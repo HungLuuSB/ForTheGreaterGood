@@ -18,7 +18,7 @@ return Templates.extend(Templates.TankT1, {
 	movement = { maxSpeed = 28, accel = 10, brake = 20, turnRate = 90 },
 	sensors = { sight = 150 },
 	weapons = { { def = "chs_mlrs", turretPiece = "launcher", muzzle = "muzzle" } },
-	pieces = { "base", "turret", "muzzle" },
+	pieces = { "base", "launcher", "turret", "muzzle" },
 	icon = "artillery",
 	model = "chs_hydra",
 })

@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 1,
 	sensors = { sight = 140, sonar = 260 },
 	weapons = { { def = "chs_torpedo", turretPiece = "launcher", muzzle = "muzzle" } },
-	pieces = { "base", "turret", "muzzle" },
+	pieces = { "base", "launcher", "turret", "muzzle" },
 	icon = "torpedo",
 	placement = "water",
 	model = "chs_fang",

@@ -8,6 +8,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 - S-1: network contract `docs/contracts/net.md`; projectile math moved to Shared.
 - S-2: join / reconnect snapshot and the Eco channel (protocol 6).
+- S-3: weapon pieces must be in `pieces` (client request).
 
 ---
 
@@ -40,3 +41,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - HELLO accepts, rejects with each reason, and errors on garbage.
   - Eco values match the account.
   - `Schema.spec`: golden bytes, round trips, truncation and rejections for the new records.
+
+## S-3 — Weapon pieces must be in `pieces` (2026-10-21, client request)
+
+- **Found:** 14 unit defs named a `turretPiece` missing from their `pieces`: `bay` on the four bombers, `launcher` on SAM trucks, MLRS and torpedo launchers, `turret` on two fighters.
+- **Fix:** the missing piece is added to each def's `pieces` (after `base`).
+- **Validation:** `Defs` now rejects a weapon's `turretPiece`, `pitchPiece` or `muzzle` that isn't in the unit's `pieces` (`Defs.spec` case). The client rig (guide 14.2, `docs/contracts/rig.md`) animates these pieces.
+- The defs hash changes; both sides load the same files.
