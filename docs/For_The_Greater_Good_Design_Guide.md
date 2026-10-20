@@ -4,7 +4,7 @@
 **Platform:** Roblox (Luau), PC-first
 **Modes:** Team (2v2 – 4v4) and Free-For-All (up to 8 players)
 **Factions:** Order / Chaos
-**Document version:** 0.4 — living document; update it whenever a decision changes.
+**Document version:** 0.5 — living document; update it whenever a decision changes.
 
 > **Naming note.** "For The Greater Good" plus *Order* and *Chaos* will remind many players of Warhammer 40K / Age of Sigmar. The words themselves are generic, but before committing, search Roblox for existing experiences with the same name and keep the visual identity clearly your own.
 
@@ -125,7 +125,9 @@ ReplicatedStorage/
       MoveClasses.luau
       ArmorClasses.luau
       Categories.luau
-      Defs.luau         loader + validation + inheritance helpers
+      Defs.luau         loader + validation + derived values + defs hash
+      Templates.luau    templates + extend() (unit modules require this, not Defs)
+      Registry.luau     every def module by file name (no portable folder listing)
     Net/
       Schema.luau       packet layouts, field widths
       Packer.luau       buffer read/write helpers (bit packing)
@@ -138,6 +140,7 @@ ReplicatedStorage/
       Profiler.luau     profilebegin/end wrapper (no-op outside Roblox), clock for timings
       Log.luau          tagged, levelled logging
       Prng.luau         seeded deterministic PRNG (pure Luau, same output on every runtime)
+      Hash.luau         FNV-1a 32-bit + canonical value hash (defs hash, world hash)
                         later: Fixed math, RingBuffer, Pool
   Models/               unit models by ID (client clones these)
   Icons/                strategic icons
@@ -252,9 +255,9 @@ local World = {
 
 ```lua
 -- ReplicatedStorage/Shared/Defs/Units/ord_paladin.luau
-local Defs = require("../Defs")
+local Templates = require("../Templates")
 
-return Defs.extend(Defs.Templates.TankT2, {
+return Templates.extend(Templates.TankT2, {
 	id          = "ord_paladin",
 	name        = "Paladin",
 	description = "Main battle tank. Long-range rail cannon.",
@@ -357,7 +360,18 @@ At load, for every def, assert:
 - At most 8 entries in `weapons`: the state record's aim slot mask is one byte and its weapon field holds 2 bits per slot in a `u16` (section 7.3).
 - Compute and cache derived values (category bitmasks, max weapon range, numeric def index for packets).
 
-Assign each def a **numeric index** (sorted by ID) so packets send `u16 defIndex` instead of strings. Hash the full def set; server and client compare the hash on join.
+Assign each def a **numeric index** (sorted by ID) so packets send `u16 defIndex` instead of strings. Units and weapons have separate index spaces, both 1-based (0 is reserved on the wire). Hash the full def set; server and client compare the hash on join.
+
+How `Defs.luau` does it:
+
+- Defs are registered by hand in `Defs/Registry.luau`, keyed by file name. Neither runtime can list a folder portably, and the key is what "IDs match file names" is checked against.
+- Unit modules `require("../Templates")` and call `Templates.extend(...)`. `Defs.luau` requires the registry, so a unit module requiring `Defs` would be a cycle. `Defs.extend` and `Defs.Templates` are re-exported for everything else.
+- `extend` deep-merges records (`cost`, `movement`, `sensors`…) and replaces lists (`categories`, `weapons`, `pieces`…) whole.
+- **Unknown fields are errors**, so a typo such as `maxspeed` fails loudly instead of silently using a template value.
+- Validation collects **every** problem and fails once, listing them all (`Defs: 3 problem(s): …`), each prefixed with the def and field path.
+- Built defs are deep-frozen. Derived fields: unit `index`, `categoryMask`, `maxRange`, `weapons[i].weaponIndex`; weapon `index`, `targetMask`, `priorityMasks`.
+- The defs hash is FNV-1a 32-bit over a canonical serialization (sorted keys, numbers by their IEEE-754 bits), so it is identical on every runtime.
+- The `pieces`-exist-in-model check runs client-side once models exist; it can't run headless.
 
 ---
 
@@ -1402,7 +1416,7 @@ Each milestone has **exit criteria**. Don't move on until they're met.
 
 ### 22.1 Adding a new unit — checklist
 
-1. Create `Defs/Units/<id>.luau` (extend a template).
+1. Create `Defs/Units/<id>.luau` (extend a template) and register it in `Defs/Registry.luau`.
 2. Create or reuse WeaponDefs.
 3. Add to a builder's or factory's `buildOptions`.
 4. Add a `blockout` (or model) with correct piece names.

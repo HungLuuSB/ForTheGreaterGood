@@ -109,7 +109,7 @@ Suggest the user saves or commits (Rojo + git) before large changes.
 ### Add a new unit
 
 1. Pick role, faction, tier, domain, move class. ID = `ord_<name>` or `chs_<name>`; display name follows the faction style (Order: Latin/virtue/heraldic; Chaos: myth beasts/ruin).
-2. Create `Defs/Units/<id>` by extending a template (`Defs.extend(Defs.Templates.X, {...})`).
+2. Create `Defs/Units/<id>.luau` by extending a template (`local Templates = require("../Templates")`, then `Templates.extend(Templates.X, {...})`) and register it in `Defs/Registry.luau`.
 3. Create or reuse WeaponDefs; fill every armor class in `damage`.
 4. Add the ID to the right factory's or builder's `buildOptions`.
 5. Model: if no art yet, add a `blockout` table so the placeholder generator builds it. Piece names must match `pieces` and the animation script.
