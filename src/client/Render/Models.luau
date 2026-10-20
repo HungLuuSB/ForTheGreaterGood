@@ -23,6 +23,7 @@ function Models.template(def: any): Model
 	local template: Model
 	if real and real:IsA("Model") and real.PrimaryPart then
 		template = real:Clone()
+		template:SetAttribute("DefId", def.id)
 		if template:GetAttribute("RootOffset") == nil then
 			template:SetAttribute("RootOffset", (template.PrimaryPart :: BasePart).CFrame)
 		end
