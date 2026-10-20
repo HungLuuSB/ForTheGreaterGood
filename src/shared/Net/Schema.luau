@@ -370,6 +370,15 @@ end
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
 
+-- Unit state bits: the u16 `state` of ENTER and State records. The sim's
+-- World.State is this table (one source; S-6, client request).
+Schema.UnitState = table.freeze({
+	MOVING = 1,
+	TOGGLED_ON = 2, -- radar / jammer switched on
+	SUBMERGED = 4, -- submarines (sonar-only detection)
+	LANDED = 8, -- aircraft on the ground / on a pad
+})
+
 Schema.StateField = table.freeze({
 	HEALTH = 1,
 	STATE = 2,

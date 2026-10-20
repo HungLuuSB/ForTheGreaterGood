@@ -11,6 +11,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-3: weapon pieces must be in `pieces` (client request).
 - S-4: order queues and behaviors (shift, FIGHT, PATROL, ATTACK, GUARD, REPAIR, RECLAIM, BUILD, factory rally and repeat).
 - S-5: field extensions run as sliced Pathing jobs (Movement peak at 800 units 12.1 → 6.3 ms).
+- S-6: unit state bits in Shared (`Schema.UnitState`; client request).
 
 ---
 
@@ -96,3 +97,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Average tick at 800: 8.89 → 8.62 ms.
   - One sequential stress run showed a 16 ms Pathing tick at 600 units. Isolated runs of that scenario peak at 8–9 ms, so it was noise.
 - The peak was already lower than round 7's 43.9 ms before this change, because attack-move now holds to engage (S-4) and units bunch less.
+
+## S-6 — Unit state bits in Shared (2026-10-21, client request)
+
+- `Schema.UnitState` (MOVING 1, TOGGLED_ON 2, SUBMERGED 4, LANDED 8) is the one definition of the `state` bits in ENTER and State records. `World.State` is the same table, so the client decodes them without a copy. Alternative: a client-side copy, which could drift. Rejected.
+- `Schema.spec` checks that the two are one table with the expected values. Contract section 3 names it.

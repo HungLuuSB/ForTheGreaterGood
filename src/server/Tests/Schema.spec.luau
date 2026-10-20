@@ -454,6 +454,12 @@ return function(t: RunAll.Context)
 		t.equal(Schema.Channel.Eco.reliable, true, "economy is reliable")
 	end)
 
+	t.test("unit state bits live in Shared and are the sim's", function()
+		local World = require("../Sim/World")
+		t.equal(World.State, Schema.UnitState, "one table (S-6)")
+		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8 })
+	end)
+
 	t.test("tactical layout is byte exact", function()
 		local rec: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
 		t.deepEqual(bytesOf(encodeOne(Schema.encodeTactical, rec)), { 0x01, 0x02, 0x03, 0x04, 5, 6, 7, 1, 9 })

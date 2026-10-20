@@ -10,6 +10,7 @@
 --   matching dirty bit. NetOut reads and clears them.
 
 local Hash = require("@shared/Util/Hash")
+local Schema = require("@shared/Net/Schema")
 
 local bor = bit32.bor
 
@@ -31,13 +32,9 @@ World.Dirty = table.freeze({
 local D = World.Dirty
 local ALL_DIRTY = 127
 
--- State bit flags (replicated in the state record's `state` u16).
-World.State = table.freeze({
-	MOVING = 1,
-	TOGGLED_ON = 2,
-	SUBMERGED = 4, -- submarines (sonar-only detection)
-	LANDED = 8, -- aircraft on the ground / on a pad
-})
+-- State bit flags (replicated in the state record's `state` u16): defined
+-- in Shared so clients decode them with the same table (S-6).
+World.State = Schema.UnitState
 
 -- Fire / move states (guide 10.1); values match Schema.FireState / MoveState.
 World.FireState = table.freeze({ HOLD_FIRE = 0, RETURN_FIRE = 1, FIRE_AT_WILL = 2 })
