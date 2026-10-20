@@ -22,8 +22,8 @@ Status of the unattended work session. A new session should be able to continue 
 | 2 | Defs: loader, `extend`, validation (4.5), indices, hash, enums, `ord_lancer` / `chs_ravager` | ✅ done |
 | 3 | Grid: cell math, position encode/decode, procedural test map (height + water) | ✅ done |
 | 4 | World (SoA, u16 IDs with delayed reuse, dirty bits), `Sim.step` with stub systems, replay log, world hash | ✅ done (M0 exit criteria met) |
-| 5 | Movement classes and passability: passMask + per-class clearance on the test map | ⏳ next |
-| 6 | Quadtree + coarse A* route + corridor | pending |
+| 5 | Movement classes and passability: passMask + per-class clearance on the test map | ✅ done |
+| 6 | Quadtree + coarse A* route + corridor | ⏳ next |
 | 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | pending |
 | 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | pending |
 | 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | pending |
@@ -71,6 +71,25 @@ Status of the unattended work session. A new session should be able to continue 
 - Tests: **11 specs, 83 passed, 0 failed**.
 - **M0 exit criteria met.** CLAUDE.md's milestone line now says M1.
 - Decisions: D13–D20.
+
+### Task 5 — Passability
+
+- `src/shared/Grid/Passability.luau`: `build(layers)` produces:
+  - the slope layer (u8);
+  - passMask (u16, bit per move class: ford/slope for land, depth for ships and subs, any water for hover, slope only for amphib, air always);
+  - per-class clearance (Chebyshev distance transform, map edge counts as blocked).
+
+  Plus `canEnter`, `clearance`, `fits(moveClass, footprint, cell)` and `requiredClearance(F) = floor(F/2) + 1`.
+- About 75 ms per 256×256 map in Lune (load time only).
+- Specs (`Passability.spec`):
+  - an exact slope value;
+  - a depth table across all 9 classes (ships only on deep water, subs deeper, ford limits);
+  - a 26.5° ramp that blocks HEAVY_TRACKED, WHEELED and HOVER but not TRACKED or AMPHIB;
+  - exact clearance on a hand-built map;
+  - a footprint-2 unit rejected in a 1-cell gap and accepted in a 3-cell gap;
+  - generated-map invariants and the Lipschitz property of clearance.
+- Tests: **12 specs, 92 passed, 0 failed**.
+- Decisions: D21–D24. **D21 changes the guide's footprint formula. Please confirm.**
 
 ## Benchmarks
 

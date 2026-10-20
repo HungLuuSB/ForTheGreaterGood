@@ -464,7 +464,11 @@ Each move class gets one bit in `passMask` and its own `clearance` layer.
 
 ### 6.2 Footprints and clearance
 
-A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell] ≥ ceil(F / 2)`. Clearance is a distance transform (BFS from blocked cells), computed at bake time and updated locally when a structure is placed or destroyed.
+A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell] ≥ floor(F / 2) + 1`. Clearance is the Chebyshev distance to the nearest cell the class can't enter (a blocked cell is 0; outside the map counts as blocked). It is computed with a two-pass distance transform at map load, and updated locally when a structure is placed or destroyed.
+
+The rule requires the (2r+1)² square around the cell to be free, with r = floor(F/2). Even footprints count as the next odd size, so a 2×2 unit needs a 3-wide gap. The earlier `ceil(F/2)` let a 2×2 unit into a 1-cell gap (DECISIONS D21).
+
+Slope is the steepest climb to a 4-neighbor, stored as u8 (0..255 = 0..90°). `Shared/Grid/Passability.luau` builds slope, passMask and clearance from the height and water layers: about 75 ms for a 256×256 map in Lune.
 
 ### 6.3 Hierarchical pathfinding: quadtree + flow field
 

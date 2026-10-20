@@ -150,3 +150,34 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
 - **Decision:** `src/server/Tests/*.spec.luau` use `require("../Sim/World")`.
 - **Alternatives:** a new `@server` alias.
 - **Why:** Tests and Sim are both under `src/server`, so they share one root, and `../Sim/X` resolves identically in Roblox (`ServerScriptService.Tests` → `ServerScriptService.Sim`). This follows the "relative within a root" rule.
+
+## D21 — Footprint rule: `clearance >= floor(F/2) + 1`, not `ceil(F/2)` (2026-10-20)
+
+- **Decision:** clearance is the Chebyshev distance to the nearest blocked cell (blocked = 0, a free cell touching a blocked cell = 1). A footprint-F unit fits on a cell when `clearance >= floor(F/2) + 1`, i.e. the (2r+1)² square around the cell is free for r = floor(F/2).
+- **Alternatives:**
+  - The guide's `ceil(F/2)`, which gives 1 for F = 2, so a 2×2 unit would fit a 1-cell gap. That contradicts the requested test and the intent.
+  - Corner-anchored "true clearance" (largest free square with the cell as its min corner), which is exact for even footprints but makes even-sized units asymmetric around their center.
+- **Why:** it's symmetric and simple, and it's one distance transform per move class. Even footprints are treated like the next odd size, so a 2×2 unit needs a 3-wide passage. That's conservative by one cell; switch to corner-anchored clearance if 2-wide gaps must admit 2×2 units. Guide 6.2 is updated.
+
+## D22 — Slope = steepest climb to a 4-neighbor (2026-10-20)
+
+- **Decision:** `slope[c] = atan(max |h(n) - h(c)| / 8)` over the 4-neighbors, stored as u8 (0..255 → 0..90°). Move-class limits compare against the same quantization (`degreesToSlope(maxSlope)`).
+- **Alternatives:** 8-neighbors (diagonals over 8√2), a gradient vector magnitude, or the bake's per-cell raycast maximum (guide 5.4).
+- **Why:** it's cheap and conservative at cliffs, and the cells on both sides of a step become steep. The Studio bake can replace the slope layer with raycast data without changing anything downstream.
+
+## D23 — Outside the map counts as blocked for clearance (2026-10-20)
+
+- **Decision:** border cells have clearance at most 1.
+- **Alternatives:** ignore the map edge.
+- **Why:** big units shouldn't hang off the map, and it keeps the footprint rule uniform at the edges.
+
+## D24 — Surface rules per move class (2026-10-20)
+
+- **Decision:**
+  - Land classes need `water <= maxFord` and `slope <= maxSlope`.
+  - SHIP/SUB need `water >= minDepth`.
+  - HOVER: any water cell (the surface is flat), else the slope limit.
+  - AMPHIB: the slope limit only (it drives on the sea floor).
+  - Air: always.
+- **Alternatives:** HOVER also checking shoreline slope; AMPHIB limited in depth.
+- **Why:** this is a direct reading of guide 6.1. Edge cases (hover climbing steep beaches) can be tightened when real maps exist.
