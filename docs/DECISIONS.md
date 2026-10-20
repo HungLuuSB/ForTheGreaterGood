@@ -1,6 +1,15 @@
 # Decisions log
 
-Decisions made while working unattended. Each entry gives the date, the decision, the alternatives and the reason. Everything here is meant to be easy to change. Overrule any of them and I'll update the code, the guide and this file together.
+**This file is the history: D1–D109, up to 2026-10-20.** New decisions go in one file per work stream, so the streams never edit the same file:
+
+| File | Stream | Prefix |
+|---|---|---|
+| [`decisions/sim.md`](decisions/sim.md) | Headless simulation (`src/shared` except `Defs/Blockouts/`, `src/server`, `.lune/`) | `S-` |
+| `decisions/client.md` (created by the client stream) | Roblox client and Studio work (`src/client`, `src/shared/Defs/Blockouts/`, place content) | `C-` |
+
+A later decision that changes one here says so and names the D-number it revises.
+
+Each entry gives the date, the decision, the alternatives and the reason. Everything here is meant to be easy to change. Overrule any of them and I'll update the code, the guide and this file together.
 
 ## Summary
 
@@ -17,7 +26,7 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D95–D99: round 6: shared aim point, bombs on radar contacts and ghosts, destroyer SAM and missile guidance, same-role band, combat events on the wire.
 - D100–D105: round 7: team knowledge (ghost targets, ATTACK_GROUND, audit), homing corrections, rearm airfields in balance fights, fire-control radar and its lock bonus.
 - D106–D109: round 8: pathfinding as physics, domain-only radar contacts, jammer upkeep, unit generations.
-- **From 2026-10-20 (after D109) decisions are prefixed by work stream:** `S-1`, `S-2`, ... for the headless simulation (`docs/progress/sim.md`), and the client stream's own prefix for the Roblox client and Studio work.
+- After D109: see the stream files above (`S-` simulation, `C-` client).
 
 Open points are listed in each stream's progress file (`docs/progress/`) → Summary.
 
