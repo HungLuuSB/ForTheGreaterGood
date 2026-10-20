@@ -51,6 +51,7 @@
 local Grid = require("@shared/Grid/Grid")
 local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
+local Icons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
@@ -75,21 +76,8 @@ local CHANGED = bor(D.HEALTH, D.STATE, D.BUILD)
 local L = Sensors.Level
 local SF = Schema.StrategicFlag
 
--- Strategic icon per def: distinct icon names, sorted, numbered from 1.
-function NetOut.iconIndex(defs: any): { [number]: number }
-	local names = {}
-	for _, def in defs.unitByIndex do
-		if table.find(names, def.icon) == nil then
-			table.insert(names, def.icon)
-		end
-	end
-	table.sort(names)
-	local out = {}
-	for index, def in defs.unitByIndex do
-		out[index] = math.min(table.find(names, def.icon) :: number, 63)
-	end
-	return out
-end
+-- Strategic icon per def: the shared numbering (Shared/Net/Icons, S-10).
+NetOut.iconIndex = Icons.byDef
 
 function NetOut.new(sim: Types.Sim): NetState.NetState
 	return NetState.new(sim.playerOrder, NetOut.iconIndex(sim.defs))
