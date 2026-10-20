@@ -563,3 +563,30 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - `Spawn.unit` places complete structures without checks (scenarios and tests); construction always checks.
 - **Alternatives:** push units out of the footprint (BAR does).
 - **Why:** it's simple and deterministic. Pushing units aside can be added when construction AI needs it.
+
+## D61 — Construction model (2026-10-20)
+
+- **Decision:**
+  - **BUILD to a mobile builder:** it drives until the site is within `buildRange + half the footprint`, then checks placement. If valid, it starts an unfinished frame (1% health, occupying its footprint). Another builder arriving at the same site with the same order assists that frame instead. An invalid site gives `BUILD_FAILED` with a reason.
+  - **Progress:** per tick, `ΣBP / buildTime × effective ratio`, also capped so the spend never exceeds the window allowance. Health grows by `maxHealth × Δprogress`.
+  - **Completion:** a finished frame starts producing (`Lifecycle.completed`), and its builders drop the target.
+  - **Order:** targets are processed in the order their first builder appears in `world.ids`.
+  - **Events:** `BUILD_START`, `BUILD_DONE`, `BUILD_FAILED`, `PRODUCED` and `RECLAIMED` are added to the per-tick event list.
+- **Alternatives:** paying the full cost before building starts (explicitly ruled out by the guide); per-builder spending.
+- **Why:** this is guide 8.2 and 9.3. Assisting is just more BP on the same target. Measured: a generator (1,200 units) takes 60 ticks at BP 300, exactly 4 s.
+
+## D62 — Factories and assisting (2026-10-20)
+
+- **Decision:**
+  - BUILD sent to a complete factory appends to its queue (max 50). The head item advances with the factory's own BP plus assisting builders (REPAIR on the factory), at the same economy rates.
+  - A finished unit spawns one cell outside the footprint on the factory's facing side and drives 24 studs further out.
+  - REPAIR on an unfinished frame assists construction. Repairing damaged units is not done yet.
+  - MOVE and STOP cancel a builder's work. Factories keep their queues; there is no cancel command yet.
+- **Alternatives:** a nano-frame entity for the unit in production (BAR). Rally points.
+- **Why:** it's simple and deterministic, and enough for the build-order test. Measured: a Lancer (4,500 units) at BP 100 takes 675 ticks = 45 s; a Command Vehicle assisting cuts it below half.
+
+## D63 — Reclaim (2026-10-20)
+
+- **Decision:** RECLAIM drives the builder in range of the wreck, then moves `buildPower × 0.1` supply per second from the wreck into the team account (settled at the next economy step, capped by storage). The wreck is removed when empty. Reclaim doesn't depend on the stall ratio.
+- **Alternatives:** reclaim speed from a per-wreck reclaim time.
+- **Why:** guide 8.7. Rate 0.1 makes a Mason (BP 100) reclaim a Ravager wreck (65 supply) in 6.5 s.

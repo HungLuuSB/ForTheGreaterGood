@@ -1,7 +1,10 @@
 --!strict
--- System 10: build progress x economy ratio (M3).
--- Stub: does nothing yet.
+-- System 10: construction, factory production and reclaim (guide 9).
+-- See Sim/Build.luau.
 
+local Build = require("../Build")
 local Types = require("../Types")
 
-return function(_sim: Types.Sim) end
+return function(sim: Types.Sim)
+	Build.step(sim)
+end

@@ -35,13 +35,14 @@ export type UnitProfile = {
 }
 
 export type Event = {
-	kind: "FIRE" | "SPAWN_PROJ" | "IMPACT" | "DEATH",
+	kind: "FIRE" | "SPAWN_PROJ" | "IMPACT" | "DEATH" | "BUILD_START" | "BUILD_DONE" | "BUILD_FAILED" | "PRODUCED" | "RECLAIMED",
 	tick: number,
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), dead unit (DEATH)
 	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT), wreck or 0 (DEATH)
 	slot: number?, -- FIRE, SPAWN_PROJ
 	hit: boolean?, -- FIRE (hitscan)
 	severity: number?, -- DEATH: 0..255
+	reason: string?, -- BUILD_FAILED
 	x: number?,
 	y: number?,
 	z: number?,
@@ -308,6 +309,14 @@ function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef): nu
 	return id
 end
 
+function Combat.removeWreck(c: Combat, id: number)
+	local i = table.find(c.wreckIds, id)
+	if i then
+		table.remove(c.wreckIds, i)
+	end
+	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id] = nil, nil, nil, nil
+end
+
 --------------------------------------------------------------------------------
 -- Hash (part of Sim.hash)
 --------------------------------------------------------------------------------
@@ -335,6 +344,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.number(h, c.wreckX[id])
 		h = Hash.number(h, c.wreckZ[id])
 		h = Hash.u32(h, c.wreckDef[id])
+		h = Hash.number(h, c.wreckSupply[id])
 	end
 	return h
 end
