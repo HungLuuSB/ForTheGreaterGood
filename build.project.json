@@ -4,24 +4,24 @@
     "$className": "DataModel",
     "ReplicatedStorage": {
       "Shared": {
-        "$path": "build/src/shared"
+        "$path": "build/ci/src/shared"
       }
     },
     "ServerScriptService": {
       "Sim": {
-        "$path": "build/src/server/Sim"
+        "$path": "build/ci/src/server/Sim"
       },
       "Tests": {
-        "$path": "build/src/server/Tests"
+        "$path": "build/ci/src/server/Tests"
       },
       "Entry": {
-        "$path": "build/src/roblox"
+        "$path": "build/ci/src/roblox"
       }
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "Client": {
-          "$path": "build/src/client"
+          "$path": "build/ci/src/client"
         }
       }
     }
