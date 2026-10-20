@@ -25,8 +25,8 @@ Status of the unattended work session. A new session should be able to continue 
 | 5 | Movement classes and passability: passMask + per-class clearance on the test map | ✅ done |
 | 6 | Quadtree + coarse A* route + corridor | ✅ done |
 | 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | ✅ done |
-| 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | ⏳ next |
-| 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | pending |
+| 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | ✅ done (over budget, see Benchmarks) |
+| 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | ⏳ next |
 | 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | pending |
 | — | Rules review (requires, determinism, no Instances, hot-loop allocation) | pending |
 
@@ -127,6 +127,35 @@ Status of the unattended work session. A new session should be able to continue 
 - Tests: **14 specs, 107 passed, 0 failed**.
 - Decisions: D29–D32. **D29 (work-unit budgets) changes how guide 6.4's "8 ms" is enforced. Please confirm.**
 
+### Task 8 — Benchmark
+
+- `.lune/bench.luau`: `lune run bench [runs]` times passability, quadtree, route, corridor and flow field on 256×256 open/maze/island maps (west-to-east endpoints, TRACKED, footprint 1). It prints a table and writes `debug_out/bench.txt`.
+- Results below. No optimization was done, as instructed.
+- Tests: unchanged (**14 specs, 107 passed**).
+- Decision: D33.
+
 ## Benchmarks
 
-_None yet (task 8)._
+Lune 0.11 on the dev PC, 256×256, median over 7 runs (best in the second figure), ms:
+
+| map | passability (load) | quadtree | route | corridor cells | **flow field** | of which integration | work units | units/ms |
+|---|---|---|---|---|---|---|---|---|
+| open | 77 | 1.4 | 0.00 (1 leaf) | 65,536 | **80.2** / 78.3 | 70.1 | 131,071 | 1,634 |
+| maze (zig-zag, 16-cell spacing) | 76 | 12.0 | 9.1 (707 leaves) | 43,141 | **31.5** / 31.3 | 24.7 | 86,281 | 2,742 |
+| island (r = 110, hills + lakes) | 76 | 5.5 | 1.3 (32 leaves) | 10,236 | **9.9** / 9.8 | 8.3 | 20,471 | 2,076 |
+
+**Against the 8 ms Pathing budget (guide 18.1): every one-shot field is over budget.**
+
+- Open: 10× over. Maze: 4× over. Island: 1.2× over.
+- With deterministic slicing at 12,000 units per tick (D33), the fields complete in 11, 8 and 2 ticks (0.73 s, 0.53 s, 0.13 s). Units steer straight toward the goal until then, which guide 6.4 allows.
+- Integration (Dijkstra with a binary heap) is about 85% of the cost.
+- The open map is the worst case: the whole map is one leaf, so the corridor is all 65,536 cells.
+
+Suggested fixes, in order of value per effort (none done yet):
+
+1. **No field when start and goal share an open leaf.** A leaf is a passable square, so the straight line inside it is always clear. This removes the open-map worst case entirely and helps every route's last leaf. *Cheap; will be used in task 9.*
+2. **Bucket queue instead of a binary heap.** Integer costs 10/14 with Dial's algorithm make queue operations O(1). Expect about 2× on integration.
+3. **Tighter corridor on open terrain.** Clip huge padding leaves to the route's bounding box plus a margin (D28 option).
+4. **`--!native` on the path modules.** Roblox servers run Luau native codegen; numeric loops like these typically gain 1.5–3×. Must be measured on a live server.
+5. **Actors (guide 6.4).** Move integration off the main thread so the main-thread budget only covers dispatch and apply. Results must be applied at a deterministic tick (D29).
+6. **Cache hits.** All units in one order share a field, and repeated orders to the same goal hit the LRU, so real per-tick load is far below one field per order.

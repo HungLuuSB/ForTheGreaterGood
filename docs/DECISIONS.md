@@ -253,3 +253,9 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
 - **Decision:** each field stores a `cellCount`-byte direction buffer (64 KB at 256×256) indexed by cell, even though only the corridor is filled.
 - **Alternatives:** store only the corridor's bounding box.
 - **Why:** indexing is trivial (`dir[cell]`), and 32 cached fields cost 2 MB, which is fine for a server. If memory matters, store the bbox and offset the index.
+
+## D33 — Pathing budget: 12,000 work units per tick (2026-10-20)
+
+- **Decision:** `Pathing` will spend at most 12,000 flow-field work units per tick. The benchmark measured 1,640–2,740 units/ms in Lune on this PC (task 8), so 8 ms ≈ 13,000 units at the slowest map, rounded down.
+- **Alternatives:** a wall-clock budget (rejected in D29); a lower budget with Actors doing the heavy lifting.
+- **Why:** it's deterministic and close to the guide's 8 ms on the measured hardware. Re-calibrate on a live Roblox server (`--!native` codegen and server CPUs differ from Lune on a desktop) and change the one constant.

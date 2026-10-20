@@ -44,6 +44,8 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
   - Runtime-specific behavior lives only in the `Shared/Util` adapters (`Env`, `Profiler`, `Log`). Branch on `Env.isRoblox` / `Env.isLune` there, nowhere else.
   - Randomness comes only from `Shared/Util/Prng` (pure Luau, so both runtimes give bit-identical sequences), never `Random.new` or `math.random`.
 - `.lune/` holds Lune-only scripts (test entry, tooling). They may use `@lune/*`.
+  - `lune run bench`: flow field benchmark (results in `docs/PROGRESS.md`).
+  - `lune run debug_map`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored).
 - `src/client` is Roblox-only and isn't covered by this rule.
 - Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). Plan: keep the require style above unchanged. When Studio is available, add a darklua build step whose `convert_require` rule rewrites `@shared/...` and relative requires into Instance paths using the Rojo sourcemap (`rojo sourcemap -o sourcemap.json`). Rojo then serves darklua's output instead of `src/`.
 
