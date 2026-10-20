@@ -7,11 +7,11 @@
 --              packets by the headless client (Support/Client) with a
 --              whole-map camera: tactical units (full detail), strategic
 --              records (radar / sonar blips at their wobbled positions,
---              ghosts), and that player's ally-team sight map as fog.
---              Projectiles and combat events aren't on the wire yet (D82),
---              so the player view has none.
+--              ghosts), the projectiles the client steps from SPAWN_PROJ,
+--              the effects of FIRE / IMPACT / DECOYED / DEATH (D99), and
+--              that player's ally-team sight map as fog.
 --
--- Format "ftgg-match" version 1 (JSON; positions in studs to 0.1):
+-- Format "ftgg-match" version 2 (JSON; positions in studs to 0.1):
 --   meta     { format, version, scenario, mapId, seed, view, player, ally,
 --              tickRate, ticksPerFrame, endTick, over, winner, icons }
 --   map      { cellsX, cellsZ, cellSize, originX, originZ, sensorX, sensorZ,
@@ -22,8 +22,10 @@
 --   frames   [{ t,
 --               u: [[id, defIndex, team, x, z, headingDeg, health‰, alt, state, target, build‰]],
 --               s: [[id, team, x, z, flags, icon]]   (player view: strategic records)
---               p: [[x, y, z]]                     (spectator: projectiles)
---               e: [[kind, x, z]]                  (spectator: events since the last frame)
+--               p: [[x, y, z, weaponIndex]]        projectiles (player view: as its client steps them)
+--               e: [[kind, x, z, fromX?, fromZ?]]  events since the last frame: impact, death,
+--                                                  decoy, lost (spectator only), fire (a
+--                                                  hitscan tracer from (fromX, fromZ))
 --               fog: base64 bitmap, 1 bit per sensor cell, 1 = in sight (player view) }]
 -- `kind` is a drawing category (tank, artillery, aa, light, sensor, worker,
 -- commander, jet, heli, ship, sub, factory, turret, extractor, power,
@@ -42,7 +44,7 @@ local World = require("../../Sim/World")
 local MatchExport = {}
 
 MatchExport.FORMAT = "ftgg-match"
-MatchExport.VERSION = 1
+MatchExport.VERSION = 2 -- 2: player-view projectiles and events, fire tracers
 
 export type Options = {
 	view: "spectator" | "player",
@@ -204,7 +206,7 @@ function MatchExport.record(scene: Scenes.Scene, name: string, opts: Options): a
 
 	local frames = Json.array()
 	local pendingEvents = Json.array()
-	local EVENT_KIND = { IMPACT = "impact", DEATH = "death", DECOYED = "decoy", LOST_LOCK = "lost" }
+	local EVENT_KIND = { IMPACT = "impact", DEATH = "death", DECOYED = "decoy", LOST_LOCK = "lost", FIRE = "fire" }
 
 	local function capture()
 		local frame: any = { t = sim.tick, u = Json.array() }
@@ -227,7 +229,7 @@ function MatchExport.record(scene: Scenes.Scene, name: string, opts: Options): a
 			end
 			frame.p = Json.array()
 			for _, pid in c.proj do
-				table.insert(frame.p, { r1(c.px[pid]), r1(c.py[pid]), r1(c.pz[pid]) })
+				table.insert(frame.p, { r1(c.px[pid]), r1(c.py[pid]), r1(c.pz[pid]), c.pWeapon[pid] })
 			end
 			frame.e = pendingEvents
 			pendingEvents = Json.array()
@@ -270,6 +272,26 @@ function MatchExport.record(scene: Scenes.Scene, name: string, opts: Options): a
 				end
 			end
 			frame.fog = MatchExport.base64(bytes)
+			-- what the client draws: its own projectiles and this frame's effects
+			frame.p = Json.array()
+			local pids = {}
+			for id in v.projectiles do
+				table.insert(pids, id)
+			end
+			table.sort(pids)
+			for _, id in pids do
+				local p = v.projectiles[id]
+				table.insert(frame.p, { r1(p.x), r1(p.y), r1(p.z), p.weaponIndex })
+			end
+			frame.e = Json.array()
+			for _, fx in v.effects do
+				if fx.fromX then
+					table.insert(frame.e, { fx.kind, r1(fx.x), r1(fx.z), r1(fx.fromX :: number), r1(fx.fromZ :: number) })
+				else
+					table.insert(frame.e, { fx.kind, r1(fx.x), r1(fx.z) })
+				end
+			end
+			table.clear(v.effects)
 		end
 		table.insert(frames, frame)
 		if opts.onFrame then
@@ -286,7 +308,9 @@ function MatchExport.record(scene: Scenes.Scene, name: string, opts: Options): a
 		else
 			for _, e in c.events do
 				local kind = EVENT_KIND[e.kind]
-				if kind and e.x and e.z then
+				if kind == "fire" and e.x and e.z and w.slot[e.unit] then
+					table.insert(pendingEvents, { kind, r1(e.x), r1(e.z), r1(w.posX[e.unit]), r1(w.posZ[e.unit]) })
+				elseif kind and e.x and e.z then
 					table.insert(pendingEvents, { kind, r1(e.x), r1(e.z) })
 				end
 			end

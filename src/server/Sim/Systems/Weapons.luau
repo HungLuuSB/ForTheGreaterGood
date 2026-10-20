@@ -124,17 +124,23 @@ local function fire(
 	-- hitscan, or a projectile shot at the pool cap: the total error is the
 	-- turret's remaining aim offset (within tolerance) plus the spread
 	local hit = hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
-	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit })
-	local tx, tz = w.posX[target], w.posZ[target]
+	-- where the shot ends: the target's aim point, or the ground beyond or
+	-- beside it on a miss (FIRE carries it for clients, guide 7.3)
+	local ex, ey, ez
+	if hit then
+		ex, ey, ez = Combat.aimPoint(c, w, target)
+	else
+		ex = w.posX[id] + sin(worldYaw + yawErr) * dist
+		ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
+		ey = Combat.groundHeight(c, ex, ez)
+	end
+	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit, x = ex, y = ey, z = ez })
 	if hit then
 		c.stats.hits += 1
-		local _, ty = Combat.aimPoint(c, w, target)
-		Combat.explode(c, w, tx, ty, tz, weapon, id, w.ally[id], target)
+		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
 		-- a miss still explodes on the ground beyond/beside the target
-		local mx = w.posX[id] + sin(worldYaw + yawErr) * dist
-		local mz = w.posZ[id] + cos(worldYaw + yawErr) * dist
-		Combat.explode(c, w, mx, Combat.groundHeight(c, mx, mz), mz, weapon, id, w.ally[id], 0)
+		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], 0)
 	end
 end
 

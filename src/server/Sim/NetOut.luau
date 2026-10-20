@@ -16,6 +16,22 @@
 --     unit. Radar / sonar contacts carry their wobbled cell and icon 0;
 --     remembered structures carry the GHOST flag and their last position.
 --   * DEATH events for dead units the player had in its tactical tier.
+--   * Combat events (D99), only what the ally team may know:
+--       FIRE        hitscan / beam shots of units in the tactical tier, with
+--                   the shot's end point (no target ID: it may be hidden);
+--       SPAWN_PROJ  a projectile the client doesn't have yet, once it is in
+--                   the ally team's sight and in the camera rectangle (+2
+--                   cells): at launch, or when it flies into view. It carries
+--                   the current position and velocity, and the homing
+--                   target if the ally team knows that unit (tactical or a
+--                   strategic record: its ID is no secret then);
+--       DECOYED,    for projectiles the client has: position and the new
+--       LOST_LOCK   velocity (after the decoy turn; or flying on unguided);
+--       IMPACT      for projectiles the client has, or anywhere in sight and
+--                   in the camera rectangle (projectiles at the end of their
+--                   life burst with an IMPACT too).
+--     The client steps known projectiles itself and drops them on IMPACT or
+--     at their time to live. All of a tick's events form one batch.
 -- Every channel is packed through Packer.chunk (≤ 900 bytes per message)
 -- after a u16 tick header. Dirty bits are cleared once all players are done.
 
@@ -29,6 +45,8 @@ local Types = require("./Types")
 local World = require("./World")
 
 local NetOut = {}
+
+local combatEvents: (Types.Sim, Grid.Grid, NetState.PlayerNet, number, { number }, { Schema.Event }) -> ()
 
 NetOut.ENTER_MARGIN = 2 -- cells
 NetOut.LEAVE_MARGIN = 5
@@ -143,6 +161,62 @@ local function pack<T>(records: { T }, encode: (Packer.Writer, T) -> (), wireTic
 	return Packer.chunk(records, encode, Packer.MAX_MESSAGE_BYTES, function(wr)
 		Schema.encodeTickHeader(wr, wireTick)
 	end)
+end
+
+local function withPos(e: Schema.Event, g: Grid.Grid, x: number, y: number, z: number): Schema.Event
+	e.cell, e.offX, e.offZ = g:encode(x, z)
+	e.y = Schema.toI16(y)
+	return e
+end
+
+local function withVel(e: Schema.Event, vx: number, vy: number, vz: number): Schema.Event
+	e.vx, e.vy, e.vz = Schema.toI16(vx), Schema.toI16(vy), Schema.toI16(vz)
+	return e
+end
+
+-- Combat events for one player (see the header): appended to `events`
+-- after this tick's ENTER records, so a FIRE's shooter is already known.
+function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally: number, cam: { number }, events: { Schema.Event })
+	local c = sim.combat
+	local known = pn.projKnown
+	local function shown(x: number, z: number): boolean
+		return inRect(g, cam, x, z, NetOut.ENTER_MARGIN) and Sensors.inSight(sim, ally, x, z)
+	end
+	for _, e in c.events do
+		if e.kind == "SPAWN_PROJ" then
+			known[e.other] = nil -- a new projectile (IDs are reused)
+		end
+	end
+	-- projectiles entering this client's view
+	local sentNow: { [number]: boolean } = {}
+	for _, p in c.proj do
+		if not known[p] and shown(c.px[p], c.pz[p]) then
+			known[p] = true
+			sentNow[p] = true
+			local target = c.pTarget[p]
+			if target ~= 0 and (sim.world.slot[target] == nil or Sensors.level(sim, ally, target) == L.HIDDEN) then
+				target = 0
+			end
+			local e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
+			table.insert(events, withVel(e, c.pvx[p], c.pvy[p], c.pvz[p]))
+		end
+	end
+	for _, e in c.events do
+		local kind = e.kind
+		if kind == "FIRE" and pn.tactical[e.unit] and e.x then
+			table.insert(events, withPos({ kind = Schema.EventKind.FIRE, unitId = e.unit, slot = e.slot, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number))
+		elseif (kind == "DECOYED" or kind == "LOST_LOCK") and known[e.other] and not sentNow[e.other] then
+			local p = e.other
+			if c.projSlot[p] ~= nil then -- else its IMPACT follows
+				-- the state after this tick's step, like SPAWN_PROJ
+				local d = withPos({ kind = if kind == "DECOYED" then Schema.EventKind.DECOYED else Schema.EventKind.LOST_LOCK, projId = p }, g, c.px[p], c.py[p], c.pz[p])
+				table.insert(events, withVel(d, c.pvx[p], c.pvy[p], c.pvz[p]))
+			end
+		elseif kind == "IMPACT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
+			known[e.other] = nil
+			table.insert(events, withPos({ kind = Schema.EventKind.IMPACT, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
+		end
+	end
 end
 
 function NetOut.step(sim: Types.Sim)
@@ -272,6 +346,13 @@ function NetOut.step(sim: Types.Sim)
 					})
 				end
 			end
+		end
+
+		if cam ~= nil then
+			combatEvents(sim, g, pn, ally, cam, events)
+		end
+		for _, e in events do
+			pn.eventCounts[e.kind] = (pn.eventCounts[e.kind] or 0) + 1
 		end
 
 		local outbox = pn.outbox

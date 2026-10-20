@@ -135,6 +135,165 @@ return function(t: RunAll.Context)
 		print(string.format("    largest message: %d bytes", largest))
 	end)
 
+	-- Combat events (D99): every FIRE, SPAWN_PROJ, IMPACT and DECOYED a player
+	-- gets is something its ally team may know, and the client's own
+	-- projectile stepping follows the server's.
+	t.test("combat events: only what the ally team may see, and the client tracks projectiles", function()
+		local sim, mine, theirs = battle(12)
+		local g = (sim.map :: any).grid
+		local c = sim.combat
+		local rng = Prng.new(98)
+		local views = { Client.new(g), Client.new(g) }
+		local counts = { FIRE = 0, SPAWN_PROJ = 0, IMPACT = 0, DECOYED = 0, LOST_LOCK = 0 }
+		local known = { {}, {} } -- projectile IDs each client was sent
+		local drift = 0
+		local EK = Schema.EventKind
+		for _ = 1, 600 do
+			if sim.tick % 120 == 0 then
+				moveTo(sim, 1, mine, rng:nextNumber(-200, 100), rng:nextNumber(-150, 150))
+				moveTo(sim, 2, theirs, rng:nextNumber(-100, 200), rng:nextNumber(-150, 150))
+			end
+			Sim.step(sim)
+			for pid = 1, 2 do
+				local pn = sim.net.players[pid]
+				local ally = sim.players[pid].allyTeam :: number
+				local cam = pn.camera :: { number }
+				local function inCamera(x: number, z: number): boolean
+					local cx, cz = g:cellAt(x, z)
+					return cx >= cam[1] - 2 and cx <= cam[3] + 2 and cz >= cam[2] - 2 and cz <= cam[4] + 2
+				end
+				for _, msg in pn.outbox.Events do
+					for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+						if e.kind == EK.FIRE then
+							counts.FIRE += 1
+							t.expect(pn.tactical[e.unitId :: number] == true, `FIRE from unit {e.unitId}, not tactical for player {pid}`)
+						elseif e.kind == EK.SPAWN_PROJ then
+							counts.SPAWN_PROJ += 1
+							local id = e.projId :: number
+							known[pid][id] = true
+							t.expect(c.projSlot[id] ~= nil, "SPAWN_PROJ for a live projectile")
+							local x, z = c.px[id], c.pz[id]
+							t.expect(Sensors.inSight(sim, ally, x, z) and inCamera(x, z), `projectile {id} sent to player {pid} outside its sight or camera`)
+							local target = e.targetId :: number
+							t.expect(target == 0 or knows(sim, ally, target), "a homing target only when the ally team knows it")
+						elseif e.kind == EK.IMPACT then
+							counts.IMPACT += 1
+							local id = e.projId :: number
+							local gx, gz = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+							t.expect(known[pid][id] or (Sensors.inSight(sim, ally, gx, gz) and inCamera(gx, gz)), `IMPACT of projectile {id} the player may not see`)
+							known[pid][id] = nil
+						elseif e.kind == EK.DECOYED or e.kind == EK.LOST_LOCK then
+							counts[if e.kind == EK.DECOYED then "DECOYED" else "LOST_LOCK"] += 1
+							t.expect(known[pid][e.projId :: number] == true, "DECOYED / LOST_LOCK only for projectiles the client has")
+						end
+					end
+				end
+				local view = views[pid]
+				Client.receive(view, pn.outbox)
+				-- non-homing projectiles the client has: same flight as the server's
+				for id, p in view.projectiles do
+					local weapon = sim.defs.weaponByIndex[p.weaponIndex]
+					if c.projSlot[id] ~= nil and c.pWeapon[id] == p.weaponIndex and weapon.turnRate == nil then
+						drift = math.max(drift, math.abs(p.x - c.px[id]), math.abs(p.y - c.py[id]), math.abs(p.z - c.pz[id]))
+					end
+				end
+			end
+		end
+		t.expect(counts.SPAWN_PROJ > 0 and counts.IMPACT > 0, `projectile events were sent ({counts.SPAWN_PROJ} spawns, {counts.IMPACT} impacts)`)
+		t.expect(drift < 0.5, `client projectiles follow the server's (worst drift {drift} studs)`)
+		print(string.format("    events: %d SPAWN_PROJ, %d IMPACT, %d DECOYED, %d LOST_LOCK; worst projectile drift %.3f studs", counts.SPAWN_PROJ, counts.IMPACT, counts.DECOYED, counts.LOST_LOCK, drift))
+	end)
+
+	-- A Hellmouth mortar outside Order's sight shells an Order generator it
+	-- sees on its own radar. Order gets the shells only once they fly into
+	-- its sight, never at the muzzle, and never learns the mortar's ID.
+	t.test("a hidden shooter's shells appear only once they fly into sight", function()
+		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local c = sim.combat
+		local w = sim.world
+		local gen = Spawn.unit(sim, "ord_generator", 1, -150, 0)
+		local lancer = Spawn.unit(sim, "ord_lancer", 1, -150, 40)
+		w.fireState[lancer] = World.FireState.HOLD_FIRE
+		local mortar = Spawn.unit(sim, "chs_hellmouth", 2, 200, 0, -math.pi / 2)
+		Spawn.unit(sim, "chs_watcher", 2, 250, 100)
+		camera(sim, 1, 0, 0, 95, 95)
+		camera(sim, 2, 0, 0, 95, 95)
+		local view = Client.new(g)
+		local shells, impacts, nearest = 0, 0, math.huge
+		for _ = 1, 600 do
+			Sim.step(sim)
+			local pn = sim.net.players[1]
+			for _, msg in pn.outbox.Events do
+				for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+					if e.kind == Schema.EventKind.SPAWN_PROJ and e.weaponIndex == sim.defs.weapons.chs_mortar.index then
+						shells += 1
+						local id = e.projId :: number
+						t.expect(Sensors.inSight(sim, 1, c.px[id], c.pz[id]), "the shell is in Order's sight when it is sent")
+						nearest = math.min(nearest, math.sqrt((c.px[id] - w.posX[mortar]) ^ 2 + (c.pz[id] - w.posZ[mortar]) ^ 2))
+					elseif e.kind == Schema.EventKind.IMPACT then
+						impacts += 1
+					end
+				end
+			end
+			Client.receive(view, pn.outbox)
+			t.expect(Sensors.level(sim, 1, mortar) == L.HIDDEN, "the mortar stays hidden from Order")
+		end
+		t.expect(shells >= 3, `Order saw the shells coming ({shells})`)
+		t.expect(impacts >= 1, `and their impacts ({impacts})`)
+		t.expect(nearest > 150, `never at the muzzle: closest {nearest} studs from the mortar`)
+		t.expect(view.received[mortar] == nil, "Order's client never learned the mortar's ID")
+		t.expect(w.slot[gen] == nil or w.health[gen] < sim.defs.units.ord_generator.health, "the generator was shelled")
+		print(string.format("    hidden mortar: %d shells shown, first seen %.0f studs from the muzzle", shells, nearest))
+	end)
+
+	-- Hitscan flak (FIRE): a Dominion shoots at a Wasp hovering over it.
+	-- Chaos's camera covers the fight, Order's is elsewhere, so only Chaos
+	-- (which sees the ship) gets the shots, with their end points.
+	t.test("FIRE goes to players that have the shooter in their tactical tier", function()
+		local sim = Sim.new({ seed = 4, players = PLAYERS, mapId = "sea:128" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local ship = Spawn.unit(sim, "ord_dominion", 1, 100, 0)
+		local wasp = Spawn.unit(sim, "chs_wasp", 2, 160, 0)
+		World.setHealth(w, wasp, 1e6)
+		w.fireState[wasp] = World.FireState.HOLD_FIRE
+		camera(sim, 1, 0, 0, 20, 20) -- far from the fight
+		camera(sim, 2, 0, 0, 127, 127)
+		local view = Client.new(g)
+		local fires = { 0, 0 }
+		local hits, worst = 0, 0
+		for _ = 1, 300 do
+			Sim.step(sim)
+			for pid = 1, 2 do
+				for _, msg in sim.net.players[pid].outbox.Events do
+					for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+						if e.kind == Schema.EventKind.FIRE then
+							fires[pid] += 1
+							t.equal(e.unitId, ship, "the shooter is the ship")
+							if e.hit then
+								hits += 1
+								local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+								worst = math.max(worst, math.sqrt((x - w.posX[wasp]) ^ 2 + (z - w.posZ[wasp]) ^ 2))
+							end
+						end
+					end
+				end
+			end
+			Client.receive(view, sim.net.players[2].outbox)
+		end
+		t.equal(fires[1], 0, "Order's camera is elsewhere: no FIRE")
+		t.expect(fires[2] >= 5, `Chaos sees the flak ({fires[2]} shots)`)
+		t.expect(hits >= 1 and worst < 1, `hits end at the target ({hits} hits, worst {worst} studs off)`)
+		local tracers = 0
+		for _, fx in view.effects do
+			if fx.kind == "fire" then
+				tracers += 1
+			end
+		end
+		t.equal(tracers, fires[2], "the client draws a tracer per shot")
+	end)
+
 	t.test("tactical tier hysteresis: enter at +2 cells, leave beyond +5", function()
 		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:64" })
 		local g = (sim.map :: any).grid

@@ -283,7 +283,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 2, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 3, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -341,6 +341,29 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEvent, enter)), "01 02 01 04 03 02 06 05 07 08 09 0a 0b 0c 0e 0d")
 		t.equal(hex(encodeOne(Schema.encodeEvent, { kind = Schema.EventKind.LEAVE, unitId = 0x0102 })), "02 02 01")
 		t.equal(hex(encodeOne(Schema.encodeEvent, { kind = Schema.EventKind.DEATH, unitId = 0x0102, severity = 200, wreckId = 0x0304 })), "03 02 01 c8 04 03")
+		-- version 3: combat events; slot byte 3 + hit bit 16 = 0x13, y = -2 is fe ff
+		local fire: Schema.Event = { kind = Schema.EventKind.FIRE, unitId = 0x0102, slot = 3, hit = true, cell = 0x0304, offX = 5, offZ = 6, y = -2 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, fire)), "04 02 01 13 04 03 05 06 fe ff")
+		local spawn: Schema.Event = {
+			kind = Schema.EventKind.SPAWN_PROJ,
+			projId = 0x0102,
+			weaponIndex = 0x0304,
+			cell = 0x0506,
+			offX = 7,
+			offZ = 8,
+			y = 0x0109,
+			vx = -1,
+			vy = 0x0200,
+			vz = 3,
+			targetId = 0x0a0b,
+		}
+		t.equal(hex(encodeOne(Schema.encodeEvent, spawn)), "05 02 01 04 03 06 05 07 08 09 01 ff ff 00 02 03 00 0b 0a")
+		local impact: Schema.Event = { kind = Schema.EventKind.IMPACT, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, impact)), "06 01 00 02 00 03 04 05 00")
+		local decoyed: Schema.Event = { kind = Schema.EventKind.DECOYED, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5, vx = 6, vy = -7, vz = 8 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "07 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
+		decoyed.kind = Schema.EventKind.LOST_LOCK
+		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "08 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
 	end)
 
 	t.test("events round-trip, reject bad input, and every prefix is truncated", function()
@@ -348,9 +371,24 @@ return function(t: RunAll.Context)
 			{ kind = Schema.EventKind.ENTER, unitId = 65535, defIndex = 1, team = 8, cell = 65535, offX = 255, offZ = 0, heading = 255, alt = 0, health = 255, build = 0, state = 65535 },
 			{ kind = Schema.EventKind.LEAVE, unitId = 1 },
 			{ kind = Schema.EventKind.DEATH, unitId = 7, severity = 0, wreckId = 0 },
+			{ kind = Schema.EventKind.FIRE, unitId = 65535, slot = 8, hit = false, cell = 65535, offX = 255, offZ = 0, y = -32768 },
+			{ kind = Schema.EventKind.FIRE, unitId = 1, slot = 1, hit = true, cell = 0, offX = 0, offZ = 255, y = 32767 },
+			{ kind = Schema.EventKind.SPAWN_PROJ, projId = 65535, weaponIndex = 1, cell = 1, offX = 2, offZ = 3, y = 4, vx = -32768, vy = 32767, vz = 0, targetId = 0 },
+			{ kind = Schema.EventKind.IMPACT, projId = 1, cell = 65535, offX = 255, offZ = 255, y = -1 },
+			{ kind = Schema.EventKind.DECOYED, projId = 2, cell = 3, offX = 4, offZ = 5, y = 6, vx = -7, vy = 8, vz = -9 },
+			{ kind = Schema.EventKind.LOST_LOCK, projId = 3, cell = 4, offX = 5, offZ = 6, y = 7, vx = 8, vy = -9, vz = 10 },
 		}
 		roundTrip(t, events, Schema.encodeEvent, Schema.decodeEvent)
 		t.equal(buffer.len(encodeOne(Schema.encodeEvent, events[1])), Schema.ENTER_BYTES)
+		for _, e in events do
+			t.equal(buffer.len(encodeOne(Schema.encodeEvent, e)), Schema.EVENT_BYTES[e.kind], `size of event kind {e.kind}`)
+			expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, e))
+		end
+		expectRejected(t, Schema.decodeEvent, { 4, 1, 0, 0x23, 0, 0, 0, 0, 0, 0 }, "reserved bits")
+		expectRejected(t, Schema.decodeEvent, { 4, 1, 0, 0x10, 0, 0, 0, 0, 0, 0 }, "weapon slot 0 outside")
+		expectRejected(t, Schema.decodeEvent, { 4, 1, 0, 9, 0, 0, 0, 0, 0, 0 }, "weapon slot 9 outside")
+		expectRejected(t, Schema.decodeEvent, { 6, 0, 0, 0, 0, 0, 0, 0, 0 }, "projId 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
 		expectRejected(t, Schema.decodeEvent, { 9, 1, 0 }, "unknown event kind 9")

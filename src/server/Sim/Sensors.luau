@@ -453,6 +453,18 @@ function Sensors.knownPosition(sim: Types.Sim, team: number, id: number): (numbe
 	return nil, nil, level
 end
 
+-- Is point (x, z) in `team`'s line of sight? NetOut shows projectiles and
+-- impacts only where the player's ally team can see (guide 7.2).
+function Sensors.inSight(sim: Types.Sim, team: number, x: number, z: number): boolean
+	local s = sim.sensors
+	local m = s.maps[team]
+	if m == nil then
+		return false
+	end
+	local _, _, cell = Sensors.cellOf(s, x, z)
+	return readu16(m.los, cell * 2) > 0
+end
+
 -- What `team` knows about unit `id`: VISIBLE for its own units; GHOST for a
 -- dead structure it still remembers; HIDDEN when nothing is known.
 function Sensors.level(sim: Types.Sim, team: number, id: number): number

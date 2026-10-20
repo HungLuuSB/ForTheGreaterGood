@@ -13,6 +13,8 @@ export type PlayerNet = {
 	outbox: { [string]: { buffer } }, -- this tick's messages per channel
 	bytes: { [string]: number }, -- cumulative bytes sent per channel
 	messages: { [string]: number }, -- cumulative message count per channel
+	projKnown: { [number]: boolean }, -- projectile IDs this client was sent SPAWN_PROJ for
+	eventCounts: { [number]: number }, -- cumulative event records per Schema.EventKind
 }
 
 export type NetState = {
@@ -29,7 +31,16 @@ function NetState.new(playerIds: { number }, iconIndex: { [number]: number }): N
 			bytes[ch] = 0
 			messages[ch] = 0
 		end
-		players[pid] = { camera = nil, tactical = {}, tacticalList = {}, outbox = outbox, bytes = bytes, messages = messages }
+		players[pid] = {
+			camera = nil,
+			tactical = {},
+			tacticalList = {},
+			outbox = outbox,
+			bytes = bytes,
+			messages = messages,
+			projKnown = {},
+			eventCounts = {},
+		}
 	end
 	return { players = players, iconIndex = iconIndex }
 end

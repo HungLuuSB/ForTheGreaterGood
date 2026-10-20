@@ -6,7 +6,9 @@
 -- 10.6) and against the terrain. The test runs in each unit's frame of
 -- reference (the chord minus the unit's own motion this tick), so fast jets
 -- can't slip between ticks either. The earliest contact is the impact; an
--- explosion applies direct and AoE damage. Projectiles expire after their ttl.
+-- explosion applies direct and AoE damage. Projectiles expire after their
+-- ttl: they burst harmlessly (an IMPACT with no unit and no damage, guide
+-- 10.5 "expired homing missiles self-destruct"), so clients drop them too.
 --
 -- HOMING / TORPEDO projectiles turn toward their target at the weapon's
 -- turnRate (deg/s) before each step, leading it: they aim at where it will
@@ -158,6 +160,7 @@ return function(sim: Types.Sim)
 		else
 			local ttl = c.pTtl[id] - DT
 			if ttl <= 0 then
+				Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = 0, other = id, x = x1, y = y1, z = z1 })
 				Combat.removeProjectile(c, id)
 			else
 				c.px[id], c.py[id], c.pz[id] = x1, y1, z1

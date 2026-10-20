@@ -1155,3 +1155,47 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - same-role band: 32 of 38 fights inside. Outside: Archon against Harpy and Manticore (0.20–0.43) and Falcon against Harpy (0.32 close) (all ran dry), and Judgement against Hellmouth (0.43 long).
   - Tanks → Ground findings 59 → 23: the 36 tank mirrors were artifacts of ●●● (D94) and now sit in the band.
 - **Guide 12.4** notes the band under the matrix.
+
+## D99 — Combat events on the wire (2026-10-20, user-requested)
+
+- **Records** (`Schema`, `PROTOCOL_VERSION` 3; layouts in guide 7.3; golden bytes in `Schema.spec`):
+  - FIRE (10 B): shooter, slot, hit bit and the end point. There is no target ID, because the target may be hidden.
+  - SPAWN_PROJ (19 B): projectile ID, weapon, position, velocity and homing target.
+  - IMPACT (9 B).
+  - DECOYED and LOST_LOCK (15 B each): position and the new velocity.
+  - Positions are a cell plus offsets and `y` in eighth studs; velocities are eighth studs per second (i16).
+  - LOST_LOCK was not on the user's list. It is added because without it the client keeps steering a missile the server flies straight.
+- **NetOut** (per player, after the tick's ENTER records, in one batch):
+  - FIRE only for shooters in the player's tactical tier.
+  - SPAWN_PROJ once a projectile is in the ally team's sight and in the camera area (+2 cells), at launch or when it flies into view. The homing target is sent only if the ally team knows the unit.
+  - DECOYED / LOST_LOCK only for projectiles the client has. They carry the state after the tick's step.
+  - IMPACT for projectiles the client has, or anywhere in sight and camera.
+  - `NetState` keeps each player's known projectile IDs (reset when an ID is reused) and cumulative counts per event kind.
+- **Sim changes** (events only, no state):
+  - FIRE events carry the shot's end point.
+  - Projectiles at the end of their time to live emit an IMPACT with no unit and no damage (guide 10.5 "expired homing missiles self-destruct"), so clients drop them.
+  - `Sensors.inSight(sim, team, x, z)` is new.
+- **Client and export:**
+  - The headless client steps the projectiles it knows (ballistic step; homing turns toward the target it has, in 3D, at the weapon's turn rate) and keeps effects (fire, impact, decoy, lost, death).
+  - `MatchExport` version 2: the player view has projectiles and events rebuilt from the wire. Both views have `fire` tracers, and projectiles carry their weapon index. The viewer draws the tracers and reads versions 1 and 2.
+- **Accuracy:**
+  - Unguided projectiles match the server exactly (worst 0.08 studs in `NetOut.spec`, 0.00 in the export test).
+  - Homing missiles drift. In the Seraph-vs-Harpy export the worst drift is about 600 studs, for missiles homing on radar contacts whose altitude and true position the client doesn't know. IMPACT corrects them at the end. A periodic correction for homing projectiles would fix this at about 15 B × 3 Hz per missile (a question for the user).
+- **Tests:**
+  - `Schema.spec`: golden bytes for every new kind, round trips at the edges, truncation, and reserved bits / slot / ID 0 rejected.
+  - `NetOut.spec`:
+    - 600 battle ticks: every combat event is allowed for its player, and the client's unguided projectiles follow the server's;
+    - a hidden mortar's shells appear only once in sight (first seen 161 studs from the muzzle) and its ID never reaches the client;
+    - flak FIRE only to the player that has the ship tactical, with end points on the target and one tracer per shot.
+  - `Export.spec`: the player view has projectiles and impacts, and every unguided projectile drawn matches a server projectile.
+  - Mutations (no sight / camera filter; FIRE without the tactical check) fail the NetOut tests.
+- **Bandwidth** (`lune run stress`, per player, KB/s; the other channels are unchanged):
+
+| units | Events before | Events after | total before | total after |
+|---|---|---|---|---|
+| 200 | 0.06 | 0.52 | 5.78 | 6.24 |
+| 400 | 0.12 | 0.95 | 12.18 | 13.01 |
+| 600 | 0.16 | 1.34 | 18.44 | 19.62 |
+| 800 | 0.19 | 1.60 | 19.19 | 20.59 |
+
+  At 800 units that is about 48 SPAWN_PROJ and 54 IMPACT records per second per player. The stress armies carry no hitscan weapons and no decoys, so FIRE and DECOYED don't show up there. NetOut's average time per tick went from 0.94 to 0.97 ms at 800 units.

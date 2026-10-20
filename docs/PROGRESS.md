@@ -312,6 +312,14 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 6 — item 5: combat events on the wire ✅
+
+- New records FIRE, SPAWN_PROJ, IMPACT, DECOYED and LOST_LOCK (`PROTOCOL_VERSION` 3), sent only for what the player's ally team may know and batched per tick (D99).
+- The headless client steps its projectiles. `MatchExport` v2 rebuilds the player view's projectiles and explosions from the wire, and the viewer draws `fire` tracers.
+- Unguided projectiles match the server exactly. Homing missiles drift on radar contacts (up to about 600 studs in one export) until their IMPACT.
+- Stress test, per player: Events 0.06–0.19 → 0.52–1.60 KB/s for 200–800 units. Tactical, State and Strategic are unchanged. The worst total is 20.7 KB/s (budget 35).
+- Tests: **31 specs, 230 passed**.
+
 ### Round 6 — item 4: same-role band ✅
 
 - Same-role pairs need mutual damage and an equal-cost trade within 0.5–2.0. They are listed in their own table in `BALANCE.md` (D98).

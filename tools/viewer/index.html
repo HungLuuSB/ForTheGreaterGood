@@ -137,7 +137,7 @@ $("file").addEventListener("change", (ev) => {
 
 function load(d, name) {
 	if (!d || !d.meta || d.meta.format !== "ftgg-match") throw new Error("not an ftgg-match export");
-	if (d.meta.version !== 1) throw new Error("unsupported version " + d.meta.version);
+	if (d.meta.version !== 1 && d.meta.version !== 2) throw new Error("unsupported version " + d.meta.version);
 	data = d;
 	defs = [];
 	for (const def of d.defs) if (def) defs[def.index] = def;
@@ -325,7 +325,7 @@ function draw() {
 		}
 	}
 
-	// projectiles and recent events (spectator)
+	// projectiles and recent events (both views since export version 2)
 	if ($("showProj").checked) {
 		if (frame.p) {
 			ctx.fillStyle = "#fff59d";
@@ -345,6 +345,7 @@ function draw() {
 				if (e[0] === "impact") { ctx.strokeStyle = "#ffa726"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, (3 + 10 * age) * Math.max(0.6, cam.zoom), 0, 7); ctx.stroke(); }
 				else if (e[0] === "death") { ctx.fillStyle = "#ff5252"; ctx.beginPath(); ctx.arc(x, y, (6 + 14 * age) * Math.max(0.6, cam.zoom), 0, 7); ctx.fill(); }
 				else if (e[0] === "decoy") { ctx.fillStyle = "#e040fb"; ctx.font = "bold 14px sans-serif"; ctx.fillText("✶", x - 5, y + 5); }
+				else if (e[0] === "fire" && e.length >= 5) { const [fx, fy] = toScreen(e[3], e[4]); ctx.strokeStyle = "#fff176"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(x, y); ctx.stroke(); }
 				else if (e[0] === "lost") { ctx.strokeStyle = "#bdbdbd"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke(); }
 				ctx.restore();
 			}

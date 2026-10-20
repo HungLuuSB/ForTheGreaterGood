@@ -166,9 +166,28 @@ local function run(total: number)
 		local pn = sim.net.players[pid]
 		local tac = pn.bytes.Tactical / seconds / 1000
 		local strat = pn.bytes.Strategic / seconds / 1000
-		local se = (pn.bytes.State + pn.bytes.Events) / seconds / 1000
-		out(string.format("player %d KB/s: tactical %.2f (peak target 15), strategic %.2f (10), state+events %.2f (10), total %.2f (35)%s",
-			pid, tac, strat, se, tac + strat + se, if tac + strat + se > 35 then "  OVER" else ""))
+		local st = pn.bytes.State / seconds / 1000
+		local ev = pn.bytes.Events / seconds / 1000
+		local se = st + ev
+		out(string.format("player %d KB/s: tactical %.2f (peak target 15), strategic %.2f (10), state %.2f + events %.2f = %.2f (10), total %.2f (35)%s",
+			pid, tac, strat, st, ev, se, tac + strat + se, if tac + strat + se > 35 then "  OVER" else ""))
+		local kinds = {}
+		for name, k in Schema.EventKind do
+			local n = (pn.eventCounts or {})[k] or 0
+			if n > 0 then
+				table.insert(kinds, { name = name, n = n })
+			end
+		end
+		table.sort(kinds, function(x, y)
+			return x.n > y.n
+		end)
+		local parts = {}
+		for _, k in kinds do
+			table.insert(parts, string.format("%s %.1f/s", k.name, k.n / seconds))
+		end
+		if #parts > 0 then
+			out(string.format("  player %d event records: %s", pid, table.concat(parts, ", ")))
+		end
 	end
 	return firstOver
 end

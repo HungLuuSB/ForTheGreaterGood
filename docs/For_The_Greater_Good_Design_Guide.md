@@ -592,6 +592,12 @@ for each player P:
   - The strategic snapshot runs every 5th tick and always sends at least a header, so clients drop units that disappeared.
   - DEATH goes to players that had the unit tactical.
   - Event records ENTER / LEAVE / DEATH were added in `PROTOCOL_VERSION` 2.
+  - Combat events (`PROTOCOL_VERSION` 3, D99) go only where the player's ally team may know. They are batched with the tick's other events:
+    - FIRE (hitscan and beams): only for shooters in the player's tactical tier. It carries the shot's end point, never a target ID.
+    - SPAWN_PROJ: once a projectile is in the ally team's sight and in the camera area (+2 cells), at launch or when it flies into view. A hidden shooter's shells appear mid-flight, never at the muzzle. The homing target's ID is sent only if the ally team knows that unit.
+    - DECOYED / LOST_LOCK: only for projectiles the client has, with the new velocity.
+    - IMPACT: for projectiles the client has, or anywhere in sight and in the camera area. Projectiles at the end of their life burst with an IMPACT (no damage).
+    - The client steps its projectiles itself. Unguided ones match the server exactly; homing ones are approximate (the client doesn't know a radar contact's altitude or true position), and the IMPACT corrects them.
 
 ### 7.3 Packet layouts
 
@@ -604,7 +610,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 - Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
 - Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
 - A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
-- **`Schema.PROTOCOL_VERSION`** (currently 1) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **`Schema.PROTOCOL_VERSION`** (currently 3) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
 - **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
@@ -670,14 +676,22 @@ flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack,
                   = 6 bytes per unit
 ```
 
-**Event examples (reliable)**
+**Event records (reliable, one batch per tick under the tick header)**
 
 ```
-FIRE      tick u16, shooterId u16, weaponSlot u8, targetCell u16 + off u8 u8 | targetId u16
-SPAWN_PROJ projId u16, weaponDefIndex u16, origin(pos), velocity(i16×3), targetId u16, tick u16
-IMPACT    projId u16, pos
-DEATH     unitId u16, severity u8, wreckId u16
-ALERT     type u8, cell u16    (unit under attack, structure lost, ...)
+kind u8, then:
+ENTER       unitId u16, defIndex u16, team u8, cell u16, offX u8, offZ u8,
+            heading u8, alt u8, health u8, build u8, state u16          16 B
+LEAVE       unitId u16                                                    3 B
+DEATH       unitId u16, severity u8, wreckId u16 (0 = none)               6 B
+FIRE        shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos  10 B
+SPAWN_PROJ  projId u16, weaponDefIndex u16, pos, vel, targetId u16 (0 = none)  19 B
+IMPACT      projId u16, pos                                               9 B
+DECOYED     projId u16, pos, vel (after the decoy turn)                  15 B
+LOST_LOCK   projId u16, pos, vel (flying on unguided)                    15 B
+pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
+vel = vx, vy, vz i16 (1/8 stud per second)
+ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
 ```
 
 ### 7.4 Client interpolation
@@ -704,6 +718,8 @@ Targets per player (measure on real servers):
 | **Total** | **10–25 KB/s** | **≤ 35 KB/s** |
 
 If over budget: reduce tactical rate for distant-but-in-view units, drop strategic to 2 Hz, merge events per tick.
+
+Measured headless (`lune run stress`, round 6, D99): with combat events, Events is 0.5–1.6 KB/s per player for 200–800 units (it was 0.06–0.19 before). The worst total is 20.7 KB/s at 800 units.
 
 ---
 
@@ -895,7 +911,7 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 - Collision against **unit collision volumes** (sphere or cylinder per def), found through the dynamic spatial hash. No Roblox raycasts against Parts.
 - Fast projectiles and jets: test the segment travelled this tick (swept test), not just the end point.
 - Ground impact: compare projectile height to the `height` layer.
-- Lifetime cap per weapon; expired homing missiles self-destruct.
+- Lifetime cap per weapon; expired projectiles self-destruct: an IMPACT event with no unit and no damage (D99), so clients drop them.
 - Hard cap on live projectiles (e.g., 2,000). If exceeded, oldest ballistic shells resolve instantly at their predicted impact point.
 
 ### 10.6 Damage

@@ -61,7 +61,7 @@ return function(t: RunAll.Context)
 		})
 		local meta, map = data.meta, data.map
 		t.equal(meta.format, "ftgg-match")
-		t.equal(meta.version, 1)
+		t.equal(meta.version, 2)
 		t.equal(meta.view, "spectator")
 		t.equal(#map.height, map.cellsX * map.cellsZ, "height per cell")
 		t.equal(#map.water, map.cellsX * map.cellsZ, "water per cell")
@@ -100,6 +100,7 @@ return function(t: RunAll.Context)
 		local hiddenAll: { [number]: boolean } = {}
 		local ally = 0
 		local seen: { [number]: boolean } = {}
+		local drawn, impacts, farthest, homingFarthest = 0, 0, 0, 0
 		local data = MatchExport.record(scene, "matchup:ord_seraph:chs_harpy:long", {
 			view = "player",
 			player = 1,
@@ -138,7 +139,26 @@ return function(t: RunAll.Context)
 					end
 				end
 				t.equal(frame.fog, MatchExport.base64(bytes), "fog = sight map")
-				t.equal(frame.p, nil, "no projectiles on the wire")
+				-- projectiles: the client's own, stepped from SPAWN_PROJ (D99);
+				-- each unguided one is where a live server projectile is
+				local c = sim.combat
+				for _, p in frame.p do
+					drawn += 1
+					local best = math.huge
+					for _, id in c.proj do
+						best = math.min(best, math.sqrt((c.px[id] - p[1]) ^ 2 + (c.py[id] - p[2]) ^ 2 + (c.pz[id] - p[3]) ^ 2))
+					end
+					if sim.defs.weaponByIndex[p[4]].turnRate then
+						homingFarthest = math.max(homingFarthest, best)
+					else
+						farthest = math.max(farthest, best)
+					end
+				end
+				for _, e in frame.e do
+					if e[1] == "impact" then
+						impacts += 1
+					end
+				end
 			end,
 		})
 		t.equal(data.meta.view, "player")
@@ -155,6 +175,9 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(blips > 0, `radar blips were recorded ({blips})`)
+		t.expect(drawn > 0 and impacts > 0, `the player view has projectiles ({drawn}) and impacts ({impacts}) from the wire`)
+		t.expect(farthest < 1, `each unguided projectile drawn is a server one (worst {farthest} studs)`)
+		print(string.format("    player view: %d projectile draws, %d impacts; unguided worst %.2f studs, homing worst %.0f studs from the server's", drawn, impacts, farthest, homingFarthest))
 	end)
 
 	t.test("exports are deterministic", function()
