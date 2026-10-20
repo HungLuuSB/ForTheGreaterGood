@@ -283,7 +283,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 5, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 6, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -371,6 +371,17 @@ return function(t: RunAll.Context)
 		local tracked: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = Schema.StrategicFlag.RADAR_ONLY + Schema.StrategicFlag.TRACKED }
 		-- 1 + (2 - 1) * 2^6 + 17 * 2^9 = 0x2241
 		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 41 22")
+		-- version 6: join handshake and economy
+		local SK = Schema.SnapshotKind
+		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.HELLO, protocol = 0x0102, defsHash = 0x03040506 })), "01 02 01 06 05 04 03")
+		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.REJECT, protocol = 6, defsHash = 0x0A0B0C0D, reason = 2 })), "02 06 00 0d 0c 0b 0a 02")
+		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.WELCOME, tick = 0x01020304, player = 1, team = 2, allyTeam = 1, mapId = "ab" })), "03 04 03 02 01 01 02 01 02 61 62")
+		local eco: Schema.Eco = {
+			supply = { stored = 1, storage = 2, income = 3, demand = 4, ratio = 5 },
+			power = { stored = 6, storage = 7, income = 8, demand = 9, ratio = 10 },
+			wind = 11,
+		}
+		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b")
 	end)
 
 	t.test("events round-trip, reject bad input, and every prefix is truncated", function()
@@ -415,6 +426,32 @@ return function(t: RunAll.Context)
 		end
 		expectRejected(t, Schema.decodeProjSync, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "projId 0 is reserved")
 		t.equal(Schema.Channel.Projectiles.reliable, false, "corrections are unreliable")
+	end)
+
+	t.test("join handshake and economy records round-trip, reject bad input, and every prefix is truncated", function()
+		local SK = Schema.SnapshotKind
+		local recs: { Schema.SnapshotRecord } = {
+			{ kind = SK.HELLO, protocol = 65535, defsHash = 4294967295 },
+			{ kind = SK.REJECT, protocol = 0, defsHash = 0, reason = 1 },
+			{ kind = SK.WELCOME, tick = 4294967295, player = 255, team = 8, allyTeam = 8, mapId = "skirmish:192" },
+			{ kind = SK.WELCOME, tick = 0, player = 1, team = 1, allyTeam = 1, mapId = "" },
+		}
+		roundTrip(t, recs, Schema.encodeSnapshot, Schema.decodeSnapshot)
+		for _, r in recs do
+			expectTruncated(t, "snapshot record", Schema.decodeSnapshot, encodeOne(Schema.encodeSnapshot, r))
+		end
+		expectRejected(t, Schema.decodeSnapshot, { 9 }, "unknown snapshot kind 9")
+		expectRejected(t, Schema.decodeSnapshot, { 2, 0, 0, 0, 0, 0, 0, 3 }, "unknown reject reason 3")
+		local eco: Schema.Eco = {
+			supply = { stored = 4294967295, storage = 0, income = 12345, demand = 0, ratio = 255 },
+			power = { stored = 0, storage = 4294967295, income = 0, demand = 99999, ratio = 0 },
+			wind = 255,
+		}
+		roundTrip(t, { eco }, Schema.encodeEco, Schema.decodeEco)
+		t.equal(buffer.len(encodeOne(Schema.encodeEco, eco)), Schema.ECO_BYTES)
+		expectTruncated(t, "eco record", Schema.decodeEco, encodeOne(Schema.encodeEco, eco))
+		t.equal(Schema.Channel.Snapshot.reliable, true, "the handshake is reliable")
+		t.equal(Schema.Channel.Eco.reliable, true, "economy is reliable")
 	end)
 
 	t.test("tactical layout is byte exact", function()

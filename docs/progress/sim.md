@@ -6,13 +6,19 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 ## For the client stream
 
-- **Ready:** `docs/contracts/net.md` (network contract, protocol 5, plus the protocol-6 join snapshot and Eco channel). Merged into `main`.
+- **Ready:** `docs/contracts/net.md` (network contract). Merged into `main`.
+- **Ready:** protocol 6 is built: join / reconnect (`NetOut.hello`, `NetOut.join`) and the Eco channel (the client-state contract's economy placeholder can use it). Contract section 10.
 
 ## Integration notes
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
 - 2026-10-21: client `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1` merged (`--no-ff`); `lune run test` 34 specs / 253 passed, `lune run build` 263 scripts / 787 requires; pushed (`2a8b078`). `main` merged into `m-sim-2`.
+
+## Overnight 2026-10-21 (integrator + queue)
+
+- Task 1 ✅: `docs/contracts/net.md`; `Ballistics` (with `steer`) moved to `Shared/Combat` for the client (S-1).
+- Task 2 ✅: join / reconnect snapshot and the Eco channel, protocol 6 (S-2). Tests: **34 specs, 257 passed**.
 
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)
 

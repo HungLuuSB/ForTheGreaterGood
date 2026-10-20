@@ -717,6 +717,10 @@ projId u16, pos, vel          14 B
 
 - On join: check **protocol version** (`Schema.PROTOCOL_VERSION`) and **defs hash** first; on a mismatch, refuse with a clear message (stale client) before sending anything else. Then send map ID, full snapshot of everything the player's team knows, current economy.
 - Reconnect = join. Spectators get every team's knowledge (or full world in replays).
+- Implementation (S-2, `docs/contracts/net.md` section 10):
+  - The Snapshot channel carries HELLO (client versions), REJECT (the server's versions and the reason) or WELCOME (full tick, player, team, ally team, map ID).
+  - `NetOut.join` resets the player's replication state, so the next outbox is complete: a full strategic snapshot, ENTERs for the camera area, SPAWN_PROJ for projectiles in view, and the Eco record.
+  - The Eco channel then sends the team's account on economy ticks when it changes (35 B).
 
 ### 7.6 Bandwidth budget
 
