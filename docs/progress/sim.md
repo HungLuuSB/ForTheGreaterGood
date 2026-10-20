@@ -20,7 +20,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 **Tests:** `lune run test` gives **36 specs, 272 passed, 0 failed** (253 at the start). New: `Orders.spec` (8), `AI.spec` (4), plus tests in `NetOut.spec` (4), `Schema.spec` (2), `Defs.spec` (1) and `Placement.spec` (1). Every new mechanism was mutation-checked (its test fails when it is undone). `lune run build`: 288 scripts, 861 requires.
 
-**Integrated from the client stream:** `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1`, `a96cca2`, `2062b10`, `df29a2d`, `f52bf53`, `47aaa63`, `afe8aea`, `b8405ff`. No conflicts and no failed checks (see Integration notes).
+**Integrated from the client stream:** `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1`, `a96cca2`, `2062b10`, `df29a2d`, `f52bf53`, `47aaa63`, `afe8aea`, `b8405ff`, `508b215`, `002cc39`. No conflicts and no failed checks (see Integration notes).
 
 **Balance** (re-run after FIGHT started holding to engage): 448 of 568 pairs hold (was 457); 206 findings (75 mechanic, 131 numbers); same-role band 24 of 38 (was 34). See "Needs my review".
 
@@ -53,7 +53,8 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-21: client `a96cca2` (contracts: rig, blockout format, client-state draft) → `02bacbc`; `2062b10` (blockout generator) → `4c93177`; `df29a2d` (client foundation) → `6b05efe`. Each passed test and build and was pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
 - 2026-10-21: client `f52bf53` → `f649cfe`; `47aaa63` → `cbd662e`. Both passed test (36 specs / 270) and build (297 scripts / 894 requires) and were pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
 - 2026-10-21: client `afe8aea` (combat effects) → `4c00545`; `b8405ff` (strategic zoom icons) → `a1dbd54`. Both passed test (36 specs / 271) and build (302 scripts / 914 requires) and were pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
-- Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 (see git log).
+- 2026-10-21: client `508b215` (placeholder minimap and resource bar) → `425c468`; `002cc39` (client night summary) → `a1c2740`. Both passed test (36 specs / 272) and build (306 scripts / 929 requires) and were pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
+- Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`.
 
 ## Overnight 2026-10-21 (integrator + queue)
 
