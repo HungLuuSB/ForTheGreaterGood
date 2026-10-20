@@ -315,6 +315,13 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 5 — task 24: proper bombing ✅
+
+- BOMB weapons with a computed lead point, bomb runs with egress and go-around, and a bomber altitude of 130; rearming as before (D91).
+- `Air.spec` (5 new tests): 4 / 4 bombs on parked targets; a moving column hit (1 / 2, and 0 / 2 without prediction); egress; return → rearm → bomb again; determinism. 3 mutations caught.
+- Balance report re-run (all rows, `docs/BALANCE.md`). Bomber trades fell to 1.9–2.7, still with no wins: without spotters bombers can't see 400 studs ahead to line up a run (see D91).
+- Tests: **30 specs, 212 passed**.
+
 ### Task 23 — Skirmish AI ✅
 
 - `Sim/AI/Skirmish.luau`: a deterministic AI that plays through commands (D90). It runs a build order, expands to free deposits, builds an army and attacks in growing waves. New map `skirmish:<cells>`.

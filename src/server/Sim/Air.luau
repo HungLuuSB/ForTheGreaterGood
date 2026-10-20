@@ -16,6 +16,7 @@
 -- so they cost supply without lengthening the rearm (guide 11.6).
 
 local AirState = require("./AirState")
+local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local EW = require("./EW")
 local Economy = require("./Economy")
@@ -28,7 +29,9 @@ local World = require("./World")
 local Air = {}
 
 Air.DT = 1 / 15
-Air.ALTITUDE = table.freeze({ JET = 100, HELI = 35 }) -- studs above ground (guide 6.7)
+Air.ALTITUDE = table.freeze({ JET = 100, HELI = 35, BOMBER = 130 }) -- studs above ground (guide 6.7)
+Air.EGRESS_TICKS = 45 -- bombers fly straight this long after a release (3 s)
+Air.RUN_IN = 150 -- studs beyond the release distance a bomber turns back from (about a turn radius)
 Air.CLIMB_RATE = 40 -- studs per second
 Air.LOITER_RADIUS = 220 -- studs; wider than a jet's turn circle at cruise speed
 Air.CRUISE = 0.75 -- fraction of max speed while circling
@@ -51,6 +54,73 @@ local function def(sim: Types.Sim, id: number): Defs.UnitDef
 	return sim.defs.unitByIndex[sim.world.defIndex[id]]
 end
 
+-- Does this def carry a BOMB weapon? Cached per def.
+local bomberCache: { [any]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+function Air.isBomber(sim: Types.Sim, d: Defs.UnitDef): boolean
+	local cached = bomberCache[d]
+	if cached == nil then
+		cached = false
+		for _, slot in d.weapons do
+			if sim.defs.weaponByIndex[slot.weaponIndex].type == "BOMB" then
+				cached = true
+			end
+		end
+		bomberCache[d] = cached
+	end
+	return cached
+end
+
+local function cruiseAltitude(sim: Types.Sim, d: Defs.UnitDef): number
+	if Air.isBomber(sim, d) then
+		return Air.ALTITUDE.BOMBER
+	end
+	return Air.ALTITUDE[d.moveClass or "HELI"] or 35
+end
+
+-- Bomb solution for bomber `id` against `target` known at (kx, kz) (guide
+-- 10.5: a bomb leaves with the bomber's velocity and falls). Returns the
+-- fall time, where the bomb would land if dropped now, and where the target
+-- will be by then (its velocity is only known while VISIBLE).
+function Air.bombSolution(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, target: number, kx: number, kz: number): (number, number, number, number, number)
+	local w = sim.world
+	local c = sim.combat
+	local tp = c.profiles[w.defIndex[target]]
+	local dropY = Combat.unitBase(c, w, id) + c.profiles[w.defIndex[id]].muzzleHeight
+	local hitY = Combat.unitBase(c, w, target) + tp.height / 2
+	local g = weapon.gravity or 60
+	local t = sqrt(2 * math.max(dropY - hitY, 1) / g)
+	local h, v = w.heading[id], w.speed[id]
+	local ix, iz = w.posX[id] + math.sin(h) * v * t, w.posZ[id] + math.cos(h) * v * t
+	local ax, az = kx, kz
+	if Sensors.level(sim, w.ally[id], target) == Sensors.Level.VISIBLE then
+		local th, tv = w.heading[target], w.speed[target]
+		ax += math.sin(th) * tv * t
+		az += math.cos(th) * tv * t
+	end
+	return t, ix, iz, ax, az
+end
+
+-- Release now? When the predicted impact is within half a tick of travel of
+-- the aim point along the track, and close enough across it.
+function Air.bombRelease(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, target: number, kx: number, kz: number): boolean
+	local w = sim.world
+	local _, ix, iz, ax, az = Air.bombSolution(sim, id, weapon, target, kx, kz)
+	local h, v = w.heading[id], w.speed[id]
+	local fx, fz = math.sin(h), math.cos(h)
+	local dx, dz = ax - ix, az - iz
+	local along = dx * fx + dz * fz
+	local across = math.abs(dx * fz - dz * fx)
+	local half = v * Air.DT / 2 + 0.5
+	local tolerance = math.max((weapon.aoe or 0) * 0.5, 3) + sim.combat.profiles[w.defIndex[target]].radius
+	return along <= half and along > -half and across <= tolerance
+end
+
+-- A bomb just left `id`: fly straight out, then set up the next run.
+function Air.onBombRelease(sim: Types.Sim, id: number)
+	sim.air.run[id] = "out"
+	sim.air.egressUntil[id] = sim.tick + Air.EGRESS_TICKS
+end
+
 -- New aircraft: cruising altitude, full ammo, current spot as resume point;
 -- jets already at minimum speed.
 function Air.onSpawn(sim: Types.Sim, id: number)
@@ -60,7 +130,7 @@ function Air.onSpawn(sim: Types.Sim, id: number)
 	end
 	local w = sim.world
 	local a = sim.air
-	w.alt[id] = Air.ALTITUDE[d.moveClass or "HELI"] or 35
+	w.alt[id] = cruiseAltitude(sim, d)
 	a.phase[id] = "fly"
 	a.ammo[id] = d.ammo
 	a.pad[id] = 0
@@ -150,8 +220,35 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 		if target ~= 0 and (a.ammo[id] == nil or a.ammo[id] > 0) then
 			kx, kz = Sensors.knownPosition(sim, w.ally[id], target)
 		end
-		if kx and kz then
+		if kx and kz and Air.isBomber(sim, def(sim, id)) then
+			-- bomb run (D91): line up on the aim point from far enough out
+			-- to release, fly away after a drop or a missed window
+			loiter = false
+			local weapon = sim.defs.weaponByIndex[def(sim, id).weapons[1].weaponIndex]
+			local t, _, _, ax, az = Air.bombSolution(sim, id, weapon, target, kx, kz)
+			local lead = math.max(v, p.minSpeed or 0) * t
+			local dist = sqrt((ax - x) ^ 2 + (az - z) ^ 2)
+			local run = a.run[id] or "in"
+			if sim.tick < (a.egressUntil[id] or 0) then
+				tx, tz = x + math.sin(h) * 100, z + math.cos(h) * 100 -- straight on
+			elseif run == "out" then
+				tx, tz = x + (x - ax), z + (z - az) -- away from the target
+				if dist >= lead + Air.RUN_IN then
+					a.run[id] = "in"
+				end
+			else
+				tx, tz = ax, az
+				if dist < lead * 0.6 then
+					a.run[id] = "out" -- missed the window: go round again
+				end
+			end
+		elseif kx and kz then
 			tx, tz, loiter = kx, kz, false -- chase; overshoot and come around
+		elseif a.run[id] ~= nil then
+			a.run[id] = nil -- target gone: the next run starts fresh
+			if w.orderId[id] ~= 0 and sqrt((tx - x) ^ 2 + (tz - z) ^ 2) > Air.LOITER_RADIUS then
+				loiter = false
+			end
 		elseif w.orderId[id] ~= 0 then
 			local dist = sqrt((tx - x) ^ 2 + (tz - z) ^ 2)
 			if dist <= Air.LOITER_RADIUS then
@@ -198,7 +295,7 @@ end
 function Air.updateAltitude(sim: Types.Sim, id: number)
 	local w = sim.world
 	local d = def(sim, id)
-	local target = if sim.air.phase[id] == "rearm" then 0 else Air.ALTITUDE[d.moveClass or "HELI"] or 35
+	local target = if sim.air.phase[id] == "rearm" then 0 else cruiseAltitude(sim, d)
 	local alt = w.alt[id]
 	if alt ~= target then
 		local step = Air.CLIMB_RATE * Air.DT

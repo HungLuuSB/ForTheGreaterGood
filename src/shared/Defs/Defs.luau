@@ -470,8 +470,8 @@ function Defs.validate(raw: RawDefs): { string }
 		if PROJECTILE_TYPES[wtype] and wtype ~= "BOMB" and w.projectileSpeed == nil then
 			report(`projectileSpeed: required for {wtype} weapons`)
 		end
-		if wtype == "BALLISTIC" and w.gravity == nil then
-			report("gravity: required for BALLISTIC weapons")
+		if (wtype == "BALLISTIC" or wtype == "BOMB") and w.gravity == nil then
+			report(`gravity: required for {wtype} weapons`)
 		end
 		if GUIDED_TYPES[wtype] then
 			if w.guidance == nil then

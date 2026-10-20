@@ -547,7 +547,8 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly.
 - Implementation (`Sim/Air.luau`, DECISIONS D73–D74):
   - Jets circle their goal at 220 studs when idle and chase or orbit their target when attacking.
-  - Helicopters hover at 35, jets cruise at 100; they climb at 40 studs/s.
+  - Helicopters hover at 35, jets cruise at 100, bombers at 130; they climb at 40 studs/s.
+  - Bombers fly runs: line up, release when the bomb's predicted impact meets the target's predicted position, egress straight for 3 s, go round, and rearm when empty (D91).
   - Projectiles test collisions in each target's frame, so fast jets can't tunnel.
   - Empty aircraft fly to the nearest rearm pad, land, and rearm round by round at the team's stall ratio.
 
@@ -880,7 +881,7 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 | `BALLISTIC` | Tank shells, artillery, flak | Simulated arc | `SPAWN_PROJ` once, `IMPACT` | Simulates same arc |
 | `HOMING` | SAMs, AAMs, ATGMs | Simulated steering + EW checks | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
 | `TORPEDO` | Subs, ASW | Homing, restricted to water | Same as homing | Underwater trail |
-| `BOMB` | Bombers | Ballistic with zero launch speed | Same as ballistic | Falls |
+| `BOMB` | Bombers | Ballistic with zero launch speed: released at the computed lead point (D91) | Same as ballistic | Falls |
 
 ### 10.5 Projectiles (server)
 

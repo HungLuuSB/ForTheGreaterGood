@@ -14,6 +14,9 @@
 --     radius sideways and its half-height vertically at the target distance.
 --   BALLISTIC / BOMB / HOMING / TORPEDO: spawn a projectile from the muzzle.
 --     If the pool is full the shot resolves like hitscan (guide 10.5 cap).
+--   BOMB: no turret; released when the bomb's predicted impact meets the
+--     target's predicted position (Air.bombRelease); the bomb leaves with the
+--     bomber's velocity and falls (guide 10.5, DECISIONS D91).
 -- Guided missiles launch only with a lock (EW.canLock, guide 11.5).
 
 local Air = require("../Air")
@@ -86,18 +89,26 @@ local function fire(
 		local yaw, p = worldYaw + yawErr, pitch + pitchErr
 		local ttl = 2 * weapon.range / math.max(speed, 1) + 1
 		local launchY = muzzleY
+		local vx, vy, vz = cos(p) * sin(yaw) * speed, sin(p) * speed, cos(p) * cos(yaw) * speed
 		if wtype == "TORPEDO" then
 			p = 0
 			launchY = Combat.surfaceHeight(c, w.posX[id], w.posZ[id]) - Combat.TORPEDO_DEPTH
+			vx, vy, vz = sin(yaw) * speed, 0, cos(yaw) * speed
+		elseif wtype == "BOMB" then
+			-- zero launch speed: the bomb keeps the bomber's velocity (spread on its heading)
+			local h, v = w.heading[id] + yawErr, w.speed[id]
+			vx, vy, vz = sin(h) * v, 0, cos(h) * v
+			ttl = 8
+			Air.onBombRelease(sim, id)
 		end
 		projectile = Combat.spawnProjectile(
 			c,
 			w.posX[id],
 			launchY,
 			w.posZ[id],
-			cos(p) * sin(yaw) * speed,
-			sin(p) * speed,
-			cos(p) * cos(yaw) * speed,
+			vx,
+			vy,
+			vz,
 			weapon.index,
 			id,
 			w.ally[id], -- projectile side: allies are never hit directly
@@ -181,6 +192,8 @@ return function(sim: Types.Sim)
 					pitch = atan2(dy, dist)
 				elseif weapon.type == "TORPEDO" then
 					pitch = 0 -- launched level in the water; homing does the rest
+				elseif weapon.type == "BOMB" then
+					pitch = 0 -- dropped, not aimed
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
@@ -193,6 +206,9 @@ return function(sim: Types.Sim)
 					if turret and (pitch < rad(turret.minPitch) or pitch > rad(turret.maxPitch)) then
 						canFire = false
 					end
+				end
+				if weapon.type == "BOMB" then
+					canFire = not holdFire and Air.bombRelease(sim, id, weapon, target, kx, kz)
 				end
 				if canFire and weapon.guidance and not EW.canLock(sim, id, weapon, target, dist) then
 					canFire = false -- no lock, no launch

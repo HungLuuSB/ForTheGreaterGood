@@ -970,3 +970,31 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - seeds 2–4: Chaos wins at 6.0, 7.8 and 6.3 min, peak ticks 8.7–9.3 ms, at most 60 units;
   - a full match takes about 1.4 s of wall time headless.
 - **Alternatives:** a utility-scoring AI; AI inside the sim as a system (it would bypass the command path and the replay).
+
+## D91 — Bombing: runs, lead point, egress, rearm (2026-10-20, user-requested)
+
+- **Decision:**
+  - Bomb weapons are the real `BOMB` type: no turret and no projectile speed; `gravity` is required, and `range` (now 800) is the acquisition radius.
+  - Bombers (JETs carrying a BOMB) cruise at 130 studs (guide 6.7's 120–140 band).
+  - **Release** (`Air.bombRelease`):
+    - fall time t = √(2h ÷ g) from the drop height to the target's centre;
+    - predicted impact = bomber position + velocity × t; predicted target position = known position + its velocity × t (velocity only while VISIBLE; radar contacts don't move in the prediction);
+    - release in the tick when the impact point crosses the aim point along the track (within half a tick of travel) and lies within max(aoe ÷ 2, 3) + target radius across it.
+    - The bomb leaves with the bomber's velocity plus the weapon's yaw spread, and falls under gravity.
+  - **Run** (`Air.steerJet`, state in `AirState.run` / `egressUntil`, hashed):
+    - "in": turn toward the aim point. If closer than 0.6 × the release distance, the window is missed: switch to "out";
+    - after a release: fly straight for 3 s (egress), then "out";
+    - "out": fly away from the target until release distance + 150 studs (about a turn radius), then "in" again;
+    - when the target is lost the run state resets.
+  - **Empty:** return to the nearest pad and rearm as before (D74), then resume.
+- **Tests** (`Air.spec`):
+  - 4 of 4 bombs land within the blast radius of parked targets;
+  - a moving column is hit (1 of 2, versus 0 of 2 without motion prediction);
+  - the heading is held during egress;
+  - fly → return → rearm → fly, then bombing again;
+  - determinism;
+  - mutations caught: no lead, no target prediction, no egress.
+- **Balance report re-run** (bomber value trade, before → after):
+  - Absolution 3.57 → 1.93, Phantom 7.90 → 2.68, Plague 5.24 → 2.18, Behemoth 4.61 → 1.93; still 0 wins in 56 fights each.
+  - The old "bomb" fired like a gun from 130 studs. A real run releases about 400 studs before the target, but bombers see only 200 studs, and the report's fights have no spotters, radar or pads. So bombers rarely hold a target long enough to line up, and they run dry. This is a mechanics finding for the counter check (task 27).
+- **Alternatives:** carpet runs (several bombs per pass); letting bombs target radar contacts.

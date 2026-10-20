@@ -21,6 +21,10 @@ export type AirState = {
 	cmPerRound: { [number]: number }, -- charges restocked per round
 	cmSupplyPerRound: { [number]: number }, -- their supply cost per round
 	cmProgress: { [number]: number }, -- toward the next charge, 0..1
+	-- bombers (D91): "in" = lining up on the target, "out" = flying away to
+	-- set up the next run; egress keeps the heading straight after a release
+	run: { [number]: "in" | "out" },
+	egressUntil: { [number]: number }, -- tick
 }
 
 function AirState.new(): AirState
@@ -34,6 +38,8 @@ function AirState.new(): AirState
 		cmPerRound = {},
 		cmSupplyPerRound = {},
 		cmProgress = {},
+		run = {},
+		egressUntil = {},
 	}
 end
 
@@ -47,6 +53,8 @@ function AirState.clearUnit(a: AirState, id: number)
 	a.cmPerRound[id] = nil
 	a.cmSupplyPerRound[id] = nil
 	a.cmProgress[id] = nil
+	a.run[id] = nil
+	a.egressUntil[id] = nil
 end
 
 local PHASE_CODE = { fly = 1, ["return"] = 2, rearm = 3 }
@@ -63,6 +71,8 @@ function AirState.hash(a: AirState, ids: { number }, h: number): number
 			h = Hash.number(h, a.cmPerRound[id] or 0)
 			h = Hash.number(h, a.cmSupplyPerRound[id] or 0)
 			h = Hash.number(h, a.cmProgress[id] or 0)
+			h = Hash.u32(h, if a.run[id] == "out" then 2 elseif a.run[id] == "in" then 1 else 0)
+			h = Hash.u32(h, a.egressUntil[id] or 0)
 		end
 	end
 	return h

@@ -164,4 +164,133 @@ return function(t: RunAll.Context)
 		end
 		t.equal(run(), run())
 	end)
+
+	-- An Absolution bomber 600 studs west of three parked Ravagers, with an
+	-- Order spotter keeping them VISIBLE; the bomber is told to fight there.
+	local function bombRange(seed: number, moving: boolean): (Sim.Sim, number, { number })
+		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, 0, math.pi / 2)
+		local spotter = Spawn.unit(sim, "ord_lancer", 1, 150, 0) -- 100 studs from the targets: in sight
+		local targets = {}
+		for i = 1, 3 do
+			local id = Spawn.unit(sim, "chs_ravager", 2, 150 + (i - 2) * 20, -100, 0)
+			table.insert(targets, id)
+			w.fireState[id] = World.FireState.HOLD_FIRE
+			World.setHealth(w, id, 1e6) -- survive, so every bomb can be judged
+		end
+		w.fireState[spotter] = World.FireState.HOLD_FIRE
+		moveTo(sim, 1, { bomber }, 150, -100)
+		if moving then
+			moveTo(sim, 2, targets, 150, 250) -- driving north under the bombs
+		end
+		return sim, bomber, targets
+	end
+
+	-- Steps `ticks`; returns bombs released and how many landed within the
+	-- blast radius of a target unit (judged at impact).
+	local function judge(sim: Sim.Sim, bomber: number, targets: { number }, ticks: number): (number, number, { number })
+		local w = sim.world
+		local released, near = 0, 0
+		local releaseTicks = {}
+		local aoe = sim.defs.weapons.ord_bomb.aoe :: number
+		for _ = 1, ticks do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					released += 1
+					table.insert(releaseTicks, sim.tick)
+				elseif e.kind == "IMPACT" and e.x then
+					local best = math.huge
+					for _, t in targets do
+						if w.slot[t] then
+							best = math.min(best, math.sqrt((w.posX[t] - (e.x :: number)) ^ 2 + (w.posZ[t] - (e.z :: number)) ^ 2))
+						end
+					end
+					if best <= aoe then
+						near += 1
+					end
+				end
+			end
+		end
+		return released, near, releaseTicks
+	end
+
+	t.test("bombers make runs and release at the lead point: bombs land on parked targets", function()
+		local sim, bomber, targets = bombRange(21, false)
+		t.equal(sim.world.alt[bomber], Air.ALTITUDE.BOMBER, "bombers fly in their own band")
+		local released, near = judge(sim, bomber, targets, 1800)
+		local ammo = sim.defs.units.ord_absolution.ammo :: number
+		t.equal(released, ammo, `all {ammo} bombs dropped`)
+		t.expect(near >= ammo - 1, `{near} of {released} bombs landed within the blast radius`)
+		print(`    parked targets: {near} of {released} bombs within the blast radius`)
+	end)
+
+	t.test("the lead point accounts for a moving target", function()
+		local sim, bomber, targets = bombRange(22, true)
+		local released, near = judge(sim, bomber, targets, 1800)
+		t.expect(released >= 2, `bombs dropped on the moving column ({released})`)
+		t.expect(near >= released - 1, `{near} of {released} bombs landed within the blast radius of a moving target`)
+		print(`    moving column: {near} of {released} bombs within the blast radius`)
+	end)
+
+	t.test("after a release the bomber egresses straight, then comes round for the next run", function()
+		local sim, bomber, targets = bombRange(23, false)
+		local w = sim.world
+		local headingAt: { number } = {}
+		local releaseTick: number? = nil
+		for _ = 1, 1800 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber and releaseTick == nil then
+					releaseTick = sim.tick
+				end
+			end
+			if releaseTick and sim.tick - releaseTick <= Air.EGRESS_TICKS then
+				table.insert(headingAt, w.heading[bomber])
+			end
+			if releaseTick and sim.tick - releaseTick > Air.EGRESS_TICKS + 5 then
+				break
+			end
+		end
+		t.expect(releaseTick ~= nil, "released")
+		for i = 2, #headingAt do
+			t.expect(math.abs(headingAt[i] - headingAt[1]) < 1e-9, "heading held during egress")
+		end
+		local _ = targets
+	end)
+
+	t.test("an empty bomber flies home, rearms, and resumes its runs", function()
+		local sim, bomber, targets = bombRange(24, false)
+		Spawn.unit(sim, "ord_airpad", 1, -450, -300)
+		local phases = { "fly" }
+		local drops = 0
+		for _ = 1, 6000 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					drops += 1
+				end
+			end
+			local phase = sim.air.phase[bomber]
+			if phases[#phases] ~= phase then
+				table.insert(phases, phase)
+			end
+			if #phases >= 4 and drops > (sim.defs.units.ord_absolution.ammo :: number) then
+				break
+			end
+		end
+		t.deepEqual({ phases[1], phases[2], phases[3], phases[4] }, { "fly", "return", "rearm", "fly" })
+		t.expect(drops > (sim.defs.units.ord_absolution.ammo :: number), `bombed again after rearming ({drops} drops)`)
+		local _ = targets
+	end)
+
+	t.test("bomb runs are deterministic", function()
+		local function run(): number
+			local sim, bomber, targets = bombRange(25, true)
+			judge(sim, bomber, targets, 900)
+			return Sim.hash(sim)
+		end
+		t.equal(run(), run())
+	end)
 end
