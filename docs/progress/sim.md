@@ -2,7 +2,7 @@
 
 Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts/`), `src/server`, `.lune/` and the balance and stress tooling, run under Lune. It continues on branch `m-sim-2`. The Roblox client and Studio work (`src/client`, `src/shared/Defs/Blockouts/`, place content) is another stream with its own file in this folder; this stream doesn't edit those areas.
 
-Decisions: D1–D109 in `docs/DECISIONS.md`; from now on this stream's decisions are `S-1`, `S-2`, ... (same file). A new session should be able to continue from this file alone.
+Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)
 
@@ -37,7 +37,7 @@ Decisions: D1–D109 in `docs/DECISIONS.md`; from now on this stream's decisions
 - Rules: `CLAUDE.md`, the `ftgg-roblox-dev` skill and the design guide (`docs/For_The_Greater_Good_Design_Guide.md`).
 - Unattended-session rules (from the user):
   - After each task passes the tests: commit, push, and update this file.
-  - When something is unclear, decide, log it in `docs/DECISIONS.md` and continue.
+  - When something is unclear, decide, log it in `docs/decisions/sim.md` (prefix `S-`) and continue.
   - Stop only if a test can't be made to pass, or a change would delete or rewrite existing work.
   - Never weaken a test to make it pass.
   - Simulation code only: nothing that needs Studio.

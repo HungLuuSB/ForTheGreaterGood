@@ -9,7 +9,7 @@ State at handoff (2026-10-20, updated after round 4):
 - `src/client` is empty.
 - No Roblox-only server code exists yet.
 
-Read first: `CLAUDE.md` (Lune mode rules), `docs/progress/sim.md` (what exists in the simulation), `docs/DECISIONS.md` (why). The design guide sections are named in each step.
+Read first: `CLAUDE.md` (Lune mode rules), `docs/progress/sim.md` (what exists in the simulation), `docs/DECISIONS.md` (why, D1–D109; new client decisions go in `docs/decisions/client.md`, prefix `C-`). The design guide sections are named in each step.
 
 ---
 
@@ -45,7 +45,7 @@ Roblox can't resolve `@shared/...` aliases or relative string requires yet (see 
 - [ ] Run it. Expect **27 specs, 182 passed**.
   - `Env.isRoblox` should be true: `Profiler` then uses `debug.profilebegin`, and `Log` uses `warn` for warnings.
   - Some specs print measurements (direct-hit rates, the naval duel, EW tallies). Compare them with the Lune output in `docs/progress/sim.md`.
-- [ ] **Cross-runtime hash check** (informational, DECISIONS D51): print `Sim.hash` after the `Sim.spec` 1,000-tick run and after `ew_test` at tick 600, in Lune and in Studio. Prng is pure Luau and identical; `sin`, `cos` and `atan2` come from each platform's libm and may differ. We accepted same-platform replays (guide 17.1), so a mismatch is expected and fine. Record the result in DECISIONS.
+- [ ] **Cross-runtime hash check** (informational, DECISIONS D51): print `Sim.hash` after the `Sim.spec` 1,000-tick run and after `ew_test` at tick 600, in Lune and in Studio. Prng is pure Luau and identical; `sin`, `cos` and `atan2` come from each platform's libm and may differ. We accepted same-platform replays (guide 17.1), so a mismatch is expected and fine. Record the result in `docs/decisions/client.md`.
 - [ ] Clean Output: no warnings from the Defs loader, no strict-mode type errors in Script Analysis for `src/shared` and `src/server`.
 
 ## 3. Server tick loop and network wiring (guide 3.3, 7.1, 19)
