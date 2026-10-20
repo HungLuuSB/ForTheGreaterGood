@@ -328,6 +328,16 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 4 — answers to the task 11–17 questions
+
+- **1. COMMAND guidance (D80, revised):**
+  - needs only a live launcher and the target VISIBLE to the launcher's team, checked every tick of the flight;
+  - jamming, flares, chaff and DIRCM have no effect;
+  - guide 11.5 table updated.
+  - New `EW.spec` test: a COMMAND missile hits a jammed target carrying certain-success flares, chaff and DIRCM, which spend nothing. Killing the launcher or the spotter mid-flight raises `LOST_LOCK` and the sidestepping target is missed.
+  - Mutations caught: jamming blocking the lock, no sight check, countermeasures rolling against COMMAND.
+  - Tests: 27 specs, 183 passed.
+
 ### Task 17 — Electronic warfare (M7) ✅
 
 - `Sim/EW.luau`, `Sim/EWState.luau`:

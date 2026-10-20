@@ -983,7 +983,7 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 |---|---|---|---|---|
 | `IR` (heat-seeking) | Target VISIBLE and within `lockRange` (short) | No effect | No effect | Flares, DIRCM |
 | `RADAR` | Target VISIBLE or RADAR contact | Blocks lock outside burn-through range; can break lock mid-flight | Lock range × signature | Chaff, jamming |
-| `COMMAND` | Target VISIBLE from launcher | Breaks guidance if launcher's view is jammed | — | Killing the launcher |
+| `COMMAND` | Target VISIBLE to the launcher's team | No effect | No effect | Killing the launcher, or breaking the team's sight of the target (both checked for the whole flight) |
 
 **Burn-through:** a jammed target can still be locked by a radar-guided launcher when it is closer than `burnThrough × lockRange` (e.g., 35%). This makes jamming strong at long range and weaker up close, which creates interesting positioning.
 
@@ -997,7 +997,7 @@ Implementation (`Sim/EW.luau`, DECISIONS D79–D80, D82):
 - `EW.canLock` gates every guided launch.
 - Midcourse checks run every 5 ticks per missile; burn-through is measured from the missile.
 - The terminal check fires once the missile could reach `terminalRange` within the tick. A decoyed missile turns 60° and loses its target.
-- COMMAND needs the launcher alive, seeing the target and not inside an enemy jam field.
+- COMMAND needs the launcher alive and the target VISIBLE to the launcher's team, checked every tick of the flight. Jamming, chaff, flares and DIRCM don't affect it.
 - `DECOYED` and `LOST_LOCK` are sim events; they are not replicated yet.
 - Measured: an Aegis (lock range 600, burn-through 210) never launches at a jammed Wasp at 250 or 550 studs, even when the Wasp is in plain sight. At 150 studs it launches and hits.
 

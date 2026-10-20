@@ -290,12 +290,10 @@ return function(t: RunAll.Context)
 		t.equal(e.chaff[heli], 2, "and chaff")
 	end)
 
-	t.test("lock rules: IR ignores jamming, stealth shortens radar lock, COMMAND needs its launcher", function()
+	t.test("lock rules: IR ignores jamming, stealth shortens radar lock, IR needs sight", function()
 		local defs = testDefs({
 			stealth_heli = { from = "chs_wasp", with = { sensors = { radarSignature = 0.3 } } },
-		}, {
-			cmd_sam = { from = "ord_radar_sam", with = { guidance = "COMMAND" } },
-		})
+		}, {})
 		-- jammed Wasp at (400, 0) with a Vigil 250 studs south; a plain and a
 		-- stealthy Wasp about 300 studs from the Aegis, far from the jammer
 		local sim, aegis, wasp = samScene(6, 400, true, defs)
@@ -325,33 +323,78 @@ return function(t: RunAll.Context)
 		t.expect(EW.canLock(sim, aegis, ws.ord_radar_sam, blip, dist(aegis, blip)), "radar locks a radar contact")
 		t.expect(not EW.canLock(sim, aegis, ws.ord_ir_sam, blip, 200), "IR needs the target VISIBLE")
 
-		-- COMMAND: guided while the launcher lives and sees the target
+	end)
+
+	t.test("COMMAND guidance needs only a live launcher and sight of the target", function()
+		local defs = testDefs({
+			decoy_heli = {
+				from = "chs_wasp",
+				with = {
+					countermeasures = {
+						flares = { charges = 4, chance = 1 },
+						chaff = { charges = 4, chance = 1 },
+						dircm = { chance = 1, cooldown = 1, powerDrain = 0 },
+					},
+				},
+			},
+		}, {
+			cmd_sam = { from = "ord_radar_sam", with = { guidance = "COMMAND" } },
+		})
+		-- target under a Chaos jammer whose field also covers the launcher;
+		-- an Order spotter keeps it VISIBLE
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = MAP, defs = defs })
 		local c = sim.combat
-		local function commandShot(killLauncher: boolean): (boolean, boolean)
-			local launcher = Spawn.unit(sim, "ord_aegis", 1, -400, 300)
-			hold(sim, { launcher })
-			local m = launchAt(sim, launcher, plain, "neu_cmd_sam", math.pi / 2, 350)
-			if killLauncher then
-				Combat.queueDamage(c, launcher, 1e9, 0)
+		local target = Spawn.unit(sim, "neu_decoy_heli", 2, 0, 0)
+		World.setHealth(sim.world, target, 1e7)
+		hold(sim, { target, Spawn.unit(sim, "chs_shroud", 2, 20, -40) })
+		for _ = 1, 15 do
+			Sim.step(sim)
+		end
+		-- kill: "launcher" or "spotter" dies on the first tick of the flight
+		local function shot(kill: string?): { lost: boolean, hit: boolean, decoyed: boolean }
+			local tx, tz = sim.world.posX[target], sim.world.posZ[target]
+			local launcher = Spawn.unit(sim, "ord_aegis", 1, -250, 0)
+			local spotter = Spawn.unit(sim, "ord_lancer", 1, tx, tz + 120)
+			hold(sim, { launcher, spotter })
+			for _ = 1, 4 do
+				Sim.step(sim) -- the spotter's sight is stamped
 			end
-			local lost, hit = false, false
-			for _ = 1, 60 do
+			t.equal(Sensors.level(sim, 1, target), L.VISIBLE, "the target is VISIBLE before launch")
+			t.expect(EW.jammed(sim, target) and EW.canLock(sim, launcher, sim.defs.weapons.neu_cmd_sam, target, 250), "jamming doesn't stop a COMMAND lock")
+			local m = launchAt(sim, launcher, target, "neu_cmd_sam", -math.pi / 2, 240)
+			moveTo(sim, 2, { target }, tx, tz - 100) -- sidestep: only a guided missile still hits
+			if kill == "launcher" then
+				Combat.queueDamage(c, launcher, 1e9, 0)
+			elseif kill == "spotter" then
+				Combat.queueDamage(c, spotter, 1e9, 0)
+			end
+			local r = { lost = false, hit = false, decoyed = false }
+			for _ = 1, 45 do
 				Sim.step(sim)
 				for _, e in c.events do
-					if e.other == m and e.kind == "LOST_LOCK" then
-						lost = true
-					elseif e.other == m and e.kind == "IMPACT" and e.unit == plain then
-						hit = true
+					if e.other == m then
+						r.lost = r.lost or e.kind == "LOST_LOCK"
+						r.decoyed = r.decoyed or e.kind == "DECOYED"
+						r.hit = r.hit or (e.kind == "IMPACT" and e.unit == target)
 					end
 				end
 			end
-			return lost, hit
+			for _, id in { launcher, spotter } do
+				if sim.world.slot[id] then
+					Combat.queueDamage(c, id, 1e9, 0)
+				end
+			end
+			Sim.step(sim)
+			return r
 		end
-		World.setHealth(sim.world, plain, 1e7)
-		local lost, hit = commandShot(false)
-		t.expect(not lost and hit, "with its launcher alive the command missile hits")
-		lost = commandShot(true)
-		t.expect(lost, "killing the launcher breaks command guidance (LOST_LOCK)")
+		local ok = shot(nil)
+		t.expect(ok.hit and not ok.lost and not ok.decoyed, "guided all the way: hits through jamming and every countermeasure")
+		t.equal(sim.ew.flares[target], 4, "no flares used")
+		t.equal(sim.ew.chaff[target], 4, "no chaff used")
+		local noLauncher = shot("launcher")
+		t.expect(noLauncher.lost and not noLauncher.hit, "launcher killed: LOST_LOCK, miss")
+		local noSight = shot("spotter")
+		t.expect(noSight.lost and not noSight.hit, "sight lost: LOST_LOCK, miss")
 	end)
 
 	t.test("EW replays stay deterministic", function()

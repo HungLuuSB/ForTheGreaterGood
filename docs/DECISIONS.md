@@ -728,7 +728,13 @@ The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/P
 - **Alternatives:** burn-through measured from the launcher (semi-active homing); re-checking every tick; a proportional-navigation miss instead of a fixed veer.
 - **Why:** guide 11.5 as written ("cheap, event-based"). Measuring from the missile models an active seeker and needs no launcher bookkeeping. The terminal window includes one tick of closing, because a 480 stud/s missile and a 260 stud/s jet close about 50 studs per tick, more than the 40-stud terminal range.
 
-## D80 — COMMAND guidance (2026-10-20, task 17)
+## D80 — COMMAND guidance (2026-10-20, task 17; revised by the user the same day)
+
+- **Revised (user answer):**
+  - COMMAND guidance needs the launcher alive and the target VISIBLE to the launcher's team for the whole flight. Losing either raises `LOST_LOCK`.
+  - Jamming, chaff, flares and DIRCM don't affect it.
+  - The check runs every tick for COMMAND missiles (every 5 ticks for RADAR).
+  - The original decision below (launcher inside an enemy jam field breaks it) is superseded.
 
 - **Decision:**
   - Lock: target VISIBLE to the launcher's team, within lock range, and the launcher *not inside an enemy jam field*. That is my reading of "breaks guidance if launcher's view is jammed".

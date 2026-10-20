@@ -10,9 +10,11 @@
 --            closer than burnThrough × lockRange. Midcourse: a target that
 --            enters a jam field beyond burn-through breaks the lock.
 --            Defeated by chaff.
---   COMMAND  lock: target VISIBLE and the launcher not inside an enemy jam
---            field. Midcourse: the launcher must be alive, still see the
---            target and stay unjammed. No countermeasures.
+--   COMMAND  lock: target VISIBLE to the launcher's team and within lock
+--            range. For the whole flight (checked every tick) the launcher
+--            must be alive and its team must still see the target; losing
+--            either breaks guidance. Jamming, chaff, flares and DIRCM have
+--            no effect.
 --   ACOUSTIC torpedoes: sonar contacts (Targeting); no EW checks.
 --
 -- Flight checks are cheap and event-based:
@@ -98,17 +100,6 @@ function EW.jammed(sim: Types.Sim, id: number): boolean
 	return inJamOf(sim, sim.world.team[id], id)
 end
 
--- Is unit `id` inside any enemy jammer's field?
-function EW.inEnemyJam(sim: Types.Sim, id: number): boolean
-	local team = sim.world.team[id]
-	for _, other in sim.sensors.teams do
-		if other ~= team and inJamOf(sim, other, id) then
-			return true
-		end
-	end
-	return false
-end
-
 function EW.lockRange(weapon: Defs.WeaponDef): number
 	return weapon.lockRange or weapon.range
 end
@@ -138,7 +129,7 @@ function EW.canLock(sim: Types.Sim, shooter: number, weapon: Defs.WeaponDef, tar
 		end
 		return dist <= EW.burnThroughRange(weapon) or not EW.jammed(sim, target)
 	elseif guidance == "COMMAND" then
-		return level == L.VISIBLE and dist <= range and not EW.inEnemyJam(sim, shooter)
+		return level == L.VISIBLE and dist <= range
 	end
 	return true
 end
@@ -191,8 +182,8 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	local flags = c.pFlags[p]
 	local x, y, z = c.px[p], c.py[p], c.pz[p]
 
-	-- 2. midcourse
-	if (sim.tick + p) % EW.MIDCOURSE_PERIOD == 0 then
+	-- 2. midcourse (COMMAND: every tick, the link must hold all the way)
+	if guidance == "COMMAND" or (sim.tick + p) % EW.MIDCOURSE_PERIOD == 0 then
 		local lost = false
 		if guidance == "RADAR" then
 			local dx, dz = w.posX[target] - x, w.posZ[target] - z
@@ -200,9 +191,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 			lost = dx * dx + dz * dz > bt * bt and EW.jammed(sim, target)
 		elseif guidance == "COMMAND" then
 			local launcher = c.pOwner[p]
-			lost = w.slot[launcher] == nil
-				or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE
-				or EW.inEnemyJam(sim, launcher)
+			lost = w.slot[launcher] == nil or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE
 		end
 		if lost then
 			c.pTarget[p] = 0
