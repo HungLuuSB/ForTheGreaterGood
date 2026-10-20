@@ -14,6 +14,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-4 | Models face −Z; a unit's world rotation is `heading + π` about Y; turret yaw and barrel pitch are plain joint rotations |
 | C-5 | UI reads one client state table and calls one actions table (`docs/contracts/client-state.md`) |
 | C-6 | Blockouts are separate modules in `Defs/Blockouts/`, parts in model space, pieces jointed, decorations welded |
+| C-7 | Client specs live in `tests/client/` and run with `lune run test_client`; client logic that can be pure is kept pure |
+| C-8 | Units without a hand-made blockout get a generic one from their def (footprint, domain, pieces) |
 
 ---
 
@@ -64,3 +66,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Alternatives:** a `blockout` table inside each unit def (guide 20.2 as written); parts relative to their parent piece (harder to read and edit by hand).
 
 **Why:** ownership and hash stability, and model-space numbers can be checked against each other at a glance.
+
+### C-7 — Client tests in Lune (2026-10-21)
+
+**Decision:** client-stream specs live in `tests/client/*.spec.luau` and run with `lune run test_client [filter]` (new `.lune/test_client.luau`, same `RunAll` and output as `lune run test`). Client code that doesn't need Instances (blockout data, packet decoding into the client world, interpolation, selection math, command building, effect caps) is written without Roblox globals so these specs can cover it, including against the real `Sim` and `NetOut`.
+
+**Alternatives:** specs in `src/client/Tests` (they would sync into every player's PlayerScripts); adding `tests/client` to `lune run test` (that's `.lune/test.luau`, the sim stream's entry; can be merged later on request).
+
+**Why:** most client bugs are logic bugs; Studio playtests are slow and can't run unattended when Studio isn't rendering.
+
+### C-8 — Generic blockouts for every unit (2026-10-21)
+
+**Decision:** `Blockout.forDef(def)` returns the hand-made blockout if registered, else `Blockout.generic(def)`: a hull sized by footprint and shaped by domain (tracks for ground, wings and tail for air, a bow for naval, a block for structures) with every def piece in place and muzzles at the front of their weapon's piece. A spec checks that all 123 defs get a valid one.
+
+**Alternatives:** an error or an invisible unit for defs without a blockout; hand-making all 123 now.
+
+**Why:** the whole roster can appear in playtests from day one, with correct piece names, while hand-made blockouts replace generic ones unit by unit.
