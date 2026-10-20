@@ -67,6 +67,7 @@ export type UnitDef = {
 		track: number?, -- fire-control (tracking) radar radius (D104)
 		trackError: number?, -- wobble radius of contacts this radar tracks
 		trackDrain: number?, -- power per second; the radius shrinks when power stalls
+		jamDrain: number?, -- jammer upkeep, power per second; the jam radius shrinks when power stalls (D108)
 	},
 	weapons: { WeaponSlot },
 	maxRange: number, -- derived: longest weapon range, 0 if unarmed
@@ -230,6 +231,7 @@ local UNIT_SPEC: Spec = {
 				track = opt(NON_NEGATIVE), -- tracking radar radius (D104)
 				trackError = opt(NON_NEGATIVE), -- wobble radius of tracked contacts (studs)
 				trackDrain = opt(NON_NEGATIVE), -- power per second while tracking
+				jamDrain = opt(NON_NEGATIVE), -- power per second while jamming (D108)
 			},
 		},
 		weapons = {

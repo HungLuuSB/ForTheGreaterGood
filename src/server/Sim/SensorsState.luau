@@ -35,10 +35,11 @@ export type State = {
 	closeSonar: { [number]: { number } },
 	-- fire-control radar (D104): per team, enemy units that are radar
 	-- detectable inside its track map, and the best track error; per
-	-- tracking unit, its radius scale from the power it gets (0..1)
+	-- powered sensor (tracking radars, jammers: D104, D108), the share of its
+	-- power upkeep it gets (0..1), which scales its track and jam radii
 	tracked: { [number]: { [number]: boolean } },
 	trackError: { [number]: number },
-	trackScale: { [number]: number },
+	powerScale: { [number]: number },
 }
 
 function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
@@ -79,7 +80,7 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 		radarError = {},
 		tracked = tracked,
 		trackError = {},
-		trackScale = {},
+		powerScale = {},
 		closeSonar = (function()
 			local r = {}
 			for _, team in teams do
@@ -116,12 +117,12 @@ function SensorsState.hash(s: State, h: number): number
 		end
 	end
 	local sids = {}
-	for id in s.trackScale do
+	for id in s.powerScale do
 		table.insert(sids, id)
 	end
 	table.sort(sids)
 	for _, id in sids do
-		h = Hash.number(Hash.u32(h, id), s.trackScale[id])
+		h = Hash.number(Hash.u32(h, id), s.powerScale[id])
 	end
 	return h
 end

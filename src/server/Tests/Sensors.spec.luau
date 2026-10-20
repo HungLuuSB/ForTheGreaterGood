@@ -45,8 +45,15 @@ local function bruteMismatch(sim: Sim.Sim, allowUnstamped: boolean?): string?
 			continue
 		end
 		local sensors = sim.defs.unitByIndex[w.defIndex[id]].sensors
-		local track = math.floor((sensors.track or 0) * (s.trackScale[id] or 1) / 16) * 16 -- whole sensor cells (D104)
-		local radii = { sensors.sight, sensors.airSight or sensors.sight * 1.5, sensors.radar, sensors.sonar, sensors.jam or 0, track }
+		local function powered(radius: number?, drain: number?): number
+			if (radius or 0) <= 0 then
+				return 0
+			elseif (drain or 0) <= 0 then
+				return radius :: number
+			end
+			return math.floor((radius :: number) * (s.powerScale[id] or 1) / 16) * 16 -- whole sensor cells (D104, D108)
+		end
+		local radii = { sensors.sight, sensors.airSight or sensors.sight * 1.5, sensors.radar, sensors.sonar, powered(sensors.jam, sensors.jamDrain), powered(sensors.track, sensors.trackDrain) }
 		local stamped = s.stampCell[id]
 		if stamped == nil then
 			if allowUnstamped then

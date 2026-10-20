@@ -1361,3 +1361,13 @@ Every system was reviewed for decisions that read another team's units from serv
   - the AI prefers a tracked generator over a nearer tank.
   - The last two fail when the rule is undone.
 - **Still from truth:** a radar contact's altitude (aim height), which radar measures, and the seeker's lock physics (D101).
+
+## D108 — Jammer power upkeep (2026-10-20, user decision; guide 11.4)
+
+- **Defs:** new sensor field `jamDrain` (power per second). Values: Curtain 15, Smog 18, Veil 20, Shroud 25, Banshee 25, Siren 25, Veilspire 30, Blackout 35. Placeholders for M8.
+- **Mechanism:** the same as tracking radars (D104). `Sensors.drainStep` drains `trackDrain + jamDrain` per powered sensor at the team's power stall ratio. The share it gets (`sensors.powerScale`, renamed from `trackScale`, hashed) scales both the track and the jam radius, in whole sensor cells. A unit re-stamps when either radius changes; radii tables are cached per (def, track, jam).
+- **Tests** (`Fog.spec`):
+  - a Veil hides a Lancer 250 studs away while powered, and its upkeep shows in the team's power demand;
+  - after a stall the jam shrinks and the Lancer is a radar contact; power back, it is jammed again.
+  - Ignoring the drain fails the test.
+  - The older jamming test now keeps the Veil powered, because it runs longer than 1,000 stored power lasts.

@@ -234,7 +234,7 @@ return function(t: RunAll.Context)
 			acc.power.stored = 0 -- no power at all
 			Sim.step(sim)
 		end
-		t.expect((sim.sensors.trackScale[tribunal] or 1) < 0.5, `the radar gets little power ({sim.sensors.trackScale[tribunal]})`)
+		t.expect((sim.sensors.powerScale[tribunal] or 1) < 0.5, `the radar gets little power ({sim.sensors.powerScale[tribunal]})`)
 		t.expect(not Sensors.isTracked(sim, 1, tank), "the shrunken radius no longer reaches the tank")
 		t.equal(Sensors.level(sim, 1, tank), L.RADAR, "it is still a radar contact")
 		for _ = 1, 30 do

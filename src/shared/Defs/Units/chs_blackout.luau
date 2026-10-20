@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 260, power = 4200, buildTime = 6800 },
 	health = 1400,
 	footprint = 1,
-	sensors = { sight = 140, jam = 550 },
+	sensors = { sight = 140, jam = 550, jamDrain = 35 },
 	icon = "jammer",
 	model = "chs_blackout",
 })

@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 260, power = 4200, buildTime = 6800 },
 	health = 1400,
 	footprint = 1,
-	sensors = { sight = 140, jam = 400 },
+	sensors = { sight = 140, jam = 400, jamDrain = 30 },
 	icon = "jammer",
 	model = "ord_veilspire",
 })

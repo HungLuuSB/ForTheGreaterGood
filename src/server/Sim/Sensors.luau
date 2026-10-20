@@ -35,9 +35,10 @@
 -- TRACKED (`tracked`, Sensors.isTracked): as a radar contact it wobbles by
 -- the team's best trackError instead of its radarError, and its type is
 -- known. Jamming hides from tracking radar too, with no burn-through.
--- Tracking radars drain trackDrain power per second (Sensors.drainStep, an
--- economy consumer); their radius scales with the power they get, in whole
--- sensor cells, and they re-stamp when it changes.
+-- Tracking radars drain trackDrain power per second, jammers jamDrain
+-- (Sensors.drainStep, an economy consumer; D104, D108). Their track and jam
+-- radii scale with the share of that power they get, in whole sensor cells,
+-- and they re-stamp when a radius changes.
 
 local Categories = require("@shared/Defs/Categories")
 local Defs = require("@shared/Defs/Defs")
@@ -189,15 +190,18 @@ end
 
 -- Radii per def (KINDS order), built once per def and shared: re-stamping a
 -- moving unit allocates nothing.
--- The track radius is the def's scaled by the power the radar gets, in whole
--- sensor cells, so the cache holds one table per (def, track radius).
+-- Powered radii (track, jam) are the def's scaled by the share of their
+-- upkeep the unit gets, in whole sensor cells, so the cache holds one table
+-- per (def, track radius, jam radius).
 local radiiCache: { [any]: { [number]: { number } } } = setmetatable({}, { __mode = "k" }) :: any
-local function trackRadius(sim: Types.Sim, id: number, def: Defs.UnitDef): number
-	local track = def.sensors.track or 0
-	if track <= 0 then
+local function poweredRadius(sim: Types.Sim, id: number, radius: number?, drain: number?): number
+	if radius == nil or radius <= 0 then
 		return 0
 	end
-	return math.floor(track * (sim.sensors.trackScale[id] or 1) / CELL) * CELL
+	if drain == nil or drain <= 0 then
+		return radius -- no upkeep: always full
+	end
+	return math.floor(radius * (sim.sensors.powerScale[id] or 1) / CELL) * CELL
 end
 local function radiiOf(sim: Types.Sim, id: number): { number }
 	local def = sim.defs.unitByIndex[sim.world.defIndex[id]]
@@ -206,19 +210,21 @@ local function radiiOf(sim: Types.Sim, id: number): { number }
 		byTrack = {}
 		radiiCache[def] = byTrack
 	end
-	local track = trackRadius(sim, id, def)
-	local radii = byTrack[track]
+	local sensors = def.sensors
+	local track = poweredRadius(sim, id, sensors.track, sensors.trackDrain)
+	local jam = poweredRadius(sim, id, sensors.jam, sensors.jamDrain)
+	local key = track * 65536 + jam
+	local radii = byTrack[key]
 	if radii == nil then
-		local sensors = def.sensors
 		radii = table.freeze({
 			sensors.sight,
 			sensors.airSight or sensors.sight * Sensors.AIR_SIGHT_FACTOR,
 			sensors.radar,
 			sensors.sonar,
-			sensors.jam or 0,
+			jam,
 			track,
 		})
-		byTrack[track] = radii
+		byTrack[key] = radii
 	end
 	return radii
 end
@@ -550,10 +556,11 @@ function Sensors.isTracked(sim: Types.Sim, team: number, id: number): boolean
 	return t ~= nil and t[id] == true
 end
 
--- Tracking-radar upkeep (called by Build.step with the other economy
--- consumers, D104): each finished tracking radar drains trackDrain power
--- per second at the team's power stall ratio; the share it gets scales its
--- radius (applied at the next sensor tick).
+-- Powered-sensor upkeep (called by Build.step with the other economy
+-- consumers; D104 tracking radars, D108 jammers): each finished unit drains
+-- trackDrain + jamDrain power per second at the team's power stall ratio;
+-- the share it gets scales its track and jam radii (applied at the next
+-- sensor tick).
 function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 	local w = sim.world
 	local s = sim.sensors
@@ -561,8 +568,14 @@ function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 	local dt = Sensors.DT
 	for _, id in w.ids do
 		local sensors = sim.defs.unitByIndex[w.defIndex[id]].sensors
-		local drain = sensors.trackDrain or 0
-		if (sensors.track or 0) <= 0 or drain <= 0 or w.buildProgress[id] < 1 then
+		local drain = 0
+		if (sensors.track or 0) > 0 then
+			drain += sensors.trackDrain or 0
+		end
+		if (sensors.jam or 0) > 0 then
+			drain += sensors.jamDrain or 0
+		end
+		if drain <= 0 or w.buildProgress[id] < 1 then
 			continue
 		end
 		local team = w.team[id]
@@ -574,7 +587,7 @@ function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 		local ratio = math.min(Economy.effective(acc, 0, drain), Economy.allowance(acc.power) / (drain * dt))
 		ratio = math.clamp(ratio, 0, 1)
 		acc.power.spent += drain * dt * ratio
-		s.trackScale[id] = ratio
+		s.powerScale[id] = ratio
 	end
 end
 
@@ -612,7 +625,7 @@ table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
 		s.vis[team][id] = nil -- ghosts (structures) are kept until seen gone
 		s.tracked[team][id] = nil
 	end
-	s.trackScale[id] = nil
+	s.powerScale[id] = nil
 end)
 
 return Sensors

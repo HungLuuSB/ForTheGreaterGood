@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 300, power = 4200, buildTime = 8000 },
 	health = 1600,
 	movement = { maxSpeed = 26, accel = 8, brake = 12, turnRate = 55 },
-	sensors = { sight = 220, jam = 520 },
+	sensors = { sight = 220, jam = 520, jamDrain = 25 },
 	weapons = {},
 	pieces = { "base", "turret1", "turret2", "muzzle1", "muzzle2" },
 	icon = "ew_ship",
