@@ -1,6 +1,6 @@
 # Contract: client state for UI (first draft)
 
-Owner: client stream. Readers: a future UI session (resource bar, build menu, command card, unit panel, minimap, alerts; guide 15.7). Status: **draft**, filled in as the client foundation lands (tasks 4–9). Network details are in `docs/contracts/net.md` (sim stream).
+Owner: client stream. Readers: a future UI session (resource bar, build menu, command card, unit panel, minimap, alerts; guide 15.7). Status: **draft**; implemented in `src/client/Api.luau` (task 5): `state`, `changed`, `actions` below, except where marked *later*. Network details are in `docs/contracts/net.md` (sim stream).
 
 The UI reads one state table and calls one actions table. It never touches RemoteEvents, never edits the state, and never reads `workspace.Units` models for game data.
 
@@ -20,12 +20,12 @@ Plain tables, updated by the client each frame (positions) or when packets arriv
 | `selection` | `{ id }` | selected own units, in selection order |
 | `groups` | `{ [1..9]: { id } }` | control groups |
 | `camera` | `{ x, z, zoom, strategic: bool, rect = { minX, minZ, maxX, maxZ } }` | focus point (studs), zoom level, icon view on, visible cell rectangle |
-| `hover` | `{ unit: id?, x, z }?` | what the mouse is over (ground point in studs) |
-| `placement` | `{ defId, x, z, facing, valid, reason? }?` | active build ghost, nil when not placing |
-| `economy` | `{ supply = Res, power = Res }` | **placeholder** until the sim sends the Eco channel (request in `docs/progress/client.md`) |
+| `hover` | `{ unit: id?, x, z }?` | what the mouse is over (ground point in studs) (*later*) |
+| `placement` | `{ defId, x, z, facing, valid, reason? }?` | active build ghost, nil when not placing (*later*: task 6) |
+| `economy` | `{ supply = Res, power = Res, wind }?` | own team's account from the Eco channel (protocol 6); nil before the first record |
 | `alerts` | `{ { kind, x, z, time } }` | recent alerts, newest last |
 
-`UnitView`:
+`UnitView` (today `state.units` is the client World's own unit table, `src/client/Core/World.luau`, type `Unit`: `id, tier, team, defIndex?, icon?, flags?, x, z, alt, heading, health?, build?, state` bits, `weapon`, `aim[slot] = { yaw, pitch }`, and `rx, ry, rz` where it is drawn. The friendlier view below is the target):
 
 | Field | Type | Notes |
 |---|---|---|
@@ -51,10 +51,10 @@ Signals with `:Connect(fn)`; each fires at most once per frame.
 | Signal | Argument |
 |---|---|
 | `selection` | the new selection list |
-| `units` | `{ added = { id }, removed = { id } }` |
 | `economy` | `state.economy` |
-| `placement` | `state.placement` or nil |
-| `alert` | the new alert |
+| `focus` | `{ x, z }`: a camera jump request (minimap click, double-tapped group) |
+| `orders` | every order sent (`Orders.Intent`), for feedback |
+| `units`, `placement`, `alert` | *later* |
 
 ## 3. Trigger: `Client.actions`
 

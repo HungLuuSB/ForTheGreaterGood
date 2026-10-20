@@ -1,6 +1,6 @@
 --!strict
 -- Applies server messages to the client World (guide 7, docs/contracts/net.md,
--- protocol 5). One call per received message; channels may arrive in any
+-- protocol 6). One call per received message; channels may arrive in any
 -- order, unreliable ones may be lost or reordered:
 --   * every decode is pcall'ed and a malformed message is dropped whole;
 --   * Tactical / Strategic records older than what a unit already has are dropped;
@@ -75,6 +75,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			if u and u.tier == "tactical" then
 				u.tier = "strategic" -- refreshed or dropped by the next strategic snapshot
 				table.clear(u.snaps)
+				u.rx, u.ry, u.rz = nil, nil, nil -- no longer drawn
 				table.insert(world.left, u.id)
 			end
 		elseif kind == EK.DEATH then
@@ -188,6 +189,7 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 end
 
 local DECODERS: { [string]: any } = {
+	Eco = Schema.decodeEco,
 	Events = Schema.decodeEvent,
 	Tactical = Schema.decodeTactical,
 	State = Schema.decodeState,
@@ -198,6 +200,25 @@ local DECODERS: { [string]: any } = {
 -- Applies one message. `now` is the local clock in seconds (for Interp).
 -- Returns false (and drops the message) if it doesn't decode.
 function NetIn.apply(world: World.World, channel: string, msg: buffer, now: number): boolean
+	if channel == "Snapshot" then
+		-- the join handshake: bare records, no tick header
+		local ok, records = pcall(Packer.readAll, msg, Schema.decodeSnapshot)
+		if not ok then
+			world.dropped += 1
+			return false
+		end
+		for _, rec in records :: { Schema.SnapshotRecord } do
+			if rec.kind == Schema.SnapshotKind.WELCOME then
+				World.welcome(world, rec, now)
+			elseif rec.kind == Schema.SnapshotKind.REJECT then
+				world.rejected = rec
+			end
+		end
+		return true
+	end
+	if not world.joined then
+		return false -- nothing counts before the WELCOME
+	end
 	local decode = DECODERS[channel]
 	if decode == nil then
 		return false
@@ -210,6 +231,8 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 	local tick = stamp(world, wireTick :: number, now)
 	if channel == "Events" then
 		applyEvents(world, records :: any, tick)
+	elseif channel == "Eco" then
+		world.economy = (records :: any)[1]
 	elseif channel == "Tactical" then
 		applyTactical(world, records :: any, tick)
 	elseif channel == "State" then
@@ -227,7 +250,14 @@ end
 
 -- Applies a whole outbox (channel → messages) in the server's send order.
 -- Lune specs use this; the Roblox client gets the same messages one by one.
-NetIn.ORDER = table.freeze({ "Events", "Tactical", "State", "Projectiles", "Strategic" })
+NetIn.ORDER = table.freeze({ "Snapshot", "Events", "Tactical", "State", "Projectiles", "Strategic", "Eco" })
+
+-- The HELLO a client sends first (net.md section 10).
+function NetIn.hello(defsHash: number): buffer
+	local w = Packer.Writer.new(8)
+	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.HELLO, protocol = Schema.PROTOCOL_VERSION, defsHash = defsHash })
+	return w:finish()
+end
 
 function NetIn.applyOutbox(world: World.World, outbox: { [string]: { buffer } }, now: number)
 	for _, channel in NetIn.ORDER do

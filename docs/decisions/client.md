@@ -18,6 +18,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-8 | Units without a hand-made blockout get a generic one from their def (footprint, domain, pieces) |
 | C-9 | Minimal Roblox server entry in `src/roblox`; identity and map ID as attributes until the protocol 6 handshake |
 | C-10 | Playtest proof: Studio-only debug bindables and a top-down render from live instance data |
+| C-11 | Order lines mirror the server's line-slot layout and greedy assignment (display only) |
+| C-12 | The client joins with protocol 6's HELLO / WELCOME; C-9's attributes are gone |
+| C-13 | Default controls: box / click / double-click select, smart right-click, right-drag line, Shift queue, Ctrl+1..9 groups, X stop |
 
 ---
 
@@ -85,7 +88,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 **Why:** the whole roster can appear in playtests from day one, with correct piece names, while hand-made blockouts replace generic ones unit by unit.
 
-### C-9 — Minimal server entry until the join handshake (2026-10-21)
+### C-9 — Minimal server entry until the join handshake (2026-10-21; the attributes part superseded by C-12)
 
 **Decision:** `src/roblox/Main.server.luau` hosts one fixed match from `src/roblox/MatchConfig.luau` (seed, map, scenario, players, human slots). It steps the real `Sim` at 15 Hz from a Heartbeat accumulator (at most 3 steps per frame), fires each human player's outbox in net.md's channel order (one `RemoteEvent` / `UnreliableRemoteEvent` per `Schema.Channel` in `ReplicatedStorage.Remotes`), and passes `Cmd` buffers to `Sim.submit` behind a size cap (2 KB) and a token bucket (20/s, burst 40). Until protocol 6's HELLO / WELCOME, the map ID, protocol version and defs hash are attributes on `Remotes`, and each player's sim ID and team are attributes on the `Player`; the client refuses to start on a protocol or defs mismatch. `Players.CharacterAutoLoads` is set false at runtime (no avatars in an RTS). Placeholder: `demoOrders` sends both sides to the midpoint between them every 10 s, and the match restarts with the next seed 6 s after one side is gone.
 
@@ -95,8 +98,30 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 ### C-10 — Playtest proof without Studio screenshots (2026-10-21)
 
-**Decision:** Studio's `screen_capture` returns the 2D GUI but a black 3D view in this setup (Edit and Play). As proof, the playtest client exposes `ReplicatedStorage.FtggClientDebug` (Studio only): `Invoke()` returns counts (units per team and tier, models, render delay, camera), `Invoke("view")` returns every drawn part's top-down footprint and color. `lune run render_view` turns a saved dump into a PNG under `debug_out/screens/`. The server has `ServerStorage.FtggDebug` for sim summaries. Both exist because `execute_luau` doesn't share the scripts' `shared` / `_G`.
+**Decision:** Studio's `screen_capture` returns the 2D GUI but a black 3D view in this setup (Edit and Play). As proof, the playtest client exposes `ReplicatedStorage.FtggClientDebug` (Studio only): `Invoke()` returns counts (units per team and tier, models, render delay, camera), `Invoke("scene")` returns a compact scene (one line per unit model: def, team color, position, heading, turret aim; one per overlay disc or line). `lune run render_scene` rebuilds the units from their blockouts and draws a PNG under `debug_out/screens/`. The server has `ServerStorage.FtggDebug` for sim summaries. Both exist because `execute_luau` doesn't share the scripts' `shared` / `_G`.
 
 **Alternatives:** keep retrying screenshots (they stay black); trust the numbers only.
 
 **Why:** the PNG is drawn from the actual Instances the client created, so it shows piece placement, turret aim and positions as the playtest had them. A real screenshot is still wanted once the 3D view captures again.
+
+### C-11 — Drawn order lines follow the server's slots (2026-10-21)
+
+**Decision:** order queues aren't replicated (net.md 9), so the client draws what it sent (`Core/Waypoints`). For line moves it computes each unit's goal the way the server does (`Nav.slotsFor` and `Nav.assignSlots`): rows of slots spaced `2 x radius x 1.3` along the line, extra rows stepping back toward the group's centroid, deepest row first, each slot taking the closest unassigned unit (ties to the lower ID). The constants are copied from `Nav` until they're shared (request 3). A point counts as reached within a formation-sized radius (`spacing x sqrt(n)`, at least 10 studs), and a unit that stands still for 2 s drops its lines.
+
+**Alternatives:** spread goals by the units' order along the line (first version: lines crossed, because the server assigns differently); replicate order queues (sim work, more bandwidth).
+
+**Why:** lines that point where units actually go. `Orders.spec` checks every unit ends within 4 studs of its drawn slot.
+
+### C-12 — Protocol 6 join (2026-10-21)
+
+**Decision:** the client starts with an empty `World`, sends HELLO on the Snapshot remote and drops everything until WELCOME, which sets the player, team, ally team, map (loaded with `MapRegistry`) and the full sim tick (wire ticks unwrap from it). REJECT stops the client with a warning. The server entry answers HELLO with `NetOut.hello` / `NetOut.join`, sends nothing to a player before that, and re-joins everyone when a match restarts (a new WELCOME resets the client's view). The Eco record lands in `world.economy` and `Api.state.economy`. C-9's attributes (map ID, versions, player ID and team) are removed.
+
+**Why:** the sim stream shipped protocol 6 (S-2); one source of truth for identity and map.
+
+### C-13 — Default controls (2026-10-21)
+
+**Decision:** left click / drag selects (Shift adds, Ctrl toggles), double-click selects that type on screen, right click gives the smart order (enemy: attack; own unfinished frame: repair; own unit: guard; ground: move), right-drag gives a line move, Shift queues, Ctrl+1..9 sets and 1..9 recalls a group (Shift+digit adds it, a double tap jumps the camera), X stops. Picking uses projected unit centers (18 px), because unit parts don't take raycasts (rig.md).
+
+**Alternatives:** BAR's S for stop (S pans the camera here); raycast picking (needs `CanQuery` on every unit part).
+
+**Why:** familiar RTS defaults; listed under "Needs my review" because they're a feel decision.
