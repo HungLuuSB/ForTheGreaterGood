@@ -93,8 +93,10 @@ function UnitRenderer.clear(r: Renderer)
 	table.clear(r.dying)
 end
 
--- Applies the world's queues, then draws every tactical unit at render tick `t`.
-function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number)
+-- Applies the world's queues, then draws every tactical unit at render tick
+-- `t`. With `hidden` (strategic zoom: models unparented) it only works out
+-- the drawn positions (rx, ry, rz) for icons and selection.
+function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number, hidden: boolean?)
 	for _, id in world.entered do
 		hide(r, id) -- an ID can come back after a LEAVE; start clean
 		show(r, world, id)
@@ -136,6 +138,9 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		local x, z, alt, heading = Interp.sample(u, t)
 		local y = World.groundY(world, x, z, d.floats) + alt
 		u.rx, u.ry, u.rz = x, y, z
+		if hidden then
+			continue
+		end
 		table.insert(parts, d.root)
 		table.insert(frames, CFrame.new(x, y, z) * CFrame.Angles(0, heading + math.pi, 0) * d.rootOffset)
 		for slot, a in u.aim do

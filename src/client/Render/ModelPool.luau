@@ -15,15 +15,26 @@ local TEAM_TAG = "TeamColor"
 
 local free: { [string]: { Model } } = {}
 local folder: Folder? = nil
+local visible = true
 
 local function unitsFolder(): Folder
-	if folder == nil or folder.Parent == nil then
+	if folder == nil then
 		local f = Instance.new("Folder")
 		f.Name = "Units"
-		f.Parent = workspace
+		f.Parent = if visible then workspace else nil
 		folder = f
 	end
 	return folder :: Folder
+end
+
+-- Shows or hides every unit model at once (strategic zoom, guide 15.4).
+function ModelPool.setVisible(on: boolean)
+	visible = on
+	local f = unitsFolder()
+	local parent = if on then workspace else nil
+	if f.Parent ~= parent then
+		f.Parent = parent
+	end
 end
 
 local function resetJoints(model: Model)

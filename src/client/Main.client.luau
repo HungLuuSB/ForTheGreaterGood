@@ -24,6 +24,9 @@ local World = require("./Core/World")
 local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
 local Effects = require("./Core/Effects")
+local Icons = require("./Core/Icons")
+local IconLayer = require("./Render/IconLayer")
+local ModelPool = require("./Render/ModelPool")
 local RenderEffects = require("./Render/Effects")
 local Ground = require("./Render/Ground")
 local Overlay = require("./Render/Overlay")
@@ -58,6 +61,10 @@ local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
 local fx = Effects.new()
 local fxRenderer = RenderEffects.new()
+local iconTable = Icons.table(defs)
+local iconLayer = IconLayer.new()
+local strategic = false
+local tiers: { [number]: string } = {}
 
 -- Drawn muzzle of a unit's weapon slot (tracers start there), if it has a model.
 local function muzzleOf(id: number, slot: number): (number?, number?, number?)
@@ -165,7 +172,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
 	api.state.camera.rect = camState.rect
 	local t = Interp.advance(clock, world, now, dt)
-	UnitRenderer.step(renderer, world, t, dt)
+	UnitRenderer.step(renderer, world, t, dt, strategic)
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
 	RenderEffects.step(fxRenderer, fx, t, now)
 	Api.frame(api, now)
@@ -177,6 +184,23 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	PlacementGhost.step(ghost, api)
 	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)
+
+	-- strategic zoom (guide 15.4): icons for everything, models hidden; icons
+	-- for units without a model at any zoom
+	local nowStrategic = Icons.strategic(strategic, camState.distance)
+	if nowStrategic ~= strategic then
+		strategic = nowStrategic
+		ModelPool.setVisible(not strategic)
+	end
+	api.state.camera.strategic = strategic
+	table.clear(tiers)
+	for id, u in world.units do
+		tiers[id] = u.tier
+	end
+	local cam = workspace.CurrentCamera
+	local view = cam.ViewportSize
+	local draws = Icons.draws(iconTable, world, Controls.projector(cam), view.X, view.Y, api.selection.set)
+	IconLayer.step(iconLayer, draws, tiers, strategic)
 	table.clear(world.died) -- the renderer and Effects have taken what they need
 	local drawn = 0
 	for _ in renderer.drawn do

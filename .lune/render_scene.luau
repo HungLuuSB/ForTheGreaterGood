@@ -6,7 +6,8 @@
 -- heading and turret yaw. From the project root:
 --   lune run render_scene <dump.txt> <out.png> [margin studs]
 -- Records: M (map), U (unit), D (disc), L (line), G defId x z facing valid
--- (the build ghost: translucent, over a green / red footprint).
+-- (the build ghost: translucent, over a green / red footprint), and
+-- I x z shape size r g b alpha selected (a strategic-zoom icon, in pixels).
 -- North (-Z) is up; the ground is a 64-stud checkerboard (8 × 8 cells).
 
 local fs = require("@lune/fs")
@@ -35,6 +36,8 @@ type Disc = { x: number, z: number, radius: number, r: number, g: number, b: num
 local rects: { Rect } = {}
 local discs: { Disc } = {}
 local overDiscs: { Disc } = {} -- E records: effects drawn over the units
+type Icon = { x: number, z: number, shape: string, size: number, r: number, g: number, b: number, alpha: number, selected: boolean }
+local icons: { Icon } = {}
 local map = { -192, -192, 384, 384 }
 
 -- Roblox rotation about +Y by θ, applied to (x, z)
@@ -133,6 +136,8 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 			table.insert(rects, { cx = n(3), cz = n(4), ax = 1, az = 0, ha = half, bx = 0, bz = 1, hb = half, top = 0.1, r = tint[1], g = tint[2], b = tint[3], alpha = 0.45 })
 			addUnit(w[2], { 210, 210, 210 }, n(3), n(4), math.pi - n(5) * math.pi / 2, 0, tint)
 		end
+	elseif w[1] == "I" then
+		table.insert(icons, { x = n(2), z = n(3), shape = w[4], size = n(5), r = n(6), g = n(7), b = n(8), alpha = n(9), selected = w[10] == "1" })
 	elseif w[1] == "D" or w[1] == "E" then
 		table.insert(if w[1] == "E" then overDiscs else discs, { x = n(2), z = n(3), radius = n(4) / 2, r = n(5), g = n(6), b = n(7), alpha = n(8) })
 	elseif w[1] == "L" then
@@ -159,6 +164,10 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 	end
 end
 
+for _, i in icons do
+	table.insert(discs, { x = i.x, z = i.z, radius = 12, r = 0, g = 0, b = 0, alpha = 0 }) -- bounds only
+	table.insert(overDiscs, discs[#discs])
+end
 if #rects == 0 and #discs == 0 then
 	print("nothing to draw")
 	process.exit(1)
@@ -261,7 +270,55 @@ end
 
 -- effects over the units
 for _, d in overDiscs do
-	drawDisc(d)
+	if d.alpha > 0 then
+		drawDisc(d)
+	end
+end
+
+-- strategic-zoom icons, in pixels, centered on the unit
+for _, i in icons do
+	local cx, cy = (i.x - minX) * scale, (i.z - minZ) * scale
+	local half = i.size / 2
+	for y = math.floor(cy - half - 2), math.ceil(cy + half + 2) do
+		for x = math.floor(cx - half - 2), math.ceil(cx + half + 2) do
+			local dx, dy = x + 0.5 - cx, y + 0.5 - cy
+			local inside, edge = false, false
+			local s = i.shape
+			if s == "circle" or s == "blip" then
+				local r = if s == "blip" then half * 0.6 else half
+				local d = math.sqrt(dx * dx + dy * dy)
+				inside, edge = d <= r, d > r - 1.2
+			elseif s == "diamond" then
+				local d = (math.abs(dx) + math.abs(dy)) / (half * 1.06)
+				inside, edge = d <= 1, d > 1 - 1.5 / half
+			elseif s == "triangle" then
+				local t = (dy + half) / (2 * half) -- 0 at the top, 1 at the bottom
+				inside = t >= 0 and t <= 1 and math.abs(dx) <= half * t
+				edge = inside and (t > 1 - 1.5 / (2 * half) or math.abs(dx) > half * t - 1.5)
+			else -- square, frame, ghost
+				inside = math.abs(dx) <= half and math.abs(dy) <= half
+				edge = inside and (math.abs(dx) > half - (if s == "square" then 1 else 2) or math.abs(dy) > half - (if s == "square" then 1 else 2))
+			end
+			if inside then
+				local r, g, b = i.r, i.g, i.b
+				local a = i.alpha
+				if s == "ghost" and not edge then
+					a = 0
+				elseif s == "frame" and not edge then
+					r, g, b = r * 0.55, g * 0.55, b * 0.55
+				elseif edge then
+					if i.selected then
+						r, g, b = 255, 255, 255
+					elseif s ~= "frame" and s ~= "ghost" then
+						r, g, b = 0, 0, 0
+					end
+				end
+				if a > 0 then
+					blend(x, y, r, g, b, a)
+				end
+			end
+		end
+	end
 end
 
 for y = 0, h - 1 do
