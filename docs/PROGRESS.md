@@ -315,6 +315,13 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 5 — task 27: match viewer ✅
+
+- `tools/viewer/index.html`: open a `lune run export` file (double-click the page, pick the file).
+  - Draws terrain and water, units by category in team colours, projectiles and events, radar and sonar blips, ghosts, fog, and a minimap.
+  - Play, pause, speed, scrub, zoom and pan; click a unit to see its state (D93).
+- Checked in the browser pane: the AI match in spectator and player-1 views, and the Seraph-vs-Harpy radar matchup in player view (blips in the fog).
+
 ### Round 5 — task 26: match export ✅
 
 - `lune run export` (D93): the spectator view, or one player's fog-filtered view rebuilt from real NetOut packets. Shared `Scenes` (AI match, balance matchups, Sim scenarios); `lune run balance` now uses `Scenes.matchup` (identical results).

@@ -1037,3 +1037,9 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - determinism;
   - mutation caught: leaking units the client never received.
 - **Alternatives:** a binary format (smaller, but needs a decoder in the page); recording the replay and re-simulating in the browser (would need the sim in JS).
+- **Viewer** (`tools/viewer/index.html`, one self-contained file with no external scripts):
+  - a file picker reads the export with `FileReader`, so it works when opened by double-click (file://);
+  - draws terrain and water from the map layers, deposits, units as category shapes in team colours interpolated between frames, aircraft shadows, health bars, projectiles, impacts, deaths, decoys and lost locks;
+  - in player view: radar and sonar blips (pulsing rings at their wobbled positions), ghosts (dashed), and fog from the sight bitmap;
+  - minimap (click to jump); play / pause / speed 0.25–16× / scrub / step; wheel zoom and drag pan; click a unit for its def, health, build, position, heading, state bits and target;
+  - checked in the browser pane against the AI match (spectator and player 1) and a radar matchup. `.claude/launch.json` has a "viewer" static server for that kind of check.

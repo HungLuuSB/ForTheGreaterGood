@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FTGG Match Viewer</title>
+<style>
+:root {
+	--bg: #0f1216; --panel: #171b21; --panel2: #1e232b; --line: #2b313b;
+	--text: #e4e7eb; --muted: #8b93a1; --accent: #4f8cff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+	font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+#app { display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: 1fr 300px; height: 100%; }
+header { grid-column: 1 / 3; display: flex; gap: 12px; align-items: center; padding: 8px 12px;
+	background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+header h1 { font-size: 14px; margin: 0; font-weight: 600; }
+header .meta { color: var(--muted); }
+#stage { position: relative; overflow: hidden; background: #0b0d10; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; }
+#view.dragging { cursor: grabbing; }
+#empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+	color: var(--muted); text-align: center; padding: 24px; }
+aside { grid-row: 2 / 4; grid-column: 2; background: var(--panel); border-left: 1px solid var(--line);
+	overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 12px; }
+aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+#minimap { width: 100%; aspect-ratio: 1; background: #000; border: 1px solid var(--line); cursor: crosshair; display: block; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+.kv div:nth-child(odd) { color: var(--muted); }
+footer { grid-column: 1; display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+	background: var(--panel); border-top: 1px solid var(--line); flex-wrap: wrap; }
+button, select, input[type=file]::file-selector-button {
+	background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+	padding: 4px 10px; font: inherit; cursor: pointer; }
+button:hover, select:hover { border-color: var(--accent); }
+#scrub { flex: 1; min-width: 120px; accent-color: var(--accent); }
+#time { font-variant-numeric: tabular-nums; min-width: 150px; }
+.legend { display: grid; grid-template-columns: 22px 1fr; gap: 4px 6px; align-items: center; }
+.legend canvas { width: 22px; height: 22px; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.hint { color: var(--muted); font-size: 12px; }
+label.check { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+@media (max-width: 760px) {
+	#app { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; }
+	aside { grid-row: 4; grid-column: 1; border-left: 0; border-top: 1px solid var(--line); max-height: 40vh; }
+	header { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+	<header>
+		<h1>FTGG Match Viewer</h1>
+		<input type="file" id="file" accept=".json,application/json">
+		<span class="meta" id="meta">Open a file from <code>lune run export</code> (debug_out/match_*.json).</span>
+	</header>
+	<div id="stage">
+		<canvas id="view"></canvas>
+		<div id="empty">Pick a match file above.<br>Drag to pan, scroll to zoom, click a unit to inspect it. Space plays/pauses, ← → step.</div>
+	</div>
+	<aside>
+		<section>
+			<h2>Minimap</h2>
+			<canvas id="minimap" width="256" height="256"></canvas>
+		</section>
+		<section>
+			<h2>Selected</h2>
+			<div id="info" class="hint">Click a unit.</div>
+		</section>
+		<section>
+			<h2>Teams</h2>
+			<div id="teams" class="hint">—</div>
+		</section>
+		<section>
+			<h2>Layers</h2>
+			<label class="check"><input type="checkbox" id="showFog" checked> Fog (player view)</label>
+			<label class="check"><input type="checkbox" id="showProj" checked> Projectiles &amp; events</label>
+			<label class="check"><input type="checkbox" id="showHealth" checked> Health bars</label>
+			<label class="check"><input type="checkbox" id="showTargets"> Target lines (spectator)</label>
+		</section>
+		<section>
+			<h2>Legend</h2>
+			<div class="legend" id="legend"></div>
+		</section>
+	</aside>
+	<footer>
+		<button id="play" title="Play / pause (space)">▶</button>
+		<button id="back" title="Step back (←)">◀︎</button>
+		<button id="fwd" title="Step forward (→)">▶︎|</button>
+		<select id="speed" title="Playback speed">
+			<option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option>
+			<option value="2">2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option>
+		</select>
+		<input type="range" id="scrub" min="0" max="0" value="0" step="0.01">
+		<span id="time">0:00 · tick 0</span>
+		<button id="fit" title="Fit the map">Fit</button>
+	</footer>
+</div>
+<script>
+"use strict";
+// ---------------------------------------------------------------- state
+const TEAM_COLORS = ["#4f8cff", "#ef5350", "#4caf50", "#ffb300", "#ab47bc", "#26c6da", "#ec407a", "#9ccc65"];
+const KINDS = ["tank", "light", "artillery", "aa", "sensor", "worker", "commander", "jet", "heli", "ship", "sub",
+	"factory", "turret", "extractor", "power", "structure"];
+const STATE_BITS = [[1, "moving"], [2, "toggled on"], [4, "submerged"], [8, "landed"]];
+const SF = { RADAR: 1, SONAR: 2, ATTACKED: 4, GHOST: 8 };
+
+let data = null;          // the parsed export
+let defs = [];            // by def index
+let pos = 0;              // playback position in frames (fractional)
+let playing = false, speed = 1, lastTime = 0;
+let cam = { x: 0, z: 0, zoom: 1 }; // world centre, pixels per stud
+let selected = 0;
+let terrain = null;       // offscreen canvas, 1 px per cell
+let fogCanvas = null, fogFrame = -1;
+let indexById = [];       // per frame: Map id → row
+
+const $ = (id) => document.getElementById(id);
+const view = $("view"), ctx = view.getContext("2d");
+const mini = $("minimap"), mctx = mini.getContext("2d");
+
+function teamColor(team) { return TEAM_COLORS[(team - 1) % TEAM_COLORS.length] || "#ccc"; }
+
+// ---------------------------------------------------------------- loading
+$("file").addEventListener("change", (ev) => {
+	const f = ev.target.files[0];
+	if (!f) return;
+	$("meta").textContent = "Loading " + f.name + " …";
+	const reader = new FileReader();
+	reader.onload = () => {
+		try { load(JSON.parse(reader.result), f.name); }
+		catch (err) { $("meta").textContent = "Could not read " + f.name + ": " + err.message; }
+	};
+	reader.readAsText(f);
+});
+
+function load(d, name) {
+	if (!d || !d.meta || d.meta.format !== "ftgg-match") throw new Error("not an ftgg-match export");
+	if (d.meta.version !== 1) throw new Error("unsupported version " + d.meta.version);
+	data = d;
+	defs = [];
+	for (const def of d.defs) if (def) defs[def.index] = def;
+	indexById = d.frames.map((f) => { const m = new Map(); for (const u of f.u) m.set(u[0], u); return m; });
+	buildTerrain();
+	pos = 0; selected = 0; fogFrame = -1; playing = false;
+	$("play").textContent = "▶";
+	$("scrub").max = String(d.frames.length - 1);
+	$("empty").style.display = "none";
+	const m = d.meta;
+	const viewText = m.view === "player" ? "player " + m.player + " (ally " + m.ally + "), fog-filtered" : "spectator";
+	const result = m.over ? (m.winner ? " · winner: ally " + m.winner : " · draw") : "";
+	$("meta").textContent = name + " · " + m.scenario + " · " + m.mapId + " · seed " + m.seed + " · " + viewText +
+		" · " + fmtTime(m.endTick) + result;
+	renderTeams(); renderLegend(); fit();
+}
+
+function buildTerrain() {
+	const map = data.map;
+	terrain = document.createElement("canvas");
+	terrain.width = map.cellsX; terrain.height = map.cellsZ;
+	const tctx = terrain.getContext("2d");
+	const img = tctx.createImageData(map.cellsX, map.cellsZ);
+	let lo = Infinity, hi = -Infinity;
+	for (let i = 0; i < map.height.length; i++) { lo = Math.min(lo, map.height[i]); hi = Math.max(hi, map.height[i]); }
+	const span = Math.max(hi - lo, 1);
+	for (let i = 0; i < map.height.length; i++) {
+		const h = (map.height[i] - lo) / span, w = map.water[i];
+		let r, g, b;
+		if (w > 0) { const d = Math.min(w / 25, 1); r = 20 + 20 * (1 - d); g = 60 + 50 * (1 - d); b = 110 + 60 * (1 - d); }
+		else { r = 52 + 70 * h; g = 70 + 60 * h; b = 44 + 30 * h; }
+		if (map.supply[i] > 0) { r = 230; g = 200; b = 60; }
+		img.data[i * 4] = r; img.data[i * 4 + 1] = g; img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = 255;
+	}
+	tctx.putImageData(img, 0, 0);
+}
+
+// ---------------------------------------------------------------- coordinates
+function toScreen(x, z) {
+	return [(x - cam.x) * cam.zoom + view.width / 2, (z - cam.z) * cam.zoom + view.height / 2];
+}
+function toWorld(sx, sy) {
+	return [(sx - view.width / 2) / cam.zoom + cam.x, (sy - view.height / 2) / cam.zoom + cam.z];
+}
+function fit() {
+	if (!data) return;
+	const map = data.map, w = map.cellsX * map.cellSize, h = map.cellsZ * map.cellSize;
+	cam.x = map.originX + w / 2; cam.z = map.originZ + h / 2;
+	cam.zoom = Math.min(view.width / w, view.height / h) * 0.95;
+}
+
+// ---------------------------------------------------------------- frames
+function frameAt(p) {
+	const n = data.frames.length;
+	const i = Math.max(0, Math.min(n - 1, Math.floor(p)));
+	return [i, Math.min(n - 1, i + 1), p - i];
+}
+function lerpAngle(a, b, t) { let d = ((b - a + 540) % 360) - 180; return a + d * t; }
+// Units at position p, interpolated between frames by id.
+function unitsAt(p) {
+	const [i, j, t] = frameAt(p);
+	const a = data.frames[i], next = indexById[j];
+	return a.u.map((u) => {
+		const v = t > 0 ? next.get(u[0]) : null;
+		if (!v) return u;
+		return [u[0], u[1], u[2], u[3] + (v[3] - u[3]) * t, u[4] + (v[4] - u[4]) * t, lerpAngle(u[5], v[5], t),
+			u[6], u[7] + (v[7] - u[7]) * t, u[8], u[9], u[10]];
+	});
+}
+
+// ---------------------------------------------------------------- drawing
+function shape(c, kind, x, y, r, heading, fill, stroke, alpha) {
+	c.save();
+	c.globalAlpha = alpha;
+	c.translate(x, y);
+	c.rotate(heading * Math.PI / 180);
+	c.fillStyle = fill; c.strokeStyle = stroke; c.lineWidth = Math.max(1, r * 0.18);
+	c.beginPath();
+	switch (kind) {
+		case "tank": c.rect(-r, -r, 2 * r, 2 * r); c.fill(); c.stroke(); c.beginPath(); c.moveTo(0, 0); c.lineTo(0, r * 1.7); c.stroke(); break;
+		case "light": c.rect(-r * 0.8, -r * 0.8, 1.6 * r, 1.6 * r); c.fill(); c.stroke(); break;
+		case "artillery": c.moveTo(0, r * 1.3); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath(); c.fill(); c.stroke(); break;
+		case "aa": c.moveTo(0, r * 1.2); c.lineTo(r * 1.2, 0); c.lineTo(0, -r * 1.2); c.lineTo(-r * 1.2, 0); c.closePath(); c.fill(); c.stroke(); break;
+		case "sensor": c.arc(0, 0, r, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.arc(0, 0, r * 0.35, 0, 7); c.fillStyle = stroke; c.fill(); break;
+		case "worker": c.arc(0, 0, r, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.moveTo(-r * .6, 0); c.lineTo(r * .6, 0); c.moveTo(0, -r * .6); c.lineTo(0, r * .6); c.stroke(); break;
+		case "commander": for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5, rr = k % 2 ? r * 0.6 : r * 1.5; c.lineTo(Math.sin(a) * rr, Math.cos(a) * rr); } c.closePath(); c.fill(); c.stroke(); break;
+		case "jet": c.moveTo(0, r * 1.6); c.lineTo(r * 1.2, -r); c.lineTo(0, -r * 0.4); c.lineTo(-r * 1.2, -r); c.closePath(); c.fill(); c.stroke(); break;
+		case "heli": c.arc(0, 0, r * 0.8, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.moveTo(-r * 1.4, -r * 1.4); c.lineTo(r * 1.4, r * 1.4); c.moveTo(r * 1.4, -r * 1.4); c.lineTo(-r * 1.4, r * 1.4); c.stroke(); break;
+		case "ship": c.moveTo(0, r * 1.8); c.lineTo(r * 0.8, r * 0.6); c.lineTo(r * 0.8, -r * 1.4); c.lineTo(-r * 0.8, -r * 1.4); c.lineTo(-r * 0.8, r * 0.6); c.closePath(); c.fill(); c.stroke(); break;
+		case "sub": c.setLineDash([r * 0.4, r * 0.3]); c.ellipse(0, 0, r * 0.6, r * 1.6, 0, 0, 7); c.globalAlpha = alpha * 0.5; c.fill(); c.globalAlpha = alpha; c.stroke(); break;
+		case "factory": c.rect(-r, -r, 2 * r, 2 * r); c.fill(); c.stroke(); c.beginPath(); c.rect(-r * .45, -r * .45, r * .9, r * .9); c.stroke(); break;
+		case "turret": c.rect(-r * .8, -r * .8, 1.6 * r, 1.6 * r); c.fill(); c.stroke(); c.beginPath(); c.arc(0, 0, r * .45, 0, 7); c.stroke(); c.moveTo(0, 0); c.lineTo(0, r * 1.6); c.stroke(); break;
+		case "extractor": c.arc(0, 0, r, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.arc(0, 0, r * 0.5, 0, 7); c.stroke(); break;
+		case "power": c.rect(-r * .8, -r * .8, 1.6 * r, 1.6 * r); c.fill(); c.stroke(); c.beginPath(); c.moveTo(r * .2, -r * .6); c.lineTo(-r * .3, 0); c.lineTo(r * .3, 0); c.lineTo(-r * .2, r * .6); c.stroke(); break;
+		default: c.rect(-r * .8, -r * .8, 1.6 * r, 1.6 * r); c.fill(); c.stroke();
+	}
+	c.restore();
+}
+
+function draw() {
+	const dpr = window.devicePixelRatio || 1;
+	const rect = view.getBoundingClientRect();
+	if (view.width !== Math.round(rect.width * dpr) || view.height !== Math.round(rect.height * dpr)) {
+		const first = view.width === 300 && view.height === 150;
+		view.width = Math.round(rect.width * dpr); view.height = Math.round(rect.height * dpr);
+		if (first || !data) fit();
+	}
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
+	ctx.fillStyle = "#0b0d10"; ctx.fillRect(0, 0, view.width, view.height);
+	if (!data) return;
+	const map = data.map, cs = map.cellSize;
+	const [ox, oy] = toScreen(map.originX, map.originZ);
+	ctx.imageSmoothingEnabled = false;
+	ctx.drawImage(terrain, ox, oy, map.cellsX * cs * cam.zoom, map.cellsZ * cs * cam.zoom);
+
+	const [fi, , ] = frameAt(pos);
+	const frame = data.frames[fi];
+
+	// fog (player view)
+	if (frame.fog && $("showFog").checked) {
+		if (fogFrame !== fi) { buildFog(frame.fog); fogFrame = fi; }
+		ctx.imageSmoothingEnabled = true;
+		ctx.drawImage(fogCanvas, ox, oy, map.sensorX * map.sensorCell * cam.zoom, map.sensorZ * map.sensorCell * cam.zoom);
+	}
+
+	// strategic records: blips and ghosts
+	if (frame.s) {
+		const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 180);
+		for (const s of frame.s) {
+			const [x, y] = toScreen(s[2], s[3]);
+			const flags = s[4], r = Math.max(4, 6 * cam.zoom);
+			ctx.save();
+			if (flags & SF.GHOST) {
+				ctx.globalAlpha = 0.45; ctx.strokeStyle = teamColor(s[1]); ctx.setLineDash([3, 3]); ctx.lineWidth = 1.5;
+				ctx.strokeRect(x - r, y - r, 2 * r, 2 * r);
+			} else if (flags & (SF.RADAR | SF.SONAR)) {
+				ctx.strokeStyle = flags & SF.SONAR ? "#4dd0e1" : "#ff7043";
+				ctx.globalAlpha = 0.5 + 0.5 * pulse; ctx.lineWidth = 2;
+				ctx.beginPath(); ctx.arc(x, y, r * (0.8 + 0.4 * pulse), 0, 7); ctx.stroke();
+				ctx.beginPath(); ctx.arc(x, y, 2, 0, 7); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
+			} else {
+				ctx.fillStyle = teamColor(s[1]); ctx.globalAlpha = 0.8;
+				ctx.beginPath(); ctx.arc(x, y, Math.max(2.5, r * 0.5), 0, 7); ctx.fill();
+			}
+			ctx.restore();
+		}
+	}
+
+	// units
+	const units = unitsAt(pos);
+	const showHealth = $("showHealth").checked;
+	if ($("showTargets").checked) {
+		const byId = indexById[fi];
+		ctx.save(); ctx.globalAlpha = 0.35; ctx.lineWidth = 1;
+		for (const u of units) {
+			const t = byId.get(u[9]);
+			if (u[9] && t) {
+				const [x1, y1] = toScreen(u[3], u[4]), [x2, y2] = toScreen(t[3], t[4]);
+				ctx.strokeStyle = teamColor(u[2]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+			}
+		}
+		ctx.restore();
+	}
+	for (const u of units) {
+		const def = defs[u[1]] || { kind: "structure", radius: 4 };
+		const [x, y] = toScreen(u[3], u[4]);
+		if (x < -50 || y < -50 || x > view.width + 50 || y > view.height + 50) continue;
+		const r = Math.max(3.5, def.radius * cam.zoom);
+		const building = u[10] < 1000;
+		const color = teamColor(u[2]);
+		if (u[7] > 0) { // aircraft shadow
+			ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = "#000";
+			ctx.beginPath(); ctx.arc(x + u[7] * 0.08 * cam.zoom, y + u[7] * 0.08 * cam.zoom, r * 0.8, 0, 7); ctx.fill(); ctx.restore();
+		}
+		shape(ctx, def.kind, x, y, r, -u[5], color, "#0b0d10", building ? 0.45 : 1);
+		if (u[0] === selected) {
+			ctx.save(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+			ctx.beginPath(); ctx.arc(x, y, r * 2 + 4, 0, 7); ctx.stroke(); ctx.restore();
+		}
+		if (showHealth && u[6] < 1000 && r > 4) {
+			const w = Math.max(14, r * 2.4), hp = u[6] / 1000;
+			ctx.fillStyle = "#000a"; ctx.fillRect(x - w / 2, y - r - 7, w, 4);
+			ctx.fillStyle = hp > 0.5 ? "#66bb6a" : hp > 0.25 ? "#ffca28" : "#ef5350";
+			ctx.fillRect(x - w / 2, y - r - 7, w * hp, 4);
+		}
+	}
+
+	// projectiles and recent events (spectator)
+	if ($("showProj").checked) {
+		if (frame.p) {
+			ctx.fillStyle = "#fff59d";
+			for (const p of frame.p) {
+				const [x, y] = toScreen(p[0], p[2]);
+				ctx.beginPath(); ctx.arc(x, y, Math.max(1.5, 0.8 * cam.zoom), 0, 7); ctx.fill();
+			}
+		}
+		const back = Math.max(0, fi - 5);
+		for (let k = back; k <= fi; k++) {
+			const f = data.frames[k];
+			if (!f.e) continue;
+			const age = (fi - k + (pos - fi)) / 6;
+			for (const e of f.e) {
+				const [x, y] = toScreen(e[1], e[2]);
+				ctx.save(); ctx.globalAlpha = Math.max(0, 1 - age);
+				if (e[0] === "impact") { ctx.strokeStyle = "#ffa726"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, (3 + 10 * age) * Math.max(0.6, cam.zoom), 0, 7); ctx.stroke(); }
+				else if (e[0] === "death") { ctx.fillStyle = "#ff5252"; ctx.beginPath(); ctx.arc(x, y, (6 + 14 * age) * Math.max(0.6, cam.zoom), 0, 7); ctx.fill(); }
+				else if (e[0] === "decoy") { ctx.fillStyle = "#e040fb"; ctx.font = "bold 14px sans-serif"; ctx.fillText("✶", x - 5, y + 5); }
+				else if (e[0] === "lost") { ctx.strokeStyle = "#bdbdbd"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke(); }
+				ctx.restore();
+			}
+		}
+	}
+	drawMinimap(units, frame);
+	updateInfo(units);
+}
+
+function buildFog(b64) {
+	const map = data.map;
+	if (!fogCanvas) fogCanvas = document.createElement("canvas");
+	fogCanvas.width = map.sensorX; fogCanvas.height = map.sensorZ;
+	const fctx = fogCanvas.getContext("2d");
+	const img = fctx.createImageData(map.sensorX, map.sensorZ);
+	const bin = atob(b64);
+	for (let i = 0; i < map.sensorX * map.sensorZ; i++) {
+		const bit = (bin.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1;
+		img.data[i * 4 + 3] = bit ? 0 : 150; // dark where not in sight
+	}
+	fctx.putImageData(img, 0, 0);
+}
+
+function drawMinimap(units, frame) {
+	const map = data.map;
+	const W = mini.width, H = mini.height;
+	mctx.imageSmoothingEnabled = false;
+	mctx.drawImage(terrain, 0, 0, W, H);
+	const sx = W / (map.cellsX * map.cellSize), sz = H / (map.cellsZ * map.cellSize);
+	if (frame.fog && $("showFog").checked && fogCanvas) { mctx.imageSmoothingEnabled = true; mctx.drawImage(fogCanvas, 0, 0, W, H); }
+	for (const u of units) {
+		mctx.fillStyle = teamColor(u[2]);
+		mctx.fillRect((u[3] - map.originX) * sx - 1.5, (u[4] - map.originZ) * sz - 1.5, 3, 3);
+	}
+	if (frame.s) for (const s of frame.s) {
+		mctx.fillStyle = s[4] & (SF.RADAR | SF.SONAR) ? "#ff7043" : teamColor(s[1]);
+		mctx.fillRect((s[2] - map.originX) * sx - 1, (s[3] - map.originZ) * sz - 1, 2, 2);
+	}
+	const [x0, z0] = toWorld(0, 0), [x1, z1] = toWorld(view.width, view.height);
+	mctx.strokeStyle = "#fff"; mctx.lineWidth = 1;
+	mctx.strokeRect((x0 - map.originX) * sx, (z0 - map.originZ) * sz, (x1 - x0) * sx, (z1 - z0) * sz);
+}
+
+// ---------------------------------------------------------------- panels
+function fmtTime(tick) {
+	const s = Math.floor(tick / (data ? data.meta.tickRate : 15));
+	return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+function updateInfo(units) {
+	const [fi] = frameAt(pos);
+	const tick = data.frames[fi].t;
+	$("time").textContent = fmtTime(tick) + " · tick " + tick + " / " + data.meta.endTick;
+	$("scrub").value = String(pos);
+	if (!selected) return;
+	const u = units.find((v) => v[0] === selected);
+	const info = $("info");
+	if (!u) {
+		const s = data.frames[fi].s && data.frames[fi].s.find((v) => v[0] === selected);
+		if (s) {
+			const kind = s[4] & SF.GHOST ? "ghost (structure seen earlier)" : s[4] & SF.RADAR ? "radar blip (position wobbled)" : s[4] & SF.SONAR ? "sonar contact" : "known, out of detail";
+			const icon = s[5] ? data.meta.icons[s[5] - 1] : "unknown";
+			info.innerHTML = kv([["Unit", "#" + s[0]], ["Team", swatch(s[1])], ["What", kind], ["Icon", icon], ["Position", s[2].toFixed(1) + ", " + s[3].toFixed(1)]]);
+		} else info.textContent = "#" + selected + " is gone (dead or out of view).";
+		return;
+	}
+	const def = defs[u[1]] || {};
+	const states = STATE_BITS.filter(([b]) => u[8] & b).map(([, n]) => n).join(", ") || "—";
+	let target = "—";
+	if (u[9]) { const t = indexById[fi].get(u[9]); target = "#" + u[9] + (t && defs[t[1]] ? " " + defs[t[1]].name : ""); }
+	info.innerHTML = kv([
+		["Unit", "#" + u[0]],
+		["Def", (def.name || "?") + " <span class=hint>(" + (def.id || "?") + ")</span>"],
+		["Kind", def.kind || "?"],
+		["Team", swatch(u[2])],
+		["Health", (u[6] / 10).toFixed(1) + "% of " + (def.maxHealth || "?")],
+		["Built", (u[10] / 10).toFixed(0) + "%"],
+		["Position", u[3].toFixed(1) + ", " + u[4].toFixed(1) + (u[7] ? " · alt " + u[7].toFixed(0) : "")],
+		["Heading", Math.round(u[5]) + "°"],
+		["State", states],
+		["Target", data.meta.view === "spectator" ? target : "not on the wire"],
+	]);
+}
+function kv(rows) { return '<div class="kv">' + rows.map(([k, v]) => "<div>" + k + "</div><div>" + v + "</div>").join("") + "</div>"; }
+function swatch(team) { return '<span class="swatch" style="background:' + teamColor(team) + '"></span>team ' + team; }
+function renderTeams() {
+	$("teams").innerHTML = data.players.map((p) =>
+		"<div>" + swatch(p.team) + " · player " + p.id + " · ally " + p.ally + (data.meta.view === "player" && p.id === data.meta.player ? " <b>(this view)</b>" : "") + "</div>").join("");
+}
+function renderLegend() {
+	const box = $("legend"); box.innerHTML = "";
+	for (const k of KINDS) {
+		const c = document.createElement("canvas"); c.width = 44; c.height = 44;
+		shape(c.getContext("2d"), k, 22, 22, 9, 180, "#9aa4b2", "#0b0d10", 1);
+		const label = document.createElement("span"); label.textContent = k;
+		box.append(c, label);
+	}
+	const extra = [["radar blip", "#ff7043"], ["sonar contact", "#4dd0e1"], ["ghost", "#9aa4b2"]];
+	for (const [name, col] of extra) {
+		const c = document.createElement("canvas"); c.width = 44; c.height = 44;
+		const g = c.getContext("2d"); g.strokeStyle = col; g.lineWidth = 3;
+		if (name === "ghost") { g.setLineDash([5, 4]); g.strokeRect(10, 10, 24, 24); } else { g.beginPath(); g.arc(22, 22, 12, 0, 7); g.stroke(); }
+		const label = document.createElement("span"); label.textContent = name;
+		box.append(c, label);
+	}
+}
+
+// ---------------------------------------------------------------- input
+let drag = null;
+view.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, cx: cam.x, cz: cam.z, moved: false }; view.setPointerCapture(e.pointerId); });
+view.addEventListener("pointermove", (e) => {
+	if (!drag) return;
+	const dpr = window.devicePixelRatio || 1;
+	const dx = (e.clientX - drag.x) * dpr, dy = (e.clientY - drag.y) * dpr;
+	if (Math.abs(dx) + Math.abs(dy) > 4) { drag.moved = true; view.classList.add("dragging"); }
+	cam.x = drag.cx - dx / cam.zoom; cam.z = drag.cz - dy / cam.zoom;
+});
+view.addEventListener("pointerup", (e) => {
+	view.classList.remove("dragging");
+	if (drag && !drag.moved && data) pick(e);
+	drag = null;
+});
+function pick(e) {
+	const dpr = window.devicePixelRatio || 1, rect = view.getBoundingClientRect();
+	const sx = (e.clientX - rect.left) * dpr, sy = (e.clientY - rect.top) * dpr;
+	let best = 0, bestD = 18 * dpr;
+	for (const u of unitsAt(pos)) {
+		const [x, y] = toScreen(u[3], u[4]);
+		const r = Math.max(3.5, ((defs[u[1]] || {}).radius || 4) * cam.zoom);
+		const d = Math.hypot(x - sx, y - sy) - r;
+		if (d < bestD) { best = u[0]; bestD = d; }
+	}
+	const [fi] = frameAt(pos);
+	for (const s of data.frames[fi].s || []) {
+		const [x, y] = toScreen(s[2], s[3]);
+		const d = Math.hypot(x - sx, y - sy) - 6;
+		if (d < bestD) { best = s[0]; bestD = d; }
+	}
+	selected = best;
+	if (!best) $("info").textContent = "Click a unit.";
+}
+view.addEventListener("wheel", (e) => {
+	e.preventDefault();
+	const dpr = window.devicePixelRatio || 1, rect = view.getBoundingClientRect();
+	const sx = (e.clientX - rect.left) * dpr, sy = (e.clientY - rect.top) * dpr;
+	const [wx, wz] = toWorld(sx, sy);
+	cam.zoom = Math.min(40, Math.max(0.05, cam.zoom * Math.exp(-e.deltaY * 0.0015)));
+	cam.x = wx - (sx - view.width / 2) / cam.zoom; cam.z = wz - (sy - view.height / 2) / cam.zoom;
+}, { passive: false });
+mini.addEventListener("pointerdown", (e) => {
+	if (!data) return;
+	const rect = mini.getBoundingClientRect(), map = data.map;
+	cam.x = map.originX + (e.clientX - rect.left) / rect.width * map.cellsX * map.cellSize;
+	cam.z = map.originZ + (e.clientY - rect.top) / rect.height * map.cellsZ * map.cellSize;
+});
+$("play").onclick = () => { if (!data) return; playing = !playing; $("play").textContent = playing ? "❚❚" : "▶"; if (playing && pos >= data.frames.length - 1) pos = 0; };
+$("back").onclick = () => { if (data) { playing = false; $("play").textContent = "▶"; pos = Math.max(0, Math.floor(pos) - 1); } };
+$("fwd").onclick = () => { if (data) { playing = false; $("play").textContent = "▶"; pos = Math.min(data.frames.length - 1, Math.floor(pos) + 1); } };
+$("speed").onchange = (e) => { speed = Number(e.target.value); };
+$("scrub").oninput = (e) => { pos = Number(e.target.value); };
+$("fit").onclick = fit;
+window.addEventListener("keydown", (e) => {
+	if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
+	if (e.code === "Space") { e.preventDefault(); $("play").click(); }
+	else if (e.key === "ArrowLeft") $("back").click();
+	else if (e.key === "ArrowRight") $("fwd").click();
+	else if (e.key === "+" || e.key === "=") cam.zoom *= 1.25;
+	else if (e.key === "-") cam.zoom /= 1.25;
+});
+
+// ---------------------------------------------------------------- loop
+function loop(now) {
+	if (data && playing) {
+		const dt = Math.min(0.1, (now - lastTime) / 1000);
+		pos += dt * speed * data.meta.tickRate / data.meta.ticksPerFrame;
+		if (pos >= data.frames.length - 1) { pos = data.frames.length - 1; playing = false; $("play").textContent = "▶"; }
+	}
+	lastTime = now;
+	draw();
+	requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
