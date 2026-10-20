@@ -15,6 +15,7 @@ BAR-style modern-warfare RTS on Roblox. Factions: Order / Chaos. Domains: ground
 | `src/server/Sim` | ServerScriptService.Sim |
 | `src/server/Tests` | ServerScriptService.Tests |
 | `src/client` | StarterPlayer.StarterPlayerScripts.Client |
+| `src/roblox` | ServerScriptService.Entry (Roblox-only server scripts, e.g. the in-Studio test entry `RunTests`) |
 | `docs/` | design documents (not synced) |
 | `.lune/` | Lune scripts: test entry, tooling (not synced) |
 | `.luaurc` | require aliases (`@shared`) for Lune and tooling (not synced) |
@@ -50,7 +51,8 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).
   - `lune run export <scene> [--player N]`: record a match for the viewer (`tools/viewer/index.html`) into `debug_out/`.
   - `lune run build`: Roblox build (see below). `lune run check_build [place]` re-checks a built place.
-- `src/client` is Roblox-only and isn't covered by this rule.
+- `src/client` and `src/roblox` are Roblox-only and aren't covered by this rule.
+- In Studio, run the same specs with `require(game.ServerScriptService.Entry.RunTests).run(filter?)`. Through `execute_luau` use `.start(filter?)`, then poll `.status()` until it returns the summary (the full suite takes ~30 s, longer than an `execute_luau` call waits).
 - Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). So the source keeps the require style above, and a build step converts it (DECISIONS D84):
   - `lune run build`:
     1. `rojo sourcemap default.project.json -o sourcemap.json`;
@@ -58,7 +60,8 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
     3. `rojo build build.project.json -o build/place.rbxl`;
     4. `lune run check_build` loads the place with `@lune/roblox` and checks that every script compiles and every require resolves to a ModuleScript.
   - Tools are pinned in `rokit.toml` (darklua 0.19.0). `build/` and `sourcemap.json` are gitignored.
-  - Live sync to Studio: run `darklua process src build/src --watch` and `rojo serve build.project.json`, never `default.project.json`. `default.project.json` stays the source tree for the sourcemap and tooling.
+  - Live sync to Studio: run `lune run build` once, then keep `rojo sourcemap default.project.json -o sourcemap.json --watch`, `darklua process src build/src --watch` and `rojo serve build.project.json` running (never serve `default.project.json`).
+  - darklua's watcher deletes the output when a source file is replaced by rename (how some editors and tools save) and doesn't write it back. If a synced script disappears from Studio, rewrite the source file in place (e.g. `cat f > tmp && cat tmp > f`) or restart the watcher. `default.project.json` stays the source tree for the sourcemap and tooling.
 
 ## Current milestone
 
