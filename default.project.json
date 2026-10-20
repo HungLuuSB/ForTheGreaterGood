@@ -1,0 +1,26 @@
+{
+  "name": "ForTheGreaterGood",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "Sim": {
+        "$path": "src/server/Sim"
+      },
+      "Tests": {
+        "$path": "src/server/Tests"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}

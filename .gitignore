@@ -1,0 +1,14 @@
+# Roblox place files: publish the place to Roblox (it keeps version history)
+# and keep local backups outside this repo
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+
+# Rojo / tooling output
+sourcemap.json
+/build/
+
+# OS and editor clutter
+.DS_Store
+Thumbs.db
