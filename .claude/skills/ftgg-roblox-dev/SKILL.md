@@ -98,7 +98,7 @@ Suggest the user saves or commits (Rojo + git) before large changes.
 
 ### Verifying
 
-- **Logic:** from the project root run `lune run test` (`lune run test <filter>` for matching specs only) and report pass/fail. It runs every `*.spec.luau` under `src/server/Tests` through `Tests/RunAll`. A Studio entry for running the tests through `execute_luau` is still to be added.
+- **Logic:** from the project root run `lune run test` (`lune run test <filter>` for matching specs only) and report pass/fail. It runs every `*.spec.luau` under `src/server/Tests` through `Tests/RunAll`. In Studio (client session only), `execute_luau` (Edit) runs `require(game.ServerScriptService.Entry.RunTests).start(filter?)`, then polls `.status()` until it returns the summary (`specs`, `passed`, `failed`, `failures`); the per-test lines go to the Output.
 - **Runtime:** `start_stop_play` → `get_console_output` → `screen_capture` if visual → `start_stop_play` to stop.
 - Read errors from console output before guessing at fixes. Fix the cause, then re-run the same check.
 

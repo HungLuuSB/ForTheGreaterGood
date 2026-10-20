@@ -13,6 +13,9 @@
       },
       "Tests": {
         "$path": "src/server/Tests"
+      },
+      "Entry": {
+        "$path": "src/roblox"
       }
     },
     "StarterPlayer": {
