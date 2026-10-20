@@ -22,14 +22,14 @@ Roblox can't resolve `@shared/...` aliases or relative string requires yet (see 
 - [x] `.darklua.json`'s `convert_require` rule:
   - `current`: path mode with `sources = { "@shared" = "./src/shared" }`, matching `.luaurc`;
   - `target`: roblox, using the Rojo sourcemap, `indexing_style = "find_first_child"`.
-- [x] `darklua process src build/src`, and `build.project.json` maps the same tree from `build/src`. `build/` is gitignored.
-- [x] `rojo build build.project.json -o build/place.rbxl`, then `lune run check_build` (`@lune/roblox`) checks the built place:
+- [x] `darklua process src build/ci/src`, and `build.project.json` maps the same tree from `build/ci/src`. `build/` is gitignored. (The live sync uses its own copy, `build/serve/src` and `serve.project.json`; C-3.)
+- [x] `rojo build build.project.json -o build/ci/place.rbxl`, then `lune run check_build` (`@lune/roblox`) checks the built place:
   - every script compiles (`@lune/luau`);
   - no string require is left (comments and strings are skipped);
   - every require expression resolves to an existing ModuleScript.
   - Verified to fail on an unconverted place (482 problems), a missing child, a require pointing at a Folder, and a syntax error.
 - [x] CLAUDE.md and the skill document the build and serve commands. Keep `default.project.json` as the source tree.
-- [x] **In Studio:** run `darklua process src build/src --watch` and `rojo serve build.project.json`, connect the plugin, and confirm modules require each other at runtime (step 2's test entry does that for every spec). Done 2026-10-21 (client stream): 263 scripts synced, all specs load and pass in Studio. A `rojo sourcemap --watch` runs alongside (CLAUDE.md).
+- [x] **In Studio:** run `darklua process src build/src --watch` and `rojo serve build.project.json`, connect the plugin, and confirm modules require each other at runtime (step 2's test entry does that for every spec). Done 2026-10-21 (client stream): 263 scripts synced, all specs load and pass in Studio. Now `lune run serve` + `rojo serve serve.project.json` (C-3, CLAUDE.md).
 - [ ] If the client gets string requires, consider `indexing_style = "wait_for_child"` for client code (replication order); the server tree is fine with `find_first_child`.
 
 ## 2. Roblox-only server root and in-Studio tests

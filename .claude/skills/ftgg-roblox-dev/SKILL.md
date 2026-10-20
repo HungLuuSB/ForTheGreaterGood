@@ -67,7 +67,7 @@ Code is synced from the repository into Studio by Rojo:
 - **Edit code as files under `src/`**, never with Studio `multi_edit`; Rojo would overwrite edits made in Studio.
 - Use the Studio MCP tools for what lives only in the place file (maps, terrain, models, `ReplicatedStorage.Models`) and for running code, inspecting instances, playtesting and reading console output.
 - File naming: `Name.server.luau` = Script, `Name.client.luau` = LocalScript, `Name.luau` = ModuleScript, a folder with `init.luau` = ModuleScript with children.
-- Before testing in Studio, confirm Rojo is syncing (the changed module exists in Studio with the new content). If it isn't, ask the user to start `darklua process src build/src --watch` and `rojo serve build.project.json` (the converted tree; `default.project.json` serves unconverted string requires that Roblox can't resolve), then connect the Studio plugin. `lune run build` builds and checks a place file offline.
+- Before testing in Studio, confirm Rojo is syncing (the changed module exists in Studio with the new content). If it isn't, ask the user to run `lune run serve` and `rojo serve serve.project.json` in two terminals (the converted tree in `build/serve/`; `default.project.json` serves unconverted string requires that Roblox can't resolve), then connect the Studio plugin. `lune run build` builds and checks a place file offline in `build/ci/` and is safe alongside. Never wipe `build/serve/` while the sync runs: Rojo's serve crashes.
 - After each working, verified step, suggest a git commit with a clear message.
 
 ---

@@ -64,7 +64,7 @@ end
 
 function RunTests.run(filter: string?): Summary
 	local tests = ServerScriptService:FindFirstChild("Tests")
-	assert(tests, "ServerScriptService.Tests not found: is Rojo syncing build.project.json?")
+	assert(tests, "ServerScriptService.Tests not found: is Rojo syncing serve.project.json?")
 	local runAllModule = tests:FindFirstChild("RunAll")
 	assert(runAllModule and runAllModule:IsA("ModuleScript"), "ServerScriptService.Tests.RunAll not found")
 	local RunAll = (require :: any)(runAllModule)

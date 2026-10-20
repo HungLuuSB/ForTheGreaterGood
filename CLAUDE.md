@@ -50,18 +50,22 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - `lune run stress`: stress test and bandwidth report (results in `docs/progress/sim.md`).
   - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).
   - `lune run export <scene> [--player N]`: record a match for the viewer (`tools/viewer/index.html`) into `debug_out/`.
-  - `lune run build`: Roblox build (see below). `lune run check_build [place]` re-checks a built place.
+  - `lune run build`: offline Roblox build and check, in `build/ci/` (see below). `lune run check_build [place]` re-checks a built place.
+  - `lune run serve`: live sync to Studio, into `build/serve/` (see below).
 - `src/client` and `src/roblox` are Roblox-only and aren't covered by this rule.
 - In Studio, run the same specs with `require(game.ServerScriptService.Entry.RunTests).run(filter?)`. Through `execute_luau` use `.start(filter?)`, then poll `.status()` until it returns the summary (the full suite takes ~30 s, longer than an `execute_luau` call waits).
 - Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). So the source keeps the require style above, and a build step converts it (DECISIONS D84):
   - `lune run build`:
     1. `rojo sourcemap default.project.json -o sourcemap.json`;
-    2. `darklua process src build/src`. `.darklua.json`'s `convert_require` rule turns `@shared/...` and relative requires into `game:GetService(...)` / `script.Parent` paths with `FindFirstChild`;
-    3. `rojo build build.project.json -o build/place.rbxl`;
+    2. `darklua process src build/ci/src`. `.darklua.json`'s `convert_require` rule turns `@shared/...` and relative requires into `game:GetService(...)` / `script.Parent` paths with `FindFirstChild`;
+    3. `rojo build build.project.json -o build/ci/place.rbxl`;
     4. `lune run check_build` loads the place with `@lune/roblox` and checks that every script compiles and every require resolves to a ModuleScript.
+    It wipes and rebuilds only `build/ci/`, so it's safe while the live sync runs.
   - Tools are pinned in `rokit.toml` (darklua 0.19.0). `build/` and `sourcemap.json` are gitignored.
-  - Live sync to Studio: run `lune run build` once, then keep `rojo sourcemap default.project.json -o sourcemap.json --watch`, `darklua process src build/src --watch` and `rojo serve build.project.json` running (never serve `default.project.json`).
-  - darklua's watcher deletes the output when a source file is replaced by rename (how some editors and tools save) and doesn't write it back. If a synced script disappears from Studio, rewrite the source file in place (e.g. `cat f > tmp && cat tmp > f`) or restart the watcher. `default.project.json` stays the source tree for the sourcemap and tooling.
+  - Live sync to Studio, two terminals in the project root: `lune run serve`, then `rojo serve serve.project.json`; then connect the Rojo plugin. Never serve `default.project.json` (unconverted requires) or `build.project.json` (the CI tree, rebuilt from scratch).
+    - `.lune/serve.luau` replaces `darklua --watch` and `rojo sourcemap --watch`: it polls `src`, converts each changed file with darklua (files saved by rename included), regenerates `sourcemap.json` and converts everything when a file is added or removed, and removes only the output file of a deleted source. It never deletes a directory.
+    - **Never run anything that wipes or rebuilds `build/serve/` while the sync is running** (no `rm -r build`, no `darklua process` into it, no switching `lune run build` back to it). Rojo's serve crashes when a directory it watches disappears (`change_processor.rs`, "The system cannot find the path specified"). Stop both terminals first.
+  - `default.project.json` stays the source tree for the sourcemap and tooling.
 
 ## Current milestone
 
