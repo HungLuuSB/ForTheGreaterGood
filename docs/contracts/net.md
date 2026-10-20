@@ -51,7 +51,7 @@ Names and reliability: `Schema.Channel`.
 | Turret yaw / pitch | u8 | Radians in [−π, π] → `round((a + π) / 2π × 255)`; yaw is relative to the hull. |
 | Def index | u16 | `defs.unitByIndex[i]` (1-based, `Defs.load()` order, identical on both sides; the defs hash proves it). |
 | Weapon index | u16 | `defs.weaponByIndex[i]`. |
-| Icon | 6 bits | 0 = unknown (radar / sonar blip). Else the position (1-based) of the def's `icon` name in the **sorted list of distinct icon names** over all unit defs (`NetOut.iconIndex`), capped at 63. |
+| Icon | 6 bits | 0 = unknown (radar / sonar blip). Else the position (1-based) of the def's `icon` name in the **sorted list of distinct icon names** over all unit defs, capped at 63: `Shared/Net/Icons` (`Icons.byDef`, `Icons.names`), which the server uses too. |
 | Team | 3 bits (strategic) / u8 (ENTER) | 1..8. Ally teams come from the match config. |
 
 **Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1`, `TOGGLED_ON 2` (radar / jammer switched on), `SUBMERGED 4`, `LANDED 8`. Other bits are reserved (0).

@@ -1,4 +1,6 @@
 --!strict
+local Defs = require("@shared/Defs/Defs")
+local Icons = require("@shared/Net/Icons")
 local NetOut = require("../Sim/NetOut")
 local Packer = require("@shared/Net/Packer")
 local Scenes = require("./Support/Scenes")
@@ -56,6 +58,23 @@ local function knows(sim: Sim.Sim, team: number, id: number): boolean
 end
 
 return function(t: RunAll.Context)
+	-- S-10: clients number icons with Shared/Net/Icons; the server must too.
+	t.test("strategic icons use the shared numbering: sorted distinct names from 1, at most 63", function()
+		local defs = Defs.load()
+		local names = Icons.names(defs)
+		for i = 2, #names do
+			t.expect(names[i - 1] < names[i], `names sorted and distinct ({names[i - 1]}, {names[i]})`)
+		end
+		local byDef = Icons.byDef(defs)
+		for index, def in defs.unitByIndex do
+			local n = byDef[index]
+			t.expect(n >= 1 and n <= Icons.MAX, `{def.id}: icon {n} in 1..63`)
+			t.expect(n == Icons.MAX or names[n] == def.icon, `{def.id}: icon {n} is "{def.icon}"`)
+		end
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		t.deepEqual(sim.net.iconIndex, byDef, "the server sends exactly these numbers")
+	end)
+
 	t.test("1,000 ticks: fog holds, radar is wobbled, messages fit, the client view matches", function()
 		local sim, mine, theirs = battle(11)
 		local g = (sim.map :: any).grid
