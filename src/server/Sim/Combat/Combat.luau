@@ -39,10 +39,20 @@ export type UnitProfile = {
 }
 
 export type Event = {
-	kind: "FIRE" | "SPAWN_PROJ" | "IMPACT" | "DEATH" | "BUILD_START" | "BUILD_DONE" | "BUILD_FAILED" | "PRODUCED" | "RECLAIMED",
+	kind: "FIRE"
+		| "SPAWN_PROJ"
+		| "IMPACT"
+		| "DECOYED"
+		| "LOST_LOCK"
+		| "DEATH"
+		| "BUILD_START"
+		| "BUILD_DONE"
+		| "BUILD_FAILED"
+		| "PRODUCED"
+		| "RECLAIMED",
 	tick: number,
-	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), dead unit (DEATH)
-	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT), wreck or 0 (DEATH)
+	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
+	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK), wreck or 0 (DEATH)
 	slot: number?, -- FIRE, SPAWN_PROJ
 	hit: boolean?, -- FIRE (hitscan)
 	severity: number?, -- DEATH: 0..255
@@ -76,6 +86,7 @@ export type Combat = {
 	pTeam: { [number]: number },
 	pTtl: { [number]: number }, -- seconds left
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
+	pFlags: { [number]: number }, -- guided missiles: EW.Flag bits (terminal rolled, lock lost)
 	nextProjId: number,
 	freeProj: { number }, -- FIFO of freed IDs
 	freeHead: number,
@@ -147,6 +158,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pTeam = {},
 		pTtl = {},
 		pTarget = {},
+		pFlags = {},
 		nextProjId = 1,
 		freeProj = {},
 		freeHead = 1,
@@ -328,6 +340,7 @@ function Combat.spawnProjectile(
 	c.pTeam[id] = team
 	c.pTtl[id] = ttl
 	c.pTarget[id] = target or 0
+	c.pFlags[id] = 0
 	return id
 end
 
@@ -340,7 +353,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.projSlot[id] = nil
 	c.px[id], c.py[id], c.pz[id] = nil, nil, nil
 	c.pvx[id], c.pvy[id], c.pvz[id] = nil, nil, nil
-	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id] = nil, nil, nil, nil, nil
+	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id], c.pFlags[id] = nil, nil, nil, nil, nil, nil
 	c.freeProj[c.freeTail] = id
 	c.freeTail += 1
 end
@@ -388,6 +401,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pOwner[id])
 		h = Hash.number(h, c.pTtl[id])
 		h = Hash.u32(h, c.pTarget[id])
+		h = Hash.u32(h, c.pFlags[id])
 	end
 	h = Hash.u32(h, c.nextProjId)
 	h = Hash.u32(h, #c.wreckIds)

@@ -746,3 +746,47 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - Weapons `*_naval_gun` (BALLISTIC, NAVAL/GROUND/STRUCTURE), `*_torpedo` (sub's anti-ship torpedo) and `*_asw_torpedo` (destroyer's, stronger against SUB).
   - Test map `sea:<n>`: land (height 10) on the west quarter, sea floor −10 with 20 studs of water elsewhere.
 - **Why:** needed for the naval tests. Balance is M8. Measured: a Crusader sinks a Lamprey 200 studs away in 8.5 s and keeps 1960 / 2600 HP.
+
+## D79 — Missile guidance checks (2026-10-20, task 17)
+
+- **Decision** (`Sim/EW.luau`):
+  - **Launch:** Weapons asks `EW.canLock` before firing a guided HOMING weapon. No lock means no launch, no ammo spent and the reload stays ready.
+    - IR: target VISIBLE and within `lockRange`.
+    - RADAR: VISIBLE or RADAR contact, within `lockRange × radarSignature`, and not jammed unless closer than `burnThrough × lockRange` (default `burnThrough` 0.35). "Jammed" means inside its own team's jam map (the same map that hides it from radar, guide 11.4).
+    - `lockRange` defaults to the weapon's range.
+  - **Midcourse:** every 5 ticks per missile, staggered by projectile id. A RADAR missile whose target is jammed and farther than burn-through *from the missile* raises `LOST_LOCK`: the target is cleared and it flies straight until its lifetime ends.
+  - **Terminal:** once, when the missile could close to `terminalRange` within this tick (`terminalRange + (missile speed + target speed) × dt`, so fast closures can't skip the check; default 40). On a successful countermeasure roll: `DECOYED`, the target is cleared and the velocity turns 60° left or right (one Prng draw).
+  - Missiles carry a flags field (`Combat.pFlags`: terminal rolled, lock lost), included in the world hash.
+- **Alternatives:** burn-through measured from the launcher (semi-active homing); re-checking every tick; a proportional-navigation miss instead of a fixed veer.
+- **Why:** guide 11.5 as written ("cheap, event-based"). Measuring from the missile models an active seeker and needs no launcher bookkeeping. The terminal window includes one tick of closing, because a 480 stud/s missile and a 260 stud/s jet close about 50 studs per tick, more than the 40-stud terminal range.
+
+## D80 — COMMAND guidance (2026-10-20, task 17)
+
+- **Decision:**
+  - Lock: target VISIBLE to the launcher's team, within lock range, and the launcher *not inside an enemy jam field*. That is my reading of "breaks guidance if launcher's view is jammed".
+  - Midcourse: `LOST_LOCK` if the launcher is dead, the team no longer sees the target, or the launcher is jammed.
+  - No terminal countermeasures.
+- **Alternatives:** treating COMMAND like RADAR for jamming (the target's jam field).
+- **Why:** gives COMMAND its own counterplay (kill or jam the launcher) as the guide's table intends. No placeholder unit uses COMMAND yet; the tests use a test-only weapon.
+
+## D81 — Countermeasure rolls and DIRCM upkeep (2026-10-20, task 17)
+
+- **Decision** (`Sim/EWState.luau` holds charges and cooldowns per unit; hashed):
+  - **vs IR:** DIRCM first if its cooldown is 0. Engaging starts the cooldown whether or not the roll succeeds, so it handles at most one missile per cooldown. Then flares if charges remain (one charge per roll).
+  - **vs RADAR:** chaff, one charge per roll.
+  - Jamming acts on locks, not as a terminal roll. COMMAND and ACOUSTIC have no countermeasures.
+  - All rolls use `sim.rng` (`Prng.chance`) in projectile order inside the Projectiles system.
+  - **DIRCM upkeep:** an economy consumer in the Construction system, next to rearming. It drains `powerDrain` per second continuously and recharges its cooldown at the team's power stall ratio, so with no power it never recharges and switches off in effect.
+  - **Flares and chaff refill** when an aircraft finishes rearming. Their supply cost is not charged separately yet (guide 8.6 says it costs supply); it can be folded into `ammoCost` in M8.
+  - **Placeholder loadouts** (guide 11.6 flavor): Guardian has DIRCM (0.7, 3 s, 15 power/s); Falcon has DIRCM plus 2 chaff; Wasp has 4 flares; Harpy has 6 flares and 6 chaff.
+- **Alternatives:** DIRCM consuming its cooldown only on success; flares before DIRCM.
+- **Why:** "defeats at most one IR missile per cooldown" reads as one engagement. Measured: DIRCM decoys 25 of 40 single missiles, but only 14 of 80 in salvos of 4 (66 of 80 hit).
+
+## D82 — EW events stay in the sim; SAM placeholders (2026-10-20, task 17)
+
+- **Decision:**
+  - `DECOYED` and `LOST_LOCK` are sim events (`Combat.Event`), like `SPAWN_PROJ` and `IMPACT`. They are not on the wire yet: the Events channel carries only ENTER, LEAVE and DEATH, and projectile replication isn't built. `PROTOCOL_VERSION` stays 2.
+  - Placeholder SAM sites (guide 13.5): IR sites `ord_vigil` "Vigil" and `chs_thorn` "Thorn"; long-range radar sites `ord_aegis` "Aegis" (own radar 650, error 20) and `chs_wyvern` "Wyvern" (radar 600, error 45). Missiles `*_ir_sam` and `*_radar_sam` (`canTargetRadar`, `burnThrough` 0.35). New weapon field `burnThrough`.
+  - `Air.spec`'s interception test sets the Wasp's flares to 0: it tests flight, and with flares the Falcon's 4 missiles may all be decoyed. Its assertions are unchanged.
+  - Targeting does not yet prefer lockable targets: a radar SAM keeps a jammed target and holds fire instead of switching to an unjammed one.
+- **Why:** the wire format for projectiles and FX is a Studio/rendering milestone (guide 7). Retargeting on lock failure is a balance and AI question for M8.

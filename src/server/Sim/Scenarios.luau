@@ -86,4 +86,25 @@ Scenarios.standard_start = function(sim: Types.Sim)
 	end
 end
 
+-- Electronic warfare (guide 11.5–11.6): an Order radar SAM site with a
+-- spotter facing a Chaos helicopter under a mobile jammer, and an Order
+-- helicopter with DIRCM inside a ring of four Chaos IR SAM sites.
+Scenarios.ew_test = function(sim: Types.Sim)
+	local order = sim.playerOrder
+	if #order < 2 then
+		error("Scenarios.ew_test: needs two players", 0)
+	end
+	local a, b = order[1], order[2]
+	Spawn.unit(sim, "ord_aegis", a, -450, 0)
+	Spawn.unit(sim, "ord_lancer", a, 100, 150, math.pi)
+	Spawn.unit(sim, "ord_generator", a, -450, 200)
+	Spawn.unit(sim, "ord_guardian", a, -250, -250)
+	Spawn.unit(sim, "chs_wasp", b, 100, 0)
+	Spawn.unit(sim, "chs_shroud", b, 120, -40)
+	for i = 0, 3 do
+		local angle = i * math.pi / 2
+		Spawn.unit(sim, "chs_thorn", b, -250 + 150 * math.sin(angle), -250 + 150 * math.cos(angle))
+	end
+end
+
 return Scenarios

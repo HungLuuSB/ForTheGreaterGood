@@ -9,12 +9,14 @@
 -- explosion applies direct and AoE damage. Projectiles expire after their ttl.
 --
 -- HOMING / TORPEDO projectiles turn toward their target's center at the
--- weapon's turnRate (deg/s) before each step; guidance types, locks and
--- countermeasures come with electronic warfare (guide 11.5, M7).
+-- weapon's turnRate (deg/s) before each step. Guided missiles first run
+-- their midcourse and terminal checks (EW.guide, guide 11.5), which may
+-- break the lock or decoy them.
 
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
+local EW = require("../EW")
 local Types = require("../Types")
 
 local DT = 1 / 15
@@ -59,6 +61,9 @@ return function(sim: Types.Sim)
 		local id = proj[k]
 		local weapon = weapons[c.pWeapon[id]]
 		local g = weapon.gravity or 0
+		if weapon.guidance then
+			EW.guide(sim, id, weapon)
+		end
 		local x0, y0, z0 = c.px[id], c.py[id], c.pz[id]
 		local pvx, pvy, pvz = c.pvx[id], c.pvy[id], c.pvz[id]
 		local homingTarget = c.pTarget[id]

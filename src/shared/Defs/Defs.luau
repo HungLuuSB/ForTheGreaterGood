@@ -67,7 +67,7 @@ export type UnitDef = {
 	},
 	weapons: { WeaponSlot },
 	maxRange: number, -- derived: longest weapon range, 0 if unarmed
-	countermeasures: any?,
+	countermeasures: Countermeasures?,
 	buildPower: number?,
 	buildOptions: { string }?,
 	buildRange: number?,
@@ -85,6 +85,10 @@ export type UnitDef = {
 	icon: string,
 	wreck: string?,
 }
+
+export type Charges = { charges: number, chance: number }
+export type Dircm = { chance: number, cooldown: number, powerDrain: number }
+export type Countermeasures = { flares: Charges?, chaff: Charges?, dircm: Dircm? } -- guide 11.6
 
 export type WeaponDef = {
 	id: string,
@@ -108,6 +112,7 @@ export type WeaponDef = {
 	turnRate: number?,
 	lockRange: number?,
 	terminalRange: number?,
+	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
 	fx: { [string]: string }?,
 }
@@ -313,6 +318,7 @@ local WEAPON_SPEC: Spec = {
 		turnRate = opt(POSITIVE),
 		lockRange = opt(POSITIVE),
 		terminalRange = opt(POSITIVE),
+		burnThrough = opt(FRACTION),
 		canTargetRadar = { kind = "boolean", optional = true },
 		fx = {
 			kind = "record",

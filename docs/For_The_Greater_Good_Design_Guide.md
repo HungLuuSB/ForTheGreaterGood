@@ -993,6 +993,14 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 2. **Midcourse:** every ~5 ticks, re-check. Radar missile whose target entered an enemy jam field beyond burn-through → `LOST_LOCK` (flies straight, self-destructs at lifetime).
 3. **Terminal:** once, when within `terminalRange`, roll countermeasures (11.6). Success → `DECOYED` event; the missile veers off. Failure → it hits.
 
+Implementation (`Sim/EW.luau`, DECISIONS D79–D80, D82):
+- `EW.canLock` gates every guided launch.
+- Midcourse checks run every 5 ticks per missile; burn-through is measured from the missile.
+- The terminal check fires once the missile could reach `terminalRange` within the tick. A decoyed missile turns 60° and loses its target.
+- COMMAND needs the launcher alive, seeing the target and not inside an enemy jam field.
+- `DECOYED` and `LOST_LOCK` are sim events; they are not replicated yet.
+- Measured: an Aegis (lock range 600, burn-through 210) never launches at a jammed Wasp at 250 or 550 studs, even when the Wasp is in plain sight. At 150 studs it launches and hits.
+
 ### 11.6 Countermeasures
 
 Defined per unit:
@@ -1008,6 +1016,11 @@ countermeasures = {
 - **Flares/chaff** use charges, refilled when rearming (costs supply).
 - **DIRCM** (Directional Infrared Counter-Measures) has no charges but a cooldown and power drain. It defeats at most one IR missile per cooldown. **A salvo overwhelms it** — that's the counterplay.
 - All rolls use the match's seeded PRNG in fixed system order, so replays stay identical.
+- Implementation (`Sim/EWState.luau`, DECISIONS D81):
+  - Against IR, DIRCM rolls first (starting its cooldown either way), then flares. Chaff rolls against RADAR.
+  - DIRCM drains power continuously and recharges at the team's power stall ratio.
+  - Flares and chaff refill when rearming finishes.
+  - Measured: DIRCM decoys 25 of 40 single IR missiles but only 14 of 80 in salvos of 4.
 
 **Faction flavor**
 

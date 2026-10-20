@@ -21,6 +21,7 @@ return Templates.extend(Templates.Unit, {
 	ammo = 6,
 	ammoCost = { supply = 8, power = 110 },
 	rearmTime = 1.5,
+	countermeasures = { flares = { charges = 6, chance = 0.55 }, chaff = { charges = 6, chance = 0.5 } },
 	pieces = { "base", "pylon", "muzzle" },
 	model = "chs_harpy",
 	icon = "fighter",

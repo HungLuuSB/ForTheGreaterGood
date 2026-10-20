@@ -21,6 +21,7 @@ return Templates.extend(Templates.Unit, {
 	ammo = 12,
 	ammoCost = { supply = 6, power = 60 },
 	rearmTime = 0.6,
+	countermeasures = { dircm = { chance = 0.7, cooldown = 3, powerDrain = 15 } },
 	pieces = { "base", "pylon", "muzzle" },
 	model = "ord_guardian",
 	icon = "heli",

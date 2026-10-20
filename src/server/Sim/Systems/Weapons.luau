@@ -12,14 +12,15 @@
 -- degrees from sim.rng, in system order, so replays stay exact.
 --   HITSCAN / BEAM: resolved now. Hit if the shot passes within the target's
 --     radius sideways and its half-height vertically at the target distance.
---   BALLISTIC / BOMB (and HOMING / TORPEDO until guidance exists, M7): spawn a
---     projectile from the muzzle. If the pool is full the shot resolves like
---     hitscan (guide 10.5 cap).
+--   BALLISTIC / BOMB / HOMING / TORPEDO: spawn a projectile from the muzzle.
+--     If the pool is full the shot resolves like hitscan (guide 10.5 cap).
+-- Guided missiles launch only with a lock (EW.canLock, guide 11.5).
 
 local Air = require("../Air")
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
+local EW = require("../EW")
 local Sensors = require("../Sensors")
 local Types = require("../Types")
 local World = require("../World")
@@ -192,6 +193,9 @@ return function(sim: Types.Sim)
 					if turret and (pitch < rad(turret.minPitch) or pitch > rad(turret.maxPitch)) then
 						canFire = false
 					end
+				end
+				if canFire and weapon.guidance and not EW.canLock(sim, id, weapon, target, dist) then
+					canFire = false -- no lock, no launch
 				end
 			end
 

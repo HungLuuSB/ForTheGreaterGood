@@ -15,6 +15,7 @@
 
 local AirState = require("./AirState")
 local Defs = require("@shared/Defs/Defs")
+local EW = require("./EW")
 local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
 local Nav = require("./Nav")
@@ -281,7 +282,8 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				a.progress[id] = math.max(progress, 0)
 			end
 			if a.ammo[id] >= (d.ammo :: number) then
-				-- full: take off and go back
+				-- full: take off and go back, flares and chaff restocked (guide 11.6)
+				EW.refill(sim, id)
 				a.phase[id] = "fly"
 				a.pad[id] = 0
 				a.progress[id] = 0

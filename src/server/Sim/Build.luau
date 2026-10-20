@@ -21,6 +21,7 @@ local Grid = require("@shared/Grid/Grid")
 local Air = require("./Air")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
+local EW = require("./EW")
 local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
 local Nav = require("./Nav")
@@ -387,6 +388,9 @@ function Build.step(sim: Types.Sim)
 
 	-- 3. aircraft landing on pads and rearming (also economy consumers)
 	Air.rearmStep(sim, demandS, demandP)
+
+	-- 4. DIRCM upkeep: continuous power drain, cooldown at the stall ratio
+	EW.drainStep(sim, demandP)
 
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]

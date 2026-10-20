@@ -34,6 +34,9 @@ local function intercept(seed: number): (Sim.Sim, number, number)
 	local wasp = Spawn.unit(sim, "chs_wasp", 2, 380, 30, -math.pi / 2)
 	moveTo(sim, 1, { falcon }, -200, 0)
 	moveTo(sim, 2, { wasp }, -450, 30)
+	-- no flares: this spec is about flight, ammo and rearming; countermeasures
+	-- are EW.spec's subject (with flares the 4 missiles may all be decoyed)
+	sim.ew.flares[wasp] = 0
 	return sim, falcon, wasp
 end
 

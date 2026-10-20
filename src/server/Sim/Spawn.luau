@@ -3,6 +3,7 @@
 -- (health, weapon slots). Used by scenarios, tests and (later) construction.
 
 local Air = require("./Air")
+local EW = require("./EW")
 local Lifecycle = require("./Lifecycle")
 local Placement = require("./Placement")
 local Types = require("./Types")
@@ -41,6 +42,7 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 		Placement.occupy(sim, id)
 	end
 	Air.onSpawn(sim, id)
+	EW.onSpawn(sim, id)
 	if def.moveClass == "SUB" then
 		World.setState(sim.world, id, bit32.bor(sim.world.state[id], World.State.SUBMERGED)) -- always submerged (guide 12.3)
 	end
