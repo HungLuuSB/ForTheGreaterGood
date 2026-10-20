@@ -29,26 +29,7 @@ local World = require("../World")
 local DT = 1 / 15
 local sqrt, sin, cos = math.sqrt, math.sin, math.cos
 
--- Turns velocity (vx, vy, vz) toward direction (dx, dy, dz) by at most
--- maxAngle radians, keeping its speed.
-local function steer(vx: number, vy: number, vz: number, dx: number, dy: number, dz: number, maxAngle: number): (number, number, number)
-	local speed = sqrt(vx * vx + vy * vy + vz * vz)
-	local dl = sqrt(dx * dx + dy * dy + dz * dz)
-	if speed < 1e-9 or dl < 1e-9 then
-		return vx, vy, vz
-	end
-	local ax, ay, az = vx / speed, vy / speed, vz / speed
-	local bx, by, bz = dx / dl, dy / dl, dz / dl
-	local dot = math.clamp(ax * bx + ay * by + az * bz, -1, 1)
-	local angle = math.acos(dot)
-	local t = if angle <= maxAngle then 1 else maxAngle / angle
-	local nx, ny, nz = ax + (bx - ax) * t, ay + (by - ay) * t, az + (bz - az) * t
-	local nl = sqrt(nx * nx + ny * ny + nz * nz)
-	if nl < 1e-9 then
-		return vx, vy, vz
-	end
-	return nx / nl * speed, ny / nl * speed, nz / nl * speed
-end
+local steer = Ballistics.steer
 
 local candidates: { number } = {}
 
