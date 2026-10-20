@@ -47,6 +47,7 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
   - `lune run bench`: flow field benchmark (results in `docs/PROGRESS.md`).
   - `lune run debug_map`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored).
   - `lune run stress`: stress test and bandwidth report (results in `docs/PROGRESS.md`).
+  - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).
   - `lune run build`: Roblox build (see below). `lune run check_build [place]` re-checks a built place.
 - `src/client` is Roblox-only and isn't covered by this rule.
 - Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). So the source keeps the require style above, and a build step converts it (DECISIONS D84):

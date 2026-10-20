@@ -338,6 +338,18 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 22 — Balance report ✅
+
+- `lune run balance [seeds] [filter]` writes `docs/BALANCE.md` (D89): 1,064 battles (19 × 19 units, 2 starts, 2 seeds) in 190 s. Report only; no stats changed.
+- **What the placeholder stats show** (value trade, geometric mean; wins / fights):
+  - **Ships dominate:** cruisers 18–19×, carriers 11–18×, destroyers 3–5×, corvettes 5–11×. Only ships, bombers, subs and artillery can hurt them, and their health is high for their value.
+  - **Bombers never win** (0 / 56 each) but trade 3.6–7.9×: they kill some units and can't be shot back by ground units without AA, then run out of bombs.
+  - **Attack helicopters are strong** (Guardian 6.45, Wasp 7.51): only SAMs, flak and fighters can hit them.
+  - **Ground units trade at about 0.4–1.1.** Juggernaut and Jackal are the best Chaos ground units (≈1.0); Seraph and Gorgon the worst, because radar SAMs only hit aircraft and lose to anything on the ground.
+  - **MLRS** (Judgement, Hydra) and **ASW helicopters** (Tidewatch, Leech) never win: MLRS lose at close range; ASW helicopters only hit ships and submarines.
+  - **Fighters:** Harpy 1.19 and Manticore 1.05 beat Falcon 0.82 and Archon 1.76 on wins (17 and 19 vs 8 and 4 of 40).
+- Tests unchanged: **29 specs, 205 passed**.
+
 ### Task 21 — Full placeholder roster and tech tree ✅
 
 - 79 new unit and structure defs (115 total: 57 Order, 58 Chaos) and 16 new weapons, generated from role templates (D88).

@@ -934,3 +934,17 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - in the sim: shipyard → Tidewright → tidal generator, and airfield → Skywright → solar array;
   - mutations caught: a T2 tank in the T1 plant, Tidewatch missing from the Advanced Airfield.
 - **Changed test data:** `Defs.spec`'s "unknown build option" case used `ord_paladin`, which now exists; it uses `ord_no_such_unit`.
+
+## D89 — Balance report method (2026-10-20, task 22)
+
+- **Decision** (`lune run balance`, `docs/BALANCE.md`; report only):
+  - Every Order combat unit against every Chaos combat unit where one can damage the other. Workers, commanders, unarmed support aircraft and ships, and structures are left out.
+  - Equal value per side: about 3,000, with value = supply + power ÷ 10 (BAR's metal + energy ÷ 60 idea, rescaled to our costs); at most 20 units.
+  - Two starts: close (120 studs) and long (600 studs, both attack-move at the enemy centroid every 2 s). 2 seeds; at most 120 s.
+  - Map: flat 128 for land and air pairs; `sea:256` when a ship is involved (ships offshore, land units on the beach).
+  - Score: value trade = enemy value destroyed ÷ own value lost, damage counted pro rata. Per-unit geometric means are over all matchups.
+- **Caveats:**
+  - Aircraft have no pads and run dry.
+  - One-sided matchups (bombers vs units with no AA) give large trades without wins.
+  - Equal value at a 3,000 budget rounds expensive units to 1–2 copies.
+- **Why:** a cheap, deterministic first look for M8 balancing; the numbers aren't targets.
