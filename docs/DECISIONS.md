@@ -259,3 +259,83 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
 - **Decision:** `Pathing` will spend at most 12,000 flow-field work units per tick. The benchmark measured 1,640–2,740 units/ms in Lune on this PC (task 8), so 8 ms ≈ 13,000 units at the slowest map, rounded down.
 - **Alternatives:** a wall-clock budget (rejected in D29); a lower budget with Actors doing the heavy lifting.
 - **Why:** it's deterministic and close to the guide's 8 ms on the measured hardware. Re-calibrate on a live Roblox server (`--!native` codegen and server CPUs differ from Lune on a desktop) and change the one constant.
+
+## D34 — The sim loads terrain from a map ID (2026-10-20)
+
+- **Decision:**
+  - `Shared/Grid/MapRegistry` turns `mapId` into layers: `none`, `flat:<n>`, `wall:<n>` (a water wall with one gap), `gen:<seed>:<n>`.
+  - `Sim.new` builds passability and `Nav` when there is a map. `"none"` runs without movement.
+  - Unknown IDs are errors.
+- **Alternatives:** pass layers directly in the config.
+- **Why:** the map ID is in the replay header, so a replay rebuilds the same terrain. Baked maps become `baked:<name>` later.
+
+## D35 — One shared field per group; each unit has its own slot and steers straight when it can (2026-10-20)
+
+- **Decision:**
+  - Units of one MOVE are grouped by (move class, clearance need). Each group gets one order and one flow field to the group goal.
+  - Each unit gets its own goal (a formation slot).
+  - A unit steers straight to its slot when its cell and the slot share an open quadtree leaf, or when a sampled line check (every 2 studs, within 96 studs) is clear. This is re-checked every 4 ticks, staggered by ID.
+  - Otherwise it follows the field. With no field yet (job still running), it steers straight.
+  - The group corridor comes from one leaf-level Dijkstra (`Route.findMany`) covering every member's start leaf.
+- **Alternatives:** one field per unit goal (50× the cost); A* waypoints per unit.
+- **Why:** guide 6.3/6.6 say "all units in one move order … share one field" and "each gets its own goal cell". The same-leaf shortcut is benchmark fix #1: open terrain needs no field near the goal.
+
+## D36 — Spatial hash buckets are 16 studs, not 8 (2026-10-20)
+
+- **Decision:** separation and overlap queries use 16-stud buckets, searching `ceil((2·maxRadius + 2) / 16)` rings (1 ring for footprint ≤ 2).
+- **Alternatives:** the guide's 8-stud cells (6.5), searching two rings (5×5).
+- **Why:** the separation reach for two footprint-1 units is 9.2 studs, more than one 8-stud cell. 16-stud buckets with a 3×3 search cover it with fewer bucket visits. The hash uses linked lists in reused arrays, so it doesn't allocate per tick.
+
+## D37 — Collision radius = 0.45 × footprint × 8 studs; overlaps resolved by position (2026-10-20)
+
+- **Decision:**
+  - A footprint-1 unit has radius 3.6 studs.
+  - After moving, overlapping pairs are pushed apart (2 passes): 50/50 when both are moving or both idle, 80/20 with the idle unit yielding (push priority, guide 6.5).
+  - A push that would enter blocked terrain is skipped.
+- **Alternatives:** velocity-only avoidance (RVO/ORCA).
+- **Why:** it's simple and deterministic, and it guarantees near-zero overlap. Measured worst overlap at rest is 0.20 studs. RVO is worth revisiting if crowds jam in real maps.
+
+## D38 — Arrival, give-up and holding position (2026-10-20)
+
+- **Decision:**
+  - Arrived means within 1.5 studs of the unit's own goal.
+  - A unit within 24 studs whose distance hasn't improved by 0.5 stud in 45 ticks also ends its order (crowded goal), and its current spot becomes its goal.
+  - Idle units hold their goal: one pushed more than its radius away walks back at 60% speed, unless it's within 6 studs and already stopped.
+  - STOP sets the goal to the current position.
+- **Alternatives:** exact arrival only (units jam forever on a crowded slot); never returning (arrived units get shoved 45 studs away by later arrivals, as observed).
+- **Why:** guide 6.6: "units within a radius of the goal stop rather than pushing to the exact cell". Holding the spot keeps the formation after the crowd passes.
+
+## D39 — Fields are extended for units that leave the corridor or stall (2026-10-20)
+
+- **Decision:**
+  - Each tick, units whose cell has no field direction, or with no progress for 90 ticks, are collected per order.
+  - `Nav.extendField` routes them (`findMany`), merges the result into the current corridor and queues a new field job.
+  - At most once per 15 ticks per order, and never while a job is pending.
+- **Alternatives:** per-unit fallback fields; letting stuck units give up.
+- **Why:** crowd pushes moved a unit against a wall outside the corridor, and steering straight then pinned it there forever (seen on `wall:96`). The extension fixed it in 3–5 extra fields on the wall maps.
+
+## D40 — Formation slots: lattice around the goal, far side filled first (2026-10-20)
+
+- **Decision:**
+  - Slots are lattice points around the group goal, spaced 1.3 × the largest unit diameter, nearest first, keeping only open cells in the group's component.
+  - A goal on blocked ground snaps to the nearest open cell (BFS).
+  - Slots are filled far side first along the approach direction, each by the nearest unassigned unit.
+  - Line moves: evenly spaced points from start to end. When the line is too short, extra rows step back toward the group's centroid.
+- **Alternatives:** center-first filling. It measured worse: worst unit 27.8 studs from its slot versus 16.5, and 32 versus 35 of 50 within 2 studs on average across 9 maps.
+- **Why:** units that arrive first take the deepest slots, so later arrivals don't have to squeeze past them.
+
+## D41 — FIGHT and PATROL move like MOVE for now; the queue flag is ignored (2026-10-20)
+
+- **Decision:** FIGHT (attack-move) and PATROL issue plain moves. A new order replaces the current one, even with the QUEUE flag.
+- **Alternatives:** ignore them until their systems exist.
+- **Why:** players expect units to move. Attack-move becomes "move, engage targets on the way" in task 10 or M2. Order queues (shift) need an order list per unit, which is a later task.
+
+## D42 — Tracked-vehicle movement model (2026-10-20)
+
+- **Decision:**
+  - Units move only along their heading (forward = `(sin h, cos h)`). The heading turns toward the desired direction at `turnRate`.
+  - Target speed is `min(maxSpeed, sqrt(2·brake·distance))` scaled by `max(0, cos(heading error))`, so a unit facing away turns in place.
+  - Speed changes at `accel` / `brake`.
+  - A blocked cell makes the unit slide along the free axis at half speed, or stop.
+- **Alternatives:** holonomic movement (strafe freely).
+- **Why:** it fits tanks. Turn rate becomes gameplay, consistent with the aim model's philosophy (guide 10.3). Jets and helis get their own models in M6.

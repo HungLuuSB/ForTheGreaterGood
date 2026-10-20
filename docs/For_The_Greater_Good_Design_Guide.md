@@ -504,12 +504,23 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - Units do not path around each other. They use **separation steering** against nearby units found through a dynamic spatial hash (rebuilt or updated each tick, same 8-stud cells).
 - Idle units nudge aside for moving friendly units (push priority: moving > idle; larger > smaller).
 - Structures are static obstacles in the grid, never in the spatial hash.
+- Implementation notes (`Sim/Systems/Movement.luau`, DECISIONS D36–D38, D42):
+  - The hash uses 16-stud buckets (3×3 search).
+  - Separation steering acts within radius sum + 2 studs. After moving, overlaps are resolved by position, with idle units yielding 80/20.
+  - Tanks move along their heading at a limited turn rate, with an accel/brake speed curve.
+  - Idle units return to their spot when pushed off it.
 
 ### 6.6 Group movement & formations
 
 - **Line move (BAR-style):** dragging a right-click line spreads selected units evenly along it; each gets its own goal cell but units sharing a move class and nearby goals can share a field.
 - **Speed matching (optional toggle):** group moves at the slowest member's speed.
 - Arrival: units within a radius of the goal stop rather than pushing to the exact cell.
+- Implementation notes (`Sim/Nav.luau`, DECISIONS D35, D38–D40):
+  - Each (move class, footprint) group shares one field to the group goal, and each unit gets its own formation slot.
+  - Slots fill far side first along the approach direction.
+  - A unit steers straight to its slot when it shares an open leaf with it or the line is clear.
+  - Arrival is within 1.5 studs. A unit gives up within 24 studs after 45 ticks without progress.
+  - Units pushed out of the corridor, or stalled, trigger a merged-corridor field extension.
 
 ### 6.7 Air movement
 

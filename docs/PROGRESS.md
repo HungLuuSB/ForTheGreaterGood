@@ -26,8 +26,8 @@ Status of the unattended work session. A new session should be able to continue 
 | 6 | Quadtree + coarse A* route + corridor | ✅ done |
 | 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | ✅ done |
 | 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | ✅ done (over budget, see Benchmarks) |
-| 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | ⏳ next |
-| 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | pending |
+| 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | ✅ done |
+| 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | ⏳ next |
 | — | Rules review (requires, determinism, no Instances, hot-loop allocation) | pending |
 
 ## Done so far
@@ -133,6 +133,44 @@ Status of the unattended work session. A new session should be able to continue 
 - Results below. No optimization was done, as instructed.
 - Tests: unchanged (**14 specs, 107 passed**).
 - Decision: D33.
+
+### Task 9 — Movement and local avoidance
+
+- `src/shared/Grid/MapRegistry.luau`: `none`, `flat:<n>`, `wall:<n>`, `gen:<seed>:<n>`. The sim loads its map from `mapId` (D34).
+- `src/server/Sim/Nav.luau`: movement profiles, lazy quadtrees, field cache, the job FIFO, move orders with group fields and per-unit slots (spiral formation or line), goal snapping, field extension, and line-of-sight checks.
+- Systems:
+  - `Pathing`: runs field jobs within 12,000 work units per tick.
+  - `Movement`: steer, move with terrain sliding, overlap resolution, write-back with dirty bits.
+  - `Commands`: MOVE/FIGHT/PATROL (with LINE) and STOP now have effects.
+- `World` gained movement fields (speed, orderId, goal, direct, progress), all hashed. `Route.findMany` and `Route.mergeCorridors` were added. Scenario `march_test` places 50 Lancers on the west side.
+- `.lune/debug_movement.luau`: `lune run debug_movement [mapId] [ticks]` writes `debug_out/movement_<map>.png` with tracks and prints arrival statistics.
+- Specs (`Movement.spec`):
+  - 50 units cross a lake map, and 50 units detour through a wall's gap: all finish within 2,000 ticks, end ≤ 24 studs from their slots on open ground, and overlap at most 0.5 stud;
+  - one order shares one field with distinct slots;
+  - same seed gives identical positions and hash, and the replay reproduces it;
+  - line-move goals are evenly spaced end to end, and units reach them;
+  - a water goal snaps to land;
+  - STOP; out-of-map cells are ignored;
+  - idle units stay clean (no dirty bits).
+- Tests: **15 specs, 115 passed, 0 failed**.
+- Bugs found and fixed: the job FIFO used `table.insert` on a queue with nil head slots, so extension jobs never ran. Arrived units were shoved away by later arrivals.
+- Decisions: D34–D42.
+
+Movement results (`lune run debug_movement`, 50 Lancers west → east, Lune on the dev PC):
+
+| map | ticks to all arrived | sim ms/tick | fields built | units ≤ 2 studs from slot | worst distance from slot | closest pair gap at end |
+|---|---|---|---|---|---|---|
+| gen:7:96 | 461 | 0.18 | 2 | 34/50 | 13.7 | −0.00 |
+| gen:3:96 | 404 | 0.18 | 1 | 47/50 | 6.3 | +0.07 |
+| gen:11:128 | 532 | 0.17 | 1 | 45/50 | 5.3 | −0.00 |
+| gen:21:128 | 628 | 0.17 | 2 | 33/50 | 11.7 | −0.20 |
+| gen:5:96 | 477 | 0.17 | 1 | 27/50 | 7.3 | −0.00 |
+| flat:64 | 312 | 0.14 | 1 | 45/50 | 14.0 | −0.00 |
+| wall:64 | 431 | 0.18 | 5 | 25/50 | 5.8 | −0.00 |
+| wall:96 | 597 | 0.20 | 5 | 32/50 | 16.5 | −0.00 |
+| wall:128 | 757 | 0.24 | 6 | 26/50 | 14.8 | −0.00 |
+
+Every unit arrives on every map and overlap is negligible. Formation precision is mediocre: about 70% of units end within 2 studs of their slot, and the rest stop up to about 17 studs short where the crowd blocks them (D38 give-up). Better slot assignment (e.g. Hungarian matching, or reserving the approach lane) is a possible follow-up.
 
 ## Benchmarks
 

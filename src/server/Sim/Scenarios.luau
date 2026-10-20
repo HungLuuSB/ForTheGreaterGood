@@ -3,6 +3,7 @@
 -- header, so a replay rebuilds the same starting world. Setups may use only
 -- sim.rng for randomness and must visit players in sim.playerOrder.
 
+local Nav = require("./Nav")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -29,6 +30,44 @@ Scenarios.skirmish_test = function(sim: Types.Sim)
 				health = def.health,
 			})
 		end
+	end
+end
+
+-- 50 Lancers for the first player, in a block (columns of up to 10) near the
+-- west edge of the map
+-- (spots on terrain they can't stand on are skipped). Needs a map.
+Scenarios.march_test = function(sim: Types.Sim)
+	local nav = sim.nav
+	if nav == nil then
+		error("Scenarios.march_test: needs a map (mapId)", 0)
+	end
+	local def = sim.defs.units.ord_lancer
+	local profile = nav.profiles[def.index]
+	local g = nav.grid
+	local owner = sim.playerOrder[1]
+	local team = sim.players[owner].team
+	local spacing = 12
+	local placed = 0
+	local x = g.originX + 24
+	while placed < 50 and x < g.originX + g.sizeX / 3 do
+		for row = 0, 9 do
+			-- rows alternate outward from the middle: 0, +1, -1, +2, -2, ...
+			local offset = if row % 2 == 0 then row // 2 else -(row // 2 + 1)
+			local z = offset * spacing
+			if placed < 50 and math.abs(z) < g.sizeZ / 2 - 16 and Nav.fits(nav, profile, x, z) then
+				World.spawn(sim.world, sim.tick, {
+					defIndex = def.index,
+					team = team,
+					owner = owner,
+					x = x,
+					z = z,
+					heading = math.pi / 2, -- facing +X
+					health = def.health,
+				})
+				placed += 1
+			end
+		end
+		x += spacing
 	end
 end
 

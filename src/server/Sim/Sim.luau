@@ -12,10 +12,13 @@
 
 local Defs = require("@shared/Defs/Defs")
 local Hash = require("@shared/Util/Hash")
+local MapRegistry = require("@shared/Grid/MapRegistry")
+local Passability = require("@shared/Grid/Passability")
 local Packer = require("@shared/Net/Packer")
 local Prng = require("@shared/Util/Prng")
 local Profiler = require("@shared/Util/Profiler")
 local Schema = require("@shared/Net/Schema")
+local Nav = require("./Nav")
 local Replay = require("./Replay")
 local Scenarios = require("./Scenarios")
 local Types = require("./Types")
@@ -32,7 +35,7 @@ export type Sim = Types.Sim
 export type Config = {
 	seed: number,
 	players: { Types.Player },
-	mapId: string?,
+	mapId: string?, -- MapRegistry ID, default "none" (no terrain, no movement)
 	scenario: string?, -- key in Scenarios, default "empty"
 	defs: Defs.DefSet?, -- default Defs.load()
 }
@@ -86,6 +89,8 @@ function Sim.new(config: Config): Sim
 
 	local defs = config.defs or Defs.load()
 	local mapId = config.mapId or "none"
+	local layers = MapRegistry.load(mapId)
+	local map = if layers then Passability.build(layers) else nil
 	local headerPlayers = {}
 	for i, id in order do
 		headerPlayers[i] = { id = id, team = players[id].team }
@@ -99,6 +104,8 @@ function Sim.new(config: Config): Sim
 		world = World.new(),
 		rng = Prng.new(seed),
 		defs = defs,
+		map = map,
+		nav = if map then Nav.new(map, defs) else nil,
 		players = players,
 		playerOrder = order,
 		queue = {},

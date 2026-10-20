@@ -46,7 +46,7 @@ local function drive(sim: Sim.Sim, driver: Prng.Prng)
 end
 
 local function run(seed: number, driverSeed: number, ticks: number): Sim.Sim
-	local sim = Sim.new({ seed = seed, players = PLAYERS, scenario = "skirmish_test", mapId = "flat" })
+	local sim = Sim.new({ seed = seed, players = PLAYERS, scenario = "skirmish_test", mapId = "none" })
 	local driver = Prng.new(driverSeed)
 	for _ = 1, ticks do
 		drive(sim, driver)

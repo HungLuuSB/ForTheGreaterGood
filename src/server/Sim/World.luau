@@ -59,6 +59,15 @@ export type World = {
 	moveState: { [number]: number },
 	dirty: { [number]: number }, -- World.Dirty bits
 
+	-- movement (server-only, not replicated directly)
+	speed: { [number]: number }, -- studs/s along heading
+	orderId: { [number]: number }, -- active move order (Nav), 0 = idle
+	goalX: { [number]: number }, -- this unit's own goal (formation slot)
+	goalZ: { [number]: number },
+	direct: { [number]: boolean }, -- straight line to the goal is clear
+	bestDist: { [number]: number }, -- closest distance to the goal so far
+	progressTick: { [number]: number }, -- tick bestDist last improved
+
 	-- ID allocator
 	nextFresh: number, -- next never-used ID
 	freeIds: { number }, -- FIFO of freed IDs ...
@@ -83,6 +92,13 @@ function World.new(): World
 		fireState = {},
 		moveState = {},
 		dirty = {},
+		speed = {},
+		orderId = {},
+		goalX = {},
+		goalZ = {},
+		direct = {},
+		bestDist = {},
+		progressTick = {},
 		nextFresh = 1,
 		freeIds = {},
 		freeTicks = {},
@@ -149,6 +165,13 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 	w.fireState[id] = World.FireState.FIRE_AT_WILL
 	w.moveState[id] = World.MoveState.MANEUVER
 	w.dirty[id] = ALL_DIRTY
+	w.speed[id] = 0
+	w.orderId[id] = 0
+	w.goalX[id] = info.x
+	w.goalZ[id] = info.z
+	w.direct[id] = false
+	w.bestDist[id] = 0
+	w.progressTick[id] = tick
 	return id
 end
 
@@ -178,6 +201,13 @@ function World.despawn(w: World, tick: number, id: number)
 	w.fireState[id] = nil
 	w.moveState[id] = nil
 	w.dirty[id] = nil
+	w.speed[id] = nil
+	w.orderId[id] = nil
+	w.goalX[id] = nil
+	w.goalZ[id] = nil
+	w.direct[id] = nil
+	w.bestDist[id] = nil
+	w.progressTick[id] = nil
 
 	local tail = w.freeTail
 	w.freeIds[tail] = id
@@ -256,6 +286,11 @@ function World.hash(w: World, h: number?): number
 		hv = Hash.u32(hv, w.state[id])
 		hv = Hash.u32(hv, w.fireState[id])
 		hv = Hash.u32(hv, w.moveState[id])
+		hv = Hash.number(hv, w.speed[id])
+		hv = Hash.u32(hv, w.orderId[id])
+		hv = Hash.number(hv, w.goalX[id])
+		hv = Hash.number(hv, w.goalZ[id])
+		hv = Hash.u32(hv, if w.direct[id] then 1 else 0)
 	end
 	hv = Hash.u32(hv, w.nextFresh)
 	for i = w.freeHead, w.freeTail - 1 do

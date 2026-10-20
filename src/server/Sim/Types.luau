@@ -3,6 +3,8 @@
 -- instead of Sim.luau, which would be a require cycle.
 
 local Defs = require("@shared/Defs/Defs")
+local Nav = require("./Nav")
+local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
 local Replay = require("./Replay")
 local Schema = require("@shared/Net/Schema")
@@ -24,6 +26,8 @@ export type Sim = {
 	world: World.World,
 	rng: Prng.Prng, -- the only randomness the sim may use
 	defs: Defs.DefSet,
+	map: Passability.PassMap?, -- nil for mapId "none"
+	nav: Nav.Nav?, -- movement state; nil without a map
 	players: { [number]: Player },
 	playerOrder: { number }, -- player IDs, ascending
 	queue: { QueuedCommand }, -- commands to apply on the next tick

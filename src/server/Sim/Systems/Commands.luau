@@ -3,11 +3,15 @@
 --
 -- Commands were decoded (structurally validated) by Sim.submit. Here each one
 -- is recorded into the replay, then applied to the units the sender owns;
--- other unit IDs are skipped. Orders that need movement or combat (MOVE,
--- ATTACK, BUILD...) are accepted and recorded but have no effect until those
--- systems exist (M1–M3).
+-- other unit IDs are skipped.
+--
+-- Effects so far: fire state, move state, toggle; MOVE (plus FIGHT and PATROL,
+-- which act as plain moves until combat and patrol orders exist) and STOP
+-- when the sim has a map. ATTACK, BUILD and the rest are recorded but have no
+-- effect until their systems exist (M2–M3).
 
 local Schema = require("@shared/Net/Schema")
+local Nav = require("../Nav")
 local Replay = require("../Replay")
 local Types = require("../Types")
 local World = require("../World")
@@ -15,10 +19,57 @@ local World = require("../World")
 local CT = Schema.CmdType
 local bor, band, bnot = bit32.bor, bit32.band, bit32.bnot
 local TOGGLED_ON = World.State.TOGGLED_ON
+local LINE = Schema.CmdFlag.LINE
+
+local MOVE_LIKE = {
+	[CT.MOVE] = true,
+	[CT.FIGHT] = true,
+	[CT.PATROL] = true,
+}
+
+local function ownedUnits(w: World.World, player: number, unitIds: { number }): { number }
+	local out = {}
+	for _, id in unitIds do
+		if w.owner[id] == player then
+			table.insert(out, id)
+		end
+	end
+	return out
+end
+
+local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
+	local nav = sim.nav
+	if nav == nil then
+		return
+	end
+	local g = nav.grid
+	local cell = cmd.cell :: number
+	if cell >= g.cellCount then
+		return -- outside this map: ignore (the record itself was well-formed)
+	end
+	local units = ownedUnits(sim.world, player, cmd.unitIds)
+	if #units == 0 then
+		return
+	end
+	local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+	local lx, lz
+	if band(cmd.flags, LINE) ~= 0 then
+		local cell2 = cmd.cell2 :: number
+		if cell2 >= g.cellCount then
+			return
+		end
+		lx, lz = g:decode(cell2, cmd.offX2 :: number, cmd.offZ2 :: number)
+	end
+	Nav.issueMove(nav, sim.world, sim.tick, units, x, z, lx, lz)
+end
 
 local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	local w = sim.world
 	local cmdType = cmd.cmdType
+	if MOVE_LIKE[cmdType] then
+		applyMove(sim, player, cmd)
+		return
+	end
 	for _, id in cmd.unitIds do
 		if w.owner[id] ~= player then
 			continue -- dead, never existed, or someone else's
@@ -30,6 +81,10 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		elseif cmdType == CT.TOGGLE then
 			local state = w.state[id]
 			World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
+		elseif cmdType == CT.STOP and sim.nav then
+			Nav.clearOrder(sim.nav, w, id)
+			-- hold where it stands
+			w.goalX[id], w.goalZ[id] = w.posX[id], w.posZ[id]
 		end
 	end
 end
