@@ -883,3 +883,26 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
 - **Alternatives:**
   - renumbering every leaf to match a fresh build's IDs (O(map) per change);
   - rebuilding dirty trees as sliced jobs (stale trees in between).
+
+## D87 — Teams, ally teams and match rules (2026-10-20, task 20)
+
+- **Teams and ally teams** (guide 16.1, 8.3):
+  - A player's `team` is their economy account and ownership, as before. New: `allyTeam` (default = `team`); every team belongs to exactly one ally team.
+  - Units carry `w.ally`. Sight maps, visibility, ghosts and radar lists are per ally team, so allies share sight, radar and sonar.
+  - Targeting, the contact grid, projectile friendliness and AoE friendly fire use the ally team, so allies never target or directly hit each other.
+  - Economy accounts stay per team. Overflow above storage goes to allies with room, split evenly among those that still have room (repeated until placed), in fixed team order; the rest is wasted. Order per window: production and spending → overflow sharing → stall ratios (guide 8.4).
+  - Giving units and resources to allies (guide 16.1) is a command, not done yet.
+- **Match config** (`Sim.new{ match = { mode, win, unitCap? } }`, absent = no rules):
+  - FFA: 2–8 players, each their own ally team.
+  - TEAM: 2–4 ally teams of up to 4 players. I allow 1-player ally teams (uneven matches) where the guide says "2–4 players".
+  - Unit cap default from guide 16.4: `clamp(300 − 25 × (players − 2), 150, 300)`: 300 in 1v1, 150 in an 8-player FFA.
+- **Unit cap:** counts units and structures a player owns, frames included. At the cap, construction fails with `unit_cap` and a finished factory item waits at the exit until there is room.
+- **Win conditions:**
+  - A new `Sim.Match` system runs every tick after Construction (guide 3.3 order updated).
+  - COMMAND_ENDS: a player with no COMMANDER-category unit left is out. ANNIHILATION: a player with nothing left is out.
+  - Per-player counts come from Lifecycle hooks (`addedHooks` is new).
+  - An eliminated player's units self-destruct: lethal overkill damage, so no wrecks, applied by the next Damage step.
+  - An ally team is defeated when all its players are out. When ≤ 1 ally team remains, the match ends (winner 0 = nobody: a draw).
+  - Sim events `ELIMINATED` and `MATCH_END` (not on the wire yet, like D82). `MatchState` is hashed.
+- **Replay format 2:** the header stores each player's ally team and the match options.
+- **Alternatives:** separate economies per player within one team (BAR-style comshare, not needed); removing an eliminated player's units instantly (self-destruct reads better and leaves death events).

@@ -45,6 +45,7 @@ export type Account = { supply: Resource, power: Resource }
 export type Economy = {
 	accounts: { [number]: Account },
 	teams: { number }, -- ascending
+	allyOf: { [number]: number }, -- team → ally team (overflow is shared within it)
 	producers: { number }, -- unit IDs with production / extractor / storage
 	producerSlot: { [number]: number },
 }
@@ -62,7 +63,7 @@ local function newResource(): Resource
 	}
 end
 
-function Economy.new(teams: { number }): Economy
+function Economy.new(teams: { number }, allyOf: { [number]: number }?): Economy
 	local accounts = {}
 	local sorted = table.clone(teams)
 	table.sort(sorted)
@@ -73,7 +74,11 @@ function Economy.new(teams: { number }): Economy
 			table.insert(unique, t)
 		end
 	end
-	return { accounts = accounts, teams = unique, producers = {}, producerSlot = {} }
+	local allies: { [number]: number } = {}
+	for _, t in unique do
+		allies[t] = if allyOf then allyOf[t] or t else t
+	end
+	return { accounts = accounts, teams = unique, allyOf = allies, producers = {}, producerSlot = {} }
 end
 
 -- Does this def produce, extract or store anything?
@@ -101,20 +106,64 @@ function Economy.removeProducer(eco: Economy, id: number)
 	eco.producerSlot[id] = nil
 end
 
--- Settles one resource for a window. Pure; exposed for tests.
-function Economy.settle(r: Resource, window: number)
+-- Settles the stored amount for a window; returns the overflow above
+-- storage (not yet counted as wasted: allies may take it).
+local function settleStored(r: Resource, window: number): number
 	local stored = r.stored + r.income * window - r.spent + r.reclaimed
 	r.spent = 0
 	r.reclaimed = 0
+	local overflow = 0
 	if stored > r.storage then
-		r.wasted += stored - r.storage
+		overflow = stored - r.storage
 		stored = r.storage
 	elseif stored < 0 then
 		stored = 0 -- income dropped mid-window (a producer died): forgive the remainder
 	end
 	r.stored = stored
+	return overflow
+end
+
+local function settleRatio(r: Resource, window: number)
 	local wanted = r.demand * window
-	r.ratio = if wanted > 0 then math.min(1, (stored + r.income * window) / wanted) else 1
+	r.ratio = if wanted > 0 then math.min(1, (r.stored + r.income * window) / wanted) else 1
+end
+
+-- Settles one resource for a window, overflow wasted. Pure; exposed for tests.
+function Economy.settle(r: Resource, window: number)
+	r.wasted += settleStored(r, window)
+	settleRatio(r, window)
+end
+
+-- Gives `team`'s overflow to its allies with room (guide 8.4 "overflow
+-- sharing", 16.1): split evenly among the allies that still have room,
+-- repeated until it is placed or nobody has room; the rest is wasted.
+local RESOURCES: { "supply" | "power" } = { "supply", "power" }
+local overflowScratch: { [number]: number } = {}
+local function shareOverflow(eco: Economy, kind: "supply" | "power", team: number, amount: number)
+	local ally = eco.allyOf[team]
+	local left = amount
+	while left > 1e-9 do
+		local open = 0
+		for _, t in eco.teams do
+			local r = eco.accounts[t][kind]
+			if t ~= team and eco.allyOf[t] == ally and r.stored < r.storage then
+				open += 1
+			end
+		end
+		if open == 0 then
+			break
+		end
+		local share = left / open
+		for _, t in eco.teams do
+			local r = eco.accounts[t][kind]
+			if t ~= team and eco.allyOf[t] == ally and r.stored < r.storage then
+				local give = math.min(share, r.storage - r.stored)
+				r.stored += give
+				left -= give
+			end
+		end
+	end
+	eco.accounts[team][kind].wasted += math.max(left, 0)
 end
 
 -- Effective progress ratio for a consumer of cost (supply, power): the
@@ -168,10 +217,20 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 			acc.power.storage += s.power or 0
 		end
 	end
-	for _, team in eco.teams do
-		local acc = eco.accounts[team]
-		Economy.settle(acc.supply, Economy.WINDOW)
-		Economy.settle(acc.power, Economy.WINDOW)
+	-- production and spending, then overflow sharing, then ratios (guide 8.4)
+	for _, kind in RESOURCES do
+		for _, team in eco.teams do
+			overflowScratch[team] = settleStored(eco.accounts[team][kind], Economy.WINDOW)
+		end
+		for _, team in eco.teams do
+			local over = overflowScratch[team]
+			if over > 0 then
+				shareOverflow(eco, kind, team, over)
+			end
+		end
+		for _, team in eco.teams do
+			settleRatio(eco.accounts[team][kind], Economy.WINDOW)
+		end
 	end
 end
 

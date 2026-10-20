@@ -20,6 +20,8 @@ local Profiler = require("@shared/Util/Profiler")
 local Schema = require("@shared/Net/Schema")
 local AirState = require("./AirState")
 local EWState = require("./EWState")
+local Match = require("./Match")
+local MatchState = require("./MatchState")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
@@ -46,6 +48,7 @@ export type Config = {
 	mapId: string?, -- MapRegistry ID, default "none" (no terrain, no movement)
 	scenario: string?, -- key in Scenarios, default "empty"
 	defs: Defs.DefSet?, -- default Defs.load()
+	match: MatchState.Config?, -- match rules (guide 16); nil = none
 }
 
 type System = { name: string, every: number, run: (Sim) -> () }
@@ -62,6 +65,7 @@ local SYSTEMS: { System } = {
 	{ name = "Sim.Projectiles", every = 1, run = require("./Systems/Projectiles") },
 	{ name = "Sim.Damage", every = 1, run = require("./Systems/Damage") },
 	{ name = "Sim.Construction", every = 1, run = require("./Systems/Construction") },
+	{ name = "Sim.Match", every = 1, run = require("./Systems/Match") },
 	{ name = "Sim.NetOut", every = 1, run = require("./Systems/NetOut") },
 }
 
@@ -90,10 +94,32 @@ function Sim.new(config: Config): Sim
 		if p.team ~= math.floor(p.team) or p.team < 1 or p.team > Sim.MAX_TEAMS then
 			error(`Sim.new: team must be an integer in 1..{Sim.MAX_TEAMS}, got {p.team}`, 2)
 		end
-		players[p.id] = { id = p.id, team = p.team }
+		local ally = p.allyTeam or p.team
+		if ally ~= math.floor(ally) or ally < 1 or ally > Sim.MAX_TEAMS then
+			error(`Sim.new: allyTeam must be an integer in 1..{Sim.MAX_TEAMS}, got {ally}`, 2)
+		end
+		players[p.id] = { id = p.id, team = p.team, allyTeam = ally }
 		table.insert(order, p.id)
 	end
 	table.sort(order)
+	-- each team belongs to exactly one ally team
+	local allyOf: { [number]: number } = {}
+	local allyTeams: { number } = {}
+	for _, id in order do
+		local p = players[id]
+		local ally = p.allyTeam :: number
+		if allyOf[p.team] ~= nil and allyOf[p.team] ~= ally then
+			error(`Sim.new: team {p.team} is in two ally teams`, 2)
+		end
+		allyOf[p.team] = ally
+		if table.find(allyTeams, ally) == nil then
+			table.insert(allyTeams, ally)
+		end
+	end
+	table.sort(allyTeams)
+
+	local unitCap = if config.match then Match.validate(config.match, players, order) else 0
+	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap } else nil
 
 	local defs = config.defs or Defs.load()
 	local mapId = config.mapId or "none"
@@ -101,7 +127,7 @@ function Sim.new(config: Config): Sim
 	local map = if layers then Passability.build(layers) else nil
 	local headerPlayers = {}
 	for i, id in order do
-		headerPlayers[i] = { id = id, team = players[id].team }
+		headerPlayers[i] = { id = id, team = players[id].team, allyTeam = players[id].allyTeam }
 	end
 
 	local sim: Sim = {
@@ -118,25 +144,19 @@ function Sim.new(config: Config): Sim
 		build = BuildState.new(),
 		air = AirState.new(),
 		ew = EWState.new(),
-		sensors = SensorsState.new(if map then map.grid else nil, (function()
-			local teams = {}
-			for _, id in order do
-				if table.find(teams, players[id].team) == nil then
-					table.insert(teams, players[id].team)
-				end
-			end
-			table.sort(teams)
-			return teams
-		end)()),
+		match = MatchState.new(matchInfo, unitCap),
+		sensors = SensorsState.new(if map then map.grid else nil, allyTeams), -- sight is per ally team
 		eco = Economy.new((function()
 			local teams = {}
 			for _, id in order do
 				table.insert(teams, players[id].team)
 			end
 			return teams
-		end)()),
+		end)(), allyOf),
 		players = players,
 		playerOrder = order,
+		allyOf = allyOf,
+		allyTeams = allyTeams,
 		queue = {},
 		replay = Replay.new({
 			protocolVersion = Schema.PROTOCOL_VERSION,
@@ -145,6 +165,7 @@ function Sim.new(config: Config): Sim
 			mapId = mapId,
 			scenario = scenario,
 			players = headerPlayers,
+			match = matchInfo,
 		}),
 		stats = { commandsApplied = 0, commandsRejected = 0 },
 		net = nil :: any,
@@ -190,6 +211,7 @@ function Sim.hash(sim: Sim): number
 	h = BuildState.hash(sim.build, ids, h)
 	h = AirState.hash(sim.air, ids, h)
 	h = EWState.hash(sim.ew, ids, h)
+	h = MatchState.hash(sim.match, sim.playerOrder, h)
 	return SensorsState.hash(sim.sensors, h)
 end
 
@@ -248,7 +270,7 @@ function Sim.fromReplay(log: Replay.Log, defs: Defs.DefSet?): Sim
 	if h.defsHash ~= set.hash then
 		error(`Sim.fromReplay: replay defs hash {h.defsHash}, this build is {set.hash}`, 2)
 	end
-	return Sim.new({ seed = h.seed, players = h.players, mapId = h.mapId, scenario = h.scenario, defs = set })
+	return Sim.new({ seed = h.seed, players = h.players, mapId = h.mapId, scenario = h.scenario, defs = set, match = h.match })
 end
 
 -- Plays a replay to `untilTick` (default: its last entry's tick) and compares

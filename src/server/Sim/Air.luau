@@ -148,7 +148,7 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 		local target = if w.weaponCount[id] > 0 then w.wTarget[World.slotKey(id, 1)] else 0
 		local kx, kz = nil, nil
 		if target ~= 0 and (a.ammo[id] == nil or a.ammo[id] > 0) then
-			kx, kz = Sensors.knownPosition(sim, w.team[id], target)
+			kx, kz = Sensors.knownPosition(sim, w.ally[id], target)
 		end
 		if kx and kz then
 			tx, tz, loiter = kx, kz, false -- chase; overshoot and come around

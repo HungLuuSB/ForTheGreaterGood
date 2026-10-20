@@ -4,6 +4,7 @@
 
 local AirState = require("./AirState")
 local EWState = require("./EWState")
+local MatchState = require("./MatchState")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
@@ -17,7 +18,10 @@ local Schema = require("@shared/Net/Schema")
 local SensorsState = require("./SensorsState")
 local World = require("./World")
 
-export type Player = { id: number, team: number }
+-- team: economy and ownership (one account per team); allyTeam: shared
+-- sight, no friendly targeting, overflow sharing (guide 16.1). Default
+-- allyTeam = team.
+export type Player = { id: number, team: number, allyTeam: number? }
 
 export type QueuedCommand = {
 	player: number,
@@ -40,10 +44,13 @@ export type Sim = {
 	build: BuildState.BuildState, -- construction orders, factory queues, reclaim
 	air: AirState.AirState, -- aircraft ammo and rearming
 	ew: EWState.EWState, -- countermeasure charges and cooldowns
+	match: MatchState.MatchState, -- match rules: counts, eliminations, result
 	sensors: SensorsState.State, -- sensor maps, visibility, ghosts
 	net: NetState.NetState, -- per-player replication (not hashed)
 	players: { [number]: Player },
 	playerOrder: { number }, -- player IDs, ascending
+	allyOf: { [number]: number }, -- team → ally team
+	allyTeams: { number }, -- ascending
 	queue: { QueuedCommand }, -- commands to apply on the next tick
 	replay: Replay.Log,
 	stats: { commandsApplied: number, commandsRejected: number },

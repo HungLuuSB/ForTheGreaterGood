@@ -277,7 +277,7 @@ end
 --     radar range × signature of one of the observer's radar emitters.
 function Sensors.radarDetects(sim: Types.Sim, s: State, observer: number, id: number, cell: number): boolean
 	local w = sim.world
-	local ownJam = s.maps[w.team[id]]
+	local ownJam = s.maps[w.ally[id]]
 	if ownJam and readu16(ownJam.jam, cell * 2) > 0 then
 		return false
 	end
@@ -356,22 +356,22 @@ function Sensors.step(sim: Types.Sim)
 		end
 		local def = sim.defs.unitByIndex[w.defIndex[id]]
 		local sensors = def.sensors
-		local radars = s.radars[w.team[id]]
-		local close = s.closeSonar[w.team[id]]
+		local radars = s.radars[w.ally[id]]
+		local close = s.closeSonar[w.ally[id]]
 		if close and isCloseSonar(sim, def) then
 			table.insert(close, id)
 		end
 		if sensors.radar > 0 and radars then
 			table.insert(radars, id)
 			local err = sensors.radarError or Sensors.DEFAULT_RADAR_ERROR
-			local team = w.team[id]
+			local team = w.ally[id]
 			s.radarError[team] = math.min(s.radarError[team] or math.huge, err)
 		end
 		local _, _, cell = Sensors.cellOf(s, w.posX[id], w.posZ[id])
 		local old = s.stampCell[id]
 		if old ~= cell then
 			local radii = radiiOf(sim, id)
-			local team = w.team[id]
+			local team = w.ally[id]
 			local width = s.width
 			local ddx, ddz = 2, 2 -- not adjacent unless already stamped
 			if old ~= nil then
@@ -401,7 +401,7 @@ function Sensors.step(sim: Types.Sim)
 		local ghosts = s.ghosts[team]
 		local ghostIds = s.ghostIds[team]
 		for _, id in w.ids do
-			if w.team[id] == team then
+			if w.ally[id] == team then
 				continue
 			end
 			local _, _, cell = Sensors.cellOf(s, w.posX[id], w.posZ[id])
@@ -457,7 +457,7 @@ end
 -- dead structure it still remembers; HIDDEN when nothing is known.
 function Sensors.level(sim: Types.Sim, team: number, id: number): number
 	local w = sim.world
-	if w.slot[id] ~= nil and w.team[id] == team then
+	if w.slot[id] ~= nil and w.ally[id] == team then
 		return L.VISIBLE
 	end
 	local s = sim.sensors

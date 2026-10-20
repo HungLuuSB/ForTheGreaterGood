@@ -166,6 +166,7 @@ ServerScriptService/
       Projectiles.luau
       Damage.luau
       Construction.luau
+      Match.luau        win conditions, eliminations
       Lifecycle.luau    spawn, death, wrecks
       NetOut.luau       per-player interest + packet building
     Workers/            Actor scripts for flow fields (Parallel Luau)
@@ -219,7 +220,8 @@ StarterPlayer/StarterPlayerScripts/
 | 8 | Projectiles | every tick | Step, collide, impact |
 | 9 | Damage & Lifecycle | every tick | Apply damage, deaths, wrecks |
 | 10 | Construction | every tick | Build progress × economy ratio |
-| 11 | NetOut | every tick | Interest management, build packets per player |
+| 11 | Match | every tick | Win conditions, eliminations, match end (guide 16.2) |
+| 12 | NetOut | every tick | Interest management, build packets per player |
 
 **Staggering** is the single biggest CPU saver: expensive per-unit decisions (targeting, re-path checks, idle behavior) run for only `1/N` of units each tick.
 
@@ -1341,6 +1343,12 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 - **Team mode:** 2–4 ally teams of 2–4 players.
 - **FFA:** each player is their own ally team, up to 8.
 
+- Implementation (DECISIONS D87):
+  - Players have a `team` (economy, ownership) and an `allyTeam`.
+  - Sight maps are per ally team. Targeting and friendly fire use ally teams.
+  - Overflow is split among allies with room.
+  - The match config `{ mode = "FFA" | "TEAM", win, unitCap? }` is validated at start: FFA 2–8 players each alone; TEAM 2–4 ally teams of up to 4.
+
 ### 16.2 Win conditions (match option)
 
 | Option | Rule |
@@ -1348,6 +1356,8 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 | **Command Ends** (default) | A player is eliminated when their Command Vehicle dies |
 | **Annihilation** | Eliminated when no units or structures remain |
 | **Time limit** (optional) | Highest score (unit value destroyed + held deposits) wins |
+
+- Implementation: the `Match` system (after Construction) eliminates players by the chosen rule. Their units self-destruct (no wrecks), and the match ends when at most one ally team is left (none left = draw).
 
 ### 16.3 Match flow
 
@@ -1361,6 +1371,9 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 - Unit cap per player: e.g., 150 (FFA 8) to 300 (1v1), with a global cap around what the server handles.
 - Factory queue limit, max command size (200 units).
+- Implementation:
+  - The default cap is `clamp(300 − 25 × (players − 2), 150, 300)` and counts units, structures and frames.
+  - At the cap, construction fails with `unit_cap`, and finished factory items wait until there is room.
 
 ---
 

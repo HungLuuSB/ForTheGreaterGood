@@ -338,6 +338,22 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 20 — Match rules ✅
+
+- **Teams:** `allyTeam` per player and `w.ally` per unit. Sensors, targeting, the contact grid, projectiles and friendly fire use ally teams; economy stays per team, with overflow shared to allies (D87).
+- **New modules:** `Sim/Match.luau`, `Sim/MatchState.luau`, the `Sim.Match` system (after Construction), `Lifecycle.addedHooks`, unit-cap checks in Build, a `match_test` scenario, and replay header format 2 (ally teams plus match options).
+- **`Match.spec`** (10 tests):
+  - each win condition in both modes: FFA Command Ends (3 players), FFA Annihilation, Team Command Ends (2v2), Team Annihilation;
+  - a draw;
+  - allies share sight and never target each other (FFA shares nothing);
+  - overflow: exactly 900 power goes to the ally in TEAM and is wasted in FFA;
+  - unit cap: construction fails, the factory item waits, then rolls out when there is room;
+  - config validation and default caps (300 in 1v1, 150 in 8-player FFA);
+  - a fought-out 2v2 ends at 29.3 s and replays exactly.
+- Mutations caught: no overflow sharing, no self-destruct, cap ignored, win conditions swapped, allies targetable (both redundant ally checks broken).
+- Updated tests: the replay round-trip now includes ally teams and match options; the system-order test includes `Sim.Match`.
+- Tests: **28 specs, 200 passed**.
+
 ### Task 19 — Local quadtree invalidation ✅
 
 - `Quadtree.update` re-decides only the nodes touching the flipped cells, then patches leaves, IDs, neighbors and components. `Nav.terrainChanged` calls it for every tree (rectangle padded by the clearance cap) and restarts stale route searches (D86).

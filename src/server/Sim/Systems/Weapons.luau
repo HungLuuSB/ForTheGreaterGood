@@ -100,7 +100,7 @@ local function fire(
 			cos(p) * cos(yaw) * speed,
 			weapon.index,
 			id,
-			w.team[id],
+			w.ally[id], -- projectile side: allies are never hit directly
 			ttl,
 			if wtype == "HOMING" or wtype == "TORPEDO" then target else 0
 		)
@@ -118,12 +118,12 @@ local function fire(
 	if hit then
 		c.stats.hits += 1
 		local tp = c.profiles[w.defIndex[target]]
-		Combat.explode(c, w, tx, Combat.unitBase(c, w, target) + tp.height / 2, tz, weapon, id, w.team[id], target)
+		Combat.explode(c, w, tx, Combat.unitBase(c, w, target) + tp.height / 2, tz, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
 		-- a miss still explodes on the ground beyond/beside the target
 		local mx = w.posX[id] + sin(worldYaw + yawErr) * dist
 		local mz = w.posZ[id] + cos(worldYaw + yawErr) * dist
-		Combat.explode(c, w, mx, Combat.groundHeight(c, mx, mz), mz, weapon, id, w.team[id], 0)
+		Combat.explode(c, w, mx, Combat.groundHeight(c, mx, mz), mz, weapon, id, w.ally[id], 0)
 	end
 end
 
@@ -160,7 +160,7 @@ return function(sim: Types.Sim)
 			-- when visible, the wobbled one for radar contacts (guide 11.4).
 			local kx, kz = nil, nil
 			if target ~= 0 and w.slot[target] ~= nil then
-				kx, kz = Sensors.knownPosition(sim, w.team[id], target)
+				kx, kz = Sensors.knownPosition(sim, w.ally[id], target)
 			end
 			local exactYaw, exactPitch = 0, 0
 			if kx ~= nil and kz ~= nil then

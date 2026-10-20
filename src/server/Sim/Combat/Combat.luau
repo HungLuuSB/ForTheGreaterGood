@@ -49,7 +49,9 @@ export type Event = {
 		| "BUILD_DONE"
 		| "BUILD_FAILED"
 		| "PRODUCED"
-		| "RECLAIMED",
+		| "RECLAIMED"
+		| "ELIMINATED" -- other = player
+		| "MATCH_END", -- other = winning ally team (0 = nobody)
 	tick: number,
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
 	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK), wreck or 0 (DEATH)
@@ -245,7 +247,7 @@ end
 
 local scratch: { number } = {}
 
--- Explosion at (x, y, z) from `weapon` fired by `attacker` of `team`.
+-- Explosion at (x, y, z) from `weapon` fired by `attacker` of ally team `team`.
 -- `direct` (0 = none) is the unit the projectile struck: it takes full
 -- damage. (Projectiles never strike allies directly, guide 10.6, so `direct`
 -- is always an enemy.) Every other unit takes damage × falloff by its
@@ -275,7 +277,7 @@ function Combat.explode(
 	local n = ContactGrid.query(c.contacts, w, x, z, aoe + c.maxRadius, 0, scratch)
 	for i = 1, n do
 		local id = scratch[i]
-		if id == direct or (w.team[id] == team and not c.friendlyFire) then
+		if id == direct or (w.ally[id] == team and not c.friendlyFire) then
 			continue
 		end
 		local p = c.profiles[w.defIndex[id]]

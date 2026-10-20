@@ -65,14 +65,14 @@ local VISIBLE, RADAR, GHOST, SONAR = Sensors.Level.VISIBLE, Sensors.Level.RADAR,
 local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number): number?
 	local c = sim.combat
 	local w = sim.world
-	if w.slot[t] == nil or w.team[t] == w.team[id] then
+	if w.slot[t] == nil or w.ally[t] == w.ally[id] then
 		return nil
 	end
 	local tp = c.profiles[w.defIndex[t]]
 	if band(weapon.targetMask, tp.categoryMask) == 0 then
 		return nil
 	end
-	local kx, kz, level = Sensors.knownPosition(sim, w.team[id], t)
+	local kx, kz, level = Sensors.knownPosition(sim, w.ally[id], t)
 	local allowed = level == VISIBLE
 		or ((level == RADAR or level == GHOST) and weapon.canTargetRadar)
 		or (level == SONAR and weapon.type == "TORPEDO") -- torpedoes hunt sonar contacts
@@ -109,7 +109,7 @@ local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (numb
 	local c = sim.combat
 	local w = sim.world
 	local best, bestScore = 0, 0
-	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], weapon.range + c.maxRadius, w.team[id], candidates)
+	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], weapon.range + c.maxRadius, w.ally[id], candidates)
 	for i = 1, n do
 		local t = candidates[i]
 		local dist = acceptable(sim, id, weapon, t, 1)

@@ -51,6 +51,7 @@ export type World = {
 	-- per-unit fields, indexed by ID
 	defIndex: { [number]: number },
 	team: { [number]: number },
+	ally: { [number]: number }, -- ally team: shares sight, never a target (guide 16.1)
 	owner: { [number]: number }, -- player ID
 	posX: { [number]: number },
 	posZ: { [number]: number },
@@ -94,6 +95,7 @@ function World.new(): World
 		slot = {},
 		defIndex = {},
 		team = {},
+		ally = {},
 		owner = {},
 		posX = {},
 		posZ = {},
@@ -155,6 +157,7 @@ end
 export type SpawnInfo = {
 	defIndex: number,
 	team: number,
+	ally: number?, -- default: team
 	owner: number,
 	x: number,
 	z: number,
@@ -183,6 +186,7 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 	w.slot[id] = #w.ids
 	w.defIndex[id] = info.defIndex
 	w.team[id] = info.team
+	w.ally[id] = info.ally or info.team
 	w.owner[id] = info.owner
 	w.posX[id] = info.x
 	w.posZ[id] = info.z
@@ -230,6 +234,7 @@ function World.despawn(w: World, tick: number, id: number)
 
 	w.defIndex[id] = nil
 	w.team[id] = nil
+	w.ally[id] = nil
 	w.owner[id] = nil
 	w.posX[id] = nil
 	w.posZ[id] = nil
@@ -331,6 +336,7 @@ function World.hash(w: World, h: number?): number
 		hv = Hash.u32(hv, id)
 		hv = Hash.u32(hv, w.defIndex[id])
 		hv = Hash.u32(hv, w.team[id])
+		hv = Hash.u32(hv, w.ally[id])
 		hv = Hash.u32(hv, w.owner[id])
 		hv = Hash.number(hv, w.posX[id])
 		hv = Hash.number(hv, w.posZ[id])

@@ -18,6 +18,9 @@ function Lifecycle.added(sim: Types.Sim, id: number)
 	if Economy.isProducerDef(def) and sim.world.buildProgress[id] >= 1 then
 		Economy.addProducer(sim.eco, id)
 	end
+	for _, hook in Lifecycle.addedHooks do
+		hook(sim, id)
+	end
 end
 
 -- A structure (or factory-built unit) finished construction.
@@ -32,6 +35,7 @@ end
 -- sit above this one in the require graph (construction, placement).
 -- Run in registration order, which is fixed by Sim's require order.
 Lifecycle.removalHooks = {} :: { (Types.Sim, number) -> () }
+Lifecycle.addedHooks = {} :: { (Types.Sim, number) -> () } -- same, for units entering
 
 -- Removes a unit from every subsystem, then from the world.
 function Lifecycle.remove(sim: Types.Sim, id: number)

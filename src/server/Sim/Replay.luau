@@ -6,7 +6,9 @@
 -- Binary layout (little-endian, via Packer):
 --   header   magic "FTGR" | format u8 | protocol u16 | defsHash u32 | seed u32
 --            | mapId (len u8 + bytes) | scenario (len u8 + bytes)
---            | playerCount u8 | (player u8, team u8) × playerCount
+--            | playerCount u8 | (player u8, team u8, allyTeam u8) × playerCount
+--            | hasMatch u8 [| mode u8 (1 FFA, 2 TEAM) | win u8 (1 COMMAND_ENDS,
+--              2 ANNIHILATION) | unitCap u16]
 --   entries  kind u8, then
 --            COMMAND     tick u32 | player u8 | length u16 | payload (Schema command record)
 --            CHECKPOINT  tick u32 | hash u32
@@ -16,10 +18,11 @@ local Packer = require("@shared/Net/Packer")
 local Replay = {}
 
 Replay.MAGIC = "FTGR"
-Replay.FORMAT_VERSION = 1
+Replay.FORMAT_VERSION = 2 -- 2: ally teams and match options in the header
 Replay.Kind = table.freeze({ COMMAND = 1, CHECKPOINT = 2 })
 
-export type PlayerInfo = { id: number, team: number }
+export type PlayerInfo = { id: number, team: number, allyTeam: number? }
+export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number? }
 
 export type Header = {
 	protocolVersion: number,
@@ -28,6 +31,7 @@ export type Header = {
 	mapId: string,
 	scenario: string,
 	players: { PlayerInfo }, -- in player ID order
+	match: MatchInfo?, -- nil: no match rules
 }
 
 export type Entry = {
@@ -85,6 +89,16 @@ function Replay.serialize(log: Log): buffer
 	for _, p in h.players do
 		w:writeU8(p.id)
 		w:writeU8(p.team)
+		w:writeU8(p.allyTeam or p.team)
+	end
+	local m = h.match
+	if m then
+		w:writeU8(1)
+		w:writeU8(if m.mode == "FFA" then 1 else 2)
+		w:writeU8(if m.win == "COMMAND_ENDS" then 1 else 2)
+		w:writeU16(m.unitCap or 0)
+	else
+		w:writeU8(0)
 	end
 	for _, e in log.entries do
 		w:writeU8(e.kind)
@@ -123,7 +137,18 @@ function Replay.parse(buf: buffer): Log
 		players = {},
 	}
 	for _ = 1, r:readU8() do
-		table.insert(header.players, { id = r:readU8(), team = r:readU8() })
+		table.insert(header.players, { id = r:readU8(), team = r:readU8(), allyTeam = r:readU8() })
+	end
+	if r:readU8() == 1 then
+		local mode, win, cap = r:readU8(), r:readU8(), r:readU16()
+		if (mode ~= 1 and mode ~= 2) or (win ~= 1 and win ~= 2) then
+			error(`Replay: bad match options (mode {mode}, win {win})`, 2)
+		end
+		header.match = {
+			mode = if mode == 1 then "FFA" else "TEAM",
+			win = if win == 1 then "COMMAND_ENDS" else "ANNIHILATION",
+			unitCap = if cap > 0 then cap else nil,
+		}
 	end
 
 	local log = Replay.new(header)

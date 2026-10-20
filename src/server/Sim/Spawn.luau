@@ -31,6 +31,7 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 	local id = World.spawn(sim.world, sim.tick, {
 		defIndex = def.index,
 		team = player.team,
+		ally = player.allyTeam,
 		owner = owner,
 		x = x,
 		z = z,

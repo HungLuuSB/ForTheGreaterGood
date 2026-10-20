@@ -2,8 +2,9 @@
 -- Interest management and packet building (guide 7.2–7.6), headless.
 --
 -- Per player, every tick, fog first:
---   * Known units: the player's team's own units, plus enemies the team has
---     at RADAR / SONAR / VISIBLE / GHOST (Sensors). Nothing else is ever sent.
+--   * Known units: the player's ally team's units, plus enemies the ally
+--     team has at RADAR / SONAR / VISIBLE / GHOST (Sensors: sight is shared
+--     by allies, guide 16.1). Nothing else is ever sent.
 --   * Tactical tier: own or VISIBLE units within the camera rectangle; enter
 --     at +2 cells, leave beyond +5 cells (hysteresis). Entering sends a
 --     reliable ENTER event with the full state; leaving sends LEAVE.
@@ -159,6 +160,7 @@ function NetOut.step(sim: Types.Sim)
 	for _, pid in sim.playerOrder do
 		local pn = net.players[pid]
 		local team = sim.players[pid].team
+		local ally = sim.allyOf[team] -- sight is shared by the ally team (guide 16.1)
 		local cam = pn.camera
 		local events: { Schema.Event } = {}
 		local tactical: { Schema.Tactical } = {}
@@ -194,7 +196,7 @@ function NetOut.step(sim: Types.Sim)
 
 		-- tier membership (fog first: only own or VISIBLE units can be tactical)
 		for _, id in w.ids do
-			local seen = w.team[id] == team or Sensors.level(sim, team, id) == L.VISIBLE
+			local seen = w.ally[id] == ally or Sensors.level(sim, ally, id) == L.VISIBLE
 			if pn.tactical[id] then
 				if not seen or cam == nil or not inRect(g, cam, w.posX[id], w.posZ[id], NetOut.LEAVE_MARGIN) then
 					pn.tactical[id] = nil
@@ -239,11 +241,11 @@ function NetOut.step(sim: Types.Sim)
 				if pn.tactical[id] then
 					continue
 				end
-				local kx, kz, level = Sensors.knownPosition(sim, team, id)
+				local kx, kz, level = Sensors.knownPosition(sim, ally, id)
 				if kx == nil or kz == nil then
 					continue
 				end
-				local own = w.team[id] == team
+				local own = w.ally[id] == ally
 				local flags = if level == L.RADAR then SF.RADAR_ONLY
 					elseif level == L.SONAR then SF.SONAR_ONLY
 					elseif level == L.GHOST then SF.GHOST
@@ -258,9 +260,9 @@ function NetOut.step(sim: Types.Sim)
 				})
 			end
 			-- remembered structures that are already gone
-			for _, gid in sim.sensors.ghostIds[team] or {} do
+			for _, gid in sim.sensors.ghostIds[ally] or {} do
 				if w.slot[gid] == nil then
-					local ghost = sim.sensors.ghosts[team][gid]
+					local ghost = sim.sensors.ghosts[ally][gid]
 					table.insert(strategic, {
 						unitId = gid,
 						cell = (g:encode(ghost.x, ghost.z)),

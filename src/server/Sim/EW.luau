@@ -137,7 +137,7 @@ end
 
 -- Is unit `id` hidden by its own team's jammers (guide 11.4)?
 function EW.jammed(sim: Types.Sim, id: number): boolean
-	return inJamOf(sim, sim.world.team[id], id)
+	return inJamOf(sim, sim.world.ally[id], id)
 end
 
 function EW.lockRange(weapon: Defs.WeaponDef): number
@@ -155,7 +155,7 @@ function EW.canLock(sim: Types.Sim, shooter: number, weapon: Defs.WeaponDef, tar
 	if guidance == nil or weapon.type ~= "HOMING" then
 		return true
 	end
-	local level = Sensors.level(sim, sim.world.team[shooter], target)
+	local level = Sensors.level(sim, sim.world.ally[shooter], target)
 	local range = EW.lockRange(weapon)
 	if guidance == "IR" then
 		return level == L.VISIBLE and dist <= range

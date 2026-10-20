@@ -24,6 +24,7 @@ local Combat = require("./Combat/Combat")
 local EW = require("./EW")
 local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
+local Match = require("./Match")
 local Nav = require("./Nav")
 local Placement = require("./Placement")
 local Spawn = require("./Spawn")
@@ -174,6 +175,7 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 	local id = World.spawn(w, sim.tick, {
 		defIndex = d.index,
 		team = sim.players[owner].team,
+		ally = sim.allyOf[sim.players[owner].team],
 		owner = owner,
 		x = x,
 		z = z,
@@ -275,6 +277,9 @@ function Build.step(sim: Types.Sim)
 					b.assist[id] = false
 				else
 					local ok, why, _, _, cx, cz = Placement.check(sim, sd, pending.x, pending.z)
+					if ok and Match.atCap(sim, w.owner[id]) then
+						ok, why = false, "unit_cap"
+					end
 					if ok then
 						local frame = startFrame(sim, sd, w.owner[id], cx, cz, pending.facing)
 						b.target[id] = frame
@@ -339,6 +344,15 @@ function Build.step(sim: Types.Sim)
 		local bp = power[t]
 		local frame = w.buildProgress[t] < 1
 		local itemDef = if frame then def(sim, t) else sim.defs.unitByIndex[(b.queue[t] :: { number })[1]]
+		if not frame and (b.progress[t] or 0) >= 1 - 1e-9 then
+			-- finished item waiting at the exit for room under the unit cap
+			if not Match.atCap(sim, w.owner[t]) then
+				table.remove(b.queue[t] :: { number }, 1)
+				b.progress[t] = 0
+				produce(sim, t, itemDef)
+			end
+			continue
+		end
 		local cost = itemDef.cost
 		local team = w.team[t]
 		local acc = eco.accounts[team]
@@ -376,7 +390,9 @@ function Build.step(sim: Types.Sim)
 			acc.supply.spent += cost.supply * step
 			acc.power.spent += cost.power * step
 			p += step
-			if p >= 1 - 1e-9 then
+			if p >= 1 - 1e-9 and Match.atCap(sim, w.owner[t]) then
+				b.progress[t] = 1 -- done; rolls out when the owner is under the cap
+			elseif p >= 1 - 1e-9 then
 				table.remove(q, 1)
 				b.progress[t] = 0
 				produce(sim, t, itemDef)
