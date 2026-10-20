@@ -24,6 +24,8 @@ local World = require("./World")
 
 local Economy = {}
 
+local TOGGLED_ON = World.State.TOGGLED_ON
+
 Economy.STEP_TICKS = 5
 Economy.WINDOW = Economy.STEP_TICKS / 15 -- seconds settled per step
 Economy.START_STORED = 1000 -- guide 16.3
@@ -46,9 +48,14 @@ export type Economy = {
 	accounts: { [number]: Account },
 	teams: { number }, -- ascending
 	allyOf: { [number]: number }, -- team → ally team (overflow is shared within it)
-	producers: { number }, -- unit IDs with production / extractor / storage
+	producers: { number }, -- unit IDs with production / extractor / storage / wind / converter
 	producerSlot: { [number]: number },
+	seed: number, -- match seed: the wind sequence
+	wind: number, -- current wind, 0..1 of a turbine's max (guide 8.5)
 }
+
+Economy.WIND_PERIOD = 450 -- ticks between wind changes (30 s)
+Economy.CONVERTER_RESERVE = 0.5 -- converters only burn power above this share of storage
 
 local function newResource(): Resource
 	return {
@@ -63,7 +70,14 @@ local function newResource(): Resource
 	}
 end
 
-function Economy.new(teams: { number }, allyOf: { [number]: number }?): Economy
+-- Wind for a tick: a stateless hash of (seed, tick // WIND_PERIOD) mapped to
+-- 0..1, so it never touches sim.rng and replays exactly.
+function Economy.windAt(seed: number, tick: number): number
+	local h = Hash.u32(Hash.u32(Hash.OFFSET_BASIS, seed), tick // Economy.WIND_PERIOD)
+	return (h % 10001) / 10000
+end
+
+function Economy.new(teams: { number }, allyOf: { [number]: number }?, seed: number?): Economy
 	local accounts = {}
 	local sorted = table.clone(teams)
 	table.sort(sorted)
@@ -78,12 +92,20 @@ function Economy.new(teams: { number }, allyOf: { [number]: number }?): Economy
 	for _, t in unique do
 		allies[t] = if allyOf then allyOf[t] or t else t
 	end
-	return { accounts = accounts, teams = unique, allyOf = allies, producers = {}, producerSlot = {} }
+	return {
+		accounts = accounts,
+		teams = unique,
+		allyOf = allies,
+		producers = {},
+		producerSlot = {},
+		seed = seed or 0,
+		wind = Economy.windAt(seed or 0, 0),
+	}
 end
 
 -- Does this def produce, extract or store anything?
 function Economy.isProducerDef(def: Defs.UnitDef): boolean
-	return def.production ~= nil or def.extractor ~= nil or def.storage ~= nil
+	return def.production ~= nil or def.extractor ~= nil or def.storage ~= nil or def.wind ~= nil or def.converter ~= nil
 end
 
 function Economy.addProducer(eco: Economy, id: number)
@@ -186,7 +208,8 @@ end
 
 -- Recomputes income and storage from the producers, then settles every
 -- team. `world` positions locate extractors on the deposit layer.
-function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: Layers.Layers?)
+function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: Layers.Layers?, tick: number?)
+	eco.wind = Economy.windAt(eco.seed, tick or 0)
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]
 		acc.supply.income, acc.power.income = 0, 0
@@ -215,6 +238,28 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 		if s then
 			acc.supply.storage += s.supply or 0
 			acc.power.storage += s.power or 0
+		end
+		if def.wind then
+			acc.power.income += def.wind.max * eco.wind
+		end
+	end
+	-- converters (switched on): burn power above the reserve, add supply
+	-- (guide 8.4 order: production, converters, consumers, overflow)
+	for _, id in eco.producers do
+		local conv = defs.unitByIndex[w.defIndex[id]].converter
+		if conv == nil or bit32.band(w.state[id], TOGGLED_ON) == 0 then
+			continue
+		end
+		local acc = eco.accounts[w.team[id]]
+		if acc == nil then
+			continue
+		end
+		local p = acc.power
+		local spare = p.stored + p.income * Economy.WINDOW - p.spent - p.storage * Economy.CONVERTER_RESERVE
+		local burn = math.clamp(spare, 0, conv.power * Economy.WINDOW)
+		if burn > 0 then
+			p.spent += burn
+			acc.supply.reclaimed += burn * conv.supply / conv.power
 		end
 	end
 	-- production and spending, then overflow sharing, then ratios (guide 8.4)
@@ -247,6 +292,7 @@ function Economy.hash(eco: Economy, h: number): number
 			h = Hash.number(h, r.reclaimed)
 		end
 	end
+	h = Hash.number(h, eco.wind)
 	local sorted = table.clone(eco.producers)
 	table.sort(sorted)
 	h = Hash.u32(h, #sorted)

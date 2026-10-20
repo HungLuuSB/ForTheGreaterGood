@@ -12,6 +12,6 @@ return Templates.extend(Templates.Builder, {
 	sensors = { sight = 100 },
 	buildPower = 100,
 	buildRange = 64,
-	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_depot", "ord_vehplant", "ord_advvehplant", "ord_bulwark", "ord_vigil", "ord_watchtower", "ord_curtain" },
+	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_vehplant", "ord_advvehplant", "ord_bulwark", "ord_vigil", "ord_watchtower", "ord_curtain" },
 	model = "ord_mason",
 })

@@ -19,7 +19,7 @@ return Templates.extend(Templates.Builder, {
 	sensors = { sight = 120 },
 	buildPower = 200,
 	buildRange = 64,
-	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_depot", "chs_advextractor", "chs_fusion", "chs_advvehplant", "chs_maw", "chs_wyvern", "chs_cataclysm", "chs_allseer", "chs_blackout" },
+	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_advextractor", "chs_fusion", "chs_advvehplant", "chs_maw", "chs_wyvern", "chs_cataclysm", "chs_allseer", "chs_blackout" },
 	pieces = { "base", "nano" },
 	icon = "worker",
 	model = "chs_forgemaster",

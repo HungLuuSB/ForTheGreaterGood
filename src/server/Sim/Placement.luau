@@ -29,57 +29,74 @@ function Placement.snap(grid: Grid.Grid, size: number, x: number, z: number): (n
 end
 
 -- Can `def` be placed centered near (x, z)? Returns ok, a reason when not,
--- and the snapped min corner and center.
-function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number): (boolean, string?, number, number, number, number)
+-- the snapped min corner and center, and the unit the placement replaces
+-- (0 if none). With `team`, an extractor may go onto that team's own
+-- complete extractor with a lower rate: the upgrade (guide 9.3) replaces it
+-- when construction starts.
+function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number, team: number?): (boolean, string?, number, number, number, number, number)
 	local pm = sim.map
 	if pm == nil then
-		return false, "no map", 0, 0, x, z
+		return false, "no map", 0, 0, x, z, 0
 	end
 	local g = pm.grid
 	local size = def.footprint
 	local x0, z0, cx, cz = Placement.snap(g, size, x, z)
 	local layers = pm.layers
+	local w = sim.world
+	local replaces = 0
 	local placement = def.placement or "land"
 	local maxSlope = Passability.degreesToSlope(Placement.LAND_MAX_SLOPE)
 	for cellZ = z0, z0 + size - 1 do
 		for cellX = x0, x0 + size - 1 do
 			if not g:inBounds(cellX, cellZ) then
-				return false, "out of bounds", x0, z0, cx, cz
+				return false, "out of bounds", x0, z0, cx, cz, 0
 			end
 			local i = g:index(cellX, cellZ)
-			if Passability.occupant(pm, i) ~= 0 then
-				return false, "occupied", x0, z0, cx, cz
+			local occupant = Passability.occupant(pm, i)
+			if occupant ~= 0 then
+				local od = if w.slot[occupant] then sim.defs.unitByIndex[w.defIndex[occupant]] else nil
+				local upgrade = def.extractor ~= nil
+					and team ~= nil
+					and od ~= nil
+					and od.extractor ~= nil
+					and od.extractor.rate < def.extractor.rate
+					and w.team[occupant] == team
+					and w.buildProgress[occupant] >= 1
+					and (replaces == 0 or replaces == occupant)
+				if not upgrade then
+					return false, "occupied", x0, z0, cx, cz, 0
+				end
+				replaces = occupant
 			end
 			local water = Layers.getWater(layers, i)
 			local land = water <= 0 and buffer.readu8(pm.slope, i) <= maxSlope
 			local sea = water >= Placement.WATER_MIN_DEPTH
 			local ok = if placement == "land" then land elseif placement == "water" then sea else (land or sea)
 			if not ok then
-				return false, "terrain", x0, z0, cx, cz
+				return false, "terrain", x0, z0, cx, cz, 0
 			end
 		end
 	end
 	if def.extractor then
 		local gx, gz = g:cellAt(cx, cz)
 		if Layers.getSupply(layers, g:index(gx, gz)) == 0 then
-			return false, "no deposit", x0, z0, cx, cz
+			return false, "no deposit", x0, z0, cx, cz, 0
 		end
 	end
 	-- no ground unit may stand on the footprint
-	local w = sim.world
 	local minX, minZ = x0 * Grid.CELL_SIZE + g.originX, z0 * Grid.CELL_SIZE + g.originZ
 	local maxX, maxZ = minX + size * Grid.CELL_SIZE, minZ + size * Grid.CELL_SIZE
 	for _, id in w.ids do
 		local udef = sim.defs.unitByIndex[w.defIndex[id]]
-		if udef.domain ~= "air" then
+		if udef.domain ~= "air" and id ~= replaces then
 			local r = sim.combat.profiles[w.defIndex[id]].radius
 			local px, pz = w.posX[id], w.posZ[id]
 			if px + r > minX and px - r < maxX and pz + r > minZ and pz - r < maxZ then
-				return false, "units in the way", x0, z0, cx, cz
+				return false, "units in the way", x0, z0, cx, cz, 0
 			end
 		end
 	end
-	return true, nil, x0, z0, cx, cz
+	return true, nil, x0, z0, cx, cz, replaces
 end
 
 local function footprintRect(sim: Types.Sim, id: number): (number, number, number)

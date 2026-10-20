@@ -315,6 +315,13 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 5 — task 25: wind, converters, extractor upgrades ✅
+
+- Wind (seeded, stateless, every 30 s), wind turbines, toggleable supply converters (power above half storage), extractor upgrade replacement (D92). 4 new defs, added to the T1 economy build lists.
+- `Economy.spec` (3 new tests): wind range, period and seeding, and turbine income; a converter burns exactly down to the reserve (500 power → 7.14 supply) and does nothing when switched off; an upgrade removes the T1 when it starts, others' or same-tier extractors block, and the result earns 1.75 × the deposit value.
+- Mutations caught: toggle ignored, no reserve, upgrade keeps the T1.
+- Tests: **30 specs, 215 passed**.
+
 ### Round 5 — task 24: proper bombing ✅
 
 - BOMB weapons with a computed lead point, bomb runs with egress and go-around, and a bomber altitude of 130; rearming as before (D91).

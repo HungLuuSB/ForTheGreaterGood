@@ -998,3 +998,22 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - Absolution 3.57 → 1.93, Phantom 7.90 → 2.68, Plague 5.24 → 2.18, Behemoth 4.61 → 1.93; still 0 wins in 56 fights each.
   - The old "bomb" fired like a gun from 130 studs. A real run releases about 400 studs before the target, but bombers see only 200 studs, and the report's fights have no spotters, radar or pads. So bombers rarely hold a target long enough to line up, and they run dry. This is a mechanics finding for the counter check (task 27).
 - **Alternatives:** carpet runs (several bombs per pass); letting bombs target radar contacts.
+
+## D92 — Wind, converters and extractor upgrades (2026-10-20, user-requested)
+
+- **Wind Turbine:**
+  - New def field `wind = { max }`. Power income = max × the global wind.
+  - Wind is a stateless hash of (match seed, tick ÷ 450) mapped to 0–1, so it changes every 30 s, never touches `sim.rng`, and replays exactly.
+  - It is stepwise, not smoothed. `eco.wind` is hashed.
+  - Placeholders: `ord_windmill` "Wind Turbine" (max 30), `chs_windmill` "Wind Pylon" (max 34); cost 35 supply. Average about 15 power per second, against the solar array's steady 8.
+- **Supply Converter:**
+  - New def field `converter = { power, supply }` per second. Converters run in the Economy step after production and before consumers (guide 8.4).
+  - A converter burns only power above half the team's power storage (`CONVERTER_RESERVE`), up to its rate, and adds supply at the ratio.
+  - Toggleable with the existing TOGGLE command (`TOGGLED_ON`); converters start switched on.
+  - Placeholders: `ord_converter` "Supply Converter" (70 : 1), `chs_converter` "Smelter" (60 : 1).
+- **Extractor upgrade** (guide 9.3):
+  - `Placement.check` takes an optional builder team. An extractor may then go onto that team's own complete extractor with a lower rate; the check returns the unit it replaces.
+  - Build removes it (`Lifecycle.remove`) in the tick the new frame starts.
+  - Another team's extractor, or one of the same rate, still counts as "occupied".
+- Wind turbines and converters are in every T1 economy build list.
+- **Alternatives:** a seeded random walk for wind (would need state or `sim.rng` draws); converters with a player-set energy threshold (BAR's slider) instead of a fixed 50%.

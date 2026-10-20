@@ -73,6 +73,8 @@ export type UnitDef = {
 	buildRange: number?,
 	production: { supply: number?, power: number? }?, -- per second while built
 	extractor: { rate: number }?, -- supply per second per deposit value
+	wind: { max: number }?, -- power per second at full wind (guide 8.5 Wind Turbine)
+	converter: { power: number, supply: number }?, -- per second: power in, supply out (toggleable)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -260,6 +262,8 @@ local UNIT_SPEC: Spec = {
 			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
 		},
 		extractor = { kind = "record", optional = true, fields = { rate = POSITIVE } },
+		wind = { kind = "record", optional = true, fields = { max = POSITIVE } },
+		converter = { kind = "record", optional = true, fields = { power = POSITIVE, supply = POSITIVE } },
 		storage = {
 			kind = "record",
 			optional = true,
@@ -521,6 +525,9 @@ function Defs.validate(raw: RawDefs): { string }
 		end
 		if type(u.movement) == "table" and u.movement.minSpeed ~= nil and u.movement.minSpeed > u.movement.maxSpeed then
 			report("movement.minSpeed: above maxSpeed")
+		end
+		if (u.wind ~= nil or u.converter ~= nil) and u.domain ~= "structure" then
+			report("wind / converter: only structures")
 		end
 		if u.extractor ~= nil and u.domain ~= "structure" then
 			report("extractor: only structures can be extractors")

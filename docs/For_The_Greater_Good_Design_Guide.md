@@ -772,6 +772,11 @@ Optionally store values as integers in thousandths so rounding never drifts over
 | Supply Converter | T1/T2 | Converts power → supply at a fixed rate (toggleable) |
 | Supply Depot / Power Bank | T1 | +Storage |
 
+Implementation (DECISIONS D92):
+- Wind is a seeded, stateless value from 0 to 1 that changes every 30 s; turbine output is `wind.max × wind`.
+- Converters burn power above half of storage at their rate and can be toggled.
+- An Advanced Extractor placed on your own extractor replaces it when construction starts.
+
 ### 8.6 Logistics (modern-warfare layer)
 
 Route these through the same team account so shortages affect them naturally:

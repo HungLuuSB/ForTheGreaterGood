@@ -14,7 +14,7 @@ return Templates.extend(Templates.Builder, {
 	sensors = { sight = 130 },
 	buildPower = 300,
 	buildRange = 80,
-	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_depot", "chs_vehplant", "chs_airfield", "chs_shipyard", "chs_spike", "chs_eye" },
+	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_vehplant", "chs_airfield", "chs_shipyard", "chs_spike", "chs_eye" },
 	production = { supply = 1, power = 20 },
 	model = "chs_warlord",
 	icon = "commander",

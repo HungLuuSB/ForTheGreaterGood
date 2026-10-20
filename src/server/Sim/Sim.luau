@@ -152,7 +152,7 @@ function Sim.new(config: Config): Sim
 				table.insert(teams, players[id].team)
 			end
 			return teams
-		end)(), allyOf),
+		end)(), allyOf, seed),
 		players = players,
 		playerOrder = order,
 		allyOf = allyOf,

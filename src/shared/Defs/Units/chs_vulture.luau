@@ -19,7 +19,7 @@ return Templates.extend(Templates.Unit, {
 	sensors = { sight = 120 },
 	buildPower = 90,
 	buildRange = 48,
-	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_depot", "chs_airfield", "chs_advairfield", "chs_airpad", "chs_thorn", "chs_eye" },
+	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_airfield", "chs_advairfield", "chs_airpad", "chs_thorn", "chs_eye" },
 	pieces = { "base", "nano" },
 	icon = "worker",
 	model = "chs_vulture",

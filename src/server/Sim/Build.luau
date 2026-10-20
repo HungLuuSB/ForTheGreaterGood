@@ -185,6 +185,9 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)
+	if d.converter then
+		World.setState(w, id, bit32.bor(w.state[id], World.State.TOGGLED_ON)) -- converters start on
+	end
 	Lifecycle.added(sim, id)
 	return id
 end
@@ -276,11 +279,14 @@ function Build.step(sim: Types.Sim)
 					b.target[id] = existing
 					b.assist[id] = false
 				else
-					local ok, why, _, _, cx, cz = Placement.check(sim, sd, pending.x, pending.z)
+					local ok, why, _, _, cx, cz, replaces = Placement.check(sim, sd, pending.x, pending.z, w.team[id])
 					if ok and Match.atCap(sim, w.owner[id]) then
 						ok, why = false, "unit_cap"
 					end
 					if ok then
+						if replaces ~= 0 then
+							Lifecycle.remove(sim, replaces) -- extractor upgrade: the T1 goes when the T2 starts (guide 9.3)
+						end
 						local frame = startFrame(sim, sd, w.owner[id], cx, cz, pending.facing)
 						b.target[id] = frame
 						b.assist[id] = false
