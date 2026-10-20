@@ -459,8 +459,9 @@ function Sensors.step(sim: Types.Sim)
 				if level == L.VISIBLE then
 					local g = ghosts[id]
 					if g == nil then
-						ghosts[id] = { defIndex = w.defIndex[id], team = w.team[id], x = w.posX[id], z = w.posZ[id] }
+						ghosts[id] = { defIndex = w.defIndex[id], team = w.team[id], x = w.posX[id], z = w.posZ[id], gen = w.gen[id] }
 						table.insert(ghostIds, id)
+						World.pin(w, id) -- never reused while remembered (D109)
 					end
 				elseif ghosts[id] ~= nil then
 					level = L.GHOST
@@ -474,9 +475,10 @@ function Sensors.step(sim: Types.Sim)
 			local gid = ghostIds[i]
 			local g = ghosts[gid]
 			local _, _, cell = Sensors.cellOf(s, g.x, g.z)
-			if w.slot[gid] == nil and readu16(s.maps[team].los, cell * 2) > 0 then
+			if not World.isRef(w, gid, g.gen) and readu16(s.maps[team].los, cell * 2) > 0 then
 				ghosts[gid] = nil
 				table.remove(ghostIds, i)
+				World.unpin(w, gid)
 			else
 				i += 1
 			end
@@ -508,7 +510,18 @@ end
 -- and its def index. A structure ghost answers from the ghost record, so a
 -- structure that died unseen is still a target until its spot is seen
 -- again: the team can't tell it from a live one. nil when hidden.
-function Sensors.knownTarget(sim: Types.Sim, team: number, id: number): (number?, number?, number, number?)
+--
+-- With `gen` (a remembered reference, D109): if (id, gen) is no longer the
+-- live unit, only a ghost of that very unit can answer; else hidden.
+function Sensors.knownTarget(sim: Types.Sim, team: number, id: number, gen: number?): (number?, number?, number, number?)
+	if gen ~= nil and not World.isRef(sim.world, id, gen) then
+		local ghosts = sim.sensors.ghosts[team]
+		local g = ghosts and ghosts[id]
+		if g and g.gen == gen then
+			return g.x, g.z, L.GHOST, g.defIndex
+		end
+		return nil, nil, L.HIDDEN, nil
+	end
 	local kx, kz, level = Sensors.knownPosition(sim, team, id)
 	if kx == nil then
 		return nil, nil, level, nil

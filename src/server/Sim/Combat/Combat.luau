@@ -85,6 +85,8 @@ export type Combat = {
 	pvz: { [number]: number },
 	pWeapon: { [number]: number }, -- weapon def index
 	pOwner: { [number]: number },
+	pOwnerGen: { [number]: number }, -- generations of the shooter and the homing target (D109)
+	pTargetGen: { [number]: number },
 	pTeam: { [number]: number },
 	pTtl: { [number]: number }, -- seconds left
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
@@ -157,6 +159,8 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pvz = {},
 		pWeapon = {},
 		pOwner = {},
+		pOwnerGen = {},
+		pTargetGen = {},
 		pTeam = {},
 		pTtl = {},
 		pTarget = {},
@@ -358,7 +362,9 @@ function Combat.spawnProjectile(
 	owner: number,
 	team: number,
 	ttl: number,
-	target: number?
+	target: number?,
+	w: World.World?, -- records the shooter's and target's generations (D109)
+	targetGen: number? -- default: the live target's
 ): number?
 	local id = allocProjectile(c)
 	if id == nil then
@@ -373,6 +379,8 @@ function Combat.spawnProjectile(
 	c.pTeam[id] = team
 	c.pTtl[id] = ttl
 	c.pTarget[id] = target or 0
+	c.pOwnerGen[id] = if w and owner ~= 0 then w.gen[owner] or 0 else 0
+	c.pTargetGen[id] = if w and (target or 0) ~= 0 then targetGen or w.gen[target :: number] or 0 else 0
 	c.pFlags[id] = 0
 	return id
 end
@@ -387,6 +395,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.px[id], c.py[id], c.pz[id] = nil, nil, nil
 	c.pvx[id], c.pvy[id], c.pvz[id] = nil, nil, nil
 	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id], c.pFlags[id] = nil, nil, nil, nil, nil, nil
+	c.pOwnerGen[id], c.pTargetGen[id] = nil, nil
 	c.freeProj[c.freeTail] = id
 	c.freeTail += 1
 end
@@ -434,6 +443,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pOwner[id])
 		h = Hash.number(h, c.pTtl[id])
 		h = Hash.u32(h, c.pTarget[id])
+		h = Hash.u32(Hash.u32(h, c.pOwnerGen[id]), c.pTargetGen[id])
 		h = Hash.u32(h, c.pFlags[id])
 	end
 	h = Hash.u32(h, c.nextProjId)

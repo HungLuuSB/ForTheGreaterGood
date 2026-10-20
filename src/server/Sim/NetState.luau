@@ -8,7 +8,7 @@ NetState.CHANNELS = table.freeze({ "Tactical", "State", "Strategic", "Events", "
 
 export type PlayerNet = {
 	camera: { number }?, -- minX, minZ, maxX, maxZ in cells; nil = no tactical tier
-	tactical: { [number]: boolean }, -- unit IDs in this player's tactical tier
+	tactical: { [number]: number }, -- unit IDs in this player's tactical tier → their generation (D109)
 	tacticalList: { number }, -- the same, in the order they entered
 	outbox: { [string]: { buffer } }, -- this tick's messages per channel
 	bytes: { [string]: number }, -- cumulative bytes sent per channel

@@ -1371,3 +1371,23 @@ Every system was reviewed for decisions that read another team's units from serv
   - after a stall the jam shrinks and the Lancer is a radar contact; power back, it is jammed again.
   - Ignoring the drain fails the test.
   - The older jamming test now keeps the Veil powered, because it runs longer than 1,000 stored power lasts.
+
+## D109 — Unit generations and ghost pins (2026-10-20, user decision)
+
+- **Generation counter:** `World.gen[id]` counts the units that have had an ID. It is incremented at spawn, kept after despawn, and hashed. `World.isRef(w, id, gen)` is true only while that very unit lives.
+- **Every remembered unit reference stores its generation**, and every check goes through `World.isRef`:
+  - weapon targets: `wTargetGen` (`World.setTarget`), a ghost's generation for dead structures;
+  - `lastAttackerGen` (RETURN_FIRE);
+  - `AirState.padGen`;
+  - `BuildState.targetGen`;
+  - projectiles' `pOwnerGen` / `pTargetGen` (`Combat.spawnProjectile` now takes the world and the target's generation);
+  - ghosts (`Ghost.gen`);
+  - NetOut's tactical set (stores the generation).
+- **Ghosts:** `Sensors.knownTarget(sim, team, id, gen)` answers for a remembered reference: the live unit if `(id, gen)` matches, else only a ghost of that very generation, else hidden. Targeting, the AI and Placement use the ghost's generation for dead ghosts.
+- **Ghost pins:** an ID remembered as a ghost by any team is pinned (`World.pin` / `unpin`, counted per team), and the allocator sends pinned IDs to the back of the free queue. Why: the wire carries 16-bit IDs, so a ghost and a new unit must not share one in strategic records. The ID is free again once every team has forgotten the ghost (its spot seen).
+- **Tests** (`IdReuse.spec`, reuse forced by using up the fresh IDs):
+  - generations and pins in World;
+  - RETURN_FIRE never answers a new unit that got its old attacker's ID;
+  - a dead structure's ghost keeps its generation and its ID isn't reused until the ghost is forgotten;
+  - a builder drops a stale frame target, and a jet a stale pad, after their IDs went to other units.
+  - Ignoring generations fails three of the tests; ignoring pins fails two.

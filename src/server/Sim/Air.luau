@@ -136,6 +136,7 @@ function Air.onSpawn(sim: Types.Sim, id: number)
 	a.phase[id] = "fly"
 	a.ammo[id] = d.ammo
 	a.pad[id] = 0
+	a.padGen[id] = 0
 	a.progress[id] = 0
 	a.resumeX[id], a.resumeZ[id] = w.posX[id], w.posZ[id]
 	if d.moveClass == "JET" and d.movement and d.movement.minSpeed then
@@ -178,6 +179,7 @@ function Air.onEmpty(sim: Types.Sim, id: number)
 	end
 	a.phase[id] = "return"
 	a.pad[id] = pad
+	a.padGen[id] = w.gen[pad]
 	headTo(sim, id, w.posX[pad], w.posZ[pad])
 end
 
@@ -190,7 +192,7 @@ function Air.attackGround(sim: Types.Sim, id: number, x: number, z: number)
 	local a = sim.air
 	a.groundX[id], a.groundZ[id] = x, z
 	a.run[id] = nil
-	sim.world.wTarget[World.slotKey(id, 1)] = 0
+	World.setTarget(sim.world, World.slotKey(id, 1), 0)
 end
 
 function Air.clearGround(sim: Types.Sim, id: number)
@@ -209,11 +211,12 @@ function Air.bombAim(sim: Types.Sim, id: number): (number?, number?, number?, nu
 		return 0, a.groundX[id], a.groundZ[id], nil
 	end
 	local w = sim.world
-	local target = if w.weaponCount[id] > 0 then w.wTarget[World.slotKey(id, 1)] else 0
+	local key = World.slotKey(id, 1)
+	local target = if w.weaponCount[id] > 0 then w.wTarget[key] else 0
 	if target == 0 then
 		return nil
 	end
-	local kx, kz, _, defIndex = Sensors.knownTarget(sim, w.ally[id], target)
+	local kx, kz, _, defIndex = Sensors.knownTarget(sim, w.ally[id], target, w.wTargetGen[key])
 	if kx == nil then
 		return nil
 	end
@@ -252,7 +255,7 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 	local nav = sim.nav :: Nav.Nav
 	local tx, tz = w.goalX[id], w.goalZ[id]
 	local loiter = true
-	if phase == "return" and w.slot[a.pad[id]] then
+	if phase == "return" and World.isRef(w, a.pad[id], a.padGen[id]) then
 		local pad = a.pad[id]
 		tx, tz, loiter = w.posX[pad], w.posZ[pad], false
 	else
@@ -263,9 +266,10 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 				local t: number?, x: number?, z: number?, d: number? = Air.bombAim(sim, id)
 				target, kx, kz, defIndex = t or 0, x, z, d
 			else
-				target = if w.weaponCount[id] > 0 then w.wTarget[World.slotKey(id, 1)] else 0
+				local key = World.slotKey(id, 1)
+				target = if w.weaponCount[id] > 0 then w.wTarget[key] else 0
 				if target ~= 0 then
-					kx, kz = Sensors.knownPosition(sim, w.ally[id], target)
+					kx, kz = Sensors.knownTarget(sim, w.ally[id], target, w.wTargetGen[key])
 				end
 			end
 		end
@@ -374,9 +378,10 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 		local phase = a.phase[id]
 		if phase == "return" then
 			local pad = a.pad[id]
-			if w.slot[pad] == nil then
-				pad = nearestPad(sim, id) -- pad destroyed: try another
+			if not World.isRef(w, pad, a.padGen[id]) then
+				pad = nearestPad(sim, id) -- pad destroyed (its ID may be another unit's now): try another
 				a.pad[id] = pad
+				a.padGen[id] = w.gen[pad] or 0
 				if pad == 0 then
 					a.phase[id] = "fly"
 					continue
@@ -407,7 +412,7 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 		elseif phase == "rearm" then
 			local d = def(sim, id)
 			local pad = a.pad[id]
-			if w.slot[pad] == nil then
+			if not World.isRef(w, pad, a.padGen[id]) then
 				-- pad destroyed under us: take off and look for another
 				a.phase[id] = "fly"
 				World.setState(w, id, bit32.band(w.state[id], bit32.bnot(LANDED)))
@@ -453,6 +458,7 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				a.cmPerRound[id], a.cmSupplyPerRound[id], a.cmProgress[id] = nil, nil, nil
 				a.phase[id] = "fly"
 				a.pad[id] = 0
+				a.padGen[id] = 0
 				a.progress[id] = 0
 				World.setState(w, id, bit32.band(w.state[id], bit32.bnot(LANDED)))
 				if d.movement and d.movement.minSpeed then

@@ -244,6 +244,7 @@ local World = {
 ```
 
 - Unit IDs are `u16` (1–65535). **Delay reuse** of freed IDs (e.g., 10 seconds) so late packets never apply to the wrong unit.
+- **Generations** (D109): each ID slot counts the units that have had it. Anything that remembers a unit across ticks stores `(id, generation)`, and a mismatch means the remembered unit is gone. That covers weapon targets, the last attacker, rearm pads, builder targets, projectile shooters and homing targets, ghosts, and NetOut's tactical set. IDs remembered as ghosts are pinned and never reused, so a ghost and a new unit never share an ID on the wire.
 - Every write to a replicated field also sets the matching `dirty` bit. NetOut reads and clears dirty bits.
 
 ---

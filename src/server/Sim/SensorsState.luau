@@ -10,7 +10,7 @@ local SensorsState = {}
 SensorsState.Level = table.freeze({ HIDDEN = 0, RADAR = 1, SONAR = 2, VISIBLE = 3, GHOST = 4 })
 SensorsState.KINDS = table.freeze({ "los", "airLos", "radar", "sonar", "jam", "track" })
 
-export type Ghost = { defIndex: number, team: number, x: number, z: number }
+export type Ghost = { defIndex: number, team: number, x: number, z: number, gen: number } -- gen: the remembered unit's (D109)
 
 export type State = {
 	width: number, -- sensor cells

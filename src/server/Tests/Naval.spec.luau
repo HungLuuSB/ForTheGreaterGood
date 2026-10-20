@@ -219,7 +219,7 @@ return function(t: RunAll.Context)
 		local x0 = SHORE_X + 100
 		local y0 = Combat.surfaceHeight(c, x0, 0) - Combat.TORPEDO_DEPTH
 		-- fired straight at the tank, homing on it, angled up out of the water
-		local p = Combat.spawnProjectile(c, x0, y0, 0, -90, 20, 0, weapon.index, 0, 1, 10, lancer) :: number
+		local p = Combat.spawnProjectile(c, x0, y0, 0, -90, 20, 0, weapon.index, 0, 1, 10, lancer, sim.world) :: number
 		local maxY, removedAt = -math.huge, nil
 		for _ = 1, 60 do
 			Sim.step(sim)

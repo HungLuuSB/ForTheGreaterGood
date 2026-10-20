@@ -201,7 +201,7 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			known[p] = true
 			sentNow[p] = true
 			local target = c.pTarget[p]
-			if target ~= 0 and (sim.world.slot[target] == nil or Sensors.level(sim, ally, target) == L.HIDDEN) then
+			if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or Sensors.level(sim, ally, target) == L.HIDDEN) then
 				target = 0
 			end
 			local e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
@@ -266,7 +266,7 @@ function NetOut.step(sim: Types.Sim)
 		local i = 1
 		while i <= #pn.tacticalList do
 			local id = pn.tacticalList[i]
-			if w.slot[id] == nil then
+			if not World.isRef(w, id, pn.tactical[id]) then -- gone (or its ID reused, D109)
 				pn.tactical[id] = nil
 				table.remove(pn.tacticalList, i)
 				table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
@@ -285,7 +285,7 @@ function NetOut.step(sim: Types.Sim)
 					table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
 				end
 			elseif seen and cam ~= nil and inRect(g, cam, w.posX[id], w.posZ[id], NetOut.ENTER_MARGIN) then
-				pn.tactical[id] = true
+				pn.tactical[id] = w.gen[id]
 				table.insert(pn.tacticalList, id)
 				entered[id] = true
 				table.insert(events, enterEvent(sim, g, id))
@@ -343,8 +343,8 @@ function NetOut.step(sim: Types.Sim)
 			end
 			-- remembered structures that are already gone
 			for _, gid in sim.sensors.ghostIds[ally] or {} do
-				if w.slot[gid] == nil then
-					local ghost = sim.sensors.ghosts[ally][gid]
+				local ghost = sim.sensors.ghosts[ally][gid]
+				if not World.isRef(w, gid, ghost.gen) then
 					table.insert(strategic, {
 						unitId = gid,
 						cell = (g:encode(ghost.x, ghost.z)),

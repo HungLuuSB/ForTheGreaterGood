@@ -33,6 +33,7 @@ local Placement = require("../Placement")
 local Sensors = require("../Sensors")
 local Sim = require("../Sim")
 local Types = require("../Types")
+local World = require("../World")
 
 local Skirmish = {}
 
@@ -210,8 +211,8 @@ function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number
 	local L = Sensors.Level
 	local threatX, threatZ, threatD = nil, nil, math.huge
 	local targetX, targetZ, targetScore = nil, nil, math.huge
-	local function consider(id: number)
-		local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
+	local function consider(id: number, gen: number?)
+		local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id, gen)
 		if kx == nil or kz == nil then
 			return
 		end
@@ -235,8 +236,9 @@ function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number
 		end
 	end
 	for _, gid in sim.sensors.ghostIds[brain.ally] or {} do
-		if w.slot[gid] == nil then
-			consider(gid)
+		local ghost = sim.sensors.ghosts[brain.ally][gid]
+		if not World.isRef(w, gid, ghost.gen) then
+			consider(gid, ghost.gen)
 		end
 	end
 	return threatX, threatZ, targetX, targetZ

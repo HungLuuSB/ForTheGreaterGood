@@ -113,7 +113,9 @@ local function fire(
 			id,
 			w.ally[id], -- projectile side: allies are never hit directly
 			ttl,
-			if wtype == "HOMING" or wtype == "TORPEDO" then target else 0
+			if wtype == "HOMING" or wtype == "TORPEDO" then target else 0,
+			w,
+			w.wTargetGen[World.slotKey(id, slot)]
 		)
 		if projectile then
 			Combat.addEvent(c, { kind = "SPAWN_PROJ", tick = sim.tick, unit = id, other = projectile, slot = slot })
@@ -170,6 +172,7 @@ return function(sim: Types.Sim)
 			end
 
 			local target = w.wTarget[key]
+			local targetGen = w.wTargetGen[key]
 			local wantYaw, wantPitch = 0, 0
 			local canFire = false
 			local dist, worldYaw = 0, 0
@@ -182,7 +185,7 @@ return function(sim: Types.Sim)
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
 			elseif target ~= 0 then
 				local level
-				kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], target)
+				kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], target, targetGen)
 				if kx ~= nil and not Sensors.typeKnown(sim, w.ally[id], target, level) then
 					defIndex = nil -- an untracked blip's size is unknown (D107)
 				end
@@ -198,7 +201,7 @@ return function(sim: Types.Sim)
 				local dy = aimY - muzzleY
 				-- the true direction, for judging hitscan hits (only live targets are hit-checked)
 				exactYaw, exactPitch = worldYaw, atan2(dy, dist)
-				if target ~= 0 and w.slot[target] ~= nil then
+				if World.isRef(w, target, targetGen) then
 					local tx, tz = w.posX[target] - x, w.posZ[target] - z
 					local trueDist = sqrt(tx * tx + tz * tz)
 					exactYaw = atan2(tx, tz)

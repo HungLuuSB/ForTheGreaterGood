@@ -133,6 +133,7 @@ function Build.commandAssist(sim: Types.Sim, ids: { number }, targetId: number)
 		end
 		BuildState.idle(b, id)
 		b.target[id] = targetId
+		b.targetGen[id] = w.gen[targetId]
 		b.assist[id] = factory
 		if sim.nav then
 			Nav.clearOrder(sim.nav, w, id)
@@ -278,6 +279,7 @@ function Build.step(sim: Types.Sim)
 				local existing = frameAt(sim, w.team[id], pending.defIndex, pending.x, pending.z)
 				if existing ~= 0 then
 					b.target[id] = existing
+					b.targetGen[id] = w.gen[existing]
 					b.assist[id] = false
 				else
 					local ok, why, _, _, cx, cz, replaces = Placement.check(sim, sd, pending.x, pending.z, w.team[id])
@@ -290,6 +292,7 @@ function Build.step(sim: Types.Sim)
 						end
 						local frame = startFrame(sim, sd, w.owner[id], cx, cz, pending.facing)
 						b.target[id] = frame
+						b.targetGen[id] = w.gen[frame]
 						b.assist[id] = false
 						Combat.addEvent(sim.combat, { kind = "BUILD_START", tick = sim.tick, unit = frame, other = id })
 					else
@@ -326,7 +329,7 @@ function Build.step(sim: Types.Sim)
 
 		local t = b.target[id] or 0
 		if t ~= 0 then
-			local valid = w.slot[t] ~= nil and w.team[t] == w.team[id]
+			local valid = World.isRef(w, t, b.targetGen[id]) and w.team[t] == w.team[id] -- D109
 			if valid then
 				if b.assist[id] then
 					local q = b.queue[t]

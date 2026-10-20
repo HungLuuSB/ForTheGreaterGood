@@ -11,6 +11,7 @@ export type PendingBuild = { defIndex: number, x: number, z: number, facing: num
 export type BuildState = {
 	order: { [number]: PendingBuild }, -- mobile builder → structure it is on its way to start
 	target: { [number]: number }, -- builder → unit it is building / assisting (0 = none)
+	targetGen: { [number]: number }, -- its generation (D109)
 	assist: { [number]: boolean }, -- builder's target is a factory's production (not a frame)
 	reclaim: { [number]: number }, -- builder → wreck it is reclaiming (0 = none)
 	queue: { [number]: { number } }, -- factory → def indices waiting (head is in production)
@@ -20,13 +21,14 @@ export type BuildState = {
 BuildState.MAX_QUEUE = 50
 
 function BuildState.new(): BuildState
-	return { order = {}, target = {}, assist = {}, reclaim = {}, queue = {}, progress = {} }
+	return { order = {}, target = {}, targetGen = {}, assist = {}, reclaim = {}, queue = {}, progress = {} }
 end
 
 -- Forgets everything about one unit (it was removed from the world).
 function BuildState.clearUnit(b: BuildState, id: number)
 	b.order[id] = nil
 	b.target[id] = nil
+	b.targetGen[id] = nil
 	b.assist[id] = nil
 	b.reclaim[id] = nil
 	b.queue[id] = nil
@@ -37,6 +39,7 @@ end
 function BuildState.idle(b: BuildState, id: number)
 	b.order[id] = nil
 	b.target[id] = nil
+	b.targetGen[id] = nil
 	b.assist[id] = nil
 	b.reclaim[id] = nil
 end
@@ -49,7 +52,7 @@ function BuildState.hash(b: BuildState, ids: { number }, h: number): number
 			h = Hash.u32(Hash.u32(h, id), o.defIndex)
 			h = Hash.number(Hash.number(h, o.x), o.z)
 		end
-		h = Hash.u32(h, b.target[id] or 0)
+		h = Hash.u32(Hash.u32(h, b.target[id] or 0), b.targetGen[id] or 0)
 		h = Hash.u32(h, b.reclaim[id] or 0)
 		local q = b.queue[id]
 		if q then

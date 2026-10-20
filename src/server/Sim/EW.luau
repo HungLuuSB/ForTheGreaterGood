@@ -41,6 +41,7 @@ local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
 local Sensors = require("./Sensors")
 local Types = require("./Types")
+local World = require("./World")
 
 local EW = {}
 
@@ -220,7 +221,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	local c = sim.combat
 	local w = sim.world
 	local target = c.pTarget[p]
-	if target == 0 or w.slot[target] == nil then
+	if not World.isRef(w, target, c.pTargetGen[p]) then
 		return
 	end
 	local flags = c.pFlags[p]
@@ -235,7 +236,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 			lost = dx * dx + dz * dz > bt * bt and EW.jammed(sim, target)
 		elseif guidance == "COMMAND" then
 			local launcher = c.pOwner[p]
-			lost = w.slot[launcher] == nil or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE
+			lost = not World.isRef(w, launcher, c.pOwnerGen[p]) or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE
 		end
 		if lost then
 			c.pTarget[p] = 0

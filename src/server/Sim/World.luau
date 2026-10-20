@@ -76,12 +76,16 @@ export type World = {
 	-- combat. Per-weapon fields are keyed by World.slotKey(id, slot).
 	weaponCount: { [number]: number },
 	lastAttacker: { [number]: number }, -- unit that last damaged this one, 0 = none
+	lastAttackerGen: { [number]: number }, -- its generation (D109)
 	wYaw: { [number]: number }, -- turret yaw relative to the hull, radians
 	wPitch: { [number]: number }, -- radians, up positive
 	wReload: { [number]: number }, -- seconds until ready (<= 0 = ready)
 	wTarget: { [number]: number }, -- target unit ID, 0 = none
+	wTargetGen: { [number]: number }, -- the target's generation (D109): a ghost's for dead structures
 
 	-- ID allocator
+	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
+	pins: { [number]: number }, -- IDs still remembered as ghosts: never reused while pinned (D109)
 	nextFresh: number, -- next never-used ID
 	freeIds: { number }, -- FIFO of freed IDs ...
 	freeTicks: { number }, -- ... and the tick each was freed
@@ -116,10 +120,14 @@ function World.new(): World
 		progressTick = {},
 		weaponCount = {},
 		lastAttacker = {},
+		lastAttackerGen = {},
 		wYaw = {},
 		wPitch = {},
 		wReload = {},
 		wTarget = {},
+		wTargetGen = {},
+		gen = {},
+		pins = {},
 		nextFresh = 1,
 		freeIds = {},
 		freeTicks = {},
@@ -143,13 +151,25 @@ local function allocate(w: World, tick: number): number?
 		w.nextFresh += 1
 		return id
 	end
-	local head = w.freeHead
-	local id = w.freeIds[head]
-	if id ~= nil and tick - w.freeTicks[head] >= World.REUSE_DELAY_TICKS then
+	-- oldest freed ID past its delay; pinned IDs (remembered ghosts) go to
+	-- the back of the queue with their free tick (D109)
+	for _ = 1, w.freeTail - w.freeHead do
+		local head = w.freeHead
+		local id = w.freeIds[head]
+		local freedAt = w.freeTicks[head]
+		if id == nil or tick - freedAt < World.REUSE_DELAY_TICKS then
+			return nil
+		end
 		w.freeIds[head] = nil
 		w.freeTicks[head] = nil
 		w.freeHead = head + 1
-		return id
+		if (w.pins[id] or 0) == 0 then
+			return id
+		end
+		local tail = w.freeTail
+		w.freeIds[tail] = id
+		w.freeTicks[tail] = freedAt
+		w.freeTail = tail + 1
 	end
 	return nil
 end
@@ -184,6 +204,7 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 	end
 	table.insert(w.ids, id)
 	w.slot[id] = #w.ids
+	w.gen[id] = (w.gen[id] or 0) + 1
 	w.defIndex[id] = info.defIndex
 	w.team[id] = info.team
 	w.ally[id] = info.ally or info.team
@@ -208,14 +229,41 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 	local weapons = info.weaponCount or 0
 	w.weaponCount[id] = weapons
 	w.lastAttacker[id] = 0
+	w.lastAttackerGen[id] = 0
 	for slot = 1, weapons do
 		local key = id * 8 + slot - 1
 		w.wYaw[key] = 0
 		w.wPitch[key] = 0
 		w.wReload[key] = 0
 		w.wTarget[key] = 0
+		w.wTargetGen[key] = 0
 	end
 	return id
+end
+
+-- Is (id, gen) still the same live unit (D109)? A remembered reference
+-- whose generation no longer matches points at a unit that is gone, even if
+-- its ID was handed to a new one.
+function World.isRef(w: World, id: number, gen: number?): boolean
+	return id ~= 0 and w.slot[id] ~= nil and w.gen[id] == gen
+end
+
+-- Sets weapon slot `key`'s target to (id, gen); gen defaults to the live
+-- unit's.
+function World.setTarget(w: World, key: number, id: number, gen: number?)
+	w.wTarget[key] = id
+	w.wTargetGen[key] = if id == 0 then 0 else (gen or w.gen[id] or 0)
+end
+
+-- Ghost pins (D109): an ID remembered as a ghost by any team is never
+-- reused, so a ghost and a new unit can't share an ID (on the wire too).
+function World.pin(w: World, id: number)
+	w.pins[id] = (w.pins[id] or 0) + 1
+end
+
+function World.unpin(w: World, id: number)
+	local n = (w.pins[id] or 0) - 1
+	w.pins[id] = if n > 0 then n else nil
 end
 
 -- Removes a unit; its ID becomes reusable after REUSE_DELAY_TICKS.
@@ -259,9 +307,11 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wPitch[key] = nil
 		w.wReload[key] = nil
 		w.wTarget[key] = nil
+		w.wTargetGen[key] = nil
 	end
 	w.weaponCount[id] = nil
 	w.lastAttacker[id] = nil
+	w.lastAttackerGen[id] = nil
 
 	local tail = w.freeTail
 	w.freeIds[tail] = id
@@ -352,13 +402,16 @@ function World.hash(w: World, h: number?): number
 		hv = Hash.number(hv, w.goalX[id])
 		hv = Hash.number(hv, w.goalZ[id])
 		hv = Hash.u32(hv, if w.direct[id] then 1 else 0)
+		hv = Hash.u32(hv, w.gen[id])
 		hv = Hash.u32(hv, w.lastAttacker[id])
+		hv = Hash.u32(hv, w.lastAttackerGen[id])
 		for slot = 1, w.weaponCount[id] do
 			local key = id * 8 + slot - 1
 			hv = Hash.number(hv, w.wYaw[key])
 			hv = Hash.number(hv, w.wPitch[key])
 			hv = Hash.number(hv, w.wReload[key])
 			hv = Hash.u32(hv, w.wTarget[key])
+			hv = Hash.u32(hv, w.wTargetGen[key])
 		end
 	end
 	hv = Hash.u32(hv, w.nextFresh)

@@ -24,6 +24,7 @@ local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
 local EW = require("../EW")
 local Types = require("../Types")
+local World = require("../World")
 
 local DT = 1 / 15
 local sqrt, sin, cos = math.sqrt, math.sin, math.cos
@@ -73,7 +74,7 @@ return function(sim: Types.Sim)
 		local x0, y0, z0 = c.px[id], c.py[id], c.pz[id]
 		local pvx, pvy, pvz = c.pvx[id], c.pvy[id], c.pvz[id]
 		local homingTarget = c.pTarget[id]
-		if homingTarget ~= 0 and w.slot[homingTarget] ~= nil and weapon.turnRate then
+		if World.isRef(w, homingTarget, c.pTargetGen[id]) and weapon.turnRate then
 			-- lead pursuit: steer at where the target will be when the
 			-- missile gets there (straight-line time to go, target holding
 			-- its heading and speed)
@@ -122,7 +123,7 @@ return function(sim: Types.Sim)
 		-- approach when that is within its blast radius of the target's hull
 		-- (target frame, as above); the burst deals AoE damage only
 		local burst = 0
-		if weapon.type == "HOMING" and homingTarget ~= 0 and w.slot[homingTarget] ~= nil and (weapon.aoe or 0) > 0 then
+		if weapon.type == "HOMING" and World.isRef(w, homingTarget, c.pTargetGen[id]) and (weapon.aoe or 0) > 0 then
 			local u = homingTarget
 			local p = profiles[w.defIndex[u]]
 			local base = Combat.unitBase(c, w, u)
@@ -155,7 +156,11 @@ return function(sim: Types.Sim)
 			if bestUnit ~= 0 or burst ~= 0 then
 				c.stats.hits += 1
 			end
-			Combat.explode(c, w, ix, iy, iz, weapon, c.pOwner[id], team, bestUnit)
+			local owner = c.pOwner[id]
+			if not World.isRef(w, owner, c.pOwnerGen[id]) then
+				owner = 0 -- the shooter is gone (D109)
+			end
+			Combat.explode(c, w, ix, iy, iz, weapon, owner, team, bestUnit)
 			Combat.removeProjectile(c, id)
 		else
 			local ttl = c.pTtl[id] - DT

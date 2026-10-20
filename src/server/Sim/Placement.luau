@@ -14,6 +14,7 @@ local Lifecycle = require("./Lifecycle")
 local Sensors = require("./Sensors")
 local Nav = require("./Nav")
 local Types = require("./Types")
+local World = require("./World")
 
 local Placement = {}
 
@@ -93,8 +94,8 @@ function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number
 	if knower ~= nil then
 		-- remembered structures that are gone: the planner believes they stand
 		for _, gid in sim.sensors.ghostIds[knower] or {} do
-			if w.slot[gid] == nil then
-				local ghost = sim.sensors.ghosts[knower][gid]
+			local ghost = sim.sensors.ghosts[knower][gid]
+			if not World.isRef(w, gid, ghost.gen) then
 				local gsize = sim.defs.unitByIndex[ghost.defIndex].footprint
 				local gx0, gz0 = Placement.snap(g, gsize, ghost.x, ghost.z)
 				if gx0 < x0 + size and x0 < gx0 + gsize and gz0 < z0 + size and z0 < gz0 + gsize then
