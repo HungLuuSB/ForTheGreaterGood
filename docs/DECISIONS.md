@@ -1215,3 +1215,29 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - a plant destroyed unseen is still bombed (bombs land on its empty spot), and bombing stops once a spotter sees the spot (the ghost is forgotten). Without the dead-ghost search the bomber never attacks;
   - ATTACK_GROUND: 2 of 3 bombs within 10 studs of the spot, a Lancer ignores the order, and a MOVE cancels it.
 - **Known edge:** unit IDs are reused only after all 65,535 fresh IDs and a 10 s delay. A ghost whose ID is reused would follow the new unit. Not handled yet.
+
+## D101 — Audit: decisions on server truth (2026-10-20, user-requested)
+
+Every system was reviewed for decisions that read another team's units from server truth where the deciding team's knowledge should decide. The review covered every loop over all units, every contact-grid query, and every read of a target's position, type or state. Tests are in `Knowledge.spec`; each fails when its fix is undone.
+
+**Fixed:**
+
+| Where | Truth leak | Now |
+|---|---|---|
+| `Targeting` search | Candidates were gathered by true position within range + largest radius. A radar contact whose believed position was in range, but whose true one wasn't, was never considered. | The query reaches range + largest radius + largest radar error, and acceptance stays on the believed position. Test: a mortar fires at a blip that wobbles into range. |
+| `Placement.check` (AI planning) | The AI skipped build sites and deposits taken by enemy structures or units it had never seen. | Optional `knower` (ally team): enemies the team doesn't see don't block, and remembered structures (ghosts, alive or not) do. The physical check, when a builder starts the frame, is unchanged. Tests: planner vs physical check; the AI keeps choosing a deposit an unseen enemy extractor took, and picks another once it sees it. |
+| `Skirmish` targets | It read the true def of radar blips (structure or Command Vehicle?) to rank attack targets. Threats near home needed `w.slot` (alive), and dead ghosts were ignored. | `Skirmish.knownTargets`: types only for VISIBLE units and ghosts; dead ghosts count as targets and threats. Test: a nearer tank beats a radar-only generator, the generator wins once seen, and stays the target after dying unseen. |
+| Weapons and bombers (D100) | Targets had to be alive. | Ghost targets follow team knowledge. |
+
+**Reviewed and kept (physics or the unit's own senses, not a team decision):**
+- Hit judgement, projectile collision, homing steering and the proximity fuse use true positions: that is where things physically are.
+- `EW.canLock` (jamming, stealth signature) is the seeker's own physical result. Targeting preferring lockable targets uses that result, as a real fire-control system would.
+- RETURN_FIRE uses the attacker recorded by Damage, but only through the knowledge check.
+- Bomber lead and weapon pitch use the true heading, speed or altitude only for VISIBLE targets, or the altitude of a radar contact (radar measures it).
+- The physical placement check when a frame starts, and movement avoidance, block on everything physically there.
+- Win conditions, Sensors and NetOut work on truth by design (NetOut filters fog first).
+
+**Open (questions for the user):**
+- **Pathfinding uses true passability:** routes go around enemy structures the team never saw. Fixing it needs per-team passability (or treating unseen structures as passable until a unit bumps into them). That is a large change to Nav and the flow-field cache.
+- **Radar contacts' categories:** weapons filter radar contacts by their true category (e.g. artillery ignores a blip that is an aircraft). Radar can tell air from surface, but finer categories (light vs armored) also come from truth in target priority.
+- **Ghost IDs reused** after 65,535 spawns would follow the new unit (D100).

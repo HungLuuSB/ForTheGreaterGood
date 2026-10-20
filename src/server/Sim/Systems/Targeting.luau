@@ -111,12 +111,31 @@ local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: numb
 	return s
 end
 
+-- The largest radar error any def has: a radar contact's believed position
+-- can be this far from its true one (cached per def set).
+local maxErrorCache: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any
+local function maxRadarError(sim: Types.Sim): number
+	local e = maxErrorCache[sim.defs]
+	if e == nil then
+		e = Sensors.DEFAULT_RADAR_ERROR
+		for _, d in sim.defs.unitByIndex do
+			e = math.max(e, d.sensors.radarError or 0)
+		end
+		maxErrorCache[sim.defs] = e
+	end
+	return e
+end
+
 -- Best acceptable enemy within range, and its score (0, 0 when none).
+-- Candidates come from the contact grid (true positions), gathered wide
+-- enough that every enemy whose believed position is in range is among
+-- them: acceptance is decided on the believed position (D101).
 local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (number, number)
 	local c = sim.combat
 	local w = sim.world
 	local best, bestScore = 0, 0
-	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], weapon.range + c.maxRadius, w.ally[id], candidates)
+	local reach = weapon.range + c.maxRadius + (if weapon.canTargetRadar or weapon.type == "TORPEDO" then maxRadarError(sim) else 0)
+	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], reach, w.ally[id], candidates)
 	for i = 1, n do
 		local t = candidates[i]
 		local dist = acceptable(sim, id, weapon, t, 1)

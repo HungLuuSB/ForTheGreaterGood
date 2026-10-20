@@ -3,7 +3,9 @@
 -- player: it reads only what its ally team knows (Sensors), its own units,
 -- its own economy and the map's start positions, and acts only through
 -- commands (Sim.submit), so its games are recorded in the replay like any
--- other player's.
+-- other player's. Build sites are planned with the team's knowledge
+-- (Placement.check with `knower`); enemy types are known only for VISIBLE
+-- units and ghosts, never for radar blips (D101).
 --
 -- Every THINK_PERIOD ticks (offset by player ID) it:
 --   1. Builders (the Command Vehicle stays home): a Vehicle Plant first;
@@ -170,7 +172,7 @@ local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (n
 				continue
 			end
 			local cell = g:index(gx, gz)
-			if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick and Placement.check(sim, def, x, z) then
+			if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick and Placement.check(sim, def, x, z, nil, brain.ally) then
 				brain.claims[cell] = sim.tick
 				return x, z
 			end
@@ -179,20 +181,65 @@ local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (n
 	return nil, nil
 end
 
--- The nearest deposit with nothing on it and nobody sent there lately.
-local function freeDeposit(brain: Brain): number?
+-- The nearest deposit with nothing on it, as far as the team knows, and
+-- nobody sent there lately.
+function Skirmish.freeDeposit(brain: Brain): number?
 	local sim = brain.sim
 	local pm = sim.map :: Passability.PassMap
 	local def = sim.defs.units[faction(brain, "extractor", "extractor")]
 	for _, cell in brain.deposits do
-		if Passability.occupant(pm, cell) == 0 and (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
+		if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
 			local x, z = pm.grid:cellCenter(pm.grid:coords(cell))
-			if Placement.check(sim, def, x, z) then
+			if Placement.check(sim, def, x, z, nil, brain.ally) then
 				return cell
 			end
 		end
 	end
 	return nil
+end
+local freeDeposit = Skirmish.freeDeposit
+
+-- Known enemies (D101): the nearest one near home (a threat), and the best
+-- attack target, where structures and the Command Vehicle count four times
+-- closer. Radar blips have no known type; remembered structures count even
+-- if they died unseen. Returns threatX, threatZ, targetX, targetZ (nil when
+-- none).
+function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number?)
+	local sim = brain.sim
+	local w = sim.world
+	local L = Sensors.Level
+	local threatX, threatZ, threatD = nil, nil, math.huge
+	local targetX, targetZ, targetScore = nil, nil, math.huge
+	local function consider(id: number)
+		local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
+		if kx == nil or kz == nil then
+			return
+		end
+		local dh = (kx - brain.homeX) ^ 2 + (kz - brain.homeZ) ^ 2
+		if dh < Skirmish.HOME_RADIUS ^ 2 and dh < threatD then
+			threatX, threatZ, threatD = kx, kz, dh
+		end
+		local important = false
+		if level == L.VISIBLE or level == L.GHOST then
+			local d = sim.defs.unitByIndex[defIndex :: number]
+			important = d.domain == "structure" or bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0
+		end
+		local score = dh * (if important then 0.25 else 1)
+		if score < targetScore then
+			targetX, targetZ, targetScore = kx, kz, score
+		end
+	end
+	for _, id in w.ids do
+		if w.ally[id] ~= brain.ally then
+			consider(id)
+		end
+	end
+	for _, gid in sim.sensors.ghostIds[brain.ally] or {} do
+		if w.slot[gid] == nil then
+			consider(gid)
+		end
+	end
+	return threatX, threatZ, targetX, targetZ
 end
 
 type Census = {
@@ -342,26 +389,7 @@ local function think(brain: Brain)
 		end
 	end
 	-- known enemies: the nearest one near home, and the best attack target
-	local threatX, threatZ, threatD = nil, nil, math.huge
-	local targetX, targetZ, targetScore = nil, nil, math.huge
-	for _, id in w.ids do
-		if w.ally[id] == brain.ally then
-			continue
-		end
-		local kx, kz = Sensors.knownPosition(sim, brain.ally, id)
-		if kx and kz then
-			local dh = (kx - brain.homeX) ^ 2 + (kz - brain.homeZ) ^ 2
-			if dh < Skirmish.HOME_RADIUS ^ 2 and dh < threatD and w.slot[id] then
-				threatX, threatZ, threatD = kx, kz, dh
-			end
-			local d = unitDef(sim, id)
-			local important = d.domain == "structure" or bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0
-			local score = dh * (if important then 0.25 else 1)
-			if score < targetScore then
-				targetX, targetZ, targetScore = kx, kz, score
-			end
-		end
-	end
+	local threatX, threatZ, targetX, targetZ = Skirmish.knownTargets(brain)
 	local home, wave = {}, {}
 	local attacking: { [number]: boolean } = {} -- rebuilt from the living army
 	for _, id in c.army do

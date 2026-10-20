@@ -322,6 +322,13 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 7 — item 2b: server-truth audit ✅
+
+- Fixed (D101): radar contacts are judged by their believed position in the targeting search. The AI plans placement with its team's knowledge, never reads a radar blip's type, and keeps dead ghosts as targets and threats.
+- New `Knowledge.spec` (4 tests); each fails when its fix is undone.
+- Open: pathfinding on true passability, and radar contacts' true categories in weapon filters.
+- Tests: **32 specs, 236 passed**.
+
 ### Round 7 — item 2a: ghosts of dead structures, ATTACK_GROUND ✅
 
 - Targeting follows team knowledge: ghosts stay targets after their structure dies unseen, until the spot is seen again (D100).
