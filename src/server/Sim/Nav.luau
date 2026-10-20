@@ -562,6 +562,20 @@ function Nav.extendField(nav: Nav, order: Order, cells: { number }, tick: number
 	enqueue(nav, { key = key, order = order, job = FlowField.newJob(tree, corridor, order.goalCell) })
 end
 
+-- Passability changed inside the cell rectangle (a structure was placed or
+-- removed): drop every quadtree (rebuilt lazily) and every cached field whose
+-- corridor touches the rectangle. Orders keep their current field; units it
+-- now leads into the structure stall and get an extended field (D39).
+function Nav.terrainChanged(nav: Nav, x0: number, z0: number, x1: number, z1: number)
+	table.clear(nav.trees)
+	local g = nav.grid
+	for z = math.max(z0, 0), math.min(z1, g.cellsZ - 1) do
+		for x = math.max(x0, 0), math.min(x1, g.cellsX - 1) do
+			FieldCache.invalidateCell(nav.cache, z * g.cellsX + x)
+		end
+	end
+end
+
 -- Pathing system body: advances queued field jobs, oldest first, within
 -- `budget` work units.
 function Nav.runJobs(nav: Nav, budget: number)

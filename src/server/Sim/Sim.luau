@@ -21,6 +21,7 @@ local Schema = require("@shared/Net/Schema")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
 local Nav = require("./Nav")
+local _Placement = require("./Placement") -- registers its Lifecycle removal hook
 local Replay = require("./Replay")
 local Scenarios = require("./Scenarios")
 local Types = require("./Types")

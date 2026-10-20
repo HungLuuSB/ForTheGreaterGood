@@ -3,13 +3,16 @@
 -- (health, weapon slots). Used by scenarios, tests and (later) construction.
 
 local Lifecycle = require("./Lifecycle")
+local Placement = require("./Placement")
 local Types = require("./Types")
 local World = require("./World")
 
 local Spawn = {}
 
 -- Spawns a complete `defId` unit for player `owner` at (x, z). Returns the
--- unit ID. (Structures under construction come from Build, not from here.)
+-- unit ID. Structures snap to the grid and occupy their footprint (no
+-- placement check: scenarios and tests place them deliberately). Structures
+-- under construction come from Build, not from here.
 function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: number, heading: number?): number
 	local def = sim.defs.units[defId]
 	if def == nil then
@@ -18,6 +21,10 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 	local player = sim.players[owner]
 	if player == nil then
 		error(`Spawn.unit: unknown player {owner}`, 2)
+	end
+	if def.domain == "structure" and sim.map then
+		local _, _, cx, cz = Placement.snap(sim.map.grid, def.footprint, x, z)
+		x, z = cx, cz
 	end
 	local id = World.spawn(sim.world, sim.tick, {
 		defIndex = def.index,
@@ -29,6 +36,9 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 		health = def.health,
 		weaponCount = #def.weapons,
 	})
+	if def.domain == "structure" then
+		Placement.occupy(sim, id)
+	end
 	Lifecycle.added(sim, id)
 	return id
 end

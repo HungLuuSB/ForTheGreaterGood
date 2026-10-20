@@ -803,6 +803,10 @@ Factories have build power and an optional rally point and repeat queue. Workers
 ### 9.3 Build rules
 
 - Placement: footprint must be on cells passable for the structure's placement class (land / water / either), not occupied, within builder range when construction starts.
+  - Land means dry with slope ≤ 30°; water means depth ≥ 6 studs.
+  - Extractors must stand on a deposit, and no ground unit may stand on the footprint.
+  - Footprints snap to the grid, with odd sizes centered on a cell (DECISIONS D59–D60).
+  - A placed structure writes the occupancy layer and blocks every non-air class. Clearance is capped at 16 and recomputed exactly around the change only.
 - **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.
 - The client shows a placement ghost using its own grid copy; the server re-validates.
 - Unfinished structures exist from the first tick with low health (they can be attacked).

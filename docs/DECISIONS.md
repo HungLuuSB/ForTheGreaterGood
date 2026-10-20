@@ -539,3 +539,27 @@ Decisions made while working unattended. Each entry gives the date, the decision
 
 - **Decision:** `Sim/Lifecycle.luau`. `added` registers producers (complete units such as the Command Vehicle). `completed` registers finished structures. `remove` clears producers, the move order, and registered hooks (construction, placement), then despawns. `Spawn.unit` and the Damage system go through it.
 - **Why:** every subsystem with per-unit state stays consistent. Modules above it in the require graph register removal hooks instead of creating require cycles.
+
+## D59 — Clearance capped at 16; exact local updates when structures change (2026-10-20)
+
+- **Decision:**
+  - Clearance values are capped at `CLEARANCE_CAP = 16`, since no footprint needs more.
+  - A structure's footprint is written to an `occupancy` layer (u16 structure ID per cell) and blocks every non-air class.
+  - `Passability.updateRect` recomputes passMask for the changed cells, then reruns the distance transform on the change expanded by 2 × CAP, and writes back the inner band (change + CAP). That's exact for both placement and removal, because a capped clearance depends only on blocked cells within CAP.
+  - Release clears only cells the structure itself occupies.
+  - `Nav.terrainChanged` drops every quadtree (lazily rebuilt) and the cached fields that touch the change. Orders keep their field, and units it leads into a new structure stall and get an extended field (D39).
+- **Alternatives:** an uncapped full-map recompute per change (about 75 ms on 256×256 for all classes); an exact uncapped local update (needs unbounded windows for removals).
+- **Why:**
+  - It's exact (verified against a brute-force Chebyshev clearance on every cell and class), and the window is small: (F + 64)² cells per class.
+  - The map-load build uses the same transform, still about 77 ms on 256×256.
+
+## D60 — Placement rules (2026-10-20)
+
+- **Decision:**
+  - Footprints snap to the grid: odd sizes center on a cell, even ones on a cell corner.
+  - A placement is valid when every cell is in bounds, unoccupied, and fits the placement class: land = dry and slope ≤ 30°; water = depth ≥ 6 studs; either = one of the two.
+  - Extractors need a deposit under their center.
+  - No ground unit's collision circle may overlap the footprint.
+  - `Spawn.unit` places complete structures without checks (scenarios and tests); construction always checks.
+- **Alternatives:** push units out of the footprint (BAR does).
+- **Why:** it's simple and deterministic. Pushing units aside can be added when construction AI needs it.
