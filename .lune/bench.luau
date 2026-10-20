@@ -169,6 +169,54 @@ for _, m in MAPS do
 	out(string.format("        corridor %d cells, route %d leaves", cells, routeLen))
 end
 
+-- Whole move orders through Nav: issue + run the jobs to completion, for one
+-- unit and for a 50-unit block, west → east (the direct-path shortcut skips
+-- the field when every straight line is clear).
+local Defs = require("../src/shared/Defs/Defs")
+local Nav = require("../src/server/Sim/Nav")
+local World = require("../src/server/Sim/World")
+local defs = Defs.load()
+local lancer = defs.units.ord_lancer
+out("")
+out("Move orders through Nav (issue + jobs to completion), median ms over runs:")
+out(string.format("%-7s %14s %8s %16s %8s", "map", "1 unit", "fields", "50-unit block", "fields"))
+for _, m in MAPS do
+	local pm = Passability.build(m.layers())
+	local function order(count: number): (number, number)
+		local times, fields = {}, 0
+		for _ = 1, RUNS do
+			local nav = Nav.new(pm, defs)
+			local w = World.new()
+			local tree = Nav.tree(nav, "TRACKED", 1)
+			local start, goal = endpoints(tree)
+			local g = pm.grid
+			local sx, sz = g:cellCenter(g:coords(start))
+			local gx, gz = g:cellCenter(g:coords(goal))
+			local ids = {}
+			local profile = nav.profiles[lancer.index]
+			local k = 0
+			while #ids < count and k < 400 do
+				local x, z = sx + (k // 10) * 12, sz + (k % 10 - 4.5) * 12
+				if Nav.fits(nav, profile, x, z) then
+					table.insert(ids, World.spawn(w, 0, { defIndex = lancer.index, team = 1, owner = 1, x = x, z = z, health = 1 }))
+				end
+				k += 1
+			end
+			local t0 = os.clock()
+			Nav.issueMove(nav, w, 0, ids, gx, gz)
+			while nav.jobs[nav.jobHead] do
+				Nav.runJobs(nav, math.huge)
+			end
+			table.insert(times, (os.clock() - t0) * 1000)
+			fields = nav.stats.fieldsBuilt
+		end
+		return median(times), fields
+	end
+	local one, f1 = order(1)
+	local fifty, f50 = order(50)
+	out(string.format("%-7s %14.2f %8d %16.2f %8d", m.name, one, f1, fifty, f50))
+end
+
 local slowest = math.huge
 for _, r in results do
 	slowest = math.min(slowest, r.unitsPerMs)

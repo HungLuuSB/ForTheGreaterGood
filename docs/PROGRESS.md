@@ -267,6 +267,15 @@ Fixes made during the review and while building the tasks:
 
 Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-time tables in Nav) are per discrete event, not per unit per tick.
 
+### Round 3 — answers, pathing fixes, duel reports
+
+- The answers were applied:
+  - D21 is confirmed; guide 5.5 now requires chokepoints ≥ 3 cells and 6.2 prefers odd footprints.
+  - Work-unit budgets are approved.
+  - Same-platform re-simulation is accepted; guide 17.1 separates player-facing stream replays from dev-only command re-simulation.
+  - Test audit: no hard-coded simulation hashes.
+- **Fix (a), direct-path shortcut (D52):** each unit's line to its slot is checked once (same leaf is exact and free, otherwise sampled). Units with a clear line steer directly, and a field is built only for the rest, or not at all. All 9 movement maps still arrive. Open maps build 0 fields.
+
 ## Benchmarks
 
 Lune 0.11 on the dev PC, 256×256, median over 7 runs (best in the second figure), ms:
@@ -284,7 +293,17 @@ Lune 0.11 on the dev PC, 256×256, median over 7 runs (best in the second figure
 - Integration (Dijkstra with a binary heap) is about 85% of the cost.
 - The open map is the worst case: the whole map is one leaf, so the corridor is all 65,536 cells.
 
-Suggested fixes, in order of value per effort (none done yet):
+**After fix (a), direct-path shortcut.** `lune run bench` now also times whole move orders (issue + jobs to completion), median ms:
+
+| map | 1 unit | fields | 50-unit block | fields |
+|---|---|---|---|---|
+| open | **0.02** | 0 | **0.35** | 0 |
+| maze | 44.7 | 1 | 45.1 | 1 |
+| island | 14.0 | 1 | 17.6 | 1 |
+
+The open-map worst case (one 80 ms field) is gone. Without the same-leaf test, sampling 50 long lines took 8.4 ms. Maze and island still need their fields; the order cost there adds the leaf route (about 9 ms in the maze) to the field.
+
+Suggested fixes, in order of value per effort (as listed before fix (a)):
 
 1. **No field when start and goal share an open leaf.** A leaf is a passable square, so the straight line inside it is always clear. This removes the open-map worst case entirely and helps every route's last leaf. *Cheap; will be used in task 9.*
 2. **Bucket queue instead of a binary heap.** Integer costs 10/14 with Dial's algorithm make queue operations O(1). Expect about 2× on integration.

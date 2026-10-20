@@ -4,7 +4,7 @@
 **Platform:** Roblox (Luau), PC-first
 **Modes:** Team (2v2 – 4v4) and Free-For-All (up to 8 players)
 **Factions:** Order / Chaos
-**Document version:** 0.5 — living document; update it whenever a decision changes.
+**Document version:** 0.6 — living document; update it whenever a decision changes.
 
 > **Naming note.** "For The Greater Good" plus *Order* and *Chaos* will remind many players of Warhammer 40K / Age of Sigmar. The words themselves are generic, but before committing, search Roblox for existing experiences with the same name and keep the visual identity clearly your own.
 
@@ -437,7 +437,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
 - **Symmetry:** mirrored or rotational for fair team play. FFA maps: rotational for 3–8 starts.
 - **Supply deposits:** 3–4 safe ones near each start, contested ones in the middle, a few rich ones in exposed spots.
 - **Water:** every naval-enabled map needs a connected sea reachable from at least some starts; give non-coastal starts a land path to the coast.
-- **Chokepoints and open ground:** both, so artillery, tanks and air each have a place to shine.
+- **Chokepoints and open ground:** both, so artillery, tanks and air each have a place to shine. **Chokepoints must be at least 3 cells (24 studs) wide.** With the footprint rule in 6.2, footprint-2 and footprint-3 units need a 3-cell gap.
 - **Elevation:** hills give sight range bonus (optional); slopes limit wheeled units.
 - **Air lanes:** keep some areas without SAM-friendly terrain so air play is viable.
 - Tag maps with supported modes (`Team`, `FFA`, `Naval`).
@@ -463,6 +463,8 @@ Ground units don't send height: the client looks it up from its own copy of the 
 Each move class gets one bit in `passMask` and its own `clearance` layer.
 
 ### 6.2 Footprints and clearance
+
+**Prefer odd footprints (1, 3) for ground units.** The clearance rule treats an even footprint like the next odd one, so a 2×2 unit costs as much passage width as a 3×3 one.
 
 A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell] ≥ floor(F / 2) + 1`. Clearance is the Chebyshev distance to the nearest cell the class can't enter (a blocked cell is 0; outside the map counts as blocked). It is computed with a two-pass distance transform at map load, and updated locally when a structure is placed or destroyed.
 
@@ -1311,6 +1313,9 @@ Build these **before** adding lots of content.
   - COMMAND `[tick u32][player u8][len u16][payload]`, recorded at the tick the command is applied. Payloads are Schema command records, so a replay plays back only with the protocol version and defs hash it was recorded with.
   - CHECKPOINT `[tick u32][hash u32]`, written every 300 ticks.
 - `Sim.runReplay` rebuilds the sim from the header, feeds the commands at their ticks and reports the first checkpoint whose hash differs.
+- **Two kinds of replay:**
+  - **Player-facing replays** store the stream the server actually sent (per player, or the spectator stream), and the client plays it back like a live match. They never re-simulate, so they work across platforms and after balance patches.
+  - **Command-log re-simulation** is a **developer tool** for bug reproduction and desync checks. It is only guaranteed on the same platform and build that recorded it: `math.sin`/`cos`/`atan2` may differ in the last bits between operating systems (DECISIONS D51), and any def change alters the defs hash.
 - Because the server simulation is deterministic, replaying the commands reproduces the match exactly. Every bug report should come with a replay.
 - Add a desync check: every 300 ticks, log a hash of the simulation state (`Sim.hash`: tick, PRNG state, every unit field in ID order, ID allocator). A replay that produces a different hash means non-determinism crept in (unordered `pairs`, `os.clock` in logic, unseeded random).
 

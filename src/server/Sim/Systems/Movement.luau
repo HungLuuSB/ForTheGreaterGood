@@ -172,10 +172,14 @@ return function(sim: Types.Sim)
 		local cx, cz = g:cellAt(x, z)
 		local cell = if g:inBounds(cx, cz) then cz * g.cellsX + cx else -1
 
-		-- Is the straight line to our own goal clear? Re-checked every few ticks.
+		-- Is the straight line to our own goal clear? Re-checked every few ticks,
+		-- except for orders that took the direct-path shortcut (no field): their
+		-- lines were checked in full when the order was issued, and a unit that
+		-- stalls asks for a field below.
+		local shortcut = order ~= nil and order.field == nil and not order.pending
 		if returning then
 			w.direct[id] = true
-		elseif (id + tick) % DIRECT_STAGGER == 0 then
+		elseif not shortcut and (id + tick) % DIRECT_STAGGER == 0 then
 			local direct = p.air
 			if not direct and order and cell >= 0 then
 				local tree = Nav.tree(nav, p.moveClass, p.need, p.treeKey)
@@ -190,14 +194,14 @@ return function(sim: Types.Sim)
 		end
 
 		local dirX, dirZ = dx / dist, dz / dist
-		if not w.direct[id] and order and order.field and cell >= 0 then
-			local field = order.field :: FlowField.Field
-			local d = FlowField.direction(field, cell)
-			if d ~= FlowField.NONE then
+		local stalled = tick - w.progressTick[id] > REPATH_TICKS
+		if order and cell >= 0 and (order.field or (shortcut and stalled)) and (not w.direct[id] or stalled) then
+			local field = order.field
+			local d = if field then FlowField.direction(field, cell) else FlowField.NONE
+			if field and d ~= FlowField.NONE and not w.direct[id] then
 				dirX, dirZ = FlowField.vector(d)
 			end
-			local stalled = tick - w.progressTick[id] > REPATH_TICKS
-			if (d == FlowField.NONE and cell ~= field.goalCell) or stalled then
+			if field == nil or (d == FlowField.NONE and cell ~= field.goalCell) or stalled then
 				local oid = w.orderId[id]
 				local list = coverCells[oid]
 				if list == nil then

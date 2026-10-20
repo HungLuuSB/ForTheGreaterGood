@@ -68,7 +68,7 @@ export type Nav = {
 	orders: { [number]: Order },
 	nextOrderId: number,
 	maxRadius: number,
-	stats: { fieldsBuilt: number, cacheHits: number, workUnits: number },
+	stats: { fieldsBuilt: number, cacheHits: number, workUnits: number, directOrders: number },
 }
 
 function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
@@ -107,7 +107,7 @@ function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 		orders = {},
 		nextOrderId = 1,
 		maxRadius = maxRadius,
-		stats = { fieldsBuilt = 0, cacheHits = 0, workUnits = 0 },
+		stats = { fieldsBuilt = 0, cacheHits = 0, workUnits = 0, directOrders = 0 },
 	}
 end
 
@@ -500,24 +500,45 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 		nav.orders[order.id] = order
 
 		if tree ~= nil and not order.unreachable then
+			-- Direct-path shortcut: units whose straight line to their slot is
+			-- passable steer directly; only the others need the shared field.
+			-- If every line is clear, no field is built at all.
 			local cells = {}
+			local t = tree :: Quadtree.Tree
 			for _, id in members do
+				local p = nav.profiles[w.defIndex[id]]
 				local ux, uz = g:cellAt(w.posX[id], w.posZ[id])
-				if g:inBounds(ux, uz) then
-					table.insert(cells, g:index(ux, uz))
+				local sx, sz = g:cellAt(w.goalX[id], w.goalZ[id])
+				-- Same open leaf (a free square) needs no sampling; otherwise sample.
+				local sameLeaf = g:inBounds(ux, uz)
+					and g:inBounds(sx, sz)
+					and Quadtree.isOpen(t, g:index(ux, uz))
+					and Quadtree.leafAt(t, g:index(ux, uz)) == Quadtree.leafAt(t, g:index(sx, sz))
+				if sameLeaf or Nav.clearLine(nav, p, w.posX[id], w.posZ[id], w.goalX[id], w.goalZ[id]) then
+					w.direct[id] = true
+				else
+					local ux, uz = g:cellAt(w.posX[id], w.posZ[id])
+					if g:inBounds(ux, uz) then
+						table.insert(cells, g:index(ux, uz))
+					end
 				end
 			end
-			requestField(nav, order, tree, cells)
+			if #cells > 0 then
+				requestField(nav, order, tree, cells)
+			else
+				nav.stats.directOrders += 1
+			end
 		end
 	end
 end
 
 -- Rebuilds an order's field so it also covers `cells` (units pushed out of
 -- the corridor, or stuck): routes from those cells are merged into the
--- current corridor. Rate-limited per order; ignored while a job is pending.
+-- current corridor. Orders that took the direct-path shortcut get their first
+-- field this way. Rate-limited per order; ignored while a job is pending.
 function Nav.extendField(nav: Nav, order: Order, cells: { number }, tick: number)
 	local field = order.field
-	if order.pending or field == nil or order.unreachable or tick - order.lastExtendTick < Nav.EXTEND_COOLDOWN then
+	if order.pending or order.unreachable or order.moveClass == "air" or tick - order.lastExtendTick < Nav.EXTEND_COOLDOWN then
 		return
 	end
 	order.lastExtendTick = tick
@@ -532,7 +553,10 @@ function Nav.extendField(nav: Nav, order: Order, cells: { number }, tick: number
 	if #leaves == 0 then
 		return
 	end
-	local corridor = Route.mergeCorridors(field.corridor, Route.corridor(tree, leaves))
+	local corridor = Route.corridor(tree, leaves)
+	if field then
+		corridor = Route.mergeCorridors(field.corridor, corridor)
+	end
 	order.pending = true
 	local key = FieldCache.key(order.moveClass, order.need, order.goalCell)
 	enqueue(nav, { key = key, order = order, job = FlowField.newJob(tree, corridor, order.goalCell) })

@@ -197,6 +197,7 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - The guide's `ceil(F/2)`, which gives 1 for F = 2, so a 2×2 unit would fit a 1-cell gap. That contradicts the requested test and the intent.
   - Corner-anchored "true clearance" (largest free square with the cell as its min corner), which is exact for even footprints but makes even-sized units asymmetric around their center.
 - **Why:** it's symmetric and simple, and it's one distance transform per move class. Even footprints are treated like the next odd size, so a 2×2 unit needs a 3-wide passage. That's conservative by one cell; switch to corner-anchored clearance if 2-wide gaps must admit 2×2 units. Guide 6.2 is updated.
+- **Confirmed by the user (2026-10-20):** keep this rule. Ground units should prefer odd footprints, and map chokepoints must be at least 3 cells wide (guide 5.5, 6.2).
 
 ## D22 — Slope = steepest climb to a 4-neighbor (2026-10-20)
 
@@ -265,6 +266,7 @@ Decisions made while working unattended. Each entry gives the date, the decision
 
 - **Decision:** `FlowField.run(job, budget)` spends at most `budget` work units: one per settled cell (Dijkstra) and one per directed cell. The per-tick budget will be a work-unit count calibrated from the benchmark (task 8) to fit the 8 ms Pathing budget.
 - **Alternatives:** a wall-clock budget (`Profiler.now()`), as guide 6.4's "8 ms" suggests literally.
+- **Approved by the user (2026-10-20).**
 - **Why:** with a clock budget, the tick on which a field completes, and therefore every unit's path, would depend on server CPU speed and load. That breaks the "deterministic on the server" rule and makes replays diverge. Work units keep slicing invisible to the outcome: a sliced job is byte-identical to a one-shot job (tested). The same concern applies to Actor workers later: their results must be applied at a deterministic tick.
 
 ## D30 — Flow field encoding and costs (2026-10-20)
@@ -462,9 +464,19 @@ Decisions made while working unattended. Each entry gives the date, the decision
 
 - **Observation:** Movement and Weapons use `math.sin`, `cos`, `atan`, `atan2`, which come from the platform's C library. IEEE-754 guarantees exact results for `+ − × ÷ sqrt`, but not for these.
 - **Consequence:** the sim is deterministic on one platform (all tests, and replays on the same server OS). A replay recorded on a Roblox server (Linux) and replayed in Studio on Windows *might* diverge in the last bits, and the checkpoint hashes would report it.
-- **Decision:** none yet; logged as a question.
+- **Decision (user, 2026-10-20):** accept same-platform re-simulation. Player-facing replays will store the server's sent stream; command-log re-simulation is a developer tool (guide 17.1).
+- **Test audit:** no test hard-codes a simulation hash value. Every Sim/World hash check compares two runs, or a run and its replay. The only literal values are reference vectors for FNV-1a and xoshiro128**, and the Schema wire bytes, which test those functions and the wire format, not simulation state.
 - **Alternatives:**
   - Pure-Luau trig (polynomial approximations using only exact operations).
   - Fixed-point angles with lookup tables.
   - Always replaying on the same platform as the recording.
 - **Why not now:** it touches every angle computation, it's a design choice, and it only matters for cross-platform replay.
+
+## D52 — Direct-path shortcut when a move is issued (2026-10-20, user-requested fix (a))
+
+- **Decision:**
+  - In `Nav.issueMove`, each ground unit's straight line to its slot is checked once, in full. The check is exact and free when unit and slot share an open quadtree leaf; otherwise `clearLine` samples every 2 studs.
+  - Units with a clear line steer directly. Only the others are routed and covered by the group's field; if every line is clear, no field is built.
+  - Movement trusts that check for field-less orders. A unit on such an order that stalls for 90 ticks triggers `Nav.extendField`, which now also builds a first field.
+- **Alternatives:** check only near the goal (the previous behavior); per-tick line re-checks for every unit (costly over long distances).
+- **Why:** open terrain needs no flow field at all. A 50-unit move across an open 256×256 map went from a 79 ms field to 0.35 ms (PROGRESS, Benchmarks).
