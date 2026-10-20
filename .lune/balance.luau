@@ -16,15 +16,16 @@
 -- 4. Counter check: the results against the counter matrix in guide 12.4
 --    (parsed from the guide), listing every attacker / target pair that
 --    falls short of its dots, and why (DECISIONS D94):
---      mechanic  can't target, can't see, can't reach, out of range, ran
---                dry, a bomber never lined up a run, or its bombs on
+--      mechanic  can't target, can't see, can't reach, out of range,
+--                a bomber never lined up a run, or its bombs on
 --                radar contacts all missed
 --      numbers   it fought (fired, hit) but lost the trade
 --    Same-role pairs (tanks vs tanks, ...) are judged on a soft band of
 --    the equal-cost trade, 0.5–2.0, and both sides must be able to damage
 --    each other (D98). Destroying nothing never holds a cell.
 -- Workers, commanders, unarmed support units and structures (except
--- coastal batteries in section 3) are left out. Aircraft have no rearm pads.
+-- coastal batteries in section 3) are left out. Aircraft rearm at an
+-- airfield behind their start (Scenes, D103).
 -- Every fight is the same as `lune run export matchup:<a>:<b>[:close|long]`
 -- or `siege:<unit>`, so it can be watched in tools/viewer/index.html.
 
@@ -441,9 +442,6 @@ local function diagnose(att: Defs.UnitDef, def: Defs.UnitDef?, d: Diag): (string
 		end
 		return "mechanic", "fired but never hit (aim, tracking or the target's countermeasures)"
 	end
-	if d.dry then
-		return "mechanic", "ran out of ammo (no rearm pads)"
-	end
 	if isBomber(att) then
 		return "numbers", string.format("bombed and lost the trade (%d of %d bombs, all seeds, on radar contacts)", d.blind, d.drops)
 	end
@@ -524,7 +522,7 @@ for _, row in rows do
 									local kind, why = diagnose(att, def, c.diag)
 									table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = c.start, result = "neither side destroyed anything", kind = kind, why = why })
 								elseif c.trade < BAND_LOW or c.trade > BAND_HIGH then
-									table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = c.start, result = string.format("trade %s, %d shots, %d hits", fmt(c.trade), c.diag.shots // SEEDS, c.diag.hits // SEEDS), kind = "numbers", why = string.format("same role: trade outside the soft %.1f–%.1f band", BAND_LOW, BAND_HIGH) .. (if c.diag.dry then "; ran out of ammo (no rearm pads)" else "") })
+									table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = c.start, result = string.format("trade %s, %d shots, %d hits", fmt(c.trade), c.diag.shots // SEEDS, c.diag.hits // SEEDS), kind = "numbers", why = string.format("same role: trade outside the soft %.1f–%.1f band", BAND_LOW, BAND_HIGH) })
 								end
 							end
 						end
@@ -581,7 +579,7 @@ out(string.format("- Equal value per side: about %d (value = supply + power / 10
 out(string.format("- Two starts: **close** (120 studs apart) and **long** (600 studs apart, both attack-move). %d seed(s) each; at most %d ticks (%d s).", SEEDS, MAX_TICKS, MAX_TICKS // 15))
 out("- Cell: Order's value trade, close / long = Chaos value destroyed ÷ Order value lost (damage counted pro rata). Above 1 favours Order, ∞ means Order lost nothing. Letters: winner per seed (O, C, or - when time ran out with both sides alive).")
 out("- Blank: neither unit can damage the other.")
-out("- Aircraft have no rearm pads in these fights and run dry.")
+out("- Aircraft sides get their faction's Advanced Airfield at the map edge behind them (not part of the trade, durable) and a full account, so they rearm as in a match (D103).")
 out("- Bomber groups bring their faction's T1 radar tower (not part of the trade), as a match's base radar would, so bombs can target radar contacts (D96).")
 out("- Watch any fight: `lune run export matchup:<order id>:<chaos id>[:close|long]` (or `siege:<id>`), then open `tools/viewer/index.html`.")
 out(string.format("- %d battles, %.0f s on the dev PC.", battles, os.clock() - t0))
@@ -685,7 +683,7 @@ out("Against structures (the siege), the share of the base destroyed must be abo
 out("")
 out("Why a pair fell short:")
 out("")
-out("- **mechanic**: can't target, can't see, can't reach (the shore), out of range, never hit, ran dry, a bomber never lined up a run, or all its bombs on radar contacts missed;")
+out("- **mechanic**: can't target, can't see, can't reach (the shore), out of range, never hit, a bomber never lined up a run, or all its bombs on radar contacts missed;")
 out("- **numbers**: it saw, reached, fired and hit, but lost the trade.")
 out("")
 local byKind = { mechanic = 0, numbers = 0 }

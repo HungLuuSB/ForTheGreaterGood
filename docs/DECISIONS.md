@@ -1273,3 +1273,19 @@ Every system was reviewed for decisions that read another team's units from serv
   - corrections only for known homing projectiles in view;
   - visible drift 618 studs without corrections, 30 with them, 58 with every other correction message lost.
   - Sending regardless of view fails it.
+
+## D103 — Rearm airfields in balance fights (2026-10-20, user-requested)
+
+- **Setup** (`Scenes`): each aircraft group gets its faction's Advanced Airfield (two pads) at the map edge behind its start.
+  - Like the bomber radar (D96, which now uses the same helper), it is durable (health × 100) and not part of the trade.
+  - The team's account is kept full every tick, so rearming isn't throttled by an economy these fights don't model.
+  - Aircraft fly home empty, rearm and come back, as in a match. Fights still end at 2 minutes.
+- **Report** (`lune run balance`): "ran out of ammo (no rearm pads)" is no longer a diagnosis.
+- **Air rows** (2 seeds; this run also includes D100–D101):
+  - all 30 "ran out of ammo" findings are gone (20 mechanic, plus 10 fighter mirrors flagged as dry);
+  - attack helicopters against ships now rearm and lose on numbers (7 findings);
+  - Behemoth sieges 81% → 100%;
+  - fighter mirrors: wins Falcon 4 → 17 of 44, Archon 6 → 13, Harpy 10 → 24; the same-role band is now 34 of 38 fights inside (was 32);
+  - still outside the band: Archon vs Harpy (0.24 / 0.49), Falcon vs Manticore close (0.22), Judgement vs Hellmouth long (0.43).
+  - Whole check: 456 of 568 pairs hold (was 452); 193 findings (50 mechanic, 143 numbers).
+  - The remaining air mechanic findings are bombers: 31 bombed only small radar contacts and missed, 16 never lined up a run against AA, 1 couldn't see.

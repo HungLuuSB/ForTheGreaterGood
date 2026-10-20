@@ -13,6 +13,8 @@
 -- the bomber's sight, as they would with a match's base radar. It stands
 -- at the map edge behind the group and, like a defended base radar, can't
 -- be destroyed in practice (health × 100); it is not part of the trade.
+-- Aircraft groups get their faction's Advanced Airfield the same way (D103),
+-- and their team's account is kept full, so they rearm as in a match.
 -- Attack-moves aim at enemy units, not at structures, when there are any.
 --   <Sim scenario name>         that scenario; every player's units
 --                               attack-move at the enemy centroid every 2 s
@@ -123,6 +125,23 @@ function Scenes.layout(a: Defs.UnitDef, b: Defs.UnitDef, gap: number): (string, 
 	return "sea:256", SHORE - 40, SHORE + 60 + gap
 end
 
+-- Base infrastructure behind a group: not part of the trade, and durable.
+local function backline(sim: Sim.Sim, defId: string, owner: number, facing: number, z: number)
+	local g = (sim.map :: any).grid
+	local x = if facing > 0 then g.originX + 48 else g.originX + g.sizeX - 48
+	local id = Spawn.unit(sim, defId, owner, x, z)
+	World.setHealth(sim.world, id, sim.world.health[id] * 100)
+end
+
+-- Keeps the accounts of `teams` full (rearming is not the question here).
+local function topUp(sim: Sim.Sim, teams: { number })
+	for _, team in teams do
+		local acc = sim.eco.accounts[team]
+		acc.supply.stored = acc.supply.storage
+		acc.power.stored = acc.power.storage
+	end
+end
+
 local function spawnGroup(sim: Sim.Sim, d: Defs.UnitDef, owner: number, cx: number, facing: number): { number }
 	local count = math.clamp(math.floor(Scenes.BUDGET / Scenes.value(d) + 0.5), 1, 20)
 	local spacing = 8 * d.footprint + 6
@@ -132,12 +151,12 @@ local function spawnGroup(sim: Sim.Sim, d: Defs.UnitDef, owner: number, cx: numb
 		local x = cx + (if facing > 0 then -1 else 1) * row * spacing
 		table.insert(ids, Spawn.unit(sim, d.id, owner, x, (col - 2) * spacing, facing))
 	end
+	local prefix = if d.faction == "order" then "ord_" else "chs_"
 	if Air.isBomber(sim, d) then
-		-- the team's radar at the map edge behind the group
-		local g = (sim.map :: any).grid
-		local rx = if facing > 0 then g.originX + 40 else g.originX + g.sizeX - 40
-		local radar = Spawn.unit(sim, if d.faction == "order" then "ord_beacon" else "chs_allseer", owner, rx, 0)
-		World.setHealth(sim.world, radar, sim.world.health[radar] * 100)
+		backline(sim, prefix .. (if d.faction == "order" then "beacon" else "allseer"), owner, facing, 0) -- the team's radar
+	end
+	if d.domain == "air" then
+		backline(sim, prefix .. "advairfield", owner, facing, 150) -- somewhere to rearm
 	end
 	return ids
 end
@@ -160,9 +179,20 @@ function Scenes.matchup(aId: string, bId: string, kind: string, seed: number): S
 		end
 		return n
 	end
+	local airTeams = {}
+	if a.domain == "air" then
+		table.insert(airTeams, 1)
+	end
+	if b.domain == "air" then
+		table.insert(airTeams, 2)
+	end
+	local fight = fightDriver(30)
 	return {
 		sim = sim,
-		drive = fightDriver(30),
+		drive = function(s: Sim.Sim)
+			topUp(s, airTeams)
+			fight(s)
+		end,
 		done = function(s: Sim.Sim): boolean
 			return alive(sideA) == 0 or alive(sideB) == 0
 		end,
@@ -202,9 +232,14 @@ function Scenes.siege(aId: string, seed: number): Scene
 		end
 		return n
 	end
+	local fight = fightDriver(30)
+	local airTeams = if a.domain == "air" then { attacker } else {}
 	return {
 		sim = sim,
-		drive = fightDriver(30),
+		drive = function(s: Sim.Sim)
+			topUp(s, airTeams)
+			fight(s)
+		end,
 		done = function(_s: Sim.Sim): boolean
 			return alive(base) == 0 or alive(group) == 0
 		end,
