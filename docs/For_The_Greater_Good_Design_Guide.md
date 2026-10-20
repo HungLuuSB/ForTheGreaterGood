@@ -4,7 +4,7 @@
 **Platform:** Roblox (Luau), PC-first
 **Modes:** Team (2v2 – 4v4) and Free-For-All (up to 8 players)
 **Factions:** Order / Chaos
-**Document version:** 0.2 — living document; update it whenever a decision changes.
+**Document version:** 0.4 — living document; update it whenever a decision changes.
 
 > **Naming note.** "For The Greater Good" plus *Order* and *Chaos* will remind many players of Warhammer 40K / Age of Sigmar. The words themselves are generic, but before committing, search Roblox for existing experiences with the same name and keep the visual identity clearly your own.
 
@@ -354,6 +354,7 @@ At load, for every def, assert:
 - Every damage table covers every armor class (missing = 0, but log it).
 - `pieces` listed in the def exist in the model (client-side check in Studio).
 - Builders have `buildPower > 0`; non-builders have none.
+- At most 8 entries in `weapons`: the state record's aim slot mask is one byte and its weapon field holds 2 bits per slot in a `u16` (section 7.3).
 - Compute and cache derived values (category bitmasks, max weapon range, numeric def index for packets).
 
 Assign each def a **numeric index** (sorted by ID) so packets send `u16 defIndex` instead of strings. Hash the full def set; server and client compare the hash on join.
@@ -521,16 +522,40 @@ for each player P:
 
 ### 7.3 Packet layouts
 
+Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tests/Schema.spec.luau` locks the exact bytes.
+
+**Wire rules (all records)**
+
+- Little-endian multi-byte values. Bit fields are packed LSB-first (first field in the lowest bits) and zero-padded to a whole byte.
+- Schema fields are wire units: integers already quantized by the caller (health 0..255, heading 0..255, …).
+- Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
+- Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
+- A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
+- **`Schema.PROTOCOL_VERSION`** (currently 1) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
+
 **Command (C → S)**
 
 ```
-cmdType   u8      MOVE, FIGHT, ATTACK, ATTACK_GROUND, PATROL, GUARD, STOP, BUILD,
-                  REPAIR, RECLAIM, SET_FIRE_STATE, SET_MOVE_STATE, TOGGLE, CAMERA
-flags     u8      bit0 = queue (shift), bit1 = line-formation, ...
-count     u16     number of unit IDs (max 200 per command)
+cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
+                  8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
+                  13 TOGGLE, 14 CAMERA   (0 is invalid)
+flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
+count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
-params    depends on cmdType (target unit u16, target cell u16 + offsets u8 u8, defIndex u16, ...)
+params    by cmdType:
+  MOVE, FIGHT, ATTACK_GROUND, PATROL   cell u16, offX u8, offZ u8
+                                       + line end cell2 u16, offX2 u8, offZ2 u8 if the line flag is set
+  ATTACK, GUARD, REPAIR, RECLAIM       targetId u16 (unit, or wreck for RECLAIM)
+  BUILD                                defIndex u16, cell u16, offX u8, offZ u8,
+                                       facing u8: 0..3 = 0/90/180/270° (bits 2–7 reserved)
+  SET_FIRE_STATE / SET_MOVE_STATE      value u8: 0 hold, 1 return fire / maneuver, 2 fire at will / roam
+  TOGGLE                               value u8: 0 off, 1 on
+  CAMERA                               minX u8, minZ u8, maxX u8, maxZ u8  (camera area as a cell rectangle)
+  STOP                                 none
 ```
+
+The line flag is only valid on position commands. Largest command: 4 + 400 + 8 = 412 bytes.
 
 **Tactical record (S → C, unreliable), only for units that moved this tick**
 
@@ -540,31 +565,35 @@ cell      u16
 offX      u8
 offZ      u8
 heading   u8      0..255 → 0..360°
-flags     u8      bit0 = has altitude
+flags     u8      bit0 = has altitude; other bits reserved
 [alt]     u8      only if flag set (air units)
-                  = 8–9 bytes per moving unit
+                  = 8 bytes, 9 with altitude
 ```
 
 **State record (S → C, reliable), only changed fields**
 
 ```
 unitId    u16
-mask      u8      which fields follow
+mask      u8      which fields follow: bit0 health, bit1 state, bit2 aim, bit3 weapon, bit4 build
+                  (never 0; bits 5–7 reserved)
 [health]  u8      fraction 0..255
 [state]   u16     bit flags (moving, building, stunned, submerged, landed, cloaked...)
-[aim]     u8 ×2 per weapon: yaw, pitch
-[weapon]  u8      2 bits per weapon: IDLE / AIMING / READY / RESTORING
+[aim]     u8      slot mask: bit i-1 = weapon slot i (1..8) follows; never 0
+          u8 ×2   yaw, pitch for each set slot, in slot order
+[weapon]  u16     2 bits per slot (slot 1 = bits 0–1): 0 IDLE, 1 AIMING, 2 READY, 3 RESTORING
 [build]   u8      build progress 0..255
 ```
+
+Units have at most **8 weapon slots**; defs validation must enforce it. The aim slot mask means only weapons whose aim changed are sent, and the record can be decoded without knowing the unit's def. The 2-byte weapon field is sent only when a weapon state changes.
 
 **Strategic record (S → C, unreliable, 2–4 Hz)**
 
 ```
 unitId    u16
 cell      u16
-icon      6 bits  (radar-only contacts send icon 0 = unknown blip)
-team      3 bits  (up to 8 teams)
-flags     7 bits  radarOnly, sonarOnly, underAttack, structureGhost, ...
+icon      6 bits  bits 0–5   (radar-only contacts send icon 0 = unknown blip)
+team      3 bits  bits 6–8   team - 1 (teams 1..8)
+flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost; bits 4–6 reserved
                   = 6 bytes per unit
 ```
 
@@ -580,14 +609,14 @@ ALERT     type u8, cell u16    (unit under attack, structure lost, ...)
 
 ### 7.4 Client interpolation
 
-- Each tactical record is stamped with its server tick. The client keeps a small buffer per unit (3–4 snapshots).
+- Each tactical message carries its server tick in the tick header (section 7.3; compare wire ticks with `Net/Tick`, never `<`). The client keeps a small buffer per unit (3–4 snapshots).
 - Render time = latest tick − 2 ticks (≈ 133 ms at 15 Hz). Interpolate position and heading between the two surrounding snapshots.
 - If a snapshot is missing, extrapolate up to 1 tick, then hold.
 - A unit that hasn't moved sends nothing, and the client simply keeps its last position.
 
 ### 7.5 Join, reconnect, spectate
 
-- On join: send defs hash check, map ID, full snapshot of everything the player's team knows, current economy.
+- On join: check **protocol version** (`Schema.PROTOCOL_VERSION`) and **defs hash** first; on a mismatch, refuse with a clear message (stale client) before sending anything else. Then send map ID, full snapshot of everything the player's team knows, current economy.
 - Reconnect = join. Spectators get every team's knowledge (or full world in replays).
 
 ### 7.6 Bandwidth budget
@@ -721,6 +750,7 @@ Factories have build power and an optional rally point and repeat queue. Workers
 ### 9.3 Build rules
 
 - Placement: footprint must be on cells passable for the structure's placement class (land / water / either), not occupied, within builder range when construction starts.
+- **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.
 - The client shows a placement ghost using its own grid copy; the server re-validates.
 - Unfinished structures exist from the first tick with low health (they can be attacked).
 - Cancelling refunds what was spent (optional: 100% refund like BAR).
@@ -1222,7 +1252,7 @@ Build these **before** adding lots of content.
 
 ### 17.1 Replay system
 
-- Log: header (game version, defs hash, map ID, RNG seed, players) + every command as `[tick u32][player u8][payload]`.
+- Log: header (game version, **protocol version**, defs hash, map ID, RNG seed, players) + every command as `[tick u32][player u8][payload]`. Command payloads use the Schema command record, so a replay plays back only with the protocol version it was recorded with.
 - Because the server simulation is deterministic, replaying the commands reproduces the match exactly. Every bug report should come with a replay.
 - Add a desync check: every 300 ticks, log a hash of world state (positions, health). A replay that produces a different hash means non-determinism crept in (unordered `pairs`, `os.clock` in logic, unseeded random).
 
