@@ -1429,6 +1429,7 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 - Implementation: the `Match` system (after Construction) eliminates players by the chosen rule. Their units self-destruct (no wrecks), and the match ends when at most one ally team is left (none left = draw).
 
 - Skirmish AI (DECISIONS D90): `Sim/AI/Skirmish.luau` plays through commands like a player, so AI games replay exactly.
+  - S-7: it builds a radar tower early and techs up to the Advanced Vehicle Plant for a mobile fire-control radar, MLRS and main battle tanks. Radar and fire-control vehicles guard its waves. Its artillery kites from close enemies. It answers known enemy aircraft with IR SAM trucks, plus an IR SAM site when they come near home.
 
 ### 16.3 Match flow
 

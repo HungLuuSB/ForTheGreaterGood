@@ -12,6 +12,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-4: order queues and behaviors (shift, FIGHT, PATROL, ATTACK, GUARD, REPAIR, RECLAIM, BUILD, factory rally and repeat).
 - S-5: field extensions run as sliced Pathing jobs (Movement peak at 800 units 12.1 → 6.3 ms).
 - S-6: unit state bits in Shared (`Schema.UnitState`; client request).
+- S-7: smarter skirmish AI (radar, fire-control radar, kiting artillery, anti-air).
 
 ---
 
@@ -102,3 +103,26 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 - `Schema.UnitState` (MOVING 1, TOGGLED_ON 2, SUBMERGED 4, LANDED 8) is the one definition of the `state` bits in ENTER and State records. `World.State` is the same table, so the client decodes them without a copy. Alternative: a client-side copy, which could drift. Rejected.
 - `Schema.spec` checks that the two are one table with the expected values. Contract section 3 names it.
+
+## S-7 — Smarter skirmish AI (2026-10-21)
+
+- **Radar:** once a Vehicle Plant and two extractors stand, a worker builds the faction's radar tower toward the enemy. The plant builds one mobile radar after the workers.
+- **Fire-control radar:**
+  - With more than 900 supply stored, a worker builds the Advanced Vehicle Plant, and idle workers assist the frame.
+  - The advanced plant builds one mobile fire-control radar (Arbiter / Stalker), then MLRS and main battle tanks, half and half by the AI's Prng.
+  - Radar and fire-control vehicles GUARD the wave's lead unit (S-4), so the wave's artillery fires on radar contacts with tracking (D104).
+- **Kiting:** each think, artillery and MLRS check for a VISIBLE enemy ground unit within half their range.
+  - If there is one, they MOVE 100 studs directly away, then (queued) FIGHT back toward the wave's target if they were in the wave.
+  - Kiting units are left out of wave orders for 45 ticks. Tanks never kite.
+- **Anti-air:**
+  - The census counts enemy aircraft the team knows: VISIBLE, tracked, or radar contacts, whose domain is known (D107).
+  - The plant keeps one IR SAM truck per two known aircraft, at most four.
+  - A worker builds an IR SAM site when enemy aircraft are within 1.5× the home radius.
+- **Determinism:** decisions read only team knowledge and own state; randomness only from the AI's own Prng. The AI-vs-AI replay test still passes.
+- **Tests** (`AI.spec`, 4):
+  - radar towers on both sides by 1.4 min;
+  - a rich AI fields an Arbiter by 3.1 min;
+  - four helicopters over the base bring IR SAM trucks and a site;
+  - a Verdict kites from a close tank (a Lancer never does).
+  - Disabling anti-air, kiting or the tech-up fails its test.
+- **Balance numbers** (the thresholds 900 supply, 1 per 2 aircraft, half range, 100 studs) are placeholders for M8.
