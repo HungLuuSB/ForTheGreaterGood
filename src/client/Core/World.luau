@@ -8,6 +8,7 @@
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
+local MapRegistry = require("@shared/Grid/MapRegistry")
 local Schema = require("@shared/Net/Schema")
 
 local World = {}
@@ -41,6 +42,10 @@ export type Unit = {
 	state: number,
 	weapon: number, -- Schema weapon state field
 	aim: { [number]: Aim }, -- by weapon slot
+	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
+	rx: number?,
+	ry: number?,
+	rz: number?,
 }
 
 -- A tactical unit that died: the renderer plays its death and drops the model.
@@ -51,8 +56,14 @@ export type Me = { player: number, team: number, allyTeam: number }
 export type World = {
 	grid: Grid.Grid,
 	layers: Layers.Layers?,
+	mapId: string?,
+	mapVersion: number, -- bumps when WELCOME brings another map (the renderer rebuilds the ground)
 	defs: Defs.DefSet,
 	me: Me,
+	joined: boolean, -- a WELCOME arrived; everything else is dropped before it
+	joins: number, -- WELCOMEs received (the renderer starts over on a change)
+	rejected: Schema.SnapshotRecord?, -- the server's REJECT: stale client
+	economy: Schema.Eco?, -- own team's account (Eco channel)
 	units: { [number]: Unit },
 	latestTick: number, -- newest sim tick seen on any channel, -1 before the first
 	latestAt: number, -- local time (seconds) when latestTick arrived
@@ -65,12 +76,19 @@ export type World = {
 	dropped: number, -- records dropped as out of sync or malformed (diagnostics)
 }
 
-function World.new(grid: Grid.Grid, defs: Defs.DefSet, me: Me, layers: Layers.Layers?): World
+-- An empty world waiting for the server's WELCOME (net.md section 10).
+function World.new(defs: Defs.DefSet): World
 	return {
-		grid = grid,
-		layers = layers,
+		grid = Grid.new(1, 1), -- replaced by the WELCOME's map
+		layers = nil,
+		mapId = nil,
+		mapVersion = 0,
 		defs = defs,
-		me = me,
+		me = { player = 0, team = 0, allyTeam = 0 },
+		joined = false,
+		joins = 0,
+		rejected = nil,
+		economy = nil,
 		units = {},
 		latestTick = -1,
 		latestAt = 0,
@@ -81,6 +99,31 @@ function World.new(grid: Grid.Grid, defs: Defs.DefSet, me: Me, layers: Layers.La
 		events = {},
 		dropped = 0,
 	}
+end
+
+-- Applies a WELCOME: who we are, the map, the full sim tick. Drops
+-- everything known before (a join or reconnect rebuilds the whole view).
+function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
+	local mapId = rec.mapId :: string
+	if mapId ~= world.mapId then
+		local layers = MapRegistry.load(mapId)
+		world.layers = layers
+		world.grid = if layers then layers.grid else Grid.new(1, 1)
+		world.mapId = mapId
+		world.mapVersion += 1
+	end
+	world.me = { player = rec.player :: number, team = rec.team :: number, allyTeam = rec.allyTeam :: number }
+	table.clear(world.units)
+	table.clear(world.entered)
+	table.clear(world.left)
+	table.clear(world.died)
+	table.clear(world.events)
+	world.strategicTick = -1
+	world.economy = nil
+	world.latestTick = rec.tick :: number -- unwraps wire ticks from here on
+	world.latestAt = now
+	world.joined = true
+	world.joins += 1
 end
 
 -- Wire heading u8 → radians.

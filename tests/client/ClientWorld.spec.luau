@@ -8,6 +8,7 @@ local Interp = require("../../src/client/Core/Interp")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
 local Reference = require("../../src/server/Tests/Support/Client")
+local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
@@ -22,8 +23,10 @@ local function newDuel()
 		scenario = "duel_test",
 	})
 	local grid = (sim.map :: any).layers.grid
-	local world = World.new(grid, sim.defs, { player = 1, team = 1, allyTeam = 1 }, (sim.map :: any).layers)
+	local world = World.new(sim.defs)
 	local ref = Reference.new(grid, sim.defs)
+	assert(NetOut.hello(sim, NetIn.hello(sim.defs.hash)) == nil, "HELLO accepted")
+	NetOut.join(sim, 1)
 	-- camera over the whole map, and both sides drive at each other
 	assert(Sim.submit(sim, 1, Commands.camera(0, 0, 47, 47)))
 	local function idsOf(team: number): { number }
@@ -89,6 +92,55 @@ return function(t: any)
 		t.expect(moved > 0, "the tanks drove: units have several snapshots")
 		t.equal(world.dropped, 0, "nothing dropped on a lossless link")
 		t.expect(world.latestTick == 300, "latest tick follows the sim")
+		t.expect(world.joined and world.joins == 1, "joined once")
+		t.deepEqual(world.me, { player = 1, team = 1, allyTeam = 1 }, "WELCOME says who we are")
+		t.equal(world.mapId, "flat:48")
+		t.expect(world.economy ~= nil and world.economy.supply.storage > 0, "Eco record decoded")
+	end)
+
+	t.test("a client that joins late rebuilds the same view; nothing counts before WELCOME", function()
+		local sim, early, _ = newDuel()
+		local late = World.new(sim.defs)
+		for tick = 1, 120 do
+			if tick == 60 then
+				NetOut.join(sim, 1) -- the late client's HELLO was accepted
+			end
+			Sim.step(sim)
+			local outbox = sim.net.players[1].outbox
+			NetIn.applyOutbox(early, outbox, tick * DT)
+			if tick >= 60 then
+				NetIn.applyOutbox(late, outbox, tick * DT)
+			else
+				-- before its WELCOME the late client drops everything
+				for _, channel in NetIn.ORDER do
+					for _, msg in outbox[channel] or {} do
+						if channel ~= "Snapshot" then
+							t.expect(not NetIn.apply(late, channel, msg, tick * DT), "dropped before WELCOME")
+						end
+					end
+				end
+			end
+		end
+		t.equal(late.joins, 1)
+		t.equal(early.joins, 2, "the re-join reset the early client too (same player)")
+		for id, u in early.units do
+			local v = late.units[id]
+			t.expect(v ~= nil, `late client has unit {id}`)
+			t.equal(v.tier, u.tier)
+			t.expect(v.x == u.x and v.z == u.z, `unit {id} same position`)
+		end
+		for id in late.units do
+			t.expect(early.units[id] ~= nil, `no extra unit {id}`)
+		end
+	end)
+
+	t.test("a REJECT is kept and stops the client", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:48" })
+		local reject = NetOut.hello(sim, NetIn.hello((sim.defs.hash + 1) % 4294967296))
+		t.expect(reject ~= nil, "server rejects other defs")
+		local world = World.new(sim.defs)
+		t.expect(NetIn.apply(world, "Snapshot", reject :: buffer, 0))
+		t.expect(world.rejected ~= nil and not world.joined, "rejected, not joined")
 	end)
 
 	t.test("aim and weapon state arrive for tanks that engage", function()

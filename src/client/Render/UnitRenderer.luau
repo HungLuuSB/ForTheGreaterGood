@@ -119,6 +119,7 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		end
 		local x, z, alt, heading = Interp.sample(u, t)
 		local y = World.groundY(world, x, z, d.floats) + alt
+		u.rx, u.ry, u.rz = x, y, z
 		table.insert(parts, d.root)
 		table.insert(frames, CFrame.new(x, y, z) * CFrame.Angles(0, heading + math.pi, 0) * d.rootOffset)
 		for slot, a in u.aim do

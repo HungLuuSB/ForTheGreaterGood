@@ -46,7 +46,7 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - Randomness comes only from `Shared/Util/Prng` (pure Luau, so both runtimes give bit-identical sequences), never `Random.new` or `math.random`.
 - `.lune/` holds Lune-only scripts (test entry, tooling). They may use `@lune/*`.
   - `lune run test_client [filter]`: the client stream's Lune specs in `tests/client/` (pure client logic and blockout data; C-7).
-  - `lune run render_view <dump> <png>`: top-down PNG of a client view dump (`ReplicatedStorage.FtggClientDebug:Invoke("view")` in a Studio playtest; C-10).
+  - `lune run render_scene <dump> <png>`: top-down PNG of a client scene dump (`ReplicatedStorage.FtggClientDebug:Invoke("scene")` in a Studio playtest; C-10).
   - `lune run bench`: flow field benchmark (results in `docs/progress/sim.md`).
   - `lune run debug_map`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored).
   - `lune run stress`: stress test and bandwidth report (results in `docs/progress/sim.md`).

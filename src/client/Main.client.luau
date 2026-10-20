@@ -1,8 +1,8 @@
 --!strict
--- Client entry (guide 15): receives the server's channels into the client
--- World, draws tactical units with interpolation, runs the RTS camera and
--- sends its camera rectangle. Identity and map come from attributes until
--- the protocol 6 join handshake (C-9).
+-- Client entry (guide 15): joins with HELLO / WELCOME (net.md section 10),
+-- receives the server's channels into the client World, draws tactical
+-- units with interpolation, runs the RTS camera (sending its rectangle),
+-- and wires mouse and keys to the client API (selection and orders).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,51 +13,32 @@ if not game:IsLoaded() then
 end
 ReplicatedStorage:WaitForChild("Shared")
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
-local player = Players.LocalPlayer :: Player
-while player:GetAttribute("SimPlayer") == nil do
-	player:GetAttributeChangedSignal("SimPlayer"):Wait()
-end
 
 local Defs = require("@shared/Defs/Defs")
-local MapRegistry = require("@shared/Grid/MapRegistry")
 local Schema = require("@shared/Net/Schema")
+local Api = require("./Api")
 local Camera = require("./Camera")
 local Interp = require("./Core/Interp")
 local NetIn = require("./Core/NetIn")
 local World = require("./Core/World")
 local Hud = require("./Debug/Hud")
+local Controls = require("./Input/Controls")
 local Ground = require("./Render/Ground")
+local Overlay = require("./Render/Overlay")
 local UnitRenderer = require("./Render/UnitRenderer")
 
 local defs = Defs.load()
-if remotes:GetAttribute("ProtocolVersion") ~= Schema.PROTOCOL_VERSION or remotes:GetAttribute("DefsHash") ~= defs.hash then
-	warn(
-		`[Client] version mismatch: server protocol {remotes:GetAttribute("ProtocolVersion")} defs {remotes:GetAttribute("DefsHash")}, `
-			.. `client protocol {Schema.PROTOCOL_VERSION} defs {defs.hash}. Update the client.`
-	)
-	return
-end
-
-local mapId = remotes:GetAttribute("MapId") :: string
-local layers = MapRegistry.load(mapId)
-assert(layers, `[Client] map {mapId} has no layers`)
-Ground.build(layers)
-
-local me = {
-	player = player:GetAttribute("SimPlayer") :: number,
-	team = player:GetAttribute("SimTeam") :: number,
-	allyTeam = player:GetAttribute("SimTeam") :: number,
-}
-
-local world = World.new(layers.grid, defs, me, layers)
+local world = World.new(defs)
 local clock = Interp.newClock()
 local renderer = UnitRenderer.new()
 local camState = Camera.new(0, 0, 220)
-Camera.bind(camState)
-local hud = Hud.new()
+local cmd = remotes:WaitForChild("Cmd") :: RemoteEvent
+local api = Api.new(world, function(payload: buffer)
+	cmd:FireServer(payload)
+end)
 
-for name, ch in Schema.Channel do
-	if name == "Cmd" or name == "Eco" or name == "Snapshot" then
+for name in Schema.Channel do
+	if name == "Cmd" then
 		continue
 	end
 	local remote = remotes:WaitForChild(name) :: any
@@ -67,26 +48,36 @@ for name, ch in Schema.Channel do
 		end
 	end)
 end
-local cmd = remotes:WaitForChild("Cmd") :: RemoteEvent
 
--- a new match on the server: start from an empty view
-remotes:GetAttributeChangedSignal("MatchId"):Connect(function()
-	UnitRenderer.clear(renderer)
-	world = World.new(layers.grid, defs, me, layers)
-	clock = Interp.newClock()
-	camState.lastRect = nil -- resend the camera so the server rebuilds the tactical tier
+Camera.bind(camState)
+local controls = Controls.bind(api)
+local overlay = Overlay.new()
+Overlay.bind(overlay, api, os.clock)
+local hud = Hud.new()
+api.changed.focus:Connect(function(p)
+	camState.x, camState.z = p[1], p[2]
 end)
 
-print(`[Client] sim player {me.player}, team {me.team}, map {mapId}`)
+-- Join: HELLO now; the WELCOME (or a REJECT) comes back on the Snapshot channel.
+local snapshot = remotes:WaitForChild("Snapshot") :: RemoteEvent
+snapshot:FireServer(NetIn.hello(defs.hash))
+
+local seenJoins, seenMap = 0, 0
+local warned = false
 
 -- Studio inspection through execute_luau (its VM doesn't share `shared`):
--- game.ReplicatedStorage.FtggClientDebug:Invoke() returns a summary.
+-- game.ReplicatedStorage.FtggClientDebug:Invoke(query?) returns a summary.
 if RunService:IsStudio() then
 	local debugFn = Instance.new("BindableFunction")
 	debugFn.Name = "FtggClientDebug"
-	debugFn.OnInvoke = function(query: string?)
-		if query == "view" then
-			return require("./Debug/ViewDump")(layers.grid)
+	debugFn.OnInvoke = function(query: string?, ...: any)
+		if query == "scene" then
+			return require("./Debug/SceneDump")(world.grid)
+		elseif query == "act" then
+			-- Invoke("act", "smartOrder", x, z, unitId?, queue?): an API action, as the UI would call it
+			local name = (...)
+			local ok, why = api.actions[name](select(2, ...))
+			return { ok = ok, why = why }
 		end
 		local byTeam, tiers, drawn = {}, {}, 0
 		for _, u in world.units do
@@ -96,14 +87,24 @@ if RunService:IsStudio() then
 		for _ in renderer.drawn do
 			drawn += 1
 		end
+		local waypoints = 0
+		for _, list in api.waypoints.byUnit do
+			waypoints += #list
+		end
 		return {
+			joined = world.joined,
+			me = world.me,
+			mapId = world.mapId,
 			latestTick = world.latestTick,
 			renderTick = clock.tick,
-			strategicTick = world.strategicTick,
 			unitsByTeam = byTeam,
 			tiers = tiers,
 			models = drawn,
 			dropped = world.dropped,
+			selection = table.clone(api.state.selection),
+			groups = api.state.groups,
+			waypoints = waypoints,
+			economy = api.state.economy,
 			camera = { x = camState.x, z = camState.z, distance = camState.distance, rect = camState.rect },
 		}
 	end
@@ -112,12 +113,40 @@ end
 
 RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, function(dt: number)
 	local now = os.clock()
+	if world.rejected then
+		if not warned then
+			warned = true
+			warn(`[Client] the server runs protocol {world.rejected.protocol}, defs {world.rejected.defsHash}; this client has {Schema.PROTOCOL_VERSION}, {defs.hash}. Update the client.`)
+		end
+		return
+	end
+	if not world.joined then
+		return
+	end
+	if world.joins ~= seenJoins then
+		-- a (re)join: start over from the server's full picture
+		seenJoins = world.joins
+		UnitRenderer.clear(renderer)
+		clock = Interp.newClock()
+		camState.lastRect = nil -- resend the camera so the tactical tier is rebuilt
+		if world.mapVersion ~= seenMap then
+			seenMap = world.mapVersion
+			if world.layers then
+				Ground.build(world.layers)
+			end
+		end
+		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
+	end
 	local payload = Camera.update(camState, world, workspace.CurrentCamera, dt, now)
 	if payload then
 		cmd:FireServer(payload)
 	end
+	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
+	api.state.camera.rect = camState.rect
 	local t = Interp.advance(clock, world, now, dt)
 	UnitRenderer.step(renderer, world, t, dt)
+	Api.frame(api, now)
+	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)
 	-- consumed by combat effects later (client task 7)
 	table.clear(world.died)
 	table.clear(world.events)
@@ -125,5 +154,5 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	for _ in renderer.drawn do
 		drawn += 1
 	end
-	Hud.update(hud, world, t, drawn, camState.rect, now)
+	Hud.update(hud, world, t, drawn, camState.rect, now, #api.state.selection)
 end)

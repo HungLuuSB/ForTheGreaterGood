@@ -44,7 +44,7 @@ function Hud.new(): Hud
 	return { label = label, nextUpdate = 0 }
 end
 
-function Hud.update(h: Hud, world: World.World, renderTick: number, drawn: number, rect: { number }, now: number)
+function Hud.update(h: Hud, world: World.World, renderTick: number, drawn: number, rect: { number }, now: number, selected: number)
 	if now < h.nextUpdate then
 		return
 	end
@@ -61,7 +61,7 @@ function Hud.update(h: Hud, world: World.World, renderTick: number, drawn: numbe
 		end
 	end
 	h.label.Text = string.format(
-		"FTGG client (F3)\ntick %d  render %.1f (%.1f behind)\nunits %d tactical, %d strategic, %d own; %d models\ncamera cells %d,%d .. %d,%d\ndropped %d",
+		"FTGG client (F3)\ntick %d  render %.1f (%.1f behind)\nunits %d tactical, %d strategic, %d own; %d models; %d selected\ncamera cells %d,%d .. %d,%d\ndropped %d",
 		world.latestTick,
 		renderTick,
 		world.latestTick - renderTick,
@@ -69,6 +69,7 @@ function Hud.update(h: Hud, world: World.World, renderTick: number, drawn: numbe
 		strategic,
 		own,
 		drawn,
+		selected,
 		rect[1],
 		rect[2],
 		rect[3],

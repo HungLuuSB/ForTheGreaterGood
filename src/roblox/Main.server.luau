@@ -4,9 +4,10 @@
 -- guide 3.3), sends each human player's NetOut outbox over one remote per
 -- Schema.Channel, and feeds Cmd messages to Sim.submit.
 --
--- Not yet: the protocol 6 join handshake (identity and map ID go out as
--- attributes until then), reconnects, guide 19 checks beyond a rate limit
--- and a size cap, replay saving.
+-- Join (net.md section 10): a client's HELLO on the Snapshot channel is
+-- checked with NetOut.hello (REJECT on a protocol or defs mismatch), then
+-- NetOut.join queues its WELCOME; nothing is sent to a player before that.
+-- Not yet: guide 19 checks beyond a rate limit and a size cap, replay saving.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,6 +15,7 @@ local RunService = game:GetService("RunService")
 
 -- full paths, so check_build can resolve them
 local Sim = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Sim")) :: any
+local NetOut = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("NetOut")) :: any
 local Defs = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Defs"):WaitForChild("Defs")) :: any
 local Packer = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("Packer")) :: any
 local Schema = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("Schema")) :: any
@@ -23,7 +25,7 @@ local DT = 1 / Sim.TICK_RATE
 local MAX_STEPS_PER_FRAME = 3
 local CMD_MAX_BYTES = 2048
 local CMD_RATE = 20 -- messages per second, burst 40
-local SEND_ORDER = { "Events", "Tactical", "State", "Projectiles", "Strategic" }
+local SEND_ORDER = { "Snapshot", "Events", "Tactical", "State", "Projectiles", "Strategic", "Eco" }
 
 -- An RTS has no avatars.
 Players.CharacterAutoLoads = false
@@ -38,12 +40,7 @@ for name, ch in Schema.Channel do
 	r.Parent = remotes
 	remoteOf[name] = r
 end
-remotes:SetAttribute("MapId", Config.mapId)
-remotes:SetAttribute("ProtocolVersion", Schema.PROTOCOL_VERSION)
-remotes:SetAttribute("TickRate", Sim.TICK_RATE)
-
 local defs = Defs.load()
-remotes:SetAttribute("DefsHash", defs.hash)
 
 local sim: any
 local matchId = 0
@@ -51,6 +48,7 @@ local seed = Config.seed
 local endedAt: number? = nil
 
 local slotOf: { [Player]: number } = {} -- Roblox player → sim player ID
+local joined: { [Player]: boolean } = {} -- HELLO accepted: receives the outbox
 local tokens: { [Player]: number } = {}
 
 local function encode(cmd: any): buffer
@@ -78,7 +76,11 @@ local function centroid(ids: { number }): (number, number)
 	return sx / math.max(#ids, 1), sz / math.max(#ids, 1)
 end
 
--- Placeholder orders (Config.demoOrders): each side drives to the midpoint
+local function isHuman(id: number): boolean
+	return table.find(Config.humanSlots, id) ~= nil
+end
+
+-- Placeholder orders (Config.demoOrders) for bot players: each drives to the midpoint
 -- between its own and the enemy's centroids, re-issued every DEMO_EVERY
 -- ticks, so the sides meet and brawl instead of driving through each other
 -- (the sim's FIGHT is still a plain move, net.md section 9).
@@ -86,6 +88,9 @@ local DEMO_EVERY = 150
 local function demoOrders()
 	local grid = sim.map.layers.grid
 	for _, p in Config.players do
+		if isHuman(p.id) then
+			continue -- humans give their own orders (client task 5)
+		end
 		local own = unitsOf(p.id)
 		local enemy = {}
 		for _, q in Config.players do
@@ -108,7 +113,12 @@ local function startMatch()
 	sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
 	matchId += 1
 	endedAt = nil
-	remotes:SetAttribute("MatchId", matchId)
+	-- a new match is a fresh view for everyone connected: WELCOME again
+	for player, ok in joined do
+		if ok then
+			NetOut.join(sim, slotOf[player], true)
+		end
+	end
 	if Config.demoOrders then
 		demoOrders()
 	end
@@ -130,8 +140,6 @@ local function assignSlot(player: Player)
 					team = p.team
 				end
 			end
-			player:SetAttribute("SimPlayer", id)
-			player:SetAttribute("SimTeam", team)
 			print(`[Entry] {player.Name} plays sim player {id} (team {team})`)
 			return
 		end
@@ -145,12 +153,32 @@ for _, player in Players:GetPlayers() do
 end
 Players.PlayerRemoving:Connect(function(player)
 	slotOf[player] = nil
+	joined[player] = nil
 	tokens[player] = nil
+end)
+
+remoteOf.Snapshot.OnServerEvent:Connect(function(player: Player, payload: any)
+	local id = slotOf[player]
+	if id == nil or typeof(payload) ~= "buffer" or buffer.len(payload) > 64 then
+		return
+	end
+	local ok, reject = pcall(NetOut.hello, sim, payload)
+	if not ok then
+		return -- not a HELLO
+	end
+	if reject then
+		remoteOf.Snapshot:FireClient(player, reject)
+		print(`[Entry] {player.Name}: stale client, rejected`)
+		return
+	end
+	NetOut.join(sim, id) -- a reconnect keeps the camera
+	joined[player] = true
+	print(`[Entry] {player.Name} joined as sim player {id}`)
 end)
 
 remoteOf.Cmd.OnServerEvent:Connect(function(player: Player, payload: any)
 	local id = slotOf[player]
-	if id == nil or typeof(payload) ~= "buffer" or buffer.len(payload) > CMD_MAX_BYTES then
+	if id == nil or not joined[player] or typeof(payload) ~= "buffer" or buffer.len(payload) > CMD_MAX_BYTES then
 		return
 	end
 	if (tokens[player] or 0) < 1 then
@@ -163,7 +191,7 @@ end)
 local function send()
 	for player, id in slotOf do
 		local pn = sim.net.players[id]
-		if pn then
+		if pn and joined[player] then
 			for _, ch in SEND_ORDER do
 				local remote = remoteOf[ch]
 				for _, msg in pn.outbox[ch] do
