@@ -499,3 +499,25 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - close: **Chaos wins 5/5** with 10 Ravagers left after 13 s, identical every seed because spread hardly matters at this range.
   - kite: **Order wins 3/5** with 2 Lancers left after 89–125 s; **Chaos wins 2/5** with 10–13 Ravagers left after about 34 s, when the kite breaks down.
 - **Why no rebalance:** as instructed. Note that kiting quality depends on the scripted micro (band, re-command rate, turning tracked hulls around). A first version with a band of 170–185 parked Lancers just beyond their own 183.6-stud reach, and the fights stalled to timeout. That was a script bug, fixed before recording these numbers.
+
+## D55 — Economy def fields and the M3 placeholder roster (2026-10-20)
+
+- **Decision:**
+  - New optional unit-def fields: `production {supply, power}` (per second while built), `extractor {rate}` (supply/s per deposit value; structures only), `storage {supply, power}` and `placement` (structures only).
+  - Mobile builders must have `buildRange`.
+  - New templates: `Templates.Structure` and `Templates.Builder`.
+  - New defs, per faction:
+    - Command Vehicle: `ord_sovereign` / `chs_warlord`, BP 300, range 80, +1 supply and +20 power per second.
+    - Worker: `ord_mason` / `chs_scrapper`, BP 100.
+    - Extractor (footprint 1, rate 0.5).
+    - Generator (footprint 1, +20 power, +100 power storage).
+    - Vehicle Plant (footprint 3, BP 100, builds the worker and the T1 tank).
+  - Footprints are odd (user, D21).
+  - Names follow guide 13 where it has them. Extractor, Generator and Plant names are placeholders (Extractor/Excavator, Generator/Furnace, Vehicle Plant/Vehicle Foundry).
+- **Alternatives:** separate structure defs; factory flags.
+- **Why:** a factory is simply a structure with `buildOptions` and `buildPower`. Costs follow guide 8.5 proportions and BAR-like magnitudes; balance is M8.
+
+## D56 — Supply deposits as a map layer; `start:<n>` test map (2026-10-20)
+
+- **Decision:** `Layers.supply` (u8 deposit value per cell, guide 5.2) and `Layers.starts` (start positions). `MapRegistry` `start:<n>` is flat, with west and east starts, 4 deposits of value 4 around each and 2 in the middle.
+- **Why:** the build-order scenario needs deposits and starts. The Studio bake will fill the same layers from tagged parts (guide 5.4).

@@ -7,6 +7,8 @@
 --   "gen:<seed>:<cells>" TestMap.generate hills and lakes
 --   "wall:<cells>"      flat land split by a north–south water wall (3 cells
 --                       thick) with one 6-cell gap near the north end
+--   "start:<cells>"     flat land with two starts (west, east), four supply
+--                       deposits (value 4) around each start, two in the middle
 --
 -- Baked Studio maps (guide 5.4) will be added as "baked:<name>".
 
@@ -36,6 +38,25 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 			local inGap = cz >= 4 and cz < 10
 			return 10, if inWall and not inGap then 10 else 0
 		end)
+	end
+	local startCells = string.match(mapId, "^start:(%d+)$")
+	if startCells then
+		local n = tonumber(startCells) :: number
+		local layers = TestMap.build(n, n, function()
+			return 10, 0
+		end)
+		local g = layers.grid
+		local mid = n // 2
+		local west, east = math.floor(n * 0.15), n - 1 - math.floor(n * 0.15)
+		for _, sx in { west, east } do
+			table.insert(layers.starts, { g:cellCenter(sx, mid) })
+			for _, d in { { 4, 4 }, { 4, -4 }, { -4, 4 }, { -4, -4 } } do
+				Layers.setSupply(layers, g:index(sx + d[1], mid + d[2]), 4)
+			end
+		end
+		Layers.setSupply(layers, g:index(mid - 1, mid - 6), 4)
+		Layers.setSupply(layers, g:index(mid, mid + 6), 4)
+		return layers
 	end
 	local seed, size = string.match(mapId, "^gen:(%d+):(%d+)$")
 	if seed then

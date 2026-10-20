@@ -57,14 +57,22 @@ return function(t: RunAll.Context)
 
 	t.test("numeric indices are 1-based and sorted by id", function()
 		local set = Defs.load()
-		t.equal(set.units.chs_ravager.index, 1)
-		t.equal(set.units.ord_lancer.index, 2)
-		t.equal(set.unitByIndex[1], set.units.chs_ravager)
-		t.equal(set.unitByIndex[2], set.units.ord_lancer)
-		t.equal(#set.unitByIndex, 2)
-		t.equal(set.weapons.chs_light_cannon.index, 1)
-		t.equal(set.weapons.ord_light_cannon.index, 2)
-		t.equal(set.weaponByIndex[2], set.weapons.ord_light_cannon)
+		-- Expected order: the registry's file names, sorted independently here.
+		for kind, byIndex in { units = set.unitByIndex, weapons = set.weaponByIndex } do
+			local ids = {}
+			for id in (Registry :: any)[kind] do
+				table.insert(ids, id)
+			end
+			table.sort(ids)
+			t.equal(#byIndex, #ids, `{kind}: one index per def`)
+			for i, id in ids do
+				local def = (set :: any)[kind][id]
+				t.equal(def.index, i, `{kind}: {id} index`)
+				t.equal(byIndex[i], def, `{kind}: byIndex[{i}]`)
+			end
+		end
+		t.expect(set.units.chs_ravager.index < set.units.ord_lancer.index, "chs_ before ord_")
+		t.expect(set.weapons.chs_light_cannon.index == 1 and set.weapons.ord_light_cannon.index == 2, "weapons 1-based")
 	end)
 
 	t.test("derived values are computed", function()
@@ -201,6 +209,21 @@ return function(t: RunAll.Context)
 			{ "unit ord_lancer: movement: structures don't move; remove it", function(d)
 				d.units.ord_lancer.domain = "structure"
 				d.units.ord_lancer.moveClass = nil
+			end },
+			{ "unit ord_lancer: extractor: only structures can be extractors", function(d)
+				d.units.ord_lancer.extractor = { rate = 1 }
+			end },
+			{ "unit ord_lancer: placement: only structures have a placement class", function(d)
+				d.units.ord_lancer.placement = "land"
+			end },
+			{ "unit ord_mason: buildRange: mobile builders need buildRange", function(d)
+				d.units.ord_mason.buildRange = nil
+			end },
+			{ 'unit ord_vehplant: buildOptions[2]: unknown unit "ord_paladin"', function(d)
+				d.units.ord_vehplant.buildOptions[2] = "ord_paladin"
+			end },
+			{ "unit ord_generator: production.power: expected a number >= 0, got -5", function(d)
+				d.units.ord_generator.production.power = -5
 			end },
 			{ "weapon ord_light_cannon: damage.HEAVY: unknown field", function(d)
 				d.weapons.ord_light_cannon.damage.HEAVY = 10

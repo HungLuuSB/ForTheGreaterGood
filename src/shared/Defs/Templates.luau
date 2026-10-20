@@ -59,4 +59,29 @@ Templates.TankT1 = table.freeze(Templates.extend(Templates.Unit, {
 	icon = "tank_light",
 }))
 
+-- Immobile structures: built in place, block their footprint (odd sizes).
+Templates.Structure = table.freeze(Templates.extend(Templates.Unit, {
+	tier = 1,
+	domain = "structure",
+	categories = { "STRUCTURE" },
+	armorClass = "STRUCTURE",
+	footprint = 1,
+	placement = "land",
+	sensors = { sight = 60 },
+	pieces = { "base" },
+	icon = "structure",
+}))
+
+-- Mobile builders (Command Vehicle, workers): tracked, unarmed.
+Templates.Builder = table.freeze(Templates.extend(Templates.Unit, {
+	tier = 1,
+	domain = "ground",
+	categories = { "GROUND", "WORKER" },
+	armorClass = "ARMORED",
+	moveClass = "TRACKED",
+	footprint = 1,
+	pieces = { "base", "nano" },
+	icon = "worker",
+}))
+
 return table.freeze(Templates)

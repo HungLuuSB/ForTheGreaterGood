@@ -63,6 +63,10 @@ export type UnitDef = {
 	buildPower: number?,
 	buildOptions: { string }?,
 	buildRange: number?,
+	production: { supply: number?, power: number? }?, -- per second while built
+	extractor: { rate: number }?, -- supply per second per deposit value
+	storage: { supply: number?, power: number? }?, -- added to team storage while built
+	placement: ("land" | "water" | "either")?, -- structures only
 	model: string,
 	pieces: { string },
 	script: string?,
@@ -218,6 +222,19 @@ local UNIT_SPEC: Spec = {
 		script = opt(STRING),
 		icon = STRING,
 		wreck = opt(STRING),
+		-- economy (guide 8)
+		production = {
+			kind = "record",
+			optional = true,
+			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
+		},
+		extractor = { kind = "record", optional = true, fields = { rate = POSITIVE } },
+		storage = {
+			kind = "record",
+			optional = true,
+			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
+		},
+		placement = { kind = "string", optional = true, enum = set({ "land", "water", "either" }) },
 	},
 }
 
@@ -455,6 +472,15 @@ function Defs.validate(raw: RawDefs): { string }
 			end
 		end
 
+		if u.extractor ~= nil and u.domain ~= "structure" then
+			report("extractor: only structures can be extractors")
+		end
+		if u.placement ~= nil and u.domain ~= "structure" then
+			report("placement: only structures have a placement class")
+		end
+		if u.buildOptions ~= nil and u.domain ~= "structure" and u.buildRange == nil then
+			report("buildRange: mobile builders need buildRange")
+		end
 		if u.domain == "structure" then
 			if u.moveClass ~= nil then
 				report("moveClass: structures don't move; remove it")

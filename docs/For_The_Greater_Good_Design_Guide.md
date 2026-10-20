@@ -295,7 +295,13 @@ return Templates.extend(Templates.TankT2, {
 	-- builders only
 	buildPower   = nil,
 	buildOptions = nil,
-	buildRange   = nil,
+	buildRange   = nil,         -- required for mobile builders
+
+	-- economy (section 8)
+	production = nil,           -- { supply = 1, power = 20 } per second while built
+	extractor  = nil,           -- { rate = 0.5 }: supply/s per deposit value (structures on a deposit)
+	storage    = nil,           -- { supply = 0, power = 100 } added to team storage while built
+	placement  = nil,           -- structures: "land" | "water" | "either"
 
 	-- visuals (client)
 	model  = "ord_paladin",

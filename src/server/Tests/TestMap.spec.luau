@@ -64,6 +64,25 @@ return function(t: RunAll.Context)
 		t.expect(wet > 0 and wet < g.cellCount, `map should have land and water, wet = {wet}`)
 	end)
 
+	t.test("start map has two starts and supply deposits", function()
+		local MapRegistry = require("@shared/Grid/MapRegistry")
+		local layers = MapRegistry.load("start:64") :: Layers.Layers
+		t.equal(#layers.starts, 2)
+		t.expect(layers.starts[1][1] < 0 and layers.starts[2][1] > 0, "west and east")
+		local deposits, total = 0, 0
+		for i = 0, layers.grid.cellCount - 1 do
+			local v = Layers.getSupply(layers, i)
+			if v > 0 then
+				deposits += 1
+				total += v
+			end
+		end
+		t.equal(deposits, 10)
+		t.equal(total, 40)
+		Layers.setSupply(layers, 0, 300)
+		t.equal(Layers.getSupply(layers, 0), 255, "clamped to u8")
+	end)
+
 	t.test("full-size map generates", function()
 		local layers = TestMap.generate({ seed = 1, cellsX = 256 })
 		t.equal(layers.grid.cellCount, 65536)
