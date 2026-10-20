@@ -128,8 +128,8 @@ local function fire(
 	local tx, tz = w.posX[target], w.posZ[target]
 	if hit then
 		c.stats.hits += 1
-		local tp = c.profiles[w.defIndex[target]]
-		Combat.explode(c, w, tx, Combat.unitBase(c, w, target) + tp.height / 2, tz, weapon, id, w.ally[id], target)
+		local _, ty = Combat.aimPoint(c, w, target)
+		Combat.explode(c, w, tx, ty, tz, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
 		-- a miss still explodes on the ground beyond/beside the target
 		local mx = w.posX[id] + sin(worldYaw + yawErr) * dist
@@ -180,13 +180,14 @@ return function(sim: Types.Sim)
 				dist = sqrt(dx * dx + dz * dz)
 				worldYaw = atan2(dx, dz)
 				wantYaw = wrapAngle(worldYaw - heading)
-				local aimY = Combat.groundHeight(c, kx, kz) + w.alt[target] + tp.height / 2
+				local _, aimY = Combat.aimPoint(c, w, target, kx, kz) -- at the believed position
 				local dy = aimY - muzzleY
 				-- the true direction, for judging hitscan hits
 				local tx, tz = w.posX[target] - x, w.posZ[target] - z
 				local trueDist = sqrt(tx * tx + tz * tz)
 				exactYaw = atan2(tx, tz)
-				exactPitch = atan2(Combat.unitBase(c, w, target) + tp.height / 2 - muzzleY, trueDist)
+				local _, trueY = Combat.aimPoint(c, w, target)
+				exactPitch = atan2(trueY - muzzleY, trueDist)
 				local pitch: number?
 				if weapon.type == "HITSCAN" or weapon.type == "BEAM" then
 					pitch = atan2(dy, dist)

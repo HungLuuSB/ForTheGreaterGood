@@ -1077,3 +1077,19 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - IR SAM → helicopters ●●● (3): Halo against Wasp trades 0.5–0.6, Hornet against Guardian 1.64;
   - Radar SAM → helicopters ●● (2); Destroyers → Sub ●● (4: 0.34–0.52); Fighters → jets ●●● (2); Silence against Corsair (1.91 < 2).
 - **Nothing was changed.** The fixes (aim point, bomber spotting, destroyer SAM, anti-helicopter weapons) are questions for the user.
+
+## D95 — One aim point for aiming and hit checks (2026-10-20, user-requested)
+
+- **Decision:**
+  - `Combat.aimPoint(c, w, id, x?, z?)` is the centre of the unit's collision cylinder, using the same base rules as `unitBase` (ships float with their draft, submarines sit below the surface, other units stand on terrain plus altitude).
+  - It is evaluated at the true position, or at a believed position (a radar blip, a ghost) via the new `Combat.baseAt`.
+  - Weapons aim (pitch to the believed position), the hitscan judgement (the true direction), homing steering, the EW terminal check, bomb solutions and hitscan explosions all use it.
+  - Before this, weapon pitch used terrain + altitude: the sea floor for ships, about 17 studs under the hull.
+- **Tests** (`Naval.spec`):
+  - the aim point matches the hull for ships and submarines;
+  - a Lancer on the beach hits a stationary ship with 19 of 19 shells;
+  - a Judgement MLRS fires at a ship and hits 7 of 10 (with the old aim point both fail).
+- **Counter check after the fix:**
+  - 425 of 568 pairs hold (was 412); findings 273 → 248, with mechanic 157 → 84 and numbers 116 → 164;
+  - all 78 "never fired / never hit" ship findings are gone;
+  - what remains against ships is numbers (tanks 16, artillery 25, coastal batteries 3: they hit now but lose the trade).

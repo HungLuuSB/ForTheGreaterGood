@@ -886,6 +886,7 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 | `BALLISTIC` | Tank shells, artillery, flak | Simulated arc | `SPAWN_PROJ` once, `IMPACT` | Simulates same arc |
 | `HOMING` | SAMs, AAMs, ATGMs | Simulated steering + EW checks | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
 | `TORPEDO` | Subs, ASW | Homing, restricted to water | Same as homing | Underwater trail |
+| (all) | — | Every weapon aims at, and is judged against, `Combat.aimPoint`: the centre of the target's hull (ships float, submarines sit below the surface; D95) | | |
 | `BOMB` | Bombers | Ballistic with zero launch speed: released at the computed lead point (D91) | Same as ballistic | Falls |
 
 ### 10.5 Projectiles (server)

@@ -223,14 +223,29 @@ end
 -- air units; the water surface minus the draft for ships; deeper for
 -- submerged submarines.
 function Combat.unitBase(c: Combat, w: World.World, id: number): number
+	return Combat.baseAt(c, w, id, w.posX[id], w.posZ[id])
+end
+
+-- The base unit `id` would have standing at (x, z): the same rules as
+-- unitBase, for a believed position (a radar blip, a ghost).
+function Combat.baseAt(c: Combat, w: World.World, id: number, x: number, z: number): number
 	if c.profiles[w.defIndex[id]].naval then
-		local surface = Combat.surfaceHeight(c, w.posX[id], w.posZ[id])
+		local surface = Combat.surfaceHeight(c, x, z)
 		if bit32.band(w.state[id], World.State.SUBMERGED) ~= 0 then
 			return surface - Combat.SUB_DEPTH - c.profiles[w.defIndex[id]].height
 		end
 		return surface - Combat.DRAFT
 	end
-	return Combat.groundHeight(c, w.posX[id], w.posZ[id]) + w.alt[id]
+	return Combat.groundHeight(c, x, z) + w.alt[id]
+end
+
+-- The point weapons aim at and hits are judged against: the centre of the
+-- unit's collision cylinder, at its true position or at (x, z) when given
+-- (where the shooter's team believes it is). Ships float and submarines
+-- sit below the surface, so this is not terrain + altitude (DECISIONS D95).
+function Combat.aimPoint(c: Combat, w: World.World, id: number, x: number?, z: number?): (number, number, number)
+	local px, pz = x or w.posX[id], z or w.posZ[id]
+	return px, Combat.baseAt(c, w, id, px, pz) + c.profiles[w.defIndex[id]].height / 2, pz
 end
 
 function Combat.addEvent(c: Combat, e: Event)

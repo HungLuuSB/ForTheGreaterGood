@@ -312,6 +312,13 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 6 — item 1: shared aim point ✅
+
+- `Combat.aimPoint` / `Combat.baseAt` are used by aiming, hit checks, homing, EW, bombs and explosions (D95).
+- `Naval.spec`: hull aim point; a tank hits a stationary ship 19 / 19; an MLRS fires at ships and hits 7 / 10. The old aim fails both.
+- Counter check: 425 of 568 pairs hold, 248 findings (84 mechanic, 164 numbers); no ship "never hit" findings left.
+- Tests: **31 specs, 223 passed**.
+
 ### Round 5 — task 28: counter check ✅ (report only)
 
 - `lune run balance` now also runs sieges (`Scenes.siege`) and coastal-battery fights. It checks every matrix cell of guide 12.4 (parsed from the guide) for every unit of the role on both sides, and diagnoses each shortfall from per-fight records (D94).

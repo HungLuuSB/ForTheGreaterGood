@@ -245,8 +245,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	if bit32.band(flags, TERMINAL) ~= 0 then
 		return
 	end
-	local tp = c.profiles[w.defIndex[target]]
-	local ty = Combat.unitBase(c, w, target) + tp.height / 2
+	local _, ty = Combat.aimPoint(c, w, target)
 	local dx, dy, dz = w.posX[target] - x, ty - y, w.posZ[target] - z
 	local reach = (weapon.terminalRange or EW.TERMINAL_RANGE) + ((weapon.projectileSpeed or 0) + w.speed[target]) * EW.DT
 	if dx * dx + dy * dy + dz * dz > reach * reach then

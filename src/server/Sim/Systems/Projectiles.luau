@@ -68,8 +68,7 @@ return function(sim: Types.Sim)
 		local pvx, pvy, pvz = c.pvx[id], c.pvy[id], c.pvz[id]
 		local homingTarget = c.pTarget[id]
 		if homingTarget ~= 0 and w.slot[homingTarget] ~= nil and weapon.turnRate then
-			local tp = profiles[w.defIndex[homingTarget]]
-			local ty = Combat.unitBase(c, w, homingTarget) + tp.height / 2
+			local _, ty = Combat.aimPoint(c, w, homingTarget)
 			pvx, pvy, pvz = steer(pvx, pvy, pvz, w.posX[homingTarget] - x0, ty - y0, w.posZ[homingTarget] - z0, math.rad(weapon.turnRate) * DT)
 		end
 		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
