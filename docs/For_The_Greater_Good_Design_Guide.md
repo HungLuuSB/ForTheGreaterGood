@@ -513,6 +513,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
   - Measured worst Commands + Pathing tick at 800 units: 91 ms → 10 ms.
   - The budget is counted in **work units** (cells settled + cells directed), calibrated so it takes about 8 ms on a live server. A wall-clock budget would make the tick a path completes on, and therefore the whole simulation, depend on CPU speed (DECISIONS D29).
   - A sliced job gives byte-identical output to a one-shot job (`Sim/Path/FlowField.luau`).
+  - Field extensions are sliced too (S-5). Units pushed out of their corridor, or stalled, get them. The route search, corridor merge and field become a plan job, so Movement only queues them. The merge scans only the corridors' bounding box. Measured Movement peak at 800 units: 12.1 → 6.3 ms.
 - **Parallel Luau:** run field generation in Actors. Each Actor keeps its own copy of the static grid layers; the main sim sends requests and receives finished direction buffers.
 - **Invalidation:** when a structure changes passability, mark the affected quadtree nodes dirty and drop cached fields that cover them.
 - Implementation (DECISIONS D86): each quadtree is updated locally (`Quadtree.update`): only nodes touching the flipped cells are re-decided, and the result equals a full rebuild. A placement costs ≤ 6 ms for all trees at 800 units, instead of 10–40 ms of lazy rebuilds.
@@ -1428,6 +1429,7 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 - Implementation: the `Match` system (after Construction) eliminates players by the chosen rule. Their units self-destruct (no wrecks), and the match ends when at most one ally team is left (none left = draw).
 
 - Skirmish AI (DECISIONS D90): `Sim/AI/Skirmish.luau` plays through commands like a player, so AI games replay exactly.
+  - S-7: it builds a radar tower early and techs up to the Advanced Vehicle Plant for a mobile fire-control radar, MLRS and main battle tanks. Radar and fire-control vehicles guard its waves. Its artillery kites from close enemies. It answers known enemy aircraft with IR SAM trucks, plus an IR SAM site when they come near home.
 
 ### 16.3 Match flow
 

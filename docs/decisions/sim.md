@@ -10,6 +10,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-2: join / reconnect snapshot and the Eco channel (protocol 6).
 - S-3: weapon pieces must be in `pieces` (client request).
 - S-4: order queues and behaviors (shift, FIGHT, PATROL, ATTACK, GUARD, REPAIR, RECLAIM, BUILD, factory rally and repeat).
+- S-5: field extensions run as sliced Pathing jobs (Movement peak at 800 units 12.1 → 6.3 ms).
+- S-6: unit state bits in Shared (`Schema.UnitState`; client request).
+- S-7: smarter skirmish AI (radar, fire-control radar, kiting artillery, anti-air).
 
 ---
 
@@ -79,3 +82,47 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The torpedo-drift test in `NetOut.spec` saw shorter flights; its threshold became relative (corrections still cut drift 56 → 9.6 studs).
   - A stopped builder's target reads `nil` (idle) instead of 0.
 - **Tests:** `Orders.spec`, 8 tests: shift order and replacement, FIGHT vs MOVE, PATROL, GUARD, ATTACK (forced, on hold fire, hidden targets refused), REPAIR free, RECLAIM and BUILD queues, rally and repeat, determinism. Mutations (no hold, no forced target, no queue flag, no repeat) fail them.
+
+## S-5 — Field extensions as sliced Pathing jobs (2026-10-21; guide 6.4)
+
+- **Found** (profiling the 800-unit stress battle tick by tick): Movement's peak ticks spent 4–8 ms in `Nav.extendField`, almost all of it in `Route.findMany` (1.5–2 ms per call, 2–3 calls per peak tick). Extensions were computed synchronously inside Movement, outside the pathing budget.
+- **Change:**
+  - `Nav.extendField` now queues a plan job (`Plan.extend`) with its route search pre-built. `Nav.runJobs` slices the search within the Pathing work budget, then builds the corridor, merges it into the order's current one and runs the flow-field job.
+  - Movement only queues. Units steer straight until the field covers them, which guide 6.4 allows.
+  - An extension that finds no route leaves the order as it is (it doesn't mark it unreachable).
+  - `Route.mergeCorridors(a, b, width)` scans only the two corridors' bounding box, not the whole map mask.
+  - The extension's corridor step waits for the next tick when the budget left can't cover it (one unit per 4 cells of the old corridor's box).
+- **Measured** (`lune run stress`, peak / average ms):
+  - Movement at 800 units: 12.09 / 3.87 → 6.39 / 3.48 (budget 10). At 600: 12.19 → 4.85.
+  - Pathing at 800: 8.60 → 8.37 (budget 8).
+  - Average tick at 800: 8.89 → 8.62 ms.
+  - One sequential stress run showed a 16 ms Pathing tick at 600 units. Isolated runs of that scenario peak at 8–9 ms, so it was noise.
+- The peak was already lower than round 7's 43.9 ms before this change, because attack-move now holds to engage (S-4) and units bunch less.
+
+## S-6 — Unit state bits in Shared (2026-10-21, client request)
+
+- `Schema.UnitState` (MOVING 1, TOGGLED_ON 2, SUBMERGED 4, LANDED 8) is the one definition of the `state` bits in ENTER and State records. `World.State` is the same table, so the client decodes them without a copy. Alternative: a client-side copy, which could drift. Rejected.
+- `Schema.spec` checks that the two are one table with the expected values. Contract section 3 names it.
+
+## S-7 — Smarter skirmish AI (2026-10-21)
+
+- **Radar:** once a Vehicle Plant and two extractors stand, a worker builds the faction's radar tower toward the enemy. The plant builds one mobile radar after the workers.
+- **Fire-control radar:**
+  - With more than 900 supply stored, a worker builds the Advanced Vehicle Plant, and idle workers assist the frame.
+  - The advanced plant builds one mobile fire-control radar (Arbiter / Stalker), then MLRS and main battle tanks, half and half by the AI's Prng.
+  - Radar and fire-control vehicles GUARD the wave's lead unit (S-4), so the wave's artillery fires on radar contacts with tracking (D104).
+- **Kiting:** each think, artillery and MLRS check for a VISIBLE enemy ground unit within half their range.
+  - If there is one, they MOVE 100 studs directly away, then (queued) FIGHT back toward the wave's target if they were in the wave.
+  - Kiting units are left out of wave orders for 45 ticks. Tanks never kite.
+- **Anti-air:**
+  - The census counts enemy aircraft the team knows: VISIBLE, tracked, or radar contacts, whose domain is known (D107).
+  - The plant keeps one IR SAM truck per two known aircraft, at most four.
+  - A worker builds an IR SAM site when enemy aircraft are within 1.5× the home radius.
+- **Determinism:** decisions read only team knowledge and own state; randomness only from the AI's own Prng. The AI-vs-AI replay test still passes.
+- **Tests** (`AI.spec`, 4):
+  - radar towers on both sides by 1.4 min;
+  - a rich AI fields an Arbiter by 3.1 min;
+  - four helicopters over the base bring IR SAM trucks and a site;
+  - a Verdict kites from a close tank (a Lancer never does).
+  - Disabling anti-air, kiting or the tech-up fails its test.
+- **Balance numbers** (the thresholds 900 supply, 1 per 2 aircraft, half range, 100 studs) are placeholders for M8.
