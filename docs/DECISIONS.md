@@ -480,3 +480,12 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - Movement trusts that check for field-less orders. A unit on such an order that stalls for 90 ticks triggers `Nav.extendField`, which now also builds a first field.
 - **Alternatives:** check only near the goal (the previous behavior); per-tick line re-checks for every unit (costly over long distances).
 - **Why:** open terrain needs no flow field at all. A 50-unit move across an open 256×256 map went from a 79 ms field to 0.35 ms (PROGRESS, Benchmarks).
+
+## D53 — Bucket-queue integration; pathing budget recalibrated to 36,000 units (2026-10-20, user-requested fix (b))
+
+- **Decision:**
+  - Flow field integration uses a bucket queue (Dial's algorithm) with buckets one cost unit wide (floor of the cost). Entries are linked per bucket, LIFO within a bucket.
+  - Because every step costs ≥ 1, cells in the current bucket are final, so the costs are exactly Dijkstra's. Verified byte-identical directions and costs against the heap version on four 256×256 maps.
+  - The per-tick budget is re-measured: about 4,700 units/ms at the slowest map, so 8 ms ≈ 37,000 units. `Nav.PATHING_BUDGET` rounds down to 36,000.
+- **Alternatives:** integer 10/14 costs with exact Dial buckets (changes the field values); a radix heap.
+- **Why:** queue operations become O(1) with no change in output: integration is 3.9× faster on the open map. **Constraint for later:** terrain cost modifiers must keep the minimum step cost ≥ 1 (the bucket width), or the bucket width must shrink to match.

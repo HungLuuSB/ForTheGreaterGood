@@ -5,6 +5,11 @@
 --    Straight steps cost 1, diagonal steps √2 (terrain modifiers can scale
 --    these later). Diagonals never cut corners: both orthogonal cells they
 --    pass between must be in the corridor.
+--    The queue is a bucket queue (Dial's algorithm): bucket b holds cells
+--    with cost in [b, b + 1). Every step costs at least 1, so a cell in the
+--    current bucket can't be improved by another cell of the same bucket:
+--    costs are exactly Dijkstra's, with O(1) queue operations. (Terrain
+--    modifiers must keep the minimum step cost >= the bucket width.)
 -- 2. Directions: each corridor cell points to its cheapest neighbor (u8,
 --    0..7 counter-clockwise from +X; 255 = none). The goal cell and cells
 --    the goal can't reach have 255.
@@ -14,7 +19,6 @@
 -- stopped, so the result never depends on how it was sliced, and the tick a
 -- field completes on never depends on CPU speed (replays stay exact).
 
-local Heap = require("./Heap")
 local Quadtree = require("./Quadtree")
 local Route = require("./Route")
 
@@ -47,7 +51,14 @@ export type Job = {
 	field: Field,
 	phase: "integrate" | "direct" | "done",
 	cost: { number },
-	heap: Heap.Heap,
+	-- bucket queue: entries linked per bucket (LIFO), buckets visited in order
+	bucketHead: { [number]: number }, -- bucket → first entry (0 = empty)
+	entryCell: { number },
+	entryCost: { number },
+	entryNext: { number },
+	entryCount: number,
+	bucket: number, -- current bucket
+	maxBucket: number,
 	scanZ: number, -- direction pass position within the corridor bbox
 	scanX: number,
 	keepCost: boolean,
@@ -65,8 +76,6 @@ function FlowField.newJob(tree: Quadtree.Tree, corridor: Route.Corridor, goalCel
 	buffer.fill(dir, 0, FlowField.NONE)
 	local cost = table.create(n, INF)
 	cost[goalCell + 1] = 0
-	local heap = Heap.new()
-	Heap.push(heap, goalCell, 0, 0)
 	return {
 		field = {
 			moveClass = tree.moveClass,
@@ -80,7 +89,13 @@ function FlowField.newJob(tree: Quadtree.Tree, corridor: Route.Corridor, goalCel
 		},
 		phase = "integrate",
 		cost = cost,
-		heap = heap,
+		bucketHead = { [0] = 1 },
+		entryCell = { goalCell },
+		entryCost = { 0 },
+		entryNext = { 0 },
+		entryCount = 1,
+		bucket = 0,
+		maxBucket = 0,
 		scanZ = corridor.minZ,
 		scanX = corridor.minX,
 		keepCost = keepCost == true,
@@ -96,12 +111,23 @@ function FlowField.run(job: Job, budget: number?): boolean
 	local w, h = field.cellsX, field.cellsZ
 	local mask = field.corridor.mask
 	local cost = job.cost
-	local heap = job.heap
 	local spent = 0
 
 	if job.phase == "integrate" then
-		while spent < remaining and not Heap.isEmpty(heap) do
-			local cell, c = Heap.pop(heap)
+		local bucketHead, entryCell, entryCost, entryNext = job.bucketHead, job.entryCell, job.entryCost, job.entryNext
+		local floor = math.floor
+		while spent < remaining do
+			-- next entry: the current bucket's head, else the next non-empty bucket
+			local e = bucketHead[job.bucket] or 0
+			while e == 0 and job.bucket < job.maxBucket do
+				job.bucket += 1
+				e = bucketHead[job.bucket] or 0
+			end
+			if e == 0 then
+				break -- queue empty
+			end
+			bucketHead[job.bucket] = entryNext[e]
+			local cell, c = entryCell[e], entryCost[e]
 			if c > cost[cell + 1] then
 				continue -- stale entry; costs no work
 			end
@@ -128,11 +154,21 @@ function FlowField.run(job: Job, budget: number?): boolean
 				local nv = c + step
 				if nv < cost[nc + 1] then
 					cost[nc + 1] = nv
-					Heap.push(heap, nc, nv, 0)
+					local b = floor(nv)
+					local ne = job.entryCount + 1
+					job.entryCount = ne
+					entryCell[ne] = nc
+					entryCost[ne] = nv
+					entryNext[ne] = bucketHead[b] or 0
+					bucketHead[b] = ne
+					if b > job.maxBucket then
+						job.maxBucket = b
+					end
 				end
 			end
 		end
-		if Heap.isEmpty(heap) then
+		local head = job.bucketHead[job.bucket] or 0
+		if head == 0 and job.bucket >= job.maxBucket then
 			job.phase = "direct"
 		end
 	end

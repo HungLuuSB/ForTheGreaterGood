@@ -24,7 +24,7 @@ Nav.DIRECT_RANGE = 96 -- studs: line-of-sight checks for direct steering only th
 Nav.LINE_STEP = 2 -- studs between line-of-sight samples
 Nav.SLOT_SPACING = 1.3 -- formation spacing, in unit diameters
 Nav.RADIUS_PER_FOOTPRINT = 8 * 0.45 -- collision radius per footprint cell (studs)
-Nav.PATHING_BUDGET = 12000 -- flow field work units per tick (DECISIONS D33)
+Nav.PATHING_BUDGET = 36000 -- flow field work units per tick (DECISIONS D33, D53)
 Nav.NEAREST_SEARCH_LIMIT = 4096 -- cells examined when snapping a goal to open ground
 Nav.EXTEND_COOLDOWN = 15 -- ticks between field extensions for one order
 
