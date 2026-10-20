@@ -5,6 +5,8 @@
 -- blockout data the client builds its models from, placed with the dumped
 -- heading and turret yaw. From the project root:
 --   lune run render_scene <dump.txt> <out.png> [margin studs]
+-- Records: M (map), U (unit), D (disc), L (line), G defId x z facing valid
+-- (the build ghost: translucent, over a green / red footprint).
 -- North (-Z) is up; the ground is a 64-stud checkerboard (8 × 8 cells).
 
 local fs = require("@lune/fs")
@@ -40,7 +42,7 @@ local function rot(x: number, z: number, t: number): (number, number)
 	return x * c + z * s, -x * s + z * c
 end
 
-local function addUnit(defId: string, team: { number }, ux: number, uz: number, heading: number, yaw: number)
+local function addUnit(defId: string, team: { number }, ux: number, uz: number, heading: number, yaw: number, tint: { number }?)
 	local def = byId[defId]
 	if def == nil then
 		print(`unknown def {defId}, skipped`)
@@ -85,6 +87,9 @@ local function addUnit(defId: string, team: { number }, ux: number, uz: number, 
 		ax, az = rot(ax, az, t)
 		bx, bz = rot(bx, bz, t)
 		local color = if p.color == "team" then team else palette[p.color]
+		if tint then
+			color = { (color[1] + tint[1]) / 2, (color[2] + tint[2]) / 2, (color[3] + tint[3]) / 2 }
+		end
 		table.insert(rects, {
 			cx = ux + cx,
 			cz = uz + cz,
@@ -98,7 +103,7 @@ local function addUnit(defId: string, team: { number }, ux: number, uz: number, 
 			r = color[1],
 			g = color[2],
 			b = color[3],
-			alpha = 1,
+			alpha = if tint then 0.6 else 1,
 		})
 	end
 end
@@ -119,6 +124,14 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 			table.insert(team, tonumber(c) or 0)
 		end
 		addUnit(w[2], team, n(4), n(5), n(6), n(7))
+	elseif w[1] == "G" then
+		local def = byId[w[2]]
+		local tint = if n(6) == 1 then { 90, 230, 110 } else { 235, 70, 60 }
+		if def then
+			local half = def.footprint * 4
+			table.insert(rects, { cx = n(3), cz = n(4), ax = 1, az = 0, ha = half, bx = 0, bz = 1, hb = half, top = 0.1, r = tint[1], g = tint[2], b = tint[3], alpha = 0.45 })
+			addUnit(w[2], { 210, 210, 210 }, n(3), n(4), math.pi - n(5) * math.pi / 2, 0, tint)
+		end
 	elseif w[1] == "D" then
 		table.insert(discs, { x = n(2), z = n(3), radius = n(4) / 2, r = n(5), g = n(6), b = n(7), alpha = n(8) })
 	elseif w[1] == "L" then

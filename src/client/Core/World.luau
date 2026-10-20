@@ -16,8 +16,8 @@ local World = {}
 World.MAX_SNAPS = 4 -- per unit (guide 7.4: 3–4)
 World.MAX_QUEUED_EVENTS = 1024 -- combat events kept until the renderer drains them
 
--- Unit state bits (net.md section 3; mirrors the sim's World.State).
-World.State = table.freeze({ MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8 })
+-- Unit state bits (net.md section 3), shared with the sim (S-6).
+World.State = Schema.UnitState
 
 export type Snap = { tick: number, x: number, z: number, alt: number, heading: number }
 

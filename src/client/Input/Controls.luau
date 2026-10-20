@@ -8,6 +8,11 @@
 --   Shift + right click      queue the order
 --   Ctrl + 1..9 / 1..9       set / recall a control group (double tap: jump the camera)
 --   X                        stop
+-- While placing a structure (build ghost, guide 15.6):
+--   left click / drag        place / a row (Shift: queue it and keep placing)
+--   R                        rotate
+--   right click, Esc         cancel
+--   B                        placeholder build menu: the selected builder's next build option
 -- Bindings are first guesses: listed under "Needs my review".
 
 local UserInputService = game:GetService("UserInputService")
@@ -15,6 +20,7 @@ local Players = game:GetService("Players")
 
 local Api = require("../Api")
 local Selection = require("../Core/Selection")
+local World = require("../Core/World")
 
 local Controls = {}
 
@@ -22,6 +28,8 @@ Controls.DRAG_PIXELS = 5 -- left drag beyond this is a box
 Controls.LINE_PIXELS = 12 -- right drag beyond this is a line move
 Controls.DOUBLE_CLICK = 0.35 -- seconds
 Controls.STOP_KEY = Enum.KeyCode.X
+Controls.ROTATE_KEY = Enum.KeyCode.R
+Controls.BUILD_KEY = Enum.KeyCode.B -- placeholder until the build menu (UI)
 
 local DIGITS = {
 	[Enum.KeyCode.One] = 1,
@@ -37,6 +45,7 @@ local DIGITS = {
 
 export type Controls = {
 	boxFrame: Frame,
+	placeFrom: Vector3?, -- left-drag start on the ground while placing (row preview)
 	lineFrom: Vector3?, -- right-drag start on the ground, while dragging
 	lineTo: Vector3?,
 }
@@ -70,6 +79,12 @@ function Controls.groundAt(cam: Camera, px: number, py: number): Vector3?
 	return nil
 end
 
+-- Ground point under the mouse (for the build ghost), or nil.
+function Controls.hover(): Vector3?
+	local mouse = UserInputService:GetMouseLocation()
+	return Controls.groundAt(workspace.CurrentCamera, mouse.X, mouse.Y)
+end
+
 function Controls.projector(cam: Camera): Selection.Projector
 	return function(x: number, y: number, z: number)
 		local v, onScreen = cam:WorldToViewportPoint(Vector3.new(x, y, z))
@@ -95,7 +110,7 @@ function Controls.bind(api: Api.Api): Controls
 	box.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 
-	local self: Controls = { boxFrame = box, lineFrom = nil, lineTo = nil }
+	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil }
 	local leftStart: Vector2? = nil
 	local boxing = false
 	local rightStart: Vector2? = nil
@@ -112,6 +127,37 @@ function Controls.bind(api: Api.Api): Controls
 			return
 		end
 		local mouse = UserInputService:GetMouseLocation()
+		local placing = api.state.placement ~= nil
+		if placing and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			self.placeFrom = Controls.groundAt(cam(), mouse.X, mouse.Y)
+			leftStart, boxing = mouse, false
+			return
+		elseif placing and (input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.Escape) then
+			api.actions.cancelPlacement()
+			return
+		elseif placing and input.KeyCode == Controls.ROTATE_KEY then
+			api.actions.rotatePlacement()
+			return
+		end
+		if input.KeyCode == Controls.BUILD_KEY then
+			-- next build option of the first selected builder (placeholder)
+			for _, id in api.state.selection do
+				local u = world.units[id]
+				local def = u and World.def(world, u)
+				local options = def and def.buildOptions
+				if options and #options > 0 then
+					local current = if api.state.placement then table.find(options, api.state.placement.defId) else nil
+					for k = 1, #options do
+						local pick = options[((current or 0) + k - 1) % #options + 1]
+						if api.actions.beginPlacement(pick) then
+							break
+						end
+					end
+					break
+				end
+			end
+			return
+		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			leftStart, boxing = mouse, false
 		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -143,6 +189,9 @@ function Controls.bind(api: Api.Api): Controls
 			return
 		end
 		local mouse = UserInputService:GetMouseLocation()
+		if self.placeFrom then
+			return -- placing: no selection box
+		end
 		if leftStart and (boxing or (mouse - leftStart).Magnitude > Controls.DRAG_PIXELS) then
 			boxing = true
 			local a, b = leftStart :: Vector2, mouse
@@ -157,6 +206,18 @@ function Controls.bind(api: Api.Api): Controls
 
 	UserInputService.InputEnded:Connect(function(input)
 		local mouse = UserInputService:GetMouseLocation()
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and self.placeFrom then
+			local from = self.placeFrom :: Vector3
+			local to = Controls.groundAt(cam(), mouse.X, mouse.Y)
+			local dragged = leftStart and (mouse - leftStart).Magnitude > Controls.DRAG_PIXELS
+			if to and dragged then
+				api.actions.placeRow(from.X, from.Z, to.X, to.Z, shift(), shift())
+			elseif to then
+				api.actions.place(to.X, to.Z, shift(), shift())
+			end
+			self.placeFrom, leftStart = nil, nil
+			return
+		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 and leftStart then
 			local project = Controls.projector(cam())
 			local mode = if shift() then "add" elseif ctrl() then "toggle" else "replace"

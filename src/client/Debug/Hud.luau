@@ -44,7 +44,7 @@ function Hud.new(): Hud
 	return { label = label, nextUpdate = 0 }
 end
 
-function Hud.update(h: Hud, world: World.World, renderTick: number, drawn: number, rect: { number }, now: number, selected: number)
+function Hud.update(h: Hud, world: World.World, renderTick: number, drawn: number, rect: { number }, now: number, selected: number, placing: string?)
 	if now < h.nextUpdate then
 		return
 	end
@@ -75,7 +75,7 @@ function Hud.update(h: Hud, world: World.World, renderTick: number, drawn: numbe
 		rect[3],
 		rect[4],
 		world.dropped
-	)
+	) .. (if placing then "\nplacing " .. placing else "")
 end
 
 return Hud

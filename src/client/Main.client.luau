@@ -25,6 +25,7 @@ local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
 local Ground = require("./Render/Ground")
 local Overlay = require("./Render/Overlay")
+local PlacementGhost = require("./Render/PlacementGhost")
 local UnitRenderer = require("./Render/UnitRenderer")
 
 local defs = Defs.load()
@@ -52,6 +53,7 @@ end
 Camera.bind(camState)
 local controls = Controls.bind(api)
 local overlay = Overlay.new()
+local ghost = PlacementGhost.new()
 Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
 api.changed.focus:Connect(function(p)
@@ -146,6 +148,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local t = Interp.advance(clock, world, now, dt)
 	UnitRenderer.step(renderer, world, t, dt)
 	Api.frame(api, now)
+	if api.state.placement then
+		local hover = Controls.hover()
+		if hover then
+			api.actions.updatePlacement(hover.X, hover.Z)
+		end
+	end
+	PlacementGhost.step(ghost, api)
 	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)
 	-- consumed by combat effects later (client task 7)
 	table.clear(world.died)
@@ -154,5 +163,6 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	for _ in renderer.drawn do
 		drawn += 1
 	end
-	Hud.update(hud, world, t, drawn, camState.rect, now, #api.state.selection)
+	local p = api.state.placement
+	Hud.update(hud, world, t, drawn, camState.rect, now, #api.state.selection, if p then `{p.defId} ({if p.valid then "ok" else p.reason})` else nil)
 end)

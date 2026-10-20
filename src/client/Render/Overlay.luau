@@ -21,6 +21,7 @@ local KIND_COLOR: { [number]: Color3 } = {
 	[CT.GUARD] = Color3.fromRGB(90, 140, 235),
 	[CT.REPAIR] = Color3.fromRGB(235, 220, 80),
 	[CT.RECLAIM] = Color3.fromRGB(200, 120, 235),
+	[CT.BUILD] = Color3.fromRGB(235, 220, 80),
 }
 local FLASH_SECONDS = 0.6
 local LIFT = 0.15 -- studs above the ground

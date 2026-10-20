@@ -1,0 +1,114 @@
+--!strict
+-- Headless client demos (C-10): the real Sim and the real client (World,
+-- NetIn, Api) run in Lune, and the client's view is written as a scene for
+-- `lune run render_scene`. Proof for client features when Studio can't
+-- show them; not a substitute for a playtest. From the project root:
+--   lune run client_demo build <out.txt>     build ghost, a frame, a queued row
+--   lune run client_demo combat <out.txt>    a Lancer / Ravager fight with effects
+
+local fs = require("@lune/fs")
+local process = require("@lune/process")
+
+local Api = require("../src/client/Api")
+local Commands = require("../src/client/Core/Commands")
+local NetIn = require("../src/client/Core/NetIn")
+local World = require("../src/client/Core/World")
+local NetOut = require("../src/server/Sim/NetOut")
+local Sim = require("../src/server/Sim/Sim")
+
+local DT = 1 / 15
+local TEAM_RGB = { "58,120,230", "214,62,48", "64,176,84", "232,196,52" } -- Render/TeamColors
+
+local demo, out = process.args[1], process.args[2]
+if demo == nil or out == nil then
+	print("usage: lune run client_demo <build|combat> <out.txt>")
+	process.exit(1)
+end
+
+local function setup(config: any)
+	local sim = Sim.new(config)
+	local world = World.new(sim.defs)
+	NetOut.join(sim, 1)
+	local api = Api.new(world, function(payload: buffer)
+		assert(Sim.submit(sim, 1, payload))
+	end)
+	local cells = (sim.map :: any).grid.cellsX
+	api.send(Commands.camera(0, 0, cells - 1, cells - 1))
+	local tick = 0
+	local function run(n: number, each: ((number) -> ())?)
+		for _ = 1, n do
+			tick += 1
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			table.clear(world.entered)
+			table.clear(world.left)
+			table.clear(world.died)
+			Api.frame(api, tick * DT)
+			if each then
+				each(tick)
+			end
+		end
+	end
+	run(2)
+	return sim, world, api, run
+end
+
+-- The client's view as a scene (Debug/SceneDump's format, plus G for the ghost).
+local function scene(world: any, api: any, extra: { string }?): string
+	local g = world.grid
+	local lines = { string.format("M %.0f %.0f %.0f %.0f", g.originX, g.originZ, g.sizeX, g.sizeZ) }
+	for _, u in world.units do
+		local def = World.def(world, u)
+		if u.tier == "tactical" and def then
+			local aim = u.aim[1]
+			table.insert(lines, string.format("U %s %s %.1f %.1f %.2f %.2f %.2f", def.id, TEAM_RGB[u.team] or "200,200,200", u.x, u.z, u.heading, if aim then aim.yaw else 0, if aim then aim.pitch else 0))
+		end
+	end
+	for _, id in api.state.selection do
+		local u = world.units[id]
+		local def = World.def(world, u)
+		table.insert(lines, string.format("D %.1f %.1f %.1f 110 235 120 0.45", u.x, u.z, (if def then def.footprint else 1) * 8 * 0.95))
+		local from = { u.x, u.z }
+		for _, p in api.waypoints.byUnit[id] or {} do
+			table.insert(lines, string.format("L %.1f %.1f %.1f %.1f 0.35 235 220 80", from[1], from[2], p.x, p.z))
+			table.insert(lines, string.format("D %.1f %.1f 1.4 235 220 80 0.8", p.x, p.z))
+			from = { p.x, p.z }
+		end
+	end
+	local p = api.state.placement
+	if p then
+		table.insert(lines, string.format("G %s %.1f %.1f %d %d", p.defId, p.x, p.z, p.facing, if p.valid then 1 else 0))
+	end
+	for _, line in extra or {} do
+		table.insert(lines, line)
+	end
+	return table.concat(lines, "\n") .. "\n"
+end
+
+if demo == "build" then
+	local _sim, world, api, run = setup({ seed = 2, players = { { id = 1, team = 1 } }, mapId = "start:48", scenario = "standard_start" })
+	local cv = World.ownIds(world)[1]
+	local u = world.units[cv]
+	api.actions.select({ cv })
+	-- a generator now, then a queued row of solars
+	assert(api.actions.beginPlacement("ord_generator"))
+	assert(api.actions.place(u.x + 36, u.z - 20, false, false))
+	assert(api.actions.beginPlacement("ord_solar"))
+	assert(api.actions.placeRow(u.x + 20, u.z + 40, u.x + 70, u.z + 40, true, false))
+	run(15 * 12)
+	-- the ghost, held over the Command Vehicle (red: units in the way) and a valid spot
+	assert(api.actions.beginPlacement("ord_vehplant"))
+	api.actions.updatePlacement(u.x - 40, u.z - 30)
+	local ok, why = api.actions.updatePlacement(u.x - 40, u.z - 30)
+	print(`ghost at a free spot: {ok} {why}`)
+	fs.writeFile(out, scene(world, api))
+	local red = string.gsub(out, "%.txt$", "_invalid.txt")
+	api.actions.updatePlacement(world.units[cv].x, world.units[cv].z)
+	ok, why = api.actions.updatePlacement(world.units[cv].x, world.units[cv].z)
+	print(`ghost on the Command Vehicle: {ok} {why}`)
+	fs.writeFile(red, scene(world, api))
+	print(`wrote {out} and {red}`)
+else
+	print(`unknown demo {demo}`)
+	process.exit(1)
+end

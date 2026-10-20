@@ -49,13 +49,16 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 		return
 	end
 	if kind ~= CT.MOVE and kind ~= CT.FIGHT and kind ~= CT.PATROL and kind ~= CT.ATTACK
-		and kind ~= CT.ATTACK_GROUND and kind ~= CT.GUARD and kind ~= CT.REPAIR and kind ~= CT.RECLAIM then
+		and kind ~= CT.ATTACK_GROUND and kind ~= CT.GUARD and kind ~= CT.REPAIR and kind ~= CT.RECLAIM
+		and kind ~= CT.BUILD then
 		return -- state commands don't move anything
 	end
 	local slots = if intent.x2
 		then Orders.lineSlots(world, ids, intent.x :: number, intent.z :: number, intent.x2, intent.z2 :: number)
 		else nil
-	local reach = if slots then Waypoints.REACHED else reachFor(world, ids)
+	local reach = if slots then Waypoints.REACHED
+		elseif kind == CT.BUILD then 0 -- builders work from range: dropped when the builder stands idle, not on arrival
+		else reachFor(world, ids)
 	for _, id in ids do
 		local list = wp.byUnit[id]
 		if list == nil or not intent.queue then
