@@ -13,6 +13,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-5: field extensions run as sliced Pathing jobs (Movement peak at 800 units 12.1 → 6.3 ms).
 - S-6: unit state bits in Shared (`Schema.UnitState`; client request).
 - S-7: smarter skirmish AI (radar, fire-control radar, kiting artillery, anti-air).
+- S-8: 40-minute AI-vs-AI soak test (`lune run soak`).
 
 ---
 
@@ -126,3 +127,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - a Verdict kites from a close tank (a Lancer never does).
   - Disabling anti-air, kiting or the tech-up fails its test.
 - **Balance numbers** (the thresholds 900 supply, 1 per 2 aircraft, half range, 100 studs) are placeholders for M8.
+
+## S-8 — 40-minute AI-vs-AI soak test (2026-10-21)
+
+- **`lune run soak [seed] [minutes]`** (`.lune/soak.luau`): Order AI vs Chaos AI on `skirmish:256` under Annihilation, for up to 40 minutes of game time or until the match ends.
+  - Reports average, p95 and p99 tick time, the peak tick and the slowest systems, unit counts, and the Lua heap per minute.
+  - It then replays the command log and compares the final hash.
+  - Exits 1 when the peak tick exceeds 66.7 ms, the heap more than doubles per unit after minute 5 (a leak), or the replay differs.
+  - Output also goes to `debug_out/soak.txt`.
+- **Why a script, not a spec:** a full 40-minute match plus its replay takes about 30 s, more than the whole `lune run test` suite. Specs stay fast; the soak runs on demand, like `lune run stress`.
+- **Default seed 3:** it plays the full 40 minutes. Seeds 1, 2, 4 and 5 end with an annihilation at 10–18 minutes (one AI overruns the other), which the soak reports as a pass of a shorter match.
+- **Result (seed 3, dev PC):**
+  - 40.0 min (36,000 ticks) in 16 s; at most 152 units alive (it grows steadily from minute 15);
+  - tick average 0.44 ms, p99 1.39 ms, peak 10.8 ms (Pathing 9.4, Construction 6.9);
+  - heap 6–16 MB with no growth trend (214 KB per unit at minute 5, 99 KB at minute 40);
+  - replay identical.
