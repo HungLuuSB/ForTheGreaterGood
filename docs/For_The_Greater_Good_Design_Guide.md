@@ -476,6 +476,13 @@ Slope is the steepest climb to a 4-neighbor, stored as u8 (0..255 = 0..90°). `S
 
 **Step 2 — Corridor.** Take the leaves along the coarse route, plus one neighbor ring as padding. That's the corridor.
 
+Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
+- One tree per (move class, required clearance); see DECISIONS D26–D28.
+- Leaves link by shared edges only, and connected components make unreachable goals an O(1) rejection.
+- A* runs over leaf centers with the start and goal cells as endpoints.
+- The padding ring is made of whole adjacent open leaves.
+- Measured on 256×256 hilly terrain: tree build about 6 ms (load time), route about 2.5 ms corner to corner.
+
 **Step 3 — Flow field inside the corridor only.**
 - Integration field: Dijkstra/BFS from the goal cell over corridor cells (cost = 1 × terrain modifier).
 - Direction field: `u8` per cell (0–7 = eight directions, 255 = none).

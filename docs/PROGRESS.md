@@ -23,8 +23,8 @@ Status of the unattended work session. A new session should be able to continue 
 | 3 | Grid: cell math, position encode/decode, procedural test map (height + water) | ✅ done |
 | 4 | World (SoA, u16 IDs with delayed reuse, dirty bits), `Sim.step` with stub systems, replay log, world hash | ✅ done (M0 exit criteria met) |
 | 5 | Movement classes and passability: passMask + per-class clearance on the test map | ✅ done |
-| 6 | Quadtree + coarse A* route + corridor | ⏳ next |
-| 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | pending |
+| 6 | Quadtree + coarse A* route + corridor | ✅ done |
+| 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | ⏳ next |
 | 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | pending |
 | 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | pending |
 | 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | pending |
@@ -90,6 +90,24 @@ Status of the unattended work session. A new session should be able to continue 
   - generated-map invariants and the Lipschitz property of clearance.
 - Tests: **12 specs, 92 passed, 0 failed**.
 - Decisions: D21–D24. **D21 changes the guide's footprint formula. Please confirm.**
+
+### Task 6 — Quadtree and coarse route
+
+- `src/server/Sim/Path/`:
+  - `Heap.luau`: deterministic (k1, k2, id) min-heap, reusable.
+  - `Quadtree.luau`: per (move class, need); summed-area uniformity; edge-sharing neighbors; components.
+  - `Route.luau`: A* over leaves with failure reasons, plus `corridor()` (route leaves + adjacent open leaves, mask buffer + bounding box).
+- Measured on 256×256 hilly terrain: tree about 6 ms (4,285 leaves, 2,413 open); corner-to-corner route about 2.5 ms (40 leaves); corridor 0.15 ms (20,545 cells).
+- Specs (`Route.spec`):
+  - heap ordering;
+  - flat 256² collapses to 1 leaf, 200×120 to ≤ 64 leaves, generated terrain < 1/4 of cells;
+  - partition, symmetric neighbors, and components identical to cell flood-fill;
+  - a route around a wall goes through the gap, with consecutive leaves touching and the goal reachable inside the corridor;
+  - island, blocked goal and blocked start fail with the right reasons;
+  - a 1-cell gap passes footprint 1 but not footprint 2;
+  - a same-leaf route; determinism.
+- Tests: **13 specs, 99 passed, 0 failed**.
+- Decisions: D25–D28.
 
 ## Benchmarks
 

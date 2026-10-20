@@ -181,3 +181,43 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
   - Air: always.
 - **Alternatives:** HOVER also checking shoreline slope; AMPHIB limited in depth.
 - **Why:** this is a direct reading of guide 6.1. Edge cases (hover climbing steep beaches) can be tightened when real maps exist.
+
+## D25 — Pathing algorithms live in `src/server/Sim/Path/` (2026-10-20)
+
+- **Decision:** `Path/Heap.luau`, `Path/Quadtree.luau`, `Path/Route.luau`, with flow fields to follow. The `Systems/Pathing.luau` system (requests, budgets) will call into them.
+- **Alternatives:** put everything in `Systems/Pathing.luau`; or put the algorithms under `src/shared` for client path previews.
+- **Why:** the algorithms are pure functions over buffers, so they are testable alone and can be required from Actor workers (guide 6.4 Parallel Luau). The client doesn't need them yet.
+
+## D26 — One quadtree per (move class, required clearance) (2026-10-20)
+
+- **Decision:**
+  - A cell is passable for the tree when `clearance[mc] >= need`.
+  - The root is the next power of two over the map, and cells outside the map count as blocked.
+  - Leaves are uniform squares found with a summed-area table.
+  - Open leaves link to edge-sharing open leaves only (4-connectivity).
+  - Each open leaf gets a connected-component ID.
+- **Alternatives:** one tree per move class with footprints handled in A*; 8-connectivity at corners.
+- **Why:**
+  - Footprint changes which cells are passable, so it changes the decomposition.
+  - Corner-only contact must not count as a connection, because flow fields never cut corners.
+  - Component IDs reject unreachable goals in O(1).
+  - Cost is about 6 ms per tree on 256×256 at load (trees are built lazily per class and need).
+
+## D27 — A* over leaves: start/goal cells as endpoints, Euclidean costs (2026-10-20)
+
+- **Decision:**
+  - Node positions are leaf centers, except the start and goal leaves, which use the actual start and goal cells.
+  - Edge cost is the Euclidean distance; the heuristic is the straight line to the goal (admissible and consistent).
+  - Ties break on f, then h, then leaf ID.
+  - It fails with `start_blocked`, `goal_blocked` or `unreachable`.
+- **Alternatives:** costs from shared-edge midpoints (shorter, more accurate routes, more work per expansion).
+- **Why:** it's simple, deterministic and fast (about 2.5 ms corner to corner on a 256×256 hilly map). The flow field inside the corridor does the fine routing anyway.
+
+## D28 — Corridor = route leaves + all open leaves adjacent to them (2026-10-20)
+
+- **Decision:** padding is "one neighbor ring" of leaves (guide 6.3), not one ring of cells.
+- **Alternatives:** dilate the route leaves by one cell.
+- **Why:**
+  - Adjacent leaves give units room to spread and avoid each other without leaving the field.
+  - On open terrain the corridor can cover most of the map (20,545 cells on a 256×256 hilly map, corner to corner). That makes the flow field as big as it gets, which task 8 measures.
+  - If that's over budget, switch to cell dilation; it's one function.
