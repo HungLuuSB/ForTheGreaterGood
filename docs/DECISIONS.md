@@ -906,3 +906,31 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - Sim events `ELIMINATED` and `MATCH_END` (not on the wire yet, like D82). `MatchState` is hashed.
 - **Replay format 2:** the header stores each player's ally team and the match options.
 - **Alternatives:** separate economies per player within one team (BAR-style comshare, not needed); removing an eliminated player's units instantly (self-destruct reads better and leaves death events).
+
+## D88 — Full placeholder roster and tech tree (2026-10-20, task 21)
+
+- **Decision:**
+  - Every unit and structure in guide 13 now exists as a validated def: 79 new defs, 115 in total (57 Order, 58 Chaos). They are generated from role templates, so stats are consistent by role.
+  - Order is slightly longer-ranged and more precise; Chaos has more health and damage and larger jam radii.
+  - Move classes follow the roles:
+    - scouts and SAM or radar trucks: WHEELED;
+    - main battle tanks: HEAVY_TRACKED;
+    - amphibious tanks: AMPHIB;
+    - air workers and helicopters: HELI;
+    - fighters, bombers and support aircraft: JET;
+    - naval workers and ships: SHIP; submarines: SUB.
+  - **Factories and economy** (guide 9.2, 8.5), which section 13 doesn't name:
+    - Advanced Vehicle Plant, Airfield / Advanced Airfield (1 and 2 rearm pads), Shipyard / Advanced Shipyard (water);
+    - Advanced Extractor (rate 1.75, about 3.5×), Solar Array, Tidal Generator (water), Fusion Reactor, Depot (+1,000 storage);
+    - Chaos names are placeholders (Foundry, Aerodrome, Drydock, Sun Trap, Tide Mill, Hellforge, Hoard).
+  - **Build tree** (guide 9.1–9.2): `Commander → T1 factories and economy → T1 workers → advanced factories → T2 workers, T2 units`. T1 builders reach T2 only through advanced factories. Ships come only from shipyards and aircraft only from airfields.
+  - **Weapons:** 16 new: MG, heavy cannon, MLRS, bomb, heavy bomb, heavy naval gun, flak per faction; Archon's radar AAM; Manticore's heavy IR AAM.
+  - **Bombs** are slow BALLISTIC drops (60 stud/s, gravity, pitch down to −90°), because the guide's BOMB type has no sim behavior yet. The balance report (task 22) will show how well bombers actually deliver.
+  - **Carriers** may have `rearmPads`: validation now allows ships, per guide 12.3's "mobile airfield". An aircraft landing on a moving carrier stays where it landed while rearming (to refine with carriers).
+  - **Left out for now:** Wind Turbine (needs a global wind value), Supply Converter (needs a converter step), naval SAM platform (not in section 13), and replacing a T1 extractor when its upgrade starts (guide 9.3).
+- **Tests** (`TechTree.spec`):
+  - every guide-13 unit exists and every faction def is reachable from its Command Vehicle;
+  - tech gating, faction purity, move classes per role, ships only from water factories, water placement for naval structures, every weapon can damage something it targets;
+  - in the sim: shipyard → Tidewright → tidal generator, and airfield → Skywright → solar array;
+  - mutations caught: a T2 tank in the T1 plant, Tidewatch missing from the Advanced Airfield.
+- **Changed test data:** `Defs.spec`'s "unknown build option" case used `ord_paladin`, which now exists; it uses `ord_no_such_unit`.

@@ -10,7 +10,7 @@ return Templates.extend(Templates.Structure, {
 	health = 3000,
 	footprint = 3,
 	buildPower = 100,
-	buildOptions = { "ord_mason", "ord_lancer" },
+	buildOptions = { "ord_mason", "ord_herald", "ord_lancer", "ord_verdict", "ord_halo", "ord_oracle" },
 	model = "ord_vehplant",
 	icon = "factory",
 })

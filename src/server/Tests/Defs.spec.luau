@@ -221,8 +221,8 @@ return function(t: RunAll.Context)
 			{ "unit ord_mason: buildRange: mobile builders need buildRange", function(d)
 				d.units.ord_mason.buildRange = nil
 			end },
-			{ 'unit ord_vehplant: buildOptions[2]: unknown unit "ord_paladin"', function(d)
-				d.units.ord_vehplant.buildOptions[2] = "ord_paladin"
+			{ 'unit ord_vehplant: buildOptions[2]: unknown unit "ord_no_such_unit"', function(d)
+				d.units.ord_vehplant.buildOptions[2] = "ord_no_such_unit"
 			end },
 			{ "unit ord_generator: production.power: expected a number >= 0, got -5", function(d)
 				d.units.ord_generator.production.power = -5

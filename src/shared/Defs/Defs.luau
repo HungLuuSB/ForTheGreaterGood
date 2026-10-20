@@ -516,8 +516,8 @@ function Defs.validate(raw: RawDefs): { string }
 		if u.ammo ~= nil and u.rearmTime == nil then
 			report("rearmTime: units with ammo need rearmTime")
 		end
-		if u.rearmPads ~= nil and u.domain ~= "structure" then
-			report("rearmPads: only structures have rearm pads")
+		if u.rearmPads ~= nil and u.domain ~= "structure" and u.domain ~= "naval" then
+			report("rearmPads: only structures and ships (carriers) have rearm pads")
 		end
 		if type(u.movement) == "table" and u.movement.minSpeed ~= nil and u.movement.minSpeed > u.movement.maxSpeed then
 			report("movement.minSpeed: above maxSpeed")

@@ -338,6 +338,16 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 21 — Full placeholder roster and tech tree ✅
+
+- 79 new unit and structure defs (115 total: 57 Order, 58 Chaos) and 16 new weapons, generated from role templates (D88).
+- Build options rewired per guide 9.1–9.2.
+- Defs validation now allows carriers to have rearm pads.
+- New `TechTree.spec`:
+  - roster reachability for both factions; tech gating; move classes per role; domain and placement rules; every weapon can damage something it targets;
+  - in-sim chains: shipyard → Tidewright → tidal, and airfield → Skywright → solar.
+- Tests: **29 specs, 205 passed**.
+
 ### Task 20 — Match rules ✅
 
 - **Teams:** `allyTeam` per player and `w.ally` per unit. Sensors, targeting, the contact grid, projectiles and friendly fire use ally teams; economy stays per team, with overflow shared to allies (D87).

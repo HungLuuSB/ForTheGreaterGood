@@ -1113,6 +1113,8 @@ countermeasures = {
 
 Names are placeholders; roles are what matter for the first playable build.
 
+Implementation (DECISIONS D88): every entry below exists as a validated placeholder def (`ord_<name>` / `chs_<name>`, lowercase), with factories and economy structures from 8.5 and 9.2, and the build tree of 9.1–9.2. `TechTree.spec` checks that each faction's whole roster is reachable from its Command Vehicle.
+
 ### 13.1 Command & workers
 
 | Role | Tier | Order | Chaos |
