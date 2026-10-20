@@ -358,7 +358,7 @@ local function classOf(d: Defs.UnitDef): string?
 end
 
 -- the matrix, read from the guide
-local guide = fs.readFile("docs/For_The_Greater_Good_Design_Guide.md")
+local guide = string.gsub(fs.readFile("docs/For_The_Greater_Good_Design_Guide.md"), "\r\n", "\n") -- checkouts may use CRLF
 local section = string.match(guide, "### 12%.4 Counter matrix.-\n(|.-)\n\n")
 assert(section, "balance: guide 12.4 table not found")
 local columns: { string } = {}
