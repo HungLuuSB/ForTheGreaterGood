@@ -38,6 +38,9 @@ Build.DT = 1 / 15
 Build.START_HEALTH = 0.01 -- fraction of max health a new frame starts with
 Build.RECLAIM_RATE = 0.1 -- supply per second per point of build power
 Build.EXIT_ROLL = 24 -- studs a new unit drives out of its factory
+-- Set by Orders (which requires this module): gives a produced unit its
+-- exit roll and its factory's rally order.
+Build.producedHook = nil :: ((Types.Sim, number, number, number, number) -> ())?
 
 local sqrt = math.sqrt
 
@@ -113,7 +116,8 @@ function Build.commandBuild(sim: Types.Sim, ids: { number }, defIndex: number, x
 	end
 end
 
--- REPAIR: assist an unfinished structure, or a factory's production.
+-- REPAIR: assist an unfinished structure or a factory's production, or heal
+-- a finished, damaged unit (free, at the rate it was built: S-4).
 function Build.commandAssist(sim: Types.Sim, ids: { number }, targetId: number)
 	local w = sim.world
 	local b = sim.build
@@ -123,8 +127,9 @@ function Build.commandAssist(sim: Types.Sim, ids: { number }, targetId: number)
 	local td = def(sim, targetId)
 	local unfinished = w.buildProgress[targetId] < 1
 	local factory = not unfinished and td.domain == "structure" and td.buildOptions ~= nil
-	if not unfinished and not factory then
-		return -- repairing damaged units: later
+	local damaged = not unfinished and w.health[targetId] < td.health
+	if not unfinished and not factory and not damaged then
+		return -- nothing to do
 	end
 	for _, id in ids do
 		local d = def(sim, id)
@@ -135,6 +140,7 @@ function Build.commandAssist(sim: Types.Sim, ids: { number }, targetId: number)
 		b.target[id] = targetId
 		b.targetGen[id] = w.gen[targetId]
 		b.assist[id] = factory
+		b.repair[id] = (not unfinished and not factory) or nil
 		if sim.nav then
 			Nav.clearOrder(sim.nav, w, id)
 		end
@@ -228,7 +234,12 @@ local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 	local x, z = w.posX[factory] + fx * out, w.posZ[factory] + fz * out
 	local id = Spawn.unit(sim, unitDef.id, w.owner[factory], x, z, h)
 	if sim.nav and unitDef.domain ~= "structure" then
-		Nav.issueMove(sim.nav, w, sim.tick, { id }, x + fx * Build.EXIT_ROLL, z + fz * Build.EXIT_ROLL)
+		local ex, ez = x + fx * Build.EXIT_ROLL, z + fz * Build.EXIT_ROLL
+		if Build.producedHook then
+			Build.producedHook(sim, factory, id, ex, ez) -- exit roll, then the rally order (Orders)
+		else
+			Nav.issueMove(sim.nav, w, sim.tick, { id }, ex, ez)
+		end
 	end
 	Combat.addEvent(sim.combat, { kind = "PRODUCED", tick = sim.tick, unit = id, other = factory })
 end
@@ -334,15 +345,24 @@ function Build.step(sim: Types.Sim)
 				if b.assist[id] then
 					local q = b.queue[t]
 					valid = w.buildProgress[t] >= 1 and q ~= nil and #q > 0
+				elseif b.repair[id] then
+					valid = w.buildProgress[t] >= 1 and w.health[t] < def(sim, t).health
 				else
 					valid = w.buildProgress[t] < 1
 				end
 			end
 			if not valid then
 				b.target[id] = 0
+				b.repair[id] = nil
 			elseif inRange(sim, id, w.posX[t], w.posZ[t], halfSize(def(sim, t))) then
 				halt(sim, id)
-				addPower(t, bp)
+				if b.repair[id] then
+					-- heal at the rate it was built, for free (S-4)
+					local td = def(sim, t)
+					World.setHealth(w, t, math.min(td.health, w.health[t] + td.health * bp / td.cost.buildTime * DT))
+				else
+					addPower(t, bp)
+				end
 			else
 				approach(sim, id, w.posX[t], w.posZ[t])
 			end
@@ -357,7 +377,11 @@ function Build.step(sim: Types.Sim)
 		if not frame and (b.progress[t] or 0) >= 1 - 1e-9 then
 			-- finished item waiting at the exit for room under the unit cap
 			if not Match.atCap(sim, w.owner[t]) then
-				table.remove(b.queue[t] :: { number }, 1)
+				local q = b.queue[t] :: { number }
+				table.remove(q, 1)
+				if sim.orders.repeatOn[t] then
+					table.insert(q, itemDef.index) -- repeat: back to the end of the queue (S-4)
+				end
 				b.progress[t] = 0
 				produce(sim, t, itemDef)
 			end
@@ -404,6 +428,9 @@ function Build.step(sim: Types.Sim)
 				b.progress[t] = 1 -- done; rolls out when the owner is under the cap
 			elseif p >= 1 - 1e-9 then
 				table.remove(q, 1)
+				if sim.orders.repeatOn[t] then
+					table.insert(q, itemDef.index) -- repeat: back to the end of the queue (S-4)
+				end
 				b.progress[t] = 0
 				produce(sim, t, itemDef)
 			else

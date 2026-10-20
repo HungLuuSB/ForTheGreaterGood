@@ -159,7 +159,8 @@ return function(sim: Types.Sim)
 		local p = profiles[w.defIndex[id]]
 		local x, z, heading = w.posX[id], w.posZ[id], w.heading[id]
 		local muzzleY = Combat.unitBase(c, w, id) + p.muzzleHeight
-		local holdFire = w.fireState[id] == HOLD_FIRE
+		-- an attack order (Orders) fires even on hold fire
+		local holdFire = w.fireState[id] == HOLD_FIRE and sim.orders.forced[id] == nil
 
 		for slot = 1, count do
 			local key = id * 8 + slot - 1

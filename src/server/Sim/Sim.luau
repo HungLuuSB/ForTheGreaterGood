@@ -19,6 +19,7 @@ local Prng = require("@shared/Util/Prng")
 local Profiler = require("@shared/Util/Profiler")
 local Schema = require("@shared/Net/Schema")
 local AirState = require("./AirState")
+local OrdersState = require("./OrdersState")
 local EWState = require("./EWState")
 local Match = require("./Match")
 local MatchState = require("./MatchState")
@@ -143,6 +144,7 @@ function Sim.new(config: Config): Sim
 		combat = Combat.new(defs, layers),
 		build = BuildState.new(),
 		air = AirState.new(),
+		orders = OrdersState.new(),
 		ew = EWState.new(),
 		match = MatchState.new(matchInfo, unitCap),
 		sensors = SensorsState.new(if map then map.grid else nil, allyTeams), -- sight is per ally team
@@ -210,6 +212,7 @@ function Sim.hash(sim: Sim): number
 	table.sort(ids)
 	h = BuildState.hash(sim.build, ids, h)
 	h = AirState.hash(sim.air, ids, h)
+	h = OrdersState.hash(sim.orders, ids, h)
 	h = EWState.hash(sim.ew, ids, h)
 	h = MatchState.hash(sim.match, sim.playerOrder, h)
 	return SensorsState.hash(sim.sensors, h)

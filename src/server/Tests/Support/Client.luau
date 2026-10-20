@@ -63,6 +63,9 @@ export type View = {
 	units: { [number]: Unit },
 	projectiles: { [number]: Projectile },
 	effects: { Effect },
+	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
+	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
+	rejected: Schema.SnapshotRecord?, -- a REJECT: the server's versions
 	strategicTick: number, -- wire tick of the current strategic snapshot
 	received: { [number]: boolean }, -- every unit ID ever mentioned
 	log: { { channel: string, ids: { number } } }, -- this tick's mentions, for checks
@@ -136,8 +139,26 @@ end
 -- (call it every tick: it also advances the known projectiles one tick).
 function Client.receive(view: View, outbox: { [string]: { buffer } })
 	table.clear(view.log)
+	-- join handshake first: a WELCOME starts over from an empty view (S-2)
+	for _, msg in outbox.Snapshot or {} do
+		for _, rec in (Packer.readAll(msg, Schema.decodeSnapshot)) do
+			if rec.kind == Schema.SnapshotKind.WELCOME then
+				view.welcome = rec
+				table.clear(view.units)
+				table.clear(view.projectiles)
+				table.clear(view.effects)
+				view.strategicTick = -1
+				view.economy = nil
+			elseif rec.kind == Schema.SnapshotKind.REJECT then
+				view.rejected = rec
+			end
+		end
+	end
 	advance(view)
 	local g = view.grid
+	for _, msg in outbox.Eco or {} do
+		view.economy = (Packer.readAll(msg, Schema.decodeEco, Schema.decodeTickHeader))[1]
+	end
 	local function pos(e: Schema.Event): (number, number, number)
 		local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 		return x, (e.y :: number) / Schema.Y_SCALE, z

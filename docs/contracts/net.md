@@ -1,8 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21).
-- Sections 1–9 describe `Schema.PROTOCOL_VERSION` **5**, as built and tested today.
-- Section 10 (join / reconnect snapshot and the economy channel) is specified here and lands as protocol **6** with sim task 2 (S-2). Its layouts won't change without a note in this file.
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **6**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -21,13 +19,13 @@ Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client s
 | `Strategic` | S → C | UnreliableRemoteEvent | no | Every known non-tactical unit, every 5th tick |
 | `Events` | S → C | RemoteEvent | yes | ENTER / LEAVE / DEATH and combat events |
 | `Projectiles` | S → C | UnreliableRemoteEvent | no | Homing-projectile corrections |
-| `Eco` | S → C | RemoteEvent | yes | Own team's economy (protocol 6, section 10) |
-| `Snapshot` | both | RemoteEvent | yes | Join handshake (protocol 6, section 10) |
+| `Eco` | S → C | RemoteEvent | yes | Own team's economy (section 10) |
+| `Snapshot` | both | RemoteEvent | yes | Join handshake (section 10) |
 
 Names and reliability: `Schema.Channel`.
 
 - The server produces, per player and per tick, an **outbox**: channel → list of `buffer` messages (`sim.net.players[p].outbox`, filled by `NetOut.step` at the end of every tick).
-- The Roblox server glue fires one remote call per message, in this channel order: Events, Tactical, State, Projectiles, Strategic (and Eco when present).
+- The Roblox server glue fires one remote call per message, in this channel order: Snapshot, Events, Tactical, State, Projectiles, Strategic, Eco. The client must apply a WELCOME before the rest of that tick's messages.
 - A message is at most **900 bytes** (`Packer.MAX_MESSAGE_BYTES`). It is a run of records of one type after a **tick header**; records are never split across messages. Read a message with `Packer.readAll(msg, Schema.decode<Kind>, Schema.decodeTickHeader)`.
 
 ## 2. Wire rules
@@ -158,10 +156,21 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - Flags: bit0 queue (shift), bit1 line formation.
 - At most 200 unit IDs per command.
 - The server applies a command to the sender's own live units only and ignores the rest. Commands are validated server-side (guide 19); a rejected command just has no effect.
-- **Currently effective:** MOVE / FIGHT / PATROL (as moves), ATTACK_GROUND (bombers), STOP, BUILD, REPAIR (assist frames and factories), RECLAIM, the three state commands, CAMERA.
-- **Coming with sim task 3:** ATTACK, GUARD, real PATROL and FIGHT, shift-queue, factory rally and repeat. This file will be updated.
+- **All commands are effective** (S-4). With the queue flag, an order is appended to each unit's queue; without it, it replaces the queue:
+  - MOVE;
+  - FIGHT: attack-move, holds to engage;
+  - PATROL: back and forth between the unit's start and the point, forever;
+  - ATTACK: force-fire a unit the sender's team knows, even on hold fire; it chases into range. A target the team doesn't know is ignored;
+  - GUARD: follow an allied unit (builders assist a frame or factory);
+  - ATTACK_GROUND: bombers;
+  - REPAIR: assist a frame or a factory's production, or heal a damaged allied unit, for free;
+  - RECLAIM;
+  - BUILD: mobile builders. A factory queues the unit.
+- **STOP** clears the queue.
+- **Factories:** MOVE / FIGHT / PATROL given to a factory set its **rally point** (produced units roll out of the exit, then take the rally order). **TOGGLE** on a factory sets **repeat** on or off: a finished item goes back to the end of the queue. On other units TOGGLE switches `TOGGLED_ON` (radar, jammer).
+- Order queues aren't replicated yet. The client draws queued paths from what it sent (guide 15.6).
 
-## 10. Join and reconnect (protocol 6, sim task 2)
+## 10. Join and reconnect (S-2)
 
 A reconnect is a join. The **Snapshot** channel carries a short handshake, then the normal channels deliver the state. Records start with `kind u8`.
 
@@ -177,7 +186,9 @@ After WELCOME, the server resets the player's replication state, so the very nex
 - **SPAWN_PROJ** for projectiles in view;
 - an **Eco** record.
 
-The client drops everything it had before WELCOME. Test: a client that joins late, or reconnects, rebuilds the same view as one connected from the start (`NetOut.spec`, sim task 2).
+The client drops everything it had before WELCOME.
+
+Server side: `NetOut.hello(sim, msg)` returns nil (accept) or the REJECT message; malformed input errors, so `pcall` it. `NetOut.join(sim, player, clearCamera?)` queues the WELCOME. Test (`NetOut.spec`): a client that joins at tick 300 has, five ticks later, exactly the view of a client connected from the start: units, tiers, positions, icons and flags, unguided projectiles and the economy.
 
 **Eco channel** (reliable), own team only: one record after the tick header, sent on economy ticks (every 5th tick) when it changed, and after WELCOME.
 
@@ -205,4 +216,4 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 3 | FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK (D99) |
 | 4 | Projectiles channel: homing corrections (D102) |
 | 5 | Strategic TRACKED flag (D104) |
-| 6 | Snapshot handshake (HELLO / REJECT / WELCOME), Eco channel (S-2, planned) |
+| 6 | Snapshot handshake (HELLO / REJECT / WELCOME), Eco channel (S-2) |

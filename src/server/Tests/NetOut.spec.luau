@@ -364,11 +364,118 @@ return function(t: RunAll.Context)
 		t.expect(on.corrections > 0, `corrections were sent ({on.corrections})`)
 		t.equal(on.unguided, 0, "never for unguided projectiles")
 		t.equal(on.outOfView, 0, "never for projectiles out of the player's view")
-		t.expect(off.worst > 200, `without corrections torpedoes drift far ({off.worst} studs)`)
+		-- since attack-move holds to engage (S-4) the torpedo flights are shorter: the
+		-- drift without corrections is smaller than it was (618 studs in D102)
+		t.expect(off.worst > 40, `without corrections torpedoes drift visibly ({off.worst} studs)`)
+		t.expect(off.worst > 3 * math.max(on.worst, 1), `corrections cut the drift at least 3× ({off.worst} → {on.worst} studs)`)
 		t.expect(on.worst < 40, `with corrections the visible drift stays small ({on.worst} studs)`)
 		t.expect(lossy.worst < 80, `half the corrections lost: still bounded ({lossy.worst} studs)`)
 		print(string.format("    visible drift: %.1f studs without, %.1f with, %.1f with half lost; %d corrections, %.2f KB/s",
 			off.worst, on.worst, lossy.worst, on.corrections, on.bytes / (on.ticks / 15) / 1000))
+	end)
+
+	-- Join / reconnect (S-2): two identical runs of the battle (NetOut never
+	-- changes the sim). In the first, player 1's client is connected from
+	-- the start; in the second, a client joins at tick 300. Five ticks
+	-- later the late client's view equals the first one's.
+	local function sameView(a: Client.View, b: Client.View): (boolean, string)
+		for id, u in a.units do
+			local v = b.units[id]
+			if v == nil then
+				return false, `unit {id} missing`
+			elseif v.tier ~= u.tier or v.team ~= u.team or v.defIndex ~= u.defIndex or v.icon ~= u.icon or v.flags ~= u.flags then
+				return false, `unit {id} differs ({u.tier} / {v.tier})`
+			elseif math.abs(v.x - u.x) > 1e-9 or math.abs(v.z - u.z) > 1e-9 or v.health ~= u.health or v.state ~= u.state then
+				return false, `unit {id} position or state differs`
+			end
+		end
+		for id in b.units do
+			if a.units[id] == nil then
+				return false, `unit {id} extra`
+			end
+		end
+		for id, p in a.projectiles do
+			local q = b.projectiles[id]
+			local weapon = a.defs.weaponByIndex[p.weaponIndex]
+			if weapon.turnRate == nil and (q == nil or math.abs(q.x - p.x) > 0.5 or math.abs(q.z - p.z) > 0.5) then
+				return false, `projectile {id} differs`
+			end
+		end
+		return true, ""
+	end
+
+	t.test("a client joining late rebuilds the same view as one connected from the start", function()
+		local function run(joinAt: number?): (Client.View, Sim.Sim)
+			local sim, mine, theirs = battle(13)
+			local g = (sim.map :: any).grid
+			local rng = Prng.new(97)
+			local view = Client.new(g)
+			for _ = 1, 320 do
+				if sim.tick % 120 == 0 then
+					moveTo(sim, 1, mine, rng:nextNumber(-200, 100), rng:nextNumber(-150, 150))
+					moveTo(sim, 2, theirs, rng:nextNumber(-100, 200), rng:nextNumber(-150, 150))
+				end
+				if joinAt and sim.tick == joinAt then
+					NetOut.join(sim, 1) -- reconnect: keeps the camera
+					view = Client.new(g) -- a brand-new client
+				end
+				Sim.step(sim)
+				if joinAt == nil or sim.tick > joinAt then
+					Client.receive(view, sim.net.players[1].outbox)
+				end
+			end
+			return view, sim
+		end
+		local always, simA = run(nil)
+		local late, simB = run(300)
+		t.equal(Sim.hash(simA), Sim.hash(simB), "joining never changes the simulation")
+		t.expect(late.welcome ~= nil and late.welcome.player == 1 and late.welcome.mapId == simB.mapId, "WELCOME names the player and the map")
+		t.equal(late.welcome and late.welcome.tick, 300, "and the full tick")
+		local ok, why = sameView(always, late)
+		t.expect(ok, `same view after the join: {why}`)
+		local tactical = 0
+		for _, u in late.units do
+			if u.tier == "tactical" then
+				tactical += 1
+			end
+		end
+		t.expect(tactical > 0, `tactical units were re-entered ({tactical})`)
+		t.expect(late.economy ~= nil, "the economy came with the join")
+		t.deepEqual(late.economy, always.economy, "and equals the connected client's")
+	end)
+
+	t.test("HELLO: matching versions are accepted, stale ones get REJECT with the reason", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:64" })
+		local function hello(protocol: number, defsHash: number): buffer
+			local w = Packer.Writer.new()
+			Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.HELLO, protocol = protocol, defsHash = defsHash })
+			return w:finish()
+		end
+		t.equal(NetOut.hello(sim, hello(Schema.PROTOCOL_VERSION, sim.defs.hash)), nil, "accepted")
+		local function reason(msg: buffer?): number?
+			return msg and (Packer.readAll(msg, Schema.decodeSnapshot))[1].reason
+		end
+		t.equal(reason(NetOut.hello(sim, hello(Schema.PROTOCOL_VERSION - 1, sim.defs.hash))), Schema.RejectReason.PROTOCOL, "old protocol")
+		t.equal(reason(NetOut.hello(sim, hello(Schema.PROTOCOL_VERSION, (sim.defs.hash + 1) % 4294967296))), Schema.RejectReason.DEFS, "other defs")
+		t.expect(not pcall(NetOut.hello, sim, buffer.fromstring("\9")), "garbage errors (callers pcall it)")
+	end)
+
+	t.test("the Eco channel carries the team's account when it changes", function()
+		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:64" })
+		Spawn.unit(sim, "ord_generator", 1, 0, 0)
+		local view = Client.new((sim.map :: any).grid)
+		local sent = 0
+		for _ = 1, 60 do
+			Sim.step(sim)
+			sent += #sim.net.players[1].outbox.Eco
+			Client.receive(view, sim.net.players[1].outbox)
+		end
+		t.expect(sent >= 1 and sent <= 12, `sent on economy ticks when changed ({sent} of 12)`)
+		local acc = sim.eco.accounts[1]
+		local e = view.economy :: Schema.Eco
+		t.equal(e.supply.stored, math.floor(acc.supply.stored), "supply stored")
+		t.equal(e.power.income, math.floor(acc.power.income * 10 + 0.5), "power income in tenths per second")
+		t.equal(e.power.ratio, math.clamp(math.floor(acc.power.ratio * 255), 0, 255), "power ratio")
 	end)
 
 	t.test("tactical tier hysteresis: enter at +2 cells, leave beyond +5", function()

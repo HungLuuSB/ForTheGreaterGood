@@ -4,15 +4,31 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
+## Needs my review
+
+- **Free repair** (S-4): REPAIR heals damaged units at the rate they were built and costs nothing (BAR-style). Alternative: charge a share of the unit's cost.
+- **TOGGLE means repeat on factories** (S-4): the wire has no separate repeat command, and factories have no other toggle. Alternative: a REPEAT command type (protocol change).
+- **FIGHT now holds to engage** (S-4): balance fights and the AI use attack-move, so `docs/BALANCE.md` numbers will shift at the next re-run.
+
 ## For the client stream
 
-- **Ready:** `docs/contracts/net.md` (network contract, protocol 5, plus the protocol-6 join snapshot and Eco channel). Merged into `main`.
+- **Ready:** `docs/contracts/net.md` (network contract). Merged into `main`.
+- **Ready:** protocol 6 is built: join / reconnect (`NetOut.hello`, `NetOut.join`) and the Eco channel (the client-state contract's economy placeholder can use it). Contract section 10.
+- **Ready:** all commands now work (S-4, contract section 9): shift-queue, FIGHT, PATROL, ATTACK, GUARD, REPAIR, RECLAIM, BUILD, factory rally (move-like order on a factory) and repeat (TOGGLE on a factory). Order queues aren't replicated; draw queued paths from what the client sent.
+- **Done (request: bomber weapon pieces):** all 14 defs with a weapon piece missing from `pieces` are fixed (not only the bombers), and `Defs` validation now rejects such defs (S-3). On `main`.
 
 ## Integration notes
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
 - 2026-10-21: client `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1` merged (`--no-ff`); `lune run test` 34 specs / 253 passed, `lune run build` 263 scripts / 787 requires; pushed (`2a8b078`). `main` merged into `m-sim-2`.
+
+## Overnight 2026-10-21 (integrator + queue)
+
+- Task 1 ✅: `docs/contracts/net.md`; `Ballistics` (with `steer`) moved to `Shared/Combat` for the client (S-1).
+- Task 2 ✅: join / reconnect snapshot and the Eco channel, protocol 6 (S-2). Tests: **34 specs, 257 passed**.
+- Client request ✅: weapon pieces in `pieces` and a validation rule (S-3).
+- Task 3 ✅: order queues and behaviors (S-4): shift-queue, FIGHT holds to engage, PATROL, ATTACK, GUARD, REPAIR (free healing), RECLAIM / BUILD queues, factory rally and repeat. `Orders.spec` (8 tests). Tests: **35 specs, 265 passed**.
 
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)
 
