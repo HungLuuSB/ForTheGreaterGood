@@ -2,66 +2,43 @@
 
 Status of the unattended work session. A new session should be able to continue from this file alone.
 
-## Summary (end of the second unattended session, 2026-10-20)
+## Summary (end of the third queue, 2026-10-20, branch `m-sim-polish`)
 
-**Done: tasks 11–17, the M6 and M7 rules reviews, and `docs/STUDIO_HANDOFF.md`.** Branch `m0-foundations` is pushed; every task is its own commit. The headless simulation now covers M0–M7: everything except what needs Studio (map bake, client, rendering, live benchmarks).
+**Merged first:** `m0-foundations` → `main` (`fa21a39`, no-ff), tagged `sim-headless-v0.1`, and the new branch `m-sim-polish` started from it.
+
+**Done: tasks 18–23**, one commit each, all pushed.
 
 | # | Task | Commit |
 |---|---|---|
-| 11 | Sensor maps, visibility levels, structure ghosts (M4) | `fb0d0df` |
-| 12 | Radar wobble, jamming, stealth; fog-aware targeting (M4) | `f0e1a28` |
-| 13 | Interest management and NetOut with a simulated client | `08e4ede` |
-| 14 | Stress test with per-system timing and bandwidth report | `2e7925d` |
-| 15 | Aircraft: jets, helicopters, ammo, rearm pads (M6) | `f0733e0` |
-| 16 | Naval: ships, submarines, torpedoes (M6) | `8c6d6b2` |
-| — | M6 rules review | `561d6b7` |
-| 17 | Electronic warfare: guidance, burn-through, countermeasures (M7) | `2af0466` |
-| — | M7 rules review (Movement regression fix) | `dccf50c` |
-| — | Studio handoff checklist, final summary | (last commit) |
+| 18 | Sensors: one-cell circle shifts, row spans, stamp budget | `2950572` |
+| 19 | Local quadtree updates when structures change | `4702fe6` |
+| 20 | Match rules: ally teams, win conditions, elimination, overflow, unit caps | `226e39a` |
+| 21 | Full placeholder roster (115 defs) and tech tree | `6537df8` |
+| 22 | Balance report (`lune run balance` → `docs/BALANCE.md`) | `0a96b77` |
+| 23 | Skirmish AI; AI-vs-AI match test | (last commit) |
 
-Earlier on this branch: M0 (`e1be1c4`–`6d79a93`), the M1 simulation side, the M2 combat core, the pathing fixes and duel reports (`bafe3b1`–`8878849`), and M3 economy and construction (`3c27b99`–`1b17519`).
+**Tests:** `lune run test` gives **30 specs, 207 passed, 0 failed** (about 15 s). New specs: Match, TechTree, Skirmish. New tests also in Sensors, Placement and EW. Every mechanism was mutation-checked.
 
-**Tests:** `lune run test` gives **27 specs, 182 passed, 0 failed** (about 7 s). This session added Sensors, Fog, NetOut, Air, Naval and EW specs. Every new mechanism was mutation-checked: each deliberately broken version was caught.
+**Performance** (stress test, 800 units, this PC):
+- Sensors peak: 21.6 → **2.1 ms** (average 4.2 → 0.5 ms).
+- Average tick: about 12.1 → **9.2–9.5 ms**; the worst whole tick is about 25 ms, against the 66.7 ms budget.
+- Worst move-order tick: about 10 ms.
+- Worst tick with a structure placed mid-battle: 42 → about 25 ms (the placement itself is ≤ 5.7 ms).
+- Bandwidth: unchanged, about 21 KB/s per player against 35.
 
-**Benchmarks and bandwidth** (Lune; details under Benchmarks):
-- **Stress test, 800 units:**
-  - average tick 12.1 ms, p95 20.4, max 95, against a 66.7 ms tick;
-  - no system over budget on average;
-  - peak offenders: Sensors (17 ms against 5) and Movement (11.6 against 10). The 82 ms Commands spike on move orders was fixed in round 4 (D83): the worst move-order tick is now about 10 ms.
-  - This PC got about 1.6× slower after the reset: the task-14 commit measures 12.2 ms here, against the 7.28 ms recorded at the time.
-- **Bandwidth:** worst 21.5 KB/s per player at 800 units (tactical 6.6, strategic 6.9, state and events 8.0) against 35.
-- **Flow fields** (after the bucket queue): open 28 ms, maze 18 ms, island 4.3 ms one-shot. Sliced at 36,000 work units per tick they finish in at most 4 ticks.
+**AI matches** (192×192, Order AI vs Chaos AI): they end by Command Ends in 6–8 game minutes; peak ticks 8.7–10.3 ms; deterministic and replayable.
 
-**Results:**
-- **Fog:** artillery direct hits 87% with a spotter versus 20% on radar.
-- **Air:** a Falcon kills an incoming Wasp in 22.9 s, never drops below minimum speed, circles, runs dry, rearms (120 ticks at full economy, more than 3× on a stall) and returns.
-- **Naval:** ships and subs never leave the water. A sub is HIDDEN without sonar and never better than a SONAR contact with it. Only torpedoes engage subs, and torpedoes die at the shore. A Crusader sinks a Lamprey in 8.5 s and keeps 1960 / 2600 HP.
-- **EW:**
-  - an Aegis never launches at a jammed Wasp at 550 or 250 studs, though it sees it, but does at 150 (inside the 210-stud burn-through);
-  - mid-flight jamming raises `LOST_LOCK`;
-  - DIRCM decoys 25 of 40 single IR missiles but only 14 of 80 in salvos of 4 (66 hit);
-  - a stalled DIRCM never recharges;
-  - EW scenarios replay exactly.
+**Balance report:** see `docs/BALANCE.md` and Task 22 below. Ships and helicopters are strong; MLRS, ASW helicopters and mobile SAMs are weak in straight fights.
 
-**Decisions:** D65–D82 in `docs/DECISIONS.md` (this session). The ones that need your call are below.
+**Decisions:** D85–D90 (this queue).
 
-**Round 4 (your answers to the six questions above): all done** (details under *Round 4* below).
-
-| # | Answer applied | Commit |
-|---|---|---|
-| 1 | COMMAND guidance: live launcher + target VISIBLE, checked every tick; immune to jamming and countermeasures | `929b308` |
-| 2 | Flare/chaff refills cost supply, spread over the rearm | `b10a701` |
-| 3 | SAMs prefer lockable targets, 1.25× switch margin; jets now spawn flying (bug found by the test) | `6ba564e` |
-| 4 | Naval units and ASW helis detect submerged subs within 40 studs; Tidewatch / Leech placeholders | `93df08e` |
-| 5 | Move-order spike: profiled, planning sliced into the pathing budget; worst move-order tick 91 → 10 ms at 800 units | `0556c9e` |
-| 6 | Offline Roblox build: darklua `convert_require`, `rojo build`, `lune run check_build` (482 requires resolve) | `8b62a50` |
-
-Tests now: **27 specs, 188 passed, 0 failed**.
-
-**Open points** (no decision needed now):
-1. **Quadtree rebuilds after structure placement** (D83 follow-up): `Nav.terrainChanged` drops all quadtrees, so the next order rebuilds one in its tick (10–17 ms on 256×256). The fix is an incremental quadtree update.
-2. **Sensors** is now the top per-tick peak (14–22 ms against 5 at 800 units: the first full stamp and all-pairs visibility), then Movement (10–13 against 10).
-3. **Studio:** only the in-Studio run of step 1 remains; then step 2 (Roblox-only root and the in-Studio test entry).
+**Questions for you:**
+1. **Faction balance** (D89, D90): Chaos wins all 4 AI matches and most equal-value ground fights (Ravager vs Lancer as before). Rebalance now, or keep it for M8 with the report as the baseline?
+2. **Naval and air strength:** cruisers and carriers trade 11–19× because few units can hurt them, and attack helicopters about 7×. Is that the intended counter structure (guide 12.4), or should land units get more anti-ship and anti-air options?
+3. **Bombs:** bombers drop slow ballistic shells, because the BOMB type has no sim behavior (D88). Implement real level bombing (release over the target), or keep this for now?
+4. **Economy gaps** (D88): Wind Turbine, Supply Converter and replacing a T1 extractor when its upgrade starts are not implemented. Needed before M8?
+5. **Team sizes and caps** (D87): I allow 1-player ally teams in TEAM mode (uneven matches), and the unit cap counts structures and frames, like BAR. OK?
+6. **Studio:** unchanged; `docs/STUDIO_HANDOFF.md` step 1 only needs its in-Studio run.
 
 ---
 
@@ -337,6 +314,16 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
   - Tests: **19 specs, 140 passed**.
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
+
+### Task 23 — Skirmish AI ✅
+
+- `Sim/AI/Skirmish.luau`: a deterministic AI that plays through commands (D90). It runs a build order, expands to free deposits, builds an army and attacks in growing waves. New map `skirmish:<cells>`.
+- `Skirmish.spec`:
+  - Order AI vs Chaos AI on `skirmish:192`, Command Ends: Chaos wins at **8.0 min** (7,189 ticks), **peak tick 10.3 ms**; both sides attacked (1 and 3 waves) and expanded (9 and 8 extractors, beyond the 4 home deposits); 0 rejected commands;
+  - a second run is identical (hash, length, winner), and the replay without the AI ends identically.
+- Seeds 2–4: Chaos wins at 6.0, 7.8 and 6.3 min; peak ticks 8.7–9.3 ms; at most 60 units.
+- **Rules review** for tasks 18–23: strict, require forms, no globals, clocks or random in sim code; every new loop over a dictionary sorts first or only clears; the Roblox build check passes (245 scripts, 701 requires).
+- Tests: **30 specs, 207 passed**.
 
 ### Task 22 — Balance report ✅
 

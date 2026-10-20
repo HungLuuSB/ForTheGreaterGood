@@ -12,6 +12,7 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D79–D82: M7 electronic warfare (task 17). D76 and D80–D82 were revised by the user's round-4 answers (see each entry's "Revised" block).
 - D83: move orders, profiled and sliced into the pathing budget.
 - D84: offline Roblox build (darklua `convert_require` plus a place check).
+- D85–D90: third queue: Sensors stamping, local quadtree updates, match rules, full roster, balance report, skirmish AI.
 
 Open points are listed in `docs/PROGRESS.md` → Summary.
 
@@ -948,3 +949,24 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - One-sided matchups (bombers vs units with no AA) give large trades without wins.
   - Equal value at a 3,000 budget rounds expensive units to 1–2 copies.
 - **Why:** a cheap, deterministic first look for M8 balancing; the numbers aren't targets.
+
+## D90 — Skirmish AI (2026-10-20, task 23)
+
+- **Decision** (`Sim/AI/Skirmish.luau`):
+  - The AI is a player. It reads its own units and economy, what its ally team knows (`Sensors.knownPosition`) and the map's start positions, and acts only through `Sim.submit`. Its games are therefore in the replay like anyone's, and a replay without the AI reproduces them exactly.
+  - It thinks every 15 ticks (offset by player ID) and has its own Prng (seed × 31 + player × 7919), used only for the production mix (1 artillery piece in 4).
+  - **Builders:**
+    - the Command Vehicle stays within 260 studs of home;
+    - priorities: a Vehicle Plant (a second one past 600 stored supply) → generators while power is short → extractors on the nearest free deposits (claims last 60 s) → assist a factory;
+    - spots come from rings around home checked with `Placement.check`, like a client's placement ghost.
+  - **Factories:** keep 2 items queued: workers up to 3, then T1 tanks and artillery.
+  - **Army:**
+    - new units gather at a rally point 160 studs toward the enemy;
+    - enemies within 260 studs of home are attacked by everything at home;
+    - at the wave size (8, growing by 2) the wave attack-moves at the best known target (structures and the Command Vehicle count 4× closer), else the enemy start, re-targeting every 5 s.
+  - **Map:** a `skirmish:<cells>` test map: `start` plus two pairs of value-3 expansions per side and a rich value-6 pair in the middle.
+- **Results** (192×192, Order AI vs Chaos AI, Command Ends):
+  - seed 1: Chaos wins at 8.0 min, peak tick 10.3 ms, 9 / 8 extractors;
+  - seeds 2–4: Chaos wins at 6.0, 7.8 and 6.3 min, peak ticks 8.7–9.3 ms, at most 60 units;
+  - a full match takes about 1.4 s of wall time headless.
+- **Alternatives:** a utility-scoring AI; AI inside the sim as a system (it would bypass the command path and the replay).

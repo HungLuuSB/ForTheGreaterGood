@@ -1361,6 +1361,8 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 - Implementation: the `Match` system (after Construction) eliminates players by the chosen rule. Their units self-destruct (no wrecks), and the match ends when at most one ally team is left (none left = draw).
 
+- Skirmish AI (DECISIONS D90): `Sim/AI/Skirmish.luau` plays through commands like a player, so AI games replay exactly.
+
 ### 16.3 Match flow
 
 1. **Lobby:** map vote, mode, teams, faction pick. Use reserved servers via TeleportService for matches.

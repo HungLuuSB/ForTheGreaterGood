@@ -4,8 +4,8 @@ Everything that needs Roblox Studio, in the order to do it. The headless simulat
 
 State at handoff (2026-10-20, updated after round 4):
 - Branch `m0-foundations`.
-- `lune run test`: **27 specs, 188 passed**.
-- `lune run build`: 143 scripts compile; 482 requires resolve to ModuleScripts.
+- `lune run test`: **30 specs, 207 passed** (branch `m-sim-polish`).
+- `lune run build`: 245 scripts compile; 701 requires resolve to ModuleScripts.
 - `src/client` is empty.
 - No Roblox-only server code exists yet.
 
