@@ -6,7 +6,6 @@
 local Nav = require("./Nav")
 local Spawn = require("./Spawn")
 local Types = require("./Types")
-local World = require("./World")
 
 local Scenarios: { [string]: (Types.Sim) -> () } = {}
 

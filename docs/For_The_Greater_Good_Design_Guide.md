@@ -876,7 +876,7 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 - Projectile flight is exact, with a swept chord test. AoE is measured to the cylinder surface.
 - Damage is queued and applied in order. Deaths leave a wreck worth 50% of supply when overkill ≤ 50% of max health.
 - Per-tick events are in `sim.combat.events`.
-- Not yet: line-of-fire checks (10.7), target leading, salvos, guidance (M7), focus-fire and overkill heuristics.
+- Not yet: line-of-fire checks (10.8), target leading, salvos, guidance (M7), focus-fire and overkill heuristics.
 
 ### 10.8 Line of fire
 

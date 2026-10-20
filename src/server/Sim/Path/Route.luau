@@ -132,7 +132,7 @@ function Route.findMany(tree: Quadtree.Tree, startCells: { number }, goalCell: n
 		end
 	end
 	if wantedCount == 0 then
-		return if #unreachable == #startCells then {} else { goalLeaf }, unreachable
+		return {}, unreachable -- no start cell can reach the goal
 	end
 
 	local dist: { [number]: number } = { [goalLeaf] = 0 }

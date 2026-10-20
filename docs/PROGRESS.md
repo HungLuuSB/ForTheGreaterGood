@@ -2,6 +2,49 @@
 
 Status of the unattended work session. A new session should be able to continue from this file alone.
 
+## Summary (end of the unattended session, 2026-10-20)
+
+**Done: all 10 tasks, plus the rules review.** Branch `m0-foundations` is pushed; every task is its own commit.
+
+| # | Task | Commit |
+|---|---|---|
+| 1 | Packer/Schema follow-ups, guide 0.4 | `e1be1c4` |
+| 2 | Defs: loader, validation, indices, hash, Lancer/Ravager | `67b89b8` |
+| 3 | Grid: cell math, wire positions, test maps | `e18c19c` |
+| 4 | World, Sim.step, replay log, world hash (**M0 exit criteria met**) | `6d79a93` |
+| 5 | Passability: slope, passMask, clearance | `b615360` |
+| 6 | Quadtree, coarse A*, corridor | `ddcea5e` |
+| 7 | Flow fields, time-slicing, LRU cache | `089a316` |
+| 8 | Flow field benchmark | `49bbc74` |
+| 9 | Movement, shared fields, avoidance | `7fe1b02` |
+| 10 | Combat core (targeting → damage), headless | `2b8110c` |
+| — | Rules review, final docs | (last commit) |
+
+**Tests:** `lune run test` gives **17 specs, 129 passed, 0 failed** (about 1.5 s). Key mechanisms were mutation-checked: each deliberately broken version was caught by the specs.
+
+**Benchmarks** (Lune, dev PC; details below):
+- One-shot flow fields on 256×256 take 80 ms (open), 31.5 ms (maze) and 9.9 ms (island). All are **over** the 8 ms budget.
+- Sliced at 12,000 work units per tick they finish in 11, 8 and 2 ticks.
+- 50-unit marches cost about 0.2 ms per tick. The 10 v 10 duel costs about 0.024 ms per tick.
+
+**Results:**
+- 50 Lancers arrive on all 9 test maps (lakes and wall-with-gap) without overlap. About 70% land within 2 studs of their formation slot, and the worst lands about 17 studs short.
+- The 10 v 10 duel always ends: Chaos wins 10 of 10 seeds with placeholder stats.
+- Every run is deterministic and replays exactly.
+
+**Decisions:** D1–D51 in `docs/DECISIONS.md`. The ones that change the guide or need your call are listed under *Questions*.
+
+**Questions for you:**
+1. **D21, footprint rule.** I used `clearance >= floor(F/2) + 1` (the guide's `ceil(F/2)` lets a 2×2 unit into a 1-cell gap). Even footprints then need a gap one cell wider than strictly necessary. Keep it, or switch to exact corner-anchored clearance?
+2. **D29/D33, pathing budget in work units** (12,000 per tick), not wall-clock ms, so replays stay exact. Confirm?
+3. **Benchmark: fields are over budget.** Pick the next optimization: bucket-queue Dijkstra (about 2×), tighter corridors, `--!native` and Actors (needs Studio/live measurements), or accept the slicing.
+4. **D50, balance.** Ravagers win the close duel 10 of 10. Is that intended by the doctrine (Chaos brawls, Order out-ranges)? Should a long-range test scenario be added?
+5. **D51, cross-platform determinism.** sin, cos and atan2 come from the platform's libm, so a replay recorded on a Linux server may diverge when replayed on Windows. Accept same-platform replays, or should I write deterministic trig?
+6. **Formation precision** (about 70% exact). Good enough for now, or invest in better slot assignment?
+7. Still pending from before: Studio access for the darklua require pipeline and the Studio test entry.
+
+---
+
 ## How to continue
 
 - Branch: `m0-foundations` (pushed to `origin`). Run `lune run test` from the repo root; everything must pass before starting the next task.
@@ -28,7 +71,7 @@ Status of the unattended work session. A new session should be able to continue 
 | 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | ✅ done (over budget, see Benchmarks) |
 | 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | ✅ done |
 | 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | ✅ done |
-| — | Rules review (requires, determinism, no Instances, hot-loop allocation) | ⏳ next |
+| — | Rules review (requires, determinism, no Instances, hot-loop allocation) | ✅ done |
 
 ## Done so far
 
@@ -201,6 +244,28 @@ Every unit arrives on every map and overlap is negligible. Formation precision i
 - Tests: **17 specs, 129 passed, 0 failed**.
 - Duel results (`lune run debug_duel 10`): Chaos wins 10 of 10 seeds with 5 Ravagers left after 221–244 ticks (about 15 s). 96–97% of shells hit, 15 kills and 15 wrecks per fight, about 0.024 ms per tick for 20 units. Placeholder stats; see D50.
 - Decisions: D43–D50.
+
+### Rules review
+
+Checked every file under `src/` against CLAUDE.md and the skill:
+
+- `--!strict` everywhere. ✅
+- Requires: only `@shared/...` across roots and relative paths within a root. ✅
+- No Roblox globals, Instances, `Random`, `math.random`, `os.clock`/`tick`/`time` in sim code (clocks only via `Util/Profiler`). ✅
+- No `pairs()`-order dependence: every loop over a hash-keyed table only builds a set or copy, or sorts its keys first. ✅
+- Replicated fields are written only through World setters (dirty bits); turret aim sets STATE dirty explicitly. ✅
+- No print spam in sim code. ✅
+
+Fixes made during the review and while building the tasks:
+
+1. **Hot-loop allocations removed:**
+   - Targeting created a closure per weapon per tick; it's now a module-level function.
+   - `Nav.tree` built a string key per call from Movement; the key is now precomputed per profile.
+2. **Queue bugs fixed:** two FIFO queues used `table.insert` / `#` on tables with nil head slots: World's free-ID queue (caught in review before tests) and Nav's job queue (caught by the wall-map march). Both now use explicit head and tail indices.
+3. **Unused require** (`World` in Scenarios) removed. Stale guide reference (line of fire is now 10.8) fixed. `Route.findMany` edge case simplified.
+4. **Logged, not fixed:** D51 (libm trigonometry across platforms).
+
+Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-time tables in Nav) are per discrete event, not per unit per tick.
 
 ## Benchmarks
 

@@ -51,6 +51,7 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
 
 ## Current milestone
 
-M1 — One tank moves. In Lune mode only the simulation side: passability, quadtree + flow fields, movement and avoidance. Map bake, replication, rendering and debug overlays need Studio.
+M1 — One tank moves. Simulation side done in Lune (passability, quadtree + flow fields, movement and avoidance). Still open, all needing Studio: map bake, tactical replication, interpolated rendering, debug overlays.
+M2 (Combat) core is implemented headless ahead of M1's Studio work: targeting, aim model, hitscan/ballistic weapons, projectiles, damage, deaths and wrecks. See `docs/PROGRESS.md`.
 M0 (Foundations) exit criteria met on 2026-10-20: defs validate, packets round-trip, and 1,000 headless ticks run deterministically and replay exactly.
 Update this line when a milestone's exit criteria are met.
