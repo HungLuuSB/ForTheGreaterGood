@@ -26,6 +26,8 @@ local Controls = require("./Input/Controls")
 local Effects = require("./Core/Effects")
 local Icons = require("./Core/Icons")
 local IconLayer = require("./Render/IconLayer")
+local MinimapUI = require("./UI/Minimap")
+local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
 local RenderEffects = require("./Render/Effects")
 local Ground = require("./Render/Ground")
@@ -65,6 +67,8 @@ local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local strategic = false
 local tiers: { [number]: string } = {}
+local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
+local resourceBar = ResourceBar.new() -- placeholder UI (task 9)
 
 -- Drawn muzzle of a unit's weapon slot (tracers start there), if it has a model.
 local function muzzleOf(id: number, slot: number): (number?, number?, number?)
@@ -161,6 +165,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			seenMap = world.mapVersion
 			if world.layers then
 				Ground.build(world.layers)
+				MinimapUI.setMap(minimap, world.layers)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
@@ -201,6 +206,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local view = cam.ViewportSize
 	local draws = Icons.draws(iconTable, world, Controls.projector(cam), view.X, view.Y, api.selection.set)
 	IconLayer.step(iconLayer, draws, tiers, strategic)
+	MinimapUI.step(minimap, api, now)
+	ResourceBar.step(resourceBar, api, now)
 	table.clear(world.died) -- the renderer and Effects have taken what they need
 	local drawn = 0
 	for _ in renderer.drawn do

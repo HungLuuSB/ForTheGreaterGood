@@ -26,7 +26,7 @@ function Hud.new(): Hud
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Top
 	label.AutomaticSize = Enum.AutomaticSize.XY
-	label.Position = UDim2.fromOffset(8, 8)
+	label.Position = UDim2.fromOffset(8, 64) -- below the Roblox top bar buttons
 	label.Text = ""
 	label.Parent = gui
 	local pad = Instance.new("UIPadding")
