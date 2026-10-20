@@ -35,6 +35,8 @@ local ALL_DIRTY = 127
 World.State = table.freeze({
 	MOVING = 1,
 	TOGGLED_ON = 2,
+	SUBMERGED = 4, -- submarines (sonar-only detection)
+	LANDED = 8, -- aircraft on the ground / on a pad
 })
 
 -- Fire / move states (guide 10.1); values match Schema.FireState / MoveState.

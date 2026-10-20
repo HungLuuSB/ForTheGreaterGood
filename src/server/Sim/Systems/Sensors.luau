@@ -1,7 +1,10 @@
 --!strict
--- System 3: LOS / radar / sonar / jamming maps (M4).
--- Stub: does nothing yet.
+-- System 3 (every 2nd tick): re-stamp sensor maps for emitters that changed
+-- sensor cell, then recompute visibility per team (guide 11). See Sim/Sensors.luau.
 
+local Sensors = require("../Sensors")
 local Types = require("../Types")
 
-return function(_sim: Types.Sim) end
+return function(sim: Types.Sim)
+	Sensors.step(sim)
+end

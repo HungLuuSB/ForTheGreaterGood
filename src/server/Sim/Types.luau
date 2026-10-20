@@ -11,6 +11,7 @@ local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
 local Replay = require("./Replay")
 local Schema = require("@shared/Net/Schema")
+local SensorsState = require("./SensorsState")
 local World = require("./World")
 
 export type Player = { id: number, team: number }
@@ -34,6 +35,7 @@ export type Sim = {
 	combat: Combat.Combat, -- projectiles, damage queue, wrecks, this tick's events
 	eco: Economy.Economy, -- team accounts
 	build: BuildState.BuildState, -- construction orders, factory queues, reclaim
+	sensors: SensorsState.State, -- sensor maps, visibility, ghosts
 	players: { [number]: Player },
 	playerOrder: { number }, -- player IDs, ascending
 	queue: { QueuedCommand }, -- commands to apply on the next tick

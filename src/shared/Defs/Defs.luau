@@ -56,7 +56,7 @@ export type UnitDef = {
 	moveClass: string?,
 	movement: { maxSpeed: number, accel: number, brake: number, turnRate: number }?,
 	footprint: number,
-	sensors: { sight: number, radar: number, sonar: number, radarSignature: number },
+	sensors: { sight: number, airSight: number?, radar: number, sonar: number, jam: number?, radarSignature: number },
 	weapons: { WeaponSlot },
 	maxRange: number, -- derived: longest weapon range, 0 if unarmed
 	countermeasures: any?,
@@ -191,7 +191,14 @@ local UNIT_SPEC: Spec = {
 		footprint = { kind = "integer", min = 1, max = 8 },
 		sensors = {
 			kind = "record",
-			fields = { sight = NON_NEGATIVE, radar = NON_NEGATIVE, sonar = NON_NEGATIVE, radarSignature = FRACTION },
+			fields = {
+				sight = NON_NEGATIVE,
+				airSight = opt(NON_NEGATIVE), -- sight against aircraft; default 1.5 × sight
+				radar = NON_NEGATIVE,
+				sonar = NON_NEGATIVE,
+				jam = opt(NON_NEGATIVE), -- jammer radius (hides own team from enemy radar)
+				radarSignature = FRACTION,
+			},
 		},
 		weapons = {
 			kind = "list",

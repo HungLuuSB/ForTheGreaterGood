@@ -925,6 +925,12 @@ Per ally team, on a **sensor grid of 16-stud cells** (2×2 grid cells; 128×128 
 
 **Stamping:** precompute circle offset lists per radius. When an emitter crosses into a new sensor cell, subtract its old circle and add the new one. Units that don't change sensor cell cost nothing. Large moving radars (AWACS) re-stamp at most every few ticks.
 
+Implementation (`Sim/Sensors.luau`, DECISIONS D65):
+- Counts are u16, so dense stacks can't overflow. `airSight` defaults to 1.5 × sight.
+- Unfinished structures don't emit.
+- Visibility for every enemy and team is recomputed each sensor tick (every 2nd tick) from the maps.
+- Structure ghosts persist until the team sees the spot empty.
+
 Optional later: terrain-occluded LOS (sample height along rays at stamp time). Start without it.
 
 ### 11.3 Visibility rule

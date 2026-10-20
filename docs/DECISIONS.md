@@ -599,3 +599,21 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - three tanks by 107 s (Order) and 90 s (Chaos);
   - production then becomes power-bound (power ratio 0.45–0.5), the intended stall behavior for a build with too few generators.
 - **Why:** M3 exit criterion "a full T1 build order is playable", proven headless and deterministic.
+
+## D65 — Sensor maps and visibility (2026-10-20, task 11)
+
+- **Decision:**
+  - Per ally team, five maps on the 16-stud sensor grid (los, airLos, radar, sonar, jam), **u16** counts.
+  - An emitter adds +1 to every sensor cell whose center is within its radius of the emitter's cell center (circle offsets cached per radius). It re-stamps only when its sensor cell changes; radii are cached per def, so a re-stamp allocates nothing.
+  - Unfinished structures don't emit, and removal unstamps (Lifecycle hook).
+  - `airSight` defaults to 1.5 × sight.
+  - Visibility of every enemy unit for every team is recomputed on each sensor tick (every 2nd tick). Precedence: VISIBLE > GHOST (structures seen before) > RADAR / SONAR > HIDDEN. Submerged units are only SONAR or HIDDEN.
+  - Ghosts keep def and position, outlive the structure, and are removed once the team's los covers the spot and the structure is gone.
+  - `Sensors.radarDetects` is the hook for jamming and stealth (task 12).
+- **Alternatives:** u8 counts (guide 11.2) could overflow under a few hundred stacked units; event-driven visibility (guide 11.3) is more complex.
+- **Why:** visibility for all pairs is O(units × teams) buffer reads every 2 ticks, which is cheap and has no invalidation bugs. The stress test (task 14) will tell if it needs the event-driven version.
+
+## D66 — Placeholder mobile radars (2026-10-20)
+
+- **Decision:** `ord_oracle` "Oracle" (radar 700, wheeled, 380 HP) and `chs_watcher` "Watcher" (radar 600, 420 HP), per guide 13.2. Unarmed. Category `RADAR_EMITTER`.
+- **Why:** radar contacts need an emitter. Order's radar is longer and more precise (wobble in task 12), per guide 11.6.

@@ -307,6 +307,21 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 11 — Sensors (M4)
+
+- `Sim/Sensors.luau` + `Sim/SensorsState.luau`:
+  - per-team u16 maps (los, airLos, radar, sonar, jam); cached circle offsets;
+  - stamp and unstamp on sensor-cell change, with no allocation (radii cached per def);
+  - visibility levels with structure ghosts; `Sensors.level(sim, team, id)`;
+  - hash, and a Lifecycle unstamp hook.
+- World state bits SUBMERGED and LANDED. Placeholder mobile radars Oracle and Watcher (D66). Def sensors gained `airSight` and `jam`.
+- `Sensors.spec`:
+  - 30 units moving and dying for 240 ticks: the maps always equal a recount of the stamped circles, and stamps never trail positions by more than one cell; after everyone dies, every map is zero;
+  - a Ravager walking past an observer: HIDDEN → VISIBLE → HIDDEN, exactly matching the sight circle on every sensor tick;
+  - ghosts persist out of sight and after death, and disappear once the spot is seen;
+  - radar contact beyond sight; unfinished units don't emit.
+- Tests: **22 specs, 155 passed**.
+
 ## Benchmarks
 
 Lune 0.11 on the dev PC, 256×256, median over 7 runs (best in the second figure), ms:

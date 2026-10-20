@@ -21,6 +21,7 @@ local Schema = require("@shared/Net/Schema")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
+local SensorsState = require("./SensorsState")
 local Nav = require("./Nav")
 local _Placement = require("./Placement") -- registers its Lifecycle removal hook
 local Replay = require("./Replay")
@@ -112,6 +113,16 @@ function Sim.new(config: Config): Sim
 		nav = if map then Nav.new(map, defs) else nil,
 		combat = Combat.new(defs, layers),
 		build = BuildState.new(),
+		sensors = SensorsState.new(if map then map.grid else nil, (function()
+			local teams = {}
+			for _, id in order do
+				if table.find(teams, players[id].team) == nil then
+					table.insert(teams, players[id].team)
+				end
+			end
+			table.sort(teams)
+			return teams
+		end)()),
 		eco = Economy.new((function()
 			local teams = {}
 			for _, id in order do
@@ -169,7 +180,8 @@ function Sim.hash(sim: Sim): number
 	h = Economy.hash(sim.eco, Combat.hash(sim.combat, World.hash(sim.world, h)))
 	local ids = table.clone(sim.world.ids)
 	table.sort(ids)
-	return BuildState.hash(sim.build, ids, h)
+	h = BuildState.hash(sim.build, ids, h)
+	return SensorsState.hash(sim.sensors, h)
 end
 
 -- Advances one tick: every system in order, at its rate.
