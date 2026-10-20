@@ -1,5 +1,7 @@
 --!strict
+local NetOut = require("../Sim/NetOut")
 local Packer = require("@shared/Net/Packer")
+local Scenes = require("./Support/Scenes")
 local Prng = require("@shared/Util/Prng")
 local Schema = require("@shared/Net/Schema")
 local Sensors = require("../Sim/Sensors")
@@ -292,6 +294,81 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.equal(tracers, fires[2], "the client draws a tracer per shot")
+	end)
+
+	-- Homing corrections (D102). A Crusader torpedoes a Lamprey: Order's
+	-- client draws torpedoes from SPAWN_PROJ and the corrections. Visible
+	-- drift = drawn position vs the server's, while in the player's view.
+	type DriftRun = { worst: number, corrections: number, unguided: number, outOfView: number, bytes: number, ticks: number }
+	local function homingRun(every: number, dropEveryOther: boolean): DriftRun
+		local saved = NetOut.HOMING_SYNC_EVERY
+		NetOut.HOMING_SYNC_EVERY = every
+		local scene = Scenes.matchup("ord_crusader", "chs_lamprey", "close", 1)
+		local sim = scene.sim
+		local g = (sim.map :: any).grid
+		local c = sim.combat
+		NetOut.setCamera(sim, 1, 0, 0, math.min(g.cellsX - 1, 255), math.min(g.cellsZ - 1, 255))
+		local view = Client.new(g)
+		local r: DriftRun = { worst = 0, corrections = 0, unguided = 0, outOfView = 0, bytes = 0, ticks = 0 }
+		local lastSync: { [number]: number } = {}
+		local n = 0
+		for _ = 1, 900 do
+			scene.drive(sim)
+			Sim.step(sim)
+			local pn = sim.net.players[1]
+			for _, msg in pn.outbox.Projectiles do
+				for _, rec in (Packer.readAll(msg, Schema.decodeProjSync, Schema.decodeTickHeader)) do
+					local p = rec.projId
+					r.corrections += 1
+					t.expect(pn.projKnown[p] == true, "corrections only for projectiles the client has")
+					if sim.defs.weaponByIndex[c.pWeapon[p]].turnRate == nil then
+						r.unguided += 1
+					end
+					local cx, cz = g:cellAt(c.px[p], c.pz[p])
+					if not (g:inBounds(cx, cz) and Sensors.inSight(sim, 1, c.px[p], c.pz[p])) then
+						r.outOfView += 1
+					end
+					lastSync[p] = sim.tick
+				end
+			end
+			local outbox = pn.outbox
+			if dropEveryOther then
+				n += 1
+				if n % 2 == 0 then
+					outbox = table.clone(outbox)
+					outbox.Projectiles = {} -- lost: the channel is unreliable
+				end
+			end
+			Client.receive(view, outbox)
+			for id, p in view.projectiles do
+				if c.projSlot[id] ~= nil and c.pWeapon[id] == p.weaponIndex and sim.defs.weaponByIndex[p.weaponIndex].turnRate then
+					local cx, cz = g:cellAt(c.px[id], c.pz[id])
+					if g:inBounds(cx, cz) and Sensors.inSight(sim, 1, c.px[id], c.pz[id]) then
+						local x, y, z = Client.drawn(p)
+						r.worst = math.max(r.worst, math.sqrt((x - c.px[id]) ^ 2 + (y - c.py[id]) ^ 2 + (z - c.pz[id]) ^ 2))
+					end
+				end
+			end
+		end
+		r.bytes = sim.net.players[1].bytes.Projectiles
+		r.ticks = sim.tick
+		NetOut.HOMING_SYNC_EVERY = saved
+		return r
+	end
+
+	t.test("homing corrections: only known homing projectiles in view, and the client's drift stays small", function()
+		local off = homingRun(0, false)
+		local on = homingRun(5, false)
+		local lossy = homingRun(5, true)
+		t.equal(off.corrections, 0, "no corrections when turned off")
+		t.expect(on.corrections > 0, `corrections were sent ({on.corrections})`)
+		t.equal(on.unguided, 0, "never for unguided projectiles")
+		t.equal(on.outOfView, 0, "never for projectiles out of the player's view")
+		t.expect(off.worst > 200, `without corrections torpedoes drift far ({off.worst} studs)`)
+		t.expect(on.worst < 40, `with corrections the visible drift stays small ({on.worst} studs)`)
+		t.expect(lossy.worst < 80, `half the corrections lost: still bounded ({lossy.worst} studs)`)
+		print(string.format("    visible drift: %.1f studs without, %.1f with, %.1f with half lost; %d corrections, %.2f KB/s",
+			off.worst, on.worst, lossy.worst, on.corrections, on.bytes / (on.ticks / 15) / 1000))
 	end)
 
 	t.test("tactical tier hysteresis: enter at +2 cells, leave beyond +5", function()

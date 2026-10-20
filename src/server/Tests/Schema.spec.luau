@@ -283,7 +283,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 3, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 4, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -364,6 +364,9 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "07 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
 		decoyed.kind = Schema.EventKind.LOST_LOCK
 		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "08 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
+		-- version 4: homing corrections on the Projectiles channel
+		local sync: Schema.ProjSync = { projId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = -2, vx = 1, vy = -1, vz = 0x0203 }
+		t.equal(hex(encodeOne(Schema.encodeProjSync, sync)), "02 01 04 03 05 06 fe ff 01 00 ff ff 03 02")
 	end)
 
 	t.test("events round-trip, reject bad input, and every prefix is truncated", function()
@@ -394,6 +397,20 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 9, 1, 0 }, "unknown event kind 9")
 		expectRejected(t, Schema.decodeEvent, { 2, 0, 0 }, "unitId 0 is reserved")
 		expectRejected(t, Schema.decodeEvent, { 1, 1, 0, 1, 0, 9 }, "team 9 outside")
+	end)
+
+	t.test("projectile corrections round-trip, reject projId 0, and every prefix is truncated", function()
+		local recs: { Schema.ProjSync } = {
+			{ projId = 65535, cell = 65535, offX = 255, offZ = 0, y = -32768, vx = 32767, vy = -32768, vz = 0 },
+			{ projId = 1, cell = 0, offX = 0, offZ = 255, y = 32767, vx = -1, vy = 1, vz = -2 },
+		}
+		roundTrip(t, recs, Schema.encodeProjSync, Schema.decodeProjSync)
+		for _, r in recs do
+			t.equal(buffer.len(encodeOne(Schema.encodeProjSync, r)), Schema.PROJ_SYNC_BYTES)
+			expectTruncated(t, "projectile correction", Schema.decodeProjSync, encodeOne(Schema.encodeProjSync, r))
+		end
+		expectRejected(t, Schema.decodeProjSync, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "projId 0 is reserved")
+		t.equal(Schema.Channel.Projectiles.reliable, false, "corrections are unreliable")
 	end)
 
 	t.test("tactical layout is byte exact", function()

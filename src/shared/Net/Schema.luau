@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 3 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK)
+Schema.PROTOCOL_VERSION = 4 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -28,6 +28,7 @@ Schema.Channel = table.freeze({
 	State = table.freeze({ name = "State", reliable = true }), -- state records
 	Strategic = table.freeze({ name = "Strategic", reliable = false }), -- strategic records
 	Events = table.freeze({ name = "Events", reliable = true }),
+	Projectiles = table.freeze({ name = "Projectiles", reliable = false }), -- homing corrections (D102)
 	Eco = table.freeze({ name = "Eco", reliable = true }),
 	Snapshot = table.freeze({ name = "Snapshot", reliable = true }),
 })
@@ -749,6 +750,30 @@ function Schema.decodeEvent(r: Reader): Event
 		readVel(r, e)
 	end
 	return e
+end
+
+--------------------------------------------------------------------------------
+-- Projectile corrections (S → C, unreliable; D102): the server's position
+-- and velocity of a homing projectile the client already has, ~3 Hz.
+--   projId u16 | pos | vel                                             = 14 bytes
+--------------------------------------------------------------------------------
+
+export type ProjSync = { projId: number, cell: number, offX: number, offZ: number, y: number, vx: number, vy: number, vz: number }
+
+Schema.PROJ_SYNC_BYTES = 14
+
+function Schema.encodeProjSync(w: Writer, rec: ProjSync)
+	writeId(w, rec.projId, "projId")
+	writePos(w, rec :: any)
+	writeVel(w, rec :: any)
+end
+
+function Schema.decodeProjSync(r: Reader): ProjSync
+	r.context = "projectile correction"
+	local rec: any = { projId = readId(r, "projId") }
+	readPos(r, rec)
+	readVel(r, rec)
+	return rec :: ProjSync
 end
 
 return Schema

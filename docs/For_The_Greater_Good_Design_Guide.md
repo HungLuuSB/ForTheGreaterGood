@@ -565,6 +565,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 | `State` | S → C | RemoteEvent (reliable) | Discrete changes: state bits, health, aim, build progress |
 | `Strategic` | S → C | UnreliableRemoteEvent | Minimap data for all known units |
 | `Events` | S → C | RemoteEvent (reliable) | Enter/leave tactical tier, fire, impact, death, alerts |
+| `Projectiles` | S → C | UnreliableRemoteEvent | Homing-projectile corrections, ~3 Hz, in the player's view only (D102) |
 | `Eco` | S → C | RemoteEvent (reliable) | Own team's economy |
 | `Snapshot` | S → C | RemoteEvent (reliable) | Full world for join/reconnect |
 
@@ -610,7 +611,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 - Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
 - Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
 - A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
-- **`Schema.PROTOCOL_VERSION`** (currently 3) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **`Schema.PROTOCOL_VERSION`** (currently 4) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
 - **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
@@ -694,12 +695,22 @@ vel = vx, vy, vz i16 (1/8 stud per second)
 ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
 ```
 
+**Projectile correction (S → C, unreliable, `Projectiles` channel, after the tick header)**
+
+```
+projId u16, pos, vel          14 B
+```
+
 ### 7.4 Client interpolation
 
 - Each tactical message carries its server tick in the tick header (section 7.3; compare wire ticks with `Net/Tick`, never `<`). The client keeps a small buffer per unit (3–4 snapshots).
 - Render time = latest tick − 2 ticks (≈ 133 ms at 15 Hz). Interpolate position and heading between the two surrounding snapshots.
 - If a snapshot is missing, extrapolate up to 1 tick, then hold.
 - A unit that hasn't moved sends nothing, and the client simply keeps its last position.
+- **Projectiles** (D99, D102): the client steps the projectiles it was sent itself (SPAWN_PROJ). Homing ones get corrections ~3 Hz, plus one when a projectile comes (back) into view, while they are in the player's view (camera + leave margin, in sight).
+  - On a correction the client snaps its prediction to the server's state and blends the drawn position toward it over 5 ticks.
+  - Errors above 60 studs snap: they only happen when a projectile comes back into view.
+  - Lost corrections (unreliable) just mean a longer blend.
 
 ### 7.5 Join, reconnect, spectate
 
@@ -720,6 +731,8 @@ Targets per player (measure on real servers):
 If over budget: reduce tactical rate for distant-but-in-view units, drop strategic to 2 Hz, merge events per tick.
 
 Measured headless (`lune run stress`, round 6, D99): with combat events, Events is 0.5–1.6 KB/s per player for 200–800 units (it was 0.06–0.19 before). The worst total is 20.7 KB/s at 800 units.
+
+Homing corrections (D102) cost about 45 B/s per homing projectile in view (14 B at 3 Hz plus the header): 0.03–0.18 KB/s per player in missile and torpedo duels. The stress armies have no homing weapons.
 
 ---
 

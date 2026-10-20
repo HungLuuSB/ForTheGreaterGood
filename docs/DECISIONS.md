@@ -1241,3 +1241,35 @@ Every system was reviewed for decisions that read another team's units from serv
 - **Pathfinding uses true passability:** routes go around enemy structures the team never saw. Fixing it needs per-team passability (or treating unseen structures as passable until a unit bumps into them). That is a large change to Nav and the flow-field cache.
 - **Radar contacts' categories:** weapons filter radar contacts by their true category (e.g. artillery ignores a blip that is an aircraft). Radar can tell air from surface, but finer categories (light vs armored) also come from truth in target priority.
 - **Ghost IDs reused** after 65,535 spawns would follow the new unit (D100).
+
+## D102 — Homing-projectile corrections (2026-10-20, user-requested)
+
+- **Wire:**
+  - New unreliable channel `Projectiles` (`PROTOCOL_VERSION` 4).
+  - Record: projId u16, pos, vel = 14 B, after the tick header. Golden bytes and round trips are in `Schema.spec`.
+- **NetOut:**
+  - For each homing projectile (a weapon with `turnRate`) the client already has: every `HOMING_SYNC_EVERY` = 5 ticks (3 Hz, staggered by ID), and on the tick it comes (back) into view.
+  - "In view" means inside the camera rectangle + LEAVE_MARGIN (the tactical area) and in the ally team's sight.
+  - Never for unguided projectiles, projectiles out of view, or unknown ones. `HOMING_SYNC_EVERY = 0` turns corrections off, for measurements.
+- **Client:**
+  - On a correction it snaps its prediction (position, velocity) to the server's and keeps drawing where it was. The drawn offset decays to 0 over `BLEND_TICKS` = 5.
+  - An error above `SNAP_STUDS` = 60 snaps: that only happens when a projectile comes back into view after flying uncorrected outside it.
+  - Lost corrections just leave the prediction running longer.
+- **Max visible drift** (drawn vs server position, while in the player's view; 1,200 ticks; player 1 / player 2):
+
+| fight | before | after |
+|---|---|---|
+| Seraph vs Harpy (radar SAMs, AAMs) | 94 / 171 | 59 / 56 |
+| Falcon vs Harpy (AAMs) | 517 / 517 | 67 / 65 |
+| Halo vs Wasp (IR SAMs, short flights) | 12 / 12 | 12 / 12 |
+| Crusader vs Lamprey (torpedoes) | 618 / 631 | 30 / 14 |
+
+  Mean drift fell 2–10× (e.g. torpedoes 73 → 7 studs).
+- **Bandwidth:**
+  - About 45 B/s per homing projectile in view; 0.03–0.18 KB/s per player in these duels.
+  - The stress-test armies carry no homing weapons, so their channels are unchanged (Projectiles 0.00).
+  - At 800 units: total 22.9 / 23.1 KB/s per player. The battle itself changed with D101's targeting search, so the other channels differ from round 6's 20.6.
+- **Test** (`NetOut.spec`), Crusader vs Lamprey:
+  - corrections only for known homing projectiles in view;
+  - visible drift 618 studs without corrections, 30 with them, 58 with every other correction message lost.
+  - Sending regardless of view fails it.

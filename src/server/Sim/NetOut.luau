@@ -32,6 +32,11 @@
 --                   life burst with an IMPACT too).
 --     The client steps known projectiles itself and drops them on IMPACT or
 --     at their time to live. All of a tick's events form one batch.
+--   * Homing corrections (Projectiles channel, unreliable, D102): every
+--     HOMING_SYNC_EVERY ticks (staggered by projectile ID), the position and
+--     velocity of each homing projectile the client has that is in the
+--     tactical area (camera + LEAVE_MARGIN) and in the ally team's sight;
+--     also on the tick one comes (back) into that view.
 -- Every channel is packed through Packer.chunk (≤ 900 bytes per message)
 -- after a u16 tick header. Dirty bits are cleared once all players are done.
 
@@ -51,6 +56,7 @@ local combatEvents: (Types.Sim, Grid.Grid, NetState.PlayerNet, number, { number 
 NetOut.ENTER_MARGIN = 2 -- cells
 NetOut.LEAVE_MARGIN = 5
 NetOut.STRATEGIC_EVERY = 5 -- ticks (3 Hz)
+NetOut.HOMING_SYNC_EVERY = 5 -- ticks (3 Hz); 0 turns corrections off (measurements)
 
 local D = World.Dirty
 local band, bor = bit32.band, bit32.bor
@@ -355,7 +361,34 @@ function NetOut.step(sim: Types.Sim)
 			pn.eventCounts[e.kind] = (pn.eventCounts[e.kind] or 0) + 1
 		end
 
+		local syncs: { Schema.ProjSync } = {}
+		local every = NetOut.HOMING_SYNC_EVERY
+		if cam ~= nil and every > 0 then
+			local c = sim.combat
+			local weapons = sim.defs.weaponByIndex
+			local inView = pn.projInView
+			for _, e in c.events do
+				if e.kind == "SPAWN_PROJ" then
+					inView[e.other] = nil
+				end
+			end
+			for _, p in c.proj do
+				if pn.projKnown[p] and weapons[c.pWeapon[p]].turnRate ~= nil then
+					local x, z = c.px[p], c.pz[p]
+					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) and Sensors.inSight(sim, ally, x, z)
+					local entered = seen and not inView[p]
+					inView[p] = seen or nil
+					if seen and (entered or (p + tick) % every == 0) then
+						local rec: any = withVel(withPos({ kind = 0, projId = p } :: any, g, x, c.py[p], z), c.pvx[p], c.pvy[p], c.pvz[p])
+						rec.kind = nil
+						table.insert(syncs, rec :: Schema.ProjSync)
+					end
+				end
+			end
+		end
+
 		local outbox = pn.outbox
+		outbox.Projectiles = pack(syncs, Schema.encodeProjSync, wireTick)
 		outbox.Events = pack(events, Schema.encodeEvent, wireTick)
 		outbox.Tactical = pack(tactical, Schema.encodeTactical, wireTick)
 		outbox.State = pack(states, Schema.encodeState, wireTick)

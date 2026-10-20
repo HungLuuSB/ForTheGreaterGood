@@ -281,7 +281,8 @@ function MatchExport.record(scene: Scenes.Scene, name: string, opts: Options): a
 			table.sort(pids)
 			for _, id in pids do
 				local p = v.projectiles[id]
-				table.insert(frame.p, { r1(p.x), r1(p.y), r1(p.z), p.weaponIndex })
+				local x, y, z = Client.drawn(p)
+				table.insert(frame.p, { r1(x), r1(y), r1(z), p.weaponIndex })
 			end
 			frame.e = Json.array()
 			for _, fx in v.effects do

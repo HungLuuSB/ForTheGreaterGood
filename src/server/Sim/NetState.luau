@@ -4,7 +4,7 @@
 
 local NetState = {}
 
-NetState.CHANNELS = table.freeze({ "Tactical", "State", "Strategic", "Events" })
+NetState.CHANNELS = table.freeze({ "Tactical", "State", "Strategic", "Events", "Projectiles" })
 
 export type PlayerNet = {
 	camera: { number }?, -- minX, minZ, maxX, maxZ in cells; nil = no tactical tier
@@ -14,6 +14,7 @@ export type PlayerNet = {
 	bytes: { [string]: number }, -- cumulative bytes sent per channel
 	messages: { [string]: number }, -- cumulative message count per channel
 	projKnown: { [number]: boolean }, -- projectile IDs this client was sent SPAWN_PROJ for
+	projInView: { [number]: boolean }, -- known homing projectiles in its view last tick (D102)
 	eventCounts: { [number]: number }, -- cumulative event records per Schema.EventKind
 }
 
@@ -39,6 +40,7 @@ function NetState.new(playerIds: { number }, iconIndex: { [number]: number }): N
 			bytes = bytes,
 			messages = messages,
 			projKnown = {},
+			projInView = {},
 			eventCounts = {},
 		}
 	end

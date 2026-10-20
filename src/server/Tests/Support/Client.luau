@@ -38,9 +38,13 @@ export type Unit = {
 }
 
 export type Projectile = {
-	x: number,
+	x: number, -- the client's own prediction (snapped to corrections)
 	y: number,
 	z: number,
+	ox: number, -- drawn position = prediction + offset; the offset decays
+	oy: number, -- to 0 over BLEND_TICKS after a correction (D102)
+	oz: number,
+	blend: number, -- ticks of blending left
 	vx: number,
 	vy: number,
 	vz: number,
@@ -63,6 +67,14 @@ export type View = {
 	received: { [number]: boolean }, -- every unit ID ever mentioned
 	log: { { channel: string, ids: { number } } }, -- this tick's mentions, for checks
 }
+
+Client.BLEND_TICKS = 5 -- a correction is blended in over this many ticks
+Client.SNAP_STUDS = 60 -- larger errors snap: they only happen when a projectile comes back into view
+
+-- Where the client draws projectile `p`.
+function Client.drawn(p: Projectile): (number, number, number)
+	return p.x + p.ox, p.y + p.oy, p.z + p.oz
+end
 
 function Client.new(grid: Grid.Grid, defs: Defs.DefSet?): View
 	return {
@@ -118,6 +130,11 @@ local function advance(view: View)
 			end
 		end
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, DT)
+		if p.blend > 0 then
+			local k = 1 / p.blend
+			p.ox, p.oy, p.oz = p.ox * (1 - k), p.oy * (1 - k), p.oz * (1 - k)
+			p.blend -= 1
+		end
 	end
 end
 
@@ -152,7 +169,21 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				local weapon = view.defs.weaponByIndex[e.weaponIndex :: number]
 				assert(weapon, `SPAWN_PROJ with unknown weapon {e.weaponIndex}`)
 				local target = e.targetId :: number -- a unit the ally team knows; its strategic record may come later
-				view.projectiles[e.projId :: number] = { x = x, y = y, z = z, vx = vx, vy = vy, vz = vz, weaponIndex = weapon.index, target = target, ttl = ttlOf(weapon) }
+				view.projectiles[e.projId :: number] = {
+					x = x,
+					y = y,
+					z = z,
+					ox = 0,
+					oy = 0,
+					oz = 0,
+					blend = 0,
+					vx = vx,
+					vy = vy,
+					vz = vz,
+					weaponIndex = weapon.index,
+					target = target,
+					ttl = ttlOf(weapon),
+				}
 				continue
 			elseif kind == EK.IMPACT then
 				local x, y, z = pos(e)
@@ -213,6 +244,24 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 		end
 		mention(view, "Events", ids)
 		mention(view, "Leave", leaves)
+	end
+	-- homing corrections (unreliable: any of them may be missing): snap the
+	-- prediction, keep drawing where it was and blend the gap away
+	for _, msg in outbox.Projectiles or {} do
+		for _, r in (Packer.readAll(msg, Schema.decodeProjSync, Schema.decodeTickHeader)) do
+			local p = view.projectiles[r.projId]
+			if p then
+				local dx, dy, dz = Client.drawn(p)
+				local x, z = g:decode(r.cell, r.offX, r.offZ)
+				p.x, p.y, p.z = x, r.y / Schema.Y_SCALE, z
+				p.vx, p.vy, p.vz = r.vx / Schema.Y_SCALE, r.vy / Schema.Y_SCALE, r.vz / Schema.Y_SCALE
+				p.ox, p.oy, p.oz = dx - p.x, dy - p.y, dz - p.z
+				p.blend = Client.BLEND_TICKS
+				if p.ox * p.ox + p.oy * p.oy + p.oz * p.oz > Client.SNAP_STUDS ^ 2 then
+					p.ox, p.oy, p.oz, p.blend = 0, 0, 0, 0
+				end
+			end
+		end
 	end
 	for _, msg in outbox.Tactical do
 		local records = Packer.readAll(msg, Schema.decodeTactical, Schema.decodeTickHeader)

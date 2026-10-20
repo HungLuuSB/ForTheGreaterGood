@@ -169,8 +169,10 @@ local function run(total: number)
 		local st = pn.bytes.State / seconds / 1000
 		local ev = pn.bytes.Events / seconds / 1000
 		local se = st + ev
-		out(string.format("player %d KB/s: tactical %.2f (peak target 15), strategic %.2f (10), state %.2f + events %.2f = %.2f (10), total %.2f (35)%s",
-			pid, tac, strat, st, ev, se, tac + strat + se, if tac + strat + se > 35 then "  OVER" else ""))
+		local pr = (pn.bytes.Projectiles or 0) / seconds / 1000
+		local total = tac + strat + se + pr
+		out(string.format("player %d KB/s: tactical %.2f (peak target 15), strategic %.2f (10), state %.2f + events %.2f = %.2f (10), projectiles %.2f, total %.2f (35)%s",
+			pid, tac, strat, st, ev, se, pr, total, if total > 35 then "  OVER" else ""))
 		local kinds = {}
 		for name, k in Schema.EventKind do
 			local n = (pn.eventCounts or {})[k] or 0
