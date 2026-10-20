@@ -107,4 +107,24 @@ Scenarios.ew_test = function(sim: Types.Sim)
 	end
 end
 
+-- Match rules (guide 16): each player gets a Command Vehicle and tanks.
+-- Ally team 1 (the lowest) starts west with three tanks per player; every
+-- other ally team starts east with one, so ally team 1 wins a straight fight.
+Scenarios.match_test = function(sim: Types.Sim)
+	local first = sim.allyTeams[1]
+	local slot: { [number]: number } = {}
+	for _, pid in sim.playerOrder do
+		local ally = sim.players[pid].allyTeam :: number
+		slot[ally] = (slot[ally] or 0) + 1
+		local west = ally == first
+		local x = if west then -160 else 160
+		local z = (slot[ally] - 1) * 120 - 60
+		local facing = if west then math.pi / 2 else -math.pi / 2
+		Spawn.unit(sim, if west then "ord_sovereign" else "chs_warlord", pid, x + (if west then -40 else 40), z, facing)
+		for k = 1, if west then 3 else 1 do
+			Spawn.unit(sim, if west then "ord_lancer" else "chs_ravager", pid, x, z + (k - 2) * 16, facing)
+		end
+	end
+end
+
 return Scenarios

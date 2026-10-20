@@ -166,6 +166,7 @@ ServerScriptService/
       Projectiles.luau
       Damage.luau
       Construction.luau
+      Match.luau        win conditions, eliminations
       Lifecycle.luau    spawn, death, wrecks
       NetOut.luau       per-player interest + packet building
     Workers/            Actor scripts for flow fields (Parallel Luau)
@@ -219,7 +220,8 @@ StarterPlayer/StarterPlayerScripts/
 | 8 | Projectiles | every tick | Step, collide, impact |
 | 9 | Damage & Lifecycle | every tick | Apply damage, deaths, wrecks |
 | 10 | Construction | every tick | Build progress × economy ratio |
-| 11 | NetOut | every tick | Interest management, build packets per player |
+| 11 | Match | every tick | Win conditions, eliminations, match end (guide 16.2) |
+| 12 | NetOut | every tick | Interest management, build packets per player |
 
 **Staggering** is the single biggest CPU saver: expensive per-unit decisions (targeting, re-path checks, idle behavior) run for only `1/N` of units each tick.
 
@@ -242,6 +244,7 @@ local World = {
 ```
 
 - Unit IDs are `u16` (1–65535). **Delay reuse** of freed IDs (e.g., 10 seconds) so late packets never apply to the wrong unit.
+- **Generations** (D109): each ID slot counts the units that have had it. Anything that remembers a unit across ticks stores `(id, generation)`, and a mismatch means the remembered unit is gone. That covers weapon targets, the last attacker, rearm pads, builder targets, projectile shooters and homing targets, ghosts, and NetOut's tactical set. IDs remembered as ghosts are pinned and never reused, so a ghost and a new unit never share an ID on the wire.
 - Every write to a replicated field also sets the matching `dirty` bit. NetOut reads and clears dirty bits.
 
 ---
@@ -512,6 +515,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
   - A sliced job gives byte-identical output to a one-shot job (`Sim/Path/FlowField.luau`).
 - **Parallel Luau:** run field generation in Actors. Each Actor keeps its own copy of the static grid layers; the main sim sends requests and receives finished direction buffers.
 - **Invalidation:** when a structure changes passability, mark the affected quadtree nodes dirty and drop cached fields that cover them.
+- Implementation (DECISIONS D86): each quadtree is updated locally (`Quadtree.update`): only nodes touching the flipped cells are re-decided, and the result equals a full rebuild. A placement costs ≤ 6 ms for all trees at 800 units, instead of 10–40 ms of lazy rebuilds.
 
 ### 6.5 Local avoidance
 
@@ -544,7 +548,8 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly.
 - Implementation (`Sim/Air.luau`, DECISIONS D73–D74):
   - Jets circle their goal at 220 studs when idle and chase or orbit their target when attacking.
-  - Helicopters hover at 35, jets cruise at 100; they climb at 40 studs/s.
+  - Helicopters hover at 35, jets cruise at 100, bombers at 130; they climb at 40 studs/s.
+  - Bombers fly runs: line up, release when the bomb's predicted impact meets the target's predicted position, egress straight for 3 s, go round, and rearm when empty (D91).
   - Projectiles test collisions in each target's frame, so fast jets can't tunnel.
   - Empty aircraft fly to the nearest rearm pad, land, and rearm round by round at the team's stall ratio.
 
@@ -561,6 +566,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 | `State` | S → C | RemoteEvent (reliable) | Discrete changes: state bits, health, aim, build progress |
 | `Strategic` | S → C | UnreliableRemoteEvent | Minimap data for all known units |
 | `Events` | S → C | RemoteEvent (reliable) | Enter/leave tactical tier, fire, impact, death, alerts |
+| `Projectiles` | S → C | UnreliableRemoteEvent | Homing-projectile corrections, ~3 Hz, in the player's view only (D102) |
 | `Eco` | S → C | RemoteEvent (reliable) | Own team's economy |
 | `Snapshot` | S → C | RemoteEvent (reliable) | Full world for join/reconnect |
 
@@ -588,6 +594,12 @@ for each player P:
   - The strategic snapshot runs every 5th tick and always sends at least a header, so clients drop units that disappeared.
   - DEATH goes to players that had the unit tactical.
   - Event records ENTER / LEAVE / DEATH were added in `PROTOCOL_VERSION` 2.
+  - Combat events (`PROTOCOL_VERSION` 3, D99) go only where the player's ally team may know. They are batched with the tick's other events:
+    - FIRE (hitscan and beams): only for shooters in the player's tactical tier. It carries the shot's end point, never a target ID.
+    - SPAWN_PROJ: once a projectile is in the ally team's sight and in the camera area (+2 cells), at launch or when it flies into view. A hidden shooter's shells appear mid-flight, never at the muzzle. The homing target's ID is sent only if the ally team knows that unit.
+    - DECOYED / LOST_LOCK: only for projectiles the client has, with the new velocity.
+    - IMPACT: for projectiles the client has, or anywhere in sight and in the camera area. Projectiles at the end of their life burst with an IMPACT (no damage).
+    - The client steps its projectiles itself. Unguided ones match the server exactly; homing ones are approximate (the client doesn't know a radar contact's altitude or true position), and the IMPACT corrects them.
 
 ### 7.3 Packet layouts
 
@@ -600,7 +612,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 - Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
 - Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
 - A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
-- **`Schema.PROTOCOL_VERSION`** (currently 1) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **`Schema.PROTOCOL_VERSION`** (currently 5) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
 - **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
@@ -662,18 +674,32 @@ unitId    u16
 cell      u16
 icon      6 bits  bits 0–5   (radar-only contacts send icon 0 = unknown blip)
 team      3 bits  bits 6–8   team - 1 (teams 1..8)
-flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost; bits 4–6 reserved
+flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost, bit4 tracked (v5: real icon); bits 5–6 reserved
                   = 6 bytes per unit
 ```
 
-**Event examples (reliable)**
+**Event records (reliable, one batch per tick under the tick header)**
 
 ```
-FIRE      tick u16, shooterId u16, weaponSlot u8, targetCell u16 + off u8 u8 | targetId u16
-SPAWN_PROJ projId u16, weaponDefIndex u16, origin(pos), velocity(i16×3), targetId u16, tick u16
-IMPACT    projId u16, pos
-DEATH     unitId u16, severity u8, wreckId u16
-ALERT     type u8, cell u16    (unit under attack, structure lost, ...)
+kind u8, then:
+ENTER       unitId u16, defIndex u16, team u8, cell u16, offX u8, offZ u8,
+            heading u8, alt u8, health u8, build u8, state u16          16 B
+LEAVE       unitId u16                                                    3 B
+DEATH       unitId u16, severity u8, wreckId u16 (0 = none)               6 B
+FIRE        shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos  10 B
+SPAWN_PROJ  projId u16, weaponDefIndex u16, pos, vel, targetId u16 (0 = none)  19 B
+IMPACT      projId u16, pos                                               9 B
+DECOYED     projId u16, pos, vel (after the decoy turn)                  15 B
+LOST_LOCK   projId u16, pos, vel (flying on unguided)                    15 B
+pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
+vel = vx, vy, vz i16 (1/8 stud per second)
+ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
+```
+
+**Projectile correction (S → C, unreliable, `Projectiles` channel, after the tick header)**
+
+```
+projId u16, pos, vel          14 B
 ```
 
 ### 7.4 Client interpolation
@@ -682,6 +708,10 @@ ALERT     type u8, cell u16    (unit under attack, structure lost, ...)
 - Render time = latest tick − 2 ticks (≈ 133 ms at 15 Hz). Interpolate position and heading between the two surrounding snapshots.
 - If a snapshot is missing, extrapolate up to 1 tick, then hold.
 - A unit that hasn't moved sends nothing, and the client simply keeps its last position.
+- **Projectiles** (D99, D102): the client steps the projectiles it was sent itself (SPAWN_PROJ). Homing ones get corrections ~3 Hz, plus one when a projectile comes (back) into view, while they are in the player's view (camera + leave margin, in sight).
+  - On a correction the client snaps its prediction to the server's state and blends the drawn position toward it over 5 ticks.
+  - Errors above 60 studs snap: they only happen when a projectile comes back into view.
+  - Lost corrections (unreliable) just mean a longer blend.
 
 ### 7.5 Join, reconnect, spectate
 
@@ -700,6 +730,10 @@ Targets per player (measure on real servers):
 | **Total** | **10–25 KB/s** | **≤ 35 KB/s** |
 
 If over budget: reduce tactical rate for distant-but-in-view units, drop strategic to 2 Hz, merge events per tick.
+
+Measured headless (`lune run stress`, round 6, D99): with combat events, Events is 0.5–1.6 KB/s per player for 200–800 units (it was 0.06–0.19 before). The worst total is 20.7 KB/s at 800 units.
+
+Homing corrections (D102) cost about 45 B/s per homing projectile in view (14 B at 3 Hz plus the header): 0.03–0.18 KB/s per player in missile and torpedo duels. The stress armies have no homing weapons.
 
 ---
 
@@ -767,6 +801,11 @@ Optionally store values as integers in thousandths so rounding never drifts over
 | Fusion Reactor | T2 | Large power; big explosion on death |
 | Supply Converter | T1/T2 | Converts power → supply at a fixed rate (toggleable) |
 | Supply Depot / Power Bank | T1 | +Storage |
+
+Implementation (DECISIONS D92):
+- Wind is a seeded, stateless value from 0 to 1 that changes every 30 s; turbine output is `wind.max × wind`.
+- Converters burn power above half of storage at their rate and can be toggled.
+- An Advanced Extractor placed on your own extractor replaces it when construction starts.
 
 ### 8.6 Logistics (modern-warfare layer)
 
@@ -861,6 +900,8 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 - Runs **staggered**: each unit re-evaluates every 4–8 ticks (offset by `id % N`). Keep the current target while it stays valid (hysteresis).
 - **Candidate search:** query cells within weapon range from the per-team **contact grid** (a coarse 64-stud bucket grid of enemies this team can see or detect), not from all units.
 - **Filter:** `bit32.band(target.categories, weapon.targetMask) ~= 0`, target known to the team (visible, or radar contact if `canTargetRadar`), within arc and range.
+- **Untracked contacts** reveal only their domain (D107): weapons filter them by domain, and type priorities apply only to visible, remembered or tracked targets. The AI follows the same rule.
+- **Team knowledge, never server truth** (D100, audit D101): every targeting, AI and auto-behavior decision uses what the deciding ally team knows; only physics (hits, collisions, seekers, the frame-start placement check) uses true positions. The AI plans build sites with its team's knowledge. A structure ghost stays a target for `canTargetRadar` weapons even if the structure died unseen (the shots hit empty ground), until the team sees the spot again.
 - **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional), penalty for overkill.
 - Long-range weapons (SAM sites, artillery): use the coarse bucket grid only, and re-evaluate less often.
 
@@ -875,9 +916,10 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 | `HITSCAN` | MG, autocannon, CIWS | Instant hit roll | `FIRE` event | Tracer/flash |
 | `BEAM` | Laser defense | Instant hit, damage over duration | `FIRE` event | Beam for duration |
 | `BALLISTIC` | Tank shells, artillery, flak | Simulated arc | `SPAWN_PROJ` once, `IMPACT` | Simulates same arc |
-| `HOMING` | SAMs, AAMs, ATGMs | Simulated steering + EW checks | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
+| `HOMING` | SAMs, AAMs, ATGMs | Simulated steering (lead pursuit) + EW checks + proximity fuse within `aoe` of the target's hull (D97) | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
 | `TORPEDO` | Subs, ASW | Homing, restricted to water | Same as homing | Underwater trail |
-| `BOMB` | Bombers | Ballistic with zero launch speed | Same as ballistic | Falls |
+| (all) | — | Every weapon aims at, and is judged against, `Combat.aimPoint`: the centre of the target's hull (ships float, submarines sit below the surface; D95) | | |
+| `BOMB` | Bombers | Ballistic with zero launch speed: released at the computed lead point (D91) | Same as ballistic | Falls |
 
 ### 10.5 Projectiles (server)
 
@@ -885,7 +927,7 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 - Collision against **unit collision volumes** (sphere or cylinder per def), found through the dynamic spatial hash. No Roblox raycasts against Parts.
 - Fast projectiles and jets: test the segment travelled this tick (swept test), not just the end point.
 - Ground impact: compare projectile height to the `height` layer.
-- Lifetime cap per weapon; expired homing missiles self-destruct.
+- Lifetime cap per weapon; expired projectiles self-destruct: an IMPACT event with no unit and no damage (D99), so clients drop them.
 - Hard cap on live projectiles (e.g., 2,000). If exceeded, oldest ballistic shells resolve instantly at their predicted impact point.
 
 ### 10.6 Damage
@@ -922,7 +964,8 @@ For each enemy unit and each ally team:
 | Level | Meaning | What the observer gets |
 |---|---|---|
 | `HIDDEN` | Not detected | Nothing |
-| `RADAR` | Radar contact | Blip, position with error, no type (unless previously identified) |
+| `RADAR` | Radar contact | Blip, position with error, no type: only its domain (air / surface / submerged, D107) |
+| `TRACKED` | Radar contact inside the team's fire-control (track) radar (D104) | Blip with a small error, the real type, and its motion (bombers lead it) |
 | `SONAR` | Sonar contact | Blip for naval/submerged units |
 | `VISIBLE` | In sight (LOS) | Full information |
 | `GHOST` | Structure seen earlier, now out of sight | Last known position & type (minimap + map) |
@@ -938,14 +981,26 @@ Per ally team, on a **sensor grid of 16-stud cells** (2×2 grid cells; 128×128 
 | `radar` | u8 counts | Radar emitters |
 | `sonar` | u8 counts | Sonar emitters |
 | `jam` | u8 counts | This team's jammers (hides this team's units from enemy radar) |
+| `track` | u8 counts | Fire-control (tracking) radars (D104) |
 
 **Stamping:** precompute circle offset lists per radius. When an emitter crosses into a new sensor cell, subtract its old circle and add the new one. Units that don't change sensor cell cost nothing. Large moving radars (AWACS) re-stamp at most every few ticks.
+
+Implementation (`Sim/Sensors.luau`, DECISIONS D85):
+- Circles are row spans.
+- A move to a neighboring sensor cell shifts the circle, touching only the edge cells (O(radius)).
+- Full stamps (new emitters, jumps) are budgeted at 200,000 cells per sensor tick, in ids order.
+- Sensors peak at 800 units: 21.6 → 2.1 ms.
 
 Implementation (`Sim/Sensors.luau`, DECISIONS D65):
 - Counts are u16, so dense stacks can't overflow. `airSight` defaults to 1.5 × sight.
 - Unfinished structures don't emit.
 - Visibility for every enemy and team is recomputed each sensor tick (every 2nd tick) from the maps.
 - Structure ghosts persist until the team sees the spot empty.
+
+Implementation of tracking (D104):
+- `track` is stamped like `radar`.
+- An enemy unit the team's radar detects (radar map, not jammed, passing the stealth check) inside its `track` map is TRACKED (`Sensors.isTracked`; its level stays `RADAR`).
+- A tracking radar's radius is its def's `track` scaled by the power it gets, in whole sensor cells. It re-stamps when that changes.
 
 Optional later: terrain-occluded LOS (sample height along rays at stamp time). Start without it.
 
@@ -973,9 +1028,18 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 ### 11.4 Radar error, jamming, stealth
 
 - **Radar error ("wobble"):** a radar blip's position is offset by a pseudo-random amount that changes slowly (e.g., seeded by `unitId` and `tick // 30`). The **server sends the wobbled position**, never the true one — clients can't cheat it. Order radars have smaller error than Chaos radars.
-- **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks.
+- **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks (implemented in D108: `jamDrain`, the radius scales with the share of upkeep it gets, like tracking radars).
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the wobbled position, so they miss more — that's intended.
+- **Fire-control (tracking) radar** (D104):
+  - A short-range radar that turns early-warning contacts inside it into TRACKED contacts.
+  - Their wobble is the team's best `trackError` (Order 4–6 studs, Chaos 10–12) instead of `radarError` (15–45).
+  - The strategic record carries the real icon and a TRACKED flag.
+  - Bombers lead tracked contacts as they lead visible ones. Artillery, MLRS and bombs aim at the tracked position.
+  - Jamming hides units from tracking radar too, with no burn-through.
+  - Tracking radars drain `trackDrain` power per second. When power stalls, their radius shrinks with the share they get.
+  - Optional (D105): radar-guided missiles lock at +10% range against tracked targets.
+  - Measured: a Verdict on a radar-only Ravager scores 4 of 15 direct hits untracked and 11 of 15 tracked. An Absolution hits a moving radar-only tank 0 of 9 times untracked and 6 of 10 tracked.
 - Implementation (DECISIONS D67):
   - Wobble is a stateless hash of (unit, tick // 30, observer), interpolated between periods. Its radius is the observer's best `sensors.radarError`.
   - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
@@ -1045,6 +1109,7 @@ countermeasures = {
 |---|---|---|
 | Radar | Radar Tower (T1), Long-Range Radar (T2), mobile radar truck, AWACS aircraft | Power upkeep |
 | Jammer | Jammer Tower (T1/T2), mobile jammer, EW aircraft, EW ship | Power upkeep |
+| Fire-control radar | Tribunal / Seeker Spire (T2 structure), Arbiter / Stalker (T2 vehicle) | Power upkeep; radius shrinks in a stall; tracks early-warning contacts (D104) |
 | Sonar | Sonar Buoy (T1), Sonar Station (T2), ships with sonar | |
 | Short-range AA | IR SAM site, mobile IR SAM, flak | Unaffected by jamming |
 | Long-range AA | Radar SAM site, mobile radar SAM, SAM ships | Affected by jamming/stealth |
@@ -1062,7 +1127,7 @@ countermeasures = {
 ### 12.2 Air
 
 - **Fighters** (`JET`): target `AIR` only. Patrol/intercept orders. Carry limited missiles; return to rearm when empty.
-- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order.
+- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order. `ATTACK_GROUND` gives a bomber a spot to bomb, run after run, until another order (D100). Bombs may target radar contacts (aimed at the wobbled position, so small targets are often missed) and remembered structures at their last known position (D96).
 - **Attack helicopters** (`HELI`): hover and engage ground/naval targets; vulnerable to IR SAMs.
 - **ASW helicopter** (`HELI`): drops torpedoes on submerged contacts.
 - **Support aircraft:** AWACS (Order), EW jammer aircraft (Chaos).
@@ -1078,6 +1143,7 @@ countermeasures = {
   - Ships float with a 3-stud draft; submarines spawn `SUBMERGED` and sit 10 studs down. They carry only the `SUB` category, so only weapons that list it (torpedoes) can target them.
   - Besides sonar, naval units and ASW helicopters (helicopters with a weapon that can target `SUB`) detect a submerged submarine within 40 studs as a SONAR contact: torpedo-targetable, never VISIBLE. No other unit can see it.
   - Torpedoes launch level just under the surface, stay between the sea floor and the surface, home on sonar contacts, and are removed harmlessly when they reach land.
+  - Destroyers carry a radar-guided naval SAM (`ord_naval_sam` 380 studs / `chs_naval_sam` 360, about their 1.5 × sight against aircraft; D97).
 - **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base.
 - **Amphibious/hover units** bridge land and sea.
 - Naval structures: floating turret, torpedo launcher, sonar buoy, naval SAM platform, tidal generator.
@@ -1086,23 +1152,27 @@ countermeasures = {
 
 | ↓ attacker / target → | Ground | Air (jet) | Air (heli) | Ship | Sub | Structure |
 |---|---|---|---|---|---|---|
-| Tanks | ●●● | — | ● | ●● | — | ●● |
+| Tanks | ●●● | — | — | ●● | — | ●● |
 | Artillery | ●● | — | — | ●● | — | ●●● |
 | IR SAM | — | ●● | ●●● | — | — | — |
 | Radar SAM | — | ●●● | ●● | — | — | — |
 | Fighters | — | ●●● | ●● | — | — | — |
 | Bombers | ●● | — | — | ●● | — | ●●● |
-| Attack helis | ●●● | — | ● | ●● | — | ●● |
+| Attack helis | ●●● | — | — | ●● | — | ●● |
 | Destroyers | ● | ●● | ●● | ●● | ●● | ●● |
 | Submarines | — | — | — | ●●● | ●● | — |
 
 ● weak · ●● good · ●●● strong · — cannot target
+
+Tanks and attack helicopters can't target helicopters (changed from ● in round 6: no ground gun or rocket targets `AIR`; D97). Same-role cells (a role against its own kind, e.g. tanks against tanks) are checked as a soft band, not as dots: both sides must be able to damage each other, and the equal-cost trade should stay within 0.5–2.0 (D98).
 
 ---
 
 ## 13. Starter Unit Roster
 
 Names are placeholders; roles are what matter for the first playable build.
+
+Implementation (DECISIONS D88): every entry below exists as a validated placeholder def (`ord_<name>` / `chs_<name>`, lowercase), with factories and economy structures from 8.5 and 9.2, and the build tree of 9.1–9.2. `TechTree.spec` checks that each faction's whole roster is reachable from its Command Vehicle.
 
 ### 13.1 Command & workers
 
@@ -1129,6 +1199,7 @@ Names are placeholders; roles are what matter for the first playable build.
 | MLRS | T2 | **Judgement** (precise) | **Hydra** (large salvo) |
 | Mobile radar SAM | T2 | **Seraph** | **Gorgon** |
 | Mobile jammer | T2 | **Veil** (short range) | **Shroud** (long range) |
+| Mobile fire-control radar | T2 | **Arbiter** (precise) | **Stalker** (cheaper, weaker) |
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
 
 ### 13.3 Air units
@@ -1165,6 +1236,7 @@ Names are placeholders; roles are what matter for the first playable build.
 | Artillery emplacement | T2 | **Edict** | **Cataclysm** | Adv. Ground |
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
+| Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
 | Floating turret | T1 | **Moat** | **Riptide** | Naval |
 | Torpedo launcher | T1 | **Undertow** | **Fang** | Naval |
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |
@@ -1334,6 +1406,12 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 - **Team mode:** 2–4 ally teams of 2–4 players.
 - **FFA:** each player is their own ally team, up to 8.
 
+- Implementation (DECISIONS D87):
+  - Players have a `team` (economy, ownership) and an `allyTeam`.
+  - Sight maps are per ally team. Targeting and friendly fire use ally teams.
+  - Overflow is split among allies with room.
+  - The match config `{ mode = "FFA" | "TEAM", win, unitCap? }` is validated at start: FFA 2–8 players each alone; TEAM 2–4 ally teams of up to 4.
+
 ### 16.2 Win conditions (match option)
 
 | Option | Rule |
@@ -1341,6 +1419,10 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 | **Command Ends** (default) | A player is eliminated when their Command Vehicle dies |
 | **Annihilation** | Eliminated when no units or structures remain |
 | **Time limit** (optional) | Highest score (unit value destroyed + held deposits) wins |
+
+- Implementation: the `Match` system (after Construction) eliminates players by the chosen rule. Their units self-destruct (no wrecks), and the match ends when at most one ally team is left (none left = draw).
+
+- Skirmish AI (DECISIONS D90): `Sim/AI/Skirmish.luau` plays through commands like a player, so AI games replay exactly.
 
 ### 16.3 Match flow
 
@@ -1354,6 +1436,9 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 - Unit cap per player: e.g., 150 (FFA 8) to 300 (1v1), with a global cap around what the server handles.
 - Factory queue limit, max command size (200 units).
+- Implementation:
+  - The default cap is `clamp(300 − 25 × (players − 2), 150, 300)` and counts units, structures and frames.
+  - At the cap, construction fails with `unit_cap`, and finished factory items wait until there is room.
 
 ---
 

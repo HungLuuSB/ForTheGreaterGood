@@ -24,8 +24,10 @@ local Combat = require("./Combat/Combat")
 local EW = require("./EW")
 local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
+local Match = require("./Match")
 local Nav = require("./Nav")
 local Placement = require("./Placement")
+local Sensors = require("./Sensors")
 local Spawn = require("./Spawn")
 local Types = require("./Types")
 local World = require("./World")
@@ -131,6 +133,7 @@ function Build.commandAssist(sim: Types.Sim, ids: { number }, targetId: number)
 		end
 		BuildState.idle(b, id)
 		b.target[id] = targetId
+		b.targetGen[id] = w.gen[targetId]
 		b.assist[id] = factory
 		if sim.nav then
 			Nav.clearOrder(sim.nav, w, id)
@@ -174,6 +177,7 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 	local id = World.spawn(w, sim.tick, {
 		defIndex = d.index,
 		team = sim.players[owner].team,
+		ally = sim.allyOf[sim.players[owner].team],
 		owner = owner,
 		x = x,
 		z = z,
@@ -183,6 +187,9 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)
+	if d.converter then
+		World.setState(w, id, bit32.bor(w.state[id], World.State.TOGGLED_ON)) -- converters start on
+	end
 	Lifecycle.added(sim, id)
 	return id
 end
@@ -272,12 +279,20 @@ function Build.step(sim: Types.Sim)
 				local existing = frameAt(sim, w.team[id], pending.defIndex, pending.x, pending.z)
 				if existing ~= 0 then
 					b.target[id] = existing
+					b.targetGen[id] = w.gen[existing]
 					b.assist[id] = false
 				else
-					local ok, why, _, _, cx, cz = Placement.check(sim, sd, pending.x, pending.z)
+					local ok, why, _, _, cx, cz, replaces = Placement.check(sim, sd, pending.x, pending.z, w.team[id])
+					if ok and Match.atCap(sim, w.owner[id]) then
+						ok, why = false, "unit_cap"
+					end
 					if ok then
+						if replaces ~= 0 then
+							Lifecycle.remove(sim, replaces) -- extractor upgrade: the T1 goes when the T2 starts (guide 9.3)
+						end
 						local frame = startFrame(sim, sd, w.owner[id], cx, cz, pending.facing)
 						b.target[id] = frame
+						b.targetGen[id] = w.gen[frame]
 						b.assist[id] = false
 						Combat.addEvent(sim.combat, { kind = "BUILD_START", tick = sim.tick, unit = frame, other = id })
 					else
@@ -314,7 +329,7 @@ function Build.step(sim: Types.Sim)
 
 		local t = b.target[id] or 0
 		if t ~= 0 then
-			local valid = w.slot[t] ~= nil and w.team[t] == w.team[id]
+			local valid = World.isRef(w, t, b.targetGen[id]) and w.team[t] == w.team[id] -- D109
 			if valid then
 				if b.assist[id] then
 					local q = b.queue[t]
@@ -339,6 +354,15 @@ function Build.step(sim: Types.Sim)
 		local bp = power[t]
 		local frame = w.buildProgress[t] < 1
 		local itemDef = if frame then def(sim, t) else sim.defs.unitByIndex[(b.queue[t] :: { number })[1]]
+		if not frame and (b.progress[t] or 0) >= 1 - 1e-9 then
+			-- finished item waiting at the exit for room under the unit cap
+			if not Match.atCap(sim, w.owner[t]) then
+				table.remove(b.queue[t] :: { number }, 1)
+				b.progress[t] = 0
+				produce(sim, t, itemDef)
+			end
+			continue
+		end
 		local cost = itemDef.cost
 		local team = w.team[t]
 		local acc = eco.accounts[team]
@@ -376,7 +400,9 @@ function Build.step(sim: Types.Sim)
 			acc.supply.spent += cost.supply * step
 			acc.power.spent += cost.power * step
 			p += step
-			if p >= 1 - 1e-9 then
+			if p >= 1 - 1e-9 and Match.atCap(sim, w.owner[t]) then
+				b.progress[t] = 1 -- done; rolls out when the owner is under the cap
+			elseif p >= 1 - 1e-9 then
 				table.remove(q, 1)
 				b.progress[t] = 0
 				produce(sim, t, itemDef)
@@ -391,6 +417,9 @@ function Build.step(sim: Types.Sim)
 
 	-- 4. DIRCM upkeep: continuous power drain, cooldown at the stall ratio
 	EW.drainStep(sim, demandP)
+
+	-- 5. tracking radars: power drain, radius at the stall ratio (D104)
+	Sensors.drainStep(sim, demandP)
 
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]

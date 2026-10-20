@@ -85,6 +85,14 @@ return function(t: RunAll.Context)
 		local jammer = Spawn.unit(sim, "ord_veil", 1, 40, 0)
 		local radar = Spawn.unit(sim, "chs_watcher", 2, -450, 0)
 		quiet(sim, { tank, radar })
+		-- jamming, not its upkeep (D108), is tested here: keep the Veil powered
+		local acc = sim.eco.accounts[1]
+		local function step(s: Sim.Sim, n: number)
+			for _ = 1, n do
+				acc.power.stored = acc.power.storage
+				Sim.step(s)
+			end
+		end
 		step(sim, 2)
 		t.equal(Sensors.level(sim, 2, tank), L.HIDDEN, "inside the Veil's 300-stud jam: off radar")
 		moveTo(sim, 1, { jammer }, 450, 300)
@@ -97,6 +105,30 @@ return function(t: RunAll.Context)
 		quiet(sim, { spotter })
 		step(sim, 2)
 		t.equal(Sensors.level(sim, 2, tank), L.VISIBLE, "jamming never hides from sight")
+	end)
+
+	-- D108: jammers drain power; in a stall their jam radius shrinks.
+	t.test("a power stall shrinks a jammer's radius until its unit shows on radar", function()
+		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
+		local jammer = Spawn.unit(sim, "ord_veil", 1, 0, 0) -- jam 300
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 250, 0) -- inside the jam, near its edge
+		local radar = Spawn.unit(sim, "chs_watcher", 2, -300, 0) -- radar 600 reaches the tank
+		quiet(sim, { jammer, tank, radar })
+		local acc = sim.eco.accounts[1]
+		local function run(n: number, power: boolean)
+			for _ = 1, n do
+				acc.power.stored = if power then acc.power.storage else 0
+				Sim.step(sim)
+			end
+		end
+		run(10, true)
+		t.equal(Sensors.level(sim, 2, tank), L.HIDDEN, "powered: the tank is jammed")
+		t.expect(acc.power.demand >= sim.defs.units.ord_veil.sensors.jamDrain :: number, `the Veil's upkeep is power demand ({acc.power.demand})`)
+		run(150, false)
+		t.expect((sim.sensors.powerScale[jammer] or 1) < 0.5, `the jammer gets little power ({sim.sensors.powerScale[jammer]})`)
+		t.equal(Sensors.level(sim, 2, tank), L.RADAR, "the shrunken jam no longer covers the tank")
+		run(30, true)
+		t.equal(Sensors.level(sim, 2, tank), L.HIDDEN, "power back: jammed again")
 	end)
 
 	t.test("a stealth unit shows on radar only within range × signature", function()

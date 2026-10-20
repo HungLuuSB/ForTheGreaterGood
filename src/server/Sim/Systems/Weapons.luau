@@ -14,6 +14,9 @@
 --     radius sideways and its half-height vertically at the target distance.
 --   BALLISTIC / BOMB / HOMING / TORPEDO: spawn a projectile from the muzzle.
 --     If the pool is full the shot resolves like hitscan (guide 10.5 cap).
+--   BOMB: no turret; released when the bomb's predicted impact meets the
+--     target's predicted position (Air.bombRelease); the bomb leaves with the
+--     bomber's velocity and falls (guide 10.5, DECISIONS D91).
 -- Guided missiles launch only with a lock (EW.canLock, guide 11.5).
 
 local Air = require("../Air")
@@ -86,23 +89,33 @@ local function fire(
 		local yaw, p = worldYaw + yawErr, pitch + pitchErr
 		local ttl = 2 * weapon.range / math.max(speed, 1) + 1
 		local launchY = muzzleY
+		local vx, vy, vz = cos(p) * sin(yaw) * speed, sin(p) * speed, cos(p) * cos(yaw) * speed
 		if wtype == "TORPEDO" then
 			p = 0
 			launchY = Combat.surfaceHeight(c, w.posX[id], w.posZ[id]) - Combat.TORPEDO_DEPTH
+			vx, vy, vz = sin(yaw) * speed, 0, cos(yaw) * speed
+		elseif wtype == "BOMB" then
+			-- zero launch speed: the bomb keeps the bomber's velocity (spread on its heading)
+			local h, v = w.heading[id] + yawErr, w.speed[id]
+			vx, vy, vz = sin(h) * v, 0, cos(h) * v
+			ttl = 8
+			Air.onBombRelease(sim, id)
 		end
 		projectile = Combat.spawnProjectile(
 			c,
 			w.posX[id],
 			launchY,
 			w.posZ[id],
-			cos(p) * sin(yaw) * speed,
-			sin(p) * speed,
-			cos(p) * cos(yaw) * speed,
+			vx,
+			vy,
+			vz,
 			weapon.index,
 			id,
-			w.team[id],
+			w.ally[id], -- projectile side: allies are never hit directly
 			ttl,
-			if wtype == "HOMING" or wtype == "TORPEDO" then target else 0
+			if wtype == "HOMING" or wtype == "TORPEDO" then target else 0,
+			w,
+			w.wTargetGen[World.slotKey(id, slot)]
 		)
 		if projectile then
 			Combat.addEvent(c, { kind = "SPAWN_PROJ", tick = sim.tick, unit = id, other = projectile, slot = slot })
@@ -113,17 +126,23 @@ local function fire(
 	-- hitscan, or a projectile shot at the pool cap: the total error is the
 	-- turret's remaining aim offset (within tolerance) plus the spread
 	local hit = hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
-	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit })
-	local tx, tz = w.posX[target], w.posZ[target]
+	-- where the shot ends: the target's aim point, or the ground beyond or
+	-- beside it on a miss (FIRE carries it for clients, guide 7.3)
+	local ex, ey, ez
+	if hit then
+		ex, ey, ez = Combat.aimPoint(c, w, target)
+	else
+		ex = w.posX[id] + sin(worldYaw + yawErr) * dist
+		ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
+		ey = Combat.groundHeight(c, ex, ez)
+	end
+	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit, x = ex, y = ey, z = ez })
 	if hit then
 		c.stats.hits += 1
-		local tp = c.profiles[w.defIndex[target]]
-		Combat.explode(c, w, tx, Combat.unitBase(c, w, target) + tp.height / 2, tz, weapon, id, w.team[id], target)
+		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
 		-- a miss still explodes on the ground beyond/beside the target
-		local mx = w.posX[id] + sin(worldYaw + yawErr) * dist
-		local mz = w.posZ[id] + cos(worldYaw + yawErr) * dist
-		Combat.explode(c, w, mx, Combat.groundHeight(c, mx, mz), mz, weapon, id, w.team[id], 0)
+		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], 0)
 	end
 end
 
@@ -153,38 +172,53 @@ return function(sim: Types.Sim)
 			end
 
 			local target = w.wTarget[key]
+			local targetGen = w.wTargetGen[key]
 			local wantYaw, wantPitch = 0, 0
 			local canFire = false
 			local dist, worldYaw = 0, 0
-			-- Aim at where the team believes the target is: the true position
-			-- when visible, the wobbled one for radar contacts (guide 11.4).
-			local kx, kz = nil, nil
-			if target ~= 0 and w.slot[target] ~= nil then
-				kx, kz = Sensors.knownPosition(sim, w.team[id], target)
+			-- Aim at where the team believes the target is (D100): the true
+			-- position when visible, the wobbled one for radar contacts (guide
+			-- 11.4), the ghost's for remembered structures (alive or not), the
+			-- ordered spot for a bomber's attack-ground.
+			local kx, kz, defIndex = nil, nil, nil
+			if weapon.type == "BOMB" and sim.air.groundX[id] ~= nil then
+				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
+			elseif target ~= 0 then
+				local level
+				kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], target, targetGen)
+				if kx ~= nil and not Sensors.typeKnown(sim, w.ally[id], target, level) then
+					defIndex = nil -- an untracked blip's size is unknown (D107)
+				end
 			end
 			local exactYaw, exactPitch = 0, 0
 			if kx ~= nil and kz ~= nil then
-				local tp = profiles[w.defIndex[target]]
+				local radius = if defIndex then profiles[defIndex].radius else 0
 				local dx, dz = kx - x, kz - z
 				dist = sqrt(dx * dx + dz * dz)
 				worldYaw = atan2(dx, dz)
 				wantYaw = wrapAngle(worldYaw - heading)
-				local aimY = Combat.groundHeight(c, kx, kz) + w.alt[target] + tp.height / 2
+				local _, aimY = Combat.knownAimPoint(c, w, target, defIndex, kx, kz) -- at the believed position
 				local dy = aimY - muzzleY
-				-- the true direction, for judging hitscan hits
-				local tx, tz = w.posX[target] - x, w.posZ[target] - z
-				local trueDist = sqrt(tx * tx + tz * tz)
-				exactYaw = atan2(tx, tz)
-				exactPitch = atan2(Combat.unitBase(c, w, target) + tp.height / 2 - muzzleY, trueDist)
+				-- the true direction, for judging hitscan hits (only live targets are hit-checked)
+				exactYaw, exactPitch = worldYaw, atan2(dy, dist)
+				if World.isRef(w, target, targetGen) then
+					local tx, tz = w.posX[target] - x, w.posZ[target] - z
+					local trueDist = sqrt(tx * tx + tz * tz)
+					exactYaw = atan2(tx, tz)
+					local _, trueY = Combat.aimPoint(c, w, target)
+					exactPitch = atan2(trueY - muzzleY, trueDist)
+				end
 				local pitch: number?
 				if weapon.type == "HITSCAN" or weapon.type == "BEAM" then
 					pitch = atan2(dy, dist)
 				elseif weapon.type == "TORPEDO" then
 					pitch = 0 -- launched level in the water; homing does the rest
+				elseif weapon.type == "BOMB" then
+					pitch = 0 -- dropped, not aimed
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
-				canFire = not holdFire and dist <= weapon.range + tp.radius
+				canFire = not holdFire and dist <= weapon.range + radius
 				if pitch == nil then
 					canFire = false
 					wantPitch = if turret then rad(turret.maxPitch) else 0
@@ -193,6 +227,9 @@ return function(sim: Types.Sim)
 					if turret and (pitch < rad(turret.minPitch) or pitch > rad(turret.maxPitch)) then
 						canFire = false
 					end
+				end
+				if weapon.type == "BOMB" then
+					canFire = not holdFire and Air.bombRelease(sim, id, weapon, target, kx, kz, defIndex)
 				end
 				if canFire and weapon.guidance and not EW.canLock(sim, id, weapon, target, dist) then
 					canFire = false -- no lock, no launch

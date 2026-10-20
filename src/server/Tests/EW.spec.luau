@@ -112,7 +112,7 @@ local function launchAt(sim: Sim.Sim, owner: number, target: number, weaponId: s
 	local weapon = sim.defs.weapons[weaponId]
 	local s = weapon.projectileSpeed :: number
 	local ttl = 2 * weapon.range / s + 1
-	return Combat.spawnProjectile(c, x, y, z, dx / d * s, dy / d * s, dz / d * s, weapon.index, owner, w.team[owner], ttl, target) :: number
+	return Combat.spawnProjectile(c, x, y, z, dx / d * s, dy / d * s, dz / d * s, weapon.index, owner, w.team[owner], ttl, target, w) :: number
 end
 
 -- An aircraft of `defId` (team 1) hovering at the origin with a power

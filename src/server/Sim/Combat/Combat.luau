@@ -49,7 +49,9 @@ export type Event = {
 		| "BUILD_DONE"
 		| "BUILD_FAILED"
 		| "PRODUCED"
-		| "RECLAIMED",
+		| "RECLAIMED"
+		| "ELIMINATED" -- other = player
+		| "MATCH_END", -- other = winning ally team (0 = nobody)
 	tick: number,
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
 	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK), wreck or 0 (DEATH)
@@ -83,6 +85,8 @@ export type Combat = {
 	pvz: { [number]: number },
 	pWeapon: { [number]: number }, -- weapon def index
 	pOwner: { [number]: number },
+	pOwnerGen: { [number]: number }, -- generations of the shooter and the homing target (D109)
+	pTargetGen: { [number]: number },
 	pTeam: { [number]: number },
 	pTtl: { [number]: number }, -- seconds left
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
@@ -155,6 +159,8 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pvz = {},
 		pWeapon = {},
 		pOwner = {},
+		pOwnerGen = {},
+		pTargetGen = {},
 		pTeam = {},
 		pTtl = {},
 		pTarget = {},
@@ -221,14 +227,45 @@ end
 -- air units; the water surface minus the draft for ships; deeper for
 -- submerged submarines.
 function Combat.unitBase(c: Combat, w: World.World, id: number): number
+	return Combat.baseAt(c, w, id, w.posX[id], w.posZ[id])
+end
+
+-- The base unit `id` would have standing at (x, z): the same rules as
+-- unitBase, for a believed position (a radar blip, a ghost).
+function Combat.baseAt(c: Combat, w: World.World, id: number, x: number, z: number): number
 	if c.profiles[w.defIndex[id]].naval then
-		local surface = Combat.surfaceHeight(c, w.posX[id], w.posZ[id])
+		local surface = Combat.surfaceHeight(c, x, z)
 		if bit32.band(w.state[id], World.State.SUBMERGED) ~= 0 then
 			return surface - Combat.SUB_DEPTH - c.profiles[w.defIndex[id]].height
 		end
 		return surface - Combat.DRAFT
 	end
-	return Combat.groundHeight(c, w.posX[id], w.posZ[id]) + w.alt[id]
+	return Combat.groundHeight(c, x, z) + w.alt[id]
+end
+
+-- The point weapons aim at and hits are judged against: the centre of the
+-- unit's collision cylinder, at its true position or at (x, z) when given
+-- (where the shooter's team believes it is). Ships float and submarines
+-- sit below the surface, so this is not terrain + altitude (DECISIONS D95).
+function Combat.aimPoint(c: Combat, w: World.World, id: number, x: number?, z: number?): (number, number, number)
+	local px, pz = x or w.posX[id], z or w.posZ[id]
+	return px, Combat.baseAt(c, w, id, px, pz) + c.profiles[w.defIndex[id]].height / 2, pz
+end
+
+-- The aim point of a target as its shooter's team knows it (D100): a live
+-- unit at the believed (x, z); a remembered structure (possibly dead: the
+-- team can't tell) from its def, standing on the ground or floating; the
+-- ground itself when `id` is 0 (attack-ground).
+function Combat.knownAimPoint(c: Combat, w: World.World, id: number, defIndex: number?, x: number, z: number): (number, number, number)
+	if id ~= 0 and w.slot[id] ~= nil then
+		return Combat.aimPoint(c, w, id, x, z)
+	end
+	if defIndex == nil then
+		return x, Combat.groundHeight(c, x, z), z
+	end
+	local p = c.profiles[defIndex]
+	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT else Combat.groundHeight(c, x, z)
+	return x, base + p.height / 2, z
 end
 
 function Combat.addEvent(c: Combat, e: Event)
@@ -245,7 +282,7 @@ end
 
 local scratch: { number } = {}
 
--- Explosion at (x, y, z) from `weapon` fired by `attacker` of `team`.
+-- Explosion at (x, y, z) from `weapon` fired by `attacker` of ally team `team`.
 -- `direct` (0 = none) is the unit the projectile struck: it takes full
 -- damage. (Projectiles never strike allies directly, guide 10.6, so `direct`
 -- is always an enemy.) Every other unit takes damage × falloff by its
@@ -275,7 +312,7 @@ function Combat.explode(
 	local n = ContactGrid.query(c.contacts, w, x, z, aoe + c.maxRadius, 0, scratch)
 	for i = 1, n do
 		local id = scratch[i]
-		if id == direct or (w.team[id] == team and not c.friendlyFire) then
+		if id == direct or (w.ally[id] == team and not c.friendlyFire) then
 			continue
 		end
 		local p = c.profiles[w.defIndex[id]]
@@ -325,7 +362,9 @@ function Combat.spawnProjectile(
 	owner: number,
 	team: number,
 	ttl: number,
-	target: number?
+	target: number?,
+	w: World.World?, -- records the shooter's and target's generations (D109)
+	targetGen: number? -- default: the live target's
 ): number?
 	local id = allocProjectile(c)
 	if id == nil then
@@ -340,6 +379,8 @@ function Combat.spawnProjectile(
 	c.pTeam[id] = team
 	c.pTtl[id] = ttl
 	c.pTarget[id] = target or 0
+	c.pOwnerGen[id] = if w and owner ~= 0 then w.gen[owner] or 0 else 0
+	c.pTargetGen[id] = if w and (target or 0) ~= 0 then targetGen or w.gen[target :: number] or 0 else 0
 	c.pFlags[id] = 0
 	return id
 end
@@ -354,6 +395,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.px[id], c.py[id], c.pz[id] = nil, nil, nil
 	c.pvx[id], c.pvy[id], c.pvz[id] = nil, nil, nil
 	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id], c.pFlags[id] = nil, nil, nil, nil, nil, nil
+	c.pOwnerGen[id], c.pTargetGen[id] = nil, nil
 	c.freeProj[c.freeTail] = id
 	c.freeTail += 1
 end
@@ -401,6 +443,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pOwner[id])
 		h = Hash.number(h, c.pTtl[id])
 		h = Hash.u32(h, c.pTarget[id])
+		h = Hash.u32(Hash.u32(h, c.pOwnerGen[id]), c.pTargetGen[id])
 		h = Hash.u32(h, c.pFlags[id])
 	end
 	h = Hash.u32(h, c.nextProjId)

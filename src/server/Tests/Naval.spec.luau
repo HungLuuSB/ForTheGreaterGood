@@ -219,7 +219,7 @@ return function(t: RunAll.Context)
 		local x0 = SHORE_X + 100
 		local y0 = Combat.surfaceHeight(c, x0, 0) - Combat.TORPEDO_DEPTH
 		-- fired straight at the tank, homing on it, angled up out of the water
-		local p = Combat.spawnProjectile(c, x0, y0, 0, -90, 20, 0, weapon.index, 0, 1, 10, lancer) :: number
+		local p = Combat.spawnProjectile(c, x0, y0, 0, -90, 20, 0, weapon.index, 0, 1, 10, lancer, sim.world) :: number
 		local maxY, removedAt = -math.huge, nil
 		for _ = 1, 60 do
 			Sim.step(sim)
@@ -262,5 +262,104 @@ return function(t: RunAll.Context)
 		end
 		t.equal(a.world.health[ad], b.world.health[bd], "destroyer health")
 		t.equal(a.world.slot[as] ~= nil, b.world.slot[bs] ~= nil, "sub alive")
+	end)
+
+	-- A shooter on the beach and a stationary enemy corvette 150 studs offshore.
+	local function shore(seed: number, shooter: string, gap: number): (Sim.Sim, number, number)
+		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP })
+		local gun = Spawn.unit(sim, shooter, 1, SHORE_X - 30, 0, math.pi / 2)
+		local ship = Spawn.unit(sim, "chs_barracuda", 2, SHORE_X - 30 + gap, 0, -math.pi / 2)
+		sim.world.fireState[ship] = World.FireState.HOLD_FIRE
+		World.setHealth(sim.world, ship, 1e7) -- survive, so every shot can be judged
+		return sim, gun, ship
+	end
+	local function shots(sim: Sim.Sim, gun: number, ship: number, ticks: number): (number, number)
+		local fired, hit = 0, 0
+		local mine: { [number]: boolean } = {}
+		for _ = 1, ticks do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == gun then
+					fired += 1
+					mine[e.other] = true
+				elseif e.kind == "IMPACT" and mine[e.other] then
+					mine[e.other] = nil
+					if e.unit == ship then
+						hit += 1
+					end
+				end
+			end
+		end
+		return fired, hit
+	end
+
+	t.test("the aim point is the hull: ships float, submarines sit below the surface", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = MAP })
+		local c, w = sim.combat, sim.world
+		local ship = Spawn.unit(sim, "chs_barracuda", 2, 0, 0)
+		local sub = Spawn.unit(sim, "chs_lamprey", 2, 60, 0)
+		local _, shipY = Combat.aimPoint(c, w, ship)
+		local h = c.profiles[w.defIndex[ship]].height
+		t.equal(shipY, Combat.surfaceHeight(c, 0, 0) - Combat.DRAFT + h / 2, "ship: draft below the surface, plus half the hull")
+		local _, subY = Combat.aimPoint(c, w, sub)
+		t.expect(subY < Combat.surfaceHeight(c, 60, 0) - Combat.SUB_DEPTH, "submarine: below the surface")
+		local _, believedY = Combat.aimPoint(c, w, ship, 40, 0)
+		t.equal(believedY, shipY, "at a believed position over the same water: same height")
+		t.expect(shipY > Combat.groundHeight(c, 0, 0) + h, "well above the sea floor")
+	end)
+
+	t.test("a tank on the beach hits a stationary ship with its shells", function()
+		local sim, gun, ship = shore(31, "ord_lancer", 150)
+		local fired, hit = shots(sim, gun, ship, 450)
+		t.expect(fired >= 10, `the tank fired ({fired})`)
+		t.expect(hit >= fired * 0.6, `{hit} of {fired} shells hit the ship`)
+		print(`    tank vs ship: {hit} of {fired} shells hit`)
+	end)
+
+	t.test("an MLRS on the beach fires at ships and hits them", function()
+		local sim, gun, ship = shore(32, "ord_judgement", 140) -- inside its 150-stud sight
+		local fired, hit = shots(sim, gun, ship, 900)
+		t.expect(fired >= 3, `the MLRS fired ({fired})`)
+		t.expect(hit >= 1, `and hit ({hit} of {fired})`)
+		print(`    MLRS vs ship: {hit} of {fired} rockets hit`)
+	end)
+
+	-- Destroyers carry a naval SAM (guide 12.3, D97): a Crusader against a
+	-- Wasp hovering over the sea, a Corsair against a Falcon circling it.
+	-- Only the SAM can damage aircraft, so the kill is the SAM's.
+	local function antiAir(seed: number, ship: string, aircraft: string, sam: string): (number?, number)
+		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP })
+		local w = sim.world
+		local shipOwner = if string.sub(ship, 1, 4) == "ord_" then 1 else 2
+		local destroyer = Spawn.unit(sim, ship, shipOwner, 0, 0, math.pi / 2)
+		local plane = Spawn.unit(sim, aircraft, 3 - shipOwner, 300, 0, -math.pi / 2)
+		w.fireState[plane] = World.FireState.HOLD_FIRE
+		w.fireState[destroyer] = World.FireState.FIRE_AT_WILL
+		moveTo(sim, 3 - shipOwner, { plane }, 100, 0)
+		local launched = 0
+		for _ = 1, 1200 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				local wd, target = shot(sim, e)
+				if wd == sam and e.unit == destroyer and target == plane then
+					launched += 1
+				end
+			end
+			if w.slot[plane] == nil then
+				return sim.tick, launched
+			end
+		end
+		return nil, launched
+	end
+
+	t.test("destroyers carry a naval SAM: they shoot down helicopters and jets", function()
+		local tick, launched = antiAir(41, "ord_crusader", "chs_wasp", "ord_naval_sam")
+		t.expect(tick ~= nil, "the Crusader shot down the Wasp")
+		t.expect(launched >= 1, `with naval SAMs ({launched})`)
+		print(`    Crusader vs Wasp: down at tick {tick}, {launched} missiles`)
+		local tick2, launched2 = antiAir(42, "chs_corsair", "ord_falcon", "chs_naval_sam")
+		t.expect(tick2 ~= nil, "the Corsair shot down the Falcon")
+		t.expect(launched2 >= 1, `with naval SAMs ({launched2})`)
+		print(`    Corsair vs Falcon: down at tick {tick2}, {launched2} missiles`)
 	end)
 end

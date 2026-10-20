@@ -6,10 +6,16 @@
 -- 10.6) and against the terrain. The test runs in each unit's frame of
 -- reference (the chord minus the unit's own motion this tick), so fast jets
 -- can't slip between ticks either. The earliest contact is the impact; an
--- explosion applies direct and AoE damage. Projectiles expire after their ttl.
+-- explosion applies direct and AoE damage. Projectiles expire after their
+-- ttl: they burst harmlessly (an IMPACT with no unit and no damage, guide
+-- 10.5 "expired homing missiles self-destruct"), so clients drop them too.
 --
--- HOMING / TORPEDO projectiles turn toward their target's center at the
--- weapon's turnRate (deg/s) before each step. Guided missiles first run
+-- HOMING / TORPEDO projectiles turn toward their target at the weapon's
+-- turnRate (deg/s) before each step, leading it: they aim at where it will
+-- be after the straight-line time to go (D97). HOMING missiles also carry a
+-- proximity fuse: they burst at the closest approach to their target when
+-- it is within their blast radius (aoe) of the hull; the burst deals AoE
+-- damage, and its IMPACT names the target. Guided missiles first run
 -- their midcourse and terminal checks (EW.guide, guide 11.5), which may
 -- break the lock or decoy them.
 
@@ -18,6 +24,7 @@ local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
 local EW = require("../EW")
 local Types = require("../Types")
+local World = require("../World")
 
 local DT = 1 / 15
 local sqrt, sin, cos = math.sqrt, math.sin, math.cos
@@ -67,10 +74,17 @@ return function(sim: Types.Sim)
 		local x0, y0, z0 = c.px[id], c.py[id], c.pz[id]
 		local pvx, pvy, pvz = c.pvx[id], c.pvy[id], c.pvz[id]
 		local homingTarget = c.pTarget[id]
-		if homingTarget ~= 0 and w.slot[homingTarget] ~= nil and weapon.turnRate then
-			local tp = profiles[w.defIndex[homingTarget]]
-			local ty = Combat.unitBase(c, w, homingTarget) + tp.height / 2
-			pvx, pvy, pvz = steer(pvx, pvy, pvz, w.posX[homingTarget] - x0, ty - y0, w.posZ[homingTarget] - z0, math.rad(weapon.turnRate) * DT)
+		if World.isRef(w, homingTarget, c.pTargetGen[id]) and weapon.turnRate then
+			-- lead pursuit: steer at where the target will be when the
+			-- missile gets there (straight-line time to go, target holding
+			-- its heading and speed)
+			local tx, ty, tz = Combat.aimPoint(c, w, homingTarget)
+			local speed = sqrt(pvx * pvx + pvy * pvy + pvz * pvz)
+			local tgo = sqrt((tx - x0) ^ 2 + (ty - y0) ^ 2 + (tz - z0) ^ 2) / math.max(speed, 1)
+			local th, tv = w.heading[homingTarget], w.speed[homingTarget]
+			tx += sin(th) * tv * tgo
+			tz += cos(th) * tv * tgo
+			pvx, pvy, pvz = steer(pvx, pvy, pvz, tx - x0, ty - y0, tz - z0, math.rad(weapon.turnRate) * DT)
 		end
 		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
 		if weapon.type == "TORPEDO" then
@@ -105,27 +119,53 @@ return function(sim: Types.Sim)
 			end
 		end
 
+		-- proximity fuse (D97): a homing missile bursts at its closest
+		-- approach when that is within its blast radius of the target's hull
+		-- (target frame, as above); the burst deals AoE damage only
+		local burst = 0
+		if weapon.type == "HOMING" and World.isRef(w, homingTarget, c.pTargetGen[id]) and (weapon.aoe or 0) > 0 then
+			local u = homingTarget
+			local p = profiles[w.defIndex[u]]
+			local base = Combat.unitBase(c, w, u)
+			local h, v = w.heading[u], w.speed[u] * DT
+			local ux, uz = w.posX[u], w.posZ[u]
+			local ax, az = x0 - (ux - sin(h) * v), z0 - (uz - cos(h) * v)
+			local dx, dy, dz = (x1 - ux) - ax, y1 - y0, (z1 - uz) - az
+			local cy = base + p.height / 2
+			local len2 = dx * dx + dy * dy + dz * dz
+			local t = if len2 > 0 then math.clamp(-(ax * dx + (y0 - cy) * dy + az * dz) / len2, 0, 1) else 0
+			local d = Ballistics.distanceToCylinder(ax + dx * t, y0 + dy * t, az + dz * t, 0, 0, p.radius, base, base + p.height)
+			if d <= (weapon.aoe :: number) and t < bestT then
+				bestT, bestUnit, burst = t, 0, u
+			end
+		end
+
 		-- terrain contact (ground treated as linear along the chord)
 		local a0 = y0 - Combat.groundHeight(c, x0, z0)
 		local a1 = y1 - Combat.groundHeight(c, x1, z1)
 		if a1 < 0 and weapon.type ~= "TORPEDO" then
 			local t = if a0 > 0 then a0 / (a0 - a1) else 0
 			if t < bestT then
-				bestT, bestUnit = t, 0
+				bestT, bestUnit, burst = t, 0, 0
 			end
 		end
 
 		if bestT <= 1 then
 			local ix, iy, iz = x0 + (x1 - x0) * bestT, y0 + (y1 - y0) * bestT, z0 + (z1 - z0) * bestT
-			Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = bestUnit, other = id, x = ix, y = iy, z = iz })
-			if bestUnit ~= 0 then
+			Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = if burst ~= 0 then burst else bestUnit, other = id, x = ix, y = iy, z = iz })
+			if bestUnit ~= 0 or burst ~= 0 then
 				c.stats.hits += 1
 			end
-			Combat.explode(c, w, ix, iy, iz, weapon, c.pOwner[id], team, bestUnit)
+			local owner = c.pOwner[id]
+			if not World.isRef(w, owner, c.pOwnerGen[id]) then
+				owner = 0 -- the shooter is gone (D109)
+			end
+			Combat.explode(c, w, ix, iy, iz, weapon, owner, team, bestUnit)
 			Combat.removeProjectile(c, id)
 		else
 			local ttl = c.pTtl[id] - DT
 			if ttl <= 0 then
+				Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = 0, other = id, x = x1, y = y1, z = z1 })
 				Combat.removeProjectile(c, id)
 			else
 				c.px[id], c.py[id], c.pz[id] = x1, y1, z1

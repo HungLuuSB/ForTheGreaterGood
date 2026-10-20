@@ -12,8 +12,14 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D79–D82: M7 electronic warfare (task 17). D76 and D80–D82 were revised by the user's round-4 answers (see each entry's "Revised" block).
 - D83: move orders, profiled and sliced into the pathing budget.
 - D84: offline Roblox build (darklua `convert_require` plus a place check).
+- D85–D90: third queue: Sensors stamping, local quadtree updates, match rules, full roster, balance report, skirmish AI.
+- D91–D94: round 5: bombing, wind / converters / extractor upgrades, match export and viewer, counter check.
+- D95–D99: round 6: shared aim point, bombs on radar contacts and ghosts, destroyer SAM and missile guidance, same-role band, combat events on the wire.
+- D100–D105: round 7: team knowledge (ghost targets, ATTACK_GROUND, audit), homing corrections, rearm airfields in balance fights, fire-control radar and its lock bonus.
+- D106–D109: round 8: pathfinding as physics, domain-only radar contacts, jammer upkeep, unit generations.
+- **From 2026-10-20 (after D109) decisions are prefixed by work stream:** `S-1`, `S-2`, ... for the headless simulation (`docs/progress/sim.md`), and the client stream's own prefix for the Roblox client and Studio work.
 
-Open points are listed in `docs/PROGRESS.md` → Summary.
+Open points are listed in each stream's progress file (`docs/progress/`) → Summary.
 
 ---
 
@@ -834,3 +840,556 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - A Roblox-side require shim (would break the "no `script`" rule in shared code).
   - `wait_for_child` everywhere (unneeded on the server, where Rojo builds the tree before scripts run).
 - **Why:** the user's step 1 of STUDIO_HANDOFF, done without Studio. Only the in-Studio run remains.
+
+## D85 — Sensor stamping: one-cell shifts, row spans, budgeted full stamps (2026-10-20, task 18)
+
+- **Profile** (800-unit stress test, per sensor tick):
+  - stamping and unstamping: 12–23 ms, about 95% of the time, writing 540k–1.27M map cells. Most restamps are moving units crossing one sensor cell: each erased and redrew whole circles (a radar is about 6,000 cells, an air-sight circle about 1,100);
+  - visibility updates: 0.2–0.4 ms;
+  - radar and close-sonar lists: 0.3–0.7 ms;
+  - ghosts: about 0.
+  - So recomputing visibility selectively, or staggering it, wouldn't help.
+- **Decision** (`Sim/Sensors.luau`):
+  - **Shift:** a unit whose new sensor cell is a neighbor of its stamped cell (same team and radii) shifts each circle: an x shift (each row loses its trailing end cell and gains the next leading one), then a z shift (each column likewise). That is O(radius), not O(radius²).
+  - **Row spans:** circles are cached per radius as row spans, so a full stamp is a tight run along each row (same cell set as before).
+  - **Stamp budget:** full stamps (new emitters, jumps of more than one cell, team or radius changes) are limited to `STAMP_BUDGET = 200,000` cells per sensor tick, in ids order. The first stamp over the budget still runs, so there is always progress. A unit over budget keeps its previous stamp, or has none if new, until a later sensor tick. Removals (death, unfinished frames) are never deferred.
+  - The existing full-recount test validates the shifts. A new test covers the budget (300 radars: 35 in the first sensor tick, all within 18 ticks, maps always matching the stamps made).
+  - Combining los and airLos stamping wasn't needed once shifts made moves cheap.
+- **Result** (Sensors average / peak ms, stress test, same PC):
+
+  | units | before | after |
+  |---|---|---|
+  | 200 | 1.46 / 6.10 | 0.18 / 1.39 |
+  | 400 | 2.39 / 12.42 | 0.31 / 3.48 |
+  | 600 | 3.42 / 14.18 | 0.40 / 2.06 |
+  | 800 | 4.16 / 21.56 | 0.54 / 2.14 |
+
+  The average tick at 800 units went from about 12.1 to 9.2 ms.
+- **Trade-off:** in a mass spawn (the stress test's 800 units appearing in one tick), the last units start emitting up to about 1 s late. Normal play spawns a few units at a time, far below the budget.
+- **Alternatives:** stamping at a coarser resolution (changes what is seen); spreading every restamp over ticks (would make moving units' sight lag).
+
+## D86 — Local quadtree updates when structures change passability (2026-10-20, task 19)
+
+- **Before:** `Nav.terrainChanged` dropped every quadtree. The next `Nav.tree` call rebuilt them lazily, usually in Movement in the same tick, at 2–11 ms per tree on a 256×256 map with 5 ground trees.
+- **Decision:**
+  - `Quadtree.update(tree, pm, rect)` (see its header) is called for every existing tree, in sorted key order. The rectangle is the footprint padded by `CLEARANCE_CAP` (16), the farthest clearance can change.
+    1. Find the cells whose open/blocked state flipped. If none, return; for example, land structures don't touch ship trees.
+    2. Re-decide nodes top-down, descending only into nodes touching the flipped box. Untouched nodes take their state from the old tree in O(1). The merge and split rule is the full build's, so the leaf set equals a rebuild's.
+    3. New leaves replace the old leaves they cover. IDs come from removed and free IDs ascending, then appended; dead IDs have `leafSize = 0`.
+    4. Neighbor lists are patched; components are recomputed (one BFS over open leaves).
+  - Leaf IDs can differ from a fresh build's. They are deterministic for the same history; routes break ties by leaf ID, so a different history can give a different but equally short route.
+  - Plan jobs with a route search in flight over a changed tree restart their search.
+- **Tests** (`Placement.spec`):
+  - after each of 40 random placements and removals on a generated 128×128 map, every tree (including a need-2 TRACKED tree, where clearance beyond the footprint matters) equals a fresh build: leaf rectangles, cell→leaf links, adjacency, component partition and counts;
+  - mutations caught: no merging, no neighbor patch, no component recompute, no padding;
+  - the old "the tree object was replaced" check now checks that the same tree blocks the new structure's cells.
+- **Result** (stress test, 800 units, 14 structures placed mid-battle):
+  - worst tick containing a placement: 42–43 ms → 24–27 ms, which is the ordinary tick peak; the placement itself costs ≤ 5.7 ms;
+  - Movement peak: 31–35 → 14 ms.
+- **Alternatives:**
+  - renumbering every leaf to match a fresh build's IDs (O(map) per change);
+  - rebuilding dirty trees as sliced jobs (stale trees in between).
+
+## D87 — Teams, ally teams and match rules (2026-10-20, task 20)
+
+- **Teams and ally teams** (guide 16.1, 8.3):
+  - A player's `team` is their economy account and ownership, as before. New: `allyTeam` (default = `team`); every team belongs to exactly one ally team.
+  - Units carry `w.ally`. Sight maps, visibility, ghosts and radar lists are per ally team, so allies share sight, radar and sonar.
+  - Targeting, the contact grid, projectile friendliness and AoE friendly fire use the ally team, so allies never target or directly hit each other.
+  - Economy accounts stay per team. Overflow above storage goes to allies with room, split evenly among those that still have room (repeated until placed), in fixed team order; the rest is wasted. Order per window: production and spending → overflow sharing → stall ratios (guide 8.4).
+  - Giving units and resources to allies (guide 16.1) is a command, not done yet.
+- **Match config** (`Sim.new{ match = { mode, win, unitCap? } }`, absent = no rules):
+  - FFA: 2–8 players, each their own ally team.
+  - TEAM: 2–4 ally teams of up to 4 players. I allow 1-player ally teams (uneven matches) where the guide says "2–4 players".
+  - Unit cap default from guide 16.4: `clamp(300 − 25 × (players − 2), 150, 300)`: 300 in 1v1, 150 in an 8-player FFA.
+- **Unit cap:** counts units and structures a player owns, frames included. At the cap, construction fails with `unit_cap` and a finished factory item waits at the exit until there is room.
+- **Win conditions:**
+  - A new `Sim.Match` system runs every tick after Construction (guide 3.3 order updated).
+  - COMMAND_ENDS: a player with no COMMANDER-category unit left is out. ANNIHILATION: a player with nothing left is out.
+  - Per-player counts come from Lifecycle hooks (`addedHooks` is new).
+  - An eliminated player's units self-destruct: lethal overkill damage, so no wrecks, applied by the next Damage step.
+  - An ally team is defeated when all its players are out. When ≤ 1 ally team remains, the match ends (winner 0 = nobody: a draw).
+  - Sim events `ELIMINATED` and `MATCH_END` (not on the wire yet, like D82). `MatchState` is hashed.
+- **Replay format 2:** the header stores each player's ally team and the match options.
+- **Alternatives:** separate economies per player within one team (BAR-style comshare, not needed); removing an eliminated player's units instantly (self-destruct reads better and leaves death events).
+
+## D88 — Full placeholder roster and tech tree (2026-10-20, task 21)
+
+- **Decision:**
+  - Every unit and structure in guide 13 now exists as a validated def: 79 new defs, 115 in total (57 Order, 58 Chaos). They are generated from role templates, so stats are consistent by role.
+  - Order is slightly longer-ranged and more precise; Chaos has more health and damage and larger jam radii.
+  - Move classes follow the roles:
+    - scouts and SAM or radar trucks: WHEELED;
+    - main battle tanks: HEAVY_TRACKED;
+    - amphibious tanks: AMPHIB;
+    - air workers and helicopters: HELI;
+    - fighters, bombers and support aircraft: JET;
+    - naval workers and ships: SHIP; submarines: SUB.
+  - **Factories and economy** (guide 9.2, 8.5), which section 13 doesn't name:
+    - Advanced Vehicle Plant, Airfield / Advanced Airfield (1 and 2 rearm pads), Shipyard / Advanced Shipyard (water);
+    - Advanced Extractor (rate 1.75, about 3.5×), Solar Array, Tidal Generator (water), Fusion Reactor, Depot (+1,000 storage);
+    - Chaos names are placeholders (Foundry, Aerodrome, Drydock, Sun Trap, Tide Mill, Hellforge, Hoard).
+  - **Build tree** (guide 9.1–9.2): `Commander → T1 factories and economy → T1 workers → advanced factories → T2 workers, T2 units`. T1 builders reach T2 only through advanced factories. Ships come only from shipyards and aircraft only from airfields.
+  - **Weapons:** 16 new: MG, heavy cannon, MLRS, bomb, heavy bomb, heavy naval gun, flak per faction; Archon's radar AAM; Manticore's heavy IR AAM.
+  - **Bombs** are slow BALLISTIC drops (60 stud/s, gravity, pitch down to −90°), because the guide's BOMB type has no sim behavior yet. The balance report (task 22) will show how well bombers actually deliver.
+  - **Carriers** may have `rearmPads`: validation now allows ships, per guide 12.3's "mobile airfield". An aircraft landing on a moving carrier stays where it landed while rearming (to refine with carriers).
+  - **Left out for now:** Wind Turbine (needs a global wind value), Supply Converter (needs a converter step), naval SAM platform (not in section 13), and replacing a T1 extractor when its upgrade starts (guide 9.3).
+- **Tests** (`TechTree.spec`):
+  - every guide-13 unit exists and every faction def is reachable from its Command Vehicle;
+  - tech gating, faction purity, move classes per role, ships only from water factories, water placement for naval structures, every weapon can damage something it targets;
+  - in the sim: shipyard → Tidewright → tidal generator, and airfield → Skywright → solar array;
+  - mutations caught: a T2 tank in the T1 plant, Tidewatch missing from the Advanced Airfield.
+- **Changed test data:** `Defs.spec`'s "unknown build option" case used `ord_paladin`, which now exists; it uses `ord_no_such_unit`.
+
+## D89 — Balance report method (2026-10-20, task 22)
+
+- **Decision** (`lune run balance`, `docs/BALANCE.md`; report only):
+  - Every Order combat unit against every Chaos combat unit where one can damage the other. Workers, commanders, unarmed support aircraft and ships, and structures are left out.
+  - Equal value per side: about 3,000, with value = supply + power ÷ 10 (BAR's metal + energy ÷ 60 idea, rescaled to our costs); at most 20 units.
+  - Two starts: close (120 studs) and long (600 studs, both attack-move at the enemy centroid every 2 s). 2 seeds; at most 120 s.
+  - Map: flat 128 for land and air pairs; `sea:256` when a ship is involved (ships offshore, land units on the beach).
+  - Score: value trade = enemy value destroyed ÷ own value lost, damage counted pro rata. Per-unit geometric means are over all matchups.
+- **Caveats:**
+  - Aircraft have no pads and run dry.
+  - One-sided matchups (bombers vs units with no AA) give large trades without wins.
+  - Equal value at a 3,000 budget rounds expensive units to 1–2 copies.
+- **Why:** a cheap, deterministic first look for M8 balancing; the numbers aren't targets.
+
+## D90 — Skirmish AI (2026-10-20, task 23)
+
+- **Decision** (`Sim/AI/Skirmish.luau`):
+  - The AI is a player. It reads its own units and economy, what its ally team knows (`Sensors.knownPosition`) and the map's start positions, and acts only through `Sim.submit`. Its games are therefore in the replay like anyone's, and a replay without the AI reproduces them exactly.
+  - It thinks every 15 ticks (offset by player ID) and has its own Prng (seed × 31 + player × 7919), used only for the production mix (1 artillery piece in 4).
+  - **Builders:**
+    - the Command Vehicle stays within 260 studs of home;
+    - priorities: a Vehicle Plant (a second one past 600 stored supply) → generators while power is short → extractors on the nearest free deposits (claims last 60 s) → assist a factory;
+    - spots come from rings around home checked with `Placement.check`, like a client's placement ghost.
+  - **Factories:** keep 2 items queued: workers up to 3, then T1 tanks and artillery.
+  - **Army:**
+    - new units gather at a rally point 160 studs toward the enemy;
+    - enemies within 260 studs of home are attacked by everything at home;
+    - at the wave size (8, growing by 2) the wave attack-moves at the best known target (structures and the Command Vehicle count 4× closer), else the enemy start, re-targeting every 5 s.
+  - **Map:** a `skirmish:<cells>` test map: `start` plus two pairs of value-3 expansions per side and a rich value-6 pair in the middle.
+- **Results** (192×192, Order AI vs Chaos AI, Command Ends):
+  - seed 1: Chaos wins at 8.0 min, peak tick 10.3 ms, 9 / 8 extractors;
+  - seeds 2–4: Chaos wins at 6.0, 7.8 and 6.3 min, peak ticks 8.7–9.3 ms, at most 60 units;
+  - a full match takes about 1.4 s of wall time headless.
+- **Alternatives:** a utility-scoring AI; AI inside the sim as a system (it would bypass the command path and the replay).
+
+## D91 — Bombing: runs, lead point, egress, rearm (2026-10-20, user-requested)
+
+- **Decision:**
+  - Bomb weapons are the real `BOMB` type: no turret and no projectile speed; `gravity` is required, and `range` (now 800) is the acquisition radius.
+  - Bombers (JETs carrying a BOMB) cruise at 130 studs (guide 6.7's 120–140 band).
+  - **Release** (`Air.bombRelease`):
+    - fall time t = √(2h ÷ g) from the drop height to the target's centre;
+    - predicted impact = bomber position + velocity × t; predicted target position = known position + its velocity × t (velocity only while VISIBLE; radar contacts don't move in the prediction);
+    - release in the tick when the impact point crosses the aim point along the track (within half a tick of travel) and lies within max(aoe ÷ 2, 3) + target radius across it.
+    - The bomb leaves with the bomber's velocity plus the weapon's yaw spread, and falls under gravity.
+  - **Run** (`Air.steerJet`, state in `AirState.run` / `egressUntil`, hashed):
+    - "in": turn toward the aim point. If closer than 0.6 × the release distance, the window is missed: switch to "out";
+    - after a release: fly straight for 3 s (egress), then "out";
+    - "out": fly away from the target until release distance + 150 studs (about a turn radius), then "in" again;
+    - when the target is lost the run state resets.
+  - **Empty:** return to the nearest pad and rearm as before (D74), then resume.
+- **Tests** (`Air.spec`):
+  - 4 of 4 bombs land within the blast radius of parked targets;
+  - a moving column is hit (1 of 2, versus 0 of 2 without motion prediction);
+  - the heading is held during egress;
+  - fly → return → rearm → fly, then bombing again;
+  - determinism;
+  - mutations caught: no lead, no target prediction, no egress.
+- **Balance report re-run** (bomber value trade, before → after):
+  - Absolution 3.57 → 1.93, Phantom 7.90 → 2.68, Plague 5.24 → 2.18, Behemoth 4.61 → 1.93; still 0 wins in 56 fights each.
+  - The old "bomb" fired like a gun from 130 studs. A real run releases about 400 studs before the target, but bombers see only 200 studs, and the report's fights have no spotters, radar or pads. So bombers rarely hold a target long enough to line up, and they run dry. This is a mechanics finding for the counter check (task 27).
+- **Alternatives:** carpet runs (several bombs per pass); letting bombs target radar contacts.
+
+## D92 — Wind, converters and extractor upgrades (2026-10-20, user-requested)
+
+- **Wind Turbine:**
+  - New def field `wind = { max }`. Power income = max × the global wind.
+  - Wind is a stateless hash of (match seed, tick ÷ 450) mapped to 0–1, so it changes every 30 s, never touches `sim.rng`, and replays exactly.
+  - It is stepwise, not smoothed. `eco.wind` is hashed.
+  - Placeholders: `ord_windmill` "Wind Turbine" (max 30), `chs_windmill` "Wind Pylon" (max 34); cost 35 supply. Average about 15 power per second, against the solar array's steady 8.
+- **Supply Converter:**
+  - New def field `converter = { power, supply }` per second. Converters run in the Economy step after production and before consumers (guide 8.4).
+  - A converter burns only power above half the team's power storage (`CONVERTER_RESERVE`), up to its rate, and adds supply at the ratio.
+  - Toggleable with the existing TOGGLE command (`TOGGLED_ON`); converters start switched on.
+  - Placeholders: `ord_converter` "Supply Converter" (70 : 1), `chs_converter` "Smelter" (60 : 1).
+- **Extractor upgrade** (guide 9.3):
+  - `Placement.check` takes an optional builder team. An extractor may then go onto that team's own complete extractor with a lower rate; the check returns the unit it replaces.
+  - Build removes it (`Lifecycle.remove`) in the tick the new frame starts.
+  - Another team's extractor, or one of the same rate, still counts as "occupied".
+- Wind turbines and converters are in every T1 economy build list.
+- **Alternatives:** a seeded random walk for wind (would need state or `sim.rng` draws); converters with a player-set energy threshold (BAR's slider) instead of a fixed 50%.
+
+## D93 — Match export for the viewer (2026-10-20, user-requested)
+
+- **Decision:**
+  - `lune run export <scene> [--player N] [--seed S] [--map M] [--ticks T] [--every K] [--out file]` writes `debug_out/match_<scene>_<view>.json`.
+  - The core lives in pure Luau under `src/server/Tests/Support` (tests use it in both runtimes):
+    - `Scenes`: sim setups with their command drivers: `ai`, `matchup:<a>:<b>[:close|long]` (the balance report's fight, which `lune run balance` now uses too), or any Sim scenario with an attack-move driver;
+    - `MatchExport`: records frames;
+    - `Json`: deterministic encoder (sorted keys), plus a decoder for tests.
+  - **Views:**
+    - spectator: the server's truth every frame: units, projectiles, combat events;
+    - player: the headless client (`Support/Client`) decodes that player's real NetOut packets with a whole-map camera. The frame holds tactical units, strategic records (radar and sonar blips at their wobbled positions, ghosts) and the ally team's sight map as a 1-bit-per-sensor-cell fog bitmap (base64). Projectiles and events aren't on the wire yet (D82), so the player view has none.
+  - **Format "ftgg-match" v1:** see the `MatchExport` header. Positions to 0.1 stud; one frame every 3 ticks by default. The 8-minute AI match is 4 MB as spectator and 5.8 MB as a player view, recorded in about 2 s.
+- **Tests** (`Export.spec`):
+  - JSON round trip and formatting; base64 vectors;
+  - spectator frames equal the sim's units and projectiles at capture; map arrays, row shapes, bounds, events; an exact JSON round trip;
+  - player view (radar matchup): tactical units are allied or VISIBLE, strategic records only ever-known units, radar blips present, fog equals the sight map, no projectiles;
+  - determinism;
+  - mutation caught: leaking units the client never received.
+- **Alternatives:** a binary format (smaller, but needs a decoder in the page); recording the replay and re-simulating in the browser (would need the sim in JS).
+- **Viewer** (`tools/viewer/index.html`, one self-contained file with no external scripts):
+  - a file picker reads the export with `FileReader`, so it works when opened by double-click (file://);
+  - draws terrain and water from the map layers, deposits, units as category shapes in team colours interpolated between frames, aircraft shadows, health bars, projectiles, impacts, deaths, decoys and lost locks;
+  - in player view: radar and sonar blips (pulsing rings at their wobbled positions), ghosts (dashed), and fog from the sight bitmap;
+  - minimap (click to jump); play / pause / speed 0.25–16× / scrub / step; wheel zoom and drag pan; click a unit for its def, health, build, position, heading, state bits and target;
+  - checked in the browser pane against the AI match (spectator and player 1) and a radar matchup. `.claude/launch.json` has a "viewer" static server for that kind of check.
+
+## D94 — Counter check against guide 12.4 (2026-10-20, user-requested; report only)
+
+- **Method** (`lune run balance`, section "Counter check" in `docs/BALANCE.md`):
+  - The 12.4 table is parsed from the guide, so the check follows guide edits.
+  - Roles map to units: Tanks = Lancer, Ravager, Paladin, Juggernaut, Tideguard, Mire; Artillery = Verdict, Hellmouth, Judgement, Hydra; IR SAM = Halo, Hornet; Radar SAM = Seraph, Gorgon; Fighters = Falcon, Harpy, Archon, Manticore; Bombers = the four; Attack helis = Guardian, Wasp; Destroyers = Crusader, Corsair; Submarines = Silence, Lamprey.
+  - Coastal batteries (Rampart, Breaker) are added from guide 13.5 ("heavy gun against ships": ●●●).
+  - Target classes come from the defender's move class and domain.
+  - **Fights:**
+    - the existing equal-value duels;
+    - new sieges (`Scenes.siege`: a group against an enemy plant, 3 generators and a radar tower) for the Structure column;
+    - batteries against every enemy ship.
+  - **Shortfall:**
+    - "—" but can damage;
+    - ● and destroys nothing;
+    - ●● with a value trade below 1;
+    - ●●● with a value trade below 2;
+    - sieges: less than 2%, 30% or 60% of the base destroyed.
+  - **Diagnosis** from per-fight records (ever knew a target its weapons accept, closest distance, shots, hits, ammo):
+    - mechanic: can't target, can't see, can't reach (the shore), out of range, never fired, fired but never hit, ran dry, a bomber never lined up a run;
+    - numbers: it saw, reached, fired and hit, but lost the trade.
+- **Result:** 412 of 568 attacker / target pairs hold. 273 findings (one per pair and start): 157 mechanic, 116 numbers.
+- **Mechanic findings** (by cause):
+  1. **Ballistic fire at ships aims at the sea floor** (78 findings: tanks 39, artillery 24, coastal batteries 6, plus some destroyer and corvette guns). `Weapons` aims at `groundHeight + alt + height/2`, but a ship floats about 17 studs above the sea floor. MLRS (minimum pitch 0°) never fire; howitzers, mortars and tank and coastal guns fire low and never hit. The hitscan judgement already uses `Combat.unitBase`, so the aim point should too.
+  2. **Bombers can't line up runs** (34): they see 190–200 studs but release about 400 studs out. Without spotters, radar or bombs on radar contacts, they never or rarely drop.
+  3. **Destroyers can't hit aircraft** (13): their SAM was left out in D78 and never added.
+  4. **Tanks and attack helicopters can't hit helicopters** (22): the matrix says weak (●), but no ground gun or rocket targets AIR.
+  5. **Ran dry** (19): fighters against jets and attack helicopters against ships empty their ammo without pads. This is a property of the report's fights (no pads), not of the game.
+- **Numbers findings:**
+  - same-class mirrors (Tanks → Ground ●●● 59, Artillery → Ground ●● 35, Submarines → Sub 2, Destroyers → Ship 2): with equal value on both sides, one side's ●●● (trade ≥ 2) is the other side's trade ≤ 0.5, so a mirror can't satisfy both sides. These are artifacts of checking the matrix on same-role duels;
+  - IR SAM → helicopters ●●● (3): Halo against Wasp trades 0.5–0.6, Hornet against Guardian 1.64;
+  - Radar SAM → helicopters ●● (2); Destroyers → Sub ●● (4: 0.34–0.52); Fighters → jets ●●● (2); Silence against Corsair (1.91 < 2).
+- **Nothing was changed.** The fixes (aim point, bomber spotting, destroyer SAM, anti-helicopter weapons) are questions for the user.
+
+## D95 — One aim point for aiming and hit checks (2026-10-20, user-requested)
+
+- **Decision:**
+  - `Combat.aimPoint(c, w, id, x?, z?)` is the centre of the unit's collision cylinder, using the same base rules as `unitBase` (ships float with their draft, submarines sit below the surface, other units stand on terrain plus altitude).
+  - It is evaluated at the true position, or at a believed position (a radar blip, a ghost) via the new `Combat.baseAt`.
+  - Weapons aim (pitch to the believed position), the hitscan judgement (the true direction), homing steering, the EW terminal check, bomb solutions and hitscan explosions all use it.
+  - Before this, weapon pitch used terrain + altitude: the sea floor for ships, about 17 studs under the hull.
+- **Tests** (`Naval.spec`):
+  - the aim point matches the hull for ships and submarines;
+  - a Lancer on the beach hits a stationary ship with 19 of 19 shells;
+  - a Judgement MLRS fires at a ship and hits 7 of 10 (with the old aim point both fail).
+- **Counter check after the fix:**
+  - 425 of 568 pairs hold (was 412); findings 273 → 248, with mechanic 157 → 84 and numbers 116 → 164;
+  - all 78 "never fired / never hit" ship findings are gone;
+  - what remains against ships is numbers (tanks 16, artillery 25, coastal batteries 3: they hit now but lose the trade).
+
+## D96 — Bombs on radar contacts and ghost structures (2026-10-20, user-requested)
+
+- **Decision:**
+  - The four bomb weapons get `canTargetRadar = true`. Bombers may target radar contacts, aiming at the wobbled position the team sees (guide 11.4), and remembered structures (ghosts) at their last known position. Bomber sight is unchanged.
+  - The bomb solution takes the impact height at the believed position too (`Combat.aimPoint` at `kx, kz`).
+  - Ghosts of structures that died unseen are not targeted: a weapon's target must be a live unit. Bombing a remembered spot that may be empty would need an attack-ground order (a question for the user).
+- **Tests** (`Air.spec`):
+  - a Plague with only Chaos radar on a parked Lancer releases 5 bombs on the contact; they land 6.3 studs from the blip on average and 23.8 from the tank;
+  - an Absolution bombs a plant that a spotter saw and left: 2 of 3 bombs are released on the ghost, both damage it.
+  - Without `canTargetRadar` both tests fail (no releases).
+- **Balance fights** (`Scenes`): bomber groups bring their faction's T1 radar tower (Watchtower / Eye), as a match's base radar would. The tower is not part of the trade. Attack-moves now aim at enemy units and fall back to structures only when no units are left (sieges).
+- **Bomber rows** (`lune run balance 2`):
+  - sieges, share of the base destroyed: Absolution 37% → 100%, Phantom 0% → 55% (ran dry), Behemoth 4% → 92%, Plague 85% → 100%;
+  - mean trade: Absolution 1.93 → 2.90, Phantom 2.68 → 2.17, Behemoth 1.93 → 2.64, Plague 2.18 → 2.63;
+  - bomber findings 34 → 33. None is "can't see" any more: 14 never lined up a run (shot down or out of time against SAMs and AA ships), 9 dropped only on radar contacts of small units and missed (radar error 20–45 studs, blast radius 14), 7 ran dry (no pads in these fights), 3 lost the trade.
+  - Whole check: 425 of 568 pairs hold; 249 findings (82 mechanic, 167 numbers).
+- **Revised (item 4, same day):**
+  - The T1 tower beside the bombers' start died within seconds in close starts: the enemy group was 120 studs away. Bombers then had nothing to aim at.
+  - Bomber groups now get the long-range radar (Beacon / Allseer) at the map edge behind them, with health × 100, standing in for a defended base radar. It is still not part of the trade.
+  - With this and D98's "destroying nothing never holds" (bomber rows against units that can't shoot back used to hold with 0 ÷ 0 = ∞):
+    - sieges: Absolution 100%, Phantom 8% (2 Phantoms, 4 bombs per seed: noisy), Behemoth 81%, Plague 100%;
+    - 31 bomber findings are bombs dropped only on radar contacts of small units that missed. 17 never lined up a run.
+  - A Behemoth traced against Lancers made about 6 runs on radar contacts for 1 release: the blip shifts up to 40 studs every 2 s, and radar contacts get no lead, so the impact point misses the ±10-stud release window. Whether to widen the window for radar contacts is a question for the user.
+
+## D97 — Destroyer naval SAM; missile lead pursuit and proximity fuse; matrix edits (2026-10-20, user-requested)
+
+- **Naval SAM (guide 12.3):**
+  - Crusader and Corsair get a third weapon, `ord_naval_sam` / `chs_naval_sam`: radar-guided HOMING, `AIR` only.
+  - Range 380 / 360, matching the destroyers' sight against aircraft (1.5 × sight).
+  - 300 / 280 damage, reload 3.5 / 3 s, `canTargetRadar`, priority jets, then helicopters.
+- **Guidance fix (found while testing the SAM):**
+  - Homing used pure pursuit (steering at the target's current position) with contact fuses only. Against a circling jet, every SAM missed: the Gorgon, the Hornet and the new naval SAM launched 20–25 missiles each over 80 s, with no impact at all. Their turn radius (about 200 studs at 380 studs/s and 110°/s) is wider than the jet's loiter circle, so missiles orbit and expire.
+  - The land SAM rows still "held" in the counter check: a fighter can't shoot back, so the trade was 0 ÷ 0 = ∞ (fixed in D98).
+  - **Now:**
+    - Lead pursuit: HOMING and TORPEDO projectiles steer at the target's position after the straight-line time to go, assuming it holds its heading and speed.
+    - Proximity fuse: a HOMING missile bursts at its closest approach to its target when that is within its `aoe` of the target's hull (measured in the target's frame, like the contact test). The burst deals AoE damage only, and its IMPACT event names the target.
+  - Measured against a Falcon circling 100 studs away: the Corsair downs it with 11 missiles, the Gorgon with 6, and an Absolution falls to the Corsair in 9. The Hornet IR SAM still misses the Falcon (21 launched, 6 decoyed by DIRCM or flares, the rest pass 6–15 studs from the hull with a 5-stud blast). That is a numbers question for M8.
+- **Tests:**
+  - `Naval.spec`: a Crusader downs a Wasp (tick 61, 2 missiles); a Corsair downs a circling Falcon (tick 596, 14 missiles).
+  - `Air.spec`: a Seraph downs a circling Harpy (3 of 8 missiles on target).
+  - Both fail with the old guidance.
+- **Matrix (guide 12.4):** Tanks → Air (heli) and Attack helis → Air (heli) are now "—" (no ground gun or rocket targets `AIR`).
+- **BALANCE.md:**
+  - The new section "M8 balance items" lists, first, IR SAM vs helicopters (Halo vs Wasp 0.58 / 0.55, Hornet vs Guardian 1.36 / 2.01; 12.4 says ●●●).
+  - Destroyers against aircraft: Crusader vs Wasp 0.00 → 1.10 / 1.02; the Corsair now beats the Guardian.
+  - Counter check: 446 of 568 pairs hold (was 425); findings 249 → 223 (mechanic 82 → 57, numbers 166).
+
+## D98 — Same-role cells on a soft band; destroying nothing never holds (2026-10-20, user-requested)
+
+- **Same-role pairs** (`lune run balance`): a role against its own kind (Tanks → Ground against tanks, Destroyers → Ship against destroyers, Fighters → Air (jet) against fighters, and so on). Units map to roles by the counter check's role table.
+  - Both sides must be able to damage each other, or it is a mechanic finding ("one-sided").
+  - Each start's equal-cost trade must fall within the soft band 0.5–2.0. Outside, it is a numbers finding ("same role: trade outside the soft 0.5–2.0 band", plus "ran out of ammo" when aircraft ran dry). A fight where neither side destroyed anything is diagnosed as before.
+  - A new table "Same-role pairs" in `BALANCE.md` lists every Order / Chaos pair with both trades and whether they are in the band.
+- **Destroying nothing never holds:**
+  - A cell with dots now also needs the attacker to destroy something.
+  - Before, a fight where neither side lost anything gave a trade of 0 ÷ 0 = ∞ and held ●● and ●●● (e.g. bombers against tanks that can't shoot back, SAMs against fighters).
+- **Result** (2 seeds):
+  - 452 of 568 pairs hold (was 446); 201 findings (71 mechanic, 130 numbers);
+  - same-role band: 32 of 38 fights inside. Outside: Archon against Harpy and Manticore (0.20–0.43) and Falcon against Harpy (0.32 close) (all ran dry), and Judgement against Hellmouth (0.43 long).
+  - Tanks → Ground findings 59 → 23: the 36 tank mirrors were artifacts of ●●● (D94) and now sit in the band.
+- **Guide 12.4** notes the band under the matrix.
+
+## D99 — Combat events on the wire (2026-10-20, user-requested)
+
+- **Records** (`Schema`, `PROTOCOL_VERSION` 3; layouts in guide 7.3; golden bytes in `Schema.spec`):
+  - FIRE (10 B): shooter, slot, hit bit and the end point. There is no target ID, because the target may be hidden.
+  - SPAWN_PROJ (19 B): projectile ID, weapon, position, velocity and homing target.
+  - IMPACT (9 B).
+  - DECOYED and LOST_LOCK (15 B each): position and the new velocity.
+  - Positions are a cell plus offsets and `y` in eighth studs; velocities are eighth studs per second (i16).
+  - LOST_LOCK was not on the user's list. It is added because without it the client keeps steering a missile the server flies straight.
+- **NetOut** (per player, after the tick's ENTER records, in one batch):
+  - FIRE only for shooters in the player's tactical tier.
+  - SPAWN_PROJ once a projectile is in the ally team's sight and in the camera area (+2 cells), at launch or when it flies into view. The homing target is sent only if the ally team knows the unit.
+  - DECOYED / LOST_LOCK only for projectiles the client has. They carry the state after the tick's step.
+  - IMPACT for projectiles the client has, or anywhere in sight and camera.
+  - `NetState` keeps each player's known projectile IDs (reset when an ID is reused) and cumulative counts per event kind.
+- **Sim changes** (events only, no state):
+  - FIRE events carry the shot's end point.
+  - Projectiles at the end of their time to live emit an IMPACT with no unit and no damage (guide 10.5 "expired homing missiles self-destruct"), so clients drop them.
+  - `Sensors.inSight(sim, team, x, z)` is new.
+- **Client and export:**
+  - The headless client steps the projectiles it knows (ballistic step; homing turns toward the target it has, in 3D, at the weapon's turn rate) and keeps effects (fire, impact, decoy, lost, death).
+  - `MatchExport` version 2: the player view has projectiles and events rebuilt from the wire. Both views have `fire` tracers, and projectiles carry their weapon index. The viewer draws the tracers and reads versions 1 and 2.
+- **Accuracy:**
+  - Unguided projectiles match the server exactly (worst 0.08 studs in `NetOut.spec`, 0.00 in the export test).
+  - Homing missiles drift. In the Seraph-vs-Harpy export the worst drift is about 600 studs, for missiles homing on radar contacts whose altitude and true position the client doesn't know. IMPACT corrects them at the end. A periodic correction for homing projectiles would fix this at about 15 B × 3 Hz per missile (a question for the user).
+- **Tests:**
+  - `Schema.spec`: golden bytes for every new kind, round trips at the edges, truncation, and reserved bits / slot / ID 0 rejected.
+  - `NetOut.spec`:
+    - 600 battle ticks: every combat event is allowed for its player, and the client's unguided projectiles follow the server's;
+    - a hidden mortar's shells appear only once in sight (first seen 161 studs from the muzzle) and its ID never reaches the client;
+    - flak FIRE only to the player that has the ship tactical, with end points on the target and one tracer per shot.
+  - `Export.spec`: the player view has projectiles and impacts, and every unguided projectile drawn matches a server projectile.
+  - Mutations (no sight / camera filter; FIRE without the tactical check) fail the NetOut tests.
+- **Bandwidth** (`lune run stress`, per player, KB/s; the other channels are unchanged):
+
+| units | Events before | Events after | total before | total after |
+|---|---|---|---|---|
+| 200 | 0.06 | 0.52 | 5.78 | 6.24 |
+| 400 | 0.12 | 0.95 | 12.18 | 13.01 |
+| 600 | 0.16 | 1.34 | 18.44 | 19.62 |
+| 800 | 0.19 | 1.60 | 19.19 | 20.59 |
+
+  At 800 units that is about 48 SPAWN_PROJ and 54 IMPACT records per second per player. The stress armies carry no hitscan weapons and no decoys, so FIRE and DECOYED don't show up there. NetOut's average time per tick went from 0.94 to 0.97 ms at 800 units.
+
+## D100 — Targeting follows team knowledge; ghosts of dead structures; ATTACK_GROUND for bombers (2026-10-20, user-requested)
+
+- **Rule:** every targeting decision uses what the shooter's ally team knows, never server truth.
+- **Ghosts of dead structures:**
+  - Before, a weapon target had to be alive, so bombers and artillery dropped a ghost the moment its structure died, even unseen. That told the owner something the team didn't know.
+  - Now `Sensors.knownTarget(sim, team, id)` answers from the ghost record (position, def index), whether the structure lives or not. `Targeting` keeps such targets and also searches the team's dead ghosts (`canTargetRadar` weapons), scored like live ones.
+  - `Combat.knownAimPoint` aims at a remembered structure from its def, or at the ground. Shots land on empty ground. The ghost, and with it the target, goes away only when the team sees the spot again (Sensors, unchanged).
+- **ATTACK_GROUND** (`CmdType` 4, already on the wire):
+  - Gives owned bombers an order in `AirState.groundX/Z` (hashed). The bomber makes bomb runs on the spot with the usual run logic (`Air.bombAim`); its bomb weapons don't auto-target meanwhile.
+  - Any move-like order or STOP cancels it. It survives rearming. Other units ignore it for now.
+- **Tests** (`Air.spec`):
+  - a plant destroyed unseen is still bombed (bombs land on its empty spot), and bombing stops once a spotter sees the spot (the ghost is forgotten). Without the dead-ghost search the bomber never attacks;
+  - ATTACK_GROUND: 2 of 3 bombs within 10 studs of the spot, a Lancer ignores the order, and a MOVE cancels it.
+- **Known edge:** unit IDs are reused only after all 65,535 fresh IDs and a 10 s delay. A ghost whose ID is reused would follow the new unit. Not handled yet.
+
+## D101 — Audit: decisions on server truth (2026-10-20, user-requested)
+
+Every system was reviewed for decisions that read another team's units from server truth where the deciding team's knowledge should decide. The review covered every loop over all units, every contact-grid query, and every read of a target's position, type or state. Tests are in `Knowledge.spec`; each fails when its fix is undone.
+
+**Fixed:**
+
+| Where | Truth leak | Now |
+|---|---|---|
+| `Targeting` search | Candidates were gathered by true position within range + largest radius. A radar contact whose believed position was in range, but whose true one wasn't, was never considered. | The query reaches range + largest radius + largest radar error, and acceptance stays on the believed position. Test: a mortar fires at a blip that wobbles into range. |
+| `Placement.check` (AI planning) | The AI skipped build sites and deposits taken by enemy structures or units it had never seen. | Optional `knower` (ally team): enemies the team doesn't see don't block, and remembered structures (ghosts, alive or not) do. The physical check, when a builder starts the frame, is unchanged. Tests: planner vs physical check; the AI keeps choosing a deposit an unseen enemy extractor took, and picks another once it sees it. |
+| `Skirmish` targets | It read the true def of radar blips (structure or Command Vehicle?) to rank attack targets. Threats near home needed `w.slot` (alive), and dead ghosts were ignored. | `Skirmish.knownTargets`: types only for VISIBLE units and ghosts; dead ghosts count as targets and threats. Test: a nearer tank beats a radar-only generator, the generator wins once seen, and stays the target after dying unseen. |
+| Weapons and bombers (D100) | Targets had to be alive. | Ghost targets follow team knowledge. |
+
+**Reviewed and kept (physics or the unit's own senses, not a team decision):**
+- Hit judgement, projectile collision, homing steering and the proximity fuse use true positions: that is where things physically are.
+- `EW.canLock` (jamming, stealth signature) is the seeker's own physical result. Targeting preferring lockable targets uses that result, as a real fire-control system would.
+- RETURN_FIRE uses the attacker recorded by Damage, but only through the knowledge check.
+- Bomber lead and weapon pitch use the true heading, speed or altitude only for VISIBLE targets, or the altitude of a radar contact (radar measures it).
+- The physical placement check when a frame starts, and movement avoidance, block on everything physically there.
+- Win conditions, Sensors and NetOut work on truth by design (NetOut filters fog first).
+
+**Open (questions for the user):**
+- **Pathfinding uses true passability:** routes go around enemy structures the team never saw. Fixing it needs per-team passability (or treating unseen structures as passable until a unit bumps into them). That is a large change to Nav and the flow-field cache.
+- **Radar contacts' categories:** weapons filter radar contacts by their true category (e.g. artillery ignores a blip that is an aircraft). Radar can tell air from surface, but finer categories (light vs armored) also come from truth in target priority.
+- **Ghost IDs reused** after 65,535 spawns would follow the new unit (D100).
+
+## D102 — Homing-projectile corrections (2026-10-20, user-requested)
+
+- **Wire:**
+  - New unreliable channel `Projectiles` (`PROTOCOL_VERSION` 4).
+  - Record: projId u16, pos, vel = 14 B, after the tick header. Golden bytes and round trips are in `Schema.spec`.
+- **NetOut:**
+  - For each homing projectile (a weapon with `turnRate`) the client already has: every `HOMING_SYNC_EVERY` = 5 ticks (3 Hz, staggered by ID), and on the tick it comes (back) into view.
+  - "In view" means inside the camera rectangle + LEAVE_MARGIN (the tactical area) and in the ally team's sight.
+  - Never for unguided projectiles, projectiles out of view, or unknown ones. `HOMING_SYNC_EVERY = 0` turns corrections off, for measurements.
+- **Client:**
+  - On a correction it snaps its prediction (position, velocity) to the server's and keeps drawing where it was. The drawn offset decays to 0 over `BLEND_TICKS` = 5.
+  - An error above `SNAP_STUDS` = 60 snaps: that only happens when a projectile comes back into view after flying uncorrected outside it.
+  - Lost corrections just leave the prediction running longer.
+- **Max visible drift** (drawn vs server position, while in the player's view; 1,200 ticks; player 1 / player 2):
+
+| fight | before | after |
+|---|---|---|
+| Seraph vs Harpy (radar SAMs, AAMs) | 94 / 171 | 59 / 56 |
+| Falcon vs Harpy (AAMs) | 517 / 517 | 67 / 65 |
+| Halo vs Wasp (IR SAMs, short flights) | 12 / 12 | 12 / 12 |
+| Crusader vs Lamprey (torpedoes) | 618 / 631 | 30 / 14 |
+
+  Mean drift fell 2–10× (e.g. torpedoes 73 → 7 studs).
+- **Bandwidth:**
+  - About 45 B/s per homing projectile in view; 0.03–0.18 KB/s per player in these duels.
+  - The stress-test armies carry no homing weapons, so their channels are unchanged (Projectiles 0.00).
+  - At 800 units: total 22.9 / 23.1 KB/s per player. The battle itself changed with D101's targeting search, so the other channels differ from round 6's 20.6.
+- **Test** (`NetOut.spec`), Crusader vs Lamprey:
+  - corrections only for known homing projectiles in view;
+  - visible drift 618 studs without corrections, 30 with them, 58 with every other correction message lost.
+  - Sending regardless of view fails it.
+
+## D103 — Rearm airfields in balance fights (2026-10-20, user-requested)
+
+- **Setup** (`Scenes`): each aircraft group gets its faction's Advanced Airfield (two pads) at the map edge behind its start.
+  - Like the bomber radar (D96, which now uses the same helper), it is durable (health × 100) and not part of the trade.
+  - The team's account is kept full every tick, so rearming isn't throttled by an economy these fights don't model.
+  - Aircraft fly home empty, rearm and come back, as in a match. Fights still end at 2 minutes.
+- **Report** (`lune run balance`): "ran out of ammo (no rearm pads)" is no longer a diagnosis.
+- **Air rows** (2 seeds; this run also includes D100–D101):
+  - all 30 "ran out of ammo" findings are gone (20 mechanic, plus 10 fighter mirrors flagged as dry);
+  - attack helicopters against ships now rearm and lose on numbers (7 findings);
+  - Behemoth sieges 81% → 100%;
+  - fighter mirrors: wins Falcon 4 → 17 of 44, Archon 6 → 13, Harpy 10 → 24; the same-role band is now 34 of 38 fights inside (was 32);
+  - still outside the band: Archon vs Harpy (0.24 / 0.49), Falcon vs Manticore close (0.22), Judgement vs Hellmouth long (0.43).
+  - Whole check: 456 of 568 pairs hold (was 452); 193 findings (50 mechanic, 143 numbers).
+  - The remaining air mechanic findings are bombers: 31 bombed only small radar contacts and missed, 16 never lined up a run against AA, 1 couldn't see.
+
+## D104 — Fire-control (tracking) radar (2026-10-20, user-requested)
+
+- **Defs:** new optional sensor fields `track` (radius), `trackError` (wobble radius of tracked contacts) and `trackDrain` (power per second).
+- **Sensors:**
+  - A sixth map `track` per ally team, stamped like `radar` (moves shift circles, full stamps budgeted).
+  - An enemy unit that the team's radar detects (radar map, not inside its own team's jam map, stealth check passed) and that lies in the `track` map is **tracked** (`sensors.tracked[team]`, `Sensors.isTracked`).
+  - The level stays `RADAR`, so every radar-contact rule (`canTargetRadar`, radar locks, wire flags) still applies.
+  - A tracked radar contact's believed position wobbles by the team's best `trackError` instead of its `radarError`.
+- **Jamming:** hides from tracking radar with no burn-through, because a jammed unit isn't radar-detected at all.
+- **Power:**
+  - `Sensors.drainStep` (a Build.step economy consumer, next to DIRCM) drains `trackDrain` power per second at the team's power stall ratio. The share a radar gets (`trackScale`, hashed) scales its radius, rounded down to whole 16-stud sensor cells.
+  - A radar re-stamps when its radius changes; radii tables are cached per (def, radius).
+  - Jammer upkeep (guide 11.4) is still not implemented; it can reuse this mechanism.
+- **Weapons:**
+  - Artillery, MLRS and bombs aim at the believed position, hence the tracked one.
+  - Bombers also lead tracked contacts (`Air.bombSolution`), as they lead visible ones: tracking radar measures motion.
+- **Wire:** strategic flag `TRACKED` = bit 4 (`PROTOCOL_VERSION` 5). A tracked contact's record carries the real icon; plain radar contacts keep icon 0.
+- **Defs** (T2 placeholders, balance in M8):
+
+| | Order | Chaos |
+|---|---|---|
+| Structure | `ord_tribunal` Tribunal: track 700, error 4, drain 40, 220 / 3,200 | `chs_seekerspire` Seeker Spire: track 600, error 10, drain 25, 150 / 2,200 |
+| Vehicle | `ord_arbiter` Arbiter: track 450, error 6, drain 25, 160 / 2,400 | `chs_stalker` Stalker: track 380, error 12, drain 18, 120 / 1,700 |
+
+  The structures are built by the Advanced Ground Workers (Architect, Forgemaster), the vehicles by the Advanced Vehicle Plants. Tracking radars have no early-warning radar of their own.
+- **Tests** (`Tracking.spec`):
+  - a Verdict on a radar-only Ravager: 4 of 15 direct hits untracked, 11 of 15 tracked;
+  - an Absolution against a radar-only tank driving back and forth: 0 of 9 untracked, 6 of 10 tracked;
+  - wobble stays within the Tribunal's 4 and the Seeker Spire's 10, and Order's is smaller;
+  - a Shroud jammer cancels the track (and the radar contact);
+  - the client gets the real icon and TRACKED only for the tracked contact;
+  - a power stall shrinks the radius until the tank isn't tracked, and power brings it back.
+  - Mutations (no tracking wobble, no lead) fail.
+- **Balance:** `lune run balance` has a new section "Fire-control radar". It runs `Scenes.radarDuel`: equal-value artillery groups 380 studs apart, beyond sight, each with its T1 radar tower, with no tracking, Order tracking or Chaos tracking.
+  - In the first run, Order's Tribunal doubled the Verdicts' direct hits (4 → 9). The Hellmouths still won: their mortars kill a tight group by blast alone.
+  - With MLRS, Order won faster with tracking (1,021 vs 1,468 ticks).
+  - Final run (2 seeds), Order's trade (no tracking / Order tracks / Chaos tracks): Verdict vs Hellmouth 0.61 / 0.71 / 0.68; Judgement vs Hydra 1.64 / 1.90 / 1.68.
+  - Chaos's tracking more than doubles its direct hits (2 → 5) but not its effect. Order's units even live longer (unit-ticks 1,097 → 1,617): precise blast shells pile onto the one unit they aim at, while wobbly ones spread damage over the group. A question for the user.
+
+## D105 — Radar-guided lock range +10% against tracked targets (2026-10-20, user-requested option)
+
+- `EW.canLock`: for `RADAR` guidance, the lock range is multiplied by `EW.TRACK_LOCK_BONUS` = 1.1 when the shooter's team tracks the target. The fire-control radar hands over its track. Stealth (× signature) and burn-through apply on top.
+- Kept separate from D104 so it can be removed on its own.
+- **Test** (`Tracking.spec`): a Seraph can't lock a Wasp radar contact at 105% of its lock range until a Tribunal tracks it.
+
+## D106 — Pathfinding uses the real map (2026-10-20, user decision)
+
+- **Decision:** routes are planned on true passability, enemy structures included, whether or not the team has seen them. This is treated as physics, like BAR.
+- **Known minor info leak:** units visibly avoid enemy structures their team never saw, so a careful observer can infer an unseen building from a detour. Accepted. Per-team passability would cost a separate flow-field cache per team.
+- Placement uses the same physics at frame start (D101); only planning (the AI) uses team knowledge.
+
+## D107 — Untracked contacts reveal only their domain (2026-10-20, user decision)
+
+- **Rule:** a team knows a unit's type (its categories) only when the unit is VISIBLE, a ghost (seen before), tracked by its fire-control radar (D104), or its own. Any other radar or sonar contact reveals only its domain:
+  - air: AIR, HELI, JET;
+  - surface: GROUND, NAVAL, STRUCTURE;
+  - submerged: SUB.
+- `Sensors.typeKnown` and `Sensors.knownCategories` implement it. `Sensors.DOMAIN_MASK` holds the three masks.
+- **Weapons:**
+  - Targeting filters untracked contacts by domain only.
+  - Untracked contacts score with weight 1 (no type priority).
+  - Their collision radius doesn't count toward range, and bomb release uses radius 0.
+  - Every current radar-capable weapon targets whole domains, so acceptance is unchanged today. Priorities do change: a radar SAM no longer prefers an untracked jet over a nearer untracked helicopter.
+- **AI:** structure / Command Vehicle weighting only for typed contacts (visible, ghost, tracked).
+- **Tests** (`Knowledge.spec`):
+  - untracked tank, helicopter and submarine show only surface, air and submerged; tracked, the tank shows its real categories;
+  - a Seraph picks the nearer untracked blip, but the jet once both are tracked;
+  - the AI prefers a tracked generator over a nearer tank.
+  - The last two fail when the rule is undone.
+- **Still from truth:** a radar contact's altitude (aim height), which radar measures, and the seeker's lock physics (D101).
+
+## D108 — Jammer power upkeep (2026-10-20, user decision; guide 11.4)
+
+- **Defs:** new sensor field `jamDrain` (power per second). Values: Curtain 15, Smog 18, Veil 20, Shroud 25, Banshee 25, Siren 25, Veilspire 30, Blackout 35. Placeholders for M8.
+- **Mechanism:** the same as tracking radars (D104). `Sensors.drainStep` drains `trackDrain + jamDrain` per powered sensor at the team's power stall ratio. The share it gets (`sensors.powerScale`, renamed from `trackScale`, hashed) scales both the track and the jam radius, in whole sensor cells. A unit re-stamps when either radius changes; radii tables are cached per (def, track, jam).
+- **Tests** (`Fog.spec`):
+  - a Veil hides a Lancer 250 studs away while powered, and its upkeep shows in the team's power demand;
+  - after a stall the jam shrinks and the Lancer is a radar contact; power back, it is jammed again.
+  - Ignoring the drain fails the test.
+  - The older jamming test now keeps the Veil powered, because it runs longer than 1,000 stored power lasts.
+
+## D109 — Unit generations and ghost pins (2026-10-20, user decision)
+
+- **Generation counter:** `World.gen[id]` counts the units that have had an ID. It is incremented at spawn, kept after despawn, and hashed. `World.isRef(w, id, gen)` is true only while that very unit lives.
+- **Every remembered unit reference stores its generation**, and every check goes through `World.isRef`:
+  - weapon targets: `wTargetGen` (`World.setTarget`), a ghost's generation for dead structures;
+  - `lastAttackerGen` (RETURN_FIRE);
+  - `AirState.padGen`;
+  - `BuildState.targetGen`;
+  - projectiles' `pOwnerGen` / `pTargetGen` (`Combat.spawnProjectile` now takes the world and the target's generation);
+  - ghosts (`Ghost.gen`);
+  - NetOut's tactical set (stores the generation).
+- **Ghosts:** `Sensors.knownTarget(sim, team, id, gen)` answers for a remembered reference: the live unit if `(id, gen)` matches, else only a ghost of that very generation, else hidden. Targeting, the AI and Placement use the ghost's generation for dead ghosts.
+- **Ghost pins:** an ID remembered as a ghost by any team is pinned (`World.pin` / `unpin`, counted per team), and the allocator sends pinned IDs to the back of the free queue. Why: the wire carries 16-bit IDs, so a ghost and a new unit must not share one in strategic records. The ID is free again once every team has forgotten the ghost (its spot seen).
+- **Tests** (`IdReuse.spec`, reuse forced by using up the fresh IDs):
+  - generations and pins in World;
+  - RETURN_FIRE never answers a new unit that got its old attacker's ID;
+  - a dead structure's ghost keeps its generation and its ID isn't reused until the ghost is forgotten;
+  - a builder drops a stale frame target, and a jet a stale pad, after their IDs went to other units.
+  - Ignoring generations fails three of the tests; ignoring pins fails two.

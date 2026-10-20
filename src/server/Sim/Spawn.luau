@@ -31,6 +31,7 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 	local id = World.spawn(sim.world, sim.tick, {
 		defIndex = def.index,
 		team = player.team,
+		ally = player.allyTeam,
 		owner = owner,
 		x = x,
 		z = z,
@@ -43,6 +44,9 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 	end
 	Air.onSpawn(sim, id)
 	EW.onSpawn(sim, id)
+	if def.converter then
+		World.setState(sim.world, id, bit32.bor(sim.world.state[id], World.State.TOGGLED_ON)) -- converters start on
+	end
 	if def.moveClass == "SUB" then
 		World.setState(sim.world, id, bit32.bor(sim.world.state[id], World.State.SUBMERGED)) -- always submerged (guide 12.3)
 	end

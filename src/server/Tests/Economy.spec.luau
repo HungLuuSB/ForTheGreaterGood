@@ -3,6 +3,9 @@ local Combat = require("../Sim/Combat/Combat")
 local Economy = require("../Sim/Economy")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
+local Packer = require("@shared/Net/Packer")
+local Passability = require("@shared/Grid/Passability")
+local Schema = require("@shared/Net/Schema")
 local RunAll = require("./RunAll")
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
@@ -108,5 +111,108 @@ return function(t: RunAll.Context)
 		t.equal(Sim.hash(a), Sim.hash(b))
 		b.eco.accounts[2].power.stored -= 1
 		t.notEqual(Sim.hash(a), Sim.hash(b))
+	end)
+
+	t.test("wind changes every 30 s, seeded, and drives turbine income", function()
+		local values, distinct = {}, 0
+		for period = 0, 39 do
+			local v = Economy.windAt(7, period * Economy.WIND_PERIOD)
+			t.expect(v >= 0 and v <= 1, "wind in 0..1")
+			t.equal(Economy.windAt(7, period * Economy.WIND_PERIOD + Economy.WIND_PERIOD - 1), v, "constant within a period")
+			if not table.find(values, v) then
+				distinct += 1
+				table.insert(values, v)
+			end
+		end
+		t.expect(distinct >= 30, `it changes ({distinct} distinct values in 40 periods)`)
+		t.expect(Economy.windAt(7, 0) ~= Economy.windAt(8, 0), "another seed, other wind")
+
+		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:64" })
+		Spawn.unit(sim, "ord_windmill", 1, 0, 0)
+		Spawn.unit(sim, "ord_windmill", 1, 40, 0)
+		local max = sim.defs.units.ord_windmill.wind.max
+		for _, at in { 5, Economy.WIND_PERIOD + 5, 3 * Economy.WIND_PERIOD + 5 } do
+			step(sim, at - sim.tick)
+			near(t, sim.eco.accounts[1].power.income, 2 * max * Economy.windAt(7, sim.tick - (sim.tick % 5)), `turbine income at tick {sim.tick}`)
+		end
+	end)
+
+	t.test("a converter turns spare power above half storage into supply, until switched off", function()
+		local function run(off: boolean): (number, number)
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:64" })
+			local conv = Spawn.unit(sim, "ord_converter", 1, 0, 0)
+			local acc = sim.eco.accounts[1]
+			acc.supply.stored = 0 -- room for what is made
+			if off then
+				local w = Packer.Writer.new()
+				Schema.encodeCommand(w, { cmdType = Schema.CmdType.TOGGLE, flags = 0, unitIds = { conv }, value = 0 })
+				assert(Sim.submit(sim, 1, w:finish()))
+			end
+			step(sim, 300) -- 20 s
+			return acc.power.stored, acc.supply.stored
+		end
+		local power, supply = run(false)
+		local rate = 70 -- ord_converter: 70 power → 1 supply
+		near(t, power, 500, "power burned down to the reserve (half of 1,000)")
+		near(t, supply, 500 / rate, "and turned into supply at 70 : 1")
+		local powerOff, supplyOff = run(true)
+		near(t, powerOff, 1000, "switched off: no power burned")
+		near(t, supplyOff, 0, "and no supply made")
+	end)
+
+	t.test("an advanced extractor upgrades your own extractor in place; others' or same-tier ones block", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		local layers = (sim.map :: any).layers
+		local g = layers.grid
+		local w = sim.world
+		local start = layers.starts[1]
+		local sx, sz = g:cellAt(start[1], start[2])
+		local dx, dz = g:cellCenter(sx + 4, sz + 4)
+		local t1 = Spawn.unit(sim, "ord_extractor", 1, dx, dz)
+		Spawn.unit(sim, "ord_generator", 1, start[1] - 60, start[2]) -- some power
+		local builder = Spawn.unit(sim, "ord_architect", 1, dx - 30, dz)
+		local Placement = require("../Sim/Placement")
+		local ok, why = Placement.check(sim, sim.defs.units.ord_extractor, dx, dz, 1)
+		t.expect(not ok and why == "occupied", "a second T1 extractor can't go on it")
+		ok, why = Placement.check(sim, sim.defs.units.chs_advextractor, dx, dz, 2)
+		t.expect(not ok and why == "occupied", "the other team can't upgrade it")
+		local okUp, _, _, _, _, _, replaces = Placement.check(sim, sim.defs.units.ord_advextractor, dx, dz, 1)
+		t.expect(okUp and replaces == t1, "its owner can upgrade it")
+		local wcmd = Packer.Writer.new()
+		local cell, ox, oz = g:encode(dx, dz)
+		Schema.encodeCommand(wcmd, { cmdType = Schema.CmdType.BUILD, flags = 0, unitIds = { builder }, defIndex = sim.defs.units.ord_advextractor.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		assert(Sim.submit(sim, 1, wcmd:finish()))
+		local started, frame = nil, 0
+		for _ = 1, 300 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "BUILD_START" then
+					started, frame = sim.tick, e.unit
+				end
+			end
+			if started then
+				break
+			end
+		end
+		t.expect(started ~= nil, "the upgrade started")
+		t.equal(w.slot[t1], nil, "the T1 extractor was removed when construction started")
+		local pm = sim.map :: Passability.PassMap
+		local gx, gz = g:cellAt(dx, dz)
+		t.equal(Passability.occupant(pm, g:index(gx, gz)), frame, "the frame holds the deposit")
+		local done = false
+		for _ = 1, 6000 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "BUILD_DONE" and e.unit == frame then
+					done = true
+				end
+			end
+			if done then
+				break
+			end
+		end
+		t.expect(done, "the advanced extractor finished")
+		step(sim, 5)
+		near(t, sim.eco.accounts[1].supply.income, 1.75 * 4, "advanced rate 1.75 × deposit value 4")
 	end)
 end

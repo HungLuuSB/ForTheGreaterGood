@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 130, power = 2000, buildTime = 4000 },
 	health = 480,
 	movement = { maxSpeed = 34, accel = 13, brake = 26, turnRate = 120 },
-	sensors = { sight = 110, jam = 450 },
+	sensors = { sight = 110, jam = 450, jamDrain = 25 },
 	pieces = { "base", "array" },
 	model = "chs_shroud",
 	icon = "jammer",

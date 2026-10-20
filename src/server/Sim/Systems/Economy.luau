@@ -6,5 +6,5 @@ local Economy = require("../Economy")
 local Types = require("../Types")
 
 return function(sim: Types.Sim)
-	Economy.step(sim.eco, sim.world, sim.defs, if sim.map then sim.map.layers else nil)
+	Economy.step(sim.eco, sim.world, sim.defs, if sim.map then sim.map.layers else nil, sim.tick)
 end

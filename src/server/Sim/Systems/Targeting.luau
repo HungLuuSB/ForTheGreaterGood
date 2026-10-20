@@ -1,11 +1,17 @@
 --!strict
 -- System 4: target acquisition (guide 10.2).
 --
--- Each weapon keeps its current target while it stays valid: alive, an
--- enemy the team knows about (VISIBLE; RADAR contacts and structure ghosts
--- only for canTargetRadar weapons, guide 11.4), a category it can hit, within
--- range (+10% hysteresis, measured to the known position) and arc, and
--- allowed by the unit's fire state. An invalid target is dropped at once. A
+-- Targeting follows team knowledge, never server truth (D100). Each weapon
+-- keeps its current target while it stays valid: an enemy the team knows
+-- about (VISIBLE; RADAR contacts and structure ghosts only for
+-- canTargetRadar weapons, guide 11.4), a category it can hit, within range
+-- (+10% hysteresis, measured to the known position) and arc, and allowed by
+-- the unit's fire state. A ghost stays a target even if its structure died
+-- unseen (the team can't tell): until the spot is seen again, when Sensors
+-- forgets it. Bombers with an attack-ground order (Air) don't auto-target.
+-- An untracked radar or sonar contact reveals only its domain (D107): it is
+-- filtered by domain, scored without type priorities, and its collision
+-- radius doesn't count toward range. An invalid target is dropped at once. A
 -- weapon without a target searches only on its unit's stagger tick
 -- ((id + tick) % STAGGER == 0), so 1/STAGGER of units search per tick.
 --
@@ -62,26 +68,32 @@ end
 -- Can `weapon` on unit `id` engage `t`? Returns the center distance when yes.
 local VISIBLE, RADAR, GHOST, SONAR = Sensors.Level.VISIBLE, Sensors.Level.RADAR, Sensors.Level.GHOST, Sensors.Level.SONAR
 
-local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number): number?
+-- `gen` is the remembered target's generation (D109); nil = the live unit.
+local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number, gen: number?): number?
 	local c = sim.combat
 	local w = sim.world
-	if w.slot[t] == nil or w.team[t] == w.team[id] then
+	if w.slot[t] ~= nil and w.ally[t] == w.ally[id] and (gen == nil or w.gen[t] == gen) then
 		return nil
 	end
-	local tp = c.profiles[w.defIndex[t]]
-	if band(weapon.targetMask, tp.categoryMask) == 0 then
+	local kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], t, gen)
+	if kx == nil then
 		return nil
 	end
-	local kx, kz, level = Sensors.knownPosition(sim, w.team[id], t)
+	local tp = c.profiles[defIndex :: number]
+	local known = Sensors.typeKnown(sim, w.ally[id], t, level)
+	if band(weapon.targetMask, Sensors.knownCategories(sim, w.ally[id], t, level, defIndex :: number)) == 0 then
+		return nil
+	end
+	local radius = if known then tp.radius else 0
 	local allowed = level == VISIBLE
 		or ((level == RADAR or level == GHOST) and weapon.canTargetRadar)
 		or (level == SONAR and weapon.type == "TORPEDO") -- torpedoes hunt sonar contacts
-	if kx == nil or not allowed then
+	if not allowed then
 		return nil
 	end
 	local dx, dz = (kx :: number) - w.posX[id], (kz :: number) - w.posZ[id]
 	local dist = sqrt(dx * dx + dz * dz)
-	if dist > weapon.range * hysteresis + tp.radius then
+	if dist > weapon.range * hysteresis + radius then
 		return nil
 	end
 	local turret = weapon.turret
@@ -96,31 +108,71 @@ local function isGuided(weapon: Defs.WeaponDef): boolean
 	return weapon.guidance ~= nil and weapon.type == "HOMING"
 end
 
-local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, dist: number): number
-	local s = priorityWeight(weapon.priorityMasks, sim.combat.profiles[sim.world.defIndex[t]].categoryMask) / math.max(dist, 1)
+local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, dist: number, gen: number?): number
+	local team = sim.world.ally[id]
+	local _, _, level, defIndex = Sensors.knownTarget(sim, team, t, gen)
+	-- type priorities only for targets whose type the team knows (D107)
+	local weight = if Sensors.typeKnown(sim, team, t, level) then priorityWeight(weapon.priorityMasks, sim.combat.profiles[defIndex :: number].categoryMask) else 1
+	local s = weight / math.max(dist, 1)
 	if isGuided(weapon) and EW.canLock(sim, id, weapon, t, dist) then
 		s *= LOCK_PREFERENCE
 	end
 	return s
 end
 
--- Best acceptable enemy within range, and its score (0, 0 when none).
-local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (number, number)
+-- The largest radar error any def has: a radar contact's believed position
+-- can be this far from its true one (cached per def set).
+local maxErrorCache: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any
+local function maxRadarError(sim: Types.Sim): number
+	local e = maxErrorCache[sim.defs]
+	if e == nil then
+		e = Sensors.DEFAULT_RADAR_ERROR
+		for _, d in sim.defs.unitByIndex do
+			e = math.max(e, d.sensors.radarError or 0)
+		end
+		maxErrorCache[sim.defs] = e
+	end
+	return e
+end
+
+-- Best acceptable enemy within range: (target, its generation, score);
+-- (0, 0, 0) when none.
+-- Candidates come from the contact grid (true positions), gathered wide
+-- enough that every enemy whose believed position is in range is among
+-- them: acceptance is decided on the believed position (D101).
+local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (number, number, number)
 	local c = sim.combat
 	local w = sim.world
-	local best, bestScore = 0, 0
-	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], weapon.range + c.maxRadius, w.team[id], candidates)
+	local best, bestGen, bestScore = 0, 0, 0
+	local reach = weapon.range + c.maxRadius + (if weapon.canTargetRadar or weapon.type == "TORPEDO" then maxRadarError(sim) else 0)
+	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], reach, w.ally[id], candidates)
 	for i = 1, n do
 		local t = candidates[i]
 		local dist = acceptable(sim, id, weapon, t, 1)
 		if dist ~= nil then
 			local s = score(sim, id, weapon, t, dist)
 			if s > bestScore or (s == bestScore and t < best) then
-				best, bestScore = t, s
+				best, bestGen, bestScore = t, w.gen[t], s
 			end
 		end
 	end
-	return best, bestScore
+	-- remembered structures that are no longer there: the team doesn't know
+	if weapon.canTargetRadar then
+		local ally = w.ally[id]
+		for _, gid in sim.sensors.ghostIds[ally] or {} do
+			local ghost = sim.sensors.ghosts[ally][gid]
+			if not World.isRef(w, gid, ghost.gen) then
+				local dist = acceptable(sim, id, weapon, gid, 1, ghost.gen)
+				if dist ~= nil then
+					local s = score(sim, id, weapon, gid, dist, ghost.gen)
+					if s > bestScore or (s == bestScore and gid < best) then
+						best, bestGen, bestScore = gid, ghost.gen, s
+					end
+				end
+			end
+		end
+	end
+	return best, bestGen, bestScore
 end
 
 return function(sim: Types.Sim)
@@ -139,41 +191,50 @@ return function(sim: Types.Sim)
 		local fs = w.fireState[id]
 		local searchNow = (id + tick) % STAGGER == 0
 		local attacker = w.lastAttacker[id]
+		if not World.isRef(w, attacker, w.lastAttackerGen[id]) then
+			attacker = 0 -- gone, or its ID now belongs to another unit (D109)
+		end
 
+		local groundOrder = sim.air.groundX[id] ~= nil
 		for slot = 1, count do
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
+			if groundOrder and weapon.type == "BOMB" then
+				World.setTarget(w, key, 0) -- bombing the ordered spot (Air.bombAim)
+				continue
+			end
 
 			local cur = w.wTarget[key]
+			local curGen = w.wTargetGen[key]
 			local curDist: number? = nil
 			if cur ~= 0 then
-				curDist = acceptable(sim, id, weapon, cur, RANGE_HYSTERESIS)
+				curDist = acceptable(sim, id, weapon, cur, RANGE_HYSTERESIS, curGen)
 				local keep = fs ~= HOLD_FIRE and (fs ~= RETURN_FIRE or cur == attacker) and curDist ~= nil
 				if not keep then
 					cur = 0
-					w.wTarget[key] = 0
+					World.setTarget(w, key, 0)
 				end
 			end
 
 			-- guided missiles: switch to a clearly better (e.g. lockable) target
 			if cur ~= 0 and searchNow and fs ~= RETURN_FIRE and isGuided(weapon) then
-				local best, bestScore = search(sim, id, weapon)
-				if best ~= 0 and best ~= cur and bestScore > score(sim, id, weapon, cur, curDist :: number) * SWITCH_MARGIN then
-					w.wTarget[key] = best
+				local best, bestGen, bestScore = search(sim, id, weapon)
+				if best ~= 0 and best ~= cur and bestScore > score(sim, id, weapon, cur, curDist :: number, curGen) * SWITCH_MARGIN then
+					World.setTarget(w, key, best, bestGen)
 				end
 				continue
 			end
 
 			if cur == 0 and searchNow and fs ~= HOLD_FIRE then
-				local best = 0
+				local best, bestGen = 0, 0
 				if fs == RETURN_FIRE then
 					if attacker ~= 0 and acceptable(sim, id, weapon, attacker, 1) ~= nil then
-						best = attacker
+						best, bestGen = attacker, w.gen[attacker]
 					end
 				else
-					best = search(sim, id, weapon)
+					best, bestGen = search(sim, id, weapon)
 				end
-				w.wTarget[key] = best
+				World.setTarget(w, key, best, bestGen)
 			end
 		end
 	end

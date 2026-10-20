@@ -4,12 +4,12 @@ Everything that needs Roblox Studio, in the order to do it. The headless simulat
 
 State at handoff (2026-10-20, updated after round 4):
 - Branch `m0-foundations`.
-- `lune run test`: **27 specs, 188 passed**.
-- `lune run build`: 143 scripts compile; 482 requires resolve to ModuleScripts.
+- `lune run test`: **30 specs, 207 passed** (branch `m-sim-polish`).
+- `lune run build`: 245 scripts compile; 701 requires resolve to ModuleScripts.
 - `src/client` is empty.
 - No Roblox-only server code exists yet.
 
-Read first: `CLAUDE.md` (Lune mode rules), `docs/PROGRESS.md` (what exists), `docs/DECISIONS.md` (why). The design guide sections are named in each step.
+Read first: `CLAUDE.md` (Lune mode rules), `docs/progress/sim.md` (what exists in the simulation), `docs/DECISIONS.md` (why). The design guide sections are named in each step.
 
 ---
 
@@ -44,7 +44,7 @@ Roblox can't resolve `@shared/...` aliases or relative string requires yet (see 
   - print the same summary line.
 - [ ] Run it. Expect **27 specs, 182 passed**.
   - `Env.isRoblox` should be true: `Profiler` then uses `debug.profilebegin`, and `Log` uses `warn` for warnings.
-  - Some specs print measurements (direct-hit rates, the naval duel, EW tallies). Compare them with the Lune output in PROGRESS.md.
+  - Some specs print measurements (direct-hit rates, the naval duel, EW tallies). Compare them with the Lune output in `docs/progress/sim.md`.
 - [ ] **Cross-runtime hash check** (informational, DECISIONS D51): print `Sim.hash` after the `Sim.spec` 1,000-tick run and after `ew_test` at tick 600, in Lune and in Studio. Prng is pure Luau and identical; `sin`, `cos` and `atan2` come from each platform's libm and may differ. We accepted same-platform replays (guide 17.1), so a mismatch is expected and fine. Record the result in DECISIONS.
 - [ ] Clean Output: no warnings from the Defs loader, no strict-mode type errors in Script Analysis for `src/shared` and `src/server`.
 
@@ -102,7 +102,7 @@ In guide order. Each is client-only and builds on step 5.
 
 ## 8. Live-server benchmarks to repeat (M5, guide 18)
 
-Lune numbers are in PROGRESS.md → Benchmarks. Repeat the same scenarios on a live server (not only Studio play-solo), with the MicroProfiler open (Profiler labels are `Sim.<System>`).
+Lune numbers are in `docs/progress/sim.md` → Benchmarks. Repeat the same scenarios on a live server (not only Studio play-solo), with the MicroProfiler open (Profiler labels are `Sim.<System>`).
 
 - [ ] **Flow fields** (`lune run bench` scenarios: open, maze, island at 256×256): one-shot time and work units per ms. Check that `Nav.PATHING_BUDGET` (36,000 units per tick) still fits the 8 ms pathing budget at Roblox speed; re-derive it if not.
 - [ ] **Stress test** (`.lune/stress.luau`) at 200, 400, 600 and 800 units:
@@ -115,6 +115,6 @@ Lune numbers are in PROGRESS.md → Benchmarks. Repeat the same scenarios on a l
 
 ## 9. Open items carried over
 
-- Questions for the user are listed in PROGRESS.md's summary.
+- Questions for the user are listed in the summary of each `docs/progress/` file.
 - Guide 7.5 (join, reconnect, spectate) and guide 19 (anti-exploit) are server-entry work for step 3.
 - Missile reload costs (guide 8.6) and flare/chaff refill costs aren't charged yet (D81). Balance is M8.

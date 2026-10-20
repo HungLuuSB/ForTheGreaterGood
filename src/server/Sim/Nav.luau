@@ -1,7 +1,7 @@
 --!strict
 -- Navigation state shared by the Commands, Pathing and Movement systems
 -- (guide 6.3–6.6): per-def movement profiles, quadtrees (built when the map
--- loads, rebuilt lazily after terrain changes), the flow field cache and job
+-- loads, updated locally when terrain changes), the flow field cache and job
 -- queue, and move orders.
 --
 -- A move order covers the units of one (move class, clearance need) group.
@@ -733,11 +733,30 @@ function Nav.extendField(nav: Nav, order: Order, cells: { number }, tick: number
 end
 
 -- Passability changed inside the cell rectangle (a structure was placed or
--- removed): drop every quadtree (rebuilt lazily) and every cached field whose
--- corridor touches the rectangle. Orders keep their current field; units it
--- now leads into the structure stall and get an extended field (D39).
+-- removed): update each quadtree locally (D86; the rectangle is padded by
+-- the clearance cap, the farthest clearance can change) and drop every
+-- cached field whose corridor touches the rectangle. Route searches in
+-- flight over a changed tree restart. Orders keep their current field;
+-- units it now leads into the structure stall and get an extended field
+-- (D39).
 function Nav.terrainChanged(nav: Nav, x0: number, z0: number, x1: number, z1: number)
-	table.clear(nav.trees)
+	local pad = Passability.CLEARANCE_CAP
+	local keys: { string } = {}
+	for key in nav.trees do
+		table.insert(keys, key)
+	end
+	table.sort(keys)
+	for _, key in keys do
+		local tree = nav.trees[key]
+		if Quadtree.update(tree, nav.pm, x0 - pad, z0 - pad, x1 + pad, z1 + pad) then
+			for i = nav.jobHead, nav.jobTail - 1 do
+				local plan = nav.jobs[i].plan
+				if plan and plan.tree == tree and plan.search then
+					plan.search = nil -- its leaf IDs are stale: search again
+				end
+			end
+		end
+	end
 	local g = nav.grid
 	for z = math.max(z0, 0), math.min(z1, g.cellsZ - 1) do
 		for x = math.max(x0, 0), math.min(x1, g.cellsX - 1) do

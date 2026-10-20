@@ -1,0 +1,20 @@
+--!strict
+local Templates = require("../Templates")
+
+-- Placeholder (guide 9.2 "Advanced Shipyard", T2); stats to balance in M8.
+return Templates.extend(Templates.Structure, {
+	id = "ord_advshipyard",
+	name = "Advanced Shipyard",
+	description = "T2 factory: advanced naval worker, T2 ships and the carrier.",
+	faction = "order",
+	tier = 2,
+	categories = { "STRUCTURE" },
+	cost = { supply = 2400, power = 10000, buildTime = 34000 },
+	health = 6500,
+	footprint = 5,
+	icon = "factory_naval",
+	placement = "water",
+	buildPower = 200,
+	buildOptions = { "ord_harbormaster", "ord_crusader", "ord_dominion", "ord_sanctuary" },
+	model = "ord_advshipyard",
+})

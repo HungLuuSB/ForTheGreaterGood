@@ -36,6 +36,7 @@ return function(sim: Types.Sim)
 		local attacker = c.dmgAttacker[i]
 		if attacker ~= t then
 			w.lastAttacker[t] = attacker
+			w.lastAttackerGen[t] = if attacker ~= 0 then w.gen[attacker] or 0 else 0 -- D109
 		end
 		if after <= 0 then
 			nDead += 1

@@ -107,11 +107,28 @@ local function run(total: number)
 	local tickTimes = {}
 	-- move-order path per tick: Commands (issuing) + Pathing (plans, fields)
 	local orderPeak, lastOrders = 0, 0
+	-- structures placed mid-battle (every 30 ticks from tick 60), timed with
+	-- the tick they land in: passability, quadtree and field-cache updates
+	local placements, placementPeak, placeCost = 0, 0, 0
 	local t0 = os.clock()
-	for _ = 1, TICKS do
+	for tick = 1, TICKS do
 		local s = os.clock()
+		local placed = false
+		if tick >= 60 and tick % 30 == 0 then
+			local k = tick // 30
+			local x, z = ((k * 137) % 400) - 200, ((k * 71) % 400) - 200
+			local p0 = os.clock()
+			Spawn.unit(sim, if k % 2 == 0 then "ord_vehplant" else "chs_generator", 1 + k % 2, x, z)
+			placeCost = math.max(placeCost, (os.clock() - p0) * 1000)
+			placements += 1
+			placed = true
+		end
 		Sim.step(sim)
-		table.insert(tickTimes, (os.clock() - s) * 1000)
+		local ms = (os.clock() - s) * 1000
+		table.insert(tickTimes, ms)
+		if placed then
+			placementPeak = math.max(placementPeak, ms)
+		end
 		local orders = (timing.total["Sim.Commands"] or 0) + (timing.total["Sim.Pathing"] or 0)
 		orderPeak = math.max(orderPeak, (orders - lastOrders) * 1000)
 		lastOrders = orders
@@ -142,15 +159,37 @@ local function run(total: number)
 	end
 	out("first system over budget (average): " .. (firstOver or "none"))
 	out(string.format("move orders (Commands + Pathing in one tick): worst tick %.2f ms", orderPeak))
+	out(string.format("structure placements mid-battle: %d, worst tick with a placement %.2f ms (placement itself: worst %.2f ms)", placements, placementPeak, placeCost))
 	-- bandwidth per player
 	local seconds = TICKS / 15
 	for pid = 1, 2 do
 		local pn = sim.net.players[pid]
 		local tac = pn.bytes.Tactical / seconds / 1000
 		local strat = pn.bytes.Strategic / seconds / 1000
-		local se = (pn.bytes.State + pn.bytes.Events) / seconds / 1000
-		out(string.format("player %d KB/s: tactical %.2f (peak target 15), strategic %.2f (10), state+events %.2f (10), total %.2f (35)%s",
-			pid, tac, strat, se, tac + strat + se, if tac + strat + se > 35 then "  OVER" else ""))
+		local st = pn.bytes.State / seconds / 1000
+		local ev = pn.bytes.Events / seconds / 1000
+		local se = st + ev
+		local pr = (pn.bytes.Projectiles or 0) / seconds / 1000
+		local total = tac + strat + se + pr
+		out(string.format("player %d KB/s: tactical %.2f (peak target 15), strategic %.2f (10), state %.2f + events %.2f = %.2f (10), projectiles %.2f, total %.2f (35)%s",
+			pid, tac, strat, st, ev, se, pr, total, if total > 35 then "  OVER" else ""))
+		local kinds = {}
+		for name, k in Schema.EventKind do
+			local n = (pn.eventCounts or {})[k] or 0
+			if n > 0 then
+				table.insert(kinds, { name = name, n = n })
+			end
+		end
+		table.sort(kinds, function(x, y)
+			return x.n > y.n
+		end)
+		local parts = {}
+		for _, k in kinds do
+			table.insert(parts, string.format("%s %.1f/s", k.name, k.n / seconds))
+		end
+		if #parts > 0 then
+			out(string.format("  player %d event records: %s", pid, table.concat(parts, ", ")))
+		end
 	end
 	return firstOver
 end

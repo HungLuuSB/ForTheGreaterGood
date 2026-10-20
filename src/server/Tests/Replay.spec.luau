@@ -9,7 +9,8 @@ local function sampleLog(): Replay.Log
 		seed = 4294967295,
 		mapId = "test_map",
 		scenario = "skirmish_test",
-		players = { { id = 1, team = 1 }, { id = 7, team = 8 } },
+		players = { { id = 1, team = 1, allyTeam = 1 }, { id = 7, team = 8, allyTeam = 2 } },
+		match = { mode = "TEAM", win = "ANNIHILATION", unitCap = 250 },
 	})
 	Replay.addCommand(log, 1, 1, buffer.fromstring("\7\0\1\0\1\0"))
 	Replay.addCheckpoint(log, 300, 0x12345678)

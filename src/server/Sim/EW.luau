@@ -41,9 +41,11 @@ local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
 local Sensors = require("./Sensors")
 local Types = require("./Types")
+local World = require("./World")
 
 local EW = {}
 
+EW.TRACK_LOCK_BONUS = 1.1 -- radar-guided lock range against tracked targets (D105)
 EW.DT = 1 / 15
 EW.MIDCOURSE_PERIOD = 5 -- ticks between midcourse checks
 EW.BURN_THROUGH = 0.35 -- default fraction of lockRange
@@ -137,7 +139,7 @@ end
 
 -- Is unit `id` hidden by its own team's jammers (guide 11.4)?
 function EW.jammed(sim: Types.Sim, id: number): boolean
-	return inJamOf(sim, sim.world.team[id], id)
+	return inJamOf(sim, sim.world.ally[id], id)
 end
 
 function EW.lockRange(weapon: Defs.WeaponDef): number
@@ -155,13 +157,16 @@ function EW.canLock(sim: Types.Sim, shooter: number, weapon: Defs.WeaponDef, tar
 	if guidance == nil or weapon.type ~= "HOMING" then
 		return true
 	end
-	local level = Sensors.level(sim, sim.world.team[shooter], target)
+	local level = Sensors.level(sim, sim.world.ally[shooter], target)
 	local range = EW.lockRange(weapon)
 	if guidance == "IR" then
 		return level == L.VISIBLE and dist <= range
 	elseif guidance == "RADAR" then
 		if level ~= L.VISIBLE and level ~= L.RADAR then
 			return false
+		end
+		if Sensors.isTracked(sim, sim.world.ally[shooter], target) then
+			range *= EW.TRACK_LOCK_BONUS -- fire-control radar hands over the track (D105)
 		end
 		local signature = math.min(unitDef(sim, target).sensors.radarSignature, 1)
 		if dist > range * signature then
@@ -216,7 +221,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	local c = sim.combat
 	local w = sim.world
 	local target = c.pTarget[p]
-	if target == 0 or w.slot[target] == nil then
+	if not World.isRef(w, target, c.pTargetGen[p]) then
 		return
 	end
 	local flags = c.pFlags[p]
@@ -231,7 +236,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 			lost = dx * dx + dz * dz > bt * bt and EW.jammed(sim, target)
 		elseif guidance == "COMMAND" then
 			local launcher = c.pOwner[p]
-			lost = w.slot[launcher] == nil or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE
+			lost = not World.isRef(w, launcher, c.pOwnerGen[p]) or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE
 		end
 		if lost then
 			c.pTarget[p] = 0
@@ -245,8 +250,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	if bit32.band(flags, TERMINAL) ~= 0 then
 		return
 	end
-	local tp = c.profiles[w.defIndex[target]]
-	local ty = Combat.unitBase(c, w, target) + tp.height / 2
+	local _, ty = Combat.aimPoint(c, w, target)
 	local dx, dy, dz = w.posX[target] - x, ty - y, w.posZ[target] - z
 	local reach = (weapon.terminalRange or EW.TERMINAL_RANGE) + ((weapon.projectileSpeed or 0) + w.speed[target]) * EW.DT
 	if dx * dx + dy * dy + dz * dz > reach * reach then

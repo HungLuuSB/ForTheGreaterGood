@@ -9,6 +9,9 @@
 --                       thick) with one 6-cell gap near the north end
 --   "start:<cells>"     flat land with two starts (west, east), four supply
 --                       deposits (value 4) around each start, two in the middle
+--   "skirmish:<cells>"  "start" plus expansions for the skirmish AI: two
+--                       pairs of deposits (value 3) per side, mirrored, and a
+--                       rich pair (value 6) in the middle
 --   "sea:<cells>"       land on the west quarter (height 10), deep sea elsewhere
 --                       (sea floor -10, surface at 10: 20 studs of water)
 --
@@ -58,6 +61,24 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 		end
 		Layers.setSupply(layers, g:index(mid - 1, mid - 6), 4)
 		Layers.setSupply(layers, g:index(mid, mid + 6), 4)
+		return layers
+	end
+	local skirmishCells = string.match(mapId, "^skirmish:(%d+)$")
+	if skirmishCells then
+		local n = tonumber(skirmishCells) :: number
+		local layers = MapRegistry.load(`start:{n}`) :: Layers.Layers
+		local g = layers.grid
+		local mid = n // 2
+		for _, side in { -1, 1 } do
+			local ex = mid + side * math.floor(n * 0.2)
+			for _, dz in { -1, 1 } do
+				local ez = mid + dz * math.floor(n * 0.25)
+				Layers.setSupply(layers, g:index(ex, ez), 3)
+				Layers.setSupply(layers, g:index(ex + side * 3, ez), 3)
+			end
+		end
+		Layers.setSupply(layers, g:index(mid - 1, mid - 6), 6)
+		Layers.setSupply(layers, g:index(mid, mid + 6), 6)
 		return layers
 	end
 	local seaCells = string.match(mapId, "^sea:(%d+)$")

@@ -64,6 +64,10 @@ export type UnitDef = {
 		jam: number?,
 		radarError: number?,
 		radarSignature: number,
+		track: number?, -- fire-control (tracking) radar radius (D104)
+		trackError: number?, -- wobble radius of contacts this radar tracks
+		trackDrain: number?, -- power per second; the radius shrinks when power stalls
+		jamDrain: number?, -- jammer upkeep, power per second; the jam radius shrinks when power stalls (D108)
 	},
 	weapons: { WeaponSlot },
 	maxRange: number, -- derived: longest weapon range, 0 if unarmed
@@ -73,6 +77,8 @@ export type UnitDef = {
 	buildRange: number?,
 	production: { supply: number?, power: number? }?, -- per second while built
 	extractor: { rate: number }?, -- supply per second per deposit value
+	wind: { max: number }?, -- power per second at full wind (guide 8.5 Wind Turbine)
+	converter: { power: number, supply: number }?, -- per second: power in, supply out (toggleable)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -222,6 +228,10 @@ local UNIT_SPEC: Spec = {
 				jam = opt(NON_NEGATIVE), -- jammer radius (hides own team from enemy radar)
 				radarError = opt(NON_NEGATIVE), -- wobble radius of this unit's radar contacts (studs)
 				radarSignature = FRACTION,
+				track = opt(NON_NEGATIVE), -- tracking radar radius (D104)
+				trackError = opt(NON_NEGATIVE), -- wobble radius of tracked contacts (studs)
+				trackDrain = opt(NON_NEGATIVE), -- power per second while tracking
+				jamDrain = opt(NON_NEGATIVE), -- power per second while jamming (D108)
 			},
 		},
 		weapons = {
@@ -260,6 +270,8 @@ local UNIT_SPEC: Spec = {
 			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
 		},
 		extractor = { kind = "record", optional = true, fields = { rate = POSITIVE } },
+		wind = { kind = "record", optional = true, fields = { max = POSITIVE } },
+		converter = { kind = "record", optional = true, fields = { power = POSITIVE, supply = POSITIVE } },
 		storage = {
 			kind = "record",
 			optional = true,
@@ -470,8 +482,8 @@ function Defs.validate(raw: RawDefs): { string }
 		if PROJECTILE_TYPES[wtype] and wtype ~= "BOMB" and w.projectileSpeed == nil then
 			report(`projectileSpeed: required for {wtype} weapons`)
 		end
-		if wtype == "BALLISTIC" and w.gravity == nil then
-			report("gravity: required for BALLISTIC weapons")
+		if (wtype == "BALLISTIC" or wtype == "BOMB") and w.gravity == nil then
+			report(`gravity: required for {wtype} weapons`)
 		end
 		if GUIDED_TYPES[wtype] then
 			if w.guidance == nil then
@@ -516,11 +528,14 @@ function Defs.validate(raw: RawDefs): { string }
 		if u.ammo ~= nil and u.rearmTime == nil then
 			report("rearmTime: units with ammo need rearmTime")
 		end
-		if u.rearmPads ~= nil and u.domain ~= "structure" then
-			report("rearmPads: only structures have rearm pads")
+		if u.rearmPads ~= nil and u.domain ~= "structure" and u.domain ~= "naval" then
+			report("rearmPads: only structures and ships (carriers) have rearm pads")
 		end
 		if type(u.movement) == "table" and u.movement.minSpeed ~= nil and u.movement.minSpeed > u.movement.maxSpeed then
 			report("movement.minSpeed: above maxSpeed")
+		end
+		if (u.wind ~= nil or u.converter ~= nil) and u.domain ~= "structure" then
+			report("wind / converter: only structures")
 		end
 		if u.extractor ~= nil and u.domain ~= "structure" then
 			report("extractor: only structures can be extractors")

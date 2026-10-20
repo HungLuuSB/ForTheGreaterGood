@@ -8,10 +8,12 @@
 -- Effects: fire state, move state, toggle; MOVE (plus FIGHT and PATROL, which
 -- act as plain moves for now) and STOP when the sim has a map; BUILD (mobile
 -- builders start structures, factories queue units), REPAIR (assist a frame
--- or a factory) and RECLAIM (wrecks). ATTACK and GUARD are recorded but have
--- no effect yet.
+-- or a factory) and RECLAIM (wrecks). ATTACK_GROUND gives bombers an
+-- attack-ground order (Air.attackGround, D100); a later move-like order or
+-- STOP cancels it. ATTACK and GUARD are recorded but have no effect yet.
 
 local Schema = require("@shared/Net/Schema")
+local Air = require("../Air")
 local Build = require("../Build")
 local Nav = require("../Nav")
 local NetOut = require("../NetOut")
@@ -53,6 +55,9 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 	local units = ownedUnits(sim.world, player, cmd.unitIds)
 	if #units == 0 then
 		return
+	end
+	for _, id in units do
+		Air.clearGround(sim, id)
 	end
 	Build.commandIdle(sim, units)
 	local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
@@ -96,6 +101,17 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.RECLAIM then
 		Build.commandReclaim(sim, ownedUnits(w, player, cmd.unitIds), cmd.targetId :: number)
 		return
+	elseif cmdType == CT.ATTACK_GROUND then
+		local g = if sim.map then (sim.map :: any).grid else nil
+		local cell = cmd.cell :: number
+		if g == nil or cell >= g.cellCount then
+			return
+		end
+		local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
+		for _, id in ownedUnits(w, player, cmd.unitIds) do
+			Air.attackGround(sim, id, x, z)
+		end
+		return
 	elseif cmdType == CT.CAMERA then
 		NetOut.setCamera(sim, player, cmd.minX :: number, cmd.minZ :: number, cmd.maxX :: number, cmd.maxZ :: number)
 		return
@@ -112,6 +128,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			local state = w.state[id]
 			World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
 		elseif cmdType == CT.STOP then
+			Air.clearGround(sim, id)
 			Build.commandIdle(sim, { id })
 			if sim.nav then
 				Nav.clearOrder(sim.nav, w, id)

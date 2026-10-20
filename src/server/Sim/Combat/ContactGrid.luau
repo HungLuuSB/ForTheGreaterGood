@@ -70,7 +70,7 @@ function ContactGrid.rebuild(g: ContactGrid, w: World.World)
 end
 
 -- Writes into `out` the IDs of units whose center is within `radius` of
--- (x, z) and whose team is not `excludeTeam` (0 = keep every team). Returns
+-- (x, z) and whose ally team is not `excludeAlly` (0 = keep every team). Returns
 -- the count. Order is deterministic (buckets row by row, ids order within a
 -- bucket). Callers add unit radii to `radius` when they need surface contact.
 function ContactGrid.query(
@@ -79,19 +79,19 @@ function ContactGrid.query(
 	x: number,
 	z: number,
 	radius: number,
-	excludeTeam: number,
+	excludeAlly: number,
 	out: { number }
 ): number
 	local n = 0
 	local x0, z0 = bucketOf(g, x - radius, z - radius)
 	local x1, z1 = bucketOf(g, x + radius, z + radius)
 	local r2 = radius * radius
-	local head, nextUnit, team, posX, posZ = g.head, g.nextUnit, w.team, w.posX, w.posZ
+	local head, nextUnit, ally, posX, posZ = g.head, g.nextUnit, w.ally, w.posX, w.posZ
 	for bz = z0, z1 do
 		for bx = x0, x1 do
 			local id = head[bz * g.width + bx]
 			while id ~= nil and id ~= 0 do
-				if team[id] ~= excludeTeam then
+				if ally[id] ~= excludeAlly then
 					local dx, dz = posX[id] - x, posZ[id] - z
 					if dx * dx + dz * dz <= r2 then
 						n += 1

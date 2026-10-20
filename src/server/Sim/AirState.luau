@@ -14,6 +14,7 @@ export type AirState = {
 	ammo: { [number]: number }, -- rounds left (aircraft with a def ammo count)
 	phase: { [number]: Phase },
 	pad: { [number]: number }, -- rearm pad in use or targeted (0 = none)
+	padGen: { [number]: number }, -- its generation (D109)
 	progress: { [number]: number }, -- rearm progress toward the next round, 0..1
 	resumeX: { [number]: number }, -- where to go back to after rearming
 	resumeZ: { [number]: number },
@@ -21,6 +22,13 @@ export type AirState = {
 	cmPerRound: { [number]: number }, -- charges restocked per round
 	cmSupplyPerRound: { [number]: number }, -- their supply cost per round
 	cmProgress: { [number]: number }, -- toward the next charge, 0..1
+	-- bombers (D91): "in" = lining up on the target, "out" = flying away to
+	-- set up the next run; egress keeps the heading straight after a release
+	run: { [number]: "in" | "out" },
+	egressUntil: { [number]: number }, -- tick
+	-- attack-ground order (bombers, D100): bomb this spot until another order
+	groundX: { [number]: number },
+	groundZ: { [number]: number },
 }
 
 function AirState.new(): AirState
@@ -28,12 +36,17 @@ function AirState.new(): AirState
 		ammo = {},
 		phase = {},
 		pad = {},
+		padGen = {},
 		progress = {},
 		resumeX = {},
 		resumeZ = {},
 		cmPerRound = {},
 		cmSupplyPerRound = {},
 		cmProgress = {},
+		run = {},
+		egressUntil = {},
+		groundX = {},
+		groundZ = {},
 	}
 end
 
@@ -41,12 +54,17 @@ function AirState.clearUnit(a: AirState, id: number)
 	a.ammo[id] = nil
 	a.phase[id] = nil
 	a.pad[id] = nil
+	a.padGen[id] = nil
 	a.progress[id] = nil
 	a.resumeX[id] = nil
 	a.resumeZ[id] = nil
 	a.cmPerRound[id] = nil
 	a.cmSupplyPerRound[id] = nil
 	a.cmProgress[id] = nil
+	a.run[id] = nil
+	a.egressUntil[id] = nil
+	a.groundX[id] = nil
+	a.groundZ[id] = nil
 end
 
 local PHASE_CODE = { fly = 1, ["return"] = 2, rearm = 3 }
@@ -58,11 +76,14 @@ function AirState.hash(a: AirState, ids: { number }, h: number): number
 		if phase then
 			h = Hash.u32(Hash.u32(h, id), PHASE_CODE[phase])
 			h = Hash.u32(h, a.ammo[id] or 0)
-			h = Hash.u32(h, a.pad[id] or 0)
+			h = Hash.u32(Hash.u32(h, a.pad[id] or 0), a.padGen[id] or 0)
 			h = Hash.number(h, a.progress[id] or 0)
 			h = Hash.number(h, a.cmPerRound[id] or 0)
 			h = Hash.number(h, a.cmSupplyPerRound[id] or 0)
 			h = Hash.number(h, a.cmProgress[id] or 0)
+			h = Hash.u32(h, if a.run[id] == "out" then 2 elseif a.run[id] == "in" then 1 else 0)
+			h = Hash.u32(h, a.egressUntil[id] or 0)
+			h = Hash.number(Hash.number(h, a.groundX[id] or 0), a.groundZ[id] or 0)
 		end
 	end
 	return h

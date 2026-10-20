@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 2 -- 2: Events channel records (ENTER, LEAVE, DEATH)
+Schema.PROTOCOL_VERSION = 5 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -28,6 +28,7 @@ Schema.Channel = table.freeze({
 	State = table.freeze({ name = "State", reliable = true }), -- state records
 	Strategic = table.freeze({ name = "Strategic", reliable = false }), -- strategic records
 	Events = table.freeze({ name = "Events", reliable = true }),
+	Projectiles = table.freeze({ name = "Projectiles", reliable = false }), -- homing corrections (D102)
 	Eco = table.freeze({ name = "Eco", reliable = true }),
 	Snapshot = table.freeze({ name = "Snapshot", reliable = true }),
 })
@@ -516,8 +517,9 @@ Schema.StrategicFlag = table.freeze({
 	SONAR_ONLY = 2,
 	UNDER_ATTACK = 4,
 	GHOST = 8, -- structure seen earlier, now out of sight
+	TRACKED = 16, -- radar blip under fire-control radar: wobbles less, and the icon is the real one (D104)
 })
-local STRATEGIC_FLAGS_MASK = 15 -- bits 4..6 reserved
+local STRATEGIC_FLAGS_MASK = 31 -- bits 5..6 reserved
 
 export type Strategic = {
 	unitId: number,
@@ -557,25 +559,40 @@ function Schema.decodeStrategic(r: Reader): Strategic
 end
 
 --------------------------------------------------------------------------------
--- Events (S → C, reliable): tactical tier changes and deaths (guide 7.2, 7.3)
+-- Events (S → C, reliable): tactical tier changes, deaths and combat (guide
+-- 7.2, 7.3). All of a tick's events go in one record list under the tick
+-- header (chunked at 900 bytes).
 --   kind u8, then
---   ENTER  unitId u16 | defIndex u16 | team u8 | cell u16 | offX u8 | offZ u8
---          | heading u8 | alt u8 | health u8 | build u8 | state u16   = 16 bytes
---   LEAVE  unitId u16                                                 =  3 bytes
---   DEATH  unitId u16 | severity u8 | wreckId u16 (0 = none)          =  6 bytes
+--   ENTER       unitId u16 | defIndex u16 | team u8 | cell u16 | offX u8 | offZ u8
+--               | heading u8 | alt u8 | health u8 | build u8 | state u16      = 16 bytes
+--   LEAVE       unitId u16                                                    =  3 bytes
+--   DEATH       unitId u16 | severity u8 | wreckId u16 (0 = none)             =  6 bytes
+--   FIRE        shooterId u16 | slot u8 (bits 0–3 slot 1..8, bit 4 hit;
+--               bits 5–7 reserved) | end pos                                  = 10 bytes
+--   SPAWN_PROJ  projId u16 | weaponDefIndex u16 | pos | vel
+--               | targetId u16 (0 = none or not shown)                        = 19 bytes
+--   IMPACT      projId u16 | pos                                              =  9 bytes
+--   DECOYED     projId u16 | pos | vel (after the decoy turn)                 = 15 bytes
+--   LOST_LOCK   projId u16 | pos | vel (the missile flies on unguided)       = 15 bytes
+-- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
+-- vel = vx i16 | vy i16 | vz i16 (eighth studs per second)                     6 bytes
 --------------------------------------------------------------------------------
 
-Schema.EventKind = table.freeze({ ENTER = 1, LEAVE = 2, DEATH = 3 })
+Schema.EventKind = table.freeze({ ENTER = 1, LEAVE = 2, DEATH = 3, FIRE = 4, SPAWN_PROJ = 5, IMPACT = 6, DECOYED = 7, LOST_LOCK = 8 })
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 15, [8] = 15 })
+Schema.FIRE_HIT = 16 -- FIRE slot byte: bit 4
+Schema.Y_SCALE = 8 -- pos.y and vel units per stud
 
 export type Event = {
 	kind: number,
-	unitId: number,
+	unitId: number?, -- ENTER, LEAVE, DEATH; FIRE: the shooter
+	projId: number?, -- SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK
 	-- ENTER
 	defIndex: number?,
 	team: number?, -- 1..8
-	cell: number?,
+	cell: number?, -- ENTER, and pos of FIRE (end point), SPAWN_PROJ, IMPACT, DECOYED
 	offX: number?,
 	offZ: number?,
 	heading: number?,
@@ -586,15 +603,62 @@ export type Event = {
 	-- DEATH
 	severity: number?,
 	wreckId: number?,
+	-- FIRE
+	slot: number?, -- 1..8
+	hit: boolean?,
+	-- pos (FIRE, SPAWN_PROJ, IMPACT, DECOYED)
+	y: number?, -- eighth studs (i16)
+	-- vel (SPAWN_PROJ, DECOYED)
+	vx: number?,
+	vy: number?,
+	vz: number?,
+	-- SPAWN_PROJ
+	weaponIndex: number?,
+	targetId: number?, -- 0 = none
 }
+
+local function writePos(w: Writer, e: Event)
+	w:writeU16(required(e.cell, "cell"))
+	w:writeU8(required(e.offX, "offX"))
+	w:writeU8(required(e.offZ, "offZ"))
+	w:writeI16(required(e.y, "y"))
+end
+
+local function readPos(r: Reader, e: Event)
+	e.cell = r:readU16()
+	e.offX = r:readU8()
+	e.offZ = r:readU8()
+	e.y = r:readI16()
+end
+
+local function writeVel(w: Writer, e: Event)
+	w:writeI16(required(e.vx, "vx"))
+	w:writeI16(required(e.vy, "vy"))
+	w:writeI16(required(e.vz, "vz"))
+end
+
+local function readVel(r: Reader, e: Event)
+	e.vx = r:readI16()
+	e.vy = r:readI16()
+	e.vz = r:readI16()
+end
+
+-- Studs (or studs per second) → the i16 wire unit, clamped.
+function Schema.toI16(v: number): number
+	return math.clamp(math.floor(v * Schema.Y_SCALE + 0.5), -32768, 32767)
+end
 
 function Schema.encodeEvent(w: Writer, e: Event)
 	local kind = e.kind
-	if kind ~= EK.ENTER and kind ~= EK.LEAVE and kind ~= EK.DEATH then
+	if Schema.EVENT_BYTES[kind] == nil then
 		error(`Schema: unknown event kind {kind}`, 2)
 	end
 	w:writeU8(kind)
-	writeId(w, e.unitId, "unitId")
+	if kind >= EK.SPAWN_PROJ then
+		writeId(w, required(e.projId, "projId"), "projId")
+	else
+		writeId(w, required(e.unitId, "unitId"), "unitId")
+	end
 	if kind == EK.ENTER then
 		local team = required(e.team, "team")
 		if team < 1 or team > Schema.MAX_TEAMS then
@@ -613,16 +677,38 @@ function Schema.encodeEvent(w: Writer, e: Event)
 	elseif kind == EK.DEATH then
 		w:writeU8(required(e.severity, "severity"))
 		w:writeU16(required(e.wreckId, "wreckId"))
+	elseif kind == EK.FIRE then
+		local slot = required(e.slot, "slot")
+		if slot < 1 or slot > Schema.MAX_WEAPONS then
+			error(`Schema: weapon slot {slot} outside 1..{Schema.MAX_WEAPONS}`, 2)
+		end
+		w:writeU8(slot + (if e.hit then Schema.FIRE_HIT else 0))
+		writePos(w, e)
+	elseif kind == EK.SPAWN_PROJ then
+		writeId(w, required(e.weaponIndex, "weaponIndex"), "weaponIndex")
+		writePos(w, e)
+		writeVel(w, e)
+		w:writeU16(e.targetId or 0)
+	elseif kind == EK.IMPACT then
+		writePos(w, e)
+	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
+		writePos(w, e)
+		writeVel(w, e)
 	end
 end
 
 function Schema.decodeEvent(r: Reader): Event
 	r.context = "event record"
 	local kind = r:readU8()
-	if kind ~= EK.ENTER and kind ~= EK.LEAVE and kind ~= EK.DEATH then
+	if Schema.EVENT_BYTES[kind] == nil then
 		fail(r, `unknown event kind {kind}`)
 	end
-	local e: Event = { kind = kind, unitId = readId(r, "unitId") }
+	local e: Event = { kind = kind }
+	if kind >= EK.SPAWN_PROJ then
+		e.projId = readId(r, "projId")
+	else
+		e.unitId = readId(r, "unitId")
+	end
 	if kind == EK.ENTER then
 		e.defIndex = readId(r, "defIndex")
 		local team = r:readU8()
@@ -641,8 +727,54 @@ function Schema.decodeEvent(r: Reader): Event
 	elseif kind == EK.DEATH then
 		e.severity = r:readU8()
 		e.wreckId = r:readU16()
+	elseif kind == EK.FIRE then
+		local b = r:readU8()
+		local slot = band(b, 15)
+		if band(b, 0xE0) ~= 0 then
+			fail(r, `slot byte has reserved bits: {b}`)
+		end
+		if slot < 1 or slot > Schema.MAX_WEAPONS then
+			fail(r, `weapon slot {slot} outside 1..{Schema.MAX_WEAPONS}`)
+		end
+		e.slot = slot
+		e.hit = band(b, Schema.FIRE_HIT) ~= 0
+		readPos(r, e)
+	elseif kind == EK.SPAWN_PROJ then
+		e.weaponIndex = readId(r, "weaponIndex")
+		readPos(r, e)
+		readVel(r, e)
+		e.targetId = r:readU16()
+	elseif kind == EK.IMPACT then
+		readPos(r, e)
+	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
+		readPos(r, e)
+		readVel(r, e)
 	end
 	return e
+end
+
+--------------------------------------------------------------------------------
+-- Projectile corrections (S → C, unreliable; D102): the server's position
+-- and velocity of a homing projectile the client already has, ~3 Hz.
+--   projId u16 | pos | vel                                             = 14 bytes
+--------------------------------------------------------------------------------
+
+export type ProjSync = { projId: number, cell: number, offX: number, offZ: number, y: number, vx: number, vy: number, vz: number }
+
+Schema.PROJ_SYNC_BYTES = 14
+
+function Schema.encodeProjSync(w: Writer, rec: ProjSync)
+	writeId(w, rec.projId, "projId")
+	writePos(w, rec :: any)
+	writeVel(w, rec :: any)
+end
+
+function Schema.decodeProjSync(r: Reader): ProjSync
+	r.context = "projectile correction"
+	local rec: any = { projId = readId(r, "projId") }
+	readPos(r, rec)
+	readVel(r, rec)
+	return rec :: ProjSync
 end
 
 return Schema

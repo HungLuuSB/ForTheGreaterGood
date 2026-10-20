@@ -4,6 +4,7 @@ local Passability = require("@shared/Grid/Passability")
 local Combat = require("../Sim/Combat/Combat")
 local Nav = require("../Sim/Nav")
 local Placement = require("../Sim/Placement")
+local Prng = require("@shared/Util/Prng")
 local Quadtree = require("../Sim/Path/Quadtree")
 local Route = require("../Sim/Path/Route")
 local Sim = require("../Sim/Sim")
@@ -12,6 +13,81 @@ local RunAll = require("./RunAll")
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
 local CLASSES = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "HOVER", "AMPHIB", "SHIP", "SUB", "HELI", "JET" }
+
+-- A tree's structure without leaf IDs: leaves as "x,z,size,open", the
+-- neighbor set of each open leaf, and the component of each open leaf.
+type Canon = { leaves: { string }, neighbors: { [string]: string }, comp: { [string]: number }, count: number }
+local function canon(tree: Quadtree.Tree): (Canon?, string?)
+	local key: { [number]: string } = {}
+	local c: Canon = { leaves = {}, neighbors = {}, comp = {}, count = tree.componentCount }
+	local g = tree.grid
+	local opens = 0
+	for id = 1, tree.leafCount do
+		local size = tree.leafSize[id]
+		if size > 0 then
+			local k = `{tree.leafX[id]},{tree.leafZ[id]},{size},{tree.leafOpen[id]}`
+			key[id] = k
+			table.insert(c.leaves, k)
+			if tree.leafOpen[id] then
+				opens += 1
+			end
+			-- every cell of the leaf points back to it
+			for cz = tree.leafZ[id], math.min(tree.leafZ[id] + size, g.cellsZ) - 1 do
+				for cx = tree.leafX[id], math.min(tree.leafX[id] + size, g.cellsX) - 1 do
+					if Quadtree.leafAt(tree, cz * g.cellsX + cx) ~= id then
+						return nil, `cell ({cx}, {cz}) doesn't point to leaf {k}`
+					end
+				end
+			end
+		end
+	end
+	if opens ~= tree.openLeafCount then
+		return nil, `openLeafCount {tree.openLeafCount} vs {opens}`
+	end
+	table.sort(c.leaves)
+	for id = 1, tree.leafCount do
+		if tree.leafSize[id] > 0 and tree.leafOpen[id] then
+			local ns = {}
+			for _, n in tree.neighbors[id] do
+				if key[n] == nil then
+					return nil, `leaf {key[id]} links to dead leaf {n}`
+				end
+				table.insert(ns, key[n])
+			end
+			table.sort(ns)
+			c.neighbors[key[id]] = table.concat(ns, " ")
+			c.comp[key[id]] = tree.leafComponent[id]
+		end
+	end
+	return c, nil
+end
+
+-- nil if `a` (updated) has the same structure as `b` (fresh build).
+local function sameTree(a: Quadtree.Tree, b: Quadtree.Tree): string?
+	local ca, errA = canon(a)
+	if ca == nil then
+		return errA
+	end
+	local cb = canon(b) :: Canon
+	if table.concat(ca.leaves, ";") ~= table.concat(cb.leaves, ";") then
+		return `leaf sets differ ({#ca.leaves} vs {#cb.leaves} leaves)`
+	end
+	if ca.count ~= cb.count then
+		return `component count {ca.count} vs {cb.count}`
+	end
+	local ab, ba = {}, {}
+	for k, nb in cb.neighbors do
+		if ca.neighbors[k] ~= nb then
+			return `neighbors of {k} differ`
+		end
+		local x, y = ca.comp[k], cb.comp[k]
+		if (ab[x] or y) ~= y or (ba[y] or x) ~= x then
+			return `component partition differs at {k}`
+		end
+		ab[x], ba[y] = y, x
+	end
+	return nil
+end
 
 -- Brute-force capped Chebyshev clearance for one class.
 local function bruteClearance(pm: Passability.PassMap, mc: string, cell: number): number
@@ -118,18 +194,60 @@ return function(t: RunAll.Context)
 		t.expect(snapshot(pm) == before, "destroying them restores every layer byte for byte")
 	end)
 
+	t.test("local quadtree updates equal a full rebuild as structures come and go", function()
+		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "gen:3:128" })
+		local nav = sim.nav :: Nav.Nav
+		local pm = sim.map :: Passability.PassMap
+		local rng = Prng.new(19)
+		-- also a footprint-3 ground tree (need 2): clearance changes reach
+		-- beyond the footprint, so the update must cover the padded rectangle
+		Nav.tree(nav, "TRACKED", 2)
+		local keys = {}
+		for k in nav.trees do
+			table.insert(keys, k)
+		end
+		table.sort(keys)
+		t.expect(#keys >= 4, `trees for every ground profile ({#keys})`)
+		local structures = {}
+		local checks = 0
+		for op = 1, 40 do
+			if #structures > 0 and rng:chance(0.35) then
+				local i = rng:nextInteger(1, #structures)
+				Combat.queueDamage(sim.combat, structures[i], 1e9, 0)
+				table.remove(structures, i)
+				Sim.step(sim)
+			else
+				local def = if rng:chance(0.5) then "ord_vehplant" else "ord_generator"
+				local id = Spawn.unit(sim, def, 1, rng:nextNumber(-480, 480), rng:nextNumber(-480, 480))
+				table.insert(structures, id)
+			end
+			for _, k in keys do
+				local tree = nav.trees[k]
+				local diff = sameTree(tree, Quadtree.build(pm, tree.moveClass, tree.need))
+				t.equal(diff, nil, `op {op}, tree {k}`)
+				checks += 1
+				if diff then
+					return
+				end
+			end
+		end
+		print(`    {checks} tree comparisons after 40 placements and removals`)
+	end)
+
 	t.test("routes go around a new structure", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:32" })
 		local nav = sim.nav :: Nav.Nav
 		local g = nav.grid
 		local before = Nav.tree(nav, "TRACKED", 1)
+		t.expect(Quadtree.isOpen(before, g:index(16, 20)), "open before the plants")
 		-- a column of plants across the middle, leaving the top rows open
 		for cz = 4, 30, 3 do
 			local x, z = g:cellCenter(16, cz)
 			Spawn.unit(sim, "ord_vehplant", 1, x, z)
 		end
 		local after = Nav.tree(nav, "TRACKED", 1)
-		t.expect(after ~= before, "the quadtree was rebuilt")
+		-- updated in place (D86): the same tree now blocks the plants' cells
+		t.expect(after == before and not Quadtree.isOpen(after, g:index(16, 20)), "the quadtree was updated")
 		local route = Route.find(after, g:index(2, 20), g:index(29, 20)) :: { number }
 		t.expect(route ~= nil, "still reachable through the open top rows")
 		local corridor = Route.corridor(after, route)

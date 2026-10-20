@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 140, power = 2200, buildTime = 4200 },
 	health = 420,
 	movement = { maxSpeed = 36, accel = 14, brake = 28, turnRate = 130 },
-	sensors = { sight = 120, jam = 300 },
+	sensors = { sight = 120, jam = 300, jamDrain = 20 },
 	pieces = { "base", "array" },
 	model = "ord_veil",
 	icon = "jammer",

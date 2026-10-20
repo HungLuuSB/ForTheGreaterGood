@@ -5,7 +5,7 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Unit, {
 	id = "ord_crusader",
 	name = "Crusader",
-	description = "Destroyer. Sonar, gun and anti-submarine torpedoes.",
+	description = "Destroyer. Sonar, gun, anti-submarine torpedoes and a naval SAM.",
 	faction = "order",
 	tier = 2,
 	domain = "naval",
@@ -17,8 +17,8 @@ return Templates.extend(Templates.Unit, {
 	health = 2600,
 	movement = { maxSpeed = 26, accel = 7, brake = 11, turnRate = 45 },
 	sensors = { sight = 260, sonar = 320 },
-	weapons = { { def = "ord_naval_gun", turretPiece = "turret1", muzzle = "muzzle1" }, { def = "ord_asw_torpedo", turretPiece = "turret2", muzzle = "muzzle2" } },
-	pieces = { "base", "turret1", "turret2", "muzzle1", "muzzle2" },
+	weapons = { { def = "ord_naval_gun", turretPiece = "turret1", muzzle = "muzzle1" }, { def = "ord_asw_torpedo", turretPiece = "turret2", muzzle = "muzzle2" }, { def = "ord_naval_sam", turretPiece = "launcher", muzzle = "muzzle3" } },
+	pieces = { "base", "turret1", "turret2", "launcher", "muzzle1", "muzzle2", "muzzle3" },
 	model = "ord_crusader",
 	icon = "destroyer",
 })
