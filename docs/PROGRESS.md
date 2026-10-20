@@ -20,8 +20,8 @@ Status of the unattended work session. A new session should be able to continue 
 |---|---|---|
 | 1 | Packer/Schema follow-ups (8 weapon slots, PROTOCOL_VERSION, BUILD facing, tick wrap), guide 0.4 | ✅ done (`e1be1c4`) |
 | 2 | Defs: loader, `extend`, validation (4.5), indices, hash, enums, `ord_lancer` / `chs_ravager` | ✅ done |
-| 3 | Grid: cell math, position encode/decode, procedural test map (height + water) | ⏳ next |
-| 4 | World (SoA, u16 IDs with delayed reuse, dirty bits), `Sim.step` with stub systems, replay log, world hash | pending |
+| 3 | Grid: cell math, position encode/decode, procedural test map (height + water) | ✅ done |
+| 4 | World (SoA, u16 IDs with delayed reuse, dirty bits), `Sim.step` with stub systems, replay log, world hash | ⏳ next |
 | 5 | Movement classes and passability: passMask + per-class clearance on the test map | pending |
 | 6 | Quadtree + coarse A* route + corridor | pending |
 | 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | pending |
@@ -43,6 +43,17 @@ Status of the unattended work session. A new session should be able to continue 
 - Specs: `Defs.spec` (valid load, indices, derived values, extend, freeze, hash, missing damage logged, 28 broken-def cases, aggregated errors) and `Hash.spec`.
 - Tests: **6 specs, 51 passed, 0 failed**.
 - Decisions: D1–D7 in `docs/DECISIONS.md`.
+
+### Task 3 — Grid
+
+- `src/shared/Grid/`:
+  - `Grid.luau`: 8-stud cells up to 256×256, centered on the origin; index/coords, cellAt, cellCenter, encode/decode (error in [0, 1/32) stud, clamped to the map), 16-stud sensor cells.
+  - `Layers.luau`: height and waterDepth as i16 in 0.25-stud steps.
+  - `TestMap.luau`: seeded 3-octave value-noise hills with water below sea level, plus `build()` for hand-made maps.
+- `.lune/lib/Ppm.luau` (PPM and PNG writer) and `.lune/debug_map.luau`. `lune run debug_map [seed] [cells]` writes `debug_out/map_<seed>.png`.
+- Specs: `Grid.spec` (sizes, index round-trip, boundaries, 15,000 random encode/decode round-trips within 1/32 stud, clamping, sensor cells) and `TestMap.spec` (quantization, determinism per seed, water consistency, 256×256).
+- Tests: **8 specs, 64 passed, 0 failed**.
+- Decisions: D8–D12.
 
 ## Benchmarks
 

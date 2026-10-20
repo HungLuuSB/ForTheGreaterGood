@@ -60,3 +60,37 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
   - Ravager: 1300 HP, cheaper, cannon with 160 range, 1.2° spread and more damage.
 - **Alternatives:** the LIGHT armor class for light tanks.
 - **Why:** they match the faction doctrines in guide 2.1. Balance happens in M8.
+
+## D8 — Cell indices are 0-based, `index = cz * cellsX + cx` (2026-10-20)
+
+- **Decision:** cells are addressed by 0-based `(cx, cz)` or by a 0-based row-major index. Layer buffers use the same index (`offset = index * bytesPerCell`).
+- **Alternatives:** 1-based indices to match Luau arrays.
+- **Why:** the index is the `u16` on the wire (0..65535 for 256×256), and buffers are 0-based. Converting once at the edges would invite off-by-one bugs.
+
+## D9 — `Grid.encode` clamps out-of-map positions to the edge (2026-10-20)
+
+- **Decision:** a world position outside the map encodes as the nearest edge cell (offset 0 or 255).
+- **Alternatives:** raise an error.
+- **Why:** the wire must never carry an invalid cell, and a unit sitting exactly on the far edge (x == maxX) is legitimate floating-point noise. Keeping units inside the map is Movement's job; that's tested there.
+
+## D10 — Offsets truncate (floor); decode returns the step's low corner (2026-10-20)
+
+- **Decision:** `off = floor(frac * 256)` and `decode` uses the guide's formula unchanged, so the error is in `[0, 1/32)` stud, always toward the cell origin.
+- **Alternatives:** round to nearest (error ≤ 1/64, but 255.5 rounds to 256 and needs carry into the next cell), or decode at the step center.
+- **Why:** it's simplest and never carries. 1/32 stud is far below anything visible.
+
+## D11 — Map layers live in `Grid/Layers.luau`; test maps in `Grid/TestMap.luau` (2026-10-20)
+
+- **Decision:**
+  - `Layers` owns the terrain inputs (`height`, `waterDepth`: i16 in 0.25-stud steps, rounded to nearest). Derived layers (slope, passMask, clearance) are added by the passability builder.
+  - `TestMap.generate` is 3-octave value noise (lattice spacings 32/8/4 cells) seeded by `Prng`.
+  - Water fills everything below `seaLevel`.
+  - `TestMap.build` makes hand-built maps from a per-cell callback.
+- **Alternatives:** Perlin or simplex noise, or loading the guide's `MapData/` format.
+- **Why:** value noise is enough for hills and lakes, and it's cheap and deterministic. Real maps come from the Studio bake in M1+.
+
+## D12 — Debug images: PPM plus PNG written from Lune (2026-10-20)
+
+- **Decision:** `.lune/lib/Ppm.luau` writes binary PPM and also PNG (zlib via `@lune/serde`, CRC-32 in Luau), so images open directly on Windows. Debug scripts are `.lune/debug_*.luau` and write to `debug_out/`.
+- **Alternatives:** PPM only.
+- **Why:** PPM isn't viewable without extra software, and PNG takes about 30 extra lines.

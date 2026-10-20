@@ -134,6 +134,8 @@ ReplicatedStorage/
       Remotes.luau      creates/gets RemoteEvents
     Grid/
       Grid.luau         cell math, coordinate encode/decode
+      Layers.luau       per-cell layer buffers (height, waterDepth, ...)
+      TestMap.luau      procedural test maps for headless tests (until baked maps exist)
       MapData/          baked map layers per map
     Util/
       Env.luau          detects the runtime (Roblox / Lune)
@@ -414,6 +416,8 @@ position = cellIndex (u16) + offsetX (u8) + offsetZ (u8)     → 32 bits
 offset   = 0..255 → 0..8 studs  (1/32 stud ≈ 0.031 precision)
 worldX   = (cellX + offsetX/256) * 8 + mapOriginX
 ```
+
+Cell index = `cz * cellsX + cx` with 0-based cell coordinates (`Grid.index`). Encoding truncates, so the decoded position is within `[0, 1/32)` stud of the true one. Positions outside the map clamp to the edge cell, so an invalid cell never goes on the wire.
 
 Ground units don't send height: the client looks it up from its own copy of the `height` layer. Air units send altitude above ground (`u8`, 1 stud steps, 0–255).
 
