@@ -68,6 +68,17 @@ return function(sim: Types.Sim)
 			pvx, pvy, pvz = steer(pvx, pvy, pvz, w.posX[homingTarget] - x0, ty - y0, w.posZ[homingTarget] - z0, math.rad(weapon.turnRate) * DT)
 		end
 		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
+		if weapon.type == "TORPEDO" then
+			-- torpedoes run in water only (guide 12.3): gone at the shore,
+			-- otherwise held between the sea floor and just under the surface
+			if Combat.waterDepth(c, x1, z1) <= 0 then
+				Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = 0, other = id, x = x1, y = y1, z = z1 })
+				Combat.removeProjectile(c, id)
+				continue
+			end
+			local surface = Combat.surfaceHeight(c, x1, z1)
+			y1 = math.clamp(y1, Combat.groundHeight(c, x1, z1) + 0.5, surface - 0.5)
+		end
 
 		-- earliest unit contact along the chord
 		local team = c.pTeam[id]
@@ -92,7 +103,7 @@ return function(sim: Types.Sim)
 		-- terrain contact (ground treated as linear along the chord)
 		local a0 = y0 - Combat.groundHeight(c, x0, z0)
 		local a1 = y1 - Combat.groundHeight(c, x1, z1)
-		if a1 < 0 then
+		if a1 < 0 and weapon.type ~= "TORPEDO" then
 			local t = if a0 > 0 then a0 / (a0 - a1) else 0
 			if t < bestT then
 				bestT, bestUnit = t, 0

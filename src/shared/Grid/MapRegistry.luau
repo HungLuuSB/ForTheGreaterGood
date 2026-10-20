@@ -9,6 +9,8 @@
 --                       thick) with one 6-cell gap near the north end
 --   "start:<cells>"     flat land with two starts (west, east), four supply
 --                       deposits (value 4) around each start, two in the middle
+--   "sea:<cells>"       land on the west quarter (height 10), deep sea elsewhere
+--                       (sea floor -10, surface at 10: 20 studs of water)
 --
 -- Baked Studio maps (guide 5.4) will be added as "baked:<name>".
 
@@ -57,6 +59,16 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 		Layers.setSupply(layers, g:index(mid - 1, mid - 6), 4)
 		Layers.setSupply(layers, g:index(mid, mid + 6), 4)
 		return layers
+	end
+	local seaCells = string.match(mapId, "^sea:(%d+)$")
+	if seaCells then
+		local n = tonumber(seaCells) :: number
+		return TestMap.build(n, n, function(cx)
+			if cx < n // 4 then
+				return 10, 0
+			end
+			return -10, 20
+		end)
 	end
 	local seed, size = string.match(mapId, "^gen:(%d+):(%d+)$")
 	if seed then

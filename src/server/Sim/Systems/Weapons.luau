@@ -84,10 +84,15 @@ local function fire(
 		local speed = weapon.projectileSpeed or 0
 		local yaw, p = worldYaw + yawErr, pitch + pitchErr
 		local ttl = 2 * weapon.range / math.max(speed, 1) + 1
+		local launchY = muzzleY
+		if wtype == "TORPEDO" then
+			p = 0
+			launchY = Combat.surfaceHeight(c, w.posX[id], w.posZ[id]) - Combat.TORPEDO_DEPTH
+		end
 		projectile = Combat.spawnProjectile(
 			c,
 			w.posX[id],
-			muzzleY,
+			launchY,
 			w.posZ[id],
 			cos(p) * sin(yaw) * speed,
 			sin(p) * speed,
@@ -173,6 +178,8 @@ return function(sim: Types.Sim)
 				local pitch: number?
 				if weapon.type == "HITSCAN" or weapon.type == "BEAM" then
 					pitch = atan2(dy, dist)
+				elseif weapon.type == "TORPEDO" then
+					pitch = 0 -- launched level in the water; homing does the rest
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end

@@ -41,6 +41,9 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 		Placement.occupy(sim, id)
 	end
 	Air.onSpawn(sim, id)
+	if def.moveClass == "SUB" then
+		World.setState(sim.world, id, bit32.bor(sim.world.state[id], World.State.SUBMERGED)) -- always submerged (guide 12.3)
+	end
 	Lifecycle.added(sim, id)
 	return id
 end

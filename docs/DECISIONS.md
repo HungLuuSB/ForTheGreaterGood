@@ -715,3 +715,34 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - Rearm pads: `ord_airpad` "Aerie" and `chs_airpad` "Roost", footprint 3, 1 pad each (pad names are placeholders).
   - New def fields: `movement.minSpeed`, `ammo`, `ammoCost`, `rearmTime`, `rearmPads`.
 - **Why:** needed for the air tests. Balance is M8.
+
+## D76 — Naval hull volumes and submerged submarines (2026-10-20, task 16)
+
+- **Decision:**
+  - Units with `domain = "naval"` float: their collision cylinder starts `Combat.DRAFT = 3` studs below the water surface (terrain height + water depth), not at the terrain.
+  - Submarines (move class `SUB`) get the `SUBMERGED` state bit on spawn and keep it (guide 12.3, "always submerged in v1"). Their hull starts `SUB_DEPTH = 10` studs below the surface minus the hull height, so only projectiles that travel in the water can reach them.
+  - Detection needed no change: the Sensors module already reports submerged units only as SONAR or HIDDEN.
+  - Submarines carry only the `SUB` category (not `NAVAL`), so every weapon whose `targets` list lacks `SUB` ignores them; only torpedoes list it.
+- **Alternatives:** a surface/dive toggle; letting very close sight reveal subs (the guide allows it as an option).
+- **Why:** smallest model that satisfies guide 12.3. Close-range sight detection is left out because it would make the sonar-only test meaningless; it can be added later as a short `sight` range against `SUBMERGED`.
+
+## D77 — Torpedoes run in the water column (2026-10-20, task 16)
+
+- **Decision:**
+  - New guidance value `ACOUSTIC` (homing on sonar contacts).
+  - TORPEDO weapons launch level (pitch 0, no ballistic pitch) from `TORPEDO_DEPTH = 1.5` studs below the surface at the shooter's position.
+  - In flight their height is clamped between the sea floor + 0.5 and the surface − 0.5, so homing can dive toward a submarine but never leaves the water. They skip the terrain-contact test (the clamp replaces it).
+  - A torpedo whose next position has no water is removed with a harmless IMPACT event (unit 0): torpedoes can't hit land units.
+  - Targeting accepts SONAR-level contacts for TORPEDO weapons (other weapons still need VISIBLE, or RADAR/GHOST with `canTargetRadar`). Homing steers toward the true position; the launch aims at the known (wobbled) position.
+- **Alternatives:** a separate 2-D underwater projectile type; torpedoes hitting the shore as a terrain impact with AoE.
+- **Why:** reuses the existing homing projectile path (D73) with two checks. Shore impacts with AoE would let torpedoes splash coastal units, which guide 12.3 rules out ("restricted to water").
+
+## D78 — Placeholder naval roster and the `sea:<n>` test map (2026-10-20, task 16)
+
+- **Decision (guide 13.4):**
+  - Corvettes `ord_sentry` "Sentry" / `chs_barracuda` "Barracuda" (naval gun).
+  - Submarines `ord_silence` "Silence" / `chs_lamprey` "Lamprey" (torpedo, own sonar).
+  - Destroyers `ord_crusader` "Crusader" / `chs_corsair` "Corsair": naval gun, anti-submarine torpedo, sonar 320 / 300. The guide's destroyer SAM is left out until missiles get guidance in task 17.
+  - Weapons `*_naval_gun` (BALLISTIC, NAVAL/GROUND/STRUCTURE), `*_torpedo` (sub's anti-ship torpedo) and `*_asw_torpedo` (destroyer's, stronger against SUB).
+  - Test map `sea:<n>`: land (height 10) on the west quarter, sea floor −10 with 20 studs of water elsewhere.
+- **Why:** needed for the naval tests. Balance is M8. Measured: a Crusader sinks a Lamprey 200 studs away in 8.5 s and keeps 1960 / 2600 HP.

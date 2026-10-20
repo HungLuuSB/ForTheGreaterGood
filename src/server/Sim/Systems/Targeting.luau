@@ -49,7 +49,7 @@ local function priorityWeight(masks: { number }, category: number): number
 end
 
 -- Can `weapon` on unit `id` engage `t`? Returns the center distance when yes.
-local VISIBLE, RADAR, GHOST = Sensors.Level.VISIBLE, Sensors.Level.RADAR, Sensors.Level.GHOST
+local VISIBLE, RADAR, GHOST, SONAR = Sensors.Level.VISIBLE, Sensors.Level.RADAR, Sensors.Level.GHOST, Sensors.Level.SONAR
 
 local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number): number?
 	local c = sim.combat
@@ -62,7 +62,10 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 		return nil
 	end
 	local kx, kz, level = Sensors.knownPosition(sim, w.team[id], t)
-	if kx == nil or (level ~= VISIBLE and not ((level == RADAR or level == GHOST) and weapon.canTargetRadar)) then
+	local allowed = level == VISIBLE
+		or ((level == RADAR or level == GHOST) and weapon.canTargetRadar)
+		or (level == SONAR and weapon.type == "TORPEDO") -- torpedoes hunt sonar contacts
+	if kx == nil or not allowed then
 		return nil
 	end
 	local dx, dz = (kx :: number) - w.posX[id], (kz :: number) - w.posZ[id]

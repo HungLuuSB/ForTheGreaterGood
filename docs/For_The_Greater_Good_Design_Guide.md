@@ -1054,6 +1054,10 @@ countermeasures = {
 
 - **Surface ships** (`SHIP`): corvette (fast, cheap), destroyer (SAM + gun + sonar), cruiser/battleship (T2 heavy), carrier (T2).
 - **Submarines** (`SUB`): always submerged in v1. Only detected by sonar (or very close sight). Only `TORPEDO` weapons and ASW can target `SUB`.
+- Implementation (DECISIONS D76–D78):
+  - Ships float with a 3-stud draft; submarines spawn `SUBMERGED` and sit 10 studs down. They carry only the `SUB` category, so only weapons that list it (torpedoes) can target them.
+  - Close-sight detection of submarines is not implemented yet; sonar is the only way to find them.
+  - Torpedoes launch level just under the surface, stay between the sea floor and the surface, home on sonar contacts, and are removed harmlessly when they reach land.
 - **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base.
 - **Amphibious/hover units** bridge land and sea.
 - Naval structures: floating turret, torpedo launcher, sonar buoy, naval SAM platform, tidal generator.

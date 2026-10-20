@@ -104,7 +104,7 @@ export type WeaponDef = {
 	priority: { string }?,
 	priorityMasks: { number }, -- derived, same order as priority
 	turret: any?,
-	guidance: ("IR" | "RADAR" | "COMMAND")?,
+	guidance: ("IR" | "RADAR" | "COMMAND" | "ACOUSTIC")?,
 	turnRate: number?,
 	lockRange: number?,
 	terminalRange: number?,
@@ -309,7 +309,7 @@ local WEAPON_SPEC: Spec = {
 				arc = { kind = "number", above = 0, max = 360 },
 			},
 		},
-		guidance = { kind = "string", optional = true, enum = set({ "IR", "RADAR", "COMMAND" }) },
+		guidance = { kind = "string", optional = true, enum = set({ "IR", "RADAR", "COMMAND", "ACOUSTIC" }) },
 		turnRate = opt(POSITIVE),
 		lockRange = opt(POSITIVE),
 		terminalRange = opt(POSITIVE),

@@ -23,6 +23,9 @@ Combat.RADIUS_PER_FOOTPRINT = 8 * 0.45 -- keep equal to Nav.RADIUS_PER_FOOTPRINT
 Combat.MAX_PROJECTILES = 2000 -- guide 10.5
 Combat.WRECK_SUPPLY_FRACTION = 0.5 -- of the unit's supply cost (guide 8.7)
 Combat.WRECK_MAX_SEVERITY = 0.5 -- overkill above this fraction of max health leaves no wreck
+Combat.DRAFT = 3 -- studs a ship's hull reaches below the surface
+Combat.SUB_DEPTH = 10 -- studs below the surface a submarine's hull starts
+Combat.TORPEDO_DEPTH = 1.5 -- studs below the surface torpedoes run
 
 export type UnitProfile = {
 	radius: number,
@@ -32,6 +35,7 @@ export type UnitProfile = {
 	categoryMask: number,
 	maxHealth: number,
 	weapons: { Defs.WeaponDef }, -- by slot
+	naval: boolean, -- floats: hull from the water surface down by DRAFT
 }
 
 export type Event = {
@@ -117,6 +121,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 			categoryMask = def.categoryMask,
 			maxHealth = def.health,
 			weapons = weapons,
+			naval = def.domain == "naval",
 		}
 	end
 	local grid = if layers then layers.grid else nil
@@ -173,8 +178,44 @@ function Combat.groundHeight(c: Combat, x: number, z: number): number
 	return Layers.getHeight(layers, cz * g.cellsX + cx)
 end
 
--- Bottom of a unit's collision cylinder.
+-- Water surface height at (x, z) (= ground where dry).
+function Combat.surfaceHeight(c: Combat, x: number, z: number): number
+	local layers = c.layers
+	if layers == nil then
+		return 0
+	end
+	local g = layers.grid
+	local cx, cz = g:cellAt(x, z)
+	cx = math.clamp(cx, 0, g.cellsX - 1)
+	cz = math.clamp(cz, 0, g.cellsZ - 1)
+	local i = cz * g.cellsX + cx
+	return Layers.getHeight(layers, i) + Layers.getWater(layers, i)
+end
+
+function Combat.waterDepth(c: Combat, x: number, z: number): number
+	local layers = c.layers
+	if layers == nil then
+		return 0
+	end
+	local g = layers.grid
+	local cx, cz = g:cellAt(x, z)
+	if not g:inBounds(cx, cz) then
+		return 0
+	end
+	return Layers.getWater(layers, cz * g.cellsX + cx)
+end
+
+-- Bottom of a unit's collision cylinder: terrain + altitude for land and
+-- air units; the water surface minus the draft for ships; deeper for
+-- submerged submarines.
 function Combat.unitBase(c: Combat, w: World.World, id: number): number
+	if c.profiles[w.defIndex[id]].naval then
+		local surface = Combat.surfaceHeight(c, w.posX[id], w.posZ[id])
+		if bit32.band(w.state[id], World.State.SUBMERGED) ~= 0 then
+			return surface - Combat.SUB_DEPTH - c.profiles[w.defIndex[id]].height
+		end
+		return surface - Combat.DRAFT
+	end
 	return Combat.groundHeight(c, w.posX[id], w.posZ[id]) + w.alt[id]
 end
 
