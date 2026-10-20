@@ -105,19 +105,23 @@ return function(sim: Types.Sim)
 	local g = nav.grid
 	local originX, originZ = g.originX, g.originZ
 	local bw, bh = math.ceil(g.sizeX / HASH_CELL), math.ceil(g.sizeZ / HASH_CELL)
-	local rings = math.ceil((2 * nav.maxRadius + SEPARATION_MARGIN) / HASH_CELL)
 	local posX, posZ, heading, speed = w.posX, w.posZ, w.heading, w.speed
 	local profiles = nav.profiles
 
 	-- Start-of-tick positions into the scratch arrays and hash.
 	local anyActive = false
+	local maxRadius = 0 -- of the units present: a big def elsewhere in the roster mustn't widen every search
 	for k = 1, n do
 		local id = ids[k]
 		nx[k] = posX[id]
 		nz[k] = posZ[id]
 		nheading[k] = heading[id]
 		nspeed[k] = speed[id]
-		prof[k] = profiles[w.defIndex[id]]
+		local p = profiles[w.defIndex[id]]
+		prof[k] = p
+		if p and p.radius > maxRadius then
+			maxRadius = p.radius
+		end
 		moving[k] = w.orderId[id] ~= 0
 		anyActive = anyActive or moving[k] or speed[id] > 0
 	end
@@ -126,6 +130,7 @@ return function(sim: Types.Sim)
 		return
 	end
 	buildHash(n, nx, nz, originX, originZ, bw, bh)
+	local rings = math.ceil((2 * maxRadius + SEPARATION_MARGIN) / HASH_CELL)
 
 	-- 1. Steer
 	for k = 1, n do
