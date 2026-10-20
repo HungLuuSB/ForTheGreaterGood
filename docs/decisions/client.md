@@ -11,6 +11,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-1 | Roblox-only server code lives in `src/roblox`, synced to `ServerScriptService.Entry` |
 | C-2 | The in-Studio test entry is a ModuleScript run through `execute_luau`, in the background, yielding once per test |
 | C-3 | Live sync and offline build use separate folders (`build/serve`, `build/ci`); `lune run serve` replaces the darklua and sourcemap watchers |
+| C-4 | Models face −Z; a unit's world rotation is `heading + π` about Y; turret yaw and barrel pitch are plain joint rotations |
+| C-5 | UI reads one client state table and calls one actions table (`docs/contracts/client-state.md`) |
+| C-6 | Blockouts are separate modules in `Defs/Blockouts/`, parts in model space, pieces jointed, decorations welded |
 
 ---
 
@@ -37,3 +40,27 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Alternatives:** keep `darklua process --watch` into its own folder (it still deleted outputs on saves by rename and never wrote them back, and its behaviour on removed directories isn't ours to control); keep one folder and stop the sync before each build (easy to forget, and that is how Rojo crashed).
 
 **Why:** Rojo's serve crashes (`change_processor.rs`, "The system cannot find the path specified") when a directory it watches disappears, which is what `lune run build`'s wipe of `build/src` did. Owning the watcher also folds the sourcemap watcher in: two terminals instead of three. `sourcemap.json` is still shared by both; both write the same content from the same sources.
+
+### C-4 — Model axes (2026-10-21)
+
+**Decision:** unit models face −Z (Roblox `LookVector`, what Studio's importer and most kits use). The sim's heading points along `(sin h, cos h)`, which is a rotation of +Z by `h` about +Y, so a unit is placed with `CFrame.Angles(0, h + π, 0)`. Turret yaw (relative to the hull, same sense) is `Motor6D.Transform = CFrame.Angles(0, yaw, 0)`; barrel pitch (up positive) is `CFrame.Angles(pitch, 0, 0)`, which raises a −Z barrel. Details in `docs/contracts/rig.md`.
+
+**Alternatives:** models facing +Z (no `+ π`, but against Roblox convention and imported art); changing the sim's heading convention (sim area, and it would break replays).
+
+**Why:** one fixed offset in one place (the client's unit placement) instead of fighting every imported model.
+
+### C-5 — UI contract: state + actions (2026-10-21)
+
+**Decision:** a future UI session reads `Client.state` (units, selection, groups, camera, hover, placement, economy, alerts), listens to `Client.changed` signals and calls `Client.actions`. The UI never sends remotes or edits state. Draft in `docs/contracts/client-state.md`.
+
+**Alternatives:** UI reading the client modules directly (couples the UI to internals that change every task); a full reactive store (overkill before there is any UI).
+
+**Why:** lets UI work start in parallel with a stable surface; placeholder fields (economy) are marked until the sim sends them.
+
+### C-6 — Blockout format (2026-10-21)
+
+**Decision:** one module per unit in `src/shared/Defs/Blockouts/<id>.luau`, separate from the unit def (the guide's 20.2 suggests a `blockout` table in the def; unit defs are the sim stream's files and feed the defs hash, and a model change must not change the hash). Parts are listed in model space (`at`, optional `pivot`, `rot`) with a `parent`; def pieces get `Motor6D`s, other parts are decorations welded with `WeldConstraint`s; attachments (`muzzle`) are listed separately. Colors are palette keys, the faction picks the palette. Format in `docs/contracts/rig.md` section 4.
+
+**Alternatives:** a `blockout` table inside each unit def (guide 20.2 as written); parts relative to their parent piece (harder to read and edit by hand).
+
+**Why:** ownership and hash stability, and model-space numbers can be checked against each other at a glance.
