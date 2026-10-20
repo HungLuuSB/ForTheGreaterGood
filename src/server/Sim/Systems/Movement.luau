@@ -133,6 +133,7 @@ return function(sim: Types.Sim)
 	local rings = math.ceil((2 * maxRadius + SEPARATION_MARGIN) / HASH_CELL)
 
 	-- 1. Steer
+	local holdOf = sim.orders.hold
 	for k = 1, n do
 		local id = ids[k]
 		local p = prof[k]
@@ -157,6 +158,13 @@ return function(sim: Types.Sim)
 				continue
 			end
 			returning = true -- pushed off its spot: walk back
+		end
+
+		-- engaged on a fight / patrol move (Orders): keep the order, brake, hold
+		if not returning and holdOf[id] then
+			w.progressTick[id] = tick
+			nspeed[k] = max(0, nspeed[k] - p.brake * DT)
+			continue
 		end
 
 		-- progress tracking and arrival

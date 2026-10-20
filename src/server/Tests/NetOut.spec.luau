@@ -364,7 +364,10 @@ return function(t: RunAll.Context)
 		t.expect(on.corrections > 0, `corrections were sent ({on.corrections})`)
 		t.equal(on.unguided, 0, "never for unguided projectiles")
 		t.equal(on.outOfView, 0, "never for projectiles out of the player's view")
-		t.expect(off.worst > 200, `without corrections torpedoes drift far ({off.worst} studs)`)
+		-- since attack-move holds to engage (S-4) the torpedo flights are shorter: the
+		-- drift without corrections is smaller than it was (618 studs in D102)
+		t.expect(off.worst > 40, `without corrections torpedoes drift visibly ({off.worst} studs)`)
+		t.expect(off.worst > 3 * math.max(on.worst, 1), `corrections cut the drift at least 3× ({off.worst} → {on.worst} studs)`)
 		t.expect(on.worst < 40, `with corrections the visible drift stays small ({on.worst} studs)`)
 		t.expect(lossy.worst < 80, `half the corrections lost: still bounded ({lossy.worst} studs)`)
 		print(string.format("    visible drift: %.1f studs without, %.1f with, %.1f with half lost; %d corrections, %.2f KB/s",

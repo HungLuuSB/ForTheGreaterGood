@@ -1,0 +1,99 @@
+--!strict
+-- Unit order queues (data only; logic in Orders.luau; S-4). Kept apart so
+-- Types can describe it without a require cycle.
+
+local Hash = require("@shared/Util/Hash")
+
+local OrdersState = {}
+
+export type Kind = "move" | "fight" | "patrol" | "attack" | "guard" | "repair" | "reclaim" | "build" | "attackGround"
+
+export type Order = {
+	kind: Kind,
+	batch: number, -- the command it came from: units starting a move together go as a group
+	x: number?, -- move / fight / patrol / build / attackGround: the point
+	z: number?,
+	lx: number?, -- line formation end (move-like orders)
+	lz: number?,
+	ox: number?, -- patrol: the other end (where the unit was when it started)
+	oz: number?,
+	target: number?, -- attack / guard / repair: unit ID; reclaim: wreck ID
+	gen: number?, -- the target unit's generation (D109); for attack, a ghost's if remembered dead
+	defIndex: number?, -- build
+	facing: number?,
+	started: boolean,
+	nav: number, -- Nav order ID of the move this order issued (0 = none)
+	gx: number?, -- chase moves (attack, guard): where the last move was aimed
+	gz: number?,
+	issued: number, -- tick of the last chase move
+}
+
+export type OrdersState = {
+	queue: { [number]: { Order } }, -- unit → its orders, head first
+	hold: { [number]: boolean }, -- engaged while on a fight / patrol move: Movement brakes and keeps the order
+	forced: { [number]: number }, -- unit → its attack order's target (Targeting prefers it)
+	forcedGen: { [number]: number },
+	rallyKind: { [number]: Kind }, -- factory → order given to each unit it produces ("move" / "fight")
+	rallyX: { [number]: number },
+	rallyZ: { [number]: number },
+	repeatOn: { [number]: boolean }, -- factory → finished items go back to the end of the queue
+	nextBatch: number,
+}
+
+function OrdersState.new(): OrdersState
+	return {
+		queue = {},
+		hold = {},
+		forced = {},
+		forcedGen = {},
+		rallyKind = {},
+		rallyX = {},
+		rallyZ = {},
+		repeatOn = {},
+		nextBatch = 1,
+	}
+end
+
+function OrdersState.clearUnit(o: OrdersState, id: number)
+	o.queue[id] = nil
+	o.hold[id] = nil
+	o.forced[id] = nil
+	o.forcedGen[id] = nil
+	o.rallyKind[id] = nil
+	o.rallyX[id] = nil
+	o.rallyZ[id] = nil
+	o.repeatOn[id] = nil
+end
+
+local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9 }
+
+-- Hash over units in `ids` (ascending).
+function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
+	for _, id in ids do
+		local q = o.queue[id]
+		if q then
+			h = Hash.u32(Hash.u32(h, id), #q)
+			for _, ord in q do
+				h = Hash.u32(h, KIND_CODE[ord.kind])
+				h = Hash.u32(h, ord.batch)
+				h = Hash.number(Hash.number(h, ord.x or 0), ord.z or 0)
+				h = Hash.number(Hash.number(h, ord.ox or 0), ord.oz or 0)
+				h = Hash.u32(Hash.u32(h, ord.target or 0), ord.gen or 0)
+				h = Hash.u32(h, ord.defIndex or 0)
+				h = Hash.u32(Hash.u32(h, if ord.started then 1 else 0), ord.nav)
+				h = Hash.u32(h, ord.issued)
+			end
+		end
+		h = Hash.u32(h, if o.hold[id] then 1 else 0)
+		h = Hash.u32(Hash.u32(h, o.forced[id] or 0), o.forcedGen[id] or 0)
+		local rally = o.rallyKind[id]
+		if rally then
+			h = Hash.u32(h, KIND_CODE[rally])
+			h = Hash.number(Hash.number(h, o.rallyX[id]), o.rallyZ[id])
+		end
+		h = Hash.u32(h, if o.repeatOn[id] then 1 else 0)
+	end
+	return Hash.u32(h, o.nextBatch)
+end
+
+return OrdersState

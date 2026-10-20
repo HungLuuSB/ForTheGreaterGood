@@ -857,7 +857,7 @@ Every domain has a **T1 worker** and an **advanced (T2) worker**. Workers build 
 | Shipyard | T1 | Naval Worker, T1 ships, submarine |
 | Advanced Shipyard | T2 | Advanced Naval Worker, T2 ships, carrier |
 
-Factories have build power and an optional rally point and repeat queue. Workers can assist factories.
+Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-4: a MOVE / FIGHT / PATROL order given to a factory sets its rally point; TOGGLE on a factory turns repeat on or off.)
 
 ### 9.3 Build rules
 
@@ -1378,6 +1378,7 @@ When the camera is zoomed far out, hide models and draw icons (flat billboards o
 - Box select (project unit positions to screen), double-click selects all of type on screen, control groups (Ctrl+1–9).
 - Right-click **smart command**: enemy → attack, ally → guard, wreck → reclaim, unfinished structure → repair, ground → move.
 - Shift queues commands; queued paths draw as lines for selected units.
+  - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT holds to engage; PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
 - Line formation by right-click drag.
 - Build placement ghost with grid snapping, validity tint (green/red), shift for multiple, drag for rows.
 
