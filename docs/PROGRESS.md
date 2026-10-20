@@ -45,13 +45,23 @@ Earlier on this branch: M0 (`e1be1c4`–`6d79a93`), the M1 simulation side, the 
 
 **Decisions:** D65–D82 in `docs/DECISIONS.md` (this session). The ones that need your call are below.
 
-**Questions for you:**
-1. **D80, COMMAND guidance.** I read "launcher's view is jammed" as *the launcher stands inside an enemy jam field*. The other reading is to treat it like RADAR, jammed at the target. Which one?
-2. **D81, DIRCM.** An engagement starts the cooldown even when the roll fails, so it handles at most one missile per cooldown. Flare and chaff refills are free on rearm for now (guide 8.6 says they cost supply). OK, or should the refill be charged now?
-3. **D82, SAM target choice.** A radar SAM keeps a jammed target and holds fire. Should Targeting prefer targets it can lock (more CPU per SAM, smarter AA)?
-4. **D76, submarines.** Only sonar finds them; the guide's optional "very close sight" detection is left out. Add it (e.g. within 40 studs)?
-5. **Commands peak** (82 ms on a 400-unit move order, the top peak offender). Fix now (grid-bucketed greedy slot assignment, or slicing the order over a few ticks), or wait for live M5 measurements?
-6. **Studio:** `docs/STUDIO_HANDOFF.md` is the ordered checklist. Step 1 (the darklua require conversion) unblocks everything else.
+**Round 4 (your answers to the six questions above): all done** (details under *Round 4* below).
+
+| # | Answer applied | Commit |
+|---|---|---|
+| 1 | COMMAND guidance: live launcher + target VISIBLE, checked every tick; immune to jamming and countermeasures | `929b308` |
+| 2 | Flare/chaff refills cost supply, spread over the rearm | `b10a701` |
+| 3 | SAMs prefer lockable targets, 1.25× switch margin; jets now spawn flying (bug found by the test) | `6ba564e` |
+| 4 | Naval units and ASW helis detect submerged subs within 40 studs; Tidewatch / Leech placeholders | `93df08e` |
+| 5 | Move-order spike: profiled, planning sliced into the pathing budget; worst move-order tick 91 → 10 ms at 800 units | `0556c9e` |
+| 6 | Offline Roblox build: darklua `convert_require`, `rojo build`, `lune run check_build` (482 requires resolve) | `8b62a50` |
+
+Tests now: **27 specs, 188 passed, 0 failed**.
+
+**Open points** (no decision needed now):
+1. **Quadtree rebuilds after structure placement** (D83 follow-up): `Nav.terrainChanged` drops all quadtrees, so the next order rebuilds one in its tick (10–17 ms on 256×256). The fix is an incremental quadtree update.
+2. **Sensors** is now the top per-tick peak (14–22 ms against 5 at 800 units: the first full stamp and all-pairs visibility), then Movement (10–13 against 10).
+3. **Studio:** only the in-Studio run of step 1 remains; then step 2 (Roblox-only root and the in-Studio test entry).
 
 ---
 

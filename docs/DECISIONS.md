@@ -9,9 +9,11 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D55–D64: M3 economy and construction.
 - D65–D72: M4 sensors and fog, NetOut, stress harness (tasks 11–14).
 - D73–D78: M6 air and naval (tasks 15–16).
-- D79–D82: M7 electronic warfare (task 17).
+- D79–D82: M7 electronic warfare (task 17). D76 and D80–D82 were revised by the user's round-4 answers (see each entry's "Revised" block).
+- D83: move orders, profiled and sliced into the pathing budget.
+- D84: offline Roblox build (darklua `convert_require` plus a place check).
 
-The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/PROGRESS.md` → Summary.
+Open points are listed in `docs/PROGRESS.md` → Summary.
 
 ---
 
