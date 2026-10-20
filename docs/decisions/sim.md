@@ -10,6 +10,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-2: join / reconnect snapshot and the Eco channel (protocol 6).
 - S-3: weapon pieces must be in `pieces` (client request).
 - S-4: order queues and behaviors (shift, FIGHT, PATROL, ATTACK, GUARD, REPAIR, RECLAIM, BUILD, factory rally and repeat).
+- S-5: field extensions run as sliced Pathing jobs (Movement peak at 800 units 12.1 → 6.3 ms).
 
 ---
 
@@ -79,3 +80,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The torpedo-drift test in `NetOut.spec` saw shorter flights; its threshold became relative (corrections still cut drift 56 → 9.6 studs).
   - A stopped builder's target reads `nil` (idle) instead of 0.
 - **Tests:** `Orders.spec`, 8 tests: shift order and replacement, FIGHT vs MOVE, PATROL, GUARD, ATTACK (forced, on hold fire, hidden targets refused), REPAIR free, RECLAIM and BUILD queues, rally and repeat, determinism. Mutations (no hold, no forced target, no queue flag, no repeat) fail them.
+
+## S-5 — Field extensions as sliced Pathing jobs (2026-10-21; guide 6.4)
+
+- **Found** (profiling the 800-unit stress battle tick by tick): Movement's peak ticks spent 4–8 ms in `Nav.extendField`, almost all of it in `Route.findMany` (1.5–2 ms per call, 2–3 calls per peak tick). Extensions were computed synchronously inside Movement, outside the pathing budget.
+- **Change:**
+  - `Nav.extendField` now queues a plan job (`Plan.extend`) with its route search pre-built. `Nav.runJobs` slices the search within the Pathing work budget, then builds the corridor, merges it into the order's current one and runs the flow-field job.
+  - Movement only queues. Units steer straight until the field covers them, which guide 6.4 allows.
+  - An extension that finds no route leaves the order as it is (it doesn't mark it unreachable).
+  - `Route.mergeCorridors(a, b, width)` scans only the two corridors' bounding box, not the whole map mask.
+  - The extension's corridor step waits for the next tick when the budget left can't cover it (one unit per 4 cells of the old corridor's box).
+- **Measured** (`lune run stress`, peak / average ms):
+  - Movement at 800 units: 12.09 / 3.87 → 6.39 / 3.48 (budget 10). At 600: 12.19 → 4.85.
+  - Pathing at 800: 8.60 → 8.37 (budget 8).
+  - Average tick at 800: 8.89 → 8.62 ms.
+  - One sequential stress run showed a 16 ms Pathing tick at 600 units. Isolated runs of that scenario peak at 8–9 ms, so it was noise.
+- The peak was already lower than round 7's 43.9 ms before this change, because attack-move now holds to engage (S-4) and units bunch less.

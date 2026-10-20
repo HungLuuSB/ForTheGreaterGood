@@ -283,14 +283,31 @@ function Route.corridor(tree: Quadtree.Tree, route: { number }): Corridor
 end
 
 -- Union of two corridors over the same map (new mask; inputs unchanged).
-function Route.mergeCorridors(a: Corridor, b: Corridor): Corridor
+-- With the grid `width`, only the two corridors' bounding box is scanned
+-- (S-5); without it, the whole mask.
+function Route.mergeCorridors(a: Corridor, b: Corridor, width: number?): Corridor
 	local n = buffer.len(a.mask)
 	local mask = buffer.create(n)
 	local count = 0
-	for i = 0, n - 1 do
-		if buffer.readu8(a.mask, i) == 1 or buffer.readu8(b.mask, i) == 1 then
-			buffer.writeu8(mask, i, 1)
-			count += 1
+	local readu8, writeu8 = buffer.readu8, buffer.writeu8
+	if width then
+		local am, bm = a.mask, b.mask
+		for cz = math.min(a.minZ, b.minZ), math.max(a.maxZ, b.maxZ) do
+			local row = cz * width
+			for cx = math.min(a.minX, b.minX), math.max(a.maxX, b.maxX) do
+				local i = row + cx
+				if readu8(am, i) == 1 or readu8(bm, i) == 1 then
+					writeu8(mask, i, 1)
+					count += 1
+				end
+			end
+		end
+	else
+		for i = 0, n - 1 do
+			if readu8(a.mask, i) == 1 or readu8(b.mask, i) == 1 then
+				writeu8(mask, i, 1)
+				count += 1
+			end
 		end
 	end
 	return {
