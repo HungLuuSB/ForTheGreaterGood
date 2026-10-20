@@ -2,50 +2,58 @@
 
 Status of the unattended work session. A new session should be able to continue from this file alone.
 
-## Summary (end of round 6, 2026-10-20, branch `m-sim-polish`)
+## Summary (end of round 7, 2026-10-20, branch `m-sim-polish`)
 
-**Done:** all five round-6 items, one commit each, all pushed. Then the full balance re-run.
+**Done:** every round-7 task, one commit each, all pushed. Answers 1 (keep the ±10 release window) and 4 (keep lead pursuit and the proximity fuse) needed no work.
 
 | Item | What | Commit |
 |---|---|---|
-| 1 | Shared aim point (`Combat.aimPoint`) for aiming and hit checks | `8d4a73a` |
-| 2 | Bombs on radar contacts (wobbled position) and structure ghosts | `a6cc029` |
-| 3 | Destroyer naval SAM; missile lead pursuit and proximity fuse; matrix edits; M8 item | `837fc93` |
-| 4 | Same-role cells on a soft 0.5–2.0 band; destroying nothing never holds | `3c29240` |
-| 5 | Combat events on the wire (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK) | `ac2d7c5` |
+| 2a | Targeting follows team knowledge: ghosts of dead structures stay targets; ATTACK_GROUND for bombers | `6d4fe2f` |
+| 2b | Server-truth audit: targeting search, AI placement and target choice | `fef343c` |
+| 3 | Homing-projectile corrections on an unreliable channel | `c65344b` |
+| 5 | Rearm airfields in balance fights; air rows re-run | `be3156a` |
+| 6 | Fire-control (tracking) radar, plus the optional +10% lock range | `c3b0703` |
+| — | Full balance re-run, this summary | (last commit) |
 
-**Tests:** `lune run test` gives **31 specs, 230 passed, 0 failed** (220 at the end of round 5). Every new mechanism has a test that fails without it: old aim point, no `canTargetRadar` on bombs, old guidance, no sight filter in NetOut, FIRE without the tactical check. `lune run build` still passes (255 scripts, 743 requires).
+**Tests:** `lune run test` gives **33 specs, 245 passed, 0 failed** (238 → 245 this round; new `Knowledge.spec` and `Tracking.spec`). Each new mechanism has a test that fails when it is undone. `lune run build`: 261 scripts compile, 776 requires resolve.
 
-**Counter check** (`lune run balance 2`, `docs/BALANCE.md`):
+**Team knowledge** (D100, D101): every targeting, AI and auto-behavior decision now uses the deciding team's knowledge.
+- Fixed:
+  - bombers and artillery keep attacking ghosts of structures that died unseen, until the spot is seen;
+  - the targeting search judges radar contacts by their believed position;
+  - the AI plans build sites with what its team knows;
+  - the AI never reads a radar blip's type and keeps dead ghosts as targets.
+- Kept as physics: hits, collisions, seekers, the frame-start placement check.
+- Open: see questions 1 and 2.
 
-| After | Pairs hold (of 568) | Findings | Mechanic | Numbers |
-|---|---|---|---|---|
-| Round 5 | 412 | 273 | 157 | 116 |
-| Item 1 (aim point) | 425 | 248 | 84 | 164 |
-| Item 2 (bombs on radar / ghosts) | 425 | 249 | 82 | 167 |
-| Item 3 (destroyer SAM, guidance) | 446 | 223 | 57 | 166 |
-| Item 4 (band; nothing destroyed fails) | **452** | **201** | **71** | **130** |
-| Final re-run (after item 5) | 452 | 201 | 71 | 130 |
+**Homing corrections** (D102): max visible drift went torpedoes 631 → 30 studs, AAMs 517 → 67, radar SAMs 171 → 59. Cost: about 45 B/s per homing projectile in view (0.03–0.18 KB/s per player in duels). The stress armies have no homing weapons, so the stress test shows no change there.
 
-- Same-role band: 32 of 38 fights inside 0.5–2.0. Outside: Archon against Harpy and Manticore and Falcon against Harpy (all ran dry), and Judgement against Hellmouth (0.43 long).
-- **Remaining mechanic findings (71), all air:**
-  - bombers: 31 dropped only on radar contacts of small units and missed, 17 never lined up a run, 12 ran dry, 1 couldn't see;
-  - attack helicopters against ships: 8 ran dry;
-  - radar SAMs against jets: 2.
-- **M8 balance items** (top of `BALANCE.md`): 1. IR SAM vs helicopters (Halo vs Wasp 0.58 / 0.55, Hornet vs Guardian 1.36 / 2.01).
+**Air rows with airfields** (D103): no more "ran out of ammo" findings. The same-role band now holds 34 of 38 fights.
 
-**Changes you didn't ask for (each in DECISIONS):**
-- **D97, missile guidance:** while testing the destroyer SAM I found that no SAM ever hit a circling jet: 20–25 missiles each, no impact. Homing was pure pursuit with contact fuses only. It is now lead pursuit plus a proximity fuse within the warhead's blast radius. The land SAM rows had "held" only because 0 ÷ 0 counted as ∞.
-- **D96 revised, balance fights:** bomber groups get a durable long-range radar at the map edge. The T1 tower beside them died in the first seconds of close starts.
-- **D99, LOST_LOCK:** added as a sixth combat event. Without it the client keeps steering a missile the server flies straight.
+**Fire-control radar** (D104, D105):
 
-**Bandwidth** (stress test, per player): Events 0.06 / 0.12 / 0.16 / 0.19 → 0.52 / 0.95 / 1.34 / 1.60 KB/s at 200 / 400 / 600 / 800 units. Tactical, Strategic and State are unchanged. Total at 800 units: 19.2 → 20.6 KB/s (budget 35).
+| Test | Untracked | Tracked |
+|---|---|---|
+| Verdict on a radar-only Ravager, direct hits | 4 of 15 | 11 of 15 |
+| Absolution on a moving radar-only tank | 0 of 9 | 6 of 10 |
+
+Artillery duels on radar (`BALANCE.md`, Order's trade):
+
+| | Early warning only | Order tracks | Chaos tracks |
+|---|---|---|---|
+| Verdict vs Hellmouth | 0.61 | 0.71 | 0.68 |
+| Judgement vs Hydra | 1.64 | 1.90 | 1.68 |
+
+Chaos's tracking doubles its direct hits but doesn't help it. Its mortars and rockets are blast weapons: precise shots pile onto the one unit they aim at, while wobbly ones spread damage over the group.
+
+**Counter check** (2 seeds): 456 of 568 pairs hold (452 at the end of round 6); 193 findings: 50 mechanic, 143 numbers. The remaining mechanic findings are bombers: 31 bombed only small radar contacts and missed, 16 never lined up a run against AA, 1 couldn't see.
 
 **Questions for you:**
-1. **Bomb release on radar contacts** (D96): against moving radar contacts a bomber makes about 6 runs per release. The blip shifts up to 40 studs every 2 s, radar contacts get no lead, and the release window is ±10 studs across the track. Widen the window for radar contacts to the radar error (more drops, most of them misses on small units), or leave it so radar bombing is mainly for structures?
-2. **Ghosts of dead structures:** bombs only target live units, so a ghost whose structure died unseen is never bombed. Is that fine, or should an attack-ground order on remembered spots come with the order system?
-3. **Homing missiles on the client** (D99): unguided projectiles match the server exactly, but missiles homing on radar contacts drift (up to about 600 studs in one export) until their IMPACT. Add a periodic correction record for homing projectiles (about 15 B × 3 Hz per missile in flight), or accept the drift?
-4. **Guidance change** (D97): keep lead pursuit and proximity fuses? The Hornet IR SAM still can't hit a Falcon (DIRCM and flares, 5-stud blast). I'm treating that as M8 numbers.
+1. **Pathfinding on true passability** (D101): routes go around enemy structures the team never saw. Fix it (per-team passability, or unseen structures passable until a unit bumps into them: a large change to Nav and the flow-field cache), or accept it as physics?
+2. **Radar contacts' categories** (D101): weapon filters and target priority use a radar contact's true category. Limit radar knowledge to air vs surface (vs submerged), or accept it?
+3. **Blast weapons and tracking** (D104): tracking makes Chaos's mortars and rockets more precise but not more effective against groups. Accept that, which fits Chaos's "cheaper, weaker" tracking, or give salvo weapons a deliberate spread so precision still pays?
+4. **Jammer power upkeep** (guide 11.4 says jammers drain power and shrink in a stall; never implemented). Add it now with the tracking-radar mechanism?
+5. **Ghost ID reuse** (D100): after 65,535 spawns a reused ID would carry an old ghost. Give ghosts their own IDs now, or leave it for the match-length tests?
 
 ---
 

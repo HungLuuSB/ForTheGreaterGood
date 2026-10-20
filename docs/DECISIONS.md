@@ -15,6 +15,7 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D85–D90: third queue: Sensors stamping, local quadtree updates, match rules, full roster, balance report, skirmish AI.
 - D91–D94: round 5: bombing, wind / converters / extractor upgrades, match export and viewer, counter check.
 - D95–D99: round 6: shared aim point, bombs on radar contacts and ghosts, destroyer SAM and missile guidance, same-role band, combat events on the wire.
+- D100–D105: round 7: team knowledge (ghost targets, ATTACK_GROUND, audit), homing corrections, rearm airfields in balance fights, fire-control radar and its lock bonus.
 
 Open points are listed in `docs/PROGRESS.md` → Summary.
 
@@ -1326,6 +1327,8 @@ Every system was reviewed for decisions that read another team's units from serv
 - **Balance:** `lune run balance` has a new section "Fire-control radar". It runs `Scenes.radarDuel`: equal-value artillery groups 380 studs apart, beyond sight, each with its T1 radar tower, with no tracking, Order tracking or Chaos tracking.
   - In the first run, Order's Tribunal doubled the Verdicts' direct hits (4 → 9). The Hellmouths still won: their mortars kill a tight group by blast alone.
   - With MLRS, Order won faster with tracking (1,021 vs 1,468 ticks).
+  - Final run (2 seeds), Order's trade (no tracking / Order tracks / Chaos tracks): Verdict vs Hellmouth 0.61 / 0.71 / 0.68; Judgement vs Hydra 1.64 / 1.90 / 1.68.
+  - Chaos's tracking more than doubles its direct hits (2 → 5) but not its effect. Order's units even live longer (unit-ticks 1,097 → 1,617): precise blast shells pile onto the one unit they aim at, while wobbly ones spread damage over the group. A question for the user.
 
 ## D105 — Radar-guided lock range +10% against tracked targets (2026-10-20, user-requested option)
 
