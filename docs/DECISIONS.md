@@ -590,3 +590,12 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - **Decision:** RECLAIM drives the builder in range of the wreck, then moves `buildPower × 0.1` supply per second from the wreck into the team account (settled at the next economy step, capped by storage). The wreck is removed when empty. Reclaim doesn't depend on the stall ratio.
 - **Alternatives:** reclaim speed from a per-wreck reclaim time.
 - **Why:** guide 8.7. Rate 0.1 makes a Mason (BP 100) reclaim a Ravager wreck (65 supply) in 6.5 s.
+
+## D64 — Match start and the scripted build order (2026-10-20)
+
+- **Decision:** scenario `standard_start` gives each player their faction's Command Vehicle (Order for odd teams, Chaos for even) at the map's start positions in player order, facing the center. The test driver (`Tests/Support/BuildOrder.luau`) plays only through `Sim.submit`, so its inputs are in the replay.
+- **Observed** (`lune run report_buildorder`, both factions mirrored):
+  - extractors at 6 and 12 s, generators at 16 and 20 s, vehicle plant at about 43 s;
+  - three tanks by 107 s (Order) and 90 s (Chaos);
+  - production then becomes power-bound (power ratio 0.45–0.5), the intended stall behavior for a build with too few generators.
+- **Why:** M3 exit criterion "a full T1 build order is playable", proven headless and deterministic.

@@ -69,4 +69,21 @@ Scenarios.duel_test = function(sim: Types.Sim)
 	end
 end
 
+-- Match start (guide 16.3): each player's Command Vehicle at its map start
+-- position (player order), Order for odd teams and Chaos for even teams,
+-- facing the map center. Needs a map with start positions.
+Scenarios.standard_start = function(sim: Types.Sim)
+	local map = sim.map
+	if map == nil or #map.layers.starts < #sim.playerOrder then
+		error("Scenarios.standard_start: needs a map with a start per player", 0)
+	end
+	for i, playerId in sim.playerOrder do
+		local player = sim.players[playerId]
+		local start = map.layers.starts[i]
+		local defId = if player.team % 2 == 1 then "ord_sovereign" else "chs_warlord"
+		local heading = if start[1] < 0 then math.pi / 2 else -math.pi / 2
+		Spawn.unit(sim, defId, playerId, start[1], start[2], heading)
+	end
+end
+
 return Scenarios
