@@ -70,6 +70,7 @@ type Plan = {
 	nextMember: number, -- next unit to line-check
 	cells: { number }, -- start cells of units that need the field
 	search: Route.Search?, -- coarse route, once every unit is checked
+	extend: boolean?, -- a field extension (S-5): merge into the order's corridor, no cache lookup
 }
 
 -- A queued job: an order's plan, then (same entry) its flow field.
@@ -691,12 +692,29 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 	end
 	local leaves = Route.searchResult(search)
 	if #leaves == 0 then
-		order.unreachable = true
+		if not plan.extend then
+			order.unreachable = true -- (an extension that finds nothing leaves the order as it is)
+		end
 		order.pending = false
 		return spent, true
 	end
+	-- corridor (and merge) cost about one unit per 8 cells of the area they
+	-- touch: if this tick's budget can't cover it, finish next tick (S-5)
+	local old = if plan.extend then order.field else nil
+	local area = 0
+	if old then
+		local c = old.corridor
+		area = ((c.maxX - c.minX + 1) * (c.maxZ - c.minZ + 1)) // 4
+	end
+	if old and spent > 0 and spent + area > budget then
+		return spent, false -- the search is done; the next call goes straight here
+	end
 	local corridor = Route.corridor(t, leaves)
 	spent += corridor.cellCount // 8
+	if old then
+		corridor = Route.mergeCorridors(old.corridor, corridor, g.cellsX)
+		spent += corridor.cellCount // 8
+	end
 	entry.plan = nil
 	entry.job = FlowField.newJob(t, corridor, order.goalCell)
 	return spent, false
@@ -706,6 +724,8 @@ end
 -- the corridor, or stuck): routes from those cells are merged into the
 -- current corridor. Orders that took the direct-path shortcut get their first
 -- field this way. Rate-limited per order; ignored while a job is pending.
+-- The route search, corridor and field all run as a sliced Pathing job
+-- (S-5): Movement only queues it, and units steer straight meanwhile.
 function Nav.extendField(nav: Nav, order: Order, cells: { number }, tick: number)
 	local field = order.field
 	if order.pending or order.unreachable or order.moveClass == "air" or tick - order.lastExtendTick < Nav.EXTEND_COOLDOWN then
@@ -719,17 +739,16 @@ function Nav.extendField(nav: Nav, order: Order, cells: { number }, tick: number
 			table.insert(open, c)
 		end
 	end
-	local leaves = Route.findMany(tree, open, order.goalCell)
-	if #leaves == 0 then
+	if #open == 0 then
 		return
 	end
-	local corridor = Route.corridor(tree, leaves)
-	if field then
-		corridor = Route.mergeCorridors(field.corridor, corridor)
-	end
+	local _ = field
 	order.pending = true
-	local key = FieldCache.key(order.moveClass, order.need, order.goalCell)
-	enqueue(nav, { key = key, order = order, job = FlowField.newJob(tree, corridor, order.goalCell) })
+	enqueue(nav, {
+		key = FieldCache.key(order.moveClass, order.need, order.goalCell),
+		order = order,
+		plan = { tree = tree, members = {}, nextMember = 1, cells = open, search = Route.newSearch(tree, open, order.goalCell), extend = true },
+	})
 end
 
 -- Passability changed inside the cell rectangle (a structure was placed or
