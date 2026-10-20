@@ -16,11 +16,11 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 | 4 | Movement peak at 800 units 12.1 → 6.4 ms (budget 10): field extensions are now sliced Pathing jobs | S-5 |
 | 5 | Smarter AI: radar tower, fire-control radar via the Advanced Vehicle Plant escorting waves, kiting artillery, IR SAM trucks and sites against known aircraft | S-7 |
 | 6 | `lune run soak`: 40-minute AI-vs-AI match, 36,000 ticks in 16 s; peak tick 10.8 ms, heap 6–16 MB with no growth, replay identical | S-8 |
-| Client requests | Weapon pieces in `pieces` plus validation (S-3); unit state bits in Shared, `Schema.UnitState` (S-6) | S-3, S-6 |
+| Client requests | Weapon pieces in `pieces` plus validation (S-3); unit state bits in Shared, `Schema.UnitState` (S-6); placement rules in Shared, `Shared/Grid/PlacementRules` (S-9) | S-3, S-6, S-9 |
 
-**Tests:** `lune run test` gives **36 specs, 270 passed, 0 failed** (253 at the start). New: `Orders.spec` (8), `AI.spec` (4), plus tests in `NetOut.spec` (3), `Schema.spec` (2) and `Defs.spec` (1). Every new mechanism was mutation-checked (its test fails when it is undone). `lune run build`: 288 scripts, 861 requires.
+**Tests:** `lune run test` gives **36 specs, 271 passed, 0 failed** (253 at the start). New: `Orders.spec` (8), `AI.spec` (4), plus tests in `NetOut.spec` (3), `Schema.spec` (2), `Defs.spec` (1) and `Placement.spec` (1). Every new mechanism was mutation-checked (its test fails when it is undone). `lune run build`: 288 scripts, 861 requires.
 
-**Integrated from the client stream:** `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1`, `a96cca2`, `2062b10`, `df29a2d`. No conflicts and no failed checks (see Integration notes).
+**Integrated from the client stream:** `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1`, `a96cca2`, `2062b10`, `df29a2d`, `f52bf53`, `47aaa63`. No conflicts and no failed checks (see Integration notes).
 
 **Balance** (re-run after FIGHT started holding to engage): 448 of 568 pairs hold (was 457); 206 findings (75 mechanic, 131 numbers); same-role band 24 of 38 (was 34). See "Needs my review".
 
@@ -41,6 +41,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 - **Ready:** protocol 6 is built: join / reconnect (`NetOut.hello`, `NetOut.join`) and the Eco channel (the client-state contract's economy placeholder can use it). Contract section 10.
 - **Ready:** all commands now work (S-4, contract section 9): shift-queue, FIGHT, PATROL, ATTACK, GUARD, REPAIR, RECLAIM, BUILD, factory rally (move-like order on a factory) and repeat (TOGGLE on a factory). Order queues aren't replicated; draw queued paths from what the client sent.
 - **Done (request 2: unit state bits in Shared):** `Schema.UnitState`; `World.State` is that same table (S-6). On `main`.
+- **Done (request 4: placement rules in Shared):** `Shared/Grid/PlacementRules` has `snap`, `terrainOk(passMap, cell, placement)` and `LAND_MAX_SLOPE`, `WATER_MIN_DEPTH`, `RADIUS_PER_FOOTPRINT`. The server's `Placement`, `Nav` and `Combat` use it, and a test checks the server's terrain verdict equals it, so the client copy (C-14) can go (S-9). Occupancy and units in the way stay server-side.
 - **Done (request: bomber weapon pieces):** all 14 defs with a weapon piece missing from `pieces` are fixed (not only the bombers), and `Defs` validation now rejects such defs (S-3). On `main`.
 
 ## Integration notes
@@ -49,7 +50,8 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 
 - 2026-10-21: client `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1` merged (`--no-ff`); `lune run test` 34 specs / 253 passed, `lune run build` 263 scripts / 787 requires; pushed (`2a8b078`). `main` merged into `m-sim-2`.
 - 2026-10-21: client `a96cca2` (contracts: rig, blockout format, client-state draft) → `02bacbc`; `2062b10` (blockout generator) → `4c93177`; `df29a2d` (client foundation) → `6b05efe`. Each passed test and build and was pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
-- Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`.
+- 2026-10-21: client `f52bf53` → `f649cfe`; `47aaa63` → `cbd662e`. Both passed test (36 specs / 270) and build (297 scripts / 894 requires) and were pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
+- Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 (see git log).
 
 ## Overnight 2026-10-21 (integrator + queue)
 
@@ -60,6 +62,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - Client request 2 ✅: `Schema.UnitState` (S-6).
 - Task 5 ✅: smarter AI (S-7): radar tower, Advanced Vehicle Plant with a fire-control radar escorting waves, kiting artillery, IR SAM trucks and sites against known aircraft. `AI.spec` (4). Tests: **36 specs, 270 passed**.
 - Task 6 ✅: `lune run soak`, 40-minute AI-vs-AI match test (S-8).
+- Client request 4 ✅: placement rules in Shared (S-9). Tests: **36 specs, 271 passed**.
 - Task 4 ✅: Movement peak at 800 units 12.1 → 6.4 ms (budget 10): field extensions are sliced Pathing jobs, and the corridor merge is bounded (S-5). Stress: average tick 8.6 ms, Pathing peak 8.4 ms.
 
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)

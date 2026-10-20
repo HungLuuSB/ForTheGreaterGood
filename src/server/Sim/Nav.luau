@@ -15,6 +15,7 @@
 -- the coarse route and corridor, then the flow field job. Until the plan is
 -- done the order is pending and its units steer straight at their slots.
 
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Passability = require("@shared/Grid/Passability")
@@ -30,7 +31,7 @@ Nav.ARRIVE_RADIUS = 1.5 -- studs: a unit this close to its own goal has arrived
 Nav.DIRECT_RANGE = 96 -- studs: line-of-sight checks for direct steering only this close
 Nav.LINE_STEP = 2 -- studs between line-of-sight samples
 Nav.SLOT_SPACING = 1.3 -- formation spacing, in unit diameters
-Nav.RADIUS_PER_FOOTPRINT = 8 * 0.45 -- collision radius per footprint cell (studs)
+Nav.RADIUS_PER_FOOTPRINT = PlacementRules.RADIUS_PER_FOOTPRINT -- collision radius per footprint cell (studs; shared, S-9)
 Nav.PATHING_BUDGET = 36000 -- flow field work units per tick (DECISIONS D33, D53)
 Nav.NEAREST_SEARCH_LIMIT = 4096 -- cells examined when snapping a goal to open ground
 Nav.EXTEND_COOLDOWN = 15 -- ticks between field extensions for one order

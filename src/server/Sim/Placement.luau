@@ -10,6 +10,7 @@ local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
 local Passability = require("@shared/Grid/Passability")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Lifecycle = require("./Lifecycle")
 local Sensors = require("./Sensors")
 local Nav = require("./Nav")
@@ -20,17 +21,10 @@ local Placement = {}
 
 local L = Sensors.Level
 
-Placement.LAND_MAX_SLOPE = 30 -- degrees
-Placement.WATER_MIN_DEPTH = 6 -- studs (as deep as ships need)
-
--- Min-corner cell of a size-F footprint whose center is nearest (x, z), and
--- the snapped world center.
-function Placement.snap(grid: Grid.Grid, size: number, x: number, z: number): (number, number, number, number)
-	local fx = (x - grid.originX) / Grid.CELL_SIZE - size / 2
-	local fz = (z - grid.originZ) / Grid.CELL_SIZE - size / 2
-	local x0, z0 = math.floor(fx + 0.5), math.floor(fz + 0.5)
-	return x0, z0, (x0 + size / 2) * Grid.CELL_SIZE + grid.originX, (z0 + size / 2) * Grid.CELL_SIZE + grid.originZ
-end
+-- The snap and terrain rule are shared with clients (Shared/Grid/PlacementRules, S-9).
+Placement.LAND_MAX_SLOPE = PlacementRules.LAND_MAX_SLOPE
+Placement.WATER_MIN_DEPTH = PlacementRules.WATER_MIN_DEPTH
+Placement.snap = PlacementRules.snap
 
 -- Can `def` be placed centered near (x, z)? Returns ok, a reason when not,
 -- the snapped min corner and center, and the unit the placement replaces
@@ -53,7 +47,6 @@ function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number
 	local w = sim.world
 	local replaces = 0
 	local placement = def.placement or "land"
-	local maxSlope = Passability.degreesToSlope(Placement.LAND_MAX_SLOPE)
 	for cellZ = z0, z0 + size - 1 do
 		for cellX = x0, x0 + size - 1 do
 			if not g:inBounds(cellX, cellZ) then
@@ -82,11 +75,7 @@ function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number
 				end
 				replaces = occupant
 			end
-			local water = Layers.getWater(layers, i)
-			local land = water <= 0 and buffer.readu8(pm.slope, i) <= maxSlope
-			local sea = water >= Placement.WATER_MIN_DEPTH
-			local ok = if placement == "land" then land elseif placement == "water" then sea else (land or sea)
-			if not ok then
+			if not PlacementRules.terrainOk(pm, i, placement) then
 				return false, "terrain", x0, z0, cx, cz, 0
 			end
 		end
