@@ -158,6 +158,58 @@ elseif demo == "combat" then
 	end)
 	fs.writeFile(out, best)
 	print(`wrote {out} (busiest frame: {bestScore})`)
+elseif demo == "minimap" then
+	-- the placeholder minimap and resource bar, drawn from Core/Minimap (the
+	-- GUI itself needs Studio): a start map, buildings going up, a power stall
+	local Minimap = require("../src/client/Core/Minimap")
+	local Ppm = require("./lib/Ppm")
+	local _sim, world, api, run = setup({ seed = 2, players = { { id = 1, team = 1 } }, mapId = "start:48", scenario = "standard_start" })
+	local cv = World.ownIds(world)[1]
+	local u = world.units[cv]
+	api.actions.select({ cv })
+	assert(api.actions.beginPlacement("ord_vehplant"))
+	api.actions.place(u.x + 40, u.z, false, true)
+	api.actions.place(u.x + 40, u.z + 40, true, true)
+	api.actions.place(u.x + 40, u.z - 40, true, false)
+	run(15 * 25)
+	local W, H = 460, 290
+	local img = Ppm.new(W, H)
+	local function rect(x0: number, y0: number, w: number, h: number, r: number, g: number, b: number)
+		for y = math.floor(y0), math.ceil(y0 + h) - 1 do
+			for x = math.floor(x0), math.ceil(x0 + w) - 1 do
+				Ppm.set(img, x, y, r, g, b)
+			end
+		end
+	end
+	rect(0, 0, W, H, 34, 36, 40)
+	-- resource bar (top): fills; red when stalling
+	local eco = api.state.economy :: any
+	for i, name in { "Supply", "Power" } do
+		local line = Minimap.resLine(name, if name == "Supply" then eco.supply else eco.power)
+		print(line.text)
+		local y = 10 + (i - 1) * 22
+		rect(10, y, 440, 18, 45, 48, 54)
+		local c = if line.stalling then { 230, 70, 60 } elseif name == "Supply" then { 110, 190, 230 } else { 240, 210, 90 }
+		rect(10, y, 440 * line.fill, 18, c[1], c[2], c[3])
+	end
+	-- minimap (bottom left, 200 px): terrain, dots, camera box
+	local mx, my, S = 10, 80, 200
+	for _, tile in Minimap.terrain(world.layers) do
+		local c = if tile.supply > 0 then { 160, 150, 80 } elseif tile.water > 0 then { 40, 80, 130 } else { 80, 102, 66 }
+		rect(mx + tile.u * S, my + tile.v * S, tile.w * S, tile.h * S, c[1], c[2], c[3])
+	end
+	for _, d in Minimap.dots(world, api.selection.set) do
+		local px = if d.kind == "structure" then 5 else 4
+		local c = if d.selected then { 255, 255, 255 } else { 58, 120, 230 }
+		rect(mx + d.u * S - px / 2, my + d.v * S - px / 2, px, px, c[1], c[2], c[3])
+	end
+	local u0, v0, u1, v1 = Minimap.cameraBox(world.grid, { 10, 14, 30, 33 })
+	rect(mx + u0 * S, my + v0 * S, (u1 - u0) * S, 1, 255, 255, 255)
+	rect(mx + u0 * S, my + v1 * S, (u1 - u0) * S, 1, 255, 255, 255)
+	rect(mx + u0 * S, my + v0 * S, 1, (v1 - v0) * S, 255, 255, 255)
+	rect(mx + u1 * S, my + v0 * S, 1, (v1 - v0) * S, 255, 255, 255)
+	Ppm.writePng(img, out)
+	print(`wrote {out}`)
 elseif demo == "icons" then
 	-- strategic zoom over a skirmish start: everything as icons, a few selected
 	local sim, world, api, run = setup({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "ew_test" })

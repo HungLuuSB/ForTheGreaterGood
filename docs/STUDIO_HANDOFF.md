@@ -84,14 +84,14 @@ Projectiles and FX aren't replicated yet (D82). The sim already emits `SPAWN_PRO
 
 In guide order. Each is client-only and builds on step 5.
 
-- [ ] **M2 combat visuals:** projectiles (client-simulated from spawn records, guide 10.5), impacts, wrecks and deaths (guide 14.6), turret aim from the state records (`wYaw` / `wPitch`).
+- [ ] **M2 combat visuals:** projectiles (client-simulated from spawn records, guide 10.5), impacts, wrecks and deaths (guide 14.6), turret aim from the state records (`wYaw` / `wPitch`). *Client stream: projectiles, impacts, tracers, death bursts and turret aim done (tasks 4, 7); wrecks and death animations open.*
 - [ ] **Animation system (guide 14):** piece scripts in the BAR style, the scheduler and LOD.
-- [ ] **M3 economy and build UI:**
+- [ ] **M3 economy and build UI:** *(client stream: placement ghost done in task 6, placeholder resource bar in task 9; build menu and factory queues open)*
   - resource bar with stall ratio;
   - build menu and placement ghost (validated against `Placement`);
   - factory queues;
   - reclaim cursor.
-- [ ] **M4 fog and minimap:** fog rendering from the client view (VISIBLE, RADAR blips at wobbled positions, ghosts); minimap from strategic snapshots; camera interest sent as the camera command so the server's tactical tier follows it.
+- [ ] **M4 fog and minimap:** *(client stream: camera interest sent (task 4), strategic icons with blips and ghosts (task 8), placeholder minimap (task 9))* fog rendering from the client view (VISIBLE, RADAR blips at wobbled positions, ghosts); minimap from strategic snapshots; camera interest sent as the camera command so the server's tactical tier follows it.
 - [ ] **M6 air and naval visuals:**
   - aircraft altitude bands, landing on pads, rearm progress;
   - water rendering;
