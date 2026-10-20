@@ -16,8 +16,10 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D91–D94: round 5: bombing, wind / converters / extractor upgrades, match export and viewer, counter check.
 - D95–D99: round 6: shared aim point, bombs on radar contacts and ghosts, destroyer SAM and missile guidance, same-role band, combat events on the wire.
 - D100–D105: round 7: team knowledge (ghost targets, ATTACK_GROUND, audit), homing corrections, rearm airfields in balance fights, fire-control radar and its lock bonus.
+- D106–D109: round 8: pathfinding as physics, domain-only radar contacts, jammer upkeep, unit generations.
+- **From 2026-10-20 (after D109) decisions are prefixed by work stream:** `S-1`, `S-2`, ... for the headless simulation (`docs/progress/sim.md`), and the client stream's own prefix for the Roblox client and Studio work.
 
-Open points are listed in `docs/PROGRESS.md` → Summary.
+Open points are listed in each stream's progress file (`docs/progress/`) → Summary.
 
 ---
 

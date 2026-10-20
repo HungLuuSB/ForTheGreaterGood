@@ -44,9 +44,9 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
   - Runtime-specific behavior lives only in the `Shared/Util` adapters (`Env`, `Profiler`, `Log`). Branch on `Env.isRoblox` / `Env.isLune` there, nowhere else.
   - Randomness comes only from `Shared/Util/Prng` (pure Luau, so both runtimes give bit-identical sequences), never `Random.new` or `math.random`.
 - `.lune/` holds Lune-only scripts (test entry, tooling). They may use `@lune/*`.
-  - `lune run bench`: flow field benchmark (results in `docs/PROGRESS.md`).
+  - `lune run bench`: flow field benchmark (results in `docs/progress/sim.md`).
   - `lune run debug_map`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored).
-  - `lune run stress`: stress test and bandwidth report (results in `docs/PROGRESS.md`).
+  - `lune run stress`: stress test and bandwidth report (results in `docs/progress/sim.md`).
   - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).
   - `lune run export <scene> [--player N]`: record a match for the viewer (`tools/viewer/index.html`) into `debug_out/`.
   - `lune run build`: Roblox build (see below). `lune run check_build [place]` re-checks a built place.
@@ -64,6 +64,6 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
 
 M1 — One tank moves. Simulation side done in Lune (passability, quadtree + flow fields, movement and avoidance). Still open, all needing Studio: map bake, tactical replication, interpolated rendering, debug overlays.
 M2 (Combat) core and M3 (Economy & construction) are implemented headless ahead of M1's Studio work: targeting, aim model, weapons, projectiles, damage, wrecks; team economy with stall ratios, extractors and generators, construction with assist, factories with queues, reclaim, and a scripted T1 build order.
-M4 (sensors, fog, ghosts, NetOut interest management), the M5 stress harness, M6 (air, naval) and M7 (guidance, jamming, burn-through, countermeasures) are implemented headless too. So are match rules (FFA / Team, Command Ends / Annihilation, unit caps), the full placeholder roster and tech tree, a balance report and a skirmish AI (M8 groundwork). Their remaining exit criteria need Studio (minimap, live caps, playable matches). See `docs/PROGRESS.md` and the ordered Studio checklist in `docs/STUDIO_HANDOFF.md`.
+M4 (sensors, fog, ghosts, NetOut interest management), the M5 stress harness, M6 (air, naval) and M7 (guidance, jamming, burn-through, countermeasures) are implemented headless too. So are match rules (FFA / Team, Command Ends / Annihilation, unit caps), the full placeholder roster and tech tree, a balance report and a skirmish AI (M8 groundwork). Their remaining exit criteria need Studio (minimap, live caps, playable matches). See `docs/progress/` (one file per work stream: `sim.md` for the headless simulation) and the ordered Studio checklist in `docs/STUDIO_HANDOFF.md`.
 M0 (Foundations) exit criteria met on 2026-10-20: defs validate, packets round-trip, and 1,000 headless ticks run deterministically and replay exactly.
 Update this line when a milestone's exit criteria are met.
