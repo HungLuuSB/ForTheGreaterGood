@@ -36,13 +36,16 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
 
 - Run the tests from the project root with `lune run test` (entry: `.lune/test.luau`). It runs every `*.spec.luau` under `src/server/Tests`. `lune run test <filter>` runs only the specs whose path contains `<filter>`.
 - All code in `src/shared` and `src/server` must run in **both** Lune and Roblox:
-  - String requires only (`require("./Foo")`, `require("../Util/Log")`). Cross-tree requires use the `.luaurc` aliases, e.g. `require("@shared/Util/Prng")`. Never `require(script.Parent.X)` or `game:GetService`.
+  - String requires in exactly two forms, never mixed with anything else:
+    - **Across roots** (e.g. `src/server` → `src/shared`): always the alias, `require("@shared/Util/Prng")`.
+    - **Within a root:** relative paths, `require("./Env")`, `require("../Defs")`.
+    - Nothing else: no `require(script.Parent.X)`, no `game:GetService`, no other aliases, no relative path that climbs out of its root.
   - No Instances and no Roblox-only globals or libraries (`game`, `workspace`, `script`, `Instance`, `Random`, `Vector3`, `task`, `debug.profilebegin`…), and no `@lune/*` libraries.
   - Runtime-specific behavior lives only in the `Shared/Util` adapters (`Env`, `Profiler`, `Log`). Branch on `Env.isRoblox` / `Env.isLune` there, nowhere else.
   - Randomness comes only from `Shared/Util/Prng` (pure Luau, so both runtimes give bit-identical sequences), never `Random.new` or `math.random`.
 - `.lune/` holds Lune-only scripts (test entry, tooling). They may use `@lune/*`.
 - `src/client` is Roblox-only and isn't covered by this rule.
-- When Studio becomes available, check that Roblox resolves the `.luaurc` aliases before relying on them there.
+- Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). Plan: keep the require style above unchanged. When Studio is available, add a darklua build step whose `convert_require` rule rewrites `@shared/...` and relative requires into Instance paths using the Rojo sourcemap (`rojo sourcemap -o sourcemap.json`). Rojo then serves darklua's output instead of `src/`.
 
 ## Current milestone
 
