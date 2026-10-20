@@ -861,3 +861,25 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   The average tick at 800 units went from about 12.1 to 9.2 ms.
 - **Trade-off:** in a mass spawn (the stress test's 800 units appearing in one tick), the last units start emitting up to about 1 s late. Normal play spawns a few units at a time, far below the budget.
 - **Alternatives:** stamping at a coarser resolution (changes what is seen); spreading every restamp over ticks (would make moving units' sight lag).
+
+## D86 — Local quadtree updates when structures change passability (2026-10-20, task 19)
+
+- **Before:** `Nav.terrainChanged` dropped every quadtree. The next `Nav.tree` call rebuilt them lazily, usually in Movement in the same tick, at 2–11 ms per tree on a 256×256 map with 5 ground trees.
+- **Decision:**
+  - `Quadtree.update(tree, pm, rect)` (see its header) is called for every existing tree, in sorted key order. The rectangle is the footprint padded by `CLEARANCE_CAP` (16), the farthest clearance can change.
+    1. Find the cells whose open/blocked state flipped. If none, return; for example, land structures don't touch ship trees.
+    2. Re-decide nodes top-down, descending only into nodes touching the flipped box. Untouched nodes take their state from the old tree in O(1). The merge and split rule is the full build's, so the leaf set equals a rebuild's.
+    3. New leaves replace the old leaves they cover. IDs come from removed and free IDs ascending, then appended; dead IDs have `leafSize = 0`.
+    4. Neighbor lists are patched; components are recomputed (one BFS over open leaves).
+  - Leaf IDs can differ from a fresh build's. They are deterministic for the same history; routes break ties by leaf ID, so a different history can give a different but equally short route.
+  - Plan jobs with a route search in flight over a changed tree restart their search.
+- **Tests** (`Placement.spec`):
+  - after each of 40 random placements and removals on a generated 128×128 map, every tree (including a need-2 TRACKED tree, where clearance beyond the footprint matters) equals a fresh build: leaf rectangles, cell→leaf links, adjacency, component partition and counts;
+  - mutations caught: no merging, no neighbor patch, no component recompute, no padding;
+  - the old "the tree object was replaced" check now checks that the same tree blocks the new structure's cells.
+- **Result** (stress test, 800 units, 14 structures placed mid-battle):
+  - worst tick containing a placement: 42–43 ms → 24–27 ms, which is the ordinary tick peak; the placement itself costs ≤ 5.7 ms;
+  - Movement peak: 31–35 → 14 ms.
+- **Alternatives:**
+  - renumbering every leaf to match a fresh build's IDs (O(map) per change);
+  - rebuilding dirty trees as sliced jobs (stale trees in between).

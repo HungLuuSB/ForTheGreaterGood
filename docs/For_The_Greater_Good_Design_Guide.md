@@ -512,6 +512,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
   - A sliced job gives byte-identical output to a one-shot job (`Sim/Path/FlowField.luau`).
 - **Parallel Luau:** run field generation in Actors. Each Actor keeps its own copy of the static grid layers; the main sim sends requests and receives finished direction buffers.
 - **Invalidation:** when a structure changes passability, mark the affected quadtree nodes dirty and drop cached fields that cover them.
+- Implementation (DECISIONS D86): each quadtree is updated locally (`Quadtree.update`): only nodes touching the flipped cells are re-decided, and the result equals a full rebuild. A placement costs ≤ 6 ms for all trees at 800 units, instead of 10–40 ms of lazy rebuilds.
 
 ### 6.5 Local avoidance
 

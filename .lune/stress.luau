@@ -107,11 +107,28 @@ local function run(total: number)
 	local tickTimes = {}
 	-- move-order path per tick: Commands (issuing) + Pathing (plans, fields)
 	local orderPeak, lastOrders = 0, 0
+	-- structures placed mid-battle (every 30 ticks from tick 60), timed with
+	-- the tick they land in: passability, quadtree and field-cache updates
+	local placements, placementPeak, placeCost = 0, 0, 0
 	local t0 = os.clock()
-	for _ = 1, TICKS do
+	for tick = 1, TICKS do
 		local s = os.clock()
+		local placed = false
+		if tick >= 60 and tick % 30 == 0 then
+			local k = tick // 30
+			local x, z = ((k * 137) % 400) - 200, ((k * 71) % 400) - 200
+			local p0 = os.clock()
+			Spawn.unit(sim, if k % 2 == 0 then "ord_vehplant" else "chs_generator", 1 + k % 2, x, z)
+			placeCost = math.max(placeCost, (os.clock() - p0) * 1000)
+			placements += 1
+			placed = true
+		end
 		Sim.step(sim)
-		table.insert(tickTimes, (os.clock() - s) * 1000)
+		local ms = (os.clock() - s) * 1000
+		table.insert(tickTimes, ms)
+		if placed then
+			placementPeak = math.max(placementPeak, ms)
+		end
 		local orders = (timing.total["Sim.Commands"] or 0) + (timing.total["Sim.Pathing"] or 0)
 		orderPeak = math.max(orderPeak, (orders - lastOrders) * 1000)
 		lastOrders = orders
@@ -142,6 +159,7 @@ local function run(total: number)
 	end
 	out("first system over budget (average): " .. (firstOver or "none"))
 	out(string.format("move orders (Commands + Pathing in one tick): worst tick %.2f ms", orderPeak))
+	out(string.format("structure placements mid-battle: %d, worst tick with a placement %.2f ms (placement itself: worst %.2f ms)", placements, placementPeak, placeCost))
 	-- bandwidth per player
 	local seconds = TICKS / 15
 	for pid = 1, 2 do
