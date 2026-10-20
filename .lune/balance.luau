@@ -622,6 +622,14 @@ do
 		end
 	end
 	out("1. **IR SAM vs helicopters** (12.4: ●●●, the IR SAM's best target): " .. table.concat(parts, "; ") .. ". The IR SAMs lose or barely win against attack helicopters of equal value (D94; round-6 answer 3).")
+	-- 2. blast weapons and tracking (round-7 answer 3: accepted, no deliberate spread)
+	local duelText = "see the fire-control radar section"
+	for _, r in radarDuels do
+		if r.a == "ord_verdict" then
+			duelText = string.format("Verdict vs Hellmouth, Order's trade with no tracking / Order tracking / Chaos tracking: %s / %s / %s", fmt(r.none.trade), fmt(r.order.trade), fmt(r.chaos.trade))
+		end
+	end
+	out("2. **Blast weapons gain little from tracking** (D104; round-7 answer 3: accepted, no deliberate spread): precise mortar and rocket shells pile onto the unit they aim at, while wobbly ones spread blast damage over a group, so Chaos's tracking more than doubles its direct hits but not its effect (" .. duelText .. "). Tune blast radii, salvo sizes or tracking costs in M8 if tracking should pay for blast weapons.")
 end
 out("")
 local header = "| Order \\ Chaos |"

@@ -1335,3 +1335,9 @@ Every system was reviewed for decisions that read another team's units from serv
 - `EW.canLock`: for `RADAR` guidance, the lock range is multiplied by `EW.TRACK_LOCK_BONUS` = 1.1 when the shooter's team tracks the target. The fire-control radar hands over its track. Stealth (× signature) and burn-through apply on top.
 - Kept separate from D104 so it can be removed on its own.
 - **Test** (`Tracking.spec`): a Seraph can't lock a Wasp radar contact at 105% of its lock range until a Tribunal tracks it.
+
+## D106 — Pathfinding uses the real map (2026-10-20, user decision)
+
+- **Decision:** routes are planned on true passability, enemy structures included, whether or not the team has seen them. This is treated as physics, like BAR.
+- **Known minor info leak:** units visibly avoid enemy structures their team never saw, so a careful observer can infer an unseen building from a detour. Accepted. Per-team passability would cost a separate flow-field cache per team.
+- Placement uses the same physics at frame start (D101); only planning (the AI) uses team knowledge.
