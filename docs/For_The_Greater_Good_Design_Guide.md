@@ -611,7 +611,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 - Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
 - Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
 - A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
-- **`Schema.PROTOCOL_VERSION`** (currently 4) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **`Schema.PROTOCOL_VERSION`** (currently 5) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
 - **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
@@ -673,7 +673,7 @@ unitId    u16
 cell      u16
 icon      6 bits  bits 0–5   (radar-only contacts send icon 0 = unknown blip)
 team      3 bits  bits 6–8   team - 1 (teams 1..8)
-flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost; bits 4–6 reserved
+flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost, bit4 tracked (v5: real icon); bits 5–6 reserved
                   = 6 bytes per unit
 ```
 
@@ -963,6 +963,7 @@ For each enemy unit and each ally team:
 |---|---|---|
 | `HIDDEN` | Not detected | Nothing |
 | `RADAR` | Radar contact | Blip, position with error, no type (unless previously identified) |
+| `TRACKED` | Radar contact inside the team's fire-control (track) radar (D104) | Blip with a small error, the real type, and its motion (bombers lead it) |
 | `SONAR` | Sonar contact | Blip for naval/submerged units |
 | `VISIBLE` | In sight (LOS) | Full information |
 | `GHOST` | Structure seen earlier, now out of sight | Last known position & type (minimap + map) |
@@ -978,6 +979,7 @@ Per ally team, on a **sensor grid of 16-stud cells** (2×2 grid cells; 128×128 
 | `radar` | u8 counts | Radar emitters |
 | `sonar` | u8 counts | Sonar emitters |
 | `jam` | u8 counts | This team's jammers (hides this team's units from enemy radar) |
+| `track` | u8 counts | Fire-control (tracking) radars (D104) |
 
 **Stamping:** precompute circle offset lists per radius. When an emitter crosses into a new sensor cell, subtract its old circle and add the new one. Units that don't change sensor cell cost nothing. Large moving radars (AWACS) re-stamp at most every few ticks.
 
@@ -992,6 +994,11 @@ Implementation (`Sim/Sensors.luau`, DECISIONS D65):
 - Unfinished structures don't emit.
 - Visibility for every enemy and team is recomputed each sensor tick (every 2nd tick) from the maps.
 - Structure ghosts persist until the team sees the spot empty.
+
+Implementation of tracking (D104):
+- `track` is stamped like `radar`.
+- An enemy unit the team's radar detects (radar map, not jammed, passing the stealth check) inside its `track` map is TRACKED (`Sensors.isTracked`; its level stays `RADAR`).
+- A tracking radar's radius is its def's `track` scaled by the power it gets, in whole sensor cells. It re-stamps when that changes.
 
 Optional later: terrain-occluded LOS (sample height along rays at stamp time). Start without it.
 
@@ -1022,6 +1029,15 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks.
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the wobbled position, so they miss more — that's intended.
+- **Fire-control (tracking) radar** (D104):
+  - A short-range radar that turns early-warning contacts inside it into TRACKED contacts.
+  - Their wobble is the team's best `trackError` (Order 4–6 studs, Chaos 10–12) instead of `radarError` (15–45).
+  - The strategic record carries the real icon and a TRACKED flag.
+  - Bombers lead tracked contacts as they lead visible ones. Artillery, MLRS and bombs aim at the tracked position.
+  - Jamming hides units from tracking radar too, with no burn-through.
+  - Tracking radars drain `trackDrain` power per second. When power stalls, their radius shrinks with the share they get.
+  - Optional (D105): radar-guided missiles lock at +10% range against tracked targets.
+  - Measured: a Verdict on a radar-only Ravager scores 4 of 15 direct hits untracked and 11 of 15 tracked. An Absolution hits a moving radar-only tank 0 of 9 times untracked and 6 of 10 tracked.
 - Implementation (DECISIONS D67):
   - Wobble is a stateless hash of (unit, tick // 30, observer), interpolated between periods. Its radius is the observer's best `sensors.radarError`.
   - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
@@ -1091,6 +1107,7 @@ countermeasures = {
 |---|---|---|
 | Radar | Radar Tower (T1), Long-Range Radar (T2), mobile radar truck, AWACS aircraft | Power upkeep |
 | Jammer | Jammer Tower (T1/T2), mobile jammer, EW aircraft, EW ship | Power upkeep |
+| Fire-control radar | Tribunal / Seeker Spire (T2 structure), Arbiter / Stalker (T2 vehicle) | Power upkeep; radius shrinks in a stall; tracks early-warning contacts (D104) |
 | Sonar | Sonar Buoy (T1), Sonar Station (T2), ships with sonar | |
 | Short-range AA | IR SAM site, mobile IR SAM, flak | Unaffected by jamming |
 | Long-range AA | Radar SAM site, mobile radar SAM, SAM ships | Affected by jamming/stealth |
@@ -1180,6 +1197,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | MLRS | T2 | **Judgement** (precise) | **Hydra** (large salvo) |
 | Mobile radar SAM | T2 | **Seraph** | **Gorgon** |
 | Mobile jammer | T2 | **Veil** (short range) | **Shroud** (long range) |
+| Mobile fire-control radar | T2 | **Arbiter** (precise) | **Stalker** (cheaper, weaker) |
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
 
 ### 13.3 Air units
@@ -1216,6 +1234,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Artillery emplacement | T2 | **Edict** | **Cataclysm** | Adv. Ground |
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
+| Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
 | Floating turret | T1 | **Moat** | **Riptide** | Naval |
 | Torpedo launcher | T1 | **Undertow** | **Fang** | Naval |
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |

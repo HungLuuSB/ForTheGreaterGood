@@ -1289,3 +1289,46 @@ Every system was reviewed for decisions that read another team's units from serv
   - still outside the band: Archon vs Harpy (0.24 / 0.49), Falcon vs Manticore close (0.22), Judgement vs Hellmouth long (0.43).
   - Whole check: 456 of 568 pairs hold (was 452); 193 findings (50 mechanic, 143 numbers).
   - The remaining air mechanic findings are bombers: 31 bombed only small radar contacts and missed, 16 never lined up a run against AA, 1 couldn't see.
+
+## D104 — Fire-control (tracking) radar (2026-10-20, user-requested)
+
+- **Defs:** new optional sensor fields `track` (radius), `trackError` (wobble radius of tracked contacts) and `trackDrain` (power per second).
+- **Sensors:**
+  - A sixth map `track` per ally team, stamped like `radar` (moves shift circles, full stamps budgeted).
+  - An enemy unit that the team's radar detects (radar map, not inside its own team's jam map, stealth check passed) and that lies in the `track` map is **tracked** (`sensors.tracked[team]`, `Sensors.isTracked`).
+  - The level stays `RADAR`, so every radar-contact rule (`canTargetRadar`, radar locks, wire flags) still applies.
+  - A tracked radar contact's believed position wobbles by the team's best `trackError` instead of its `radarError`.
+- **Jamming:** hides from tracking radar with no burn-through, because a jammed unit isn't radar-detected at all.
+- **Power:**
+  - `Sensors.drainStep` (a Build.step economy consumer, next to DIRCM) drains `trackDrain` power per second at the team's power stall ratio. The share a radar gets (`trackScale`, hashed) scales its radius, rounded down to whole 16-stud sensor cells.
+  - A radar re-stamps when its radius changes; radii tables are cached per (def, radius).
+  - Jammer upkeep (guide 11.4) is still not implemented; it can reuse this mechanism.
+- **Weapons:**
+  - Artillery, MLRS and bombs aim at the believed position, hence the tracked one.
+  - Bombers also lead tracked contacts (`Air.bombSolution`), as they lead visible ones: tracking radar measures motion.
+- **Wire:** strategic flag `TRACKED` = bit 4 (`PROTOCOL_VERSION` 5). A tracked contact's record carries the real icon; plain radar contacts keep icon 0.
+- **Defs** (T2 placeholders, balance in M8):
+
+| | Order | Chaos |
+|---|---|---|
+| Structure | `ord_tribunal` Tribunal: track 700, error 4, drain 40, 220 / 3,200 | `chs_seekerspire` Seeker Spire: track 600, error 10, drain 25, 150 / 2,200 |
+| Vehicle | `ord_arbiter` Arbiter: track 450, error 6, drain 25, 160 / 2,400 | `chs_stalker` Stalker: track 380, error 12, drain 18, 120 / 1,700 |
+
+  The structures are built by the Advanced Ground Workers (Architect, Forgemaster), the vehicles by the Advanced Vehicle Plants. Tracking radars have no early-warning radar of their own.
+- **Tests** (`Tracking.spec`):
+  - a Verdict on a radar-only Ravager: 4 of 15 direct hits untracked, 11 of 15 tracked;
+  - an Absolution against a radar-only tank driving back and forth: 0 of 9 untracked, 6 of 10 tracked;
+  - wobble stays within the Tribunal's 4 and the Seeker Spire's 10, and Order's is smaller;
+  - a Shroud jammer cancels the track (and the radar contact);
+  - the client gets the real icon and TRACKED only for the tracked contact;
+  - a power stall shrinks the radius until the tank isn't tracked, and power brings it back.
+  - Mutations (no tracking wobble, no lead) fail.
+- **Balance:** `lune run balance` has a new section "Fire-control radar". It runs `Scenes.radarDuel`: equal-value artillery groups 380 studs apart, beyond sight, each with its T1 radar tower, with no tracking, Order tracking or Chaos tracking.
+  - In the first run, Order's Tribunal doubled the Verdicts' direct hits (4 → 9). The Hellmouths still won: their mortars kill a tight group by blast alone.
+  - With MLRS, Order won faster with tracking (1,021 vs 1,468 ticks).
+
+## D105 — Radar-guided lock range +10% against tracked targets (2026-10-20, user-requested option)
+
+- `EW.canLock`: for `RADAR` guidance, the lock range is multiplied by `EW.TRACK_LOCK_BONUS` = 1.1 when the shooter's team tracks the target. The fire-control radar hands over its track. Stealth (× signature) and burn-through apply on top.
+- Kept separate from D104 so it can be removed on its own.
+- **Test** (`Tracking.spec`): a Seraph can't lock a Wasp radar contact at 105% of its lock range until a Tribunal tracks it.

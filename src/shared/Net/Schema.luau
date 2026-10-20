@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 4 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections)
+Schema.PROTOCOL_VERSION = 5 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -517,8 +517,9 @@ Schema.StrategicFlag = table.freeze({
 	SONAR_ONLY = 2,
 	UNDER_ATTACK = 4,
 	GHOST = 8, -- structure seen earlier, now out of sight
+	TRACKED = 16, -- radar blip under fire-control radar: wobbles less, and the icon is the real one (D104)
 })
-local STRATEGIC_FLAGS_MASK = 15 -- bits 4..6 reserved
+local STRATEGIC_FLAGS_MASK = 31 -- bits 5..6 reserved
 
 export type Strategic = {
 	unitId: number,

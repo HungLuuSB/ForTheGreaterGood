@@ -1,10 +1,11 @@
 --!strict
 -- Sensor maps and visibility (guide 11.1–11.3).
 --
--- Per ally team, on the 16-stud sensor grid, five count maps (u16 per cell):
+-- Per ally team, on the 16-stud sensor grid, six count maps (u16 per cell):
 --   los     sight of every unit                    airLos  sight against aircraft
 --   radar   radar emitters                         sonar   sonar emitters
 --   jam     this team's jammers (hide this team from enemy radar)
+--   track   fire-control (tracking) radars (D104)
 -- An emitter stamps +1 on every sensor cell whose center lies within its
 -- radius of the emitter's cell center (circles cached per radius as row
 -- spans), and only re-stamps when it changes sensor cell. Unfinished
@@ -28,11 +29,21 @@
 -- CLOSE_SONAR studs (exact distance) of one of its naval units or ASW
 -- helicopters (helicopters with a weapon that can target SUB). Nothing else
 -- finds them. Jamming and stealth refine RADAR (guide 11.4).
+--
+-- Tracking (D104): an enemy unit the team's radar detects (in its radar
+-- map, not jammed, passing the stealth check) inside its track map is
+-- TRACKED (`tracked`, Sensors.isTracked): as a radar contact it wobbles by
+-- the team's best trackError instead of its radarError, and its type is
+-- known. Jamming hides from tracking radar too, with no burn-through.
+-- Tracking radars drain trackDrain power per second (Sensors.drainStep, an
+-- economy consumer); their radius scales with the power they get, in whole
+-- sensor cells, and they re-stamp when it changes.
 
 local Categories = require("@shared/Defs/Categories")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Hash = require("@shared/Util/Hash")
+local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
 local SensorsState = require("./SensorsState")
 local Types = require("./Types")
@@ -48,6 +59,8 @@ Sensors.DEFAULT_RADAR_ERROR = 40 -- studs, when a radar def has no radarError
 Sensors.WOBBLE_PERIOD = 30 -- ticks per wobble target (guide 11.4: tick // 30)
 Sensors.CLOSE_SONAR = 40 -- studs: naval units and ASW helis detect submerged subs this close
 Sensors.STAMP_BUDGET = 200000 -- cells written by full stamps per sensor tick (D85)
+Sensors.DEFAULT_TRACK_ERROR = 8 -- studs, when a tracking radar def has no trackError
+Sensors.DT = 1 / 15
 Sensors.new = SensorsState.new
 Sensors.hash = SensorsState.hash
 local CELL = Grid.SENSOR_CELL_SIZE
@@ -176,10 +189,25 @@ end
 
 -- Radii per def (KINDS order), built once per def and shared: re-stamping a
 -- moving unit allocates nothing.
-local radiiCache: { [any]: { number } } = setmetatable({}, { __mode = "k" }) :: any
+-- The track radius is the def's scaled by the power the radar gets, in whole
+-- sensor cells, so the cache holds one table per (def, track radius).
+local radiiCache: { [any]: { [number]: { number } } } = setmetatable({}, { __mode = "k" }) :: any
+local function trackRadius(sim: Types.Sim, id: number, def: Defs.UnitDef): number
+	local track = def.sensors.track or 0
+	if track <= 0 then
+		return 0
+	end
+	return math.floor(track * (sim.sensors.trackScale[id] or 1) / CELL) * CELL
+end
 local function radiiOf(sim: Types.Sim, id: number): { number }
 	local def = sim.defs.unitByIndex[sim.world.defIndex[id]]
-	local radii = radiiCache[def]
+	local byTrack = radiiCache[def]
+	if byTrack == nil then
+		byTrack = {}
+		radiiCache[def] = byTrack
+	end
+	local track = trackRadius(sim, id, def)
+	local radii = byTrack[track]
 	if radii == nil then
 		local sensors = def.sensors
 		radii = table.freeze({
@@ -188,8 +216,9 @@ local function radiiOf(sim: Types.Sim, id: number): { number }
 			sensors.radar,
 			sensors.sonar,
 			sensors.jam or 0,
+			track,
 		})
-		radiiCache[def] = radii
+		byTrack[track] = radii
 	end
 	return radii
 end
@@ -308,8 +337,8 @@ end
 -- Radar error offset `observer` sees on unit `id` at `tick`: a wobble of
 -- radius = the observer's best radarError, moving smoothly from one random
 -- point to the next every WOBBLE_PERIOD ticks (guide 11.4).
-function Sensors.wobble(s: State, observer: number, id: number, tick: number): (number, number)
-	local err = s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR
+function Sensors.wobble(s: State, observer: number, id: number, tick: number, radius: number?): (number, number)
+	local err = radius or s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR
 	local k = tick // Sensors.WOBBLE_PERIOD
 	local f = (tick % Sensors.WOBBLE_PERIOD) / Sensors.WOBBLE_PERIOD
 	local ax, az = wobblePoint(id, k, observer)
@@ -317,26 +346,30 @@ function Sensors.wobble(s: State, observer: number, id: number, tick: number): (
 	return (ax + (bx - ax) * f) * err, (az + (bz - az) * f) * err
 end
 
-local function levelFor(sim: Types.Sim, s: State, team: number, id: number, cell: number): number
+-- Level of enemy unit `id` for `team`, and whether the team's radar
+-- tracks it (radar detectable inside its track map, D104).
+local function levelFor(sim: Types.Sim, s: State, team: number, id: number, cell: number): (number, boolean)
 	local w = sim.world
 	local m = s.maps[team]
 	local domain = domainOf(sim, id)
 	if bit32.band(w.state[id], World.State.SUBMERGED) ~= 0 then
 		if readu16(m.sonar, cell * 2) > 0 or closeSonarDetects(sim, s, team, id) then
-			return L.SONAR
+			return L.SONAR, false
 		end
-		return L.HIDDEN
+		return L.HIDDEN, false
 	end
+	local onRadar = readu16(m.radar, cell * 2) > 0 and Sensors.radarDetects(sim, s, team, id, cell)
+	local tracked = onRadar and readu16(m.track, cell * 2) > 0
 	if readu16(m.los, cell * 2) > 0 or (domain == "air" and readu16(m.airLos, cell * 2) > 0) then
-		return L.VISIBLE
+		return L.VISIBLE, tracked
 	end
-	if readu16(m.radar, cell * 2) > 0 and Sensors.radarDetects(sim, s, team, id, cell) then
-		return L.RADAR
+	if onRadar then
+		return L.RADAR, tracked
 	end
 	if domain == "naval" and readu16(m.sonar, cell * 2) > 0 then
-		return L.SONAR
+		return L.SONAR, false
 	end
-	return L.HIDDEN
+	return L.HIDDEN, false
 end
 
 -- Sensors system body: re-stamp moved emitters, then recompute visibility.
@@ -348,6 +381,7 @@ function Sensors.step(sim: Types.Sim)
 		table.clear(s.radars[team])
 		table.clear(s.closeSonar[team])
 		s.radarError[team] = nil
+		s.trackError[team] = nil
 	end
 	for _, id in w.ids do
 		if w.buildProgress[id] < 1 then
@@ -367,10 +401,14 @@ function Sensors.step(sim: Types.Sim)
 			local team = w.ally[id]
 			s.radarError[team] = math.min(s.radarError[team] or math.huge, err)
 		end
+		local radii = radiiOf(sim, id)
+		if radii[6] > 0 then
+			local team = w.ally[id]
+			s.trackError[team] = math.min(s.trackError[team] or math.huge, sensors.trackError or Sensors.DEFAULT_TRACK_ERROR)
+		end
 		local _, _, cell = Sensors.cellOf(s, w.posX[id], w.posZ[id])
 		local old = s.stampCell[id]
-		if old ~= cell then
-			local radii = radiiOf(sim, id)
+		if old ~= cell or s.stampRadius[id] ~= radii then -- moved, or a tracking radius changed
 			local team = w.ally[id]
 			local width = s.width
 			local ddx, ddz = 2, 2 -- not adjacent unless already stamped
@@ -398,6 +436,8 @@ function Sensors.step(sim: Types.Sim)
 
 	for _, team in s.teams do
 		local vis = s.vis[team]
+		local trackedBy = s.tracked[team]
+		table.clear(trackedBy)
 		local ghosts = s.ghosts[team]
 		local ghostIds = s.ghostIds[team]
 		for _, id in w.ids do
@@ -405,7 +445,10 @@ function Sensors.step(sim: Types.Sim)
 				continue
 			end
 			local _, _, cell = Sensors.cellOf(s, w.posX[id], w.posZ[id])
-			local level = levelFor(sim, s, team, id, cell)
+			local level, tracked = levelFor(sim, s, team, id, cell)
+			if tracked then
+				trackedBy[id] = true
+			end
 			if domainOf(sim, id) == "structure" then
 				if level == L.VISIBLE then
 					local g = ghosts[id]
@@ -447,7 +490,9 @@ function Sensors.knownPosition(sim: Types.Sim, team: number, id: number): (numbe
 		local g = sim.sensors.ghosts[team][id]
 		return g.x, g.z, level
 	elseif level == L.RADAR or level == L.SONAR then
-		local dx, dz = Sensors.wobble(sim.sensors, team, id, sim.tick)
+		local s = sim.sensors
+		local radius = if level == L.RADAR and s.tracked[team] and s.tracked[team][id] then s.trackError[team] else nil
+		local dx, dz = Sensors.wobble(s, team, id, sim.tick, radius)
 		return w.posX[id] + dx, w.posZ[id] + dz, level
 	end
 	return nil, nil, level
@@ -466,6 +511,40 @@ function Sensors.knownTarget(sim: Types.Sim, team: number, id: number): (number?
 		return kx, kz, level, sim.sensors.ghosts[team][id].defIndex
 	end
 	return kx, kz, level, sim.world.defIndex[id]
+end
+
+-- Does `team`'s fire-control radar track enemy unit `id` (D104)?
+function Sensors.isTracked(sim: Types.Sim, team: number, id: number): boolean
+	local t = sim.sensors.tracked[team]
+	return t ~= nil and t[id] == true
+end
+
+-- Tracking-radar upkeep (called by Build.step with the other economy
+-- consumers, D104): each finished tracking radar drains trackDrain power
+-- per second at the team's power stall ratio; the share it gets scales its
+-- radius (applied at the next sensor tick).
+function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
+	local w = sim.world
+	local s = sim.sensors
+	local eco = sim.eco
+	local dt = Sensors.DT
+	for _, id in w.ids do
+		local sensors = sim.defs.unitByIndex[w.defIndex[id]].sensors
+		local drain = sensors.trackDrain or 0
+		if (sensors.track or 0) <= 0 or drain <= 0 or w.buildProgress[id] < 1 then
+			continue
+		end
+		local team = w.team[id]
+		local acc = eco.accounts[team]
+		if acc == nil then
+			continue
+		end
+		demandP[team] += drain
+		local ratio = math.min(Economy.effective(acc, 0, drain), Economy.allowance(acc.power) / (drain * dt))
+		ratio = math.clamp(ratio, 0, 1)
+		acc.power.spent += drain * dt * ratio
+		s.trackScale[id] = ratio
+	end
 end
 
 -- Is point (x, z) in `team`'s line of sight? NetOut shows projectiles and
@@ -500,7 +579,9 @@ table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
 	Sensors.unstamp(s, id)
 	for _, team in s.teams do
 		s.vis[team][id] = nil -- ghosts (structures) are kept until seen gone
+		s.tracked[team][id] = nil
 	end
+	s.trackScale[id] = nil
 end)
 
 return Sensors

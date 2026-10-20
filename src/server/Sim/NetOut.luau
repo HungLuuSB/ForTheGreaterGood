@@ -13,7 +13,8 @@
 --   * State records (reliable): tactical units whose health, state, aim or
 --     build progress changed (dirty bits).
 --   * Strategic records (unreliable, every 5th tick = 3 Hz): every other known
---     unit. Radar / sonar contacts carry their wobbled cell and icon 0;
+--     unit. Radar / sonar contacts carry their wobbled cell and icon 0
+--     (tracked radar contacts: the TRACKED flag and the real icon, D104);
 --     remembered structures carry the GHOST flag and their last position.
 --   * DEATH events for dead units the player had in its tactical tier.
 --   * Combat events (D99), only what the ally team may know:
@@ -326,7 +327,8 @@ function NetOut.step(sim: Types.Sim)
 					continue
 				end
 				local own = w.ally[id] == ally
-				local flags = if level == L.RADAR then SF.RADAR_ONLY
+				local tracked = level == L.RADAR and Sensors.isTracked(sim, ally, id) -- D104: type known
+				local flags = if level == L.RADAR then (if tracked then SF.RADAR_ONLY + SF.TRACKED else SF.RADAR_ONLY)
 					elseif level == L.SONAR then SF.SONAR_ONLY
 					elseif level == L.GHOST then SF.GHOST
 					else 0
@@ -334,7 +336,7 @@ function NetOut.step(sim: Types.Sim)
 				table.insert(strategic, {
 					unitId = id,
 					cell = cell,
-					icon = if own or level == L.VISIBLE or level == L.GHOST then net.iconIndex[w.defIndex[id]] else 0,
+					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[w.defIndex[id]] else 0,
 					team = w.team[id],
 					flags = flags,
 				})

@@ -44,6 +44,7 @@ local Types = require("./Types")
 
 local EW = {}
 
+EW.TRACK_LOCK_BONUS = 1.1 -- radar-guided lock range against tracked targets (D105)
 EW.DT = 1 / 15
 EW.MIDCOURSE_PERIOD = 5 -- ticks between midcourse checks
 EW.BURN_THROUGH = 0.35 -- default fraction of lockRange
@@ -162,6 +163,9 @@ function EW.canLock(sim: Types.Sim, shooter: number, weapon: Defs.WeaponDef, tar
 	elseif guidance == "RADAR" then
 		if level ~= L.VISIBLE and level ~= L.RADAR then
 			return false
+		end
+		if Sensors.isTracked(sim, sim.world.ally[shooter], target) then
+			range *= EW.TRACK_LOCK_BONUS -- fire-control radar hands over the track (D105)
 		end
 		local signature = math.min(unitDef(sim, target).sensors.radarSignature, 1)
 		if dist > range * signature then

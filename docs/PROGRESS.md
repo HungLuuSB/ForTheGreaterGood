@@ -322,6 +322,14 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 7 — item 6: fire-control (tracking) radar ✅
+
+- `track` sensor map. Radar contacts inside it are TRACKED: small wobble (Order 4–6, Chaos 10–12), real icon plus a TRACKED flag on the wire (`PROTOCOL_VERSION` 5), and bombers lead them. Jamming hides from it; power stalls shrink it (D104).
+- +10% radar-SAM lock range against tracked targets (D105).
+- New T2 defs: Tribunal and Arbiter (Order), Seeker Spire and Stalker (Chaos), in the Advanced Ground Worker and Advanced Vehicle Plant build options.
+- `Tracking.spec` (7 tests): howitzer 4/15 → 11/15 direct hits; bomber on a moving tank 0/9 → 6/10. Balance section "Fire-control radar" (artillery duels on radar).
+- Tests: **33 specs, 245 passed**.
+
 ### Round 7 — item 5: rearm airfields in balance fights ✅
 
 - Aircraft groups get a durable Advanced Airfield behind their start and a full account; they rearm as in a match (D103).

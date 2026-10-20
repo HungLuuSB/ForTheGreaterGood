@@ -13,6 +13,8 @@
 -- 2. Sieges: each combat unit's equal-value group against an enemy base of
 --    passive structures (Scenes.siege): the "Structure" column.
 -- 3. Coastal batteries (guide 13.5) against every enemy ship.
+-- 3b. Fire-control radar (D104): artillery + early warning against
+--    artillery + early warning + tracking (Scenes.radarDuel).
 -- 4. Counter check: the results against the counter matrix in guide 12.4
 --    (parsed from the guide), listing every attacker / target pair that
 --    falls short of its dots, and why (DECISIONS D94):
@@ -291,6 +293,23 @@ for _, pair in { { "ord_rampart", chaos }, { "chs_breaker", order } } do
 	end
 end
 print(string.format("coastal batteries done (%.0f s)", os.clock() - t0))
+
+-- 3b. fire-control radar duels (D104) -----------------------------------------------
+local RADAR_DUELS = { { "ord_verdict", "chs_hellmouth" }, { "ord_judgement", "chs_hydra" } }
+local radarDuels: { { a: string, b: string, none: Outcome, order: Outcome, chaos: Outcome } } = {}
+if FILTER == nil then
+	for _, pair in RADAR_DUELS do
+		local row: any = { a = pair[1], b = pair[2] }
+		for _, tracking in { "none", "order", "chaos" } do
+			row[tracking] = fight(function(seed: number): Scenes.Scene
+				return Scenes.radarDuel(pair[1], pair[2], tracking, seed)
+			end)
+			battles += SEEDS
+		end
+		table.insert(radarDuels, row)
+	end
+	print(string.format("radar duels done (%.0f s)", os.clock() - t0))
+end
 
 -- 4. counter check against guide 12.4 ----------------------------------------------
 -- Roles (matrix rows) by unit name, both factions.
@@ -668,6 +687,21 @@ for _, id in chaos do
 	summary(id, false)
 end
 out("")
+if #radarDuels > 0 then
+	out("## Fire-control radar (D104)")
+	out("")
+	out("Equal-value artillery groups 380 studs apart (inside both guns' range, beyond both sides' sight), holding, each side with its T1 radar tower; one side may add its tracking structure (Tribunal / Seeker Spire, 4 / 10 studs of error against the towers' 20 / 45). Structures are durable, powered and outside the trade. Cell: Order's value trade (above 1 favours Order), winners per seed. Watch one: `lune run export radarduel:<order>:<chaos>:<none|order|chaos>`.")
+	out("")
+	out("| Order \\ Chaos | Early warning only | Order adds tracking | Chaos adds tracking |")
+	out("|---|---|---|---|")
+	for _, r in radarDuels do
+		local function cell(o: Outcome): string
+			return `{fmt(o.trade)} {o.winner}`
+		end
+		out(string.format("| %s vs %s | %s | %s | %s |", shortName(r.a), shortName(r.b), cell(r.none), cell(r.order), cell(r.chaos)))
+	end
+	out("")
+end
 out("## Counter check (guide 12.4)")
 out("")
 out("Each matrix cell is checked for every unit of that role on both sides, against every enemy unit of that target class. A pair falls short when:")

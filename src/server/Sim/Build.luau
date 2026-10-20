@@ -27,6 +27,7 @@ local Lifecycle = require("./Lifecycle")
 local Match = require("./Match")
 local Nav = require("./Nav")
 local Placement = require("./Placement")
+local Sensors = require("./Sensors")
 local Spawn = require("./Spawn")
 local Types = require("./Types")
 local World = require("./World")
@@ -413,6 +414,9 @@ function Build.step(sim: Types.Sim)
 
 	-- 4. DIRCM upkeep: continuous power drain, cooldown at the stall ratio
 	EW.drainStep(sim, demandP)
+
+	-- 5. tracking radars: power drain, radius at the stall ratio (D104)
+	Sensors.drainStep(sim, demandP)
 
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]

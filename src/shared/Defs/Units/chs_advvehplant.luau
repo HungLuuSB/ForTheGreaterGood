@@ -14,6 +14,6 @@ return Templates.extend(Templates.Structure, {
 	footprint = 5,
 	icon = "factory",
 	buildPower = 200,
-	buildOptions = { "chs_forgemaster", "chs_juggernaut", "chs_hydra", "chs_gorgon", "chs_shroud", "chs_mire" },
+	buildOptions = { "chs_forgemaster", "chs_juggernaut", "chs_hydra", "chs_gorgon", "chs_shroud", "chs_mire", "chs_stalker" },
 	model = "chs_advvehplant",
 })

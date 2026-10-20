@@ -91,7 +91,10 @@ function Air.bombSolution(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, ta
 	local h, v = w.heading[id], w.speed[id]
 	local ix, iz = w.posX[id] + math.sin(h) * v * t, w.posZ[id] + math.cos(h) * v * t
 	local ax, az = kx, kz
-	if target ~= 0 and Sensors.level(sim, w.ally[id], target) == Sensors.Level.VISIBLE then
+	-- lead a target whose motion the team sees: VISIBLE, or tracked by its
+	-- fire-control radar (D104)
+	local level = if target ~= 0 then Sensors.level(sim, w.ally[id], target) else Sensors.Level.HIDDEN
+	if level == Sensors.Level.VISIBLE or (level == Sensors.Level.RADAR and Sensors.isTracked(sim, w.ally[id], target)) then
 		local th, tv = w.heading[target], w.speed[target]
 		ax += math.sin(th) * tv * t
 		az += math.cos(th) * tv * t

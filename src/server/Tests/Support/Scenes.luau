@@ -7,6 +7,11 @@
 --                               the balance report's equal-value fight (D89)
 --   siege:<unit>                an equal-value group of <unit> against an
 --                               enemy base (plant, 3 generators, radar tower)
+--   radarduel:<order>:<chaos>:<none|order|chaos>
+--                               equal-value artillery groups out of each
+--                               other's sight, each with its T1 radar tower;
+--                               the named side also has its tracking
+--                               structure (D104)
 --
 -- Bomber groups bring their faction's long-range radar (Beacon / Allseer,
 -- D96): bombs need radar contacts or ghosts to line up runs from beyond
@@ -248,6 +253,55 @@ function Scenes.siege(aId: string, seed: number): Scene
 	}
 end
 
+-- Artillery duel on radar alone (D104): two equal-value groups 380 studs
+-- apart (inside both guns' range, beyond both sides' sight), no orders, so
+-- they hold and fire at radar contacts. Each side has its T1 radar tower
+-- 150 studs behind its group; `tracking` names the side that also has its
+-- fire-control structure there. Structures are durable, powered and not
+-- part of the trade.
+function Scenes.radarDuel(aId: string, bId: string, tracking: string, seed: number): Scene
+	local defs = Defs.load()
+	local a, b = defs.units[aId], defs.units[bId]
+	assert(a and b, `Scenes.radarDuel: unknown unit {aId} or {bId}`)
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+	local sideA = spawnGroup(sim, a, 1, -190, math.pi / 2)
+	local sideB = spawnGroup(sim, b, 2, 190, -math.pi / 2)
+	local function infra(defId: string, owner: number, x: number, z: number)
+		local id = Spawn.unit(sim, defId, owner, x, z)
+		World.setHealth(sim.world, id, sim.world.health[id] * 100)
+	end
+	infra("ord_watchtower", 1, -340, 0)
+	infra("chs_eye", 2, 340, 0)
+	if tracking == "order" then
+		infra("ord_tribunal", 1, -340, 120)
+	elseif tracking == "chaos" then
+		infra("chs_seekerspire", 2, 340, 120)
+	end
+	local function alive(ids: { number }): number
+		local n = 0
+		for _, id in ids do
+			if sim.world.slot[id] then
+				n += 1
+			end
+		end
+		return n
+	end
+	return {
+		sim = sim,
+		drive = function(s: Sim.Sim)
+			for _, team in { 1, 2 } do
+				local acc = s.eco.accounts[team]
+				acc.power.stored = acc.power.storage
+			end
+		end,
+		done = function(_s: Sim.Sim): boolean
+			return alive(sideA) == 0 or alive(sideB) == 0
+		end,
+		maxTicks = Scenes.MATCHUP_TICKS,
+		sides = { sideA, sideB },
+	}
+end
+
 function Scenes.ai(seed: number, mapId: string?): Scene
 	local sim = Sim.new({
 		seed = seed,
@@ -276,6 +330,10 @@ end
 function Scenes.byName(name: string, seed: number, mapId: string?): Scene
 	if name == "ai" then
 		return Scenes.ai(seed, mapId)
+	end
+	local ra, rb, rt = string.match(name, "^radarduel:([%w_]+):([%w_]+):(%a+)$")
+	if ra and rb and rt then
+		return Scenes.radarDuel(ra, rb, rt, seed)
 	end
 	local besieger = string.match(name, "^siege:([%w_]+)$")
 	if besieger then

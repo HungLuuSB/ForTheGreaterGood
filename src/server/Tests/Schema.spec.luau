@@ -283,7 +283,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 4, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 5, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -367,6 +367,10 @@ return function(t: RunAll.Context)
 		-- version 4: homing corrections on the Projectiles channel
 		local sync: Schema.ProjSync = { projId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = -2, vx = 1, vy = -1, vz = 0x0203 }
 		t.equal(hex(encodeOne(Schema.encodeProjSync, sync)), "02 01 04 03 05 06 fe ff 01 00 ff ff 03 02")
+		-- version 5: TRACKED strategic flag (16 = flag bit 4 = bit 13 overall)
+		local tracked: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = Schema.StrategicFlag.RADAR_ONLY + Schema.StrategicFlag.TRACKED }
+		-- 1 + (2 - 1) * 2^6 + 17 * 2^9 = 0x2241
+		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 41 22")
 	end)
 
 	t.test("events round-trip, reject bad input, and every prefix is truncated", function()
@@ -510,7 +514,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeState, { 1, 0, 32 }, "reserved bits")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.AIM, 0 }, "aim slot mask is empty")
 
-		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0x00, 0x20 }, "reserved bits")
+		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0x00, 0x40 }, "reserved bits") -- flag bit 5 (bit 4 is TRACKED since v5)
 		expectRejected(t, Schema.decodeStrategic, { 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
 	end)
 
@@ -525,7 +529,7 @@ return function(t: RunAll.Context)
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 0, flags = 0 }), "team 0")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 9, flags = 0 }), "team 9")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 64, team = 1, flags = 0 }), "6%-bit value")
-		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 1, flags = 16 }), "reserved bits")
+		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 1, flags = 32 }), "reserved bits")
 		t.throws(enc(Schema.encodeState, { unitId = 1 }), "no fields")
 		t.throws(enc(Schema.encodeState, { unitId = 1, aim = {} }), "aim list is empty")
 		t.throws(enc(Schema.encodeState, { unitId = 1, aim = { { slot = 2, yaw = 0, pitch = 0 }, { slot = 1, yaw = 0, pitch = 0 } } }), "ascending")
