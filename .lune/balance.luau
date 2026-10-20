@@ -20,6 +20,9 @@
 --                dry, a bomber never lined up a run, or its bombs on
 --                radar contacts all missed
 --      numbers   it fought (fired, hit) but lost the trade
+--    Same-role pairs (tanks vs tanks, ...) are judged on a soft band of
+--    the equal-cost trade, 0.5–2.0, and both sides must be able to damage
+--    each other (D98). Destroying nothing never holds a cell.
 -- Workers, commanders, unarmed support units and structures (except
 -- coastal batteries in section 3) are left out. Aircraft have no rearm pads.
 -- Every fight is the same as `lune run export matchup:<a>:<b>[:close|long]`
@@ -305,6 +308,17 @@ local ROLE_UNITS: { [string]: { string } } = {
 local function idOf(name: string): string
 	return (if defs.units["ord_" .. name] then "ord_" else "chs_") .. name
 end
+local roleOf: { [string]: string } = {} -- unit id → matrix row
+for role, names in ROLE_UNITS do
+	for _, name in names do
+		roleOf[idOf(name)] = role
+	end
+end
+-- Same-role pairs (a role against its own kind) are judged on a soft band
+-- of the equal-cost trade instead of the cell's dots (D98).
+local BAND_LOW, BAND_HIGH = 0.5, 2.0
+type Mirror = { row: string, attacker: string, target: string, mutual: boolean, close: number?, long: number? }
+local mirrors: { Mirror } = {}
 -- Target class (matrix column) of a defender.
 local function classOf(d: Defs.UnitDef): string?
 	if d.domain == "structure" then
@@ -489,6 +503,36 @@ for _, row in rows do
 					end
 					checked += 1
 					local before = #findings
+					if roleOf[defender] == row and dots > 0 then
+						-- same role: both sides must hurt each other, and the trade stay in the band
+						local mutual = canDamage(att, def) and canDamage(def, att)
+						local checks = duel(attacker, defender)
+						local m: Mirror = { row = row, attacker = attacker, target = defender, mutual = mutual }
+						for _, c in checks do
+							(m :: any)[c.start] = c.trade
+						end
+						if att.faction == "order" then
+							table.insert(mirrors, m)
+						end
+						if not mutual then
+							local who = if canDamage(att, def) then def else att
+							local other = if who == att then def else att
+							table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = "-", result = "one-sided", kind = "mechanic", why = string.format("same role, but %s can't damage %s", who.name, other.name) })
+						else
+							for _, c in checks do
+								if c.diag.dealt <= 0 and c.diag.lost <= 0 then
+									local kind, why = diagnose(att, def, c.diag)
+									table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = c.start, result = "neither side destroyed anything", kind = kind, why = why })
+								elseif c.trade < BAND_LOW or c.trade > BAND_HIGH then
+									table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = c.start, result = string.format("trade %s, %d shots, %d hits", fmt(c.trade), c.diag.shots // SEEDS, c.diag.hits // SEEDS), kind = "numbers", why = string.format("same role: trade outside the soft %.1f–%.1f band", BAND_LOW, BAND_HIGH) .. (if c.diag.dry then "; ran out of ammo (no rearm pads)" else "") })
+								end
+							end
+						end
+						if #findings == before then
+							held += 1
+						end
+						continue
+					end
 					if dots == 0 then
 						if canDamage(att, def) then
 							table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = "-", result = "can damage it", kind = "mechanic", why = "targets a class the matrix says it can't" })
@@ -504,7 +548,8 @@ for _, row in rows do
 						continue
 					end
 					for _, c in checks do
-						local bad = if dots == 1 then c.diag.dealt <= 0 else c.trade < ({ 0, 1, 2 })[dots]
+						-- destroying nothing never holds (0 ÷ 0 is not an infinite trade)
+						local bad = c.diag.dealt <= 0 or (dots > 1 and c.trade < ({ 0, 1, 2 })[dots])
 						if bad then
 							local kind, why = diagnose(att, def, c.diag)
 							table.insert(findings, { row = row, col = col, dots = dots, attacker = attacker, target = defender, start = c.start, result = string.format("trade %s, %d shots, %d hits", fmt(c.trade), c.diag.shots // SEEDS, c.diag.hits // SEEDS), kind = kind, why = why })
@@ -634,6 +679,8 @@ out("- **●**: it destroys nothing;")
 out("- **●●**: its value trade is below 1;")
 out("- **●●●**: its value trade is below 2.")
 out("")
+out(string.format("Every cell needs the attacker to destroy something: a fight where nothing died on either side is not an infinite trade. **Same-role pairs** (a role against its own kind: tanks against tanks, destroyers against destroyers) are judged differently (D98): both sides must be able to damage each other, and the equal-cost trade should stay within the soft band %.1f–%.1f. They are listed below the findings.", BAND_LOW, BAND_HIGH))
+out("")
 out("Against structures (the siege), the share of the base destroyed must be above 2% for ●, 30% for ●●, and 60% for ●●●. The coastal battery row comes from guide 13.5 (\"heavy gun against ships\": ●●●).")
 out("")
 out("Why a pair fell short:")
@@ -663,6 +710,37 @@ table.sort(findings, function(a, b)
 end)
 for _, f in findings do
 	out(string.format("| %s → %s %s | %s | %s | %s | %s | %s | %s |", f.row, f.col, DOTS[f.dots], shortName(f.attacker), shortName(f.target), f.start, f.result, f.kind, f.why))
+end
+out("")
+out("### Same-role pairs")
+out("")
+local inBand, mirrorRuns = 0, 0
+for _, m in mirrors do
+	for _, t in { m.close, m.long } do
+		mirrorRuns += 1
+		if m.mutual and t ~= nil and t >= BAND_LOW and t <= BAND_HIGH then
+			inBand += 1
+		end
+	end
+end
+out(string.format("Order's equal-cost trade against the Chaos unit of the same role (close / long); the Chaos side's trade is the inverse. Band %.1f–%.1f: %d of %d fights inside.", BAND_LOW, BAND_HIGH, inBand, mirrorRuns))
+out("")
+out("| Role | Order | Chaos | Both can damage | Close | Long | In band |")
+out("|---|---|---|---|---|---|---|")
+table.sort(mirrors, function(a, b)
+	if a.row ~= b.row then
+		return a.row < b.row
+	elseif a.attacker ~= b.attacker then
+		return a.attacker < b.attacker
+	end
+	return a.target < b.target
+end)
+for _, m in mirrors do
+	local function band(t: number?): boolean
+		return t ~= nil and t >= BAND_LOW and t <= BAND_HIGH
+	end
+	local ok = if not m.mutual then "no (one-sided)" elseif band(m.close) and band(m.long) then "yes" elseif band(m.close) or band(m.long) then "one start" else "no"
+	out(string.format("| %s | %s | %s | %s | %s | %s | %s |", m.row, shortName(m.attacker), shortName(m.target), if m.mutual then "yes" else "no", if m.close then fmt(m.close) else "-", if m.long then fmt(m.long) else "-", ok))
 end
 out("")
 if FILTER == nil then

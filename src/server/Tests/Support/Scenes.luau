@@ -8,11 +8,12 @@
 --   siege:<unit>                an equal-value group of <unit> against an
 --                               enemy base (plant, 3 generators, radar tower)
 --
--- Bomber groups bring their faction's T1 radar tower (D96): bombs need
--- radar contacts or ghosts to line up runs from beyond the bomber's sight,
--- as they would with a match's base radar. The tower is not part of the
--- trade, and attack-moves aim at enemy units, not at structures, when
--- there are any.
+-- Bomber groups bring their faction's long-range radar (Beacon / Allseer,
+-- D96): bombs need radar contacts or ghosts to line up runs from beyond
+-- the bomber's sight, as they would with a match's base radar. It stands
+-- at the map edge behind the group and, like a defended base radar, can't
+-- be destroyed in practice (health × 100); it is not part of the trade.
+-- Attack-moves aim at enemy units, not at structures, when there are any.
 --   <Sim scenario name>         that scenario; every player's units
 --                               attack-move at the enemy centroid every 2 s
 
@@ -25,6 +26,7 @@ local Scenarios = require("../../Sim/Scenarios")
 local Sim = require("../../Sim/Sim")
 local Skirmish = require("../../Sim/AI/Skirmish")
 local Spawn = require("../../Sim/Spawn")
+local World = require("../../Sim/World")
 
 local Scenes = {}
 
@@ -131,8 +133,11 @@ local function spawnGroup(sim: Sim.Sim, d: Defs.UnitDef, owner: number, cx: numb
 		table.insert(ids, Spawn.unit(sim, d.id, owner, x, (col - 2) * spacing, facing))
 	end
 	if Air.isBomber(sim, d) then
-		-- the team's radar, beside the group's start (outside the formation)
-		Spawn.unit(sim, if d.faction == "order" then "ord_watchtower" else "chs_eye", owner, cx, -3 * spacing - 40)
+		-- the team's radar at the map edge behind the group
+		local g = (sim.map :: any).grid
+		local rx = if facing > 0 then g.originX + 40 else g.originX + g.sizeX - 40
+		local radar = Spawn.unit(sim, if d.faction == "order" then "ord_beacon" else "chs_allseer", owner, rx, 0)
+		World.setHealth(sim.world, radar, sim.world.health[radar] * 100)
 	end
 	return ids
 end

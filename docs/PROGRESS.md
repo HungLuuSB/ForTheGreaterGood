@@ -312,6 +312,14 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 6 — item 4: same-role band ✅
+
+- Same-role pairs need mutual damage and an equal-cost trade within 0.5–2.0. They are listed in their own table in `BALANCE.md` (D98).
+- Destroying nothing no longer holds a cell (0 ÷ 0 was ∞).
+- Bomber balance fights now get a durable long-range radar at the map edge. The T1 tower died in close starts (D96, revised).
+- Counter check: 452 of 568 pairs hold, 201 findings (71 mechanic, 130 numbers); band 32 of 38 fights inside.
+- Tests: **31 specs, 227 passed**.
+
 ### Round 6 — item 3: destroyer SAM, missile guidance, matrix edits ✅
 
 - Crusader and Corsair carry a radar-guided naval SAM (380 / 360 studs) (D97).

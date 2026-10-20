@@ -1110,6 +1110,13 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - mean trade: Absolution 1.93 → 2.90, Phantom 2.68 → 2.17, Behemoth 1.93 → 2.64, Plague 2.18 → 2.63;
   - bomber findings 34 → 33. None is "can't see" any more: 14 never lined up a run (shot down or out of time against SAMs and AA ships), 9 dropped only on radar contacts of small units and missed (radar error 20–45 studs, blast radius 14), 7 ran dry (no pads in these fights), 3 lost the trade.
   - Whole check: 425 of 568 pairs hold; 249 findings (82 mechanic, 167 numbers).
+- **Revised (item 4, same day):**
+  - The T1 tower beside the bombers' start died within seconds in close starts: the enemy group was 120 studs away. Bombers then had nothing to aim at.
+  - Bomber groups now get the long-range radar (Beacon / Allseer) at the map edge behind them, with health × 100, standing in for a defended base radar. It is still not part of the trade.
+  - With this and D98's "destroying nothing never holds" (bomber rows against units that can't shoot back used to hold with 0 ÷ 0 = ∞):
+    - sieges: Absolution 100%, Phantom 8% (2 Phantoms, 4 bombs per seed: noisy), Behemoth 81%, Plague 100%;
+    - 31 bomber findings are bombs dropped only on radar contacts of small units that missed. 17 never lined up a run.
+  - A Behemoth traced against Lancers made about 6 runs on radar contacts for 1 release: the blip shifts up to 40 studs every 2 s, and radar contacts get no lead, so the impact point misses the ±10-stud release window. Whether to widen the window for radar contacts is a question for the user.
 
 ## D97 — Destroyer naval SAM; missile lead pursuit and proximity fuse; matrix edits (2026-10-20, user-requested)
 
@@ -1133,3 +1140,18 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - The new section "M8 balance items" lists, first, IR SAM vs helicopters (Halo vs Wasp 0.58 / 0.55, Hornet vs Guardian 1.36 / 2.01; 12.4 says ●●●).
   - Destroyers against aircraft: Crusader vs Wasp 0.00 → 1.10 / 1.02; the Corsair now beats the Guardian.
   - Counter check: 446 of 568 pairs hold (was 425); findings 249 → 223 (mechanic 82 → 57, numbers 166).
+
+## D98 — Same-role cells on a soft band; destroying nothing never holds (2026-10-20, user-requested)
+
+- **Same-role pairs** (`lune run balance`): a role against its own kind (Tanks → Ground against tanks, Destroyers → Ship against destroyers, Fighters → Air (jet) against fighters, and so on). Units map to roles by the counter check's role table.
+  - Both sides must be able to damage each other, or it is a mechanic finding ("one-sided").
+  - Each start's equal-cost trade must fall within the soft band 0.5–2.0. Outside, it is a numbers finding ("same role: trade outside the soft 0.5–2.0 band", plus "ran out of ammo" when aircraft ran dry). A fight where neither side destroyed anything is diagnosed as before.
+  - A new table "Same-role pairs" in `BALANCE.md` lists every Order / Chaos pair with both trades and whether they are in the band.
+- **Destroying nothing never holds:**
+  - A cell with dots now also needs the attacker to destroy something.
+  - Before, a fight where neither side lost anything gave a trade of 0 ÷ 0 = ∞ and held ●● and ●●● (e.g. bombers against tanks that can't shoot back, SAMs against fighters).
+- **Result** (2 seeds):
+  - 452 of 568 pairs hold (was 446); 201 findings (71 mechanic, 130 numbers);
+  - same-role band: 32 of 38 fights inside. Outside: Archon against Harpy and Manticore (0.20–0.43) and Falcon against Harpy (0.32 close) (all ran dry), and Judgement against Hellmouth (0.43 long).
+  - Tanks → Ground findings 59 → 23: the 36 tank mirrors were artifacts of ●●● (D94) and now sit in the band.
+- **Guide 12.4** notes the band under the matrix.
