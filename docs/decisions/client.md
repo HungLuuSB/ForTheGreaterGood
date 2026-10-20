@@ -16,6 +16,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-6 | Blockouts are separate modules in `Defs/Blockouts/`, parts in model space, pieces jointed, decorations welded |
 | C-7 | Client specs live in `tests/client/` and run with `lune run test_client`; client logic that can be pure is kept pure |
 | C-8 | Units without a hand-made blockout get a generic one from their def (footprint, domain, pieces) |
+| C-9 | Minimal Roblox server entry in `src/roblox`; identity and map ID as attributes until the protocol 6 handshake |
+| C-10 | Playtest proof: Studio-only debug bindables and a top-down render from live instance data |
 
 ---
 
@@ -82,3 +84,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Alternatives:** an error or an invisible unit for defs without a blockout; hand-making all 123 now.
 
 **Why:** the whole roster can appear in playtests from day one, with correct piece names, while hand-made blockouts replace generic ones unit by unit.
+
+### C-9 — Minimal server entry until the join handshake (2026-10-21)
+
+**Decision:** `src/roblox/Main.server.luau` hosts one fixed match from `src/roblox/MatchConfig.luau` (seed, map, scenario, players, human slots). It steps the real `Sim` at 15 Hz from a Heartbeat accumulator (at most 3 steps per frame), fires each human player's outbox in net.md's channel order (one `RemoteEvent` / `UnreliableRemoteEvent` per `Schema.Channel` in `ReplicatedStorage.Remotes`), and passes `Cmd` buffers to `Sim.submit` behind a size cap (2 KB) and a token bucket (20/s, burst 40). Until protocol 6's HELLO / WELCOME, the map ID, protocol version and defs hash are attributes on `Remotes`, and each player's sim ID and team are attributes on the `Player`; the client refuses to start on a protocol or defs mismatch. `Players.CharacterAutoLoads` is set false at runtime (no avatars in an RTS). Placeholder: `demoOrders` sends both sides to the midpoint between them every 10 s, and the match restarts with the next seed 6 s after one side is gone.
+
+**Alternatives:** wait for the sim stream's server entry (STUDIO_HANDOFF step 3 has no owner yet, and task 4 needs a running server); implement the protocol 6 handshake client-side now (its server half is the sim stream's, S-2).
+
+**Why:** the smallest server that drives the real simulation and the real NetOut packets. When WELCOME lands, the attributes go and the client reads the handshake instead.
+
+### C-10 — Playtest proof without Studio screenshots (2026-10-21)
+
+**Decision:** Studio's `screen_capture` returns the 2D GUI but a black 3D view in this setup (Edit and Play). As proof, the playtest client exposes `ReplicatedStorage.FtggClientDebug` (Studio only): `Invoke()` returns counts (units per team and tier, models, render delay, camera), `Invoke("view")` returns every drawn part's top-down footprint and color. `lune run render_view` turns a saved dump into a PNG under `debug_out/screens/`. The server has `ServerStorage.FtggDebug` for sim summaries. Both exist because `execute_luau` doesn't share the scripts' `shared` / `_G`.
+
+**Alternatives:** keep retrying screenshots (they stay black); trust the numbers only.
+
+**Why:** the PNG is drawn from the actual Instances the client created, so it shows piece placement, turret aim and positions as the playtest had them. A real screenshot is still wanted once the 3D view captures again.

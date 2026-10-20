@@ -50,9 +50,9 @@ Roblox can't resolve `@shared/...` aliases or relative string requires yet (see 
 
 ## 3. Server tick loop and network wiring (guide 3.3, 7.1, 19)
 
-- [ ] Server entry: build the `Sim` (`Sim.new` with the match seed, players, map ID and scenario) and drive it from a Heartbeat accumulator at 15 Hz. Cap catch-up (at most 2–3 steps per frame, guide 3.3). `Sim.step` never reads a clock; the entry script does.
-- [ ] RemoteEvents per `Schema.Channel` (Cmd, Tactical, State, Strategic, Events, Eco, Snapshot). After each tick, send `NetOut`'s per-player outbox; messages are already chunked to ≤ 900 bytes (`Packer.chunk`).
-- [ ] Commands from clients go to `Sim.submit(sim, playerId, payload)`. Add rate limits and size caps (guide 19) in the entry script, not in the sim.
+- [x] (minimal, client stream C-9: `src/roblox/Main.server.luau`) Server entry: build the `Sim` (`Sim.new` with the match seed, players, map ID and scenario) and drive it from a Heartbeat accumulator at 15 Hz. Cap catch-up (at most 2–3 steps per frame, guide 3.3). `Sim.step` never reads a clock; the entry script does.
+- [x] (C-9) RemoteEvents per `Schema.Channel` (Cmd, Tactical, State, Strategic, Events, Eco, Snapshot). After each tick, send `NetOut`'s per-player outbox; messages are already chunked to ≤ 900 bytes (`Packer.chunk`).
+- [x] (C-9: size cap and rate limit only) Commands from clients go to `Sim.submit(sim, playerId, payload)`. Add rate limits and size caps (guide 19) in the entry script, not in the sim.
 - [ ] Player join and leave: guide 7.5 (join, reconnect, spectate) isn't implemented in the sim yet. A late joiner needs a full tactical and strategic snapshot (NetOut's `ENTER` path covers tactical units).
 - [ ] Replay recording: `sim.replay` is already filled. Save `Replay.serialize` at match end. Player-facing replays store the server's sent stream (guide 17.1), so record the outbox too.
 
@@ -68,8 +68,8 @@ Roblox can't resolve `@shared/...` aliases or relative string requires yet (see 
 
 ## 5. M1: client (guide 7.4, 15, 17.3)
 
-- [ ] Client mirror of the tactical, strategic and state records. `src/server/Tests/Support/Client.luau` is a working reference: it decodes everything NetOut sends and keeps a view.
-- [ ] Interpolated rendering with a 2-tick delay (guide 7.4). Units are placeholder blockouts with the guide 14.2 piece names.
+- [x] (client task 4: `src/client/Core/World`, `NetIn`) Client mirror of the tactical, strategic and state records. `src/server/Tests/Support/Client.luau` is a working reference: it decodes everything NetOut sends and keeps a view.
+- [x] (client task 4: `Core/Interp`, `Render/UnitRenderer`) Interpolated rendering with a 2-tick delay (guide 7.4). Units are placeholder blockouts with the guide 14.2 piece names.
 - [ ] Debug overlays, toggled by a key (guide 17.3): passability and clearance per class, quadtree leaves, flow-field arrows, sensor maps (LOS, radar, jam), unit goals and formation slots.
 - [ ] **M1 exit:** 50 tanks path smoothly across the baked map; overlays show the fields.
 

@@ -1,0 +1,82 @@
+--!strict
+-- Client interpolation (guide 7.4): draw units DELAY_TICKS behind the newest
+-- server tick, between the two surrounding snapshots. Past the newest
+-- snapshot a MOVING unit extrapolates up to one tick, then holds; a unit that
+-- stopped just holds (no overshoot). Pure Luau (C-7).
+
+local World = require("./World")
+
+local Interp = {}
+
+Interp.TICK_RATE = 15
+Interp.DELAY_TICKS = 2
+Interp.MAX_EXTRAPOLATE = 1 -- ticks
+Interp.SNAP_ERROR = 3 -- ticks: a render clock further off than this jumps
+
+export type Clock = { tick: number, started: boolean }
+
+function Interp.newClock(): Clock
+	return { tick = 0, started = false }
+end
+
+-- Advances the render clock by `dt` seconds and returns the render tick
+-- (fractional sim tick), or -1 before any packet. It runs at the tick rate
+-- and is pulled gently toward (newest tick + time since it arrived − delay),
+-- so packet jitter doesn't make units stutter.
+function Interp.advance(clock: Clock, world: World.World, now: number, dt: number): number
+	if world.latestTick < 0 then
+		return -1
+	end
+	local target = world.latestTick + (now - world.latestAt) * Interp.TICK_RATE - Interp.DELAY_TICKS
+	if not clock.started then
+		clock.tick, clock.started = target, true
+		return target
+	end
+	clock.tick += dt * Interp.TICK_RATE
+	local err = target - clock.tick
+	if math.abs(err) > Interp.SNAP_ERROR then
+		clock.tick = target
+	else
+		clock.tick += err * math.min(1, dt * 2)
+	end
+	return clock.tick
+end
+
+local function lerpAngle(a: number, b: number, k: number): number
+	local d = (b - a + math.pi) % (2 * math.pi) - math.pi
+	return a + d * k
+end
+
+-- Position (x, z), altitude and heading of `unit` at render tick `t`.
+function Interp.sample(unit: World.Unit, t: number): (number, number, number, number)
+	local snaps = unit.snaps
+	local n = #snaps
+	if n == 0 then
+		return unit.x, unit.z, unit.alt, unit.heading
+	end
+	local first = snaps[1]
+	if t <= first.tick then
+		return first.x, first.z, first.alt, first.heading
+	end
+	local last = snaps[n]
+	if t < last.tick then
+		for i = n - 1, 1, -1 do
+			local a = snaps[i]
+			if a.tick <= t then
+				local b = snaps[i + 1]
+				local k = (t - a.tick) / (b.tick - a.tick)
+				return a.x + (b.x - a.x) * k, a.z + (b.z - a.z) * k, a.alt + (b.alt - a.alt) * k, lerpAngle(a.heading, b.heading, k)
+			end
+		end
+	end
+	local over = t - last.tick
+	if n >= 2 and over > 0 and bit32.band(unit.state, World.State.MOVING) ~= 0 then
+		local prev = snaps[n - 1]
+		local span = last.tick - prev.tick
+		local k = math.min(over, Interp.MAX_EXTRAPOLATE) / span
+		return last.x + (last.x - prev.x) * k, last.z + (last.z - prev.z) * k, last.alt + (last.alt - prev.alt) * k, lerpAngle(last.heading, last.heading + (last.heading - prev.heading), k)
+	end
+	return last.x, last.z, last.alt, last.heading
+end
+
+return Interp
