@@ -884,7 +884,7 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 | `HITSCAN` | MG, autocannon, CIWS | Instant hit roll | `FIRE` event | Tracer/flash |
 | `BEAM` | Laser defense | Instant hit, damage over duration | `FIRE` event | Beam for duration |
 | `BALLISTIC` | Tank shells, artillery, flak | Simulated arc | `SPAWN_PROJ` once, `IMPACT` | Simulates same arc |
-| `HOMING` | SAMs, AAMs, ATGMs | Simulated steering + EW checks | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
+| `HOMING` | SAMs, AAMs, ATGMs | Simulated steering (lead pursuit) + EW checks + proximity fuse within `aoe` of the target's hull (D97) | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
 | `TORPEDO` | Subs, ASW | Homing, restricted to water | Same as homing | Underwater trail |
 | (all) | — | Every weapon aims at, and is judged against, `Combat.aimPoint`: the centre of the target's hull (ships float, submarines sit below the surface; D95) | | |
 | `BOMB` | Bombers | Ballistic with zero launch speed: released at the computed lead point (D91) | Same as ballistic | Falls |
@@ -1094,6 +1094,7 @@ countermeasures = {
   - Ships float with a 3-stud draft; submarines spawn `SUBMERGED` and sit 10 studs down. They carry only the `SUB` category, so only weapons that list it (torpedoes) can target them.
   - Besides sonar, naval units and ASW helicopters (helicopters with a weapon that can target `SUB`) detect a submerged submarine within 40 studs as a SONAR contact: torpedo-targetable, never VISIBLE. No other unit can see it.
   - Torpedoes launch level just under the surface, stay between the sea floor and the surface, home on sonar contacts, and are removed harmlessly when they reach land.
+  - Destroyers carry a radar-guided naval SAM (`ord_naval_sam` 380 studs / `chs_naval_sam` 360, about their 1.5 × sight against aircraft; D97).
 - **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base.
 - **Amphibious/hover units** bridge land and sea.
 - Naval structures: floating turret, torpedo launcher, sonar buoy, naval SAM platform, tidal generator.
@@ -1102,17 +1103,19 @@ countermeasures = {
 
 | ↓ attacker / target → | Ground | Air (jet) | Air (heli) | Ship | Sub | Structure |
 |---|---|---|---|---|---|---|
-| Tanks | ●●● | — | ● | ●● | — | ●● |
+| Tanks | ●●● | — | — | ●● | — | ●● |
 | Artillery | ●● | — | — | ●● | — | ●●● |
 | IR SAM | — | ●● | ●●● | — | — | — |
 | Radar SAM | — | ●●● | ●● | — | — | — |
 | Fighters | — | ●●● | ●● | — | — | — |
 | Bombers | ●● | — | — | ●● | — | ●●● |
-| Attack helis | ●●● | — | ● | ●● | — | ●● |
+| Attack helis | ●●● | — | — | ●● | — | ●● |
 | Destroyers | ● | ●● | ●● | ●● | ●● | ●● |
 | Submarines | — | — | — | ●●● | ●● | — |
 
 ● weak · ●● good · ●●● strong · — cannot target
+
+Tanks and attack helicopters can't target helicopters (changed from ● in round 6: no ground gun or rocket targets `AIR`; D97). Same-role cells (a role against its own kind, e.g. tanks against tanks) are checked as a soft band, not as dots: both sides must be able to damage each other, and the equal-cost trade should stay within 0.5–2.0 (D98).
 
 ---
 

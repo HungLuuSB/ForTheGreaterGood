@@ -323,4 +323,43 @@ return function(t: RunAll.Context)
 		t.expect(hit >= 1, `and hit ({hit} of {fired})`)
 		print(`    MLRS vs ship: {hit} of {fired} rockets hit`)
 	end)
+
+	-- Destroyers carry a naval SAM (guide 12.3, D97): a Crusader against a
+	-- Wasp hovering over the sea, a Corsair against a Falcon circling it.
+	-- Only the SAM can damage aircraft, so the kill is the SAM's.
+	local function antiAir(seed: number, ship: string, aircraft: string, sam: string): (number?, number)
+		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP })
+		local w = sim.world
+		local shipOwner = if string.sub(ship, 1, 4) == "ord_" then 1 else 2
+		local destroyer = Spawn.unit(sim, ship, shipOwner, 0, 0, math.pi / 2)
+		local plane = Spawn.unit(sim, aircraft, 3 - shipOwner, 300, 0, -math.pi / 2)
+		w.fireState[plane] = World.FireState.HOLD_FIRE
+		w.fireState[destroyer] = World.FireState.FIRE_AT_WILL
+		moveTo(sim, 3 - shipOwner, { plane }, 100, 0)
+		local launched = 0
+		for _ = 1, 1200 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				local wd, target = shot(sim, e)
+				if wd == sam and e.unit == destroyer and target == plane then
+					launched += 1
+				end
+			end
+			if w.slot[plane] == nil then
+				return sim.tick, launched
+			end
+		end
+		return nil, launched
+	end
+
+	t.test("destroyers carry a naval SAM: they shoot down helicopters and jets", function()
+		local tick, launched = antiAir(41, "ord_crusader", "chs_wasp", "ord_naval_sam")
+		t.expect(tick ~= nil, "the Crusader shot down the Wasp")
+		t.expect(launched >= 1, `with naval SAMs ({launched})`)
+		print(`    Crusader vs Wasp: down at tick {tick}, {launched} missiles`)
+		local tick2, launched2 = antiAir(42, "chs_corsair", "ord_falcon", "chs_naval_sam")
+		t.expect(tick2 ~= nil, "the Corsair shot down the Falcon")
+		t.expect(launched2 >= 1, `with naval SAMs ({launched2})`)
+		print(`    Corsair vs Falcon: down at tick {tick2}, {launched2} missiles`)
+	end)
 end

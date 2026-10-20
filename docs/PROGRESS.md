@@ -312,6 +312,14 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 6 — item 3: destroyer SAM, missile guidance, matrix edits ✅
+
+- Crusader and Corsair carry a radar-guided naval SAM (380 / 360 studs) (D97).
+- While testing it: SAMs never hit a circling jet (pure pursuit, contact fuse only). Homing now leads the target, and missiles have a proximity fuse within their blast radius. Land SAMs and the naval SAM now down circling jets; the Hornet IR SAM still misses Falcons (M8 numbers).
+- Guide 12.4: tanks and attack helicopters → helicopters are "—". `BALANCE.md` has an "M8 balance items" section, with IR SAM vs helicopters first.
+- Counter check: 446 of 568 pairs hold, 223 findings (57 mechanic, 166 numbers).
+- Tests: **31 specs, 227 passed**.
+
 ### Round 6 — item 2: bombs on radar contacts and ghosts ✅
 
 - Bombs have `canTargetRadar`: radar contacts at the wobbled position, structure ghosts at their last known position; sight unchanged (D96).

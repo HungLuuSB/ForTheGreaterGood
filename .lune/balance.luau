@@ -541,6 +541,27 @@ out("- Bomber groups bring their faction's T1 radar tower (not part of the trade
 out("- Watch any fight: `lune run export matchup:<order id>:<chaos id>[:close|long]` (or `siege:<id>`), then open `tools/viewer/index.html`.")
 out(string.format("- %d battles, %.0f s on the dev PC.", battles, os.clock() - t0))
 out("")
+-- M8 balance items: the user's list, top first, with this run's numbers.
+out("## M8 balance items")
+out("")
+out("Recorded for M8 (balance), most important first. Numbers are this run's value trades for the attacker (close / long).")
+out("")
+do
+	local parts = {}
+	for _, sam in { "ord_halo", "chs_hornet" } do
+		local samDef = defs.units[sam]
+		for _, heli in (if samDef.faction == "order" then chaos else order) do
+			if defs.units[heli].moveClass == "HELI" and canDamage(defs.units[heli], samDef) then -- attack helicopters
+				local checks = duel(sam, heli)
+				if #checks == 2 then
+					table.insert(parts, string.format("%s vs %s %s / %s", samDef.name, defs.units[heli].name, fmt(checks[1].trade), fmt(checks[2].trade)))
+				end
+			end
+		end
+	end
+	out("1. **IR SAM vs helicopters** (12.4: ●●●, the IR SAM's best target): " .. table.concat(parts, "; ") .. ". The IR SAMs lose or barely win against attack helicopters of equal value (D94; round-6 answer 3).")
+end
+out("")
 local header = "| Order \\ Chaos |"
 local sep = "|---|"
 for _, bId in chaos do

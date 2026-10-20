@@ -1110,3 +1110,26 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - mean trade: Absolution 1.93 → 2.90, Phantom 2.68 → 2.17, Behemoth 1.93 → 2.64, Plague 2.18 → 2.63;
   - bomber findings 34 → 33. None is "can't see" any more: 14 never lined up a run (shot down or out of time against SAMs and AA ships), 9 dropped only on radar contacts of small units and missed (radar error 20–45 studs, blast radius 14), 7 ran dry (no pads in these fights), 3 lost the trade.
   - Whole check: 425 of 568 pairs hold; 249 findings (82 mechanic, 167 numbers).
+
+## D97 — Destroyer naval SAM; missile lead pursuit and proximity fuse; matrix edits (2026-10-20, user-requested)
+
+- **Naval SAM (guide 12.3):**
+  - Crusader and Corsair get a third weapon, `ord_naval_sam` / `chs_naval_sam`: radar-guided HOMING, `AIR` only.
+  - Range 380 / 360, matching the destroyers' sight against aircraft (1.5 × sight).
+  - 300 / 280 damage, reload 3.5 / 3 s, `canTargetRadar`, priority jets, then helicopters.
+- **Guidance fix (found while testing the SAM):**
+  - Homing used pure pursuit (steering at the target's current position) with contact fuses only. Against a circling jet, every SAM missed: the Gorgon, the Hornet and the new naval SAM launched 20–25 missiles each over 80 s, with no impact at all. Their turn radius (about 200 studs at 380 studs/s and 110°/s) is wider than the jet's loiter circle, so missiles orbit and expire.
+  - The land SAM rows still "held" in the counter check: a fighter can't shoot back, so the trade was 0 ÷ 0 = ∞ (fixed in D98).
+  - **Now:**
+    - Lead pursuit: HOMING and TORPEDO projectiles steer at the target's position after the straight-line time to go, assuming it holds its heading and speed.
+    - Proximity fuse: a HOMING missile bursts at its closest approach to its target when that is within its `aoe` of the target's hull (measured in the target's frame, like the contact test). The burst deals AoE damage only, and its IMPACT event names the target.
+  - Measured against a Falcon circling 100 studs away: the Corsair downs it with 11 missiles, the Gorgon with 6, and an Absolution falls to the Corsair in 9. The Hornet IR SAM still misses the Falcon (21 launched, 6 decoyed by DIRCM or flares, the rest pass 6–15 studs from the hull with a 5-stud blast). That is a numbers question for M8.
+- **Tests:**
+  - `Naval.spec`: a Crusader downs a Wasp (tick 61, 2 missiles); a Corsair downs a circling Falcon (tick 596, 14 missiles).
+  - `Air.spec`: a Seraph downs a circling Harpy (3 of 8 missiles on target).
+  - Both fail with the old guidance.
+- **Matrix (guide 12.4):** Tanks → Air (heli) and Attack helis → Air (heli) are now "—" (no ground gun or rocket targets `AIR`).
+- **BALANCE.md:**
+  - The new section "M8 balance items" lists, first, IR SAM vs helicopters (Halo vs Wasp 0.58 / 0.55, Hornet vs Guardian 1.36 / 2.01; 12.4 says ●●●).
+  - Destroyers against aircraft: Crusader vs Wasp 0.00 → 1.10 / 1.02; the Corsair now beats the Guardian.
+  - Counter check: 446 of 568 pairs hold (was 425); findings 249 → 223 (mechanic 82 → 57, numbers 166).

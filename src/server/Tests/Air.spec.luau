@@ -295,6 +295,37 @@ return function(t: RunAll.Context)
 		t.equal(run(), run())
 	end)
 
+	-- Missile guidance (D97): a Seraph radar SAM against a Harpy circling
+	-- 100 studs away. Pure pursuit with contact fuses never hit a circling
+	-- jet; lead pursuit and the proximity fuse bring it down.
+	t.test("a SAM shoots down a circling jet (lead pursuit, proximity fuse)", function()
+		local sim = Sim.new({ seed = 33, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local sam = Spawn.unit(sim, "ord_seraph", 1, 0, 0)
+		local jet = Spawn.unit(sim, "chs_harpy", 2, 300, 0, -math.pi / 2)
+		w.fireState[jet] = World.FireState.HOLD_FIRE
+		moveTo(sim, 2, { jet }, 100, 0)
+		local launched, bursts = 0, 0
+		local down: number? = nil
+		for _ = 1, 1200 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == sam then
+					launched += 1
+				elseif e.kind == "IMPACT" and e.unit == jet then
+					bursts += 1
+				end
+			end
+			if w.slot[jet] == nil then
+				down = sim.tick
+				break
+			end
+		end
+		t.expect(down ~= nil, `the Harpy is shot down ({launched} missiles, {bursts} on target)`)
+		t.expect(bursts >= 1 and launched <= 12, `within a dozen missiles ({bursts} of {launched} on target)`)
+		print(`    Seraph vs circling Harpy: down at tick {down}, {bursts} of {launched} missiles on target`)
+	end)
+
 	-- Unseen targets (D96). Steps `ticks` and returns, per bomb that landed:
 	-- the sensor level of the bomber's target at release, the impact's
 	-- distance to the believed and to the true position of the target at
