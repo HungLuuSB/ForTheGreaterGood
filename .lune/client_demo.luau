@@ -11,6 +11,7 @@ local process = require("@lune/process")
 
 local Api = require("../src/client/Api")
 local Commands = require("../src/client/Core/Commands")
+local Effects = require("../src/client/Core/Effects")
 local NetIn = require("../src/client/Core/NetIn")
 local World = require("../src/client/Core/World")
 local NetOut = require("../src/server/Sim/NetOut")
@@ -42,11 +43,11 @@ local function setup(config: any)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			table.clear(world.entered)
 			table.clear(world.left)
-			table.clear(world.died)
 			Api.frame(api, tick * DT)
 			if each then
 				each(tick)
 			end
+			table.clear(world.died)
 		end
 	end
 	run(2)
@@ -108,6 +109,54 @@ if demo == "build" then
 	print(`ghost on the Command Vehicle: {ok} {why}`)
 	fs.writeFile(red, scene(world, api))
 	print(`wrote {out} and {red}`)
+elseif demo == "combat" then
+	-- the duel, drawn the way the client would at render tick T - 2
+	local sim, world, api, run = setup({ seed = 7, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:48", scenario = "duel_test" })
+	local fx = Effects.new()
+	-- both sides close in (as the playtest's bot orders do), so shells fly between them
+	local own = World.ownIds(world)
+	api.actions.select(own)
+	api.actions.smartOrder(0, 0, nil, false)
+	local Packer = require("@shared/Net/Packer")
+	local Schema = require("@shared/Net/Schema")
+	local enemy = {}
+	for _, id in sim.world.ids do
+		if sim.world.owner[id] == 2 then
+			table.insert(enemy, id)
+		end
+	end
+	local w = Packer.Writer.new(64)
+	local cell, offX, offZ = world.grid:encode(0, 0)
+	Schema.encodeCommand(w, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = enemy, cell = cell, offX = offX, offZ = offZ })
+	assert(Sim.submit(sim, 2, w:finish()))
+	local best, bestScore = "", -1
+	run(15 * 9, function(tick)
+		-- the client keeps died / events for Effects; run() clears died after this hook
+		Effects.update(fx, world, tick - 2, tick * DT, 0, 0)
+		local n = 0
+		for _ in fx.projectiles do
+			n += 1
+		end
+		local score = n + #fx.bursts * 2
+		if tick > 30 and score > bestScore then
+			bestScore = score
+			local extra = {}
+			for _, v in Effects.visible(fx, tick - 2) do
+				table.insert(extra, string.format("E %.1f %.1f 1.4 255 205 110 1", v[2], v[4]))
+			end
+			for _, b in fx.bursts do
+				local age = math.clamp((tick * DT - b.born) / b.life, 0, 1)
+				local color = if b.kind == "death" then "255 110 50" elseif b.kind == "muzzle" then "255 235 170" else "255 170 70"
+				table.insert(extra, string.format("E %.1f %.1f %.1f %s %.2f", b.x, b.z, b.radius * 2 * (0.35 + 0.65 * age), color, 0.85 - 0.8 * age))
+			end
+			for _, t in fx.tracers do
+				table.insert(extra, string.format("L %.1f %.1f %.1f %.1f 0.3 255 230 160", t.x0, t.z0, t.x1, t.z1))
+			end
+			best = scene(world, api, extra)
+		end
+	end)
+	fs.writeFile(out, best)
+	print(`wrote {out} (busiest frame: {bestScore})`)
 else
 	print(`unknown demo {demo}`)
 	process.exit(1)

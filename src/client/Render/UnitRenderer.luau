@@ -24,12 +24,13 @@ type Drawn = {
 
 export type Renderer = {
 	drawn: { [number]: Drawn },
+	dying: { { model: Model, tick: number } }, -- dead units' models, kept until the render clock reaches the death
 	parts: { BasePart },
 	frames: { CFrame },
 }
 
 function UnitRenderer.new(): Renderer
-	return { drawn = {}, parts = {}, frames = {} }
+	return { drawn = {}, dying = {}, parts = {}, frames = {} }
 end
 
 local function jointOf(model: Model, piece: string?): Joint?
@@ -86,6 +87,10 @@ function UnitRenderer.clear(r: Renderer)
 	for id in r.drawn do
 		hide(r, id)
 	end
+	for _, dying in r.dying do
+		ModelPool.release(dying.model)
+	end
+	table.clear(r.dying)
 end
 
 -- Applies the world's queues, then draws every tactical unit at render tick `t`.
@@ -100,9 +105,20 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 	end
 	table.clear(world.left)
 	for _, death in world.died do
-		hide(r, death.id) -- death effects and wrecks: client task 7
+		-- the model stays where it was drawn until the render clock reaches the death
+		local d = r.drawn[death.id]
+		if d then
+			r.drawn[death.id] = nil
+			table.insert(r.dying, { model = d.model, tick = death.tick })
+		end
 	end
-	-- the renderer doesn't consume `died` beyond this; effects read it first
+	for i = #r.dying, 1, -1 do
+		local dying = r.dying[i]
+		if t < 0 or dying.tick <= t then
+			ModelPool.release(dying.model) -- the burst comes from Effects; wrecks later
+			table.remove(r.dying, i)
+		end
+	end
 	if t < 0 then
 		return
 	end

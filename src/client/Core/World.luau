@@ -49,7 +49,7 @@ export type Unit = {
 }
 
 -- A tactical unit that died: the renderer plays its death and drops the model.
-export type Death = { id: number, defIndex: number?, team: number, x: number, z: number, heading: number, severity: number, wreckId: number }
+export type Death = { id: number, defIndex: number?, team: number, x: number, z: number, heading: number, severity: number, wreckId: number, tick: number }
 
 export type Me = { player: number, team: number, allyTeam: number }
 

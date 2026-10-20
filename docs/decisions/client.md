@@ -23,6 +23,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-13 | Default controls: box / click / double-click select, smart right-click, right-drag line, Shift queue, Ctrl+1..9 groups, X stop |
 | C-14 | The build ghost runs the server's placement rules on the client's knowledge, cell by cell in the server's order |
 | C-15 | When Studio isn't available, `lune run client_demo` renders the real client's view headless (labelled as such) |
+| C-16 | Effects play on the render clock; every projectile is followed, caps apply to what is drawn, by size over distance |
 
 ---
 
@@ -141,3 +142,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Decision:** `lune run client_demo <name> <out.txt>` runs the real Sim and the real client modules (World, NetIn, Api) in Lune, scripts a scene through the same API the input layer calls, and writes the client's view (units, selection, order lines, the build ghost) in the scene-dump format; `lune run render_scene` draws it. Images from it are named and labelled as headless, not as playtests.
 
 **Why:** Studio closed its place during the night run, and per the rules it isn't repaired from here. The demos still exercise the real client logic end to end; the Roblox-only layer (Instances, input events) waits for a playtest.
+
+### C-16 — Combat effects on the render clock, with caps (2026-10-21)
+
+**Decision:** `Core/Effects` consumes combat events and deaths only when the render clock (2 ticks behind, Interp) reaches their tick, so shells burst where the interpolated tanks are drawn; the unit renderer likewise keeps a dead unit's model until then. Projectiles are stepped tick by tick with the server's math (`Shared/Combat/Ballistics`: steer for homing, then step; the step is exact for any time step, so drawing between ticks adds no error). IMPACT ends a projectile, DECOYED / LOST_LOCK snap it, homing corrections blend over 5 ticks (snap above 60 studs). Caps (guide 15.3): all projectiles are followed logically, at most 150 are drawn; at most 60 bursts and 100 tracers live at once. Over a cap the least important is dropped, importance = size (weapon AoE) / (1 + distance to the camera focus / 100). Bursts are a growing, fading flash plus one `ParticleEmitter:Emit` on a shared carrier part (never `Enabled`).
+
+**Alternatives:** play events on arrival (effects 133 ms ahead of the units they belong to); cap the logical projectile set (a skipped projectile would miss its IMPACT bookkeeping).
+
+**Why:** `Effects.spec`: client shells stay within 0.5 studs of the server's projectiles (wire quantization) for 240 ticks of the duel, IMPACT clears them, events and deaths wait for their tick, and 400 projectiles / 200 impacts respect the caps with the near ones kept.

@@ -23,6 +23,8 @@ local NetIn = require("./Core/NetIn")
 local World = require("./Core/World")
 local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
+local Effects = require("./Core/Effects")
+local RenderEffects = require("./Render/Effects")
 local Ground = require("./Render/Ground")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
@@ -54,6 +56,22 @@ Camera.bind(camState)
 local controls = Controls.bind(api)
 local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
+local fx = Effects.new()
+local fxRenderer = RenderEffects.new()
+
+-- Drawn muzzle of a unit's weapon slot (tracers start there), if it has a model.
+local function muzzleOf(id: number, slot: number): (number?, number?, number?)
+	local model = UnitRenderer.modelOf(renderer, id)
+	local u = world.units[id]
+	local def = u and World.def(world, u)
+	local name = def and def.weapons[slot] and def.weapons[slot].muzzle
+	local att = model and name and model:FindFirstChild(name, true)
+	if att and att:IsA("Attachment") then
+		local p = att.WorldPosition
+		return p.X, p.Y, p.Z
+	end
+	return nil, nil, nil
+end
 Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
 api.changed.focus:Connect(function(p)
@@ -129,6 +147,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		-- a (re)join: start over from the server's full picture
 		seenJoins = world.joins
 		UnitRenderer.clear(renderer)
+		Effects.clear(fx)
 		clock = Interp.newClock()
 		camState.lastRect = nil -- resend the camera so the tactical tier is rebuilt
 		if world.mapVersion ~= seenMap then
@@ -147,6 +166,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	api.state.camera.rect = camState.rect
 	local t = Interp.advance(clock, world, now, dt)
 	UnitRenderer.step(renderer, world, t, dt)
+	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
+	RenderEffects.step(fxRenderer, fx, t, now)
 	Api.frame(api, now)
 	if api.state.placement then
 		local hover = Controls.hover()
@@ -156,9 +177,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	PlacementGhost.step(ghost, api)
 	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)
-	-- consumed by combat effects later (client task 7)
-	table.clear(world.died)
-	table.clear(world.events)
+	table.clear(world.died) -- the renderer and Effects have taken what they need
 	local drawn = 0
 	for _ in renderer.drawn do
 		drawn += 1
