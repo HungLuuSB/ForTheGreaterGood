@@ -32,7 +32,7 @@ Maps, terrain and unit models live in the place file, not in this repo.
 
 ## Lune mode (current)
 
-Studio isn't available, so all code and tests run under [Lune](https://lune-org.github.io/docs) (version pinned in `rokit.toml`).
+Studio is now available to the client session only (`src/client`, `src/shared/Defs/Blockouts/`, place content), through the Roblox Studio MCP tools. The simulation stays headless: its code and tests run under [Lune](https://lune-org.github.io/docs) (version pinned in `rokit.toml`) and are still tested with `lune run test`.
 
 - Run the tests from the project root with `lune run test` (entry: `.lune/test.luau`). It runs every `*.spec.luau` under `src/server/Tests`. `lune run test <filter>` runs only the specs whose path contains `<filter>`.
 - All code in `src/shared` and `src/server` must run in **both** Lune and Roblox:
