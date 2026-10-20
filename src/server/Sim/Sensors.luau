@@ -513,6 +513,37 @@ function Sensors.knownTarget(sim: Types.Sim, team: number, id: number): (number?
 	return kx, kz, level, sim.world.defIndex[id]
 end
 
+-- Unit types are known only for VISIBLE units, ghosts (seen before),
+-- tracked radar contacts and the team's own units. Any other contact
+-- reveals only its domain (D107): air, surface or submerged.
+local CB = Categories.Bit
+Sensors.DOMAIN_MASK = table.freeze({
+	air = bit32.bor(CB.AIR, CB.HELI, CB.JET),
+	surface = bit32.bor(CB.GROUND, CB.NAVAL, CB.STRUCTURE),
+	submerged = CB.SUB,
+})
+
+function Sensors.typeKnown(sim: Types.Sim, team: number, id: number, level: number): boolean
+	return level == L.VISIBLE or level == L.GHOST or Sensors.isTracked(sim, team, id)
+end
+
+-- The categories `team` knows unit `id` has, given its level and def index
+-- (from Sensors.knownTarget): all of them when its type is known, else
+-- those of its domain (D107).
+function Sensors.knownCategories(sim: Types.Sim, team: number, id: number, level: number, defIndex: number): number
+	local def = sim.defs.unitByIndex[defIndex]
+	if Sensors.typeKnown(sim, team, id, level) then
+		return def.categoryMask
+	end
+	local w = sim.world
+	if def.domain == "air" then
+		return Sensors.DOMAIN_MASK.air
+	elseif bit32.band(def.categoryMask, CB.SUB) ~= 0 or (w.slot[id] ~= nil and bit32.band(w.state[id], World.State.SUBMERGED) ~= 0) then
+		return Sensors.DOMAIN_MASK.submerged
+	end
+	return Sensors.DOMAIN_MASK.surface
+end
+
 -- Does `team`'s fire-control radar track enemy unit `id` (D104)?
 function Sensors.isTracked(sim: Types.Sim, team: number, id: number): boolean
 	local t = sim.sensors.tracked[team]

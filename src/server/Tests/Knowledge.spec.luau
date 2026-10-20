@@ -1,6 +1,7 @@
 --!strict
 -- Decisions follow team knowledge, never server truth (DECISIONS D100,
--- D101): one test per place the audit fixed. Bomber ghost targeting and
+-- D101, D107): one test per place the audit fixed, and the domain-only rule
+-- for untracked radar contacts. Bomber ghost targeting and
 -- ATTACK_GROUND are in Air.spec.
 local Combat = require("../Sim/Combat/Combat")
 local Passability = require("@shared/Grid/Passability")
@@ -14,6 +15,13 @@ local RunAll = require("./RunAll")
 
 local L = Sensors.Level
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
+
+local function powered(sim: Sim.Sim)
+	for _, team in { 1, 2 } do
+		local acc = sim.eco.accounts[team]
+		acc.power.stored = acc.power.storage
+	end
+end
 
 local function steps(sim: Sim.Sim, n: number)
 	for _ = 1, n do
@@ -166,5 +174,92 @@ return function(t: RunAll.Context)
 		t.expect(w.slot[gen] == nil, "destroyed")
 		_, _, tx, tz = Skirmish.knownTargets(brain)
 		t.expect(math.abs((tx :: number) - gx) < 1 and math.abs((tz :: number) - gz) < 1, "the remembered generator is still the target")
+	end)
+
+	-- D107: untracked contacts reveal only their domain.
+	t.test("untracked radar contacts reveal only their domain; tracked and visible ones their type", function()
+		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "sea:128" })
+		local w = sim.world
+		Spawn.unit(sim, "ord_beacon", 1, -400, 0) -- on the land strip, radar 1100
+		local tank = Spawn.unit(sim, "chs_juggernaut", 2, -350, 400) -- on land, far from Order's sight
+		local heli = Spawn.unit(sim, "chs_wasp", 2, 200, -300)
+		local sub = Spawn.unit(sim, "chs_lamprey", 2, 300, 300)
+		Spawn.unit(sim, "ord_crusader", 1, 300, 100) -- sonar 320 reaches the sub
+		for _, id in { tank, heli, sub } do
+			w.fireState[id] = World.FireState.HOLD_FIRE
+		end
+		steps(sim, 4)
+		local function cats(id: number): number
+			local _, _, level, defIndex = Sensors.knownTarget(sim, 1, id)
+			return Sensors.knownCategories(sim, 1, id, level, defIndex :: number)
+		end
+		local D = Sensors.DOMAIN_MASK
+		t.equal(Sensors.level(sim, 1, tank), L.RADAR, "the tank is a radar blip")
+		t.equal(cats(tank), D.surface, "an untracked surface blip: surface, no ARMORED or COMMANDER")
+		t.equal(Sensors.level(sim, 1, heli), L.RADAR, "the helicopter is a radar blip")
+		t.equal(cats(heli), D.air, "an untracked air blip: air only")
+		t.equal(Sensors.level(sim, 1, sub), L.SONAR, "the submarine is a sonar contact")
+		t.equal(cats(sub), D.submerged, "a sonar contact under water: submerged")
+		Spawn.unit(sim, "ord_tribunal", 1, -400, 250) -- tracks the tank
+		for _ = 1, 4 do
+			powered(sim)
+			Sim.step(sim)
+		end
+		t.expect(Sensors.isTracked(sim, 1, tank), "tracked")
+		t.equal(cats(tank), sim.defs.units.chs_juggernaut.categoryMask, "tracked: its real categories")
+	end)
+
+	-- A Seraph (radar SAM, priority jet > air > helicopter) with a Wasp radar
+	-- blip at 400 studs and a Harpy radar blip at 500. Untracked, the nearer
+	-- blip wins; tracked, the jet's priority wins.
+	local function samChoice(tracking: boolean): (number, number, number)
+		local sim = Sim.new({ seed = 10, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local sam = Spawn.unit(sim, "ord_seraph", 1, -300, 0)
+		local heli = Spawn.unit(sim, "chs_wasp", 2, 100, 0)
+		local jet = Spawn.unit(sim, "chs_harpy", 2, 200, 0, -math.pi / 2)
+		w.fireState[heli] = World.FireState.HOLD_FIRE
+		w.fireState[jet] = World.FireState.HOLD_FIRE
+		if tracking then
+			Spawn.unit(sim, "ord_tribunal", 1, -300, 200)
+		end
+		local first = 0
+		for _ = 1, 12 do
+			powered(sim)
+			Sim.step(sim)
+			local cur = w.wTarget[World.slotKey(sam, 1)]
+			if first == 0 and cur ~= 0 then
+				first = cur
+			end
+		end
+		return first, heli, jet
+	end
+
+	t.test("type priorities apply only to tracked or visible targets", function()
+		local pick, heli, jet = samChoice(false)
+		t.equal(pick, heli, "untracked: the nearer blip (no type priority)")
+		pick, heli, jet = samChoice(true)
+		t.equal(pick, jet, "tracked: the jet, by priority")
+	end)
+
+	t.test("the AI types tracked contacts like seen ones", function()
+		local sim, brain = aiStart(11)
+		local w = sim.world
+		local hx, hz, dir = brain.homeX, brain.homeZ, brain.toward
+		local tank = Spawn.unit(sim, "chs_ravager", 2, hx + dir * 300, hz)
+		local gen = Spawn.unit(sim, "chs_generator", 2, hx, hz + 400)
+		w.fireState[tank] = World.FireState.HOLD_FIRE
+		local spotter = Spawn.unit(sim, "ord_lancer", 1, hx + dir * 300, hz + 60)
+		w.fireState[spotter] = World.FireState.HOLD_FIRE
+		Spawn.unit(sim, "ord_watchtower", 1, hx, hz + 150)
+		Spawn.unit(sim, "ord_tribunal", 1, hx - dir * 100, hz + 150)
+		for _ = 1, 4 do
+			powered(sim)
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 1, gen), L.RADAR, "the generator is a radar blip")
+		t.expect(Sensors.isTracked(sim, 1, gen), "and tracked")
+		local _, _, tx, tz = Skirmish.knownTargets(brain)
+		t.expect(math.abs((tx :: number) - w.posX[gen]) < 20 and math.abs((tz :: number) - w.posZ[gen]) < 20, "tracked: the AI knows it is a structure and prefers it")
 	end)
 end

@@ -181,8 +181,11 @@ return function(sim: Types.Sim)
 			if weapon.type == "BOMB" and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
 			elseif target ~= 0 then
-				local _lv
-				kx, kz, _lv, defIndex = Sensors.knownTarget(sim, w.ally[id], target)
+				local level
+				kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], target)
+				if kx ~= nil and not Sensors.typeKnown(sim, w.ally[id], target, level) then
+					defIndex = nil -- an untracked blip's size is unknown (D107)
+				end
 			end
 			local exactYaw, exactPitch = 0, 0
 			if kx ~= nil and kz ~= nil then

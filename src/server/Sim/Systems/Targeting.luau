@@ -8,7 +8,10 @@
 -- (+10% hysteresis, measured to the known position) and arc, and allowed by
 -- the unit's fire state. A ghost stays a target even if its structure died
 -- unseen (the team can't tell): until the spot is seen again, when Sensors
--- forgets it. Bombers with an attack-ground order (Air) don't auto-target. An invalid target is dropped at once. A
+-- forgets it. Bombers with an attack-ground order (Air) don't auto-target.
+-- An untracked radar or sonar contact reveals only its domain (D107): it is
+-- filtered by domain, scored without type priorities, and its collision
+-- radius doesn't count toward range. An invalid target is dropped at once. A
 -- weapon without a target searches only on its unit's stagger tick
 -- ((id + tick) % STAGGER == 0), so 1/STAGGER of units search per tick.
 --
@@ -76,9 +79,11 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 		return nil
 	end
 	local tp = c.profiles[defIndex :: number]
-	if band(weapon.targetMask, tp.categoryMask) == 0 then
+	local known = Sensors.typeKnown(sim, w.ally[id], t, level)
+	if band(weapon.targetMask, Sensors.knownCategories(sim, w.ally[id], t, level, defIndex :: number)) == 0 then
 		return nil
 	end
+	local radius = if known then tp.radius else 0
 	local allowed = level == VISIBLE
 		or ((level == RADAR or level == GHOST) and weapon.canTargetRadar)
 		or (level == SONAR and weapon.type == "TORPEDO") -- torpedoes hunt sonar contacts
@@ -87,7 +92,7 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 	end
 	local dx, dz = (kx :: number) - w.posX[id], (kz :: number) - w.posZ[id]
 	local dist = sqrt(dx * dx + dz * dz)
-	if dist > weapon.range * hysteresis + tp.radius then
+	if dist > weapon.range * hysteresis + radius then
 		return nil
 	end
 	local turret = weapon.turret
@@ -103,8 +108,11 @@ local function isGuided(weapon: Defs.WeaponDef): boolean
 end
 
 local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, dist: number): number
-	local _, _, _, defIndex = Sensors.knownTarget(sim, sim.world.ally[id], t)
-	local s = priorityWeight(weapon.priorityMasks, sim.combat.profiles[defIndex :: number].categoryMask) / math.max(dist, 1)
+	local team = sim.world.ally[id]
+	local _, _, level, defIndex = Sensors.knownTarget(sim, team, t)
+	-- type priorities only for targets whose type the team knows (D107)
+	local weight = if Sensors.typeKnown(sim, team, t, level) then priorityWeight(weapon.priorityMasks, sim.combat.profiles[defIndex :: number].categoryMask) else 1
+	local s = weight / math.max(dist, 1)
 	if isGuided(weapon) and EW.canLock(sim, id, weapon, t, dist) then
 		s *= LOCK_PREFERENCE
 	end

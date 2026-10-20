@@ -201,8 +201,8 @@ local freeDeposit = Skirmish.freeDeposit
 
 -- Known enemies (D101): the nearest one near home (a threat), and the best
 -- attack target, where structures and the Command Vehicle count four times
--- closer. Radar blips have no known type; remembered structures count even
--- if they died unseen. Returns threatX, threatZ, targetX, targetZ (nil when
+-- closer. Untracked radar blips have no known type (D107); remembered
+-- structures count even if they died unseen. Returns threatX, threatZ, targetX, targetZ (nil when
 -- none).
 function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number?)
 	local sim = brain.sim
@@ -220,7 +220,7 @@ function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number
 			threatX, threatZ, threatD = kx, kz, dh
 		end
 		local important = false
-		if level == L.VISIBLE or level == L.GHOST then
+		if Sensors.typeKnown(sim, brain.ally, id, level) then -- visible, remembered or tracked (D107)
 			local d = sim.defs.unitByIndex[defIndex :: number]
 			important = d.domain == "structure" or bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0
 		end

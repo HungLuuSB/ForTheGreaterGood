@@ -1341,3 +1341,23 @@ Every system was reviewed for decisions that read another team's units from serv
 - **Decision:** routes are planned on true passability, enemy structures included, whether or not the team has seen them. This is treated as physics, like BAR.
 - **Known minor info leak:** units visibly avoid enemy structures their team never saw, so a careful observer can infer an unseen building from a detour. Accepted. Per-team passability would cost a separate flow-field cache per team.
 - Placement uses the same physics at frame start (D101); only planning (the AI) uses team knowledge.
+
+## D107 — Untracked contacts reveal only their domain (2026-10-20, user decision)
+
+- **Rule:** a team knows a unit's type (its categories) only when the unit is VISIBLE, a ghost (seen before), tracked by its fire-control radar (D104), or its own. Any other radar or sonar contact reveals only its domain:
+  - air: AIR, HELI, JET;
+  - surface: GROUND, NAVAL, STRUCTURE;
+  - submerged: SUB.
+- `Sensors.typeKnown` and `Sensors.knownCategories` implement it. `Sensors.DOMAIN_MASK` holds the three masks.
+- **Weapons:**
+  - Targeting filters untracked contacts by domain only.
+  - Untracked contacts score with weight 1 (no type priority).
+  - Their collision radius doesn't count toward range, and bomb release uses radius 0.
+  - Every current radar-capable weapon targets whole domains, so acceptance is unchanged today. Priorities do change: a radar SAM no longer prefers an untracked jet over a nearer untracked helicopter.
+- **AI:** structure / Command Vehicle weighting only for typed contacts (visible, ghost, tracked).
+- **Tests** (`Knowledge.spec`):
+  - untracked tank, helicopter and submarine show only surface, air and submerged; tracked, the tank shows its real categories;
+  - a Seraph picks the nearer untracked blip, but the jet once both are tracked;
+  - the AI prefers a tracked generator over a nearer tank.
+  - The last two fail when the rule is undone.
+- **Still from truth:** a radar contact's altitude (aim height), which radar measures, and the seeker's lock physics (D101).
