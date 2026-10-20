@@ -14,6 +14,7 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D84: offline Roblox build (darklua `convert_require` plus a place check).
 - D85–D90: third queue: Sensors stamping, local quadtree updates, match rules, full roster, balance report, skirmish AI.
 - D91–D94: round 5: bombing, wind / converters / extractor upgrades, match export and viewer, counter check.
+- D95–D99: round 6: shared aim point, bombs on radar contacts and ghosts, destroyer SAM and missile guidance, same-role band, combat events on the wire.
 
 Open points are listed in `docs/PROGRESS.md` → Summary.
 
