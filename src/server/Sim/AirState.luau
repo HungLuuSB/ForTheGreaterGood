@@ -17,10 +17,24 @@ export type AirState = {
 	progress: { [number]: number }, -- rearm progress toward the next round, 0..1
 	resumeX: { [number]: number }, -- where to go back to after rearming
 	resumeZ: { [number]: number },
+	-- countermeasure restock during a rearm, spread evenly over its rounds
+	cmPerRound: { [number]: number }, -- charges restocked per round
+	cmSupplyPerRound: { [number]: number }, -- their supply cost per round
+	cmProgress: { [number]: number }, -- toward the next charge, 0..1
 }
 
 function AirState.new(): AirState
-	return { ammo = {}, phase = {}, pad = {}, progress = {}, resumeX = {}, resumeZ = {} }
+	return {
+		ammo = {},
+		phase = {},
+		pad = {},
+		progress = {},
+		resumeX = {},
+		resumeZ = {},
+		cmPerRound = {},
+		cmSupplyPerRound = {},
+		cmProgress = {},
+	}
 end
 
 function AirState.clearUnit(a: AirState, id: number)
@@ -30,6 +44,9 @@ function AirState.clearUnit(a: AirState, id: number)
 	a.progress[id] = nil
 	a.resumeX[id] = nil
 	a.resumeZ[id] = nil
+	a.cmPerRound[id] = nil
+	a.cmSupplyPerRound[id] = nil
+	a.cmProgress[id] = nil
 end
 
 local PHASE_CODE = { fly = 1, ["return"] = 2, rearm = 3 }
@@ -43,6 +60,9 @@ function AirState.hash(a: AirState, ids: { number }, h: number): number
 			h = Hash.u32(h, a.ammo[id] or 0)
 			h = Hash.u32(h, a.pad[id] or 0)
 			h = Hash.number(h, a.progress[id] or 0)
+			h = Hash.number(h, a.cmPerRound[id] or 0)
+			h = Hash.number(h, a.cmSupplyPerRound[id] or 0)
+			h = Hash.number(h, a.cmProgress[id] or 0)
 		end
 	end
 	return h

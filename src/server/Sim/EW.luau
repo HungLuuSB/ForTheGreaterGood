@@ -26,7 +26,8 @@
 --      the missile veers off DECOY_TURN with no target.
 --
 -- Countermeasures: flares (vs IR) and chaff (vs RADAR) spend a charge per
--- roll and are refilled when an aircraft finishes rearming. DIRCM (vs IR)
+-- roll and are restocked while an aircraft rearms, each charge costing its
+-- refillSupply (paid by Air.rearmStep, spread over the rearm). DIRCM (vs IR)
 -- has no charges: it engages at most one missile per cooldown, recharging at
 -- the team's power stall ratio while draining power continuously. A salvo
 -- that arrives within one cooldown overwhelms it.
@@ -70,7 +71,46 @@ function EW.onSpawn(sim: Types.Sim, id: number)
 	end
 end
 
--- Refills flare and chaff charges (aircraft finishing a rearm).
+-- Charges missing from full, and the supply to restock them all.
+function EW.missingCharges(sim: Types.Sim, id: number): (number, number)
+	local cm = unitDef(sim, id).countermeasures
+	if cm == nil then
+		return 0, 0
+	end
+	local count, supply = 0, 0
+	if cm.flares then
+		local n = cm.flares.charges - (sim.ew.flares[id] or 0)
+		count += n
+		supply += n * cm.flares.refillSupply
+	end
+	if cm.chaff then
+		local n = cm.chaff.charges - (sim.ew.chaff[id] or 0)
+		count += n
+		supply += n * cm.chaff.refillSupply
+	end
+	return count, supply
+end
+
+-- Restocks one charge: flares first, then chaff. False if already full.
+function EW.addCharge(sim: Types.Sim, id: number): boolean
+	local cm = unitDef(sim, id).countermeasures
+	if cm == nil then
+		return false
+	end
+	local e = sim.ew
+	if cm.flares and (e.flares[id] or 0) < cm.flares.charges then
+		e.flares[id] = (e.flares[id] or 0) + 1
+		return true
+	end
+	if cm.chaff and (e.chaff[id] or 0) < cm.chaff.charges then
+		e.chaff[id] = (e.chaff[id] or 0) + 1
+		return true
+	end
+	return false
+end
+
+-- Fills flare and chaff charges to full (spawn; the end of a rearm, whose
+-- supply cost was already paid round by round).
 function EW.refill(sim: Types.Sim, id: number)
 	local cm = unitDef(sim, id).countermeasures
 	if cm == nil then

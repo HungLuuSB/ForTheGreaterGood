@@ -337,6 +337,12 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
   - New `EW.spec` test: a COMMAND missile hits a jammed target carrying certain-success flares, chaff and DIRCM, which spend nothing. Killing the launcher or the spotter mid-flight raises `LOST_LOCK` and the sidestepping target is missed.
   - Mutations caught: jamming blocking the lock, no sight check, countermeasures rolling against COMMAND.
   - Tests: 27 specs, 183 passed.
+- **2. Refill costs (D81, revised):**
+  - new required `refillSupply` per flare or chaff charge;
+  - the restock is spread over the rearm's rounds (`Air.rearmStep`, `EW.missingCharges` / `EW.addCharge`) and hashed in `AirState`.
+  - New test: a Harpy missing 5 flares and 3 chaff pays exactly 19 supply more than one with full charges, rearms in the same 135 ticks, has part of its charges back at 4 s, and is full on take-off.
+  - Mutations caught: free refill; restock only at the end.
+  - Tests: 27 specs, 184 passed.
 
 ### Task 17 — Electronic warfare (M7) ✅
 

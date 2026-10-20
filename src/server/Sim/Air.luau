@@ -11,7 +11,9 @@
 -- An aircraft whose ammo runs out flies to the nearest friendly rearm pad,
 -- lands when within reach and a pad slot is free, rearms round by round
 -- (paying ammoCost per round at the team's stall ratio, guide 8.6), then
--- takes off back to where it was going.
+-- takes off back to where it was going. Spent flares and chaff are restocked
+-- alongside the rounds: their refillSupply is spread evenly over the rounds,
+-- so they cost supply without lengthening the rearm (guide 11.6).
 
 local AirState = require("./AirState")
 local Defs = require("@shared/Defs/Defs")
@@ -239,6 +241,11 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				padLoad[pad] = (padLoad[pad] or 0) + 1
 				a.phase[id] = "rearm"
 				a.progress[id] = 0
+				local rounds = math.max((def(sim, id).ammo or 1) - a.ammo[id], 1)
+				local charges, supply = EW.missingCharges(sim, id)
+				a.cmPerRound[id] = charges / rounds
+				a.cmSupplyPerRound[id] = supply / rounds
+				a.cmProgress[id] = 0
 				if sim.nav then
 					Nav.clearOrder(sim.nav, w, id)
 				end
@@ -258,7 +265,7 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				continue
 			end
 			local cost = d.ammoCost or NO_COST
-			local cs, cp = cost.supply or 0, cost.power or 0
+			local cs, cp = (cost.supply or 0) + (a.cmSupplyPerRound[id] or 0), cost.power or 0
 			local rate = 1 / (d.rearmTime :: number) -- rounds per second at full economy
 			local team = w.team[id]
 			local acc = eco.accounts[team]
@@ -280,10 +287,20 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 					progress -= 1
 				end
 				a.progress[id] = math.max(progress, 0)
+				local perRound = a.cmPerRound[id] or 0
+				if perRound > 0 then
+					local cm = (a.cmProgress[id] or 0) + step * perRound
+					while cm >= 1 - 1e-9 and EW.addCharge(sim, id) do
+						cm -= 1
+					end
+					a.cmProgress[id] = math.max(cm, 0)
+				end
 			end
 			if a.ammo[id] >= (d.ammo :: number) then
-				-- full: take off and go back, flares and chaff restocked (guide 11.6)
+				-- full: take off and go back. The last fraction of a charge is
+				-- already paid, so top the countermeasures up.
 				EW.refill(sim, id)
+				a.cmPerRound[id], a.cmSupplyPerRound[id], a.cmProgress[id] = nil, nil, nil
 				a.phase[id] = "fly"
 				a.pad[id] = 0
 				a.progress[id] = 0

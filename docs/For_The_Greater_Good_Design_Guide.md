@@ -1007,8 +1007,8 @@ Defined per unit:
 
 ```lua
 countermeasures = {
-	flares = { charges = 4, chance = 0.55 },                   -- vs IR
-	chaff  = { charges = 4, chance = 0.50 },                   -- vs RADAR
+	flares = { charges = 4, chance = 0.55, refillSupply = 2 }, -- vs IR; supply per charge restocked
+	chaff  = { charges = 4, chance = 0.50, refillSupply = 3 }, -- vs RADAR
 	dircm  = { chance = 0.70, cooldown = 3.0, powerDrain = 15 }, -- vs IR, no charges
 }
 ```
@@ -1019,7 +1019,7 @@ countermeasures = {
 - Implementation (`Sim/EWState.luau`, DECISIONS D81):
   - Against IR, DIRCM rolls first (starting its cooldown either way), then flares. Chaff rolls against RADAR.
   - DIRCM drains power continuously and recharges at the team's power stall ratio.
-  - Flares and chaff refill when rearming finishes.
+  - Flares and chaff are restocked while rearming. Each charge costs its `refillSupply`, spread evenly over the rearm's rounds, so it adds supply cost (slowing the rearm only when supply stalls) without lengthening it.
   - Measured: DIRCM decoys 25 of 40 single IR missiles but only 14 of 80 in salvos of 4.
 
 **Faction flavor**

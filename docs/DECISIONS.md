@@ -743,7 +743,13 @@ The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/P
 - **Alternatives:** treating COMMAND like RADAR for jamming (the target's jam field).
 - **Why:** gives COMMAND its own counterplay (kill or jam the launcher) as the guide's table intends. No placeholder unit uses COMMAND yet; the tests use a test-only weapon.
 
-## D81 — Countermeasure rolls and DIRCM upkeep (2026-10-20, task 17)
+## D81 — Countermeasure rolls and DIRCM upkeep (2026-10-20, task 17; refill cost added by the user the same day)
+
+- **Revised (user answer):**
+  - DIRCM keeps starting its cooldown on failed attempts.
+  - Flare and chaff refills now cost supply: a per-charge `refillSupply` in the def (required). Placeholders: flares 2, chaff 3.
+  - At landing, the missing charges and their total cost are spread evenly over the rounds still to rearm. Each tick's rearm step pays `ammoCost.supply + refill cost per round` at the stall ratio, and restocks charges (flares first, then chaff) as its progress crosses whole charges.
+  - At full ammo any fraction left is topped up (already paid). The rearm takes no longer at full economy, and both slow together when supply stalls.
 
 - **Decision** (`Sim/EWState.luau` holds charges and cooldowns per unit; hashed):
   - **vs IR:** DIRCM first if its cooldown is 0. Engaging starts the cooldown whether or not the roll succeeds, so it handles at most one missile per cooldown. Then flares if charges remain (one charge per roll).

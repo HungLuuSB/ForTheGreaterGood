@@ -1,4 +1,5 @@
 --!strict
+local Air = require("../Sim/Air")
 local Combat = require("../Sim/Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local EW = require("../Sim/EW")
@@ -263,7 +264,12 @@ return function(t: RunAll.Context)
 		local defs = testDefs({
 			decoy_heli = {
 				from = "chs_wasp",
-				with = { countermeasures = { flares = { charges = 2, chance = 1 }, chaff = { charges = 2, chance = 1 } } },
+				with = {
+					countermeasures = {
+						flares = { charges = 2, chance = 1, refillSupply = 2 },
+						chaff = { charges = 2, chance = 1, refillSupply = 3 },
+					},
+				},
 			},
 		}, {})
 		local sim, heli, owner = targetRange(5, "neu_decoy_heli", defs)
@@ -288,6 +294,50 @@ return function(t: RunAll.Context)
 		EW.refill(sim, heli)
 		t.equal(e.flares[heli], 2, "rearming refills flares")
 		t.equal(e.chaff[heli], 2, "and chaff")
+	end)
+
+	t.test("rearming restocks flares and chaff for supply, spread over the rearm", function()
+		-- An empty Harpy lands on a Roost; team 2 has no income, so supply
+		-- stored minus spent only falls by what the rearm pays.
+		local function rearm(spent: boolean): (number, number, { number }, { number })
+			local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = MAP })
+			Spawn.unit(sim, "chs_airpad", 2, 0, 0)
+			local harpy = Spawn.unit(sim, "chs_harpy", 2, 40, 0)
+			hold(sim, { harpy })
+			if spent then
+				sim.ew.flares[harpy], sim.ew.chaff[harpy] = 1, 3
+			end
+			sim.air.ammo[harpy] = 0
+			Air.onEmpty(sim, harpy)
+			local acc = sim.eco.accounts[2].supply
+			local landed, done, before, after = nil, nil, 0, 0
+			local mid = {}
+			for _ = 1, 3000 do
+				Sim.step(sim)
+				local phase = sim.air.phase[harpy]
+				if phase == "rearm" and landed == nil then
+					landed, before = sim.tick, acc.stored - acc.spent
+				elseif phase == "rearm" and sim.tick - (landed :: number) == 60 then
+					mid = { sim.ew.flares[harpy], sim.ew.chaff[harpy] }
+				elseif phase == "fly" and landed ~= nil then
+					done, after = sim.tick, acc.stored - acc.spent
+					break
+				end
+			end
+			t.expect(landed ~= nil and done ~= nil, "landed and rearmed")
+			return (done :: number) - (landed :: number), before - after, mid, { sim.ew.flares[harpy], sim.ew.chaff[harpy] }
+		end
+		local harpy = Defs.load().units.chs_harpy
+		local fullTicks, fullCost, _, fullEnd = rearm(false)
+		local ticks, cost, mid, final = rearm(true)
+		local cm = harpy.countermeasures :: any
+		local expected = (cm.flares.charges - 1) * cm.flares.refillSupply + (cm.chaff.charges - 3) * cm.chaff.refillSupply
+		t.expect(math.abs(fullCost - harpy.ammo * harpy.ammoCost.supply) < 1e-6, `full charges: only the rounds are paid ({fullCost})`)
+		t.expect(math.abs((cost - fullCost) - expected) < 1e-6, `5 flares and 3 chaff cost {cost - fullCost} supply (expected {expected})`)
+		t.equal(ticks, fullTicks, "restocking doesn't lengthen the rearm")
+		t.expect(mid[1] > 1 and mid[1] + mid[2] < cm.flares.charges + cm.chaff.charges, `restocked gradually (at 4 s: {mid[1]} flares, {mid[2]} chaff)`)
+		t.deepEqual(final, { cm.flares.charges, cm.chaff.charges }, "full on take-off")
+		t.deepEqual(fullEnd, { cm.flares.charges, cm.chaff.charges })
 	end)
 
 	t.test("lock rules: IR ignores jamming, stealth shortens radar lock, IR needs sight", function()
@@ -331,8 +381,8 @@ return function(t: RunAll.Context)
 				from = "chs_wasp",
 				with = {
 					countermeasures = {
-						flares = { charges = 4, chance = 1 },
-						chaff = { charges = 4, chance = 1 },
+						flares = { charges = 4, chance = 1, refillSupply = 2 },
+						chaff = { charges = 4, chance = 1, refillSupply = 3 },
 						dircm = { chance = 1, cooldown = 1, powerDrain = 0 },
 					},
 				},

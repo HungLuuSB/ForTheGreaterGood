@@ -86,7 +86,7 @@ export type UnitDef = {
 	wreck: string?,
 }
 
-export type Charges = { charges: number, chance: number }
+export type Charges = { charges: number, chance: number, refillSupply: number } -- refillSupply: per charge restocked
 export type Dircm = { chance: number, cooldown: number, powerDrain: number }
 export type Countermeasures = { flares: Charges?, chaff: Charges?, dircm: Dircm? } -- guide 11.6
 
@@ -180,7 +180,7 @@ end
 
 local CHARGES: Spec = {
 	kind = "record",
-	fields = { charges = { kind = "integer", min = 0 }, chance = FRACTION },
+	fields = { charges = { kind = "integer", min = 0 }, chance = FRACTION, refillSupply = NON_NEGATIVE },
 }
 
 local UNIT_SPEC: Spec = {

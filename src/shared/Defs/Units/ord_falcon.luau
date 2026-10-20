@@ -21,7 +21,7 @@ return Templates.extend(Templates.Unit, {
 	ammo = 4,
 	ammoCost = { supply = 10, power = 150 },
 	rearmTime = 2,
-	countermeasures = { chaff = { charges = 2, chance = 0.5 }, dircm = { chance = 0.7, cooldown = 3, powerDrain = 15 } },
+	countermeasures = { chaff = { charges = 2, chance = 0.5, refillSupply = 3 }, dircm = { chance = 0.7, cooldown = 3, powerDrain = 15 } },
 	pieces = { "base", "pylon", "muzzle" },
 	model = "ord_falcon",
 	icon = "fighter",
