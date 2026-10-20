@@ -489,3 +489,13 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - The per-tick budget is re-measured: about 4,700 units/ms at the slowest map, so 8 ms ≈ 37,000 units. `Nav.PATHING_BUDGET` rounds down to 36,000.
 - **Alternatives:** integer 10/14 costs with exact Dial buckets (changes the field values); a radix heap.
 - **Why:** queue operations become O(1) with no change in output: integration is 3.9× faster on the open map. **Constraint for later:** terrain cost modifiers must keep the minimum step cost ≥ 1 (the bucket width), or the bucket width must shrink to match.
+
+## D54 — Report-only duel scenarios; no rebalance (2026-10-20, user-requested)
+
+- **Decision:** `.lune/report_duels.luau` prints outcomes with no pass/fail. Equal cost means equal supply: 13 Lancers (1,950) vs 15 Ravagers (1,950).
+  - **close:** lines 100 studs apart, so every pair is inside both guns' range.
+  - **kite:** open 256×256 map. Ravagers attack-move at the Lancers' centroid every 30 ticks. Every 10 ticks each Lancer keeps its nearest Ravager at 168–178 studs: back off below 168, close in above 178, otherwise stop and shoot.
+- **Results (5 seeds):**
+  - close: **Chaos wins 5/5** with 10 Ravagers left after 13 s, identical every seed because spread hardly matters at this range.
+  - kite: **Order wins 3/5** with 2 Lancers left after 89–125 s; **Chaos wins 2/5** with 10–13 Ravagers left after about 34 s, when the kite breaks down.
+- **Why no rebalance:** as instructed. Note that kiting quality depends on the scripted micro (band, re-command rate, turning tracked hulls around). A first version with a band of 170–185 parked Lancers just beyond their own 183.6-stud reach, and the fights stalled to timeout. That was a script bug, fixed before recording these numbers.
