@@ -1,10 +1,11 @@
 # Studio handoff
 
-Everything that needs Roblox Studio, in the order to do it. The headless simulation (M0–M7 sim side) was built and tested in Lune; nothing below has been done yet.
+Everything that needs Roblox Studio, in the order to do it. The headless simulation (M0–M7 sim side) was built and tested in Lune. Step 1 is done offline except its in-Studio run; nothing else below has been done yet.
 
-State at handoff (2026-10-20):
+State at handoff (2026-10-20, updated after round 4):
 - Branch `m0-foundations`.
-- `lune run test`: **27 specs, 182 passed**.
+- `lune run test`: **27 specs, 188 passed**.
+- `lune run build`: 143 scripts compile; 482 requires resolve to ModuleScripts.
 - `src/client` is empty.
 - No Roblox-only server code exists yet.
 
@@ -14,17 +15,22 @@ Read first: `CLAUDE.md` (Lune mode rules), `docs/PROGRESS.md` (what exists), `do
 
 ## 1. Toolchain and require conversion (blocks everything else)
 
-Roblox can't resolve `@shared/...` aliases or relative string requires yet (see CLAUDE.md). The plan is to keep the source as it is and convert at build time.
+Roblox can't resolve `@shared/...` aliases or relative string requires yet (see CLAUDE.md). The source keeps them, and a build step converts them (DECISIONS D84).
 
-- [ ] Add darklua to `rokit.toml` (pin an exact version, like rojo and lune).
-- [ ] Generate a sourcemap: `rojo sourcemap default.project.json -o sourcemap.json`. Gitignore it, or regenerate it in the build script.
-- [ ] Add `.darklua.json` with the `convert_require` rule:
-  - `current`: `{ name = "path", sources = { "@shared" = "src/shared" } }`, matching `.luaurc`;
-  - `target`: `{ name = "roblox", rojo_sourcemap = "sourcemap.json", indexing_style = "find_first_child" }` (or `wait_for_child` on the client).
-- [ ] Build step: `darklua process src build/src`. Add a second Rojo project (e.g. `build.project.json`) that maps the same tree from `build/src`, and serve that one. Gitignore `build/`.
-- [ ] Check the output: no `require("@` or `require("./` left in `build/`. Every `require` should resolve to an Instance path.
-- [ ] Keep `default.project.json` (the source tree) for the sourcemap and for editor tooling.
-- [ ] Update CLAUDE.md's "Working rules" with the build-and-serve commands.
+- [x] darklua 0.19.0 pinned in `rokit.toml`.
+- [x] `lune run build` regenerates `sourcemap.json` (gitignored) from `default.project.json`.
+- [x] `.darklua.json`'s `convert_require` rule:
+  - `current`: path mode with `sources = { "@shared" = "./src/shared" }`, matching `.luaurc`;
+  - `target`: roblox, using the Rojo sourcemap, `indexing_style = "find_first_child"`.
+- [x] `darklua process src build/src`, and `build.project.json` maps the same tree from `build/src`. `build/` is gitignored.
+- [x] `rojo build build.project.json -o build/place.rbxl`, then `lune run check_build` (`@lune/roblox`) checks the built place:
+  - every script compiles (`@lune/luau`);
+  - no string require is left (comments and strings are skipped);
+  - every require expression resolves to an existing ModuleScript.
+  - Verified to fail on an unconverted place (482 problems), a missing child, a require pointing at a Folder, and a syntax error.
+- [x] CLAUDE.md and the skill document the build and serve commands. Keep `default.project.json` as the source tree.
+- [ ] **In Studio:** run `darklua process src build/src --watch` and `rojo serve build.project.json`, connect the plugin, and confirm modules require each other at runtime (step 2's test entry does that for every spec).
+- [ ] If the client gets string requires, consider `indexing_style = "wait_for_child"` for client code (replication order); the server tree is fine with `find_first_child`.
 
 ## 2. Roblox-only server root and in-Studio tests
 

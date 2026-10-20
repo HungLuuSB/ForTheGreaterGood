@@ -814,3 +814,21 @@ The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/P
   - `Nav.terrainChanged` still drops every quadtree, so the first order after a structure is placed rebuilds one in its tick (10–17 ms on 256×256). An incremental quadtree update would fix this.
   - `Nav.extendField` (stalled units) still runs its route synchronously in Movement, rate-limited per order.
 - **Alternatives:** Hungarian or optimal assignment (not needed for the cost); deferring slot assignment too (units would wait for the plan job before they get goals).
+
+## D84 — Offline Roblox build: darklua `convert_require` and a place check (2026-10-20, user-requested)
+
+- **Decision:**
+  - darklua 0.19.0 is pinned via Rokit (the tool had to be trusted with `rokit trust seaofvoices/darklua`).
+  - `.darklua.json`: `convert_require` from path mode (`@shared` → `./src/shared`) to the roblox target with the Rojo sourcemap of `default.project.json` and `find_first_child` indexing. darklua's other rules are off, so code is otherwise unchanged.
+  - Output goes to `build/src`; `build.project.json` maps the same DataModel tree from there.
+  - `lune run build` runs sourcemap → darklua → `rojo build` → `lune run check_build`.
+  - **The checker** loads the place with `@lune/roblox` and, for every Script, LocalScript and ModuleScript:
+    - compiles the source with `@lune/luau`;
+    - lexes it (skipping comments and strings) to find `require(...)` calls;
+    - rejects string requires;
+    - walks each Instance path (`script` / `game:GetService`, `.Parent`, `:FindFirstChild`, `:WaitForChild`, `.Name`, `["Name"]`) through the place and requires a ModuleScript at the end.
+  - Result: 143 scripts, 482 requires, 0 problems.
+- **Alternatives:**
+  - A Roblox-side require shim (would break the "no `script`" rule in shared code).
+  - `wait_for_child` everywhere (unneeded on the server, where Rojo builds the tree before scripts run).
+- **Why:** the user's step 1 of STUDIO_HANDOFF, done without Studio. Only the in-Studio run remains.

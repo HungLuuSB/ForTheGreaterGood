@@ -46,8 +46,17 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
 - `.lune/` holds Lune-only scripts (test entry, tooling). They may use `@lune/*`.
   - `lune run bench`: flow field benchmark (results in `docs/PROGRESS.md`).
   - `lune run debug_map`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored).
+  - `lune run stress`: stress test and bandwidth report (results in `docs/PROGRESS.md`).
+  - `lune run build`: Roblox build (see below). `lune run check_build [place]` re-checks a built place.
 - `src/client` is Roblox-only and isn't covered by this rule.
-- Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). Plan: keep the require style above unchanged. When Studio is available, add a darklua build step whose `convert_require` rule rewrites `@shared/...` and relative requires into Instance paths using the Rojo sourcemap (`rojo sourcemap -o sourcemap.json`). Rojo then serves darklua's output instead of `src/`.
+- Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). So the source keeps the require style above, and a build step converts it (DECISIONS D84):
+  - `lune run build`:
+    1. `rojo sourcemap default.project.json -o sourcemap.json`;
+    2. `darklua process src build/src`. `.darklua.json`'s `convert_require` rule turns `@shared/...` and relative requires into `game:GetService(...)` / `script.Parent` paths with `FindFirstChild`;
+    3. `rojo build build.project.json -o build/place.rbxl`;
+    4. `lune run check_build` loads the place with `@lune/roblox` and checks that every script compiles and every require resolves to a ModuleScript.
+  - Tools are pinned in `rokit.toml` (darklua 0.19.0). `build/` and `sourcemap.json` are gitignored.
+  - Live sync to Studio: run `darklua process src build/src --watch` and `rojo serve build.project.json`, never `default.project.json`. `default.project.json` stays the source tree for the sourcemap and tooling.
 
 ## Current milestone
 

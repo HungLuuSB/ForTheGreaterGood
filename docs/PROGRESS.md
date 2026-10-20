@@ -380,6 +380,12 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 
     Repeated 800-unit runs give worst move-order ticks of 8.7–11.6 ms. The remaining max-tick peaks are Sensors (14–22 ms) and Movement (10–13 ms).
   - Tests: 27 specs, 188 passed.
+- **6. Offline Roblox build (D84, STUDIO_HANDOFF step 1):**
+  - darklua 0.19.0 via Rokit; `.darklua.json` (`convert_require` with the Rojo sourcemap); `build.project.json`;
+  - `lune run build` (sourcemap → darklua → `rojo build` → check) and `lune run check_build`.
+  - The built place: 143 scripts compile; 482 requires all resolve to ModuleScripts.
+  - The checker fails, as it should, on an unconverted place, a missing child, a Folder target and a syntax error (exit code 1).
+  - Only the in-Studio run (serve `build.project.json`, confirm runtime requires) remains.
 
 ### Task 17 — Electronic warfare (M7) ✅
 
