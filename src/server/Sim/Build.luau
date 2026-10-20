@@ -18,6 +18,7 @@
 
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
+local Air = require("./Air")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
@@ -383,6 +384,9 @@ function Build.step(sim: Types.Sim)
 			end
 		end
 	end
+
+	-- 3. aircraft landing on pads and rearming (also economy consumers)
+	Air.rearmStep(sim, demandS, demandP)
 
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]

@@ -39,6 +39,8 @@ export type Profile = {
 	need: number, -- required clearance
 	moveClass: string,
 	air: boolean,
+	jet: boolean, -- JET steering (Air.steerJet): minimum speed, no hovering
+	minSpeed: number?,
 	treeKey: string, -- "moveClass:need", precomputed so hot paths don't build strings
 }
 
@@ -92,6 +94,8 @@ function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 			need = Passability.requiredClearance(def.footprint),
 			moveClass = def.moveClass :: string,
 			air = def.domain == "air",
+			jet = def.moveClass == "JET",
+			minSpeed = m.minSpeed,
 			treeKey = `{def.moveClass}:{Passability.requiredClearance(def.footprint)}`,
 		}
 	end

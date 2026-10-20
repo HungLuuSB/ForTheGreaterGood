@@ -3,8 +3,14 @@
 --
 -- Exact ballistic step per tick, then a swept test of the tick's chord
 -- against unit cylinders (enemies only: direct hits never hit allies, guide
--- 10.6) and against the terrain. The earliest contact is the impact; an
+-- 10.6) and against the terrain. The test runs in each unit's frame of
+-- reference (the chord minus the unit's own motion this tick), so fast jets
+-- can't slip between ticks either. The earliest contact is the impact; an
 -- explosion applies direct and AoE damage. Projectiles expire after their ttl.
+--
+-- HOMING / TORPEDO projectiles turn toward their target's center at the
+-- weapon's turnRate (deg/s) before each step; guidance types, locks and
+-- countermeasures come with electronic warfare (guide 11.5, M7).
 
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
@@ -12,7 +18,28 @@ local ContactGrid = require("../Combat/ContactGrid")
 local Types = require("../Types")
 
 local DT = 1 / 15
-local sqrt = math.sqrt
+local sqrt, sin, cos = math.sqrt, math.sin, math.cos
+
+-- Turns velocity (vx, vy, vz) toward direction (dx, dy, dz) by at most
+-- maxAngle radians, keeping its speed.
+local function steer(vx: number, vy: number, vz: number, dx: number, dy: number, dz: number, maxAngle: number): (number, number, number)
+	local speed = sqrt(vx * vx + vy * vy + vz * vz)
+	local dl = sqrt(dx * dx + dy * dy + dz * dz)
+	if speed < 1e-9 or dl < 1e-9 then
+		return vx, vy, vz
+	end
+	local ax, ay, az = vx / speed, vy / speed, vz / speed
+	local bx, by, bz = dx / dl, dy / dl, dz / dl
+	local dot = math.clamp(ax * bx + ay * by + az * bz, -1, 1)
+	local angle = math.acos(dot)
+	local t = if angle <= maxAngle then 1 else maxAngle / angle
+	local nx, ny, nz = ax + (bx - ax) * t, ay + (by - ay) * t, az + (bz - az) * t
+	local nl = sqrt(nx * nx + ny * ny + nz * nz)
+	if nl < 1e-9 then
+		return vx, vy, vz
+	end
+	return nx / nl * speed, ny / nl * speed, nz / nl * speed
+end
 
 local candidates: { number } = {}
 
@@ -33,19 +60,30 @@ return function(sim: Types.Sim)
 		local weapon = weapons[c.pWeapon[id]]
 		local g = weapon.gravity or 0
 		local x0, y0, z0 = c.px[id], c.py[id], c.pz[id]
-		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, c.pvx[id], c.pvy[id], c.pvz[id], g, DT)
+		local pvx, pvy, pvz = c.pvx[id], c.pvy[id], c.pvz[id]
+		local homingTarget = c.pTarget[id]
+		if homingTarget ~= 0 and w.slot[homingTarget] ~= nil and weapon.turnRate then
+			local tp = profiles[w.defIndex[homingTarget]]
+			local ty = Combat.unitBase(c, w, homingTarget) + tp.height / 2
+			pvx, pvy, pvz = steer(pvx, pvy, pvz, w.posX[homingTarget] - x0, ty - y0, w.posZ[homingTarget] - z0, math.rad(weapon.turnRate) * DT)
+		end
+		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
 
 		-- earliest unit contact along the chord
 		local team = c.pTeam[id]
 		local mx, mz = (x0 + x1) / 2, (z0 + z1) / 2
 		local half = sqrt((x1 - x0) ^ 2 + (z1 - z0) ^ 2) / 2
-		local n = ContactGrid.query(c.contacts, w, mx, mz, half + c.maxRadius, team, candidates)
+		local n = ContactGrid.query(c.contacts, w, mx, mz, half + c.maxRadius + c.maxSpeedStep, team, candidates)
 		local bestT, bestUnit = math.huge, 0
 		for i = 1, n do
 			local u = candidates[i]
 			local p = profiles[w.defIndex[u]]
 			local base = Combat.unitBase(c, w, u)
-			local t = Ballistics.segmentCylinder(x0, y0, z0, x1, y1, z1, w.posX[u], w.posZ[u], p.radius, base, base + p.height)
+			-- in the unit's frame: where the unit was at the start of the tick
+			local h, v = w.heading[u], w.speed[u] * DT
+			local ux, uz = w.posX[u], w.posZ[u]
+			local sx, sz = ux - sin(h) * v, uz - cos(h) * v
+			local t = Ballistics.segmentCylinder(x0 - sx, y0, z0 - sz, x1 - ux, y1, z1 - uz, 0, 0, p.radius, base, base + p.height)
 			if t ~= nil and (t < bestT or (t == bestT and u < bestUnit)) then
 				bestT, bestUnit = t, u
 			end

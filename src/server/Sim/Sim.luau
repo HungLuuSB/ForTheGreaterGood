@@ -18,6 +18,7 @@ local Packer = require("@shared/Net/Packer")
 local Prng = require("@shared/Util/Prng")
 local Profiler = require("@shared/Util/Profiler")
 local Schema = require("@shared/Net/Schema")
+local AirState = require("./AirState")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
@@ -114,6 +115,7 @@ function Sim.new(config: Config): Sim
 		nav = if map then Nav.new(map, defs) else nil,
 		combat = Combat.new(defs, layers),
 		build = BuildState.new(),
+		air = AirState.new(),
 		sensors = SensorsState.new(if map then map.grid else nil, (function()
 			local teams = {}
 			for _, id in order do
@@ -184,6 +186,7 @@ function Sim.hash(sim: Sim): number
 	local ids = table.clone(sim.world.ids)
 	table.sort(ids)
 	h = BuildState.hash(sim.build, ids, h)
+	h = AirState.hash(sim.air, ids, h)
 	return SensorsState.hash(sim.sensors, h)
 end
 

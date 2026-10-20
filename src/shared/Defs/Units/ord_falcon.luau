@@ -1,0 +1,27 @@
+--!strict
+local Templates = require("../Templates")
+
+-- Placeholder (guide 13.3); stats to balance in M8.
+return Templates.extend(Templates.Unit, {
+	id = "ord_falcon",
+	name = "Falcon",
+	description = "Fighter. Intercepts aircraft with a few precise missiles.",
+	faction = "order",
+	tier = 1,
+	domain = "air",
+	categories = { "AIR", "JET" },
+	armorClass = "AIR",
+	moveClass = "JET",
+	footprint = 1,
+	cost = { supply = 160, power = 3200, buildTime = 6000 },
+	health = 520,
+	movement = { maxSpeed = 260, minSpeed = 140, accel = 90, brake = 70, turnRate = 75 },
+	sensors = { sight = 220, airSight = 420 },
+	weapons = { { def = "ord_aam", turretPiece = "pylon", muzzle = "muzzle" } },
+	ammo = 4,
+	ammoCost = { supply = 10, power = 150 },
+	rearmTime = 2,
+	pieces = { "base", "pylon", "muzzle" },
+	model = "ord_falcon",
+	icon = "fighter",
+})

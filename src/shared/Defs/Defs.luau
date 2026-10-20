@@ -54,7 +54,7 @@ export type UnitDef = {
 	health: number,
 	armorClass: string,
 	moveClass: string?,
-	movement: { maxSpeed: number, accel: number, brake: number, turnRate: number }?,
+	movement: { maxSpeed: number, minSpeed: number?, accel: number, brake: number, turnRate: number }?,
 	footprint: number,
 	sensors: {
 		sight: number,
@@ -75,6 +75,10 @@ export type UnitDef = {
 	extractor: { rate: number }?, -- supply per second per deposit value
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
+	ammo: number?, -- rounds carried (aircraft); nil = unlimited
+	ammoCost: { supply: number?, power: number? }?, -- per round rearmed
+	rearmTime: number?, -- seconds per round at full economy
+	rearmPads: number?, -- structures: aircraft rearmed at once
 	model: string,
 	pieces: { string },
 	script: string?,
@@ -194,7 +198,13 @@ local UNIT_SPEC: Spec = {
 		movement = {
 			kind = "record",
 			optional = true,
-			fields = { maxSpeed = POSITIVE, accel = POSITIVE, brake = POSITIVE, turnRate = POSITIVE },
+			fields = {
+				maxSpeed = POSITIVE,
+				minSpeed = opt(POSITIVE), -- jets: can't fly slower
+				accel = POSITIVE,
+				brake = POSITIVE,
+				turnRate = POSITIVE,
+			},
 		},
 		footprint = { kind = "integer", min = 1, max = 8 },
 		sensors = {
@@ -251,6 +261,15 @@ local UNIT_SPEC: Spec = {
 			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
 		},
 		placement = { kind = "string", optional = true, enum = set({ "land", "water", "either" }) },
+		-- aircraft ammo and rearming (guide 8.6, 12.2)
+		ammo = { kind = "integer", optional = true, min = 1 },
+		ammoCost = {
+			kind = "record",
+			optional = true,
+			fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) },
+		},
+		rearmTime = opt(POSITIVE), -- seconds per round at full economy
+		rearmPads = { kind = "integer", optional = true, min = 1 }, -- aircraft rearmed at once
 	},
 }
 
@@ -488,6 +507,15 @@ function Defs.validate(raw: RawDefs): { string }
 			end
 		end
 
+		if u.ammo ~= nil and u.rearmTime == nil then
+			report("rearmTime: units with ammo need rearmTime")
+		end
+		if u.rearmPads ~= nil and u.domain ~= "structure" then
+			report("rearmPads: only structures have rearm pads")
+		end
+		if type(u.movement) == "table" and u.movement.minSpeed ~= nil and u.movement.minSpeed > u.movement.maxSpeed then
+			report("movement.minSpeed: above maxSpeed")
+		end
 		if u.extractor ~= nil and u.domain ~= "structure" then
 			report("extractor: only structures can be extractors")
 		end

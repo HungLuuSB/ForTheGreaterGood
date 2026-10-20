@@ -71,7 +71,8 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 		return nil
 	end
 	local turret = weapon.turret
-	if turret and turret.arc < 360 and abs(wrapAngle(atan2(dx, dz) - w.heading[id])) > rad(turret.arc) / 2 then
+	local maneuvers = sim.defs.unitByIndex[w.defIndex[id]].moveClass == "JET" -- a jet turns to bring its guns to bear
+	if turret and turret.arc < 360 and not maneuvers and abs(wrapAngle(atan2(dx, dz) - w.heading[id])) > rad(turret.arc) / 2 then
 		return nil
 	end
 	return dist

@@ -536,6 +536,11 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - **JET:** minimum speed (can't stop), limited turn rate, circles when idle or attacking. Collision checks use the swept path each tick because jets move 15–25 studs per tick.
 - **HELI:** can hover, slower turns, separation steering against other helis.
 - Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly.
+- Implementation (`Sim/Air.luau`, DECISIONS D73–D74):
+  - Jets circle their goal at 220 studs when idle and chase or orbit their target when attacking.
+  - Helicopters hover at 35, jets cruise at 100; they climb at 40 studs/s.
+  - Projectiles test collisions in each target's frame, so fast jets can't tunnel.
+  - Empty aircraft fly to the nearest rearm pad, land, and rearm round by round at the team's stall ratio.
 
 ---
 

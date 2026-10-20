@@ -16,6 +16,7 @@
 --     projectile from the muzzle. If the pool is full the shot resolves like
 --     hitscan (guide 10.5 cap).
 
+local Air = require("../Air")
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
@@ -94,7 +95,8 @@ local function fire(
 			weapon.index,
 			id,
 			w.team[id],
-			ttl
+			ttl,
+			if wtype == "HOMING" or wtype == "TORPEDO" then target else 0
 		)
 		if projectile then
 			Combat.addEvent(c, { kind = "SPAWN_PROJ", tick = sim.tick, unit = id, other = projectile, slot = slot })
@@ -208,7 +210,7 @@ return function(sim: Types.Sim)
 
 			if canFire and reload <= 0 then
 				local tol = rad(if turret then turret.tolerance else 0)
-				if abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol then
+				if abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol and Air.useAmmo(sim, id) then
 					-- Fire along the turret's actual aim; keep fractional reload
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)

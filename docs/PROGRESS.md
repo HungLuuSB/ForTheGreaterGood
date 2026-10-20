@@ -307,6 +307,26 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 15 — Air (M6) ✅
+
+- `Sim/Air.luau`, `Sim/AirState.luau`:
+  - jet steering (min speed, turn rate, loiter circling, chase, map edge);
+  - altitude bands; ammo use; return to the nearest pad, landing, rearming through the economy, take-off and resume.
+- Integration:
+  - Movement has a jet branch, updates altitudes, and skips jets in overlap resolution.
+  - Projectiles do homing steering and test collisions in each target's frame.
+  - Targeting lets jets acquire outside their arc; Weapons spend ammo; Build runs rearming as a consumer; Spawn initializes aircraft.
+  - Nav profiles have `jet` and `minSpeed`.
+- Defs: Falcon and Harpy fighters, Guardian and Wasp helicopters, Aerie and Roost pads, missiles and rockets (D75).
+- `Air.spec`:
+  - a Falcon intercepts an incoming Wasp (killed at 22.9 s with 3 missiles, 3 hits), never drops below minimum speed, then circles its point (more than 2π of turning in 30 s);
+  - an empty Falcon goes fly → return → rearm (landed on the pad, LANDED) → fly with full ammo and back out;
+  - rearm takes 120 ticks at full economy versus more than 3× on a power stall;
+  - a helicopter hovers at 35;
+  - determinism.
+  - Mutation checks: removing the min-speed clamp, ignoring the stall in rearm, and never spending ammo each fail their test.
+- Tests: **25 specs, 169 passed**.
+
 ### Task 14 — Stress test and bandwidth report ✅
 
 - `Sim.enableTiming` (D72) and `.lune/stress.luau`. `lune run stress 900 200 400 600 800` writes `debug_out/stress.txt`.

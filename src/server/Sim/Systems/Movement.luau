@@ -21,6 +21,7 @@
 -- Idle units hold their spot: one pushed more than its radius from its goal
 -- (last move target, or spawn point) steers straight back to it.
 
+local Air = require("../Air")
 local FlowField = require("../Path/FlowField")
 local Nav = require("../Nav")
 local Quadtree = require("../Path/Quadtree")
@@ -132,6 +133,10 @@ return function(sim: Types.Sim)
 		local p = prof[k]
 		if p == nil then
 			continue -- immobile
+		end
+		if p.jet then
+			nheading[k], nspeed[k] = Air.steerJet(sim, id, p, nx[k], nz[k], nheading[k], nspeed[k])
+			continue
 		end
 		local x, z = nx[k], nz[k]
 		local gx, gz = w.goalX[id], w.goalZ[id]
@@ -311,7 +316,7 @@ return function(sim: Types.Sim)
 					local j = bucketHead[oz * bw + ox]
 					while j ~= nil and j ~= 0 do
 						local q = prof[j]
-						if j > k and q ~= nil and q.air == p.air then
+						if j > k and q ~= nil and q.air == p.air and not p.jet and not q.jet then
 							local ex, ez = nx[k] - nx[j], nz[k] - nz[j]
 							local d2 = ex * ex + ez * ez
 							local minD = p.radius + q.radius
@@ -358,5 +363,9 @@ return function(sim: Types.Sim)
 			World.setHeading(w, id, nheading[k])
 		end
 		speed[id] = nspeed[k]
+		local p = prof[k]
+		if p and p.air then
+			Air.updateAltitude(sim, id)
+		end
 	end
 end

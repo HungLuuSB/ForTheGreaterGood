@@ -678,3 +678,40 @@ Decisions made while working unattended. Each entry gives the date, the decision
     - each player's camera is 40×30 cells over the middle;
     - reports average and peak ms per system against guide 18.1, and KB/s per player per channel against 7.6.
 - **Why:** guide 17.5. **Numbers are from Lune on a desktop PC; repeat on a live server** (guide 17.5, STUDIO_HANDOFF).
+
+## D73 — Aircraft flight model (2026-10-20, task 15)
+
+- **Decision:**
+  - **Jets** (`Air.steerJet`):
+    - speed is clamped to [`movement.minSpeed`, `maxSpeed`] and heading turns at `turnRate`;
+    - with no order they circle their goal clockwise at `LOITER_RADIUS = 220` studs (tangent plus radial correction), at 75% speed;
+    - with a weapon target they chase its known position at full speed, overshoot and come around, which makes them circle the target;
+    - a move order flies to the goal and switches to circling within the loiter radius;
+    - near the map edge they turn back toward the center.
+  - **Helicopters** use the normal ground steering without terrain collision, so they hover.
+  - **Altitude bands** above ground: JET 100, HELI 35. Aircraft climb and descend at 40 studs/s and sit at 0 on a pad.
+  - **Jets don't push each other** (no overlap resolution); helicopters separate like ground units.
+  - **Jet targeting** ignores the firing arc (the jet turns to bring the target into it); firing still needs the arc.
+  - **Swept collision:** projectile chords are tested in each unit's frame (the chord minus the unit's motion this tick), so fast jets can't slip between ticks.
+  - **HOMING / TORPEDO** projectiles turn toward the target center at the weapon's `turnRate`. Lock rules and countermeasures come in task 17.
+- **Alternatives:** a full 3-D flight model with banking and energy.
+- **Why:** guide 6.7 at the level the sim needs. A 260 stud/s jet turning 75°/s has a turn radius of about 200 studs, hence the 220-stud loiter.
+
+## D74 — Ammo, rearm pads, rearming through the economy (2026-10-20, task 15)
+
+- **Decision:**
+  - Units with `ammo` spend one round per shot and can't fire at 0.
+  - At 0 they remember their goal, fly to the nearest friendly complete structure with `rearmPads`, and land when within reach (60 studs for jets, 12 for helicopters) and a pad slot is free. Landing snaps them onto the pad, sets speed and altitude to 0 and sets the LANDED state.
+  - Rearming runs in the Construction system as an economy consumer: `1 / rearmTime` rounds per second × the effective stall ratio, paying `ammoCost` per round within the window allowance, and adding to demand.
+  - When full they take off at minimum speed and fly back to the remembered goal. If the pad is destroyed, they look for another one.
+- **Alternatives:** instant rearm; rearm costs paid upfront.
+- **Why:** guide 8.6 and 12.2. Measured: a Falcon rearms 4 rounds in exactly 120 ticks (8 s) at full economy, and more than 3× longer on a 20-power-per-second stall.
+
+## D75 — Placeholder aircraft and pads (2026-10-20, task 15)
+
+- **Decision (guide 13.3):**
+  - Fighters: `ord_falcon` "Falcon" (260/140 speed, 4 × `ord_aam`) and `chs_harpy` "Harpy" (6 × `chs_aam`, cheaper and less agile).
+  - Attack helicopters: `ord_guardian` "Guardian" and `chs_wasp` "Wasp", with rockets against ground targets.
+  - Rearm pads: `ord_airpad` "Aerie" and `chs_airpad` "Roost", footprint 3, 1 pad each (pad names are placeholders).
+  - New def fields: `movement.minSpeed`, `ammo`, `ammoCost`, `rearmTime`, `rearmPads`.
+- **Why:** needed for the air tests. Balance is M8.

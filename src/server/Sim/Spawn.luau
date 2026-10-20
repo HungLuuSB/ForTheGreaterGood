@@ -2,6 +2,7 @@
 -- Spawning units from defs: the one place that turns a def into World fields
 -- (health, weapon slots). Used by scenarios, tests and (later) construction.
 
+local Air = require("./Air")
 local Lifecycle = require("./Lifecycle")
 local Placement = require("./Placement")
 local Types = require("./Types")
@@ -39,6 +40,7 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 	if def.domain == "structure" then
 		Placement.occupy(sim, id)
 	end
+	Air.onSpawn(sim, id)
 	Lifecycle.added(sim, id)
 	return id
 end

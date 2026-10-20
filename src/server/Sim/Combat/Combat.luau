@@ -51,6 +51,7 @@ export type Event = {
 export type Combat = {
 	profiles: { [number]: UnitProfile }, -- by unit def index
 	maxRadius: number, -- largest collision radius of any def
+	maxSpeedStep: number, -- farthest any unit moves in one tick (studs), for swept queries
 	layers: Layers.Layers?,
 	grid: Grid.Grid?,
 	contacts: ContactGrid.ContactGrid,
@@ -70,6 +71,7 @@ export type Combat = {
 	pOwner: { [number]: number },
 	pTeam: { [number]: number },
 	pTtl: { [number]: number }, -- seconds left
+	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
 	nextProjId: number,
 	freeProj: { number }, -- FIFO of freed IDs
 	freeHead: number,
@@ -95,6 +97,7 @@ export type Combat = {
 function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 	local profiles = {}
 	local maxRadius = 0
+	local maxSpeed = 0
 	for index, def in defs.unitByIndex do
 		local weapons = {}
 		for slot, ws in def.weapons do
@@ -103,6 +106,9 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		local height = Combat.UNIT_HEIGHT * def.footprint
 		local radius = def.footprint * Combat.RADIUS_PER_FOOTPRINT
 		maxRadius = math.max(maxRadius, radius)
+		if def.movement then
+			maxSpeed = math.max(maxSpeed, def.movement.maxSpeed)
+		end
 		profiles[index] = {
 			radius = radius,
 			height = height,
@@ -117,6 +123,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 	return {
 		profiles = profiles,
 		maxRadius = maxRadius,
+		maxSpeedStep = maxSpeed / 15,
 		layers = layers,
 		grid = grid,
 		contacts = ContactGrid.new(grid),
@@ -134,6 +141,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pOwner = {},
 		pTeam = {},
 		pTtl = {},
+		pTarget = {},
 		nextProjId = 1,
 		freeProj = {},
 		freeHead = 1,
@@ -263,7 +271,8 @@ function Combat.spawnProjectile(
 	weaponIndex: number,
 	owner: number,
 	team: number,
-	ttl: number
+	ttl: number,
+	target: number?
 ): number?
 	local id = allocProjectile(c)
 	if id == nil then
@@ -277,6 +286,7 @@ function Combat.spawnProjectile(
 	c.pOwner[id] = owner
 	c.pTeam[id] = team
 	c.pTtl[id] = ttl
+	c.pTarget[id] = target or 0
 	return id
 end
 
@@ -289,7 +299,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.projSlot[id] = nil
 	c.px[id], c.py[id], c.pz[id] = nil, nil, nil
 	c.pvx[id], c.pvy[id], c.pvz[id] = nil, nil, nil
-	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id] = nil, nil, nil, nil
+	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id] = nil, nil, nil, nil, nil
 	c.freeProj[c.freeTail] = id
 	c.freeTail += 1
 end
@@ -336,6 +346,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pWeapon[id])
 		h = Hash.u32(h, c.pOwner[id])
 		h = Hash.number(h, c.pTtl[id])
+		h = Hash.u32(h, c.pTarget[id])
 	end
 	h = Hash.u32(h, c.nextProjId)
 	h = Hash.u32(h, #c.wreckIds)

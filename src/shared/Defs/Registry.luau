@@ -5,17 +5,23 @@
 
 return {
 	units = {
+		chs_airpad = require("./Units/chs_airpad"),
 		chs_extractor = require("./Units/chs_extractor"),
 		chs_hellmouth = require("./Units/chs_hellmouth"),
 		chs_generator = require("./Units/chs_generator"),
+		chs_harpy = require("./Units/chs_harpy"),
 		chs_ravager = require("./Units/chs_ravager"),
 		chs_scrapper = require("./Units/chs_scrapper"),
 		chs_shroud = require("./Units/chs_shroud"),
 		chs_vehplant = require("./Units/chs_vehplant"),
 		chs_warlord = require("./Units/chs_warlord"),
+		chs_wasp = require("./Units/chs_wasp"),
 		chs_watcher = require("./Units/chs_watcher"),
+		ord_airpad = require("./Units/ord_airpad"),
 		ord_extractor = require("./Units/ord_extractor"),
+		ord_falcon = require("./Units/ord_falcon"),
 		ord_generator = require("./Units/ord_generator"),
+		ord_guardian = require("./Units/ord_guardian"),
 		ord_lancer = require("./Units/ord_lancer"),
 		ord_mason = require("./Units/ord_mason"),
 		ord_oracle = require("./Units/ord_oracle"),
@@ -25,9 +31,13 @@ return {
 		ord_verdict = require("./Units/ord_verdict"),
 	},
 	weapons = {
+		chs_aam = require("./Weapons/chs_aam"),
 		chs_light_cannon = require("./Weapons/chs_light_cannon"),
 		chs_mortar = require("./Weapons/chs_mortar"),
+		chs_rockets = require("./Weapons/chs_rockets"),
+		ord_aam = require("./Weapons/ord_aam"),
 		ord_howitzer = require("./Weapons/ord_howitzer"),
 		ord_light_cannon = require("./Weapons/ord_light_cannon"),
+		ord_rockets = require("./Weapons/ord_rockets"),
 	},
 }

@@ -2,6 +2,7 @@
 -- Shared types for the server simulation. Types only: systems require this
 -- instead of Sim.luau, which would be a require cycle.
 
+local AirState = require("./AirState")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
@@ -36,6 +37,7 @@ export type Sim = {
 	combat: Combat.Combat, -- projectiles, damage queue, wrecks, this tick's events
 	eco: Economy.Economy, -- team accounts
 	build: BuildState.BuildState, -- construction orders, factory queues, reclaim
+	air: AirState.AirState, -- aircraft ammo and rearming
 	sensors: SensorsState.State, -- sensor maps, visibility, ghosts
 	net: NetState.NetState, -- per-player replication (not hashed)
 	players: { [number]: Player },
