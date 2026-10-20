@@ -17,6 +17,16 @@ local PROFILES = {
 		-- Start a new match (next seed) this long after one side is gone.
 		restartAfter = 6, -- seconds
 	},
+	-- your Command Vehicle on a start map with deposits: for trying the build ghost (B)
+	build = {
+		seed = 2,
+		mapId = "start:48",
+		scenario = "standard_start",
+		players = { { id = 1, team = 1 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,

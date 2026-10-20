@@ -20,6 +20,8 @@ export type Intent = {
 	x2: number?, -- line end (LINE flag)
 	z2: number?,
 	value: number?, -- state commands
+	defIndex: number?, -- BUILD: what to build at (x, z)
+	facing: number?, -- BUILD: 0..3
 }
 
 Orders.KIND = table.freeze({
@@ -66,6 +68,10 @@ function Orders.encode(world: World.World, intent: Intent, ids: { number }): { b
 		}
 		if intent.targetId then
 			cmd.targetId = intent.targetId
+		elseif intent.defIndex then
+			cmd.defIndex = intent.defIndex
+			cmd.cell, cmd.offX, cmd.offZ = g:encode(intent.x :: number, intent.z :: number)
+			cmd.facing = intent.facing or 0
 		elseif intent.x then
 			cmd.cell, cmd.offX, cmd.offZ = g:encode(intent.x, intent.z :: number)
 			if intent.x2 then

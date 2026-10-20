@@ -21,6 +21,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-11 | Order lines mirror the server's line-slot layout and greedy assignment (display only) |
 | C-12 | The client joins with protocol 6's HELLO / WELCOME; C-9's attributes are gone |
 | C-13 | Default controls: box / click / double-click select, smart right-click, right-drag line, Shift queue, Ctrl+1..9 groups, X stop |
+| C-14 | The build ghost runs the server's placement rules on the client's knowledge, cell by cell in the server's order |
+| C-15 | When Studio isn't available, `lune run client_demo` renders the real client's view headless (labelled as such) |
 
 ---
 
@@ -125,3 +127,17 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Alternatives:** BAR's S for stop (S pans the camera here); raycast picking (needs `CanQuery` on every unit part).
 
 **Why:** familiar RTS defaults; listed under "Needs my review" because they're a feel decision.
+
+### C-14 — Client placement check (2026-10-21)
+
+**Decision:** `Core/Placement.check` applies `Sim/Placement.check`'s rules to the client World: the same snapping, bounds, slope (from `Passability.build` on the WELCOME map's layers) and water depth by placement type, the extractor deposit rule and upgrade rule, occupied cells (known structures; strategic ghosts block their cell) and ground units in the way (known units). It walks the footprint cell by cell like the server (bounds, occupant, terrain), so the reason matches too. It uses only what the client knows, like the server's planning check (D101); the server re-checks when the builder starts the frame. The constants (`LAND_MAX_SLOPE`, `WATER_MIN_DEPTH`, the unit radius) are copies until shared (request 4).
+
+**Alternatives:** no client check, only the server's verdict (the ghost couldn't turn red before a click); ask the server per hover (latency, bandwidth).
+
+**Why:** `Placement.spec` compares 750 random spots (five defs, hills, lakes, structures, deposits) with the server's planning check: all agree, reasons included.
+
+### C-15 — Headless client demos when Studio is away (2026-10-21)
+
+**Decision:** `lune run client_demo <name> <out.txt>` runs the real Sim and the real client modules (World, NetIn, Api) in Lune, scripts a scene through the same API the input layer calls, and writes the client's view (units, selection, order lines, the build ghost) in the scene-dump format; `lune run render_scene` draws it. Images from it are named and labelled as headless, not as playtests.
+
+**Why:** Studio closed its place during the night run, and per the rules it isn't repaired from here. The demos still exercise the real client logic end to end; the Roblox-only layer (Instances, input events) waits for a playtest.

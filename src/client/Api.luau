@@ -5,6 +5,7 @@
 -- (C-7): `send` is injected (the Cmd remote in Roblox, a Sim in tests).
 
 local Orders = require("./Core/Orders")
+local Placement = require("./Core/Placement")
 local Schema = require("@shared/Net/Schema")
 local Selection = require("./Core/Selection")
 local Signal = require("./Core/Signal")
@@ -14,6 +15,18 @@ local World = require("./Core/World")
 local Api = {}
 
 local CT = Schema.CmdType
+
+-- The build ghost (guide 15.6): what, where (snapped), facing, and whether
+-- the client's check passes (the server re-checks).
+export type PlacementState = {
+	defId: string,
+	defIndex: number,
+	x: number,
+	z: number,
+	facing: number, -- 0..3 = 0/90/180/270 degrees
+	valid: boolean,
+	reason: string?,
+}
 
 export type Res = { stored: number, storage: number, income: number, demand: number, ratio: number }
 
@@ -25,7 +38,7 @@ export type State = {
 	groups: { [number]: { number } },
 	camera: { x: number, z: number, zoom: number, strategic: boolean, rect: { number } },
 	hover: { unit: number?, x: number, z: number }?,
-	placement: any?, -- client task 6
+	placement: PlacementState?,
 	economy: { supply: Res, power: Res, wind: number }?,
 	alerts: { any },
 }
@@ -36,6 +49,7 @@ export type Api = {
 		selection: Signal.Signal<{ number }>,
 		economy: Signal.Signal<any>,
 		focus: Signal.Signal<{ number }>, -- camera jump requests { x, z }
+		placement: Signal.Signal<PlacementState?>,
 		orders: Signal.Signal<Orders.Intent>, -- every order sent (markers)
 	},
 	actions: { [string]: any },
@@ -160,6 +174,114 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return true
 	end
 
+	-- Selected own units that can build `defId` (its id is in their buildOptions).
+	local function buildersOf(defId: string): { number }
+		local out = {}
+		for _, id in sel.ids do
+			local u = world.units[id]
+			local def = u and World.def(world, u)
+			if def and def.buildOptions and table.find(def.buildOptions, defId) then
+				table.insert(out, id)
+			end
+		end
+		return out
+	end
+
+	local function defOf(defId: string): any
+		for _, def in world.defs.unitByIndex do
+			if def.id == defId then
+				return def
+			end
+		end
+		return nil
+	end
+
+	function actions.beginPlacement(defId: string)
+		local def = defOf(defId)
+		if def == nil or def.domain ~= "structure" then
+			return false, "not a structure"
+		end
+		if #buildersOf(defId) == 0 then
+			return false, "no selected builder can build it"
+		end
+		local facing = if state.placement then state.placement.facing else 0
+		state.placement = { defId = defId, defIndex = def.index, x = state.camera.x, z = state.camera.z, facing = facing, valid = false, reason = nil }
+		api.changed.placement:Fire(state.placement)
+		return true
+	end
+
+	function actions.rotatePlacement()
+		local p = state.placement
+		if p == nil then
+			return false, "not placing"
+		end
+		p.facing = (p.facing + 1) % 4
+		return true
+	end
+
+	function actions.cancelPlacement()
+		if state.placement == nil then
+			return false, "not placing"
+		end
+		state.placement = nil
+		api.changed.placement:Fire(nil)
+		return true
+	end
+
+	-- Moves the ghost to (x, z): snaps and checks it.
+	function actions.updatePlacement(x: number, z: number)
+		local p = state.placement
+		if p == nil then
+			return false, "not placing"
+		end
+		local r = Placement.check(world, world.defs.unitByIndex[p.defIndex], x, z)
+		p.x, p.z, p.valid, p.reason = r.x, r.z, r.ok, r.reason
+		return r.ok, r.reason
+	end
+
+	-- Places the ghost at (x, z): a BUILD to the selected builders. Placing
+	-- ends unless `keep` (Shift places several); `queue` appends the build.
+	function actions.place(x: number, z: number, queue: boolean?, keep: boolean?)
+		local p = state.placement
+		if p == nil then
+			return false, "not placing"
+		end
+		local ok, why = actions.updatePlacement(x, z)
+		if not ok then
+			return false, why
+		end
+		local sent, reason = issue({ cmdType = CT.BUILD, queue = queue == true, x = p.x, z = p.z, defIndex = p.defIndex, facing = p.facing }, buildersOf(p.defId))
+		if sent and not keep then
+			actions.cancelPlacement()
+		end
+		return sent, reason
+	end
+
+	-- A row of the ghost's structure dragged from (x1, z1) to (x2, z2): one
+	-- BUILD per valid spot, queued after the first (guide 15.6).
+	function actions.placeRow(x1: number, z1: number, x2: number, z2: number, queue: boolean?, keep: boolean?)
+		local p = state.placement
+		if p == nil then
+			return false, "not placing"
+		end
+		local def = world.defs.unitByIndex[p.defIndex]
+		local builders = buildersOf(p.defId)
+		local placed = 0
+		for _, spot in Placement.row(world, def, x1, z1, x2, z2) do
+			local r = Placement.check(world, def, spot[1], spot[2])
+			if r.ok then
+				local sent = issue({ cmdType = CT.BUILD, queue = queue == true or placed > 0, x = r.x, z = r.z, defIndex = p.defIndex, facing = p.facing }, builders)
+				if sent then
+					placed += 1
+				end
+			end
+		end
+		if placed > 0 and not keep then
+			actions.cancelPlacement()
+		end
+		return placed > 0, if placed == 0 then "no valid spot" else nil
+	end
+
 	api = {
 		state = state,
 		changed = {
@@ -167,6 +289,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			economy = Signal.new(),
 			focus = Signal.new(),
 			orders = Signal.new(),
+			placement = Signal.new(),
 		},
 		actions = actions,
 		world = world,
