@@ -18,25 +18,19 @@
 local fs = require("@lune/fs")
 local process = require("@lune/process")
 
-local Packer = require("../src/shared/Net/Packer")
-local Schema = require("../src/shared/Net/Schema")
 local Defs = require("../src/shared/Defs/Defs")
 local Categories = require("../src/shared/Defs/Categories")
 local Sim = require("../src/server/Sim/Sim")
-local Spawn = require("../src/server/Sim/Spawn")
+local Scenes = require("../src/server/Tests/Support/Scenes")
 
 local SEEDS = tonumber(process.args[1]) or 1
 local FILTER = process.args[2]
-local BUDGET = 3000
-local MAX_TICKS = 1800 -- 2 minutes
-local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
-local CT = Schema.CmdType
+local BUDGET = Scenes.BUDGET
+local MAX_TICKS = Scenes.MATCHUP_TICKS -- 2 minutes
 
 local defs = Defs.load()
 
-local function value(d: Defs.UnitDef): number
-	return d.cost.supply + d.cost.power / 10
-end
+local value = Scenes.value
 
 local BIT = Categories.Bit
 local function isCombat(d: Defs.UnitDef): boolean
@@ -65,51 +59,20 @@ end
 table.sort(order)
 table.sort(chaos)
 
-local function submit(sim: Sim.Sim, player: number, cmd: Schema.Command)
-	local w = Packer.Writer.new()
-	Schema.encodeCommand(w, cmd)
-	assert(Sim.submit(sim, player, w:finish()))
-end
-
--- Where each side stands (x of its group centre) for a pair on `mapId`.
-local SHORE = -512 -- sea:256: land west of x = -512
-local function layout(a: Defs.UnitDef, b: Defs.UnitDef, gap: number): (string, number, number)
-	local naval = a.domain == "naval" or b.domain == "naval"
-	if not naval then
-		return "flat:128", -gap / 2, gap / 2
-	end
-	if a.domain == "naval" and b.domain == "naval" then
-		return "sea:256", -gap / 2, gap / 2
-	end
-	-- a ship against a land / air unit: the land side on the beach, the ship offshore
-	if a.domain == "naval" then
-		return "sea:256", SHORE + 60 + gap, SHORE - 40
-	end
-	return "sea:256", SHORE - 40, SHORE + 60 + gap
-end
-
-local function spawnGroup(sim: Sim.Sim, d: Defs.UnitDef, owner: number, cx: number, facing: number): ({ number }, number)
-	local count = math.clamp(math.floor(BUDGET / value(d) + 0.5), 1, 20)
-	local spacing = 8 * d.footprint + 6
-	local ids = {}
-	for i = 0, count - 1 do
-		local row, col = i // 5, i % 5
-		local x = cx + (if facing > 0 then -1 else 1) * row * spacing
-		table.insert(ids, Spawn.unit(sim, d.id, owner, x, (col - 2) * spacing, facing))
-	end
-	return ids, count * value(d)
-end
-
 type Outcome = { trade: number, lostA: number, lostB: number, winner: string, ticks: number }
 
+-- One fight, set up and driven exactly like `lune run export matchup:...`
+-- (Support/Scenes), so the viewer shows the same battle.
 local function battle(aId: string, bId: string, kind: string, seed: number): Outcome
 	local a, b = defs.units[aId], defs.units[bId]
-	local gap = if kind == "close" then 120 else 600
-	local mapId, xa, xb = layout(a, b, gap)
-	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = mapId })
+	local scene = Scenes.matchup(aId, bId, kind, seed)
+	local sim = scene.sim
 	local w = sim.world
-	local idsA = spawnGroup(sim, a, 1, xa, math.pi / 2)
-	local idsB = spawnGroup(sim, b, 2, xb, -math.pi / 2)
+	local sides = scene.sides :: { { number } }
+	while sim.tick < MAX_TICKS and not scene.done(sim) do
+		scene.drive(sim)
+		Sim.step(sim)
+	end
 	local function lost(ids: { number }, d: Defs.UnitDef): number
 		local v = 0
 		for _, id in ids do
@@ -118,37 +81,17 @@ local function battle(aId: string, bId: string, kind: string, seed: number): Out
 		end
 		return v
 	end
-	local function alive(ids: { number }): { number }
-		local out = {}
+	local function alive(ids: { number }): number
+		local n = 0
 		for _, id in ids do
 			if w.slot[id] then
-				table.insert(out, id)
+				n += 1
 			end
 		end
-		return out
+		return n
 	end
-	local g = (sim.map :: any).grid
-	while sim.tick < MAX_TICKS do
-		local la, lb = alive(idsA), alive(idsB)
-		if #la == 0 or #lb == 0 then
-			break
-		end
-		if sim.tick % 30 == 0 then
-			for side = 1, 2 do
-				local mine, theirs = if side == 1 then la else lb, if side == 1 then lb else la
-				local cx, cz = 0, 0
-				for _, id in theirs do
-					cx += w.posX[id] / #theirs
-					cz += w.posZ[id] / #theirs
-				end
-				local cell, ox, oz = g:encode(cx, cz)
-				submit(sim, side, { cmdType = CT.FIGHT, flags = 0, unitIds = mine, cell = cell, offX = ox, offZ = oz })
-			end
-		end
-		Sim.step(sim)
-	end
-	local lostA, lostB = lost(idsA, a), lost(idsB, b)
-	local la, lb = #alive(idsA), #alive(idsB)
+	local lostA, lostB = lost(sides[1], a), lost(sides[2], b)
+	local la, lb = alive(sides[1]), alive(sides[2])
 	local winner = if la > 0 and lb == 0 then "O" elseif lb > 0 and la == 0 then "C" else "-"
 	return { trade = if lostA > 0 then lostB / lostA else math.huge, lostA = lostA, lostB = lostB, winner = winner, ticks = sim.tick }
 end

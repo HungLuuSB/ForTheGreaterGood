@@ -1017,3 +1017,23 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - Another team's extractor, or one of the same rate, still counts as "occupied".
 - Wind turbines and converters are in every T1 economy build list.
 - **Alternatives:** a seeded random walk for wind (would need state or `sim.rng` draws); converters with a player-set energy threshold (BAR's slider) instead of a fixed 50%.
+
+## D93 — Match export for the viewer (2026-10-20, user-requested)
+
+- **Decision:**
+  - `lune run export <scene> [--player N] [--seed S] [--map M] [--ticks T] [--every K] [--out file]` writes `debug_out/match_<scene>_<view>.json`.
+  - The core lives in pure Luau under `src/server/Tests/Support` (tests use it in both runtimes):
+    - `Scenes`: sim setups with their command drivers: `ai`, `matchup:<a>:<b>[:close|long]` (the balance report's fight, which `lune run balance` now uses too), or any Sim scenario with an attack-move driver;
+    - `MatchExport`: records frames;
+    - `Json`: deterministic encoder (sorted keys), plus a decoder for tests.
+  - **Views:**
+    - spectator: the server's truth every frame: units, projectiles, combat events;
+    - player: the headless client (`Support/Client`) decodes that player's real NetOut packets with a whole-map camera. The frame holds tactical units, strategic records (radar and sonar blips at their wobbled positions, ghosts) and the ally team's sight map as a 1-bit-per-sensor-cell fog bitmap (base64). Projectiles and events aren't on the wire yet (D82), so the player view has none.
+  - **Format "ftgg-match" v1:** see the `MatchExport` header. Positions to 0.1 stud; one frame every 3 ticks by default. The 8-minute AI match is 4 MB as spectator and 5.8 MB as a player view, recorded in about 2 s.
+- **Tests** (`Export.spec`):
+  - JSON round trip and formatting; base64 vectors;
+  - spectator frames equal the sim's units and projectiles at capture; map arrays, row shapes, bounds, events; an exact JSON round trip;
+  - player view (radar matchup): tactical units are allied or VISIBLE, strategic records only ever-known units, radar blips present, fog equals the sight map, no projectiles;
+  - determinism;
+  - mutation caught: leaking units the client never received.
+- **Alternatives:** a binary format (smaller, but needs a decoder in the page); recording the replay and re-simulating in the browser (would need the sim in JS).
