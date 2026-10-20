@@ -12,3 +12,6 @@ sourcemap.json
 # OS and editor clutter
 .DS_Store
 Thumbs.db
+
+# Debug output (images, logs) from Lune scripts
+/debug_out/

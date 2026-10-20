@@ -4,7 +4,7 @@
 **Platform:** Roblox (Luau), PC-first
 **Modes:** Team (2v2 – 4v4) and Free-For-All (up to 8 players)
 **Factions:** Order / Chaos
-**Document version:** 0.1 — living document; update it whenever a decision changes.
+**Document version:** 0.6 — living document; update it whenever a decision changes.
 
 > **Naming note.** "For The Greater Good" plus *Order* and *Chaos* will remind many players of Warhammer 40K / Age of Sigmar. The words themselves are generic, but before committing, search Roblox for existing experiences with the same name and keep the visual identity clearly your own.
 
@@ -114,66 +114,90 @@ Optional tooltip designation for flavor: `ORD-T2 Paladin` / `CHS-T2 Juggernaut`.
 
 ### 3.2 Project structure
 
+File extension is `.luau` everywhere. Rojo maps `Name.luau` to a ModuleScript, `Name.server.luau` to a Script and `Name.client.luau` to a LocalScript.
+
 ```
 ReplicatedStorage/
   Shared/
     Defs/
-      Units/          ord_*.lua, chs_*.lua, neu_*.lua   (one ModuleScript per unit)
-      Weapons/        one ModuleScript per weapon
-      MoveClasses.lua
-      ArmorClasses.lua
-      Categories.lua
-      Defs.lua        loader + validation + inheritance helpers
+      Units/            ord_*.luau, chs_*.luau, neu_*.luau   (one ModuleScript per unit)
+      Weapons/          one ModuleScript per weapon
+      MoveClasses.luau
+      ArmorClasses.luau
+      Categories.luau
+      Defs.luau         loader + validation + derived values + defs hash
+      Templates.luau    templates + extend() (unit modules require this, not Defs)
+      Registry.luau     every def module by file name (no portable folder listing)
     Net/
-      Schema.lua      packet layouts, field widths
-      Packer.lua      buffer read/write helpers (bit packing)
-      Remotes.lua     creates/gets RemoteEvents
+      Schema.luau       packet layouts, field widths
+      Packer.luau       buffer read/write helpers (bit packing)
+      Remotes.luau      creates/gets RemoteEvents
     Grid/
-      Grid.lua        cell math, coordinate encode/decode
-      MapData/        baked map layers per map
-    Util/             Fixed math, PRNG wrapper, RingBuffer, Pool
-  Models/             unit models by ID (client clones these)
-  Icons/              strategic icons
+      Grid.luau         cell math, coordinate encode/decode
+      Layers.luau       per-cell layer buffers (height, waterDepth, ...)
+      TestMap.luau      procedural test maps for headless tests (until baked maps exist)
+      MapData/          baked map layers per map
+    Util/
+      Env.luau          detects the runtime (Roblox / Lune)
+      Profiler.luau     profilebegin/end wrapper (no-op outside Roblox), clock for timings
+      Log.luau          tagged, levelled logging
+      Prng.luau         seeded deterministic PRNG (pure Luau, same output on every runtime)
+      Hash.luau         FNV-1a 32-bit + canonical value hash (defs hash, world hash)
+                        later: Fixed math, RingBuffer, Pool
+  Models/               unit models by ID (client clones these)
+  Icons/                strategic icons
 
 ServerScriptService/
   Sim/
-    Main.server.lua   tick loop, system order
-    World.lua         unit storage (struct-of-arrays), ID allocator
+    Main.server.luau    Heartbeat tick loop (Roblox only; drives Sim.step)
+    Sim.luau            Sim.new / submit / step / hash / runReplay, fixed system order
+    Types.luau          shared Sim types (systems require this, not Sim)
+    Scenarios.luau      named, deterministic match-start setups
+    World.luau          unit storage (struct-of-arrays), ID allocator
+    Replay.luau         replay log: header, commands, checkpoints
     Systems/
-      Commands.lua    validation + command queues
-      Economy.lua
-      Sensors.lua     LOS / radar / sonar / jamming maps
-      Targeting.lua
-      Pathing.lua     requests, caching, corridor builder
-      Movement.lua    steering, local avoidance
-      Weapons.lua     aim model, fire control, countermeasures
-      Projectiles.lua
-      Damage.lua
-      Construction.lua
-      Lifecycle.lua   spawn, death, wrecks
-      NetOut.lua      per-player interest + packet building
-    Workers/          Actor scripts for flow fields (Parallel Luau)
-    Replay/           command log writer
+      Commands.luau     validation + command queues
+      Economy.luau
+      Sensors.luau      LOS / radar / sonar / jamming maps
+      Targeting.luau
+      Pathing.luau      requests, caching, corridor builder
+      Movement.luau     steering, local avoidance
+      Weapons.luau      aim model, fire control, countermeasures
+      Projectiles.luau
+      Damage.luau
+      Construction.luau
+      Lifecycle.luau    spawn, death, wrecks
+      NetOut.luau       per-player interest + packet building
+    Workers/            Actor scripts for flow fields (Parallel Luau)
+  Tests/
+    RunAll.luau         headless test runner
+    *.spec.luau         test specs (section 17.2)
 
 StarterPlayer/StarterPlayerScripts/
   Client/
-    Main.client.lua
-    World.lua         client-side table of known units
-    NetIn.lua         packet decoding
-    Interp.lua        snapshot buffer + interpolation
+    Main.client.luau
+    World.luau          client-side table of known units
+    NetIn.luau          packet decoding
+    Interp.luau         snapshot buffer + interpolation
     Render/
-      ModelPool.lua
-      Animator.lua    piece scripts scheduler
-      Effects.lua
-      Projectiles.lua
-    Camera.lua
+      ModelPool.luau
+      Animator.luau     piece scripts scheduler
+      Effects.luau
+      Projectiles.luau
+    Camera.luau
     Input/
-      Selection.lua
-      Commands.lua
-      BuildPlacement.lua
-    UI/               resource bar, build menu, unit panel, minimap, alerts
-    Debug/            overlays, packet inspector
+      Selection.luau
+      Commands.luau
+      BuildPlacement.luau
+    UI/                 resource bar, build menu, unit panel, minimap, alerts
+    Debug/              overlays, packet inspector
+
+(repo only, not synced)
+.lune/test.luau         Lune entry: `lune run test` runs every *.spec.luau
+.luaurc                 require aliases (@shared)
 ```
+
+**Runs in Lune and Roblox.** Everything under `Shared/` and `ServerScriptService/` must run unchanged in both Roblox and [Lune](https://lune-org.github.io/docs), so the simulation can be tested headless outside Studio. It uses string requires only (cross-tree via `.luaurc` aliases such as `@shared/Util/Prng`), and no Instances or Roblox-only globals. Runtime-specific behavior is confined to the `Util/Env`, `Util/Profiler` and `Util/Log` adapters. `Client/` is Roblox-only.
 
 ### 3.3 The simulation tick
 
@@ -204,7 +228,7 @@ StarterPlayer/StarterPlayerScripts/
 Use **struct-of-arrays** keyed by a numeric unit ID rather than one table per unit with many fields:
 
 ```lua
--- World.lua (server)
+-- World.luau (server)
 local World = {
 	alive    = {},  -- [id] = true
 	defId    = {},  -- [id] = "ord_paladin"
@@ -235,10 +259,10 @@ local World = {
 ### 4.2 UnitDef schema
 
 ```lua
--- ReplicatedStorage/Shared/Defs/Units/ord_paladin.lua
-local Defs = require(script.Parent.Parent.Defs)
+-- ReplicatedStorage/Shared/Defs/Units/ord_paladin.luau
+local Templates = require("../Templates")
 
-return Defs.extend(Defs.Templates.TankT2, {
+return Templates.extend(Templates.TankT2, {
 	id          = "ord_paladin",
 	name        = "Paladin",
 	description = "Main battle tank. Long-range rail cannon.",
@@ -271,7 +295,13 @@ return Defs.extend(Defs.Templates.TankT2, {
 	-- builders only
 	buildPower   = nil,
 	buildOptions = nil,
-	buildRange   = nil,
+	buildRange   = nil,         -- required for mobile builders
+
+	-- economy (section 8)
+	production = nil,           -- { supply = 1, power = 20 } per second while built
+	extractor  = nil,           -- { rate = 0.5 }: supply/s per deposit value (structures on a deposit)
+	storage    = nil,           -- { supply = 0, power = 100 } added to team storage while built
+	placement  = nil,           -- structures: "land" | "water" | "either"
 
 	-- visuals (client)
 	model  = "ord_paladin",
@@ -285,7 +315,7 @@ return Defs.extend(Defs.Templates.TankT2, {
 ### 4.3 WeaponDef schema
 
 ```lua
--- ReplicatedStorage/Shared/Defs/Weapons/ord_railcannon.lua
+-- ReplicatedStorage/Shared/Defs/Weapons/ord_railcannon.luau
 return {
 	id    = "ord_railcannon",
 	type  = "BALLISTIC",  -- HITSCAN | BALLISTIC | HOMING | BEAM | TORPEDO | BOMB
@@ -320,16 +350,16 @@ return {
 ### 4.4 Shared enums
 
 ```lua
--- Categories.lua  (bitmask; max 32 for bit32)
+-- Categories.luau  (bitmask; max 32 for bit32)
 GROUND=1, AIR=2, NAVAL=4, SUB=8, STRUCTURE=16, WORKER=32, COMMANDER=64,
 ARMORED=128, LIGHT=256, HELI=512, JET=1024, ANTIAIR=2048, ARTILLERY=4096,
 STEALTH=8192, RADAR_EMITTER=16384, JAMMER=32768
 
--- ArmorClasses.lua
+-- ArmorClasses.luau
 LIGHT, ARMORED, STRUCTURE, AIR, SHIP, SUB
 ```
 
-### 4.5 Startup validation (`Defs.lua`)
+### 4.5 Startup validation (`Defs.luau`)
 
 At load, for every def, assert:
 
@@ -338,9 +368,21 @@ At load, for every def, assert:
 - Every damage table covers every armor class (missing = 0, but log it).
 - `pieces` listed in the def exist in the model (client-side check in Studio).
 - Builders have `buildPower > 0`; non-builders have none.
+- At most 8 entries in `weapons`: the state record's aim slot mask is one byte and its weapon field holds 2 bits per slot in a `u16` (section 7.3).
 - Compute and cache derived values (category bitmasks, max weapon range, numeric def index for packets).
 
-Assign each def a **numeric index** (sorted by ID) so packets send `u16 defIndex` instead of strings. Hash the full def set; server and client compare the hash on join.
+Assign each def a **numeric index** (sorted by ID) so packets send `u16 defIndex` instead of strings. Units and weapons have separate index spaces, both 1-based (0 is reserved on the wire). Hash the full def set; server and client compare the hash on join.
+
+How `Defs.luau` does it:
+
+- Defs are registered by hand in `Defs/Registry.luau`, keyed by file name. Neither runtime can list a folder portably, and the key is what "IDs match file names" is checked against.
+- Unit modules `require("../Templates")` and call `Templates.extend(...)`. `Defs.luau` requires the registry, so a unit module requiring `Defs` would be a cycle. `Defs.extend` and `Defs.Templates` are re-exported for everything else.
+- `extend` deep-merges records (`cost`, `movement`, `sensors`…) and replaces lists (`categories`, `weapons`, `pieces`…) whole.
+- **Unknown fields are errors**, so a typo such as `maxspeed` fails loudly instead of silently using a template value.
+- Validation collects **every** problem and fails once, listing them all (`Defs: 3 problem(s): …`), each prefixed with the def and field path.
+- Built defs are deep-frozen. Derived fields: unit `index`, `categoryMask`, `maxRange`, `weapons[i].weaponIndex`; weapon `index`, `targetMask`, `priorityMasks`.
+- The defs hash is FNV-1a 32-bit over a canonical serialization (sorted keys, numbers by their IEEE-754 bits), so it is identical on every runtime.
+- The `pieces`-exist-in-model check runs client-side once models exist; it can't run headless.
 
 ---
 
@@ -384,6 +426,8 @@ offset   = 0..255 → 0..8 studs  (1/32 stud ≈ 0.031 precision)
 worldX   = (cellX + offsetX/256) * 8 + mapOriginX
 ```
 
+Cell index = `cz * cellsX + cx` with 0-based cell coordinates (`Grid.index`). Encoding truncates, so the decoded position is within `[0, 1/32)` stud of the true one. Positions outside the map clamp to the edge cell, so an invalid cell never goes on the wire.
+
 Ground units don't send height: the client looks it up from its own copy of the `height` layer. Air units send altitude above ground (`u8`, 1 stud steps, 0–255).
 
 ### 5.4 Map authoring pipeline
@@ -399,7 +443,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
 - **Symmetry:** mirrored or rotational for fair team play. FFA maps: rotational for 3–8 starts.
 - **Supply deposits:** 3–4 safe ones near each start, contested ones in the middle, a few rich ones in exposed spots.
 - **Water:** every naval-enabled map needs a connected sea reachable from at least some starts; give non-coastal starts a land path to the coast.
-- **Chokepoints and open ground:** both, so artillery, tanks and air each have a place to shine.
+- **Chokepoints and open ground:** both, so artillery, tanks and air each have a place to shine. **Chokepoints must be at least 3 cells (24 studs) wide.** With the footprint rule in 6.2, footprint-2 and footprint-3 units need a 3-cell gap.
 - **Elevation:** hills give sight range bonus (optional); slopes limit wheeled units.
 - **Air lanes:** keep some areas without SAM-friendly terrain so air play is viable.
 - Tag maps with supported modes (`Team`, `FFA`, `Naval`).
@@ -426,13 +470,26 @@ Each move class gets one bit in `passMask` and its own `clearance` layer.
 
 ### 6.2 Footprints and clearance
 
-A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell] ≥ ceil(F / 2)`. Clearance is a distance transform (BFS from blocked cells), computed at bake time and updated locally when a structure is placed or destroyed.
+**Prefer odd footprints (1, 3) for ground units.** The clearance rule treats an even footprint like the next odd one, so a 2×2 unit costs as much passage width as a 3×3 one.
+
+A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell] ≥ floor(F / 2) + 1`. Clearance is the Chebyshev distance to the nearest cell the class can't enter (a blocked cell is 0; outside the map counts as blocked). It is computed with a two-pass distance transform at map load, and updated locally when a structure is placed or destroyed.
+
+The rule requires the (2r+1)² square around the cell to be free, with r = floor(F/2). Even footprints count as the next odd size, so a 2×2 unit needs a 3-wide gap. The earlier `ceil(F/2)` let a 2×2 unit into a 1-cell gap (DECISIONS D21).
+
+Slope is the steepest climb to a 4-neighbor, stored as u8 (0..255 = 0..90°). `Shared/Grid/Passability.luau` builds slope, passMask and clearance from the height and water layers: about 75 ms for a 256×256 map in Lune.
 
 ### 6.3 Hierarchical pathfinding: quadtree + flow field
 
 **Step 1 — Coarse route (quadtree).** For each move class, build a quadtree over passability: a leaf is a square region that is entirely passable or entirely blocked. Run A* over adjacent passable leaves. This is fast because open terrain becomes a few big leaves.
 
 **Step 2 — Corridor.** Take the leaves along the coarse route, plus one neighbor ring as padding. That's the corridor.
+
+Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
+- One tree per (move class, required clearance); see DECISIONS D26–D28.
+- Leaves link by shared edges only, and connected components make unreachable goals an O(1) rejection.
+- A* runs over leaf centers with the start and goal cells as endpoints.
+- The padding ring is made of whole adjacent open leaves.
+- Measured on 256×256 hilly terrain: tree build about 6 ms (load time), route about 2.5 ms corner to corner.
 
 **Step 3 — Flow field inside the corridor only.**
 - Integration field: Dijkstra/BFS from the goal cell over corridor cells (cost = 1 × terrain modifier).
@@ -443,8 +500,16 @@ A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell]
 
 ### 6.4 Caching and budgets
 
-- Cache fields by `(moveClass, goalCell)`. LRU with ~32 entries (a 256×256 direction field is 64 KB).
+- Cache fields by `(moveClass, clearance need, goalCell)`. LRU with ~32 entries (a 256×256 direction field is 64 KB). Recency is a use counter, so eviction is deterministic (`Sim/Path/FieldCache.luau`).
 - **Time-slice:** the Pathing system has a fixed budget per tick (e.g., 8 ms). Unfinished work continues next tick. Units start moving toward the goal in a straight line until their field is ready.
+- Implementation (DECISIONS D83):
+  - A move command only assigns slots in its tick (exact bucketed greedy).
+  - Each unit's line check, the coarse route and the corridor are a plan job sliced by the same work units as fields.
+  - Work spent issuing orders comes out of that tick's pathing budget.
+  - Quadtrees are built at map load.
+  - Measured worst Commands + Pathing tick at 800 units: 91 ms → 10 ms.
+  - The budget is counted in **work units** (cells settled + cells directed), calibrated so it takes about 8 ms on a live server. A wall-clock budget would make the tick a path completes on, and therefore the whole simulation, depend on CPU speed (DECISIONS D29).
+  - A sliced job gives byte-identical output to a one-shot job (`Sim/Path/FlowField.luau`).
 - **Parallel Luau:** run field generation in Actors. Each Actor keeps its own copy of the static grid layers; the main sim sends requests and receives finished direction buffers.
 - **Invalidation:** when a structure changes passability, mark the affected quadtree nodes dirty and drop cached fields that cover them.
 
@@ -453,12 +518,23 @@ A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell]
 - Units do not path around each other. They use **separation steering** against nearby units found through a dynamic spatial hash (rebuilt or updated each tick, same 8-stud cells).
 - Idle units nudge aside for moving friendly units (push priority: moving > idle; larger > smaller).
 - Structures are static obstacles in the grid, never in the spatial hash.
+- Implementation notes (`Sim/Systems/Movement.luau`, DECISIONS D36–D38, D42):
+  - The hash uses 16-stud buckets (3×3 search).
+  - Separation steering acts within radius sum + 2 studs. After moving, overlaps are resolved by position, with idle units yielding 80/20.
+  - Tanks move along their heading at a limited turn rate, with an accel/brake speed curve.
+  - Idle units return to their spot when pushed off it.
 
 ### 6.6 Group movement & formations
 
 - **Line move (BAR-style):** dragging a right-click line spreads selected units evenly along it; each gets its own goal cell but units sharing a move class and nearby goals can share a field.
 - **Speed matching (optional toggle):** group moves at the slowest member's speed.
 - Arrival: units within a radius of the goal stop rather than pushing to the exact cell.
+- Implementation notes (`Sim/Nav.luau`, DECISIONS D35, D38–D40):
+  - Each (move class, footprint) group shares one field to the group goal, and each unit gets its own formation slot.
+  - Slots fill far side first along the approach direction.
+  - A unit steers straight to its slot when it shares an open leaf with it or the line is clear.
+  - Arrival is within 1.5 studs. A unit gives up within 24 studs after 45 ticks without progress.
+  - Units pushed out of the corridor, or stalled, trigger a merged-corridor field extension.
 
 ### 6.7 Air movement
 
@@ -466,6 +542,11 @@ A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell]
 - **JET:** minimum speed (can't stop), limited turn rate, circles when idle or attacking. Collision checks use the swept path each tick because jets move 15–25 studs per tick.
 - **HELI:** can hover, slower turns, separation steering against other helis.
 - Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly.
+- Implementation (`Sim/Air.luau`, DECISIONS D73–D74):
+  - Jets circle their goal at 220 studs when idle and chase or orbit their target when attacking.
+  - Helicopters hover at 35, jets cruise at 100; they climb at 40 studs/s.
+  - Projectiles test collisions in each target's frame, so fast jets can't tunnel.
+  - Empty aircraft fly to the nearest rearm pad, land, and rearm round by round at the team's stall ratio.
 
 ---
 
@@ -485,7 +566,7 @@ A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell]
 
 **Rule of thumb:** continuous values where only the latest matters (position, heading) go **unreliable**. Discrete changes that must not be lost (died, started building, health changed) go **reliable**.
 
-All payloads are `buffer`s written with `Packer.lua`. UnreliableRemoteEvent has a small per-message size limit (around 900 bytes; check the current docs), so `NetOut` splits large updates into several messages.
+All payloads are `buffer`s written with `Packer.luau`. UnreliableRemoteEvent has a small per-message size limit (around 900 bytes; check the current docs), so `NetOut` splits large updates into several messages.
 
 ### 7.2 Interest management (per player, every tick)
 
@@ -502,19 +583,48 @@ for each player P:
 - Fast jets owned by or near the player's team: larger margin, or always tactical while in allied airspace.
 - **Entering tactical:** server sends one reliable `Enter` event with the unit's full state. After that, only changes.
 - **Leaving tactical:** reliable `Leave` event; client returns the model to the pool but keeps the unit in its strategic table.
+- Implementation (`Sim/NetOut.luau`, DECISIONS D70–D71):
+  - Radar and sonar contacts are strategic-only (icon 0, wobbled cell).
+  - The strategic snapshot runs every 5th tick and always sends at least a header, so clients drop units that disappeared.
+  - DEATH goes to players that had the unit tactical.
+  - Event records ENTER / LEAVE / DEATH were added in `PROTOCOL_VERSION` 2.
 
 ### 7.3 Packet layouts
+
+Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tests/Schema.spec.luau` locks the exact bytes.
+
+**Wire rules (all records)**
+
+- Little-endian multi-byte values. Bit fields are packed LSB-first (first field in the lowest bits) and zero-padded to a whole byte.
+- Schema fields are wire units: integers already quantized by the caller (health 0..255, heading 0..255, …).
+- Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
+- Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
+- A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
+- **`Schema.PROTOCOL_VERSION`** (currently 1) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
 
 ```
-cmdType   u8      MOVE, FIGHT, ATTACK, ATTACK_GROUND, PATROL, GUARD, STOP, BUILD,
-                  REPAIR, RECLAIM, SET_FIRE_STATE, SET_MOVE_STATE, TOGGLE, CAMERA
-flags     u8      bit0 = queue (shift), bit1 = line-formation, ...
-count     u16     number of unit IDs (max 200 per command)
+cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
+                  8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
+                  13 TOGGLE, 14 CAMERA   (0 is invalid)
+flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
+count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
-params    depends on cmdType (target unit u16, target cell u16 + offsets u8 u8, defIndex u16, ...)
+params    by cmdType:
+  MOVE, FIGHT, ATTACK_GROUND, PATROL   cell u16, offX u8, offZ u8
+                                       + line end cell2 u16, offX2 u8, offZ2 u8 if the line flag is set
+  ATTACK, GUARD, REPAIR, RECLAIM       targetId u16 (unit, or wreck for RECLAIM)
+  BUILD                                defIndex u16, cell u16, offX u8, offZ u8,
+                                       facing u8: 0..3 = 0/90/180/270° (bits 2–7 reserved)
+  SET_FIRE_STATE / SET_MOVE_STATE      value u8: 0 hold, 1 return fire / maneuver, 2 fire at will / roam
+  TOGGLE                               value u8: 0 off, 1 on
+  CAMERA                               minX u8, minZ u8, maxX u8, maxZ u8  (camera area as a cell rectangle)
+  STOP                                 none
 ```
+
+The line flag is only valid on position commands. Largest command: 4 + 400 + 8 = 412 bytes.
 
 **Tactical record (S → C, unreliable), only for units that moved this tick**
 
@@ -524,31 +634,35 @@ cell      u16
 offX      u8
 offZ      u8
 heading   u8      0..255 → 0..360°
-flags     u8      bit0 = has altitude
+flags     u8      bit0 = has altitude; other bits reserved
 [alt]     u8      only if flag set (air units)
-                  = 8–9 bytes per moving unit
+                  = 8 bytes, 9 with altitude
 ```
 
 **State record (S → C, reliable), only changed fields**
 
 ```
 unitId    u16
-mask      u8      which fields follow
+mask      u8      which fields follow: bit0 health, bit1 state, bit2 aim, bit3 weapon, bit4 build
+                  (never 0; bits 5–7 reserved)
 [health]  u8      fraction 0..255
 [state]   u16     bit flags (moving, building, stunned, submerged, landed, cloaked...)
-[aim]     u8 ×2 per weapon: yaw, pitch
-[weapon]  u8      2 bits per weapon: IDLE / AIMING / READY / RESTORING
+[aim]     u8      slot mask: bit i-1 = weapon slot i (1..8) follows; never 0
+          u8 ×2   yaw, pitch for each set slot, in slot order
+[weapon]  u16     2 bits per slot (slot 1 = bits 0–1): 0 IDLE, 1 AIMING, 2 READY, 3 RESTORING
 [build]   u8      build progress 0..255
 ```
+
+Units have at most **8 weapon slots**; defs validation must enforce it. The aim slot mask means only weapons whose aim changed are sent, and the record can be decoded without knowing the unit's def. The 2-byte weapon field is sent only when a weapon state changes.
 
 **Strategic record (S → C, unreliable, 2–4 Hz)**
 
 ```
 unitId    u16
 cell      u16
-icon      6 bits  (radar-only contacts send icon 0 = unknown blip)
-team      3 bits  (up to 8 teams)
-flags     7 bits  radarOnly, sonarOnly, underAttack, structureGhost, ...
+icon      6 bits  bits 0–5   (radar-only contacts send icon 0 = unknown blip)
+team      3 bits  bits 6–8   team - 1 (teams 1..8)
+flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost; bits 4–6 reserved
                   = 6 bytes per unit
 ```
 
@@ -564,14 +678,14 @@ ALERT     type u8, cell u16    (unit under attack, structure lost, ...)
 
 ### 7.4 Client interpolation
 
-- Each tactical record is stamped with its server tick. The client keeps a small buffer per unit (3–4 snapshots).
+- Each tactical message carries its server tick in the tick header (section 7.3; compare wire ticks with `Net/Tick`, never `<`). The client keeps a small buffer per unit (3–4 snapshots).
 - Render time = latest tick − 2 ticks (≈ 133 ms at 15 Hz). Interpolate position and heading between the two surrounding snapshots.
 - If a snapshot is missing, extrapolate up to 1 tick, then hold.
 - A unit that hasn't moved sends nothing, and the client simply keeps its last position.
 
 ### 7.5 Join, reconnect, spectate
 
-- On join: send defs hash check, map ID, full snapshot of everything the player's team knows, current economy.
+- On join: check **protocol version** (`Schema.PROTOCOL_VERSION`) and **defs hash** first; on a mismatch, refuse with a clear message (stale client) before sending anything else. Then send map ID, full snapshot of everything the player's team knows, current economy.
 - Reconnect = join. Spectators get every team's knowledge (or full world in replays).
 
 ### 7.6 Bandwidth budget
@@ -705,6 +819,11 @@ Factories have build power and an optional rally point and repeat queue. Workers
 ### 9.3 Build rules
 
 - Placement: footprint must be on cells passable for the structure's placement class (land / water / either), not occupied, within builder range when construction starts.
+  - Land means dry with slope ≤ 30°; water means depth ≥ 6 studs.
+  - Extractors must stand on a deposit, and no ground unit may stand on the footprint.
+  - Footprints snap to the grid, with odd sizes centered on a cell (DECISIONS D59–D60).
+  - A placed structure writes the occupancy layer and blocks every non-air class. Clearance is capped at 16 and recomputed exactly around the change only.
+- **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.
 - The client shows a placement ghost using its own grid copy; the server re-validates.
 - Unfinished structures exist from the first tick with low health (they can be attacked).
 - Cancelling refunds what was spent (optional: 100% refund like BAR).
@@ -777,7 +896,17 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 - Structures under construction take full damage.
 - Death severity (overkill amount) chooses the death effect and whether a wreck is left.
 
-### 10.7 Line of fire
+### 10.7 Implementation notes (M2 core, headless)
+
+- Code: `Sim/Combat/` (`Combat.luau` state, `ContactGrid.luau`, `Ballistics.luau`) and `Sim/Systems/` (`Targeting`, `Weapons`, `Projectiles`, `Damage`). See DECISIONS D43–D50.
+- Targets are per weapon slot and staggered (6 ticks). Every enemy is visible until Sensors (M4).
+- Collision volumes are cylinders (radius 0.45 × footprint × 8, height 6 × footprint).
+- Projectile flight is exact, with a swept chord test. AoE is measured to the cylinder surface.
+- Damage is queued and applied in order. Deaths leave a wreck worth 50% of supply when overkill ≤ 50% of max health.
+- Per-tick events are in `sim.combat.events`.
+- Not yet: line-of-fire checks (10.8), target leading, salvos, guidance (M7), focus-fire and overkill heuristics.
+
+### 10.8 Line of fire
 
 - Ballistic and homing: no line check (they arc or steer).
 - Hitscan/beam/direct shells: sample the `height` layer along the line every cell; if terrain blocks, don't fire and try repositioning (Maneuver/Roam) or retarget.
@@ -812,6 +941,12 @@ Per ally team, on a **sensor grid of 16-stud cells** (2×2 grid cells; 128×128 
 
 **Stamping:** precompute circle offset lists per radius. When an emitter crosses into a new sensor cell, subtract its old circle and add the new one. Units that don't change sensor cell cost nothing. Large moving radars (AWACS) re-stamp at most every few ticks.
 
+Implementation (`Sim/Sensors.luau`, DECISIONS D65):
+- Counts are u16, so dense stacks can't overflow. `airSight` defaults to 1.5 × sight.
+- Unfinished structures don't emit.
+- Visibility for every enemy and team is recomputed each sensor tick (every 2nd tick) from the maps.
+- Structure ghosts persist until the team sees the spot empty.
+
 Optional later: terrain-occluded LOS (sample height along rays at stamp time). Start without it.
 
 ### 11.3 Visibility rule
@@ -841,6 +976,10 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks.
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the wobbled position, so they miss more — that's intended.
+- Implementation (DECISIONS D67):
+  - Wobble is a stateless hash of (unit, tick // 30, observer), interpolated between periods. Its radius is the observer's best `sensors.radarError`.
+  - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
+  - Measured: howitzer direct hits 87% with a spotter versus 20% on radar.
 
 ### 11.5 Missile guidance & electronic warfare
 
@@ -850,7 +989,7 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 |---|---|---|---|---|
 | `IR` (heat-seeking) | Target VISIBLE and within `lockRange` (short) | No effect | No effect | Flares, DIRCM |
 | `RADAR` | Target VISIBLE or RADAR contact | Blocks lock outside burn-through range; can break lock mid-flight | Lock range × signature | Chaff, jamming |
-| `COMMAND` | Target VISIBLE from launcher | Breaks guidance if launcher's view is jammed | — | Killing the launcher |
+| `COMMAND` | Target VISIBLE to the launcher's team | No effect | No effect | Killing the launcher, or breaking the team's sight of the target (both checked for the whole flight) |
 
 **Burn-through:** a jammed target can still be locked by a radar-guided launcher when it is closer than `burnThrough × lockRange` (e.g., 35%). This makes jamming strong at long range and weaker up close, which creates interesting positioning.
 
@@ -860,14 +999,23 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 2. **Midcourse:** every ~5 ticks, re-check. Radar missile whose target entered an enemy jam field beyond burn-through → `LOST_LOCK` (flies straight, self-destructs at lifetime).
 3. **Terminal:** once, when within `terminalRange`, roll countermeasures (11.6). Success → `DECOYED` event; the missile veers off. Failure → it hits.
 
+Implementation (`Sim/EW.luau`, DECISIONS D79–D80, D82):
+- `EW.canLock` gates every guided launch.
+- Target choice for guided missiles prefers lockable targets (score ×1,000). The choice is re-checked every 6 ticks, and the missile switches only to a target scoring ≥ 1.25× the current one. With nothing lockable it keeps tracking the best target and holds fire.
+- Midcourse checks run every 5 ticks per missile; burn-through is measured from the missile.
+- The terminal check fires once the missile could reach `terminalRange` within the tick. A decoyed missile turns 60° and loses its target.
+- COMMAND needs the launcher alive and the target VISIBLE to the launcher's team, checked every tick of the flight. Jamming, chaff, flares and DIRCM don't affect it.
+- `DECOYED` and `LOST_LOCK` are sim events; they are not replicated yet.
+- Measured: an Aegis (lock range 600, burn-through 210) never launches at a jammed Wasp at 250 or 550 studs, even when the Wasp is in plain sight. At 150 studs it launches and hits.
+
 ### 11.6 Countermeasures
 
 Defined per unit:
 
 ```lua
 countermeasures = {
-	flares = { charges = 4, chance = 0.55 },                   -- vs IR
-	chaff  = { charges = 4, chance = 0.50 },                   -- vs RADAR
+	flares = { charges = 4, chance = 0.55, refillSupply = 2 }, -- vs IR; supply per charge restocked
+	chaff  = { charges = 4, chance = 0.50, refillSupply = 3 }, -- vs RADAR
 	dircm  = { chance = 0.70, cooldown = 3.0, powerDrain = 15 }, -- vs IR, no charges
 }
 ```
@@ -875,6 +1023,11 @@ countermeasures = {
 - **Flares/chaff** use charges, refilled when rearming (costs supply).
 - **DIRCM** (Directional Infrared Counter-Measures) has no charges but a cooldown and power drain. It defeats at most one IR missile per cooldown. **A salvo overwhelms it** — that's the counterplay.
 - All rolls use the match's seeded PRNG in fixed system order, so replays stay identical.
+- Implementation (`Sim/EWState.luau`, DECISIONS D81):
+  - Against IR, DIRCM rolls first (starting its cooldown either way), then flares. Chaff rolls against RADAR.
+  - DIRCM drains power continuously and recharges at the team's power stall ratio.
+  - Flares and chaff are restocked while rearming. Each charge costs its `refillSupply`, spread evenly over the rearm's rounds, so it adds supply cost (slowing the rearm only when supply stalls) without lengthening it.
+  - Measured: DIRCM decoys 25 of 40 single IR missiles but only 14 of 80 in salvos of 4.
 
 **Faction flavor**
 
@@ -921,6 +1074,10 @@ countermeasures = {
 
 - **Surface ships** (`SHIP`): corvette (fast, cheap), destroyer (SAM + gun + sonar), cruiser/battleship (T2 heavy), carrier (T2).
 - **Submarines** (`SUB`): always submerged in v1. Only detected by sonar (or very close sight). Only `TORPEDO` weapons and ASW can target `SUB`.
+- Implementation (DECISIONS D76–D78):
+  - Ships float with a 3-stud draft; submarines spawn `SUBMERGED` and sit 10 studs down. They carry only the `SUB` category, so only weapons that list it (torpedoes) can target them.
+  - Besides sonar, naval units and ASW helicopters (helicopters with a weapon that can target `SUB`) detect a submerged submarine within 40 studs as a SONAR contact: torpedo-targetable, never VISIBLE. No other unit can see it.
+  - Torpedoes launch level just under the surface, stay between the sea floor and the surface, home on sonar contacts, and are removed harmlessly when they reach land.
 - **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base.
 - **Amphibious/hover units** bridge land and sea.
 - Naval structures: floating turret, torpedo launcher, sonar buoy, naval SAM platform, tidal generator.
@@ -1206,9 +1363,15 @@ Build these **before** adding lots of content.
 
 ### 17.1 Replay system
 
-- Log: header (game version, defs hash, map ID, RNG seed, players) + every command as `[tick u32][player u8][payload]`.
+- Log: header (`"FTGR"`, format version, **protocol version**, defs hash, RNG seed, map ID, scenario, players), then entries, each starting with a kind byte:
+  - COMMAND `[tick u32][player u8][len u16][payload]`, recorded at the tick the command is applied. Payloads are Schema command records, so a replay plays back only with the protocol version and defs hash it was recorded with.
+  - CHECKPOINT `[tick u32][hash u32]`, written every 300 ticks.
+- `Sim.runReplay` rebuilds the sim from the header, feeds the commands at their ticks and reports the first checkpoint whose hash differs.
+- **Two kinds of replay:**
+  - **Player-facing replays** store the stream the server actually sent (per player, or the spectator stream), and the client plays it back like a live match. They never re-simulate, so they work across platforms and after balance patches.
+  - **Command-log re-simulation** is a **developer tool** for bug reproduction and desync checks. It is only guaranteed on the same platform and build that recorded it: `math.sin`/`cos`/`atan2` may differ in the last bits between operating systems (DECISIONS D51), and any def change alters the defs hash.
 - Because the server simulation is deterministic, replaying the commands reproduces the match exactly. Every bug report should come with a replay.
-- Add a desync check: every 300 ticks, log a hash of world state (positions, health). A replay that produces a different hash means non-determinism crept in (unordered `pairs`, `os.clock` in logic, unseeded random).
+- Add a desync check: every 300 ticks, log a hash of the simulation state (`Sim.hash`: tick, PRNG state, every unit field in ID order, ID allocator). A replay that produces a different hash means non-determinism crept in (unordered `pairs`, `os.clock` in logic, unseeded random).
 
 ### 17.2 Headless simulation tests
 
@@ -1339,8 +1502,8 @@ Each milestone has **exit criteria**. Don't move on until they're met.
 
 | # | Milestone | Scope | Exit criteria |
 |---|---|---|---|
-| M0 | Foundations | Defs loader + validation, grid + map bake, Packer, tick loop, World storage, replay log | Defs validate; packets round-trip; 1,000 headless ticks run |
-| M1 | One tank moves | Move command → quadtree + flow field → movement → tactical replication → interpolated render; debug overlays | 50 tanks path across a map smoothly; overlays show fields |
+| M0 | Foundations | Runtime utils (Env, Profiler, Log, Prng) + test runner, defs loader + validation, grid, Packer, tick loop, World storage, replay log | Defs validate; packets round-trip; 1,000 headless ticks run (all under `lune run test`) |
+| M1 | One tank moves | Map bake (section 5.4), move command → quadtree + flow field → movement → tactical replication → interpolated render; debug overlays | 50 tanks path across a map smoothly; overlays show fields |
 | M2 | Combat | Targeting, aim model, hitscan + ballistic weapons, projectiles, damage, death, wrecks | Two groups fight to the end; replay reproduces it exactly |
 | M3 | Economy & building | Team accounts, extractors, generators, Command Vehicle, workers, factories, placement, assist, reclaim | A full T1 build order is playable |
 | M4 | Sensors & minimap | LOS/radar maps, fog of war, strategic tier, camera interest, minimap, ghosts | Enemies hidden correctly; bandwidth within budget |
@@ -1356,13 +1519,13 @@ Each milestone has **exit criteria**. Don't move on until they're met.
 
 ### 22.1 Adding a new unit — checklist
 
-1. Create `Defs/Units/<id>.lua` (extend a template).
+1. Create `Defs/Units/<id>.luau` (extend a template) and register it in `Defs/Registry.luau`.
 2. Create or reuse WeaponDefs.
 3. Add to a builder's or factory's `buildOptions`.
 4. Add a `blockout` (or model) with correct piece names.
 5. Choose an icon and an animation script.
-6. Run validation (Studio output must be clean).
-7. Add a headless test: it can be built, move, and fight its intended counter.
+6. Run validation and tests: `lune run test` must pass (and Studio output must be clean once Studio is available).
+7. Add a headless test (`Tests/<Name>.spec.luau`): it can be built, move, and fight its intended counter.
 8. Balance pass: cost vs. power compared with units of the same role.
 
 ### 22.2 Glossary

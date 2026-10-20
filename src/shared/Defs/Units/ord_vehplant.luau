@@ -1,0 +1,16 @@
+--!strict
+local Templates = require("../Templates")
+
+return Templates.extend(Templates.Structure, {
+	id = "ord_vehplant",
+	name = "Vehicle Plant",
+	description = "T1 factory: ground worker and T1 ground units.",
+	faction = "order",
+	cost = { supply = 600, power = 1200, buildTime = 7000 },
+	health = 3000,
+	footprint = 3,
+	buildPower = 100,
+	buildOptions = { "ord_mason", "ord_lancer" },
+	model = "ord_vehplant",
+	icon = "factory",
+})

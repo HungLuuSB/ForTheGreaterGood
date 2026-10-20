@@ -14,13 +14,13 @@ If the design guide (`For_The_Greater_Good_Design_Guide.md`) is available in the
 ## 1. Architecture rules (never break these)
 
 1. **Server-authoritative simulation.** Clients send commands; the server simulates; clients render. Never let client code decide damage, hits, economy or visibility.
-2. **The simulation is pure data.** No Instances, Parts, Humanoids, physics or `workspace:Raycast` for units on the server. Units live in struct-of-arrays tables in `World.lua`, keyed by `u16` unit IDs.
-3. **Deterministic on the server.** Fixed tick (15 Hz), fixed system order, seeded `Random.new(seed)` only.
-   - Never use `math.random`, `os.clock()`, `tick()` or `time()` in gameplay logic (profiling only).
+2. **The simulation is pure data.** No Instances, Parts, Humanoids, physics or `workspace:Raycast` for units on the server. Units live in struct-of-arrays tables in `World.luau`, keyed by `u16` unit IDs.
+3. **Deterministic on the server.** Fixed tick (15 Hz), fixed system order, the seeded `@shared/Util/Prng` module only.
+   - Never use `math.random`, `Random.new`, `os.clock()`, `tick()` or `time()` in gameplay logic. For profiling timings use `Profiler.now()`.
    - Never let `pairs()` iteration order affect outcomes — iterate arrays of IDs.
    - No `task.wait`/yielding inside sim systems.
 4. **Defs are data.** One ModuleScript per unit/weapon returning a table; shared by server and client; validated at startup. IDs use prefixes `ord_`, `chs_`, `neu_`, are lowercase `snake_case`, and are never renamed once used.
-5. **Networking:** payloads are `buffer`s written via `Net/Packer.lua` following `Net/Schema.lua`. Continuous values (position/heading) → UnreliableRemoteEvent; discrete changes → reliable RemoteEvent. Keep unreliable messages under ~900 bytes (split them).
+5. **Networking:** payloads are `buffer`s written via `Net/Packer.luau` following `Net/Schema.luau`. Continuous values (position/heading) → UnreliableRemoteEvent; discrete changes → reliable RemoteEvent. Keep unreliable messages under ~900 bytes (split them).
 6. **Fog of war is applied before anything is sent.** Camera position changes level of detail only, never what a player can see. Radar contacts are sent with their wobbled position, never the true one.
 7. **Animation is visual only.** The server's aim model (yaw/pitch numbers with turn rates) decides when weapons can fire; client piece scripts only display it.
 8. **Pay for what changes.** Idle units cost no CPU and no bandwidth. Expensive per-unit work is staggered (`id % N`).
@@ -43,10 +43,10 @@ Commands → Economy (every 5th tick) → Sensors (every 2nd) → Targeting (sta
 ### Where code lives
 
 ```
-ReplicatedStorage/Shared/   Defs/ (Units, Weapons, MoveClasses, ArmorClasses, Categories, Defs.lua)
+ReplicatedStorage/Shared/   Defs/ (Units, Weapons, MoveClasses, ArmorClasses, Categories, Defs.luau)
                             Net/ (Schema, Packer, Remotes)  Grid/  Util/
 ReplicatedStorage/Models/   unit models by def ID
-ServerScriptService/Sim/    Main.server.lua, World.lua, Systems/*, Workers/ (Actors), Replay/
+ServerScriptService/Sim/    Main.server.luau, World.luau, Systems/*, Workers/ (Actors), Replay/
 ServerScriptService/Tests/  test modules + RunAll
 StarterPlayerScripts/Client/ World, NetIn, Interp, Render/*, Camera, Input/*, UI/*, Debug/*
 ```
@@ -67,7 +67,7 @@ Code is synced from the repository into Studio by Rojo:
 - **Edit code as files under `src/`**, never with Studio `multi_edit`; Rojo would overwrite edits made in Studio.
 - Use the Studio MCP tools for what lives only in the place file (maps, terrain, models, `ReplicatedStorage.Models`) and for running code, inspecting instances, playtesting and reading console output.
 - File naming: `Name.server.luau` = Script, `Name.client.luau` = LocalScript, `Name.luau` = ModuleScript, a folder with `init.luau` = ModuleScript with children.
-- Before testing in Studio, confirm Rojo is syncing (the changed module exists in Studio with the new content). If it isn't, ask the user to start `rojo serve` and connect the Studio plugin.
+- Before testing in Studio, confirm Rojo is syncing (the changed module exists in Studio with the new content). If it isn't, ask the user to start `darklua process src build/src --watch` and `rojo serve build.project.json` (the converted tree; `default.project.json` serves unconverted string requires that Roblox can't resolve), then connect the Studio plugin. `lune run build` builds and checks a place file offline.
 - After each working, verified step, suggest a git commit with a clear message.
 
 ---
@@ -90,7 +90,7 @@ Code is synced from the repository into Studio by Rojo:
 ### Ask before
 
 - Deleting instances or scripts, or renaming anything other scripts reference.
-- Edits touching more than ~5 scripts at once, or changing `Schema.lua` / packet formats (they break replays and clients).
+- Edits touching more than ~5 scripts at once, or changing `Schema.luau` / packet formats (they break replays and clients).
 - Inserting Toolbox assets (`insert_asset`) — confirm the asset and its license first.
 - Generating meshes/materials that will replace existing art.
 
@@ -98,7 +98,7 @@ Suggest the user saves or commits (Rojo + git) before large changes.
 
 ### Verifying
 
-- **Logic:** run tests with `execute_luau` (`datamodel_type = "Edit"`): `require(game.ServerScriptService.Tests.RunAll)()` and report pass/fail.
+- **Logic:** from the project root run `lune run test` (`lune run test <filter>` for matching specs only) and report pass/fail. It runs every `*.spec.luau` under `src/server/Tests` through `Tests/RunAll`. A Studio entry for running the tests through `execute_luau` is still to be added.
 - **Runtime:** `start_stop_play` → `get_console_output` → `screen_capture` if visual → `start_stop_play` to stop.
 - Read errors from console output before guessing at fixes. Fix the cause, then re-run the same check.
 
@@ -109,7 +109,7 @@ Suggest the user saves or commits (Rojo + git) before large changes.
 ### Add a new unit
 
 1. Pick role, faction, tier, domain, move class. ID = `ord_<name>` or `chs_<name>`; display name follows the faction style (Order: Latin/virtue/heraldic; Chaos: myth beasts/ruin).
-2. Create `Defs/Units/<id>` by extending a template (`Defs.extend(Defs.Templates.X, {...})`).
+2. Create `Defs/Units/<id>.luau` by extending a template (`local Templates = require("../Templates")`, then `Templates.extend(Templates.X, {...})`) and register it in `Defs/Registry.luau`.
 3. Create or reuse WeaponDefs; fill every armor class in `damage`.
 4. Add the ID to the right factory's or builder's `buildOptions`.
 5. Model: if no art yet, add a `blockout` table so the placeholder generator builds it. Piece names must match `pieces` and the animation script.
@@ -122,7 +122,7 @@ Set `type` (HITSCAN / BALLISTIC / HOMING / BEAM / TORPEDO / BOMB), range, reload
 
 ### Add or change a packet field
 
-1. Update `Schema.lua` (field, width, which channel).
+1. Update `Schema.luau` (field, width, which channel).
 2. Update writer (server NetOut) and reader (client NetIn) together.
 3. Add/extend the pack→unpack round-trip test with edge values (0, max, negative where signed).
 4. Recalculate bytes per record and the bandwidth impact; state it in the summary.
@@ -130,7 +130,7 @@ Set `type` (HITSCAN / BALLISTIC / HOMING / BEAM / TORPEDO / BOMB), range, reload
 ### Write or modify a sim system
 
 - Pure functions over `World` data; no Instances, no yields.
-- Wrap the system in `debug.profilebegin("Sim.<System>")` / `debug.profileend()`.
+- Wrap the system in `Profiler.begin("Sim.<System>")` / `Profiler.finish()` (`@shared/Util/Profiler`; MicroProfiler labels in Roblox, no-ops in Lune).
 - Respect its time budget (Targeting 8 ms, Movement 10 ms, Pathing 8 ms, Sensors 5 ms, NetOut 6 ms…). Use staggering or time-slicing rather than doing all units every tick.
 - Any field that replicates must set its `dirty` bit when written.
 - Reuse tables and buffers; don't allocate per unit per tick.
