@@ -338,6 +338,26 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 18 — Sensors performance ✅ (branch `m-sim-polish`)
+
+- **Profile:** stamping is about 95% of Sensors time (12–23 ms per sensor tick at 800 units); visibility 0.2–0.4 ms, lists 0.3–0.7 ms, ghosts about 0 (D85).
+- **Fix:** one-cell circle shifts, row-span circles, a full-stamp budget of 200,000 cells per sensor tick.
+- **Sensors average / peak ms, before → after:**
+
+  | units | before | after |
+  |---|---|---|
+  | 200 | 1.46 / 6.10 | 0.18 / 1.39 |
+  | 400 | 2.39 / 12.42 | 0.31 / 3.48 |
+  | 600 | 3.42 / 14.18 | 0.40 / 2.06 |
+  | 800 | 4.16 / 21.56 | 0.54 / 2.14 |
+
+  Target ≤ 5 ms met. Average tick at 800 units: about 12.1 → 9.2 ms.
+- **Tests:**
+  - the existing full-recount test covers shifts;
+  - new: a 300-radar mass spawn is stamped in ids order within budget and catches up after 18 ticks;
+  - mutations caught: off-by-one leading edge, off-by-one trailing z edge, budget ignored.
+- Tests: **27 specs, 189 passed**.
+
 ### Round 4 — answers to the task 11–17 questions
 
 - **1. COMMAND guidance (D80, revised):**

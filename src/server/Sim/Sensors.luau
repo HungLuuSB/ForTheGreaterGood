@@ -6,10 +6,19 @@
 --   radar   radar emitters                         sonar   sonar emitters
 --   jam     this team's jammers (hide this team from enemy radar)
 -- An emitter stamps +1 on every sensor cell whose center lies within its
--- radius of the emitter's cell center (precomputed circle offsets per
--- radius), and only re-stamps when it changes sensor cell. Unfinished
+-- radius of the emitter's cell center (circles cached per radius as row
+-- spans), and only re-stamps when it changes sensor cell. Unfinished
 -- structures don't emit. Counts are u16 (not the guide's u8): a dense blob
 -- of units can put more than 255 emitters on one cell.
+--
+-- Re-stamping cost (DECISIONS D85):
+--   * a unit moving to a neighboring sensor cell shifts its circles: only
+--     the cells entering and leaving each circle change, O(radius) instead
+--     of O(radius²);
+--   * full stamps (new emitters, jumps of more than one cell, team or radius
+--     changes) are budgeted at STAMP_BUDGET cells per sensor tick, in ids
+--     order. A unit over budget keeps its previous stamp (or none, if new)
+--     until a later sensor tick. Removals are never deferred.
 --
 -- Visibility of each enemy unit for each team is recomputed on every
 -- sensor tick (every 2nd tick) from the maps: O(units × teams) buffer reads.
@@ -38,6 +47,7 @@ Sensors.AIR_SIGHT_FACTOR = 1.5 -- default airSight = 1.5 × sight
 Sensors.DEFAULT_RADAR_ERROR = 40 -- studs, when a radar def has no radarError
 Sensors.WOBBLE_PERIOD = 30 -- ticks per wobble target (guide 11.4: tick // 30)
 Sensors.CLOSE_SONAR = 40 -- studs: naval units and ASW helis detect submerged subs this close
+Sensors.STAMP_BUDGET = 200000 -- cells written by full stamps per sensor tick (D85)
 Sensors.new = SensorsState.new
 Sensors.hash = SensorsState.hash
 local CELL = Grid.SENSOR_CELL_SIZE
@@ -75,17 +85,91 @@ function Sensors.circle(radius: number): { number }
 	return c
 end
 
+-- The same circle as row spans: half[dz + R + 1] = largest |dx| in row dz
+-- (by symmetry also the largest |dz| in column dx); `cells` = its size.
+type Spans = { R: number, half: { number }, cells: number }
+local spansCache: { [number]: Spans } = {}
+local function spansOf(radius: number): Spans
+	local sp = spansCache[radius]
+	if sp then
+		return sp
+	end
+	local R = math.floor(radius / CELL)
+	local r2 = (radius / CELL) ^ 2
+	local half, cells = {}, 0
+	for dz = -R, R do
+		local h = -1
+		for dx = 0, R do
+			if dx * dx + dz * dz <= r2 then
+				h = dx
+			end
+		end
+		half[dz + R + 1] = h
+		cells += 2 * h + 1
+	end
+	sp = { R = R, half = half, cells = cells }
+	spansCache[radius] = sp
+	return sp
+end
+
+local function add(map: buffer, w: number, d: number, x: number, z: number, delta: number)
+	if x >= 0 and z >= 0 and x < w and z < d then
+		local o = (z * w + x) * 2
+		writeu16(map, o, readu16(map, o) + delta)
+	end
+end
+
 local function stampCircle(s: State, map: buffer, cx: number, cz: number, radius: number, delta: number)
 	if radius <= 0 then
 		return
 	end
-	local c = Sensors.circle(radius)
+	local sp = spansOf(radius)
+	local R, half = sp.R, sp.half
 	local w, d = s.width, s.depth
-	for i = 1, #c, 2 do
-		local x, z = cx + c[i], cz + c[i + 1]
-		if x >= 0 and z >= 0 and x < w and z < d then
-			local o = (z * w + x) * 2
+	for dz = -R, R do
+		local z = cz + dz
+		local h = half[dz + R + 1]
+		if z < 0 or z >= d or h < 0 then
+			continue
+		end
+		local x0, x1 = math.max(cx - h, 0), math.min(cx + h, w - 1)
+		local o = (z * w + x0) * 2
+		for _ = x0, x1 do
 			writeu16(map, o, readu16(map, o) + delta)
+			o += 2
+		end
+	end
+end
+
+-- Moves a stamped circle from (cx, cz) by (ddx, ddz), each -1, 0 or 1: an
+-- x shift (each row loses one end cell and gains the next), then a z shift
+-- (each column likewise).
+local function shiftCircle(s: State, map: buffer, cx: number, cz: number, radius: number, ddx: number, ddz: number)
+	if radius <= 0 then
+		return
+	end
+	local sp = spansOf(radius)
+	local R, half = sp.R, sp.half
+	local w, d = s.width, s.depth
+	if ddx ~= 0 then
+		for dz = -R, R do
+			local h = half[dz + R + 1]
+			if h >= 0 then
+				local z = cz + dz
+				add(map, w, d, cx - ddx * h, z, -1) -- trailing end
+				add(map, w, d, cx + ddx * (h + 1), z, 1) -- new leading end
+			end
+		end
+		cx += ddx
+	end
+	if ddz ~= 0 then
+		for dx = -R, R do
+			local h = half[dx + R + 1]
+			if h >= 0 then
+				local x = cx + dx
+				add(map, w, d, x, cz - ddz * h, -1)
+				add(map, w, d, x, cz + ddz * (h + 1), 1)
+			end
 		end
 	end
 end
@@ -119,6 +203,18 @@ local function stampUnit(s: State, team: number, cell: number, radii: { number }
 	for k, kind in Sensors.KINDS do
 		stampCircle(s, m[kind], cx, cz, radii[k], delta)
 	end
+end
+Sensors.stampUnit = stampUnit -- tests recount maps with it
+
+-- Cells written by stamping (or unstamping) these radii once.
+local function stampCost(radii: { number }): number
+	local n = 0
+	for _, radius in radii do
+		if radius > 0 then
+			n += spansOf(radius).cells
+		end
+	end
+	return n
 end
 
 -- Removes a unit's stamps (it moved, died or stopped emitting).
@@ -247,6 +343,7 @@ end
 function Sensors.step(sim: Types.Sim)
 	local s = sim.sensors
 	local w = sim.world
+	local fullSpent = 0
 	for _, team in s.teams do
 		table.clear(s.radars[team])
 		table.clear(s.closeSonar[team])
@@ -271,14 +368,31 @@ function Sensors.step(sim: Types.Sim)
 			s.radarError[team] = math.min(s.radarError[team] or math.huge, err)
 		end
 		local _, _, cell = Sensors.cellOf(s, w.posX[id], w.posZ[id])
-		if s.stampCell[id] ~= cell then
-			Sensors.unstamp(s, id)
+		local old = s.stampCell[id]
+		if old ~= cell then
 			local radii = radiiOf(sim, id)
 			local team = w.team[id]
-			stampUnit(s, team, cell, radii, 1)
-			s.stampCell[id] = cell
-			s.stampTeam[id] = team
-			s.stampRadius[id] = radii
+			local width = s.width
+			local ddx, ddz = 2, 2 -- not adjacent unless already stamped
+			if old ~= nil then
+				ddx, ddz = cell % width - old % width, cell // width - old // width
+			end
+			local m = s.maps[team]
+			if old ~= nil and m and s.stampTeam[id] == team and s.stampRadius[id] == radii and math.abs(ddx) <= 1 and math.abs(ddz) <= 1 then
+				-- one cell over: shift the circles
+				local ox, oz = old % width, old // width
+				for k, kind in Sensors.KINDS do
+					shiftCircle(s, m[kind], ox, oz, radii[k], ddx, ddz)
+				end
+				s.stampCell[id] = cell
+			elseif fullSpent < Sensors.STAMP_BUDGET then
+				fullSpent += stampCost(radii) + (if old ~= nil then stampCost(s.stampRadius[id]) else 0)
+				Sensors.unstamp(s, id)
+				stampUnit(s, team, cell, radii, 1)
+				s.stampCell[id] = cell
+				s.stampTeam[id] = team
+				s.stampRadius[id] = radii
+			end -- else: over this tick's budget; restamped on a later sensor tick
 		end
 	end
 

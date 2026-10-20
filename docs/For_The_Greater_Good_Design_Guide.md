@@ -941,6 +941,12 @@ Per ally team, on a **sensor grid of 16-stud cells** (2×2 grid cells; 128×128 
 
 **Stamping:** precompute circle offset lists per radius. When an emitter crosses into a new sensor cell, subtract its old circle and add the new one. Units that don't change sensor cell cost nothing. Large moving radars (AWACS) re-stamp at most every few ticks.
 
+Implementation (`Sim/Sensors.luau`, DECISIONS D85):
+- Circles are row spans.
+- A move to a neighboring sensor cell shifts the circle, touching only the edge cells (O(radius)).
+- Full stamps (new emitters, jumps) are budgeted at 200,000 cells per sensor tick, in ids order.
+- Sensors peak at 800 units: 21.6 → 2.1 ms.
+
 Implementation (`Sim/Sensors.luau`, DECISIONS D65):
 - Counts are u16, so dense stacks can't overflow. `airSight` defaults to 1.5 × sight.
 - Unfinished structures don't emit.

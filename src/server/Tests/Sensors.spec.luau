@@ -30,7 +30,7 @@ end
 -- it was stamped at (Sensors run before Movement in a tick, so after a step
 -- the stamp may trail the position by up to one tick of movement; that is
 -- checked separately). Returns the first mismatch, or nil.
-local function bruteMismatch(sim: Sim.Sim): string?
+local function bruteMismatch(sim: Sim.Sim, allowUnstamped: boolean?): string?
 	local s = sim.sensors
 	local w = sim.world
 	local expected: { [number]: { [string]: { [number]: number } } } = {}
@@ -48,6 +48,9 @@ local function bruteMismatch(sim: Sim.Sim): string?
 		local radii = { sensors.sight, sensors.airSight or sensors.sight * 1.5, sensors.radar, sensors.sonar, sensors.jam or 0 }
 		local stamped = s.stampCell[id]
 		if stamped == nil then
+			if allowUnstamped then
+				continue -- waiting for stamp budget (D85)
+			end
 			return `unit {id} is complete but not stamped`
 		end
 		local cx, cz = stamped % s.width, stamped // s.width
@@ -126,6 +129,36 @@ return function(t: RunAll.Context)
 				end
 			end
 		end
+	end)
+
+	t.test("a mass spawn is stamped within the per-tick budget, in ids order, and catches up", function()
+		local sim = Sim.new({ seed = 4, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local ids = {}
+		for i = 1, 300 do
+			local id = Spawn.unit(sim, if i % 2 == 0 then "ord_oracle" else "chs_watcher", if i % 2 == 0 then 1 else 2, ((i % 20) - 10) * 40, (i // 20 - 7) * 40)
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			table.insert(ids, id)
+		end
+		step(sim, 2) -- one sensor tick
+		local s = sim.sensors
+		local stamped = 0
+		for k, id in ids do
+			if s.stampCell[id] ~= nil then
+				stamped += 1
+				t.equal(stamped, k, "stamped in ids order")
+			end
+		end
+		t.expect(stamped > 0 and stamped < #ids, `first sensor tick stamped {stamped} of {#ids} radars`)
+		t.equal(bruteMismatch(sim, true), nil, "maps match the stamps made so far")
+		local ticks = 2
+		while s.stampCell[ids[#ids]] == nil and ticks < 200 do
+			step(sim, 2)
+			ticks += 2
+			t.equal(bruteMismatch(sim, true), nil, `tick {ticks}`)
+		end
+		t.equal(bruteMismatch(sim), nil, `all stamped after {ticks} ticks`)
+		print(`    300 radars: {stamped} stamped in the first sensor tick, all after {ticks} ticks`)
 	end)
 
 	t.test("a unit walking past changes HIDDEN → VISIBLE → HIDDEN exactly at the sight circle", function()

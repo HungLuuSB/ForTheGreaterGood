@@ -834,3 +834,30 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - A Roblox-side require shim (would break the "no `script`" rule in shared code).
   - `wait_for_child` everywhere (unneeded on the server, where Rojo builds the tree before scripts run).
 - **Why:** the user's step 1 of STUDIO_HANDOFF, done without Studio. Only the in-Studio run remains.
+
+## D85 — Sensor stamping: one-cell shifts, row spans, budgeted full stamps (2026-10-20, task 18)
+
+- **Profile** (800-unit stress test, per sensor tick):
+  - stamping and unstamping: 12–23 ms, about 95% of the time, writing 540k–1.27M map cells. Most restamps are moving units crossing one sensor cell: each erased and redrew whole circles (a radar is about 6,000 cells, an air-sight circle about 1,100);
+  - visibility updates: 0.2–0.4 ms;
+  - radar and close-sonar lists: 0.3–0.7 ms;
+  - ghosts: about 0.
+  - So recomputing visibility selectively, or staggering it, wouldn't help.
+- **Decision** (`Sim/Sensors.luau`):
+  - **Shift:** a unit whose new sensor cell is a neighbor of its stamped cell (same team and radii) shifts each circle: an x shift (each row loses its trailing end cell and gains the next leading one), then a z shift (each column likewise). That is O(radius), not O(radius²).
+  - **Row spans:** circles are cached per radius as row spans, so a full stamp is a tight run along each row (same cell set as before).
+  - **Stamp budget:** full stamps (new emitters, jumps of more than one cell, team or radius changes) are limited to `STAMP_BUDGET = 200,000` cells per sensor tick, in ids order. The first stamp over the budget still runs, so there is always progress. A unit over budget keeps its previous stamp, or has none if new, until a later sensor tick. Removals (death, unfinished frames) are never deferred.
+  - The existing full-recount test validates the shifts. A new test covers the budget (300 radars: 35 in the first sensor tick, all within 18 ticks, maps always matching the stamps made).
+  - Combining los and airLos stamping wasn't needed once shifts made moves cheap.
+- **Result** (Sensors average / peak ms, stress test, same PC):
+
+  | units | before | after |
+  |---|---|---|
+  | 200 | 1.46 / 6.10 | 0.18 / 1.39 |
+  | 400 | 2.39 / 12.42 | 0.31 / 3.48 |
+  | 600 | 3.42 / 14.18 | 0.40 / 2.06 |
+  | 800 | 4.16 / 21.56 | 0.54 / 2.14 |
+
+  The average tick at 800 units went from about 12.1 to 9.2 ms.
+- **Trade-off:** in a mass spawn (the stress test's 800 units appearing in one tick), the last units start emitting up to about 1 s late. Normal play spawns a few units at a time, far below the budget.
+- **Alternatives:** stamping at a coarser resolution (changes what is seen); spreading every restamp over ticks (would make moving units' sight lag).
