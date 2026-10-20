@@ -4,6 +4,7 @@
 
 local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
+local Economy = require("./Economy")
 local Nav = require("./Nav")
 local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
@@ -30,6 +31,7 @@ export type Sim = {
 	map: Passability.PassMap?, -- nil for mapId "none"
 	nav: Nav.Nav?, -- movement state; nil without a map
 	combat: Combat.Combat, -- projectiles, damage queue, wrecks, this tick's events
+	eco: Economy.Economy, -- team accounts
 	players: { [number]: Player },
 	playerOrder: { number }, -- player IDs, ascending
 	queue: { QueuedCommand }, -- commands to apply on the next tick

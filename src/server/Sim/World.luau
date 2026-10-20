@@ -26,9 +26,10 @@ World.Dirty = table.freeze({
 	HEALTH = 8,
 	STATE = 16,
 	ALTITUDE = 32,
+	BUILD = 64,
 })
 local D = World.Dirty
-local ALL_DIRTY = 63
+local ALL_DIRTY = 127
 
 -- State bit flags (replicated in the state record's `state` u16).
 World.State = table.freeze({
@@ -54,6 +55,7 @@ export type World = {
 	alt: { [number]: number },
 	heading: { [number]: number }, -- radians, 0 = +Z, counter-clockwise
 	health: { [number]: number },
+	buildProgress: { [number]: number }, -- 0..1; 1 = complete
 	state: { [number]: number }, -- World.State bits
 	fireState: { [number]: number },
 	moveState: { [number]: number },
@@ -96,6 +98,7 @@ function World.new(): World
 		alt = {},
 		heading = {},
 		health = {},
+		buildProgress = {},
 		state = {},
 		fireState = {},
 		moveState = {},
@@ -157,6 +160,7 @@ export type SpawnInfo = {
 	alt: number?,
 	health: number,
 	weaponCount: number?,
+	buildProgress: number?, -- default 1 (complete)
 }
 
 World.MAX_WEAPONS = 8
@@ -183,6 +187,7 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 	w.alt[id] = info.alt or 0
 	w.heading[id] = info.heading or 0
 	w.health[id] = info.health
+	w.buildProgress[id] = info.buildProgress or 1
 	w.state[id] = 0
 	w.fireState[id] = World.FireState.FIRE_AT_WILL
 	w.moveState[id] = World.MoveState.MANEUVER
@@ -229,6 +234,7 @@ function World.despawn(w: World, tick: number, id: number)
 	w.alt[id] = nil
 	w.heading[id] = nil
 	w.health[id] = nil
+	w.buildProgress[id] = nil
 	w.state[id] = nil
 	w.fireState[id] = nil
 	w.moveState[id] = nil
@@ -281,6 +287,11 @@ function World.setHealth(w: World, id: number, health: number)
 	w.dirty[id] = bor(w.dirty[id], D.HEALTH)
 end
 
+function World.setBuildProgress(w: World, id: number, progress: number)
+	w.buildProgress[id] = progress
+	w.dirty[id] = bor(w.dirty[id], D.BUILD)
+end
+
 function World.setState(w: World, id: number, state: number)
 	w.state[id] = state
 	w.dirty[id] = bor(w.dirty[id], D.STATE)
@@ -324,6 +335,7 @@ function World.hash(w: World, h: number?): number
 		hv = Hash.number(hv, w.alt[id])
 		hv = Hash.number(hv, w.heading[id])
 		hv = Hash.number(hv, w.health[id])
+		hv = Hash.number(hv, w.buildProgress[id])
 		hv = Hash.u32(hv, w.state[id])
 		hv = Hash.u32(hv, w.fireState[id])
 		hv = Hash.u32(hv, w.moveState[id])

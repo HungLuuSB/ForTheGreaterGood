@@ -2,12 +2,14 @@
 -- Spawning units from defs: the one place that turns a def into World fields
 -- (health, weapon slots). Used by scenarios, tests and (later) construction.
 
+local Lifecycle = require("./Lifecycle")
 local Types = require("./Types")
 local World = require("./World")
 
 local Spawn = {}
 
--- Spawns a `defId` unit for player `owner` at (x, z). Returns the unit ID.
+-- Spawns a complete `defId` unit for player `owner` at (x, z). Returns the
+-- unit ID. (Structures under construction come from Build, not from here.)
 function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: number, heading: number?): number
 	local def = sim.defs.units[defId]
 	if def == nil then
@@ -17,7 +19,7 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 	if player == nil then
 		error(`Spawn.unit: unknown player {owner}`, 2)
 	end
-	return World.spawn(sim.world, sim.tick, {
+	local id = World.spawn(sim.world, sim.tick, {
 		defIndex = def.index,
 		team = player.team,
 		owner = owner,
@@ -27,6 +29,8 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 		health = def.health,
 		weaponCount = #def.weapons,
 	})
+	Lifecycle.added(sim, id)
+	return id
 end
 
 return Spawn

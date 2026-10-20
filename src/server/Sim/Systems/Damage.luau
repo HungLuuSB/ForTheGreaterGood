@@ -8,7 +8,7 @@
 -- unit killed with severity <= 0.5 leaves a wreck worth half its supply.
 
 local Combat = require("../Combat/Combat")
-local Nav = require("../Nav")
+local Lifecycle = require("../Lifecycle")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -63,9 +63,6 @@ return function(sim: Types.Sim)
 			z = w.posZ[id],
 		})
 		c.stats.kills += 1
-		if sim.nav then
-			Nav.clearOrder(sim.nav, w, id)
-		end
-		World.despawn(w, sim.tick, id)
+		Lifecycle.remove(sim, id)
 	end
 end

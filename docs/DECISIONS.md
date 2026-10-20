@@ -521,3 +521,21 @@ Decisions made while working unattended. Each entry gives the date, the decision
 
 - **Decision:** `Layers.supply` (u8 deposit value per cell, guide 5.2) and `Layers.starts` (start positions). `MapRegistry` `start:<n>` is flat, with west and east starts, 4 deposits of value 4 around each and 2 in the middle.
 - **Why:** the build-order scenario needs deposits and starts. The Studio bake will fill the same layers from tagged parts (guide 5.4).
+
+## D57 — Economy settlement: income from producers, charge actual spend (2026-10-20)
+
+- **Decision:**
+  - One account per ally team (`Sim.team`). Overflow above storage is wasted (counted), since allies already share the account.
+  - Every 5th tick: income and storage are recomputed from the producer list. Then `stored := clamp(stored + income × window − spent + reclaimed, 0, storage)` and `ratio := min(1, (stored + income × window) / (demand × window))`.
+  - Construction spends each tick at `rate × effective ratio`, charges only what it actually spent, and is capped by the window's allowance, so stored can't go negative even when demand rises mid-window.
+  - The effective ratio of a consumer is the minimum over the resources it uses (two passes, guide 8.4).
+- **Alternatives:** the guide's incremental running totals for income and demand (updated on every change); charging `demand × ratio` at the step.
+- **Why:**
+  - Recomputing income from the producer list at 3 Hz is O(producers) and can't drift. Demand is reported by Construction each tick from the actual active jobs.
+  - Charging the actual spend makes the "refund the unused part" of guide 8.4 automatic.
+  - If a producer dies mid-window, the window's income is credited at the new rate, and a tiny shortfall is forgiven (stored is floored at 0).
+
+## D58 — `Lifecycle` is the single place units are added and removed (2026-10-20)
+
+- **Decision:** `Sim/Lifecycle.luau`. `added` registers producers (complete units such as the Command Vehicle). `completed` registers finished structures. `remove` clears producers, the move order, and registered hooks (construction, placement), then despawns. `Spawn.unit` and the Damage system go through it.
+- **Why:** every subsystem with per-unit state stays consistent. Modules above it in the require graph register removal hooks instead of creating require cycles.

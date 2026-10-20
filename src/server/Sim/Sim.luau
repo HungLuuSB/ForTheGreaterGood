@@ -19,6 +19,7 @@ local Prng = require("@shared/Util/Prng")
 local Profiler = require("@shared/Util/Profiler")
 local Schema = require("@shared/Net/Schema")
 local Combat = require("./Combat/Combat")
+local Economy = require("./Economy")
 local Nav = require("./Nav")
 local Replay = require("./Replay")
 local Scenarios = require("./Scenarios")
@@ -108,6 +109,13 @@ function Sim.new(config: Config): Sim
 		map = map,
 		nav = if map then Nav.new(map, defs) else nil,
 		combat = Combat.new(defs, layers),
+		eco = Economy.new((function()
+			local teams = {}
+			for _, id in order do
+				table.insert(teams, players[id].team)
+			end
+			return teams
+		end)()),
 		players = players,
 		playerOrder = order,
 		queue = {},
@@ -149,13 +157,13 @@ function Sim.submit(sim: Sim, player: number, payload: buffer): (boolean, string
 	return true, nil
 end
 
--- Hash of the whole simulation state: tick, PRNG state, world and combat
--- (projectiles, wrecks).
+-- Hash of the whole simulation state: tick, PRNG state, world, combat
+-- (projectiles, wrecks) and economy.
 function Sim.hash(sim: Sim): number
 	local h = Hash.u32(Hash.OFFSET_BASIS, sim.tick)
 	local s0, s1, s2, s3 = sim.rng:getState()
 	h = Hash.u32(Hash.u32(Hash.u32(Hash.u32(h, s0), s1), s2), s3)
-	return Combat.hash(sim.combat, World.hash(sim.world, h))
+	return Economy.hash(sim.eco, Combat.hash(sim.combat, World.hash(sim.world, h)))
 end
 
 -- Advances one tick: every system in order, at its rate.
