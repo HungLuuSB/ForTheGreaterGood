@@ -5,6 +5,8 @@
 --   ai                          Order AI vs Chaos AI on skirmish:192 (D90)
 --   matchup:<order>:<chaos>[:close|long]
 --                               the balance report's equal-value fight (D89)
+--   siege:<unit>                an equal-value group of <unit> against an
+--                               enemy base (plant, 3 generators, radar tower)
 --   <Sim scenario name>         that scenario; every player's units
 --                               attack-move at the enemy centroid every 2 s
 
@@ -142,6 +144,48 @@ function Scenes.matchup(aId: string, bId: string, kind: string, seed: number): S
 	}
 end
 
+-- An equal-value group of `aId` attacks an enemy base of passive structures:
+-- the balance report's "Structure" column (guide 12.4). Ships attack a
+-- base on the beach from offshore.
+function Scenes.siege(aId: string, seed: number): Scene
+	local defs = Defs.load()
+	local a = defs.units[aId]
+	assert(a, `Scenes.siege: unknown unit {aId}`)
+	local attacker = if a.faction == "order" then 1 else 2
+	local enemy = 3 - attacker
+	local p = if enemy == 1 then "ord_" else "chs_"
+	local naval = a.domain == "naval"
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = if naval then "sea:256" else "flat:128" })
+	local bx = if naval then SHORE - 90 else 250
+	local ax = if naval then SHORE + 350 else -250
+	local base = {
+		Spawn.unit(sim, p .. "vehplant", enemy, bx, 0),
+		Spawn.unit(sim, p .. "generator", enemy, bx - 50, -60),
+		Spawn.unit(sim, p .. "generator", enemy, bx - 50, 60),
+		Spawn.unit(sim, p .. "generator", enemy, bx + 50, -60),
+		Spawn.unit(sim, p .. (if enemy == 1 then "watchtower" else "eye"), enemy, bx + 50, 60),
+	}
+	local group = spawnGroup(sim, a, attacker, ax, if ax < bx then math.pi / 2 else -math.pi / 2)
+	local function alive(ids: { number }): number
+		local n = 0
+		for _, id in ids do
+			if sim.world.slot[id] then
+				n += 1
+			end
+		end
+		return n
+	end
+	return {
+		sim = sim,
+		drive = fightDriver(30),
+		done = function(_s: Sim.Sim): boolean
+			return alive(base) == 0 or alive(group) == 0
+		end,
+		maxTicks = Scenes.MATCHUP_TICKS,
+		sides = if attacker == 1 then { group, base } else { base, group },
+	}
+end
+
 function Scenes.ai(seed: number, mapId: string?): Scene
 	local sim = Sim.new({
 		seed = seed,
@@ -170,6 +214,10 @@ end
 function Scenes.byName(name: string, seed: number, mapId: string?): Scene
 	if name == "ai" then
 		return Scenes.ai(seed, mapId)
+	end
+	local besieger = string.match(name, "^siege:([%w_]+)$")
+	if besieger then
+		return Scenes.siege(besieger, seed)
 	end
 	local a, b, kind = string.match(name, "^matchup:([%w_]+):([%w_]+):?(%a*)$")
 	if a and b then

@@ -13,6 +13,7 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - D83: move orders, profiled and sliced into the pathing budget.
 - D84: offline Roblox build (darklua `convert_require` plus a place check).
 - D85–D90: third queue: Sensors stamping, local quadtree updates, match rules, full roster, balance report, skirmish AI.
+- D91–D94: round 5: bombing, wind / converters / extractor upgrades, match export and viewer, counter check.
 
 Open points are listed in `docs/PROGRESS.md` → Summary.
 
@@ -1043,3 +1044,36 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - in player view: radar and sonar blips (pulsing rings at their wobbled positions), ghosts (dashed), and fog from the sight bitmap;
   - minimap (click to jump); play / pause / speed 0.25–16× / scrub / step; wheel zoom and drag pan; click a unit for its def, health, build, position, heading, state bits and target;
   - checked in the browser pane against the AI match (spectator and player 1) and a radar matchup. `.claude/launch.json` has a "viewer" static server for that kind of check.
+
+## D94 — Counter check against guide 12.4 (2026-10-20, user-requested; report only)
+
+- **Method** (`lune run balance`, section "Counter check" in `docs/BALANCE.md`):
+  - The 12.4 table is parsed from the guide, so the check follows guide edits.
+  - Roles map to units: Tanks = Lancer, Ravager, Paladin, Juggernaut, Tideguard, Mire; Artillery = Verdict, Hellmouth, Judgement, Hydra; IR SAM = Halo, Hornet; Radar SAM = Seraph, Gorgon; Fighters = Falcon, Harpy, Archon, Manticore; Bombers = the four; Attack helis = Guardian, Wasp; Destroyers = Crusader, Corsair; Submarines = Silence, Lamprey.
+  - Coastal batteries (Rampart, Breaker) are added from guide 13.5 ("heavy gun against ships": ●●●).
+  - Target classes come from the defender's move class and domain.
+  - **Fights:**
+    - the existing equal-value duels;
+    - new sieges (`Scenes.siege`: a group against an enemy plant, 3 generators and a radar tower) for the Structure column;
+    - batteries against every enemy ship.
+  - **Shortfall:**
+    - "—" but can damage;
+    - ● and destroys nothing;
+    - ●● with a value trade below 1;
+    - ●●● with a value trade below 2;
+    - sieges: less than 2%, 30% or 60% of the base destroyed.
+  - **Diagnosis** from per-fight records (ever knew a target its weapons accept, closest distance, shots, hits, ammo):
+    - mechanic: can't target, can't see, can't reach (the shore), out of range, never fired, fired but never hit, ran dry, a bomber never lined up a run;
+    - numbers: it saw, reached, fired and hit, but lost the trade.
+- **Result:** 412 of 568 attacker / target pairs hold. 273 findings (one per pair and start): 157 mechanic, 116 numbers.
+- **Mechanic findings** (by cause):
+  1. **Ballistic fire at ships aims at the sea floor** (78 findings: tanks 39, artillery 24, coastal batteries 6, plus some destroyer and corvette guns). `Weapons` aims at `groundHeight + alt + height/2`, but a ship floats about 17 studs above the sea floor. MLRS (minimum pitch 0°) never fire; howitzers, mortars and tank and coastal guns fire low and never hit. The hitscan judgement already uses `Combat.unitBase`, so the aim point should too.
+  2. **Bombers can't line up runs** (34): they see 190–200 studs but release about 400 studs out. Without spotters, radar or bombs on radar contacts, they never or rarely drop.
+  3. **Destroyers can't hit aircraft** (13): their SAM was left out in D78 and never added.
+  4. **Tanks and attack helicopters can't hit helicopters** (22): the matrix says weak (●), but no ground gun or rocket targets AIR.
+  5. **Ran dry** (19): fighters against jets and attack helicopters against ships empty their ammo without pads. This is a property of the report's fights (no pads), not of the game.
+- **Numbers findings:**
+  - same-class mirrors (Tanks → Ground ●●● 59, Artillery → Ground ●● 35, Submarines → Sub 2, Destroyers → Ship 2): with equal value on both sides, one side's ●●● (trade ≥ 2) is the other side's trade ≤ 0.5, so a mirror can't satisfy both sides. These are artifacts of checking the matrix on same-role duels;
+  - IR SAM → helicopters ●●● (3): Halo against Wasp trades 0.5–0.6, Hornet against Guardian 1.64;
+  - Radar SAM → helicopters ●● (2); Destroyers → Sub ●● (4: 0.34–0.52); Fighters → jets ●●● (2); Silence against Corsair (1.91 < 2).
+- **Nothing was changed.** The fixes (aim point, bomber spotting, destroyer SAM, anti-helicopter weapons) are questions for the user.

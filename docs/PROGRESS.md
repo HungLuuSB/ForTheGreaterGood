@@ -2,43 +2,40 @@
 
 Status of the unattended work session. A new session should be able to continue from this file alone.
 
-## Summary (end of the third queue, 2026-10-20, branch `m-sim-polish`)
+## Summary (end of round 5, 2026-10-20, branch `m-sim-polish`)
 
-**Merged first:** `m0-foundations` → `main` (`fa21a39`, no-ff), tagged `sim-headless-v0.1`, and the new branch `m-sim-polish` started from it.
+**Done:** all six of your round-5 items, one commit each, all pushed.
 
-**Done: tasks 18–23**, one commit each, all pushed.
-
-| # | Task | Commit |
+| Item | What | Commit |
 |---|---|---|
-| 18 | Sensors: one-cell circle shifts, row spans, stamp budget | `2950572` |
-| 19 | Local quadtree updates when structures change | `4702fe6` |
-| 20 | Match rules: ally teams, win conditions, elimination, overflow, unit caps | `226e39a` |
-| 21 | Full placeholder roster (115 defs) and tech tree | `6537df8` |
-| 22 | Balance report (`lune run balance` → `docs/BALANCE.md`) | `0a96b77` |
-| 23 | Skirmish AI; AI-vs-AI match test | (last commit) |
+| 3 | Proper bombing: lead point, runs, egress, rearm; bomber rows re-run | `8dcd800` |
+| 4 | Wind turbines, supply converters, extractor upgrades | `c3264fc` |
+| 6a | Match export: `lune run export <scene> [--player N]` | `188b742` |
+| 6b | Match viewer: `tools/viewer/index.html` | `1974d5f` |
+| 2 | Counter check against guide 12.4 (report only) | (last commit) |
 
-**Tests:** `lune run test` gives **30 specs, 207 passed, 0 failed** (about 15 s). New specs: Match, TechTree, Skirmish. New tests also in Sensors, Placement and EW. Every mechanism was mutation-checked.
+(Answers 1 and 5 needed no work: balance stays for M8; team sizes and caps stay as they are.)
 
-**Performance** (stress test, 800 units, this PC):
-- Sensors peak: 21.6 → **2.1 ms** (average 4.2 → 0.5 ms).
-- Average tick: about 12.1 → **9.2–9.5 ms**; the worst whole tick is about 25 ms, against the 66.7 ms budget.
-- Worst move-order tick: about 10 ms.
-- Worst tick with a structure placed mid-battle: 42 → about 25 ms (the placement itself is ≤ 5.7 ms).
-- Bandwidth: unchanged, about 21 KB/s per player against 35.
+**Tests:** `lune run test` gives **31 specs, 220 passed, 0 failed**. New: 5 bomber tests (Air), 3 economy tests, `Export.spec` (5). Mutation checks were run for each new mechanism.
 
-**AI matches** (192×192, Order AI vs Chaos AI): they end by Command Ends in 6–8 game minutes; peak ticks 8.7–10.3 ms; deterministic and replayable.
+**Bombing:**
+- 4 / 4 bombs on parked targets;
+- moving targets hit with lead (1 / 2, versus 0 / 2 without);
+- bombers rearm and resume.
+- In the balance report bombers now trade 1.9–2.7 (they were 3.6–7.9 when bombs fired like guns), because they can't see far enough to line up runs (see below).
 
-**Balance report:** see `docs/BALANCE.md` and Task 22 below. Ships and helicopters are strong; MLRS, ASW helicopters and mobile SAMs are weak in straight fights.
+**Viewer:** double-click `tools/viewer/index.html`, then pick a file from `lune run export`:
+- `ai`: the 8-minute AI match, 4 MB;
+- `ai --player 1`: Order's fog-filtered view rebuilt from the real packets, 5.8 MB;
+- `matchup:<order>:<chaos>[:close|long]` or `siege:<unit>`: any balance fight.
 
-**Decisions:** D85–D90 (this queue).
+**Counter check** (`docs/BALANCE.md`): 412 of 568 pairs hold; 273 findings (157 mechanic, 116 numbers). The main mechanic causes are below.
 
 **Questions for you:**
-1. **Faction balance** (D89, D90): Chaos wins all 4 AI matches and most equal-value ground fights (Ravager vs Lancer as before). Rebalance now, or keep it for M8 with the report as the baseline?
-2. **Naval and air strength:** cruisers and carriers trade 11–19× because few units can hurt them, and attack helicopters about 7×. Is that the intended counter structure (guide 12.4), or should land units get more anti-ship and anti-air options?
-3. **Bombs:** bombers drop slow ballistic shells, because the BOMB type has no sim behavior (D88). Implement real level bombing (release over the target), or keep this for now?
-4. **Economy gaps** (D88): Wind Turbine, Supply Converter and replacing a T1 extractor when its upgrade starts are not implemented. Needed before M8?
-5. **Team sizes and caps** (D87): I allow 1-player ally teams in TEAM mode (uneven matches), and the unit cap counts structures and frames, like BAR. OK?
-6. **Studio:** unchanged; `docs/STUDIO_HANDOFF.md` step 1 only needs its in-Studio run.
+1. **Aim point at ships** (D94): ballistic weapons aim at the sea floor under a ship, about 17 studs below its hull. MLRS never fire at ships; tanks, artillery and coastal batteries never or rarely hit them. This looks like a bug: aim at the hull (`Combat.unitBase`), as the hit judgement already does. Fix it now?
+2. **Bomber spotting** (D91, D94): bombers see about 200 studs but must release about 400 studs out, so they only bomb what allies spot. Options: give bombers a longer air-to-ground sight, let bombs target radar contacts, or leave it (it rewards spotting).
+3. **Matrix vs defs** (D94): destroyers have no SAM (the matrix says ●● against aircraft), and nothing on the ground except SAMs can hit helicopters (the matrix says tanks ● and attack helicopters ●). Add the destroyer SAM and light anti-air to tanks and helicopters, or change the matrix?
+4. **Counter-check thresholds:** same-role mirrors can't meet ●●● for both sides by construction. Should mirror cells be checked only for "deals damage", or left as is?
 
 ---
 
@@ -314,6 +311,22 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
   - Tests: **19 specs, 140 passed**.
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
+
+### Round 5 — task 28: counter check ✅ (report only)
+
+- `lune run balance` now also runs sieges (`Scenes.siege`) and coastal-battery fights. It checks every matrix cell of guide 12.4 (parsed from the guide) for every unit of the role on both sides, and diagnoses each shortfall from per-fight records (D94).
+- **Result:** 412 of 568 pairs hold; 273 findings: 157 mechanic, 116 numbers. Details in `docs/BALANCE.md`.
+- **Mechanic:**
+  - ballistic fire at ships aims at the sea floor (tanks, artillery and coastal batteries never or rarely hit ships; MLRS never fire);
+  - bombers can't line up runs (sight ≈ 200 < release ≈ 400);
+  - destroyers have no SAM;
+  - tanks and attack helicopters can't hit helicopters at all (the matrix says weak);
+  - fighters and attack helicopters run dry without pads (a property of the report).
+- **Numbers:**
+  - same-role mirrors can't meet ●●● or ●● for both sides (an artifact of checking);
+  - IR SAMs lose to helicopters (Halo vs Wasp 0.5–0.6);
+  - destroyers lose to subs (0.34–0.52).
+- Every fight can be watched: `lune run export matchup:<order>:<chaos>[:close|long]` or `siege:<unit>`.
 
 ### Round 5 — task 27: match viewer ✅
 
