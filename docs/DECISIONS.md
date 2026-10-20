@@ -1093,3 +1093,20 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
   - 425 of 568 pairs hold (was 412); findings 273 → 248, with mechanic 157 → 84 and numbers 116 → 164;
   - all 78 "never fired / never hit" ship findings are gone;
   - what remains against ships is numbers (tanks 16, artillery 25, coastal batteries 3: they hit now but lose the trade).
+
+## D96 — Bombs on radar contacts and ghost structures (2026-10-20, user-requested)
+
+- **Decision:**
+  - The four bomb weapons get `canTargetRadar = true`. Bombers may target radar contacts, aiming at the wobbled position the team sees (guide 11.4), and remembered structures (ghosts) at their last known position. Bomber sight is unchanged.
+  - The bomb solution takes the impact height at the believed position too (`Combat.aimPoint` at `kx, kz`).
+  - Ghosts of structures that died unseen are not targeted: a weapon's target must be a live unit. Bombing a remembered spot that may be empty would need an attack-ground order (a question for the user).
+- **Tests** (`Air.spec`):
+  - a Plague with only Chaos radar on a parked Lancer releases 5 bombs on the contact; they land 6.3 studs from the blip on average and 23.8 from the tank;
+  - an Absolution bombs a plant that a spotter saw and left: 2 of 3 bombs are released on the ghost, both damage it.
+  - Without `canTargetRadar` both tests fail (no releases).
+- **Balance fights** (`Scenes`): bomber groups bring their faction's T1 radar tower (Watchtower / Eye), as a match's base radar would. The tower is not part of the trade. Attack-moves now aim at enemy units and fall back to structures only when no units are left (sieges).
+- **Bomber rows** (`lune run balance 2`):
+  - sieges, share of the base destroyed: Absolution 37% → 100%, Phantom 0% → 55% (ran dry), Behemoth 4% → 92%, Plague 85% → 100%;
+  - mean trade: Absolution 1.93 → 2.90, Phantom 2.68 → 2.17, Behemoth 1.93 → 2.64, Plague 2.18 → 2.63;
+  - bomber findings 34 → 33. None is "can't see" any more: 14 never lined up a run (shot down or out of time against SAMs and AA ships), 9 dropped only on radar contacts of small units and missed (radar error 20–45 studs, blast radius 14), 7 ran dry (no pads in these fights), 3 lost the trade.
+  - Whole check: 425 of 568 pairs hold; 249 findings (82 mechanic, 167 numbers).

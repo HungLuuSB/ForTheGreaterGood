@@ -1078,7 +1078,7 @@ countermeasures = {
 ### 12.2 Air
 
 - **Fighters** (`JET`): target `AIR` only. Patrol/intercept orders. Carry limited missiles; return to rearm when empty.
-- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order.
+- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order. Bombs may target radar contacts (aimed at the wobbled position, so small targets are often missed) and remembered structures at their last known position (D96).
 - **Attack helicopters** (`HELI`): hover and engage ground/naval targets; vulnerable to IR SAMs.
 - **ASW helicopter** (`HELI`): drops torpedoes on submerged contacts.
 - **Support aircraft:** AWACS (Order), EW jammer aircraft (Chaos).

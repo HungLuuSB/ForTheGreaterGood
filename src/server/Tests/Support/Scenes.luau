@@ -7,9 +7,16 @@
 --                               the balance report's equal-value fight (D89)
 --   siege:<unit>                an equal-value group of <unit> against an
 --                               enemy base (plant, 3 generators, radar tower)
+--
+-- Bomber groups bring their faction's T1 radar tower (D96): bombs need
+-- radar contacts or ghosts to line up runs from beyond the bomber's sight,
+-- as they would with a match's base radar. The tower is not part of the
+-- trade, and attack-moves aim at enemy units, not at structures, when
+-- there are any.
 --   <Sim scenario name>         that scenario; every player's units
 --                               attack-move at the enemy centroid every 2 s
 
+local Air = require("../../Sim/Air")
 local Categories = require("@shared/Defs/Categories")
 local Defs = require("@shared/Defs/Defs")
 local Packer = require("@shared/Net/Packer")
@@ -60,16 +67,27 @@ local function fightDriver(every: number): (Sim.Sim) -> ()
 		local g = (sim.map :: any).grid
 		for _, pid in sim.playerOrder do
 			local mine, ex, ez, n = {}, 0, 0, 0
+			local sx, sz, sn = 0, 0, 0 -- enemy structures: the goal only when no units are left
 			for _, id in w.ids do
+				local isStructure = sim.defs.unitByIndex[w.defIndex[id]].domain == "structure"
 				if w.owner[id] == pid then
-					if sim.defs.unitByIndex[w.defIndex[id]].domain ~= "structure" then
+					if not isStructure then
 						table.insert(mine, id)
 					end
 				elseif w.ally[id] ~= sim.players[pid].allyTeam then
-					ex += w.posX[id]
-					ez += w.posZ[id]
-					n += 1
+					if isStructure then
+						sx += w.posX[id]
+						sz += w.posZ[id]
+						sn += 1
+					else
+						ex += w.posX[id]
+						ez += w.posZ[id]
+						n += 1
+					end
 				end
+			end
+			if n == 0 then
+				ex, ez, n = sx, sz, sn
 			end
 			if #mine > 0 and n > 0 then
 				local cell, ox, oz = g:encode(ex / n, ez / n)
@@ -111,6 +129,10 @@ local function spawnGroup(sim: Sim.Sim, d: Defs.UnitDef, owner: number, cx: numb
 		local row, col = i // 5, i % 5
 		local x = cx + (if facing > 0 then -1 else 1) * row * spacing
 		table.insert(ids, Spawn.unit(sim, d.id, owner, x, (col - 2) * spacing, facing))
+	end
+	if Air.isBomber(sim, d) then
+		-- the team's radar, beside the group's start (outside the formation)
+		Spawn.unit(sim, if d.faction == "order" then "ord_watchtower" else "chs_eye", owner, cx, -3 * spacing - 40)
 	end
 	return ids
 end

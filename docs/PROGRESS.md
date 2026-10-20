@@ -312,6 +312,13 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 6 — item 2: bombs on radar contacts and ghosts ✅
+
+- Bombs have `canTargetRadar`: radar contacts at the wobbled position, structure ghosts at their last known position; sight unchanged (D96).
+- `Air.spec`: radar contact (5 drops, 6.3 studs from the blip, 23.8 from the tank) and ghost plant (both ghost drops damage it). Both fail without the flag.
+- Balance fights give bomber groups their T1 radar tower. Sieges: Absolution 100%, Phantom 55%, Behemoth 92%, Plague 100% (were 37 / 0 / 4 / 85%).
+- Tests: **31 specs, 225 passed**.
+
 ### Round 6 — item 1: shared aim point ✅
 
 - `Combat.aimPoint` / `Combat.baseAt` are used by aiming, hit checks, homing, EW, bombs and explosions (D95).

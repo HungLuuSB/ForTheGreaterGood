@@ -2,6 +2,7 @@
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Air = require("../Sim/Air")
+local Sensors = require("../Sim/Sensors")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
@@ -292,5 +293,105 @@ return function(t: RunAll.Context)
 			return Sim.hash(sim)
 		end
 		t.equal(run(), run())
+	end)
+
+	-- Unseen targets (D96). Steps `ticks` and returns, per bomb that landed:
+	-- the sensor level of the bomber's target at release, the impact's
+	-- distance to the believed and to the true position of the target at
+	-- release, and whether it damaged the target.
+	type Drop = { level: number, toBelieved: number, toTrue: number, hit: boolean }
+	local function unseenDrops(sim: Sim.Sim, bomber: number, ticks: number): { Drop }
+		local w = sim.world
+		local pending: { [number]: { level: number, target: number, bx: number, bz: number, tx: number, tz: number, hp: number } } = {}
+		local drops: { Drop } = {}
+		for _ = 1, ticks do
+			for _, r in pending do
+				r.hp = w.health[r.target]
+			end
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					local target = w.wTarget[World.slotKey(bomber, 1)]
+					local bx, bz, level = Sensors.knownPosition(sim, w.ally[bomber], target)
+					pending[e.other] = { level = level, target = target, bx = bx :: number, bz = bz :: number, tx = w.posX[target], tz = w.posZ[target], hp = w.health[target] }
+				elseif e.kind == "IMPACT" and pending[e.other] and e.x then
+					local r = pending[e.other]
+					pending[e.other] = nil
+					local ix, iz = e.x :: number, e.z :: number
+					table.insert(drops, {
+						level = r.level,
+						toBelieved = math.sqrt((ix - r.bx) ^ 2 + (iz - r.bz) ^ 2),
+						toTrue = math.sqrt((ix - r.tx) ^ 2 + (iz - r.tz) ^ 2),
+						hit = w.health[r.target] < r.hp, -- damaged by this bomb
+					})
+				end
+			end
+		end
+		return drops
+	end
+
+	-- A Plague 600 studs east of a parked Lancer that only Chaos radar sees
+	-- (an Eye tower: radar error 45 studs, so the blip is well off the tank).
+	t.test("bombs target radar contacts and land on the wobbled position", function()
+		local sim = Sim.new({ seed = 31, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local bomber = Spawn.unit(sim, "chs_plague", 2, 450, 0, -math.pi / 2)
+		Spawn.unit(sim, "chs_eye", 2, 200, 250) -- radar 600 reaches the target; sight 160 doesn't
+		local target = Spawn.unit(sim, "ord_lancer", 1, -150, -100, 0)
+		w.fireState[target] = World.FireState.HOLD_FIRE
+		World.setHealth(w, target, 1e6)
+		moveTo(sim, 2, { bomber }, -150, -100)
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 2, target), Sensors.Level.RADAR, "the target is a radar contact only")
+		local drops = unseenDrops(sim, bomber, 1800)
+		local onRadar, believed, actual = 0, 0, 0
+		for _, d in drops do
+			if d.level == Sensors.Level.RADAR then
+				onRadar += 1
+				believed += d.toBelieved
+				actual += d.toTrue
+			end
+		end
+		t.expect(onRadar >= 3, `bombs released on the radar contact ({onRadar} of {#drops})`)
+		believed /= math.max(onRadar, 1)
+		actual /= math.max(onRadar, 1)
+		-- a release is allowed within aoe / 2 + radius across the track (Air.bombRelease)
+		local weapon = sim.defs.weapons.chs_bomb
+		local tolerance = (weapon.aoe :: number) / 2 + sim.combat.profiles[w.defIndex[target]].radius + weapon.accuracy
+		t.expect(believed <= tolerance, `bombs land on the believed (wobbled) position: {believed} studs on average (release tolerance {tolerance})`)
+		t.expect(actual > believed + 10, `and miss the true position by about the radar error: {actual} studs on average`)
+		print(`    radar contact: {onRadar} drops, {string.format("%.1f", believed)} studs from the blip, {string.format("%.1f", actual)} from the tank`)
+	end)
+
+	t.test("bombs target ghost structures at their last known position", function()
+		local sim = Sim.new({ seed = 32, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, 0, math.pi / 2)
+		local plant = Spawn.unit(sim, "chs_vehplant", 2, 150, -100)
+		World.setHealth(w, plant, 1e6)
+		local spotter = Spawn.unit(sim, "ord_lancer", 1, 150, 0)
+		w.fireState[spotter] = World.FireState.HOLD_FIRE
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		World.setPosition(w, spotter, -450, 450) -- the spotter leaves; nobody sees the plant now
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 1, plant), Sensors.Level.GHOST, "the plant is a ghost")
+		moveTo(sim, 1, { bomber }, 150, -100)
+		local drops = unseenDrops(sim, bomber, 1800)
+		local onGhost, hits = 0, 0
+		for _, d in drops do
+			if d.level == Sensors.Level.GHOST then
+				onGhost += 1
+				hits += if d.hit then 1 else 0
+			end
+		end
+		t.expect(onGhost >= 2, `bombs released on the ghost ({onGhost} of {#drops})`)
+		t.equal(hits, onGhost, "every bomb released on the ghost damaged the plant")
+		print(`    ghost structure: {onGhost} of {#drops} drops released on the ghost, {hits} damaged it`)
 	end)
 end

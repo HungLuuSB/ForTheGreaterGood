@@ -85,7 +85,7 @@ function Air.bombSolution(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, ta
 	local w = sim.world
 	local c = sim.combat
 	local dropY = Combat.unitBase(c, w, id) + c.profiles[w.defIndex[id]].muzzleHeight
-	local _, hitY = Combat.aimPoint(c, w, target)
+	local _, hitY = Combat.aimPoint(c, w, target, kx, kz) -- at the believed position
 	local g = weapon.gravity or 60
 	local t = sqrt(2 * math.max(dropY - hitY, 1) / g)
 	local h, v = w.heading[id], w.speed[id]

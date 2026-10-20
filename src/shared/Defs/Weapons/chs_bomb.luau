@@ -4,6 +4,7 @@ return {
 	id = "chs_bomb",
 	type = "BOMB",
 	range = 800, -- acquisition radius; release is computed (D91)
+	canTargetRadar = true, -- radar contacts (wobbled position) and structure ghosts (D96)
 	reload = 1.5,
 	gravity = 60,
 	accuracy = 2,

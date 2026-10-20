@@ -17,7 +17,8 @@
 --    (parsed from the guide), listing every attacker / target pair that
 --    falls short of its dots, and why (DECISIONS D94):
 --      mechanic  can't target, can't see, can't reach, out of range, ran
---                dry, or a bomber never lined up a run
+--                dry, a bomber never lined up a run, or its bombs on
+--                radar contacts all missed
 --      numbers   it fought (fired, hit) but lost the trade
 -- Workers, commanders, unarmed support units and structures (except
 -- coastal batteries in section 3) are left out. Aircraft have no rearm pads.
@@ -31,6 +32,7 @@ local Defs = require("../src/shared/Defs/Defs")
 local Sensors = require("../src/server/Sim/Sensors")
 local Sim = require("../src/server/Sim/Sim")
 local Scenes = require("../src/server/Tests/Support/Scenes")
+local World = require("../src/server/Sim/World")
 
 local SEEDS = tonumber(process.args[1]) or 1
 local FILTER = process.args[2]
@@ -75,11 +77,13 @@ type Diag = {
 	knew: boolean, -- ever knew a target its weapons accept
 	minDist: number, -- closest the two groups got (studs)
 	dry: boolean, -- an aircraft ran out of ammo
+	drops: number, -- bombs released
+	blind: number, -- bombs released on radar contacts (aimed at the wobbled position)
 }
 type Outcome = { trade: number, lostA: number, lostB: number, winner: string, ticks: number, diag: { Diag } }
 
 local function newDiag(): Diag
-	return { lost = 0, dealt = 0, shots = 0, hits = 0, knew = false, minDist = math.huge, dry = false }
+	return { lost = 0, dealt = 0, shots = 0, hits = 0, knew = false, minDist = math.huge, dry = false, drops = 0, blind = 0 }
 end
 
 -- Runs a scene to the end, recording both sides.
@@ -117,6 +121,14 @@ local function run(scene: Scenes.Scene): ({ Diag }, number, string)
 				diag[side].shots += 1
 				if e.kind == "SPAWN_PROJ" then
 					projSide[e.other] = side
+					local slot = e.slot :: number
+					if defs.weaponByIndex[defOf[e.unit].weapons[slot].weaponIndex].type == "BOMB" then
+						diag[side].drops += 1
+						local target = w.wTarget[World.slotKey(e.unit, slot)]
+						if Sensors.level(sim, w.ally[e.unit], target) == L.RADAR then
+							diag[side].blind += 1
+						end
+					end
 				elseif e.hit then
 					diag[side].hits += 1
 				end
@@ -183,6 +195,8 @@ local function merge(into: Diag, d: Diag)
 	into.knew = into.knew or d.knew
 	into.minDist = math.min(into.minDist, d.minDist)
 	into.dry = into.dry or d.dry
+	into.drops += d.drops
+	into.blind += d.blind
 end
 
 local function fight(make: (number) -> Scenes.Scene): Outcome
@@ -394,7 +408,7 @@ local function diagnose(att: Defs.UnitDef, def: Defs.UnitDef?, d: Diag): (string
 	end
 	if d.shots == 0 then
 		if isBomber(att) then
-			return "mechanic", "never lined up a bomb run (sight 190–200 < release distance ≈ 400)"
+			return "mechanic", "never lined up a bomb run (shot down or out of time first)"
 		end
 		local reach = if def then reachOf(att, def) else 0
 		if d.minDist > reach + 20 then
@@ -408,13 +422,16 @@ local function diagnose(att: Defs.UnitDef, def: Defs.UnitDef?, d: Diag): (string
 		return "mechanic", "never fired (in range and seen)"
 	end
 	if d.hits == 0 then
+		if d.blind > 0 then
+			return "mechanic", string.format("bombs never hit: %d of %d bombs (all seeds) dropped on radar contacts, which miss by the radar error (20–45 studs; blast radius 14)", d.blind, d.drops)
+		end
 		return "mechanic", "fired but never hit (aim, tracking or the target's countermeasures)"
 	end
 	if d.dry then
 		return "mechanic", "ran out of ammo (no rearm pads)"
 	end
 	if isBomber(att) then
-		return "mechanic", "too few bomb runs lined up (sight 190–200 < release distance ≈ 400)"
+		return "numbers", string.format("bombed and lost the trade (%d of %d bombs, all seeds, on radar contacts)", d.blind, d.drops)
 	end
 	return "numbers", "fought and lost the trade"
 end
@@ -520,6 +537,7 @@ out(string.format("- Two starts: **close** (120 studs apart) and **long** (600 s
 out("- Cell: Order's value trade, close / long = Chaos value destroyed ÷ Order value lost (damage counted pro rata). Above 1 favours Order, ∞ means Order lost nothing. Letters: winner per seed (O, C, or - when time ran out with both sides alive).")
 out("- Blank: neither unit can damage the other.")
 out("- Aircraft have no rearm pads in these fights and run dry.")
+out("- Bomber groups bring their faction's T1 radar tower (not part of the trade), as a match's base radar would, so bombs can target radar contacts (D96).")
 out("- Watch any fight: `lune run export matchup:<order id>:<chaos id>[:close|long]` (or `siege:<id>`), then open `tools/viewer/index.html`.")
 out(string.format("- %d battles, %.0f s on the dev PC.", battles, os.clock() - t0))
 out("")
@@ -599,7 +617,7 @@ out("Against structures (the siege), the share of the base destroyed must be abo
 out("")
 out("Why a pair fell short:")
 out("")
-out("- **mechanic**: can't target, can't see, can't reach (the shore), out of range, never hit, ran dry, or a bomber never lined up a run;")
+out("- **mechanic**: can't target, can't see, can't reach (the shore), out of range, never hit, ran dry, a bomber never lined up a run, or all its bombs on radar contacts missed;")
 out("- **numbers**: it saw, reached, fired and hit, but lost the trade.")
 out("")
 local byKind = { mechanic = 0, numbers = 0 }
