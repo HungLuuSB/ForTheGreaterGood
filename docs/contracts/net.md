@@ -54,7 +54,7 @@ Names and reliability: `Schema.Channel`.
 | Icon | 6 bits | 0 = unknown (radar / sonar blip). Else the position (1-based) of the def's `icon` name in the **sorted list of distinct icon names** over all unit defs (`NetOut.iconIndex`), capped at 63. |
 | Team | 3 bits (strategic) / u8 (ENTER) | 1..8. Ally teams come from the match config. |
 
-**Unit `state` bits** (u16, `World.State`): `MOVING 1`, `TOGGLED_ON 2` (radar / jammer switched on), `SUBMERGED 4`, `LANDED 8`. Other bits are reserved (0).
+**Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1`, `TOGGLED_ON 2` (radar / jammer switched on), `SUBMERGED 4`, `LANDED 8`. Other bits are reserved (0).
 
 **Weapon states** (2 bits per slot in a u16; slot 1 = bits 0–1; `Schema.weaponStateAt`):
 - `IDLE 0`: no target;
