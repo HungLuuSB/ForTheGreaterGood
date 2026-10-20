@@ -149,8 +149,12 @@ ReplicatedStorage/
 
 ServerScriptService/
   Sim/
-    Main.server.luau    tick loop, system order
+    Main.server.luau    Heartbeat tick loop (Roblox only; drives Sim.step)
+    Sim.luau            Sim.new / submit / step / hash / runReplay, fixed system order
+    Types.luau          shared Sim types (systems require this, not Sim)
+    Scenarios.luau      named, deterministic match-start setups
     World.luau          unit storage (struct-of-arrays), ID allocator
+    Replay.luau         replay log: header, commands, checkpoints
     Systems/
       Commands.luau     validation + command queues
       Economy.luau
@@ -165,7 +169,6 @@ ServerScriptService/
       Lifecycle.luau    spawn, death, wrecks
       NetOut.luau       per-player interest + packet building
     Workers/            Actor scripts for flow fields (Parallel Luau)
-    Replay/             command log writer
   Tests/
     RunAll.luau         headless test runner
     *.spec.luau         test specs (section 17.2)
@@ -1270,9 +1273,12 @@ Build these **before** adding lots of content.
 
 ### 17.1 Replay system
 
-- Log: header (game version, **protocol version**, defs hash, map ID, RNG seed, players) + every command as `[tick u32][player u8][payload]`. Command payloads use the Schema command record, so a replay plays back only with the protocol version it was recorded with.
+- Log: header (`"FTGR"`, format version, **protocol version**, defs hash, RNG seed, map ID, scenario, players), then entries, each starting with a kind byte:
+  - COMMAND `[tick u32][player u8][len u16][payload]`, recorded at the tick the command is applied. Payloads are Schema command records, so a replay plays back only with the protocol version and defs hash it was recorded with.
+  - CHECKPOINT `[tick u32][hash u32]`, written every 300 ticks.
+- `Sim.runReplay` rebuilds the sim from the header, feeds the commands at their ticks and reports the first checkpoint whose hash differs.
 - Because the server simulation is deterministic, replaying the commands reproduces the match exactly. Every bug report should come with a replay.
-- Add a desync check: every 300 ticks, log a hash of world state (positions, health). A replay that produces a different hash means non-determinism crept in (unordered `pairs`, `os.clock` in logic, unseeded random).
+- Add a desync check: every 300 ticks, log a hash of the simulation state (`Sim.hash`: tick, PRNG state, every unit field in ID order, ID allocator). A replay that produces a different hash means non-determinism crept in (unordered `pairs`, `os.clock` in logic, unseeded random).
 
 ### 17.2 Headless simulation tests
 

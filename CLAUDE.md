@@ -49,6 +49,6 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
 
 ## Current milestone
 
-M0 — Foundations (defs loader + validation, grid, Packer, tick loop, World storage, replay log). Map bake is in M1.
-Exit: defs validate; packets round-trip; 1,000 headless ticks run under `lune run test`.
+M1 — One tank moves. In Lune mode only the simulation side: passability, quadtree + flow fields, movement and avoidance. Map bake, replication, rendering and debug overlays need Studio.
+M0 (Foundations) exit criteria met on 2026-10-20: defs validate, packets round-trip, and 1,000 headless ticks run deterministically and replay exactly.
 Update this line when a milestone's exit criteria are met.

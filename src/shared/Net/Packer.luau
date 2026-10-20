@@ -110,6 +110,14 @@ function Writer.writeBytes(self: Writer, source: buffer, offset: number?, count:
 	self._pos += n
 end
 
+-- Appends the raw bytes of a string (no length prefix).
+function Writer.writeString(self: Writer, s: string)
+	local n = #s
+	ensure(self, n)
+	buffer.writestring(self._buf, self._pos, s)
+	self._pos += n
+end
+
 -- Appends the low `count` bits of value (count 1..32). Bits accumulate until
 -- they fill whole bytes; call flushBits() before the next byte write or finish().
 -- Arithmetic stays exact: at most 7 + 32 = 39 pending bits, well under 2^53.
@@ -237,6 +245,19 @@ end
 
 function Reader.readU32(self: Reader): number
 	return readu32(self._buf, take(self, 4))
+end
+
+-- Reads `count` raw bytes as a string (bounds-checked).
+function Reader.readString(self: Reader, count: number): string
+	if type(count) ~= "number" or count < 0 or count ~= math.floor(count) then
+		error(`Packer: byte count must be an integer >= 0, got {count}`, 2)
+	end
+	return buffer.readstring(self._buf, take(self, count), count)
+end
+
+-- Reads `count` raw bytes into a new buffer (bounds-checked).
+function Reader.readBuffer(self: Reader, count: number): buffer
+	return buffer.fromstring(self:readString(count))
 end
 
 -- Reads `count` bits (1..32), LSB-first, matching Writer.writeBits.

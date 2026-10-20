@@ -21,8 +21,8 @@ Status of the unattended work session. A new session should be able to continue 
 | 1 | Packer/Schema follow-ups (8 weapon slots, PROTOCOL_VERSION, BUILD facing, tick wrap), guide 0.4 | ✅ done (`e1be1c4`) |
 | 2 | Defs: loader, `extend`, validation (4.5), indices, hash, enums, `ord_lancer` / `chs_ravager` | ✅ done |
 | 3 | Grid: cell math, position encode/decode, procedural test map (height + water) | ✅ done |
-| 4 | World (SoA, u16 IDs with delayed reuse, dirty bits), `Sim.step` with stub systems, replay log, world hash | ⏳ next |
-| 5 | Movement classes and passability: passMask + per-class clearance on the test map | pending |
+| 4 | World (SoA, u16 IDs with delayed reuse, dirty bits), `Sim.step` with stub systems, replay log, world hash | ✅ done (M0 exit criteria met) |
+| 5 | Movement classes and passability: passMask + per-class clearance on the test map | ⏳ next |
 | 6 | Quadtree + coarse A* route + corridor | pending |
 | 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | pending |
 | 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | pending |
@@ -54,6 +54,23 @@ Status of the unattended work session. A new session should be able to continue 
 - Specs: `Grid.spec` (sizes, index round-trip, boundaries, 15,000 random encode/decode round-trips within 1/32 stud, clamping, sensor cells) and `TestMap.spec` (quantization, determinism per seed, water consistency, 256×256).
 - Tests: **8 specs, 64 passed, 0 failed**.
 - Decisions: D8–D12.
+
+### Task 4 — World, Sim, replay
+
+- `src/server/Sim/`:
+  - `World.luau`: SoA fields, dense `ids` list, fresh-first IDs with FIFO reuse after 150 ticks, dirty-bit setters, hash.
+  - `Sim.luau`: `new`/`submit`/`step`/`hash`/`fromReplay`/`runReplay`; 11 systems in guide order with rates and Profiler labels; checkpoint every 300 ticks.
+  - `Replay.luau`: binary log with header, COMMAND and CHECKPOINT entries.
+  - `Scenarios.luau` (`empty`, `skirmish_test`), `Types.luau`.
+  - `Systems/Commands.luau`: applies fire state, move state and toggle to the sender's own units. The other 10 systems are stubs.
+- `Packer` gained `writeString`, `readString` and `readBuffer`.
+- Specs:
+  - `World.spec`: dense ids, delayed FIFO reuse after exhausting all 65,535 IDs, dirty bits, order-independent hash.
+  - `Replay.spec`: round-trip, every truncated prefix, bad magic/format/kind.
+  - `Sim.spec`: system order; 1,000 ticks twice give identical checkpoints and hash; a different seed differs; replay reproduces the run and re-records an identical log; an injected command and a corrupted checkpoint are both caught; protocol/defs mismatch refused; malformed submits dropped; ownership respected.
+- Tests: **11 specs, 83 passed, 0 failed**.
+- **M0 exit criteria met.** CLAUDE.md's milestone line now says M1.
+- Decisions: D13–D20.
 
 ## Benchmarks
 

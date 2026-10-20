@@ -94,3 +94,59 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
 - **Decision:** `.lune/lib/Ppm.luau` writes binary PPM and also PNG (zlib via `@lune/serde`, CRC-32 in Luau), so images open directly on Windows. Debug scripts are `.lune/debug_*.luau` and write to `debug_out/`.
 - **Alternatives:** PPM only.
 - **Why:** PPM isn't viewable without extra software, and PNG takes about 30 extra lines.
+
+## D13 — Unit IDs: fresh first, then FIFO reuse after 150 ticks (2026-10-20)
+
+- **Decision:** `World.spawn` hands out never-used IDs (1..65535) first. After that it reuses freed IDs oldest-first, and only once `REUSE_DELAY_TICKS = 150` (10 s) have passed since they were freed.
+- **Alternatives:** reuse freed IDs as soon as their delay passes, even while fresh IDs remain.
+- **Why:** fresh-first keeps IDs unique for as long as possible, which makes logs and replays easier to read. Both are deterministic.
+
+## D14 — Heading is radians, 0 = +Z, counter-clockwise (2026-10-20)
+
+- **Decision:** `World.heading` holds radians. The wire `heading u8` is quantized from it when NetOut exists.
+- **Alternatives:** degrees.
+- **Why:** sin/cos take radians directly, so the movement and aim math needs no conversions.
+
+## D15 — Replay format: entry kinds and length-prefixed payloads (2026-10-20)
+
+- **Decision:**
+  - The header is `"FTGR"`, then format u8, protocol u16, defs hash u32, seed u32, map id, scenario, and players.
+  - Each entry starts with a `kind u8`:
+    - COMMAND: `[tick u32][player u8][len u16][payload]`.
+    - CHECKPOINT: `[tick u32][hash u32]`, written every 300 ticks.
+  - A command is recorded at the tick it is **applied**.
+- **Alternatives:** the guide's bare `[tick u32][player u8][payload]` with checkpoints in a separate file.
+- **Why:** a payload has no self-delimiting length (a command's length depends on its type), and checkpoints belong next to the commands they verify. Guide 17.1 is updated.
+
+## D16 — Match start comes from a named scenario (2026-10-20)
+
+- **Decision:** `Sim/Scenarios.luau` maps names to deterministic setup functions (`empty`, `skirmish_test`). The name is stored in the replay header.
+- **Alternatives:** record initial spawns as replay entries.
+- **Why:** a replay rebuilds the same start from seed + scenario + players. The real start (Command Vehicles at start positions) becomes another scenario once maps exist.
+
+## D17 — Commands system: only state commands have effects yet (2026-10-20)
+
+- **Decision:**
+  - SET_FIRE_STATE, SET_MOVE_STATE and TOGGLE apply to the sender's own units. Other unit IDs are skipped silently.
+  - MOVE, ATTACK, BUILD and the like are decoded, recorded and accepted, with no effect until their systems exist.
+  - Malformed payloads, trailing bytes and unknown players are rejected in `Sim.submit` (counted in `sim.stats`) and never reach the queue.
+- **Alternatives:** reject the whole command if any unit isn't owned.
+- **Why:** with multi-select, some units may have died since the client sent the command. Applying to the valid ones is what players expect.
+
+## D18 — The Heartbeat tick loop waits for the Roblox entry script (2026-10-20)
+
+- **Decision:** `Sim.step` is a pure function of state. The accumulator loop (whole ticks only, at most 2 catch-up ticks per frame) belongs in `Main.server.luau`, which needs Studio.
+- **Alternatives:** a runtime-agnostic loop driven by `Profiler.now()`.
+- **Why:** the loop is about wall-clock time, which the headless sim must never read. Tests drive `Sim.step` directly.
+
+## D19 — Sim hash = tick + PRNG state + world, units in ID order (2026-10-20)
+
+- **Decision:** `Sim.hash` folds in the tick, the four PRNG state words, then `World.hash`. World.hash covers every gameplay field and the ID allocator, visiting units in ascending ID order.
+- **Alternatives:** hash positions and health only (the guide's minimum).
+- **Why:** desyncs in the PRNG or the allocator show up a checkpoint earlier. Sorting by ID makes the hash independent of swap-remove order.
+
+## D20 — Server tests require Sim modules relatively (2026-10-20)
+
+- **Decision:** `src/server/Tests/*.spec.luau` use `require("../Sim/World")`.
+- **Alternatives:** a new `@server` alias.
+- **Why:** Tests and Sim are both under `src/server`, so they share one root, and `../Sim/X` resolves identically in Roblox (`ServerScriptService.Tests` → `ServerScriptService.Sim`). This follows the "relative within a root" rule.
