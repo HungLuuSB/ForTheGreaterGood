@@ -3,6 +3,7 @@
 -- instead of Sim.luau, which would be a require cycle.
 
 local AirState = require("./AirState")
+local OrdersState = require("./OrdersState")
 local EWState = require("./EWState")
 local MatchState = require("./MatchState")
 local BuildState = require("./BuildState")
@@ -43,6 +44,7 @@ export type Sim = {
 	eco: Economy.Economy, -- team accounts
 	build: BuildState.BuildState, -- construction orders, factory queues, reclaim
 	air: AirState.AirState, -- aircraft ammo and rearming
+	orders: OrdersState.OrdersState, -- unit order queues, factory rally / repeat (S-4)
 	ew: EWState.EWState, -- countermeasure charges and cooldowns
 	match: MatchState.MatchState, -- match rules: counts, eliminations, result
 	sensors: SensorsState.State, -- sensor maps, visibility, ghosts

@@ -9,6 +9,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-1: network contract `docs/contracts/net.md`; projectile math moved to Shared.
 - S-2: join / reconnect snapshot and the Eco channel (protocol 6).
 - S-3: weapon pieces must be in `pieces` (client request).
+- S-4: order queues and behaviors (shift, FIGHT, PATROL, ATTACK, GUARD, REPAIR, RECLAIM, BUILD, factory rally and repeat).
 
 ---
 
@@ -48,3 +49,33 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Fix:** the missing piece is added to each def's `pieces` (after `base`).
 - **Validation:** `Defs` now rejects a weapon's `turretPiece`, `pitchPiece` or `muzzle` that isn't in the unit's `pieces` (`Defs.spec` case). The client rig (guide 14.2, `docs/contracts/rig.md`) animates these pieces.
 - The defs hash changes; both sides load the same files.
+
+## S-4 — Order queues and behaviors (2026-10-21; guide 15.6, 8.x factories)
+
+- **Model:** `Sim/Orders.luau` and `OrdersState` (hashed). Each mobile unit has a queue of orders, head first.
+  - A command replaces the queue; with the queue flag (shift) it is appended.
+  - `Orders.step` runs at the end of the Commands system every tick. It starts the head order through the existing mechanisms (Nav moves, Build commands, `Air.attackGround`) and pops it when done:
+    - a move when its Nav order ends;
+    - builder orders when the builder is idle;
+    - attack when the team no longer knows the target;
+    - guard when the ally is gone.
+  - Units starting move-like orders from the same command in the same tick move as one group (formation slots).
+  - Aircraft away rearming pause their queue and restart the head order afterwards.
+- **Behaviors:**
+  - **FIGHT** (attack-move): the move holds while the unit has a weapon target. Movement brakes and keeps the order (`orders.hold`); jets don't hold.
+  - **PATROL:** fight-moves between the unit's start and the point, forever.
+  - **ATTACK:** the target (with its generation, D109; a ghost's for dead structures) must be known to the sender's team when commanded and every tick after.
+    - Targeting gives every weapon that can engage it that target (`orders.forced`), overriding the fire state.
+    - The unit chases to 90% of its longest range and halts there; aircraft chase on their own.
+    - A command naming a unit the team doesn't know is ignored (no information leak, no cheating).
+  - **GUARD:** stays within 80 studs of an allied unit (chase moves throttled to every 15 ticks or 24 studs); builders assist a guarded frame or factory.
+  - **REPAIR:** besides frames and factories, heals finished, damaged allied units at the rate they were built, for free (BAR-style; see "Needs my review").
+  - **RECLAIM, BUILD:** queueable.
+  - **Factories:**
+    - a move-like order sets the rally point; produced units roll out (an exit move), then take the rally order (`Build.producedHook`);
+    - TOGGLE sets repeat, and finished items are re-queued.
+- **Effects on existing behavior:**
+  - FIGHT used to be a plain move, so balance fights (attack-move) and the AI now stop to engage.
+  - The torpedo-drift test in `NetOut.spec` saw shorter flights; its threshold became relative (corrections still cut drift 56 → 9.6 studs).
+  - A stopped builder's target reads `nil` (idle) instead of 0.
+- **Tests:** `Orders.spec`, 8 tests: shift order and replacement, FIGHT vs MOVE, PATROL, GUARD, ATTACK (forced, on hold fire, hidden targets refused), REPAIR free, RECLAIM and BUILD queues, rally and repeat, determinism. Mutations (no hold, no forced target, no queue flag, no repeat) fail them.

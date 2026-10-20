@@ -196,6 +196,8 @@ return function(sim: Types.Sim)
 		end
 
 		local groundOrder = sim.air.groundX[id] ~= nil
+		local forced = sim.orders.forced[id] -- an attack order's target (Orders, S-4)
+		local forcedGen = sim.orders.forcedGen[id]
 		for slot = 1, count do
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
@@ -204,6 +206,10 @@ return function(sim: Types.Sim)
 				continue
 			end
 
+			if forced and acceptable(sim, id, weapon, forced, 1, forcedGen) ~= nil then
+				World.setTarget(w, key, forced, forcedGen) -- ordered: overrides fire states and search
+				continue
+			end
 			local cur = w.wTarget[key]
 			local curGen = w.wTargetGen[key]
 			local curDist: number? = nil

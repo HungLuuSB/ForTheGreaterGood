@@ -156,8 +156,19 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - Flags: bit0 queue (shift), bit1 line formation.
 - At most 200 unit IDs per command.
 - The server applies a command to the sender's own live units only and ignores the rest. Commands are validated server-side (guide 19); a rejected command just has no effect.
-- **Currently effective:** MOVE / FIGHT / PATROL (as moves), ATTACK_GROUND (bombers), STOP, BUILD, REPAIR (assist frames and factories), RECLAIM, the three state commands, CAMERA.
-- **Coming with sim task 3:** ATTACK, GUARD, real PATROL and FIGHT, shift-queue, factory rally and repeat. This file will be updated.
+- **All commands are effective** (S-4). With the queue flag, an order is appended to each unit's queue; without it, it replaces the queue:
+  - MOVE;
+  - FIGHT: attack-move, holds to engage;
+  - PATROL: back and forth between the unit's start and the point, forever;
+  - ATTACK: force-fire a unit the sender's team knows, even on hold fire; it chases into range. A target the team doesn't know is ignored;
+  - GUARD: follow an allied unit (builders assist a frame or factory);
+  - ATTACK_GROUND: bombers;
+  - REPAIR: assist a frame or a factory's production, or heal a damaged allied unit, for free;
+  - RECLAIM;
+  - BUILD: mobile builders. A factory queues the unit.
+- **STOP** clears the queue.
+- **Factories:** MOVE / FIGHT / PATROL given to a factory set its **rally point** (produced units roll out of the exit, then take the rally order). **TOGGLE** on a factory sets **repeat** on or off: a finished item goes back to the end of the queue. On other units TOGGLE switches `TOGGLED_ON` (radar, jammer).
+- Order queues aren't replicated yet. The client draws queued paths from what it sent (guide 15.6).
 
 ## 10. Join and reconnect (S-2)
 

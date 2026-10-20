@@ -5,16 +5,17 @@
 -- is recorded into the replay, then applied to the units the sender owns;
 -- other unit IDs are skipped.
 --
--- Effects: fire state, move state, toggle; MOVE (plus FIGHT and PATROL, which
--- act as plain moves for now) and STOP when the sim has a map; BUILD (mobile
--- builders start structures, factories queue units), REPAIR (assist a frame
--- or a factory) and RECLAIM (wrecks). ATTACK_GROUND gives bombers an
--- attack-ground order (Air.attackGround, D100); a later move-like order or
--- STOP cancels it. ATTACK and GUARD are recorded but have no effect yet.
+-- Effects: fire state, move state, toggle (factories: repeat on / off);
+-- orders through Orders (S-4): MOVE, FIGHT, PATROL, ATTACK, GUARD,
+-- ATTACK_GROUND, REPAIR, RECLAIM and mobile builders' BUILD replace a unit's
+-- queue, or append to it with the queue flag; STOP clears it. A move-like
+-- order given to a factory sets its rally point; BUILD given to a factory
+-- queues the unit. ATTACK and GUARD need a target the sender's team knows.
 
 local Schema = require("@shared/Net/Schema")
-local Air = require("../Air")
 local Build = require("../Build")
+local Orders = require("../Orders")
+local Sensors = require("../Sensors")
 local Nav = require("../Nav")
 local NetOut = require("../NetOut")
 local Replay = require("../Replay")
@@ -25,12 +26,9 @@ local CT = Schema.CmdType
 local bor, band, bnot = bit32.bor, bit32.band, bit32.bnot
 local TOGGLED_ON = World.State.TOGGLED_ON
 local LINE = Schema.CmdFlag.LINE
+local QUEUE = Schema.CmdFlag.QUEUE
 
-local MOVE_LIKE = {
-	[CT.MOVE] = true,
-	[CT.FIGHT] = true,
-	[CT.PATROL] = true,
-}
+local KIND_OF: { [number]: string } = { [CT.MOVE] = "move", [CT.FIGHT] = "fight", [CT.PATROL] = "patrol" }
 
 local function ownedUnits(w: World.World, player: number, unitIds: { number }): { number }
 	local out = {}
@@ -56,10 +54,6 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 	if #units == 0 then
 		return
 	end
-	for _, id in units do
-		Air.clearGround(sim, id)
-	end
-	Build.commandIdle(sim, units)
 	local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
 	local lx, lz
 	if band(cmd.flags, LINE) ~= 0 then
@@ -69,11 +63,50 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 		end
 		lx, lz = g:decode(cell2, cmd.offX2 :: number, cmd.offZ2 :: number)
 	end
-	Nav.issueMove(nav, sim.world, sim.tick, units, x, z, lx, lz)
+	local kind = KIND_OF[cmd.cmdType] :: any
+	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz }, band(cmd.flags, QUEUE) ~= 0)
+end
+
+-- ATTACK / GUARD / REPAIR / RECLAIM: an order on a target. ATTACK needs a
+-- unit the sender's team knows (a ghost too); GUARD and REPAIR an allied
+-- live unit; RECLAIM a wreck.
+local function applyTargeted(sim: Types.Sim, player: number, cmd: Schema.Command)
+	local w = sim.world
+	local units = ownedUnits(w, player, cmd.unitIds)
+	if #units == 0 then
+		return
+	end
+	local t = cmd.targetId :: number
+	local ally = sim.players[player].allyTeam :: number
+	local kind, gen
+	if cmd.cmdType == CT.ATTACK then
+		local kx, _, level = Sensors.knownTarget(sim, ally, t)
+		if kx == nil or (w.slot[t] ~= nil and w.ally[t] == ally) then
+			return -- unknown to the team, or an ally
+		end
+		kind = "attack"
+		gen = if w.slot[t] ~= nil then w.gen[t] else nil
+		if level == Sensors.Level.GHOST and w.slot[t] == nil then
+			gen = sim.sensors.ghosts[ally][t].gen
+		end
+	elseif cmd.cmdType == CT.RECLAIM then
+		if sim.combat.wreckX[t] == nil then
+			return
+		end
+		kind = "reclaim"
+	else
+		if w.slot[t] == nil or w.ally[t] ~= ally then
+			return
+		end
+		kind = if cmd.cmdType == CT.GUARD then "guard" else "repair"
+		gen = w.gen[t]
+	end
+	Orders.give(sim, units, { kind = kind :: any, target = t, gen = gen }, band(cmd.flags, QUEUE) ~= 0)
 end
 
 local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
-	local units = ownedUnits(sim.world, player, cmd.unitIds)
+	local w = sim.world
+	local units = ownedUnits(w, player, cmd.unitIds)
 	if #units == 0 or sim.map == nil then
 		return
 	end
@@ -83,23 +116,30 @@ local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
 		return
 	end
 	local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
-	Build.commandBuild(sim, units, cmd.defIndex :: number, x, z, cmd.facing :: number)
+	-- factories queue the unit; mobile builders take a (queueable) build order
+	local factories, builders = {}, {}
+	for _, id in units do
+		table.insert(if sim.defs.unitByIndex[w.defIndex[id]].domain == "structure" then factories else builders, id)
+	end
+	if #factories > 0 then
+		Build.commandBuild(sim, factories, cmd.defIndex :: number, x, z, cmd.facing :: number)
+	end
+	if #builders > 0 then
+		Orders.give(sim, builders, { kind = "build", x = x, z = z, defIndex = cmd.defIndex, facing = cmd.facing }, band(cmd.flags, QUEUE) ~= 0)
+	end
 end
 
 local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	local w = sim.world
 	local cmdType = cmd.cmdType
-	if MOVE_LIKE[cmdType] then
+	if KIND_OF[cmdType] then
 		applyMove(sim, player, cmd)
 		return
 	elseif cmdType == CT.BUILD then
 		applyBuild(sim, player, cmd)
 		return
-	elseif cmdType == CT.REPAIR then
-		Build.commandAssist(sim, ownedUnits(w, player, cmd.unitIds), cmd.targetId :: number)
-		return
-	elseif cmdType == CT.RECLAIM then
-		Build.commandReclaim(sim, ownedUnits(w, player, cmd.unitIds), cmd.targetId :: number)
+	elseif cmdType == CT.ATTACK or cmdType == CT.GUARD or cmdType == CT.REPAIR or cmdType == CT.RECLAIM then
+		applyTargeted(sim, player, cmd)
 		return
 	elseif cmdType == CT.ATTACK_GROUND then
 		local g = if sim.map then (sim.map :: any).grid else nil
@@ -108,9 +148,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			return
 		end
 		local x, z = g:decode(cell, cmd.offX :: number, cmd.offZ :: number)
-		for _, id in ownedUnits(w, player, cmd.unitIds) do
-			Air.attackGround(sim, id, x, z)
-		end
+		Orders.give(sim, ownedUnits(w, player, cmd.unitIds), { kind = "attackGround", x = x, z = z }, band(cmd.flags, QUEUE) ~= 0)
 		return
 	elseif cmdType == CT.CAMERA then
 		NetOut.setCamera(sim, player, cmd.minX :: number, cmd.minZ :: number, cmd.maxX :: number, cmd.maxZ :: number)
@@ -125,29 +163,26 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		elseif cmdType == CT.SET_MOVE_STATE then
 			World.setMoveState(w, id, cmd.value :: number)
 		elseif cmdType == CT.TOGGLE then
-			local state = w.state[id]
-			World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
-		elseif cmdType == CT.STOP then
-			Air.clearGround(sim, id)
-			Build.commandIdle(sim, { id })
-			if sim.nav then
-				Nav.clearOrder(sim.nav, w, id)
-				-- hold where it stands
-				w.goalX[id], w.goalZ[id] = w.posX[id], w.posZ[id]
+			local d = sim.defs.unitByIndex[w.defIndex[id]]
+			if d.domain == "structure" and d.buildOptions ~= nil then
+				Orders.setRepeat(sim, id, cmd.value == 1) -- factories: repeat (S-4)
+			else
+				local state = w.state[id]
+				World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
 			end
+		elseif cmdType == CT.STOP then
+			Orders.stop(sim, id)
 		end
 	end
 end
 
 return function(sim: Types.Sim)
 	local queue = sim.queue
-	if #queue == 0 then
-		return
-	end
 	for _, q in queue do
 		Replay.addCommand(sim.replay, sim.tick, q.player, q.payload)
 		apply(sim, q.player, q.cmd)
 		sim.stats.commandsApplied += 1
 	end
 	table.clear(queue)
+	Orders.step(sim) -- start and check every unit's head order
 end

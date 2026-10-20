@@ -255,7 +255,7 @@ return function(t: RunAll.Context)
 		Sim.step(sim)
 		Sim.step(sim)
 		t.equal(Passability.occupant(pm, cell), 0, "footprint released")
-		t.equal(sim.build.target[cv], 0, "the CV stopped building")
+		t.equal(sim.build.target[cv] or 0, 0, "the CV stopped building") -- idle: no target (nil or 0)
 	end)
 
 	t.test("construction is deterministic", function()
