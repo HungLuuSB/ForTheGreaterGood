@@ -4,6 +4,16 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
+## For the client stream
+
+- **Ready:** `docs/contracts/net.md` (network contract, protocol 5, plus the protocol-6 join snapshot and Eco channel). Merged into `main`.
+
+## Integration notes
+
+Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
+
+- 2026-10-21: client `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1` merged (`--no-ff`); `lune run test` 34 specs / 253 passed, `lune run build` 263 scripts / 787 requires; pushed (`2a8b078`). `main` merged into `m-sim-2`.
+
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)
 
 **Done:** all five round-8 answers, one commit each, then the merge.

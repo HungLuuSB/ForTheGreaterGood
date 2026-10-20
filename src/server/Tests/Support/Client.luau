@@ -11,7 +11,7 @@
 -- DEATH also leave visual effects in `effects` until the caller clears
 -- them.
 
-local Ballistics = require("../../Sim/Combat/Ballistics")
+local Ballistics = require("@shared/Combat/Ballistics")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Packer = require("@shared/Net/Packer")
@@ -112,22 +112,9 @@ local function advance(view: View)
 		local weapon = view.defs.weaponByIndex[p.weaponIndex]
 		local target = view.units[p.target]
 		if weapon.turnRate and target then
+			-- turn toward the target by at most turnRate, with the server's function
 			local dx, dy, dz = target.x - p.x, (if target.alt then target.alt - p.y else 0), target.z - p.z
-			local speed = math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz)
-			local dl = math.sqrt(dx * dx + dy * dy + dz * dz)
-			if speed > 1e-6 and dl > 1e-6 then
-				-- turn the velocity toward the target by at most turnRate (as the server)
-				local ax, ay, az = p.vx / speed, p.vy / speed, p.vz / speed
-				local bx, by, bz = dx / dl, dy / dl, dz / dl
-				local angle = math.acos(math.clamp(ax * bx + ay * by + az * bz, -1, 1))
-				local maxAngle = math.rad(weapon.turnRate) * DT
-				local k = if angle <= maxAngle then 1 else maxAngle / angle
-				local nx, ny, nz = ax + (bx - ax) * k, ay + (by - ay) * k, az + (bz - az) * k
-				local nl = math.sqrt(nx * nx + ny * ny + nz * nz)
-				if nl > 1e-9 then
-					p.vx, p.vy, p.vz = nx / nl * speed, ny / nl * speed, nz / nl * speed
-				end
-			end
+			p.vx, p.vy, p.vz = Ballistics.steer(p.vx, p.vy, p.vz, dx, dy, dz, math.rad(weapon.turnRate) * DT)
 		end
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, DT)
 		if p.blend > 0 then
