@@ -91,6 +91,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 					heading = u.heading,
 					severity = e.severity or 0,
 					wreckId = e.wreckId or 0,
+					tick = tick,
 				})
 				world.units[id] = nil
 			end

@@ -34,6 +34,7 @@ type Disc = { x: number, z: number, radius: number, r: number, g: number, b: num
 
 local rects: { Rect } = {}
 local discs: { Disc } = {}
+local overDiscs: { Disc } = {} -- E records: effects drawn over the units
 local map = { -192, -192, 384, 384 }
 
 -- Roblox rotation about +Y by θ, applied to (x, z)
@@ -132,8 +133,8 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 			table.insert(rects, { cx = n(3), cz = n(4), ax = 1, az = 0, ha = half, bx = 0, bz = 1, hb = half, top = 0.1, r = tint[1], g = tint[2], b = tint[3], alpha = 0.45 })
 			addUnit(w[2], { 210, 210, 210 }, n(3), n(4), math.pi - n(5) * math.pi / 2, 0, tint)
 		end
-	elseif w[1] == "D" then
-		table.insert(discs, { x = n(2), z = n(3), radius = n(4) / 2, r = n(5), g = n(6), b = n(7), alpha = n(8) })
+	elseif w[1] == "D" or w[1] == "E" then
+		table.insert(if w[1] == "E" then overDiscs else discs, { x = n(2), z = n(3), radius = n(4) / 2, r = n(5), g = n(6), b = n(7), alpha = n(8) })
 	elseif w[1] == "L" then
 		local x1, z1, x2, z2, width = n(2), n(3), n(4), n(5), n(6)
 		local dx, dz = x2 - x1, z2 - z1
@@ -169,6 +170,9 @@ for _, r in rects do
 	local ez = math.abs(r.az) * r.ha + math.abs(r.bz) * r.hb
 	minX, maxX = math.min(minX, r.cx - ex), math.max(maxX, r.cx + ex)
 	minZ, maxZ = math.min(minZ, r.cz - ez), math.max(maxZ, r.cz + ez)
+end
+for _, d in overDiscs do
+	table.insert(discs, d) -- for the bounds only; drawn separately below
 end
 for _, d in discs do
 	minX, maxX = math.min(minX, d.x - d.radius), math.max(maxX, d.x + d.radius)
@@ -210,8 +214,7 @@ for y = 0, h - 1 do
 	end
 end
 
--- overlay discs (rings, dots, flashes) under the units
-for _, d in discs do
+local function drawDisc(d: Disc)
 	local x0, x1 = math.floor((d.x - d.radius - minX) * scale), math.ceil((d.x + d.radius - minX) * scale)
 	local y0, y1 = math.floor((d.z - d.radius - minZ) * scale), math.ceil((d.z + d.radius - minZ) * scale)
 	for y = math.max(y0, 0), math.min(y1, h - 1) do
@@ -222,6 +225,13 @@ for _, d in discs do
 				blend(x, y, d.r, d.g, d.b, d.alpha)
 			end
 		end
+	end
+end
+
+-- overlay discs (rings, dots) under the units
+for _, d in discs do
+	if table.find(overDiscs, d) == nil then
+		drawDisc(d)
 	end
 end
 
@@ -247,6 +257,11 @@ for _, r in rects do
 			end
 		end
 	end
+end
+
+-- effects over the units
+for _, d in overDiscs do
+	drawDisc(d)
 end
 
 for y = 0, h - 1 do

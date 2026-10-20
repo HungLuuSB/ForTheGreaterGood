@@ -4,7 +4,8 @@
 -- screenshots can't show the 3D view. Read from the live Instances:
 --   M originX originZ sizeX sizeZ                 map
 --   U defId r,g,b x z heading yaw pitch           a unit model: team color, root, turret and barrel joints
---   D x z diameter r g b alpha                    a disc (selection ring, order dot, flash, effect)
+--   D x z diameter r g b alpha                    a disc under the units (selection ring, order dot)
+--   E x z diameter r g b alpha                    an effect disc over the units (shell, flash)
 --   L x1 z1 x2 z2 width r g b                     a line (order path, tracer)
 
 local function rgb(c: Color3): string
@@ -46,18 +47,25 @@ return function(grid: any): string
 		local color = (string.gsub(rgb(teamColor), " ", ","))
 		table.insert(out, string.format("U %s %s %.1f %.1f %.2f %.2f %.2f", model:GetAttribute("DefId") or model.Name, color, unit.Position.X, unit.Position.Z, heading, yaw, pitch))
 	end
-	local overlay = workspace:FindFirstChild("Overlay")
-	for _, p in (if overlay then overlay:GetChildren() else {}) do
-		if not p:IsA("BasePart") then
-			continue
+	local parts = {}
+	for _, folderName in { "Overlay", "Effects" } do
+		local folder = workspace:FindFirstChild(folderName)
+		for _, p in (if folder then folder:GetChildren() else {}) do
+			if p:IsA("BasePart") and p.Transparency < 0.98 then
+				table.insert(parts, { p, folderName == "Effects" })
+			end
 		end
+	end
+	for _, entry in parts do
+		local p, effect = entry[1], entry[2]
 		local pos = p.Position
-		if p.Name == "line" then
+		if p.Name == "line" or p.Name == "Tracer" then
 			local half = p.CFrame.LookVector * p.Size.Z / 2
 			local a, b = pos - half, pos + half
 			table.insert(out, string.format("L %.1f %.1f %.1f %.1f %.2f %s", a.X, a.Z, b.X, b.Z, p.Size.X, rgb(p.Color)))
 		else
-			table.insert(out, string.format("D %.1f %.1f %.1f %s %.2f", pos.X, pos.Z, p.Size.Y, rgb(p.Color), 1 - p.Transparency))
+			local d = if p.Name == "Projectile" then 1.4 else p.Size.Y
+			table.insert(out, string.format("%s %.1f %.1f %.1f %s %.2f", if effect then "E" else "D", pos.X, pos.Z, d, rgb(p.Color), 1 - p.Transparency))
 		end
 	end
 	return table.concat(out, "\n")
