@@ -12,6 +12,7 @@ local process = require("@lune/process")
 local Api = require("../src/client/Api")
 local Commands = require("../src/client/Core/Commands")
 local Effects = require("../src/client/Core/Effects")
+local Icons = require("../src/client/Core/Icons")
 local NetIn = require("../src/client/Core/NetIn")
 local World = require("../src/client/Core/World")
 local NetOut = require("../src/server/Sim/NetOut")
@@ -157,6 +158,26 @@ elseif demo == "combat" then
 	end)
 	fs.writeFile(out, best)
 	print(`wrote {out} (busiest frame: {bestScore})`)
+elseif demo == "icons" then
+	-- strategic zoom over a skirmish start: everything as icons, a few selected
+	local sim, world, api, run = setup({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "ew_test" })
+	run(15 * 4)
+	local own = World.ownIds(world)
+	api.actions.select({ own[1], own[2], own[3] })
+	local tbl = Icons.table(sim.defs)
+	-- "screen" = world studs shifted to be positive (the on-screen test drops negatives)
+	local project = function(x: number, _y: number, z: number)
+		return x + 4096, z + 4096, true
+	end
+	local lines = {}
+	local draws = Icons.draws(tbl, world, project, math.huge, math.huge, api.selection.set)
+	for _, d in draws do
+		local rgb = string.split(TEAM_RGB[d.style.team] or "200,200,200", ",")
+		table.insert(lines, string.format("I %.1f %.1f %s %d %s %s %s %.2f %d", d.x - 4096, d.y - 4096, d.style.shape, d.style.size, rgb[1], rgb[2], rgb[3], d.style.alpha, if d.style.selected then 1 else 0))
+	end
+	local g = world.grid
+	fs.writeFile(out, string.format("M %.0f %.0f %.0f %.0f\n", g.originX, g.originZ, g.sizeX, g.sizeZ) .. table.concat(lines, "\n") .. "\n")
+	print(`wrote {out}: {#draws} icons`)
 else
 	print(`unknown demo {demo}`)
 	process.exit(1)

@@ -24,6 +24,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-14 | The build ghost runs the server's placement rules on the client's knowledge, cell by cell in the server's order |
 | C-15 | When Studio isn't available, `lune run client_demo` renders the real client's view headless (labelled as such) |
 | C-16 | Effects play on the render clock; every projectile is followed, caps apply to what is drawn, by size over distance |
+| C-17 | Strategic zoom: screen-space shape icons (no image assets), on beyond 480 studs, off below 420; units without a model always get one |
 
 ---
 
@@ -150,3 +151,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Alternatives:** play events on arrival (effects 133 ms ahead of the units they belong to); cap the logical projectile set (a skipped projectile would miss its IMPACT bookkeeping).
 
 **Why:** `Effects.spec`: client shells stay within 0.5 studs of the server's projectiles (wire quantization) for 240 ticks of the duel, IMPACT clears them, events and deaths wait for their tick, and 400 projectiles / 200 impacts respect the caps with the near ones kept.
+
+### C-17 — Strategic zoom icons (2026-10-21)
+
+**Decision:** past a camera distance of 480 studs (back below 420) the unit models are hidden (`ModelPool.setVisible`, one folder unparented) and every known unit is drawn as an icon in a screen-space layer of pooled frames: ground units squares, builders circles, aircraft triangles, ships diamonds, structures framed squares; radar and sonar blips faint dots (tracked contacts show their real icon, D104), ghosts hollow squares; size by tier and footprint; team colors; selected units white-edged and on top. Units without a model (strategic records, blips, ghosts in view) get an icon at any zoom. Strategic records map back from the icon number with a copy of the server's numbering (`NetOut.iconIndex`), checked equal in `Icons.spec`. The camera rectangle is still sent at strategic zoom.
+
+**Alternatives:** BillboardGuis per unit (guide 15.7 warns against hundreds); image icons (need uploaded assets: later, with the art pass); stop sending the camera at strategic zoom (smaller tactical tier, less bandwidth, but icons would then move at 3 Hz cell steps: left for review).
+
+**Why:** readable large battles and cheap rendering (guide 15.4) without assets.
