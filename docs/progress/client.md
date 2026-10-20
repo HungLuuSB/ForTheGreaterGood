@@ -14,7 +14,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 ## Tasks
 
 1. Studio sync (`STUDIO_HANDOFF.md` step 1) and an in-Studio test entry for `RunAll`. **Done 2026-10-21**, see below.
-2. Contracts: `docs/contracts/rig.md`, `docs/contracts/client-state.md`.
+2. Contracts: `docs/contracts/rig.md`, `docs/contracts/client-state.md`. **Done 2026-10-21** (C-4, C-5, C-6).
 3. Blockout generator (guide 20.2), `ord_lancer` and `chs_ravager` first.
 4. Client foundation (guide 15): world table from NetIn, interpolation, model pool, RTS camera.
 
