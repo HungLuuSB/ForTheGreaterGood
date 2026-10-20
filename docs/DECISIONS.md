@@ -668,3 +668,13 @@ Decisions made while working unattended. Each entry gives the date, the decision
 - **Alternatives:** radar contacts in the tactical tier; deltas for strategic records.
 - **Why:** guide 7.2–7.3. Strategic snapshots are simple and self-healing over the unreliable channel.
 - **Tests:** a simulated client (`Tests/Support/Client.luau`) rebuilds the view from packets only. Mutations leaking hidden units or true radar positions are caught.
+
+## D72 — Stress harness and per-system timing (2026-10-20, task 14)
+
+- **Decision:**
+  - `Sim.enableTiming(sim)` makes `Sim.step` record per-system wall time (total and peak) via `Profiler.now()`. It only observes; nothing feeds back into the simulation.
+  - `lune run stress [ticks] [sizes...]`:
+    - mixed armies (75% tanks, 15% artillery, 5% radars, 5% jammers) on `gen:4:256`, sent at each other with FIGHT;
+    - each player's camera is 40×30 cells over the middle;
+    - reports average and peak ms per system against guide 18.1, and KB/s per player per channel against 7.6.
+- **Why:** guide 17.5. **Numbers are from Lune on a desktop PC; repeat on a live server** (guide 17.5, STUDIO_HANDOFF).

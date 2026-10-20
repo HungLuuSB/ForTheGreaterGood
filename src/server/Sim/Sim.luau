@@ -187,17 +187,44 @@ function Sim.hash(sim: Sim): number
 	return SensorsState.hash(sim.sensors, h)
 end
 
+-- Optional per-system wall-clock timing for profiling and stress tests.
+-- Observes only: timings never feed back into the simulation.
+export type Timing = { total: { [string]: number }, peak: { [string]: number }, ticks: number }
+local timings: { [any]: Timing } = setmetatable({}, { __mode = "k" }) :: any
+
+function Sim.enableTiming(sim: Sim): Timing
+	local t: Timing = { total = {}, peak = {}, ticks = 0 }
+	for _, s in SYSTEMS do
+		t.total[s.name] = 0
+		t.peak[s.name] = 0
+	end
+	timings[sim] = t
+	return t
+end
+
 -- Advances one tick: every system in order, at its rate.
 function Sim.step(sim: Sim)
 	local tick = sim.tick + 1
 	sim.tick = tick
 	table.clear(sim.combat.events) -- events describe one tick (NetOut sends them)
+	local timing = timings[sim]
 	for _, system in SYSTEMS do
 		if tick % system.every == 0 then
 			Profiler.begin(system.name)
-			system.run(sim)
+			if timing then
+				local t0 = Profiler.now()
+				system.run(sim)
+				local dt = Profiler.now() - t0
+				timing.total[system.name] += dt
+				timing.peak[system.name] = math.max(timing.peak[system.name], dt)
+			else
+				system.run(sim)
+			end
 			Profiler.finish()
 		end
+	end
+	if timing then
+		timing.ticks += 1
 	end
 	if tick % Sim.CHECKPOINT_INTERVAL == 0 then
 		Replay.addCheckpoint(sim.replay, tick, Sim.hash(sim))

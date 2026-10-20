@@ -307,6 +307,12 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 14 — Stress test and bandwidth report ✅
+
+- `Sim.enableTiming` (D72) and `.lune/stress.luau`. `lune run stress 900 200 400 600 800` writes `debug_out/stress.txt`.
+- Results: see **Stress test** under Benchmarks below.
+- Tests unchanged: **24 specs, 164 passed**.
+
 ### Task 13 — Interest management and NetOut (headless) ✅
 
 - `Schema`: Events records ENTER/LEAVE/DEATH, `PROTOCOL_VERSION` 2 (D70).
@@ -375,6 +381,63 @@ Lune 0.11 on the dev PC, 256×256, median over 7 runs (best in the second figure
 - With deterministic slicing at 12,000 units per tick (D33), the fields complete in 11, 8 and 2 ticks (0.73 s, 0.53 s, 0.13 s). Units steer straight toward the goal until then, which guide 6.4 allows.
 - Integration (Dijkstra with a binary heap) is about 85% of the cost.
 - The open map is the worst case: the whole map is one leaf, so the corridor is all 65,536 cells.
+
+### Stress test (task 14)
+
+Lune on the dev PC, 60 s of game time per size, two mixed armies attack-moving into each other on `gen:4:256`. Each player watches a 40×30-cell camera over the middle.
+
+**Tick time (ms):**
+
+| units | avg | p95 | max | alive at end | kills |
+|---|---|---|---|---|---|
+| 200 | 1.68 | 4.21 | 47.7 | 97 | 103 |
+| 400 | 3.31 | 7.80 | 52.0 | 170 | 230 |
+| 600 | 5.35 | 12.23 | 65.7 | 256 | 344 |
+| 800 | 7.28 | 16.54 | 71.0 | 312 | 488 |
+
+**Per system at 800 units, ms per tick, average / peak against the budget:**
+
+| system | avg | peak | budget |
+|---|---|---|---|
+| Commands | 0.07 | **59.25** | 1 |
+| Economy | 0.00 | 0.02 | 1 |
+| Sensors | 2.43 | **15.99** | 5 |
+| Targeting | 0.56 | 3.00 | 8 |
+| Pathing | 0.44 | **8.44** | 8 |
+| Movement | 2.59 | 9.30 | 10 |
+| Weapons | 0.30 | 1.15 | 5 |
+| Projectiles + Damage | 0.10 | 0.60 | 8 |
+| Construction | 0.03 | 0.07 | 2 |
+| NetOut | 0.75 | 3.87 (7.85 at 600) | 6 |
+
+**Bandwidth per player (KB/s), worst player:**
+
+| units | tactical (≤ 15) | strategic (≤ 10) | state + events (≤ 10) | total (≤ 35) |
+|---|---|---|---|---|
+| 200 | 1.91 | 1.65 | 2.03 | 5.59 |
+| 400 | 4.32 | 3.00 | 4.51 | 11.83 |
+| 600 | 6.89 | 4.42 | 4.77 | 16.08 |
+| 800 | 9.12 | 5.66 | 6.59 | **21.37** |
+
+**Verdict:**
+- **On average, nothing breaks budget up to 800 units** (7.3 ms of 66.7 ms per tick).
+- **The first system to break budget is Commands, on its peak:** 38–59 ms in the tick a 400-unit attack-move is issued, making the worst tick 71 ms at 800 units.
+  - Cause: `Nav.issueMove` does greedy slot assignment, which is O(n²) (160,000 distance checks for 400 units), plus one sampled line check per unit.
+- **Sensors is next:** its peak (6–16 ms against 5) comes from the first full stamp and from all-pairs visibility. Its average grows linearly (2.4 ms at 800), so it would reach 5 ms around 1,600 units.
+- **Pathing** peaks right at its sliced budget (8.4 ms), as designed.
+- **Bandwidth** stays under every target; the worst total is 21.4 KB/s at 800 units.
+
+**Suggested fixes (not done, as instructed):**
+
+1. **Commands spike:**
+   - Assign slots in O(n log n): sort units and slots along the approach axis, then pair in order.
+   - Do line-of-sight checks with a quadtree-leaf walk instead of 2-stud sampling.
+   - Spread very large orders over a few ticks (a queue with a per-tick unit budget, deterministic).
+2. **Sensors:**
+   - Event-driven visibility (guide 11.3): recompute only units whose sensor cell changed, plus those under changed map cells.
+   - Stagger the per-team passes across the two sensor ticks.
+   - Stamp circles as row spans.
+3. **Re-measure on a live Roblox server** with `--!native` before optimizing further. Desktop Lune numbers are not server numbers.
 
 **After fix (a), direct-path shortcut.** `lune run bench` now also times whole move orders (issue + jobs to completion), median ms:
 
