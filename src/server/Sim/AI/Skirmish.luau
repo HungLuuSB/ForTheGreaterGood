@@ -10,15 +10,25 @@
 -- Every THINK_PERIOD ticks (offset by player ID) it:
 --   1. Builders (the Command Vehicle stays home): a Vehicle Plant first;
 --      generators when power runs short; extractors on the nearest free
---      deposits (home first, then expansions); a second plant when supply
---      piles up; otherwise assist a factory.
---   2. Factories keep QUEUE_TARGET items queued: workers until it has
---      WORKERS of them, then tanks with one artillery piece in four.
+--      deposits (home first, then expansions); a radar tower once the plant
+--      and two extractors stand; an IR SAM site when enemy aircraft come
+--      near home; an Advanced Vehicle Plant once supply piles up (S-7); a
+--      second plant when supply piles up; otherwise assist a factory frame,
+--      or a factory.
+--   2. Factories keep QUEUE_TARGET items queued. Vehicle Plant: workers
+--      until it has WORKERS of them; IR SAM trucks while it has fewer than
+--      one per two enemy aircraft its team knows (at most MAX_AA); one
+--      mobile radar; then tanks with one artillery piece in four. Advanced
+--      plant: one mobile fire-control radar, then MLRS and main battle
+--      tanks.
 --   3. Army: idle new units gather at a rally point. Enemies near home are
 --      attacked by everyone. When the army reaches the wave size, the wave
 --      attack-moves at the nearest known enemy (structures and the Command
 --      Vehicle first), or the enemy start if nothing is known; the next
---      wave is larger.
+--      wave is larger. Radar and fire-control vehicles guard the wave, so
+--      its artillery can fire on radar contacts with tracking (S-7).
+--      Artillery kites: a known enemy inside KITE_RANGE of its range makes
+--      it back off, then rejoin the wave's attack.
 -- Its only randomness is its own Prng (seeded from the match seed and the
 -- player ID), used for the production mix.
 
@@ -45,6 +55,11 @@ Skirmish.WAVE_GROWTH = 2
 Skirmish.HOME_RADIUS = 260 -- studs: enemies inside it are attacked by everyone
 Skirmish.CLAIM_TICKS = 900 -- a deposit someone was sent to stays reserved this long
 Skirmish.SECOND_PLANT_SUPPLY = 600
+Skirmish.ADV_PLANT_SUPPLY = 900 -- supply stored before the Advanced Vehicle Plant (S-7)
+Skirmish.MAX_AA = 4 -- IR SAM trucks wanted at most
+Skirmish.KITE_RANGE = 0.5 -- of its range: artillery backs off from enemies closer than this
+Skirmish.KITE_STEP = 100 -- studs it backs off
+Skirmish.KITE_TICKS = 45 -- how long a kiting unit is left out of wave orders
 
 local CT = Schema.CmdType
 local BIT = Categories.Bit
@@ -67,6 +82,7 @@ export type Brain = {
 	deposits: { number }, -- deposit cells, nearest home first
 	waves: number,
 	lastWaveOrder: number, -- tick the wave was last sent at its target
+	kiting: { [number]: number }, -- unit → tick it last backed off (S-7)
 }
 
 local function submit(sim: Types.Sim, player: number, cmd: Schema.Command)
@@ -134,6 +150,7 @@ function Skirmish.new(sim: Types.Sim, player: number): Brain
 		deposits = deposits,
 		waves = 0,
 		lastWaveOrder = -math.huge,
+		kiting = {},
 	}
 end
 
@@ -247,39 +264,111 @@ end
 type Census = {
 	commander: number,
 	builders: { number },
-	factories: { number },
-	frames: number, -- factory frames under construction
+	factories: { number }, -- complete Vehicle Plants
+	advFactories: { number }, -- complete Advanced Vehicle Plants
+	frames: number, -- Vehicle Plant frames under construction
+	advFrames: { number }, -- Advanced Vehicle Plant frames
+	extractors: number,
+	radarTowers: number, -- radar towers, frames included
+	samSites: number, -- IR SAM sites, frames included
 	army: { number },
+	aa: number, -- IR SAM trucks
+	radarTrucks: { number }, -- mobile radars
+	trackers: { number }, -- mobile fire-control radars
 	workers: number,
+	enemyAir: number, -- enemy aircraft the team knows (any detection: radar reveals the domain, D107)
+	enemyAirNearHome: number,
 }
 
 local function census(brain: Brain): Census
 	local sim = brain.sim
 	local w = sim.world
-	local c: Census = { commander = 0, builders = {}, factories = {}, frames = 0, army = {}, workers = 0 }
+	local c: Census = {
+		commander = 0,
+		builders = {},
+		factories = {},
+		advFactories = {},
+		frames = 0,
+		advFrames = {},
+		extractors = 0,
+		radarTowers = 0,
+		samSites = 0,
+		army = {},
+		aa = 0,
+		radarTrucks = {},
+		trackers = {},
+		workers = 0,
+		enemyAir = 0,
+		enemyAirNearHome = 0,
+	}
+	local advPlant = faction(brain, "advvehplant", "advvehplant")
+	local nearHome = (Skirmish.HOME_RADIUS * 1.5) ^ 2
 	for _, id in w.ids do
 		if w.owner[id] ~= brain.player then
+			if w.ally[id] ~= brain.ally then
+				local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
+				if kx and kz and bit32.band(Sensors.knownCategories(sim, brain.ally, id, level, defIndex :: number), BIT.AIR) ~= 0 then
+					c.enemyAir += 1
+					if (kx - brain.homeX) ^ 2 + (kz - brain.homeZ) ^ 2 < nearHome then
+						c.enemyAirNearHome += 1
+					end
+				end
+			end
 			continue
 		end
 		local d = unitDef(sim, id)
+		local done = w.buildProgress[id] >= 1
 		if bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0 then
 			c.commander = id
 		elseif d.domain == "structure" then
 			if d.buildOptions then
-				if w.buildProgress[id] >= 1 then
+				if d.id == advPlant then
+					if done then
+						table.insert(c.advFactories, id)
+					else
+						table.insert(c.advFrames, id)
+					end
+				elseif done then
 					table.insert(c.factories, id)
 				else
 					c.frames += 1
 				end
+			elseif d.extractor then
+				c.extractors += 1
+			elseif d.sensors.radar > 0 then
+				c.radarTowers += 1
+			elseif #d.weapons > 0 and bit32.band(d.categoryMask, BIT.ANTIAIR) ~= 0 then
+				c.samSites += 1
 			end
 		elseif d.buildOptions then
 			table.insert(c.builders, id)
 			c.workers += 1
 		elseif #d.weapons > 0 then
 			table.insert(c.army, id)
+			if bit32.band(d.categoryMask, BIT.ANTIAIR) ~= 0 then
+				c.aa += 1
+			end
+		elseif (d.sensors.track or 0) > 0 then
+			table.insert(c.trackers, id)
+		elseif d.sensors.radar > 0 then
+			table.insert(c.radarTrucks, id)
 		end
 	end
 	return c
+end
+
+-- Units of `defId` waiting in factory queues.
+local function queued(sim: Types.Sim, factories: { number }, defId: string): number
+	local n = 0
+	local index = sim.defs.units[defId].index
+	for _, f in factories do
+		for _, di in sim.build.queue[f] or {} do
+			if di == index then
+				n += 1
+			end
+		end
+	end
+	return n
 end
 
 local function idleBuilder(sim: Types.Sim, id: number): boolean
@@ -313,6 +402,36 @@ local function think(brain: Brain)
 				continue
 			end
 		end
+		if not isCommander and #c.factories > 0 and c.extractors >= 2 and c.radarTowers == 0 then
+			-- radar: early warning for the artillery (S-7)
+			local tower = faction(brain, "watchtower", "eye")
+			local x, z = spotNear(brain, tower, brain.homeX + brain.toward * 120, brain.homeZ + 60)
+			if x and z then
+				build(brain, id, tower, x, z, 0)
+				c.radarTowers += 1
+				continue
+			end
+		end
+		if c.enemyAirNearHome > 0 and c.samSites == 0 then
+			-- enemy aircraft over the base: an IR SAM site (S-7)
+			local site = faction(brain, "vigil", "thorn")
+			local x, z = spotNear(brain, site, brain.homeX, brain.homeZ - 50)
+			if x and z then
+				build(brain, id, site, x, z, 0)
+				c.samSites += 1
+				continue
+			end
+		end
+		if not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and acc.supply.stored > Skirmish.ADV_PLANT_SUPPLY then
+			-- tech up: the Advanced Vehicle Plant (fire-control radar, MLRS; S-7)
+			local adv = faction(brain, "advvehplant", "advvehplant")
+			local x, z = spotNear(brain, adv, brain.homeX - brain.toward * 40, brain.homeZ + 120)
+			if x and z then
+				build(brain, id, adv, x, z, if brain.toward > 0 then 1 else 3)
+				table.insert(c.advFrames, 0)
+				continue
+			end
+		end
 		if acc.power.ratio < 0.95 or acc.power.income < 20 * #c.factories + 20 then
 			local gen = faction(brain, "generator", "generator")
 			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
@@ -332,7 +451,10 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if #c.factories > 0 then
+		local frame = c.advFrames[1]
+		if frame and frame ~= 0 then
+			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = frame }) -- help the tech-up
+		elseif #c.factories > 0 then
 			submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = c.factories[1] })
 		end
 	end
@@ -349,6 +471,24 @@ local function think(brain: Brain)
 			end
 		end
 	end
+	local aaUnit = faction(brain, "halo", "hornet")
+	local radarUnit = faction(brain, "oracle", "watcher")
+	local trackerUnit = faction(brain, "arbiter", "stalker")
+	local aaWanted = math.min(math.ceil(c.enemyAir / 2), Skirmish.MAX_AA)
+	local aaPlanned = c.aa + queued(sim, c.factories, aaUnit)
+	local radarPlanned = #c.radarTrucks + queued(sim, c.factories, radarUnit)
+	local function queueItem(f: number, item: string)
+		submit(sim, brain.player, {
+			cmdType = CT.BUILD,
+			flags = 0,
+			unitIds = { f },
+			defIndex = sim.defs.units[item].index,
+			cell = 0,
+			offX = 0,
+			offZ = 0,
+			facing = 0,
+		})
+	end
 	for _, f in c.factories do
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, Skirmish.QUEUE_TARGET do
@@ -356,19 +496,30 @@ local function think(brain: Brain)
 			if c.workers + queuedWorkers < Skirmish.WORKERS then
 				item = worker
 				queuedWorkers += 1
+			elseif aaPlanned < aaWanted then
+				item = aaUnit -- anti-air against the aircraft the team knows (S-7)
+				aaPlanned += 1
+			elseif radarPlanned < 1 and c.workers >= Skirmish.WORKERS then
+				item = radarUnit -- radar to escort the waves (S-7)
+				radarPlanned += 1
 			else
 				item = if brain.rng:chance(0.25) then arty else tank
 			end
-			submit(sim, brain.player, {
-				cmdType = CT.BUILD,
-				flags = 0,
-				unitIds = { f },
-				defIndex = sim.defs.units[item].index,
-				cell = 0,
-				offX = 0,
-				offZ = 0,
-				facing = 0,
-			})
+			queueItem(f, item)
+		end
+	end
+	local trackerPlanned = #c.trackers + queued(sim, c.advFactories, trackerUnit)
+	for _, f in c.advFactories do
+		local q = sim.build.queue[f] or {}
+		for _ = #q + 1, Skirmish.QUEUE_TARGET do
+			local item
+			if trackerPlanned < 1 then
+				item = trackerUnit -- fire-control radar for the artillery (S-7)
+				trackerPlanned += 1
+			else
+				item = if brain.rng:chance(0.5) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "juggernaut")
+			end
+			queueItem(f, item)
 		end
 	end
 
@@ -392,9 +543,56 @@ local function think(brain: Brain)
 	end
 	-- known enemies: the nearest one near home, and the best attack target
 	local threatX, threatZ, targetX, targetZ = Skirmish.knownTargets(brain)
+
+	-- artillery kites (S-7): a known enemy unit inside KITE_RANGE of its
+	-- range → back off, then (queued) rejoin the attack
+	local kiting: { [number]: number } = {}
+	local L = Sensors.Level
+	for _, id in c.army do
+		local d = unitDef(sim, id)
+		if bit32.band(d.categoryMask, BIT.ARTILLERY) == 0 or d.maxRange <= 0 then
+			continue
+		end
+		local x, z = w.posX[id], w.posZ[id]
+		local reach = d.maxRange * Skirmish.KITE_RANGE
+		local bestX, bestZ, bestD = nil, nil, reach * reach
+		for _, e in w.ids do
+			if w.ally[e] ~= brain.ally and unitDef(sim, e).domain ~= "structure" and unitDef(sim, e).domain ~= "air" then
+				local kx, kz, level = Sensors.knownTarget(sim, brain.ally, e)
+				if kx and kz and level == L.VISIBLE then
+					local d2 = (kx - x) ^ 2 + (kz - z) ^ 2
+					if d2 < bestD then
+						bestX, bestZ, bestD = kx, kz, d2
+					end
+				end
+			end
+		end
+		if bestX and bestZ then
+			local dl = math.max(math.sqrt(bestD), 1)
+			local ax, az = x + (x - bestX) / dl * Skirmish.KITE_STEP, z + (z - bestZ) / dl * Skirmish.KITE_STEP
+			local cell, ox, oz = g:encode(ax, az)
+			submit(sim, brain.player, { cmdType = CT.MOVE, flags = 0, unitIds = { id }, cell = cell, offX = ox, offZ = oz })
+			local tx, tz = targetX or brain.enemyX, targetZ or brain.enemyZ
+			local tcell, tox, toz = g:encode(tx, tz)
+			if brain.attacking[id] then
+				submit(sim, brain.player, { cmdType = CT.FIGHT, flags = Schema.CmdFlag.QUEUE, unitIds = { id }, cell = tcell, offX = tox, offZ = toz })
+			end
+			kiting[id] = sim.tick
+		elseif brain.kiting[id] and sim.tick - brain.kiting[id] < Skirmish.KITE_TICKS then
+			kiting[id] = brain.kiting[id]
+		end
+	end
+	brain.kiting = kiting
+
 	local home, wave = {}, {}
 	local attacking: { [number]: boolean } = {} -- rebuilt from the living army
 	for _, id in c.army do
+		if kiting[id] then
+			if brain.attacking[id] then
+				attacking[id] = true -- still in the wave, but left to its kiting orders
+			end
+			continue
+		end
 		if brain.attacking[id] then
 			attacking[id] = true
 			table.insert(wave, id)
@@ -434,10 +632,19 @@ local function think(brain: Brain)
 			submit(sim, brain.player, { cmdType = CT.MOVE, flags = 0, unitIds = far, cell = cell, offX = ox, offZ = oz })
 		end
 	end
-	-- the wave re-targets every 5 s
+	-- the wave re-targets every 5 s; radar and fire-control vehicles guard it
 	if #wave > 0 and (newWave or sim.tick - brain.lastWaveOrder >= Skirmish.THINK_PERIOD * 5) then
 		brain.lastWaveOrder = sim.tick
 		fight(wave, targetX or brain.enemyX, targetZ or brain.enemyZ)
+		local escorts = {}
+		for _, list in { c.radarTrucks, c.trackers } do
+			for _, id in list do
+				table.insert(escorts, id)
+			end
+		end
+		if #escorts > 0 then
+			submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = escorts, targetId = wave[1] })
+		end
 	end
 end
 
