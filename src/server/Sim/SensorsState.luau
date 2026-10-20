@@ -30,6 +30,9 @@ export type State = {
 	-- per team: radar emitters (unit IDs, ids order) and the best radar error
 	radars: { [number]: { number } },
 	radarError: { [number]: number },
+	-- per team: naval units and ASW helicopters, which detect submerged
+	-- submarines within CLOSE_SONAR studs (ids order)
+	closeSonar: { [number]: { number } },
 }
 
 function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
@@ -67,6 +70,13 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 			return r
 		end)(),
 		radarError = {},
+		closeSonar = (function()
+			local r = {}
+			for _, team in teams do
+				r[team] = {}
+			end
+			return r
+		end)(),
 	}
 end
 

@@ -15,8 +15,13 @@
 -- sensor tick (every 2nd tick) from the maps: O(units × teams) buffer reads.
 -- Levels: VISIBLE (in los, or airLos for aircraft) > GHOST (a structure seen
 -- before, now out of sight) > RADAR / SONAR > HIDDEN. Submerged units are
--- only ever SONAR or HIDDEN. Jamming and stealth refine RADAR (guide 11.4).
+-- only ever SONAR or HIDDEN: SONAR inside the team's sonar map, or within
+-- CLOSE_SONAR studs (exact distance) of one of its naval units or ASW
+-- helicopters (helicopters with a weapon that can target SUB). Nothing else
+-- finds them. Jamming and stealth refine RADAR (guide 11.4).
 
+local Categories = require("@shared/Defs/Categories")
+local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Hash = require("@shared/Util/Hash")
 local Lifecycle = require("./Lifecycle")
@@ -32,6 +37,7 @@ Sensors.KINDS = SensorsState.KINDS
 Sensors.AIR_SIGHT_FACTOR = 1.5 -- default airSight = 1.5 × sight
 Sensors.DEFAULT_RADAR_ERROR = 40 -- studs, when a radar def has no radarError
 Sensors.WOBBLE_PERIOD = 30 -- ticks per wobble target (guide 11.4: tick // 30)
+Sensors.CLOSE_SONAR = 40 -- studs: naval units and ASW helis detect submerged subs this close
 Sensors.new = SensorsState.new
 Sensors.hash = SensorsState.hash
 local CELL = Grid.SENSOR_CELL_SIZE
@@ -136,6 +142,38 @@ local function domainOf(sim: Types.Sim, id: number): string
 	return sim.defs.unitByIndex[sim.world.defIndex[id]].domain
 end
 
+local SUB_BIT = Categories.Bit.SUB
+
+-- Naval units and ASW helicopters (a HELI with a weapon that can target SUB).
+local function isCloseSonar(sim: Types.Sim, def: Defs.UnitDef): boolean
+	if def.domain == "naval" then
+		return true
+	end
+	if def.moveClass ~= "HELI" then
+		return false
+	end
+	for _, slot in def.weapons do
+		if bit32.band(sim.defs.weaponByIndex[slot.weaponIndex].targetMask, SUB_BIT) ~= 0 then
+			return true
+		end
+	end
+	return false
+end
+
+-- Is submerged unit `id` within CLOSE_SONAR of one of `team`'s close detectors?
+local function closeSonarDetects(sim: Types.Sim, s: State, team: number, id: number): boolean
+	local w = sim.world
+	local x, z = w.posX[id], w.posZ[id]
+	local r2 = Sensors.CLOSE_SONAR * Sensors.CLOSE_SONAR
+	for _, d in s.closeSonar[team] do
+		local dx, dz = w.posX[d] - x, w.posZ[d] - z
+		if dx * dx + dz * dz <= r2 then
+			return true
+		end
+	end
+	return false
+end
+
 -- Radar detection of unit `id` by `observer`, given the observer's radar
 -- map already covers the unit's cell (guide 11.4):
 --   * jamming: units inside their own team's jam map are invisible to radar;
@@ -188,7 +226,10 @@ local function levelFor(sim: Types.Sim, s: State, team: number, id: number, cell
 	local m = s.maps[team]
 	local domain = domainOf(sim, id)
 	if bit32.band(w.state[id], World.State.SUBMERGED) ~= 0 then
-		return if readu16(m.sonar, cell * 2) > 0 then L.SONAR else L.HIDDEN
+		if readu16(m.sonar, cell * 2) > 0 or closeSonarDetects(sim, s, team, id) then
+			return L.SONAR
+		end
+		return L.HIDDEN
 	end
 	if readu16(m.los, cell * 2) > 0 or (domain == "air" and readu16(m.airLos, cell * 2) > 0) then
 		return L.VISIBLE
@@ -208,6 +249,7 @@ function Sensors.step(sim: Types.Sim)
 	local w = sim.world
 	for _, team in s.teams do
 		table.clear(s.radars[team])
+		table.clear(s.closeSonar[team])
 		s.radarError[team] = nil
 	end
 	for _, id in w.ids do
@@ -215,8 +257,13 @@ function Sensors.step(sim: Types.Sim)
 			Sensors.unstamp(s, id)
 			continue
 		end
-		local sensors = sim.defs.unitByIndex[w.defIndex[id]].sensors
+		local def = sim.defs.unitByIndex[w.defIndex[id]]
+		local sensors = def.sensors
 		local radars = s.radars[w.team[id]]
+		local close = s.closeSonar[w.team[id]]
+		if close and isCloseSonar(sim, def) then
+			table.insert(close, id)
+		end
 		if sensors.radar > 0 and radars then
 			table.insert(radars, id)
 			local err = sensors.radarError or Sensors.DEFAULT_RADAR_ERROR

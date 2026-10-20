@@ -351,6 +351,16 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
     - **hysteresis:** radar wobble swaps which of two Wasps (500 and 505 studs) looks closer 10 times; the SAM never switches.
   - Mutations caught: no lock preference (102 wasted ticks), no re-search (258), no hysteresis (switches).
   - Tests: 27 specs, 186 passed.
+- **4. Close submarine detection (D76, revised):**
+  - `Sensors.CLOSE_SONAR = 40`: naval units and ASW helis (HELI with a SUB-capable weapon) make a submerged sub a SONAR contact.
+  - New placeholders: Tidewatch and Leech ASW helicopters.
+  - New `Naval.spec` test:
+    - a sonar-less corvette at 30 studs sees a SONAR contact; at 55, nothing;
+    - a sonar-less ASW heli at 35: SONAR; at 50: nothing;
+    - an attack heli at 20 and a tank on the beach: nothing;
+    - the ASW heli then drops torpedoes on it, and it is never VISIBLE.
+  - Mutations caught: helis excluded, range 400, everyone detecting.
+  - Tests: 27 specs, 187 passed.
 
 ### Task 17 — Electronic warfare (M7) ✅
 

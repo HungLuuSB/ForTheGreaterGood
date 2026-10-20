@@ -9,12 +9,25 @@ local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local RunAll = require("./RunAll")
+local Defs = require("@shared/Defs/Defs")
+local Registry = require("@shared/Defs/Registry")
 
 local L = Sensors.Level
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
 -- "sea:128": 1024 studs across, centered on 0; land where x < -256, deep water (20) elsewhere
 local MAP = "sea:128"
 local SHORE_X = -256
+
+local function deepCopy(v: any): any
+	if type(v) ~= "table" then
+		return v
+	end
+	local out = {}
+	for k, x in v do
+		out[k] = deepCopy(x)
+	end
+	return out
+end
 
 local function moveTo(sim: Sim.Sim, player: number, ids: { number }, x: number, z: number)
 	local g = (sim.map :: any).grid
@@ -123,6 +136,48 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(sonarTicks > 0, "the destroyer's sonar picks the submarine up")
+	end)
+
+	t.test("naval units and ASW helicopters detect a submerged sub within 40 studs; nothing else does", function()
+		-- a test ASW heli without dipping sonar, to isolate the close-range rule
+		local raw = deepCopy(Registry)
+		local heli = Defs.extend(raw.units.ord_tidewatch, { sensors = { sonar = 0 } })
+		heli.id, heli.model, heli.faction = "neu_asw_heli", "neu_asw_heli", "neutral"
+		raw.units[heli.id] = heli
+		local defs = Defs.build(raw)
+		local function levelWith(defId: string, dx: number, dz: number): (number, Sim.Sim, number, number)
+			local sim = Sim.new({ seed = 12, players = PLAYERS, mapId = MAP, defs = defs })
+			local sub = Spawn.unit(sim, "chs_lamprey", 2, SHORE_X + 30, 0)
+			local watcher = Spawn.unit(sim, defId, 1, SHORE_X + 30 + dx, dz)
+			sim.world.fireState[sub] = World.FireState.HOLD_FIRE
+			for _ = 1, 6 do
+				Sim.step(sim)
+			end
+			return Sensors.level(sim, 1, sub), sim, sub, watcher
+		end
+		t.equal(levelWith("ord_sentry", 30, 0), L.SONAR, "a corvette (no sonar) 30 studs away: SONAR contact")
+		t.equal(levelWith("ord_sentry", 55, 0), L.HIDDEN, "at 55 studs: hidden")
+		t.equal(levelWith("neu_asw_heli", 0, 35), L.SONAR, "an ASW helicopter 35 studs away: SONAR contact")
+		t.equal(levelWith("neu_asw_heli", 0, 50), L.HIDDEN, "at 50 studs: hidden")
+		t.equal(levelWith("ord_guardian", 0, 20), L.HIDDEN, "an attack helicopter 20 studs away can't")
+		t.equal(levelWith("ord_lancer", -50, 0), L.HIDDEN, "a tank on the beach can't")
+
+		-- torpedo-targetable, never VISIBLE: the ASW heli attacks it
+		local _, sim, sub, asw = levelWith("neu_asw_heli", 0, 30)
+		local shots = 0
+		for _ = 1, 150 do
+			Sim.step(sim)
+			if sim.world.slot[sub] == nil then
+				break
+			end
+			t.expect(Sensors.level(sim, 1, sub) ~= L.VISIBLE, "never VISIBLE")
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == asw then
+					shots += 1
+				end
+			end
+		end
+		t.expect(shots > 0, `the ASW helicopter dropped torpedoes on it ({shots})`)
 	end)
 
 	t.test("only torpedoes target submarines: guns and land units ignore a known sub", function()

@@ -684,7 +684,14 @@ The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/P
   - New def fields: `movement.minSpeed`, `ammo`, `ammoCost`, `rearmTime`, `rearmPads`.
 - **Why:** needed for the air tests. Balance is M8.
 
-## D76 — Naval hull volumes and submerged submarines (2026-10-20, task 16)
+## D76 — Naval hull volumes and submerged submarines (2026-10-20, task 16; close detection added by the user the same day)
+
+- **Revised (user answer):**
+  - Within 40 studs (`Sensors.CLOSE_SONAR`, exact distance), naval units and ASW helicopters detect submerged submarines as SONAR contacts: torpedo-targetable, never VISIBLE. Nothing else can.
+  - An "ASW helicopter" is derived from the def, not a new category: a `HELI` with a weapon that can target `SUB`.
+  - Sensors keeps a per-team list of these detectors each sensor tick and checks them only for submerged units outside sonar coverage.
+  - Placeholders `ord_tidewatch` "Tidewatch" and `chs_leech` "Leech" (guide 13.3): dipping sonar 170 / 150, the side's ASW torpedo dropped into the water below, 4 rounds.
+  - This replaces "close-sight detection is not implemented" below.
 
 - **Decision:**
   - Units with `domain = "naval"` float: their collision cylinder starts `Combat.DRAFT = 3` studs below the water surface (terrain height + water depth), not at the terrain.
