@@ -343,6 +343,14 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
   - New test: a Harpy missing 5 flares and 3 chaff pays exactly 19 supply more than one with full charges, rearms in the same 135 ticks, has part of its charges back at 4 s, and is full on take-off.
   - Mutations caught: free refill; restock only at the end.
   - Tests: 27 specs, 184 passed.
+- **3. SAM target choice (D82, revised):**
+  - Targeting gives guided missiles a lock preference (×1,000), re-searches every 6 ticks while holding a target, and switches only on a 1.25× score margin.
+  - Bug fixed: jets spawned without orders now start at minimum speed; before, they hung motionless.
+  - New tests:
+    - **escort:** a jammer aircraft flying 25 studs behind fighter A. The Aegis fires 0 missiles at A and 8 at B, and is aimed elsewhere only 38 ticks while B is lockable (bound: 6 ticks per time B becomes lockable, 7 times). Once B is gone it tracks a jammed aircraft 221 of 300 ticks without firing. Without the escort it engages both (7 and 7).
+    - **hysteresis:** radar wobble swaps which of two Wasps (500 and 505 studs) looks closer 10 times; the SAM never switches.
+  - Mutations caught: no lock preference (102 wasted ticks), no re-search (258), no hysteresis (switches).
+  - Tests: 27 specs, 186 passed.
 
 ### Task 17 — Electronic warfare (M7) ✅
 

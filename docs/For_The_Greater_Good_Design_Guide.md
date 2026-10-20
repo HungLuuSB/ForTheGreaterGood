@@ -995,6 +995,7 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 
 Implementation (`Sim/EW.luau`, DECISIONS D79–D80, D82):
 - `EW.canLock` gates every guided launch.
+- Target choice for guided missiles prefers lockable targets (score ×1,000). The choice is re-checked every 6 ticks, and the missile switches only to a target scoring ≥ 1.25× the current one. With nothing lockable it keeps tracking the best target and holds fire.
 - Midcourse checks run every 5 ticks per missile; burn-through is measured from the missile.
 - The terminal check fires once the missile could reach `terminalRange` within the tick. A decoyed missile turns 60° and loses its target.
 - COMMAND needs the launcher alive and the target VISIBLE to the launcher's team, checked every tick of the flight. Jamming, chaff, flares and DIRCM don't affect it.

@@ -762,7 +762,14 @@ The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/P
 - **Alternatives:** DIRCM consuming its cooldown only on success; flares before DIRCM.
 - **Why:** "defeats at most one IR missile per cooldown" reads as one engagement. Measured: DIRCM decoys 25 of 40 single missiles, but only 14 of 80 in salvos of 4 (66 of 80 hit).
 
-## D82 — EW events stay in the sim; SAM placeholders (2026-10-20, task 17)
+## D82 — EW events stay in the sim; SAM placeholders (2026-10-20, task 17; target choice revised by the user the same day)
+
+- **Revised (user answer), SAM target choice:**
+  - Guided missiles prefer targets they can lock: a lockable target's score is multiplied by 1,000, so it outranks any unlockable one.
+  - They re-search on their stagger tick (every 6 ticks) even while holding a target, and switch only when the new score is at least 1.25× the current one.
+  - With nothing lockable they keep tracking the best target and hold fire.
+  - Measured: with a jammer escort on fighter A, an Aegis fires 0 missiles at A and 8 at fighter B. It turns to B within one search interval each time B becomes lockable (38 ticks over 7 transitions). With radar wobble swapping which of two hovering Wasps looks closer 10 times in 60 s, it never switches.
+  - Found while writing this test: jets spawned without a move order never started flying, because Movement saw nothing moving. Jets now spawn at minimum speed.
 
 - **Decision:**
   - `DECOYED` and `LOST_LOCK` are sim events (`Combat.Event`), like `SPAWN_PROJ` and `IMPACT`. They are not on the wire yet: the Events channel carries only ENTER, LEAVE and DEATH, and projectile replication isn't built. `PROTOCOL_VERSION` stays 2.

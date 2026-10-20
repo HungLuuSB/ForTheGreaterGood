@@ -447,6 +447,132 @@ return function(t: RunAll.Context)
 		t.expect(noSight.lost and not noSight.hit, "sight lost: LOST_LOCK, miss")
 	end)
 
+	-- An Aegis at the origin of a large map; two Harpies circling 450 studs
+	-- north (A) and south (B), so they always stay beyond burn-through (210).
+	-- An Order spotter with long air sight at A's circle keeps A VISIBLE.
+	-- With `escort`, a jammer aircraft flies 25 studs behind A on the same
+	-- circle (same steering, shifted), hiding A from radar locks.
+	local function escortScene(seed: number, escort: boolean): (Sim.Sim, number, number, number)
+		local defs = testDefs({
+			escort = { from = "chs_harpy", with = { weapons = {}, sensors = { jam = 150 } } },
+			spotter = { from = "ord_lancer", with = { sensors = { airSight = 700 } } },
+		}, {})
+		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:256", defs = defs })
+		local aegis = Spawn.unit(sim, "ord_aegis", 1, 0, 0)
+		local a = Spawn.unit(sim, "chs_harpy", 2, 0, 450 + 220, math.pi / 2)
+		local b = Spawn.unit(sim, "chs_harpy", 2, 0, -450 + 220, math.pi / 2)
+		-- jets circle their goal: point each at its circle's center
+		sim.world.goalX[a], sim.world.goalZ[a] = 0, 450
+		sim.world.goalX[b], sim.world.goalZ[b] = 0, -450
+		hold(sim, { a, b, Spawn.unit(sim, "neu_spotter", 1, 0, 450) })
+		if escort then
+			local e = Spawn.unit(sim, "neu_escort", 2, -25, 450 + 220, math.pi / 2)
+			sim.world.goalX[e], sim.world.goalZ[e] = -25, 450
+			hold(sim, { e })
+		end
+		return sim, aegis, a, b
+	end
+
+	t.test("a jammer escort near one fighter makes the SAM shoot the other", function()
+		local function run(escort: boolean): { [string]: number }
+			local sim, aegis, a, b = escortScene(10, escort)
+			local w = sim.world
+			local r = { atA = 0, atB = 0, trackJammed = 0, lockA = 0, launchesAfter = 0, wasted = 0, bLockable = 0 }
+			local bWas = false
+			local key = World.slotKey(aegis, 1)
+			for tick = 1, 1200 do
+				if tick == 900 and w.slot[b] then
+					Combat.queueDamage(sim.combat, b, 1e9, 0) -- then only A is left
+				end
+				Sim.step(sim)
+				for _, e in sim.combat.events do
+					if e.kind == "SPAWN_PROJ" and e.unit == aegis and tick > 900 then
+						r.launchesAfter += 1
+					end
+					if e.kind == "SPAWN_PROJ" and e.unit == aegis then
+						local tgt = w.wTarget[key]
+						if tgt == a then
+							r.atA += 1
+						elseif tgt == b then
+							r.atB += 1
+						end
+					end
+				end
+				if w.slot[a] and EW.canLock(sim, aegis, sim.defs.weapons.ord_radar_sam, a, math.sqrt(w.posX[a] ^ 2 + w.posZ[a] ^ 2)) then
+					r.lockA += 1
+				end
+				local cur = w.wTarget[key]
+				local bLock = w.slot[b] ~= nil and EW.canLock(sim, aegis, sim.defs.weapons.ord_radar_sam, b, math.sqrt(w.posX[b] ^ 2 + w.posZ[b] ^ 2))
+				if bLock and not bWas then
+					r.bLockable += 1
+				end
+				bWas = bLock
+				if bLock and cur ~= b then
+					r.wasted += 1 -- B could be shot, but the SAM is aimed elsewhere
+				end
+				if tick > 900 and w.wTarget[key] ~= 0 then
+					r.trackJammed += 1 -- only A and its escort are left, both jammed
+				end
+			end
+			return r
+		end
+		local open, escorted = run(false), run(true)
+		t.expect(open.atA > 0 and open.atB > 0, `without the escort the SAM engages both ({open.atA} at A, {open.atB} at B)`)
+		t.equal(escorted.atA, 0, "with the escort: no missile at A")
+		t.expect(escorted.atB > 0, `the SAM shoots B instead ({escorted.atB} missiles)`)
+		t.equal(escorted.lockA, 0, "A is never lockable")
+		-- B turns lockable each time it circles back into range; the SAM must
+		-- turn to it within one search interval (6 ticks) every time
+		t.expect(escorted.wasted <= 6 * escorted.bLockable, `aimed elsewhere while B was lockable for {escorted.wasted} ticks ({escorted.bLockable} times B became lockable)`)
+		t.expect(escorted.trackJammed > 200, `with B gone it keeps tracking the best jammed aircraft ({escorted.trackJammed} of 300 ticks)`)
+		t.equal(escorted.launchesAfter, 0, "holding fire")
+		print(`    escort: open {open.atA} at A / {open.atB} at B; escorted {escorted.atA} at A / {escorted.atB} at B, then tracked a jammed aircraft {escorted.trackJammed} / 300 ticks without firing`)
+	end)
+
+	t.test("guided target choice doesn't flip-flop between similar targets", function()
+		-- Two Wasps hovering 500 and 505 studs from an Aegis, known only by
+		-- radar: the ±20-stud wobble keeps swapping which one looks closer.
+		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = MAP })
+		local w = sim.world
+		local aegis = Spawn.unit(sim, "ord_aegis", 1, -400, -200)
+		local near = Spawn.unit(sim, "chs_wasp", 2, 100, -200)
+		local far = Spawn.unit(sim, "chs_wasp", 2, -400 + 505 * math.sin(math.pi / 4), -200 + 505 * math.cos(math.pi / 4))
+		hold(sim, { near, far })
+		for _, id in { near, far } do
+			World.setHealth(w, id, 1e7)
+		end
+		local key = World.slotKey(aegis, 1)
+		local switches, prev, held, closerFlips, prevCloser = 0, 0, 0, 0, 0
+		for _ = 1, 900 do
+			Sim.step(sim)
+			local cur = w.wTarget[key]
+			if cur ~= 0 then
+				held += 1
+				if prev ~= 0 and cur ~= prev then
+					switches += 1
+				end
+				prev = cur
+			end
+			-- which one the SAM's team believes is closer (what a margin-free choice would follow)
+			local nx, nz = Sensors.knownPosition(sim, 1, near)
+			local fx, fz = Sensors.knownPosition(sim, 1, far)
+			if nx and fx then
+				local dn = (nx + 400) ^ 2 + (nz + 200) ^ 2
+				local df = (fx + 400) ^ 2 + (fz + 200) ^ 2
+				local closer = if dn < df then near else far
+				if prevCloser ~= 0 and closer ~= prevCloser then
+					closerFlips += 1
+				end
+				prevCloser = closer
+			end
+		end
+		t.equal(Sensors.level(sim, 1, near), L.RADAR, "radar contacts")
+		t.expect(closerFlips >= 4, `the wobble swaps which one looks closer ({closerFlips} times)`)
+		t.expect(held > 800, `the SAM held a target {held} of 900 ticks`)
+		t.equal(switches, 0, "and never switched")
+		print(`    hysteresis: closer target swapped {closerFlips} times in 60 s, SAM switched {switches} times`)
+	end)
+
 	t.test("EW replays stay deterministic", function()
 		local original = Sim.new({ seed = 77, players = PLAYERS, mapId = MAP, scenario = "ew_test" })
 		local wasp = 0

@@ -51,7 +51,8 @@ local function def(sim: Types.Sim, id: number): Defs.UnitDef
 	return sim.defs.unitByIndex[sim.world.defIndex[id]]
 end
 
--- New aircraft: cruising altitude, full ammo, current spot as resume point.
+-- New aircraft: cruising altitude, full ammo, current spot as resume point;
+-- jets already at minimum speed.
 function Air.onSpawn(sim: Types.Sim, id: number)
 	local d = def(sim, id)
 	if d.domain ~= "air" then
@@ -65,6 +66,9 @@ function Air.onSpawn(sim: Types.Sim, id: number)
 	a.pad[id] = 0
 	a.progress[id] = 0
 	a.resumeX[id], a.resumeZ[id] = w.posX[id], w.posZ[id]
+	if d.moveClass == "JET" and d.movement and d.movement.minSpeed then
+		w.speed[id] = d.movement.minSpeed -- jets are born flying: never parked in the air
+	end
 end
 
 -- Nearest complete friendly rearm pad, or 0.
