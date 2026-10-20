@@ -4,11 +4,36 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
+## Summary (overnight 2026-10-21, branch `m-sim-2`; everything merged into `main`)
+
+**Done:** the whole queue (tasks 1–6), both client requests, and integration of every client commit marked ready. Each piece was merged into `main` with `--no-ff` after `lune run test` and `lune run build` passed, then pushed. The hourly integrator loop is running (cron job `af888f92`, session-only).
+
+| Task | What | Decision |
+|---|---|---|
+| 1 | `docs/contracts/net.md`: everything the client receives (marked ready); `Ballistics` and its homing steer moved to `Shared/Combat` | S-1 |
+| 2 | Join / reconnect: HELLO / REJECT / WELCOME handshake, full rebuild after a join, Eco channel (protocol 6). A late-joining client rebuilds exactly the same view | S-2 |
+| 3 | Order queues: shift-queue, FIGHT (holds to engage), PATROL, ATTACK (forced fire, team knowledge), GUARD, REPAIR (also heals), RECLAIM / BUILD queues, factory rally and repeat | S-4 |
+| 4 | Movement peak at 800 units 12.1 → 6.4 ms (budget 10): field extensions are now sliced Pathing jobs | S-5 |
+| 5 | Smarter AI: radar tower, fire-control radar via the Advanced Vehicle Plant escorting waves, kiting artillery, IR SAM trucks and sites against known aircraft | S-7 |
+| 6 | `lune run soak`: 40-minute AI-vs-AI match, 36,000 ticks in 16 s; peak tick 10.8 ms, heap 6–16 MB with no growth, replay identical | S-8 |
+| Client requests | Weapon pieces in `pieces` plus validation (S-3); unit state bits in Shared, `Schema.UnitState` (S-6) | S-3, S-6 |
+
+**Tests:** `lune run test` gives **36 specs, 270 passed, 0 failed** (253 at the start). New: `Orders.spec` (8), `AI.spec` (4), plus tests in `NetOut.spec` (3), `Schema.spec` (2) and `Defs.spec` (1). Every new mechanism was mutation-checked (its test fails when it is undone). `lune run build`: 288 scripts, 861 requires.
+
+**Integrated from the client stream:** `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1`, `a96cca2`, `2062b10`, `df29a2d`. No conflicts and no failed checks (see Integration notes).
+
+**Balance** (re-run after FIGHT started holding to engage): 448 of 568 pairs hold (was 457); 206 findings (75 mechanic, 131 numbers); same-role band 24 of 38 (was 34). See "Needs my review".
+
 ## Needs my review
 
 - **Free repair** (S-4): REPAIR heals damaged units at the rate they were built and costs nothing (BAR-style). Alternative: charge a share of the unit's cost.
 - **TOGGLE means repeat on factories** (S-4): the wire has no separate repeat command, and factories have no other toggle. Alternative: a REPEAT command type (protocol change).
-- **FIGHT now holds to engage** (S-4): balance fights and the AI use attack-move, so `docs/BALANCE.md` numbers will shift at the next re-run.
+- **Attack-move now holds to engage** (S-4), and the balance fights shifted with it (M8):
+  - ships hold at their own range, outside the sight of tanks and artillery on the beach, which now "can't see" them (37 findings);
+  - tank mirrors are lopsided (Lancer vs Ravager 0.39–0.40; Tideguard vs Ravager 0.25–0.27): whichever side comes into range first gets to hold and fire.
+  - Accept these as M8 numbers, or have attack-move units close in to their weapon range instead of holding at first contact?
+- **AI tuning numbers** (S-7): 900 supply before teching up, one IR SAM truck per two known aircraft, kiting at half range. Placeholders.
+- **AI matches end early on most seeds** (S-8): one AI overruns the other at 10–18 minutes on seeds 1, 2, 4 and 5; only seed 3 plays the full 40 minutes. A deeper AI (defensive structures, expansion defense) would make longer matches; not done.
 
 ## For the client stream
 
@@ -23,6 +48,8 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
 - 2026-10-21: client `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1` merged (`--no-ff`); `lune run test` 34 specs / 253 passed, `lune run build` 263 scripts / 787 requires; pushed (`2a8b078`). `main` merged into `m-sim-2`.
+- 2026-10-21: client `a96cca2` (contracts: rig, blockout format, client-state draft) → `02bacbc`; `2062b10` (blockout generator) → `4c93177`; `df29a2d` (client foundation) → `6b05efe`. Each passed test and build and was pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
+- Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`.
 
 ## Overnight 2026-10-21 (integrator + queue)
 
@@ -32,6 +59,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - Task 3 ✅: order queues and behaviors (S-4): shift-queue, FIGHT holds to engage, PATROL, ATTACK, GUARD, REPAIR (free healing), RECLAIM / BUILD queues, factory rally and repeat. `Orders.spec` (8 tests). Tests: **35 specs, 265 passed**.
 - Client request 2 ✅: `Schema.UnitState` (S-6).
 - Task 5 ✅: smarter AI (S-7): radar tower, Advanced Vehicle Plant with a fire-control radar escorting waves, kiting artillery, IR SAM trucks and sites against known aircraft. `AI.spec` (4). Tests: **36 specs, 270 passed**.
+- Task 6 ✅: `lune run soak`, 40-minute AI-vs-AI match test (S-8).
 - Task 4 ✅: Movement peak at 800 units 12.1 → 6.4 ms (budget 10): field extensions are sliced Pathing jobs, and the corridor merge is bounded (S-5). Stress: average tick 8.6 ms, Pathing peak 8.4 ms.
 
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)

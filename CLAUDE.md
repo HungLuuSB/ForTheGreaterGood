@@ -51,6 +51,7 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - `lune run bench`: flow field benchmark (results in `docs/progress/sim.md`).
   - `lune run debug_map`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored).
   - `lune run stress`: stress test and bandwidth report (results in `docs/progress/sim.md`).
+  - `lune run soak [seed] [minutes]`: 40-minute AI-vs-AI match: peak tick, heap, replay check; exits 1 on failure (S-8).
   - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).
   - `lune run export <scene> [--player N]`: record a match for the viewer (`tools/viewer/index.html`) into `debug_out/`.
   - `lune run build`: offline Roblox build and check, in `build/ci/` (see below). `lune run check_build [place]` re-checks a built place.
