@@ -2,48 +2,16 @@
 
 Decisions made while working unattended. Each entry gives the date, the decision, the alternatives and the reason. Everything here is meant to be easy to change. Overrule any of them and I'll update the code, the guide and this file together.
 
-## Summary (end of the unattended session, 2026-10-20)
+## Summary
 
-**Done: all 10 tasks, plus the rules review.** Branch `m0-foundations` is pushed; every task is its own commit.
+- D1–D51: first unattended session (M0, the M1 simulation side, the M2 combat core). The questions it raised were answered in round 3.
+- D52–D54: round 3 (pathing fixes, duel reports).
+- D55–D64: M3 economy and construction.
+- D65–D72: M4 sensors and fog, NetOut, stress harness (tasks 11–14).
+- D73–D78: M6 air and naval (tasks 15–16).
+- D79–D82: M7 electronic warfare (task 17).
 
-| # | Task | Commit |
-|---|---|---|
-| 1 | Packer/Schema follow-ups, guide 0.4 | `e1be1c4` |
-| 2 | Defs: loader, validation, indices, hash, Lancer/Ravager | `67b89b8` |
-| 3 | Grid: cell math, wire positions, test maps | `e18c19c` |
-| 4 | World, Sim.step, replay log, world hash (**M0 exit criteria met**) | `6d79a93` |
-| 5 | Passability: slope, passMask, clearance | `b615360` |
-| 6 | Quadtree, coarse A*, corridor | `ddcea5e` |
-| 7 | Flow fields, time-slicing, LRU cache | `089a316` |
-| 8 | Flow field benchmark | `49bbc74` |
-| 9 | Movement, shared fields, avoidance | `7fe1b02` |
-| 10 | Combat core (targeting → damage), headless | `2b8110c` |
-| — | Rules review, final docs | (last commit) |
-
-**Tests:** `lune run test` gives **17 specs, 129 passed, 0 failed** (about 1.5 s). Key mechanisms were mutation-checked: each deliberately broken version was caught by the specs.
-
-**Benchmarks** (Lune, dev PC; details below):
-- One-shot flow fields on 256×256 take 80 ms (open), 31.5 ms (maze) and 9.9 ms (island). All are **over** the 8 ms budget.
-- Sliced at 12,000 work units per tick they finish in 11, 8 and 2 ticks.
-- 50-unit marches cost about 0.2 ms per tick. The 10 v 10 duel costs about 0.024 ms per tick.
-
-**Results:**
-- 50 Lancers arrive on all 9 test maps (lakes and wall-with-gap) without overlap. About 70% land within 2 studs of their formation slot, and the worst lands about 17 studs short.
-- The 10 v 10 duel always ends: Chaos wins 10 of 10 seeds with placeholder stats.
-- Every run is deterministic and replays exactly.
-
-**Decisions:** D1–D51 below. The ones that change the guide or need your call are listed under *Questions*.
-
-**Questions for you:**
-1. **D21, footprint rule.** I used `clearance >= floor(F/2) + 1` (the guide's `ceil(F/2)` lets a 2×2 unit into a 1-cell gap). Even footprints then need a gap one cell wider than strictly necessary. Keep it, or switch to exact corner-anchored clearance?
-2. **D29/D33, pathing budget in work units** (12,000 per tick), not wall-clock ms, so replays stay exact. Confirm?
-3. **Benchmark: fields are over budget.** Pick the next optimization: bucket-queue Dijkstra (about 2×), tighter corridors, `--!native` and Actors (needs Studio/live measurements), or accept the slicing.
-4. **D50, balance.** Ravagers win the close duel 10 of 10. Is that intended by the doctrine (Chaos brawls, Order out-ranges)? Should a long-range test scenario be added?
-5. **D51, cross-platform determinism.** sin, cos and atan2 come from the platform's libm, so a replay recorded on a Linux server may diverge when replayed on Windows. Accept same-platform replays, or should I write deterministic trig?
-6. **Formation precision** (about 70% exact). Good enough for now, or invest in better slot assignment?
-7. Still pending from before: Studio access for the darklua require pipeline and the Studio test entry.
-
----
+The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/PROGRESS.md` → Summary.
 
 ---
 

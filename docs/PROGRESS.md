@@ -2,52 +2,63 @@
 
 Status of the unattended work session. A new session should be able to continue from this file alone.
 
-## Summary (end of the unattended session, 2026-10-20)
+## Summary (end of the second unattended session, 2026-10-20)
 
-**Done: all 10 tasks, plus the rules review.** Branch `m0-foundations` is pushed; every task is its own commit.
+**Done: tasks 11–17, the M6 and M7 rules reviews, and `docs/STUDIO_HANDOFF.md`.** Branch `m0-foundations` is pushed; every task is its own commit. The headless simulation now covers M0–M7: everything except what needs Studio (map bake, client, rendering, live benchmarks).
 
 | # | Task | Commit |
 |---|---|---|
-| 1 | Packer/Schema follow-ups, guide 0.4 | `e1be1c4` |
-| 2 | Defs: loader, validation, indices, hash, Lancer/Ravager | `67b89b8` |
-| 3 | Grid: cell math, wire positions, test maps | `e18c19c` |
-| 4 | World, Sim.step, replay log, world hash (**M0 exit criteria met**) | `6d79a93` |
-| 5 | Passability: slope, passMask, clearance | `b615360` |
-| 6 | Quadtree, coarse A*, corridor | `ddcea5e` |
-| 7 | Flow fields, time-slicing, LRU cache | `089a316` |
-| 8 | Flow field benchmark | `49bbc74` |
-| 9 | Movement, shared fields, avoidance | `7fe1b02` |
-| 10 | Combat core (targeting → damage), headless | `2b8110c` |
-| — | Rules review, final docs | (last commit) |
+| 11 | Sensor maps, visibility levels, structure ghosts (M4) | `fb0d0df` |
+| 12 | Radar wobble, jamming, stealth; fog-aware targeting (M4) | `f0e1a28` |
+| 13 | Interest management and NetOut with a simulated client | `08e4ede` |
+| 14 | Stress test with per-system timing and bandwidth report | `2e7925d` |
+| 15 | Aircraft: jets, helicopters, ammo, rearm pads (M6) | `f0733e0` |
+| 16 | Naval: ships, submarines, torpedoes (M6) | `8c6d6b2` |
+| — | M6 rules review | `561d6b7` |
+| 17 | Electronic warfare: guidance, burn-through, countermeasures (M7) | `2af0466` |
+| — | M7 rules review (Movement regression fix) | `dccf50c` |
+| — | Studio handoff checklist, final summary | (last commit) |
 
-**Tests:** `lune run test` gives **17 specs, 129 passed, 0 failed** (about 1.5 s). Key mechanisms were mutation-checked: each deliberately broken version was caught by the specs.
+Earlier on this branch: M0 (`e1be1c4`–`6d79a93`), the M1 simulation side, the M2 combat core, the pathing fixes and duel reports (`bafe3b1`–`8878849`), and M3 economy and construction (`3c27b99`–`1b17519`).
 
-**Benchmarks** (Lune, dev PC; details below):
-- One-shot flow fields on 256×256 take 80 ms (open), 31.5 ms (maze) and 9.9 ms (island). All are **over** the 8 ms budget.
-- Sliced at 12,000 work units per tick they finish in 11, 8 and 2 ticks.
-- 50-unit marches cost about 0.2 ms per tick. The 10 v 10 duel costs about 0.024 ms per tick.
+**Tests:** `lune run test` gives **27 specs, 182 passed, 0 failed** (about 7 s). This session added Sensors, Fog, NetOut, Air, Naval and EW specs. Every new mechanism was mutation-checked: each deliberately broken version was caught.
+
+**Benchmarks and bandwidth** (Lune; details under Benchmarks):
+- **Stress test, 800 units:**
+  - average tick 12.1 ms, p95 20.4, max 95, against a 66.7 ms tick;
+  - no system over budget on average;
+  - peak offenders: Commands (82 ms on a 400-unit order, O(n²) slot assignment), Sensors (17 ms against 5) and Movement (11.6 against 10).
+  - This PC got about 1.6× slower after the reset: the task-14 commit measures 12.2 ms here, against the 7.28 ms recorded at the time.
+- **Bandwidth:** worst 21.5 KB/s per player at 800 units (tactical 6.6, strategic 6.9, state and events 8.0) against 35.
+- **Flow fields** (after the bucket queue): open 28 ms, maze 18 ms, island 4.3 ms one-shot. Sliced at 36,000 work units per tick they finish in at most 4 ticks.
 
 **Results:**
-- 50 Lancers arrive on all 9 test maps (lakes and wall-with-gap) without overlap. About 70% land within 2 studs of their formation slot, and the worst lands about 17 studs short.
-- The 10 v 10 duel always ends: Chaos wins 10 of 10 seeds with placeholder stats.
-- Every run is deterministic and replays exactly.
+- **Fog:** artillery direct hits 87% with a spotter versus 20% on radar.
+- **Air:** a Falcon kills an incoming Wasp in 22.9 s, never drops below minimum speed, circles, runs dry, rearms (120 ticks at full economy, more than 3× on a stall) and returns.
+- **Naval:** ships and subs never leave the water. A sub is HIDDEN without sonar and never better than a SONAR contact with it. Only torpedoes engage subs, and torpedoes die at the shore. A Crusader sinks a Lamprey in 8.5 s and keeps 1960 / 2600 HP.
+- **EW:**
+  - an Aegis never launches at a jammed Wasp at 550 or 250 studs, though it sees it, but does at 150 (inside the 210-stud burn-through);
+  - mid-flight jamming raises `LOST_LOCK`;
+  - DIRCM decoys 25 of 40 single IR missiles but only 14 of 80 in salvos of 4 (66 hit);
+  - a stalled DIRCM never recharges;
+  - EW scenarios replay exactly.
 
-**Decisions:** D1–D51 in `docs/DECISIONS.md`. The ones that change the guide or need your call are listed under *Questions*.
+**Decisions:** D65–D82 in `docs/DECISIONS.md` (this session). The ones that need your call are below.
 
 **Questions for you:**
-1. **D21, footprint rule.** I used `clearance >= floor(F/2) + 1` (the guide's `ceil(F/2)` lets a 2×2 unit into a 1-cell gap). Even footprints then need a gap one cell wider than strictly necessary. Keep it, or switch to exact corner-anchored clearance?
-2. **D29/D33, pathing budget in work units** (12,000 per tick), not wall-clock ms, so replays stay exact. Confirm?
-3. **Benchmark: fields are over budget.** Pick the next optimization: bucket-queue Dijkstra (about 2×), tighter corridors, `--!native` and Actors (needs Studio/live measurements), or accept the slicing.
-4. **D50, balance.** Ravagers win the close duel 10 of 10. Is that intended by the doctrine (Chaos brawls, Order out-ranges)? Should a long-range test scenario be added?
-5. **D51, cross-platform determinism.** sin, cos and atan2 come from the platform's libm, so a replay recorded on a Linux server may diverge when replayed on Windows. Accept same-platform replays, or should I write deterministic trig?
-6. **Formation precision** (about 70% exact). Good enough for now, or invest in better slot assignment?
-7. Still pending from before: Studio access for the darklua require pipeline and the Studio test entry.
+1. **D80, COMMAND guidance.** I read "launcher's view is jammed" as *the launcher stands inside an enemy jam field*. The other reading is to treat it like RADAR, jammed at the target. Which one?
+2. **D81, DIRCM.** An engagement starts the cooldown even when the roll fails, so it handles at most one missile per cooldown. Flare and chaff refills are free on rearm for now (guide 8.6 says they cost supply). OK, or should the refill be charged now?
+3. **D82, SAM target choice.** A radar SAM keeps a jammed target and holds fire. Should Targeting prefer targets it can lock (more CPU per SAM, smarter AA)?
+4. **D76, submarines.** Only sonar finds them; the guide's optional "very close sight" detection is left out. Add it (e.g. within 40 studs)?
+5. **Commands peak** (82 ms on a 400-unit move order, the top peak offender). Fix now (grid-bucketed greedy slot assignment, or slicing the order over a few ticks), or wait for live M5 measurements?
+6. **Studio:** `docs/STUDIO_HANDOFF.md` is the ordered checklist. Step 1 (the darklua require conversion) unblocks everything else.
 
 ---
 
 ## How to continue
 
 - Branch: `m0-foundations` (pushed to `origin`). Run `lune run test` from the repo root; everything must pass before starting the next task.
+- **Next:** wait for answers to the questions above. Everything left for the milestones needs Studio; follow `docs/STUDIO_HANDOFF.md` in order. Headless work that could still be done without Studio: M8 roster and balance (placeholder defs exist for guide 13's ground, air, naval and SAM roles), the Commands slot-assignment peak, and the guide 7.5 join/reconnect snapshot logic.
 - Rules: `CLAUDE.md`, the `ftgg-roblox-dev` skill and the design guide (`docs/For_The_Greater_Good_Design_Guide.md`).
 - Unattended-session rules (from the user):
   - After each task passes the tests: commit, push, and update this file.
@@ -72,6 +83,16 @@ Status of the unattended work session. A new session should be able to continue 
 | 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | ✅ done |
 | 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | ✅ done |
 | — | Rules review (requires, determinism, no Instances, hot-loop allocation) | ✅ done |
+| — | Round 3: direct-path shortcut, bucket-queue flow fields, duel reports | ✅ done (`bafe3b1`–`8878849`) |
+| M3 | Economy and construction (headless), scripted T1 build order, M3 review | ✅ done (`3c27b99`–`1b17519`) |
+| 11 | Sensor maps, visibility levels, ghosts (M4) | ✅ done |
+| 12 | Wobble, jamming, stealth, fog-aware targeting (M4) | ✅ done |
+| 13 | Interest management and NetOut, simulated client | ✅ done |
+| 14 | Stress test and bandwidth report | ✅ done |
+| 15 | Air: jets, helicopters, ammo, rearm pads (M6) | ✅ done |
+| 16 | Naval: ships, subs, torpedoes (M6) + M6 review | ✅ done |
+| 17 | Electronic warfare (M7) + M7 review | ✅ done |
+| — | `docs/STUDIO_HANDOFF.md` | ✅ done |
 
 ## Done so far
 
