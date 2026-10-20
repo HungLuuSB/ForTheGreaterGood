@@ -15,6 +15,7 @@ BAR-style modern-warfare RTS on Roblox. Factions: Order / Chaos. Domains: ground
 | `src/server/Sim` | ServerScriptService.Sim |
 | `src/server/Tests` | ServerScriptService.Tests |
 | `src/client` | StarterPlayer.StarterPlayerScripts.Client |
+| `src/roblox` | ServerScriptService.Entry (Roblox-only server scripts, e.g. the in-Studio test entry `RunTests`) |
 | `docs/` | design documents (not synced) |
 | `.lune/` | Lune scripts: test entry, tooling (not synced) |
 | `.luaurc` | require aliases (`@shared`) for Lune and tooling (not synced) |
@@ -32,7 +33,7 @@ Maps, terrain and unit models live in the place file, not in this repo.
 
 ## Lune mode (current)
 
-Studio isn't available, so all code and tests run under [Lune](https://lune-org.github.io/docs) (version pinned in `rokit.toml`).
+Studio is now available to the client session only (`src/client`, `src/shared/Defs/Blockouts/`, place content), through the Roblox Studio MCP tools. The simulation stays headless: its code and tests run under [Lune](https://lune-org.github.io/docs) (version pinned in `rokit.toml`) and are still tested with `lune run test`.
 
 - Run the tests from the project root with `lune run test` (entry: `.lune/test.luau`). It runs every `*.spec.luau` under `src/server/Tests`. `lune run test <filter>` runs only the specs whose path contains `<filter>`.
 - All code in `src/shared` and `src/server` must run in **both** Lune and Roblox:
@@ -49,16 +50,22 @@ Studio isn't available, so all code and tests run under [Lune](https://lune-org.
   - `lune run stress`: stress test and bandwidth report (results in `docs/progress/sim.md`).
   - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).
   - `lune run export <scene> [--player N]`: record a match for the viewer (`tools/viewer/index.html`) into `debug_out/`.
-  - `lune run build`: Roblox build (see below). `lune run check_build [place]` re-checks a built place.
-- `src/client` is Roblox-only and isn't covered by this rule.
+  - `lune run build`: offline Roblox build and check, in `build/ci/` (see below). `lune run check_build [place]` re-checks a built place.
+  - `lune run serve`: live sync to Studio, into `build/serve/` (see below).
+- `src/client` and `src/roblox` are Roblox-only and aren't covered by this rule.
+- In Studio, run the same specs with `require(game.ServerScriptService.Entry.RunTests).run(filter?)`. Through `execute_luau` use `.start(filter?)`, then poll `.status()` with plain calls until it returns the summary (the full suite takes ~30 s; an `execute_luau` call gives up well before 20 s, even when it yields, so don't wait inside the call). A poll can fail with "Target is not reachable" while Studio is inside one long test; just poll again.
 - Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). So the source keeps the require style above, and a build step converts it (DECISIONS D84):
   - `lune run build`:
     1. `rojo sourcemap default.project.json -o sourcemap.json`;
-    2. `darklua process src build/src`. `.darklua.json`'s `convert_require` rule turns `@shared/...` and relative requires into `game:GetService(...)` / `script.Parent` paths with `FindFirstChild`;
-    3. `rojo build build.project.json -o build/place.rbxl`;
+    2. `darklua process src build/ci/src`. `.darklua.json`'s `convert_require` rule turns `@shared/...` and relative requires into `game:GetService(...)` / `script.Parent` paths with `FindFirstChild`;
+    3. `rojo build build.project.json -o build/ci/place.rbxl`;
     4. `lune run check_build` loads the place with `@lune/roblox` and checks that every script compiles and every require resolves to a ModuleScript.
+    It wipes and rebuilds only `build/ci/`, so it's safe while the live sync runs.
   - Tools are pinned in `rokit.toml` (darklua 0.19.0). `build/` and `sourcemap.json` are gitignored.
-  - Live sync to Studio: run `darklua process src build/src --watch` and `rojo serve build.project.json`, never `default.project.json`. `default.project.json` stays the source tree for the sourcemap and tooling.
+  - Live sync to Studio, two terminals in the project root: `lune run serve`, then `rojo serve serve.project.json`; then connect the Rojo plugin. Never serve `default.project.json` (unconverted requires) or `build.project.json` (the CI tree, rebuilt from scratch).
+    - `.lune/serve.luau` replaces `darklua --watch` and `rojo sourcemap --watch`: it polls `src`, converts each changed file with darklua (files saved by rename included), regenerates `sourcemap.json` and converts everything when a file is added or removed, and removes only the output file of a deleted source. It never deletes a directory.
+    - **Never run anything that wipes or rebuilds `build/serve/` while the sync is running** (no `rm -r build`, no `darklua process` into it, no switching `lune run build` back to it). Rojo's serve crashes when a directory it watches disappears (`change_processor.rs`, "The system cannot find the path specified"). Stop both terminals first.
+  - `default.project.json` stays the source tree for the sourcemap and tooling.
 
 ## Current milestone
 

@@ -67,7 +67,7 @@ Code is synced from the repository into Studio by Rojo:
 - **Edit code as files under `src/`**, never with Studio `multi_edit`; Rojo would overwrite edits made in Studio.
 - Use the Studio MCP tools for what lives only in the place file (maps, terrain, models, `ReplicatedStorage.Models`) and for running code, inspecting instances, playtesting and reading console output.
 - File naming: `Name.server.luau` = Script, `Name.client.luau` = LocalScript, `Name.luau` = ModuleScript, a folder with `init.luau` = ModuleScript with children.
-- Before testing in Studio, confirm Rojo is syncing (the changed module exists in Studio with the new content). If it isn't, ask the user to start `darklua process src build/src --watch` and `rojo serve build.project.json` (the converted tree; `default.project.json` serves unconverted string requires that Roblox can't resolve), then connect the Studio plugin. `lune run build` builds and checks a place file offline.
+- Before testing in Studio, confirm Rojo is syncing (the changed module exists in Studio with the new content). If it isn't, ask the user to run `lune run serve` and `rojo serve serve.project.json` in two terminals (the converted tree in `build/serve/`; `default.project.json` serves unconverted string requires that Roblox can't resolve), then connect the Studio plugin. `lune run build` builds and checks a place file offline in `build/ci/` and is safe alongside. Never wipe `build/serve/` while the sync runs: Rojo's serve crashes.
 - After each working, verified step, suggest a git commit with a clear message.
 
 ---
@@ -98,7 +98,7 @@ Suggest the user saves or commits (Rojo + git) before large changes.
 
 ### Verifying
 
-- **Logic:** from the project root run `lune run test` (`lune run test <filter>` for matching specs only) and report pass/fail. It runs every `*.spec.luau` under `src/server/Tests` through `Tests/RunAll`. A Studio entry for running the tests through `execute_luau` is still to be added.
+- **Logic:** from the project root run `lune run test` (`lune run test <filter>` for matching specs only) and report pass/fail. It runs every `*.spec.luau` under `src/server/Tests` through `Tests/RunAll`. In Studio (client session only), `execute_luau` (Edit) runs `require(game.ServerScriptService.Entry.RunTests).start(filter?)`, then polls `.status()` with plain calls (no waiting inside the call: `execute_luau` gives up before 20 s) until it returns the summary (`specs`, `passed`, `failed`, `failures`); the per-test lines go to the Output. "Target is not reachable" during a run means Studio is inside a long test: poll again.
 - **Runtime:** `start_stop_play` → `get_console_output` → `screen_capture` if visual → `start_stop_play` to stop.
 - Read errors from console output before guessing at fixes. Fix the cause, then re-run the same check.
 

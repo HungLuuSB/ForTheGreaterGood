@@ -1,5 +1,5 @@
 --!strict
--- Checks a built place (default build/place.rbxl, from `lune run build`):
+-- Checks a built place (default build/ci/place.rbxl, from `lune run build`):
 --   * every script's source compiles (Luau syntax);
 --   * no string require is left (`require("...")` / `require('...')`);
 --   * every require is an Instance path darklua's convert_require emits
@@ -14,7 +14,7 @@ local luau = require("@lune/luau")
 local process = require("@lune/process")
 local roblox = require("@lune/roblox")
 
-local PLACE = process.args[1] or "build/place.rbxl"
+local PLACE = process.args[1] or "build/ci/place.rbxl"
 if not fs.isFile(PLACE) then
 	print(`{PLACE} not found: run "lune run build" first`)
 	process.exit(1)

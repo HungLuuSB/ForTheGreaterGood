@@ -22,27 +22,27 @@ Roblox can't resolve `@shared/...` aliases or relative string requires yet (see 
 - [x] `.darklua.json`'s `convert_require` rule:
   - `current`: path mode with `sources = { "@shared" = "./src/shared" }`, matching `.luaurc`;
   - `target`: roblox, using the Rojo sourcemap, `indexing_style = "find_first_child"`.
-- [x] `darklua process src build/src`, and `build.project.json` maps the same tree from `build/src`. `build/` is gitignored.
-- [x] `rojo build build.project.json -o build/place.rbxl`, then `lune run check_build` (`@lune/roblox`) checks the built place:
+- [x] `darklua process src build/ci/src`, and `build.project.json` maps the same tree from `build/ci/src`. `build/` is gitignored. (The live sync uses its own copy, `build/serve/src` and `serve.project.json`; C-3.)
+- [x] `rojo build build.project.json -o build/ci/place.rbxl`, then `lune run check_build` (`@lune/roblox`) checks the built place:
   - every script compiles (`@lune/luau`);
   - no string require is left (comments and strings are skipped);
   - every require expression resolves to an existing ModuleScript.
   - Verified to fail on an unconverted place (482 problems), a missing child, a require pointing at a Folder, and a syntax error.
 - [x] CLAUDE.md and the skill document the build and serve commands. Keep `default.project.json` as the source tree.
-- [ ] **In Studio:** run `darklua process src build/src --watch` and `rojo serve build.project.json`, connect the plugin, and confirm modules require each other at runtime (step 2's test entry does that for every spec).
+- [x] **In Studio:** run `darklua process src build/src --watch` and `rojo serve build.project.json`, connect the plugin, and confirm modules require each other at runtime (step 2's test entry does that for every spec). Done 2026-10-21 (client stream): 263 scripts synced, all specs load and pass in Studio. Now `lune run serve` + `rojo serve serve.project.json` (C-3, CLAUDE.md).
 - [ ] If the client gets string requires, consider `indexing_style = "wait_for_child"` for client code (replication order); the server tree is fine with `find_first_child`.
 
 ## 2. Roblox-only server root and in-Studio tests
 
 `src/server` must stay runnable in Lune, so Roblox-only scripts need their own root, like `src/client`.
 
-- [ ] Add `src/roblox` (or a similar name), mapped to e.g. `ServerScriptService.Entry`. Exempt it from the dual-runtime rule in CLAUDE.md, as `src/client` is.
-- [ ] **Test entry** (`RunTests.server.luau`):
+- [x] Add `src/roblox` (or a similar name), mapped to e.g. `ServerScriptService.Entry`. Exempt it from the dual-runtime rule in CLAUDE.md, as `src/client` is. (C-1)
+- [x] **Test entry**: done as a ModuleScript, `src/roblox/RunTests.luau`, run through `execute_luau` (`start()` / `status()`) rather than an auto-running Script (C-2). Original plan, `RunTests.server.luau`:
   - only in Studio (`RunService:IsStudio()`), behind an attribute or a toggle;
   - collect every ModuleScript under `ServerScriptService.Tests` whose name ends in `.spec`, sorted by full name (Lune sorts paths too);
   - `require` them and pass them to `RunAll` the same way `.lune/test.luau` does;
   - print the same summary line.
-- [ ] Run it. Expect **27 specs, 182 passed**.
+- [x] Run it. Expect **27 specs, 182 passed**. 2026-10-21: **34 specs, 253 passed, 0 failed** in Studio (31.8 s; Lune 17.7 s), the same as `lune run test`.
   - `Env.isRoblox` should be true: `Profiler` then uses `debug.profilebegin`, and `Log` uses `warn` for warnings.
   - Some specs print measurements (direct-hit rates, the naval duel, EW tallies). Compare them with the Lune output in `docs/progress/sim.md`.
 - [ ] **Cross-runtime hash check** (informational, DECISIONS D51): print `Sim.hash` after the `Sim.spec` 1,000-tick run and after `ew_test` at tick 600, in Lune and in Studio. Prng is pure Luau and identical; `sin`, `cos` and `atan2` come from each platform's libm and may differ. We accepted same-platform replays (guide 17.1), so a mismatch is expected and fine. Record the result in `docs/decisions/client.md`.
