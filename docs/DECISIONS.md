@@ -221,3 +221,35 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
   - Adjacent leaves give units room to spread and avoid each other without leaving the field.
   - On open terrain the corridor can cover most of the map (20,545 cells on a 256×256 hilly map, corner to corner). That makes the flow field as big as it gets, which task 8 measures.
   - If that's over budget, switch to cell dilation; it's one function.
+
+## D29 — Pathing time-slices count work units, not milliseconds (2026-10-20)
+
+- **Decision:** `FlowField.run(job, budget)` spends at most `budget` work units: one per settled cell (Dijkstra) and one per directed cell. The per-tick budget will be a work-unit count calibrated from the benchmark (task 8) to fit the 8 ms Pathing budget.
+- **Alternatives:** a wall-clock budget (`Profiler.now()`), as guide 6.4's "8 ms" suggests literally.
+- **Why:** with a clock budget, the tick on which a field completes, and therefore every unit's path, would depend on server CPU speed and load. That breaks the "deterministic on the server" rule and makes replays diverge. Work units keep slicing invisible to the outcome: a sliced job is byte-identical to a one-shot job (tested). The same concern applies to Actor workers later: their results must be applied at a deterministic tick.
+
+## D30 — Flow field encoding and costs (2026-10-20)
+
+- **Decision:**
+  - Direction u8 runs 0..7 counter-clockwise from +X (0 = +X, 2 = +Z, 4 = −X, 6 = −Z; odd = diagonal). 255 = none, which covers the goal cell itself, cells outside the corridor, and cells the goal can't reach.
+  - Straight steps cost 1 and diagonal steps √2. Diagonals never cut corners.
+  - Terrain modifiers are 1 for now, since there is no terrainType layer yet.
+  - Ties go to the lowest direction number.
+- **Alternatives:** a separate "goal" value (254), or 4-connected fields.
+- **Why:** it matches guide 6.3 ("255 = none"). Units at the goal cell compare their cell with `field.goalCell`. With 8-connected fields and no corner cutting, units move naturally and never clip wall corners.
+
+## D31 — Field cache key includes the clearance need; recency is a counter (2026-10-20)
+
+- **Decision:**
+  - The key is `moveClass:need:goalCell` (the guide says `(moveClass, goalCell)`).
+  - LRU recency is a use counter, not a clock.
+  - `invalidateCell(cell)` drops every field whose corridor contains the cell, for when structures change passability.
+- **Alternatives:** a key without need, which would mix fields for different footprints.
+- **Why:** a footprint-2 field differs from a footprint-1 field to the same goal. A counter keeps eviction deterministic.
+- **Open question for task 9:** a cached field was built inside one start's corridor. A unit starting outside that corridor needs a new route, merged into the cached corridor or replacing it.
+
+## D32 — Direction fields are full-map buffers (2026-10-20)
+
+- **Decision:** each field stores a `cellCount`-byte direction buffer (64 KB at 256×256) indexed by cell, even though only the corridor is filled.
+- **Alternatives:** store only the corridor's bounding box.
+- **Why:** indexing is trivial (`dir[cell]`), and 32 cached fields cost 2 MB, which is fine for a server. If memory matters, store the bbox and offset the index.

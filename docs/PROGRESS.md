@@ -24,8 +24,8 @@ Status of the unattended work session. A new session should be able to continue 
 | 4 | World (SoA, u16 IDs with delayed reuse, dirty bits), `Sim.step` with stub systems, replay log, world hash | ✅ done (M0 exit criteria met) |
 | 5 | Movement classes and passability: passMask + per-class clearance on the test map | ✅ done |
 | 6 | Quadtree + coarse A* route + corridor | ✅ done |
-| 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | ⏳ next |
-| 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | pending |
+| 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | ✅ done |
+| 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | ⏳ next |
 | 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | pending |
 | 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | pending |
 | — | Rules review (requires, determinism, no Instances, hot-loop allocation) | pending |
@@ -108,6 +108,24 @@ Status of the unattended work session. A new session should be able to continue 
   - a same-leaf route; determinism.
 - Tests: **13 specs, 99 passed, 0 failed**.
 - Decisions: D25–D28.
+
+### Task 7 — Flow fields
+
+- `src/server/Sim/Path/FlowField.luau`:
+  - a job runs Dijkstra from the goal over corridor cells (8-connected, √2 diagonals, no corner cutting), then a direction pass (u8, 255 = none);
+  - `run(job, budget)` is time-sliced in work units and resumes exactly;
+  - plus `build`, `direction`, `covers`, `vector`.
+- `src/server/Sim/Path/FieldCache.luau`: LRU (default 32) keyed by `moveClass:need:goal`; hit/miss/eviction stats; `invalidateCell`.
+- `.lune/debug_flowfield.luau`: `lune run debug_flowfield [maze|hills] [seed]` writes `debug_out/flowfield_<kind>.png` (cost shading plus direction ticks).
+- `src/server/Tests/Support/Maps.luau`: shared test map builders (flat with water, zig-zag maze, field from start to goal).
+- Specs (`FlowField.spec`):
+  - from every corridor cell, following the field reaches the goal without leaving the corridor or cutting corners (wall map, maze, generated terrain);
+  - integration equals the octile distance on open ground;
+  - the pinch-corner case;
+  - sliced output equals one-shot for budgets 1, 7, 64 and 1000;
+  - vectors; cache hits, LRU eviction and invalidation.
+- Tests: **14 specs, 107 passed, 0 failed**.
+- Decisions: D29–D32. **D29 (work-unit budgets) changes how guide 6.4's "8 ms" is enforced. Please confirm.**
 
 ## Benchmarks
 

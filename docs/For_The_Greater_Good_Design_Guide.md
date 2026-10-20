@@ -492,8 +492,10 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 
 ### 6.4 Caching and budgets
 
-- Cache fields by `(moveClass, goalCell)`. LRU with ~32 entries (a 256×256 direction field is 64 KB).
+- Cache fields by `(moveClass, clearance need, goalCell)`. LRU with ~32 entries (a 256×256 direction field is 64 KB). Recency is a use counter, so eviction is deterministic (`Sim/Path/FieldCache.luau`).
 - **Time-slice:** the Pathing system has a fixed budget per tick (e.g., 8 ms). Unfinished work continues next tick. Units start moving toward the goal in a straight line until their field is ready.
+  - The budget is counted in **work units** (cells settled + cells directed), calibrated so it takes about 8 ms on a live server. A wall-clock budget would make the tick a path completes on, and therefore the whole simulation, depend on CPU speed (DECISIONS D29).
+  - A sliced job gives byte-identical output to a one-shot job (`Sim/Path/FlowField.luau`).
 - **Parallel Luau:** run field generation in Actors. Each Actor keeps its own copy of the static grid layers; the main sim sends requests and receives finished direction buffers.
 - **Invalidation:** when a structure changes passability, mark the affected quadtree nodes dirty and drop cached fields that cover them.
 
