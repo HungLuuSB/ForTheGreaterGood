@@ -205,7 +205,7 @@ for _, m in MAPS do
 			local t0 = os.clock()
 			Nav.issueMove(nav, w, 0, ids, gx, gz)
 			while nav.jobs[nav.jobHead] do
-				Nav.runJobs(nav, math.huge)
+				Nav.runJobs(nav, w, math.huge)
 			end
 			table.insert(times, (os.clock() - t0) * 1000)
 			fields = nav.stats.fieldsBuilt

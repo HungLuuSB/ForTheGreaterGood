@@ -105,11 +105,16 @@ local function run(total: number)
 	end
 
 	local tickTimes = {}
+	-- move-order path per tick: Commands (issuing) + Pathing (plans, fields)
+	local orderPeak, lastOrders = 0, 0
 	local t0 = os.clock()
 	for _ = 1, TICKS do
 		local s = os.clock()
 		Sim.step(sim)
 		table.insert(tickTimes, (os.clock() - s) * 1000)
+		local orders = (timing.total["Sim.Commands"] or 0) + (timing.total["Sim.Pathing"] or 0)
+		orderPeak = math.max(orderPeak, (orders - lastOrders) * 1000)
+		lastOrders = orders
 	end
 	local wall = os.clock() - t0
 	table.sort(tickTimes)
@@ -136,6 +141,7 @@ local function run(total: number)
 		out(string.format("%-20s %9.3f %9.2f %8.1f  %s", b[1], avg, peak * 1000, b[3], if over then "OVER (average)" elseif peak * 1000 > b[3] then "peak over" else "ok"))
 	end
 	out("first system over budget (average): " .. (firstOver or "none"))
+	out(string.format("move orders (Commands + Pathing in one tick): worst tick %.2f ms", orderPeak))
 	-- bandwidth per player
 	local seconds = TICKS / 15
 	for pid = 1, 2 do

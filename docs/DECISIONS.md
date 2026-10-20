@@ -784,3 +784,33 @@ The open questions (D76, D80, D81, D82, the Commands peak) are listed in `docs/P
   - `Air.spec`'s interception test sets the Wasp's flares to 0: it tests flight, and with flares the Falcon's 4 missiles may all be decoyed. Its assertions are unchanged.
   - Targeting does not yet prefer lockable targets: a radar SAM keeps a jammed target and holds fire instead of switching to an unjammed one.
 - **Why:** the wire format for projectiles and FX is a Studio/rendering milestone (guide 7). Retargeting on lock failure is a balance and AI question for M8.
+
+## D83 — Move orders: profiled, planning deferred into the pathing budget (2026-10-20, user-requested)
+
+- **Profile** (`Nav.issueMove`, the stress test's 200-unit commands on the 256×256 generated map; four arrive in the first tick at 800 units). Per command:
+  - quadtree built on the first order for its move class: 10–17 ms;
+  - coarse route (`Route.findMany`) plus corridor: 5–12 ms;
+  - straight-line checks for every unit: 2–6 ms;
+  - greedy slot assignment: about 1.3 ms. The O(n²) loop was **not** the main cost at 200 units (the per-command cap, guide 22.3).
+  - The first order also built the formation spiral cache: about 5 ms.
+- **Decision:**
+  - Quadtrees for every ground profile are built when the map loads (`Nav.new`). They are still rebuilt lazily after terrain changes.
+  - The formation spiral for 200 units (`Nav.MAX_COMMAND_UNITS`) is built at load.
+  - `issueMove` now only groups units, snaps the goal, makes slots and assigns them. The rest is a **plan job** in the Pathing FIFO, sliced by work units with the flow fields:
+    - each unit's straight-line check (1 unit, plus 1 per line sample);
+    - the cache lookup;
+    - the coarse route, now resumable (`Route.newSearch` / `runSearch` / `searchResult`; 1 unit per leaf popped and per edge);
+    - the corridor (1 per 8 cells);
+    - then the same entry becomes the flow field job.
+    - Until the plan is done the order is pending and its units steer straight at their slots, as they already did while a field was pending. Pathing runs after Commands in the same tick, so a small order is planned before its units move.
+  - **Exact bucketed greedy assignment** (`Nav.assignSlots`): units in a 32-stud bucket grid over their bounding box, ring search with a proven stopping bound, ties to the lower ID. A spec checks it against the brute force on 60 random cases with duplicate positions. For far formations it saves about 25% of distance checks; short moves save more.
+  - **Shared budget:** issuing charges `10 × units + distance checks ÷ 4` work units to `nav.issueWork`. The next Pathing step runs with `PATHING_BUDGET − issueWork` (at least 0), so issuing and planning in one tick together stay within one budget, deterministically.
+  - Work-unit rates measured: plan work 4,300–11,100 units/ms, flow fields about 4,200 units/ms on this PC, so a plan unit is never more expensive than a field unit.
+- **Result** (stress test, same PC, before → after):
+  - worst Commands + Pathing tick: 60 / 69 / 81 / 91 ms → 11.4 / 12.8 / 12.7 / 10.2 ms at 200 / 400 / 600 / 800 units;
+  - Commands peak: 82 → 6.5 ms;
+  - max tick at 800 units: 95 → 29 ms, the rest being Sensors' and Movement's own peaks.
+- **Not done** (follow-ups):
+  - `Nav.terrainChanged` still drops every quadtree, so the first order after a structure is placed rebuilds one in its tick (10–17 ms on 256×256). An incremental quadtree update would fix this.
+  - `Nav.extendField` (stalled units) still runs its route synchronously in Movement, rate-limited per order.
+- **Alternatives:** Hungarian or optimal assignment (not needed for the cost); deferring slot assignment too (units would wait for the plan job before they get goals).

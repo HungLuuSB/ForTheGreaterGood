@@ -1,6 +1,7 @@
 --!strict
 local Packer = require("@shared/Net/Packer")
 local Passability = require("@shared/Grid/Passability")
+local Prng = require("@shared/Util/Prng")
 local Schema = require("@shared/Net/Schema")
 local Nav = require("../Sim/Nav")
 local Quadtree = require("../Sim/Path/Quadtree")
@@ -109,7 +110,63 @@ local function checkArrival(t: RunAll.Context, sim: Sim.Sim, slots: { [number]: 
 	return worst
 end
 
+-- The original O(slots × units) greedy, as the reference for Nav.assignSlots.
+local function bruteAssign(w: World.World, members: { number }, slots: { { number } }): { number }
+	local taken: { [number]: boolean } = {}
+	local pick = {}
+	for i, slot in slots do
+		local best, bestD = 0, math.huge
+		for _, id in members do -- ascending IDs: strict < keeps the lower ID on ties
+			if not taken[id] then
+				local d = (w.posX[id] - slot[1]) ^ 2 + (w.posZ[id] - slot[2]) ^ 2
+				if d < bestD then
+					best, bestD = id, d
+				end
+			end
+		end
+		pick[i] = best
+		if best ~= 0 then
+			taken[best] = true
+		end
+	end
+	return pick
+end
+
 return function(t: RunAll.Context)
+	t.test("bucketed slot assignment matches the brute-force greedy exactly", function()
+		local rng = Prng.new(31)
+		for case = 1, 60 do
+			local w = World.new()
+			local members = {}
+			local units = rng:nextInteger(1, 200)
+			local spread = rng:nextNumber(5, 400)
+			local cx, cz = rng:nextNumber(-500, 500), rng:nextNumber(-500, 500)
+			for i = 1, units do
+				local x, z
+				if i > 1 and rng:chance(0.1) then
+					-- exact duplicate positions: ties must go to the lower ID
+					local other = members[rng:nextInteger(1, #members)]
+					x, z = w.posX[other], w.posZ[other]
+				else
+					x, z = cx + rng:nextNumber(-spread, spread), cz + rng:nextNumber(-spread, spread)
+				end
+				table.insert(members, World.spawn(w, 0, { defIndex = 1, team = 1, owner = 1, x = x, z = z, health = 1 }))
+			end
+			table.sort(members)
+			local slots = {}
+			local nSlots = rng:nextInteger(1, units + 20) -- sometimes more slots than units
+			local sx, sz = rng:nextNumber(-900, 900), rng:nextNumber(-900, 900)
+			for _ = 1, nSlots do
+				if rng:chance(0.1) then
+					table.insert(slots, { w.posX[members[1]], w.posZ[members[1]] }) -- a slot on a unit
+				else
+					table.insert(slots, { sx + rng:nextNumber(-120, 120), sz + rng:nextNumber(-120, 120) })
+				end
+			end
+			t.deepEqual((Nav.assignSlots(w, members, slots)), bruteAssign(w, members, slots), `case {case} ({units} units, {nSlots} slots)`)
+		end
+	end)
+
 	t.test("50 units cross a lake map, all arrive, no overlaps", function()
 		local sim, doneAt, slots = march("gen:7:96", 2000)
 		t.expect(doneAt ~= nil, "units still moving after 2,000 ticks")

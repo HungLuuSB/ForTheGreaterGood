@@ -109,48 +109,89 @@ end
 -- one shared field serving a whole group (guide 6.3: "all units in one move
 -- order share one field"). One Dijkstra over the leaf graph from the goal
 -- leaf, stopped once every reachable start leaf is settled.
--- Returns the leaf list (no duplicates, deterministic order) and the start
--- cells that can't reach the goal. Empty list = goal blocked or unreachable.
-function Route.findMany(tree: Quadtree.Tree, startCells: { number }, goalCell: number): ({ number }, { number })
+--
+-- Resumable so the Pathing system can slice it by work units: newSearch,
+-- then runSearch(budget) until it returns true, then searchResult. One work
+-- unit per leaf popped and per neighbor edge examined.
+export type Search = {
+	tree: Quadtree.Tree,
+	startCells: { number },
+	goalLeaf: number,
+	wanted: { [number]: boolean },
+	wantedCount: number,
+	anyWanted: boolean,
+	unreachable: { number },
+	dist: { [number]: number },
+	parent: { [number]: number },
+	settled: { [number]: boolean },
+	heap: Heap.Heap,
+	done: boolean,
+	workDone: number,
+}
+
+function Route.newSearch(tree: Quadtree.Tree, startCells: { number }, goalCell: number): Search
 	local goalLeaf = Quadtree.leafAt(tree, goalCell)
-	local unreachable: { number } = {}
+	local s: Search = {
+		tree = tree,
+		startCells = startCells,
+		goalLeaf = goalLeaf,
+		wanted = {},
+		wantedCount = 0,
+		anyWanted = false,
+		unreachable = {},
+		dist = { [goalLeaf] = 0 },
+		parent = {},
+		settled = {},
+		heap = Heap.new(),
+		done = false,
+		workDone = 0,
+	}
 	if not tree.leafOpen[goalLeaf] then
-		return {}, table.clone(startCells)
+		s.unreachable = table.clone(startCells)
+		s.done = true
+		return s
 	end
 	local goalComp = tree.leafComponent[goalLeaf]
-
-	-- Start leaves still to settle.
-	local wanted: { [number]: boolean } = {}
-	local wantedCount = 0
 	for _, cell in startCells do
 		local leaf = Quadtree.leafAt(tree, cell)
 		if not tree.leafOpen[leaf] or tree.leafComponent[leaf] ~= goalComp then
-			table.insert(unreachable, cell)
-		elseif not wanted[leaf] then
-			wanted[leaf] = true
-			wantedCount += 1
+			table.insert(s.unreachable, cell)
+		elseif not s.wanted[leaf] then
+			s.wanted[leaf] = true
+			s.wantedCount += 1
 		end
 	end
-	if wantedCount == 0 then
-		return {}, unreachable -- no start cell can reach the goal
+	s.anyWanted = s.wantedCount > 0
+	if not s.anyWanted then
+		s.done = true -- no start cell can reach the goal
+		return s
 	end
+	Heap.push(s.heap, goalLeaf, 0, 0)
+	return s
+end
 
-	local dist: { [number]: number } = { [goalLeaf] = 0 }
-	local parent: { [number]: number } = {}
-	local settled: { [number]: boolean } = {}
-	local heap = Heap.new()
-	Heap.push(heap, goalLeaf, 0, 0)
-	while not Heap.isEmpty(heap) and wantedCount > 0 do
+-- Advances the search by about `budget` work units; true when finished.
+function Route.runSearch(s: Search, budget: number): boolean
+	local tree = s.tree
+	local heap, dist, parent, settled, wanted = s.heap, s.dist, s.parent, s.settled, s.wanted
+	local spent = 0
+	while not s.done and spent < budget do
+		if Heap.isEmpty(heap) or s.wantedCount == 0 then
+			s.done = true
+			break
+		end
 		local cur, d = Heap.pop(heap)
+		spent += 1
 		if settled[cur] then
 			continue
 		end
 		settled[cur] = true
 		if wanted[cur] then
-			wantedCount -= 1
+			s.wantedCount -= 1
 		end
 		local cx, cz = Quadtree.leafCenter(tree, cur)
 		for _, nb in tree.neighbors[cur] do
+			spent += 1
 			if not settled[nb] then
 				local nx, nz = Quadtree.leafCenter(tree, nb)
 				local nd = d + math.sqrt((nx - cx) ^ 2 + (nz - cz) ^ 2)
@@ -162,25 +203,45 @@ function Route.findMany(tree: Quadtree.Tree, startCells: { number }, goalCell: n
 			end
 		end
 	end
+	if not s.done and (Heap.isEmpty(heap) or s.wantedCount == 0) then
+		s.done = true
+	end
+	s.workDone += spent
+	return s.done
+end
 
+-- The finished search's leaf list (no duplicates, deterministic order) and
+-- the start cells that can't reach the goal. Empty list = goal blocked or
+-- unreachable.
+function Route.searchResult(s: Search): ({ number }, { number })
+	if not s.anyWanted then
+		return {}, s.unreachable
+	end
 	-- Walk each start leaf back to the goal, in start order.
 	local leaves: { number } = {}
 	local seen: { [number]: boolean } = {}
-	for _, cell in startCells do
-		local leaf = Quadtree.leafAt(tree, cell)
-		if wanted[leaf] then
+	for _, cell in s.startCells do
+		local leaf = Quadtree.leafAt(s.tree, cell)
+		if s.wanted[leaf] then
 			local cur: number? = leaf
 			while cur ~= nil and not seen[cur] do
 				seen[cur] = true
 				table.insert(leaves, cur)
-				cur = parent[cur]
+				cur = s.parent[cur]
 			end
 		end
 	end
-	if not seen[goalLeaf] then
-		table.insert(leaves, goalLeaf)
+	if not seen[s.goalLeaf] then
+		table.insert(leaves, s.goalLeaf)
 	end
-	return leaves, unreachable
+	return leaves, s.unreachable
+end
+
+-- The whole search in one call.
+function Route.findMany(tree: Quadtree.Tree, startCells: { number }, goalCell: number): ({ number }, { number })
+	local s = Route.newSearch(tree, startCells, goalCell)
+	Route.runSearch(s, math.huge)
+	return Route.searchResult(s)
 end
 
 -- Corridor = cells of the route's leaves plus every open leaf adjacent to

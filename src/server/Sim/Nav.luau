@@ -1,12 +1,19 @@
 --!strict
 -- Navigation state shared by the Commands, Pathing and Movement systems
--- (guide 6.3–6.6): per-def movement profiles, lazily built quadtrees, the
--- flow field cache and job queue, and move orders.
+-- (guide 6.3–6.6): per-def movement profiles, quadtrees (built when the map
+-- loads, rebuilt lazily after terrain changes), the flow field cache and job
+-- queue, and move orders.
 --
 -- A move order covers the units of one (move class, clearance need) group.
 -- The group shares one flow field to the group goal; each unit also gets its
 -- own goal (a formation slot, or a point on the line for line moves) and
 -- steers straight to it once the line there is clear.
+--
+-- Issuing an order (Commands) only groups the units, snaps the goal and
+-- assigns slots. The rest is a plan job in the Pathing queue, sliced by work
+-- units like flow fields (DECISIONS D83): each unit's direct-line check, then
+-- the coarse route and corridor, then the flow field job. Until the plan is
+-- done the order is pending and its units steer straight at their slots.
 
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -56,7 +63,17 @@ export type Order = {
 	lastExtendTick: number, -- last time the field was extended (-inf if never)
 }
 
-type JobEntry = { key: string, order: Order, job: FlowField.Job }
+-- Planning phase of an order (see the header).
+type Plan = {
+	tree: Quadtree.Tree,
+	members: { number }, -- unit IDs given the order, ascending
+	nextMember: number, -- next unit to line-check
+	cells: { number }, -- start cells of units that need the field
+	search: Route.Search?, -- coarse route, once every unit is checked
+}
+
+-- A queued job: an order's plan, then (same entry) its flow field.
+type JobEntry = { order: Order, plan: Plan?, key: string?, job: FlowField.Job? }
 
 export type Nav = {
 	pm: Passability.PassMap,
@@ -70,6 +87,7 @@ export type Nav = {
 	orders: { [number]: Order },
 	nextOrderId: number,
 	maxRadius: number,
+	issueWork: number, -- work units spent issuing orders since the last Pathing tick
 	stats: { fieldsBuilt: number, cacheHits: number, workUnits: number, directOrders: number },
 }
 
@@ -99,7 +117,7 @@ function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 			treeKey = `{def.moveClass}:{Passability.requiredClearance(def.footprint)}`,
 		}
 	end
-	return {
+	local nav: Nav = {
 		pm = pm,
 		grid = pm.grid,
 		profiles = profiles,
@@ -111,8 +129,18 @@ function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 		orders = {},
 		nextOrderId = 1,
 		maxRadius = maxRadius,
+		issueWork = 0,
 		stats = { fieldsBuilt = 0, cacheHits = 0, workUnits = 0, directOrders = 0 },
 	}
+	-- Quadtrees for every ground profile now, at map load, not in the tick
+	-- of the first order that needs one.
+	for index = 1, #defs.unitByIndex do
+		local p = profiles[index]
+		if p and not p.air then
+			Nav.tree(nav, p.moveClass, p.need, p.treeKey)
+		end
+	end
+	return nav
 end
 
 function Nav.tree(nav: Nav, moveClass: string, need: number, key: string?): Quadtree.Tree
@@ -208,6 +236,96 @@ local function spiral(count: number): { { number } }
 	return spiralCache
 end
 
+Nav.MAX_COMMAND_UNITS = 200 -- guide 22.3
+spiral(Nav.MAX_COMMAND_UNITS * 4) -- built at load, not in the first order's tick
+
+-- Greedy slot assignment: slot by slot (in order), the closest unassigned
+-- unit takes it; ties go to the lower ID. Returns the unit per slot (0 once
+-- units run out) and the number of distance checks made. Same result as
+-- scanning every unit for every slot, but the
+-- units sit in a bucket grid over their bounding box, and each search scans
+-- rings of buckets outward from the bucket nearest the slot, stopping once
+-- no unscanned bucket can hold a unit as close as the best so far. (For a
+-- point p in the box and q the slot clamped into it, |p - slot|² ≥
+-- |p - q|² + |q - slot|², and buckets r + 1 rings out are ≥ r × size from q.)
+Nav.ASSIGN_BUCKET = 32 -- studs
+Nav.ISSUE_UNIT_COST = 10 -- work units per unit given an order (plus 1 per 4 assignment distance checks)
+function Nav.assignSlots(w: World.World, members: { number }, slots: { { number } }): ({ number }, number)
+	local pick: { number } = {}
+	local n = #members
+	if n == 0 then
+		for i = 1, #slots do
+			pick[i] = 0
+		end
+		return pick, 0
+	end
+	local checks = 0
+	local B = Nav.ASSIGN_BUCKET
+	local minX, minZ, maxX, maxZ = math.huge, math.huge, -math.huge, -math.huge
+	for _, id in members do
+		minX, maxX = math.min(minX, w.posX[id]), math.max(maxX, w.posX[id])
+		minZ, maxZ = math.min(minZ, w.posZ[id]), math.max(maxZ, w.posZ[id])
+	end
+	local nbx, nbz = (maxX - minX) // B + 1, (maxZ - minZ) // B + 1
+	local buckets: { { number } } = {}
+	for i = 1, nbx * nbz do
+		buckets[i] = {}
+	end
+	local where: { [number]: number } = {} -- unit → bucket index
+	for _, id in members do
+		local b = ((w.posZ[id] - minZ) // B) * nbx + (w.posX[id] - minX) // B + 1
+		table.insert(buckets[b], id)
+		where[id] = b
+	end
+	local left = n
+	local maxRing = math.max(nbx, nbz)
+	for i, slot in slots do
+		if left == 0 then
+			pick[i] = 0
+			continue
+		end
+		local sx, sz = slot[1], slot[2]
+		local qx, qz = math.clamp(sx, minX, maxX), math.clamp(sz, minZ, maxZ)
+		local base = (qx - sx) ^ 2 + (qz - sz) ^ 2
+		local bx, bz = (qx - minX) // B, (qz - minZ) // B
+		local best, bestD = 0, math.huge
+		for ring = 0, maxRing do
+			for oz = bz - ring, bz + ring do
+				if oz < 0 or oz >= nbz then
+					continue
+				end
+				local edge = oz == bz - ring or oz == bz + ring
+				local step = if edge then 1 else 2 * ring
+				local ox = bx - ring
+				while ox <= bx + ring do
+					if ox >= 0 and ox < nbx then
+						for _, id in buckets[oz * nbx + ox + 1] do
+							local d = (w.posX[id] - sx) ^ 2 + (w.posZ[id] - sz) ^ 2
+							checks += 1
+							if d < bestD or (d == bestD and id < best) then
+								best, bestD = id, d
+							end
+						end
+					end
+					ox += if step == 0 then 1 else step
+				end
+			end
+			-- anything further out is at least base + (ring × B)² away
+			if best ~= 0 and bestD < base + (ring * B) ^ 2 then
+				break
+			end
+		end
+		pick[i] = best
+		-- take the unit out of its bucket
+		local list = buckets[where[best]]
+		local k = table.find(list, best) :: number
+		list[k] = list[#list]
+		list[#list] = nil
+		left -= 1
+	end
+	return pick, checks
+end
+
 -- Candidate goal positions for `n` units: a formation around (cx, cz), or
 -- evenly spaced along the line to (lx, lz) (extra rows step back toward
 -- `back` when the line is too short). Only positions on open cells of the
@@ -294,32 +412,18 @@ local function enqueue(nav: Nav, entry: JobEntry)
 	nav.jobTail += 1
 end
 
--- Queues (or reuses) the shared field for an order covering `cells`.
-local function requestField(nav: Nav, order: Order, tree: Quadtree.Tree, cells: { number })
+-- A cached field for this order's goal that already covers `cells`, if any.
+local function cachedField(nav: Nav, order: Order, cells: { number }): (string, FlowField.Field?)
 	local key = FieldCache.key(order.moveClass, order.need, order.goalCell)
 	local cached = FieldCache.get(nav.cache, key)
 	if cached then
-		local coversAll = true
 		for _, c in cells do
 			if not Route.inCorridor(cached.corridor, c) then
-				coversAll = false
-				break
+				return key, nil
 			end
 		end
-		if coversAll then
-			order.field = cached
-			nav.stats.cacheHits += 1
-			return
-		end
 	end
-	local leaves = Route.findMany(tree, cells, order.goalCell)
-	if #leaves == 0 then
-		order.unreachable = true
-		return
-	end
-	local corridor = Route.corridor(tree, leaves)
-	order.pending = true
-	enqueue(nav, { key = key, order = order, job = FlowField.newJob(tree, corridor, order.goalCell) })
+	return key, cached
 end
 
 -- Ends a unit's order (arrived, stopped or replaced).
@@ -446,7 +550,7 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 		-- approach direction from the group's centroid): the units that
 		-- arrive first take the deepest slots, so later arrivals never have to
 		-- squeeze past units already standing still. Each slot takes the
-		-- closest unassigned unit; ties go to the lower ID.
+		-- closest unassigned unit; ties go to the lower ID (Nav.assignSlots).
 		local ax, az = cx - backX, cz - backZ
 		local alen = math.sqrt(ax * ax + az * az)
 		if alen > 1e-9 then
@@ -465,19 +569,15 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 			return rank[a] < rank[b]
 		end)
 		local assigned: { [number]: boolean } = {}
-		for _, slot in slots do
-			local best, bestD = nil, math.huge
-			for _, id in members do
-				if not assigned[id] then
-					local d = (w.posX[id] - slot[1]) ^ 2 + (w.posZ[id] - slot[2]) ^ 2
-					if d < bestD then
-						best, bestD = id, d
-					end
-				end
-			end
-			if best == nil then
+		local pick, checks = Nav.assignSlots(w, members, slots)
+		-- issuing shares the tick's pathing budget (Pathing gets what's left)
+		nav.issueWork += Nav.ISSUE_UNIT_COST * #members + checks // 4
+		for i, slot in slots do
+			local best = pick[i]
+			if best == 0 then
 				break
 			end
+			local bestD = (w.posX[best] - slot[1]) ^ 2 + (w.posZ[best] - slot[2]) ^ 2
 			assigned[best] = true
 			Nav.clearOrder(nav, w, best)
 			w.orderId[best] = order.id
@@ -504,36 +604,102 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 		nav.orders[order.id] = order
 
 		if tree ~= nil and not order.unreachable then
-			-- Direct-path shortcut: units whose straight line to their slot is
-			-- passable steer directly; only the others need the shared field.
-			-- If every line is clear, no field is built at all.
-			local cells = {}
-			local t = tree :: Quadtree.Tree
-			for _, id in members do
-				local p = nav.profiles[w.defIndex[id]]
-				local ux, uz = g:cellAt(w.posX[id], w.posZ[id])
-				local sx, sz = g:cellAt(w.goalX[id], w.goalZ[id])
-				-- Same open leaf (a free square) needs no sampling; otherwise sample.
-				local sameLeaf = g:inBounds(ux, uz)
-					and g:inBounds(sx, sz)
-					and Quadtree.isOpen(t, g:index(ux, uz))
-					and Quadtree.leafAt(t, g:index(ux, uz)) == Quadtree.leafAt(t, g:index(sx, sz))
-				if sameLeaf or Nav.clearLine(nav, p, w.posX[id], w.posZ[id], w.goalX[id], w.goalZ[id]) then
-					w.direct[id] = true
-				else
-					local ux, uz = g:cellAt(w.posX[id], w.posZ[id])
-					if g:inBounds(ux, uz) then
-						table.insert(cells, g:index(ux, uz))
-					end
-				end
-			end
-			if #cells > 0 then
-				requestField(nav, order, tree, cells)
-			else
-				nav.stats.directOrders += 1
-			end
+			-- the direct-line checks, route and field run as a sliced job
+			order.pending = true
+			enqueue(nav, {
+				order = order,
+				plan = { tree = tree, members = table.clone(members), nextMember = 1, cells = {}, search = nil },
+			})
 		end
 	end
+end
+
+-- Advances an order's plan within `budget` work units: returns the units
+-- spent and whether the entry is finished (true when no field is needed;
+-- false when it has turned into a field job or ran out of budget).
+--   1. Direct-path shortcut: units whose straight line to their slot is
+--      passable steer directly; only the others need the shared field (cost:
+--      1 per unit, plus 1 per line sample). If every line is clear, no field.
+--   2. Coarse route from the remaining units' cells (Route search units).
+--   3. Corridor (1 per 8 corridor cells) and the flow field job.
+local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number): (number, boolean)
+	local order = entry.order
+	local plan = entry.plan :: Plan
+	local g = nav.grid
+	local t = plan.tree
+	local spent = 0
+	if nav.orders[order.id] == nil then
+		order.pending = false
+		return 0, true -- every unit left the order: nothing to plan
+	end
+
+	local members = plan.members
+	while plan.nextMember <= #members and spent < budget do
+		local id = members[plan.nextMember]
+		plan.nextMember += 1
+		spent += 1
+		if w.slot[id] == nil or w.orderId[id] ~= order.id then
+			continue
+		end
+		local p = nav.profiles[w.defIndex[id]]
+		local x, z, gx, gz = w.posX[id], w.posZ[id], w.goalX[id], w.goalZ[id]
+		local ux, uz = g:cellAt(x, z)
+		local sx, sz = g:cellAt(gx, gz)
+		-- Same open leaf (a free square) needs no sampling; otherwise sample.
+		local sameLeaf = g:inBounds(ux, uz)
+			and g:inBounds(sx, sz)
+			and Quadtree.isOpen(t, g:index(ux, uz))
+			and Quadtree.leafAt(t, g:index(ux, uz)) == Quadtree.leafAt(t, g:index(sx, sz))
+		local direct = sameLeaf
+		if not direct then
+			spent += math.ceil(math.sqrt((gx - x) ^ 2 + (gz - z) ^ 2) / Nav.LINE_STEP)
+			direct = Nav.clearLine(nav, p, x, z, gx, gz)
+		end
+		if direct then
+			w.direct[id] = true
+		elseif g:inBounds(ux, uz) then
+			table.insert(plan.cells, g:index(ux, uz))
+		end
+	end
+	if plan.nextMember <= #members then
+		return spent, false
+	end
+
+	if plan.search == nil then
+		if #plan.cells == 0 then
+			nav.stats.directOrders += 1
+			order.pending = false
+			return spent, true
+		end
+		local key, cached = cachedField(nav, order, plan.cells)
+		if cached then
+			order.field = cached
+			order.pending = false
+			nav.stats.cacheHits += 1
+			return spent, true
+		end
+		entry.key = key
+		plan.search = Route.newSearch(t, plan.cells, order.goalCell)
+		spent += #plan.cells
+	end
+	local search = plan.search :: Route.Search
+	local before = search.workDone
+	local done = Route.runSearch(search, math.max(budget - spent, 0))
+	spent += search.workDone - before
+	if not done then
+		return spent, false
+	end
+	local leaves = Route.searchResult(search)
+	if #leaves == 0 then
+		order.unreachable = true
+		order.pending = false
+		return spent, true
+	end
+	local corridor = Route.corridor(t, leaves)
+	spent += corridor.cellCount // 8
+	entry.plan = nil
+	entry.job = FlowField.newJob(t, corridor, order.goalCell)
+	return spent, false
 end
 
 -- Rebuilds an order's field so it also covers `cells` (units pushed out of
@@ -580,20 +746,33 @@ function Nav.terrainChanged(nav: Nav, x0: number, z0: number, x1: number, z1: nu
 	end
 end
 
--- Pathing system body: advances queued field jobs, oldest first, within
--- `budget` work units.
-function Nav.runJobs(nav: Nav, budget: number)
+-- Pathing system body: advances queued plan and field jobs, oldest first,
+-- within `budget` work units.
+function Nav.runJobs(nav: Nav, w: World.World, budget: number)
 	local left = budget
 	while left > 0 and nav.jobs[nav.jobHead] do
 		local entry = nav.jobs[nav.jobHead]
-		local before = entry.job.workDone
-		local done = FlowField.run(entry.job, left)
-		local spent = entry.job.workDone - before
+		if entry.plan then
+			local spent, finished = runPlan(nav, w, entry, left)
+			left -= spent
+			nav.stats.workUnits += spent
+			if finished then
+				nav.jobs[nav.jobHead] = nil
+				nav.jobHead += 1
+			elseif entry.plan and spent == 0 then
+				break
+			end
+			continue
+		end
+		local job = entry.job :: FlowField.Job
+		local before = job.workDone
+		local done = FlowField.run(job, left)
+		local spent = job.workDone - before
 		left -= spent
 		nav.stats.workUnits += spent
 		if done then
-			local field = entry.job.field
-			FieldCache.put(nav.cache, entry.key, field)
+			local field = job.field
+			FieldCache.put(nav.cache, entry.key :: string, field)
 			entry.order.field = field
 			entry.order.pending = false
 			nav.stats.fieldsBuilt += 1

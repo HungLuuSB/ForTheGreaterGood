@@ -101,7 +101,8 @@ Lune numbers are in PROGRESS.md → Benchmarks. Repeat the same scenarios on a l
 - [ ] **Flow fields** (`lune run bench` scenarios: open, maze, island at 256×256): one-shot time and work units per ms. Check that `Nav.PATHING_BUDGET` (36,000 units per tick) still fits the 8 ms pathing budget at Roblox speed; re-derive it if not.
 - [ ] **Stress test** (`.lune/stress.luau`) at 200, 400, 600 and 800 units:
   - per-system averages and peaks against guide 18.1;
-  - known peak offenders: Commands (O(n²) slot assignment on a 400-unit order, about 82 ms in Lune), Sensors (first full stamp, all-pairs visibility) and Movement.
+  - known peak offenders: Sensors (first full stamp, all-pairs visibility, about 21 ms against 5 in Lune) and Movement (about 13 ms against 10). Move orders were fixed in Lune (D83: worst Commands + Pathing tick about 10–13 ms); confirm live.
+  - Quadtree rebuilds after structure placement still land in the next order's tick (D83 follow-up).
 - [ ] **Bandwidth** per player with real clients (Lune: 21.5 KB/s total at 800 units against 35).
 - [ ] Try `--!native` on hot modules (FlowField, Movement, Sensors, Passability) and Actors for pathing (guide 6, M5). Both need live measurements and couldn't be judged in Lune.
 - [ ] Choose unit caps from the results (M5 exit criterion: a known cap at a stable 15 Hz on live servers).

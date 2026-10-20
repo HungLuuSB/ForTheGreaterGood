@@ -27,7 +27,7 @@ Earlier on this branch: M0 (`e1be1c4`–`6d79a93`), the M1 simulation side, the 
 - **Stress test, 800 units:**
   - average tick 12.1 ms, p95 20.4, max 95, against a 66.7 ms tick;
   - no system over budget on average;
-  - peak offenders: Commands (82 ms on a 400-unit order, O(n²) slot assignment), Sensors (17 ms against 5) and Movement (11.6 against 10).
+  - peak offenders: Sensors (17 ms against 5) and Movement (11.6 against 10). The 82 ms Commands spike on move orders was fixed in round 4 (D83): the worst move-order tick is now about 10 ms.
   - This PC got about 1.6× slower after the reset: the task-14 commit measures 12.2 ms here, against the 7.28 ms recorded at the time.
 - **Bandwidth:** worst 21.5 KB/s per player at 800 units (tactical 6.6, strategic 6.9, state and events 8.0) against 35.
 - **Flow fields** (after the bucket queue): open 28 ms, maze 18 ms, island 4.3 ms one-shot. Sliced at 36,000 work units per tick they finish in at most 4 ticks.
@@ -361,6 +361,25 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
     - the ASW heli then drops torpedoes on it, and it is never VISIBLE.
   - Mutations caught: helis excluded, range 400, everyone detecting.
   - Tests: 27 specs, 187 passed.
+- **5. Move-order spike (D83):**
+  - **Profile:** see D83. Quadratic slot assignment was ~1.3 ms per 200-unit command, not the main cost. The big costs were the lazy quadtree build (10–17 ms), the coarse route and corridor (5–12 ms) and the per-unit line checks (2–6 ms).
+  - **Fix:**
+    - quadtrees and the formation spiral are built at load;
+    - line checks, route and corridor move into a work-unit-sliced plan job (resumable `Route` search);
+    - exact bucketed greedy assignment;
+    - issuing shares the tick's pathing budget.
+  - New `Movement.spec` test: the bucketed assignment equals the brute-force greedy on 60 random cases with ties. Mutations caught: early stop, no tie rule.
+  - The stress harness now reports the worst Commands + Pathing tick.
+
+    | units | worst move-order tick before → after (ms) | Commands peak before → after | max tick before → after |
+    |---|---|---|---|
+    | 200 | 60.4 → 11.4 | 49.8 → 0.8 | 61.5 → 13.8 |
+    | 400 | 68.9 → 12.8 | 59.1 → 2.4 | 70.9 → 16.6 |
+    | 600 | 80.6 → 12.7 | 70.2 → 3.3 | 85.1 → 26.4 |
+    | 800 | 91.4 → 10.2 | 81.9 → 6.5 | 95.3 → 28.6 |
+
+    Repeated 800-unit runs give worst move-order ticks of 8.7–11.6 ms. The remaining max-tick peaks are Sensors (14–22 ms) and Movement (10–13 ms).
+  - Tests: 27 specs, 188 passed.
 
 ### Task 17 — Electronic warfare (M7) ✅
 
