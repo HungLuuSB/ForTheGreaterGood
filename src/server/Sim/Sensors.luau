@@ -453,6 +453,21 @@ function Sensors.knownPosition(sim: Types.Sim, team: number, id: number): (numbe
 	return nil, nil, level
 end
 
+-- What `team` knows about unit `id` for targeting (D100): where it is, how,
+-- and its def index. A structure ghost answers from the ghost record, so a
+-- structure that died unseen is still a target until its spot is seen
+-- again: the team can't tell it from a live one. nil when hidden.
+function Sensors.knownTarget(sim: Types.Sim, team: number, id: number): (number?, number?, number, number?)
+	local kx, kz, level = Sensors.knownPosition(sim, team, id)
+	if kx == nil then
+		return nil, nil, level, nil
+	end
+	if level == L.GHOST then
+		return kx, kz, level, sim.sensors.ghosts[team][id].defIndex
+	end
+	return kx, kz, level, sim.world.defIndex[id]
+end
+
 -- Is point (x, z) in `team`'s line of sight? NetOut shows projectiles and
 -- impacts only where the player's ally team can see (guide 7.2).
 function Sensors.inSight(sim: Types.Sim, team: number, x: number, z: number): boolean

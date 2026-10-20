@@ -1200,3 +1200,18 @@ Open points are listed in `docs/PROGRESS.md` → Summary.
 | 800 | 0.19 | 1.60 | 19.19 | 20.59 |
 
   At 800 units that is about 48 SPAWN_PROJ and 54 IMPACT records per second per player. The stress armies carry no hitscan weapons and no decoys, so FIRE and DECOYED don't show up there. NetOut's average time per tick went from 0.94 to 0.97 ms at 800 units.
+
+## D100 — Targeting follows team knowledge; ghosts of dead structures; ATTACK_GROUND for bombers (2026-10-20, user-requested)
+
+- **Rule:** every targeting decision uses what the shooter's ally team knows, never server truth.
+- **Ghosts of dead structures:**
+  - Before, a weapon target had to be alive, so bombers and artillery dropped a ghost the moment its structure died, even unseen. That told the owner something the team didn't know.
+  - Now `Sensors.knownTarget(sim, team, id)` answers from the ghost record (position, def index), whether the structure lives or not. `Targeting` keeps such targets and also searches the team's dead ghosts (`canTargetRadar` weapons), scored like live ones.
+  - `Combat.knownAimPoint` aims at a remembered structure from its def, or at the ground. Shots land on empty ground. The ghost, and with it the target, goes away only when the team sees the spot again (Sensors, unchanged).
+- **ATTACK_GROUND** (`CmdType` 4, already on the wire):
+  - Gives owned bombers an order in `AirState.groundX/Z` (hashed). The bomber makes bomb runs on the spot with the usual run logic (`Air.bombAim`); its bomb weapons don't auto-target meanwhile.
+  - Any move-like order or STOP cancels it. It survives rearming. Other units ignore it for now.
+- **Tests** (`Air.spec`):
+  - a plant destroyed unseen is still bombed (bombs land on its empty spot), and bombing stops once a spotter sees the spot (the ghost is forgotten). Without the dead-ghost search the bomber never attacks;
+  - ATTACK_GROUND: 2 of 3 bombs within 10 studs of the spot, a Lancer ignores the order, and a MOVE cancels it.
+- **Known edge:** unit IDs are reused only after all 65,535 fresh IDs and a 10 s delay. A ghost whose ID is reused would follow the new unit. Not handled yet.

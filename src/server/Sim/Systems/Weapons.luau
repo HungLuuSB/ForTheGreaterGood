@@ -173,27 +173,35 @@ return function(sim: Types.Sim)
 			local wantYaw, wantPitch = 0, 0
 			local canFire = false
 			local dist, worldYaw = 0, 0
-			-- Aim at where the team believes the target is: the true position
-			-- when visible, the wobbled one for radar contacts (guide 11.4).
-			local kx, kz = nil, nil
-			if target ~= 0 and w.slot[target] ~= nil then
-				kx, kz = Sensors.knownPosition(sim, w.ally[id], target)
+			-- Aim at where the team believes the target is (D100): the true
+			-- position when visible, the wobbled one for radar contacts (guide
+			-- 11.4), the ghost's for remembered structures (alive or not), the
+			-- ordered spot for a bomber's attack-ground.
+			local kx, kz, defIndex = nil, nil, nil
+			if weapon.type == "BOMB" and sim.air.groundX[id] ~= nil then
+				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
+			elseif target ~= 0 then
+				local _lv
+				kx, kz, _lv, defIndex = Sensors.knownTarget(sim, w.ally[id], target)
 			end
 			local exactYaw, exactPitch = 0, 0
 			if kx ~= nil and kz ~= nil then
-				local tp = profiles[w.defIndex[target]]
+				local radius = if defIndex then profiles[defIndex].radius else 0
 				local dx, dz = kx - x, kz - z
 				dist = sqrt(dx * dx + dz * dz)
 				worldYaw = atan2(dx, dz)
 				wantYaw = wrapAngle(worldYaw - heading)
-				local _, aimY = Combat.aimPoint(c, w, target, kx, kz) -- at the believed position
+				local _, aimY = Combat.knownAimPoint(c, w, target, defIndex, kx, kz) -- at the believed position
 				local dy = aimY - muzzleY
-				-- the true direction, for judging hitscan hits
-				local tx, tz = w.posX[target] - x, w.posZ[target] - z
-				local trueDist = sqrt(tx * tx + tz * tz)
-				exactYaw = atan2(tx, tz)
-				local _, trueY = Combat.aimPoint(c, w, target)
-				exactPitch = atan2(trueY - muzzleY, trueDist)
+				-- the true direction, for judging hitscan hits (only live targets are hit-checked)
+				exactYaw, exactPitch = worldYaw, atan2(dy, dist)
+				if target ~= 0 and w.slot[target] ~= nil then
+					local tx, tz = w.posX[target] - x, w.posZ[target] - z
+					local trueDist = sqrt(tx * tx + tz * tz)
+					exactYaw = atan2(tx, tz)
+					local _, trueY = Combat.aimPoint(c, w, target)
+					exactPitch = atan2(trueY - muzzleY, trueDist)
+				end
 				local pitch: number?
 				if weapon.type == "HITSCAN" or weapon.type == "BEAM" then
 					pitch = atan2(dy, dist)
@@ -204,7 +212,7 @@ return function(sim: Types.Sim)
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
-				canFire = not holdFire and dist <= weapon.range + tp.radius
+				canFire = not holdFire and dist <= weapon.range + radius
 				if pitch == nil then
 					canFire = false
 					wantPitch = if turret then rad(turret.maxPitch) else 0
@@ -215,7 +223,7 @@ return function(sim: Types.Sim)
 					end
 				end
 				if weapon.type == "BOMB" then
-					canFire = not holdFire and Air.bombRelease(sim, id, weapon, target, kx, kz)
+					canFire = not holdFire and Air.bombRelease(sim, id, weapon, target, kx, kz, defIndex)
 				end
 				if canFire and weapon.guidance and not EW.canLock(sim, id, weapon, target, dist) then
 					canFire = false -- no lock, no launch

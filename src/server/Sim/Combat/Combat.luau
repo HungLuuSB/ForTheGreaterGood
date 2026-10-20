@@ -248,6 +248,22 @@ function Combat.aimPoint(c: Combat, w: World.World, id: number, x: number?, z: n
 	return px, Combat.baseAt(c, w, id, px, pz) + c.profiles[w.defIndex[id]].height / 2, pz
 end
 
+-- The aim point of a target as its shooter's team knows it (D100): a live
+-- unit at the believed (x, z); a remembered structure (possibly dead: the
+-- team can't tell) from its def, standing on the ground or floating; the
+-- ground itself when `id` is 0 (attack-ground).
+function Combat.knownAimPoint(c: Combat, w: World.World, id: number, defIndex: number?, x: number, z: number): (number, number, number)
+	if id ~= 0 and w.slot[id] ~= nil then
+		return Combat.aimPoint(c, w, id, x, z)
+	end
+	if defIndex == nil then
+		return x, Combat.groundHeight(c, x, z), z
+	end
+	local p = c.profiles[defIndex]
+	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT else Combat.groundHeight(c, x, z)
+	return x, base + p.height / 2, z
+end
+
 function Combat.addEvent(c: Combat, e: Event)
 	table.insert(c.events, e)
 end

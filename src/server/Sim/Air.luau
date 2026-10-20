@@ -81,17 +81,17 @@ end
 -- 10.5: a bomb leaves with the bomber's velocity and falls). Returns the
 -- fall time, where the bomb would land if dropped now, and where the target
 -- will be by then (its velocity is only known while VISIBLE).
-function Air.bombSolution(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, target: number, kx: number, kz: number): (number, number, number, number, number)
+function Air.bombSolution(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, target: number, kx: number, kz: number, defIndex: number?): (number, number, number, number, number)
 	local w = sim.world
 	local c = sim.combat
 	local dropY = Combat.unitBase(c, w, id) + c.profiles[w.defIndex[id]].muzzleHeight
-	local _, hitY = Combat.aimPoint(c, w, target, kx, kz) -- at the believed position
+	local _, hitY = Combat.knownAimPoint(c, w, target, defIndex, kx, kz) -- at the believed position
 	local g = weapon.gravity or 60
 	local t = sqrt(2 * math.max(dropY - hitY, 1) / g)
 	local h, v = w.heading[id], w.speed[id]
 	local ix, iz = w.posX[id] + math.sin(h) * v * t, w.posZ[id] + math.cos(h) * v * t
 	local ax, az = kx, kz
-	if Sensors.level(sim, w.ally[id], target) == Sensors.Level.VISIBLE then
+	if target ~= 0 and Sensors.level(sim, w.ally[id], target) == Sensors.Level.VISIBLE then
 		local th, tv = w.heading[target], w.speed[target]
 		ax += math.sin(th) * tv * t
 		az += math.cos(th) * tv * t
@@ -101,16 +101,16 @@ end
 
 -- Release now? When the predicted impact is within half a tick of travel of
 -- the aim point along the track, and close enough across it.
-function Air.bombRelease(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, target: number, kx: number, kz: number): boolean
+function Air.bombRelease(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, target: number, kx: number, kz: number, defIndex: number?): boolean
 	local w = sim.world
-	local _, ix, iz, ax, az = Air.bombSolution(sim, id, weapon, target, kx, kz)
+	local _, ix, iz, ax, az = Air.bombSolution(sim, id, weapon, target, kx, kz, defIndex)
 	local h, v = w.heading[id], w.speed[id]
 	local fx, fz = math.sin(h), math.cos(h)
 	local dx, dz = ax - ix, az - iz
 	local along = dx * fx + dz * fz
 	local across = math.abs(dx * fz - dz * fx)
 	local half = v * Air.DT / 2 + 0.5
-	local tolerance = math.max((weapon.aoe or 0) * 0.5, 3) + sim.combat.profiles[w.defIndex[target]].radius
+	local tolerance = math.max((weapon.aoe or 0) * 0.5, 3) + (if defIndex then sim.combat.profiles[defIndex].radius else 0)
 	return along <= half and along > -half and across <= tolerance
 end
 
@@ -178,6 +178,45 @@ function Air.onEmpty(sim: Types.Sim, id: number)
 	headTo(sim, id, w.posX[pad], w.posZ[pad])
 end
 
+-- Attack-ground order (D100): bombers make runs on (x, z) until another
+-- order replaces it. Other units ignore it.
+function Air.attackGround(sim: Types.Sim, id: number, x: number, z: number)
+	if not Air.isBomber(sim, def(sim, id)) then
+		return
+	end
+	local a = sim.air
+	a.groundX[id], a.groundZ[id] = x, z
+	a.run[id] = nil
+	sim.world.wTarget[World.slotKey(id, 1)] = 0
+end
+
+function Air.clearGround(sim: Types.Sim, id: number)
+	local a = sim.air
+	if a.groundX[id] ~= nil then
+		a.groundX[id], a.groundZ[id] = nil, nil
+		a.run[id] = nil
+	end
+end
+
+-- What a bomber is bombing: (target ID or 0 for the ground, believed x, z,
+-- def index or nil for the ground), or nil when it has nothing.
+function Air.bombAim(sim: Types.Sim, id: number): (number?, number?, number?, number?)
+	local a = sim.air
+	if a.groundX[id] ~= nil then
+		return 0, a.groundX[id], a.groundZ[id], nil
+	end
+	local w = sim.world
+	local target = if w.weaponCount[id] > 0 then w.wTarget[World.slotKey(id, 1)] else 0
+	if target == 0 then
+		return nil
+	end
+	local kx, kz, _, defIndex = Sensors.knownTarget(sim, w.ally[id], target)
+	if kx == nil then
+		return nil
+	end
+	return target, kx, kz, defIndex
+end
+
 -- Spends one round; returns false if the unit has no ammo to fire.
 function Air.useAmmo(sim: Types.Sim, id: number): boolean
 	local a = sim.air
@@ -214,17 +253,25 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 		local pad = a.pad[id]
 		tx, tz, loiter = w.posX[pad], w.posZ[pad], false
 	else
-		local target = if w.weaponCount[id] > 0 then w.wTarget[World.slotKey(id, 1)] else 0
-		local kx, kz = nil, nil
-		if target ~= 0 and (a.ammo[id] == nil or a.ammo[id] > 0) then
-			kx, kz = Sensors.knownPosition(sim, w.ally[id], target)
+		local isBomber = Air.isBomber(sim, def(sim, id))
+		local target, kx, kz, defIndex = 0, nil, nil, nil
+		if a.ammo[id] == nil or a.ammo[id] > 0 then
+			if isBomber then
+				local t: number?, x: number?, z: number?, d: number? = Air.bombAim(sim, id)
+				target, kx, kz, defIndex = t or 0, x, z, d
+			else
+				target = if w.weaponCount[id] > 0 then w.wTarget[World.slotKey(id, 1)] else 0
+				if target ~= 0 then
+					kx, kz = Sensors.knownPosition(sim, w.ally[id], target)
+				end
+			end
 		end
-		if kx and kz and Air.isBomber(sim, def(sim, id)) then
+		if kx and kz and isBomber then
 			-- bomb run (D91): line up on the aim point from far enough out
 			-- to release, fly away after a drop or a missed window
 			loiter = false
 			local weapon = sim.defs.weaponByIndex[def(sim, id).weapons[1].weaponIndex]
-			local t, _, _, ax, az = Air.bombSolution(sim, id, weapon, target, kx, kz)
+			local t, _, _, ax, az = Air.bombSolution(sim, id, weapon, target, kx, kz, defIndex)
 			local lead = math.max(v, p.minSpeed or 0) * t
 			local dist = sqrt((ax - x) ^ 2 + (az - z) ^ 2)
 			local run = a.run[id] or "in"

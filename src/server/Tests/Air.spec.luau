@@ -2,6 +2,7 @@
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Air = require("../Sim/Air")
+local Combat = require("../Sim/Combat/Combat")
 local Sensors = require("../Sim/Sensors")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
@@ -16,6 +17,14 @@ local function moveTo(sim: Sim.Sim, player: number, ids: { number }, x: number, 
 	local cell, ox, oz = g:encode(x, z)
 	local w = Packer.Writer.new()
 	Schema.encodeCommand(w, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = ids, cell = cell, offX = ox, offZ = oz })
+	assert(Sim.submit(sim, player, w:finish()))
+end
+
+local function attackGround(sim: Sim.Sim, player: number, ids: { number }, x: number, z: number)
+	local g = (sim.map :: any).grid
+	local cell, ox, oz = g:encode(x, z)
+	local w = Packer.Writer.new()
+	Schema.encodeCommand(w, { cmdType = Schema.CmdType.ATTACK_GROUND, flags = 0, unitIds = ids, cell = cell, offX = ox, offZ = oz })
 	assert(Sim.submit(sim, player, w:finish()))
 end
 
@@ -293,6 +302,98 @@ return function(t: RunAll.Context)
 			return Sim.hash(sim)
 		end
 		t.equal(run(), run())
+	end)
+
+	-- Team knowledge, not server truth (D100): a Chaos plant that Order saw
+	-- once is destroyed while nobody watches. Order still remembers it, so a
+	-- bomber sent later bombs the empty spot, until a spotter sees it again.
+	t.test("bombers bomb a ghost whose structure died unseen, until the spot is seen again", function()
+		local sim = Sim.new({ seed = 34, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local plant = Spawn.unit(sim, "chs_vehplant", 2, 150, -100)
+		local spotter = Spawn.unit(sim, "ord_lancer", 1, 150, 0)
+		w.fireState[spotter] = World.FireState.HOLD_FIRE
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		World.setPosition(w, spotter, -450, 450) -- leaves: the plant is a ghost
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		Combat.queueDamage(sim.combat, plant, 1e9, 0) -- destroyed unseen
+		Sim.step(sim)
+		t.expect(w.slot[plant] == nil, "the plant is gone")
+		t.equal(Sensors.level(sim, 1, plant), Sensors.Level.GHOST, "Order still remembers it")
+		-- a bomber arrives from beyond its acquisition range
+		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, -400, math.pi / 2)
+		moveTo(sim, 1, { bomber }, 150, -100)
+		local drops, onGround = 0, 0
+		for _ = 1, 900 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					drops += 1
+				elseif e.kind == "IMPACT" and e.unit == 0 and e.x and math.sqrt((e.x - 150) ^ 2 + ((e.z :: number) + 100) ^ 2) < 40 then
+					onGround += 1
+				end
+			end
+		end
+		t.expect(drops >= 1, `the bomber bombed the remembered plant ({drops} bombs)`)
+		t.expect(onGround >= 1, `the bombs hit empty ground where it stood ({onGround})`)
+		-- a spotter sees the spot again: the ghost is forgotten, the bombing stops
+		World.setPosition(w, spotter, 150, -40)
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 1, plant), Sensors.Level.HIDDEN, "seen again: the ghost is gone")
+		local later = 0
+		for _ = 1, 300 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					later += 1
+				end
+			end
+		end
+		t.equal(later, 0, "no bombs once the spot is seen empty")
+		print(`    dead ghost: {drops} bombs on the remembered plant, {onGround} landed on its empty spot`)
+	end)
+
+	t.test("ATTACK_GROUND: a bomber bombs an empty spot until another order", function()
+		local sim = Sim.new({ seed = 35, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, 0, math.pi / 2)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, -400, 200)
+		attackGround(sim, 1, { bomber, tank }, 100, 50)
+		local near, drops = 0, 0
+		for _ = 1, 900 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					drops += 1
+				elseif e.kind == "IMPACT" and e.x and math.sqrt((e.x - 100) ^ 2 + ((e.z :: number) - 50) ^ 2) <= 10 then
+					near += 1
+				end
+			end
+		end
+		t.expect(drops >= 2, `bombs dropped on the spot ({drops})`)
+		t.expect(near >= drops - 1, `{near} of {drops} landed within 10 studs of it`)
+		t.equal(sim.air.groundX[tank], nil, "only bombers take the order")
+		moveTo(sim, 1, { bomber }, -300, 0)
+		Sim.step(sim)
+		t.equal(sim.air.groundX[bomber], nil, "a move order cancels it")
+		local later = 0
+		for _ = 1, 300 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
+					later += 1
+				end
+			end
+		end
+		t.equal(later, 0, "no more bombs after the move")
+		print(`    attack-ground: {near} of {drops} bombs within 10 studs`)
+		local _ = w
 	end)
 
 	-- Missile guidance (D97): a Seraph radar SAM against a Harpy circling

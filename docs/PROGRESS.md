@@ -322,6 +322,12 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Round 7 — item 2a: ghosts of dead structures, ATTACK_GROUND ✅
+
+- Targeting follows team knowledge: ghosts stay targets after their structure dies unseen, until the spot is seen again (D100).
+- ATTACK_GROUND for bombers: runs on a spot until another order.
+- `Air.spec`: dead ghost bombed then forgotten; attack-ground on an empty spot. The ghost test fails without the dead-ghost search.
+
 ### Round 6 — item 5: combat events on the wire ✅
 
 - New records FIRE, SPAWN_PROJ, IMPACT, DECOYED and LOST_LOCK (`PROTOCOL_VERSION` 3), sent only for what the player's ally team may know and batched per tick (D99).

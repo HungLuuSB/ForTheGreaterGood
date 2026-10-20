@@ -886,6 +886,7 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 - Runs **staggered**: each unit re-evaluates every 4–8 ticks (offset by `id % N`). Keep the current target while it stays valid (hysteresis).
 - **Candidate search:** query cells within weapon range from the per-team **contact grid** (a coarse 64-stud bucket grid of enemies this team can see or detect), not from all units.
 - **Filter:** `bit32.band(target.categories, weapon.targetMask) ~= 0`, target known to the team (visible, or radar contact if `canTargetRadar`), within arc and range.
+- **Team knowledge, never server truth** (D100): every targeting decision uses what the shooter's ally team knows. A structure ghost stays a target for `canTargetRadar` weapons even if the structure died unseen (the shots hit empty ground), until the team sees the spot again.
 - **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional), penalty for overkill.
 - Long-range weapons (SAM sites, artillery): use the coarse bucket grid only, and re-evaluate less often.
 
@@ -1094,7 +1095,7 @@ countermeasures = {
 ### 12.2 Air
 
 - **Fighters** (`JET`): target `AIR` only. Patrol/intercept orders. Carry limited missiles; return to rearm when empty.
-- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order. Bombs may target radar contacts (aimed at the wobbled position, so small targets are often missed) and remembered structures at their last known position (D96).
+- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order. `ATTACK_GROUND` gives a bomber a spot to bomb, run after run, until another order (D100). Bombs may target radar contacts (aimed at the wobbled position, so small targets are often missed) and remembered structures at their last known position (D96).
 - **Attack helicopters** (`HELI`): hover and engage ground/naval targets; vulnerable to IR SAMs.
 - **ASW helicopter** (`HELI`): drops torpedoes on submerged contacts.
 - **Support aircraft:** AWACS (Order), EW jammer aircraft (Chaos).

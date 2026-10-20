@@ -1,11 +1,14 @@
 --!strict
 -- System 4: target acquisition (guide 10.2).
 --
--- Each weapon keeps its current target while it stays valid: alive, an
--- enemy the team knows about (VISIBLE; RADAR contacts and structure ghosts
--- only for canTargetRadar weapons, guide 11.4), a category it can hit, within
--- range (+10% hysteresis, measured to the known position) and arc, and
--- allowed by the unit's fire state. An invalid target is dropped at once. A
+-- Targeting follows team knowledge, never server truth (D100). Each weapon
+-- keeps its current target while it stays valid: an enemy the team knows
+-- about (VISIBLE; RADAR contacts and structure ghosts only for
+-- canTargetRadar weapons, guide 11.4), a category it can hit, within range
+-- (+10% hysteresis, measured to the known position) and arc, and allowed by
+-- the unit's fire state. A ghost stays a target even if its structure died
+-- unseen (the team can't tell): until the spot is seen again, when Sensors
+-- forgets it. Bombers with an attack-ground order (Air) don't auto-target. An invalid target is dropped at once. A
 -- weapon without a target searches only on its unit's stagger tick
 -- ((id + tick) % STAGGER == 0), so 1/STAGGER of units search per tick.
 --
@@ -65,18 +68,21 @@ local VISIBLE, RADAR, GHOST, SONAR = Sensors.Level.VISIBLE, Sensors.Level.RADAR,
 local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number): number?
 	local c = sim.combat
 	local w = sim.world
-	if w.slot[t] == nil or w.ally[t] == w.ally[id] then
+	if w.slot[t] ~= nil and w.ally[t] == w.ally[id] then
 		return nil
 	end
-	local tp = c.profiles[w.defIndex[t]]
+	local kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], t)
+	if kx == nil then
+		return nil
+	end
+	local tp = c.profiles[defIndex :: number]
 	if band(weapon.targetMask, tp.categoryMask) == 0 then
 		return nil
 	end
-	local kx, kz, level = Sensors.knownPosition(sim, w.ally[id], t)
 	local allowed = level == VISIBLE
 		or ((level == RADAR or level == GHOST) and weapon.canTargetRadar)
 		or (level == SONAR and weapon.type == "TORPEDO") -- torpedoes hunt sonar contacts
-	if kx == nil or not allowed then
+	if not allowed then
 		return nil
 	end
 	local dx, dz = (kx :: number) - w.posX[id], (kz :: number) - w.posZ[id]
@@ -97,7 +103,8 @@ local function isGuided(weapon: Defs.WeaponDef): boolean
 end
 
 local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, dist: number): number
-	local s = priorityWeight(weapon.priorityMasks, sim.combat.profiles[sim.world.defIndex[t]].categoryMask) / math.max(dist, 1)
+	local _, _, _, defIndex = Sensors.knownTarget(sim, sim.world.ally[id], t)
+	local s = priorityWeight(weapon.priorityMasks, sim.combat.profiles[defIndex :: number].categoryMask) / math.max(dist, 1)
 	if isGuided(weapon) and EW.canLock(sim, id, weapon, t, dist) then
 		s *= LOCK_PREFERENCE
 	end
@@ -117,6 +124,20 @@ local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (numb
 			local s = score(sim, id, weapon, t, dist)
 			if s > bestScore or (s == bestScore and t < best) then
 				best, bestScore = t, s
+			end
+		end
+	end
+	-- remembered structures that are no longer there: the team doesn't know
+	if weapon.canTargetRadar then
+		for _, gid in sim.sensors.ghostIds[w.ally[id]] or {} do
+			if w.slot[gid] == nil then
+				local dist = acceptable(sim, id, weapon, gid, 1)
+				if dist ~= nil then
+					local s = score(sim, id, weapon, gid, dist)
+					if s > bestScore or (s == bestScore and gid < best) then
+						best, bestScore = gid, s
+					end
+				end
 			end
 		end
 	end
@@ -140,9 +161,14 @@ return function(sim: Types.Sim)
 		local searchNow = (id + tick) % STAGGER == 0
 		local attacker = w.lastAttacker[id]
 
+		local groundOrder = sim.air.groundX[id] ~= nil
 		for slot = 1, count do
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
+			if groundOrder and weapon.type == "BOMB" then
+				w.wTarget[key] = 0 -- bombing the ordered spot (Air.bombAim)
+				continue
+			end
 
 			local cur = w.wTarget[key]
 			local curDist: number? = nil
