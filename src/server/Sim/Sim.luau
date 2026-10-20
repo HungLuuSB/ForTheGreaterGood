@@ -23,6 +23,7 @@ local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
 local SensorsState = require("./SensorsState")
 local Nav = require("./Nav")
+local NetOut = require("./NetOut")
 local _Placement = require("./Placement") -- registers its Lifecycle removal hook
 local Replay = require("./Replay")
 local Scenarios = require("./Scenarios")
@@ -142,7 +143,9 @@ function Sim.new(config: Config): Sim
 			players = headerPlayers,
 		}),
 		stats = { commandsApplied = 0, commandsRejected = 0 },
+		net = nil :: any,
 	}
+	sim.net = NetOut.new(sim)
 	setup(sim)
 	return sim
 end

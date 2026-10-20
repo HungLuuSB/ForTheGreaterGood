@@ -252,17 +252,26 @@ return function(t: RunAll.Context)
 		t.notEqual(Sim.hash(sim), before, "(only the tick changed)")
 	end)
 
-	t.test("idle units cost nothing: no dirty bits without movement", function()
+	t.test("idle units cost nothing: no dirty bits and no packets without movement", function()
 		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, scenario = "march_test", mapId = "flat:32" })
 		local w = sim.world
-		for _, id in w.ids do
-			World.clearDirty(w, id)
-		end
+		-- camera over the whole map: every unit enters the tactical tier on tick 1
+		assert(Sim.submit(sim, 1, encode({ cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 31, maxZ = 31 })))
+		Sim.step(sim)
+		local outbox = sim.net.players[1].outbox
+		t.equal(#outbox.Events, 1, "ENTER events on the first tick")
+		local dirtySeen = false
 		for _ = 1, 10 do
+			-- dirty bits are cleared by NetOut at the end of each tick; any set
+			-- during the tick would show up as tactical or state records
 			Sim.step(sim)
+			for _, ch in { "Tactical", "State", "Events" } do
+				t.equal(#outbox[ch], 0, `idle units produced {ch} messages on tick {sim.tick}`)
+			end
+			for _, id in w.ids do
+				dirtySeen = dirtySeen or w.dirty[id] ~= 0
+			end
 		end
-		for _, id in w.ids do
-			t.equal(w.dirty[id], 0, `idle unit {id} was marked dirty`)
-		end
+		t.expect(not dirtySeen, "no dirty bits left after NetOut")
 	end)
 end

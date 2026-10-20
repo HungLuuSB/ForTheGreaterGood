@@ -642,3 +642,29 @@ Decisions made while working unattended. Each entry gives the date, the decision
   - Artillery: `ord_verdict` "Verdict" with `ord_howitzer` (range 450, 0.6° spread, canTargetRadar) and `chs_hellmouth` "Hellmouth" with `chs_mortar` (range 400, 1.6° spread, canTargetRadar).
   - Def field `sensors.radarError`.
 - **Why:** needed for the jamming and radar-artillery tests. They follow the faction doctrine: short Order jammer, long Chaos jammer, precise Order artillery.
+
+## D70 — Event records on the wire; PROTOCOL_VERSION 2 (2026-10-20, task 13)
+
+- **Decision:** the Events channel gets Schema records:
+  - ENTER (16 bytes: id, def index, team, position, heading, altitude, health, build, state);
+  - LEAVE (3 bytes);
+  - DEATH (6 bytes: id, severity, wreck).
+
+  `PROTOCOL_VERSION` is now 2. The golden-byte test pins the new records; existing layouts are unchanged.
+- **Why:** NetOut needs reliable tier changes and deaths. Our rule is to bump on any wire change.
+
+## D71 — NetOut design (2026-10-20, task 13)
+
+- **Decision:**
+  - **Fog first:** a player's known units are its team's units plus enemies at RADAR, SONAR, VISIBLE or GHOST. Only own and VISIBLE units can be tactical; radar and sonar contacts are strategic-only blips with icon 0 at their wobbled cell.
+  - **Tactical tier:** units within the camera rectangle; enter at +2 cells, leave beyond +5. The camera arrives via the CAMERA command; without one, there's no tactical tier.
+  - **Tactical records** (unreliable): moved tactical units, every tick.
+  - **State records** (reliable): tactical units with dirty HEALTH, STATE or BUILD. A STATE change sends every weapon slot's aim plus the weapon-state field: IDLE without a target, READY when reloaded, otherwise AIMING.
+  - **Strategic snapshot** every 5th tick: all other known units, plus ghosts of dead structures. A strategic tick always sends at least a header-only message, so the client can drop stale entries.
+  - **DEATH** goes only to players who had the unit tactical. Strategic-only units just vanish from the next snapshot. Removals without a death (reclaim) send LEAVE.
+  - **Quantization:** heading u8 = round(h / 2π × 256) mod 256; health u8 = ceil(health / max × 255); build u8 = floor(progress × 255); aim angles u8 over [−π, π].
+  - **Packing:** every channel goes through `Packer.chunk` with a tick header. Dirty bits are cleared at the end of NetOut.
+  - Per-player outboxes plus cumulative bytes and messages per channel sit in `sim.net`, which is not hashed.
+- **Alternatives:** radar contacts in the tactical tier; deltas for strategic records.
+- **Why:** guide 7.2–7.3. Strategic snapshots are simple and self-healing over the unreliable channel.
+- **Tests:** a simulated client (`Tests/Support/Client.luau`) rebuilds the view from packets only. Mutations leaking hidden units or true radar positions are caught.

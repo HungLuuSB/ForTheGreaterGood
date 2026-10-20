@@ -283,7 +283,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 1, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 2, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -323,6 +323,39 @@ return function(t: RunAll.Context)
 		local strategic: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
 		t.equal(hex(encodeOne(Schema.encodeStrategic, strategic)), "02 01 04 03 41 02")
 		t.equal(hex(encodeOne(Schema.encodeTickHeader, 0xABCD)), "cd ab")
+		-- version 2: events
+		local enter: Schema.Event = {
+			kind = Schema.EventKind.ENTER,
+			unitId = 0x0102,
+			defIndex = 0x0304,
+			team = 2,
+			cell = 0x0506,
+			offX = 7,
+			offZ = 8,
+			heading = 9,
+			alt = 10,
+			health = 11,
+			build = 12,
+			state = 0x0D0E,
+		}
+		t.equal(hex(encodeOne(Schema.encodeEvent, enter)), "01 02 01 04 03 02 06 05 07 08 09 0a 0b 0c 0e 0d")
+		t.equal(hex(encodeOne(Schema.encodeEvent, { kind = Schema.EventKind.LEAVE, unitId = 0x0102 })), "02 02 01")
+		t.equal(hex(encodeOne(Schema.encodeEvent, { kind = Schema.EventKind.DEATH, unitId = 0x0102, severity = 200, wreckId = 0x0304 })), "03 02 01 c8 04 03")
+	end)
+
+	t.test("events round-trip, reject bad input, and every prefix is truncated", function()
+		local events: { Schema.Event } = {
+			{ kind = Schema.EventKind.ENTER, unitId = 65535, defIndex = 1, team = 8, cell = 65535, offX = 255, offZ = 0, heading = 255, alt = 0, health = 255, build = 0, state = 65535 },
+			{ kind = Schema.EventKind.LEAVE, unitId = 1 },
+			{ kind = Schema.EventKind.DEATH, unitId = 7, severity = 0, wreckId = 0 },
+		}
+		roundTrip(t, events, Schema.encodeEvent, Schema.decodeEvent)
+		t.equal(buffer.len(encodeOne(Schema.encodeEvent, events[1])), Schema.ENTER_BYTES)
+		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
+		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
+		expectRejected(t, Schema.decodeEvent, { 9, 1, 0 }, "unknown event kind 9")
+		expectRejected(t, Schema.decodeEvent, { 2, 0, 0 }, "unitId 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 1, 1, 0, 1, 0, 9 }, "team 9 outside")
 	end)
 
 	t.test("tactical layout is byte exact", function()

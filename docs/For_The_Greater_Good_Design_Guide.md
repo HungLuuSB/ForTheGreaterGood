@@ -572,6 +572,11 @@ for each player P:
 - Fast jets owned by or near the player's team: larger margin, or always tactical while in allied airspace.
 - **Entering tactical:** server sends one reliable `Enter` event with the unit's full state. After that, only changes.
 - **Leaving tactical:** reliable `Leave` event; client returns the model to the pool but keeps the unit in its strategic table.
+- Implementation (`Sim/NetOut.luau`, DECISIONS D70–D71):
+  - Radar and sonar contacts are strategic-only (icon 0, wobbled cell).
+  - The strategic snapshot runs every 5th tick and always sends at least a header, so clients drop units that disappeared.
+  - DEATH goes to players that had the unit tactical.
+  - Event records ENTER / LEAVE / DEATH were added in `PROTOCOL_VERSION` 2.
 
 ### 7.3 Packet layouts
 

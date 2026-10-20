@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 1
+Schema.PROTOCOL_VERSION = 2 -- 2: Events channel records (ENTER, LEAVE, DEATH)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -554,6 +554,95 @@ function Schema.decodeStrategic(r: Reader): Strategic
 		fail(r, `flags has reserved bits: {flags}`)
 	end
 	return { unitId = unitId, cell = cell, icon = icon, team = team, flags = flags }
+end
+
+--------------------------------------------------------------------------------
+-- Events (S → C, reliable): tactical tier changes and deaths (guide 7.2, 7.3)
+--   kind u8, then
+--   ENTER  unitId u16 | defIndex u16 | team u8 | cell u16 | offX u8 | offZ u8
+--          | heading u8 | alt u8 | health u8 | build u8 | state u16   = 16 bytes
+--   LEAVE  unitId u16                                                 =  3 bytes
+--   DEATH  unitId u16 | severity u8 | wreckId u16 (0 = none)          =  6 bytes
+--------------------------------------------------------------------------------
+
+Schema.EventKind = table.freeze({ ENTER = 1, LEAVE = 2, DEATH = 3 })
+local EK = Schema.EventKind
+Schema.ENTER_BYTES = 16
+
+export type Event = {
+	kind: number,
+	unitId: number,
+	-- ENTER
+	defIndex: number?,
+	team: number?, -- 1..8
+	cell: number?,
+	offX: number?,
+	offZ: number?,
+	heading: number?,
+	alt: number?,
+	health: number?,
+	build: number?,
+	state: number?,
+	-- DEATH
+	severity: number?,
+	wreckId: number?,
+}
+
+function Schema.encodeEvent(w: Writer, e: Event)
+	local kind = e.kind
+	if kind ~= EK.ENTER and kind ~= EK.LEAVE and kind ~= EK.DEATH then
+		error(`Schema: unknown event kind {kind}`, 2)
+	end
+	w:writeU8(kind)
+	writeId(w, e.unitId, "unitId")
+	if kind == EK.ENTER then
+		local team = required(e.team, "team")
+		if team < 1 or team > Schema.MAX_TEAMS then
+			error(`Schema: team {team} outside 1..{Schema.MAX_TEAMS}`, 2)
+		end
+		writeId(w, required(e.defIndex, "defIndex"), "defIndex")
+		w:writeU8(team)
+		w:writeU16(required(e.cell, "cell"))
+		w:writeU8(required(e.offX, "offX"))
+		w:writeU8(required(e.offZ, "offZ"))
+		w:writeU8(required(e.heading, "heading"))
+		w:writeU8(required(e.alt, "alt"))
+		w:writeU8(required(e.health, "health"))
+		w:writeU8(required(e.build, "build"))
+		w:writeU16(required(e.state, "state"))
+	elseif kind == EK.DEATH then
+		w:writeU8(required(e.severity, "severity"))
+		w:writeU16(required(e.wreckId, "wreckId"))
+	end
+end
+
+function Schema.decodeEvent(r: Reader): Event
+	r.context = "event record"
+	local kind = r:readU8()
+	if kind ~= EK.ENTER and kind ~= EK.LEAVE and kind ~= EK.DEATH then
+		fail(r, `unknown event kind {kind}`)
+	end
+	local e: Event = { kind = kind, unitId = readId(r, "unitId") }
+	if kind == EK.ENTER then
+		e.defIndex = readId(r, "defIndex")
+		local team = r:readU8()
+		if team < 1 or team > Schema.MAX_TEAMS then
+			fail(r, `team {team} outside 1..{Schema.MAX_TEAMS}`)
+		end
+		e.team = team
+		e.cell = r:readU16()
+		e.offX = r:readU8()
+		e.offZ = r:readU8()
+		e.heading = r:readU8()
+		e.alt = r:readU8()
+		e.health = r:readU8()
+		e.build = r:readU8()
+		e.state = r:readU16()
+	elseif kind == EK.DEATH then
+		e.severity = r:readU8()
+		e.wreckId = r:readU16()
+	end
+	return e
 end
 
 return Schema

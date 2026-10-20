@@ -1,0 +1,299 @@
+--!strict
+-- Interest management and packet building (guide 7.2–7.6), headless.
+--
+-- Per player, every tick, fog first:
+--   * Known units: the player's team's own units, plus enemies the team has
+--     at RADAR / SONAR / VISIBLE / GHOST (Sensors). Nothing else is ever sent.
+--   * Tactical tier: own or VISIBLE units within the camera rectangle; enter
+--     at +2 cells, leave beyond +5 cells (hysteresis). Entering sends a
+--     reliable ENTER event with the full state; leaving sends LEAVE.
+--   * Tactical records (unreliable): tactical units whose position, heading
+--     or altitude changed this tick.
+--   * State records (reliable): tactical units whose health, state, aim or
+--     build progress changed (dirty bits).
+--   * Strategic records (unreliable, every 5th tick = 3 Hz): every other known
+--     unit. Radar / sonar contacts carry their wobbled cell and icon 0;
+--     remembered structures carry the GHOST flag and their last position.
+--   * DEATH events for dead units the player had in its tactical tier.
+-- Every channel is packed through Packer.chunk (≤ 900 bytes per message)
+-- after a u16 tick header. Dirty bits are cleared once all players are done.
+
+local Grid = require("@shared/Grid/Grid")
+local Packer = require("@shared/Net/Packer")
+local Schema = require("@shared/Net/Schema")
+local Tick = require("@shared/Net/Tick")
+local NetState = require("./NetState")
+local Sensors = require("./Sensors")
+local Types = require("./Types")
+local World = require("./World")
+
+local NetOut = {}
+
+NetOut.ENTER_MARGIN = 2 -- cells
+NetOut.LEAVE_MARGIN = 5
+NetOut.STRATEGIC_EVERY = 5 -- ticks (3 Hz)
+
+local D = World.Dirty
+local band, bor = bit32.band, bit32.bor
+local TAU = 2 * math.pi
+local MOVED = bor(D.POSITION, D.HEADING, D.ALTITUDE)
+local CHANGED = bor(D.HEALTH, D.STATE, D.BUILD)
+local L = Sensors.Level
+local SF = Schema.StrategicFlag
+
+-- Strategic icon per def: distinct icon names, sorted, numbered from 1.
+function NetOut.iconIndex(defs: any): { [number]: number }
+	local names = {}
+	for _, def in defs.unitByIndex do
+		if table.find(names, def.icon) == nil then
+			table.insert(names, def.icon)
+		end
+	end
+	table.sort(names)
+	local out = {}
+	for index, def in defs.unitByIndex do
+		out[index] = math.min(table.find(names, def.icon) :: number, 63)
+	end
+	return out
+end
+
+function NetOut.new(sim: Types.Sim): NetState.NetState
+	return NetState.new(sim.playerOrder, NetOut.iconIndex(sim.defs))
+end
+
+function NetOut.setCamera(sim: Types.Sim, player: number, minX: number, minZ: number, maxX: number, maxZ: number)
+	local pn = sim.net.players[player]
+	if pn then
+		pn.camera = { minX, minZ, maxX, maxZ }
+	end
+end
+
+-- Quantization (wire units)
+function NetOut.headingU8(h: number): number
+	return math.floor((h % TAU) / TAU * 256 + 0.5) % 256
+end
+
+local function healthU8(health: number, max: number): number
+	return math.clamp(math.ceil(health / max * 255), 0, 255)
+end
+
+local function angleU8(a: number): number -- radians in [-π, π] → 0..255
+	return math.clamp(math.floor((a + math.pi) / TAU * 255 + 0.5), 0, 255)
+end
+
+local function inRect(g: Grid.Grid, cam: { number }, x: number, z: number, margin: number): boolean
+	local cx, cz = g:cellAt(x, z)
+	return cx >= cam[1] - margin and cx <= cam[3] + margin and cz >= cam[2] - margin and cz <= cam[4] + margin
+end
+
+local function enterEvent(sim: Types.Sim, g: Grid.Grid, id: number): Schema.Event
+	local w = sim.world
+	local def = sim.defs.unitByIndex[w.defIndex[id]]
+	local cell, ox, oz = g:encode(w.posX[id], w.posZ[id])
+	return {
+		kind = Schema.EventKind.ENTER,
+		unitId = id,
+		defIndex = w.defIndex[id],
+		team = w.team[id],
+		cell = cell,
+		offX = ox,
+		offZ = oz,
+		heading = NetOut.headingU8(w.heading[id]),
+		alt = math.clamp(math.floor(w.alt[id] + 0.5), 0, 255),
+		health = healthU8(w.health[id], def.health),
+		build = math.floor(w.buildProgress[id] * 255),
+		state = band(w.state[id], 0xFFFF),
+	}
+end
+
+local function stateRecord(sim: Types.Sim, id: number, dirty: number): Schema.State
+	local w = sim.world
+	local rec: Schema.State = { unitId = id }
+	if band(dirty, D.HEALTH) ~= 0 then
+		rec.health = healthU8(w.health[id], sim.defs.unitByIndex[w.defIndex[id]].health)
+	end
+	if band(dirty, D.BUILD) ~= 0 then
+		rec.build = math.floor(w.buildProgress[id] * 255)
+	end
+	if band(dirty, D.STATE) ~= 0 then
+		rec.state = band(w.state[id], 0xFFFF)
+		local count = w.weaponCount[id]
+		if count > 0 then
+			local aim, states = {}, {}
+			for slot = 1, count do
+				local key = World.slotKey(id, slot)
+				table.insert(aim, { slot = slot, yaw = angleU8(w.wYaw[key]), pitch = angleU8(w.wPitch[key]) })
+				states[slot] = if w.wTarget[key] == 0
+					then Schema.WeaponState.IDLE
+					elseif w.wReload[key] <= 0 then Schema.WeaponState.READY
+					else Schema.WeaponState.AIMING
+			end
+			rec.aim = aim
+			rec.weapon = Schema.packWeaponStates(states)
+		end
+	end
+	return rec
+end
+
+local function pack<T>(records: { T }, encode: (Packer.Writer, T) -> (), wireTick: number): { buffer }
+	if #records == 0 then
+		return {}
+	end
+	return Packer.chunk(records, encode, Packer.MAX_MESSAGE_BYTES, function(wr)
+		Schema.encodeTickHeader(wr, wireTick)
+	end)
+end
+
+function NetOut.step(sim: Types.Sim)
+	local map = sim.map
+	if map == nil then
+		return -- no grid to encode positions with
+	end
+	local g = map.grid
+	local w = sim.world
+	local net = sim.net
+	local tick = sim.tick
+	local wireTick = Tick.toWire(tick)
+	local strategicTick = tick % NetOut.STRATEGIC_EVERY == 0
+
+	for _, pid in sim.playerOrder do
+		local pn = net.players[pid]
+		local team = sim.players[pid].team
+		local cam = pn.camera
+		local events: { Schema.Event } = {}
+		local tactical: { Schema.Tactical } = {}
+		local states: { Schema.State } = {}
+		local entered: { [number]: boolean } = {}
+
+		-- deaths of tactical units
+		for _, e in sim.combat.events do
+			if e.kind == "DEATH" and pn.tactical[e.unit] then
+				pn.tactical[e.unit] = nil
+				table.remove(pn.tacticalList, table.find(pn.tacticalList, e.unit) :: number)
+				table.insert(events, {
+					kind = Schema.EventKind.DEATH,
+					unitId = e.unit,
+					severity = e.severity or 0,
+					wreckId = e.other,
+				})
+			end
+		end
+
+		-- tactical units removed without a DEATH (reclaimed, cancelled frames)
+		local i = 1
+		while i <= #pn.tacticalList do
+			local id = pn.tacticalList[i]
+			if w.slot[id] == nil then
+				pn.tactical[id] = nil
+				table.remove(pn.tacticalList, i)
+				table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
+			else
+				i += 1
+			end
+		end
+
+		-- tier membership (fog first: only own or VISIBLE units can be tactical)
+		for _, id in w.ids do
+			local seen = w.team[id] == team or Sensors.level(sim, team, id) == L.VISIBLE
+			if pn.tactical[id] then
+				if not seen or cam == nil or not inRect(g, cam, w.posX[id], w.posZ[id], NetOut.LEAVE_MARGIN) then
+					pn.tactical[id] = nil
+					table.remove(pn.tacticalList, table.find(pn.tacticalList, id) :: number)
+					table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
+				end
+			elseif seen and cam ~= nil and inRect(g, cam, w.posX[id], w.posZ[id], NetOut.ENTER_MARGIN) then
+				pn.tactical[id] = true
+				table.insert(pn.tacticalList, id)
+				entered[id] = true
+				table.insert(events, enterEvent(sim, g, id))
+			end
+		end
+
+		-- changes of tactical units that were already known to the client
+		for _, id in pn.tacticalList do
+			if entered[id] then
+				continue
+			end
+			local dirty = w.dirty[id]
+			if band(dirty, MOVED) ~= 0 then
+				local cell, ox, oz = g:encode(w.posX[id], w.posZ[id])
+				local alt = w.alt[id]
+				table.insert(tactical, {
+					unitId = id,
+					cell = cell,
+					offX = ox,
+					offZ = oz,
+					heading = NetOut.headingU8(w.heading[id]),
+					alt = if alt > 0 then math.clamp(math.floor(alt + 0.5), 0, 255) else nil,
+				})
+			end
+			if band(dirty, CHANGED) ~= 0 then
+				table.insert(states, stateRecord(sim, id, dirty))
+			end
+		end
+
+		-- strategic snapshot of every other known unit
+		local strategic: { Schema.Strategic } = {}
+		if strategicTick then
+			for _, id in w.ids do
+				if pn.tactical[id] then
+					continue
+				end
+				local kx, kz, level = Sensors.knownPosition(sim, team, id)
+				if kx == nil or kz == nil then
+					continue
+				end
+				local own = w.team[id] == team
+				local flags = if level == L.RADAR then SF.RADAR_ONLY
+					elseif level == L.SONAR then SF.SONAR_ONLY
+					elseif level == L.GHOST then SF.GHOST
+					else 0
+				local cell = g:encode(kx, kz)
+				table.insert(strategic, {
+					unitId = id,
+					cell = cell,
+					icon = if own or level == L.VISIBLE or level == L.GHOST then net.iconIndex[w.defIndex[id]] else 0,
+					team = w.team[id],
+					flags = flags,
+				})
+			end
+			-- remembered structures that are already gone
+			for _, gid in sim.sensors.ghostIds[team] or {} do
+				if w.slot[gid] == nil then
+					local ghost = sim.sensors.ghosts[team][gid]
+					table.insert(strategic, {
+						unitId = gid,
+						cell = (g:encode(ghost.x, ghost.z)),
+						icon = net.iconIndex[ghost.defIndex],
+						team = ghost.team,
+						flags = SF.GHOST,
+					})
+				end
+			end
+		end
+
+		local outbox = pn.outbox
+		outbox.Events = pack(events, Schema.encodeEvent, wireTick)
+		outbox.Tactical = pack(tactical, Schema.encodeTactical, wireTick)
+		outbox.State = pack(states, Schema.encodeState, wireTick)
+		outbox.Strategic = pack(strategic, Schema.encodeStrategic, wireTick)
+		if strategicTick and #outbox.Strategic == 0 then
+			-- an empty snapshot still tells the client to drop old strategic units
+			local wr = Packer.Writer.new(2)
+			Schema.encodeTickHeader(wr, wireTick)
+			outbox.Strategic = { wr:finish() }
+		end
+		for _, ch in NetState.CHANNELS do
+			for _, msg in outbox[ch] do
+				pn.bytes[ch] += buffer.len(msg)
+				pn.messages[ch] += 1
+			end
+		end
+	end
+
+	for _, id in w.ids do
+		World.clearDirty(w, id)
+	end
+end
+
+return NetOut

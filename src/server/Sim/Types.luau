@@ -7,6 +7,7 @@ local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local Economy = require("./Economy")
 local Nav = require("./Nav")
+local NetState = require("./NetState")
 local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
 local Replay = require("./Replay")
@@ -36,6 +37,7 @@ export type Sim = {
 	eco: Economy.Economy, -- team accounts
 	build: BuildState.BuildState, -- construction orders, factory queues, reclaim
 	sensors: SensorsState.State, -- sensor maps, visibility, ghosts
+	net: NetState.NetState, -- per-player replication (not hashed)
 	players: { [number]: Player },
 	playerOrder: { number }, -- player IDs, ascending
 	queue: { QueuedCommand }, -- commands to apply on the next tick

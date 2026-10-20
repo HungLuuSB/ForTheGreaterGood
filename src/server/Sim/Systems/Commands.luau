@@ -14,6 +14,7 @@
 local Schema = require("@shared/Net/Schema")
 local Build = require("../Build")
 local Nav = require("../Nav")
+local NetOut = require("../NetOut")
 local Replay = require("../Replay")
 local Types = require("../Types")
 local World = require("../World")
@@ -94,6 +95,9 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		return
 	elseif cmdType == CT.RECLAIM then
 		Build.commandReclaim(sim, ownedUnits(w, player, cmd.unitIds), cmd.targetId :: number)
+		return
+	elseif cmdType == CT.CAMERA then
+		NetOut.setCamera(sim, player, cmd.minX :: number, cmd.minZ :: number, cmd.maxX :: number, cmd.maxZ :: number)
 		return
 	end
 	for _, id in cmd.unitIds do
