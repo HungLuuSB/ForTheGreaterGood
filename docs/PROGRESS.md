@@ -323,6 +323,12 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
   - determinism.
   - Mutation checks: no SUBMERGED on spawn, no shoreline removal, no SONAR targeting and no water-column clamp are each caught.
 - Tests: **26 specs, 175 passed**.
+- **M6 rules review** (tasks 15–16):
+  - strict, require forms, no globals, clocks or random: clean;
+  - no `pairs()`-order dependence: the new loops run over `w.ids` and def arrays; `AirState.hash` walks the ascending id list;
+  - no unused requires;
+  - one fix: rearming built an empty cost table per unit per tick when a def had no `ammoCost`; it now uses a frozen constant;
+  - accepted: `Air.nearestPad` scans all units (only when an aircraft runs dry or its pad dies), and `Air.rearmStep` walks the unit list twice per Construction tick (O(n), no allocation).
 
 ### Task 15 — Air (M6) ✅
 

@@ -204,6 +204,7 @@ end
 --------------------------------------------------------------------------------
 
 local padLoad: { [number]: number } = {}
+local NO_COST: { supply: number?, power: number? } = table.freeze({})
 
 function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number })
 	local w = sim.world
@@ -255,7 +256,7 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				Air.onEmpty(sim, id)
 				continue
 			end
-			local cost = d.ammoCost or {}
+			local cost = d.ammoCost or NO_COST
 			local cs, cp = cost.supply or 0, cost.power or 0
 			local rate = 1 / (d.rearmTime :: number) -- rounds per second at full economy
 			local team = w.team[id]
