@@ -19,6 +19,7 @@
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
+local Sensors = require("../Sensors")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -147,13 +148,26 @@ return function(sim: Types.Sim)
 			local wantYaw, wantPitch = 0, 0
 			local canFire = false
 			local dist, worldYaw = 0, 0
+			-- Aim at where the team believes the target is: the true position
+			-- when visible, the wobbled one for radar contacts (guide 11.4).
+			local kx, kz = nil, nil
 			if target ~= 0 and w.slot[target] ~= nil then
+				kx, kz = Sensors.knownPosition(sim, w.team[id], target)
+			end
+			local exactYaw, exactPitch = 0, 0
+			if kx ~= nil and kz ~= nil then
 				local tp = profiles[w.defIndex[target]]
-				local dx, dz = w.posX[target] - x, w.posZ[target] - z
+				local dx, dz = kx - x, kz - z
 				dist = sqrt(dx * dx + dz * dz)
 				worldYaw = atan2(dx, dz)
 				wantYaw = wrapAngle(worldYaw - heading)
-				local dy = Combat.unitBase(c, w, target) + tp.height / 2 - muzzleY
+				local aimY = Combat.groundHeight(c, kx, kz) + w.alt[target] + tp.height / 2
+				local dy = aimY - muzzleY
+				-- the true direction, for judging hitscan hits
+				local tx, tz = w.posX[target] - x, w.posZ[target] - z
+				local trueDist = sqrt(tx * tx + tz * tz)
+				exactYaw = atan2(tx, tz)
+				exactPitch = atan2(Combat.unitBase(c, w, target) + tp.height / 2 - muzzleY, trueDist)
 				local pitch: number?
 				if weapon.type == "HITSCAN" or weapon.type == "BEAM" then
 					pitch = atan2(dy, dist)
@@ -198,7 +212,7 @@ return function(sim: Types.Sim)
 					-- Fire along the turret's actual aim; keep fractional reload
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)
-					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, worldYaw, wantPitch)
+					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch)
 				end
 			end
 		end

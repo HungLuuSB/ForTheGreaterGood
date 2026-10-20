@@ -139,7 +139,7 @@ return function(t: RunAll.Context)
 		moveTo(sim, 2, { walker }, -340, 40)
 		local s = sim.sensors
 		local ocx, ocz = Sensors.cellOf(s, w.posX[observer], w.posZ[observer])
-		local circle = Sensors.circle(110)
+		local circle = Sensors.circle(sim.defs.units.ord_lancer.sensors.sight)
 		local function inCircle(x: number, z: number): boolean
 			local cx, cz = Sensors.cellOf(s, x, z)
 			for i = 1, #circle, 2 do

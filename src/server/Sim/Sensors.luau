@@ -18,6 +18,7 @@
 -- only ever SONAR or HIDDEN. Jamming and stealth refine RADAR (guide 11.4).
 
 local Grid = require("@shared/Grid/Grid")
+local Hash = require("@shared/Util/Hash")
 local Lifecycle = require("./Lifecycle")
 local SensorsState = require("./SensorsState")
 local Types = require("./Types")
@@ -29,6 +30,8 @@ Sensors.Level = SensorsState.Level
 local L = Sensors.Level
 Sensors.KINDS = SensorsState.KINDS
 Sensors.AIR_SIGHT_FACTOR = 1.5 -- default airSight = 1.5 × sight
+Sensors.DEFAULT_RADAR_ERROR = 40 -- studs, when a radar def has no radarError
+Sensors.WOBBLE_PERIOD = 30 -- ticks per wobble target (guide 11.4: tick // 30)
 Sensors.new = SensorsState.new
 Sensors.hash = SensorsState.hash
 local CELL = Grid.SENSOR_CELL_SIZE
@@ -133,9 +136,51 @@ local function domainOf(sim: Types.Sim, id: number): string
 	return sim.defs.unitByIndex[sim.world.defIndex[id]].domain
 end
 
--- RADAR detection hook: jamming and stealth (task 12) refine this.
-Sensors.radarDetects = function(_sim: Types.Sim, _s: State, _observer: number, _id: number, _cell: number): boolean
-	return true
+-- Radar detection of unit `id` by `observer`, given the observer's radar
+-- map already covers the unit's cell (guide 11.4):
+--   * jamming: units inside their own team's jam map are invisible to radar;
+--   * stealth: with radarSignature < 1, the unit must be within
+--     radar range × signature of one of the observer's radar emitters.
+function Sensors.radarDetects(sim: Types.Sim, s: State, observer: number, id: number, cell: number): boolean
+	local w = sim.world
+	local ownJam = s.maps[w.team[id]]
+	if ownJam and readu16(ownJam.jam, cell * 2) > 0 then
+		return false
+	end
+	local signature = sim.defs.unitByIndex[w.defIndex[id]].sensors.radarSignature
+	if signature >= 1 then
+		return true
+	end
+	local x, z = w.posX[id], w.posZ[id]
+	for _, r in s.radars[observer] do
+		local reach = sim.defs.unitByIndex[w.defIndex[r]].sensors.radar * signature
+		local dx, dz = w.posX[r] - x, w.posZ[r] - z
+		if dx * dx + dz * dz <= reach * reach then
+			return true
+		end
+	end
+	return false
+end
+
+-- Pseudo-random point in the unit disc for (unit, period, observer):
+-- stateless, so it never touches sim.rng and is the same however often asked.
+local function wobblePoint(id: number, period: number, observer: number): (number, number)
+	local h = Hash.u32(Hash.u32(Hash.u32(Hash.OFFSET_BASIS, id), period), observer)
+	local a = (h % 65536) / 65536 * 2 * math.pi
+	local r = math.sqrt((h // 65536) / 65536)
+	return math.cos(a) * r, math.sin(a) * r
+end
+
+-- Radar error offset `observer` sees on unit `id` at `tick`: a wobble of
+-- radius = the observer's best radarError, moving smoothly from one random
+-- point to the next every WOBBLE_PERIOD ticks (guide 11.4).
+function Sensors.wobble(s: State, observer: number, id: number, tick: number): (number, number)
+	local err = s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR
+	local k = tick // Sensors.WOBBLE_PERIOD
+	local f = (tick % Sensors.WOBBLE_PERIOD) / Sensors.WOBBLE_PERIOD
+	local ax, az = wobblePoint(id, k, observer)
+	local bx, bz = wobblePoint(id, k + 1, observer)
+	return (ax + (bx - ax) * f) * err, (az + (bz - az) * f) * err
 end
 
 local function levelFor(sim: Types.Sim, s: State, team: number, id: number, cell: number): number
@@ -161,10 +206,22 @@ end
 function Sensors.step(sim: Types.Sim)
 	local s = sim.sensors
 	local w = sim.world
+	for _, team in s.teams do
+		table.clear(s.radars[team])
+		s.radarError[team] = nil
+	end
 	for _, id in w.ids do
 		if w.buildProgress[id] < 1 then
 			Sensors.unstamp(s, id)
 			continue
+		end
+		local sensors = sim.defs.unitByIndex[w.defIndex[id]].sensors
+		local radars = s.radars[w.team[id]]
+		if sensors.radar > 0 and radars then
+			table.insert(radars, id)
+			local err = sensors.radarError or Sensors.DEFAULT_RADAR_ERROR
+			local team = w.team[id]
+			s.radarError[team] = math.min(s.radarError[team] or math.huge, err)
 		end
 		local _, _, cell = Sensors.cellOf(s, w.posX[id], w.posZ[id])
 		if s.stampCell[id] ~= cell then
@@ -215,6 +272,24 @@ function Sensors.step(sim: Types.Sim)
 			end
 		end
 	end
+end
+
+-- Where `team` believes unit `id` is, and how it knows: the true position
+-- when VISIBLE (or a ghost of a structure, which doesn't move), the wobbled
+-- position for RADAR / SONAR contacts, nil when hidden.
+function Sensors.knownPosition(sim: Types.Sim, team: number, id: number): (number?, number?, number)
+	local level = Sensors.level(sim, team, id)
+	local w = sim.world
+	if level == L.VISIBLE then
+		return w.posX[id], w.posZ[id], level
+	elseif level == L.GHOST then
+		local g = sim.sensors.ghosts[team][id]
+		return g.x, g.z, level
+	elseif level == L.RADAR or level == L.SONAR then
+		local dx, dz = Sensors.wobble(sim.sensors, team, id, sim.tick)
+		return w.posX[id] + dx, w.posZ[id] + dz, level
+	end
+	return nil, nil, level
 end
 
 -- What `team` knows about unit `id`: VISIBLE for its own units; GHOST for a

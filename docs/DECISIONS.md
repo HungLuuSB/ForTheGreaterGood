@@ -617,3 +617,28 @@ Decisions made while working unattended. Each entry gives the date, the decision
 
 - **Decision:** `ord_oracle` "Oracle" (radar 700, wheeled, 380 HP) and `chs_watcher` "Watcher" (radar 600, 420 HP), per guide 13.2. Unarmed. Category `RADAR_EMITTER`.
 - **Why:** radar contacts need an emitter. Order's radar is longer and more precise (wobble in task 12), per guide 11.6.
+
+## D67 — Radar wobble, jamming, stealth, and fog-aware targeting (2026-10-20, task 12)
+
+- **Decision:**
+  - **Wobble:** a stateless hash of (unit, tick // 30, observing team) gives a point in the unit disc. The offset interpolates linearly to the next period's point, so blips drift smoothly. Its radius is the observing team's best `sensors.radarError` among its radar emitters (Oracle 20 studs, Watcher 45, default 40). It never touches `sim.rng`.
+  - **Jamming:** a unit standing in its own team's jam map can't be a RADAR contact. Sight is unaffected.
+  - **Stealth:** `radarSignature < 1` requires the unit to be within `radar × signature` of one of the observer's radar emitters (exact distance, emitter list rebuilt each sensor tick).
+  - **Targeting** only accepts VISIBLE targets. RADAR contacts and ghosts of living structures are accepted only by `canTargetRadar` weapons, which aim at the wobbled (or ghost) position. Range is measured to the known position.
+  - **Hitscan** hits are judged against the true position, so radar fire really misses.
+- **Alternatives:** wobble from `sim.rng` (order-dependent); jamming that also blocks sight.
+- **Why:** guide 11.4. Measured: Verdict howitzer direct-hit rate is 87% with a spotter versus 20% on radar.
+
+## D68 — Tanks see as far as they shoot (2026-10-20)
+
+- **Decision:** Lancer sight 110 → 200 and Ravager 100 → 180, so they can see the targets their guns reach (180 / 160).
+- **Alternatives:** keep short sight and rely on spotters or radar.
+- **Why:** with fog of war on, tanks that out-range their own sight never fire without a spotter, which isn't the intended design for line tanks. Artillery (Verdict, Hellmouth) keeps short sight and needs spotters or radar, as intended. Balance is M8.
+
+## D69 — Placeholder jammers and artillery (2026-10-20)
+
+- **Decision (guide 13.2):**
+  - Jammers: `ord_veil` "Veil" (jam 300) and `chs_shroud` "Shroud" (jam 450), both T2 and unarmed.
+  - Artillery: `ord_verdict` "Verdict" with `ord_howitzer` (range 450, 0.6° spread, canTargetRadar) and `chs_hellmouth` "Hellmouth" with `chs_mortar` (range 400, 1.6° spread, canTargetRadar).
+  - Def field `sensors.radarError`.
+- **Why:** needed for the jamming and radar-artillery tests. They follow the faction doctrine: short Order jammer, long Chaos jammer, precise Order artillery.

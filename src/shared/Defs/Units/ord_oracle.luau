@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 90, power = 1200, buildTime = 2600 },
 	health = 380,
 	movement = { maxSpeed = 40, accel = 16, brake = 32, turnRate = 140 },
-	sensors = { sight = 120, radar = 700 },
+	sensors = { sight = 120, radar = 700, radarError = 20 },
 	model = "ord_oracle",
 	icon = "radar",
 })

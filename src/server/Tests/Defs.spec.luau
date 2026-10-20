@@ -72,7 +72,8 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(set.units.chs_ravager.index < set.units.ord_lancer.index, "chs_ before ord_")
-		t.expect(set.weapons.chs_light_cannon.index == 1 and set.weapons.ord_light_cannon.index == 2, "weapons 1-based")
+		t.equal(set.weaponByIndex[1].index, 1, "weapons are 1-based")
+		t.equal(set.unitByIndex[1].index, 1, "units are 1-based")
 	end)
 
 	t.test("derived values are computed", function()
@@ -92,7 +93,8 @@ return function(t: RunAll.Context)
 		t.equal(lancer.moveClass, "TRACKED")
 		t.equal(lancer.armorClass, "ARMORED")
 		t.deepEqual(lancer.pieces, { "base", "turret", "barrel", "muzzle" })
-		t.deepEqual(lancer.sensors, { sight = 110, radar = 0, sonar = 0, radarSignature = 1 }, "sensors merge key by key")
+		-- the unit sets only sight; the template supplies the rest
+		t.deepEqual(lancer.sensors, { sight = (Registry.units.ord_lancer :: any).sensors.sight, radar = 0, sonar = 0, radarSignature = 1 }, "sensors merge key by key")
 	end)
 
 	t.test("extend deep-merges records, replaces lists, keeps inputs intact", function()

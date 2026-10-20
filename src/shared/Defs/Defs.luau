@@ -56,7 +56,15 @@ export type UnitDef = {
 	moveClass: string?,
 	movement: { maxSpeed: number, accel: number, brake: number, turnRate: number }?,
 	footprint: number,
-	sensors: { sight: number, airSight: number?, radar: number, sonar: number, jam: number?, radarSignature: number },
+	sensors: {
+		sight: number,
+		airSight: number?,
+		radar: number,
+		sonar: number,
+		jam: number?,
+		radarError: number?,
+		radarSignature: number,
+	},
 	weapons: { WeaponSlot },
 	maxRange: number, -- derived: longest weapon range, 0 if unarmed
 	countermeasures: any?,
@@ -197,6 +205,7 @@ local UNIT_SPEC: Spec = {
 				radar = NON_NEGATIVE,
 				sonar = NON_NEGATIVE,
 				jam = opt(NON_NEGATIVE), -- jammer radius (hides own team from enemy radar)
+				radarError = opt(NON_NEGATIVE), -- wobble radius of this unit's radar contacts (studs)
 				radarSignature = FRACTION,
 			},
 		},

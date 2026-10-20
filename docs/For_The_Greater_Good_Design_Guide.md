@@ -960,6 +960,10 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks.
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the wobbled position, so they miss more — that's intended.
+- Implementation (DECISIONS D67):
+  - Wobble is a stateless hash of (unit, tick // 30, observer), interpolated between periods. Its radius is the observer's best `sensors.radarError`.
+  - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
+  - Measured: howitzer direct hits 87% with a spotter versus 20% on radar.
 
 ### 11.5 Missile guidance & electronic warfare
 

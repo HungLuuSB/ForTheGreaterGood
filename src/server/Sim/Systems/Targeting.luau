@@ -2,7 +2,9 @@
 -- System 4: target acquisition (guide 10.2).
 --
 -- Each weapon keeps its current target while it stays valid: alive, an
--- enemy, a category it can hit, within range (+10% hysteresis) and arc, and
+-- enemy the team knows about (VISIBLE; RADAR contacts and structure ghosts
+-- only for canTargetRadar weapons, guide 11.4), a category it can hit, within
+-- range (+10% hysteresis, measured to the known position) and arc, and
 -- allowed by the unit's fire state. An invalid target is dropped at once. A
 -- weapon without a target searches only on its unit's stagger tick
 -- ((id + tick) % STAGGER == 0), so 1/STAGGER of units search per tick.
@@ -13,6 +15,7 @@
 
 local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
+local Sensors = require("../Sensors")
 local Defs = require("@shared/Defs/Defs")
 local Types = require("../Types")
 local World = require("../World")
@@ -46,7 +49,11 @@ local function priorityWeight(masks: { number }, category: number): number
 end
 
 -- Can `weapon` on unit `id` engage `t`? Returns the center distance when yes.
-local function acceptable(c: Combat.Combat, w: World.World, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number): number?
+local VISIBLE, RADAR, GHOST = Sensors.Level.VISIBLE, Sensors.Level.RADAR, Sensors.Level.GHOST
+
+local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number): number?
+	local c = sim.combat
+	local w = sim.world
 	if w.slot[t] == nil or w.team[t] == w.team[id] then
 		return nil
 	end
@@ -54,7 +61,11 @@ local function acceptable(c: Combat.Combat, w: World.World, id: number, weapon: 
 	if band(weapon.targetMask, tp.categoryMask) == 0 then
 		return nil
 	end
-	local dx, dz = w.posX[t] - w.posX[id], w.posZ[t] - w.posZ[id]
+	local kx, kz, level = Sensors.knownPosition(sim, w.team[id], t)
+	if kx == nil or (level ~= VISIBLE and not ((level == RADAR or level == GHOST) and weapon.canTargetRadar)) then
+		return nil
+	end
+	local dx, dz = (kx :: number) - w.posX[id], (kz :: number) - w.posZ[id]
 	local dist = sqrt(dx * dx + dz * dz)
 	if dist > weapon.range * hysteresis + tp.radius then
 		return nil
@@ -91,7 +102,7 @@ return function(sim: Types.Sim)
 			if cur ~= 0 then
 				local keep = fs ~= HOLD_FIRE
 					and (fs ~= RETURN_FIRE or cur == attacker)
-					and acceptable(c, w, id, weapon, cur, RANGE_HYSTERESIS) ~= nil
+					and acceptable(sim, id, weapon, cur, RANGE_HYSTERESIS) ~= nil
 				if not keep then
 					cur = 0
 					w.wTarget[key] = 0
@@ -101,14 +112,14 @@ return function(sim: Types.Sim)
 			if cur == 0 and searchNow and fs ~= HOLD_FIRE then
 				local best, bestScore = 0, 0
 				if fs == RETURN_FIRE then
-					if attacker ~= 0 and acceptable(c, w, id, weapon, attacker, 1) ~= nil then
+					if attacker ~= 0 and acceptable(sim, id, weapon, attacker, 1) ~= nil then
 						best = attacker
 					end
 				else
 					local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], weapon.range + c.maxRadius, w.team[id], candidates)
 					for i = 1, n do
 						local t = candidates[i]
-						local dist = acceptable(c, w, id, weapon, t, 1)
+						local dist = acceptable(sim, id, weapon, t, 1)
 						if dist ~= nil then
 							local score = priorityWeight(weapon.priorityMasks, profiles[w.defIndex[t]].categoryMask) / math.max(dist, 1)
 							if score > bestScore or (score == bestScore and t < best) then

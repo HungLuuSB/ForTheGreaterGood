@@ -12,7 +12,7 @@ return Templates.extend(Templates.TankT1, {
 
 	movement = { maxSpeed = 30, accel = 12, brake = 24, turnRate = 100 },
 
-	sensors = { sight = 100 },
+	sensors = { sight = 180 },
 
 	weapons = {
 		{ def = "chs_light_cannon", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" },

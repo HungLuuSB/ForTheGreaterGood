@@ -27,8 +27,9 @@ export type State = {
 	vis: { [number]: { [number]: number } },
 	ghosts: { [number]: { [number]: Ghost } }, -- team → structure ID → last seen
 	ghostIds: { [number]: { number } }, -- team → structure IDs (insertion order)
-	-- radar wobble seed (task 12) and per-team extras
-	extra: { [string]: any },
+	-- per team: radar emitters (unit IDs, ids order) and the best radar error
+	radars: { [number]: { number } },
+	radarError: { [number]: number },
 }
 
 function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
@@ -58,7 +59,14 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 		vis = vis,
 		ghosts = ghosts,
 		ghostIds = ghostIds,
-		extra = {},
+		radars = (function()
+			local r = {}
+			for _, team in teams do
+				r[team] = {}
+			end
+			return r
+		end)(),
+		radarError = {},
 	}
 end
 

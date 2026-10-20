@@ -307,6 +307,30 @@ Remaining allocations per event (FIRE, IMPACT and DEATH event tables; command-ti
 - **M3.2 — team economy (D57, D58):** `Sim/Economy.luau`: accounts, producer list, settlement every 5th tick, stall ratio, two-pass effective ratio, window allowance, storage cap and waste, hash. `Sim/Lifecycle.luau`. `World.buildProgress` with a BUILD dirty bit. `Economy.spec`: settlement math, effective ratio, starting accounts, income from the CV, extractor (deposit value) and generator, storage bonus, producer death, hash. Tests: **18 specs, 136 passed**.
 - **M3.1 — defs and map (D55, D56):** economy def fields and validation; Command Vehicle, worker, extractor, generator and vehicle plant per faction; supply deposit and start layers; `start:<n>` map. The Defs index test now checks sorted order against the registry instead of hard-coded indices. Tests: **17 specs, 130 passed**.
 
+### Task 12 — Wobble, jamming, stealth (M4) ✅
+
+- `Sensors`:
+  - `radarDetects` (jam map of the target's team; stealth against each observer radar within range × signature);
+  - per-team radar emitter list and best radar error;
+  - `wobble` (stateless, smooth, per observer) and `knownPosition`.
+- Targeting accepts only known targets (radar contacts and ghosts for `canTargetRadar`). Weapons aim at known positions; hitscan is judged against the truth.
+- Defs: `sensors.radarError`; Veil and Shroud jammers; Verdict and Hellmouth artillery with radar-targetable guns. Tank sight now covers weapon range (D68).
+- `Fog.spec`:
+  - wobble is bounded, deterministic, smooth and per observer;
+  - a jammed tank is off enemy radar but still visible to sight;
+  - a stealth unit (signature 0.3) shows on radar exactly within 210 studs of a 700-stud radar, checked every sensor tick along a walk through all three bands;
+  - a unit with 40-stud sight never fires at an in-range unseen enemy, and fires once a friendly spotter sees it;
+  - radar-targeted artillery hits directly 20% of the time versus 87% spotted.
+  - Mutation checks: removing the jam or stealth check fails the matching test.
+- Three earlier tests read hard-coded sight and index values; they now read them from the defs.
+- Tests: **23 specs, 160 passed**.
+- **M4 rules review:**
+  - strict, require forms, no globals, clocks or random: clean;
+  - the only dictionary loop (visibility hash) sorts first;
+  - no unused requires;
+  - the sensor tick allocates nothing per unit (radar lists cleared and refilled, stateless wobble, cached radii).
+  - No fixes needed.
+
 ### Task 11 — Sensors (M4)
 
 - `Sim/Sensors.luau` + `Sim/SensorsState.luau`:

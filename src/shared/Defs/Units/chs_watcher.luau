@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 80, power = 1000, buildTime = 2400 },
 	health = 420,
 	movement = { maxSpeed = 38, accel = 15, brake = 30, turnRate = 130 },
-	sensors = { sight = 110, radar = 600 },
+	sensors = { sight = 110, radar = 600, radarError = 45 },
 	model = "chs_watcher",
 	icon = "radar",
 })
