@@ -18,7 +18,7 @@ return Templates.extend(Templates.Unit, {
 	movement = { maxSpeed = 190, minSpeed = 115, accel = 80, brake = 60, turnRate = 48 },
 	sensors = { sight = 190 },
 	weapons = { { def = "chs_bomb", turretPiece = "bay", muzzle = "muzzle" } },
-	pieces = { "base", "pylon", "muzzle" },
+	pieces = { "base", "bay", "pylon", "muzzle" },
 	icon = "bomber",
 	ammo = 6,
 	ammoCost = { supply = 12, power = 100 },

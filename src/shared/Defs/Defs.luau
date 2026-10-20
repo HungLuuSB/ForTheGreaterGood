@@ -565,9 +565,24 @@ function Defs.validate(raw: RawDefs): { string }
 		end
 
 		if type(u.weapons) == "table" then
+			-- the client rig animates these pieces (guide 14.2, docs/contracts/rig.md)
+			local pieces: { [string]: boolean } = {}
+			if type(u.pieces) == "table" then
+				for _, piece in u.pieces do
+					pieces[piece] = true
+				end
+			end
 			for i, slot in u.weapons do
 				if type(slot) == "table" and type(slot.def) == "string" and weapons[slot.def] == nil then
 					report(`weapons[{i}].def: unknown weapon {describe(slot.def)}`)
+				end
+				if type(slot) == "table" then
+					for _, key in { "turretPiece", "pitchPiece", "muzzle" } do
+						local piece = slot[key]
+						if type(piece) == "string" and not pieces[piece] then
+							report(`weapons[{i}].{key}: piece {describe(piece)} is not in pieces`)
+						end
+					end
 				end
 			end
 		end

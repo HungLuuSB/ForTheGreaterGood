@@ -8,6 +8,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 - **Ready:** `docs/contracts/net.md` (network contract). Merged into `main`.
 - **Ready:** protocol 6 is built: join / reconnect (`NetOut.hello`, `NetOut.join`) and the Eco channel (the client-state contract's economy placeholder can use it). Contract section 10.
+- **Done (request: bomber weapon pieces):** all 14 defs with a weapon piece missing from `pieces` are fixed (not only the bombers), and `Defs` validation now rejects such defs (S-3). On `main`.
 
 ## Integration notes
 
@@ -19,6 +20,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 
 - Task 1 ✅: `docs/contracts/net.md`; `Ballistics` (with `steer`) moved to `Shared/Combat` for the client (S-1).
 - Task 2 ✅: join / reconnect snapshot and the Eco channel, protocol 6 (S-2). Tests: **34 specs, 257 passed**.
+- Client request ✅: weapon pieces in `pieces` and a validation rule (S-3).
 
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)
 
