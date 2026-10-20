@@ -4,6 +4,7 @@
 -- sim.rng for randomness and must visit players in sim.playerOrder.
 
 local Nav = require("./Nav")
+local Spawn = require("./Spawn")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -18,17 +19,11 @@ Scenarios.skirmish_test = function(sim: Types.Sim)
 	local defs = sim.defs
 	for _, playerId in sim.playerOrder do
 		local player = sim.players[playerId]
-		local def = if player.team % 2 == 1 then defs.units.ord_lancer else defs.units.chs_ravager
+		local defId = if player.team % 2 == 1 then "ord_lancer" else "chs_ravager"
 		for _ = 1, 10 do
-			World.spawn(sim.world, sim.tick, {
-				defIndex = def.index,
-				team = player.team,
-				owner = player.id,
-				x = sim.rng:nextNumber(-256, 256),
-				z = sim.rng:nextNumber(-256, 256),
-				heading = sim.rng:nextNumber(0, 2 * math.pi),
-				health = def.health,
-			})
+			local x = sim.rng:nextNumber(-256, 256)
+			local z = sim.rng:nextNumber(-256, 256)
+			Spawn.unit(sim, defId, player.id, x, z, sim.rng:nextNumber(0, 2 * math.pi))
 		end
 	end
 end
@@ -41,11 +36,9 @@ Scenarios.march_test = function(sim: Types.Sim)
 	if nav == nil then
 		error("Scenarios.march_test: needs a map (mapId)", 0)
 	end
-	local def = sim.defs.units.ord_lancer
-	local profile = nav.profiles[def.index]
+	local profile = nav.profiles[sim.defs.units.ord_lancer.index]
 	local g = nav.grid
 	local owner = sim.playerOrder[1]
-	local team = sim.players[owner].team
 	local spacing = 12
 	local placed = 0
 	local x = g.originX + 24
@@ -55,19 +48,25 @@ Scenarios.march_test = function(sim: Types.Sim)
 			local offset = if row % 2 == 0 then row // 2 else -(row // 2 + 1)
 			local z = offset * spacing
 			if placed < 50 and math.abs(z) < g.sizeZ / 2 - 16 and Nav.fits(nav, profile, x, z) then
-				World.spawn(sim.world, sim.tick, {
-					defIndex = def.index,
-					team = team,
-					owner = owner,
-					x = x,
-					z = z,
-					heading = math.pi / 2, -- facing +X
-					health = def.health,
-				})
+				Spawn.unit(sim, "ord_lancer", owner, x, z, math.pi / 2) -- facing +X
 				placed += 1
 			end
 		end
 		x += spacing
+	end
+end
+
+-- Ten Lancers (first player) and ten Ravagers (second player) facing each
+-- other 140 studs apart in two rows of five, all within both guns' range.
+Scenarios.duel_test = function(sim: Types.Sim)
+	local order = sim.playerOrder
+	if #order < 2 then
+		error("Scenarios.duel_test: needs two players", 0)
+	end
+	for i = 0, 9 do
+		local row, col = i // 5, i % 5
+		Spawn.unit(sim, "ord_lancer", order[1], -70 - row * 10, (col - 2) * 12, math.pi / 2)
+		Spawn.unit(sim, "chs_ravager", order[2], 70 + row * 10, (col - 2) * 12, -math.pi / 2)
 	end
 end
 

@@ -339,3 +339,82 @@ _Written when the unattended session ends. See `docs/PROGRESS.md` for the full s
   - A blocked cell makes the unit slide along the free axis at half speed, or stop.
 - **Alternatives:** holonomic movement (strafe freely).
 - **Why:** it fits tanks. Turn rate becomes gameplay, consistent with the aim model's philosophy (guide 10.3). Jets and helis get their own models in M6.
+
+## D43 — Full visibility until Sensors exist; one contact grid with team filtering (2026-10-20)
+
+- **Decision:** `Combat/ContactGrid` is one 64-stud bucket grid of all live units, rebuilt in Targeting and again in Projectiles (after Movement). "Enemies of team T near P" is a query that skips T's units. Every enemy counts as known.
+- **Alternatives:** separate grids per team, filled only with what that team can see.
+- **Why:**
+  - Sensors (LOS/radar maps, guide 11) are M4. Until then every enemy is visible anyway, so per-team grids would hold the same units.
+  - When fog arrives, the visibility test goes into `ContactGrid.query`, or per-team grids get built from the sensor maps, without touching Targeting.
+
+## D44 — Targeting: per weapon, staggered, sticky (2026-10-20)
+
+- **Decision:**
+  - Each weapon slot has its own target (`World.wTarget[id*8+slot-1]`).
+  - A target stays while it remains valid (alive, an enemy, a hittable category, within range × 1.1 + its radius, in arc, and allowed by the fire state). Otherwise it's dropped at once.
+  - Weapons without a target search only on their unit's stagger tick (`(id + tick) % 6 == 0`).
+  - Score is `(1 + priority rank) / distance`; ties go to the lower ID.
+  - Return Fire only engages `lastAttacker`.
+  - There is no focus-fire bonus or overkill penalty yet.
+- **Alternatives:** unit-level targets; re-scoring every tick.
+- **Why:** guide 10.2 (staggering, hysteresis). Per-weapon targets are needed anyway for mixed AA/AG units. The optional heuristics can come with the M8 balance pass.
+
+## D45 — Aim model details (2026-10-20)
+
+- **Decision:**
+  - Turret yaw is relative to the hull, and pitch is absolute; both rotate at the def rates.
+  - Wanted pitch is the low-arc ballistic solution for BALLISTIC/BOMB weapons (nil when out of reach) and the straight line for HITSCAN/BEAM.
+  - A weapon fires when both axes are within `tolerance`, the pitch is within [minPitch, maxPitch], the target is within range + its radius, and it's reloaded.
+  - Without a target the turret returns to rest (0, 0).
+  - Reload keeps a fractional carry of at most one tick while firing continuously.
+  - Changing aim marks the unit's STATE dirty bit.
+- **Alternatives:** world-frame turret yaw; target leading.
+- **Why:** guide 10.3. A slow turret measurably fires later: 30°/s versus 180°/s gives first shots at tick ≥85 versus ≤25 (tested). Leading moving targets is left for M2 tuning.
+
+## D46 — Spread, hitscan resolution and weapon-type gaps (2026-10-20)
+
+- **Decision:**
+  - Each shot draws yaw and pitch errors uniformly in ±`accuracy`° from `sim.rng`, in system order.
+  - HITSCAN/BEAM hit when the total error (turret offset + spread) keeps the shot within the target's radius sideways and its half-height vertically at the target distance.
+  - HOMING and TORPEDO currently fly as straight projectiles (guidance is M7).
+  - `salvo.count > 1` isn't implemented; every def uses 1.
+- **Alternatives:** Gaussian spread; ray tests against every unit along a hitscan line.
+- **Why:** it's deterministic, cheap and good enough for the duel tests. Hitscan doesn't hit bystanders yet.
+
+## D47 — Collision volumes and projectile flight (2026-10-20)
+
+- **Decision:**
+  - Units are vertical cylinders: radius 0.45 × footprint × 8 studs (same as movement), height 6 × footprint, standing on the terrain (plus altitude).
+  - Projectiles use the exact ballistic step per tick, then a swept test of the tick's chord against enemy cylinders and the terrain (linear between the chord's ends). The earliest contact wins.
+  - ttl = 2·range/speed + 1 s.
+  - Pool cap 2,000: at the cap, a shot resolves like hitscan.
+  - Projectile IDs are reused FIFO without delay (IMPACT is reliable and ordered).
+- **Alternatives:** the guide's "oldest shells resolve at predicted impact" at the cap; sphere volumes.
+- **Why:** guide 10.5. Tested: a 3,000 stud/s round (200 studs per tick) still hits a 7-stud tank. Resolving the new shot at the cap is simpler than predicting old shells' impacts and equally deterministic.
+
+## D48 — AoE and friendly fire (2026-10-20)
+
+- **Decision:**
+  - AoE distance is measured from the blast to each unit's cylinder surface, so a tank touching the blast takes full damage.
+  - The struck unit takes full damage.
+  - Friendly fire for AoE is on by default (`sim.combat.friendlyFire`). Direct hits never strike allies; projectiles pass through them.
+  - A hitscan miss with `aoe > 0` explodes on the ground at the target distance.
+- **Alternatives:** center distance (big units would shrug off blasts at their edge); friendly fire off by default.
+- **Why:** guide 10.6 says it's toggleable per match; on is the BAR-like default.
+
+## D49 — Deaths, wrecks and events (2026-10-20)
+
+- **Decision:**
+  - Weapons and projectiles queue damage; the Damage system applies it in queue order, then removes the dead in the order they died.
+  - Severity = overkill / max health (0..1, u8 in DEATH). A unit killed with severity ≤ 0.5 leaves a wreck worth 50% of its supply cost.
+  - Wrecks live in `sim.combat` (position, def, supply) until a features system exists.
+  - Each tick's events (FIRE, SPAWN_PROJ, IMPACT, DEATH) are in `sim.combat.events` for NetOut and tests.
+- **Alternatives:** applying damage immediately (order-dependent within a tick); wreck defs (D6).
+- **Why:** guide 10.6, 8.7, 7.3. Queued damage makes simultaneous kills symmetric within a tick.
+
+## D50 — Placeholder stats make Ravagers win the close duel (2026-10-20)
+
+- **Observation:** in `duel_test` (140 studs apart, inside both ranges) Chaos wins 10 of 10 seeds with 5 Ravagers left after about 15 s. The Ravager has more HP (1300 vs 1100), a faster reload (1.4 vs 1.6 s) and more damage (125 vs 120 vs ARMORED); the Lancer's longer range (180 vs 160) doesn't come into play.
+- **Decision:** no stat changes; balance is M8 (guide 21).
+- **Why:** this matches the faction doctrine (Chaos wins brawls, Order wins at range). A range-advantage scenario is the natural counter-test.

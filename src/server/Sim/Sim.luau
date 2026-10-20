@@ -18,6 +18,7 @@ local Packer = require("@shared/Net/Packer")
 local Prng = require("@shared/Util/Prng")
 local Profiler = require("@shared/Util/Profiler")
 local Schema = require("@shared/Net/Schema")
+local Combat = require("./Combat/Combat")
 local Nav = require("./Nav")
 local Replay = require("./Replay")
 local Scenarios = require("./Scenarios")
@@ -106,6 +107,7 @@ function Sim.new(config: Config): Sim
 		defs = defs,
 		map = map,
 		nav = if map then Nav.new(map, defs) else nil,
+		combat = Combat.new(defs, layers),
 		players = players,
 		playerOrder = order,
 		queue = {},
@@ -147,18 +149,20 @@ function Sim.submit(sim: Sim, player: number, payload: buffer): (boolean, string
 	return true, nil
 end
 
--- Hash of the whole simulation state: tick, PRNG state and world.
+-- Hash of the whole simulation state: tick, PRNG state, world and combat
+-- (projectiles, wrecks).
 function Sim.hash(sim: Sim): number
 	local h = Hash.u32(Hash.OFFSET_BASIS, sim.tick)
 	local s0, s1, s2, s3 = sim.rng:getState()
 	h = Hash.u32(Hash.u32(Hash.u32(Hash.u32(h, s0), s1), s2), s3)
-	return World.hash(sim.world, h)
+	return Combat.hash(sim.combat, World.hash(sim.world, h))
 end
 
 -- Advances one tick: every system in order, at its rate.
 function Sim.step(sim: Sim)
 	local tick = sim.tick + 1
 	sim.tick = tick
+	table.clear(sim.combat.events) -- events describe one tick (NetOut sends them)
 	for _, system in SYSTEMS do
 		if tick % system.every == 0 then
 			Profiler.begin(system.name)

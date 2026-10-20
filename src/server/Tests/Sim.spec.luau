@@ -78,7 +78,9 @@ return function(t: RunAll.Context)
 		local elapsed = Profiler.now() - started
 		local b = run(12345, 99, 1000)
 		t.equal(a.tick, 1000)
-		t.equal(World.count(a.world), 20)
+		-- The tanks also fight (combat is live), so compare survivors between runs.
+		t.expect(World.count(a.world) <= 20, "no units appear from nowhere")
+		t.deepEqual(a.world.ids, b.world.ids, "the same units survive in both runs")
 		t.expect(a.stats.commandsApplied > 300, `only {a.stats.commandsApplied} commands applied`)
 		local cpA, cpB = Replay.checkpoints(a.replay), Replay.checkpoints(b.replay)
 		t.equal(#cpA, 3, "checkpoints at 300, 600, 900")

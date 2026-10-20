@@ -868,7 +868,17 @@ Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawR
 - Structures under construction take full damage.
 - Death severity (overkill amount) chooses the death effect and whether a wreck is left.
 
-### 10.7 Line of fire
+### 10.7 Implementation notes (M2 core, headless)
+
+- Code: `Sim/Combat/` (`Combat.luau` state, `ContactGrid.luau`, `Ballistics.luau`) and `Sim/Systems/` (`Targeting`, `Weapons`, `Projectiles`, `Damage`). See DECISIONS D43–D50.
+- Targets are per weapon slot and staggered (6 ticks). Every enemy is visible until Sensors (M4).
+- Collision volumes are cylinders (radius 0.45 × footprint × 8, height 6 × footprint).
+- Projectile flight is exact, with a swept chord test. AoE is measured to the cylinder surface.
+- Damage is queued and applied in order. Deaths leave a wreck worth 50% of supply when overkill ≤ 50% of max health.
+- Per-tick events are in `sim.combat.events`.
+- Not yet: line-of-fire checks (10.7), target leading, salvos, guidance (M7), focus-fire and overkill heuristics.
+
+### 10.8 Line of fire
 
 - Ballistic and homing: no line check (they arc or steer).
 - Hitscan/beam/direct shells: sample the `height` layer along the line every cell; if terrain blocks, don't fire and try repositioning (Maneuver/Roam) or retarget.

@@ -27,8 +27,8 @@ Status of the unattended work session. A new session should be able to continue 
 | 7 | Flow field (integration + direction), LRU cache, time-slicing, PPM debug image | ✅ done |
 | 8 | `lune run bench`: flow field timings on 256×256 (open, maze, island) vs 8 ms budget | ✅ done (over budget, see Benchmarks) |
 | 9 | Movement and local avoidance: shared fields, separation, arrival, line-move spreading | ✅ done |
-| 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | ⏳ next |
-| — | Rules review (requires, determinism, no Instances, hot-loop allocation) | pending |
+| 10 | Combat core: targeting, aim model, HITSCAN/BALLISTIC, projectiles, damage, AoE, deaths | ✅ done |
+| — | Rules review (requires, determinism, no Instances, hot-loop allocation) | ⏳ next |
 
 ## Done so far
 
@@ -171,6 +171,36 @@ Movement results (`lune run debug_movement`, 50 Lancers west → east, Lune on t
 | wall:128 | 757 | 0.24 | 6 | 26/50 | 14.8 | −0.00 |
 
 Every unit arrives on every map and overlap is negligible. Formation precision is mediocre: about 70% of units end within 2 studs of their slot, and the rest stop up to about 17 studs short where the crowd blocks them (D38 give-up). Better slot assignment (e.g. Hungarian matching, or reserving the approach lane) is a possible follow-up.
+
+### Task 10 — Combat core
+
+- `src/server/Sim/Combat/`:
+  - `Combat.luau`: per-def collision and weapon profiles, terrain height, damage queue, `explode` with AoE falloff and friendly fire, projectile pool (u16 IDs, cap 2,000), wrecks, per-tick events, hash.
+  - `ContactGrid.luau`: 64-stud buckets, team-filtered queries.
+  - `Ballistics.luau`: low-arc launch pitch, exact step, segment vs cylinder, distance to cylinder, falloff.
+- Systems:
+  - `Targeting`: per weapon, staggered, sticky, priority scoring, fire states.
+  - `Weapons`: turret yaw/pitch rates, tolerance, ballistic pitch, reload, spread from `sim.rng`, hitscan resolution, projectile spawn.
+  - `Projectiles`: exact flight, swept collision against enemy cylinders and terrain, impact explosions, ttl.
+  - `Damage`: queued damage by armor class, lastAttacker, deaths with severity, wrecks, DEATH events, order cleanup.
+- `World` has per-weapon state (yaw, pitch, reload, target) and lastAttacker, all hashed. `Sim/Spawn.luau` spawns from defs. Scenario `duel_test`. `Sim.hash` includes combat.
+- `.lune/debug_duel.luau`: `lune run debug_duel [seeds]` prints the duel outcome, shots, hits, kills and cost.
+- Specs:
+  - `Ballistics.spec`: launch pitch lands on target; reach; exact step; segment/cylinder cases including no tunneling; distance; falloff.
+  - `Combat.spec`:
+    - 10 Lancers vs 10 Ravagers until one side is gone, deterministic across runs and replay;
+    - a slow turret (30°/s) first fires ≥60 ticks after a fast one (180°/s);
+    - exact AoE falloff for 5 units at known distances, and friendly fire off spares allies;
+    - a shell blast damages 3 tanks with the exact falloff from the impact point;
+    - hitscan damage lands the same tick;
+    - a 3,000 stud/s rail doesn't tunnel, and an ally in the line of fire is untouched;
+    - wreck vs. obliteration by overkill; armor classes;
+    - Hold Fire stays silent; Return Fire shoots back only after being attacked.
+  - Mutation checks: letting projectiles hit allies, ignoring aim tolerance, and dropping the swept test were each caught.
+- `Sim.spec`: "20 units after 1,000 ticks" became "both runs end with the same survivors", since the skirmish tanks now fight. The determinism check is stricter, not weaker.
+- Tests: **17 specs, 129 passed, 0 failed**.
+- Duel results (`lune run debug_duel 10`): Chaos wins 10 of 10 seeds with 5 Ravagers left after 221–244 ticks (about 15 s). 96–97% of shells hit, 15 kills and 15 wrecks per fight, about 0.024 ms per tick for 20 units. Placeholder stats; see D50.
+- Decisions: D43–D50.
 
 ## Benchmarks
 

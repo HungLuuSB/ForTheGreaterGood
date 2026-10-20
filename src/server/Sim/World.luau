@@ -68,6 +68,14 @@ export type World = {
 	bestDist: { [number]: number }, -- closest distance to the goal so far
 	progressTick: { [number]: number }, -- tick bestDist last improved
 
+	-- combat. Per-weapon fields are keyed by World.slotKey(id, slot).
+	weaponCount: { [number]: number },
+	lastAttacker: { [number]: number }, -- unit that last damaged this one, 0 = none
+	wYaw: { [number]: number }, -- turret yaw relative to the hull, radians
+	wPitch: { [number]: number }, -- radians, up positive
+	wReload: { [number]: number }, -- seconds until ready (<= 0 = ready)
+	wTarget: { [number]: number }, -- target unit ID, 0 = none
+
 	-- ID allocator
 	nextFresh: number, -- next never-used ID
 	freeIds: { number }, -- FIFO of freed IDs ...
@@ -99,6 +107,12 @@ function World.new(): World
 		direct = {},
 		bestDist = {},
 		progressTick = {},
+		weaponCount = {},
+		lastAttacker = {},
+		wYaw = {},
+		wPitch = {},
+		wReload = {},
+		wTarget = {},
 		nextFresh = 1,
 		freeIds = {},
 		freeTicks = {},
@@ -142,7 +156,15 @@ export type SpawnInfo = {
 	heading: number?,
 	alt: number?,
 	health: number,
+	weaponCount: number?,
 }
+
+World.MAX_WEAPONS = 8
+
+-- Key for per-weapon fields: slots 1..8 of unit `id`.
+function World.slotKey(id: number, slot: number): number
+	return id * 8 + slot - 1
+end
 
 -- Adds a unit and returns its ID. Errors when all 65,535 IDs are in use or
 -- still waiting out their reuse delay.
@@ -172,6 +194,16 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 	w.direct[id] = false
 	w.bestDist[id] = 0
 	w.progressTick[id] = tick
+	local weapons = info.weaponCount or 0
+	w.weaponCount[id] = weapons
+	w.lastAttacker[id] = 0
+	for slot = 1, weapons do
+		local key = id * 8 + slot - 1
+		w.wYaw[key] = 0
+		w.wPitch[key] = 0
+		w.wReload[key] = 0
+		w.wTarget[key] = 0
+	end
 	return id
 end
 
@@ -208,6 +240,15 @@ function World.despawn(w: World, tick: number, id: number)
 	w.direct[id] = nil
 	w.bestDist[id] = nil
 	w.progressTick[id] = nil
+	for slot = 1, w.weaponCount[id] do
+		local key = id * 8 + slot - 1
+		w.wYaw[key] = nil
+		w.wPitch[key] = nil
+		w.wReload[key] = nil
+		w.wTarget[key] = nil
+	end
+	w.weaponCount[id] = nil
+	w.lastAttacker[id] = nil
 
 	local tail = w.freeTail
 	w.freeIds[tail] = id
@@ -291,6 +332,14 @@ function World.hash(w: World, h: number?): number
 		hv = Hash.number(hv, w.goalX[id])
 		hv = Hash.number(hv, w.goalZ[id])
 		hv = Hash.u32(hv, if w.direct[id] then 1 else 0)
+		hv = Hash.u32(hv, w.lastAttacker[id])
+		for slot = 1, w.weaponCount[id] do
+			local key = id * 8 + slot - 1
+			hv = Hash.number(hv, w.wYaw[key])
+			hv = Hash.number(hv, w.wPitch[key])
+			hv = Hash.number(hv, w.wReload[key])
+			hv = Hash.u32(hv, w.wTarget[key])
+		end
 	end
 	hv = Hash.u32(hv, w.nextFresh)
 	for i = w.freeHead, w.freeTail - 1 do

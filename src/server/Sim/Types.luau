@@ -2,6 +2,7 @@
 -- Shared types for the server simulation. Types only: systems require this
 -- instead of Sim.luau, which would be a require cycle.
 
+local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local Nav = require("./Nav")
 local Passability = require("@shared/Grid/Passability")
@@ -28,6 +29,7 @@ export type Sim = {
 	defs: Defs.DefSet,
 	map: Passability.PassMap?, -- nil for mapId "none"
 	nav: Nav.Nav?, -- movement state; nil without a map
+	combat: Combat.Combat, -- projectiles, damage queue, wrecks, this tick's events
 	players: { [number]: Player },
 	playerOrder: { number }, -- player IDs, ascending
 	queue: { QueuedCommand }, -- commands to apply on the next tick
