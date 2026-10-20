@@ -53,7 +53,7 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - `lune run build`: offline Roblox build and check, in `build/ci/` (see below). `lune run check_build [place]` re-checks a built place.
   - `lune run serve`: live sync to Studio, into `build/serve/` (see below).
 - `src/client` and `src/roblox` are Roblox-only and aren't covered by this rule.
-- In Studio, run the same specs with `require(game.ServerScriptService.Entry.RunTests).run(filter?)`. Through `execute_luau` use `.start(filter?)`, then poll `.status()` until it returns the summary (the full suite takes ~30 s, longer than an `execute_luau` call waits).
+- In Studio, run the same specs with `require(game.ServerScriptService.Entry.RunTests).run(filter?)`. Through `execute_luau` use `.start(filter?)`, then poll `.status()` with plain calls until it returns the summary (the full suite takes ~30 s; an `execute_luau` call gives up well before 20 s, even when it yields, so don't wait inside the call). A poll can fail with "Target is not reachable" while Studio is inside one long test; just poll again.
 - Roblox doesn't support custom require aliases yet (staff said in January 2026 it's in progress, with no date). So the source keeps the require style above, and a build step converts it (DECISIONS D84):
   - `lune run build`:
     1. `rojo sourcemap default.project.json -o sourcemap.json`;
