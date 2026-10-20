@@ -7,6 +7,7 @@
 -- studs (the same as movement), height UNIT_HEIGHT × footprint, standing on
 -- the terrain under the unit's center (plus altitude for air units).
 
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Hash = require("@shared/Util/Hash")
@@ -19,7 +20,7 @@ local Combat = {}
 
 Combat.UNIT_HEIGHT = 6 -- studs per footprint cell
 Combat.MUZZLE_HEIGHT = 0.6 -- fraction of unit height
-Combat.RADIUS_PER_FOOTPRINT = 8 * 0.45 -- keep equal to Nav.RADIUS_PER_FOOTPRINT
+Combat.RADIUS_PER_FOOTPRINT = PlacementRules.RADIUS_PER_FOOTPRINT -- the same as Nav's (shared, S-9)
 Combat.MAX_PROJECTILES = 2000 -- guide 10.5
 Combat.WRECK_SUPPLY_FRACTION = 0.5 -- of the unit's supply cost (guide 8.7)
 Combat.WRECK_MAX_SEVERITY = 0.5 -- overkill above this fraction of max health leaves no wreck

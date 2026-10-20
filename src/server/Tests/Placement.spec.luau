@@ -4,6 +4,7 @@ local Passability = require("@shared/Grid/Passability")
 local Combat = require("../Sim/Combat/Combat")
 local Nav = require("../Sim/Nav")
 local Placement = require("../Sim/Placement")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Prng = require("@shared/Util/Prng")
 local Quadtree = require("../Sim/Path/Quadtree")
 local Route = require("../Sim/Path/Route")
@@ -167,6 +168,49 @@ return function(t: RunAll.Context)
 		local wx, wz = wg:cellCenter(32, 40)
 		_, why = Placement.check(wall, wall.defs.units.ord_generator, wx, wz)
 		t.equal(why, "terrain", "no land structures on water")
+	end)
+
+	-- S-9: clients draw the build ghost with Shared/Grid/PlacementRules, so
+	-- the server must decide terrain with exactly the same rule.
+	t.test("the shared placement rules are the ones the server uses", function()
+		t.expect(Placement.snap == PlacementRules.snap, "one snap")
+		t.equal(Placement.LAND_MAX_SLOPE, PlacementRules.LAND_MAX_SLOPE)
+		t.equal(Placement.WATER_MIN_DEPTH, PlacementRules.WATER_MIN_DEPTH)
+		t.equal(Nav.RADIUS_PER_FOOTPRINT, PlacementRules.RADIUS_PER_FOOTPRINT)
+		t.equal(Combat.RADIUS_PER_FOOTPRINT, PlacementRules.RADIUS_PER_FOOTPRINT)
+		local waterOk = 0
+		for _, mapId in { "wall:64", "gen:3:48" } do
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = mapId })
+			local pm = sim.map :: Passability.PassMap
+			local g = pm.grid
+			local checked = { land = 0, water = 0, terrain = 0 }
+			for _, defId in { "ord_generator", "ord_tidal" } do
+				local def = sim.defs.units[defId]
+				local placement = def.placement or "land"
+				for cz = 0, g.cellsZ - 1, 3 do
+					for cx = 0, g.cellsX - 1, 3 do
+						local x, z = g:cellCenter(cx, cz)
+						local ok, why, x0, z0 = Placement.check(sim, def, x, z)
+						if ok or why == "terrain" then
+							local shared = true
+							for fz = z0, z0 + def.footprint - 1 do
+								for fx = x0, x0 + def.footprint - 1 do
+									shared = shared and PlacementRules.terrainOk(pm, g:index(fx, fz), placement)
+								end
+							end
+							if shared ~= ok then
+								t.equal(shared, ok, `{mapId} {defId} at cell ({cx}, {cz})`)
+								return
+							end
+							checked[if ok then placement else "terrain"] += 1
+						end
+					end
+				end
+			end
+			t.expect(checked.terrain > 0 and checked.land > 0, `{mapId}: both outcomes seen ({checked.land} land, {checked.water} water ok, {checked.terrain} terrain)`)
+			waterOk += checked.water
+		end
+		t.expect(waterOk > 0, "some water placements allowed (wall:64's lake)")
 	end)
 
 	t.test("structures block ground classes; clearance updates exactly; release restores", function()
