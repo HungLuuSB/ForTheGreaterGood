@@ -38,10 +38,18 @@
 --     velocity of each homing projectile the client has that is in the
 --     tactical area (camera + LEAVE_MARGIN) and in the ally team's sight;
 --     also on the tick one comes (back) into that view.
+--   * Economy (Eco channel, S-2): the player's team account, on economy
+--     ticks when it changed.
+--   * Join / reconnect (Snapshot channel, S-2): NetOut.hello checks the
+--     client's versions; NetOut.join resets the player's replication state
+--     and queues a WELCOME, so the next outbox is a complete picture (full
+--     strategic snapshot, ENTERs for the camera area, SPAWN_PROJ for
+--     projectiles in view, the Eco record).
 -- Every channel is packed through Packer.chunk (≤ 900 bytes per message)
 -- after a u16 tick header. Dirty bits are cleared once all players are done.
 
 local Grid = require("@shared/Grid/Grid")
+local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Tick = require("@shared/Net/Tick")
@@ -85,6 +93,74 @@ end
 
 function NetOut.new(sim: Types.Sim): NetState.NetState
 	return NetState.new(sim.playerOrder, NetOut.iconIndex(sim.defs))
+end
+
+-- A client's HELLO (the first Snapshot message after connecting): nil when
+-- its protocol and defs match, else the REJECT message to send it before
+-- closing (docs/contracts/net.md 10). Malformed input errors (pcall it).
+function NetOut.hello(sim: Types.Sim, msg: buffer): buffer?
+	local rec = Packer.readAll(msg, Schema.decodeSnapshot)[1]
+	if rec == nil or rec.kind ~= Schema.SnapshotKind.HELLO then
+		error("NetOut.hello: expected a HELLO record", 2)
+	end
+	local reason = if rec.protocol ~= Schema.PROTOCOL_VERSION then Schema.RejectReason.PROTOCOL
+		elseif rec.defsHash ~= sim.defs.hash then Schema.RejectReason.DEFS
+		else nil
+	if reason == nil then
+		return nil
+	end
+	local w = Packer.Writer.new(8)
+	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.REJECT, protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, reason = reason })
+	return w:finish()
+end
+
+-- (Re)joins `player`: forgets what its client had and queues a WELCOME, so
+-- the next outbox rebuilds the whole view. A reconnect keeps the camera
+-- unless `clearCamera`; a first join has none until a CAMERA command.
+function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
+	local pn = sim.net.players[player]
+	assert(pn, `NetOut.join: unknown player {player}`)
+	table.clear(pn.tactical)
+	table.clear(pn.tacticalList)
+	table.clear(pn.projKnown)
+	table.clear(pn.projInView)
+	if clearCamera then
+		pn.camera = nil
+	end
+	pn.forceFull = true
+	pn.lastEco = nil
+	local p = sim.players[player]
+	local w = Packer.Writer.new(32)
+	Schema.encodeSnapshot(w, {
+		kind = Schema.SnapshotKind.WELCOME,
+		tick = sim.tick,
+		player = player,
+		team = p.team,
+		allyTeam = sim.allyOf[p.team],
+		mapId = sim.mapId,
+	})
+	pn.welcome = w:finish()
+end
+
+-- The player's team account in wire units (Eco record).
+local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
+	local acc = sim.eco.accounts[team]
+	if acc == nil then
+		return nil
+	end
+	local function res(r: Economy.Resource): Schema.EcoResource
+		local function u32(x: number): number
+			return math.clamp(math.floor(x), 0, 4294967295)
+		end
+		return {
+			stored = u32(r.stored),
+			storage = u32(r.storage),
+			income = u32(r.income * 10 + 0.5),
+			demand = u32(r.demand * 10 + 0.5),
+			ratio = math.clamp(math.floor(r.ratio * 255), 0, 255),
+		}
+	end
+	return { supply = res(acc.supply), power = res(acc.power), wind = math.clamp(math.floor(sim.eco.wind * 255), 0, 255) }
 end
 
 function NetOut.setCamera(sim: Types.Sim, player: number, minX: number, minZ: number, maxX: number, maxZ: number)
@@ -317,7 +393,8 @@ function NetOut.step(sim: Types.Sim)
 
 		-- strategic snapshot of every other known unit
 		local strategic: { Schema.Strategic } = {}
-		if strategicTick then
+		local fullNow = strategicTick or pn.forceFull
+		if fullNow then
 			for _, id in w.ids do
 				if pn.tactical[id] then
 					continue
@@ -390,17 +467,40 @@ function NetOut.step(sim: Types.Sim)
 		end
 
 		local outbox = pn.outbox
+		outbox.Snapshot = {}
+		if pn.welcome then
+			outbox.Snapshot = { pn.welcome }
+			pn.welcome = nil
+		end
+		outbox.Eco = {}
+		if pn.forceFull or tick % Economy.STEP_TICKS == 0 then
+			local rec = ecoRecord(sim, team)
+			if rec then
+				local wr = Packer.Writer.new(Schema.TICK_HEADER_BYTES + Schema.ECO_BYTES)
+				Schema.encodeTickHeader(wr, wireTick)
+				Schema.encodeEco(wr, rec)
+				local msg = wr:finish()
+				local bytes = buffer.tostring(msg)
+				-- the tick header changes every time: compare the record itself
+				local body = string.sub(bytes, Schema.TICK_HEADER_BYTES + 1)
+				if pn.forceFull or body ~= pn.lastEco then
+					outbox.Eco = { msg }
+					pn.lastEco = body
+				end
+			end
+		end
 		outbox.Projectiles = pack(syncs, Schema.encodeProjSync, wireTick)
 		outbox.Events = pack(events, Schema.encodeEvent, wireTick)
 		outbox.Tactical = pack(tactical, Schema.encodeTactical, wireTick)
 		outbox.State = pack(states, Schema.encodeState, wireTick)
 		outbox.Strategic = pack(strategic, Schema.encodeStrategic, wireTick)
-		if strategicTick and #outbox.Strategic == 0 then
+		if fullNow and #outbox.Strategic == 0 then
 			-- an empty snapshot still tells the client to drop old strategic units
 			local wr = Packer.Writer.new(2)
 			Schema.encodeTickHeader(wr, wireTick)
 			outbox.Strategic = { wr:finish() }
 		end
+		pn.forceFull = false
 		for _, ch in NetState.CHANNELS do
 			for _, msg in outbox[ch] do
 				pn.bytes[ch] += buffer.len(msg)

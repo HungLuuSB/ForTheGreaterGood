@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 5 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag
+Schema.PROTOCOL_VERSION = 6 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -751,6 +751,125 @@ function Schema.decodeEvent(r: Reader): Event
 		readVel(r, e)
 	end
 	return e
+end
+
+--------------------------------------------------------------------------------
+-- Join handshake (Snapshot channel, both directions; S-2, docs/contracts/net.md 10)
+--   kind u8, then
+--   HELLO    C → S  protocol u16 | defsHash u32                              =  7 bytes
+--   REJECT   S → C  protocol u16 | defsHash u32 | reason u8 (1 protocol, 2 defs) = 8 bytes
+--   WELCOME  S → C  tick u32 | player u8 | team u8 | allyTeam u8 | mapIdLength u8 | mapId
+--------------------------------------------------------------------------------
+
+Schema.SnapshotKind = table.freeze({ HELLO = 1, REJECT = 2, WELCOME = 3 })
+Schema.RejectReason = table.freeze({ PROTOCOL = 1, DEFS = 2 })
+local SK = Schema.SnapshotKind
+
+export type SnapshotRecord = {
+	kind: number,
+	protocol: number?, -- HELLO, REJECT
+	defsHash: number?, -- HELLO, REJECT (u32)
+	reason: number?, -- REJECT
+	tick: number?, -- WELCOME: the full sim tick (u32)
+	player: number?, -- WELCOME
+	team: number?,
+	allyTeam: number?,
+	mapId: string?,
+}
+
+function Schema.encodeSnapshot(w: Writer, rec: SnapshotRecord)
+	local kind = rec.kind
+	if kind ~= SK.HELLO and kind ~= SK.REJECT and kind ~= SK.WELCOME then
+		error(`Schema: unknown snapshot kind {kind}`, 2)
+	end
+	w:writeU8(kind)
+	if kind == SK.WELCOME then
+		w:writeU32(required(rec.tick, "tick"))
+		w:writeU8(required(rec.player, "player"))
+		w:writeU8(required(rec.team, "team"))
+		w:writeU8(required(rec.allyTeam, "allyTeam"))
+		local mapId = required(rec.mapId, "mapId")
+		if #mapId > 255 then
+			error("Schema: mapId longer than 255 bytes", 2)
+		end
+		w:writeU8(#mapId)
+		w:writeString(mapId)
+	else
+		w:writeU16(required(rec.protocol, "protocol"))
+		w:writeU32(required(rec.defsHash, "defsHash"))
+		if kind == SK.REJECT then
+			local reason = required(rec.reason, "reason")
+			if reason ~= Schema.RejectReason.PROTOCOL and reason ~= Schema.RejectReason.DEFS then
+				error(`Schema: unknown reject reason {reason}`, 2)
+			end
+			w:writeU8(reason)
+		end
+	end
+end
+
+function Schema.decodeSnapshot(r: Reader): SnapshotRecord
+	r.context = "snapshot record"
+	local kind = r:readU8()
+	if kind ~= SK.HELLO and kind ~= SK.REJECT and kind ~= SK.WELCOME then
+		fail(r, `unknown snapshot kind {kind}`)
+	end
+	local rec: SnapshotRecord = { kind = kind }
+	if kind == SK.WELCOME then
+		rec.tick = r:readU32()
+		rec.player = r:readU8()
+		rec.team = r:readU8()
+		rec.allyTeam = r:readU8()
+		rec.mapId = r:readString(r:readU8())
+	else
+		rec.protocol = r:readU16()
+		rec.defsHash = r:readU32()
+		if kind == SK.REJECT then
+			local reason = r:readU8()
+			if reason ~= Schema.RejectReason.PROTOCOL and reason ~= Schema.RejectReason.DEFS then
+				fail(r, `unknown reject reason {reason}`)
+			end
+			rec.reason = reason
+		end
+	end
+	return rec
+end
+
+--------------------------------------------------------------------------------
+-- Economy (Eco channel, S → C, reliable; S-2): the player's own team, after
+-- the tick header. Per resource (supply, then power):
+--   stored u32 (whole) | storage u32 (whole) | income u32 (tenths per second)
+--   | demand u32 (tenths per second) | ratio u8 (stall ratio × 255)
+-- then wind u8 (× 255)                                                  = 35 bytes
+--------------------------------------------------------------------------------
+
+export type EcoResource = { stored: number, storage: number, income: number, demand: number, ratio: number }
+export type Eco = { supply: EcoResource, power: EcoResource, wind: number }
+
+Schema.ECO_BYTES = 35
+
+local function writeResource(w: Writer, r: EcoResource)
+	w:writeU32(r.stored)
+	w:writeU32(r.storage)
+	w:writeU32(r.income)
+	w:writeU32(r.demand)
+	w:writeU8(r.ratio)
+end
+
+local function readResource(r: Reader): EcoResource
+	return { stored = r:readU32(), storage = r:readU32(), income = r:readU32(), demand = r:readU32(), ratio = r:readU8() }
+end
+
+function Schema.encodeEco(w: Writer, rec: Eco)
+	writeResource(w, rec.supply)
+	writeResource(w, rec.power)
+	w:writeU8(rec.wind)
+end
+
+function Schema.decodeEco(r: Reader): Eco
+	r.context = "eco record"
+	local supply = readResource(r)
+	local power = readResource(r)
+	return { supply = supply, power = power, wind = r:readU8() }
 end
 
 --------------------------------------------------------------------------------
