@@ -4,7 +4,7 @@
 **Platform:** Roblox (Luau), PC-first
 **Modes:** Team (2v2 – 4v4) and Free-For-All (up to 8 players)
 **Factions:** Order / Chaos
-**Document version:** 0.1 — living document; update it whenever a decision changes.
+**Document version:** 0.2 — living document; update it whenever a decision changes.
 
 > **Naming note.** "For The Greater Good" plus *Order* and *Chaos* will remind many players of Warhammer 40K / Age of Sigmar. The words themselves are generic, but before committing, search Roblox for existing experiences with the same name and keep the visual identity clearly your own.
 
@@ -114,66 +114,82 @@ Optional tooltip designation for flavor: `ORD-T2 Paladin` / `CHS-T2 Juggernaut`.
 
 ### 3.2 Project structure
 
+File extension is `.luau` everywhere. Rojo maps `Name.luau` to a ModuleScript, `Name.server.luau` to a Script and `Name.client.luau` to a LocalScript.
+
 ```
 ReplicatedStorage/
   Shared/
     Defs/
-      Units/          ord_*.lua, chs_*.lua, neu_*.lua   (one ModuleScript per unit)
-      Weapons/        one ModuleScript per weapon
-      MoveClasses.lua
-      ArmorClasses.lua
-      Categories.lua
-      Defs.lua        loader + validation + inheritance helpers
+      Units/            ord_*.luau, chs_*.luau, neu_*.luau   (one ModuleScript per unit)
+      Weapons/          one ModuleScript per weapon
+      MoveClasses.luau
+      ArmorClasses.luau
+      Categories.luau
+      Defs.luau         loader + validation + inheritance helpers
     Net/
-      Schema.lua      packet layouts, field widths
-      Packer.lua      buffer read/write helpers (bit packing)
-      Remotes.lua     creates/gets RemoteEvents
+      Schema.luau       packet layouts, field widths
+      Packer.luau       buffer read/write helpers (bit packing)
+      Remotes.luau      creates/gets RemoteEvents
     Grid/
-      Grid.lua        cell math, coordinate encode/decode
-      MapData/        baked map layers per map
-    Util/             Fixed math, PRNG wrapper, RingBuffer, Pool
-  Models/             unit models by ID (client clones these)
-  Icons/              strategic icons
+      Grid.luau         cell math, coordinate encode/decode
+      MapData/          baked map layers per map
+    Util/
+      Env.luau          detects the runtime (Roblox / Lune)
+      Profiler.luau     profilebegin/end wrapper (no-op outside Roblox), clock for timings
+      Log.luau          tagged, levelled logging
+      Prng.luau         seeded deterministic PRNG (pure Luau, same output on every runtime)
+                        later: Fixed math, RingBuffer, Pool
+  Models/               unit models by ID (client clones these)
+  Icons/                strategic icons
 
 ServerScriptService/
   Sim/
-    Main.server.lua   tick loop, system order
-    World.lua         unit storage (struct-of-arrays), ID allocator
+    Main.server.luau    tick loop, system order
+    World.luau          unit storage (struct-of-arrays), ID allocator
     Systems/
-      Commands.lua    validation + command queues
-      Economy.lua
-      Sensors.lua     LOS / radar / sonar / jamming maps
-      Targeting.lua
-      Pathing.lua     requests, caching, corridor builder
-      Movement.lua    steering, local avoidance
-      Weapons.lua     aim model, fire control, countermeasures
-      Projectiles.lua
-      Damage.lua
-      Construction.lua
-      Lifecycle.lua   spawn, death, wrecks
-      NetOut.lua      per-player interest + packet building
-    Workers/          Actor scripts for flow fields (Parallel Luau)
-    Replay/           command log writer
+      Commands.luau     validation + command queues
+      Economy.luau
+      Sensors.luau      LOS / radar / sonar / jamming maps
+      Targeting.luau
+      Pathing.luau      requests, caching, corridor builder
+      Movement.luau     steering, local avoidance
+      Weapons.luau      aim model, fire control, countermeasures
+      Projectiles.luau
+      Damage.luau
+      Construction.luau
+      Lifecycle.luau    spawn, death, wrecks
+      NetOut.luau       per-player interest + packet building
+    Workers/            Actor scripts for flow fields (Parallel Luau)
+    Replay/             command log writer
+  Tests/
+    RunAll.luau         headless test runner
+    *.spec.luau         test specs (section 17.2)
 
 StarterPlayer/StarterPlayerScripts/
   Client/
-    Main.client.lua
-    World.lua         client-side table of known units
-    NetIn.lua         packet decoding
-    Interp.lua        snapshot buffer + interpolation
+    Main.client.luau
+    World.luau          client-side table of known units
+    NetIn.luau          packet decoding
+    Interp.luau         snapshot buffer + interpolation
     Render/
-      ModelPool.lua
-      Animator.lua    piece scripts scheduler
-      Effects.lua
-      Projectiles.lua
-    Camera.lua
+      ModelPool.luau
+      Animator.luau     piece scripts scheduler
+      Effects.luau
+      Projectiles.luau
+    Camera.luau
     Input/
-      Selection.lua
-      Commands.lua
-      BuildPlacement.lua
-    UI/               resource bar, build menu, unit panel, minimap, alerts
-    Debug/            overlays, packet inspector
+      Selection.luau
+      Commands.luau
+      BuildPlacement.luau
+    UI/                 resource bar, build menu, unit panel, minimap, alerts
+    Debug/              overlays, packet inspector
+
+(repo only, not synced)
+.lune/test.luau         Lune entry: `lune run test` runs every *.spec.luau
+.luaurc                 require aliases (@shared)
 ```
+
+**Runs in Lune and Roblox.** Everything under `Shared/` and `ServerScriptService/` must run unchanged in both Roblox and [Lune](https://lune-org.github.io/docs), so the simulation can be tested headless outside Studio. It uses string requires only (cross-tree via `.luaurc` aliases such as `@shared/Util/Prng`), and no Instances or Roblox-only globals. Runtime-specific behavior is confined to the `Util/Env`, `Util/Profiler` and `Util/Log` adapters. `Client/` is Roblox-only.
 
 ### 3.3 The simulation tick
 
@@ -204,7 +220,7 @@ StarterPlayer/StarterPlayerScripts/
 Use **struct-of-arrays** keyed by a numeric unit ID rather than one table per unit with many fields:
 
 ```lua
--- World.lua (server)
+-- World.luau (server)
 local World = {
 	alive    = {},  -- [id] = true
 	defId    = {},  -- [id] = "ord_paladin"
@@ -235,8 +251,8 @@ local World = {
 ### 4.2 UnitDef schema
 
 ```lua
--- ReplicatedStorage/Shared/Defs/Units/ord_paladin.lua
-local Defs = require(script.Parent.Parent.Defs)
+-- ReplicatedStorage/Shared/Defs/Units/ord_paladin.luau
+local Defs = require("../Defs")
 
 return Defs.extend(Defs.Templates.TankT2, {
 	id          = "ord_paladin",
@@ -285,7 +301,7 @@ return Defs.extend(Defs.Templates.TankT2, {
 ### 4.3 WeaponDef schema
 
 ```lua
--- ReplicatedStorage/Shared/Defs/Weapons/ord_railcannon.lua
+-- ReplicatedStorage/Shared/Defs/Weapons/ord_railcannon.luau
 return {
 	id    = "ord_railcannon",
 	type  = "BALLISTIC",  -- HITSCAN | BALLISTIC | HOMING | BEAM | TORPEDO | BOMB
@@ -320,16 +336,16 @@ return {
 ### 4.4 Shared enums
 
 ```lua
--- Categories.lua  (bitmask; max 32 for bit32)
+-- Categories.luau  (bitmask; max 32 for bit32)
 GROUND=1, AIR=2, NAVAL=4, SUB=8, STRUCTURE=16, WORKER=32, COMMANDER=64,
 ARMORED=128, LIGHT=256, HELI=512, JET=1024, ANTIAIR=2048, ARTILLERY=4096,
 STEALTH=8192, RADAR_EMITTER=16384, JAMMER=32768
 
--- ArmorClasses.lua
+-- ArmorClasses.luau
 LIGHT, ARMORED, STRUCTURE, AIR, SHIP, SUB
 ```
 
-### 4.5 Startup validation (`Defs.lua`)
+### 4.5 Startup validation (`Defs.luau`)
 
 At load, for every def, assert:
 
@@ -485,7 +501,7 @@ A unit with footprint `F` cells can stand in a cell only if `clearance[mc][cell]
 
 **Rule of thumb:** continuous values where only the latest matters (position, heading) go **unreliable**. Discrete changes that must not be lost (died, started building, health changed) go **reliable**.
 
-All payloads are `buffer`s written with `Packer.lua`. UnreliableRemoteEvent has a small per-message size limit (around 900 bytes; check the current docs), so `NetOut` splits large updates into several messages.
+All payloads are `buffer`s written with `Packer.luau`. UnreliableRemoteEvent has a small per-message size limit (around 900 bytes; check the current docs), so `NetOut` splits large updates into several messages.
 
 ### 7.2 Interest management (per player, every tick)
 
@@ -1339,8 +1355,8 @@ Each milestone has **exit criteria**. Don't move on until they're met.
 
 | # | Milestone | Scope | Exit criteria |
 |---|---|---|---|
-| M0 | Foundations | Defs loader + validation, grid + map bake, Packer, tick loop, World storage, replay log | Defs validate; packets round-trip; 1,000 headless ticks run |
-| M1 | One tank moves | Move command → quadtree + flow field → movement → tactical replication → interpolated render; debug overlays | 50 tanks path across a map smoothly; overlays show fields |
+| M0 | Foundations | Runtime utils (Env, Profiler, Log, Prng) + test runner, defs loader + validation, grid, Packer, tick loop, World storage, replay log | Defs validate; packets round-trip; 1,000 headless ticks run (all under `lune run test`) |
+| M1 | One tank moves | Map bake (section 5.4), move command → quadtree + flow field → movement → tactical replication → interpolated render; debug overlays | 50 tanks path across a map smoothly; overlays show fields |
 | M2 | Combat | Targeting, aim model, hitscan + ballistic weapons, projectiles, damage, death, wrecks | Two groups fight to the end; replay reproduces it exactly |
 | M3 | Economy & building | Team accounts, extractors, generators, Command Vehicle, workers, factories, placement, assist, reclaim | A full T1 build order is playable |
 | M4 | Sensors & minimap | LOS/radar maps, fog of war, strategic tier, camera interest, minimap, ghosts | Enemies hidden correctly; bandwidth within budget |
@@ -1356,13 +1372,13 @@ Each milestone has **exit criteria**. Don't move on until they're met.
 
 ### 22.1 Adding a new unit — checklist
 
-1. Create `Defs/Units/<id>.lua` (extend a template).
+1. Create `Defs/Units/<id>.luau` (extend a template).
 2. Create or reuse WeaponDefs.
 3. Add to a builder's or factory's `buildOptions`.
 4. Add a `blockout` (or model) with correct piece names.
 5. Choose an icon and an animation script.
-6. Run validation (Studio output must be clean).
-7. Add a headless test: it can be built, move, and fight its intended counter.
+6. Run validation and tests: `lune run test` must pass (and Studio output must be clean once Studio is available).
+7. Add a headless test (`Tests/<Name>.spec.luau`): it can be built, move, and fight its intended counter.
 8. Balance pass: cost vs. power compared with units of the same role.
 
 ### 22.2 Glossary
