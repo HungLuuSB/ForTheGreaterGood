@@ -110,6 +110,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `a619e7d` `15cb953` (merge of `main` with S-49, protocol 17; building pip C-59, test weapon overrides C-60; request 28 for the sim); test_client 104, test 339, build passed.
 - Ready to merge: `78d61cb` (request 29 for the sim: interception chance 0.2; docs only).
 - Ready to merge: `b0a0293` (one launch notice, C-61); test_client 104, build passed.
+- Ready to merge: `8f9e3e9` `2af545f` (merge of `main` with S-50; the nuke profile's interception override dropped, request 29 marked done); test_client 104, test 339, build passed.
 
 ## Tasks
 
