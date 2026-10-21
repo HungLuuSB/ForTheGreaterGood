@@ -4,7 +4,27 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: round of 2026-10-22, branch `m-sim-2`; everything merged into `main`)
+## Summary (latest: second round of 2026-10-22, branch `m-sim-2`; everything merged into `main`)
+
+**This round** (the user's seven tasks, the client's requests first, then the soak and the AI level report). Protocol 9 → 13. Tests: 299 in 41 specs → 331 in 48 (325 fast, ~34 s; 6 slow, ~35 s).
+
+| Task | Result | Decision |
+|---|---|---|
+| 1. Client requests 9, 10, 13 (+13d, 14–19 that came in during the round) | Team sight map and wrecks on the wire (protocol 10; ~0.5 KB/s per player at 800 units, a join ~2 KB). IR SAMs: the miss was a one-tick aim misalignment, not the fuse; proportional navigation (`Shared/Combat/Guidance`, shared with the client) and a seeker cone: a circling Falcon now takes 90% of the Thorns' missiles (was 33%), the rest are DIRCM decoys. Decoyed missiles bend toward the decoy (protocol 11). Then: MOVING bit, projectiles burst at the map edge, Thorn range 420 / blast 12 (asked; review), jets fly to their move goal, DECOYED names the countermeasure (protocol 13), no wrecks for aircraft shot down | S-26, S-27, S-28, S-33, S-38 |
+| 2. Overkill-aware targeting, T1 re-check | A weapon doesn't fire at a visible target that shells already on their way will kill (weighted by an estimated hit chance, checked against fired shells); decided at the trigger so a volley spreads: 6 Verdicts vs 6 one-shot tanks, 12 shells / 6.3 s instead of 30 / 18.9 s. Targeting cost unchanged. It didn't move artillery: without spotters both fire at sight range. One retune: Verdict sight 140 → 170 (long artillery fight 0.58 → 0.97) | S-29, S-30 |
+| 3. Twin Lakes 2v2 bias | Traced like S-23 (mirrored players' decisions): the generator rule read the power stall ratio at think time, which reads 1.0 just after a builder finishes, and think offsets decided which side caught that moment. Then two more causes on Ridgeline: think phases against the 5-tick economy / 2-tick sensor steps, and the server's site snap rounding half cells toward +x. Fixed all three; Hard–Normal on Twin Lakes 3–3 by side (was 0–6) | S-31 |
+| 4. Coastline stalemates | Not the map: attack-moves held on enemies across the inner ridges, shooting into the cliff, because direct fire went through hills. Line of fire built (task 5's first item): 0 of 36 Coastline matches at the limit (was 31). The level report no longer counts "on value" as a win | S-32 |
+| 5. Audit gaps | Line of fire; move states (Hold Position / Maneuver / Roam); CANCEL with a refund (protocol 12); carriers recover, carry and launch aircraft; terrain types and speed modifiers (MapGen paints sand and rock); amphibious units submerge, hover units ride the surface | S-32, S-34..S-37, S-39 |
+| 6. Test suites | `lune run test` (fast, every commit) and `lune run test_slow` (AI matches, fairness; run by `integrate.sh`); `CLAUDE.md` documents both | S-40 |
+| 7. Replay compression | Noted under "Launch items"; not built | — |
+
+**Soak** (`lune run soak`, now seed 11): with this round's AI and combat no seed of 1–13 lasts 40 minutes (8–33 min); seed 11 is the longest. 32.6 min, 29,305 ticks in 18 s, at most 85 units; tick avg 0.60 ms, p99 2.19, peak 11.3 ms (Pathing 9.8); heap flat at 10–18 MB (217 KB per unit at minute 5, 189 at minute 32); replay identical. The spectator replay (5.8 MB, 178 KB per game minute) is now recorded in a second run of the same match: kept in memory, it grows with time, and with today's smaller armies it made the per-unit heap look like a leak (it failed the check at 920 KB per unit; without it the heap is flat). S-41.
+
+**AI levels** (`docs/AI_LEVELS.md`, 126 matches, 3 seeds, Command Ends; "on value" no longer counts): **every match now ends by a win condition** (none at the 40-minute limit; Coastline median 6.4 min, was 31 of 36 at the limit). Hard beats Easy 36–0 and Normal 37–5. **But Easy beats Normal 23–19:** Easy wins on the 128-cell maps (Coastline 11–1, Ridgeline 8–4), Normal on `skirmish:256` (10–2) and Twin Lakes (4–2). Matches on the small maps end at ~4.5 min: Easy's first wave of 8 reaches Normal's Command Vehicle while Normal has 2–3 army units, its economy (17 structures to Easy's 13) not yet turned into an army. Likely why it shows now: before line of fire (S-32), attack-moves stalled behind the ridges, so early waves rarely got through. The S-31 stall memory is part of it (without it 6–6 on Ridgeline) but not all; trials were noisy. **Not fixed:** it needs a Normal early-defence / build-order change, proposed for the next round.
+
+**Integration:** 16 client commits and 2 from the new models stream merged this round, all passing; no conflicts. `main` is at the last merge below.
+
+## Summary (previous round, 2026-10-22: tasks 1–7, S-19..S-25)
 
 **This round** (the user's seven tasks, then the soak and the AI level report):
 
@@ -51,6 +71,8 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 What the guide asks of the simulation and isn't implemented (or only partly), most important for gameplay first. Not implemented yet, by request. Size: S small, M medium, L large.
 
+**Status after the 2026-10-22 round:** 1 done (S-34), 2 done (S-32), 3 done (S-37), 4 done except a hover roster unit (S-39), 5 done except carriers building aircraft (S-36), 6 done (S-35), 8 overkill done (S-29; focus fire not). The rest stand.
+
 1. **Move states do nothing** (10.1, M). Maneuver (chase a little, come back), Roam (chase freely) and Hold Position are stored (`World.moveState`, SET_MOVE_STATE) but nothing reads them: idle units never chase, so everything behaves as Hold Position. Fire states work.
 2. **No line-of-fire check** (10.8, M). Hitscan, beams and direct shells should check the height layer and hold or reposition when terrain blocks; direct fire goes through hills (10.7 lists it as "not yet").
 3. **No terrain types or speed modifiers** (5.2 `terrainType`, 6.3, 12.1 "heavies slow on sand"; M). No `terrainType` layer, flow-field step cost always 1 (D30), Movement ignores terrain.
@@ -78,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **AI level order (found at the end of this round):** Easy beats Normal 23–19, on the two 128-cell maps (early rush reaches Normal's Command Vehicle at ~4.5 min). Fix next round: Normal should hold its first army at home until it can match an incoming wave, or build its first tanks before its third generator. Your call on which.
 - **No hover unit in the roster (S-39):** the HOVER rules work (surface riding), but no def uses the class. Add one (e.g. a hover worker or tank per guide 6.1)?
 - **Terrain speed factors (S-37):** placeholders in `Shared/Grid/Terrain.SPEED` (heavy tracked on sand 0.6, wheeled on road 1.25, ...; table in the guide, 12.1), and MapGen's painting rules (sand within 2 cells of water, rock above 15°; no roads). Both shape every generated map.
 - **Carriers don't build aircraft (S-36):** the guide doesn't say they do; it would change the tech tree. Should they?
@@ -143,6 +166,10 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: merges now run in the integration worktree `../FTGG-integration` with `tools/integration/integrate.sh` (see `CLAUDE.md`, "Integration"). The client resolved the `486fc51` conflict in its merge `dfdd0e7`; integrated `dfdd0e7` (client commits `486fc51`..`49e983c`, C-23..C-30) → `870357e` and `e125dee` (air and naval rendering, C-31) → `0494564`. Both passed test (39 specs / 292) and build (326 scripts / 1004 requires) and were pushed. Nothing blocked.
 - 2026-10-22: client `4a014e9` (C-39), `3671f2b` (C-40), `d8f67eb` (request 13), `272b106` (merge of `main`), `486d468` (SAM scene), `b3c1d19` (C-41) → up to `c594a2d`; each passed test (41 specs / 299) and build (339 scripts / 1058 requires) and was pushed. No conflicts or failures.
 - 2026-10-22: client `849486c` (merge of `main`), `f9cc4ed` (C-42), `7c2180c` (SAM scene), `64472f6` (C-43), `d44e70c` (request 13d) → up to `4855ea2`; each passed test (42 specs / 304) and build and was pushed. No conflicts or failures.
+- 2026-10-22: client `7a7e2bd`, `8ca419a` (C-44), `4346a86` (C-45), `2d244af` (C-46), `d39ec8e`, `58187a7` (requests 14–16), `927a141` (C-47) → up to `9a334b5`; models stream `84ba52d` (T1 blockouts, M-1..M-5) → `3f11cf6`. Each passed test (44 specs / 313) and build and was pushed. The models stream (`m-models`, `docs/progress/models.md`) is new; its commits touch only `src/shared/Defs/Blockouts/` and its own progress file.
+- 2026-10-22: client `a8d794e`, `91a79a1` (C-48), `37c6142`, `1ae6176` (C-49) → up to `100daff`; models `255dd9f` (M-6..M-8) → `1480dfa`. Each passed test and build and was pushed. No conflicts or failures this round.
+- 2026-10-22: client `073d5e7` (C-50) → `051456b`, passed test (47 specs / 327) and build, pushed. Then `m-sim-2` (S-38..S-40) → `dceb4fa`; that merge ran the old `integrate.sh` (fast suite and build), so the slow suite was run on `main` afterwards: 6 passed.
+- From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 
 ## Overnight 2026-10-21 (integrator + queue)
@@ -184,6 +211,13 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 **Open questions:** none from this round. Earlier open points are settled: pathfinding is physics (D106); radar contacts reveal only their domain (D107).
 
 ---
+
+## Launch items (not built yet)
+
+- **Replay compression** (the user, 2026-10-22: note it, don't build it yet). Player replays (`Shared/Net/PlayerReplay`, "FTGP") are raw: a spectator recording runs ~420 KB per game minute at ~240 units (16.8 MB for the 40-minute soak), a player's ~33 KB per minute on a small 4-minute match. Before launch, where replays are stored or shared:
+  - measure first: deflate / zstd-class compression of whole files vs. per-frame, on the soak's spectator recording and a player's;
+  - cheap wins inside the format: delta-encode Tactical records against the unit's previous record, drop redundant tick headers inside a frame, run-length the Strategic snapshots (mostly unchanged every 5th tick);
+  - it plugs in at `PlayerReplay.serialize` / `parse` (a new format byte, version 2), so recorders and players stay the same; Roblox has no built-in compressor, so a pure-Luau one (or a server-side store that compresses) is the likely path.
 
 ## How to continue
 
