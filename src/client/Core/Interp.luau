@@ -21,18 +21,23 @@ end
 
 -- Advances the render clock by `dt` seconds and returns the render tick
 -- (fractional sim tick), or -1 before any packet. It runs at the tick rate
--- and is pulled gently toward (newest tick + time since it arrived − delay),
--- so packet jitter doesn't make units stutter.
-function Interp.advance(clock: Clock, world: World.World, now: number, dt: number): number
+-- times the sim speed (C-35: 0.25 = slow motion, 0 = paused) and is pulled
+-- gently toward (newest tick + time since it arrived − delay), so packet
+-- jitter doesn't make units stutter.
+function Interp.advance(clock: Clock, world: World.World, now: number, dt: number, speed: number?): number
 	if world.latestTick < 0 then
 		return -1
 	end
-	local target = world.latestTick + (now - world.latestAt) * Interp.TICK_RATE - Interp.DELAY_TICKS
+	local rate = Interp.TICK_RATE * (speed or 1)
+	local target = world.latestTick + (now - world.latestAt) * rate - Interp.DELAY_TICKS
 	if not clock.started then
 		clock.tick, clock.started = target, true
 		return target
 	end
-	clock.tick += dt * Interp.TICK_RATE
+	if rate <= 0 then
+		return clock.tick -- paused: the picture freezes where it is (no pull back toward the target)
+	end
+	clock.tick += dt * rate
 	local err = target - clock.tick
 	if math.abs(err) > Interp.SNAP_ERROR then
 		clock.tick = target

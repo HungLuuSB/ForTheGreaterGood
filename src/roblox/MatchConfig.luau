@@ -8,6 +8,8 @@
 --   { def, player, x, z, heading?, count?, dx?, dz? }
 -- `count` units from (x, z), each `dx`, `dz` studs from the last (default
 -- one unit); heading in radians (0 faces +z, pi / 2 faces +x).
+-- `speed` (optional, default 1): the sim speed the match starts at (C-35);
+-- in a playtest - / = change it and P pauses.
 
 local PROFILES = {
 	-- 10 Lancers (you) vs 10 Ravagers (bot), in gun range from the start

@@ -67,6 +67,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `6093f19` (Task 5: deaths and wrecks (C-34)).
 - Ready to merge: `db75cf4` (Own team's Eco record (protocol 9)).
 - Ready to merge: `b2d2095` (merge of `main` with S-21, protocol 9, into this branch; clean, test_client, test and build pass).
+- Ready to merge: `ec6488d` (Playtest profiles (juggernaut, air, naval, radar)).
 
 ## Tasks
 
@@ -235,6 +236,11 @@ All with real mouse and keyboard input through the MCP tools.
 
 - **Deaths by severity:** a death that leaves a wreck shakes briefly and becomes a charred wreck of the unit (`debug_out/screens/deaths_wrecks.jpg`); a big overkill flings the turret and other pieces up and away under the explosion and leaves nothing (`deaths_fling.jpg`). Same rule as the server for when a wreck exists.
 - **Gap:** the client only learns of wrecks from deaths it saw, and never of a wreck being reclaimed, so wrecks stay until the match restarts (request 10).
+
+## 2026-10-21: global sim speed (C-35)
+
+- In a Studio playtest: `-` slower, `=` faster (0.1×, 0.25×, 0.5×, 1×, 2×, 4×), `P` pause / resume; the F3 readout shows the speed. A profile can start at another speed with `speed = 0.25` in `MatchConfig`. Everything simulated slows together; camera and UI stay real-time; a pause freezes the picture exactly (`debug_out/screens/sim_speed_quarter.jpg`).
+- Also fixed: a just-launched shell on a short shot could burst up to 0.9 tick late (C-26 timing with the C-27 barrel-tip offset).
 
 ## Needs my review
 

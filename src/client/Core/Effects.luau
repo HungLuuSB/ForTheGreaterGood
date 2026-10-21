@@ -371,9 +371,16 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			continue
 		end
 		local x, y, z = pos(world, e)
-		local need = math.sqrt((x - p.x - p.ox) ^ 2 + (y - p.y - p.oy) ^ 2 + (z - p.z - p.oz) ^ 2) -- from where it is drawn
-		local step = math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz) * DT
-		if frac >= math.clamp(need / math.max(step, 1e-6), 0, 1) then
+		-- where it is drawn now and at the tick's end (the server's step plus
+		-- the offset still closing after a launch, C-27); it bursts once it is
+		-- as far along that move as the point nearest the impact
+		local keep = if p.blend > 0 then 1 - 1 / p.blend else 1
+		local sx, sy, sz = p.x + p.ox, p.y + p.oy, p.z + p.oz
+		local nx, ny, nz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, p.weapon.gravity or 0, DT)
+		local dx, dy, dz = nx + p.ox * keep - sx, ny + p.oy * keep - sy, nz + p.oz * keep - sz
+		local len2 = dx * dx + dy * dy + dz * dz
+		local along = if len2 > 1e-9 then ((x - sx) * dx + (y - sy) * dy + (z - sz) * dz) / len2 else 1
+		if frac >= math.clamp(along, 0, 1) then
 			table.remove(events, i)
 			apply(fx, world, e, now, muzzleOf)
 		end

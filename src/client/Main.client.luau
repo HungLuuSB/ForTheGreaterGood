@@ -72,9 +72,38 @@ local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
 local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
+-- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
+-- The server publishes the speed as the Remotes folder's SimSpeed attribute.
+local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
+local resumeSpeed = 1
+local function simSpeed(): number
+	return (remotes:GetAttribute("SimSpeed") :: number?) or 1
+end
+local function requestSpeed(value: number)
+	local remote = remotes:FindFirstChild("SimSpeed")
+	if remote and remote:IsA("RemoteEvent") then
+		remote:FireServer(value)
+	end
+end
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-	if not processed and input.KeyCode == RangeOverlay.TOGGLE_KEY then
+	if processed then
+		return
+	end
+	local key = input.KeyCode
+	if key == RangeOverlay.TOGGLE_KEY then
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
+	elseif key == Enum.KeyCode.Minus or key == Enum.KeyCode.Equals then
+		local now = if simSpeed() == 0 then resumeSpeed else simSpeed()
+		local i = table.find(SPEEDS, now) or 4
+		i = math.clamp(i + (if key == Enum.KeyCode.Minus then -1 else 1), 1, #SPEEDS)
+		requestSpeed(SPEEDS[i])
+	elseif key == Enum.KeyCode.P then
+		if simSpeed() == 0 then
+			requestSpeed(resumeSpeed)
+		else
+			resumeSpeed = simSpeed()
+			requestSpeed(0)
+		end
 	end
 end)
 local fx = Effects.new()
@@ -259,9 +288,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
 	api.state.camera.rect = camState.rect
 	local frameT0 = os.clock()
-	local t = Interp.advance(clock, world, now, dt)
+	-- sim time this frame: units, shells, piece scripts and banking slow down
+	-- or pause with the sim; camera and UI stay in real time (C-35)
+	local speed = simSpeed()
+	local simDt = dt * speed
+	local t = Interp.advance(clock, world, now, dt, speed)
 	local t0 = os.clock()
-	UnitRenderer.step(renderer, world, t, dt, strategic, workspace.CurrentCamera.CFrame.Position)
+	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position)
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
@@ -271,7 +304,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
 	if not strategic then
 		PieceAnim.drive(anim, world, fx.shots)
-		PieceAnim.step(anim, dt)
+		PieceAnim.step(anim, simDt)
 		UnitRenderer.applyPieces(renderer)
 	end
 	table.clear(fx.shots)
@@ -333,5 +366,5 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		drawn += 1
 	end
 	local p = api.state.placement
-	Hud.update(hud, world, t, drawn, camState.rect, now, #api.state.selection, if p then `{p.defId} ({if p.valid then "ok" else p.reason})` else nil)
+	Hud.update(hud, world, t, drawn, camState.rect, now, #api.state.selection, if p then `{p.defId} ({if p.valid then "ok" else p.reason})` else nil, speed)
 end)
