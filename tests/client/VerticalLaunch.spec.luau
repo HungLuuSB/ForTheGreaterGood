@@ -74,7 +74,9 @@ return function(t: any)
 		print(string.format("    %d vertical launches (%d going up when first drawn, %d pitched over); client vs server: median %.2f, 90th percentile %.2f studs", launched, upward, turnedSeen, median, p90))
 		t.expect(launched >= 3, "the Wyverns fired")
 		t.expect(upward == launched, "every missile leaves going up")
-		t.expect(turnedSeen >= launched - 1, "they pitch over onto their targets")
+		-- since S-62 some targets die (or are taken by another missile) before
+		-- a missile pitches over: most still do
+		t.expect(turnedSeen >= launched * 0.6, "they pitch over onto their targets")
 		t.expect(median < 0.5 and p90 < 3, `the client's missiles stay with the server's (median {median}, p90 {p90})`)
 		-- the straight climb (S-44): no sideways turn below climbHeight (less
 		-- one tick's climb, as the turn starts on the tick it gets there)

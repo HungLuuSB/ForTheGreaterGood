@@ -1,18 +1,21 @@
 --!strict
 -- Unit panel (C-68; BAR style since C-71), bottom left under the build
--- grid, a functional PLACEHOLDER. One unit selected: a portrait tile (the
--- type's glyph), name and role, health, then BAR's stat lines: DPS, weapon
--- range and reload, speed, build power, sight and radar, missiles in stock
--- (and the next one's progress), on / off and repeat, a factory's queue
--- (as the client queued it: not replicated yet). Several selected: a tile
--- per unit type with its count; a click keeps only that type. Ammo isn't on
--- the wire yet. Reads only the client API's state.
+-- grid, a functional PLACEHOLDER. One unit selected: a portrait tile (its
+-- icon), name and role, health, then its stats as the player may know them
+-- (Core/UnitStats, C-76: combat, mobility and sensors, economy, state with
+-- the server's fire / move state and ammo), the team's radar precision, the
+-- next missile's progress, on / off and repeat, and a factory's queue as the
+-- server has it (S-61). An enemy shows full stats only in sight or tracked;
+-- a radar contact its domain only. Several selected: a tile per unit type
+-- with its count; a click keeps only that type. Reads only the client API's
+-- state.
 
 local Players = game:GetService("Players")
 
 local Api = require("../Api")
 local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
+local UnitStats = require("../Core/UnitStats")
 local World = require("../Core/World")
 local Glyph = require("./Glyph")
 local TeamColors = require("../Render/TeamColors")
@@ -21,7 +24,7 @@ local UnitPanel = {}
 
 local BG = Color3.fromRGB(18, 20, 24)
 local TILE = Color3.fromRGB(58, 62, 70)
-local WIDTH = 280
+local WIDTH = 460 -- wide enough for a stat line at a glance (C-76)
 
 export type UI = {
 	gui: ScreenGui,
@@ -64,7 +67,7 @@ function UnitPanel.new(api: Api.Api): UI
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0, 1)
 	panel.Position = UDim2.new(0, 0, 1, 0)
-	panel.Size = UDim2.fromOffset(WIDTH, 112)
+	panel.Size = UDim2.fromOffset(WIDTH, 120)
 	panel.BackgroundColor3 = BG
 	panel.BackgroundTransparency = 0.15
 	panel.BorderSizePixel = 0
@@ -101,8 +104,9 @@ function UnitPanel.new(api: Api.Api): UI
 	role.Size = UDim2.new(1, -78, 0, 14)
 	role.TextTruncate = Enum.TextTruncate.AtEnd
 	local stats = textLabel(panel, Enum.Font.Gotham, 11, Color3.fromRGB(225, 225, 225))
-	stats.Position = UDim2.fromOffset(72, 38)
-	stats.Size = UDim2.new(1, -78, 1, -40)
+	stats.Position = UDim2.fromOffset(72, 36)
+	stats.Size = UDim2.new(1, -78, 1, -38)
+	stats.LineHeight = 1.05
 	local types = Instance.new("Frame")
 	types.Name = "Types"
 	types.BackgroundTransparency = 1
@@ -123,90 +127,49 @@ function UnitPanel.new(api: Api.Api): UI
 end
 
 local function styleOf(ui: UI, def: any, team: number, size: number): any
-	return { shape = if def.icon == "commander" then "star" else Icons.shapeOf(def), size = size, team = team, alpha = 1, selected = false, glyph = ui.icons.glyphs[def.index] }
-end
-
--- BAR's stat lines for one unit.
-local function statLines(world: World.World, def: any): { string }
-	local dps, range, reload = 0, 0, nil
-	for _, ws in def.weapons or {} do
-		local w = world.defs.weaponByIndex[(ws :: any).weaponIndex] :: any
-		if w then
-			local best = 0
-			for _, d in w.damage or {} do
-				best = math.max(best, d)
-			end
-			local shots = (w.salvo or 1) * (w.projectiles or 1)
-			dps += best * shots / math.max(w.reload or 1, 0.05)
-			range = math.max(range, w.range or 0)
-			reload = reload or w.reload
-		end
-	end
-	local lines = {}
-	if dps > 0 then
-		table.insert(lines, string.format("DPS %d,  Weapon range %d,  Reload %.2f", math.floor(dps + 0.5), range, reload or 0))
-	end
-	local move = def.movement
-	local sensors = def.sensors or {}
-	local parts = {}
-	if move and move.maxSpeed then
-		table.insert(parts, string.format("Speed %d", math.floor(move.maxSpeed + 0.5)))
-	end
-	if def.buildPower then
-		table.insert(parts, `Buildpower {def.buildPower}`)
-	end
-	if #parts > 0 then
-		table.insert(lines, table.concat(parts, ",  "))
-	end
-	local see = {}
-	if (sensors.sight or 0) > 0 then
-		table.insert(see, `LoS {sensors.sight}`)
-	end
-	if (sensors.airSight or 0) > 0 then
-		table.insert(see, `AirLoS {sensors.airSight}`)
-	end
-	if (sensors.radar or 0) > 0 then
-		table.insert(see, `Radar {sensors.radar}`)
-	end
-	if (sensors.jam or 0) > 0 then
-		table.insert(see, `Jammer {sensors.jam}`)
-	end
-	if #see > 0 then
-		table.insert(lines, table.concat(see, ",  "))
-	end
-	return lines
+	return Icons.ofDef(def, team, size)
 end
 
 local function one(ui: UI, api: Api.Api, id: number)
 	local world = api.world
 	local u = world.units[id]
-	local def = u and World.def(world, u)
-	if u == nil or def == nil then
+	if u == nil then
 		ui.name.Text, ui.role.Text, ui.stats.Text = "(out of view)", "", ""
 		return
 	end
-	Glyph.apply(ui.portraitGlyph, styleOf(ui, def, u.team, 40), TeamColors(u.team))
-	local h = World.shownHealth(world, u) or u.health or 1
-	ui.healthFill.Size = UDim2.fromScale(math.clamp(h, 0, 1), 1)
-	ui.healthText.Text = `{math.floor(h * (def.health or 0) + 0.5)}\n/ {def.health or 0}`
-	ui.name.Text = def.name
-	ui.role.Text = string.match(def.description or "", "^[^%.]*") or ""
-	local lines = statLines(world, def)
-	if u.build and u.build < 1 then
-		table.insert(lines, 1, string.format("Building %d%%", math.floor(u.build * 100)))
+	local sheet = UnitStats.of(world, u)
+	local def = if sheet.access == "contact" then nil else (World.def(world, u) or world.defs.unitByIndex[u.icon or 0])
+	-- the icon as drawn on the map (a contact's dashed frame, a ghost's faded type)
+	local style = Icons.style(ui.icons, world, u, false)
+	style.size = math.floor(style.size * 38 / Icons.BASE + 0.5)
+	Glyph.apply(ui.portraitGlyph, style, TeamColors(u.team))
+	ui.health.Visible = sheet.health ~= nil
+	ui.healthText.Visible = sheet.maxHealth ~= nil
+	if sheet.health and sheet.maxHealth then
+		ui.healthFill.Size = UDim2.fromScale(math.clamp(sheet.health / sheet.maxHealth, 0, 1), 1)
+		ui.healthText.Text = `{math.floor(sheet.health + 0.5)}\n/ {sheet.maxHealth}`
+	elseif sheet.maxHealth then
+		ui.healthText.Text = `? / {sheet.maxHealth}`
+	end
+	ui.name.Text = sheet.name
+	ui.role.Text = if def then string.match(def.description or "", "^[^%.]*") or "" else ""
+	local lines = UnitStats.lines(sheet)
+	if sheet.build then
+		table.insert(lines, 1, string.format("Building %d%%", math.floor(sheet.build * 100)))
+	end
+	if def == nil or sheet.access ~= "own" then
+		ui.stats.Text = table.concat(lines, "\n")
+		return
 	end
 	local renderTick = world.shownTick or world.latestTick
-	for slot, ws in def.weapons or {} do
+	for _, ws in def.weapons or {} do
 		local cap = (ws :: any).stockCapacity
 		if cap and u.stock then
-			local line = `Stock {u.stock[slot] or 0}/{cap}`
-			if (u.stock[slot] or 0) < cap then
-				local shown = World.stockProgressOf(world, u, renderTick)
-				if shown then
-					line ..= string.format(", next %d%%", math.floor(shown * 100))
-				end
+			local shown = World.stockProgressOf(world, u, renderTick)
+			if shown then
+				table.insert(lines, string.format("Next missile %d%%", math.floor(shown * 100)))
 			end
-			table.insert(lines, line)
+			break
 		end
 	end
 	if Precision.relevant(def) then
@@ -234,7 +197,8 @@ local function one(ui: UI, api: Api.Api, id: number)
 			end
 			count += 1
 		end
-		table.insert(flags, "Queue: " .. table.concat(parts, ", "))
+		local head = string.format(" (%d%%)", math.floor((u.queueProgress or 0) * 100))
+		table.insert(flags, "Queue: " .. table.concat(parts, ", ") .. head)
 	end
 	if #flags > 0 then
 		table.insert(lines, table.concat(flags, "   "))
@@ -242,20 +206,36 @@ local function one(ui: UI, api: Api.Api, id: number)
 	ui.stats.Text = table.concat(lines, "\n")
 end
 
+-- The unit the panel describes alone: a hovered enemy (BAR: hover shows
+-- its info), else a hovered unit with nothing selected, else the one
+-- selected unit; nil for a multi-selection or nothing.
+function UnitPanel.subject(api: Api.Api): number?
+	local hover = api.state.hover
+	local h = hover and hover.unit
+	local hu = h and api.world.units[h]
+	local sel = api.state.selection
+	if hu and (hu.team ~= api.world.me.team or #sel == 0) then
+		return h
+	end
+	return if #sel == 1 then sel[1] else nil
+end
+
 function UnitPanel.step(ui: UI, api: Api.Api)
 	local sel = api.state.selection
-	ui.panel.Visible = #sel > 0
-	if #sel == 0 then
+	local subject = UnitPanel.subject(api)
+	ui.panel.Visible = #sel > 0 or subject ~= nil
+	if not ui.panel.Visible then
 		return
 	end
 	local world = api.world
-	local single = #sel == 1
+	local single = subject ~= nil
 	for _, f in { ui.portrait, ui.health, ui.healthText, ui.name, ui.role, ui.stats } :: { GuiObject } do
 		f.Visible = single
 	end
 	ui.types.Visible = not single
 	if single then
-		one(ui, api, sel[1])
+		one(ui, api, subject :: number)
+		ui.key = "" -- the type tiles redraw when the selection shows again
 		return
 	end
 	local counts, order, teams = {}, {}, {}
@@ -321,7 +301,7 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 		b.LayoutOrder = i
 		b.Visible = true
 		local def = world.defs.unitByIndex[d]
-		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 26), TeamColors(teams[d]))
+		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 24), TeamColors(teams[d]))
 		;(b :: any).Count.Text = tostring(counts[d])
 	end
 	for i = #order + 1, #ui.typeButtons do

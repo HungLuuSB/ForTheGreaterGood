@@ -5,7 +5,6 @@
 -- (C-7): `send` is injected (the Cmd remote in Roblox, a Sim in tests).
 
 local Alerts = require("./Core/Alerts")
-local FactoryQueue = require("./Core/FactoryQueue")
 local Orders = require("./Core/Orders")
 local Placement = require("./Core/Placement")
 local Schema = require("@shared/Net/Schema")
@@ -46,9 +45,11 @@ export type State = {
 	-- the command a left click gives (C-68): "attack", "fight", "move",
 	-- "patrol" or "guard"; nil = normal selection clicks
 	commandMode: string?,
-	fireState: number?, -- the last fire / move state sent (not replicated yet: PLACEHOLDER)
+	-- the selection's fire / move state as the server has them (protocol 20,
+	-- S-61): the first selected unit that has one; nil when none does
+	fireState: number?,
 	moveState: number?,
-	factoryQueues: { [number]: { number } }, -- factory → queued def indices, as the client queued them (PLACEHOLDER, request 36)
+	factoryQueues: { [number]: { number } }, -- own factory → its queue on the server (def indices, the head in production; S-61)
 }
 
 export type Api = {
@@ -68,8 +69,8 @@ export type Api = {
 	waypoints: Waypoints.Waypoints,
 	send: (buffer) -> (),
 	alertState: Alerts.State,
-	factoryQueue: FactoryQueue.Queue,
 	seenSelection: number,
+	seenJoins: number, -- world.joins last frame: a new WELCOME starts a fresh view (C-78)
 	seenEconomy: any,
 }
 
@@ -97,9 +98,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		factoryQueues = {},
 	}
 	local alertState = Alerts.new()
-	local factoryQueue = FactoryQueue.new()
 	state.alerts = alertState.list
-	state.factoryQueues = factoryQueue.byFactory
 
 	local function issue(intent: Orders.Intent, ids: { number }?): (boolean, string?)
 		local targets = ids or sel.ids
@@ -178,12 +177,10 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	end
 
 	function actions.setFireState(n: number)
-		state.fireState = n
 		return issue({ cmdType = CT.SET_FIRE_STATE, queue = false, value = n })
 	end
 
 	function actions.setMoveState(n: number)
-		state.moveState = n
 		return issue({ cmdType = CT.SET_MOVE_STATE, queue = false, value = n })
 	end
 
@@ -196,9 +193,6 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	-- item `index` (1-based; 0 = all).
 	function actions.cancel(index: number?)
 		local i = index or 0
-		for _, id in sel.ids do
-			FactoryQueue.remove(factoryQueue, id, i)
-		end
 		return issue({ cmdType = CT.CANCEL, queue = false, value = i })
 	end
 
@@ -218,7 +212,6 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 				for _ = 1, n do
 					issue({ cmdType = CT.BUILD, queue = true, defIndex = def.index, x = u.x, z = u.z, facing = 0 }, { id })
 				end
-				FactoryQueue.add(factoryQueue, id, def.index, n)
 				sent += 1
 			end
 		end
@@ -401,8 +394,8 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		waypoints = Waypoints.new(),
 		send = send,
 		alertState = alertState,
-		factoryQueue = factoryQueue,
 		seenSelection = 0,
+		seenJoins = world.joins,
 		seenEconomy = nil,
 	}
 	return api
@@ -414,6 +407,20 @@ end
 -- refreshes the state and fires the signals.
 function Api.frame(api: Api, now: number, warnings: { any }?)
 	local world, sel, state = api.world, api.selection, api.state
+	if world.joins ~= api.seenJoins then
+		-- a new WELCOME (a rejoin or a new match): unit IDs start over, so the
+		-- old selection, groups, waypoints and command mode would point at
+		-- other units
+		api.seenJoins = world.joins
+		Selection.set(sel, world, {}, "replace")
+		for _, g in sel.groups do
+			table.clear(g)
+		end
+		table.clear(api.waypoints.byUnit)
+		table.clear(api.waypoints.idleSince)
+		state.commandMode = nil
+		state.placement = nil
+	end
 	Selection.prune(sel, world)
 	Waypoints.update(api.waypoints, world, now)
 	state.player = world.me
@@ -425,7 +432,21 @@ function Api.frame(api: Api, now: number, warnings: { any }?)
 		state.economy = if e then { supply = res(e.supply), power = res(e.power), wind = e.wind / 255 } else nil
 		api.changed.economy:Fire(state.economy)
 	end
-	FactoryQueue.step(api.factoryQueue, world)
+	-- own factories' queues and the selection's states, from the server (S-61)
+	table.clear(state.factoryQueues)
+	for id, u in world.units do
+		if u.queue and u.team == world.me.team then
+			state.factoryQueues[id] = u.queue
+		end
+	end
+	state.fireState, state.moveState = nil, nil
+	for _, id in sel.ids do
+		local u = world.units[id]
+		if u and u.fireState then
+			state.fireState, state.moveState = u.fireState, u.moveState
+			break
+		end
+	end
 	if world.joined then
 		for _, alert in Alerts.step(api.alertState, world, now, warnings, state.economy) do
 			api.changed.alert:Fire(alert)

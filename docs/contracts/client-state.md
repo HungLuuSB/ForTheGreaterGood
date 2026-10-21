@@ -25,8 +25,8 @@ Plain tables, updated by the client each frame (positions) or when packets arriv
 | `economy` | `{ supply = Res, power = Res, wind }?` | own team's account from the Eco channel (protocol 6); nil before the first record |
 | `alerts` | `{ { kind, text, x, z, time } }` | recent alerts, newest last (C-68): kind `"attack" \| "lost" \| "stall" \| "nuke"` |
 | `commandMode` | string? | the command the next left click gives: `"attack" \| "fight" \| "move" \| "patrol" \| "guard"`, nil = normal clicks (C-68) |
-| `fireState`, `moveState` | number? | the last fire / move state sent (not replicated yet: placeholder) |
-| `factoryQueues` | `{ [factoryId]: { defIndex } }` | factory queues as the client queued them (not replicated yet: placeholder, request 36) |
+| `fireState`, `moveState` | number? | the selection's fire / move state as the server has it (protocol 20, S-61): the first selected unit that has one; nil when none does |
+| `factoryQueues` | `{ [factoryId]: { defIndex } }` | own factories' queues on the server, the head in production (protocol 20, S-61); the head's progress is `units[id].queueProgress` |
 
 `UnitView` (today `state.units` is the client World's own unit table, `src/client/Core/World.luau`, type `Unit`: `id, tier, team, defIndex?, icon?, flags?, x, z, alt, heading, health?, build?, state` bits, `weapon`, `aim[slot] = { yaw, pitch }`, `targets[slot]` (own units' target IDs, 0 = none; nil when not sent, S-16), and `rx, ry, rz` where it is drawn. The friendlier view below is the target):
 

@@ -137,6 +137,21 @@ local function pickAt(world: any, project: any, x: number, y: number): number?
 	return hit or Selection.pick(world, project, x, y)
 end
 
+-- The unit under the mouse, any team (the unit panel shows a hovered enemy, C-76).
+function Controls.hoverUnit(world: any): number?
+	local cam = workspace.CurrentCamera
+	local mouse = UserInputService:GetMouseLocation()
+	local inset = game:GetService("GuiService"):GetGuiInset()
+	local gui = (game:GetService("Players").LocalPlayer :: any).PlayerGui
+	for _, o in gui:GetGuiObjectsAtPosition(mouse.X, mouse.Y - inset.Y) do
+		-- over a UI panel (the icon layer and see-through labels don't count)
+		if not o:IsDescendantOf(gui.Icons) and o.BackgroundTransparency < 1 then
+			return nil
+		end
+	end
+	return pickAt(world, Controls.projector(cam), mouse.X, mouse.Y)
+end
+
 function Controls.bind(api: Api.Api): Controls
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "SelectionBox"

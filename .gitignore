@@ -20,3 +20,6 @@ Thumbs.db
 /assets/models/*/export/preview_*.png
 __pycache__/
 /assets/models/*/export/*.fbm/
+
+# Node packages for tools/icons
+node_modules/

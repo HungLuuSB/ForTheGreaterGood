@@ -29,7 +29,7 @@ local OFF = Color3.fromRGB(46, 50, 58)
 local TILE = Color3.fromRGB(58, 62, 70)
 local ITEMS_PER_ROW = 5
 local CELL = 52
-local ROWS = 3 -- visible rows; more scroll
+local ROWS = 2 -- visible rows; more scroll (2 since C-76: room for the wider unit panel)
 local WIDTH = 280 -- the minimap's width: the grid sits under it (BAR layout)
 
 export type UI = {
@@ -291,7 +291,7 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		local cost = def.cost or {}
 		b.LayoutOrder = i
 		b.Visible = true
-		local style: any = { shape = if def.icon == "commander" then "star" else Icons.shapeOf(def), size = 30, team = world.me.team, alpha = 1, selected = false, glyph = ui.icons.glyphs[def.index] }
+		local style = Icons.ofDef(def, world.me.team, 24)
 		Glyph.apply(ui.itemGlyphs[i], style, TeamColors(world.me.team))
 		;(b :: any).Title.Text = def.name
 		;(b :: any).Hot.Text = if ui.armed and i <= 10 then tostring(i % 10) else ""

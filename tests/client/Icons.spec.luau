@@ -5,6 +5,7 @@
 
 local Commands = require("../../src/client/Core/Commands")
 local Icons = require("../../src/client/Core/Icons")
+local IconAtlas = require("../../src/client/UI/IconAtlas")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
@@ -24,16 +25,6 @@ return function(t: any)
 			t.equal(def, defs.unitByIndex[n])
 		end
 		t.equal(#mine.sample, #defs.unitByIndex)
-		-- every unit type its own glyph (C-71): shape, mark, tier, faction, variant
-		local keys: { [string]: string } = {}
-		for index, def in defs.unitByIndex do
-			local g = mine.glyphs[index]
-			local shape = if def.icon == "commander" then "star" else Icons.shapeOf(def)
-			local key = `{shape}|{g.mark}|{g.tier}|{g.chaos}|{g.variant}`
-			t.expect(keys[key] == nil, `{def.id} looks like {keys[key]}`)
-			keys[key] = def.id
-			t.expect(g.variant <= 3, `{def.id}: at most 3 variant dots ({g.variant})`)
-		end
 		-- every unit type its own two-letter code (C-67)
 		local seen: { [string]: string } = {}
 		for index, def in defs.unitByIndex do
@@ -44,27 +35,19 @@ return function(t: any)
 		end
 	end)
 
-	t.test("every def has an icon family; builders, air, naval and structures look apart", function()
+	t.test("every def draws its catalogue tile, larger for higher tiers", function()
 		local defs = Defs.load()
 		local tbl = Icons.table(defs)
 		local world = World.new(defs)
-		local seen: { [string]: boolean } = {}
 		for _, def in defs.unitByIndex do
 			local u: any = { id = 1, team = 1, defIndex = def.index, flags = 0, x = 0, z = 0, alt = 0 }
 			local s = Icons.style(tbl, world, u, false)
-			seen[s.shape] = true
-			t.expect(s.size >= 12 and s.size <= 30, `{def.id}: size {s.size}`) -- room for the code (C-67)
-			if def.domain == "air" then
-				t.equal(s.shape, "triangle", def.id)
-			elseif def.domain == "naval" then
-				t.equal(s.shape, "diamond", def.id)
-			elseif def.domain == "structure" then
-				t.equal(s.shape, "frame", def.id)
-			end
+			t.equal(s.kind, "unit", def.id)
+			t.equal(s.tile, IconAtlas.byDef[def.id].tile, def.id)
+			t.expect(s.size >= Icons.BASE and s.size <= 30, `{def.id}: size {s.size}`)
 		end
-		for _, shape in { "square", "circle", "diamond", "triangle", "frame" } do
-			t.expect(seen[shape], `some unit is a {shape}`)
-		end
+		t.expect(Icons.style(tbl, world, { id = 1, team = 1, defIndex = defs.units.ord_paladin.index, flags = 0, x = 0, z = 0, alt = 0 } :: any, false).size > Icons.BASE, "T2 drawn larger")
+		t.equal(IconAtlas.byDef.ord_lancer.tile, IconAtlas.byDef.chs_ravager.tile, "faction counterparts share an icon (the catalogue)")
 	end)
 
 	t.test("strategic records: real icons for known units, blips for radar contacts, ghosts", function()
@@ -76,12 +59,17 @@ return function(t: any)
 		local function style(icon: number, flags: number): any
 			return Icons.style(tbl, world, { id = 5, team = 2, icon = icon, flags = flags, x = 0, z = 0, alt = 0 } :: any, false)
 		end
-		t.equal(style(tbl.byDef[lancer.index], 0).shape, "square", "a seen Lancer")
-		t.equal(style(0, SF.RADAR_ONLY).shape, "blip", "an unidentified radar contact")
+		t.equal(style(tbl.byDef[lancer.index], 0).tile, IconAtlas.byDef.ord_lancer.tile, "a seen Lancer")
+		t.equal(style(0, SF.RADAR_ONLY).tile, IconAtlas.contacts.vehicle, "an unidentified radar contact: a dashed vehicle frame")
+		t.equal(style(tbl.byDef[lancer.index], SF.RADAR_ONLY).tile, IconAtlas.contacts.vehicle, "an untracked contact shows only its frame")
+		t.equal(style(tbl.byDef[defs.units.ord_falcon.index], SF.RADAR_ONLY).tile, IconAtlas.contacts.air)
 		local tracked = style(tbl.byDef[lancer.index], SF.RADAR_ONLY + SF.TRACKED)
-		t.equal(tracked.shape, "square", "a tracked contact shows its real icon")
+		t.equal(tracked.tile, IconAtlas.byDef.ord_lancer.tile, "a tracked contact shows its real icon")
 		t.equal(tracked.alpha, 1)
-		t.equal(style(tbl.byDef[defs.units.ord_generator.index], SF.GHOST).shape, "ghost")
+		local ghost = style(tbl.byDef[defs.units.ord_generator.index], SF.GHOST)
+		t.equal(ghost.kind, "ghost")
+		t.equal(ghost.tile, IconAtlas.byDef.ord_generator.tile, "a ghost is its type's tile")
+		t.expect(math.abs(ghost.alpha - 0.45) < 1e-6, "at 45% opacity")
 	end)
 
 	t.test("draws: every known unit of a live match, selected last; hysteresis", function()
@@ -115,7 +103,7 @@ return function(t: any)
 		t.equal(draws[#draws].id, selectedId, "selected on top")
 		t.expect(draws[#draws].style.selected)
 		for _, d in draws do
-			t.expect(d.style.shape == "square", "strategic Lancers and Ravagers are squares")
+			t.expect(d.style.tile == IconAtlas.byDef.ord_lancer.tile, "strategic Lancers and Ravagers draw the Light Tank icon")
 		end
 		local _ = own
 		t.expect(not Icons.strategic(false, 450) and Icons.strategic(false, 500), "enter beyond 480")
