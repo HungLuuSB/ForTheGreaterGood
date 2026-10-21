@@ -121,6 +121,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `02237c5` `27eef6e` (merge of `main` with S-56; request 33 done, SAM scene specs); test_client 105, test 345, build passed.
 - Ready to merge: `1f3d216` (fog from the server's sight, wrecks from WRECK records, C-65; requests 34, 35 for the sim); test_client 108, test 345, build passed.
 - Ready to merge: `68b0641` `33a0b04` (merge of `main` with S-58, protocol 19; terrain from the sim's terrain layer and Normandy features, C-66); test_client 108, test 345, build passed.
+- Ready to merge: `23adb8d` (a unique icon per unit type, C-67); test_client 108, build passed.
 
 ## Tasks
 
