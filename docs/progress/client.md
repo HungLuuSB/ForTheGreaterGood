@@ -45,6 +45,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b8405ff` (task 8: strategic zoom icons; `.lune/client_demo.luau` and `render_scene.luau` updated).
 - Ready to merge: `508b215` (task 9: placeholder minimap and resource bar; touches `STUDIO_HANDOFF.md`, `CLAUDE.md`).
 - Ready to merge: `002cc39` (night run summary at the top of `docs/progress/client.md`).
+- Ready to merge: `90c387d` (client uses Shared PlacementRules and Net/Icons).
 
 ## Tasks
 
