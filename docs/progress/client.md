@@ -85,6 +85,11 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `64472f6` (camera follow, C-43).
 - Ready to merge: `d44e70c` (request 13d for the sim session: gradual decoy turn; docs only).
 - Ready to merge: `7a7e2bd` (merge of `main` with S-26, S-27, S-28, protocol 11; with `8ca419a` test_client 85, test 304, build passed).
+- Ready to merge: `8ca419a` (client missiles steer with the shared guidance, C-44; take it with `7a7e2bd`, or the client lags the server's guidance).
+- Ready to merge: `4346a86` (move lines last until the unit arrives, C-45).
+- Ready to merge: `2d244af` (missiles past the map's edge, C-46).
+- Ready to merge: `d39ec8e` (SAM scene on flat:256).
+- Ready to merge: `58187a7` (log C-45, C-46; requests 14-16 for the sim session).
 
 ## Tasks
 
