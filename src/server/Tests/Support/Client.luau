@@ -58,6 +58,7 @@ export type Projectile = {
 	ttl: number, -- seconds left
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the point it follows (S-28)
 	countermeasure: number?, -- decoyed: what defeated it (Schema.Countermeasure, S-38)
+	turned: boolean?, -- vertical launches: pitched over yet (Guidance.vertical, S-42)
 }
 
 -- A visual effect: a tracer (fire: from the shooter to the end point), an
@@ -148,7 +149,11 @@ local function advance(view: View)
 			local ty = target.alt or p.y
 			local tvx, tvz = target.vx or 0, target.vz or 0
 			local maxTurn = math.rad(weapon.turnRate) * DT
-			if weapon.type == "HOMING" then
+			if weapon.type == "HOMING" and weapon.launch == "vertical" then
+				local turned
+				p.vx, p.vy, p.vz, turned = Guidance.vertical(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, 0, tvz, maxTurn, DT, p.turned == true)
+				p.turned = turned
+			elseif weapon.type == "HOMING" then
 				p.vx, p.vy, p.vz = Guidance.pn(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, 0, tvz, maxTurn, DT)
 			else
 				p.vx, p.vy, p.vz = Guidance.lead(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, tvz, maxTurn)

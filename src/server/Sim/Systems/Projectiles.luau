@@ -30,6 +30,7 @@ local Types = require("../Types")
 local World = require("../World")
 
 local DT = 1 / 15
+local TURNED = EW.Flag.TURNED
 local sqrt, sin, cos = math.sqrt, math.sin, math.cos
 
 local candidates: { number } = {}
@@ -62,7 +63,14 @@ return function(sim: Types.Sim)
 			local tx, ty, tz = Combat.aimPoint(c, w, homingTarget)
 			local tvx, tvz = Guidance.velocity(w.heading[homingTarget], w.speed[homingTarget])
 			local maxTurn = math.rad(weapon.turnRate) * DT
-			if weapon.type == "HOMING" then
+			if weapon.type == "HOMING" and weapon.launch == "vertical" then
+				-- climb, pitch over, then navigate (S-42)
+				local turned = bit32.band(c.pFlags[id], TURNED) ~= 0
+				pvx, pvy, pvz, turned = Guidance.vertical(x0, y0, z0, pvx, pvy, pvz, tx - tvx * DT, ty, tz - tvz * DT, tvx, 0, tvz, maxTurn, DT, turned)
+				if turned then
+					c.pFlags[id] = bit32.bor(c.pFlags[id], TURNED)
+				end
+			elseif weapon.type == "HOMING" then
 				-- the target already moved this tick (Movement runs first):
 				-- navigate against where it was when the missile's step starts
 				pvx, pvy, pvz = Guidance.pn(x0, y0, z0, pvx, pvy, pvz, tx - tvx * DT, ty, tz - tvz * DT, tvx, 0, tvz, maxTurn, DT)

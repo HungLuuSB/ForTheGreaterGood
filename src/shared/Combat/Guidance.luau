@@ -119,6 +119,47 @@ function Guidance.decoy(px: number, py: number, pz: number, vx: number, vy: numb
 	return nx, ny, nz, true
 end
 
+-- Vertically launched missiles (S-42, client request 20; IRIS-T SLM style)
+-- leave the launcher straight up. Until their target is first within
+-- HANDOVER degrees of the nose they turn straight toward it at PITCH_OVER times their
+-- turnRate (thrust vectoring during the boost: at plain turnRate a 360
+-- studs/s missile turning 90°/s needs a 229-stud radius and can't reach a
+-- target closer than that); from then on, proportional navigation at
+-- turnRate. `turned` is that
+-- state: false at launch, and the function returns its new value, so a
+-- client stepping its own copy keeps it per missile. Target position at the
+-- start of the step, as for `pn`.
+Guidance.PITCH_OVER = 3 -- turn-rate factor while a vertical launch pitches over
+Guidance.HANDOVER = 15 -- degrees: a vertical launch hands over to proportional navigation once the target is this close to its nose
+
+function Guidance.vertical(
+	px: number,
+	py: number,
+	pz: number,
+	vx: number,
+	vy: number,
+	vz: number,
+	tx: number,
+	ty: number,
+	tz: number,
+	tvx: number,
+	tvy: number,
+	tvz: number,
+	maxTurn: number,
+	dt: number,
+	turned: boolean
+): (number, number, number, boolean)
+	if not turned then
+		if not Guidance.inCone(px, py, pz, vx, vy, vz, tx, ty, tz, math.rad(Guidance.HANDOVER)) then
+			local nx, ny, nz = Ballistics.steer(vx, vy, vz, tx - px, ty - py, tz - pz, maxTurn * Guidance.PITCH_OVER)
+			return nx, ny, nz, false
+		end
+		turned = true
+	end
+	local nx, ny, nz = Guidance.pn(px, py, pz, vx, vy, vz, tx, ty, tz, tvx, tvy, tvz, maxTurn, dt)
+	return nx, ny, nz, true
+end
+
 -- A target's velocity from the state the wire and the sim share: heading
 -- (0 = +Z) and ground speed. Aircraft climbs are left out.
 function Guidance.velocity(heading: number, speed: number): (number, number)
