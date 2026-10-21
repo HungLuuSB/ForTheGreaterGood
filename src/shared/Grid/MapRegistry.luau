@@ -7,6 +7,14 @@
 --   "gen:<seed>:<cells>" TestMap.generate hills and lakes
 --   "wall:<cells>"      flat land split by a north–south water wall (3 cells
 --                       thick) with one 6-cell gap near the north end
+--   "ridge:<cells>"     flat land split by a north–south ridge (3 cells thick,
+--                       20 studs above the land) with one 6-cell gap near the north end
+--                       (line-of-fire tests, S-32)
+--   "beach:<cells>"     land (height 10) in the west half sloping gently
+--                       (about 10°) into a sea 30 studs deep in the east
+--                       (water surface at 10; amphibious tests, S-39)
+--   "terrain:<cells>"   flat land: grass in the west half, sand in the east
+--                       half, a road along the middle row (terrain tests, S-37)
 --   "start:<cells>"     flat land with two starts (west, east), four supply
 --                       deposits (value 4) around each start, two in the middle
 --   "skirmish:<cells>"  "start" plus expansions for the skirmish AI: two
@@ -17,12 +25,14 @@
 --   "mapgen:<layout>:<seed>:<cells>[:<water>[:<symmetry>]]"
 --                       a MapGen skirmish map (guide 5.5, S-15): layout 1v1,
 --                       2v2 or ffa4; water none (default), lakes or sea
---   "map:<name>"        a named MapGen map (MapRegistry.NAMED below)
+--   "map:<name>"        a named MapGen map (MapRegistry.NAMED below), or a
+--                       hand-made one (MapRegistry.HANDMADE: "map:normandy", S-53)
 --
 -- Baked Studio maps (guide 5.4) will be added as "baked:<name>".
 
 local Layers = require("./Layers")
 local MapGen = require("./MapGen")
+local Normandy = require("./Normandy")
 local TestMap = require("./TestMap")
 
 local MapRegistry = {}
@@ -37,9 +47,19 @@ MapRegistry.NAMED = table.freeze({
 	crossroads = { name = "Crossroads", options = { seed = 14, cells = 192, layout = "ffa4", water = "sea" } },
 } :: { [string]: Named })
 
--- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs.
+-- Hand-made maps (S-53): built by their own module, not MapGen.
+export type Handmade = { name: string, build: () -> Layers.Layers }
+MapRegistry.HANDMADE = table.freeze({
+	normandy = { name = "Normandy", build = Normandy.build },
+} :: { [string]: Handmade })
+
+-- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs (and for
+-- hand-made maps).
 function MapRegistry.genOptions(mapId: string): MapGen.Options?
 	local name = string.match(mapId, "^map:([%w_]+)$")
+	if name and MapRegistry.HANDMADE[name] then
+		return nil
+	end
 	if name then
 		local named = MapRegistry.NAMED[name]
 		if named == nil then
@@ -91,6 +111,31 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 			return 10, if inWall and not inGap then 10 else 0
 		end)
 	end
+	local ridgeCells = string.match(mapId, "^ridge:(%d+)$")
+	if ridgeCells then
+		local n = tonumber(ridgeCells) :: number
+		local mid = n // 2
+		return TestMap.build(n, n, function(cx, cz)
+			local inRidge = cx >= mid - 1 and cx <= mid + 1 and not (cz >= 4 and cz < 10)
+			return if inRidge then 30 else 10, 0
+		end)
+	end
+	local beachCells = string.match(mapId, "^beach:(%d+)$")
+	if beachCells then
+		local n = tonumber(beachCells) :: number
+		return TestMap.build(n, n, function(cx)
+			local h = math.max(-20, 10 - math.max(0, cx - n // 2) * 1.5)
+			return h, math.max(0, 10 - h)
+		end)
+	end
+	local terrainCells = string.match(mapId, "^terrain:(%d+)$")
+	if terrainCells then
+		local n = tonumber(terrainCells) :: number
+		local T = Layers.Terrain
+		return TestMap.build(n, n, function(cx, cz)
+			return 10, 0, if cz == n // 2 then T.ROAD elseif cx >= n // 2 then T.SAND else T.GRASS
+		end)
+	end
 	local startCells = string.match(mapId, "^start:(%d+)$")
 	if startCells then
 		local n = tonumber(startCells) :: number
@@ -137,6 +182,10 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 			end
 			return -10, 20
 		end)
+	end
+	local handmade = string.match(mapId, "^map:([%w_]+)$")
+	if handmade and MapRegistry.HANDMADE[handmade] then
+		return MapRegistry.HANDMADE[handmade].build()
 	end
 	local options = MapRegistry.genOptions(mapId)
 	if options then

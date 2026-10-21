@@ -1,7 +1,11 @@
 --!strict
 -- Lune entry for the headless tests. From the project root:
---   lune run test            runs every *.spec.luau under src/server/Tests
---   lune run test <filter>   runs only specs whose path contains <filter>
+--   lune run test            the fast suite: every *.spec.luau under
+--                            src/server/Tests, without the slow tests (for
+--                            every commit)
+--   lune run test <filter>   only specs whose path contains <filter>
+--   lune run test_slow [filter]  only the slow tests (AI matches, fairness),
+--                            run by the integration check
 -- Exits with code 1 if anything failed.
 
 local fs = require("@lune/fs")
@@ -32,6 +36,7 @@ local function collect(dir: string, rel: string, out: { string })
 	end
 end
 
+local mode: RunAll.Mode = (_G :: any).FTGG_TEST_MODE or "fast"
 local filter = process.args[1]
 local paths: { string } = {}
 collect(TESTS_DIR, "", paths)
@@ -58,5 +63,5 @@ if #specs == 0 then
 	process.exit(1)
 end
 
-local summary = RunAll.run(specs)
+local summary = RunAll.run(specs, mode)
 process.exit(if summary.failed > 0 then 1 else 0)

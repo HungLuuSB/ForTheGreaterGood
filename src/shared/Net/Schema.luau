@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 9 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team
+Schema.PROTOCOL_VERSION = 20 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -98,6 +98,7 @@ Schema.CmdType = table.freeze({
 	TOGGLE = 13,
 	CAMERA = 14,
 	REPEAT = 15, -- factories: repeat the build queue on / off (S-13)
+	CANCEL = 16, -- unfinished frames: cancel them; factories: drop queue item `value` (0 = all), refunding what was spent (S-35)
 })
 
 Schema.CmdFlag = table.freeze({
@@ -139,12 +140,14 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.TOGGLE] = "value",
 	[CT.CAMERA] = "camera",
 	[CT.REPEAT] = "value",
+	[CT.CANCEL] = "value",
 }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
 	[CT.SET_MOVE_STATE] = 2,
 	[CT.TOGGLE] = 1,
 	[CT.REPEAT] = 1,
+	[CT.CANCEL] = 50, -- a factory queue holds at most 50 items (D62)
 }
 
 export type Command = {
@@ -367,10 +370,20 @@ end
 
 --------------------------------------------------------------------------------
 -- State (S → C, reliable): only the fields that changed
---   unitId u16 | mask u8 | [health u8] | [state u16] | [aim] | [weapon u16] | [build u8] | [targets]
+--   unitId u16 | mask u8 | [health u8] | [state u16] | [aim] | [weapon u16] | [build u8] | [targets] | [stock]
 --   aim = slotMask u8 (bit i-1 = weapon slot i, 1..8) + yaw u8, pitch u8 per set bit
 --   targets = slotMask u8 + targetId u16 per set bit (0 = none); sent only to
 --             the unit's owner (protocol 8, S-16)
+--   stock   = slotMask u8 + (count u8, progress u8) per set bit: missiles in
+--             stock of the weapon slots with a stockpile, and the next
+--             missile's build progress (0..255 of 1; protocol 17, S-49); sent
+--             only to the unit's owner (protocol 15, S-47)
+--   owner   = ownerMask u8, then the fields it sets (protocol 20, S-61; only
+--             to the unit's owner):
+--               QUEUE 1   count u8 (0..50) | progress u8 (the head item,
+--                         0..255 of 1) | defIndex u16 × count
+--               STATES 2  u8: fire state bits 0–1, move state bits 2–3
+--               AMMO 4    rounds u8 | max u8
 --------------------------------------------------------------------------------
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
@@ -392,14 +405,20 @@ Schema.StateField = table.freeze({
 	WEAPON = 8,
 	BUILD = 16,
 	TARGET = 32, -- own units only: each weapon's target (protocol 8, S-16)
+	STOCK = 64, -- own units only: missiles in stock per stockpile slot (protocol 15, S-47)
+	OWNER = 128, -- own units only: factory queue, fire / move state, ammo (protocol 20, S-61)
 })
-local STATE_MASK_ALL = 63
+local STATE_MASK_ALL = 255
+Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4 })
+local OWNER_MASK_ALL = 7
+Schema.MAX_QUEUE = 50 -- items a factory queue can hold (BuildState.MAX_QUEUE)
 local SF = Schema.StateField
 
 Schema.WeaponState = table.freeze({ IDLE = 0, AIMING = 1, READY = 2, RESTORING = 3 })
 
 export type Aim = { slot: number, yaw: number, pitch: number }
 export type Target = { slot: number, targetId: number } -- targetId 0 = no target
+export type Stock = { slot: number, count: number, progress: number } -- missiles in stock (0..255); next one's progress 0..255 (S-49)
 
 export type State = {
 	unitId: number,
@@ -409,6 +428,14 @@ export type State = {
 	weapon: number?, -- u16, 2 bits per slot; see packWeaponStates / weaponStateAt
 	build: number?, -- 0..255 build progress
 	targets: { Target }?, -- own units only (S-16): ascending slot order; targetId 0 = none
+	stock: { Stock }?, -- own units only (S-47): stockpile slots, ascending slot order
+	-- own units only (S-61, protocol 20): each optional
+	queue: { number }?, -- factory queue: unit def indices, the head in production
+	queueProgress: number?, -- 0..255: the head item's progress (with `queue`)
+	fireState: number?, -- Schema.FireState (with `moveState`: the STATES field)
+	moveState: number?, -- Schema.MoveState
+	ammo: number?, -- rounds left (with `maxAmmo`: the AMMO field)
+	maxAmmo: number?,
 }
 
 -- {slot1, slot2, ...} WeaponState values → the u16 weapon field.
@@ -445,6 +472,22 @@ function Schema.encodeState(w: Writer, rec: State)
 	end
 	if rec.targets ~= nil then
 		mask += SF.TARGET
+	end
+	if rec.stock ~= nil then
+		mask += SF.STOCK
+	end
+	local owner = 0
+	if rec.queue ~= nil then
+		owner += Schema.OwnerField.QUEUE
+	end
+	if rec.fireState ~= nil or rec.moveState ~= nil then
+		owner += Schema.OwnerField.STATES
+	end
+	if rec.ammo ~= nil then
+		owner += Schema.OwnerField.AMMO
+	end
+	if owner ~= 0 then
+		mask += SF.OWNER
 	end
 	if mask == 0 then
 		error("Schema: state record has no fields", 2)
@@ -501,6 +544,50 @@ function Schema.encodeState(w: Writer, rec: State)
 			w:writeU16(tg.targetId) -- 0 = none
 		end
 	end
+	if rec.stock ~= nil then
+		local slotMask = 0
+		local lastSlot = 0
+		for _, st in rec.stock do
+			if st.slot ~= math.floor(st.slot) or st.slot <= lastSlot or st.slot > Schema.MAX_WEAPONS then
+				error("Schema: stock slots must be ascending within 1..MAX_WEAPONS", 2)
+			end
+			slotMask += 2 ^ (st.slot - 1)
+			lastSlot = st.slot
+		end
+		if slotMask == 0 then
+			error("Schema: stock list is empty", 2)
+		end
+		w:writeU8(slotMask)
+		for _, st in rec.stock do
+			w:writeU8(st.count)
+			w:writeU8(st.progress)
+		end
+	end
+	if owner ~= 0 then
+		w:writeU8(owner)
+		if rec.queue ~= nil then
+			local q = rec.queue
+			if #q > Schema.MAX_QUEUE then
+				error(`Schema: queue of {#q} items (at most {Schema.MAX_QUEUE})`, 2)
+			end
+			w:writeU8(#q)
+			w:writeU8(rec.queueProgress or 0)
+			for _, defIndex in q do
+				writeId(w, defIndex, "defIndex")
+			end
+		end
+		if band(owner, Schema.OwnerField.STATES) ~= 0 then
+			local fs, ms = required(rec.fireState, "fireState"), required(rec.moveState, "moveState")
+			if fs > 3 or ms > 3 then
+				error(`Schema: fire / move state {fs} / {ms} outside 0..3`, 2)
+			end
+			w:writeU8(fs + ms * 4)
+		end
+		if rec.ammo ~= nil then
+			w:writeU8(rec.ammo)
+			w:writeU8(required(rec.maxAmmo, "maxAmmo"))
+		end
+	end
 end
 
 function Schema.decodeState(r: Reader): State
@@ -551,13 +638,60 @@ function Schema.decodeState(r: Reader): State
 		end
 		rec.targets = targets
 	end
+	if band(mask, SF.STOCK) ~= 0 then
+		local slotMask = r:readU8()
+		if slotMask == 0 then
+			fail(r, "stock slot mask is empty")
+		end
+		local stock: { Stock } = {}
+		for slot = 1, Schema.MAX_WEAPONS do
+			if band(slotMask, 2 ^ (slot - 1)) ~= 0 then
+				local count = r:readU8()
+				table.insert(stock, { slot = slot, count = count, progress = r:readU8() })
+			end
+		end
+		rec.stock = stock
+	end
+	if band(mask, SF.OWNER) ~= 0 then
+		local owner = r:readU8()
+		if owner == 0 then
+			fail(r, "owner field mask is empty")
+		end
+		if band(owner, OWNER_MASK_ALL) ~= owner then
+			fail(r, `owner field mask has reserved bits: {owner}`)
+		end
+		if band(owner, Schema.OwnerField.QUEUE) ~= 0 then
+			local count = r:readU8()
+			if count > Schema.MAX_QUEUE then
+				fail(r, `queue of {count} items`)
+			end
+			rec.queueProgress = r:readU8()
+			local q = table.create(count)
+			for i = 1, count do
+				q[i] = readId(r, "defIndex")
+			end
+			rec.queue = q
+		end
+		if band(owner, Schema.OwnerField.STATES) ~= 0 then
+			local b = r:readU8()
+			if b > 15 then
+				fail(r, `states byte has reserved bits: {b}`)
+			end
+			rec.fireState, rec.moveState = b % 4, b // 4
+		end
+		if band(owner, Schema.OwnerField.AMMO) ~= 0 then
+			rec.ammo = r:readU8()
+			rec.maxAmmo = r:readU8()
+		end
+	end
 	return rec
 end
 
 --------------------------------------------------------------------------------
 -- Strategic (S → C, unreliable, 2–4 Hz): every known unit, minimap level
---   unitId u16 | cell u16 | icon 6 bits | team 3 bits | flags 7 bits  = 6 bytes
---   Bits are packed LSB-first: icon = bits 0–5, team = 6–8, flags = 9–15.
+--   unitId u16 | cell u16 | icon 8 bits | team 3 bits | flags 5 bits  = 6 bytes
+--   Bits are packed LSB-first: icon = bits 0–7, team = 8–10, flags = 11–15
+--   (protocol 19, S-58: the icon is the unit's def index, Shared/Net/Icons).
 --   Team travels as team - 1 (teams are 1..8).
 --------------------------------------------------------------------------------
 
@@ -571,12 +705,12 @@ Schema.StrategicFlag = table.freeze({
 	GHOST = 8, -- structure seen earlier, now out of sight
 	TRACKED = 16, -- radar blip under fire-control radar: wobbles less, and the icon is the real one (D104)
 })
-local STRATEGIC_FLAGS_MASK = 31 -- bits 5..6 reserved
+local STRATEGIC_FLAGS_MASK = 31 -- all 5 flag bits are in use
 
 export type Strategic = {
 	unitId: number,
 	cell: number,
-	icon: number, -- 0..63, 0 = unknown blip
+	icon: number, -- 0..255: the unit's def index (Icons), 0 = unknown blip
 	team: number, -- 1..8
 	flags: number,
 }
@@ -590,9 +724,9 @@ function Schema.encodeStrategic(w: Writer, rec: Strategic)
 	end
 	writeId(w, rec.unitId, "unitId")
 	w:writeU16(rec.cell)
-	w:writeBits(rec.icon, 6)
+	w:writeBits(rec.icon, 8)
 	w:writeBits(rec.team - 1, 3)
-	w:writeBits(rec.flags, 7)
+	w:writeBits(rec.flags, 5)
 	w:flushBits()
 end
 
@@ -600,9 +734,9 @@ function Schema.decodeStrategic(r: Reader): Strategic
 	r.context = "strategic record"
 	local unitId = readId(r, "unitId")
 	local cell = r:readU16()
-	local icon = r:readBits(6)
+	local icon = r:readBits(8)
 	local team = r:readBits(3) + 1
-	local flags = r:readBits(7)
+	local flags = r:readBits(5)
 	r:alignBits()
 	if band(flags, STRATEGIC_FLAGS_MASK) ~= flags then
 		fail(r, `flags has reserved bits: {flags}`)
@@ -624,16 +758,62 @@ end
 --   SPAWN_PROJ  projId u16 | weaponDefIndex u16 | pos | vel
 --               | targetId u16 (0 = none or not shown)                        = 19 bytes
 --   IMPACT      projId u16 | pos                                              =  9 bytes
---   DECOYED     projId u16 | pos | vel (after the decoy turn)                 = 15 bytes
+--   DECOYED     projId u16 | pos | vel | decoy pos (the point it follows)
+--               | decoyTicks u8 (ticks it still follows it; protocol 11)
+--               | countermeasure u8 (Schema.Countermeasure; protocol 13)     = 23 bytes
 --   LOST_LOCK   projId u16 | pos | vel (the missile flies on unguided)       = 15 bytes
+--   WRECK       wreckId u16 | defIndex u16 | cell u16 | offX u8 | offZ u8
+--               | heading u8                                                  = 10 bytes
+--   WRECK_GONE  wreckId u16                                                   =  3 bytes
+--   SIGHT_ROWS  firstRow u8 | rowCount u8 (1..) | rowBytes u8 (1..)
+--               | rowCount × rowBytes bytes: one bit per sensor cell, row by
+--               row, bit (x % 8) of byte x // 8; 1 = in the ally team's sight
+--                                                          = 4 + rows × rowBytes
+--   SHOT        hit u8 (0 / 1) | start pos | end pos: a hitscan / beam shot
+--               whose shooter the player doesn't have (protocol 14)        = 14 bytes
+--   INTERCEPTOR projId u16 | weaponDefIndex u16 | pos | vel | targetProjId u16:
+--               SPAWN_PROJ of a missile fired at a strategic missile; the
+--               target is a projectile (0 = one the client doesn't have;
+--               protocol 16)                                                  = 19 bytes
+--   LAUNCH_WARNING projId u16 | pos: a strategic missile launched from pos;
+--               every player gets it, wherever it is (protocol 16)            =  9 bytes
+--   INTERCEPTED projId u16 | pos: a strategic missile destroyed in flight; it
+--               doesn't detonate (protocol 16)                                =  9 bytes
+--   SPAWN_STRATEGIC as SPAWN_PROJ (targetId 0) | goal pos: a strategic missile
+--               and the spot it flies to (Shared/Combat/Lofted; protocol 18) = 25 bytes
+--   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
+--               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
 -- vel = vx i16 | vy i16 | vz i16 (eighth studs per second)                     6 bytes
 --------------------------------------------------------------------------------
 
-Schema.EventKind = table.freeze({ ENTER = 1, LEAVE = 2, DEATH = 3, FIRE = 4, SPAWN_PROJ = 5, IMPACT = 6, DECOYED = 7, LOST_LOCK = 8 })
+Schema.EventKind = table.freeze({
+	ENTER = 1,
+	LEAVE = 2,
+	DEATH = 3,
+	FIRE = 4,
+	SPAWN_PROJ = 5,
+	IMPACT = 6,
+	DECOYED = 7,
+	LOST_LOCK = 8,
+	WRECK = 9, -- protocol 10 (S-26)
+	WRECK_GONE = 10,
+	SIGHT_ROWS = 11,
+	SIGHT_CELLS = 12,
+	SHOT = 13, -- protocol 14 (S-43)
+	INTERCEPTOR = 14, -- protocol 16 (S-48)
+	LAUNCH_WARNING = 15,
+	INTERCEPTED = 16,
+	SPAWN_STRATEGIC = 17, -- protocol 18 (S-51)
+})
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 15, [8] = 15 })
+-- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25 })
+Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
+Schema.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- DECOYED: what defeated the missile (protocol 13)
+Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
+Schema.SIGHT_MAX_ROW_BYTES = 640 -- per SIGHT_ROWS record (rowCount × rowBytes)
 Schema.FIRE_HIT = 16 -- FIRE slot byte: bit 4
 Schema.Y_SCALE = 8 -- pos.y and vel units per stud
 
@@ -666,8 +846,47 @@ export type Event = {
 	vz: number?,
 	-- SPAWN_PROJ
 	weaponIndex: number?,
-	targetId: number?, -- 0 = none
+	targetId: number?, -- 0 = none; INTERCEPTOR: the target projectile's ID
+	-- DECOYED: the decoy point (a pos) and the ticks the missile still follows it
+	decoyCell: number?,
+	decoyOffX: number?,
+	decoyOffZ: number?,
+	decoyY: number?,
+	decoyTicks: number?,
+	countermeasure: number?, -- DECOYED: Schema.Countermeasure
+	-- WRECK, WRECK_GONE: wreckId; WRECK: defIndex, cell, offX, offZ, heading
+	-- SIGHT_ROWS
+	firstRow: number?, -- 0-based sensor row
+	rowCount: number?,
+	rowBytes: number?,
+	bits: buffer?, -- rowCount × rowBytes
+	-- SIGHT_CELLS: cell index, + SIGHT_SEEN when the cell is now in sight
+	cells: { number }?,
+	-- SPAWN_STRATEGIC: the goal (a pos)
+	goalCell: number?,
+	goalOffX: number?,
+	goalOffZ: number?,
+	goalY: number?,
+	-- SHOT: the start pos (end pos in cell / offX / offZ / y; hit as FIRE)
+	fromCell: number?,
+	fromOffX: number?,
+	fromOffZ: number?,
+	fromY: number?,
 }
+
+local function isProjEvent(kind: number): boolean
+	return (kind >= EK.SPAWN_PROJ and kind <= EK.LOST_LOCK) or (kind >= EK.INTERCEPTOR and kind <= EK.SPAWN_STRATEGIC)
+end
+
+-- Encoded size of an event record.
+function Schema.eventBytes(e: Event): number
+	if e.kind == EK.SIGHT_ROWS then
+		return 4 + (e.rowCount :: number) * (e.rowBytes :: number)
+	elseif e.kind == EK.SIGHT_CELLS then
+		return 2 + 2 * #(e.cells :: { number })
+	end
+	return Schema.EVENT_BYTES[e.kind]
+end
 
 local function writePos(w: Writer, e: Event)
 	w:writeU16(required(e.cell, "cell"))
@@ -702,11 +921,51 @@ end
 
 function Schema.encodeEvent(w: Writer, e: Event)
 	local kind = e.kind
-	if Schema.EVENT_BYTES[kind] == nil then
+	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS then
 		error(`Schema: unknown event kind {kind}`, 2)
 	end
 	w:writeU8(kind)
-	if kind >= EK.SPAWN_PROJ then
+	if kind == EK.SIGHT_ROWS then
+		local rows, rowBytes = required(e.rowCount, "rowCount"), required(e.rowBytes, "rowBytes")
+		local bits = required(e.bits, "bits")
+		if rows < 1 or rows > 255 or rowBytes < 1 or rows * rowBytes > Schema.SIGHT_MAX_ROW_BYTES or buffer.len(bits) ~= rows * rowBytes then
+			error(`Schema: SIGHT_ROWS of {rows} rows × {rowBytes} bytes ({buffer.len(bits)} given)`, 2)
+		end
+		w:writeU8(required(e.firstRow, "firstRow"))
+		w:writeU8(rows)
+		w:writeU8(rowBytes)
+		w:writeBytes(bits)
+		return
+	elseif kind == EK.SIGHT_CELLS then
+		local cells = required(e.cells, "cells")
+		if #cells < 1 or #cells > Schema.SIGHT_MAX_CELLS then
+			error(`Schema: SIGHT_CELLS needs 1..{Schema.SIGHT_MAX_CELLS} cells, got {#cells}`, 2)
+		end
+		w:writeU8(#cells)
+		for _, c in cells do
+			w:writeU16(c)
+		end
+		return
+	elseif kind == EK.SHOT then
+		w:writeU8(if e.hit then 1 else 0)
+		w:writeU16(required(e.fromCell, "fromCell"))
+		w:writeU8(required(e.fromOffX, "fromOffX"))
+		w:writeU8(required(e.fromOffZ, "fromOffZ"))
+		w:writeI16(required(e.fromY, "fromY"))
+		writePos(w, e)
+		return
+	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
+		writeId(w, required(e.wreckId, "wreckId"), "wreckId")
+		if kind == EK.WRECK then
+			writeId(w, required(e.defIndex, "defIndex"), "defIndex")
+			w:writeU16(required(e.cell, "cell"))
+			w:writeU8(required(e.offX, "offX"))
+			w:writeU8(required(e.offZ, "offZ"))
+			w:writeU8(required(e.heading, "heading"))
+		end
+		return
+	end
+	if isProjEvent(kind) then
 		writeId(w, required(e.projId, "projId"), "projId")
 	else
 		writeId(w, required(e.unitId, "unitId"), "unitId")
@@ -736,27 +995,88 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		end
 		w:writeU8(slot + (if e.hit then Schema.FIRE_HIT else 0))
 		writePos(w, e)
-	elseif kind == EK.SPAWN_PROJ then
+	elseif kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR or kind == EK.SPAWN_STRATEGIC then
 		writeId(w, required(e.weaponIndex, "weaponIndex"), "weaponIndex")
 		writePos(w, e)
 		writeVel(w, e)
 		w:writeU16(e.targetId or 0)
-	elseif kind == EK.IMPACT then
+		if kind == EK.SPAWN_STRATEGIC then
+			w:writeU16(required(e.goalCell, "goalCell"))
+			w:writeU8(required(e.goalOffX, "goalOffX"))
+			w:writeU8(required(e.goalOffZ, "goalOffZ"))
+			w:writeI16(required(e.goalY, "goalY"))
+		end
+	elseif kind == EK.IMPACT or kind == EK.LAUNCH_WARNING or kind == EK.INTERCEPTED then
 		writePos(w, e)
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		writePos(w, e)
 		writeVel(w, e)
+		if kind == EK.DECOYED then
+			w:writeU16(required(e.decoyCell, "decoyCell"))
+			w:writeU8(required(e.decoyOffX, "decoyOffX"))
+			w:writeU8(required(e.decoyOffZ, "decoyOffZ"))
+			w:writeI16(required(e.decoyY, "decoyY"))
+			w:writeU8(required(e.decoyTicks, "decoyTicks"))
+			local cm = required(e.countermeasure, "countermeasure")
+			if cm < 1 or cm > 3 then
+				error(`Schema: countermeasure {cm} outside 1..3`, 2)
+			end
+			w:writeU8(cm)
+		end
 	end
 end
 
 function Schema.decodeEvent(r: Reader): Event
 	r.context = "event record"
 	local kind = r:readU8()
-	if Schema.EVENT_BYTES[kind] == nil then
+	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS then
 		fail(r, `unknown event kind {kind}`)
 	end
 	local e: Event = { kind = kind }
-	if kind >= EK.SPAWN_PROJ then
+	if kind == EK.SIGHT_ROWS then
+		e.firstRow = r:readU8()
+		local rows, rowBytes = r:readU8(), r:readU8()
+		if rows < 1 or rowBytes < 1 or rows * rowBytes > Schema.SIGHT_MAX_ROW_BYTES then
+			fail(r, `SIGHT_ROWS of {rows} rows × {rowBytes} bytes`)
+		end
+		e.rowCount, e.rowBytes = rows, rowBytes
+		e.bits = r:readBuffer(rows * rowBytes)
+		return e
+	elseif kind == EK.SIGHT_CELLS then
+		local count = r:readU8()
+		if count < 1 then
+			fail(r, "SIGHT_CELLS with no cells")
+		end
+		local cells = table.create(count)
+		for i = 1, count do
+			cells[i] = r:readU16()
+		end
+		e.cells = cells
+		return e
+	elseif kind == EK.SHOT then
+		local hit = r:readU8()
+		if hit > 1 then
+			fail(r, `SHOT hit byte {hit}`)
+		end
+		e.hit = hit == 1
+		e.fromCell = r:readU16()
+		e.fromOffX = r:readU8()
+		e.fromOffZ = r:readU8()
+		e.fromY = r:readI16()
+		readPos(r, e)
+		return e
+	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
+		e.wreckId = readId(r, "wreckId")
+		if kind == EK.WRECK then
+			e.defIndex = readId(r, "defIndex")
+			e.cell = r:readU16()
+			e.offX = r:readU8()
+			e.offZ = r:readU8()
+			e.heading = r:readU8()
+		end
+		return e
+	end
+	if isProjEvent(kind) then
 		e.projId = readId(r, "projId")
 	else
 		e.unitId = readId(r, "unitId")
@@ -791,16 +1111,34 @@ function Schema.decodeEvent(r: Reader): Event
 		e.slot = slot
 		e.hit = band(b, Schema.FIRE_HIT) ~= 0
 		readPos(r, e)
-	elseif kind == EK.SPAWN_PROJ then
+	elseif kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR or kind == EK.SPAWN_STRATEGIC then
 		e.weaponIndex = readId(r, "weaponIndex")
 		readPos(r, e)
 		readVel(r, e)
 		e.targetId = r:readU16()
-	elseif kind == EK.IMPACT then
+		if kind == EK.SPAWN_STRATEGIC then
+			e.goalCell = r:readU16()
+			e.goalOffX = r:readU8()
+			e.goalOffZ = r:readU8()
+			e.goalY = r:readI16()
+		end
+	elseif kind == EK.IMPACT or kind == EK.LAUNCH_WARNING or kind == EK.INTERCEPTED then
 		readPos(r, e)
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		readPos(r, e)
 		readVel(r, e)
+		if kind == EK.DECOYED then
+			e.decoyCell = r:readU16()
+			e.decoyOffX = r:readU8()
+			e.decoyOffZ = r:readU8()
+			e.decoyY = r:readI16()
+			e.decoyTicks = r:readU8()
+			local cm = r:readU8()
+			if cm < 1 or cm > 3 then
+				fail(r, `countermeasure {cm} outside 1..3`)
+			end
+			e.countermeasure = cm
+		end
 	end
 	return e
 end

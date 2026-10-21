@@ -21,6 +21,14 @@
 --            the Build commands; done when the builder is idle again.
 --            Repair also heals damaged finished units (Build, S-4).
 --   attackGround  bombers' attack-ground (D100); kept until replaced.
+-- Idle units act on their move state (guide 10.1, S-34; Orders.autoStep):
+-- Hold Position never moves on its own; Maneuver (default) attack-moves
+-- toward the nearest visible enemy it can damage (Fire at Will units only)
+-- when no weapon has a shot
+-- (none in range, or terrain in the way), as far as MANEUVER_LEASH studs
+-- from its anchor (where it was last sent), and walks back when done;
+-- Roam chases up to ROAM_CHASE studs beyond its range and stays there.
+-- These orders are marked `auto`; any command replaces them and re-anchors.
 -- Units leaving a move together (same command, same tick) move as a group
 -- (one Nav order, formation slots). Aircraft away rearming pause their
 -- queue and restart the head order when they fly again.
@@ -32,7 +40,9 @@
 
 local Air = require("./Air")
 local Build = require("./Build")
+local ContactGrid = require("./Combat/ContactGrid")
 local Defs = require("@shared/Defs/Defs")
+local Hash = require("@shared/Util/Hash")
 local Lifecycle = require("./Lifecycle")
 local Nav = require("./Nav")
 local OrdersState = require("./OrdersState")
@@ -48,6 +58,10 @@ Orders.GUARD_RADIUS = 80 -- studs
 Orders.CHASE_STEP = 24 -- studs: re-aim a chase move when the target moved this far
 Orders.CHASE_EVERY = 15 -- ticks between chase moves
 Orders.ATTACK_REACH = 0.9 -- of the unit's longest weapon range
+Orders.AUTO_PERIOD = 15 -- ticks between an idle unit's move-state checks (staggered by ID)
+Orders.MANEUVER_LEASH = 150 -- studs a Maneuver unit goes from its anchor to get a shot
+Orders.ROAM_CHASE = 500 -- studs beyond its range a Roam unit looks for something to chase
+Orders.ANCHOR_SLACK = 24 -- studs: a Maneuver unit farther than this from its anchor walks back
 
 export type OrderSpec = {
 	kind: OrdersState.Kind,
@@ -101,8 +115,11 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 	local batch = o.nextBatch
 	o.nextBatch += 1
 	for _, id in ids do
+		o.anchorX[id], o.anchorZ[id] = nil, nil -- re-anchored where this leaves it (S-34)
+		Air.release(sim, id) -- a docked aircraft launches (S-36)
 		local d = def(sim, id)
-		if d.domain == "structure" then
+		-- structures take no orders, except a silo's attack-ground (S-48)
+		if d.domain == "structure" and not (spec.kind == "attackGround" and Air.isManualFire(sim, d)) then
 			if isFactory(d) and isMoveLike(spec.kind) and spec.x then
 				o.rallyKind[id] = if spec.kind == "move" then "move" else "fight"
 				o.rallyX[id], o.rallyZ[id] = spec.x :: number, spec.z :: number
@@ -141,6 +158,7 @@ function Orders.stop(sim: Types.Sim, id: number)
 	if o.queue[id] then
 		o.queue[id] = nil
 	end
+	o.anchorX[id], o.anchorZ[id] = nil, nil
 	cancelCurrent(sim, id)
 	halt(sim, id)
 end
@@ -189,7 +207,7 @@ local function engaged(sim: Types.Sim, id: number): boolean
 	for slot = 1, w.weaponCount[id] do
 		local key = World.slotKey(id, slot)
 		local t = w.wTarget[key]
-		if t ~= 0 then
+		if t ~= 0 and w.wBlocked[key] == 0 then -- terrain in the way: not engaged, move on (S-32)
 			local kx, kz, level, defIndex = Sensors.knownTarget(sim, ally, t, w.wTargetGen[key])
 			if kx ~= nil and kz ~= nil then
 				local radius = if defIndex and Sensors.typeKnown(sim, ally, t, level) then profiles[defIndex].radius else 0
@@ -234,13 +252,16 @@ local function start(sim: Types.Sim, id: number, h: Order): boolean
 	elseif kind == "build" then
 		Build.commandBuild(sim, { id }, h.defIndex :: number, h.x :: number, h.z :: number, h.facing or 0)
 	elseif kind == "attackGround" then
-		if not Air.isBomber(sim, def(sim, id)) then
-			return false -- only bombers take it: done
+		if not Air.isBomber(sim, def(sim, id)) and not Air.isManualFire(sim, def(sim, id)) then
+			return false -- only bombers and silos take it: done
 		end
 		Air.attackGround(sim, id, h.x :: number, h.z :: number)
 	elseif kind == "guard" then
 		local t = h.target :: number
 		local td = def(sim, t)
+		if def(sim, id).domain == "air" and td.rearmPads and Air.recover(sim, id, t) then
+			return false -- guarding a carrier or airfield: land there, it is home (S-36)
+		end
 		if def(sim, id).buildPower and (w.buildProgress[t] < 1 or isFactory(td)) then
 			Build.commandAssist(sim, { id }, t)
 		end
@@ -302,10 +323,142 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		end
 		return true
 	elseif kind == "attackGround" then
-		return true -- until replaced
+		-- bombers: until replaced; a silo: until it launched (S-48)
+		return Air.isBomber(sim, def(sim, id)) or sim.air.groundX[id] ~= nil
 	end
 	-- repair / reclaim / build
 	return not builderIdle(sim, id)
+end
+
+--------------------------------------------------------------------------------
+-- Move states (guide 10.1, S-34)
+--------------------------------------------------------------------------------
+
+local VISIBLE = Sensors.Level.VISIBLE
+local MANEUVER, ROAM = World.MoveState.MANEUVER, World.MoveState.ROAM
+local candidates: { number } = {}
+local rebuiltAt: { [any]: number } = setmetatable({}, { __mode = "k" }) :: any -- contact grid → tick rebuilt for chases
+
+-- Replaces the unit's queue with one automatic order.
+local function giveAuto(sim: Types.Sim, id: number, kind: OrdersState.Kind, x: number, z: number)
+	local o = sim.orders
+	local q = o.queue[id]
+	if q ~= nil and #q > 0 then
+		cancelCurrent(sim, id)
+	end
+	o.queue[id] = { { kind = kind, batch = o.nextBatch, x = x, z = z, started = false, nav = 0, issued = -math.huge, auto = true } }
+	o.nextBatch += 1
+end
+
+-- The nearest visible enemy unit `id` can damage and reach, within `radius`
+-- of (cx, cz); its believed position, or nil.
+local function chaseTarget(sim: Types.Sim, id: number, cx: number, cz: number, radius: number): (number?, number?)
+	local w = sim.world
+	local c = sim.combat
+	local nav = sim.nav :: Nav.Nav
+	local ally = w.ally[id]
+	local weapons = c.profiles[w.defIndex[id]].weapons
+	local np = nav.profiles[w.defIndex[id]]
+	if rebuiltAt[c.contacts] ~= sim.tick then
+		ContactGrid.rebuild(c.contacts, w) -- Orders runs before Targeting rebuilds it this tick
+		rebuiltAt[c.contacts] = sim.tick
+	end
+	local n = ContactGrid.query(c.contacts, w, cx, cz, radius + c.maxRadius, ally, candidates)
+	local bestX, bestZ, bestD, bestT = nil, nil, math.huge, 0
+	for i = 1, n do
+		local t = candidates[i]
+		if Sensors.level(sim, ally, t) ~= VISIBLE then
+			continue
+		end
+		local mask = c.profiles[w.defIndex[t]].categoryMask
+		local can = false
+		for _, wd in weapons do
+			if bit32.band(wd.targetMask, mask) ~= 0 then
+				can = true
+				break
+			end
+		end
+		local tx, tz = w.posX[t], w.posZ[t]
+		if not can or (tx - cx) ^ 2 + (tz - cz) ^ 2 > radius * radius or (np and not Nav.fits(nav, np, tx, tz)) then
+			continue
+		end
+		local d = (tx - w.posX[id]) ^ 2 + (tz - w.posZ[id]) ^ 2
+		if d < bestD or (d == bestD and t < bestT) then
+			bestX, bestZ, bestD, bestT = tx, tz, d, t
+		end
+	end
+	return bestX, bestZ
+end
+
+-- One idle unit's move-state check (every AUTO_PERIOD ticks).
+local function autoUnit(sim: Types.Sim, id: number)
+	local w = sim.world
+	local o = sim.orders
+	local q = o.queue[id]
+	local head = q and q[1]
+	if head ~= nil and not head.auto then
+		return -- busy with a player's order
+	end
+	local d = def(sim, id)
+	local state = w.moveState[id]
+	if d.domain == "structure" or d.domain == "air" or #d.weapons == 0 or d.buildPower ~= nil or w.fireState[id] ~= World.FireState.FIRE_AT_WILL or state < MANEUVER then
+		if head ~= nil then
+			Orders.stop(sim, id) -- the state changed under an automatic order
+		end
+		return
+	end
+	if o.anchorX[id] == nil then
+		o.anchorX[id], o.anchorZ[id] = w.goalX[id] or w.posX[id], w.goalZ[id] or w.posZ[id]
+	end
+	local ax, az = o.anchorX[id], o.anchorZ[id]
+	local x, z = w.posX[id], w.posZ[id]
+	local away2 = (x - ax) ^ 2 + (z - az) ^ 2
+	if state == MANEUVER and away2 > (Orders.MANEUVER_LEASH + Orders.ANCHOR_SLACK) ^ 2 then
+		if not (head and head.kind == "move") then
+			giveAuto(sim, id, "move", ax, az) -- too far: back to the anchor
+		end
+		return
+	end
+	if engaged(sim, id) then
+		return -- a weapon has a shot: stay (an automatic fight order holds)
+	end
+	local tx, tz
+	if state == ROAM then
+		tx, tz = chaseTarget(sim, id, x, z, d.maxRange + Orders.ROAM_CHASE)
+	else
+		tx, tz = chaseTarget(sim, id, ax, az, d.maxRange + Orders.MANEUVER_LEASH)
+	end
+	if tx and tz then
+		if not (head and head.kind == "fight" and head.x == tx and head.z == tz) then
+			giveAuto(sim, id, "fight", tx :: number, tz :: number)
+		end
+	elseif head == nil or head.kind == "fight" then
+		-- nothing (left) to chase
+		if state == ROAM then
+			if head ~= nil then
+				Orders.stop(sim, id)
+			end
+			o.anchorX[id], o.anchorZ[id] = x, z -- roaming units stay where they end up
+		elseif away2 > Orders.ANCHOR_SLACK ^ 2 then
+			giveAuto(sim, id, "move", ax, az)
+		elseif head ~= nil then
+			Orders.stop(sim, id)
+			o.anchorX[id], o.anchorZ[id] = ax, az
+		end
+	end
+end
+
+-- Move-state behavior of idle units (start of the Orders step).
+function Orders.autoStep(sim: Types.Sim)
+	if sim.nav == nil then
+		return
+	end
+	local tick = sim.tick
+	for _, id in sim.world.ids do
+		if (Hash.mix32(id) + tick) % Orders.AUTO_PERIOD == 0 then
+			autoUnit(sim, id)
+		end
+	end
 end
 
 local starters: { number } = {}
@@ -317,6 +470,7 @@ function Orders.step(sim: Types.Sim)
 	local w = sim.world
 	local o = sim.orders
 	local air = sim.air
+	Orders.autoStep(sim)
 	table.clear(starters)
 	for _, id in w.ids do
 		local q = o.queue[id]

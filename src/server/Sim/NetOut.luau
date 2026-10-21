@@ -17,29 +17,39 @@
 --     (tracked radar contacts: the TRACKED flag and the real icon, D104);
 --     remembered structures carry the GHOST flag and their last position.
 --   * DEATH events for dead units the player had in its tactical tier.
---   * Combat events (D99), only what the ally team may know:
+--   * Combat events (D99; S-43: projectiles and shots regardless of sight,
+--     never revealing a shooter):
 --       FIRE        hitscan / beam shots of units in the tactical tier, with
 --                   the shot's end point (no target ID: it may be hidden);
+--       SHOT        the same for a shooter the player doesn't have: start and
+--                   end point, no ID, when either is in the camera rectangle;
 --       SPAWN_PROJ  a projectile the client doesn't have yet, once it is in
---                   the ally team's sight and in the camera rectangle (+2
---                   cells): at launch, or when it flies into view. It carries
+--                   the camera rectangle (+2 cells), seen or not: at launch,
+--                   or when it flies into view. It carries
 --                   the current position and velocity, and the homing
 --                   target if the ally team knows that unit (tactical or a
 --                   strategic record: its ID is no secret then);
---       DECOYED,    for projectiles the client has: position and the new
---       LOST_LOCK   velocity (after the decoy turn; or flying on unguided);
---       IMPACT      for projectiles the client has, or anywhere in sight and
---                   in the camera rectangle (projectiles at the end of their
+--       DECOYED,    for projectiles the client has: position and velocity
+--       LOST_LOCK   (DECOYED: also the decoy point it follows and for how many
+--                   more ticks, S-28; LOST_LOCK: it flies on unguided);
+--       IMPACT      for projectiles the client has, or anywhere in the camera
+--                   rectangle (projectiles at the end of their
 --                   life burst with an IMPACT too).
 --     The client steps known projectiles itself and drops them on IMPACT or
 --     at their time to live. All of a tick's events form one batch.
 --   * Homing corrections (Projectiles channel, unreliable, D102): every
 --     HOMING_SYNC_EVERY ticks (staggered by projectile ID), the position and
 --     velocity of each homing projectile the client has that is in the
---     tactical area (camera + LEAVE_MARGIN) and in the ally team's sight;
+--     tactical area (camera + LEAVE_MARGIN), seen or not (S-43);
 --     also on the tick one comes (back) into that view.
 --   * Economy (Eco channel, S-2): the player's team account, on economy
 --     ticks when it changed.
+--   * Sight and wrecks (Events, protocol 10, S-26): the ally team's sight
+--     map (sensor cells) on sensor ticks when it changed, as SIGHT_CELLS
+--     changes or SIGHT_ROWS of the whole map (after a join); WRECK when the
+--     team learns of a wreck (its spot in sight), WRECK_GONE when it sees
+--     the spot without it. Spectators get no sight (they see everything) and
+--     every wreck.
 --   * Join / reconnect (Snapshot channel, S-2): NetOut.hello checks the
 --     client's versions; NetOut.join resets the player's replication state
 --     and queues a WELCOME, so the next outbox is a complete picture (full
@@ -53,6 +63,8 @@ local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
+local Combat = require("./Combat/Combat")
+local Stockpile = require("./Stockpile")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
 local Sensors = require("./Sensors")
@@ -149,6 +161,8 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	pn.forceFull = true
 	pn.lastEco = nil
 	table.clear(pn.sentTargets)
+	table.clear(pn.sentStock)
+	table.clear(pn.sentOwner)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
 	Schema.encodeSnapshot(w, {
@@ -282,25 +296,50 @@ end
 function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally: number, cam: { number }, events: { Schema.Event })
 	local c = sim.combat
 	local known = pn.projKnown
+	-- projectiles: everything in the camera area, whatever the team sees;
+	-- they carry no shooter, so they reveal none (S-43, client request 21)
 	local function shown(x: number, z: number): boolean
-		return inRect(g, cam, x, z, NetOut.ENTER_MARGIN) and inSightFor(sim, ally, x, z)
+		return inRect(g, cam, x, z, NetOut.ENTER_MARGIN)
 	end
 	for _, e in c.events do
 		if e.kind == "SPAWN_PROJ" then
 			known[e.other] = nil -- a new projectile (IDs are reused)
 		end
 	end
-	-- projectiles entering this client's view
+	-- projectiles entering this client's view; strategic missiles go to
+	-- every player wherever they fly (a few per match), and interceptors
+	-- last, so the missile they chase is always known (S-48)
 	local sentNow: { [number]: boolean } = {}
-	for _, p in c.proj do
-		if not known[p] and shown(c.px[p], c.pz[p]) then
+	local strategic = c.strategic
+	for pass = 1, 2 do
+		for _, p in c.proj do
+			local interceptor = c.pTargetProj[p] ~= 0
+			if interceptor ~= (pass == 2) or known[p] then
+				continue
+			end
+			if not shown(c.px[p], c.pz[p]) and (#strategic == 0 or table.find(strategic, p) == nil) then
+				continue
+			end
 			known[p] = true
 			sentNow[p] = true
-			local target = c.pTarget[p]
-			if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or levelFor(sim, ally, target) == L.HIDDEN) then
-				target = 0
+			local e
+			if interceptor then
+				local tp = c.pTargetProj[p]
+				local target = if known[tp] and Combat.isProjRef(c, tp, c.pTargetSerial[p]) then tp else 0
+				e = withPos({ kind = Schema.EventKind.INTERCEPTOR, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
+			elseif c.pGoal[p] then
+				-- a strategic missile and the spot it flies to (S-51)
+				local goal = c.pGoal[p]
+				e = withPos({ kind = Schema.EventKind.SPAWN_STRATEGIC, projId = p, weaponIndex = c.pWeapon[p], targetId = 0 }, g, c.px[p], c.py[p], c.pz[p])
+				e.goalCell, e.goalOffX, e.goalOffZ = g:encode(goal[1], goal[3])
+				e.goalY = Schema.toI16(goal[2])
+			else
+				local target = c.pTarget[p]
+				if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or levelFor(sim, ally, target) == L.HIDDEN) then
+					target = 0
+				end
+				e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
 			end
-			local e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
 			table.insert(events, withVel(e, c.pvx[p], c.pvy[p], c.pvz[p]))
 		end
 	end
@@ -308,18 +347,191 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 		local kind = e.kind
 		if kind == "FIRE" and pn.tactical[e.unit] and e.x then
 			table.insert(events, withPos({ kind = Schema.EventKind.FIRE, unitId = e.unit, slot = e.slot, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number))
+		elseif kind == "FIRE" and e.x and e.sx and (shown(e.x, e.z :: number) or shown(e.sx, e.sz :: number)) then
+			-- a shooter the player doesn't have: both ends, no ID (S-43)
+			local shot = withPos({ kind = Schema.EventKind.SHOT, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number)
+			shot.fromCell, shot.fromOffX, shot.fromOffZ = g:encode(e.sx, e.sz :: number)
+			shot.fromY = Schema.toI16(e.sy :: number)
+			table.insert(events, shot)
 		elseif (kind == "DECOYED" or kind == "LOST_LOCK") and known[e.other] and not sentNow[e.other] then
 			local p = e.other
 			if c.projSlot[p] ~= nil then -- else its IMPACT follows
 				-- the state after this tick's step, like SPAWN_PROJ
 				local d = withPos({ kind = if kind == "DECOYED" then Schema.EventKind.DECOYED else Schema.EventKind.LOST_LOCK, projId = p }, g, c.px[p], c.py[p], c.pz[p])
-				table.insert(events, withVel(d, c.pvx[p], c.pvy[p], c.pvz[p]))
+				withVel(d, c.pvx[p], c.pvy[p], c.pvz[p])
+				if kind == "DECOYED" then
+					-- the point it follows and for how many more ticks (S-28)
+					local dp = c.pDecoy[p] or { c.px[p], c.py[p], c.pz[p], 0, 1 }
+					d.decoyCell, d.decoyOffX, d.decoyOffZ = g:encode(dp[1], dp[3])
+					d.decoyY, d.decoyTicks = Schema.toI16(dp[2]), dp[4]
+					d.countermeasure = dp[5] or 1 -- which countermeasure won (S-38)
+				end
+				table.insert(events, d)
 			end
 		elseif kind == "IMPACT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
 			known[e.other] = nil
 			table.insert(events, withPos({ kind = Schema.EventKind.IMPACT, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
+		elseif kind == "INTERCEPTED" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
+			known[e.other] = nil
+			table.insert(events, withPos({ kind = Schema.EventKind.INTERCEPTED, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
 		end
 	end
+end
+
+--------------------------------------------------------------------------------
+-- Wrecks and sight on the wire (protocol 10, S-26)
+--------------------------------------------------------------------------------
+
+NetOut.SIGHT_EVERY = 2 -- ticks: the Sensors rate, so sight changes only then
+
+-- An ally team's knowledge of wrecks (spectators: every wreck, at once). On
+-- sensor ticks every unknown wreck in sight becomes known and every known
+-- wreck that is gone is forgotten once its spot is in sight; in between,
+-- only this tick's new and reclaimed wrecks are checked, so a DEATH and its
+-- WRECK arrive together.
+local function updateWrecks(sim: Types.Sim, net: NetState.NetState, ally: number, sensorTick: boolean, fresh: { number }, reclaimed: { number })
+	local c = sim.combat
+	local k = net.wrecks[ally]
+	if k == nil then
+		k = { known = {}, list = {}, version = 0 }
+		net.wrecks[ally] = k
+	end
+	local known, list = k.known, k.list
+	local changed = false
+	local function learn(wid: number)
+		local x, z = c.wreckX[wid], c.wreckZ[wid]
+		if known[wid] == nil and x ~= nil and inSightFor(sim, ally, x, z) then
+			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid] }
+			table.insert(list, wid)
+			changed = true
+		end
+	end
+	local function forgetIfSeen(i: number): boolean
+		local wid = list[i]
+		local p = known[wid]
+		if c.wreckX[wid] == nil and inSightFor(sim, ally, p[1], p[2]) then
+			known[wid] = nil
+			table.remove(list, i)
+			changed = true
+			return true
+		end
+		return false
+	end
+	if sensorTick then
+		for _, wid in c.wreckIds do
+			learn(wid)
+		end
+		local i = 1
+		while i <= #list do
+			if not forgetIfSeen(i) then
+				i += 1
+			end
+		end
+	else
+		for _, wid in fresh do
+			learn(wid)
+		end
+		for _, wid in reclaimed do
+			local i = if known[wid] then table.find(list, wid) else nil
+			if i then
+				forgetIfSeen(i)
+			end
+		end
+	end
+	if changed then
+		k.version += 1
+	end
+end
+
+-- WRECK / WRECK_GONE for what the viewer's team learned since the last send.
+local function wreckEvents(g: Grid.Grid, pn: NetState.PlayerNet, k: NetState.WreckKnowledge, events: { Schema.Event })
+	if pn.wreckVersion == k.version then
+		return
+	end
+	pn.wreckVersion = k.version
+	local sent, sentList = pn.wrecksSent, pn.wreckList
+	local i = 1
+	while i <= #sentList do
+		local wid = sentList[i]
+		if k.known[wid] == nil then
+			sent[wid] = nil
+			table.remove(sentList, i)
+			table.insert(events, { kind = Schema.EventKind.WRECK_GONE, wreckId = wid })
+		else
+			i += 1
+		end
+	end
+	for _, wid in k.list do
+		if not sent[wid] then
+			sent[wid] = true
+			table.insert(sentList, wid)
+			local p = k.known[wid]
+			local cell, ox, oz = g:encode(p[1], p[2])
+			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]) })
+		end
+	end
+end
+
+-- The ally team's sight as of this sensor tick (one byte, 0 / 1, per sensor
+-- cell), diffed in place against the last one: one pass per ally team, the
+-- changes shared by its players.
+local function updateSight(sim: Types.Sim, net: NetState.NetState, ally: number)
+	local s = sim.sensors
+	local n = s.width * s.depth
+	local st = net.sight[ally]
+	if st == nil then
+		st = { cells = buffer.create(n), version = 0, changes = {} }
+		net.sight[ally] = st
+	end
+	local los, cells = s.maps[ally].los, st.cells
+	local changes = {}
+	local readu16, readu8, writeu8 = buffer.readu16, buffer.readu8, buffer.writeu8
+	for i = 0, n - 1 do
+		local v = if readu16(los, i * 2) > 0 then 1 else 0
+		if v ~= readu8(cells, i) then
+			writeu8(cells, i, v)
+			table.insert(changes, if v == 1 then i + Schema.SIGHT_SEEN else i)
+		end
+	end
+	if #changes > 0 then
+		st.version += 1
+		st.changes = changes
+	end
+end
+
+-- SIGHT_CELLS with the team's latest changes when the client has the version
+-- before them and they are small; else SIGHT_ROWS of the whole map.
+local function sightEvents(sim: Types.Sim, pn: NetState.PlayerNet, st: NetState.Sight, events: { Schema.Event })
+	if pn.sightVersion == st.version then
+		return
+	end
+	local s = sim.sensors
+	local width, depth = s.width, s.depth
+	local changes = st.changes
+	if pn.sightVersion >= 0 and pn.sightVersion == st.version - 1 and #changes <= width * depth // 16 then -- 2 bytes per change against 1/8 per cell
+		for first = 1, #changes, Schema.SIGHT_MAX_CELLS do
+			table.insert(events, { kind = Schema.EventKind.SIGHT_CELLS, cells = table.move(changes, first, math.min(first + Schema.SIGHT_MAX_CELLS - 1, #changes), 1, {}) })
+		end
+	else
+		local now = st.cells
+		local rowBytes = (width + 7) // 8
+		local perRecord = math.min(255, Schema.SIGHT_MAX_ROW_BYTES // rowBytes)
+		for first = 0, depth - 1, perRecord do
+			local rows = math.min(perRecord, depth - first)
+			local bits = buffer.create(rows * rowBytes)
+			for r = 0, rows - 1 do
+				local base = (first + r) * width
+				for x = 0, width - 1 do
+					if buffer.readu8(now, base + x) == 1 then
+						local at = r * rowBytes + x // 8
+						buffer.writeu8(bits, at, bit32.bor(buffer.readu8(bits, at), bit32.lshift(1, x % 8)))
+					end
+				end
+			end
+			table.insert(events, { kind = Schema.EventKind.SIGHT_ROWS, firstRow = first, rowCount = rows, rowBytes = rowBytes, bits = bits })
+		end
+	end
+	pn.sightVersion = st.version
 end
 
 function NetOut.step(sim: Types.Sim)
@@ -352,6 +564,28 @@ function NetOut.step(sim: Types.Sim)
 	end
 	for _, spn in net.spectators do
 		table.insert(viewers, { pid = 0, pn = spn, team = 0, ally = SPECTATOR })
+	end
+
+	-- wreck knowledge per ally team, and the teams' sight on sensor ticks (S-26)
+	local sensorTick = tick % NetOut.SIGHT_EVERY == 0
+	local fresh, reclaimed = {}, {}
+	for _, e in sim.combat.events do
+		if e.kind == "DEATH" and (e.other or 0) ~= 0 then
+			table.insert(fresh, e.other :: number)
+		elseif e.kind == "RECLAIMED" then
+			table.insert(reclaimed, e.other :: number)
+		end
+	end
+	local updated: { [number]: boolean } = {}
+	for _, viewer in viewers do
+		local a = viewer.ally
+		if not updated[a] then
+			updated[a] = true
+			updateWrecks(sim, net, a, sensorTick, fresh, reclaimed)
+			if a ~= SPECTATOR and (sensorTick or net.sight[a] == nil) then
+				updateSight(sim, net, a)
+			end
+		end
 	end
 	for _, viewer in viewers do
 		local pid, pn, team = viewer.pid, viewer.pn, viewer.team
@@ -466,6 +700,101 @@ function NetOut.step(sim: Types.Sim)
 		end
 		pn.sentTargets = sentNow
 
+		-- own units' missile stock (S-47) and the next missile's progress
+		-- (S-49): when a count or the progress step (1/WIRE_STEPS) changes,
+		-- and on entering
+		local sentStock = pn.sentStock
+		local stockNow: { [number]: string } = {}
+		for _, id in pn.tacticalList do
+			local count = w.weaponCount[id]
+			if w.owner[id] ~= pid or count == 0 then
+				continue
+			end
+			local stock: { Schema.Stock } = {}
+			local parts = {}
+			for slot = 1, count do
+				local key = World.slotKey(id, slot)
+				local n = w.wStock[key]
+				if n ~= nil then
+					local progress = w.wStockProgress[key]
+					table.insert(stock, { slot = slot, count = math.clamp(n, 0, 255), progress = math.clamp(math.floor(progress * 255), 0, 255) })
+					table.insert(parts, n)
+					table.insert(parts, math.floor(progress * Stockpile.WIRE_STEPS))
+				end
+			end
+			if #stock == 0 then
+				continue
+			end
+			local sig = table.concat(parts, ",")
+			stockNow[id] = sig
+			if entered[id] or sentStock[id] ~= sig then
+				local rec = recordOf[id]
+				if rec == nil then
+					rec = { unitId = id }
+					recordOf[id] = rec
+					table.insert(states, rec)
+				end
+				rec.stock = stock
+			end
+		end
+		pn.sentStock = stockNow
+
+		-- own units' factory queue, fire / move state and ammo (S-61): each
+		-- part when it changes (the queue's progress by sixteenths, like
+		-- stock), all of them with the ENTER
+		local sentOwner = pn.sentOwner
+		local ownerNow: { [number]: { string } } = {}
+		for _, id in pn.tacticalList do
+			if w.owner[id] ~= pid then
+				continue
+			end
+			local d = sim.defs.unitByIndex[w.defIndex[id]]
+			local q = sim.build.queue[id]
+			local qSig, sSig, aSig = "", "", ""
+			local progress = 0
+			if q then
+				progress = math.clamp(math.floor((sim.build.progress[id] or 0) * 255), 0, 255)
+				qSig = table.concat(q, ",") .. "@" .. math.floor((sim.build.progress[id] or 0) * Stockpile.WIRE_STEPS)
+			end
+			local hasStates = d.domain ~= "structure" or #d.weapons > 0
+			if hasStates then
+				sSig = tostring(w.fireState[id] * 4 + w.moveState[id])
+			end
+			local ammo = sim.air.ammo[id]
+			if ammo ~= nil then
+				aSig = tostring(ammo)
+			end
+			local now = { qSig, sSig, aSig }
+			ownerNow[id] = now
+			local before = if entered[id] then nil else sentOwner[id]
+			local rec: Schema.State? = nil
+			local function record(): Schema.State
+				if rec == nil then
+					rec = recordOf[id]
+					if rec == nil then
+						rec = { unitId = id }
+						recordOf[id] = rec
+						table.insert(states, rec :: Schema.State)
+					end
+				end
+				return rec :: Schema.State
+			end
+			if q and (before == nil or before[1] ~= qSig) then
+				local r = record()
+				r.queue = table.clone(q)
+				r.queueProgress = progress
+			end
+			if hasStates and (before == nil or before[2] ~= sSig) then
+				local r = record()
+				r.fireState, r.moveState = w.fireState[id], w.moveState[id]
+			end
+			if ammo ~= nil and (before == nil or before[3] ~= aSig) then
+				local r = record()
+				r.ammo, r.maxAmmo = math.clamp(ammo, 0, 255), math.clamp(d.ammo or ammo, 0, 255)
+			end
+		end
+		pn.sentOwner = ownerNow
+
 		-- strategic snapshot of every other known unit
 		local strategic: { Schema.Strategic } = {}
 		local fullNow = strategicTick or pn.forceFull
@@ -511,8 +840,25 @@ function NetOut.step(sim: Types.Sim)
 		if cam ~= nil then
 			combatEvents(sim, g, pn, ally, cam, events)
 		end
+		-- strategic launches: every player, camera or not (S-48)
+		for _, e in sim.combat.events do
+			if e.kind == "LAUNCH" and e.x then
+				table.insert(events, withPos({ kind = Schema.EventKind.LAUNCH_WARNING, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
+			end
+		end
+		if pn.forceFull then
+			pn.sightVersion = -1
+			table.clear(pn.wrecksSent)
+			table.clear(pn.wreckList)
+			pn.wreckVersion = -1
+		end
+		if ally ~= SPECTATOR then
+			sightEvents(sim, pn, net.sight[ally], events)
+		end
+		wreckEvents(g, pn, net.wrecks[ally], events)
 		for _, e in events do
 			pn.eventCounts[e.kind] = (pn.eventCounts[e.kind] or 0) + 1
+			pn.eventBytes[e.kind] = (pn.eventBytes[e.kind] or 0) + Schema.eventBytes(e)
 		end
 
 		local syncs: { Schema.ProjSync } = {}
@@ -529,7 +875,7 @@ function NetOut.step(sim: Types.Sim)
 			for _, p in c.proj do
 				if pn.projKnown[p] and weapons[c.pWeapon[p]].turnRate ~= nil then
 					local x, z = c.px[p], c.pz[p]
-					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) and inSightFor(sim, ally, x, z)
+					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) -- sight doesn't matter (S-43)
 					local entered = seen and not inView[p]
 					inView[p] = seen or nil
 					if seen and (entered or (p + tick) % every == 0) then

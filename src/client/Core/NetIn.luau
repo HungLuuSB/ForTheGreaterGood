@@ -45,6 +45,17 @@ local function queueEvent(world: World.World, e: Schema.Event, tick: number)
 	world.eventCounts[kind] = (world.eventCounts[kind] or 0) + 1
 end
 
+-- The ally team's sight map, made on its first record for the map's sensor grid.
+local function sightOf(world: World.World): World.Sight
+	local s = world.sight
+	if s == nil then
+		local w, d = world.grid.sensorX, world.grid.sensorZ
+		s = { width = w, depth = d, cells = buffer.create(w * d), version = 0, changed = {}, full = true }
+		world.sight = s
+	end
+	return s :: World.Sight
+end
+
 local function applyEvents(world: World.World, events: { Schema.Event }, tick: number)
 	local g = world.grid
 	for _, e in events do
@@ -54,6 +65,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 			local heading = World.heading(e.heading :: number)
 			local alt = e.alt or 0
+			local was = world.units[id] -- a strategic record of it keeps its movement (C-45)
 			world.units[id] = {
 				id = id,
 				tier = "tactical",
@@ -65,7 +77,9 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 				heading = heading,
 				snaps = { { tick = tick, x = x, z = z, alt = alt, heading = heading } },
 				lastTick = tick,
+				movedTick = was and was.movedTick,
 				health = (e.health :: number) / 255,
+				shownHealth = (e.health :: number) / 255,
 				build = (e.build :: number) / 255,
 				state = e.state or 0,
 				weapon = 0,
@@ -84,6 +98,13 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local id = e.unitId :: number
 			local u = world.units[id]
 			if u then
+				local vx, vz = 0, 0
+				local snaps = u.snaps
+				if #snaps >= 2 then
+					local a, b = snaps[#snaps - 1], snaps[#snaps]
+					local dt = math.max(b.tick - a.tick, 1) / 15
+					vx, vz = (b.x - a.x) / dt, (b.z - a.z) / dt
+				end
 				table.insert(world.died, {
 					id = id,
 					defIndex = u.defIndex,
@@ -94,9 +115,55 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 					severity = e.severity or 0,
 					wreckId = e.wreckId or 0,
 					tick = tick,
+					alt = u.alt,
+					vx = vx,
+					vz = vz,
 				})
+				world.dying[id] = { unit = u, tick = tick } -- still a missile's target until the death is drawn (C-50)
 				world.units[id] = nil
 			end
+			if (e.wreckId or 0) ~= 0 then
+				world.deathWrecks[e.wreckId :: number] = tick
+			end
+		elseif kind == EK.SIGHT_ROWS then
+			-- the ally team's sight, rows wholesale (protocol 10, C-65)
+			local s = sightOf(world)
+			local first, rows, rowBytes = e.firstRow :: number, e.rowCount :: number, e.rowBytes :: number
+			local bits = e.bits :: buffer
+			for r = 0, rows - 1 do
+				local z = first + r
+				if z >= s.depth then
+					break
+				end
+				for x = 0, s.width - 1 do
+					local byte = buffer.readu8(bits, r * rowBytes + x // 8)
+					buffer.writeu8(s.cells, z * s.width + x, bit32.extract(byte, x % 8, 1))
+				end
+			end
+			s.full = true
+			s.version += 1
+		elseif kind == EK.SIGHT_CELLS then
+			-- cells that turned seen / unseen since the last sensor tick
+			local s = sightOf(world)
+			local n = s.width * s.depth
+			for _, c in e.cells :: { number } do
+				local index = bit32.band(c, 0x7FFF)
+				if index < n then
+					buffer.writeu8(s.cells, index, if bit32.band(c, Schema.SIGHT_SEEN) ~= 0 then 1 else 0)
+					table.insert(s.changed, index)
+				end
+			end
+			s.version += 1
+		elseif kind == EK.WRECK then
+			local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+			local id = e.wreckId :: number
+			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0) }
+			table.insert(world.wreckAdded, id)
+		elseif kind == EK.WRECK_GONE then
+			local id = e.wreckId :: number
+			world.wrecks[id] = nil
+			world.deathWrecks[id] = nil
+			table.insert(world.wreckGone, id)
 		else
 			queueEvent(world, e, tick)
 		end
@@ -117,12 +184,15 @@ local function applyTactical(world: World.World, records: { Schema.Tactical }, t
 		local x, z = g:decode(r.cell, r.offX, r.offZ)
 		local heading = World.heading(r.heading)
 		local alt = r.alt or 0
+		if x ~= u.x or z ~= u.z or alt ~= u.alt or heading ~= u.heading then
+			u.movedTick = tick -- C-45: the server doesn't set MOVING
+		end
 		u.x, u.z, u.alt, u.heading, u.lastTick = x, z, alt, heading, tick
 		pushSnap(u, { tick = tick, x = x, z = z, alt = alt, heading = heading })
 	end
 end
 
-local function applyState(world: World.World, records: { Schema.State })
+local function applyState(world: World.World, records: { Schema.State }, tick: number)
 	for _, r in records do
 		local u = world.units[r.unitId]
 		if u == nil or u.tier ~= "tactical" then
@@ -131,6 +201,10 @@ local function applyState(world: World.World, records: { Schema.State })
 		end
 		if r.health then
 			u.health = r.health / 255
+			-- shown when the render clock reaches it (C-49)
+			local log = u.healthLog or {}
+			table.insert(log, { tick, u.health :: number })
+			u.healthLog = log
 		end
 		if r.build then
 			u.build = r.build / 255
@@ -151,6 +225,18 @@ local function applyState(world: World.World, records: { Schema.State })
 			end
 			u.targets = targets
 		end
+		if r.stock then
+			-- own units' missile stockpiles (protocol 15, S-47) and the next
+			-- missile's build progress (protocol 17, S-49)
+			local stock = u.stock or {}
+			local progress = u.stockProgress or {}
+			for _, st in r.stock do
+				stock[st.slot] = st.count
+				progress[st.slot] = { st.progress / 255, tick }
+			end
+			u.stock = stock
+			u.stockProgress = progress
+		end
 	end
 end
 
@@ -160,11 +246,13 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			return -- an older snapshot arrived late
 		end
 	end
+	local before: { [number]: World.Unit } = {}
 	if wireTick ~= world.strategicTick then
 		-- a new snapshot replaces every non-tactical unit
 		world.strategicTick = wireTick
 		for id, u in world.units do
 			if u.tier ~= "tactical" then
+				before[id] = u
 				world.units[id] = nil
 			end
 		end
@@ -176,6 +264,8 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			continue -- tactical detail wins over a snapshot computed around a LEAVE / ENTER
 		end
 		local x, z = g:decode(r.cell, 128, 128)
+		local old = before[r.unitId] or u
+		local movedTick = if old == nil then nil elseif old.x ~= x or old.z ~= z then tick else old.movedTick
 		world.units[r.unitId] = {
 			id = r.unitId,
 			tier = "strategic",
@@ -189,6 +279,7 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			heading = 0,
 			snaps = {},
 			lastTick = tick,
+			movedTick = movedTick,
 			health = nil,
 			build = nil,
 			state = 0,
@@ -254,7 +345,7 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 	elseif channel == "Tactical" then
 		applyTactical(world, records :: any, tick)
 	elseif channel == "State" then
-		applyState(world, records :: any)
+		applyState(world, records :: any, tick)
 	elseif channel == "Strategic" then
 		applyStrategic(world, records :: any, wireTick :: number, tick)
 	elseif channel == "Projectiles" then

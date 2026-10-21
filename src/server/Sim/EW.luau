@@ -19,11 +19,15 @@
 --
 -- Flight checks are cheap and event-based:
 --   1. launch (Weapons): no lock, no launch;
+--   1b. seeker cone, every tick (IR, RADAR; S-27): a target more than the
+--      seeker's half-angle off the missile's nose (it overshot) breaks the
+--      lock: LOST_LOCK, and nothing re-acquires;
 --   2. midcourse, every MIDCOURSE_PERIOD ticks: LOST_LOCK clears the target,
 --      so the missile flies straight until its lifetime runs out;
 --   3. terminal, once, when the missile could reach terminalRange this tick:
---      the target rolls its countermeasures; on success a DECOYED event and
---      the missile veers off DECOY_TURN with no target.
+--      the target rolls its countermeasures; on success a DECOYED event: the
+--      missile loses its target and follows the decoy point for up to a
+--      second (Guidance.decoy, S-28), then flies straight.
 --
 -- Countermeasures: flares (vs IR) and chaff (vs RADAR) spend a charge per
 -- roll and are restocked while an aircraft rearms, each charge costing its
@@ -34,7 +38,9 @@
 --
 -- Every roll draws from sim.rng in fixed system order, so replays are exact.
 
+local Pinpoint = require("@shared/Combat/Pinpoint")
 local Combat = require("./Combat/Combat")
+local Guidance = require("@shared/Combat/Guidance")
 local Defs = require("@shared/Defs/Defs")
 local EWState = require("./EWState")
 local Economy = require("./Economy")
@@ -50,8 +56,14 @@ EW.DT = 1 / 15
 EW.MIDCOURSE_PERIOD = 5 -- ticks between midcourse checks
 EW.BURN_THROUGH = 0.35 -- default fraction of lockRange
 EW.TERMINAL_RANGE = 40 -- studs, default
-EW.DECOY_TURN = math.rad(60) -- a decoyed missile's sideways veer
-EW.Flag = table.freeze({ TERMINAL = 1, LOST = 2 }) -- Combat.pFlags bits
+-- the point a decoyed missile follows (S-28): the cloud of flares or chaff
+-- next to the target, DECOY_SIDE studs to one side of the missile's line of
+-- flight (a coin flip) and DECOY_DROP below the target (flares fall, chaff
+-- hangs), so following it draws the missile off the target in any approach
+EW.DECOY_SIDE = 25
+EW.DECOY_DROP = table.freeze({ IR = 20, RADAR = 6 } :: { [string]: number })
+EW.Flag = table.freeze({ TERMINAL = 1, LOST = 2, TURNED = 4 }) -- Combat.pFlags bits; TURNED: a vertical launch has pitched over (S-42)
+EW.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- what defeated a missile (DECOYED; same numbers as Schema.Countermeasure)
 
 local L = Sensors.Level
 local TERMINAL, LOST = EW.Flag.TERMINAL, EW.Flag.LOST
@@ -180,10 +192,12 @@ function EW.canLock(sim: Types.Sim, shooter: number, weapon: Defs.WeaponDef, tar
 end
 
 -- Terminal roll: does `target` defeat a missile with this guidance?
-local function defeats(sim: Types.Sim, target: number, guidance: string): boolean
+-- The countermeasure that defeated the missile (EW.Countermeasure; client
+-- request 18), or 0 when none did.
+local function defeats(sim: Types.Sim, target: number, guidance: string): number
 	local cm = unitDef(sim, target).countermeasures
 	if cm == nil then
-		return false
+		return 0
 	end
 	local e = sim.ew
 	local rng = sim.rng
@@ -192,22 +206,22 @@ local function defeats(sim: Types.Sim, target: number, guidance: string): boolea
 		if dircm and (e.dircmCooldown[target] or 0) <= 0 then
 			e.dircmCooldown[target] = dircm.cooldown -- one engagement per cooldown
 			if rng:chance(dircm.chance) then
-				return true
+				return EW.Countermeasure.DIRCM
 			end
 		end
 		local flares = cm.flares
 		if flares and (e.flares[target] or 0) > 0 then
 			e.flares[target] -= 1
-			return rng:chance(flares.chance)
+			return if rng:chance(flares.chance) then EW.Countermeasure.FLARES else 0
 		end
 	elseif guidance == "RADAR" then
 		local chaff = cm.chaff
 		if chaff and (e.chaff[target] or 0) > 0 then
 			e.chaff[target] -= 1
-			return rng:chance(chaff.chance)
+			return if rng:chance(chaff.chance) then EW.Countermeasure.CHAFF else 0
 		end
 	end
-	return false
+	return 0
 end
 
 -- Midcourse and terminal checks for guided missile `p` (called by the
@@ -226,6 +240,33 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	end
 	local flags = c.pFlags[p]
 	local x, y, z = c.px[p], c.py[p], c.pz[p]
+	local function loseLock()
+		c.pTarget[p] = 0
+		Combat.dropPending(c, p)
+		c.pFlags[p] = bit32.bor(flags, LOST)
+		Combat.addEvent(c, { kind = "LOST_LOCK", tick = sim.tick, unit = target, other = p, x = x, y = y, z = z })
+	end
+
+	-- 1b. seeker cone, every tick (S-27): a target outside the seeker's field
+	-- of view (the missile overshot it) breaks the lock for good
+	local cone = Guidance.seekerAngle(weapon)
+	if weapon.launch == "vertical" and bit32.band(flags, EW.Flag.TURNED) == 0 then
+		cone = nil -- still climbing: the target isn't ahead yet (S-42)
+	end
+	if cone then
+		-- where the target was when this step starts (it moved already), as
+		-- Projectiles navigates; inside one step's reach the fuse decides
+		local tx, ty, tz = Combat.aimPoint(c, w, target)
+		local tvx, tvz = Guidance.velocity(w.heading[target], w.speed[target])
+		tx, tz = tx - tvx * EW.DT, tz - tvz * EW.DT
+		local vx, vy, vz = c.pvx[p], c.pvy[p], c.pvz[p]
+		local reach = math.sqrt(vx * vx + vy * vy + vz * vz) * EW.DT
+		local dx, dy, dz = tx - x, ty - y, tz - z
+		if dx * dx + dy * dy + dz * dz > reach * reach and not Guidance.inCone(x, y, z, vx, vy, vz, tx, ty, tz, math.rad(cone)) then
+			loseLock()
+			return
+		end
+	end
 
 	-- 2. midcourse (COMMAND: every tick, the link must hold all the way)
 	if guidance == "COMMAND" or (sim.tick + p) % EW.MIDCOURSE_PERIOD == 0 then
@@ -234,14 +275,18 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 			local dx, dz = w.posX[target] - x, w.posZ[target] - z
 			local bt = EW.burnThroughRange(weapon)
 			lost = dx * dx + dz * dz > bt * bt and EW.jammed(sim, target)
+			-- a target only on radar: without Pinpointers the track is too
+			-- coarse to hold (S-59)
+			if not lost and Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE then
+				local chance = Pinpoint.LOCK_LOSS * (1 - Sensors.precision(sim.sensors, c.pTeam[p]))
+				lost = chance > 0 and sim.rng:chance(chance)
+			end
 		elseif guidance == "COMMAND" then
 			local launcher = c.pOwner[p]
 			lost = not World.isRef(w, launcher, c.pOwnerGen[p]) or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE
 		end
 		if lost then
-			c.pTarget[p] = 0
-			c.pFlags[p] = bit32.bor(flags, LOST)
-			Combat.addEvent(c, { kind = "LOST_LOCK", tick = sim.tick, unit = target, other = p, x = x, y = y, z = z })
+			loseLock()
 			return
 		end
 	end
@@ -257,10 +302,16 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 		return
 	end
 	c.pFlags[p] = bit32.bor(flags, TERMINAL)
-	if defeats(sim, target, guidance) then
-		local a = if sim.rng:chance(0.5) then EW.DECOY_TURN else -EW.DECOY_TURN
+	local won = defeats(sim, target, guidance)
+	if won ~= 0 then
+		-- no kink: the missile turns toward the decoy over the next ticks
+		local side = if sim.rng:chance(0.5) then EW.DECOY_SIDE else -EW.DECOY_SIDE
+		local tvx, tvz = Guidance.velocity(w.heading[target], w.speed[target])
 		local vx, vz = c.pvx[p], c.pvz[p]
-		c.pvx[p], c.pvz[p] = vx * cos(a) + vz * sin(a), vz * cos(a) - vx * sin(a)
+		local vl = math.max(math.sqrt(vx * vx + vz * vz), 1e-6)
+		local sx, sz = vz / vl * side, -vx / vl * side -- across the missile's flight
+		Combat.dropPending(c, p)
+		c.pDecoy[p] = { w.posX[target] - tvx * EW.DT + sx, ty - (EW.DECOY_DROP[guidance] or 0), w.posZ[target] - tvz * EW.DT + sz, Guidance.DECOY_TICKS, won }
 		c.pTarget[p] = 0
 		Combat.addEvent(c, { kind = "DECOYED", tick = sim.tick, unit = target, other = p, x = x, y = y, z = z })
 	end

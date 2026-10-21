@@ -14,25 +14,34 @@ local Bars = {}
 
 Bars.FULL = 0.999 -- at or above: counts as full (health is a u8 on the wire)
 
-export type Bar = { id: number, health: number, build: number?, own: boolean, selected: boolean }
+-- `stock` / `stockMax`: an own unit's missiles in stock and its capacity
+-- (S-47, C-56); a unit that isn't full shows its bar, so a refilling SAM site
+-- stays visible.
+export type Bar = { id: number, health: number, build: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number? }
 
 -- Bars for the tactical units (the only ones whose health is known).
 function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
 	local out = {}
 	for id, u in world.units do
-		if u.tier ~= "tactical" or u.health == nil then
+		local shown = World.shownHealth(world, u)
+		if u.tier ~= "tactical" or shown == nil then
 			continue
 		end
-		local health = u.health :: number
+		local health = shown :: number
 		local building = u.build ~= nil and (u.build :: number) < 1
 		local isSel = selected[id] == true
-		if isSel or building or health < Bars.FULL then
+		local stock, stockMax = World.stockOf(world, u)
+		local refilling = stock ~= nil and (stock :: number) < (stockMax :: number)
+		if isSel or building or health < Bars.FULL or refilling then
 			table.insert(out, {
 				id = id,
 				health = health,
 				build = if building then u.build else nil,
 				own = u.team == world.me.team,
 				selected = isSel,
+				stock = stock,
+				stockMax = stockMax,
+				stockProgress = if refilling then World.stockProgressOf(world, u, world.shownTick or 0) else nil,
 			})
 		end
 	end

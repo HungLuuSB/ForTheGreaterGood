@@ -6,9 +6,10 @@ local Hash = require("@shared/Util/Hash")
 
 local AirState = {}
 
--- "fly": normal; "return": empty, flying to a rearm pad; "rearm": landed on
--- a pad, rearming.
-export type Phase = "fly" | "return" | "rearm"
+-- "fly": normal; "return": flying to a rearm pad (empty, or recovered to its
+-- home); "rearm": landed on a pad, rearming; "docked": landed on its home
+-- pad, full, held there until given an order (carriers, S-36).
+export type Phase = "fly" | "return" | "rearm" | "docked"
 
 export type AirState = {
 	ammo: { [number]: number }, -- rounds left (aircraft with a def ammo count)
@@ -29,6 +30,12 @@ export type AirState = {
 	-- attack-ground order (bombers, D100): bomb this spot until another order
 	groundX: { [number]: number },
 	groundZ: { [number]: number },
+	-- home base (S-36): a carrier or airfield; empty aircraft go there
+	-- first, and a recovered aircraft stays docked there
+	home: { [number]: number },
+	homeGen: { [number]: number },
+	hold: { [number]: boolean }, -- stay docked on the home pad once full
+	approach: { [number]: number }, -- jets: the Nav order they have flown toward (arrival, client request 17)
 }
 
 function AirState.new(): AirState
@@ -47,6 +54,10 @@ function AirState.new(): AirState
 		egressUntil = {},
 		groundX = {},
 		groundZ = {},
+		home = {},
+		homeGen = {},
+		hold = {},
+		approach = {},
 	}
 end
 
@@ -65,9 +76,13 @@ function AirState.clearUnit(a: AirState, id: number)
 	a.egressUntil[id] = nil
 	a.groundX[id] = nil
 	a.groundZ[id] = nil
+	a.home[id] = nil
+	a.homeGen[id] = nil
+	a.hold[id] = nil
+	a.approach[id] = nil
 end
 
-local PHASE_CODE = { fly = 1, ["return"] = 2, rearm = 3 }
+local PHASE_CODE = { fly = 1, ["return"] = 2, rearm = 3, docked = 4 }
 
 -- Hash over units in `ids` (ascending).
 function AirState.hash(a: AirState, ids: { number }, h: number): number
@@ -84,6 +99,9 @@ function AirState.hash(a: AirState, ids: { number }, h: number): number
 			h = Hash.u32(h, if a.run[id] == "out" then 2 elseif a.run[id] == "in" then 1 else 0)
 			h = Hash.u32(h, a.egressUntil[id] or 0)
 			h = Hash.number(Hash.number(h, a.groundX[id] or 0), a.groundZ[id] or 0)
+			h = Hash.u32(Hash.u32(h, a.home[id] or 0), a.homeGen[id] or 0)
+			h = Hash.u32(h, if a.hold[id] then 1 else 0)
+			h = Hash.u32(h, a.approach[id] or 0)
 		end
 	end
 	return h

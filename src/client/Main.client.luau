@@ -16,6 +16,7 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local Defs = require("@shared/Defs/Defs")
 local Schema = require("@shared/Net/Schema")
+local Normandy = require("@shared/Grid/Normandy")
 local Api = require("./Api")
 local Camera = require("./Camera")
 local Interp = require("./Core/Interp")
@@ -26,8 +27,10 @@ local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
 local Bars = require("./Core/Bars")
 local Effects = require("./Core/Effects")
+local Follow = require("./Core/Follow")
 local Icons = require("./Core/Icons")
 local IconLayer = require("./Render/IconLayer")
+local FollowButton = require("./UI/FollowButton")
 local MinimapUI = require("./UI/Minimap")
 local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
@@ -40,6 +43,14 @@ local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
 local MissileViewRender = require("./Render/MissileView")
+local NukeWarning = require("./Render/NukeWarning")
+local RadarRings = require("./Render/RadarRings")
+local AlertFeed = require("./UI/AlertFeed")
+local BuildMenuUI = require("./UI/BuildMenu")
+local CommandCard = require("./UI/CommandCard")
+local UnitPanel = require("./UI/UnitPanel")
+local LobbyUI = require("./UI/Lobby")
+local AttackPreviewRender = require("./Render/AttackPreview")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
@@ -55,6 +66,8 @@ local api = Api.new(world, function(payload: buffer)
 	cmd:FireServer(payload)
 end)
 
+-- bytes received per channel since the client started (Invoke("net"): bandwidth checks, C-69)
+local received: { [string]: number } = {}
 for name in Schema.Channel do
 	if name == "Cmd" then
 		continue
@@ -62,12 +75,18 @@ for name in Schema.Channel do
 	local remote = remotes:WaitForChild(name) :: any
 	remote.OnClientEvent:Connect(function(msg: any)
 		if typeof(msg) == "buffer" then
+			received[name] = (received[name] or 0) + buffer.len(msg)
 			NetIn.apply(world, name, msg, os.clock())
 		end
 	end)
 end
 
 Camera.bind(camState)
+-- A hand-made map's cell features, for its drawn materials and houses (C-66).
+local function mapFeature(mapId: string?): ((number, number) -> string)?
+	return if mapId == "map:normandy" then Normandy.feature else nil
+end
+
 local controls = Controls.bind(api)
 -- clicks select a unit by its model too, wherever it is drawn (an aircraft
 -- high above its ground point, a big model's body; C-38)
@@ -89,6 +108,23 @@ local ghost = PlacementGhost.new()
 local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
+local nukeWarning = NukeWarning.new() -- strategic launch warnings (C-57)
+local radarRings = RadarRings.new() -- own radar facilities' rings, always on top (C-63, C-64)
+local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-58)
+-- Camera follow (C-43), T or the placeholder button: the first selected
+-- unit, else the homing missile drawn nearest the screen centre.
+local FOLLOW_KEY = Enum.KeyCode.T
+local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
+local function toggleFollow()
+	if camState.follow then
+		camState.follow = nil
+		return
+	end
+	local cam = workspace.CurrentCamera
+	local view = cam.ViewportSize
+	camState.follow = Follow.pick(world, api.state.selection, lastVisibleFx, Controls.projector(cam), view.X / 2, view.Y / 2)
+end
+local followButton = FollowButton.new(toggleFollow)
 -- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
 -- The server publishes the speed as the Remotes folder's SimSpeed attribute.
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
@@ -111,6 +147,8 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
+	elseif key == FOLLOW_KEY then
+		toggleFollow()
 	elseif key == Enum.KeyCode.Minus or key == Enum.KeyCode.Equals then
 		local now = if simSpeed() == 0 then resumeSpeed else simSpeed()
 		local i = table.find(SPEEDS, now) or 4
@@ -138,6 +176,18 @@ local strategic = false
 local tiers: { [number]: string } = {}
 local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
 local resourceBar = ResourceBar.new() -- placeholder UI (task 9)
+-- playable placeholder UI (C-68): build menu, command card, unit panel, alerts
+local buildMenu = BuildMenuUI.new(api)
+local commandCard = CommandCard.new(api)
+local unitPanel = UnitPanel.new(api)
+local alertFeed = AlertFeed.new(api)
+local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; profiles with a lobby only)
+Controls.capture = function(input: InputObject): boolean
+	return BuildMenuUI.capture(buildMenu, api, input)
+end
+api.changed.alert:Connect(function(alert: any)
+	MinimapUI.ping(minimap, world.grid, alert.x, alert.z, AlertFeed.COLOR[alert.kind] or Color3.new(1, 1, 1))
+end)
 
 -- Drawn muzzle of a unit's weapon slot (tracers start there), if it has a model.
 local function muzzleOf(id: number, slot: number): (number?, number?, number?)
@@ -156,6 +206,7 @@ Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
 api.changed.focus:Connect(function(p)
 	camState.x, camState.z = p[1], p[2]
+	camState.follow = nil -- a jump (minimap, group double tap) is a manual move
 end)
 
 -- Join: HELLO now; the WELCOME (or a REJECT) comes back on the Snapshot channel.
@@ -196,9 +247,13 @@ if RunService:IsStudio() then
 			for _ in fx.projectiles do
 				live += 1
 			end
-			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n }, launches = { n = fx.launches.n, fromBarrel = fx.launches.fromBarrel, avgOffset = fx.launches.sumOffset / math.max(fx.launches.fromBarrel, 1) } }
+			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, vfx = fxRenderer.vfx.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n }, launches = { n = fx.launches.n, fromBarrel = fx.launches.fromBarrel, avgOffset = fx.launches.sumOffset / math.max(fx.launches.fromBarrel, 1) } }
 		elseif query == "ranges" then
-			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection }
+			local kinds = {}
+			for _, line in ranges.lines do
+				kinds[line.kind] = (kinds[line.kind] or 0) + 1
+			end
+			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection, lines = kinds, radarRingSegments = radarRings.used }
 		elseif query == "missiles" then
 			-- Invoke("missiles", on?): the missile sensor view (C-39), turned on or off if `on` is given
 			local on = ...
@@ -207,7 +262,7 @@ if RunService:IsStudio() then
 			end
 			local entries = {}
 			for _, e in missileView.entries do
-				table.insert(entries, { id = e.id, label = e.label, locked = e.locked, target = e.targetId, distance = e.distance, tgo = e.tgo, miss = e.miss, fuse = e.fuse, hit = e.hit, path = #e.path // 3 })
+				table.insert(entries, { id = e.id, label = e.label, locked = e.locked, target = e.targetId, distance = e.distance, tgo = e.tgo, miss = e.miss, fuse = e.fuse, hit = e.hit, path = #e.path // 3, seekerAngle = e.seekerAngle, offNose = e.offNose, inSeeker = e.inSeeker, pos = { e.x, e.y, e.z } })
 			end
 			local marks = {}
 			for _, m in fx.marks do
@@ -222,17 +277,48 @@ if RunService:IsStudio() then
 			end
 			table.clear(perf)
 			return out
+		elseif query == "follow" then
+			-- Invoke("follow", "toggle" | "stop"?): camera follow (C-43); returns what it follows and the camera's focus
+			local action = ...
+			if action == "toggle" then
+				toggleFollow()
+			elseif action == "stop" then
+				camState.follow = nil
+			end
+			local f = camState.follow
+			local x, y, z
+			if f then
+				x, y, z = Follow.position(world, fx, lastVisibleFx, f, clock.tick)
+			end
+			return { kind = f and f.kind, id = f and f.id, at = x and { x, y, z }, focus = { camState.x, camState.z }, distance = camState.distance, yaw = camState.yaw }
 		elseif query == "camera" then
-			-- Invoke("camera", x, z, distance?): move the RTS camera (close-ups for proof screenshots)
-			local x, z, distance = ...
-			camState.x, camState.z = x, z
+			-- Invoke("camera", x, z, distance?, pitchDegrees?): move the RTS camera (close-ups
+			-- for proof screenshots); returns the camera rectangle last computed
+			local x, z, distance, pitch = ...
+			if x then
+				camState.x, camState.z = x, z
+			end
 			if distance then
 				camState.distance = distance
 			end
-			return true
+			if pitch then
+				camState.pitch = math.rad(pitch)
+			end
+			return { rect = camState.rect, pitch = math.deg(camState.pitch), distance = camState.distance }
+		elseif query == "net" then
+			-- Invoke("net"): bytes received per channel since the client started (C-69)
+			return received
 		elseif query == "fog" then
 			-- fog of war: mode, plates, lights (made / lit), last rebuild; contacts and ghosts
-			return { mode = fog.mode, stats = fog.stats, contacts = contacts.stats, version = fog.vision and fog.vision.version }
+			-- the server's ally-team sight (C-65): records applied, cells seen
+			local sight = world.sight
+			local seenCells = 0
+			if sight then
+				for i = 0, sight.width * sight.depth - 1 do
+					seenCells += buffer.readu8(sight.cells, i)
+				end
+			end
+			return { mode = fog.mode, stats = fog.stats, contacts = contacts.stats, version = fog.vision and fog.vision.version, sightVersion = sight and sight.version, seenCells = seenCells, wrecks = renderer.deaths.stats.wrecks }
 		elseif query == "deaths" then
 			-- deaths played (shakes, flings), wrecks standing
 			return renderer.deaths.stats
@@ -247,7 +333,7 @@ if RunService:IsStudio() then
 			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
 			local mode = ...
 			if mode and world.layers then
-				Ground.build(world.layers, mode)
+				Ground.build(world.layers, mode, mapFeature(world.mapId))
 			end
 			return Ground.last
 		elseif query == "act" then
@@ -310,34 +396,62 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		if world.mapVersion ~= seenMap then
 			seenMap = world.mapVersion
 			if world.layers then
-				Ground.build(world.layers)
+				Ground.build(world.layers, nil, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogOfWar.setMap(fog, world.layers)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
 	end
-	local payload = Camera.update(camState, world, workspace.CurrentCamera, dt, now)
-	if payload then
-		cmd:FireServer(payload)
+	if Camera.input(camState, workspace.CurrentCamera, dt) then
+		camState.follow = nil -- a manual pan stops a follow (zooming doesn't)
 	end
-	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
-	api.state.camera.rect = camState.rect
 	local frameT0 = os.clock()
 	-- sim time this frame: units, shells, piece scripts and banking slow down
 	-- or pause with the sim; camera and UI stay in real time (C-35)
 	local speed = simSpeed()
 	local simDt = dt * speed
 	local t = Interp.advance(clock, world, now, dt, speed)
+	World.settle(world, t) -- health bars show changes with the hits that caused them (C-49)
 	local t0 = os.clock()
-	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position)
+	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
-	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now)
+	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now, speed)
+	lastVisibleFx = visibleFx
 	mark("effects", t0)
+	-- the camera goes on after units and missiles have their drawn positions
+	-- this frame, so a followed one sits still in the middle of the screen
+	local following = camState.follow
+	if following then
+		local x, y, z = Follow.position(world, fx, visibleFx, following, t)
+		if x then
+			camState.x, camState.z, camState.minDistance = Follow.focus(x, y :: number, z :: number, camState.pitch, camState.yaw, function(gx, gz)
+				return World.groundY(world, gx, gz)
+			end)
+		else
+			camState.follow = nil -- it ended: the camera stays where it is
+		end
+	end
+	if camState.follow == nil and camState.minDistance then
+		-- after a follow the camera keeps the distance it had
+		camState.distance = math.min(math.max(camState.distance, camState.minDistance), Camera.MAX_DISTANCE)
+		camState.minDistance = nil
+	end
+	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)
+	if payload then
+		cmd:FireServer(payload)
+	end
+	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
+	api.state.camera.rect = camState.rect
+	local followed = camState.follow
+	local followDef = followed and followed.kind == "unit" and world.units[followed.id] and World.def(world, world.units[followed.id])
+	FollowButton.step(followButton, if followed == nil then nil elseif followed.kind == "missile" then "missile" elseif followDef then followDef.name else `unit #{followed.id}`)
 	t0 = os.clock()
 	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
+	NukeWarning.step(nukeWarning, fx, world, now, workspace.CurrentCamera)
+	AttackPreviewRender.step(attackPreview, world, api.state.selection, if api.state.commandMode == "attack" then Controls.hover() else nil, workspace.CurrentCamera)
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
@@ -348,7 +462,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	table.clear(fx.shots)
 	mark("anim", t0)
-	Api.frame(api, now)
+	Api.frame(api, now, fx.warnings)
 	if api.state.placement then
 		local hover = Controls.hover()
 		if hover then
@@ -359,6 +473,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now, knownEnemy)
+	RadarRings.step(radarRings, world, now)
 	mark("ranges", t0)
 	t0 = os.clock()
 	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)
@@ -397,6 +512,10 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	t0 = os.clock()
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
+	BuildMenuUI.step(buildMenu, api)
+	CommandCard.step(commandCard, api)
+	UnitPanel.step(unitPanel, api)
+	AlertFeed.step(alertFeed)
 	mark("ui", t0)
 	mark("frame", frameT0)
 	table.clear(world.died) -- the renderer and Effects have taken what they need

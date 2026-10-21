@@ -9,6 +9,7 @@
 -- death, then plays its death (Render/Deaths, C-34) and leaves its wreck.
 
 local Attitude = require("../Core/Attitude")
+local Deaths = require("../Core/Deaths")
 local Interp = require("../Core/Interp")
 local PieceAnim = require("../Core/PieceAnim")
 local PieceScripts = require("../Core/PieceScripts/Registry")
@@ -101,7 +102,7 @@ end
 -- `t`. With `hidden` (strategic zoom: models unparented) it only works out
 -- the drawn positions (rx, ry, rz) for icons and selection. `camera` sets
 -- each unit's animation LOD.
-function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number, hidden: boolean?, camera: Vector3?)
+function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number, hidden: boolean?, camera: Vector3?, speed: number?)
 	for _, id in world.entered do
 		hide(r, id) -- an ID can come back after a LEAVE; start clean
 		show(r, world, id)
@@ -120,7 +121,9 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 			table.insert(r.dying, { drawn = d, death = death })
 		end
 	end
-	local now = os.clock()
+	-- deaths play on the render clock (sim seconds), so they slow down and
+	-- pause with the sim like the effects (C-48)
+	local now = t / 15
 	for i = #r.dying, 1, -1 do
 		local dying = r.dying[i]
 		local death = dying.death
@@ -130,14 +133,21 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 			if t < 0 or hidden then
 				release(d) -- nothing to watch
 			else
-				-- the burst comes from Effects; the shake or the flung pieces and the wreck from here
+				-- the burst comes from Effects; the shake or the flung pieces and the wreck
+				-- from here, or an aircraft's fall (C-48)
+				local crash = Deaths.crash(death, d.def, function(x: number, z: number): number
+					return World.groundY(world, x, z)
+				end)
 				RenderDeaths.start(r.deaths, death.id, d.def, d.model, d.motors, death.severity, death.wreckId, now, function()
 					release(d)
-				end)
+				end, crash, d.rootOffset)
 			end
 		end
 	end
-	RenderDeaths.step(r.deaths, now)
+	RenderDeaths.step(r.deaths, now, speed)
+	if t >= 0 then
+		RenderDeaths.syncWrecks(r.deaths, world, t)
+	end
 	if t < 0 then
 		return
 	end

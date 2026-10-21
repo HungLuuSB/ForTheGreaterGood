@@ -6,6 +6,7 @@
 -- units get the even IDs (both sides produce on the same ticks, player 1
 -- first). The stagger phase is now a mixed hash of the ID.
 local Hash = require("@shared/Util/Hash")
+local Schema = require("@shared/Net/Schema")
 local Sim = require("../Sim/Sim")
 local Skirmish = require("../Sim/AI/Skirmish")
 local Spawn = require("../Sim/Spawn")
@@ -72,7 +73,7 @@ return function(t: RunAll.Context)
 		end
 	end)
 
-	t.test("in mirror fights the side holding the even IDs has no edge", function()
+	t.slow("in mirror fights the side holding the even IDs has no edge", function()
 		-- Lancers: precise guns, so a fight is decided by who reacts first
 		local even, odd, draws = 0, 0, 0
 		for _, unit in { "ord_lancer" } do
@@ -95,9 +96,68 @@ return function(t: RunAll.Context)
 		t.expect(decided > 0 and even <= decided * 0.8 and odd <= decided * 0.8, `neither parity wins over 80%: even {even}, odd {odd} (before S-23 the even side won all 40)`)
 	end)
 
+	-- S-31: on Twin Lakes the east pair won every Hard–Normal 2v2. Mirrored
+	-- players think at different ticks, and the generator rule read the
+	-- power stall ratio at that moment; it reads 1 just after a builder
+	-- finishes, so one side built an extractor where its mirror built a
+	-- generator, and the east's economy pulled ahead every game.
+	t.slow("Hard 2v2 mirror on Twin Lakes: mirrored players build the same things in the same places", function()
+		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 1 }, { id = 3, team = 3, allyTeam = 2 }, { id = 4, team = 4, allyTeam = 2 } }
+		local sim = Sim.new({
+			seed = 7,
+			players = players,
+			mapId = "map:twin_lakes",
+			scenario = "standard_start",
+			match = { mode = "TEAM", win = "COMMAND_ENDS", ai = { [1] = "hard", [2] = "hard", [3] = "hard", [4] = "hard" } },
+		})
+		local brains = Skirmish.forMatch(sim)
+		local g = (sim.map :: any).grid
+		local midX = g.originX + g.cellsX * 8 / 2 -- the west / east mirror line
+		local orders: { { string } } = { {}, {}, {}, {} }
+		local function value(owner: number): number
+			local v = 0
+			for _, id in sim.world.ids do
+				if sim.world.owner[id] == owner then
+					local c = sim.defs.unitByIndex[sim.world.defIndex[id]].cost
+					v += (c.supply + c.power / 10) * sim.world.buildProgress[id]
+				end
+			end
+			return v
+		end
+		for _ = 1, 900 * 3 do
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
+			for _, q in sim.queue do
+				local cmd = q.cmd
+				if cmd.cmdType == Schema.CmdType.BUILD and (cmd.cell or 0) ~= 0 then
+					-- structures: the def and the site, mirrored for the east pair
+					local x, z = g:decode(cmd.cell :: number, cmd.offX :: number, cmd.offZ :: number)
+					if q.player >= 3 then
+						x = 2 * midX - x
+					end
+					table.insert(orders[q.player], `{sim.defs.unitByIndex[cmd.defIndex :: number].id}@{math.floor(x / 8 + 0.5)},{math.floor(z / 8 + 0.5)}`)
+				end
+			end
+			Sim.step(sim)
+		end
+		for _, pair in { { 1, 3 }, { 2, 4 } } do
+			local a, b = orders[pair[1]], orders[pair[2]]
+			local same = 0
+			while same < math.min(#a, #b) and a[same + 1] == b[same + 1] do
+				same += 1
+			end
+			-- later, single trips taking a few ticks more on one side or the other
+			-- (flow-field tie-breaks, no net direction) reorder jobs
+			t.expect(same >= 8, `players {pair[1]} and {pair[2]}: the first {same} structures match (before S-31 they parted at the 3rd: extractor against generator)`)
+			local va, vb = value(pair[1]), value(pair[2])
+			t.expect(math.abs(va - vb) <= 0.1 * math.max(va, vb), `players {pair[1]} and {pair[2]} at 3 minutes: value {va} against {vb} (before S-31 the east led by 7–15% every game)`)
+		end
+	end)
+
 	-- The same AI level on both starts of a mirrored map, both factions, six
 	-- seeds: wins (or the value lead after 10 minutes) split close to even.
-	t.test("mirror AI matches on a mirrored map split close to even between the starts", function()
+	t.slow("mirror AI matches on a mirrored map split close to even between the starts", function()
 		local west, east = 0, 0
 		for seed = 1, 6 do
 			for _, teams in { { 1, 3 }, { 2, 4 } } do -- Order mirror, Chaos mirror

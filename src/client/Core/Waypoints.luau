@@ -23,10 +23,16 @@ Waypoints.IDLE_SECONDS = 2 -- a unit standing still this long has no orders left
 -- (a fallback for a build the server dropped).
 Waypoints.BUILD_IDLE_SECONDS = 20
 Waypoints.MAX_PER_UNIT = 16
+-- Aircraft fly to their goal and arrive within the server's
+-- Air.ARRIVE_RADIUS, or once the goal falls behind them after they flew
+-- toward it, within Air.LOITER_RADIUS (a goal inside their turn circle:
+-- the closest approach); then they circle it (S-38, C-51).
+Waypoints.AIR_REACH = 40
+Waypoints.AIR_PASS = 220
 
 local CT = Schema.CmdType
 
-export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number? }
+export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number?, approached: boolean? }
 export type Waypoints = { byUnit: { [number]: { Point } }, idleSince: { [number]: number } }
 
 function Waypoints.new(): Waypoints
@@ -34,18 +40,20 @@ function Waypoints.new(): Waypoints
 end
 
 -- How close counts as there: the server spreads a group in a formation
--- around a point (Orders.lineSlots), about spacing × √n across.
+-- around a point (Orders.lineSlots), about spacing × √n across; aircraft
+-- arrive at AIR_REACH.
 local function reachFor(world: World.World, ids: { number }): number
-	local footprint = 1
+	local footprint, air = 1, false
 	for _, id in ids do
 		local u = world.units[id]
 		local def = u and World.def(world, u)
 		if def then
 			footprint = math.max(footprint, def.footprint)
+			air = air or def.domain == "air"
 		end
 	end
 	local spacing = Formation.spacing(footprint * PlacementRules.RADIUS_PER_FOOTPRINT)
-	return math.max(Waypoints.REACHED, spacing * math.sqrt(#ids))
+	return math.max(if air then Waypoints.AIR_REACH else Waypoints.REACHED, spacing * math.sqrt(#ids))
 end
 
 -- Records `intent` sent to `ids`.
@@ -141,7 +149,7 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 		end
 		local head = list[1]
 		local buildNext = head ~= nil and head.kind == CT.BUILD
-		if bit32.band(u.state, World.State.MOVING) == 0 and not (buildNext and building(world, u)) then
+		if not World.moving(world, u) and not (buildNext and building(world, u)) then
 			local since = wp.idleSince[id]
 			local limit = if buildNext then Waypoints.BUILD_IDLE_SECONDS else Waypoints.IDLE_SECONDS
 			if since == nil then
@@ -167,7 +175,19 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 				break -- attack / guard / repair last until the target is gone
 			end
 			local x, z = u.rx or u.x, u.rz or u.z
-			if (first.x - x) ^ 2 + (first.z - z) ^ 2 <= first.reach ^ 2 and first.kind ~= CT.PATROL then
+			local d2 = (first.x - x) ^ 2 + (first.z - z) ^ 2
+			local passed = false
+			local def = World.def(world, u)
+			if def and def.domain == "air" then
+				-- the server's arrival (S-38): the goal fell behind after it was ahead
+				local ahead = math.sin(u.heading) * (first.x - x) + math.cos(u.heading) * (first.z - z) > 0
+				if ahead then
+					first.approached = true
+				elseif first.approached and d2 <= Waypoints.AIR_PASS ^ 2 then
+					passed = true
+				end
+			end
+			if (d2 <= first.reach ^ 2 or passed) and first.kind ~= CT.PATROL then
 				table.remove(list, 1)
 				first = list[1]
 			else

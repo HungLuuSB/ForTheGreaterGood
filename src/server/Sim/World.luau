@@ -80,6 +80,12 @@ export type World = {
 	wTarget: { [number]: number }, -- target unit ID, 0 = none
 	wTargetGen: { [number]: number }, -- the target's generation (D109): a ghost's for dead structures
 	wHold: { [number]: number }, -- ticks the weapon still keeps its aim after losing its target (Shared/Combat/Aim, S-20)
+	wOverkill: { [number]: number }, -- World.Overkill: left a doomed target, search now / may shoot a doomed one (S-29)
+	wBlocked: { [number]: number }, -- 1 while terrain blocks the shot at the current target (line of fire, S-32)
+	wStock: { [number]: number }, -- missiles in stock; nil = the slot has no stockpile (Stockpile, S-47)
+	wTargetProj: { [number]: number }, -- interceptors: the enemy strategic missile targeted (projectile ID, 0 = none; S-48)
+	wTargetProjSerial: { [number]: number }, -- its Combat.pSerial
+	wStockProgress: { [number]: number }, -- 0..1 of the next missile
 
 	-- ID allocator
 	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
@@ -125,6 +131,12 @@ function World.new(): World
 		wTarget = {},
 		wTargetGen = {},
 		wHold = {},
+		wOverkill = {},
+		wBlocked = {},
+		wStock = {},
+		wTargetProj = {},
+		wTargetProjSerial = {},
+		wStockProgress = {},
 		gen = {},
 		pins = {},
 		nextFresh = 1,
@@ -184,6 +196,7 @@ export type SpawnInfo = {
 	alt: number?,
 	health: number,
 	weaponCount: number?,
+	weaponStock: { [number]: number }?, -- slot → missiles in stock, for slots with a stockpile (S-47)
 	weaponRest: { { number } }?, -- per slot {yaw, pitch} (radians): the aim it starts at; default 0, 0 (S-20)
 	buildProgress: number?, -- default 1 (complete)
 }
@@ -236,9 +249,18 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 		w.wYaw[key] = if rest then rest[1] else 0
 		w.wPitch[key] = if rest then rest[2] else 0
 		w.wHold[key] = 0
+		w.wOverkill[key] = 0
+		w.wBlocked[key] = 0
 		w.wReload[key] = 0
 		w.wTarget[key] = 0
 		w.wTargetGen[key] = 0
+		w.wTargetProj[key] = 0
+		w.wTargetProjSerial[key] = 0
+		local stock = info.weaponStock and info.weaponStock[slot]
+		if stock then
+			w.wStock[key] = stock
+			w.wStockProgress[key] = 0
+		end
 	end
 	return id
 end
@@ -253,9 +275,19 @@ end
 -- Sets weapon slot `key`'s target to (id, gen); gen defaults to the live
 -- unit's.
 function World.setTarget(w: World, key: number, id: number, gen: number?)
+	if w.wTarget[key] ~= id then
+		w.wOverkill[key] = 0
+		w.wBlocked[key] = 0
+	end
 	w.wTarget[key] = id
 	w.wTargetGen[key] = if id == 0 then 0 else (gen or w.gen[id] or 0)
 end
+
+-- Overkill avoidance per weapon (S-29): RETARGET = it just left a target that
+-- hits already on the way will kill, so it searches on the next tick instead
+-- of waiting for its stagger tick; ALLOWED = its target is doomed but nothing
+-- else is in reach, so it fires anyway.
+World.Overkill = table.freeze({ NONE = 0, RETARGET = 1, ALLOWED = 2 })
 
 -- Ghost pins (D109): an ID remembered as a ghost by any team is never
 -- reused, so a ghost and a new unit can't share an ID (on the wire too).
@@ -311,6 +343,12 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wTarget[key] = nil
 		w.wTargetGen[key] = nil
 		w.wHold[key] = nil
+		w.wOverkill[key] = nil
+		w.wBlocked[key] = nil
+		w.wStock[key] = nil
+		w.wStockProgress[key] = nil
+		w.wTargetProj[key] = nil
+		w.wTargetProjSerial[key] = nil
 	end
 	w.weaponCount[id] = nil
 	w.lastAttacker[id] = nil
@@ -416,6 +454,14 @@ function World.hash(w: World, h: number?): number
 			hv = Hash.u32(hv, w.wTarget[key])
 			hv = Hash.u32(hv, w.wTargetGen[key])
 			hv = Hash.u32(hv, w.wHold[key])
+			hv = Hash.u32(hv, w.wOverkill[key])
+			hv = Hash.u32(hv, w.wBlocked[key])
+			hv = Hash.u32(Hash.u32(hv, w.wTargetProj[key]), w.wTargetProjSerial[key])
+			local stock = w.wStock[key]
+			if stock ~= nil then
+				hv = Hash.u32(hv, stock)
+				hv = Hash.number(hv, w.wStockProgress[key])
+			end
 		end
 	end
 	hv = Hash.u32(hv, w.nextFresh)

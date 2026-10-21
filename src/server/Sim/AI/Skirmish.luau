@@ -9,7 +9,8 @@
 --
 -- Every THINK_PERIOD ticks (players spread over the period) it:
 --   1. Builders (the Command Vehicle stays home): a Vehicle Plant first;
---      generators when power runs short; extractors on the nearest free
+--      generators when power runs short (a stall within the last 5 s,
+--      S-31); extractors on the nearest free
 --      deposits (home first, then expansions); a radar tower once the plant
 --      and two extractors stand; an IR SAM site when enemy aircraft come
 --      near home; an Advanced Vehicle Plant once supply piles up (S-7); a
@@ -33,10 +34,21 @@
 -- player ID), used for the production mix.
 --
 -- Levels (S-17; a match option, `match.ai = { [player] = level }`):
---   easy    thinks every 2 s, 2 workers, one item queued per factory and
---           at most one army unit per 15 s, at most 6 extractors, one plant,
---           no radar, anti-air, tech-up or kiting.
---   normal  everything above (the default).
+--   easy    for a new player (S-57): thinks every 2 s, 2 workers, one item
+--           queued per factory and at most one army unit per 20 s, an army
+--           of at most 8, at most 6 extractors, one plant, no radar,
+--           anti-air, tech-up or kiting; no wave before 8 minutes, then
+--           waves of 4, 5, ... units at least 2 minutes apart.
+--   normal  everything above (the default); thinks every 4/3 s (S-31: a
+--           multiple of THINK_ALIGN; it was 1 s). S-57: from its second
+--           generator, its plant builds 2–3 tanks before more workers and
+--           it builds no third generator until they are out; an enemy wave of 3+
+--           ground units near the base (the recall radius) brings the whole
+--           army home, and no wave leaves for 20 s after.
+-- Missile stockpiles (S-57): the generator rule plans for the power its
+-- SAMs' refills want (up to REFILL_POWER_CAP); while enemy aircraft were
+-- near home in the last AIR_MEMORY ticks, half its mobile SAMs stay home,
+-- and with SAMs refilling under a power stall it queues no new army units.
 --   hard    thinks every 2/3 s; expands only to deposits nearer its own
 --           start than any enemy start, escorting workers to the far ones;
 --           waits for bigger waves (12, growing by 4) that go for the enemy
@@ -62,7 +74,9 @@ local World = require("../World")
 
 local Skirmish = {}
 
-Skirmish.THINK_PERIOD = 15 -- ticks (1 s)
+Skirmish.THINK_PERIOD = 15 -- ticks (1 s): the AI's timers
+Skirmish.THINK_ALIGN = 10 -- ticks: think periods and offsets are multiples of it, the economy (5) and sensor (2) periods' common multiple (S-31)
+Skirmish.POWER_MEMORY = 75 -- ticks a power stall is remembered for the generator rule (S-31)
 Skirmish.QUEUE_TARGET = 2
 Skirmish.WORKERS = 3
 Skirmish.FIRST_WAVE = 8
@@ -78,6 +92,13 @@ Skirmish.KITE_TICKS = 45 -- how long a kiting unit is left out of wave orders
 Skirmish.FLEET_SIZE = 4 -- ships gathered before the fleet attacks (hard)
 Skirmish.MAX_TURRETS = 6
 Skirmish.ESCORT_RADIUS = 160 -- studs: workers sent to deposits farther from home get an escort (hard)
+Skirmish.REFILL_POWER_CAP = 60 -- power/s of missile refills the generator rule plans for, at most (S-57)
+Skirmish.AIR_MEMORY = 900 -- ticks enemy aircraft near home are remembered: half the mobile SAMs stay home (S-57)
+Skirmish.RECALL_RADIUS = 570 -- studs from home: an enemy wave this close brings the army home (S-57)
+Skirmish.RECALL_MIN = 3 -- known enemy ground units that make a wave
+Skirmish.RECALL_HOLD = 300 -- ticks no new wave leaves after a recall
+Skirmish.WAVE_ALIGN = 300 -- ticks: waves leave only at the start of these windows (S-57)
+Skirmish.RALLY_GAP = 520 -- studs at least between two rally points: beyond artillery range (howitzer 450) (S-57)
 
 export type Level = {
 	think: number, -- ticks between thinks
@@ -101,6 +122,11 @@ export type Level = {
 	naval: boolean, -- a shipyard when a sea is near
 	safeExpansion: boolean, -- claims only deposits nearer its start than any enemy start
 	hunt: boolean, -- waves go for the enemy Command Vehicle first (it ends the match)
+	firstAttack: number, -- ticks before the first wave may leave (S-57; easy: 8 min)
+	waveInterval: number, -- ticks at least between two waves leaving (S-57)
+	maxArmy: number, -- army units it keeps at most (S-57; easy)
+	tanksBeforeGen3: number, -- tanks before its third generator (S-57; normal): this or one more, by its Prng
+	recall: boolean, -- pulls the whole army home against an enemy wave near the base (S-57)
 }
 
 Skirmish.LEVELS = table.freeze({
@@ -108,9 +134,9 @@ Skirmish.LEVELS = table.freeze({
 		think = 30,
 		workers = 2,
 		queue = 1,
-		armyCooldown = 15,
-		firstWave = 8,
-		waveGrowth = 2,
+		armyCooldown = 20,
+		firstWave = 4, -- small waves a new player can hold (S-57)
+		waveGrowth = 1,
 		maxExtractors = 6,
 		secondPlant = false,
 		secondPlantSupply = math.huge,
@@ -126,9 +152,14 @@ Skirmish.LEVELS = table.freeze({
 		naval = false,
 		safeExpansion = false,
 		hunt = false,
+		firstAttack = 8 * 60 * 15, -- no attack before 8 minutes (S-57)
+		waveInterval = 120 * 15,
+		maxArmy = 8, -- small enough that a normal wave breaks it (S-57)
+		tanksBeforeGen3 = 0,
+		recall = false,
 	},
 	normal = {
-		think = Skirmish.THINK_PERIOD,
+		think = 20, -- a multiple of THINK_ALIGN (S-31)
 		workers = Skirmish.WORKERS,
 		queue = Skirmish.QUEUE_TARGET,
 		armyCooldown = 0,
@@ -149,6 +180,11 @@ Skirmish.LEVELS = table.freeze({
 		naval = false,
 		safeExpansion = false,
 		hunt = false,
+		firstAttack = 0,
+		waveInterval = 0,
+		maxArmy = math.huge,
+		tanksBeforeGen3 = 2, -- tanks before the third generator (S-57)
+		recall = true, -- defends the base against enemy waves (S-57)
 	},
 	hard = {
 		think = 10,
@@ -172,6 +208,11 @@ Skirmish.LEVELS = table.freeze({
 		naval = true,
 		safeExpansion = true,
 		hunt = true,
+		firstAttack = 0,
+		waveInterval = 0,
+		maxArmy = math.huge,
+		tanksBeforeGen3 = 0,
+		recall = false,
 	},
 } :: { [string]: Level })
 
@@ -210,6 +251,13 @@ export type Brain = {
 	lastFarZ: number?,
 	thinkOffset: number, -- ticks into the think period this player thinks at
 	lastArmyQueued: number, -- tick it last queued an army unit (easy's cooldown)
+	powerShortAt: number, -- last tick power was stalling (S-31)
+	airNearAt: number, -- last tick enemy aircraft were known near home (S-57)
+	lastWaveAt: number, -- tick the last wave left (S-57)
+	recallUntil: number, -- no new wave before this tick (S-57)
+	recallRadius: number, -- RECALL_RADIUS, or less on a small map: never the enemy's own rally point
+	tanksFirst: number, -- tanks before its third generator this match: tanksBeforeGen3 or one more, by its Prng (S-57)
+	rallyDist: number, -- studs from home to the rally point (S-57)
 }
 
 local function submit(sim: Types.Sim, player: number, cmd: Schema.Command)
@@ -310,7 +358,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 			end
 		end
 	end
-	return {
+	local brain: Brain = {
 		sim = sim,
 		player = player,
 		team = p.team,
@@ -328,6 +376,18 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		deposits = deposits,
 		waves = 0,
 		lastWaveOrder = -math.huge,
+		powerShortAt = -math.huge,
+		airNearAt = -math.huge,
+		lastWaveAt = -math.huge,
+		recallUntil = -math.huge,
+		recallRadius = math.min(Skirmish.RECALL_RADIUS, dl * 0.45),
+		tanksFirst = 0,
+		-- the rally point: 160 studs out, but on a small map far enough back
+		-- that the two armies parked at their rally points are out of each
+		-- other's artillery range (RALLY_GAP apart). Within range, the side
+		-- whose artillery saw the other first won the duel, and with mirrored
+		-- players that was always the same side (S-57)
+		rallyDist = math.clamp((dl - Skirmish.RALLY_GAP) / 2, 40, 160),
 		kiting = {},
 		level = levelName,
 		cfg = cfg,
@@ -339,11 +399,22 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		seaZ = seaZ,
 		lastFleetOrder = -math.huge,
 		lastArmyQueued = -math.huge,
-		-- players spread evenly over the think period: with `tick + player`
-		-- the higher player always thought a tick earlier and won every race
-		-- for a contested deposit (S-17)
-		thinkOffset = ((table.find(sim.playerOrder, player) :: number) - 1) * cfg.think // #sim.playerOrder,
+		-- players spread over the think period in steps of THINK_ALIGN, so
+		-- every player thinks at the same phase of the economy (5 ticks) and
+		-- sensor (2 ticks) steps: at other phases the same plan finished at
+		-- a different point of a player's cycle, and mirrored players made
+		-- different choices (S-31). With `tick + player` the higher player
+		-- always thought a tick earlier and won every race for a contested
+		-- deposit (S-17); players sharing a slot think in the same tick.
+		thinkOffset = (((table.find(sim.playerOrder, player) :: number) - 1) * Skirmish.THINK_ALIGN) % cfg.think,
 	}
+	-- "2–3 tanks" (S-57): the count varies by match through its own Prng, so
+	-- mirrored players don't play the same opening every time (a fixed
+	-- count made one side win nearly every mirror)
+	if cfg.tanksBeforeGen3 > 0 then
+		brain.tanksFirst = cfg.tanksBeforeGen3 + (if brain.rng:chance(0.5) then 1 else 0)
+	end
+	return brain
 end
 
 -- A brain for every player the match's `ai` option names, in player order.
@@ -381,6 +452,8 @@ end
 -- Each ring is swept from the enemy's side, mirrored by `toward`, so the two
 -- starts of a mirrored map build mirrored bases (S-17: sweeping from +x for
 -- both gave the east start a different, safer base).
+local SNAP_NUDGE = 1e-3 -- studs
+
 local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (number?, number?)
 	local sim = brain.sim
 	local def = sim.defs.units[defId]
@@ -390,7 +463,10 @@ local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (n
 		local n = ring * 8
 		for k = 0, n - 1 do
 			local a = k / n * 2 * math.pi
-			local x, z = cx + brain.toward * math.cos(a) * ring * step, cz + math.sin(a) * ring * step
+			-- the nudge toward the enemy keeps points off exact half cells:
+			-- snapping rounds halves up (+x) for everyone, which made the
+			-- east player's site one cell off the west's mirror image (S-31)
+			local x, z = cx + brain.toward * (math.cos(a) * ring * step + SNAP_NUDGE), cz + math.sin(a) * ring * step
 			local gx, gz = g:cellAt(x, z)
 			if not g:inBounds(gx, gz) then
 				continue
@@ -469,6 +545,35 @@ function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number
 	return threatX, threatZ, targetX, targetZ
 end
 
+-- An enemy wave coming at the base (S-57): the known enemy ground units
+-- (not structures, not aircraft; radar contacts count by their domain,
+-- D107) within the recall radius of home (RECALL_RADIUS, at most 45% of the
+-- way to the enemy start, so its army parked at home never counts), and
+-- where they are on average.
+function Skirmish.incoming(brain: Brain): (number, number, number)
+	local sim = brain.sim
+	local w = sim.world
+	local n, sx, sz = 0, 0, 0
+	local r2 = brain.recallRadius ^ 2
+	for _, id in w.ids do
+		if w.ally[id] ~= brain.ally then
+			local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
+			if kx and kz and (kx - brain.homeX) ^ 2 + (kz - brain.homeZ) ^ 2 <= r2 then
+				local cats = Sensors.knownCategories(sim, brain.ally, id, level, defIndex :: number)
+				if bit32.band(cats, BIT.STRUCTURE + BIT.AIR) == 0 then
+					n += 1
+					sx += kx
+					sz += kz
+				end
+			end
+		end
+	end
+	if n == 0 then
+		return 0, brain.homeX, brain.homeZ
+	end
+	return n, sx / n, sz / n
+end
+
 type Census = {
 	commander: number,
 	builders: { number },
@@ -494,6 +599,9 @@ type Census = {
 	shipFrames: number,
 	fleet: { number }, -- armed ships and submarines
 	fighters: number, -- own anti-air aircraft
+	refillPower: number, -- power per second its missile stockpiles below capacity want (S-57)
+	generators: number, -- generators, frames included
+	aaTrucks: { number }, -- own mobile SAMs, in ID order
 }
 
 local function census(brain: Brain): Census
@@ -524,8 +632,12 @@ local function census(brain: Brain): Census
 		shipFrames = 0,
 		fleet = {},
 		fighters = 0,
+		refillPower = 0,
+		generators = 0,
+		aaTrucks = {},
 	}
 	local advPlant = faction(brain, "advvehplant", "advvehplant")
+	local generator = faction(brain, "generator", "generator")
 	local airfield = faction(brain, "airfield", "airfield")
 	local shipyard = faction(brain, "shipyard", "shipyard")
 	local nearHome = (Skirmish.HOME_RADIUS * 1.5) ^ 2
@@ -544,6 +656,16 @@ local function census(brain: Brain): Census
 		end
 		local d = unitDef(sim, id)
 		local done = w.buildProgress[id] >= 1
+		if done then
+			-- missiles still to build (S-47): their power, at full economy
+			for slot, s in d.weapons do
+				local stock = w.wStock[World.slotKey(id, slot)]
+				if stock and s.stockCapacity and stock < s.stockCapacity then
+					local sp = sim.defs.weapons[s.def].stockpile :: any
+					c.refillPower += (sp.cost.power or 0) / sp.buildTime
+				end
+			end
+		end
 		if bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0 then
 			c.commander = id
 		elseif d.domain == "structure" then
@@ -567,6 +689,8 @@ local function census(brain: Brain): Census
 				else
 					c.frames += 1
 				end
+			elseif d.id == generator then
+				c.generators += 1
 			elseif d.extractor then
 				c.extractors += 1
 				if (w.posX[id] - brain.homeX) ^ 2 + (w.posZ[id] - brain.homeZ) ^ 2 > Skirmish.HOME_RADIUS ^ 2 then
@@ -591,6 +715,7 @@ local function census(brain: Brain): Census
 					c.fighters += 1
 				else
 					c.aa += 1
+					table.insert(c.aaTrucks, id)
 				end
 			end
 		elseif (d.sensors.track or 0) > 0 then
@@ -626,6 +751,9 @@ local function think(brain: Brain)
 	local w = sim.world
 	local c = census(brain)
 	local acc = sim.eco.accounts[brain.team]
+	if c.enemyAirNearHome > 0 then
+		brain.airNearAt = sim.tick
+	end
 	local plant = faction(brain, "vehplant", "vehplant")
 
 	-- 1. builders
@@ -634,6 +762,12 @@ local function think(brain: Brain)
 		table.insert(workers, 1, c.commander)
 	end
 	local cfg = brain.cfg
+	-- power is short if it stalled in the last POWER_MEMORY ticks (watched
+	-- every tick in Skirmish.tick): the stall ratio reads 1 for a moment
+	-- whenever a builder has just finished (its demand is gone), which is
+	-- exactly when the AI picks the next job; deciding on that moment made
+	-- mirrored players choose differently by when they think (S-31)
+	local powerShort = sim.tick - brain.powerShortAt <= Skirmish.POWER_MEMORY
 	local plantsWanted = if cfg.secondPlant and acc.supply.stored > cfg.secondPlantSupply and c.extractors >= cfg.secondPlantExtractors then 2 else 1
 	-- hard extras come once the economy and an army stand
 	local established = c.extractors >= 6 and #c.army >= 6 and acc.supply.stored >= 200
@@ -643,6 +777,12 @@ local function think(brain: Brain)
 	local wantAir = cfg.air and #c.factories > 0 and established and #c.airfields + c.airFrames == 0
 	local wantNaval = cfg.naval and brain.seaX ~= nil and #c.factories > 0 and established and #c.shipyards + c.shipFrames == 0
 	local wantTurret = c.turrets < turretsWanted and #c.factories > 0 and c.extractors >= 5 and #c.army >= 4
+	-- normal: once two generators stand, an army before anything else
+	-- (S-57): builders start no new job until the plant has rolled out
+	-- `tanksBeforeGen3` units; other jobs would split the power and stall
+	-- them. (Sending the builders to help the plant gave mirrored players
+	-- a side bias: east won 9–11 of 12 Normal mirrors.)
+	local armyFirst = brain.tanksFirst > 0 and c.generators >= 2 and #c.army < brain.tanksFirst and #c.factories > 0
 	for _, id in workers do
 		local isCommander = id == c.commander
 		if not idleBuilder(sim, id) then
@@ -725,7 +865,11 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if acc.power.ratio < 0.95 or acc.power.income < 20 * #c.factories + 20 then
+		-- missile refills draw power too (S-47): an AI under air attack whose
+		-- SAMs sit empty wants the generators for them (S-57)
+		-- normal: no third generator before its first tanks (S-57)
+		local genAllowed = not armyFirst
+		if genAllowed and (powerShort or acc.power.income < 20 * #c.factories + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) then
 			local gen = faction(brain, "generator", "generator")
 			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
 			if x and z then
@@ -778,6 +922,10 @@ local function think(brain: Brain)
 	local aaWanted = if cfg.antiAir then math.min(math.ceil(c.enemyAir / 2), Skirmish.MAX_AA) else 0
 	local aaPlanned = c.aa + queued(sim, c.factories, aaUnit)
 	local radarPlanned = #c.radarTrucks + queued(sim, c.factories, radarUnit)
+	-- under air attack with SAMs waiting for missiles and power stalling:
+	-- no new army units until they refill (the economy shares power evenly,
+	-- so new production would keep the SAMs empty; S-57)
+	local holdArmy = sim.tick - brain.airNearAt <= Skirmish.AIR_MEMORY and c.refillPower > 0 and acc.power.ratio < 0.5
 	local function queueItem(f: number, item: string)
 		submit(sim, brain.player, {
 			cmdType = CT.BUILD,
@@ -794,17 +942,23 @@ local function think(brain: Brain)
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
 			local item
-			if c.workers + queuedWorkers < cfg.workers then
+			if armyFirst then
+				item = tank -- normal: its first tanks before more workers (S-57)
+			elseif c.workers + queuedWorkers < cfg.workers then
 				item = worker
 				queuedWorkers += 1
 			elseif aaPlanned < aaWanted then
 				item = aaUnit -- anti-air against the aircraft the team knows (S-7)
 				aaPlanned += 1
-			elseif cfg.radar and radarPlanned < 1 and c.workers >= cfg.workers then
+			elseif cfg.radar and radarPlanned < 1 and c.workers >= cfg.workers and not armyFirst then
 				item = radarUnit -- radar to escort the waves (S-7)
 				radarPlanned += 1
 			elseif cfg.armyCooldown > 0 and sim.tick - brain.lastArmyQueued < cfg.armyCooldown * 15 then
 				break -- easy: no army unit this soon after the last
+			elseif holdArmy then
+				break
+			elseif #c.army >= cfg.maxArmy then
+				break -- easy: a small army (S-57)
 			else
 				item = if brain.rng:chance(cfg.artyChance) then arty else tank
 				brain.lastArmyQueued = sim.tick
@@ -966,14 +1120,60 @@ local function think(brain: Brain)
 		end
 	end
 	local newWave = false
-	if threatX and threatZ then
-		fight(home, threatX, threatZ) -- defend
-	elseif #home >= brain.waveSize then
-		for _, id in home do
-			brain.attacking[id] = true
-			table.insert(wave, id)
+	-- enemy aircraft came near home lately: half the mobile SAMs (at least
+	-- one) stay home as base air defence instead of leaving with a wave (S-57)
+	local guardHome: { [number]: boolean } = {}
+	if sim.tick - brain.airNearAt <= Skirmish.AIR_MEMORY then
+		local keep = math.ceil(#c.aaTrucks / 2)
+		for _, id in c.aaTrucks do
+			if keep > 0 and not brain.attacking[id] then
+				guardHome[id] = true
+				keep -= 1
+			end
 		end
-		home = {}
+	end
+	-- normal: an enemy wave near the base brings the whole army home (S-57)
+	local recalled = false
+	if cfg.recall then
+		local n, cx, cz = Skirmish.incoming(brain)
+		if n >= Skirmish.RECALL_MIN then
+			recalled = true
+			if #wave > 0 or sim.tick >= brain.recallUntil - Skirmish.RECALL_HOLD + Skirmish.THINK_PERIOD * 3 then
+				-- (re-ordered every 3 s while it lasts, not every think)
+				local all = table.clone(home)
+				table.move(wave, 1, #wave, #all + 1, all)
+				fight(all, cx, cz)
+				brain.recallUntil = sim.tick + Skirmish.RECALL_HOLD
+			end
+			brain.attacking = {}
+			wave = {}
+			home = {}
+		end
+	end
+	-- waves leave only in the first think of each WAVE_ALIGN window: mirrored
+	-- players reach the wave size within a think of each other, and the one
+	-- whose think came first used to leave first and attack into a defended
+	-- base every time (a side bias, S-57)
+	local onGrid = sim.tick % Skirmish.WAVE_ALIGN < cfg.think
+	local mayAttack = onGrid and sim.tick >= cfg.firstAttack and sim.tick - brain.lastWaveAt >= cfg.waveInterval and sim.tick >= brain.recallUntil
+	if recalled then
+		-- defending: nothing else this think
+	elseif threatX and threatZ then
+		fight(home, threatX, threatZ) -- defend
+	elseif #home >= brain.waveSize and mayAttack then
+		-- easy (a wave interval) sends only the wave's size; the others wait
+		local cap = if cfg.waveInterval > 0 then brain.waveSize else math.huge
+		local stay = {}
+		for _, id in home do
+			if guardHome[id] or #wave >= cap then
+				table.insert(stay, id)
+			else
+				brain.attacking[id] = true
+				table.insert(wave, id)
+			end
+		end
+		home = stay
+		brain.lastWaveAt = sim.tick
 		newWave = true
 		brain.waves += 1
 		brain.waveSize += cfg.waveGrowth
@@ -984,7 +1184,7 @@ local function think(brain: Brain)
 				table.insert(idle, id)
 			end
 		end
-		local rx, rz = brain.homeX + brain.toward * 160, brain.homeZ
+		local rx, rz = brain.homeX + brain.toward * brain.rallyDist, brain.homeZ
 		local cell, ox, oz = g:encode(rx, rz)
 		local far = {}
 		for _, id in idle do
@@ -1051,7 +1251,16 @@ end
 -- Call once per tick, before Sim.step.
 function Skirmish.tick(brain: Brain)
 	local sim = brain.sim
-	if sim.match.eliminated[brain.player] or (sim.tick - brain.thinkOffset) % brain.cfg.think ~= 0 then
+	if sim.match.eliminated[brain.player] then
+		return
+	end
+	-- watched every tick, not only when thinking: which moments a think
+	-- samples must not decide what it sees (S-31)
+	local acc = sim.eco.accounts[brain.team]
+	if acc and acc.power.ratio < 0.95 then
+		brain.powerShortAt = sim.tick
+	end
+	if (sim.tick - brain.thinkOffset) % brain.cfg.think ~= 0 then
 		return
 	end
 	think(brain)

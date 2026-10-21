@@ -39,6 +39,7 @@ export type State = {
 	-- power upkeep it gets (0..1), which scales its track and jam radii
 	tracked: { [number]: { [number]: boolean } },
 	trackError: { [number]: number },
+	pinpoints: { [number]: number }, -- per team: finished Pinpointers (S-59); recomputed every sensor step
 	powerScale: { [number]: number },
 }
 
@@ -80,6 +81,7 @@ function SensorsState.new(grid: Grid.Grid?, teams: { number }): State
 		radarError = {},
 		tracked = tracked,
 		trackError = {},
+		pinpoints = {},
 		powerScale = {},
 		closeSonar = (function()
 			local r = {}

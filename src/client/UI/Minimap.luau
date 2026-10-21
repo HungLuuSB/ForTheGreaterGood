@@ -13,7 +13,7 @@ local TeamColors = require("../Render/TeamColors")
 
 local MinimapUI = {}
 
-local SIZE = 200 -- pixels
+local SIZE = 280 -- pixels: top left, BAR layout (C-71)
 
 export type UI = {
 	gui: ScreenGui,
@@ -23,7 +23,10 @@ export type UI = {
 	camera: Frame,
 	pool: { Frame },
 	nextDots: number,
+	pings: { { frame: Frame, at: number } }, -- alert pings (C-68)
 }
+
+MinimapUI.PING_SECONDS = 3
 
 function MinimapUI.new(api: Api.Api): UI
 	local gui = Instance.new("ScreenGui")
@@ -32,8 +35,8 @@ function MinimapUI.new(api: Api.Api): UI
 	gui.DisplayOrder = 5
 	local map = Instance.new("Frame")
 	map.Name = "Map"
-	map.AnchorPoint = Vector2.new(0, 1)
-	map.Position = UDim2.new(0, 10, 1, -10)
+	map.AnchorPoint = Vector2.new(0, 0)
+	map.Position = UDim2.fromOffset(0, 0)
 	map.Size = UDim2.fromOffset(SIZE, SIZE)
 	map.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
 	map.BorderSizePixel = 0
@@ -53,7 +56,7 @@ function MinimapUI.new(api: Api.Api): UI
 	label.TextSize = 12
 	label.TextColor3 = Color3.fromRGB(230, 200, 90)
 	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Text = "PLACEHOLDER MINIMAP"
+	label.Text = ""
 	label.Parent = map
 	local function layer(name: string, z: number): Frame
 		local f = Instance.new("Frame")
@@ -97,7 +100,7 @@ function MinimapUI.new(api: Api.Api): UI
 		end
 	end)
 
-	return { gui = gui, map = map, terrain = terrain, dots = dots, camera = camera, pool = {}, nextDots = 0 }
+	return { gui = gui, map = map, terrain = terrain, dots = dots, camera = camera, pool = {}, nextDots = 0, pings = {} }
 end
 
 local function tileColor(tile: Minimap.Tile): Color3
@@ -132,8 +135,42 @@ function MinimapUI.setMap(ui: UI, layers: any)
 	end
 end
 
+-- An alert's ping (C-68): a ring that grows and fades at (x, z).
+function MinimapUI.ping(ui: UI, grid: any, x: number, z: number, color: Color3)
+	local u, v = Minimap.toMap(grid, x, z)
+	local f = Instance.new("Frame")
+	f.Name = "Ping"
+	f.AnchorPoint = Vector2.new(0.5, 0.5)
+	f.Position = UDim2.fromScale(u, v)
+	f.BackgroundTransparency = 1
+	f.ZIndex = 4
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = f
+	local s = Instance.new("UIStroke")
+	s.Color = color
+	s.Thickness = 2
+	s.Parent = f
+	f.Parent = ui.map
+	table.insert(ui.pings, { frame = f, at = os.clock() })
+end
+
 function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 	local world = api.world
+	local clock = os.clock()
+	for i = #ui.pings, 1, -1 do
+		local p = ui.pings[i]
+		local t = (clock - p.at) / MinimapUI.PING_SECONDS
+		if t >= 1 then
+			p.frame:Destroy()
+			table.remove(ui.pings, i)
+		else
+			local px = 6 + 40 * (t * 3 % 1) -- three rings over the ping's life
+			p.frame.Size = UDim2.fromOffset(px, px)
+			local s = p.frame:FindFirstChildOfClass("UIStroke") :: UIStroke
+			s.Transparency = t
+		end
+	end
 	local u0, v0, u1, v1 = Minimap.cameraBox(world.grid, api.state.camera.rect)
 	ui.camera.Position = UDim2.fromScale(u0, v0)
 	ui.camera.Size = UDim2.fromScale(u1 - u0, v1 - v0)

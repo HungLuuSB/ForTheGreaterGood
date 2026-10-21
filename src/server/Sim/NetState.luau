@@ -20,13 +20,35 @@ export type PlayerNet = {
 	lastEco: string?, -- the last Eco record sent (bytes), to send only changes
 	eventCounts: { [number]: number }, -- cumulative event records per Schema.EventKind
 	sentTargets: { [number]: string }, -- own tactical units → the weapon targets last sent (S-16)
+	sentStock: { [number]: string }, -- own tactical units → the missile stock last sent (S-47)
+	sentOwner: { [number]: { string } }, -- own tactical units → queue, states, ammo last sent (S-61)
 	spectator: boolean, -- sees everything, camera on the whole map (S-18)
+	eventBytes: { [number]: number }, -- cumulative bytes per Schema.EventKind (bandwidth reports)
+	sightVersion: number, -- the ally team's sight version the client has (-1: none; S-26)
+	wrecksSent: { [number]: boolean }, -- wreck IDs the client was sent a WRECK for (S-26)
+	wreckList: { number }, -- the same, in the order they were sent
+	wreckVersion: number, -- the ally team's wreck knowledge version last compared
+}
+
+-- What an ally team knows of wrecks (S-26): a wreck is known once its spot
+-- was in the team's sight while it existed, and forgotten once the team sees
+-- the spot without it. `version` changes whenever the list does.
+-- An ally team's sight (S-26): one byte (0 / 1) per sensor cell, as of the
+-- last sensor tick; `changes` took version - 1 to version.
+export type Sight = { cells: buffer, version: number, changes: { number } }
+
+export type WreckKnowledge = {
+	known: { [number]: { number } }, -- wreck ID → { x, z }
+	list: { number }, -- known IDs, in the order the team learned of them
+	version: number,
 }
 
 export type NetState = {
 	players: { [number]: PlayerNet },
 	spectators: { PlayerNet }, -- in the order they were added (S-18)
-	iconIndex: { [number]: number }, -- unit def index → strategic icon (1..63; 0 = unknown blip)
+	iconIndex: { [number]: number }, -- unit def index → strategic icon (Shared/Net/Icons: the def index; 0 = unknown blip)
+	wrecks: { [number]: WreckKnowledge }, -- per ally team (0: spectators)
+	sight: { [number]: Sight }, -- per ally team
 }
 
 -- Replication state of one viewer (a player or a spectator).
@@ -51,7 +73,14 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		lastEco = nil,
 		eventCounts = {},
 		sentTargets = {},
+		sentStock = {},
+		sentOwner = {},
 		spectator = spectator,
+		eventBytes = {},
+		sightVersion = -1,
+		wrecksSent = {},
+		wreckList = {},
+		wreckVersion = -1,
 	}
 end
 
@@ -60,7 +89,7 @@ function NetState.new(playerIds: { number }, iconIndex: { [number]: number }): N
 	for _, pid in playerIds do
 		players[pid] = NetState.viewer(false)
 	end
-	return { players = players, spectators = {}, iconIndex = iconIndex }
+	return { players = players, spectators = {}, iconIndex = iconIndex, wrecks = {}, sight = {} }
 end
 
 return NetState

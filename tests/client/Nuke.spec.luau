@@ -1,0 +1,156 @@
+--!strict
+-- Nukes on the client (protocol 16, S-48, C-57): the launch warning, the
+-- landing the client predicts from the missile alone, interceptors that
+-- chase it in step with the server's, and its end: a detonation (a "nuke"
+-- burst at the spot) or an interception (a burst in the air).
+
+local Commands = require("../../src/client/Core/Commands")
+local Effects = require("../../src/client/Core/Effects")
+local MissileView = require("../../src/client/Core/MissileView")
+local NetIn = require("../../src/client/Core/NetIn")
+local World = require("../../src/client/Core/World")
+local NetOut = require("../../src/server/Sim/NetOut")
+local Sim = require("../../src/server/Sim/Sim")
+local Spawn = require("../../src/server/Sim/Spawn")
+local Schema = require("@shared/Net/Schema")
+
+local DT = 1 / 15
+local CT = Schema.CmdType
+local TARGET_X, TARGET_Z = 500, 0
+
+local function scene(defended: boolean)
+	local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:256", scenario = "empty" })
+	local silo = Spawn.unit(sim, "ord_reckoning", 1, -800, 0, 0)
+	if defended then
+		Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 100, -150, 0)
+		Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 100, 150, 0)
+		Spawn.unit(sim, "ord_lancer", 1, TARGET_X - 200, 0, 0) -- a spotter: the client knows enemy radars it sees
+	end
+	local world = World.new(sim.defs)
+	NetOut.join(sim, 1)
+	local g = sim.map.layers.grid
+	assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+	assert(Sim.submit(sim, 1, Commands.toPoint(g, CT.ATTACK_GROUND, { silo }, TARGET_X, TARGET_Z)))
+	return sim, world
+end
+
+return function(t: any)
+	t.test("an undefended nuke: warning, predicted landing, detonation at the spot", function()
+		local sim, world = scene(false)
+		local fx = Effects.new()
+		local predicted: { number }? = nil
+		local nukeBurst
+		local maxWarnings = 0
+		local nukeErr, nukeFrames, sawStrategic = 0, 0, false
+		for tick = 1, 15 * 20 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			table.clear(world.died)
+			maxWarnings = math.max(maxWarnings, #fx.warnings)
+			-- the drawn nuke against the server's: boost, pitch-over, arc (S-51)
+			for id, p in fx.projectiles do
+				if p.goal then
+					sawStrategic = true
+					if sim.combat.projSlot[id] then
+						nukeFrames += 1
+						nukeErr = math.max(nukeErr, math.sqrt((p.x - sim.combat.px[id]) ^ 2 + (p.y - sim.combat.py[id]) ^ 2 + (p.z - sim.combat.pz[id]) ^ 2))
+					end
+				end
+			end
+			local w = fx.warnings[1]
+			if predicted == nil and w and w.proj then
+				local x, z = Effects.landing(world, w.proj :: Effects.Proj)
+				if x then
+					predicted = { x, z :: number }
+				end
+			end
+			for _, b in fx.bursts do
+				if b.kind == "nuke" then
+					nukeBurst = b
+				end
+			end
+		end
+		t.expect(predicted ~= nil, "the client got a launch warning with its missile and predicted the landing")
+		t.expect(nukeBurst ~= nil, "it detonated")
+		t.equal(maxWarnings, 1) -- LAUNCH_WARNING and the missile's SPAWN_STRATEGIC raise one warning
+		print(string.format("    the drawn nuke over %d frames: worst %.2f studs from the server's", nukeFrames, nukeErr))
+		t.expect(sawStrategic and nukeFrames > 150, "the nuke came as SPAWN_STRATEGIC with its goal")
+		t.expect(nukeErr < 0.5, `the drawn nuke flies the server's path (worst {nukeErr} studs)`)
+		if predicted and nukeBurst then
+			local off = math.sqrt((predicted[1] - nukeBurst.x) ^ 2 + (predicted[2] - nukeBurst.z) ^ 2)
+			print(string.format("    predicted landing %.1f studs from the detonation; detonation %.1f studs from the target", off, math.sqrt((nukeBurst.x - TARGET_X) ^ 2 + (nukeBurst.z - TARGET_Z) ^ 2)))
+			t.expect(off < 2, `the predicted landing is the detonation's spot ({off} studs off)`)
+			t.equal(nukeBurst.radius, sim.defs.weapons.ord_nuke.aoe)
+		end
+	end)
+
+	t.test("Wyverns intercept: interceptors chase the nuke in step with the server's", function()
+		local sim, world = scene(true)
+		local fx = Effects.new()
+		local interceptors, chasing, errs = 0, 0, {}
+		local maxTracks, ownSeen, lockedFrames, lockFrames = 0, false, 0, 0
+		local seen: { [any]: boolean } = {}
+		local intercepted, detonated = false, false
+		for tick = 1, 15 * 20 do
+			Sim.step(sim)
+			-- the sensor view (C-58): the Wyverns' radar tracks on our nuke,
+			-- interceptors locked on it
+			if tick > 1 then
+				local visible = Effects.visible(fx, fx.tick)
+				for _, tr in MissileView.tracks(fx, world, visible) do
+					ownSeen = ownSeen or tr.own
+					maxTracks = math.max(maxTracks, #tr.sites)
+				end
+				for _, e in MissileView.build(fx, world, fx.tick, visible) do
+					local p = fx.projectiles[e.id]
+					if p and p.chase and not p.chase.gone then
+						lockFrames += 1
+						if e.locked and e.label:find("LOCK  NUKE") then
+							lockedFrames += 1
+						end
+					end
+				end
+			end
+			for _, e in sim.combat.events do
+				if e.kind == "INTERCEPTED" then
+					intercepted = true
+				end
+			end
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			table.clear(world.died)
+			local c = sim.combat
+			for id, p in fx.projectiles do
+				if p.chase then
+					if not seen[p] then
+						seen[p] = true
+						interceptors += 1
+					end
+					if not p.chase.gone then
+						chasing += 1
+					end
+					if c.projSlot[id] then
+						table.insert(errs, math.sqrt((p.x - c.px[id]) ^ 2 + (p.y - c.py[id]) ^ 2 + (p.z - c.pz[id]) ^ 2))
+					end
+				end
+			end
+			for _, b in fx.bursts do
+				if b.kind == "nuke" then
+					detonated = true
+				end
+			end
+		end
+		table.sort(errs)
+		local median = errs[math.max(1, #errs // 2)] or 0
+		local p90 = errs[math.max(1, math.floor(#errs * 0.9))] or 0
+		print(string.format("    %d interceptors, %d frames chasing; client vs server median %.2f, p90 %.2f studs; intercepted %s, detonated %s", interceptors, chasing, median, p90, tostring(intercepted), tostring(detonated)))
+		t.expect(interceptors >= 1 and chasing > 0, "interceptors went up after the nuke")
+		t.expect(median < 0.5 and p90 < 3, `in step with the server's (median {median}, p90 {p90})`)
+		t.expect(intercepted ~= detonated, "the nuke either was intercepted or detonated, as the server says")
+		print(string.format("    sensor view: %d radar tracks at most on our nuke; interceptors locked on it in %d of %d frames", maxTracks, lockedFrames, lockFrames))
+		t.expect(ownSeen, "the client knows the nuke is its own (launched from its silo)")
+		t.equal(maxTracks, 2) -- both Wyverns hold it
+		t.expect(lockFrames > 0 and lockedFrames == lockFrames, "interceptors show locked on the nuke")
+	end)
+end

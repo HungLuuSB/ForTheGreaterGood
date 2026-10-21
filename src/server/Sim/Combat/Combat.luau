@@ -38,6 +38,7 @@ export type UnitProfile = {
 	maxHealth: number,
 	weapons: { Defs.WeaponDef }, -- by slot
 	naval: boolean, -- floats: hull from the water surface down by DRAFT
+	hover: boolean, -- HOVER move class: rides on the water surface over water (S-39)
 }
 
 export type Event = {
@@ -52,6 +53,8 @@ export type Event = {
 		| "BUILD_FAILED"
 		| "PRODUCED"
 		| "RECLAIMED"
+		| "LAUNCH" -- a strategic missile left its silo: unit = silo, other = projectile, x/y/z = launch (S-48)
+		| "INTERCEPTED" -- a strategic missile destroyed in flight: other = projectile, x/y/z = where (S-48)
 		| "ELIMINATED" -- other = player
 		| "MATCH_END", -- other = winning ally team (0 = nobody)
 	tick: number,
@@ -64,6 +67,9 @@ export type Event = {
 	x: number?,
 	y: number?,
 	z: number?,
+	sx: number?, -- FIRE: where the shot started (the muzzle; S-43)
+	sy: number?,
+	sz: number?,
 }
 
 export type Combat = {
@@ -93,6 +99,21 @@ export type Combat = {
 	pTtl: { [number]: number }, -- seconds left
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
 	pFlags: { [number]: number }, -- guided missiles: EW.Flag bits (terminal rolled, lock lost)
+	pDecoy: { [number]: { number } }, -- decoyed missiles: { x, y, z, ticks left, countermeasure } (S-28, S-38)
+	pSerial: { [number]: number }, -- spawn serial: (id, serial) names one projectile though IDs are reused (S-48)
+	pTargetProj: { [number]: number }, -- interceptors: the strategic missile they steer at (0 = none; S-48)
+	pTargetSerial: { [number]: number },
+	projSerial: number, -- last serial given
+	strategic: { number }, -- strategic missiles in flight, in launch order (S-48)
+	pGoal: { [number]: { number } }, -- lofted missiles: the ordered spot { x, y, z } (S-51)
+	-- overkill accounting (S-29, guide 10.2): the unit a projectile was fired
+	-- at, its generation, and the direct damage it would deal
+	pAim: { [number]: number },
+	pAimGen: { [number]: number },
+	pAimDmg: { [number]: number },
+	pending: { [number]: number }, -- target → direct damage of projectiles in flight at it
+	pendingGen: { [number]: number }, -- the target generation `pending` counts for
+	queued: { [number]: number }, -- target → damage queued this tick (hitscan, impacts), until Damage applies it
 	nextProjId: number,
 	freeProj: { number }, -- FIFO of freed IDs
 	freeHead: number,
@@ -109,6 +130,7 @@ export type Combat = {
 	wreckX: { [number]: number },
 	wreckZ: { [number]: number },
 	wreckDef: { [number]: number },
+	wreckHeading: { [number]: number }, -- the unit's heading when it died (radians; S-26)
 	wreckSupply: { [number]: number },
 	nextWreckId: number,
 
@@ -139,6 +161,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 			maxHealth = def.health,
 			weapons = weapons,
 			naval = def.domain == "naval",
+			hover = def.moveClass == "HOVER",
 		}
 	end
 	local grid = if layers then layers.grid else nil
@@ -167,6 +190,19 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pTtl = {},
 		pTarget = {},
 		pFlags = {},
+		pDecoy = {},
+		pSerial = {},
+		pTargetProj = {},
+		pTargetSerial = {},
+		projSerial = 0,
+		strategic = {},
+		pGoal = {},
+		pAim = {},
+		pAimGen = {},
+		pAimDmg = {},
+		pending = {},
+		pendingGen = {},
+		queued = {},
 		nextProjId = 1,
 		freeProj = {},
 		freeHead = 1,
@@ -179,6 +215,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		wreckX = {},
 		wreckZ = {},
 		wreckDef = {},
+		wreckHeading = {},
 		wreckSupply = {},
 		nextWreckId = 1,
 		stats = { shots = 0, hits = 0, kills = 0 },
@@ -191,11 +228,7 @@ function Combat.groundHeight(c: Combat, x: number, z: number): number
 	if layers == nil then
 		return 0
 	end
-	local g = layers.grid
-	local cx, cz = g:cellAt(x, z)
-	cx = math.clamp(cx, 0, g.cellsX - 1)
-	cz = math.clamp(cz, 0, g.cellsZ - 1)
-	return Layers.getHeight(layers, cz * g.cellsX + cx)
+	return Layers.heightAt(layers, x, z) -- shared with the client (S-44)
 end
 
 -- Water surface height at (x, z) (= ground where dry).
@@ -242,6 +275,9 @@ function Combat.baseAt(c: Combat, w: World.World, id: number, x: number, z: numb
 		end
 		return surface - Combat.DRAFT
 	end
+	if c.profiles[w.defIndex[id]].hover then
+		return Combat.surfaceHeight(c, x, z) -- over water: on the surface (S-39)
+	end
 	return Combat.groundHeight(c, x, z) + w.alt[id]
 end
 
@@ -266,7 +302,9 @@ function Combat.knownAimPoint(c: Combat, w: World.World, id: number, defIndex: n
 		return x, Combat.groundHeight(c, x, z), z
 	end
 	local p = c.profiles[defIndex]
-	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT else Combat.groundHeight(c, x, z)
+	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT
+		elseif p.hover then Combat.surfaceHeight(c, x, z)
+		else Combat.groundHeight(c, x, z)
 	return x, base + p.height / 2, z
 end
 
@@ -280,6 +318,149 @@ function Combat.queueDamage(c: Combat, target: number, amount: number, attacker:
 	c.dmgTarget[n] = target
 	c.dmgAmount[n] = amount
 	c.dmgAttacker[n] = attacker
+	c.queued[target] = (c.queued[target] or 0) + amount
+end
+
+--------------------------------------------------------------------------------
+-- Overkill accounting (S-29, guide 10.2)
+--------------------------------------------------------------------------------
+
+-- Projectile `proj` was fired at `target` and would deal `amount` to it.
+function Combat.addPending(c: Combat, w: World.World, proj: number, target: number, amount: number)
+	local gen = w.gen[target]
+	if c.pendingGen[target] ~= gen then
+		c.pending[target], c.pendingGen[target] = 0, gen -- a new unit under a reused ID
+	end
+	c.pending[target] += amount
+	c.pAim[proj], c.pAimGen[proj], c.pAimDmg[proj] = target, gen, amount
+end
+
+-- The projectile no longer threatens its target (it landed, expired, or was
+-- decoyed or lost its lock).
+function Combat.dropPending(c: Combat, proj: number)
+	local t = c.pAim[proj]
+	if t == nil then
+		return
+	end
+	if c.pendingGen[t] == c.pAimGen[proj] then
+		local left = c.pending[t] - c.pAimDmg[proj]
+		c.pending[t] = if left > 1e-6 then left else 0
+	end
+	c.pAim[proj], c.pAimGen[proj], c.pAimDmg[proj] = nil, nil, nil
+end
+
+Combat.AVOID_OVERKILL = true -- false turns overkill avoidance off (measurements)
+
+--------------------------------------------------------------------------------
+-- Line of fire (guide 10.8, S-32)
+--------------------------------------------------------------------------------
+
+Combat.LOF_STEP = 8 -- studs between terrain samples along a shot: one per height cell (guide 10.8)
+Combat.LOF_END = 6 -- studs at the target end left unchecked (the ground it stands on)
+
+-- Whether `weapon`'s shot from (x0, y0, z0) reaches (x1, y1, z1) above the
+-- terrain: a straight line for hitscan and beams, the shell's low arc for
+-- ballistic weapons (so artillery lobs over a ridge a tank shell hits).
+-- Homing missiles, torpedoes and bombs aren't checked: they steer or fall.
+-- Every LOF_STEP studs, the shot must be above the ground there.
+function Combat.lineOfFire(c: Combat, weapon: Defs.WeaponDef, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean
+	local wtype = weapon.type
+	if (wtype ~= "HITSCAN" and wtype ~= "BEAM" and wtype ~= "BALLISTIC") or c.layers == nil then
+		return true
+	end
+	local dx, dz = x1 - x0, z1 - z0
+	local dist = math.sqrt(dx * dx + dz * dz)
+	if dist <= Combat.LOF_END + Combat.LOF_STEP then
+		return true
+	end
+	local g = if wtype == "BALLISTIC" then weapon.gravity or 0 else 0
+	local slope, drop = (y1 - y0) / dist, 0
+	if g > 0 then
+		local speed = weapon.projectileSpeed or 1
+		local pitch = Ballistics.launchPitch(speed, g, dist, y1 - y0)
+		if pitch == nil then
+			return false -- out of reach
+		end
+		local hv = speed * math.cos(pitch)
+		slope, drop = math.tan(pitch), g / (2 * hv * hv)
+	end
+	local ux, uz = dx / dist, dz / dist
+	local s = Combat.LOF_STEP
+	local last = dist - Combat.LOF_END
+	while s <= last do
+		if y0 + s * slope - drop * s * s < Combat.groundHeight(c, x0 + ux * s, z0 + uz * s) then
+			return false
+		end
+		s += Combat.LOF_STEP
+	end
+	return true
+end
+
+-- Line of fire from unit `id`'s muzzle to where its team believes target `t`
+-- is (kx, kz; defIndex nil when the type is unknown).
+function Combat.unitLineOfFire(c: Combat, w: World.World, id: number, weapon: Defs.WeaponDef, t: number, defIndex: number?, kx: number, kz: number): boolean
+	local wtype = weapon.type
+	if wtype ~= "HITSCAN" and wtype ~= "BEAM" and wtype ~= "BALLISTIC" then
+		return true
+	end
+	local _, ty = Combat.knownAimPoint(c, w, t, defIndex, kx, kz)
+	local y0 = Combat.unitBase(c, w, id) + c.profiles[w.defIndex[id]].muzzleHeight
+	return Combat.lineOfFire(c, weapon, w.posX[id], y0, w.posZ[id], kx, ty, kz)
+end
+
+-- The chance a shot from `weapon` at `dist` studs reaches a target of profile
+-- `p` (S-29): its hull plus half the blast radius. Spread is uniform in
+-- ±accuracy on yaw and on pitch (Weapons). Sideways a shot misses by
+-- dist·tan(error). Lengthwise a ballistic arc's range changes by dR/dθ·error
+-- (flat ground, low arc: dR/dθ = 2v²·cos 2θ / g), and a shell coming down
+-- at θ crosses the hull's height over height / tan θ of ground, so the
+-- lengthwise window is radius + blast + height / (2 tan θ); a straight
+-- shot's height error is dist·tan(error) against half the hull's height.
+-- Guided weapons and torpedoes count as sure hits; bombs spread only
+-- sideways. Checked against fired shells at stationary targets
+-- (Overkill.spec).
+function Combat.hitChance(weapon: Defs.WeaponDef, p: UnitProfile, dist: number): number
+	local acc = math.rad(weapon.accuracy or 0)
+	local wtype = weapon.type
+	if acc <= 0 or wtype == "HOMING" or wtype == "TORPEDO" then
+		return 1
+	end
+	local blast = (weapon.aoe or 0) / 2
+	local reach = p.radius + blast
+	local side = dist * math.tan(acc)
+	local chance = if side > reach then reach / side else 1
+	if wtype == "BOMB" then
+		return chance
+	end
+	local g = weapon.gravity or 0
+	local along, alongReach
+	if wtype == "BALLISTIC" and g > 0 then
+		local v2 = (weapon.projectileSpeed or 1) ^ 2
+		local sin2 = math.min(1, dist * g / v2)
+		along = 2 * v2 * math.sqrt(1 - sin2 * sin2) / g * acc
+		local theta = math.asin(sin2) / 2
+		alongReach = reach + p.height / (2 * math.max(math.tan(theta), 1e-3))
+	else
+		along = dist * math.tan(acc)
+		alongReach = p.height / 2 + blast
+	end
+	if along > alongReach then
+		chance *= alongReach / along
+	end
+	return chance
+end
+
+-- Whether damage already on its way (projectiles in flight at it, damage
+-- queued this tick) will kill live unit `t`.
+function Combat.doomed(c: Combat, w: World.World, t: number): boolean
+	if not Combat.AVOID_OVERKILL then
+		return false
+	end
+	local incoming = c.queued[t] or 0
+	if c.pendingGen[t] == w.gen[t] then
+		incoming += c.pending[t]
+	end
+	return incoming > 0 and incoming >= w.health[t]
 end
 
 local scratch: { number } = {}
@@ -384,7 +565,16 @@ function Combat.spawnProjectile(
 	c.pOwnerGen[id] = if w and owner ~= 0 then w.gen[owner] or 0 else 0
 	c.pTargetGen[id] = if w and (target or 0) ~= 0 then targetGen or w.gen[target :: number] or 0 else 0
 	c.pFlags[id] = 0
+	c.projSerial += 1
+	c.pSerial[id] = c.projSerial
+	c.pTargetProj[id] = 0
+	c.pTargetSerial[id] = 0
 	return id
+end
+
+-- Is (id, serial) still the same projectile in flight (S-48)?
+function Combat.isProjRef(c: Combat, id: number, serial: number?): boolean
+	return id ~= 0 and c.projSlot[id] ~= nil and c.pSerial[id] == serial
 end
 
 function Combat.removeProjectile(c: Combat, id: number)
@@ -398,6 +588,14 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pvx[id], c.pvy[id], c.pvz[id] = nil, nil, nil
 	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id], c.pFlags[id] = nil, nil, nil, nil, nil, nil
 	c.pOwnerGen[id], c.pTargetGen[id] = nil, nil
+	c.pDecoy[id] = nil
+	c.pSerial[id], c.pTargetProj[id], c.pTargetSerial[id] = nil, nil, nil
+	c.pGoal[id] = nil
+	local si = table.find(c.strategic, id)
+	if si then
+		table.remove(c.strategic, si)
+	end
+	Combat.dropPending(c, id)
 	c.freeProj[c.freeTail] = id
 	c.freeTail += 1
 end
@@ -406,13 +604,14 @@ end
 -- Wrecks
 --------------------------------------------------------------------------------
 
-function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef): number
+function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef, heading: number?): number
 	local id = c.nextWreckId
 	c.nextWreckId += 1
 	table.insert(c.wreckIds, id)
 	c.wreckX[id] = x
 	c.wreckZ[id] = z
 	c.wreckDef[id] = def.index
+	c.wreckHeading[id] = heading or 0
 	c.wreckSupply[id] = def.cost.supply * Combat.WRECK_SUPPLY_FRACTION
 	return id
 end
@@ -422,7 +621,7 @@ function Combat.removeWreck(c: Combat, id: number)
 	if i then
 		table.remove(c.wreckIds, i)
 	end
-	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id] = nil, nil, nil, nil
+	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id], c.wreckHeading[id] = nil, nil, nil, nil, nil
 end
 
 --------------------------------------------------------------------------------
@@ -447,14 +646,29 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pTarget[id])
 		h = Hash.u32(Hash.u32(h, c.pOwnerGen[id]), c.pTargetGen[id])
 		h = Hash.u32(h, c.pFlags[id])
+		h = Hash.u32(h, c.pAim[id] or 0)
+		h = Hash.u32(Hash.u32(Hash.u32(h, c.pSerial[id]), c.pTargetProj[id]), c.pTargetSerial[id])
+		local goal = c.pGoal[id]
+		if goal then
+			h = Hash.number(Hash.number(Hash.number(h, goal[1]), goal[2]), goal[3])
+		end
+		local d = c.pDecoy[id]
+		if d then
+			h = Hash.u32(Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4]), d[5] or 0)
+		end
 	end
 	h = Hash.u32(h, c.nextProjId)
+	h = Hash.u32(h, c.projSerial)
+	for _, id in c.strategic do
+		h = Hash.u32(h, id)
+	end
 	h = Hash.u32(h, #c.wreckIds)
 	for _, id in c.wreckIds do
 		h = Hash.u32(h, id)
 		h = Hash.number(h, c.wreckX[id])
 		h = Hash.number(h, c.wreckZ[id])
 		h = Hash.u32(h, c.wreckDef[id])
+		h = Hash.number(h, c.wreckHeading[id])
 		h = Hash.number(h, c.wreckSupply[id])
 	end
 	return h

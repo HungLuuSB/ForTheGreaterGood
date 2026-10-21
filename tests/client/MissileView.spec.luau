@@ -20,7 +20,8 @@ local function samScene()
 	for i = 0, 3 do
 		local f = Spawn.unit(sim, "ord_falcon", 1, -60, -60 + i * 40, math.pi / 2)
 		ServerWorld.setHealth(sim.world, f, sim.world.health[f] * 5)
-		Spawn.unit(sim, "chs_thorn", 2, -100 + (i % 2) * 200, -100 + (i // 2) * 200, 0)
+		-- under the jets' 220-stud loiter circle: in reach of the Thorn's 206 (S-56)
+		Spawn.unit(sim, "chs_thorn", 2, -130 + (i % 2) * 140, -70 + (i // 2) * 140, 0)
 	end
 	local world = World.new(sim.defs)
 	NetOut.join(sim, 1)
@@ -33,6 +34,7 @@ return function(t: any)
 		local sim, world = samScene()
 		local fx = Effects.new()
 		local entries, locked, maxShown, paths = 0, 0, 0, 0
+		local inside, outside = 0, 0
 		for tick = 1, 15 * 30 do
 			Sim.step(sim)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
@@ -45,8 +47,12 @@ return function(t: any)
 				entries += 1
 				local p = fx.projectiles[e.id]
 				t.expect(p ~= nil and p.weapon.type == "HOMING", "homing missiles only")
-				t.equal(e.fuse, 5) -- chs_ir_sam's aoe
+				t.equal(e.fuse, sim.defs.weapons.chs_ir_sam.aoe) -- its proximity fuse
 				t.expect(string.find(e.label, "IR", 1, true) == 1, `label starts with the guidance: {e.label}`)
+				-- the seeker cone (C-42): Thorn's IR seeker, 60° off the nose, out to its lock range
+				t.equal(e.seekerAngle, 60)
+				t.equal(e.seekerRange, sim.defs.weapons.chs_ir_sam.lockRange or sim.defs.weapons.chs_ir_sam.range)
+				t.expect(math.abs(e.fx * e.fx + e.fy * e.fy + e.fz * e.fz - 1) < 1e-6, "the flight direction is a unit vector")
 				if #e.path >= 6 then
 					paths += 1
 				end
@@ -55,12 +61,25 @@ return function(t: any)
 					t.expect(e.cx ~= nil and e.lx ~= nil and e.distance ~= nil, "a locked missile has its target's centre, its aim point and a distance")
 					t.expect(string.find(e.label, "LOCK", 1, true) ~= nil and string.find(e.label, "Falcon", 1, true) ~= nil, `label names the lock and the target: {e.label}`)
 					t.expect(e.hullRadius ~= nil and (e.hullRadius :: number) > 0, "the target's hull is known")
+					local off = e.offNose :: number
+					t.expect(off ~= nil and off >= 0 and off <= 180, `the target's angle off the nose is 0..180 ({off})`)
+					t.equal(e.inSeeker, off <= 60)
+					t.expect(string.find(e.label, `{math.floor(off + 0.5)}° / 60° off`, 1, true) ~= nil, `label shows the angle off the nose: {e.label}`)
+					if e.inSeeker then
+						inside += 1
+					else
+						outside += 1
+					end
 				else
 					t.expect(string.find(e.label, "no lock", 1, true) ~= nil, `label says no lock: {e.label}`)
 				end
 			end
 		end
-		print(string.format("    sam scene: %d entries (%d locked), up to %d at once, %d with a path", entries, locked, maxShown, paths))
+		print(string.format("    sam scene: %d entries (%d locked: %d with the target in the seeker cone, %d outside), up to %d at once, %d with a path", entries, locked, inside, outside, maxShown, paths))
+		-- the server breaks the lock when the target leaves the seeker cone
+		-- (S-27), so a locked missile's target is inside it (a drawn missile
+		-- may lag the server's by a frame at the cone's edge)
+		t.expect(inside > 100 and outside <= math.max(2, locked * 0.02), "locked missiles keep their target inside the seeker cone")
 		t.expect(entries > 100 and locked > 100, "missiles were shown, locked on")
 		t.expect(maxShown <= MissileView.MAX_MISSILES, "at most MAX_MISSILES")
 		t.expect(paths >= entries * 0.9, "almost every missile has a predicted path ahead")
@@ -80,6 +99,10 @@ return function(t: any)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			-- the outcome of every missile that ended this tick
 			for _, e in sim.combat.events do
+				-- a countermeasure decides those, not the fuse geometry the call predicts
+				if (e.kind == "DECOYED" or e.kind == "LOST_LOCK") and called[e.other] ~= nil then
+					called[e.other] = nil
+				end
 				if e.kind == "IMPACT" and called[e.other] ~= nil then
 					local hit = e.unit ~= 0
 					if hit == called[e.other] then
@@ -124,7 +147,10 @@ return function(t: any)
 		table.sort(errors)
 		local median, p90 = errors[math.max(1, n // 2)] or 0, errors[math.max(1, math.floor(n * 0.9))] or 0
 		print(string.format("    %d-tick predictions: %d, median %.2f studs off the server, 90th percentile %.2f, mean %.2f, worst %.1f; hit calls %d right, %d wrong", AHEAD, n, median, p90, mean, worst, agree, disagree))
-		t.expect(n > 100, "plenty of predictions checked")
+		-- overkill-aware targeting (S-29) fires fewer missiles at the jets, and
+		-- at the Thorn's 206 studs (S-56) a flight lasts ~6 ticks, so few are
+		-- still flying 5 ticks after a prediction
+		t.expect(n > 10, `plenty of predictions checked ({n})`)
 		-- the targets circle, and the prediction flies them straight on: most
 		-- paths stay close, the turning end game spreads (missiles fly 28 studs a tick)
 		t.expect(median < 3, `predicted {AHEAD} ticks ahead: median {median} studs off`)

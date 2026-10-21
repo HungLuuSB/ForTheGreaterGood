@@ -34,6 +34,7 @@ Air.EGRESS_TICKS = 45 -- bombers fly straight this long after a release (3 s)
 Air.RUN_IN = 150 -- studs beyond the release distance a bomber turns back from (about a turn radius)
 Air.CLIMB_RATE = 40 -- studs per second
 Air.LOITER_RADIUS = 220 -- studs; wider than a jet's turn circle at cruise speed
+Air.ARRIVE_RADIUS = 40 -- studs: a jet's move ends this close to its goal, or once it flew toward it and the goal fell behind (client request 17)
 Air.CRUISE = 0.75 -- fraction of max speed while circling
 Air.LAND_RADIUS = table.freeze({ JET = 60, HELI = 12 })
 Air.EDGE_MARGIN = 60 -- studs: jets turn back toward the map before leaving it
@@ -165,7 +166,8 @@ local function headTo(sim: Types.Sim, id: number, x: number, z: number)
 	end
 end
 
--- Out of ammo: remember where we were going, head for a pad.
+-- Out of ammo: remember where we were going, head for a pad: its home base
+-- if it has one (S-36), else the nearest.
 function Air.onEmpty(sim: Types.Sim, id: number)
 	local a = sim.air
 	if a.phase[id] ~= "fly" then
@@ -173,7 +175,7 @@ function Air.onEmpty(sim: Types.Sim, id: number)
 	end
 	local w = sim.world
 	a.resumeX[id], a.resumeZ[id] = w.goalX[id], w.goalZ[id]
-	local pad = nearestPad(sim, id)
+	local pad = if World.isRef(w, a.home[id] or 0, a.homeGen[id]) then a.home[id] :: number else nearestPad(sim, id)
 	if pad == 0 then
 		return -- nowhere to rearm: keep flying empty
 	end
@@ -183,10 +185,87 @@ function Air.onEmpty(sim: Types.Sim, id: number)
 	headTo(sim, id, w.posX[pad], w.posZ[pad])
 end
 
+--------------------------------------------------------------------------------
+-- Carriers and home bases (guide 12.3, S-36)
+--------------------------------------------------------------------------------
+
+local function takeOff(sim: Types.Sim, id: number)
+	local a = sim.air
+	local w = sim.world
+	a.phase[id] = "fly"
+	a.pad[id] = 0
+	a.padGen[id] = 0
+	a.progress[id] = 0
+	World.setState(w, id, bit32.band(w.state[id], bit32.bnot(LANDED)))
+	local d = def(sim, id)
+	if d.movement and d.movement.minSpeed then
+		w.speed[id] = d.movement.minSpeed
+	end
+end
+
+-- Recovers aircraft `id` to `pad`, a friendly carrier or airfield (anything
+-- with rearmPads): it becomes its home base, and the aircraft flies there,
+-- lands, rearms and stays docked (moving with a carrier) until an order
+-- launches it. False when `pad` can't take it.
+function Air.recover(sim: Types.Sim, id: number, pad: number): boolean
+	local a = sim.air
+	local w = sim.world
+	if a.phase[id] == nil or w.slot[pad] == nil or w.team[pad] ~= w.team[id] or w.buildProgress[pad] < 1 or not def(sim, pad).rearmPads then
+		return false
+	end
+	a.home[id], a.homeGen[id] = pad, w.gen[pad]
+	a.hold[id] = true
+	if a.phase[id] == "fly" then
+		a.resumeX[id], a.resumeZ[id] = w.posX[id], w.posZ[id]
+		a.phase[id] = "return"
+		a.pad[id] = pad
+		a.padGen[id] = w.gen[pad]
+		headTo(sim, id, w.posX[pad], w.posZ[pad])
+	end
+	return true
+end
+
+-- An order for aircraft `id` (Orders.give): a docked aircraft launches, one
+-- flying home only to be recovered turns back to fly; an empty one still
+-- rearms first.
+function Air.release(sim: Types.Sim, id: number)
+	local a = sim.air
+	if a.phase[id] == nil then
+		return
+	end
+	a.hold[id] = nil
+	local d = def(sim, id)
+	local empty = d.ammo ~= nil and (a.ammo[id] or 0) <= 0
+	if a.phase[id] == "docked" or (a.phase[id] == "return" and not empty) then
+		takeOff(sim, id)
+	end
+end
+
+-- Does this def carry a manualFire weapon (a nuke silo, S-48)? Cached per def.
+local manualCache: { [any]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+function Air.isManualFire(sim: Types.Sim, d: Defs.UnitDef): boolean
+	local cached = manualCache[d]
+	if cached == nil then
+		cached = false
+		for _, slot in d.weapons do
+			if sim.defs.weaponByIndex[slot.weaponIndex].manualFire then
+				cached = true
+			end
+		end
+		manualCache[d] = cached
+	end
+	return cached
+end
+
 -- Attack-ground order (D100): bombers make runs on (x, z) until another
--- order replaces it. Other units ignore it.
+-- order replaces it; a unit with a manualFire weapon (a silo, S-48) fires
+-- one shot there, then the order is done. Other units ignore it. The point
+-- is kept here (AirState.groundX / groundZ) for both.
 function Air.attackGround(sim: Types.Sim, id: number, x: number, z: number)
 	if not Air.isBomber(sim, def(sim, id)) then
+		if Air.isManualFire(sim, def(sim, id)) then
+			sim.air.groundX[id], sim.air.groundZ[id] = x, z
+		end
 		return
 	end
 	local a = sim.air
@@ -249,7 +328,7 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 	local a = sim.air
 	local w = sim.world
 	local phase = a.phase[id]
-	if phase == "rearm" then
+	if phase == "rearm" or phase == "docked" then
 		return h, 0 -- parked on its pad
 	end
 	local nav = sim.nav :: Nav.Nav
@@ -303,9 +382,17 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 				loiter = false
 			end
 		elseif w.orderId[id] ~= 0 then
+			-- fly to the goal itself; arrived within ARRIVE_RADIUS, or when it
+			-- falls behind after the jet flew toward it (a goal inside the
+			-- turn circle: the closest approach), then circle it (request 17)
 			local dist = sqrt((tx - x) ^ 2 + (tz - z) ^ 2)
-			if dist <= Air.LOITER_RADIUS then
+			local ahead = math.sin(h) * (tx - x) + math.cos(h) * (tz - z) > 0
+			if ahead then
+				a.approach[id] = w.orderId[id]
+			end
+			if dist <= Air.ARRIVE_RADIUS or (not ahead and a.approach[id] == w.orderId[id] and dist <= Air.LOITER_RADIUS) then
 				Nav.clearOrder(nav, w, id) -- arrived: circle the goal from now on
+				a.approach[id] = nil
 			else
 				loiter = false
 			end
@@ -348,7 +435,8 @@ end
 function Air.updateAltitude(sim: Types.Sim, id: number)
 	local w = sim.world
 	local d = def(sim, id)
-	local target = if sim.air.phase[id] == "rearm" then 0 else cruiseAltitude(sim, d)
+	local phase = sim.air.phase[id]
+	local target = if phase == "rearm" or phase == "docked" then 0 else cruiseAltitude(sim, d)
 	local alt = w.alt[id]
 	if alt ~= target then
 		local step = Air.CLIMB_RATE * Air.DT
@@ -369,7 +457,7 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 	local eco = sim.eco
 	table.clear(padLoad)
 	for _, id in w.ids do
-		if a.phase[id] == "rearm" then
+		if a.phase[id] == "rearm" or a.phase[id] == "docked" then
 			padLoad[a.pad[id]] = (padLoad[a.pad[id]] or 0) + 1
 		end
 	end
@@ -391,12 +479,15 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 			local d = def(sim, id)
 			local reach = Air.LAND_RADIUS[d.moveClass or "HELI"] or 12
 			local dist = sqrt((w.posX[pad] - w.posX[id]) ^ 2 + (w.posZ[pad] - w.posZ[id]) ^ 2)
+			if dist > reach * 2 and w.orderId[id] == 0 then
+				headTo(sim, id, w.posX[pad], w.posZ[pad]) -- the pad moved (a carrier): follow it
+			end
 			if dist <= reach and (padLoad[pad] or 0) < (def(sim, pad).rearmPads or 1) then
 				-- land on the pad
 				padLoad[pad] = (padLoad[pad] or 0) + 1
 				a.phase[id] = "rearm"
 				a.progress[id] = 0
-				local rounds = math.max((def(sim, id).ammo or 1) - a.ammo[id], 1)
+				local rounds = math.max((def(sim, id).ammo or 1) - (a.ammo[id] or 0), 1)
 				local charges, supply = EW.missingCharges(sim, id)
 				a.cmPerRound[id] = charges / rounds
 				a.cmSupplyPerRound[id] = supply / rounds
@@ -408,6 +499,18 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 				w.goalX[id], w.goalZ[id] = w.posX[pad], w.posZ[pad]
 				w.speed[id] = 0
 				World.setState(w, id, bit32.bor(w.state[id], LANDED))
+			end
+		elseif phase == "docked" then
+			-- held on its home pad: ride along with a carrier (S-36)
+			local pad = a.pad[id]
+			if not World.isRef(w, pad, a.padGen[id]) then
+				takeOff(sim, id) -- the carrier is gone
+				a.hold[id] = nil
+				continue
+			end
+			if w.posX[id] ~= w.posX[pad] or w.posZ[id] ~= w.posZ[pad] then
+				World.setPosition(w, id, w.posX[pad], w.posZ[pad])
+				w.goalX[id], w.goalZ[id] = w.posX[pad], w.posZ[pad]
 			end
 		elseif phase == "rearm" then
 			local d = def(sim, id)
@@ -451,20 +554,22 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 					a.cmProgress[id] = math.max(cm, 0)
 				end
 			end
-			if a.ammo[id] >= (d.ammo :: number) then
-				-- full: take off and go back. The last fraction of a charge is
-				-- already paid, so top the countermeasures up.
+			if pad ~= 0 and World.isRef(w, pad, a.padGen[id]) and (w.posX[id] ~= w.posX[pad] or w.posZ[id] ~= w.posZ[pad]) then
+				World.setPosition(w, id, w.posX[pad], w.posZ[pad]) -- a carrier carries it along (S-36)
+				w.goalX[id], w.goalZ[id] = w.posX[pad], w.posZ[pad]
+			end
+			if d.ammo == nil or a.ammo[id] >= (d.ammo :: number) then
+				-- full. The last fraction of a charge is already paid, so top the
+				-- countermeasures up.
 				EW.refill(sim, id)
 				a.cmPerRound[id], a.cmSupplyPerRound[id], a.cmProgress[id] = nil, nil, nil
-				a.phase[id] = "fly"
-				a.pad[id] = 0
-				a.padGen[id] = 0
-				a.progress[id] = 0
-				World.setState(w, id, bit32.band(w.state[id], bit32.bnot(LANDED)))
-				if d.movement and d.movement.minSpeed then
-					w.speed[id] = d.movement.minSpeed
+				if a.hold[id] and pad == a.home[id] then
+					a.phase[id] = "docked" -- recovered: stay until launched (S-36)
+					a.progress[id] = 0
+				else
+					takeOff(sim, id) -- and go back
+					headTo(sim, id, a.resumeX[id], a.resumeZ[id])
 				end
-				headTo(sim, id, a.resumeX[id], a.resumeZ[id])
 			end
 		end
 	end

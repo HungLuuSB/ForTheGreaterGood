@@ -23,7 +23,10 @@ Plain tables, updated by the client each frame (positions) or when packets arriv
 | `hover` | `{ unit: id?, x, z }?` | what the mouse is over (ground point in studs) (*later*) |
 | `placement` | `{ defId, x, z, facing, valid, reason? }?` | active build ghost, nil when not placing (*later*: task 6) |
 | `economy` | `{ supply = Res, power = Res, wind }?` | own team's account from the Eco channel (protocol 6); nil before the first record |
-| `alerts` | `{ { kind, x, z, time } }` | recent alerts, newest last |
+| `alerts` | `{ { kind, text, x, z, time } }` | recent alerts, newest last (C-68): kind `"attack" \| "lost" \| "stall" \| "nuke"` |
+| `commandMode` | string? | the command the next left click gives: `"attack" \| "fight" \| "move" \| "patrol" \| "guard"`, nil = normal clicks (C-68) |
+| `fireState`, `moveState` | number? | the last fire / move state sent (not replicated yet: placeholder) |
+| `factoryQueues` | `{ [factoryId]: { defIndex } }` | factory queues as the client queued them (not replicated yet: placeholder, request 36) |
 
 `UnitView` (today `state.units` is the client World's own unit table, `src/client/Core/World.luau`, type `Unit`: `id, tier, team, defIndex?, icon?, flags?, x, z, alt, heading, health?, build?, state` bits, `weapon`, `aim[slot] = { yaw, pitch }`, `targets[slot]` (own units' target IDs, 0 = none; nil when not sent, S-16), and `rx, ry, rz` where it is drawn. The friendlier view below is the target):
 
@@ -54,7 +57,9 @@ Signals with `:Connect(fn)`; each fires at most once per frame.
 | `economy` | `state.economy` |
 | `focus` | `{ x, z }`: a camera jump request (minimap click, double-tapped group) |
 | `orders` | every order sent (`Orders.Intent`), for feedback |
-| `units`, `placement`, `alert` | *later* |
+| `alert` | a new alert `{ kind, text, x, z, time }` (C-68) |
+| `commandMode` | the new command mode or nil (C-68) |
+| `units` | *later* |
 
 ## 3. Trigger: `Client.actions`
 
@@ -71,7 +76,10 @@ Each action validates locally, then builds the Schema command and sends it on th
 | `stop()` | |
 | `setFireState(n)`, `setMoveState(n)`, `toggle(on)` | Schema `FireState` / `MoveState` values |
 | `beginPlacement(defId)`, `rotatePlacement()`, `cancelPlacement()` | build ghost; the click that places comes from input |
-| `queueBuild(factoryId, defId, count)` | BUILD sent to the factory (the sim queues units, guide 9.2); removing from a queue needs a new command later |
+| `queueBuild(defId, count?)` | queues `count` (1..50) of `defId` in every selected factory that builds it (one BUILD each, guide 9.2) (C-68) |
+| `setRepeat(on)` | factories: REPEAT on / off (C-68) |
+| `cancel(index?)` | CANCEL: a factory drops queue item `index` (1-based, 0 = all); an unfinished frame is cancelled (C-68) |
+| `setCommandMode(kind?)`, `commandAt(x, z, unitId?, queue?, keep?)` | command modes: the next click gives attack (enemy unit or ground), guard (a unit), fight / move / patrol (a point); `keep` stays in the mode (C-68) |
 | `focusCamera(x, z)` | minimap click |
 
 ## 4. Rules

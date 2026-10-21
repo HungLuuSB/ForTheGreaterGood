@@ -326,3 +326,412 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **S-8 update (2026-10-22):** after the AI changes (S-17, S-24, S-25) seed 3 ends at 8.4 min; `lune run soak` now defaults to seed 2, which plays the full 40 minutes (seeds 1 and 3–13 end at 8–26 min). Result: 36,000 ticks in 36 s, at most 244 units, tick average 0.99 ms, p99 3.26, peak 23.3 ms (NetOut 14.6, Pathing 14.1); heap 7.7 → 73 MB growing with the unit count (~310 KB per unit at minutes 5 and 40: no leak); replay identical. The spectator recording (S-18) of the 40 minutes is 16.8 MB raw (419 KB per game minute at up to 244 units).
 
 - **S-17 / S-25 final report (2026-10-22, `docs/AI_LEVELS.md`):** Normal beats Easy 29-13, Hard beats Easy 25-11, Hard beats Normal 24-18 over 1v1 and 2v2. Ridgeline: 10-2, 11-1, 12-0. Coastline matches mostly reach the 40-minute limit and are called on value (a passive Easy leads Hard 9-3 there); Twin Lakes Hard-Normal goes to the east pair 6-0 while a Normal-only 2v2 mirror splits 3-3. Both open, in the progress file.
+
+## S-26 — The team's sight map and wrecks on the wire (protocol 10; client requests 9, 10) (2026-10-22)
+
+- **Problem:** the client rebuilt its fog from its own units (allied units can't be counted; own units seen only as strategic icons have unknown sight), and heard of a wreck only through DEATH's `wreckId` for tactical deaths, never of wrecks made elsewhere, before it joined, or reclaimed.
+- **Where:** four new **Events** kinds rather than a new channel (no new remote for the client; reliable and in order with the rest of the tick): WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12. Layouts in `Schema` and `docs/contracts/net.md` 7a; guide 7.2, 7.3, 8.7.
+- **Sight:** per ally team, sensor cells with LOS (allies' units included; air sight left out). Once per ally team per sensor tick, `NetOut` diffs the LOS map against the last one in one pass and keeps the change list; a player one version behind gets SIGHT_CELLS (2 B per cell, bit 15 = seen), anyone else (a join) SIGHT_ROWS (a bitset, 2 KB for a 256-cell map), whichever is smaller. Spectators get none.
+- **Wrecks:** known per ally team like structure ghosts, on the whole map (wrecks are on the minimap, guide 8.7): known once the team has the spot in sight (the DEATH's wreck in the same tick when it saw the death), forgotten when it sees the spot without it. This is replication state (`NetState.wrecks`), not sim state; the AI doesn't use it. Combat now stores each wreck's heading (`wreckHeading`, hashed). Spectators get every wreck at once.
+- **Cost** (`lune run stress`, 800 units): events 0.72 → 1.22 KB/s per player (sight ~0.3–0.4, wrecks ~0.12), total 15.4 of 35 KB/s; NetOut average 0.98 → 1.21 ms (budget 6). A join adds ~2 KB plus 10 B per known wreck.
+- **Tests:** `Schema.spec` (golden bytes, round-trip, rejects, truncation for the four kinds); `NetOut.spec`: the client's sight equals the server's LOS on every sensor tick (allied unit's sight included); wrecks in fog unknown, scouted, reclaimed out of sight kept until re-seen, removed in sight gone, DEATH and WRECK in the same tick; spectators get all wrecks and no sight; a late joiner gets the same sight and wrecks. `PlayerReplay.spec` digests include sight and wrecks. `Movement.spec`'s idle test now starts its 10 packet-free ticks after tick 2, the first sensor pass, which sends the team's first sight (checked to be only sight records); the idle ticks still must send nothing.
+- **Known limit:** wreck IDs are u16 on the wire and never reused; a match making 65,535 wrecks would error. Far beyond any match so far (the 40-minute soak made a few thousand at most); revisit with ID reuse if it ever matters.
+
+## S-27 — Missile guidance: proportional navigation, step-start alignment, seeker cone (client request 13) (2026-10-22)
+
+- **Symptom (client, `sam` scene):** four Thorns hit a circling Falcon with 31% of their missiles; crossing shots passed 5–9 studs from the hull, outside the 5-stud fuse; a missile that missed looped back for another pass.
+- **Measured headless** (the same scene, 3 seeds, 2 min): 33% against the circling jet before the change; helicopters 88–94%.
+- **Causes:** (1) the main one: Projectiles runs after Movement, so a missile at its start-of-tick position steered at the target's **end-of-tick** position, a one-tick lead (13 studs against a 195 studs/s jet). (2) Lead pursuit with a straight-line prediction is wrong against a turning target. (3) No seeker field of view.
+- **Changes:**
+  - `Shared/Combat/Guidance` (new, shared with the client, request 11b): `pn` (proportional navigation: the velocity turns at N = 4 times the line-of-sight rate about the same axis, capped by `turnRate`), `lead` (the old lead pursuit, kept for torpedoes, bit-identical), `inCone`, `velocity`.
+  - Projectiles: missiles fly `Guidance.pn` against the target's position at the start of the step (aim point minus one tick of its velocity). PN alone, without the alignment, made it worse (18%).
+  - Seeker cone (EW.guide, every tick, IR and RADAR): a target more than `seekerAngle` off the nose (default `EW.SEEKER_ANGLE`: IR 60°, RADAR 70°; new optional weapon field) breaks the lock for good (LOST_LOCK, no re-acquisition). Skipped within one step of the target, where the fuse decides.
+- **Not changed:** the fuse radius. With the alignment every missile that isn't decoyed hits (the fuse tests the closest approach along the whole step, so the 28-stud step was never the problem); a separate `fuseRange` would add a field without changing a result.
+- **G limit (request 11c):** not added. Missiles fly at constant speed, so the `turnRate` cap already is a G limit (a = ω v); a separate one would only rename it.
+- **Results (Thorns, headless, 3 seeds × 2 min):** circling Falcon 90% (was 33%), every other missile decoyed by flares; helicopter flying in 94%, hovering 88% (unchanged: the rest are flares). No missile loses its lock.
+- **Tests (`Guidance.spec`, 3):** PN closes within 2.5 studs on straight and 51°/s-circling targets from 24 launch angles; the IR SAM salvo hits a circling jet and a helicopter (flying in, hovering) with every non-decoyed missile and at least 75% overall; a missile flying past a target it can't turn onto gets LOST_LOCK and flies away without a second pass. The reference client (`Support/Client`) now steers with `Guidance` too; the contract (section 7) says how.
+
+## S-28 — Decoyed missiles bend toward the decoy (client request 13d; protocol 11) (2026-10-22)
+
+- **Problem:** a successful flare / chaff roll turned the missile 60° in one tick (`EW.DECOY_TURN`); at 420 studs/s it visibly kinked sideways.
+- **Change:** on DECOYED the missile loses its target and follows a fixed decoy point for up to `Guidance.DECOY_TICKS` (15, 1 s), turning at its `turnRate` (`Guidance.decoy`), while the point stays in its seeker cone; then it flies straight to the end of its lifetime. The point is the cloud next to the target: `EW.DECOY_SIDE` (25) studs across the **missile's** line of flight (side by the same coin flip as before, so the rng draws are unchanged) and `EW.DECOY_DROP` below the target (flares 20, chaff 6).
+- **Why across the missile's path, not behind the target** (the client's suggestion): a point behind the target lies on the missile's line in a tail chase and head-on, and in a first try 5 of 8 decoyed missiles still hit the jet. Across the line, none do.
+- **What it looks like:** the roll happens 20–60 studs out, so a missile passes its decoy within a tick or two: a bend of 10–20° off the target, then straight on (no kink: never more than `turnRate` per tick).
+- **Wire (protocol 11):** DECOYED carries the decoy point and the ticks left (22 B) so the client steers it with the same function; `Guidance.SEEKER_ANGLE` / `seekerAngle(weapon)` moved to Shared for that. Server state: `Combat.pDecoy` (hashed).
+- **Tests:** `Guidance.spec`'s salvo test now also checks that decoyed missiles turn at most `turnRate` per tick, that none hits its target, and that a spectator client steering them with `Guidance.decoy` stays within a stud of the server inside the map. `Schema.spec` golden bytes for the new layout.
+
+## S-29 — Overkill-aware targeting (guide 10.2) (2026-10-22)
+
+- **Asked:** units in the same area spread their fire instead of shooting a target that pending hits will already kill; deterministic, within the Targeting budget.
+- **Accounting (Combat):** each projectile fired at a live unit records the damage it is expected to deal: `damage[armorClass] × Combat.hitChance(weapon, target, distance)`. `pending[target]` sums them while they fly (dropped when the projectile lands, expires, is decoyed or loses its lock; keyed by the target's generation, D109); `queued[target]` sums damage queued this tick (hitscan, impacts) until Damage applies it. `Combat.doomed(t)`: pending + queued ≥ health.
+- **Hit chance:** from the weapon's spread (uniform ±accuracy on yaw and pitch): sideways `dist·tan(acc)` against hull radius + half the blast; lengthwise, for a ballistic arc, the range error `dR/dθ·acc` (flat ground, low arc) against radius + blast + height / (2 tan θ) (a descending shell crosses the hull's height); straight shots compare the height error. Guided weapons and torpedoes count as sure. Checked against fired shells at a stationary Ravager: howitzer at 350 studs 1.00 estimated / 0.99 measured, mortar 0.82 / 0.79 at 200 and 0.62 / 0.63 at 350, Lancer gun 1.00 / 1.07 at 180. A first version without the height window said 0.12 for a tank gun at 60 studs and made the avoidance worse than none.
+- **Decision at the trigger (Weapons):** a ready, aimed weapon whose visible target is doomed doesn't fire; it drops the target and is marked RETARGET, so Targeting searches on the next tick instead of waiting for its stagger. Deciding in Targeting alone would send a whole volley to the same next target (all guns score targets alike). Health counts only for targets the team sees (VISIBLE); radar contacts and ghosts are never "doomed".
+- **Search (Targeting):** doomed targets are skipped; the best of them is the fallback when nothing else is acceptable, marked ALLOWED so the weapon fires anyway (a lone target still gets shot, and a miss gets followed up). Attack orders fire regardless. Guided missiles don't switch to a doomed target.
+- **State:** `World.wOverkill` per weapon (NONE / RETARGET / ALLOWED, hashed), `Combat.pAim / pAimGen / pAimDmg` per projectile (aim hashed), `Combat.pending / pendingGen / queued` derived. `Combat.AVOID_OVERKILL = false` turns it off for measurements.
+- **Results:** six Verdicts against six one-shot Ravagers in a column: first volley on 6 targets (1 without), all dead in 12 shells and 6.3 s (30 shells and 18.9 s without). Stress at 800 units: Targeting 1.95 ms average, 6.54 peak (2.04 / 7.51 before; budget 8).
+- **Tests (`Overkill.spec`, 4):** the estimate within 0.15 of measured damage for four weapon/range cases; the group volley spreads, kills faster and wastes fewer shells; a lone doomed target is still shot; an attack order is obeyed on a doomed target.
+
+## S-30 — T1 balance after overkill avoidance: Verdict sight 170 (2026-10-22)
+
+- **Re-check (3 seeds) after S-29:** Lancer vs Ravager 1.25 / 1.00, Herald vs Jackal 1.06 / 0.75, Verdict vs Hellmouth 0.50 / 0.58 (unchanged by S-29).
+- **Why artillery didn't move:** the matchups have no spotters, so both artillery groups fire at their own sight range (140 / 130); the Verdict's range and precision never apply, and at that distance the Hellmouth's health, damage and reload win. Six single-number probes (3 seeds each, `docs/BALANCE.md` Pass 2): reload, accuracy, range and health moved it by at most 0.07; sight 140 → 170 took the long fight to 0.97.
+- **Change:** `ord_verdict.sensors.sight` 140 → 170 (listed under "Needs my review"). Close-range artillery (0.50) and the scouts' long fight (0.75) stay outside the band; both are listed with what would move them.
+
+## S-31 — Twin Lakes 2v2 bias: the generator rule read a momentary stall ratio (2026-10-22)
+
+- **Symptom (S-17 report):** Hard ×2 against Normal ×2 on Twin Lakes went to the east pair in all 6 games (whichever level was east), though a Normal mirror split 3–3.
+- **Traced like S-23:** a Hard ×2 vs Hard ×2 mirror, comparing each player with its mirror image (player 1 ↔ 3, the Order players; 2 ↔ 4, Chaos; Twin Lakes is mirrored west / east). Unit positions part at tick 60 (flow-field tie-breaks, as in S-23, favouring no side), so the comparison is on decisions: each structure ordered (def and mirrored site), in order. Players 1 and 3 parted at the third structure: player 1 started an extractor, player 3 a generator, at the same point of the same build. From there player 3's economy ran ahead: at 3 minutes the east led by 7–15% in value in every seed (the openings are seed-independent), before any fight.
+- **Cause:** the AI builds a generator when `power.ratio < 0.95`. A player thinks every 10 ticks (Hard) at an offset by player (0, 2, 5, 7), so mirrored players think at different moments. Right after a builder finishes its job its demand is gone, and the stall ratio reads 1.0 for an economy step, exactly when the AI picks that builder's next job. Player 1 thought in that window and judged power fine while it was starved (0 stored, ratio 0.3 before and after); player 3, 5 ticks later in its own cycle, didn't. Which side catches the window follows from the think offsets, the same in every game.
+- **Fix:** power counts as short if any think saw a stall in the last 5 s (`Skirmish.POWER_MEMORY` = 75 ticks), not only at this think. All levels use it.
+- **Result:** mirrored players build the same first 17 (Order) and 13 (Chaos) structures in the same places (3 before); at 3 minutes the values are within 5% (west slightly ahead in some seeds, east in others), and both sides are richer than before (5,630 against 4,692 for player 1). Twin Lakes Hard–Normal: 3 games to the west pair, 3 to the east (was 0–6); Hard won 4 of 6.
+- **Test (`Fairness.spec`):** in a Hard 2v2 mirror on Twin Lakes the mirrored players' first 10 structures match and their values at 3 minutes are within 10%. With the old rule it fails at the 3rd structure.
+- **Seen on the way, not changed:** the army mix comes from each AI's own random stream, so mirrored players' armies differ from the first army unit (fair in expectation). Ridgeline Normal mirrors now split west 4 – east 8 of 12 (6–6 at S-23), within the test's bound; to watch.
+
+- **S-31 follow-up (same day):** the remembered stall fixed Twin Lakes, but Ridgeline Normal mirrors drifted east (3–9 of 12), and a trace showed the Order mirror again splitting at the 3rd structure, this time on the income rule (`income < 20 × plants + 20`): player 1 thought just after its first generator finished, player 2 just before. Two more causes, both fixed:
+  - **Think phase:** a player's think offset (0, 7 for two Normal players) sat at different phases of the economy (5-tick) and sensor (2-tick) steps, so the same plan finished at a different point of each player's cycle. Think periods and offsets are now multiples of `Skirmish.THINK_ALIGN` = 10 ticks: Normal thinks every 20 ticks (was 15), Easy 30, Hard 10; offsets `(index − 1) × 10 mod period`, so players sharing a slot (all Hard players) think in the same tick, in player order. Power stalls are now watched every tick, not only at thinks.
+  - **Site rounding:** the AI's site search is mirrored (`brain.toward`), but the server snaps a footprint with `floor(f + 0.5)`, which rounds exact half cells toward +x for everyone; homes and offsets put sites exactly there, so the east player's generator landed a cell off the west's mirror image. The search now nudges each candidate a thousandth of a stud toward the player's front (`SNAP_NUDGE`), which rounds symmetrically.
+  - **Result:** Ridgeline Normal mirrors build the same first 21 (Order) and 9 (Chaos) structures, equal values at 2 minutes (4,053 / 4,030); outcomes west 8 – east 4 of 12 in the spec (a 24-match run before the rounding fix gave 9–15; the splits move both ways, as noise does). Twin Lakes Hard 2v2: same first 9 structures for both pairs. Mirrored single-unit trips on Ridgeline: 4 faster west, 5 faster east, 18 equal, mean difference 0 ticks.
+  - The Fairness test's bar is now the first 8 structures (the old rule parted at the 3rd); later, trips that take a few ticks more on one side or the other reorder jobs.
+
+## S-32 — Line of fire (guide 10.8); Coastline stalemates (2026-10-22)
+
+- **Coastline (task 4):** 31 of 36 level matches reached 40 minutes. Not the map (open land, two ridge pairs, the sea in the north) but the fight: a wave on attack-move held as soon as an enemy was within weapon range (S-14), and on Coastline that is often across one of the inner ridges. Its Lancers stood at x ≈ 0 shooting a Lancer at x ≈ −175 (190 studs, in range) through the ridge; every shell hit the cliff, nobody died, nobody advanced. Direct fire went through hills because line of fire (10.8) wasn't built.
+- **Line of fire:** `Combat.lineOfFire` samples the height layer once per cell along the shot: the straight line for hitscan and beams, the real low arc for ballistic shells (so artillery lobs over what a tank shell hits); homing, torpedoes and bombs aren't checked. Weapons checks it when a weapon is ready and on target: blocked, no shot, and the weapon is marked (`World.wBlocked`, hashed). Targeting prefers, among the best two candidates, one with a clear shot (on the team's believed position, D100); a blocked weapon re-searches on its stagger tick. Orders: a blocked weapon doesn't count as engaged, so an attack-move keeps going until it has a shot.
+- **Result:** Coastline, 36 matches: none at the limit (was 31), median 6.9 min, longest 19.1. Stress at 800 units on hilly terrain: line-of-fire checks average 0.1 ms per tick (worst tick 0.39 ms, 187 checks); Targeting average 2.35 ms (1.95 before; budget 8), from blocked weapons searching more; its peaks vary 8.5–18 ms between runs.
+- **Level report:** a match still running at the limit is undecided: it shows who was ahead on value but no longer counts as a win in the tally (shown in brackets).
+- **Found, not fixed here:** Normal loses all 12 Coastline matches to Easy (it starves for supply on that map); Hard beats Normal 9–3 there. Listed for the next round.
+- **Tests (`LineOfFire.spec`, 4, on the new `ridge:<cells>` test map):** the shot geometry (tank shell and machine gun blocked by the ridge, clear through the gap, howitzer arc clears it, missiles unchecked); a Lancer holds fire behind the ridge while a Verdict fires over it; a Lancer takes a target it can hit over a nearer one behind the ridge; three Lancers on attack-move stop at most a second at the ridge, go through the gap and kill the target.
+
+## S-33 — Client requests 14–16: MOVING bit, the map's edge, Thorn range (2026-10-22)
+
+- **14, MOVING:** the bit was in the schema but never set. Movement now sets it on ground and naval units with a movement order or nonzero speed and on aircraft unless landed (loitering and hovering included), and clears it otherwise; only on a change, so idle units still send nothing. Test (`Movement.spec`): a tank's bit goes on with a move order and off when it stops, on the client too; a loitering jet is moving, a landed one isn't.
+- **15, past the edge:** projectiles that leave the map now burst on its edge (IMPACT, no damage; there is nothing to hit out there), so no projectile position past the edge reaches the wire (`Air.spec`). Aircraft: not changed. Two tries to keep jets inside (a turn-back margin of their turn radius; a hard edge they slide along) broke the bombers' runs on small maps (egress loops leave the map there and the bomb-run tests rely on them), and a look-ahead version still let a Falcon out by 46 studs at a corner. Jets keep the 60-stud turn-back (B measured at most 14 studs out); the alternative, positions past the edge on the wire (a signed offset), is a protocol change left for later.
+- **16, Thorn (the user asked):** `chs_ir_sam.range` and `lockRange` 280 → 420, `aoe` 5 → 12 (also its proximity fuse), `projectileSpeed` 420 → 500 (as suggested, so a 420-stud shot arrives about as fast); `chs_thorn.sensors.airSight` 300 → 420, because an IR missile locks only on what the site sees, so the new range would otherwise only help with a radar's or ally's sight. Under "Needs my review": Order's IR SAM (`ord_ir_sam`, the Vigil) stays at 300 / 5. `Guidance.spec` now counts only missiles that finished (a 420-stud flight can outlast the test) and puts the circling Falcon at x = 300, as the client's scene does, because its loiter around x = 420 reached the map's edge.
+
+## S-34 — Move states: Hold Position, Maneuver, Roam (guide 10.1; audit item 1) (2026-10-22)
+
+- **Before:** the move state was stored but nothing read it; idle units never moved on their own, as if on Hold Position.
+- **Now (`Orders.autoStep`, start of the Orders step):** every 15 ticks (staggered by `Hash.mix32(id)`), an idle unit (empty queue, or an automatic order) that is armed, mobile, not a builder, not an aircraft, and on Fire at Will checks its move state:
+  - **Hold Position:** nothing (an automatic order left over is stopped).
+  - **Maneuver** (default): if no weapon has a shot (no target in range, or line of fire blocked, S-32), an automatic attack-move toward the nearest enemy the team sees, which one of its weapons can hit and its move class can reach, within `MANEUVER_LEASH` (150) studs of its **anchor** plus its longest range. Beyond the leash (+24 slack), or when nothing is left to chase, it walks back to the anchor.
+  - **Roam:** the same within `ROAM_CHASE` (500) studs of itself plus its range; it doesn't come back (the anchor moves to where it stops).
+  - Automatic orders are ordinary queue entries marked `auto` (hashed); any command replaces them and clears the anchor, which is set again where the unit next stands idle (its last move goal).
+- **Why only Fire at Will:** a Return Fire unit shouldn't go looking for fights; Hold Fire never fires.
+- **Test changes:** `NetOut.spec`'s weapon-target test and `LineOfFire.spec`'s "holds fire behind the ridge" put their units on Hold Position, to keep the static scenes they describe (on Maneuver the Lancer now goes round the ridge, which `MoveStates.spec` tests).
+- **Cost (stress, 800 units):** Commands 0.45 → 0.59 ms average (budget 1).
+- **Tests (`MoveStates.spec`, 5):** Hold Position stays; Maneuver closes on an enemy just out of range, kills it and walks back (at most 174 studs out); Maneuver ignores an enemy beyond its leash while Roam chases it down and stays; Maneuver repositions past a ridge to get a shot; a command replaces the chase and re-anchors.
+
+## S-35 — Cancel construction with a refund (guide 9.3; audit item 6) (2026-10-22)
+
+- **Command:** CANCEL 16 (protocol 12), `value u8` 0..50. On an unfinished frame: the frame is removed (no wreck, a BUILD_FAILED event with reason "cancelled"), and its builders stop. On a factory: queue item `value` (1-based) is dropped, 0 = the whole queue.
+- **Refund:** spending is proportional to progress (Build spends `cost × step` as progress grows), so a refund is progress × cost, credited like reclaim (`reclaimed`) at the next economy step and capped by storage. Only the frame or the item in production has progress; queued items cost nothing yet. 100% of what was spent, like BAR (the guide's "optional" choice).
+- **Tests (`Build.spec`):** a plant frame cancelled at 30–70% credits exactly progress × cost of supply and power and is gone; CANCEL through the command removes a frame; cancelling a factory's item in production refunds its progress and the next item starts from scratch; a queued item goes without a refund; CANCEL 0 clears the queue. `Schema.spec`: golden bytes and range check for CANCEL.
+
+## S-36 — Carriers: recovering, carrying and launching aircraft (guide 12.3; audit item 5) (2026-10-22)
+
+- **Before:** carriers' rearm pads were used by empty aircraft (nearest pad), but an aircraft couldn't take a carrier as home, a rearming aircraft stayed where the carrier had been, and nothing held aircraft aboard.
+- **Recover:** GUARD from an aircraft on a friendly unit with rearm pads (carrier or airfield) calls `Air.recover`: that pad becomes its **home** (`AirState.home`, hashed) and it is flagged to **hold**; it flies there, lands, rearms (aircraft without ammo are full at once) and then stays in a new phase **docked** instead of taking off.
+- **Carried along:** while rearming or docked, an aircraft's position is its pad's every tick; one flying to a carrier re-aims when the carrier has moved.
+- **Launch:** any order (`Orders.give` → `Air.release`) takes a docked aircraft off; one flying home only to be recovered turns back; an empty one still rearms first. A destroyed carrier launches its docked aircraft.
+- **Home first:** an empty aircraft goes to its home pad if it still exists, else the nearest.
+- **Not done:** carriers building aircraft (the guide doesn't say they do; it would change the tech tree, listed for review).
+- **Tests (`Carrier.spec`, 3):** recovery lands and holds a Falcon on a Sanctuary, which then sails with it aboard; a move order launches it; an empty Falcon heads for its carrier although an airfield is nearer, and lands on it.
+
+## S-37 — Terrain types and speed modifiers (guide 5.2, 6.3, 12.1; audit item 3) (2026-10-22)
+
+- **Layer:** `Layers.terrain` (u8 per cell, `Layers.Terrain` GRASS 0, ROCK 1, SAND 2, ROAD 3; default grass) in Shared, so the client gets it with the map.
+- **Speed:** `Shared/Grid/Terrain.SPEED[moveClass][type]` (placeholders, listed for review): wheeled rock 0.8 / sand 0.7 / road 1.25; tracked 0.9 / 0.8 / 1.1; heavy tracked 0.9 / 0.6 / 1.1; amphibious 0.9 / 0.85 / 1.1; hover 0.8 / 1 / 1.1; grass 1; ships, submarines and aircraft ignore terrain. Movement scales a unit's top speed by the factor of the cell it is on.
+- **Paths:** each tree (move class, clearance) carries per-cell step multipliers `best factor on this map / cell factor` (≥ 1, as the flow field's bucket queue needs; nil when the map has one kind of ground for that class, so other maps cost nothing extra); a step costs its length times the mean of its two cells' multipliers. The coarse quadtree route still ignores terrain.
+- **Maps:** MapGen paints sand on land within 2 cells of water and rock where a cell rises more than 15° to a neighbour; both follow the symmetric heights, so maps stay symmetric (tested). Named maps: Ridgeline 768 rock cells (ridge flanks, mostly impassable anyway), Coastline 962 rock / 304 sand, Twin Lakes 1,596 / 528, Crossroads 2,264 / 656. No roads are generated (map design). New test map `terrain:<cells>`.
+- **Tests (`Terrain.spec`, 3):** a Paladin on sand tops out at 0.6 of its max speed and a Jackal on the road at 1.25 (much slower on sand); a heavy class's flow field costs crossing sand more than 1.4× grass, and an all-grass map has no multipliers; Coastline's terrain has sand only on land, rock, and mirror symmetry.
+
+## S-38 — Client requests 17–19: jets reach their goal, countermeasure on DECOYED, no aircraft wrecks (2026-10-22)
+
+- **17, jets (high priority, the user asked):** a jet's move used to count as arrived as soon as its goal was within the 220-stud loiter radius, so a close order made it circle from wherever it was. Now it flies to the goal and arrives within `Air.ARRIVE_RADIUS` (40 studs, the name the client mirrors) or, for a goal inside its turn circle, once it has flown toward it and the goal falls behind (the closest approach; `AirState.approach`, hashed); then it circles at 220 as before. Test (`Air.spec`): goals 134 studs to the side and 150 behind are passed within 70 studs, a far one within 40, and the jet then circles at ~220.
+- **18, countermeasure (protocol 13):** `EW` now returns which countermeasure defeated a missile (flares, chaff, DIRCM); it rides on the decoy point and DECOYED ends with `countermeasure u8` (23 B). Test (`Guidance.spec`): every decoy in the salvo test reaches the client as DIRCM. **Correction:** the Falcon and the Guardian carry DIRCM and chaff, not flares, so the decoys S-27 and S-28 called "flares" were DIRCM engagements; the numbers stand.
+- **19, aircraft wrecks:** Damage leaves no wreck for an aircraft that dies in flight (no LANDED bit); a landed one may leave one. Test (`Air.spec`): a Guardian killed in flight has wreck 0, a landed one gets a wreck.
+
+## S-39 — Amphibious and hover details (guide 6.1, 12.3; audit item 4) (2026-10-22)
+
+- **Amphibious:** Movement sets SUBMERGED on AMPHIB units in water at least as deep as their hull is tall (they drive on the sea floor) and clears it in the shallows and on land. Submerged, they are what submarines are to the sensors (sonar contacts only, `Sensors.levelFor`) and to targeting (the submerged domain: torpedoes, D107); their own weapons don't fire under water unless they are torpedoes (Weapons).
+- **Hover:** combat profiles of HOVER defs ride on the water surface: `Combat.baseAt` and the believed aim point use the surface over water (the sea floor before). No roster unit is HOVER yet (a roster decision, listed for review); the rule is tested on a ground profile switched to hover.
+- **Test map:** `beach:<cells>`, land sloping about 10° into a 30-stud-deep sea (the `sea:` map's coast is a cliff no ground class climbs).
+- **Tests (`Amphibious.spec`, 2):** a Tideguard drives into the sea and submerges; an enemy tank without sonar loses it; it holds its gun though the enemy is in range; back in the shallows it surfaces. A hover profile's aim point is on the water surface, a ground unit's on the sea floor, attack-ground's on the ground.
+
+## S-40 — Fast and slow test suites (2026-10-22)
+
+- **Asked:** a fast suite for every commit and the slow fairness and AI matches in a separate suite that the integration check runs.
+- **How:** specs register slow tests with `t.slow(name, fn)` instead of `t.test`; `RunAll.run(specs, mode)` runs "fast" (no slow tests), "slow" (only them) or "all" (the default, so the Studio runner, which is the client stream's, still runs everything). `lune run test` is the fast suite; `lune run test_slow` (`.lune/test_slow.luau`) the slow one. `tools/integration/integrate.sh` runs both, and the build, before pushing `main` (it skips the slow suite on a tree that doesn't have it yet). The runner now prints the time of every test that takes a second or more.
+- **Slow (7 tests, ~35 s):** Fairness.spec's mirror fights, Twin Lakes 2v2 mirror and Ridgeline mirror matches; AI.spec's "hard beats easy"; Skirmish.spec's full AI match and its replay determinism run. The fairness spec's ID-parity check is a unit test and stays fast.
+- **Fast:** 324 tests in ~33 s (was 331 in ~65 s). `CLAUDE.md` and the project skill describe both.
+
+## S-41 — Soak: seed 11, heap measured without the replay recording (2026-10-22)
+
+- With this round's AI and combat (line of fire, move states, overkill, terrain) no seed of 1–13 plays 40 minutes on `skirmish:256` (8–33 min); `lune run soak` now defaults to seed 11 (32.6 min).
+- The soak failed its leak check (heap per unit 262 KB at minute 5 → 920 KB at minute 32). Not a leak: the spectator recording (S-18) keeps every message in memory, which grows with time, not units; with ~50–65 units it dominated. Without it the heap is flat (11–18 MB). The soak now measures tick times, heap and the replay check in a run without recording, and records the spectator replay in a second run of the same match (it also checks both runs end in the same hash). Lune can't force a collection (`collectgarbage("collect")` isn't allowed), so the heap figures include uncollected garbage, as before.
+- Result: PASS; see the progress summary.
+- **Level report (same day):** every one of the 126 matches ends by a win condition; Easy beats Normal 23–19 on the 128-cell maps (an early wave reaches Normal's Command Vehicle). Not fixed; listed for review with a proposal.
+
+## S-42 — Vertical-launch radar SAMs and heavier warheads (client request 20; supersedes request 12) (2026-10-22)
+
+- **Asked (the user, through the client):** radar SAMs launch vertically, IRIS-T SLM style, and carry heavy warheads.
+- **Weapon field `launch`** ("turret" default, or "vertical"; HOMING): Weapons fires a vertical launcher as soon as a target is in range and locked, with no yaw / pitch wait or tolerance; its turret stays at its rest pose. The missile spawns pointing straight up at its speed.
+- **Steering (`Guidance.vertical`, shared):** until the target is within `Guidance.HANDOVER` (15°) of the nose, the missile turns straight toward it at `Guidance.PITCH_OVER` (3) × its turnRate, the boost's thrust vectoring; then proportional navigation at turnRate. The state rides in `pFlags` (`EW.Flag.TURNED`), and the seeker-cone check (S-27) starts only after the hand-over. Two tries before that: plain turnRate (90°/s at 360 studs/s is a 229-stud radius) couldn't reach a helicopter 150 studs away; handing over as soon as the target entered the 70° seeker cone left the missile still climbing when PN took over, and it lost the lock.
+- **Defs:** `chs_radar_sam` and `ord_radar_sam` get `launch = "vertical"` (Wyvern, Gorgon, Aegis, Seraph); `aoe` 8 → 20 for both (also their proximity fuse), damage unchanged (Chaos 400, Order 380). The IR sites keep their turning launchers. Under "Needs my review".
+- **Tests:** `Guidance.spec`: a Wyvern against a circling Falcon fires 22 missiles, every one leaving steeply upward, its launcher never moves, 18 hit (82%), 4 overshoot a jet passing close over the site. `EW.spec`'s burn-through test (a jammed Wasp 150 studs from an Aegis) passes again with the vertical launch: 3 of 3 hit. The reference client steps vertical launches with `Guidance.vertical`.
+
+## S-43 — Projectiles and shots shown regardless of sight (client request 21; changes D99) (2026-10-22)
+
+- **Asked (the user, through the client):** "Only render the projectile, not revealing the shooters; if the shooter is cloaked and they decide to shoot, they switch out of cloak mode and reveal themselves."
+- **Rule change:** D99 sent combat events only where the player's ally team had sight. Now projectiles are shown in the player's camera area (+2 cells; +5 for homing corrections) whatever the team sees: SPAWN_PROJ at launch, homing corrections, IMPACT. None of these names a shooter, so a hidden shooter stays hidden until normal sight reveals it. `targetId` is unchanged (0 unless the team knows the target). DECOYED / LOST_LOCK were already for projectiles the client has.
+- **Gun shots:** FIRE names its shooter, so it still goes only to players that have the shooter in their tactical tier. Anyone else whose camera area has either end of the shot gets a new event SHOT 13 (protocol 14): `hit u8, start pos, end pos`, 14 B, no IDs. Weapons now records the muzzle position on FIRE events.
+- **Cloak:** not built; the guide (11.4) now says a cloaked unit that fires drops its cloak.
+- **Cost:** in the 800-unit stress battle events stay ~1.2 KB/s per player (everything in the camera was in sight there anyway); a hidden artillery duel costs what a visible one does.
+- **Tests:** `NetOut.spec`: a hidden mortar's shells reach Order from 13 studs out of the muzzle (before: only once in Order's sight) while the mortar stays hidden and unnamed; a hidden gunner's shot reaches the other player as SHOT with both ends and nothing naming the gunner, and its owner as FIRE; the combat-events test checks the camera rule; homing corrections are bounded by the camera area. `Schema.spec`: SHOT golden bytes, round-trip, rejects. Guide 7.2, 7.3, 11.4 and contract section 7 updated.
+
+## S-44 — Vertical launch: a straight climb before the pitch-over (client request 22) (2026-10-22)
+
+- **Asked (the user, through the client):** "launch vertically a little more time, it turns over too soon": the missile leaned over from the first tick at 3× turnRate.
+- **Rule:** weapon field `climbHeight` (studs above the ground; 100 on both radar SAMs). While a vertical launch still flies exactly straight up (no horizontal velocity) and is less than `climbHeight` above the ground under it, `Guidance.vertical` doesn't steer it; then the pitch-over and hand-over of S-42. Read from the missile's state only, as the client asked, so a client that first sees a missile mid-flight decides the same (the wire keeps a zero velocity component exact).
+- **Ground:** the cell-based ground height moved to Shared as `Layers.heightAt` (the server's `Combat.groundHeight` calls it), so server and client use one function; `Guidance.climbLeft(weapon, y, ground)` is the shared helper. `Guidance.vertical` takes `climbLeft` as an optional last argument.
+- **Tests:** `Guidance.spec`'s Wyvern test checks every missile climbed straight to 100 studs before it leaned over; `EW.spec`'s 150-stud burn-through shot still hits (2 of 2).
+
+## S-45 — Radar SAM range ×3 (client request 23, the user asked) (2026-10-22)
+
+- **Changed:** `chs_radar_sam` range and lockRange 560 → 1680, `ord_radar_sam` 600 → 1800; their units' radars ×3 so they can lock on their own: Wyvern 600 → 1800, Gorgon 480 → 1440, Aegis 650 → 1950, Seraph 520 → 1560. Under "Needs my review".
+- **Left as is (my call):** `projectileSpeed` 360 (a full-range shot flies ~5 s; lifetime follows range); burn-through stays 35% of lockRange, so jamming now fails inside ~600 studs instead of ~200.
+- **Tests:** `EW.spec` checks EW rules at fixed distances on a 1024-stud map, so its defs keep the old radar SAM ranges and radars (its own test defs; the replay test keeps the registered defs). `Guidance.spec`'s Wyvern bound is 70% (it now also takes long shots at a weaving jet: 17 of 23).
+- **Not measured yet:** the effect on AI matches and balance (a Wyvern covers most of a 2048-stud map); next level report.
+
+## S-46 — Archon radar signature 0.35 → 0.6 (client request 24, the user asked) (2026-10-22)
+
+- With the ×3 radar SAM ranges (S-45) a Wyvern locked Archons only at ~552 studs (radar 1800 × 0.35, lock 1680 × 0.35), about where the Thorns in front open up. At 0.6 it locks them at ~1,000. Only the Archon; the Phantom stays at 0.2. For the user to test; under "Needs my review".
+
+## S-47 — Missile stockpiles for SAMs (client request 25, the user chose it) (2026-10-22)
+
+- **Asked (the user, through the client):** "SAM systems should have a stockpile and spend resources to fill it up"; all SAM sites and mobile SAMs, refilled automatically, BAR style.
+- **Defs:** weapon field `stockpile = { capacity, buildTime (s), cost = { supply, power } }`; a unit's weapon slot may override the capacity (`{ def = "chs_ir_sam", stockpile = 4 }`), because one weapon serves units with different capacities. Derived `weapons[i].stockCapacity`. Validation: capacity 1..255 (a u8 on the wire); a slot capacity needs a weapon stockpile.
+- **Numbers (the client's suggestion; under "Needs my review"):** IR SAMs 6 s, 15 supply + 300 power, capacity 8 (Thorn, Vigil), 4 (Hornet, Halo: Halo mirrors Hornet, the request listed only Hornet); radar SAMs 12 s, 40 + 900, capacity 6 (Wyvern, Aegis), 3 (Gorgon, Seraph). **Naval SAMs (Corsair, Crusader) have none yet:** the request named sites and mobile SAMs; a question for the user.
+- **Rules (Shared defs, server `Sim/Stockpile.luau`):** per weapon slot `World.wStock` (missiles) and `wStockProgress` (0..1 of the next), hashed. A shot needs a missile (Weapons: no stock → no fire, the target is kept) and spends one; the reload is unchanged. Each finished unit below capacity builds one missile at a time per slot, an economy consumer in the construction step after aircraft rearm: demand cost / buildTime, progress at the team's effective ratio, never more than the window allows (as construction and rearm). Spawn.unit (scenarios, tests) starts full; frames start empty; units out of a factory are emptied.
+- **Wire (protocol 15):** State mask bit 64 STOCK: `slotMask u8` + `count u8` per stockpile slot, to the owner only, on change and on ENTER (like `targets`, S-16).
+- **Tests:** `Stockpile.spec` (7): capacities, an empty site holds fire and fires the built missile at once (90 ticks), refill rate and exact cost (8 × 15 supply, 8 × 300 power), produced and frame-built units start empty, owner-only wire, hash. `Schema.spec` golden bytes. Two guidance tests (Air.spec Seraph vs Harpy, Guidance.spec Wyvern) give their launcher 255 missiles: they measure guidance, not supply.
+- **Not measured:** the effect on AI matches (AI sites now stall after a salvo when power is short) and balance.
+
+## S-48 — Nuke silos and radar SAM interception (client request 26, the user chose it) (2026-10-22)
+
+- **Asked (the user, through the client):** radar SAMs should "shoot down ICBMs or nukes from the enemy launched into its radar range"; the user chose a T3 nuke silo per faction that builds nukes into a stockpile, and the radar SAM sites as interceptors.
+- **Units (new tier 3; Defs allow tier 0..3):** `ord_reckoning` (Reckoning; "Judgement" is already Order's MLRS) and `chs_ragnarok` (Ragnarok), structures, 2,400 supply + 24,000 power, buildTime 48,000, health 7,000, footprint 3, icon `nuke`, built by the T2 ground builders (Architect, Forgemaster).
+- **Weapon fields:** `strategic` (interceptable; blast hurts every side; no unit collision in flight; launch warning), `manualFire` (never targets; one shot per attack-ground order; fire states don't apply), `apex` (lofted BALLISTIC: fixed apex above the launch, horizontal speed from the distance, so flight time doesn't depend on range and the client steps it with plain gravity), `intercepts = { chance }` (vertical-launch HOMING only).
+- **Warheads `ord_nuke` / `chs_nuke`:** range 8,192 (anywhere), apex 800, gravity 40 (~12.7 s flight), aoe 150, edge 0.3, damage 8,000 (LIGHT, ARMORED, SHIP), 10,000 STRUCTURE, 4,000 AIR, 3,000 SUB; stockpile 2, 120 s, 1,500 + 40,000 (the client's numbers). Silos placed by scenarios start full (S-47).
+- **Orders:** attack-ground (CT.ATTACK_GROUND, D100) now reaches structures with a manualFire weapon; the point is kept in `AirState.groundX / groundZ` like a bomber's; the order ends at the launch.
+- **Interception:** radar SAM weapons get `intercepts = { chance = 0.5 }`. Targeting checks every tick, before units, for an enemy strategic missile within weapon range that the team detects (new `Sensors.detectsPoint`: sight, air sight or radar coverage; jamming doesn't hide it). Weapons fires from stock with no lock check. The interceptor (`Combat.pTargetProj` + serial; projectile IDs are reused, so `Combat.pSerial` names one) is navigated by Projectiles against the missile's position and velocity; at its closest approach within `aoe` it bursts and rolls `chance` with the sim Prng. A destroyed missile is removed after the projectile loop (swap removal mid-loop would skip one) with an INTERCEPTED event and no blast.
+- **Wire (protocol 16):** INTERCEPTOR 14 (SPAWN_PROJ layout, `targetId` = the missile's projId), LAUNCH_WARNING 15 (`projId, pos` of the launch, to every player), INTERCEPTED 16 (`projId, pos`). **Strategic missiles go to every player wherever they fly** (my call: without it an interceptor launched in view could chase a missile the client doesn't have; a few per match cost nothing). The launch warning reveals the silo's position (my call; BAR-like).
+- **Tests:** `Nuke.spec` (5): launches only on order, one per order, apex ~821 studs, 12.7 s, lands on the spot, kills an enemy and an own tank, 400 studs off untouched; every player gets the warning and the missile; two Wyverns ignore a helicopter for the nuke and destroy it (2 interceptors), no blast; empty stockpiles stop nothing; deterministic. `Schema.spec` golden bytes for the three events. TechTree roster.
+- **Not done:** the AI never builds or fires silos; balance unmeasured. Under "Needs my review".
+
+## S-49 — Lower nuke arc; stockpile build progress on the wire (client request 27) (2026-10-22)
+
+- **(a) Asked (the user, through the client):** "limit its height so that the missile does not shoot over the screen height". At the camera's 55° pitch and 70° FOV a point above the focus stays on screen up to ~0.6 × camera distance (~290 studs at zoom 480, the last before icons). `ord_nuke` / `chs_nuke`: `apex` 800 → 300, `gravity` 40 → 15: flight time 2·√(2·apex / gravity) stays 12.7 s, so the interception window is unchanged. `Nuke.spec`: apex 321 studs above sea level (300 above the launcher), 12.7 s, two Wyverns still intercept.
+- **(b) Asked:** the user thought a silo had stopped making nukes: STOCK carried only whole missiles, and a 120 s warhead at game speed 0.25 is 8 real minutes without a visible change. **Protocol 17:** each STOCK entry is now `count u8, progress u8` (`wStockProgress` × 255). Sent when a count changes or a progress crosses a sixteenth (`Stockpile.WIRE_STEPS` = 16), not every tick: a radar SAM refill (12 s) costs a record every 0.75 s, a nuke one every 7.5 s. `Stockpile.spec`: the owner's progress stays within a step of the server's every tick. `Schema.spec` golden bytes.
+
+## S-50 — Interception chance 0.2 (client request 29, the user set it) (2026-10-22)
+
+- `chs_radar_sam` and `ord_radar_sam`: `intercepts = { chance = 0.5 }` → `{ chance = 0.2 }`. The user tried 0.2 through the client's test override (C-60) and chose it. A nuke now needs about five interceptor bursts for an even chance of being destroyed (1 − 0.8⁵ ≈ 0.67), so one Wyvern's full stockpile of six usually stops one nuke, and a mobile Gorgon or Seraph (three) usually doesn't. `Nuke.spec` (seed 3): two Wyverns still destroy the nuke, with 2 interceptors. Guide 4.3 and 10.9 updated.
+
+## S-51 — Nukes climb vertically, then turn toward the target (client request 28, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** "Can we make the nuke go vertical to a height then turn toward its destination?"
+- **Flight (`Shared/Combat/Lofted`, shared with clients):** straight up at `projectileSpeed` (150) until `climbHeight` (120) above the ground under it; then a pitch-over at `turnRate` (90°/s; powered, no gravity) toward the lofted velocity, the ballistic arc from the missile's position that peaks `apex` above the ordered spot and lands on it; within one tick's turn of it, the missile takes it exactly and falls. While climbing it is re-solved every tick (on the arc that equals its own velocity), so the landing stays exact. Descending: plain ballistic. Every phase follows from the missile's state and its goal, so a client stepping its own copy, even from mid-flight, flies the same path.
+- **Numbers:** `apex` is now measured above the ordered spot (was: above the launch; the same on flat ground). `gravity` 15 → 12 keeps the flight at 12.7 s (measured, 1,400 studs) with the boost and turn; apex 310 studs above sea level on a flat map. Validation: lofted weapons need `turnRate`.
+- **Wire (protocol 18):** a client can't fly the turn without the goal, so a strategic missile now arrives as **SPAWN_STRATEGIC 17**: SPAWN_PROJ's fields plus `goal pos` (25 B), still to every player. It reveals the target spot to everyone, which the arc showed within a second or two anyway (my call).
+- **Tests:** `Nuke.spec` (6): flight 12.7 s, lands 0.0 studs from the spot; the warhead leans over only at 120.8 studs above the ground; a client far from everything flies its own copy within 0.15 studs of the server's for the whole flight; interception and the earlier tests unchanged. `Schema.spec` golden bytes.
+
+## S-52 — Radar SAM sites: stock 15, refill twice as fast (client request 30, the user asked) (2026-10-22)
+
+- **Asked (the user, after testing nukes, through the client):** "increase the SAM stock to 15, lower its recharge time too."
+- **Changed:** the radar SAM weapons' stockpile (`chs_radar_sam`, `ord_radar_sam`): capacity 6 → 15 (the Wyvern and Aegis sites, which intercept nukes), buildTime per missile 12 → 6 s (the user gave no number; the client suggested halving).
+- **Kept (my call, under "Needs my review"):** the cost per missile (40 supply + 900 power: a full refill is now 600 + 13,500, drained at twice the rate, 6.7 supply and 150 power per second per site); the mobile Gorgon and Seraph at 3 (slot override); the IR SAMs as they are. Read as the radar sites only, since the user was testing interception.
+- **Tests:** `Stockpile.spec` capacities. With chance 0.2 per burst (S-50), a full Wyvern now gives a nuke about a 96% chance of being destroyed if all 15 get to burst (1 − 0.8¹⁵).
+
+## S-53 — `map:normandy`, a hand-made large-battle map (client request 31, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** "a large map, maybe make a map like Normandy", for a large-scale battle test. The client sent the zone layout, which its army profile uses; all of it is kept.
+- **Built:** `Shared/Grid/Normandy` (hand-made, not MapGen), registered under `MapRegistry.HANDMADE` as `map:normandy`; `genOptions` returns nil for it. Layout in guide 5.5. My calls:
+  - **Hedgerows:** 1-cell banks 6 studs high, so their ends and the cells beside them are also too steep (37°) and a hedge line blocks 3 cells. Gaps are 5 cells, 3 of them passable; terrain is ROCK.
+  - **Bocage limits:** it fills only z −200…280, between the staging fields; the 20-stud strips B left at −360…−340 and 540…560 stay open, so no stray stubs.
+  - **Bluffs:** a 3-cell cliff (about 6.7 studs per cell).
+  - **Draws:** 2 studs per cell (14°), passable for every land class.
+  - **River:** 4 deep, so wheels and tracks can't ford it; amphibious units and hovercraft can.
+  - **Houses:** 2 × 2 cells, 8 studs high, every 6 cells, kept off the roads.
+- **For drawing:** `Normandy.feature(cx, cz)` names each cell.
+- **Tests** (`Normandy.spec`, 5):
+  - the zones and the sea surface;
+  - the cliff, river, hedges and houses are impassable to WHEELED, TRACKED and HEAVY_TRACKED, while the draws, bridges and gaps are passable;
+  - a flood fill gets every land class from the south start to the beach;
+  - a Ravager drives over the x = 100 bridge;
+  - the map is identical on every load. It has 662 hedge cells and 60 house cells.
+
+## S-54 — `map:normandy` re-oriented: the fight runs west–east (the user) (2026-10-22)
+
+- **The user:** "this map fight from the side (left - right) not the sea - land". S-53 followed the client's layout, which put Order on the beach and Chaos behind a river to the south, so the armies met along z, from the sea inland.
+- **Now:** player 1 is west and player 2 east. The coast (sea, beach, bluffs with three draws) is a north flank both sides share. South of the bluffs the map is a mirror image about x = 0:
+  - **Rear:** each side's rear at |x| > 672.
+  - **Rivers:** one at x = ±660, each with bridges at z = −700, −250 and 250, so both sides get a river between their rear and the front, where S-53 gave one only to Chaos.
+  - **Staging:** each side's staging field at |x| 420–640.
+  - **Bocage:** at |x| < 400, with villages at (±220, −150).
+  - **Starts:** (∓850, 0).
+- **Kept:** every S-53 feature size (hedges, houses, gaps, draws, river, bridges). `Normandy.spec` checks the mirror (features and heights) and a Ravager crossing the east bridge at z = 250; 1,044 hedge cells, 72 house cells.
+- **The client's `normandy` profile** places armies on the S-53 layout and has to move to the new zones.
+
+## S-55 — Shorter SAM ranges (client request 32, the user asked) (2026-10-22)
+
+- **Asked (the user, after playing the Normandy battle):** "the anti air should not cover this large range or maybe because the map is small, reduce the SAM IR by 30%, the SAM radar by 25%".
+- **Weapons:** range and lockRange together:
+  - `chs_ir_sam` 420 → 294 and `ord_ir_sam` 300 → 210 (Thorn, Hornet, Vigil, Halo).
+  - `chs_radar_sam` 1680 → 1260 and `ord_radar_sam` 1800 → 1350 (Wyvern, Gorgon, Aegis, Seraph).
+- **Sensors follow by the same factor (my call; S-33 and S-45 scaled them together):**
+  - IR airSight: Thorn 294, Vigil 224, Hornet 210, Halo 224.
+  - Radars: Wyvern 1350, Aegis 1463, Gorgon 1080, Seraph 1170.
+  - projectileSpeed unchanged.
+- **Side effects:**
+  - Burn-through stays 35% of lockRange (~440 studs now).
+  - A nuke reaches a radar site's range later, so the interception window is shorter. In `Nuke.spec` two Wyverns still destroy it, with 3 interceptors.
+- **Tests:**
+  - `EW.spec` pins the old IR ranges and air sights for its fixed-distance rule checks, as it already did for the radar SAMs.
+  - `Guidance.spec`'s hovering helicopter moves in to 260, inside every Thorn's reach: 86% hit.
+  - `Nuke.spec` checks "nuke first" only once the nuke is in a site's range.
+
+## S-56 — SAM ranges cut again (client request 33, the user asked) (2026-10-22)
+
+- **Asked (the user, playtesting Normandy, right after S-55):** "Drop the IR range 30% more, the SAM 25% more".
+- **Weapons (range and lockRange, from the S-55 values):**
+  - `chs_ir_sam` 294 → 206, `ord_ir_sam` 210 → 147;
+  - `chs_radar_sam` 1260 → 945, `ord_radar_sam` 1350 → 1013.
+  - Overall since S-45: IR at 49% of before, radar at 56% (1.7× the pre-S-45 range).
+- **Sensors follow (as in S-55):**
+  - airSight: Thorn 206, Vigil 157, Hornet 147, Halo 157;
+  - radar: Wyvern 1013, Aegis 1097, Gorgon 810, Seraph 878.
+- **Nukes:** a nuke is now within a radar site's reach for only ~6 s of its 12.7 s flight, so a site gets one or two shots at 0.2 each. `Nuke.spec` now defends with four Wyverns, which destroy it with 4 interceptors; two sites now often let one through.
+- **Tests:**
+  - `Guidance.spec`: the hovering helicopter moves in to x = 400, inside every Thorn's reach (94% hit).
+  - The vertical-launch test no longer counts a missile still flying at the end as a steep launch.
+
+## S-58 — One strategic icon per unit type (client request 35, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** "Every type of unit need to have its own unique icon." The wire icon was the family name's number (50 names over 126 unit defs), 6 bits.
+- **Now (protocol 19):** the Strategic record's icon is 8 bits and is the unit's **def index** (`Shared/Net/Icons.byDef`); `def.icon` stays the family name for the shape. The record keeps its 6 bytes: the flags field shrinks from 7 to 5 bits, all five of which were in use (2 were reserved). At most 255 unit defs (an assert).
+- **Knowledge unchanged:** icons go only where the team knows the type (VISIBLE, ghosts, TRACKED contacts), as before; untracked blips stay icon 0 (D107). A tracked contact now shows its exact type instead of its family, which D107 already allows (tracking reveals the type).
+- **Tests:** `Schema.spec` bit layout, golden bytes and range checks; `NetOut.spec` checks every def's icon is its own index.
+
+## S-59 — Pinpointers: radar precision for the team (client request 34, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** radar vehicles, and "radar enhance facility (pinpointer) that increase the team's accuracy, build around 6 and maximum accuracy achieved -> less to no wobble radar blip, radar missile will be able to hit more precisely (long range radar will likely to lose lock or miss without pinpointer enhancements)."
+- **Radar vehicles:** each faction already has one per tier. T1 mobile radar: Oracle (Order), Watcher (Chaos). T2 mobile fire-control radar: Arbiter, Stalker. No gap, nothing added.
+- **Pinpointer:** `ord_witness` (Witness) and `chs_augur` (Chaos: Augur), T2 structures built by the Architect and Forgemaster. Unit def field `pinpointer = true`.
+  - Stats: 250 supply + 3,000 power, health 1,000, footprint 2.
+- **Rule (`Shared/Combat/Pinpoint`, so a client computes the same):** precision p = min(count, 6) / 6, linear, where count is the ally team's finished Pinpointers. Sensors counts them every sensor step.
+  - Wobble: radar contacts' wobble and fire-control tracks scale by 1 − 0.9 p.
+  - Missiles: a RADAR-guided missile whose target its team has only on radar loses lock with chance 0.1 × (1 − p) per midcourse check (sim Prng).
+  - Wire: no change. Pinpointers have unique icons (S-58), so the client can count them.
+- **Numbers (under "Needs my review"):** 6 for full precision, 90% less error, lock loss 0.1 per check, the cost.
+- **Tests:**
+  - `Pinpoint.spec`: precision is linear; the worst wobble is 14.6 / 8.2 / 1.5 studs at 0 / 3 / 6 Pinpointers; radar-only shots at 700 studs lose lock 9 of 25 times with none and 0 of 25 with 6.
+  - `Guidance.spec`'s Wyvern test gets 6 Pinpointers: it measures guidance, not precision.
+
+## S-57 — AI levels: a gentle Easy, a defending Normal, missile refills (overnight task 1, the user) (2026-10-22)
+
+- **Asked (the user):**
+  - Easy must be easy for a new human player: no attack before about 8 minutes, smaller first waves.
+  - Normal builds 2–3 tanks before its third generator and pulls its army home when an enemy wave approaches its base.
+  - Measure and fix the AI's handling of SAM stockpiles.
+  - Target: Hard > Normal > Easy on every map.
+- **Before** (old report, before stockpiles): Easy beat Normal 23–19 overall. Easy won the 128-cell maps with its first wave of 8, which reached Normal's Command Vehicle at ~4.5 min.
+- **Easy:**
+  - No wave before 8 minutes (`firstAttack`), and at least 2 minutes between waves (`waveInterval`).
+  - Waves of 4, then 5, 6, …, and only that many units leave: the rest stay home.
+  - An army of at most 8 (`maxArmy`) and one army unit per 20 s (was 15).
+  - A cap of 12 made Easy a turtle that beat Normal's waves on defence (Coastline), so 8.
+- **Normal:**
+  - From its second generator, until 2 tanks are out, every builder helps the plant, and the plant builds tanks before more workers (`tanksBeforeGen3`).
+  - First tried as "no third generator until 2 tanks". That deadlocked: other construction split the 40 power/s, the tanks never finished, and Normal sat at 2 generators until minute 7.
+  - Recall: 3 or more known enemy ground units within the recall radius (570 studs, at most 45% of the distance between starts) bring the whole army, waves included, home; no wave leaves for 20 s after.
+  - The 45% fixes a false alarm: on 128-cell maps the enemy's rally point is within 570 studs of home.
+- **Missile stockpiles:** measured with scratch runs (not kept): a Normal AI against helicopter raids that fly at its base every minute from minute 4.
+  - In AI-vs-AI matches nobody builds aircraft, so the AI never fields SAMs.
+  - Before the fix, 2 helicopters per minute: refills cost 1,679 supply + 33,586 power over 15 min. The economy stalled 60% of the time, and SAMs sat empty 49% of the time, 44% with a target.
+  - Fixes:
+    - the generator rule adds the SAMs' refill power (capped at 60/s);
+    - with aircraft near home in the last minute, half the mobile SAMs stay home instead of leaving with waves;
+    - while SAMs refill under a stall (power ratio < 0.5) it queues no new army units.
+  - After: empty with a target 31% (2 helicopters). Against 4 helicopters per minute Normal still falls at ~9.5 min; it fires 44 missiles instead of 19.
+  - **Root cause, a design question:** refills get the same share of a stalled economy as construction (S-47). Should missile refills take priority? Under "Needs my review".
+- **Report** (`docs/AI_LEVELS.md`, now with a per-map tally): Hard > Normal > Easy on every map.
+  - Overall: Normal beat Easy 39–3, Hard beat Normal 42–0 and Easy 36–0.
+  - Per map, Normal–Easy: Ridgeline 10–2, Coastline 11–1, skirmish:256 12–0, Twin Lakes 6–0.
+  - Hard won all 6 FFAs.
+  - The report has no hard-vs-easy 2v2 pairing (Twin Lakes).
+- **Tests (`AI.spec`):**
+  - Easy sends no wave by 8 minutes, then a first wave of at most 4, with an army within its cap.
+  - Normal has at least 2 tanks when its third generator stands, and recalls a wave against 4 enemy tanks 220 studs from home.
+
+## S-57 (follow-up) — Mirror fairness: the integration slow suite failed (2026-10-22)
+
+- **Found by the integrator:** `Fairness.spec` (`test_slow`) failed on the first S-57 merge, so nothing was pushed. Normal mirrors on Ridgeline split 2–10 between the starts; the test wants at least 4 each.
+- **Bisected:** every form of Normal's army-first rule gave one start almost every mirror:
+  - helping the plant: east 9–11 of 12;
+  - builders idle: east 11–0;
+  - tanks-first alone: west 11–0;
+  - thinking every 10 ticks didn't help.
+- **Mechanism:**
+  - Both armies park at their rally points, 160 studs in front of home. On a 128-cell map those are ~375 studs apart, inside howitzer (450) and mortar (400) range.
+  - The side whose artillery saw the other first won the duel. With mirrored players and their fixed 10-tick think offset, that was always the same side, and army-first's uniform openings made it decide every match.
+- **Fixes:**
+  - **Rally points** sit (start distance − 520) / 2 in front of home, between 40 and 160 studs (`RALLY_GAP` = 520, beyond artillery range). Big maps are unchanged.
+  - **Waves** leave only in the first think of each 20 s window (`WAVE_ALIGN` = 300 ticks), so mirrored players that reach the wave size a think apart leave together.
+  - **"2–3 tanks":** each Normal AI draws 2 or 3 tanks before its third generator from its own Prng, so openings vary by match.
+  - **Army-first** keeps the factory's tanks-before-workers order and holds the third generator; builders keep their own jobs. Sending them all to the plant was dropped.
+- **After:**
+  - Mirrors split 4–8 (passes).
+  - The level report still shows Hard > Normal > Easy on every map: overall Normal–Easy 36–6, Hard–Normal 42–0, Hard–Easy 36–0. Per map Normal–Easy is Ridgeline 10–2, Coastline 8–4, skirmish:256 12–0, Twin Lakes 6–0, and Hard won 5 of 6 FFAs.
+
+## S-60 — Normandy performance: pathing, slot assignment (overnight task 3) (2026-10-22)
+
+- **Asked (the user):** "profile the `normandy` scenario headless (392 units; worst tick 17.5 ms). Find which system peaks and bring every system back within its guide 18.1 budget without changing behavior. Before/after numbers."
+- **Tool:** `lune run profile_normandy [ticks]` builds the Studio profile from `src/roblox/MatchConfig.luau` itself (loaded as data). At tick 30 both armies attack-move at each other, with both cameras on the bocage. It reports per-system averages and peaks (with their ticks) against guide 18.1, the five worst ticks broken down, and the state hash.
+- **Rule for every change:** the state hash must not change. `86bd5a1a` after 1,800 ticks of the profile and `0720e012` after 300 ticks of a pathing benchmark, before and after each change: behaviour identical, bit for bit.
+- **What peaked:** the work-unit budget of 36,000 units per tick was about 9 ms of real time on Normandy.
+  - Big orders on the fragmented map (hedgerows cut the quadtree into small leaves) made the route search slow per unit.
+  - Each search and each flow field allocated ~1.6 MB.
+- **Changes:**
+  - `Heap`: hole-based sifting with inline comparisons; same comparisons in the same order, so pops are unchanged.
+  - `Route.runSearch`: leaf centres inline. `dist` / `settled` are arrays sized to the tree, pooled and reset on the leaves each search touched.
+  - `FlowField`: the cost table and queue arrays are pooled, reset on the cells written. The integrate loop keeps its counters in locals and is unrolled in DX / DZ order, keeping the push order the bucket queue depends on; the direction pass is unrolled too.
+  - `Formation.assign`: per-row and per-column unit counts skip empty bucket rows and columns. The same buckets with units are examined, so picks and `checks` are identical.
+- **Per-unit cost:** route search 0.366 → 0.145 µs per work unit, flow field 0.268 → 0.177 (the Pathing budget is now at most ~6.4 ms of work); the order's slot assignment 2.8 → 0.8 ms.
+- **Before → after** (`profile_normandy 1800`, three runs each, interleaved, same PC; before = `main` at 0348056):
+
+| | Before (3 runs) | After (3 runs) |
+|---|---|---|
+| Worst tick (ms) | 16.3 / 25.4 / 16.3 | 10.9 / 15.2 / 13.8 |
+| p99 tick (ms) | 11.9 / 13.6 / 12.2 | 7.9 / 8.6 / 8.7 |
+| Pathing peak (budget 8) | 11.9 / 19.5 / 11.8 | 8.1 / 7.6 / 6.9 |
+| Commands peak (budget 1) | 3.2 / 3.4 / 3.2 | 1.7 / 2.7 / 1.7 |
+| Projectiles+Damage peak (budget 8) | 11.1 / 9.2 / 7.4 | 6.5 / 7.2 / 9.9 |
+| NetOut peak (budget 6) | 4.8 / 7.4 / 5.3 | 3.8 / 4.4 / 4.2 |
+| Sensors / Targeting / Movement / Weapons / Construction / Economy peaks | all within budget | all within budget |
+
+- **Still over** (under "Needs my review"; each fix changes timing, so not done):
+  - **Commands:** 1.7 ms on the tick a select-all order of ~300 units is given (budget 1 ms; was 3.2). Slot assignment has to prove each pick over a 1,300-stud army. Fix options: slice big orders' slot assignment into the Pathing job (units start moving a tick later), or a 2 ms Commands budget for that tick.
+  - **Projectiles+Damage when a structure dies:** `Nav.terrainChanged` updates 7 quadtrees, about 4.3 ms (6 ms with the rest of the removal). It stays under 8 alone but goes over when a GC pause lands in the same tick. Fix option: update the quadtrees lazily, the first time each one is used.
+  - **GC pauses:** the remaining single-tick spikes (the worst tick of 15 ms) are Lune's garbage collector landing in a system; Roblox's differs. Allocation per path is down from ~1.6 MB to a few hundred KB.
+
+## S-61 — Own units' factory queue, fire / move state and ammo on the wire (client request 36) (2026-10-22)
+
+- **Asked (the client):** the unit panel showed the queue and states the client had sent itself, and no ammo.
+- **Protocol 20:** State mask bit 128 OWNER, then `ownerMask u8` with QUEUE 1, STATES 2, AMMO 4. Owner only. Each field is sent when it changes and with ENTER:
+  - QUEUE: `count u8`, the head's `progress u8`, `defIndex u16` per item. Progress steps of a sixteenth, like stock (S-49).
+  - STATES: one byte, fire bits 0–1, move bits 2–3.
+  - AMMO: `rounds u8`, `max u8`.
+- **Tests:**
+  - `Schema.spec`: golden bytes and rejects (empty mask, reserved bits, a 51-item queue).
+  - `NetOut.spec`: a plant with a 2-item queue, a tank whose fire and move state change, and a jet whose ammo drops. The owner's view matches every tick (the jet while tactical); the other player never gets them.

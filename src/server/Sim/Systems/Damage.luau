@@ -5,7 +5,8 @@
 -- the armor-class lookup and AoE falloff), remembers the attacker (for
 -- Return Fire), then removes the dead in the order they died. Severity =
 -- overkill as a fraction of max health (0..1 → u8 in the DEATH event); a
--- unit killed with severity <= 0.5 leaves a wreck worth half its supply.
+-- unit killed with severity <= 0.5 leaves a wreck worth half its supply,
+-- except aircraft shot down in flight (they crash and burn).
 
 local Combat = require("../Combat/Combat")
 local Lifecycle = require("../Lifecycle")
@@ -20,6 +21,7 @@ return function(sim: Types.Sim)
 	if count == 0 then
 		return
 	end
+	table.clear(c.queued)
 	local w = sim.world
 	local nDead = 0
 	for i = 1, count do
@@ -51,8 +53,11 @@ return function(sim: Types.Sim)
 		local def = sim.defs.unitByIndex[w.defIndex[id]]
 		local severity = math.clamp(-w.health[id] / def.health, 0, 1)
 		local wreck = 0
-		if severity <= Combat.WRECK_MAX_SEVERITY then
-			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def)
+		-- aircraft shot down in flight crash and burn: no wreck (client
+		-- request 19); a landed one may leave one
+		local airborne = def.domain == "air" and bit32.band(w.state[id], World.State.LANDED) == 0
+		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne then
+			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def, w.heading[id])
 		end
 		Combat.addEvent(c, {
 			kind = "DEATH",

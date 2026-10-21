@@ -38,6 +38,8 @@ export type WeaponSlot = {
 	turretPiece: string?,
 	pitchPiece: string?,
 	muzzle: string?,
+	stockpile: number?, -- capacity on this unit, overriding the weapon's stockpile.capacity (S-47)
+	stockCapacity: number?, -- derived: the slot's missile capacity, nil = no stockpile (S-47)
 }
 
 export type UnitDef = {
@@ -79,6 +81,7 @@ export type UnitDef = {
 	extractor: { rate: number }?, -- supply per second per deposit value
 	wind: { max: number }?, -- power per second at full wind (guide 8.5 Wind Turbine)
 	converter: { power: number, supply: number }?, -- per second: power in, supply out (toggleable)
+	pinpointer: boolean?, -- raises its ally team's radar precision (Shared/Combat/Pinpoint, S-59)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -118,6 +121,26 @@ export type WeaponDef = {
 	turnRate: number?,
 	lockRange: number?,
 	terminalRange: number?,
+	seekerAngle: number?, -- degrees off the nose the seeker sees; default by guidance (EW.SEEKER_ANGLE, S-27)
+	climbHeight: number?, -- vertical launch: studs above the ground it climbs straight before pitching over (S-44)
+	-- missiles kept in stock (S-47): a shot needs one; the unit builds one
+	-- at a time (buildTime seconds, cost each) while below capacity. A unit's
+	-- slot may set its own capacity (WeaponSlot.stockpile).
+	stockpile: { capacity: number, buildTime: number, cost: { supply: number?, power: number? } }?,
+	-- strategic missiles (S-48): `strategic` = interceptable by `intercepts`
+	-- weapons, its blast hurts every side, it passes over units in flight
+	-- and every player is warned of its launch; `manualFire` = never picks a
+	-- target, fires one shot per attack-ground order; `apex` (BALLISTIC) =
+	-- lofted (Shared/Combat/Lofted, S-51): straight up at projectileSpeed to
+	-- climbHeight, a pitch-over at turnRate, then the arc that peaks `apex`
+	-- studs above the ordered spot and lands on it
+	strategic: boolean?,
+	manualFire: boolean?,
+	apex: number?,
+	-- HOMING: also targets enemy strategic missiles the team detects, before
+	-- anything else; a proximity burst destroys one with `chance` (S-48)
+	intercepts: { chance: number }?,
+	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
 	fx: { [string]: string }?,
@@ -196,7 +219,7 @@ local UNIT_SPEC: Spec = {
 		name = STRING,
 		description = STRING,
 		faction = { kind = "string", enum = set({ "order", "chaos", "neutral" }) },
-		tier = { kind = "integer", min = 0, max = 2 },
+		tier = { kind = "integer", min = 0, max = 3 }, -- 3: strategic structures (S-48)
 		domain = { kind = "string", enum = set({ "ground", "air", "naval", "structure" }) },
 		categories = { kind = "list", item = CATEGORY, minItems = 1 },
 		cost = {
@@ -239,7 +262,13 @@ local UNIT_SPEC: Spec = {
 			maxItems = Defs.MAX_WEAPONS,
 			item = {
 				kind = "record",
-				fields = { def = STRING, turretPiece = opt(STRING), pitchPiece = opt(STRING), muzzle = opt(STRING) },
+				fields = {
+					def = STRING,
+					turretPiece = opt(STRING),
+					pitchPiece = opt(STRING),
+					muzzle = opt(STRING),
+					stockpile = { kind = "integer", optional = true, min = 1, max = 255 }, -- capacity (S-47)
+				},
 			},
 		},
 		countermeasures = {
@@ -272,6 +301,7 @@ local UNIT_SPEC: Spec = {
 		extractor = { kind = "record", optional = true, fields = { rate = POSITIVE } },
 		wind = { kind = "record", optional = true, fields = { max = POSITIVE } },
 		converter = { kind = "record", optional = true, fields = { power = POSITIVE, supply = POSITIVE } },
+		pinpointer = { kind = "boolean", optional = true },
 		storage = {
 			kind = "record",
 			optional = true,
@@ -334,7 +364,23 @@ local WEAPON_SPEC: Spec = {
 		turnRate = opt(POSITIVE),
 		lockRange = opt(POSITIVE),
 		terminalRange = opt(POSITIVE),
+		seekerAngle = { kind = "number", optional = true, min = 1, max = 180 },
+		launch = { kind = "string", optional = true, enum = set({ "turret", "vertical" }) },
+		climbHeight = opt(NON_NEGATIVE),
+		stockpile = {
+			kind = "record",
+			optional = true,
+			fields = {
+				capacity = { kind = "integer", min = 1, max = 255 }, -- a u8 on the wire
+				buildTime = POSITIVE, -- seconds per missile at full economy
+				cost = { kind = "record", fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) } },
+			},
+		},
 		burnThrough = opt(FRACTION),
+		strategic = { kind = "boolean", optional = true },
+		manualFire = { kind = "boolean", optional = true },
+		apex = opt(POSITIVE),
+		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION } },
 		canTargetRadar = { kind = "boolean", optional = true },
 		fx = {
 			kind = "record",
@@ -499,6 +545,15 @@ function Defs.validate(raw: RawDefs): { string }
 		elseif w.guidance ~= nil then
 			report(`guidance: only HOMING and TORPEDO weapons are guided, not {tostring(wtype)}`)
 		end
+		if w.apex ~= nil and wtype ~= "BALLISTIC" then
+			report(`apex: only BALLISTIC weapons are lofted, not {tostring(wtype)}`)
+		end
+		if w.apex ~= nil and w.turnRate == nil then
+			report(`turnRate: required for lofted (apex) weapons: the pitch-over`)
+		end
+		if w.intercepts ~= nil and (wtype ~= "HOMING" or w.launch ~= "vertical") then
+			report(`intercepts: only vertical-launch HOMING weapons intercept (they need no aim)`)
+		end
 		local turret = w.turret
 		if
 			type(turret) == "table"
@@ -587,6 +642,15 @@ function Defs.validate(raw: RawDefs): { string }
 			for i, slot in u.weapons do
 				if type(slot) == "table" and type(slot.def) == "string" and weapons[slot.def] == nil then
 					report(`weapons[{i}].def: unknown weapon {describe(slot.def)}`)
+				end
+				if
+					type(slot) == "table"
+					and slot.stockpile ~= nil
+					and type(slot.def) == "string"
+					and type(weapons[slot.def]) == "table"
+					and weapons[slot.def].stockpile == nil
+				then
+					report(`weapons[{i}].stockpile: weapon {describe(slot.def)} has no stockpile`)
 				end
 				if type(slot) == "table" then
 					for _, key in { "turretPiece", "pitchPiece", "muzzle" } do
@@ -705,6 +769,9 @@ function Defs.build(raw: RawDefs): DefSet
 		for _, slot in u.weapons do
 			local w = weapons[slot.def]
 			slot.weaponIndex = w.index
+			if w.stockpile then
+				slot.stockCapacity = slot.stockpile or w.stockpile.capacity
+			end
 			maxRange = math.max(maxRange, w.range)
 		end
 		u.maxRange = maxRange

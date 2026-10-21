@@ -23,6 +23,7 @@ local Passability = require("@shared/Grid/Passability")
 local FieldCache = require("./Path/FieldCache")
 local FlowField = require("./Path/FlowField")
 local Quadtree = require("./Path/Quadtree")
+local Terrain = require("@shared/Grid/Terrain")
 local Route = require("./Path/Route")
 local World = require("./World")
 
@@ -151,6 +152,7 @@ function Nav.tree(nav: Nav, moveClass: string, need: number, key: string?): Quad
 	local tree = nav.trees[k]
 	if tree == nil then
 		tree = Quadtree.build(nav.pm, moveClass, need)
+		tree.stepCost = Terrain.stepCosts(nav.pm.layers, moveClass) -- S-37
 		nav.trees[k] = tree
 	end
 	return tree
@@ -528,6 +530,7 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 			order.unreachable = true -- (an extension that finds nothing leaves the order as it is)
 		end
 		order.pending = false
+		Route.releaseSearch(search)
 		return spent, true
 	end
 	-- corridor (and merge) cost about one unit per 8 cells of the area they
@@ -548,6 +551,7 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 		spent += corridor.cellCount // 8
 	end
 	entry.plan = nil
+	Route.releaseSearch(search) -- its arrays serve the next search (S-60)
 	entry.job = FlowField.newJob(t, corridor, order.goalCell)
 	return spent, false
 end
@@ -646,6 +650,7 @@ function Nav.runJobs(nav: Nav, w: World.World, budget: number)
 			entry.order.field = field
 			entry.order.pending = false
 			nav.stats.fieldsBuilt += 1
+			FlowField.release(job) -- its scratch serves the next field (S-60)
 			nav.jobs[nav.jobHead] = nil
 			nav.jobHead += 1
 		elseif spent == 0 then

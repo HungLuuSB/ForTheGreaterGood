@@ -287,13 +287,89 @@ return function(t: any)
 		t.expect(worst <= 3, `no jumps or corners (worst {worst} studs; a missile covers ~7 a frame)`)
 	end)
 
+	t.test("bursts carry what the effects need: launch clouds, countermeasures toward the decoy point, ground and direction (C-47, C-48)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "ew_test" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 127, 127)))
+		local fx = Effects.new()
+		local seen: { [any]: boolean } = {}
+		local kinds: { [string]: number } = {}
+		local decoyPoints = {}
+		for tick = 1, 300 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for _, e in world.events do
+				if (e :: any).kind == Schema.EventKind.DECOYED and (e :: any).decoyTicks > 0 then
+					local x, z = world.grid:decode((e :: any).decoyCell, (e :: any).decoyOffX, (e :: any).decoyOffZ)
+					table.insert(decoyPoints, { x, (e :: any).decoyY / Schema.Y_SCALE, z })
+				end
+			end
+			local rt = tick - 1.5
+			Effects.update(fx, world, rt, rt * DT, 0, 0)
+			table.clear(world.died)
+			for _, b in fx.bursts do
+				if seen[b] then
+					continue
+				end
+				seen[b] = true
+				kinds[b.kind] = (kinds[b.kind] or 0) + 1
+				if b.kind == "launch" or b.kind == "impact" or b.kind == "flare" or b.kind == "chaff" or b.kind == "dircm" then
+					t.expect(b.ground ~= nil, `a {b.kind} knows the ground under it`)
+				end
+				if b.kind == "launch" or b.kind == "flare" or b.kind == "chaff" or b.kind == "dircm" then
+					t.expect(b.dx ~= nil and math.abs(b.dx ^ 2 + (b.dy :: number) ^ 2 + (b.dz :: number) ^ 2 - 1) < 1e-6, `a {b.kind} faces a unit direction`)
+				end
+				if b.kind == "flare" or b.kind == "chaff" then
+					-- flares head for the decoy point from the aircraft; chaff blooms there
+					local px, py, pz = if b.kind == "flare" then b.tx else b.x, if b.kind == "flare" then b.ty else b.y, if b.kind == "flare" then b.tz else b.z
+					local near = false
+					for _, d in decoyPoints do
+						near = near or (d[1] - (px :: number)) ^ 2 + (d[2] - (py :: number)) ^ 2 + (d[3] - (pz :: number)) ^ 2 < 1
+					end
+					t.expect(near, "flares head for the decoy point the server sent")
+				elseif b.kind == "dircm" then
+					t.expect(b.tx ~= nil, "a jammer laser ends on the missile")
+				end
+			end
+		end
+		local parts = {}
+		for k, n in kinds do
+			table.insert(parts, `{k} {n}`)
+		end
+		table.sort(parts)
+		print(`    ew_test bursts: {table.concat(parts, ", ")}`)
+		t.expect((kinds.launch or 0) > 0, "missiles leave in a launch cloud")
+		t.expect((kinds.flare or 0) + (kinds.chaff or 0) + (kinds.dircm or 0) > 0, "a decoyed missile shows what seduced it")
+	end)
+
+	t.test("the countermeasure drawn is the one the server names, else follows the target's equipment (C-48, S-38)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:32", scenario = "empty" })
+		local world = World.new(sim.defs)
+		local function unit(defId: string): any
+			return { defIndex = table.find(sim.defs.unitByIndex, sim.defs.units[defId]) }
+		end
+		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "IR"), "dircm") -- chaff and DIRCM, no flares
+		t.equal(Effects.countermeasure(world, unit("ord_guardian"), "IR"), "dircm") -- a helicopter with DIRCM only
+		t.equal(Effects.countermeasure(world, unit("chs_wasp"), "IR"), "flare") -- a helicopter with flares
+		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "RADAR"), "chaff")
+		t.equal(Effects.countermeasure(world, nil, "IR"), "flare") -- a contact of unknown type
+		-- radar SAMs carry heavy warheads: their explosions are drawn bigger than the IR ones (C-52)
+		t.expect(Effects.impactSize(sim.defs.weapons.chs_radar_sam) > Effects.impactSize(sim.defs.weapons.chs_ir_sam), "radar SAM explosions are the bigger ones")
+		-- the server says which one won (protocol 13, S-38): that wins over the guess
+		t.equal(Effects.countermeasure(world, unit("chs_wasp"), "IR", Schema.Countermeasure.DIRCM), "dircm")
+		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "IR", Schema.Countermeasure.FLARES), "flare")
+		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "RADAR", Schema.Countermeasure.CHAFF), "chaff")
+	end)
+
 	t.test("SAM missiles chasing circling jets bend smoothly, with no corner at tick boundaries (C-38)", function()
 		-- the `sam` test scene: 4 Thorn IR SAM sites, 4 Falcons (5x health) over them
 		local sim = Sim.new({ seed = 25, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "empty" })
 		for i = 0, 3 do
 			local f = Spawn.unit(sim, "ord_falcon", 1, -60, -60 + i * 40, math.pi / 2)
 			ServerWorld.setHealth(sim.world, f, sim.world.health[f] * 5)
-			Spawn.unit(sim, "chs_thorn", 2, -100 + (i % 2) * 200, -100 + (i // 2) * 200, 0)
+			-- under the jets' 220-stud loiter circle: in reach of the Thorn's 206 (S-56)
+		Spawn.unit(sim, "chs_thorn", 2, -130 + (i % 2) * 140, -70 + (i // 2) * 140, 0)
 		end
 		local world = World.new(sim.defs)
 		NetOut.join(sim, 1)
@@ -333,7 +409,11 @@ return function(t: any)
 		print(string.format("    sam scene: %d missile frames, bend mean %.3f studs (at tick boundaries %.3f), worst %.2f", n, mean, boundary, worst))
 		t.expect(n > 1000, "plenty of missile frames")
 		t.expect(worst <= 3, `no jumps (worst {worst} studs)`)
-		t.expect(boundary <= mean * 1.5, `no corner at tick boundaries ({boundary} vs {mean} on average)`)
+		-- C-38's corners were ~1 stud a frame; with proportional navigation
+		-- (S-27) paths are so straight that the mean bend halved, and at the
+		-- Thorn's 206 studs (S-56) most of a ~6-tick flight is the terminal
+		-- turn, so 0.15 stud at the boundary still counts as smooth
+		t.expect(boundary <= math.max(mean * 1.5, 0.15), `no corner at tick boundaries ({boundary} vs {mean} on average)`)
 	end)
 
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()

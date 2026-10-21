@@ -19,14 +19,26 @@
 --     target's predicted position (Air.bombRelease); the bomb leaves with the
 --     bomber's velocity and falls (guide 10.5, DECISIONS D91).
 -- Guided missiles launch only with a lock (EW.canLock, guide 11.5).
+-- Overkill (S-29, guide 10.2): a weapon doesn't fire at a visible target that
+-- damage already on its way will kill (Combat.doomed: projectiles in flight
+-- at it, damage queued this tick); it drops the target and Targeting
+-- searches for another on the next tick. So a group's volley spreads over
+-- several targets. Attack orders, and a doomed target with nothing else in
+-- reach (Targeting marks it ALLOWED), still get fired at.
+-- Line of fire (S-32, guide 10.8): hitscan, beams and ballistic shells fire
+-- only when the shot clears the terrain (Combat.lineOfFire); otherwise the
+-- weapon is marked blocked (World.wBlocked) and holds.
 
 local Aim = require("@shared/Combat/Aim")
 local Air = require("../Air")
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
+local Guidance = require("@shared/Combat/Guidance")
+local Lofted = require("@shared/Combat/Lofted")
 local EW = require("../EW")
 local Sensors = require("../Sensors")
+local Stockpile = require("../Stockpile")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -35,6 +47,8 @@ local sqrt, sin, cos, tan, atan2, abs, rad = math.sqrt, math.sin, math.cos, math
 local max, min = math.max, math.min
 local PI, TAU = math.pi, 2 * math.pi
 local HOLD_FIRE = World.FireState.HOLD_FIRE
+local VISIBLE = Sensors.Level.VISIBLE
+local OK_RETARGET, OK_ALLOWED = World.Overkill.RETARGET, World.Overkill.ALLOWED
 local aimState: Aim.State = { yaw = 0, pitch = 0, hold = 0 } -- scratch, reused for every weapon
 
 local function wrapAngle(a: number): number
@@ -71,7 +85,8 @@ local function fire(
 	muzzleY: number,
 	dist: number,
 	exactYaw: number, -- true direction / pitch to the target's center
-	exactPitch: number
+	exactPitch: number,
+	projTarget: number -- interceptors: the strategic missile they are fired at (S-48)
 )
 	local c = sim.combat
 	local w = sim.world
@@ -87,8 +102,20 @@ local function fire(
 		local yaw, p = worldYaw + yawErr, pitch + pitchErr
 		local ttl = 2 * weapon.range / math.max(speed, 1) + 1
 		local launchY = muzzleY
+		local goal: { number }? = nil
 		local vx, vy, vz = cos(p) * sin(yaw) * speed, sin(p) * speed, cos(p) * cos(yaw) * speed
-		if wtype == "TORPEDO" then
+		if weapon.launch == "vertical" then
+			vx, vy, vz = 0, speed, 0 -- straight up; guidance pitches it over (S-42)
+		elseif weapon.apex then
+			-- lofted (S-48, S-51): straight up; Projectiles flies it to the
+			-- ordered spot with Shared/Combat/Lofted
+			local tx, tz = w.posX[id] + sin(yaw) * dist, w.posZ[id] + cos(yaw) * dist
+			goal = { tx, Combat.groundHeight(c, tx, tz), tz }
+			vx, vy, vz = 0, speed, 0
+			local climb = math.max(Guidance.climbLeft(weapon, launchY, Combat.groundHeight(c, w.posX[id], w.posZ[id])), 0)
+			local _, _, _, t = Lofted.velocity(w.posX[id], launchY + climb, w.posZ[id], goal[1], goal[2], goal[3], goal[2] + weapon.apex, weapon.gravity :: number)
+			ttl = climb / math.max(speed, 1) + t + 5 -- boost, the arc, and slack for the pitch-over
+		elseif wtype == "TORPEDO" then
 			p = 0
 			launchY = Combat.surfaceHeight(c, w.posX[id], w.posZ[id]) - Combat.TORPEDO_DEPTH
 			vx, vy, vz = sin(yaw) * speed, 0, cos(yaw) * speed
@@ -117,6 +144,21 @@ local function fire(
 		)
 		if projectile then
 			Combat.addEvent(c, { kind = "SPAWN_PROJ", tick = sim.tick, unit = id, other = projectile, slot = slot })
+			c.pGoal[projectile] = goal
+			if projTarget ~= 0 then
+				c.pTargetProj[projectile] = projTarget
+				c.pTargetSerial[projectile] = c.pSerial[projTarget]
+			end
+			if weapon.strategic then
+				-- every player is warned (S-48)
+				table.insert(c.strategic, projectile)
+				Combat.addEvent(c, { kind = "LAUNCH", tick = sim.tick, unit = id, other = projectile, x = w.posX[id], y = launchY, z = w.posZ[id] })
+			end
+			if World.isRef(w, target, w.wTargetGen[World.slotKey(id, slot)]) then
+				-- the damage it is expected to deal (S-29)
+				local tp = c.profiles[w.defIndex[target]]
+				Combat.addPending(c, w, projectile, target, weapon.damage[tp.armorClass] * Combat.hitChance(weapon, tp, dist))
+			end
 			return
 		end
 	end
@@ -134,7 +176,7 @@ local function fire(
 		ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
 		ey = Combat.groundHeight(c, ex, ez)
 	end
-	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit, x = ex, y = ey, z = ez })
+	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
 	if hit then
 		c.stats.hits += 1
 		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
@@ -157,6 +199,7 @@ return function(sim: Types.Sim)
 		local p = profiles[w.defIndex[id]]
 		local x, z, heading = w.posX[id], w.posZ[id], w.heading[id]
 		local muzzleY = Combat.unitBase(c, w, id) + p.muzzleHeight
+		local submerged = bit32.band(w.state[id], World.State.SUBMERGED) ~= 0
 		-- an attack order (Orders) fires even on hold fire
 		local holdFire = w.fireState[id] == HOLD_FIRE and sim.orders.forced[id] == nil
 
@@ -180,8 +223,13 @@ return function(sim: Types.Sim)
 			-- 11.4), the ghost's for remembered structures (alive or not), the
 			-- ordered spot for a bomber's attack-ground.
 			local kx, kz, defIndex = nil, nil, nil
-			if weapon.type == "BOMB" and sim.air.groundX[id] ~= nil then
+			local projTarget = 0
+			if (weapon.type == "BOMB" or weapon.manualFire) and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
+			elseif weapon.manualFire then
+				target = 0 -- nothing without an attack-ground order (S-48)
+			elseif weapon.intercepts and Combat.isProjRef(c, w.wTargetProj[key], w.wTargetProjSerial[key]) then
+				target, projTarget = 0, w.wTargetProj[key] -- a strategic missile (S-48)
 			elseif target ~= 0 then
 				local level
 				kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], target, targetGen)
@@ -215,6 +263,8 @@ return function(sim: Types.Sim)
 					pitch = 0 -- launched level in the water; homing does the rest
 				elseif weapon.type == "BOMB" then
 					pitch = 0 -- dropped, not aimed
+				elseif weapon.apex then
+					pitch = 0 -- lofted: fire() works out the launch (S-48)
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
@@ -230,16 +280,28 @@ return function(sim: Types.Sim)
 				end
 				if weapon.type == "BOMB" then
 					canFire = not holdFire and Air.bombRelease(sim, id, weapon, target, kx, kz, defIndex)
+				elseif weapon.manualFire then
+					canFire = dist <= weapon.range -- ordered: fire states don't apply
 				end
 				if canFire and weapon.guidance and not EW.canLock(sim, id, weapon, target, dist) then
 					canFire = false -- no lock, no launch
 				end
+				if canFire and submerged and weapon.type ~= "TORPEDO" then
+					canFire = false -- under water only torpedoes fire (amphibious units, S-39)
+				end
+				if canFire and not Stockpile.ready(w, key) then
+					canFire = false -- nothing in stock (S-47)
+				end
+			elseif projTarget ~= 0 then
+				-- interceptors launch vertically: in range and in stock is enough (S-48)
+				dist = sqrt((c.px[projTarget] - x) ^ 2 + (c.pz[projTarget] - z) ^ 2)
+				canFire = not holdFire and dist <= weapon.range and Stockpile.ready(w, key)
 			end
 
 			-- rotate the turret (fixed mounts without a turret table aim
 			-- instantly); without a target: hold, then back to rest
 			aimState.yaw, aimState.pitch, aimState.hold = w.wYaw[key], w.wPitch[key], w.wHold[key]
-			if aimed then
+			if aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
 				Aim.update(turret, aimState, wantYaw, wantPitch)
 			else
 				Aim.update(turret, aimState, nil, nil)
@@ -255,13 +317,43 @@ return function(sim: Types.Sim)
 				w.dirty[id] = bit32.bor(w.dirty[id], World.Dirty.STATE)
 			end
 
+			-- overkill (S-29): hits already on the way will kill a target the team
+			-- sees; leave it to them and look for another (unless ordered, or
+			-- nothing else is in reach)
+			if
+				canFire
+				and reload <= 0
+				and w.wOverkill[key] ~= OK_ALLOWED
+				and sim.orders.forced[id] ~= target
+				and World.isRef(w, target, targetGen)
+				and Combat.doomed(c, w, target)
+				and Sensors.level(sim, w.ally[id], target) == VISIBLE
+			then
+				World.setTarget(w, key, 0)
+				w.wOverkill[key] = OK_RETARGET
+				canFire = false
+			end
+
 			if canFire and reload <= 0 then
 				local tol = rad(if turret then turret.tolerance else 0)
-				if abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol and Air.useAmmo(sim, id) then
+				-- vertical launchers need no aim: in range and locked is enough (S-42)
+				local onTarget = weapon.launch == "vertical" or (abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol)
+				-- line of fire (S-32): terrain in the way, no shot; Targeting
+				-- looks for a clear target, attack-moves go on (Orders)
+				if onTarget and kx ~= nil and kz ~= nil and not weapon.apex then -- lofted shots clear the terrain (S-48)
+					local clear = Combat.unitLineOfFire(c, w, id, weapon, target, defIndex, kx, kz)
+					w.wBlocked[key] = if clear then 0 else 1
+					onTarget = clear
+				end
+				if onTarget and Air.useAmmo(sim, id) then
 					-- Fire along the turret's actual aim; keep fractional reload
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)
-					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch)
+					Stockpile.take(w, key)
+					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch, projTarget)
+					if weapon.manualFire then
+						Air.clearGround(sim, id) -- one shot per order (S-48)
+					end
 				end
 			end
 		end

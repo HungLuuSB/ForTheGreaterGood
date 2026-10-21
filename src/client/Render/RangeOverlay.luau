@@ -9,7 +9,8 @@
 -- Colors: weapon red, anti-air pink, sight white, radar and tracking
 -- green, jammer yellow. Known enemy defenses (C-41) always show their
 -- weapon rings, dark red (ground) and violet (anti-air), looked up at most
--- every MIN_INTERVAL. Toggled with V (on by default).
+-- every MIN_INTERVAL. Toggled with V (on by default). Own radar
+-- facilities' always-on rings are Render/RadarRings' (C-63, C-64).
 
 local Api = require("../Api")
 local Ranges = require("../Core/Ranges")

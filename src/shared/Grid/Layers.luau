@@ -22,6 +22,7 @@ export type Layers = {
 	height: buffer, -- i16 × cellCount
 	waterDepth: buffer, -- i16 × cellCount; 0 = dry land
 	supply: buffer, -- u8 × cellCount: supply deposit value, 0 = none (guide 5.2)
+	terrain: buffer, -- u8 × cellCount: Layers.Terrain type (guide 5.2 terrainType, S-37)
 	starts: { { number } }, -- start positions {x, z} in world studs, player order
 }
 
@@ -31,6 +32,7 @@ function Layers.new(grid: Grid.Grid): Layers
 		height = buffer.create(grid.cellCount * 2),
 		waterDepth = buffer.create(grid.cellCount * 2),
 		supply = buffer.create(grid.cellCount),
+		terrain = buffer.create(grid.cellCount), -- all grass
 		starts = {},
 	}
 end
@@ -64,6 +66,29 @@ end
 -- Deposit value 0..255 (0 removes the deposit).
 function Layers.setSupply(layers: Layers, index: number, value: number)
 	buffer.writeu8(layers.supply, index, math.clamp(math.floor(value), 0, 255))
+end
+
+-- Ground height at world (x, z): the height of the cell it falls in, cells
+-- outside the map clamped to the edge. The server's Combat.groundHeight and
+-- the vertical-launch climb (Guidance.climbLeft, S-44) use it, so a client
+-- calling it gets the same number.
+function Layers.heightAt(layers: Layers, x: number, z: number): number
+	local g = layers.grid
+	local cx, cz = g:cellAt(x, z)
+	cx = math.clamp(cx, 0, g.cellsX - 1)
+	cz = math.clamp(cz, 0, g.cellsZ - 1)
+	return Layers.getHeight(layers, cz * g.cellsX + cx)
+end
+
+-- Terrain types (guide 5.2 `terrainType`; speed factors in Shared/Grid/Terrain).
+Layers.Terrain = table.freeze({ GRASS = 0, ROCK = 1, SAND = 2, ROAD = 3 })
+
+function Layers.getTerrain(layers: Layers, index: number): number
+	return buffer.readu8(layers.terrain, index)
+end
+
+function Layers.setTerrain(layers: Layers, index: number, terrainType: number)
+	buffer.writeu8(layers.terrain, index, terrainType)
 end
 
 return Layers

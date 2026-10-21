@@ -3,16 +3,17 @@
 return {
 	id = "chs_ir_sam",
 	type = "HOMING",
-	range = 280,
+	range = 206, -- −30% twice (S-55, S-56; the user asked)
 	reload = 2,
-	projectileSpeed = 420,
+	projectileSpeed = 500,
 	accuracy = 1,
 	turnRate = 160,
 	guidance = "IR",
-	lockRange = 280,
+	lockRange = 206,
 	terminalRange = 30,
+	stockpile = { capacity = 8, buildTime = 6, cost = { supply = 15, power = 300 } }, -- missiles in stock (S-47); Hornet / Halo carry 4
 	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 200, SUB = 0 },
-	aoe = 5,
+	aoe = 12,
 	edgeEffectiveness = 0.5,
 	targets = { "AIR" },
 	priority = { "HELI", "JET", "AIR" },

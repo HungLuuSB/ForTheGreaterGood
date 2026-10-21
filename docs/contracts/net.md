@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **9**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2) and the REPEAT command (S-13).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **20**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -17,7 +17,7 @@ Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client s
 | `Tactical` | S → C | UnreliableRemoteEvent | no | Positions of moving units in the tactical tier |
 | `State` | S → C | RemoteEvent | yes | Changed health / state bits / aim / weapon states / build progress |
 | `Strategic` | S → C | UnreliableRemoteEvent | no | Every known non-tactical unit, every 5th tick |
-| `Events` | S → C | RemoteEvent | yes | ENTER / LEAVE / DEATH and combat events |
+| `Events` | S → C | RemoteEvent | yes | ENTER / LEAVE / DEATH, combat events, sight and wrecks (7a) |
 | `Projectiles` | S → C | UnreliableRemoteEvent | no | Homing-projectile corrections |
 | `Eco` | S → C | RemoteEvent | yes | Own team's economy; a spectator's: every team's (section 10) |
 | `Snapshot` | both | RemoteEvent | yes | Join handshake (section 10) |
@@ -51,10 +51,10 @@ Names and reliability: `Schema.Channel`.
 | Turret yaw / pitch | u8 | Radians in [−π, π] → `round((a + π) / 2π × 255)`; yaw is relative to the hull. |
 | Def index | u16 | `defs.unitByIndex[i]` (1-based, `Defs.load()` order, identical on both sides; the defs hash proves it). |
 | Weapon index | u16 | `defs.weaponByIndex[i]`. |
-| Icon | 6 bits | 0 = unknown (radar / sonar blip). Else the position (1-based) of the def's `icon` name in the **sorted list of distinct icon names** over all unit defs, capped at 63: `Shared/Net/Icons` (`Icons.byDef`, `Icons.names`), which the server uses too. |
+| Icon | 8 bits (protocol 19) | 0 = unknown (radar / sonar blip). Else the unit's **def index** (Defs: sorted by ID, from 1): every unit type has its own icon (S-58, client request 35). `Shared/Net/Icons.byDef`, which the server uses too. `def.icon` stays the family name (`Icons.names` lists them) for the shape; the def gives the unique glyph. |
 | Team | 3 bits (strategic) / u8 (ENTER) | 1..8. Ally teams come from the match config. |
 
-**Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1`, `TOGGLED_ON 2` (radar / jammer switched on), `SUBMERGED 4`, `LANDED 8`, `REPEAT 16` (factory repeat on, protocol 7). Other bits are reserved (0).
+**Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1` (since S-33: ground and naval units with a movement order or speed, aircraft unless landed, loitering included; it changes in a State record like any bit), `TOGGLED_ON 2` (radar / jammer switched on), `SUBMERGED 4`, `LANDED 8`, `REPEAT 16` (factory repeat on, protocol 7). Other bits are reserved (0).
 
 **Weapon states** (2 bits per slot in a u16; slot 1 = bits 0–1; `Schema.weaponStateAt`):
 - `IDLE 0`: no target;
@@ -88,7 +88,7 @@ The camera is sent by the client as a `CAMERA` command (cell rectangle `minX, mi
 
 Per tick, for each player, in this order (the Events message carries them in this order too):
 
-1. **DEATH** for tactical units that died (the unit is removed: play the death effect, spawn the wreck; `wreckId` 0 = no wreck).
+1. **DEATH** for tactical units that died (the unit is removed: play the death effect; `wreckId` 0 = no wreck; aircraft shot down in flight never leave one, S-38). Since protocol 10 the wreck itself arrives as a WRECK record in the same batch (section 7a): draw wrecks from WRECK / WRECK_GONE, and use `wreckId` only to link the death animation to it.
 2. **LEAVE** for tactical units removed without a death (reclaimed, cancelled frame, ID gone) or no longer tactical (left the camera area, out of sight). The client keeps the unit as *strategic* until the next strategic snapshot refreshes or drops it.
 3. **ENTER** for units that just joined the tactical tier. It carries the full state (`defIndex`, team, position, heading, altitude, health, build, state bits). It is the only way a unit becomes tactical. Spawn or reuse a model.
 4. Combat events (section 7), after the ENTERs: a FIRE's shooter is always already known.
@@ -96,54 +96,89 @@ Per tick, for each player, in this order (the Events message carries them in thi
 Then:
 - **Tactical** (unreliable): `unitId, cell, offX, offZ, heading, flags (bit0 = has altitude), [alt]`, 8 or 9 B. Sent only for tactical units that moved, turned or changed altitude this tick, and never in the same tick as their ENTER. No record means it didn't move: keep the last value.
 - **State** (reliable): `unitId, mask` plus only the changed fields.
-  - Mask bits: health 1, state 2, aim 4, weapon 8, build 16, targets 32 (protocol 8).
+  - Mask bits: health 1, state 2, aim 4, weapon 8, build 16, targets 32 (protocol 8), stock 64 (protocol 15), owner 128 (protocol 20).
   - Aim: `slotMask u8` (bit i−1 = slot i), then `yaw u8, pitch u8` per set bit in slot order.
   - A change of state bits or turret aim sends the state, the aim of every slot and the weapon field together.
   - Aim rest and restore (S-20): a unit enters with its weapons at their turret's rest pose (`restYaw`, `restPitch`); after losing a target a weapon holds its aim `restoreDelay` seconds, then turns back to rest. `Shared/Combat/Aim.update` is the server's exact per-tick step, so a client can animate between aim updates with the same results.
   - **Targets** (S-16, own units only): `slotMask u8`, then `targetId u16` per set bit (0 = no target). Sent to the unit's owner whenever a weapon's target changes (every slot), and with the ENTER tick when it has any target; the ID is always a unit (or remembered structure) the team knows. Other players never get it. Exact from the tick Targeting picks the target, before the turret has turned.
+  - **Owner** (S-61, own units only; protocol 20): `ownerMask u8` (QUEUE 1, STATES 2, AMMO 4), then the fields it sets, after `stock`:
+    - QUEUE (factories): `count u8` (0..50), `progress u8` (the head item, 0..255 of 1), then `defIndex u16` per queued item, the head first. Sent when the queue changes or the head's progress crosses a sixteenth.
+    - STATES (mobile units and armed structures): one byte, fire state in bits 0–1 (`Schema.FireState`), move state in bits 2–3 (`Schema.MoveState`). Sent when either changes.
+    - AMMO (aircraft with an `ammo` count): `rounds u8`, `max u8`. Sent when the rounds change.
+    - Each is also sent with the ENTER tick. Other players and spectators never get them.
+  - **Stock** (S-47, own units only; protocol 15, progress since 17): `slotMask u8`, then `count u8, progress u8` per set bit: missiles in stock of each weapon slot that has a stockpile (`weapons[i].stockCapacity` in the defs; slots without one are never set), and the next missile's build progress (0..255 of one missile; 0 when full). Sent to the unit's owner whenever a count changes or a progress crosses a sixteenth (`Stockpile.WIRE_STEPS`; every stockpile slot together), and with the ENTER tick always. Between records the progress grows by at most 1/16 (it stalls with the economy), so a client may animate it at `1 / buildTime` per second and stop at the next sixteenth. Other players and spectators never get it. Comes after `targets` in the record.
 
 A Tactical or State record always refers to a unit the client got an ENTER for. If not, the client is out of sync: drop the record (the reference client asserts).
 
 ## 6. Strategic
 
 - Every 5th tick (3 Hz) the server sends a full **snapshot** of every known unit that is not tactical for this player. That includes own units outside the camera and ghosts of structures that died unseen.
-- Record: `unitId u16, cell u16, icon 6 bits | team 3 bits (team − 1) | flags 7 bits`, 6 B.
+- Record: `unitId u16, cell u16, icon 8 bits | team 3 bits (team − 1) | flags 5 bits`, 6 B (protocol 19; bits LSB-first: icon 0–7, team 8–10, flags 11–15).
 - Flags:
   - `RADAR_ONLY 1`, `SONAR_ONLY 2`, `UNDER_ATTACK 4` (reserved, not sent yet), `GHOST 8`, `TRACKED 16`;
-  - bits 5–6 reserved.
+  - all 5 flag bits are in use.
 - A message whose tick differs from the last strategic tick **starts a new snapshot**: drop every non-tactical unit, then add the records. A snapshot can span several messages with the same tick.
 - An empty snapshot still sends one message holding only the tick header, so the client can drop units that disappeared.
 - Positions of radar and sonar contacts are wobbled server-side (they move smoothly, re-aimed every 30 ticks); never treat them as exact.
 
 ## 7. Combat events (Events channel)
 
-All of a tick's events are one reliable batch. Records start with `kind u8`; sizes include it. Sent only where P's ally team may know (D99):
+All of a tick's events are one reliable batch. Records start with `kind u8`; sizes include it. Shooters are sent only where P's ally team may know (D99). **Projectiles and shots are shown in P's camera area whatever the team sees (S-43, client request 21):** they carry no shooter, so a hidden shooter stays hidden; only normal sight reveals it.
 
 | Kind | Layout | When P gets it |
 |---|---|---|
 | `FIRE 4` | `shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos`, 10 B | Hitscan / beam shots of units in P's tactical tier. Draw a tracer from the shooter's muzzle to the end point (the target's hull centre on a hit, the ground on a miss). No target ID. |
-| `SPAWN_PROJ 5` | `projId u16, weaponIndex u16, pos, vel, targetId u16`, 19 B | A projectile the client doesn't have yet, once it is in P's sight and in the camera area (+2 cells): at launch, or when it flies into view (a hidden shooter's shells appear mid-flight). `targetId` is the homing target if P's team knows that unit, else 0. |
-| `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in sight and in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). |
-| `DECOYED 7` | `projId u16, pos, vel`, 15 B | For projectiles the client has: a countermeasure turned it away. Snap to `pos`/`vel` and clear its target. |
+| `SHOT 13` | `hit u8 (0 / 1), start pos, end pos`, 14 B (protocol 14) | A hitscan / beam shot whose shooter P doesn't have (not in its tactical tier), when either end is in the camera area (+2 cells). Draw a tracer from the start (the muzzle) to the end. No shooter or target ID. |
+| `SPAWN_PROJ 5` | `projId u16, weaponIndex u16, pos, vel, targetId u16`, 19 B | A projectile the client doesn't have yet, once it is in the camera area (+2 cells), seen or not (S-43): at launch, or when it flies into the camera area. `targetId` is the homing target if P's team knows that unit, else 0. |
+| `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). A strategic missile's IMPACT is its detonation (`aoe` 150). |
+| `INTERCEPTOR 14` | as SPAWN_PROJ, 19 B (protocol 16) | SPAWN_PROJ of a missile fired at a strategic missile (S-48). `targetId` is the **projectile ID** of the strategic missile it chases (always one the client has: see below), not a unit. Steer it with `Guidance.vertical` / `pn` against that projectile's predicted position and velocity (vy included). Its IMPACT is the interceptor's burst. |
+| `LAUNCH_WARNING 15` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile (`weapon.strategic`) was launched from `pos` (the silo). **Every player** gets it, camera or not, in the launch tick. **Strategic missiles are sent to every player wherever they fly:** its SPAWN_STRATEGIC arrives in the same tick. |
+| `SPAWN_STRATEGIC 17` | SPAWN_PROJ's fields (`targetId` 0), then `goal pos`, 25 B (protocol 18) | A strategic missile the client doesn't have yet, to **every player** wherever it is (S-48): at launch, or on joining mid-flight. `goal` is the spot it flies to. Step it every tick with `Lofted.step(x, y, z, vx, vy, vz, gx, gy, gz, gy + weapon.apex, weapon.gravity, rad(weapon.turnRate) / 15, Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)), 1/15)` (`Shared/Combat/Lofted`, S-51): straight up to `climbHeight`, the pitch-over, the arc. The phase comes from its state, so a copy first seen mid-flight steps the same (a client copy stays within 0.15 studs of the server's over a whole flight). Its IMPACT is the detonation, ~12.7 s after launch. |
+| `INTERCEPTED 16` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile was destroyed in flight at `pos`: a small burst, **no detonation**; drop the projectile. Sent instead of its IMPACT. |
+| `DECOYED 7` | `projId u16, pos, vel, decoy pos, decoyTicks u8, countermeasure u8`, 23 B (countermeasure: 1 flares, 2 chaff, 3 DIRCM, `Schema.Countermeasure`; protocol 13) | For projectiles the client has: a countermeasure seduced it. Snap to `pos`/`vel`, clear its target, and for the next `decoyTicks` ticks steer toward the decoy point with `Guidance.decoy` (stop early when it returns false), then fly straight (protocol 11, S-28). |
 | `LOST_LOCK 8` | `projId u16, pos, vel`, 15 B | Same, but the missile flies on unguided. |
 | `DEATH 3` | `unitId u16, severity u8, wreckId u16`, 6 B | Tactical units (section 5). |
 | `ENTER 1` / `LEAVE 2` | 16 B / 3 B | Section 5. |
 
-`pos` = `cell u16, offX u8, offZ u8, y i16` (6 B); `vel` = `vx, vy, vz i16` (6 B).
+| `WRECK 9` | `wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8`, 10 B | Section 7a. |
+| `WRECK_GONE 10` | `wreckId u16`, 3 B | Section 7a. |
+| `SIGHT_ROWS 11` | `firstRow u8, rowCount u8, rowBytes u8, bits`, 4 + rowCount × rowBytes B | Section 7a. |
+| `SIGHT_CELLS 12` | `count u8, cell u16 × count`, 2 + 2 × count B | Section 7a. |
+
+`pos` = `cell u16, offX u8, offZ u8, y i16` (6 B); `vel` = `vx, vy, vz i16` (6 B). Sizes per kind: `Schema.EVENT_BYTES` (fixed kinds), `Schema.eventBytes(e)` (all).
 
 **Client projectiles** (guide 15.3):
 - From SPAWN_PROJ, step each projectile yourself every tick with the server's math:
-  - homing weapons (`weapon.turnRate`) first turn toward their target's position, if the client knows the target, with `Ballistics.steer(vx, vy, vz, dx, dy, dz, rad(turnRate) / 15)`;
-  - then `Ballistics.step(x, y, z, vx, vy, vz, weapon.gravity or 0, 1/15)`.
-  - Both are in **`Shared/Combat/Ballistics`**.
+  - homing weapons (`weapon.turnRate`) whose target the client knows first steer (S-27, **`Shared/Combat/Guidance`**): `HOMING` missiles with `Guidance.pn(x, y, z, vx, vy, vz, tx, ty, tz, tvx, 0, tvz, rad(turnRate) / 15, 1/15)` (proportional navigation), `TORPEDO` with `Guidance.lead(x, y, z, vx, vy, vz, tx, ty, tz, tvx, tvz, rad(turnRate) / 15)`. `t` is the target's position **at the start of the tick** (where the client had it before this tick's records) and `tv` its velocity: `Guidance.velocity(heading, speed)` on the server; the reference client estimates it from its last two Tactical records (0 when a tick brings none);
+  - then `Ballistics.step(x, y, z, vx, vy, vz, weapon.gravity or 0, 1/15)` (**`Shared/Combat/Ballistics`**).
+  - A guided missile whose target leaves its seeker cone gets LOST_LOCK and flies on unguided (S-27); the client gets the event.
+  - Vertical launches (`weapon.launch == "vertical"`: the radar SAMs, S-42) spawn pointing straight up from a launcher whose turret stays at rest. Step them with `Guidance.vertical(x, y, z, vx, vy, vz, tx, ty, tz, tvx, 0, tvz, rad(turnRate) / 15, 1/15, turned, climbLeft)`, which returns the velocity and the new `turned`: keep it per missile, false at SPAWN_PROJ (a missile that comes into view already turned over flips to true on its first step with the target near its nose).
+  - The boost climb (S-44): `climbLeft = Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z))`, the weapon's `climbHeight` (100 studs on both radar SAMs) minus the missile's height above the ground under it. Use `Layers.heightAt` (Shared, cell-based: the cell's height, the server's `Combat.groundHeight`), not a smoothed ground, or the hand-over tick differs. While the missile still flies exactly straight up (vx = vz = 0, which the wire keeps exact) and `climbLeft > 0`, it doesn't steer; nothing about its age is needed.
+  - A decoyed missile (DECOYED) follows its decoy point: `Guidance.decoy(x, y, z, vx, vy, vz, dx, dy, dz, rad(turnRate) / 15, Guidance.seekerAngle(weapon))` each tick while ticks remain and it returns true (S-28). The reference client matches the server's path to under a stud this way (`Guidance.spec`).
 - Unguided projectiles then match the server exactly; homing ones are approximate.
-- Drop a projectile on IMPACT. As a fallback, drop it at its time to live: `2 × range / projectileSpeed + 1` s (bombs 8 s), plus a tick.
+- Drop a projectile on IMPACT. A projectile that leaves the map bursts on its edge with an IMPACT there (S-33). As a fallback, drop it at its time to live: `2 × range / projectileSpeed + 1` s (bombs 8 s), plus a tick.
 - Projectile IDs are reused. A SPAWN_PROJ for an ID the client still has replaces it.
+
+## 7a. Sight map and wrecks (Events channel, protocol 10, S-26; client requests 9 and 10)
+
+**Sight.** The client's fog is the ally team's sight, exactly: sensor cells (16 studs, 2 × 2 grid cells; `grid.sensorX × grid.sensorZ`, index `z × sensorX + x`, `Grid:sensorCellAt(x, z)`) that any unit of the ally team (own or allied) has in LOS. Air sight (against aircraft only) is not part of it.
+- `SIGHT_ROWS`: rows `firstRow .. firstRow + rowCount − 1` of the map as a bitset, `rowBytes = ceil(sensorX / 8)` bytes per row; cell x of a row is bit `x % 8` of byte `x // 8`; 1 = in sight. Sent after a WELCOME (the whole map, in records of at most 640 bytes of bits), and instead of SIGHT_CELLS when a tick's changes are larger.
+- `SIGHT_CELLS`: up to 255 cells that changed since the last sight record, each `cell index | 0x8000` (`Schema.SIGHT_SEEN`) when it is now in sight, the bare index when it no longer is. Apply them in order.
+- Sent on sensor ticks (every 2nd tick, `NetOut.SIGHT_EVERY`) when something changed. The client's map then equals `Sensors` LOS at the end of every sensor tick (tested on every one).
+- Spectators get no sight records: they have no fog.
+
+**Wrecks.** Known per ally team, like structure ghosts:
+- `WRECK` when the team first has the wreck's spot in sight (in the same tick as the DEATH that made it, if the team saw it), on the whole map, not only the camera area (wrecks are on the minimap). `heading` is the dead unit's (u8 like ENTER); `defIndex` is the unit it was (the wreck model comes from its def).
+- `WRECK_GONE` when the team sees the spot without the wreck (reclaimed). A wreck removed out of the team's sight stays on the client's map until then.
+- After a WELCOME, a WRECK for every wreck the team knows. Spectators get every wreck at once and see it go at once.
+- Wreck IDs are the server's (1-based, never reused within a match); RECLAIM commands target them.
+
+**Cost** (`lune run stress`, 800 units, two players): sight ~0.3–0.4 KB/s and wrecks ~0.12 KB/s per player in a large battle (events 0.72 → 1.22 KB/s, total 15.4 KB/s of 35); a join adds the whole map once (2 KB on a 256-cell map) plus 10 B per known wreck.
 
 ## 8. Homing corrections (Projectiles channel, D102)
 
 - Record: `projId u16, pos, vel`, 14 B, after the tick header.
-- Sent for each homing projectile the client has while it is in P's view (camera + 5 cells, and in sight): about 3 Hz (every 5 ticks, staggered by ID), plus once on the tick it comes back into view.
+- Sent for each homing projectile the client has while it is in P's view (camera + 5 cells; sight doesn't matter since S-43): about 3 Hz (every 5 ticks, staggered by ID), plus once on the tick it comes back into view.
 - **Client:**
   - snap the prediction to `pos`/`vel` and keep drawing where it was;
   - blend the drawn offset to 0 over 5 ticks;
@@ -154,7 +189,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 ## 9. Client → server: commands (Cmd channel)
 
 - Layout: guide 7.3 and `Schema.encodeCommand`: `cmdType u8, flags u8, count u16, unitIds u16 × count, params`.
-- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10, SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14, REPEAT 15 (`value u8`: 0 off, 1 on; protocol 7).
+- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10, SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14, REPEAT 15 (`value u8`: 0 off, 1 on; protocol 7), CANCEL 16 (`value u8` 0..50; protocol 12): on an unfinished frame it cancels it (gone, no wreck; the frame's progress × cost is refunded); on a factory it drops queue item `value` (1-based; 0 = all), refunding the progress on the item in production (S-35).
 - Flags: bit0 queue (shift), bit1 line formation.
 - At most 200 unit IDs per command.
 - The server applies a command to the sender's own live units only and ignores the rest. Commands are validated server-side (guide 19); a rejected command just has no effect.
@@ -187,7 +222,8 @@ After WELCOME, the server resets the player's replication state, so the very nex
 - a **full strategic snapshot**, not waiting for the 5-tick cadence;
 - **ENTER** for every tactical unit, if a camera is set; a reconnect keeps the last camera, a first join has none until the client sends `CAMERA`;
 - **SPAWN_PROJ** for projectiles in view;
-- an **Eco** record.
+- an **Eco** record;
+- **SIGHT_ROWS** of the whole map and a **WRECK** for every wreck the team knows (protocol 10).
 
 The client drops everything it had before WELCOME.
 
@@ -233,3 +269,14 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 7 | REPEAT command (15) and `REPEAT` unit state bit (16); TOGGLE no longer sets repeat on factories (S-13) |
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
+| 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 20 | State `owner` field (mask bit 128): own units' factory queue, fire / move state, aircraft ammo (S-61, client request 36) |
+| 19 | Strategic icon is 8 bits, the unit's def index: one icon per unit type; flags 5 bits (S-58, client request 35) |
+| 18 | Event SPAWN_STRATEGIC 17: a strategic missile with its goal; nukes boost, pitch over, then fly the lofted arc (`Shared/Combat/Lofted`; S-51, client request 28) |
+| 17 | State `stock` entries gain `progress u8`: the next missile's build progress (S-49, client request 27b) |
+| 16 | Events INTERCEPTOR 14, LAUNCH_WARNING 15, INTERCEPTED 16; strategic missiles go to every player (S-48, client request 26) |
+| 15 | State `stock` field (mask bit 64): own units' missile stock per stockpile slot (S-47, client request 25) |
+| 14 | SHOT 13: a hidden shooter's hitscan shot with both ends; projectiles and homing corrections in the camera area whatever the team sees (S-43, client request 21) |
+| 13 | DECOYED ends with `countermeasure u8`: what defeated the missile (S-38, client request 18) |
+| 12 | CANCEL command 16 (S-35) |
+| 11 | DECOYED adds the decoy point (pos) and `decoyTicks u8` (22 B): decoyed missiles bend toward the flares or chaff instead of turning 60° in one tick (S-28, client request 13d) |

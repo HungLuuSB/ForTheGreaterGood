@@ -6,11 +6,15 @@
 -- interpolated tanks are: an event or a death waits in the queue until the
 -- render tick reaches its tick.
 --   * SPAWN_PROJ starts a projectile the client steps itself with the
---     server's math (Ballistics.steer for homing, Ballistics.step); IMPACT
+--     server's math (Shared/Combat/Guidance for homing, S-27; Ballistics.step); IMPACT
 --     ends it and bursts; DECOYED / LOST_LOCK snap it and clear its target;
 --     homing corrections snap the prediction and blend the drawn offset away
 --     over 5 ticks (errors above 60 studs snap).
---   * FIRE draws a tracer from the shooter's muzzle to the end point.
+--   * Strategic missiles (nukes, S-48) fly ballistic; INTERCEPTOR starts a
+--     missile that chases one (steered at its state, C-57), INTERCEPTED
+--     destroys one in the air, LAUNCH_WARNING is kept in `warnings`.
+--   * FIRE draws a tracer from the shooter's muzzle to the end point; SHOT
+--     (a shooter the client doesn't have, S-43) from the start point it gives.
 --   * DEATH bursts at the unit, bigger with severity.
 -- Caps (guide 15.3): every projectile is followed, but at most
 -- MAX_PROJECTILES are drawn; at most MAX_EXPLOSIONS bursts and MAX_TRACERS
@@ -18,9 +22,12 @@
 -- size / (1 + distance to the camera focus / 100).
 
 local Ballistics = require("@shared/Combat/Ballistics")
+local Guidance = require("@shared/Combat/Guidance")
+local Lofted = require("@shared/Combat/Lofted")
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
+local Deaths = require("./Deaths")
 local Interp = require("./Interp")
 local World = require("./World")
 
@@ -36,6 +43,11 @@ Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with t
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
 Effects.EXPLOSION_SECONDS = 0.55
+Effects.LAUNCH_SECONDS = 0.5 -- a missile's launch flash (its smoke cloud lasts longer, Render/Vfx)
+Effects.FLARE_SECONDS = 1.6 -- flares or chaff falling where a decoyed missile went (C-47)
+Effects.DIRCM_SECONDS = 0.45 -- a jammer laser on a decoyed IR missile (C-48)
+Effects.NUKE_SECONDS = 4 -- a nuke's detonation flash and fireball (its cloud lasts longer, Render/Vfx; C-57)
+Effects.WARNING_LINGER = 4 -- seconds a launch warning stays after its missile is gone
 Effects.DEATH_SECONDS = 0.9
 Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
 Effects.MAX_MARKS = 40
@@ -65,9 +77,25 @@ export type Proj = {
 	size: number,
 	launch: { number }?, -- launched early (C-27): the server's state at its spawn tick { tick, x, y, z, vx, vy, vz }, taken as is on that step
 	nextState: { number }?, -- the prediction one tick on { x, y, z, vx, vy, vz, dvx, dvy, dvz } (dv: this tick's steering): frames draw the curve between (C-38)
+	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the flare or chaff it follows (S-28)
+	turned: boolean?, -- a vertical launch has pitched over onto its target (Guidance.vertical, S-42, C-53)
+	chase: Proj?, -- an interceptor's strategic missile (S-48, C-57)
+	own: boolean?, -- a strategic missile launched by the local player's team (C-58)
+	goal: { number }?, -- a strategic missile's ordered spot x, y, z (SPAWN_STRATEGIC, S-51): it flies Shared/Combat/Lofted
+	gone: boolean?, -- ended (impact, interception, time out): interceptors chasing it fly on
 }
 
-export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number }
+-- A strategic missile's launch (LAUNCH_WARNING, S-48): every player gets one.
+export type Warning = { projId: number, x: number, y: number, z: number, born: number, proj: Proj?, endedAt: number? }
+
+-- A flash, explosion or puff. `kind`: impact, death, muzzle, launch (a
+-- missile leaving its launcher), decoy, flare (dropped by the aircraft,
+-- falling toward the decoy point), chaff (a cloud at the decoy point), dircm
+-- (the aircraft's jammer laser on the missile), lost. `ground`: the ground
+-- height under it (air bursts sit well above it); `dx, dy, dz`: the
+-- direction it faces (a muzzle's shot, a launch's flight), when known
+-- (C-47); `tx, ty, tz`: where flares head, or the missile a laser hits (C-48).
+export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number? }
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
@@ -78,6 +106,7 @@ export type Fx = {
 	bursts: { Burst },
 	tracers: { Tracer },
 	pendingDeaths: { World.Death },
+	crashes: { { at: number, x: number, y: number, z: number, radius: number } }, -- falling aircraft: where and at which render tick they hit (C-48)
 	tick: number, -- projectiles are stepped up to this sim tick
 	focusX: number,
 	focusZ: number,
@@ -87,6 +116,7 @@ export type Fx = {
 	launches: { n: number, fromBarrel: number, sumOffset: number }, -- shells started at a drawn barrel tip, and its distance from the server's launch point (diagnostics)
 	shots: { { number } }, -- { unitId, slot } of shots played since the caller last cleared it (piece scripts' FireWeapon)
 	marks: { Mark }, -- the sensor view's corrections, decoys and lost locks, oldest first (C-39)
+	warnings: { Warning }, -- strategic launches, kept while the missile flies and WARNING_LINGER after (C-57)
 }
 
 function Effects.new(): Fx
@@ -95,6 +125,7 @@ function Effects.new(): Fx
 		bursts = {},
 		tracers = {},
 		pendingDeaths = {},
+		crashes = {},
 		tick = -1,
 		focusX = 0,
 		focusZ = 0,
@@ -104,6 +135,7 @@ function Effects.new(): Fx
 		launches = { n = 0, fromBarrel = 0, sumOffset = 0 },
 		shots = {},
 		marks = {},
+		warnings = {},
 	}
 end
 
@@ -137,10 +169,35 @@ local function weaponSize(weapon: any): number
 	return math.max(1, (weapon and weapon.aoe) or 1)
 end
 
+-- Weapons whose impact effect is a large one (fx.impact "..._large", the
+-- radar SAMs' heavy warheads) explode this much bigger than their blast
+-- radius alone gives (C-52).
+Effects.LARGE_IMPACT = 1.8
+function Effects.impactSize(weapon: any): number
+	local impact = weapon and weapon.fx and weapon.fx.impact
+	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
+	return weaponSize(weapon) * (if large then Effects.LARGE_IMPACT else 1)
+end
+
 local function pos(world: World.World, e: Schema.Event): (number, number, number)
 	local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 	return x, (e.y :: number) / Schema.Y_SCALE, z
 end
+
+-- SPAWN_STRATEGIC's goal (S-51).
+local function goalPos(world: World.World, e: any): { number }
+	local x, z = world.grid:decode(e.goalCell :: number, e.goalOffX :: number, e.goalOffZ :: number)
+	return { x, (e.goalY :: number) / Schema.Y_SCALE, z }
+end
+
+-- One tick of a strategic missile toward `goal` (Shared/Combat/Lofted, S-51):
+-- the server's Projectiles step, climb measured on Layers.heightAt.
+local function loftedStep(world: World.World, weapon: any, goal: { number }, x: number, y: number, z: number, vx: number, vy: number, vz: number): (number, number, number, number, number, number)
+	local layers = world.layers
+	local climbLeft = if layers then Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)) or 0 else 0
+	return Lofted.step(x, y, z, vx, vy, vz, goal[1], goal[2], goal[3], goal[2] + weapon.apex, weapon.gravity, math.rad(weapon.turnRate or 0) * DT, climbLeft, DT)
+end
+Effects.loftedStep = loftedStep
 
 local function vel(e: any): (number, number, number)
 	return e.vx / Schema.Y_SCALE, e.vy / Schema.Y_SCALE, e.vz / Schema.Y_SCALE
@@ -154,11 +211,40 @@ local function ttlTicks(weapon: any): number
 end
 
 -- Over a cap one effect is always dropped (this one or a less important one).
-local function burst(fx: Fx, now: number, x: number, y: number, z: number, radius: number, kind: string, life: number)
+local function burst(fx: Fx, now: number, x: number, y: number, z: number, radius: number, kind: string, life: number): Burst
 	if #fx.bursts >= Effects.MAX_EXPLOSIONS then
 		fx.skipped.bursts += 1
 	end
-	capped(fx, fx.bursts, { x = x, y = y, z = z, radius = radius, born = now, life = life, kind = kind, size = radius }, Effects.MAX_EXPLOSIONS)
+	local b: Burst = { x = x, y = y, z = z, radius = radius, born = now, life = life, kind = kind, size = radius }
+	capped(fx, fx.bursts, b, Effects.MAX_EXPLOSIONS)
+	return b
+end
+
+-- Which countermeasure seduced a missile of `guidance` aimed at `unit`
+-- (C-48). DECOYED says (`wire`: Schema.Countermeasure, protocol 13, S-38);
+-- without it (an older record) it follows the server's order (EW): radar
+-- missiles meet chaff; IR missiles meet DIRCM first, then flares.
+local CM_NAME = { [Schema.Countermeasure.FLARES] = "flare", [Schema.Countermeasure.CHAFF] = "chaff", [Schema.Countermeasure.DIRCM] = "dircm" }
+function Effects.countermeasure(world: World.World, unit: World.Unit?, guidance: string?, wire: number?): string
+	if wire and CM_NAME[wire] then
+		return CM_NAME[wire]
+	end
+	if guidance == "RADAR" then
+		return "chaff"
+	end
+	local def = if unit then World.def(world, unit) else nil
+	local cm = def and (def :: any).countermeasures
+	if cm and cm.dircm and not cm.flares then
+		return "dircm"
+	end
+	return "flare"
+end
+
+local function facing(b: Burst, dx: number, dy: number, dz: number)
+	local l = math.sqrt(dx * dx + dy * dy + dz * dz)
+	if l > 1e-6 then
+		b.dx, b.dy, b.dz = dx / l, dy / l, dz / l
+	end
 end
 
 -- The server's homing aim (Sim/Systems/Projectiles, C-36): the centre of the
@@ -210,10 +296,39 @@ local function targetAt(target: World.Unit, t: number): (number, number, number,
 	return x, z, alt, heading, math.sqrt((x - x0) ^ 2 + (z - z0) ^ 2) / DT
 end
 
-local function homingAim(world: World.World, target: World.Unit, t: number, px: number, py: number, pz: number, speed: number): (number, number, number)
-	local x, z, alt, heading, tv = targetAt(target, t)
-	local lx, ly, lz = Effects.aimFrom(world, target, x, z, alt, heading, tv, px, py, pz, speed)
-	return lx, ly, lz
+-- One tick of the server's homing guidance into tick `t` (Projectiles,
+-- S-27; Shared/Combat/Guidance): missiles fly proportional navigation
+-- against the target's centre where it was when the tick's step starts,
+-- torpedoes lead pursuit against where it is at the tick's end. `at(t)`
+-- gives the target's x, z and altitude at the end of sim tick t; its
+-- velocity is taken over the tick.
+-- Vertical launches (`launch = "vertical"`, S-42) climb `climbHeight` straight
+-- up (S-44), then pitch over (Guidance.vertical); `turned` is their state,
+-- returned updated.
+local function steer(world: World.World, target: World.Unit, weapon: any, at: (number) -> (number, number, number), t: number, x: number, y: number, z: number, vx: number, vy: number, vz: number, turned: boolean?): (number, number, number, boolean?)
+	local ex, ez, alt = at(t)
+	local sx, sz = at(t - 1)
+	local _, ty = Effects.aimFrom(world, target, ex, ez, alt, 0, 0, x, y, z, 1)
+	local tvx, tvz = (ex - sx) / DT, (ez - sz) / DT
+	local maxTurn = math.rad(weapon.turnRate) * DT
+	if weapon.type == "HOMING" and weapon.launch == "vertical" then
+		-- the straight climb first (S-44, C-55): judged on the server's cell
+		-- ground (Layers.heightAt), not the smoothed drawn terrain
+		local layers = world.layers
+		local climbLeft = if layers then Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)) else nil
+		return Guidance.vertical(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT, turned == true, climbLeft)
+	elseif weapon.type == "HOMING" then
+		local nx, ny, nz = Guidance.pn(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT)
+		return nx, ny, nz, turned
+	end
+	local nx, ny, nz = Guidance.lead(x, y, z, vx, vy, vz, ex, ty, ez, tvx, tvz, maxTurn)
+	return nx, ny, nz, turned
+end
+
+-- A decoyed missile's tick toward its decoy point (S-28): the new velocity
+-- and whether its seeker still follows the point.
+local function followDecoy(weapon: any, d: { number }, x: number, y: number, z: number, vx: number, vy: number, vz: number): (number, number, number, boolean)
+	return Guidance.decoy(x, y, z, vx, vy, vz, d[1], d[2], d[3], math.rad(weapon.turnRate) * DT, Guidance.seekerAngle(weapon) or 60)
 end
 
 -- The share of the drawn offset left `frac` ticks into the current tick:
@@ -296,38 +411,83 @@ local function reblend(p: Proj, x: number, y: number, z: number, vx: number, vy:
 end
 
 -- A projectile's state one sim tick on, into tick `t` (the server's
--- order: steer, then step), without changing it; and how steering changed
--- its velocity. On its spawn tick (launched early, C-27) it is the
--- server's own state (a homing missile already steered during it).
-local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number)
+-- order: steer, then step), without changing it; how steering changed its
+-- velocity; and, for a decoyed missile, whether it still follows the decoy.
+-- On its spawn tick (launched early, C-27) it is the server's own state (a
+-- homing missile already steered during it). Last: a vertical launch's
+-- `turned` after this tick (C-53).
+local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean, boolean?)
 	local launch = p.launch
 	if launch and launch[1] == t then
-		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0
+		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0, true, p.turned
 	end
 	local weapon = p.weapon
 	local vx, vy, vz = p.vx, p.vy, p.vz
-	local target = if p.target ~= 0 then world.units[p.target] else nil
-	if weapon.turnRate and target then
-		local speed = math.sqrt(vx * vx + vy * vy + vz * vz)
-		local tx, ty, tz = homingAim(world, target, t, p.x, p.y, p.z, speed)
-		vx, vy, vz = Ballistics.steer(vx, vy, vz, tx - p.x, ty - p.y, tz - p.z, math.rad(weapon.turnRate) * DT)
+	local target = World.unitOrDying(world, p.target)
+	local follow = true
+	local turned = p.turned
+	local chase = p.chase
+	if weapon.turnRate and chase and not chase.gone then
+		-- an interceptor (S-48): navigate against its missile's own state at
+		-- the step's start, vertical velocity included, as the server does
+		local maxTurn = math.rad(weapon.turnRate) * DT
+		if weapon.launch == "vertical" then
+			local layers = world.layers
+			local climbLeft = if layers then Guidance.climbLeft(weapon, p.y, Layers.heightAt(layers, p.x, p.z)) else nil
+			vx, vy, vz, turned = Guidance.vertical(p.x, p.y, p.z, vx, vy, vz, chase.x, chase.y, chase.z, chase.vx, chase.vy, chase.vz, maxTurn, DT, turned == true, climbLeft)
+		else
+			vx, vy, vz = Guidance.pn(p.x, p.y, p.z, vx, vy, vz, chase.x, chase.y, chase.z, chase.vx, chase.vy, chase.vz, maxTurn, DT)
+		end
+	elseif weapon.turnRate and target then
+		vx, vy, vz, turned = steer(world, target, weapon, function(tt: number): (number, number, number)
+			local x, z, alt = Interp.sample(target, tt)
+			return x, z, alt
+		end, t, p.x, p.y, p.z, vx, vy, vz, p.turned)
+	elseif weapon.turnRate and p.decoy then
+		vx, vy, vz, follow = followDecoy(weapon, p.decoy, p.x, p.y, p.z, vx, vy, vz)
+	end
+	local goal = p.goal
+	if goal and weapon.apex then
+		-- a strategic missile: boost, pitch-over, lofted arc (S-51)
+		local x, y, z, nvx, nvy, nvz = loftedStep(world, weapon, goal, p.x, p.y, p.z, p.vx, p.vy, p.vz)
+		return x, y, z, nvx, nvy, nvz, 0, 0, 0, true, turned
 	end
 	local dvx, dvy, dvz = vx - p.vx, vy - p.vy, vz - p.vz
 	local x, y, z, nvx, nvy, nvz = Ballistics.step(p.x, p.y, p.z, vx, vy, vz, weapon.gravity or 0, DT)
-	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz
+	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz, follow, turned
 end
 
--- One sim tick of every projectile, into tick `t`.
+-- One sim tick of every projectile, into tick `t`. Every step is worked
+-- out from the tick's start states first, then applied, so an interceptor
+-- steers at its missile where it was at the tick's start (C-57).
+local stepped: { [Proj]: { any } } = {}
 local function stepProjectiles(fx: Fx, world: World.World, t: number)
+	table.clear(stepped)
 	for id, p in fx.projectiles do
 		p.ttl -= 1
 		if p.ttl <= 0 then
 			fx.projectiles[id] = nil
+			p.gone = true
 			continue
 		end
-		local x, y, z, vx, vy, vz, dvx, dvy, dvz = advance(world, p, t)
+		stepped[p] = { advance(world, p, t) }
+	end
+	for _, p in fx.projectiles do
+		local r = stepped[p]
+		if r == nil then
+			continue
+		end
+		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow, turned = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11]
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
+		p.turned = turned
 		p.launch = nil
+		local d = p.decoy
+		if d then
+			d[4] -= 1
+			if not follow or d[4] <= 0 then
+				p.decoy = nil
+			end
+		end
 		advanceBlend(p, dvx, dvy, dvz)
 	end
 end
@@ -339,7 +499,7 @@ local function mark(fx: Fx, kind: string, now: number, x0: number, y0: number, z
 	table.insert(fx.marks, { kind = kind, x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now })
 end
 
-local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
+local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED", [EK.SPAWN_STRATEGIC] = "SPAWN_STRATEGIC" }
 
 -- The unit (and weapon slot) that launched a `weaponIndex` shell from
 -- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
@@ -366,6 +526,41 @@ local function launcher(world: World.World, weaponIndex: number, x: number, z: n
 	return bestId, bestSlot
 end
 
+-- Is one of the local team's launchers at (x, z)? The wire doesn't say
+-- whose a projectile is, but a strategic missile leaves from its silo's
+-- position (Weapons.fire) and own units are always known (C-58).
+Effects.LAUNCHER_REACH = 24 -- studs
+function Effects.ownLauncherAt(world: World.World, x: number, z: number): boolean
+	local me = world.me
+	if me == nil then
+		return false
+	end
+	for _, u in world.units do
+		if u.team == me.team and (u.x - x) ^ 2 + (u.z - z) ^ 2 <= Effects.LAUNCHER_REACH ^ 2 then
+			local def = World.def(world, u)
+			for _, ws in if def then def.weapons else {} do
+				local w = world.defs.weaponByIndex[(ws :: any).weaponIndex]
+				if w and (w :: any).strategic then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- One warning per strategic launch (LAUNCH_WARNING and the missile's own
+-- SPAWN_PROJ both raise it; ids are reused once a missile has ended).
+local function warn(fx: Fx, p: Proj?, projId: number, x: number, y: number, z: number, now: number)
+	for _, w in fx.warnings do
+		if w.projId == projId and w.endedAt == nil then
+			w.proj = w.proj or p
+			return
+		end
+	end
+	table.insert(fx.warnings, { projId = projId, x = x, y = y, z = z, born = now, proj = p })
+end
+
 -- `early`: applied one tick before its tick (C-27). SPAWN_PROJ carries the
 -- state after the server's first step, so the shell is stepped back one
 -- tick to where the server launched it.
@@ -373,7 +568,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 	local kind = e.kind
 	local name = KIND_NAME[kind] or tostring(kind)
 	fx.applied[name] = (fx.applied[name] or 0) + 1
-	if kind == EK.SPAWN_PROJ then
+	if kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR or kind == EK.SPAWN_STRATEGIC then
 		local weapon = world.defs.weaponByIndex[e.weaponIndex]
 		if weapon == nil then
 			return
@@ -381,7 +576,11 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local x, y, z = pos(world, e)
 		local vx, vy, vz = vel(e)
 		local launch = if early then { e.tick, x, y, z, vx, vy, vz } else nil
-		if early then
+		local goal = if kind == EK.SPAWN_STRATEGIC then goalPos(world, e) else nil
+		if early and goal then
+			-- a strategic missile's first tick is its boost: straight up, no gravity (Lofted)
+			x, y, z = x - vx * DT, y - vy * DT, z - vz * DT
+		elseif early then
 			-- invert Ballistics.step over one tick (unsteered: the step into the
 			-- spawn tick then takes the server's state as is, see stepProjectiles)
 			local g = weapon.gravity or 0
@@ -423,18 +622,44 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			ovy = 0,
 			ovz = 0,
 			weapon = weapon,
-			target = e.targetId or 0,
-			ttl = ttlTicks(weapon),
+			-- an interceptor's target is a projectile, not a unit (S-48)
+			target = if kind == EK.INTERCEPTOR then 0 else e.targetId or 0,
+			chase = if kind == EK.INTERCEPTOR then fx.projectiles[e.targetId] else nil,
+			ttl = if goal then 15 * 60 else ttlTicks(weapon), -- a strategic missile ends with its IMPACT
 			size = weaponSize(weapon),
 			launch = launch,
+			goal = goal,
 		}
-		burst(fx, now, x + ox, y + oy, z + oz, 0.8, "muzzle", 0.12)
+		-- a missile leaves its launcher in a cloud (C-47); a gun just flashes
+		local b = if weapon.type == "HOMING" or weapon.strategic
+			then burst(fx, now, x + ox, y + oy, z + oz, weaponSize(weapon), "launch", Effects.LAUNCH_SECONDS)
+			else burst(fx, now, x + ox, y + oy, z + oz, 0.8, "muzzle", 0.12)
+		b.ground = World.groundY(world, x + ox, z + oz)
+		facing(b, vx, vy, vz)
+		-- a strategic missile warns even without its LAUNCH_WARNING, which
+		-- comes only on its launch tick: a player who joins while it flies
+		if weapon.strategic then
+			local p = fx.projectiles[e.projId]
+			p.own = Effects.ownLauncherAt(world, p.x, p.z)
+			warn(fx, p, e.projId, x, y, z, now)
+		end
 	elseif kind == EK.IMPACT then
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
+		if p then
+			p.gone = true
+		end
 		local x, y, z = pos(world, e)
-		local r = if p then weaponSize(p.weapon) else 2
-		burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
+		local r = if p then Effects.impactSize(p.weapon) else 2
+		-- a strategic missile's IMPACT is its detonation (S-48, C-57)
+		local nuke = p ~= nil and p.weapon.strategic == true
+		local b = if nuke
+			then burst(fx, now, x, y, z, (p :: Proj).weapon.aoe or 150, "nuke", Effects.NUKE_SECONDS)
+			else burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
+		b.ground = World.groundY(world, x, z)
+		if p then
+			facing(b, p.vx, p.vy, p.vz)
+		end
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		local p = fx.projectiles[e.projId]
 		if p then
@@ -443,10 +668,50 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local x, y, z = pos(world, e)
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
+			local target = World.unitOrDying(world, p.target)
 			p.target = 0
+			p.decoy = nil
+			if kind == EK.DECOYED and (e.decoyTicks or 0) > 0 then
+				-- it follows the flare or chaff like the server (S-28)
+				local cx, cz = world.grid:decode(e.decoyCell, e.decoyOffX, e.decoyOffZ)
+				p.decoy = { cx, e.decoyY / Schema.Y_SCALE, cz, e.decoyTicks }
+				-- what seduced it (C-48): flares the aircraft drops toward the decoy
+				-- point, a chaff cloud there, or the aircraft's jammer laser
+				local cy = e.decoyY / Schema.Y_SCALE
+				local ax, ay, az = cx, cy, cz
+				if target and target.rx then
+					ax, ay, az = target.rx, target.ry :: number, target.rz :: number
+				end
+				local cm = Effects.countermeasure(world, target, p.weapon.guidance, e.countermeasure)
+				local b
+				if cm == "dircm" then
+					b = burst(fx, now, ax, ay, az, 1, "dircm", Effects.DIRCM_SECONDS)
+					b.tx, b.ty, b.tz = dx, dy, dz
+				elseif cm == "chaff" then
+					b = burst(fx, now, cx, cy, cz, 1, "chaff", Effects.FLARE_SECONDS)
+				else
+					b = burst(fx, now, ax, ay, az, 1, "flare", Effects.FLARE_SECONDS)
+					b.tx, b.ty, b.tz = cx, cy, cz
+				end
+				b.ground = World.groundY(world, b.x, b.z)
+				facing(b, vx, vy, vz)
+			end
 			mark(fx, if kind == EK.DECOYED then "decoy" else "lost", now, dx, dy, dz, x, y, z)
 			burst(fx, now, dx, dy, dz, 1.2, if kind == EK.DECOYED then "decoy" else "lost", 0.35)
 		end
+	elseif kind == EK.INTERCEPTED then
+		-- destroyed in flight: a burst in the air, no detonation (S-48, C-57)
+		local p = fx.projectiles[e.projId]
+		fx.projectiles[e.projId] = nil
+		if p then
+			p.gone = true
+		end
+		local x, y, z = pos(world, e)
+		local b = burst(fx, now, x, y, z, 12, "impact", Effects.EXPLOSION_SECONDS)
+		b.ground = World.groundY(world, x, z)
+	elseif kind == EK.LAUNCH_WARNING then
+		local x, y, z = pos(world, e)
+		warn(fx, fx.projectiles[e.projId], e.projId, x, y, z, now)
 	elseif kind == EK.FIRE then
 		table.insert(fx.shots, { e.unitId, e.slot })
 		local x1, y1, z1 = pos(world, e)
@@ -467,8 +732,21 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 				fx.skipped.tracers += 1
 			end
 			capped(fx, fx.tracers, t, Effects.MAX_TRACERS)
-			burst(fx, now, x0, y0 :: number, z0 :: number, 0.7, "muzzle", 0.1)
+			local b = burst(fx, now, x0, y0 :: number, z0 :: number, 0.7 * t.size, "muzzle", 0.1)
+			facing(b, x1 - x0, y1 - (y0 :: number), z1 - (z0 :: number))
 		end
+	elseif kind == EK.SHOT then
+		-- a hidden shooter's hitscan shot (protocol 14, S-43, C-54): a tracer
+		-- between the two ends the server sends, with no shooter and no muzzle
+		-- flash, so it shows the shot without lighting up where it came from
+		local x1, y1, z1 = pos(world, e)
+		local x0, z0 = world.grid:decode(e.fromCell, e.fromOffX, e.fromOffZ)
+		local y0 = e.fromY / Schema.Y_SCALE
+		local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = Effects.TRACER_SECONDS, hit = e.hit == true, size = 1 }
+		if #fx.tracers >= Effects.MAX_TRACERS then
+			fx.skipped.tracers += 1
+		end
+		capped(fx, fx.tracers, t, Effects.MAX_TRACERS)
 	elseif kind == 0 then
 		-- homing correction (Projectiles channel): snap the prediction, keep
 		-- drawing where it was, blend the gap away
@@ -478,6 +756,14 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local y = e.y / Schema.Y_SCALE
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
+			-- a correction doesn't carry a vertical launch's `turned`: with the
+			-- target already near the nose, the server has handed over (C-53)
+			local target = World.unitOrDying(world, p.target)
+			if p.weapon.launch == "vertical" and not p.turned and target then
+				local tx, tz, alt = Interp.sample(target, fx.tick)
+				local _, ty = Effects.aimFrom(world, target, tx, tz, alt, 0, 0, x, y, z, 1)
+				p.turned = Guidance.inCone(x, y, z, vx, vy, vz, tx, ty, tz, math.rad(Guidance.HANDOVER))
+			end
 			mark(fx, "correction", now, dx, dy, dz, x, y, z)
 		end
 	end
@@ -529,7 +815,7 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 	-- tick it would appear a tick's travel out of the barrel (C-27)
 	for i = 1, #events do
 		local e = events[i] :: any
-		if e.kind == EK.SPAWN_PROJ and e.tick == fx.tick + 1 and not e.launched then
+		if (e.kind == EK.SPAWN_PROJ or e.kind == EK.INTERCEPTOR or e.kind == EK.SPAWN_STRATEGIC) and e.tick == fx.tick + 1 and not e.launched then
 			e.launched = true
 			apply(fx, world, e, now, muzzleOf, true)
 		end
@@ -580,7 +866,26 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			table.remove(fx.pendingDeaths, i)
 			local def = if d.defIndex then world.defs.unitByIndex[d.defIndex] else nil
 			local r = (if def then def.footprint else 1) * 3 * (1 + d.severity / 255)
-			burst(fx, now, d.x, World.groundY(world, d.x, d.z) + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
+			-- an aircraft falls first and explodes where it hits (C-48)
+			local crash = Deaths.crash(d, def, function(x: number, z: number): number
+				return World.groundY(world, x, z)
+			end)
+			if crash then
+				-- on the render clock, as Render/Deaths plays the fall
+				table.insert(fx.crashes, { at = renderTick + crash.duration * 15, x = crash.ex, y = crash.ey, z = crash.ez, radius = r * 1.3 })
+			else
+				local ground = World.groundY(world, d.x, d.z)
+				local b = burst(fx, now, d.x, ground + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
+				b.ground = ground
+			end
+		end
+	end
+	for i = #fx.crashes, 1, -1 do
+		local c = fx.crashes[i]
+		if renderTick >= c.at then
+			table.remove(fx.crashes, i)
+			local b = burst(fx, now, c.x, c.y + 1.5, c.z, c.radius, "death", Effects.DEATH_SECONDS)
+			b.ground = c.y
 		end
 	end
 	for i = #fx.bursts, 1, -1 do
@@ -591,6 +896,17 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 	for i = #fx.tracers, 1, -1 do
 		if now - fx.tracers[i].born >= fx.tracers[i].life then
 			table.remove(fx.tracers, i)
+		end
+	end
+	for i = #fx.warnings, 1, -1 do
+		local wv = fx.warnings[i]
+		wv.proj = wv.proj or fx.projectiles[wv.projId]
+		local p = wv.proj
+		if wv.endedAt == nil and ((p == nil and now - wv.born > 1) or (p ~= nil and p.gone)) then
+			wv.endedAt = now
+		end
+		if wv.endedAt and now - (wv.endedAt :: number) > Effects.WARNING_LINGER then
+			table.remove(fx.warnings, i)
 		end
 	end
 	for i = #fx.marks, 1, -1 do
@@ -640,7 +956,7 @@ end
 -- (default: its prediction): the led point lx, ly, lz and the target's
 -- centre cx, cy, cz; nil without a target (C-39).
 function Effects.aim(world: World.World, p: Proj, t: number, px: number?, py: number?, pz: number?): (number?, number?, number?, number?, number?, number?)
-	local target = if p.target ~= 0 then world.units[p.target] else nil
+	local target = World.unitOrDying(world, p.target)
 	if target == nil then
 		return nil, nil, nil, nil, nil, nil
 	end
@@ -664,34 +980,48 @@ export type Prediction = {
 
 -- Where projectile `p` flies over the next `ticks` sim ticks from its
 -- prediction at fx.tick: the server's steering and step on a copy, the
--- target known up to its last snapshot and extrapolated straight on from it
--- (heading and speed held). Stops at the fuse (as the server's) or the
+-- target known up to its last snapshot and extrapolated from it holding its
+-- speed and its turn rate over its last two snapshots (a circling jet keeps
+-- circling: proportional navigation reacts to the target's turn). Stops at the fuse (as the server's) or the
 -- ground. The closest approach is taken along each tick's chord relative to
 -- the moving target, as the server's fuse does (C-39).
 function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Prediction
 	local weapon = p.weapon
-	local target = if p.target ~= 0 then world.units[p.target] else nil
+	local target = World.unitOrDying(world, p.target)
 	local out: Prediction = { path = table.create(ticks * 3), hit = false, ground = false }
 	local x, y, z, vx, vy, vz = p.x, p.y, p.z, p.vx, p.vy, p.vz
-	local lastTick, lx, lz, lalt, lheading, ltv = math.huge, 0, 0, 0, 0, 0
+	local lastTick, lx, lz, lalt, lheading, ltv, lturn = math.huge, 0, 0, 0, 0, 0, 0
 	local radius, height = 0, 0
 	if target then
 		local snaps = target.snaps
 		if #snaps > 0 then
 			lastTick = snaps[#snaps].tick
 			lx, lz, lalt, lheading, ltv = targetAt(target, lastTick)
+			if #snaps >= 2 then
+				local a, b = snaps[#snaps - 1], snaps[#snaps]
+				lturn = ((b.heading - a.heading + math.pi) % (2 * math.pi) - math.pi) / math.max(b.tick - a.tick, 1)
+			end
 		end
 		local def = World.def(world, target)
 		local fp = if def then def.footprint else 1
 		radius, height = fp * Effects.HULL_RADIUS, Effects.UNIT_HEIGHT * fp
 	end
-	-- the target at tick t: as drawn up to its last snapshot, then straight on
+	-- the target at tick t: as drawn up to its last snapshot, then on along
+	-- its turn (whole ticks stepped like the sim's movement, then the rest)
+	local ext = { lx, lz, lheading } -- x, z, heading after k whole ticks past lastTick, flattened
 	local function targetState(t: number): (number, number, number, number, number)
 		if t <= lastTick then
 			return targetAt(target :: World.Unit, t)
 		end
-		local d = ltv * (t - lastTick) * DT
-		return lx + math.sin(lheading) * d, lz + math.cos(lheading) * d, lalt, lheading, ltv
+		local k = math.floor(t - lastTick)
+		while #ext < (k + 1) * 3 do
+			local i = #ext
+			local h = ext[i] + lturn
+			ext[i + 1], ext[i + 2], ext[i + 3] = ext[i - 2] + math.sin(h) * ltv * DT, ext[i - 1] + math.cos(h) * ltv * DT, h
+		end
+		local x, z, h = ext[k * 3 + 1], ext[k * 3 + 2], ext[k * 3 + 3]
+		local f = (t - lastTick - k) * ltv * DT
+		return x + math.sin(h + lturn) * f, z + math.cos(h + lturn) * f, lalt, h, ltv
 	end
 	-- the target's centre at the start of the current tick
 	local pcx, pcy, pcz = 0, 0, 0
@@ -700,6 +1030,12 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 		local _, ty, _, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, 1)
 		pcx, pcy, pcz = cx, ty, cz
 	end
+	local function at(t: number): (number, number, number)
+		local tx, tz, alt = targetState(t)
+		return tx, tz, alt
+	end
+	local decoy = if p.decoy then table.clone(p.decoy) else nil
+	local turned = p.turned
 	local best = math.huge
 	local path = out.path
 	for k = 1, ticks do
@@ -710,11 +1046,17 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 		local svx, svy, svz = vx, vy, vz
 		if target then
 			local tx, tz, alt, heading, tv = targetState(t)
-			local speed = math.sqrt(vx * vx + vy * vy + vz * vz)
-			local ax, ay, az, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, speed)
+			local _, ay, _, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, 1)
 			ccx, ccy, ccz = cx, ay, cz
 			if weapon.turnRate then
-				svx, svy, svz = Ballistics.steer(vx, vy, vz, ax - x, ay - y, az - z, math.rad(weapon.turnRate) * DT)
+				svx, svy, svz, turned = steer(world, target, weapon, at, t, x, y, z, vx, vy, vz, turned)
+			end
+		elseif decoy and weapon.turnRate then
+			local follow
+			svx, svy, svz, follow = followDecoy(weapon, decoy, x, y, z, vx, vy, vz)
+			decoy[4] -= 1
+			if not follow or decoy[4] <= 0 then
+				decoy = nil
 			end
 		end
 		if launch and launch[1] == t then
@@ -751,12 +1093,40 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 	return out
 end
 
+-- Where a ballistic projectile comes down (C-57): its state stepped with
+-- gravity (a strategic missile: Lofted toward its goal, S-51) until it
+-- reaches the ground (the server's Layers.heightAt), at most `maxSeconds`.
+-- Returns x, z and the sim seconds to get there, or nil.
+function Effects.landing(world: World.World, p: Proj, maxSeconds: number?): (number?, number?, number?)
+	local layers = world.layers
+	local g = p.weapon.gravity or 0
+	local x, y, z, vx, vy, vz = p.x, p.y, p.z, p.vx, p.vy, p.vz
+	for k = 1, math.floor((maxSeconds or 60) * 15) do
+		local px, py, pz = x, y, z
+		local goal = p.goal
+		if goal and p.weapon.apex then
+			x, y, z, vx, vy, vz = loftedStep(world, p.weapon, goal, x, y, z, vx, vy, vz)
+		else
+			x, y, z, vx, vy, vz = Ballistics.step(x, y, z, vx, vy, vz, g, DT)
+		end
+		local ground = if layers then Layers.heightAt(layers, x, z) else 0
+		if vy < 0 and y <= ground then
+			-- where the tick's chord meets the ground
+			local f = if py > y then math.clamp((py - ground) / (py - y), 0, 1) else 1
+			return px + (x - px) * f, pz + (z - pz) * f, (k - 1 + f) * DT
+		end
+	end
+	return nil, nil, nil
+end
+
 -- Forgets everything (a new WELCOME).
 function Effects.clear(fx: Fx)
 	table.clear(fx.projectiles)
 	table.clear(fx.bursts)
 	table.clear(fx.tracers)
 	table.clear(fx.pendingDeaths)
+	table.clear(fx.crashes)
+	table.clear(fx.warnings)
 	table.clear(fx.shots)
 	table.clear(fx.marks)
 	fx.tick = -1

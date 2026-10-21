@@ -40,6 +40,7 @@
 -- radii scale with the share of that power they get, in whole sensor cells,
 -- and they re-stamp when a radius changes.
 
+local Pinpoint = require("@shared/Combat/Pinpoint")
 local Categories = require("@shared/Defs/Categories")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -342,14 +343,21 @@ end
 
 -- Radar error offset `observer` sees on unit `id` at `tick`: a wobble of
 -- radius = the observer's best radarError, moving smoothly from one random
--- point to the next every WOBBLE_PERIOD ticks (guide 11.4).
+-- point to the next every WOBBLE_PERIOD ticks (guide 11.4). Pinpointers
+-- shrink it (S-59): the radius is scaled by the team's precision.
 function Sensors.wobble(s: State, observer: number, id: number, tick: number, radius: number?): (number, number)
-	local err = radius or s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR
+	local err = (radius or s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR) * Pinpoint.errorScale(Sensors.precision(s, observer))
 	local k = tick // Sensors.WOBBLE_PERIOD
 	local f = (tick % Sensors.WOBBLE_PERIOD) / Sensors.WOBBLE_PERIOD
 	local ax, az = wobblePoint(id, k, observer)
 	local bx, bz = wobblePoint(id, k + 1, observer)
 	return (ax + (bx - ax) * f) * err, (az + (bz - az) * f) * err
+end
+
+-- The ally team's radar precision 0..1 from its finished Pinpointers
+-- (Shared/Combat/Pinpoint, S-59).
+function Sensors.precision(s: State, team: number): number
+	return Pinpoint.precision(s.pinpoints[team] or 0)
 end
 
 -- Level of enemy unit `id` for `team`, and whether the team's radar
@@ -388,6 +396,7 @@ function Sensors.step(sim: Types.Sim)
 		table.clear(s.closeSonar[team])
 		s.radarError[team] = nil
 		s.trackError[team] = nil
+		s.pinpoints[team] = 0
 	end
 	for _, id in w.ids do
 		if w.buildProgress[id] < 1 then
@@ -396,6 +405,9 @@ function Sensors.step(sim: Types.Sim)
 		end
 		local def = sim.defs.unitByIndex[w.defIndex[id]]
 		local sensors = def.sensors
+		if def.pinpointer and s.pinpoints[w.ally[id]] then
+			s.pinpoints[w.ally[id]] += 1
+		end
 		local radars = s.radars[w.ally[id]]
 		local close = s.closeSonar[w.ally[id]]
 		if close and isCloseSonar(sim, def) then
@@ -614,6 +626,19 @@ function Sensors.inSight(sim: Types.Sim, team: number, x: number, z: number): bo
 	end
 	local _, _, cell = Sensors.cellOf(s, x, z)
 	return readu16(m.los, cell * 2) > 0
+end
+
+-- Does `team` detect something airborne at (x, z): in its sight or its radar
+-- coverage? Strategic missiles are found this way (S-48): big, hot and high,
+-- they show on any radar, and jamming doesn't hide them.
+function Sensors.detectsPoint(sim: Types.Sim, team: number, x: number, z: number): boolean
+	local s = sim.sensors
+	local m = s.maps[team]
+	if m == nil then
+		return false
+	end
+	local _, _, cell = Sensors.cellOf(s, x, z)
+	return readu16(m.los, cell * 2) > 0 or readu16(m.airLos, cell * 2) > 0 or readu16(m.radar, cell * 2) > 0
 end
 
 -- What `team` knows about unit `id`: VISIBLE for its own units; GHOST for a

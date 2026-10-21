@@ -2,8 +2,9 @@
 -- Flow fields inside a corridor (guide 6.3 step 3, 6.4).
 --
 -- 1. Integration: Dijkstra from the goal over corridor cells, 8-connected.
---    Straight steps cost 1, diagonal steps √2 (terrain modifiers can scale
---    these later). Diagonals never cut corners: both orthogonal cells they
+--    Straight steps cost 1, diagonal steps √2, times the mean of the two
+--    cells' terrain multipliers (tree.stepCost, each >= 1; S-37). Diagonals
+--    never cut corners: both orthogonal cells they
 --    pass between must be in the corridor.
 --    The queue is a bucket queue (Dial's algorithm): bucket b holds cells
 --    with cost in [b, b + 1). Every step costs at least 1, so a cell in the
@@ -63,7 +64,41 @@ export type Job = {
 	scanX: number,
 	keepCost: boolean,
 	workDone: number, -- total work units spent
+	stepCost: buffer?, -- the tree's terrain multipliers (S-37)
 }
+
+-- Finished jobs give back their scratch (S-60, the Normandy profile): the
+-- per-cell cost table (a whole map's worth, ~1 MB on a 256-cell map) and the
+-- bucket-queue arrays. Released cost tables are reset to INF on exactly the
+-- cells the job wrote (every one of them is in its entry list), so a reused
+-- table is indistinguishable from a new one and fields come out the same.
+local POOL_MAX = 4
+local scratchPool: { { cost: { number }, n: number, entryCell: { number }, entryCost: { number }, entryNext: { number } } } = {}
+
+local function takeScratch(n: number): ({ number }, { number }, { number }, { number })
+	for i = #scratchPool, 1, -1 do
+		local s = scratchPool[i]
+		if s.n == n then
+			table.remove(scratchPool, i)
+			return s.cost, s.entryCell, s.entryCost, s.entryNext
+		end
+	end
+	return table.create(n, INF), {}, {}, {}
+end
+
+-- Gives a finished job's scratch back for the next job (no-op for jobs that
+-- keep their cost table or aren't done). Call once the field is stored.
+function FlowField.release(job: Job)
+	if job.keepCost or job.phase ~= "done" or #scratchPool >= POOL_MAX then
+		return
+	end
+	local cost, entryCell = job.cost, job.entryCell
+	for e = 1, job.entryCount do
+		cost[entryCell[e] + 1] = INF
+	end
+	table.insert(scratchPool, { cost = cost, n = job.field.cellsX * job.field.cellsZ, entryCell = entryCell, entryCost = job.entryCost, entryNext = job.entryNext })
+	job.cost = {} -- the job no longer owns it
+end
 
 -- Starts a job. The goal must be inside the corridor.
 function FlowField.newJob(tree: Quadtree.Tree, corridor: Route.Corridor, goalCell: number, keepCost: boolean?): Job
@@ -74,8 +109,9 @@ function FlowField.newJob(tree: Quadtree.Tree, corridor: Route.Corridor, goalCel
 	local n = grid.cellCount
 	local dir = buffer.create(n)
 	buffer.fill(dir, 0, FlowField.NONE)
-	local cost = table.create(n, INF)
+	local cost, entryCell, entryCost, entryNext = takeScratch(n)
 	cost[goalCell + 1] = 0
+	entryCell[1], entryCost[1], entryNext[1] = goalCell, 0, 0
 	return {
 		field = {
 			moveClass = tree.moveClass,
@@ -90,9 +126,9 @@ function FlowField.newJob(tree: Quadtree.Tree, corridor: Route.Corridor, goalCel
 		phase = "integrate",
 		cost = cost,
 		bucketHead = { [0] = 1 },
-		entryCell = { goalCell },
-		entryCost = { 0 },
-		entryNext = { 0 },
+		entryCell = entryCell,
+		entryCost = entryCost,
+		entryNext = entryNext,
 		entryCount = 1,
 		bucket = 0,
 		maxBucket = 0,
@@ -100,6 +136,7 @@ function FlowField.newJob(tree: Quadtree.Tree, corridor: Route.Corridor, goalCel
 		scanX = corridor.minX,
 		keepCost = keepCost == true,
 		workDone = 0,
+		stepCost = tree.stepCost,
 	}
 end
 
@@ -112,21 +149,47 @@ function FlowField.run(job: Job, budget: number?): boolean
 	local mask = field.corridor.mask
 	local cost = job.cost
 	local spent = 0
+	local stepCost = job.stepCost
+	local readf32 = buffer.readf32
 
 	if job.phase == "integrate" then
 		local bucketHead, entryCell, entryCost, entryNext = job.bucketHead, job.entryCell, job.entryCost, job.entryNext
 		local floor = math.floor
+		-- the job's queue counters live in locals while it runs (S-60: the
+		-- Normandy profile); written back below
+		local bucket, maxBucket, entryCount = job.bucket, job.maxBucket, job.entryCount
+		-- the cell being expanded: its cost and terrain multiplier
+		local cur, curStep = 0, 0
+		local function relax(nc: number, base: number)
+			local step = base
+			if stepCost then
+				step *= (curStep + readf32(stepCost, nc * 4)) * 0.5
+			end
+			local nv = cur + step
+			if nv < cost[nc + 1] then
+				cost[nc + 1] = nv
+				local b = floor(nv)
+				entryCount += 1
+				entryCell[entryCount] = nc
+				entryCost[entryCount] = nv
+				entryNext[entryCount] = bucketHead[b] or 0
+				bucketHead[b] = entryCount
+				if b > maxBucket then
+					maxBucket = b
+				end
+			end
+		end
 		while spent < remaining do
 			-- next entry: the current bucket's head, else the next non-empty bucket
-			local e = bucketHead[job.bucket] or 0
-			while e == 0 and job.bucket < job.maxBucket do
-				job.bucket += 1
-				e = bucketHead[job.bucket] or 0
+			local e = bucketHead[bucket] or 0
+			while e == 0 and bucket < maxBucket do
+				bucket += 1
+				e = bucketHead[bucket] or 0
 			end
 			if e == 0 then
 				break -- queue empty
 			end
-			bucketHead[job.bucket] = entryNext[e]
+			bucketHead[bucket] = entryNext[e]
 			local cell, c = entryCell[e], entryCost[e]
 			if c > cost[cell + 1] then
 				continue -- stale entry; costs no work
@@ -134,39 +197,40 @@ function FlowField.run(job: Job, budget: number?): boolean
 			spent += 1
 			local cz = cell // w
 			local cx = cell - cz * w
-			for d = 0, 7 do
-				local nx, nz = cx + DX[d + 1], cz + DZ[d + 1]
-				if nx < 0 or nz < 0 or nx >= w or nz >= h then
-					continue
-				end
-				local nc = nz * w + nx
-				if readu8(mask, nc) == 0 then
-					continue
-				end
-				local step = 1
-				if d % 2 == 1 then
-					-- diagonal: both cells it squeezes between must be open
-					if readu8(mask, cz * w + nx) == 0 or readu8(mask, nz * w + cx) == 0 then
-						continue
-					end
-					step = SQRT2
-				end
-				local nv = c + step
-				if nv < cost[nc + 1] then
-					cost[nc + 1] = nv
-					local b = floor(nv)
-					local ne = job.entryCount + 1
-					job.entryCount = ne
-					entryCell[ne] = nc
-					entryCost[ne] = nv
-					entryNext[ne] = bucketHead[b] or 0
-					bucketHead[b] = ne
-					if b > job.maxBucket then
-						job.maxBucket = b
-					end
-				end
+			cur, curStep = c, if stepCost then readf32(stepCost, cell * 4) else 0
+			-- the 8 neighbors in DX / DZ order (E, NE, N, NW, W, SW, S, SE),
+			-- unrolled (S-60); a diagonal also needs both cells it squeezes
+			-- between open
+			local e = cx + 1 < w and readu8(mask, cell + 1) ~= 0
+			local n = cz + 1 < h and readu8(mask, cell + w) ~= 0
+			local west = cx > 0 and readu8(mask, cell - 1) ~= 0
+			local s = cz > 0 and readu8(mask, cell - w) ~= 0
+			if e then
+				relax(cell + 1, 1)
+			end
+			if e and n and readu8(mask, cell + w + 1) ~= 0 then
+				relax(cell + w + 1, SQRT2)
+			end
+			if n then
+				relax(cell + w, 1)
+			end
+			if west and n and readu8(mask, cell + w - 1) ~= 0 then
+				relax(cell + w - 1, SQRT2)
+			end
+			if west then
+				relax(cell - 1, 1)
+			end
+			if west and s and readu8(mask, cell - w - 1) ~= 0 then
+				relax(cell - w - 1, SQRT2)
+			end
+			if s then
+				relax(cell - w, 1)
+			end
+			if e and s and readu8(mask, cell - w + 1) ~= 0 then
+				relax(cell - w + 1, SQRT2)
 			end
 		end
+		job.bucket, job.maxBucket, job.entryCount = bucket, maxBucket, entryCount
 		local head = job.bucketHead[job.bucket] or 0
 		if head == 0 and job.bucket >= job.maxBucket then
 			job.phase = "direct"
@@ -183,17 +247,61 @@ function FlowField.run(job: Job, budget: number?): boolean
 			if readu8(mask, cell) == 1 and cell ~= goal and cost[cell + 1] < INF then
 				spent += 1
 				local best, bestCost = FlowField.NONE, cost[cell + 1]
-				for d = 0, 7 do
-					local nx, nz = x + DX[d + 1], z + DZ[d + 1]
-					if nx < 0 or nz < 0 or nx >= w or nz >= h then
-						continue
+				-- the 8 neighbors in DX / DZ order, unrolled (S-60); a diagonal
+				-- needs both cells it squeezes between open. First strictly
+				-- lower cost wins, as before.
+				local inE, inN, inW, inS = x + 1 < w, z + 1 < h, x > 0, z > 0
+				local e = inE and readu8(mask, cell + 1) ~= 0
+				local n = inN and readu8(mask, cell + w) ~= 0
+				local west = inW and readu8(mask, cell - 1) ~= 0
+				local s = inS and readu8(mask, cell - w) ~= 0
+				local v
+				if inE then
+					v = cost[cell + 2]
+					if v < bestCost then
+						best, bestCost = 0, v
 					end
-					if d % 2 == 1 and (readu8(mask, z * w + nx) == 0 or readu8(mask, nz * w + x) == 0) then
-						continue
+				end
+				if e and n then
+					v = cost[cell + w + 2]
+					if v < bestCost then
+						best, bestCost = 1, v
 					end
-					local nv = cost[nz * w + nx + 1]
-					if nv < bestCost then
-						best, bestCost = d, nv
+				end
+				if inN then
+					v = cost[cell + w + 1]
+					if v < bestCost then
+						best, bestCost = 2, v
+					end
+				end
+				if west and n then
+					v = cost[cell + w]
+					if v < bestCost then
+						best, bestCost = 3, v
+					end
+				end
+				if inW then
+					v = cost[cell]
+					if v < bestCost then
+						best, bestCost = 4, v
+					end
+				end
+				if west and s then
+					v = cost[cell - w]
+					if v < bestCost then
+						best, bestCost = 5, v
+					end
+				end
+				if inS then
+					v = cost[cell - w + 1]
+					if v < bestCost then
+						best, bestCost = 6, v
+					end
+				end
+				if e and s then
+					v = cost[cell - w + 2]
+					if v < bestCost then
+						best, bestCost = 7, v
 					end
 				end
 				writeu8(dir, cell, best)

@@ -11,6 +11,7 @@ local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local Client = require("./Support/Client")
+local Combat = require("../Sim/Combat/Combat")
 local RunAll = require("./RunAll")
 
 local L = Sensors.Level
@@ -59,17 +60,20 @@ end
 
 return function(t: RunAll.Context)
 	-- S-10: clients number icons with Shared/Net/Icons; the server must too.
-	t.test("strategic icons use the shared numbering: sorted distinct names from 1, at most 63", function()
+	t.test("strategic icons use the shared numbering: one per unit type, the def index (S-58)", function()
 		local defs = Defs.load()
 		local names = Icons.names(defs)
 		for i = 2, #names do
-			t.expect(names[i - 1] < names[i], `names sorted and distinct ({names[i - 1]}, {names[i]})`)
+			t.expect(names[i - 1] < names[i], `family names sorted and distinct ({names[i - 1]}, {names[i]})`)
 		end
 		local byDef = Icons.byDef(defs)
+		local seen = {}
 		for index, def in defs.unitByIndex do
 			local n = byDef[index]
-			t.expect(n >= 1 and n <= Icons.MAX, `{def.id}: icon {n} in 1..63`)
-			t.expect(n == Icons.MAX or names[n] == def.icon, `{def.id}: icon {n} is "{def.icon}"`)
+			t.expect(n >= 1 and n <= Icons.MAX, `{def.id}: icon {n} in 1..{Icons.MAX}`)
+			t.equal(n, def.index, `{def.id}: its icon is its def index`)
+			t.expect(not seen[n], `{def.id}: no other unit type has icon {n}`)
+			seen[n] = true
 		end
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
 		t.deepEqual(sim.net.iconIndex, byDef, "the server sends exactly these numbers")
@@ -159,13 +163,13 @@ return function(t: RunAll.Context)
 	-- Combat events (D99): every FIRE, SPAWN_PROJ, IMPACT and DECOYED a player
 	-- gets is something its ally team may know, and the client's own
 	-- projectile stepping follows the server's.
-	t.test("combat events: only what the ally team may see, and the client tracks projectiles", function()
+	t.test("combat events: projectiles in the camera area, shooters only when known, and the client tracks projectiles", function()
 		local sim, mine, theirs = battle(12)
 		local g = (sim.map :: any).grid
 		local c = sim.combat
 		local rng = Prng.new(98)
 		local views = { Client.new(g), Client.new(g) }
-		local counts = { FIRE = 0, SPAWN_PROJ = 0, IMPACT = 0, DECOYED = 0, LOST_LOCK = 0 }
+		local counts = { FIRE = 0, SHOT = 0, SPAWN_PROJ = 0, IMPACT = 0, DECOYED = 0, LOST_LOCK = 0 }
 		local known = { {}, {} } -- projectile IDs each client was sent
 		local drift = 0
 		local EK = Schema.EventKind
@@ -188,20 +192,25 @@ return function(t: RunAll.Context)
 						if e.kind == EK.FIRE then
 							counts.FIRE += 1
 							t.expect(pn.tactical[e.unitId :: number] == true, `FIRE from unit {e.unitId}, not tactical for player {pid}`)
+						elseif e.kind == EK.SHOT then
+							counts.SHOT += 1 -- no shooter on the wire (S-43)
+							local ex, ez = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+							local sx, sz = g:decode(e.fromCell :: number, e.fromOffX :: number, e.fromOffZ :: number)
+							t.expect(inCamera(ex, ez) or inCamera(sx, sz), "a SHOT touches the camera area")
 						elseif e.kind == EK.SPAWN_PROJ then
 							counts.SPAWN_PROJ += 1
 							local id = e.projId :: number
 							known[pid][id] = true
 							t.expect(c.projSlot[id] ~= nil, "SPAWN_PROJ for a live projectile")
 							local x, z = c.px[id], c.pz[id]
-							t.expect(Sensors.inSight(sim, ally, x, z) and inCamera(x, z), `projectile {id} sent to player {pid} outside its sight or camera`)
+							t.expect(inCamera(x, z), `projectile {id} sent to player {pid} outside its camera area`) -- seen or not (S-43)
 							local target = e.targetId :: number
 							t.expect(target == 0 or knows(sim, ally, target), "a homing target only when the ally team knows it")
 						elseif e.kind == EK.IMPACT then
 							counts.IMPACT += 1
 							local id = e.projId :: number
 							local gx, gz = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
-							t.expect(known[pid][id] or (Sensors.inSight(sim, ally, gx, gz) and inCamera(gx, gz)), `IMPACT of projectile {id} the player may not see`)
+							t.expect(known[pid][id] or inCamera(gx, gz), `IMPACT of projectile {id} outside the camera area`)
 							known[pid][id] = nil
 						elseif e.kind == EK.DECOYED or e.kind == EK.LOST_LOCK then
 							counts[if e.kind == EK.DECOYED then "DECOYED" else "LOST_LOCK"] += 1
@@ -226,9 +235,11 @@ return function(t: RunAll.Context)
 	end)
 
 	-- A Hellmouth mortar outside Order's sight shells an Order generator it
-	-- sees on its own radar. Order gets the shells only once they fly into
-	-- its sight, never at the muzzle, and never learns the mortar's ID.
-	t.test("a hidden shooter's shells appear only once they fly into sight", function()
+	-- sees on its own radar. Order's camera covers the map: it gets the
+	-- shells from the muzzle (S-43, client request 21: projectiles regardless
+	-- of sight; before, only once they flew into its sight), and never
+	-- learns the mortar's ID.
+	t.test("a hidden shooter's shells show from the muzzle, but never the shooter", function()
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:96" })
 		local g = (sim.map :: any).grid
 		local c = sim.combat
@@ -250,7 +261,6 @@ return function(t: RunAll.Context)
 					if e.kind == Schema.EventKind.SPAWN_PROJ and e.weaponIndex == sim.defs.weapons.chs_mortar.index then
 						shells += 1
 						local id = e.projId :: number
-						t.expect(Sensors.inSight(sim, 1, c.px[id], c.pz[id]), "the shell is in Order's sight when it is sent")
 						nearest = math.min(nearest, math.sqrt((c.px[id] - w.posX[mortar]) ^ 2 + (c.pz[id] - w.posZ[mortar]) ^ 2))
 					elseif e.kind == Schema.EventKind.IMPACT then
 						impacts += 1
@@ -262,7 +272,7 @@ return function(t: RunAll.Context)
 		end
 		t.expect(shells >= 3, `Order saw the shells coming ({shells})`)
 		t.expect(impacts >= 1, `and their impacts ({impacts})`)
-		t.expect(nearest > 150, `never at the muzzle: closest {nearest} studs from the mortar`)
+		t.expect(nearest < 40, `from the muzzle: first seen {nearest} studs from the mortar`)
 		t.expect(view.received[mortar] == nil, "Order's client never learned the mortar's ID")
 		-- both are untracked radar blips to the mortar (no type, so no priority):
 		-- it shells whichever it found first
@@ -285,6 +295,9 @@ return function(t: RunAll.Context)
 		camera(sim, 2, 0, 0, 63, 63)
 		for _, id in theirs do
 			World.setHealth(w, id, 1e6)
+		end
+		for _, id in { mine[1], mine[2], theirs[1], theirs[2] } do
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION) -- a static scene (move states, S-34)
 		end
 		local views = { Client.new(g), Client.new(g) }
 		local exact, targeted, beforeTurned, leaked = 0, 0, 0, 0
@@ -320,6 +333,58 @@ return function(t: RunAll.Context)
 		t.expect(targeted > 100, `the tanks had targets ({targeted} unit-ticks)`)
 		t.equal(leaked, 0, "the other player never gets targets")
 		print(string.format("    targets: %d unit-ticks with a target, %d of them before the turret turned", targeted, beforeTurned))
+	end)
+
+	t.test("own units' factory queue, fire / move state and ammo reach their owner only, exactly (S-61)", function()
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:64" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, -60, 0, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 40, 60, 0)
+		local jet = Spawn.unit(sim, "ord_falcon", 1, 40, -60, 0)
+		Spawn.unit(sim, "chs_ravager", 2, 120, 0, 0) -- near enough to be seen
+		camera(sim, 1, 0, 0, 63, 63)
+		camera(sim, 2, 0, 0, 63, 63)
+		local defs = sim.defs.units
+		local cell = g:encode(0, 0)
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = defs.ord_lancer.index, cell = cell, offX = 0, offZ = 0, facing = 0 })
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = defs.ord_mason.index, cell = cell, offX = 0, offZ = 0, facing = 0 })
+		local views = { Client.new(g), Client.new(g) }
+		local exact, leaked, jetSeen = 0, 0, 0
+		for tick = 1, 120 do
+			if tick == 40 then
+				w.fireState[tank] = World.FireState.HOLD_FIRE
+				World.setMoveState(w, tank, World.MoveState.ROAM)
+				sim.air.ammo[jet] = 1
+			end
+			Sim.step(sim)
+			for pid = 1, 2 do
+				Client.receive(views[pid], sim.net.players[pid].outbox)
+			end
+			local p, tk, j = views[1].units[plant], views[1].units[tank], views[1].units[jet]
+			local q = sim.build.queue[plant] or {}
+			local okQueue = p and p.queue and #p.queue == #q and (#q == 0 or p.queue[1] == q[1])
+			local okStates = tk and tk.fireState == w.fireState[tank] and tk.moveState == w.moveState[tank]
+			-- (the jet flies in and out of the tactical tier: checked while in it)
+			local okAmmo = j and j.ammo == sim.air.ammo[jet] and j.maxAmmo == defs.ord_falcon.ammo
+			local jetTactical = j ~= nil and j.tier == "tactical"
+			if okQueue and okStates and (okAmmo or not jetTactical) then
+				exact += 1
+			end
+			if jetTactical then
+				jetSeen += 1
+			end
+			for id, u in views[2].units do
+				if w.owner[id] == 1 and (u.queue or u.fireState or u.ammo) then
+					leaked += 1
+				end
+			end
+		end
+		t.expect(exact >= 118, `the owner's view matches every tick after entering ({exact} of 120)`)
+		t.expect(jetSeen > 60, `the jet's ammo was checked while it was in view ({jetSeen} ticks)`)
+		t.equal(leaked, 0, "the other player never gets them")
+		local p = views[1].units[plant]
+		t.expect(p.queueProgress ~= nil and math.abs(p.queueProgress / 255 - (sim.build.progress[plant] or 0)) <= 1 / 16 + 1 / 255, "queue progress within a sixteenth")
 	end)
 
 	-- Hitscan flak (FIRE): a Dominion shoots at a Wasp hovering over it.
@@ -397,8 +462,9 @@ return function(t: RunAll.Context)
 					if sim.defs.weaponByIndex[c.pWeapon[p]].turnRate == nil then
 						r.unguided += 1
 					end
+					-- the camera covers the map: in view = on the map (sight doesn't matter, S-43)
 					local cx, cz = g:cellAt(c.px[p], c.pz[p])
-					if not (g:inBounds(cx, cz) and Sensors.inSight(sim, 1, c.px[p], c.pz[p])) then
+					if not g:inBounds(cx, cz) then
 						r.outOfView += 1
 					end
 					lastSync[p] = sim.tick
@@ -515,6 +581,178 @@ return function(t: RunAll.Context)
 		t.expect(tactical > 0, `tactical units were re-entered ({tactical})`)
 		t.expect(late.economy ~= nil, "the economy came with the join")
 		t.deepEqual(late.economy, always.economy, "and equals the connected client's")
+		t.expect(late.sight ~= nil and buffer.tostring(late.sight :: buffer) == buffer.tostring(always.sight :: buffer), "the team's sight came with the join, equal (S-26)")
+		t.deepEqual(late.wrecks, always.wrecks, "and the known wrecks")
+	end)
+
+	-- S-26 (client requests 9 and 10): the ally team's sight map and the
+	-- wrecks it knows, so the client's fog and wrecks match the server's.
+	t.test("sight and wrecks: the client's fog equals the ally team's sight, wrecks come and go as the team sees them", function()
+		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 1 }, { id = 3, team = 3, allyTeam = 2 } }
+		local sim = Sim.new({ seed = 5, players = players, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local c = sim.combat
+		local scout = Spawn.unit(sim, "ord_lancer", 1, -300, 0, math.pi / 2)
+		Spawn.unit(sim, "ord_lancer", 2, 300, 300, 0) -- the ally's: its sight is ours too
+		Spawn.unit(sim, "chs_ravager", 3, 300, -300, 0)
+		camera(sim, 1, 0, 0, 95, 95)
+		local view = Client.new(g)
+		local spectator = Client.new(g)
+		local spec = NetOut.addSpectator(sim)
+		local mismatches, checks = 0, 0
+		local function step(n: number)
+			for _ = 1, n do
+				Sim.step(sim)
+				Client.receive(view, sim.net.players[1].outbox)
+				Client.receive(spectator, sim.net.spectators[spec].outbox)
+				if sim.tick % 2 == 0 then
+					local los = sim.sensors.maps[1].los
+					for i = 0, sim.sensors.width * sim.sensors.depth - 1 do
+						local server = buffer.readu16(los, i * 2) > 0
+						local client = view.sight ~= nil and buffer.readu8(view.sight :: buffer, i) == 1
+						if server ~= client then
+							mismatches += 1
+						end
+					end
+					checks += 1
+				end
+			end
+		end
+		local function stepUntil(cond: () -> boolean, limit: number): boolean
+			for _ = 1, limit do
+				if cond() then
+					return true
+				end
+				step(1)
+			end
+			return cond()
+		end
+		step(4)
+		t.expect(Client.inSight(view, 300, 300), "the ally's unit's surroundings are in our sight")
+		t.expect(Client.inSight(view, -300, 0), "and our own unit's")
+		t.expect(not Client.inSight(view, 0, -300), "the middle of the south edge isn't")
+		t.equal(spectator.sight, nil, "spectators get no sight (they see everything)")
+
+		-- a wreck in fog: unknown to the team, known to spectators at once
+		local ravager = sim.defs.units.chs_ravager
+		local hidden = Combat.addWreck(c, 0, -300, ravager, math.pi / 2)
+		local near = Combat.addWreck(c, -300, 20, ravager, 1.0)
+		step(2)
+		t.equal(view.wrecks[hidden], nil, "a wreck in fog isn't sent")
+		t.expect(spectator.wrecks[hidden] ~= nil, "spectators get every wreck")
+		local nw = view.wrecks[near]
+		t.expect(nw ~= nil, "a wreck in sight is")
+		if nw then
+			t.equal(nw.defIndex, ravager.index, "with its def")
+			t.expect(math.abs(nw.x - -300) < 0.1 and math.abs(nw.z - 20) < 0.1, "position")
+			t.equal(nw.heading, NetOut.headingU8(1.0), "and heading")
+		end
+
+		-- scouting the hidden one, then it disappears while out of sight
+		moveTo(sim, 1, { scout }, 0, -270)
+		t.expect(stepUntil(function()
+			return view.wrecks[hidden] ~= nil
+		end, 400), "the wreck appears once the scout sees its spot")
+		moveTo(sim, 1, { scout }, -300, 0)
+		t.expect(stepUntil(function()
+			return not Client.inSight(view, 0, -300)
+		end, 400), "the scout left")
+		Combat.removeWreck(c, hidden)
+		step(10)
+		t.expect(view.wrecks[hidden] ~= nil, "a wreck reclaimed out of sight stays on the client's map (the team can't know)")
+		t.equal(spectator.wrecks[hidden], nil, "spectators see it go at once")
+		moveTo(sim, 1, { scout }, 0, -270)
+		t.expect(stepUntil(function()
+			return view.wrecks[hidden] == nil
+		end, 400), "WRECK_GONE once the team sees the empty spot")
+		moveTo(sim, 1, { scout }, -300, 0)
+		step(200)
+
+		-- a wreck removed in sight goes at once (by the next sensor tick)
+		Combat.removeWreck(c, near)
+		step(2)
+		t.equal(view.wrecks[near], nil, "a wreck removed in sight is gone")
+
+		-- a real kill in sight: the DEATH's wreck arrives in the same tick
+		local victim = Spawn.unit(sim, "chs_ravager", 3, w.posX[scout] + 60, w.posZ[scout], 0)
+		World.setHealth(w, victim, 1)
+		local sameTick = nil
+		for _ = 1, 300 do
+			step(1)
+			for _, msg in sim.net.players[1].outbox.Events do
+				for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+					if e.kind == Schema.EventKind.DEATH and e.unitId == victim and (e.wreckId :: number) ~= 0 then
+						sameTick = view.wrecks[e.wreckId :: number] ~= nil
+					end
+				end
+			end
+			if sameTick ~= nil then
+				break
+			end
+		end
+		t.equal(sameTick, true, "DEATH and its WRECK in the same tick")
+		t.equal(mismatches, 0, `sensor cells where the client's sight differs from the server's ({checks} sensor ticks)`)
+	end)
+
+	-- S-43 (client request 21): a hitscan shot from a shooter the player
+	-- doesn't have arrives as SHOT, with both ends and no shooter ID
+	t.test("a hidden shooter's gun shot: SHOT with both ends to others, FIRE to its owner", function()
+		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:64" })
+		local w, c = sim.world, sim.combat
+		local g = (sim.map :: any).grid
+		local victim = Spawn.unit(sim, "ord_lancer", 1, -100, 0, 0)
+		local gunner = Spawn.unit(sim, "chs_jackal", 2, 200, 150, 0) -- far outside Order's sight
+		for _, id in { victim, gunner } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+		end
+		camera(sim, 1, 0, 0, 63, 63)
+		camera(sim, 2, 0, 0, 63, 63)
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 1, gunner), L.HIDDEN, "Order doesn't see the gunner")
+		-- the gunner's shot this tick, as Weapons records it
+		Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = gunner, other = victim, slot = 1, hit = true, x = -100, y = 13, z = 0, sx = 200, sy = 14, sz = 150 })
+		NetOut.step(sim)
+		local function events(pid: number): { Schema.Event }
+			local all = {}
+			for _, msg in sim.net.players[pid].outbox.Events do
+				for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+					table.insert(all, e)
+				end
+			end
+			return all
+		end
+		local shot, fire, mentions = nil, 0, 0
+		for _, e in events(1) do
+			if e.kind == Schema.EventKind.SHOT then
+				shot = e
+			elseif e.kind == Schema.EventKind.FIRE then
+				fire += 1
+			end
+			if e.unitId == gunner then
+				mentions += 1
+			end
+		end
+		t.expect(shot ~= nil, "Order gets a SHOT")
+		t.equal(fire, 0, "no FIRE (it would name the shooter)")
+		t.equal(mentions, 0, "nothing names the gunner")
+		if shot then
+			local ex, ez = g:decode(shot.cell :: number, shot.offX :: number, shot.offZ :: number)
+			local sx, sz = g:decode(shot.fromCell :: number, shot.fromOffX :: number, shot.fromOffZ :: number)
+			t.expect(math.abs(ex + 100) < 0.1 and math.abs(ez) < 0.1, "with the end point")
+			t.expect(math.abs(sx - 200) < 0.1 and math.abs(sz - 150) < 0.1, "and the start point")
+			t.equal(shot.hit, true)
+		end
+		local owner = 0
+		for _, e in events(2) do
+			if e.kind == Schema.EventKind.FIRE and e.unitId == gunner then
+				owner += 1
+			end
+		end
+		t.equal(owner, 1, "the gunner's owner gets the usual FIRE")
 	end)
 
 	t.test("HELLO: matching versions are accepted, stale ones get REJECT with the reason", function()

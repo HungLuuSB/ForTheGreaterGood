@@ -14,8 +14,14 @@ local HEALTH_H = 4 -- pixels
 local BUILD_H = 3
 local BUILD_COLOR = Color3.fromRGB(150, 205, 255)
 local BACK_COLOR = Color3.fromRGB(20, 20, 20)
+-- missile stock (S-47, C-56): one pip per missile above the health bar,
+-- filled while in stock; past MAX_PIPS a single bar instead
+local PIP_H = 3
+local MAX_PIPS = 10
+local STOCK_COLOR = Color3.fromRGB(255, 200, 70)
+local EMPTY_COLOR = Color3.fromRGB(70, 60, 45)
 
-type Slot = { root: Frame, healthFill: Frame, buildBack: Frame, buildFill: Frame }
+type Slot = { root: Frame, healthFill: Frame, buildBack: Frame, buildFill: Frame, stockRow: Frame, pips: { Frame } }
 
 export type Layer = { gui: ScreenGui, slots: { Slot }, used: number }
 
@@ -48,7 +54,66 @@ local function newSlot(parent: ScreenGui): Slot
 	buildBack.BackgroundTransparency = 0.25
 	buildBack.Position = UDim2.new(0, 0, 1, 1)
 	local buildFill = bar(buildBack, "Build", BUILD_COLOR)
-	return { root = root, healthFill = healthFill, buildBack = buildBack, buildFill = buildFill }
+	local stockRow = Instance.new("Frame")
+	stockRow.Name = "Stock"
+	stockRow.BackgroundTransparency = 1
+	stockRow.AnchorPoint = Vector2.new(0, 1)
+	stockRow.Position = UDim2.new(0, 0, 0, -1)
+	stockRow.Parent = root
+	return { root = root, healthFill = healthFill, buildBack = buildBack, buildFill = buildFill, stockRow = stockRow, pips = {} }
+end
+
+-- The stock row: `count` of `capacity` pips lit (or one bar past MAX_PIPS),
+-- the next one filling with `progress` (S-49, C-59).
+local function drawStock(slot: Slot, width: number, count: number?, capacity: number?, progress: number?)
+	local row = slot.stockRow
+	if count == nil or capacity == nil then
+		row.Visible = false
+		return
+	end
+	row.Visible = true
+	row.Size = UDim2.fromOffset(width, PIP_H)
+	local n = if capacity <= MAX_PIPS then capacity else 1
+	for i = 1, math.max(n, #slot.pips) do
+		local pip = slot.pips[i]
+		if i > n then
+			if pip then
+				pip.Visible = false
+			end
+			continue
+		end
+		if pip == nil then
+			pip = bar(row, "Pip", STOCK_COLOR)
+			slot.pips[i] = pip
+		end
+		pip.Visible = true
+		if capacity <= MAX_PIPS then
+			local gap = 1
+			local w = math.max(1, (width - gap * (capacity - 1)) / capacity)
+			pip.Position = UDim2.fromOffset(math.floor((i - 1) * (w + gap) + 0.5), 0)
+			pip.Size = UDim2.fromOffset(math.max(1, math.floor(w + 0.5)), PIP_H)
+			pip.BackgroundColor3 = if i <= count then STOCK_COLOR else EMPTY_COLOR
+			-- the missile being built fills its pip from the left
+			local fill = pip:FindFirstChild("Fill") :: Frame?
+			local building = i == count + 1 and progress ~= nil and progress > 0
+			if building and fill == nil then
+				local f = bar(pip, "Fill", STOCK_COLOR)
+				f.BackgroundTransparency = 0.35
+				fill = f
+			end
+			if fill then
+				fill.Visible = building
+				if building then
+					fill.Position = UDim2.fromOffset(0, 0)
+					fill.Size = UDim2.new(progress :: number, 0, 1, 0)
+				end
+			end
+		else
+			pip.Position = UDim2.fromOffset(0, 0)
+			pip.Size = UDim2.fromOffset(math.max(1, math.floor(width * (count + (progress or 0)) / capacity + 0.5)), PIP_H)
+			pip.BackgroundColor3 = STOCK_COLOR
+		end
+	end
 end
 
 function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
@@ -75,6 +140,7 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 				slot.buildBack.Size = UDim2.new(1, 0, 0, BUILD_H)
 				slot.buildFill.Size = UDim2.new(math.clamp(b.build :: number, 0, 1), 0, 1, 0)
 			end
+			drawStock(slot, w, b.stock, b.stockMax, b.stockProgress)
 			slot.root.Visible = true
 		end
 	end

@@ -8,7 +8,8 @@
 -- when a tick errors, the peak tick exceeds the 66.7 ms budget, the heap
 -- keeps growing after the opening (a leak), or the replay differs.
 -- A spectator (S-18) watches the whole match; its stream is saved as a
--- player replay, debug_out/soak.ftgp, and its size reported.
+-- player replay, debug_out/soak.ftgp, and its size reported. It is recorded
+-- in a second run of the same match, so the heap check doesn't count it.
 -- Results go to debug_out/soak.txt; copy the summary into
 -- docs/progress/sim.md.
 
@@ -22,7 +23,7 @@ local Sim = require("../src/server/Sim/Sim")
 local Skirmish = require("../src/server/Sim/AI/Skirmish")
 local Replay = require("../src/server/Sim/Replay")
 
-local SEED = tonumber(process.args[1]) or 2 -- seed 2 plays the full 40 minutes (S-25 AI; seeds 1 and 3–13 end at 8–26 min)
+local SEED = tonumber(process.args[1]) or 4 -- the longest of seeds 1–16 with the S-57 AI (25.5 min; none reaches 40; was 11, 32.6 min, before S-57)
 local MINUTES = tonumber(process.args[2]) or 40
 local TICKS = MINUTES * 60 * 15
 local BUDGET_MS = 1000 / 15
@@ -33,53 +34,75 @@ local function out(s: string)
 	table.insert(lines, s)
 end
 
-local sim = Sim.new({
-	seed = SEED,
-	players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
-	mapId = "skirmish:256",
-	scenario = "standard_start",
-	match = { mode = "FFA", win = "ANNIHILATION" },
-})
-local timing = Sim.enableTiming(sim)
-local brains = { Skirmish.new(sim, 1), Skirmish.new(sim, 2) }
-local spectator = NetOut.addSpectator(sim)
-local recording = PlayerReplay.new({
-	protocol = Schema.PROTOCOL_VERSION,
-	defsHash = sim.defs.hash,
-	mapId = sim.mapId,
-	viewer = 0,
-	players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 } },
-}, sim.tick + 1)
-
-local tickMs: { number } = {}
-local peak, peakTick = 0, 0
-local samples = {} -- per minute: { minute, units, heapKB, avgMs }
-local minuteSum = 0
-local maxUnits = 0
-local t0 = os.clock()
-for tick = 1, TICKS do
-	local s = os.clock()
-	for _, b in brains do
-		Skirmish.tick(b)
+-- Plays the match. The heap is measured in a run without the spectator
+-- recording: the recording keeps every message, grows with time rather than
+-- with units, and with small armies it made the per-unit heap look like a
+-- leak. The recording comes from a second run of the same (deterministic)
+-- match.
+type Run = {
+	sim: Sim.Sim,
+	timing: any,
+	recording: PlayerReplay.Replay?,
+	tickMs: { number },
+	peak: number,
+	peakTick: number,
+	samples: { { minute: number, units: number, heap: number, avg: number } },
+	maxUnits: number,
+	wall: number,
+}
+local function play(record: boolean): Run
+	local sim = Sim.new({
+		seed = SEED,
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		mapId = "skirmish:256",
+		scenario = "standard_start",
+		match = { mode = "FFA", win = "ANNIHILATION" },
+	})
+	local r: Run = { sim = sim, timing = Sim.enableTiming(sim), recording = nil, tickMs = {}, peak = 0, peakTick = 0, samples = {}, maxUnits = 0, wall = 0 }
+	local brains = { Skirmish.new(sim, 1), Skirmish.new(sim, 2) }
+	local spectator = NetOut.addSpectator(sim)
+	if record then
+		r.recording = PlayerReplay.new({
+			protocol = Schema.PROTOCOL_VERSION,
+			defsHash = sim.defs.hash,
+			mapId = sim.mapId,
+			viewer = 0,
+			players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 } },
+		}, sim.tick + 1)
 	end
-	Sim.step(sim)
-	local ms = (os.clock() - s) * 1000
-	PlayerReplay.record(recording, sim.tick, sim.net.spectators[spectator].outbox)
-	table.insert(tickMs, ms)
-	minuteSum += ms
-	if ms > peak then
-		peak, peakTick = ms, sim.tick
+	local minuteSum = 0
+	local t0 = os.clock()
+	for tick = 1, TICKS do
+		local s = os.clock()
+		for _, b in brains do
+			Skirmish.tick(b)
+		end
+		Sim.step(sim)
+		local ms = (os.clock() - s) * 1000
+		if r.recording then
+			PlayerReplay.record(r.recording, sim.tick, sim.net.spectators[spectator].outbox)
+		end
+		table.insert(r.tickMs, ms)
+		minuteSum += ms
+		if ms > r.peak then
+			r.peak, r.peakTick = ms, sim.tick
+		end
+		r.maxUnits = math.max(r.maxUnits, #sim.world.ids)
+		if tick % 900 == 0 then
+			table.insert(r.samples, { minute = tick // 900, units = #sim.world.ids, heap = collectgarbage("count"), avg = minuteSum / 900 })
+			minuteSum = 0
+		end
+		if sim.match.over then
+			break
+		end
 	end
-	maxUnits = math.max(maxUnits, #sim.world.ids)
-	if tick % 900 == 0 then
-		table.insert(samples, { minute = tick // 900, units = #sim.world.ids, heap = collectgarbage("count"), avg = minuteSum / 900 })
-		minuteSum = 0
-	end
-	if sim.match.over then
-		break
-	end
+	r.wall = os.clock() - t0
+	return r
 end
-local wall = os.clock() - t0
+
+local run = play(false)
+local sim, timing, tickMs, peak, peakTick, samples, maxUnits = run.sim, run.timing, run.tickMs, run.peak, run.peakTick, run.samples, run.maxUnits
+local wall = run.wall
 local played = sim.tick
 
 table.sort(tickMs)
@@ -130,9 +153,14 @@ if early and late and late.minute >= 10 then
 	end
 end
 
--- the spectator's player replay
+-- the spectator's player replay, from a second run of the same match
+local recorded = play(true)
+local recording = recorded.recording :: PlayerReplay.Replay
 local file = PlayerReplay.serialize(recording)
-out(string.format("spectator replay: %.0f KB (%.1f KB per minute of game time), %d frames", buffer.len(file) / 1024, buffer.len(file) / 1024 / (played / 900), #recording.frames))
+out(string.format("spectator replay (second run): %.0f KB (%.1f KB per minute of game time), %d frames", buffer.len(file) / 1024, buffer.len(file) / 1024 / (played / 900), #recording.frames))
+if Sim.hash(recorded.sim) ~= Sim.hash(sim) then
+	table.insert(failures, "the recorded run differs from the first")
+end
 
 -- replay: the command log reproduces the final hash
 local r0 = os.clock()
