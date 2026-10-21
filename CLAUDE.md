@@ -49,7 +49,7 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - `lune run client_demo <build|combat|icons|minimap> <out>`: headless client scene from the real sim and client API, for `render_scene` (C-15).
   - `lune run render_scene <dump> <png>`: top-down PNG of a client scene dump (`ReplicatedStorage.FtggClientDebug:Invoke("scene")` in a Studio playtest; C-10).
   - `lune run bench`: flow field benchmark (results in `docs/progress/sim.md`).
-  - `lune run debug_map`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored).
+  - `lune run debug_map [seed | mapId]`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored); `debug_map map:crossroads` renders a registry map (S-15).
   - `lune run stress`: stress test and bandwidth report (results in `docs/progress/sim.md`).
   - `lune run soak [seed] [minutes]`: 40-minute AI-vs-AI match: peak tick, heap, replay check; exits 1 on failure (S-8).
   - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).

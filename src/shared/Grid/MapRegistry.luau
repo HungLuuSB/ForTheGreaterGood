@@ -14,13 +14,60 @@
 --                       rich pair (value 6) in the middle
 --   "sea:<cells>"       land on the west quarter (height 10), deep sea elsewhere
 --                       (sea floor -10, surface at 10: 20 studs of water)
+--   "mapgen:<layout>:<seed>:<cells>[:<water>[:<symmetry>]]"
+--                       a MapGen skirmish map (guide 5.5, S-15): layout 1v1,
+--                       2v2 or ffa4; water none (default), lakes or sea
+--   "map:<name>"        a named MapGen map (MapRegistry.NAMED below)
 --
 -- Baked Studio maps (guide 5.4) will be added as "baked:<name>".
 
 local Layers = require("./Layers")
+local MapGen = require("./MapGen")
 local TestMap = require("./TestMap")
 
 local MapRegistry = {}
+
+-- Named skirmish maps (S-15): MapGen options plus a display name. Starts
+-- are in player order; on 2v2 maps players 1-2 and 3-4 are the teams.
+export type Named = { name: string, options: MapGen.Options }
+MapRegistry.NAMED = table.freeze({
+	ridgeline = { name = "Ridgeline", options = { seed = 11, cells = 128, layout = "1v1", symmetry = "mirror", water = "none" } },
+	coastline = { name = "Coastline", options = { seed = 12, cells = 128, layout = "1v1", symmetry = "mirror", water = "sea" } },
+	twin_lakes = { name = "Twin Lakes", options = { seed = 13, cells = 192, layout = "2v2", water = "lakes" } },
+	crossroads = { name = "Crossroads", options = { seed = 14, cells = 192, layout = "ffa4", water = "sea" } },
+} :: { [string]: Named })
+
+-- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs.
+function MapRegistry.genOptions(mapId: string): MapGen.Options?
+	local name = string.match(mapId, "^map:([%w_]+)$")
+	if name then
+		local named = MapRegistry.NAMED[name]
+		if named == nil then
+			error(`MapRegistry: unknown named map "{name}"`, 2)
+		end
+		return named.options
+	end
+	local rest = string.match(mapId, "^mapgen:(.+)$")
+	if rest then
+		local parts = string.split(rest, ":")
+		local seed, cells = tonumber(parts[2]), tonumber(parts[3])
+		if #parts < 3 or seed == nil or cells == nil then
+			error(`MapRegistry: malformed map id "{mapId}"`, 2)
+		end
+		return { layout = parts[1] :: any, seed = seed, cells = cells, water = parts[4] :: any, symmetry = parts[5] :: any }
+	end
+	return nil
+end
+
+-- Info (layout, symmetry, water, players, mode tags) of a generated map.
+function MapRegistry.info(mapId: string): MapGen.Info?
+	local options = MapRegistry.genOptions(mapId)
+	if options == nil then
+		return nil
+	end
+	local _, info = MapGen.generate(options)
+	return info
+end
 
 -- Layers for a map ID, nil for "none". Errors on an unknown or malformed ID.
 function MapRegistry.load(mapId: string): Layers.Layers?
@@ -90,6 +137,10 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 			end
 			return -10, 20
 		end)
+	end
+	local options = MapRegistry.genOptions(mapId)
+	if options then
+		return (MapGen.generate(options))
 	end
 	local seed, size = string.match(mapId, "^gen:(%d+):(%d+)$")
 	if seed then
