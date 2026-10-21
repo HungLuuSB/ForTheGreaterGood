@@ -30,6 +30,7 @@ export type Tree = {
 	grid: Grid.Grid,
 	moveClass: string,
 	need: number, -- minimum clearance
+	stepCost: buffer?, -- flow-field step-cost multipliers by terrain (f32 per cell, >= 1; Shared/Grid/Terrain, S-37); nil = all 1
 	rootSize: number,
 	-- leaves, 1-based IDs
 	leafCount: number,

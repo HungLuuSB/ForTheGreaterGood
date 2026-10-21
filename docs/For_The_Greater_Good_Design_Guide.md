@@ -415,7 +415,7 @@ Store each layer as its own `buffer` (flat, cache-friendly, cheap to send to Act
 | `height` | i16 (×0.25 stud) | Ground height; client uses it to place ground units |
 | `waterDepth` | i16 (×0.25 stud) | 0 = dry land |
 | `slope` | u8 | Max slope inside the cell, 0–255 → 0–90° |
-| `terrainType` | u8 | Grass, rock, sand, road (speed modifiers) |
+| `terrainType` | u8 | Grass, rock, sand, road (speed modifiers; built in S-37 as `Layers.terrain`, factors in `Shared/Grid/Terrain`) |
 | `passMask` | u16 | Bit per move class: can this class enter this cell |
 | `clearance[mc]` | u8 per move class | Distance (cells) to nearest blocked cell; used for big footprints |
 | `occupancy` | u16 | Structure ID occupying cell (0 = free) |
@@ -494,6 +494,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - A* runs over leaf centers with the start and goal cells as endpoints.
 - The padding ring is made of whole adjacent open leaves.
 - Measured on 256×256 hilly terrain: tree build about 6 ms (load time), route about 2.5 ms corner to corner.
+- The coarse route ignores terrain types; the flow field inside the corridor weighs them (S-37, 12.1).
 
 **Step 3 — Flow field inside the corridor only.**
 - Integration field: Dijkstra/BFS from the goal cell over corridor cells (cost = 1 × terrain modifier).
@@ -1149,6 +1150,7 @@ countermeasures = {
 - Roles: scout, light tank, MBT, artillery (radar-targetable), MLRS (saturation), mobile IR SAM, mobile radar SAM, mobile radar, mobile jammer, workers.
 - Defenses: gun turret, heavy turret, IR SAM site, long-range radar SAM site, artillery emplacement, coastal battery.
 - Terrain matters: slopes block wheeled units; heavies are slow on sand (terrain modifiers).
+- Terrain modifiers (S-37, placeholder numbers in `Shared/Grid/Terrain.SPEED`): a unit's top speed is its maxSpeed × its move class's factor for the cell it is on. Wheeled: rock 0.8, sand 0.7, road 1.25. Tracked: 0.9, 0.8, 1.1. Heavy tracked: 0.9, 0.6, 1.1. Amphibious: 0.9, 0.85, 1.1. Hover: rock 0.8, sand 1, road 1.1. Grass is 1; ships, submarines and aircraft ignore terrain. Flow fields cost each step the best factor on the map divided by the factor of the cells it crosses, so paths prefer good ground. Generated maps (MapGen) paint sand on land within 2 cells of water and rock where the ground rises more than 15°; roads aren't generated yet.
 
 ### 12.2 Air
 

@@ -78,6 +78,8 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Terrain speed factors (S-37):** placeholders in `Shared/Grid/Terrain.SPEED` (heavy tracked on sand 0.6, wheeled on road 1.25, ...; table in the guide, 12.1), and MapGen's painting rules (sand within 2 cells of water, rock above 15°; no roads). Both shape every generated map.
+- **Carriers don't build aircraft (S-36):** the guide doesn't say they do; it would change the tech tree. Should they?
 - **Thorn SAM (client request 16, the user asked), S-33:** `chs_ir_sam` range / lockRange 280 → 420, aoe 5 → 12, projectileSpeed 420 → 500; `chs_thorn.sensors.airSight` 300 → 420 (an IR site locks only what it sees). Order's IR SAM (`ord_ir_sam`, Vigil) stays at range 300 / aoe 5: should it follow?
 - **Pass 2 retune (S-30): `ord_verdict.sensors.sight` 140 → 170**, the one number changed this round. Three seeds, Verdict vs Hellmouth 0.50 / 0.58 → 0.50 / 0.97 (long fight in band); Verdict vs Ravager long 0.57 → 0.72. Overkill avoidance (S-29) didn't move artillery: without spotters both sides fire at sight range, so the Verdict's range and precision never applied. Still outside 0.8–1.25:
   - close-range artillery duel 0.50 (two artillery groups 120 studs apart: health and damage decide, where Chaos is tougher by design; closing it would cost faction identity);
@@ -97,6 +99,10 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **New (S-37): terrain types.** `Layers.terrain` (u8 per cell: `Layers.Terrain` GRASS 0, ROCK 1, SAND 2, ROAD 3) comes with every map from `MapRegistry.load`; generated maps paint sand on shores and rock on steep ground. Units are slower on sand and rock (factors in `Shared/Grid/Terrain.SPEED`), so the client can colour the ground and predict speeds with `Terrain.factor`. Nothing changes on the wire.
+- **New (S-35): CANCEL command 16** (protocol 12): on an unfinished frame it cancels it with a refund; on a factory it drops queue item `value` (0 = all). Contract section 9.
+- **New (S-34): move states work.** Idle Fire-at-Will units on Maneuver (default) chase visible enemies near their spot and walk back; Roam chases farther; Hold Position stays. The orders aren't replicated; units just move.
+- **New (S-36): carriers.** GUARD from an aircraft on a friendly carrier or airfield lands it there and keeps it docked (LANDED, moving with the carrier) until any order launches it.
 - **Done (request 16: Thorn range and blast), S-33:** `chs_ir_sam` range / lockRange 420, aoe 12 (also the fuse), projectileSpeed 500; `chs_thorn` airSight 420 (an IR site only locks what it sees). Everything is read from the defs.
 - **Done (request 14: MOVING), S-33:** set on ground and naval units with a movement order or speed and on aircraft unless landed (loitering included), cleared when they stop; it arrives in State records like any bit.
 - **Partly done (request 15: past the map's edge), S-33:** projectiles that leave the map burst on its edge (an IMPACT there), so missiles no longer fly on past it. Aircraft are unchanged: keeping jets inside by turn radius broke bombing runs on small maps; they still turn back at 60 studs (your measurement: up to 14 studs out). If that matters, the alternative is positions past the edge on the wire (signed offsets, a protocol bump); say if you want it.

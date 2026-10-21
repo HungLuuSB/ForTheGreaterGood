@@ -452,6 +452,49 @@ local function cellTerrain(plan: Plan, cx: number, cz: number): (number, number)
 	return hgt, 0
 end
 
+-- Terrain types (S-37): sand on land within SHORE cells of water, rock
+-- where the ground is steeper than ROCK_SLOPE degrees; grass elsewhere.
+-- Derived from the (symmetric) heights and water, so it is symmetric too.
+local SHORE = 2
+local ROCK_SLOPE = 15
+local function paintTerrain(layers: Layers.Layers)
+	local g = layers.grid
+	local n = g.cellsX
+	local rockRise = math.tan(math.rad(ROCK_SLOPE)) * Grid.CELL_SIZE
+	for cz = 0, g.cellsZ - 1 do
+		for cx = 0, n - 1 do
+			local i = cz * n + cx
+			if Layers.getWater(layers, i) > 0 then
+				continue
+			end
+			local shore = false
+			for dz = -SHORE, SHORE do
+				for dx = -SHORE, SHORE do
+					local x, z = cx + dx, cz + dz
+					if x >= 0 and z >= 0 and x < n and z < g.cellsZ and Layers.getWater(layers, z * n + x) > 0 then
+						shore = true
+					end
+				end
+			end
+			if shore then
+				Layers.setTerrain(layers, i, Layers.Terrain.SAND)
+			else
+				local h = Layers.getHeight(layers, i)
+				local rise = 0
+				for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+					local x, z = cx + d[1], cz + d[2]
+					if x >= 0 and z >= 0 and x < n and z < g.cellsZ then
+						rise = math.max(rise, math.abs(Layers.getHeight(layers, z * n + x) - h))
+					end
+				end
+				if rise > rockRise then
+					Layers.setTerrain(layers, i, Layers.Terrain.ROCK)
+				end
+			end
+		end
+	end
+end
+
 local function buildLayers(plan: Plan): Layers.Layers
 	local n = plan.n
 	local grid = Grid.new(n, n)
@@ -472,6 +515,7 @@ local function buildLayers(plan: Plan): Layers.Layers
 			end
 		end
 	end
+	paintTerrain(layers)
 	for _, d in plan.deposits do
 		Layers.setSupply(layers, grid:index(math.floor(d.x), math.floor(d.z)), d.value)
 	end

@@ -23,6 +23,7 @@ local Passability = require("@shared/Grid/Passability")
 local FieldCache = require("./Path/FieldCache")
 local FlowField = require("./Path/FlowField")
 local Quadtree = require("./Path/Quadtree")
+local Terrain = require("@shared/Grid/Terrain")
 local Route = require("./Path/Route")
 local World = require("./World")
 
@@ -151,6 +152,7 @@ function Nav.tree(nav: Nav, moveClass: string, need: number, key: string?): Quad
 	local tree = nav.trees[k]
 	if tree == nil then
 		tree = Quadtree.build(nav.pm, moveClass, need)
+		tree.stepCost = Terrain.stepCosts(nav.pm.layers, moveClass) -- S-37
 		nav.trees[k] = tree
 	end
 	return tree
