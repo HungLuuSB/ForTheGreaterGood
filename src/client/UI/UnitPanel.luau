@@ -12,6 +12,7 @@ local Players = game:GetService("Players")
 
 local Api = require("../Api")
 local Icons = require("../Core/Icons")
+local Precision = require("../Core/Precision")
 local World = require("../Core/World")
 local Glyph = require("./Glyph")
 local TeamColors = require("../Render/TeamColors")
@@ -208,9 +209,13 @@ local function one(ui: UI, api: Api.Api, id: number)
 			table.insert(lines, line)
 		end
 	end
+	if Precision.relevant(def) then
+		-- the team's radar precision from its Pinpointers (S-59, C-72)
+		local p, n = Precision.of(world)
+		table.insert(lines, string.format("Radar precision %d%% (%d/%d Pinpointers)", math.floor(p * 100 + 0.5), math.min(n, Precision.FULL), Precision.FULL))
+	end
 	local st, flags = u.state or 0, {}
-	local sensors = def.sensors or {}
-	if (sensors.radar or 0) > 0 or (sensors.jam or 0) > 0 or def.converter then -- (0 is truthy)
+	if def.converter then -- only converters read the on / off bit (Economy)
 		table.insert(flags, if bit32.band(st, 2) ~= 0 then "On" else "Off")
 	end
 	if bit32.band(st, 16) ~= 0 then
