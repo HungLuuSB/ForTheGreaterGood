@@ -1,6 +1,7 @@
 --!strict
 -- Skirmish AI behaviors (S-7): radar, fire-control radar, kiting artillery,
--- anti-air against aircraft. Full matches are in Skirmish.spec.
+-- anti-air against aircraft; difficulty levels (S-17). Full matches are in
+-- Skirmish.spec; level matchups in `lune run ailevels` (docs/AI_LEVELS.md).
 local Sensors = require("../Sim/Sensors")
 local Sim = require("../Sim/Sim")
 local Skirmish = require("../Sim/AI/Skirmish")
@@ -116,6 +117,84 @@ return function(t: RunAll.Context)
 		end)
 		return math.sqrt((w.posX[gun] - w.posX[tank]) ^ 2 + (w.posZ[gun] - w.posZ[tank]) ^ 2) - d0, kited
 	end
+
+	-- S-17: difficulty levels
+	local function levelSim(mapId: string, seed: number, ai: { [number]: string }?): Sim.Sim
+		return Sim.new({
+			seed = seed,
+			players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 3, allyTeam = 2 } },
+			mapId = mapId,
+			scenario = "standard_start",
+			match = { mode = "FFA", win = "COMMAND_ENDS", ai = ai :: any },
+		})
+	end
+
+	t.test("AI levels are a match option; bad levels and players are refused", function()
+		local sim = levelSim("map:ridgeline", 31, { [1] = "hard", [2] = "easy" })
+		local brains = Skirmish.forMatch(sim)
+		t.equal(#brains, 2)
+		t.equal(brains[1].level, "hard")
+		t.equal(brains[2].level, "easy")
+		t.equal(Skirmish.new(levelSim("map:ridgeline", 31), 1).level, "normal", "the default level")
+		t.throws(function()
+			levelSim("map:ridgeline", 31, { [1] = "insane" })
+		end, "ai level must be")
+		t.throws(function()
+			levelSim("map:ridgeline", 31, { [7] = "hard" })
+		end, "unknown player")
+	end)
+
+	t.test("easy: one plant, at most 6 extractors, no radar, anti-air or tech-up", function()
+		local sim = levelSim("map:ridgeline", 32)
+		local brain = Skirmish.new(sim, 1, "easy")
+		run(sim, { brain }, 900 * 8, true)
+		t.equal(#owned(sim, 1, "ord_vehplant"), 1, "one Vehicle Plant")
+		t.expect(#owned(sim, 1, "ord_extractor") <= 6, `at most 6 extractors ({#owned(sim, 1, "ord_extractor")})`)
+		t.expect(#owned(sim, 1, "ord_extractor") >= 4, "but it does build them")
+		t.equal(#owned(sim, 1, "ord_advvehplant") + #owned(sim, 1, "ord_watchtower") + #owned(sim, 1, "ord_oracle"), 0, "no tech-up, radar tower or mobile radar")
+		t.expect(brain.waves >= 1, `it attacks ({brain.waves} waves)`)
+	end)
+
+	t.test("hard: turrets, escorted expansions, an airfield with aircraft", function()
+		local sim = levelSim("map:ridgeline", 33)
+		local brain = Skirmish.new(sim, 1, "hard")
+		for i = 1, 4 do -- a few tanks at home, so the first expansion can be escorted
+			Spawn.unit(sim, "ord_lancer", 1, brain.homeX + 30, brain.homeZ + (i - 2.5) * 20)
+		end
+		local escorted = false
+		local aircraft = 0
+		run(sim, { brain }, 900 * 12, true, function()
+			escorted = escorted or next(brain.escorts) ~= nil
+			aircraft = #owned(sim, 1, "ord_guardian") + #owned(sim, 1, "ord_absolution") + #owned(sim, 1, "ord_falcon")
+			return escorted and aircraft > 0 and #owned(sim, 1, "ord_bulwark") >= 2
+		end)
+		t.expect(#owned(sim, 1, "ord_bulwark") >= 2, `gun turrets ({#owned(sim, 1, "ord_bulwark")})`)
+		t.expect(escorted, "army units escorted a worker to a far deposit")
+		t.expect(#owned(sim, 1, "ord_airfield") > 0, "an airfield")
+		t.expect(aircraft > 0, `and aircraft from it ({aircraft})`)
+		print(string.format("    hard: turrets, escort and aircraft by %.1f min", sim.tick / 900))
+	end)
+
+	t.test("hard on a naval map: a shipyard and a fleet", function()
+		local sim = levelSim("map:coastline", 34)
+		local brain = Skirmish.new(sim, 1, "hard")
+		t.expect(brain.seaX ~= nil, "it found the sea")
+		run(sim, { brain }, 900 * 12, true, function()
+			return #owned(sim, 1, "ord_sentry") + #owned(sim, 1, "ord_silence") >= 2
+		end)
+		t.expect(#owned(sim, 1, "ord_shipyard") > 0, "a shipyard")
+		t.expect(#owned(sim, 1, "ord_sentry") + #owned(sim, 1, "ord_silence") >= 2, "ships")
+		print(string.format("    hard: a fleet by %.1f min", sim.tick / 900))
+	end)
+
+	t.test("hard beats easy", function()
+		local sim = levelSim("map:ridgeline", 9, { [1] = "hard", [2] = "easy" })
+		local brains = Skirmish.forMatch(sim)
+		run(sim, brains, 900 * 20, false, function()
+			return sim.match.over
+		end)
+		t.expect(sim.match.over and sim.match.winner == 1, `hard won (over {sim.match.over}, winner {sim.match.winner}, {sim.tick / 900} min)`)
+	end)
 
 	t.test("AI artillery kites away from a close enemy; tanks don't", function()
 		local gained, kited = closing("ord_verdict")

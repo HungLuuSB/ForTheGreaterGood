@@ -20,39 +20,47 @@ export type PlayerNet = {
 	lastEco: string?, -- the last Eco record sent (bytes), to send only changes
 	eventCounts: { [number]: number }, -- cumulative event records per Schema.EventKind
 	sentTargets: { [number]: string }, -- own tactical units → the weapon targets last sent (S-16)
+	spectator: boolean, -- sees everything, camera on the whole map (S-18)
 }
 
 export type NetState = {
 	players: { [number]: PlayerNet },
+	spectators: { PlayerNet }, -- in the order they were added (S-18)
 	iconIndex: { [number]: number }, -- unit def index → strategic icon (1..63; 0 = unknown blip)
 }
+
+-- Replication state of one viewer (a player or a spectator).
+function NetState.viewer(spectator: boolean): PlayerNet
+	local outbox, bytes, messages = {}, {}, {}
+	for _, ch in NetState.CHANNELS do
+		outbox[ch] = {}
+		bytes[ch] = 0
+		messages[ch] = 0
+	end
+	return {
+		camera = nil,
+		tactical = {},
+		tacticalList = {},
+		outbox = outbox,
+		bytes = bytes,
+		messages = messages,
+		projKnown = {},
+		projInView = {},
+		welcome = nil,
+		forceFull = false,
+		lastEco = nil,
+		eventCounts = {},
+		sentTargets = {},
+		spectator = spectator,
+	}
+end
 
 function NetState.new(playerIds: { number }, iconIndex: { [number]: number }): NetState
 	local players = {}
 	for _, pid in playerIds do
-		local outbox, bytes, messages = {}, {}, {}
-		for _, ch in NetState.CHANNELS do
-			outbox[ch] = {}
-			bytes[ch] = 0
-			messages[ch] = 0
-		end
-		players[pid] = {
-			camera = nil,
-			tactical = {},
-			tacticalList = {},
-			outbox = outbox,
-			bytes = bytes,
-			messages = messages,
-			projKnown = {},
-			projInView = {},
-			welcome = nil,
-			forceFull = false,
-			lastEco = nil,
-			eventCounts = {},
-			sentTargets = {},
-		}
+		players[pid] = NetState.viewer(false)
 	end
-	return { players = players, iconIndex = iconIndex }
+	return { players = players, spectators = {}, iconIndex = iconIndex }
 end
 
 return NetState

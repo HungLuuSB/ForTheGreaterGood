@@ -74,6 +74,19 @@ local TAU = 2 * math.pi
 local MOVED = bor(D.POSITION, D.HEADING, D.ALTITUDE)
 local CHANGED = bor(D.HEALTH, D.STATE, D.BUILD)
 local L = Sensors.Level
+
+-- Spectators (S-18) see through the eyes of "ally 0": everything alive is
+-- visible and every point in sight. Ally teams are 1..8, so 0 is free.
+local SPECTATOR = 0
+local function levelFor(sim: Types.Sim, ally: number, id: number): number
+	if ally == SPECTATOR then
+		return if sim.world.slot[id] ~= nil then L.VISIBLE else L.HIDDEN
+	end
+	return Sensors.level(sim, ally, id)
+end
+local function inSightFor(sim: Types.Sim, ally: number, x: number, z: number): boolean
+	return ally == SPECTATOR or Sensors.inSight(sim, ally, x, z)
+end
 local SF = Schema.StrategicFlag
 
 -- Strategic icon per def: the shared numbering (Shared/Net/Icons, S-10).
@@ -100,6 +113,25 @@ function NetOut.hello(sim: Types.Sim, msg: buffer): buffer?
 	local w = Packer.Writer.new(8)
 	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.REJECT, protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, reason = reason })
 	return w:finish()
+end
+
+-- Adds a spectator (S-18): it sees every unit (no fog), its camera covers
+-- the whole map, so every unit is in its tactical tier, and it gets every
+-- combat event; no Eco records (they have no team field) and no weapon
+-- targets. Its first outbox starts with a WELCOME whose player, team and
+-- ally team are 0. Returns its index in `sim.net.spectators`.
+function NetOut.addSpectator(sim: Types.Sim): number
+	local pn = NetState.viewer(true)
+	local map = sim.map
+	if map then
+		pn.camera = { 0, 0, math.min(map.grid.cellsX - 1, 255), math.min(map.grid.cellsZ - 1, 255) }
+	end
+	pn.forceFull = true
+	local w = Packer.Writer.new(32)
+	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.WELCOME, tick = sim.tick, player = 0, team = 0, allyTeam = 0, mapId = sim.mapId })
+	pn.welcome = w:finish()
+	table.insert(sim.net.spectators, pn)
+	return #sim.net.spectators
 end
 
 -- (Re)joins `player`: forgets what its client had and queues a WELCOME, so
@@ -252,7 +284,7 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 	local c = sim.combat
 	local known = pn.projKnown
 	local function shown(x: number, z: number): boolean
-		return inRect(g, cam, x, z, NetOut.ENTER_MARGIN) and Sensors.inSight(sim, ally, x, z)
+		return inRect(g, cam, x, z, NetOut.ENTER_MARGIN) and inSightFor(sim, ally, x, z)
 	end
 	for _, e in c.events do
 		if e.kind == "SPAWN_PROJ" then
@@ -266,7 +298,7 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			known[p] = true
 			sentNow[p] = true
 			local target = c.pTarget[p]
-			if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or Sensors.level(sim, ally, target) == L.HIDDEN) then
+			if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or levelFor(sim, ally, target) == L.HIDDEN) then
 				target = 0
 			end
 			local e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
@@ -303,10 +335,18 @@ function NetOut.step(sim: Types.Sim)
 	local wireTick = Tick.toWire(tick)
 	local strategicTick = tick % NetOut.STRATEGIC_EVERY == 0
 
+	-- viewers: the players, then spectators (player, team and ally team 0)
+	local viewers: { { pid: number, pn: NetState.PlayerNet, team: number, ally: number } } = {}
 	for _, pid in sim.playerOrder do
-		local pn = net.players[pid]
 		local team = sim.players[pid].team
-		local ally = sim.allyOf[team] -- sight is shared by the ally team (guide 16.1)
+		table.insert(viewers, { pid = pid, pn = net.players[pid], team = team, ally = sim.allyOf[team] })
+	end
+	for _, spn in net.spectators do
+		table.insert(viewers, { pid = 0, pn = spn, team = 0, ally = SPECTATOR })
+	end
+	for _, viewer in viewers do
+		local pid, pn, team = viewer.pid, viewer.pn, viewer.team
+		local ally = viewer.ally -- sight is shared by the ally team (guide 16.1)
 		local cam = pn.camera
 		local events: { Schema.Event } = {}
 		local tactical: { Schema.Tactical } = {}
@@ -342,7 +382,7 @@ function NetOut.step(sim: Types.Sim)
 
 		-- tier membership (fog first: only own or VISIBLE units can be tactical)
 		for _, id in w.ids do
-			local seen = w.ally[id] == ally or Sensors.level(sim, ally, id) == L.VISIBLE
+			local seen = w.ally[id] == ally or levelFor(sim, ally, id) == L.VISIBLE
 			if pn.tactical[id] then
 				if not seen or cam == nil or not inRect(g, cam, w.posX[id], w.posZ[id], NetOut.LEAVE_MARGIN) then
 					pn.tactical[id] = nil
@@ -480,7 +520,7 @@ function NetOut.step(sim: Types.Sim)
 			for _, p in c.proj do
 				if pn.projKnown[p] and weapons[c.pWeapon[p]].turnRate ~= nil then
 					local x, z = c.px[p], c.pz[p]
-					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) and Sensors.inSight(sim, ally, x, z)
+					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) and inSightFor(sim, ally, x, z)
 					local entered = seen and not inView[p]
 					inView[p] = seen or nil
 					if seen and (entered or (p + tick) % every == 0) then
@@ -499,7 +539,7 @@ function NetOut.step(sim: Types.Sim)
 			pn.welcome = nil
 		end
 		outbox.Eco = {}
-		if pn.forceFull or tick % Economy.STEP_TICKS == 0 then
+		if team ~= 0 and (pn.forceFull or tick % Economy.STEP_TICKS == 0) then -- spectators: no team account
 			local rec = ecoRecord(sim, team)
 			if rec then
 				local wr = Packer.Writer.new(Schema.TICK_HEADER_BYTES + Schema.ECO_BYTES)

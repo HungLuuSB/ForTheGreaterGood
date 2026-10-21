@@ -7,12 +7,17 @@
 -- then replays the command log and checks the final hash. Fails (exit 1)
 -- when a tick errors, the peak tick exceeds the 66.7 ms budget, the heap
 -- keeps growing after the opening (a leak), or the replay differs.
+-- A spectator (S-18) watches the whole match; its stream is saved as a
+-- player replay, debug_out/soak.ftgp, and its size reported.
 -- Results go to debug_out/soak.txt; copy the summary into
 -- docs/progress/sim.md.
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
 
+local NetOut = require("../src/server/Sim/NetOut")
+local PlayerReplay = require("../src/shared/Net/PlayerReplay")
+local Schema = require("../src/shared/Net/Schema")
 local Sim = require("../src/server/Sim/Sim")
 local Skirmish = require("../src/server/Sim/AI/Skirmish")
 local Replay = require("../src/server/Sim/Replay")
@@ -37,6 +42,14 @@ local sim = Sim.new({
 })
 local timing = Sim.enableTiming(sim)
 local brains = { Skirmish.new(sim, 1), Skirmish.new(sim, 2) }
+local spectator = NetOut.addSpectator(sim)
+local recording = PlayerReplay.new({
+	protocol = Schema.PROTOCOL_VERSION,
+	defsHash = sim.defs.hash,
+	mapId = sim.mapId,
+	viewer = 0,
+	players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 } },
+}, sim.tick + 1)
 
 local tickMs: { number } = {}
 local peak, peakTick = 0, 0
@@ -51,6 +64,7 @@ for tick = 1, TICKS do
 	end
 	Sim.step(sim)
 	local ms = (os.clock() - s) * 1000
+	PlayerReplay.record(recording, sim.tick, sim.net.spectators[spectator].outbox)
 	table.insert(tickMs, ms)
 	minuteSum += ms
 	if ms > peak then
@@ -116,6 +130,10 @@ if early and late and late.minute >= 10 then
 	end
 end
 
+-- the spectator's player replay
+local file = PlayerReplay.serialize(recording)
+out(string.format("spectator replay: %.0f KB (%.1f KB per minute of game time), %d frames", buffer.len(file) / 1024, buffer.len(file) / 1024 / (played / 900), #recording.frames))
+
 -- replay: the command log reproduces the final hash
 local r0 = os.clock()
 local log = Replay.parse(Replay.serialize(sim.replay))
@@ -130,6 +148,7 @@ if not fs.isDir("debug_out") then
 	fs.writeDir("debug_out")
 end
 fs.writeFile("debug_out/soak.txt", table.concat(lines, "\n") .. "\n")
+fs.writeFile("debug_out/soak.ftgp", file)
 if #failures > 0 then
 	out("FAIL: " .. table.concat(failures, "; "))
 	process.exit(1)
