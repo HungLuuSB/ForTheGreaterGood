@@ -132,6 +132,8 @@ local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
 local fog = FogOfWar.new()
 local contacts = Contacts.new()
+-- enemy structures seen before (kept by Contacts) and icon sample defs: enemy defense rings (C-41)
+local knownEnemy = { memory = contacts.memory.memory, sample = iconTable.sample }
 local strategic = false
 local tiers: { [number]: string } = {}
 local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
@@ -356,7 +358,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	PlacementGhost.step(ghost, api)
 	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
-	RangeOverlay.step(ranges, api, now)
+	RangeOverlay.step(ranges, api, now, knownEnemy)
 	mark("ranges", t0)
 	t0 = os.clock()
 	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)

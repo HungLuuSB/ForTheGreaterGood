@@ -147,7 +147,7 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 		end
 	elseif w[1] == "A" then
 		-- a range-ring arc: sampled like the client does (Core/Ranges)
-		local ARC = { weapon = { 235, 60, 50 }, aa = { 240, 120, 220 }, sight = { 235, 235, 235 }, radar = { 90, 220, 110 }, track = { 60, 170, 80 }, jammer = { 240, 210, 60 } }
+		local ARC = { weapon = { 235, 60, 50 }, aa = { 240, 120, 220 }, sight = { 235, 235, 235 }, radar = { 90, 220, 110 }, track = { 60, 170, 80 }, jammer = { 240, 210, 60 }, enemyWeapon = { 190, 25, 25 }, enemyAa = { 165, 70, 235 } }
 		local cx, cz, r, a0, a1 = n(2), n(3), n(4), n(5), n(6)
 		local c = ARC[w[7]] or ARC.weapon
 		local steps = math.max(1, math.ceil(math.clamp(math.ceil(2 * math.pi * r / 6), 24, 96) * (a1 - a0) / (2 * math.pi)))

@@ -4,12 +4,18 @@
 -- into one outline: only the arc segments not inside another circle of
 -- that kind are kept. Pure Luau (C-7); Render/RangeOverlay draws the
 -- polylines on the terrain.
+--
+-- Enemy defenses the team knows of (C-41) show their weapon rings too,
+-- whatever is selected: structures with weapons that aren't factories, when
+-- in sight, seen before (ghosts), or a radar contact we can name.
 
+local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
 local Ranges = {}
 
-Ranges.KINDS = table.freeze({ "weapon", "aa", "sight", "radar", "track", "jammer" })
+Ranges.KINDS = table.freeze({ "weapon", "aa", "sight", "radar", "track", "jammer", "enemyWeapon", "enemyAa" })
+Ranges.MEMORY_MATCH = 24 -- studs: a radar contact this close to a structure seen there is that structure (radar error and cell rounding)
 Ranges.STEP = 6 -- studs between polyline points, at most
 Ranges.MIN_POINTS_PER_CIRCLE = 24
 Ranges.MAX_POINTS_PER_CIRCLE = 96
@@ -189,6 +195,56 @@ function Ranges.circles(world: World.World, ids: { number }): { Circle }
 		local def = u and World.def(world, u)
 		if u and def and u.team == world.me.team then
 			Ranges.circlesOfDef(def, world.defs, u.rx or u.x, u.rz or u.z, out, id)
+		end
+	end
+	return out
+end
+
+-- A structure that defends: it has weapons and builds nothing (factories
+-- and builders with a turret don't count).
+function Ranges.isDefense(def: any): boolean
+	return def ~= nil and def.domain == "structure" and #(def.weapons or {}) > 0 and #(def.buildOptions or {}) == 0
+end
+
+export type Known = { memory: { [number]: { defIndex: number, x: number, z: number } }, sample: { [number]: any } }
+
+-- Weapon circles of the enemy defenses the team knows of, by unit ID:
+--   * in sight in the camera area (tactical): its def, where it stands;
+--   * any other record (in sight elsewhere, a ghost, a radar contact) of a
+--     structure seen before (`known.memory`, kept by Core/Ghosts) at about
+--     the same place: that def, where it was seen;
+--   * otherwise a record with an icon (in sight, ghost, tracked contact):
+--     the icon's sample def (`known.sample`) at the record's cell.
+-- A plain radar blip (icon 0) never seen up close stays unknown: no ring.
+function Ranges.enemyDefenses(world: World.World, known: Known?): { Circle }
+	local out: { Circle } = {}
+	local ids = {}
+	for id, u in world.units do
+		if u.team ~= world.me.team then
+			table.insert(ids, id)
+		end
+	end
+	table.sort(ids)
+	for _, id in ids do
+		local u = world.units[id]
+		local def, x, z
+		if u.tier == "tactical" then
+			def, x, z = World.def(world, u), u.rx or u.x, u.rz or u.z
+		elseif bit32.band(u.flags or 0, Schema.StrategicFlag.SONAR_ONLY) == 0 then
+			local m = known and known.memory[id]
+			if m and (m.x - u.x) ^ 2 + (m.z - u.z) ^ 2 <= Ranges.MEMORY_MATCH ^ 2 then
+				def, x, z = world.defs.unitByIndex[m.defIndex], m.x, m.z
+			elseif known and u.icon and u.icon > 0 then
+				def, x, z = known.sample[u.icon], u.x, u.z
+			end
+		end
+		if Ranges.isDefense(def) then
+			for _, slot in def.weapons do
+				local weapon = world.defs.weaponByIndex[slot.weaponIndex]
+				if weapon and weapon.range > 0 then
+					table.insert(out, { x = x :: number, z = z :: number, r = weapon.range, kind = if targetsOnlyAir(weapon) then "enemyAa" else "enemyWeapon" })
+				end
+			end
 		end
 	end
 	return out
