@@ -118,7 +118,8 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 		o.anchorX[id], o.anchorZ[id] = nil, nil -- re-anchored where this leaves it (S-34)
 		Air.release(sim, id) -- a docked aircraft launches (S-36)
 		local d = def(sim, id)
-		if d.domain == "structure" then
+		-- structures take no orders, except a silo's attack-ground (S-48)
+		if d.domain == "structure" and not (spec.kind == "attackGround" and Air.isManualFire(sim, d)) then
 			if isFactory(d) and isMoveLike(spec.kind) and spec.x then
 				o.rallyKind[id] = if spec.kind == "move" then "move" else "fight"
 				o.rallyX[id], o.rallyZ[id] = spec.x :: number, spec.z :: number
@@ -251,8 +252,8 @@ local function start(sim: Types.Sim, id: number, h: Order): boolean
 	elseif kind == "build" then
 		Build.commandBuild(sim, { id }, h.defIndex :: number, h.x :: number, h.z :: number, h.facing or 0)
 	elseif kind == "attackGround" then
-		if not Air.isBomber(sim, def(sim, id)) then
-			return false -- only bombers take it: done
+		if not Air.isBomber(sim, def(sim, id)) and not Air.isManualFire(sim, def(sim, id)) then
+			return false -- only bombers and silos take it: done
 		end
 		Air.attackGround(sim, id, h.x :: number, h.z :: number)
 	elseif kind == "guard" then
@@ -322,7 +323,8 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		end
 		return true
 	elseif kind == "attackGround" then
-		return true -- until replaced
+		-- bombers: until replaced; a silo: until it launched (S-48)
+		return Air.isBomber(sim, def(sim, id)) or sim.air.groundX[id] ~= nil
 	end
 	-- repair / reclaim / build
 	return not builderIdle(sim, id)

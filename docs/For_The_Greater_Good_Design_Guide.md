@@ -353,6 +353,15 @@ return {
 	-- slot may set its own capacity: weapons = { { def = "chs_ir_sam", stockpile = 4 } }
 	stockpile = nil,       -- { capacity = 8, buildTime = 6, cost = { supply = 15, power = 300 } }
 
+	-- strategic missiles (S-48; nuke silos and their interceptors, sections 10.9, 11.5)
+	strategic  = false,    -- interceptable; its blast hurts every side; passes over units in flight;
+	                       -- every player is warned of its launch and gets it on the wire
+	manualFire = false,    -- never picks a target: one shot per attack-ground order, any distance
+	apex       = nil,      -- BALLISTIC: lofted to this many studs above the launch whatever the
+	                       -- distance (with `gravity`); the horizontal speed follows from the distance
+	intercepts = nil,      -- vertical-launch HOMING: { chance = 0.5 } targets enemy strategic missiles
+	                       -- first; a proximity burst destroys one with `chance`
+
 	-- visuals
 	fx = { muzzle = "flash_large", trail = nil, impact = "explosion_medium", sound = "rail_fire" },
 }
@@ -379,6 +388,7 @@ At load, for every def, assert:
 - Every damage table covers every armor class (missing = 0, but log it).
 - `pieces` listed in the def exist in the model (client-side check in Studio).
 - Builders have `buildPower > 0`; non-builders have none.
+- `tier` is 0..3; T3 is the strategic structures (nuke silos, S-48).
 - At most 8 entries in `weapons`: the state record's aim slot mask is one byte and its weapon field holds 2 bits per slot in a `u16` (section 7.3).
 - Compute and cache derived values (category bitmasks, max weapon range, numeric def index for packets).
 
@@ -613,6 +623,7 @@ for each player P:
     - SPAWN_PROJ: once a projectile is in the camera area (+2 cells), seen or not: at launch, or when it flies into the camera area. The homing target's ID is sent only if the ally team knows that unit.
     - DECOYED / LOST_LOCK: only for projectiles the client has, with the new velocity.
     - IMPACT: for projectiles the client has, or anywhere in the camera area. Projectiles at the end of their life burst with an IMPACT (no damage).
+    - Strategic missiles (`PROTOCOL_VERSION` 16, S-48): LAUNCH_WARNING (the missile's ID and launch point) to every player, camera or not; the missile's SPAWN_PROJ to every player wherever it flies; INTERCEPTOR instead of SPAWN_PROJ for an interceptor, naming the missile it chases; INTERCEPTED instead of IMPACT for a missile destroyed in flight (no detonation).
     - The client steps its projectiles itself. Unguided ones match the server exactly; homing ones are approximate (the client doesn't know a radar contact's altitude or true position), and the IMPACT corrects them.
   - Sight and wrecks (`PROTOCOL_VERSION` 10, S-26), on the Events channel:
     - The ally team's **sight map** (sensor cells in LOS, allies' units included), so the client's fog is the server's: SIGHT_ROWS (a bitset of the whole map) after a join, then SIGHT_CELLS with the cells that changed, on sensor ticks. Spectators get none (no fog).
@@ -718,6 +729,9 @@ WRECK_GONE  wreckId u16                                                   3 B
 SIGHT_ROWS  firstRow u8, rowCount u8, rowBytes u8, bits (1 per sensor cell)  4 + rows × rowBytes
 SIGHT_CELLS count u8, cell u16 × count (bit 15 = now in sight)          2 + 2 × count
 SHOT        hit u8, start pos, end pos (v14: a hidden shooter's hitscan)  14 B
+INTERCEPTOR as SPAWN_PROJ; targetId = the strategic missile's projId (v16)     19 B
+LAUNCH_WARNING projId u16, pos (launch point; every player; v16)            9 B
+INTERCEPTED projId u16, pos (a strategic missile destroyed; v16)            9 B
 pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
 vel = vx, vy, vz i16 (1/8 stud per second)
 ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
@@ -850,7 +864,8 @@ Route these through the same team account so shortages affect them naturally:
   | IR SAM (`chs_ir_sam`, `ord_ir_sam`) | 6 s, 15 supply + 300 power | Thorn, Vigil 8; Hornet, Halo 4 |
   | Radar SAM (`chs_radar_sam`, `ord_radar_sam`) | 12 s, 40 supply + 900 power | Wyvern, Aegis 6; Gorgon, Seraph 3 |
 
-  The owner sees each unit's stock (State `stock` field, protocol 15, section 7).
+  The owner sees each unit's stock (State `stock` field, protocol 15, section 7). Naval SAMs (Corsair, Crusader) stay unlimited (the user, 2026-10-22).
+- **Nuke silos** (S-48) build warheads the same way: capacity 2, 120 s, 1,500 supply + 40,000 power each (about 12.5 supply and 333 power per second while building, a T3 economy's worth).
 - **Sensor upkeep:** radars, jammers and DIRCM drain power continuously. If power stalls, they lose range or switch off.
 
 ### 8.7 Reclaim
@@ -946,6 +961,7 @@ Move states (S-34, `Orders.autoStep`): every 15 ticks an idle armed unit on Fire
 - **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional, not built).
 - **Overkill** (S-29): a weapon doesn't fire at a visible target that damage already on its way will kill: shells and missiles in flight at it (each counted as its damage × `Combat.hitChance`, the chance its spread lets it reach the hull at that distance), plus damage queued this tick. It leaves the target and searches again on the next tick, skipping doomed targets; with nothing else in reach it takes the best doomed one and fires. Attack orders are always obeyed. Decided at the trigger, so a group firing in the same tick spreads its volley: six Verdicts against six one-shot tanks in a column put their first six shells on six targets, not one.
 - Long-range weapons (SAM sites, artillery): use the coarse bucket grid only, and re-evaluate less often.
+- **Strategic missiles** (S-48): `intercepts` weapons (the radar SAMs) check every tick, before any unit, for an enemy strategic missile within their range that their team detects (in its sight or radar coverage; jamming doesn't hide one). They keep it while it stays in range (+10%) and take the nearest otherwise. `manualFire` weapons (silos) never pick a target.
 
 ### 10.3 Aim model (server)
 
@@ -973,6 +989,14 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - Ground impact: compare projectile height to the `height` layer.
 - Lifetime cap per weapon; expired projectiles self-destruct: an IMPACT event with no unit and no damage (D99), so clients drop them. So do projectiles that leave the map, on its edge (S-33).
 - Hard cap on live projectiles (e.g., 2,000). If exceeded, oldest ballistic shells resolve instantly at their predicted impact point.
+
+### 10.9 Strategic missiles (nuke silos, S-48)
+
+- A T3 silo per faction (13.5) builds warheads into its stockpile (8.6) and launches one only on an **attack-ground order**, anywhere on the map: one launch per order, then the order is done (STOP or a new order cancels it). Fire states don't apply. No turret.
+- **Flight:** lofted ballistic (`apex` 800 studs, gravity 40): ~12.7 s in the air whatever the distance (1,400 studs → ~110 studs/s horizontally), landing on the ordered spot. It passes over units; only the ground stops it.
+- **Blast:** `aoe` 150, `edgeEffectiveness` 0.3, 8,000–10,000 damage at the center: it hurts every side, the launcher's own units included (BAR).
+- **Interception:** radar SAM sites and mobile radar SAMs (`intercepts = { chance = 0.5 }`) fire interceptors from their stockpiles at an enemy strategic missile their team detects within their range, before any aircraft (10.2). An interceptor navigates against the missile's position and velocity and bursts at its closest approach within its fuse (`aoe`, 20 studs); the burst destroys the missile with probability `chance` (sim Prng). A destroyed missile doesn't detonate. Several sites, or full stockpiles, are needed against more than one missile; empty stockpiles stop nothing.
+- **Wire** (protocol 16, 7.3): every player gets LAUNCH_WARNING at a launch and the missile itself wherever it flies; INTERCEPTOR records name the missile they chase; INTERCEPTED replaces the IMPACT of a destroyed missile.
 
 ### 10.6 Damage
 
@@ -1118,6 +1142,7 @@ Implementation (`Sim/EW.luau`, DECISIONS D79–D80, D82):
 - The terminal check fires once the missile could reach `terminalRange` within the tick. A decoyed missile turns 60° and loses its target.
 - COMMAND needs the launcher alive and the target VISIBLE to the launcher's team, checked every tick of the flight. Jamming, chaff, flares and DIRCM don't affect it.
 - `DECOYED` and `LOST_LOCK` are sim events; they are not replicated yet.
+- **Interceptors** (S-48, 10.9) chase a projectile, not a unit: no lock check, seeker cone or countermeasures (strategic missiles carry none); proportional navigation against the missile's own position and velocity, after the vertical climb.
 - Measured: an Aegis (lock range 600, burn-through 210) never launches at a jammed Wasp at 250 or 550 studs, even when the Wasp is in plain sight. At 150 studs it launches and hits.
 
 ### 11.6 Countermeasures
@@ -1290,6 +1315,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Torpedo launcher | T1 | **Undertow** | **Fang** | Naval |
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |
 | Sonar buoy / station | T1 / T2 | **Ear / Choir** | **Listener / Deepear** | Naval / Adv. Naval |
+| Nuclear missile silo (S-48) | T3 | **Reckoning** | **Ragnarok** | Adv. Ground (Architect / Forgemaster) |
 
 ---
 

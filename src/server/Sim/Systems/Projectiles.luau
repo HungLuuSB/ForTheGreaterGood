@@ -20,6 +20,14 @@
 -- others by AoE, and its IMPACT names the target. Guided missiles first run
 -- their midcourse and terminal checks (EW.guide, guide 11.5), which may
 -- break the lock or decoy them.
+--
+-- Strategic missiles (S-48) pass over units (only the ground stops them) and
+-- their blast hurts every side. Interceptors steer at their strategic
+-- missile by proportional navigation against its position and velocity, and
+-- burst at the closest approach within their fuse (aoe) of it: the burst
+-- destroys it with the weapon's `intercepts.chance` (sim Prng). A destroyed
+-- missile is removed after the loop (removing another projectile mid-loop
+-- would move an unprocessed one) with an INTERCEPTED event, no blast.
 
 local Ballistics = require("../Combat/Ballistics")
 local Guidance = require("@shared/Combat/Guidance")
@@ -34,6 +42,7 @@ local TURNED = EW.Flag.TURNED
 local sqrt, sin, cos = math.sqrt, math.sin, math.cos
 
 local candidates: { number } = {}
+local killed: { number } = {}
 
 return function(sim: Types.Sim)
 	local c = sim.combat
@@ -47,8 +56,12 @@ return function(sim: Types.Sim)
 	local profiles = c.profiles
 
 	-- Backwards, so swap-removal never skips an unprocessed projectile.
+	table.clear(killed)
 	for k = #proj, 1, -1 do
 		local id = proj[k]
+		if table.find(killed, id) then
+			continue -- intercepted this tick: removed below
+		end
 		local weapon = weapons[c.pWeapon[id]]
 		local g = weapon.gravity or 0
 		if weapon.guidance then
@@ -57,7 +70,26 @@ return function(sim: Types.Sim)
 		local x0, y0, z0 = c.px[id], c.py[id], c.pz[id]
 		local pvx, pvy, pvz = c.pvx[id], c.pvy[id], c.pvz[id]
 		local homingTarget = c.pTarget[id]
-		if World.isRef(w, homingTarget, c.pTargetGen[id]) and weapon.turnRate then
+		local projTarget = c.pTargetProj[id]
+		if projTarget ~= 0 and not Combat.isProjRef(c, projTarget, c.pTargetSerial[id]) then
+			projTarget = 0 -- it detonated or was destroyed: fly on
+		end
+		if projTarget ~= 0 and weapon.turnRate then
+			-- interceptor (S-48): navigate against the missile's own state
+			local tx, ty, tz = c.px[projTarget], c.py[projTarget], c.pz[projTarget]
+			local tvx, tvy, tvz = c.pvx[projTarget], c.pvy[projTarget], c.pvz[projTarget]
+			local maxTurn = math.rad(weapon.turnRate) * DT
+			if weapon.launch == "vertical" then
+				local turned = bit32.band(c.pFlags[id], TURNED) ~= 0
+				local climbLeft = Guidance.climbLeft(weapon, y0, Combat.groundHeight(c, x0, z0))
+				pvx, pvy, pvz, turned = Guidance.vertical(x0, y0, z0, pvx, pvy, pvz, tx, ty, tz, tvx, tvy, tvz, maxTurn, DT, turned, climbLeft)
+				if turned then
+					c.pFlags[id] = bit32.bor(c.pFlags[id], TURNED)
+				end
+			else
+				pvx, pvy, pvz = Guidance.pn(x0, y0, z0, pvx, pvy, pvz, tx, ty, tz, tvx, tvy, tvz, maxTurn, DT)
+			end
+		elseif World.isRef(w, homingTarget, c.pTargetGen[id]) and weapon.turnRate then
 			-- missiles: proportional navigation; torpedoes: lead pursuit
 			-- (Shared/Combat/Guidance, S-27)
 			local tx, ty, tz = Combat.aimPoint(c, w, homingTarget)
@@ -115,7 +147,7 @@ return function(sim: Types.Sim)
 		local team = c.pTeam[id]
 		local mx, mz = (x0 + x1) / 2, (z0 + z1) / 2
 		local half = sqrt((x1 - x0) ^ 2 + (z1 - z0) ^ 2) / 2
-		local n = ContactGrid.query(c.contacts, w, mx, mz, half + c.maxRadius + c.maxSpeedStep, team, candidates)
+		local n = if weapon.strategic then 0 else ContactGrid.query(c.contacts, w, mx, mz, half + c.maxRadius + c.maxSpeedStep, team, candidates)
 		local bestT, bestUnit = math.huge, 0
 		for i = 1, n do
 			local u = candidates[i]
@@ -152,14 +184,42 @@ return function(sim: Types.Sim)
 			end
 		end
 
+		-- interceptor fuse against its strategic missile (S-48), in the
+		-- missile's frame
+		local burstProj = 0
+		if projTarget ~= 0 and (weapon.aoe or 0) > 0 then
+			local ax, ay, az = x0 - c.px[projTarget], y0 - c.py[projTarget], z0 - c.pz[projTarget]
+			local dx = (x1 - x0) - c.pvx[projTarget] * DT
+			local dy = (y1 - y0) - c.pvy[projTarget] * DT
+			local dz = (z1 - z0) - c.pvz[projTarget] * DT
+			local len2 = dx * dx + dy * dy + dz * dz
+			local t = if len2 > 0 then math.clamp(-(ax * dx + ay * dy + az * dz) / len2, 0, 1) else 0
+			local ex, ey, ez = ax + dx * t, ay + dy * t, az + dz * t
+			if ex * ex + ey * ey + ez * ez <= (weapon.aoe :: number) ^ 2 and t < bestT then
+				bestT, bestUnit, burst, burstProj = t, 0, 0, projTarget
+			end
+		end
+
 		-- terrain contact (ground treated as linear along the chord)
 		local a0 = y0 - Combat.groundHeight(c, x0, z0)
 		local a1 = y1 - Combat.groundHeight(c, x1, z1)
 		if a1 < 0 and weapon.type ~= "TORPEDO" then
 			local t = if a0 > 0 then a0 / (a0 - a1) else 0
 			if t < bestT then
-				bestT, bestUnit, burst = t, 0, 0
+				bestT, bestUnit, burst, burstProj = t, 0, 0, 0
 			end
+		end
+
+		if bestT <= 1 and burstProj ~= 0 then
+			-- the interceptor bursts at the missile; no blast on the ground
+			local ix, iy, iz = x0 + (x1 - x0) * bestT, y0 + (y1 - y0) * bestT, z0 + (z1 - z0) * bestT
+			Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = 0, other = id, x = ix, y = iy, z = iz })
+			local intercepts = weapon.intercepts
+			if intercepts and sim.rng:chance(intercepts.chance) and not table.find(killed, burstProj) then
+				table.insert(killed, burstProj)
+			end
+			Combat.removeProjectile(c, id)
+			continue
 		end
 
 		if bestT <= 1 then
@@ -172,7 +232,8 @@ return function(sim: Types.Sim)
 			if not World.isRef(w, owner, c.pOwnerGen[id]) then
 				owner = 0 -- the shooter is gone (D109)
 			end
-			Combat.explode(c, w, ix, iy, iz, weapon, owner, team, bestUnit)
+			-- a strategic blast hurts every side (S-48): team 0 is nobody's
+			Combat.explode(c, w, ix, iy, iz, weapon, owner, if weapon.strategic then 0 else team, bestUnit)
 			Combat.removeProjectile(c, id)
 		else
 			local ttl = c.pTtl[id] - DT
@@ -184,6 +245,15 @@ return function(sim: Types.Sim)
 				c.pvx[id], c.pvy[id], c.pvz[id] = vx, vy, vz
 				c.pTtl[id] = ttl
 			end
+		end
+	end
+
+	-- strategic missiles destroyed by interceptors this tick (S-48)
+	for _, p in killed do
+		if c.projSlot[p] ~= nil then
+			c.stats.hits += 1
+			Combat.addEvent(c, { kind = "INTERCEPTED", tick = sim.tick, unit = 0, other = p, x = c.px[p], y = c.py[p], z = c.pz[p] })
+			Combat.removeProjectile(c, p)
 		end
 	end
 end

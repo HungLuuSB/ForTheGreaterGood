@@ -63,6 +63,7 @@ local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
+local Combat = require("./Combat/Combat")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
 local Sensors = require("./Sensors")
@@ -303,17 +304,34 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			known[e.other] = nil -- a new projectile (IDs are reused)
 		end
 	end
-	-- projectiles entering this client's view
+	-- projectiles entering this client's view; strategic missiles go to
+	-- every player wherever they fly (a few per match), and interceptors
+	-- last, so the missile they chase is always known (S-48)
 	local sentNow: { [number]: boolean } = {}
-	for _, p in c.proj do
-		if not known[p] and shown(c.px[p], c.pz[p]) then
+	local strategic = c.strategic
+	for pass = 1, 2 do
+		for _, p in c.proj do
+			local interceptor = c.pTargetProj[p] ~= 0
+			if interceptor ~= (pass == 2) or known[p] then
+				continue
+			end
+			if not shown(c.px[p], c.pz[p]) and (#strategic == 0 or table.find(strategic, p) == nil) then
+				continue
+			end
 			known[p] = true
 			sentNow[p] = true
-			local target = c.pTarget[p]
-			if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or levelFor(sim, ally, target) == L.HIDDEN) then
-				target = 0
+			local e
+			if interceptor then
+				local tp = c.pTargetProj[p]
+				local target = if known[tp] and Combat.isProjRef(c, tp, c.pTargetSerial[p]) then tp else 0
+				e = withPos({ kind = Schema.EventKind.INTERCEPTOR, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
+			else
+				local target = c.pTarget[p]
+				if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or levelFor(sim, ally, target) == L.HIDDEN) then
+					target = 0
+				end
+				e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
 			end
-			local e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
 			table.insert(events, withVel(e, c.pvx[p], c.pvy[p], c.pvz[p]))
 		end
 	end
@@ -345,6 +363,9 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 		elseif kind == "IMPACT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
 			known[e.other] = nil
 			table.insert(events, withPos({ kind = Schema.EventKind.IMPACT, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
+		elseif kind == "INTERCEPTED" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
+			known[e.other] = nil
+			table.insert(events, withPos({ kind = Schema.EventKind.INTERCEPTED, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
 		end
 	end
 end
@@ -749,6 +770,12 @@ function NetOut.step(sim: Types.Sim)
 
 		if cam ~= nil then
 			combatEvents(sim, g, pn, ally, cam, events)
+		end
+		-- strategic launches: every player, camera or not (S-48)
+		for _, e in sim.combat.events do
+			if e.kind == "LAUNCH" and e.x then
+				table.insert(events, withPos({ kind = Schema.EventKind.LAUNCH_WARNING, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
+			end
 		end
 		if pn.forceFull then
 			pn.sightVersion = -1

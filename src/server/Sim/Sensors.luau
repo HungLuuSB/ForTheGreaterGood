@@ -616,6 +616,19 @@ function Sensors.inSight(sim: Types.Sim, team: number, x: number, z: number): bo
 	return readu16(m.los, cell * 2) > 0
 end
 
+-- Does `team` detect something airborne at (x, z): in its sight or its radar
+-- coverage? Strategic missiles are found this way (S-48): big, hot and high,
+-- they show on any radar, and jamming doesn't hide them.
+function Sensors.detectsPoint(sim: Types.Sim, team: number, x: number, z: number): boolean
+	local s = sim.sensors
+	local m = s.maps[team]
+	if m == nil then
+		return false
+	end
+	local _, _, cell = Sensors.cellOf(s, x, z)
+	return readu16(m.los, cell * 2) > 0 or readu16(m.airLos, cell * 2) > 0 or readu16(m.radar, cell * 2) > 0
+end
+
 -- What `team` knows about unit `id`: VISIBLE for its own units; GHOST for a
 -- dead structure it still remembers; HIDDEN when nothing is known.
 function Sensors.level(sim: Types.Sim, team: number, id: number): number

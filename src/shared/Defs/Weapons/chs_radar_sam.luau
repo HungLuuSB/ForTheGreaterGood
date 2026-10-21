@@ -12,6 +12,7 @@ return {
 	climbHeight = 100, -- studs above the ground it climbs straight first (S-44, the user asked)
 	stockpile = { capacity = 6, buildTime = 12, cost = { supply = 40, power = 900 } }, -- missiles in stock (S-47); Gorgon / Seraph carry 3
 	guidance = "RADAR",
+	intercepts = { chance = 0.5 }, -- shoots at enemy strategic missiles first (S-48)
 	lockRange = 1680,
 	burnThrough = 0.35,
 	terminalRange = 50,

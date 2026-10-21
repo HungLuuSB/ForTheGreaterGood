@@ -83,6 +83,8 @@ export type World = {
 	wOverkill: { [number]: number }, -- World.Overkill: left a doomed target, search now / may shoot a doomed one (S-29)
 	wBlocked: { [number]: number }, -- 1 while terrain blocks the shot at the current target (line of fire, S-32)
 	wStock: { [number]: number }, -- missiles in stock; nil = the slot has no stockpile (Stockpile, S-47)
+	wTargetProj: { [number]: number }, -- interceptors: the enemy strategic missile targeted (projectile ID, 0 = none; S-48)
+	wTargetProjSerial: { [number]: number }, -- its Combat.pSerial
 	wStockProgress: { [number]: number }, -- 0..1 of the next missile
 
 	-- ID allocator
@@ -132,6 +134,8 @@ function World.new(): World
 		wOverkill = {},
 		wBlocked = {},
 		wStock = {},
+		wTargetProj = {},
+		wTargetProjSerial = {},
 		wStockProgress = {},
 		gen = {},
 		pins = {},
@@ -250,6 +254,8 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 		w.wReload[key] = 0
 		w.wTarget[key] = 0
 		w.wTargetGen[key] = 0
+		w.wTargetProj[key] = 0
+		w.wTargetProjSerial[key] = 0
 		local stock = info.weaponStock and info.weaponStock[slot]
 		if stock then
 			w.wStock[key] = stock
@@ -341,6 +347,8 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wBlocked[key] = nil
 		w.wStock[key] = nil
 		w.wStockProgress[key] = nil
+		w.wTargetProj[key] = nil
+		w.wTargetProjSerial[key] = nil
 	end
 	w.weaponCount[id] = nil
 	w.lastAttacker[id] = nil
@@ -448,6 +456,7 @@ function World.hash(w: World, h: number?): number
 			hv = Hash.u32(hv, w.wHold[key])
 			hv = Hash.u32(hv, w.wOverkill[key])
 			hv = Hash.u32(hv, w.wBlocked[key])
+			hv = Hash.u32(Hash.u32(hv, w.wTargetProj[key]), w.wTargetProjSerial[key])
 			local stock = w.wStock[key]
 			if stock ~= nil then
 				hv = Hash.u32(hv, stock)
