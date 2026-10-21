@@ -4,6 +4,34 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (overnight run, 2026-10-22 → 23)
+
+**Your list is done, except where someone else is needed:** the 2-client Studio test (my Studio tools only start a solo playtest), server alerts (waiting for sim-A: request 39), and the draft 3 icon sheet (waiting for you to import it). Each item is committed, pushed and marked "Ready to merge" below. sim-A has already integrated C-75 to C-80 into main (`a21d325`).
+
+| # | What | Decision | Proof |
+|---|---|---|---|
+| 1 | Current work: request 36 used (server queues, fire / move states, ammo); icon sheet draft 3 built | C-75, C-74 | `OwnerFields.spec` (client = server every tick); sheet `assets/icons/ftgg-icons.png` |
+| 2 | Unit stats in the unit panel, enemies by hover, knowledge rules | C-76 | `UnitStats.spec` (Lancer vs armored), `c76_*.jpg` |
+| 3 | Two humans: lobby seats, host, factions, rejoin into the seat; `duo` profile | C-77 | `TwoPlayers.spec` (two client stacks: join, fog, commands, combat, win), `c77_*.jpg`. **2-client Studio test not run:** `ACTIVE = "duo"`, Test → Clients and Servers → 2 players |
+| 4 | Robustness: late join, rejoin, restart; the stale selection after a restart fixed | C-78 | `Robustness.spec`, `c78_rejoined.jpg` |
+| 5 | Spectators (no seat → watch everything) and the replay viewer (save, watch, pause, 0.25–8×, seek, exit) | C-79 | `Replay.spec` (every seek = the live view), `c79_*.jpg` |
+| 6 | Lobby choices (faction, AI level per seat, named maps) and results with the sim's statistics | C-77, C-80 | `Lobby.spec`, `c77_results_stats.jpg` |
+| 7 | Settings menu (O): camera, graphics quality, fog lights, atmosphere, UI scale, keys | C-81 | `Settings.spec`, `c81_*.jpg` |
+| 8 | Server alerts | — | requested from sim-A (request 39); the client's own alerts stay |
+| 9 | Nuke crater (Terrain, put back on a new match), water splashes | C-82 | `Splash.spec`, `c82_nuke_crater.jpg`, `c82_crater_close.jpg` |
+| 10 | Atmosphere presets as options (Current stays the default) | C-83 | table with GPU / CPU cost and `c83_atmosphere_*.jpg` |
+| + | Requests 37, 38 used (live flares / chaff; sim statistics), S-62 Pinpointer weights followed | C-80 | `OwnerFields.spec`, `c80_charges.jpg` |
+| + | Warden deploy and Minotaur ram animations (S-64); their icons fall back to the Main Battle Tank | C-84, C-74 | `Deploy.spec`; no Studio image until the models stream's blockouts land |
+| + | Sound plan with candidate audio IDs, nothing inserted | — | `docs/SOUND_PLAN.md` |
+
+**Tests at the end:** `lune run test_client`: 43 specs, 143 passed, 0 failed. `lune run test` (sim): 53 specs, 355 passed. `lune run build`: 415 scripts compile, every require resolves.
+
+**What I need from you:**
+1. Import `assets/icons/ftgg-icons.png` (draft 3; same layout, so only the ID changes) and send me the asset ID. I'll then re-check the pairs you fixed at real size.
+2. Add catalogue entries for the Warden and the Minotaur to the icon HTML.
+3. Run the 2-client test once (above), or tell me to.
+4. Review the "Needs my review" list: settings defaults, UI placement, atmosphere options, sound picks.
+
 ## Summary (night run, 2026-10-21)
 
 **All nine queued tasks are done, committed, pushed and in the merge queue below.** Tasks 1–5 were verified in Studio playtests; Studio then closed its place (the instance reports "Place is not open"), so tasks 6–9 are verified headless only: Lune specs against the real sim, plus headless renders of the real client's view (C-15). Nothing was done to repair Studio.
