@@ -1,6 +1,7 @@
 --!strict
 -- Draws Core/Effects (guide 15.3): projectiles as pooled Neon shells with a
--- short Trail, moved with one BulkMoveTo; tracers as thin fading parts;
+-- short Trail, missiles as small models with an exhaust glow and a smoke
+-- trail, all moved with one BulkMoveTo; tracers as thin fading parts;
 -- bursts as a growing, fading flash plus a particle burst
 -- (ParticleEmitter:Emit on a shared carrier, never Enabled). Pools never
 -- shrink; unused parts are unparented.
@@ -44,6 +45,8 @@ export type Renderer = {
 	folder: Folder,
 	shells: { Shell },
 	slotOf: { [number]: number }, -- projectile ID → shell index (stable: trails don't jump)
+	missiles: { any }, -- Missile
+	missileOf: { [number]: any }, -- projectile ID → its Missile
 	tracers: { BasePart },
 	flashes: { BasePart },
 	carrier: BasePart,
@@ -51,7 +54,7 @@ export type Renderer = {
 	emitted: { [any]: boolean },
 	parts: { BasePart },
 	frames: { CFrame },
-	stats: { maxProjectiles: number, maxFlashes: number, maxTracers: number, emits: number }, -- diagnostics
+	stats: { maxProjectiles: number, maxFlashes: number, maxTracers: number, emits: number, maxMissiles: number }, -- diagnostics
 }
 
 local function newPart(name: string, shape: Enum.PartType?): Part
@@ -92,6 +95,160 @@ local function newShell(): Shell
 	return { part = part, trail = trail, owner = nil, fresh = true }
 end
 
+-- Missiles (HOMING): a small model instead of a shell, sized for the RTS
+-- camera like the shells (C-18): body, nose (dark IR seeker, white radar
+-- radome), cross fins and a flickering Neon exhaust with a light, a short
+-- flame and a grey smoke trail. "smoke_thick" weapons (radar SAMs) get a
+-- bigger missile and a longer, wider plume. When a missile ends, its model
+-- hides and stops where it was, so its smoke fades out instead of vanishing.
+-- Parts are anchored and moved together in the same BulkMoveTo as shells.
+local MISSILE_STYLE: { [string]: { scale: number, smoke: number } } = {
+	smoke_thin = { scale = 1, smoke = 1.1 },
+	smoke_thick = { scale = 1.3, smoke = 1.8 },
+}
+local NOSE_COLOR: { [string]: Color3 } = {
+	IR = Color3.fromRGB(45, 48, 55),
+	RADAR = Color3.fromRGB(240, 238, 228),
+}
+local MISSILE_LIGHTS = 16 -- exhaust lights at once (the first drawn missiles)
+
+type Missile = {
+	root: BasePart, -- the nose: named "Projectile" for the scene dump, the other parts are its children
+	parts: { BasePart },
+	offsets: { CFrame },
+	exhaust: BasePart,
+	light: PointLight,
+	smoke: Trail,
+	flame: Trail,
+	style: string,
+	owner: number?,
+	fresh: boolean,
+	freeAt: number, -- released: reusable once its smoke has faded
+}
+
+local function meshed(name: string, meshType: Enum.MeshType, size: Vector3, color: Color3, material: Enum.Material): Part
+	local p = newPart(name)
+	p.Material = material
+	p.Size = size
+	p.Color = color
+	local m = Instance.new("SpecialMesh")
+	m.MeshType = meshType
+	m.Parent = p
+	return p
+end
+
+local function newMissile(style: string): Missile
+	local s = (MISSILE_STYLE[style] or MISSILE_STYLE.smoke_thin).scale
+	local d = 0.8 * s -- forward is -Z (CFrame.lookAt); the missile runs from z = -2.2 s (tip) to 2.2 s (tail)
+	local body = newPart("Body")
+	body.Shape = Enum.PartType.Cylinder -- its axis is X
+	body.Material = Enum.Material.SmoothPlastic
+	body.Size = Vector3.new(3.2 * s, d, d)
+	body.Color = Color3.fromRGB(225, 225, 220)
+	local nose = meshed("Projectile", Enum.MeshType.Sphere, Vector3.new(d, d, 2.4 * s), NOSE_COLOR.IR, Enum.Material.SmoothPlastic)
+	local finColor = Color3.fromRGB(160, 162, 166)
+	local finA = newPart("Fins")
+	finA.Material = Enum.Material.SmoothPlastic
+	finA.Size = Vector3.new(0.08 * s, 2 * s, 0.9 * s)
+	finA.Color = finColor
+	local finB = finA:Clone()
+	finB.Size = Vector3.new(2 * s, 0.08 * s, 0.9 * s)
+	local exhaust = meshed("Exhaust", Enum.MeshType.Sphere, Vector3.new(0.65 * s, 0.65 * s, 1.6 * s), Color3.fromRGB(255, 190, 90), Enum.Material.Neon)
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 170, 80)
+	light.Range = 10 * s
+	light.Brightness = 3
+	light.Shadows = false
+	light.Parent = exhaust
+	local function trail(name: string, half: number, lifetime: number): Trail
+		local a0 = Instance.new("Attachment")
+		a0.Name = name .. "Top"
+		a0.Position = Vector3.new(0, half, 0.8 * s)
+		a0.Parent = exhaust
+		local a1 = Instance.new("Attachment")
+		a1.Name = name .. "Bottom"
+		a1.Position = Vector3.new(0, -half, 0.8 * s)
+		a1.Parent = exhaust
+		local t = Instance.new("Trail")
+		t.Name = name
+		t.Attachment0 = a0
+		t.Attachment1 = a1
+		t.Lifetime = lifetime
+		t.FaceCamera = true
+		t.MinLength = 0.1
+		t.Parent = exhaust
+		return t
+	end
+	local smoke = trail("Smoke", 0.5 * s, (MISSILE_STYLE[style] or MISSILE_STYLE.smoke_thin).smoke)
+	smoke.LightEmission = 0
+	smoke.LightInfluence = 1
+	smoke.Color = ColorSequence.new(Color3.fromRGB(235, 235, 232), Color3.fromRGB(175, 175, 172))
+	smoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(0.6, 0.75), NumberSequenceKeypoint.new(1, 1) })
+	smoke.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 5) }) -- 1 stud at the nozzle, billowing to 5
+	local flame = trail("Flame", 0.22 * s, 0.05)
+	flame.LightEmission = 1
+	flame.Color = ColorSequence.new(Color3.fromRGB(255, 230, 150), Color3.fromRGB(255, 120, 40))
+	flame.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1) })
+	flame.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.3) })
+	for _, p in { body, finA, finB, exhaust } :: { BasePart } do
+		p.Parent = nose
+	end
+	return {
+		root = nose,
+		parts = { nose, body, finA, finB, exhaust },
+		offsets = {
+			CFrame.new(0, 0, -1 * s),
+			CFrame.new(0, 0, 0.6 * s) * CFrame.Angles(0, math.pi / 2, 0),
+			CFrame.new(0, 0, 1.7 * s),
+			CFrame.new(0, 0, 1.7 * s),
+			CFrame.new(0, 0, 2.6 * s),
+		},
+		exhaust = exhaust,
+		light = light,
+		smoke = smoke,
+		flame = flame,
+		style = style,
+		owner = nil,
+		fresh = true,
+		freeAt = 0,
+	}
+end
+
+local function setMissileShown(m: Missile, shown: boolean)
+	local t = if shown then 0 else 1
+	for _, p in m.parts do
+		if p.Transparency ~= t then
+			p.Transparency = t
+		end
+	end
+	if not shown then
+		m.light.Enabled = false
+	end
+end
+
+-- A missile model for projectile `id`: the one it had, else a released one
+-- of its style whose smoke has faded, else a new one.
+local function missileFor(r: Renderer, id: number, style: string, now: number): Missile
+	local m = r.missileOf[id]
+	if m and m.owner == id then
+		return m
+	end
+	for _, other in r.missiles do
+		if other.owner == nil and other.style == style and now >= other.freeAt then
+			m = other
+			break
+		end
+	end
+	if m == nil then
+		m = newMissile(style)
+		table.insert(r.missiles, m)
+	end
+	local mm = m :: Missile
+	mm.owner, mm.fresh = id, true
+	r.missileOf[id] = mm
+	return mm
+end
+
 function RenderEffects.new(): Renderer
 	local folder = Instance.new("Folder")
 	folder.Name = "Effects"
@@ -115,6 +272,8 @@ function RenderEffects.new(): Renderer
 		folder = folder,
 		shells = {},
 		slotOf = {},
+		missiles = {},
+		missileOf = {},
 		tracers = {},
 		flashes = {},
 		carrier = carrier,
@@ -122,7 +281,7 @@ function RenderEffects.new(): Renderer
 		emitted = setmetatable({}, { __mode = "k" }) :: any,
 		parts = {},
 		frames = {},
-		stats = { maxProjectiles = 0, maxFlashes = 0, maxTracers = 0, emits = 0 },
+		stats = { maxProjectiles = 0, maxFlashes = 0, maxTracers = 0, emits = 0, maxMissiles = 0 },
 	}
 end
 
@@ -187,9 +346,49 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			inUse[r.slotOf[p.id]] = true -- reserve before handing out free shells
 		end
 	end
+	local lights, liveMissiles = 0, {}
 	for _, v in visible do
 		local p = v[1] :: Effects.Proj
 		local kind = p.weapon.type
+		if kind == "HOMING" then
+			local style = p.weapon.fx and p.weapon.fx.trail
+			if MISSILE_STYLE[style] == nil then
+				style = "smoke_thin"
+			end
+			local m = missileFor(r, p.id, style, now)
+			liveMissiles[m] = true
+			if m.root.Parent ~= r.folder then
+				m.root.Parent = r.folder
+			end
+			setMissileShown(m, true)
+			local nose = NOSE_COLOR[p.weapon.guidance] or NOSE_COLOR.IR
+			if m.root.Color ~= nose then
+				m.root.Color = nose
+			end
+			if m.fresh then
+				m.smoke.Enabled, m.flame.Enabled = false, false
+				m.smoke:Clear()
+				m.flame:Clear()
+				m.fresh = false
+			elseif not m.smoke.Enabled then
+				m.smoke.Enabled, m.flame.Enabled = true, true
+			end
+			-- the exhaust flickers; the first MISSILE_LIGHTS light their surroundings
+			local flicker = 0.5 + 0.5 * math.sin(now * 47 + p.id * 1.7) * math.sin(now * 23 + p.id)
+			m.exhaust.Transparency = 0.05 + 0.3 * flicker
+			lights += 1
+			m.light.Enabled = lights <= MISSILE_LIGHTS
+			m.light.Brightness = 2 + 2 * (1 - flicker)
+			local pos = Vector3.new(v[2], v[3], v[4])
+			local vel = Vector3.new(p.vx, p.vy, p.vz)
+			local frame = if vel.Magnitude > 1e-3 then CFrame.lookAt(pos, pos + vel) else CFrame.new(pos)
+			m.root:SetAttribute("TrailLength", vel.Magnitude * m.smoke.Lifetime) -- for the scene dump
+			for k, part in m.parts do
+				table.insert(parts, part)
+				table.insert(frames, frame * m.offsets[k])
+			end
+			continue
+		end
 		local shell = shellFor(r, p.id, inUse)
 		local part = shell.part
 		local size = PROJ_SIZE[kind] or PROJ_SIZE.BALLISTIC
@@ -228,6 +427,20 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			end
 		end
 	end
+	-- missiles no longer drawn: hidden where they ended, reused once their smoke has faded
+	for _, m in r.missiles do
+		if m.owner and not liveMissiles[m] then
+			if r.missileOf[m.owner] == m then
+				r.missileOf[m.owner] = nil
+			end
+			m.owner = nil
+			m.freeAt = now + m.smoke.Lifetime
+			setMissileShown(m, false)
+		elseif m.owner == nil and m.root.Parent ~= nil and now >= m.freeAt then
+			m.root.Parent = nil
+		end
+	end
+	r.stats.maxMissiles = math.max(r.stats.maxMissiles, lights)
 	r.stats.maxProjectiles = math.max(r.stats.maxProjectiles, #visible)
 	r.stats.maxFlashes = math.max(r.stats.maxFlashes, #fx.bursts)
 	r.stats.maxTracers = math.max(r.stats.maxTracers, #fx.tracers)
