@@ -4,7 +4,24 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: second round of 2026-10-22, branch `m-sim-2`; everything merged into `main`)
+## Summary (latest: overnight 2026-10-22, branch `m-sim-2`; everything merged into `main`)
+
+**Overnight** (the user's five tasks, with the client's requests 34–36 first, as they came). Protocol 18 → 20. Tests: 345 in 51 specs → 356 in 52 (350 fast, ~36 s; 6 slow, ~40 s). Every commit passed the fast suite; every merge into `main` passed fast, slow and the build.
+
+| Task | Result | Decision |
+|---|---|---|
+| 1. AI levels | Easy: no attack before 8 min, waves of 4 +1 two minutes apart, an army of 8. Normal: 2–3 tanks before its third generator, recalls its army against an enemy wave near the base. SAM stockpiles measured against helicopter raids (empty-with-a-target 44% → 31%) and fixed in the AI: refill power counted, half the mobile SAMs stay home, production pauses for refills under a stall. The integration's slow suite caught a side bias in Normal mirrors (rally points inside each other's artillery range); fixed. **Hard > Normal > Easy on every map** (Normal–Easy 36–6, Hard–Normal 42–0, Hard–Easy 36–0; was Easy–Normal 23–19) | S-57 |
+| 2. Faction proposal | `docs/design/factions.md` (write-only): an updated guide 2.1, numbers per shared role (Order longer range, accuracy, damage per shot, toughness, sensors, price; Chaos the opposite), faction-only units, match flow, measurement plan, AI per faction, risks. Proposes **Vigil 250 / Thorn 200** (Order outranges again) | — |
+| 3. Normandy performance | New `lune run profile_normandy`. Route search, flow fields and slot assignment do the same work faster; the state hash is unchanged. Worst tick 16–25 → 11–15 ms, p99 12–14 → 8–9 ms; Pathing peak 12–19 → 7–8 ms, Projectiles+Damage 7–11 → 6.5–10, NetOut 5–7 → 4. **Still over:** Commands on a select-all order (1.7 ms, budget 1) and a structure death's quadtree updates (~6 ms); proposals under "Needs my review" | S-60 |
+| 4. Baseline | `docs/BALANCE.md` "Baseline": counter check 439 → 444 pairs holding; mobile radar SAMs weaker, bombers stronger, Hornet stronger. AI levels unchanged by the SAM changes alone. Stress (800 units) Pathing 11.1 → 5.1 ms; the soak's default seed is now 4 (25.5 min, replay identical) | — |
+| 5. Integration | Client C-59 … C-73 and models M-12, M-13 merged, all passing; no conflicts | — |
+| Client requests | 29: interception chance 0.2. 28: nukes climb vertically, then turn (shared `Lofted`, protocol 18). 30: radar SAM stock 15. 31: `map:normandy`, re-oriented west–east by the user (S-54). 32, 33: SAM ranges −30% IR / −25% radar, twice. 34: Pinpointers (radar precision). 35: a unique icon per unit type (protocol 19). 36: own units' queue, fire / move state, ammo on the wire (protocol 20) | S-50 … S-61 |
+
+**Earlier on 2026-10-22** (requests 25–27): SAM missile stockpiles (protocol 15), nuke silos with radar SAM interception (protocol 16), lower nuke arc and stockpile progress (protocol 17). S-47 … S-49.
+
+**Needs my review** (below) gained: the AI level numbers and the refill-priority question (S-57); Pinpointer numbers (S-59); radar SAM stock and the range cuts (S-52, S-55, S-56); the two remaining performance peaks (S-60); the faction proposal itself.
+
+## Summary (previous round: second round of 2026-10-22)
 
 **This round** (the user's seven tasks, the client's requests first, then the soak and the AI level report). Protocol 9 → 13. Tests: 299 in 41 specs → 331 in 48 (325 fast, ~34 s; 6 slow, ~35 s).
 
