@@ -333,7 +333,10 @@ return function(t: any)
 		print(string.format("    sam scene: %d missile frames, bend mean %.3f studs (at tick boundaries %.3f), worst %.2f", n, mean, boundary, worst))
 		t.expect(n > 1000, "plenty of missile frames")
 		t.expect(worst <= 3, `no jumps (worst {worst} studs)`)
-		t.expect(boundary <= mean * 1.5, `no corner at tick boundaries ({boundary} vs {mean} on average)`)
+		-- C-38's corners were ~1 stud a frame; with proportional navigation
+		-- (S-27) paths are so straight that the mean bend halved, so a tenth
+		-- of a stud at the boundary still counts as smooth
+		t.expect(boundary <= math.max(mean * 1.5, 0.1), `no corner at tick boundaries ({boundary} vs {mean} on average)`)
 	end)
 
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()
