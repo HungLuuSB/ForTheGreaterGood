@@ -1,6 +1,10 @@
 {
   "id": "ord_lancer",
   "footprintStuds": 8,
+  "variants": {
+    "a": "plain sand, weathered",
+    "b": "three-tone disruptive"
+  },
   "pieces": {
     "base": {
       "parent": null,
@@ -43,12 +47,12 @@
       "center": [
         0.0,
         2.3,
-        -4.475
+        -4.4925
       ],
       "size": [
         0.8,
         0.62,
-        5.95
+        5.985
       ]
     }
   },
@@ -58,36 +62,28 @@
       "at": [
         0.0,
         2.3,
-        -7.5
+        -7.52
       ]
     }
   },
   "teamColorPieces": [
-    "base",
     "turret"
   ],
   "triangles": {
-    "base": 2036,
-    "turret": 608,
-    "barrel": 372,
-    "total": 3016
+    "base": 2012,
+    "turret": 764,
+    "barrel": 928,
+    "total": 3704
   },
   "textures": {
-    "ALB": {
-      "file": "ord_lancer_ALB.png",
-      "size": 1024
-    },
-    "NOR": {
-      "file": "ord_lancer_NOR.png",
-      "size": 1024
-    },
-    "RGH": {
-      "file": "ord_lancer_RGH.png",
-      "size": 1024
-    },
-    "MTL": {
-      "file": "ord_lancer_MTL.png",
-      "size": 1024
-    }
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL"
+    ]
   }
 }

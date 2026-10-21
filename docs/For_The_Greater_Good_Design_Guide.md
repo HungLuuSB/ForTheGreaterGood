@@ -470,6 +470,16 @@ Ground units don't send height: the client looks it up from its own copy of the 
 - **Air lanes:** keep some areas without SAM-friendly terrain so air play is viable.
 - Tag maps with supported modes (`Team`, `FFA`, `Naval`).
 - Implementation (S-15): `Shared/Grid/MapGen` generates maps that follow these rules (1v1, 2v2, 4-player FFA; mirror or rotational symmetry; safe, expansion and contested deposits; ridges with passes at least 3 cells wide; optional lakes or a sea) and checks each candidate; `MapRegistry` has `mapgen:` IDs and the named maps `map:ridgeline`, `map:coastline`, `map:twin_lakes`, `map:crossroads`.
+- **Hand-made maps** (S-53, S-54): `map:normandy` (`Shared/Grid/Normandy`), a 256 × 256-cell (2048-stud) large-battle test map. The armies fight **west (player 1) against east (player 2)**, the user's choice (S-54).
+  - **Coast:** a north flank both sides share. Sea north of z 760 (surface 10, ~25 deep; scenery), a sand beach at z 640–760, and bluffs at z 560–640: a 3-cell cliff to the plateau (34) that no land unit climbs, with three 48-stud draws, with roads, at x = −560, 0 and 560.
+  - **South of the bluffs, mirrored about x = 0:**
+    - each side's rear at |x| > 672, open fields;
+    - a north–south river at x = ±660, 24 studs wide and 4 deep, with bridges (and roads) at z = −700, −250 and 250;
+    - each side's open staging field at |x| 420–640;
+    - the bocage at |x| < 400: 176-stud fields bounded by hedgerows. A hedgerow is a 1-cell bank 6 studs high (rock) that blocks land units and low direct fire, with a 40-stud gap every 96 studs, 24 of them passable;
+    - two villages at (±220, −150): 2 × 2-cell houses, 8 studs high.
+  - **Starts and deposits:** (−850, 0) and (850, 0). There are no deposits.
+  - **For drawing:** `Normandy.feature(cx, cz)` names each cell (sea, beach, bluff, draw, hedge, house, road, bridge, river, field).
 
 ---
 

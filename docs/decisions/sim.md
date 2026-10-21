@@ -552,3 +552,33 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Changed:** the radar SAM weapons' stockpile (`chs_radar_sam`, `ord_radar_sam`): capacity 6 → 15 (the Wyvern and Aegis sites, which intercept nukes), buildTime per missile 12 → 6 s (the user gave no number; the client suggested halving).
 - **Kept (my call, under "Needs my review"):** the cost per missile (40 supply + 900 power: a full refill is now 600 + 13,500, drained at twice the rate, 6.7 supply and 150 power per second per site); the mobile Gorgon and Seraph at 3 (slot override); the IR SAMs as they are. Read as the radar sites only, since the user was testing interception.
 - **Tests:** `Stockpile.spec` capacities. With chance 0.2 per burst (S-50), a full Wyvern now gives a nuke about a 96% chance of being destroyed if all 15 get to burst (1 − 0.8¹⁵).
+
+## S-53 — `map:normandy`, a hand-made large-battle map (client request 31, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** "a large map, maybe make a map like Normandy", for a large-scale battle test. The client sent the zone layout, which its army profile uses; all of it is kept.
+- **Built:** `Shared/Grid/Normandy` (hand-made, not MapGen), registered under `MapRegistry.HANDMADE` as `map:normandy`; `genOptions` returns nil for it. Layout in guide 5.5. My calls:
+  - **Hedgerows:** 1-cell banks 6 studs high, so their ends and the cells beside them are also too steep (37°) and a hedge line blocks 3 cells. Gaps are 5 cells, 3 of them passable; terrain is ROCK.
+  - **Bocage limits:** it fills only z −200…280, between the staging fields; the 20-stud strips B left at −360…−340 and 540…560 stay open, so no stray stubs.
+  - **Bluffs:** a 3-cell cliff (about 6.7 studs per cell).
+  - **Draws:** 2 studs per cell (14°), passable for every land class.
+  - **River:** 4 deep, so wheels and tracks can't ford it; amphibious units and hovercraft can.
+  - **Houses:** 2 × 2 cells, 8 studs high, every 6 cells, kept off the roads.
+- **For drawing:** `Normandy.feature(cx, cz)` names each cell.
+- **Tests** (`Normandy.spec`, 5):
+  - the zones and the sea surface;
+  - the cliff, river, hedges and houses are impassable to WHEELED, TRACKED and HEAVY_TRACKED, while the draws, bridges and gaps are passable;
+  - a flood fill gets every land class from the south start to the beach;
+  - a Ravager drives over the x = 100 bridge;
+  - the map is identical on every load. It has 662 hedge cells and 60 house cells.
+
+## S-54 — `map:normandy` re-oriented: the fight runs west–east (the user) (2026-10-22)
+
+- **The user:** "this map fight from the side (left - right) not the sea - land". S-53 followed the client's layout, which put Order on the beach and Chaos behind a river to the south, so the armies met along z, from the sea inland.
+- **Now:** player 1 is west and player 2 east. The coast (sea, beach, bluffs with three draws) is a north flank both sides share. South of the bluffs the map is a mirror image about x = 0:
+  - **Rear:** each side's rear at |x| > 672.
+  - **Rivers:** one at x = ±660, each with bridges at z = −700, −250 and 250, so both sides get a river between their rear and the front, where S-53 gave one only to Chaos.
+  - **Staging:** each side's staging field at |x| 420–640.
+  - **Bocage:** at |x| < 400, with villages at (±220, −150).
+  - **Starts:** (∓850, 0).
+- **Kept:** every S-53 feature size (hedges, houses, gaps, draws, river, bridges). `Normandy.spec` checks the mirror (features and heights) and a Ravager crossing the east bridge at z = 250; 1,044 hedge cells, 72 house cells.
+- **The client's `normandy` profile** places armies on the S-53 layout and has to move to the new zones.
