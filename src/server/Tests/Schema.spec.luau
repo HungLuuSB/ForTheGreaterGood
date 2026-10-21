@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 13, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 14, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -477,7 +477,14 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 13, 1, 0 }, "unknown event kind 13") -- 9..12 since protocol 10
+		expectRejected(t, Schema.decodeEvent, { 14, 1, 0 }, "unknown event kind 14") -- 9..12 since protocol 10, 13 since 14
+		-- protocol 14: SHOT, a hidden shooter's hitscan shot (S-43)
+		local shot: Schema.Event = { kind = Schema.EventKind.SHOT, hit = true, fromCell = 0x0102, fromOffX = 3, fromOffZ = 4, fromY = -5, cell = 0x0607, offX = 8, offZ = 9, y = 10 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, shot)), "0d 01 02 01 03 04 fb ff 07 06 08 09 0a 00")
+		t.equal(buffer.len(encodeOne(Schema.encodeEvent, shot)), Schema.EVENT_BYTES[Schema.EventKind.SHOT])
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, shot), Schema.decodeEvent)[1], shot)
+		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, shot))
+		expectRejected(t, Schema.decodeEvent, { 13, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "SHOT hit byte 2")
 		expectRejected(t, Schema.decodeEvent, { 2, 0, 0 }, "unitId 0 is reserved")
 		expectRejected(t, Schema.decodeEvent, { 1, 1, 0, 1, 0, 9 }, "team 9 outside")
 	end)
