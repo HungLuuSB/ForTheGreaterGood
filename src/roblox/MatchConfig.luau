@@ -1,7 +1,8 @@
 --!strict
 -- What the Studio playtest runs (C-9). Until a lobby exists, the server
 -- hosts one fixed match and Roblox players take the human slots in join
--- order. Pick a profile with ACTIVE.
+-- order. Pick a profile with ACTIVE, in this file: an edit made in Studio
+-- isn't seen by Rojo and silently survives until this file changes.
 
 local PROFILES = {
 	-- 10 Lancers (you) vs 10 Ravagers (bot), in gun range from the start

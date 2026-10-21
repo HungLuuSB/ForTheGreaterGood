@@ -74,6 +74,7 @@ export type World = {
 	died: { Death },
 	events: { Schema.Event }, -- combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK) with `tick`
 	dropped: number, -- records dropped as out of sync or malformed (diagnostics)
+	eventCounts: { [number]: number }, -- combat events received per Schema.EventKind (0 = homing correction)
 }
 
 -- An empty world waiting for the server's WELCOME (net.md section 10).
@@ -98,6 +99,7 @@ function World.new(defs: Defs.DefSet): World
 		died = {},
 		events = {},
 		dropped = 0,
+		eventCounts = {},
 	}
 end
 

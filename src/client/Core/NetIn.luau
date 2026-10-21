@@ -41,6 +41,8 @@ local function queueEvent(world: World.World, e: Schema.Event, tick: number)
 	end
 	(e :: any).tick = tick
 	table.insert(events, e)
+	local kind = (e :: any).kind
+	world.eventCounts[kind] = (world.eventCounts[kind] or 0) + 1
 end
 
 local function applyEvents(world: World.World, events: { Schema.Event }, tick: number)

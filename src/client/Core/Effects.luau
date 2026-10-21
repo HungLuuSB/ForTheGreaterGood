@@ -65,6 +65,7 @@ export type Fx = {
 	focusX: number,
 	focusZ: number,
 	skipped: { bursts: number, tracers: number },
+	applied: { [string]: number }, -- events applied per kind name (diagnostics)
 }
 
 function Effects.new(): Fx
@@ -77,6 +78,7 @@ function Effects.new(): Fx
 		focusX = 0,
 		focusZ = 0,
 		skipped = { bursts = 0, tracers = 0 },
+		applied = {},
 	}
 end
 
@@ -157,8 +159,12 @@ local function stepProjectiles(fx: Fx, world: World.World)
 	end
 end
 
+local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
+
 local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: ((number, number) -> (number?, number?, number?))?)
 	local kind = e.kind
+	local name = KIND_NAME[kind] or tostring(kind)
+	fx.applied[name] = (fx.applied[name] or 0) + 1
 	if kind == EK.SPAWN_PROJ then
 		local weapon = world.defs.weaponByIndex[e.weaponIndex]
 		if weapon == nil then
