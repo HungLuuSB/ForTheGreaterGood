@@ -272,8 +272,9 @@ end
 -- torpedoes lead pursuit against where it is at the tick's end. `at(t)`
 -- gives the target's x, z and altitude at the end of sim tick t; its
 -- velocity is taken over the tick.
--- Vertical launches (`launch = "vertical"`, S-42) pitch over first
--- (Guidance.vertical); `turned` is their state, returned updated.
+-- Vertical launches (`launch = "vertical"`, S-42) climb `climbHeight` straight
+-- up (S-44), then pitch over (Guidance.vertical); `turned` is their state,
+-- returned updated.
 local function steer(world: World.World, target: World.Unit, weapon: any, at: (number) -> (number, number, number), t: number, x: number, y: number, z: number, vx: number, vy: number, vz: number, turned: boolean?): (number, number, number, boolean?)
 	local ex, ez, alt = at(t)
 	local sx, sz = at(t - 1)
@@ -281,7 +282,11 @@ local function steer(world: World.World, target: World.Unit, weapon: any, at: (n
 	local tvx, tvz = (ex - sx) / DT, (ez - sz) / DT
 	local maxTurn = math.rad(weapon.turnRate) * DT
 	if weapon.type == "HOMING" and weapon.launch == "vertical" then
-		return Guidance.vertical(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT, turned == true)
+		-- the straight climb first (S-44, C-55): judged on the server's cell
+		-- ground (Layers.heightAt), not the smoothed drawn terrain
+		local layers = world.layers
+		local climbLeft = if layers then Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)) else nil
+		return Guidance.vertical(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT, turned == true, climbLeft)
 	elseif weapon.type == "HOMING" then
 		local nx, ny, nz = Guidance.pn(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT)
 		return nx, ny, nz, turned
