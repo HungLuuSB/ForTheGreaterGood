@@ -15,7 +15,7 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
   - [ ] Batch 4: T1 structures
 - **Phase 2** (started early, M-9): detailed meshes with PBR textures.
   - [x] Style guide rewritten for the near-future look ([`../art/style-guide.md`](../art/style-guide.md)); Chaos base color test on Coastline: gunmetal recommended (M-10).
-  - [ ] Lancer vertical slice. Pipeline proposed in [`../art/pipeline.md`](../art/pipeline.md) (M-11). **Waiting for your approval** before building.
+  - [x] Lancer vertical slice (M-11..M-13), section below. **Waiting for your review.**
 
 ## Style review: modern armies (2026-10-21)
 
@@ -81,6 +81,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 
 - Ready to merge: `84ba52d` (batch 1: T1 ground unit blockouts, both factions; new `docs/decisions/models.md` and `docs/progress/models.md`; touches only `src/shared/Defs/Blockouts/` and those two files).
 - Ready to merge: `255dd9f` (new art direction: guide 2.1 and 20.3, `docs/art/style-guide.md`; style-review variants in `Blockouts/Review/`, not used by the game).
+- Ready to merge: `8eee48c` (near-future art direction: guide 2.1, `docs/art/style-guide.md`, `docs/art/pipeline.md` proposal; docs only).
 
 ## Requests
 

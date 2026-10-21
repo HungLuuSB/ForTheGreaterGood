@@ -1,0 +1,93 @@
+{
+  "id": "ord_lancer",
+  "footprintStuds": 8,
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.955,
+        -0.1175
+      ],
+      "size": [
+        6.0,
+        1.91,
+        8.135
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "pivot": [
+        0.0,
+        1.85,
+        0.4
+      ],
+      "center": [
+        0.0,
+        2.625,
+        0.4324
+      ],
+      "size": [
+        4.09,
+        1.55,
+        5.4352
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "pivot": [
+        0.0,
+        2.3,
+        -1.45
+      ],
+      "center": [
+        0.0,
+        2.3,
+        -4.475
+      ],
+      "size": [
+        0.8,
+        0.62,
+        5.95
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        2.3,
+        -7.5
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret"
+  ],
+  "triangles": {
+    "base": 2036,
+    "turret": 608,
+    "barrel": 372,
+    "total": 3016
+  },
+  "textures": {
+    "ALB": {
+      "file": "ord_lancer_ALB.png",
+      "size": 1024
+    },
+    "NOR": {
+      "file": "ord_lancer_NOR.png",
+      "size": 1024
+    },
+    "RGH": {
+      "file": "ord_lancer_RGH.png",
+      "size": 1024
+    },
+    "MTL": {
+      "file": "ord_lancer_MTL.png",
+      "size": 1024
+    }
+  }
+}
