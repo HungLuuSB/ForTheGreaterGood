@@ -41,6 +41,26 @@ local function total(arcs: { any }): number
 end
 
 return function(t: any)
+	t.test("arcs keep the unit they belong to, so rings can follow it between rebuilds (C-29)", function()
+		local circles = {
+			{ x = 0, z = 0, r = 50, kind = "weapon", owner = 7 },
+			{ x = 30, z = 0, r = 50, kind = "weapon", owner = 9 },
+			{ x = 200, z = 0, r = 30, kind = "weapon" }, -- the build ghost: no owner
+		}
+		local arcs = Ranges.union(circles)
+		local owners = {}
+		for _, arc in arcs do
+			owners[arc.owner or 0] = true
+			t.equal(arc.owner, if arc.x == 0 then 7 elseif arc.x == 30 then 9 else nil, "an arc's owner is its circle's")
+		end
+		t.expect(owners[7] and owners[9] and owners[0], "both units' arcs and the ghost's")
+		for _, line in Ranges.polylines(arcs, function()
+			return 0
+		end) do
+			t.expect(line.owner == nil or line.owner == 7 or line.owner == 9, "lines keep it too")
+		end
+	end)
+
 	t.test("two overlapping circles give one outline with no interior arcs", function()
 		local circles = { { x = 0, z = 0, r = 10, kind = "weapon" }, { x = 12, z = 0, r = 10, kind = "weapon" } }
 		local arcs = Ranges.union(circles)
