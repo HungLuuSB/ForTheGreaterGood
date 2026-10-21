@@ -169,6 +169,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `9fac768` (nuke craters and water splashes, C-82); test_client 141, build passed.
 - Ready to merge: `c5888f5` (atmosphere presets as options, C-83); test_client 141, build passed.
 - Ready to merge: `2d98701` (Warden and Minotaur piece scripts, deploy phases, C-84); test_client 143, build passed.
+- Ready to merge: `6ea62c3` (alerts from the server, S-69 to S-73 followed, C-85; includes the merge of main at f487eea); test_client 144, build passed.
 
 ## Tasks
 
