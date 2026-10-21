@@ -72,6 +72,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `89740cf` (smooth missile paths, C-36).
 - Ready to merge: `6161783` (SAM test scene, slowed flight tests, fog darkening off, C-37).
 - Ready to merge: `5d6c9e9` (curved missile paths, aircraft markers, clicking models, C-38).
+- Ready to merge: `1b2866a` (merge of `main` with S-23, S-24 and the C-36, C-37 integrations; test_client 78, test 299, build passed).
 
 ## Tasks
 
