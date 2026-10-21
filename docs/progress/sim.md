@@ -163,6 +163,9 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 37), S-63, protocol 21:** OWNER field bit **CHARGES 8**: `flares u8, chaff u8` (charges left; 0 for a kind the def lacks), own units with flares or chaff, on change and with ENTER.
+- **Done (request 38), S-63:** `Sim/Stats`: `Stats.report(sim)` → per player `{ unitsBuilt, unitsLost, unitsKilled, damageDealt, supplyGathered, powerGathered, supplySpent, powerSpent }`; server-side only. Definitions are in the module header.
+- **Pinpointers (S-62):** a type may need a different count for full precision (`pinpointFull`: Witness 5, Augur 7). Please sum `Pinpoint.weight(def)` over the finished Pinpointers instead of counting them, then call `Pinpoint.precision(sum)` as now.
 - **Done (request 36), S-61, protocol 20:** State mask bit **128 OWNER**, after `stock`: `ownerMask u8` (QUEUE 1, STATES 2, AMMO 4), then:
   - QUEUE: `count u8`, `progress u8` (the head, 0..255), `defIndex u16` × count.
   - STATES: `u8` = fire (bits 0–1) + move × 4 (bits 2–3).

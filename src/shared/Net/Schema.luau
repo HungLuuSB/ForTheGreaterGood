@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 20 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo)
+Schema.PROTOCOL_VERSION = 21 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -384,6 +384,9 @@ end
 --                         0..255 of 1) | defIndex u16 × count
 --               STATES 2  u8: fire state bits 0–1, move state bits 2–3
 --               AMMO 4    rounds u8 | max u8
+--               CHARGES 8 flares u8 | chaff u8: countermeasure charges
+--                         left, 0 for a kind the def lacks (protocol 21,
+--                         S-63)
 --------------------------------------------------------------------------------
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
@@ -409,8 +412,8 @@ Schema.StateField = table.freeze({
 	OWNER = 128, -- own units only: factory queue, fire / move state, ammo (protocol 20, S-61)
 })
 local STATE_MASK_ALL = 255
-Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4 })
-local OWNER_MASK_ALL = 7
+Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4, CHARGES = 8 })
+local OWNER_MASK_ALL = 15
 Schema.MAX_QUEUE = 50 -- items a factory queue can hold (BuildState.MAX_QUEUE)
 local SF = Schema.StateField
 
@@ -436,6 +439,8 @@ export type State = {
 	moveState: number?, -- Schema.MoveState
 	ammo: number?, -- rounds left (with `maxAmmo`: the AMMO field)
 	maxAmmo: number?,
+	flares: number?, -- countermeasure charges left (with `chaff`: the CHARGES field, protocol 21)
+	chaff: number?,
 }
 
 -- {slot1, slot2, ...} WeaponState values → the u16 weapon field.
@@ -485,6 +490,9 @@ function Schema.encodeState(w: Writer, rec: State)
 	end
 	if rec.ammo ~= nil then
 		owner += Schema.OwnerField.AMMO
+	end
+	if rec.flares ~= nil or rec.chaff ~= nil then
+		owner += Schema.OwnerField.CHARGES
 	end
 	if owner ~= 0 then
 		mask += SF.OWNER
@@ -587,6 +595,10 @@ function Schema.encodeState(w: Writer, rec: State)
 			w:writeU8(rec.ammo)
 			w:writeU8(required(rec.maxAmmo, "maxAmmo"))
 		end
+		if band(owner, Schema.OwnerField.CHARGES) ~= 0 then
+			w:writeU8(rec.flares or 0)
+			w:writeU8(rec.chaff or 0)
+		end
 	end
 end
 
@@ -682,6 +694,10 @@ function Schema.decodeState(r: Reader): State
 		if band(owner, Schema.OwnerField.AMMO) ~= 0 then
 			rec.ammo = r:readU8()
 			rec.maxAmmo = r:readU8()
+		end
+		if band(owner, Schema.OwnerField.CHARGES) ~= 0 then
+			rec.flares = r:readU8()
+			rec.chaff = r:readU8()
 		end
 	end
 	return rec

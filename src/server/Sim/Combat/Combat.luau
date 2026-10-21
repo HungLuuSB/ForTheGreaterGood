@@ -94,6 +94,7 @@ export type Combat = {
 	pWeapon: { [number]: number }, -- weapon def index
 	pOwner: { [number]: number },
 	pOwnerGen: { [number]: number }, -- generations of the shooter and the homing target (D109)
+	pPlayer: { [number]: number }, -- the shooter's player, kept after it dies (Stats, S-63)
 	pTargetGen: { [number]: number },
 	pTeam: { [number]: number },
 	pTtl: { [number]: number }, -- seconds left
@@ -123,6 +124,7 @@ export type Combat = {
 	dmgTarget: { number },
 	dmgAmount: { number },
 	dmgAttacker: { number },
+	dmgPlayer: { number }, -- the attacker's player (0 = none), for Stats (S-63)
 	dmgCount: number,
 
 	-- wrecks
@@ -185,6 +187,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pWeapon = {},
 		pOwner = {},
 		pOwnerGen = {},
+		pPlayer = {},
 		pTargetGen = {},
 		pTeam = {},
 		pTtl = {},
@@ -210,6 +213,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		dmgTarget = {},
 		dmgAmount = {},
 		dmgAttacker = {},
+		dmgPlayer = {},
 		dmgCount = 0,
 		wreckIds = {},
 		wreckX = {},
@@ -312,12 +316,13 @@ function Combat.addEvent(c: Combat, e: Event)
 	table.insert(c.events, e)
 end
 
-function Combat.queueDamage(c: Combat, target: number, amount: number, attacker: number)
+function Combat.queueDamage(c: Combat, target: number, amount: number, attacker: number, player: number?)
 	local n = c.dmgCount + 1
 	c.dmgCount = n
 	c.dmgTarget[n] = target
 	c.dmgAmount[n] = amount
 	c.dmgAttacker[n] = attacker
+	c.dmgPlayer[n] = player or 0
 	c.queued[target] = (c.queued[target] or 0) + amount
 end
 
@@ -480,13 +485,15 @@ function Combat.explode(
 	weapon: Defs.WeaponDef,
 	attacker: number,
 	team: number,
-	direct: number
+	direct: number,
+	player: number? -- default: the attacker's owner
 )
 	local aoe = weapon.aoe or 0
 	local edge = weapon.edgeEffectiveness or 0
+	player = player or (if attacker ~= 0 then w.owner[attacker] else 0)
 	if direct ~= 0 and w.slot[direct] ~= nil then
 		local p = c.profiles[w.defIndex[direct]]
-		Combat.queueDamage(c, direct, weapon.damage[p.armorClass], attacker)
+		Combat.queueDamage(c, direct, weapon.damage[p.armorClass], attacker, player)
 	end
 	if aoe <= 0 then
 		return
@@ -503,7 +510,7 @@ function Combat.explode(
 		local d = Ballistics.distanceToCylinder(x, y, z, w.posX[id], w.posZ[id], p.radius, base, base + p.height)
 		local f = Ballistics.falloff(d, aoe, edge)
 		if f > 0 then
-			Combat.queueDamage(c, id, weapon.damage[p.armorClass] * f, attacker)
+			Combat.queueDamage(c, id, weapon.damage[p.armorClass] * f, attacker, player)
 		end
 	end
 end
@@ -563,6 +570,7 @@ function Combat.spawnProjectile(
 	c.pTtl[id] = ttl
 	c.pTarget[id] = target or 0
 	c.pOwnerGen[id] = if w and owner ~= 0 then w.gen[owner] or 0 else 0
+	c.pPlayer[id] = if w and owner ~= 0 then w.owner[owner] or 0 else 0
 	c.pTargetGen[id] = if w and (target or 0) ~= 0 then targetGen or w.gen[target :: number] or 0 else 0
 	c.pFlags[id] = 0
 	c.projSerial += 1
@@ -588,6 +596,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pvx[id], c.pvy[id], c.pvz[id] = nil, nil, nil
 	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id], c.pFlags[id] = nil, nil, nil, nil, nil, nil
 	c.pOwnerGen[id], c.pTargetGen[id] = nil, nil
+	c.pPlayer[id] = nil
 	c.pDecoy[id] = nil
 	c.pSerial[id], c.pTargetProj[id], c.pTargetSerial[id] = nil, nil, nil
 	c.pGoal[id] = nil

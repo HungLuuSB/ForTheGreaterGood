@@ -769,3 +769,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Stockpile: Chaos capacities.
   - Terrain: a run long enough to reach top speed.
   - Pinpoint: Witness / Augur weights, plus a new test of mixed teams.
+
+## S-63 — Countermeasure charges on the wire; match statistics (client requests 37, 38) (2026-10-22)
+
+- **37, protocol 21:** OWNER field bit CHARGES 8: `flares u8, chaff u8`, the charges left, for own units whose def has flares or chaff. Sent on change and with the ENTER, owner only, like S-61. `NetOut.spec` checks a Falcon's chaff after one is spent; `Schema.spec` pins the bytes.
+- **38: `Sim/Stats`**, server-side only, no wire change:
+  - Per player: `unitsBuilt` (factory output and finished structures; the start doesn't count), `unitsLost`, `unitsKilled`, `damageDealt` (enemy health removed, capped at what was left).
+  - From the player's team account: `supplyGathered` / `powerGathered` (income, reclaim and converter output per economy window, before the storage cap; refunds included) and `supplySpent` / `powerSpent` (drawn after stall ratios, less any forgiven shortfall).
+  - `Stats.report(sim)` returns them all; the Roblox server reads it at match end.
+  - So that a shell's damage counts after its shooter dies, a projectile keeps its shooter's player (`Combat.pPlayer`), and queued damage carries it (`dmgPlayer`).
+  - Not hashed: nothing in the sim reads it.
+  - `Stats.spec` covers damage capped at the target's health, a dead shooter's shell, units built, and the gathered and spent totals.

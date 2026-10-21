@@ -750,7 +750,7 @@ function NetOut.step(sim: Types.Sim)
 			end
 			local d = sim.defs.unitByIndex[w.defIndex[id]]
 			local q = sim.build.queue[id]
-			local qSig, sSig, aSig = "", "", ""
+			local qSig, sSig, aSig, cSig = "", "", "", ""
 			local progress = 0
 			if q then
 				progress = math.clamp(math.floor((sim.build.progress[id] or 0) * 255), 0, 255)
@@ -764,7 +764,16 @@ function NetOut.step(sim: Types.Sim)
 			if ammo ~= nil then
 				aSig = tostring(ammo)
 			end
-			local now = { qSig, sSig, aSig }
+			-- countermeasure charges left (S-63, client request 37)
+			local cm = d.countermeasures
+			local hasCharges = cm ~= nil and (cm.flares ~= nil or cm.chaff ~= nil)
+			local flares, chaff = 0, 0
+			if hasCharges then
+				flares = if cm and cm.flares then sim.ew.flares[id] or 0 else 0
+				chaff = if cm and cm.chaff then sim.ew.chaff[id] or 0 else 0
+				cSig = flares .. "/" .. chaff
+			end
+			local now = { qSig, sSig, aSig, cSig }
 			ownerNow[id] = now
 			local before = if entered[id] then nil else sentOwner[id]
 			local rec: Schema.State? = nil
@@ -791,6 +800,10 @@ function NetOut.step(sim: Types.Sim)
 			if ammo ~= nil and (before == nil or before[3] ~= aSig) then
 				local r = record()
 				r.ammo, r.maxAmmo = math.clamp(ammo, 0, 255), math.clamp(d.ammo or ammo, 0, 255)
+			end
+			if hasCharges and (before == nil or before[4] ~= cSig) then
+				local r = record()
+				r.flares, r.chaff = math.clamp(flares, 0, 255), math.clamp(chaff, 0, 255)
 			end
 		end
 		pn.sentOwner = ownerNow

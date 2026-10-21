@@ -35,6 +35,13 @@ return function(sim: Types.Sim)
 		end
 		local after = before - c.dmgAmount[i]
 		World.setHealth(w, t, after)
+		-- the results screen (S-63): enemy health removed, and who finished it
+		local player = c.dmgPlayer[i]
+		local ps = sim.playerStats[player]
+		local enemy = ps ~= nil and w.ally[t] ~= sim.players[player].allyTeam
+		if enemy and ps then
+			ps.damageDealt += math.min(c.dmgAmount[i], before)
+		end
 		local attacker = c.dmgAttacker[i]
 		if attacker ~= t then
 			w.lastAttacker[t] = attacker
@@ -43,6 +50,9 @@ return function(sim: Types.Sim)
 		if after <= 0 then
 			nDead += 1
 			dead[nDead] = t
+			if enemy and ps then
+				ps.unitsKilled += 1
+			end
 		end
 	end
 	c.dmgCount = 0
@@ -51,6 +61,10 @@ return function(sim: Types.Sim)
 		local id = dead[i]
 		dead[i] = nil
 		local def = sim.defs.unitByIndex[w.defIndex[id]]
+		local lost = sim.playerStats[w.owner[id]]
+		if lost then
+			lost.unitsLost += 1
+		end
 		local severity = math.clamp(-w.health[id] / def.health, 0, 1)
 		local wreck = 0
 		-- aircraft shot down in flight crash and burn: no wreck (client

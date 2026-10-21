@@ -40,6 +40,8 @@ export type Resource = {
 	spent: number, -- spent so far this window
 	reclaimed: number, -- reclaimed so far this window
 	wasted: number, -- total overflow lost to full storage
+	gathered: number, -- total credited: income and reclaim per window, before the storage cap (Stats, S-63)
+	drawn: number, -- total spent, less any shortfall a window forgave (Stats, S-63)
 }
 
 export type Account = { supply: Resource, power: Resource }
@@ -67,6 +69,8 @@ local function newResource(): Resource
 		spent = 0,
 		reclaimed = 0,
 		wasted = 0,
+		gathered = 0,
+		drawn = 0,
 	}
 end
 
@@ -132,6 +136,8 @@ end
 -- storage (not yet counted as wasted: allies may take it).
 local function settleStored(r: Resource, window: number): number
 	local stored = r.stored + r.income * window - r.spent + r.reclaimed
+	r.gathered += r.income * window + r.reclaimed
+	r.drawn += r.spent
 	r.spent = 0
 	r.reclaimed = 0
 	local overflow = 0
@@ -139,6 +145,7 @@ local function settleStored(r: Resource, window: number): number
 		overflow = stored - r.storage
 		stored = r.storage
 	elseif stored < 0 then
+		r.drawn += stored -- never paid
 		stored = 0 -- income dropped mid-window (a producer died): forgive the remainder
 	end
 	r.stored = stored

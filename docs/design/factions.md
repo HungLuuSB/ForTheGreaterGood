@@ -1,6 +1,6 @@
 # Faction proposal: Order (heavy defense and strategy) vs Chaos (strength of armies)
 
-Status: **approved by the user with one change (2026-10-22): IR SAMs Vigil 206, Thorn 165.** Stage 1 (the shared-role numbers, S-62) and stage 2 (Warden, Minotaur, S-63) are implemented; the numbers as built, with the ones tuned away from this document, are in `docs/BALANCE.md`, "Pass 3". The rest (faction AI, the other faction-only units) follows.
+Status: **approved by the user with one change (2026-10-22): IR SAMs Vigil 206, Thorn 165.** Stage 1 (the shared-role numbers, S-62) and stage 2 (Warden, Minotaur, S-64) are implemented; the numbers as built, with the ones tuned away from this document, are in `docs/BALANCE.md`, "Pass 3". The rest (faction AI, the other faction-only units) follows.
 
 ## 1. Intent
 
