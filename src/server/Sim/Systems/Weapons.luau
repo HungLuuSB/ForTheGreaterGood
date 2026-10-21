@@ -240,6 +240,24 @@ return function(sim: Types.Sim)
 					defIndex = nil -- an untracked blip's size is unknown (D107)
 				end
 			end
+			-- shells lead a visible moving target (S-69): aim where it will be
+			-- after the flight time, like bombs and missiles (two passes)
+			if weapon.type == "BALLISTIC" and not weapon.apex and kx ~= nil and kz ~= nil and target ~= 0
+				and World.isRef(w, target, targetGen) and w.speed[target] > 0
+				and Sensors.level(sim, w.ally[id], target) == VISIBLE
+			then
+				local v, h = w.speed[target], w.heading[target]
+				local tvx, tvz = sin(h) * v, cos(h) * v
+				local speed = weapon.projectileSpeed or 1
+				local lx, lz = kx :: number, kz :: number
+				for _ = 1, 2 do
+					local d = sqrt((lx - x) ^ 2 + (lz - z) ^ 2)
+					local p = Ballistics.launchPitch(speed, weapon.gravity or 0, d, 0) or 0
+					local t = d / math.max(speed * cos(p), 1)
+					lx, lz = (kx :: number) + tvx * t, (kz :: number) + tvz * t
+				end
+				kx, kz = lx, lz
+			end
 			local exactYaw, exactPitch = 0, 0
 			local aimed = kx ~= nil and kz ~= nil
 			if kx ~= nil and kz ~= nil then
@@ -342,6 +360,23 @@ return function(sim: Types.Sim)
 				canFire = false
 			end
 
+			-- the rest of a salvo (S-69): `salvo.count` shots, `salvo.delay`
+			-- apart; the reload runs from the first. A shot waits for a target
+			-- to fire at; losing it ends the salvo.
+			local salvoLeft = w.wSalvo[key]
+			if salvoLeft ~= nil and salvoLeft > 0 then
+				local wait = w.wSalvoWait[key] - DT
+				w.wSalvoWait[key] = wait
+				if not canFire then
+					w.wSalvo[key] = 0
+				elseif wait <= 1e-9 then
+					w.wSalvo[key] = salvoLeft - 1
+					w.wSalvoWait[key] = (weapon.salvo :: any).delay
+					fire(sim, id, slot, weapon, target, heading + w.wYaw[key], w.wPitch[key], muzzleY, dist, exactYaw, exactPitch, projTarget)
+				end
+				continue
+			end
+
 			if canFire and reload <= 0 then
 				local tol = rad(if turret then turret.tolerance else 0)
 				-- vertical launchers need no aim: in range and locked is enough (S-42)
@@ -359,6 +394,10 @@ return function(sim: Types.Sim)
 					w.wReload[key] = weapon.reload + max(reload, -DT)
 					Stockpile.take(w, key)
 					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch, projTarget)
+					local salvo = weapon.salvo
+					if salvo and salvo.count > 1 then
+						w.wSalvo[key], w.wSalvoWait[key] = salvo.count - 1, salvo.delay
+					end
 					if weapon.manualFire then
 						Air.clearGround(sim, id) -- one shot per order (S-48)
 					end

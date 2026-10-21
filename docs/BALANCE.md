@@ -379,6 +379,10 @@ The user approved `docs/design/factions.md` with one change (IR SAMs Vigil 206, 
 | `chs_wyvern` | sensors.radarError | 45 | 50 |
 
 
+### Pass 4 — salvos and shell leading (2026-10-22, S-69)
+
+`ord_mlrs` (Judgement): `salvo` 1 → 4 rockets 0.3 s apart, damage per rocket LIGHT 260 → 58, ARMORED 200 → 45, STRUCTURE 240 → 54, SHIP 200 → 45 (a salvo deals 90% of the old shot: tuned −10%). `chs_mlrs` (Hydra): `salvo` 1 → 8 rockets 0.15 s apart, per rocket LIGHT 264 → 33, ARMORED 250 → 31, STRUCTURE 244 → 31, SHIP 166 → 21 (same total). Ballistic shells now lead visible moving targets. `lune run factions 3`: 12 of 12 roles in band; MLRS overall 1.20 (close 1.36, long 1.06, defend 1.82, flank 0.57).
+
 ## M8 balance items
 
 Recorded for M8 (balance), most important first. Numbers are this run's value trades for the attacker (close / long).
