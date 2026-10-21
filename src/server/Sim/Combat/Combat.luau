@@ -331,6 +331,63 @@ end
 
 Combat.AVOID_OVERKILL = true -- false turns overkill avoidance off (measurements)
 
+--------------------------------------------------------------------------------
+-- Line of fire (guide 10.8, S-32)
+--------------------------------------------------------------------------------
+
+Combat.LOF_STEP = 8 -- studs between terrain samples along a shot: one per height cell (guide 10.8)
+Combat.LOF_END = 6 -- studs at the target end left unchecked (the ground it stands on)
+
+-- Whether `weapon`'s shot from (x0, y0, z0) reaches (x1, y1, z1) above the
+-- terrain: a straight line for hitscan and beams, the shell's low arc for
+-- ballistic weapons (so artillery lobs over a ridge a tank shell hits).
+-- Homing missiles, torpedoes and bombs aren't checked: they steer or fall.
+-- Every LOF_STEP studs, the shot must be above the ground there.
+function Combat.lineOfFire(c: Combat, weapon: Defs.WeaponDef, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean
+	local wtype = weapon.type
+	if (wtype ~= "HITSCAN" and wtype ~= "BEAM" and wtype ~= "BALLISTIC") or c.layers == nil then
+		return true
+	end
+	local dx, dz = x1 - x0, z1 - z0
+	local dist = math.sqrt(dx * dx + dz * dz)
+	if dist <= Combat.LOF_END + Combat.LOF_STEP then
+		return true
+	end
+	local g = if wtype == "BALLISTIC" then weapon.gravity or 0 else 0
+	local slope, drop = (y1 - y0) / dist, 0
+	if g > 0 then
+		local speed = weapon.projectileSpeed or 1
+		local pitch = Ballistics.launchPitch(speed, g, dist, y1 - y0)
+		if pitch == nil then
+			return false -- out of reach
+		end
+		local hv = speed * math.cos(pitch)
+		slope, drop = math.tan(pitch), g / (2 * hv * hv)
+	end
+	local ux, uz = dx / dist, dz / dist
+	local s = Combat.LOF_STEP
+	local last = dist - Combat.LOF_END
+	while s <= last do
+		if y0 + s * slope - drop * s * s < Combat.groundHeight(c, x0 + ux * s, z0 + uz * s) then
+			return false
+		end
+		s += Combat.LOF_STEP
+	end
+	return true
+end
+
+-- Line of fire from unit `id`'s muzzle to where its team believes target `t`
+-- is (kx, kz; defIndex nil when the type is unknown).
+function Combat.unitLineOfFire(c: Combat, w: World.World, id: number, weapon: Defs.WeaponDef, t: number, defIndex: number?, kx: number, kz: number): boolean
+	local wtype = weapon.type
+	if wtype ~= "HITSCAN" and wtype ~= "BEAM" and wtype ~= "BALLISTIC" then
+		return true
+	end
+	local _, ty = Combat.knownAimPoint(c, w, t, defIndex, kx, kz)
+	local y0 = Combat.unitBase(c, w, id) + c.profiles[w.defIndex[id]].muzzleHeight
+	return Combat.lineOfFire(c, weapon, w.posX[id], y0, w.posZ[id], kx, ty, kz)
+end
+
 -- The chance a shot from `weapon` at `dist` studs reaches a target of profile
 -- `p` (S-29): its hull plus half the blast radius. Spread is uniform in
 -- ±accuracy on yaw and on pitch (Weapons). Sideways a shot misses by

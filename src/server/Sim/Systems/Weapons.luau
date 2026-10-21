@@ -25,6 +25,9 @@
 -- searches for another on the next tick. So a group's volley spreads over
 -- several targets. Attack orders, and a doomed target with nothing else in
 -- reach (Targeting marks it ALLOWED), still get fired at.
+-- Line of fire (S-32, guide 10.8): hitscan, beams and ballistic shells fire
+-- only when the shot clears the terrain (Combat.lineOfFire); otherwise the
+-- weapon is marked blocked (World.wBlocked) and holds.
 
 local Aim = require("@shared/Combat/Aim")
 local Air = require("../Air")
@@ -287,7 +290,15 @@ return function(sim: Types.Sim)
 
 			if canFire and reload <= 0 then
 				local tol = rad(if turret then turret.tolerance else 0)
-				if abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol and Air.useAmmo(sim, id) then
+				local onTarget = abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol
+				-- line of fire (S-32): terrain in the way, no shot; Targeting
+				-- looks for a clear target, attack-moves go on (Orders)
+				if onTarget and kx ~= nil and kz ~= nil then
+					local clear = Combat.unitLineOfFire(c, w, id, weapon, target, defIndex, kx, kz)
+					w.wBlocked[key] = if clear then 0 else 1
+					onTarget = clear
+				end
+				if onTarget and Air.useAmmo(sim, id) then
 					-- Fire along the turret's actual aim; keep fractional reload
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)

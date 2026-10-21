@@ -26,6 +26,10 @@
 -- will kill (Combat.doomed) are skipped; the best of them is taken only when
 -- nothing else is acceptable, and then marked ALLOWED so Weapons fires. A
 -- weapon that just left a doomed target (RETARGET) searches at once.
+-- Line of fire (S-32, guide 10.8): direct-fire weapons (hitscan, beams,
+-- ballistic shells) prefer, among their best few candidates, one they have
+-- a clear shot at; a weapon Weapons found blocked looks for one on its
+-- stagger tick.
 --
 -- Guided missiles (HOMING with a guidance type) prefer targets they can lock
 -- (EW.canLock): a lockable target's score is multiplied by LOCK_PREFERENCE,
@@ -162,25 +166,49 @@ end
 -- Candidates come from the contact grid (true positions), gathered wide
 -- enough that every enemy whose believed position is in range is among
 -- them: acceptance is decided on the believed position (D101).
-local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (number, number, number, boolean)
+-- Candidates of one search (scratch, reused): target, generation, score,
+-- doomed (S-29).
+local cT, cGen, cScore, cDoomed = {} :: { number }, {} :: { number }, {} :: { number }, {} :: { boolean }
+local LOF_TRIES = 2 -- candidates checked for a clear shot, best first (S-32; 4 cost 1.5 ms more at peak)
+
+local function directFire(weapon: Defs.WeaponDef): boolean
+	local t = weapon.type
+	return t == "HITSCAN" or t == "BEAM" or t == "BALLISTIC"
+end
+
+-- Whether unit `id`'s weapon has a line of fire to target `t` where its
+-- team believes it is (S-32).
+local function clearShot(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, gen: number): boolean
+	local w = sim.world
+	local kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], t, gen)
+	if kx == nil or kz == nil then
+		return false
+	end
+	if not Sensors.typeKnown(sim, w.ally[id], t, level) then
+		defIndex = nil
+	end
+	return Combat.unitLineOfFire(sim.combat, w, id, weapon, t, defIndex, kx :: number, kz :: number)
+end
+
+-- The best acceptable target: (target, generation, score, doomed, clear).
+-- Preference: not doomed before doomed (S-29), then score, then the lower
+-- ID. Direct-fire weapons take the first of the best LOF_TRIES with a line
+-- of fire; with none, the best one anyway (aimed at but not fired at:
+-- Weapons marks it blocked, attack-moves go on). (0, 0, 0, false, false)
+-- when nothing is acceptable.
+local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (number, number, number, boolean, boolean)
 	local c = sim.combat
 	local w = sim.world
-	local best, bestGen, bestScore = 0, 0, 0
-	local doomedBest, doomedScore = 0, 0 -- fallback: the best target already being killed
+	local m = 0
 	local reach = weapon.range + c.maxRadius + (if weapon.canTargetRadar or weapon.type == "TORPEDO" then maxRadarError(sim) else 0)
 	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], reach, w.ally[id], candidates)
 	for i = 1, n do
 		local t = candidates[i]
-			local dist = acceptable(sim, id, weapon, t, 1)
+		local dist = acceptable(sim, id, weapon, t, 1)
 		if dist ~= nil then
-			local s = score(sim, id, weapon, t, dist)
-			if Combat.doomed(c, w, t) and Sensors.level(sim, w.ally[id], t) == VISIBLE then
-				if s > doomedScore or (s == doomedScore and t < doomedBest) then
-					doomedBest, doomedScore = t, s
-				end
-			elseif s > bestScore or (s == bestScore and t < best) then
-				best, bestGen, bestScore = t, w.gen[t], s
-			end
+			m += 1
+			cT[m], cGen[m], cScore[m] = t, w.gen[t], score(sim, id, weapon, t, dist)
+			cDoomed[m] = Combat.doomed(c, w, t) and Sensors.level(sim, w.ally[id], t) == VISIBLE
 		end
 	end
 	-- remembered structures that are no longer there: the team doesn't know
@@ -191,18 +219,47 @@ local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (numb
 			if not World.isRef(w, gid, ghost.gen) then
 				local dist = acceptable(sim, id, weapon, gid, 1, ghost.gen)
 				if dist ~= nil then
-					local s = score(sim, id, weapon, gid, dist, ghost.gen)
-					if s > bestScore or (s == bestScore and gid < best) then
-						best, bestGen, bestScore = gid, ghost.gen, s
-					end
+					m += 1
+					cT[m], cGen[m], cScore[m], cDoomed[m] = gid, ghost.gen, score(sim, id, weapon, gid, dist, ghost.gen), false
 				end
 			end
 		end
 	end
-	if best == 0 and doomedBest ~= 0 then
-		return doomedBest, w.gen[doomedBest], doomedScore, true
+	local checkLof = sim.map ~= nil and directFire(weapon)
+	local first = 0
+	local fT, fGen, fScore, fDoomed = 0, 0, 0, false -- the best one, for the fallback
+	for try = 1, if checkLof then LOF_TRIES else 1 do
+		local bi = 0
+		for i = 1, m do
+			if cT[i] == 0 then
+				continue -- tried
+			end
+			if bi == 0 then
+				bi = i
+			else
+				local a, b = cDoomed[i], cDoomed[bi]
+				if (a ~= b and not a) or (a == b and (cScore[i] > cScore[bi] or (cScore[i] == cScore[bi] and cT[i] < cT[bi]))) then
+					bi = i
+				end
+			end
+		end
+		if bi == 0 then
+			break
+		end
+		if first == 0 then
+			first = bi
+			fT, fGen, fScore, fDoomed = cT[bi], cGen[bi], cScore[bi], cDoomed[bi]
+		end
+		if not checkLof or clearShot(sim, id, weapon, cT[bi], cGen[bi]) then
+			return cT[bi], cGen[bi], cScore[bi], cDoomed[bi], true
+		end
+		if bi ~= first then
+			cT[bi] = 0 -- tried and blocked (the first is kept for the fallback)
+		else
+			cScore[bi], cDoomed[bi] = -1, true -- rank it last from now on
+		end
 	end
-	return best, bestGen, bestScore, false
+	return fT, fGen, fScore, fDoomed, false
 end
 
 return function(sim: Types.Sim)
@@ -251,6 +308,17 @@ return function(sim: Types.Sim)
 					cur = 0
 					World.setTarget(w, key, 0)
 				end
+			end
+
+			-- terrain blocks the shot at the current target (Weapons, S-32):
+			-- on the stagger tick, switch to a target with a clear shot if any
+			if cur ~= 0 and searchNow and fs ~= RETURN_FIRE and w.wBlocked[key] == 1 then
+				local best, bestGen, _, doomed, clear = search(sim, id, weapon)
+				if clear and best ~= cur then
+					World.setTarget(w, key, best, bestGen)
+					w.wOverkill[key] = if doomed then OK_ALLOWED else OK_NONE
+				end
+				continue
 			end
 
 			-- guided missiles: switch to a clearly better (e.g. lockable) target

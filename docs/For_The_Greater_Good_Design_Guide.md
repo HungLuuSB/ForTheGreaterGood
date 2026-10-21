@@ -966,12 +966,13 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - Projectile flight is exact, with a swept chord test. AoE is measured to the cylinder surface.
 - Damage is queued and applied in order. Deaths leave a wreck worth 50% of supply when overkill ≤ 50% of max health.
 - Per-tick events are in `sim.combat.events`.
-- Not yet: line-of-fire checks (10.8), target leading, salvos, guidance (M7), focus-fire and overkill heuristics.
+- Not yet: target leading, salvos, focus fire. Line of fire (10.8, S-32), guidance (11.5) and overkill (10.2, S-29) are built.
 
 ### 10.8 Line of fire
 
-- Ballistic and homing: no line check (they arc or steer).
-- Hitscan/beam/direct shells: sample the `height` layer along the line every cell; if terrain blocks, don't fire and try repositioning (Maneuver/Roam) or retarget.
+- Homing missiles, torpedoes and bombs: no line check (they steer or fall).
+- Hitscan and beams: the straight line from the muzzle to the target's aim point. Ballistic shells: their actual low arc (S-32), so an artillery shell lobs over a ridge a flat tank shell would hit. Both sample the `height` layer once per cell (`Combat.lineOfFire`); the last 6 studs before the target aren't checked.
+- Terrain in the way: the weapon doesn't fire and is marked blocked. Targeting prefers, among its best two candidates, one with a clear shot, and a blocked weapon looks for one on its stagger tick. A blocked weapon doesn't hold an attack-move (FIGHT, PATROL): the unit keeps advancing until it has a shot. Idle units reposition by their move state (10.1).
 
 ---
 
