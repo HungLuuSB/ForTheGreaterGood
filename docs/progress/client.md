@@ -264,7 +264,14 @@ All with real mouse and keyboard input through the MCP tools.
 - **Aircraft icon, health bar, selection ring and lines** now sit at the aircraft, not at twice its altitude or on the ground under it (`debug_out/screens/air_select_ring_bar.jpg`).
 - **Clicking a unit's model** selects it (right-click targets it), wherever it is drawn.
 
+## 2026-10-21: missile sensor view (C-39)
+
+- **N** shows what each homing missile is doing: its predicted path for the next second (green = it will hit, orange = it will miss), the point it steers at (yellow), its target's centre (red), the fuse zone around the target, the predicted closest approach (magenta), and a label with guidance, lock, target, distance, time to go and predicted miss vs fuse. Corrections and decoys flash as short fading lines (`debug_out/screens/c39_missile_view_sam.jpg`).
+- Predictions run the client's copy of the server's guidance with the target flown straight on, so they are close for a second or so and spread when the target turns.
+
 ## Needs my review
+
+- **Missile sensor view look (C-39):** colors, sizes and label text in `src/client/Render/MissileView.luau` and `Core/MissileView.luau`; path length 1 s, at most 12 missiles, marks 2.5 s.
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
 - **Controls (C-13, answered: C-21):** BAR style now: arrow keys, edge scroll (live), middle-drag, S stop, V range rings, WASD free. Earlier: WASD / arrows pan, middle-drag pan, wheel zoom, Q/E rotate; left click / drag select (Shift add, Ctrl toggle), double-click same type, right click smart order, right-drag line move, Shift queue, Ctrl+1..9 / 1..9 groups (double tap jumps), X stop, F3 debug readout. S can't be stop (camera pan).

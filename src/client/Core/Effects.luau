@@ -19,6 +19,7 @@
 
 local Ballistics = require("@shared/Combat/Ballistics")
 local Layers = require("@shared/Grid/Layers")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local Interp = require("./Interp")
 local World = require("./World")
@@ -36,6 +37,8 @@ Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
 Effects.EXPLOSION_SECONDS = 0.55
 Effects.DEATH_SECONDS = 0.9
+Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
+Effects.MAX_MARKS = 40
 
 local DT = 1 / 15
 local EK = Schema.EventKind
@@ -65,6 +68,9 @@ export type Proj = {
 }
 
 export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number }
+-- A correction, decoy or lost lock (C-39): where the missile was drawn
+-- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
+export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
 export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number }
 
 export type Fx = {
@@ -80,6 +86,7 @@ export type Fx = {
 	late: { n: number, sum: number, max: number }, -- render ticks between an event's tick and when it played (diagnostics)
 	launches: { n: number, fromBarrel: number, sumOffset: number }, -- shells started at a drawn barrel tip, and its distance from the server's launch point (diagnostics)
 	shots: { { number } }, -- { unitId, slot } of shots played since the caller last cleared it (piece scripts' FireWeapon)
+	marks: { Mark }, -- the sensor view's corrections, decoys and lost locks, oldest first (C-39)
 }
 
 function Effects.new(): Fx
@@ -96,6 +103,7 @@ function Effects.new(): Fx
 		late = { n = 0, sum = 0, max = 0 },
 		launches = { n = 0, fromBarrel = 0, sumOffset = 0 },
 		shots = {},
+		marks = {},
 	}
 end
 
@@ -162,6 +170,7 @@ end
 Effects.UNIT_HEIGHT = 6
 Effects.DRAFT = 3
 Effects.SUB_DEPTH = 10
+Effects.HULL_RADIUS = PlacementRules.RADIUS_PER_FOOTPRINT -- collision radius per footprint cell (the fuse measures from the hull)
 
 local function cellHeights(world: World.World, x: number, z: number): (number, number)
 	local layers = world.layers
@@ -174,9 +183,10 @@ local function cellHeights(world: World.World, x: number, z: number): (number, n
 	return Layers.getHeight(layers, i), Layers.getWater(layers, i)
 end
 
-local function homingAim(world: World.World, target: World.Unit, t: number, px: number, py: number, pz: number, speed: number): (number, number, number)
-	local x, z, alt, heading = Interp.sample(target, t)
-	local x0, z0 = Interp.sample(target, t - 1)
+-- The server's aim from a target's state: (x, z), altitude, heading and
+-- speed `tv` (studs/s). Returns the led point x, y, z and the unled centre
+-- cx, cz (y is the same).
+function Effects.aimFrom(world: World.World, target: World.Unit, x: number, z: number, alt: number, heading: number, tv: number, px: number, py: number, pz: number, speed: number): (number, number, number, number, number)
 	local def = World.def(world, target)
 	local height = Effects.UNIT_HEIGHT * (if def then def.footprint else 1)
 	local ground, water = cellHeights(world, x, z)
@@ -189,8 +199,21 @@ local function homingAim(world: World.World, target: World.Unit, t: number, px: 
 	local y = base + height / 2
 	-- lead: where the target will be when the missile gets there
 	local tgo = math.sqrt((x - px) ^ 2 + (y - py) ^ 2 + (z - pz) ^ 2) / math.max(speed, 1)
-	local tv = math.sqrt((x - x0) ^ 2 + (z - z0) ^ 2) / DT -- its speed over the last tick
-	return x + math.sin(heading) * tv * tgo, y, z + math.cos(heading) * tv * tgo
+	return x + math.sin(heading) * tv * tgo, y, z + math.cos(heading) * tv * tgo, x, z
+end
+
+-- A target's state at render tick `t`: x, z, altitude, heading, and its
+-- speed over the tick before.
+local function targetAt(target: World.Unit, t: number): (number, number, number, number, number)
+	local x, z, alt, heading = Interp.sample(target, t)
+	local x0, z0 = Interp.sample(target, t - 1)
+	return x, z, alt, heading, math.sqrt((x - x0) ^ 2 + (z - z0) ^ 2) / DT
+end
+
+local function homingAim(world: World.World, target: World.Unit, t: number, px: number, py: number, pz: number, speed: number): (number, number, number)
+	local x, z, alt, heading, tv = targetAt(target, t)
+	local lx, ly, lz = Effects.aimFrom(world, target, x, z, alt, heading, tv, px, py, pz, speed)
+	return lx, ly, lz
 end
 
 -- The share of the drawn offset left `frac` ticks into the current tick:
@@ -309,6 +332,13 @@ local function stepProjectiles(fx: Fx, world: World.World, t: number)
 	end
 end
 
+local function mark(fx: Fx, kind: string, now: number, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number)
+	if #fx.marks >= Effects.MAX_MARKS then
+		table.remove(fx.marks, 1)
+	end
+	table.insert(fx.marks, { kind = kind, x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now })
+end
+
 local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
 
 -- The unit (and weapon slot) that launched a `weaponIndex` shell from
@@ -414,6 +444,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
 			p.target = 0
+			mark(fx, if kind == EK.DECOYED then "decoy" else "lost", now, dx, dy, dz, x, y, z)
 			burst(fx, now, dx, dy, dz, 1.2, if kind == EK.DECOYED then "decoy" else "lost", 0.35)
 		end
 	elseif kind == EK.FIRE then
@@ -444,8 +475,10 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local p = fx.projectiles[e.projId]
 		if p then
 			local x, z = world.grid:decode(e.cell, e.offX, e.offZ)
+			local y = e.y / Schema.Y_SCALE
 			local vx, vy, vz = vel(e)
-			reblend(p, x, e.y / Schema.Y_SCALE, z, vx, vy, vz)
+			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
+			mark(fx, "correction", now, dx, dy, dz, x, y, z)
 		end
 	end
 end
@@ -560,6 +593,11 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			table.remove(fx.tracers, i)
 		end
 	end
+	for i = #fx.marks, 1, -1 do
+		if now - fx.marks[i].born >= Effects.MARK_SECONDS then
+			table.remove(fx.marks, i)
+		end
+	end
 end
 
 -- Projectiles to draw at render tick `renderTick`: at most MAX_PROJECTILES,
@@ -598,6 +636,121 @@ function Effects.visible(fx: Fx, renderTick: number): { { any } }
 	return list
 end
 
+-- Where homing projectile `p` aims at render tick `t` from (px, py, pz)
+-- (default: its prediction): the led point lx, ly, lz and the target's
+-- centre cx, cy, cz; nil without a target (C-39).
+function Effects.aim(world: World.World, p: Proj, t: number, px: number?, py: number?, pz: number?): (number?, number?, number?, number?, number?, number?)
+	local target = if p.target ~= 0 then world.units[p.target] else nil
+	if target == nil then
+		return nil, nil, nil, nil, nil, nil
+	end
+	local tx, tz, alt, heading, tv = targetAt(target, t)
+	local speed = math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz)
+	local lx, ly, lz, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, px or p.x, py or p.y, pz or p.z, speed)
+	return lx, ly, lz, cx, ly, cz
+end
+
+export type Prediction = {
+	path: { number }, -- x, y, z after each predicted tick
+	miss: number?, -- closest approach to the target's hull (studs); nil without a target
+	centre: number?, -- the same to its centre
+	at: number?, -- sim ticks from fx.tick to that closest approach
+	cx: number?, -- the missile there
+	cy: number?,
+	cz: number?,
+	hit: boolean, -- the proximity fuse would fire (miss <= aoe)
+	ground: boolean, -- it flies into the ground first
+}
+
+-- Where projectile `p` flies over the next `ticks` sim ticks from its
+-- prediction at fx.tick: the server's steering and step on a copy, the
+-- target known up to its last snapshot and extrapolated straight on from it
+-- (heading and speed held). Stops at the fuse (as the server's) or the
+-- ground. The closest approach is taken along each tick's chord relative to
+-- the moving target, as the server's fuse does (C-39).
+function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Prediction
+	local weapon = p.weapon
+	local target = if p.target ~= 0 then world.units[p.target] else nil
+	local out: Prediction = { path = table.create(ticks * 3), hit = false, ground = false }
+	local x, y, z, vx, vy, vz = p.x, p.y, p.z, p.vx, p.vy, p.vz
+	local lastTick, lx, lz, lalt, lheading, ltv = math.huge, 0, 0, 0, 0, 0
+	local radius, height = 0, 0
+	if target then
+		local snaps = target.snaps
+		if #snaps > 0 then
+			lastTick = snaps[#snaps].tick
+			lx, lz, lalt, lheading, ltv = targetAt(target, lastTick)
+		end
+		local def = World.def(world, target)
+		local fp = if def then def.footprint else 1
+		radius, height = fp * Effects.HULL_RADIUS, Effects.UNIT_HEIGHT * fp
+	end
+	-- the target at tick t: as drawn up to its last snapshot, then straight on
+	local function targetState(t: number): (number, number, number, number, number)
+		if t <= lastTick then
+			return targetAt(target :: World.Unit, t)
+		end
+		local d = ltv * (t - lastTick) * DT
+		return lx + math.sin(lheading) * d, lz + math.cos(lheading) * d, lalt, lheading, ltv
+	end
+	-- the target's centre at the start of the current tick
+	local pcx, pcy, pcz = 0, 0, 0
+	if target then
+		local tx, tz, alt, heading, tv = targetState(fx.tick)
+		local _, ty, _, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, 1)
+		pcx, pcy, pcz = cx, ty, cz
+	end
+	local best = math.huge
+	local path = out.path
+	for k = 1, ticks do
+		local t = fx.tick + k
+		local launch = p.launch
+		local nx, ny, nz, nvx, nvy, nvz
+		local ccx, ccy, ccz = 0, 0, 0
+		local svx, svy, svz = vx, vy, vz
+		if target then
+			local tx, tz, alt, heading, tv = targetState(t)
+			local speed = math.sqrt(vx * vx + vy * vy + vz * vz)
+			local ax, ay, az, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, speed)
+			ccx, ccy, ccz = cx, ay, cz
+			if weapon.turnRate then
+				svx, svy, svz = Ballistics.steer(vx, vy, vz, ax - x, ay - y, az - z, math.rad(weapon.turnRate) * DT)
+			end
+		end
+		if launch and launch[1] == t then
+			nx, ny, nz, nvx, nvy, nvz = launch[2], launch[3], launch[4], launch[5], launch[6], launch[7]
+		else
+			nx, ny, nz, nvx, nvy, nvz = Ballistics.step(x, y, z, svx, svy, svz, weapon.gravity or 0, DT)
+		end
+		if target then
+			-- closest approach along the chord, relative to the moving centre
+			local ax, ay, az = x - pcx, y - pcy, z - pcz
+			local dx, dy, dz = (nx - ccx) - ax, (ny - ccy) - ay, (nz - ccz) - az
+			local len2 = dx * dx + dy * dy + dz * dz
+			local s = if len2 > 1e-9 then math.clamp(-(ax * dx + ay * dy + az * dz) / len2, 0, 1) else 0
+			local rx, ry, rz = ax + dx * s, ay + dy * s, az + dz * s
+			local hull = Ballistics.distanceToCylinder(rx, ry, rz, 0, 0, radius, -height / 2, height / 2)
+			if hull < best then
+				best = hull
+				out.miss, out.centre, out.at = hull, math.sqrt(rx * rx + ry * ry + rz * rz), k - 1 + s
+				out.cx, out.cy, out.cz = x + (nx - x) * s, y + (ny - y) * s, z + (nz - z) * s
+			end
+			pcx, pcy, pcz = ccx, ccy, ccz
+		end
+		path[#path + 1], path[#path + 2], path[#path + 3] = nx, ny, nz
+		x, y, z, vx, vy, vz = nx, ny, nz, nvx, nvy, nvz
+		if target and weapon.type == "HOMING" and best <= (weapon.aoe or 0) then
+			out.hit = true
+			break
+		end
+		if y < cellHeights(world, x, z) then
+			out.ground = true
+			break
+		end
+	end
+	return out
+end
+
 -- Forgets everything (a new WELCOME).
 function Effects.clear(fx: Fx)
 	table.clear(fx.projectiles)
@@ -605,6 +758,7 @@ function Effects.clear(fx: Fx)
 	table.clear(fx.tracers)
 	table.clear(fx.pendingDeaths)
 	table.clear(fx.shots)
+	table.clear(fx.marks)
 	fx.tick = -1
 end
 

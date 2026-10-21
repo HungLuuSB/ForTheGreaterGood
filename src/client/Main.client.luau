@@ -39,6 +39,7 @@ local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
+local MissileViewRender = require("./Render/MissileView")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
@@ -87,6 +88,7 @@ local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
 local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
+local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
 -- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
 -- The server publishes the speed as the Remotes folder's SimSpeed attribute.
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
@@ -107,6 +109,8 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 	local key = input.KeyCode
 	if key == RangeOverlay.TOGGLE_KEY then
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
+	elseif key == MissileViewRender.TOGGLE_KEY then
+		MissileViewRender.setEnabled(missileView, not missileView.enabled)
 	elseif key == Enum.KeyCode.Minus or key == Enum.KeyCode.Equals then
 		local now = if simSpeed() == 0 then resumeSpeed else simSpeed()
 		local i = table.find(SPEEDS, now) or 4
@@ -193,6 +197,21 @@ if RunService:IsStudio() then
 			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n }, launches = { n = fx.launches.n, fromBarrel = fx.launches.fromBarrel, avgOffset = fx.launches.sumOffset / math.max(fx.launches.fromBarrel, 1) } }
 		elseif query == "ranges" then
 			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection }
+		elseif query == "missiles" then
+			-- Invoke("missiles", on?): the missile sensor view (C-39), turned on or off if `on` is given
+			local on = ...
+			if type(on) == "boolean" then
+				MissileViewRender.setEnabled(missileView, on)
+			end
+			local entries = {}
+			for _, e in missileView.entries do
+				table.insert(entries, { id = e.id, label = e.label, locked = e.locked, target = e.targetId, distance = e.distance, tgo = e.tgo, miss = e.miss, fuse = e.fuse, hit = e.hit, path = #e.path // 3 })
+			end
+			local marks = {}
+			for _, m in fx.marks do
+				marks[m.kind] = (marks[m.kind] or 0) + 1
+			end
+			return { enabled = missileView.enabled, entries = entries, marks = marks, stats = missileView.stats }
 		elseif query == "perf" then
 			-- average and worst ms per frame since the last call, per part
 			local out = {}
@@ -313,8 +332,11 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
-	RenderEffects.step(fxRenderer, fx, t, now)
+	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now)
 	mark("effects", t0)
+	t0 = os.clock()
+	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
+	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
 	if not strategic then
