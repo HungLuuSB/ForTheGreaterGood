@@ -172,6 +172,14 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 			end
 			u.targets = targets
 		end
+		if r.stock then
+			-- own units' missile stockpiles (protocol 15, S-47)
+			local stock = u.stock or {}
+			for _, st in r.stock do
+				stock[st.slot] = st.count
+			end
+			u.stock = stock
+		end
 	end
 end
 

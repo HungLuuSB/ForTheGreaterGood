@@ -52,6 +52,7 @@ export type Unit = {
 	weapon: number, -- Schema weapon state field
 	aim: { [number]: Aim }, -- by weapon slot
 	targets: { [number]: number }?, -- own units (S-16): target unit id by weapon slot, 0 = none; nil until the server sends them
+	stock: { [number]: number }?, -- own units (S-47): missiles in stock by weapon slot (slots with a stockpile only)
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
 	rx: number?,
 	ry: number?,
@@ -222,6 +223,28 @@ function World.shownHealth(world: World, u: Unit): number?
 		return u.health
 	end
 	return u.shownHealth or u.health
+end
+
+-- Missiles in stock across a unit's stockpile slots (S-47, C-56), and their
+-- total capacity (Defs' derived `stockCapacity`); nil when it has no
+-- stockpile or the server hasn't said (other players' units never carry it).
+function World.stockOf(world: World, u: Unit): (number?, number?)
+	local def = World.def(world, u)
+	if def == nil or u.stock == nil then
+		return nil, nil
+	end
+	local count, capacity = 0, 0
+	for slot, w in def.weapons do
+		local cap = (w :: any).stockCapacity
+		if cap then
+			capacity += cap
+			count += (u.stock :: { [number]: number })[slot] or 0
+		end
+	end
+	if capacity == 0 then
+		return nil, nil
+	end
+	return count, capacity
 end
 
 -- Whether a unit is moving: the server's MOVING state bit, or (the server

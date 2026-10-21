@@ -102,6 +102,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `ad0c3b1` (request 21 for the sim session: projectiles visible regardless of sight; docs only).
 - Ready to merge: `6cafe85` (merge of `main` with S-43, protocol 14) with `9698380` (SHOT tracers, C-54); test_client 99, test 327, build passed.
 - Ready to merge: `95ff932` `8b54138` (merge of `main` with S-44, S-45; the climb mirrored, C-55); test_client 99, test 327, build passed.
+- Ready to merge: `186af86` `042e4c4` (merge of `main` with S-46; request 24 marked done); test_client 99, test 327, build passed.
 
 ## Tasks
 
@@ -384,6 +385,11 @@ All with real mouse and keyboard input through the MCP tools.
 - Radar SAM missiles now climb straight up about 100 studs before they pitch over (`climbHeight` in `chs_radar_sam.luau` / `ord_radar_sam.luau`, tunable like `reload`); the client follows the same rule (`debug_out/screens/c55_vertical_climb.jpg`).
 - Radar SAMs reach 3x as far (Wyvern / Gorgon 1680, Aegis / Seraph 1800) with their radars to match; the range rings follow. In `airsam` the Wyverns can now reach your aircraft almost from where they start.
 
+## 2026-10-21: SAM missile stockpiles (C-56)
+
+- SAM sites and mobile SAMs now hold a stock of missiles (Thorn / Vigil 8, Hornet / Halo 4, Wyvern / Aegis 6, Gorgon / Seraph 3) and rebuild it one missile at a time for supply and power (IR 6 s, 15 + 300; radar 12 s, 40 + 900). An empty site holds its fire.
+- Your own SAMs show their stock as a row of pips above the health bar (lit = in stock), and a site that isn't full keeps its bar up while it refills (`debug_out/screens/c56_sam_stock_pips.jpg`). You never see an enemy site's stock.
+
 ## Needs my review
 
 - **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
@@ -407,6 +413,20 @@ All with real mouse and keyboard input through the MCP tools.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+26. **Nuke silo and radar SAM interception (the user, 2026-10-21; new design, not in the guide):** "apart from air, it needs to shoot down ICBMs or nukes from the enemy launched into its radar range." The user chose: a T3 nuke silo per faction that builds nukes into a stockpile, and the radar SAM sites themselves as the interceptors. Suggested (numbers are yours to balance):
+    - **Silo:** one T3 structure per faction (names in the faction styles, e.g. Order "Judgement", Chaos "Ragnarok"; your call), built by the advanced builders. It builds one nuke at a time into a stockpile (capacity 1–2, ~120 s and very expensive, e.g. 1,500 supply + 40,000 power, drained like construction and slowed by stalls) and fires only on a manual ground-target order (never automatically), anywhere on the map.
+    - **Nuke:** a slow ballistic missile on a high arc (apex several hundred studs; ~150–200 studs/s, so defenses get time), a huge blast (aoe ~150, `edgeEffectiveness` ~0.3) that damages everything in it, own units included (BAR). A new weapon type or a flag (e.g. `strategic = true`) so other systems can tell it apart.
+    - **Interception:** radar SAM weapons (`chs_radar_sam`, `ord_radar_sam`) get e.g. `intercepts = true`: an enemy strategic missile inside the site's radar range (and detected by the team: strategic missiles could count as radar-visible) is a target, preferred over aircraft. The site fires interceptors from its stockpile (request 25) at it; each has a hit chance (sim Prng, e.g. 0.5) or a proximity fuse against the missile's path, so one site can be overwhelmed by several nukes or an empty stockpile. A destroyed nuke doesn't detonate (a small burst only).
+    - **Wire:** an interceptor's target is a projectile, not a unit (SPAWN_PROJ needs a target projectile ID or a flag); a nuke launch is worth an event every player gets (a warning; BAR announces it). The client draws whatever the contract says: on my side the nuke's plume, flash, shockwave and cloud, a launch warning, interceptors flying at the missile, and the silo's fire order and stockpile in the UI.
+    - The guide needs it: weapon schema (4.3), economy drain (8), targeting projectiles (10), guidance (11.5), roster (13.5, a T3 row), and contract section 7.
+
+25. **Done (S-47, protocol 15): weapon field `stockpile`, own units' STOCK in State records; the client shows it since C-56. Naval SAMs have no stockpile yet (a question for the user).** **Missile stockpiles for SAM sites (the user, 2026-10-21; new design, not in the guide):** "SAM systems should have a stockpile and spend resources to fill it up." Today SAMs fire forever at their reload rate; only aircraft have ammo. The user chose: all SAM sites and mobile SAMs, refilled automatically, BAR style. Suggested:
+    - A weapon field, e.g. `stockpile = { capacity, buildTime, cost = { supply, power } }`: Thorn and Vigil 8, Wyvern and Aegis 6, Hornet 4, Gorgon and Seraph 3. Build times e.g. IR 6 s and radar 12 s per missile; costs e.g. IR 15 supply + 300 power, radar 40 + 900. The reload between shots stays as it is.
+    - A site builds one missile at a time while below capacity, draining supply and power like construction (slower when the team stalls). A shot needs a missile in stock. Built sites start empty and fill up; scenario spawns could start full.
+    - Wire: the owner's units carry their stock (e.g. a `stock u8` in State records, own units only, like `targets`) so the client can show it; protocol bump.
+    - Client (mine, once it's on the wire): the stock count on the unit panel and bars.
+    - Guide: weapon schema (4.3) and economy drain (8).
 
 24. **Done (S-46): `ord_archon` radarSignature 0.6. In `airsam` a Wyvern can lock an Archon from 992 studs (tick 40); its first radar shot at one still comes at tick 62, the Wyverns' first reload (4 s) after their opening shots at a Falcon and a Guardian.** **Archon radar signature 0.35 → 0.6 (the user, 2026-10-21):** with the radar SAMs at 3× range (S-45), Wyverns in `airsam` fire at Falcons and Guardians from ~1,600 studs but at Archons only from 552 (detection 1800 × 0.35 = 630, lock 1680 × 0.35 ≈ 590), about where the Thorns already reach, so radar and IR SAMs open up on them together. At 0.6 a Wyvern locks an Archon at ~1,000. `ord_phantom` (0.2) unchanged. The user will test it. Sent to sim-A directly.
 
