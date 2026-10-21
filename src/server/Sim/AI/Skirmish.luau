@@ -33,9 +33,9 @@
 -- player ID), used for the production mix.
 --
 -- Levels (S-17; a match option, `match.ai = { [player] = level }`):
---   easy    thinks every 2 s, 2 workers, one item queued per factory, at
---           most 6 extractors, one plant, no radar, anti-air, tech-up or
---           kiting; attacks early with small waves (6, growing by 2).
+--   easy    thinks every 2 s, 2 workers, one item queued per factory and
+--           at most one army unit per 15 s, at most 6 extractors, one plant,
+--           no radar, anti-air, tech-up or kiting.
 --   normal  everything above (the default).
 --   hard    thinks every 2/3 s; expands only to deposits nearer its own
 --           start than any enemy start, escorting workers to the far ones;
@@ -83,6 +83,7 @@ export type Level = {
 	think: number, -- ticks between thinks
 	workers: number,
 	queue: number, -- items kept queued per factory
+	armyCooldown: number, -- seconds between army units it queues (0 = none; easy's production handicap)
 	firstWave: number,
 	waveGrowth: number,
 	maxExtractors: number,
@@ -107,7 +108,8 @@ Skirmish.LEVELS = table.freeze({
 		think = 30,
 		workers = 2,
 		queue = 1,
-		firstWave = 6,
+		armyCooldown = 15,
+		firstWave = 8,
 		waveGrowth = 2,
 		maxExtractors = 6,
 		secondPlant = false,
@@ -129,6 +131,7 @@ Skirmish.LEVELS = table.freeze({
 		think = Skirmish.THINK_PERIOD,
 		workers = Skirmish.WORKERS,
 		queue = Skirmish.QUEUE_TARGET,
+		armyCooldown = 0,
 		firstWave = Skirmish.FIRST_WAVE,
 		waveGrowth = Skirmish.WAVE_GROWTH,
 		maxExtractors = math.huge,
@@ -151,6 +154,7 @@ Skirmish.LEVELS = table.freeze({
 		think = 10,
 		workers = Skirmish.WORKERS,
 		queue = 2,
+		armyCooldown = 0,
 		firstWave = 12,
 		waveGrowth = 4,
 		maxExtractors = math.huge,
@@ -205,6 +209,7 @@ export type Brain = {
 	lastFarX: number?, -- the last far deposit a worker was sent to (hard: turrets go there)
 	lastFarZ: number?,
 	thinkOffset: number, -- ticks into the think period this player thinks at
+	lastArmyQueued: number, -- tick it last queued an army unit (easy's cooldown)
 }
 
 local function submit(sim: Types.Sim, player: number, cmd: Schema.Command)
@@ -333,6 +338,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		seaX = seaX,
 		seaZ = seaZ,
 		lastFleetOrder = -math.huge,
+		lastArmyQueued = -math.huge,
 		-- players spread evenly over the think period: with `tick + player`
 		-- the higher player always thought a tick earlier and won every race
 		-- for a contested deposit (S-17)
@@ -797,8 +803,11 @@ local function think(brain: Brain)
 			elseif cfg.radar and radarPlanned < 1 and c.workers >= cfg.workers then
 				item = radarUnit -- radar to escort the waves (S-7)
 				radarPlanned += 1
+			elseif cfg.armyCooldown > 0 and sim.tick - brain.lastArmyQueued < cfg.armyCooldown * 15 then
+				break -- easy: no army unit this soon after the last
 			else
 				item = if brain.rng:chance(cfg.artyChance) then arty else tank
+				brain.lastArmyQueued = sim.tick
 			end
 			queueItem(f, item)
 		end

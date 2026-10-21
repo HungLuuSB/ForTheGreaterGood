@@ -30,6 +30,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-22: first balance pass, T1 ground (six numbers).
 - S-23: start-position bias: the targeting stagger followed ID parity; hashed phase.
 - S-24: AI waves: artillery guards the lead tank.
+- S-25: Easy AI: one army unit per 15 s instead of an early rush.
 
 ---
 
@@ -315,3 +316,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 - **Found while fixing S-23's tests:** a Hard AI with three times Easy's value couldn't finish it in 30 minutes. Under BAR attack-move (S-14) a wave's artillery stops at its 450-stud range as soon as anything (here a remembered extractor) is in range, while the tanks go in alone and die; the wave never pushes.
 - **Fix (all levels):** a wave's non-artillery units attack-move; its artillery GUARDs the lead tank, so it follows the push and fires at whatever is in range; radar and fire-control escorts guard the lead tank too. Hard now beats Easy on Ridgeline seed 9 at ~6 minutes (`AI.spec`).
+
+## S-25 — Easy AI: a production handicap instead of an early rush (2026-10-22)
+
+- **Problem:** in the first level report (S-17) Easy beat Normal about as often as it lost (20–22; on Twin Lakes 2v2 Easy won 5 of 6). Easy's small early waves (6, +2) out-traded Normal, which spends its early economy on radar, a third worker and a second plant.
+- **Change (Easy only):** at most one army unit queued per 15 s (`armyCooldown`; workers exempt), and Normal's wave sizes (8, +2). It still has its other limits (2 s thinking, 2 workers, 6 extractors, one plant, no radar, anti-air, tech-up or kiting).
+- **Result (Ridgeline, 3 seeds, both factions, sides swapped, 30 min):** Normal beats Easy 11–1, Hard beats Normal 10–2, Hard beats Easy 12–0. Twin Lakes 2v2: Normal–Easy 3–3 (was 0–6). Full report: `docs/AI_LEVELS.md`.
