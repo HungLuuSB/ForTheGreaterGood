@@ -101,6 +101,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `d39244e` (merge of `main` with S-41, S-42) with `54f1532` (vertical-launch steering, C-53); test_client 98, test 326, build passed.
 - Ready to merge: `ad0c3b1` (request 21 for the sim session: projectiles visible regardless of sight; docs only).
 - Ready to merge: `6cafe85` (merge of `main` with S-43, protocol 14) with `9698380` (SHOT tracers, C-54); test_client 99, test 327, build passed.
+- Ready to merge: `95ff932` `8b54138` (merge of `main` with S-44, S-45; the climb mirrored, C-55); test_client 99, test 327, build passed.
 
 ## Tasks
 
@@ -406,6 +407,8 @@ All with real mouse and keyboard input through the MCP tools.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+24. **Done (S-46): `ord_archon` radarSignature 0.6. In `airsam` a Wyvern can lock an Archon from 992 studs (tick 40); its first radar shot at one still comes at tick 62, the Wyverns' first reload (4 s) after their opening shots at a Falcon and a Guardian.** **Archon radar signature 0.35 → 0.6 (the user, 2026-10-21):** with the radar SAMs at 3× range (S-45), Wyverns in `airsam` fire at Falcons and Guardians from ~1,600 studs but at Archons only from 552 (detection 1800 × 0.35 = 630, lock 1680 × 0.35 ≈ 590), about where the Thorns already reach, so radar and IR SAMs open up on them together. At 0.6 a Wyvern locks an Archon at ~1,000. `ord_phantom` (0.2) unchanged. The user will test it. Sent to sim-A directly.
 
 23. **Done (S-45): radar SAM range / lockRange 1680 (Chaos) and 1800 (Order), their radars ×3; the client reads it from the defs.** **Radar SAM range ×3 (the user, 2026-10-21):** "increase the long range RADAR to x3 its current range". Weapons: `chs_radar_sam` range / lockRange 560 → 1680, `ord_radar_sam` 600 → 1800; their own radars ×3 so they can lock that far: `chs_wyvern` 600 → 1800, `chs_gorgon` 480 → 1440, `ord_aegis` 650 → 1950, `ord_seraph` 520 → 1560. projectileSpeed and balance are the sim's call (a full-range shot at 360 studs/s flies ~4.7 s). The client reads it all from the defs. Sent to sim-A directly.
 
