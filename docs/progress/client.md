@@ -100,6 +100,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `5c92bb0` (crashes leave their smoke, radar SAM missiles drawn big, C-52; request 20).
 - Ready to merge: `d39244e` (merge of `main` with S-41, S-42) with `54f1532` (vertical-launch steering, C-53); test_client 98, test 326, build passed.
 - Ready to merge: `ad0c3b1` (request 21 for the sim session: projectiles visible regardless of sight; docs only).
+- Ready to merge: `6cafe85` (merge of `main` with S-43, protocol 14) with `9698380` (SHOT tracers, C-54); test_client 99, test 327, build passed.
 
 ## Tasks
 
@@ -400,6 +401,10 @@ All with real mouse and keyboard input through the MCP tools.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+23. **Radar SAM range ×3 (the user, 2026-10-21):** "increase the long range RADAR to x3 its current range". Weapons: `chs_radar_sam` range / lockRange 560 → 1680, `ord_radar_sam` 600 → 1800; their own radars ×3 so they can lock that far: `chs_wyvern` 600 → 1800, `chs_gorgon` 480 → 1440, `ord_aegis` 650 → 1950, `ord_seraph` 520 → 1560. projectileSpeed and balance are the sim's call (a full-range shot at 360 studs/s flies ~4.7 s). The client reads it all from the defs. Sent to sim-A directly.
+
+22. **Vertical launches climb longer before pitching over (the user, 2026-10-21):** "I need the missile to launch vertically a little more time, it turns over too soon." `Guidance.vertical` turns toward the target from the first tick at 3× turnRate, so a Wyvern missile is near level after ~1/3 s. Suggested: a weapon field `climbHeight` (studs above the ground; ~100 on `chs_radar_sam` and `ord_radar_sam`, tunable like `reload`) below which the missile flies straight up, then the pitch-over as now. Derivable from the missile's position (with a ground height both sides compute the same) rather than its age, since a client can receive a missile mid-flight; or put the remaining boost ticks on SPAWN_PROJ and corrections. Sent to sim-A directly (both sessions in bypass).
 
 21. **Done (S-43, protocol 14): projectiles go to every player whose camera area has them; a hidden shooter's gun shot arrives as SHOT (both ends, no shooter); cloak rule in guide 11.4. The client draws SHOT since C-54.** **Projectiles visible regardless of sight, without revealing the shooter (the user, 2026-10-21; high priority):** "Only render the projectile, not revealing the shooters; if the shooter is cloaked and they decide to shoot, they switch out of cloak mode and reveal themselves." Today SPAWN_PROJ, homing corrections and IMPACT reach a player only in its ally team's sight (D99, contract section 7), so missiles from a site you can't see appear mid-flight and vertical launches (S-42) are never seen leaving. Please:
     - **Projectiles:** send SPAWN_PROJ (at launch), homing corrections and IMPACT for every projectile in the player's camera area (+ the usual margin), whatever the ally team sees. These records carry no shooter, so the shooter stays hidden; it is revealed only by the normal sight rules. Keep the camera-area limit (bandwidth), and keep `targetId` as now (0 when the team doesn't know the target).
