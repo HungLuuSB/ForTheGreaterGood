@@ -8,7 +8,7 @@
 --
 -- Script hooks (all optional), each run in a new thread:
 --   Create(u)                        the unit got a model
---   StartMoving(u) / StopMoving(u)   the MOVING state bit changed
+--   StartMoving(u) / StopMoving(u)   the unit started / stopped moving (World.moving, C-45)
 --   Land(u) / TakeOff(u)             the LANDED state bit changed (aircraft)
 --   AimWeapon(u, slot, yaw, pitch, active)
 --                                    the replicated aim changed, or every
@@ -39,7 +39,6 @@ PieceAnim.MID = 600
 PieceAnim.REAIM = 0.5 -- seconds between AimWeapon calls while a weapon is engaged
 
 local WS = Schema.WeaponState
-local MOVING = Schema.UnitState.MOVING
 local LANDED = Schema.UnitState.LANDED
 local AXES = { x = 1, y = 2, z = 3 }
 
@@ -361,7 +360,7 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
 			continue
 		end
 		if u.lod == "near" then
-			local moving = bit32.band(wu.state or 0, MOVING) ~= 0
+			local moving = World.moving(world, wu)
 			if moving ~= u.moving then
 				u.moving = moving
 				PieceAnim.call(u, if moving then "StartMoving" else "StopMoving")

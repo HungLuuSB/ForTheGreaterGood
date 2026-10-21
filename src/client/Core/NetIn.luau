@@ -54,6 +54,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 			local heading = World.heading(e.heading :: number)
 			local alt = e.alt or 0
+			local was = world.units[id] -- a strategic record of it keeps its movement (C-45)
 			world.units[id] = {
 				id = id,
 				tier = "tactical",
@@ -65,6 +66,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 				heading = heading,
 				snaps = { { tick = tick, x = x, z = z, alt = alt, heading = heading } },
 				lastTick = tick,
+				movedTick = was and was.movedTick,
 				health = (e.health :: number) / 255,
 				build = (e.build :: number) / 255,
 				state = e.state or 0,
@@ -117,6 +119,9 @@ local function applyTactical(world: World.World, records: { Schema.Tactical }, t
 		local x, z = g:decode(r.cell, r.offX, r.offZ)
 		local heading = World.heading(r.heading)
 		local alt = r.alt or 0
+		if x ~= u.x or z ~= u.z or alt ~= u.alt or heading ~= u.heading then
+			u.movedTick = tick -- C-45: the server doesn't set MOVING
+		end
 		u.x, u.z, u.alt, u.heading, u.lastTick = x, z, alt, heading, tick
 		pushSnap(u, { tick = tick, x = x, z = z, alt = alt, heading = heading })
 	end
@@ -160,11 +165,13 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			return -- an older snapshot arrived late
 		end
 	end
+	local before: { [number]: World.Unit } = {}
 	if wireTick ~= world.strategicTick then
 		-- a new snapshot replaces every non-tactical unit
 		world.strategicTick = wireTick
 		for id, u in world.units do
 			if u.tier ~= "tactical" then
+				before[id] = u
 				world.units[id] = nil
 			end
 		end
@@ -176,6 +183,8 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			continue -- tactical detail wins over a snapshot computed around a LEAVE / ENTER
 		end
 		local x, z = g:decode(r.cell, 128, 128)
+		local old = before[r.unitId] or u
+		local movedTick = if old == nil then nil elseif old.x ~= x or old.z ~= z then tick else old.movedTick
 		world.units[r.unitId] = {
 			id = r.unitId,
 			tier = "strategic",
@@ -189,6 +198,7 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			heading = 0,
 			snaps = {},
 			lastTick = tick,
+			movedTick = movedTick,
 			health = nil,
 			build = nil,
 			state = 0,

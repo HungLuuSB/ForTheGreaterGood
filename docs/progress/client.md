@@ -84,6 +84,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `7c2180c` (SAM scene: the Falcon circles at x = 300).
 - Ready to merge: `64472f6` (camera follow, C-43).
 - Ready to merge: `d44e70c` (request 13d for the sim session: gradual decoy turn; docs only).
+- Ready to merge: `7a7e2bd` (merge of `main` with S-26, S-27, S-28, protocol 11; with `8ca419a` test_client 85, test 304, build passed).
 
 ## Tasks
 

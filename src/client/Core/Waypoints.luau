@@ -23,6 +23,9 @@ Waypoints.IDLE_SECONDS = 2 -- a unit standing still this long has no orders left
 -- (a fallback for a build the server dropped).
 Waypoints.BUILD_IDLE_SECONDS = 20
 Waypoints.MAX_PER_UNIT = 16
+-- Aircraft arrive within the server's Air.LOITER_RADIUS of their goal and
+-- circle it from then on (C-45), so their point is reached that far out.
+Waypoints.AIR_REACH = 220
 
 local CT = Schema.CmdType
 
@@ -34,18 +37,20 @@ function Waypoints.new(): Waypoints
 end
 
 -- How close counts as there: the server spreads a group in a formation
--- around a point (Orders.lineSlots), about spacing × √n across.
+-- around a point (Orders.lineSlots), about spacing × √n across; aircraft
+-- arrive at AIR_REACH.
 local function reachFor(world: World.World, ids: { number }): number
-	local footprint = 1
+	local footprint, air = 1, false
 	for _, id in ids do
 		local u = world.units[id]
 		local def = u and World.def(world, u)
 		if def then
 			footprint = math.max(footprint, def.footprint)
+			air = air or def.domain == "air"
 		end
 	end
 	local spacing = Formation.spacing(footprint * PlacementRules.RADIUS_PER_FOOTPRINT)
-	return math.max(Waypoints.REACHED, spacing * math.sqrt(#ids))
+	return math.max(if air then Waypoints.AIR_REACH else Waypoints.REACHED, spacing * math.sqrt(#ids))
 end
 
 -- Records `intent` sent to `ids`.
@@ -141,7 +146,7 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 		end
 		local head = list[1]
 		local buildNext = head ~= nil and head.kind == CT.BUILD
-		if bit32.band(u.state, World.State.MOVING) == 0 and not (buildNext and building(world, u)) then
+		if not World.moving(world, u) and not (buildNext and building(world, u)) then
 			local since = wp.idleSince[id]
 			local limit = if buildNext then Waypoints.BUILD_IDLE_SECONDS else Waypoints.IDLE_SECONDS
 			if since == nil then

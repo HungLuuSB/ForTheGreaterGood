@@ -15,6 +15,11 @@ local Terrain = require("./Terrain")
 local World = {}
 
 World.MAX_SNAPS = 4 -- per unit (guide 7.4: 3–4)
+-- A unit counts as moving this many ticks after its position or heading
+-- last changed (C-45): tactical records come every tick it moves, strategic
+-- ones every 5th tick at cell precision, so a slow unit may keep its cell
+-- for a few snapshots.
+World.MOVING_TICKS = table.freeze({ tactical = 2, strategic = 16 })
 World.MAX_QUEUED_EVENTS = 1024 -- combat events kept until the renderer drains them
 
 -- Unit state bits (net.md section 3), shared with the sim (S-6).
@@ -38,6 +43,7 @@ export type Unit = {
 	heading: number, -- radians, (sin h, cos h) forward
 	snaps: { Snap }, -- tactical: ascending sim ticks
 	lastTick: number, -- sim tick of the last position applied (drops reordered unreliable records)
+	movedTick: number?, -- sim tick its position or heading last changed (C-45)
 	health: number?, -- 0..1
 	build: number?, -- 0..1
 	state: number,
@@ -157,6 +163,17 @@ function World.groundY(world: World, x: number, z: number, floats: boolean?): nu
 		return 0
 	end
 	return if floats then Terrain.surfaceY(layers, x, z) else Terrain.groundY(layers, x, z)
+end
+
+-- Whether a unit is moving: the server's MOVING state bit, or (the server
+-- doesn't set that bit yet, C-45) a position or heading change within the
+-- last MOVING_TICKS ticks.
+function World.moving(world: World, unit: Unit): boolean
+	if bit32.band(unit.state or 0, World.State.MOVING) ~= 0 then
+		return true
+	end
+	local moved = unit.movedTick
+	return moved ~= nil and world.latestTick - moved <= World.MOVING_TICKS[unit.tier]
 end
 
 function World.def(world: World, unit: Unit): Defs.UnitDef?
