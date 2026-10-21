@@ -9,6 +9,10 @@ local Ranges = require("../../src/client/Core/Ranges")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
+local Ghosts = require("../../src/client/Core/Ghosts")
+local Icons = require("../../src/client/Core/Icons")
+local Spawn = require("../../src/server/Sim/Spawn")
+local Schema = require("@shared/Net/Schema")
 local Profiler = require("@shared/Util/Profiler")
 
 local TAU = 2 * math.pi
@@ -167,5 +171,58 @@ return function(t: any)
 		print(string.format("    50 Lancers: %d circles -> %d arcs, %d points; recompute %.2f ms (Lune)", #circles, #arcs, points, ms))
 		t.expect(ms < 8, `recompute in {ms} ms`)
 		noInteriorArcs(t, circles, arcs)
+	end)
+
+	t.test("known enemy defenses show their weapon rings: in sight, then as ghosts; radar blips and factories don't (C-41)", function()
+		local sim = Sim.new({ seed = 5, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:96", scenario = "empty" })
+		Spawn.unit(sim, "ord_beacon", 1, -300, 0, 0) -- radar over the whole map
+		local scout = Spawn.unit(sim, "ord_lancer", 1, -250, 60, math.pi / 2)
+		local thorn = Spawn.unit(sim, "chs_thorn", 2, 300, 0, 0)
+		Spawn.unit(sim, "chs_vehplant", 2, 300, 100, 0) -- a factory: never a ring
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 95, 95)))
+		local memory = Ghosts.new()
+		local known = { memory = memory.memory, sample = Icons.table(sim.defs).sample }
+		local function run(ticks: number)
+			for _ = 1, ticks do
+				Sim.step(sim)
+				NetIn.applyOutbox(world, sim.net.players[1].outbox, sim.tick / 15)
+				Ghosts.remember(memory, world)
+				table.clear(world.died)
+			end
+		end
+		local function move(x: number, z: number)
+			assert(Sim.submit(sim, 1, Commands.toPoint(world.grid, Schema.CmdType.MOVE, { scout }, x, z)))
+		end
+		local thornRange = sim.defs.weaponByIndex[sim.defs.units.chs_thorn.weapons[1].weaponIndex].range
+		-- 1. only on radar: an unknown blip, no ring
+		run(30)
+		local u = world.units[thorn]
+		t.expect(u ~= nil and u.tier == "strategic" and bit32.band(u.flags or 0, Schema.StrategicFlag.RADAR_ONLY) ~= 0, "the Thorn starts as a radar blip")
+		t.equal(#Ranges.enemyDefenses(world, known), 0)
+		-- 2. the scout drives up and sees it: its anti-air ring, at the Thorn
+		move(140, 60)
+		run(15 * 14)
+		u = world.units[thorn]
+		t.expect(u ~= nil and u.tier == "tactical", "the Thorn is in sight")
+		local seen = Ranges.enemyDefenses(world, known)
+		t.equal(#seen, 1)
+		t.equal(seen[1].kind, "enemyAa")
+		t.equal(seen[1].r, thornRange)
+		local tx, tz = sim.world.posX[thorn], sim.world.posZ[thorn]
+		t.expect(math.abs(seen[1].x - tx) < 0.5 and math.abs(seen[1].z - tz) < 0.5, `ring at the Thorn ({seen[1].x}, {seen[1].z} vs {tx}, {tz})`)
+		-- 3. the scout leaves: a ghost, the ring stays where the Thorn was seen
+		move(-250, 60)
+		run(15 * 14)
+		u = world.units[thorn]
+		t.expect(u ~= nil and u.tier == "strategic" and bit32.band(u.flags or 0, Schema.StrategicFlag.GHOST + Schema.StrategicFlag.RADAR_ONLY) ~= 0, "the Thorn is out of sight again")
+		local ghost = Ranges.enemyDefenses(world, known)
+		t.equal(#ghost, 1)
+		t.expect(math.abs(ghost[1].x - tx) < 0.5 and math.abs(ghost[1].z - tz) < 0.5, "the remembered ring stays at the Thorn")
+		-- the defense rule itself
+		t.expect(Ranges.isDefense(sim.defs.units.chs_thorn), "a SAM site defends")
+		t.expect(not Ranges.isDefense(sim.defs.units.chs_vehplant), "a factory doesn't")
+		t.expect(not Ranges.isDefense(sim.defs.units.ord_lancer), "a tank isn't a structure")
 	end)
 end

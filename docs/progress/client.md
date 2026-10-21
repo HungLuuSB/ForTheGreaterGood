@@ -77,6 +77,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `3671f2b` (recognizable missiles: model, smoke trail, exhaust glow, C-40).
 - Ready to merge: `d8f67eb` (request 13 for the sim session: IR SAM misses; docs only).
 - Ready to merge: `272b106` (merge of `main` with S-25 and the C-38 integration; test_client 81, test 299, build passed).
+- Ready to merge: `486d468` (SAM scene reworked: bigger map, Thorns east, one Falcon flying in).
 
 ## Tasks
 
@@ -281,7 +282,13 @@ All with real mouse and keyboard input through the MCP tools.
 
 - `sam` is now on a bigger map (`flat:160`): the 4 Thorns stand on the east side, and one Falcon (5× health) starts on the west side out of their range and flies over them (spawn entries take `moveTo`). Your radars still cover the map (`debug_out/screens/sam_east_falcon_inbound.jpg`).
 
+## 2026-10-21: enemy defense ranges (C-41)
+
+- Enemy defenses you have seen (or can identify on radar) show their weapon range: dark red for ground weapons, violet for anti-air. Seen-before ones keep the ring as ghosts. Factories don't get one, and unknown radar blips don't either (their type isn't known). V hides all rings (`debug_out/screens/c41_enemy_sam_rings.jpg`).
+
 ## Needs my review
+
+- **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
 
 - **Missile look (C-40):** size 4.4 × 0.8 studs (1.3× for radar SAMs), smoke 1.1 s (1.8 s), 1 → 5 studs wide, exhaust light range 10. Values at the top of the missile section in `src/client/Render/Effects.luau`.
 - **Missile sensor view look (C-39):** colors, sizes and label text in `src/client/Render/MissileView.luau` and `Core/MissileView.luau`; path length 1 s, at most 12 missiles, marks 2.5 s.
@@ -303,7 +310,7 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
-13. **IR SAMs miss most crossing shots (C-39, 2026-10-21):** in the `sam` scene (4 Thorns, `chs_ir_sam`, against 4 circling Falcons) only 57 of 183 missiles hit over 2 minutes (31 %; 5 decoyed, the rest missed); hits come almost only head-on or tail-on. The missile sensor view (N, C-39) shows why: crossing shots pass 5–9 studs from the hull against a 5-stud fuse. Two causes: (a) guidance is lead pursuit with a straight-line target prediction (Projectiles: aim at where the target would be after the straight-line time to go, at `turnRate` 160°/s); against a turning jet the lead is wrong and the missile ends in a tail chase or overshoots; (b) the proximity fuse is `aoe` (5 studs from the hull), which is small next to a missile's 28-stud step per tick. Suggestions: proportional navigation (commanded turn = N × closing speed × line-of-sight rate, N ≈ 3–4, capped by `turnRate`), which handles turning targets without predicting them; and a separate fuse radius for SAMs (e.g. `fuseRange = 10`) instead of reusing `aoe`, keeping the damage falloff on `aoe`. Your call on the weapon model (guide 10.4, 11.5) and on request 11c's G limit with it. The client mirrors the guidance in `Core/Effects` (`aimFrom`, `predict`) and would follow a change (better, request 11b: a shared aim function). Medium priority; the user asked.
+13. **IR SAMs miss most crossing shots (C-39, 2026-10-21):** in the `sam` scene (4 Thorns, `chs_ir_sam`, against 4 circling Falcons) only 57 of 183 missiles hit over 2 minutes (31 %; 5 decoyed, the rest missed); hits come almost only head-on or tail-on. The missile sensor view (N, C-39) shows why: crossing shots pass 5–9 studs from the hull against a 5-stud fuse. Two causes: (a) guidance is lead pursuit with a straight-line target prediction (Projectiles: aim at where the target would be after the straight-line time to go, at `turnRate` 160°/s); against a turning jet the lead is wrong and the missile ends in a tail chase or overshoots; (b) the proximity fuse is `aoe` (5 studs from the hull), which is small next to a missile's 28-stud step per tick. Suggestions: proportional navigation (commanded turn = N × closing speed × line-of-sight rate, N ≈ 3–4, capped by `turnRate`), which handles turning targets without predicting them; and a separate fuse radius for SAMs (e.g. `fuseRange = 10`) instead of reusing `aoe`, keeping the damage falloff on `aoe`. (c) No seeker field of view: a missile that misses keeps its lock, overshoots and turns back for another pass (160°/s, a full loop in ~2.3 s) until its fuel runs out; the user saw one "lose lock, fly off and come round again" at the Falcon. Suggest a seeker cone per guided weapon (e.g. `seekerAngle = 60`° off the nose for IR, wider for radar): in the midcourse check, a target outside it breaks the lock (LOST_LOCK, the missile flies on and self-destructs at its lifetime), and nothing re-acquires. Your call on the weapon model (guide 10.4, 11.5) and on request 11c's G limit with it. The client mirrors the guidance in `Core/Effects` (`aimFrom`, `predict`) and would follow a change (better, request 11b: a shared aim function). Medium priority; the user asked.
 
 12. **Vertical-launch SAM, IRIS-T SLM style (the user, 2026-10-21):** "the enemy will have 4 SAM systems that launch missiles vertical ... to test missile flight path". Missiles leave the launcher straight up, then pitch over toward the target (at their turnRate, or after a short boost), so the launcher needs no turret aim. E.g. a weapon field `launch = "vertical"` (Weapons spawns at pitch 90°, ready to fire as soon as the target is in range and locked; Projectiles steers from there), and a Chaos (or Order) VLS SAM site using it; the client draws it with no change (it steers like the server, C-36, once request 11b shares the aim code; until then corrections cover it). The `sam` test profile would switch its Thorns to that unit. Medium priority.
 
