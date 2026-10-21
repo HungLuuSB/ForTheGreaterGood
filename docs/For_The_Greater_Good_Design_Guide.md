@@ -912,6 +912,8 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 | Maneuver | Chases a little, returns (default) |
 | Roam | Chases freely |
 
+Move states (S-34, `Orders.autoStep`): every 15 ticks an idle armed unit on Fire at Will (not builders, not aircraft) whose weapons have no shot (nothing in range, or terrain in the way, 10.8) attack-moves toward the nearest visible enemy it can damage and reach. Maneuver: only enemies within 150 studs of its anchor (where it was last sent) plus its range; past that leash, or when nothing is left, it walks back. Roam: enemies within 500 studs plus its range; it stays where the chase ends. Hold Position, Hold Fire and Return Fire units never move on their own. These orders are automatic: any command replaces them and sets a new anchor where it leaves the unit.
+
 ### 10.2 Target acquisition
 
 - Runs **staggered**: each unit re-evaluates every 4–8 ticks, offset by a mixed hash of its ID (`Hash.mix32(id) % N`; with `id % N` the offset followed the ID's parity, and Sensors runs on even ticks, so even IDs reacted sooner: a start bias in mirrored matches, S-23). Keep the current target while it stays valid (hysteresis).

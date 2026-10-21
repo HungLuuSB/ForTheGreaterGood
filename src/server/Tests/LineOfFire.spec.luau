@@ -51,9 +51,10 @@ return function(t: RunAll.Context)
 		t.expect(Combat.lineOfFire(c, defs.weapons.chs_ir_sam, -80, 14, 60, 90, 13, 60), "homing missiles aren't checked")
 	end)
 
-	t.test("a tank doesn't fire through the ridge; artillery fires over it", function()
+	t.test("a tank holding position doesn't fire through the ridge; artillery fires over it", function()
 		local sim = ridge()
 		local lancer = Spawn.unit(sim, "ord_lancer", 1, -80, 60, math.pi / 2)
+		World.setMoveState(sim.world, lancer, World.MoveState.HOLD_POSITION) -- on Maneuver it would go round (MoveStates.spec)
 		Spawn.unit(sim, "ord_watchtower", 1, -40, 100, 0) -- sight over the ridge
 		dummy(sim, "chs_ravager", 90, 60)
 		local fired = shotsBy(sim, lancer, 150)
