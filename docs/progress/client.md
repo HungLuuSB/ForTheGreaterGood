@@ -60,6 +60,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `f95efcc` (Smooth range rings (C-29)).
 - Ready to merge: `49e983c` (Task 2: piece scripts and the Juggernaut (C-30)).
 - Ready to merge: `e125dee` (Task 3: air and naval rendering (C-31)).
+- Ready to merge: `dfdd0e7` (merge of `main` into this branch: resolves the `docs/progress/client.md` conflict with f5b8093 by keeping request 6 done and requests 7 and 8; test_client, test and build pass).
 
 ## Tasks
 
