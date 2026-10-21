@@ -158,7 +158,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - The server applies a command to the sender's own live units only and ignores the rest. Commands are validated server-side (guide 19); a rejected command just has no effect.
 - **All commands are effective** (S-4). With the queue flag, an order is appended to each unit's queue; without it, it replaces the queue:
   - MOVE;
-  - FIGHT: attack-move, holds to engage;
+  - FIGHT: attack-move: advances while no enemy is within weapon range, stops and fires while one is, then goes on (S-14);
   - PATROL: back and forth between the unit's start and the point, forever;
   - ATTACK: force-fire a unit the sender's team knows, even on hold fire; it chases into range. A target the team doesn't know is ignored;
   - GUARD: follow an allied unit (builders assist a frame or factory);
