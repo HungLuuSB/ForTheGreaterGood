@@ -284,6 +284,7 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-21: SAM scene reworked
 
 - `sam` is now on a bigger map (`flat:160`): the 4 Thorns stand on the east side, and one Falcon (5× health) starts on the west side out of their range and flies over them (spawn entries take `moveTo`). Your radars still cover the map (`debug_out/screens/sam_east_falcon_inbound.jpg`).
+- Later the same day: the Falcon now flies to x = 300 instead of 420 and circles there, just west of the Thorns and inside the map (at 420 its circle ran past the east edge). Studio: it circles between x ≈ 110 and 500 (`debug_out/screens/sam_falcon_circles_300.jpg`).
 
 ## 2026-10-21: enemy defense ranges (C-41)
 
