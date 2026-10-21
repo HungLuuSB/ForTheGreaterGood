@@ -100,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Performance (S-60):** two peaks are still over their guide 18.1 budgets, because the fixes change timing. Commands takes 1.7 ms on a ~300-unit select-all order (budget 1); proposal: slice the order's slot assignment into the Pathing job. A structure's death costs ~6 ms in Damage (quadtree updates); proposal: lazy quadtree updates.
 - **AI levels (S-57):** Easy's numbers (first wave at 8 min, waves of 4 + 1, 2 min apart, army of 8, a unit per 20 s); Normal's 2 tanks before the third generator and its recall rule. **Design question:** missile refills share a stalled economy evenly with construction, so an AI (or player) under air attack keeps its SAMs empty. Should refills take priority over construction?
 - **Pinpointers (S-59, the user asked):** names Witness and Augur; full precision at 6 (linear); 90% less radar and track error at full; radar-only missile lock loss 10% per midcourse check without Pinpointers (a long shot fails about a third to half the time); cost 250 + 3,000.
 - **SAM ranges cut again (S-56, the user asked):** IR now 49% of its S-33 range, radar 56% of S-45's. **Nukes:** a nuke is now in a radar site's reach for only ~6 s, so two sites often let one through (the test now uses four). If interception should stay strong, raise the chance or the radar SAM stock again.
@@ -133,6 +134,11 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 36), S-61, protocol 20:** State mask bit **128 OWNER**, after `stock`: `ownerMask u8` (QUEUE 1, STATES 2, AMMO 4), then:
+  - QUEUE: `count u8`, `progress u8` (the head, 0..255), `defIndex u16` × count.
+  - STATES: `u8` = fire (bits 0–1) + move × 4 (bits 2–3).
+  - AMMO: `rounds u8`, `max u8`.
+  - Owner only, each on change (queue progress by sixteenths) and with ENTER. Contract section 5.
 - **Done (request 34), S-59:** Pinpointers `ord_witness` (Witness) and `chs_augur` (Augur).
   - Defs: T2 structures with icon family `pinpointer`, pieces `base` and `dish`, built by the Architect and Forgemaster, unit def field `pinpointer = true`.
   - Precision: `Shared/Combat/Pinpoint.precision(count)` = min(count, 6) / 6, where count is the team's finished Pinpointers. Error scales by `errorScale(p)` = 1 − 0.9 p.

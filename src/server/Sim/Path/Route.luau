@@ -124,13 +124,48 @@ export type Search = {
 	dist: { [number]: number },
 	parent: { [number]: number },
 	settled: { [number]: boolean },
+	touched: { number }, -- leaves whose dist / settled were set (reset on release, S-60)
+	arraySize: number, -- the leaf count dist / settled were made for
 	heap: Heap.Heap,
 	done: boolean,
 	workDone: number,
 }
 
+-- Finished searches give back their per-leaf arrays (S-60): reset on exactly
+-- the leaves they touched, so a reused pair is as good as new and routes
+-- come out the same; it saves ~0.6 MB of allocation per search on a big map.
+local POOL_MAX = 4
+local arrayPool: { { dist: { number }, settled: { boolean }, n: number } } = {}
+
+local function takeArrays(n: number): ({ number }, { boolean })
+	for i = #arrayPool, 1, -1 do
+		local a = arrayPool[i]
+		if a.n == n then
+			table.remove(arrayPool, i)
+			return a.dist, a.settled
+		end
+	end
+	return table.create(n, math.huge), table.create(n, false)
+end
+
+-- Gives a search's arrays back for the next one; the search must not be
+-- used again.
+function Route.releaseSearch(s: Search)
+	if #arrayPool >= POOL_MAX or s.dist == nil then
+		return
+	end
+	local dist, settled = s.dist, s.settled
+	for _, leaf in s.touched do
+		dist[leaf] = math.huge
+		settled[leaf] = false
+	end
+	table.insert(arrayPool, { dist = dist, settled = settled, n = s.arraySize })
+	s.dist, s.settled = nil :: any, nil :: any
+end
+
 function Route.newSearch(tree: Quadtree.Tree, startCells: { number }, goalCell: number): Search
 	local goalLeaf = Quadtree.leafAt(tree, goalCell)
+	local dist, settled = takeArrays(tree.leafCount)
 	local s: Search = {
 		tree = tree,
 		startCells = startCells,
@@ -139,13 +174,18 @@ function Route.newSearch(tree: Quadtree.Tree, startCells: { number }, goalCell: 
 		wantedCount = 0,
 		anyWanted = false,
 		unreachable = {},
-		dist = { [goalLeaf] = 0 },
+		-- per-leaf arrays sized to the tree (array part, no rehashing as the
+		-- search grows; pooled; S-60): math.huge = not reached, false = not settled
+		dist = dist,
 		parent = {},
-		settled = {},
+		settled = settled,
+		touched = { goalLeaf },
+		arraySize = tree.leafCount,
 		heap = Heap.new(),
 		done = false,
 		workDone = 0,
 	}
+	s.dist[goalLeaf] = 0
 	if not tree.leafOpen[goalLeaf] then
 		s.unreachable = table.clone(startCells)
 		s.done = true
@@ -173,8 +213,12 @@ end
 -- Advances the search by about `budget` work units; true when finished.
 function Route.runSearch(s: Search, budget: number): boolean
 	local tree = s.tree
-	local heap, dist, parent, settled, wanted = s.heap, s.dist, s.parent, s.settled, s.wanted
+	local heap, dist, parent, settled, wanted, touched = s.heap, s.dist, s.parent, s.settled, s.wanted, s.touched
 	local spent = 0
+	-- leaf centres inline (Quadtree.leafCenter: corner + size / 2, the same
+	-- arithmetic), the hot loop of big orders on fragmented maps (S-60)
+	local leafX, leafZ, leafSize, neighbors = tree.leafX, tree.leafZ, tree.leafSize, tree.neighbors
+	local sqrt = math.sqrt
 	while not s.done and spent < budget do
 		if Heap.isEmpty(heap) or s.wantedCount == 0 then
 			s.done = true
@@ -189,13 +233,19 @@ function Route.runSearch(s: Search, budget: number): boolean
 		if wanted[cur] then
 			s.wantedCount -= 1
 		end
-		local cx, cz = Quadtree.leafCenter(tree, cur)
-		for _, nb in tree.neighbors[cur] do
+		local half = leafSize[cur] / 2
+		local cx, cz = leafX[cur] + half, leafZ[cur] + half
+		for _, nb in neighbors[cur] do
 			spent += 1
 			if not settled[nb] then
-				local nx, nz = Quadtree.leafCenter(tree, nb)
-				local nd = d + math.sqrt((nx - cx) ^ 2 + (nz - cz) ^ 2)
-				if dist[nb] == nil or nd < dist[nb] then
+				local nhalf = leafSize[nb] / 2
+				local nx, nz = leafX[nb] + nhalf, leafZ[nb] + nhalf
+				local nd = d + sqrt((nx - cx) ^ 2 + (nz - cz) ^ 2)
+				local old = dist[nb]
+				if nd < old then
+					if old == math.huge then
+						touched[#touched + 1] = nb
+					end
 					dist[nb] = nd
 					parent[nb] = cur
 					Heap.push(heap, nb, nd, 0)

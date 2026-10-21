@@ -693,3 +693,45 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **After:**
   - Mirrors split 4–8 (passes).
   - The level report still shows Hard > Normal > Easy on every map: overall Normal–Easy 36–6, Hard–Normal 42–0, Hard–Easy 36–0. Per map Normal–Easy is Ridgeline 10–2, Coastline 8–4, skirmish:256 12–0, Twin Lakes 6–0, and Hard won 5 of 6 FFAs.
+
+## S-60 — Normandy performance: pathing, slot assignment (overnight task 3) (2026-10-22)
+
+- **Asked (the user):** "profile the `normandy` scenario headless (392 units; worst tick 17.5 ms). Find which system peaks and bring every system back within its guide 18.1 budget without changing behavior. Before/after numbers."
+- **Tool:** `lune run profile_normandy [ticks]` builds the Studio profile from `src/roblox/MatchConfig.luau` itself (loaded as data). At tick 30 both armies attack-move at each other, with both cameras on the bocage. It reports per-system averages and peaks (with their ticks) against guide 18.1, the five worst ticks broken down, and the state hash.
+- **Rule for every change:** the state hash must not change. `86bd5a1a` after 1,800 ticks of the profile and `0720e012` after 300 ticks of a pathing benchmark, before and after each change: behaviour identical, bit for bit.
+- **What peaked:** the work-unit budget of 36,000 units per tick was about 9 ms of real time on Normandy.
+  - Big orders on the fragmented map (hedgerows cut the quadtree into small leaves) made the route search slow per unit.
+  - Each search and each flow field allocated ~1.6 MB.
+- **Changes:**
+  - `Heap`: hole-based sifting with inline comparisons; same comparisons in the same order, so pops are unchanged.
+  - `Route.runSearch`: leaf centres inline. `dist` / `settled` are arrays sized to the tree, pooled and reset on the leaves each search touched.
+  - `FlowField`: the cost table and queue arrays are pooled, reset on the cells written. The integrate loop keeps its counters in locals and is unrolled in DX / DZ order, keeping the push order the bucket queue depends on; the direction pass is unrolled too.
+  - `Formation.assign`: per-row and per-column unit counts skip empty bucket rows and columns. The same buckets with units are examined, so picks and `checks` are identical.
+- **Per-unit cost:** route search 0.366 → 0.145 µs per work unit, flow field 0.268 → 0.177 (the Pathing budget is now at most ~6.4 ms of work); the order's slot assignment 2.8 → 0.8 ms.
+- **Before → after** (`profile_normandy 1800`, three runs each, interleaved, same PC; before = `main` at 0348056):
+
+| | Before (3 runs) | After (3 runs) |
+|---|---|---|
+| Worst tick (ms) | 16.3 / 25.4 / 16.3 | 10.9 / 15.2 / 13.8 |
+| p99 tick (ms) | 11.9 / 13.6 / 12.2 | 7.9 / 8.6 / 8.7 |
+| Pathing peak (budget 8) | 11.9 / 19.5 / 11.8 | 8.1 / 7.6 / 6.9 |
+| Commands peak (budget 1) | 3.2 / 3.4 / 3.2 | 1.7 / 2.7 / 1.7 |
+| Projectiles+Damage peak (budget 8) | 11.1 / 9.2 / 7.4 | 6.5 / 7.2 / 9.9 |
+| NetOut peak (budget 6) | 4.8 / 7.4 / 5.3 | 3.8 / 4.4 / 4.2 |
+| Sensors / Targeting / Movement / Weapons / Construction / Economy peaks | all within budget | all within budget |
+
+- **Still over** (under "Needs my review"; each fix changes timing, so not done):
+  - **Commands:** 1.7 ms on the tick a select-all order of ~300 units is given (budget 1 ms; was 3.2). Slot assignment has to prove each pick over a 1,300-stud army. Fix options: slice big orders' slot assignment into the Pathing job (units start moving a tick later), or a 2 ms Commands budget for that tick.
+  - **Projectiles+Damage when a structure dies:** `Nav.terrainChanged` updates 7 quadtrees, about 4.3 ms (6 ms with the rest of the removal). It stays under 8 alone but goes over when a GC pause lands in the same tick. Fix option: update the quadtrees lazily, the first time each one is used.
+  - **GC pauses:** the remaining single-tick spikes (the worst tick of 15 ms) are Lune's garbage collector landing in a system; Roblox's differs. Allocation per path is down from ~1.6 MB to a few hundred KB.
+
+## S-61 — Own units' factory queue, fire / move state and ammo on the wire (client request 36) (2026-10-22)
+
+- **Asked (the client):** the unit panel showed the queue and states the client had sent itself, and no ammo.
+- **Protocol 20:** State mask bit 128 OWNER, then `ownerMask u8` with QUEUE 1, STATES 2, AMMO 4. Owner only. Each field is sent when it changes and with ENTER:
+  - QUEUE: `count u8`, the head's `progress u8`, `defIndex u16` per item. Progress steps of a sixteenth, like stock (S-49).
+  - STATES: one byte, fire bits 0–1, move bits 2–3.
+  - AMMO: `rounds u8`, `max u8`.
+- **Tests:**
+  - `Schema.spec`: golden bytes and rejects (empty mask, reserved bits, a 51-item queue).
+  - `NetOut.spec`: a plant with a 2-item queue, a tank whose fire and move state change, and a jet whose ammo drops. The owner's view matches every tick (the jet while tactical); the other player never gets them.

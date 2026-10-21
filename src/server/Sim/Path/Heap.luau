@@ -6,6 +6,11 @@
 -- again; callers skip stale entries when popped (lazy deletion). Storage is
 -- parallel arrays reused across clear() calls, so a reused heap allocates
 -- nothing.
+--
+-- Push and pop move a "hole" instead of swapping pairs and compare inline
+-- (S-60, the Normandy profile): the same comparisons in the same order as
+-- swap-based sifting, so every pop returns exactly what it did before, at
+-- about half the cost.
 
 local Heap = {}
 
@@ -24,64 +29,91 @@ function Heap.clear(heap: Heap)
 	heap.n = 0 -- arrays keep their slots; entries above n are ignored
 end
 
-local function less(heap: Heap, a: number, b: number): boolean
-	local x, y = heap.k1[a], heap.k1[b]
-	if x ~= y then
-		return x < y
-	end
-	x, y = heap.k2[a], heap.k2[b]
-	if x ~= y then
-		return x < y
-	end
-	return heap.id[a] < heap.id[b]
-end
-
-local function swap(heap: Heap, a: number, b: number)
-	local id, k1, k2 = heap.id, heap.k1, heap.k2
-	id[a], id[b] = id[b], id[a]
-	k1[a], k1[b] = k1[b], k1[a]
-	k2[a], k2[b] = k2[b], k2[a]
-end
-
 function Heap.push(heap: Heap, id: number, k1: number, k2: number)
+	local ids, k1s, k2s = heap.id, heap.k1, heap.k2
 	local i = heap.n + 1
 	heap.n = i
-	heap.id[i], heap.k1[i], heap.k2[i] = id, k1, k2
+	-- sift up: parents larger than the new entry move down into the hole
 	while i > 1 do
 		local p = i // 2
-		if less(heap, i, p) then
-			swap(heap, i, p)
-			i = p
+		local pk1 = k1s[p]
+		local smaller
+		if k1 ~= pk1 then
+			smaller = k1 < pk1
 		else
+			local pk2 = k2s[p]
+			if k2 ~= pk2 then
+				smaller = k2 < pk2
+			else
+				smaller = id < ids[p]
+			end
+		end
+		if not smaller then
 			break
 		end
+		ids[i], k1s[i], k2s[i] = ids[p], pk1, k2s[p]
+		i = p
 	end
+	ids[i], k1s[i], k2s[i] = id, k1, k2
 end
 
--- Removes and returns the smallest entry's id and first key.
 function Heap.pop(heap: Heap): (number, number)
-	local id, k1 = heap.id[1], heap.k1[1]
+	local ids, k1s, k2s = heap.id, heap.k1, heap.k2
+	local topId, topK1 = ids[1], k1s[1]
 	local n = heap.n
-	swap(heap, 1, n)
+	-- the last entry fills the hole at the root, then sifts down
+	local id, k1, k2 = ids[n], k1s[n], k2s[n]
 	n -= 1
 	heap.n = n
 	local i = 1
 	while true do
-		local l, r = i * 2, i * 2 + 1
-		local m = i
-		if l <= n and less(heap, l, m) then
-			m = l
-		end
-		if r <= n and less(heap, r, m) then
-			m = r
-		end
-		if m == i then
+		local l = i * 2
+		if l > n then
 			break
 		end
-		swap(heap, i, m)
+		-- the smaller child (left on ties, as before)
+		local m = l
+		local r = l + 1
+		if r <= n then
+			local lk1, rk1 = k1s[l], k1s[r]
+			local rLess
+			if rk1 ~= lk1 then
+				rLess = rk1 < lk1
+			else
+				local lk2, rk2 = k2s[l], k2s[r]
+				if rk2 ~= lk2 then
+					rLess = rk2 < lk2
+				else
+					rLess = ids[r] < ids[l]
+				end
+			end
+			if rLess then
+				m = r
+			end
+		end
+		-- stop when the moving entry is not larger than that child
+		local mk1 = k1s[m]
+		local childLess
+		if mk1 ~= k1 then
+			childLess = mk1 < k1
+		else
+			local mk2 = k2s[m]
+			if mk2 ~= k2 then
+				childLess = mk2 < k2
+			else
+				childLess = ids[m] < id
+			end
+		end
+		if not childLess then
+			break
+		end
+		ids[i], k1s[i], k2s[i] = ids[m], mk1, k2s[m]
 		i = m
 	end
-	return id, k1
+	if n > 0 then
+		ids[i], k1s[i], k2s[i] = id, k1, k2
+	end
+	return topId, topK1
 end
 
 function Heap.isEmpty(heap: Heap): boolean
