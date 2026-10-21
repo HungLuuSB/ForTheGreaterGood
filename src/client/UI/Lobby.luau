@@ -191,6 +191,12 @@ local function render(ui: UI, data: any)
 			send({ op = "set", key = "win", value = w })
 		end)
 	end
+	local ffRow = row(ui.body, "Friendly fire", 4)
+	for _, v in { true, false } do
+		button(ffRow, if v then "On" else "Off", 112, s.friendlyFire ~= false and v or s.friendlyFire == false and not v, function()
+			send({ op = "set", key = "friendlyFire", value = v })
+		end)
+	end
 	local starts = 2
 	for _, m in data.maps do
 		if m.id == s.mapId then

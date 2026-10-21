@@ -16,7 +16,7 @@ local TeamColors = require("./TeamColors")
 local IconLayer = {}
 
 -- what a slot last showed
-type Shown = { tile: string?, size: number, team: number, alpha: number, selected: boolean, x: number, y: number, visible: boolean }
+type Shown = { tile: string?, size: number, team: number, alpha: number, selected: boolean, red: boolean, x: number, y: number, visible: boolean }
 
 export type Layer = { gui: ScreenGui, slots: { Glyph.G }, shown: { Shown }, used: number, stats: { styled: number, moved: number } }
 
@@ -33,6 +33,8 @@ end
 -- Draws this frame's icons. With `everything` false only units without a
 -- model (not tactical) get one.
 function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: string }, everything: boolean)
+	local blink = math.floor(os.clock() * 4) % 2 == 0 -- under-attack icons blink red (S-68)
+	Glyph.setBlink(blink)
 	local n = 0
 	for _, d in draws do
 		if not everything and tiers[d.id] == "tactical" then
@@ -44,7 +46,7 @@ function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: 
 		if slot == nil then
 			slot = Glyph.new(layer.gui)
 			layer.slots[n] = slot
-			shown = { tile = nil, size = 0, team = 0, alpha = 0, selected = false, x = -1, y = -1, visible = false }
+			shown = { tile = nil, size = 0, team = 0, alpha = 0, selected = false, red = false, x = -1, y = -1, visible = false }
 			layer.shown[n] = shown
 		end
 		if not shown.visible then
@@ -58,9 +60,10 @@ function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: 
 			layer.stats.moved += 1
 		end
 		local st = d.style
-		if st.tile ~= shown.tile or st.size ~= shown.size or st.team ~= shown.team or st.alpha ~= shown.alpha or st.selected ~= shown.selected then
+		local red = st.attacked == true and blink
+		if st.tile ~= shown.tile or st.size ~= shown.size or st.team ~= shown.team or st.alpha ~= shown.alpha or st.selected ~= shown.selected or red ~= shown.red then
 			Glyph.apply(slot, st, TeamColors(st.team))
-			shown.tile, shown.size, shown.team, shown.alpha, shown.selected = st.tile, st.size, st.team, st.alpha, st.selected
+			shown.tile, shown.size, shown.team, shown.alpha, shown.selected, shown.red = st.tile, st.size, st.team, st.alpha, st.selected, red
 			layer.stats.styled += 1
 		end
 	end

@@ -639,3 +639,15 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** `Render/Atmosphere` holds four lighting presets (Current, Clear day, Battlefield haze, Dusk) that set Lighting's clock, brightness, ambient, exposure and shadow softness, the Atmosphere, Bloom, a ColorCorrection (made if missing, off in Current) and SunRays on this client. The first apply remembers the place's values; Current puts them back. The settings menu's "Atmosphere" row picks one; Current is the default, as the user asked. Measured in the same normandy fight: the presets cost about 0.5 ms of GPU over Current (4.3 → 4.8–4.9 ms), no CPU. Dusk was tuned after the first try came out too dark to read a fight.
 
 **Why:** the user asked for 2–3 atmosphere options to choose from, with before / after screenshots and frame cost, the current look staying the default. Lighting.Technology isn't scriptable, so "Future" lighting stays a place setting.
+
+### C-84 — Deploy phases in piece scripts; the Warden and the Minotaur (2026-10-22)
+
+**Decision:** PieceAnim calls a new hook `Deploy(u, phase, instant)` for defs with `deploy` when the phase read from the state bits changes: DEPLOYING after deployed is "packing", DEPLOYING otherwise "unpacking", DEPLOYED "deployed", neither "packed"; `instant` the first time (a unit entering view already deployed snaps). The Warden's script turns `spades` 55° down and lowers `base` 0.4 studs over the def's deploy time, and on packing locks `turret` and `barrel` forward (its AimWeapon is ignored while packing or packed, when it can't fire); the Minotaur's script drives `ram` 2.5 studs forward on a slot 2 shot (the demolition charge) and back at 2 studs/s, and aims and recoils its gun like the default script.
+
+**Why:** the user asked for the faction-only units' visuals as they land (Warden deploying, Minotaur's charge). The timing follows the server's state bits, so the client never shows a deployed gun the server hasn't deployed. Piece names follow S-64's def (`pieces`) and the models request.
+
+### C-85 — Alerts from the server; S-69 to S-73 followed (2026-10-23)
+
+**Decision:** NetIn queues ALERT events (protocol 23, S-68) in `world.alertQueue` (cell decoded to its centre; stalls carry cell 0); Core/Alerts maps each kind to the feed's kind, text (with the unit's name when the event names one) and whether it has a place to jump to (`at`; stalls don't), and drains the queue each frame. The client's inference (health drops, deaths, the economy ratio, launch warnings) is removed; the server rate-limits. The strategic UNDER_ATTACK flag makes minimap dots and strategic icons blink red (4 Hz phase; the icon layer redraws only on a phase change). S-70: a def with `deathBlast` adds an impact burst of its `aoe` on its death. S-72: `sensors.radarDrain` counts in the stats' upkeep. S-73: the lobby has `friendlyFire` (default on) passed as `match.friendlyFire`.
+
+**Why:** request 39 landed; the server knows who hit whom, sees through no fog it shouldn't, and limits alerts the same for every client. sim-A asked the client to draw the death blast.
