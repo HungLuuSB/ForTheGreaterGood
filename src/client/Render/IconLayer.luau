@@ -3,7 +3,10 @@
 -- glyphs in team colors (UI/Glyph, BAR style, C-71), no image assets.
 -- Units without a model (radar blips, ghosts, strategic records in view)
 -- always get an icon; at strategic zoom every unit does and the models are
--- hidden. Looks are placeholders: listed under "Needs my review".
+-- hidden. Each slot remembers the style and pixel it last showed, so a
+-- frame only writes what changed (C-73: the icon layer was the client's
+-- biggest cost at full zoom). Looks are placeholders: listed under "Needs
+-- my review".
 
 local Players = game:GetService("Players")
 
@@ -13,7 +16,10 @@ local TeamColors = require("./TeamColors")
 
 local IconLayer = {}
 
-export type Layer = { gui: ScreenGui, slots: { Glyph.G }, used: number }
+-- what a slot last showed
+type Shown = { shape: string?, size: number, team: number, alpha: number, selected: boolean, glyph: any, x: number, y: number, visible: boolean }
+
+export type Layer = { gui: ScreenGui, slots: { Glyph.G }, shown: { Shown }, used: number, stats: { styled: number, moved: number } }
 
 function IconLayer.new(): Layer
 	local gui = Instance.new("ScreenGui")
@@ -22,7 +28,7 @@ function IconLayer.new(): Layer
 	gui.ResetOnSpawn = false
 	gui.DisplayOrder = 1
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	return { gui = gui, slots = {}, used = 0 }
+	return { gui = gui, slots = {}, shown = {}, used = 0, stats = { styled = 0, moved = 0 } }
 end
 
 -- Draws this frame's icons. With `everything` false only units without a
@@ -35,16 +41,35 @@ function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: 
 		end
 		n += 1
 		local slot = layer.slots[n]
+		local shown = layer.shown[n]
 		if slot == nil then
 			slot = Glyph.new(layer.gui)
 			layer.slots[n] = slot
+			shown = { shape = nil, size = 0, team = 0, alpha = 0, selected = false, glyph = nil, x = -1, y = -1, visible = false }
+			layer.shown[n] = shown
 		end
-		slot.root.Visible = true
-		slot.root.Position = UDim2.fromOffset(d.x, d.y)
-		Glyph.apply(slot, d.style, TeamColors(d.style.team))
+		if not shown.visible then
+			slot.root.Visible = true
+			shown.visible = true
+		end
+		local x, y = math.floor(d.x + 0.5), math.floor(d.y + 0.5)
+		if x ~= shown.x or y ~= shown.y then
+			slot.root.Position = UDim2.fromOffset(x, y)
+			shown.x, shown.y = x, y
+			layer.stats.moved += 1
+		end
+		local st = d.style
+		if st.shape ~= shown.shape or st.size ~= shown.size or st.team ~= shown.team or st.alpha ~= shown.alpha or st.selected ~= shown.selected or st.glyph ~= shown.glyph then
+			Glyph.apply(slot, st, TeamColors(st.team))
+			shown.shape, shown.size, shown.team, shown.alpha, shown.selected, shown.glyph = st.shape, st.size, st.team, st.alpha, st.selected, st.glyph
+			layer.stats.styled += 1
+		end
 	end
 	for i = n + 1, layer.used do
-		layer.slots[i].root.Visible = false
+		if layer.shown[i].visible then
+			layer.slots[i].root.Visible = false
+			layer.shown[i].visible = false
+		end
 	end
 	layer.used = n
 end

@@ -459,6 +459,7 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-22: overnight run
 
 - Fog and wrecks from the server (C-65): the client now uses the server's exact team sight, allies included (it used to work it out from its own units). Wrecks appear for anything the team knows of, also after joining, and disappear when reclaimed (`debug_out/screens/c65_wrecks.jpg`).
+- Client performance in the normandy battle (C-73): 60 fps at normal and full zoom in Studio; the client's own frame work is 1-2 ms. The biggest cost, the icon layer at full zoom, dropped 60% (1.67 → 0.66 ms) by only writing what changed.
 - Pinpointers (S-59, C-72): radars, radar SAMs and Pinpointers show the team's radar precision in the unit panel as "Accuracy 50%" (`debug_out/screens/c72_radar_precision.jpg`).
 - BAR-style UI (C-71, the user's reference screenshot): minimap top left, the build grid under it, unit info bottom left, the command card next to it with colored state bars, BAR's resource bar; unit icons are now BAR-like glyphs (shape, role mark, tier pips) instead of letter codes (`debug_out/screens/c71_bar_layout.jpg`). BAR's real icons are CC BY-NC-ND, so they can't be used in a Roblox game; see the question in the summary.
 - Match flow (C-70): new profile `skirmish` starts in a lobby (map, mode, win rule, faction, AI slots Easy / Normal / Hard), then a match from the map's starts against the AI, a results screen (victory, defeat, or eliminated while the AIs fight on) and back to the lobby (`debug_out/screens/c70_lobby.jpg`, `c70_results.jpg`).
