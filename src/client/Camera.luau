@@ -6,6 +6,9 @@
 -- the server's tactical tier follows it (net.md section 5). T follows a
 -- unit or a missile (C-43, Core/Follow): Main sets the focus each frame
 -- between `input` and `apply`; a manual pan stops it, zooming doesn't.
+-- Alt + wheel tilts the camera between MIN_PITCH and MAX_PITCH (C-69); at a
+-- low pitch the rectangle sent to the server stops RECT_CAP camera
+-- distances from the focus, so the tactical tier never reaches the horizon.
 --
 -- Feel values are first guesses: listed under "Needs my review".
 
@@ -17,7 +20,14 @@ local World = require("./Core/World")
 
 local Camera = {}
 
-Camera.PITCH = math.rad(55) -- looking down
+Camera.PITCH = math.rad(55) -- looking down: the starting pitch
+Camera.MIN_PITCH = math.rad(35) -- Alt + wheel range (C-69)
+Camera.MAX_PITCH = math.rad(80)
+Camera.PITCH_STEP = math.rad(4) -- per wheel notch
+-- the sent rectangle's corners stay within this many camera distances of the
+-- focus (horizontally): about where the far edge is at 55°, so a low pitch
+-- doesn't pull the tactical tier out to the horizon (C-69)
+Camera.RECT_CAP = 1.8
 Camera.MIN_DISTANCE = 30
 Camera.MAX_DISTANCE = 900
 Camera.ZOOM_STEP = 1.15 -- per wheel notch
@@ -36,6 +46,7 @@ export type State = {
 	z: number,
 	distance: number,
 	yaw: number,
+	pitch: number, -- radians above the horizontal (C-69)
 	dragging: Vector2?,
 	lastRect: { number }?,
 	lastSent: number,
@@ -46,7 +57,7 @@ export type State = {
 }
 
 function Camera.new(x: number, z: number, distance: number): State
-	return { x = x, z = z, distance = distance, yaw = 0, dragging = nil, lastRect = nil, lastSent = -math.huge, rect = { 0, 0, 0, 0 }, outside = 0 }
+	return { x = x, z = z, distance = distance, yaw = 0, pitch = Camera.PITCH, dragging = nil, lastRect = nil, lastSent = -math.huge, rect = { 0, 0, 0, 0 }, outside = 0 }
 end
 
 local keys = {
@@ -64,7 +75,12 @@ function Camera.bind(state: State)
 		end
 		if input.UserInputType == Enum.UserInputType.MouseWheel then
 			local notch = input.Position.Z
-			state.distance = math.clamp(state.distance * Camera.ZOOM_STEP ^ -notch, Camera.MIN_DISTANCE, Camera.MAX_DISTANCE)
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt) then
+				-- tilt (C-69): wheel up looks further ahead
+				state.pitch = math.clamp(state.pitch - notch * Camera.PITCH_STEP, Camera.MIN_PITCH, Camera.MAX_PITCH)
+			else
+				state.distance = math.clamp(state.distance * Camera.ZOOM_STEP ^ -notch, Camera.MIN_DISTANCE, Camera.MAX_DISTANCE)
+			end
 		end
 	end)
 	UserInputService.InputBegan:Connect(function(input, processed)
@@ -157,21 +173,32 @@ function Camera.apply(state: State, world: World.World, cam: Camera, now: number
 	local groundY = World.groundY(world, state.x, state.z)
 	local focus = Vector3.new(state.x, groundY, state.z)
 	-- camera sits south of the focus (looking north, -Z) at yaw 0
-	local back = Vector3.new(-sin, 0, cos) * math.cos(Camera.PITCH) + Vector3.new(0, math.sin(Camera.PITCH), 0)
+	local back = Vector3.new(-sin, 0, cos) * math.cos(state.pitch) + Vector3.new(0, math.sin(state.pitch), 0)
 	local distance = math.max(state.distance, state.minDistance or 0)
 	cam.CameraType = Enum.CameraType.Scriptable
 	cam.CFrame = CFrame.lookAt(focus + back * distance, focus)
 
-	-- camera rectangle from the screen corners (sky corners clamp to far ground)
+	-- camera rectangle from the screen corners, each at most RECT_CAP camera
+	-- distances from the focus (sky corners: straight ahead at the cap, C-69)
 	local xs, zs = {}, {}
+	local cap = distance * Camera.RECT_CAP
 	for _, p in { Vector2.new(0, 0), Vector2.new(view.X, 0), Vector2.new(0, view.Y), view } do
+		local ray = cam:ViewportPointToRay(p.X, p.Y)
 		local hit = groundHit(cam, p.X, p.Y, groundY)
-		if hit == nil then
-			local far = focus - back * distance * 3
-			hit = Vector3.new(far.X, groundY, far.Z)
+		local dx, dz
+		if hit then
+			dx, dz = hit.X - focus.X, hit.Z - focus.Z
+		else
+			dx, dz = ray.Direction.X, ray.Direction.Z
+			local len = math.sqrt(dx * dx + dz * dz)
+			dx, dz = dx / math.max(len, 1e-6) * cap, dz / math.max(len, 1e-6) * cap
 		end
-		table.insert(xs, hit.X)
-		table.insert(zs, hit.Z)
+		local len = math.sqrt(dx * dx + dz * dz)
+		if len > cap then
+			dx, dz = dx / len * cap, dz / len * cap
+		end
+		table.insert(xs, focus.X + dx)
+		table.insert(zs, focus.Z + dz)
 	end
 	local minX, minZ, maxX, maxZ = Commands.cameraRect(g, xs, zs)
 	state.rect = { minX, minZ, maxX, maxZ }
