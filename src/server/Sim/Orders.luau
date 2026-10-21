@@ -83,8 +83,9 @@ local function isFactory(d: Defs.UnitDef): boolean
 	return d.domain == "structure" and d.buildOptions ~= nil
 end
 
+local MOVE_LIKE: { [string]: boolean } = { move = true, fight = true, patrol = true }
 local function isMoveLike(kind: string): boolean
-	return kind == "move" or kind == "fight" or kind == "patrol"
+	return MOVE_LIKE[kind] == true
 end
 
 -- Ends whatever the unit is doing for its current order (not its Nav move:
@@ -199,18 +200,27 @@ type Order = OrdersState.Order
 -- position ≤ range + the target's radius when its type is known). Targeting
 -- keeps a target out to 110% of range (hysteresis); that alone doesn't
 -- stop the unit, it closes in. Seeing an enemy never does.
+local SEEN = Sensors.Level.VISIBLE
 local function engaged(sim: Types.Sim, id: number): boolean
 	local w = sim.world
 	local profiles = sim.combat.profiles
 	local weapons = profiles[w.defIndex[id]].weapons
 	local ally = w.ally[id]
+	local vis = sim.sensors.vis[ally]
 	for slot = 1, w.weaponCount[id] do
 		local key = World.slotKey(id, slot)
 		local t = w.wTarget[key]
 		if t ~= 0 and w.wBlocked[key] == 0 then -- terrain in the way: not engaged, move on (S-32)
-			local kx, kz, level, defIndex = Sensors.knownTarget(sim, ally, t, w.wTargetGen[key])
+			local kx, kz, radius
+			if World.isRef(w, t, w.wTargetGen[key]) and vis and vis[t] == SEEN and w.ally[t] ~= ally then
+				-- a live enemy in sight (most cases): what knownTarget would say (S-74)
+				kx, kz, radius = w.posX[t], w.posZ[t], profiles[w.defIndex[t]].radius
+			else
+				local level, defIndex
+				kx, kz, level, defIndex = Sensors.knownTarget(sim, ally, t, w.wTargetGen[key])
+				radius = if defIndex and Sensors.typeKnown(sim, ally, t, level) then profiles[defIndex].radius else 0
+			end
 			if kx ~= nil and kz ~= nil then
-				local radius = if defIndex and Sensors.typeKnown(sim, ally, t, level) then profiles[defIndex].radius else 0
 				local dx, dz = kx - w.posX[id], kz - w.posZ[id]
 				if dx * dx + dz * dz <= (weapons[slot].range + radius) ^ 2 then
 					return true
@@ -276,7 +286,7 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 	local w = sim.world
 	local o = sim.orders
 	local kind = h.kind
-	if isMoveLike(kind) then
+	if MOVE_LIKE[kind] then
 		if w.orderId[id] ~= h.nav then
 			-- arrived (or the move was replaced)
 			if kind == "patrol" then

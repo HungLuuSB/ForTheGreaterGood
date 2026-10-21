@@ -959,3 +959,33 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Exception:** strategic blasts (nukes, team 0) and death blasts (S-70) still hurt everyone; they belong to no team.
 - **Replay header:** its match byte is 2 when friendly fire is off (1 as before otherwise), so old replays still read and a replayed match keeps the option. No format version change.
 - **Test:** `FriendlyFire.spec`: the default hurts both tanks under a blast, the option spares the own one; the option survives a replay round trip.
+
+## S-74 — 800 units: Targeting and Commands, same behaviour (the user's task 9) (2026-10-22)
+
+- **Asked:** bring Commands (5.1 ms, budget 1) and Targeting (8.6, budget 8) at 800 units within budget without changing behaviour (same game-state hash), with before/after numbers.
+- **Where things stood:** S-67 had already moved a select-all order's slot assignment into the Pathing job. On today's code (`lune run stress 450 800`, which now prints the state hash and each system's peak tick):
+  - Commands averages 0.47 ms, peaks 1.9–3.7.
+  - Targeting averages 1.9–2.1 ms, peaks 5.6–9.1.
+- **Changes** (the state hash stays `75cd2a2c` in every run):
+  - **Targeting's search:**
+    - `acceptable()` hands back the level, def index, "type known" and known categories it looked up, and the search scores from them, where `score()` asked the sensors again. The doomed check reuses the level.
+    - A per-def `possibleMask`, every category the sensors could ever report for a live unit of that def (its own, its domain's, GROUND for aircraft), rejects candidates a weapon can never target (anti-air over a tank column, guns over jets) before any sensor lookup.
+  - **Orders' attack-move hold check (`engaged`):** a live enemy in sight is read straight from the world. That is exactly what `Sensors.knownTarget` would return; any other target still asks it.
+  - **Orders:** move-like kinds by table lookup.
+- **Deterministic effect:** sensor lookups per 30 s stress run: `knownTarget` 1,173,143 → 811,243 (−31%), `typeKnown` 1,867,852 → 1,192,546 (−36%), `knownCategories` 876,257 → 562,851 (−36%), `level` 1,680,111 → 1,274,427 (−24%).
+- **Timings** (3 runs each; the PC is noisy, ±30% run to run):
+
+| | Before | After |
+|---|---|---|
+| Targeting peak (budget 8) | 9.10 / 5.74 / 5.59 | 5.65 / 6.52 / 7.39 |
+| Targeting average | 2.06 / 1.93 / 1.91 | 1.83 / 1.80 / 2.07 |
+| Commands peak (budget 1) | 3.67 / 1.93 / 1.97 | 1.76 / 1.77 / 2.15 |
+| Commands average | 0.54 / 0.47 / 0.47 | 0.48 / 0.46 / 0.57 |
+
+- **Targeting:** within budget in every run since. **Commands is not:**
+  - Its average is 0.47 ms, half of it the attack-move hold check for ~700 units a tick.
+  - Its peak is the order tick (applying and issuing 800 units' FIGHT: ~0.4 ms giving orders, ~0.8 ms issuing them) and odd mid-battle ticks at ~1.2–1.5 ms.
+  - What's left needs a behaviour change; under "Needs my review":
+    - (a) check attack-move holds for half the units each tick (each unit every 2nd tick: 0.13 s later to stop);
+    - (b) give a big order's queue entries over 2–4 ticks, like its slots (S-67).
+- Tool: `Sim.enableTiming` records each system's peak tick; `stress` prints it and the state hash.

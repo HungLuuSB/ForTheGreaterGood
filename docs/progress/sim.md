@@ -117,6 +117,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **800 units (S-74):** Targeting is within budget (peaks 5.7–7.4 ms of 8; a third fewer sensor lookups, same state hash). Commands is not (average 0.47 ms, peaks 1.8–2.2 of 1): what remains needs a behaviour change. Pick one: (a) attack-move hold checks for half the units each tick (a unit stops up to 0.07 s later), or (b) spread a big order's queue entries over 2–4 ticks.
 - **Faction balance in AI matches (S-65, `docs/FACTION_AI.md`):** Order wins 89% of same-level matches (target 40–60%). Addressed next by the faction AI (task 11) and the ±10% tuning (task 12); Normandy (no deposits) leaves 43% of its matches undecided at 40 minutes.
 - **Warden and Minotaur (S-64):**
   - **My calls on the mechanic:** the Warden deploys automatically whenever it stands still, and can't fire while packed.
