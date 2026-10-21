@@ -12,6 +12,7 @@
 -- angle off the nose against the seeker cone (C-42), predicted miss.
 -- Corrections, decoys and lost locks come from Effects' marks.
 
+local Guidance = require("@shared/Combat/Guidance")
 local Effects = require("./Effects")
 local World = require("./World")
 
@@ -21,9 +22,10 @@ MissileView.MAX_MISSILES = 12
 MissileView.PATH_TICKS = 15 -- the drawn path: 1 s of sim time
 MissileView.PREDICT_TICKS = 45 -- how far ahead the miss is looked for (3 s)
 MissileView.PAST_TICKS = 2 -- a locked missile's path ends this many ticks after its closest approach
--- Seeker half-angle off the nose by guidance (degrees, C-42) until the sim
--- gives weapons a `seekerAngle` (request 13c); COMMAND guidance has no seeker.
-MissileView.SEEKER_ANGLE = table.freeze({ IR = 60, RADAR = 70 }) :: { [string]: number }
+-- Seeker half-angle off the nose by guidance (degrees, C-42): the server's
+-- (Guidance.seekerAngle, S-27; a weapon's `seekerAngle` wins); COMMAND
+-- guidance has no seeker.
+MissileView.SEEKER_ANGLE = Guidance.SEEKER_ANGLE
 
 export type Entry = {
 	id: number,
@@ -110,7 +112,7 @@ function MissileView.build(fx: Effects.Fx, world: World.World, renderTick: numbe
 			fx = vx,
 			fy = vy,
 			fz = vz,
-			seekerAngle = weapon.seekerAngle or MissileView.SEEKER_ANGLE[guidance],
+			seekerAngle = Guidance.seekerAngle(weapon),
 			seekerRange = weapon.lockRange or weapon.range or 0,
 			inSeeker = false,
 			locked = target ~= nil,

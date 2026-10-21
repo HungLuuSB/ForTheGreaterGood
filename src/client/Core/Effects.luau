@@ -6,7 +6,7 @@
 -- interpolated tanks are: an event or a death waits in the queue until the
 -- render tick reaches its tick.
 --   * SPAWN_PROJ starts a projectile the client steps itself with the
---     server's math (Ballistics.steer for homing, Ballistics.step); IMPACT
+--     server's math (Shared/Combat/Guidance for homing, S-27; Ballistics.step); IMPACT
 --     ends it and bursts; DECOYED / LOST_LOCK snap it and clear its target;
 --     homing corrections snap the prediction and blend the drawn offset away
 --     over 5 ticks (errors above 60 studs snap).
@@ -18,6 +18,7 @@
 -- size / (1 + distance to the camera focus / 100).
 
 local Ballistics = require("@shared/Combat/Ballistics")
+local Guidance = require("@shared/Combat/Guidance")
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
@@ -65,6 +66,7 @@ export type Proj = {
 	size: number,
 	launch: { number }?, -- launched early (C-27): the server's state at its spawn tick { tick, x, y, z, vx, vy, vz }, taken as is on that step
 	nextState: { number }?, -- the prediction one tick on { x, y, z, vx, vy, vz, dvx, dvy, dvz } (dv: this tick's steering): frames draw the curve between (C-38)
+	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the flare or chaff it follows (S-28)
 }
 
 export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number }
@@ -210,10 +212,28 @@ local function targetAt(target: World.Unit, t: number): (number, number, number,
 	return x, z, alt, heading, math.sqrt((x - x0) ^ 2 + (z - z0) ^ 2) / DT
 end
 
-local function homingAim(world: World.World, target: World.Unit, t: number, px: number, py: number, pz: number, speed: number): (number, number, number)
-	local x, z, alt, heading, tv = targetAt(target, t)
-	local lx, ly, lz = Effects.aimFrom(world, target, x, z, alt, heading, tv, px, py, pz, speed)
-	return lx, ly, lz
+-- One tick of the server's homing guidance into tick `t` (Projectiles,
+-- S-27; Shared/Combat/Guidance): missiles fly proportional navigation
+-- against the target's centre where it was when the tick's step starts,
+-- torpedoes lead pursuit against where it is at the tick's end. `at(t)`
+-- gives the target's x, z and altitude at the end of sim tick t; its
+-- velocity is taken over the tick.
+local function steer(world: World.World, target: World.Unit, weapon: any, at: (number) -> (number, number, number), t: number, x: number, y: number, z: number, vx: number, vy: number, vz: number): (number, number, number)
+	local ex, ez, alt = at(t)
+	local sx, sz = at(t - 1)
+	local _, ty = Effects.aimFrom(world, target, ex, ez, alt, 0, 0, x, y, z, 1)
+	local tvx, tvz = (ex - sx) / DT, (ez - sz) / DT
+	local maxTurn = math.rad(weapon.turnRate) * DT
+	if weapon.type == "HOMING" then
+		return Guidance.pn(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT)
+	end
+	return Guidance.lead(x, y, z, vx, vy, vz, ex, ty, ez, tvx, tvz, maxTurn)
+end
+
+-- A decoyed missile's tick toward its decoy point (S-28): the new velocity
+-- and whether its seeker still follows the point.
+local function followDecoy(weapon: any, d: { number }, x: number, y: number, z: number, vx: number, vy: number, vz: number): (number, number, number, boolean)
+	return Guidance.decoy(x, y, z, vx, vy, vz, d[1], d[2], d[3], math.rad(weapon.turnRate) * DT, Guidance.seekerAngle(weapon) or 60)
 end
 
 -- The share of the drawn offset left `frac` ticks into the current tick:
@@ -296,25 +316,30 @@ local function reblend(p: Proj, x: number, y: number, z: number, vx: number, vy:
 end
 
 -- A projectile's state one sim tick on, into tick `t` (the server's
--- order: steer, then step), without changing it; and how steering changed
--- its velocity. On its spawn tick (launched early, C-27) it is the
--- server's own state (a homing missile already steered during it).
-local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number)
+-- order: steer, then step), without changing it; how steering changed its
+-- velocity; and, for a decoyed missile, whether it still follows the decoy.
+-- On its spawn tick (launched early, C-27) it is the server's own state (a
+-- homing missile already steered during it).
+local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean)
 	local launch = p.launch
 	if launch and launch[1] == t then
-		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0
+		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0, true
 	end
 	local weapon = p.weapon
 	local vx, vy, vz = p.vx, p.vy, p.vz
 	local target = if p.target ~= 0 then world.units[p.target] else nil
+	local follow = true
 	if weapon.turnRate and target then
-		local speed = math.sqrt(vx * vx + vy * vy + vz * vz)
-		local tx, ty, tz = homingAim(world, target, t, p.x, p.y, p.z, speed)
-		vx, vy, vz = Ballistics.steer(vx, vy, vz, tx - p.x, ty - p.y, tz - p.z, math.rad(weapon.turnRate) * DT)
+		vx, vy, vz = steer(world, target, weapon, function(tt: number): (number, number, number)
+			local x, z, alt = Interp.sample(target, tt)
+			return x, z, alt
+		end, t, p.x, p.y, p.z, vx, vy, vz)
+	elseif weapon.turnRate and p.decoy then
+		vx, vy, vz, follow = followDecoy(weapon, p.decoy, p.x, p.y, p.z, vx, vy, vz)
 	end
 	local dvx, dvy, dvz = vx - p.vx, vy - p.vy, vz - p.vz
 	local x, y, z, nvx, nvy, nvz = Ballistics.step(p.x, p.y, p.z, vx, vy, vz, weapon.gravity or 0, DT)
-	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz
+	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz, follow
 end
 
 -- One sim tick of every projectile, into tick `t`.
@@ -325,9 +350,16 @@ local function stepProjectiles(fx: Fx, world: World.World, t: number)
 			fx.projectiles[id] = nil
 			continue
 		end
-		local x, y, z, vx, vy, vz, dvx, dvy, dvz = advance(world, p, t)
+		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow = advance(world, p, t)
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
 		p.launch = nil
+		local d = p.decoy
+		if d then
+			d[4] -= 1
+			if not follow or d[4] <= 0 then
+				p.decoy = nil
+			end
+		end
 		advanceBlend(p, dvx, dvy, dvz)
 	end
 end
@@ -444,6 +476,12 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
 			p.target = 0
+			p.decoy = nil
+			if kind == EK.DECOYED and (e.decoyTicks or 0) > 0 then
+				-- it follows the flare or chaff like the server (S-28)
+				local cx, cz = world.grid:decode(e.decoyCell, e.decoyOffX, e.decoyOffZ)
+				p.decoy = { cx, e.decoyY / Schema.Y_SCALE, cz, e.decoyTicks }
+			end
 			mark(fx, if kind == EK.DECOYED then "decoy" else "lost", now, dx, dy, dz, x, y, z)
 			burst(fx, now, dx, dy, dz, 1.2, if kind == EK.DECOYED then "decoy" else "lost", 0.35)
 		end
@@ -664,8 +702,9 @@ export type Prediction = {
 
 -- Where projectile `p` flies over the next `ticks` sim ticks from its
 -- prediction at fx.tick: the server's steering and step on a copy, the
--- target known up to its last snapshot and extrapolated straight on from it
--- (heading and speed held). Stops at the fuse (as the server's) or the
+-- target known up to its last snapshot and extrapolated from it holding its
+-- speed and its turn rate over its last two snapshots (a circling jet keeps
+-- circling: proportional navigation reacts to the target's turn). Stops at the fuse (as the server's) or the
 -- ground. The closest approach is taken along each tick's chord relative to
 -- the moving target, as the server's fuse does (C-39).
 function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Prediction
@@ -673,25 +712,38 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 	local target = if p.target ~= 0 then world.units[p.target] else nil
 	local out: Prediction = { path = table.create(ticks * 3), hit = false, ground = false }
 	local x, y, z, vx, vy, vz = p.x, p.y, p.z, p.vx, p.vy, p.vz
-	local lastTick, lx, lz, lalt, lheading, ltv = math.huge, 0, 0, 0, 0, 0
+	local lastTick, lx, lz, lalt, lheading, ltv, lturn = math.huge, 0, 0, 0, 0, 0, 0
 	local radius, height = 0, 0
 	if target then
 		local snaps = target.snaps
 		if #snaps > 0 then
 			lastTick = snaps[#snaps].tick
 			lx, lz, lalt, lheading, ltv = targetAt(target, lastTick)
+			if #snaps >= 2 then
+				local a, b = snaps[#snaps - 1], snaps[#snaps]
+				lturn = ((b.heading - a.heading + math.pi) % (2 * math.pi) - math.pi) / math.max(b.tick - a.tick, 1)
+			end
 		end
 		local def = World.def(world, target)
 		local fp = if def then def.footprint else 1
 		radius, height = fp * Effects.HULL_RADIUS, Effects.UNIT_HEIGHT * fp
 	end
-	-- the target at tick t: as drawn up to its last snapshot, then straight on
+	-- the target at tick t: as drawn up to its last snapshot, then on along
+	-- its turn (whole ticks stepped like the sim's movement, then the rest)
+	local ext = { lx, lz, lheading } -- x, z, heading after k whole ticks past lastTick, flattened
 	local function targetState(t: number): (number, number, number, number, number)
 		if t <= lastTick then
 			return targetAt(target :: World.Unit, t)
 		end
-		local d = ltv * (t - lastTick) * DT
-		return lx + math.sin(lheading) * d, lz + math.cos(lheading) * d, lalt, lheading, ltv
+		local k = math.floor(t - lastTick)
+		while #ext < (k + 1) * 3 do
+			local i = #ext
+			local h = ext[i] + lturn
+			ext[i + 1], ext[i + 2], ext[i + 3] = ext[i - 2] + math.sin(h) * ltv * DT, ext[i - 1] + math.cos(h) * ltv * DT, h
+		end
+		local x, z, h = ext[k * 3 + 1], ext[k * 3 + 2], ext[k * 3 + 3]
+		local f = (t - lastTick - k) * ltv * DT
+		return x + math.sin(h + lturn) * f, z + math.cos(h + lturn) * f, lalt, h, ltv
 	end
 	-- the target's centre at the start of the current tick
 	local pcx, pcy, pcz = 0, 0, 0
@@ -700,6 +752,11 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 		local _, ty, _, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, 1)
 		pcx, pcy, pcz = cx, ty, cz
 	end
+	local function at(t: number): (number, number, number)
+		local tx, tz, alt = targetState(t)
+		return tx, tz, alt
+	end
+	local decoy = if p.decoy then table.clone(p.decoy) else nil
 	local best = math.huge
 	local path = out.path
 	for k = 1, ticks do
@@ -710,11 +767,17 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 		local svx, svy, svz = vx, vy, vz
 		if target then
 			local tx, tz, alt, heading, tv = targetState(t)
-			local speed = math.sqrt(vx * vx + vy * vy + vz * vz)
-			local ax, ay, az, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, speed)
+			local _, ay, _, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, 1)
 			ccx, ccy, ccz = cx, ay, cz
 			if weapon.turnRate then
-				svx, svy, svz = Ballistics.steer(vx, vy, vz, ax - x, ay - y, az - z, math.rad(weapon.turnRate) * DT)
+				svx, svy, svz = steer(world, target, weapon, at, t, x, y, z, vx, vy, vz)
+			end
+		elseif decoy and weapon.turnRate then
+			local follow
+			svx, svy, svz, follow = followDecoy(weapon, decoy, x, y, z, vx, vy, vz)
+			decoy[4] -= 1
+			if not follow or decoy[4] <= 0 then
+				decoy = nil
 			end
 		end
 		if launch and launch[1] == t then

@@ -75,9 +75,10 @@ return function(t: any)
 			end
 		end
 		print(string.format("    sam scene: %d entries (%d locked: %d with the target in the seeker cone, %d outside), up to %d at once, %d with a path", entries, locked, inside, outside, maxShown, paths))
-		-- the server has no seeker cone yet (request 13c): missiles that overshoot
-		-- keep their lock with the target behind them, so both cases show up
-		t.expect(inside > 50 and outside > 50, "targets inside and outside the seeker cone")
+		-- the server breaks the lock when the target leaves the seeker cone
+		-- (S-27), so a locked missile's target is inside it (a drawn missile
+		-- may lag the server's by a frame at the cone's edge)
+		t.expect(inside > 100 and outside <= math.max(2, locked * 0.02), "locked missiles keep their target inside the seeker cone")
 		t.expect(entries > 100 and locked > 100, "missiles were shown, locked on")
 		t.expect(maxShown <= MissileView.MAX_MISSILES, "at most MAX_MISSILES")
 		t.expect(paths >= entries * 0.9, "almost every missile has a predicted path ahead")
