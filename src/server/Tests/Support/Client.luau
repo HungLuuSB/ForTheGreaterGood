@@ -41,6 +41,12 @@ export type Unit = {
 	targets: { [number]: number }?, -- own units: weapon slot → target ID (0 = none; S-16)
 	stock: { [number]: number }?, -- own units: weapon slot → missiles in stock (S-47)
 	stockProgress: { [number]: number }?, -- own units: weapon slot → next missile's progress 0..255 (S-49)
+	queue: { number }?, -- own factories: def indices queued (S-61)
+	queueProgress: number?,
+	fireState: number?, -- own units (S-61)
+	moveState: number?,
+	ammo: number?, -- own aircraft: rounds left and max (S-61)
+	maxAmmo: number?,
 	vx: number?, -- tactical units: velocity estimated from the last two Tactical records (studs/s; S-27)
 	vz: number?,
 	movedAt: number?, -- view.tick of the last Tactical record
@@ -457,6 +463,15 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				end
 				u.stock = st
 				u.stockProgress = sp
+			end
+			if r.queue then
+				u.queue, u.queueProgress = r.queue, r.queueProgress
+			end
+			if r.fireState then
+				u.fireState, u.moveState = r.fireState, r.moveState
+			end
+			if r.ammo then
+				u.ammo, u.maxAmmo = r.ammo, r.maxAmmo
 			end
 		end
 		mention(view, "State", ids)

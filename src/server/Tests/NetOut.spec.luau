@@ -335,6 +335,58 @@ return function(t: RunAll.Context)
 		print(string.format("    targets: %d unit-ticks with a target, %d of them before the turret turned", targeted, beforeTurned))
 	end)
 
+	t.test("own units' factory queue, fire / move state and ammo reach their owner only, exactly (S-61)", function()
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:64" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, -60, 0, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 40, 60, 0)
+		local jet = Spawn.unit(sim, "ord_falcon", 1, 40, -60, 0)
+		Spawn.unit(sim, "chs_ravager", 2, 120, 0, 0) -- near enough to be seen
+		camera(sim, 1, 0, 0, 63, 63)
+		camera(sim, 2, 0, 0, 63, 63)
+		local defs = sim.defs.units
+		local cell = g:encode(0, 0)
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = defs.ord_lancer.index, cell = cell, offX = 0, offZ = 0, facing = 0 })
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = defs.ord_mason.index, cell = cell, offX = 0, offZ = 0, facing = 0 })
+		local views = { Client.new(g), Client.new(g) }
+		local exact, leaked, jetSeen = 0, 0, 0
+		for tick = 1, 120 do
+			if tick == 40 then
+				w.fireState[tank] = World.FireState.HOLD_FIRE
+				World.setMoveState(w, tank, World.MoveState.ROAM)
+				sim.air.ammo[jet] = 1
+			end
+			Sim.step(sim)
+			for pid = 1, 2 do
+				Client.receive(views[pid], sim.net.players[pid].outbox)
+			end
+			local p, tk, j = views[1].units[plant], views[1].units[tank], views[1].units[jet]
+			local q = sim.build.queue[plant] or {}
+			local okQueue = p and p.queue and #p.queue == #q and (#q == 0 or p.queue[1] == q[1])
+			local okStates = tk and tk.fireState == w.fireState[tank] and tk.moveState == w.moveState[tank]
+			-- (the jet flies in and out of the tactical tier: checked while in it)
+			local okAmmo = j and j.ammo == sim.air.ammo[jet] and j.maxAmmo == defs.ord_falcon.ammo
+			local jetTactical = j ~= nil and j.tier == "tactical"
+			if okQueue and okStates and (okAmmo or not jetTactical) then
+				exact += 1
+			end
+			if jetTactical then
+				jetSeen += 1
+			end
+			for id, u in views[2].units do
+				if w.owner[id] == 1 and (u.queue or u.fireState or u.ammo) then
+					leaked += 1
+				end
+			end
+		end
+		t.expect(exact >= 118, `the owner's view matches every tick after entering ({exact} of 120)`)
+		t.expect(jetSeen > 60, `the jet's ammo was checked while it was in view ({jetSeen} ticks)`)
+		t.equal(leaked, 0, "the other player never gets them")
+		local p = views[1].units[plant]
+		t.expect(p.queueProgress ~= nil and math.abs(p.queueProgress / 255 - (sim.build.progress[plant] or 0)) <= 1 / 16 + 1 / 255, "queue progress within a sixteenth")
+	end)
+
 	-- Hitscan flak (FIRE): a Dominion shoots at a Wasp hovering over it.
 	-- Chaos's camera covers the fight, Order's is elsewhere, so only Chaos
 	-- (which sees the ship) gets the shots, with their end points.

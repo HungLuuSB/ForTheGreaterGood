@@ -162,6 +162,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	pn.lastEco = nil
 	table.clear(pn.sentTargets)
 	table.clear(pn.sentStock)
+	table.clear(pn.sentOwner)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
 	Schema.encodeSnapshot(w, {
@@ -737,6 +738,62 @@ function NetOut.step(sim: Types.Sim)
 			end
 		end
 		pn.sentStock = stockNow
+
+		-- own units' factory queue, fire / move state and ammo (S-61): each
+		-- part when it changes (the queue's progress by sixteenths, like
+		-- stock), all of them with the ENTER
+		local sentOwner = pn.sentOwner
+		local ownerNow: { [number]: { string } } = {}
+		for _, id in pn.tacticalList do
+			if w.owner[id] ~= pid then
+				continue
+			end
+			local d = sim.defs.unitByIndex[w.defIndex[id]]
+			local q = sim.build.queue[id]
+			local qSig, sSig, aSig = "", "", ""
+			local progress = 0
+			if q then
+				progress = math.clamp(math.floor((sim.build.progress[id] or 0) * 255), 0, 255)
+				qSig = table.concat(q, ",") .. "@" .. math.floor((sim.build.progress[id] or 0) * Stockpile.WIRE_STEPS)
+			end
+			local hasStates = d.domain ~= "structure" or #d.weapons > 0
+			if hasStates then
+				sSig = tostring(w.fireState[id] * 4 + w.moveState[id])
+			end
+			local ammo = sim.air.ammo[id]
+			if ammo ~= nil then
+				aSig = tostring(ammo)
+			end
+			local now = { qSig, sSig, aSig }
+			ownerNow[id] = now
+			local before = if entered[id] then nil else sentOwner[id]
+			local rec: Schema.State? = nil
+			local function record(): Schema.State
+				if rec == nil then
+					rec = recordOf[id]
+					if rec == nil then
+						rec = { unitId = id }
+						recordOf[id] = rec
+						table.insert(states, rec :: Schema.State)
+					end
+				end
+				return rec :: Schema.State
+			end
+			if q and (before == nil or before[1] ~= qSig) then
+				local r = record()
+				r.queue = table.clone(q)
+				r.queueProgress = progress
+			end
+			if hasStates and (before == nil or before[2] ~= sSig) then
+				local r = record()
+				r.fireState, r.moveState = w.fireState[id], w.moveState[id]
+			end
+			if ammo ~= nil and (before == nil or before[3] ~= aSig) then
+				local r = record()
+				r.ammo, r.maxAmmo = math.clamp(ammo, 0, 255), math.clamp(d.ammo or ammo, 0, 255)
+			end
+		end
+		pn.sentOwner = ownerNow
 
 		-- strategic snapshot of every other known unit
 		local strategic: { Schema.Strategic } = {}
