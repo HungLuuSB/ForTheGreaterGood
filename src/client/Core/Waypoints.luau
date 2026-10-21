@@ -1,25 +1,32 @@
 --!strict
 -- What each own unit was last ordered to do, from the commands this client
 -- sent (order queues aren't replicated, net.md section 9): drawn as lines
--- for selected units (guide 15.6). A point is dropped when its unit gets
--- close; a unit target follows that unit and is dropped when it's gone.
+-- for selected units (guide 15.6) and as translucent queued structures. A
+-- point is dropped when its unit gets close; a unit target follows that unit
+-- and is dropped when it's gone; a queued build is done once an own frame of
+-- that structure stands on its spot (C-23).
 -- Pure Luau (C-7).
 
 local Formation = require("@shared/Grid/Formation")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local Orders = require("./Orders")
+local Placement = require("./Placement")
 local World = require("./World")
 
 local Waypoints = {}
 
 Waypoints.REACHED = 10 -- studs, at least; groups stand in a formation around the point
 Waypoints.IDLE_SECONDS = 2 -- a unit standing still this long has no orders left
+-- A builder stands still while it builds, so a queued build only expires
+-- after this long idle with no own frame going up within its build range
+-- (a fallback for a build the server dropped).
+Waypoints.BUILD_IDLE_SECONDS = 20
 Waypoints.MAX_PER_UNIT = 16
 
 local CT = Schema.CmdType
 
-export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number }
+export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number? }
 export type Waypoints = { byUnit: { [number]: { Point } }, idleSince: { [number]: number } }
 
 function Waypoints.new(): Waypoints
@@ -59,7 +66,7 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 		then Orders.lineSlots(world, ids, intent.x :: number, intent.z :: number, intent.x2, intent.z2 :: number)
 		else nil
 	local reach = if slots then Waypoints.REACHED
-		elseif kind == CT.BUILD then 0 -- builders work from range: dropped when the builder stands idle, not on arrival
+		elseif kind == CT.BUILD then 0 -- builders work from range: done when the frame starts, not on arrival
 		else reachFor(world, ids)
 	for _, id in ids do
 		local list = wp.byUnit[id]
@@ -74,6 +81,8 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 		if intent.targetId then
 			local t = world.units[intent.targetId]
 			point = { kind = kind, x = if t then t.x else 0, z = if t then t.z else 0, targetId = intent.targetId, reach = 0 }
+		elseif intent.defIndex then
+			point = { kind = kind, x = intent.x :: number, z = intent.z :: number, reach = reach, defIndex = intent.defIndex, facing = intent.facing }
 		elseif slots then
 			point = { kind = kind, x = slots[id][1], z = slots[id][2], reach = reach }
 		else
@@ -84,8 +93,37 @@ function Waypoints.issue(wp: Waypoints, world: World.World, intent: Orders.Inten
 	end
 end
 
--- Follows unit targets, drops reached points, units that are gone and
--- units that have stood still for IDLE_SECONDS (`now` in seconds).
+-- Is the queued build `p` finished from the client's point of view: an own
+-- structure of that def stands on its spot (its frame has started), or
+-- another structure took the spot (the server skips it)?
+local function buildDone(world: World.World, p: Point): boolean
+	for _, s in world.units do
+		local sdef = World.def(world, s)
+		if sdef and sdef.domain == "structure" and math.abs(s.x - p.x) < 1 and math.abs(s.z - p.z) < 1 then
+			return true -- ours of that def (started) or something else (blocked)
+		end
+	end
+	local def = world.defs.unitByIndex[p.defIndex :: number]
+	local r = Placement.check(world, def, p.x, p.z)
+	return not r.ok and r.reason == "occupied" and r.replaces == 0
+end
+
+-- Is `u` putting up a frame: an own unfinished structure within its build range?
+local function building(world: World.World, u: World.Unit): boolean
+	local def = World.def(world, u)
+	local range = (def and def.buildRange or 0) + 16
+	for _, s in world.units do
+		if s.team == u.team and s.build and s.build < 1 and (s.x - u.x) ^ 2 + (s.z - u.z) ^ 2 <= range * range then
+			return true
+		end
+	end
+	return false
+end
+
+-- Follows unit targets, drops reached points and started builds, units that
+-- are gone, and units that have stood still for IDLE_SECONDS (builders with a
+-- build next: BUILD_IDLE_SECONDS, and never while a frame goes up) (`now` in
+-- seconds).
 function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 	for id, list in wp.byUnit do
 		local u = world.units[id]
@@ -94,11 +132,21 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 			wp.idleSince[id] = nil
 			continue
 		end
-		if bit32.band(u.state, World.State.MOVING) == 0 then
+		-- queued builds anywhere in the list: done once their frame stands
+		for i = #list, 1, -1 do
+			local p = list[i]
+			if p.kind == CT.BUILD and p.defIndex and buildDone(world, p) then
+				table.remove(list, i)
+			end
+		end
+		local head = list[1]
+		local buildNext = head ~= nil and head.kind == CT.BUILD
+		if bit32.band(u.state, World.State.MOVING) == 0 and not (buildNext and building(world, u)) then
 			local since = wp.idleSince[id]
+			local limit = if buildNext then Waypoints.BUILD_IDLE_SECONDS else Waypoints.IDLE_SECONDS
 			if since == nil then
 				wp.idleSince[id] = now
-			elseif now - since >= Waypoints.IDLE_SECONDS then
+			elseif now - since >= limit then
 				wp.byUnit[id] = nil
 				wp.idleSince[id] = nil
 				continue

@@ -30,6 +30,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-20 | Target line for one selected unit: the attack order sent, else the known enemy on the turret's aim line (until targets are on the wire) |
 | C-21 | BAR-style controls: camera on the arrow keys, edge scroll (live) and middle-drag; S = stop; WASD free |
 | C-22 | Deposits are drawn on their exact cells (3D and minimap); the extractor ghost snaps onto a deposit within 12 studs |
+| C-23 | A queued build is done when its frame stands on its spot; queued structures show translucent until then |
 
 ---
 
@@ -196,3 +197,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Decision:** supply deposits are one cell (8 studs), and an extractor is valid only with its center on that cell (the server's rule, unchanged). The client now draws a gold Neon plate on each deposit cell in the 3D ground (brighter for richer deposits) and a small gold square per deposit on the minimap, instead of tinting the minimap's whole 4 x 4-cell tile. The extractor ghost snaps onto the nearest deposit within 12 studs of the cursor (`Placement.assist`: the cell's center for odd footprints, its min corner for even ones).
 
 **Why:** the user couldn't place extractors on "the golden spots": the gold the client showed was the minimap's 32-stud tile, the real target was an unmarked 8-stud cell, and the server (correctly) refused spots a few studs off. `Placement.spec` checks every deposit of the start map from five cursor offsets up to 10 studs away: the ghost lands on the deposit and the server's check accepts it. Studio: an aim point 5–6 studs off a deposit snapped onto it, the extractor was built there and supply income went from +1.0 to +3.0.
+
+### C-23 — Queued builds (2026-10-22)
+
+**Decision:** a BUILD the client sent stays in that builder's queue (`Core/Waypoints`) until a structure stands on its spot: its own frame started (or another structure took the spot, which the server skips). The 2 s idle rule no longer applies to a builder whose next order is a build, because builders stand still while they build; it expires only after 20 s idle with no own frame going up within its build range (a fallback for a build the server dropped). Every queued build of your own builders shows as a translucent copy of the structure over a faint yellow footprint (`Render/QueuedBuilds`, rebuilt only when the queue changes), and the yellow order line keeps running through the remaining ones.
+
+**Why:** the user saw the yellow line to the rest of the queue vanish after the first building: the idle rule (C-11) wiped the whole queue once the builder had stood still for 2 s while building. `Placement.spec` follows a generator plus a Shift-queued row of solars against the server's own order queue: the client's list is never more than one item off (the frame just started) and empties as the last frame starts. Studio: three Shift-queued generators showed two translucent models and the line through them while the first went up; each went away as its frame started. Units queued in a factory have no spot on the map, so they aren't drawn (a factory queue UI is later).

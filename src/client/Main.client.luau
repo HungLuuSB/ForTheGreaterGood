@@ -33,6 +33,7 @@ local RenderEffects = require("./Render/Effects")
 local Ground = require("./Render/Ground")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
+local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
 
@@ -62,6 +63,7 @@ Camera.bind(camState)
 local controls = Controls.bind(api)
 local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
+local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
 	if not processed and input.KeyCode == RangeOverlay.TOGGLE_KEY then
@@ -234,6 +236,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		end
 	end
 	PlacementGhost.step(ghost, api)
+	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now)
 	mark("ranges", t0)

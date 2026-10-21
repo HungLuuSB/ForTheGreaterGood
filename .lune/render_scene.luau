@@ -129,6 +129,14 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 			table.insert(team, tonumber(c) or 0)
 		end
 		addUnit(w[2], team, n(4), n(5), n(6), n(7))
+	elseif w[1] == "Q" then
+		-- a queued structure: translucent, over a faint yellow footprint
+		local def = byId[w[2]]
+		if def then
+			local half = def.footprint * 4
+			table.insert(rects, { cx = n(3), cz = n(4), ax = 1, az = 0, ha = half, bx = 0, bz = 1, hb = half, top = 0.1, r = 235, g = 220, b = 80, alpha = 0.25 })
+			addUnit(w[2], { 210, 210, 210 }, n(3), n(4), n(5), 0, { 235, 235, 235 })
+		end
 	elseif w[1] == "G" then
 		local def = byId[w[2]]
 		local tint = if n(6) == 1 then { 90, 230, 110 } else { 235, 70, 60 }

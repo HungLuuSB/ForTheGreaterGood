@@ -125,6 +125,54 @@ return function(t: any)
 		local _ = run
 	end)
 
+	t.test("a builder's queue: each queued build stays until its frame starts, through long standstills (C-23)", function()
+		local sim, world, api, run = setup("start:48", "standard_start")
+		local cv = World.ownIds(world)[1]
+		api.actions.select({ cv })
+		local u = world.units[cv]
+		t.expect(api.actions.beginPlacement("ord_generator"))
+		t.expect(api.actions.place(u.x + 36, u.z - 20, false, false))
+		t.expect(api.actions.beginPlacement("ord_solar"))
+		t.expect(api.actions.placeRow(u.x + 20, u.z + 40, u.x + 44, u.z + 40, true, false))
+		local queued = #api.waypoints.byUnit[cv]
+		t.expect(queued >= 3, `generator + a row of solars queued ({queued})`)
+		local function serverBuilds(): number
+			local n = 0
+			for _, o in sim.orders.queue[cv] or {} do
+				if o.kind == "build" and not o.started then
+					n += 1
+				end
+			end
+			return n
+		end
+		local seen: { [number]: boolean } = { [queued] = true }
+		local maxGap = 0
+		for _ = 1, 15 * 120 do
+			run(1)
+			local list = api.waypoints.byUnit[cv]
+			local n = if list then #list else 0
+			seen[n] = true
+			-- never more than one ahead of the server (the one whose frame just started)
+			local gap = serverBuilds() - n
+			maxGap = math.max(maxGap, math.abs(gap))
+			if n == 0 and serverBuilds() == 0 then
+				break
+			end
+		end
+		t.expect(maxGap <= 1, `the client's queue follows the server's (worst gap {maxGap})`)
+		for k = queued, 0, -1 do
+			t.expect(seen[k], `the queue went through {k} items left`)
+		end
+		local frames = 0
+		for _, s in world.units do
+			local d = World.def(world, s)
+			if d and (d.id == "ord_generator" or d.id == "ord_solar") then
+				frames += 1
+			end
+		end
+		t.equal(frames, queued, "every queued structure was built")
+	end)
+
 	t.test("placing sends a BUILD and the server raises the frame", function()
 		local sim, world, api, run, sentCount = setup("start:48", "standard_start")
 		local cv = World.ownIds(world)[1]
