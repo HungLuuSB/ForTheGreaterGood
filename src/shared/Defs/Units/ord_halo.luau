@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 120, power = 1600, buildTime = 3200 },
 	health = 500,
 	movement = { maxSpeed = 38, accel = 16, brake = 30, turnRate = 130 },
-	sensors = { sight = 160, airSight = 320 },
+	sensors = { sight = 160, airSight = 224 },
 	weapons = { { def = "ord_ir_sam", turretPiece = "launcher", muzzle = "muzzle", stockpile = 4 } },
 	pieces = { "base", "launcher", "turret", "muzzle" },
 	icon = "sam_ir",

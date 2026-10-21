@@ -100,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Shorter SAM ranges (S-55, the user asked):** IR −30%, radar −25%. My call: the units' air sight and radars shrink by the same factor. A side effect is a shorter interception window for nukes.
 - **Radar SAM stock (S-52, the user asked):** Wyvern / Aegis capacity 15, 6 s per missile. My calls: the cost per missile stays 40 + 900 (a full refill 600 + 13,500), mobile radar SAMs stay at 3, IR SAMs unchanged.
 - **Nuke silos (S-48, the user asked through the client):** names Reckoning (Order; "Judgement" was taken by the MLRS) and Ragnarok (Chaos); silo 2,400 supply + 24,000 power, health 7,000; warhead stockpile 2 × (120 s, 1,500 + 40,000), aoe 150, edge 0.3, 8,000–10,000 damage, ~12.7 s flight at apex 300 (was 800; S-49); radar SAM interception chance 0.2 per burst (was 0.5; the user set it, S-50). My calls: strategic missiles are sent to every player wherever they fly, and the launch warning shows the silo's position. The AI doesn't build silos.
 - **Missile stockpiles (S-47, the user asked through the client):** IR SAM missiles 6 s, 15 supply + 300 power; radar 12 s, 40 + 900; capacities Thorn / Vigil 8, Hornet / Halo 4, Wyvern / Aegis 6, Gorgon / Seraph 3 (the client's numbers; Halo mirrors Hornet). Naval SAMs stay unlimited (the user, through the client). AI effect not measured.
@@ -129,6 +130,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 32), S-55:** SAM ranges and lockRanges: IR 294 (Chaos) / 210 (Order), radar 1260 / 1350. Sensors follow: airSight Thorn 294, Vigil 224, Hornet 210, Halo 224; radars Wyvern 1350, Aegis 1463, Gorgon 1080, Seraph 1170. projectileSpeed unchanged.
 - **Changed (S-54, the user): `map:normandy` now fights west against east.** Player 1 is in the west rear (start (−850, 0)), player 2 in the east (850, 0).
   - **Coast:** sea, beach and bluffs (draws at x = −560, 0, 560) are a shared north flank (z > 560).
   - **South of z 560, mirrored:**
