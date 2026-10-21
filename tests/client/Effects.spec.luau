@@ -343,7 +343,7 @@ return function(t: any)
 		t.expect((kinds.flare or 0) + (kinds.chaff or 0) + (kinds.dircm or 0) > 0, "a decoyed missile shows what seduced it")
 	end)
 
-	t.test("the countermeasure drawn follows the target's equipment and the server's order (C-48)", function()
+	t.test("the countermeasure drawn is the one the server names, else follows the target's equipment (C-48, S-38)", function()
 		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:32", scenario = "empty" })
 		local world = World.new(sim.defs)
 		local function unit(defId: string): any
@@ -354,6 +354,12 @@ return function(t: any)
 		t.equal(Effects.countermeasure(world, unit("chs_wasp"), "IR"), "flare") -- a helicopter with flares
 		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "RADAR"), "chaff")
 		t.equal(Effects.countermeasure(world, nil, "IR"), "flare") -- a contact of unknown type
+		-- radar SAMs carry heavy warheads: their explosions are drawn bigger than the IR ones (C-52)
+		t.expect(Effects.impactSize(sim.defs.weapons.chs_radar_sam) > Effects.impactSize(sim.defs.weapons.chs_ir_sam), "radar SAM explosions are the bigger ones")
+		-- the server says which one won (protocol 13, S-38): that wins over the guess
+		t.equal(Effects.countermeasure(world, unit("chs_wasp"), "IR", Schema.Countermeasure.DIRCM), "dircm")
+		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "IR", Schema.Countermeasure.FLARES), "flare")
+		t.equal(Effects.countermeasure(world, unit("ord_falcon"), "RADAR", Schema.Countermeasure.CHAFF), "chaff")
 	end)
 
 	t.test("SAM missiles chasing circling jets bend smoothly, with no corner at tick boundaries (C-38)", function()

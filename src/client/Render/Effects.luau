@@ -101,7 +101,7 @@ end
 -- Parts are anchored and moved together in the same BulkMoveTo as shells.
 local MISSILE_STYLE: { [string]: { scale: number, smoke: number, puffs: number } } = {
 	smoke_thin = { scale = 1, smoke = 1.1, puffs = 2 },
-	smoke_thick = { scale = 1.3, smoke = 1.8, puffs = 3.2 },
+	smoke_thick = { scale = 2.3, smoke = 2.6, puffs = 4.5 }, -- radar SAMs: a far bigger missile with a heavy warhead (C-52)
 }
 local PUFF_RATE = 110 -- smoke puffs per second while a missile flies
 local NOSE_COLOR: { [string]: Color3 } = {
@@ -155,7 +155,7 @@ local function newMissile(style: string): Missile
 	local exhaust = meshed("Exhaust", Enum.MeshType.Sphere, Vector3.new(0.65 * s, 0.65 * s, 1.6 * s), Color3.fromRGB(255, 190, 90), Enum.Material.Neon)
 	local light = Instance.new("PointLight")
 	light.Color = Color3.fromRGB(255, 170, 80)
-	light.Range = 10 * s
+	light.Range = 10 * math.sqrt(s) -- big missiles light a little farther, not 2.3x (it washes their own body out)
 	light.Brightness = 3
 	light.Shadows = false
 	light.Parent = exhaust

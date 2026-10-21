@@ -134,7 +134,7 @@ end
 -- `rootOffset` (its root's frame against the unit's position and heading).
 function RenderDeaths.start(s: State, id: number, def: any, model: Model, motors: { [string]: Motor6D }, severity: number, wreckId: number, now: number, done: () -> (), crash: Deaths.Crash?, rootOffset: CFrame?)
 	local plan = if crash
-		then { kind = "crash", duration = crash.duration, wreck = false, pieces = {} } :: Deaths.Plan
+		then { kind = "crash", duration = crash.duration + Deaths.CRASH_LINGER, wreck = false, pieces = {} } :: Deaths.Plan
 		else Deaths.plan(id, def, severity, wreckId)
 	local root = model.PrimaryPart :: BasePart
 	local fire = if crash then burning(root, math.max(1, def.footprint or 1)) else nil
@@ -169,9 +169,17 @@ function RenderDeaths.step(s: State, now: number, speed: number?)
 			continue
 		end
 		if p.plan.kind == "crash" then
+			-- after the hit (it sinks out of sight) the flames and smoke stop, and
+			-- what they left fades in the air (C-52)
+			local burning = t < (p.crash :: Deaths.Crash).duration
 			for _, e in (p.fire :: Attachment):GetChildren() do
-				if e:IsA("ParticleEmitter") and e.TimeScale ~= timeScale then
-					e.TimeScale = timeScale
+				if e:IsA("ParticleEmitter") then
+					if e.TimeScale ~= timeScale then
+						e.TimeScale = timeScale
+					end
+					if e.Enabled ~= burning then
+						e.Enabled = burning
+					end
 				end
 			end
 			local x, y, z, heading, pitch, roll = Deaths.crashAt(p.crash :: Deaths.Crash, t)

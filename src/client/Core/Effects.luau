@@ -152,29 +152,19 @@ local function weaponSize(weapon: any): number
 	return math.max(1, (weapon and weapon.aoe) or 1)
 end
 
-local CELL_EDGE = 8 / 256 -- the last wire offset step short of the map's far edge
+-- Weapons whose impact effect is a large one (fx.impact "..._large", the
+-- radar SAMs' heavy warheads) explode this much bigger than their blast
+-- radius alone gives (C-52).
+Effects.LARGE_IMPACT = 1.8
+function Effects.impactSize(weapon: any): number
+	local impact = weapon and weapon.fx and weapon.fx.impact
+	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
+	return weaponSize(weapon) * (if large then Effects.LARGE_IMPACT else 1)
+end
 
 local function pos(world: World.World, e: Schema.Event): (number, number, number)
 	local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 	return x, (e.y :: number) / Schema.Y_SCALE, z
-end
-
--- The wire can't carry a position off the map: Grid.encode clamps it to the
--- edge. A missile that overshoots past the edge (C-46) would be corrected
--- back onto it every few ticks, so on an axis where the record sits on the
--- clamp and the client's own prediction is already beyond it on that side,
--- the prediction is kept (the server's position is somewhere out there).
-function Effects.unclamp(world: World.World, p: Proj, x: number, z: number): (number, number)
-	local g = world.grid
-	local x0, z0 = g.originX, g.originZ
-	local x1, z1 = x0 + g.sizeX - CELL_EDGE, z0 + g.sizeZ - CELL_EDGE
-	if (x <= x0 and p.x < x) or (x >= x1 and p.x > x) then
-		x = p.x
-	end
-	if (z <= z0 and p.z < z) or (z >= z1 and p.z > z) then
-		z = p.z
-	end
-	return x, z
 end
 
 local function vel(e: any): (number, number, number)
@@ -199,11 +189,14 @@ local function burst(fx: Fx, now: number, x: number, y: number, z: number, radiu
 end
 
 -- Which countermeasure seduced a missile of `guidance` aimed at `unit`
--- (C-48). The DECOYED record doesn't say (request 18), so it follows the
--- server's order (EW): radar missiles meet chaff; IR missiles meet DIRCM
--- first, then flares, so an aircraft with DIRCM and no flares jammed it and
--- one with flares (with or without DIRCM) is drawn dropping flares.
-function Effects.countermeasure(world: World.World, unit: World.Unit?, guidance: string?): string
+-- (C-48). DECOYED says (`wire`: Schema.Countermeasure, protocol 13, S-38);
+-- without it (an older record) it follows the server's order (EW): radar
+-- missiles meet chaff; IR missiles meet DIRCM first, then flares.
+local CM_NAME = { [Schema.Countermeasure.FLARES] = "flare", [Schema.Countermeasure.CHAFF] = "chaff", [Schema.Countermeasure.DIRCM] = "dircm" }
+function Effects.countermeasure(world: World.World, unit: World.Unit?, guidance: string?, wire: number?): string
+	if wire and CM_NAME[wire] then
+		return CM_NAME[wire]
+	end
 	if guidance == "RADAR" then
 		return "chaff"
 	end
@@ -529,10 +522,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
 		local x, y, z = pos(world, e)
-		if p then
-			x, z = Effects.unclamp(world, p, x, z)
-		end
-		local r = if p then weaponSize(p.weapon) else 2
+		local r = if p then Effects.impactSize(p.weapon) else 2
 		local b = burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
 		b.ground = World.groundY(world, x, z)
 		if p then
@@ -544,7 +534,6 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			-- like a correction: the server's new state, drawn from where the
 			-- missile is and eased onto its new course (no jump, C-36)
 			local x, y, z = pos(world, e)
-			x, z = Effects.unclamp(world, p, x, z)
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
 			local target = World.unitOrDying(world, p.target)
@@ -561,7 +550,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 				if target and target.rx then
 					ax, ay, az = target.rx, target.ry :: number, target.rz :: number
 				end
-				local cm = Effects.countermeasure(world, target, p.weapon.guidance)
+				local cm = Effects.countermeasure(world, target, p.weapon.guidance, e.countermeasure)
 				local b
 				if cm == "dircm" then
 					b = burst(fx, now, ax, ay, az, 1, "dircm", Effects.DIRCM_SECONDS)
@@ -606,7 +595,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		-- drawing where it was, blend the gap away
 		local p = fx.projectiles[e.projId]
 		if p then
-			local x, z = Effects.unclamp(world, p, world.grid:decode(e.cell, e.offX, e.offZ))
+			local x, z = world.grid:decode(e.cell, e.offX, e.offZ)
 			local y = e.y / Schema.Y_SCALE
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)

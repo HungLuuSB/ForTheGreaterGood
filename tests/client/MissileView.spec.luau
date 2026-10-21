@@ -46,11 +46,11 @@ return function(t: any)
 				entries += 1
 				local p = fx.projectiles[e.id]
 				t.expect(p ~= nil and p.weapon.type == "HOMING", "homing missiles only")
-				t.equal(e.fuse, 5) -- chs_ir_sam's aoe
+				t.equal(e.fuse, sim.defs.weapons.chs_ir_sam.aoe) -- its proximity fuse
 				t.expect(string.find(e.label, "IR", 1, true) == 1, `label starts with the guidance: {e.label}`)
 				-- the seeker cone (C-42): Thorn's IR seeker, 60° off the nose, out to its lock range
 				t.equal(e.seekerAngle, 60)
-				t.equal(e.seekerRange, 280)
+				t.equal(e.seekerRange, sim.defs.weapons.chs_ir_sam.lockRange or sim.defs.weapons.chs_ir_sam.range)
 				t.expect(math.abs(e.fx * e.fx + e.fy * e.fy + e.fz * e.fz - 1) < 1e-6, "the flight direction is a unit vector")
 				if #e.path >= 6 then
 					paths += 1
@@ -98,6 +98,10 @@ return function(t: any)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			-- the outcome of every missile that ended this tick
 			for _, e in sim.combat.events do
+				-- a countermeasure decides those, not the fuse geometry the call predicts
+				if (e.kind == "DECOYED" or e.kind == "LOST_LOCK") and called[e.other] ~= nil then
+					called[e.other] = nil
+				end
 				if e.kind == "IMPACT" and called[e.other] ~= nil then
 					local hit = e.unit ~= 0
 					if hit == called[e.other] then

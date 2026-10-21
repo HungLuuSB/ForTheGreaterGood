@@ -1,8 +1,10 @@
 --!strict
--- Moving units (C-45): the server doesn't set the MOVING state bit, so the
--- client tells movement from its position records. A move line (Waypoints)
--- stays until the unit gets there, for a tank and for a jet, and goes once
--- the unit stands still.
+-- Moving units (C-45, C-51): the server sets the MOVING state bit (S-33)
+-- and the client also tells movement from its position records. A move line
+-- (Waypoints) stays until the unit gets there, for a tank and for a jet, and
+-- goes once the unit stands still; a jet's line goes when the server says
+-- it arrived (S-38: within ARRIVE_RADIUS, or once a goal inside its turn
+-- circle falls behind it).
 
 local Commands = require("../../src/client/Core/Commands")
 local NetIn = require("../../src/client/Core/NetIn")
@@ -28,11 +30,12 @@ end
 
 return function(t: any)
 	t.test("aircraft reach their point where the server says they arrive", function()
-		t.equal(Waypoints.AIR_REACH, Air.LOITER_RADIUS)
+		t.equal(Waypoints.AIR_REACH, Air.ARRIVE_RADIUS)
+		t.equal(Waypoints.AIR_PASS, Air.LOITER_RADIUS)
 	end)
 
-	-- the jet arrives at the loiter radius and circles from then on
-	for _, case in { { def = "ord_lancer", x = 100, seconds = 40, near = 40 }, { def = "ord_falcon", from = -480, x = 480, seconds = 20, near = 220 } } do
+	-- the jet flies to the point itself now (S-38), arriving within 40 studs
+	for _, case in { { def = "ord_lancer", x = 100, seconds = 40, near = 40 }, { def = "ord_falcon", from = -480, x = 480, seconds = 20, near = 45 } } do
 		t.test(`{case.def}: moving while it drives or flies to the point, its move line lasting until it gets there`, function()
 			local sim, world, id = scene(case.def, case.from)
 			local wp = Waypoints.new()
@@ -46,7 +49,6 @@ return function(t: any)
 				NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 				Waypoints.update(wp, world, tick * DT)
 				local u = world.units[id]
-				t.equal(bit32.band(u.state, World.State.MOVING), 0) -- the server still doesn't set it
 				local sx, sz = sim.world.posX[id], sim.world.posZ[id]
 				local near = (sx - case.x) ^ 2 + sz ^ 2 < case.near ^ 2
 				if reachedAt == nil and near then
@@ -71,6 +73,32 @@ return function(t: any)
 			t.expect(droppedAt ~= nil and droppedAt >= (reachedAt :: number) - 15, "the line goes when it gets there, not before")
 		end)
 	end
+
+	t.test("a jet's line goes when the server says it arrived, also for a goal inside its turn circle (S-38)", function()
+		for _, goal in { { 480, 0 }, { -230, 90 } } do -- far ahead; close and off to the side (inside the turn circle)
+			local sim, world, id = scene("ord_falcon", -300)
+			local wp = Waypoints.new()
+			local clearedAt, droppedAt
+			for tick = 1, 15 * 20 do
+				if tick == 2 then
+					assert(Sim.submit(sim, 1, Commands.toPoint(world.grid, CT.MOVE, { id }, goal[1], goal[2])))
+					Waypoints.issue(wp, world, { cmdType = CT.MOVE, queue = false, x = goal[1], z = goal[2] }, { id })
+				end
+				Sim.step(sim)
+				NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+				Waypoints.update(wp, world, tick * DT)
+				if tick > 3 and clearedAt == nil and sim.world.orderId[id] == 0 then
+					clearedAt = tick
+				end
+				if tick > 2 and droppedAt == nil and wp.byUnit[id] == nil then
+					droppedAt = tick
+				end
+			end
+			print(string.format("    goal (%d, %d): the server's order ended at tick %s, the line went at tick %s", goal[1], goal[2], tostring(clearedAt), tostring(droppedAt)))
+			t.expect(clearedAt ~= nil and droppedAt ~= nil, "the jet arrived and the line went")
+			t.expect(math.abs((droppedAt :: number) - (clearedAt :: number)) <= 3, "within a few ticks of the server's arrival")
+		end
+	end)
 
 	t.test("a unit that stops counts as standing still within MOVING_TICKS", function()
 		local sim, world, id = scene("ord_lancer")

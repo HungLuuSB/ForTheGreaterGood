@@ -407,3 +407,22 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Missile damage spread (the user asked whether it is inconsistent):** by design (D97). A SAM missile's proximity fuse bursts at its closest approach and deals area damage falling off with distance (`Combat.explode`, the weapon's `edgeEffectiveness`): a Thorn missile does 200 at the hull and 100 at its 5-stud fuse edge, so hits land anywhere between (a headless run showed 200s and a 150). Missiles that are jammed or decoyed explode harmlessly at the end of their life.
 
 **Why / measured:** `DyingTarget.spec` (four Falcons at 20 HP, so one hit kills, rendering 2 ticks behind): 4 kills, 16 frames of killing missiles still flying, none with the target gone; without the fix 8 of 16 were "no lock". Studio (`airsam`): kills and crash explosions, no errors.
+
+### C-51 — Following the sim's answers to requests 14–19 (2026-10-21)
+
+**Decision:** with the merge of S-33 and S-38 (protocol 13):
+- **Jet arrival (request 17):** `Waypoints` mirrors `Air.steerJet`: an aircraft's move point is reached within `AIR_REACH` = `Air.ARRIVE_RADIUS` (40), or once the point, having been ahead of the aircraft, falls behind it within `AIR_PASS` = `Air.LOITER_RADIUS` (220); `approached` on the point remembers it was ahead. Both constants are tested equal to the server's.
+- **Countermeasure (request 18):** `Effects.countermeasure` takes DECOYED's `countermeasure` (Schema.Countermeasure) first; the equipment guess (C-48) remains for records without it.
+- **Edge (request 15, partly):** projectiles now burst on the map's edge on the server, so `Effects.unclamp` (C-46) is removed: it could only misplace an edge burst by the client's own prediction. Aircraft still turn back 60 studs inside and may be drawn on the edge for a few ticks; accepted for now.
+- **MOVING (request 14):** the server sets the bit; `World.moving` keeps the position fallback (C-45), now redundant but harmless. Air wrecks (request 19) and the Thorn's numbers (request 16) need nothing: the client already ignored air wrecks and reads the defs.
+- Specs follow the new numbers from the defs (fuse 12, lock range 420) instead of pinned values; the missile view's HIT / miss check leaves out missiles a countermeasure decided (all 12 of its "wrong" calls after the merge were decoys or jammed missiles; 59 right, 0 wrong without them).
+
+**Why / measured:** `Moving.spec`: a jet ordered far ahead and one ordered to a point inside its turn circle both lose their line within a tick of the server ending the order (ticks 48 / 49 and 11 / 12); `OffMap.spec`: 10 missiles burst on the edge, none drawn more than a tick past it. Studio (`airsam`): a Falcon ordered to a point 117 studs off its nose turned to it, passed 93 studs away (the closest it can turn), the line went then, and it settled into a 225-stud circle around the point; a far order kept its line while flying (`debug_out/screens/c51_jet_move_line.jpg`).
+
+### C-52 — Crashes leave their smoke; radar SAM missiles drawn big (2026-10-21)
+
+**Decision:**
+- A crashed aircraft (C-48) stays `Deaths.CRASH_LINGER` (3 sim seconds) after it hits: `crashAt` lets it go on falling under the ground out of sight, and Render/Deaths turns its flame and smoke emitters off at the hit instead of destroying them. Destroying them with the model had wiped the whole smoke trail at once (particles belong to their emitter). The ground explosion still comes at the hit.
+- Radar SAM missiles (the `smoke_thick` trail style) are drawn at 2.3× an IR missile (was 1.3×), with a 2.6 s trail and 4.5 s puffs; their exhaust light grows with √scale so it doesn't wash the bigger body out. Weapons whose `fx.impact` is a `..._large` effect explode 1.8× bigger than their `aoe` alone gives (`Effects.impactSize`), since the radar SAM's `aoe` (8) is now below the IR Thorn's (12). Vertical launch and a bigger radar `aoe` are the sim's (request 20, replacing 12); the user chose to leave that to A.
+
+**Why / measured:** the user asked for all three. `Deaths.spec`: a crashed jet is more than 5 studs under the ground a second after its hit; `Effects.spec`: a radar SAM's explosion is bigger than an IR one's. Studio (`airsam`): a Wyvern missile next to the Thorns' (`debug_out/screens/c52_radar_sam_missile.jpg`); a shot-down Archon's explosion with its smoke trail still in the air and the model gone under the ground (`c52_crash_smoke_stays.jpg`); no errors.
