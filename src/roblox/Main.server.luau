@@ -113,6 +113,12 @@ end
 
 local function startMatch()
 	sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
+	-- the profile's extra units (MatchConfig `spawns`)
+	for _, s in Config.spawns or {} do
+		for i = 0, (s.count or 1) - 1 do
+			Spawn.unit(sim, s.def, s.player, s.x + i * (s.dx or 0), s.z + i * (s.dz or 0), s.heading or 0)
+		end
+	end
 	matchId += 1
 	endedAt = nil
 	-- a new match is a fresh view for everyone connected: WELCOME again
