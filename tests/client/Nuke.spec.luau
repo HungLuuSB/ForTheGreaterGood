@@ -6,6 +6,7 @@
 
 local Commands = require("../../src/client/Core/Commands")
 local Effects = require("../../src/client/Core/Effects")
+local MissileView = require("../../src/client/Core/MissileView")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
@@ -23,6 +24,7 @@ local function scene(defended: boolean)
 	if defended then
 		Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 100, -150, 0)
 		Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 100, 150, 0)
+		Spawn.unit(sim, "ord_lancer", 1, TARGET_X - 200, 0, 0) -- a spotter: the client knows enemy radars it sees
 	end
 	local world = World.new(sim.defs)
 	NetOut.join(sim, 1)
@@ -73,10 +75,29 @@ return function(t: any)
 		local sim, world = scene(true)
 		local fx = Effects.new()
 		local interceptors, chasing, errs = 0, 0, {}
+		local maxTracks, ownSeen, lockedFrames, lockFrames = 0, false, 0, 0
 		local seen: { [any]: boolean } = {}
 		local intercepted, detonated = false, false
 		for tick = 1, 15 * 20 do
 			Sim.step(sim)
+			-- the sensor view (C-58): the Wyverns' radar tracks on our nuke,
+			-- interceptors locked on it
+			if tick > 1 then
+				local visible = Effects.visible(fx, fx.tick)
+				for _, tr in MissileView.tracks(fx, world, visible) do
+					ownSeen = ownSeen or tr.own
+					maxTracks = math.max(maxTracks, #tr.sites)
+				end
+				for _, e in MissileView.build(fx, world, fx.tick, visible) do
+					local p = fx.projectiles[e.id]
+					if p and p.chase and not p.chase.gone then
+						lockFrames += 1
+						if e.locked and e.label:find("LOCK  NUKE") then
+							lockedFrames += 1
+						end
+					end
+				end
+			end
 			for _, e in sim.combat.events do
 				if e.kind == "INTERCEPTED" then
 					intercepted = true
@@ -113,5 +134,9 @@ return function(t: any)
 		t.expect(interceptors >= 1 and chasing > 0, "interceptors went up after the nuke")
 		t.expect(median < 0.5 and p90 < 3, `in step with the server's (median {median}, p90 {p90})`)
 		t.expect(intercepted ~= detonated, "the nuke either was intercepted or detonated, as the server says")
+		print(string.format("    sensor view: %d radar tracks at most on our nuke; interceptors locked on it in %d of %d frames", maxTracks, lockedFrames, lockFrames))
+		t.expect(ownSeen, "the client knows the nuke is its own (launched from its silo)")
+		t.equal(maxTracks, 2) -- both Wyverns hold it
+		t.expect(lockFrames > 0 and lockedFrames == lockFrames, "interceptors show locked on the nuke")
 	end)
 end

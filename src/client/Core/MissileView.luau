@@ -11,6 +11,13 @@
 -- guidance, LOCK or no lock, target, distance, time to go, the target's
 -- angle off the nose against the seeker cone (C-42), predicted miss.
 -- Corrections, decoys and lost locks come from Effects' marks.
+--
+-- Interceptors (S-48) are locked on their strategic missile. Strategic
+-- missiles get radar tracks (C-58): every known radar SAM site that would
+-- engage it (an intercepting weapon of the other side, the missile within
+-- its range: Targeting's rule; these sites' own radars reach that far) with
+-- the time to impact and the interceptors flying at it. A radar holds a
+-- missile this big and slow the whole way: tracks are never lost.
 
 local Guidance = require("@shared/Combat/Guidance")
 local Effects = require("./Effects")
@@ -63,8 +70,91 @@ export type Entry = {
 	label: string,
 }
 
+-- A strategic missile's radar tracks (C-58).
+export type Track = {
+	id: number,
+	x: number, -- drawn position
+	y: number,
+	z: number,
+	own: boolean, -- the local team's missile (tracked by enemy sites)
+	sites: { { number } }, -- x, y, z of each tracking site
+	interceptors: number, -- in flight at it
+	eta: number?, -- sim seconds to impact (Effects.landing)
+	label: string,
+}
+
 local function fmt(v: number): string
 	return if v < 10 then string.format("%.1f", v) else string.format("%d", math.floor(v + 0.5))
+end
+
+-- Drawn positions by projectile, from Effects.visible's list.
+function MissileView.drawn(visible: { { any } }): { [Effects.Proj]: { number } }
+	local out = {}
+	for _, v in visible do
+		out[v[1] :: Effects.Proj] = { v[2] :: number, v[3] :: number, v[4] :: number }
+	end
+	return out
+end
+
+-- The known units of the side that would engage strategic missile `p`
+-- with an intercepting weapon in range (Targeting.interceptTarget: the
+-- horizontal distance within the weapon's range): x, y, z of each.
+function MissileView.trackers(world: World.World, p: Effects.Proj, x: number, z: number): { { number } }
+	local out = {}
+	local me = world.me
+	if me == nil then
+		return out
+	end
+	for _, u in world.units do
+		-- own missiles are tracked by the other teams, the others by ours
+		if (u.team == me.team) == (p.own == true) then
+			continue
+		end
+		local def = World.def(world, u)
+		if def == nil then
+			continue
+		end
+		for _, ws in def.weapons do
+			local w = world.defs.weaponByIndex[(ws :: any).weaponIndex] :: any
+			if w and w.intercepts and (u.x - x) ^ 2 + (u.z - z) ^ 2 <= w.range ^ 2 then
+				local ux, uz = u.rx or u.x, u.rz or u.z
+				local fp = def.footprint
+				table.insert(out, { ux, (u.ry or World.groundY(world, ux, uz)) + fp * Effects.UNIT_HEIGHT, uz })
+				break
+			end
+		end
+	end
+	return out
+end
+
+-- Radar tracks of the strategic missiles drawn this frame (C-58).
+function MissileView.tracks(fx: Effects.Fx, world: World.World, visible: { { any } }): { Track }
+	local out: { Track } = {}
+	local chasing: { [Effects.Proj]: number } = {}
+	for _, q in fx.projectiles do
+		if q.chase and not q.chase.gone then
+			chasing[q.chase] = (chasing[q.chase] or 0) + 1
+		end
+	end
+	for _, v in visible do
+		local p = v[1] :: Effects.Proj
+		if not p.weapon.strategic or p.gone then
+			continue
+		end
+		local x, y, z = v[2] :: number, v[3] :: number, v[4] :: number
+		local sites = MissileView.trackers(world, p, x, z)
+		local _, _, eta = Effects.landing(world, p)
+		local n = chasing[p] or 0
+		local first = if #sites > 0
+			then `NUKE{if p.own then " (yours)" else ""}  RADAR TRACK x{#sites}`
+			else `NUKE{if p.own then " (yours)" else ""}  no radar in range`
+		local second = if eta then `impact {string.format("%.1f", eta)} s` else ""
+		if n > 0 then
+			second ..= `  {n} interceptor{if n == 1 then "" else "s"} up`
+		end
+		table.insert(out, { id = p.id, x = x, y = y, z = z, own = p.own == true, sites = sites, interceptors = n, eta = eta, label = first .. "\n" .. second })
+	end
+	return out
 end
 
 -- `visible`: Effects.visible's list for this render tick.
@@ -82,6 +172,7 @@ function MissileView.build(fx: Effects.Fx, world: World.World, renderTick: numbe
 		end
 		return (a[1] :: Effects.Proj).id < (b[1] :: Effects.Proj).id
 	end)
+	local drawn = MissileView.drawn(visible)
 	local out: { Entry } = {}
 	for i = 1, math.min(#homing, MissileView.MAX_MISSILES) do
 		local v = homing[i]
@@ -134,7 +225,37 @@ function MissileView.build(fx: Effects.Fx, world: World.World, renderTick: numbe
 			end
 		end
 		local lines = {}
-		if target then
+		local chase = p.chase
+		local chaseAt = if chase and not chase.gone then drawn[chase] else nil
+		if chase and chaseAt then
+			-- an interceptor: locked on its strategic missile (S-48)
+			e.locked = true
+			e.targetName = "NUKE"
+			e.cx, e.cy, e.cz = chaseAt[1], chaseAt[2], chaseAt[3]
+			local dx, dy, dz = chaseAt[1] - x, chaseAt[2] - y, chaseAt[3] - z
+			e.distance = math.sqrt(dx * dx + dy * dy + dz * dz)
+			if e.seekerAngle and (e.distance :: number) > 1e-6 then
+				local cos = (dx * vx + dy * vy + dz * vz) / (e.distance :: number)
+				e.offNose = math.deg(math.acos(math.clamp(cos, -1, 1)))
+				e.inSeeker = (e.offNose :: number) <= (e.seekerAngle :: number)
+			end
+			-- time to go at the closing speed
+			local closing = if (e.distance :: number) > 1e-6
+				then ((p.vx - chase.vx) * dx + (p.vy - chase.vy) * dy + (p.vz - chase.vz) * dz) / (e.distance :: number)
+				else 0
+			if closing > 1 then
+				e.tgo = (e.distance :: number) / closing
+			end
+			table.insert(lines, `{e.guidance}  LOCK  NUKE`)
+			local second = `{fmt(e.distance :: number)} studs`
+			if e.tgo then
+				second ..= `  {string.format("%.2f", e.tgo)} s`
+			end
+			if e.offNose then
+				second ..= `  {math.floor((e.offNose :: number) + 0.5)}° / {e.seekerAngle}° off`
+			end
+			table.insert(lines, second)
+		elseif target then
 			local def = World.def(world, target)
 			e.targetId = p.target
 			-- a strategic-tier target (outside the camera's rectangle) has no def

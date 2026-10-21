@@ -401,7 +401,16 @@ All with real mouse and keyboard input through the MCP tools.
 - New test profile `nuke`: the Chaos silo fires at your base when the match starts and your 2 Aegis try to stop it; your silo has 2 nukes for the Chaos base, which 2 Wyverns defend (`debug_out/screens/c57_chase.jpg`, `c57_warning.jpg`). Both nukes were intercepted in my Studio run, so the detonation itself is only checked in Lune so far.
 - The `nuke` profile now has an economy to refill the stockpiles (the user): 5 fusion reactors and 12 supply converters (the flat map has no deposits), 12 supply/s and 1,250 power/s. Measured headless: the silo rebuilds a nuke in its full 120 s, twice back to back; 8 converters fall to 135 s on the second.
 
+## 2026-10-21: nuke arc preview, radar tracks (C-58)
+
+- In attack mode (A) with a silo selected, the cursor now shows the nuke's flight arc from the silo, its blast ring and "impact in 12.7 s - 2 in stock" (`debug_out/screens/c58_attack_preview.jpg`). An order on an empty silo says "empty: fires when built": the order waits and the nuke launches as soon as it's built.
+- The flight path is a physics arc (gravity), not a Bezier curve; it climbs 800 studs, off the top of the screen. The height is the sim's: asked sim-A to bring it down to 300 with the same 13 s flight (request 27a).
+- The silo didn't stop building: headless it fires and rebuilds every 120 s, but at sim speed 0.25 that's 8 real minutes and the pips only show whole nukes. Asked sim-A to send the build progress so the pips can fill as it builds (request 27b).
+- The sensor view (N) now shows radars tracking a nuke: lines from every radar SAM site that has it, "NUKE  RADAR TRACK x2", time to impact and interceptors up; interceptors show locked on it. The warning banner adds "2 radars tracking" (`c58_radar_tracks.jpg`).
+
 ## Needs my review
+
+- **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
 
 - **Nuke look (C-57):** missile 4.5× an IR one; detonation flash, fireball, stem and cap (6–10 s), shockwave ring to ~3× the blast, 240-stud scorch; screen flash 1.2 s; warning banner and rings in red. Values in `src/client/Render/Vfx.luau` (`NUKE`), `Render/Effects.luau` (`smoke_huge`) and `Render/NukeWarning.luau`.
 
@@ -430,6 +439,10 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+27. **Lower nuke apex; stockpile build progress on the wire (the user, 2026-10-21):**
+    - (a) "limit its height so that the missile does not shoot over the screen height." At the camera's 55° pitch and 70° field of view a point above the view's focus stays on screen up to ~0.6 × the camera distance: ~290 studs at 480 (the last zoom before the icon view). `ord_nuke` / `chs_nuke` climb to `apex` 800 above the launch. Suggested: `apex` 300 with `gravity` 15, which keeps the flight time at 12.7 s (it only depends on apex / gravity: 2 × sqrt(2 × apex / gravity)), so interceptors keep the same window; the vertical launch speed drops from 253 to 95 studs/s. Numbers are yours; guide 10.9 needs them. The client reads both from the def (flight, arc preview, landing prediction), nothing to change on this side.
+    - (b) The user fired 3 nukes in the `nuke` profile and thought the silo had stopped building more. Headless it hasn't (6 launches, each rebuilt in 120 s with the profile's economy), but at sim speed 0.25 one rebuild is 8 real minutes and STOCK only carries whole missiles, so the pips sit still the whole time. Suggested: the build progress of the next missile per stockpile slot with STOCK (e.g. a u8, 0–255 of `wStockProgress`, sent when it changes by a step, owner only, like STOCK; protocol 17), so the client can fill the next pip as it builds. Medium priority.
 
 26. **Done (S-48, protocol 16): Reckoning / Ragnarok silos, `ord_nuke` / `chs_nuke` (strategic, manual fire, stockpile 2), radar SAMs intercept (chance 0.5), INTERCEPTOR / LAUNCH_WARNING / INTERCEPTED; the client draws them and fires silos with A since C-57.** **Nuke silo and radar SAM interception (the user, 2026-10-21; new design, not in the guide):** "apart from air, it needs to shoot down ICBMs or nukes from the enemy launched into its radar range." The user chose: a T3 nuke silo per faction that builds nukes into a stockpile, and the radar SAM sites themselves as the interceptors. Suggested (numbers are yours to balance):
     - **Silo:** one T3 structure per faction (names in the faction styles, e.g. Order "Judgement", Chaos "Ragnarok"; your call), built by the advanced builders. It builds one nuke at a time into a stockpile (capacity 1–2, ~120 s and very expensive, e.g. 1,500 supply + 40,000 power, drained like construction and slowed by stalls) and fires only on a manual ground-target order (never automatically), anywhere on the map.

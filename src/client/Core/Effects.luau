@@ -79,6 +79,7 @@ export type Proj = {
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the flare or chaff it follows (S-28)
 	turned: boolean?, -- a vertical launch has pitched over onto its target (Guidance.vertical, S-42, C-53)
 	chase: Proj?, -- an interceptor's strategic missile (S-48, C-57)
+	own: boolean?, -- a strategic missile launched by the local player's team (C-58)
 	gone: boolean?, -- ended (impact, interception, time out): interceptors chasing it fly on
 }
 
@@ -502,6 +503,29 @@ local function launcher(world: World.World, weaponIndex: number, x: number, z: n
 	return bestId, bestSlot
 end
 
+-- Is one of the local team's launchers at (x, z)? The wire doesn't say
+-- whose a projectile is, but a strategic missile leaves from its silo's
+-- position (Weapons.fire) and own units are always known (C-58).
+Effects.LAUNCHER_REACH = 24 -- studs
+function Effects.ownLauncherAt(world: World.World, x: number, z: number): boolean
+	local me = world.me
+	if me == nil then
+		return false
+	end
+	for _, u in world.units do
+		if u.team == me.team and (u.x - x) ^ 2 + (u.z - z) ^ 2 <= Effects.LAUNCHER_REACH ^ 2 then
+			local def = World.def(world, u)
+			for _, ws in if def then def.weapons else {} do
+				local w = world.defs.weaponByIndex[(ws :: any).weaponIndex]
+				if w and (w :: any).strategic then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
 -- One warning per strategic launch (LAUNCH_WARNING and the missile's own
 -- SPAWN_PROJ both raise it; ids are reused once a missile has ended).
 local function warn(fx: Fx, p: Proj?, projId: number, x: number, y: number, z: number, now: number)
@@ -587,7 +611,9 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		-- a strategic missile warns even without its LAUNCH_WARNING, which
 		-- comes only on its launch tick: a player who joins while it flies
 		if weapon.strategic then
-			warn(fx, fx.projectiles[e.projId], e.projId, x, y, z, now)
+			local p = fx.projectiles[e.projId]
+			p.own = Effects.ownLauncherAt(world, p.x, p.z)
+			warn(fx, p, e.projId, x, y, z, now)
 		end
 	elseif kind == EK.IMPACT then
 		local p = fx.projectiles[e.projId]
