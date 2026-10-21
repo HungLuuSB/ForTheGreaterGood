@@ -31,6 +31,14 @@ Maps, terrain and unit models live in the place file, not in this repo.
 - After a change: run the tests (`lune run test` while in Lune mode), report the result, and suggest a commit message.
 - Don't commit or push unless I ask.
 
+## Integration (merges into `main`)
+
+- The sim session is the integrator. All merges into `main` and their checks run in the **integration worktree** `../FTGG-integration` (a worktree on `main`), never in a working checkout (`ForTheGreaterGood` on `m-sim-2`, `FTGG-client` on `m-client-foundation`).
+- `bash tools/integration/check.sh` lists "Ready to merge: <commit>" entries in `docs/progress/*.md` on every local branch that `main` doesn't contain, then the client's requests for the sim session.
+- `bash tools/integration/integrate.sh <commit-or-branch> "<description>"` merges `--no-ff` in the worktree, runs `lune run test` and `lune run build` there, and pushes `main` only if both pass. A conflict aborts the merge; failed checks drop the unpushed merge. Never force-push or rewrite history. Record failures under that stream's "Integration notes" in `docs/progress/sim.md`.
+- After integrating, each stream merges `main` into its own branch itself. The sim stream doesn't edit `docs/progress/client.md` (it reports in its own progress file).
+- If the worktree is missing: `git worktree add ../FTGG-integration main`.
+
 ## Lune mode (current)
 
 Studio is now available to the client session only (`src/client`, `src/shared/Defs/Blockouts/`, place content), through the Roblox Studio MCP tools. The simulation stays headless: its code and tests run under [Lune](https://lune-org.github.io/docs) (version pinned in `rokit.toml`) and are still tested with `lune run test`.
