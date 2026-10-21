@@ -73,7 +73,7 @@ return function(t: RunAll.Context)
 		end
 	end)
 
-	t.test("in mirror fights the side holding the even IDs has no edge", function()
+	t.slow("in mirror fights the side holding the even IDs has no edge", function()
 		-- Lancers: precise guns, so a fight is decided by who reacts first
 		local even, odd, draws = 0, 0, 0
 		for _, unit in { "ord_lancer" } do
@@ -101,7 +101,7 @@ return function(t: RunAll.Context)
 	-- power stall ratio at that moment; it reads 1 just after a builder
 	-- finishes, so one side built an extractor where its mirror built a
 	-- generator, and the east's economy pulled ahead every game.
-	t.test("Hard 2v2 mirror on Twin Lakes: mirrored players build the same things in the same places", function()
+	t.slow("Hard 2v2 mirror on Twin Lakes: mirrored players build the same things in the same places", function()
 		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 1 }, { id = 3, team = 3, allyTeam = 2 }, { id = 4, team = 4, allyTeam = 2 } }
 		local sim = Sim.new({
 			seed = 7,
@@ -157,7 +157,7 @@ return function(t: RunAll.Context)
 
 	-- The same AI level on both starts of a mirrored map, both factions, six
 	-- seeds: wins (or the value lead after 10 minutes) split close to even.
-	t.test("mirror AI matches on a mirrored map split close to even between the starts", function()
+	t.slow("mirror AI matches on a mirrored map split close to even between the starts", function()
 		local west, east = 0, 0
 		for seed = 1, 6 do
 			for _, teams in { { 1, 3 }, { 2, 4 } } do -- Order mirror, Chaos mirror

@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 11 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks
+Schema.PROTOCOL_VERSION = 13 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -98,6 +98,7 @@ Schema.CmdType = table.freeze({
 	TOGGLE = 13,
 	CAMERA = 14,
 	REPEAT = 15, -- factories: repeat the build queue on / off (S-13)
+	CANCEL = 16, -- unfinished frames: cancel them; factories: drop queue item `value` (0 = all), refunding what was spent (S-35)
 })
 
 Schema.CmdFlag = table.freeze({
@@ -139,12 +140,14 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.TOGGLE] = "value",
 	[CT.CAMERA] = "camera",
 	[CT.REPEAT] = "value",
+	[CT.CANCEL] = "value",
 }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
 	[CT.SET_MOVE_STATE] = 2,
 	[CT.TOGGLE] = 1,
 	[CT.REPEAT] = 1,
+	[CT.CANCEL] = 50, -- a factory queue holds at most 50 items (D62)
 }
 
 export type Command = {
@@ -625,7 +628,8 @@ end
 --               | targetId u16 (0 = none or not shown)                        = 19 bytes
 --   IMPACT      projId u16 | pos                                              =  9 bytes
 --   DECOYED     projId u16 | pos | vel | decoy pos (the point it follows)
---               | decoyTicks u8 (ticks it still follows it; protocol 11)       = 22 bytes
+--               | decoyTicks u8 (ticks it still follows it; protocol 11)
+--               | countermeasure u8 (Schema.Countermeasure; protocol 13)     = 23 bytes
 --   LOST_LOCK   projId u16 | pos | vel (the missile flies on unguided)       = 15 bytes
 --   WRECK       wreckId u16 | defIndex u16 | cell u16 | offX u8 | offZ u8
 --               | heading u8                                                  = 10 bytes
@@ -657,8 +661,9 @@ Schema.EventKind = table.freeze({
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 22, [8] = 15, [9] = 10, [10] = 3 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3 })
 Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
+Schema.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- DECOYED: what defeated the missile (protocol 13)
 Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
 Schema.SIGHT_MAX_ROW_BYTES = 640 -- per SIGHT_ROWS record (rowCount × rowBytes)
 Schema.FIRE_HIT = 16 -- FIRE slot byte: bit 4
@@ -700,6 +705,7 @@ export type Event = {
 	decoyOffZ: number?,
 	decoyY: number?,
 	decoyTicks: number?,
+	countermeasure: number?, -- DECOYED: Schema.Countermeasure
 	-- WRECK, WRECK_GONE: wreckId; WRECK: defIndex, cell, offX, offZ, heading
 	-- SIGHT_ROWS
 	firstRow: number?, -- 0-based sensor row
@@ -839,6 +845,11 @@ function Schema.encodeEvent(w: Writer, e: Event)
 			w:writeU8(required(e.decoyOffZ, "decoyOffZ"))
 			w:writeI16(required(e.decoyY, "decoyY"))
 			w:writeU8(required(e.decoyTicks, "decoyTicks"))
+			local cm = required(e.countermeasure, "countermeasure")
+			if cm < 1 or cm > 3 then
+				error(`Schema: countermeasure {cm} outside 1..3`, 2)
+			end
+			w:writeU8(cm)
 		end
 	end
 end
@@ -932,6 +943,11 @@ function Schema.decodeEvent(r: Reader): Event
 			e.decoyOffZ = r:readU8()
 			e.decoyY = r:readI16()
 			e.decoyTicks = r:readU8()
+			local cm = r:readU8()
+			if cm < 1 or cm > 3 then
+				fail(r, `countermeasure {cm} outside 1..3`)
+			end
+			e.countermeasure = cm
 		end
 	end
 	return e

@@ -68,13 +68,16 @@
 | | **Order** | **Chaos** |
 |---|---|---|
 | Ideology | Discipline, precision, control | Freedom, force, disruption |
-| Palette | White / steel blue / gold accents | Gunmetal / crimson / rust accents |
-| Shapes | Clean, angular, symmetric, sloped armor | Heavy, asymmetric, exposed machinery, spikes kept subtle |
+| Look | Western modern armies (Leopard 2, Abrams, Patriot) | Eastern modern armies (T-90M, T-14 Armata, Pantsir) |
+| Palette | Light grey or sand base | Dark olive or gunmetal base |
+| Shapes | Clean, angular wedge armor, flat-panel sensors | Heavier, blockier, covered in reactive-armor tiles and slat cages, more weapons per vehicle; no exposed engines, stacks, crates or rust |
 | Doctrine | Better sensors, stealth, precision long range, DIRCM | Strong jamming, missile saturation, cheap mass, heavy armor |
 | Strength | Wins information fights; strong at range | Wins brawls and attrition; blinds enemy sensors |
 | Weakness | Expensive, fragile when cornered | Less accurate, weaker sensors, limited stealth |
 
 Both factions have the **same roles** (scout, MBT, SAM, fighter, etc.) so balancing stays manageable. They differ in stats and in which information-warfare tools they get.
+
+Both factions look like **modern armies**: long, low, wide hulls; flat turrets set toward the rear; long guns; side skirts with road wheels; sights and sensor boxes; canister launchers for SAMs; flat phased-array radars, never dishes; team color only on panels and stripes. Silhouette first, secondary shapes second, small details only if cheap. Details and swatches: [`docs/art/style-guide.md`](art/style-guide.md).
 
 ### 2.2 Naming conventions
 
@@ -415,7 +418,7 @@ Store each layer as its own `buffer` (flat, cache-friendly, cheap to send to Act
 | `height` | i16 (×0.25 stud) | Ground height; client uses it to place ground units |
 | `waterDepth` | i16 (×0.25 stud) | 0 = dry land |
 | `slope` | u8 | Max slope inside the cell, 0–255 → 0–90° |
-| `terrainType` | u8 | Grass, rock, sand, road (speed modifiers) |
+| `terrainType` | u8 | Grass, rock, sand, road (speed modifiers; built in S-37 as `Layers.terrain`, factors in `Shared/Grid/Terrain`) |
 | `passMask` | u16 | Bit per move class: can this class enter this cell |
 | `clearance[mc]` | u8 per move class | Distance (cells) to nearest blocked cell; used for big footprints |
 | `occupancy` | u16 | Structure ID occupying cell (0 = free) |
@@ -472,6 +475,8 @@ Ground units don't send height: the client looks it up from its own copy of the 
 
 Each move class gets one bit in `passMask` and its own `clearance` layer.
 
+Amphibious and hover units (S-39): an `AMPHIB` unit drives on the sea floor and is SUBMERGED in water at least as deep as its hull is tall: then only sonar finds it, torpedoes can target it, and its guns don't fire (it surfaces in the shallows). A `HOVER` unit rides on the water surface over water: weapons aim at it and hit it there. No roster unit is `HOVER` yet.
+
 ### 6.2 Footprints and clearance
 
 **Prefer odd footprints (1, 3) for ground units.** The clearance rule treats an even footprint like the next odd one, so a 2×2 unit costs as much passage width as a 3×3 one.
@@ -494,6 +499,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - A* runs over leaf centers with the start and goal cells as endpoints.
 - The padding ring is made of whole adjacent open leaves.
 - Measured on 256×256 hilly terrain: tree build about 6 ms (load time), route about 2.5 ms corner to corner.
+- The coarse route ignores terrain types; the flow field inside the corridor weighs them (S-37, 12.1).
 
 **Step 3 — Flow field inside the corridor only.**
 - Integration field: Dijkstra/BFS from the goal cell over corridor cells (cost = 1 × terrain modifier).
@@ -625,7 +631,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 ```
 cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
                   8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
-                  13 TOGGLE, 14 CAMERA, 15 REPEAT   (0 is invalid)
+                  13 TOGGLE, 14 CAMERA, 15 REPEAT, 16 CANCEL   (0 is invalid)
 flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
 count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
@@ -638,6 +644,8 @@ params    by cmdType:
   SET_FIRE_STATE / SET_MOVE_STATE      value u8: 0 hold, 1 return fire / maneuver, 2 fire at will / roam
   TOGGLE                               value u8: 0 off, 1 on
   REPEAT                               value u8: 0 off, 1 on (factories; others ignore it)
+  CANCEL                               value u8: 0..50. Unfinished frames: cancelled (value ignored).
+                                       Factories: drop queue item `value` (1-based), 0 = the whole queue
   CAMERA                               minX u8, minZ u8, maxX u8, maxZ u8  (camera area as a cell rectangle)
   STOP                                 none
 ```
@@ -697,7 +705,7 @@ DEATH       unitId u16, severity u8, wreckId u16 (0 = none)               6 B
 FIRE        shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos  10 B
 SPAWN_PROJ  projId u16, weaponDefIndex u16, pos, vel, targetId u16 (0 = none)  19 B
 IMPACT      projId u16, pos                                               9 B
-DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11)         22 B
+DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11), countermeasure u8 (v13)  23 B
 LOST_LOCK   projId u16, pos, vel (flying on unguided)                    15 B
 WRECK       wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8   10 B
 WRECK_GONE  wreckId u16                                                   3 B
@@ -833,7 +841,7 @@ Route these through the same team account so shortages affect them naturally:
 
 ### 8.7 Reclaim
 
-- Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time.
+- Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time. Aircraft shot down in flight crash and burn: no wreck (a landed one can leave one; S-38).
 - Wrecks are static features stored in grid cells. They appear on the minimap and are rendered in the tactical tier.
 - A team knows a wreck once it has seen its spot, and learns it is gone only by seeing the spot again (like structure ghosts; S-26).
 
@@ -882,7 +890,7 @@ Factories have build power and an optional rally point and repeat queue. Workers
 - **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.
 - The client shows a placement ghost using its own grid copy; the server re-validates.
 - Unfinished structures exist from the first tick with low health (they can be attacked).
-- Cancelling refunds what was spent (optional: 100% refund like BAR).
+- Cancelling refunds what was spent (S-35): the CANCEL command removes an unfinished frame (no wreck) or a factory queue item; the frame's progress, or the factory's progress on the item in production, times its cost comes back at the next economy step (capped by storage). Queued items not started cost nothing yet.
 - Upgrading a T1 extractor into T2: build the T2 on the same spot; the T1 is removed when construction starts.
 
 ### 9.4 Tech progression
@@ -911,6 +919,8 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 | Hold Position | Never moves on its own |
 | Maneuver | Chases a little, returns (default) |
 | Roam | Chases freely |
+
+Move states (S-34, `Orders.autoStep`): every 15 ticks an idle armed unit on Fire at Will (not builders, not aircraft) whose weapons have no shot (nothing in range, or terrain in the way, 10.8) attack-moves toward the nearest visible enemy it can damage and reach. Maneuver: only enemies within 150 studs of its anchor (where it was last sent) plus its range; past that leash, or when nothing is left, it walks back. Roam: enemies within 500 studs plus its range; it stays where the chase ends. Hold Position, Hold Fire and Return Fire units never move on their own. These orders are automatic: any command replaces them and sets a new anchor where it leaves the unit.
 
 ### 10.2 Target acquisition
 
@@ -947,7 +957,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - Collision against **unit collision volumes** (sphere or cylinder per def), found through the dynamic spatial hash. No Roblox raycasts against Parts.
 - Fast projectiles and jets: test the segment travelled this tick (swept test), not just the end point.
 - Ground impact: compare projectile height to the `height` layer.
-- Lifetime cap per weapon; expired projectiles self-destruct: an IMPACT event with no unit and no damage (D99), so clients drop them.
+- Lifetime cap per weapon; expired projectiles self-destruct: an IMPACT event with no unit and no damage (D99), so clients drop them. So do projectiles that leave the map, on its edge (S-33).
 - Hard cap on live projectiles (e.g., 2,000). If exceeded, oldest ballistic shells resolve instantly at their predicted impact point.
 
 ### 10.6 Damage
@@ -1145,6 +1155,7 @@ countermeasures = {
 - Roles: scout, light tank, MBT, artillery (radar-targetable), MLRS (saturation), mobile IR SAM, mobile radar SAM, mobile radar, mobile jammer, workers.
 - Defenses: gun turret, heavy turret, IR SAM site, long-range radar SAM site, artillery emplacement, coastal battery.
 - Terrain matters: slopes block wheeled units; heavies are slow on sand (terrain modifiers).
+- Terrain modifiers (S-37, placeholder numbers in `Shared/Grid/Terrain.SPEED`): a unit's top speed is its maxSpeed × its move class's factor for the cell it is on. Wheeled: rock 0.8, sand 0.7, road 1.25. Tracked: 0.9, 0.8, 1.1. Heavy tracked: 0.9, 0.6, 1.1. Amphibious: 0.9, 0.85, 1.1. Hover: rock 0.8, sand 1, road 1.1. Grass is 1; ships, submarines and aircraft ignore terrain. Flow fields cost each step the best factor on the map divided by the factor of the cells it crosses, so paths prefer good ground. Generated maps (MapGen) paint sand on land within 2 cells of water and rock where the ground rises more than 15°; roads aren't generated yet.
 
 ### 12.2 Air
 
@@ -1166,7 +1177,7 @@ countermeasures = {
   - Besides sonar, naval units and ASW helicopters (helicopters with a weapon that can target `SUB`) detect a submerged submarine within 40 studs as a SONAR contact: torpedo-targetable, never VISIBLE. No other unit can see it.
   - Torpedoes launch level just under the surface, stay between the sea floor and the surface, home on sonar contacts, and are removed harmlessly when they reach land.
   - Destroyers carry a radar-guided naval SAM (`ord_naval_sam` 380 studs / `chs_naval_sam` 360, about their 1.5 × sight against aircraft; D97).
-- **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base.
+- **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base. (S-36) GUARD from an aircraft on a friendly carrier or airfield recovers it there: that pad becomes its home, and it lands, rearms and stays docked, carried along by a carrier, until any order launches it. Empty aircraft rearm at their home first, else at the nearest pad. Carriers don't build aircraft (not decided).
 - **Amphibious/hover units** bridge land and sea.
 - Naval structures: floating turret, torpedo launcher, sonar buoy, naval SAM platform, tidal generator.
 
@@ -1581,7 +1592,7 @@ Add an optional `blockout` table to UnitDefs (boxes, wedges, cylinders with size
 - Assemble each unit from kit parts, then add 1–2 unique pieces. T2 versions = T1 + extra kit parts.
 - Keep each animated piece as its own object named after its piece (`turret`, `barrel`, `armL`).
 - Export, import with Studio's 3D Importer as MeshParts, rig with Motor6Ds. Script the rigging: a Studio plugin that creates Motor6Ds from piece names saves hours.
-- Make Order and Chaos kits different (clean slopes vs heavy blocks) so the factions read apart even at low detail.
+- Make Order and Chaos kits different (clean wedge armor vs blocky reactive-armor tiles and slat cages, section 2.1) so the factions read apart even at low detail.
 
 ### 20.4 Free asset libraries (check every asset's license)
 

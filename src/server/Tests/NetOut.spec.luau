@@ -287,6 +287,9 @@ return function(t: RunAll.Context)
 		for _, id in theirs do
 			World.setHealth(w, id, 1e6)
 		end
+		for _, id in { mine[1], mine[2], theirs[1], theirs[2] } do
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION) -- a static scene (move states, S-34)
+		end
 		local views = { Client.new(g), Client.new(g) }
 		local exact, targeted, beforeTurned, leaked = 0, 0, 0, 0
 		for _ = 1, 240 do

@@ -401,3 +401,66 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Level report:** a match still running at the limit is undecided: it shows who was ahead on value but no longer counts as a win in the tally (shown in brackets).
 - **Found, not fixed here:** Normal loses all 12 Coastline matches to Easy (it starves for supply on that map); Hard beats Normal 9–3 there. Listed for the next round.
 - **Tests (`LineOfFire.spec`, 4, on the new `ridge:<cells>` test map):** the shot geometry (tank shell and machine gun blocked by the ridge, clear through the gap, howitzer arc clears it, missiles unchecked); a Lancer holds fire behind the ridge while a Verdict fires over it; a Lancer takes a target it can hit over a nearer one behind the ridge; three Lancers on attack-move stop at most a second at the ridge, go through the gap and kill the target.
+
+## S-33 — Client requests 14–16: MOVING bit, the map's edge, Thorn range (2026-10-22)
+
+- **14, MOVING:** the bit was in the schema but never set. Movement now sets it on ground and naval units with a movement order or nonzero speed and on aircraft unless landed (loitering and hovering included), and clears it otherwise; only on a change, so idle units still send nothing. Test (`Movement.spec`): a tank's bit goes on with a move order and off when it stops, on the client too; a loitering jet is moving, a landed one isn't.
+- **15, past the edge:** projectiles that leave the map now burst on its edge (IMPACT, no damage; there is nothing to hit out there), so no projectile position past the edge reaches the wire (`Air.spec`). Aircraft: not changed. Two tries to keep jets inside (a turn-back margin of their turn radius; a hard edge they slide along) broke the bombers' runs on small maps (egress loops leave the map there and the bomb-run tests rely on them), and a look-ahead version still let a Falcon out by 46 studs at a corner. Jets keep the 60-stud turn-back (B measured at most 14 studs out); the alternative, positions past the edge on the wire (a signed offset), is a protocol change left for later.
+- **16, Thorn (the user asked):** `chs_ir_sam.range` and `lockRange` 280 → 420, `aoe` 5 → 12 (also its proximity fuse), `projectileSpeed` 420 → 500 (as suggested, so a 420-stud shot arrives about as fast); `chs_thorn.sensors.airSight` 300 → 420, because an IR missile locks only on what the site sees, so the new range would otherwise only help with a radar's or ally's sight. Under "Needs my review": Order's IR SAM (`ord_ir_sam`, the Vigil) stays at 300 / 5. `Guidance.spec` now counts only missiles that finished (a 420-stud flight can outlast the test) and puts the circling Falcon at x = 300, as the client's scene does, because its loiter around x = 420 reached the map's edge.
+
+## S-34 — Move states: Hold Position, Maneuver, Roam (guide 10.1; audit item 1) (2026-10-22)
+
+- **Before:** the move state was stored but nothing read it; idle units never moved on their own, as if on Hold Position.
+- **Now (`Orders.autoStep`, start of the Orders step):** every 15 ticks (staggered by `Hash.mix32(id)`), an idle unit (empty queue, or an automatic order) that is armed, mobile, not a builder, not an aircraft, and on Fire at Will checks its move state:
+  - **Hold Position:** nothing (an automatic order left over is stopped).
+  - **Maneuver** (default): if no weapon has a shot (no target in range, or line of fire blocked, S-32), an automatic attack-move toward the nearest enemy the team sees, which one of its weapons can hit and its move class can reach, within `MANEUVER_LEASH` (150) studs of its **anchor** plus its longest range. Beyond the leash (+24 slack), or when nothing is left to chase, it walks back to the anchor.
+  - **Roam:** the same within `ROAM_CHASE` (500) studs of itself plus its range; it doesn't come back (the anchor moves to where it stops).
+  - Automatic orders are ordinary queue entries marked `auto` (hashed); any command replaces them and clears the anchor, which is set again where the unit next stands idle (its last move goal).
+- **Why only Fire at Will:** a Return Fire unit shouldn't go looking for fights; Hold Fire never fires.
+- **Test changes:** `NetOut.spec`'s weapon-target test and `LineOfFire.spec`'s "holds fire behind the ridge" put their units on Hold Position, to keep the static scenes they describe (on Maneuver the Lancer now goes round the ridge, which `MoveStates.spec` tests).
+- **Cost (stress, 800 units):** Commands 0.45 → 0.59 ms average (budget 1).
+- **Tests (`MoveStates.spec`, 5):** Hold Position stays; Maneuver closes on an enemy just out of range, kills it and walks back (at most 174 studs out); Maneuver ignores an enemy beyond its leash while Roam chases it down and stays; Maneuver repositions past a ridge to get a shot; a command replaces the chase and re-anchors.
+
+## S-35 — Cancel construction with a refund (guide 9.3; audit item 6) (2026-10-22)
+
+- **Command:** CANCEL 16 (protocol 12), `value u8` 0..50. On an unfinished frame: the frame is removed (no wreck, a BUILD_FAILED event with reason "cancelled"), and its builders stop. On a factory: queue item `value` (1-based) is dropped, 0 = the whole queue.
+- **Refund:** spending is proportional to progress (Build spends `cost × step` as progress grows), so a refund is progress × cost, credited like reclaim (`reclaimed`) at the next economy step and capped by storage. Only the frame or the item in production has progress; queued items cost nothing yet. 100% of what was spent, like BAR (the guide's "optional" choice).
+- **Tests (`Build.spec`):** a plant frame cancelled at 30–70% credits exactly progress × cost of supply and power and is gone; CANCEL through the command removes a frame; cancelling a factory's item in production refunds its progress and the next item starts from scratch; a queued item goes without a refund; CANCEL 0 clears the queue. `Schema.spec`: golden bytes and range check for CANCEL.
+
+## S-36 — Carriers: recovering, carrying and launching aircraft (guide 12.3; audit item 5) (2026-10-22)
+
+- **Before:** carriers' rearm pads were used by empty aircraft (nearest pad), but an aircraft couldn't take a carrier as home, a rearming aircraft stayed where the carrier had been, and nothing held aircraft aboard.
+- **Recover:** GUARD from an aircraft on a friendly unit with rearm pads (carrier or airfield) calls `Air.recover`: that pad becomes its **home** (`AirState.home`, hashed) and it is flagged to **hold**; it flies there, lands, rearms (aircraft without ammo are full at once) and then stays in a new phase **docked** instead of taking off.
+- **Carried along:** while rearming or docked, an aircraft's position is its pad's every tick; one flying to a carrier re-aims when the carrier has moved.
+- **Launch:** any order (`Orders.give` → `Air.release`) takes a docked aircraft off; one flying home only to be recovered turns back; an empty one still rearms first. A destroyed carrier launches its docked aircraft.
+- **Home first:** an empty aircraft goes to its home pad if it still exists, else the nearest.
+- **Not done:** carriers building aircraft (the guide doesn't say they do; it would change the tech tree, listed for review).
+- **Tests (`Carrier.spec`, 3):** recovery lands and holds a Falcon on a Sanctuary, which then sails with it aboard; a move order launches it; an empty Falcon heads for its carrier although an airfield is nearer, and lands on it.
+
+## S-37 — Terrain types and speed modifiers (guide 5.2, 6.3, 12.1; audit item 3) (2026-10-22)
+
+- **Layer:** `Layers.terrain` (u8 per cell, `Layers.Terrain` GRASS 0, ROCK 1, SAND 2, ROAD 3; default grass) in Shared, so the client gets it with the map.
+- **Speed:** `Shared/Grid/Terrain.SPEED[moveClass][type]` (placeholders, listed for review): wheeled rock 0.8 / sand 0.7 / road 1.25; tracked 0.9 / 0.8 / 1.1; heavy tracked 0.9 / 0.6 / 1.1; amphibious 0.9 / 0.85 / 1.1; hover 0.8 / 1 / 1.1; grass 1; ships, submarines and aircraft ignore terrain. Movement scales a unit's top speed by the factor of the cell it is on.
+- **Paths:** each tree (move class, clearance) carries per-cell step multipliers `best factor on this map / cell factor` (≥ 1, as the flow field's bucket queue needs; nil when the map has one kind of ground for that class, so other maps cost nothing extra); a step costs its length times the mean of its two cells' multipliers. The coarse quadtree route still ignores terrain.
+- **Maps:** MapGen paints sand on land within 2 cells of water and rock where a cell rises more than 15° to a neighbour; both follow the symmetric heights, so maps stay symmetric (tested). Named maps: Ridgeline 768 rock cells (ridge flanks, mostly impassable anyway), Coastline 962 rock / 304 sand, Twin Lakes 1,596 / 528, Crossroads 2,264 / 656. No roads are generated (map design). New test map `terrain:<cells>`.
+- **Tests (`Terrain.spec`, 3):** a Paladin on sand tops out at 0.6 of its max speed and a Jackal on the road at 1.25 (much slower on sand); a heavy class's flow field costs crossing sand more than 1.4× grass, and an all-grass map has no multipliers; Coastline's terrain has sand only on land, rock, and mirror symmetry.
+
+## S-38 — Client requests 17–19: jets reach their goal, countermeasure on DECOYED, no aircraft wrecks (2026-10-22)
+
+- **17, jets (high priority, the user asked):** a jet's move used to count as arrived as soon as its goal was within the 220-stud loiter radius, so a close order made it circle from wherever it was. Now it flies to the goal and arrives within `Air.ARRIVE_RADIUS` (40 studs, the name the client mirrors) or, for a goal inside its turn circle, once it has flown toward it and the goal falls behind (the closest approach; `AirState.approach`, hashed); then it circles at 220 as before. Test (`Air.spec`): goals 134 studs to the side and 150 behind are passed within 70 studs, a far one within 40, and the jet then circles at ~220.
+- **18, countermeasure (protocol 13):** `EW` now returns which countermeasure defeated a missile (flares, chaff, DIRCM); it rides on the decoy point and DECOYED ends with `countermeasure u8` (23 B). Test (`Guidance.spec`): every decoy in the salvo test reaches the client as DIRCM. **Correction:** the Falcon and the Guardian carry DIRCM and chaff, not flares, so the decoys S-27 and S-28 called "flares" were DIRCM engagements; the numbers stand.
+- **19, aircraft wrecks:** Damage leaves no wreck for an aircraft that dies in flight (no LANDED bit); a landed one may leave one. Test (`Air.spec`): a Guardian killed in flight has wreck 0, a landed one gets a wreck.
+
+## S-39 — Amphibious and hover details (guide 6.1, 12.3; audit item 4) (2026-10-22)
+
+- **Amphibious:** Movement sets SUBMERGED on AMPHIB units in water at least as deep as their hull is tall (they drive on the sea floor) and clears it in the shallows and on land. Submerged, they are what submarines are to the sensors (sonar contacts only, `Sensors.levelFor`) and to targeting (the submerged domain: torpedoes, D107); their own weapons don't fire under water unless they are torpedoes (Weapons).
+- **Hover:** combat profiles of HOVER defs ride on the water surface: `Combat.baseAt` and the believed aim point use the surface over water (the sea floor before). No roster unit is HOVER yet (a roster decision, listed for review); the rule is tested on a ground profile switched to hover.
+- **Test map:** `beach:<cells>`, land sloping about 10° into a 30-stud-deep sea (the `sea:` map's coast is a cliff no ground class climbs).
+- **Tests (`Amphibious.spec`, 2):** a Tideguard drives into the sea and submerges; an enemy tank without sonar loses it; it holds its gun though the enemy is in range; back in the shallows it surfaces. A hover profile's aim point is on the water surface, a ground unit's on the sea floor, attack-ground's on the ground.
+
+## S-40 — Fast and slow test suites (2026-10-22)
+
+- **Asked:** a fast suite for every commit and the slow fairness and AI matches in a separate suite that the integration check runs.
+- **How:** specs register slow tests with `t.slow(name, fn)` instead of `t.test`; `RunAll.run(specs, mode)` runs "fast" (no slow tests), "slow" (only them) or "all" (the default, so the Studio runner, which is the client stream's, still runs everything). `lune run test` is the fast suite; `lune run test_slow` (`.lune/test_slow.luau`) the slow one. `tools/integration/integrate.sh` runs both, and the build, before pushing `main` (it skips the slow suite on a tree that doesn't have it yet). The runner now prints the time of every test that takes a second or more.
+- **Slow (7 tests, ~35 s):** Fairness.spec's mirror fights, Twin Lakes 2v2 mirror and Ridgeline mirror matches; AI.spec's "hard beats easy"; Skirmish.spec's full AI match and its replay determinism run. The fairness spec's ID-parity check is a unit test and stays fast.
+- **Fast:** 324 tests in ~33 s (was 331 in ~65 s). `CLAUDE.md` and the project skill describe both.

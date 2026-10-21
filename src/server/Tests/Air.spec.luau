@@ -526,4 +526,83 @@ return function(t: RunAll.Context)
 		t.equal(hits, onGhost, "every bomb released on the ghost damaged the plant")
 		print(`    ghost structure: {onGhost} of {#drops} drops released on the ghost, {hits} damaged it`)
 	end)
+
+	-- client request 15: projectiles past the map's edge (where wire
+	-- positions are clamped) burst on it
+	t.test("projectiles leaving the map burst at the edge", function()
+		local sim = Sim.new({ seed = 2, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:160" })
+		local c = sim.combat
+		local half = (sim.map :: any).grid.sizeX / 2
+		-- a shell fired out of the map ends at the edge
+		local weapon = sim.defs.weapons.ord_light_cannon
+		local p = Combat.spawnProjectile(c, half - 20, 20, 0, 380, 0, 0, weapon.index, 0, 1, 5) :: number
+		local burst = nil
+		for _ = 1, 15 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if e.kind == "IMPACT" and e.other == p then
+					burst = e
+				end
+			end
+			if burst then
+				break
+			end
+		end
+		t.expect(burst ~= nil and math.abs((burst :: any).x - half) < 1e-6, "the shell bursts on the edge")
+	end)
+
+	-- client request 17: a move inside the loiter radius used to count as
+	-- arrived at once, and the jet circled from wherever it was
+	t.test("a jet flies to its move goal, near or far, before circling it", function()
+		local function closest(goalX: number, goalZ: number): (number, number)
+			local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:160" })
+			local w = sim.world
+			local jet = Spawn.unit(sim, "ord_falcon", 1, 0, 0, 0) -- heading +Z
+			for _ = 1, 30 do
+				Sim.step(sim)
+			end
+			local x0, z0 = w.posX[jet], w.posZ[jet]
+			local gx, gz = x0 + goalX, z0 + goalZ
+			moveTo(sim, 1, { jet }, gx, gz)
+			local best = math.huge
+			for _ = 1, 15 * 30 do
+				Sim.step(sim)
+				best = math.min(best, math.sqrt((w.posX[jet] - gx) ^ 2 + (w.posZ[jet] - gz) ^ 2))
+			end
+			local last = math.sqrt((w.posX[jet] - gx) ^ 2 + (w.posZ[jet] - gz) ^ 2)
+			return best, last
+		end
+		-- a point inside the jet's turn circle can't be reached exactly: it
+		-- counts as reached at the closest approach
+		for _, case in { { -120, 60, "inside the loiter radius, off to the side", 70 }, { 0, -150, "inside the loiter radius, behind", 70 }, { 400, 300, "far away", Air.ARRIVE_RADIUS + 1 } } do
+			local best, last = closest(case[1] :: number, case[2] :: number)
+			t.expect(best <= (case[4] :: number), `{case[3]}: it got within {best} studs of the point`)
+			t.expect(math.abs(last - Air.LOITER_RADIUS) < 60, `{case[3]}: then circles it ({last} studs off)`)
+		end
+	end)
+
+	-- client request 19: aircraft shot down in flight crash; no wreck
+	t.test("aircraft killed in flight leave no wreck; a landed one can", function()
+		local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64" })
+		local w, c = sim.world, sim.combat
+		local flying = Spawn.unit(sim, "ord_guardian", 1, 0, 0, 0)
+		local landed = Spawn.unit(sim, "ord_guardian", 1, 100, 0, 0)
+		World.setState(w, landed, bit32.bor(w.state[landed], World.State.LANDED))
+		for _ = 1, 5 do
+			Sim.step(sim)
+		end
+		World.setState(w, landed, bit32.bor(w.state[landed], World.State.LANDED))
+		local wrecks: { [number]: number } = {}
+		for _, id in { flying, landed } do
+			Combat.queueDamage(c, id, w.health[id] + 1, 0) -- a clean kill (low severity)
+		end
+		Sim.step(sim)
+		for _, e in c.events do
+			if e.kind == "DEATH" then
+				wrecks[e.unit] = e.other
+			end
+		end
+		t.equal(wrecks[flying], 0, "the helicopter shot down in flight: no wreck")
+		t.expect((wrecks[landed] or 0) ~= 0, "the landed one leaves a wreck")
+	end)
 end

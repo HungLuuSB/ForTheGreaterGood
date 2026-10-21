@@ -58,15 +58,18 @@ end
 
 -- Builds layers from a function returning (height, waterDepth) per cell.
 -- Handy for hand-made test maps with known expected values.
-function TestMap.build(cellsX: number, cellsZ: number, cell: (cx: number, cz: number) -> (number, number?)): Layers.Layers
+function TestMap.build(cellsX: number, cellsZ: number, cell: (cx: number, cz: number) -> (number, number?, number?)): Layers.Layers
 	local grid = Grid.new(cellsX, cellsZ)
 	local layers = Layers.new(grid)
 	for cz = 0, cellsZ - 1 do
 		for cx = 0, cellsX - 1 do
-			local h, water = cell(cx, cz)
+			local h, water, terrain = cell(cx, cz)
 			local index = grid:index(cx, cz)
 			Layers.setHeight(layers, index, h)
 			Layers.setWater(layers, index, water or 0)
+			if terrain then
+				Layers.setTerrain(layers, index, terrain) -- default grass (S-37)
+			end
 		end
 	end
 	return layers

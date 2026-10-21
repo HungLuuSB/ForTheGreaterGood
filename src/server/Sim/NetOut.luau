@@ -323,9 +323,10 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 				withVel(d, c.pvx[p], c.pvy[p], c.pvz[p])
 				if kind == "DECOYED" then
 					-- the point it follows and for how many more ticks (S-28)
-					local dp = c.pDecoy[p] or { c.px[p], c.py[p], c.pz[p], 0 }
+					local dp = c.pDecoy[p] or { c.px[p], c.py[p], c.pz[p], 0, 1 }
 					d.decoyCell, d.decoyOffX, d.decoyOffZ = g:encode(dp[1], dp[3])
 					d.decoyY, d.decoyTicks = Schema.toI16(dp[2]), dp[4]
+					d.countermeasure = dp[5] or 1 -- which countermeasure won (S-38)
 				end
 				table.insert(events, d)
 			end

@@ -38,6 +38,7 @@ export type UnitProfile = {
 	maxHealth: number,
 	weapons: { Defs.WeaponDef }, -- by slot
 	naval: boolean, -- floats: hull from the water surface down by DRAFT
+	hover: boolean, -- HOVER move class: rides on the water surface over water (S-39)
 }
 
 export type Event = {
@@ -93,7 +94,7 @@ export type Combat = {
 	pTtl: { [number]: number }, -- seconds left
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
 	pFlags: { [number]: number }, -- guided missiles: EW.Flag bits (terminal rolled, lock lost)
-	pDecoy: { [number]: { number } }, -- decoyed missiles: { x, y, z, ticks left } of the point they follow (S-28)
+	pDecoy: { [number]: { number } }, -- decoyed missiles: { x, y, z, ticks left, countermeasure } (S-28, S-38)
 	-- overkill accounting (S-29, guide 10.2): the unit a projectile was fired
 	-- at, its generation, and the direct damage it would deal
 	pAim: { [number]: number },
@@ -149,6 +150,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 			maxHealth = def.health,
 			weapons = weapons,
 			naval = def.domain == "naval",
+			hover = def.moveClass == "HOVER",
 		}
 	end
 	local grid = if layers then layers.grid else nil
@@ -260,6 +262,9 @@ function Combat.baseAt(c: Combat, w: World.World, id: number, x: number, z: numb
 		end
 		return surface - Combat.DRAFT
 	end
+	if c.profiles[w.defIndex[id]].hover then
+		return Combat.surfaceHeight(c, x, z) -- over water: on the surface (S-39)
+	end
 	return Combat.groundHeight(c, x, z) + w.alt[id]
 end
 
@@ -284,7 +289,9 @@ function Combat.knownAimPoint(c: Combat, w: World.World, id: number, defIndex: n
 		return x, Combat.groundHeight(c, x, z), z
 	end
 	local p = c.profiles[defIndex]
-	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT else Combat.groundHeight(c, x, z)
+	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT
+		elseif p.hover then Combat.surfaceHeight(c, x, z)
+		else Combat.groundHeight(c, x, z)
 	return x, base + p.height / 2, z
 end
 
@@ -614,7 +621,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pAim[id] or 0)
 		local d = c.pDecoy[id]
 		if d then
-			h = Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4])
+			h = Hash.u32(Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4]), d[5] or 0)
 		end
 	end
 	h = Hash.u32(h, c.nextProjId)

@@ -9,6 +9,7 @@
 -- explosion applies direct and AoE damage. Projectiles expire after their
 -- ttl: they burst harmlessly (an IMPACT with no unit and no damage, guide
 -- 10.5 "expired homing missiles self-destruct"), so clients drop them too.
+-- A projectile leaving the map bursts at the edge the same way.
 --
 -- HOMING / TORPEDO projectiles turn toward their target at most the weapon's
 -- turnRate (deg/s) before each step: missiles by proportional navigation,
@@ -79,6 +80,16 @@ return function(sim: Types.Sim)
 			end
 		end
 		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
+		local grid = c.grid
+		if grid and (x1 < grid.originX or z1 < grid.originZ or x1 > grid.originX + grid.sizeX or z1 > grid.originZ + grid.sizeZ) then
+			-- off the map: nothing to hit out there; burst at the edge (client
+			-- request 15: positions past the edge can't go on the wire)
+			local ex = math.clamp(x1, grid.originX, grid.originX + grid.sizeX)
+			local ez = math.clamp(z1, grid.originZ, grid.originZ + grid.sizeZ)
+			Combat.addEvent(c, { kind = "IMPACT", tick = sim.tick, unit = 0, other = id, x = ex, y = y1, z = ez })
+			Combat.removeProjectile(c, id)
+			continue
+		end
 		if weapon.type == "TORPEDO" then
 			-- torpedoes run in water only (guide 12.3): gone at the shore,
 			-- otherwise held between the sea floor and just under the surface

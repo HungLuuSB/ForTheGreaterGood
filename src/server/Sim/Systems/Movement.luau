@@ -14,21 +14,33 @@
 --   4. Write changed positions/headings through World setters (dirty bits).
 -- Idle units that aren't touched cost nothing and replicate nothing.
 --
+-- Terrain (S-37): a unit's top speed is scaled by its move class's factor
+-- for the cell it is on (Shared/Grid/Terrain).
+--
 -- Arrival: within ARRIVE_RADIUS of its own goal, or no progress for
 -- STUCK_TICKS while within GIVE_UP_RANGE (crowded goal) → the order ends.
 -- Units outside their order's corridor, or without progress for REPATH_TICKS,
 -- are collected and the order's field is extended to cover them.
 -- Idle units hold their spot: one pushed more than its radius from its goal
 -- (last move target, or spawn point) steers straight back to it.
+-- The MOVING state bit (client request 14): ground and naval units with a
+-- movement order or speed, aircraft unless landed (loitering included);
+-- written only when it changes, so idle units still cost nothing.
+-- SUBMERGED for amphibious units (S-39): set in water at least as deep as
+-- the hull is tall (they drive on the sea floor), cleared on land and in
+-- the shallows.
 
 local Air = require("../Air")
 local FlowField = require("../Path/FlowField")
+local Layers = require("@shared/Grid/Layers")
 local Nav = require("../Nav")
 local Quadtree = require("../Path/Quadtree")
+local Terrain = require("@shared/Grid/Terrain")
 local Types = require("../Types")
 local World = require("../World")
 
 local DT = 1 / 15
+local MOVING, LANDED, SUBMERGED = World.State.MOVING, World.State.LANDED, World.State.SUBMERGED
 local HASH_CELL = 16 -- studs per spatial hash bucket
 local SEPARATION_MARGIN = 2 -- studs beyond touching where separation starts
 local SEPARATION_WEIGHT = 1.5
@@ -90,6 +102,37 @@ local function buildHash(n: number, xs: { number }, zs: { number }, originX: num
 	end
 end
 
+-- Sets or clears every unit's MOVING bit to match what it is doing now, and
+-- amphibious units' SUBMERGED bit to the water they are in.
+local function updateMoving(sim: Types.Sim, profiles: { [number]: any })
+	local w = sim.world
+	local nav = sim.nav :: Nav.Nav
+	local layers, g = nav.pm.layers, nav.grid
+	local hulls = sim.combat.profiles
+	local band, bor, bnot = bit32.band, bit32.bor, bit32.bnot
+	for _, id in w.ids do
+		local p = profiles[w.defIndex[id]]
+		local state = w.state[id]
+		local now = false
+		if p ~= nil then
+			if p.air then
+				now = band(state, LANDED) == 0
+			else
+				now = w.orderId[id] ~= 0 or w.speed[id] > 0
+			end
+		end
+		local next = if now then bor(state, MOVING) else band(state, bnot(MOVING))
+		if p ~= nil and p.moveClass == "AMPHIB" then
+			local cx, cz = g:cellAt(w.posX[id], w.posZ[id])
+			local under = Layers.getWater(layers, cz * g.cellsX + cx) >= hulls[w.defIndex[id]].height
+			next = if under then bor(next, SUBMERGED) else band(next, bnot(SUBMERGED))
+		end
+		if next ~= state then
+			World.setState(w, id, next)
+		end
+	end
+end
+
 return function(sim: Types.Sim)
 	local nav = sim.nav
 	if nav == nil then
@@ -107,6 +150,7 @@ return function(sim: Types.Sim)
 	local bw, bh = math.ceil(g.sizeX / HASH_CELL), math.ceil(g.sizeZ / HASH_CELL)
 	local posX, posZ, heading, speed = w.posX, w.posZ, w.heading, w.speed
 	local profiles = nav.profiles
+	local layers = nav.pm.layers
 
 	-- Start-of-tick positions into the scratch arrays and hash.
 	local anyActive = false
@@ -127,6 +171,7 @@ return function(sim: Types.Sim)
 	end
 	if not anyActive then
 		-- Nothing is moving: nothing can start overlapping either.
+		updateMoving(sim, profiles)
 		return
 	end
 	buildHash(n, nx, nz, originX, originZ, bw, bh)
@@ -270,7 +315,13 @@ return function(sim: Types.Sim)
 		nheading[k] = h
 
 		-- speed: slow down to stop at the goal, and while facing away
-		local target = min(if returning then p.maxSpeed * RETURN_SPEED else p.maxSpeed, sqrt(2 * p.brake * max(dist - Nav.ARRIVE_RADIUS, 0)))
+		-- terrain: the cell under the unit scales its top speed (S-37)
+		local top = p.maxSpeed
+		if not p.air then
+			local tx, tz = g:cellAt(nx[k], nz[k])
+			top *= Terrain.factor(layers, p.moveClass, tz * g.cellsX + tx)
+		end
+		local target = min(if returning then top * RETURN_SPEED else top, sqrt(2 * p.brake * max(dist - Nav.ARRIVE_RADIUS, 0)))
 		target *= max(0, cos(diff))
 		local v = nspeed[k]
 		if v < target then
@@ -381,4 +432,5 @@ return function(sim: Types.Sim)
 			Air.updateAltitude(sim, id)
 		end
 	end
+	updateMoving(sim, profiles)
 end

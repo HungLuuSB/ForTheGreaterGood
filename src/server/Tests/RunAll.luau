@@ -9,11 +9,17 @@
 --   		t.equal(1 + 1, 2)
 --   	end)
 --   end
+--
+-- Slow tests (whole AI matches, fairness runs) register with t.slow instead
+-- of t.test. RunAll.run's mode picks what runs: "fast" (every commit,
+-- `lune run test`), "slow" (`lune run test_slow`, run by the integration
+-- check), or "all" (the default, e.g. the Studio runner).
 
 local Profiler = require("@shared/Util/Profiler")
 
 export type Context = {
 	test: (name: string, fn: () -> ()) -> (),
+	slow: (name: string, fn: () -> ()) -> (), -- a slow test: only in the "slow" and "all" modes
 	expect: (condition: any, message: string?) -> (),
 	equal: (actual: any, expected: any, message: string?) -> (),
 	notEqual: (actual: any, unexpected: any, message: string?) -> (),
@@ -72,9 +78,10 @@ local function fail(message: string): never
 	error(message, 3)
 end
 
-local function newContext(register: (name: string, fn: () -> ()) -> ()): Context
+local function newContext(register: (name: string, fn: () -> ()) -> (), registerSlow: (name: string, fn: () -> ()) -> ()): Context
 	return {
 		test = register,
+		slow = registerSlow,
 		expect = function(condition: any, message: string?)
 			if not condition then
 				fail(message or "expectation failed")
@@ -111,7 +118,10 @@ end
 local RunAll = {}
 
 -- Runs the specs in the given order and prints a report. Never throws.
-function RunAll.run(specs: { Spec }): Summary
+export type Mode = "fast" | "slow" | "all"
+
+function RunAll.run(specs: { Spec }, mode: Mode?): Summary
+	local which: Mode = mode or "all"
 	local started = Profiler.now()
 	local summary: Summary = { specs = #specs, passed = 0, failed = 0, failures = {}, seconds = 0 }
 
@@ -126,8 +136,17 @@ function RunAll.run(specs: { Spec }): Summary
 		print(spec.name)
 
 		local tests: { { name: string, fn: () -> () } } = {}
+		local registered = 0
 		local ctx = newContext(function(name: string, fn: () -> ())
-			table.insert(tests, { name = name, fn = fn })
+			registered += 1
+			if which ~= "slow" then
+				table.insert(tests, { name = name, fn = fn })
+			end
+		end, function(name: string, fn: () -> ())
+			registered += 1
+			if which ~= "fast" then
+				table.insert(tests, { name = name, fn = fn })
+			end
 		end)
 
 		if type(spec.module) ~= "function" then
@@ -139,16 +158,18 @@ function RunAll.run(specs: { Spec }): Summary
 			recordFailure(spec.name, "(load)", tostring(err))
 			continue
 		end
-		if #tests == 0 then
+		if registered == 0 then
 			recordFailure(spec.name, "(load)", "spec registered no tests")
 			continue
 		end
 
 		for _, test in tests do
+			local t0 = Profiler.now()
 			local passed, testErr = pcall(test.fn)
+			local ms = (Profiler.now() - t0) * 1000
 			if passed then
 				summary.passed += 1
-				print(`  PASS {test.name}`)
+				print(if ms >= 1000 then string.format("  PASS %s (%.1f s)", test.name, ms / 1000) else `  PASS {test.name}`)
 			else
 				recordFailure(spec.name, test.name, tostring(testErr))
 			end

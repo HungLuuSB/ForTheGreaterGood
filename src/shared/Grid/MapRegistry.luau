@@ -10,6 +10,11 @@
 --   "ridge:<cells>"     flat land split by a north–south ridge (3 cells thick,
 --                       20 studs above the land) with one 6-cell gap near the north end
 --                       (line-of-fire tests, S-32)
+--   "beach:<cells>"     land (height 10) in the west half sloping gently
+--                       (about 10°) into a sea 30 studs deep in the east
+--                       (water surface at 10; amphibious tests, S-39)
+--   "terrain:<cells>"   flat land: grass in the west half, sand in the east
+--                       half, a road along the middle row (terrain tests, S-37)
 --   "start:<cells>"     flat land with two starts (west, east), four supply
 --                       deposits (value 4) around each start, two in the middle
 --   "skirmish:<cells>"  "start" plus expansions for the skirmish AI: two
@@ -101,6 +106,22 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 		return TestMap.build(n, n, function(cx, cz)
 			local inRidge = cx >= mid - 1 and cx <= mid + 1 and not (cz >= 4 and cz < 10)
 			return if inRidge then 30 else 10, 0
+		end)
+	end
+	local beachCells = string.match(mapId, "^beach:(%d+)$")
+	if beachCells then
+		local n = tonumber(beachCells) :: number
+		return TestMap.build(n, n, function(cx)
+			local h = math.max(-20, 10 - math.max(0, cx - n // 2) * 1.5)
+			return h, math.max(0, 10 - h)
+		end)
+	end
+	local terrainCells = string.match(mapId, "^terrain:(%d+)$")
+	if terrainCells then
+		local n = tonumber(terrainCells) :: number
+		local T = Layers.Terrain
+		return TestMap.build(n, n, function(cx, cz)
+			return 10, 0, if cz == n // 2 then T.ROAD elseif cx >= n // 2 then T.SAND else T.GRASS
 		end)
 	end
 	local startCells = string.match(mapId, "^start:(%d+)$")

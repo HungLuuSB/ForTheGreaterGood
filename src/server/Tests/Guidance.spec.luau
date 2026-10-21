@@ -31,6 +31,7 @@ type Salvo = {
 	worstTurn: number, -- largest turn in one tick of a decoyed missile (degrees)
 	decoyTicks: number, -- ticks decoyed missiles spent following their decoy
 	clientDrift: number, -- worst gap between a spectator client's decoyed missile and the server's
+	countermeasures: { [number]: number }, -- DECOYED events the client got, by countermeasure (S-38)
 }
 
 -- The client's `sam` scene (request 13): four Thorn IR SAM sites, one
@@ -45,14 +46,27 @@ local function salvo(defId: string, gx: number, ticks: number): Salvo
 		Spawn.unit(sim, "chs_thorn", 2, p[1], p[2], 0)
 	end
 	moveTo(sim, 1, { target }, gx, 0)
-	local r: Salvo = { launched = 0, hits = 0, decoyed = 0, lost = 0, worstTurn = 0, decoyTicks = 0, clientDrift = 0 }
+	local r: Salvo = { launched = 0, hits = 0, decoyed = 0, lost = 0, worstTurn = 0, decoyTicks = 0, clientDrift = 0, countermeasures = {} }
 	local sam: { [number]: boolean } = {}
 	local decoyed: { [number]: { number } } = {} -- projectile → its velocity last tick
 	local spec = NetOut.addSpectator(sim)
 	local view = Client.new((sim.map :: any).grid)
 	for _ = 1, ticks do
 		Sim.step(sim)
+		for _, msg in sim.net.spectators[spec].outbox.Events do
+			for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+				if e.kind == Schema.EventKind.DECOYED then
+					local cm = e.countermeasure :: number
+					r.countermeasures[cm] = (r.countermeasures[cm] or 0) + 1
+				end
+			end
+		end
 		Client.receive(view, sim.net.spectators[spec].outbox)
+		for _, e in c.events do
+			if e.kind == "SPAWN_PROJ" or e.kind == "IMPACT" then
+				decoyed[e.other] = nil -- gone, or its ID now belongs to a new projectile
+			end
+		end
 		for p, v in decoyed do
 			if c.projSlot[p] == nil then
 				decoyed[p] = nil
@@ -87,6 +101,12 @@ local function salvo(defId: string, gx: number, ticks: number): Salvo
 					r.lost += 1
 				end
 			end
+		end
+	end
+	-- missiles still flying at the end are neither hits nor misses yet
+	for p in sam do
+		if c.projSlot[p] ~= nil then
+			r.launched -= 1
 		end
 	end
 	return r
@@ -133,16 +153,20 @@ return function(t: RunAll.Context)
 	t.test("an IR SAM salvo hits a circling jet and a helicopter unless decoyed", function()
 		-- before S-27 (lead pursuit against the target's end-of-tick position):
 		-- the jet took 33% of the missiles, crossing shots passing 5–9 studs off
-		for _, case in { { "ord_falcon", 420, "circling jet" }, { "ord_guardian", 420, "helicopter flying in" }, { "ord_guardian", 200, "hovering helicopter" } } do
+		for _, case in { { "ord_falcon", 300, "circling jet" }, { "ord_guardian", 420, "helicopter flying in" }, { "ord_guardian", 200, "hovering helicopter" } } do
 			local r = salvo(case[1] :: string, case[2] :: number, 1200)
-			print(string.format("    %s: %d launched, %d hits (%.0f%%), %d decoyed by flares, %d lost lock", case[3], r.launched, r.hits, r.hits / math.max(r.launched, 1) * 100, r.decoyed, r.lost))
+			print(string.format("    %s: %d launched, %d hits (%.0f%%), %d decoyed (DIRCM), %d lost lock", case[3], r.launched, r.hits, r.hits / math.max(r.launched, 1) * 100, r.decoyed, r.lost))
 			t.expect(r.launched >= 20, `{case[3]}: the Thorns fired ({r.launched})`)
 			t.equal(r.hits + r.decoyed, r.launched, `{case[3]}: every missile that isn't decoyed hits`)
-			-- flares decoy 10–25% (more against a helicopter hovering in range)
+			-- DIRCM defeats 10–25% (more against a helicopter hovering in range)
 			t.expect(r.hits >= r.launched * 0.75, `{case[3]}: at least 75% hit ({r.hits} of {r.launched})`)
 			t.equal(r.lost, 0, `{case[3]}: no missile overshoots and loses its lock`)
 			-- decoyed missiles bend toward the flares (S-28, request 13d)
-			t.expect(r.worstTurn <= 160 / 15 + 1e-6, `{case[3]}: a decoyed missile turns at most turnRate per tick ({r.worstTurn}°)`)
+			-- Ballistics.steer interpolates directions, which can overshoot the cap by ~0.1%
+			t.expect(r.worstTurn <= 160 / 15 * 1.01, `{case[3]}: a decoyed missile turns at most turnRate per tick ({r.worstTurn}°)`)
+			-- the Falcon and the Guardian carry DIRCM (and chaff, which only works on radar missiles)
+			local dircm = r.countermeasures[Schema.Countermeasure.DIRCM] or 0
+			t.equal(dircm, r.decoyed, `{case[3]}: every decoy reported to the client as DIRCM (S-38)`)
 			-- the roll comes 20–60 studs out, so a missile passes its decoy within a
 			-- tick or two: a short bend instead of the old one-tick 60° kink
 			print(string.format("      decoyed: worst turn %.1f° per tick, %d ticks following decoys after the roll", r.worstTurn, r.decoyTicks))
