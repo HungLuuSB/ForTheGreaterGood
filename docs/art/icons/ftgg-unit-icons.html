@@ -1,0 +1,413 @@
+<title>FTGG Unit Icons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a field manual sheet — legend of the icon grammar, controls, then one grid per domain and a battlefield readability strip. */
+:root {
+  --bg: #eceee4;
+  --surface: #f7f8f1;
+  --ink: #1c231d;
+  --muted: #5b655c;
+  --line: #cdd3c3;
+  --accent: #a86a12;
+  --chip: #e2e6d8;
+  /* map swatches are content, identical in both themes */
+  --map-grass-a: #3f6b34;
+  --map-grass-b: #4c7a3e;
+  --map-dark-a: #262c27;
+  --map-dark-b: #2e3530;
+  --map-sand-a: #b9a576;
+  --map-sand-b: #c7b385;
+  --font-display: "Saira Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121713; --surface: #1a201b; --ink: #e2e7da; --muted: #96a092;
+    --line: #2d362d; --accent: #e3a646; --chip: #232b24; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121713; --surface: #1a201b; --ink: #e2e7da; --muted: #96a092;
+  --line: #2d362d; --accent: #e3a646; --chip: #232b24; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+  font-size: 15px; line-height: 1.55;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+  display: grid; gap: 28px;
+}
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(34px, 6vw, 54px); line-height: 1; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+.lede { max-width: 66ch; color: var(--muted); margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 26px; margin: 0; letter-spacing: .02em; text-transform: uppercase; }
+.section { display: grid; gap: 14px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* grammar legend */
+.grammar { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.rule { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 10px; align-content: start; }
+.rule h3 { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.rule .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.mini { display: grid; justify-items: center; gap: 2px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.mini .pad { background: var(--map-dark-a); border-radius: 4px; padding: 4px; line-height: 0; }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ctl > span { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 5px 10px; background: transparent; color: var(--ink); border: 0; border-right: 1px solid var(--line); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--chip); font-weight: 600; }
+.seg button:focus-visible, .copy:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+input[type=range] { accent-color: var(--accent); width: 140px; }
+.sizeval { font-family: var(--font-mono); font-size: 13px; min-width: 3.5ch; font-variant-numeric: tabular-nums; }
+
+/* tiles */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.swatch { height: 104px; display: grid; place-items: center; position: relative; }
+.swatch .smalls { position: absolute; right: 6px; bottom: 6px; display: flex; gap: 6px; align-items: flex-end; }
+.meta { padding: 8px 10px 10px; display: grid; gap: 2px; min-width: 0; }
+.meta b { font-weight: 600; font-size: 14px; }
+.meta code { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+.meta .foot { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 4px; }
+.tier { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: .06em; }
+.copy { font: inherit; font-size: 12px; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+.copy:hover { background: var(--chip); }
+
+.bg-grass { background-color: var(--map-grass-a); background-image: radial-gradient(var(--map-grass-b) 1px, transparent 1.6px), radial-gradient(var(--map-grass-b) 1px, transparent 1.6px); background-size: 9px 9px, 13px 13px; background-position: 0 0, 4px 6px; }
+.bg-dark { background-color: var(--map-dark-a); background-image: linear-gradient(var(--map-dark-b) 1px, transparent 1px), linear-gradient(90deg, var(--map-dark-b) 1px, transparent 1px); background-size: 24px 24px; }
+.bg-sand { background-color: var(--map-sand-a); background-image: radial-gradient(var(--map-sand-b) 1px, transparent 1.6px); background-size: 7px 7px; }
+
+/* battlefield strip */
+.field { border-radius: 6px; border: 1px solid var(--line); overflow-x: auto; }
+.field svg { display: block; min-width: 760px; width: 100%; height: auto; }
+.note { font-size: 13px; color: var(--muted); margin: 0; max-width: 72ch; }
+
+.copy-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: grid; gap: 8px; }
+.copy-panel textarea { width: 100%; min-height: 110px; font-family: var(--font-mono); font-size: 12px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
+@media (prefers-reduced-motion: no-preference) { .copy { transition: background .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">For The Greater Good · strategic zoom</div>
+    <h1>Unit icon set, draft 1</h1>
+    <p class="lede">One grammar for every unit, inspired by NATO map symbols. The frame says where it fights, the white symbol says what it does, chevrons above say its tier, and the frame color is the team. All icons are vector shapes, so they stay crisp at 16 pixels.</p>
+  </header>
+
+  <section class="grammar" aria-label="Icon grammar">
+    <div class="rule"><h3>Frame = domain</h3><div class="row" id="lg-frames"></div></div>
+    <div class="rule"><h3>Symbol = role</h3><div class="row" id="lg-roles"></div></div>
+    <div class="rule"><h3>Chevrons = tier</h3><div class="row" id="lg-tiers"></div></div>
+    <div class="rule"><h3>Contacts</h3><div class="row" id="lg-contacts"></div></div>
+  </section>
+
+  <div class="controls" role="group" aria-label="Preview settings">
+    <div class="ctl"><span>Team</span><div class="seg" id="team"></div></div>
+    <div class="ctl"><span>Ground</span><div class="seg" id="ground"></div></div>
+    <div class="ctl"><label for="size"><span>Size</span></label><input id="size" type="range" min="16" max="64" step="2" value="44"><span class="sizeval" id="sizeval">44 px</span></div>
+  </div>
+
+  <div id="copyPanel" class="copy-panel" hidden>
+    <b>Copy this SVG</b>
+    <textarea id="copyText" aria-label="SVG source" readonly></textarea>
+  </div>
+
+  <div id="sections"></div>
+
+  <section class="section">
+    <div class="section-head"><h2>Battlefield check</h2><p>Real in-game size at strategic zoom (16–22 px), both teams mixed</p></div>
+    <div class="field" id="field"></div>
+    <p class="note">This is the test that matters: at this size, can you tell tanks from artillery, fighters from helicopters, and SAMs from radars, at a glance? Bigger units (higher tier) are drawn larger, as in BAR.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const TEAMS = [
+    { id: "order", name: "Order", color: "#3f7fd6" },
+    { id: "chaos", name: "Chaos", color: "#d24a37" },
+    { id: "ally", name: "Ally", color: "#3a9f58" },
+    { id: "yellow", name: "Team 4", color: "#d4a21f" },
+  ];
+  const GROUNDS = [
+    { id: "grass", name: "Grass" }, { id: "sand", name: "Sand" }, { id: "dark", name: "Dark" },
+  ];
+
+  // ---- frames (48x48 space) ----
+  const FRAMES = {
+    ground: { d: "M9 12 H39 Q43 12 43 16 V34 Q43 38 39 38 H9 Q5 38 5 34 V16 Q5 12 9 12 Z", c: [24, 25], top: 12 },
+    air:    { d: "M5 38 V26 A19 15 0 0 1 43 26 V38 Z", c: [24, 29], top: 11 },
+    naval:  { d: "M24 10 A15 15 0 1 1 23.99 10 Z", c: [24, 25], top: 10 },
+    sub:    { d: "M6 16 H42 V21 A18 16 0 0 1 6 21 Z", c: [24, 23], top: 16 },
+    struct: { d: "M8 10 H40 V40 H8 Z M5 43 H43", c: [24, 25], top: 10 },
+  };
+
+  // ---- glyphs ----
+  const S = (d, w = 2.4) => `<path d="${d}" fill="none" stroke="#fff" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const F = (d) => `<path d="${d}" fill="#fff"/>`;
+  const C = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`;
+  const E = (x, y, rx, ry, fill) => fill
+    ? `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff"/>`
+    : `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="none" stroke="#fff" stroke-width="2.4"/>`;
+  const pol = (cx, cy, r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  function wedge(cx, cy, r1, r2, a0, a1) {
+    const p1 = pol(cx, cy, r1, a0), p2 = pol(cx, cy, r2, a0), p3 = pol(cx, cy, r2, a1), p4 = pol(cx, cy, r1, a1);
+    const f = (n) => n.toFixed(2);
+    return F(`M${f(p1[0])} ${f(p1[1])} L${f(p2[0])} ${f(p2[1])} A${r2} ${r2} 0 0 1 ${f(p3[0])} ${f(p3[1])} L${f(p4[0])} ${f(p4[1])} A${r1} ${r1} 0 0 0 ${f(p1[0])} ${f(p1[1])} Z`);
+  }
+  const G = {
+    engineer: (x, y) => S(`M${x-9} ${y+5} V${y-4} H${x+9} V${y+5} M${x} ${y-4} V${y+5}`),
+    commander: (x, y) => {
+      let d = ""; for (let i = 0; i < 10; i++) { const r = i % 2 ? 4 : 9.5; const [px, py] = pol(x, y + 1, r, -Math.PI / 2 + i * Math.PI / 5); d += (i ? "L" : "M") + px.toFixed(2) + " " + py.toFixed(2) + " "; }
+      return F(d + "Z");
+    },
+    recon: (x, y) => S(`M${x-11} ${y+8} L${x+11} ${y-8}`),
+    armor: (x, y) => E(x, y, 10, 5.5, false),
+    heavyArmor: (x, y) => E(x - 3, y, 8, 5.5, true) + S(`M${x+4} ${y} H${x+15}`, 2.6),
+    assaultWalker: (x, y) => E(x, y - 1, 7, 5, true) + S(`M${x-5} ${y+4} L${x-8} ${y+9} M${x+5} ${y+4} L${x+8} ${y+9}`),
+    artillery: (x, y) => C(x, y, 4.5),
+    mlrs: (x, y) => C(x - 7, y + 3, 2.8) + C(x, y - 4, 2.8) + C(x + 7, y + 3, 2.8),
+    irSam: (x, y) => S(`M${x-11} ${y+7} A11 10 0 0 1 ${x+11} ${y+7} M${x} ${y+7} V${y-1}`),
+    radarSam: (x, y) => S(`M${x-11} ${y+8} A11 10 0 0 1 ${x+11} ${y+8} M${x} ${y+8} V${y-8} M${x-4} ${y-4} L${x} ${y-8} L${x+4} ${y-4}`),
+    radar: (x, y) => C(x - 8, y, 2.4) + S(`M${x-3} ${y-5} A7 7 0 0 1 ${x-3} ${y+5} M${x+2} ${y-9} A12 12 0 0 1 ${x+2} ${y+9}`),
+    tracking: (x, y) => `<circle cx="${x}" cy="${y}" r="6.5" fill="none" stroke="#fff" stroke-width="2.4"/>` + S(`M${x} ${y-11} V${y-4} M${x} ${y+4} V${y+11} M${x-12} ${y} H${x-4} M${x+4} ${y} H${x+12}`) + C(x, y, 1.6),
+    jammer: (x, y) => S(`M${x-12} ${y+1} L${x-8} ${y-6} L${x-3} ${y+7} L${x+2} ${y-6} L${x+7} ${y+7} L${x+12} ${y-1}`),
+    amphib: (x, y) => E(x, y - 3, 9, 4.5, false) + S(`M${x-11} ${y+6} q2.75 -3 5.5 0 t5.5 0 t5.5 0 t5.5 0`),
+    fighter: (x, y) => F(`M${x} ${y-9} L${x+9} ${y+6} L${x} ${y+2} L${x-9} ${y+6} Z`),
+    bomber: (x, y) => S(`M${x-13} ${y} H${x+13} M${x} ${y-7} V${y+8} M${x-5} ${y+8} H${x+5}`, 2.8),
+    heli: (x, y) => S(`M${x-12} ${y-6} H${x+12}`) + C(x, y + 1, 4) + S(`M${x} ${y+5} V${y+9}`),
+    aswHeli: (x, y) => S(`M${x-12} ${y-7} H${x+12}`) + C(x, y - 1, 3.6) + S(`M${x-4} ${y+5} L${x} ${y+9} L${x+4} ${y+5}`),
+    awacs: (x, y) => E(x, y - 3, 10, 3.6, false) + S(`M${x} ${y+1} V${y+8} M${x-6} ${y+8} H${x+6}`),
+    ewPlane: (x, y) => S(`M${x-11} ${y+2} L${x-7} ${y-4} L${x-2} ${y+7} L${x+3} ${y-4} L${x+7} ${y+5} L${x+11} ${y}`),
+    corvette: (x, y) => S(`M${x-8} ${y+5} L${x} ${y-6} L${x+8} ${y+5}`),
+    destroyer: (x, y) => S(`M${x-8} ${y+1} L${x} ${y-8} L${x+8} ${y+1} M${x-8} ${y+8} L${x} ${y-1} L${x+8} ${y+8}`),
+    cruiser: (x, y) => E(x, y, 9, 4.6, true),
+    carrier: (x, y) => S(`M${x-11} ${y+5} H${x+11}`, 2.8) + F(`M${x} ${y-8} L${x+6} ${y+2} L${x} ${y-1} L${x-6} ${y+2} Z`),
+    torpedo: (x, y) => F(`M${x-10} ${y-2.5} H${x+5} Q${x+10} ${y} ${x+5} ${y+2.5} H${x-10} Z`) + S(`M${x-10} ${y-5} V${y+5}`, 2.2),
+    factory: (x, y, sub) => S(`M${x-11} ${y-1} V${y-8} L${x-6} ${y-4} V${y-8} L${x-1} ${y-4} V${y-8} L${x+4} ${y-4} V${y-8} L${x+11} ${y-8} V${y-1}`, 2.2) + (sub ? sub(x, y + 7) : ""),
+    extractor: (x, y) => S(`M${x-9} ${y-7} H${x+9} L${x} ${y+8} Z M${x} ${y-11} V${y-7}`),
+    generator: (x, y) => F(`M${x+2} ${y-11} L${x-7} ${y+1} H${x-1} L${x-3} ${y+11} L${x+7} ${y-2} H${x+1} Z`),
+    fusion: (x, y) => `<g fill="none" stroke="#fff" stroke-width="2"><ellipse cx="${x}" cy="${y}" rx="11" ry="4.2"/><ellipse cx="${x}" cy="${y}" rx="11" ry="4.2" transform="rotate(60 ${x} ${y})"/><ellipse cx="${x}" cy="${y}" rx="11" ry="4.2" transform="rotate(-60 ${x} ${y})"/></g>` + C(x, y, 2.2),
+    storage: (x, y) => S(`M${x-9} ${y-6} H${x+9} M${x-9} ${y} H${x+9} M${x-9} ${y+6} H${x+9}`),
+    turret: (x, y) => `<circle cx="${x-3}" cy="${y+2}" r="6" fill="none" stroke="#fff" stroke-width="2.4"/>` + S(`M${x+2} ${y-2} L${x+11} ${y-10}`, 2.6),
+    heavyTurret: (x, y) => C(x - 3, y + 2, 7) + S(`M${x+3} ${y-3} L${x+12} ${y-11}`, 3.4),
+    sonar: (x, y) => C(x, y + 6, 2.4) + S(`M${x-5} ${y+1} A7 7 0 0 1 ${x+5} ${y+1} M${x-9} ${y-3} A12 12 0 0 1 ${x+9} ${y-3}`),
+    silo: (x, y) => C(x, y, 2.6) + wedge(x, y, 4.2, 11, -Math.PI/2 - 0.55, -Math.PI/2 + 0.55) + wedge(x, y, 4.2, 11, Math.PI/6 - 0.55, Math.PI/6 + 0.55) + wedge(x, y, 4.2, 11, 5*Math.PI/6 - 0.55, 5*Math.PI/6 + 0.55),
+  };
+  const sub = {
+    veh: (x, y) => E(x, y, 6, 3.2, true),
+    air: (x, y) => F(`M${x} ${y-4} L${x+6} ${y+4} L${x} ${y+1.5} L${x-6} ${y+4} Z`),
+    sea: (x, y) => S(`M${x-6} ${y+3} L${x} ${y-3} L${x+6} ${y+3}`, 2.2),
+  };
+
+  // ---- catalogue (roles from guide 13; names are the current roster) ----
+  const CAT = [
+    { domain: "Ground", note: "Rounded rectangle frame", items: [
+      { n: "Command Vehicle", ids: "ord_sovereign · chs_warlord", f: "ground", g: "commander", t: 0, big: 1.35 },
+      { n: "Ground Worker", ids: "ord_mason · chs_scrapper", f: "ground", g: "engineer", t: 1 },
+      { n: "Adv. Ground Worker", ids: "ord_architect · chs_forgemaster", f: "ground", g: "engineer", t: 2 },
+      { n: "Scout", ids: "ord_herald · chs_jackal", f: "ground", g: "recon", t: 1 },
+      { n: "Light Tank", ids: "ord_lancer · chs_ravager", f: "ground", g: "armor", t: 1 },
+      { n: "Main Battle Tank", ids: "ord_paladin", f: "ground", g: "heavyArmor", t: 2 },
+      { n: "Assault Walker", ids: "chs_juggernaut", f: "ground", g: "assaultWalker", t: 2 },
+      { n: "Artillery", ids: "ord_verdict · chs_hellmouth", f: "ground", g: "artillery", t: 1 },
+      { n: "MLRS", ids: "ord_judgement · chs_hydra", f: "ground", g: "mlrs", t: 2 },
+      { n: "Mobile IR SAM", ids: "ord_halo · chs_hornet", f: "ground", g: "irSam", t: 1 },
+      { n: "Mobile Radar SAM", ids: "ord_seraph · chs_gorgon", f: "ground", g: "radarSam", t: 2 },
+      { n: "Mobile Radar", ids: "ord_oracle · chs_watcher", f: "ground", g: "radar", t: 1 },
+      { n: "Tracking Radar", ids: "ord_arbiter · chs_stalker", f: "ground", g: "tracking", t: 2 },
+      { n: "Mobile Jammer", ids: "ord_veil · chs_shroud", f: "ground", g: "jammer", t: 2 },
+      { n: "Amphibious Tank", ids: "ord_tideguard · chs_mire", f: "ground", g: "amphib", t: 2 },
+    ]},
+    { domain: "Air", note: "Arch frame (open at the bottom)", items: [
+      { n: "Air Worker", ids: "ord_skywright · chs_vulture", f: "air", g: "engineer", t: 1 },
+      { n: "Fighter", ids: "ord_falcon · chs_harpy", f: "air", g: "fighter", t: 1 },
+      { n: "Air Superiority", ids: "ord_archon · chs_manticore", f: "air", g: "fighter", t: 2 },
+      { n: "Attack Helicopter", ids: "ord_guardian · chs_wasp", f: "air", g: "heli", t: 1 },
+      { n: "ASW Helicopter", ids: "ord_tidewatch · chs_leech", f: "air", g: "aswHeli", t: 2 },
+      { n: "Bomber", ids: "ord_absolution · chs_plague", f: "air", g: "bomber", t: 1 },
+      { n: "Strategic Bomber", ids: "ord_phantom · chs_behemoth", f: "air", g: "bomber", t: 2 },
+      { n: "AWACS", ids: "ord_archangel", f: "air", g: "awacs", t: 2 },
+      { n: "EW Jammer Plane", ids: "chs_banshee", f: "air", g: "ewPlane", t: 2 },
+    ]},
+    { domain: "Naval", note: "Circle frame; submarines use the bowl frame", items: [
+      { n: "Naval Worker", ids: "ord_tidewright · chs_wrecker", f: "naval", g: "engineer", t: 1 },
+      { n: "Corvette", ids: "ord_sentry · chs_barracuda", f: "naval", g: "corvette", t: 1 },
+      { n: "Destroyer", ids: "ord_crusader · chs_corsair", f: "naval", g: "destroyer", t: 2 },
+      { n: "Cruiser", ids: "ord_dominion · chs_kraken", f: "naval", g: "cruiser", t: 2 },
+      { n: "Carrier", ids: "ord_sanctuary · chs_leviathan", f: "naval", g: "carrier", t: 2 },
+      { n: "EW Ship", ids: "chs_siren", f: "naval", g: "jammer", t: 2 },
+      { n: "Submarine", ids: "ord_silence · chs_lamprey", f: "sub", g: "torpedo", t: 1 },
+    ]},
+    { domain: "Structures", note: "Square frame on a base line", items: [
+      { n: "Vehicle Plant", ids: "vehplant / _t2", f: "struct", g: "factory", sg: "veh", t: 1 },
+      { n: "Airfield", ids: "airfield / _t2", f: "struct", g: "factory", sg: "air", t: 1 },
+      { n: "Shipyard", ids: "shipyard / _t2", f: "struct", g: "factory", sg: "sea", t: 1 },
+      { n: "Supply Extractor", ids: "extractor / advanced", f: "struct", g: "extractor", t: 1 },
+      { n: "Power Generator", ids: "generator · solar · wind", f: "struct", g: "generator", t: 1 },
+      { n: "Fusion Reactor", ids: "fusion", f: "struct", g: "fusion", t: 2 },
+      { n: "Storage", ids: "supply depot · power bank", f: "struct", g: "storage", t: 1 },
+      { n: "Gun Turret", ids: "ord_bulwark · chs_spike", f: "struct", g: "turret", t: 1 },
+      { n: "Heavy Turret", ids: "ord_bastion · chs_maw", f: "struct", g: "heavyTurret", t: 2 },
+      { n: "IR SAM Site", ids: "ord_vigil · chs_thorn", f: "struct", g: "irSam", t: 1 },
+      { n: "Radar SAM Site", ids: "ord_aegis · chs_wyvern", f: "struct", g: "radarSam", t: 2 },
+      { n: "Artillery Emplacement", ids: "ord_edict · chs_cataclysm", f: "struct", g: "artillery", t: 2 },
+      { n: "Radar Tower", ids: "watchtower · eye / beacon", f: "struct", g: "radar", t: 1 },
+      { n: "Tracking Radar Site", ids: "ord_tribunal · chs_seeker_spire", f: "struct", g: "tracking", t: 2 },
+      { n: "Jammer Tower", ids: "curtain · smog / veilspire", f: "struct", g: "jammer", t: 1 },
+      { n: "Sonar Station", ids: "ear · listener / choir", f: "struct", g: "sonar", t: 1 },
+      { n: "Torpedo Launcher", ids: "ord_undertow · chs_fang", f: "struct", g: "torpedo", t: 1 },
+      { n: "Nuke Silo", ids: "ord_reckoning · chs_ragnarok", f: "struct", g: "silo", t: 3, big: 1.3 },
+    ]},
+  ];
+
+  const SCALE = { 0: 1, 1: 1, 2: 1.15, 3: 1.3 };
+
+  function chevrons(tier, top) {
+    if (!(tier >= 2)) return "";
+    const y = top - 2;
+    const one = (dx) => `M${18+dx} ${y} L${24+dx} ${y-5} L${30+dx} ${y}`;
+    const d = tier === 2 ? one(0) : one(0) + " " + `M18 ${y-5} L24 ${y-10} L30 ${y-5}`;
+    return `<path d="${d}" fill="none" stroke="#0e130f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>` +
+           `<path d="${d}" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  // icon: { f, g, sg?, t } ; opts: { color, size, mode: "unit"|"blip"|"ghost" }
+  function iconSVG(it, color, size, mode = "unit") {
+    const fr = FRAMES[it.f];
+    const [cx, cy] = fr.c;
+    let frame;
+    if (mode === "blip") {
+      frame = `<path d="${fr.d}" fill="none" stroke="#0e130f" stroke-width="5" opacity=".5"/><path d="${fr.d}" fill="none" stroke="${color}" stroke-width="2.6" stroke-dasharray="4 3"/>`;
+    } else if (mode === "ghost") {
+      frame = `<path d="${fr.d}" fill="${color}" fill-opacity=".18" stroke="${color}" stroke-width="2.4" stroke-dasharray="5 3"/>`;
+    } else {
+      frame = `<path d="${fr.d}" fill="none" stroke="#0e130f" stroke-width="5" stroke-linejoin="round"/>` +
+              `<path d="${fr.d}" fill="${color}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>`;
+    }
+    let glyph = "";
+    if (mode === "unit" && it.g) glyph = G[it.g](cx, cy, it.sg ? sub[it.sg] : null);
+    if (mode === "ghost" && it.g) glyph = `<g opacity=".55">${G[it.g](cx, cy, it.sg ? sub[it.sg] : null)}</g>`;
+    const ch = mode === "unit" ? chevrons(it.t, fr.top) : "";
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 -4 48 52" role="img" aria-label="${it.n || ""}">${frame}${glyph}${ch}</svg>`;
+  }
+
+  // ---- state ----
+  let team = TEAMS[0], ground = GROUNDS[0], size = 44;
+  try { const s = JSON.parse(localStorage.getItem("ftgg-icons") || "{}"); team = TEAMS.find(t => t.id === s.team) || team; ground = GROUNDS.find(g => g.id === s.ground) || ground; size = s.size || size; } catch (e) {}
+  function save() { try { localStorage.setItem("ftgg-icons", JSON.stringify({ team: team.id, ground: ground.id, size })); } catch (e) {} }
+
+  // ---- legend ----
+  const lg = (el, entries) => { document.getElementById(el).innerHTML = entries.map(([svg, label]) => `<div class="mini"><div class="pad">${svg}</div>${label}</div>`).join(""); };
+  function renderLegend() {
+    const c = team.color;
+    lg("lg-frames", [
+      [iconSVG({ f: "ground" }, c, 34), "Ground"], [iconSVG({ f: "air" }, c, 34), "Air"],
+      [iconSVG({ f: "naval" }, c, 34), "Naval"], [iconSVG({ f: "sub" }, c, 34), "Sub"], [iconSVG({ f: "struct" }, c, 34), "Building"],
+    ]);
+    lg("lg-roles", [
+      [iconSVG({ f: "ground", g: "armor", t: 1 }, c, 34), "Tank"], [iconSVG({ f: "ground", g: "artillery", t: 1 }, c, 34), "Artillery"],
+      [iconSVG({ f: "ground", g: "irSam", t: 1 }, c, 34), "Anti-air"], [iconSVG({ f: "ground", g: "radar", t: 1 }, c, 34), "Radar"],
+      [iconSVG({ f: "ground", g: "engineer", t: 1 }, c, 34), "Builder"],
+    ]);
+    lg("lg-tiers", [
+      [iconSVG({ f: "ground", g: "armor", t: 1 }, c, 34), "T1"], [iconSVG({ f: "ground", g: "armor", t: 2 }, c, 39), "T2"], [iconSVG({ f: "struct", g: "silo", t: 3 }, c, 44), "T3"],
+    ]);
+    lg("lg-contacts", [
+      [iconSVG({ f: "ground" }, "#e86a5a", 34, "blip"), "Radar"], [iconSVG({ f: "air" }, "#e86a5a", 34, "blip"), "Air contact"],
+      [iconSVG({ f: "sub" }, "#e86a5a", 34, "blip"), "Sonar"], [iconSVG({ f: "struct", g: "turret", t: 1 }, "#e86a5a", 34, "ghost"), "Ghost"],
+    ]);
+  }
+
+  // ---- controls ----
+  function seg(elId, list, cur, onPick, swatch) {
+    const el = document.getElementById(elId);
+    el.innerHTML = list.map(x => `<button type="button" data-id="${x.id}" aria-pressed="${x.id === cur.id}">${swatch ? `<span class="dot" style="background:${x.color}"></span>` : ""}${x.name}</button>`).join("");
+    el.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; onPick(list.find(x => x.id === b.dataset.id)); };
+  }
+  function renderControls() {
+    seg("team", TEAMS, team, (t) => { team = t; save(); renderAll(); }, true);
+    seg("ground", GROUNDS, ground, (g) => { ground = g; save(); renderAll(); }, false);
+    const r = document.getElementById("size"); r.value = size;
+    document.getElementById("sizeval").textContent = size + " px";
+  }
+  document.getElementById("size").addEventListener("input", (e) => { size = +e.target.value; document.getElementById("sizeval").textContent = size + " px"; save(); renderSections(); });
+
+  // ---- sections ----
+  const flat = [];
+  CAT.forEach(sec => sec.items.forEach(it => flat.push(it)));
+  function renderSections() {
+    const root = document.getElementById("sections");
+    root.innerHTML = CAT.map((sec, si) => `
+      <section class="section">
+        <div class="section-head"><h2>${sec.domain}</h2><p>${sec.note} · ${sec.items.length} icons</p></div>
+        <div class="grid">${sec.items.map((it, ii) => {
+          const s = Math.round(size * (it.big || SCALE[it.t]));
+          return `<article class="tile">
+            <div class="swatch bg-${ground.id}">${iconSVG(it, team.color, s)}
+              <div class="smalls">${iconSVG(it, team.color, Math.round(16 * (it.big || SCALE[it.t])))}${iconSVG(it, team.color, Math.round(22 * (it.big || SCALE[it.t])))}</div>
+            </div>
+            <div class="meta"><b>${it.n}</b><code>${it.ids}</code>
+              <div class="foot"><span class="tier">${it.t === 0 ? "COMMAND" : "T" + it.t}</span>
+              <button class="copy" type="button" data-s="${si}" data-i="${ii}">Copy SVG</button></div>
+            </div></article>`;
+        }).join("")}</div>
+      </section>`).join("");
+  }
+  document.getElementById("sections").addEventListener("click", (e) => {
+    const b = e.target.closest(".copy"); if (!b) return;
+    const it = CAT[+b.dataset.s].items[+b.dataset.i];
+    const svg = iconSVG(it, team.color, 48);
+    const done = () => { b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy SVG"), 1400); };
+    const fallback = () => { const p = document.getElementById("copyPanel"); const t = document.getElementById("copyText"); t.value = svg; p.hidden = false; t.focus(); t.select(); p.scrollIntoView({ block: "nearest" }); };
+    try { navigator.clipboard.writeText(svg).then(done, fallback); } catch (err) { fallback(); }
+  });
+
+  // ---- battlefield strip ----
+  function renderField() {
+    const W = 1100, H = 300;
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const pick = (cond) => flat.filter(cond);
+    const ground_ = pick(i => i.f === "ground" && i.t > 0), air_ = pick(i => i.f === "air"), struct_ = pick(i => i.f === "struct");
+    const place = [];
+    const add = (it, x, y, color, mode = "unit") => { const s = Math.round(18 * (it.big || SCALE[it.t] || 1)); place.push(`<g transform="translate(${(x - s/2).toFixed(1)} ${(y - s/2).toFixed(1)})">${iconSVG(it, color, s, mode)}</g>`); };
+    // bases
+    for (let i = 0; i < 9; i++) add(struct_[Math.floor(rnd() * struct_.length)], 60 + (i % 3) * 40, 70 + Math.floor(i / 3) * 70, TEAMS[0].color);
+    for (let i = 0; i < 9; i++) add(struct_[Math.floor(rnd() * struct_.length)], W - 60 - (i % 3) * 40, 70 + Math.floor(i / 3) * 70, TEAMS[1].color);
+    // armies
+    for (let i = 0; i < 26; i++) add(ground_[Math.floor(rnd() * ground_.length)], 330 + rnd() * 170, 40 + rnd() * 220, TEAMS[0].color);
+    for (let i = 0; i < 26; i++) add(ground_[Math.floor(rnd() * ground_.length)], 600 + rnd() * 170, 40 + rnd() * 220, TEAMS[1].color);
+    for (let i = 0; i < 6; i++) add(air_[Math.floor(rnd() * air_.length)], 470 + rnd() * 160, 30 + rnd() * 240, TEAMS[i % 2].color);
+    // contacts
+    add({ f: "ground" }, 860, 150, TEAMS[1].color, "blip"); add({ f: "air" }, 520, 40, TEAMS[1].color, "blip");
+    add({ f: "struct", g: "radarSam", t: 2 }, 880, 250, TEAMS[1].color, "ghost");
+    const bgFill = ground.id === "grass" ? "#456f38" : ground.id === "sand" ? "#bba878" : "#282e29";
+    document.getElementById("field").innerHTML =
+      `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Icons at in-game size on a battlefield">
+        <rect width="${W}" height="${H}" fill="${bgFill}"/>
+        <path d="M540 0 C 520 90, 580 170, 545 300" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="16"/>
+        ${place.join("")}
+      </svg>`;
+  }
+
+  function renderAll() { renderControls(); renderLegend(); renderSections(); renderField(); }
+  renderAll();
+})();
+</script>
