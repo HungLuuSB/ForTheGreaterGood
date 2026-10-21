@@ -4,7 +4,26 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (overnight 2026-10-21, branch `m-sim-2`; everything merged into `main`)
+## Summary (latest: round of 2026-10-21, branch `m-sim-2`; everything merged into `main`)
+
+**This round:** the client's two open requests, then the queue.
+
+| Item | Result | Decision |
+|---|---|---|
+| Bomber `bay` pieces | S-3 had only added `bay` to `pieces`. Bombs have no turret (they fall from a fixed bay, D91), so `ord_absolution`, `ord_phantom`, `chs_behemoth` and `chs_plague` now drop `turretPiece` and keep only the muzzle. `Defs` checks every weapon piece is in `pieces` (S-3) and now also rejects turret or pitch pieces on a weapon without a turret | S-11 |
+| Formation slots in Shared | `Shared/Grid/Formation`: `layout` (line rows or spiral, terrain as a callback), `deepestFirst`, `assign` (bucketed greedy), `SLOT_SPACING`. `Nav` uses it; sim hashes of two AI matches and fifteen group-move rounds are unchanged; `Formation.spec` proves a client prediction from the module equals the server's goals. Marked done in the client's request list (with request 1) | S-12 |
+| Queue: command queue behaviors | **Already done** (S-4): shift-queue, PATROL, GUARD, REPAIR, RECLAIM, factory rally and repeat, `Orders.spec` | S-4 |
+| Queue: movement at 800 units | **Already done** (S-5): Movement peak 6.4 ms against the 10 ms budget | S-5 |
+| Queue: smarter AI | **Already done** (S-7): radar, fire-control radar escorts, kiting, anti-air; `AI.spec` | S-7 |
+| Queue: 40-minute AI-vs-AI match | **Already done** (S-8): `lune run soak`, peak tick 10.8 ms, heap 6–16 MB, replay identical | S-8 |
+
+**Tests:** `lune run test` gives **37 specs, 275 passed, 0 failed** (new `Formation.spec`, 3 tests; a new `Defs.spec` case). `lune run build`: 308 scripts, 940 requires.
+
+**Integrated from the client stream this round:** `90c387d` (client uses Shared PlacementRules and Icons) and `5563c15` (readable shells, effect diagnostics). No conflicts or failed checks.
+
+**Next:** nothing left in the queue. Open items are under "Needs my review".
+
+## Summary (overnight 2026-10-21)
 
 **Done:** the whole queue (tasks 1–6), all four client requests (1, 2, 4, 5), and integration of every client commit marked ready. Each piece was merged into `main` with `--no-ff` after `lune run test` and `lune run build` passed, then pushed. The hourly integrator loop is running (cron job `af888f92`, session-only).
 
@@ -56,7 +75,8 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-21: client `f52bf53` → `f649cfe`; `47aaa63` → `cbd662e`. Both passed test (36 specs / 270) and build (297 scripts / 894 requires) and were pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
 - 2026-10-21: client `afe8aea` (combat effects) → `4c00545`; `b8405ff` (strategic zoom icons) → `a1dbd54`. Both passed test (36 specs / 271) and build (302 scripts / 914 requires) and were pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
 - 2026-10-21: client `508b215` (placeholder minimap and resource bar) → `425c468`; `002cc39` (client night summary) → `a1c2740`. Both passed test (36 specs / 272) and build (306 scripts / 929 requires) and were pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
-- Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`.
+- 2026-10-21: client `90c387d` (client uses Shared PlacementRules and Net/Icons) → `ea959dd`; `5563c15` (readable shells, effect diagnostics) → `64eab13`. Both passed test (36 specs / 272) and build (306 scripts / 932 requires) and were pushed. Merged before S-12 so that marking request 3 in `docs/progress/client.md` sits on top of the client's own edits to that list. No conflicts or failures.
+- Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 
 ## Overnight 2026-10-21 (integrator + queue)
 
@@ -69,6 +89,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - Task 6 ✅: `lune run soak`, 40-minute AI-vs-AI match test (S-8).
 - Client request 4 ✅: placement rules in Shared (S-9). Tests: **36 specs, 271 passed**.
 - Client request 5 ✅: icon numbering in Shared (S-10). Tests: **36 specs, 272 passed**.
+- Client request 1 revisited ✅: bombers without turret pieces (S-11). Client request 3 ✅: formation slots in Shared (S-12). Tests: **37 specs, 275 passed**.
 - Task 4 ✅: Movement peak at 800 units 12.1 → 6.4 ms (budget 10): field extensions are sliced Pathing jobs, and the corridor merge is bounded (S-5). Stress: average tick 8.6 ms, Pathing peak 8.4 ms.
 
 ## Summary (end of round 8, 2026-10-20; merged into `main` as `sim-headless-v0.2`)

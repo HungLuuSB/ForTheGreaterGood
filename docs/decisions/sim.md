@@ -14,6 +14,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-6: unit state bits in Shared (`Schema.UnitState`; client request).
 - S-7: smarter skirmish AI (radar, fire-control radar, kiting artillery, anti-air).
 - S-8: 40-minute AI-vs-AI soak test (`lune run soak`).
+- S-9: placement rules in Shared (`Shared/Grid/PlacementRules`; client request).
+- S-10: strategic icon numbering in Shared (`Shared/Net/Icons`; client request).
+- S-11: bombers have no turret piece; turretless weapons can't name turret or pitch pieces (client request).
+- S-12: formation slots in Shared (`Shared/Grid/Formation`; client request).
 
 ---
 
