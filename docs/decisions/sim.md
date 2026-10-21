@@ -26,6 +26,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-18: spectator stream and player replay files.
 - S-19: build ranges at 70% (client request 7); frames start in range of their snapped center.
 - S-20: aim rest pose and restore delay (`Shared/Combat/Aim`; client request 8); the Juggernaut's arms.
+- S-21: Eco records carry their team (protocol 9); spectators get every team's economy.
 
 ---
 
@@ -280,3 +281,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `Aim.update(turret, state, wantYaw?, wantPitch?)` is the whole step; `Aim.step`, `Aim.rest`, `Aim.holdTicks`, `Aim.pitchTime` are its parts. Weapons without the new fields behave exactly as before (rest 0, 0; no hold).
 - **Juggernaut:** its own weapon def `chs_juggernaut_cannon` (the heavy cannon's numbers, since `chs_maw`, `ord_paladin` and `ord_bastion` share `chs_heavy_cannon`), with `minPitch = -65`, `restPitch = -65`, `pitchRate = 80` (~0.8 s from rest to level) and `restoreDelay = 3`. `armL`, `armR` added to its `pieces`.
 - **Tests** (`Aim.spec`, 4): a Juggernaut starts with its arms at -65° and first fires after 12 ticks of turning (the arm raise), at firing pitch, and never before; the level heavy cannon (Maw) fires at once; after its target is gone the arms stay up exactly 45 ticks (3 s), then lower to -65° at 80°/s; a client-side `Aim.update` from the rest pose with the same wanted aims matches the server's yaw and pitch bit for bit on every tick (raise, fire, hold, lower); weapons without the fields behave as before. `Defs.spec`: a rest pitch outside the limits and a rest yaw outside the arc are refused. Without the rest pose the tests fail.
+
+## S-21 — Every team's economy for spectators (2026-10-22)
+
+- **Protocol 9:** Eco records start with `team u8` (1..8; 0 and 9+ refused), 36 bytes. A message holds one record per team after the tick header.
+- **Who gets what:** a player still gets only its own team's record; a spectator gets every team's, in team order, on economy ticks when any of them changed and after its WELCOME. So spectator streams and player replays recorded from them carry every economy.
+- **Clients:** a player's message still has exactly one record (its own); a client that read the first record keeps working. The reference test client keeps `economies[team]` and `economy` (its own team's).
+- **Tests:** golden bytes with the team byte (protocol 9), round trip, truncation, team 0 and 9 refused (`Schema.spec`); in `PlayerReplay.spec` the spectator has both teams' accounts with the server's values while player 1 has only its own, and the playback digest compares every team's economy. Giving the spectator one team only fails it.

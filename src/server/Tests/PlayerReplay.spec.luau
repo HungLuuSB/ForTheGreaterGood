@@ -43,9 +43,11 @@ local function digest(view: Client.View): string
 		local p = view.projectiles[id]
 		table.insert(parts, string.format("p%d:%d:%.6f:%.6f:%.6f", id, p.weaponIndex, p.x, p.y, p.z))
 	end
-	local e = view.economy
-	if e then
-		table.insert(parts, string.format("eco:%d:%d:%d:%d", e.supply.stored, e.supply.income, e.power.stored, e.power.income))
+	for team = 1, 8 do
+		local e = view.economies[team]
+		if e then
+			table.insert(parts, string.format("eco%d:%d:%d:%d:%d", team, e.supply.stored, e.supply.income, e.power.stored, e.power.income))
+		end
 	end
 	local wl = view.welcome
 	if wl then
@@ -131,7 +133,15 @@ return function(t: RunAll.Context)
 		t.equal(missing, 0, `units the spectator doesn't have (of {#w.ids})`)
 		t.equal(wrong, 0, "units it has wrong")
 		t.equal(r.spectator.welcome and r.spectator.welcome.player, 0, "its WELCOME names player 0")
-		t.equal(r.spectator.economy, nil, "spectators get no team economy")
+		-- every team's economy (S-21), as the server keeps it; a player only its own
+		for team = 1, 2 do
+			local e = r.spectator.economies[team]
+			t.expect(e ~= nil, `the spectator has team {team}'s economy`)
+			t.equal(e and e.supply.stored, math.clamp(math.floor(r.sim.eco.accounts[team].supply.stored), 0, 4294967295), `team {team}'s stored supply`)
+		end
+		t.equal(r.spectator.economy, nil, "a spectator has no team of its own")
+		t.expect(r.player.economies[1] ~= nil and r.player.economies[2] == nil, "player 1 gets only its own team's economy")
+		t.equal(r.player.economy, r.player.economies[1])
 		local hidden = 0
 		for _, id in w.ids do
 			if r.player.units[id] == nil then

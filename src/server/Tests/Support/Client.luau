@@ -65,6 +65,7 @@ export type View = {
 	projectiles: { [number]: Projectile },
 	effects: { Effect },
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
+	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
 	rejected: Schema.SnapshotRecord?, -- a REJECT: the server's versions
 	strategicTick: number, -- wire tick of the current strategic snapshot
@@ -90,6 +91,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?): View
 		strategicTick = -1,
 		received = {},
 		log = {},
+		economies = {},
 	}
 end
 
@@ -150,6 +152,7 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				table.clear(view.effects)
 				view.strategicTick = -1
 				view.economy = nil
+				table.clear(view.economies)
 			elseif rec.kind == Schema.SnapshotKind.REJECT then
 				view.rejected = rec
 			end
@@ -158,7 +161,13 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 	advance(view)
 	local g = view.grid
 	for _, msg in outbox.Eco or {} do
-		view.economy = (Packer.readAll(msg, Schema.decodeEco, Schema.decodeTickHeader))[1]
+		for _, rec in (Packer.readAll(msg, Schema.decodeEco, Schema.decodeTickHeader)) do
+			view.economies[rec.team] = rec
+			local wl = view.welcome
+			if wl == nil or wl.team == rec.team then
+				view.economy = rec -- our own team's
+			end
+		end
 	end
 	local function pos(e: Schema.Event): (number, number, number)
 		local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
