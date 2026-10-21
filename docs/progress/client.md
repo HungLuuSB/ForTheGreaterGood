@@ -83,6 +83,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `f9cc4ed` (seeker cone in the missile sensor view, C-42).
 - Ready to merge: `7c2180c` (SAM scene: the Falcon circles at x = 300).
 - Ready to merge: `64472f6` (camera follow, C-43).
+- Ready to merge: `d44e70c` (request 13d for the sim session: gradual decoy turn; docs only).
 
 ## Tasks
 
