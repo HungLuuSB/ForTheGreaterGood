@@ -415,7 +415,7 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-21: building pip, test overrides (C-59, C-60)
 
 - Your silo's (and SAM sites') next pip now fills up as the missile is built, from the sim's new progress (S-49) (`debug_out/screens/c59_stock_progress_pip.jpg`). Nukes also fly lower now (300 studs up, same 13 s), so they stay on screen.
-- For testing, the `nuke` profile makes nukes cost 1 supply and 1 power and build in 10 s, and radar SAM interceptors kill only 20% of the time (the defs say 50%). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
+- For testing, the `nuke` profile makes nukes cost 1 supply and 1 power and build in 10 s. Radar SAM interceptors kill only 20% of the time: first as a test override, now the real number (S-50). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
 
 ## 2026-10-21: one launch notice (C-61)
 
@@ -453,7 +453,7 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
-29. **Radar SAM interception chance 0.5 → 0.2 (the user, 2026-10-21):** "Make 0.2 the real interception chance." `chs_radar_sam` and `ord_radar_sam`: `intercepts = { chance = 0.2 }` (guide 10.9 and the S-48 numbers with it). The user tried it in the `nuke` profile through C-60's test override; once the defs say 0.2 the client drops that override. Nothing else changes on the client (it never reads the chance). High priority (the user asked).
+29. **Done (S-50): `intercepts = { chance = 0.2 }` on both radar SAMs; the `nuke` profile's override dropped.** **Radar SAM interception chance 0.5 → 0.2 (the user, 2026-10-21):** "Make 0.2 the real interception chance." `chs_radar_sam` and `ord_radar_sam`: `intercepts = { chance = 0.2 }` (guide 10.9 and the S-48 numbers with it). The user tried it in the `nuke` profile through C-60's test override; once the defs say 0.2 the client drops that override. Nothing else changes on the client (it never reads the chance). High priority (the user asked).
 
 28. **Nukes launch vertically, then turn onto their arc (the user, 2026-10-21):** "Can we make the nuke go vertical to a height then turn toward its destination?" Today a nuke leaves the silo already on its parabola (Weapons.fire's lofted branch: up at sqrt(2 g apex), across at dist / t). Suggested (numbers yours):
     - A boost phase like the radar SAMs' (S-42 / S-44): straight up from the silo to `climbHeight` (e.g. 120 studs above the launcher), then a pitch-over at `turnRate` (e.g. 90°/s, about a second) toward the lofted velocity that, from where the missile is, peaks at `apex` (300 above the launcher) and lands on the aimed spot; then unpowered ballistic flight as now. Re-solving that velocity at the end of the turn keeps the landing exact. The flight can stay near 12.7 s so interceptors keep their window.

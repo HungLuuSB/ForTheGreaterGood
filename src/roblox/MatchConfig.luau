@@ -203,8 +203,8 @@ local PROFILES = {
 	-- spare power; the flat map has no deposits) rebuild a nuke in its full
 	-- 120 s, back to back, with power left for the Aegis' interceptors.
 	-- For testing (the user, 2026-10-21) nukes cost 1 supply and 1 power and
-	-- build in 10 s, and radar SAM interceptors kill with chance 0.2 (0.5 in
-	-- the defs).
+	-- build in 10 s. Radar SAM interceptors kill with chance 0.2 (the defs'
+	-- since S-50).
 	nuke = {
 		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
 		seed = 41,
@@ -232,8 +232,6 @@ local PROFILES = {
 		weaponOverrides = {
 			ord_nuke = { stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
 			chs_nuke = { stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
-			ord_radar_sam = { intercepts = { chance = 0.2 } },
-			chs_radar_sam = { intercepts = { chance = 0.2 } },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders
