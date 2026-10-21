@@ -622,3 +622,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Now (protocol 19):** the Strategic record's icon is 8 bits and is the unit's **def index** (`Shared/Net/Icons.byDef`); `def.icon` stays the family name for the shape. The record keeps its 6 bytes: the flags field shrinks from 7 to 5 bits, all five of which were in use (2 were reserved). At most 255 unit defs (an assert).
 - **Knowledge unchanged:** icons go only where the team knows the type (VISIBLE, ghosts, TRACKED contacts), as before; untracked blips stay icon 0 (D107). A tracked contact now shows its exact type instead of its family, which D107 already allows (tracking reveals the type).
 - **Tests:** `Schema.spec` bit layout, golden bytes and range checks; `NetOut.spec` checks every def's icon is its own index.
+
+## S-59 — Pinpointers: radar precision for the team (client request 34, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** radar vehicles, and "radar enhance facility (pinpointer) that increase the team's accuracy, build around 6 and maximum accuracy achieved -> less to no wobble radar blip, radar missile will be able to hit more precisely (long range radar will likely to lose lock or miss without pinpointer enhancements)."
+- **Radar vehicles:** each faction already has one per tier. T1 mobile radar: Oracle (Order), Watcher (Chaos). T2 mobile fire-control radar: Arbiter, Stalker. No gap, nothing added.
+- **Pinpointer:** `ord_witness` (Witness) and `chs_augur` (Chaos: Augur), T2 structures built by the Architect and Forgemaster. Unit def field `pinpointer = true`.
+  - Stats: 250 supply + 3,000 power, health 1,000, footprint 2.
+- **Rule (`Shared/Combat/Pinpoint`, so a client computes the same):** precision p = min(count, 6) / 6, linear, where count is the ally team's finished Pinpointers. Sensors counts them every sensor step.
+  - Wobble: radar contacts' wobble and fire-control tracks scale by 1 − 0.9 p.
+  - Missiles: a RADAR-guided missile whose target its team has only on radar loses lock with chance 0.1 × (1 − p) per midcourse check (sim Prng).
+  - Wire: no change. Pinpointers have unique icons (S-58), so the client can count them.
+- **Numbers (under "Needs my review"):** 6 for full precision, 90% less error, lock loss 0.1 per check, the cost.
+- **Tests:**
+  - `Pinpoint.spec`: precision is linear; the worst wobble is 14.6 / 8.2 / 1.5 studs at 0 / 3 / 6 Pinpointers; radar-only shots at 700 studs lose lock 9 of 25 times with none and 0 of 25 with 6.
+  - `Guidance.spec`'s Wyvern test gets 6 Pinpointers: it measures guidance, not precision.
