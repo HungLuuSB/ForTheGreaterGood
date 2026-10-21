@@ -12,6 +12,7 @@ local Combat = require("../../src/server/Sim/Combat/Combat")
 local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
 local Spawn = require("../../src/server/Sim/Spawn")
+local Schema = require("@shared/Net/Schema")
 
 local DT = 1 / 15
 
@@ -25,12 +26,12 @@ local function scene()
 	local g = sim.map.layers.grid
 	assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
 	local tick = 0
-	local function step(n: number, warnings: { any }?)
+	local function step(n: number)
 		for _ = 1, n do
 			tick += 1
 			Sim.step(sim)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
-			Api.frame(api, tick * DT, warnings)
+			Api.frame(api, tick * DT)
 			table.clear(world.died)
 		end
 	end
@@ -115,38 +116,51 @@ return function(t: any)
 		local _ = world
 	end)
 
-	t.test("alerts: under attack, structure lost, stall, nuclear launch", function()
+	t.test("alerts from the server (S-68): under attack, lost, stall, built; nuke mapping", function()
 		local sim, world, api, step = scene()
 		local lancer = Spawn.unit(sim, "ord_lancer", 1, 0, 0, 0)
 		local solar = Spawn.unit(sim, "ord_solar", 1, -60, 0, 0)
 		step(3)
 		local kinds: { [string]: number } = {}
+		local texts: { string } = {}
 		api.changed.alert:Connect(function(a: any)
 			kinds[a.kind] = (kinds[a.kind] or 0) + 1
+			table.insert(texts, a.text)
 		end)
-		Combat.queueDamage(sim.combat, lancer, 50, 0)
-		step(3)
-		Combat.queueDamage(sim.combat, lancer, 50, 0)
-		step(3)
-		t.equal(kinds.attack, 1) -- once per zone per cooldown
+		-- an enemy opens fire: one alert per zone per 20 s on the server
+		Spawn.unit(sim, "chs_ravager", 2, 120, 0, -math.pi / 2)
+		step(15 * 6)
+		t.equal(kinds.attack, 1, "one 'under attack' for the zone")
 		sim.world.health[solar] = 1
 		Combat.queueDamage(sim.combat, solar, 5000, 0)
 		step(4)
-		t.equal(kinds.lost, 1)
+		t.expect((kinds.lost or 0) >= 1, "structure lost")
 		-- a stall: a factory building with no power at all
-		local plant = Spawn.unit(sim, "ord_vehplant", 1, 100, 100, 0)
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, -150, -150, 0)
 		step(3)
-		local acc = sim.eco.accounts[1]
-		acc.power.stored = 0
+		sim.eco.accounts[1].power.stored = 0
 		api.actions.select({ plant })
-		api.actions.queueBuild("ord_lancer", 1)
+		api.actions.queueBuild("ord_herald", 1)
 		step(30)
 		t.expect((kinds.stall or 0) >= 1, `a power stall alert ({kinds.stall})`)
-		step(1, { { projId = 7, x = 10, z = 20, born = 1 } })
-		t.equal(kinds.nuke, 1)
+		-- power back: the scout is built
+		Spawn.unit(sim, "ord_fusion", 1, -200, 150, 0)
+		for _ = 1, 15 * 60 do
+			step(1)
+			if (kinds.built or 0) > 0 then
+				break
+			end
+		end
+		t.expect((kinds.built or 0) >= 1, "construction complete")
+		t.expect(#api.state.alerts >= 4, `alerts listed ({#api.state.alerts})`)
+		-- the nuke's alert as the server sends it
+		table.insert(world.alertQueue, { kind = Schema.AlertKind.NUKE_LAUNCH, x = 10, z = 20, defIndex = 0, tick = 0 })
+		step(1)
 		local last = assert(api.state.alerts[#api.state.alerts])
 		t.equal(last.kind, "nuke")
-		t.expect(#api.state.alerts >= 3, `alerts listed ({#api.state.alerts})`)
-		local _ = world
+		t.equal(last.text, "Nuclear launch detected")
+		t.expect(last.at, "it has a place to jump to")
+		print("    " .. table.concat(texts, " | "))
+		local _ = lancer
 	end)
 end

@@ -6,7 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (overnight run, 2026-10-22 → 23)
 
-**Your list is done, except where someone else is needed:** the 2-client Studio test (my Studio tools only start a solo playtest), server alerts (waiting for sim-A: request 39), and the draft 3 icon sheet (waiting for you to import it). Each item is committed, pushed and marked "Ready to merge" below. sim-A has already integrated C-75 to C-80 into main (`a21d325`).
+**Your list is done, except where someone else is needed:** the 2-client Studio test (my Studio tools only start a solo playtest) and the draft 3 icon sheet (waiting for you to import it). Server alerts landed overnight (C-85). Each item is committed, pushed and marked "Ready to merge" below. sim-A has already integrated C-75 to C-80 into main (`a21d325`).
 
 | # | What | Decision | Proof |
 |---|---|---|---|
@@ -17,7 +17,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 | 5 | Spectators (no seat → watch everything) and the replay viewer (save, watch, pause, 0.25–8×, seek, exit) | C-79 | `Replay.spec` (every seek = the live view), `c79_*.jpg` |
 | 6 | Lobby choices (faction, AI level per seat, named maps) and results with the sim's statistics | C-77, C-80 | `Lobby.spec`, `c77_results_stats.jpg` |
 | 7 | Settings menu (O): camera, graphics quality, fog lights, atmosphere, UI scale, keys | C-81 | `Settings.spec`, `c81_*.jpg` |
-| 8 | Server alerts | — | requested from sim-A (request 39); the client's own alerts stay |
+| 8 | Server alerts (request 39 landed overnight), under-attack blinking | C-85 | `Ui.spec`, `c85_server_alerts.jpg` |
 | 9 | Nuke crater (Terrain, put back on a new match), water splashes | C-82 | `Splash.spec`, `c82_nuke_crater.jpg`, `c82_crater_close.jpg` |
 | 10 | Atmosphere presets as options (Current stays the default) | C-83 | table with GPU / CPU cost and `c83_atmosphere_*.jpg` |
 | + | Requests 37, 38 used (live flares / chaff; sim statistics), S-62 Pinpointer weights followed | C-80 | `OwnerFields.spec`, `c80_charges.jpg` |
@@ -497,6 +497,11 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: alerts from the server, S-69 to S-73 followed (C-85)
+
+- Alerts now come from the server (request 39, S-68, protocol 23): unit or structure under attack, Command Vehicle under attack, unit or structure lost, construction complete, supply or power stall, nuclear launch, each with the unit's name, rate-limited by the server. The client's own guesses are gone. Own and allied units the server marks under attack blink red on the minimap and as strategic icons. `Ui.spec` runs a real fight, loss, stall and build through the server's alerts; `debug_out/screens/c85_server_alerts.jpg`.
+- S-70: a Fusion Reactor's death draws a blast as wide as its damage (`Splash.spec`). S-72: radar power drain shows as upkeep in the unit stats. S-73: "Friendly fire" On / Off in the lobby (on by default). S-69: ground attack already went out for any selection, so artillery, tanks and turrets can now shell a spot with no client change; MLRS salvos draw rocket by rocket.
+
 ## 2026-10-22: sound plan
 
 - `docs/SOUND_PLAN.md`: the sounds the game needs and candidate Roblox audio IDs from Studio's Creator Store search, nothing inserted. ProSoundEffects (Roblox-licensed) where it has a fit; several community uploads are ripped from other games and marked "don't use".
@@ -625,6 +630,8 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+39. **Done and used (S-68, protocol 23; C-85).** **The ALERT event and the strategic UNDER_ATTACK flag (2026-10-22, the user asked):** owner-only alerts (attacked, lost, built, stalls, nuke, commander attacked) rate-limited on the server, and the flag on units hit in the last ~3 s. Sent to sim-A directly.
 
 37. **Done and used (S-63, protocol 21; C-80): the unit panel shows own flares and chaff left.** **Live countermeasure charges for own units (C-76, 2026-10-22):** the unit panel shows ammo from S-61 but flares / chaff only as the def's maximum. Suggested: a 4th OwnerField bit, CHARGES 8: `flares u8, chaff u8` (charges left), on change and with the ENTER, for units with `countermeasures`. Low priority. Sent to sim-A directly.
 38. **Done and used (S-63, Sim/Stats; C-80): the results screen shows them.** **Match statistics per player (2026-10-22, the user asked):** for the results screen: units built, lost and killed, supply / power gathered and spent, damage dealt per player, counted by the sim (e.g. `Sim/Stats`), read by the Roblox server at match end; no wire change. Medium priority. Sent to sim-A directly.

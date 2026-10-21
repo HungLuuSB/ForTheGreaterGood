@@ -900,6 +900,12 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 				local ground = World.groundY(world, d.x, d.z)
 				local b = burst(fx, now, d.x, ground + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
 				b.ground = ground
+				local blast = def and (def :: any).deathBlast
+				if blast then
+					-- it explodes when killed (S-70): a blast as wide as its damage
+					local big = burst(fx, now, d.x, ground + 2, d.z, blast.aoe, "impact", Effects.EXPLOSION_SECONDS)
+					big.ground = ground
+				end
 			end
 		end
 	end

@@ -288,7 +288,7 @@ function Controls.bind(api: Api.Api): Controls
 		elseif input.KeyCode == Controls.ALERT_KEY then
 			local list = api.state.alerts
 			for i = #list, 1, -1 do
-				if list[i].kind ~= "stall" then
+				if list[i].at then
 					api.actions.focusCamera(list[i].x, list[i].z)
 					break
 				end

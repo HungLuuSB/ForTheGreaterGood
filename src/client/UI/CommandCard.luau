@@ -74,7 +74,7 @@ local function act(api: Api.Api, name: string)
 	elseif name == "alert" then
 		local list = api.state.alerts
 		for i = #list, 1, -1 do
-			if list[i].kind ~= "stall" then
+			if list[i].at then
 				a.focusCamera(list[i].x, list[i].z)
 				break
 			end

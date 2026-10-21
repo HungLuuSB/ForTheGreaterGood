@@ -25,6 +25,7 @@ export type Style = {
 	team: number,
 	alpha: number, -- 1 = opaque
 	selected: boolean,
+	attacked: boolean?, -- the server's UNDER_ATTACK flag (S-68): the icon blinks red
 }
 
 export type Table = {
@@ -117,6 +118,7 @@ function Icons.style(t: Table, world: World.World, u: World.Unit, selected: bool
 	end
 	local s = Icons.ofDef(def, u.team)
 	s.selected = selected
+	s.attacked = bit32.band(flags, Schema.StrategicFlag.UNDER_ATTACK) ~= 0
 	return s
 end
 

@@ -159,6 +159,10 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local id = e.wreckId :: number
 			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0) }
 			table.insert(world.wreckAdded, id)
+		elseif kind == EK.ALERT then
+			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
+			local x, z = g:decode(e.cell :: number, 128, 128)
+			table.insert(world.alertQueue, { kind = e.alert :: number, x = x, z = z, defIndex = e.defIndex or 0, tick = tick })
 		elseif kind == EK.WRECK_GONE then
 			local id = e.wreckId :: number
 			world.wrecks[id] = nil

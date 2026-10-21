@@ -551,7 +551,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	table.clear(fx.shots)
 	mark("anim", t0)
-	Api.frame(api, now, fx.warnings)
+	Api.frame(api, now)
 	-- the unit under the mouse, ten times a second (the unit panel shows a hovered enemy, C-76)
 	if now >= nextHover then
 		nextHover = now + 0.1

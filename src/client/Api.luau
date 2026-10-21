@@ -403,9 +403,9 @@ end
 
 -- Once per frame, after packets and before drawing (and before the frame
 -- clears world.died): prunes the selection, follows waypoints and factory
--- queues, raises alerts (`warnings`: Core/Effects' launch warnings),
--- refreshes the state and fires the signals.
-function Api.frame(api: Api, now: number, warnings: { any }?)
+-- queues, raises the server's alerts (C-85), refreshes the state and
+-- fires the signals.
+function Api.frame(api: Api, now: number)
 	local world, sel, state = api.world, api.selection, api.state
 	if world.joins ~= api.seenJoins then
 		-- a new WELCOME (a rejoin or a new match): unit IDs start over, so the
@@ -448,7 +448,7 @@ function Api.frame(api: Api, now: number, warnings: { any }?)
 		end
 	end
 	if world.joined then
-		for _, alert in Alerts.step(api.alertState, world, now, warnings, state.economy) do
+		for _, alert in Alerts.step(api.alertState, world, now) do
 			api.changed.alert:Fire(alert)
 		end
 	end
