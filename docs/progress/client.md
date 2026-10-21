@@ -447,6 +447,10 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: overnight run
+
+- Fog and wrecks from the server (C-65): the client now uses the server's exact team sight, allies included (it used to work it out from its own units). Wrecks appear for anything the team knows of, also after joining, and disappear when reclaimed (`debug_out/screens/c65_wrecks.jpg`).
+
 ## Needs my review
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
@@ -478,6 +482,10 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+35. **A unique strategic icon per unit type (the user, 2026-10-22, overnight list):** "Every type of unit need to have its own unique icon." The wire's icon number comes from Shared/Net/Icons, which numbers icon *names*; 126 unit defs share 50 names (worker x10, radar x6 ...). Asked: an icon number unique per unit def (e.g. defs in sorted order, fits a u8), keeping `def.icon` as the shape family; ghosts and contacts keep their rules. The client then draws a unique glyph per def. Sent to sim-A directly.
+
+34. **Radar vehicles and a pinpointer (the user, 2026-10-22, overnight list):** "Add radar vehicles, radar enhance facility (pinpointer) that increase the team's accuracy, build around 6 and maximum accuracy achieved -> less to no wobble radar blip, radar missile will be able to hit more precisely (long range radar will likely to lose lock or miss without pinpointer enhancements)." Asked: check the mobile radars (Oracle, Watcher) and add any missing; a Pinpointer structure per faction whose count (full at ~6) cuts radar contacts' wobble and radar-guided weapons' tracking error; radar missiles lose lock / miss more without them; the team's precision on the wire for the UI. Sent to sim-A directly.
 
 33. **Done (S-56): IR SAM range / lockRange Thorn 206, Vigil 147; radar SAM Wyvern 945, Aegis 1013; sensors follow. sim-A's note for the user: a nuke is now inside a radar site's reach for only ~6 s of its 12.7 s flight, so at chance 0.2 two sites often let it through.** **SAM ranges again: IR -30%, radar -25% from S-55 (the user, 2026-10-21):** "Drop the IR range 30% more, the SAM 25% more." chs_ir_sam 294 -> 206, ord_ir_sam 210 -> 147; chs_radar_sam 1260 -> 945, ord_radar_sam 1350 -> 1013; sensors by the same factors. Sent to sim-A directly.
 

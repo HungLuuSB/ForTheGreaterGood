@@ -275,7 +275,15 @@ if RunService:IsStudio() then
 			return true
 		elseif query == "fog" then
 			-- fog of war: mode, plates, lights (made / lit), last rebuild; contacts and ghosts
-			return { mode = fog.mode, stats = fog.stats, contacts = contacts.stats, version = fog.vision and fog.vision.version }
+			-- the server's ally-team sight (C-65): records applied, cells seen
+			local sight = world.sight
+			local seenCells = 0
+			if sight then
+				for i = 0, sight.width * sight.depth - 1 do
+					seenCells += buffer.readu8(sight.cells, i)
+				end
+			end
+			return { mode = fog.mode, stats = fog.stats, contacts = contacts.stats, version = fog.vision and fog.vision.version, sightVersion = sight and sight.version, seenCells = seenCells, wrecks = renderer.deaths.stats.wrecks }
 		elseif query == "deaths" then
 			-- deaths played (shakes, flings), wrecks standing
 			return renderer.deaths.stats
