@@ -190,6 +190,7 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		heading = facing * math.pi / 2,
 		health = math.max(1, d.health * Build.START_HEALTH),
 		weaponCount = #d.weapons,
+		weaponRest = Combat.restPoses(sim, d.index),
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)

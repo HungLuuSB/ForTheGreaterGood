@@ -99,6 +99,7 @@ Then:
   - Mask bits: health 1, state 2, aim 4, weapon 8, build 16, targets 32 (protocol 8).
   - Aim: `slotMask u8` (bit i−1 = slot i), then `yaw u8, pitch u8` per set bit in slot order.
   - A change of state bits or turret aim sends the state, the aim of every slot and the weapon field together.
+  - Aim rest and restore (S-20): a unit enters with its weapons at their turret's rest pose (`restYaw`, `restPitch`); after losing a target a weapon holds its aim `restoreDelay` seconds, then turns back to rest. `Shared/Combat/Aim.update` is the server's exact per-tick step, so a client can animate between aim updates with the same results.
   - **Targets** (S-16, own units only): `slotMask u8`, then `targetId u16` per set bit (0 = no target). Sent to the unit's owner whenever a weapon's target changes (every slot), and with the ENTER tick when it has any target; the ID is always a unit (or remembered structure) the team knows. Other players never get it. Exact from the tick Targeting picks the target, before the turret has turned.
 
 A Tactical or State record always refers to a unit the client got an ENTER for. If not, the client is out of sync: drop the record (the reference client asserts).

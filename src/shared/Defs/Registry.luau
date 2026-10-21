@@ -137,6 +137,7 @@ return {
 		chs_heavy_aam = require("./Weapons/chs_heavy_aam"),
 		chs_heavy_bomb = require("./Weapons/chs_heavy_bomb"),
 		chs_heavy_cannon = require("./Weapons/chs_heavy_cannon"),
+		chs_juggernaut_cannon = require("./Weapons/chs_juggernaut_cannon"),
 		chs_heavy_naval_gun = require("./Weapons/chs_heavy_naval_gun"),
 		chs_ir_sam = require("./Weapons/chs_ir_sam"),
 		chs_light_cannon = require("./Weapons/chs_light_cannon"),
