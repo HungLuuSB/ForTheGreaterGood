@@ -70,14 +70,14 @@
 | Ideology | Discipline, precision, control | Freedom, force, disruption |
 | Role | Heavy defense and strategy | The strength of armies |
 | Look | Western-inspired (Leopard 2, Abrams, Patriot): sleek, wedge-shaped, high-tech, fortress-like; reads heavy: thick plates, add-on armor, deep skirts, sensors, shields, active protection | Eastern-inspired (T-14 Armata, T-90M, Pantsir): rugged, aggressive, built for mass and assault; reads light: compact and high off the ground, exposed running gear, rounder or domed turrets, reactive-armor blocks, rear slat cages |
-| Palette | Sand base | Gunmetal base (recommended over olive, which disappears on grass) |
+| Palette | Light sand-grey paint, cyan emissive accents | Gunmetal paint, orange emissive accents |
 | Doctrine | Better sensors, stealth, precision long range, DIRCM | Strong jamming, missile saturation, cheap mass, heavy armor |
 | Strength | Wins information fights; strong at range | Wins brawls and attrition; blinds enemy sensors |
 | Weakness | Expensive, fragile when cornered | Less accurate, weaker sensors, limited stealth |
 
 Both factions have the **same roles** (scout, MBT, SAM, fighter, etc.) so balancing stays manageable. They differ in stats and in which information-warfare tools they get.
 
-Both factions look **near-future military, realistic-leaning**: real modern vehicles with restrained sci-fi accents (angular armor panels, sensor strips, active protection, rail-gun details). Long, low, wide hulls; turrets set toward the rear; long guns; side skirts with road wheels; sights and sensor boxes; canister launchers for SAMs; flat phased-array radars, never dishes; team color on top surfaces (turret roof, hull top). Silhouette first, secondary shapes second, small details only if cheap. Details: [`docs/art/style-guide.md`](art/style-guide.md).
+Both factions are **near-future military shapes in Beyond All Reason's model style** (M-15): real modern vehicles (Leopard 2, Abrams, T-14) with strong, slightly exaggerated silhouettes (bigger turrets and guns), clean hard-surface painted metal with crisp panel lines and edge highlights, no camouflage, large bold team-color panels designed into the model (turret roof, hull top, side plates) and small emissive accents (sensor lights, weapon glow). Long, low, wide hulls; turrets set toward the rear; long guns; side skirts with road wheels; canister launchers for SAMs; flat phased-array radars, never dishes. Silhouette first, secondary shapes second, small details only if cheap. Details: [`docs/art/style-guide.md`](art/style-guide.md).
 
 ### 2.2 Naming conventions
 

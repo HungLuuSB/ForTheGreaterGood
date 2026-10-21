@@ -2,21 +2,20 @@
   "id": "ord_lancer",
   "footprintStuds": 8,
   "variants": {
-    "a": "plain sand, weathered",
-    "b": "three-tone disruptive"
+    "bar": "BAR-style painted sand-grey (M-15)"
   },
   "pieces": {
     "base": {
       "parent": null,
       "center": [
         0.0,
-        0.955,
-        -0.1175
+        1.0012,
+        -0.12
       ],
       "size": [
-        6.0,
-        1.91,
-        8.135
+        6.3,
+        2.0025,
+        8.14
       ]
     },
     "turret": {
@@ -24,35 +23,35 @@
       "pivot": [
         0.0,
         1.85,
-        0.4
+        0.3
       ],
       "center": [
         0.0,
-        2.625,
-        0.4324
+        2.775,
+        0.4131
       ],
       "size": [
-        4.09,
-        1.55,
-        5.4352
+        4.8,
+        1.85,
+        6.3738
       ]
     },
     "barrel": {
       "parent": "turret",
       "pivot": [
         0.0,
-        2.3,
-        -1.45
+        2.45,
+        -1.8
       ],
       "center": [
         0.0,
-        2.3,
-        -4.4925
+        2.45,
+        -4.9725
       ],
       "size": [
-        0.8,
-        0.62,
-        5.985
+        1.05,
+        0.78,
+        6.365
       ]
     }
   },
@@ -61,19 +60,29 @@
       "parent": "barrel",
       "at": [
         0.0,
-        2.3,
-        -7.52
+        2.45,
+        -8.17
       ]
     }
   },
   "teamColorPieces": [
+    "base",
     "turret"
   ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
   "triangles": {
-    "base": 2012,
-    "turret": 764,
-    "barrel": 928,
-    "total": 3704
+    "base": 2136,
+    "turret": 676,
+    "barrel": 970,
+    "total": 3782
   },
   "textures": {
     "size": 1024,
@@ -83,7 +92,8 @@
     ],
     "shared": [
       "NOR",
-      "MTL"
+      "MTL",
+      "EMI"
     ]
   }
 }
