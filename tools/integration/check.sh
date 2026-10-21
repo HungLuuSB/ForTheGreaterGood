@@ -8,7 +8,8 @@ cd "$(dirname "$0")/../.." || exit 2
 git fetch -q origin
 for b in $(git for-each-ref --format='%(refname:short)' refs/heads); do
 	for f in $(git ls-tree --name-only "$b" docs/progress/ 2>/dev/null); do
-		git show "$b:$f" | grep -o "Ready to merge: \`[0-9a-f]*\`" | grep -o "[0-9a-f]\{7,\}" | while read -r c; do
+		# every backticked commit on a "Ready to merge:" line (a line may list several)
+		git show "$b:$f" | grep "Ready to merge:" | grep -o "\`[0-9a-f]\{7,40\}\`" | tr -d '\`' | while read -r c; do
 			git merge-base --is-ancestor "$c" main 2>/dev/null || echo "PENDING $b $f $c $(git log -1 --format=%s "$c")"
 		done
 	done
