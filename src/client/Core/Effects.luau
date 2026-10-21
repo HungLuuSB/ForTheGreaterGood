@@ -23,6 +23,7 @@
 
 local Ballistics = require("@shared/Combat/Ballistics")
 local Guidance = require("@shared/Combat/Guidance")
+local Lofted = require("@shared/Combat/Lofted")
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
@@ -80,6 +81,7 @@ export type Proj = {
 	turned: boolean?, -- a vertical launch has pitched over onto its target (Guidance.vertical, S-42, C-53)
 	chase: Proj?, -- an interceptor's strategic missile (S-48, C-57)
 	own: boolean?, -- a strategic missile launched by the local player's team (C-58)
+	goal: { number }?, -- a strategic missile's ordered spot x, y, z (SPAWN_STRATEGIC, S-51): it flies Shared/Combat/Lofted
 	gone: boolean?, -- ended (impact, interception, time out): interceptors chasing it fly on
 }
 
@@ -181,6 +183,21 @@ local function pos(world: World.World, e: Schema.Event): (number, number, number
 	local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 	return x, (e.y :: number) / Schema.Y_SCALE, z
 end
+
+-- SPAWN_STRATEGIC's goal (S-51).
+local function goalPos(world: World.World, e: any): { number }
+	local x, z = world.grid:decode(e.goalCell :: number, e.goalOffX :: number, e.goalOffZ :: number)
+	return { x, (e.goalY :: number) / Schema.Y_SCALE, z }
+end
+
+-- One tick of a strategic missile toward `goal` (Shared/Combat/Lofted, S-51):
+-- the server's Projectiles step, climb measured on Layers.heightAt.
+local function loftedStep(world: World.World, weapon: any, goal: { number }, x: number, y: number, z: number, vx: number, vy: number, vz: number): (number, number, number, number, number, number)
+	local layers = world.layers
+	local climbLeft = if layers then Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)) or 0 else 0
+	return Lofted.step(x, y, z, vx, vy, vz, goal[1], goal[2], goal[3], goal[2] + weapon.apex, weapon.gravity, math.rad(weapon.turnRate or 0) * DT, climbLeft, DT)
+end
+Effects.loftedStep = loftedStep
 
 local function vel(e: any): (number, number, number)
 	return e.vx / Schema.Y_SCALE, e.vy / Schema.Y_SCALE, e.vz / Schema.Y_SCALE
@@ -429,6 +446,12 @@ local function advance(world: World.World, p: Proj, t: number): (number, number,
 	elseif weapon.turnRate and p.decoy then
 		vx, vy, vz, follow = followDecoy(weapon, p.decoy, p.x, p.y, p.z, vx, vy, vz)
 	end
+	local goal = p.goal
+	if goal and weapon.apex then
+		-- a strategic missile: boost, pitch-over, lofted arc (S-51)
+		local x, y, z, nvx, nvy, nvz = loftedStep(world, weapon, goal, p.x, p.y, p.z, p.vx, p.vy, p.vz)
+		return x, y, z, nvx, nvy, nvz, 0, 0, 0, true, turned
+	end
 	local dvx, dvy, dvz = vx - p.vx, vy - p.vy, vz - p.vz
 	local x, y, z, nvx, nvy, nvz = Ballistics.step(p.x, p.y, p.z, vx, vy, vz, weapon.gravity or 0, DT)
 	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz, follow, turned
@@ -476,7 +499,7 @@ local function mark(fx: Fx, kind: string, now: number, x0: number, y0: number, z
 	table.insert(fx.marks, { kind = kind, x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now })
 end
 
-local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED" }
+local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED", [EK.SPAWN_STRATEGIC] = "SPAWN_STRATEGIC" }
 
 -- The unit (and weapon slot) that launched a `weaponIndex` shell from
 -- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
@@ -545,7 +568,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 	local kind = e.kind
 	local name = KIND_NAME[kind] or tostring(kind)
 	fx.applied[name] = (fx.applied[name] or 0) + 1
-	if kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR then
+	if kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR or kind == EK.SPAWN_STRATEGIC then
 		local weapon = world.defs.weaponByIndex[e.weaponIndex]
 		if weapon == nil then
 			return
@@ -553,7 +576,11 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local x, y, z = pos(world, e)
 		local vx, vy, vz = vel(e)
 		local launch = if early then { e.tick, x, y, z, vx, vy, vz } else nil
-		if early then
+		local goal = if kind == EK.SPAWN_STRATEGIC then goalPos(world, e) else nil
+		if early and goal then
+			-- a strategic missile's first tick is its boost: straight up, no gravity (Lofted)
+			x, y, z = x - vx * DT, y - vy * DT, z - vz * DT
+		elseif early then
 			-- invert Ballistics.step over one tick (unsteered: the step into the
 			-- spawn tick then takes the server's state as is, see stepProjectiles)
 			local g = weapon.gravity or 0
@@ -598,9 +625,10 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			-- an interceptor's target is a projectile, not a unit (S-48)
 			target = if kind == EK.INTERCEPTOR then 0 else e.targetId or 0,
 			chase = if kind == EK.INTERCEPTOR then fx.projectiles[e.targetId] else nil,
-			ttl = ttlTicks(weapon),
+			ttl = if goal then 15 * 60 else ttlTicks(weapon), -- a strategic missile ends with its IMPACT
 			size = weaponSize(weapon),
 			launch = launch,
+			goal = goal,
 		}
 		-- a missile leaves its launcher in a cloud (C-47); a gun just flashes
 		local b = if weapon.type == "HOMING" or weapon.strategic
@@ -787,7 +815,7 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 	-- tick it would appear a tick's travel out of the barrel (C-27)
 	for i = 1, #events do
 		local e = events[i] :: any
-		if (e.kind == EK.SPAWN_PROJ or e.kind == EK.INTERCEPTOR) and e.tick == fx.tick + 1 and not e.launched then
+		if (e.kind == EK.SPAWN_PROJ or e.kind == EK.INTERCEPTOR or e.kind == EK.SPAWN_STRATEGIC) and e.tick == fx.tick + 1 and not e.launched then
 			e.launched = true
 			apply(fx, world, e, now, muzzleOf, true)
 		end
@@ -1066,15 +1094,21 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 end
 
 -- Where a ballistic projectile comes down (C-57): its state stepped with
--- gravity until it reaches the ground (the server's Layers.heightAt), at
--- most `maxSeconds`. Returns x, z and the sim seconds to get there, or nil.
+-- gravity (a strategic missile: Lofted toward its goal, S-51) until it
+-- reaches the ground (the server's Layers.heightAt), at most `maxSeconds`.
+-- Returns x, z and the sim seconds to get there, or nil.
 function Effects.landing(world: World.World, p: Proj, maxSeconds: number?): (number?, number?, number?)
 	local layers = world.layers
 	local g = p.weapon.gravity or 0
 	local x, y, z, vx, vy, vz = p.x, p.y, p.z, p.vx, p.vy, p.vz
 	for k = 1, math.floor((maxSeconds or 60) * 15) do
 		local px, py, pz = x, y, z
-		x, y, z, vx, vy, vz = Ballistics.step(x, y, z, vx, vy, vz, g, DT)
+		local goal = p.goal
+		if goal and p.weapon.apex then
+			x, y, z, vx, vy, vz = loftedStep(world, p.weapon, goal, x, y, z, vx, vy, vz)
+		else
+			x, y, z, vx, vy, vz = Ballistics.step(x, y, z, vx, vy, vz, g, DT)
+		end
 		local ground = if layers then Layers.heightAt(layers, x, z) else 0
 		if vy < 0 and y <= ground then
 			-- where the tick's chord meets the ground

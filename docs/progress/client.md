@@ -422,6 +422,10 @@ All with real mouse and keyboard input through the MCP tools.
 
 - The warning banner now just says "NUCLEAR LAUNCH DETECTED", whatever the number of nukes in the air; the impact time and radar tracks are in the sensor view (N).
 
+## 2026-10-21: nukes climb, then turn (C-62)
+
+- Nukes now leave the silo straight up, climb about 120 studs, then turn over onto their arc toward the target (S-51) (`debug_out/screens/c62_nuke_boost_turn.jpg`). The attack-mode preview draws that same path, and the landing ring follows it.
+
 ## Needs my review
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
@@ -454,9 +458,11 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
+30. **Radar SAM stock 15, faster refill (the user, 2026-10-21):** "tell A to increase the SAM stock to 15, lower its recharge time too." Read as the radar SAM sites that intercept nukes: Wyvern (`chs_radar_sam`) and Aegis (`ord_radar_sam`), stockpile capacity 6 → 15; no refill number was given, suggested buildTime 12 → 6 s per missile. Cost per missile, the mobile radar SAMs (Gorgon / Seraph, 3) and the IR SAMs are the sim's call. Nothing changes on the client (it reads the defs). Sent to sim-A directly.
+
 29. **Done (S-50): `intercepts = { chance = 0.2 }` on both radar SAMs; the `nuke` profile's override dropped.** **Radar SAM interception chance 0.5 → 0.2 (the user, 2026-10-21):** "Make 0.2 the real interception chance." `chs_radar_sam` and `ord_radar_sam`: `intercepts = { chance = 0.2 }` (guide 10.9 and the S-48 numbers with it). The user tried it in the `nuke` profile through C-60's test override; once the defs say 0.2 the client drops that override. Nothing else changes on the client (it never reads the chance). High priority (the user asked).
 
-28. **Nukes launch vertically, then turn onto their arc (the user, 2026-10-21):** "Can we make the nuke go vertical to a height then turn toward its destination?" Today a nuke leaves the silo already on its parabola (Weapons.fire's lofted branch: up at sqrt(2 g apex), across at dist / t). Suggested (numbers yours):
+28. **Done (S-51, protocol 18): SPAWN_STRATEGIC with the goal; Shared/Combat/Lofted (boost to climbHeight 120, pitch-over at 90°/s, arc to apex 300 above the goal, 12.7 s); the client flies, previews and predicts with it since C-62.** **Nukes launch vertically, then turn onto their arc (the user, 2026-10-21):** "Can we make the nuke go vertical to a height then turn toward its destination?" Today a nuke leaves the silo already on its parabola (Weapons.fire's lofted branch: up at sqrt(2 g apex), across at dist / t). Suggested (numbers yours):
     - A boost phase like the radar SAMs' (S-42 / S-44): straight up from the silo to `climbHeight` (e.g. 120 studs above the launcher), then a pitch-over at `turnRate` (e.g. 90°/s, about a second) toward the lofted velocity that, from where the missile is, peaks at `apex` (300 above the launcher) and lands on the aimed spot; then unpowered ballistic flight as now. Re-solving that velocity at the end of the turn keeps the landing exact. The flight can stay near 12.7 s so interceptors keep their window.
     - As a shared function (e.g. in `Shared/Combat/Ballistics` or `Guidance`), so the client steps it the same way: its drawn flight and interceptor steering, the attack-mode arc preview (C-58) and the landing prediction under the warning (C-57) all mirror the server. The client needs the phase: derivable from the state if the rule only uses the position, height above the launch point and velocity (the client has the SPAWN_PROJ point), or on the wire.
     - The guide (10.9) and contract need it. Medium priority; the user asked.

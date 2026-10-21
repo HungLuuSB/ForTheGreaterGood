@@ -488,3 +488,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** the warning banner says only "NUCLEAR LAUNCH DETECTED" while any nuke flies, however many (the user: "just a notice is fine, in case multiple nukes are present"). It no longer shows the time to impact (C-57) or the radars tracking (C-58); both stay in the sensor view (N). The launch markers and blast rings on the ground stay, one per nuke.
 
 **Why / measured:** Studio (`nuke` profile): with the Chaos nuke and one of yours in the air, the banner text is exactly "NUCLEAR LAUNCH DETECTED". No errors.
+
+### C-62 — Nukes climb, then turn (2026-10-21)
+
+**Decision:** with S-51 (request 28, protocol 18) a strategic missile arrives as SPAWN_STRATEGIC with its goal (the ordered spot) and flies Shared/Combat/Lofted: straight up at `projectileSpeed` to `climbHeight`, a pitch-over at `turnRate` toward the lofted arc that peaks `apex` above the goal, then ballistic. `Core/Effects` keeps the goal on the projectile and steps it with `Lofted.step` (climb measured on `Layers.heightAt`, as the server); an early spawn is stepped back without gravity (its first tick is the boost). `Effects.landing` and the attack-mode preview (C-58) run the same steps forward: the preview now simulates the launch from the silo (boost, turn, arc) instead of the old parabola, drawing every third tick.
+
+**Why / measured:** `AttackPreview.spec`: the previewed path against the server's nuke, 64 points every third tick, worst 0.00 studs; 12.82 s vs 12.80 s; apex 310 both; it leans over at 139 studs. `Nuke.spec`: the drawn nuke within 0.07 studs of the server's over 192 frames; the landing predicted 0.0 studs from the detonation; interceptors still in step (median 0.05) and locked. Studio (`nuke` profile): the Chaos nuke's trail rising straight out of its silo and hooking over toward your base (`debug_out/screens/c62_nuke_boost_turn.jpg`). No errors.
