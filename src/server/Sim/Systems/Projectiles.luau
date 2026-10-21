@@ -31,6 +31,7 @@
 
 local Ballistics = require("../Combat/Ballistics")
 local Guidance = require("@shared/Combat/Guidance")
+local Lofted = require("@shared/Combat/Lofted")
 local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
 local EW = require("../EW")
@@ -120,7 +121,15 @@ return function(sim: Types.Sim)
 				c.pDecoy[id] = nil
 			end
 		end
-		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
+		local x1, y1, z1, vx, vy, vz
+		local goal = c.pGoal[id]
+		if goal and weapon.apex then
+			-- strategic missile: boost, pitch-over, lofted arc (S-51)
+			local climbLeft = Guidance.climbLeft(weapon, y0, Combat.groundHeight(c, x0, z0))
+			x1, y1, z1, vx, vy, vz = Lofted.step(x0, y0, z0, pvx, pvy, pvz, goal[1], goal[2], goal[3], goal[2] + weapon.apex, g, math.rad(weapon.turnRate :: number) * DT, climbLeft, DT)
+		else
+			x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
+		end
 		local grid = c.grid
 		if grid and (x1 < grid.originX or z1 < grid.originZ or x1 > grid.originX + grid.sizeX or z1 > grid.originZ + grid.sizeZ) then
 			-- off the map: nothing to hit out there; burst at the edge (client

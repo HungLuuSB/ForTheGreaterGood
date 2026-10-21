@@ -6,9 +6,11 @@ return {
 	type = "BALLISTIC",
 	range = 8192, -- anywhere on the map
 	reload = 10,
-	projectileSpeed = 300, -- nominal: `apex` sets the launch velocity
-	gravity = 15,
-	apex = 300, -- low enough to stay on screen (S-49, the user asked)
+	projectileSpeed = 150, -- boost speed straight up (S-51)
+	climbHeight = 120, -- boost to this height above the ground, then turn (S-51, the user asked)
+	turnRate = 90, -- pitch-over toward the lofted arc, degrees per second (S-51)
+	gravity = 12, -- with the boost and pitch-over, ~12.7 s of flight (S-51)
+	apex = 300, -- the arc peaks this high above the ordered spot; low enough to stay on screen (S-49)
 	accuracy = 0,
 	strategic = true,
 	manualFire = true,
