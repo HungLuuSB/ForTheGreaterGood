@@ -4,6 +4,11 @@ Run inside Blender 5.2 (headless: blender -b --factory-startup -P <unit>/build.p
 Geometry is written in Roblox model space (docs/contracts/rig.md): +X right,
 +Y up, forward = -Z, 1 unit = 1 stud. `R()` maps it to Blender (Z up); the
 FBX export maps it back, so the file is in Roblox space.
+
+A unit has a low-poly piece per rig piece (exported) and a detailed copy of
+each (bolts, seams, hatches; never exported) that is baked into the
+low-poly's textures: color (camouflage variants, wear, grime, ambient
+occlusion), team mask (alpha), roughness, metalness and normal.
 """
 
 import json
@@ -27,6 +32,10 @@ def R(x, y, z):
 def to_roblox(v):
     """Blender space -> Roblox model space, as a list."""
     return [round(v.x, 4), round(v.z, 4), round(-v.y, 4)]
+
+
+def vec(t):
+    return Vector((float(t[0]), float(t[1]), float(t[2])))
 
 
 # ---------------------------------------------------------------------------
@@ -85,6 +94,32 @@ class Piece:
         f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
         return self._shell(v, f, kind, bevel)
 
+    def obox(self, center, u, n, size_u, size_v, size_n, kind, bevel=0.0):
+        """Box with its axes along u, n x u and n (Roblox vectors)."""
+        c, u, n = vec(center), vec(u).normalized(), vec(n).normalized()
+        v = n.cross(u).normalized()
+        pts = [c + u * (a * size_u / 2) + v * (b * size_v / 2) + n * (d * size_n / 2)
+               for a in (-1, 1) for b in (-1, 1) for d in (-1, 1)]
+        f = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+        return self._shell([tuple(p) for p in pts], f, kind, bevel)
+
+    def ocyl(self, base, n, radius, height, sides, kind, radius2=None):
+        """Closed cylinder standing on `base` along n (Roblox vectors)."""
+        b, n = vec(base), vec(n).normalized()
+        a = Vector((1, 0, 0)) if abs(n.x) < 0.9 else Vector((0, 1, 0))
+        u = (a - n * a.dot(n)).normalized()
+        v = n.cross(u)
+        r2 = radius if radius2 is None else radius2
+        pts = []
+        for h, r in ((0.0, radius), (height, r2)):
+            for i in range(sides):
+                t = 2 * math.pi * i / sides
+                pts.append(tuple(b + n * h + u * (math.cos(t) * r) + v * (math.sin(t) * r)))
+        m = sides
+        f = [list(range(m)), list(range(2 * m - 1, m - 1, -1))]
+        f += [(i, (i + 1) % m, m + (i + 1) % m, m + i) for i in range(m)]
+        return self._shell(pts, f, kind)
+
     def prism_x(self, profile_zy, x0, x1, kind, bevel=0.0):
         """Side profile (z, y) points, extruded along X from x0 to x1."""
         n = len(profile_zy)
@@ -109,7 +144,8 @@ class Piece:
     def cylinder(self, axis, center, radius, length, sides, kind, cap_kinds=None,
                  radius2=None, bevel=0.0):
         """Closed cylinder (or cone frustum with `radius2` at the far end)
-        along `axis` ('x', 'y' or 'z'), centered on `center`."""
+        along `axis` ('x', 'y' or 'z'), centered on `center`. The first cap
+        is at the -axis end."""
         r2 = radius if radius2 is None else radius2
         cx, cy, cz = center
         h = length / 2
@@ -126,7 +162,8 @@ class Piece:
                     v.append((cx + c, cy + s, cz + end))
         n = sides
         f = [list(range(n)), list(range(2 * n - 1, n - 1, -1))]
-        kinds = [(cap_kinds or (kind, kind))[0], (cap_kinds or (kind, kind))[1]]
+        caps = cap_kinds or (kind, kind)
+        kinds = [caps[0], caps[1]]
         f += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
         kinds += [kind] * n
         return self._shell(v, f, kind, bevel, kinds=kinds)
@@ -154,7 +191,6 @@ class Piece:
             fc.material_index = self._slot(kind)
             fs.append(fc)
         # a ring has an inside and an outside: orient by hand from the outline
-        # (outer faces point away from the loop center, side faces outward in X)
         bm.normal_update()
         center = Vector((0, 0, 0))
         for p in outer_zy:
@@ -163,29 +199,28 @@ class Piece:
         for k, fc in enumerate(fs):
             role = k % 4
             c = fc.calc_center_median()
-            nrm = fc.normal
             if role == 0:
-                want = (c - Vector((c.x, center.y, center.z)))
+                want = c - Vector((c.x, center.y, center.z))
                 want.x = 0
             elif role == 1:
-                want = (Vector((c.x, center.y, center.z)) - c)
+                want = Vector((c.x, center.y, center.z)) - c
                 want.x = 0
             elif role == 2:
                 want = Vector((-1 if x0 < x1 else 1, 0, 0))
             else:
                 want = Vector((1 if x0 < x1 else -1, 0, 0))
-            if nrm.dot(want) < 0:
+            if fc.normal.dot(want) < 0:
                 fc.normal_flip()
         return fs
 
     # -- object ----------------------------------------------------------------
 
-    def to_object(self, materials, collection):
-        mesh = bpy.data.meshes.new(self.name)
+    def to_object(self, materials, collection, name=None):
+        mesh = bpy.data.meshes.new(name or self.name)
         bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts, dist=1e-5)
         self.bm.to_mesh(mesh)
         self.bm.free()
-        obj = bpy.data.objects.new(self.name, mesh)
+        obj = bpy.data.objects.new(name or self.name, mesh)
         for kind in self.kinds:
             mesh.materials.append(materials[kind])
         collection.objects.link(obj)
@@ -213,12 +248,33 @@ def outline_circle(cz, cy, r, a0, a1, steps):
     return out
 
 
-# ---------------------------------------------------------------------------
-# Materials: one per kind; each can show its color, roughness, metalness,
-# team mask (alpha) or a lit preview, and carries the bake target image.
-# ---------------------------------------------------------------------------
+def offset_polygon(points, d):
+    """Offsets a closed (z, y) outline by d (positive = inward)."""
+    n = len(points)
+    area = sum(points[i][0] * points[(i + 1) % n][1] - points[(i + 1) % n][0] * points[i][1] for i in range(n))
+    sign = 1 if area > 0 else -1
+    out = []
+    for i in range(n):
+        p0, p1, p2 = points[i - 1], points[i], points[(i + 1) % n]
+        nrm = []
+        for a, b in ((p0, p1), (p1, p2)):
+            dz, dy = b[0] - a[0], b[1] - a[1]
+            length = math.hypot(dz, dy) or 1
+            nrm.append((-dy / length * sign, dz / length * sign))
+        nz, ny = nrm[0][0] + nrm[1][0], nrm[0][1] + nrm[1][1]
+        length = math.hypot(nz, ny) or 1
+        nz, ny = nz / length, ny / length
+        cos = nz * nrm[1][0] + ny * nrm[1][1]
+        k = d / max(cos, 0.5)
+        out.append((p1[0] + nz * k, p1[1] + ny * k))
+    return out
 
-CHANNELS = ("color", "roughness", "metallic", "mask")
+
+# ---------------------------------------------------------------------------
+# Materials: one per kind, shared by the low-poly and detailed pieces. Each
+# can show color (per camouflage variant), roughness, metalness, team mask or
+# a lit preview, and carries the bake target image.
+# ---------------------------------------------------------------------------
 
 
 def srgb(c):
@@ -229,152 +285,210 @@ def srgb(c):
     return (lin(c[0]), lin(c[1]), lin(c[2]), 1.0)
 
 
-def make_material(kind, spec, camo, target):
-    """spec: dict(base=(r,g,b) | None for camo, roughness, metallic, mask,
-    edge_wear, bump=('grille'|'tread'|None), ao)."""
-    mat = bpy.data.materials.new(f"{kind}")
+mat_sockets = {}
+
+
+class _Nodes:
+    def __init__(self, nt):
+        self.nt = nt
+
+    def new(self, kind, **props):
+        n = self.nt.nodes.new(kind)
+        for k, v in props.items():
+            setattr(n, k, v)
+        return n
+
+    def link(self, a, b):
+        self.nt.links.new(a, b)
+
+    def rgb(self, c):
+        n = self.new("ShaderNodeRGB")
+        n.outputs[0].default_value = srgb(c)
+        return n.outputs[0]
+
+    def value(self, v):
+        n = self.new("ShaderNodeValue")
+        n.outputs[0].default_value = v
+        return n.outputs[0]
+
+    def math(self, op, a, b=None, clamp=False, c=None):
+        n = self.new("ShaderNodeMath", operation=op, use_clamp=clamp)
+        for i, x in enumerate((a, b, c)):
+            if x is None:
+                continue
+            if isinstance(x, (int, float)):
+                n.inputs[i].default_value = x
+            else:
+                self.link(x, n.inputs[i])
+        return n.outputs[0]
+
+    def mix(self, fac, a, b, blend="MIX"):
+        n = self.new("ShaderNodeMix", data_type="RGBA", blend_type=blend)
+        for sock, x in ((n.inputs[0], fac), (n.inputs[6], a), (n.inputs[7], b)):
+            if isinstance(x, (int, float)):
+                sock.default_value = x
+            elif isinstance(x, tuple):
+                sock.default_value = srgb(x)
+            else:
+                self.link(x, sock)
+        return n.outputs[2]
+
+    def noise(self, vector, scale, detail=1.0, roughness=0.5, distortion=0.0, mapping_scale=None, offset=(0, 0, 0)):
+        m = self.new("ShaderNodeMapping")
+        m.inputs["Location"].default_value = offset
+        if mapping_scale:
+            m.inputs["Scale"].default_value = mapping_scale
+        self.link(vector, m.inputs["Vector"])
+        n = self.new("ShaderNodeTexNoise", noise_dimensions="3D")
+        n.inputs["Scale"].default_value = scale
+        n.inputs["Detail"].default_value = detail
+        n.inputs["Roughness"].default_value = roughness
+        n.inputs["Distortion"].default_value = distortion
+        self.link(m.outputs["Vector"], n.inputs["Vector"])
+        return n.outputs["Fac"]
+
+    def map_range(self, x, a, b, c, d, clamp=True):
+        n = self.new("ShaderNodeMapRange", clamp=clamp)
+        self.link(x, n.inputs["Value"])
+        n.inputs["From Min"].default_value = a
+        n.inputs["From Max"].default_value = b
+        n.inputs["To Min"].default_value = c
+        n.inputs["To Max"].default_value = d
+        return n.outputs[0]
+
+
+def camo_color(N, pos, camo):
+    """Base color socket of one camouflage variant.
+    camo: {"type": "plain", "base", "mottle"} or
+          {"type": "disruptive", "base", "tones": [(rgb, scale, threshold, seed)]}"""
+    if camo["type"] == "plain":
+        base = N.rgb(camo["base"])
+        broad = N.map_range(N.noise(pos, 0.35, detail=2.0), 0.3, 0.7, 1.0 - camo["mottle"], 1.0 + camo["mottle"] * 0.4)
+        # faint vertical rain streaks (Blender Z is up): stretched noise
+        streak = N.map_range(N.noise(pos, 3.0, detail=1.0, mapping_scale=(6.0, 6.0, 0.4)), 0.55, 0.75, 1.0, 0.94)
+        k = N.math("MULTIPLY", broad, streak)
+        comb = N.new("ShaderNodeCombineColor")
+        for i in range(3):
+            N.link(k, comb.inputs[i])
+        return N.mix(1.0, base, comb.outputs[0], blend="MULTIPLY")
+    color = N.rgb(camo["base"])
+    for rgb, scale, threshold, seed in camo["tones"]:
+        f = N.noise(pos, scale, detail=0.0, distortion=0.15, offset=(seed * 7.3, seed * 3.1, seed * 1.7))
+        step = N.math("GREATER_THAN", f, threshold)  # crisp edge
+        color = N.mix(step, color, N.rgb(rgb))
+    return color
+
+
+def make_material(kind, spec, variants, target):
+    """spec keys: base (rgb, or None for the camouflage), darken (multiplier
+    on the camouflage), roughness, metallic, mask (number or "team"),
+    edge_wear (0..1), grime (0..1), ao (min factor), bump ("grille" | "tread"
+    | None). variants: list of camouflage dicts (see camo_color)."""
+    mat = bpy.data.materials.new(kind)
     mat.use_nodes = True
     nt = mat.node_tree
     nt.nodes.clear()
-    N = nt.nodes.new
-    L = nt.links.new
+    N = _Nodes(nt)
 
-    out = N("ShaderNodeOutputMaterial")
-    bsdf = N("ShaderNodeBsdfPrincipled")
-    emit = N("ShaderNodeEmission")
-    img = N("ShaderNodeTexImage")
+    out = N.new("ShaderNodeOutputMaterial")
+    bsdf = N.new("ShaderNodeBsdfPrincipled")
+    emit = N.new("ShaderNodeEmission")
+    img = N.new("ShaderNodeTexImage")
     img.image = target
     img.name = "bake_target"
     nt.nodes.active = img
+    geo = N.new("ShaderNodeNewGeometry")
+    pos = geo.outputs["Position"]
+    height = N.new("ShaderNodeSeparateXYZ")
+    N.link(pos, height.inputs[0])
+    y_up = height.outputs["Z"]  # Blender Z = Roblox Y
 
-    geo = N("ShaderNodeNewGeometry")
+    # edges: bevel normal vs true normal, broken up into chips
+    bevel = N.new("ShaderNodeBevel", samples=8)
+    bevel.inputs["Radius"].default_value = 0.04
+    dot = N.new("ShaderNodeVectorMath", operation="DOT_PRODUCT")
+    N.link(bevel.outputs["Normal"], dot.inputs[0])
+    N.link(geo.outputs["Normal"], dot.inputs[1])
+    edge = N.math("MULTIPLY_ADD", dot.outputs["Value"], -8.0, clamp=True, c=8.0)
+    chip_noise = N.noise(pos, 7.0, detail=3.0, roughness=0.7)
+    chips = N.math("MULTIPLY", edge, N.map_range(chip_noise, 0.42, 0.62, 0.0, 1.0))
+    wear = N.math("MULTIPLY", chips, spec.get("edge_wear", 0.5), clamp=True)
 
-    # base color
-    if spec.get("base") is None:
-        noise = N("ShaderNodeTexNoise")
-        noise.noise_dimensions = "3D"
-        noise.inputs["Scale"].default_value = camo["scale"]
-        noise.inputs["Detail"].default_value = 1.5
-        noise.inputs["Roughness"].default_value = 0.45
-        noise.inputs["Distortion"].default_value = 0.4
-        mapping = N("ShaderNodeMapping")
-        mapping.inputs["Location"].default_value = (camo["seed"] * 7.3, camo["seed"] * 3.1, 0.0)
-        L(geo.outputs["Position"], mapping.inputs["Vector"])
-        L(mapping.outputs["Vector"], noise.inputs["Vector"])
-        ramp = N("ShaderNodeValToRGB")
-        ramp.color_ramp.interpolation = "CONSTANT"
-        els = ramp.color_ramp.elements
-        stops = camo["stops"]  # [(pos, rgb255), ...]
-        els[0].position, els[0].color = stops[0][0], srgb(stops[0][1])
-        els[1].position, els[1].color = stops[1][0], srgb(stops[1][1])
-        for pos, col in stops[2:]:
-            e = els.new(pos)
-            e.color = srgb(col)
-        L(noise.outputs["Fac"], ramp.inputs["Fac"])
-        color_socket = ramp.outputs["Color"]
+    # grime: low on the hull and in crevices (ambient occlusion)
+    ao = N.new("ShaderNodeAmbientOcclusion", samples=16)
+    ao.inputs["Distance"].default_value = 0.6
+    ao_f = N.map_range(ao.outputs["AO"], 0.0, 1.0, spec.get("ao", 0.62), 1.0)
+    low = N.map_range(y_up, 0.7, 1.7, 1.0, 0.0)
+    grime_noise = N.map_range(N.noise(pos, 1.6, detail=4.0, mapping_scale=(1.0, 1.0, 2.5)), 0.35, 0.7, 0.4, 1.0)
+    grime = N.math("MULTIPLY", N.math("MULTIPLY", low, grime_noise), spec.get("grime", 0.0), clamp=True)
+
+    # one base color per camouflage variant; `variant` picks one (0, 1, ...)
+    variant = N.value(0.0)
+    colors = []
+    for camo in variants:
+        if spec.get("base") is None:
+            c = camo_color(N, pos, camo)
+            if spec.get("darken"):
+                c = N.mix(1.0, c, (int(255 * spec["darken"]),) * 3, blend="MULTIPLY")
+        else:
+            c = N.rgb(spec["base"])
+        c = N.mix(wear, c, camo.get("chip", (214, 204, 176)))
+        c = N.mix(grime, c, camo.get("grime", (104, 94, 76)))
+        colors.append(c)
+    color = colors[0]
+    for i, c in enumerate(colors[1:], start=1):
+        pick = N.math("GREATER_THAN", variant, i - 0.5)
+        color = N.mix(pick, color, c)
+    comb = N.new("ShaderNodeCombineColor")
+    for i in range(3):
+        N.link(ao_f, comb.inputs[i])
+    color = N.mix(1.0, color, comb.outputs[0], blend="MULTIPLY")
+
+    # team mask (alpha): painted panels show the team color through a thin
+    # dark wash, chipped on the edges and darker in crevices
+    if spec.get("mask") == "team":
+        occl = N.math("SUBTRACT", 1.0, ao.outputs["AO"])
+        mask = N.math("ADD", N.math("ADD", spec.get("wash", 0.3), N.math("MULTIPLY", chips, spec.get("chip_reveal", 0.9))),
+                      N.math("MULTIPLY", occl, spec.get("crease", 0.5)), clamp=True)
     else:
-        rgb = N("ShaderNodeRGB")
-        rgb.outputs[0].default_value = srgb(spec["base"])
-        color_socket = rgb.outputs[0]
+        mask = N.value(spec.get("mask", 1.0))
 
-    # edge mask from a bevel normal vs the true normal
-    bevel = N("ShaderNodeBevel")
-    bevel.inputs["Radius"].default_value = 0.05
-    bevel.samples = 8
-    dot = N("ShaderNodeVectorMath")
-    dot.operation = "DOT_PRODUCT"
-    L(bevel.outputs["Normal"], dot.inputs[0])
-    L(geo.outputs["Normal"], dot.inputs[1])
-    edge = N("ShaderNodeMath")
-    edge.operation = "MULTIPLY_ADD"  # (1 - dot) * k  ==  dot * -k + k
-    k = 7.0
-    L(dot.outputs["Value"], edge.inputs[0])
-    edge.inputs[1].default_value = -k
-    edge.inputs[2].default_value = k
-    edge.use_clamp = True
+    rough = N.math("ADD", N.math("MULTIPLY_ADD", wear, -0.2, c=spec["roughness"]),
+                   N.math("MULTIPLY", grime, 0.1), clamp=True)
+    metal = N.value(spec["metallic"])
 
-    # ambient occlusion
-    ao = N("ShaderNodeAmbientOcclusion")
-    ao.inputs["Distance"].default_value = 0.8
-    ao.samples = 16
-    ao_mix = N("ShaderNodeMapRange")
-    ao_mix.inputs["To Min"].default_value = spec.get("ao", 0.55)
-    ao_mix.inputs["To Max"].default_value = 1.0
-    L(ao.outputs["AO"], ao_mix.inputs["Value"])
-
-    # color = base, lightened on edges (worn paint), times AO
-    wear = N("ShaderNodeMix")
-    wear.data_type = "RGBA"
-    wear.blend_type = "SCREEN"
-    wear_amt = N("ShaderNodeMath")
-    wear_amt.operation = "MULTIPLY"
-    L(edge.outputs[0], wear_amt.inputs[0])
-    wear_amt.inputs[1].default_value = spec.get("edge_wear", 0.35)
-    L(wear_amt.outputs[0], wear.inputs[0])
-    L(color_socket, wear.inputs[6])
-    wear.inputs[7].default_value = (0.75, 0.72, 0.65, 1.0)
-    shade = N("ShaderNodeMix")
-    shade.data_type = "RGBA"
-    shade.blend_type = "MULTIPLY"
-    shade.inputs[0].default_value = 1.0
-    L(wear.outputs[2], shade.inputs[6])
-    comb = N("ShaderNodeCombineColor")
-    L(ao_mix.outputs[0], comb.inputs[0])
-    L(ao_mix.outputs[0], comb.inputs[1])
-    L(ao_mix.outputs[0], comb.inputs[2])
-    L(comb.outputs[0], shade.inputs[7])
-    color_final = shade.outputs[2]
-
-    # roughness: lower on worn edges
-    rough = N("ShaderNodeMath")
-    rough.operation = "MULTIPLY_ADD"
-    L(edge.outputs[0], rough.inputs[0])
-    rough.inputs[1].default_value = -0.25 * spec.get("edge_wear", 0.35) / 0.35
-    rough.inputs[2].default_value = spec["roughness"]
-    rough.use_clamp = True
-
-    metal = N("ShaderNodeValue")
-    metal.outputs[0].default_value = spec["metallic"]
-    mask = N("ShaderNodeValue")
-    mask.outputs[0].default_value = spec.get("mask", 1.0)
-
-    # normal: bevel normal plus a pattern bump
-    bump = N("ShaderNodeBump")
+    bump = N.new("ShaderNodeBump")
     bump.inputs["Distance"].default_value = 0.02
-    L(bevel.outputs["Normal"], bump.inputs["Normal"])
+    N.link(bevel.outputs["Normal"], bump.inputs["Normal"])
     pattern = spec.get("bump")
     if pattern in ("grille", "tread"):
-        wave = N("ShaderNodeTexWave")
-        wave.wave_type = "BANDS"
-        wave.bands_direction = "X" if pattern == "grille" else "Y"  # Blender X = Roblox X; Blender Y = Roblox -Z
+        wave = N.new("ShaderNodeTexWave", wave_type="BANDS", bands_direction="X" if pattern == "grille" else "Y")
         wave.inputs["Scale"].default_value = 1.2 if pattern == "grille" else 2.2
         wave.inputs["Distortion"].default_value = 0.0
-        L(geo.outputs["Position"], wave.inputs["Vector"])
-        L(wave.outputs["Fac"], bump.inputs["Height"])
+        N.link(pos, wave.inputs["Vector"])
+        N.link(wave.outputs["Fac"], bump.inputs["Height"])
         bump.inputs["Strength"].default_value = 0.8
     else:
-        fine = N("ShaderNodeTexNoise")
-        fine.inputs["Scale"].default_value = 9.0
-        L(geo.outputs["Position"], fine.inputs["Vector"])
-        L(fine.outputs["Fac"], bump.inputs["Height"])
-        bump.inputs["Strength"].default_value = 0.05
+        N.link(N.noise(pos, 9.0), bump.inputs["Height"])
+        bump.inputs["Strength"].default_value = 0.04
 
-    L(color_final, bsdf.inputs["Base Color"])
-    L(rough.outputs[0], bsdf.inputs["Roughness"])
-    L(metal.outputs[0], bsdf.inputs["Metallic"])
-    L(bump.outputs["Normal"], bsdf.inputs["Normal"])
-    L(bsdf.outputs[0], out.inputs["Surface"])
+    N.link(color, bsdf.inputs["Base Color"])
+    N.link(rough, bsdf.inputs["Roughness"])
+    N.link(metal, bsdf.inputs["Metallic"])
+    N.link(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    N.link(bsdf.outputs[0], out.inputs["Surface"])
 
-    mat["_sockets"] = 1
+    variant_node = variant.node
     mat_sockets[mat.name] = {
-        "out": out, "bsdf": bsdf, "emit": emit,
-        "color": color_final, "roughness": rough.outputs[0],
-        "metallic": metal.outputs[0], "mask": mask.outputs[0],
+        "out": out, "bsdf": bsdf, "emit": emit, "variant": variant_node,
+        "color": color, "roughness": rough, "metallic": metal, "mask": mask,
     }
     return mat
 
 
-mat_sockets = {}
+def set_variant(materials, i):
+    for mat in materials:
+        mat_sockets[mat.name]["variant"].outputs[0].default_value = float(i)
 
 
 def show_channel(materials, channel):
@@ -429,48 +543,68 @@ def unwrap(objs, margin=0.006):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def bake_all(objs, materials, size, samples, out_dir, prefix):
+def joined_copy(objs, name):
+    """One object joining copies of `objs` (world positions kept): the
+    single active target a selected-to-active bake needs."""
+    copies = []
+    for o in objs:
+        c = o.copy()
+        c.data = o.data.copy()
+        bpy.context.scene.collection.objects.link(c)
+        copies.append(c)
+    select_only(copies, copies[0])
+    bpy.ops.object.join()
+    joined = bpy.context.view_layer.objects.active
+    joined.name = name
+    return joined
+
+
+def bake_all(low, high, materials, size, samples, out_dir, prefix, variants):
+    """Bakes the detailed pieces onto the low-poly atlas. Returns the paths
+    and images per variant: {"a": {"ALB", "NOR", "RGH", "MTL"}, ...}; the
+    normal and metalness maps are shared."""
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
     scene.cycles.samples = samples
     scene.render.bake.margin = 8
-    scene.render.bake.use_clear = True
-    select_only(objs, objs[0])
-    paths = {}
+    target = joined_copy(low, f"{prefix}_bake_target")
+    select_only(high + [target], target)
 
-    def emit_bake(channel, name, space):
+    def bake(kind, name, space, channel=None):
         img = new_image(name, size, space)
         set_target(materials, img)
         show_channel(materials, channel)
-        bpy.ops.object.bake(type="EMIT")
+        bpy.ops.object.bake(type=kind, use_selected_to_active=True, cage_extrusion=0.05,
+                            max_ray_distance=0.2, use_clear=True, margin=8,
+                            normal_space="TANGENT")
         return img
 
-    color = emit_bake("color", f"{prefix}_color", "sRGB")
-    mask = emit_bake("mask", f"{prefix}_mask", "Non-Color")
-    rough = emit_bake("roughness", f"{prefix}_RGH", "Non-Color")
-    metal = emit_bake("metallic", f"{prefix}_MTL", "Non-Color")
-
-    nor = new_image(f"{prefix}_NOR", size, "Non-Color")
-    set_target(materials, nor)
-    show_channel(materials, None)
-    bpy.ops.object.bake(type="NORMAL", normal_space="TANGENT")
-
-    # color + team mask in alpha
-    alb = bpy.data.images.new(f"{prefix}_ALB", size, size, alpha=True)
-    alb.colorspace_settings.name = "sRGB"
     import numpy as np
-    c = np.array(color.pixels[:], dtype=np.float32).reshape(-1, 4)
-    m = np.array(mask.pixels[:], dtype=np.float32).reshape(-1, 4)
-    c[:, 3] = m[:, 0]
-    alb.pixels[:] = c.ravel()
-
     os.makedirs(out_dir, exist_ok=True)
-    for img, mode in ((alb, "RGBA"), (nor, "RGB"), (rough, "BW"), (metal, "BW")):
-        path = os.path.join(out_dir, f"{img.name}.png")
-        save_png(img, path, mode)
-        paths[img.name.split("_")[-1]] = path
-    return paths, {"ALB": alb, "NOR": nor, "RGH": rough, "MTL": metal}
+    nor = bake("NORMAL", f"{prefix}_NOR", "Non-Color")
+    metal = bake("EMIT", f"{prefix}_MTL", "Non-Color", "metallic")
+    mask = bake("EMIT", f"{prefix}_mask", "Non-Color", "mask")
+    save_png(nor, os.path.join(out_dir, f"{nor.name}.png"), "RGB")
+    save_png(metal, os.path.join(out_dir, f"{metal.name}.png"), "BW")
+    m = np.array(mask.pixels[:], dtype=np.float32).reshape(-1, 4)
+
+    result = {}
+    for i, key in enumerate(variants):
+        set_variant(materials, i)
+        color = bake("EMIT", f"{prefix}_{key}_color", "sRGB", "color")
+        rough = bake("EMIT", f"{prefix}_{key}_RGH", "Non-Color", "roughness")
+        alb = bpy.data.images.new(f"{prefix}_{key}_ALB", size, size, alpha=True)
+        alb.colorspace_settings.name = "sRGB"
+        c = np.array(color.pixels[:], dtype=np.float32).reshape(-1, 4)
+        c[:, 3] = m[:, 0]
+        alb.pixels[:] = c.ravel()
+        save_png(alb, os.path.join(out_dir, f"{alb.name}.png"), "RGBA")
+        save_png(rough, os.path.join(out_dir, f"{rough.name}.png"), "BW")
+        result[key] = {"ALB": alb, "NOR": nor, "RGH": rough, "MTL": metal}
+    show_channel(materials, None)
+    bpy.data.objects.remove(target, do_unlink=True)
+    return result
 
 
 def save_png(img, path, mode):
@@ -487,8 +621,10 @@ def save_png(img, path, mode):
     img.reload()
 
 
-def textured_material(name, imgs):
-    """Material using the baked set, for the preview render and the FBX."""
+def textured_material(name, imgs, team_rgb=None):
+    """Material using a baked set, for the FBX and (with `team_rgb`, the
+    team color under the alpha mask as AlphaMode.Overlay draws it) the
+    preview renders."""
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     nt = mat.node_tree
@@ -501,28 +637,22 @@ def textured_material(name, imgs):
     rgh = N("ShaderNodeTexImage"); rgh.image = imgs["RGH"]
     mtl = N("ShaderNodeTexImage"); mtl.image = imgs["MTL"]
     nmap = N("ShaderNodeNormalMap")
-    L(alb.outputs["Color"], bsdf.inputs["Base Color"])
     L(rgh.outputs["Color"], bsdf.inputs["Roughness"])
     L(mtl.outputs["Color"], bsdf.inputs["Metallic"])
     L(nor.outputs["Color"], nmap.inputs["Color"])
     L(nmap.outputs["Normal"], bsdf.inputs["Normal"])
+    if team_rgb is None:
+        L(alb.outputs["Color"], bsdf.inputs["Base Color"])
+    else:
+        mix = N("ShaderNodeMix")
+        mix.data_type = "RGBA"
+        team = N("ShaderNodeRGB")
+        team.outputs[0].default_value = srgb(team_rgb)
+        L(alb.outputs["Alpha"], mix.inputs[0])
+        L(team.outputs[0], mix.inputs[6])
+        L(alb.outputs["Color"], mix.inputs[7])
+        L(mix.outputs[2], bsdf.inputs["Base Color"])
     L(bsdf.outputs[0], out.inputs["Surface"])
-    return mat, alb, bsdf
-
-
-def preview_team_material(name, imgs, team_rgb):
-    """Like textured_material, with the team color under the alpha mask
-    (what SurfaceAppearance AlphaMode.Overlay draws)."""
-    mat, alb, bsdf = textured_material(name, imgs)
-    nt = mat.node_tree
-    mix = nt.nodes.new("ShaderNodeMix")
-    mix.data_type = "RGBA"
-    team = nt.nodes.new("ShaderNodeRGB")
-    team.outputs[0].default_value = srgb(team_rgb)
-    nt.links.new(alb.outputs["Alpha"], mix.inputs[0])
-    nt.links.new(team.outputs[0], mix.inputs[6])
-    nt.links.new(alb.outputs["Color"], mix.inputs[7])
-    nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
     return mat
 
 
@@ -545,13 +675,13 @@ def export_fbx(objs, path):
     )
 
 
-def render_preview(path, cam_from_roblox, look_at_roblox, size=(1280, 720), samples=32):
+def render_preview(path, cam_from_roblox, look_at_roblox, size=(1280, 720), samples=32, lens=50):
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.samples = samples
     scene.render.resolution_x, scene.render.resolution_y = size
     cam_data = bpy.data.cameras.get("preview_cam") or bpy.data.cameras.new("preview_cam")
-    cam_data.lens = 50
+    cam_data.lens = lens
     cam = bpy.data.objects.get("preview_cam") or bpy.data.objects.new("preview_cam", cam_data)
     if cam.name not in scene.collection.objects:
         scene.collection.objects.link(cam)
@@ -590,6 +720,15 @@ def preview_lighting():
     gm.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = srgb((92, 118, 70))
     ground.materials.append(gm)
     scene.collection.objects.link(g)
+
+
+def bounds(o):
+    pts = [o.matrix_world @ Vector(c) for c in o.bound_box]
+    rb = [to_roblox(v) for v in pts]
+    lo = [min(v[i] for v in rb) for i in range(3)]
+    hi = [max(v[i] for v in rb) for i in range(3)]
+    return {"center": [round((lo[i] + hi[i]) / 2, 4) for i in range(3)],
+            "size": [round(hi[i] - lo[i], 4) for i in range(3)]}
 
 
 def write_json(path, data):

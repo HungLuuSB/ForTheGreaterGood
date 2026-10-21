@@ -16,18 +16,20 @@ local function v3(t: { number }): Vector3
 	return Vector3.new(t[1], t[2], t[3])
 end
 
--- Every rig.json piece as a MeshPart under `src` (or `src` itself).
-local function findPieces(src: Instance, rig: any): { [string]: MeshPart }
+-- Every rig.json piece as a MeshPart under `src` (or `src` itself), named
+-- `<piece><suffix>` (an FBX can carry several variants: base_a, base_b, ...).
+local function findPieces(src: Instance, rig: any, suffix: string?): { [string]: MeshPart }
 	local parts: { [string]: MeshPart } = {}
 	local candidates = src:GetDescendants()
 	table.insert(candidates, src)
-	for _, d in candidates do
-		if d:IsA("MeshPart") and rig.pieces[d.Name] and not parts[d.Name] then
-			parts[d.Name] = d
-		end
-	end
 	for name in rig.pieces do
-		assert(parts[name], `rig: no MeshPart named {name} in {src:GetFullName()}`)
+		for _, d in candidates do
+			if d:IsA("MeshPart") and d.Name == name .. (suffix or "") then
+				parts[name] = d
+				break
+			end
+		end
+		assert(parts[name], `rig: no MeshPart named {name}{suffix or ""} in {src:GetFullName()}`)
 	end
 	return parts
 end
@@ -36,9 +38,9 @@ end
 -- 3D Importer read Blender's FBX as centimeters (x100) and turned it 180°
 -- about Y (pipeline.md, import notes). Mesh orientation inside a MeshPart
 -- doesn't matter to the rig: joints are computed from world CFrames.
-function RigModel.normalize(src: Instance, rig: any, scale: number, turnY: boolean)
+function RigModel.normalize(src: Instance, rig: any, scale: number, turnY: boolean, suffix: string?)
 	local turn = if turnY then CFrame.Angles(0, math.pi, 0) else CFrame.identity
-	for _, part in findPieces(src, rig) do
+	for _, part in findPieces(src, rig, suffix) do
 		local cf = part.CFrame
 		part.Size *= scale
 		part.CFrame = turn * (cf - cf.Position + cf.Position * scale)
@@ -46,8 +48,8 @@ function RigModel.normalize(src: Instance, rig: any, scale: number, turnY: boole
 end
 
 -- Checks that the pieces have the Blender sizes and positions (studs).
-function RigModel.check(src: Instance, rig: any): { string }
-	local parts = findPieces(src, rig)
+function RigModel.check(src: Instance, rig: any, suffix: string?): { string }
+	local parts = findPieces(src, rig, suffix)
 	local problems = {}
 	for name, part in parts do
 		local want = v3(rig.pieces[name].size)
@@ -70,8 +72,8 @@ function RigModel.check(src: Instance, rig: any): { string }
 	return problems
 end
 
-function RigModel.rig(src: Instance, rig: any, appearance: { [string]: string }?): Model
-	local parts = findPieces(src, rig)
+function RigModel.rig(src: Instance, rig: any, suffix: string?, appearance: { [string]: string }?): Model
+	local parts = findPieces(src, rig, suffix)
 	-- unit origin: base's geometry center sits at rig.pieces.base.center
 	local shift = parts.base.Position - v3(rig.pieces.base.center)
 
@@ -103,6 +105,7 @@ function RigModel.rig(src: Instance, rig: any, appearance: { [string]: string }?
 			sa.AlphaMode = Enum.AlphaMode.Overlay
 			sa.Parent = part
 		end
+		part.Name = name -- drop the variant suffix
 		part.Parent = model
 	end
 

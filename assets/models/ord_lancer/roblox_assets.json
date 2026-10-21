@@ -1,15 +1,46 @@
 {
-  "note": "Roblox assets uploaded by Studio's 3D Importer from export/ord_lancer.fbx on 2026-10-21 (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
-  "model": "rbxassetid://128852274487214",
-  "meshes": {
-    "base": "rbxassetid://124295100730854",
-    "turret": "rbxassetid://124333550925119",
-    "barrel": "rbxassetid://95532598839867"
+  "note": "Roblox assets uploaded by Studio's 3D Importer from export/ord_lancer.fbx (creator: hungluu344). Rebuild the rigged models from these with rig_model.luau; no re-import needed. The importer reuses identical meshes, so base and turret are shared by both variants.",
+  "revision": "2026-10-21, review 2: camouflage variants a (plain sand) and b (disruptive), baked detail, painted team color (light wash), new gun; 3,704 triangles",
+  "variants": {
+    "a": {
+      "meshes": {
+        "base": "rbxassetid://96013587743288",
+        "turret": "rbxassetid://91427253863252",
+        "barrel": "rbxassetid://122524653609913"
+      },
+      "surfaceAppearance": {
+        "ALB": "rbxassetid://132366000584793",
+        "NOR": "rbxassetid://84806461845778",
+        "RGH": "rbxassetid://113669155649134",
+        "MTL": "rbxassetid://118670708980265"
+      }
+    },
+    "b": {
+      "meshes": {
+        "base": "rbxassetid://96013587743288",
+        "turret": "rbxassetid://91427253863252",
+        "barrel": "rbxassetid://75632648963249"
+      },
+      "surfaceAppearance": {
+        "ALB": "rbxassetid://88648547381604",
+        "NOR": "rbxassetid://84806461845778",
+        "RGH": "rbxassetid://113877431064334",
+        "MTL": "rbxassetid://118670708980265"
+      }
+    }
   },
-  "surfaceAppearance": {
-    "ALB": "rbxassetid://133557030144323",
-    "NOR": "rbxassetid://79823659304925",
-    "RGH": "rbxassetid://74657069880141",
-    "MTL": "rbxassetid://81975653028485"
+  "previous": {
+    "note": "first slice (3,016 triangles), ReplicatedStorage.Models.ord_lancer in FTGG Art",
+    "meshes": {
+      "base": "rbxassetid://124295100730854",
+      "turret": "rbxassetid://124333550925119",
+      "barrel": "rbxassetid://95532598839867"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://133557030144323",
+      "NOR": "rbxassetid://79823659304925",
+      "RGH": "rbxassetid://74657069880141",
+      "MTL": "rbxassetid://81975653028485"
+    }
   }
 }
