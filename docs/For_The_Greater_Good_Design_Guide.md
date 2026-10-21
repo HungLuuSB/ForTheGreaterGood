@@ -1108,6 +1108,11 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 
 ### 11.4 Radar error, jamming, stealth
 
+- **Pinpointers** (S-59, client request 34): T2 structures (Order **Witness**, Chaos **Augur**, `pinpointer = true`) that sharpen their ally team's radar. Precision = finished Pinpointers ÷ 6, at most 1 (`Shared/Combat/Pinpoint`). At precision p:
+  - radar contacts wobble by radarError × (1 − 0.9 p), and fire-control tracks by trackError × (1 − 0.9 p). At full precision a blip barely moves (1.5 studs instead of 14.6 in the test).
+  - a radar-guided missile chasing a target its team has only on radar (not in sight) loses its lock with chance 0.1 × (1 − p) at each midcourse check (every 5 ticks). Without Pinpointers a 700-stud shot loses about a third (9 of 25 in the test); with six, none.
+  - No wire record: a client counts its team's Pinpointers from their icons (unique per unit type, S-58) and applies the same formula.
+
 - **Cloak (not built yet; the `cloaked` state bit is reserved):** a cloaked unit that fires drops its cloak and is then seen by normal sight, so firing never stays hidden. Its shots and projectiles are shown like anyone's (7.2, S-43): they never name the shooter.
 
 - **Radar error ("wobble"):** a radar blip's position is offset by a pseudo-random amount that changes slowly (e.g., seeded by `unitId` and `tick // 30`). The **server sends the wobbled position**, never the true one — clients can't cheat it. Order radars have smaller error than Chaos radars.
@@ -1323,6 +1328,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
 | Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
+| Pinpointer (radar precision, S-59) | T2 | **Witness** | **Augur** | Adv. Ground |
 | Floating turret | T1 | **Moat** | **Riptide** | Naval |
 | Torpedo launcher | T1 | **Undertow** | **Fang** | Naval |
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |
@@ -1513,6 +1519,12 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 - Skirmish AI (DECISIONS D90): `Sim/AI/Skirmish.luau` plays through commands like a player, so AI games replay exactly.
   - S-7: it builds a radar tower early and techs up to the Advanced Vehicle Plant for a mobile fire-control radar, MLRS and main battle tanks. Radar and fire-control vehicles guard its waves. Its artillery kites from close enemies. It answers known enemy aircraft with IR SAM trucks, plus an IR SAM site when they come near home.
+  - Levels (S-17, S-57): `match.ai = { [player] = "easy" | "normal" | "hard" }`.
+    - **Easy** is for a new player. It sends no wave before 8 minutes and keeps at most 8 army units. Waves start at 4 units, grow by 1, and leave at least 2 minutes apart.
+    - **Normal** builds 2–3 tanks (its own Prng picks) before its third generator: from its second generator its plant builds tanks before more workers, and the third generator waits for them. Rally points stay out of the other side's artillery range on small maps, and waves leave on a shared 20-second grid (mirror fairness). It pulls its whole army home when 3 or more known enemy ground units come within the recall radius of its base: 570 studs, or 45% of the way to the enemy start on smaller maps.
+    - **Hard** keeps its S-17 extras.
+    - **Missile refills (S-57):** the generator rule counts missile refill power (up to 60/s). With enemy aircraft near home in the last minute, half the mobile SAMs stay home, and new army production pauses while SAMs refill under a power stall.
+    - `lune run ailevels` measures the levels. Since S-57 Hard > Normal > Easy on every map (`docs/AI_LEVELS.md`).
 
 ### 16.3 Match flow
 

@@ -221,6 +221,10 @@ return function(t: RunAll.Context)
 		World.setHealth(w, jet, 1e9)
 		local site = Spawn.unit(sim, "chs_wyvern", 2, 400, 0, 0)
 		sim.world.wStock[World.slotKey(site, 1)] = 255 -- this test is about guidance, not supply (stockpiles, S-47)
+		-- nor radar precision: full Pinpointer precision, so no lock is lost to a coarse track (S-59)
+		for i = 1, 6 do
+			Spawn.unit(sim, "chs_augur", 2, 520, -150 + i * 40, 0)
+		end
 		local key = World.slotKey(site, 1)
 		local restYaw, restPitch = w.wYaw[key], w.wPitch[key]
 		moveTo(sim, 1, { jet }, 250, 0)

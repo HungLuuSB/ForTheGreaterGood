@@ -19,6 +19,8 @@ return {
 		chs_breaker = require("./Units/chs_breaker"),
 		chs_cataclysm = require("./Units/chs_cataclysm"),
 		chs_ragnarok = require("./Units/chs_ragnarok"),
+		chs_augur = require("./Units/chs_augur"),
+		ord_witness = require("./Units/ord_witness"),
 		ord_reckoning = require("./Units/ord_reckoning"),
 		chs_condor = require("./Units/chs_condor"),
 		chs_converter = require("./Units/chs_converter"),
