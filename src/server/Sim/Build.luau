@@ -272,6 +272,14 @@ function Build.cancelQueued(sim: Types.Sim, factory: number, index: number)
 	end
 end
 
+-- A finished unit for the results screen (Stats, S-63).
+function Build.countBuilt(sim: Types.Sim, id: number)
+	local s = sim.playerStats[sim.world.owner[id]]
+	if s then
+		s.unitsBuilt += 1
+	end
+end
+
 local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 	local w = sim.world
 	local fd = def(sim, factory)
@@ -290,6 +298,7 @@ local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 		end
 	end
 	Combat.addEvent(sim.combat, { kind = "PRODUCED", tick = sim.tick, unit = id, other = factory })
+	Build.countBuilt(sim, id)
 end
 
 function Build.step(sim: Types.Sim)
@@ -469,6 +478,7 @@ function Build.step(sim: Types.Sim)
 				World.setBuildProgress(w, t, 1)
 				Lifecycle.completed(sim, t)
 				Combat.addEvent(sim.combat, { kind = "BUILD_DONE", tick = sim.tick, unit = t, other = 0 })
+				Build.countBuilt(sim, t)
 			else
 				World.setBuildProgress(w, t, p)
 			end

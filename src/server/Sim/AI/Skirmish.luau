@@ -98,7 +98,7 @@ Skirmish.RECALL_RADIUS = 570 -- studs from home: an enemy wave this close brings
 Skirmish.RECALL_MIN = 3 -- known enemy ground units that make a wave
 Skirmish.RECALL_HOLD = 300 -- ticks no new wave leaves after a recall
 Skirmish.WAVE_ALIGN = 300 -- ticks: waves leave only at the start of these windows (S-57)
-Skirmish.RALLY_GAP = 520 -- studs at least between two rally points: beyond artillery range (howitzer 450) (S-57)
+Skirmish.RALLY_GAP = 600 -- studs at least between two rally points: beyond artillery range (Verdict 480 since S-62) with room for the army's spread (S-57)
 
 export type Level = {
 	think: number, -- ticks between thinks

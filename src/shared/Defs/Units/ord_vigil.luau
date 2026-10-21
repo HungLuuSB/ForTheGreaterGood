@@ -9,10 +9,10 @@ return Templates.extend(Templates.Structure, {
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE", "ANTIAIR" },
-	cost = { supply = 110, power = 1100, buildTime = 2800 },
-	health = 1100,
+	cost = { supply = 120, power = 1200, buildTime = 3100 },
+	health = 1300, -- faction pass (S-62)
 	footprint = 1,
-	sensors = { sight = 160, airSight = 157 },
+	sensors = { sight = 160, airSight = 206 },
 	weapons = { { def = "ord_ir_sam", turretPiece = "launcher", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "muzzle" },
 	model = "ord_vigil",

@@ -82,6 +82,7 @@ export type UnitDef = {
 	wind: { max: number }?, -- power per second at full wind (guide 8.5 Wind Turbine)
 	converter: { power: number, supply: number }?, -- per second: power in, supply out (toggleable)
 	pinpointer: boolean?, -- raises its ally team's radar precision (Shared/Combat/Pinpoint, S-59)
+	pinpointFull: number?, -- this type's count for full precision (default Pinpoint.FULL, 6; S-62)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -302,6 +303,7 @@ local UNIT_SPEC: Spec = {
 		wind = { kind = "record", optional = true, fields = { max = POSITIVE } },
 		converter = { kind = "record", optional = true, fields = { power = POSITIVE, supply = POSITIVE } },
 		pinpointer = { kind = "boolean", optional = true },
+		pinpointFull = { kind = "number", optional = true, min = 1 },
 		storage = {
 			kind = "record",
 			optional = true,

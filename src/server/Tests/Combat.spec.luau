@@ -239,7 +239,7 @@ return function(t: RunAll.Context)
 				if e.kind == "FIRE" and e.unit == shooter then
 					fired = true
 					t.expect(e.hit == true, "accuracy 0 always hits")
-					t.equal(before - w.health[target], 120, "full ARMORED damage, same tick")
+					t.equal(before - w.health[target], sim.defs.weapons.neu_laser_gun.damage.ARMORED, "full ARMORED damage, same tick")
 				end
 			end
 			if fired then
@@ -291,12 +291,12 @@ return function(t: RunAll.Context)
 		t.expect(deaths[light] ~= nil and deaths[light].other ~= 0, "low overkill leaves a wreck")
 		t.equal(deaths[heavy].other, 0, "high overkill leaves none")
 		t.equal(deaths[heavy].severity, 255)
-		t.equal(c.wreckSupply[deaths[light].other], 150 * 0.5, "wreck worth half the supply cost")
+		t.equal(c.wreckSupply[deaths[light].other], sim.defs.units.ord_lancer.cost.supply * 0.5, "wreck worth half the supply cost")
 
-		-- armor classes: the cannon does 140 to LIGHT, 120 to ARMORED
+		-- armor classes: the cannon does 165 to LIGHT, 141 to ARMORED (S-62)
 		local cannon = sim.defs.weapons.ord_light_cannon
-		t.equal(cannon.damage.LIGHT, 140)
-		t.equal(cannon.damage.ARMORED, 120)
+		t.equal(cannon.damage.LIGHT, 165)
+		t.equal(cannon.damage.ARMORED, 141)
 	end)
 
 	t.test("fire states: hold fire never shoots, return fire only shoots back", function()

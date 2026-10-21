@@ -9,10 +9,10 @@ return Templates.extend(Templates.Structure, {
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE", "RADAR_EMITTER" },
-	cost = { supply = 60, power = 900, buildTime = 1800 },
-	health = 600,
+	cost = { supply = 70, power = 1000, buildTime = 2000 },
+	health = 690, -- faction pass (S-62)
 	footprint = 1,
-	sensors = { sight = 160, radar = 650, radarError = 20 },
+	sensors = { sight = 160, radar = 700, radarError = 16 },
 	icon = "radar",
 	model = "ord_watchtower",
 })

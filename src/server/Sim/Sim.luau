@@ -27,6 +27,7 @@ local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
 local SensorsState = require("./SensorsState")
+local Stats = require("./Stats")
 local Nav = require("./Nav")
 local NetOut = require("./NetOut")
 local _Placement = require("./Placement") -- registers its Lifecycle removal hook
@@ -171,6 +172,7 @@ function Sim.new(config: Config): Sim
 			match = matchInfo,
 		}),
 		stats = { commandsApplied = 0, commandsRejected = 0 },
+		playerStats = Stats.new(order),
 		net = nil :: any,
 	}
 	sim.net = NetOut.new(sim)

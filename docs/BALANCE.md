@@ -129,6 +129,256 @@ The "before" run shared the PC with other work, so its timings read a little hig
 - Replay identical: **PASS**.
 - Before tonight, seed 11: avg 0.66, p99 2.63, max 13.83 ms; heap 10.7 → 10.5 MB; PASS.
 
+### Pass 3 — faction pass, stage 1 (2026-10-22, S-62): Order defense and strategy, Chaos army strength
+
+The user approved `docs/design/factions.md` with one change (IR SAMs Vigil 206, Thorn 165: the user's cuts kept, Order +25%) and asked for every shared role within 0.8–1.25 overall, with each version winning its own condition. Measured with the new `lune run factions 3` (equal value 6,000 per side, 3 seeds; `Scenes.trial`): close, long, defend (Order holds, Chaos attacks from 600 studs) and flank (Chaos in two halves from the north and south). Overall = geometric mean of close and long.
+
+#### Shared roles that fight each other (3 seed(s); trade > 1 favours Order)
+
+| Role | Order / Chaos | close | long | defend | flank | overall | in band | Order wins its condition | Chaos wins its condition |
+|---|---|---|---|---|---|---|---|---|---|
+| T1 tank | Lancer / Ravager | 1.08 | 0.89 | 1.38 | 0.77 | **0.98** | yes | yes | yes |
+| T2 tank | Paladin / Juggernaut | 0.76 | 1.41 | 1.66 | 1.32 | **1.03** | yes | yes | yes |
+| T1 artillery | Verdict / Hellmouth | 0.90 | 1.00 | 2.06 | 0.60 | **0.95** | yes | yes | yes |
+| T2 MLRS | Judgement / Hydra | 1.14 | 1.10 | 2.11 | 0.88 | **1.12** | yes | yes | **no** |
+| T1 fighter | Falcon / Harpy | 0.81 | 1.18 | 0.97 | 0.86 | **0.97** | yes | **no** | **no** |
+| T2 fighter | Archon / Manticore | 0.53 | 1.39 | 0.55 | 0.44 | **0.86** | yes | yes | yes |
+| Scout | Herald / Jackal | 1.27 | 0.82 | 0.82 | 0.64 | **1.02** | yes | **no** | yes |
+
+#### SAMs: each version against the same raid (defend; the raid's value destroyed / own value lost)
+
+| Role | Order / Chaos | heavy: Order | heavy: Chaos | swarm: Order | swarm: Chaos | Order / Chaos overall | in band | Order better vs heavy | Chaos better vs swarm |
+|---|---|---|---|---|---|---|---|---|---|
+| Mobile IR SAM | Halo / Hornet | 1.27 | 0.92 | 0.73 | 0.79 | **1.13** | yes | yes | yes |
+| IR SAM site | Vigil / Thorn | 2.21 | 2.23 | 3.04 | 2.39 | **1.12** | yes | no | no |
+| Mobile radar SAM | Seraph / Gorgon | 0.48 | 0.47 | 1.36 | 0.94 | **1.21** | yes | no | no |
+| Radar SAM site | Aegis / Wyvern | 1.45 | 1.53 | 2.69 | 2.93 | **0.93** | yes | yes | yes |
+
+#### Artillery emplacements: each version against the same tank assault (defend)
+
+| Role | Order / Chaos | Order | Chaos | Order / Chaos | in band |
+|---|---|---|---|---|---|
+| Artillery emplacement | Edict / Cataclysm | 0.26 | 0.29 | **0.90** | yes |
+
+**12 of 12 roles in band.**
+- T2 MLRS: Chaos wins neither close (1.14) nor on the flank (0.88)
+- T1 fighter: Order doesn't win its condition (long 1.18, defend 0.97)
+- T1 fighter: Chaos wins neither close (0.81) nor on the flank (0.86)
+- Scout: Order doesn't win its condition (long 0.82, defend 0.82)
+
+**Not met** (under "Needs my review" in `docs/progress/sim.md`):
+- **T1 fighters** are even everywhere (0.81–1.18): jets close 600 studs in about 2 s, so the starts don't separate them. Order's air condition is standoff with radar and Pinpointers, which this check doesn't build.
+- **Scouts:** Order doesn't win at range or defending (0.82, 0.82); the Herald wins close (1.27). The 35-stud range edge is less than a Jackal covers in half a second.
+- **MLRS:** Chaos wins neither close nor the flank (1.14, 0.88). Task 7 (real salvos) changes the MLRS; it gets re-measured then.
+
+**Measurement notes:** the first runs used 3,000 per side and a 20-unit cap, as the counter check does; that rounds expensive aircraft to 3 against 3, so Chaos's lower price bought no numbers (Archon vs Manticore read 2.31 for Order). At 6,000 and a 60-unit cap the same defs read 0.86. Several roles turn on hits-to-kill breakpoints: a Ravager needed 13 shots on a Lancer (12 after +5% damage), a Manticore 4 hits on an Archon (3 after the tuning).
+
+**Tuned away from the proposal's numbers** (all within ±10% of them, except where marked):
+- Lancer reload 1.75 (proposal 1.8). Ravager accuracy 1.45 (1.6), damage 131 / 109 armored (125 / 104: 12 shots kill a Lancer, not 13), reload 1.4 (1.3).
+- T1 tank turret yaw rates swapped toward the identity, Order 120 → 100, Chaos 100 → 130 °/s: **not in the proposal**, beyond ±10% of the old numbers.
+- Paladin heavy cannon damage ×1.15 (310 / 290 armored) and Juggernaut cannon ×0.75 (248 / 231): the proposal gave T2 directions but no damage numbers, and the Juggernaut out-damaged the Paladin per shot (330 vs 270), against "Order more damage per shot". Reloads 2.45 (2.7) and 2.2 (2.0).
+- Judgement reload 7.15 (6.5), accuracy 1.32 (1.2). Hydra accuracy 3.15 (3.5), damage 264 (240), armored 250 (scaled 185: 4 rockets kill a Judgement), reload 4.5 (5.0), health 935 (850).
+- Falcon health 660 (600), cost 470 (520), missile range 374 (340). Harpy cost 400 (380), missile range 234 (260).
+- Archon missile reload 2.4 (2.2), range 396 (440), damage 300 (330), cost 1,200 (1,100), DIRCM chance 0.68 (0.75 today; not in the proposal). Manticore health 880 (800), missile damage 300 (280), range 350 (320).
+- Herald / Jackal costs 121 / 99 (value; the proposal gave none), machine gun accuracy 1.35 / 1.65 (not in the proposal; was 1.5 both).
+- Vigil / Halo missile damage 264 (240). Halo health 660, Hornet 480 (not in the proposal; were 500 / 560, against Order-tougher).
+- Radar SAM reload Order 4.1 (4.5), Chaos 3.7 (3.4).
+
+**Side effects through shared weapons:** the T1 tank guns also arm the Bulwark / Spike turrets and the Tideguard / Mire amphibious tanks; the Paladin's heavy cannon also arms the Bastion. The Edict and Cataclysm got their own guns (`ord_fortress_howitzer` 520 range, 0.5°, 480 structure damage, 4.4 s; `chs_fortress_mortar` 400, 2.0°, 400, 3.0 s), since the proposal gives them numbers apart from the Verdict's and Hellmouth's.
+
+**Every changed number** (319 def fields; the two new weapons are above). Costs as supply / power / buildTime; buildTime scales with value:
+
+| Def | Field | Before | After |
+|---|---|---|---|
+| `chs_aam` | accuracy | 1.2 | 1.4 |
+| `chs_aam` | lockRange | 280 | 234 |
+| `chs_aam` | range | 280 | 234 |
+| `chs_aam` | reload | 0.9 | 0.8 |
+| `chs_aam` | damage | AIR 200 | AIR 190 |
+| `ord_aam` | lockRange | 320 | 374 |
+| `ord_aam` | range | 320 | 374 |
+| `ord_aam` | reload | 1.2 | 1.4 |
+| `ord_aam` | damage | AIR 260 | AIR 280 |
+| `ord_aegis` | sensors.radar | 1097 | 1200 |
+| `ord_aegis` | sensors.radarError | 20 | 15 |
+| `chs_allseer` | health | 1500 | 1280 |
+| `chs_allseer` | sensors.radar | 1000 | 950 |
+| `chs_allseer` | sensors.radarError | 40 | 45 |
+| `chs_allseer` | cost (supply / power / buildTime) | 300 / 5000 / 8000 | 255 / 4250 / 6800 |
+| `ord_architect` | buildPower | 200 | 220 |
+| `ord_architect` | health | 1100 | 1270 |
+| `ord_architect` | movement.maxSpeed | 28 | 26 |
+| `ord_architect` | cost (supply / power / buildTime) | 300 / 4000 / 8000 | 330 / 4500 / 8900 |
+| `ord_archon` | countermeasures.dircm.chance | 0.75 | 0.68 |
+| `ord_archon` | health | 800 | 900 |
+| `ord_archon` | movement.maxSpeed | 300 | 280 |
+| `ord_archon` | cost (supply / power / buildTime) | 360 / 7000 / 11000 | 395 / 8050 / 12400 |
+| `chs_augur` | health | 1000 | 850 |
+| `chs_augur` | pinpointFull | — | 7 |
+| `chs_augur` | cost (supply / power / buildTime) | 250 / 3000 / 6000 | 215 / 2550 / 5100 |
+| `ord_beacon` | health | 1500 | 1720 |
+| `ord_beacon` | sensors.radar | 1100 | 1250 |
+| `ord_beacon` | sensors.radarError | 15 | 12 |
+| `ord_beacon` | cost (supply / power / buildTime) | 300 / 5000 / 8000 | 345 / 5750 / 9200 |
+| `chs_cataclysm` | health | 4400 | 3800 |
+| `chs_cataclysm` | weapons.1.def | chs_mortar | chs_fortress_mortar |
+| `ord_edict` | health | 4000 | 4800 |
+| `ord_edict` | weapons.1.def | ord_howitzer | ord_fortress_howitzer |
+| `chs_eye` | health | 600 | 510 |
+| `chs_eye` | sensors.radar | 600 | 560 |
+| `chs_eye` | sensors.radarError | 45 | 50 |
+| `chs_eye` | cost (supply / power / buildTime) | 60 / 900 / 1800 | 55 / 750 / 1600 |
+| `ord_falcon` | health | 520 | 660 |
+| `ord_falcon` | movement.maxSpeed | 260 | 240 |
+| `ord_falcon` | cost (supply / power / buildTime) | = / 3200 / 6000 | = / 3100 / 5900 |
+| `chs_forgemaster` | buildPower | 200 | 180 |
+| `chs_forgemaster` | health | 1100 | 940 |
+| `chs_forgemaster` | movement.maxSpeed | 28 | 32 |
+| `chs_forgemaster` | cost (supply / power / buildTime) | 300 / 4000 / 8000 | 280 / 3600 / 7300 |
+| `chs_gorgon` | sensors.radar | 810 | 760 |
+| `chs_gorgon` | sensors.radarError | 45 | 50 |
+| `chs_gorgon` | weapons.1.stockpile | 3 | 4 |
+| `ord_halo` | health | 500 | 660 |
+| `ord_halo` | sensors.airSight | 157 | 206 |
+| `chs_harpy` | health | 560 | 480 |
+| `chs_harpy` | movement.maxSpeed | 240 | 270 |
+| `chs_harpy` | cost (supply / power / buildTime) | 140 / 2800 / = | 130 / 2700 / = |
+| `chs_heavy_aam` | lockRange | 340 | 350 |
+| `chs_heavy_aam` | range | 340 | 350 |
+| `chs_heavy_aam` | reload | 1 | 0.9 |
+| `chs_heavy_aam` | damage | AIR 340 | AIR 300 |
+| `ord_heavy_cannon` | range | 231 | 240 |
+| `ord_heavy_cannon` | reload | 2.4 | 2.45 |
+| `ord_heavy_cannon` | damage | LIGHT 270 / ARMORED 252 / STRUCTURE 216 / SHIP 198 | LIGHT 310 / ARMORED 290 / STRUCTURE 248 / SHIP 228 |
+| `chs_hellmouth` | health | 820 | 700 |
+| `chs_hellmouth` | movement.maxSpeed | 24 | 28 |
+| `ord_herald` | health | 300 | 340 |
+| `ord_herald` | movement.maxSpeed | 70 | 60 |
+| `ord_herald` | sensors.sight | 280 | 300 |
+| `ord_herald` | cost (supply / power / buildTime) | 50 / 600 / 1500 | 55 / 660 / 1600 |
+| `chs_hornet` | health | 560 | 480 |
+| `chs_hornet` | sensors.airSight | 147 | 165 |
+| `chs_hornet` | weapons.1.stockpile | 4 | 5 |
+| `ord_howitzer` | accuracy | 0.6 | 0.5 |
+| `ord_howitzer` | range | 450 | 480 |
+| `ord_howitzer` | reload | 4 | 4.4 |
+| `ord_howitzer` | damage | LIGHT 340 / ARMORED 300 / STRUCTURE 420 / SHIP 260 | LIGHT 372 / ARMORED 329 / STRUCTURE 460 / SHIP 285 |
+| `chs_hydra` | health | 1000 | 935 |
+| `chs_hydra` | movement.maxSpeed | 28 | 32 |
+| `chs_ir_sam` | lockRange | 206 | 165 |
+| `chs_ir_sam` | range | 206 | 165 |
+| `chs_ir_sam` | reload | 2 | 1.7 |
+| `chs_ir_sam` | stockpile.capacity | 8 | 10 |
+| `chs_ir_sam` | stockpile.cost.power | 300 | 240 |
+| `chs_ir_sam` | stockpile.cost.supply | 15 | 12 |
+| `chs_ir_sam` | damage | AIR 200 | AIR 180 |
+| `ord_ir_sam` | lockRange | 147 | 206 |
+| `ord_ir_sam` | range | 147 | 206 |
+| `ord_ir_sam` | reload | 2.5 | 2.8 |
+| `ord_ir_sam` | damage | AIR 220 | AIR 264 |
+| `chs_jackal` | health | 320 | 280 |
+| `chs_jackal` | movement.maxSpeed | 66 | 76 |
+| `chs_jackal` | sensors.sight | 260 | 220 |
+| `chs_jackal` | cost (supply / power / buildTime) | 50 / 600 / 1500 | 45 / 540 / 1400 |
+| `ord_judgement` | health | 900 | 1000 |
+| `ord_judgement` | movement.maxSpeed | 28 | 26 |
+| `chs_juggernaut` | health | 3000 | 2500 |
+| `chs_juggernaut` | cost (supply / power / buildTime) | 320 / 3200 / 8000 | 280 / 2800 / 7000 |
+| `chs_juggernaut_cannon` | range | 210 | 195 |
+| `chs_juggernaut_cannon` | reload | 2.4 | 2.2 |
+| `chs_juggernaut_cannon` | damage | LIGHT 330 / ARMORED 308 / STRUCTURE 264 / SHIP 242 | LIGHT 248 / ARMORED 231 / STRUCTURE 198 / SHIP 182 |
+| `ord_lancer` | health | 1100 | 1300 |
+| `ord_lancer` | movement.maxSpeed | 34 | 28 |
+| `ord_lancer` | cost (supply / power / buildTime) | 150 / 1500 / 4500 | 170 / 1700 / 5100 |
+| `chs_light_cannon` | accuracy | 2 | 1.45 |
+| `chs_light_cannon` | range | 160 | 170 |
+| `chs_light_cannon` | turret.yawRate | 100 | 130 |
+| `chs_light_cannon` | damage | LIGHT 150 / ARMORED 125 / STRUCTURE 110 / SHIP 95 | LIGHT 131 / ARMORED 109 / STRUCTURE 96 / SHIP 83 |
+| `ord_light_cannon` | accuracy | 0.5 | 0.4 |
+| `ord_light_cannon` | range | 200 | 210 |
+| `ord_light_cannon` | reload | 1.6 | 1.75 |
+| `ord_light_cannon` | turret.yawRate | 120 | 100 |
+| `ord_light_cannon` | damage | LIGHT 140 / ARMORED 120 / STRUCTURE 100 / SHIP 90 | LIGHT 165 / ARMORED 141 / STRUCTURE 118 / SHIP 106 |
+| `chs_manticore` | health | 950 | 880 |
+| `chs_manticore` | movement.maxSpeed | 280 | 310 |
+| `chs_manticore` | cost (supply / power / buildTime) | 330 / 6200 / 10000 | 305 / 5750 / 9300 |
+| `ord_mason` | buildPower | 100 | 110 |
+| `ord_mason` | health | 650 | 750 |
+| `ord_mason` | movement.maxSpeed | 30 | 28 |
+| `ord_mason` | cost (supply / power / buildTime) | 120 / 1500 / 3000 | 135 / 1650 / 3300 |
+| `chs_mg` | accuracy | 1.5 | 1.65 |
+| `chs_mg` | range | 150 | 140 |
+| `chs_mg` | reload | 0.4 | 0.35 |
+| `chs_mg` | damage | LIGHT 40 / ARMORED 16 / STRUCTURE 11 / SHIP 10 | LIGHT 34 / ARMORED 14 / STRUCTURE 9 / SHIP 8 |
+| `ord_mg` | accuracy | 1.5 | 1.35 |
+| `ord_mg` | range | 165 | 175 |
+| `ord_mg` | reload | 0.4 | 0.45 |
+| `ord_mg` | damage | LIGHT 36 / ARMORED 14 / STRUCTURE 9 / SHIP 10 | LIGHT 40 / ARMORED 16 / STRUCTURE 10 / SHIP 11 |
+| `chs_mlrs` | accuracy | 3 | 3.15 |
+| `chs_mlrs` | range | 480 | 440 |
+| `chs_mlrs` | reload | 6 | 4.5 |
+| `chs_mlrs` | damage | LIGHT 286 / ARMORED 220 / STRUCTURE 264 / SHIP 180 | LIGHT 264 / ARMORED 250 / STRUCTURE 244 / SHIP 166 |
+| `ord_mlrs` | accuracy | 1.5 | 1.32 |
+| `ord_mlrs` | range | 528 | 560 |
+| `ord_mlrs` | reload | 6 | 7.15 |
+| `ord_mlrs` | damage | LIGHT 234 / ARMORED 180 / STRUCTURE 216 / SHIP 180 | LIGHT 260 / ARMORED 200 / STRUCTURE 240 / SHIP 200 |
+| `chs_mortar` | accuracy | 1.6 | 2 |
+| `chs_mortar` | range | 400 | 380 |
+| `chs_mortar` | reload | 3.5 | 3 |
+| `chs_mortar` | damage | LIGHT 360 / ARMORED 320 / STRUCTURE 440 / SHIP 280 | LIGHT 295 / ARMORED 262 / STRUCTURE 360 / SHIP 229 |
+| `ord_oracle` | health | 380 | 440 |
+| `ord_oracle` | sensors.radar | 700 | 760 |
+| `ord_oracle` | sensors.radarError | 20 | 16 |
+| `ord_oracle` | cost (supply / power / buildTime) | 90 / 1200 / 2600 | 105 / 1350 / 3000 |
+| `ord_paladin` | health | 2600 | 3200 |
+| `ord_paladin` | cost (supply / power / buildTime) | 320 / 3200 / 8000 | 360 / 3600 / 9000 |
+| `ord_radar_aam` | lockRange | 420 | 396 |
+| `ord_radar_aam` | range | 420 | 396 |
+| `ord_radar_aam` | reload | 2 | 2.4 |
+| `chs_radar_sam` | intercepts.chance | 0.2 | 0.15 |
+| `chs_radar_sam` | lockRange | 945 | 880 |
+| `chs_radar_sam` | range | 945 | 880 |
+| `chs_radar_sam` | reload | 4 | 3.7 |
+| `chs_radar_sam` | stockpile.buildTime | 6 | 5 |
+| `chs_radar_sam` | stockpile.capacity | 15 | 18 |
+| `chs_radar_sam` | damage | AIR 400 | AIR 340 |
+| `ord_radar_sam` | intercepts.chance | 0.2 | 0.25 |
+| `ord_radar_sam` | lockRange | 1013 | 1100 |
+| `ord_radar_sam` | range | 1013 | 1100 |
+| `ord_radar_sam` | reload | 4 | 4.1 |
+| `ord_radar_sam` | damage | AIR 380 | AIR 420 |
+| `chs_ravager` | health | 1300 | 1000 |
+| `chs_ravager` | movement.maxSpeed | 30 | 36 |
+| `chs_ravager` | cost (supply / power / buildTime) | 140 / 1400 / 4000 | 130 / 1300 / 3700 |
+| `chs_scrapper` | buildPower | 100 | 90 |
+| `chs_scrapper` | health | 700 | 600 |
+| `chs_scrapper` | movement.maxSpeed | 28 | 32 |
+| `chs_scrapper` | cost (supply / power / buildTime) | 110 / 1300 / 2800 | 100 / 1200 / 2600 |
+| `ord_seraph` | sensors.radar | 878 | 950 |
+| `ord_seraph` | sensors.radarError | 20 | 15 |
+| `chs_thorn` | health | 1000 | 900 |
+| `chs_thorn` | sensors.airSight | 206 | 165 |
+| `chs_thorn` | cost (supply / power / buildTime) | 100 / 1000 / 2600 | 90 / 900 / 2300 |
+| `ord_verdict` | health | 700 | 800 |
+| `ord_verdict` | movement.maxSpeed | 26 | 24 |
+| `ord_vigil` | health | 1100 | 1300 |
+| `ord_vigil` | sensors.airSight | 157 | 206 |
+| `ord_vigil` | cost (supply / power / buildTime) | 110 / 1100 / 2800 | 120 / 1200 / 3100 |
+| `chs_watcher` | health | 420 | 360 |
+| `chs_watcher` | sensors.radar | 600 | 560 |
+| `chs_watcher` | sensors.radarError | 45 | 50 |
+| `chs_watcher` | cost (supply / power / buildTime) | 80 / 1000 / 2400 | 70 / 850 / 2100 |
+| `ord_watchtower` | health | 600 | 690 |
+| `ord_watchtower` | sensors.radar | 650 | 700 |
+| `ord_watchtower` | sensors.radarError | 20 | 16 |
+| `ord_watchtower` | cost (supply / power / buildTime) | 60 / 900 / 1800 | 70 / 1000 / 2000 |
+| `ord_witness` | health | 1000 | 1150 |
+| `ord_witness` | pinpointFull | — | 5 |
+| `ord_witness` | cost (supply / power / buildTime) | 250 / 3000 / 6000 | 290 / 3400 / 6900 |
+| `chs_wyvern` | sensors.radar | 1013 | 950 |
+| `chs_wyvern` | sensors.radarError | 45 | 50 |
+
+
 ## M8 balance items
 
 Recorded for M8 (balance), most important first. Numbers are this run's value trades for the attacker (close / long).

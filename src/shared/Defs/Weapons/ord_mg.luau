@@ -3,12 +3,12 @@
 return {
 	id = "ord_mg",
 	type = "BALLISTIC",
-	range = 165,
-	reload = 0.4,
+	range = 175, -- faction pass (S-62)
+	reload = 0.45, -- faction pass (S-62)
 	projectileSpeed = 600,
 	gravity = 20,
-	accuracy = 1.5,
-	damage = { LIGHT = 36, ARMORED = 14, STRUCTURE = 9, SHIP = 10, AIR = 0, SUB = 0 },
+	accuracy = 1.35, -- faction pass, tuned (S-62)
+	damage = { LIGHT = 40, ARMORED = 16, STRUCTURE = 10, SHIP = 11, AIR = 0, SUB = 0 },
 	aoe = 0,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "LIGHT", "GROUND" },

@@ -3,12 +3,12 @@
 return {
 	id = "chs_mlrs",
 	type = "BALLISTIC",
-	range = 480,
-	reload = 6,
+	range = 440, -- faction pass (S-62)
+	reload = 4.5, -- faction pass, tuned (S-62)
 	projectileSpeed = 260,
 	gravity = 60,
-	accuracy = 3,
-	damage = { LIGHT = 286, ARMORED = 220, STRUCTURE = 264, SHIP = 180, AIR = 0, SUB = 0 },
+	accuracy = 3.15, -- faction pass, tuned (S-62)
+	damage = { LIGHT = 264, ARMORED = 250, STRUCTURE = 244, SHIP = 166, AIR = 0, SUB = 0 },
 	aoe = 16,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
