@@ -8,6 +8,7 @@ local MatchState = {}
 
 export type Mode = "FFA" | "TEAM"
 export type WinCondition = "COMMAND_ENDS" | "ANNIHILATION"
+export type AiLevel = "easy" | "normal" | "hard"
 
 -- Match options (guide 16.1–16.4). Absent → no rules: nobody is ever
 -- eliminated and there is no unit cap (tests and sandboxes).
@@ -15,6 +16,7 @@ export type Config = {
 	mode: Mode,
 	win: WinCondition,
 	unitCap: number?, -- per player; default from the player count (Match.defaultCap)
+	ai: { [number]: AiLevel }?, -- players the skirmish AI plays, and how well (S-17)
 }
 
 export type MatchState = {
@@ -22,6 +24,7 @@ export type MatchState = {
 	mode: Mode,
 	win: WinCondition,
 	unitCap: number, -- 0 = no cap
+	ai: { [number]: AiLevel }, -- player → skirmish AI level (S-17); not in the replay: AI commands are recorded
 	units: { [number]: number }, -- player → owned units and structures (frames included)
 	commanders: { [number]: number }, -- player → owned COMMANDER units
 	eliminated: { [number]: number }, -- player → tick eliminated
@@ -36,6 +39,7 @@ function MatchState.new(config: Config?, unitCap: number): MatchState
 		mode = if config then config.mode else "FFA",
 		win = if config then config.win else "COMMAND_ENDS",
 		unitCap = if config then unitCap else 0,
+		ai = if config and config.ai then table.clone(config.ai) else {},
 		units = {},
 		commanders = {},
 		eliminated = {},

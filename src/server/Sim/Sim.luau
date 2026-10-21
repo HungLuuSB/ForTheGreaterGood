@@ -146,7 +146,8 @@ function Sim.new(config: Config): Sim
 		air = AirState.new(),
 		orders = OrdersState.new(),
 		ew = EWState.new(),
-		match = MatchState.new(matchInfo, unitCap),
+		-- AI levels stay out of the replay header: the AI's commands are recorded (S-17)
+		match = MatchState.new(if matchInfo and config.match then { mode = matchInfo.mode, win = matchInfo.win, unitCap = unitCap, ai = config.match.ai } else nil, unitCap),
 		sensors = SensorsState.new(if map then map.grid else nil, allyTeams), -- sight is per ally team
 		eco = Economy.new((function()
 			local teams = {}
