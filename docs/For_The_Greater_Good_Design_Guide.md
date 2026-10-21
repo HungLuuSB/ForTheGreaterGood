@@ -919,7 +919,8 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 - **Filter:** `bit32.band(target.categories, weapon.targetMask) ~= 0`, target known to the team (visible, or radar contact if `canTargetRadar`), within arc and range.
 - **Untracked contacts** reveal only their domain (D107): weapons filter them by domain, and type priorities apply only to visible, remembered or tracked targets. The AI follows the same rule.
 - **Team knowledge, never server truth** (D100, audit D101): every targeting, AI and auto-behavior decision uses what the deciding ally team knows; only physics (hits, collisions, seekers, the frame-start placement check) uses true positions. The AI plans build sites with its team's knowledge. A structure ghost stays a target for `canTargetRadar` weapons even if the structure died unseen (the shots hit empty ground), until the team sees the spot again.
-- **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional), penalty for overkill.
+- **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional, not built).
+- **Overkill** (S-29): a weapon doesn't fire at a visible target that damage already on its way will kill: shells and missiles in flight at it (each counted as its damage × `Combat.hitChance`, the chance its spread lets it reach the hull at that distance), plus damage queued this tick. It leaves the target and searches again on the next tick, skipping doomed targets; with nothing else in reach it takes the best doomed one and fires. Attack orders are always obeyed. Decided at the trigger, so a group firing in the same tick spreads its volley: six Verdicts against six one-shot tanks in a column put their first six shells on six targets, not one.
 - Long-range weapons (SAM sites, artillery): use the coarse bucket grid only, and re-evaluate less often.
 
 ### 10.3 Aim model (server)

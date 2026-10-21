@@ -20,6 +20,7 @@ return function(sim: Types.Sim)
 	if count == 0 then
 		return
 	end
+	table.clear(c.queued)
 	local w = sim.world
 	local nDead = 0
 	for i = 1, count do

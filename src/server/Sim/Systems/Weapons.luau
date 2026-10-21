@@ -19,6 +19,12 @@
 --     target's predicted position (Air.bombRelease); the bomb leaves with the
 --     bomber's velocity and falls (guide 10.5, DECISIONS D91).
 -- Guided missiles launch only with a lock (EW.canLock, guide 11.5).
+-- Overkill (S-29, guide 10.2): a weapon doesn't fire at a visible target that
+-- damage already on its way will kill (Combat.doomed: projectiles in flight
+-- at it, damage queued this tick); it drops the target and Targeting
+-- searches for another on the next tick. So a group's volley spreads over
+-- several targets. Attack orders, and a doomed target with nothing else in
+-- reach (Targeting marks it ALLOWED), still get fired at.
 
 local Aim = require("@shared/Combat/Aim")
 local Air = require("../Air")
@@ -35,6 +41,8 @@ local sqrt, sin, cos, tan, atan2, abs, rad = math.sqrt, math.sin, math.cos, math
 local max, min = math.max, math.min
 local PI, TAU = math.pi, 2 * math.pi
 local HOLD_FIRE = World.FireState.HOLD_FIRE
+local VISIBLE = Sensors.Level.VISIBLE
+local OK_RETARGET, OK_ALLOWED = World.Overkill.RETARGET, World.Overkill.ALLOWED
 local aimState: Aim.State = { yaw = 0, pitch = 0, hold = 0 } -- scratch, reused for every weapon
 
 local function wrapAngle(a: number): number
@@ -117,6 +125,11 @@ local function fire(
 		)
 		if projectile then
 			Combat.addEvent(c, { kind = "SPAWN_PROJ", tick = sim.tick, unit = id, other = projectile, slot = slot })
+			if World.isRef(w, target, w.wTargetGen[World.slotKey(id, slot)]) then
+				-- the damage it is expected to deal (S-29)
+				local tp = c.profiles[w.defIndex[target]]
+				Combat.addPending(c, w, projectile, target, weapon.damage[tp.armorClass] * Combat.hitChance(weapon, tp, dist))
+			end
 			return
 		end
 	end
@@ -253,6 +266,23 @@ return function(sim: Types.Sim)
 				w.wYaw[key] = yaw
 				w.wPitch[key] = pitchNow
 				w.dirty[id] = bit32.bor(w.dirty[id], World.Dirty.STATE)
+			end
+
+			-- overkill (S-29): hits already on the way will kill a target the team
+			-- sees; leave it to them and look for another (unless ordered, or
+			-- nothing else is in reach)
+			if
+				canFire
+				and reload <= 0
+				and w.wOverkill[key] ~= OK_ALLOWED
+				and sim.orders.forced[id] ~= target
+				and World.isRef(w, target, targetGen)
+				and Combat.doomed(c, w, target)
+				and Sensors.level(sim, w.ally[id], target) == VISIBLE
+			then
+				World.setTarget(w, key, 0)
+				w.wOverkill[key] = OK_RETARGET
+				canFire = false
 			end
 
 			if canFire and reload <= 0 then

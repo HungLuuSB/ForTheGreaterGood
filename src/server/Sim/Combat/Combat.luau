@@ -94,6 +94,14 @@ export type Combat = {
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
 	pFlags: { [number]: number }, -- guided missiles: EW.Flag bits (terminal rolled, lock lost)
 	pDecoy: { [number]: { number } }, -- decoyed missiles: { x, y, z, ticks left } of the point they follow (S-28)
+	-- overkill accounting (S-29, guide 10.2): the unit a projectile was fired
+	-- at, its generation, and the direct damage it would deal
+	pAim: { [number]: number },
+	pAimGen: { [number]: number },
+	pAimDmg: { [number]: number },
+	pending: { [number]: number }, -- target → direct damage of projectiles in flight at it
+	pendingGen: { [number]: number }, -- the target generation `pending` counts for
+	queued: { [number]: number }, -- target → damage queued this tick (hitscan, impacts), until Damage applies it
 	nextProjId: number,
 	freeProj: { number }, -- FIFO of freed IDs
 	freeHead: number,
@@ -170,6 +178,12 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pTarget = {},
 		pFlags = {},
 		pDecoy = {},
+		pAim = {},
+		pAimGen = {},
+		pAimDmg = {},
+		pending = {},
+		pendingGen = {},
+		queued = {},
 		nextProjId = 1,
 		freeProj = {},
 		freeHead = 1,
@@ -284,6 +298,92 @@ function Combat.queueDamage(c: Combat, target: number, amount: number, attacker:
 	c.dmgTarget[n] = target
 	c.dmgAmount[n] = amount
 	c.dmgAttacker[n] = attacker
+	c.queued[target] = (c.queued[target] or 0) + amount
+end
+
+--------------------------------------------------------------------------------
+-- Overkill accounting (S-29, guide 10.2)
+--------------------------------------------------------------------------------
+
+-- Projectile `proj` was fired at `target` and would deal `amount` to it.
+function Combat.addPending(c: Combat, w: World.World, proj: number, target: number, amount: number)
+	local gen = w.gen[target]
+	if c.pendingGen[target] ~= gen then
+		c.pending[target], c.pendingGen[target] = 0, gen -- a new unit under a reused ID
+	end
+	c.pending[target] += amount
+	c.pAim[proj], c.pAimGen[proj], c.pAimDmg[proj] = target, gen, amount
+end
+
+-- The projectile no longer threatens its target (it landed, expired, or was
+-- decoyed or lost its lock).
+function Combat.dropPending(c: Combat, proj: number)
+	local t = c.pAim[proj]
+	if t == nil then
+		return
+	end
+	if c.pendingGen[t] == c.pAimGen[proj] then
+		local left = c.pending[t] - c.pAimDmg[proj]
+		c.pending[t] = if left > 1e-6 then left else 0
+	end
+	c.pAim[proj], c.pAimGen[proj], c.pAimDmg[proj] = nil, nil, nil
+end
+
+Combat.AVOID_OVERKILL = true -- false turns overkill avoidance off (measurements)
+
+-- The chance a shot from `weapon` at `dist` studs reaches a target of profile
+-- `p` (S-29): its hull plus half the blast radius. Spread is uniform in
+-- ±accuracy on yaw and on pitch (Weapons). Sideways a shot misses by
+-- dist·tan(error). Lengthwise a ballistic arc's range changes by dR/dθ·error
+-- (flat ground, low arc: dR/dθ = 2v²·cos 2θ / g), and a shell coming down
+-- at θ crosses the hull's height over height / tan θ of ground, so the
+-- lengthwise window is radius + blast + height / (2 tan θ); a straight
+-- shot's height error is dist·tan(error) against half the hull's height.
+-- Guided weapons and torpedoes count as sure hits; bombs spread only
+-- sideways. Checked against fired shells at stationary targets
+-- (Overkill.spec).
+function Combat.hitChance(weapon: Defs.WeaponDef, p: UnitProfile, dist: number): number
+	local acc = math.rad(weapon.accuracy or 0)
+	local wtype = weapon.type
+	if acc <= 0 or wtype == "HOMING" or wtype == "TORPEDO" then
+		return 1
+	end
+	local blast = (weapon.aoe or 0) / 2
+	local reach = p.radius + blast
+	local side = dist * math.tan(acc)
+	local chance = if side > reach then reach / side else 1
+	if wtype == "BOMB" then
+		return chance
+	end
+	local g = weapon.gravity or 0
+	local along, alongReach
+	if wtype == "BALLISTIC" and g > 0 then
+		local v2 = (weapon.projectileSpeed or 1) ^ 2
+		local sin2 = math.min(1, dist * g / v2)
+		along = 2 * v2 * math.sqrt(1 - sin2 * sin2) / g * acc
+		local theta = math.asin(sin2) / 2
+		alongReach = reach + p.height / (2 * math.max(math.tan(theta), 1e-3))
+	else
+		along = dist * math.tan(acc)
+		alongReach = p.height / 2 + blast
+	end
+	if along > alongReach then
+		chance *= alongReach / along
+	end
+	return chance
+end
+
+-- Whether damage already on its way (projectiles in flight at it, damage
+-- queued this tick) will kill live unit `t`.
+function Combat.doomed(c: Combat, w: World.World, t: number): boolean
+	if not Combat.AVOID_OVERKILL then
+		return false
+	end
+	local incoming = c.queued[t] or 0
+	if c.pendingGen[t] == w.gen[t] then
+		incoming += c.pending[t]
+	end
+	return incoming > 0 and incoming >= w.health[t]
 end
 
 local scratch: { number } = {}
@@ -403,6 +503,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id], c.pFlags[id] = nil, nil, nil, nil, nil, nil
 	c.pOwnerGen[id], c.pTargetGen[id] = nil, nil
 	c.pDecoy[id] = nil
+	Combat.dropPending(c, id)
 	c.freeProj[c.freeTail] = id
 	c.freeTail += 1
 end
@@ -453,6 +554,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pTarget[id])
 		h = Hash.u32(Hash.u32(h, c.pOwnerGen[id]), c.pTargetGen[id])
 		h = Hash.u32(h, c.pFlags[id])
+		h = Hash.u32(h, c.pAim[id] or 0)
 		local d = c.pDecoy[id]
 		if d then
 			h = Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4])
