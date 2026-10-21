@@ -22,6 +22,14 @@
 -- Search: enemies from the contact grid within range; score = priority
 -- weight / distance, where the weight is 1 plus how early the target's
 -- categories appear in the weapon's priority list. Ties go to the lower ID.
+-- Overkill (S-29, guide 10.2): visible targets that damage already on its way
+-- will kill (Combat.doomed) are skipped; the best of them is taken only when
+-- nothing else is acceptable, and then marked ALLOWED so Weapons fires. A
+-- weapon that just left a doomed target (RETARGET) searches at once.
+-- Line of fire (S-32, guide 10.8): direct-fire weapons (hitscan, beams,
+-- ballistic shells) prefer, among their best few candidates, one they have
+-- a clear shot at; a weapon Weapons found blocked looks for one on its
+-- stagger tick.
 --
 -- Guided missiles (HOMING with a guidance type) prefer targets they can lock
 -- (EW.canLock): a lockable target's score is multiplied by LOCK_PREFERENCE,
@@ -63,6 +71,7 @@ local PI, TAU = math.pi, 2 * math.pi
 local HOLD_FIRE, RETURN_FIRE = World.FireState.HOLD_FIRE, World.FireState.RETURN_FIRE
 
 local candidates: { number } = {}
+local OK_NONE, OK_RETARGET, OK_ALLOWED = World.Overkill.NONE, World.Overkill.RETARGET, World.Overkill.ALLOWED
 
 local function wrapAngle(a: number): number
 	a = a % TAU
@@ -157,20 +166,49 @@ end
 -- Candidates come from the contact grid (true positions), gathered wide
 -- enough that every enemy whose believed position is in range is among
 -- them: acceptance is decided on the believed position (D101).
-local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (number, number, number)
+-- Candidates of one search (scratch, reused): target, generation, score,
+-- doomed (S-29).
+local cT, cGen, cScore, cDoomed = {} :: { number }, {} :: { number }, {} :: { number }, {} :: { boolean }
+local LOF_TRIES = 2 -- candidates checked for a clear shot, best first (S-32; 4 cost 1.5 ms more at peak)
+
+local function directFire(weapon: Defs.WeaponDef): boolean
+	local t = weapon.type
+	return t == "HITSCAN" or t == "BEAM" or t == "BALLISTIC"
+end
+
+-- Whether unit `id`'s weapon has a line of fire to target `t` where its
+-- team believes it is (S-32).
+local function clearShot(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, gen: number): boolean
+	local w = sim.world
+	local kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], t, gen)
+	if kx == nil or kz == nil then
+		return false
+	end
+	if not Sensors.typeKnown(sim, w.ally[id], t, level) then
+		defIndex = nil
+	end
+	return Combat.unitLineOfFire(sim.combat, w, id, weapon, t, defIndex, kx :: number, kz :: number)
+end
+
+-- The best acceptable target: (target, generation, score, doomed, clear).
+-- Preference: not doomed before doomed (S-29), then score, then the lower
+-- ID. Direct-fire weapons take the first of the best LOF_TRIES with a line
+-- of fire; with none, the best one anyway (aimed at but not fired at:
+-- Weapons marks it blocked, attack-moves go on). (0, 0, 0, false, false)
+-- when nothing is acceptable.
+local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (number, number, number, boolean, boolean)
 	local c = sim.combat
 	local w = sim.world
-	local best, bestGen, bestScore = 0, 0, 0
+	local m = 0
 	local reach = weapon.range + c.maxRadius + (if weapon.canTargetRadar or weapon.type == "TORPEDO" then maxRadarError(sim) else 0)
 	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], reach, w.ally[id], candidates)
 	for i = 1, n do
 		local t = candidates[i]
 		local dist = acceptable(sim, id, weapon, t, 1)
 		if dist ~= nil then
-			local s = score(sim, id, weapon, t, dist)
-			if s > bestScore or (s == bestScore and t < best) then
-				best, bestGen, bestScore = t, w.gen[t], s
-			end
+			m += 1
+			cT[m], cGen[m], cScore[m] = t, w.gen[t], score(sim, id, weapon, t, dist)
+			cDoomed[m] = Combat.doomed(c, w, t) and Sensors.level(sim, w.ally[id], t) == VISIBLE
 		end
 	end
 	-- remembered structures that are no longer there: the team doesn't know
@@ -181,15 +219,47 @@ local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (numb
 			if not World.isRef(w, gid, ghost.gen) then
 				local dist = acceptable(sim, id, weapon, gid, 1, ghost.gen)
 				if dist ~= nil then
-					local s = score(sim, id, weapon, gid, dist, ghost.gen)
-					if s > bestScore or (s == bestScore and gid < best) then
-						best, bestGen, bestScore = gid, ghost.gen, s
-					end
+					m += 1
+					cT[m], cGen[m], cScore[m], cDoomed[m] = gid, ghost.gen, score(sim, id, weapon, gid, dist, ghost.gen), false
 				end
 			end
 		end
 	end
-	return best, bestGen, bestScore
+	local checkLof = sim.map ~= nil and directFire(weapon)
+	local first = 0
+	local fT, fGen, fScore, fDoomed = 0, 0, 0, false -- the best one, for the fallback
+	for try = 1, if checkLof then LOF_TRIES else 1 do
+		local bi = 0
+		for i = 1, m do
+			if cT[i] == 0 then
+				continue -- tried
+			end
+			if bi == 0 then
+				bi = i
+			else
+				local a, b = cDoomed[i], cDoomed[bi]
+				if (a ~= b and not a) or (a == b and (cScore[i] > cScore[bi] or (cScore[i] == cScore[bi] and cT[i] < cT[bi]))) then
+					bi = i
+				end
+			end
+		end
+		if bi == 0 then
+			break
+		end
+		if first == 0 then
+			first = bi
+			fT, fGen, fScore, fDoomed = cT[bi], cGen[bi], cScore[bi], cDoomed[bi]
+		end
+		if not checkLof or clearShot(sim, id, weapon, cT[bi], cGen[bi]) then
+			return cT[bi], cGen[bi], cScore[bi], cDoomed[bi], true
+		end
+		if bi ~= first then
+			cT[bi] = 0 -- tried and blocked (the first is kept for the fallback)
+		else
+			cScore[bi], cDoomed[bi] = -1, true -- rank it last from now on
+		end
+	end
+	return fT, fGen, fScore, fDoomed, false
 end
 
 return function(sim: Types.Sim)
@@ -206,7 +276,7 @@ return function(sim: Types.Sim)
 		end
 		local p = profiles[w.defIndex[id]]
 		local fs = w.fireState[id]
-		local searchNow = (phaseOf(id) + tick) % STAGGER == 0
+		local staggerTick = (phaseOf(id) + tick) % STAGGER == 0
 		local attacker = w.lastAttacker[id]
 		if not World.isRef(w, attacker, w.lastAttackerGen[id]) then
 			attacker = 0 -- gone, or its ID now belongs to another unit (D109)
@@ -218,6 +288,7 @@ return function(sim: Types.Sim)
 		for slot = 1, count do
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
+			local searchNow = staggerTick or w.wOverkill[key] == OK_RETARGET
 			if groundOrder and weapon.type == "BOMB" then
 				World.setTarget(w, key, 0) -- bombing the ordered spot (Air.bombAim)
 				continue
@@ -239,25 +310,39 @@ return function(sim: Types.Sim)
 				end
 			end
 
+			-- terrain blocks the shot at the current target (Weapons, S-32):
+			-- on the stagger tick, switch to a target with a clear shot if any
+			if cur ~= 0 and searchNow and fs ~= RETURN_FIRE and w.wBlocked[key] == 1 then
+				local best, bestGen, _, doomed, clear = search(sim, id, weapon)
+				if clear and best ~= cur then
+					World.setTarget(w, key, best, bestGen)
+					w.wOverkill[key] = if doomed then OK_ALLOWED else OK_NONE
+				end
+				continue
+			end
+
 			-- guided missiles: switch to a clearly better (e.g. lockable) target
 			if cur ~= 0 and searchNow and fs ~= RETURN_FIRE and isGuided(weapon) then
-				local best, bestGen, bestScore = search(sim, id, weapon)
-				if best ~= 0 and best ~= cur and bestScore > score(sim, id, weapon, cur, curDist :: number, curGen) * SWITCH_MARGIN then
+				local best, bestGen, bestScore, doomed = search(sim, id, weapon)
+				if best ~= 0 and best ~= cur and not doomed and bestScore > score(sim, id, weapon, cur, curDist :: number, curGen) * SWITCH_MARGIN then
 					World.setTarget(w, key, best, bestGen)
 				end
 				continue
 			end
 
 			if cur == 0 and searchNow and fs ~= HOLD_FIRE then
-				local best, bestGen = 0, 0
+				local best, bestGen, doomed = 0, 0, false
 				if fs == RETURN_FIRE then
 					if attacker ~= 0 and acceptable(sim, id, weapon, attacker, 1) ~= nil then
 						best, bestGen = attacker, w.gen[attacker]
 					end
 				else
-					best, bestGen = search(sim, id, weapon)
+					best, bestGen, _, doomed = search(sim, id, weapon)
 				end
 				World.setTarget(w, key, best, bestGen)
+				w.wOverkill[key] = if doomed then OK_ALLOWED else OK_NONE
+			elseif w.wOverkill[key] == OK_RETARGET then
+				w.wOverkill[key] = OK_NONE -- held fire or kept a target: back to the stagger
 			end
 		end
 	end

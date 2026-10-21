@@ -238,6 +238,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	local x, y, z = c.px[p], c.py[p], c.pz[p]
 	local function loseLock()
 		c.pTarget[p] = 0
+		Combat.dropPending(c, p)
 		c.pFlags[p] = bit32.bor(flags, LOST)
 		Combat.addEvent(c, { kind = "LOST_LOCK", tick = sim.tick, unit = target, other = p, x = x, y = y, z = z })
 	end
@@ -295,6 +296,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 		local vx, vz = c.pvx[p], c.pvz[p]
 		local vl = math.max(math.sqrt(vx * vx + vz * vz), 1e-6)
 		local sx, sz = vz / vl * side, -vx / vl * side -- across the missile's flight
+		Combat.dropPending(c, p)
 		c.pDecoy[p] = { w.posX[target] - tvx * EW.DT + sx, ty - (EW.DECOY_DROP[guidance] or 0), w.posZ[target] - tvz * EW.DT + sz, Guidance.DECOY_TICKS }
 		c.pTarget[p] = 0
 		Combat.addEvent(c, { kind = "DECOYED", tick = sim.tick, unit = target, other = p, x = x, y = y, z = z })

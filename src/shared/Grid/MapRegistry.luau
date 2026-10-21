@@ -7,6 +7,9 @@
 --   "gen:<seed>:<cells>" TestMap.generate hills and lakes
 --   "wall:<cells>"      flat land split by a north–south water wall (3 cells
 --                       thick) with one 6-cell gap near the north end
+--   "ridge:<cells>"     flat land split by a north–south ridge (3 cells thick,
+--                       20 studs above the land) with one 6-cell gap near the north end
+--                       (line-of-fire tests, S-32)
 --   "start:<cells>"     flat land with two starts (west, east), four supply
 --                       deposits (value 4) around each start, two in the middle
 --   "skirmish:<cells>"  "start" plus expansions for the skirmish AI: two
@@ -89,6 +92,15 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 			local inWall = cx >= mid - 1 and cx <= mid + 1
 			local inGap = cz >= 4 and cz < 10
 			return 10, if inWall and not inGap then 10 else 0
+		end)
+	end
+	local ridgeCells = string.match(mapId, "^ridge:(%d+)$")
+	if ridgeCells then
+		local n = tonumber(ridgeCells) :: number
+		local mid = n // 2
+		return TestMap.build(n, n, function(cx, cz)
+			local inRidge = cx >= mid - 1 and cx <= mid + 1 and not (cz >= 4 and cz < 10)
+			return if inRidge then 30 else 10, 0
 		end)
 	end
 	local startCells = string.match(mapId, "^start:(%d+)$")
