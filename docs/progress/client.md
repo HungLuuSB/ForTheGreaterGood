@@ -80,6 +80,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `486d468` (SAM scene reworked: bigger map, Thorns east, one Falcon flying in).
 - Ready to merge: `b3c1d19` (range rings of known enemy defenses, C-41; request 13c).
 - Ready to merge: `849486c` (merge of `main` with the final AI level report; test_client 82, test 299, build passed).
+- Ready to merge: `f9cc4ed` (seeker cone in the missile sensor view, C-42).
 
 ## Tasks
 
