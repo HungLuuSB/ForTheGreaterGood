@@ -25,17 +25,23 @@ local VOXEL = 4
 RenderTerrain.SURFACE_BIAS = 2
 local MARKER = "FtggBuilt" -- attribute on workspace.Terrain: this client wrote it
 
+-- Core/Terrain.material names → Roblox materials (C-66)
 local MATERIAL: { [string]: Enum.Material } = {
 	grass = Enum.Material.Grass,
 	rock = Enum.Material.Rock,
 	sand = Enum.Material.Sand,
+	road = Enum.Material.Asphalt,
+	leafy = Enum.Material.LeafyGrass,
+	ground = Enum.Material.Ground,
+	bridge = Enum.Material.WoodPlanks,
 }
 
 export type Stats = { seconds: number, cpu: number, voxels: number, chunks: number, mode: string } -- seconds: wall time (yields included)
 
--- Builds the terrain for `layers` (yielding). Returns nil when the place has
--- terrain of its own (left alone).
-function RenderTerrain.build(layers: Layers.Layers): Stats?
+-- Builds the terrain for `layers` (yielding), materials from the sim's
+-- terrain types or the map's features (Core/Terrain.material). Returns nil
+-- when the place has terrain of its own (left alone).
+function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature?): Stats?
 	local terrain = workspace.Terrain
 	if terrain:GetAttribute(MARKER) then
 		terrain:Clear() -- ours, from an earlier map
@@ -47,7 +53,6 @@ function RenderTerrain.build(layers: Layers.Layers): Stats?
 	local t0 = os.clock()
 	local g = layers.grid
 	local lo, hi = CoreTerrain.bounds(layers)
-	local level = CoreTerrain.waterLevel(layers)
 	local y0 = math.floor((lo - 8) / VOXEL) * VOXEL
 	local ny = math.ceil((hi + VOXEL - y0) / VOXEL)
 	local nx, nz = math.ceil(g.sizeX / VOXEL), math.ceil(g.sizeZ / VOXEL)
@@ -69,7 +74,7 @@ function RenderTerrain.build(layers: Layers.Layers): Stats?
 					local z = g.originZ + (bz + k - 1) * VOXEL + VOXEL / 2
 					local ground = CoreTerrain.groundY(layers, x, z)
 					local water = CoreTerrain.waterY(layers, x, z)
-					local mat = MATERIAL[CoreTerrain.kind(layers, x, z, level)]
+					local mat = MATERIAL[CoreTerrain.material(layers, x, z, feature)] or Enum.Material.Grass
 					for j = 1, ny do
 						local vy = y0 + (j - 1) * VOXEL
 						local o = math.clamp((ground - RenderTerrain.SURFACE_BIAS - vy) / VOXEL, 0, 1)

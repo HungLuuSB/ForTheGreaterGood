@@ -16,6 +16,7 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local Defs = require("@shared/Defs/Defs")
 local Schema = require("@shared/Net/Schema")
+local Normandy = require("@shared/Grid/Normandy")
 local Api = require("./Api")
 local Camera = require("./Camera")
 local Interp = require("./Core/Interp")
@@ -73,6 +74,11 @@ for name in Schema.Channel do
 end
 
 Camera.bind(camState)
+-- A hand-made map's cell features, for its drawn materials and houses (C-66).
+local function mapFeature(mapId: string?): ((number, number) -> string)?
+	return if mapId == "map:normandy" then Normandy.feature else nil
+end
+
 local controls = Controls.bind(api)
 -- clicks select a unit by its model too, wherever it is drawn (an aircraft
 -- high above its ground point, a big model's body; C-38)
@@ -298,7 +304,7 @@ if RunService:IsStudio() then
 			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
 			local mode = ...
 			if mode and world.layers then
-				Ground.build(world.layers, mode)
+				Ground.build(world.layers, mode, mapFeature(world.mapId))
 			end
 			return Ground.last
 		elseif query == "act" then
@@ -361,7 +367,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		if world.mapVersion ~= seenMap then
 			seenMap = world.mapVersion
 			if world.layers then
-				Ground.build(world.layers)
+				Ground.build(world.layers, nil, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogOfWar.setMap(fog, world.layers)
 			end

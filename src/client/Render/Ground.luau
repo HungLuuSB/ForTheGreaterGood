@@ -8,6 +8,9 @@
 --              rectangles of equal height inside 8 × 8-cell blocks, so a flat
 --              map is a checkerboard of 64-stud tiles
 -- Units are placed on the smooth surface either way (World.groundY).
+-- Materials follow the sim's terrain types, or a hand-made map's features
+-- (`feature`, e.g. Normandy.feature: hedgerows, roads, bridges); its house
+-- cells get brick houses with slate roofs as parts (C-66).
 
 local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
@@ -117,7 +120,78 @@ end
 
 -- Builds the ground for `layers` and returns its folder (replacing an old
 -- one). A terrain build continues in its own thread (it yields).
-function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?): Folder
+-- Houses over a map's "house" cells: each connected group of house cells
+-- becomes one brick block of the cells' height with a slate roof (C-66).
+local HOUSE_WALL = Color3.fromRGB(150, 118, 92)
+local HOUSE_ROOF = Color3.fromRGB(78, 74, 72)
+local function buildHouses(layers: Layers.Layers, feature: CoreTerrain.Feature, folder: Folder): number
+	local g = layers.grid
+	local cell = Grid.CELL_SIZE
+	local seen: { [number]: boolean } = {}
+	local n = 0
+	for cz = 0, g.cellsZ - 1 do
+		for cx = 0, g.cellsX - 1 do
+			local i = g:index(cx, cz)
+			if seen[i] or feature(cx, cz) ~= "house" then
+				continue
+			end
+			-- flood the group: its cell bounds and top
+			local x0, x1, z0, z1, top, base = cx, cx, cz, cz, -math.huge, math.huge
+			local stack = { { cx, cz } }
+			seen[i] = true
+			while #stack > 0 do
+				local c = table.remove(stack) :: { number }
+				x0, x1, z0, z1 = math.min(x0, c[1]), math.max(x1, c[1]), math.min(z0, c[2]), math.max(z1, c[2])
+				top = math.max(top, Layers.getHeight(layers, g:index(c[1], c[2])))
+				for _, d in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+					local nx, nz = c[1] + d[1], c[2] + d[2]
+					if nx >= 0 and nz >= 0 and nx < g.cellsX and nz < g.cellsZ then
+						local j = g:index(nx, nz)
+						if not seen[j] then
+							if feature(nx, nz) == "house" then
+								seen[j] = true
+								table.insert(stack, { nx, nz })
+							else
+								base = math.min(base, Layers.getHeight(layers, j)) -- the street around it
+							end
+						end
+					end
+				end
+			end
+			if base == math.huge then
+				base = top - 8
+			end
+			local sx, sz = (x1 - x0 + 1) * cell, (z1 - z0 + 1) * cell
+			local wallH = math.max(top - base, 4)
+			local mx, mz = g.originX + x0 * cell + sx / 2, g.originZ + z0 * cell + sz / 2
+			local walls = newPart("House", Vector3.new(sx, wallH + 1, sz), CFrame.new(mx, base - 1 + (wallH + 1) / 2, mz), HOUSE_WALL)
+			walls.Material = Enum.Material.Brick
+			walls.Parent = folder
+			-- a pitched roof: two wedges along the longer side
+			local ridge = math.min(sx, sz) * 0.35
+			local alongX = sx >= sz
+			local len, half = if alongX then sx else sz, (if alongX then sz else sx) / 2
+			for side = -1, 1, 2 do
+				local w = Instance.new("WedgePart")
+				w.Name = "Roof"
+				w.Anchored, w.CanCollide, w.CanTouch, w.CanQuery = true, false, false, false
+				w.Material = Enum.Material.Slate
+				w.Color = HOUSE_ROOF
+				w.Size = Vector3.new(len + 1, ridge, half + 0.5)
+				local y = base + wallH + ridge / 2
+				local cf = if alongX
+					then CFrame.new(mx, y, mz + side * half / 2) * CFrame.Angles(0, if side > 0 then 0 else math.pi, 0)
+					else CFrame.new(mx + side * half / 2, y, mz) * CFrame.Angles(0, if side > 0 then math.pi / 2 else -math.pi / 2, 0)
+				w.CFrame = cf
+				w.Parent = folder
+			end
+			n += 1
+		end
+	end
+	return n
+end
+
+function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?, feature: CoreTerrain.Feature?): Folder
 	mode = mode or Ground.MODE
 	local old = workspace:FindFirstChild("Map")
 	if old then
@@ -137,7 +211,7 @@ function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?): Fold
 	else
 		last.parts = 0
 		task.spawn(function()
-			local stats = RenderTerrain.build(layers)
+			local stats = RenderTerrain.build(layers, feature)
 			if Ground.last == last and stats then
 				for k, v in stats do
 					last[k] = v
@@ -164,6 +238,9 @@ function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?): Fold
 				plate.Parent = folder
 			end
 		end
+	end
+	if feature then
+		last.houses = buildHouses(layers, feature, folder)
 	end
 	folder.Parent = workspace
 	return folder

@@ -64,7 +64,6 @@ return function(t: any)
 					if Terrain.groundY(layers, x, z) < level then
 						below += 1
 					end
-					t.equal(Terrain.kind(layers, x, z, level), if Terrain.kind(layers, x, z, level) == "rock" then "rock" else "sand", "sea bed is sand (or rock where steep)")
 				end
 			end
 		end
@@ -72,22 +71,38 @@ return function(t: any)
 		t.equal(Terrain.waterLevel(assert(MapRegistry.load("map:ridgeline"))), nil, "a dry map has no water level")
 	end)
 
-	t.test("ground kinds: grass at the starts, rock on the ridges, sand on the shore", function()
-		local layers = assert(MapRegistry.load("map:coastline"))
+	t.test("ground kinds are the sim's terrain types; Normandy's features give its materials (C-66)", function()
+		local Layers = require("@shared/Grid/Layers")
+		local Normandy = require("@shared/Grid/Normandy")
+		local layers = assert(MapRegistry.load("map:normandy"))
 		local g = layers.grid
-		local level = Terrain.waterLevel(layers)
-		local counts = { grass = 0, rock = 0, sand = 0 }
+		local names = { [Layers.Terrain.GRASS] = "grass", [Layers.Terrain.ROCK] = "rock", [Layers.Terrain.SAND] = "sand", [Layers.Terrain.ROAD] = "road" }
+		local counts: { [string]: number } = {}
+		local mats: { [string]: { [string]: boolean } } = {}
+		local wrong = 0
 		for cz = 0, g.cellsZ - 1 do
 			for cx = 0, g.cellsX - 1 do
 				local x, z = g:cellCenter(cx, cz)
-				local k = Terrain.kind(layers, x, z, level)
-				counts[k] += 1
+				local k = Terrain.kind(layers, x, z)
+				if k ~= names[Layers.getTerrain(layers, g:index(cx, cz))] then
+					wrong += 1
+				end
+				counts[k] = (counts[k] or 0) + 1
+				local f = Normandy.feature(cx, cz)
+				mats[f] = mats[f] or {}
+				mats[f][Terrain.material(layers, x, z, Normandy.feature)] = true
 			end
 		end
-		for _, s in layers.starts do
-			t.equal(Terrain.kind(layers, s[1], s[2], level), "grass", "a start is on grass")
-		end
-		print(string.format("    coastline cells: %d grass, %d rock, %d sand", counts.grass, counts.rock, counts.sand))
-		t.expect(counts.rock > 0 and counts.sand > 0 and counts.grass > counts.rock, "all three kinds, mostly grass")
+		print(string.format("    normandy cells: %d grass, %d rock, %d sand, %d road", counts.grass or 0, counts.rock or 0, counts.sand or 0, counts.road or 0))
+		t.equal(wrong, 0)
+		t.expect((counts.road or 0) > 0 and (counts.sand or 0) > 0 and (counts.rock or 0) > 0, "all four types on Normandy")
+		t.expect(mats.hedge and mats.hedge.leafy, "hedgerows are leafy")
+		t.expect(mats.road and mats.road.road, "roads are road")
+		t.expect(mats.bridge and mats.bridge.bridge, "bridges are planks")
+		t.expect(mats.beach and mats.beach.sand, "the beach is sand")
+		t.expect(mats.house and mats.house.ground, "house cells are ground under their parts")
+		-- without features the material is the terrain type
+		local x, z = g:cellCenter(10, 10)
+		t.equal(Terrain.material(layers, x, z), Terrain.kind(layers, x, z))
 	end)
 end

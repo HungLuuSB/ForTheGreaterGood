@@ -19,9 +19,11 @@ return function(t: any)
 		local defs = Defs.load()
 		local mine = Icons.table(defs)
 		t.deepEqual(mine.byDef, NetOut.iconIndex(defs))
+		-- unique per unit type since S-58: icon n is def n itself
 		for n, def in mine.sample do
-			t.equal(mine.names[n], def.icon)
+			t.equal(def, defs.unitByIndex[n])
 		end
+		t.equal(#mine.sample, #defs.unitByIndex)
 	end)
 
 	t.test("every def has an icon family; builders, air, naval and structures look apart", function()
