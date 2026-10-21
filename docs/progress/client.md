@@ -59,6 +59,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `9254e74` (Task 1: terrain from the map layers (C-28)).
 - Ready to merge: `f95efcc` (Smooth range rings (C-29)).
 - Ready to merge: `49e983c` (Task 2: piece scripts and the Juggernaut (C-30)).
+- Ready to merge: `e125dee` (Task 3: air and naval rendering (C-31)).
 
 ## Tasks
 
