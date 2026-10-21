@@ -61,7 +61,7 @@ EW.TERMINAL_RANGE = 40 -- studs, default
 -- hangs), so following it draws the missile off the target in any approach
 EW.DECOY_SIDE = 25
 EW.DECOY_DROP = table.freeze({ IR = 20, RADAR = 6 } :: { [string]: number })
-EW.Flag = table.freeze({ TERMINAL = 1, LOST = 2 }) -- Combat.pFlags bits
+EW.Flag = table.freeze({ TERMINAL = 1, LOST = 2, TURNED = 4 }) -- Combat.pFlags bits; TURNED: a vertical launch has pitched over (S-42)
 EW.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- what defeated a missile (DECOYED; same numbers as Schema.Countermeasure)
 
 local L = Sensors.Level
@@ -249,6 +249,9 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	-- 1b. seeker cone, every tick (S-27): a target outside the seeker's field
 	-- of view (the missile overshot it) breaks the lock for good
 	local cone = Guidance.seekerAngle(weapon)
+	if weapon.launch == "vertical" and bit32.band(flags, EW.Flag.TURNED) == 0 then
+		cone = nil -- still climbing: the target isn't ahead yet (S-42)
+	end
 	if cone then
 		-- where the target was when this step starts (it moved already), as
 		-- Projectiles navigates; inside one step's reach the fuse decides

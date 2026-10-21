@@ -100,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Radar SAM warheads (S-42, the user asked through the client):** `chs_radar_sam` and `ord_radar_sam` aoe 8 → 20 (bigger proximity fuse too), plus the vertical launch's pitch-over at 3× turnRate (`Guidance.PITCH_OVER`).
 - **AI level order (found at the end of this round):** Easy beats Normal 23–19, on the two 128-cell maps (early rush reaches Normal's Command Vehicle at ~4.5 min). Fix next round: Normal should hold its first army at home until it can match an incoming wave, or build its first tanks before its third generator. Your call on which.
 - **No hover unit in the roster (S-39):** the HOVER rules work (surface riding), but no def uses the class. Add one (e.g. a hover worker or tank per guide 6.1)?
 - **Terrain speed factors (S-37):** placeholders in `Shared/Grid/Terrain.SPEED` (heavy tracked on sand 0.6, wheeled on road 1.25, ...; table in the guide, 12.1), and MapGen's painting rules (sand within 2 cells of water, rock above 15°; no roads). Both shape every generated map.
@@ -123,6 +124,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 20: vertical-launch radar SAMs, heavy warheads), S-42; supersedes request 12.** `chs_radar_sam` and `ord_radar_sam` have `launch = "vertical"` and `aoe` 20 (damage unchanged). The launcher fires with no turret aim (the turret stays at rest; aim State records don't change); SPAWN_PROJ carries the missile at the muzzle with an upward velocity. **One change on your side:** steer missiles of `launch == "vertical"` weapons with `Guidance.vertical(..., turned)` and keep `turned` per missile (false at SPAWN_PROJ), not `Guidance.pn`: the climb turns at 3× turnRate toward the target until it is within 15° of the nose, then PN. Contract section 7.
 - **Done (requests 17–19), S-38:** jets now fly to their move goal and arrive within `Air.ARRIVE_RADIUS` (40 studs) or at the closest approach for a goal inside their turn circle, then circle at `Air.LOITER_RADIUS`; DECOYED ends with `countermeasure u8` (1 flares, 2 chaff, 3 DIRCM; protocol 13, 23 B); aircraft shot down in flight leave no wreck (DEATH `wreckId` 0). Note: the Falcon and the Guardian have DIRCM, not flares.
 - **New (S-37): terrain types.** `Layers.terrain` (u8 per cell: `Layers.Terrain` GRASS 0, ROCK 1, SAND 2, ROAD 3) comes with every map from `MapRegistry.load`; generated maps paint sand on shores and rock on steep ground. Units are slower on sand and rock (factors in `Shared/Grid/Terrain.SPEED`), so the client can colour the ground and predict speeds with `Terrain.factor`. Nothing changes on the wire.
 - **New (S-35): CANCEL command 16** (protocol 12): on an unfinished frame it cancels it with a refund; on a factory it drops queue item `value` (0 = all). Contract section 9.
