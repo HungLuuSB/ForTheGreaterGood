@@ -295,3 +295,9 @@ Also: C-26's timing now measures along the drawn shell's actual move over the ti
 
 **Why:** the user saw missiles bounce and zig-zag. Measured in `ew_test` (Lune, 60 fps): the drawn path jumped up to 27.7 studs in a frame (a decoy snapped the missile; corrections turned it at once, a corner every 5 ticks); now at most 2.5 studs off a straight continuation (a missile covers ~7 a frame), and `Effects.spec` checks ≤ 3 with a decoy in the run. Studio (`air` profile): worst 5.3 studs over 57 frames (uneven frame times). The prediction itself still drifts from the server by 7 studs on average between corrections, mostly for targets the client only knows as radar contacts (it can't steer at a position it doesn't have); request 11 asks for more frequent homing corrections. A missile that leaves the map draws up to ~20 studs off, because positions on the wire clamp to the edge cell (harmless).
 
+### C-37 — SAM test scene, slowed flight tests, fog darkening off (2026-10-21)
+
+**Decision:** a `sam` MatchConfig profile: 4 Order long-range radars (Beacon, radar 1,100) cover the flat 128-cell map, 4 Falcons with 5× health circle over the middle, and 4 Chaos Thorn IR SAM sites (the nearest unit to IRIS-T SLM: IR-guided, short range) keep firing at them. Spawn entries take `health` (a multiplier on the starting health, for test runs; the wire clamps it to a full bar until it drops below the normal maximum). Profiles for watching flight paths (`sam`, `air`, `naval`) start at `speed = 0.25` (the user's rule). The fog-of-war darkening (C-32) is off (`FogOfWar.ENABLED = false`): the user found it made things hard to see, to revisit later; vision, radar contacts and ghosts stay.
+
+**Why / measured:** headless minute of `sam`: 94 missiles, 8 decoyed, 26 hits, all 4 Falcons (2,600 health) still flying. Studio: the match starts at 0.25×, normal lighting, missiles in the air within seconds. Vertical launch (IRIS-T style) needs the sim: request 12.
+

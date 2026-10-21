@@ -22,6 +22,7 @@ local Schema = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared
 local Config = require(script.Parent:WaitForChild("MatchConfig")) :: any
 local Combat = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Combat"):WaitForChild("Combat")) :: any
 local Spawn = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Spawn")) :: any
+local SimWorld = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("World")) :: any
 
 local DT = 1 / Sim.TICK_RATE
 local MAX_STEPS_PER_FRAME = 3
@@ -131,10 +132,13 @@ end
 
 local function startMatch()
 	sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
-	-- the profile's extra units (MatchConfig `spawns`)
+	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
 	for _, s in Config.spawns or {} do
 		for i = 0, (s.count or 1) - 1 do
-			Spawn.unit(sim, s.def, s.player, s.x + i * (s.dx or 0), s.z + i * (s.dz or 0), s.heading or 0)
+			local id = Spawn.unit(sim, s.def, s.player, s.x + i * (s.dx or 0), s.z + i * (s.dz or 0), s.heading or 0)
+			if s.health then
+				SimWorld.setHealth(sim.world, id, sim.world.health[id] * s.health)
+			end
 		end
 	end
 	matchId += 1
