@@ -117,6 +117,15 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Warden and Minotaur (S-64):**
+  - **My calls on the mechanic:** the Warden deploys automatically whenever it stands still, and can't fire while packed.
+  - **Placeholder numbers:**
+    - Warden: value 600, 2,200 health, gun range 280, 350 armored per 3 s.
+    - Minotaur: value 680, 4,200 health, demolition charge 3,000 per 20 s.
+  - **Counter check:**
+    - The Warden wins most ground fights (trade 1.0–1.9), but below the ●●● its row asks for, and loses to Ravagers (0.75).
+    - The Minotaur levels a base (siege 100%) and loses to units in the field (mean 0.45), as designed.
+- **Refill priority (S-66):** 25% of income, as you said. In the raid measurement Order's empty-SAM share dropped, Chaos's barely moved; the AI fields few SAMs, so the number is noisy.
 - **Faction pass (S-62; BALANCE.md "Pass 3"):** 12 of 12 shared roles in 0.8–1.25. Your calls:
   - **Tuning away from the proposal:** every step is listed in Pass 3; all are within ±10% of its numbers except three:
     - the T1 tank turret yaw rates (Order 100, Chaos 130 °/s);
@@ -132,7 +141,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
     - machine gun accuracy 1.35 / 1.65.
   - **Look:** Order's units are now the tougher ones; guide 2.1's look row still reads "Chaos: built for mass and assault", which fits, but the art direction may want Order's armor to read heavier (factions.md, risks).
 - **Performance (S-60):** two peaks are still over their guide 18.1 budgets, because the fixes change timing. Commands takes 1.7 ms on a ~300-unit select-all order (budget 1); proposal: slice the order's slot assignment into the Pathing job. A structure's death costs ~6 ms in Damage (quadtree updates); proposal: lazy quadtree updates.
-- **AI levels (S-57):** Easy's numbers (first wave at 8 min, waves of 4 + 1, 2 min apart, army of 8, a unit per 20 s); Normal's 2 tanks before the third generator and its recall rule. **Design question:** missile refills share a stalled economy evenly with construction, so an AI (or player) under air attack keeps its SAMs empty. Should refills take priority over construction?
+- **AI levels (S-57):** Easy's numbers (first wave at 8 min, waves of 4 + 1, 2 min apart, army of 8, a unit per 20 s); Normal's 2 tanks before the third generator and its recall rule. (The refill question is answered: S-66.)
 - **Pinpointers (S-59, the user asked):** names Witness and Augur; full precision at 6 (linear); 90% less radar and track error at full; radar-only missile lock loss 10% per midcourse check without Pinpointers (a long shot fails about a third to half the time); cost 250 + 3,000.
 - **SAM ranges cut again (S-56, the user asked):** IR now 49% of its S-33 range, radar 56% of S-45's. **Nukes:** a nuke is now in a radar site's reach for only ~6 s, so two sites often let one through (the test now uses four). If interception should stay strong, raise the chance or the radar SAM stock again.
 - **Shorter SAM ranges (S-55, the user asked):** IR −30%, radar −25%. My call: the units' air sight and radars shrink by the same factor. A side effect is a shorter interception window for nukes.

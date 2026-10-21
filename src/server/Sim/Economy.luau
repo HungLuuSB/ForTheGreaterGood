@@ -40,6 +40,8 @@ export type Resource = {
 	spent: number, -- spent so far this window
 	reclaimed: number, -- reclaimed so far this window
 	wasted: number, -- total overflow lost to full storage
+	priorityDemand: number?, -- per second, of `demand`: missile refills, served first (S-66)
+	priorityRatio: number?, -- 0..1: their progress ratio this window (S-66)
 	gathered: number, -- total credited: income and reclaim per window, before the storage cap (Stats, S-63)
 	drawn: number, -- total spent, less any shortfall a window forgave (Stats, S-63)
 }
@@ -71,6 +73,8 @@ local function newResource(): Resource
 		wasted = 0,
 		gathered = 0,
 		drawn = 0,
+		priorityDemand = 0,
+		priorityRatio = 1,
 	}
 end
 
@@ -152,9 +156,20 @@ local function settleStored(r: Resource, window: number): number
 	return overflow
 end
 
+-- Missile refills come first in a stall (S-66, the user): up to
+-- REFILL_PRIORITY of the window's income goes to them before construction
+-- gets its share; whatever they want beyond that shares the rest like any
+-- consumer. At 0 every consumer shares alike, as before.
+Economy.REFILL_PRIORITY = 0.25
+
 local function settleRatio(r: Resource, window: number)
+	local available = r.stored + r.income * window
 	local wanted = r.demand * window
-	r.ratio = if wanted > 0 then math.min(1, (r.stored + r.income * window) / wanted) else 1
+	local pWanted = (r.priorityDemand or 0) * window
+	local granted = math.max(0, math.min(pWanted, available, Economy.REFILL_PRIORITY * r.income * window))
+	local restWanted = wanted - granted
+	r.ratio = if restWanted > 1e-12 then math.clamp((available - granted) / restWanted, 0, 1) else 1
+	r.priorityRatio = if pWanted > 0 then math.min(1, (granted + (pWanted - granted) * r.ratio) / pWanted) else 1
 end
 
 -- Settles one resource for a window, overflow wasted. Pure; exposed for tests.
@@ -204,6 +219,18 @@ function Economy.effective(acc: Account, costSupply: number, costPower: number):
 	end
 	if costPower > 0 then
 		e = math.min(e, acc.power.ratio)
+	end
+	return e
+end
+
+-- The same for missile refills, which come first in a stall (S-66).
+function Economy.priorityEffective(acc: Account, costSupply: number, costPower: number): number
+	local e = 1
+	if costSupply > 0 then
+		e = math.min(e, acc.supply.priorityRatio or acc.supply.ratio)
+	end
+	if costPower > 0 then
+		e = math.min(e, acc.power.priorityRatio or acc.power.ratio)
 	end
 	return e
 end

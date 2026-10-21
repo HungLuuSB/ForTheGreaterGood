@@ -820,3 +820,17 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - attack-move: holds, deploys, fires at range;
   - the charge levels a Bulwark and ignores a tank.
 - **Blockouts:** requested from the models stream (`docs/progress/models.md`): Warden with `spades` to lower when deployed; Minotaur with a `ram`.
+
+## S-66 — Missile refills come first in a stall (the user, 2026-10-22)
+
+- **Asked:** "Missile refills take priority over construction, up to ~25% of income." It answers the S-57 review question: refills had shared a stalled economy evenly with construction (S-47), so SAMs under air attack stayed empty.
+- **Rule** (`Economy.REFILL_PRIORITY` = 0.25), per resource and economy window:
+  - Missile refills' demand is served first, up to a quarter of the window's income and what is available.
+  - Whatever they want beyond that shares the rest with construction, production, rearming and upkeep at the common ratio.
+  - Refills progress at their own `priorityRatio`; everything else at `ratio`.
+  - Without a stall both are 1, so nothing changes.
+- **Order:** `Stockpile.step` now runs before construction in `Build.step`, so a window's allowance goes to refills first.
+- **Test** (`Stockpile.spec`): a Chaos plant building Ravagers on a Warlord's income keeps the economy stalled 100% of the time.
+  - An empty Thorn rebuilds 2.49 missiles in 60 s with priority, against 1.81 sharing alike.
+  - Its floor is a quarter of 20 power/s, about 1.25 missiles a minute.
+- **AI under helicopter raids** (new `lune run sam_raids`, kept this time; Normal AI on skirmish:192, 15 min): numbers in the progress file. They are noisy: the AI builds few SAMs, and with the faction pass's prices Order's economy is stalled 85–90% of the time, a faction-AI question (task 11).
