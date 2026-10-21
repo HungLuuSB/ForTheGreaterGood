@@ -18,6 +18,8 @@ return {
 		chs_blackout = require("./Units/chs_blackout"),
 		chs_breaker = require("./Units/chs_breaker"),
 		chs_cataclysm = require("./Units/chs_cataclysm"),
+		chs_ragnarok = require("./Units/chs_ragnarok"),
+		ord_reckoning = require("./Units/ord_reckoning"),
 		chs_condor = require("./Units/chs_condor"),
 		chs_converter = require("./Units/chs_converter"),
 		chs_corsair = require("./Units/chs_corsair"),
@@ -130,6 +132,8 @@ return {
 		ord_zenith = require("./Units/ord_zenith"),
 	},
 	weapons = {
+		chs_nuke = require("./Weapons/chs_nuke"),
+		ord_nuke = require("./Weapons/ord_nuke"),
 		chs_aam = require("./Weapons/chs_aam"),
 		chs_asw_torpedo = require("./Weapons/chs_asw_torpedo"),
 		chs_bomb = require("./Weapons/chs_bomb"),

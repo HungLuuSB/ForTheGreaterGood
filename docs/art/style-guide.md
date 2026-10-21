@@ -1,61 +1,54 @@
 # Art style guide
 
-How units and structures look. Source: design guide 2.1 (faction look) and 20 (art pipeline); decisions `M-` in [`../decisions/models.md`](../decisions/models.md). The rig (axes, piece names, joints) is in [`../contracts/rig.md`](../contracts/rig.md) and doesn't change with the style.
+How units and structures look. Sources: design guide 2.1 and 20; decisions `M-` in [`../decisions/models.md`](../decisions/models.md). The rig (axes, pieces, joints) is [`../contracts/rig.md`](../contracts/rig.md). The production steps are in [`pipeline.md`](pipeline.md).
 
-**Status (2026-10-21):** direction set (M-6). Two Lancer and two Ravager variants are in review (`src/shared/Defs/Blockouts/Review/`); the palette and the variant per faction get picked from them, then this guide is finalized and the rest of the roster follows it.
+## Look
 
-## 1. Direction
+- **Near-future military, realistic-leaning.** Real modern vehicles as the base, with restrained sci-fi accents: angular armor panels, sensor strips, active-protection systems, rail-gun details.
+- **Mood reference:** the textured realism of *World in Conflict*. Mood only: never copy its models or textures (or anyone else's).
+- **Readability first:** silhouette, then secondary shapes, then small details only if they're cheap.
 
-Modern armies, not science fiction or post-apocalypse. Each faction takes after one real-world family of equipment, simplified into a low-poly, flat-shaded "tabletop military" look (guide 20.1).
+## Factions
 
-| | **Order** | **Chaos** |
+| | **Order**: heavy defense and strategy | **Chaos**: the strength of armies |
 |---|---|---|
-| Inspired by | Western armies: Leopard 2, Abrams, Patriot | Eastern armies: T-90M, T-14 Armata, Pantsir |
-| Base color | Light grey or sand | Dark olive or gunmetal |
-| Armor | Clean, angular wedge armor; flat faces | Heavier and blockier; reactive-armor tiles and slat cages |
-| Sensors | Flat-panel sensors, neat sight boxes | Sight boxes, protection radars, more of them |
-| Weapons | One main weapon, a small remote gun at most | More weapons per vehicle: remote guns, launchers, active protection |
+| Based on | Western equipment: Leopard 2, Abrams, Patriot | Eastern equipment: T-14 Armata, T-90M, Pantsir |
+| Character | Sleek, wedge-shaped, high-tech, fortress-like | Rugged, aggressive, built for mass and assault |
+| Shapes | Wedge armor, flat faces, long and low | Rounder or domed turrets, shorter and wider proportions |
+| Signature details | Heavy armor, sensor strips, shields, active protection | Visible reactive-armor blocks, slat cages at the rear, more weapons per vehicle |
+| Base color | Sand (186, 170, 132) | Gunmetal (76, 80, 84), recommended over olive (see "Base color test") |
+| Camouflage | Two- or three-tone disruptive pattern in sand and its darker tones | Pattern in the chosen base and its darker tones |
 
-## 2. Shared rules (both factions)
+## Rules for both
 
-- **Hulls:** long, low and wide. Glacis wedge in front, flat engine deck at the back.
-- **Running gear:** side skirts with road wheels showing below them, and a track belt on the ground.
-- **Turrets:** flat, set toward the rear of the hull. Bustle or slat cage behind.
-- **Guns:** long. A tank's gun reaches well past the nose.
-- **Sights and sensors:** small boxes on the roof with a dark glass face.
-- **SAMs:** canister launchers (boxes or tube bundles), never bare missiles on rails.
-- **Radars:** flat phased-array panels, never dishes.
-- **Team color:** only on panels and stripes: a stripe on each skirt, a panel on each turret side and a roof panel (like an air-recognition panel) so the team reads from the RTS camera above. Never a whole turret or hull.
-- **Glass:** dark tinted, never glowing.
-- **Never:** exposed engines, smoke stacks, crates, pistons, rust, round dishes, glowing orange, bright saturated hulls, toy proportions (big turret on a short hull).
+- **Hulls:** long, low and wide (Chaos a bit shorter and wider), skirts with road wheels showing below, a track belt on the ground.
+- **Turrets** set toward the rear, **long guns**, sights and sensor boxes on the roof.
+- **SAMs:** canister launchers. **Radars:** flat phased arrays, never dishes.
+- **Team color on top surfaces** (turret roof, hull top): the camera looks down at 35°–80° (55° by default), so roofs are what players see. At low pitch the sides show too, so they carry the camouflage and the faction's signature details.
+- **Glass and sensors:** dark tinted; a thin emissive strip at most, never a glow.
+- **Never:** exposed engines, smoke stacks, crates, pistons, rust, round dishes, bright saturated hulls, toy proportions (big turret on a short hull).
 
-## 3. Detail order
+## Size
 
-Build in this order and stop when the budget is spent:
+Models match their def's footprint: one cell is 8 studs, and a footprint-1 vehicle fits in about 6 × 8 studs (rig.md 3). The gun may reach past the footprint. Check every model from the game camera at 35°, 55° and 80° pitch, at close, normal and maximum zoom.
 
-1. **Silhouette:** hull, turret, gun, skirts. Must read as a black shape from the game camera (55° pitch) at about 100 studs.
-2. **Secondary shapes:** bustle, sight boxes, remote gun, reactive-armor rows, slat cage, launcher boxes.
-3. **Small details, only if cheap:** glass faces, team stripes, deck plates.
+## Budget (guide 20.1)
 
-## 4. Palettes (candidates)
+Units 300–1,500 triangles, structures up to 3,000, wrecks up to 500; one texture set per unit (color, normal, roughness, metalness) at most 1024 × 1024, Roblox's upload limit. Roblox's automatic level of detail takes care of distance.
 
-RGB 0..255, by blockout palette key (`hull`, `dark`, `track`, `metal`, `glass`; `team` comes from the player's team color). Data: `src/shared/Defs/Blockouts/Review/Variants.luau`. One per faction gets picked; it then replaces `Blockout.PALETTES`.
+## Lessons from the part-built variants
 
-| Key | Order grey | Order sand | Chaos olive | Chaos gunmetal |
-|---|---|---|---|---|
-| hull | 166, 170, 162 | 186, 170, 132 | 80, 86, 60 | 76, 80, 84 |
-| dark | 92, 96, 92 | 110, 100, 80 | 50, 54, 40 | 46, 48, 52 |
-| track | 44, 45, 43 | 48, 46, 42 | 36, 36, 32 | 34, 34, 34 |
-| metal | 120, 124, 118 | 138, 130, 110 | 90, 94, 82 | 98, 102, 106 |
-| glass | 34, 48, 60 | 36, 46, 52 | 40, 52, 48 | 44, 58, 62 |
+- A turret as wide as the hull blends into it from above: keep the turret narrower and set back, so it shows as its own shape.
+- Whole team-colored turrets look like toys; team color goes on panels on top surfaces only.
+- All tanks share one outline by design, so faction identity comes from shapes on top of it (wedges vs domes, sensor strips vs reactive-armor blocks and cages) and from the base color.
+- Low hulls put the muzzle at about 2.3–2.5 studs, below the sim's 3.6-stud firing height; the mesh's muzzle attachment is where effects start (rig.md 3).
 
-## 5. Proportions (footprint 1 ground units)
+## Base color test (Chaos, 2026-10-21)
 
-- Hull 5.8 studs wide (skirts to 6.3), 7.4–7.8 long plus a 1.0–1.2 glacis; hull top at 1.8–1.9.
-- Turret top at 2.6–3.0; the tallest roof detail at 3.3.
-- Gun 6.0–6.4 studs, from the turret front; muzzle at 2.25–2.5 studs high.
-- Road wheels 0.95–1.1 studs across, 5–7 per side.
+Olive (80, 86, 60) vs gunmetal (76, 80, 84) on the Ravager variants, on the Coastline terrain's grass and beach in "FTGG Art", with the sand Lancer for reference; pitch 35°, 55° and 80°, at 80, 220 (normal), 450 (just inside the icon switch, C-17) and 900 studs (max).
 
-## 6. Budget
+- **Olive** disappears into the grass at every pitch: realistic camouflage, poor readability. On sand it reads, but most of the map is grass.
+- **Gunmetal** stays a distinct cool grey on grass and sand, and reads apart from Order's warm sand at a glance.
+- **At 900 studs** every unit is a few pixels and the game draws strategic icons instead (beyond 480), so color only matters up to about 450.
 
-Guide 20.1: 300–1,500 triangles per unit. The variants are 32–53 primitive parts (11–16 cylinders, mostly road wheels) against 13 for the current Lancer and Ravager. Roblox doesn't report primitive triangle counts; at about 100 per cylinder and 12 per box they come to roughly 1,350 (Lancer A) to 2,000 (both Ravagers), so the Chaos variants go over budget as primitives. The phase 2 meshes merge them into one mesh per piece and fit the budget.
+**Recommendation: gunmetal.** If it looks too blue under the final lighting, warm it slightly rather than greening it. Screenshots: `debug_out/screens/color_*.jpg`.

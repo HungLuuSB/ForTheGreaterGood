@@ -83,7 +83,8 @@ local function fire(
 	muzzleY: number,
 	dist: number,
 	exactYaw: number, -- true direction / pitch to the target's center
-	exactPitch: number
+	exactPitch: number,
+	projTarget: number -- interceptors: the strategic missile they are fired at (S-48)
 )
 	local c = sim.combat
 	local w = sim.world
@@ -102,6 +103,16 @@ local function fire(
 		local vx, vy, vz = cos(p) * sin(yaw) * speed, sin(p) * speed, cos(p) * cos(yaw) * speed
 		if weapon.launch == "vertical" then
 			vx, vy, vz = 0, speed, 0 -- straight up; guidance pitches it over (S-42)
+		elseif weapon.apex then
+			-- lofted (S-48): up to `apex` studs above the launch, down on the
+			-- aimed spot; the horizontal speed follows from the distance
+			local g = weapon.gravity :: number
+			local tx, tz = w.posX[id] + sin(yaw) * dist, w.posZ[id] + cos(yaw) * dist
+			local drop = launchY - Combat.groundHeight(c, tx, tz)
+			local up = math.sqrt(2 * g * weapon.apex)
+			local t = (up + math.sqrt(math.max(up * up + 2 * g * drop, 0))) / g
+			vx, vy, vz = sin(yaw) * dist / t, up, cos(yaw) * dist / t
+			ttl = t + 2
 		elseif wtype == "TORPEDO" then
 			p = 0
 			launchY = Combat.surfaceHeight(c, w.posX[id], w.posZ[id]) - Combat.TORPEDO_DEPTH
@@ -131,6 +142,15 @@ local function fire(
 		)
 		if projectile then
 			Combat.addEvent(c, { kind = "SPAWN_PROJ", tick = sim.tick, unit = id, other = projectile, slot = slot })
+			if projTarget ~= 0 then
+				c.pTargetProj[projectile] = projTarget
+				c.pTargetSerial[projectile] = c.pSerial[projTarget]
+			end
+			if weapon.strategic then
+				-- every player is warned (S-48)
+				table.insert(c.strategic, projectile)
+				Combat.addEvent(c, { kind = "LAUNCH", tick = sim.tick, unit = id, other = projectile, x = w.posX[id], y = launchY, z = w.posZ[id] })
+			end
 			if World.isRef(w, target, w.wTargetGen[World.slotKey(id, slot)]) then
 				-- the damage it is expected to deal (S-29)
 				local tp = c.profiles[w.defIndex[target]]
@@ -200,8 +220,13 @@ return function(sim: Types.Sim)
 			-- 11.4), the ghost's for remembered structures (alive or not), the
 			-- ordered spot for a bomber's attack-ground.
 			local kx, kz, defIndex = nil, nil, nil
-			if weapon.type == "BOMB" and sim.air.groundX[id] ~= nil then
+			local projTarget = 0
+			if (weapon.type == "BOMB" or weapon.manualFire) and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
+			elseif weapon.manualFire then
+				target = 0 -- nothing without an attack-ground order (S-48)
+			elseif weapon.intercepts and Combat.isProjRef(c, w.wTargetProj[key], w.wTargetProjSerial[key]) then
+				target, projTarget = 0, w.wTargetProj[key] -- a strategic missile (S-48)
 			elseif target ~= 0 then
 				local level
 				kx, kz, level, defIndex = Sensors.knownTarget(sim, w.ally[id], target, targetGen)
@@ -235,6 +260,8 @@ return function(sim: Types.Sim)
 					pitch = 0 -- launched level in the water; homing does the rest
 				elseif weapon.type == "BOMB" then
 					pitch = 0 -- dropped, not aimed
+				elseif weapon.apex then
+					pitch = 0 -- lofted: fire() works out the launch (S-48)
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
@@ -250,6 +277,8 @@ return function(sim: Types.Sim)
 				end
 				if weapon.type == "BOMB" then
 					canFire = not holdFire and Air.bombRelease(sim, id, weapon, target, kx, kz, defIndex)
+				elseif weapon.manualFire then
+					canFire = dist <= weapon.range -- ordered: fire states don't apply
 				end
 				if canFire and weapon.guidance and not EW.canLock(sim, id, weapon, target, dist) then
 					canFire = false -- no lock, no launch
@@ -260,6 +289,10 @@ return function(sim: Types.Sim)
 				if canFire and not Stockpile.ready(w, key) then
 					canFire = false -- nothing in stock (S-47)
 				end
+			elseif projTarget ~= 0 then
+				-- interceptors launch vertically: in range and in stock is enough (S-48)
+				dist = sqrt((c.px[projTarget] - x) ^ 2 + (c.pz[projTarget] - z) ^ 2)
+				canFire = not holdFire and dist <= weapon.range and Stockpile.ready(w, key)
 			end
 
 			-- rotate the turret (fixed mounts without a turret table aim
@@ -304,7 +337,7 @@ return function(sim: Types.Sim)
 				local onTarget = weapon.launch == "vertical" or (abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol)
 				-- line of fire (S-32): terrain in the way, no shot; Targeting
 				-- looks for a clear target, attack-moves go on (Orders)
-				if onTarget and kx ~= nil and kz ~= nil then
+				if onTarget and kx ~= nil and kz ~= nil and not weapon.apex then -- lofted shots clear the terrain (S-48)
 					local clear = Combat.unitLineOfFire(c, w, id, weapon, target, defIndex, kx, kz)
 					w.wBlocked[key] = if clear then 0 else 1
 					onTarget = clear
@@ -314,7 +347,10 @@ return function(sim: Types.Sim)
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)
 					Stockpile.take(w, key)
-					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch)
+					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch, projTarget)
+					if weapon.manualFire then
+						Air.clearGround(sim, id) -- one shot per order (S-48)
+					end
 				end
 			end
 		end

@@ -241,10 +241,31 @@ function Air.release(sim: Types.Sim, id: number)
 	end
 end
 
+-- Does this def carry a manualFire weapon (a nuke silo, S-48)? Cached per def.
+local manualCache: { [any]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+function Air.isManualFire(sim: Types.Sim, d: Defs.UnitDef): boolean
+	local cached = manualCache[d]
+	if cached == nil then
+		cached = false
+		for _, slot in d.weapons do
+			if sim.defs.weaponByIndex[slot.weaponIndex].manualFire then
+				cached = true
+			end
+		end
+		manualCache[d] = cached
+	end
+	return cached
+end
+
 -- Attack-ground order (D100): bombers make runs on (x, z) until another
--- order replaces it. Other units ignore it.
+-- order replaces it; a unit with a manualFire weapon (a silo, S-48) fires
+-- one shot there, then the order is done. Other units ignore it. The point
+-- is kept here (AirState.groundX / groundZ) for both.
 function Air.attackGround(sim: Types.Sim, id: number, x: number, z: number)
 	if not Air.isBomber(sim, def(sim, id)) then
+		if Air.isManualFire(sim, def(sim, id)) then
+			sim.air.groundX[id], sim.air.groundZ[id] = x, z
+		end
 		return
 	end
 	local a = sim.air

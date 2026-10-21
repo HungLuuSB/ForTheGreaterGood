@@ -15,7 +15,7 @@ local ROSTER = {
 		"falcon", "guardian", "absolution", "archon", "phantom", "tidewatch", "archangel",
 		"sentry", "silence", "crusader", "dominion", "sanctuary",
 		"bulwark", "bastion", "vigil", "aegis", "edict", "watchtower", "beacon", "curtain", "veilspire",
-		"moat", "undertow", "rampart", "ear", "choir",
+		"moat", "undertow", "rampart", "ear", "choir", "reckoning",
 	},
 	chaos = {
 		"warlord", "scrapper", "forgemaster", "vulture", "condor", "wrecker", "reaver",
@@ -23,7 +23,7 @@ local ROSTER = {
 		"harpy", "wasp", "plague", "manticore", "behemoth", "leech", "banshee",
 		"barracuda", "lamprey", "corsair", "kraken", "leviathan", "siren",
 		"spike", "maw", "thorn", "wyvern", "cataclysm", "eye", "allseer", "smog", "blackout",
-		"riptide", "fang", "breaker", "listener", "deepear",
+		"riptide", "fang", "breaker", "listener", "deepear", "ragnarok",
 	},
 }
 local PREFIX = { order = "ord_", chaos = "chs_" }

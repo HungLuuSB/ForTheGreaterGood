@@ -57,6 +57,7 @@ export type Projectile = {
 	vz: number,
 	weaponIndex: number,
 	target: number, -- 0 = none
+	targetProj: number?, -- interceptors: the strategic missile (projectile ID) they chase (S-48)
 	ttl: number, -- seconds left
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the point it follows (S-28)
 	countermeasure: number?, -- decoyed: what defeated it (Schema.Countermeasure, S-38)
@@ -65,7 +66,7 @@ export type Projectile = {
 
 -- A visual effect: a tracer (fire: from the shooter to the end point), an
 -- explosion (impact), a decoyed missile (decoy) or a unit's death (death).
-export type Effect = { kind: "fire" | "impact" | "decoy" | "lost" | "death", x: number, y: number, z: number, fromX: number?, fromZ: number? }
+export type Effect = { kind: "fire" | "impact" | "decoy" | "lost" | "death" | "intercepted", x: number, y: number, z: number, fromX: number?, fromZ: number? }
 
 export type View = {
 	grid: Grid.Grid,
@@ -74,6 +75,7 @@ export type View = {
 	units: { [number]: Unit },
 	projectiles: { [number]: Projectile },
 	effects: { Effect },
+	warnings: { { projId: number, x: number, z: number } }, -- LAUNCH_WARNING records (S-48)
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
 	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
@@ -104,6 +106,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		units = {},
 		projectiles = {},
 		effects = {},
+		warnings = {},
 		strategicTick = -1,
 		received = {},
 		log = {},
@@ -236,12 +239,15 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 		local ids, leaves = {}, {}
 		for _, e in events do
 			local kind = e.kind
-			if kind == EK.SPAWN_PROJ then
+			if kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR then
 				local x, y, z = pos(e)
 				local vx, vy, vz = vel(e)
 				local weapon = view.defs.weaponByIndex[e.weaponIndex :: number]
 				assert(weapon, `SPAWN_PROJ with unknown weapon {e.weaponIndex}`)
-				local target = e.targetId :: number -- a unit the ally team knows; its strategic record may come later
+				-- a unit the ally team knows (its strategic record may come later);
+				-- INTERCEPTOR: a projectile (S-48)
+				local interceptor = kind == EK.INTERCEPTOR
+				local target = if interceptor then 0 else e.targetId :: number
 				view.projectiles[e.projId :: number] = {
 					x = x,
 					y = y,
@@ -255,8 +261,18 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 					vz = vz,
 					weaponIndex = weapon.index,
 					target = target,
+					targetProj = if interceptor then e.targetId :: number else nil,
 					ttl = ttlOf(weapon),
 				}
+				continue
+			elseif kind == EK.LAUNCH_WARNING then
+				local x, _, z = pos(e)
+				table.insert(view.warnings, { projId = e.projId :: number, x = x, z = z })
+				continue
+			elseif kind == EK.INTERCEPTED then
+				local x, y, z = pos(e)
+				view.projectiles[e.projId :: number] = nil
+				table.insert(view.effects, { kind = "intercepted", x = x, y = y, z = z })
 				continue
 			elseif kind == EK.IMPACT then
 				local x, y, z = pos(e)
