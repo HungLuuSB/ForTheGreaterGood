@@ -88,7 +88,7 @@ function MissileView.build(fx: Effects.Fx, world: World.World, renderTick: numbe
 		local p = v[1] :: Effects.Proj
 		local x, y, z = v[2] :: number, v[3] :: number, v[4] :: number
 		local weapon = p.weapon
-		local target = if p.target ~= 0 then world.units[p.target] else nil
+		local target = World.unitOrDying(world, p.target)
 		-- the drawn velocity: the tick's start velocity eased toward the next (C-38)
 		local s = math.clamp(renderTick - fx.tick, 0, 1)
 		local vx, vy, vz = p.vx, p.vy, p.vz

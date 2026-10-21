@@ -108,6 +108,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 					vx = vx,
 					vz = vz,
 				})
+				world.dying[id] = { unit = u, tick = tick } -- still a missile's target until the death is drawn (C-50)
 				world.units[id] = nil
 			end
 		else
