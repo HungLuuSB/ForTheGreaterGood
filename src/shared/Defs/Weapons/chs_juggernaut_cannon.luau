@@ -5,12 +5,12 @@
 return {
 	id = "chs_juggernaut_cannon",
 	type = "BALLISTIC",
-	range = 210,
-	reload = 2.4,
+	range = 195, -- faction pass (S-62)
+	reload = 2.2, -- faction pass, tuned (S-62)
 	projectileSpeed = 420,
 	gravity = 60,
 	accuracy = 0.6,
-	damage = { LIGHT = 330, ARMORED = 308, STRUCTURE = 264, SHIP = 242, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 248, ARMORED = 231, STRUCTURE = 198, SHIP = 182, AIR = 0, SUB = 0 },
 	aoe = 5,
 	edgeEffectiveness = 0.4,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

@@ -266,7 +266,8 @@ return function(t: RunAll.Context)
 				table.insert(structures, id)
 			end
 			for _, k in keys do
-				local tree = nav.trees[k]
+				local old = nav.trees[k]
+				local tree = Nav.tree(nav, old.moveClass, old.need, k) -- applies pending changes (lazy since S-67)
 				local diff = sameTree(tree, Quadtree.build(pm, tree.moveClass, tree.need))
 				t.equal(diff, nil, `op {op}, tree {k}`)
 				checks += 1

@@ -10,10 +10,10 @@ return Templates.extend(Templates.Structure, {
 	tier = 2,
 	categories = { "STRUCTURE", "ARTILLERY" },
 	cost = { supply = 600, power = 6000, buildTime = 12000 },
-	health = 4000,
+	health = 4800, -- faction pass (S-62)
 	footprint = 3,
 	sensors = { sight = 160 },
-	weapons = { { def = "ord_howitzer", turretPiece = "turret", muzzle = "muzzle" } },
+	weapons = { { def = "ord_fortress_howitzer", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "muzzle" },
 	icon = "artillery",
 	model = "ord_edict",

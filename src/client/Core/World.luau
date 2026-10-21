@@ -54,6 +54,15 @@ export type Unit = {
 	targets: { [number]: number }?, -- own units (S-16): target unit id by weapon slot, 0 = none; nil until the server sends them
 	stock: { [number]: number }?, -- own units (S-47): missiles in stock by weapon slot (slots with a stockpile only)
 	stockProgress: { [number]: { number } }?, -- own units (S-49): the next missile's build progress (0..1) by slot, and the record's tick
+	-- own units only (S-61, protocol 20); nil until the server sends them
+	queue: { number }?, -- a factory's queue: unit def indices, the head in production
+	queueProgress: number?, -- the head item's progress, 0..1 (to a 255th)
+	fireState: number?, -- Schema.FireState
+	moveState: number?, -- Schema.MoveState
+	ammo: number?, -- aircraft with an ammo count: rounds left
+	maxAmmo: number?,
+	flares: number?, -- countermeasure charges left (protocol 21, S-63); nil until sent
+	chaff: number?,
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
 	rx: number?,
 	ry: number?,

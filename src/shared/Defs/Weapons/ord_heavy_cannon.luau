@@ -3,12 +3,12 @@
 return {
 	id = "ord_heavy_cannon",
 	type = "BALLISTIC",
-	range = 231,
-	reload = 2.4,
+	range = 240, -- faction pass (S-62)
+	reload = 2.45, -- faction pass, tuned (S-62)
 	projectileSpeed = 420,
 	gravity = 60,
 	accuracy = 0.6,
-	damage = { LIGHT = 270, ARMORED = 252, STRUCTURE = 216, SHIP = 198, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 310, ARMORED = 290, STRUCTURE = 248, SHIP = 228, AIR = 0, SUB = 0 },
 	aoe = 5,
 	edgeEffectiveness = 0.4,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

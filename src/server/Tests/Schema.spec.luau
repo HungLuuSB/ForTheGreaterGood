@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 20, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 23, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -352,6 +352,14 @@ return function(t: RunAll.Context)
 		expectTruncated(t, "state record", Schema.decodeState, encodeOne(Schema.encodeState, own))
 		local onlyStates: State = { unitId = 1, fireState = 0, moveState = 2 }
 		t.equal(hex(encodeOne(Schema.encodeState, onlyStates)), "01 00 80 02 08")
+		-- version 23: ALERT (S-68): alert kind, cell, defIndex
+		local alert: Schema.Event = { kind = Schema.EventKind.ALERT, alert = Schema.AlertKind.UNIT_LOST, cell = 0x0102, defIndex = 0x0304 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, alert)), "12 03 02 01 04 03")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, alert), Schema.decodeEvent)[1], alert)
+		-- version 21: OWNER CHARGES (S-63): flares, chaff left
+		local charges: State = { unitId = 1, flares = 5, chaff = 0 }
+		t.equal(hex(encodeOne(Schema.encodeState, charges)), "01 00 80 08 05 00")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, charges), Schema.decodeState)[1], charges)
 		local emptyQueue: State = { unitId = 1, queue = {}, queueProgress = 0 }
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, emptyQueue), Schema.decodeState)[1], emptyQueue)
 		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
@@ -495,7 +503,8 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 18, 1, 0 }, "unknown event kind 18") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18
+		expectRejected(t, Schema.decodeEvent, { 19, 1, 0 }, "unknown event kind 19") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23
+		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind
 		local icpt: Schema.Event = { kind = EK.INTERCEPTOR, projId = 0x0102, weaponIndex = 3, cell = 0x0405, offX = 6, offZ = 7, y = 8, vx = 1, vy = -1, vz = 2, targetId = 0x0a0b }
@@ -574,7 +583,7 @@ return function(t: RunAll.Context)
 	t.test("unit state bits live in Shared and are the sim's", function()
 		local World = require("../Sim/World")
 		t.equal(World.State, Schema.UnitState, "one table (S-6)")
-		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16 })
+		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16, DEPLOYED = 32, DEPLOYING = 64 })
 	end)
 
 	t.test("tactical layout is byte exact", function()
@@ -674,7 +683,7 @@ return function(t: RunAll.Context)
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 0 }, "owner field mask is empty") -- 128 is OWNER since protocol 20
-		expectRejected(t, Schema.decodeState, { 1, 0, 128, 8 }, "owner field mask has reserved bits")
+		expectRejected(t, Schema.decodeState, { 1, 0, 128, 16 }, "owner field mask has reserved bits") -- 8 is CHARGES since protocol 21
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 2, 16 }, "states byte has reserved bits")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 1, 51, 0 }, "queue of 51 items")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.STOCK, 0 }, "stock slot mask is empty")

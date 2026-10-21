@@ -148,12 +148,14 @@ return function(t: any)
 		local median, p90 = errors[math.max(1, n // 2)] or 0, errors[math.max(1, math.floor(n * 0.9))] or 0
 		print(string.format("    %d-tick predictions: %d, median %.2f studs off the server, 90th percentile %.2f, mean %.2f, worst %.1f; hit calls %d right, %d wrong", AHEAD, n, median, p90, mean, worst, agree, disagree))
 		-- overkill-aware targeting (S-29) fires fewer missiles at the jets, and
-		-- at the Thorn's 206 studs (S-56) a flight lasts ~6 ticks, so few are
-		-- still flying 5 ticks after a prediction
-		t.expect(n > 10, `plenty of predictions checked ({n})`)
-		-- the targets circle, and the prediction flies them straight on: most
-		-- paths stay close, the turning end game spreads (missiles fly 28 studs a tick)
-		t.expect(median < 3, `predicted {AHEAD} ticks ahead: median {median} studs off`)
+		-- at the Thorn's 165 studs (S-62) a flight lasts ~5 ticks, so few are
+		-- still flying 5 ticks after a prediction (8 in this scene)
+		t.expect(n >= 6, `plenty of predictions checked ({n})`)
+		-- the targets circle, and the prediction flies them straight on; at
+		-- 165 studs every 5-tick prediction ends in the turning end game
+		-- (missiles fly 28 studs a tick), so the median spreads too (6.7 since
+		-- S-62, from under 3 at 206 studs); the HIT / miss call stays right
+		t.expect(median < 10, `predicted {AHEAD} ticks ahead: median {median} studs off`)
 		t.expect(p90 < 20, `predicted {AHEAD} ticks ahead: 90th percentile {p90} studs off`)
 		t.expect(agree > 10 and disagree <= agree * 0.2, `close in, the HIT / miss call matches the outcome ({agree} right, {disagree} wrong)`)
 	end)

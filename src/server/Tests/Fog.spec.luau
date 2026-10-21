@@ -135,18 +135,20 @@ return function(t: RunAll.Context)
 		local defs = testDefs({ shade = { sensors = { radarSignature = 0.3, sight = 60 } } })
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128", defs = defs })
 		local w = sim.world
-		local radar = Spawn.unit(sim, "ord_oracle", 1, -400, 0) -- radar 700, sight 120
+		local radar = Spawn.unit(sim, "ord_oracle", 1, -400, 0) -- radar 760, sight 120
 		local shade = Spawn.unit(sim, "neu_shade", 2, 300, 20, -math.pi / 2)
 		quiet(sim, { shade })
 		moveTo(sim, 2, { shade }, -470, 20)
-		local reach = 700 * 0.3
+		local reach = (sim.defs.units.ord_oracle.sensors.radar :: number) * 0.3
 		local s = sim.sensors
 		local seen = {}
 		for _ = 1, 1200 do
+			-- Sensors runs before Movement: it judges where the shade was at the start of the tick
+			local sx, sz = w.posX[shade], w.posZ[shade]
 			Sim.step(sim)
 			if sim.tick % 2 == 0 then
-				local d = math.sqrt((w.posX[shade] - w.posX[radar]) ^ 2 + (w.posZ[shade] - w.posZ[radar]) ^ 2)
-				local _, _, cell = Sensors.cellOf(s, w.posX[shade], w.posZ[shade])
+				local d = math.sqrt((sx - w.posX[radar]) ^ 2 + (sz - w.posZ[radar]) ^ 2)
+				local _, _, cell = Sensors.cellOf(s, sx, sz)
 				local want = if Sensors.count(s, 1, "los", cell) > 0 then L.VISIBLE elseif d <= reach then L.RADAR else L.HIDDEN
 				t.equal(Sensors.level(sim, 1, shade), want, `at {d} studs from the radar`)
 				seen[want] = true

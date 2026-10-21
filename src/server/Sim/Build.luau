@@ -19,6 +19,7 @@
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Air = require("./Air")
+local Alerts = require("./Alerts")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local EW = require("./EW")
@@ -227,6 +228,8 @@ local targets: { number } = {}
 local power: { [number]: number } = {}
 local demandS: { [number]: number } = {}
 local demandP: { [number]: number } = {}
+local priorityS: { [number]: number } = {} -- missile refills' share of the demand (S-66)
+local priorityP: { [number]: number } = {}
 
 -- Cancelling (guide 9.3, S-35): what was spent comes back. Spending is
 -- proportional to progress, so a refund is progress × cost, credited like
@@ -272,6 +275,15 @@ function Build.cancelQueued(sim: Types.Sim, factory: number, index: number)
 	end
 end
 
+-- A finished unit for the results screen (Stats, S-63).
+function Build.countBuilt(sim: Types.Sim, id: number)
+	local s = sim.playerStats[sim.world.owner[id]]
+	if s then
+		s.unitsBuilt += 1
+	end
+	Alerts.built(sim, id) -- BUILD_DONE (S-68)
+end
+
 local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 	local w = sim.world
 	local fd = def(sim, factory)
@@ -290,6 +302,7 @@ local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 		end
 	end
 	Combat.addEvent(sim.combat, { kind = "PRODUCED", tick = sim.tick, unit = id, other = factory })
+	Build.countBuilt(sim, id)
 end
 
 function Build.step(sim: Types.Sim)
@@ -304,6 +317,7 @@ function Build.step(sim: Types.Sim)
 	end
 	for _, team in eco.teams do
 		demandS[team], demandP[team] = 0, 0
+		priorityS[team], priorityP[team] = 0, 0
 	end
 
 	local function addPower(target: number, bp: number)
@@ -424,7 +438,10 @@ function Build.step(sim: Types.Sim)
 		end
 	end
 
-	-- 2. progress, spending, demand
+	-- 2. missile stockpiles (S-47) first: refills have priority in a stall (S-66)
+	Stockpile.step(sim, demandS, demandP, priorityS, priorityP)
+
+	-- 2b. progress, spending, demand
 	for _, t in targets do
 		local bp = power[t]
 		local frame = w.buildProgress[t] < 1
@@ -469,6 +486,7 @@ function Build.step(sim: Types.Sim)
 				World.setBuildProgress(w, t, 1)
 				Lifecycle.completed(sim, t)
 				Combat.addEvent(sim.combat, { kind = "BUILD_DONE", tick = sim.tick, unit = t, other = 0 })
+				Build.countBuilt(sim, t)
 			else
 				World.setBuildProgress(w, t, p)
 			end
@@ -497,9 +515,6 @@ function Build.step(sim: Types.Sim)
 	-- 3. aircraft landing on pads and rearming (also economy consumers)
 	Air.rearmStep(sim, demandS, demandP)
 
-	-- 3b. missile stockpiles (S-47)
-	Stockpile.step(sim, demandS, demandP)
-
 	-- 4. DIRCM upkeep: continuous power drain, cooldown at the stall ratio
 	EW.drainStep(sim, demandP)
 
@@ -510,6 +525,8 @@ function Build.step(sim: Types.Sim)
 		local acc = eco.accounts[team]
 		acc.supply.demand = demandS[team]
 		acc.power.demand = demandP[team]
+		acc.supply.priorityDemand = priorityS[team]
+		acc.power.priorityDemand = priorityP[team]
 	end
 end
 

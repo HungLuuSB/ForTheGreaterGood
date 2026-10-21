@@ -1,0 +1,12 @@
+{
+  "name": "ftgg-icons",
+  "private": true,
+  "type": "module",
+  "description": "Rasterizes docs/art/icons/ftgg-unit-icons.html into the strategic icon sprite sheets (C-74).",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}

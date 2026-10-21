@@ -3,15 +3,15 @@
 return {
 	id = "chs_heavy_aam",
 	type = "HOMING",
-	range = 340,
-	reload = 1,
+	range = 350, -- faction pass, tuned (S-62)
+	reload = 0.9, -- faction pass (S-62)
 	projectileSpeed = 460,
 	accuracy = 1,
 	turnRate = 180,
 	guidance = "IR",
-	lockRange = 340,
+	lockRange = 350, -- faction pass, tuned (S-62)
 	terminalRange = 40,
-	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 340, SUB = 0 },
+	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 300, SUB = 0 },
 	aoe = 6,
 	edgeEffectiveness = 0.5,
 	targets = { "AIR" },

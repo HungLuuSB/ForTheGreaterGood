@@ -15,7 +15,7 @@ local function near(t: RunAll.Context, a: number, b: number, what: string)
 end
 
 local function resource(stored: number, storage: number, income: number, demand: number, spent: number): Economy.Resource
-	return { stored = stored, storage = storage, income = income, demand = demand, ratio = 1, spent = spent, reclaimed = 0, wasted = 0 }
+	return { stored = stored, storage = storage, income = income, demand = demand, ratio = 1, spent = spent, reclaimed = 0, wasted = 0, gathered = 0, drawn = 0 }
 end
 
 local function step(sim: Sim.Sim, ticks: number)

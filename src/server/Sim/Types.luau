@@ -17,6 +17,7 @@ local Prng = require("@shared/Util/Prng")
 local Replay = require("./Replay")
 local Schema = require("@shared/Net/Schema")
 local SensorsState = require("./SensorsState")
+local Stats = require("./Stats")
 local World = require("./World")
 
 -- team: economy and ownership (one account per team); allyTeam: shared
@@ -56,6 +57,8 @@ export type Sim = {
 	queue: { QueuedCommand }, -- commands to apply on the next tick
 	replay: Replay.Log,
 	stats: { commandsApplied: number, commandsRejected: number },
+	playerStats: { [number]: Stats.PlayerStats }, -- the results screen's numbers (S-63); not hashed
+	alerts: any, -- Alerts.State: player alerts, last enemy hit per unit (S-68); not hashed
 }
 
 return {}

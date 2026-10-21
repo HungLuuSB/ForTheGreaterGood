@@ -74,6 +74,8 @@ export type World = {
 	weaponCount: { [number]: number },
 	lastAttacker: { [number]: number }, -- unit that last damaged this one, 0 = none
 	lastAttackerGen: { [number]: number }, -- its generation (D109)
+	deploy: { [number]: number }, -- deployable units only: 0 packed .. 1 deployed (Deploy, S-64)
+	deployIds: { number }, -- deployable units, in the order they entered
 	wYaw: { [number]: number }, -- turret yaw relative to the hull, radians
 	wPitch: { [number]: number }, -- radians, up positive
 	wReload: { [number]: number }, -- seconds until ready (<= 0 = ready)
@@ -86,6 +88,8 @@ export type World = {
 	wTargetProj: { [number]: number }, -- interceptors: the enemy strategic missile targeted (projectile ID, 0 = none; S-48)
 	wTargetProjSerial: { [number]: number }, -- its Combat.pSerial
 	wStockProgress: { [number]: number }, -- 0..1 of the next missile
+	wSalvo: { [number]: number }, -- salvo weapons: shots left in the salvo under way (S-69)
+	wSalvoWait: { [number]: number }, -- seconds until its next shot
 
 	-- ID allocator
 	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
@@ -125,6 +129,8 @@ function World.new(): World
 		weaponCount = {},
 		lastAttacker = {},
 		lastAttackerGen = {},
+		deploy = {},
+		deployIds = {},
 		wYaw = {},
 		wPitch = {},
 		wReload = {},
@@ -137,6 +143,8 @@ function World.new(): World
 		wTargetProj = {},
 		wTargetProjSerial = {},
 		wStockProgress = {},
+		wSalvo = {},
+		wSalvoWait = {},
 		gen = {},
 		pins = {},
 		nextFresh = 1,
@@ -347,6 +355,8 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wBlocked[key] = nil
 		w.wStock[key] = nil
 		w.wStockProgress[key] = nil
+		w.wSalvo[key] = nil
+		w.wSalvoWait[key] = nil
 		w.wTargetProj[key] = nil
 		w.wTargetProjSerial[key] = nil
 	end
@@ -446,6 +456,10 @@ function World.hash(w: World, h: number?): number
 		hv = Hash.u32(hv, w.gen[id])
 		hv = Hash.u32(hv, w.lastAttacker[id])
 		hv = Hash.u32(hv, w.lastAttackerGen[id])
+		local deploy = w.deploy[id]
+		if deploy ~= nil then
+			hv = Hash.number(hv, deploy) -- only deployable units: other units' hashes are as before (S-64)
+		end
 		for slot = 1, w.weaponCount[id] do
 			local key = id * 8 + slot - 1
 			hv = Hash.number(hv, w.wYaw[key])
@@ -461,6 +475,10 @@ function World.hash(w: World, h: number?): number
 			if stock ~= nil then
 				hv = Hash.u32(hv, stock)
 				hv = Hash.number(hv, w.wStockProgress[key])
+			end
+			local salvo = w.wSalvo[key]
+			if salvo ~= nil and salvo > 0 then -- only during a salvo: other hashes are as before (S-69)
+				hv = Hash.number(Hash.u32(hv, salvo), w.wSalvoWait[key])
 			end
 		end
 	end

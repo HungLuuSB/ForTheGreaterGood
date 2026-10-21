@@ -13,11 +13,11 @@ return Templates.extend(Templates.Builder, {
 	armorClass = "ARMORED",
 	moveClass = "TRACKED",
 	footprint = 1,
-	cost = { supply = 300, power = 4000, buildTime = 8000 },
-	health = 1100,
-	movement = { maxSpeed = 28, accel = 11, brake = 22, turnRate = 100 },
+	cost = { supply = 280, power = 3600, buildTime = 7300 },
+	health = 940, -- faction pass (S-62)
+	movement = { maxSpeed = 32, accel = 11, brake = 22, turnRate = 100 },
 	sensors = { sight = 120 },
-	buildPower = 200,
+	buildPower = 180, -- faction pass (S-62)
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)
 	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_advextractor", "chs_fusion", "chs_advvehplant", "chs_maw", "chs_wyvern", "chs_cataclysm", "chs_allseer", "chs_blackout", "chs_seekerspire", "chs_ragnarok", "chs_augur" },
 	pieces = { "base", "nano" },

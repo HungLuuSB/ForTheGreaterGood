@@ -117,8 +117,32 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
-- **Performance (S-60):** two peaks are still over their guide 18.1 budgets, because the fixes change timing. Commands takes 1.7 ms on a ~300-unit select-all order (budget 1); proposal: slice the order's slot assignment into the Pathing job. A structure's death costs ~6 ms in Damage (quadtree updates); proposal: lazy quadtree updates.
-- **AI levels (S-57):** Easy's numbers (first wave at 8 min, waves of 4 + 1, 2 min apart, army of 8, a unit per 20 s); Normal's 2 tanks before the third generator and its recall rule. **Design question:** missile refills share a stalled economy evenly with construction, so an AI (or player) under air attack keeps its SAMs empty. Should refills take priority over construction?
+- **Faction balance in AI matches (S-65, `docs/FACTION_AI.md`):** Order wins 89% of same-level matches (target 40–60%). Addressed next by the faction AI (task 11) and the ±10% tuning (task 12); Normandy (no deposits) leaves 43% of its matches undecided at 40 minutes.
+- **Warden and Minotaur (S-64):**
+  - **My calls on the mechanic:** the Warden deploys automatically whenever it stands still, and can't fire while packed.
+  - **Placeholder numbers:**
+    - Warden: value 600, 2,200 health, gun range 280, 350 armored per 3 s.
+    - Minotaur: value 680, 4,200 health, demolition charge 3,000 per 20 s.
+  - **Counter check:**
+    - The Warden wins most ground fights (trade 1.0–1.9), but below the ●●● its row asks for, and loses to Ravagers (0.75).
+    - The Minotaur levels a base (siege 100%) and loses to units in the field (mean 0.45), as designed.
+- **Refill priority (S-66):** 25% of income, as you said. In the raid measurement Order's empty-SAM share dropped, Chaos's barely moved; the AI fields few SAMs, so the number is noisy.
+- **Faction pass (S-62; BALANCE.md "Pass 3"):** 12 of 12 shared roles in 0.8–1.25. Your calls:
+  - **Tuning away from the proposal:** every step is listed in Pass 3; all are within ±10% of its numbers except three:
+    - the T1 tank turret yaw rates (Order 100, Chaos 130 °/s);
+    - the T2 cannon damages (Paladin ×1.15, Juggernaut ×0.75), where the proposal gave no number;
+    - the Archon's DIRCM 0.68.
+  - **Conditions not met:**
+    - T1 fighters are even at every start: jets close 600 studs in ~2 s, so Order's standoff never shows.
+    - The Herald doesn't win at range (0.82): its 35-stud edge is half a second of a Jackal's run.
+    - The Hydra wins neither close nor flanking: re-measured after the salvos (task 7).
+  - **Proposal silent, I followed the direction:**
+    - Halo 660 / Hornet 480 health (were 500 / 560);
+    - Herald / Jackal costs 121 / 99;
+    - machine gun accuracy 1.35 / 1.65.
+  - **Look:** Order's units are now the tougher ones; guide 2.1's look row still reads "Chaos: built for mass and assault", which fits, but the art direction may want Order's armor to read heavier (factions.md, risks).
+- **Performance (S-60 → S-67):** both peaks fixed as you said. Commands on a select-all order 1.4 → 0.9 ms, Projectiles+Damage when a structure dies 7.6–10.7 → 2.8–4.4 ms; Pathing unchanged (7.5–8.0, at its 8 ms budget). My calls: orders of 64+ units slice; a tree defers at most 8 changes.
+- **AI levels (S-57):** Easy's numbers (first wave at 8 min, waves of 4 + 1, 2 min apart, army of 8, a unit per 20 s); Normal's 2 tanks before the third generator and its recall rule. (The refill question is answered: S-66.)
 - **Pinpointers (S-59, the user asked):** names Witness and Augur; full precision at 6 (linear); 90% less radar and track error at full; radar-only missile lock loss 10% per midcourse check without Pinpointers (a long shot fails about a third to half the time); cost 250 + 3,000.
 - **SAM ranges cut again (S-56, the user asked):** IR now 49% of its S-33 range, radar 56% of S-45's. **Nukes:** a nuke is now in a radar site's reach for only ~6 s, so two sites often let one through (the test now uses four). If interception should stay strong, raise the chance or the radar SAM stock again.
 - **Shorter SAM ranges (S-55, the user asked):** IR −30%, radar −25%. My call: the units' air sight and radars shrink by the same factor. A side effect is a shorter interception window for nukes.
@@ -128,11 +152,9 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 - **Archon radar signature 0.6 (S-46, the user asked through the client; was 0.35):** for your test in airsam.
 - **Radar SAM range ×3 (S-45, the user asked through the client):** ranges 1680 / 1800 and the four units' radars ×3; projectileSpeed left at 360 (~5 s to full range); burn-through follows (35% of lockRange: ~600 studs now). AI and balance effects not measured yet. Also `climbHeight` 100 (S-44).
 - **Radar SAM warheads (S-42, the user asked through the client):** `chs_radar_sam` and `ord_radar_sam` aoe 8 → 20 (bigger proximity fuse too), plus the vertical launch's pitch-over at 3× turnRate (`Guidance.PITCH_OVER`).
-- **AI level order (found at the end of this round):** Easy beats Normal 23–19, on the two 128-cell maps (early rush reaches Normal's Command Vehicle at ~4.5 min). Fix next round: Normal should hold its first army at home until it can match an incoming wave, or build its first tanks before its third generator. Your call on which.
 - **No hover unit in the roster (S-39):** the HOVER rules work (surface riding), but no def uses the class. Add one (e.g. a hover worker or tank per guide 6.1)?
 - **Terrain speed factors (S-37):** placeholders in `Shared/Grid/Terrain.SPEED` (heavy tracked on sand 0.6, wheeled on road 1.25, ...; table in the guide, 12.1), and MapGen's painting rules (sand within 2 cells of water, rock above 15°; no roads). Both shape every generated map.
 - **Carriers don't build aircraft (S-36):** the guide doesn't say they do; it would change the tech tree. Should they?
-- **Thorn SAM (client request 16, the user asked), S-33:** `chs_ir_sam` range / lockRange 280 → 420, aoe 5 → 12, projectileSpeed 420 → 500; `chs_thorn.sensors.airSight` 300 → 420 (an IR site locks only what it sees). Order's IR SAM (`ord_ir_sam`, Vigil) stays at range 300 / aoe 5: should it follow?
 - **Pass 2 retune (S-30): `ord_verdict.sensors.sight` 140 → 170**, the one number changed this round. Three seeds, Verdict vs Hellmouth 0.50 / 0.58 → 0.50 / 0.97 (long fight in band); Verdict vs Ravager long 0.57 → 0.72. Overkill avoidance (S-29) didn't move artillery: without spotters both sides fire at sight range, so the Verdict's range and precision never applied. Still outside 0.8–1.25:
   - close-range artillery duel 0.50 (two artillery groups 120 studs apart: health and damage decide, where Chaos is tougher by design; closing it would cost faction identity);
   - Herald vs Jackal long 0.75 (close 1.06). Not touched, since one retune was asked for.
@@ -151,6 +173,10 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 39), S-68, protocol 23:** event **ALERT 18** `alert u8, cell u16, defIndex u16` with `Schema.AlertKind` (UNIT_ATTACKED 1, STRUCTURE_ATTACKED 2, UNIT_LOST 3, STRUCTURE_LOST 4, BUILD_DONE 5, STALL_SUPPLY 6, STALL_POWER 7, NUKE_LAUNCH 8, COMMANDER_ATTACKED 9), rate-limited server-side as you suggested; strategic **UNDER_ATTACK** set on own and allied units hit in the last 3 s. Also: ATTACK_GROUND now works for every unit with a ballistic weapon (artillery, tanks, gun turrets), contract section 8.
+- **Done (request 37), S-63, protocol 21:** OWNER field bit **CHARGES 8**: `flares u8, chaff u8` (charges left; 0 for a kind the def lacks), own units with flares or chaff, on change and with ENTER.
+- **Done (request 38), S-63:** `Sim/Stats`: `Stats.report(sim)` → per player `{ unitsBuilt, unitsLost, unitsKilled, damageDealt, supplyGathered, powerGathered, supplySpent, powerSpent }`; server-side only. Definitions are in the module header.
+- **Pinpointers (S-62):** a type may need a different count for full precision (`pinpointFull`: Witness 5, Augur 7). Please sum `Pinpoint.weight(def)` over the finished Pinpointers instead of counting them, then call `Pinpoint.precision(sum)` as now.
 - **Done (request 36), S-61, protocol 20:** State mask bit **128 OWNER**, after `stock`: `ownerMask u8` (QUEUE 1, STATES 2, AMMO 4), then:
   - QUEUE: `count u8`, `progress u8` (the head, 0..255), `defIndex u16` × count.
   - STATES: `u8` = fire (bits 0–1) + move × 4 (bits 2–3).

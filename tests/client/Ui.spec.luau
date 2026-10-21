@@ -1,6 +1,6 @@
 --!strict
 -- The playable UI's contract pieces (C-68): the build menu's tabs, factory
--- builds through the API with the client's queue following production,
+-- builds through the API with the server's queue (S-61) following production,
 -- CANCEL, command modes, and alerts.
 
 local Api = require("../../src/client/Api")
@@ -54,7 +54,7 @@ return function(t: any)
 		local _ = api
 	end)
 
-	t.test("queueBuild: the factory produces; the client's queue follows; CANCEL clears it", function()
+	t.test("queueBuild: the factory produces; the server's queue follows; CANCEL clears it", function()
 		local sim, world, api, step = scene()
 		local plant = Spawn.unit(sim, "ord_vehplant", 1, 100, 0, 0)
 		Spawn.unit(sim, "ord_fusion", 1, -150, -150, 0) -- power for production
@@ -62,6 +62,7 @@ return function(t: any)
 		api.actions.select({ plant })
 		local ok = api.actions.queueBuild("ord_lancer", 2)
 		t.expect(ok, "queued")
+		step(2)
 		t.equal(#api.state.factoryQueues[plant], 2)
 		local lancers = 0
 		for _ = 1, 15 * 120 do
@@ -80,6 +81,7 @@ return function(t: any)
 		t.expect(lancers >= 1, "the plant built a Lancer")
 		t.equal(#api.state.factoryQueues[plant], 1) -- one left
 		api.actions.cancel(0)
+		step(2)
 		t.equal(#api.state.factoryQueues[plant], 0)
 		local _ = world
 	end)

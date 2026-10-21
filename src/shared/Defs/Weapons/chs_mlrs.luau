@@ -3,12 +3,13 @@
 return {
 	id = "chs_mlrs",
 	type = "BALLISTIC",
-	range = 480,
-	reload = 6,
+	range = 440, -- faction pass (S-62)
+	reload = 4.5, -- faction pass, tuned (S-62)
 	projectileSpeed = 260,
 	gravity = 60,
-	accuracy = 3,
-	damage = { LIGHT = 286, ARMORED = 220, STRUCTURE = 264, SHIP = 180, AIR = 0, SUB = 0 },
+	accuracy = 3.15, -- faction pass, tuned (S-62)
+	salvo = { count = 8, delay = 0.15 }, -- a large salvo (S-69)
+	damage = { LIGHT = 33, ARMORED = 31, STRUCTURE = 31, SHIP = 21, AIR = 0, SUB = 0 }, -- per rocket: the salvo deals what one shot did (S-69)
 	aoe = 16,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

@@ -343,6 +343,28 @@ local PROFILES = {
 		demoOrders = false,
 		restartAfter = nil,
 	},
+	-- the duel with no human seat (C-79): whoever joins spectates (no fog,
+	-- every unit), the placeholder bot plays both sides
+	spectate = {
+		seed = 7,
+		mapId = "flat:48",
+		scenario = "duel_test",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = {},
+		demoOrders = true,
+		restartAfter = 6,
+	},
+	-- two humans (C-77): the lobby with two open seats, for Studio's
+	-- "Clients and Servers" test with 2 players; the first to join hosts
+	duo = {
+		lobby = true,
+		seats = { "open", "open" },
+		seed = 202,
+		players = { { id = 1, team = 1 } }, -- the lobby's preview; a match builds its own
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,

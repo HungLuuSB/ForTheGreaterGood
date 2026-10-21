@@ -201,7 +201,7 @@ function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?, featu
 	folder.Name = "Map"
 	local g = layers.grid
 	local cell = Grid.CELL_SIZE
-	local last: { [string]: any } = { mode = mode }
+	local last: { [string]: any } = { mode = mode, ground = mode } -- `ground` stays: Terrain's build stats bring their own `mode`
 	Ground.last = last
 	local t0 = os.clock()
 	if mode == "parts" then

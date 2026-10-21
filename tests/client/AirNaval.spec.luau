@@ -139,7 +139,7 @@ return function(t: any)
 					sawModel = true
 				elseif bit32.band(e.flags or 0, Schema.StrategicFlag.SONAR_ONLY) ~= 0 then
 					sawContact = true
-					t.equal(Icons.style(Icons.table(sim.defs), world, e, false).shape, "sonar", "drawn as a sonar ring")
+					t.equal(Icons.style(Icons.table(sim.defs), world, e, false).kind, "contact", "drawn as a sonar contact")
 				end
 			end
 		end

@@ -735,3 +735,185 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Schema.spec`: golden bytes and rejects (empty mask, reserved bits, a 51-item queue).
   - `NetOut.spec`: a plant with a 2-item queue, a tank whose fire and move state change, and a jet whose ammo drops. The owner's view matches every tick (the jet while tactical); the other player never gets them.
+
+## S-62 — Faction pass, stage 1: the shared-role numbers (2026-10-22)
+
+- **Asked (the user):** the faction proposal approved with one change, IR SAMs Vigil 206 / Thorn 165 (the user's cuts kept, Order +25%). Shared-role trait pass as in sections 3.1–3.8; every shared role within 0.8–1.25 overall over 3 seeds, each version winning its own condition. Guide 2.1 to the new identity; every changed number in `BALANCE.md`.
+- **Applied:** every number in sections 3.1–3.8, with buildTime scaled by the value change. Where the proposal gave a direction without a number, I followed the direction (listed in BALANCE.md).
+- **New:**
+  - `ord_fortress_howitzer` / `chs_fortress_mortar` for the Edict / Cataclysm: the proposal gives the emplacements their own range and damage, but they shared the Verdict / Hellmouth guns.
+  - `pinpointFull` on Pinpointer defs, with `Pinpoint.weight(def)` = FULL / pinpointFull. Witness 5, Augur 7. The team's count is the sum of weights, so a mixed team adds up and `Pinpoint.precision` is unchanged. The client's `Core/Precision` should sum weights instead of counting (told B).
+- **Measurement:** `lune run factions [seeds] [filter]` (`Scenes.trial`, report only):
+  - Equal value 6,000 per side, up to 60 of a type.
+  - Starts: close, long, defend (Order holds, Chaos attacks from 600 studs) and flank (Chaos in two halves, from the north and south).
+  - Overall = geometric mean of close and long. Order's condition: long or defend ≥ 1.25. Chaos's: close or flank ≤ 0.8.
+  - SAMs face the same bomber and gunship raids; emplacements face the same tank assault.
+  - The counter check's 3,000 budget and 20-unit cap rounded expensive aircraft to equal counts, which hid Chaos's numbers, hence the larger trial.
+- **Tuning:** within ±10% of the proposal's numbers, apart from three steps:
+  - the T1 tank turret yaw rates, swapped toward the identity;
+  - the T2 cannon damages and the Hydra's armored damage, where the proposal gave no number;
+  - the Archon's DIRCM chance.
+  Every step is listed in BALANCE.md "Pass 3".
+- **Result: 12 of 12 roles in band.** Each version wins its condition except:
+  - T1 fighters: even everywhere, since jets close 600 studs in about 2 s;
+  - the Herald at range;
+  - the Hydra close or flanking: re-measured after task 7's salvos.
+- **Tests:** 15 specs read the old numbers and were updated, most to read them from the defs:
+  - Build: Lancer build time.
+  - Combat: damage, wreck value.
+  - Defs: ranges.
+  - Fog and Sensors: these two compared against the position after the tick, while Sensors runs before Movement; they had passed by luck of speed.
+  - Guidance: a decoyed missile that still bursts on the jet a tick later counts as decoyed; DIRCM's share against the faster Thorn is up to 30%.
+  - Nuke: the reach check allows the nuke's step in that tick.
+  - Air: the moving column stays in the spotter's sight; the far jet goal stays on the map.
+  - Stockpile: Chaos capacities.
+  - Terrain: a run long enough to reach top speed.
+  - Pinpoint: Witness / Augur weights, plus a new test of mixed teams.
+
+## S-63 — Countermeasure charges on the wire; match statistics (client requests 37, 38) (2026-10-22)
+
+- **37, protocol 21:** OWNER field bit CHARGES 8: `flares u8, chaff u8`, the charges left, for own units whose def has flares or chaff. Sent on change and with the ENTER, owner only, like S-61. `NetOut.spec` checks a Falcon's chaff after one is spent; `Schema.spec` pins the bytes.
+- **38: `Sim/Stats`**, server-side only, no wire change:
+  - Per player: `unitsBuilt` (factory output and finished structures; the start doesn't count), `unitsLost`, `unitsKilled`, `damageDealt` (enemy health removed, capped at what was left).
+  - From the player's team account: `supplyGathered` / `powerGathered` (income, reclaim and converter output per economy window, before the storage cap; refunds included) and `supplySpent` / `powerSpent` (drawn after stall ratios, less any forgiven shortfall).
+  - `Stats.report(sim)` returns them all; the Roblox server reads it at match end.
+  - So that a shell's damage counts after its shooter dies, a projectile keeps its shooter's player (`Combat.pPlayer`), and queued damage carries it (`dmgPlayer`).
+  - Not hashed: nothing in the sim reads it.
+  - `Stats.spec` covers damage capped at the target's health, a dead shooter's shell, units built, and the gathered and spent totals.
+
+## S-62 (follow-up) — AI after the faction pass: rally gap, the Skirmish test (2026-10-22)
+
+- **Found by the integrator:** two slow tests failed on the S-62 merge, so nothing was pushed.
+  - **Fairness:** Normal mirrors on Ridgeline went west 3 / east 9.
+    - Since the Verdict's range went from 450 to 480, `RALLY_GAP` 520 (S-57) left only 40 studs for the armies' spread around their rally points.
+    - Now 600. Mirrors split 4–8 (passes), though fewer finish in 10 minutes than before the pass: the value lead decides more of them.
+  - **Skirmish.spec:** Order (Normal) against Chaos on skirmish:192, seed 1: Chaos's second wave took Order's Command Vehicle at 7.3 min, before Order's first wave left.
+    - The test required both players to attack. It now requires the winner, and any player still alive after 8 minutes.
+    - Not an AI bug: the faction report has Normal Order beating Normal Chaos 7–1 in its first quick run.
+
+## S-64 — Faction-only units, stage 2: Warden and Minotaur (2026-10-22)
+
+- **Asked (the user):** Warden (Order deployable gun) and Minotaur (Chaos siege ram), with tests and counter-check rows (factions.md section 4).
+- **Warden, `ord_warden`** (T2, Order Advanced Vehicle Plant):
+  - **Stats:** value 600, health 2,200, speed 22, sight 280. Gun `ord_warden_gun`: range 280, 0.35°, 350 armored, 3 s.
+  - **New mechanic, `Sim/Deploy`** (def field `deploy = { time, armor }`):
+    - A deployer unpacks whenever it stands still: no move order, or an attack-move holding to engage, at speed 0. Packing and unpacking take `time` (4 s) each way.
+    - Packed it moves but doesn't fire. In between it neither moves nor fires. Deployed it fires, can't move, isn't pushed, and takes damage / `armor` (1.5).
+    - A move order packs it first.
+  - **My calls:**
+    - Deploy is automatic, not a separate command, so attack-moves and the AI use it with no new orders. A deploy toggle can be added if players want to hold it packed.
+    - Packed it can't fire at all (the proposal's "weak when caught packed").
+  - **Implementation:**
+    - Progress in `World.deploy`, deployers in `World.deployIds`. Hashed only for deployers, so other matches' hashes are unchanged.
+    - `Deploy.step` runs at the start of Movement. Movement anchors them; Weapons gates the shot; Damage divides by the armor.
+  - **Wire:** state bits DEPLOYED 32 and DEPLOYING 64, protocol 22.
+- **Minotaur, `chs_minotaur`** (T2, Chaos Advanced Vehicle Plant):
+  - **Stats:** value 680, health 4,200, speed 20, footprint 2.
+  - **Gun `chs_ram_cannon`:** range 160, 1.6°, 220 armored, 360 structure (+50% of its 240 light), 2.2 s.
+  - **Demolition charge `chs_demolition`:** a structures-only hitscan, 30 studs, 3,000, every 20 s.
+  - Defs only, no new mechanic.
+- **Counter matrix (guide 12.4):** rows "Deployable gun" (Ground ●●●, Ship ●●, Structure ●●) and "Siege" (Ground ●, Ship ●, Structure ●●●) in the balance report's roles.
+- **Tests:** `Deploy.spec`:
+  - unpacks in 4 s and fires only deployed;
+  - packs for 4 s on a move order;
+  - damage / 1.5, and not pushed;
+  - attack-move: holds, deploys, fires at range;
+  - the charge levels a Bulwark and ignores a tank.
+- **Blockouts:** requested from the models stream (`docs/progress/models.md`): Warden with `spades` to lower when deployed; Minotaur with a `ram`.
+
+## S-66 — Missile refills come first in a stall (the user, 2026-10-22)
+
+- **Asked:** "Missile refills take priority over construction, up to ~25% of income." It answers the S-57 review question: refills had shared a stalled economy evenly with construction (S-47), so SAMs under air attack stayed empty.
+- **Rule** (`Economy.REFILL_PRIORITY` = 0.25), per resource and economy window:
+  - Missile refills' demand is served first, up to a quarter of the window's income and what is available.
+  - Whatever they want beyond that shares the rest with construction, production, rearming and upkeep at the common ratio.
+  - Refills progress at their own `priorityRatio`; everything else at `ratio`.
+  - Without a stall both are 1, so nothing changes.
+- **Order:** `Stockpile.step` now runs before construction in `Build.step`, so a window's allowance goes to refills first.
+- **Test** (`Stockpile.spec`): a Chaos plant building Ravagers on a Warlord's income keeps the economy stalled 100% of the time.
+  - An empty Thorn rebuilds 2.49 missiles in 60 s with priority, against 1.81 sharing alike.
+  - Its floor is a quarter of 20 power/s, about 1.25 missiles a minute.
+- **AI under helicopter raids** (new `lune run sam_raids`, kept this time; Normal AI on skirmish:192, 15 min): numbers in the progress file. They are noisy: the AI builds few SAMs, and with the faction pass's prices Order's economy is stalled 85–90% of the time, a faction-AI question (task 11).
+
+## S-67 — Select-all orders' slots in the Pathing job; lazy quadtree updates (the user, 2026-10-22)
+
+- **Asked:** the two S-60 peaks: spread a select-all order's slot assignment over the Pathing job, and update quadtrees lazily when a structure dies. Both change timing (not the state hash), as S-60 said.
+- **Sliced slot assignment:**
+  - **Rule:** an order for `Nav.SLICED_ASSIGN_MIN` (64) units or more gets its ground groups' slots in the plan job.
+    - At issue, Commands only snapshots the units' positions; its units head for the formation's center.
+    - The plan job sorts the slots (`deepestFirst`), buckets the units and assigns slots, at 4 distance checks per work unit, then gives each unit still in the order its slot.
+    - Smaller orders and air groups assign at once as before.
+  - **`Formation.assign` is now resumable** (`newAssigner` / `assignStep`). Picks and checks are identical however it is sliced: tested on 150 units over 50-check steps, and the Normandy hash didn't change with the refactor alone.
+  - **Test:** an 80-unit MOVE: every unit at the center at first; after one Pathing tick each has exactly the slot an immediate assignment gives.
+- **Lazy quadtree updates:**
+  - **Rule:** `Nav.terrainChanged` only records the changed rectangle per tree (the field cache is still invalidated at once). A tree applies its pending changes the first time it is used (`Nav.tree`, a plan job's tree), or on a Pathing tick with no job queued.
+  - **Batching:** the batch recomputes components once (`Quadtree.update(..., deferComponents)` + `Quadtree.computeComponents`); each update had recomputed them over the whole tree.
+  - **Backlog cap:** more than `Nav.MAX_PENDING` (8) pending changes on a tree are applied at once, so a map's structures placed at setup don't land on the first order's tick. First tried without the cap: that tick took 95 ms, then 21 with batching.
+  - **Test:** `Placement.spec`'s rebuild comparison now reads trees through `Nav.tree`.
+- **Normandy** (`profile_normandy 1800`, 3 interleaved runs each; the first pair was noisy):
+
+| | Before | After |
+|---|---|---|
+| Commands peak (budget 1) | 1.40 / 1.47 (4.9 noisy) | **0.86 / 0.96** (2.3 noisy) |
+| Projectiles+Damage peak (budget 8) | 7.6 / 10.7 (22.6 noisy) | **2.8 / 2.9 / 4.4** |
+| Pathing peak (budget 8) | 7.3 / 8.1 / 8.9 | 7.5 / 8.0 / 9.4 |
+| p99 tick (ms) | 9.0 / 9.3 / 14.3 | 8.4 / 8.7 / 9.7 |
+
+  - The state hash changed (5f72fafa against ae5ef52e), as expected: big orders' units start toward the center for a tick, and trees update later.
+
+## S-65 — The faction axis: Order AI against Chaos AI (the user, 2026-10-22)
+
+- **Asked:** add the faction axis to the AI report: Order AI against Chaos AI at every level pair, every map, both starts, 3+ seeds. Targets: 40–60% overall, 35–65% per map, at most 10% undecided at the limit.
+- **Tool:** `lune run faction_ai [minutes] [seeds] [mapFilter] [mirrored]` writes `docs/FACTION_AI.md`.
+  - Matches: 1v1 on Ridgeline, Coastline, skirmish:256 and Normandy (9 level pairs × 2 starts); 2v2 on Twin Lakes (two of each faction per side); 4-player FFA on Crossroads (two of each, alternating, one level).
+  - `ailevels` keeps its faction mirrors: it measures levels, this measures factions.
+- **First report** (40 min, seeds 7–9, after S-62; 324 matches, 20 min of run time). **Out of target:**
+  - Order wins **89%** of the same-level matches (86–11, 11 undecided = 10%), on every map but Crossroads (60%).
+  - Levels still order across factions: Order easy loses to Chaos normal 7–20, Order normal loses to Chaos hard 5–24.
+  - Normandy has no deposits: 23 of its 54 matches are at the 40-minute limit.
+- **Why (my reading):**
+  - The trade check shows the per-value balance even (S-62), but the AI uses none of Chaos's conditions: it waves attack-moves into the enemy, which is Order's "defend" case (1.4–2.1). It never flanks or raids, and it doesn't expand wider.
+  - Chaos's cheaper units also make its economy-to-army choices the same as Order's, so its numbers advantage is only the value it saved.
+  - This is the faction AI's job (task 11, proposal section 7), then the ±10% tuning (task 12).
+
+## S-68 — Alerts, the under-attack flag, ground fire (the user's task 6; client request 39) (2026-10-22)
+
+- **Asked:** audit item 17 (the ALERT event and the strategic "under attack" flag, so the client's alerts come from the server) and item 18 (ATTACK_GROUND for artillery and any weapon with ground fire). The client asked for 17 at the same time (request 39), with suggested kinds and rate limits; built as suggested.
+- **ALERT, protocol 23** (`Sim/Alerts`; event 18, `alert u8, cell u16, defIndex u16`, owner only):
+  - UNIT_ATTACKED / STRUCTURE_ATTACKED: one per 400-stud zone per 20 s.
+  - COMMANDER_ATTACKED: one per 10 s.
+  - UNIT_LOST / STRUCTURE_LOST: one per zone per 5 s.
+  - BUILD_DONE: every factory unit and finished frame.
+  - STALL_SUPPLY / STALL_POWER: when the team's ratio drops below 1, at most once per 30 s.
+  - NUKE_LAUNCH: every player, at the silo; LAUNCH_WARNING stays as it was.
+  - **Sources:** Damage (enemy hits, deaths), Build (finished units), the Economy system (stalls), Weapons (launches). NetOut drains the player's queue each tick.
+  - **"Enemy":** the damage's player is on another ally team. Damage queued without a player falls back to its attacker's owner.
+- **UNDER_ATTACK (strategic flag 4):** own and allied units an enemy hit in the last 3 s (45 ticks).
+- **Ground fire:**
+  - Any unit with a BALLISTIC weapon (artillery, tanks, gun turrets, emplacements; `Air.groundFires`) takes ATTACK_GROUND.
+    - Mobile units close to their range (as ATTACK does), then those weapons shell the spot until another order, whatever the fire state.
+    - Its other weapons keep choosing targets.
+    - Structures with ballistic guns take it too.
+  - My call: "any weapon with ground fire" read as every ballistic weapon (shells can be aimed at a point; missiles and hitscan can't).
+- **Not hashed:** the alert state; nothing in the sim reads it.
+- **Tests:**
+  - `Alerts.spec`: rate limit per zone, owner only, UNIT_LOST with the type and place, UNDER_ATTACK set and cleared, BUILD_DONE, one power stall, NUKE_LAUNCH to both players.
+  - `GroundFire.spec`: artillery on hold fire shells a spot; out of range it drives closer; a move order ends it; an Edict takes it, a Halo doesn't.
+  - `Air.spec`: a tank now takes the bombers' ATTACK_GROUND too.
+  - `Schema.spec`: golden bytes.
+
+## S-69 — Salvos; shells lead moving targets (the user's task 7, audit item 7) (2026-10-22)
+
+- **Salvos:** `salvo = { count, delay }` is read now.
+  - The first shot starts the reload as before; the other `count - 1` follow `delay` apart along the turret's aim, as long as the weapon still has a target it may fire at. Losing it ends the salvo.
+  - State `World.wSalvo` / `wSalvoWait`, hashed only during a salvo.
+- **MLRS** (guide 13.2: "Judgement (precise)", "Hydra (large salvo)"):
+  - Judgement fires 4 rockets 0.3 s apart, Hydra 8 rockets 0.15 s apart. Each rocket does the old shot's damage / count; the Judgement's then −10% (see below).
+  - Trade check (`lune run factions 3`): MLRS 1.30 at full damage, **1.20 with the Judgement's rockets −10%** (in band; Order wins defending, 1.82; Chaos now wins the flank, 0.57, which it didn't before). Every Hydra number was already at its ±10% limit.
+- **Shell leading:**
+  - A ballistic weapon (not a lofted one) aims where a visible moving target will be after the shell's flight time. Two passes: the time from the launch pitch at the led distance; the target's speed along its heading.
+  - Radar contacts get no lead (their velocity isn't known); bombs and missiles already lead (D91, S-27).
+- **Re-run trade checks:** 12 of 12 roles still in band. Tanks, artillery and MLRS moved by ≤ 0.1 except the MLRS above.
+- **Tests (`Salvo.spec`):**
+  - A Hydra's 8 rockets 0.15 s apart, the next salvo one reload after the first rocket.
+  - A Verdict's shells burst within 14 studs of a tank driving across its line of fire. Without the lead, 0 of 4 do.

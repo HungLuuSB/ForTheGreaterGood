@@ -71,11 +71,13 @@
 | Role | Heavy defense and strategy | The strength of armies |
 | Look | Western-inspired (Leopard 2, Abrams, Patriot): sleek, wedge-shaped, high-tech, fortress-like; reads heavy: thick plates, add-on armor, deep skirts, sensors, shields, active protection | Eastern-inspired (T-14 Armata, T-90M, Pantsir): rugged, aggressive, built for mass and assault; reads light: compact and high off the ground, exposed running gear, rounder or domed turrets, reactive-armor blocks, rear slat cages |
 | Palette | Light sand-grey paint, cyan emissive accents | Gunmetal paint, orange emissive accents |
-| Doctrine | Better sensors, stealth, precision long range, DIRCM | Strong jamming, missile saturation, cheap mass, heavy armor |
-| Strength | Wins information fights; strong at range | Wins brawls and attrition; blinds enemy sensors |
-| Weakness | Expensive, fragile when cornered | Less accurate, weaker sensors, limited stealth |
+| Doctrine | Better sensors, stealth, precision long range, DIRCM, Pinpointers that reach full precision sooner (5 Witnesses; Chaos needs 7 Augurs) | Strong jamming, missile saturation, cheap mass |
+| Unit traits | Longer range, more accurate, more damage per shot, tougher; slower firing, slower moving, more expensive | Shorter range, less accurate, less per shot but faster firing; lighter, faster, cheaper: more units for the same economy |
+| Exclusive tools | Deployable defenses (Warden), fortress structures | Siege units (Minotaur), mass assault, jammers |
+| Strength | Wins information fights and fights it chose: at range, behind defenses, on a front it prepared | Wins brawls, attrition and tempo: attacks early and wide, outnumbers, blinds enemy sensors |
+| Weakness | Expensive and slow to reposition; loses if caught in the open or flanked | Dies at range and against prepared defenses; fragile units bleed value |
 
-Both factions have the **same roles** (scout, MBT, SAM, fighter, etc.) so balancing stays manageable. They differ in stats and in which information-warfare tools they get.
+Both factions have the **same roles** (scout, MBT, SAM, fighter, etc.) so balancing stays manageable. They differ in stats and in which information-warfare tools they get. Each trait differs by about 15–30% between the two versions of a role, and per unit of value (supply + power / 10) the two versions trade about evenly (0.8–1.25, `lune run factions`); what differs is the conditions each wins in. Numbers: `docs/design/factions.md` (approved 2026-10-22, S-62) and `docs/BALANCE.md`, "Faction pass". This replaced "Chaos: heavy armor".
 
 Both factions are **near-future military shapes in Beyond All Reason's model style** (M-15): real modern vehicles (Leopard 2, Abrams, T-14) with strong, slightly exaggerated silhouettes (bigger turrets and guns), clean hard-surface painted metal with crisp panel lines and edge highlights, no camouflage, large bold team-color panels designed into the model (turret roof, hull top, side plates) and small emissive accents (sensor lights, weapon glow). Long, low, wide hulls; turrets set toward the rear; long guns; side skirts with road wheels; canister launchers for SAMs; flat phased-array radars, never dishes. Silhouette first, secondary shapes second, small details only if cheap. Details: [`docs/art/style-guide.md`](art/style-guide.md).
 
@@ -746,7 +748,8 @@ SPAWN_STRATEGIC as SPAWN_PROJ, then goal pos (v18: a strategic missile)     25 B
 INTERCEPTED projId u16, pos (a strategic missile destroyed; v16)            9 B
 pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
 vel = vx, vy, vz i16 (1/8 stud per second)
-ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
+ALERT       alert u8, cell u16, defIndex u16 (v23: under attack, lost, built,
+            stall, nuke launch; rate-limited, to the player it concerns)  6 B
 ```
 
 **Projectile correction (S → C, unreliable, `Projectiles` channel, after the tick header)**
@@ -1252,8 +1255,12 @@ countermeasures = {
 | Attack helis | ●●● | — | — | ●● | — | ●● |
 | Destroyers | ● | ●● | ●● | ●● | ●● | ●● |
 | Submarines | — | — | — | ●●● | ●● | — |
+| Deployable gun | ●●● | — | — | ●● | — | ●● |
+| Siege | ● | — | — | ● | — | ●●● |
 
 ● weak · ●● good · ●●● strong · — cannot target
+
+Faction-only rows (S-64): **Deployable gun** is Order's Warden (beats a frontal push once deployed), **Siege** is Chaos's Minotaur (breaks structures; weak against an army in the field).
 
 Tanks and attack helicopters can't target helicopters (changed from ● in round 6: no ground gun or rocket targets `AIR`; D97). Same-role cells (a role against its own kind, e.g. tanks against tanks) are checked as a soft band, not as dots: both sides must be able to damage each other, and the equal-cost trade should stay within 0.5–2.0 (D98).
 
@@ -1292,6 +1299,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Mobile jammer | T2 | **Veil** (short range) | **Shroud** (long range) |
 | Mobile fire-control radar | T2 | **Arbiter** (precise) | **Stalker** (cheaper, weaker) |
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
+| Deployable gun (faction-only) | T2 | **Warden**: unpacks in 4 s whenever it stands still; deployed it fires (range 280), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
+| Siege ram (faction-only) | T2 | — | **Minotaur**: +50% gun damage to structures and a 30-stud demolition charge (3,000 to a structure, every 20 s) (S-64) |
 
 ### 13.3 Air units
 

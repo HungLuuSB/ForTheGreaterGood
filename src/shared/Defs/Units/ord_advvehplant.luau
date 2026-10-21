@@ -14,6 +14,6 @@ return Templates.extend(Templates.Structure, {
 	footprint = 5,
 	icon = "factory",
 	buildPower = 200,
-	buildOptions = { "ord_architect", "ord_paladin", "ord_judgement", "ord_seraph", "ord_veil", "ord_tideguard", "ord_arbiter" },
+	buildOptions = { "ord_architect", "ord_paladin", "ord_judgement", "ord_seraph", "ord_veil", "ord_tideguard", "ord_arbiter", "ord_warden" },
 	model = "ord_advvehplant",
 })

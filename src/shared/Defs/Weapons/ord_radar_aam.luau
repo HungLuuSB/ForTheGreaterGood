@@ -3,13 +3,13 @@
 return {
 	id = "ord_radar_aam",
 	type = "HOMING",
-	range = 420,
-	reload = 2,
+	range = 396, -- faction pass, tuned (S-62)
+	reload = 2.4, -- faction pass, tuned (S-62)
 	projectileSpeed = 520,
 	accuracy = 0.5,
 	turnRate = 160,
 	guidance = "RADAR",
-	lockRange = 420,
+	lockRange = 396, -- faction pass, tuned (S-62)
 	burnThrough = 0.35,
 	terminalRange = 50,
 	canTargetRadar = true,

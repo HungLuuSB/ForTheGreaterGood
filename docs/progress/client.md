@@ -128,6 +128,17 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `d76abd2` `3708a23` (merge of `main` with S-57, S-59; BAR-style layout and icon glyphs, C-71); test_client 115, test 349, build passed.
 - Ready to merge: `d05f3c6` (radar precision from Pinpointers, C-72); test_client 116, build passed.
 - Ready to merge: `12354ba` ("Accuracy 50%" wording, C-72); build passed.
+- Ready to merge: `420adba` (icon layer writes only what changed, C-73); test_client 116, build passed.
+- Ready to merge: `926e4a9` (the user's icon set on one sprite sheet, drawn in the game, C-74; includes the icon HTML commits `44dc172`, `a0e43e1`); test_client 119, test 350, build passed.
+- Ready to merge: `994ba89` (factory queues, fire / move states and ammo from the server, request 36, C-75); test_client 122, test 350, build passed.
+- Ready to merge: `8abbf6d` (unit stats in the unit panel, C-76; also the draft 3 icon commits `226ed70`, `c9ff356`, the sheet not yet re-imported); test_client 127, test 350, build passed.
+- Ready to merge: `315ec04` (lobby seats for several humans, results with statistics, C-77; the 2-client Studio test not run); test_client 130, test 350, build passed.
+- Ready to merge: `3101bcf` (rejoin, late join, restart: a new WELCOME clears the client's references, C-78); test_client 133, build passed.
+- Ready to merge: `390df33` (spectators and the replay viewer, C-79); test_client 136, build passed.
+- Ready to merge: `5aa4552` (requests 37 and 38 used, the faction pass followed, C-80; includes the merge of main at 1cbfb0d); test_client 137, test 355, build passed.
+- Ready to merge: `8ce4923` (settings menu, C-81); test_client 140, build passed.
+- Ready to merge: `cb7098f` (stable icon layout, S-64 units drawn as the Main Battle Tank, C-74 follow-up; includes the merge of main at a21d325); test_client 140, build passed.
+- Ready to merge: `9fac768` (nuke craters and water splashes, C-82); test_client 141, build passed.
 
 ## Tasks
 
@@ -456,6 +467,69 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: atmosphere presets (C-83)
+
+- Four lighting presets, chosen in the settings menu (O, "Atmosphere"); Current stays the default. Same fight in the normandy battle, same camera, 4 s each in Studio (60 fps cap, so the frame is 16.7 ms in all four; GPU and CPU are Roblox's render frame times):
+
+| Preset | Look | GPU | CPU | Screenshot |
+|---|---|---|---|---|
+| Current | the place as saved (Roblox's default sky, Atmosphere 0.3, Bloom) | 4.26 ms | 6.46 ms | `debug_out/screens/c83_atmosphere_current.jpg` |
+| Clear day | thinner, bluer air, a touch more colour and contrast, softer bloom | 4.80 ms | 7.12 ms | `c83_atmosphere_clear.jpg` |
+| Battlefield haze | thick warm-grey air, muted colours, sun rays through it | 4.76 ms | 6.24 ms | `c83_atmosphere_haze.jpg` |
+| Dusk | a low warm sun (17:12), orange horizon, stronger bloom and rays | 4.91 ms | 6.14 ms | `c83_atmosphere_dusk.jpg` |
+
+  The presets cost about 0.5 ms of GPU (the colour correction pass and the denser air); the CPU differences are the fight's own variation. Lighting technology (Future) can't be set from a script, so it isn't part of the presets.
+
+## 2026-10-22: nuke crater, water splashes (C-82)
+
+- A nuke that bursts near the ground now digs a crater in the Terrain instead of leaving the 240-stud dark scorch decal (your idea): a shallow bowl (radius 0.45× the blast, depth 7% of that, at most 6 studs) with a scorched basalt floor, a ring of mud around it and an uneven earth rim. It is visual only and kept shallow, since units still drive at the sim's height. Each crater's area is copied first and put back on the next WELCOME (checked in Studio: 1,727 basalt voxels, then 0 after a new WELCOME). `debug_out/screens/c82_nuke_crater.jpg` (as it forms, under the mushroom cloud), `c82_crater_close.jpg` (one dug directly, close up).
+- Shells, bombs and torpedoes that land in open water splash: a white column that falls back, spray, mist and a foam ring on the surface, instead of fire, dust and a scorch mark; a hit on a ship (a hull under the point) still explodes. `tests/client/Splash.spec` (in a corvette fight 3 of 30 impacts splash, the hits explode; on land none do). In Studio the splash is too brief to catch in a screenshot (`c82_naval_hit.jpg` shows a hit on a ship).
+
+## 2026-10-22: icons for S-64's new units (C-74 follow-up)
+
+- The Warden and the Minotaur (S-64) have no entry in your icon set yet: they draw as the Main Battle Tank (T2 vehicle) until the catalogue has them, and `render.mjs` reports it on every run. The sheet's layout is now stable: tiles keep their spots when units or entries are added, so the uploaded sheet stays right until the next import (the rebuilt sheet is byte-identical).
+
+## 2026-10-22: settings menu (C-81)
+
+- O (or "Settings" above the follow button) opens a settings panel: camera pan speed, zoom step and edge scroll; graphics quality Low / Medium / High (caps on explosions, tracers, projectiles, lights and copies of one effect, and the distance of full piece animation) and fog lights on / off; UI scale (0.7 to 1.5, the UI panels only: overlays at world positions keep screen pixels); and the key bindings reference. Values apply live; they last for the session. High is today's look; fog lights default off (your earlier call). `tests/client/Settings.spec`; screenshots `debug_out/screens/c81_settings.jpg`, `c81_settings_low_scale12.jpg`.
+
+## 2026-10-22: requests 37 and 38 used, faction pass followed (C-80)
+
+- Countermeasure charges (request 37, S-63, protocol 21): the unit panel shows own units' flares and chaff left from the server ("Flares 6/6 · Chaff 6/6", `debug_out/screens/c80_charges.jpg`); other players' units keep "max". `OwnerFields.spec` checks the client's counts against the server's.
+- Match statistics (request 38, S-63): the results come from the sim's `Stats.report`: units built / lost / killed, supply and power gathered / spent, damage dealt. My server-side `MatchStats` (C-77) is removed.
+- Faction pass (S-62): radar precision weighs each Pinpointer (`Pinpoint.weight`: 5 Witnesses or 7 Augurs for full). Specs that hard-coded unit numbers now read them from the defs (a Lancer now does 141 per 1.75 s = 80.6 DPS against armored). Two Studio-scene bounds moved with the new numbers (SAM prediction median at the Thorn's 165 studs; Wyvern pitch-overs when targets die early), and a Moving spec bug surfaced: it encoded the move with the client's placeholder grid before the WELCOME (fixed: the map's grid).
+
+## 2026-10-22: spectators and the replay viewer (C-79)
+
+- Spectators: a Roblox player without a seat (a full lobby, or a profile with no free slot) watches as a spectator on sim-A's spectator stream (S-18): every unit, no fog, a "SPECTATING" banner; re-added at every new match. New profile `spectate` (the duel, both sides played by the placeholder bot) shows it in a solo playtest (`debug_out/screens/c79_spectator.jpg`).
+- Replays: in a lobby match the server records each human's stream as a PlayerReplay (sim-A's format; 32 MB cap for all recordings together). The results screen has Save replay (kept for this server session; on a live server also a DataStore copy), Watch replay and the saved ones. Watching streams the file to the client in 200 KB chunks; it plays through the same NetIn path as the live stream with a bar at the bottom: play / pause, slower / faster (0.25× to 8×), time, a seek bar (click anywhere; back starts over from the first tick, which is fast), Exit (back to the live match with a new HELLO). Orders are not sent while a replay plays.
+- Verified: `tests/client/Replay.spec` (playback, pause, 4×, seeks forward and back, and the file round trip all give exactly the live client's view at the same tick; a spectator sees every unit as player 0; 20 s of a 2-AI match is 8.6 KB). In Studio: a 31 s match, Save (2.9 KB), Watch, 4×, seek forward, pause, seek back, Exit back to the results, no errors (`c79_results_replay.jpg`, `c79_replay.jpg`, `c79_replay_seek_back.jpg`). The DataStore copy is skipped in Studio (it needs API access; a live server tries it).
+
+## 2026-10-22: rejoin, late join, restart (C-78)
+
+- `tests/client/Robustness.spec` checks the client against the server's own view in three cases: a client joining a running match (every unit the server shows it, nothing else, health within the wire's step, the sight map whole), a dropped client replaced by a fresh one that joins as the same player (the same, with no CAMERA sent again: the server keeps it), and a match restart on a new sim and map with the same client (the new map, team and units, none of the old).
+- Fixed: after a restart or rejoin, unit IDs start over, and the old selection, control groups, waypoints and command mode pointed at other units (the restart test caught the selection keeping ID 1, the new match's Command Vehicle). The client API now clears them on every new WELCOME.
+- In Studio: the running client sent HELLO again, as a reconnecting client does; the server re-joined it as sim player 1 and the client rebuilt its view (196 units, no errors; `debug_out/screens/c78_rejoined.jpg`). The restart path ran in Studio with C-77 (lobby → match → results → lobby, no errors). A real disconnect can't be made in a solo Studio test.
+
+## 2026-10-22: two humans, lobby seats, results with statistics (C-77)
+
+- Two humans can play one match: the lobby has seats (a human, an AI with Easy / Normal / Hard, or open for a human to join), each with a faction and, in Teams, an ally team; the first human hosts (map, mode, win rule, seats, start), every human picks their own faction; open seats nobody took drop out at the start. A human who leaves mid-match keeps the seat and rejoins into it; in the lobby the seat opens (the host passes to the next human). Results come when the match is over or every human is out, and show victory or defeat for each viewer, plus a table per player: end, units built / lost, supply and power gathered / spent, damage taken (`src/roblox/MatchStats`, counted by the server each tick; damage dealt and kills wait for request 38). New profile `duo`: the lobby with two open seats.
+- Verified in Lune with two full client stacks on one match (`tests/client/TwoPlayers.spec`): both join as their own player, each sees only its own units through the fog with its own sight map, neither can select or (with a forged command) move the other's units, they meet and fight, both see the deaths, and annihilation ends it for the survivor. Lobby seats, the host's rights, two humans with an AI, and the statistics in `tests/client/Lobby.spec`.
+- In Studio (one client, profile `duo`): the lobby with seats, seat 2 set to a Hard AI, a match, defeat with the statistics table, back to the lobby with the seats kept; no errors (`debug_out/screens/c77_lobby_seats.jpg`, `c77_results_stats.jpg`). **Not done: the 2-client Studio test.** Studio's "Clients and Servers" test can't be started from my Studio tools (they only start a solo playtest); to run it: set `ACTIVE = "duo"`, Test tab, Clients and Servers, 2 players, Start; the first client hosts.
+
+## 2026-10-22: unit stats in the unit panel (C-76)
+
+- One selected unit (or a hovered one: an enemy always, an own one when nothing is selected) shows its stats, BAR style, from `Core/UnitStats`: per weapon DPS against its main target class (named), range, reload, spread, damage per shot, and for missiles guidance, lock range, stockpile and refill time; speed, sight, air sight, radar, sonar, jammer and tracking radius; cost, build power and build options; income, upkeep, conversion, extraction or storage; health, build progress, the server's fire / move state, ammo and countermeasures. Enemies: full stats only in sight or tracked; a ghost its type's stats without health; a radar or sonar contact its domain only. `tests/client/UnitStats.spec` (a Lancer does 75 DPS against armored). Screenshots: `debug_out/screens/c76_falcon_stats.jpg`, `c76_factory_queue.jpg`, `c76_hover.jpg`. The panel is 460 px wide now (the build grid shows 2 rows, the command card moved right).
+- Countermeasure charges show the def's maximum ("Chaff max 2"): live charges aren't on the wire (request 37).
+
+## 2026-10-22: request 36 used (C-75)
+
+- Factory queues, fire / move states and ammo now come from the server (S-61, protocol 20): the unit panel's queue line, the build grid's queued counts and right-click cancel read the server's queue; the command card's fire and move state buttons show the server's state for the selection; aircraft show their real ammo. The client's own guesses (`Core/FactoryQueue`, the last state sent) are removed. `tests/client/OwnerFields.spec`: the client's queue equals the server's on every tick of 1,350 (head progress within 1/16), fire / move states after each command, and ammo.
+
+## 2026-10-22: the user's icon set (C-74)
+
+- Your icon set (draft 2) is in the game (C-74): one sprite sheet (asset 96380571554418), team-tinted, drawn by the strategic icon layer, the build grid and the unit panel; ghosts at 45%, radar and sonar contacts as dashed frames. All 127 unit types map to your catalogue; `node tools/icons/render.mjs` rebuilds the sheet from the HTML. Readability at real size (22 px) in the normandy battle, on grass and sand: `debug_out/screens/c74_icons_grass.jpg`, `c74_icons_sand.jpg`, `c74_icons_real_size.jpg` (every icon, both teams, with ghosts), `c74_icons_ui.jpg`. Hard to tell apart: Bomber vs Strategic Bomber, Main Battle Tank vs MLRS, Airfield vs Rearm Pad, Gun Turret vs Floating Turret; close but readable: Fighter vs Air Superiority and the IR vs radar SAMs; T1 vs T2 dots are about 2 px.
+
 ## 2026-10-22: overnight run
 
 - Fog and wrecks from the server (C-65): the client now uses the server's exact team sight, allies included (it used to work it out from its own units). Wrecks appear for anything the team knows of, also after joining, and disappear when reclaimed (`debug_out/screens/c65_wrecks.jpg`).
@@ -470,12 +544,17 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Needs my review
 
+- **Atmosphere options (C-83):** Current (default), Clear day, Battlefield haze, Dusk, in the settings menu; table with screenshots and frame cost under "atmosphere presets (C-83)" above. Values in `src/client/Render/Atmosphere.luau`. Pick one as the default, or none.
+
+- **Settings defaults (C-81):** pan speed 1.1, zoom step 1.15, edge scroll on in live games (off in Studio), quality High (60 explosions, 100 tracers, 150 projectiles, 12 lights, 24 copies, full animation within 300 studs), Medium and Low below it, fog lights off, UI scale 1.0. In `src/client/Core/Settings.luau`; the key O opens it.
+- **UI placement (C-76, C-79, C-81):** the unit panel is 460 px wide (the build grid shows 2 rows), the command card right of it; the replay bar bottom centre with the replay / spectator banner under the resource bar; "Settings (O)" above the follow button bottom right; lobby and settings panels centred.
+
 - **Camera pitch range (C-69):** Alt + scroll, 35°–80° in 4° steps, starting at 55°; the detailed area stops at 1.8 camera distances (`Camera.MIN_PITCH`, `MAX_PITCH`, `PITCH_STEP`, `RECT_CAP` in `src/client/Camera.luau`).
 
 - **Hotkey layout (C-68):** commands M move, F fight, A attack, Z patrol, G guard, S stop; L fire state, K move state; Y repeat, U on/off, X cancel; J last alert; B build menu (again: next tab), then 1..0 pick (Shift: 5 in a factory, right click drops one). P (patrol in BAR) stays the Studio pause key. In `src/client/Input/Controls.luau` and `UI/BuildMenu.luau`.
 - **UI placement (C-71, BAR layout):** minimap top left (280 px), build grid under it (5 x 52-px tiles, 3 rows then scrolling), unit panel bottom left, command card next to it (5 columns, state bars), resource bar top center, alerts under it, F3 readout top right, follow button bottom right. Sized for Studio's small viewport; a UI session can scale it.
 
-- **Unit icons (C-71):** BAR-like glyphs: domain shape in team color, a white role mark per family (`Icons.MARKS`), tier pips, a notch on Chaos types, variant dots; 13-30 px. The user prefers BAR's real icons, which their licence (CC BY-NC-ND) rules out; original BAR-style images would need uploading to the user's account.
+- **Unit icons (C-74):** the user's icon set, 22 px wide for T1 (×1.15 T2, ×1.3 T3, ×1.35 the Command Vehicle), selected lightened 55% toward white, ghosts 45%. `Icons.BASE` in `src/client/Core/Icons.luau`, the selection tint in `UI/Glyph.luau`. Hard pairs at that size: Bomber / Strategic Bomber, Main Battle Tank / MLRS, Airfield / Rearm Pad, Gun Turret / Floating Turret (C-74).
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
 
@@ -507,7 +586,10 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
-36. **Factory queues, fire / move states and ammo on the wire (C-68, 2026-10-22):** the playable UI's unit panel and command card need them; today the client shows what it queued itself (`Core/FactoryQueue`) and the last state it sent, and no ammo. Suggested: own factories' queue (def indices, at most ~20, and the progress of the first) in State records when it changes; own units' fire state and move state (2 bits each, in the state field or a new one); aircraft ammo (rounds left / max) for own units. Owner only, like STOCK. Medium priority.
+37. **Done and used (S-63, protocol 21; C-80): the unit panel shows own flares and chaff left.** **Live countermeasure charges for own units (C-76, 2026-10-22):** the unit panel shows ammo from S-61 but flares / chaff only as the def's maximum. Suggested: a 4th OwnerField bit, CHARGES 8: `flares u8, chaff u8` (charges left), on change and with the ENTER, for units with `countermeasures`. Low priority. Sent to sim-A directly.
+38. **Done and used (S-63, Sim/Stats; C-80): the results screen shows them.** **Match statistics per player (2026-10-22, the user asked):** for the results screen: units built, lost and killed, supply / power gathered and spent, damage dealt per player, counted by the sim (e.g. `Sim/Stats`), read by the Roblox server at match end; no wire change. Medium priority. Sent to sim-A directly.
+
+36. **Done and used (S-61, protocol 20; C-75): the unit panel shows the server's factory queue, the command card the server's fire and move states, aircraft their real ammo; `Core/FactoryQueue` and the last-sent states are gone.** **Factory queues, fire / move states and ammo on the wire (C-68, 2026-10-22):** the playable UI's unit panel and command card need them; today the client shows what it queued itself (`Core/FactoryQueue`) and the last state it sent, and no ammo. Suggested: own factories' queue (def indices, at most ~20, and the progress of the first) in State records when it changes; own units' fire state and move state (2 bits each, in the state field or a new one); aircraft ammo (rounds left / max) for own units. Owner only, like STOCK. Medium priority.
 
 35. **Done (S-58, protocol 19): the strategic icon is the def index; `def.icon` stays the family.** **A unique strategic icon per unit type (the user, 2026-10-22, overnight list):** "Every type of unit need to have its own unique icon." The wire's icon number comes from Shared/Net/Icons, which numbers icon *names*; 126 unit defs share 50 names (worker x10, radar x6 ...). Asked: an icon number unique per unit def (e.g. defs in sorted order, fits a u8), keeping `def.icon` as the shape family; ghosts and contacts keep their rules. The client then draws a unique glyph per def. Sent to sim-A directly.
 

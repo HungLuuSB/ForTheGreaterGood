@@ -335,7 +335,7 @@ return function(t: RunAll.Context)
 		print(string.format("    targets: %d unit-ticks with a target, %d of them before the turret turned", targeted, beforeTurned))
 	end)
 
-	t.test("own units' factory queue, fire / move state and ammo reach their owner only, exactly (S-61)", function()
+	t.test("own units' factory queue, fire / move state, ammo and countermeasure charges reach their owner only, exactly (S-61, S-63)", function()
 		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:64" })
 		local g = (sim.map :: any).grid
 		local w = sim.world
@@ -356,6 +356,7 @@ return function(t: RunAll.Context)
 				w.fireState[tank] = World.FireState.HOLD_FIRE
 				World.setMoveState(w, tank, World.MoveState.ROAM)
 				sim.air.ammo[jet] = 1
+				sim.ew.chaff[jet] = 1 -- one of the Falcon's 2 chaff charges spent
 			end
 			Sim.step(sim)
 			for pid = 1, 2 do
@@ -367,6 +368,7 @@ return function(t: RunAll.Context)
 			local okStates = tk and tk.fireState == w.fireState[tank] and tk.moveState == w.moveState[tank]
 			-- (the jet flies in and out of the tactical tier: checked while in it)
 			local okAmmo = j and j.ammo == sim.air.ammo[jet] and j.maxAmmo == defs.ord_falcon.ammo
+				and j.chaff == sim.ew.chaff[jet] and j.flares == 0 -- the Falcon carries no flares
 			local jetTactical = j ~= nil and j.tier == "tactical"
 			if okQueue and okStates and (okAmmo or not jetTactical) then
 				exact += 1
@@ -375,7 +377,7 @@ return function(t: RunAll.Context)
 				jetSeen += 1
 			end
 			for id, u in views[2].units do
-				if w.owner[id] == 1 and (u.queue or u.fireState or u.ammo) then
+				if w.owner[id] == 1 and (u.queue or u.fireState or u.ammo or u.chaff) then
 					leaked += 1
 				end
 			end

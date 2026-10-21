@@ -31,6 +31,7 @@
 -- the shallows.
 
 local Air = require("../Air")
+local Deploy = require("../Deploy")
 local FlowField = require("../Path/FlowField")
 local Layers = require("@shared/Grid/Layers")
 local Nav = require("../Nav")
@@ -61,6 +62,7 @@ local nz: { number } = {}
 local nheading: { number } = {}
 local nspeed: { number } = {}
 local moving: { boolean } = {}
+local anchored: { boolean } = {} -- deploying / deployed / packing: no movement, no push (S-64)
 local prof: { Nav.Profile? } = {}
 
 -- Spatial hash as bucket heads + per-k links (no per-tick allocation once warm).
@@ -138,6 +140,7 @@ return function(sim: Types.Sim)
 	if nav == nil then
 		return
 	end
+	Deploy.step(sim)
 	local w = sim.world
 	local ids = w.ids
 	local n = #ids
@@ -167,6 +170,7 @@ return function(sim: Types.Sim)
 			maxRadius = p.radius
 		end
 		moving[k] = w.orderId[id] ~= 0
+		anchored[k] = Deploy.anchored(w, id)
 		anyActive = anyActive or moving[k] or speed[id] > 0
 	end
 	if not anyActive then
@@ -187,6 +191,11 @@ return function(sim: Types.Sim)
 		end
 		if p.jet then
 			nheading[k], nspeed[k] = Air.steerJet(sim, id, p, nx[k], nz[k], nheading[k], nspeed[k])
+			continue
+		end
+		if anchored[k] then
+			nspeed[k] = 0 -- unpacked or (un)packing: it holds its spot (Deploy)
+			w.progressTick[id] = tick
 			continue
 		end
 		local x, z = nx[k], nz[k]
@@ -399,6 +408,11 @@ return function(sim: Types.Sim)
 									shareK, shareJ = 0.2, 0.8
 								elseif moving[j] and not moving[k] then
 									shareK, shareJ = 0.8, 0.2
+								end
+								if anchored[k] then
+									shareK, shareJ = 0, if anchored[j] then 0 else 1
+								elseif anchored[j] then
+									shareK, shareJ = 1, 0
 								end
 								local kx, kz = nx[k] + ux * pen * shareK, nz[k] + uz * pen * shareK
 								if Nav.fits(nav, p, kx, kz) then

@@ -59,6 +59,7 @@
 -- after a u16 tick header. Dirty bits are cleared once all players are done.
 
 local Grid = require("@shared/Grid/Grid")
+local Alerts = require("./Alerts")
 local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
@@ -750,7 +751,7 @@ function NetOut.step(sim: Types.Sim)
 			end
 			local d = sim.defs.unitByIndex[w.defIndex[id]]
 			local q = sim.build.queue[id]
-			local qSig, sSig, aSig = "", "", ""
+			local qSig, sSig, aSig, cSig = "", "", "", ""
 			local progress = 0
 			if q then
 				progress = math.clamp(math.floor((sim.build.progress[id] or 0) * 255), 0, 255)
@@ -764,7 +765,16 @@ function NetOut.step(sim: Types.Sim)
 			if ammo ~= nil then
 				aSig = tostring(ammo)
 			end
-			local now = { qSig, sSig, aSig }
+			-- countermeasure charges left (S-63, client request 37)
+			local cm = d.countermeasures
+			local hasCharges = cm ~= nil and (cm.flares ~= nil or cm.chaff ~= nil)
+			local flares, chaff = 0, 0
+			if hasCharges then
+				flares = if cm and cm.flares then sim.ew.flares[id] or 0 else 0
+				chaff = if cm and cm.chaff then sim.ew.chaff[id] or 0 else 0
+				cSig = flares .. "/" .. chaff
+			end
+			local now = { qSig, sSig, aSig, cSig }
 			ownerNow[id] = now
 			local before = if entered[id] then nil else sentOwner[id]
 			local rec: Schema.State? = nil
@@ -792,6 +802,10 @@ function NetOut.step(sim: Types.Sim)
 				local r = record()
 				r.ammo, r.maxAmmo = math.clamp(ammo, 0, 255), math.clamp(d.ammo or ammo, 0, 255)
 			end
+			if hasCharges and (before == nil or before[4] ~= cSig) then
+				local r = record()
+				r.flares, r.chaff = math.clamp(flares, 0, 255), math.clamp(chaff, 0, 255)
+			end
 		end
 		pn.sentOwner = ownerNow
 
@@ -813,6 +827,9 @@ function NetOut.step(sim: Types.Sim)
 					elseif level == L.SONAR then SF.SONAR_ONLY
 					elseif level == L.GHOST then SF.GHOST
 					else 0
+				if own and Alerts.underAttack(sim, id) then
+					flags += SF.UNDER_ATTACK -- hit by an enemy in the last 3 s (S-68)
+				end
 				local cell = g:encode(kx, kz)
 				table.insert(strategic, {
 					unitId = id,
@@ -839,6 +856,16 @@ function NetOut.step(sim: Types.Sim)
 
 		if cam ~= nil then
 			combatEvents(sim, g, pn, ally, cam, events)
+		end
+		-- the player's alerts (S-68): owner only, rate-limited by Sim/Alerts
+		if pid ~= 0 then
+			local alerts = Alerts.drain(sim, pid)
+			if alerts then
+				for _, a in alerts do
+					local cell = g:encode(a.x, a.z)
+					table.insert(events, { kind = Schema.EventKind.ALERT, alert = a.kind, cell = cell, defIndex = a.defIndex })
+				end
+			end
 		end
 		-- strategic launches: every player, camera or not (S-48)
 		for _, e in sim.combat.events do

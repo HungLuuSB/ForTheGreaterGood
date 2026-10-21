@@ -6,8 +6,8 @@
 -- maneuver yellow, hold red; repeat and on / off: green on, red off); the
 -- command modes (move, fight, attack, patrol, guard: the next left click
 -- gives the order) light up while active. Hotkeys (Input/Controls) show on
--- hover. Fire and move states show the last one sent (the wire doesn't
--- carry them yet). Acts only through the client API.
+-- hover. Fire and move states are the server's (protocol 20, S-61) for
+-- the first selected unit that has them. Acts only through the client API.
 
 local Players = game:GetService("Players")
 
@@ -90,7 +90,7 @@ function CommandCard.new(api: Api.Api): UI
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0, 1)
-	panel.Position = UDim2.new(0, 284, 1, 0) -- right of the 280-pixel unit panel
+	panel.Position = UDim2.new(0, 464, 1, 0) -- right of the 460-pixel unit panel (C-76)
 	local rows = math.ceil(#ORDER / COLS)
 	panel.Size = UDim2.fromOffset(COLS * (W + 3) + 7, rows * (H + 4) + 8)
 	panel.BackgroundColor3 = BG
