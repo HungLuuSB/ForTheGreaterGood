@@ -214,6 +214,7 @@ local snapshot = remotes:WaitForChild("Snapshot") :: RemoteEvent
 snapshot:FireServer(NetIn.hello(defs.hash))
 
 local seenJoins, seenMap = 0, 0
+local nextHover = 0 -- when the hovered unit is picked next (C-76)
 -- Per-frame cost of each part of the client (guide 18.2), for Invoke("perf").
 local perf: { [string]: { sum: number, n: number, max: number } } = {}
 local function mark(name: string, t0: number)
@@ -463,6 +464,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	table.clear(fx.shots)
 	mark("anim", t0)
 	Api.frame(api, now, fx.warnings)
+	-- the unit under the mouse, ten times a second (the unit panel shows a hovered enemy, C-76)
+	if now >= nextHover then
+		nextHover = now + 0.1
+		local id = Controls.hoverUnit(world)
+		local hu = id and world.units[id]
+		api.state.hover = if hu then { unit = id, x = hu.x, z = hu.z } else nil
+	end
 	if api.state.placement then
 		local hover = Controls.hover()
 		if hover then

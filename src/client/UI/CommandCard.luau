@@ -90,7 +90,7 @@ function CommandCard.new(api: Api.Api): UI
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0, 1)
-	panel.Position = UDim2.new(0, 284, 1, 0) -- right of the 280-pixel unit panel
+	panel.Position = UDim2.new(0, 464, 1, 0) -- right of the 460-pixel unit panel (C-76)
 	local rows = math.ceil(#ORDER / COLS)
 	panel.Size = UDim2.fromOffset(COLS * (W + 3) + 7, rows * (H + 4) + 8)
 	panel.BackgroundColor3 = BG
