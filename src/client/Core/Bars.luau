@@ -57,7 +57,8 @@ function Bars.draws(world: World.World, bars: { Bar }, project: (number, number,
 		local def = World.def(world, u)
 		local size = (if def then def.footprint else 1) * Grid.CELL_SIZE
 		local x, z = u.rx or u.x, u.rz or u.z
-		local y = (u.ry or World.groundY(world, x, z)) + u.alt + size * 0.6 + 3
+		-- ry is where the model is drawn (altitude included); else ground + altitude
+		local y = (u.ry or (World.groundY(world, x, z) + u.alt)) + size * 0.6 + 3
 		local sx, sy, front = project(x, y, z)
 		if not front or sx < -60 or sy < -20 or sx > width + 60 or sy > height + 20 then
 			continue

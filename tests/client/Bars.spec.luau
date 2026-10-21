@@ -5,6 +5,7 @@
 
 local Api = require("../../src/client/Api")
 local Bars = require("../../src/client/Core/Bars")
+local Icons = require("../../src/client/Core/Icons")
 local Commands = require("../../src/client/Core/Commands")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
@@ -150,6 +151,24 @@ return function(t: any)
 		t.equal(d[1].y, 80)
 		t.equal(d[1].width, Bars.MIN_WIDTH, "an 8-stud unit at 2 px/stud: clamped up to the minimum")
 		t.equal(#Bars.draws(world, list, project, 50, 50, 1, 0), 0, "off screen: no bar")
+		-- an aircraft drawn at 110 studs: its bar and icon sit just over the model, not at twice the altitude
+		world.units[4] = { id = 4, tier = "tactical", team = 2, health = 0.5, build = 1, state = 0, x = 0, z = 0, alt = 110, rx = 0, ry = 110, rz = 0, defIndex = world.defs.units.ord_falcon.index }
+		local function side(x: number, y: number, z: number)
+			return x, y, true -- screen y = world height, to read it back
+		end
+		local barY, iconY
+		for _, dd in Bars.draws(world, Bars.list(world, {}), side, 400, 400, 1, 0) do
+			if dd.bar.id == 4 then
+				barY = dd.y
+			end
+		end
+		for _, ic in Icons.draws(Icons.table(world.defs), world, side, 400, 400, {}) do
+			if ic.id == 4 then
+				iconY = ic.y
+			end
+		end
+		t.expect(barY and barY > 110 and barY < 130, `aircraft bar just over the model ({barY})`)
+		t.equal(iconY, 110, "aircraft icon at the model")
 		local r, g = Bars.healthColor(1)
 		t.expect(g > r, "full: green")
 		r, g = Bars.healthColor(0.5)

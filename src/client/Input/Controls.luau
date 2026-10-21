@@ -94,6 +94,16 @@ function Controls.projector(cam: Camera): Selection.Projector
 	end
 end
 
+-- The unit whose model is under a viewport pixel, if any (set by Main:
+-- raycasts the drawn unit models, C-38). Clicks try it first, then the
+-- unit whose projected position is nearest (Selection.pick).
+Controls.pickModel = nil :: ((number, number) -> number?)?
+
+local function pickAt(world: any, project: any, x: number, y: number): number?
+	local hit = if Controls.pickModel then Controls.pickModel(x, y) else nil
+	return hit or Selection.pick(world, project, x, y)
+end
+
 function Controls.bind(api: Api.Api): Controls
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "SelectionBox"
@@ -227,7 +237,7 @@ function Controls.bind(api: Api.Api): Controls
 				local a = leftStart :: Vector2
 				api.actions.select(Selection.inBox(world, project, a.X, a.Y, mouse.X, mouse.Y), mode)
 			else
-				local id = Selection.pick(world, project, mouse.X, mouse.Y)
+				local id = pickAt(world, project, mouse.X, mouse.Y)
 				local u = if id then world.units[id] else nil
 				if u and u.team == world.me.team then
 					local now = os.clock()
@@ -250,7 +260,7 @@ function Controls.bind(api: Api.Api): Controls
 				api.actions.lineMove(from.X, from.Z, to.X, to.Z, shift())
 			else
 				local ground = Controls.groundAt(cam(), mouse.X, mouse.Y)
-				local id = Selection.pick(world, Controls.projector(cam()), mouse.X, mouse.Y)
+				local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
 				if ground or id then
 					local p = ground or Vector3.zero
 					api.actions.smartOrder(p.X, p.Z, id, shift())

@@ -68,6 +68,21 @@ end
 
 Camera.bind(camState)
 local controls = Controls.bind(api)
+-- clicks select a unit by its model too, wherever it is drawn (an aircraft
+-- high above its ground point, a big model's body; C-38)
+local pickParams = RaycastParams.new()
+pickParams.FilterType = Enum.RaycastFilterType.Include
+Controls.pickModel = function(px: number, py: number): number?
+	local cam = workspace.CurrentCamera
+	local ray = cam:ViewportPointToRay(px, py)
+	pickParams.FilterDescendantsInstances = { ModelPool.folder() }
+	local hit = workspace:Raycast(ray.Origin, ray.Direction * 5000, pickParams)
+	local inst: Instance? = hit and hit.Instance
+	while inst and inst.Parent and inst.Parent ~= ModelPool.folder() do
+		inst = inst.Parent
+	end
+	return if inst then UnitRenderer.unitOfModel(renderer, inst) else nil
+end
 local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
 local queued = QueuedBuilds.new()

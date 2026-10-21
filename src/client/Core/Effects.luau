@@ -29,6 +29,7 @@ Effects.MAX_PROJECTILES = 150
 Effects.MAX_EXPLOSIONS = 60
 Effects.MAX_TRACERS = 100
 Effects.BLEND_TICKS = 5
+Effects.REBLEND_KEEP = 0.3 -- a correction during a blend with more than this share left keeps its progress (C-38)
 Effects.LAUNCH_BLEND = 3 -- ticks for a shell to go from the drawn barrel tip onto the server's path (C-27)
 Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with that weapon fired it
 Effects.SNAP_STUDS = 60
@@ -60,6 +61,7 @@ export type Proj = {
 	ttl: number, -- ticks left (fallback; IMPACT normally ends it)
 	size: number,
 	launch: { number }?, -- launched early (C-27): the server's state at its spawn tick { tick, x, y, z, vx, vy, vz }, taken as is on that step
+	nextState: { number }?, -- the prediction one tick on { x, y, z, vx, vy, vz, dvx, dvy, dvz } (dv: this tick's steering): frames draw the curve between (C-38)
 }
 
 export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number }
@@ -218,14 +220,20 @@ local function advanceBlend(p: Proj, dvx: number, dvy: number, dvz: number)
 	end
 end
 
--- The gap to the ghost `frac` ticks into the current tick, scaled by what is left of the blend.
+-- The gap to the ghost `frac` ticks into the current tick, scaled by what
+-- is left of the blend. Through the tick the prediction moves with its
+-- velocity after this tick's steering (nextState's dv), the ghost without
+-- steering: the gap grows by their difference (as advanceBlend does at the
+-- tick's end, so there's no step at the boundary).
 local function gapAt(p: Proj, frac: number): (number, number, number)
 	local left = offsetLeft(p, frac)
 	if left <= 0 then
 		return 0, 0, 0
 	end
 	local f = frac * DT
-	return (p.ox + (p.ovx or 0) * f) * left, (p.oy + (p.ovy or 0) * f) * left, (p.oz + (p.ovz or 0) * f) * left
+	local n = p.nextState
+	local dvx, dvy, dvz = if n then n[7] else 0, if n then n[8] else 0, if n then n[9] else 0
+	return (p.ox + ((p.ovx or 0) - dvx) * f) * left, (p.oy + ((p.ovy or 0) - dvy) * f) * left, (p.oz + ((p.ovz or 0) - dvz) * f) * left
 end
 
 -- Restarts the blend from where the projectile is drawn now (frac 0) to its
@@ -234,20 +242,59 @@ local function reblend(p: Proj, x: number, y: number, z: number, vx: number, vy:
 	local left = offsetLeft(p, 0)
 	local gx, gy, gz = gapAt(p, 0)
 	local dx, dy, dz = p.x + gx, p.y + gy, p.z + gz
-	local dvx, dvy, dvz = p.vx + (p.ovx or 0) * left, p.vy + (p.ovy or 0) * left, p.vz + (p.ovz or 0) * left
-	p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
-	p.ox, p.oy, p.oz = dx - x, dy - y, dz - z
-	p.ovx, p.ovy, p.ovz = dvx - vx, dvy - vy, dvz - vz
-	p.blend, p.age = Effects.BLEND_TICKS, 0
-	if p.ox * p.ox + p.oy * p.oy + p.oz * p.oz > Effects.SNAP_STUDS ^ 2 then
-		p.ox, p.oy, p.oz, p.blend = 0, 0, 0, 0
-		p.ovx, p.ovy, p.ovz = 0, 0, 0
+	-- the drawn velocity now: the prediction's, plus the ghost's share, plus
+	-- how fast the closing gap itself moves the drawn point (d left / dt)
+	local rate = 0
+	if p.blend > 0 then
+		local s = math.clamp(p.age / p.blend, 0, 1)
+		rate = -6 * s * (1 - s) / (p.blend * DT)
 	end
+	local dvx = p.vx + (p.ovx or 0) * left + p.ox * rate
+	local dvy = p.vy + (p.ovy or 0) * left + p.oy * rate
+	local dvz = p.vz + (p.ovz or 0) * left + p.oz * rate
+	p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
+	if (dx - x) ^ 2 + (dy - y) ^ 2 + (dz - z) ^ 2 > Effects.SNAP_STUDS ^ 2 then
+		p.ox, p.oy, p.oz, p.blend, p.age = 0, 0, 0, 0, 0
+		p.ovx, p.ovy, p.ovz = 0, 0, 0
+		return dx, dy, dz
+	end
+	-- a blend under way keeps its progress (only the ghost is re-aimed), so
+	-- frequent corrections still converge on schedule; restarting it each
+	-- time left the drawn missile trailing an ever older course
+	local l, r = 1, 0
+	if p.blend > 0 and left > Effects.REBLEND_KEEP then
+		l, r = left, rate
+	else
+		p.blend, p.age = Effects.BLEND_TICKS, 0
+	end
+	p.ox, p.oy, p.oz = (dx - x) / l, (dy - y) / l, (dz - z) / l
+	p.ovx, p.ovy, p.ovz = (dvx - vx - p.ox * r) / l, (dvy - vy - p.oy * r) / l, (dvz - vz - p.oz * r) / l
 	return dx, dy, dz
 end
 
--- One sim tick of every projectile, into tick `t` (the server's order:
--- steer, then step).
+-- A projectile's state one sim tick on, into tick `t` (the server's
+-- order: steer, then step), without changing it; and how steering changed
+-- its velocity. On its spawn tick (launched early, C-27) it is the
+-- server's own state (a homing missile already steered during it).
+local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number)
+	local launch = p.launch
+	if launch and launch[1] == t then
+		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0
+	end
+	local weapon = p.weapon
+	local vx, vy, vz = p.vx, p.vy, p.vz
+	local target = if p.target ~= 0 then world.units[p.target] else nil
+	if weapon.turnRate and target then
+		local speed = math.sqrt(vx * vx + vy * vy + vz * vz)
+		local tx, ty, tz = homingAim(world, target, t, p.x, p.y, p.z, speed)
+		vx, vy, vz = Ballistics.steer(vx, vy, vz, tx - p.x, ty - p.y, tz - p.z, math.rad(weapon.turnRate) * DT)
+	end
+	local dvx, dvy, dvz = vx - p.vx, vy - p.vy, vz - p.vz
+	local x, y, z, nvx, nvy, nvz = Ballistics.step(p.x, p.y, p.z, vx, vy, vz, weapon.gravity or 0, DT)
+	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz
+end
+
+-- One sim tick of every projectile, into tick `t`.
 local function stepProjectiles(fx: Fx, world: World.World, t: number)
 	for id, p in fx.projectiles do
 		p.ttl -= 1
@@ -255,26 +302,9 @@ local function stepProjectiles(fx: Fx, world: World.World, t: number)
 			fx.projectiles[id] = nil
 			continue
 		end
-		local weapon = p.weapon
-		local launch = p.launch
-		if launch and launch[1] == t then
-			-- the step into the spawn tick: the server's own state (a homing
-			-- missile already steered during it)
-			p.x, p.y, p.z, p.vx, p.vy, p.vz = launch[2], launch[3], launch[4], launch[5], launch[6], launch[7]
-			p.launch = nil
-			advanceBlend(p, 0, 0, 0)
-			continue
-		end
+		local x, y, z, vx, vy, vz, dvx, dvy, dvz = advance(world, p, t)
+		p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
 		p.launch = nil
-		local target = if p.target ~= 0 then world.units[p.target] else nil
-		local svx, svy, svz = p.vx, p.vy, p.vz
-		if weapon.turnRate and target then
-			local speed = math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz)
-			local tx, ty, tz = homingAim(world, target, t, p.x, p.y, p.z, speed)
-			p.vx, p.vy, p.vz = Ballistics.steer(p.vx, p.vy, p.vz, tx - p.x, ty - p.y, tz - p.z, math.rad(weapon.turnRate) * DT)
-		end
-		local dvx, dvy, dvz = p.vx - svx, p.vy - svy, p.vz - svz
-		p.x, p.y, p.z, p.vx, p.vy, p.vz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, DT)
 		advanceBlend(p, dvx, dvy, dvz)
 	end
 end
@@ -492,7 +522,7 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 		local g0x, g0y, g0z = gapAt(p, 0)
 		local g1x, g1y, g1z = gapAt(p, 1)
 		local sx, sy, sz = p.x + g0x, p.y + g0y, p.z + g0z
-		local nx, ny, nz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, p.weapon.gravity or 0, DT)
+		local nx, ny, nz = advance(world, p, fx.tick + 1)
 		local dx, dy, dz = nx + g1x - sx, ny + g1y - sy, nz + g1z - sz
 		local len2 = dx * dx + dy * dy + dz * dz
 		local along = if len2 > 1e-9 then ((x - sx) * dx + (y - sy) * dy + (z - sz) * dz) / len2 else 1
@@ -500,6 +530,16 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			table.remove(events, i)
 			apply(fx, world, e, now, muzzleOf)
 		end
+	end
+	-- each projectile's state one tick on: frames draw the curve between (C-38)
+	for _, p in fx.projectiles do
+		local x, y, z, vx, vy, vz, dvx, dvy, dvz = advance(world, p, fx.tick + 1)
+		local n = p.nextState
+		if n == nil then
+			n = table.create(9, 0)
+			p.nextState = n
+		end
+		n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9] = x, y, z, vx, vy, vz, dvx, dvy, dvz
 	end
 	for i = #fx.pendingDeaths, 1, -1 do
 		local d = fx.pendingDeaths[i]
@@ -525,10 +565,24 @@ end
 -- Projectiles to draw at render tick `renderTick`: at most MAX_PROJECTILES,
 -- the most important first. Each entry: { proj, x, y, z }.
 function Effects.visible(fx: Fx, renderTick: number): { { any } }
-	local frac = math.clamp(renderTick - fx.tick, 0, 1) * DT
+	local s = math.clamp(renderTick - fx.tick, 0, 1)
+	local frac = s * DT
+	-- cubic Hermite weights: a curve through this tick's and the next tick's
+	-- states with their velocities, so a turning missile bends through the
+	-- tick instead of flying straight and turning at its end (C-38)
+	local s2, s3 = s * s, s * s * s
+	local h00, h10, h01, h11 = 2 * s3 - 3 * s2 + 1, (s3 - 2 * s2 + s) * DT, -2 * s3 + 3 * s2, (s3 - s2) * DT
 	local list = {}
 	for _, p in fx.projectiles do
-		local x, y, z = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, p.weapon.gravity or 0, frac)
+		local x, y, z
+		local n = p.nextState
+		if n then
+			x = h00 * p.x + h10 * p.vx + h01 * n[1] + h11 * n[4]
+			y = h00 * p.y + h10 * p.vy + h01 * n[2] + h11 * n[5]
+			z = h00 * p.z + h10 * p.vz + h01 * n[3] + h11 * n[6]
+		else
+			x, y, z = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, p.weapon.gravity or 0, frac)
+		end
 		-- the offset shrinks smoothly through the tick (stepProjectiles cuts it a step at a time)
 		local gx, gy, gz = gapAt(p, math.clamp(renderTick - fx.tick, 0, 1))
 		table.insert(list, { p, x + gx, y + gy, z + gz, Effects.importance(fx, p.size, x, z) })

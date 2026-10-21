@@ -96,7 +96,8 @@ function Icons.draws(t: Table, world: World.World, project: (number, number, num
 	local out, top = {}, {}
 	for id, u in world.units do
 		local x, z = u.rx or u.x, u.rz or u.z
-		local y = (u.ry or World.groundY(world, x, z)) + u.alt
+		-- ry is where the model is drawn (altitude included); else ground + altitude
+		local y = u.ry or (World.groundY(world, x, z) + u.alt)
 		local sx, sy, front = project(x, y, z)
 		if front and sx >= -20 and sy >= -20 and sx <= width + 20 and sy <= height + 20 then
 			local isSel = selected[id] == true

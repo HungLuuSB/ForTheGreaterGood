@@ -70,6 +70,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `ec6488d` (Playtest profiles (juggernaut, air, naval, radar)).
 - Ready to merge: `7f38c53` (global sim speed for debugging, C-35; C-26 timing fix).
 - Ready to merge: `89740cf` (smooth missile paths, C-36).
+- Ready to merge: `6161783` (SAM test scene, slowed flight tests, fog darkening off, C-37).
 
 ## Tasks
 
@@ -254,6 +255,12 @@ All with real mouse and keyboard input through the MCP tools.
 - `ACTIVE = "sam"`: your radars cover the map, 4 Falcons (5× health) circle over 4 enemy IR SAM sites that keep firing (`debug_out/screens/sam_profile.jpg`). Missiles launch along the launcher's aim until the sim adds vertical launch (request 12).
 - `sam`, `air` and `naval` start at 0.25× speed (`-` / `=` / `P` still change it).
 - The fog-of-war darkening is off for now (`FogOfWar.ENABLED`); radar contacts and ghosts still show.
+
+## 2026-10-21: curved missile paths, aircraft markers, clicking models (C-38)
+
+- **Missile zig-zag:** missiles were drawn straight within each tick and turned at its end (up to 10.7° corners every tick), and frequently corrected missiles trailed an old course. They now follow a smooth curve through each tick and converge after corrections. At 0.25× in Studio: worst 2.2° of turn in a frame.
+- **Aircraft icon, health bar, selection ring and lines** now sit at the aircraft, not at twice its altitude or on the ground under it (`debug_out/screens/air_select_ring_bar.jpg`).
+- **Clicking a unit's model** selects it (right-click targets it), wherever it is drawn.
 
 ## Needs my review
 
