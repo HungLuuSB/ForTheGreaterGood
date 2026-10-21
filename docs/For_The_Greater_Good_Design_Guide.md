@@ -213,7 +213,7 @@ StarterPlayer/StarterPlayerScripts/
 | 1 | Commands | every tick | Validate and apply queued player commands |
 | 2 | Economy | every 5th tick (3 Hz) | Team accounts, stall ratios |
 | 3 | Sensors | every 2nd tick | Re-stamp emitters that changed sensor cell |
-| 4 | Targeting | staggered | Each unit re-evaluates every N ticks, offset by `id % N` |
+| 4 | Targeting | staggered | Each unit re-evaluates every N ticks, offset by a mixed hash of its ID (S-23) |
 | 5 | Pathing | time-sliced | Fixed ms budget per tick; rest continues next tick |
 | 6 | Movement | every tick | Steering, avoidance, position update |
 | 7 | Weapons | every tick | Aim model, fire, countermeasures |
@@ -906,7 +906,7 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 
 ### 10.2 Target acquisition
 
-- Runs **staggered**: each unit re-evaluates every 4–8 ticks (offset by `id % N`). Keep the current target while it stays valid (hysteresis).
+- Runs **staggered**: each unit re-evaluates every 4–8 ticks, offset by a mixed hash of its ID (`Hash.mix32(id) % N`; with `id % N` the offset followed the ID's parity, and Sensors runs on even ticks, so even IDs reacted sooner: a start bias in mirrored matches, S-23). Keep the current target while it stays valid (hysteresis).
 - **Candidate search:** query cells within weapon range from the per-team **contact grid** (a coarse 64-stud bucket grid of enemies this team can see or detect), not from all units.
 - **Filter:** `bit32.band(target.categories, weapon.targetMask) ~= 0`, target known to the team (visible, or radar contact if `canTargetRadar`), within arc and range.
 - **Untracked contacts** reveal only their domain (D107): weapons filter them by domain, and type priorities apply only to visible, remembered or tracked targets. The AI follows the same rule.

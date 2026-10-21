@@ -987,10 +987,30 @@ local function think(brain: Brain)
 			submit(sim, brain.player, { cmdType = CT.MOVE, flags = 0, unitIds = far, cell = cell, offX = ox, offZ = oz })
 		end
 	end
-	-- the wave re-targets every 5 s; radar and fire-control vehicles guard it
+	-- the wave re-targets every 5 s. Its tanks attack-move; its artillery
+	-- guards the lead tank, so it follows the push and fires at whatever is
+	-- in range instead of stopping at its own long range while the tanks
+	-- go in alone (attack-move holds at weapon range, S-14). Radar and
+	-- fire-control vehicles guard the lead too.
 	if #wave > 0 and (newWave or sim.tick - brain.lastWaveOrder >= Skirmish.THINK_PERIOD * 5) then
 		brain.lastWaveOrder = sim.tick
-		fight(wave, targetX or brain.enemyX, targetZ or brain.enemyZ)
+		local front, support = {}, {}
+		for _, id in wave do
+			if bit32.band(unitDef(sim, id).categoryMask, BIT.ARTILLERY) ~= 0 then
+				table.insert(support, id)
+			else
+				table.insert(front, id)
+			end
+		end
+		local lead = if #front > 0 then front[1] else wave[1]
+		if #front > 0 then
+			fight(front, targetX or brain.enemyX, targetZ or brain.enemyZ)
+			if #support > 0 then
+				submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = support, targetId = lead })
+			end
+		else
+			fight(wave, targetX or brain.enemyX, targetZ or brain.enemyZ)
+		end
 		local escorts = {}
 		for _, list in { c.radarTrucks, c.trackers } do
 			for _, id in list do
@@ -998,7 +1018,7 @@ local function think(brain: Brain)
 			end
 		end
 		if #escorts > 0 then
-			submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = escorts, targetId = wave[1] })
+			submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = escorts, targetId = lead })
 		end
 	end
 	-- the fleet (hard): gathers on the home sea, then attacks on its own
