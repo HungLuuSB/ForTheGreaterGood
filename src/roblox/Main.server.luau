@@ -42,6 +42,24 @@ for name, ch in Schema.Channel do
 	r.Parent = remotes
 	remoteOf[name] = r
 end
+
+-- Global sim speed for debugging (C-35): the tick loop runs `speed` times
+-- as fast (0 = paused); clients read it from the Remotes folder's SimSpeed
+-- attribute to pace their render clock. Changed with the client's - / = / P
+-- keys through SimSpeed requests, honored in Studio only.
+local SPEEDS = { 0, 0.1, 0.25, 0.5, 1, 2, 4 }
+local speed = Config.speed or 1
+remotes:SetAttribute("SimSpeed", speed)
+local speedRemote = Instance.new("RemoteEvent")
+speedRemote.Name = "SimSpeed"
+speedRemote.Parent = remotes
+speedRemote.OnServerEvent:Connect(function(player: Player, value: any)
+	if RunService:IsStudio() and type(value) == "number" and table.find(SPEEDS, value) then
+		speed = value
+		remotes:SetAttribute("SimSpeed", speed)
+		print(`[Entry] {player.Name} set the sim speed to {speed}x`)
+	end
+end)
 local defs = Defs.load()
 
 local sim: any
@@ -270,7 +288,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 	for player, t in tokens do
 		tokens[player] = math.min(40, t + dt * CMD_RATE)
 	end
-	acc += dt
+	acc += dt * speed
 	local n = 0
 	while acc >= DT and n < MAX_STEPS_PER_FRAME do
 		local t0 = os.clock()

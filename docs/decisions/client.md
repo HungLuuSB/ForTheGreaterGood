@@ -281,3 +281,11 @@ Radar and sonar contacts are pulsing discs on the ground or water (`Render/Conta
 
 **Known gap:** wrecks reach the client only in the DEATH events of its tactical tier; it never hears of a wreck made elsewhere (or before it joined) or of one reclaimed, so its wrecks stay until the match restarts: request 10.
 
+### C-35 — Global sim speed for debugging (2026-10-21)
+
+**Decision:** the server entry's tick loop accumulates real time × `speed` (0 pauses), so at 0.25× the sim steps 15 times every 4 real seconds and the sim itself is untouched. The speed starts at the profile's `speed` (MatchConfig, default 1), is published as the Remotes folder's `SimSpeed` attribute, and changes through a `SimSpeed` RemoteEvent that the server honors only in Studio (steps 0.1, 0.25, 0.5, 1, 2, 4). Client keys (BAR's game-speed keys): `-` slower, `=` faster, `P` pause / resume; the F3 readout shows the speed when it isn't 1×. The client's render clock (`Interp.advance`) runs at 15 × speed and freezes where it is while paused (no pull back toward the target); piece scripts and aircraft attitude step in sim time (frame time × speed). Camera, UI, range rings and explosion flashes stay in real time.
+
+Also: C-26's timing now measures along the drawn shell's actual move over the tick (the server's step plus the barrel-tip offset still closing after a C-27 launch); before, a just-launched shell on a short shot could burst up to 0.9 tick after reaching the impact point. Its test now pairs each shell with the server's own SPAWN_PROJ / IMPACT events, since projectile IDs are reused (more misses after the light cannon's accuracy went from 1.2 to 2.0 exposed both).
+
+**Why:** the user wants to slow things down for debugging. `SimSpeed.spec`: at 0.1–2× the render clock moves 15 × speed ticks a second (each frame within 25 %), stays about 2 ticks behind the newest tick, freezes exactly when paused and moves on without a jump when resumed. Studio: 15.0 ticks a second at 1×, 3.65 at 0.25×, 0 paused (render clock and units still to the stud), 14.4 after resuming; the readout shows "sim speed 0.25x". `Effects.spec`: worst burst delay one frame (8.3 ms) again.
+
