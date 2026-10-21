@@ -225,7 +225,7 @@ return function(t: RunAll.Context)
 		local wreck = sim.combat.wreckIds[1]
 		t.expect(wreck ~= nil, "a wreck")
 		local value = sim.combat.wreckSupply[wreck]
-		t.equal(value, 130 * 0.5)
+		t.equal(value, sim.defs.units.chs_ravager.cost.supply * 0.5) -- half its supply
 		local mason = Spawn.unit(sim, "ord_mason", 1, -20, 0)
 		local acc = sim.eco.accounts[1]
 		acc.supply.stored = 0

@@ -8,7 +8,7 @@ return {
 	salvo = { count = 1, delay = 0 },
 	projectileSpeed = 340,
 	gravity = 60,
-	accuracy = 1.2,
+	accuracy = 2.0,
 
 	damage = { LIGHT = 150, ARMORED = 125, STRUCTURE = 110, SHIP = 95, AIR = 0, SUB = 0 },
 	aoe = 4,

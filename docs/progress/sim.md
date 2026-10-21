@@ -45,14 +45,17 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 ## Needs my review
 
-- **Free repair** (S-4): REPAIR heals damaged units at the rate they were built and costs nothing (BAR-style). Alternative: charge a share of the unit's cost.
-- **TOGGLE means repeat on factories** (S-4): the wire has no separate repeat command, and factories have no other toggle. Alternative: a REPEAT command type (protocol change).
-- **Attack-move now holds to engage** (S-4), and the balance fights shifted with it (M8):
-  - ships hold at their own range, outside the sight of tanks and artillery on the beach, which now "can't see" them (37 findings);
-  - tank mirrors are lopsided (Lancer vs Ravager 0.39–0.40; Tideguard vs Ravager 0.25–0.27): whichever side comes into range first gets to hold and fire.
-  - Accept these as M8 numbers, or have attack-move units close in to their weapon range instead of holding at first contact?
-- **AI tuning numbers** (S-7): 900 supply before teching up, one IR SAM truck per two known aircraft, kiting at half range. Placeholders.
-- **AI matches end early on most seeds** (S-8): one AI overruns the other at 10–18 minutes on seeds 1, 2, 4 and 5; only seed 3 plays the full 40 minutes. A deeper AI (defensive structures, expansion defense) would make longer matches; not done.
+- **T1 ground balance pass** (S-22; tables in `docs/BALANCE.md`, "Balance passes"). Exact changes:
+  - `chs_light_cannon.accuracy` 1.2 → 2.0 (also the Spike gun turret and the Mire amphibious tank);
+  - `chs_ravager.cost` 130 / 1200 → 140 / 1400 (value 250 → 280; Lancer is 300);
+  - `ord_light_cannon.range` 180 → 200 (also the Bulwark gun turret and the Tideguard amphibious tank);
+  - `chs_hellmouth.cost` 160 / 1600 → 175 / 1750 (value 320 → 350; Verdict is 360);
+  - `chs_mg.damage.LIGHT` 44 → 40 (Jackal only);
+  - `chs_jackal.health` 340 → 320.
+  - Results: Lancer vs Ravager 0.38 / 0.39 → 1.00 / 0.82; Herald vs Jackal 0.61 / 0.59 → 0.82 / 0.80; Verdict vs Hellmouth 0.55 / 0.73 → 0.61 / 0.80.
+  - **Not reached: Verdict vs Hellmouth at close range (0.61).** No number moved it by more than 0.1. Likely cause: precise Verdict volleys overkill one target while mortar spread and blast share damage. Fix would be a mechanic (a group spreading its fire / overkill avoidance in Targeting). Do you want that?
+  - Side effects through shared weapons: Lancer vs Mire 1.36 / 1.57 → 2.39 / 2.04 (the Mire got the Chaos cannon's spread); Tideguard vs Ravager 0.27 → 0.53; Paladin vs Ravager 0.37 → 0.84 / 1.11.
+- **AI tuning numbers** (S-7, S-17): placeholders, as agreed.
 
 ## For the client stream
 

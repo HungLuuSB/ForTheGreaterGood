@@ -7,7 +7,7 @@ return Templates.extend(Templates.TankT1, {
 	description = "Light tank. Cheap and tough, hits hard up close.",
 	faction = "chaos",
 
-	cost = { supply = 130, power = 1200, buildTime = 4000 },
+	cost = { supply = 140, power = 1400, buildTime = 4000 },
 	health = 1300,
 
 	movement = { maxSpeed = 30, accel = 12, brake = 24, turnRate = 100 },
