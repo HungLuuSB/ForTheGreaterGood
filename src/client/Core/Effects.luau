@@ -37,6 +37,8 @@ Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with t
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
 Effects.EXPLOSION_SECONDS = 0.55
+Effects.LAUNCH_SECONDS = 0.5 -- a missile's launch flash (its smoke cloud lasts longer, Render/Vfx)
+Effects.FLARE_SECONDS = 1.6 -- flares or chaff falling where a decoyed missile went (C-47)
 Effects.DEATH_SECONDS = 0.9
 Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
 Effects.MAX_MARKS = 40
@@ -69,7 +71,12 @@ export type Proj = {
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the flare or chaff it follows (S-28)
 }
 
-export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number }
+-- A flash, explosion or puff. `kind`: impact, death, muzzle, launch (a
+-- missile leaving its launcher), decoy, flare or chaff (what a decoyed
+-- missile follows, at the decoy point), lost. `ground`: the ground height
+-- under it (air bursts sit well above it); `dx, dy, dz`: the direction it
+-- faces (a muzzle's shot, a launch's flight), when known (C-47).
+export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, dx: number?, dy: number?, dz: number? }
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
@@ -176,11 +183,20 @@ local function ttlTicks(weapon: any): number
 end
 
 -- Over a cap one effect is always dropped (this one or a less important one).
-local function burst(fx: Fx, now: number, x: number, y: number, z: number, radius: number, kind: string, life: number)
+local function burst(fx: Fx, now: number, x: number, y: number, z: number, radius: number, kind: string, life: number): Burst
 	if #fx.bursts >= Effects.MAX_EXPLOSIONS then
 		fx.skipped.bursts += 1
 	end
-	capped(fx, fx.bursts, { x = x, y = y, z = z, radius = radius, born = now, life = life, kind = kind, size = radius }, Effects.MAX_EXPLOSIONS)
+	local b: Burst = { x = x, y = y, z = z, radius = radius, born = now, life = life, kind = kind, size = radius }
+	capped(fx, fx.bursts, b, Effects.MAX_EXPLOSIONS)
+	return b
+end
+
+local function facing(b: Burst, dx: number, dy: number, dz: number)
+	local l = math.sqrt(dx * dx + dy * dy + dz * dz)
+	if l > 1e-6 then
+		b.dx, b.dy, b.dz = dx / l, dy / l, dz / l
+	end
 end
 
 -- The server's homing aim (Sim/Systems/Projectiles, C-36): the centre of the
@@ -480,7 +496,12 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			size = weaponSize(weapon),
 			launch = launch,
 		}
-		burst(fx, now, x + ox, y + oy, z + oz, 0.8, "muzzle", 0.12)
+		-- a missile leaves its launcher in a cloud (C-47); a gun just flashes
+		local b = if weapon.type == "HOMING"
+			then burst(fx, now, x + ox, y + oy, z + oz, weaponSize(weapon), "launch", Effects.LAUNCH_SECONDS)
+			else burst(fx, now, x + ox, y + oy, z + oz, 0.8, "muzzle", 0.12)
+		b.ground = World.groundY(world, x + ox, z + oz)
+		facing(b, vx, vy, vz)
 	elseif kind == EK.IMPACT then
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
@@ -489,7 +510,11 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			x, z = Effects.unclamp(world, p, x, z)
 		end
 		local r = if p then weaponSize(p.weapon) else 2
-		burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
+		local b = burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
+		b.ground = World.groundY(world, x, z)
+		if p then
+			facing(b, p.vx, p.vy, p.vz)
+		end
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		local p = fx.projectiles[e.projId]
 		if p then
@@ -505,6 +530,10 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 				-- it follows the flare or chaff like the server (S-28)
 				local cx, cz = world.grid:decode(e.decoyCell, e.decoyOffX, e.decoyOffZ)
 				p.decoy = { cx, e.decoyY / Schema.Y_SCALE, cz, e.decoyTicks }
+				-- the flares (IR) or chaff (radar) it went for, falling there
+				local b = burst(fx, now, cx, e.decoyY / Schema.Y_SCALE, cz, 1, if p.weapon.guidance == "RADAR" then "chaff" else "flare", Effects.FLARE_SECONDS)
+				b.ground = World.groundY(world, cx, cz)
+				facing(b, vx, vy, vz)
 			end
 			mark(fx, if kind == EK.DECOYED then "decoy" else "lost", now, dx, dy, dz, x, y, z)
 			burst(fx, now, dx, dy, dz, 1.2, if kind == EK.DECOYED then "decoy" else "lost", 0.35)
@@ -529,7 +558,8 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 				fx.skipped.tracers += 1
 			end
 			capped(fx, fx.tracers, t, Effects.MAX_TRACERS)
-			burst(fx, now, x0, y0 :: number, z0 :: number, 0.7, "muzzle", 0.1)
+			local b = burst(fx, now, x0, y0 :: number, z0 :: number, 0.7 * t.size, "muzzle", 0.1)
+			facing(b, x1 - x0, y1 - (y0 :: number), z1 - (z0 :: number))
 		end
 	elseif kind == 0 then
 		-- homing correction (Projectiles channel): snap the prediction, keep
@@ -642,7 +672,9 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			table.remove(fx.pendingDeaths, i)
 			local def = if d.defIndex then world.defs.unitByIndex[d.defIndex] else nil
 			local r = (if def then def.footprint else 1) * 3 * (1 + d.severity / 255)
-			burst(fx, now, d.x, World.groundY(world, d.x, d.z) + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
+			local ground = World.groundY(world, d.x, d.z)
+			local b = burst(fx, now, d.x, ground + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
+			b.ground = ground
 		end
 	end
 	for i = #fx.bursts, 1, -1 do

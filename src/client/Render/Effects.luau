@@ -1,10 +1,11 @@
 --!strict
 -- Draws Core/Effects (guide 15.3): projectiles as pooled Neon shells with a
--- short Trail, missiles as small models with an exhaust glow and a smoke
--- trail, all moved with one BulkMoveTo; tracers as thin fading parts;
--- bursts as a growing, fading flash plus a particle burst
--- (ParticleEmitter:Emit on a shared carrier, never Enabled). Pools never
--- shrink; unused parts are unparented.
+-- short Trail, missiles as small models with an exhaust glow, a smoke
+-- trail and billowing smoke puffs, all moved with one BulkMoveTo; tracers as
+-- glowing streaks that fly from the muzzle to the end point, with sparks on
+-- a hit; bursts (explosions, muzzle flashes, launch clouds, flares) as
+-- Render/Vfx rigs, or the place's own effects saved in ReplicatedStorage.Vfx
+-- (C-47). Pools never shrink; unused parts are unparented.
 --
 -- Sizes are for the RTS camera: at the default height one stud is about two
 -- pixels, so shells are ~2.6 studs long with a trail, muzzle flashes at
@@ -12,16 +13,10 @@
 -- user reviews in playtests.
 
 local Effects = require("../Core/Effects")
+local Vfx = require("./Vfx")
 
 local RenderEffects = {}
 
-local BURST_COLOR: { [string]: Color3 } = {
-	impact = Color3.fromRGB(255, 160, 60),
-	death = Color3.fromRGB(255, 100, 40),
-	muzzle = Color3.fromRGB(255, 240, 180),
-	decoy = Color3.fromRGB(190, 220, 255),
-	lost = Color3.fromRGB(170, 170, 170),
-}
 local PROJ_COLOR: { [string]: Color3 } = {
 	BALLISTIC = Color3.fromRGB(255, 225, 120),
 	HOMING = Color3.fromRGB(245, 245, 255),
@@ -34,9 +29,10 @@ local PROJ_SIZE: { [string]: Vector3 } = {
 	TORPEDO = Vector3.new(0.9, 0.9, 3.4),
 	BOMB = Vector3.new(1.4, 1.4, 2.2),
 }
--- burst diameter = max(MIN, radius × 2 × SCALE), growing from 35 % to 100 %
-local BURST_MIN: { [string]: number } = { impact = 7, death = 12, muzzle = 4, decoy = 4, lost = 3 }
-local BURST_SCALE: { [string]: number } = { impact = 1.6, death = 1.4, muzzle = 1, decoy = 1, lost = 1 }
+-- explosion diameter = max(MIN, radius × 2 × SCALE): Vfx scale = diameter / 7
+local BURST_MIN: { [string]: number } = { impact = 7, death = 12 }
+local BURST_SCALE: { [string]: number } = { impact = 1.6, death = 1.4 }
+local TRACER_STREAK = 0.45 -- the streak's length as a share of the shot
 local TRAIL_SECONDS = 0.06 -- ~20 studs behind a tank shell (340–380 studs/s)
 
 type Shell = { part: BasePart, trail: Trail, owner: number?, fresh: boolean }
@@ -48,10 +44,11 @@ export type Renderer = {
 	missiles: { any }, -- Missile
 	missileOf: { [number]: any }, -- projectile ID → its Missile
 	tracers: { BasePart },
-	flashes: { BasePart },
-	carrier: BasePart,
-	emitter: ParticleEmitter,
-	emitted: { [any]: boolean },
+	vfx: Vfx.State,
+	lastNow: number,
+	vfxNow: number, -- effect time: real time scaled by the sim speed (bursts slow down and pause with the sim)
+	timeScale: number, -- the particles' TimeScale (at most 1)
+	emitted: { [any]: boolean }, -- bursts and tracers already played
 	parts: { BasePart },
 	frames: { CFrame },
 	stats: { maxProjectiles: number, maxFlashes: number, maxTracers: number, emits: number, maxMissiles: number }, -- diagnostics
@@ -102,10 +99,11 @@ end
 -- bigger missile and a longer, wider plume. When a missile ends, its model
 -- hides and stops where it was, so its smoke fades out instead of vanishing.
 -- Parts are anchored and moved together in the same BulkMoveTo as shells.
-local MISSILE_STYLE: { [string]: { scale: number, smoke: number } } = {
-	smoke_thin = { scale = 1, smoke = 1.1 },
-	smoke_thick = { scale = 1.3, smoke = 1.8 },
+local MISSILE_STYLE: { [string]: { scale: number, smoke: number, puffs: number } } = {
+	smoke_thin = { scale = 1, smoke = 1.1, puffs = 2 },
+	smoke_thick = { scale = 1.3, smoke = 1.8, puffs = 3.2 },
 }
+local PUFF_RATE = 110 -- smoke puffs per second while a missile flies
 local NOSE_COLOR: { [string]: Color3 } = {
 	IR = Color3.fromRGB(45, 48, 55),
 	RADAR = Color3.fromRGB(240, 238, 228),
@@ -120,6 +118,7 @@ type Missile = {
 	light: PointLight,
 	smoke: Trail,
 	flame: Trail,
+	puffs: ParticleEmitter, -- billowing smoke left in the air (C-47)
 	style: string,
 	owner: number?,
 	fresh: boolean,
@@ -190,6 +189,25 @@ local function newMissile(style: string): Missile
 	flame.Color = ColorSequence.new(Color3.fromRGB(255, 230, 150), Color3.fromRGB(255, 120, 40))
 	flame.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1) })
 	flame.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.3) })
+	-- puffs left behind in the air: they outlast the trail and drift up
+	local look = MISSILE_STYLE[style] or MISSILE_STYLE.smoke_thin
+	local puffs = Instance.new("ParticleEmitter")
+	puffs.Name = "Puffs"
+	puffs.Enabled = false
+	puffs.Rate = PUFF_RATE
+	puffs.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	puffs.Lifetime = NumberRange.new(look.puffs * 0.7, look.puffs)
+	puffs.Speed = NumberRange.new(0.5, 2)
+	puffs.SpreadAngle = Vector2.new(180, 180)
+	puffs.Drag = 1
+	puffs.Acceleration = Vector3.new(0, 1.2, 0)
+	puffs.Rotation = NumberRange.new(0, 360)
+	puffs.RotSpeed = NumberRange.new(-20, 20)
+	puffs.LightInfluence = 1
+	puffs.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2 * s), NumberSequenceKeypoint.new(1, 7 * s) })
+	puffs.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(0.5, 0.7), NumberSequenceKeypoint.new(1, 1) })
+	puffs.Color = ColorSequence.new(Color3.fromRGB(240, 240, 236), Color3.fromRGB(185, 185, 182))
+	puffs.Parent = exhaust
 	for _, p in { body, finA, finB, exhaust } :: { BasePart } do
 		p.Parent = nose
 	end
@@ -207,6 +225,7 @@ local function newMissile(style: string): Missile
 		light = light,
 		smoke = smoke,
 		flame = flame,
+		puffs = puffs,
 		style = style,
 		owner = nil,
 		fresh = true,
@@ -223,6 +242,7 @@ local function setMissileShown(m: Missile, shown: boolean)
 	end
 	if not shown then
 		m.light.Enabled = false
+		m.puffs.Enabled = false -- its puffs stay in the air and fade
 	end
 end
 
@@ -241,6 +261,7 @@ local function missileFor(r: Renderer, id: number, style: string, now: number): 
 	end
 	if m == nil then
 		m = newMissile(style)
+		m.puffs.TimeScale = r.timeScale
 		table.insert(r.missiles, m)
 	end
 	local mm = m :: Missile
@@ -253,21 +274,6 @@ function RenderEffects.new(): Renderer
 	local folder = Instance.new("Folder")
 	folder.Name = "Effects"
 	folder.Parent = workspace
-	local carrier = newPart("BurstCarrier")
-	carrier.Transparency = 1
-	carrier.Size = Vector3.new(0.2, 0.2, 0.2)
-	carrier.Parent = folder
-	local emitter = Instance.new("ParticleEmitter")
-	emitter.Rate = 0
-	emitter.Lifetime = NumberRange.new(0.35, 0.8)
-	emitter.Speed = NumberRange.new(8, 24)
-	emitter.SpreadAngle = Vector2.new(180, 180)
-	emitter.Drag = 4
-	emitter.LightEmission = 0.7
-	emitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2.6), NumberSequenceKeypoint.new(1, 0.4) })
-	emitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1) })
-	emitter.Color = ColorSequence.new(Color3.fromRGB(255, 200, 100), Color3.fromRGB(80, 70, 60))
-	emitter.Parent = carrier
 	return {
 		folder = folder,
 		shells = {},
@@ -275,9 +281,10 @@ function RenderEffects.new(): Renderer
 		missiles = {},
 		missileOf = {},
 		tracers = {},
-		flashes = {},
-		carrier = carrier,
-		emitter = emitter,
+		vfx = Vfx.new(folder),
+		lastNow = 0,
+		vfxNow = 0,
+		timeScale = 1,
 		emitted = setmetatable({}, { __mode = "k" }) :: any,
 		parts = {},
 		frames = {},
@@ -333,7 +340,21 @@ local function shellFor(r: Renderer, id: number, inUse: { [number]: boolean }): 
 end
 
 -- Returns Effects.visible's list (the missile sensor view draws from it).
-function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now: number): { { any } }
+-- `speed`: the sim speed (C-35); explosions and smoke run at it, at most 1.
+function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now: number, speed: number?): { { any } }
+	local sp = speed or 1
+	local dt = if r.lastNow > 0 then math.clamp(now - r.lastNow, 0, 0.1) else 0
+	r.lastNow = now
+	r.vfxNow += dt * sp
+	local vt = r.vfxNow
+	local scale = math.clamp(sp, 0, 1)
+	if scale ~= r.timeScale then
+		r.timeScale = scale
+		Vfx.setTimeScale(r.vfx, scale)
+		for _, m in r.missiles do
+			m.puffs.TimeScale = scale
+		end
+	end
 	-- projectiles: keep each one's shell while it flies
 	local parts, frames = r.parts, r.frames
 	table.clear(parts)
@@ -366,12 +387,12 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 				m.root.Color = nose
 			end
 			if m.fresh then
-				m.smoke.Enabled, m.flame.Enabled = false, false
+				m.smoke.Enabled, m.flame.Enabled, m.puffs.Enabled = false, false, false
 				m.smoke:Clear()
 				m.flame:Clear()
 				m.fresh = false
 			elseif not m.smoke.Enabled then
-				m.smoke.Enabled, m.flame.Enabled = true, true
+				m.smoke.Enabled, m.flame.Enabled, m.puffs.Enabled = true, true, true
 			end
 			-- the exhaust flickers; the first MISSILE_LIGHTS light their surroundings
 			local flicker = 0.5 + 0.5 * math.sin(now * 47 + p.id * 1.7) * math.sin(now * 23 + p.id)
@@ -448,40 +469,51 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		workspace:BulkMoveTo(parts, frames, Enum.BulkMoveMode.FireCFrameChanged)
 	end
 
-	-- tracers
+	-- tracers: a glowing streak flying from the muzzle to the end point
+	-- over the tracer's life, sparks where a hit lands
 	for i, t in fx.tracers do
 		local part = take(r.tracers, i, function()
 			return newPart("Tracer")
 		end, r.folder)
 		local a, b = Vector3.new(t.x0, t.y0, t.z0), Vector3.new(t.x1, t.y1, t.z1)
-		local len = (b - a).Magnitude
-		part.Size = Vector3.new(0.35, 0.35, math.max(len, 0.1))
-		part.CFrame = CFrame.lookAt((a + b) / 2, b)
-		part.Color = if t.hit then Color3.fromRGB(255, 220, 140) else Color3.fromRGB(255, 245, 210)
-		part.Transparency = math.clamp((now - t.born) / t.life, 0, 1) * 0.8 + 0.1
+		local k = math.clamp((now - t.born) / t.life, 0, 1)
+		local head = math.min(1, k * (1 + TRACER_STREAK))
+		local tail = math.max(0, head - TRACER_STREAK)
+		local p0, p1 = a:Lerp(b, tail), a:Lerp(b, head)
+		local len = (p1 - p0).Magnitude
+		local w = 0.25 + 0.1 * math.min(t.size, 4)
+		part.Size = Vector3.new(w, w, math.max(len, 0.1))
+		part.CFrame = if len > 1e-3 then CFrame.lookAt((p0 + p1) / 2, p1) else CFrame.new(p1)
+		part.Color = if t.hit then Color3.fromRGB(255, 215, 130) else Color3.fromRGB(255, 240, 200)
+		part.Transparency = 0.05 + 0.6 * math.max(0, k - 0.6) / 0.4
+		if t.hit and head >= 1 and not r.emitted[t] then
+			r.emitted[t] = true
+			Vfx.spawn(r.vfx, "hit", t.x1, t.y1, t.z1, math.max(0.6, t.size * 0.5), vt, nil, t.x0 - t.x1, t.y0 - t.y1, t.z0 - t.z1)
+		end
 	end
 	park(r.tracers, #fx.tracers + 1)
 
-	-- bursts: a flash that grows and fades, plus particles once
-	for i, b in fx.bursts do
-		local part = take(r.flashes, i, function()
-			return newPart("Flash", Enum.PartType.Ball)
-		end, r.folder)
-		local age = math.clamp((now - b.born) / b.life, 0, 1)
-		local full = math.max(BURST_MIN[b.kind] or 3, b.radius * 2 * (BURST_SCALE[b.kind] or 1))
-		local d = full * (0.35 + 0.65 * age)
-		part.Size = Vector3.new(d, d, d)
-		part.CFrame = CFrame.new(b.x, b.y, b.z)
-		part.Color = BURST_COLOR[b.kind] or BURST_COLOR.impact
-		part.Transparency = 0.05 + 0.95 * age * age
-		if not r.emitted[b] and b.kind ~= "muzzle" then
-			r.emitted[b] = true
-			r.carrier.CFrame = CFrame.new(b.x, b.y, b.z)
-			r.emitter:Emit(math.clamp(math.floor(full * 2), 8, 50))
+	-- bursts: each plays its Vfx rig once (or the place's saved effect)
+	for _, b in fx.bursts do
+		if r.emitted[b] then
+			continue
+		end
+		r.emitted[b] = true
+		local kind = b.kind
+		local burstScale = 1
+		if kind == "impact" or kind == "death" then
+			burstScale = Vfx.scaleFor(math.max(BURST_MIN[kind], b.radius * 2 * BURST_SCALE[kind]))
+		elseif kind == "muzzle" then
+			burstScale = math.clamp(b.radius / 0.7, 0.6, 2.5)
+		elseif kind == "launch" then
+			burstScale = math.clamp(b.radius / 3, 0.8, 2)
+		end
+		if kind ~= "lost" then
+			Vfx.spawn(r.vfx, kind, b.x, b.y, b.z, burstScale, vt, b.ground, b.dx, b.dy, b.dz)
 			r.stats.emits += 1
 		end
 	end
-	park(r.flashes, #fx.bursts + 1)
+	Vfx.step(r.vfx, vt, dt * sp)
 	return visible
 end
 

@@ -287,6 +287,58 @@ return function(t: any)
 		t.expect(worst <= 3, `no jumps or corners (worst {worst} studs; a missile covers ~7 a frame)`)
 	end)
 
+	t.test("bursts carry what the effects need: launch clouds, flares at the decoy point, ground and direction (C-47)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "ew_test" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 127, 127)))
+		local fx = Effects.new()
+		local seen: { [any]: boolean } = {}
+		local kinds: { [string]: number } = {}
+		local decoyPoints = {}
+		for tick = 1, 300 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for _, e in world.events do
+				if (e :: any).kind == Schema.EventKind.DECOYED and (e :: any).decoyTicks > 0 then
+					local x, z = world.grid:decode((e :: any).decoyCell, (e :: any).decoyOffX, (e :: any).decoyOffZ)
+					table.insert(decoyPoints, { x, (e :: any).decoyY / Schema.Y_SCALE, z })
+				end
+			end
+			local rt = tick - 1.5
+			Effects.update(fx, world, rt, rt * DT, 0, 0)
+			table.clear(world.died)
+			for _, b in fx.bursts do
+				if seen[b] then
+					continue
+				end
+				seen[b] = true
+				kinds[b.kind] = (kinds[b.kind] or 0) + 1
+				if b.kind == "launch" or b.kind == "impact" or b.kind == "flare" or b.kind == "chaff" then
+					t.expect(b.ground ~= nil, `a {b.kind} knows the ground under it`)
+				end
+				if b.kind == "launch" or b.kind == "flare" or b.kind == "chaff" then
+					t.expect(b.dx ~= nil and math.abs(b.dx ^ 2 + (b.dy :: number) ^ 2 + (b.dz :: number) ^ 2 - 1) < 1e-6, `a {b.kind} faces a unit direction`)
+				end
+				if b.kind == "flare" or b.kind == "chaff" then
+					local near = false
+					for _, d in decoyPoints do
+						near = near or (d[1] - b.x) ^ 2 + (d[2] - b.y) ^ 2 + (d[3] - b.z) ^ 2 < 1
+					end
+					t.expect(near, "flares fall at the decoy point the server sent")
+				end
+			end
+		end
+		local parts = {}
+		for k, n in kinds do
+			table.insert(parts, `{k} {n}`)
+		end
+		table.sort(parts)
+		print(`    ew_test bursts: {table.concat(parts, ", ")}`)
+		t.expect((kinds.launch or 0) > 0, "missiles leave in a launch cloud")
+		t.expect((kinds.flare or 0) + (kinds.chaff or 0) > 0, "a decoyed missile shows its flares or chaff")
+	end)
+
 	t.test("SAM missiles chasing circling jets bend smoothly, with no corner at tick boundaries (C-38)", function()
 		-- the `sam` test scene: 4 Thorn IR SAM sites, 4 Falcons (5x health) over them
 		local sim = Sim.new({ seed = 25, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "empty" })

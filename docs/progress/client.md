@@ -85,6 +85,11 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `64472f6` (camera follow, C-43).
 - Ready to merge: `d44e70c` (request 13d for the sim session: gradual decoy turn; docs only).
 - Ready to merge: `7a7e2bd` (merge of `main` with S-26, S-27, S-28, protocol 11; with `8ca419a` test_client 85, test 304, build passed).
+- Ready to merge: `8ca419a` (client missiles steer with the shared guidance, C-44; take it with `7a7e2bd`, or the client lags the server's guidance).
+- Ready to merge: `4346a86` (move lines last until the unit arrives, C-45).
+- Ready to merge: `2d244af` (missiles past the map's edge, C-46).
+- Ready to merge: `d39ec8e` (SAM scene on flat:256).
+- Ready to merge: `58187a7` (log C-45, C-46; requests 14-16 for the sim session).
 
 ## Tasks
 
@@ -308,6 +313,12 @@ All with real mouse and keyboard input through the MCP tools.
 - **Move lines** no longer vanish after 2 s: the server never sets the MOVING bit, so the client now tells from position updates whether a unit is moving; an aircraft's line lasts until it reaches its circle (C-45, `debug_out/screens/c45_falcon_move_line.jpg`). Asked the sim to set the bit (request 14).
 - **Missiles past the map's edge** explode where they are instead of on the edge (C-46). Positions past the edge can't be sent yet (request 15).
 - **`sam` scene** is now on the largest map (2048 studs): the Falcon starts far west and flies ~1,500 studs in. A longer Thorn range and bigger blast are request 16 (weapon defs are the sim's).
+
+## 2026-10-21: detailed combat effects (C-47)
+
+- **Explosions** now have a fireball, sparks, smoke, and on the ground a dust ring and a scorch mark; their size follows the weapon's blast radius, so the bigger Thorn blast (request 16) will show bigger. **Gunshots** flash at the muzzle with a puff of smoke, tracers fly as glowing streaks and spark on hits. **Missiles** leave in a launch cloud, trail billowing smoke, and decoyed ones show falling flares (`debug_out/screens/c47_*.jpg`).
+- Effects slow down and freeze with the sim speed, so paused playtests can be inspected.
+- **Your own effects:** save an effect as `ReplicatedStorage.Vfx.Impact` (or `Death`, `MuzzleFlash`, `Hit`, `Launch`, `Decoy`, `Flare`, `Chaff`) and it replaces the built-in one, e.g. one made with VFX Studio. Give each ParticleEmitter an `EmitCount` attribute (optional `EmitDelay`); C-47 lists the rest.
 
 ## Needs my review
 

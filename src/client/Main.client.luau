@@ -215,7 +215,7 @@ if RunService:IsStudio() then
 			for _ in fx.projectiles do
 				live += 1
 			end
-			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n }, launches = { n = fx.launches.n, fromBarrel = fx.launches.fromBarrel, avgOffset = fx.launches.sumOffset / math.max(fx.launches.fromBarrel, 1) } }
+			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, vfx = fxRenderer.vfx.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n }, launches = { n = fx.launches.n, fromBarrel = fx.launches.fromBarrel, avgOffset = fx.launches.sumOffset / math.max(fx.launches.fromBarrel, 1) } }
 		elseif query == "ranges" then
 			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection }
 		elseif query == "missiles" then
@@ -364,7 +364,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
-	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now)
+	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now, speed)
 	lastVisibleFx = visibleFx
 	mark("effects", t0)
 	-- the camera goes on after units and missiles have their drawn positions
