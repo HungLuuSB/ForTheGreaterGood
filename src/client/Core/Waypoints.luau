@@ -5,6 +5,8 @@
 -- close; a unit target follows that unit and is dropped when it's gone.
 -- Pure Luau (C-7).
 
+local Formation = require("@shared/Grid/Formation")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local Orders = require("./Orders")
 local World = require("./World")
@@ -35,7 +37,7 @@ local function reachFor(world: World.World, ids: { number }): number
 			footprint = math.max(footprint, def.footprint)
 		end
 	end
-	local spacing = 2 * footprint * Orders.RADIUS_PER_FOOTPRINT * Orders.SLOT_SPACING
+	local spacing = Formation.spacing(footprint * PlacementRules.RADIUS_PER_FOOTPRINT)
 	return math.max(Waypoints.REACHED, spacing * math.sqrt(#ids))
 end
 
