@@ -104,6 +104,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `95ff932` `8b54138` (merge of `main` with S-44, S-45; the climb mirrored, C-55); test_client 99, test 327, build passed.
 - Ready to merge: `186af86` `042e4c4` (merge of `main` with S-46; request 24 marked done); test_client 99, test 327, build passed.
 - Ready to merge: `b031b63` `0728784` (merge of `main` with S-47, protocol 15; SAM stock pips, C-56); test_client 100, test 334, build passed.
+- Ready to merge: `5d8a153` `d1ec2d3` (merge of `main` with S-48, protocol 16; nukes, interceptors, launch warning, A attack order, C-57; models request 1); test_client 102, test 339, build passed.
 
 ## Tasks
 
@@ -397,6 +398,7 @@ All with real mouse and keyboard input through the MCP tools.
 - Every player gets a warning while a nuke flies: a blinking "NUCLEAR LAUNCH DETECTED - impact in N s" banner, a red ring at the launch site and a pulsing red ring of the blast where it will land.
 - New key A (BAR's attack): select units, press A, left-click an enemy or the ground; Shift keeps attacking, right click cancels. With a silo selected that launches a nuke there.
 - New test profile `nuke`: the Chaos silo fires at your base when the match starts and your 2 Aegis try to stop it; your silo has 2 nukes for the Chaos base, which 2 Wyverns defend (`debug_out/screens/c57_chase.jpg`, `c57_warning.jpg`). Both nukes were intercepted in my Studio run, so the detonation itself is only checked in Lune so far.
+- The `nuke` profile now has an economy to refill the stockpiles (the user): 5 fusion reactors and 12 supply converters (the flat map has no deposits), 12 supply/s and 1,250 power/s. Measured headless: the silo rebuilds a nuke in its full 120 s, twice back to back; 8 converters fall to 135 s on the second.
 
 ## Needs my review
 

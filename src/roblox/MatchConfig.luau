@@ -195,7 +195,10 @@ local PROFILES = {
 	-- own Reckoning silo in the west has 2 nukes: select it, press A and
 	-- left-click the ground (or a unit) to launch one at the Chaos base,
 	-- which 2 Wyvern radar SAMs defend. Lancers stand in both target areas
-	-- to show the blast.
+	-- to show the blast. Your economy funds the stockpiles: 5 fusion
+	-- reactors (1,250 power/s) and 12 supply converters (12 supply/s from
+	-- spare power; the flat map has no deposits) rebuild a nuke in its full
+	-- 120 s, back to back, with power left for the Aegis' interceptors.
 	nuke = {
 		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
 		seed = 41,
@@ -209,6 +212,10 @@ local PROFILES = {
 			{ def = "ord_beacon", player = 1, x = -600, z = -600, count = 2, dx = 1200 },
 			{ def = "ord_beacon", player = 1, x = -600, z = 600, count = 2, dx = 1200 },
 			{ def = "ord_fusion", player = 1, x = -950, z = 650 },
+			{ def = "ord_fusion", player = 1, x = -980, z = -640, count = 4, dz = 48 },
+			{ def = "ord_converter", player = 1, x = -840, z = 380, count = 4, dz = 16 },
+			{ def = "ord_converter", player = 1, x = -824, z = 380, count = 4, dz = 16 },
+			{ def = "ord_converter", player = 1, x = -808, z = 380, count = 4, dz = 16 },
 			{ def = "ord_reckoning", player = 1, x = -900, z = 0 },
 			{ def = "ord_aegis", player = 1, x = -650, z = -150, count = 2, dz = 300 },
 			{ def = "ord_lancer", player = 1, x = -500, z = -60, count = 4, dz = 40, heading = math.pi / 2 },
