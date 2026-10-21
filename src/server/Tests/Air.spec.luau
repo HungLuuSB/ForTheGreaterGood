@@ -403,6 +403,7 @@ return function(t: RunAll.Context)
 		local sim = Sim.new({ seed = 33, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local sam = Spawn.unit(sim, "ord_seraph", 1, 0, 0)
+		w.wStock[World.slotKey(sam, 1)] = 255 -- about guidance, not supply (stockpiles, S-47)
 		local jet = Spawn.unit(sim, "chs_harpy", 2, 300, 0, -math.pi / 2)
 		w.fireState[jet] = World.FireState.HOLD_FIRE
 		moveTo(sim, 2, { jet }, 100, 0)

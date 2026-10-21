@@ -38,6 +38,7 @@ export type Unit = {
 	build: number?,
 	state: number?,
 	targets: { [number]: number }?, -- own units: weapon slot → target ID (0 = none; S-16)
+	stock: { [number]: number }?, -- own units: weapon slot → missiles in stock (S-47)
 	vx: number?, -- tactical units: velocity estimated from the last two Tactical records (studs/s; S-27)
 	vz: number?,
 	movedAt: number?, -- view.tick of the last Tactical record
@@ -414,6 +415,13 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 					t[tg.slot] = tg.targetId
 				end
 				u.targets = t
+			end
+			if r.stock then
+				local st = u.stock or {}
+				for _, s in r.stock do
+					st[s.slot] = s.count
+				end
+				u.stock = st
 			end
 		end
 		mention(view, "State", ids)

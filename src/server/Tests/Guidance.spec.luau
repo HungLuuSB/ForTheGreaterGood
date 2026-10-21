@@ -219,6 +219,7 @@ return function(t: RunAll.Context)
 		local jet = Spawn.unit(sim, "ord_falcon", 1, -540, 0, math.pi / 2)
 		World.setHealth(w, jet, 1e9)
 		local site = Spawn.unit(sim, "chs_wyvern", 2, 400, 0, 0)
+		sim.world.wStock[World.slotKey(site, 1)] = 255 -- this test is about guidance, not supply (stockpiles, S-47)
 		local key = World.slotKey(site, 1)
 		local restYaw, restPitch = w.wYaw[key], w.wPitch[key]
 		moveTo(sim, 1, { jet }, 250, 0)

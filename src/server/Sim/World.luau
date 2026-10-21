@@ -82,6 +82,8 @@ export type World = {
 	wHold: { [number]: number }, -- ticks the weapon still keeps its aim after losing its target (Shared/Combat/Aim, S-20)
 	wOverkill: { [number]: number }, -- World.Overkill: left a doomed target, search now / may shoot a doomed one (S-29)
 	wBlocked: { [number]: number }, -- 1 while terrain blocks the shot at the current target (line of fire, S-32)
+	wStock: { [number]: number }, -- missiles in stock; nil = the slot has no stockpile (Stockpile, S-47)
+	wStockProgress: { [number]: number }, -- 0..1 of the next missile
 
 	-- ID allocator
 	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
@@ -129,6 +131,8 @@ function World.new(): World
 		wHold = {},
 		wOverkill = {},
 		wBlocked = {},
+		wStock = {},
+		wStockProgress = {},
 		gen = {},
 		pins = {},
 		nextFresh = 1,
@@ -188,6 +192,7 @@ export type SpawnInfo = {
 	alt: number?,
 	health: number,
 	weaponCount: number?,
+	weaponStock: { [number]: number }?, -- slot → missiles in stock, for slots with a stockpile (S-47)
 	weaponRest: { { number } }?, -- per slot {yaw, pitch} (radians): the aim it starts at; default 0, 0 (S-20)
 	buildProgress: number?, -- default 1 (complete)
 }
@@ -245,6 +250,11 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 		w.wReload[key] = 0
 		w.wTarget[key] = 0
 		w.wTargetGen[key] = 0
+		local stock = info.weaponStock and info.weaponStock[slot]
+		if stock then
+			w.wStock[key] = stock
+			w.wStockProgress[key] = 0
+		end
 	end
 	return id
 end
@@ -329,6 +339,8 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wHold[key] = nil
 		w.wOverkill[key] = nil
 		w.wBlocked[key] = nil
+		w.wStock[key] = nil
+		w.wStockProgress[key] = nil
 	end
 	w.weaponCount[id] = nil
 	w.lastAttacker[id] = nil
@@ -436,6 +448,11 @@ function World.hash(w: World, h: number?): number
 			hv = Hash.u32(hv, w.wHold[key])
 			hv = Hash.u32(hv, w.wOverkill[key])
 			hv = Hash.u32(hv, w.wBlocked[key])
+			local stock = w.wStock[key]
+			if stock ~= nil then
+				hv = Hash.u32(hv, stock)
+				hv = Hash.number(hv, w.wStockProgress[key])
+			end
 		end
 	end
 	hv = Hash.u32(hv, w.nextFresh)

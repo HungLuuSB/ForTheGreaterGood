@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 14 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot)
+Schema.PROTOCOL_VERSION = 15 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -370,10 +370,13 @@ end
 
 --------------------------------------------------------------------------------
 -- State (S → C, reliable): only the fields that changed
---   unitId u16 | mask u8 | [health u8] | [state u16] | [aim] | [weapon u16] | [build u8] | [targets]
+--   unitId u16 | mask u8 | [health u8] | [state u16] | [aim] | [weapon u16] | [build u8] | [targets] | [stock]
 --   aim = slotMask u8 (bit i-1 = weapon slot i, 1..8) + yaw u8, pitch u8 per set bit
 --   targets = slotMask u8 + targetId u16 per set bit (0 = none); sent only to
 --             the unit's owner (protocol 8, S-16)
+--   stock   = slotMask u8 + count u8 per set bit: missiles in stock of the
+--             weapon slots with a stockpile; sent only to the unit's owner
+--             (protocol 15, S-47)
 --------------------------------------------------------------------------------
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
@@ -395,14 +398,16 @@ Schema.StateField = table.freeze({
 	WEAPON = 8,
 	BUILD = 16,
 	TARGET = 32, -- own units only: each weapon's target (protocol 8, S-16)
+	STOCK = 64, -- own units only: missiles in stock per stockpile slot (protocol 15, S-47)
 })
-local STATE_MASK_ALL = 63
+local STATE_MASK_ALL = 127
 local SF = Schema.StateField
 
 Schema.WeaponState = table.freeze({ IDLE = 0, AIMING = 1, READY = 2, RESTORING = 3 })
 
 export type Aim = { slot: number, yaw: number, pitch: number }
 export type Target = { slot: number, targetId: number } -- targetId 0 = no target
+export type Stock = { slot: number, count: number } -- missiles in stock (0..255)
 
 export type State = {
 	unitId: number,
@@ -412,6 +417,7 @@ export type State = {
 	weapon: number?, -- u16, 2 bits per slot; see packWeaponStates / weaponStateAt
 	build: number?, -- 0..255 build progress
 	targets: { Target }?, -- own units only (S-16): ascending slot order; targetId 0 = none
+	stock: { Stock }?, -- own units only (S-47): stockpile slots, ascending slot order
 }
 
 -- {slot1, slot2, ...} WeaponState values → the u16 weapon field.
@@ -448,6 +454,9 @@ function Schema.encodeState(w: Writer, rec: State)
 	end
 	if rec.targets ~= nil then
 		mask += SF.TARGET
+	end
+	if rec.stock ~= nil then
+		mask += SF.STOCK
 	end
 	if mask == 0 then
 		error("Schema: state record has no fields", 2)
@@ -504,6 +513,24 @@ function Schema.encodeState(w: Writer, rec: State)
 			w:writeU16(tg.targetId) -- 0 = none
 		end
 	end
+	if rec.stock ~= nil then
+		local slotMask = 0
+		local lastSlot = 0
+		for _, st in rec.stock do
+			if st.slot ~= math.floor(st.slot) or st.slot <= lastSlot or st.slot > Schema.MAX_WEAPONS then
+				error("Schema: stock slots must be ascending within 1..MAX_WEAPONS", 2)
+			end
+			slotMask += 2 ^ (st.slot - 1)
+			lastSlot = st.slot
+		end
+		if slotMask == 0 then
+			error("Schema: stock list is empty", 2)
+		end
+		w:writeU8(slotMask)
+		for _, st in rec.stock do
+			w:writeU8(st.count)
+		end
+	end
 end
 
 function Schema.decodeState(r: Reader): State
@@ -553,6 +580,19 @@ function Schema.decodeState(r: Reader): State
 			end
 		end
 		rec.targets = targets
+	end
+	if band(mask, SF.STOCK) ~= 0 then
+		local slotMask = r:readU8()
+		if slotMask == 0 then
+			fail(r, "stock slot mask is empty")
+		end
+		local stock: { Stock } = {}
+		for slot = 1, Schema.MAX_WEAPONS do
+			if band(slotMask, 2 ^ (slot - 1)) ~= 0 then
+				table.insert(stock, { slot = slot, count = r:readU8() })
+			end
+		end
+		rec.stock = stock
 	end
 	return rec
 end

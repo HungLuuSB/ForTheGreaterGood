@@ -36,6 +36,7 @@ local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local EW = require("../EW")
 local Sensors = require("../Sensors")
+local Stockpile = require("../Stockpile")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -256,6 +257,9 @@ return function(sim: Types.Sim)
 				if canFire and submerged and weapon.type ~= "TORPEDO" then
 					canFire = false -- under water only torpedoes fire (amphibious units, S-39)
 				end
+				if canFire and not Stockpile.ready(w, key) then
+					canFire = false -- nothing in stock (S-47)
+				end
 			end
 
 			-- rotate the turret (fixed mounts without a turret table aim
@@ -309,6 +313,7 @@ return function(sim: Types.Sim)
 					-- Fire along the turret's actual aim; keep fractional reload
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)
+					Stockpile.take(w, key)
 					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch)
 				end
 			end

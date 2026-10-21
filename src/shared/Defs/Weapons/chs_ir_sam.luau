@@ -11,6 +11,7 @@ return {
 	guidance = "IR",
 	lockRange = 420,
 	terminalRange = 30,
+	stockpile = { capacity = 8, buildTime = 6, cost = { supply = 15, power = 300 } }, -- missiles in stock (S-47); Hornet / Halo carry 4
 	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 200, SUB = 0 },
 	aoe = 12,
 	edgeEffectiveness = 0.5,
