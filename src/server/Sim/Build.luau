@@ -29,6 +29,7 @@ local Nav = require("./Nav")
 local Placement = require("./Placement")
 local Sensors = require("./Sensors")
 local Spawn = require("./Spawn")
+local Stockpile = require("./Stockpile")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -191,6 +192,7 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		health = math.max(1, d.health * Build.START_HEALTH),
 		weaponCount = #d.weapons,
 		weaponRest = Combat.restPoses(sim, d.index),
+		weaponStock = Stockpile.initial(sim, d.index, false), -- built sites start empty (S-47)
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)
@@ -278,6 +280,7 @@ local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 	local out = halfSize(fd) + Grid.CELL_SIZE
 	local x, z = w.posX[factory] + fx * out, w.posZ[factory] + fz * out
 	local id = Spawn.unit(sim, unitDef.id, w.owner[factory], x, z, h)
+	Stockpile.empty(sim, id) -- produced units start empty and fill up (S-47)
 	if sim.nav and unitDef.domain ~= "structure" then
 		local ex, ez = x + fx * Build.EXIT_ROLL, z + fz * Build.EXIT_ROLL
 		if Build.producedHook then
@@ -493,6 +496,9 @@ function Build.step(sim: Types.Sim)
 
 	-- 3. aircraft landing on pads and rearming (also economy consumers)
 	Air.rearmStep(sim, demandS, demandP)
+
+	-- 3b. missile stockpiles (S-47)
+	Stockpile.step(sim, demandS, demandP)
 
 	-- 4. DIRCM upkeep: continuous power drain, cooldown at the stall ratio
 	EW.drainStep(sim, demandP)

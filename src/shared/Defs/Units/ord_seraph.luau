@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	health = 800,
 	movement = { maxSpeed = 32, accel = 12, brake = 24, turnRate = 110 },
 	sensors = { sight = 150, radar = 1560, radarError = 20 },
-	weapons = { { def = "ord_radar_sam", turretPiece = "launcher", muzzle = "muzzle" } },
+	weapons = { { def = "ord_radar_sam", turretPiece = "launcher", muzzle = "muzzle", stockpile = 3 } },
 	pieces = { "base", "launcher", "turret", "muzzle" },
 	icon = "sam_radar",
 	model = "ord_seraph",

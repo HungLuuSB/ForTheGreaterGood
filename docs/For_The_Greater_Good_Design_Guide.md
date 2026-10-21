@@ -348,6 +348,11 @@ return {
 	terminalRange  = nil,
 	canTargetRadar = false,
 
+	-- missile stockpile (S-47; SAMs): a shot needs a missile in stock; the unit
+	-- builds one at a time while below capacity (section 8.6). A unit's weapon
+	-- slot may set its own capacity: weapons = { { def = "chs_ir_sam", stockpile = 4 } }
+	stockpile = nil,       -- { capacity = 8, buildTime = 6, cost = { supply = 15, power = 300 } }
+
 	-- visuals
 	fx = { muzzle = "flash_large", trail = nil, impact = "explosion_medium", sound = "rail_fire" },
 }
@@ -386,7 +391,7 @@ How `Defs.luau` does it:
 - `extend` deep-merges records (`cost`, `movement`, `sensors`…) and replaces lists (`categories`, `weapons`, `pieces`…) whole.
 - **Unknown fields are errors**, so a typo such as `maxspeed` fails loudly instead of silently using a template value.
 - Validation collects **every** problem and fails once, listing them all (`Defs: 3 problem(s): …`), each prefixed with the def and field path.
-- Built defs are deep-frozen. Derived fields: unit `index`, `categoryMask`, `maxRange`, `weapons[i].weaponIndex`; weapon `index`, `targetMask`, `priorityMasks`.
+- Built defs are deep-frozen. Derived fields: unit `index`, `categoryMask`, `maxRange`, `weapons[i].weaponIndex`, `weapons[i].stockCapacity` (the slot's stockpile capacity, S-47); weapon `index`, `targetMask`, `priorityMasks`.
 - The defs hash is FNV-1a 32-bit over a canonical serialization (sorted keys, numbers by their IEEE-754 bits), so it is identical on every runtime.
 - The `pieces`-exist-in-model check runs client-side once models exist; it can't run headless.
 
@@ -838,7 +843,14 @@ Implementation (DECISIONS D92):
 Route these through the same team account so shortages affect them naturally:
 
 - **Aircraft rearm/repair** at airfield pads or carriers: drains supply + power while rearming.
-- **Missile reloads** for SAM sites and launchers: each reload costs supply over the reload time.
+- **Missile stockpiles** (S-47, built): weapons with a `stockpile` (all IR and radar SAMs, sites and mobile; not the naval SAMs yet) fire only while they have a missile in stock. A finished unit below capacity builds one missile at a time per weapon, paying its `cost` over its `buildTime` like construction (slower when the team stalls; nothing while stalled). Units placed by scenarios start full; finished frames and units out of a factory start empty. The reload between shots is unchanged.
+
+  | Weapon | Missile | Capacity |
+  |---|---|---|
+  | IR SAM (`chs_ir_sam`, `ord_ir_sam`) | 6 s, 15 supply + 300 power | Thorn, Vigil 8; Hornet, Halo 4 |
+  | Radar SAM (`chs_radar_sam`, `ord_radar_sam`) | 12 s, 40 supply + 900 power | Wyvern, Aegis 6; Gorgon, Seraph 3 |
+
+  The owner sees each unit's stock (State `stock` field, protocol 15, section 7).
 - **Sensor upkeep:** radars, jammers and DIRCM drain power continuously. If power stalls, they lose range or switch off.
 
 ### 8.7 Reclaim

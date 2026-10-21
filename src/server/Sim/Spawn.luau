@@ -7,6 +7,7 @@ local Combat = require("./Combat/Combat")
 local EW = require("./EW")
 local Lifecycle = require("./Lifecycle")
 local Placement = require("./Placement")
+local Stockpile = require("./Stockpile")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -40,6 +41,7 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 		health = def.health,
 		weaponCount = #def.weapons,
 		weaponRest = Combat.restPoses(sim, def.index),
+		weaponStock = Stockpile.initial(sim, def.index, true), -- scenario spawns start full (S-47)
 	})
 	if def.domain == "structure" then
 		Placement.occupy(sim, id)

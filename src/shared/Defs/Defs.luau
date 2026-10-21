@@ -38,6 +38,8 @@ export type WeaponSlot = {
 	turretPiece: string?,
 	pitchPiece: string?,
 	muzzle: string?,
+	stockpile: number?, -- capacity on this unit, overriding the weapon's stockpile.capacity (S-47)
+	stockCapacity: number?, -- derived: the slot's missile capacity, nil = no stockpile (S-47)
 }
 
 export type UnitDef = {
@@ -120,6 +122,10 @@ export type WeaponDef = {
 	terminalRange: number?,
 	seekerAngle: number?, -- degrees off the nose the seeker sees; default by guidance (EW.SEEKER_ANGLE, S-27)
 	climbHeight: number?, -- vertical launch: studs above the ground it climbs straight before pitching over (S-44)
+	-- missiles kept in stock (S-47): a shot needs one; the unit builds one
+	-- at a time (buildTime seconds, cost each) while below capacity. A unit's
+	-- slot may set its own capacity (WeaponSlot.stockpile).
+	stockpile: { capacity: number, buildTime: number, cost: { supply: number?, power: number? } }?,
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
@@ -242,7 +248,13 @@ local UNIT_SPEC: Spec = {
 			maxItems = Defs.MAX_WEAPONS,
 			item = {
 				kind = "record",
-				fields = { def = STRING, turretPiece = opt(STRING), pitchPiece = opt(STRING), muzzle = opt(STRING) },
+				fields = {
+					def = STRING,
+					turretPiece = opt(STRING),
+					pitchPiece = opt(STRING),
+					muzzle = opt(STRING),
+					stockpile = { kind = "integer", optional = true, min = 1, max = 255 }, -- capacity (S-47)
+				},
 			},
 		},
 		countermeasures = {
@@ -340,6 +352,15 @@ local WEAPON_SPEC: Spec = {
 		seekerAngle = { kind = "number", optional = true, min = 1, max = 180 },
 		launch = { kind = "string", optional = true, enum = set({ "turret", "vertical" }) },
 		climbHeight = opt(NON_NEGATIVE),
+		stockpile = {
+			kind = "record",
+			optional = true,
+			fields = {
+				capacity = { kind = "integer", min = 1, max = 255 }, -- a u8 on the wire
+				buildTime = POSITIVE, -- seconds per missile at full economy
+				cost = { kind = "record", fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) } },
+			},
+		},
 		burnThrough = opt(FRACTION),
 		canTargetRadar = { kind = "boolean", optional = true },
 		fx = {
@@ -594,6 +615,15 @@ function Defs.validate(raw: RawDefs): { string }
 				if type(slot) == "table" and type(slot.def) == "string" and weapons[slot.def] == nil then
 					report(`weapons[{i}].def: unknown weapon {describe(slot.def)}`)
 				end
+				if
+					type(slot) == "table"
+					and slot.stockpile ~= nil
+					and type(slot.def) == "string"
+					and type(weapons[slot.def]) == "table"
+					and weapons[slot.def].stockpile == nil
+				then
+					report(`weapons[{i}].stockpile: weapon {describe(slot.def)} has no stockpile`)
+				end
 				if type(slot) == "table" then
 					for _, key in { "turretPiece", "pitchPiece", "muzzle" } do
 						local piece = slot[key]
@@ -711,6 +741,9 @@ function Defs.build(raw: RawDefs): DefSet
 		for _, slot in u.weapons do
 			local w = weapons[slot.def]
 			slot.weaponIndex = w.index
+			if w.stockpile then
+				slot.stockCapacity = slot.stockpile or w.stockpile.capacity
+			end
 			maxRange = math.max(maxRange, w.range)
 		end
 		u.maxRange = maxRange

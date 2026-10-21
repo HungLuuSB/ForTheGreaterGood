@@ -159,6 +159,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	pn.forceFull = true
 	pn.lastEco = nil
 	table.clear(pn.sentTargets)
+	table.clear(pn.sentStock)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
 	Schema.encodeSnapshot(w, {
@@ -669,6 +670,40 @@ function NetOut.step(sim: Types.Sim)
 			end
 		end
 		pn.sentTargets = sentNow
+
+		-- own units' missile stock (S-47): when it changes, and on entering
+		local sentStock = pn.sentStock
+		local stockNow: { [number]: string } = {}
+		for _, id in pn.tacticalList do
+			local count = w.weaponCount[id]
+			if w.owner[id] ~= pid or count == 0 then
+				continue
+			end
+			local stock: { Schema.Stock } = {}
+			local parts = {}
+			for slot = 1, count do
+				local n = w.wStock[World.slotKey(id, slot)]
+				if n ~= nil then
+					table.insert(stock, { slot = slot, count = math.clamp(n, 0, 255) })
+					table.insert(parts, n)
+				end
+			end
+			if #stock == 0 then
+				continue
+			end
+			local sig = table.concat(parts, ",")
+			stockNow[id] = sig
+			if entered[id] or sentStock[id] ~= sig then
+				local rec = recordOf[id]
+				if rec == nil then
+					rec = { unitId = id }
+					recordOf[id] = rec
+					table.insert(states, rec)
+				end
+				rec.stock = stock
+			end
+		end
+		pn.sentStock = stockNow
 
 		-- strategic snapshot of every other known unit
 		local strategic: { Schema.Strategic } = {}
