@@ -29,15 +29,15 @@ function AlertFeed.new(api: Api.Api): UI
 	gui.DisplayOrder = 6
 	local list = Instance.new("Frame")
 	list.Name = "List"
-	list.AnchorPoint = Vector2.new(1, 0)
-	list.Position = UDim2.new(1, -10, 0, 60)
+	list.AnchorPoint = Vector2.new(0, 0)
+	list.Position = UDim2.new(0.5, -273, 0, 46) -- under the resource bar, like BAR's messages (C-71)
 	list.Size = UDim2.fromOffset(300, AlertFeed.LINES * 24)
 	list.BackgroundTransparency = 1
 	list.Parent = gui
 	local layout = Instance.new("UIListLayout")
 	layout.Padding = UDim.new(0, 3)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	layout.Parent = list
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	local ui: UI = { gui = gui, list = list, lines = {} }
@@ -45,13 +45,14 @@ function AlertFeed.new(api: Api.Api): UI
 		local b = Instance.new("TextButton")
 		b.Size = UDim2.fromOffset(300, 21)
 		b.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
-		b.BackgroundTransparency = 0.2
+		b.BackgroundTransparency = 1
+		b.TextStrokeTransparency = 0.3
 		b.BorderSizePixel = 0
 		b.Font = Enum.Font.GothamBold
 		b.TextSize = 13
-		b.TextXAlignment = Enum.TextXAlignment.Right
+		b.TextXAlignment = Enum.TextXAlignment.Left
 		b.TextColor3 = COLOR[alert.kind] or Color3.new(1, 1, 1)
-		b.Text = alert.text .. "  "
+		b.Text = alert.text
 		b.LayoutOrder = -math.floor(alert.time * 100)
 		b.Parent = list
 		b.MouseButton1Click:Connect(function()
@@ -79,7 +80,7 @@ function AlertFeed.step(ui: UI)
 		elseif age > AlertFeed.SHOW - 1 then
 			local t = age - (AlertFeed.SHOW - 1)
 			l.button.TextTransparency = t
-			l.button.BackgroundTransparency = 0.2 + 0.8 * t
+			l.button.TextStrokeTransparency = 0.3 + 0.7 * t
 		end
 	end
 end

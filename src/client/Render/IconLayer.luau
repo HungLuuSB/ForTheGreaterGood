@@ -1,21 +1,19 @@
 --!strict
--- Icons on screen (guide 15.4): a pooled screen-space layer of small
--- shapes in team colors, no image assets; each unit type's two-letter code
--- inside its shape (C-67). Units without a model (radar
--- blips, ghosts, strategic records in view) always get an icon; at
--- strategic zoom every unit does and the models are hidden.
--- Looks are placeholders: listed under "Needs my review".
+-- Icons on screen (guide 15.4): a pooled screen-space layer of unit-type
+-- glyphs in team colors (UI/Glyph, BAR style, C-71), no image assets.
+-- Units without a model (radar blips, ghosts, strategic records in view)
+-- always get an icon; at strategic zoom every unit does and the models are
+-- hidden. Looks are placeholders: listed under "Needs my review".
 
 local Players = game:GetService("Players")
 
 local Icons = require("../Core/Icons")
+local Glyph = require("../UI/Glyph")
 local TeamColors = require("./TeamColors")
 
 local IconLayer = {}
 
-type Slot = { root: Frame, body: Frame, stroke: UIStroke, corner: UICorner, tri: TextLabel, label: TextLabel, shape: string? }
-
-export type Layer = { gui: ScreenGui, slots: { Slot }, used: number }
+export type Layer = { gui: ScreenGui, slots: { Glyph.G }, used: number }
 
 function IconLayer.new(): Layer
 	local gui = Instance.new("ScreenGui")
@@ -25,83 +23,6 @@ function IconLayer.new(): Layer
 	gui.DisplayOrder = 1
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return { gui = gui, slots = {}, used = 0 }
-end
-
-local function newSlot(parent: ScreenGui): Slot
-	local root = Instance.new("Frame")
-	root.Name = "Icon"
-	root.BackgroundTransparency = 1
-	root.AnchorPoint = Vector2.new(0.5, 0.5)
-	local body = Instance.new("Frame")
-	body.Name = "Body"
-	body.AnchorPoint = Vector2.new(0.5, 0.5)
-	body.Position = UDim2.fromScale(0.5, 0.5)
-	body.BorderSizePixel = 0
-	body.Parent = root
-	local corner = Instance.new("UICorner")
-	corner.Parent = body
-	local stroke = Instance.new("UIStroke")
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Parent = body
-	local tri = Instance.new("TextLabel")
-	tri.Name = "Triangle"
-	tri.BackgroundTransparency = 1
-	tri.Size = UDim2.fromScale(1, 1)
-	tri.Font = Enum.Font.Arial
-	tri.Text = "▲" -- aircraft
-	tri.TextScaled = true
-	tri.TextStrokeTransparency = 0.3
-	tri.Parent = root
-	local label = Instance.new("TextLabel")
-	label.Name = "Code"
-	label.BackgroundTransparency = 1
-	label.AnchorPoint = Vector2.new(0.5, 0.5)
-	label.Font = Enum.Font.GothamBold
-	label.TextScaled = true
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextStrokeColor3 = Color3.new(0, 0, 0)
-	label.TextStrokeTransparency = 0.35
-	label.ZIndex = 2
-	label.Parent = root
-	root.Parent = parent
-	return { root = root, body = body, stroke = stroke, corner = corner, tri = tri, label = label, shape = nil }
-end
-
-local function apply(slot: Slot, style: Icons.Style)
-	local color = TeamColors(style.team)
-	local shape = style.shape
-	local s = style.size
-	slot.root.Size = UDim2.fromOffset(s, s)
-	local isTri = shape == "triangle"
-	slot.tri.Visible = isTri
-	slot.body.Visible = not isTri
-	-- the unit type's code, centered (lower in a triangle, smaller in a diamond)
-	local label = slot.label
-	label.Visible = style.code ~= nil
-	if style.code then
-		label.Text = style.code
-		label.TextTransparency = 1 - style.alpha
-		local k = if shape == "diamond" then 0.55 elseif isTri then 0.5 else 0.7
-		label.Size = UDim2.fromScale(k, k)
-		label.Position = UDim2.fromScale(0.5, if isTri then 0.62 else 0.5)
-	end
-	if isTri then
-		slot.tri.TextColor3 = color
-		slot.tri.TextTransparency = 1 - style.alpha
-		slot.tri.TextStrokeColor3 = if style.selected then Color3.new(1, 1, 1) else Color3.new(0, 0, 0)
-		return
-	end
-	local body = slot.body
-	body.Rotation = if shape == "diamond" then 45 else 0
-	local k = if shape == "diamond" then 0.75 elseif shape == "blip" then 0.6 else 1
-	body.Size = UDim2.fromScale(k, k)
-	slot.corner.CornerRadius = if shape == "circle" or shape == "blip" or shape == "sonar" then UDim.new(1, 0) else UDim.new(0, 2)
-	local hollow = shape == "ghost" or shape == "sonar"
-	body.BackgroundColor3 = if shape == "frame" then color:Lerp(Color3.new(0, 0, 0), 0.45) else color
-	body.BackgroundTransparency = if hollow then 1 else 1 - style.alpha
-	slot.stroke.Color = if style.selected then Color3.new(1, 1, 1) elseif shape == "frame" or hollow then color else Color3.new(0, 0, 0)
-	slot.stroke.Thickness = if style.selected then 2 elseif shape == "frame" or shape == "sonar" then 2 else 1
-	slot.stroke.Transparency = if hollow then 1 - style.alpha else 0.2
 end
 
 -- Draws this frame's icons. With `everything` false only units without a
@@ -115,12 +36,12 @@ function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: 
 		n += 1
 		local slot = layer.slots[n]
 		if slot == nil then
-			slot = newSlot(layer.gui)
+			slot = Glyph.new(layer.gui)
 			layer.slots[n] = slot
 		end
 		slot.root.Visible = true
 		slot.root.Position = UDim2.fromOffset(d.x, d.y)
-		apply(slot, d.style)
+		Glyph.apply(slot, d.style, TeamColors(d.style.team))
 	end
 	for i = n + 1, layer.used do
 		layer.slots[i].root.Visible = false

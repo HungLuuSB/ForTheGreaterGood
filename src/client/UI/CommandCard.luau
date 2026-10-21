@@ -1,11 +1,13 @@
 --!strict
--- Command card (C-68, guide 15.7), a functional PLACEHOLDER: the selected
--- units' commands and states, each button with its hotkey (Input/Controls
--- has the same keys): move, fight, attack, patrol, guard (a mode: the next
--- left click gives it), stop, fire state, move state, factory repeat,
--- on / off, cancel, jump to the last alert. Fire and move states show the
--- last one sent (the wire doesn't carry them yet). Acts only through the
--- client API.
+-- Command card (C-68; BAR style since C-71), bottom left next to the unit
+-- panel, a functional PLACEHOLDER: small grey text buttons in BAR's order.
+-- State buttons on the top row carry a colored bar under the text (fire
+-- state: at will green, return yellow, hold red; move state: roam green,
+-- maneuver yellow, hold red; repeat and on / off: green on, red off); the
+-- command modes (move, fight, attack, patrol, guard: the next left click
+-- gives the order) light up while active. Hotkeys (Input/Controls) show on
+-- hover. Fire and move states show the last one sent (the wire doesn't
+-- carry them yet). Acts only through the client API.
 
 local Players = game:GetService("Players")
 
@@ -14,20 +16,25 @@ local World = require("../Core/World")
 
 local CommandCard = {}
 
-local BG = Color3.fromRGB(20, 22, 26)
-local ON = Color3.fromRGB(70, 110, 160)
-local OFF = Color3.fromRGB(40, 44, 52)
-local FIRE = { [0] = "Hold fire", [1] = "Return fire", [2] = "Fire at will" }
-local MOVE = { [0] = "Hold pos", [1] = "Maneuver", [2] = "Roam" }
+local BG = Color3.fromRGB(18, 20, 24)
+local BTN = Color3.fromRGB(52, 56, 64)
+local ACTIVE = Color3.fromRGB(70, 110, 160)
+local GREEN, YELLOW, RED = Color3.fromRGB(90, 210, 90), Color3.fromRGB(230, 200, 60), Color3.fromRGB(220, 70, 60)
+local FIRE = { [0] = { "Hold fire", RED }, [1] = { "Return fire", YELLOW }, [2] = { "Fire at will", GREEN } }
+local MOVE = { [0] = { "Hold pos", RED }, [1] = { "Maneuver", YELLOW }, [2] = { "Roam", GREEN } }
+local COLS = 5
+local W, H = 64, 24
 
 export type UI = { gui: ScreenGui, panel: Frame, buttons: { [string]: TextButton } }
 
--- What the selection is: any toggled on, any repeating, its factories.
-local function selected(api: Api.Api): (boolean, boolean, { number })
+local function selected(api: Api.Api): (boolean, boolean, { number }, boolean)
 	local anyOn, anyRepeat, factories = false, false, {}
+	local switchable = false -- converters: the only units the on / off bit does something for
 	for _, id in api.state.selection do
 		local u = api.world.units[id]
 		if u then
+			local d = World.def(api.world, u)
+			switchable = switchable or (d ~= nil and d.converter ~= nil)
 			anyOn = anyOn or bit32.band(u.state or 0, 2) ~= 0
 			anyRepeat = anyRepeat or bit32.band(u.state or 0, 16) ~= 0
 			local def = World.def(api.world, u)
@@ -36,11 +43,13 @@ local function selected(api: Api.Api): (boolean, boolean, { number })
 			end
 		end
 	end
-	return anyOn, anyRepeat, factories
+	return anyOn, anyRepeat, factories, switchable
 end
 
-local ORDER = { "move", "fight", "attack", "patrol", "guard", "stop", "fire", "movestate", "repeat", "toggle", "cancel", "alert" }
+-- BAR's order: states, then orders.
+local ORDER = { "fire", "movestate", "repeat", "toggle", "cancel", "stop", "attack", "move", "patrol", "fight", "guard", "alert" }
 local KEYS = { move = "M", fight = "F", attack = "A", patrol = "Z", guard = "G", stop = "S", fire = "L", movestate = "K", ["repeat"] = "Y", toggle = "U", cancel = "X", alert = "J" }
+local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true }
 
 local function act(api: Api.Api, name: string)
 	local a = api.actions
@@ -80,17 +89,18 @@ function CommandCard.new(api: Api.Api): UI
 	gui.DisplayOrder = 6
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
-	panel.AnchorPoint = Vector2.new(1, 1)
-	panel.Position = UDim2.new(1, -10, 1, -10)
-	panel.Size = UDim2.fromOffset(4 * 74 + 8, 3 * 38 + 8)
+	panel.AnchorPoint = Vector2.new(0, 1)
+	panel.Position = UDim2.new(0, 284, 1, 0) -- right of the 280-pixel unit panel
+	local rows = math.ceil(#ORDER / COLS)
+	panel.Size = UDim2.fromOffset(COLS * (W + 3) + 7, rows * (H + 4) + 8)
 	panel.BackgroundColor3 = BG
 	panel.BackgroundTransparency = 0.15
 	panel.BorderSizePixel = 0
 	panel.Visible = false
 	panel.Parent = gui
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.fromOffset(70, 34)
-	grid.CellPadding = UDim2.fromOffset(4, 4)
+	grid.CellSize = UDim2.fromOffset(W, H)
+	grid.CellPadding = UDim2.fromOffset(3, 4)
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = panel
 	local pad = Instance.new("UIPadding")
@@ -101,16 +111,24 @@ function CommandCard.new(api: Api.Api): UI
 		local b = Instance.new("TextButton")
 		b.Name = name
 		b.LayoutOrder = i
-		b.BackgroundColor3 = OFF
+		b.BackgroundColor3 = BTN
 		b.BorderSizePixel = 0
-		b.Font = Enum.Font.GothamBold
+		b.Font = Enum.Font.Gotham
 		b.TextSize = 11
-		b.TextWrapped = true
-		b.TextColor3 = Color3.new(1, 1, 1)
+		b.TextColor3 = Color3.fromRGB(235, 235, 235)
 		b.Parent = panel
 		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, 3)
+		c.CornerRadius = UDim.new(0, 2)
 		c.Parent = b
+		if STATES[name] then
+			local bar = Instance.new("Frame")
+			bar.Name = "State"
+			bar.AnchorPoint = Vector2.new(0.5, 1)
+			bar.Position = UDim2.new(0.5, 0, 1, -2)
+			bar.Size = UDim2.new(0.6, 0, 0, 2)
+			bar.BorderSizePixel = 0
+			bar.Parent = b
+		end
 		b.MouseButton1Click:Connect(function()
 			act(api, name)
 		end)
@@ -125,28 +143,44 @@ function CommandCard.step(ui: UI, api: Api.Api)
 	if not ui.panel.Visible then
 		return
 	end
-	local anyOn, anyRepeat, factories = selected(api)
+	local anyOn, anyRepeat, factories, switchable = selected(api)
+	local fire = FIRE[api.state.fireState or -1]
+	local move = MOVE[api.state.moveState or -1]
 	local label = {
-		move = "Move",
-		fight = "Fight",
-		attack = "Attack",
-		patrol = "Patrol",
-		guard = "Guard",
-		stop = "Stop",
-		fire = FIRE[api.state.fireState or -1] or "Fire state",
-		movestate = MOVE[api.state.moveState or -1] or "Move state",
-		["repeat"] = if anyRepeat then "Repeat on" else "Repeat off",
+		fire = if fire then fire[1] else "Fire state",
+		movestate = if move then move[1] else "Move state",
+		["repeat"] = "Repeat",
 		toggle = if anyOn then "On" else "Off",
 		cancel = "Cancel",
+		stop = "Stop",
+		attack = "Attack",
+		move = "Move",
+		patrol = "Patrol",
+		fight = "Fight",
+		guard = "Guard",
 		alert = "Last alert",
 	}
+	local stateColor = {
+		fire = if fire then fire[2] else Color3.fromRGB(110, 110, 110),
+		movestate = if move then move[2] else Color3.fromRGB(110, 110, 110),
+		["repeat"] = if anyRepeat then GREEN else RED,
+		toggle = if anyOn then GREEN else RED,
+	}
+	local mouse = game:GetService("UserInputService"):GetMouseLocation()
+	local inset = game:GetService("GuiService"):GetGuiInset()
 	for name, b in ui.buttons do
-		b.Text = `{label[name]}\n[{KEYS[name]}]`
-		local active = api.state.commandMode == name or (name == "toggle" and anyOn) or (name == "repeat" and anyRepeat)
-		b.BackgroundColor3 = if active then ON else OFF
-		b.AutoButtonColor = true
+		-- the hotkey while hovered, else the label
+		local p, s = b.AbsolutePosition, b.AbsoluteSize
+		local over = mouse.X >= p.X and mouse.X <= p.X + s.X and mouse.Y - inset.Y >= p.Y and mouse.Y - inset.Y <= p.Y + s.Y
+		b.Text = if over then `{label[name]} [{KEYS[name]}]` else label[name]
+		b.BackgroundColor3 = if api.state.commandMode == name then ACTIVE else BTN
+		local bar = b:FindFirstChild("State") :: Frame?
+		if bar then
+			bar.BackgroundColor3 = stateColor[name]
+		end
 	end
 	ui.buttons["repeat"].TextTransparency = if #factories > 0 then 0 else 0.5
+	ui.buttons.toggle.TextTransparency = if switchable then 0 else 0.5
 end
 
 return CommandCard

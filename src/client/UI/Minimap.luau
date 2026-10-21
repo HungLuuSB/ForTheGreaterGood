@@ -13,7 +13,7 @@ local TeamColors = require("../Render/TeamColors")
 
 local MinimapUI = {}
 
-local SIZE = 200 -- pixels
+local SIZE = 280 -- pixels: top left, BAR layout (C-71)
 
 export type UI = {
 	gui: ScreenGui,
@@ -35,8 +35,8 @@ function MinimapUI.new(api: Api.Api): UI
 	gui.DisplayOrder = 5
 	local map = Instance.new("Frame")
 	map.Name = "Map"
-	map.AnchorPoint = Vector2.new(0, 1)
-	map.Position = UDim2.new(0, 10, 1, -10)
+	map.AnchorPoint = Vector2.new(0, 0)
+	map.Position = UDim2.fromOffset(0, 0)
 	map.Size = UDim2.fromOffset(SIZE, SIZE)
 	map.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
 	map.BorderSizePixel = 0
@@ -56,7 +56,7 @@ function MinimapUI.new(api: Api.Api): UI
 	label.TextSize = 12
 	label.TextColor3 = Color3.fromRGB(230, 200, 90)
 	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Text = "PLACEHOLDER MINIMAP"
+	label.Text = ""
 	label.Parent = map
 	local function layer(name: string, z: number): Frame
 		local f = Instance.new("Frame")
