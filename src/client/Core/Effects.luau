@@ -51,6 +51,9 @@ Effects.WARNING_LINGER = 4 -- seconds a launch warning stays after its missile i
 Effects.DEATH_SECONDS = 0.9
 Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
 Effects.MAX_MARKS = 40
+-- an impact this close above water at least this deep is a splash (C-82)
+Effects.SPLASH_ABOVE = 4
+Effects.SPLASH_DEPTH = 0.5
 
 local DT = 1 / 15
 local EK = Schema.EventKind
@@ -95,7 +98,7 @@ export type Warning = { projId: number, x: number, y: number, z: number, born: n
 -- height under it (air bursts sit well above it); `dx, dy, dz`: the
 -- direction it faces (a muzzle's shot, a launch's flight), when known
 -- (C-47); `tx, ty, tz`: where flares head, or the missile a laser hits (C-48).
-export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number? }
+export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, water: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number? }
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
@@ -267,6 +270,20 @@ local function cellHeights(world: World.World, x: number, z: number): (number, n
 	local cx, cz = g:cellAt(x, z)
 	local i = math.clamp(cz, 0, g.cellsZ - 1) * g.cellsX + math.clamp(cx, 0, g.cellsX - 1)
 	return Layers.getHeight(layers, i), Layers.getWater(layers, i)
+end
+
+-- Is a known unit's hull under (x, z)? Within half its footprint (cells of
+-- 8 studs) plus a margin.
+function Effects.unitAt(world: World.World, x: number, z: number): boolean
+	for _, u in world.units do
+		local def = World.def(world, u)
+		local reach = ((def and def.footprint or 1) * 4 + 3)
+		local ux, uz = u.rx or u.x, u.rz or u.z
+		if (ux - x) ^ 2 + (uz - z) ^ 2 <= reach * reach then
+			return true
+		end
+	end
+	return false
 end
 
 -- The server's aim from a target's state: (x, z), altitude, heading and
@@ -657,6 +674,12 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			then burst(fx, now, x, y, z, (p :: Proj).weapon.aoe or 150, "nuke", Effects.NUKE_SECONDS)
 			else burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
 		b.ground = World.groundY(world, x, z)
+		-- a shell, bomb or torpedo ending at the water surface splashes (C-82),
+		-- unless it hit a ship there (IMPACT doesn't say: a unit under the point)
+		local floor, water = cellHeights(world, x, z)
+		if not nuke and water > Effects.SPLASH_DEPTH and y <= floor + water + Effects.SPLASH_ABOVE and not Effects.unitAt(world, x, z) then
+			b.water = floor + water
+		end
 		if p then
 			facing(b, p.vx, p.vy, p.vz)
 		end

@@ -52,6 +52,7 @@ local UnitPanel = require("./UI/UnitPanel")
 local LobbyUI = require("./UI/Lobby")
 local ReplayBar = require("./UI/ReplayBar")
 local SettingsMenu = require("./UI/SettingsMenu")
+local Crater = require("./Render/Crater")
 local ReplayPlayer = require("./Core/ReplayPlayer")
 local PlayerReplay = require("@shared/Net/PlayerReplay")
 local AttackPreviewRender = require("./Render/AttackPreview")
@@ -478,6 +479,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		seenJoins = world.joins
 		UnitRenderer.clear(renderer)
 		Effects.clear(fx)
+		Crater.clear() -- the last match's nuke craters (C-82)
 		clock = Interp.newClock()
 		camState.lastRect = nil -- resend the camera so the tactical tier is rebuilt
 		if world.mapVersion ~= seenMap then

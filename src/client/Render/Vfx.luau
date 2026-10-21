@@ -191,8 +191,19 @@ local NUKE: { Spec } = {
 	{ name = "Sparks", texture = TEX.sparks, life = { 1.5, 3 }, speed = { 80, 180 }, size = { { 0, 4 }, { 1, 0.5 } }, transparency = { { 0, 0 }, { 1, 1 } }, color = colors({ { 0, YELLOW }, { 1, ORANGE } }), count = 40, light = 1, drag = 1, accel = Vector3.new(0, -60, 0) },
 }
 
+-- A shell, bomb or torpedo meeting the water (C-82): a white column that
+-- falls back, spray, a drifting mist and a foam ring along the surface.
+local FOAM = Color3.fromRGB(235, 245, 250)
+local SPRAY = Color3.fromRGB(200, 225, 240)
+local SPLASH: { Spec } = {
+	{ name = "Column", texture = TEX.smoke, life = { 0.8, 1.3 }, speed = { 22, 42 }, size = { { 0, 1.6 }, { 0.5, 3.5 }, { 1, 5 } }, transparency = { { 0, 0.1 }, { 0.7, 0.4 }, { 1, 1 } }, color = colors({ { 0, FOAM }, { 1, SPRAY } }), count = 14, drag = 1, spread = Vector2.new(10, 10), direction = Enum.NormalId.Top, accel = Vector3.new(0, -45, 0), rotSpeed = 40 },
+	{ name = "Spray", texture = TEX.square, life = { 0.6, 1.1 }, speed = { 14, 34 }, size = { { 0, 0.45 }, { 1, 0.2 } }, transparency = { { 0, 0 }, { 0.8, 0.2 }, { 1, 1 } }, color = colors({ { 0, FOAM }, { 1, SPRAY } }), count = 16, spread = Vector2.new(40, 40), direction = Enum.NormalId.Top, accel = Vector3.new(0, -60, 0), rotSpeed = 200 },
+	{ name = "Mist", texture = TEX.smoke, life = { 1.6, 2.6 }, speed = { 1, 4 }, size = { { 0, 3 }, { 1, 8 } }, transparency = { { 0, 0.5 }, { 1, 1 } }, color = colors({ { 0, FOAM }, { 1, FOAM } }), count = 5, drag = 1.5, accel = Vector3.new(0, 1.5, 0) },
+	{ name = "Foam", texture = TEX.smoke, life = { 1.2, 2 }, speed = { 8, 14 }, size = { { 0, 1.5 }, { 1, 4.5 } }, transparency = { { 0, 0.35 }, { 1, 1 } }, color = colors({ { 0, FOAM }, { 1, FOAM } }), count = 8, drag = 4, spread = Vector2.new(10, 10), direction = Enum.NormalId.Front, ground = true, ring = true },
+}
+
 local KINDS: { [string]: Kind } = {
-	nuke = { specs = NUKE, cap = 4, life = longest(NUKE), light = { color = Color3.fromRGB(255, 230, 190), range = 60, brightness = 12, seconds = 1.5 }, flash = { color = Color3.new(1, 1, 0.9), size = 120, seconds = 0.6 }, ring = true, ringSize = 450, ringSeconds = 1.6, scorch = true, scorchSize = 240 },
+	nuke = { specs = NUKE, cap = 4, life = longest(NUKE), light = { color = Color3.fromRGB(255, 230, 190), range = 60, brightness = 12, seconds = 1.5 }, flash = { color = Color3.new(1, 1, 0.9), size = 120, seconds = 0.6 }, ring = true, ringSize = 450, ringSeconds = 1.6 }, -- no scorch decal: a ground burst digs a crater (Render/Crater, C-82)
 	impact = { specs = EXPLOSION, cap = 32, life = longest(EXPLOSION), light = { color = ORANGE, range = 12, brightness = 3, seconds = 0.25 }, flash = { color = YELLOW, size = 6, seconds = 0.12 }, ring = true, scorch = true },
 	death = { specs = combine(EXPLOSION, DEATH_EXTRA), cap = 16, life = longest(combine(EXPLOSION, DEATH_EXTRA)), light = { color = ORANGE, range = 16, brightness = 3.5, seconds = 0.35 }, flash = { color = YELLOW, size = 8, seconds = 0.15 }, ring = true, scorch = true },
 	muzzle = { specs = MUZZLE, cap = 32, life = longest(MUZZLE), light = { color = YELLOW, range = 7, brightness = 2, seconds = 0.06 } },
@@ -202,6 +213,7 @@ local KINDS: { [string]: Kind } = {
 	flare = { specs = DECOY, cap = 6, life = 3, flares = 4 },
 	chaff = { specs = CHAFF, cap = 6, life = longest(CHAFF) },
 	dircm = { specs = JAM, cap = 6, life = longest(JAM), laser = true },
+	splash = { specs = SPLASH, cap = 24, life = longest(SPLASH), flash = { color = FOAM, size = 3, seconds = 0.08 } },
 }
 
 type Emitter = { spec: Spec, emitter: ParticleEmitter, scale: number }
