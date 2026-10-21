@@ -23,7 +23,7 @@ local Sim = require("../src/server/Sim/Sim")
 local Skirmish = require("../src/server/Sim/AI/Skirmish")
 local Replay = require("../src/server/Sim/Replay")
 
-local SEED = tonumber(process.args[1]) or 11 -- the longest of seeds 1–13 with the S-31..S-39 AI and combat (32.6 min; none reaches 40 now)
+local SEED = tonumber(process.args[1]) or 4 -- the longest of seeds 1–16 with the S-57 AI (25.5 min; none reaches 40; was 11, 32.6 min, before S-57)
 local MINUTES = tonumber(process.args[2]) or 40
 local TICKS = MINUTES * 60 * 15
 local BUDGET_MS = 1000 / 15
