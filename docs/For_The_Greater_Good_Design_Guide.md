@@ -359,7 +359,7 @@ return {
 	manualFire = false,    -- never picks a target: one shot per attack-ground order, any distance
 	apex       = nil,      -- BALLISTIC: lofted to this many studs above the launch whatever the
 	                       -- distance (with `gravity`); the horizontal speed follows from the distance
-	intercepts = nil,      -- vertical-launch HOMING: { chance = 0.5 } targets enemy strategic missiles
+	intercepts = nil,      -- vertical-launch HOMING: { chance = 0.2 } targets enemy strategic missiles
 	                       -- first; a proximity burst destroys one with `chance`
 
 	-- visuals
@@ -995,7 +995,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - A T3 silo per faction (13.5) builds warheads into its stockpile (8.6) and launches one only on an **attack-ground order**, anywhere on the map: one launch per order, then the order is done (STOP or a new order cancels it). Fire states don't apply. No turret.
 - **Flight:** lofted ballistic (`apex` 300 studs, gravity 15; S-49: low enough to stay on screen at the closest zoom before icons): ~12.7 s in the air whatever the distance (2·√(2·apex / gravity); 1,400 studs → ~110 studs/s horizontally), landing on the ordered spot. It passes over units; only the ground stops it.
 - **Blast:** `aoe` 150, `edgeEffectiveness` 0.3, 8,000–10,000 damage at the center: it hurts every side, the launcher's own units included (BAR).
-- **Interception:** radar SAM sites and mobile radar SAMs (`intercepts = { chance = 0.5 }`) fire interceptors from their stockpiles at an enemy strategic missile their team detects within their range, before any aircraft (10.2). An interceptor navigates against the missile's position and velocity and bursts at its closest approach within its fuse (`aoe`, 20 studs); the burst destroys the missile with probability `chance` (sim Prng). A destroyed missile doesn't detonate. Several sites, or full stockpiles, are needed against more than one missile; empty stockpiles stop nothing.
+- **Interception:** radar SAM sites and mobile radar SAMs (`intercepts = { chance = 0.2 }`, S-50) fire interceptors from their stockpiles at an enemy strategic missile their team detects within their range, before any aircraft (10.2). An interceptor navigates against the missile's position and velocity and bursts at its closest approach within its fuse (`aoe`, 20 studs); the burst destroys the missile with probability `chance` (sim Prng). A destroyed missile doesn't detonate. Several sites, or full stockpiles, are needed against more than one missile; empty stockpiles stop nothing.
 - **Wire** (protocol 16, 7.3): every player gets LAUNCH_WARNING at a launch and the missile itself wherever it flies; INTERCEPTOR records name the missile they chase; INTERCEPTED replaces the IMPACT of a destroyed missile.
 
 ### 10.6 Damage
