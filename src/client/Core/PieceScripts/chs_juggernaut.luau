@@ -1,60 +1,36 @@
 --!strict
--- Juggernaut (guide 14.4, C-30): the torso turns to the target, both gun
--- arms rise from hanging down to the firing pitch, recoil in turn when it
--- fires, and come down again RESTORE_DELAY seconds after the weapon stops
--- aiming. AimWeapon comes every PieceAnim.REAIM seconds while the weapon
--- is engaged, and each call cancels the pending restore (SIG_AIM).
---
--- Timing: with `turret.restPitch` in the weapon def (the server rests the
--- arms there and raises them at its pitchRate; request 8), the arms follow
--- the replicated pitch at the server's own rates and the restore uses
--- `turret.restoreDelay`, so the client shows exactly the server's timing.
--- Until then the arms hang at REST_PITCH and rise at ARM_SPEED (visual).
+-- Juggernaut (guide 14.4, C-30, C-33): the torso turns to the target and
+-- both gun arms follow the server's pitch, and the arms recoil in turn
+-- when it fires. The timing is the server's (S-20, Shared/Combat/Aim): the
+-- weapon rests with the arms hanging at `turret.restPitch`, raises them at
+-- its pitchRate before it can fire, holds them `turret.restoreDelay`
+-- seconds after losing its target, then lowers them. The client turns the
+-- pieces at FOLLOW × those rates toward each replicated angle, so they stay
+-- within a tick of the server and never show a shot before the arms are up.
 
 local Jug = {}
 
-Jug.REST_PITCH = -65 -- degrees: arms hanging down
-Jug.ARM_SPEED = 120 -- degrees per second (until the server raises them itself)
-Jug.RESTORE_DELAY = 3 -- seconds
 Jug.FOLLOW = 1.25
 Jug.RECOIL = 0.8 -- studs
-local SIG_AIM = 1
+Jug.DEFAULT_REST = -65 -- degrees, if the weapon def has no restPitch
 
-local function params(u: any, slot: number): (number, number, number, number)
+local function rates(u: any, slot: number): (number, number, number)
 	local weapon = u:weapon(slot)
 	local t = (weapon and weapon.turret) or {}
-	local serverRest = t.restPitch ~= nil
-	local yawSpeed = (t.yawRate or 90) * Jug.FOLLOW
-	local armSpeed = if serverRest then (t.pitchRate or 60) * Jug.FOLLOW else Jug.ARM_SPEED
-	return yawSpeed, armSpeed, t.restPitch or Jug.REST_PITCH, t.restoreDelay or Jug.RESTORE_DELAY
-end
-
-local function restore(u: any, slot: number)
-	local yawSpeed, armSpeed, rest, delay = params(u, slot)
-	u:Sleep(delay)
-	u:Turn("turret", "y", 0, yawSpeed)
-	u:Turn("armL", "x", rest, armSpeed)
-	u:Turn("armR", "x", rest, armSpeed)
+	return (t.yawRate or 90) * Jug.FOLLOW, (t.pitchRate or 60) * Jug.FOLLOW, t.restPitch or Jug.DEFAULT_REST
 end
 
 function Jug.Create(u: any)
-	local _, _, rest = params(u, 1)
+	local _, _, rest = rates(u, 1)
 	u:Turn("armL", "x", rest)
 	u:Turn("armR", "x", rest)
 end
 
-function Jug.AimWeapon(u: any, slot: number, yaw: number, pitch: number, active: boolean)
-	if not active then
-		return -- not engaged: the restore thread lowers the arms after its delay
-	end
-	u:Signal(SIG_AIM) -- cancels the previous aim and its pending restore
-	u:SetSignalMask(SIG_AIM)
-	local yawSpeed, armSpeed = params(u, slot)
+function Jug.AimWeapon(u: any, slot: number, yaw: number, pitch: number)
+	local yawSpeed, armSpeed = rates(u, slot)
 	u:Turn("turret", "y", yaw, yawSpeed)
 	u:Turn("armL", "x", pitch, armSpeed)
 	u:Turn("armR", "x", pitch, armSpeed)
-	u:WaitForTurn("armL", "x")
-	u:StartThread(restore, slot) -- inherits SIG_AIM: the next aim cancels it
 end
 
 function Jug.FireWeapon(u: any, _slot: number)

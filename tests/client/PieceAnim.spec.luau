@@ -15,6 +15,7 @@ local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
 local ServerWorld = require("../../src/server/Sim/World")
+local Spawn = require("../../src/server/Sim/Spawn")
 local Defs = require("@shared/Defs/Defs")
 local Schema = require("@shared/Net/Schema")
 
@@ -158,59 +159,87 @@ return function(t: any)
 		t.expect(worst <= 1, "never more than a tick behind the server")
 	end)
 
-	t.test("Juggernaut: arms rise to aim, recoil in turn, and come down after the restore delay", function()
-		local def = defs.units.chs_juggernaut
-		local s = PieceAnim.new(defs.weaponByIndex)
-		local world: any = World.new(defs)
-		world.units[5] = { id = 5, tier = "tactical", team = 1, x = 0, z = 0, alt = 0, heading = 0, state = 0, weapon = 0, aim = {} }
-		local u = PieceAnim.add(s, 5, def, Registry.forDef(def))
-		t.expect(Registry.forDef(def) == Jug and Registry.forDef(defs.units.chs_ravager) == Default, "the registry picks the scripts")
-		PieceAnim.step(s, 0)
-		t.expect(near(rotOf(s, 5, "armL", 1), math.rad(Jug.REST_PITCH)), "arms start hanging down")
-		-- engaged: aim at yaw 40°, pitch 3°
-		local wu = world.units[5]
-		wu.aim[1] = { yaw = math.rad(40), pitch = math.rad(3) }
-		wu.weapon = Schema.packWeaponStates({ Schema.WeaponState.AIMING })
-		local raisedAt
-		for frame = 1, 120 do
-			PieceAnim.drive(s, world, {})
-			PieceAnim.step(s, 1 / 60)
-			if raisedAt == nil and near(rotOf(s, 5, "armL", 1), math.rad(3), 1e-6) then
-				raisedAt = frame / 60
+	t.test("Juggernaut: the arms follow the server's raise, hold and lowering (S-20), and recoil in turn", function()
+		local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:48", scenario = "empty" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 47, 47)))
+		local jug = Spawn.unit(sim, "chs_juggernaut", 1, -60, 0, math.pi / 2)
+		local s = PieceAnim.new(sim.defs.weaponByIndex)
+		local def = sim.defs.units.chs_juggernaut
+		local turret = sim.defs.weaponByIndex[def.weapons[1].weaponIndex].turret
+		t.expect(Registry.forDef(def) == Jug and Registry.forDef(sim.defs.units.chs_ravager) == Default, "the registry picks the scripts")
+		local SUBS = 4
+		local worst, compared, shots, upAtShot = 0, 0, 0, true
+		local enemy
+		local restSeen, raisedSeen, loweredAgain = false, false, false
+		for tick = 1, 15 * 16 do
+			if tick == 30 then
+				enemy = Spawn.unit(sim, "chs_ravager", 2, 80, 0, -math.pi / 2) -- in range: the arms must rise first
+			end
+			if tick == 15 * 6 and enemy and sim.world.slot[enemy] then
+				-- the target leaves sight: the server holds the aim, then lowers it
+				sim.world.posX[enemy] = 2000
+			end
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for _, id in world.entered do
+				if id == jug then
+					PieceAnim.add(s, id, def, Registry.forDef(def))
+				end
+			end
+			table.clear(world.entered)
+			table.clear(world.died)
+			local shooting = {}
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == jug then
+					table.insert(shooting, { jug, 1 })
+					shots += 1
+				end
+			end
+			for _ = 1, SUBS do
+				PieceAnim.drive(s, world, shooting)
+				table.clear(shooting)
+				PieceAnim.step(s, DT / SUBS)
+			end
+			if s.units[jug] then
+				local server = sim.world.wPitch[ServerWorld.slotKey(jug, 1)]
+				local drawn = rotOf(s, jug, "armL", 1)
+				local allowed = math.rad(turret.pitchRate) * DT + 2 * math.pi / 256
+				worst = math.max(worst, math.abs(server - drawn) / allowed)
+				compared += 1
+				if #sim.combat.events > 0 then
+					for _, e in sim.combat.events do
+						if e.kind == "SPAWN_PROJ" and e.unit == jug and drawn < math.rad(turret.minPitch + 30) then
+							upAtShot = false
+						end
+					end
+				end
+				if near(drawn, math.rad(turret.restPitch), 2 * math.pi / 255) then -- within the wire's angle step
+					if raisedSeen then
+						loweredAgain = true
+					else
+						restSeen = true
+					end
+				elseif drawn > math.rad(-10) then
+					raisedSeen = true
+				end
 			end
 		end
-		local raise = (3 - Jug.REST_PITCH) / Jug.ARM_SPEED
-		t.expect(raisedAt ~= nil and math.abs(raisedAt - raise) <= 1 / 60 + 1e-6, `arms up after {raisedAt} s (expected {raise})`)
-		t.expect(near(rotOf(s, 5, "turret", 2), math.rad(40), 1e-6), "torso on the target")
-		-- two shots: one arm each
-		PieceAnim.drive(s, world, { { 5, 1 } })
+		print(string.format("    juggernaut: %d samples, arms worst %.2f of a tick's travel off the server, %d shots", compared, worst, shots))
+		t.expect(restSeen and raisedSeen and loweredAgain, "arms down, then up, then down again")
+		t.expect(shots > 0 and upAtShot, "it fired, and only with its arms up")
+		t.expect(worst <= 1, "the arms never more than a tick off the server's pitch")
+		local u = s.units[jug]
+		PieceAnim.drive(s, world, { { jug, 1 } })
 		PieceAnim.step(s, 1 / 60)
-		t.expect(s.units[5].pieces.armL.pos[3] > 0 and s.units[5].pieces.armR.pos[3] == 0, "first shot: left arm recoils")
+		local first = if u.pieces.armL.pos[3] > 0 then "armL" else "armR"
 		for _ = 1, 60 do
 			PieceAnim.step(s, 1 / 60)
 		end
-		PieceAnim.drive(s, world, { { 5, 1 } })
+		PieceAnim.drive(s, world, { { jug, 1 } })
 		PieceAnim.step(s, 1 / 60)
-		t.expect(s.units[5].pieces.armR.pos[3] > 0, "second shot: right arm")
-		-- stays up while engaged (AimWeapon every REAIM s cancels the restore)
-		for _ = 1, 60 * 5 do
-			PieceAnim.drive(s, world, {})
-			PieceAnim.step(s, 1 / 60)
-		end
-		t.expect(near(rotOf(s, 5, "armL", 1), math.rad(3)), "still up after 5 s engaged")
-		-- target gone: the server's turret goes back, the arms wait, then come down
-		wu.weapon = 0
-		wu.aim[1] = { yaw = 0, pitch = 0 }
-		local loweredAt, startedAt = nil, s.now
-		for _ = 1, 60 * 6 do
-			PieceAnim.drive(s, world, {})
-			PieceAnim.step(s, 1 / 60)
-			if loweredAt == nil and rotOf(s, 5, "armL", 1) < math.rad(3) - 1e-6 then
-				loweredAt = s.now - startedAt
-			end
-		end
-		t.expect(loweredAt ~= nil and loweredAt >= Jug.RESTORE_DELAY - 0.5 and loweredAt <= Jug.RESTORE_DELAY + 0.1, `arms start down ~{Jug.RESTORE_DELAY} s after the last aim ({loweredAt})`)
-		t.expect(near(rotOf(s, 5, "armL", 1), math.rad(Jug.REST_PITCH)) and near(rotOf(s, 5, "turret", 2), 0), "arms down, torso forward")
-		local _ = u
+		local other = if first == "armL" then "armR" else "armL"
+		t.expect(u.pieces[other].pos[3] > 0, "the next shot recoils the other arm")
 	end)
 end

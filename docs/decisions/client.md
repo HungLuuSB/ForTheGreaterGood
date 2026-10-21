@@ -267,3 +267,9 @@ Radar and sonar contacts are pulsing discs on the ground or water (`Render/Conta
 
 **Known gaps:** own units never seen in the camera use their icon's sample def (sight differs), and allied players' units aren't known as allies yet: request 9 asks for the team's sight map on the wire. The light grid shows as a soft checker; plates show faint seams (placeholders under "Needs my review").
 
+### C-33 — The Juggernaut follows the server's arm timing (2026-10-21, after S-20)
+
+**Decision:** with request 8 done (S-20: `chs_juggernaut_cannon` rests at -65°, raises at 80°/s, holds 3 s after losing its target; `armL` / `armR` in the def's pieces), the Juggernaut's script no longer times anything itself: the torso and both arms turn toward each replicated yaw and pitch at 1.25 × the weapon's rates, from the rest pitch at Create, and recoil in turn on each shot. The blockout drops its `visualPieces` (the arms are def pieces now); `visualPieces` stays for generic helicopter rotors.
+
+**Why:** C-30's visual timing could show a shot before the arms were up and lower them up to 0.5 s early. `PieceAnim.spec` now runs the real sim: the arms rest, rise when a Ravager comes in range, hold, and come down after it is gone, never more than 0.10 of a tick's travel off the server's pitch, and every shot leaves with the arms up.
+
