@@ -12,7 +12,7 @@
 -- While placing a structure (build ghost, guide 15.6):
 --   left click / drag        place / a row (Shift: queue it and keep placing)
 --   R                        rotate
---   right click, Esc         cancel
+--   right click              cancel (Esc is Roblox's menu key: it never reaches the game)
 --   B                        placeholder build menu: the selected builder's next build option
 -- Bindings are first guesses: listed under "Needs my review".
 
@@ -133,7 +133,7 @@ function Controls.bind(api: Api.Api): Controls
 			self.placeFrom = Controls.groundAt(cam(), mouse.X, mouse.Y)
 			leftStart, boxing = mouse, false
 			return
-		elseif placing and (input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.Escape) then
+		elseif placing and input.UserInputType == Enum.UserInputType.MouseButton2 then
 			api.actions.cancelPlacement()
 			return
 		elseif placing and input.KeyCode == Controls.ROTATE_KEY then
