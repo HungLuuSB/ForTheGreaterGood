@@ -69,6 +69,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b2d2095` (merge of `main` with S-21, protocol 9, into this branch; clean, test_client, test and build pass).
 - Ready to merge: `ec6488d` (Playtest profiles (juggernaut, air, naval, radar)).
 - Ready to merge: `7f38c53` (global sim speed for debugging, C-35; C-26 timing fix).
+- Ready to merge: `89740cf` (smooth missile paths, C-36).
 
 ## Tasks
 
