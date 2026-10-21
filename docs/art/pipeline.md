@@ -37,6 +37,8 @@ assets/models/
 2. **Look at the previews** (`export/preview_*.png`) before importing.
 3. **Import (your clicks)** in "FTGG Art": Import 3D → `export/<unit>.fbx`. Defaults are fine (Upload to Roblox, Import Only as a Model, Add to Workspace, Set Pivot to Scene Origin). The importer uploads the meshes and the four textures and builds the SurfaceAppearance itself (AlphaMode Overlay).
    - Known import behavior (Blender FBX → Roblox): **×100 scale** (read as centimeters) and **turned 180° about Y**. The rig step undoes both; nothing to set in the importer.
+   - **Grey model after import:** the importer also attaches a `TexturePack` that Studio generates from the four maps. If one map fails to download during that (the Lancer's normal map got an HTTP 502), the pack stays broken for the session and every SurfaceAppearance using those maps draws grey, though the maps load (a Decal shows them). Scripts can't clear `TexturePack` (RobloxScript capability), and changing a map didn't recover it; **restarting Studio did**. Save the place first (save, not publish).
+   - Record the uploaded IDs in `<unit>/roblox_assets.json` (meshes, the four maps, the model): the rigged model can be rebuilt from them without importing again.
 4. **Rig** (`rig_model.luau` through `execute_luau`, with the unit's `rig.json`): `normalize(src, rig, 0.01, true)`, then `check` (sizes within 5 %, piece offsets within 0.05 studs) and `rig`: pieces into a Model named after the unit, pivot offsets cleared, `base` anchored and primary, one `Motor6D` per piece at the rig.json pivots, attachments (`muzzle`), collisions off, `TeamColor` tags, `RenderFidelity = Automatic`, `RootOffset` / `FootprintStuds` / `Triangles` attributes. Saved as `ReplicatedStorage.Models.<unit>`; the client uses it over the blockout (`Render/Models.luau`).
 5. **Test** in "FTGG Art" on the Coastline terrain next to the part-built blockout: pitch 35°, 55°, 80° at close (40), normal (220) and far (450) zoom; frame time with 100 units (below).
 6. **Commit** the scripts and `export/` (except previews); add the uploaded asset IDs to `rig.json`'s notes in the progress file.
@@ -55,21 +57,22 @@ Getting the models into the game place "For The Greater Good" is the client sess
 
 ### 100 units, render CPU time per frame
 
-"FTGG Art", Edit mode, Coastline-sized flat area, 100 Lancers in a 10 × 10 grid 12 studs apart, game camera pitch 55°, two runs of 6–8 s each (the second in reverse order). Studio reports no GPU time, and its frame rate is throttled to about 15 fps when its window isn't focused, so frame time itself says nothing; `Stats.RenderCPUFrameTime` is the render thread's CPU work per frame either way.
+"FTGG Art", Edit mode, flat area, 100 Lancers in a 10 × 10 grid 12 studs apart, game camera pitch 55°, three runs of 6–8 s per case (run 2 in reverse order; run 3 after the Studio restart, with the textures drawing). Studio reports no GPU time, and its frame rate is throttled to about 15 fps when its window isn't focused, so frame time itself says nothing; `Stats.RenderCPUFrameTime` is the render thread's CPU work per frame either way.
 
-| Scene | Close (40 studs) run 1 / run 2 | Normal (220) run 1 / run 2 |
+| Scene | Close (40 studs), runs 1 / 2 / 3 | Normal (220), runs 1 / 2 / 3 |
 |---|---|---|
-| Empty | 4.1 / 3.3 ms | 4.3 / 3.3 ms |
-| 100 blockouts | 5.4 / 3.9 ms | 6.0 / 3.5 ms |
-| 100 meshed Lancers | 5.1 / 4.9 ms | 5.5 / 3.8 ms |
+| Empty | 4.1 / 3.3 / 4.0 ms | 4.3 / 3.3 / 4.3 ms |
+| 100 blockouts | 5.4 / 3.9 / 6.0 ms | 6.0 / 3.5 / 4.6 ms |
+| 100 meshed Lancers | 5.1 / 4.9 / 4.3 ms | 5.5 / 3.8 / 4.3 ms |
 
-- Over the empty scene, 100 meshed Lancers add about 0.5–1.6 ms of render CPU and 100 blockouts about 0.3–1.6 ms: the same within the run-to-run noise (about 1 ms). Three MeshParts per unit cost no more CPU than thirteen Parts.
+- Over the empty scene, 100 meshed Lancers add 0.0–1.6 ms of render CPU (0.0–0.3 ms with textures drawing) and 100 blockouts 0.3–1.9 ms: the meshes are no more expensive, and in run 3 cheaper. Three MeshParts per unit cost less CPU than thirteen Parts.
+- `GraphicsTexture` memory stayed at 24 MB through run 3: the Lancer's set was already loaded by the test pair, so the per-unit cost isn't isolated here (estimate below).
 - On the GPU, 100 meshed Lancers are about 300,000 triangles (blockouts about 40,000); automatic level of detail cuts that with distance. A desktop GPU doesn't notice either; phones are untested.
 - **Not measured yet:** GPU time and real frame rate. They need a focused Studio window or, better, a live server on a phone and a low-end PC.
 
 ### Texture memory across the roster
 
-One unit set is four 1024² maps. Roblox doesn't document how it stores them on the GPU: compressed (about 1 byte per pixel for color and normal, 0.5 for the grey maps, plus a third for mip levels) it's about **4 MB per unit**; uncompressed RGBA it's about **22 MB**. "FTGG Art" reports 27 MB of `GraphicsTexture` with the Lancer, the terrain and the review parts loaded.
+One unit set is four 1024² maps. Roblox doesn't document how it stores them on the GPU: compressed (about 1 byte per pixel for color and normal, 0.5 for the grey maps, plus a third for mip levels) it's about **4 MB per unit**; uncompressed RGBA it's about **22 MB**. "FTGG Art" reports 24–27 MB of `GraphicsTexture` with the Lancer, the terrain and the review parts loaded.
 
 | Textures | Per unit | 30 unit types in a match | Whole roster (about 120 defs) |
 |---|---|---|---|
