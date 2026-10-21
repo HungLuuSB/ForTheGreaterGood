@@ -15,7 +15,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | M-5 | A wedge's slope faces forward (−Z) unrotated: glacis, noses and turret fronts take no `rot` |
 | M-6 | Visual direction: modern armies; Order after Western equipment (grey or sand), Chaos after Eastern equipment (olive or gunmetal); `docs/art/style-guide.md` |
 | M-7 | Style candidates live in `Blockouts/Review/` with their own palettes, outside the Registry; the game keeps the registered blockouts until one is picked |
-| M-8 | Team color only on panels and stripes, including a roof panel so the team reads from above |
+| M-8 | ~~Team color only on panels and stripes, including a roof panel~~ (superseded by M-9: team color on top surfaces) |
+| M-9 | Near-future military look; Order = heavy defense and strategy (sand), Chaos = strength of armies (domed turrets, reactive armor, shorter and wider); team color on top surfaces; blockouts frozen as gameplay placeholders |
+| M-10 | Chaos base color: gunmetal recommended over olive after the Coastline test (pending your confirmation) |
+| M-11 | Mesh pipeline: scripted headless Blender, no AI base mesh for vehicles, one 1024 PBR set per unit, team color through the color map's alpha (proposal, pending approval) |
 
 ### M-1 — Review in "FTGG Art" (2026-10-21)
 
@@ -83,3 +86,23 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 **Decision:** team-colored parts are thin panels only: a stripe on each skirt, a panel on each turret side and a roof panel on the turret (like an air-recognition panel). Never a whole turret, hull or launcher.
 
 **Why:** M-6 (whole blue turrets looked like toys); the roof panel keeps the team readable from the RTS camera, which mostly sees roofs.
+
+### M-9 — Near-future look, faction roles, team color on top (2026-10-21)
+
+**Decision** (the user's): near-future military, realistic-leaning: real modern vehicles with restrained sci-fi accents (angular armor panels, sensor strips, active protection, rail-gun details); *World in Conflict* as a mood reference only. Order plays heavy defense and strategy: sleek, wedge-shaped, high-tech, fortress-like, sand. Chaos plays the strength of armies: rugged and aggressive, rounder or domed turrets, visible reactive-armor blocks, rear slat cages, shorter and wider. Team color goes on top surfaces (turret roof, hull top), since the camera looks down at 35°–80°. Phase 2 (meshes) starts now; the part-built blockouts stay as gameplay placeholders and aren't polished further. Guide 2.1 and [`../art/style-guide.md`](../art/style-guide.md) are updated.
+
+**Why:** the camera mostly sees roofs; the faction roles give each look a purpose.
+
+### M-10 — Chaos base color: gunmetal (2026-10-21, recommended)
+
+**Decision:** gunmetal (76, 80, 84) over olive (80, 86, 60), from a test on the Coastline terrain in "FTGG Art" (pitch 35°, 55°, 80°; 80, 220, 450 and 900 studs): olive disappears into the grass, which covers most of the map; gunmetal reads on grass and sand and apart from Order's sand.
+
+**Alternatives:** olive (realistic camouflage, poor readability in an RTS).
+
+### M-11 — Mesh pipeline (2026-10-21, proposal)
+
+**Decision:** units are modeled by Python scripts run in headless Blender 5.2 (no AI base mesh for vehicles), baked to one 1024 PBR texture set per unit, exported as FBX, imported with Studio's 3D Importer (or the Open Cloud Assets API with a key) and rigged in Studio by a script. Team color through the color map's alpha in `AlphaMode.Overlay`. Steps and the generator license survey: [`../art/pipeline.md`](../art/pipeline.md).
+
+**Alternatives:** AI-generated base meshes (license limits and cleanup cost, see pipeline.md); separate team-colored parts (more draw calls and pieces).
+
+**Why:** reproducible, reviewable as diffs, exact to the rig and the budget.
