@@ -569,7 +569,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 | `Strategic` | S → C | UnreliableRemoteEvent | Minimap data for all known units |
 | `Events` | S → C | RemoteEvent (reliable) | Enter/leave tactical tier, fire, impact, death, alerts |
 | `Projectiles` | S → C | UnreliableRemoteEvent | Homing-projectile corrections, ~3 Hz, in the player's view only (D102) |
-| `Eco` | S → C | RemoteEvent (reliable) | Own team's economy |
+| `Eco` | S → C | RemoteEvent (reliable) | Own team's economy (a spectator: every team's, S-21) |
 | `Snapshot` | S → C | RemoteEvent (reliable) | Full world for join/reconnect |
 
 **Rule of thumb:** continuous values where only the latest matters (position, heading) go **unreliable**. Discrete changes that must not be lost (died, started building, health changed) go **reliable**.
@@ -614,7 +614,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 - Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
 - Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
 - A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
-- **`Schema.PROTOCOL_VERSION`** (currently 7) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **`Schema.PROTOCOL_VERSION`** (currently 9) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
 - **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
@@ -725,7 +725,7 @@ projId u16, pos, vel          14 B
 - Implementation (S-2, `docs/contracts/net.md` section 10):
   - The Snapshot channel carries HELLO (client versions), REJECT (the server's versions and the reason) or WELCOME (full tick, player, team, ally team, map ID).
   - `NetOut.join` resets the player's replication state, so the next outbox is complete: a full strategic snapshot, ENTERs for the camera area, SPAWN_PROJ for projectiles in view, and the Eco record.
-  - The Eco channel then sends the team's account on economy ticks when it changes (35 B).
+  - The Eco channel then sends the team's account on economy ticks when it changes (36 B with its `team` field since protocol 9; spectators get every team's, S-21).
 
 ### 7.6 Bandwidth budget
 
