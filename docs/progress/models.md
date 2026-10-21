@@ -4,18 +4,37 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
+## Summary (overnight 2026-10-22)
+
+**All four tasks are done, committed, pushed and in the merge queue below.** Every commit touches only `src/shared/Defs/Blockouts/`, `assets/` and docs. Tests: `lune run test_client` 34 specs, 116 passed; `lune run build` 454 scripts compile, every require resolves.
+
+| Task | What | Commit | Status |
+|---|---|---|---|
+| 0 | BAR-style Lancer (M-15): rebuilt, imported, rigged as `ReplicatedStorage.ModelReview.ord_lancer_bar` with its emissive mask | `9dd4913` | **Waiting for your review.** Blender previews only: in Studio its textures haven't drawn yet (the texture-pack quirk, pipeline.md step 3); a save and Studio restart should fix it |
+| 1 | BAR-style Ravager: 3,696 triangles, gunmetal, Chaos light build (exposed wheels, slat cages, domed turret with reactive armor), orange emissive; exported up to the import step | `5d37c43` | **Waiting for your review** with the Lancer; the FBX is ready for your import |
+| 2 | Silo blockouts registered (Reckoning, Ragnarok); pending blockouts for the six new units (Warden packed and deployed, Minotaur, Locust, Cyclops, Barrier, Citadel), with request 3 to the sim session for their defs (M-17); blockout palettes follow the style guide (M-16) | `e78eec0` | Done; pending ones register when the defs exist |
+| 3 | 22 T1 structure blockouts, both factions, silhouette-tested | `afc6d73` | Done |
+| 4 | 28 T2 structure blockouts, both factions | `442394f` | Done |
+
+**Needs your review:**
+- The two BAR-style tanks (previews in `assets/models/*/export/preview_bar_*.png`); the style isn't rolled out further until you approve both.
+- Blockout palettes changed for every unit (M-16): Chaos lost its rust and dark-iron colors.
+- Minotaur and Cyclops read alike as silhouettes at distance; the two radar towers per tier share an outline (same role).
+- The new units' piece lists and footprints are my proposal (request 3).
+
+**Morning steps:** save "FTGG Art" and restart Studio (the BAR Lancer's textures), then import `assets/models/chs_ravager/export/chs_ravager.fbx` for the Ravager's Studio screenshots.
+
 ## Plan
 
-- **Phase 1:** hand-made blockouts for every T1 unit and structure of both factions (guide 13), one batch at a time, each reviewed from the game camera.
-  - [x] Batch 1: T1 ground units. Style rejected in review (M-2); new direction M-6.
-  - [x] Style review: Lancer and Ravager, two variants each under M-6 (section below). Lessons kept as style rules; Order takes variant B's sand.
-  - Blockouts are frozen as gameplay placeholders (M-9); the remaining batches are on hold.
-  - [ ] Batch 2: T1 air units
-  - [ ] Batch 3: T1 naval units
-  - [ ] Batch 4: T1 structures
+- **Phase 1:** hand-made blockouts (gameplay placeholders, M-9).
+  - [x] T1 ground units (batch 1, M-1..M-5; colors updated by M-16).
+  - [x] Silos and pending new units (overnight task 2).
+  - [x] T1 structures (overnight task 3), T2 structures (overnight task 4).
+  - [ ] T1/T2 air and naval units, T2 ground units: still generic.
 - **Phase 2** (started early, M-9): detailed meshes with PBR textures.
-  - [x] Style guide rewritten for the near-future look ([`../art/style-guide.md`](../art/style-guide.md)); Chaos base color test on Coastline: gunmetal recommended (M-10).
-  - [x] Lancer vertical slice (M-11..M-13), section below. **Waiting for your review.**
+  - [x] Style guide; Chaos base color: gunmetal (M-10). BAR model style (M-15).
+  - [x] Lancer vertical slice (M-11..M-13), review 2 (camouflage), review 3 (BAR style).
+  - [ ] Ravager in BAR style: built, waiting for import and review.
 
 ## Overnight 2026-10-22: T2 structures (task 4)
 
