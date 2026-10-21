@@ -273,3 +273,11 @@ Radar and sonar contacts are pulsing discs on the ground or water (`Render/Conta
 
 **Why:** C-30's visual timing could show a shot before the arms were up and lower them up to 0.5 s early. `PieceAnim.spec` now runs the real sim: the arms rest, rise when a Ravager comes in range, hold, and come down after it is gone, never more than 0.10 of a tick's travel off the server's pitch, and every shot leaves with the arms up.
 
+### C-34 — Deaths and wrecks (task 5, 2026-10-21)
+
+**Decision:** a dead unit's model stays where it was drawn until the render clock reaches its death (as before), then `Render/Deaths` plays the death that `Core/Deaths` plans from the DEATH event, following the server's wreck rule (a wreck only when overkill ≤ 50 % of max health): with a wreck, the hull shakes for 0.4 s (0.35 stud, easing out) and the wreck takes its place; without one, 1–3 jointed pieces (turret first) fly off on ballistic arcs (22–36 studs/s up, 6–16 out, spinning, gravity 60) for 1 s while the hull sinks under the death burst, and nothing is left. Velocities come from the shared Prng seeded by the unit ID (the same death plays the same way). Pieces move through their `Motor6D.Transform`, so the pooled model is reset and returned afterwards. Wrecks are darkened copies of the unit's own model (colors 75 % toward charred brown-black, CorrodedMetal, turrets and barrels knocked askew, tilted up to 4°, sunk 0.35 stud), pooled per def, hidden at strategic zoom, at most 300 (oldest goes). A guide 14.6 "shared generic wreck per size" isn't needed: every unit has a blockout to darken.
+
+**Why:** the user's task 5. `Deaths.spec`: the plan follows the wreck rule; flung pieces are real jointed pieces, each once, rising then falling; the same death plans the same; the shake eases out; all 15 deaths of a duel get the plan their DEATH event calls for (all small overkills: 15 wrecks). Studio: a fight on Coastline left a row of six Lancer wrecks and a Juggernaut wreck; a 99,999 hit on a Ravager (`FtggDebug` damage) flung its turret and barrel up to +7.2 studs and back down within 1 s, no wreck.
+
+**Known gap:** wrecks reach the client only in the DEATH events of its tactical tier; it never hears of a wreck made elsewhere (or before it joined) or of one reclaimed, so its wrecks stay until the match restarts: request 10.
+
