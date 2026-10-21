@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 17, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 18, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -486,7 +486,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 17, 1, 0 }, "unknown event kind 17") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16
+		expectRejected(t, Schema.decodeEvent, { 18, 1, 0 }, "unknown event kind 18") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind
 		local icpt: Schema.Event = { kind = EK.INTERCEPTOR, projId = 0x0102, weaponIndex = 3, cell = 0x0405, offX = 6, offZ = 7, y = 8, vx = 1, vy = -1, vz = 2, targetId = 0x0a0b }
@@ -501,6 +501,12 @@ return function(t: RunAll.Context)
 			expectRejected(t, Schema.decodeEvent, { kind, 0, 0, 0, 0, 0, 0, 0, 0 }, "projId 0 is reserved")
 		end
 		t.equal(buffer.len(encodeOne(Schema.encodeEvent, icpt)), Schema.EVENT_BYTES[EK.INTERCEPTOR])
+		-- protocol 18: a strategic missile with its goal (S-51)
+		local strat: Schema.Event = { kind = EK.SPAWN_STRATEGIC, projId = 0x0102, weaponIndex = 3, cell = 0x0405, offX = 6, offZ = 7, y = 8, vx = 0, vy = 1200, vz = 0, targetId = 0, goalCell = 0x0a0b, goalOffX = 12, goalOffZ = 13, goalY = -1 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, strat)), "11 02 01 03 00 05 04 06 07 08 00 00 00 b0 04 00 00 00 00 0b 0a 0c 0d ff ff")
+		t.equal(buffer.len(encodeOne(Schema.encodeEvent, strat)), Schema.EVENT_BYTES[EK.SPAWN_STRATEGIC])
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, strat), Schema.decodeEvent)[1], strat)
+		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, strat))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, icpt))
 		-- protocol 14: SHOT, a hidden shooter's hitscan shot (S-43)
 		local shot: Schema.Event = { kind = Schema.EventKind.SHOT, hit = true, fromCell = 0x0102, fromOffX = 3, fromOffZ = 4, fromY = -5, cell = 0x0607, offX = 8, offZ = 9, y = 10 }

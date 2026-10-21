@@ -34,6 +34,8 @@ local Air = require("../Air")
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
+local Guidance = require("@shared/Combat/Guidance")
+local Lofted = require("@shared/Combat/Lofted")
 local EW = require("../EW")
 local Sensors = require("../Sensors")
 local Stockpile = require("../Stockpile")
@@ -100,19 +102,19 @@ local function fire(
 		local yaw, p = worldYaw + yawErr, pitch + pitchErr
 		local ttl = 2 * weapon.range / math.max(speed, 1) + 1
 		local launchY = muzzleY
+		local goal: { number }? = nil
 		local vx, vy, vz = cos(p) * sin(yaw) * speed, sin(p) * speed, cos(p) * cos(yaw) * speed
 		if weapon.launch == "vertical" then
 			vx, vy, vz = 0, speed, 0 -- straight up; guidance pitches it over (S-42)
 		elseif weapon.apex then
-			-- lofted (S-48): up to `apex` studs above the launch, down on the
-			-- aimed spot; the horizontal speed follows from the distance
-			local g = weapon.gravity :: number
+			-- lofted (S-48, S-51): straight up; Projectiles flies it to the
+			-- ordered spot with Shared/Combat/Lofted
 			local tx, tz = w.posX[id] + sin(yaw) * dist, w.posZ[id] + cos(yaw) * dist
-			local drop = launchY - Combat.groundHeight(c, tx, tz)
-			local up = math.sqrt(2 * g * weapon.apex)
-			local t = (up + math.sqrt(math.max(up * up + 2 * g * drop, 0))) / g
-			vx, vy, vz = sin(yaw) * dist / t, up, cos(yaw) * dist / t
-			ttl = t + 2
+			goal = { tx, Combat.groundHeight(c, tx, tz), tz }
+			vx, vy, vz = 0, speed, 0
+			local climb = math.max(Guidance.climbLeft(weapon, launchY, Combat.groundHeight(c, w.posX[id], w.posZ[id])), 0)
+			local _, _, _, t = Lofted.velocity(w.posX[id], launchY + climb, w.posZ[id], goal[1], goal[2], goal[3], goal[2] + weapon.apex, weapon.gravity :: number)
+			ttl = climb / math.max(speed, 1) + t + 5 -- boost, the arc, and slack for the pitch-over
 		elseif wtype == "TORPEDO" then
 			p = 0
 			launchY = Combat.surfaceHeight(c, w.posX[id], w.posZ[id]) - Combat.TORPEDO_DEPTH
@@ -142,6 +144,7 @@ local function fire(
 		)
 		if projectile then
 			Combat.addEvent(c, { kind = "SPAWN_PROJ", tick = sim.tick, unit = id, other = projectile, slot = slot })
+			c.pGoal[projectile] = goal
 			if projTarget ~= 0 then
 				c.pTargetProj[projectile] = projTarget
 				c.pTargetSerial[projectile] = c.pSerial[projTarget]

@@ -326,6 +326,12 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 				local tp = c.pTargetProj[p]
 				local target = if known[tp] and Combat.isProjRef(c, tp, c.pTargetSerial[p]) then tp else 0
 				e = withPos({ kind = Schema.EventKind.INTERCEPTOR, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
+			elseif c.pGoal[p] then
+				-- a strategic missile and the spot it flies to (S-51)
+				local goal = c.pGoal[p]
+				e = withPos({ kind = Schema.EventKind.SPAWN_STRATEGIC, projId = p, weaponIndex = c.pWeapon[p], targetId = 0 }, g, c.px[p], c.py[p], c.pz[p])
+				e.goalCell, e.goalOffX, e.goalOffZ = g:encode(goal[1], goal[3])
+				e.goalY = Schema.toI16(goal[2])
 			else
 				local target = c.pTarget[p]
 				if target ~= 0 and (not World.isRef(sim.world, target, c.pTargetGen[p]) or levelFor(sim, ally, target) == L.HIDDEN) then

@@ -357,8 +357,9 @@ return {
 	strategic  = false,    -- interceptable; its blast hurts every side; passes over units in flight;
 	                       -- every player is warned of its launch and gets it on the wire
 	manualFire = false,    -- never picks a target: one shot per attack-ground order, any distance
-	apex       = nil,      -- BALLISTIC: lofted to this many studs above the launch whatever the
-	                       -- distance (with `gravity`); the horizontal speed follows from the distance
+	apex       = nil,      -- BALLISTIC, lofted (Shared/Combat/Lofted, S-51): straight up at projectileSpeed
+	                       -- to climbHeight, a pitch-over at turnRate, then the arc peaking `apex` studs
+	                       -- above the ordered spot and landing on it (with `gravity`)
 	intercepts = nil,      -- vertical-launch HOMING: { chance = 0.2 } targets enemy strategic missiles
 	                       -- first; a proximity burst destroys one with `chance`
 
@@ -623,7 +624,7 @@ for each player P:
     - SPAWN_PROJ: once a projectile is in the camera area (+2 cells), seen or not: at launch, or when it flies into the camera area. The homing target's ID is sent only if the ally team knows that unit.
     - DECOYED / LOST_LOCK: only for projectiles the client has, with the new velocity.
     - IMPACT: for projectiles the client has, or anywhere in the camera area. Projectiles at the end of their life burst with an IMPACT (no damage).
-    - Strategic missiles (`PROTOCOL_VERSION` 16, S-48): LAUNCH_WARNING (the missile's ID and launch point) to every player, camera or not; the missile's SPAWN_PROJ to every player wherever it flies; INTERCEPTOR instead of SPAWN_PROJ for an interceptor, naming the missile it chases; INTERCEPTED instead of IMPACT for a missile destroyed in flight (no detonation).
+    - Strategic missiles (`PROTOCOL_VERSION` 16, S-48): LAUNCH_WARNING (the missile's ID and launch point) to every player, camera or not; the missile itself to every player wherever it flies, as SPAWN_STRATEGIC (`PROTOCOL_VERSION` 18, S-51: SPAWN_PROJ plus the spot it flies to); INTERCEPTOR instead of SPAWN_PROJ for an interceptor, naming the missile it chases; INTERCEPTED instead of IMPACT for a missile destroyed in flight (no detonation).
     - The client steps its projectiles itself. Unguided ones match the server exactly; homing ones are approximate (the client doesn't know a radar contact's altitude or true position), and the IMPACT corrects them.
   - Sight and wrecks (`PROTOCOL_VERSION` 10, S-26), on the Events channel:
     - The ally team's **sight map** (sensor cells in LOS, allies' units included), so the client's fog is the server's: SIGHT_ROWS (a bitset of the whole map) after a join, then SIGHT_CELLS with the cells that changed, on sensor ticks. Spectators get none (no fog).
@@ -731,6 +732,7 @@ SIGHT_CELLS count u8, cell u16 × count (bit 15 = now in sight)          2 + 2 �
 SHOT        hit u8, start pos, end pos (v14: a hidden shooter's hitscan)  14 B
 INTERCEPTOR as SPAWN_PROJ; targetId = the strategic missile's projId (v16)     19 B
 LAUNCH_WARNING projId u16, pos (launch point; every player; v16)            9 B
+SPAWN_STRATEGIC as SPAWN_PROJ, then goal pos (v18: a strategic missile)     25 B
 INTERCEPTED projId u16, pos (a strategic missile destroyed; v16)            9 B
 pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
 vel = vx, vy, vz i16 (1/8 stud per second)
@@ -993,7 +995,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 ### 10.9 Strategic missiles (nuke silos, S-48)
 
 - A T3 silo per faction (13.5) builds warheads into its stockpile (8.6) and launches one only on an **attack-ground order**, anywhere on the map: one launch per order, then the order is done (STOP or a new order cancels it). Fire states don't apply. No turret.
-- **Flight:** lofted ballistic (`apex` 300 studs, gravity 15; S-49: low enough to stay on screen at the closest zoom before icons): ~12.7 s in the air whatever the distance (2·√(2·apex / gravity); 1,400 studs → ~110 studs/s horizontally), landing on the ordered spot. It passes over units; only the ground stops it.
+- **Flight** (`Shared/Combat/Lofted`, S-51; the user asked for a vertical climb, then the turn): straight up at `projectileSpeed` 150 to `climbHeight` 120 studs above the ground; a pitch-over toward the lofted arc at `turnRate` 90°/s (powered, no gravity; about half a second); then the arc (gravity 12) that peaks `apex` 300 studs above the ordered spot (S-49: low enough to stay on screen at the closest zoom before icons) and lands on it, re-solved every climbing tick so the landing is exact. ~12.7 s in the air whatever the distance (1,400 studs → ~120 studs/s horizontally). The phase follows from the missile's state (no horizontal velocity and below the climb height: boost; climbing: turn or arc; descending: ballistic), so clients step it with the same function. It passes over units; only the ground stops it.
 - **Blast:** `aoe` 150, `edgeEffectiveness` 0.3, 8,000–10,000 damage at the center: it hurts every side, the launcher's own units included (BAR).
 - **Interception:** radar SAM sites and mobile radar SAMs (`intercepts = { chance = 0.2 }`, S-50) fire interceptors from their stockpiles at an enemy strategic missile their team detects within their range, before any aircraft (10.2). An interceptor navigates against the missile's position and velocity and bursts at its closest approach within its fuse (`aoe`, 20 studs); the burst destroys the missile with probability `chance` (sim Prng). A destroyed missile doesn't detonate. Several sites, or full stockpiles, are needed against more than one missile; empty stockpiles stop nothing.
 - **Wire** (protocol 16, 7.3): every player gets LAUNCH_WARNING at a launch and the missile itself wherever it flies; INTERCEPTOR records name the missile they chase; INTERCEPTED replaces the IMPACT of a destroyed missile.
