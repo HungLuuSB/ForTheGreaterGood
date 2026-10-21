@@ -239,23 +239,22 @@ local PROFILES = {
 			chs_nuke = { reload = 2, stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
 		},
 	},
-	-- Large-scale battle (the user, 2026-10-21): an Order and a Chaos army
-	-- of every land and air type (no naval, submarines, amphibious tanks,
-	-- anti-sub helicopters or command vehicles), in formation, with no
-	-- orders. Order holds the north (beachhead), Chaos the south. Each side:
-	-- 76 land units (tanks in front, mobile IR SAMs and scouts with them,
-	-- artillery, mobile radar SAMs, radars and jammers behind), 29
-	-- aircraft, 4 IR SAM sites near the battlefield, and in the safe rear 3
-	-- radar SAM sites, 2 long-range radars, 16 fusion reactors (4,000
+	-- Large-scale battle (the user, 2026-10-21) on `map:normandy` (S-53,
+	-- S-54): an Order and a Chaos army of every land and air type (no naval,
+	-- submarines, amphibious tanks, anti-sub helicopters or command
+	-- vehicles), in formation, with no orders. The fight runs west (Order)
+	-- to east (Chaos) across the bocage; the coast and bluffs are a flank
+	-- both share. Each side: 76 land units in its staging field (tanks in
+	-- front, scouts and mobile IR SAMs with them, artillery, mobile radar
+	-- SAMs, radars and jammers behind), 4 IR SAM sites at the edge of the
+	-- bocage, and beyond its river 29 aircraft, 3 radar SAM sites, 2
+	-- long-range radars, 5 constructors, 16 fusion reactors (4,000
 	-- power/s), 50 converters (50 supply/s from spare power), 10 depots
-	-- (11,000 supply storage), a nuke silo (2 in stock) and 5 constructors;
-	-- stores start full (`startResources`).
-	-- Laid out for `map:normandy` (request 31: sea z > 760, beach and the
-	-- Order rear z 640-760, bluffs with draws, bocage battlefield, a river
-	-- at z -380, the Chaos rear south of it); on flat:256 until it lands.
+	-- (11,000 supply storage) and a nuke silo (2 in stock); stores start
+	-- full (`startResources`).
 	normandy = {
 		seed = 44,
-		mapId = "flat:256",
+		mapId = "map:normandy",
 		startResources = { supply = 10000, power = 20000 },
 		scenario = "empty",
 		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
@@ -263,72 +262,74 @@ local PROFILES = {
 		demoOrders = false,
 		restartAfter = nil,
 		spawns = {
-			-- Order (player 1): rear on the beach
-			{ def = "ord_fusion", player = 1, x = -980, z = 700, count = 16, cols = 8, dx = 50, rowDz = 40 },
-			{ def = "ord_converter", player = 1, x = 480, z = 664, count = 50, cols = 10, dx = 16, rowDz = 16 },
-			{ def = "ord_depot", player = 1, x = -560, z = 740, count = 10, dx = 30 },
-			{ def = "ord_reckoning", player = 1, x = 0, z = 715 },
-			{ def = "ord_aegis", player = 1, x = -470, z = 690 },
-			{ def = "ord_aegis", player = 1, x = 250, z = 700 },
-			{ def = "ord_aegis", player = 1, x = 900, z = 700 },
-			{ def = "ord_beacon", player = 1, x = -200, z = 720 },
-			{ def = "ord_beacon", player = 1, x = 400, z = 720 },
-			{ def = "ord_mason", player = 1, x = -300, z = 680, count = 3, dx = 20, heading = math.pi },
-			{ def = "ord_architect", player = 1, x = 140, z = 680, count = 2, dx = 20, heading = math.pi },
-			-- Order: IR SAM sites near the battlefield
-			{ def = "ord_vigil", player = 1, x = -650, z = 380, count = 4, dx = 430 },
-			-- Order army, facing south
-			{ def = "ord_herald", player = 1, x = -500, z = 250, count = 6, dx = 200, heading = math.pi },
-			{ def = "ord_lancer", player = 1, x = -700, z = 300, count = 12, cols = 6, dx = 24, rowDz = 24, heading = math.pi },
-			{ def = "ord_lancer", player = 1, x = 560, z = 300, count = 12, cols = 6, dx = 24, rowDz = 24, heading = math.pi },
-			{ def = "ord_paladin", player = 1, x = -100, z = 300, count = 16, cols = 8, dx = 28, rowDz = 28, heading = math.pi },
-			{ def = "ord_halo", player = 1, x = -450, z = 350, count = 6, dx = 180, heading = math.pi },
-			{ def = "ord_judgement", player = 1, x = -360, z = 440, count = 8, cols = 4, dx = 30, rowDz = 30, heading = math.pi },
-			{ def = "ord_verdict", player = 1, x = 260, z = 440, count = 8, cols = 4, dx = 30, rowDz = 30, heading = math.pi },
-			{ def = "ord_seraph", player = 1, x = -40, z = 470, count = 2, dx = 80, heading = math.pi },
-			{ def = "ord_oracle", player = 1, x = -600, z = 470, count = 2, dx = 1200, heading = math.pi },
-			{ def = "ord_arbiter", player = 1, x = -150, z = 500, count = 2, dx = 300, heading = math.pi },
-			{ def = "ord_veil", player = 1, x = -300, z = 400, count = 2, dx = 600, heading = math.pi },
-			-- Order air, over the bluffs
-			{ def = "ord_falcon", player = 1, x = -500, z = 580, count = 8, cols = 4, dx = 30, rowDz = 30, heading = math.pi },
-			{ def = "ord_archon", player = 1, x = 380, z = 580, count = 6, cols = 3, dx = 30, rowDz = 30, heading = math.pi },
-			{ def = "ord_guardian", player = 1, x = -120, z = 560, count = 8, cols = 4, dx = 26, rowDz = 26, heading = math.pi },
-			{ def = "ord_absolution", player = 1, x = -800, z = 600, count = 4, dx = 40, heading = math.pi },
-			{ def = "ord_phantom", player = 1, x = 750, z = 600, count = 2, dx = 50, heading = math.pi },
-			{ def = "ord_archangel", player = 1, x = 0, z = 620, heading = math.pi },
-			-- Chaos (player 2): rear south of the river
-			{ def = "chs_fusion", player = 2, x = -980, z = -800, count = 16, cols = 8, dx = 50, rowDz = -40 },
-			{ def = "chs_converter", player = 2, x = 480, z = -760, count = 50, cols = 10, dx = 16, rowDz = -16 },
-			{ def = "chs_depot", player = 2, x = -560, z = -840, count = 10, dx = 30 },
-			{ def = "chs_ragnarok", player = 2, x = 0, z = -800 },
-			{ def = "chs_wyvern", player = 2, x = -400, z = -760 },
-			{ def = "chs_wyvern", player = 2, x = 250, z = -760 },
-			{ def = "chs_wyvern", player = 2, x = 900, z = -760 },
-			{ def = "chs_allseer", player = 2, x = -200, z = -820 },
-			{ def = "chs_allseer", player = 2, x = 400, z = -820 },
-			{ def = "chs_scrapper", player = 2, x = -300, z = -740, count = 3, dx = 20 },
-			{ def = "chs_forgemaster", player = 2, x = 140, z = -740, count = 2, dx = 20 },
-			-- Chaos: IR SAM sites near the battlefield
-			{ def = "chs_thorn", player = 2, x = -650, z = -320, count = 4, dx = 430 },
-			-- Chaos army, facing north
-			{ def = "chs_jackal", player = 2, x = -500, z = -180, count = 6, dx = 200 },
-			{ def = "chs_ravager", player = 2, x = -700, z = -230, count = 12, cols = 6, dx = 24, rowDz = -24 },
-			{ def = "chs_ravager", player = 2, x = 560, z = -230, count = 12, cols = 6, dx = 24, rowDz = -24 },
-			{ def = "chs_juggernaut", player = 2, x = -100, z = -230, count = 16, cols = 8, dx = 28, rowDz = -28 },
-			{ def = "chs_hornet", player = 2, x = -450, z = -270, count = 6, dx = 180 },
-			{ def = "chs_hydra", player = 2, x = -360, z = -300, count = 8, cols = 4, dx = 30, rowDz = -30 },
-			{ def = "chs_hellmouth", player = 2, x = 260, z = -300, count = 8, cols = 4, dx = 30, rowDz = -30 },
-			{ def = "chs_gorgon", player = 2, x = -40, z = -330, count = 2, dx = 80 },
-			{ def = "chs_watcher", player = 2, x = -600, z = -340, count = 2, dx = 1200 },
-			{ def = "chs_stalker", player = 2, x = -150, z = -350, count = 2, dx = 300 },
-			{ def = "chs_shroud", player = 2, x = -300, z = -280, count = 2, dx = 600 },
-			-- Chaos air, south of the river
-			{ def = "chs_harpy", player = 2, x = -500, z = -520, count = 8, cols = 4, dx = 30, rowDz = -30 },
-			{ def = "chs_manticore", player = 2, x = 380, z = -520, count = 6, cols = 3, dx = 30, rowDz = -30 },
-			{ def = "chs_wasp", player = 2, x = -120, z = -500, count = 8, cols = 4, dx = 26, rowDz = -26 },
-			{ def = "chs_plague", player = 2, x = -800, z = -560, count = 4, dx = 40 },
-			{ def = "chs_behemoth", player = 2, x = 750, z = -560, count = 2, dx = 50 },
-			{ def = "chs_banshee", player = 2, x = 0, z = -600 },
+			-- Order (player 1, west) rear (x beyond the river): economy and the silo
+			{ def = "ord_fusion", player = 1, x = -1000, z = -950, count = 16, cols = 2, dx = 40, rowDz = 50 },
+			{ def = "ord_converter", player = 1, x = -1010, z = 100, count = 50, cols = 5, dx = 16, rowDz = 16 },
+			{ def = "ord_depot", player = 1, x = -900, z = -950, count = 10, dz = 30 },
+			{ def = "ord_reckoning", player = 1, x = -930, z = -300 },
+			-- Order: radar SAM sites, long-range radars, constructors
+			{ def = "ord_aegis", player = 1, x = -800, z = -600 },
+			{ def = "ord_aegis", player = 1, x = -800, z = 0 },
+			{ def = "ord_aegis", player = 1, x = -800, z = 400 },
+			{ def = "ord_beacon", player = 1, x = -800, z = -300 },
+			{ def = "ord_beacon", player = 1, x = -800, z = 250 },
+			{ def = "ord_mason", player = 1, x = -800, z = -150, count = 3, dz = 20, heading = math.pi / 2 },
+			{ def = "ord_architect", player = 1, x = -800, z = 100, count = 2, dz = 20, heading = math.pi / 2 },
+			-- Order air, behind the river
+			{ def = "ord_falcon", player = 1, x = -710, z = -520, count = 8, cols = 4, dz = 30, rowDx = -30, heading = math.pi / 2 },
+			{ def = "ord_archon", player = 1, x = -710, z = 330, count = 6, cols = 3, dz = 30, rowDx = -30, heading = math.pi / 2 },
+			{ def = "ord_guardian", player = 1, x = -710, z = -80, count = 8, cols = 4, dz = 26, rowDx = -26, heading = math.pi / 2 },
+			{ def = "ord_absolution", player = 1, x = -725, z = -800, count = 4, dz = 40, heading = math.pi / 2 },
+			{ def = "ord_phantom", player = 1, x = -725, z = 480, count = 2, dz = 40, heading = math.pi / 2 },
+			{ def = "ord_archangel", player = 1, x = -725, z = 150, heading = math.pi / 2 },
+			-- Order: IR SAM sites at the edge of the bocage
+			{ def = "ord_vigil", player = 1, x = -440, z = -450, count = 4, dz = 300 },
+			-- Order army in its staging field, facing east
+			{ def = "ord_herald", player = 1, x = -420, z = -500, count = 6, dz = 200, heading = math.pi / 2 },
+			{ def = "ord_lancer", player = 1, x = -450, z = -540, count = 12, cols = 6, dz = 24, rowDx = -24, heading = math.pi / 2 },
+			{ def = "ord_lancer", player = 1, x = -450, z = 420, count = 12, cols = 6, dz = 24, rowDx = -24, heading = math.pi / 2 },
+			{ def = "ord_paladin", player = 1, x = -450, z = -98, count = 16, cols = 8, dz = 28, rowDx = -28, heading = math.pi / 2 },
+			{ def = "ord_halo", player = 1, x = -510, z = -450, count = 6, dz = 180, heading = math.pi / 2 },
+			{ def = "ord_judgement", player = 1, x = -570, z = -300, count = 8, cols = 4, dz = 30, rowDx = -30, heading = math.pi / 2 },
+			{ def = "ord_verdict", player = 1, x = -570, z = 210, count = 8, cols = 4, dz = 30, rowDx = -30, heading = math.pi / 2 },
+			{ def = "ord_seraph", player = 1, x = -600, z = -40, count = 2, dz = 80, heading = math.pi / 2 },
+			{ def = "ord_oracle", player = 1, x = -600, z = -480, count = 2, dz = 960, heading = math.pi / 2 },
+			{ def = "ord_arbiter", player = 1, x = -620, z = -150, count = 2, dz = 300, heading = math.pi / 2 },
+			{ def = "ord_veil", player = 1, x = -520, z = -360, count = 2, dz = 720, heading = math.pi / 2 },
+			-- Chaos (player 2, east) rear (x beyond the river): economy and the silo
+			{ def = "chs_fusion", player = 2, x = 1000, z = -950, count = 16, cols = 2, dx = -40, rowDz = 50 },
+			{ def = "chs_converter", player = 2, x = 1010, z = 100, count = 50, cols = 5, dx = -16, rowDz = 16 },
+			{ def = "chs_depot", player = 2, x = 900, z = -950, count = 10, dz = 30 },
+			{ def = "chs_ragnarok", player = 2, x = 930, z = -300 },
+			-- Chaos: radar SAM sites, long-range radars, constructors
+			{ def = "chs_wyvern", player = 2, x = 800, z = -600 },
+			{ def = "chs_wyvern", player = 2, x = 800, z = 0 },
+			{ def = "chs_wyvern", player = 2, x = 800, z = 400 },
+			{ def = "chs_allseer", player = 2, x = 800, z = -300 },
+			{ def = "chs_allseer", player = 2, x = 800, z = 250 },
+			{ def = "chs_scrapper", player = 2, x = 800, z = -150, count = 3, dz = 20, heading = -math.pi / 2 },
+			{ def = "chs_forgemaster", player = 2, x = 800, z = 100, count = 2, dz = 20, heading = -math.pi / 2 },
+			-- Chaos air, behind the river
+			{ def = "chs_harpy", player = 2, x = 710, z = -520, count = 8, cols = 4, dz = 30, rowDx = 30, heading = -math.pi / 2 },
+			{ def = "chs_manticore", player = 2, x = 710, z = 330, count = 6, cols = 3, dz = 30, rowDx = 30, heading = -math.pi / 2 },
+			{ def = "chs_wasp", player = 2, x = 710, z = -80, count = 8, cols = 4, dz = 26, rowDx = 26, heading = -math.pi / 2 },
+			{ def = "chs_plague", player = 2, x = 725, z = -800, count = 4, dz = 40, heading = -math.pi / 2 },
+			{ def = "chs_behemoth", player = 2, x = 725, z = 480, count = 2, dz = 40, heading = -math.pi / 2 },
+			{ def = "chs_banshee", player = 2, x = 725, z = 150, heading = -math.pi / 2 },
+			-- Chaos: IR SAM sites at the edge of the bocage
+			{ def = "chs_thorn", player = 2, x = 440, z = -450, count = 4, dz = 300 },
+			-- Chaos army in its staging field, facing west
+			{ def = "chs_jackal", player = 2, x = 420, z = -500, count = 6, dz = 200, heading = -math.pi / 2 },
+			{ def = "chs_ravager", player = 2, x = 450, z = -540, count = 12, cols = 6, dz = 24, rowDx = 24, heading = -math.pi / 2 },
+			{ def = "chs_ravager", player = 2, x = 450, z = 420, count = 12, cols = 6, dz = 24, rowDx = 24, heading = -math.pi / 2 },
+			{ def = "chs_juggernaut", player = 2, x = 450, z = -98, count = 16, cols = 8, dz = 28, rowDx = 28, heading = -math.pi / 2 },
+			{ def = "chs_hornet", player = 2, x = 510, z = -450, count = 6, dz = 180, heading = -math.pi / 2 },
+			{ def = "chs_hydra", player = 2, x = 570, z = -300, count = 8, cols = 4, dz = 30, rowDx = 30, heading = -math.pi / 2 },
+			{ def = "chs_hellmouth", player = 2, x = 570, z = 210, count = 8, cols = 4, dz = 30, rowDx = 30, heading = -math.pi / 2 },
+			{ def = "chs_gorgon", player = 2, x = 600, z = -40, count = 2, dz = 80, heading = -math.pi / 2 },
+			{ def = "chs_watcher", player = 2, x = 600, z = -480, count = 2, dz = 960, heading = -math.pi / 2 },
+			{ def = "chs_stalker", player = 2, x = 620, z = -150, count = 2, dz = 300, heading = -math.pi / 2 },
+			{ def = "chs_shroud", player = 2, x = 520, z = -360, count = 2, dz = 720, heading = -math.pi / 2 },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders

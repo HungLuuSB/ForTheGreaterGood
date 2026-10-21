@@ -8,13 +8,17 @@
 -- Enemy defenses the team knows of (C-41) show their weapon rings too,
 -- whatever is selected: structures with weapons that aren't factories, when
 -- in sight, seen before (ghosts), or a radar contact we can name.
+--
+-- Own radar facilities (C-63) always show their radar ring, selected or
+-- not and whatever the V toggle: radar towers and unarmed radar units
+-- (mobile radars, AWACS), not radar SAM sites.
 
 local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
 local Ranges = {}
 
-Ranges.KINDS = table.freeze({ "weapon", "aa", "sight", "radar", "track", "jammer", "enemyWeapon", "enemyAa" })
+Ranges.KINDS = table.freeze({ "weapon", "aa", "sight", "radar", "track", "jammer", "enemyWeapon", "enemyAa", "radarFacility" })
 Ranges.MEMORY_MATCH = 24 -- studs: a radar contact this close to a structure seen there is that structure (radar error and cell rounding)
 Ranges.STEP = 6 -- studs between polyline points, at most
 Ranges.MIN_POINTS_PER_CIRCLE = 24
@@ -196,6 +200,32 @@ function Ranges.circles(world: World.World, ids: { number }): { Circle }
 		if u and def and u.team == world.me.team then
 			Ranges.circlesOfDef(def, world.defs, u.rx or u.x, u.rz or u.z, out, id)
 		end
+	end
+	return out
+end
+
+-- A radar facility (C-63): a radar and no weapons (towers, mobile radars,
+-- AWACS; radar SAM sites have weapons).
+function Ranges.isRadarFacility(def: any): boolean
+	local s = def and def.sensors
+	return s ~= nil and (s.radar or 0) > 0 and #(def.weapons or {}) == 0
+end
+
+-- Radar rings of the team's own radar facilities in the tactical tier (the
+-- camera's area: units outside it carry no def), by unit ID.
+function Ranges.radarFacilities(world: World.World): { Circle }
+	local out: { Circle } = {}
+	local ids = {}
+	for id, u in world.units do
+		if u.team == world.me.team and Ranges.isRadarFacility(World.def(world, u)) then
+			table.insert(ids, id)
+		end
+	end
+	table.sort(ids)
+	for _, id in ids do
+		local u = world.units[id]
+		local def = World.def(world, u) :: any
+		table.insert(out, { x = u.rx or u.x, z = u.rz or u.z, r = def.sensors.radar, kind = "radarFacility", owner = id })
 	end
 	return out
 end
