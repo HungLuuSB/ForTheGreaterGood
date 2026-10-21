@@ -45,6 +45,17 @@ local function queueEvent(world: World.World, e: Schema.Event, tick: number)
 	world.eventCounts[kind] = (world.eventCounts[kind] or 0) + 1
 end
 
+-- The ally team's sight map, made on its first record for the map's sensor grid.
+local function sightOf(world: World.World): World.Sight
+	local s = world.sight
+	if s == nil then
+		local w, d = world.grid.sensorX, world.grid.sensorZ
+		s = { width = w, depth = d, cells = buffer.create(w * d), version = 0, changed = {}, full = true }
+		world.sight = s
+	end
+	return s :: World.Sight
+end
+
 local function applyEvents(world: World.World, events: { Schema.Event }, tick: number)
 	local g = world.grid
 	for _, e in events do
@@ -111,6 +122,48 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 				world.dying[id] = { unit = u, tick = tick } -- still a missile's target until the death is drawn (C-50)
 				world.units[id] = nil
 			end
+			if (e.wreckId or 0) ~= 0 then
+				world.deathWrecks[e.wreckId :: number] = tick
+			end
+		elseif kind == EK.SIGHT_ROWS then
+			-- the ally team's sight, rows wholesale (protocol 10, C-65)
+			local s = sightOf(world)
+			local first, rows, rowBytes = e.firstRow :: number, e.rowCount :: number, e.rowBytes :: number
+			local bits = e.bits :: buffer
+			for r = 0, rows - 1 do
+				local z = first + r
+				if z >= s.depth then
+					break
+				end
+				for x = 0, s.width - 1 do
+					local byte = buffer.readu8(bits, r * rowBytes + x // 8)
+					buffer.writeu8(s.cells, z * s.width + x, bit32.extract(byte, x % 8, 1))
+				end
+			end
+			s.full = true
+			s.version += 1
+		elseif kind == EK.SIGHT_CELLS then
+			-- cells that turned seen / unseen since the last sensor tick
+			local s = sightOf(world)
+			local n = s.width * s.depth
+			for _, c in e.cells :: { number } do
+				local index = bit32.band(c, 0x7FFF)
+				if index < n then
+					buffer.writeu8(s.cells, index, if bit32.band(c, Schema.SIGHT_SEEN) ~= 0 then 1 else 0)
+					table.insert(s.changed, index)
+				end
+			end
+			s.version += 1
+		elseif kind == EK.WRECK then
+			local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+			local id = e.wreckId :: number
+			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0) }
+			table.insert(world.wreckAdded, id)
+		elseif kind == EK.WRECK_GONE then
+			local id = e.wreckId :: number
+			world.wrecks[id] = nil
+			world.deathWrecks[id] = nil
+			table.insert(world.wreckGone, id)
 		else
 			queueEvent(world, e, tick)
 		end

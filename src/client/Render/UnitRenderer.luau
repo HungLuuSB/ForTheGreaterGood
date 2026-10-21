@@ -145,6 +145,9 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		end
 	end
 	RenderDeaths.step(r.deaths, now, speed)
+	if t >= 0 then
+		RenderDeaths.syncWrecks(r.deaths, world, t)
+	end
 	if t < 0 then
 		return
 	end

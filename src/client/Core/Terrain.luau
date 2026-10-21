@@ -14,8 +14,6 @@ local Terrain = {}
 
 local CELL = Grid.CELL_SIZE
 
-Terrain.STEEP = 1.2 -- rise / run above which ground is drawn as rock (~50°)
-Terrain.SHORE = 2.5 -- studs above a water surface nearby: sand
 Terrain.DEPOSIT_LIFT = 0.35 -- studs: deposit plates float this far over the cell's height (deposits on gentle slopes)
 
 local function heightAt(layers: Layers.Layers, cx: number, cz: number): number
@@ -62,24 +60,53 @@ function Terrain.surfaceY(layers: Layers.Layers, x: number, z: number): number
 	return if water and water > ground then water else ground
 end
 
--- Ground kind of a terrain column at (x, z), for its material:
--- "rock" (steep), "sand" (shore and lake / sea bed), "grass".
-export type Kind = "grass" | "rock" | "sand"
-function Terrain.kind(layers: Layers.Layers, x: number, z: number, waterLevel: number?): Kind
-	local h = Terrain.groundY(layers, x, z)
-	local d = CELL / 2
-	local sx = (Terrain.groundY(layers, x + d, z) - Terrain.groundY(layers, x - d, z)) / (2 * d)
-	local sz = (Terrain.groundY(layers, x, z + d) - Terrain.groundY(layers, x, z - d)) / (2 * d)
-	if math.sqrt(sx * sx + sz * sz) > Terrain.STEEP then
-		return "rock"
+-- Ground kind at (x, z): the sim's terrain type of the cell (Layers.terrain,
+-- guide 5.2, S-37), so ground drawn as sand or road is where units slow
+-- down or speed up (C-66; the client's own slope and shore rules are gone).
+export type Kind = "grass" | "rock" | "sand" | "road"
+local KIND: { [number]: Kind } = {
+	[Layers.Terrain.GRASS] = "grass",
+	[Layers.Terrain.ROCK] = "rock",
+	[Layers.Terrain.SAND] = "sand",
+	[Layers.Terrain.ROAD] = "road",
+}
+function Terrain.kind(layers: Layers.Layers, x: number, z: number): Kind
+	local g = layers.grid
+	local cx, cz = g:cellAt(x, z)
+	cx = math.clamp(cx, 0, g.cellsX - 1)
+	cz = math.clamp(cz, 0, g.cellsZ - 1)
+	return KIND[Layers.getTerrain(layers, cz * g.cellsX + cx)] or "grass"
+end
+
+-- What a hand-made map's cell is (Normandy.feature: "hedge", "house",
+-- "road", ...), for finer materials than the four terrain types.
+export type Feature = (cx: number, cz: number) -> string
+
+-- Material name at (x, z): the map's feature where it has a look of its own
+-- (C-66), else the terrain type. House cells give "ground" (their walls and
+-- roofs are parts, Render/Ground).
+local FEATURE: { [string]: string } = {
+	hedge = "leafy",
+	house = "ground",
+	road = "road",
+	bridge = "bridge",
+	beach = "sand",
+	bluff = "rock",
+	draw = "ground",
+	sea = "sand",
+	river = "sand",
+	field = "grass",
+}
+function Terrain.material(layers: Layers.Layers, x: number, z: number, feature: Feature?): string
+	if feature then
+		local g = layers.grid
+		local cx, cz = g:cellAt(x, z)
+		local name = FEATURE[feature(math.clamp(cx, 0, g.cellsX - 1), math.clamp(cz, 0, g.cellsZ - 1))]
+		if name then
+			return name
+		end
 	end
-	if Terrain.waterY(layers, x, z) ~= nil then
-		return "sand"
-	end
-	if waterLevel and h < waterLevel + Terrain.SHORE then
-		return "sand"
-	end
-	return "grass"
+	return Terrain.kind(layers, x, z)
 end
 
 -- The map's water surface (lakes and seas share one level in MapGen), or

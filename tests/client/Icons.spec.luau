@@ -19,8 +19,18 @@ return function(t: any)
 		local defs = Defs.load()
 		local mine = Icons.table(defs)
 		t.deepEqual(mine.byDef, NetOut.iconIndex(defs))
+		-- unique per unit type since S-58: icon n is def n itself
 		for n, def in mine.sample do
-			t.equal(mine.names[n], def.icon)
+			t.equal(def, defs.unitByIndex[n])
+		end
+		t.equal(#mine.sample, #defs.unitByIndex)
+		-- every unit type its own two-letter code (C-67)
+		local seen: { [string]: string } = {}
+		for index, def in defs.unitByIndex do
+			local code = mine.codes[index]
+			t.expect(code ~= nil and #code == 2, `{def.id} has a two-letter code ({code})`)
+			t.expect(seen[code] == nil, `{def.id} and {seen[code]} share "{code}"`)
+			seen[code] = def.id
 		end
 	end)
 
@@ -33,7 +43,7 @@ return function(t: any)
 			local u: any = { id = 1, team = 1, defIndex = def.index, flags = 0, x = 0, z = 0, alt = 0 }
 			local s = Icons.style(tbl, world, u, false)
 			seen[s.shape] = true
-			t.expect(s.size >= 8 and s.size <= 26, `{def.id}: size {s.size}`)
+			t.expect(s.size >= 12 and s.size <= 30, `{def.id}: size {s.size}`) -- room for the code (C-67)
 			if def.domain == "air" then
 				t.equal(s.shape, "triangle", def.id)
 			elseif def.domain == "naval" then

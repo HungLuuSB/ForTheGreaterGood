@@ -1,8 +1,10 @@
 --!strict
 -- Strategic zoom icons (guide 15.4): what each known unit looks like as an
 -- icon. Pure Luau (C-7); Render/IconLayer draws them. Tactical units use
--- their def; strategic records only carry an icon number (net.md section 3),
--- mapped back to the icon name and to a representative def for its family.
+-- their def; strategic records carry an icon number (net.md section 3),
+-- which since S-58 is the unit's def index. Every unit type has its own
+-- icon (C-67): its family's shape (domain, builder) with a two-letter code
+-- from its name inside, unique across all unit types.
 
 local NetIcons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
@@ -19,13 +21,49 @@ export type Style = {
 	team: number,
 	alpha: number, -- 1 = opaque
 	selected: boolean,
+	code: string?, -- the unit type's two-letter code (C-67); nil for an unknown blip
 }
 
 export type Table = {
-	names: { string }, -- icon number → name (sorted distinct names, like NetOut.iconIndex)
-	byDef: { [number]: number }, -- def index → icon number
-	sample: { [number]: any }, -- icon number → a def using it (family, size)
+	names: { string }, -- the icon family names (sorted)
+	byDef: { [number]: number }, -- def index → icon number (the def index, S-58)
+	sample: { [number]: any }, -- icon number → its def
+	codes: { [number]: string }, -- def index → its unique two-letter code (C-67)
 }
+
+-- Two-letter codes from the unit names, unique over every unit def (in def
+-- order): the initials of a two-word name, else its first letter with a
+-- later one, else a digit (C-67).
+function Icons.codes(defs: any): { [number]: string }
+	local out, used = {}, {}
+	for index, def in defs.unitByIndex do
+		local words = {}
+		for w in string.gmatch(def.name or def.id, "%a+") do
+			table.insert(words, w)
+		end
+		local first = string.upper(string.sub(words[1] or "X", 1, 1))
+		local cands = {}
+		if #words >= 2 then
+			table.insert(cands, first .. string.upper(string.sub(words[2], 1, 1)))
+			table.insert(cands, first .. string.upper(string.sub(words[#words], 1, 1)))
+		end
+		local rest = string.lower(table.concat(words, ""))
+		for k = 2, #rest do
+			table.insert(cands, first .. string.sub(rest, k, k))
+		end
+		for d = 1, 9 do
+			table.insert(cands, first .. d)
+		end
+		for _, c in cands do
+			if not used[c] then
+				used[c] = true
+				out[index] = c
+				break
+			end
+		end
+	end
+	return out
+end
 
 -- The wire numbering, from Shared/Net/Icons (S-10), plus a sample def per
 -- icon number for its family and size.
@@ -36,7 +74,7 @@ function Icons.table(defs: any): Table
 		local n = byDef[index]
 		sample[n] = sample[n] or def
 	end
-	return { names = NetIcons.names(defs), byDef = byDef, sample = sample }
+	return { names = NetIcons.names(defs), byDef = byDef, sample = sample, codes = Icons.codes(defs) }
 end
 
 local function shapeOf(def: any): Shape
@@ -53,11 +91,12 @@ local function shapeOf(def: any): Shape
 end
 
 local function sizeOf(def: any): number
-	local base = 9 + 3 * (def.tier or 1) + 2 * ((def.footprint or 1) - 1)
+	-- room for the unit type's code (C-67)
+	local base = 13 + 3 * (def.tier or 1) + 2 * ((def.footprint or 1) - 1)
 	if def.icon == "commander" then
 		base += 6
 	end
-	return math.min(base, 26)
+	return math.min(base, 30)
 end
 
 -- How `u` looks as an icon.
@@ -67,8 +106,9 @@ function Icons.style(t: Table, world: World.World, u: World.Unit, selected: bool
 	if def == nil and u.icon and u.icon > 0 then
 		def = t.sample[u.icon]
 	end
+	local code = if def then t.codes[def.index] else nil
 	if bit32.band(flags, Schema.StrategicFlag.GHOST) ~= 0 then
-		return { shape = "ghost", size = if def then sizeOf(def) else 12, team = u.team, alpha = 0.55, selected = false }
+		return { shape = "ghost", size = if def then sizeOf(def) else 12, team = u.team, alpha = 0.55, selected = false, code = code }
 	end
 	if bit32.band(flags, Schema.StrategicFlag.SONAR_ONLY) ~= 0 then
 		return { shape = "sonar", size = if def then sizeOf(def) + 2 else 10, team = u.team, alpha = 0.8, selected = false }
@@ -85,6 +125,7 @@ function Icons.style(t: Table, world: World.World, u: World.Unit, selected: bool
 		team = u.team,
 		alpha = if radar and not tracked then 0.6 else 1,
 		selected = selected,
+		code = code,
 	}
 end
 

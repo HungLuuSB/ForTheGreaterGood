@@ -1,6 +1,7 @@
 --!strict
 -- Icons on screen (guide 15.4): a pooled screen-space layer of small
--- shapes in team colors, no image assets. Units without a model (radar
+-- shapes in team colors, no image assets; each unit type's two-letter code
+-- inside its shape (C-67). Units without a model (radar
 -- blips, ghosts, strategic records in view) always get an icon; at
 -- strategic zoom every unit does and the models are hidden.
 -- Looks are placeholders: listed under "Needs my review".
@@ -12,7 +13,7 @@ local TeamColors = require("./TeamColors")
 
 local IconLayer = {}
 
-type Slot = { root: Frame, body: Frame, stroke: UIStroke, corner: UICorner, tri: TextLabel, shape: string? }
+type Slot = { root: Frame, body: Frame, stroke: UIStroke, corner: UICorner, tri: TextLabel, label: TextLabel, shape: string? }
 
 export type Layer = { gui: ScreenGui, slots: { Slot }, used: number }
 
@@ -51,8 +52,19 @@ local function newSlot(parent: ScreenGui): Slot
 	tri.TextScaled = true
 	tri.TextStrokeTransparency = 0.3
 	tri.Parent = root
+	local label = Instance.new("TextLabel")
+	label.Name = "Code"
+	label.BackgroundTransparency = 1
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextStrokeColor3 = Color3.new(0, 0, 0)
+	label.TextStrokeTransparency = 0.35
+	label.ZIndex = 2
+	label.Parent = root
 	root.Parent = parent
-	return { root = root, body = body, stroke = stroke, corner = corner, tri = tri, shape = nil }
+	return { root = root, body = body, stroke = stroke, corner = corner, tri = tri, label = label, shape = nil }
 end
 
 local function apply(slot: Slot, style: Icons.Style)
@@ -63,6 +75,16 @@ local function apply(slot: Slot, style: Icons.Style)
 	local isTri = shape == "triangle"
 	slot.tri.Visible = isTri
 	slot.body.Visible = not isTri
+	-- the unit type's code, centered (lower in a triangle, smaller in a diamond)
+	local label = slot.label
+	label.Visible = style.code ~= nil
+	if style.code then
+		label.Text = style.code
+		label.TextTransparency = 1 - style.alpha
+		local k = if shape == "diamond" then 0.55 elseif isTri then 0.5 else 0.7
+		label.Size = UDim2.fromScale(k, k)
+		label.Position = UDim2.fromScale(0.5, if isTri then 0.62 else 0.5)
+	end
 	if isTri then
 		slot.tri.TextColor3 = color
 		slot.tri.TextTransparency = 1 - style.alpha

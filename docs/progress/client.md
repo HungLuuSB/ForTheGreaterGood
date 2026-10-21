@@ -118,6 +118,11 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `242cecc` (normandy: stronger economy, startResources); build passed.
 - Ready to merge: `537ee67` `cafdbaa` `57ea548` (merges of `main` with S-53..S-55; radar rings always on, C-63; normandy on map:normandy; requests 31, 32 done, 33 sent); test_client 105, test 345, build passed.
 - Ready to merge: `db5d469` (radar rings always on top, C-64); test_client 105, build passed.
+- Ready to merge: `02237c5` `27eef6e` (merge of `main` with S-56; request 33 done, SAM scene specs); test_client 105, test 345, build passed.
+- Ready to merge: `1f3d216` (fog from the server's sight, wrecks from WRECK records, C-65; requests 34, 35 for the sim); test_client 108, test 345, build passed.
+- Ready to merge: `68b0641` `33a0b04` (merge of `main` with S-58, protocol 19; terrain from the sim's terrain layer and Normandy features, C-66); test_client 108, test 345, build passed.
+- Ready to merge: `23adb8d` (a unique icon per unit type, C-67); test_client 108, build passed.
+- Ready to merge: `7ed355e` (playable placeholder UI, C-68; request 36 for the sim); test_client 112, test 345, build passed.
 
 ## Tasks
 
@@ -446,7 +451,22 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: overnight run
+
+- Fog and wrecks from the server (C-65): the client now uses the server's exact team sight, allies included (it used to work it out from its own units). Wrecks appear for anything the team knows of, also after joining, and disappear when reclaimed (`debug_out/screens/c65_wrecks.jpg`).
+- Camera pitch (C-69): Alt + scroll tilts the camera between 35° and 80°. At low pitch the area the server sends in full detail stops at about 1.8 camera distances, so it never reaches the horizon (farther units show as icons). At 35° in the battle: 8.4 KB/s received (8.5 at 55°), 1.7 ms of client frame work (`debug_out/screens/c69_pitch35.jpg`, `c69_pitch80.jpg`).
+- Playable placeholder UI (C-68): a build menu by category tabs (B, then 1..0), a command card (move M, fight F, attack A, patrol Z, guard G, stop S, fire state L, move state K, repeat Y, on/off U, cancel X), a unit panel (health, weapons, stockpiles, build progress, factory queue) and alerts (under attack, structure lost, power stall, nuke launch) with minimap pings and J to jump to the last one (`debug_out/screens/c68_build_menu.jpg`, `c68_factory_queue.jpg`, `c68_alerts.jpg`). Factory queues, fire / move states and ammo aren't on the wire yet (request 36): the queue shown is what the client queued.
+- Every unit type has its own icon (C-67): its family shape with a unique two-letter code from its name (Ln Lancer, Pa Paladin, Rc Reckoning...), now that the server sends each unit's type in strategic records (S-58) (`debug_out/screens/c67_unique_icons.jpg`).
+- Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
+
 ## Needs my review
+
+- **Camera pitch range (C-69):** Alt + scroll, 35°–80° in 4° steps, starting at 55°; the detailed area stops at 1.8 camera distances (`Camera.MIN_PITCH`, `MAX_PITCH`, `PITCH_STEP`, `RECT_CAP` in `src/client/Camera.luau`).
+
+- **Hotkey layout (C-68):** commands M move, F fight, A attack, Z patrol, G guard, S stop; L fire state, K move state; Y repeat, U on/off, X cancel; J last alert; B build menu (again: next tab), then 1..0 pick (Shift: 5 in a factory, right click drops one). P (patrol in BAR) stays the Studio pause key. In `src/client/Input/Controls.luau` and `UI/BuildMenu.luau`.
+- **UI placement (C-68):** build menu bottom left above the minimap, unit panel bottom center, command card bottom right (4 x 3), alerts top right under the resource bar. All plain dark panels, placeholders for the UI session.
+
+- **Unit icons (C-67):** family shape plus a two-letter code per unit type, white bold text, icons 13-30 px. Codes are generated from names (`Icons.codes` in `src/client/Core/Icons.luau`); a few fall back to a digit (Halo = H1). Proper image icons can replace them later.
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
 
@@ -477,6 +497,12 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+36. **Factory queues, fire / move states and ammo on the wire (C-68, 2026-10-22):** the playable UI's unit panel and command card need them; today the client shows what it queued itself (`Core/FactoryQueue`) and the last state it sent, and no ammo. Suggested: own factories' queue (def indices, at most ~20, and the progress of the first) in State records when it changes; own units' fire state and move state (2 bits each, in the state field or a new one); aircraft ammo (rounds left / max) for own units. Owner only, like STOCK. Medium priority.
+
+35. **Done (S-58, protocol 19): the strategic icon is the def index; `def.icon` stays the family.** **A unique strategic icon per unit type (the user, 2026-10-22, overnight list):** "Every type of unit need to have its own unique icon." The wire's icon number comes from Shared/Net/Icons, which numbers icon *names*; 126 unit defs share 50 names (worker x10, radar x6 ...). Asked: an icon number unique per unit def (e.g. defs in sorted order, fits a u8), keeping `def.icon` as the shape family; ghosts and contacts keep their rules. The client then draws a unique glyph per def. Sent to sim-A directly.
+
+34. **Radar vehicles and a pinpointer (the user, 2026-10-22, overnight list):** "Add radar vehicles, radar enhance facility (pinpointer) that increase the team's accuracy, build around 6 and maximum accuracy achieved -> less to no wobble radar blip, radar missile will be able to hit more precisely (long range radar will likely to lose lock or miss without pinpointer enhancements)." Asked: check the mobile radars (Oracle, Watcher) and add any missing; a Pinpointer structure per faction whose count (full at ~6) cuts radar contacts' wobble and radar-guided weapons' tracking error; radar missiles lose lock / miss more without them; the team's precision on the wire for the UI. Sent to sim-A directly.
 
 33. **Done (S-56): IR SAM range / lockRange Thorn 206, Vigil 147; radar SAM Wyvern 945, Aegis 1013; sensors follow. sim-A's note for the user: a nuke is now inside a radar site's reach for only ~6 s of its 12.7 s flight, so at chance 0.2 two sites often let it through.** **SAM ranges again: IR -30%, radar -25% from S-55 (the user, 2026-10-21):** "Drop the IR range 30% more, the SAM 25% more." chs_ir_sam 294 -> 206, ord_ir_sam 210 -> 147; chs_radar_sam 1260 -> 945, ord_radar_sam 1350 -> 1013; sensors by the same factors. Sent to sim-A directly.
 

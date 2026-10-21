@@ -67,6 +67,15 @@ export type Death = { id: number, defIndex: number?, team: number, x: number, z:
 
 export type Me = { player: number, team: number, allyTeam: number }
 
+-- The ally team's sight on the sensor grid (SIGHT_ROWS / SIGHT_CELLS,
+-- protocol 10, C-65): one byte (0 / 1) per sensor cell. `changed` lists
+-- cells set since the last reader cleared it; `full` says a SIGHT_ROWS
+-- replaced rows wholesale (the reader diffs everything).
+export type Sight = { width: number, depth: number, cells: buffer, version: number, changed: { number }, full: boolean }
+
+-- A wreck the team knows of (WRECK, protocol 10, C-65).
+export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number }
+
 export type World = {
 	shownTick: number?, -- the render tick World.settle last ran for (C-49)
 	grid: Grid.Grid,
@@ -91,6 +100,11 @@ export type World = {
 	events: { Schema.Event }, -- combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK) with `tick`
 	dropped: number, -- records dropped as out of sync or malformed (diagnostics)
 	eventCounts: { [number]: number }, -- combat events received per Schema.EventKind (0 = homing correction)
+	sight: Sight?, -- the server's ally-team sight (C-65); nil before the first record
+	wrecks: { [number]: Wreck }, -- known wrecks by wreck ID (C-65)
+	wreckAdded: { number }, -- queues the wreck renderer drains: WRECK
+	wreckGone: { number }, -- WRECK_GONE (reclaimed or gone)
+	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
 }
 
 -- An empty world waiting for the server's WELCOME (net.md section 10).
@@ -117,6 +131,11 @@ function World.new(defs: Defs.DefSet): World
 		events = {},
 		dropped = 0,
 		eventCounts = {},
+		sight = nil,
+		wrecks = {},
+		wreckAdded = {},
+		wreckGone = {},
+		deathWrecks = {},
 	}
 end
 
@@ -138,6 +157,11 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.died)
 	table.clear(world.dying)
 	table.clear(world.events)
+	world.sight = nil -- the server sends it whole again after a WELCOME
+	table.clear(world.wrecks)
+	table.clear(world.wreckAdded)
+	table.clear(world.wreckGone)
+	table.clear(world.deathWrecks)
 	world.strategicTick = -1
 	world.economy = nil
 	world.latestTick = rec.tick :: number -- unwraps wire ticks from here on
