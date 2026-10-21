@@ -93,7 +93,7 @@ export type Combat = {
 	pTtl: { [number]: number }, -- seconds left
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
 	pFlags: { [number]: number }, -- guided missiles: EW.Flag bits (terminal rolled, lock lost)
-	pDecoy: { [number]: { number } }, -- decoyed missiles: { x, y, z, ticks left } of the point they follow (S-28)
+	pDecoy: { [number]: { number } }, -- decoyed missiles: { x, y, z, ticks left, countermeasure } (S-28, S-38)
 	-- overkill accounting (S-29, guide 10.2): the unit a projectile was fired
 	-- at, its generation, and the direct damage it would deal
 	pAim: { [number]: number },
@@ -614,7 +614,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pAim[id] or 0)
 		local d = c.pDecoy[id]
 		if d then
-			h = Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4])
+			h = Hash.u32(Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4]), d[5] or 0)
 		end
 	end
 	h = Hash.u32(h, c.nextProjId)

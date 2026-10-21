@@ -700,7 +700,7 @@ DEATH       unitId u16, severity u8, wreckId u16 (0 = none)               6 B
 FIRE        shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos  10 B
 SPAWN_PROJ  projId u16, weaponDefIndex u16, pos, vel, targetId u16 (0 = none)  19 B
 IMPACT      projId u16, pos                                               9 B
-DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11)         22 B
+DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11), countermeasure u8 (v13)  23 B
 LOST_LOCK   projId u16, pos, vel (flying on unguided)                    15 B
 WRECK       wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8   10 B
 WRECK_GONE  wreckId u16                                                   3 B
@@ -836,7 +836,7 @@ Route these through the same team account so shortages affect them naturally:
 
 ### 8.7 Reclaim
 
-- Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time.
+- Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time. Aircraft shot down in flight crash and burn: no wreck (a landed one can leave one; S-38).
 - Wrecks are static features stored in grid cells. They appear on the minimap and are rendered in the tactical tier.
 - A team knows a wreck once it has seen its spot, and learns it is gone only by seeing the spot again (like structure ghosts; S-26).
 

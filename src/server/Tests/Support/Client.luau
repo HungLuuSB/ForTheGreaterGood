@@ -57,6 +57,7 @@ export type Projectile = {
 	target: number, -- 0 = none
 	ttl: number, -- seconds left
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the point it follows (S-28)
+	countermeasure: number?, -- decoyed: what defeated it (Schema.Countermeasure, S-38)
 }
 
 -- A visual effect: a tracer (fire: from the shooter to the end point), an
@@ -286,6 +287,7 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				p.x, p.y, p.z = pos(e)
 				p.vx, p.vy, p.vz = vel(e)
 				p.target = 0
+				p.countermeasure = e.countermeasure
 				if kind == EK.DECOYED and (e.decoyTicks :: number) > 0 then
 					local dx, dz = g:decode(e.decoyCell :: number, e.decoyOffX :: number, e.decoyOffZ :: number)
 					p.decoy = { dx, (e.decoyY :: number) / Schema.Y_SCALE, dz, e.decoyTicks :: number }

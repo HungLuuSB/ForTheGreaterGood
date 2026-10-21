@@ -35,6 +35,7 @@ export type AirState = {
 	home: { [number]: number },
 	homeGen: { [number]: number },
 	hold: { [number]: boolean }, -- stay docked on the home pad once full
+	approach: { [number]: number }, -- jets: the Nav order they have flown toward (arrival, client request 17)
 }
 
 function AirState.new(): AirState
@@ -56,6 +57,7 @@ function AirState.new(): AirState
 		home = {},
 		homeGen = {},
 		hold = {},
+		approach = {},
 	}
 end
 
@@ -77,6 +79,7 @@ function AirState.clearUnit(a: AirState, id: number)
 	a.home[id] = nil
 	a.homeGen[id] = nil
 	a.hold[id] = nil
+	a.approach[id] = nil
 end
 
 local PHASE_CODE = { fly = 1, ["return"] = 2, rearm = 3, docked = 4 }
@@ -98,6 +101,7 @@ function AirState.hash(a: AirState, ids: { number }, h: number): number
 			h = Hash.number(Hash.number(h, a.groundX[id] or 0), a.groundZ[id] or 0)
 			h = Hash.u32(Hash.u32(h, a.home[id] or 0), a.homeGen[id] or 0)
 			h = Hash.u32(h, if a.hold[id] then 1 else 0)
+			h = Hash.u32(h, a.approach[id] or 0)
 		end
 	end
 	return h
