@@ -1519,6 +1519,12 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 - Skirmish AI (DECISIONS D90): `Sim/AI/Skirmish.luau` plays through commands like a player, so AI games replay exactly.
   - S-7: it builds a radar tower early and techs up to the Advanced Vehicle Plant for a mobile fire-control radar, MLRS and main battle tanks. Radar and fire-control vehicles guard its waves. Its artillery kites from close enemies. It answers known enemy aircraft with IR SAM trucks, plus an IR SAM site when they come near home.
+  - Levels (S-17, S-57): `match.ai = { [player] = "easy" | "normal" | "hard" }`.
+    - **Easy** is for a new player. It sends no wave before 8 minutes and keeps at most 8 army units. Waves start at 4 units, grow by 1, and leave at least 2 minutes apart.
+    - **Normal** builds tanks before its third generator: from its second generator, every builder helps the plant until 2 tanks are out. It pulls its whole army home when 3 or more known enemy ground units come within the recall radius of its base: 570 studs, or 45% of the way to the enemy start on smaller maps.
+    - **Hard** keeps its S-17 extras.
+    - **Missile refills (S-57):** the generator rule counts missile refill power (up to 60/s). With enemy aircraft near home in the last minute, half the mobile SAMs stay home, and new army production pauses while SAMs refill under a power stall.
+    - `lune run ailevels` measures the levels. Since S-57 Hard > Normal > Easy on every map (`docs/AI_LEVELS.md`).
 
 ### 16.3 Match flow
 

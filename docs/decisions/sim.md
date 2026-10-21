@@ -637,3 +637,39 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Pinpoint.spec`: precision is linear; the worst wobble is 14.6 / 8.2 / 1.5 studs at 0 / 3 / 6 Pinpointers; radar-only shots at 700 studs lose lock 9 of 25 times with none and 0 of 25 with 6.
   - `Guidance.spec`'s Wyvern test gets 6 Pinpointers: it measures guidance, not precision.
+
+## S-57 — AI levels: a gentle Easy, a defending Normal, missile refills (overnight task 1, the user) (2026-10-22)
+
+- **Asked (the user):**
+  - Easy must be easy for a new human player: no attack before about 8 minutes, smaller first waves.
+  - Normal builds 2–3 tanks before its third generator and pulls its army home when an enemy wave approaches its base.
+  - Measure and fix the AI's handling of SAM stockpiles.
+  - Target: Hard > Normal > Easy on every map.
+- **Before** (old report, before stockpiles): Easy beat Normal 23–19 overall. Easy won the 128-cell maps with its first wave of 8, which reached Normal's Command Vehicle at ~4.5 min.
+- **Easy:**
+  - No wave before 8 minutes (`firstAttack`), and at least 2 minutes between waves (`waveInterval`).
+  - Waves of 4, then 5, 6, …, and only that many units leave: the rest stay home.
+  - An army of at most 8 (`maxArmy`) and one army unit per 20 s (was 15).
+  - A cap of 12 made Easy a turtle that beat Normal's waves on defence (Coastline), so 8.
+- **Normal:**
+  - From its second generator, until 2 tanks are out, every builder helps the plant, and the plant builds tanks before more workers (`tanksBeforeGen3`).
+  - First tried as "no third generator until 2 tanks". That deadlocked: other construction split the 40 power/s, the tanks never finished, and Normal sat at 2 generators until minute 7.
+  - Recall: 3 or more known enemy ground units within the recall radius (570 studs, at most 45% of the distance between starts) bring the whole army, waves included, home; no wave leaves for 20 s after.
+  - The 45% fixes a false alarm: on 128-cell maps the enemy's rally point is within 570 studs of home.
+- **Missile stockpiles:** measured with scratch runs (not kept): a Normal AI against helicopter raids that fly at its base every minute from minute 4.
+  - In AI-vs-AI matches nobody builds aircraft, so the AI never fields SAMs.
+  - Before the fix, 2 helicopters per minute: refills cost 1,679 supply + 33,586 power over 15 min. The economy stalled 60% of the time, and SAMs sat empty 49% of the time, 44% with a target.
+  - Fixes:
+    - the generator rule adds the SAMs' refill power (capped at 60/s);
+    - with aircraft near home in the last minute, half the mobile SAMs stay home instead of leaving with waves;
+    - while SAMs refill under a stall (power ratio < 0.5) it queues no new army units.
+  - After: empty with a target 31% (2 helicopters). Against 4 helicopters per minute Normal still falls at ~9.5 min; it fires 44 missiles instead of 19.
+  - **Root cause, a design question:** refills get the same share of a stalled economy as construction (S-47). Should missile refills take priority? Under "Needs my review".
+- **Report** (`docs/AI_LEVELS.md`, now with a per-map tally): Hard > Normal > Easy on every map.
+  - Overall: Normal beat Easy 39–3, Hard beat Normal 42–0 and Easy 36–0.
+  - Per map, Normal–Easy: Ridgeline 10–2, Coastline 11–1, skirmish:256 12–0, Twin Lakes 6–0.
+  - Hard won all 6 FFAs.
+  - The report has no hard-vs-easy 2v2 pairing (Twin Lakes).
+- **Tests (`AI.spec`):**
+  - Easy sends no wave by 8 minutes, then a first wave of at most 4, with an army within its cap.
+  - Normal has at least 2 tanks when its third generator stands, and recalls a wave against 4 enemy tanks 220 studs from home.

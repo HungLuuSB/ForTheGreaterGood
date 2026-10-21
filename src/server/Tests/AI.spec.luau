@@ -152,7 +152,49 @@ return function(t: RunAll.Context)
 		t.expect(#owned(sim, 1, "ord_extractor") <= 6, `at most 6 extractors ({#owned(sim, 1, "ord_extractor")})`)
 		t.expect(#owned(sim, 1, "ord_extractor") >= 4, "but it does build them")
 		t.equal(#owned(sim, 1, "ord_advvehplant") + #owned(sim, 1, "ord_watchtower") + #owned(sim, 1, "ord_oracle"), 0, "no tech-up, radar tower or mobile radar")
-		t.expect(brain.waves >= 1, `it attacks ({brain.waves} waves)`)
+		-- gentle for a new player (S-57): no attack in the first 8 minutes,
+		-- then small waves, an army of at most 12
+		t.equal(brain.waves, 0, "no attack before 8 minutes")
+		run(sim, { brain }, 900 * 3, true, function()
+			return brain.waves >= 1
+		end)
+		t.expect(brain.waves >= 1, `then it attacks ({brain.waves} waves)`)
+		local sent = 0
+		for _ in brain.attacking do
+			sent += 1
+		end
+		t.expect(sent <= 4, `a small first wave ({sent} units)`)
+		t.expect(#owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict") <= Skirmish.LEVELS.easy.maxArmy + 1, "a small army")
+	end)
+
+	t.test("normal: tanks before its third generator, and the army comes home against an enemy wave", function()
+		local sim = levelSim("map:ridgeline", 34)
+		local brain = Skirmish.new(sim, 1, "normal")
+		local armyAtGen3: number? = nil
+		run(sim, { brain }, 900 * 8, false, function()
+			if armyAtGen3 == nil and #owned(sim, 1, "ord_generator") >= 3 then
+				armyAtGen3 = #owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict")
+			end
+			return false
+		end)
+		t.expect(armyAtGen3 ~= nil and armyAtGen3 >= 2, `at least 2 tanks when the third generator went down ({armyAtGen3})`)
+		-- send a wave out, then bring an enemy wave to the base
+		run(sim, { brain }, 900 * 4, true, function()
+			return next(brain.attacking) ~= nil
+		end)
+		t.expect(next(brain.attacking) ~= nil, "a wave went out")
+		local w = sim.world
+		local enemies = {}
+		for i = 1, 4 do
+			-- 220 studs out toward the enemy (inside the recall radius, 45% of the way), side by side
+			local id = Spawn.unit(sim, "chs_ravager", 2, brain.homeX + brain.dirX * 220 - brain.dirZ * i * 12, brain.homeZ + brain.dirZ * 220 + brain.dirX * i * 12, 0)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+			w.fireState[id] = World.FireState.HOLD_FIRE
+			table.insert(enemies, id)
+		end
+		run(sim, { brain }, 60, true)
+		t.equal(next(brain.attacking), nil, "the wave was called home")
+		t.expect(brain.recallUntil > sim.tick, "and no new wave leaves while it defends")
 	end)
 
 	t.test("hard: turrets, escorted expansions, an airfield with aircraft", function()
