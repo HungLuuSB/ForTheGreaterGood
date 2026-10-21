@@ -20,7 +20,8 @@ local function samScene()
 	for i = 0, 3 do
 		local f = Spawn.unit(sim, "ord_falcon", 1, -60, -60 + i * 40, math.pi / 2)
 		ServerWorld.setHealth(sim.world, f, sim.world.health[f] * 5)
-		Spawn.unit(sim, "chs_thorn", 2, -100 + (i % 2) * 200, -100 + (i // 2) * 200, 0)
+		-- under the jets' 220-stud loiter circle: in reach of the Thorn's 206 (S-56)
+		Spawn.unit(sim, "chs_thorn", 2, -130 + (i % 2) * 140, -70 + (i // 2) * 140, 0)
 	end
 	local world = World.new(sim.defs)
 	NetOut.join(sim, 1)
@@ -146,9 +147,10 @@ return function(t: any)
 		table.sort(errors)
 		local median, p90 = errors[math.max(1, n // 2)] or 0, errors[math.max(1, math.floor(n * 0.9))] or 0
 		print(string.format("    %d-tick predictions: %d, median %.2f studs off the server, 90th percentile %.2f, mean %.2f, worst %.1f; hit calls %d right, %d wrong", AHEAD, n, median, p90, mean, worst, agree, disagree))
-		-- overkill-aware targeting (S-29) and the Thorn's shorter range (294
-		-- since S-55) fire fewer missiles at the jets
-		t.expect(n > 40, `plenty of predictions checked ({n})`)
+		-- overkill-aware targeting (S-29) fires fewer missiles at the jets, and
+		-- at the Thorn's 206 studs (S-56) a flight lasts ~6 ticks, so few are
+		-- still flying 5 ticks after a prediction
+		t.expect(n > 10, `plenty of predictions checked ({n})`)
 		-- the targets circle, and the prediction flies them straight on: most
 		-- paths stay close, the turning end game spreads (missiles fly 28 studs a tick)
 		t.expect(median < 3, `predicted {AHEAD} ticks ahead: median {median} studs off`)
