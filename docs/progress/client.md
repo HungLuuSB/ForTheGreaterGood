@@ -115,6 +115,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `48af47e` `99e8a8f` (merge of `main` with S-52; request 30 marked done); test_client 104, test 340, build passed.
 - Ready to merge: `cfa1424` (reload test override, nuke profile launches every 2 s); test_client 104, build passed.
 - Ready to merge: `82d0e5f` (large-scale battle profile `normandy`, formation spawns; request 31 for the sim); build passed.
+- Ready to merge: `242cecc` (normandy: stronger economy, startResources); build passed.
 
 ## Tasks
 
