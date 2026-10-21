@@ -4,6 +4,7 @@
 -- into chunks of at most Schema.MAX_UNITS_PER_COMMAND units. Pure Luau (C-7).
 
 local Packer = require("@shared/Net/Packer")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
@@ -89,10 +90,10 @@ function Orders.encode(world: World.World, intent: Intent, ids: { number }): { b
 	return out
 end
 
--- The server's formation constants (src/server/Sim/Nav.luau; copies until
--- they're shared, see "Requests for the sim session").
+-- The server's formation spacing (src/server/Sim/Nav.luau; a copy until the
+-- formation slots are shared, request 3). The unit radius is shared (S-9).
 Orders.SLOT_SPACING = 1.3 -- unit diameters
-Orders.RADIUS_PER_FOOTPRINT = 8 * 0.45
+Orders.RADIUS_PER_FOOTPRINT = PlacementRules.RADIUS_PER_FOOTPRINT
 
 -- Goal point per unit of a line move from (x1, z1) to (x2, z2), for drawing
 -- (C-11): the server's layout (rows of evenly spaced slots, extra rows
