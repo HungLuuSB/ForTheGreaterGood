@@ -57,6 +57,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `f5740e0` (Explosion delay after a hit (C-26)).
 - Ready to merge: `a602502` (Shells from the barrel tip (C-27)).
 - Ready to merge: `9254e74` (Task 1: terrain from the map layers (C-28)).
+- Ready to merge: `f95efcc` (Smooth range rings (C-29)).
 
 ## Tasks
 
