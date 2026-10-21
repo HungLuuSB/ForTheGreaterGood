@@ -509,7 +509,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			burstScale = math.clamp(b.radius / 3, 0.8, 2)
 		end
 		if kind ~= "lost" then
-			Vfx.spawn(r.vfx, kind, b.x, b.y, b.z, burstScale, vt, b.ground, b.dx, b.dy, b.dz)
+			Vfx.spawn(r.vfx, kind, b.x, b.y, b.z, burstScale, vt, b.ground, b.dx, b.dy, b.dz, b.tx, b.ty, b.tz)
 			r.stats.emits += 1
 		end
 	end
