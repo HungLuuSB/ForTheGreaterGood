@@ -1,13 +1,12 @@
 --!strict
 -- Juggernaut (Chaos main battle tank, T2): a heavy tracked hull carrying a
 -- turning torso with two gun arms at the shoulders (guide 14.4). The arms
--- hang down at rest and rise to fire: they are visual pieces animated by
--- its piece script (Core/PieceScripts/chs_juggernaut, C-30); the def lists
--- base, turret and muzzle. Model space, forward = -Z (docs/contracts/rig.md).
+-- hang down at rest and rise to fire, following the server's aim (S-20,
+-- Core/PieceScripts/chs_juggernaut, C-33). Model space, forward = -Z
+-- (docs/contracts/rig.md).
 
 return {
 	id = "chs_juggernaut",
-	visualPieces = { "armL", "armR" },
 	parts = {
 		{ name = "base", shape = "box", size = { 6.2, 1.7, 7.4 }, at = { 0, 1.75, 0.1 }, color = "hull" },
 		{ name = "glacis", parent = "base", shape = "wedge", size = { 6.2, 1.0, 1.6 }, at = { 0, 2.1, -3.4 }, rot = { 0, 180, 0 }, color = "hull" },
