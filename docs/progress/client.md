@@ -92,6 +92,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `58187a7` (log C-45, C-46; requests 14-16 for the sim session).
 - Ready to merge: `927a141` (detailed combat effects with ReplicatedStorage.Vfx templates, C-47).
 - Ready to merge: `a8d794e` (merge of `main` with S-29..S-32) with `a9ef27b` (spec threshold); test_client 92, test 313, build passed.
+- Ready to merge: `91a79a1` (aircraft crash, countermeasures by equipment, C-48; requests 17-19).
 
 ## Tasks
 
