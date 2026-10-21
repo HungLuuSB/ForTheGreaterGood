@@ -119,7 +119,7 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 		Air.release(sim, id) -- a docked aircraft launches (S-36)
 		local d = def(sim, id)
 		-- structures take no orders, except a silo's attack-ground (S-48)
-		if d.domain == "structure" and not (spec.kind == "attackGround" and Air.isManualFire(sim, d)) then
+		if d.domain == "structure" and not (spec.kind == "attackGround" and (Air.isManualFire(sim, d) or Air.groundFires(sim, d))) then
 			if isFactory(d) and isMoveLike(spec.kind) and spec.x then
 				o.rallyKind[id] = if spec.kind == "move" then "move" else "fight"
 				o.rallyX[id], o.rallyZ[id] = spec.x :: number, spec.z :: number
@@ -252,8 +252,9 @@ local function start(sim: Types.Sim, id: number, h: Order): boolean
 	elseif kind == "build" then
 		Build.commandBuild(sim, { id }, h.defIndex :: number, h.x :: number, h.z :: number, h.facing or 0)
 	elseif kind == "attackGround" then
-		if not Air.isBomber(sim, def(sim, id)) and not Air.isManualFire(sim, def(sim, id)) then
-			return false -- only bombers and silos take it: done
+		local d = def(sim, id)
+		if not Air.isBomber(sim, d) and not Air.isManualFire(sim, d) and not Air.groundFires(sim, d) then
+			return false -- only bombers, silos and ballistic weapons take it: done
 		end
 		Air.attackGround(sim, id, h.x :: number, h.z :: number)
 	elseif kind == "guard" then
@@ -324,7 +325,25 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		return true
 	elseif kind == "attackGround" then
 		-- bombers: until replaced; a silo: until it launched (S-48)
-		return Air.isBomber(sim, def(sim, id)) or sim.air.groundX[id] ~= nil
+		local d = def(sim, id)
+		if Air.isBomber(sim, d) or Air.isManualFire(sim, d) then
+			return Air.isBomber(sim, d) or sim.air.groundX[id] ~= nil
+		end
+		-- ballistic weapons (S-68): close to range, then fire until replaced
+		local gx, gz = sim.air.groundX[id], sim.air.groundZ[id]
+		if gx == nil or gz == nil then
+			return false
+		end
+		if d.domain ~= "structure" then
+			local reach = d.maxRange * Orders.ATTACK_REACH
+			local dx, dz = (gx :: number) - w.posX[id], (gz :: number) - w.posZ[id]
+			if dx * dx + dz * dz > reach * reach then
+				chase(sim, id, h, gx :: number, gz :: number)
+			else
+				halt(sim, id)
+			end
+		end
+		return true
 	end
 	-- repair / reclaim / build
 	return not builderIdle(sim, id)

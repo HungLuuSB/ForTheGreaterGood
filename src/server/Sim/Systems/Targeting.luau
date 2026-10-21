@@ -324,8 +324,8 @@ return function(sim: Types.Sim)
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
 			local searchNow = staggerTick or w.wOverkill[key] == OK_RETARGET
-			if groundOrder and weapon.type == "BOMB" then
-				World.setTarget(w, key, 0) -- bombing the ordered spot (Air.bombAim)
+			if groundOrder and (weapon.type == "BOMB" or weapon.type == "BALLISTIC") then
+				World.setTarget(w, key, 0) -- bombing / shelling the ordered spot (Air.bombAim, S-68)
 				continue
 			end
 			if weapon.manualFire then

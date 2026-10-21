@@ -257,13 +257,32 @@ function Air.isManualFire(sim: Types.Sim, d: Defs.UnitDef): boolean
 	return cached
 end
 
+-- Does this def carry a weapon that can fire at the ground (S-68, audit
+-- item 18): a ballistic gun, howitzer, mortar or rocket launcher? Cached.
+local groundCache: { [any]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+function Air.groundFires(sim: Types.Sim, d: Defs.UnitDef): boolean
+	local cached = groundCache[d]
+	if cached == nil then
+		cached = false
+		for _, slot in d.weapons do
+			if sim.defs.weaponByIndex[slot.weaponIndex].type == "BALLISTIC" then
+				cached = true
+			end
+		end
+		groundCache[d] = cached
+	end
+	return cached
+end
+
 -- Attack-ground order (D100): bombers make runs on (x, z) until another
 -- order replaces it; a unit with a manualFire weapon (a silo, S-48) fires
--- one shot there, then the order is done. Other units ignore it. The point
--- is kept here (AirState.groundX / groundZ) for both.
+-- one shot there, then the order is done; a unit with ballistic weapons
+-- (artillery, tanks, gun turrets; S-68) fires them at the spot until another
+-- order replaces it (Orders brings it into range). Other units ignore it.
+-- The point is kept here (AirState.groundX / groundZ) for all of them.
 function Air.attackGround(sim: Types.Sim, id: number, x: number, z: number)
 	if not Air.isBomber(sim, def(sim, id)) then
-		if Air.isManualFire(sim, def(sim, id)) then
+		if Air.isManualFire(sim, def(sim, id)) or Air.groundFires(sim, def(sim, id)) then
 			sim.air.groundX[id], sim.air.groundZ[id] = x, z
 		end
 		return

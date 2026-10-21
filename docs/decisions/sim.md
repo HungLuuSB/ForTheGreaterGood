@@ -875,3 +875,29 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The trade check shows the per-value balance even (S-62), but the AI uses none of Chaos's conditions: it waves attack-moves into the enemy, which is Order's "defend" case (1.4–2.1). It never flanks or raids, and it doesn't expand wider.
   - Chaos's cheaper units also make its economy-to-army choices the same as Order's, so its numbers advantage is only the value it saved.
   - This is the faction AI's job (task 11, proposal section 7), then the ±10% tuning (task 12).
+
+## S-68 — Alerts, the under-attack flag, ground fire (the user's task 6; client request 39) (2026-10-22)
+
+- **Asked:** audit item 17 (the ALERT event and the strategic "under attack" flag, so the client's alerts come from the server) and item 18 (ATTACK_GROUND for artillery and any weapon with ground fire). The client asked for 17 at the same time (request 39), with suggested kinds and rate limits; built as suggested.
+- **ALERT, protocol 23** (`Sim/Alerts`; event 18, `alert u8, cell u16, defIndex u16`, owner only):
+  - UNIT_ATTACKED / STRUCTURE_ATTACKED: one per 400-stud zone per 20 s.
+  - COMMANDER_ATTACKED: one per 10 s.
+  - UNIT_LOST / STRUCTURE_LOST: one per zone per 5 s.
+  - BUILD_DONE: every factory unit and finished frame.
+  - STALL_SUPPLY / STALL_POWER: when the team's ratio drops below 1, at most once per 30 s.
+  - NUKE_LAUNCH: every player, at the silo; LAUNCH_WARNING stays as it was.
+  - **Sources:** Damage (enemy hits, deaths), Build (finished units), the Economy system (stalls), Weapons (launches). NetOut drains the player's queue each tick.
+  - **"Enemy":** the damage's player is on another ally team. Damage queued without a player falls back to its attacker's owner.
+- **UNDER_ATTACK (strategic flag 4):** own and allied units an enemy hit in the last 3 s (45 ticks).
+- **Ground fire:**
+  - Any unit with a BALLISTIC weapon (artillery, tanks, gun turrets, emplacements; `Air.groundFires`) takes ATTACK_GROUND.
+    - Mobile units close to their range (as ATTACK does), then those weapons shell the spot until another order, whatever the fire state.
+    - Its other weapons keep choosing targets.
+    - Structures with ballistic guns take it too.
+  - My call: "any weapon with ground fire" read as every ballistic weapon (shells can be aimed at a point; missiles and hitscan can't).
+- **Not hashed:** the alert state; nothing in the sim reads it.
+- **Tests:**
+  - `Alerts.spec`: rate limit per zone, owner only, UNIT_LOST with the type and place, UNDER_ATTACK set and cleared, BUILD_DONE, one power stall, NUKE_LAUNCH to both players.
+  - `GroundFire.spec`: artillery on hold fire shells a spot; out of range it drives closer; a move order ends it; an Edict takes it, a Halo doesn't.
+  - `Air.spec`: a tank now takes the bombers' ATTACK_GROUND too.
+  - `Schema.spec`: golden bytes.

@@ -31,6 +31,7 @@
 
 local Aim = require("@shared/Combat/Aim")
 local Air = require("../Air")
+local Alerts = require("../Alerts")
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
@@ -154,6 +155,7 @@ local function fire(
 				-- every player is warned (S-48)
 				table.insert(c.strategic, projectile)
 				Combat.addEvent(c, { kind = "LAUNCH", tick = sim.tick, unit = id, other = projectile, x = w.posX[id], y = launchY, z = w.posZ[id] })
+				Alerts.launch(sim, w.posX[id], w.posZ[id], w.defIndex[id]) -- NUKE_LAUNCH, every player (S-68)
 			end
 			if World.isRef(w, target, w.wTargetGen[World.slotKey(id, slot)]) then
 				-- the damage it is expected to deal (S-29)
@@ -225,7 +227,7 @@ return function(sim: Types.Sim)
 			-- ordered spot for a bomber's attack-ground.
 			local kx, kz, defIndex = nil, nil, nil
 			local projTarget = 0
-			if (weapon.type == "BOMB" or weapon.manualFire) and sim.air.groundX[id] ~= nil then
+			if (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC") and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
 			elseif weapon.manualFire then
 				target = 0 -- nothing without an attack-ground order (S-48)
@@ -269,7 +271,9 @@ return function(sim: Types.Sim)
 				else
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
-				canFire = not holdFire and dist <= weapon.range + radius
+				-- an attack-ground order's shelling ignores the fire state (S-68)
+				local ordered = target == 0 and weapon.type == "BALLISTIC" and sim.air.groundX[id] ~= nil
+				canFire = (ordered or not holdFire) and dist <= weapon.range + radius
 				if pitch == nil then
 					canFire = false
 					wantPitch = if turret then rad(turret.maxPitch) else 0
