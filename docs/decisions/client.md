@@ -210,3 +210,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 **Why:** the user's request. `Bars.spec` against the real sim: a generator frame keeps two bars while it builds, its health follows 1 % + 99 % x progress, then no bar once finished (one when selected); a factory frame under a tank's fire loses health but its progress never drops. Studio (`build` profile): a factory frame showed two bars with health tracking progress (0.04/0.03 … 0.39/0.38), a Studio-only 35 % hit (`FtggDebug:Invoke("damage", id, amount)`, through the sim's own damage step) took health to 0.65 while build stayed at 0.99, then it finished with one yellow-green bar. Cost 0.019 ms per frame (2 bars).
 
+### C-25 — Exact target line (2026-10-21)
+
+**Decision:** the target line (C-20) uses the server's targets for own units (State TARGET field, S-16, protocol 8): the client keeps `targets[slot]` per unit and the line goes to the first weapon slot's target that the client knows. A target the client has dropped (it died) shows no line. The aim guess and the attack-order shortcut stay only for units whose targets the server doesn't send (an ally's units in a team game; "own" on the client is the team, the wire doesn't say which player owns a unit).
+
+**Why:** `Targets.spec`: over 200 ticks of the duel, the line's target equals the server's (first slot with a live target) for every own unit on every tick; the guess without wire targets still agrees 1,393 times in 1,398.
+

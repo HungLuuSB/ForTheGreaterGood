@@ -144,6 +144,13 @@ local function applyState(world: World.World, records: { Schema.State })
 		for _, a in r.aim or {} do
 			u.aim[a.slot] = { yaw = World.angle(a.yaw), pitch = World.angle(a.pitch) }
 		end
+		if r.targets then
+			local targets = u.targets or {}
+			for _, tg in r.targets do
+				targets[tg.slot] = tg.targetId
+			end
+			u.targets = targets
+		end
 	end
 end
 

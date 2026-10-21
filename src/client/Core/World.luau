@@ -42,6 +42,7 @@ export type Unit = {
 	state: number,
 	weapon: number, -- Schema weapon state field
 	aim: { [number]: Aim }, -- by weapon slot
+	targets: { [number]: number }?, -- own units (S-16): target unit id by weapon slot, 0 = none; nil until the server sends them
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
 	rx: number?,
 	ry: number?,
