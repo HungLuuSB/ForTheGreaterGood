@@ -39,6 +39,9 @@ return function(t: any)
 				end
 			end
 			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" then
+					killers[e.other] = nil -- a new projectile under a reused ID
+				end
 				if e.kind == "IMPACT" and e.unit ~= 0 and sim.world.health[e.unit] == nil then
 					killers[e.other] = true
 				end
@@ -49,7 +52,9 @@ return function(t: any)
 			Effects.update(fx, world, rt, rt * DT, 0, 0)
 			table.clear(world.died)
 			for id, p in fx.projectiles do
-				if p.weapon.type == "HOMING" and p.target ~= 0 and killers[id] then
+				-- the killing missile, still drawn on its way in: the server has removed
+				-- it (a projectile with its ID still alive there is a later, reused one)
+				if p.weapon.type == "HOMING" and p.target ~= 0 and killers[id] and sim.combat.projSlot[id] == nil then
 					chased += 1
 					if World.unitOrDying(world, p.target) == nil then
 						lost += 1 -- drawn as "no lock" while the server's missile is still on its way in

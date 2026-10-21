@@ -10,7 +10,8 @@
 --     ends it and bursts; DECOYED / LOST_LOCK snap it and clear its target;
 --     homing corrections snap the prediction and blend the drawn offset away
 --     over 5 ticks (errors above 60 studs snap).
---   * FIRE draws a tracer from the shooter's muzzle to the end point.
+--   * FIRE draws a tracer from the shooter's muzzle to the end point; SHOT
+--     (a shooter the client doesn't have, S-43) from the start point it gives.
 --   * DEATH bursts at the unit, bigger with severity.
 -- Caps (guide 15.3): every projectile is followed, but at most
 -- MAX_PROJECTILES are drawn; at most MAX_EXPLOSIONS bursts and MAX_TRACERS
@@ -433,7 +434,7 @@ local function mark(fx: Fx, kind: string, now: number, x0: number, y0: number, z
 	table.insert(fx.marks, { kind = kind, x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now })
 end
 
-local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
+local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
 
 -- The unit (and weapon slot) that launched a `weaponIndex` shell from
 -- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
@@ -600,6 +601,18 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local b = burst(fx, now, x0, y0 :: number, z0 :: number, 0.7 * t.size, "muzzle", 0.1)
 			facing(b, x1 - x0, y1 - (y0 :: number), z1 - (z0 :: number))
 		end
+	elseif kind == EK.SHOT then
+		-- a hidden shooter's hitscan shot (protocol 14, S-43, C-54): a tracer
+		-- between the two ends the server sends, with no shooter and no muzzle
+		-- flash, so it shows the shot without lighting up where it came from
+		local x1, y1, z1 = pos(world, e)
+		local x0, z0 = world.grid:decode(e.fromCell, e.fromOffX, e.fromOffZ)
+		local y0 = e.fromY / Schema.Y_SCALE
+		local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = Effects.TRACER_SECONDS, hit = e.hit == true, size = 1 }
+		if #fx.tracers >= Effects.MAX_TRACERS then
+			fx.skipped.tracers += 1
+		end
+		capped(fx, fx.tracers, t, Effects.MAX_TRACERS)
 	elseif kind == 0 then
 		-- homing correction (Projectiles channel): snap the prediction, keep
 		-- drawing where it was, blend the gap away
