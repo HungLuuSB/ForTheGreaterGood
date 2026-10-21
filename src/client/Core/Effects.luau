@@ -152,6 +152,16 @@ local function weaponSize(weapon: any): number
 	return math.max(1, (weapon and weapon.aoe) or 1)
 end
 
+-- Weapons whose impact effect is a large one (fx.impact "..._large", the
+-- radar SAMs' heavy warheads) explode this much bigger than their blast
+-- radius alone gives (C-52).
+Effects.LARGE_IMPACT = 1.8
+function Effects.impactSize(weapon: any): number
+	local impact = weapon and weapon.fx and weapon.fx.impact
+	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
+	return weaponSize(weapon) * (if large then Effects.LARGE_IMPACT else 1)
+end
+
 local function pos(world: World.World, e: Schema.Event): (number, number, number)
 	local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 	return x, (e.y :: number) / Schema.Y_SCALE, z
@@ -512,7 +522,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
 		local x, y, z = pos(world, e)
-		local r = if p then weaponSize(p.weapon) else 2
+		local r = if p then Effects.impactSize(p.weapon) else 2
 		local b = burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
 		b.ground = World.groundY(world, x, z)
 		if p then

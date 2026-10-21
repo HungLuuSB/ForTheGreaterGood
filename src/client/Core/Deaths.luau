@@ -75,6 +75,10 @@ end
 Deaths.MIN_CRASH_ALT = 3 -- studs: lower (landed, on a pad) dies like a ground unit
 Deaths.MAX_CRASH_SECONDS = 5
 Deaths.CRASH_STEP = 1 / 30 -- seconds: the ground is looked for in these steps, then refined
+-- After the hit the wreck keeps falling through the ground out of sight, and
+-- the model stays this long, so its smoke trail (particles of the model's
+-- emitters) fades out in the air instead of vanishing with it (C-52).
+Deaths.CRASH_LINGER = 3
 local CRASH = {
 	jet = { gravity = 45, drag = 1.0, vy = -4, roll = 4.5, spin = 0 },
 	heli = { gravity = 35, drag = 2.2, vy = 0, roll = 0, spin = 7 },
@@ -177,12 +181,10 @@ end
 
 -- Where a falling aircraft is `t` seconds in, and how it is turned: x, y, z,
 -- heading, pitch (> 0 lifts the nose), roll (> 0 lifts the right side).
+-- Past `duration` it goes on falling under the ground (CRASH_LINGER).
 function Deaths.crashAt(c: Crash, t: number): (number, number, number, number, number, number)
-	local tt = math.clamp(t, 0, c.duration)
+	local tt = math.clamp(t, 0, c.duration + Deaths.CRASH_LINGER)
 	local x, y, z = crashPos(c, tt)
-	if tt >= c.duration then
-		y = c.ey
-	end
 	local h = math.sqrt(c.vx * c.vx + c.vz * c.vz) * math.exp(-c.drag * tt)
 	local vy = c.vy - c.gravity * tt
 	if c.heli then
