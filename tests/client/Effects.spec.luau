@@ -368,7 +368,8 @@ return function(t: any)
 		for i = 0, 3 do
 			local f = Spawn.unit(sim, "ord_falcon", 1, -60, -60 + i * 40, math.pi / 2)
 			ServerWorld.setHealth(sim.world, f, sim.world.health[f] * 5)
-			Spawn.unit(sim, "chs_thorn", 2, -100 + (i % 2) * 200, -100 + (i // 2) * 200, 0)
+			-- under the jets' 220-stud loiter circle: in reach of the Thorn's 206 (S-56)
+		Spawn.unit(sim, "chs_thorn", 2, -130 + (i % 2) * 140, -70 + (i // 2) * 140, 0)
 		end
 		local world = World.new(sim.defs)
 		NetOut.join(sim, 1)
@@ -409,9 +410,10 @@ return function(t: any)
 		t.expect(n > 1000, "plenty of missile frames")
 		t.expect(worst <= 3, `no jumps (worst {worst} studs)`)
 		-- C-38's corners were ~1 stud a frame; with proportional navigation
-		-- (S-27) paths are so straight that the mean bend halved, so a tenth
-		-- of a stud at the boundary still counts as smooth
-		t.expect(boundary <= math.max(mean * 1.5, 0.1), `no corner at tick boundaries ({boundary} vs {mean} on average)`)
+		-- (S-27) paths are so straight that the mean bend halved, and at the
+		-- Thorn's 206 studs (S-56) most of a ~6-tick flight is the terminal
+		-- turn, so 0.15 stud at the boundary still counts as smooth
+		t.expect(boundary <= math.max(mean * 1.5, 0.15), `no corner at tick boundaries ({boundary} vs {mean} on average)`)
 	end)
 
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()
