@@ -117,8 +117,7 @@ end
 
 -- Adds a spectator (S-18): it sees every unit (no fog), its camera covers
 -- the whole map, so every unit is in its tactical tier, and it gets every
--- combat event; no Eco records (they have no team field) and no weapon
--- targets. Its first outbox starts with a WELCOME whose player, team and
+-- combat event, every team's Eco record (S-21), and no weapon targets. Its first outbox starts with a WELCOME whose player, team and
 -- ally team are 0. Returns its index in `sim.net.spectators`.
 function NetOut.addSpectator(sim: Types.Sim): number
 	local pn = NetState.viewer(true)
@@ -181,7 +180,7 @@ local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
 			ratio = math.clamp(math.floor(r.ratio * 255), 0, 255),
 		}
 	end
-	return { supply = res(acc.supply), power = res(acc.power), wind = math.clamp(math.floor(sim.eco.wind * 255), 0, 255) }
+	return { team = team, supply = res(acc.supply), power = res(acc.power), wind = math.clamp(math.floor(sim.eco.wind * 255), 0, 255) }
 end
 
 function NetOut.setCamera(sim: Types.Sim, player: number, minX: number, minZ: number, maxX: number, maxZ: number)
@@ -334,6 +333,16 @@ function NetOut.step(sim: Types.Sim)
 	local tick = sim.tick
 	local wireTick = Tick.toWire(tick)
 	local strategicTick = tick % NetOut.STRATEGIC_EVERY == 0
+
+	-- every team, ascending: a spectator's Eco records (S-21)
+	local teamOrder: { number } = {}
+	for _, pid in sim.playerOrder do
+		local t = sim.players[pid].team
+		if table.find(teamOrder, t) == nil then
+			table.insert(teamOrder, t)
+		end
+	end
+	table.sort(teamOrder)
 
 	-- viewers: the players, then spectators (player, team and ally team 0)
 	local viewers: { { pid: number, pn: NetState.PlayerNet, team: number, ally: number } } = {}
@@ -539,12 +548,21 @@ function NetOut.step(sim: Types.Sim)
 			pn.welcome = nil
 		end
 		outbox.Eco = {}
-		if team ~= 0 and (pn.forceFull or tick % Economy.STEP_TICKS == 0) then -- spectators: no team account
-			local rec = ecoRecord(sim, team)
-			if rec then
-				local wr = Packer.Writer.new(Schema.TICK_HEADER_BYTES + Schema.ECO_BYTES)
+		if pn.forceFull or tick % Economy.STEP_TICKS == 0 then
+			-- a player: its own team's account; a spectator: every team's (S-21)
+			local records: { Schema.Eco } = {}
+			for _, t in (if team ~= 0 then { team } else teamOrder) do
+				local rec = ecoRecord(sim, t)
+				if rec then
+					table.insert(records, rec)
+				end
+			end
+			if #records > 0 then
+				local wr = Packer.Writer.new(Schema.TICK_HEADER_BYTES + Schema.ECO_BYTES * #records)
 				Schema.encodeTickHeader(wr, wireTick)
-				Schema.encodeEco(wr, rec)
+				for _, rec in records do
+					Schema.encodeEco(wr, rec)
+				end
 				local msg = wr:finish()
 				local bytes = buffer.tostring(msg)
 				-- the tick header changes every time: compare the record itself

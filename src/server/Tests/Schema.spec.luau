@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 8, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 9, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -404,11 +404,12 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.REJECT, protocol = 6, defsHash = 0x0A0B0C0D, reason = 2 })), "02 06 00 0d 0c 0b 0a 02")
 		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.WELCOME, tick = 0x01020304, player = 1, team = 2, allyTeam = 1, mapId = "ab" })), "03 04 03 02 01 01 02 01 02 61 62")
 		local eco: Schema.Eco = {
+			team = 3,
 			supply = { stored = 1, storage = 2, income = 3, demand = 4, ratio = 5 },
 			power = { stored = 6, storage = 7, income = 8, demand = 9, ratio = 10 },
 			wind = 11,
 		}
-		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b")
+		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b") -- team first since protocol 9
 	end)
 
 	t.test("events round-trip, reject bad input, and every prefix is truncated", function()
@@ -470,6 +471,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeSnapshot, { 9 }, "unknown snapshot kind 9")
 		expectRejected(t, Schema.decodeSnapshot, { 2, 0, 0, 0, 0, 0, 0, 3 }, "unknown reject reason 3")
 		local eco: Schema.Eco = {
+			team = 8,
 			supply = { stored = 4294967295, storage = 0, income = 12345, demand = 0, ratio = 255 },
 			power = { stored = 0, storage = 4294967295, income = 0, demand = 99999, ratio = 0 },
 			wind = 255,
@@ -477,6 +479,8 @@ return function(t: RunAll.Context)
 		roundTrip(t, { eco }, Schema.encodeEco, Schema.decodeEco)
 		t.equal(buffer.len(encodeOne(Schema.encodeEco, eco)), Schema.ECO_BYTES)
 		expectTruncated(t, "eco record", Schema.decodeEco, encodeOne(Schema.encodeEco, eco))
+		expectRejected(t, Schema.decodeEco, { 0 }, "team 0 outside 1..8") -- protocol 9: records carry their team
+		expectRejected(t, Schema.decodeEco, { 9 }, "team 9 outside 1..8")
 		t.equal(Schema.Channel.Snapshot.reliable, true, "the handshake is reliable")
 		t.equal(Schema.Channel.Eco.reliable, true, "economy is reliable")
 	end)

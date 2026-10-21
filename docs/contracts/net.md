@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **8**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2) and the REPEAT command (S-13).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **9**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2) and the REPEAT command (S-13).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -19,7 +19,7 @@ Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client s
 | `Strategic` | S → C | UnreliableRemoteEvent | no | Every known non-tactical unit, every 5th tick |
 | `Events` | S → C | RemoteEvent | yes | ENTER / LEAVE / DEATH and combat events |
 | `Projectiles` | S → C | UnreliableRemoteEvent | no | Homing-projectile corrections |
-| `Eco` | S → C | RemoteEvent | yes | Own team's economy (section 10) |
+| `Eco` | S → C | RemoteEvent | yes | Own team's economy; a spectator's: every team's (section 10) |
 | `Snapshot` | both | RemoteEvent | yes | Join handshake (section 10) |
 
 Names and reliability: `Schema.Channel`.
@@ -193,9 +193,10 @@ The client drops everything it had before WELCOME.
 
 Server side: `NetOut.hello(sim, msg)` returns nil (accept) or the REJECT message; malformed input errors, so `pcall` it. `NetOut.join(sim, player, clearCamera?)` queues the WELCOME. Test (`NetOut.spec`): a client that joins at tick 300 has, five ticks later, exactly the view of a client connected from the start: units, tiers, positions, icons and flags, unguided projectiles and the economy.
 
-**Eco channel** (reliable), own team only: one record after the tick header, sent on economy ticks (every 5th tick) when it changed, and after WELCOME.
+**Eco channel** (reliable): after the tick header, one record per team: a player gets only its own team's, a spectator every team's, in team order (protocol 9, S-21). Sent on economy ticks (every 5th tick) when any of them changed, and after WELCOME.
 
 ```
+team u8             1..8 (protocol 9)
 per resource, supply then power:
   stored u32        whole units (floor)
   storage u32       whole units
@@ -203,12 +204,12 @@ per resource, supply then power:
   demand u32        tenths of a unit per second
   ratio u8          stall ratio, floor(ratio × 255)
 wind u8             current wind, 0..255 of a turbine's maximum
-                    = 35 B
+                    = 36 B
 ```
 
 ## 10a. Spectators and player replays (S-18)
 
-- **Spectator:** `NetOut.addSpectator(sim)` adds a viewer that sees every unit (no fog, no ghosts), with a camera on the whole map: every unit is in its tactical tier, and it gets every combat event and homing correction. Its stream starts with a WELCOME whose `player`, `team` and `allyTeam` are **0** (no protocol change: 0 was never a valid player). It gets no Eco records (they carry no team) and no weapon targets (those are the owner's).
+- **Spectator:** `NetOut.addSpectator(sim)` adds a viewer that sees every unit (no fog, no ghosts), with a camera on the whole map: every unit is in its tactical tier, and it gets every combat event and homing correction. Its stream starts with a WELCOME whose `player`, `team` and `allyTeam` are **0** (no protocol change: 0 was never a valid player). It gets every team's Eco record (S-21) and no weapon targets (those are the owner's).
 - **Player replay files** (`Shared/Net/PlayerReplay`, guide 17.1): the stream one viewer got (a player, or a spectator), message by message. A client plays it back through its normal receive code, never re-simulating, so it survives balance patches and platform differences; it needs the protocol version and defs hash it was recorded with (both in the header).
   - Layout: `"FTGP"`, format u8 (1), protocol u16, defsHash u32, mapId (u8 length + bytes), viewer u8 (0 = spectator), players (count u8, then id, team, allyTeam u8 each), firstTick u32, lastTick u32, then frames: tick delta (varint), message count (varint), and per message channel u8 (1-based in `PlayerReplay.CHANNELS`, the same order as `NetState.CHANNELS`), length (varint), bytes. Ticks without messages have no frame.
   - API: `PlayerReplay.new(header, firstTick)`, `record(replay, tick, outbox)` after every sim tick, `serialize` / `parse`, and `play(replay, deliver)`, which calls `deliver(tick, outbox)` for every tick (empty outboxes between frames), exactly what a live client receives.
@@ -231,3 +232,4 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 6 | Snapshot handshake (HELLO / REJECT / WELCOME), Eco channel (S-2) |
 | 7 | REPEAT command (15) and `REPEAT` unit state bit (16); TOGGLE no longer sets repeat on factories (S-13) |
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
+| 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |

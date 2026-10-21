@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 8 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets)
+Schema.PROTOCOL_VERSION = 9 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -887,17 +887,20 @@ function Schema.decodeSnapshot(r: Reader): SnapshotRecord
 end
 
 --------------------------------------------------------------------------------
--- Economy (Eco channel, S → C, reliable; S-2): the player's own team, after
--- the tick header. Per resource (supply, then power):
---   stored u32 (whole) | storage u32 (whole) | income u32 (tenths per second)
---   | demand u32 (tenths per second) | ratio u8 (stall ratio × 255)
--- then wind u8 (× 255)                                                  = 35 bytes
+-- Economy (Eco channel, S → C, reliable; S-2): after the tick header, one
+-- record per team: a player gets its own team's, a spectator every team's
+-- (protocol 9, S-21).
+--   team u8 (1..8)
+--   per resource (supply, then power):
+--     stored u32 (whole) | storage u32 (whole) | income u32 (tenths per second)
+--     | demand u32 (tenths per second) | ratio u8 (stall ratio × 255)
+--   wind u8 (× 255)                                                     = 36 bytes
 --------------------------------------------------------------------------------
 
 export type EcoResource = { stored: number, storage: number, income: number, demand: number, ratio: number }
-export type Eco = { supply: EcoResource, power: EcoResource, wind: number }
+export type Eco = { team: number, supply: EcoResource, power: EcoResource, wind: number }
 
-Schema.ECO_BYTES = 35
+Schema.ECO_BYTES = 36
 
 local function writeResource(w: Writer, r: EcoResource)
 	w:writeU32(r.stored)
@@ -912,6 +915,10 @@ local function readResource(r: Reader): EcoResource
 end
 
 function Schema.encodeEco(w: Writer, rec: Eco)
+	if rec.team ~= math.floor(rec.team) or rec.team < 1 or rec.team > Schema.MAX_TEAMS then
+		error(`Schema: eco team must be 1..{Schema.MAX_TEAMS}, got {rec.team}`, 2)
+	end
+	w:writeU8(rec.team)
 	writeResource(w, rec.supply)
 	writeResource(w, rec.power)
 	w:writeU8(rec.wind)
@@ -919,9 +926,13 @@ end
 
 function Schema.decodeEco(r: Reader): Eco
 	r.context = "eco record"
+	local team = r:readU8()
+	if team < 1 or team > Schema.MAX_TEAMS then
+		fail(r, `team {team} outside 1..{Schema.MAX_TEAMS}`)
+	end
 	local supply = readResource(r)
 	local power = readResource(r)
-	return { supply = supply, power = power, wind = r:readU8() }
+	return { team = team, supply = supply, power = power, wind = r:readU8() }
 end
 
 --------------------------------------------------------------------------------
