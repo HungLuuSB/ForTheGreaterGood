@@ -17,6 +17,28 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
   - [x] Style guide rewritten for the near-future look ([`../art/style-guide.md`](../art/style-guide.md)); Chaos base color test on Coastline: gunmetal recommended (M-10).
   - [x] Lancer vertical slice (M-11..M-13), section below. **Waiting for your review.**
 
+## Overnight 2026-10-22: T1 structures (task 3)
+
+22 blockouts, every T1 structure role for both factions, registered (they replace the generic boxes):
+
+| Role | Order (heavy, closed, sloped armor, cyan) | Chaos (light, open frames, tanks, orange) |
+|---|---|---|
+| Vehicle plant (fp 3) | `ord_vehplant`: closed armored hall, buttresses, door over a ramp, team roof | `chs_vehplant`: shed plus an open gantry bay with a crane beam, round tanks |
+| Airfield (fp 5) | `ord_airfield`: runway with edge lights, armored hangar, control tower with radar panel | `chs_airfield`: runway, open roof-on-posts hangar, fuel tanks, lattice mast |
+| Shipyard (fp 5) | `ord_shipyard`: armored piers, closed hall, gantry crane across the basin | `chs_shipyard`: piers on pilings, lattice tower crane with a jib, shed and tanks |
+| Extractor | `ord_extractor`: armored sloped housing, drill head with a light ring | `chs_extractor`: open four-leg derrick, engine box |
+| Generator | `ord_generator`: armored block with a domed reactor cap | `chs_generator`: two glowing combustion tanks on a frame |
+| Solar | `ord_solar`: one large tilted panel on a pedestal | `chs_solar`: three small panels at uneven tilts on a frame |
+| Wind | `ord_windmill`: tapered tower, three-blade rotor | `chs_windmill`: lattice tower, two-blade rotor |
+| Storage | `ord_depot`: low sloped bunker with hatches | `chs_depot`: cluster of round tanks |
+| Radar tower | `ord_watchtower`: square armored tower, flat array | `chs_eye`: lattice mast, flat array, orange eye |
+| Gun turret | `ord_bulwark`: sloped armored base, wedge turret, long gun | `chs_spike`: round base with reactive blocks, rounded turret, twin guns |
+| IR SAM site | `ord_vigil`: armored base, twin closed pods round a sensor | `chs_thorn`: post with six bare canister tubes on a frame |
+
+- Pieces: as the defs (`base`, plus `turret` / `launcher` and `muzzle` on the turrets and SAM sites). Visual pieces for the client to animate: `rotor` on the wind turbines, `radar` on the radar towers.
+- Silhouette test (`debug_out/screens/struct1_*.jpg`; in "FTGG Art": `StructBig*` at z 540–720, `StructSmall*` at z 820–900): every role pair reads apart, and Order vs Chaos differ as black shapes (solid and sloped vs frames and tanks). The two radar towers share an outline (same role, by design).
+- `lune run test_client`: 34 specs, 116 passed.
+
 ## Overnight 2026-10-22: new units and silos (task 2)
 
 - **Silos** (defs exist, registered): `ord_reckoning` (stepped square armored bunker, sloped blast walls, heavy hatch, team plates on the upper block) and `chs_ragnarok` (round silo tube on a pad ringed with reactive-armor blocks, open launch gantry with a crane arm, fuel tanks). Footprint 3; `hatch` hinged at its back edge; `muzzle` over the silo.
