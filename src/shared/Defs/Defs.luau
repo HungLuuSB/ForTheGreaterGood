@@ -324,6 +324,10 @@ local WEAPON_SPEC: Spec = {
 				minPitch = { kind = "number", min = -90, max = 90 },
 				maxPitch = { kind = "number", min = -90, max = 90 },
 				arc = { kind = "number", above = 0, max = 360 },
+				-- rest pose and restore delay (guide 10.3, 14.4; Shared/Combat/Aim, S-20)
+				restYaw = { kind = "number", optional = true, min = -180, max = 180 },
+				restPitch = { kind = "number", optional = true, min = -90, max = 90 },
+				restoreDelay = opt(NON_NEGATIVE),
 			},
 		},
 		guidance = { kind = "string", optional = true, enum = set({ "IR", "RADAR", "COMMAND", "ACOUSTIC" }) },
@@ -503,6 +507,14 @@ function Defs.validate(raw: RawDefs): { string }
 			and turret.minPitch > turret.maxPitch
 		then
 			report(`turret: minPitch {turret.minPitch} is above maxPitch {turret.maxPitch}`)
+		end
+		if type(turret) == "table" and type(turret.restPitch) == "number" and type(turret.minPitch) == "number" and type(turret.maxPitch) == "number" then
+			if turret.restPitch < turret.minPitch or turret.restPitch > turret.maxPitch then
+				report(`turret: restPitch {turret.restPitch} is outside minPitch..maxPitch ({turret.minPitch}..{turret.maxPitch})`)
+			end
+		end
+		if type(turret) == "table" and type(turret.restYaw) == "number" and type(turret.arc) == "number" and math.abs(turret.restYaw) > turret.arc / 2 then
+			report(`turret: restYaw {turret.restYaw} is outside its {turret.arc}° arc`)
 		end
 	end
 

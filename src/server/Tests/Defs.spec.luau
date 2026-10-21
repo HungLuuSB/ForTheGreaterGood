@@ -179,6 +179,12 @@ return function(t: RunAll.Context)
 			{ 'unit ord_lancer: weapons[1].turretPiece: piece "bay" is not in pieces', function(d)
 				d.units.ord_lancer.weapons[1].turretPiece = "bay" -- the client rig needs it (S-3)
 			end },
+			{ "weapon chs_juggernaut_cannon: turret: restPitch -70 is outside minPitch..maxPitch (-65..20)", function(d)
+				d.weapons.chs_juggernaut_cannon.turret.restPitch = -70 -- the arms can't rest below their limit (S-20)
+			end },
+			{ "weapon ord_rockets: turret: restYaw 90 is outside its 120° arc", function(d)
+				d.weapons.ord_rockets.turret.restYaw = 90
+			end },
 			{ 'unit ord_absolution: weapons[1].turretPiece: weapon "ord_bomb" has no turret to turn it', function(d)
 				d.units.ord_absolution.weapons[1].turretPiece = "bay" -- bombs fall from a fixed bay (S-11)
 			end },

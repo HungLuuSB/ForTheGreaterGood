@@ -3,6 +3,7 @@
 -- (health, weapon slots). Used by scenarios, tests and (later) construction.
 
 local Air = require("./Air")
+local Combat = require("./Combat/Combat")
 local EW = require("./EW")
 local Lifecycle = require("./Lifecycle")
 local Placement = require("./Placement")
@@ -38,6 +39,7 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 		heading = heading,
 		health = def.health,
 		weaponCount = #def.weapons,
+		weaponRest = Combat.restPoses(sim, def.index),
 	})
 	if def.domain == "structure" then
 		Placement.occupy(sim, id)
