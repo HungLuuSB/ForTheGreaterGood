@@ -15,11 +15,11 @@ local RunAll = require("./RunAll")
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
 
--- The top speed `defId` reaches driving east along z from x = 20.
-local function topSpeed(defId: string, z: number): number
+-- The top speed `defId` reaches driving east along z from x = x0 (20).
+local function topSpeed(defId: string, z: number, x0: number?): number
 	local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "terrain:64" })
 	local w = sim.world
-	local id = Spawn.unit(sim, defId, 1, 20, z, math.pi / 2)
+	local id = Spawn.unit(sim, defId, 1, x0 or 20, z, math.pi / 2)
 	local cell, ox, oz = (sim.map :: any).grid:encode(240, z)
 	local wr = Packer.Writer.new()
 	Schema.encodeCommand(wr, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = { id }, cell = cell, offX = ox, offZ = oz })
@@ -39,7 +39,7 @@ return function(t: RunAll.Context)
 		local sandHeavy = topSpeed("ord_paladin", 100)
 		t.expect(math.abs(sandHeavy - heavyMax * Terrain.SPEED.HEAVY_TRACKED[Layers.Terrain.SAND]) < 0.01, `a heavy tank on sand: {sandHeavy} of {heavyMax}`)
 		local wheelMax = defs.units.chs_jackal.movement.maxSpeed
-		local road = topSpeed("chs_jackal", 4)
+		local road = topSpeed("chs_jackal", 4, -200) -- the whole road: room to reach 95 studs/s (S-62)
 		t.expect(math.abs(road - wheelMax * Terrain.SPEED.WHEELED[Layers.Terrain.ROAD]) < 0.01, `a scout on the road: {road} of {wheelMax}`)
 		local sand = topSpeed("chs_jackal", 100)
 		t.expect(sand < road * 0.6, `and much slower on sand ({sand})`)

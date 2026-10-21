@@ -406,7 +406,7 @@ function Sensors.step(sim: Types.Sim)
 		local def = sim.defs.unitByIndex[w.defIndex[id]]
 		local sensors = def.sensors
 		if def.pinpointer and s.pinpoints[w.ally[id]] then
-			s.pinpoints[w.ally[id]] += 1
+			s.pinpoints[w.ally[id]] += Pinpoint.weight(def)
 		end
 		local radars = s.radars[w.ally[id]]
 		local close = s.closeSonar[w.ally[id]]

@@ -212,7 +212,8 @@ return function(t: RunAll.Context)
 					nuke = e.other
 				elseif e.kind == "SPAWN_PROJ" and table.find(sites, e.unit) and nuke ~= 0 and c.projSlot[nuke] then
 					-- once the nuke is in a site's range, that site fires only at it
-					local reach = sim.defs.weapons.chs_radar_sam.range
+					-- (targeting saw it a tick earlier: less this tick's step)
+					local reach = sim.defs.weapons.chs_radar_sam.range - math.sqrt(c.pvx[nuke] ^ 2 + c.pvz[nuke] ^ 2) / Sim.TICK_RATE
 					if math.sqrt((c.px[nuke] - w.posX[e.unit]) ^ 2 + (c.pz[nuke] - w.posZ[e.unit]) ^ 2) <= reach then
 						interceptors += 1
 						t.equal(c.pTargetProj[e.other], nuke, "fired at the nuke, not the helicopter")

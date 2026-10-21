@@ -735,3 +735,37 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Schema.spec`: golden bytes and rejects (empty mask, reserved bits, a 51-item queue).
   - `NetOut.spec`: a plant with a 2-item queue, a tank whose fire and move state change, and a jet whose ammo drops. The owner's view matches every tick (the jet while tactical); the other player never gets them.
+
+## S-62 — Faction pass, stage 1: the shared-role numbers (2026-10-22)
+
+- **Asked (the user):** the faction proposal approved with one change, IR SAMs Vigil 206 / Thorn 165 (the user's cuts kept, Order +25%). Shared-role trait pass as in sections 3.1–3.8; every shared role within 0.8–1.25 overall over 3 seeds, each version winning its own condition. Guide 2.1 to the new identity; every changed number in `BALANCE.md`.
+- **Applied:** every number in sections 3.1–3.8, with buildTime scaled by the value change. Where the proposal gave a direction without a number, I followed the direction (listed in BALANCE.md).
+- **New:**
+  - `ord_fortress_howitzer` / `chs_fortress_mortar` for the Edict / Cataclysm: the proposal gives the emplacements their own range and damage, but they shared the Verdict / Hellmouth guns.
+  - `pinpointFull` on Pinpointer defs, with `Pinpoint.weight(def)` = FULL / pinpointFull. Witness 5, Augur 7. The team's count is the sum of weights, so a mixed team adds up and `Pinpoint.precision` is unchanged. The client's `Core/Precision` should sum weights instead of counting (told B).
+- **Measurement:** `lune run factions [seeds] [filter]` (`Scenes.trial`, report only):
+  - Equal value 6,000 per side, up to 60 of a type.
+  - Starts: close, long, defend (Order holds, Chaos attacks from 600 studs) and flank (Chaos in two halves, from the north and south).
+  - Overall = geometric mean of close and long. Order's condition: long or defend ≥ 1.25. Chaos's: close or flank ≤ 0.8.
+  - SAMs face the same bomber and gunship raids; emplacements face the same tank assault.
+  - The counter check's 3,000 budget and 20-unit cap rounded expensive aircraft to equal counts, which hid Chaos's numbers, hence the larger trial.
+- **Tuning:** within ±10% of the proposal's numbers, apart from three steps:
+  - the T1 tank turret yaw rates, swapped toward the identity;
+  - the T2 cannon damages and the Hydra's armored damage, where the proposal gave no number;
+  - the Archon's DIRCM chance.
+  Every step is listed in BALANCE.md "Pass 3".
+- **Result: 12 of 12 roles in band.** Each version wins its condition except:
+  - T1 fighters: even everywhere, since jets close 600 studs in about 2 s;
+  - the Herald at range;
+  - the Hydra close or flanking: re-measured after task 7's salvos.
+- **Tests:** 15 specs read the old numbers and were updated, most to read them from the defs:
+  - Build: Lancer build time.
+  - Combat: damage, wreck value.
+  - Defs: ranges.
+  - Fog and Sensors: these two compared against the position after the tick, while Sensors runs before Movement; they had passed by luck of speed.
+  - Guidance: a decoyed missile that still bursts on the jet a tick later counts as decoyed; DIRCM's share against the faster Thorn is up to 30%.
+  - Nuke: the reach check allows the nuke's step in that tick.
+  - Air: the moving column stays in the spotter's sight; the far jet goal stays on the map.
+  - Stockpile: Chaos capacities.
+  - Terrain: a run long enough to reach top speed.
+  - Pinpoint: Witness / Augur weights, plus a new test of mixed teams.

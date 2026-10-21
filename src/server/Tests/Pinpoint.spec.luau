@@ -1,6 +1,7 @@
 --!strict
 -- Pinpointers (S-59, client request 34): each raises the team's radar
--- precision, full at 6: contacts wobble less, radar missiles keep their lock.
+-- precision, full at 6 (Witness 5, Augur 7 since S-62): contacts wobble
+-- less, radar missiles keep their lock.
 local Packer = require("@shared/Net/Packer")
 local Pinpoint = require("@shared/Combat/Pinpoint")
 local Schema = require("@shared/Net/Schema")
@@ -35,6 +36,25 @@ return function(t: RunAll.Context)
 		t.expect(math.abs(Pinpoint.errorScale(1) - 0.1) < 1e-9, "a tenth of the error at full precision")
 	end)
 
+	t.test("Order's Witness is full at 5, Chaos's Augur at 7; a mixed team adds up (S-62)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+		local units = sim.defs.units
+		t.equal(Pinpoint.weight(units.ord_lancer), 0, "not a Pinpointer")
+		local function precisionWith(witnesses: number, augurs: number): number
+			local s = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+			pinpointers(s, 1, "ord_witness", witnesses, -450)
+			pinpointers(s, 1, "chs_augur", augurs, -380)
+			Sim.step(s)
+			Sim.step(s)
+			return Sensors.precision(s.sensors, 1)
+		end
+		t.expect(math.abs(precisionWith(5, 0) - 1) < 1e-9, "5 Witnesses: full")
+		t.expect(math.abs(precisionWith(4, 0) - 0.8) < 1e-9, "4 Witnesses: 0.8")
+		t.expect(math.abs(precisionWith(0, 7) - 1) < 1e-9, "7 Augurs: full")
+		t.expect(math.abs(precisionWith(0, 6) - 6 / 7) < 1e-9, "6 Augurs: not yet")
+		t.expect(math.abs(precisionWith(2, 3) - (2 / 5 + 3 / 7)) < 1e-9, "2 Witnesses and 3 Augurs on one team")
+	end)
+
 	t.test("radar contacts wobble less with each Pinpointer, barely at all with 6", function()
 		local function worstOffset(count: number): number
 			local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
@@ -50,7 +70,8 @@ return function(t: RunAll.Context)
 					worst = math.max(worst, math.sqrt((x - sim.world.posX[tank]) ^ 2 + (z - sim.world.posZ[tank]) ^ 2))
 				end
 			end
-			t.equal(Sensors.precision(sim.sensors, 1), Pinpoint.precision(count), `{count} Pinpointers counted`)
+			local weight = Pinpoint.weight(sim.defs.units.ord_witness) -- 6 / 5 (S-62)
+			t.equal(Sensors.precision(sim.sensors, 1), Pinpoint.precision(count * weight), `{count} Pinpointers counted`)
 			return worst
 		end
 		local none, three, six = worstOffset(0), worstOffset(3), worstOffset(6)

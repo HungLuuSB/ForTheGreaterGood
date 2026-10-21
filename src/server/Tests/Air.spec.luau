@@ -192,7 +192,7 @@ return function(t: RunAll.Context)
 		w.fireState[spotter] = World.FireState.HOLD_FIRE
 		moveTo(sim, 1, { bomber }, 150, -100)
 		if moving then
-			moveTo(sim, 2, targets, 150, 250) -- driving north under the bombs
+			moveTo(sim, 2, targets, 150, 150) -- driving north under the bombs, staying in the spotter's sight
 		end
 		return sim, bomber, targets
 	end
@@ -575,7 +575,7 @@ return function(t: RunAll.Context)
 		end
 		-- a point inside the jet's turn circle can't be reached exactly: it
 		-- counts as reached at the closest approach
-		for _, case in { { -120, 60, "inside the loiter radius, off to the side", 70 }, { 0, -150, "inside the loiter radius, behind", 70 }, { 400, 300, "far away", Air.ARRIVE_RADIUS + 1 } } do
+		for _, case in { { -120, 60, "inside the loiter radius, off to the side", 70 }, { 0, -150, "inside the loiter radius, behind", 70 }, { -400, 300, "far away", Air.ARRIVE_RADIUS + 1 } } do
 			local best, last = closest(case[1] :: number, case[2] :: number)
 			t.expect(best <= (case[4] :: number), `{case[3]}: it got within {best} studs of the point`)
 			t.expect(math.abs(last - Air.LOITER_RADIUS) < 60, `{case[3]}: then circles it ({last} studs off)`)

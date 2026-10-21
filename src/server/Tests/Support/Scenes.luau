@@ -7,6 +7,13 @@
 --                               the balance report's equal-value fight (D89)
 --   siege:<unit>                an equal-value group of <unit> against an
 --                               enemy base (plant, 3 generators, radar tower)
+--   trial:<a+a2...>:<b+b2...>:<close|long|defend>
+--                               the faction pass's trade check (S-62):
+--                               equal-value mixed groups; `defend` holds
+--                               side a in place (structures welcome) while
+--                               side b attack-moves at it from 600 studs;
+--                               `flank` splits side b in two, 300 studs
+--                               north and south of side a
 --   radarduel:<order>:<chaos>:<none|order|chaos>
 --                               equal-value artillery groups out of each
 --                               other's sight, each with its T1 radar tower;
@@ -39,6 +46,7 @@ local Scenes = {}
 
 Scenes.BUDGET = 3000 -- matchup value per side
 Scenes.MATCHUP_TICKS = 1800
+Scenes.TRIAL_BUDGET = 6000 -- faction trial value per side: enough that expensive units' counts reflect their price
 
 export type Scene = {
 	sim: Sim.Sim,
@@ -66,8 +74,9 @@ function Scenes.isCombat(d: Defs.UnitDef): boolean
 	return d.domain ~= "structure" and #d.weapons > 0 and bit32.band(d.categoryMask, BIT.WORKER + BIT.COMMANDER) == 0
 end
 
--- Each player's units attack-move at the centroid of everyone else's.
-local function fightDriver(every: number): (Sim.Sim) -> ()
+-- Each player's units attack-move at the centroid of everyone else's
+-- (only `only`'s, when given).
+local function fightDriver(every: number, only: number?): (Sim.Sim) -> ()
 	return function(sim: Sim.Sim)
 		if sim.tick % every ~= 0 then
 			return
@@ -75,6 +84,9 @@ local function fightDriver(every: number): (Sim.Sim) -> ()
 		local w = sim.world
 		local g = (sim.map :: any).grid
 		for _, pid in sim.playerOrder do
+			if only and pid ~= only then
+				continue
+			end
 			local mine, ex, ez, n = {}, 0, 0, 0
 			local sx, sz, sn = 0, 0, 0 -- enemy structures: the goal only when no units are left
 			for _, id in w.ids do
@@ -147,14 +159,14 @@ local function topUp(sim: Sim.Sim, teams: { number })
 	end
 end
 
-local function spawnGroup(sim: Sim.Sim, d: Defs.UnitDef, owner: number, cx: number, facing: number): { number }
-	local count = math.clamp(math.floor(Scenes.BUDGET / Scenes.value(d) + 0.5), 1, 20)
+local function spawnGroup(sim: Sim.Sim, d: Defs.UnitDef, owner: number, cx: number, facing: number, budget: number?, z0: number?, maxCount: number?): { number }
+	local count = math.clamp(math.floor((budget or Scenes.BUDGET) / Scenes.value(d) + 0.5), 1, maxCount or 20)
 	local spacing = 8 * d.footprint + 6
 	local ids = {}
 	for i = 0, count - 1 do
 		local row, col = i // 5, i % 5
 		local x = cx + (if facing > 0 then -1 else 1) * row * spacing
-		table.insert(ids, Spawn.unit(sim, d.id, owner, x, (col - 2) * spacing, facing))
+		table.insert(ids, Spawn.unit(sim, d.id, owner, x, (z0 or 0) + (col - 2) * spacing, facing))
 	end
 	local prefix = if d.faction == "order" then "ord_" else "chs_"
 	if Air.isBomber(sim, d) then
@@ -196,6 +208,72 @@ function Scenes.matchup(aId: string, bId: string, kind: string, seed: number): S
 		sim = sim,
 		drive = function(s: Sim.Sim)
 			topUp(s, airTeams)
+			fight(s)
+		end,
+		done = function(s: Sim.Sim): boolean
+			return alive(sideA) == 0 or alive(sideB) == 0
+		end,
+		maxTicks = Scenes.MATCHUP_TICKS,
+		sides = { sideA, sideB },
+	}
+end
+
+-- The faction pass's trade check (S-62): side a (`aIds`, player 1) against
+-- side b (`bIds`, player 2), each an equal-value mix (the budget split evenly
+-- between its unit types, side by side along z). close / long: both
+-- attack-move from 120 / 600 studs; defend: side a holds where it stands
+-- (it may be structures) and side b attack-moves at it from 600 studs;
+-- flank: both attack-move, side b split into two halves 300 studs north and
+-- south of side a, so it arrives from two sides.
+function Scenes.trial(aIds: { string }, bIds: { string }, kind: string, seed: number): Scene
+	local defs = Defs.load()
+	local gap = if kind == "close" then 120 else 600
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+	local function side(ids: { string }, owner: number, cx: number, facing: number, budget: number, zc: number): { number }
+		local out = {}
+		for i, id in ids do
+			local d = defs.units[id]
+			assert(d, `Scenes.trial: unknown unit {id}`)
+			local z0 = zc + (i - (#ids + 1) / 2) * 90
+			-- up to 60 of a type: cheap units bring their numbers (the matchup caps at 20)
+			for _, u in spawnGroup(sim, d, owner, cx, facing, budget / #ids, z0, 60) do
+				table.insert(out, u)
+			end
+		end
+		return out
+	end
+	local sideA, sideB
+	if kind == "flank" then
+		sideA = side(aIds, 1, -100, math.pi / 2, Scenes.TRIAL_BUDGET, 0)
+		sideB = side(bIds, 2, 100, -math.pi / 2, Scenes.TRIAL_BUDGET / 2, -300)
+		for _, u in side(bIds, 2, 100, -math.pi / 2, Scenes.TRIAL_BUDGET / 2, 300) do
+			table.insert(sideB, u)
+		end
+	else
+		sideA = side(aIds, 1, -gap / 2, math.pi / 2, Scenes.TRIAL_BUDGET, 0)
+		sideB = side(bIds, 2, gap / 2, -math.pi / 2, Scenes.TRIAL_BUDGET, 0)
+	end
+	if kind == "defend" then
+		for _, id in sideA do
+			if defs.unitByIndex[sim.world.defIndex[id]].domain ~= "air" then -- aircraft defend by patrolling over home
+				sim.world.moveState[id] = World.MoveState.HOLD_POSITION
+			end
+		end
+	end
+	local function alive(ids: { number }): number
+		local n = 0
+		for _, id in ids do
+			if sim.world.slot[id] then
+				n += 1
+			end
+		end
+		return n
+	end
+	local fight = fightDriver(30, if kind == "defend" then 2 else nil)
+	return {
+		sim = sim,
+		drive = function(s: Sim.Sim)
+			topUp(s, { 1, 2 })
 			fight(s)
 		end,
 		done = function(s: Sim.Sim): boolean
@@ -334,6 +412,10 @@ function Scenes.byName(name: string, seed: number, mapId: string?): Scene
 	local ra, rb, rt = string.match(name, "^radarduel:([%w_]+):([%w_]+):(%a+)$")
 	if ra and rb and rt then
 		return Scenes.radarDuel(ra, rb, rt, seed)
+	end
+	local ta, tb, tk = string.match(name, "^trial:([%w_+]+):([%w_+]+):(%a+)$")
+	if ta and tb and tk then
+		return Scenes.trial(string.split(ta, "+"), string.split(tb, "+"), tk, seed)
 	end
 	local besieger = string.match(name, "^siege:([%w_]+)$")
 	if besieger then

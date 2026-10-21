@@ -5,15 +5,16 @@ local Templates = require("../Templates")
 return Templates.extend(Templates.Structure, {
 	id = "ord_witness",
 	name = "Witness",
-	description = "Pinpointer. Each one sharpens the team's radar: contacts wobble less and radar missiles hold their lock (full at 6).",
+	description = "Pinpointer. Each one sharpens the team's radar: contacts wobble less and radar missiles hold their lock (full at 5).",
 	faction = "order",
 	tier = 2,
 	categories = { "STRUCTURE" },
-	cost = { supply = 250, power = 3000, buildTime = 6000 },
-	health = 1000,
+	cost = { supply = 290, power = 3400, buildTime = 6900 },
+	health = 1150, -- faction pass (S-62)
 	footprint = 2,
 	sensors = { sight = 120 },
 	pinpointer = true,
+	pinpointFull = 5, -- full at 5 (faction pass, S-62)
 	pieces = { "base", "dish" },
 	icon = "pinpointer",
 	model = "ord_witness",
