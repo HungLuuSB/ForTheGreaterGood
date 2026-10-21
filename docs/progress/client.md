@@ -270,8 +270,13 @@ All with real mouse and keyboard input through the MCP tools.
 - **N** shows what each homing missile is doing: its predicted path for the next second (green = it will hit, orange = it will miss), the point it steers at (yellow), its target's centre (red), the fuse zone around the target, the predicted closest approach (magenta), and a label with guidance, lock, target, distance, time to go and predicted miss vs fuse. Corrections and decoys flash as short fading lines (`debug_out/screens/c39_missile_view_sam.jpg`).
 - Predictions run the client's copy of the server's guidance with the target flown straight on, so they are close for a second or so and spread when the target turns.
 
+## 2026-10-21: recognizable missiles (C-40)
+
+- Missiles are now small models (body, nose, fins) with a flickering exhaust glow, a short flame and a grey smoke trail that widens behind them and fades after the missile is gone. IR missiles have a dark seeker nose, radar missiles a white radome; radar SAM missiles are bigger with thicker, longer smoke (`debug_out/screens/c40_missile_model_closeup.jpg`, `c40_missile_smoke_launch.jpg`).
+
 ## Needs my review
 
+- **Missile look (C-40):** size 4.4 × 0.8 studs (1.3× for radar SAMs), smoke 1.1 s (1.8 s), 1 → 5 studs wide, exhaust light range 10. Values at the top of the missile section in `src/client/Render/Effects.luau`.
 - **Missile sensor view look (C-39):** colors, sizes and label text in `src/client/Render/MissileView.luau` and `Core/MissileView.luau`; path length 1 s, at most 12 missiles, marks 2.5 s.
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
