@@ -60,17 +60,20 @@ end
 
 return function(t: RunAll.Context)
 	-- S-10: clients number icons with Shared/Net/Icons; the server must too.
-	t.test("strategic icons use the shared numbering: sorted distinct names from 1, at most 63", function()
+	t.test("strategic icons use the shared numbering: one per unit type, the def index (S-58)", function()
 		local defs = Defs.load()
 		local names = Icons.names(defs)
 		for i = 2, #names do
-			t.expect(names[i - 1] < names[i], `names sorted and distinct ({names[i - 1]}, {names[i]})`)
+			t.expect(names[i - 1] < names[i], `family names sorted and distinct ({names[i - 1]}, {names[i]})`)
 		end
 		local byDef = Icons.byDef(defs)
+		local seen = {}
 		for index, def in defs.unitByIndex do
 			local n = byDef[index]
-			t.expect(n >= 1 and n <= Icons.MAX, `{def.id}: icon {n} in 1..63`)
-			t.expect(n == Icons.MAX or names[n] == def.icon, `{def.id}: icon {n} is "{def.icon}"`)
+			t.expect(n >= 1 and n <= Icons.MAX, `{def.id}: icon {n} in 1..{Icons.MAX}`)
+			t.equal(n, def.index, `{def.id}: its icon is its def index`)
+			t.expect(not seen[n], `{def.id}: no other unit type has icon {n}`)
+			seen[n] = true
 		end
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
 		t.deepEqual(sim.net.iconIndex, byDef, "the server sends exactly these numbers")

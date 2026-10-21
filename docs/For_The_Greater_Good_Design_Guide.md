@@ -716,9 +716,9 @@ Units have at most **8 weapon slots**; defs validation must enforce it. The aim 
 ```
 unitId    u16
 cell      u16
-icon      6 bits  bits 0–5   (radar-only contacts send icon 0 = unknown blip)
-team      3 bits  bits 6–8   team - 1 (teams 1..8)
-flags     7 bits  bits 9–15  bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost, bit4 tracked (v5: real icon); bits 5–6 reserved
+icon      8 bits  bits 0–7   the unit's def index, one per unit type (v19); radar-only contacts send 0 = unknown blip
+team      3 bits  bits 8–10  team - 1 (teams 1..8)
+flags     5 bits  bits 11–15 bit0 radarOnly, bit1 sonarOnly, bit2 underAttack, bit3 ghost, bit4 tracked (v5: real icon)
                   = 6 bytes per unit
 ```
 
