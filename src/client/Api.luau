@@ -234,7 +234,9 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		if p == nil then
 			return false, "not placing"
 		end
-		local r = Placement.check(world, world.defs.unitByIndex[p.defIndex], x, z)
+		local def = world.defs.unitByIndex[p.defIndex]
+		x, z = Placement.assist(world, def, x, z) -- extractors jump onto a nearby deposit
+		local r = Placement.check(world, def, x, z)
 		p.x, p.z, p.valid, p.reason = r.x, r.z, r.ok, r.reason
 		return r.ok, r.reason
 	end

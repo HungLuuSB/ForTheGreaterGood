@@ -102,6 +102,25 @@ function Ground.build(layers: Layers.Layers): Folder
 			end
 		end
 	end
+
+	-- supply deposits: a gold plate on each deposit cell, where an extractor
+	-- must stand (brighter for richer deposits)
+	for cz = 0, g.cellsZ - 1 do
+		for cx = 0, g.cellsX - 1 do
+			local i = g:index(cx, cz)
+			local supply = Layers.getSupply(layers, i)
+			if supply > 0 then
+				local h = Layers.getHeight(layers, i) + Layers.getWater(layers, i)
+				local x0, z0 = g.originX + cx * cell, g.originZ + cz * cell
+				local plate = newPart("Deposit", Vector3.new(cell - 1.2, 0.3, cell - 1.2), CFrame.new(x0 + cell / 2, h + 0.15, z0 + cell / 2), Color3.fromRGB(235, 190, 60):Lerp(Color3.fromRGB(255, 230, 120), math.clamp((supply - 3) / 4, 0, 1)))
+				plate.Material = Enum.Material.Neon
+				plate.Transparency = 0.15
+				plate.CanQuery = false
+				plate:SetAttribute("Supply", supply)
+				plate.Parent = folder
+			end
+		end
+	end
 	folder.Parent = workspace
 	return folder
 end

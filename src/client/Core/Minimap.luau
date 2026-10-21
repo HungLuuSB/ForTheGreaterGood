@@ -47,7 +47,7 @@ function Minimap.terrain(layers: Layers.Layers): { Tile }
 			local height = math.floor(sum / n + 0.5)
 			local w = math.min(b, g.cellsX - bx) / g.cellsX
 			local last = row[#row]
-			if last and last.height == height and last.water == water and last.supply == 0 and supply == 0 then
+			if last and last.height == height and last.water == water then
 				last.w += w
 			else
 				table.insert(row, { u = bx / g.cellsX, v = bz / g.cellsZ, w = w, h = math.min(b, g.cellsZ - bz) / g.cellsZ, height = height, water = water, supply = supply })
@@ -56,6 +56,22 @@ function Minimap.terrain(layers: Layers.Layers): { Tile }
 		table.move(row, 1, #row, #rows + 1, rows)
 	end
 	return rows
+end
+
+-- Supply deposits, one square per deposit cell (minimap fractions): the
+-- exact spots an extractor needs (the tiles above are 4 cells wide).
+function Minimap.deposits(layers: Layers.Layers): { { number } }
+	local g = layers.grid
+	local out = {}
+	for cz = 0, g.cellsZ - 1 do
+		for cx = 0, g.cellsX - 1 do
+			local supply = Layers.getSupply(layers, g:index(cx, cz))
+			if supply > 0 then
+				table.insert(out, { (cx + 0.5) / g.cellsX, (cz + 0.5) / g.cellsZ, supply })
+			end
+		end
+	end
+	return out
 end
 
 export type Dot = { u: number, v: number, team: number, kind: "unit" | "structure" | "blip" | "ghost", selected: boolean }

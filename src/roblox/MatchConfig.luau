@@ -40,6 +40,6 @@ local PROFILES = {
 	},
 }
 
-local ACTIVE = "duel"
+local ACTIVE = "build"
 
 return table.freeze(PROFILES[ACTIVE])
