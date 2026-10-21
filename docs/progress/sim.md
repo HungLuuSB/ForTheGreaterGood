@@ -129,6 +129,12 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 31), S-53:** `map:normandy` (`Shared/Grid/Normandy`, via `MapRegistry.load`).
+  - Your zones are all where you put them; layout in guide 5.5.
+  - Hedgerows fill only z −200…280, so the strips at −360…−340 and 540…560 are open field.
+  - Hedgerows (6 studs) and houses (8 studs) are ROCK cells; bluff cliff cells are ROCK too; roads and bridges are ROAD; sand is the beach and the river bed.
+  - `Normandy.feature(cx, cz)` returns the feature name for drawing.
+  - Starts: (0, 700) and (0, −700).
 - **Done (request 30), S-52:** radar SAM weapons' stockpile capacity 15 (Wyvern, Aegis), buildTime 6 s per missile; Gorgon / Seraph stay at 3, IR SAMs and the cost per missile unchanged. Nothing on the wire changes.
 - **Done (request 28), S-51, protocol 18:** `Shared/Combat/Lofted`: `Lofted.step(x, y, z, vx, vy, vz, gx, gy, gz, gy + weapon.apex, weapon.gravity, rad(weapon.turnRate) / 15, Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)), 1/15)` per tick, and `Lofted.velocity(...)` for the arc from any point (preview, landing prediction). Phases from state: boost while vx = vz = 0 and climbLeft > 0; turn / arc while vy > 0; ballistic after. Strategic missiles arrive as **SPAWN_STRATEGIC 17** = SPAWN_PROJ fields + `goal pos` (25 B). Nukes: projectileSpeed 150 (boost), climbHeight 120, turnRate 90, gravity 12, apex 300 above the goal; 12.7 s. Guide 4.3, 7, 10.9; contract section 7.
 - **Done (request 29), S-50:** `intercepts = { chance = 0.2 }` on both radar SAMs; drop the test override whenever you like. Request 28 (vertical climb for nukes) is next.
