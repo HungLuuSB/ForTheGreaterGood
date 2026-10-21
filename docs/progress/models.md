@@ -115,6 +115,8 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `786d58b` (Lancer slice results: screenshots notes, third render run, import notes, asset IDs; docs and `assets/` only).
 - Ready to merge: `f9f1022` (Lancer review 2: camouflage variants, baked detail, painted team color, new gun; `assets/` and docs only).
 - Ready to merge: `561489b` (style guide: heavy Order, light Chaos, M-14; guide 2.1 Look row; docs only).
+- Ready to merge: `9dd4913` (BAR model style M-15: style guide, guide 2.1, BAR Lancer build; `assets/` and docs only).
+- Ready to merge: `5d37c43` (BAR-style Ravager build, up to import; `assets/` only).
 
 ## Requests
 
