@@ -25,12 +25,14 @@
 --   "mapgen:<layout>:<seed>:<cells>[:<water>[:<symmetry>]]"
 --                       a MapGen skirmish map (guide 5.5, S-15): layout 1v1,
 --                       2v2 or ffa4; water none (default), lakes or sea
---   "map:<name>"        a named MapGen map (MapRegistry.NAMED below)
+--   "map:<name>"        a named MapGen map (MapRegistry.NAMED below), or a
+--                       hand-made one (MapRegistry.HANDMADE: "map:normandy", S-53)
 --
 -- Baked Studio maps (guide 5.4) will be added as "baked:<name>".
 
 local Layers = require("./Layers")
 local MapGen = require("./MapGen")
+local Normandy = require("./Normandy")
 local TestMap = require("./TestMap")
 
 local MapRegistry = {}
@@ -45,9 +47,19 @@ MapRegistry.NAMED = table.freeze({
 	crossroads = { name = "Crossroads", options = { seed = 14, cells = 192, layout = "ffa4", water = "sea" } },
 } :: { [string]: Named })
 
--- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs.
+-- Hand-made maps (S-53): built by their own module, not MapGen.
+export type Handmade = { name: string, build: () -> Layers.Layers }
+MapRegistry.HANDMADE = table.freeze({
+	normandy = { name = "Normandy", build = Normandy.build },
+} :: { [string]: Handmade })
+
+-- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs (and for
+-- hand-made maps).
 function MapRegistry.genOptions(mapId: string): MapGen.Options?
 	local name = string.match(mapId, "^map:([%w_]+)$")
+	if name and MapRegistry.HANDMADE[name] then
+		return nil
+	end
 	if name then
 		local named = MapRegistry.NAMED[name]
 		if named == nil then
@@ -170,6 +182,10 @@ function MapRegistry.load(mapId: string): Layers.Layers?
 			end
 			return -10, 20
 		end)
+	end
+	local handmade = string.match(mapId, "^map:([%w_]+)$")
+	if handmade and MapRegistry.HANDMADE[handmade] then
+		return MapRegistry.HANDMADE[handmade].build()
 	end
 	local options = MapRegistry.genOptions(mapId)
 	if options then
