@@ -97,6 +97,8 @@ Skirmish.AIR_MEMORY = 900 -- ticks enemy aircraft near home are remembered: half
 Skirmish.RECALL_RADIUS = 570 -- studs from home: an enemy wave this close brings the army home (S-57)
 Skirmish.RECALL_MIN = 3 -- known enemy ground units that make a wave
 Skirmish.RECALL_HOLD = 300 -- ticks no new wave leaves after a recall
+Skirmish.WAVE_ALIGN = 300 -- ticks: waves leave only at the start of these windows (S-57)
+Skirmish.RALLY_GAP = 520 -- studs at least between two rally points: beyond artillery range (howitzer 450) (S-57)
 
 export type Level = {
 	think: number, -- ticks between thinks
@@ -254,7 +256,8 @@ export type Brain = {
 	lastWaveAt: number, -- tick the last wave left (S-57)
 	recallUntil: number, -- no new wave before this tick (S-57)
 	recallRadius: number, -- RECALL_RADIUS, or less on a small map: never the enemy's own rally point
-	pulled: { [number]: boolean }, -- builders army-first sent to help the plant (S-57)
+	tanksFirst: number, -- tanks before its third generator this match: tanksBeforeGen3 or one more, by its Prng (S-57)
+	rallyDist: number, -- studs from home to the rally point (S-57)
 }
 
 local function submit(sim: Types.Sim, player: number, cmd: Schema.Command)
@@ -355,7 +358,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 			end
 		end
 	end
-	return {
+	local brain: Brain = {
 		sim = sim,
 		player = player,
 		team = p.team,
@@ -378,7 +381,13 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		lastWaveAt = -math.huge,
 		recallUntil = -math.huge,
 		recallRadius = math.min(Skirmish.RECALL_RADIUS, dl * 0.45),
-		pulled = {},
+		tanksFirst = 0,
+		-- the rally point: 160 studs out, but on a small map far enough back
+		-- that the two armies parked at their rally points are out of each
+		-- other's artillery range (RALLY_GAP apart). Within range, the side
+		-- whose artillery saw the other first won the duel, and with mirrored
+		-- players that was always the same side (S-57)
+		rallyDist = math.clamp((dl - Skirmish.RALLY_GAP) / 2, 40, 160),
 		kiting = {},
 		level = levelName,
 		cfg = cfg,
@@ -399,6 +408,13 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		-- deposit (S-17); players sharing a slot think in the same tick.
 		thinkOffset = (((table.find(sim.playerOrder, player) :: number) - 1) * Skirmish.THINK_ALIGN) % cfg.think,
 	}
+	-- "2–3 tanks" (S-57): the count varies by match through its own Prng, so
+	-- mirrored players don't play the same opening every time (a fixed
+	-- count made one side win nearly every mirror)
+	if cfg.tanksBeforeGen3 > 0 then
+		brain.tanksFirst = cfg.tanksBeforeGen3 + (if brain.rng:chance(0.5) then 1 else 0)
+	end
+	return brain
 end
 
 -- A brain for every player the match's `ai` option names, in player order.
@@ -762,22 +778,14 @@ local function think(brain: Brain)
 	local wantNaval = cfg.naval and brain.seaX ~= nil and #c.factories > 0 and established and #c.shipyards + c.shipFrames == 0
 	local wantTurret = c.turrets < turretsWanted and #c.factories > 0 and c.extractors >= 5 and #c.army >= 4
 	-- normal: once two generators stand, an army before anything else
-	-- (S-57): every builder helps the plant until it has rolled out
-	-- `tanksBeforeGen3` units; other jobs would split the power and stall them
-	local armyFirst = cfg.tanksBeforeGen3 > 0 and c.generators >= 2 and #c.army < cfg.tanksBeforeGen3 and #c.factories > 0
+	-- (S-57): builders start no new job until the plant has rolled out
+	-- `tanksBeforeGen3` units; other jobs would split the power and stall
+	-- them. (Sending the builders to help the plant gave mirrored players
+	-- a side bias: east won 9–11 of 12 Normal mirrors.)
+	local armyFirst = brain.tanksFirst > 0 and c.generators >= 2 and #c.army < brain.tanksFirst and #c.factories > 0
 	for _, id in workers do
 		local isCommander = id == c.commander
-		if armyFirst then
-			if (sim.build.target[id] or 0) ~= c.factories[1] then
-				submit(sim, brain.player, { cmdType = CT.REPAIR, flags = 0, unitIds = { id }, targetId = c.factories[1] })
-			end
-			brain.pulled[id] = true
-			continue
-		end
-		-- released from army-first: free for the next job, assisting or not
-		local released = brain.pulled[id] == true
-		brain.pulled[id] = nil
-		if not released and not idleBuilder(sim, id) then
+		if not idleBuilder(sim, id) then
 			local helping = sim.build.target[id] or 0
 			local assisting = helping ~= 0 and w.slot[helping] ~= nil and w.buildProgress[helping] >= 1
 			local wanted = if isCommander then wantAir or wantNaval else wantTurret
@@ -859,7 +867,9 @@ local function think(brain: Brain)
 		end
 		-- missile refills draw power too (S-47): an AI under air attack whose
 		-- SAMs sit empty wants the generators for them (S-57)
-		if (powerShort or acc.power.income < 20 * #c.factories + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) then
+		-- normal: no third generator before its first tanks (S-57)
+		local genAllowed = not armyFirst
+		if genAllowed and (powerShort or acc.power.income < 20 * #c.factories + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) then
 			local gen = faction(brain, "generator", "generator")
 			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
 			if x and z then
@@ -1140,7 +1150,12 @@ local function think(brain: Brain)
 			home = {}
 		end
 	end
-	local mayAttack = sim.tick >= cfg.firstAttack and sim.tick - brain.lastWaveAt >= cfg.waveInterval and sim.tick >= brain.recallUntil
+	-- waves leave only in the first think of each WAVE_ALIGN window: mirrored
+	-- players reach the wave size within a think of each other, and the one
+	-- whose think came first used to leave first and attack into a defended
+	-- base every time (a side bias, S-57)
+	local onGrid = sim.tick % Skirmish.WAVE_ALIGN < cfg.think
+	local mayAttack = onGrid and sim.tick >= cfg.firstAttack and sim.tick - brain.lastWaveAt >= cfg.waveInterval and sim.tick >= brain.recallUntil
 	if recalled then
 		-- defending: nothing else this think
 	elseif threatX and threatZ then
@@ -1169,7 +1184,7 @@ local function think(brain: Brain)
 				table.insert(idle, id)
 			end
 		end
-		local rx, rz = brain.homeX + brain.toward * 160, brain.homeZ
+		local rx, rz = brain.homeX + brain.toward * brain.rallyDist, brain.homeZ
 		local cell, ox, oz = g:encode(rx, rz)
 		local far = {}
 		for _, id in idle do

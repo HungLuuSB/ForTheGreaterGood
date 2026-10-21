@@ -673,3 +673,23 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests (`AI.spec`):**
   - Easy sends no wave by 8 minutes, then a first wave of at most 4, with an army within its cap.
   - Normal has at least 2 tanks when its third generator stands, and recalls a wave against 4 enemy tanks 220 studs from home.
+
+## S-57 (follow-up) — Mirror fairness: the integration slow suite failed (2026-10-22)
+
+- **Found by the integrator:** `Fairness.spec` (`test_slow`) failed on the first S-57 merge, so nothing was pushed. Normal mirrors on Ridgeline split 2–10 between the starts; the test wants at least 4 each.
+- **Bisected:** every form of Normal's army-first rule gave one start almost every mirror:
+  - helping the plant: east 9–11 of 12;
+  - builders idle: east 11–0;
+  - tanks-first alone: west 11–0;
+  - thinking every 10 ticks didn't help.
+- **Mechanism:**
+  - Both armies park at their rally points, 160 studs in front of home. On a 128-cell map those are ~375 studs apart, inside howitzer (450) and mortar (400) range.
+  - The side whose artillery saw the other first won the duel. With mirrored players and their fixed 10-tick think offset, that was always the same side, and army-first's uniform openings made it decide every match.
+- **Fixes:**
+  - **Rally points** sit (start distance − 520) / 2 in front of home, between 40 and 160 studs (`RALLY_GAP` = 520, beyond artillery range). Big maps are unchanged.
+  - **Waves** leave only in the first think of each 20 s window (`WAVE_ALIGN` = 300 ticks), so mirrored players that reach the wave size a think apart leave together.
+  - **"2–3 tanks":** each Normal AI draws 2 or 3 tanks before its third generator from its own Prng, so openings vary by match.
+  - **Army-first** keeps the factory's tanks-before-workers order and holds the third generator; builders keep their own jobs. Sending them all to the plant was dropped.
+- **After:**
+  - Mirrors split 4–8 (passes).
+  - The level report still shows Hard > Normal > Easy on every map: overall Normal–Easy 36–6, Hard–Normal 42–0, Hard–Easy 36–0. Per map Normal–Easy is Ridgeline 10–2, Coastline 8–4, skirmish:256 12–0, Twin Lakes 6–0, and Hard won 5 of 6 FFAs.
