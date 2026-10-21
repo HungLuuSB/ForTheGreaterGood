@@ -1,0 +1,15 @@
+{
+  "note": "Roblox assets uploaded by Studio's 3D Importer from export/ord_lancer.fbx on 2026-10-21 (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
+  "model": "rbxassetid://128852274487214",
+  "meshes": {
+    "base": "rbxassetid://124295100730854",
+    "turret": "rbxassetid://124333550925119",
+    "barrel": "rbxassetid://95532598839867"
+  },
+  "surfaceAppearance": {
+    "ALB": "rbxassetid://133557030144323",
+    "NOR": "rbxassetid://79823659304925",
+    "RGH": "rbxassetid://74657069880141",
+    "MTL": "rbxassetid://81975653028485"
+  }
+}
