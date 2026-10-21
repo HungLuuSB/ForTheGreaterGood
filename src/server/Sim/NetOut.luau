@@ -64,6 +64,7 @@ local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
 local Combat = require("./Combat/Combat")
+local Stockpile = require("./Stockpile")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
 local Sensors = require("./Sensors")
@@ -692,7 +693,9 @@ function NetOut.step(sim: Types.Sim)
 		end
 		pn.sentTargets = sentNow
 
-		-- own units' missile stock (S-47): when it changes, and on entering
+		-- own units' missile stock (S-47) and the next missile's progress
+		-- (S-49): when a count or the progress step (1/WIRE_STEPS) changes,
+		-- and on entering
 		local sentStock = pn.sentStock
 		local stockNow: { [number]: string } = {}
 		for _, id in pn.tacticalList do
@@ -703,10 +706,13 @@ function NetOut.step(sim: Types.Sim)
 			local stock: { Schema.Stock } = {}
 			local parts = {}
 			for slot = 1, count do
-				local n = w.wStock[World.slotKey(id, slot)]
+				local key = World.slotKey(id, slot)
+				local n = w.wStock[key]
 				if n ~= nil then
-					table.insert(stock, { slot = slot, count = math.clamp(n, 0, 255) })
+					local progress = w.wStockProgress[key]
+					table.insert(stock, { slot = slot, count = math.clamp(n, 0, 255), progress = math.clamp(math.floor(progress * 255), 0, 255) })
 					table.insert(parts, n)
+					table.insert(parts, math.floor(progress * Stockpile.WIRE_STEPS))
 				end
 			end
 			if #stock == 0 then

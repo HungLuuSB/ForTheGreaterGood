@@ -864,7 +864,7 @@ Route these through the same team account so shortages affect them naturally:
   | IR SAM (`chs_ir_sam`, `ord_ir_sam`) | 6 s, 15 supply + 300 power | Thorn, Vigil 8; Hornet, Halo 4 |
   | Radar SAM (`chs_radar_sam`, `ord_radar_sam`) | 12 s, 40 supply + 900 power | Wyvern, Aegis 6; Gorgon, Seraph 3 |
 
-  The owner sees each unit's stock (State `stock` field, protocol 15, section 7). Naval SAMs (Corsair, Crusader) stay unlimited (the user, 2026-10-22).
+  The owner sees each unit's stock and the next missile's build progress (State `stock` field, protocols 15 and 17, section 7). Naval SAMs (Corsair, Crusader) stay unlimited (the user, 2026-10-22).
 - **Nuke silos** (S-48) build warheads the same way: capacity 2, 120 s, 1,500 supply + 40,000 power each (about 12.5 supply and 333 power per second while building, a T3 economy's worth).
 - **Sensor upkeep:** radars, jammers and DIRCM drain power continuously. If power stalls, they lose range or switch off.
 
@@ -993,7 +993,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 ### 10.9 Strategic missiles (nuke silos, S-48)
 
 - A T3 silo per faction (13.5) builds warheads into its stockpile (8.6) and launches one only on an **attack-ground order**, anywhere on the map: one launch per order, then the order is done (STOP or a new order cancels it). Fire states don't apply. No turret.
-- **Flight:** lofted ballistic (`apex` 800 studs, gravity 40): ~12.7 s in the air whatever the distance (1,400 studs → ~110 studs/s horizontally), landing on the ordered spot. It passes over units; only the ground stops it.
+- **Flight:** lofted ballistic (`apex` 300 studs, gravity 15; S-49: low enough to stay on screen at the closest zoom before icons): ~12.7 s in the air whatever the distance (2·√(2·apex / gravity); 1,400 studs → ~110 studs/s horizontally), landing on the ordered spot. It passes over units; only the ground stops it.
 - **Blast:** `aoe` 150, `edgeEffectiveness` 0.3, 8,000–10,000 damage at the center: it hurts every side, the launcher's own units included (BAR).
 - **Interception:** radar SAM sites and mobile radar SAMs (`intercepts = { chance = 0.5 }`) fire interceptors from their stockpiles at an enemy strategic missile their team detects within their range, before any aircraft (10.2). An interceptor navigates against the missile's position and velocity and bursts at its closest approach within its fuse (`aoe`, 20 studs); the burst destroys the missile with probability `chance` (sim Prng). A destroyed missile doesn't detonate. Several sites, or full stockpiles, are needed against more than one missile; empty stockpiles stop nothing.
 - **Wire** (protocol 16, 7.3): every player gets LAUNCH_WARNING at a launch and the missile itself wherever it flies; INTERCEPTOR records name the missile they chase; INTERCEPTED replaces the IMPACT of a destroyed missile.
