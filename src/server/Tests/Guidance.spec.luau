@@ -153,8 +153,8 @@ return function(t: RunAll.Context)
 	t.test("an IR SAM salvo hits a circling jet and a helicopter unless decoyed", function()
 		-- before S-27 (lead pursuit against the target's end-of-tick position):
 		-- the jet took 33% of the missiles, crossing shots passing 5–9 studs off
-		-- the hover point is inside every Thorn's range (294 since S-55)
-		for _, case in { { "ord_falcon", 300, "circling jet" }, { "ord_guardian", 420, "helicopter flying in" }, { "ord_guardian", 260, "hovering helicopter" } } do
+		-- the hover point is inside every Thorn's range (206 since S-56)
+		for _, case in { { "ord_falcon", 300, "circling jet" }, { "ord_guardian", 420, "helicopter flying in" }, { "ord_guardian", 400, "hovering helicopter" } } do
 			local r = salvo(case[1] :: string, case[2] :: number, 1200)
 			print(string.format("    %s: %d launched, %d hits (%.0f%%), %d decoyed (DIRCM), %d lost lock", case[3], r.launched, r.hits, r.hits / math.max(r.launched, 1) * 100, r.decoyed, r.lost))
 			t.expect(r.launched >= 20, `{case[3]}: the Thorns fired ({r.launched})`)
@@ -226,6 +226,7 @@ return function(t: RunAll.Context)
 		moveTo(sim, 1, { jet }, 250, 0)
 		local launched, hits, decoyed, lost, vertical, aimMoved = 0, 0, 0, 0, 0, false
 		local mine: { [number]: boolean } = {}
+		local steep: { [number]: boolean } = {} -- launched climbing steeply
 		local climbedTo: { [number]: number } = {} -- missile → height above ground when it first leaned over (S-44)
 		for _ = 1, 15 * 90 do
 			Sim.step(sim)
@@ -247,6 +248,7 @@ return function(t: RunAll.Context)
 					local speed = math.sqrt(c.pvx[p] ^ 2 + c.pvy[p] ^ 2 + c.pvz[p] ^ 2)
 					if c.pvy[p] > 0.7 * speed then
 						vertical += 1
+						steep[p] = true
 					end
 				elseif mine[e.other] then
 					if e.kind == "IMPACT" then
@@ -265,6 +267,9 @@ return function(t: RunAll.Context)
 		for p in mine do
 			if c.projSlot[p] ~= nil then
 				launched -= 1 -- still flying
+				if steep[p] then
+					vertical -= 1
+				end
 			end
 		end
 		print(string.format("    Wyvern vs circling Falcon: %d launched, %d hits, %d decoyed (chaff), %d lost lock", launched, hits, decoyed, lost))

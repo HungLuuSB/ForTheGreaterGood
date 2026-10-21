@@ -3,7 +3,7 @@
 return {
 	id = "chs_radar_sam",
 	type = "HOMING",
-	range = 1260, -- ×3 (S-45), then −25% (S-55): the user asked
+	range = 945, -- ×3 (S-45), then −25% twice (S-55, S-56): the user asked
 	reload = 4,
 	projectileSpeed = 360,
 	accuracy = 1,
@@ -13,7 +13,7 @@ return {
 	stockpile = { capacity = 15, buildTime = 6, cost = { supply = 40, power = 900 } }, -- missiles in stock (S-47; 15 and 6 s since S-52, the user asked); Gorgon / Seraph carry 3
 	guidance = "RADAR",
 	intercepts = { chance = 0.2 }, -- shoots at enemy strategic missiles first (S-48); 0.2 (S-50, the user)
-	lockRange = 1260,
+	lockRange = 945,
 	burnThrough = 0.35,
 	terminalRange = 50,
 	canTargetRadar = true,
