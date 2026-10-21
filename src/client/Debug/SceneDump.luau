@@ -59,6 +59,12 @@ return function(grid: any): string
 	for _, entry in parts do
 		local p, effect = entry[1], entry[2]
 		local pos = p.Position
+		local trail = p:GetAttribute("TrailLength") :: number?
+		if p.Name == "Projectile" and trail and trail > 0 then
+			-- the shell's trail: a fading line behind it
+			local back = pos - p.CFrame.LookVector * trail
+			table.insert(out, string.format("T %.1f %.1f %.1f %.1f %.2f %s", back.X, back.Z, pos.X, pos.Z, p.Size.X, rgb(p.Color)))
+		end
 		if p.Name == "line" or p.Name == "Tracer" then
 			local half = p.CFrame.LookVector * p.Size.Z / 2
 			local a, b = pos - half, pos + half

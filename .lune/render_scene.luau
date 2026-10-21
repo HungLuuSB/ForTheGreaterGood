@@ -7,7 +7,8 @@
 --   lune run render_scene <dump.txt> <out.png> [margin studs]
 -- Records: M (map), U (unit), D (disc), L (line), G defId x z facing valid
 -- (the build ghost: translucent, over a green / red footprint), and
--- I x z shape size r g b alpha selected (a strategic-zoom icon, in pixels).
+-- I x z shape size r g b alpha selected (a strategic-zoom icon, in pixels),
+-- T x1 z1 x2 z2 width r g b (a shell's trail: fades from x1 to x2, over the units).
 -- North (-Z) is up; the ground is a 64-stud checkerboard (8 × 8 cells).
 
 local fs = require("@lune/fs")
@@ -135,6 +136,20 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 			local half = def.footprint * 4
 			table.insert(rects, { cx = n(3), cz = n(4), ax = 1, az = 0, ha = half, bx = 0, bz = 1, hb = half, top = 0.1, r = tint[1], g = tint[2], b = tint[3], alpha = 0.45 })
 			addUnit(w[2], { 210, 210, 210 }, n(3), n(4), math.pi - n(5) * math.pi / 2, 0, tint)
+		end
+	elseif w[1] == "T" then
+		-- a trail: segments over the units, fading toward its tail
+		local x1, z1, x2, z2, width = n(2), n(3), n(4), n(5), math.max(n(6), 0.5)
+		local steps = 6
+		for k = 0, steps - 1 do
+			local a0, a1 = k / steps, (k + 1) / steps
+			local sx, sz = x1 + (x2 - x1) * a0, z1 + (z2 - z1) * a0
+			local ex, ez = x1 + (x2 - x1) * a1, z1 + (z2 - z1) * a1
+			local dx, dz = ex - sx, ez - sz
+			local len = math.sqrt(dx * dx + dz * dz)
+			if len > 0.01 then
+				table.insert(rects, { cx = (sx + ex) / 2, cz = (sz + ez) / 2, ax = dx / len, az = dz / len, ha = len / 2, bx = -dz / len, bz = dx / len, hb = width * (0.3 + 0.7 * a1) / 2, top = 50, r = n(7), g = n(8), b = n(9), alpha = 0.15 + 0.8 * a1 })
+			end
 		end
 	elseif w[1] == "I" then
 		table.insert(icons, { x = n(2), z = n(3), shape = w[4], size = n(5), r = n(6), g = n(7), b = n(8), alpha = n(9), selected = w[10] == "1" })

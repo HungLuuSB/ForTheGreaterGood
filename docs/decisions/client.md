@@ -25,6 +25,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-15 | When Studio isn't available, `lune run client_demo` renders the real client's view headless (labelled as such) |
 | C-16 | Effects play on the render clock; every projectile is followed, caps apply to what is drawn, by size over distance |
 | C-17 | Strategic zoom: screen-space shape icons (no image assets), on beyond 480 studs, off below 420; units without a model always get one |
+| C-18 | Effects sized for the RTS camera: Neon shells 2.6 studs with a 0.06 s Trail, muzzle flashes >= 4 studs, impacts >= 7 studs |
 
 ---
 
@@ -159,3 +160,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Alternatives:** BillboardGuis per unit (guide 15.7 warns against hundreds); image icons (need uploaded assets: later, with the art pass); stop sending the camera at strategic zoom (smaller tactical tier, less bandwidth, but icons would then move at 3 Hz cell steps: left for review).
 
 **Why:** readable large battles and cheap rendering (guide 15.4) without assets.
+
+### C-18 — Readable shots at RTS zoom (2026-10-22)
+
+**Decision:** at the default camera (220 studs away) one stud is about two pixels, so effects are sized for that: ballistic shells are bright Neon 0.9 x 0.9 x 2.6 studs with a short Trail (0.06 s, about 20 studs behind a 340–380 stud/s tank shell, fading and narrowing); each projectile keeps its pooled part while it flies, and a reused part's trail is cleared and held back one frame so it never streaks across the map. Muzzle flashes are at least 4 studs across, impacts at least 7 (AoE x 1.6 x 2), deaths at least 12; particle bursts use bigger particles (2.6 studs). Counters for diagnosis stay in: events received per kind (`World.eventCounts`), applied (`Effects.applied`), drawn (`RenderEffects.stats`), read with `FtggClientDebug:Invoke("fx")`.
+
+**Alternatives:** keep model-scale sizes (0.45-stud shells: about one pixel at RTS zoom); scale effects with camera distance (later, if the near view looks too big).
+
+**Why:** the user saw no projectiles. The first cause was a stale script, not the effects: Studio's `Entry.MatchConfig` said `ACTIVE = "build"` (no enemy, so no shots) while the file said `duel`, and Rojo only pushes a file when its content changes; a real edit re-synced it. In the actual duel the client received and applied 92 SPAWN_PROJ and 92 IMPACT in 8 s, but drew 0.45-stud shells for 0.05–0.13 s: invisible from the RTS camera.

@@ -104,6 +104,17 @@ if RunService:IsStudio() then
 	debugFn.OnInvoke = function(query: string?, ...: any)
 		if query == "scene" then
 			return require("./Debug/SceneDump")(world.grid)
+		elseif query == "fx" then
+			-- combat effects diagnostics: events received, applied, drawn
+			local received = {}
+			for kind, n in world.eventCounts do
+				received[tostring(kind)] = n
+			end
+			local live = 0
+			for _ in fx.projectiles do
+				live += 1
+			end
+			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats }
 		elseif query == "act" then
 			-- Invoke("act", "smartOrder", x, z, unitId?, queue?): an API action, as the UI would call it
 			local name = (...)
