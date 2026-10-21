@@ -81,6 +81,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b3c1d19` (range rings of known enemy defenses, C-41; request 13c).
 - Ready to merge: `849486c` (merge of `main` with the final AI level report; test_client 82, test 299, build passed).
 - Ready to merge: `f9cc4ed` (seeker cone in the missile sensor view, C-42).
+- Ready to merge: `7c2180c` (SAM scene: the Falcon circles at x = 300).
 
 ## Tasks
 
@@ -293,6 +294,10 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-21: seeker cones (C-42)
 
 - The missile sensor view (N) now draws each guided missile's seeker cone out to its lock range: cyan while its target is inside the cone, red when it is outside (IR 60°, radar 70° off the nose; command-guided missiles have none). The label adds the target's angle off the nose, e.g. "34° / 60° off". In the `sam` scene most locked missiles turn out to have their target behind them after a miss, which is request 13c (`debug_out/screens/c42_seeker_cone.jpg`).
+
+## 2026-10-21: camera follow (C-43)
+
+- **T** (or the "Follow (T)" button next to the minimap) makes the camera follow the first selected unit, or with nothing selected the missile nearest the middle of the screen; press again to stop. Aircraft and missiles stay in the middle of the screen at their altitude, the camera never ends up below a climbing missile, and it may follow a missile up to 400 studs past the map's edge. Panning stops it, zooming doesn't; when the target dies or the missile ends, the camera stays there (`debug_out/screens/c43_follow_falcon.jpg`, `c43_follow_missile.jpg`).
 
 ## Needs my review
 
