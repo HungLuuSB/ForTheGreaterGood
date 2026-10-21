@@ -117,6 +117,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Faction balance in AI matches (S-65, `docs/FACTION_AI.md`):** Order wins 89% of same-level matches (target 40–60%). Addressed next by the faction AI (task 11) and the ±10% tuning (task 12); Normandy (no deposits) leaves 43% of its matches undecided at 40 minutes.
 - **Warden and Minotaur (S-64):**
   - **My calls on the mechanic:** the Warden deploys automatically whenever it stands still, and can't fire while packed.
   - **Placeholder numbers:**
