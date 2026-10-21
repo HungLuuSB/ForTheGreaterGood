@@ -3,15 +3,15 @@
 return {
 	id = "ord_aam",
 	type = "HOMING",
-	range = 320,
-	reload = 1.2,
+	range = 374, -- faction pass, tuned (S-62)
+	reload = 1.4, -- faction pass (S-62)
 	projectileSpeed = 480,
 	accuracy = 0.5,
 	turnRate = 200,
 	guidance = "IR",
-	lockRange = 320,
+	lockRange = 374, -- faction pass, tuned (S-62)
 	terminalRange = 40,
-	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 260, SUB = 0 },
+	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 280, SUB = 0 },
 	aoe = 4,
 	edgeEffectiveness = 0.5,
 	targets = { "AIR" },

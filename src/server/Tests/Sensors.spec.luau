@@ -192,10 +192,12 @@ return function(t: RunAll.Context)
 		end
 		local sequence = {}
 		for _ = 1, 900 do
+			-- Sensors runs before Movement: it sees where the walker was at the start of the tick
+			local x0, z0 = w.posX[walker], w.posZ[walker]
 			Sim.step(sim)
 			if sim.tick % 2 == 0 then -- sensors run on even ticks
 				local level = Sensors.level(sim, 1, walker)
-				local want = if inCircle(w.posX[walker], w.posZ[walker]) then L.VISIBLE else L.HIDDEN
+				local want = if inCircle(x0, z0) then L.VISIBLE else L.HIDDEN
 				t.equal(level, want, `tick {sim.tick} at x = {w.posX[walker]}`)
 				if sequence[#sequence] ~= level then
 					table.insert(sequence, level)

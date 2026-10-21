@@ -71,13 +71,13 @@ return function(t: RunAll.Context)
 	t.test("spawned SAMs start full, each unit with its own capacity; other weapons have no stockpile", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:64" })
 		local want = {
-			chs_thorn = 8,
+			chs_thorn = 10, -- Chaos: more, cheaper missiles (S-62)
 			ord_vigil = 8,
-			chs_hornet = 4,
+			chs_hornet = 5,
 			ord_halo = 4,
-			chs_wyvern = 15,
+			chs_wyvern = 18,
 			ord_aegis = 15,
-			chs_gorgon = 3,
+			chs_gorgon = 4,
 			ord_seraph = 3,
 		}
 		local x = -200
@@ -125,27 +125,27 @@ return function(t: RunAll.Context)
 		bigStorage(function()
 			local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:64" })
 			local thorn = Spawn.unit(sim, "chs_thorn", 2, 0, 0, 0)
-			Stockpile.empty(sim, thorn)
+			Stockpile.empty(sim, thorn) -- 10 missiles, 6 s and 12 + 240 each (S-62)
 			rich(sim, 2)
 			local acc = sim.eco.accounts[2]
 			local supply0, power0 = acc.supply.stored, acc.power.stored
 			local reached: { number } = {}
-			for _ = 1, 800 do
+			for _ = 1, 980 do
 				Sim.step(sim)
 				local n = stock(sim, thorn) :: number
 				if n > #reached then
 					table.insert(reached, sim.tick)
 				end
 			end
-			t.equal(#reached, 8, "full at capacity, never above")
+			t.equal(#reached, 10, "full at capacity, never above")
 			t.expect(math.abs(reached[1] - 90) <= 2, `first missile at tick {reached[1]} (6 s)`)
-			t.expect(math.abs(reached[8] - 720) <= 4, `eighth at tick {reached[8]} (48 s)`)
+			t.expect(math.abs(reached[10] - 900) <= 5, `tenth at tick {reached[10]} (60 s)`)
 			-- settle the last economy window
 			for _ = 1, 10 do
 				Sim.step(sim)
 			end
-			t.expect(math.abs(supply0 - acc.supply.stored - 8 * 15) < 0.01, `supply spent {supply0 - acc.supply.stored}`)
-			t.expect(math.abs(power0 - acc.power.stored - 8 * 300) < 0.01, `power spent {power0 - acc.power.stored}`)
+			t.expect(math.abs(supply0 - acc.supply.stored - 10 * 12) < 0.01, `supply spent {supply0 - acc.supply.stored}`)
+			t.expect(math.abs(power0 - acc.power.stored - 10 * 240) < 0.01, `power spent {power0 - acc.power.stored}`)
 			t.equal(acc.supply.demand, 0, "a full site demands nothing")
 		end)
 	end)

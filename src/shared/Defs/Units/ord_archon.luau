@@ -13,9 +13,9 @@ return Templates.extend(Templates.Unit, {
 	armorClass = "AIR",
 	moveClass = "JET",
 	footprint = 1,
-	cost = { supply = 360, power = 7000, buildTime = 11000 },
-	health = 800,
-	movement = { maxSpeed = 300, minSpeed = 160, accel = 80, brake = 60, turnRate = 85 },
+	cost = { supply = 395, power = 8050, buildTime = 12400 },
+	health = 900, -- faction pass (S-62)
+	movement = { maxSpeed = 280, minSpeed = 160, accel = 80, brake = 60, turnRate = 85 },
 	sensors = { sight = 240, airSight = 480, radarSignature = 0.6 }, -- 0.35 before (S-46, the user asked)
 	weapons = { { def = "ord_radar_aam", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "pylon", "muzzle" },
@@ -23,6 +23,6 @@ return Templates.extend(Templates.Unit, {
 	ammo = 6,
 	ammoCost = { supply = 14, power = 200 },
 	rearmTime = 2,
-	countermeasures = { dircm = { chance = 0.75, cooldown = 2.5, powerDrain = 20 } },
+	countermeasures = { dircm = { chance = 0.68, cooldown = 2.5, powerDrain = 20 } },
 	model = "ord_archon",
 })

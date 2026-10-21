@@ -242,7 +242,7 @@ return function(sim: Types.Sim)
 				owner = 0 -- the shooter is gone (D109)
 			end
 			-- a strategic blast hurts every side (S-48): team 0 is nobody's
-			Combat.explode(c, w, ix, iy, iz, weapon, owner, if weapon.strategic then 0 else team, bestUnit)
+			Combat.explode(c, w, ix, iy, iz, weapon, owner, if weapon.strategic then 0 else team, bestUnit, c.pPlayer[id])
 			Combat.removeProjectile(c, id)
 		else
 			local ttl = c.pTtl[id] - DT

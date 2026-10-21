@@ -13,11 +13,11 @@ return Templates.extend(Templates.Builder, {
 	armorClass = "ARMORED",
 	moveClass = "TRACKED",
 	footprint = 1,
-	cost = { supply = 300, power = 4000, buildTime = 8000 },
-	health = 1100,
-	movement = { maxSpeed = 28, accel = 11, brake = 22, turnRate = 100 },
+	cost = { supply = 330, power = 4500, buildTime = 8900 },
+	health = 1270, -- faction pass (S-62)
+	movement = { maxSpeed = 26, accel = 11, brake = 22, turnRate = 100 },
 	sensors = { sight = 120 },
-	buildPower = 200,
+	buildPower = 220, -- faction pass (S-62)
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)
 	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_advextractor", "ord_fusion", "ord_advvehplant", "ord_bastion", "ord_aegis", "ord_edict", "ord_beacon", "ord_veilspire", "ord_tribunal", "ord_reckoning", "ord_witness" },
 	pieces = { "base", "nano" },

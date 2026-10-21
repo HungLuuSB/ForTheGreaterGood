@@ -49,6 +49,7 @@ local function salvo(defId: string, gx: number, ticks: number): Salvo
 	local r: Salvo = { launched = 0, hits = 0, decoyed = 0, lost = 0, worstTurn = 0, decoyTicks = 0, clientDrift = 0, countermeasures = {} }
 	local sam: { [number]: boolean } = {}
 	local decoyed: { [number]: { number } } = {} -- projectile → its velocity last tick
+	local wasDecoyed: { [number]: boolean } = {} -- SAM missiles in flight that were decoyed
 	local spec = NetOut.addSpectator(sim)
 	local view = Client.new((sim.map :: any).grid)
 	for _ = 1, ticks do
@@ -91,11 +92,15 @@ local function salvo(defId: string, gx: number, ticks: number): Salvo
 			elseif sam[e.other] then
 				if e.kind == "IMPACT" then
 					sam[e.other] = nil
-					if e.unit == target then
+					-- a decoyed missile can still burst on the jet a tick later,
+					-- when the roll came inside its fuse: it counts as decoyed
+					if e.unit == target and not wasDecoyed[e.other] then
 						r.hits += 1
 					end
+					wasDecoyed[e.other] = nil
 				elseif e.kind == "DECOYED" then
 					r.decoyed += 1
+					wasDecoyed[e.other] = true
 					decoyed[e.other] = { c.pvx[e.other], c.pvy[e.other], c.pvz[e.other] }
 				elseif e.kind == "LOST_LOCK" then
 					r.lost += 1
@@ -107,6 +112,9 @@ local function salvo(defId: string, gx: number, ticks: number): Salvo
 	for p in sam do
 		if c.projSlot[p] ~= nil then
 			r.launched -= 1
+			if wasDecoyed[p] then
+				r.decoyed -= 1
+			end
 		end
 	end
 	return r
@@ -153,14 +161,15 @@ return function(t: RunAll.Context)
 	t.test("an IR SAM salvo hits a circling jet and a helicopter unless decoyed", function()
 		-- before S-27 (lead pursuit against the target's end-of-tick position):
 		-- the jet took 33% of the missiles, crossing shots passing 5–9 studs off
-		-- the hover point is inside every Thorn's range (206 since S-56)
+		-- the hover point is inside every Thorn's range (165 since S-62)
 		for _, case in { { "ord_falcon", 300, "circling jet" }, { "ord_guardian", 420, "helicopter flying in" }, { "ord_guardian", 400, "hovering helicopter" } } do
 			local r = salvo(case[1] :: string, case[2] :: number, 1200)
 			print(string.format("    %s: %d launched, %d hits (%.0f%%), %d decoyed (DIRCM), %d lost lock", case[3], r.launched, r.hits, r.hits / math.max(r.launched, 1) * 100, r.decoyed, r.lost))
 			t.expect(r.launched >= 20, `{case[3]}: the Thorns fired ({r.launched})`)
 			t.equal(r.hits + r.decoyed, r.launched, `{case[3]}: every missile that isn't decoyed hits`)
-			-- DIRCM defeats 10–25% (more against a helicopter hovering in range)
-			t.expect(r.hits >= r.launched * 0.75, `{case[3]}: at least 75% hit ({r.hits} of {r.launched})`)
+			-- DIRCM defeats 10–30% (more against a helicopter hovering in range, and
+			-- against the Thorn's faster 1.7 s salvos since S-62)
+			t.expect(r.hits >= r.launched * 0.7, `{case[3]}: at least 70% hit ({r.hits} of {r.launched})`)
 			t.equal(r.lost, 0, `{case[3]}: no missile overshoots and loses its lock`)
 			-- decoyed missiles bend toward the flares (S-28, request 13d)
 			-- Ballistics.steer interpolates directions, which can overshoot the cap by ~0.1%

@@ -242,10 +242,11 @@ return function(t: RunAll.Context)
 		World.setHealth(w, tank, 500)
 		local supplyBefore = sim.eco.accounts[1].supply.stored
 		on(sim, CT.REPAIR, 1, { mason }, tank)
+		local full = sim.defs.units.ord_lancer.health
 		steps(sim, 600, function()
-			return w.health[tank] >= 1100
+			return w.health[tank] >= full
 		end)
-		t.equal(w.health[tank], 1100, "repaired to full")
+		t.equal(w.health[tank], full, "repaired to full")
 		steps(sim, 2)
 		t.expect(sim.eco.accounts[1].supply.stored >= supplyBefore - 1e-6, "for free")
 		t.equal(sim.orders.queue[mason], nil, "then idle")

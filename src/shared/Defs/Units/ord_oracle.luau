@@ -14,10 +14,10 @@ return Templates.extend(Templates.Unit, {
 	categories = { "GROUND", "LIGHT", "RADAR_EMITTER" },
 	armorClass = "LIGHT",
 	moveClass = "WHEELED",
-	cost = { supply = 90, power = 1200, buildTime = 2600 },
-	health = 380,
+	cost = { supply = 105, power = 1350, buildTime = 3000 },
+	health = 440, -- faction pass (S-62)
 	movement = { maxSpeed = 40, accel = 16, brake = 32, turnRate = 140 },
-	sensors = { sight = 120, radar = 700, radarError = 20 },
+	sensors = { sight = 120, radar = 760, radarError = 16 },
 	model = "ord_oracle",
 	icon = "radar",
 })

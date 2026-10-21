@@ -3,21 +3,21 @@
 return {
 	id = "ord_radar_sam",
 	type = "HOMING",
-	range = 1013, -- ×3 (S-45), then −25% twice (S-55, S-56): the user asked
-	reload = 4,
+	range = 1100, -- faction pass (S-62)
+	reload = 4.1, -- faction pass, tuned (S-62)
 	projectileSpeed = 360,
 	accuracy = 1,
 	turnRate = 90,
 	launch = "vertical", -- IRIS-T SLM style: straight up, then over (S-42)
 	climbHeight = 100, -- studs above the ground it climbs straight first (S-44, the user asked)
-	stockpile = { capacity = 15, buildTime = 6, cost = { supply = 40, power = 900 } }, -- missiles in stock (S-47; 15 and 6 s since S-52, the user asked); Gorgon / Seraph carry 3
+	stockpile = { capacity = 15, buildTime = 6, cost = { supply = 40, power = 900 } }, -- missiles in stock (S-47; 15 and 6 s since S-52, the user asked); Seraph carries 3
 	guidance = "RADAR",
-	intercepts = { chance = 0.2 }, -- shoots at enemy strategic missiles first (S-48); 0.2 (S-50, the user)
-	lockRange = 1013,
+	intercepts = { chance = 0.25 }, -- shoots at enemy strategic missiles first (S-48); 0.2 (S-50, the user), Order 0.25 (S-62)
+	lockRange = 1100, -- faction pass (S-62)
 	burnThrough = 0.35,
 	terminalRange = 50,
 	canTargetRadar = true,
-	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 380, SUB = 0 },
+	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 420, SUB = 0 },
 	aoe = 20, -- heavy warhead (client request 20, the user asked)
 	edgeEffectiveness = 0.4,
 	targets = { "AIR" },

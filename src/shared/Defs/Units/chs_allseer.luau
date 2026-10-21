@@ -9,10 +9,10 @@ return Templates.extend(Templates.Structure, {
 	faction = "chaos",
 	tier = 2,
 	categories = { "STRUCTURE", "RADAR_EMITTER" },
-	cost = { supply = 300, power = 5000, buildTime = 8000 },
-	health = 1500,
+	cost = { supply = 255, power = 4250, buildTime = 6800 },
+	health = 1280, -- faction pass (S-62)
 	footprint = 3,
-	sensors = { sight = 180, radar = 1000, radarError = 40 },
+	sensors = { sight = 180, radar = 950, radarError = 45 },
 	icon = "radar",
 	model = "chs_allseer",
 })

@@ -47,6 +47,8 @@ export type Unit = {
 	moveState: number?,
 	ammo: number?, -- own aircraft: rounds left and max (S-61)
 	maxAmmo: number?,
+	flares: number?, -- own units: countermeasure charges left (S-63)
+	chaff: number?,
 	vx: number?, -- tactical units: velocity estimated from the last two Tactical records (studs/s; S-27)
 	vz: number?,
 	movedAt: number?, -- view.tick of the last Tactical record
@@ -469,6 +471,9 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			end
 			if r.fireState then
 				u.fireState, u.moveState = r.fireState, r.moveState
+			end
+			if r.flares then
+				u.flares, u.chaff = r.flares, r.chaff
 			end
 			if r.ammo then
 				u.ammo, u.maxAmmo = r.ammo, r.maxAmmo

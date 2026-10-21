@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 20, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 21, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -352,6 +352,10 @@ return function(t: RunAll.Context)
 		expectTruncated(t, "state record", Schema.decodeState, encodeOne(Schema.encodeState, own))
 		local onlyStates: State = { unitId = 1, fireState = 0, moveState = 2 }
 		t.equal(hex(encodeOne(Schema.encodeState, onlyStates)), "01 00 80 02 08")
+		-- version 21: OWNER CHARGES (S-63): flares, chaff left
+		local charges: State = { unitId = 1, flares = 5, chaff = 0 }
+		t.equal(hex(encodeOne(Schema.encodeState, charges)), "01 00 80 08 05 00")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, charges), Schema.decodeState)[1], charges)
 		local emptyQueue: State = { unitId = 1, queue = {}, queueProgress = 0 }
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, emptyQueue), Schema.decodeState)[1], emptyQueue)
 		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
@@ -674,7 +678,7 @@ return function(t: RunAll.Context)
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 0 }, "owner field mask is empty") -- 128 is OWNER since protocol 20
-		expectRejected(t, Schema.decodeState, { 1, 0, 128, 8 }, "owner field mask has reserved bits")
+		expectRejected(t, Schema.decodeState, { 1, 0, 128, 16 }, "owner field mask has reserved bits") -- 8 is CHARGES since protocol 21
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 2, 16 }, "states byte has reserved bits")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 1, 51, 0 }, "queue of 51 items")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.STOCK, 0 }, "stock slot mask is empty")
