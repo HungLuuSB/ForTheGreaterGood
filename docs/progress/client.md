@@ -107,6 +107,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `5d8a153` `d1ec2d3` (merge of `main` with S-48, protocol 16; nukes, interceptors, launch warning, A attack order, C-57; models request 1); test_client 102, test 339, build passed.
 - Ready to merge: `209312d` `b408822` (nuke profile: Order economy to refill the stockpiles; C-57 queue line); test_client 102, test 339, build passed.
 - Ready to merge: `4e991cb` (attack-mode arc preview, radar tracks on nukes, C-58; request 27 for the sim); test_client 103, test 339, build passed.
+- Ready to merge: `a619e7d` `15cb953` (merge of `main` with S-49, protocol 17; building pip C-59, test weapon overrides C-60; request 28 for the sim); test_client 104, test 339, build passed.
+- Ready to merge: `78d61cb` (request 29 for the sim: interception chance 0.2; docs only).
+- Ready to merge: `b0a0293` (one launch notice, C-61); test_client 104, build passed.
 
 ## Tasks
 
@@ -412,7 +415,11 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-21: building pip, test overrides (C-59, C-60)
 
 - Your silo's (and SAM sites') next pip now fills up as the missile is built, from the sim's new progress (S-49) (`debug_out/screens/c59_stock_progress_pip.jpg`). Nukes also fly lower now (300 studs up, same 13 s), so they stay on screen.
-- For testing, the `nuke` profile makes nukes cost 1 supply and 1 power and build in 10 s, and radar SAM interceptors kill only 20% of the time (the defs say 50%). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
+- For testing, the `nuke` profile makes nukes cost 1 supply and 1 power and build in 10 s. Radar SAM interceptors kill only 20% of the time: first as a test override, now the real number (S-50). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
+
+## 2026-10-21: one launch notice (C-61)
+
+- The warning banner now just says "NUCLEAR LAUNCH DETECTED", whatever the number of nukes in the air; the impact time and radar tracks are in the sensor view (N).
 
 ## Needs my review
 
@@ -445,6 +452,8 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+29. **Done (S-50): `intercepts = { chance = 0.2 }` on both radar SAMs; the `nuke` profile's override dropped.** **Radar SAM interception chance 0.5 → 0.2 (the user, 2026-10-21):** "Make 0.2 the real interception chance." `chs_radar_sam` and `ord_radar_sam`: `intercepts = { chance = 0.2 }` (guide 10.9 and the S-48 numbers with it). The user tried it in the `nuke` profile through C-60's test override; once the defs say 0.2 the client drops that override. Nothing else changes on the client (it never reads the chance). High priority (the user asked).
 
 28. **Nukes launch vertically, then turn onto their arc (the user, 2026-10-21):** "Can we make the nuke go vertical to a height then turn toward its destination?" Today a nuke leaves the silo already on its parabola (Weapons.fire's lofted branch: up at sqrt(2 g apex), across at dist / t). Suggested (numbers yours):
     - A boost phase like the radar SAMs' (S-42 / S-44): straight up from the silo to `climbHeight` (e.g. 120 studs above the launcher), then a pitch-over at `turnRate` (e.g. 90°/s, about a second) toward the lofted velocity that, from where the missile is, peaks at `apex` (300 above the launcher) and lands on the aimed spot; then unpowered ballistic flight as now. Re-solving that velocity at the end of the turn keeps the landing exact. The flight can stay near 12.7 s so interceptors keep their window.
