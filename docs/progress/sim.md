@@ -131,6 +131,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 35), S-58, protocol 19:** the Strategic record's icon is 8 bits (bits 0–7) and is the unit's **def index** (`Icons.byDef`): unique per unit type; team bits 8–10, flags bits 11–15 (5 bits, all in use). 0 = unknown blip as before. `def.icon` stays the family name (`Icons.names`). Still 6 bytes. Contract sections 3, 6.
 - **Done (request 33), S-56:** SAM range and lockRange: IR 206 (Chaos) / 147 (Order), radar 945 / 1013. airSight Thorn 206, Vigil 157, Hornet 147, Halo 157; radars Wyvern 1013, Aegis 1097, Gorgon 810, Seraph 878.
 - **Done (request 32), S-55:** SAM ranges and lockRanges: IR 294 (Chaos) / 210 (Order), radar 1260 / 1350. Sensors follow: airSight Thorn 294, Vigil 224, Hornet 210, Halo 224; radars Wyvern 1350, Aegis 1463, Gorgon 1080, Seraph 1170. projectileSpeed unchanged.
 - **Changed (S-54, the user): `map:normandy` now fights west against east.** Player 1 is in the west rear (start (−850, 0)), player 2 in the east (850, 0).

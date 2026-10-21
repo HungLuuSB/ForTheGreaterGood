@@ -615,3 +615,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Guidance.spec`: the hovering helicopter moves in to x = 400, inside every Thorn's reach (94% hit).
   - The vertical-launch test no longer counts a missile still flying at the end as a steep launch.
+
+## S-58 — One strategic icon per unit type (client request 35, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** "Every type of unit need to have its own unique icon." The wire icon was the family name's number (50 names over 126 unit defs), 6 bits.
+- **Now (protocol 19):** the Strategic record's icon is 8 bits and is the unit's **def index** (`Shared/Net/Icons.byDef`); `def.icon` stays the family name for the shape. The record keeps its 6 bytes: the flags field shrinks from 7 to 5 bits, all five of which were in use (2 were reserved). At most 255 unit defs (an assert).
+- **Knowledge unchanged:** icons go only where the team knows the type (VISIBLE, ghosts, TRACKED contacts), as before; untracked blips stay icon 0 (D107). A tracked contact now shows its exact type instead of its family, which D107 already allows (tracking reveals the type).
+- **Tests:** `Schema.spec` bit layout, golden bytes and range checks; `NetOut.spec` checks every def's icon is its own index.

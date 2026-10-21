@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 18 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal)
+Schema.PROTOCOL_VERSION = 19 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -602,8 +602,9 @@ end
 
 --------------------------------------------------------------------------------
 -- Strategic (S → C, unreliable, 2–4 Hz): every known unit, minimap level
---   unitId u16 | cell u16 | icon 6 bits | team 3 bits | flags 7 bits  = 6 bytes
---   Bits are packed LSB-first: icon = bits 0–5, team = 6–8, flags = 9–15.
+--   unitId u16 | cell u16 | icon 8 bits | team 3 bits | flags 5 bits  = 6 bytes
+--   Bits are packed LSB-first: icon = bits 0–7, team = 8–10, flags = 11–15
+--   (protocol 19, S-58: the icon is the unit's def index, Shared/Net/Icons).
 --   Team travels as team - 1 (teams are 1..8).
 --------------------------------------------------------------------------------
 
@@ -617,12 +618,12 @@ Schema.StrategicFlag = table.freeze({
 	GHOST = 8, -- structure seen earlier, now out of sight
 	TRACKED = 16, -- radar blip under fire-control radar: wobbles less, and the icon is the real one (D104)
 })
-local STRATEGIC_FLAGS_MASK = 31 -- bits 5..6 reserved
+local STRATEGIC_FLAGS_MASK = 31 -- all 5 flag bits are in use
 
 export type Strategic = {
 	unitId: number,
 	cell: number,
-	icon: number, -- 0..63, 0 = unknown blip
+	icon: number, -- 0..255: the unit's def index (Icons), 0 = unknown blip
 	team: number, -- 1..8
 	flags: number,
 }
@@ -636,9 +637,9 @@ function Schema.encodeStrategic(w: Writer, rec: Strategic)
 	end
 	writeId(w, rec.unitId, "unitId")
 	w:writeU16(rec.cell)
-	w:writeBits(rec.icon, 6)
+	w:writeBits(rec.icon, 8)
 	w:writeBits(rec.team - 1, 3)
-	w:writeBits(rec.flags, 7)
+	w:writeBits(rec.flags, 5)
 	w:flushBits()
 end
 
@@ -646,9 +647,9 @@ function Schema.decodeStrategic(r: Reader): Strategic
 	r.context = "strategic record"
 	local unitId = readId(r, "unitId")
 	local cell = r:readU16()
-	local icon = r:readBits(6)
+	local icon = r:readBits(8)
 	local team = r:readBits(3) + 1
-	local flags = r:readBits(7)
+	local flags = r:readBits(5)
 	r:alignBits()
 	if band(flags, STRATEGIC_FLAGS_MASK) ~= flags then
 		fail(r, `flags has reserved bits: {flags}`)
