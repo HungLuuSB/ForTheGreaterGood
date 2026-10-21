@@ -36,6 +36,7 @@ local Combat = require("../Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local Guidance = require("@shared/Combat/Guidance")
 local Lofted = require("@shared/Combat/Lofted")
+local Deploy = require("../Deploy")
 local EW = require("../EW")
 local Sensors = require("../Sensors")
 local Stockpile = require("../Stockpile")
@@ -291,6 +292,9 @@ return function(sim: Types.Sim)
 				end
 				if canFire and not Stockpile.ready(w, key) then
 					canFire = false -- nothing in stock (S-47)
+				end
+				if canFire and not Deploy.canFire(w, id) then
+					canFire = false -- packed or (un)packing (S-64)
 				end
 			elseif projTarget ~= 0 then
 				-- interceptors launch vertically: in range and in stock is enough (S-48)

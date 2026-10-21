@@ -74,6 +74,8 @@ export type World = {
 	weaponCount: { [number]: number },
 	lastAttacker: { [number]: number }, -- unit that last damaged this one, 0 = none
 	lastAttackerGen: { [number]: number }, -- its generation (D109)
+	deploy: { [number]: number }, -- deployable units only: 0 packed .. 1 deployed (Deploy, S-64)
+	deployIds: { number }, -- deployable units, in the order they entered
 	wYaw: { [number]: number }, -- turret yaw relative to the hull, radians
 	wPitch: { [number]: number }, -- radians, up positive
 	wReload: { [number]: number }, -- seconds until ready (<= 0 = ready)
@@ -125,6 +127,8 @@ function World.new(): World
 		weaponCount = {},
 		lastAttacker = {},
 		lastAttackerGen = {},
+		deploy = {},
+		deployIds = {},
 		wYaw = {},
 		wPitch = {},
 		wReload = {},
@@ -446,6 +450,10 @@ function World.hash(w: World, h: number?): number
 		hv = Hash.u32(hv, w.gen[id])
 		hv = Hash.u32(hv, w.lastAttacker[id])
 		hv = Hash.u32(hv, w.lastAttackerGen[id])
+		local deploy = w.deploy[id]
+		if deploy ~= nil then
+			hv = Hash.number(hv, deploy) -- only deployable units: other units' hashes are as before (S-64)
+		end
 		for slot = 1, w.weaponCount[id] do
 			local key = id * 8 + slot - 1
 			hv = Hash.number(hv, w.wYaw[key])
