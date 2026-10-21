@@ -385,6 +385,11 @@ All with real mouse and keyboard input through the MCP tools.
 - Radar SAM missiles now climb straight up about 100 studs before they pitch over (`climbHeight` in `chs_radar_sam.luau` / `ord_radar_sam.luau`, tunable like `reload`); the client follows the same rule (`debug_out/screens/c55_vertical_climb.jpg`).
 - Radar SAMs reach 3x as far (Wyvern / Gorgon 1680, Aegis / Seraph 1800) with their radars to match; the range rings follow. In `airsam` the Wyverns can now reach your aircraft almost from where they start.
 
+## 2026-10-21: SAM missile stockpiles (C-56)
+
+- SAM sites and mobile SAMs now hold a stock of missiles (Thorn / Vigil 8, Hornet / Halo 4, Wyvern / Aegis 6, Gorgon / Seraph 3) and rebuild it one missile at a time for supply and power (IR 6 s, 15 + 300; radar 12 s, 40 + 900). An empty site holds its fire.
+- Your own SAMs show their stock as a row of pips above the health bar (lit = in stock), and a site that isn't full keeps its bar up while it refills (`debug_out/screens/c56_sam_stock_pips.jpg`). You never see an enemy site's stock.
+
 ## Needs my review
 
 - **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
@@ -416,7 +421,7 @@ All with real mouse and keyboard input through the MCP tools.
     - **Wire:** an interceptor's target is a projectile, not a unit (SPAWN_PROJ needs a target projectile ID or a flag); a nuke launch is worth an event every player gets (a warning; BAR announces it). The client draws whatever the contract says: on my side the nuke's plume, flash, shockwave and cloud, a launch warning, interceptors flying at the missile, and the silo's fire order and stockpile in the UI.
     - The guide needs it: weapon schema (4.3), economy drain (8), targeting projectiles (10), guidance (11.5), roster (13.5, a T3 row), and contract section 7.
 
-25. **Missile stockpiles for SAM sites (the user, 2026-10-21; new design, not in the guide):** "SAM systems should have a stockpile and spend resources to fill it up." Today SAMs fire forever at their reload rate; only aircraft have ammo. The user chose: all SAM sites and mobile SAMs, refilled automatically, BAR style. Suggested:
+25. **Done (S-47, protocol 15): weapon field `stockpile`, own units' STOCK in State records; the client shows it since C-56. Naval SAMs have no stockpile yet (a question for the user).** **Missile stockpiles for SAM sites (the user, 2026-10-21; new design, not in the guide):** "SAM systems should have a stockpile and spend resources to fill it up." Today SAMs fire forever at their reload rate; only aircraft have ammo. The user chose: all SAM sites and mobile SAMs, refilled automatically, BAR style. Suggested:
     - A weapon field, e.g. `stockpile = { capacity, buildTime, cost = { supply, power } }`: Thorn and Vigil 8, Wyvern and Aegis 6, Hornet 4, Gorgon and Seraph 3. Build times e.g. IR 6 s and radar 12 s per missile; costs e.g. IR 15 supply + 300 power, radar 40 + 900. The reload between shots stays as it is.
     - A site builds one missile at a time while below capacity, draining supply and power like construction (slower when the team stalls). A shot needs a missile in stock. Built sites start empty and fill up; scenario spawns could start full.
     - Wire: the owner's units carry their stock (e.g. a `stock u8` in State records, own units only, like `targets`) so the client can show it; protocol bump.
