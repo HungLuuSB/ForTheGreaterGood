@@ -17,14 +17,16 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
   - [x] Style guide rewritten for the near-future look ([`../art/style-guide.md`](../art/style-guide.md)); Chaos base color test on Coastline: gunmetal recommended (M-10).
   - [x] Lancer vertical slice (M-11..M-13), section below. **Waiting for your review.**
 
-## Lancer review 2 (2026-10-21, in progress)
+## Lancer review 2 (2026-10-21/22, waiting for your review)
 
 Your revisions: camouflage options (a) plain sand with weathering and low grime, (b) crisp three-tone disruptive; team color as a painted roof panel and side stripes; baked detail (bolts, seams, hatches, periscopes, ribs, wear, ambient occlusion); a new gun (two-part thermal sleeve with clamp bands, bore evacuator, muzzle with lip and bore).
 
 - **Built and imported:** 3,704 triangles (base 2,012, turret 764, barrel 928), limit 4,000; textures 1024 × 1024, color and roughness per variant, normal and metalness shared. Both variants rigged as `ReplicatedStorage.ModelReview.ord_lancer_a` / `_b` in "FTGG Art"; asset IDs in `assets/models/ord_lancer/roblox_assets.json`.
 - **100 tanks, render CPU per frame (close / normal zoom):** empty 4.7 / 4.7 ms, 100 blockouts 5.1 / 4.9 ms, 100 first-slice Lancers 4.3 / 4.1 ms, 100 review-2 Lancers 4.25 / 4.2 ms (warm; the first appearance had a one-off 320 ms load hitch).
 - **Team paint:** the first wash (0.3) drew dark navy in Studio and nearly vanished at 220 studs; rebuilt with a 0.1 wash (imported, not yet seen in Studio).
-- **Blocked:** since the last Studio restart every PBR model in "FTGG Art" draws grey, including the first slice that drew correctly before. Studio now renders SurfaceAppearances through their `TexturePack` assets, and all three packs fail to load ("Asset type does not match requested type"); recreating the SurfaceAppearance reuses the same pack. A Roblox-side problem; retry later. Still to do once it clears: the screenshots (3 pitches × close/normal, close-up in Realistic lighting) and the camouflage pick.
+- **Grey for one session:** after the first restart every PBR model in "FTGG Art" drew grey, the first slice included; the `TexturePack` assets failed to load ("Asset type does not match requested type"). After a second restart the next day the models draw correctly although the packs still report the same failure, so Studio falls back to the four maps.
+- **Screenshots** (`debug_out/screens/lancer2_*.jpg`; order A, B, blockout): pitch 55°, 35° and 80° at 40 and 220 studs, and a ground-level close-up in Realistic lighting. The lighter team panel reads at 220 studs on both variants; B's dark patches turn the tank brown at 80°, A stays sand.
+- **Still to decide:** the camouflage (A or B) and the budget standard.
 - **Lighting:** "FTGG Art" already uses `LightingStyle.Realistic` with `PrioritizeLightingQuality` (the unified renderer replaced `Technology`/Future).
 
 ## Lancer mesh vertical slice (2026-10-21)
