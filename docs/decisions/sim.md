@@ -935,3 +935,20 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Pads:** an aircraft heading to rearm picks the nearest pad with a free spot (counting aircraft already assigned to it against its `rearmPads`); if all are full, the nearest.
 - **Not done:** the flying sight bonus (audit item 10's third part); flying units have the sight their defs give. It would change every air unit's numbers, so it waits for a balance pass.
 - **Tests (`Landing.spec`):** a Ravager damages a Falcon parked on its pad, 131 a shell (its LIGHT damage), while a Hornet holds its fire; an empty Falcon skips a full pad for a free one farther away.
+
+## S-72 — Radar upkeep (audit item 9) (2026-10-22)
+
+- Audit item 9 had two parts.
+  - "Missile reloads for SAM sites and launchers are free" was already done by the stockpiles (S-47: each missile costs supply and power to rebuild).
+  - "Plain radars have no power upkeep" is done now.
+- **Rule:** new `sensors.radarDrain` (power per second). It is drained with the tracking and jamming upkeep (`Sensors.drainStep`, D104 / D108). In a power stall, the share a radar gets scales its radar radius, at whole sensor cells, like a tracker's. Fully powered it keeps its def radius exactly.
+- **Stealth reach:** range × signature (D78) now uses the powered radius.
+- **Numbers** (my placeholders; Order's radars are stronger and cost more):
+  - Watchtower 3, Eye 2;
+  - Beacon 12, All-Seer 9;
+  - Oracle 3, Watcher 2;
+  - Archangel (AWACS) 8.
+  - Radars on SAM sites and ships carry no upkeep: their weapons and stockpiles already cost.
+- **Tests:**
+  - `Fog.spec`: an Eye's 2 power/s shows as demand, a stall drops a tank at 530 studs off its radar, and power brings it back.
+  - `Tracking.spec`: its stall test uses an Aegis for the plain radar, since a Watchtower now shrinks too.
