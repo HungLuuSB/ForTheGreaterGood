@@ -68,6 +68,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 				lastTick = tick,
 				movedTick = was and was.movedTick,
 				health = (e.health :: number) / 255,
+				shownHealth = (e.health :: number) / 255,
 				build = (e.build :: number) / 255,
 				state = e.state or 0,
 				weapon = 0,
@@ -137,7 +138,7 @@ local function applyTactical(world: World.World, records: { Schema.Tactical }, t
 	end
 end
 
-local function applyState(world: World.World, records: { Schema.State })
+local function applyState(world: World.World, records: { Schema.State }, tick: number)
 	for _, r in records do
 		local u = world.units[r.unitId]
 		if u == nil or u.tier ~= "tactical" then
@@ -146,6 +147,10 @@ local function applyState(world: World.World, records: { Schema.State })
 		end
 		if r.health then
 			u.health = r.health / 255
+			-- shown when the render clock reaches it (C-49)
+			local log = u.healthLog or {}
+			table.insert(log, { tick, u.health :: number })
+			u.healthLog = log
 		end
 		if r.build then
 			u.build = r.build / 255
@@ -274,7 +279,7 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 	elseif channel == "Tactical" then
 		applyTactical(world, records :: any, tick)
 	elseif channel == "State" then
-		applyState(world, records :: any)
+		applyState(world, records :: any, tick)
 	elseif channel == "Strategic" then
 		applyStrategic(world, records :: any, wireTick :: number, tick)
 	elseif channel == "Projectiles" then

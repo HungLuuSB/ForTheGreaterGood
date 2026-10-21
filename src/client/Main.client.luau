@@ -359,6 +359,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local speed = simSpeed()
 	local simDt = dt * speed
 	local t = Interp.advance(clock, world, now, dt, speed)
+	World.settle(world, t) -- health bars show changes with the hits that caused them (C-49)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
 	mark("units", t0)

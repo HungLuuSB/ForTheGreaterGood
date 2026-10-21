@@ -44,7 +44,9 @@ export type Unit = {
 	snaps: { Snap }, -- tactical: ascending sim ticks
 	lastTick: number, -- sim tick of the last position applied (drops reordered unreliable records)
 	movedTick: number?, -- sim tick its position or heading last changed (C-45)
-	health: number?, -- 0..1
+	health: number?, -- 0..1, the latest the server sent
+	shownHealth: number?, -- what the bars show: health as of the render tick (C-49, World.settle)
+	healthLog: { { number } }?, -- health changes not shown yet: { tick, health }, oldest first
 	build: number?, -- 0..1
 	state: number,
 	weapon: number, -- Schema weapon state field
@@ -64,6 +66,7 @@ export type Death = { id: number, defIndex: number?, team: number, x: number, z:
 export type Me = { player: number, team: number, allyTeam: number }
 
 export type World = {
+	shownTick: number?, -- the render tick World.settle last ran for (C-49)
 	grid: Grid.Grid,
 	layers: Layers.Layers?,
 	mapId: string?,
@@ -165,6 +168,35 @@ function World.groundY(world: World, x: number, z: number, floats: boolean?): nu
 		return 0
 	end
 	return if floats then Terrain.surfaceY(layers, x, z) else Terrain.groundY(layers, x, z)
+end
+
+-- Moves what the bars show up to render tick `renderTick` (C-49): a health
+-- change shows when the render clock reaches the tick it happened on, with
+-- the hit that caused it, not when its record arrives (~2 ticks earlier).
+function World.settle(world: World, renderTick: number)
+	world.shownTick = renderTick
+	for _, u in world.units do
+		local log = u.healthLog
+		if log == nil then
+			continue
+		end
+		while log[1] and log[1][1] <= renderTick do
+			u.shownHealth = log[1][2]
+			table.remove(log, 1)
+		end
+		if #log == 0 then
+			u.healthLog = nil
+		end
+	end
+end
+
+-- The health the bars show: as of the render tick once World.settle runs,
+-- else (Lune specs that never settle) the latest.
+function World.shownHealth(world: World, u: Unit): number?
+	if world.shownTick == nil then
+		return u.health
+	end
+	return u.shownHealth or u.health
 end
 
 -- Whether a unit is moving: the server's MOVING state bit, or (the server

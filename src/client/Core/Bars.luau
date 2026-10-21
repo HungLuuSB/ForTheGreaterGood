@@ -20,10 +20,11 @@ export type Bar = { id: number, health: number, build: number?, own: boolean, se
 function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
 	local out = {}
 	for id, u in world.units do
-		if u.tier ~= "tactical" or u.health == nil then
+		local shown = World.shownHealth(world, u)
+		if u.tier ~= "tactical" or shown == nil then
 			continue
 		end
-		local health = u.health :: number
+		local health = shown :: number
 		local building = u.build ~= nil and (u.build :: number) < 1
 		local isSel = selected[id] == true
 		if isSel or building or health < Bars.FULL then
