@@ -26,6 +26,7 @@ export type Order = {
 	gx: number?, -- chase moves (attack, guard): where the last move was aimed
 	gz: number?,
 	issued: number, -- tick of the last chase move
+	auto: boolean?, -- given by the unit's move state, not a player (S-34): any command replaces it
 }
 
 export type OrdersState = {
@@ -37,6 +38,8 @@ export type OrdersState = {
 	rallyX: { [number]: number },
 	rallyZ: { [number]: number },
 	repeatOn: { [number]: boolean }, -- factory → finished items go back to the end of the queue
+	anchorX: { [number]: number }, -- idle units: the spot a Maneuver unit returns to (S-34)
+	anchorZ: { [number]: number },
 	nextBatch: number,
 }
 
@@ -50,6 +53,8 @@ function OrdersState.new(): OrdersState
 		rallyX = {},
 		rallyZ = {},
 		repeatOn = {},
+		anchorX = {},
+		anchorZ = {},
 		nextBatch = 1,
 	}
 end
@@ -63,6 +68,8 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.rallyX[id] = nil
 	o.rallyZ[id] = nil
 	o.repeatOn[id] = nil
+	o.anchorX[id] = nil
+	o.anchorZ[id] = nil
 end
 
 local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9 }
@@ -82,6 +89,7 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 				h = Hash.u32(h, ord.defIndex or 0)
 				h = Hash.u32(Hash.u32(h, if ord.started then 1 else 0), ord.nav)
 				h = Hash.u32(h, ord.issued)
+				h = Hash.u32(h, if ord.auto then 1 else 0)
 			end
 		end
 		h = Hash.u32(h, if o.hold[id] then 1 else 0)
@@ -92,6 +100,9 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 			h = Hash.number(Hash.number(h, o.rallyX[id]), o.rallyZ[id])
 		end
 		h = Hash.u32(h, if o.repeatOn[id] then 1 else 0)
+		if o.anchorX[id] then
+			h = Hash.number(Hash.number(h, o.anchorX[id]), o.anchorZ[id])
+		end
 	end
 	return Hash.u32(h, o.nextBatch)
 end

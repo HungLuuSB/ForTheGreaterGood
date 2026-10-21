@@ -226,6 +226,50 @@ local power: { [number]: number } = {}
 local demandS: { [number]: number } = {}
 local demandP: { [number]: number } = {}
 
+-- Cancelling (guide 9.3, S-35): what was spent comes back. Spending is
+-- proportional to progress, so a refund is progress × cost, credited like
+-- reclaim at the next economy step (capped by storage).
+local function refund(sim: Types.Sim, team: number, d: Defs.UnitDef, progress: number)
+	local acc = sim.eco.accounts[team]
+	if acc and progress > 0 then
+		acc.supply.reclaimed += d.cost.supply * progress
+		acc.power.reclaimed += d.cost.power * progress
+	end
+end
+
+-- Cancels an unfinished frame: refund, and the frame is gone (no wreck).
+-- False when `id` isn't an unfinished frame.
+function Build.cancelFrame(sim: Types.Sim, id: number): boolean
+	local w = sim.world
+	if w.slot[id] == nil or w.buildProgress[id] >= 1 then
+		return false
+	end
+	refund(sim, w.team[id], def(sim, id), w.buildProgress[id])
+	Combat.addEvent(sim.combat, { kind = "BUILD_FAILED", tick = sim.tick, unit = id, other = 0, reason = "cancelled" })
+	Lifecycle.remove(sim, id)
+	return true
+end
+
+-- Drops item `index` (1-based; 0 = all) from a factory's queue; the item in
+-- production is refunded what was spent on it.
+function Build.cancelQueued(sim: Types.Sim, factory: number, index: number)
+	local b = sim.build
+	local q = b.queue[factory]
+	if q == nil or #q == 0 or index > #q then
+		return
+	end
+	local w = sim.world
+	if index <= 1 then
+		refund(sim, w.team[factory], sim.defs.unitByIndex[q[1]], b.progress[factory] or 0)
+		b.progress[factory] = 0
+	end
+	if index == 0 then
+		table.clear(q)
+	else
+		table.remove(q, index)
+	end
+end
+
 local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 	local w = sim.world
 	local fd = def(sim, factory)

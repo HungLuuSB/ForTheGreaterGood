@@ -415,7 +415,7 @@ Store each layer as its own `buffer` (flat, cache-friendly, cheap to send to Act
 | `height` | i16 (×0.25 stud) | Ground height; client uses it to place ground units |
 | `waterDepth` | i16 (×0.25 stud) | 0 = dry land |
 | `slope` | u8 | Max slope inside the cell, 0–255 → 0–90° |
-| `terrainType` | u8 | Grass, rock, sand, road (speed modifiers) |
+| `terrainType` | u8 | Grass, rock, sand, road (speed modifiers; built in S-37 as `Layers.terrain`, factors in `Shared/Grid/Terrain`) |
 | `passMask` | u16 | Bit per move class: can this class enter this cell |
 | `clearance[mc]` | u8 per move class | Distance (cells) to nearest blocked cell; used for big footprints |
 | `occupancy` | u16 | Structure ID occupying cell (0 = free) |
@@ -494,6 +494,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - A* runs over leaf centers with the start and goal cells as endpoints.
 - The padding ring is made of whole adjacent open leaves.
 - Measured on 256×256 hilly terrain: tree build about 6 ms (load time), route about 2.5 ms corner to corner.
+- The coarse route ignores terrain types; the flow field inside the corridor weighs them (S-37, 12.1).
 
 **Step 3 — Flow field inside the corridor only.**
 - Integration field: Dijkstra/BFS from the goal cell over corridor cells (cost = 1 × terrain modifier).
@@ -625,7 +626,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 ```
 cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
                   8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
-                  13 TOGGLE, 14 CAMERA, 15 REPEAT   (0 is invalid)
+                  13 TOGGLE, 14 CAMERA, 15 REPEAT, 16 CANCEL   (0 is invalid)
 flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
 count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
@@ -638,6 +639,8 @@ params    by cmdType:
   SET_FIRE_STATE / SET_MOVE_STATE      value u8: 0 hold, 1 return fire / maneuver, 2 fire at will / roam
   TOGGLE                               value u8: 0 off, 1 on
   REPEAT                               value u8: 0 off, 1 on (factories; others ignore it)
+  CANCEL                               value u8: 0..50. Unfinished frames: cancelled (value ignored).
+                                       Factories: drop queue item `value` (1-based), 0 = the whole queue
   CAMERA                               minX u8, minZ u8, maxX u8, maxZ u8  (camera area as a cell rectangle)
   STOP                                 none
 ```
@@ -882,7 +885,7 @@ Factories have build power and an optional rally point and repeat queue. Workers
 - **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.
 - The client shows a placement ghost using its own grid copy; the server re-validates.
 - Unfinished structures exist from the first tick with low health (they can be attacked).
-- Cancelling refunds what was spent (optional: 100% refund like BAR).
+- Cancelling refunds what was spent (S-35): the CANCEL command removes an unfinished frame (no wreck) or a factory queue item; the frame's progress, or the factory's progress on the item in production, times its cost comes back at the next economy step (capped by storage). Queued items not started cost nothing yet.
 - Upgrading a T1 extractor into T2: build the T2 on the same spot; the T1 is removed when construction starts.
 
 ### 9.4 Tech progression
@@ -911,6 +914,8 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 | Hold Position | Never moves on its own |
 | Maneuver | Chases a little, returns (default) |
 | Roam | Chases freely |
+
+Move states (S-34, `Orders.autoStep`): every 15 ticks an idle armed unit on Fire at Will (not builders, not aircraft) whose weapons have no shot (nothing in range, or terrain in the way, 10.8) attack-moves toward the nearest visible enemy it can damage and reach. Maneuver: only enemies within 150 studs of its anchor (where it was last sent) plus its range; past that leash, or when nothing is left, it walks back. Roam: enemies within 500 studs plus its range; it stays where the chase ends. Hold Position, Hold Fire and Return Fire units never move on their own. These orders are automatic: any command replaces them and sets a new anchor where it leaves the unit.
 
 ### 10.2 Target acquisition
 
@@ -1145,6 +1150,7 @@ countermeasures = {
 - Roles: scout, light tank, MBT, artillery (radar-targetable), MLRS (saturation), mobile IR SAM, mobile radar SAM, mobile radar, mobile jammer, workers.
 - Defenses: gun turret, heavy turret, IR SAM site, long-range radar SAM site, artillery emplacement, coastal battery.
 - Terrain matters: slopes block wheeled units; heavies are slow on sand (terrain modifiers).
+- Terrain modifiers (S-37, placeholder numbers in `Shared/Grid/Terrain.SPEED`): a unit's top speed is its maxSpeed × its move class's factor for the cell it is on. Wheeled: rock 0.8, sand 0.7, road 1.25. Tracked: 0.9, 0.8, 1.1. Heavy tracked: 0.9, 0.6, 1.1. Amphibious: 0.9, 0.85, 1.1. Hover: rock 0.8, sand 1, road 1.1. Grass is 1; ships, submarines and aircraft ignore terrain. Flow fields cost each step the best factor on the map divided by the factor of the cells it crosses, so paths prefer good ground. Generated maps (MapGen) paint sand on land within 2 cells of water and rock where the ground rises more than 15°; roads aren't generated yet.
 
 ### 12.2 Air
 
@@ -1166,7 +1172,7 @@ countermeasures = {
   - Besides sonar, naval units and ASW helicopters (helicopters with a weapon that can target `SUB`) detect a submerged submarine within 40 studs as a SONAR contact: torpedo-targetable, never VISIBLE. No other unit can see it.
   - Torpedoes launch level just under the surface, stay between the sea floor and the surface, home on sonar contacts, and are removed harmlessly when they reach land.
   - Destroyers carry a radar-guided naval SAM (`ord_naval_sam` 380 studs / `chs_naval_sam` 360, about their 1.5 × sight against aircraft; D97).
-- **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base.
+- **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base. (S-36) GUARD from an aircraft on a friendly carrier or airfield recovers it there: that pad becomes its home, and it lands, rearms and stays docked, carried along by a carrier, until any order launches it. Empty aircraft rearm at their home first, else at the nearest pad. Carriers don't build aircraft (not decided).
 - **Amphibious/hover units** bridge land and sea.
 - Naval structures: floating turret, torpedo launcher, sonar buoy, naval SAM platform, tidal generator.
 

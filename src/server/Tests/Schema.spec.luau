@@ -90,7 +90,7 @@ end
 
 local POS_TYPES = { CT.MOVE, CT.FIGHT, CT.ATTACK_GROUND, CT.PATROL }
 local TARGET_TYPES = { CT.ATTACK, CT.GUARD, CT.REPAIR, CT.RECLAIM }
-local VALUE_TYPES = { { CT.SET_FIRE_STATE, 2 }, { CT.SET_MOVE_STATE, 2 }, { CT.TOGGLE, 1 }, { CT.REPEAT, 1 } }
+local VALUE_TYPES = { { CT.SET_FIRE_STATE, 2 }, { CT.SET_MOVE_STATE, 2 }, { CT.TOGGLE, 1 }, { CT.REPEAT, 1 }, { CT.CANCEL, 50 } }
 
 local function randomCommand(rng: Prng.Prng): Command
 	local kind = rng:nextInteger(1, 6)
@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 11, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 12, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -607,7 +607,9 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0 }, "unknown cmdType 16") -- 15 is REPEAT (protocol 7)
+		expectRejected(t, cmd, { 17, 0, 1, 0, 1, 0 }, "unknown cmdType 17") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12)
+		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
+		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 4, 1, 0, 1, 0 }, "reserved bits")
 		expectRejected(t, cmd, { CT.STOP, LINE, 1, 0, 1, 0 }, "LINE flag")
 		expectRejected(t, cmd, { CT.STOP, 0, 0, 0 }, "unit count 0")

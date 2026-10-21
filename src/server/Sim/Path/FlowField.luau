@@ -2,8 +2,9 @@
 -- Flow fields inside a corridor (guide 6.3 step 3, 6.4).
 --
 -- 1. Integration: Dijkstra from the goal over corridor cells, 8-connected.
---    Straight steps cost 1, diagonal steps √2 (terrain modifiers can scale
---    these later). Diagonals never cut corners: both orthogonal cells they
+--    Straight steps cost 1, diagonal steps √2, times the mean of the two
+--    cells' terrain multipliers (tree.stepCost, each >= 1; S-37). Diagonals
+--    never cut corners: both orthogonal cells they
 --    pass between must be in the corridor.
 --    The queue is a bucket queue (Dial's algorithm): bucket b holds cells
 --    with cost in [b, b + 1). Every step costs at least 1, so a cell in the
@@ -63,6 +64,7 @@ export type Job = {
 	scanX: number,
 	keepCost: boolean,
 	workDone: number, -- total work units spent
+	stepCost: buffer?, -- the tree's terrain multipliers (S-37)
 }
 
 -- Starts a job. The goal must be inside the corridor.
@@ -100,6 +102,7 @@ function FlowField.newJob(tree: Quadtree.Tree, corridor: Route.Corridor, goalCel
 		scanX = corridor.minX,
 		keepCost = keepCost == true,
 		workDone = 0,
+		stepCost = tree.stepCost,
 	}
 end
 
@@ -112,6 +115,8 @@ function FlowField.run(job: Job, budget: number?): boolean
 	local mask = field.corridor.mask
 	local cost = job.cost
 	local spent = 0
+	local stepCost = job.stepCost
+	local readf32 = buffer.readf32
 
 	if job.phase == "integrate" then
 		local bucketHead, entryCell, entryCost, entryNext = job.bucketHead, job.entryCell, job.entryCost, job.entryNext
@@ -150,6 +155,9 @@ function FlowField.run(job: Job, budget: number?): boolean
 						continue
 					end
 					step = SQRT2
+				end
+				if stepCost then
+					step *= (readf32(stepCost, cell * 4) + readf32(stepCost, nc * 4)) * 0.5
 				end
 				local nv = c + step
 				if nv < cost[nc + 1] then

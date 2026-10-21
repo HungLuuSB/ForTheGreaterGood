@@ -14,6 +14,9 @@
 --   4. Write changed positions/headings through World setters (dirty bits).
 -- Idle units that aren't touched cost nothing and replicate nothing.
 --
+-- Terrain (S-37): a unit's top speed is scaled by its move class's factor
+-- for the cell it is on (Shared/Grid/Terrain).
+--
 -- Arrival: within ARRIVE_RADIUS of its own goal, or no progress for
 -- STUCK_TICKS while within GIVE_UP_RANGE (crowded goal) → the order ends.
 -- Units outside their order's corridor, or without progress for REPATH_TICKS,
@@ -28,6 +31,7 @@ local Air = require("../Air")
 local FlowField = require("../Path/FlowField")
 local Nav = require("../Nav")
 local Quadtree = require("../Path/Quadtree")
+local Terrain = require("@shared/Grid/Terrain")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -132,6 +136,7 @@ return function(sim: Types.Sim)
 	local bw, bh = math.ceil(g.sizeX / HASH_CELL), math.ceil(g.sizeZ / HASH_CELL)
 	local posX, posZ, heading, speed = w.posX, w.posZ, w.heading, w.speed
 	local profiles = nav.profiles
+	local layers = nav.pm.layers
 
 	-- Start-of-tick positions into the scratch arrays and hash.
 	local anyActive = false
@@ -296,7 +301,13 @@ return function(sim: Types.Sim)
 		nheading[k] = h
 
 		-- speed: slow down to stop at the goal, and while facing away
-		local target = min(if returning then p.maxSpeed * RETURN_SPEED else p.maxSpeed, sqrt(2 * p.brake * max(dist - Nav.ARRIVE_RADIUS, 0)))
+		-- terrain: the cell under the unit scales its top speed (S-37)
+		local top = p.maxSpeed
+		if not p.air then
+			local tx, tz = g:cellAt(nx[k], nz[k])
+			top *= Terrain.factor(layers, p.moveClass, tz * g.cellsX + tx)
+		end
+		local target = min(if returning then top * RETURN_SPEED else top, sqrt(2 * p.brake * max(dist - Nav.ARRIVE_RADIUS, 0)))
 		target *= max(0, cos(diff))
 		local v = nspeed[k]
 		if v < target then
