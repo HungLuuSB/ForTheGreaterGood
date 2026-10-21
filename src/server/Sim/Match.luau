@@ -71,6 +71,14 @@ function Match.validate(config: MatchState.Config, players: { [number]: Types.Pl
 			end
 		end
 	end
+	for pid, level in config.ai or {} do
+		if players[pid] == nil then
+			error(`Match: ai names unknown player {tostring(pid)}`, 3)
+		end
+		if level ~= "easy" and level ~= "normal" and level ~= "hard" then
+			error(`Match: ai level must be "easy", "normal" or "hard", got {tostring(level)}`, 3)
+		end
+	end
 	local cap = config.unitCap or Match.defaultCap(#order)
 	if cap ~= math.floor(cap) or cap < 1 or cap > 65535 then
 		error(`Match: unitCap must be an integer in 1..65535, got {cap}`, 3)

@@ -205,6 +205,15 @@ wind u8             current wind, 0..255 of a turbine's maximum
                     = 35 B
 ```
 
+## 10a. Spectators and player replays (S-18)
+
+- **Spectator:** `NetOut.addSpectator(sim)` adds a viewer that sees every unit (no fog, no ghosts), with a camera on the whole map: every unit is in its tactical tier, and it gets every combat event and homing correction. Its stream starts with a WELCOME whose `player`, `team` and `allyTeam` are **0** (no protocol change: 0 was never a valid player). It gets no Eco records (they carry no team) and no weapon targets (those are the owner's).
+- **Player replay files** (`Shared/Net/PlayerReplay`, guide 17.1): the stream one viewer got (a player, or a spectator), message by message. A client plays it back through its normal receive code, never re-simulating, so it survives balance patches and platform differences; it needs the protocol version and defs hash it was recorded with (both in the header).
+  - Layout: `"FTGP"`, format u8 (1), protocol u16, defsHash u32, mapId (u8 length + bytes), viewer u8 (0 = spectator), players (count u8, then id, team, allyTeam u8 each), firstTick u32, lastTick u32, then frames: tick delta (varint), message count (varint), and per message channel u8 (1-based in `PlayerReplay.CHANNELS`, the same order as `NetState.CHANNELS`), length (varint), bytes. Ticks without messages have no frame.
+  - API: `PlayerReplay.new(header, firstTick)`, `record(replay, tick, outbox)` after every sim tick, `serialize` / `parse`, and `play(replay, deliver)`, which calls `deliver(tick, outbox)` for every tick (empty outboxes between frames), exactly what a live client receives.
+  - Size: a spectator of a 4-minute AI match on `skirmish:192` is ~54 KB per game minute, a player ~33 KB (raw; compression is left to whoever stores the file). The 40-minute soak's spectator replay is in `docs/progress/sim.md`.
+  - Tested (`PlayerReplay.spec`): playing back the spectator's and player 1's recordings rebuilds the live client's view exactly at every checkpoint (units, tiers, positions, health, state, targets, projectiles, economy).
+
 ## 11. Bandwidth (headless stress test, per player)
 
 - 800 units: about 23 KB/s total (tactical 6.2, strategic 7.4, state 7.5, events 1.8), within the guide 7.6 budget of 35.

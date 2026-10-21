@@ -1465,6 +1465,7 @@ Build these **before** adding lots of content.
 - `Sim.runReplay` rebuilds the sim from the header, feeds the commands at their ticks and reports the first checkpoint whose hash differs.
 - **Two kinds of replay:**
   - **Player-facing replays** store the stream the server actually sent (per player, or the spectator stream), and the client plays it back like a live match. They never re-simulate, so they work across platforms and after balance patches.
+  - Implementation (S-18): `NetOut.addSpectator` gives the spectator stream (everything visible, the whole map tactical, WELCOME player 0); `Shared/Net/PlayerReplay` records any viewer's stream into an `"FTGP"` file (varint-framed messages per tick) and plays it back through the client's normal receive path. Tested: playback rebuilds the live view exactly.
   - **Command-log re-simulation** is a **developer tool** for bug reproduction and desync checks. It is only guaranteed on the same platform and build that recorded it: `math.sin`/`cos`/`atan2` may differ in the last bits between operating systems (DECISIONS D51), and any def change alters the defs hash.
 - Because the server simulation is deterministic, replaying the commands reproduces the match exactly. Every bug report should come with a replay.
 - Add a desync check: every 300 ticks, log a hash of the simulation state (`Sim.hash`: tick, PRNG state, every unit field in ID order, ID allocator). A replay that produces a different hash means non-determinism crept in (unordered `pairs`, `os.clock` in logic, unseeded random).

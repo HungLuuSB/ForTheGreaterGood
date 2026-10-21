@@ -22,6 +22,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-14: attack-move holds only while an enemy is within firing range (BAR).
 - S-15: procedural skirmish maps (`Shared/Grid/MapGen`), four named maps.
 - S-16: own units' weapon targets in State records (protocol 8; client request 6).
+- S-17: AI difficulty levels (Easy, Normal, Hard) as a match option; AI fairness fixes.
+- S-18: spectator stream and player replay files.
 
 ---
 
@@ -235,3 +237,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Who gets it:** only the unit's owner (not allies, not enemies: the target choice is the owner's information). NetOut keeps, per player, the last targets sent per own tactical unit (`sentTargets`, a string of slot targets); it sends all slots when any changed, and in the unit's ENTER tick when it has a target. A join clears `sentTargets`.
 - **Exact:** NetOut runs after Targeting in the same tick, so the client knows the target from the tick it is picked, before the turret has turned.
 - **Tests:** golden bytes for a targets record pinned to protocol 8; the full State record size; random round trips with targets; an empty target slot mask and reserved bit 64 rejected; `NetOut.spec` "own units' weapon targets reach their owner only, exactly": two Lancers against two Ravagers, the owner's view equals `wTarget` on all 480 unit-ticks, the enemy never gets targets. Sending only on ENTER fails it (7 of 480).
+
+## S-17 — AI difficulty levels (2026-10-21)
+
+- **Match option:** `match.ai = { [playerId] = "easy" | "normal" | "hard" }` (validated with the other match rules; unknown players or levels are refused). `Skirmish.forMatch(sim)` makes a brain per listed player; `Skirmish.new(sim, player, level?)` defaults to the match option, else Normal. Levels stay out of the replay header: the AI's commands are recorded like a player's.
+- **Levels** (`Skirmish.LEVELS`):
+  - **Easy:** thinks every 2 s; 2 workers; one item queued per factory; at most 6 extractors; one plant; no radar, anti-air, tech-up or kiting; 15% artillery; attacks early with small waves (6, +2).
+  - **Normal:** the S-7 AI (3 workers, waves of 8, +2).
+  - **Hard:** thinks every 2/3 s; **expands only to deposits nearer its own start than any enemy start**; escorts (3 army units GUARD) every worker sent beyond 160 studs, until it is idle; gun turrets once 5 extractors and 4 army units stand (two toward the enemy, one more per two far extractors, at most 6); once 6 extractors, 6 army units and 200 supply stand, the Command Vehicle builds an **airfield** (helicopters and bombers; fighters against known aircraft) and, when deep water is within 64 cells, a **shipyard** (corvettes and submarines; the fleet gathers at sea and attacks in groups of 4); bigger waves (12, +4) that go for the enemy Command Vehicle first (it ends the match). Builders that are only assisting a factory leave it for these.
+- **What made Hard stronger** (measured with 12-game Hard-vs-Normal sets on Ridgeline, both factions, sides swapped, seeds 7–9): safe expansion (1.5 → 10.5 of 12). Escorts, turrets and the airfield cost a little early but are the behaviors asked for; a "Command Vehicle backs off from threats" behavior was tried and removed (it stopped the commander building; 7.5 → 4).
+- **Fairness fixes found on the way** (they change Normal too; the AI matches in the soak and `Skirmish.spec` play differently):
+  - the build-spot rings were swept from +x for both players, so the two starts of a mirrored map built different bases; the sweep now mirrors with `toward`;
+  - players thought at `tick + player`, so the higher player always acted a tick earlier and won every race; now they are spread evenly over the think period;
+  - deposits equally near two starts (on a mirrored map, exactly equal) are a race decided by unit IDs and player order, not play: no AI claims a deposit within a cell of equal distance to its own and an enemy start; ties in the deposit order go to the one farther from the enemy.
+  - A positional bias remains in mirror matches (a deterministic sim amplifies tiny differences); the matchup report swaps sides for every pairing.
+- **Report:** `lune run ailevels [minutes] [filter] [seeds]` writes `docs/AI_LEVELS.md`: 1v1 on Ridgeline, Coastline and `skirmish:256` (each pairing as an Order mirror and a Chaos mirror, sides swapped: Order vs Chaos measures the faction, not the level, while Ravager trades 2.5:1 against Lancer, M8), a 2v2 per pairing on Twin Lakes (each team one Order and one Chaos player), two 4-player FFAs on Crossroads; winner, length, peak units, a tally and match lengths per map.
+- **Tests** (`AI.spec`, 5 new): the match option and its validation; Easy's limits; Hard's turrets, escort and airfield with aircraft; Hard's shipyard and fleet on Coastline; Hard beats Easy (Ridgeline, seed 9). Normal's S-7 tests still pass.
