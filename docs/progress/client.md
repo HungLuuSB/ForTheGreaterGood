@@ -463,6 +463,12 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: requests 37 and 38 used, faction pass followed (C-80)
+
+- Countermeasure charges (request 37, S-63, protocol 21): the unit panel shows own units' flares and chaff left from the server ("Flares 6/6 · Chaff 6/6", `debug_out/screens/c80_charges.jpg`); other players' units keep "max". `OwnerFields.spec` checks the client's counts against the server's.
+- Match statistics (request 38, S-63): the results come from the sim's `Stats.report`: units built / lost / killed, supply and power gathered / spent, damage dealt. My server-side `MatchStats` (C-77) is removed.
+- Faction pass (S-62): radar precision weighs each Pinpointer (`Pinpoint.weight`: 5 Witnesses or 7 Augurs for full). Specs that hard-coded unit numbers now read them from the defs (a Lancer now does 141 per 1.75 s = 80.6 DPS against armored). Two Studio-scene bounds moved with the new numbers (SAM prediction median at the Thorn's 165 studs; Wyvern pitch-overs when targets die early), and a Moving spec bug surfaced: it encoded the move with the client's placeholder grid before the WELCOME (fixed: the map's grid).
+
 ## 2026-10-22: spectators and the replay viewer (C-79)
 
 - Spectators: a Roblox player without a seat (a full lobby, or a profile with no free slot) watches as a spectator on sim-A's spectator stream (S-18): every unit, no fog, a "SPECTATING" banner; re-added at every new match. New profile `spectate` (the duel, both sides played by the placeholder bot) shows it in a solo playtest (`debug_out/screens/c79_spectator.jpg`).
@@ -545,8 +551,8 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
-37. **Live countermeasure charges for own units (C-76, 2026-10-22):** the unit panel shows ammo from S-61 but flares / chaff only as the def's maximum. Suggested: a 4th OwnerField bit, CHARGES 8: `flares u8, chaff u8` (charges left), on change and with the ENTER, for units with `countermeasures`. Low priority. Sent to sim-A directly.
-38. **Match statistics per player (2026-10-22, the user asked):** for the results screen: units built, lost and killed, supply / power gathered and spent, damage dealt per player, counted by the sim (e.g. `Sim/Stats`), read by the Roblox server at match end; no wire change. Medium priority. Sent to sim-A directly.
+37. **Done and used (S-63, protocol 21; C-80): the unit panel shows own flares and chaff left.** **Live countermeasure charges for own units (C-76, 2026-10-22):** the unit panel shows ammo from S-61 but flares / chaff only as the def's maximum. Suggested: a 4th OwnerField bit, CHARGES 8: `flares u8, chaff u8` (charges left), on change and with the ENTER, for units with `countermeasures`. Low priority. Sent to sim-A directly.
+38. **Done and used (S-63, Sim/Stats; C-80): the results screen shows them.** **Match statistics per player (2026-10-22, the user asked):** for the results screen: units built, lost and killed, supply / power gathered and spent, damage dealt per player, counted by the sim (e.g. `Sim/Stats`), read by the Roblox server at match end; no wire change. Medium priority. Sent to sim-A directly.
 
 36. **Done and used (S-61, protocol 20; C-75): the unit panel shows the server's factory queue, the command card the server's fire and move states, aircraft their real ammo; `Core/FactoryQueue` and the last-sent states are gone.** **Factory queues, fire / move states and ammo on the wire (C-68, 2026-10-22):** the playable UI's unit panel and command card need them; today the client shows what it queued itself (`Core/FactoryQueue`) and the last state it sent, and no ammo. Suggested: own factories' queue (def indices, at most ~20, and the progress of the first) in State records when it changes; own units' fire state and move state (2 bits each, in the state field or a new one); aircraft ammo (rounds left / max) for own units. Owner only, like STOCK. Medium priority.
 

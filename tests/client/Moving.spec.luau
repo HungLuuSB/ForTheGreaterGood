@@ -102,7 +102,8 @@ return function(t: any)
 
 	t.test("a unit that stops counts as standing still within MOVING_TICKS", function()
 		local sim, world, id = scene("ord_lancer")
-		assert(Sim.submit(sim, 1, Commands.toPoint(world.grid, CT.MOVE, { id }, -250, 0)))
+		-- the map grid, not the client's placeholder before its WELCOME arrives
+		assert(Sim.submit(sim, 1, Commands.toPoint(sim.map.layers.grid, CT.MOVE, { id }, -250, 0)))
 		local stoppedAt
 		for tick = 1, 15 * 20 do
 			Sim.step(sim)

@@ -17,7 +17,7 @@
 -- (the first hosts; `seats` in the profile sets the starting ones); seat i
 -- plays sim player i. In the lobby an empty sim on the chosen map runs as
 -- a preview; Start builds the match (the skirmish AI plays its seats,
--- S-17), the Match system ends it, the results (with MatchStats) are
+-- S-17), the Match system ends it, the results (with the sim's Stats, S-63) are
 -- published once every human is out or the match is over, and "back to
 -- lobby" returns to the preview. A human who leaves mid-match keeps the
 -- seat and rejoins into it.
@@ -40,7 +40,7 @@ local SimWorld = require(game:GetService("ServerScriptService"):WaitForChild("Si
 local Skirmish = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("AI"):WaitForChild("Skirmish")) :: any
 local MapRegistry = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Grid"):WaitForChild("MapRegistry")) :: any
 local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
-local MatchStats = require(script.Parent:WaitForChild("MatchStats")) :: any
+local Stats = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Stats")) :: any
 local HttpService = game:GetService("HttpService")
 
 local DT = 1 / Sim.TICK_RATE
@@ -134,7 +134,6 @@ local defs = withOverrides(Defs.load(), Config.weaponOverrides)
 
 local sim: any
 local brains: { any } = {} -- the skirmish AI's players in a lobby match (C-70)
-local stats: any = nil -- the lobby match's statistics (C-77)
 local PREVIEW_PLAYERS = 8 -- the lobby preview has a sim player for every seat a human may take
 local matchStartTick = 0
 local matchId = 0
@@ -253,7 +252,6 @@ local function startMatch()
 			sim = Sim.new(Lobby.config(lobby, seed))
 			brains = Skirmish.forMatch(sim)
 			matchStartTick = sim.tick
-			stats = MatchStats.new(sim)
 			recorders, recordedBytes = {}, 0
 			for _, id in Lobby.humans(lobby) do
 				local header = { protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, mapId = sim.mapId, viewer = id, players = {} }
@@ -271,7 +269,6 @@ local function startMatch()
 				table.insert(preview, { id = i, team = i })
 			end
 			sim = Sim.new({ seed = seed, players = preview, mapId = lobby.mapId, scenario = "empty", defs = defs })
-			stats = nil
 		end
 	else
 		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
@@ -607,8 +604,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 			Skirmish.tick(b)
 		end
 		Sim.step(sim)
-		if stats and lobby and lobby.phase == "playing" then
-			MatchStats.step(stats, sim)
+		if lobby and lobby.phase == "playing" then
 			if recordedBytes < MAX_RECORDED_BYTES then
 				for id, rep in recorders do
 					local outbox = sim.net.players[id].outbox
@@ -625,7 +621,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 		-- AI may fight on in a free-for-all; the results don't wait for it)
 		if lobby and lobby.phase == "playing" and Lobby.done(lobby, sim) then
 			lobby.phase = "results"
-			lobby.results = Lobby.results(lobby, sim, matchStartTick, MatchStats.summary(stats))
+			lobby.results = Lobby.results(lobby, sim, matchStartTick, Stats.report(sim))
 			lobby.results.replays = next(recorders) ~= nil
 			brains = {}
 			print(`[Entry] match over for the humans: {if sim.match.over then `ally team {sim.match.winner} won` else "all out"}`)

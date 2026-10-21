@@ -136,4 +136,20 @@ return function(t: any)
 		step(2)
 		t.equal((world.units[lancer] :: any).ammo, nil, "no ammo for units without an ammo count")
 	end)
+
+	t.test("countermeasure charges (protocol 21): flares and chaff left follow the server's", function()
+		local sim, world, _api, step = scene()
+		local harpy = Spawn.unit(sim, "chs_harpy", 1, 0, 0, 0) -- flares and chaff
+		step(3)
+		local u = assert(world.units[harpy])
+		local cm = sim.defs.units.chs_harpy.countermeasures
+		t.equal(u.flares, cm.flares.charges, "full flares with the ENTER")
+		t.equal(u.chaff, cm.chaff.charges, "full chaff")
+		for _, left in { 3, 0, 1 } do
+			sim.ew.flares[harpy], sim.ew.chaff[harpy] = left, 2
+			step(1)
+			t.equal(u.flares, sim.ew.flares[harpy], `{left} flares`)
+			t.equal(u.chaff, sim.ew.chaff[harpy])
+		end
+	end)
 end

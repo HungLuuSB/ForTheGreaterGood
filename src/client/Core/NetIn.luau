@@ -249,6 +249,9 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 		if r.ammo then
 			u.ammo, u.maxAmmo = r.ammo, r.maxAmmo
 		end
+		if r.flares ~= nil or r.chaff ~= nil then
+			u.flares, u.chaff = r.flares, r.chaff -- countermeasure charges left (protocol 21, S-63)
+		end
 	end
 end
 

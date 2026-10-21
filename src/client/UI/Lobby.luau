@@ -8,8 +8,8 @@
 -- or open for a human to join), its faction and, in Teams, its ally team.
 -- The host (seat 1) changes everything and starts; every human picks their
 -- own faction. Results: victory or defeat for you, the match's length, and
--- a table per player (end, units built / lost, resources gathered / spent,
--- damage taken), and the replays (C-79): Save replay keeps your view of
+-- a table per player (end, units built / lost / killed, resources
+-- gathered / spent, damage dealt; the sim's Stats, S-63), and the replays (C-79): Save replay keeps your view of
 -- the match for this server session, Watch replay plays it (or one saved
 -- earlier) with the replay controls. Hidden while the match runs.
 
@@ -100,13 +100,16 @@ local function results(ui: UI, r: any, me: number, send: (any) -> ())
 	local title = if won then "VICTORY" elseif r.over then "DEFEAT" elseif mine and mine.outAt then "ELIMINATED" else "MATCH OVER"
 	label(ui.body, title, 30, 1).TextColor3 = if won then Color3.fromRGB(120, 230, 120) else Color3.fromRGB(240, 100, 90)
 	label(ui.body, `Match length {clock(r.seconds or 0)}`, 14, 2)
-	label(ui.body, "Player · faction · team · end  |  built / lost  |  supply gathered / spent  |  power gathered / spent  |  damage taken", 11, 3).TextColor3 = Color3.fromRGB(170, 170, 170)
+	label(ui.body, "Player · faction · team · end  |  units built / lost / killed  |  supply gathered / spent  |  power gathered / spent  |  damage dealt", 11, 3).TextColor3 = Color3.fromRGB(170, 170, 170)
 	for i, p in r.players or {} do
 		local out = if p.won then "won" elseif p.outAt then `out at {clock(p.outAt)}` else "standing"
 		local st = p.stats
 		local line = `{p.name}{if p.user == me then " (you)" else ""}  ·  {p.faction}  ·  {p.allyTeam}  ·  {out}`
 		if st then
-			line ..= `  |  {st.built} / {st.lost}  |  {st.supplyGathered} / {st.supplySpent}  |  {st.powerGathered} / {st.powerSpent}  |  {st.taken}`
+			local r0 = function(x: number?): string
+				return tostring(math.floor((x or 0) + 0.5))
+			end
+			line ..= `  |  {st.unitsBuilt} / {st.unitsLost} / {st.unitsKilled}  |  {r0(st.supplyGathered)} / {r0(st.supplySpent)}  |  {r0(st.powerGathered)} / {r0(st.powerSpent)}  |  {r0(st.damageDealt)}`
 		else
 			line ..= `  |  {p.units} units`
 		end

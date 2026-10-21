@@ -67,7 +67,7 @@ export type Sheet = {
 	moveState: number?,
 	ammo: number?,
 	maxAmmo: number?,
-	countermeasures: { string }, -- "Chaff max 2", "Flares max 6", "DIRCM" (live charges aren't on the wire: request 37)
+	countermeasures: { string }, -- "Flares 4/6", "Chaff 1/2" (own units: the server's charges left, S-63), "Chaff max 2" for others, "DIRCM"
 }
 
 local CLASS_SET = ArmorClasses.set
@@ -216,11 +216,14 @@ function UnitStats.of(world: World.World, u: World.Unit): Sheet
 		sheet.ammo, sheet.maxAmmo = u.ammo, u.maxAmmo or def.ammo
 	end
 	local cm = def.countermeasures or {}
+	local live = access == "own"
 	if cm.flares then
-		table.insert(sheet.countermeasures, `Flares max {cm.flares.charges or 0}`)
+		local max = cm.flares.charges or 0
+		table.insert(sheet.countermeasures, if live and u.flares then `Flares {u.flares}/{max}` else `Flares max {max}`)
 	end
 	if cm.chaff then
-		table.insert(sheet.countermeasures, `Chaff max {cm.chaff.charges or 0}`)
+		local max = cm.chaff.charges or 0
+		table.insert(sheet.countermeasures, if live and u.chaff then `Chaff {u.chaff}/{max}` else `Chaff max {max}`)
 	end
 	if cm.dircm then
 		table.insert(sheet.countermeasures, "DIRCM")

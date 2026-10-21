@@ -293,7 +293,8 @@ function Lobby.done(s: State, sim: any): boolean
 end
 
 -- The results screen's summary from the finished sim; `stats` (optional)
--- is MatchStats.summary's per-player table. Each client finds itself by
+-- is the sim's Stats.report (S-63): per player units built / lost / killed,
+-- damage dealt, supply and power gathered and spent. Each client finds itself by
 -- its UserId (`user`) and decides victory or defeat from `won`.
 function Lobby.results(s: State, sim: any, startTick: number, stats: { [number]: any }?): any
 	local out = { winner = sim.match.winner, seconds = (sim.tick - startTick) / 15, players = {}, over = sim.match.over }

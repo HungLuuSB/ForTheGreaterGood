@@ -5,7 +5,7 @@
 -- the AI plays, and the results name the winner once the humans are out.
 
 local Lobby = require("../../src/roblox/Lobby")
-local MatchStats = require("../../src/roblox/MatchStats")
+local Stats = require("../../src/server/Sim/Stats")
 local Combat = require("../../src/server/Sim/Combat/Combat")
 local Sim = require("../../src/server/Sim/Sim")
 local Skirmish = require("../../src/server/Sim/AI/Skirmish")
@@ -20,15 +20,12 @@ local function maps(): { Lobby.Map }
 	return out
 end
 
-local function run(sim: any, brains: { any }, n: number, stats: any?)
+local function run(sim: any, brains: { any }, n: number)
 	for _ = 1, n do
 		for _, b in brains do
 			Skirmish.tick(b)
 		end
 		Sim.step(sim)
-		if stats then
-			MatchStats.step(stats, sim)
-		end
 	end
 end
 
@@ -125,8 +122,7 @@ return function(t: any)
 		local sim = Sim.new(Lobby.config(s, 5))
 		local brains = Skirmish.forMatch(sim)
 		t.equal(#brains, 1, "one AI")
-		local stats = MatchStats.new(sim)
-		run(sim, brains, 450, stats)
+		run(sim, brains, 450)
 		t.expect(not Lobby.done(s, sim), "both humans in")
 		-- one human out: the match goes on for the other
 		for _, id in sim.world.ids do
@@ -134,7 +130,7 @@ return function(t: any)
 				Combat.queueDamage(sim.combat, id, 1e6, 0)
 			end
 		end
-		run(sim, brains, 30, stats)
+		run(sim, brains, 30)
 		t.expect(sim.match.eliminated[1] ~= nil, "Ann is out")
 		t.expect(not Lobby.done(s, sim), "Bo still plays")
 		for _, id in sim.world.ids do
@@ -142,16 +138,15 @@ return function(t: any)
 				Combat.queueDamage(sim.combat, id, 1e6, 0)
 			end
 		end
-		run(sim, brains, 30, stats)
+		run(sim, brains, 30)
 		t.expect(Lobby.done(s, sim), "every human out")
-		local r = Lobby.results(s, sim, 0, MatchStats.summary(stats))
+		local r = Lobby.results(s, sim, 0, Stats.report(sim))
 		t.equal(r.players[1].user, 11)
 		t.equal(r.players[2].user, 22)
 		t.equal(r.players[1].name, "Ann")
 		t.equal(r.players[3].name, "AI 1 (easy)")
-		t.expect(r.players[1].stats.lost >= 1, `Ann lost units ({r.players[1].stats.lost})`)
-		t.expect(r.players[1].stats.taken > 0, "and took damage")
-		t.expect(r.players[3].stats.built >= 1, `the AI built ({r.players[3].stats.built})`)
+		t.expect(r.players[1].stats.unitsLost >= 1, `Ann lost units ({r.players[1].stats.unitsLost})`)
+		t.expect(r.players[3].stats.unitsBuilt >= 1, `the AI built ({r.players[3].stats.unitsBuilt})`)
 		t.expect(r.players[3].stats.supplySpent > 0 and r.players[3].stats.powerGathered > 0, "spent and gathered")
 		s.phase, s.results = "results", r
 		local _, notHost = Lobby.apply(s, m, { op = "lobby" }, 2)
@@ -160,7 +155,7 @@ return function(t: any)
 		t.equal(Lobby.slotOf(s, 22), 2, "Bo keeps the seat")
 	end)
 
-	t.test("statistics: built, lost, gathered, spent, damage taken", function()
+	t.test("statistics in the results: the sim's Stats.report (S-63)", function()
 		local m = maps()
 		local s = Lobby.new(m)
 		Lobby.seat(s, 1, "Host")
@@ -168,14 +163,13 @@ return function(t: any)
 		Lobby.apply(s, m, { op = "start" }, 1)
 		local sim = Sim.new(Lobby.config(s, 3))
 		local brains = Skirmish.forMatch(sim)
-		local stats = MatchStats.new(sim)
-		run(sim, brains, 15 * 60, stats)
-		local sum = MatchStats.summary(stats)
-		local ai = sum[2]
-		t.expect(ai.built >= 3, `the AI built units ({ai.built})`)
+		run(sim, brains, 15 * 60)
+		local r = Lobby.results(s, sim, 0, Stats.report(sim))
+		local ai = r.players[2].stats
+		t.expect(ai.unitsBuilt >= 3, `the AI built units ({ai.unitsBuilt})`)
 		t.expect(ai.supplyGathered > 0 and ai.powerGathered > 0, `gathered {ai.supplyGathered} / {ai.powerGathered}`)
 		t.expect(ai.supplySpent > 0 and ai.powerSpent > 0, `spent {ai.supplySpent} / {ai.powerSpent}`)
-		t.equal(sum[1].built, 0, "the idle human built nothing")
-		print(string.format("    a minute of hard AI: built %d, supply %d / %d, power %d / %d", ai.built, ai.supplyGathered, ai.supplySpent, ai.powerGathered, ai.powerSpent))
+		t.equal(r.players[1].stats.unitsBuilt, 0, "the idle human built nothing")
+		print(string.format("    a minute of hard AI: built %d, supply %d / %d, power %d / %d", ai.unitsBuilt, ai.supplyGathered, ai.supplySpent, ai.powerGathered, ai.powerSpent))
 	end)
 end

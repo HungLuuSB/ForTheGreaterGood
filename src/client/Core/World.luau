@@ -61,6 +61,8 @@ export type Unit = {
 	moveState: number?, -- Schema.MoveState
 	ammo: number?, -- aircraft with an ammo count: rounds left
 	maxAmmo: number?,
+	flares: number?, -- countermeasure charges left (protocol 21, S-63); nil until sent
+	chaff: number?,
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
 	rx: number?,
 	ry: number?,
