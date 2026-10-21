@@ -78,6 +78,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **No hover unit in the roster (S-39):** the HOVER rules work (surface riding), but no def uses the class. Add one (e.g. a hover worker or tank per guide 6.1)?
 - **Terrain speed factors (S-37):** placeholders in `Shared/Grid/Terrain.SPEED` (heavy tracked on sand 0.6, wheeled on road 1.25, ...; table in the guide, 12.1), and MapGen's painting rules (sand within 2 cells of water, rock above 15°; no roads). Both shape every generated map.
 - **Carriers don't build aircraft (S-36):** the guide doesn't say they do; it would change the tech tree. Should they?
 - **Thorn SAM (client request 16, the user asked), S-33:** `chs_ir_sam` range / lockRange 280 → 420, aoe 5 → 12, projectileSpeed 420 → 500; `chs_thorn.sensors.airSight` 300 → 420 (an IR site locks only what it sees). Order's IR SAM (`ord_ir_sam`, Vigil) stays at range 300 / aoe 5: should it follow?
@@ -99,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (requests 17–19), S-38:** jets now fly to their move goal and arrive within `Air.ARRIVE_RADIUS` (40 studs) or at the closest approach for a goal inside their turn circle, then circle at `Air.LOITER_RADIUS`; DECOYED ends with `countermeasure u8` (1 flares, 2 chaff, 3 DIRCM; protocol 13, 23 B); aircraft shot down in flight leave no wreck (DEATH `wreckId` 0). Note: the Falcon and the Guardian have DIRCM, not flares.
 - **New (S-37): terrain types.** `Layers.terrain` (u8 per cell: `Layers.Terrain` GRASS 0, ROCK 1, SAND 2, ROAD 3) comes with every map from `MapRegistry.load`; generated maps paint sand on shores and rock on steep ground. Units are slower on sand and rock (factors in `Shared/Grid/Terrain.SPEED`), so the client can colour the ground and predict speeds with `Terrain.factor`. Nothing changes on the wire.
 - **New (S-35): CANCEL command 16** (protocol 12): on an unfinished frame it cancels it with a refund; on a factory it drops queue item `value` (0 = all). Contract section 9.
 - **New (S-34): move states work.** Idle Fire-at-Will units on Maneuver (default) chase visible enemies near their spot and walk back; Roam chases farther; Hold Position stays. The orders aren't replicated; units just move.

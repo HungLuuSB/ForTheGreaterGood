@@ -62,6 +62,7 @@ EW.TERMINAL_RANGE = 40 -- studs, default
 EW.DECOY_SIDE = 25
 EW.DECOY_DROP = table.freeze({ IR = 20, RADAR = 6 } :: { [string]: number })
 EW.Flag = table.freeze({ TERMINAL = 1, LOST = 2 }) -- Combat.pFlags bits
+EW.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- what defeated a missile (DECOYED; same numbers as Schema.Countermeasure)
 
 local L = Sensors.Level
 local TERMINAL, LOST = EW.Flag.TERMINAL, EW.Flag.LOST
@@ -190,10 +191,12 @@ function EW.canLock(sim: Types.Sim, shooter: number, weapon: Defs.WeaponDef, tar
 end
 
 -- Terminal roll: does `target` defeat a missile with this guidance?
-local function defeats(sim: Types.Sim, target: number, guidance: string): boolean
+-- The countermeasure that defeated the missile (EW.Countermeasure; client
+-- request 18), or 0 when none did.
+local function defeats(sim: Types.Sim, target: number, guidance: string): number
 	local cm = unitDef(sim, target).countermeasures
 	if cm == nil then
-		return false
+		return 0
 	end
 	local e = sim.ew
 	local rng = sim.rng
@@ -202,22 +205,22 @@ local function defeats(sim: Types.Sim, target: number, guidance: string): boolea
 		if dircm and (e.dircmCooldown[target] or 0) <= 0 then
 			e.dircmCooldown[target] = dircm.cooldown -- one engagement per cooldown
 			if rng:chance(dircm.chance) then
-				return true
+				return EW.Countermeasure.DIRCM
 			end
 		end
 		local flares = cm.flares
 		if flares and (e.flares[target] or 0) > 0 then
 			e.flares[target] -= 1
-			return rng:chance(flares.chance)
+			return if rng:chance(flares.chance) then EW.Countermeasure.FLARES else 0
 		end
 	elseif guidance == "RADAR" then
 		local chaff = cm.chaff
 		if chaff and (e.chaff[target] or 0) > 0 then
 			e.chaff[target] -= 1
-			return rng:chance(chaff.chance)
+			return if rng:chance(chaff.chance) then EW.Countermeasure.CHAFF else 0
 		end
 	end
-	return false
+	return 0
 end
 
 -- Midcourse and terminal checks for guided missile `p` (called by the
@@ -289,7 +292,8 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 		return
 	end
 	c.pFlags[p] = bit32.bor(flags, TERMINAL)
-	if defeats(sim, target, guidance) then
+	local won = defeats(sim, target, guidance)
+	if won ~= 0 then
 		-- no kink: the missile turns toward the decoy over the next ticks
 		local side = if sim.rng:chance(0.5) then EW.DECOY_SIDE else -EW.DECOY_SIDE
 		local tvx, tvz = Guidance.velocity(w.heading[target], w.speed[target])
@@ -297,7 +301,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 		local vl = math.max(math.sqrt(vx * vx + vz * vz), 1e-6)
 		local sx, sz = vz / vl * side, -vx / vl * side -- across the missile's flight
 		Combat.dropPending(c, p)
-		c.pDecoy[p] = { w.posX[target] - tvx * EW.DT + sx, ty - (EW.DECOY_DROP[guidance] or 0), w.posZ[target] - tvz * EW.DT + sz, Guidance.DECOY_TICKS }
+		c.pDecoy[p] = { w.posX[target] - tvx * EW.DT + sx, ty - (EW.DECOY_DROP[guidance] or 0), w.posZ[target] - tvz * EW.DT + sz, Guidance.DECOY_TICKS, won }
 		c.pTarget[p] = 0
 		Combat.addEvent(c, { kind = "DECOYED", tick = sim.tick, unit = target, other = p, x = x, y = y, z = z })
 	end

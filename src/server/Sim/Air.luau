@@ -34,6 +34,7 @@ Air.EGRESS_TICKS = 45 -- bombers fly straight this long after a release (3 s)
 Air.RUN_IN = 150 -- studs beyond the release distance a bomber turns back from (about a turn radius)
 Air.CLIMB_RATE = 40 -- studs per second
 Air.LOITER_RADIUS = 220 -- studs; wider than a jet's turn circle at cruise speed
+Air.ARRIVE_RADIUS = 40 -- studs: a jet's move ends this close to its goal, or once it flew toward it and the goal fell behind (client request 17)
 Air.CRUISE = 0.75 -- fraction of max speed while circling
 Air.LAND_RADIUS = table.freeze({ JET = 60, HELI = 12 })
 Air.EDGE_MARGIN = 60 -- studs: jets turn back toward the map before leaving it
@@ -360,9 +361,17 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 				loiter = false
 			end
 		elseif w.orderId[id] ~= 0 then
+			-- fly to the goal itself; arrived within ARRIVE_RADIUS, or when it
+			-- falls behind after the jet flew toward it (a goal inside the
+			-- turn circle: the closest approach), then circle it (request 17)
 			local dist = sqrt((tx - x) ^ 2 + (tz - z) ^ 2)
-			if dist <= Air.LOITER_RADIUS then
+			local ahead = math.sin(h) * (tx - x) + math.cos(h) * (tz - z) > 0
+			if ahead then
+				a.approach[id] = w.orderId[id]
+			end
+			if dist <= Air.ARRIVE_RADIUS or (not ahead and a.approach[id] == w.orderId[id] and dist <= Air.LOITER_RADIUS) then
 				Nav.clearOrder(nav, w, id) -- arrived: circle the goal from now on
+				a.approach[id] = nil
 			else
 				loiter = false
 			end

@@ -26,9 +26,13 @@
 -- The MOVING state bit (client request 14): ground and naval units with a
 -- movement order or speed, aircraft unless landed (loitering included);
 -- written only when it changes, so idle units still cost nothing.
+-- SUBMERGED for amphibious units (S-39): set in water at least as deep as
+-- the hull is tall (they drive on the sea floor), cleared on land and in
+-- the shallows.
 
 local Air = require("../Air")
 local FlowField = require("../Path/FlowField")
+local Layers = require("@shared/Grid/Layers")
 local Nav = require("../Nav")
 local Quadtree = require("../Path/Quadtree")
 local Terrain = require("@shared/Grid/Terrain")
@@ -36,7 +40,7 @@ local Types = require("../Types")
 local World = require("../World")
 
 local DT = 1 / 15
-local MOVING, LANDED = World.State.MOVING, World.State.LANDED
+local MOVING, LANDED, SUBMERGED = World.State.MOVING, World.State.LANDED, World.State.SUBMERGED
 local HASH_CELL = 16 -- studs per spatial hash bucket
 local SEPARATION_MARGIN = 2 -- studs beyond touching where separation starts
 local SEPARATION_WEIGHT = 1.5
@@ -98,9 +102,13 @@ local function buildHash(n: number, xs: { number }, zs: { number }, originX: num
 	end
 end
 
--- Sets or clears every unit's MOVING bit to match what it is doing now.
+-- Sets or clears every unit's MOVING bit to match what it is doing now, and
+-- amphibious units' SUBMERGED bit to the water they are in.
 local function updateMoving(sim: Types.Sim, profiles: { [number]: any })
 	local w = sim.world
+	local nav = sim.nav :: Nav.Nav
+	local layers, g = nav.pm.layers, nav.grid
+	local hulls = sim.combat.profiles
 	local band, bor, bnot = bit32.band, bit32.bor, bit32.bnot
 	for _, id in w.ids do
 		local p = profiles[w.defIndex[id]]
@@ -113,8 +121,14 @@ local function updateMoving(sim: Types.Sim, profiles: { [number]: any })
 				now = w.orderId[id] ~= 0 or w.speed[id] > 0
 			end
 		end
-		if now ~= (band(state, MOVING) ~= 0) then
-			World.setState(w, id, if now then bor(state, MOVING) else band(state, bnot(MOVING)))
+		local next = if now then bor(state, MOVING) else band(state, bnot(MOVING))
+		if p ~= nil and p.moveClass == "AMPHIB" then
+			local cx, cz = g:cellAt(w.posX[id], w.posZ[id])
+			local under = Layers.getWater(layers, cz * g.cellsX + cx) >= hulls[w.defIndex[id]].height
+			next = if under then bor(next, SUBMERGED) else band(next, bnot(SUBMERGED))
+		end
+		if next ~= state then
+			World.setState(w, id, next)
 		end
 	end
 end

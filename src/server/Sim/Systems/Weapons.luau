@@ -173,6 +173,7 @@ return function(sim: Types.Sim)
 		local p = profiles[w.defIndex[id]]
 		local x, z, heading = w.posX[id], w.posZ[id], w.heading[id]
 		local muzzleY = Combat.unitBase(c, w, id) + p.muzzleHeight
+		local submerged = bit32.band(w.state[id], World.State.SUBMERGED) ~= 0
 		-- an attack order (Orders) fires even on hold fire
 		local holdFire = w.fireState[id] == HOLD_FIRE and sim.orders.forced[id] == nil
 
@@ -249,6 +250,9 @@ return function(sim: Types.Sim)
 				end
 				if canFire and weapon.guidance and not EW.canLock(sim, id, weapon, target, dist) then
 					canFire = false -- no lock, no launch
+				end
+				if canFire and submerged and weapon.type ~= "TORPEDO" then
+					canFire = false -- under water only torpedoes fire (amphibious units, S-39)
 				end
 			end
 

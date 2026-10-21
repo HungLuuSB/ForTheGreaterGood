@@ -475,6 +475,8 @@ Ground units don't send height: the client looks it up from its own copy of the 
 
 Each move class gets one bit in `passMask` and its own `clearance` layer.
 
+Amphibious and hover units (S-39): an `AMPHIB` unit drives on the sea floor and is SUBMERGED in water at least as deep as its hull is tall: then only sonar finds it, torpedoes can target it, and its guns don't fire (it surfaces in the shallows). A `HOVER` unit rides on the water surface over water: weapons aim at it and hit it there. No roster unit is `HOVER` yet.
+
 ### 6.2 Footprints and clearance
 
 **Prefer odd footprints (1, 3) for ground units.** The clearance rule treats an even footprint like the next odd one, so a 2×2 unit costs as much passage width as a 3×3 one.
@@ -703,7 +705,7 @@ DEATH       unitId u16, severity u8, wreckId u16 (0 = none)               6 B
 FIRE        shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos  10 B
 SPAWN_PROJ  projId u16, weaponDefIndex u16, pos, vel, targetId u16 (0 = none)  19 B
 IMPACT      projId u16, pos                                               9 B
-DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11)         22 B
+DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11), countermeasure u8 (v13)  23 B
 LOST_LOCK   projId u16, pos, vel (flying on unguided)                    15 B
 WRECK       wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8   10 B
 WRECK_GONE  wreckId u16                                                   3 B
@@ -839,7 +841,7 @@ Route these through the same team account so shortages affect them naturally:
 
 ### 8.7 Reclaim
 
-- Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time.
+- Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time. Aircraft shot down in flight crash and burn: no wreck (a landed one can leave one; S-38).
 - Wrecks are static features stored in grid cells. They appear on the minimap and are rendered in the tactical tier.
 - A team knows a wreck once it has seen its spot, and learns it is gone only by seeing the spot again (like structure ghosts; S-26).
 

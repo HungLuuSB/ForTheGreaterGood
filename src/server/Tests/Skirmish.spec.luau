@@ -58,7 +58,7 @@ end
 return function(t: RunAll.Context)
 	local first: Result? = nil
 
-	t.test("AI vs AI plays a full match on a 192×192 map until a win condition is reached", function()
+	t.slow("AI vs AI plays a full match on a 192×192 map until a win condition is reached", function()
 		local r = play(1)
 		first = r
 		local sim = r.sim
@@ -85,7 +85,7 @@ return function(t: RunAll.Context)
 		))
 	end)
 
-	t.test("two runs with the same seed give identical matches, and the replay reproduces it", function()
+	t.slow("two runs with the same seed give identical matches, and the replay reproduces it", function()
 		local a = first or play(1)
 		local b = play(1)
 		t.equal(Sim.hash(b.sim), Sim.hash(a.sim), "final world hash")
