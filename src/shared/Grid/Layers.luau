@@ -68,6 +68,18 @@ function Layers.setSupply(layers: Layers, index: number, value: number)
 	buffer.writeu8(layers.supply, index, math.clamp(math.floor(value), 0, 255))
 end
 
+-- Ground height at world (x, z): the height of the cell it falls in, cells
+-- outside the map clamped to the edge. The server's Combat.groundHeight and
+-- the vertical-launch climb (Guidance.climbLeft, S-44) use it, so a client
+-- calling it gets the same number.
+function Layers.heightAt(layers: Layers, x: number, z: number): number
+	local g = layers.grid
+	local cx, cz = g:cellAt(x, z)
+	cx = math.clamp(cx, 0, g.cellsX - 1)
+	cz = math.clamp(cz, 0, g.cellsZ - 1)
+	return Layers.getHeight(layers, cz * g.cellsX + cx)
+end
+
 -- Terrain types (guide 5.2 `terrainType`; speed factors in Shared/Grid/Terrain).
 Layers.Terrain = table.freeze({ GRASS = 0, ROCK = 1, SAND = 2, ROAD = 3 })
 

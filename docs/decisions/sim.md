@@ -488,3 +488,17 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Cloak:** not built; the guide (11.4) now says a cloaked unit that fires drops its cloak.
 - **Cost:** in the 800-unit stress battle events stay ~1.2 KB/s per player (everything in the camera was in sight there anyway); a hidden artillery duel costs what a visible one does.
 - **Tests:** `NetOut.spec`: a hidden mortar's shells reach Order from 13 studs out of the muzzle (before: only once in Order's sight) while the mortar stays hidden and unnamed; a hidden gunner's shot reaches the other player as SHOT with both ends and nothing naming the gunner, and its owner as FIRE; the combat-events test checks the camera rule; homing corrections are bounded by the camera area. `Schema.spec`: SHOT golden bytes, round-trip, rejects. Guide 7.2, 7.3, 11.4 and contract section 7 updated.
+
+## S-44 — Vertical launch: a straight climb before the pitch-over (client request 22) (2026-10-22)
+
+- **Asked (the user, through the client):** "launch vertically a little more time, it turns over too soon": the missile leaned over from the first tick at 3× turnRate.
+- **Rule:** weapon field `climbHeight` (studs above the ground; 100 on both radar SAMs). While a vertical launch still flies exactly straight up (no horizontal velocity) and is less than `climbHeight` above the ground under it, `Guidance.vertical` doesn't steer it; then the pitch-over and hand-over of S-42. Read from the missile's state only, as the client asked, so a client that first sees a missile mid-flight decides the same (the wire keeps a zero velocity component exact).
+- **Ground:** the cell-based ground height moved to Shared as `Layers.heightAt` (the server's `Combat.groundHeight` calls it), so server and client use one function; `Guidance.climbLeft(weapon, y, ground)` is the shared helper. `Guidance.vertical` takes `climbLeft` as an optional last argument.
+- **Tests:** `Guidance.spec`'s Wyvern test checks every missile climbed straight to 100 studs before it leaned over; `EW.spec`'s 150-stud burn-through shot still hits (2 of 2).
+
+## S-45 — Radar SAM range ×3 (client request 23, the user asked) (2026-10-22)
+
+- **Changed:** `chs_radar_sam` range and lockRange 560 → 1680, `ord_radar_sam` 600 → 1800; their units' radars ×3 so they can lock on their own: Wyvern 600 → 1800, Gorgon 480 → 1440, Aegis 650 → 1950, Seraph 520 → 1560. Under "Needs my review".
+- **Left as is (my call):** `projectileSpeed` 360 (a full-range shot flies ~5 s; lifetime follows range); burn-through stays 35% of lockRange, so jamming now fails inside ~600 studs instead of ~200.
+- **Tests:** `EW.spec` checks EW rules at fixed distances on a 1024-stud map, so its defs keep the old radar SAM ranges and radars (its own test defs; the replay test keeps the registered defs). `Guidance.spec`'s Wyvern bound is 70% (it now also takes long shots at a weaving jet: 17 of 23).
+- **Not measured yet:** the effect on AI matches and balance (a Wyvern covers most of a 2048-stud map); next level report.

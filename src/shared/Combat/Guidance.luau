@@ -129,6 +129,11 @@ end
 -- state: false at launch, and the function returns its new value, so a
 -- client stepping its own copy keeps it per missile. Target position at the
 -- start of the step, as for `pn`.
+-- First the boost climb (S-44, client request 22): while a missile is still
+-- flying straight up (no horizontal velocity) and `climbLeft` (studs still to
+-- climb: Guidance.climbLeft) is above 0, it doesn't steer. Both are read
+-- from the missile's own state, so a client that first sees it mid-flight
+-- decides the same; nil `climbLeft` = no climb.
 Guidance.PITCH_OVER = 3 -- turn-rate factor while a vertical launch pitches over
 Guidance.HANDOVER = 15 -- degrees: a vertical launch hands over to proportional navigation once the target is this close to its nose
 
@@ -147,8 +152,12 @@ function Guidance.vertical(
 	tvz: number,
 	maxTurn: number,
 	dt: number,
-	turned: boolean
+	turned: boolean,
+	climbLeft: number?
 ): (number, number, number, boolean)
+	if not turned and vx == 0 and vz == 0 and (climbLeft or 0) > 0 then
+		return vx, vy, vz, false -- still in the boost climb
+	end
 	if not turned then
 		if not Guidance.inCone(px, py, pz, vx, vy, vz, tx, ty, tz, math.rad(Guidance.HANDOVER)) then
 			local nx, ny, nz = Ballistics.steer(vx, vy, vz, tx - px, ty - py, tz - pz, maxTurn * Guidance.PITCH_OVER)
@@ -158,6 +167,13 @@ function Guidance.vertical(
 	end
 	local nx, ny, nz = Guidance.pn(px, py, pz, vx, vy, vz, tx, ty, tz, tvx, tvy, tvz, maxTurn, dt)
 	return nx, ny, nz, true
+end
+
+-- Studs a vertical launch at height `py` over ground `groundY` (Layers.heightAt
+-- under it) still climbs before it may pitch over: the weapon's climbHeight
+-- above that ground (S-44).
+function Guidance.climbLeft(weapon: { climbHeight: number? }, py: number, groundY: number): number
+	return (weapon.climbHeight or 0) - (py - groundY)
 end
 
 -- A target's velocity from the state the wire and the sim share: heading
