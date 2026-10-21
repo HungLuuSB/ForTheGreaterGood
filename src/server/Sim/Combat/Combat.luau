@@ -105,6 +105,7 @@ export type Combat = {
 	pTargetSerial: { [number]: number },
 	projSerial: number, -- last serial given
 	strategic: { number }, -- strategic missiles in flight, in launch order (S-48)
+	pGoal: { [number]: { number } }, -- lofted missiles: the ordered spot { x, y, z } (S-51)
 	-- overkill accounting (S-29, guide 10.2): the unit a projectile was fired
 	-- at, its generation, and the direct damage it would deal
 	pAim: { [number]: number },
@@ -195,6 +196,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pTargetSerial = {},
 		projSerial = 0,
 		strategic = {},
+		pGoal = {},
 		pAim = {},
 		pAimGen = {},
 		pAimDmg = {},
@@ -588,6 +590,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pOwnerGen[id], c.pTargetGen[id] = nil, nil
 	c.pDecoy[id] = nil
 	c.pSerial[id], c.pTargetProj[id], c.pTargetSerial[id] = nil, nil, nil
+	c.pGoal[id] = nil
 	local si = table.find(c.strategic, id)
 	if si then
 		table.remove(c.strategic, si)
@@ -645,6 +648,10 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pFlags[id])
 		h = Hash.u32(h, c.pAim[id] or 0)
 		h = Hash.u32(Hash.u32(Hash.u32(h, c.pSerial[id]), c.pTargetProj[id]), c.pTargetSerial[id])
+		local goal = c.pGoal[id]
+		if goal then
+			h = Hash.number(Hash.number(Hash.number(h, goal[1]), goal[2]), goal[3])
+		end
 		local d = c.pDecoy[id]
 		if d then
 			h = Hash.u32(Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4]), d[5] or 0)

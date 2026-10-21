@@ -12,6 +12,7 @@
 -- them.
 
 local Ballistics = require("@shared/Combat/Ballistics")
+local Lofted = require("@shared/Combat/Lofted")
 local Guidance = require("@shared/Combat/Guidance")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -59,6 +60,7 @@ export type Projectile = {
 	weaponIndex: number,
 	target: number, -- 0 = none
 	targetProj: number?, -- interceptors: the strategic missile (projectile ID) they chase (S-48)
+	goal: { number }?, -- strategic missiles: the spot they fly to (S-51)
 	ttl: number, -- seconds left
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the point it follows (S-28)
 	countermeasure: number?, -- decoyed: what defeated it (Schema.Countermeasure, S-38)
@@ -178,7 +180,14 @@ local function advance(view: View)
 				p.decoy = nil
 			end
 		end
-		p.x, p.y, p.z, p.vx, p.vy, p.vz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, DT)
+		local goal = p.goal
+		if goal and weapon.apex and view.layers then
+			-- a strategic missile: the server's flight (Shared/Combat/Lofted, S-51)
+			local climbLeft = Guidance.climbLeft(weapon, p.y, Layers.heightAt(view.layers, p.x, p.z))
+			p.x, p.y, p.z, p.vx, p.vy, p.vz = Lofted.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, goal[1], goal[2], goal[3], goal[2] + weapon.apex, weapon.gravity :: number, math.rad(weapon.turnRate :: number) * DT, climbLeft, DT)
+		else
+			p.x, p.y, p.z, p.vx, p.vy, p.vz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, DT)
+		end
 		if p.blend > 0 then
 			local k = 1 / p.blend
 			p.ox, p.oy, p.oz = p.ox * (1 - k), p.oy * (1 - k), p.oz * (1 - k)
@@ -240,7 +249,7 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 		local ids, leaves = {}, {}
 		for _, e in events do
 			local kind = e.kind
-			if kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR then
+			if kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR or kind == EK.SPAWN_STRATEGIC then
 				local x, y, z = pos(e)
 				local vx, vy, vz = vel(e)
 				local weapon = view.defs.weaponByIndex[e.weaponIndex :: number]
@@ -263,6 +272,12 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 					weaponIndex = weapon.index,
 					target = target,
 					targetProj = if interceptor then e.targetId :: number else nil,
+					goal = if kind == EK.SPAWN_STRATEGIC
+						then (function()
+							local gx, gz = g:decode(e.goalCell :: number, e.goalOffX :: number, e.goalOffZ :: number)
+							return { gx, (e.goalY :: number) / Schema.Y_SCALE, gz }
+						end)()
+						else nil,
 					ttl = ttlOf(weapon),
 				}
 				continue

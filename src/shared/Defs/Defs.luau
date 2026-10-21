@@ -130,8 +130,9 @@ export type WeaponDef = {
 	-- weapons, its blast hurts every side, it passes over units in flight
 	-- and every player is warned of its launch; `manualFire` = never picks a
 	-- target, fires one shot per attack-ground order; `apex` (BALLISTIC) =
-	-- lofted: climbs to `apex` studs above the launch whatever the distance,
-	-- the horizontal speed follows from the distance
+	-- lofted (Shared/Combat/Lofted, S-51): straight up at projectileSpeed to
+	-- climbHeight, a pitch-over at turnRate, then the arc that peaks `apex`
+	-- studs above the ordered spot and lands on it
 	strategic: boolean?,
 	manualFire: boolean?,
 	apex: number?,
@@ -544,6 +545,9 @@ function Defs.validate(raw: RawDefs): { string }
 		end
 		if w.apex ~= nil and wtype ~= "BALLISTIC" then
 			report(`apex: only BALLISTIC weapons are lofted, not {tostring(wtype)}`)
+		end
+		if w.apex ~= nil and w.turnRate == nil then
+			report(`turnRate: required for lofted (apex) weapons: the pitch-over`)
 		end
 		if w.intercepts ~= nil and (wtype ~= "HOMING" or w.launch ~= "vertical") then
 			report(`intercepts: only vertical-launch HOMING weapons intercept (they need no aim)`)

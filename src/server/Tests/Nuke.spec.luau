@@ -1,6 +1,7 @@
 --!strict
 -- Strategic missiles (S-48, client request 26): nuke silos launch on an
 -- attack-ground order only; radar SAMs intercept them.
+local Layers = require("@shared/Grid/Layers")
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Sim = require("../Sim/Sim")
@@ -110,6 +111,48 @@ return function(t: RunAll.Context)
 			Sim.step(sim)
 			t.equal(#eventsOf(sim, "LAUNCH"), 0, "no second launch without a second order")
 		end
+	end)
+
+	t.test("the warhead climbs straight up 120 studs, pitches over, and a client flying its own copy stays with it", function()
+		local sim, silo = range(4)
+		local c = sim.combat
+		local g = (sim.map :: any).grid
+		camera(sim, 2, 0, -800) -- far from everything: the missile still comes
+		local view = Client.new(g, nil, (sim.map :: any).layers)
+		local weapon = sim.defs.weapons.ord_nuke
+		local ground = 0
+		attackGround(sim, 1, { silo }, TARGET_X, TARGET_Z)
+		local nuke = 0
+		local leanedAt: number? = nil -- height above the ground when it first moved sideways
+		local worst, steps = 0, 0
+		for _ = 1, 400 do
+			Sim.step(sim)
+			Client.receive(view, sim.net.players[2].outbox)
+			for _, e in c.events do
+				if e.kind == "LAUNCH" then
+					nuke = e.other
+					ground = Layers.heightAt((sim.map :: any).layers, e.x :: number, e.z :: number)
+				end
+			end
+			if nuke ~= 0 and c.projSlot[nuke] then
+				local vx, vz = c.pvx[nuke], c.pvz[nuke]
+				if leanedAt == nil and (vx ~= 0 or vz ~= 0) then
+					leanedAt = c.py[nuke] - c.pvy[nuke] / 15 - ground
+				end
+				local p = view.projectiles[nuke]
+				if p then
+					steps += 1
+					worst = math.max(worst, math.sqrt((p.x - c.px[nuke]) ^ 2 + (p.y - c.py[nuke]) ^ 2 + (p.z - c.pz[nuke]) ^ 2))
+				end
+			elseif nuke ~= 0 then
+				break
+			end
+		end
+		assert(leanedAt, "it leaned over")
+		print(string.format("    boost to %.1f studs above the ground, client copy within %.2f studs over %d ticks", leanedAt, worst, steps))
+		t.expect(math.abs(leanedAt - weapon.climbHeight :: number) <= (weapon.projectileSpeed :: number) / 15 + 1, `straight up to ~{weapon.climbHeight} studs (leaned at {leanedAt})`)
+		t.expect(steps > 100, "the far-away client flew it")
+		t.expect(worst < 1, `the client's copy stays within a stud ({worst})`)
 	end)
 
 	t.test("every player is warned of a launch and gets the warhead, wherever its camera is", function()

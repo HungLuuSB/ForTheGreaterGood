@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 17 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress
+Schema.PROTOCOL_VERSION = 18 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -691,6 +691,8 @@ end
 --               every player gets it, wherever it is (protocol 16)            =  9 bytes
 --   INTERCEPTED projId u16 | pos: a strategic missile destroyed in flight; it
 --               doesn't detonate (protocol 16)                                =  9 bytes
+--   SPAWN_STRATEGIC as SPAWN_PROJ (targetId 0) | goal pos: a strategic missile
+--               and the spot it flies to (Shared/Combat/Lofted; protocol 18) = 25 bytes
 --   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
 --               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
@@ -714,11 +716,12 @@ Schema.EventKind = table.freeze({
 	INTERCEPTOR = 14, -- protocol 16 (S-48)
 	LAUNCH_WARNING = 15,
 	INTERCEPTED = 16,
+	SPAWN_STRATEGIC = 17, -- protocol 18 (S-51)
 })
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25 })
 Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
 Schema.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- DECOYED: what defeated the missile (protocol 13)
 Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
@@ -771,6 +774,11 @@ export type Event = {
 	bits: buffer?, -- rowCount × rowBytes
 	-- SIGHT_CELLS: cell index, + SIGHT_SEEN when the cell is now in sight
 	cells: { number }?,
+	-- SPAWN_STRATEGIC: the goal (a pos)
+	goalCell: number?,
+	goalOffX: number?,
+	goalOffZ: number?,
+	goalY: number?,
 	-- SHOT: the start pos (end pos in cell / offX / offZ / y; hit as FIRE)
 	fromCell: number?,
 	fromOffX: number?,
@@ -779,7 +787,7 @@ export type Event = {
 }
 
 local function isProjEvent(kind: number): boolean
-	return (kind >= EK.SPAWN_PROJ and kind <= EK.LOST_LOCK) or (kind >= EK.INTERCEPTOR and kind <= EK.INTERCEPTED)
+	return (kind >= EK.SPAWN_PROJ and kind <= EK.LOST_LOCK) or (kind >= EK.INTERCEPTOR and kind <= EK.SPAWN_STRATEGIC)
 end
 
 -- Encoded size of an event record.
@@ -899,11 +907,17 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		end
 		w:writeU8(slot + (if e.hit then Schema.FIRE_HIT else 0))
 		writePos(w, e)
-	elseif kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR then
+	elseif kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR or kind == EK.SPAWN_STRATEGIC then
 		writeId(w, required(e.weaponIndex, "weaponIndex"), "weaponIndex")
 		writePos(w, e)
 		writeVel(w, e)
 		w:writeU16(e.targetId or 0)
+		if kind == EK.SPAWN_STRATEGIC then
+			w:writeU16(required(e.goalCell, "goalCell"))
+			w:writeU8(required(e.goalOffX, "goalOffX"))
+			w:writeU8(required(e.goalOffZ, "goalOffZ"))
+			w:writeI16(required(e.goalY, "goalY"))
+		end
 	elseif kind == EK.IMPACT or kind == EK.LAUNCH_WARNING or kind == EK.INTERCEPTED then
 		writePos(w, e)
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
@@ -1009,11 +1023,17 @@ function Schema.decodeEvent(r: Reader): Event
 		e.slot = slot
 		e.hit = band(b, Schema.FIRE_HIT) ~= 0
 		readPos(r, e)
-	elseif kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR then
+	elseif kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR or kind == EK.SPAWN_STRATEGIC then
 		e.weaponIndex = readId(r, "weaponIndex")
 		readPos(r, e)
 		readVel(r, e)
 		e.targetId = r:readU16()
+		if kind == EK.SPAWN_STRATEGIC then
+			e.goalCell = r:readU16()
+			e.goalOffX = r:readU8()
+			e.goalOffZ = r:readU8()
+			e.goalY = r:readI16()
+		end
 	elseif kind == EK.IMPACT or kind == EK.LAUNCH_WARNING or kind == EK.INTERCEPTED then
 		readPos(r, e)
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
