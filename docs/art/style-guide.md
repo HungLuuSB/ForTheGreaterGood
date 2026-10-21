@@ -10,18 +10,35 @@ How units and structures look. Sources: design guide 2.1 and 20; decisions `M-` 
 
 ## Factions
 
+Gameplay identity (A's [`../design/factions.md`](../design/factions.md), 2026-10-22): **Order is the heavy side**, tougher, slower and more expensive; **Chaos is the light side**, faster and cheaper, built for numbers. The looks stay; the weight of the armor follows the gameplay (M-14).
+
 | | **Order**: heavy defense and strategy | **Chaos**: the strength of armies |
 |---|---|---|
 | Based on | Western equipment: Leopard 2, Abrams, Patriot | Eastern equipment: T-14 Armata, T-90M, Pantsir |
-| Character | Sleek, wedge-shaped, high-tech, fortress-like | Rugged, aggressive, built for mass and assault |
-| Shapes | Wedge armor, flat faces, long and low | Rounder or domed turrets, shorter and wider proportions |
-| Signature details | Heavy armor, sensor strips, shields, active protection | Visible reactive-armor blocks, slat cages at the rear, more weapons per vehicle |
+| Character | Sleek, wedge-shaped, high-tech, fortress-like: heavy | Rugged, aggressive, built for mass and assault: light and nimble |
+| Shapes | Wedge armor, flat faces, long, low and broad; massive | Rounder or domed turrets; compact: shorter, narrower, higher off the ground |
+| Signature details | Thick armor plates and add-on modules, sensor strips, shields, active protection | Visible reactive-armor blocks, slat cages at the rear, more weapons per vehicle, exposed running gear |
 | Base color | Sand (186, 170, 132) | Gunmetal (76, 80, 84), recommended over olive (see "Base color test") |
 | Camouflage | Two- or three-tone disruptive pattern in sand and its darker tones | Pattern in the chosen base and its darker tones |
 
+### Reading heavy vs light
+
+At the same footprint and role, an Order unit should look like it weighs more than its Chaos counterpart, from the game camera and as a silhouette.
+
+| Cue | **Order (heavy)** | **Chaos (light)** |
+|---|---|---|
+| Plate thickness | Thick, visible at every edge (about 0.3–0.5 studs on a footprint-1 tank); big bevels | Thin plates (about 0.1–0.2 studs); armor added as separate blocks and cages |
+| Armor coverage | Add-on modules stacked on the turret cheeks and hull front (spaced armor, wedges); few gaps | Gaps and open frames: slat cages, reactive-armor bricks with space between them |
+| Skirts and wheels | Deep skirts covering most of the road wheels; tracks hidden | Short or partial skirts (rubber flaps), most road wheels and the track run visible |
+| Stance | Low ground clearance, wide track; mass close to the ground | Higher ground clearance, narrower hull, a gap between hull and tracks |
+| Volume | Broad, slab-sided turret with an armored bustle; full hull sides | Compact turret, gun long for the turret; equipment mounted outside (boxes, launchers, guns) |
+| Proportions | Long and broad for the footprint | Shorter and narrower for the footprint, nose raised slightly |
+
+Keep the faction's look under these cues: Order stays clean and wedge-shaped (heavy, not boxy); Chaos stays rugged (light, not flimsy or post-apocalyptic: still no exposed engines, stacks or rust).
+
 ## Rules for both
 
-- **Hulls:** long, low and wide (Chaos a bit shorter and wider), skirts with road wheels showing below, a track belt on the ground.
+- **Hulls:** long, low and wide, skirts (deep for Order, partial for Chaos) with road wheels showing below, a track belt on the ground.
 - **Turrets** set toward the rear, **long guns**, sights and sensor boxes on the roof.
 - **SAMs:** canister launchers. **Radars:** flat phased arrays, never dishes.
 - **Team color on top surfaces** (turret roof, hull top): the camera looks down at 35°–80° (55° by default), so roofs are what players see. At low pitch the sides show too, so they carry the camouflage and the faction's signature details.
@@ -34,7 +51,7 @@ Models match their def's footprint: one cell is 8 studs, and a footprint-1 vehic
 
 ## Budget (guide 20.1)
 
-Units 300–1,500 triangles, structures up to 3,000, wrecks up to 500; one texture set per unit (color, normal, roughness, metalness) at most 1024 × 1024, Roblox's upload limit. Roblox's automatic level of detail takes care of distance.
+Under review (M-12): the Lancer is 3,704 triangles against a 4,000 cap, with one 1024 set (color, normal, roughness, metalness) and Roblox's automatic level of detail; per-class budgets are proposed in [`pipeline.md`](pipeline.md). Guide 20.1's 300–1,500 was for simple low-poly art.
 
 ## Lessons from the part-built variants
 

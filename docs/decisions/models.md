@@ -21,6 +21,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | M-11 | Mesh pipeline: scripted headless Blender, no AI base mesh for vehicles, one 1024 PBR set per unit, team color through the color map's alpha (approved) |
 | M-12 | Lancer budget up to 4,000 triangles with automatic level of detail; per-class budgets proposed from the 100-unit test (pipeline.md) |
 | M-13 | The Blender FBX imports at x100 and turned 180° about Y; the rig script undoes both rather than changing the export or the importer settings |
+| M-14 | Order reads heavy (thick plates, add-on armor, deep skirts, low and broad), Chaos reads light (thin plates, exposed running gear, compact and high off the ground); looks otherwise unchanged |
 
 ### M-1 — Review in "FTGG Art" (2026-10-21)
 
@@ -120,3 +121,9 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 **Alternatives:** changing the FBX export (global scale, forward axis) or the importer's File Transform settings: each needs another import to verify, and a wrong guess costs a re-upload.
 
 **Why:** one fixed, checked correction is cheaper than tuning two tools' axis conventions; `check` catches it if either changes.
+
+### M-14 — Heavy Order, light Chaos (2026-10-22)
+
+**Decision** (the user's, following A's `docs/design/factions.md`): Order is the heavy side (tougher, slower, more expensive), Chaos the light side (faster, cheaper, built for numbers). The looks of M-9 stay (Order sleek and wedge-shaped, Chaos rugged), but the armor reads the gameplay: Order with thick plates, add-on armor modules, deep skirts, a low and broad stance; Chaos with thin plates, armor as separate blocks and cages, partial skirts showing the running gear, a compact hull higher off the ground. This replaces M-9's "Chaos shorter and wider" with "shorter and narrower". Cues per feature: [`../art/style-guide.md`](../art/style-guide.md), "Reading heavy vs light".
+
+**Consequence:** the Lancer mesh (review 2) reads mid-weight: thin skirt plates and visible road wheels. To match, its next revision gets thicker plate edges, deeper skirts and turret add-on armor.

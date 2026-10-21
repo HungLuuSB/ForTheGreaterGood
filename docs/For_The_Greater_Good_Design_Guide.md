@@ -69,7 +69,7 @@
 |---|---|---|
 | Ideology | Discipline, precision, control | Freedom, force, disruption |
 | Role | Heavy defense and strategy | The strength of armies |
-| Look | Western-inspired (Leopard 2, Abrams, Patriot): sleek, wedge-shaped, high-tech, fortress-like; heavy armor, sensors, shields, active protection | Eastern-inspired (T-14 Armata, T-90M, Pantsir): rugged, aggressive, built for mass and assault; rounder or domed turrets, visible reactive-armor blocks, rear slat cages, shorter and wider |
+| Look | Western-inspired (Leopard 2, Abrams, Patriot): sleek, wedge-shaped, high-tech, fortress-like; reads heavy: thick plates, add-on armor, deep skirts, sensors, shields, active protection | Eastern-inspired (T-14 Armata, T-90M, Pantsir): rugged, aggressive, built for mass and assault; reads light: compact and high off the ground, exposed running gear, rounder or domed turrets, reactive-armor blocks, rear slat cages |
 | Palette | Sand base | Gunmetal base (recommended over olive, which disappears on grass) |
 | Doctrine | Better sensors, stealth, precision long range, DIRCM | Strong jamming, missile saturation, cheap mass, heavy armor |
 | Strength | Wins information fights; strong at range | Wins brawls and attrition; blinds enemy sensors |
