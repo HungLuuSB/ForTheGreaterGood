@@ -124,6 +124,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `23adb8d` (a unique icon per unit type, C-67); test_client 108, build passed.
 - Ready to merge: `7ed355e` (playable placeholder UI, C-68; request 36 for the sim); test_client 112, test 345, build passed.
 - Ready to merge: `2e8d261` (camera pitch, C-69); test_client 112, build passed.
+- Ready to merge: `4240ff8` (match flow: lobby, match against the AI, results, C-70); test_client 115, build passed.
 
 ## Tasks
 
