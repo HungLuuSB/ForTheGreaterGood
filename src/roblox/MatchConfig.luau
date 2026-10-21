@@ -10,7 +10,8 @@
 -- one unit); heading in radians (0 faces +z, pi / 2 faces +x). `health`
 -- multiplies the units' starting health (test runs only; bars show full
 -- until they drop below their normal maximum). `moveTo = { x, z }` gives
--- them a move order there as the match starts (their player's order).
+-- them a move order there as the match starts (their player's order);
+-- `fireAt = { x, z }` an attack-ground order there (how a nuke silo fires).
 -- `speed` (optional, default 1): the sim speed the match starts at (C-35);
 -- in a playtest - / = change it and P pauses.
 
@@ -186,6 +187,34 @@ local PROFILES = {
 			{ def = "ord_guardian", player = 1, x = -900, z = -40, heading = math.pi / 2, count = 3, dz = 40, moveTo = { 250, 0 } },
 			{ def = "chs_thorn", player = 2, x = 450, z = -220, count = 3, dz = 220 },
 			{ def = "chs_wyvern", player = 2, x = 720, z = -150, count = 2, dz = 300 },
+		},
+	},
+	-- Nukes and interception (S-48, C-57): the Chaos Ragnarok silo in the
+	-- east launches at your base as the match starts; your 2 Aegis radar
+	-- SAMs try to shoot it down (each interceptor has a 50% chance). Your
+	-- own Reckoning silo in the west has 2 nukes: select it, press A and
+	-- left-click the ground (or a unit) to launch one at the Chaos base,
+	-- which 2 Wyvern radar SAMs defend. Lancers stand in both target areas
+	-- to show the blast.
+	nuke = {
+		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
+		seed = 41,
+		mapId = "flat:256",
+		scenario = "empty",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		spawns = {
+			{ def = "ord_beacon", player = 1, x = -600, z = -600, count = 2, dx = 1200 },
+			{ def = "ord_beacon", player = 1, x = -600, z = 600, count = 2, dx = 1200 },
+			{ def = "ord_fusion", player = 1, x = -950, z = 650 },
+			{ def = "ord_reckoning", player = 1, x = -900, z = 0 },
+			{ def = "ord_aegis", player = 1, x = -650, z = -150, count = 2, dz = 300 },
+			{ def = "ord_lancer", player = 1, x = -500, z = -60, count = 4, dz = 40, heading = math.pi / 2 },
+			{ def = "chs_ragnarok", player = 2, x = 900, z = 0, fireAt = { -520, 0 } },
+			{ def = "chs_wyvern", player = 2, x = 650, z = -150, count = 2, dz = 300 },
+			{ def = "chs_ravager", player = 2, x = 500, z = -60, count = 4, dz = 40, heading = -math.pi / 2 },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders

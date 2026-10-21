@@ -154,7 +154,10 @@ type Kind = {
 	light: { color: Color3, range: number, brightness: number, seconds: number }?,
 	flash: { color: Color3, size: number, seconds: number }?, -- a Neon ball that grows and fades (the scene dump sees it)
 	ring: boolean?, -- ground bursts: an expanding dust ring on the ground
+	ringSize: number?, -- its final diameter at scale 1 (default: 7 studs × 2.7) and how long it takes
+	ringSeconds: number?,
 	scorch: boolean?, -- ground bursts: a scorch mark
+	scorchSize: number?, -- its diameter at scale 1 (default 5.6 studs)
 	flares: number?, -- falling flares, each a bright ball with a smoke trail
 	laser: boolean?, -- a beam from the burst to its target point (DIRCM); the emitters play at the target
 }
@@ -175,7 +178,21 @@ local function combine(a: { Spec }, b: { Spec }): { Spec }
 	return out
 end
 
+-- A nuke (C-57): sizes are for a 150-stud blast at scale 1 (Vfx.spawn's
+-- scale is aoe / 150 for it): a blinding flash, a fireball, a stem and a
+-- mushroom cap that climb and spread for seconds, dust thrown out along the
+-- ground, a shockwave ring racing out to ~3x the blast and a wide scorch.
+local NUKE: { Spec } = {
+	{ name = "Core", texture = TEX.core, life = { 0.35, 0.5 }, speed = { 0, 0 }, size = { { 0, 60 }, { 1, 110 } }, transparency = { { 0, 0 }, { 1, 1 } }, color = colors({ { 0, Color3.new(1, 1, 0.95) }, { 1, YELLOW } }), count = 3, light = 1, z = 3 },
+	{ name = "Fireball", texture = TEX.fire, life = { 1.5, 2.6 }, speed = { 20, 55 }, size = { { 0, 28 }, { 0.4, 60 }, { 1, 70 } }, transparency = { { 0, 0 }, { 0.6, 0.3 }, { 1, 1 } }, color = colors({ { 0, Color3.new(1, 1, 0.85) }, { 0.3, ORANGE }, { 1, Color3.fromRGB(110, 40, 20) } }), count = 40, light = 0.9, drag = 3, rotSpeed = 40, z = 2 },
+	{ name = "Stem", texture = TEX.smoke, life = { 6, 8 }, speed = { 40, 85 }, size = { { 0, 22 }, { 1, 45 } }, transparency = { { 0, 0.2 }, { 0.7, 0.5 }, { 1, 1 } }, color = colors({ { 0, Color3.fromRGB(150, 90, 60) }, { 0.3, Color3.fromRGB(110, 100, 95) }, { 1, Color3.fromRGB(160, 155, 150) } }), count = 30, drag = 0.7, spread = Vector2.new(8, 8), direction = Enum.NormalId.Top, accel = Vector3.new(0, 4, 0), rotSpeed = 15 },
+	{ name = "Cap", texture = TEX.smoke, life = { 8, 10 }, speed = { 110, 160 }, size = { { 0, 45 }, { 1, 110 } }, transparency = { { 0, 0.15 }, { 0.6, 0.45 }, { 1, 1 } }, color = colors({ { 0, Color3.fromRGB(230, 140, 70) }, { 0.15, Color3.fromRGB(140, 110, 95) }, { 1, Color3.fromRGB(175, 170, 165) } }), count = 40, drag = 1.3, spread = Vector2.new(28, 28), direction = Enum.NormalId.Top, accel = Vector3.new(0, 2, 0), rotSpeed = 10 },
+	{ name = "Dust", texture = TEX.smoke, life = { 4, 6 }, speed = { 120, 200 }, size = { { 0, 25 }, { 1, 60 } }, transparency = { { 0, 0.3 }, { 1, 1 } }, color = colors({ { 0, DUST }, { 1, LIGHT_GREY } }), count = 48, drag = 2, spread = Vector2.new(6, 6), direction = Enum.NormalId.Front, ground = true, ring = true },
+	{ name = "Sparks", texture = TEX.sparks, life = { 1.5, 3 }, speed = { 80, 180 }, size = { { 0, 4 }, { 1, 0.5 } }, transparency = { { 0, 0 }, { 1, 1 } }, color = colors({ { 0, YELLOW }, { 1, ORANGE } }), count = 40, light = 1, drag = 1, accel = Vector3.new(0, -60, 0) },
+}
+
 local KINDS: { [string]: Kind } = {
+	nuke = { specs = NUKE, cap = 4, life = longest(NUKE), light = { color = Color3.fromRGB(255, 230, 190), range = 60, brightness = 12, seconds = 1.5 }, flash = { color = Color3.new(1, 1, 0.9), size = 120, seconds = 0.6 }, ring = true, ringSize = 450, ringSeconds = 1.6, scorch = true, scorchSize = 240 },
 	impact = { specs = EXPLOSION, cap = 32, life = longest(EXPLOSION), light = { color = ORANGE, range = 12, brightness = 3, seconds = 0.25 }, flash = { color = YELLOW, size = 6, seconds = 0.12 }, ring = true, scorch = true },
 	death = { specs = combine(EXPLOSION, DEATH_EXTRA), cap = 16, life = longest(combine(EXPLOSION, DEATH_EXTRA)), light = { color = ORANGE, range = 16, brightness = 3.5, seconds = 0.35 }, flash = { color = YELLOW, size = 8, seconds = 0.15 }, ring = true, scorch = true },
 	muzzle = { specs = MUZZLE, cap = 32, life = longest(MUZZLE), light = { color = YELLOW, range = 7, brightness = 2, seconds = 0.06 } },
@@ -649,7 +666,7 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 		rig.ring.Transparency = 1
 	end
 	if k.scorch and rig.ground and ground then
-		scorch(v, x, ground, z, 7 * s * 0.8, now)
+		scorch(v, x, ground, z, (k.scorchSize or 5.6) * s, now)
 	end
 	for i, f in rig.flares do
 		-- flares pop out of the aircraft, fan out toward the decoy point the
@@ -705,9 +722,9 @@ function Vfx.step(v: State, now: number, dt: number)
 				end
 			end
 			if rig.ring then
-				local t = age / 0.45
+				local t = age / (k.ringSeconds or 0.45)
 				if rig.ground and t < 1 then
-					local d = 7 * rig.scale * (0.5 + 2.2 * t)
+					local d = (k.ringSize or 7 * 2.7) * rig.scale * (0.18 + 0.82 * t)
 					rig.ring.Size = Vector3.new(0.3, d, d)
 					rig.ring.CFrame = CFrame.new(rig.x, rig.y - 0.5, rig.z) * CFrame.Angles(0, 0, math.pi / 2)
 					rig.ring.Transparency = 0.55 + 0.45 * t

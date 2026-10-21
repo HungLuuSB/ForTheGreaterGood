@@ -42,6 +42,7 @@ local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
 local MissileViewRender = require("./Render/MissileView")
+local NukeWarning = require("./Render/NukeWarning")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
@@ -91,6 +92,7 @@ local ghost = PlacementGhost.new()
 local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
+local nukeWarning = NukeWarning.new() -- strategic launch warnings (C-57)
 -- Camera follow (C-43), T or the placeholder button: the first selected
 -- unit, else the homing missile drawn nearest the screen centre.
 local FOLLOW_KEY = Enum.KeyCode.T
@@ -397,6 +399,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	FollowButton.step(followButton, if followed == nil then nil elseif followed.kind == "missile" then "missile" elseif followDef then followDef.name else `unit #{followed.id}`)
 	t0 = os.clock()
 	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
+	NukeWarning.step(nukeWarning, fx, world, now, workspace.CurrentCamera)
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom

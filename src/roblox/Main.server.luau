@@ -146,6 +146,10 @@ local function startMatch()
 			local cell, offX, offZ = sim.map.layers.grid:encode(s.moveTo[1], s.moveTo[2])
 			Sim.submit(sim, s.player, encode({ cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = ids, cell = cell, offX = offX, offZ = offZ }))
 		end
+		if s.fireAt then
+			local cell, offX, offZ = sim.map.layers.grid:encode(s.fireAt[1], s.fireAt[2])
+			Sim.submit(sim, s.player, encode({ cmdType = Schema.CmdType.ATTACK_GROUND, flags = 0, unitIds = ids, cell = cell, offX = offX, offZ = offZ }))
+		end
 	end
 	matchId += 1
 	endedAt = nil

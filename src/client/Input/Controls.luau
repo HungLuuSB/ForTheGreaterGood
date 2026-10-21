@@ -8,6 +8,9 @@
 --   Shift + right click      queue the order
 --   Ctrl + 1..9 / 1..9       set / recall a control group (double tap: jump the camera)
 --   S                        stop (BAR style; the camera pans with the arrow keys)
+--   A, then left click       attack (BAR): an enemy unit, or the ground (attack ground:
+--                            how a nuke silo fires, C-57); Shift keeps attacking;
+--                            right click cancels
 --   V                        range rings on / off (Render/RangeOverlay)
 --   T                        camera follow on / off (Core/Follow, C-43; handled in Main)
 -- While placing a structure (build ghost, guide 15.6):
@@ -32,6 +35,7 @@ Controls.DOUBLE_CLICK = 0.35 -- seconds
 Controls.STOP_KEY = Enum.KeyCode.S
 Controls.ROTATE_KEY = Enum.KeyCode.R
 Controls.BUILD_KEY = Enum.KeyCode.B -- placeholder until the build menu (UI)
+Controls.ATTACK_KEY = Enum.KeyCode.A
 
 local DIGITS = {
 	[Enum.KeyCode.One] = 1,
@@ -121,6 +125,21 @@ function Controls.bind(api: Api.Api): Controls
 	stroke.Thickness = 1
 	stroke.Parent = box
 	box.Parent = gui
+	-- attack mode's hint (A): the next left click attacks
+	local hint = Instance.new("TextLabel")
+	hint.Name = "AttackHint"
+	hint.AnchorPoint = Vector2.new(0.5, 0)
+	hint.Position = UDim2.new(0.5, 0, 0, 180)
+	hint.Size = UDim2.fromOffset(520, 24)
+	hint.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
+	hint.BackgroundTransparency = 0.25
+	hint.BorderSizePixel = 0
+	hint.Font = Enum.Font.Code
+	hint.TextSize = 15
+	hint.TextColor3 = Color3.fromRGB(255, 120, 100)
+	hint.Text = "ATTACK: left-click an enemy or the ground (right-click cancels)"
+	hint.Visible = false
+	hint.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 
 	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil }
@@ -130,6 +149,11 @@ function Controls.bind(api: Api.Api): Controls
 	local lastClick = { time = -math.huge, defIndex = -1 }
 	local lastGroup = { n = 0, time = -math.huge }
 	local world = api.world
+	local attacking = false
+	local function setAttacking(on: boolean)
+		attacking = on
+		hint.Visible = on
+	end
 
 	local function cam(): Camera
 		return workspace.CurrentCamera
@@ -150,6 +174,29 @@ function Controls.bind(api: Api.Api): Controls
 			return
 		elseif placing and input.KeyCode == Controls.ROTATE_KEY then
 			api.actions.rotatePlacement()
+			return
+		end
+		-- attack mode (A): the next left click attacks a unit or the ground
+		if input.KeyCode == Controls.ATTACK_KEY and #api.state.selection > 0 then
+			setAttacking(true)
+			return
+		elseif attacking and input.UserInputType == Enum.UserInputType.MouseButton2 then
+			setAttacking(false)
+			return
+		elseif attacking and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
+			local u = if id then world.units[id] else nil
+			if u and u.team ~= world.me.team then
+				api.actions.order("attack", id, shift())
+			else
+				local ground = Controls.groundAt(cam(), mouse.X, mouse.Y)
+				if ground then
+					api.actions.order("attackGround", { x = ground.X, z = ground.Z }, shift())
+				end
+			end
+			if not shift() then
+				setAttacking(false)
+			end
 			return
 		end
 		if input.KeyCode == Controls.BUILD_KEY then

@@ -102,6 +102,7 @@ end
 local MISSILE_STYLE: { [string]: { scale: number, smoke: number, puffs: number } } = {
 	smoke_thin = { scale = 1, smoke = 1.1, puffs = 2 },
 	smoke_thick = { scale = 2.3, smoke = 2.6, puffs = 4.5 }, -- radar SAMs: a far bigger missile with a heavy warhead (C-52)
+	smoke_huge = { scale = 4.5, smoke = 5, puffs = 8 }, -- strategic missiles (nukes, C-57)
 }
 local PUFF_RATE = 110 -- smoke puffs per second while a missile flies
 local NOSE_COLOR: { [string]: Color3 } = {
@@ -371,7 +372,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 	for _, v in visible do
 		local p = v[1] :: Effects.Proj
 		local kind = p.weapon.type
-		if kind == "HOMING" then
+		if kind == "HOMING" or p.weapon.strategic then
 			local style = p.weapon.fx and p.weapon.fx.trail
 			if MISSILE_STYLE[style] == nil then
 				style = "smoke_thin"
@@ -507,6 +508,8 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			burstScale = math.clamp(b.radius / 0.7, 0.6, 2.5)
 		elseif kind == "launch" then
 			burstScale = math.clamp(b.radius / 3, 0.8, 2)
+		elseif kind == "nuke" then
+			burstScale = b.radius / 150 -- its looks are made for a 150-stud blast (C-57)
 		end
 		if kind ~= "lost" then
 			Vfx.spawn(r.vfx, kind, b.x, b.y, b.z, burstScale, vt, b.ground, b.dx, b.dy, b.dz, b.tx, b.ty, b.tz)
