@@ -332,6 +332,17 @@ local PROFILES = {
 			{ def = "chs_shroud", player = 2, x = 520, z = -360, count = 2, dz = 720, heading = -math.pi / 2 },
 		},
 	},
+	-- Skirmish against the AI (C-70): a lobby (map, mode, win rule, faction,
+	-- AI slots with Easy / Normal / Hard), then the match from the map's
+	-- starts, the results, and back to the lobby. The human is player 1.
+	skirmish = {
+		lobby = true,
+		seed = 101,
+		players = { { id = 1, team = 1 } }, -- the lobby's preview; a match builds its own
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,
