@@ -39,7 +39,11 @@ return function(t: any)
 			end
 			t.deepEqual(Blockout.validate(bp, def), {}, def.id)
 		end
-		t.expect(generic == #defs.unitByIndex - 2, "all but the hand-made ones are generic")
+		local handMade = 0
+		for _ in Registry :: any do
+			handMade += 1
+		end
+		t.expect(generic == #defs.unitByIndex - handMade, "all but the hand-made ones are generic")
 	end)
 
 	t.test("muzzles are attachments, other pieces are parts", function()

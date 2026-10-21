@@ -26,10 +26,12 @@ Pieces only ever move through `Motor6D.Transform` (client animation, guide 14.3�
 - **Placing a unit:** the sim's heading `h` (radians) points along `(sin h, cos h)` in world X/Z, so
   `unitCFrame = CFrame.new(x, groundY + alt, z) * CFrame.Angles(0, h + math.pi, 0)` and
   `base.CFrame = unitCFrame * model:GetAttribute("RootOffset")`.
+  `groundY` is the drawn ground (`World.groundY`: the smooth terrain surface of C-28, or the water surface for floating units).
 - **Turret yaw:** the joint's pivot is the turret's rotation center; `Transform = CFrame.Angles(0, yaw, 0)`, with `yaw` the sim's turret angle relative to the hull (radians, same sense as heading).
 - **Barrel pitch:** the joint's pivot is the trunnion; `Transform = CFrame.Angles(pitch, 0, 0)`, pitch up positive (a −Z barrel rises).
 - **Wire decoding** (Schema): heading `u8 → v / 256 · 2π`; aim yaw and pitch `u8 → v / 255 · 2π − π`.
 - Joint `C0` (in `Part0` space) and `C1` (in `Part1` space) both locate the pivot, so `Transform = identity` is the rest pose (turret forward, barrel level).
+- **Piece scripts (C-30)** write `Transform = CFrame.Angles(rx, ry, rz) * CFrame.new(offset)`: turn about the pivot, then move along the turned axes (a barrel's recoil runs along the barrel). A pooled model goes back with every `Transform` reset to identity.
 
 ## 3. Sizes
 
@@ -60,7 +62,7 @@ return {
 
 | Field | Meaning |
 |---|---|
-| `name` | a piece name from the def's `pieces` (gets a `Motor6D`) or a decoration name (gets a `WeldConstraint`) |
+| `name` | a piece name from the def's `pieces` or `visualPieces` (gets a `Motor6D`) or a decoration name (gets a `WeldConstraint`) |
 | `parent` | the piece it hangs from; required for everything except `base` |
 | `shape` | `box`, `wedge`, `cylinder`, `ball` |
 | `size` | `{ x, y, z }` studs. For `cylinder` the length is along `axis` |
@@ -69,6 +71,8 @@ return {
 | `rot` | `{ x, y, z }` degrees, optional (wedges usually need it) |
 | `pivot` | joint pivot in model space, pieces only; default = `at` |
 | `color` | palette key: `hull`, `dark`, `track`, `metal`, `glass`, `team` (`team` also tags `TeamColor`) |
+
+`visualPieces` (optional) lists extra jointed pieces only the client animates (piece scripts, C-30) that the def doesn't list yet, e.g. the Juggernaut's `armL` / `armR`; they must be parts and not repeat a def piece.
 
 `attachments` places Attachments (`muzzle`, later `exhaust`, `rotorHub`, ...) in model space under a piece.
 

@@ -10,6 +10,7 @@ local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
 local MapRegistry = require("@shared/Grid/MapRegistry")
 local Schema = require("@shared/Net/Schema")
+local Terrain = require("./Terrain")
 
 local World = {}
 
@@ -42,6 +43,7 @@ export type Unit = {
 	state: number,
 	weapon: number, -- Schema weapon state field
 	aim: { [number]: Aim }, -- by weapon slot
+	targets: { [number]: number }?, -- own units (S-16): target unit id by weapon slot, 0 = none; nil until the server sends them
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
 	rx: number?,
 	ry: number?,
@@ -146,23 +148,15 @@ function World.relation(world: World, unit: Unit): "own" | "ally" | "enemy"
 	return "enemy"
 end
 
--- Ground height (studs) under a world position: the cell's height, plus its
--- water depth for units that float.
+-- Drawn ground height (studs) under a world position: the smooth surface
+-- the 3D terrain shows (Core/Terrain, C-28), or the water surface for units
+-- that float.
 function World.groundY(world: World, x: number, z: number, floats: boolean?): number
 	local layers = world.layers
 	if layers == nil then
 		return 0
 	end
-	local g = world.grid
-	local cx, cz = g:cellAt(x, z)
-	cx = math.clamp(cx, 0, g.cellsX - 1)
-	cz = math.clamp(cz, 0, g.cellsZ - 1)
-	local index = g:index(cx, cz)
-	local y = Layers.getHeight(layers, index)
-	if floats then
-		y += Layers.getWater(layers, index)
-	end
-	return y
+	return if floats then Terrain.surfaceY(layers, x, z) else Terrain.groundY(layers, x, z)
 end
 
 function World.def(world: World, unit: Unit): Defs.UnitDef?

@@ -1,8 +1,9 @@
 --!strict
 -- A unit's current target, for the target line when one unit is selected
--- (C-20). The wire doesn't carry targets yet (request 6), so the client
--- works it out from what it has:
---   1. the attack order this client sent (exact);
+-- (C-20, C-25). Own units' targets come from the server (State TARGET
+-- field, S-16): the first weapon slot with a target wins. Units whose
+-- targets the server doesn't send (an ally's) fall back to a guess:
+--   1. the attack order this client sent;
 --   2. else, while the first weapon is AIMING or READY, the known enemy
 --      within that weapon's range closest to the turret's aim line.
 -- Pure Luau (C-7).
@@ -22,6 +23,15 @@ local WS = Schema.WeaponState
 function Targets.of(world: World.World, id: number, orders: { [number]: { any } }?): number?
 	local u = world.units[id]
 	if u == nil then
+		return nil
+	end
+	if u.targets then
+		for slot = 1, Schema.MAX_WEAPONS do
+			local t = u.targets[slot]
+			if t and t ~= 0 then
+				return if world.units[t] then t else nil
+			end
+		end
 		return nil
 	end
 	local first = orders and orders[id] and orders[id][1]

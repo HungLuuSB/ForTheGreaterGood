@@ -25,7 +25,7 @@ Plain tables, updated by the client each frame (positions) or when packets arriv
 | `economy` | `{ supply = Res, power = Res, wind }?` | own team's account from the Eco channel (protocol 6); nil before the first record |
 | `alerts` | `{ { kind, x, z, time } }` | recent alerts, newest last |
 
-`UnitView` (today `state.units` is the client World's own unit table, `src/client/Core/World.luau`, type `Unit`: `id, tier, team, defIndex?, icon?, flags?, x, z, alt, heading, health?, build?, state` bits, `weapon`, `aim[slot] = { yaw, pitch }`, and `rx, ry, rz` where it is drawn. The friendlier view below is the target):
+`UnitView` (today `state.units` is the client World's own unit table, `src/client/Core/World.luau`, type `Unit`: `id, tier, team, defIndex?, icon?, flags?, x, z, alt, heading, health?, build?, state` bits, `weapon`, `aim[slot] = { yaw, pitch }`, `targets[slot]` (own units' target IDs, 0 = none; nil when not sent, S-16), and `rx, ry, rz` where it is drawn. The friendlier view below is the target):
 
 | Field | Type | Notes |
 |---|---|---|

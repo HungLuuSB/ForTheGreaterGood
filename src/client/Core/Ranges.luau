@@ -19,9 +19,10 @@ Ranges.NEAR = 24 -- studs: neighbours this close are checked first (union)
 local TAU = 2 * math.pi
 local EPS = 1e-6
 
-export type Circle = { x: number, z: number, r: number, kind: string }
-export type Arc = { x: number, z: number, r: number, a0: number, a1: number, kind: string } -- a0 < a1, radians
-export type Polyline = { kind: string, points: { Vector3 | { number } } }
+-- owner: the unit the circle is centered on (the rings follow it between rebuilds, C-29); nil for the build ghost
+export type Circle = { x: number, z: number, r: number, kind: string, owner: number? }
+export type Arc = { x: number, z: number, r: number, a0: number, a1: number, kind: string, owner: number? } -- a0 < a1, radians
+export type Polyline = { kind: string, owner: number?, points: { Vector3 | { number } } }
 
 -- A point on a circle at angle `a`: (x + r cos a, z + r sin a).
 function Ranges.at(arc: Arc, a: number): (number, number)
@@ -150,7 +151,7 @@ function Ranges.union(circles: { Circle }): { Arc }
 			end
 			if not hidden then
 				for _, span in uncovered(n) do
-					table.insert(out, { x = cx, z = cz, r = cr, a0 = span[1], a1 = span[2], kind = c.kind })
+					table.insert(out, { x = cx, z = cz, r = cr, a0 = span[1], a1 = span[2], kind = c.kind, owner = c.owner })
 				end
 			end
 		end
@@ -163,18 +164,18 @@ local function targetsOnlyAir(weapon: any): boolean
 	return #targets > 0 and table.find(targets, "AIR") ~= nil and #targets == 1
 end
 
--- Circles of one def at (x, z).
-function Ranges.circlesOfDef(def: any, defs: any, x: number, z: number, out: { Circle })
+-- Circles of one def at (x, z), owned by unit `owner` if given.
+function Ranges.circlesOfDef(def: any, defs: any, x: number, z: number, out: { Circle }, owner: number?)
 	for _, slot in def.weapons or {} do
 		local weapon = defs.weaponByIndex[slot.weaponIndex]
 		if weapon and weapon.range > 0 then
-			table.insert(out, { x = x, z = z, r = weapon.range, kind = if targetsOnlyAir(weapon) then "aa" else "weapon" })
+			table.insert(out, { x = x, z = z, r = weapon.range, kind = if targetsOnlyAir(weapon) then "aa" else "weapon", owner = owner })
 		end
 	end
 	local s = def.sensors or {}
 	for kind, r in { sight = s.sight, radar = s.radar, track = s.track, jammer = s.jam } :: { [string]: number? } do
 		if r and r > 0 then
-			table.insert(out, { x = x, z = z, r = r, kind = kind })
+			table.insert(out, { x = x, z = z, r = r, kind = kind, owner = owner })
 		end
 	end
 end
@@ -187,7 +188,7 @@ function Ranges.circles(world: World.World, ids: { number }): { Circle }
 		local u = world.units[id]
 		local def = u and World.def(world, u)
 		if u and def and u.team == world.me.team then
-			Ranges.circlesOfDef(def, world.defs, u.rx or u.x, u.rz or u.z, out)
+			Ranges.circlesOfDef(def, world.defs, u.rx or u.x, u.rz or u.z, out, id)
 		end
 	end
 	return out
@@ -206,7 +207,7 @@ function Ranges.polylines(arcs: { Arc }, groundY: (number, number) -> number): {
 			local x, z = Ranges.at(arc, a)
 			table.insert(points, { x, groundY(x, z) + Ranges.LIFT, z })
 		end
-		table.insert(out, { kind = arc.kind, points = points })
+		table.insert(out, { kind = arc.kind, owner = arc.owner, points = points })
 	end
 	return out
 end

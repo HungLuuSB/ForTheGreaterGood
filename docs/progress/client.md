@@ -50,6 +50,15 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `6cff90b` (line-move goals from Shared Formation).
 - Ready to merge: `142b5c6` (step 3 and 5: range rings, target line, BAR controls; `.lune/render_scene.luau` draws ring arcs).
 - Ready to merge: `3e2066b` (step 4: tasks 6-9 re-verified in Studio; Esc removed).
+- Ready to merge: `b207ca1` (extractor placement on deposits (C-22)).
+- Ready to merge: `486fc51` (queued builds (C-23); request 7: build ranges).
+- Ready to merge: `2fa0039` (Health and build bars (C-24)).
+- Ready to merge: `9abe9b0` (Exact target line from S-16 (C-25)).
+- Ready to merge: `f5740e0` (Explosion delay after a hit (C-26)).
+- Ready to merge: `a602502` (Shells from the barrel tip (C-27)).
+- Ready to merge: `9254e74` (Task 1: terrain from the map layers (C-28)).
+- Ready to merge: `f95efcc` (Smooth range rings (C-29)).
+- Ready to merge: `49e983c` (Task 2: piece scripts and the Juggernaut (C-30)).
 
 ## Tasks
 
@@ -156,6 +165,50 @@ All with real mouse and keyboard input through the MCP tools.
 - **Your report:** extractors couldn't be placed on the golden spots. Cause: the gold you saw was the minimap's 4 x 4-cell tile (32 studs) around each one-cell deposit; nothing marked the exact 8-stud cell in 3D, and the server (correctly) needs the extractor's center on it.
 - **Fix:** gold plates on the deposit cells in 3D, cell-sized squares on the minimap, and the extractor ghost snaps onto a deposit within 12 studs. Tested against the server for every deposit; in Studio an off-center aim snapped, the extractor was built, supply income +1.0 → +3.0.
 
+## 2026-10-22: queued builds and build range (C-23)
+
+- **Line to the rest of the queue vanished:** the 2 s idle rule wiped a builder's queue while it stood still building. Now a queued build is done when its frame starts; builders with a build next aren't idle-cleared while a frame goes up (20 s fallback otherwise). Tested against the server's queue in Lune; in Studio the line stayed through all three queued generators.
+- **Queued structures** show as translucent models over a yellow footprint until their frame starts (`debug_out/screens/queued_builds_and_line.png`). Factory unit queues have no map spot: not drawn.
+- **Build range:** `buildRange` is in the unit defs (sim's files): request 7 asks for about 70 % (80 → 56, 64 → 45, 48 → 34).
+
+## 2026-10-21: health and build bars (C-24)
+
+- **Bars** over selected, damaged and unfinished units (own and enemy): health (green → yellow → red) and, while a frame is going up, a light-blue build bar under it; one bar once finished. `Bars.spec` checks it against the real sim, including a frame under fire whose health drops while its progress doesn't.
+- **Studio:** two bars on a factory frame, health tracking progress; a 35 % hit lowered health only; finished with one bar (`debug_out/screens/health_bars.jpg`). 0.019 ms per frame. `FtggDebug:Invoke("damage", id, amount)` added for this (Studio only).
+
+## 2026-10-21: exact target line (C-25)
+
+- The target line now uses the server's targets (S-16) for your own units instead of guessing from the turret: equal to the server's on every tick of the duel in `Targets.spec`. Allies' units (no targets on the wire) keep the guess.
+
+## 2026-10-21: explosion delay after a hit (C-26)
+
+- **Your duel note:** a delay between the shot hitting and the explosion. Cause: during the tick a shell hit in, it was drawn on to the server's end-of-tick spot (up to ~23 studs past the tank) and burst only when that tick ended (33 ms later on average, 67 ms at worst). Now it bursts the frame its drawn path reaches the hit point (within 8 ms in `Effects.spec`); checked live in the Studio duel.
+
+## 2026-10-21: shells from the barrel tip (C-27)
+
+- **Your note:** shells spawned far from the barrels. They appeared a tick's travel (~23 studs) out, measured from the hull center: the server sends a shell after its first step and launches from the unit's center. Now each shell starts a tick earlier at the server's launch point, drawn from the shooter's barrel tip, and joins the server's path within 3 ticks. Tested in `Effects.spec`; Studio duel: 101 of 101 shells left a barrel tip (`debug_out/screens/shells_from_barrels.jpg`).
+
+## 2026-10-21: task 1, terrain from the map layers (C-28)
+
+- The client builds Roblox Terrain from the map's height and water layers: smooth slopes between cells, rock on steep ridges, sand on shores, water up to its surface. Units, rings, bars and effects use the same surface. The sim's procedural maps draw as they are (tried on `map:coastline`, MatchConfig profile `terrain`, now the ACTIVE one).
+- Terrain vs parts measured in Studio: terrain builds in ~1.3 s (0.5 s CPU, spread over frames) and draws cheaper (GPU 2.7 vs 3.4 ms) with no instances; parts build in 0.08 s but need 8,980 parts and look stepped. Terrain is the default (`debug_out/screens/terrain_coastline.jpg`; parts: `terrain_coastline_parts.jpg`).
+- Units stand on the drawn terrain within 0.02 stud; deposits stay visible (gold plates over the ground); the place's own Terrain stays empty (the client's terrain isn't saved).
+- Not done: units don't tilt with the slope (they stay upright).
+- **Next, task 4 (fog of war), the user's idea (2026-10-21):** light points in the grid cells that brighten what you see and darken the rest, with the Lighting adjusted to match.
+
+## 2026-10-21: smooth range rings (C-29)
+
+- **Your note:** the rings should update faster and smoothly. They now follow their units every frame (the merged outline is still recomputed 4 times a second). Costs about 1.3 ms more per frame while 50 selected units move, nothing when they stand still (`debug_out/screens/rings_follow.jpg`).
+- **Later (your note):** order lines and other markers drawn on top of the terrain instead of being hidden by hills. Planned for a later pass: draw them as always-on-top adornments.
+
+## 2026-10-21: task 2, piece animation (C-30)
+
+- **Piece scripts** (guide 14): `Turn`, `Move`, `WaitForTurn`, `WaitForMove`, `Sleep`, `StartThread`, `Signal` / `SetSignalMask`, hooks from the replicated aim, weapon state, MOVING bit and shots, LOD near / mid / far. Every unit's turret and barrel now run through it (default script, with recoil).
+- **Juggernaut:** hand-made blockout with a turning torso and two gun arms; its script raises the arms to aim, recoils them in turn, and lowers them 3 s after it stops aiming (`debug_out/screens/juggernaut_arms_down.jpg`, `juggernaut_arms_up.jpg`).
+- **Cost:** 64 animated units in a fight, 0.13 ms per frame (`juggernaut_50.jpg`).
+- **Not exact yet:** the server has no rest pose or restore delay, so the Juggernaut can fire before its arms are fully up (request 8 makes the client follow the server exactly).
+- Studio-only helpers: `FtggDebug:Invoke("spawn", defId, player, x, z, heading, count, spacing)` on the server; `FtggClientDebug:Invoke("camera", x, z, distance)` and `Invoke("anim")` on the client.
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
@@ -165,11 +218,17 @@ All with real mouse and keyboard input through the MCP tools.
 - **Build ghost:** B cycles the selected builder's options as a stand-in for the build menu; Shift both queues and keeps placing (BAR style); the facing doesn't change square footprints but turns the model.
 - **Effects look:** shells as small glowing slugs, impact and death flashes in orange with a particle puff, white tracers, muzzle flashes; colors and sizes in `src/client/Render/Effects.luau`.
 - **Strategic zoom:** switches at 480 studs (back at 420); icon shapes and sizes in `src/client/Core/Icons.luau` and `Render/IconLayer.luau`. Answered: keep sending the camera (C-17).
+- **Health and build bars (C-24):** 4 px health bar, 3 px light-blue build bar under it, 18–90 px wide, over the unit; shown for selected, damaged and unfinished units only. Sizes and colors in `src/client/Render/HealthBars.luau` and `Core/Bars.luau`.
+- **Terrain colors and materials (C-28):** Roblox Grass on open ground, Rock where steeper than ~50°, Sand on shores and under water, default Terrain water color; no custom material colors (that would change the place's Terrain settings). Rules in `src/client/Core/Terrain.luau` (`STEEP`, `SHORE`), materials in `Render/Terrain.luau`.
+- **Juggernaut's animation feel (C-30):** arms hang at -65°, rise at 120°/s, recoil 0.8 stud in turn, come down 3 s after the last aim; torso turns at 1.25 × the weapon's yaw rate. Values in `src/client/Core/PieceScripts/chs_juggernaut.luau`, model in `src/shared/Defs/Blockouts/chs_juggernaut.luau`. Exact timing waits on request 8.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
 
-6. **Done (S-16, protocol 8; marked by the sim session).** State records carry `targets` (mask bit 32) for the owner's units; contract section 6. **Own units' weapon target on the wire:** the target line (C-20) guesses the target from the turret aim (99.6 % right in the duel). A `target u16` per weapon slot in State records for the player's own units (the target is always a unit the team knows) would make it exact, including before the turret has turned. A protocol bump; medium priority (the user asked for the line).
+8. **Juggernaut arm timing on the server (the user, task 2, 2026-10-21):** "raises its arms to aim, fires, and lowers them after a delay, matching the server's aim timing". Today the heavy cannon rests at pitch 0 and reaches its firing pitch almost at once, so no arm raise exists in gameplay. Please give the Juggernaut's weapon (its own weapon def, or the heavy cannon if `chs_maw` may share it) a rest pose and a hold: `turret.restPitch = -65` (arms down; `minPitch` down to -65 so it can rest there), a `pitchRate` that makes the raise cost real time (e.g. 80°/s: ~0.85 s from rest to level), and `turret.restoreDelay = 3`: after losing its target the weapon keeps its aim for that long before turning back to rest. Weapons then rest at `restPitch` instead of 0. Also add `armL`, `armR` to `chs_juggernaut.pieces` (guide 14.2: piece names come from the def; the client lists them as visual pieces until then). The client script already reads `restPitch` / `restoreDelay` and switches to the server's rates when they exist (C-30). Medium priority.
+
+7. **Shorter build ranges (the user, 2026-10-22):** "the build range of the unit is so far, reduce to around 70%". Today `buildRange` is 80 (`ord_sovereign`, `chs_warlord`), 64 (the constructors: `ord_mason`, `ord_architect`, `ord_harbormaster`, `ord_tidewright`, `chs_scrapper`, `chs_forgemaster`, `chs_reaver`, `chs_wrecker`) and 48 (aircraft builders: `ord_skywright`, `ord_zenith`, `chs_condor`, `chs_vulture`). About 70 %: 56, 45 and 34. Unit defs are yours; the client reads `buildRange` from the defs, so nothing changes on this side. High priority (the user asked).
+6. **Done (S-16, protocol 8; marked by the sim session); the client uses it since C-25.** State records carry `targets` (mask bit 32) for the owner's units; contract section 6. **Own units' weapon target on the wire:** the target line (C-20) guesses the target from the turret aim (99.6 % right in the duel). A `target u16` per weapon slot in State records for the player's own units (the target is always a unit the team knows) would make it exact, including before the turret has turned. A protocol bump; medium priority (the user asked for the line).
 
 1. **Done (S-3, S-11; marked by the sim session).** Bombs have no turret, so the bombers no longer name `turretPiece`; the muzzle is their only weapon piece, and `Defs` rejects turret pieces on turretless weapons. **Bomber weapon pieces:** `chs_behemoth`, `chs_plague` and `ord_absolution` name `turretPiece = "bay"`, which isn't in their `pieces`. Either add `bay` to `pieces` or drop `turretPiece`; and maybe have `Defs.validate` check that weapon pieces exist. The client works around it (muzzle on the hull).
 2. **Done (S-6), thanks.** **Unit state bits in shared:** `World.State` (MOVING, TOGGLED_ON, SUBMERGED, LANDED) is in `src/server`, which clients can't require. Please mirror it in Schema (e.g. `Schema.UnitState`) so the client decodes ENTER/State `state` without a copy. (net.md lists the values; the client copies them in `Core/World`.)

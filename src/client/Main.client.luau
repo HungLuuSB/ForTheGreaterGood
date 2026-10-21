@@ -20,9 +20,11 @@ local Api = require("./Api")
 local Camera = require("./Camera")
 local Interp = require("./Core/Interp")
 local NetIn = require("./Core/NetIn")
+local PieceAnim = require("./Core/PieceAnim")
 local World = require("./Core/World")
 local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
+local Bars = require("./Core/Bars")
 local Effects = require("./Core/Effects")
 local Icons = require("./Core/Icons")
 local IconLayer = require("./Render/IconLayer")
@@ -31,15 +33,18 @@ local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
 local RenderEffects = require("./Render/Effects")
 local Ground = require("./Render/Ground")
+local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
+local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
 
 local defs = Defs.load()
 local world = World.new(defs)
 local clock = Interp.newClock()
-local renderer = UnitRenderer.new()
+local anim = PieceAnim.new(defs.weaponByIndex)
+local renderer = UnitRenderer.new(anim)
 local camState = Camera.new(0, 0, 220)
 local cmd = remotes:WaitForChild("Cmd") :: RemoteEvent
 local api = Api.new(world, function(payload: buffer)
@@ -62,6 +67,7 @@ Camera.bind(camState)
 local controls = Controls.bind(api)
 local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
+local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
 	if not processed and input.KeyCode == RangeOverlay.TOGGLE_KEY then
@@ -72,6 +78,7 @@ local fx = Effects.new()
 local fxRenderer = RenderEffects.new()
 local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
+local healthBars = HealthBars.new()
 local strategic = false
 local tiers: { [number]: string } = {}
 local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
@@ -134,7 +141,7 @@ if RunService:IsStudio() then
 			for _ in fx.projectiles do
 				live += 1
 			end
-			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats }
+			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n }, launches = { n = fx.launches.n, fromBarrel = fx.launches.fromBarrel, avgOffset = fx.launches.sumOffset / math.max(fx.launches.fromBarrel, 1) } }
 		elseif query == "ranges" then
 			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection }
 		elseif query == "perf" then
@@ -145,6 +152,28 @@ if RunService:IsStudio() then
 			end
 			table.clear(perf)
 			return out
+		elseif query == "camera" then
+			-- Invoke("camera", x, z, distance?): move the RTS camera (close-ups for proof screenshots)
+			local x, z, distance = ...
+			camState.x, camState.z = x, z
+			if distance then
+				camState.distance = distance
+			end
+			return true
+		elseif query == "anim" then
+			-- piece scripts: units by LOD, live threads and moving tracks, hooks run
+			local lods = { near = 0, mid = 0, far = 0 }
+			for _, u in anim.units do
+				lods[u.lod] += 1
+			end
+			return { lods = lods, stats = anim.stats }
+		elseif query == "ground" then
+			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
+			local mode = ...
+			if mode and world.layers then
+				Ground.build(world.layers, mode)
+			end
+			return Ground.last
 		elseif query == "act" then
 			-- Invoke("act", "smartOrder", x, z, unitId?, queue?): an API action, as the UI would call it
 			local name = (...)
@@ -220,12 +249,21 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local frameT0 = os.clock()
 	local t = Interp.advance(clock, world, now, dt)
 	local t0 = os.clock()
-	UnitRenderer.step(renderer, world, t, dt, strategic)
+	UnitRenderer.step(renderer, world, t, dt, strategic, workspace.CurrentCamera.CFrame.Position)
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
 	RenderEffects.step(fxRenderer, fx, t, now)
 	mark("effects", t0)
+	t0 = os.clock()
+	-- piece scripts (guide 14): not for models hidden at strategic zoom
+	if not strategic then
+		PieceAnim.drive(anim, world, fx.shots)
+		PieceAnim.step(anim, dt)
+		UnitRenderer.applyPieces(renderer)
+	end
+	table.clear(fx.shots)
+	mark("anim", t0)
 	Api.frame(api, now)
 	if api.state.placement then
 		local hover = Controls.hover()
@@ -234,6 +272,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		end
 	end
 	PlacementGhost.step(ghost, api)
+	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now)
 	mark("ranges", t0)
@@ -259,6 +298,12 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local draws = Icons.draws(iconTable, world, Controls.projector(cam), view.X, view.Y, api.selection.set)
 	IconLayer.step(iconLayer, draws, tiers, strategic)
 	mark("icons", t0)
+	t0 = os.clock()
+	-- health and build bars (C-24): selected, damaged and unfinished units
+	local right = cam.CFrame.RightVector
+	local barDraws = if strategic then {} else Bars.draws(world, Bars.list(world, api.selection.set), Controls.projector(cam), view.X, view.Y, right.X, right.Z)
+	HealthBars.step(healthBars, barDraws, not strategic)
+	mark("bars", t0)
 	t0 = os.clock()
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)

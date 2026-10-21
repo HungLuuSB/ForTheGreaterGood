@@ -65,10 +65,7 @@ function BlockoutBuilder.build(bp: Blockout.Blockout, def: any): Model
 		error("invalid blockout:\n" .. table.concat(problems, "\n"), 2)
 	end
 	local palette = Blockout.PALETTES[def.faction] or Blockout.PALETTES.neutral
-	local isPiece: { [string]: boolean } = {}
-	for _, piece in def.pieces do
-		isPiece[piece] = true
-	end
+	local isPiece = Blockout.pieceSet(bp, def)
 
 	local model = Instance.new("Model")
 	model.Name = def.model

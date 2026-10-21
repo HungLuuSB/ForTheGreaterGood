@@ -8,6 +8,7 @@
 --   E x z diameter r g b alpha                    an effect disc over the units (shell, flash)
 --   L x1 z1 x2 z2 width r g b                     a line (order path, tracer)
 --   A x z r a0 a1 kind                            a range-ring arc (Render/RangeOverlay)
+--   Q defId x z heading                           a queued structure (Render/QueuedBuilds)
 
 local function rgb(c: Color3): string
 	return string.format("%d %d %d", c.R * 255, c.G * 255, c.B * 255)
@@ -47,6 +48,15 @@ return function(grid: any, arcs: { any }?): string
 		end
 		local color = (string.gsub(rgb(teamColor), " ", ","))
 		table.insert(out, string.format("U %s %s %.1f %.1f %.2f %.2f %.2f", model:GetAttribute("DefId") or model.Name, color, unit.Position.X, unit.Position.Z, heading, yaw, pitch))
+	end
+	local queuedFolder = workspace:FindFirstChild("Queued")
+	for _, model in (if queuedFolder then queuedFolder:GetChildren() else {}) do
+		if model:IsA("Model") and model.PrimaryPart then
+			local offset = model:GetAttribute("RootOffset") :: CFrame? or CFrame.identity
+			local cf = (model.PrimaryPart :: BasePart).CFrame * offset:Inverse()
+			local look = cf.LookVector
+			table.insert(out, string.format("Q %s %.1f %.1f %.2f", model:GetAttribute("DefId") or model.Name, cf.Position.X, cf.Position.Z, math.atan2(look.X, look.Z)))
+		end
 	end
 	local parts = {}
 	for _, folderName in { "Ranges", "Overlay", "Effects" } do

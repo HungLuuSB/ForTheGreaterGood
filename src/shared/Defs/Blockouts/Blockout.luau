@@ -35,7 +35,22 @@ export type Blockout = {
 	id: string,
 	parts: { Part },
 	attachments: { Attachment }?,
+	-- pieces only the client animates (piece scripts, C-30) that the def
+	-- doesn't list yet; jointed like def pieces
+	visualPieces: { string }?,
 }
+
+-- Jointed pieces of a blockout for `def`: the def's and its visual pieces.
+function Blockout.pieceSet(bp: Blockout, def: any): { [string]: boolean }
+	local set: { [string]: boolean } = {}
+	for _, piece in def.pieces do
+		set[piece] = true
+	end
+	for _, piece in bp.visualPieces or {} do
+		set[piece] = true
+	end
+	return set
+end
 
 -- RGB 0..255 per palette key and faction. Order: clean light greys and blue
 -- glass; Chaos: dark iron, rust and orange glow (guide 2.1, 20.1).
@@ -97,9 +112,14 @@ function Blockout.validate(bp: Blockout, def: any): { string }
 	if bp.id ~= def.id then
 		bad(`id doesn't match the def ({def.id})`)
 	end
-	local isPiece: { [string]: boolean } = {}
-	for _, piece in def.pieces do
-		isPiece[piece] = true
+	local isPiece = Blockout.pieceSet(bp, def)
+	for _, piece in bp.visualPieces or {} do
+		if table.find(def.pieces, piece) then
+			bad(`visual piece {piece} is already a def piece`)
+		end
+		if Blockout.isAttachmentPiece(piece) then
+			bad(`visual piece {piece} can't be a muzzle`)
+		end
 	end
 
 	local seen: { [string]: string } = {} -- name → "part" | "attachment"
@@ -166,6 +186,11 @@ function Blockout.validate(bp: Blockout, def: any): { string }
 		local want = if Blockout.isAttachmentPiece(piece) then "attachment" else "part"
 		if seen[piece] ~= want then
 			bad(`def piece {piece} must be a{if want == "part" then " part" else "n attachment"}`)
+		end
+	end
+	for _, piece in bp.visualPieces or {} do
+		if seen[piece] ~= "part" then
+			bad(`visual piece {piece} must be a part`)
 		end
 	end
 	return problems

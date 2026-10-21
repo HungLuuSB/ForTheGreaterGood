@@ -1,13 +1,24 @@
 --!strict
--- Draws a map's layers (heights, water) as anchored parts in workspace.Map,
--- for maps without baked place terrain (test maps, guide 5.4). Cells merge
--- into rectangles of equal height inside 8 × 8-cell blocks, so a flat map is
--- a checkerboard of 64-stud tiles: it shows scale and motion.
+-- Draws a map's layers for maps without baked place terrain (guide 5.4):
+-- the ground and water, and a gold plate on each supply deposit
+-- (workspace.Map). Two ways to draw the ground (C-28):
+--   "terrain"  Roblox Terrain voxels on Core/Terrain's smooth surface
+--              (Render/Terrain; the default: see C-28 for the measurements)
+--   "parts"    anchored columns, one height per cell: cells merge into
+--              rectangles of equal height inside 8 × 8-cell blocks, so a flat
+--              map is a checkerboard of 64-stud tiles
+-- Units are placed on the smooth surface either way (World.groundY).
 
 local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
+local CoreTerrain = require("../Core/Terrain")
+local RenderTerrain = require("./Terrain")
 
 local Ground = {}
+
+Ground.MODE = "terrain" :: "terrain" | "parts"
+-- the last build, for Invoke("ground"): mode, parts, seconds (terrain: filled in when its build finishes)
+Ground.last = {} :: { [string]: any }
 
 local BLOCK = 8 -- cells per tile side
 local THICKNESS = 4
@@ -34,16 +45,12 @@ local function newPart(name: string, size: Vector3, cf: CFrame, color: Color3): 
 	return p
 end
 
--- Builds the ground for `layers` and returns its folder (replacing an old one).
-function Ground.build(layers: Layers.Layers): Folder
-	local old = workspace:FindFirstChild("Map")
-	if old then
-		old:Destroy()
-	end
-	local folder = Instance.new("Folder")
-	folder.Name = "Map"
+-- Anchored columns from the map's lowest ground up to each cell's height.
+local function buildParts(layers: Layers.Layers, folder: Folder): number
 	local g = layers.grid
 	local cell = Grid.CELL_SIZE
+	local base = CoreTerrain.bounds(layers) - THICKNESS
+	local parts = 0
 	local function heightAt(cx: number, cz: number): (number, number)
 		local i = g:index(cx, cz)
 		return Layers.getHeight(layers, i), Layers.getWater(layers, i)
@@ -90,17 +97,53 @@ function Ground.build(layers: Layers.Layers): Folder
 					end
 					local x0, z0 = g.originX + cx * cell, g.originZ + cz * cell
 					local sx, sz = (ex - cx + 1) * cell, (ez - cz + 1) * cell
-					local center = Vector3.new(x0 + sx / 2, h - THICKNESS / 2, z0 + sz / 2)
-					newPart("Land", Vector3.new(sx, THICKNESS, sz), CFrame.new(center), landColor(h, checker)).Parent = folder
+					local tall = math.max(h - base, THICKNESS)
+					local center = Vector3.new(x0 + sx / 2, h - tall / 2, z0 + sz / 2)
+					newPart("Land", Vector3.new(sx, tall, sz), CFrame.new(center), landColor(h, checker)).Parent = folder
+					parts += 1
 					if water > 0 then
 						local w = newPart("Water", Vector3.new(sx, water, sz), CFrame.new(center.X, h + water / 2, center.Z), Color3.fromRGB(52, 108, 168))
 						w.Transparency = 0.35
 						w.CanQuery = false
 						w.Parent = folder
+						parts += 1
 					end
 				end
 			end
 		end
+	end
+	return parts
+end
+
+-- Builds the ground for `layers` and returns its folder (replacing an old
+-- one). A terrain build continues in its own thread (it yields).
+function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?): Folder
+	mode = mode or Ground.MODE
+	local old = workspace:FindFirstChild("Map")
+	if old then
+		old:Destroy()
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Map"
+	local g = layers.grid
+	local cell = Grid.CELL_SIZE
+	local last: { [string]: any } = { mode = mode }
+	Ground.last = last
+	local t0 = os.clock()
+	if mode == "parts" then
+		RenderTerrain.clear()
+		last.parts = buildParts(layers, folder)
+		last.seconds = os.clock() - t0
+	else
+		last.parts = 0
+		task.spawn(function()
+			local stats = RenderTerrain.build(layers)
+			if Ground.last == last and stats then
+				for k, v in stats do
+					last[k] = v
+				end
+			end
+		end)
 	end
 
 	-- supply deposits: a gold plate on each deposit cell, where an extractor
@@ -110,9 +153,10 @@ function Ground.build(layers: Layers.Layers): Folder
 			local i = g:index(cx, cz)
 			local supply = Layers.getSupply(layers, i)
 			if supply > 0 then
-				local h = Layers.getHeight(layers, i) + Layers.getWater(layers, i)
+				-- over the drawn ground, which may tilt slightly under a deposit on a slope
+				local h = Layers.getHeight(layers, i) + Layers.getWater(layers, i) + CoreTerrain.DEPOSIT_LIFT
 				local x0, z0 = g.originX + cx * cell, g.originZ + cz * cell
-				local plate = newPart("Deposit", Vector3.new(cell - 1.2, 0.3, cell - 1.2), CFrame.new(x0 + cell / 2, h + 0.15, z0 + cell / 2), Color3.fromRGB(235, 190, 60):Lerp(Color3.fromRGB(255, 230, 120), math.clamp((supply - 3) / 4, 0, 1)))
+				local plate = newPart("Deposit", Vector3.new(cell - 1.2, 0.3, cell - 1.2), CFrame.new(x0 + cell / 2, h - 0.1, z0 + cell / 2), Color3.fromRGB(235, 190, 60):Lerp(Color3.fromRGB(255, 230, 120), math.clamp((supply - 3) / 4, 0, 1)))
 				plate.Material = Enum.Material.Neon
 				plate.Transparency = 0.15
 				plate.CanQuery = false
