@@ -602,6 +602,9 @@ for each player P:
     - DECOYED / LOST_LOCK: only for projectiles the client has, with the new velocity.
     - IMPACT: for projectiles the client has, or anywhere in sight and in the camera area. Projectiles at the end of their life burst with an IMPACT (no damage).
     - The client steps its projectiles itself. Unguided ones match the server exactly; homing ones are approximate (the client doesn't know a radar contact's altitude or true position), and the IMPACT corrects them.
+  - Sight and wrecks (`PROTOCOL_VERSION` 10, S-26), on the Events channel:
+    - The ally team's **sight map** (sensor cells in LOS, allies' units included), so the client's fog is the server's: SIGHT_ROWS (a bitset of the whole map) after a join, then SIGHT_CELLS with the cells that changed, on sensor ticks. Spectators get none (no fog).
+    - **Wrecks** are known per ally team like ghosts: a WRECK when the team first has its spot in sight, a WRECK_GONE when the team sees the spot without it (a wreck reclaimed out of sight stays on the client's map). The whole map, not only the camera area, because wrecks are on the minimap (8.7). Spectators get every wreck at once.
 
 ### 7.3 Packet layouts
 
@@ -694,8 +697,12 @@ DEATH       unitId u16, severity u8, wreckId u16 (0 = none)               6 B
 FIRE        shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos  10 B
 SPAWN_PROJ  projId u16, weaponDefIndex u16, pos, vel, targetId u16 (0 = none)  19 B
 IMPACT      projId u16, pos                                               9 B
-DECOYED     projId u16, pos, vel (after the decoy turn)                  15 B
+DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11)         22 B
 LOST_LOCK   projId u16, pos, vel (flying on unguided)                    15 B
+WRECK       wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8   10 B
+WRECK_GONE  wreckId u16                                                   3 B
+SIGHT_ROWS  firstRow u8, rowCount u8, rowBytes u8, bits (1 per sensor cell)  4 + rows × rowBytes
+SIGHT_CELLS count u8, cell u16 × count (bit 15 = now in sight)          2 + 2 × count
 pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
 vel = vx, vy, vz i16 (1/8 stud per second)
 ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
@@ -828,6 +835,7 @@ Route these through the same team account so shortages affect them naturally:
 
 - Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time.
 - Wrecks are static features stored in grid cells. They appear on the minimap and are rendered in the tactical tier.
+- A team knows a wreck once it has seen its spot, and learns it is gone only by seeing the spot again (like structure ghosts; S-26).
 
 ### 8.8 Networking
 
@@ -927,8 +935,8 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 | `HITSCAN` | MG, autocannon, CIWS | Instant hit roll | `FIRE` event | Tracer/flash |
 | `BEAM` | Laser defense | Instant hit, damage over duration | `FIRE` event | Beam for duration |
 | `BALLISTIC` | Tank shells, artillery, flak | Simulated arc | `SPAWN_PROJ` once, `IMPACT` | Simulates same arc |
-| `HOMING` | SAMs, AAMs, ATGMs | Simulated steering (lead pursuit) + EW checks + proximity fuse within `aoe` of the target's hull (D97) | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
-| `TORPEDO` | Subs, ASW | Homing, restricted to water | Same as homing | Underwater trail |
+| `HOMING` | SAMs, AAMs, ATGMs | Proportional navigation (N = 4, capped by `turnRate`; S-27) + EW checks + proximity fuse within `aoe` of the target's hull (D97) | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with the same function (`Shared/Combat/Guidance`) |
+| `TORPEDO` | Subs, ASW | Homing by lead pursuit, restricted to water | Same as homing | Underwater trail |
 | (all) | — | Every weapon aims at, and is judged against, `Combat.aimPoint`: the centre of the target's hull (ships float, submarines sit below the surface; D95) | | |
 | `BOMB` | Bombers | Ballistic with zero launch speed: released at the computed lead point (D91) | Same as ballistic | Falls |
 
@@ -1071,8 +1079,9 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 **Missile flight checks (cheap, event-based):**
 
 1. **Launch:** lock check per the table. No lock → no launch.
+1b. **Seeker cone** (IR, RADAR; every tick; S-27): a target more than the seeker's half-angle off the missile's nose (`seekerAngle`; default IR 60°, RADAR 70°) breaks the lock: the missile overshot. `LOST_LOCK`, and it never re-acquires: no second pass.
 2. **Midcourse:** every ~5 ticks, re-check. Radar missile whose target entered an enemy jam field beyond burn-through → `LOST_LOCK` (flies straight, self-destructs at lifetime).
-3. **Terminal:** once, when within `terminalRange`, roll countermeasures (11.6). Success → `DECOYED` event; the missile veers off. Failure → it hits.
+3. **Terminal:** once, when within `terminalRange`, roll countermeasures (11.6). Success → `DECOYED` event; the missile loses its target and follows the flares or chaff for up to a second (a point 25 studs across its flight path, below the target for flares), turning at its `turnRate`, then flies on (S-28). Failure → it hits.
 
 Implementation (`Sim/EW.luau`, DECISIONS D79–D80, D82):
 - `EW.canLock` gates every guided launch.

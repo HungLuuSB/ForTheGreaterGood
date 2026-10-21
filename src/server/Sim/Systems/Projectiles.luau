@@ -10,16 +10,18 @@
 -- ttl: they burst harmlessly (an IMPACT with no unit and no damage, guide
 -- 10.5 "expired homing missiles self-destruct"), so clients drop them too.
 --
--- HOMING / TORPEDO projectiles turn toward their target at the weapon's
--- turnRate (deg/s) before each step, leading it: they aim at where it will
--- be after the straight-line time to go (D97). HOMING missiles also carry a
--- proximity fuse: they burst at the closest approach to their target when
--- it is within their blast radius (aoe) of the hull; the burst deals AoE
--- damage, and its IMPACT names the target. Guided missiles first run
+-- HOMING / TORPEDO projectiles turn toward their target at most the weapon's
+-- turnRate (deg/s) before each step: missiles by proportional navigation,
+-- torpedoes by lead pursuit (Shared/Combat/Guidance, S-27; D97). HOMING
+-- missiles also carry a proximity fuse: they burst at the closest approach
+-- to their target when it is within their fuseRange (default: aoe) of the
+-- hull; the burst damages the target by its distance over fuseRange and
+-- others by AoE, and its IMPACT names the target. Guided missiles first run
 -- their midcourse and terminal checks (EW.guide, guide 11.5), which may
 -- break the lock or decoy them.
 
 local Ballistics = require("../Combat/Ballistics")
+local Guidance = require("@shared/Combat/Guidance")
 local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
 local EW = require("../EW")
@@ -28,8 +30,6 @@ local World = require("../World")
 
 local DT = 1 / 15
 local sqrt, sin, cos = math.sqrt, math.sin, math.cos
-
-local steer = Ballistics.steer
 
 local candidates: { number } = {}
 
@@ -56,16 +56,27 @@ return function(sim: Types.Sim)
 		local pvx, pvy, pvz = c.pvx[id], c.pvy[id], c.pvz[id]
 		local homingTarget = c.pTarget[id]
 		if World.isRef(w, homingTarget, c.pTargetGen[id]) and weapon.turnRate then
-			-- lead pursuit: steer at where the target will be when the
-			-- missile gets there (straight-line time to go, target holding
-			-- its heading and speed)
+			-- missiles: proportional navigation; torpedoes: lead pursuit
+			-- (Shared/Combat/Guidance, S-27)
 			local tx, ty, tz = Combat.aimPoint(c, w, homingTarget)
-			local speed = sqrt(pvx * pvx + pvy * pvy + pvz * pvz)
-			local tgo = sqrt((tx - x0) ^ 2 + (ty - y0) ^ 2 + (tz - z0) ^ 2) / math.max(speed, 1)
-			local th, tv = w.heading[homingTarget], w.speed[homingTarget]
-			tx += sin(th) * tv * tgo
-			tz += cos(th) * tv * tgo
-			pvx, pvy, pvz = steer(pvx, pvy, pvz, tx - x0, ty - y0, tz - z0, math.rad(weapon.turnRate) * DT)
+			local tvx, tvz = Guidance.velocity(w.heading[homingTarget], w.speed[homingTarget])
+			local maxTurn = math.rad(weapon.turnRate) * DT
+			if weapon.type == "HOMING" then
+				-- the target already moved this tick (Movement runs first):
+				-- navigate against where it was when the missile's step starts
+				pvx, pvy, pvz = Guidance.pn(x0, y0, z0, pvx, pvy, pvz, tx - tvx * DT, ty, tz - tvz * DT, tvx, 0, tvz, maxTurn, DT)
+			else
+				pvx, pvy, pvz = Guidance.lead(x0, y0, z0, pvx, pvy, pvz, tx, ty, tz, tvx, tvz, maxTurn)
+			end
+		elseif c.pDecoy[id] then
+			-- decoyed: follow the flare or chaff for a moment (S-28)
+			local d = c.pDecoy[id]
+			local follow
+			pvx, pvy, pvz, follow = Guidance.decoy(x0, y0, z0, pvx, pvy, pvz, d[1], d[2], d[3], math.rad(weapon.turnRate :: number) * DT, Guidance.seekerAngle(weapon) :: number)
+			d[4] -= 1
+			if not follow or d[4] <= 0 then
+				c.pDecoy[id] = nil
+			end
 		end
 		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
 		if weapon.type == "TORPEDO" then

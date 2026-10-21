@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 9 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team
+Schema.PROTOCOL_VERSION = 11 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -624,16 +624,43 @@ end
 --   SPAWN_PROJ  projId u16 | weaponDefIndex u16 | pos | vel
 --               | targetId u16 (0 = none or not shown)                        = 19 bytes
 --   IMPACT      projId u16 | pos                                              =  9 bytes
---   DECOYED     projId u16 | pos | vel (after the decoy turn)                 = 15 bytes
+--   DECOYED     projId u16 | pos | vel | decoy pos (the point it follows)
+--               | decoyTicks u8 (ticks it still follows it; protocol 11)       = 22 bytes
 --   LOST_LOCK   projId u16 | pos | vel (the missile flies on unguided)       = 15 bytes
+--   WRECK       wreckId u16 | defIndex u16 | cell u16 | offX u8 | offZ u8
+--               | heading u8                                                  = 10 bytes
+--   WRECK_GONE  wreckId u16                                                   =  3 bytes
+--   SIGHT_ROWS  firstRow u8 | rowCount u8 (1..) | rowBytes u8 (1..)
+--               | rowCount × rowBytes bytes: one bit per sensor cell, row by
+--               row, bit (x % 8) of byte x // 8; 1 = in the ally team's sight
+--                                                          = 4 + rows × rowBytes
+--   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
+--               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
 -- vel = vx i16 | vy i16 | vz i16 (eighth studs per second)                     6 bytes
 --------------------------------------------------------------------------------
 
-Schema.EventKind = table.freeze({ ENTER = 1, LEAVE = 2, DEATH = 3, FIRE = 4, SPAWN_PROJ = 5, IMPACT = 6, DECOYED = 7, LOST_LOCK = 8 })
+Schema.EventKind = table.freeze({
+	ENTER = 1,
+	LEAVE = 2,
+	DEATH = 3,
+	FIRE = 4,
+	SPAWN_PROJ = 5,
+	IMPACT = 6,
+	DECOYED = 7,
+	LOST_LOCK = 8,
+	WRECK = 9, -- protocol 10 (S-26)
+	WRECK_GONE = 10,
+	SIGHT_ROWS = 11,
+	SIGHT_CELLS = 12,
+})
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 15, [8] = 15 })
+-- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 22, [8] = 15, [9] = 10, [10] = 3 })
+Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
+Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
+Schema.SIGHT_MAX_ROW_BYTES = 640 -- per SIGHT_ROWS record (rowCount × rowBytes)
 Schema.FIRE_HIT = 16 -- FIRE slot byte: bit 4
 Schema.Y_SCALE = 8 -- pos.y and vel units per stud
 
@@ -667,7 +694,35 @@ export type Event = {
 	-- SPAWN_PROJ
 	weaponIndex: number?,
 	targetId: number?, -- 0 = none
+	-- DECOYED: the decoy point (a pos) and the ticks the missile still follows it
+	decoyCell: number?,
+	decoyOffX: number?,
+	decoyOffZ: number?,
+	decoyY: number?,
+	decoyTicks: number?,
+	-- WRECK, WRECK_GONE: wreckId; WRECK: defIndex, cell, offX, offZ, heading
+	-- SIGHT_ROWS
+	firstRow: number?, -- 0-based sensor row
+	rowCount: number?,
+	rowBytes: number?,
+	bits: buffer?, -- rowCount × rowBytes
+	-- SIGHT_CELLS: cell index, + SIGHT_SEEN when the cell is now in sight
+	cells: { number }?,
 }
+
+local function isProjEvent(kind: number): boolean
+	return kind >= EK.SPAWN_PROJ and kind <= EK.LOST_LOCK
+end
+
+-- Encoded size of an event record.
+function Schema.eventBytes(e: Event): number
+	if e.kind == EK.SIGHT_ROWS then
+		return 4 + (e.rowCount :: number) * (e.rowBytes :: number)
+	elseif e.kind == EK.SIGHT_CELLS then
+		return 2 + 2 * #(e.cells :: { number })
+	end
+	return Schema.EVENT_BYTES[e.kind]
+end
 
 local function writePos(w: Writer, e: Event)
 	w:writeU16(required(e.cell, "cell"))
@@ -702,11 +757,43 @@ end
 
 function Schema.encodeEvent(w: Writer, e: Event)
 	local kind = e.kind
-	if Schema.EVENT_BYTES[kind] == nil then
+	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS then
 		error(`Schema: unknown event kind {kind}`, 2)
 	end
 	w:writeU8(kind)
-	if kind >= EK.SPAWN_PROJ then
+	if kind == EK.SIGHT_ROWS then
+		local rows, rowBytes = required(e.rowCount, "rowCount"), required(e.rowBytes, "rowBytes")
+		local bits = required(e.bits, "bits")
+		if rows < 1 or rows > 255 or rowBytes < 1 or rows * rowBytes > Schema.SIGHT_MAX_ROW_BYTES or buffer.len(bits) ~= rows * rowBytes then
+			error(`Schema: SIGHT_ROWS of {rows} rows × {rowBytes} bytes ({buffer.len(bits)} given)`, 2)
+		end
+		w:writeU8(required(e.firstRow, "firstRow"))
+		w:writeU8(rows)
+		w:writeU8(rowBytes)
+		w:writeBytes(bits)
+		return
+	elseif kind == EK.SIGHT_CELLS then
+		local cells = required(e.cells, "cells")
+		if #cells < 1 or #cells > Schema.SIGHT_MAX_CELLS then
+			error(`Schema: SIGHT_CELLS needs 1..{Schema.SIGHT_MAX_CELLS} cells, got {#cells}`, 2)
+		end
+		w:writeU8(#cells)
+		for _, c in cells do
+			w:writeU16(c)
+		end
+		return
+	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
+		writeId(w, required(e.wreckId, "wreckId"), "wreckId")
+		if kind == EK.WRECK then
+			writeId(w, required(e.defIndex, "defIndex"), "defIndex")
+			w:writeU16(required(e.cell, "cell"))
+			w:writeU8(required(e.offX, "offX"))
+			w:writeU8(required(e.offZ, "offZ"))
+			w:writeU8(required(e.heading, "heading"))
+		end
+		return
+	end
+	if isProjEvent(kind) then
 		writeId(w, required(e.projId, "projId"), "projId")
 	else
 		writeId(w, required(e.unitId, "unitId"), "unitId")
@@ -746,17 +833,55 @@ function Schema.encodeEvent(w: Writer, e: Event)
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		writePos(w, e)
 		writeVel(w, e)
+		if kind == EK.DECOYED then
+			w:writeU16(required(e.decoyCell, "decoyCell"))
+			w:writeU8(required(e.decoyOffX, "decoyOffX"))
+			w:writeU8(required(e.decoyOffZ, "decoyOffZ"))
+			w:writeI16(required(e.decoyY, "decoyY"))
+			w:writeU8(required(e.decoyTicks, "decoyTicks"))
+		end
 	end
 end
 
 function Schema.decodeEvent(r: Reader): Event
 	r.context = "event record"
 	local kind = r:readU8()
-	if Schema.EVENT_BYTES[kind] == nil then
+	if Schema.EVENT_BYTES[kind] == nil and kind ~= EK.SIGHT_ROWS and kind ~= EK.SIGHT_CELLS then
 		fail(r, `unknown event kind {kind}`)
 	end
 	local e: Event = { kind = kind }
-	if kind >= EK.SPAWN_PROJ then
+	if kind == EK.SIGHT_ROWS then
+		e.firstRow = r:readU8()
+		local rows, rowBytes = r:readU8(), r:readU8()
+		if rows < 1 or rowBytes < 1 or rows * rowBytes > Schema.SIGHT_MAX_ROW_BYTES then
+			fail(r, `SIGHT_ROWS of {rows} rows × {rowBytes} bytes`)
+		end
+		e.rowCount, e.rowBytes = rows, rowBytes
+		e.bits = r:readBuffer(rows * rowBytes)
+		return e
+	elseif kind == EK.SIGHT_CELLS then
+		local count = r:readU8()
+		if count < 1 then
+			fail(r, "SIGHT_CELLS with no cells")
+		end
+		local cells = table.create(count)
+		for i = 1, count do
+			cells[i] = r:readU16()
+		end
+		e.cells = cells
+		return e
+	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
+		e.wreckId = readId(r, "wreckId")
+		if kind == EK.WRECK then
+			e.defIndex = readId(r, "defIndex")
+			e.cell = r:readU16()
+			e.offX = r:readU8()
+			e.offZ = r:readU8()
+			e.heading = r:readU8()
+		end
+		return e
+	end
+	if isProjEvent(kind) then
 		e.projId = readId(r, "projId")
 	else
 		e.unitId = readId(r, "unitId")
@@ -801,6 +926,13 @@ function Schema.decodeEvent(r: Reader): Event
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		readPos(r, e)
 		readVel(r, e)
+		if kind == EK.DECOYED then
+			e.decoyCell = r:readU16()
+			e.decoyOffX = r:readU8()
+			e.decoyOffZ = r:readU8()
+			e.decoyY = r:readI16()
+			e.decoyTicks = r:readU8()
+		end
 	end
 	return e
 end

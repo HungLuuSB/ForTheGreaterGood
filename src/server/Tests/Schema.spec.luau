@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 9, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 11, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -387,9 +387,10 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEvent, spawn)), "05 02 01 04 03 06 05 07 08 09 01 ff ff 00 02 03 00 0b 0a")
 		local impact: Schema.Event = { kind = Schema.EventKind.IMPACT, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, impact)), "06 01 00 02 00 03 04 05 00")
-		local decoyed: Schema.Event = { kind = Schema.EventKind.DECOYED, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5, vx = 6, vy = -7, vz = 8 }
-		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "07 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
+		local decoyed: Schema.Event = { kind = Schema.EventKind.DECOYED, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5, vx = 6, vy = -7, vz = 8, decoyCell = 0x0109, decoyOffX = 10, decoyOffZ = 11, decoyY = -12, decoyTicks = 13 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "07 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00 09 01 0a 0b f4 ff 0d") -- decoy point and ticks since protocol 11
 		decoyed.kind = Schema.EventKind.LOST_LOCK
+		decoyed.decoyCell, decoyed.decoyOffX, decoyed.decoyOffZ, decoyed.decoyY, decoyed.decoyTicks = nil, nil, nil, nil, nil
 		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "08 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
 		-- version 4: homing corrections on the Projectiles channel
 		local sync: Schema.ProjSync = { projId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = -2, vx = 1, vy = -1, vz = 0x0203 }
@@ -412,6 +413,45 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b") -- team first since protocol 9
 	end)
 
+	t.test("wreck and sight events (protocol 10): golden bytes, round-trip, bad input, truncation", function()
+		local EK = Schema.EventKind
+		local wreck: Schema.Event = { kind = EK.WRECK, wreckId = 0x0102, defIndex = 0x0304, cell = 0x0506, offX = 7, offZ = 8, heading = 9 }
+		local gone: Schema.Event = { kind = EK.WRECK_GONE, wreckId = 0x0102 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, wreck)), "09 02 01 04 03 06 05 07 08 09")
+		t.equal(hex(encodeOne(Schema.encodeEvent, gone)), "0a 02 01")
+		roundTrip(t, { wreck, gone }, Schema.encodeEvent, Schema.decodeEvent)
+		for _, e in { wreck, gone } do
+			t.equal(buffer.len(encodeOne(Schema.encodeEvent, e)), Schema.EVENT_BYTES[e.kind], `size of event kind {e.kind}`)
+			t.equal(Schema.eventBytes(e), Schema.EVENT_BYTES[e.kind])
+			expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, e))
+		end
+		expectRejected(t, Schema.decodeEvent, { 9, 0, 0, 1, 0, 0, 0, 0, 0, 0 }, "wreckId 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0 }, "defIndex 0 is reserved")
+
+		-- rows: 2 rows of 2 bytes; cells: one seen, one unseen
+		local rows: Schema.Event = { kind = EK.SIGHT_ROWS, firstRow = 3, rowCount = 2, rowBytes = 2, bits = fromBytes({ 0x01, 0x80, 0xFF, 0x00 }) }
+		local cells: Schema.Event = { kind = EK.SIGHT_CELLS, cells = { 5 + Schema.SIGHT_SEEN, 0x0102 } }
+		t.equal(hex(encodeOne(Schema.encodeEvent, rows)), "0b 03 02 02 01 80 ff 00")
+		t.equal(hex(encodeOne(Schema.encodeEvent, cells)), "0c 02 05 80 02 01")
+		t.equal(Schema.eventBytes(rows), 8)
+		t.equal(Schema.eventBytes(cells), 6)
+		local decoded = Packer.readAll(encodeOne(Schema.encodeEvent, rows), Schema.decodeEvent)[1]
+		t.equal(decoded.firstRow, 3)
+		t.equal(decoded.rowCount, 2)
+		t.equal(decoded.rowBytes, 2)
+		t.equal(hex(decoded.bits :: buffer), "01 80 ff 00")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, cells), Schema.decodeEvent)[1], cells)
+		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, rows))
+		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, cells))
+		expectRejected(t, Schema.decodeEvent, { 12, 0 }, "SIGHT_CELLS with no cells")
+		expectRejected(t, Schema.decodeEvent, { 11, 0, 0, 4 }, "SIGHT_ROWS of 0 rows")
+		expectRejected(t, Schema.decodeEvent, { 11, 0, 255, 16 }, "SIGHT_ROWS of 255 rows")
+		local ok = pcall(encodeOne, Schema.encodeEvent, { kind = EK.SIGHT_CELLS, cells = {} } :: Schema.Event)
+		t.expect(not ok, "an empty SIGHT_CELLS is refused")
+		ok = pcall(encodeOne, Schema.encodeEvent, { kind = EK.SIGHT_ROWS, firstRow = 0, rowCount = 2, rowBytes = 2, bits = buffer.create(3) } :: Schema.Event)
+		t.expect(not ok, "SIGHT_ROWS bits must be rows × rowBytes")
+	end)
+
 	t.test("events round-trip, reject bad input, and every prefix is truncated", function()
 		local events: { Schema.Event } = {
 			{ kind = Schema.EventKind.ENTER, unitId = 65535, defIndex = 1, team = 8, cell = 65535, offX = 255, offZ = 0, heading = 255, alt = 0, health = 255, build = 0, state = 65535 },
@@ -421,7 +461,7 @@ return function(t: RunAll.Context)
 			{ kind = Schema.EventKind.FIRE, unitId = 1, slot = 1, hit = true, cell = 0, offX = 0, offZ = 255, y = 32767 },
 			{ kind = Schema.EventKind.SPAWN_PROJ, projId = 65535, weaponIndex = 1, cell = 1, offX = 2, offZ = 3, y = 4, vx = -32768, vy = 32767, vz = 0, targetId = 0 },
 			{ kind = Schema.EventKind.IMPACT, projId = 1, cell = 65535, offX = 255, offZ = 255, y = -1 },
-			{ kind = Schema.EventKind.DECOYED, projId = 2, cell = 3, offX = 4, offZ = 5, y = 6, vx = -7, vy = 8, vz = -9 },
+			{ kind = Schema.EventKind.DECOYED, projId = 2, cell = 3, offX = 4, offZ = 5, y = 6, vx = -7, vy = 8, vz = -9, decoyCell = 65535, decoyOffX = 0, decoyOffZ = 255, decoyY = -32768, decoyTicks = 255 },
 			{ kind = Schema.EventKind.LOST_LOCK, projId = 3, cell = 4, offX = 5, offZ = 6, y = 7, vx = 8, vy = -9, vz = 10 },
 		}
 		roundTrip(t, events, Schema.encodeEvent, Schema.decodeEvent)
@@ -437,7 +477,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 9, 1, 0 }, "unknown event kind 9")
+		expectRejected(t, Schema.decodeEvent, { 13, 1, 0 }, "unknown event kind 13") -- 9..12 since protocol 10
 		expectRejected(t, Schema.decodeEvent, { 2, 0, 0 }, "unitId 0 is reserved")
 		expectRejected(t, Schema.decodeEvent, { 1, 1, 0, 1, 0, 9 }, "team 9 outside")
 	end)
