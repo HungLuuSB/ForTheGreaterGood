@@ -111,7 +111,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 ### C-11 — Drawn order lines follow the server's slots (2026-10-21)
 
-**Decision:** order queues aren't replicated (net.md 9), so the client draws what it sent (`Core/Waypoints`). For line moves it computes each unit's goal the way the server does (`Nav.slotsFor` and `Nav.assignSlots`): rows of slots spaced `2 x radius x 1.3` along the line, extra rows stepping back toward the group's centroid, deepest row first, each slot taking the closest unassigned unit (ties to the lower ID). The constants are copied from `Nav` until they're shared (request 3). A point counts as reached within a formation-sized radius (`spacing x sqrt(n)`, at least 10 studs), and a unit that stands still for 2 s drops its lines.
+**Decision:** order queues aren't replicated (net.md 9), so the client draws what it sent (`Core/Waypoints`). For line moves it computes each unit's goal the way the server does (`Nav.slotsFor` and `Nav.assignSlots`): rows of slots spaced `2 x radius x 1.3` along the line, extra rows stepping back toward the group's centroid, deepest row first, each slot taking the closest unassigned unit (ties to the lower ID). Since 2026-10-22 these are `Shared/Grid/Formation`'s own `layout`, `deepestFirst` and `assign` (S-12); the client has no copy. A point counts as reached within a formation-sized radius (`spacing x sqrt(n)`, at least 10 studs), and a unit that stands still for 2 s drops its lines.
 
 **Alternatives:** spread goals by the units' order along the line (first version: lines crossed, because the server assigns differently); replicate order queues (sim work, more bandwidth).
 

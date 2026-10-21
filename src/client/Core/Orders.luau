@@ -3,6 +3,7 @@
 -- the smart right-click, line moves, stop, states. Every command is split
 -- into chunks of at most Schema.MAX_UNITS_PER_COMMAND units. Pure Luau (C-7).
 
+local Formation = require("@shared/Grid/Formation")
 local Packer = require("@shared/Net/Packer")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
@@ -90,19 +91,14 @@ function Orders.encode(world: World.World, intent: Intent, ids: { number }): { b
 	return out
 end
 
--- The server's formation spacing (src/server/Sim/Nav.luau; a copy until the
--- formation slots are shared, request 3). The unit radius is shared (S-9).
-Orders.SLOT_SPACING = 1.3 -- unit diameters
-Orders.RADIUS_PER_FOOTPRINT = PlacementRules.RADIUS_PER_FOOTPRINT
-
 -- Goal point per unit of a line move from (x1, z1) to (x2, z2), for drawing
--- (C-11): the server's layout (rows of evenly spaced slots, extra rows
--- stepping back toward the group's centroid), deepest row first, each slot
--- taking the closest unassigned unit, ties to the lower ID (Nav.assignSlots).
--- It skips the server's open-ground filtering, so on blocked terrain the
--- drawn goals can differ.
+-- (C-11): the server's own formation functions (Shared/Grid/Formation,
+-- S-12): rows of slots along the line, deepest row first, each slot taking
+-- the closest unassigned unit. Without the server's open-ground callback,
+-- so on blocked terrain the drawn goals can differ.
 function Orders.lineSlots(world: World.World, ids: { number }, x1: number, z1: number, x2: number, z2: number): { [number]: { number } }
 	local members, maxFootprint, sumX, sumZ = {}, 1, 0, 0
+	local posX, posZ = {}, {}
 	for _, id in ids do
 		local u = world.units[id]
 		if u then
@@ -111,64 +107,23 @@ function Orders.lineSlots(world: World.World, ids: { number }, x1: number, z1: n
 			maxFootprint = math.max(maxFootprint, if def then def.footprint else 1)
 			sumX += u.x
 			sumZ += u.z
+			posX[id], posZ[id] = u.x, u.z
 		end
 	end
-	local n = #members
 	local out = {}
+	local n = #members
 	if n == 0 then
 		return out
 	end
 	local backX, backZ = sumX / n, sumZ / n
-	local spacing = 2 * maxFootprint * Orders.RADIUS_PER_FOOTPRINT * Orders.SLOT_SPACING
-	local dx, dz = x2 - x1, z2 - z1
-	local len = math.sqrt(dx * dx + dz * dz)
-	local perRow = math.max(1, math.min(n, math.floor(len / spacing) + 1))
-	local rows = math.ceil(n / perRow)
-	local ux, uz = if len > 0 then dx / len else 1, if len > 0 then dz / len else 0
-	local px, pz = -uz, ux
-	local cx, cz = (x1 + x2) / 2, (z1 + z2) / 2
-	if (backX - cx) * px + (backZ - cz) * pz < 0 then
-		px, pz = -px, -pz
-	end
-	local slots: { { number } } = {}
-	for row = 0, rows - 1 do
-		for i = 0, perRow - 1 do
-			if #slots >= n then
-				break
-			end
-			local t = if perRow == 1 then 0.5 else i / (perRow - 1)
-			table.insert(slots, { x1 + dx * t + px * spacing * row, z1 + dz * t + pz * spacing * row, #slots + 1 })
+	local spacing = Formation.spacing(maxFootprint * PlacementRules.RADIUS_PER_FOOTPRINT)
+	local slots = Formation.layout(n, spacing, x1, z1, x2, z2, backX, backZ)
+	Formation.deepestFirst(slots, (x1 + x2) / 2, (z1 + z2) / 2, backX, backZ, spacing)
+	local pick = Formation.assign(posX, posZ, members, slots)
+	for i, slot in slots do
+		if pick[i] ~= 0 then
+			out[pick[i]] = { slot[1], slot[2] }
 		end
-	end
-	-- far side first, along the approach from the centroid
-	local ax, az = cx - backX, cz - backZ
-	local alen = math.sqrt(ax * ax + az * az)
-	if alen > 1e-9 then
-		ax, az = ax / alen, az / alen
-	end
-	local function depth(s: { number }): number
-		return math.floor(((s[1] - cx) * ax + (s[2] - cz) * az) / spacing + 0.5)
-	end
-	table.sort(slots, function(a, b)
-		local da, db = depth(a), depth(b)
-		if da ~= db then
-			return da > db
-		end
-		return a[3] < b[3]
-	end)
-	local free = table.clone(members)
-	for _, slot in slots do
-		local best, bestD, bestK = 0, math.huge, 0
-		for k, id in free do
-			local u = world.units[id]
-			local d = (u.x - slot[1]) ^ 2 + (u.z - slot[2]) ^ 2
-			if d < bestD or (d == bestD and id < best) then
-				best, bestD, bestK = id, d, k
-			end
-		end
-		out[best] = { slot[1], slot[2] }
-		free[bestK] = free[#free]
-		free[#free] = nil
 	end
 	return out
 end
