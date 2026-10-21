@@ -188,4 +188,4 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 ### C-21 — BAR-style controls (2026-10-22, the user's answer)
 
-**Decision:** the camera pans with the arrow keys, screen-edge scroll (live games, off in Studio) and middle-drag; Q / E rotate as before; S stops; WASD is free for later hotkeys; V toggles range rings. Everything else in C-13 stays. Strategic zoom keeps sending the camera rectangle (answer to C-17).
+**Decision:** the camera pans with the arrow keys, screen-edge scroll (live games, off in Studio) and middle-drag; Q / E rotate as before; S stops; WASD is free for later hotkeys; V toggles range rings. Everything else in C-13 stays. Placing is cancelled with a right click only: Esc is Roblox's menu key, arrives as already processed and opens the menu (found in the step 4 playtest). Strategic zoom keeps sending the camera rectangle (answer to C-17).
