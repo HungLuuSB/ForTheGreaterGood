@@ -28,6 +28,17 @@ local PROFILES = {
 		demoOrders = false,
 		restartAfter = nil,
 	},
+	-- a procedural map with hills, ridges and a sea (S-15), for the terrain
+	-- (C-28): your Command Vehicle and three Lancers against a Warlord and a Ravager
+	terrain = {
+		seed = 3,
+		mapId = "map:coastline",
+		scenario = "match_test",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = true,
+		restartAfter = nil,
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,
@@ -40,6 +51,6 @@ local PROFILES = {
 	},
 }
 
-local ACTIVE = "duel"
+local ACTIVE = "terrain"
 
 return table.freeze(PROFILES[ACTIVE])

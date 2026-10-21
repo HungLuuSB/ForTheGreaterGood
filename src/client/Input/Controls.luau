@@ -59,15 +59,16 @@ local function ctrl(): boolean
 	return UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
 end
 
--- Ground point under a viewport pixel: a raycast against workspace.Map,
--- else the plane at the map's base height.
+-- Ground point under a viewport pixel: a raycast against the drawn ground
+-- (workspace.Map parts and the Terrain, its water surface included), else
+-- the plane at the map's base height.
 function Controls.groundAt(cam: Camera, px: number, py: number): Vector3?
 	local ray = cam:ViewportPointToRay(px, py)
 	local map = workspace:FindFirstChild("Map")
 	if map then
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Include
-		params.FilterDescendantsInstances = { map }
+		params.FilterDescendantsInstances = { map, workspace.Terrain }
 		local hit = workspace:Raycast(ray.Origin, ray.Direction * 5000, params)
 		if hit then
 			return hit.Position

@@ -26,6 +26,7 @@ Pieces only ever move through `Motor6D.Transform` (client animation, guide 14.3�
 - **Placing a unit:** the sim's heading `h` (radians) points along `(sin h, cos h)` in world X/Z, so
   `unitCFrame = CFrame.new(x, groundY + alt, z) * CFrame.Angles(0, h + math.pi, 0)` and
   `base.CFrame = unitCFrame * model:GetAttribute("RootOffset")`.
+  `groundY` is the drawn ground (`World.groundY`: the smooth terrain surface of C-28, or the water surface for floating units).
 - **Turret yaw:** the joint's pivot is the turret's rotation center; `Transform = CFrame.Angles(0, yaw, 0)`, with `yaw` the sim's turret angle relative to the hull (radians, same sense as heading).
 - **Barrel pitch:** the joint's pivot is the trunnion; `Transform = CFrame.Angles(pitch, 0, 0)`, pitch up positive (a −Z barrel rises).
 - **Wire decoding** (Schema): heading `u8 → v / 256 · 2π`; aim yaw and pitch `u8 → v / 255 · 2π − π`.

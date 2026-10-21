@@ -150,6 +150,13 @@ if RunService:IsStudio() then
 			end
 			table.clear(perf)
 			return out
+		elseif query == "ground" then
+			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
+			local mode = ...
+			if mode and world.layers then
+				Ground.build(world.layers, mode)
+			end
+			return Ground.last
 		elseif query == "act" then
 			-- Invoke("act", "smartOrder", x, z, unitId?, queue?): an API action, as the UI would call it
 			local name = (...)
