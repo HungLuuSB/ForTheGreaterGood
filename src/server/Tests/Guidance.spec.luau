@@ -211,4 +211,59 @@ return function(t: RunAll.Context)
 		end
 		t.expect(#after >= 5, `it flew on ({#after} ticks) instead of turning back`)
 	end)
+
+	-- client request 20 (S-42): radar SAMs launch vertically, IRIS-T SLM style
+	t.test("a vertical-launch radar SAM fires without turning its launcher, climbs, pitches over and hits", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:160", scenario = "empty" })
+		local w, c = sim.world, sim.combat
+		local jet = Spawn.unit(sim, "ord_falcon", 1, -540, 0, math.pi / 2)
+		World.setHealth(w, jet, 1e9)
+		local site = Spawn.unit(sim, "chs_wyvern", 2, 400, 0, 0)
+		local key = World.slotKey(site, 1)
+		local restYaw, restPitch = w.wYaw[key], w.wPitch[key]
+		moveTo(sim, 1, { jet }, 250, 0)
+		local launched, hits, decoyed, lost, vertical, aimMoved = 0, 0, 0, 0, 0, false
+		local mine: { [number]: boolean } = {}
+		for _ = 1, 15 * 90 do
+			Sim.step(sim)
+			if w.wYaw[key] ~= restYaw or w.wPitch[key] ~= restPitch then
+				aimMoved = true
+			end
+			for _, e in c.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == site then
+					launched += 1
+					mine[e.other] = true
+					-- spawned and stepped once: still steep
+					local p = e.other
+					local speed = math.sqrt(c.pvx[p] ^ 2 + c.pvy[p] ^ 2 + c.pvz[p] ^ 2)
+					if c.pvy[p] > 0.7 * speed then
+						vertical += 1
+					end
+				elseif mine[e.other] then
+					if e.kind == "IMPACT" then
+						mine[e.other] = nil
+						if e.unit == jet then
+							hits += 1
+						end
+					elseif e.kind == "DECOYED" then
+						decoyed += 1
+					elseif e.kind == "LOST_LOCK" then
+						lost += 1
+					end
+				end
+			end
+		end
+		for p in mine do
+			if c.projSlot[p] ~= nil then
+				launched -= 1 -- still flying
+			end
+		end
+		print(string.format("    Wyvern vs circling Falcon: %d launched, %d hits, %d decoyed (chaff), %d lost lock", launched, hits, decoyed, lost))
+		t.expect(launched >= 5, `it fired ({launched})`)
+		t.equal(vertical, launched, "every missile left climbing steeply")
+		t.expect(not aimMoved, "the launcher never turned")
+		-- the seeker cone only applies after the hand-over, so no lock is lost
+		-- in the climb; a few overshoot a jet passing close over the site
+		t.expect(hits >= launched * 0.75, `at least 75% hit ({hits} of {launched}, {lost} overshot)`)
+	end)
 end

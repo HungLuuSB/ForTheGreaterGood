@@ -8,13 +8,14 @@ return {
 	projectileSpeed = 360,
 	accuracy = 1,
 	turnRate = 90,
+	launch = "vertical", -- IRIS-T SLM style: straight up, then over (S-42)
 	guidance = "RADAR",
 	lockRange = 560,
 	burnThrough = 0.35,
 	terminalRange = 50,
 	canTargetRadar = true,
 	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 400, SUB = 0 },
-	aoe = 8,
+	aoe = 20, -- heavy warhead (client request 20, the user asked)
 	edgeEffectiveness = 0.4,
 	targets = { "AIR" },
 	priority = { "JET", "AIR", "HELI" },

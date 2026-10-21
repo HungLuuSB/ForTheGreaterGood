@@ -99,7 +99,9 @@ local function fire(
 		local ttl = 2 * weapon.range / math.max(speed, 1) + 1
 		local launchY = muzzleY
 		local vx, vy, vz = cos(p) * sin(yaw) * speed, sin(p) * speed, cos(p) * cos(yaw) * speed
-		if wtype == "TORPEDO" then
+		if weapon.launch == "vertical" then
+			vx, vy, vz = 0, speed, 0 -- straight up; guidance pitches it over (S-42)
+		elseif wtype == "TORPEDO" then
 			p = 0
 			launchY = Combat.surfaceHeight(c, w.posX[id], w.posZ[id]) - Combat.TORPEDO_DEPTH
 			vx, vy, vz = sin(yaw) * speed, 0, cos(yaw) * speed
@@ -259,7 +261,7 @@ return function(sim: Types.Sim)
 			-- rotate the turret (fixed mounts without a turret table aim
 			-- instantly); without a target: hold, then back to rest
 			aimState.yaw, aimState.pitch, aimState.hold = w.wYaw[key], w.wPitch[key], w.wHold[key]
-			if aimed then
+			if aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
 				Aim.update(turret, aimState, wantYaw, wantPitch)
 			else
 				Aim.update(turret, aimState, nil, nil)
@@ -294,7 +296,8 @@ return function(sim: Types.Sim)
 
 			if canFire and reload <= 0 then
 				local tol = rad(if turret then turret.tolerance else 0)
-				local onTarget = abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol
+				-- vertical launchers need no aim: in range and locked is enough (S-42)
+				local onTarget = weapon.launch == "vertical" or (abs(wrapAngle(wantYaw - yaw)) <= tol and abs(wantPitch - pitchNow) <= tol)
 				-- line of fire (S-32): terrain in the way, no shot; Targeting
 				-- looks for a clear target, attack-moves go on (Orders)
 				if onTarget and kx ~= nil and kz ~= nil then
