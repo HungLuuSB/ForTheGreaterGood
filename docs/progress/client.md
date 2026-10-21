@@ -96,6 +96,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `37c6142` (airsam test profile: planes and helicopters against 5 SAMs).
 - Ready to merge: `1ae6176` (health bars change on the hit's tick, C-49; airsam at normal health).
 - Ready to merge: `073d5e7` (missiles keep their dying target until the hit is drawn, C-50).
+- Ready to merge: `b66ff70` (merge of `main` with S-33..S-40, protocol 13) with `d69e3f8` (client follows requests 14-19, C-51); test_client 97, test 325, build passed.
 
 ## Tasks
 
