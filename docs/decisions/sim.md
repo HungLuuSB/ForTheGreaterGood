@@ -780,3 +780,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - So that a shell's damage counts after its shooter dies, a projectile keeps its shooter's player (`Combat.pPlayer`), and queued damage carries it (`dmgPlayer`).
   - Not hashed: nothing in the sim reads it.
   - `Stats.spec` covers damage capped at the target's health, a dead shooter's shell, units built, and the gathered and spent totals.
+
+## S-62 (follow-up) — AI after the faction pass: rally gap, the Skirmish test (2026-10-22)
+
+- **Found by the integrator:** two slow tests failed on the S-62 merge, so nothing was pushed.
+  - **Fairness:** Normal mirrors on Ridgeline went west 3 / east 9.
+    - Since the Verdict's range went from 450 to 480, `RALLY_GAP` 520 (S-57) left only 40 studs for the armies' spread around their rally points.
+    - Now 600. Mirrors split 4–8 (passes), though fewer finish in 10 minutes than before the pass: the value lead decides more of them.
+  - **Skirmish.spec:** Order (Normal) against Chaos on skirmish:192, seed 1: Chaos's second wave took Order's Command Vehicle at 7.3 min, before Order's first wave left.
+    - The test required both players to attack. It now requires the winner, and any player still alive after 8 minutes.
+    - Not an AI bug: the faction report has Normal Order beating Normal Chaos 7–1 in its first quick run.
