@@ -53,6 +53,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b207ca1` (extractor placement on deposits (C-22)).
 - Ready to merge: `486fc51` (queued builds (C-23); request 7: build ranges).
 - Ready to merge: `2fa0039` (Health and build bars (C-24)).
+- Ready to merge: `9abe9b0` (Exact target line from S-16 (C-25)).
 
 ## Tasks
 
