@@ -613,7 +613,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 - Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
 - Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
 - A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
-- **`Schema.PROTOCOL_VERSION`** (currently 5) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **`Schema.PROTOCOL_VERSION`** (currently 7) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
 - **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
@@ -621,7 +621,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 ```
 cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
                   8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
-                  13 TOGGLE, 14 CAMERA   (0 is invalid)
+                  13 TOGGLE, 14 CAMERA, 15 REPEAT   (0 is invalid)
 flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
 count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
@@ -633,6 +633,7 @@ params    by cmdType:
                                        facing u8: 0..3 = 0/90/180/270° (bits 2–7 reserved)
   SET_FIRE_STATE / SET_MOVE_STATE      value u8: 0 hold, 1 return fire / maneuver, 2 fire at will / roam
   TOGGLE                               value u8: 0 off, 1 on
+  REPEAT                               value u8: 0 off, 1 on (factories; others ignore it)
   CAMERA                               minX u8, minZ u8, maxX u8, maxZ u8  (camera area as a cell rectangle)
   STOP                                 none
 ```
@@ -858,7 +859,7 @@ Every domain has a **T1 worker** and an **advanced (T2) worker**. Workers build 
 | Shipyard | T1 | Naval Worker, T1 ships, submarine |
 | Advanced Shipyard | T2 | Advanced Naval Worker, T2 ships, carrier |
 
-Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-4: a MOVE / FIGHT / PATROL order given to a factory sets its rally point; TOGGLE on a factory turns repeat on or off.)
+Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-4: a MOVE / FIGHT / PATROL order given to a factory sets its rally point. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
 
 ### 9.3 Build rules
 

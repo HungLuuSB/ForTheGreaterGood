@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 6 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records
+Schema.PROTOCOL_VERSION = 7 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -97,6 +97,7 @@ Schema.CmdType = table.freeze({
 	SET_MOVE_STATE = 12,
 	TOGGLE = 13,
 	CAMERA = 14,
+	REPEAT = 15, -- factories: repeat the build queue on / off (S-13)
 })
 
 Schema.CmdFlag = table.freeze({
@@ -137,11 +138,13 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.SET_MOVE_STATE] = "value",
 	[CT.TOGGLE] = "value",
 	[CT.CAMERA] = "camera",
+	[CT.REPEAT] = "value",
 }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
 	[CT.SET_MOVE_STATE] = 2,
 	[CT.TOGGLE] = 1,
+	[CT.REPEAT] = 1,
 }
 
 export type Command = {
@@ -377,6 +380,7 @@ Schema.UnitState = table.freeze({
 	TOGGLED_ON = 2, -- radar / jammer switched on
 	SUBMERGED = 4, -- submarines (sonar-only detection)
 	LANDED = 8, -- aircraft on the ground / on a pad
+	REPEAT = 16, -- factory: finished items go back to the end of the queue (S-13)
 })
 
 Schema.StateField = table.freeze({

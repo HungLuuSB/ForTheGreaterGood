@@ -18,6 +18,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-10: strategic icon numbering in Shared (`Shared/Net/Icons`; client request).
 - S-11: bombers have no turret piece; turretless weapons can't name turret or pitch pieces (client request).
 - S-12: formation slots in Shared (`Shared/Grid/Formation`; client request).
+- S-13: REPEAT command and state bit (protocol 7); TOGGLE means on / off only.
 
 ---
 
@@ -184,3 +185,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Server:** `Nav.SLOT_SPACING`, `Nav.ASSIGN_BUCKET` and `Nav.assignSlots` remain as aliases / a thin wrapper; `slotsFor` builds the ground callbacks and calls `layout`; the issue path calls `deepestFirst`. Aircraft still ignore line moves (a spiral around the line's midpoint); the module documents it.
 - **Unchanged behavior:** before and after the move, 17 fingerprints (two 6-minute AI matches on `skirmish:256`, five group-move rounds of 36 tanks and 6 helicopters on three maps) give identical sim hashes.
 - **Test** (`Formation.spec`, 3): the shared constants and `assign` (ties, running out of units); `layout` and `deepestFirst` shapes; and on `flat:128`, for line, short-line, spot, two-move-class and aircraft orders, a client-side prediction from `Formation` alone equals every server goal. Removing the server's `deepestFirst` call fails it.
+
+## S-13 — REPEAT command; TOGGLE means on / off (2026-10-21, review answer)
+
+- **Answer to S-4's review item:** factory repeat gets its own command. Protocol **7**:
+  - `CmdType.REPEAT = 15`, params `value u8` (0 off, 1 on), like TOGGLE;
+  - `UnitState.REPEAT = 16`: a factory's repeat is a replicated state bit, so every client (and spectators) can show it;
+  - TOGGLE switches `TOGGLED_ON` on any unit again; on a factory it no longer touches repeat.
+- **Server:** `Orders.setRepeat` ignores non-factories, sets `repeatOn` and the state bit. Repeat behavior itself is unchanged (S-4).
+- **Tests:** golden bytes for a REPEAT command pinned to protocol 7; REPEAT's value range; the first unknown command type is now 16; the UnitState table; `Orders.spec` "REPEAT sets a factory's repeat (and its state bit); TOGGLE only switches on / off", and the rally / repeat test uses REPEAT.
+- **Client:** `Api.toggle` keeps sending TOGGLE; a repeat button needs `CmdType.REPEAT`. Replays recorded with protocol 6 don't play back (they carry their protocol version, guide 17.1).

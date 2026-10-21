@@ -257,7 +257,7 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		local plant = Spawn.unit(sim, "ord_vehplant", 1, -150, -150)
 		at(sim, CT.MOVE, 1, { plant }, 150, 150) -- rally point
-		submit(sim, 1, { cmdType = CT.TOGGLE, flags = 0, unitIds = { plant }, value = 1 }) -- repeat
+		submit(sim, 1, { cmdType = CT.REPEAT, flags = 0, unitIds = { plant }, value = 1 })
 		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.ord_herald.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
 		local produced = {}
 		steps(sim, 6000, function()
@@ -273,6 +273,31 @@ return function(t: RunAll.Context)
 		steps(sim, 900)
 		t.expect(dist(w, produced[1], 150, 150) < 40, "the first one went to the rally point")
 		t.equal(#(sim.build.queue[plant] :: any), 1, "the queue still holds the repeated item")
+	end)
+
+	t.test("REPEAT sets a factory's repeat (and its state bit); TOGGLE only switches on / off", function()
+		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, -150, -150)
+		local radar = Spawn.unit(sim, "ord_herald", 1, 0, 0)
+		local REPEAT, ON = World.State.REPEAT, World.State.TOGGLED_ON
+		submit(sim, 1, { cmdType = CT.TOGGLE, flags = 0, unitIds = { plant }, value = 1 })
+		steps(sim, 1)
+		t.expect(not sim.orders.repeatOn[plant], "TOGGLE no longer means repeat")
+		t.equal(bit32.band(w.state[plant], REPEAT), 0)
+		submit(sim, 1, { cmdType = CT.REPEAT, flags = 0, unitIds = { plant, radar }, value = 1 })
+		steps(sim, 1)
+		t.expect(sim.orders.repeatOn[plant], "REPEAT turns repeat on")
+		t.equal(bit32.band(w.state[plant], REPEAT), REPEAT, "and the client sees it")
+		t.expect(not sim.orders.repeatOn[radar], "non-factories ignore REPEAT")
+		t.equal(bit32.band(w.state[radar], REPEAT), 0)
+		submit(sim, 1, { cmdType = CT.TOGGLE, flags = 0, unitIds = { radar }, value = 0 })
+		steps(sim, 1)
+		t.equal(bit32.band(w.state[radar], ON), 0, "TOGGLE switches a unit off")
+		submit(sim, 1, { cmdType = CT.REPEAT, flags = 0, unitIds = { plant }, value = 0 })
+		steps(sim, 1)
+		t.expect(not sim.orders.repeatOn[plant], "REPEAT 0 turns it off")
+		t.equal(bit32.band(w.state[plant], REPEAT), 0)
 	end)
 
 	t.test("orders are deterministic", function()
