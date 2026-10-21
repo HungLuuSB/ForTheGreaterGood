@@ -16,8 +16,8 @@ function FollowButton.new(onClick: () -> ()): Button
 	gui.DisplayOrder = 5
 	local button = Instance.new("TextButton")
 	button.Name = "Follow"
-	button.AnchorPoint = Vector2.new(0, 1)
-	button.Position = UDim2.new(0, 220, 1, -10) -- right of the 200-pixel minimap
+	button.AnchorPoint = Vector2.new(1, 1)
+	button.Position = UDim2.new(1, -8, 1, -8) -- bottom right corner (BAR layout, C-71)
 	button.Size = UDim2.fromOffset(140, 26)
 	button.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
 	button.BackgroundTransparency = 0.25

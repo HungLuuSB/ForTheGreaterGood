@@ -26,7 +26,8 @@ function Hud.new(): Hud
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Top
 	label.AutomaticSize = Enum.AutomaticSize.XY
-	label.Position = UDim2.fromOffset(8, 64) -- below the Roblox top bar buttons
+	label.AnchorPoint = Vector2.new(1, 0)
+	label.Position = UDim2.new(1, -8, 0, 64) -- top right: the minimap has the top left (BAR layout, C-71)
 	label.Text = ""
 	label.Parent = gui
 	local pad = Instance.new("UIPadding")

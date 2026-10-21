@@ -1,5 +1,5 @@
 --!strict
--- Build menu (C-68, guide 15.7), a functional PLACEHOLDER: what the
+-- Build menu (C-68, guide 15.7; BAR-style grid since C-71): what the
 -- selected builders can build (Core/BuildMenu), in category tabs. Mobile
 -- builders: a click starts the build ghost. Factories: a click queues one
 -- (Shift: 5), a right click drops the last queued one; the badge is the
@@ -13,6 +13,8 @@ local UserInputService = game:GetService("UserInputService")
 local Api = require("../Api")
 local BuildMenu = require("../Core/BuildMenu")
 local Icons = require("../Core/Icons")
+local Glyph = require("./Glyph")
+local TeamColors = require("../Render/TeamColors")
 
 local BuildMenuUI = {}
 
@@ -21,19 +23,24 @@ local DIGITS = {
 	[Enum.KeyCode.One] = 1, [Enum.KeyCode.Two] = 2, [Enum.KeyCode.Three] = 3, [Enum.KeyCode.Four] = 4, [Enum.KeyCode.Five] = 5,
 	[Enum.KeyCode.Six] = 6, [Enum.KeyCode.Seven] = 7, [Enum.KeyCode.Eight] = 8, [Enum.KeyCode.Nine] = 9, [Enum.KeyCode.Zero] = 10,
 }
-local BG = Color3.fromRGB(20, 22, 26)
+local BG = Color3.fromRGB(18, 20, 24)
 local ON = Color3.fromRGB(70, 110, 160)
-local OFF = Color3.fromRGB(40, 44, 52)
+local OFF = Color3.fromRGB(46, 50, 58)
+local TILE = Color3.fromRGB(58, 62, 70)
 local ITEMS_PER_ROW = 5
-local CELL = 56
+local CELL = 52
+local ROWS = 3 -- visible rows; more scroll
+local WIDTH = 280 -- the minimap's width: the grid sits under it (BAR layout)
 
 export type UI = {
 	gui: ScreenGui,
 	panel: Frame,
 	tabRow: Frame,
-	grid: Frame,
+	grid: ScrollingFrame,
 	tabButtons: { TextButton },
 	itemButtons: { TextButton },
+	itemGlyphs: { Glyph.G },
+	icons: Icons.Table,
 	menu: BuildMenu.Menu?,
 	tab: number,
 	armed: boolean, -- B pressed: the digits pick items
@@ -119,9 +126,9 @@ function BuildMenuUI.new(api: Api.Api): UI
 	gui.DisplayOrder = 6
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
-	panel.AnchorPoint = Vector2.new(0, 1)
-	panel.Position = UDim2.new(0, 10, 1, -240)
-	panel.Size = UDim2.fromOffset(ITEMS_PER_ROW * (CELL + 4) + 8, 30 + 2 * (CELL + 4) + 8)
+	panel.AnchorPoint = Vector2.new(0, 0)
+	panel.Position = UDim2.fromOffset(0, WIDTH) -- under the minimap
+	panel.Size = UDim2.fromOffset(WIDTH, 26 + ROWS * (CELL + 3) + 8)
 	panel.BackgroundColor3 = BG
 	panel.BackgroundTransparency = 0.15
 	panel.BorderSizePixel = 0
@@ -130,26 +137,30 @@ function BuildMenuUI.new(api: Api.Api): UI
 	local tabRow = Instance.new("Frame")
 	tabRow.Name = "Tabs"
 	tabRow.BackgroundTransparency = 1
-	tabRow.Position = UDim2.fromOffset(4, 4)
-	tabRow.Size = UDim2.new(1, -8, 0, 22)
+	tabRow.Position = UDim2.fromOffset(4, 3)
+	tabRow.Size = UDim2.new(1, -8, 0, 20)
 	tabRow.Parent = panel
 	local tl = Instance.new("UIListLayout")
 	tl.FillDirection = Enum.FillDirection.Horizontal
 	tl.Padding = UDim.new(0, 3)
 	tl.Parent = tabRow
-	local grid = Instance.new("Frame")
+	local grid = Instance.new("ScrollingFrame")
 	grid.Name = "Items"
 	grid.BackgroundTransparency = 1
-	grid.Position = UDim2.fromOffset(4, 30)
-	grid.Size = UDim2.new(1, -8, 1, -34)
+	grid.BorderSizePixel = 0
+	grid.ScrollBarThickness = 4
+	grid.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	grid.CanvasSize = UDim2.new()
+	grid.Position = UDim2.fromOffset(4, 26)
+	grid.Size = UDim2.new(1, -8, 1, -30)
 	grid.Parent = panel
 	local gl = Instance.new("UIGridLayout")
 	gl.CellSize = UDim2.fromOffset(CELL, CELL)
-	gl.CellPadding = UDim2.fromOffset(4, 4)
+	gl.CellPadding = UDim2.fromOffset(2, 3)
 	gl.SortOrder = Enum.SortOrder.LayoutOrder
 	gl.Parent = grid
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	return { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
+	return { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
 end
 
 -- The menu's keys (Controls.capture): true when it took the key.
@@ -200,8 +211,8 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		local b = ui.tabButtons[i]
 		if b == nil then
 			b = button(ui.tabRow, "Tab")
-			b.Size = UDim2.fromOffset(66, 22)
-			b.TextSize = 11
+			b.Size = UDim2.fromOffset(53, 20)
+			b.TextSize = 10
 			local index = i
 			b.MouseButton1Click:Connect(function()
 				ui.tab = index
@@ -220,8 +231,48 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		local b = ui.itemButtons[i]
 		if b == nil then
 			b = button(ui.grid, "Item")
-			b.TextWrapped = true
-			b.TextYAlignment = Enum.TextYAlignment.Top
+			b.Text = ""
+			b.BackgroundColor3 = TILE
+			-- the type's glyph, its name, the hotkey and the queued count (BAR tiles)
+			local g = Glyph.new(b)
+			g.root.Position = UDim2.fromScale(0.5, 0.42)
+			ui.itemGlyphs[i] = g
+			local name = Instance.new("TextLabel")
+			name.Name = "Title"
+			name.BackgroundTransparency = 1
+			name.AnchorPoint = Vector2.new(0.5, 1)
+			name.Position = UDim2.new(0.5, 0, 1, -1)
+			name.Size = UDim2.new(1, -2, 0, 11)
+			name.Font = Enum.Font.Gotham
+			name.TextSize = 9
+			name.TextColor3 = Color3.fromRGB(225, 225, 225)
+			name.TextTruncate = Enum.TextTruncate.AtEnd
+			name.ZIndex = 4
+			name.Parent = b
+			local hot = Instance.new("TextLabel")
+			hot.Name = "Hot"
+			hot.BackgroundTransparency = 1
+			hot.Position = UDim2.fromOffset(2, 1)
+			hot.Size = UDim2.fromOffset(12, 11)
+			hot.Font = Enum.Font.GothamBold
+			hot.TextSize = 10
+			hot.TextColor3 = Color3.fromRGB(255, 220, 90)
+			hot.TextXAlignment = Enum.TextXAlignment.Left
+			hot.ZIndex = 4
+			hot.Parent = b
+			local count = Instance.new("TextLabel")
+			count.Name = "Count"
+			count.BackgroundTransparency = 1
+			count.AnchorPoint = Vector2.new(1, 0)
+			count.Position = UDim2.new(1, -2, 0, 1)
+			count.Size = UDim2.fromOffset(26, 14)
+			count.Font = Enum.Font.GothamBold
+			count.TextSize = 13
+			count.TextColor3 = Color3.new(1, 1, 1)
+			count.TextStrokeTransparency = 0.3
+			count.TextXAlignment = Enum.TextXAlignment.Right
+			count.ZIndex = 4
+			count.Parent = b
 			local index = i
 			b.MouseButton1Click:Connect(function()
 				pick(ui, api, index, shift())
@@ -236,14 +287,17 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			ui.itemButtons[i] = b
 		end
 		local def = world.defs.units[defId]
-		local cost = def.cost or {}
 		local n = queuedCount(api, menu, def.index)
-		local hot = if ui.armed and i <= 10 then `[{i % 10}] ` else ""
+		local cost = def.cost or {}
 		b.LayoutOrder = i
-		b.Text = `{hot}{ui.codes[def.index] or "?"}\n{def.name}\n{cost.supply or 0}/{cost.power or 0}{if n > 0 then `  x{n}` else ""}`
-		b.TextSize = 10
-		b.BackgroundColor3 = if n > 0 then Color3.fromRGB(60, 90, 60) else OFF
 		b.Visible = true
+		local style: any = { shape = if def.icon == "commander" then "star" else Icons.shapeOf(def), size = 30, team = world.me.team, alpha = 1, selected = false, glyph = ui.icons.glyphs[def.index] }
+		Glyph.apply(ui.itemGlyphs[i], style, TeamColors(world.me.team))
+		;(b :: any).Title.Text = def.name
+		;(b :: any).Hot.Text = if ui.armed and i <= 10 then tostring(i % 10) else ""
+		;(b :: any).Count.Text = if n > 0 then tostring(n) else ""
+		b:SetAttribute("Cost", `{cost.supply or 0} supply, {cost.power or 0} power`)
+		b.BackgroundColor3 = if n > 0 then Color3.fromRGB(64, 84, 64) else TILE
 	end
 	for i = #items + 1, #ui.itemButtons do
 		ui.itemButtons[i].Visible = false

@@ -24,6 +24,16 @@ return function(t: any)
 			t.equal(def, defs.unitByIndex[n])
 		end
 		t.equal(#mine.sample, #defs.unitByIndex)
+		-- every unit type its own glyph (C-71): shape, mark, tier, faction, variant
+		local keys: { [string]: string } = {}
+		for index, def in defs.unitByIndex do
+			local g = mine.glyphs[index]
+			local shape = if def.icon == "commander" then "star" else Icons.shapeOf(def)
+			local key = `{shape}|{g.mark}|{g.tier}|{g.chaos}|{g.variant}`
+			t.expect(keys[key] == nil, `{def.id} looks like {keys[key]}`)
+			keys[key] = def.id
+			t.expect(g.variant <= 3, `{def.id}: at most 3 variant dots ({g.variant})`)
+		end
 		-- every unit type its own two-letter code (C-67)
 		local seen: { [string]: string } = {}
 		for index, def in defs.unitByIndex do
