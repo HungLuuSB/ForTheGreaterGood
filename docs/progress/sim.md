@@ -129,6 +129,15 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Changed (S-54, the user): `map:normandy` now fights west against east.** Player 1 is in the west rear (start (−850, 0)), player 2 in the east (850, 0).
+  - **Coast:** sea, beach and bluffs (draws at x = −560, 0, 560) are a shared north flank (z > 560).
+  - **South of z 560, mirrored:**
+    - rear at |x| > 672;
+    - rivers at x = ±660 with bridges at z = −700, −250, 250;
+    - staging at |x| 420–640;
+    - bocage at |x| < 400;
+    - villages at (±220, −150).
+  - **Your profile:** the `normandy` profile's zones need to move to this layout.
 - **Done (request 31), S-53:** `map:normandy` (`Shared/Grid/Normandy`, via `MapRegistry.load`).
   - Your zones are all where you put them; layout in guide 5.5.
   - Hedgerows fill only z −200…280, so the strips at −360…−340 and 540…560 are open field.

@@ -1,31 +1,35 @@
 --!strict
--- "map:normandy" (S-53, client request 31): a hand-made 256 × 256-cell
--- (2048-stud) battle map, centre (0, 0), north = +z. Zones by world z:
+-- "map:normandy" (S-53, client request 31; re-oriented in S-54): a hand-made
+-- 256 × 256-cell (2048-stud) battle map, centre (0, 0), north = +z. The two
+-- armies face each other west (player 1) against east (player 2): the user
+-- wants the fight from side to side, not from the sea inland. The coast is
+-- a flank both share along the north edge. Mirrored about x = 0, so neither
+-- side has better ground.
 --
+-- North strip, by z (both sides):
 --   z > 760          sea: surface 10, ~25 deep (scenery; the beach shelves
 --                    into it over 48 studs)
 --   640 .. 760       beach (sand), rising gently from 10 to 14
 --   560 .. 640       bluffs: a 3-cell cliff up to the plateau (34), too steep
 --                    to drive, cut by three draws (6 cells, 48 studs, wide;
---                    a 2-studs-per-cell ramp from the beach to the plateau)
---                    at x = -560, 0, 560, each carrying a road
---   -360 .. 560      plateau (grass, ±2 studs of undulation). Open fields at
---                    z 280 .. 560 (Order's staging) and -360 .. -200
---                    (Chaos's); between them the bocage: fields of 176 studs
---                    bounded by hedgerows, 1-cell banks 6 studs high (rock)
---                    that stop every land unit and low direct fire, with
---                    40-stud gaps every 96 studs (24 studs passable: the bank
---                    ends are too steep too); two villages (2 × 2-cell
---                    houses, 8 studs high, rock, 4-cell streets) at the
---                    crossroads (-300, 150) and (400, -100)
---   z ≈ -380         a river, 3 cells (24 studs) wide and 4 deep, east–west;
---                    bridges (5 cells, 40 studs, wide; roads) at x = -500,
---                    100, 650
---   -1024 .. -420    open fields south of the river
+--                    a 2-studs-per-cell ramp) at x = -560, 0, 560, with roads
 --
--- Roads (ROAD terrain, 2 cells wide) run up the draws, through the villages
--- and over the bridges. Starts: player 1 on the beach (0, 700), player 2
--- south of the river (0, -700). No supply deposits.
+-- South of the bluffs (z < 560), by x, mirrored:
+--   |x| > 672        each side's rear: open fields (economy, SAMs, silo)
+--   |x| ≈ 660        a river, 3 cells (24 studs) wide and 4 deep, north–south;
+--                    bridges (5 cells, 40 studs, wide; roads) at z = -700,
+--                    -250, 250
+--   420 .. 640       each side's staging: open fields
+--   |x| < 400        the bocage: fields of 176 studs bounded by hedgerows,
+--                    1-cell banks 6 studs high (rock) that stop every land
+--                    unit and low direct fire, with 40-stud gaps every 96
+--                    studs (24 studs passable: the bank ends are too steep
+--                    too); two villages (2 × 2-cell houses, 8 studs high,
+--                    rock, 4-cell streets) at (-220, -150) and (220, -150)
+--
+-- The plateau undulates ±2 studs. Roads (ROAD terrain, 2 cells wide) run
+-- east–west over the bridges at z = -700, -250 and 250, and up the draws.
+-- Starts: player 1 (-850, 0), player 2 (850, 0). No supply deposits.
 --
 -- `Normandy.feature(cx, cz)` names what a cell is (for drawing): "sea",
 -- "beach", "bluff", "draw", "hedge", "house", "road", "bridge", "river" or
@@ -42,30 +46,37 @@ Normandy.PLATEAU = 34
 Normandy.HEDGE_HEIGHT = 6
 Normandy.HOUSE_HEIGHT = 8
 Normandy.DRAWS = table.freeze({ -560, 0, 560 })
-Normandy.BRIDGES = table.freeze({ -500, 100, 650 })
-Normandy.VILLAGES = table.freeze({ { -300, 150 }, { 400, -100 } })
-Normandy.STARTS = table.freeze({ { 0, 700 }, { 0, -700 } })
+Normandy.RIVER_X = 660 -- both rivers: x = -660 and 660
+Normandy.BRIDGES = table.freeze({ -700, -250, 250 }) -- z of the bridges on each river
+Normandy.VILLAGES = table.freeze({ { -220, -150 }, { 220, -150 } })
+Normandy.STARTS = table.freeze({ { -850, 0 }, { 850, 0 } })
 
 local CELL = Grid.CELL_SIZE
 local HALF = Normandy.CELLS * CELL / 2
 local T = Layers.Terrain
-local floor, abs, sin, cos = math.floor, math.abs, math.sin, math.cos
+local floor, abs, cos = math.floor, math.abs, math.cos
 
--- The bocage's cell rows: z -200 .. 280 (between the staging fields).
-local BOCAGE_FIRST = math.ceil((-200 + HALF) / CELL)
-local BOCAGE_LAST = floor((280 + HALF) / CELL) - 1
-
--- Road polylines (world x, z), 2 cells wide.
-local ROADS = {
-	{ { -560, 720 }, { -560, 150 } },
-	{ { 0, 720 }, { 0, -100 } },
-	{ { 560, 720 }, { 560, -100 } },
-	{ { -900, 150 }, { 0, 150 } },
-	{ { 0, -100 }, { 900, -100 } },
-	{ { -300, 150 }, { -300, -250 }, { -500, -320 }, { -500, -1000 } },
-	{ { 0, -100 }, { 100, -200 }, { 100, -1000 } },
-	{ { 400, -100 }, { 650, -250 }, { 650, -1000 } },
+-- Road polylines (world x, z), 2 cells wide; the west half, mirrored below.
+local HALF_ROADS = {
+	{ { -1000, -700 }, { -400, -700 } },
+	{ { -1000, -250 }, { 0, -250 } },
+	{ { -1000, 250 }, { 0, 250 } },
+	{ { -560, 720 }, { -560, -700 } },
+	{ { 0, 720 }, { 0, -250 } },
+	{ { -220, 250 }, { -220, -250 } }, -- through the western village
 }
+local ROADS = {}
+for _, line in HALF_ROADS do
+	table.insert(ROADS, line)
+	local mirror = {}
+	for i, p in line do
+		mirror[i] = { -p[1], p[2] }
+	end
+	table.insert(ROADS, mirror)
+end
+
+-- The bocage's cell columns: x -400 .. 400; the outermost is a hedge line.
+local BOCAGE_FIRST = math.ceil((-400 + HALF) / CELL)
 
 -- Cell (cx, cz) centre in world studs.
 local function centre(cx: number, cz: number): (number, number)
@@ -100,9 +111,10 @@ local function compute(): { string }
 	for cz = 0, n - 1 do
 		for cx = 0, n - 1 do
 			local x, z = centre(cx, cz)
+			local d = roadDist(x, z)
+			local road = d <= CELL -- 2 cells wide
+			local nearRoad = d <= CELL * 2.5 -- no banks or houses against a road
 			local f = "field"
-			local road = roadDist(x, z) <= CELL -- 2 cells wide
-			local nearRoad = roadDist(x, z) <= CELL * 2.5 -- no banks against a road
 			if z > 760 then
 				f = "sea"
 			elseif z > 640 then
@@ -114,27 +126,29 @@ local function compute(): { string }
 						draw = true
 					end
 				end
-				f = if draw then (if road then "road" else "draw") elseif z > 616 then "bluff" else "field"
-				if f == "field" and road then
+				if draw then
+					f = if road then "road" else "draw"
+				elseif z > 616 then
+					f = "bluff"
+				elseif road then
 					f = "road"
 				end
-			end
-			if z >= -392 and z <= -368 then
+			elseif abs(abs(x) - Normandy.RIVER_X) <= 12 then
 				f = "river"
-				for _, bx in Normandy.BRIDGES do
-					if abs(x - bx) <= 20 then
+				for _, bz in Normandy.BRIDGES do
+					if abs(z - bz) <= 20 then
 						f = "bridge"
 					end
 				end
-			elseif z > -1024 and z <= 560 and f == "field" then
-				if road then
-					f = "road"
-				else
-					-- villages: 2 × 2-cell houses every 6 cells around the crossroads,
-					-- off the roads (4-cell streets between them)
-					local village = false
-					for _, v in Normandy.VILLAGES do
-						local vx, vz = x - v[1], z - v[2]
+			elseif road then
+				f = "road"
+			else
+				-- villages: 2 × 2-cell houses every 6 cells, off the roads
+				-- (mirrored, like everything south of the bluffs)
+				local village = false
+				for _, v in Normandy.VILLAGES do
+					if v[1] < 0 then
+						local vx, vz = -abs(x) - v[1], z - v[2]
 						if abs(vx) <= 72 and abs(vz) <= 72 then
 							village = true
 							local hx, hz = floor((vx + 72) / CELL), floor((vz + 72) / CELL)
@@ -143,21 +157,18 @@ local function compute(): { string }
 							end
 						end
 					end
-					-- hedgerows: the bocage between the two open staging fields
-					-- (z -340 .. -200 and 280 .. 540); the thin strips beyond
-					-- them stay open
-					local bocage = cz >= BOCAGE_FIRST and cz <= BOCAGE_LAST
-					if bocage and not village and not nearRoad then
-						-- field lines every 22 cells (176 studs), offset per band
-						local row = cz - BOCAGE_FIRST -- the first row is a hedge line: no loose ends
-						local lx = (cx + (if floor(row / 22) % 2 == 0 then 0 else 11)) % 22 == 0
-						local lz = row % 22 == 0
-						-- 5-cell gaps every 12 cells (96 studs) along a line
-						local gapX = (cz + 3) % 12 < 5
-						local gapZ = (cx + 3) % 12 < 5
-						if (lx and not gapX) or (lz and not gapZ) then
-							f = "hedge"
-						end
+				end
+				-- hedgerows in the bocage, mirrored about x = 0
+				local mx = math.min(cx, n - 1 - cx)
+				if mx >= BOCAGE_FIRST and not village and not nearRoad then
+					local col = mx - BOCAGE_FIRST -- the outermost column is a hedge line: no loose ends
+					local lz = (cz + (if floor(col / 22) % 2 == 0 then 0 else 11)) % 22 == 0
+					local lx = col % 22 == 0
+					-- 5-cell gaps every 12 cells (96 studs) along a line
+					local gapAlongX = (mx + 3) % 12 < 5
+					local gapAlongZ = (cz + 3) % 12 < 5
+					if (lx and not gapAlongZ) or (lz and not gapAlongX) then
+						f = "hedge"
 					end
 				end
 			end
@@ -177,9 +188,9 @@ function Normandy.feature(cx: number, cz: number): string
 	return f[cz * Normandy.CELLS + cx + 1]
 end
 
--- Gentle undulation of the plateau and the southern fields (±2 studs).
+-- Gentle undulation of the plateau (±2 studs), mirrored about x = 0.
 local function undulation(x: number, z: number): number
-	return 2 * sin(x / 170) * cos(z / 230)
+	return 2 * cos(x / 170) * cos(z / 230)
 end
 
 function Normandy.build(): Layers.Layers
