@@ -583,6 +583,16 @@ function Defs.validate(raw: RawDefs): { string }
 							report(`weapons[{i}].{key}: piece {describe(piece)} is not in pieces`)
 						end
 					end
+					-- only a turret turns pieces: a weapon without one (bombs fall
+					-- from a fixed bay, D91) has a muzzle but no turret or pitch piece
+					local wdef = if type(slot.def) == "string" then weapons[slot.def] else nil
+					if type(wdef) == "table" and wdef.turret == nil then
+						for _, key in { "turretPiece", "pitchPiece" } do
+							if slot[key] ~= nil then
+								report(`weapons[{i}].{key}: weapon {describe(slot.def)} has no turret to turn it`)
+							end
+						end
+					end
 				end
 			end
 		end

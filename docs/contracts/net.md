@@ -169,6 +169,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - **STOP** clears the queue.
 - **Factories:** MOVE / FIGHT / PATROL given to a factory set its **rally point** (produced units roll out of the exit, then take the rally order). **TOGGLE** on a factory sets **repeat** on or off: a finished item goes back to the end of the queue. On other units TOGGLE switches `TOGGLED_ON` (radar, jammer).
 - Order queues aren't replicated yet. The client draws queued paths from what it sent (guide 15.6).
+- **Formation goals** (S-12): the server splits a move's units into groups by move class and clearance (aircraft form one group) and places each group with `Shared/Grid/Formation`: `spacing(maxRadius)` with radius = footprint × `PlacementRules.RADIUS_PER_FOOTPRINT`, `layout` (a line from the first point to the second, or a spiral around the point; aircraft always take the spiral around the center), `deepestFirst`, then `assign`. A client that runs the same steps on the positions it knows gets the server's goals on open ground; near blocked cells the server also drops or snaps slots, which a client can't see exactly.
 
 ## 10. Join and reconnect (S-2)
 
