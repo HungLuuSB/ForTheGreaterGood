@@ -1,7 +1,21 @@
 {
   "note": "Roblox assets uploaded by Studio's 3D Importer from export/ord_lancer.fbx (creator: hungluu344). Rebuild the rigged models from these with rig_model.luau; no re-import needed. The importer reuses identical meshes, so base and turret are shared by both variants.",
-  "revision": "2026-10-21, review 2: camouflage variants a (plain sand) and b (disruptive), baked detail, painted team color (light wash), new gun; 3,704 triangles",
-  "variants": {
+  "revision": "2026-10-22, review 3: BAR style (M-15), 3,782 triangles",
+  "previous": {
+    "note": "first slice (3,016 triangles), ReplicatedStorage.Models.ord_lancer in FTGG Art",
+    "meshes": {
+      "base": "rbxassetid://124295100730854",
+      "turret": "rbxassetid://124333550925119",
+      "barrel": "rbxassetid://95532598839867"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://133557030144323",
+      "NOR": "rbxassetid://79823659304925",
+      "RGH": "rbxassetid://74657069880141",
+      "MTL": "rbxassetid://81975653028485"
+    }
+  },
+  "review2": {
     "a": {
       "meshes": {
         "base": "rbxassetid://96013587743288",
@@ -29,18 +43,19 @@
       }
     }
   },
-  "previous": {
-    "note": "first slice (3,016 triangles), ReplicatedStorage.Models.ord_lancer in FTGG Art",
+  "bar": {
     "meshes": {
-      "base": "rbxassetid://124295100730854",
-      "turret": "rbxassetid://124333550925119",
-      "barrel": "rbxassetid://95532598839867"
+      "base": "rbxassetid://101634833314813",
+      "turret": "rbxassetid://113278593058766",
+      "barrel": "rbxassetid://122631628436181"
     },
     "surfaceAppearance": {
-      "ALB": "rbxassetid://133557030144323",
-      "NOR": "rbxassetid://79823659304925",
-      "RGH": "rbxassetid://74657069880141",
-      "MTL": "rbxassetid://81975653028485"
-    }
+      "ALB": "rbxassetid://114531316130097",
+      "NOR": "rbxassetid://122692153291250",
+      "RGH": "rbxassetid://130892568642914",
+      "MTL": "rbxassetid://81483788380096",
+      "EMI": "rbxassetid://80851524837017"
+    },
+    "model": "ReplicatedStorage.ModelReview.ord_lancer_bar in FTGG Art"
   }
 }

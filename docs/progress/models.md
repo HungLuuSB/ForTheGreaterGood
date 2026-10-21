@@ -4,18 +4,106 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
+## Summary (overnight 2026-10-22)
+
+**All four tasks are done, committed, pushed and in the merge queue below.** Every commit touches only `src/shared/Defs/Blockouts/`, `assets/` and docs. Tests: `lune run test_client` 34 specs, 116 passed; `lune run build` 454 scripts compile, every require resolves.
+
+| Task | What | Commit | Status |
+|---|---|---|---|
+| 0 | BAR-style Lancer (M-15): rebuilt, imported, rigged as `ReplicatedStorage.ModelReview.ord_lancer_bar` with its emissive mask | `9dd4913` | **Waiting for your review.** Blender previews only: in Studio its textures haven't drawn yet (the texture-pack quirk, pipeline.md step 3); a save and Studio restart should fix it |
+| 1 | BAR-style Ravager: 3,696 triangles, gunmetal, Chaos light build (exposed wheels, slat cages, domed turret with reactive armor), orange emissive; exported up to the import step | `5d37c43` | **Waiting for your review** with the Lancer; the FBX is ready for your import |
+| 2 | Silo blockouts registered (Reckoning, Ragnarok); pending blockouts for the six new units (Warden packed and deployed, Minotaur, Locust, Cyclops, Barrier, Citadel), with request 3 to the sim session for their defs (M-17); blockout palettes follow the style guide (M-16) | `e78eec0` | Done; pending ones register when the defs exist |
+| 3 | 22 T1 structure blockouts, both factions, silhouette-tested | `afc6d73` | Done |
+| 4 | 28 T2 structure blockouts, both factions | `442394f` | Done |
+
+**Needs your review:**
+- The two BAR-style tanks (previews in `assets/models/*/export/preview_bar_*.png`); the style isn't rolled out further until you approve both.
+- Blockout palettes changed for every unit (M-16): Chaos lost its rust and dark-iron colors.
+- Minotaur and Cyclops read alike as silhouettes at distance; the two radar towers per tier share an outline (same role).
+- The new units' piece lists and footprints are my proposal (request 3).
+
+**Merge fix (after the summary):** `main` merged in (conflicts in guide 2.1 and the Requests list resolved, both sides kept); Warden and Minotaur adapted to the S-64 defs and registered (Warden footprint 1 with one `spades` plate; Minotaur `ram` jointed); `debug_out/screens/s64_warden_minotaur.jpg`. Tests on the merged tree: `test_client` 42 specs, 141 passed; `test` 57 specs, 371 passed; `build` 476 scripts.
+
+**Morning steps:** save "FTGG Art" and restart Studio (the BAR Lancer's textures), then import `assets/models/chs_ravager/export/chs_ravager.fbx` for the Ravager's Studio screenshots.
+
 ## Plan
 
-- **Phase 1:** hand-made blockouts for every T1 unit and structure of both factions (guide 13), one batch at a time, each reviewed from the game camera.
-  - [x] Batch 1: T1 ground units. Style rejected in review (M-2); new direction M-6.
-  - [x] Style review: Lancer and Ravager, two variants each under M-6 (section below). Lessons kept as style rules; Order takes variant B's sand.
-  - Blockouts are frozen as gameplay placeholders (M-9); the remaining batches are on hold.
-  - [ ] Batch 2: T1 air units
-  - [ ] Batch 3: T1 naval units
-  - [ ] Batch 4: T1 structures
+- **Phase 1:** hand-made blockouts (gameplay placeholders, M-9).
+  - [x] T1 ground units (batch 1, M-1..M-5; colors updated by M-16).
+  - [x] Silos and pending new units (overnight task 2).
+  - [x] T1 structures (overnight task 3), T2 structures (overnight task 4).
+  - [ ] T1/T2 air and naval units, T2 ground units: still generic.
 - **Phase 2** (started early, M-9): detailed meshes with PBR textures.
-  - [x] Style guide rewritten for the near-future look ([`../art/style-guide.md`](../art/style-guide.md)); Chaos base color test on Coastline: gunmetal recommended (M-10).
-  - [x] Lancer vertical slice (M-11..M-13), section below. **Waiting for your review.**
+  - [x] Style guide; Chaos base color: gunmetal (M-10). BAR model style (M-15).
+  - [x] Lancer vertical slice (M-11..M-13), review 2 (camouflage), review 3 (BAR style).
+  - [ ] Ravager in BAR style: built, waiting for import and review.
+
+## Overnight 2026-10-22: T2 structures (task 4)
+
+28 blockouts, every T2 structure for both factions, registered, same rules as T1:
+
+| Role | Order | Chaos |
+|---|---|---|
+| Adv. vehicle plant (fp 5) | `ord_advvehplant`: two armored halls under one roof, two doors and ramps | `chs_advvehplant`: long shed plus two open gantry bays, row of tanks |
+| Adv. airfield (fp 5) | `ord_advairfield`: wide runway, two armored hangars, tall tower | `chs_advairfield`: two open roof-on-posts hangars, tanks, tall lattice mast |
+| Adv. shipyard (fp 5) | `ord_advshipyard`: armored piers, tall hall, two gantry cranes | `chs_advshipyard`: piers on pilings, two lattice tower cranes |
+| Adv. extractor | `ord_advextractor`: taller housing, twin drills | `chs_advextractor`: taller derrick, thick drill, cage |
+| Fusion (fp 3) | `ord_fusion`: stepped fortress round a glowing containment sphere | `chs_fusion` (Hellforge): round furnace stack with glowing bands in an open frame |
+| Long-range radar (fp 3) | `ord_beacon`: tall armored tower, very wide array | `chs_allseer`: tall lattice mast, wide array, big eye |
+| Radar SAM (fp 3) | `ord_aegis`: four-cell canister launcher, separate radar block | `chs_wyvern`: twelve bare tubes on a frame, lattice radar mast |
+| Artillery (fp 3) | `ord_edict`: casemate turret, very long gun | `chs_cataclysm`: open pit with reactive blocks, fat barrel |
+| Coastal battery (fp 3) | `ord_rampart`: sea-wall bunker, twin guns | `chs_breaker`: open platform, one long gun plus missile box |
+| Heavy turret | `ord_bastion`: twin long guns | `chs_maw`: squat turret, fat short "maw" gun |
+| Fire-control radar (fp 2) | `ord_tribunal`: block with twin back-to-back panels | `chs_seekerspire`: narrow lattice spire, panel, eye |
+| Jammer tower | `ord_veilspire`: tapered pylon, emitter fins | `chs_blackout`: lattice mast, rings of emitter rods |
+| Sonar station (fp 3) | `ord_choir`: floating armored platform, ring array | `chs_deepear`: pontoon floats, sonar drum |
+| Pinpointer (fp 2) | `ord_witness`: block with a turning flat array (`dish`) | `chs_augur`: lattice mast with a flat array (`dish`) |
+
+- Visual pieces: `radar` on the Beacon, All-Seer, Tribunal and Seeker Spire. The Pinpointers' `dish` piece is a flat array (no dishes, style guide).
+- Screenshots: `debug_out/screens/struct2_*.jpg`; in "FTGG Art": `T2Big*` (x 600–900, z 1000–1180), `T2Mid*` (z 580–720), `T2Small*` (z 820–900).
+- `lune run test_client`: 34 specs, 116 passed.
+
+## Overnight 2026-10-22: T1 structures (task 3)
+
+22 blockouts, every T1 structure role for both factions, registered (they replace the generic boxes):
+
+| Role | Order (heavy, closed, sloped armor, cyan) | Chaos (light, open frames, tanks, orange) |
+|---|---|---|
+| Vehicle plant (fp 3) | `ord_vehplant`: closed armored hall, buttresses, door over a ramp, team roof | `chs_vehplant`: shed plus an open gantry bay with a crane beam, round tanks |
+| Airfield (fp 5) | `ord_airfield`: runway with edge lights, armored hangar, control tower with radar panel | `chs_airfield`: runway, open roof-on-posts hangar, fuel tanks, lattice mast |
+| Shipyard (fp 5) | `ord_shipyard`: armored piers, closed hall, gantry crane across the basin | `chs_shipyard`: piers on pilings, lattice tower crane with a jib, shed and tanks |
+| Extractor | `ord_extractor`: armored sloped housing, drill head with a light ring | `chs_extractor`: open four-leg derrick, engine box |
+| Generator | `ord_generator`: armored block with a domed reactor cap | `chs_generator`: two glowing combustion tanks on a frame |
+| Solar | `ord_solar`: one large tilted panel on a pedestal | `chs_solar`: three small panels at uneven tilts on a frame |
+| Wind | `ord_windmill`: tapered tower, three-blade rotor | `chs_windmill`: lattice tower, two-blade rotor |
+| Storage | `ord_depot`: low sloped bunker with hatches | `chs_depot`: cluster of round tanks |
+| Radar tower | `ord_watchtower`: square armored tower, flat array | `chs_eye`: lattice mast, flat array, orange eye |
+| Gun turret | `ord_bulwark`: sloped armored base, wedge turret, long gun | `chs_spike`: round base with reactive blocks, rounded turret, twin guns |
+| IR SAM site | `ord_vigil`: armored base, twin closed pods round a sensor | `chs_thorn`: post with six bare canister tubes on a frame |
+
+- Pieces: as the defs (`base`, plus `turret` / `launcher` and `muzzle` on the turrets and SAM sites). Visual pieces for the client to animate: `rotor` on the wind turbines, `radar` on the radar towers.
+- Silhouette test (`debug_out/screens/struct1_*.jpg`; in "FTGG Art": `StructBig*` at z 540–720, `StructSmall*` at z 820–900): every role pair reads apart, and Order vs Chaos differ as black shapes (solid and sloped vs frames and tanks). The two radar towers share an outline (same role, by design).
+- `lune run test_client`: 34 specs, 116 passed.
+
+## Overnight 2026-10-22: new units and silos (task 2)
+
+- **Silos** (defs exist, registered): `ord_reckoning` (stepped square armored bunker, sloped blast walls, heavy hatch, team plates on the upper block) and `chs_ragnarok` (round silo tube on a pad ringed with reactive-armor blocks, open launch gantry with a crane arm, fuel tanks). Footprint 3; `hatch` hinged at its back edge; `muzzle` over the silo.
+- **Pending** (no defs yet, M-17; `Blockouts/Pending/`): Warden (packed and deployed: rear spades fold down, a shield rises in front of the turret), Minotaur (ram plate with reactive blocks, short fat demolition gun), Locust (very small swarm tank), Cyclops (huge mortar tube and a big glowing sensor eye), Barrier (thick sloped wall segment, lines up per cell), Citadel (stepped fortress with a big turret, an IR SAM launcher and a radar array). All validate against the stub defs in `Pending/Registry.luau`.
+- **Palettes** (M-16): blockouts now use the style guide paints (Order sand-grey and cyan, Chaos gunmetal and orange), so every part-built blockout changed color.
+- **Screenshots** (`debug_out/screens/newunits_*.jpg`): 55° halves, Warden packed vs deployed, profile and silhouette rows. In "FTGG Art": folders `NewReview`, `NewProfile`, `NewSilhouette` (x 250–490, z 300–420); the review builder is `ServerStorage.ModelsTools.Lineup`.
+- **Needs review:** Minotaur and Cyclops read alike as silhouettes at distance (both blocky hulls with a short fat gun); the Cyclops eye and the Minotaur ram only show at closer zoom.
+
+## Lancer review 2 (2026-10-21/22, waiting for your review)
+
+Your revisions: camouflage options (a) plain sand with weathering and low grime, (b) crisp three-tone disruptive; team color as a painted roof panel and side stripes; baked detail (bolts, seams, hatches, periscopes, ribs, wear, ambient occlusion); a new gun (two-part thermal sleeve with clamp bands, bore evacuator, muzzle with lip and bore).
+
+- **Built and imported:** 3,704 triangles (base 2,012, turret 764, barrel 928), limit 4,000; textures 1024 × 1024, color and roughness per variant, normal and metalness shared. Both variants rigged as `ReplicatedStorage.ModelReview.ord_lancer_a` / `_b` in "FTGG Art"; asset IDs in `assets/models/ord_lancer/roblox_assets.json`.
+- **100 tanks, render CPU per frame (close / normal zoom):** empty 4.7 / 4.7 ms, 100 blockouts 5.1 / 4.9 ms, 100 first-slice Lancers 4.3 / 4.1 ms, 100 review-2 Lancers 4.25 / 4.2 ms (warm; the first appearance had a one-off 320 ms load hitch).
+- **Team paint:** the first wash (0.3) drew dark navy in Studio and nearly vanished at 220 studs; rebuilt with a 0.1 wash (imported, not yet seen in Studio).
+- **Grey for one session:** after the first restart every PBR model in "FTGG Art" drew grey, the first slice included; the `TexturePack` assets failed to load ("Asset type does not match requested type"). After a second restart the next day the models draw correctly although the packs still report the same failure, so Studio falls back to the four maps.
+- **Screenshots** (`debug_out/screens/lancer2_*.jpg`; order A, B, blockout): pitch 55°, 35° and 80° at 40 and 220 studs, and a ground-level close-up in Realistic lighting. The lighter team panel reads at 220 studs on both variants; B's dark patches turn the tank brown at 80°, A stays sand.
+- **Still to decide:** the camouflage (A or B) and the budget standard.
+- **Lighting:** "FTGG Art" already uses `LightingStyle.Realistic` with `PrioritizeLightingQuality` (the unified renderer replaced `Technology`/Future).
 
 ## Lancer mesh vertical slice (2026-10-21)
 
@@ -101,6 +189,14 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `8eee48c` (near-future art direction: guide 2.1, `docs/art/style-guide.md`, `docs/art/pipeline.md` proposal; docs only).
 - Ready to merge: `8fb707a` (Lancer mesh vertical slice: `assets/models/` scripts and exports, `docs/art/pipeline.md` workflow and budgets; no code under `src/`).
 - Ready to merge: `786d58b` (Lancer slice results: screenshots notes, third render run, import notes, asset IDs; docs and `assets/` only).
+- Ready to merge: `f9f1022` (Lancer review 2: camouflage variants, baked detail, painted team color, new gun; `assets/` and docs only).
+- Ready to merge: `561489b` (style guide: heavy Order, light Chaos, M-14; guide 2.1 Look row; docs only).
+- Ready to merge: `9dd4913` (BAR model style M-15: style guide, guide 2.1, BAR Lancer build; `assets/` and docs only).
+- Ready to merge: `5d37c43` (BAR-style Ravager build, up to import; `assets/` only).
+- Ready to merge: `e78eec0` (blockouts: silos registered, pending new units, palettes M-16/M-17; `src/shared/Defs/Blockouts/` and docs only).
+- Ready to merge: `afc6d73` (blockouts: every T1 structure, both factions; `src/shared/Defs/Blockouts/` and progress only).
+- Ready to merge: `442394f` (blockouts: every T2 structure, both factions; `src/shared/Defs/Blockouts/` and progress only).
+- Ready to merge: `a739890` (merge of `main` with conflicts resolved, both Requests lists kept; Warden and Minotaur blockouts on the S-64 defs, registered; includes every earlier entry above).
 
 ## Requests
 
@@ -109,3 +205,4 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 3. **Sim session → models (S-64, faction-only units; the user asked for blockouts):** two new T2 ground units, defs in `src/shared/Defs/Units/`:
    - `ord_warden` **Warden** (Order deployable gun): `HEAVY_TRACKED`, footprint 1; pieces `base`, `spades` (stabilizer spades / outriggers that lower when deployed), `turret`, `barrel`, `muzzle`. State bits DEPLOYED 32 / DEPLOYING 64 (4 s each way) say when to lower or raise the spades. Order style: a long gun on a low fortress-like hull.
    - `chs_minotaur` **Minotaur** (Chaos siege ram): `HEAVY_TRACKED`, footprint 2 (the biggest Chaos tank); pieces `base`, `ram` (a heavy front ram / demolition arm, the charge's muzzle), `turret`, `barrel`, `muzzle`. Chaos style: rugged, slab armor, a short heavy gun.
+4. **Models → sim session (remaining faction units, M-17):** pending blockouts exist for `chs_locust` (T1 ground, footprint 1, pieces base / turret / barrel / muzzle), `chs_cyclops` (T2 ground, footprint 2, same pieces), `ord_barrier` (T1 structure, footprint 1, base) and `ord_citadel` (T3 structure, footprint 3, base / turret / barrel / muzzle / launcher / muzzle2 / radar), in `src/shared/Defs/Blockouts/Pending/`. When you add those defs, use these IDs, footprints and pieces or note what differs, and I will adapt and register them. (Warden and Minotaur: done against the S-64 defs, request 3.)

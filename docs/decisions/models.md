@@ -21,6 +21,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | M-11 | Mesh pipeline: scripted headless Blender, no AI base mesh for vehicles, one 1024 PBR set per unit, team color through the color map's alpha (approved) |
 | M-12 | Lancer budget up to 4,000 triangles with automatic level of detail; per-class budgets proposed from the 100-unit test (pipeline.md) |
 | M-13 | The Blender FBX imports at x100 and turned 180° about Y; the rig script undoes both rather than changing the export or the importer settings |
+| M-14 | Order reads heavy (thick plates, add-on armor, deep skirts, low and broad), Chaos reads light (thin plates, exposed running gear, compact and high off the ground); looks otherwise unchanged |
+| M-15 | BAR model style on near-future shapes: exaggerated turret and gun, painted metal with panel lines and edge highlights, no camouflage, bold team plates, small emissive accents |
+| M-16 | Blockout palettes follow the style guide paints: Order sand-grey with cyan accents, Chaos gunmetal with orange accents |
+| M-17 | Blockouts for units without a def go in `Blockouts/Pending/` with the def fields they assume and review poses, outside the Registry until the def exists |
 
 ### M-1 — Review in "FTGG Art" (2026-10-21)
 
@@ -120,3 +124,29 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 **Alternatives:** changing the FBX export (global scale, forward axis) or the importer's File Transform settings: each needs another import to verify, and a wrong guess costs a re-upload.
 
 **Why:** one fixed, checked correction is cheaper than tuning two tools' axis conventions; `check` catches it if either changes.
+
+### M-14 — Heavy Order, light Chaos (2026-10-22)
+
+**Decision** (the user's, following A's `docs/design/factions.md`): Order is the heavy side (tougher, slower, more expensive), Chaos the light side (faster, cheaper, built for numbers). The looks of M-9 stay (Order sleek and wedge-shaped, Chaos rugged), but the armor reads the gameplay: Order with thick plates, add-on armor modules, deep skirts, a low and broad stance; Chaos with thin plates, armor as separate blocks and cages, partial skirts showing the running gear, a compact hull higher off the ground. This replaces M-9's "Chaos shorter and wider" with "shorter and narrower". Cues per feature: [`../art/style-guide.md`](../art/style-guide.md), "Reading heavy vs light".
+
+**Consequence:** the Lancer mesh (review 2) reads mid-weight: thin skirt plates and visible road wheels. To match, its next revision gets thicker plate edges, deeper skirts and turret add-on armor.
+
+### M-15 — BAR model style (2026-10-22)
+
+**Decision** (the user's): units are rendered in Beyond All Reason's model style on our near-future shapes: strong, slightly exaggerated silhouettes (turret and gun about 15–25 % bigger than real), clean hard-surface painted metal with crisp panel lines and edge highlights baked in, no camouflage, large bold team-color plates designed into the model (turret roof, hull top, side plates), small emissive accents (Order cyan, Chaos orange). BAR screenshots in `assets/reference/bar/` are style references only; BAR's model files and textures are never downloaded or copied. Replaces M-9's camouflage and textured realism; the faction shapes (M-9, M-14) stay. Style guide and guide 2.1 updated.
+
+**Emissive in the pipeline:** the 3D Importer uploads only maps a material uses, so the build exports a tiny `emissive_probe` quad whose color map is the emissive mask; the rig step reads its asset ID into each SurfaceAppearance's `EmissiveMaskContent` (tint and strength from `rig.json`) and deletes the quad.
+
+### M-16 — Blockout palettes follow the style guide (2026-10-22)
+
+**Decision:** `Blockout.PALETTES` uses the style guide's paints: Order hull sand-grey (178, 174, 160) and cyan glass (90, 210, 255); Chaos hull gunmetal (76, 80, 84), steel-grey metal instead of rust, orange glass (255, 140, 50). Every part-built blockout and the generic ones change color with it; shapes don't change.
+
+**Why:** the old Chaos palette (rust, orange glow on dark iron) is what M-6 and M-15 rule out; new structure blockouts should read in the new faction colors.
+
+### M-17 — Pending blockouts (2026-10-22)
+
+**Decision:** blockouts for units that exist only in a design proposal (A's `docs/design/factions.md`: Warden, Minotaur, Locust, Cyclops, Barrier, Citadel) go in `src/shared/Defs/Blockouts/Pending/`, with `Pending/Registry.luau` listing the def fields they assume (id, faction, tier, domain, footprint, pieces) and review poses (the Warden's packed and deployed). They're validated against those stub defs but not registered, so the game and `Blockouts.spec` don't see them. When the sim session adds a def with the same pieces, the file moves up and gets registered. Request to the sim session in the progress file.
+
+**Review poses in Edit mode:** Studio doesn't apply `Motor6D.Transform` in Edit mode, so the review script places posed pieces directly on review copies.
+
+**Update (2026-10-22, S-64):** the sim session added defs for the Warden (`ord_warden`, footprint 1, pieces base / spades / turret / barrel / muzzle) and the Minotaur (`chs_minotaur`, footprint 2, pieces base / ram / turret / barrel / muzzle; `ram` is the demolition charge's turret piece and muzzle). Both blockouts moved up and are registered: the Warden was rebuilt at footprint 1 with one hinged `spades` plate (no shield), the Minotaur's ram plate became the jointed `ram` piece. M-3's SAM rig now matches the defs too (S-64: turn `turret`, pitch `launcher`).

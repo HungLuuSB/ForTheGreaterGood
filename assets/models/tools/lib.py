@@ -359,8 +359,17 @@ class _Nodes:
 
 def camo_color(N, pos, camo):
     """Base color socket of one camouflage variant.
-    camo: {"type": "plain", "base", "mottle"} or
+    camo: {"type": "paint", "base"} (BAR style, M-15: one paint, a faint
+          top-light gradient), {"type": "plain", "base", "mottle"} or
           {"type": "disruptive", "base", "tones": [(rgb, scale, threshold, seed)]}"""
+    if camo["type"] == "paint":
+        sep = N.new("ShaderNodeSeparateXYZ")
+        N.link(pos, sep.inputs[0])
+        k = N.map_range(sep.outputs["Z"], 0.3, 3.2, 0.9, 1.04)  # Blender Z = Roblox Y
+        comb = N.new("ShaderNodeCombineColor")
+        for i in range(3):
+            N.link(k, comb.inputs[i])
+        return N.mix(1.0, N.rgb(camo["base"]), comb.outputs[0], blend="MULTIPLY")
     if camo["type"] == "plain":
         base = N.rgb(camo["base"])
         broad = N.map_range(N.noise(pos, 0.35, detail=2.0), 0.3, 0.7, 1.0 - camo["mottle"], 1.0 + camo["mottle"] * 0.4)
@@ -410,8 +419,11 @@ def make_material(kind, spec, variants, target):
     N.link(bevel.outputs["Normal"], dot.inputs[0])
     N.link(geo.outputs["Normal"], dot.inputs[1])
     edge = N.math("MULTIPLY_ADD", dot.outputs["Value"], -8.0, clamp=True, c=8.0)
-    chip_noise = N.noise(pos, 7.0, detail=3.0, roughness=0.7)
-    chips = N.math("MULTIPLY", edge, N.map_range(chip_noise, 0.42, 0.62, 0.0, 1.0))
+    if spec.get("edge_mode") == "highlight":
+        chips = edge  # clean, even edge highlight (BAR style)
+    else:
+        chip_noise = N.noise(pos, 7.0, detail=3.0, roughness=0.7)
+        chips = N.math("MULTIPLY", edge, N.map_range(chip_noise, 0.42, 0.62, 0.0, 1.0))
     wear = N.math("MULTIPLY", chips, spec.get("edge_wear", 0.5), clamp=True)
 
     # grime: low on the hull and in crevices (ambient occlusion)
@@ -456,6 +468,7 @@ def make_material(kind, spec, variants, target):
     rough = N.math("ADD", N.math("MULTIPLY_ADD", wear, -0.2, c=spec["roughness"]),
                    N.math("MULTIPLY", grime, 0.1), clamp=True)
     metal = N.value(spec["metallic"])
+    emission = N.value(spec.get("emit", 0.0))  # emissive mask (lights, sensors)
 
     bump = N.new("ShaderNodeBump")
     bump.inputs["Distance"].default_value = 0.02
@@ -482,6 +495,7 @@ def make_material(kind, spec, variants, target):
     mat_sockets[mat.name] = {
         "out": out, "bsdf": bsdf, "emit": emit, "variant": variant_node,
         "color": color, "roughness": rough, "metallic": metal, "mask": mask,
+        "emission": emission,
     }
     return mat
 
@@ -560,9 +574,9 @@ def joined_copy(objs, name):
 
 
 def bake_all(low, high, materials, size, samples, out_dir, prefix, variants):
-    """Bakes the detailed pieces onto the low-poly atlas. Returns the paths
-    and images per variant: {"a": {"ALB", "NOR", "RGH", "MTL"}, ...}; the
-    normal and metalness maps are shared."""
+    """Bakes the detailed pieces onto the low-poly atlas. Returns the images
+    per variant: {"a": {"ALB", "NOR", "RGH", "MTL", "EMI"}, ...}; the normal,
+    metalness and emissive-mask maps are shared."""
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
@@ -585,8 +599,10 @@ def bake_all(low, high, materials, size, samples, out_dir, prefix, variants):
     nor = bake("NORMAL", f"{prefix}_NOR", "Non-Color")
     metal = bake("EMIT", f"{prefix}_MTL", "Non-Color", "metallic")
     mask = bake("EMIT", f"{prefix}_mask", "Non-Color", "mask")
+    emi = bake("EMIT", f"{prefix}_EMI", "Non-Color", "emission")
     save_png(nor, os.path.join(out_dir, f"{nor.name}.png"), "RGB")
     save_png(metal, os.path.join(out_dir, f"{metal.name}.png"), "BW")
+    save_png(emi, os.path.join(out_dir, f"{emi.name}.png"), "BW")
     m = np.array(mask.pixels[:], dtype=np.float32).reshape(-1, 4)
 
     result = {}
@@ -601,7 +617,7 @@ def bake_all(low, high, materials, size, samples, out_dir, prefix, variants):
         alb.pixels[:] = c.ravel()
         save_png(alb, os.path.join(out_dir, f"{alb.name}.png"), "RGBA")
         save_png(rough, os.path.join(out_dir, f"{rough.name}.png"), "BW")
-        result[key] = {"ALB": alb, "NOR": nor, "RGH": rough, "MTL": metal}
+        result[key] = {"ALB": alb, "NOR": nor, "RGH": rough, "MTL": metal, "EMI": emi}
     show_channel(materials, None)
     bpy.data.objects.remove(target, do_unlink=True)
     return result
@@ -621,10 +637,10 @@ def save_png(img, path, mode):
     img.reload()
 
 
-def textured_material(name, imgs, team_rgb=None):
+def textured_material(name, imgs, team_rgb=None, emissive_rgb=None):
     """Material using a baked set, for the FBX and (with `team_rgb`, the
-    team color under the alpha mask as AlphaMode.Overlay draws it) the
-    preview renders."""
+    team color under the alpha mask as AlphaMode.Overlay draws it, and
+    `emissive_rgb` through the emissive mask) the preview renders."""
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     nt = mat.node_tree
@@ -652,8 +668,40 @@ def textured_material(name, imgs, team_rgb=None):
         L(team.outputs[0], mix.inputs[6])
         L(alb.outputs["Color"], mix.inputs[7])
         L(mix.outputs[2], bsdf.inputs["Base Color"])
+    if emissive_rgb is not None and "EMI" in imgs:
+        emi = N("ShaderNodeTexImage"); emi.image = imgs["EMI"]
+        strength = N("ShaderNodeMath"); strength.operation = "MULTIPLY"
+        strength.inputs[1].default_value = 4.0
+        L(emi.outputs["Color"], strength.inputs[0])
+        bsdf.inputs["Emission Color"].default_value = srgb(emissive_rgb)
+        L(strength.outputs[0], bsdf.inputs["Emission Strength"])
     L(bsdf.outputs[0], out.inputs["Surface"])
     return mat
+
+
+def image_probe(name, image, collection, at=(0.0, -2.0, 0.0)):
+    """A tiny quad whose material's base color is `image`: the 3D Importer
+    uploads only maps a material uses, so this carries a map with no PBR slot
+    in the FBX (the emissive mask) up to Roblox. The rig step reads its asset
+    ID and deletes the quad."""
+    mesh = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=0.1)
+    for v in bm.verts:
+        v.co += R(*at)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.uv_layers.new(name="UVMap")
+    obj = bpy.data.objects.new(name, mesh)
+    collection.objects.link(obj)
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nt = mat.node_tree
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = image
+    nt.links.new(tex.outputs["Color"], nt.nodes["Principled BSDF"].inputs["Base Color"])
+    mesh.materials.append(mat)
+    return obj
 
 
 def assign_single_material(objs, mat):
