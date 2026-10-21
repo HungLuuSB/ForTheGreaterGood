@@ -45,6 +45,10 @@ local PlacementGhost = require("./Render/PlacementGhost")
 local MissileViewRender = require("./Render/MissileView")
 local NukeWarning = require("./Render/NukeWarning")
 local RadarRings = require("./Render/RadarRings")
+local AlertFeed = require("./UI/AlertFeed")
+local BuildMenuUI = require("./UI/BuildMenu")
+local CommandCard = require("./UI/CommandCard")
+local UnitPanel = require("./UI/UnitPanel")
 local AttackPreviewRender = require("./Render/AttackPreview")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
@@ -168,6 +172,17 @@ local strategic = false
 local tiers: { [number]: string } = {}
 local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
 local resourceBar = ResourceBar.new() -- placeholder UI (task 9)
+-- playable placeholder UI (C-68): build menu, command card, unit panel, alerts
+local buildMenu = BuildMenuUI.new(api)
+local commandCard = CommandCard.new(api)
+local unitPanel = UnitPanel.new(api)
+local alertFeed = AlertFeed.new(api)
+Controls.capture = function(input: InputObject): boolean
+	return BuildMenuUI.capture(buildMenu, api, input)
+end
+api.changed.alert:Connect(function(alert: any)
+	MinimapUI.ping(minimap, world.grid, alert.x, alert.z, AlertFeed.COLOR[alert.kind] or Color3.new(1, 1, 1))
+end)
 
 -- Drawn muzzle of a unit's weapon slot (tracers start there), if it has a model.
 local function muzzleOf(id: number, slot: number): (number?, number?, number?)
@@ -422,7 +437,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	t0 = os.clock()
 	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
 	NukeWarning.step(nukeWarning, fx, world, now, workspace.CurrentCamera)
-	AttackPreviewRender.step(attackPreview, world, api.state.selection, if controls.attacking then Controls.hover() else nil, workspace.CurrentCamera)
+	AttackPreviewRender.step(attackPreview, world, api.state.selection, if api.state.commandMode == "attack" then Controls.hover() else nil, workspace.CurrentCamera)
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
@@ -433,7 +448,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	table.clear(fx.shots)
 	mark("anim", t0)
-	Api.frame(api, now)
+	Api.frame(api, now, fx.warnings)
 	if api.state.placement then
 		local hover = Controls.hover()
 		if hover then
@@ -483,6 +498,10 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	t0 = os.clock()
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
+	BuildMenuUI.step(buildMenu, api)
+	CommandCard.step(commandCard, api)
+	UnitPanel.step(unitPanel, api)
+	AlertFeed.step(alertFeed)
 	mark("ui", t0)
 	mark("frame", frameT0)
 	table.clear(world.died) -- the renderer and Effects have taken what they need

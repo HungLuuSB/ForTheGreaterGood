@@ -8,16 +8,22 @@
 --   Shift + right click      queue the order
 --   Ctrl + 1..9 / 1..9       set / recall a control group (double tap: jump the camera)
 --   S                        stop (BAR style; the camera pans with the arrow keys)
---   A, then left click       attack (BAR): an enemy unit, or the ground (attack ground:
---                            how a nuke silo fires, C-57); Shift keeps attacking;
---                            right click cancels
+--   A / F / M / Z / G, then left click: attack (an enemy unit, or the ground:
+--                            how a nuke silo fires, C-57) / fight / move / patrol to the
+--                            point / guard a unit (C-68, Api.commandAt); Shift keeps the
+--                            command; right click cancels
+--   L / K                    cycle fire state / move state (C-68)
+--   Y / U / X                factory repeat / on-off / cancel (a factory's last queued
+--                            item, else an unfinished frame) (C-68)
+--   J                        jump to the last alert (C-68)
 --   V                        range rings on / off (Render/RangeOverlay)
 --   T                        camera follow on / off (Core/Follow, C-43; handled in Main)
 -- While placing a structure (build ghost, guide 15.6):
 --   left click / drag        place / a row (Shift: queue it and keep placing)
 --   R                        rotate
 --   right click              cancel (Esc is Roblox's menu key: it never reaches the game)
---   B                        placeholder build menu: the selected builder's next build option
+--   B                        build menu (UI/BuildMenu, C-68): open / next tab; 1..0 pick
+--                            while it is open (the menu takes those keys first)
 -- Bindings are first guesses: listed under "Needs my review".
 
 local UserInputService = game:GetService("UserInputService")
@@ -34,8 +40,29 @@ Controls.LINE_PIXELS = 12 -- right drag beyond this is a line move
 Controls.DOUBLE_CLICK = 0.35 -- seconds
 Controls.STOP_KEY = Enum.KeyCode.S
 Controls.ROTATE_KEY = Enum.KeyCode.R
-Controls.BUILD_KEY = Enum.KeyCode.B -- placeholder until the build menu (UI)
-Controls.ATTACK_KEY = Enum.KeyCode.A
+-- command modes (C-68): the next left click gives the command
+Controls.COMMAND_KEYS = {
+	[Enum.KeyCode.A] = "attack",
+	[Enum.KeyCode.F] = "fight",
+	[Enum.KeyCode.M] = "move",
+	[Enum.KeyCode.Z] = "patrol",
+	[Enum.KeyCode.G] = "guard",
+}
+Controls.FIRE_STATE_KEY = Enum.KeyCode.L
+Controls.MOVE_STATE_KEY = Enum.KeyCode.K
+Controls.REPEAT_KEY = Enum.KeyCode.Y
+Controls.TOGGLE_KEY = Enum.KeyCode.U
+Controls.CANCEL_KEY = Enum.KeyCode.X
+Controls.ALERT_KEY = Enum.KeyCode.J
+-- a UI that takes keys first (the build menu while open): true = consumed
+Controls.capture = nil :: ((InputObject) -> boolean)?
+Controls.HINT = {
+	attack = "ATTACK: left-click an enemy or the ground",
+	fight = "FIGHT: left-click where to fight to",
+	move = "MOVE: left-click where to go",
+	patrol = "PATROL: left-click the far end of the patrol",
+	guard = "GUARD: left-click a unit to guard",
+}
 
 local DIGITS = {
 	[Enum.KeyCode.One] = 1,
@@ -138,7 +165,7 @@ function Controls.bind(api: Api.Api): Controls
 	hint.Font = Enum.Font.Code
 	hint.TextSize = 15
 	hint.TextColor3 = Color3.fromRGB(255, 120, 100)
-	hint.Text = "ATTACK: left-click an enemy or the ground (right-click cancels)"
+	hint.Text = ""
 	hint.Visible = false
 	hint.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
@@ -150,10 +177,33 @@ function Controls.bind(api: Api.Api): Controls
 	local lastClick = { time = -math.huge, defIndex = -1 }
 	local lastGroup = { n = 0, time = -math.huge }
 	local world = api.world
-	local function setAttacking(on: boolean)
-		self.attacking = on
-		hint.Visible = on
+	-- the command mode lives in the API (C-68); the hint follows it
+	api.changed.commandMode:Connect(function(kind: string?)
+		self.attacking = kind == "attack"
+		hint.Visible = kind ~= nil
+		if kind then
+			hint.Text = `{Controls.HINT[kind] or kind} (Shift keeps it, right click cancels)`
+		end
+	end)
+
+	-- what the selected units are (for the toggles)
+	local function selectedStates(): (boolean, boolean, { number })
+		local anyOn, anyRepeat, factories = false, false, {}
+		for _, id in api.state.selection do
+			local u = world.units[id]
+			if u then
+				local st = u.state or 0
+				anyOn = anyOn or bit32.band(st, 2) ~= 0 -- TOGGLED_ON
+				anyRepeat = anyRepeat or bit32.band(st, 16) ~= 0 -- REPEAT
+				local def = World.def(world, u)
+				if def and def.domain == "structure" and def.buildOptions and #def.buildOptions > 0 then
+					table.insert(factories, id)
+				end
+			end
+		end
+		return anyOn, anyRepeat, factories
 	end
+	Controls.selectedStates = selectedStates
 
 	local function cam(): Camera
 		return workspace.CurrentCamera
@@ -176,43 +226,55 @@ function Controls.bind(api: Api.Api): Controls
 			api.actions.rotatePlacement()
 			return
 		end
-		-- attack mode (A): the next left click attacks a unit or the ground
-		if input.KeyCode == Controls.ATTACK_KEY and #api.state.selection > 0 then
-			setAttacking(true)
+		local capture = Controls.capture
+		if capture and capture(input) then
+			return -- a UI took it (the build menu's keys)
+		end
+		-- command modes (C-68): the next left click gives the command
+		local mode = api.state.commandMode
+		local commandKey = Controls.COMMAND_KEYS[input.KeyCode]
+		if commandKey and not ctrl() then
+			api.actions.setCommandMode(commandKey)
 			return
-		elseif self.attacking and input.UserInputType == Enum.UserInputType.MouseButton2 then
-			setAttacking(false)
+		elseif mode and input.UserInputType == Enum.UserInputType.MouseButton2 then
+			api.actions.setCommandMode(nil)
 			return
-		elseif self.attacking and input.UserInputType == Enum.UserInputType.MouseButton1 then
+		elseif mode and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
+			local ground = Controls.groundAt(cam(), mouse.X, mouse.Y)
 			local u = if id then world.units[id] else nil
-			if u and u.team ~= world.me.team then
-				api.actions.order("attack", id, shift())
-			else
-				local ground = Controls.groundAt(cam(), mouse.X, mouse.Y)
-				if ground then
-					api.actions.order("attackGround", { x = ground.X, z = ground.Z }, shift())
-				end
-			end
-			if not shift() then
-				setAttacking(false)
+			local x = if ground then ground.X elseif u then u.x else nil
+			local z = if ground then ground.Z elseif u then u.z else nil
+			if x and z then
+				api.actions.commandAt(x, z, id, shift(), shift())
 			end
 			return
 		end
-		if input.KeyCode == Controls.BUILD_KEY then
-			-- next build option of the first selected builder (placeholder)
-			for _, id in api.state.selection do
-				local u = world.units[id]
-				local def = u and World.def(world, u)
-				local options = def and def.buildOptions
-				if options and #options > 0 then
-					local current = if api.state.placement then table.find(options, api.state.placement.defId) else nil
-					for k = 1, #options do
-						local pick = options[((current or 0) + k - 1) % #options + 1]
-						if api.actions.beginPlacement(pick) then
-							break
-						end
-					end
+		if input.KeyCode == Controls.FIRE_STATE_KEY then
+			api.actions.setFireState(((api.state.fireState or 1) + 1) % 3)
+			return
+		elseif input.KeyCode == Controls.MOVE_STATE_KEY then
+			api.actions.setMoveState(((api.state.moveState or 1) + 1) % 3)
+			return
+		elseif input.KeyCode == Controls.TOGGLE_KEY then
+			local anyOn = selectedStates()
+			api.actions.toggle(not anyOn)
+			return
+		elseif input.KeyCode == Controls.REPEAT_KEY then
+			local _, anyRepeat = selectedStates()
+			api.actions.setRepeat(not anyRepeat)
+			return
+		elseif input.KeyCode == Controls.CANCEL_KEY then
+			-- a factory's last queued item, else an unfinished frame
+			local _, _, factories = selectedStates()
+			local q = factories[1] and api.state.factoryQueues[factories[1]]
+			api.actions.cancel(if q and #q > 0 then #q else 0)
+			return
+		elseif input.KeyCode == Controls.ALERT_KEY then
+			local list = api.state.alerts
+			for i = #list, 1, -1 do
+				if list[i].kind ~= "stall" then
+					api.actions.focusCamera(list[i].x, list[i].z)
 					break
 				end
 			end

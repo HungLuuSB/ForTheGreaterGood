@@ -4,6 +4,8 @@
 -- then sent as Cmd payloads). Input code uses the same actions. Pure Luau
 -- (C-7): `send` is injected (the Cmd remote in Roblox, a Sim in tests).
 
+local Alerts = require("./Core/Alerts")
+local FactoryQueue = require("./Core/FactoryQueue")
 local Orders = require("./Core/Orders")
 local Placement = require("./Core/Placement")
 local Schema = require("@shared/Net/Schema")
@@ -40,7 +42,13 @@ export type State = {
 	hover: { unit: number?, x: number, z: number }?,
 	placement: PlacementState?,
 	economy: { supply: Res, power: Res, wind: number }?,
-	alerts: { any },
+	alerts: { Alerts.Alert }, -- recent alerts, newest last (C-68)
+	-- the command a left click gives (C-68): "attack", "fight", "move",
+	-- "patrol" or "guard"; nil = normal selection clicks
+	commandMode: string?,
+	fireState: number?, -- the last fire / move state sent (not replicated yet: PLACEHOLDER)
+	moveState: number?,
+	factoryQueues: { [number]: { number } }, -- factory → queued def indices, as the client queued them (PLACEHOLDER, request 36)
 }
 
 export type Api = {
@@ -51,12 +59,16 @@ export type Api = {
 		focus: Signal.Signal<{ number }>, -- camera jump requests { x, z }
 		placement: Signal.Signal<PlacementState?>,
 		orders: Signal.Signal<Orders.Intent>, -- every order sent (markers)
+		alert: Signal.Signal<Alerts.Alert>, -- a new alert (C-68)
+		commandMode: Signal.Signal<string?>,
 	},
 	actions: { [string]: any },
 	world: World.World,
 	selection: Selection.Selection,
 	waypoints: Waypoints.Waypoints,
 	send: (buffer) -> (),
+	alertState: Alerts.State,
+	factoryQueue: FactoryQueue.Queue,
 	seenSelection: number,
 	seenEconomy: any,
 }
@@ -79,7 +91,15 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		placement = nil,
 		economy = nil,
 		alerts = {},
+		commandMode = nil,
+		fireState = nil,
+		moveState = nil,
+		factoryQueues = {},
 	}
+	local alertState = Alerts.new()
+	local factoryQueue = FactoryQueue.new()
+	state.alerts = alertState.list
+	state.factoryQueues = factoryQueue.byFactory
 
 	local function issue(intent: Orders.Intent, ids: { number }?): (boolean, string?)
 		local targets = ids or sel.ids
@@ -158,11 +178,91 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	end
 
 	function actions.setFireState(n: number)
+		state.fireState = n
 		return issue({ cmdType = CT.SET_FIRE_STATE, queue = false, value = n })
 	end
 
 	function actions.setMoveState(n: number)
+		state.moveState = n
 		return issue({ cmdType = CT.SET_MOVE_STATE, queue = false, value = n })
+	end
+
+	-- Factories: repeat the queue on / off (REPEAT, S-13).
+	function actions.setRepeat(on: boolean)
+		return issue({ cmdType = CT.REPEAT, queue = false, value = if on then 1 else 0 })
+	end
+
+	-- CANCEL (S-35): an unfinished frame is cancelled; a factory drops queue
+	-- item `index` (1-based; 0 = all).
+	function actions.cancel(index: number?)
+		local i = index or 0
+		for _, id in sel.ids do
+			FactoryQueue.remove(factoryQueue, id, i)
+		end
+		return issue({ cmdType = CT.CANCEL, queue = false, value = i })
+	end
+
+	-- Queues `count` of `defId` in the selected factories that can build it
+	-- (one BUILD per unit, the factory's position as the spot).
+	function actions.queueBuild(defId: string, count: number?)
+		local def = world.defs.units[defId]
+		if def == nil then
+			return false, "unknown def"
+		end
+		local n = math.clamp(count or 1, 1, 50)
+		local sent = 0
+		for _, id in sel.ids do
+			local u = world.units[id]
+			local udef = u and World.def(world, u)
+			if u and udef and udef.domain == "structure" and table.find(udef.buildOptions or {}, defId) then
+				for _ = 1, n do
+					issue({ cmdType = CT.BUILD, queue = true, defIndex = def.index, x = u.x, z = u.z, facing = 0 }, { id })
+				end
+				FactoryQueue.add(factoryQueue, id, def.index, n)
+				sent += 1
+			end
+		end
+		return sent > 0, if sent == 0 then "no selected factory builds it" else nil
+	end
+
+	-- The command a left click gives (attack / fight / move / patrol / guard), or nil.
+	function actions.setCommandMode(kind: string?)
+		if kind ~= nil and #sel.ids == 0 then
+			return false, "nothing selected"
+		end
+		state.commandMode = kind
+		api.changed.commandMode:Fire(kind)
+		return true
+	end
+
+	-- Gives the current command at (x, z) or on unit `unitId` (input and UI
+	-- both use this): attack an enemy or the ground, guard a unit, or fight /
+	-- move / patrol to the point. Keeps the mode with `keep` (Shift).
+	function actions.commandAt(x: number, z: number, unitId: number?, queue: boolean?, keep: boolean?)
+		local kind = state.commandMode
+		if kind == nil then
+			return false, "no command"
+		end
+		local u = if unitId then world.units[unitId] else nil
+		local ok, why
+		if kind == "attack" then
+			if u and u.team ~= world.me.team then
+				ok, why = actions.order("attack", unitId, queue)
+			else
+				ok, why = actions.order("attackGround", { x = x, z = z }, queue)
+			end
+		elseif kind == "guard" then
+			if u == nil then
+				return false, "guard needs a unit"
+			end
+			ok, why = actions.order("guard", unitId, queue)
+		else
+			ok, why = actions.order(kind, { x = x, z = z }, queue)
+		end
+		if not keep then
+			actions.setCommandMode(nil)
+		end
+		return ok, why
 	end
 
 	function actions.toggle(on: boolean)
@@ -292,21 +392,27 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			focus = Signal.new(),
 			orders = Signal.new(),
 			placement = Signal.new(),
+			alert = Signal.new(),
+			commandMode = Signal.new(),
 		},
 		actions = actions,
 		world = world,
 		selection = sel,
 		waypoints = Waypoints.new(),
 		send = send,
+		alertState = alertState,
+		factoryQueue = factoryQueue,
 		seenSelection = 0,
 		seenEconomy = nil,
 	}
 	return api
 end
 
--- Once per frame, after packets and before drawing: prunes the selection,
--- follows waypoints, refreshes the state and fires the signals.
-function Api.frame(api: Api, now: number)
+-- Once per frame, after packets and before drawing (and before the frame
+-- clears world.died): prunes the selection, follows waypoints and factory
+-- queues, raises alerts (`warnings`: Core/Effects' launch warnings),
+-- refreshes the state and fires the signals.
+function Api.frame(api: Api, now: number, warnings: { any }?)
 	local world, sel, state = api.world, api.selection, api.state
 	Selection.prune(sel, world)
 	Waypoints.update(api.waypoints, world, now)
@@ -318,6 +424,16 @@ function Api.frame(api: Api, now: number)
 		local e = world.economy
 		state.economy = if e then { supply = res(e.supply), power = res(e.power), wind = e.wind / 255 } else nil
 		api.changed.economy:Fire(state.economy)
+	end
+	FactoryQueue.step(api.factoryQueue, world)
+	if world.joined then
+		for _, alert in Alerts.step(api.alertState, world, now, warnings, state.economy) do
+			api.changed.alert:Fire(alert)
+		end
+	end
+	if state.commandMode and #sel.ids == 0 then
+		state.commandMode = nil
+		api.changed.commandMode:Fire(nil)
 	end
 	if sel.version ~= api.seenSelection then
 		api.seenSelection = sel.version

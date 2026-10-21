@@ -453,10 +453,14 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-22: overnight run
 
 - Fog and wrecks from the server (C-65): the client now uses the server's exact team sight, allies included (it used to work it out from its own units). Wrecks appear for anything the team knows of, also after joining, and disappear when reclaimed (`debug_out/screens/c65_wrecks.jpg`).
+- Playable placeholder UI (C-68): a build menu by category tabs (B, then 1..0), a command card (move M, fight F, attack A, patrol Z, guard G, stop S, fire state L, move state K, repeat Y, on/off U, cancel X), a unit panel (health, weapons, stockpiles, build progress, factory queue) and alerts (under attack, structure lost, power stall, nuke launch) with minimap pings and J to jump to the last one (`debug_out/screens/c68_build_menu.jpg`, `c68_factory_queue.jpg`, `c68_alerts.jpg`). Factory queues, fire / move states and ammo aren't on the wire yet (request 36): the queue shown is what the client queued.
 - Every unit type has its own icon (C-67): its family shape with a unique two-letter code from its name (Ln Lancer, Pa Paladin, Rc Reckoning...), now that the server sends each unit's type in strategic records (S-58) (`debug_out/screens/c67_unique_icons.jpg`).
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Hotkey layout (C-68):** commands M move, F fight, A attack, Z patrol, G guard, S stop; L fire state, K move state; Y repeat, U on/off, X cancel; J last alert; B build menu (again: next tab), then 1..0 pick (Shift: 5 in a factory, right click drops one). P (patrol in BAR) stays the Studio pause key. In `src/client/Input/Controls.luau` and `UI/BuildMenu.luau`.
+- **UI placement (C-68):** build menu bottom left above the minimap, unit panel bottom center, command card bottom right (4 x 3), alerts top right under the resource bar. All plain dark panels, placeholders for the UI session.
 
 - **Unit icons (C-67):** family shape plus a two-letter code per unit type, white bold text, icons 13-30 px. Codes are generated from names (`Icons.codes` in `src/client/Core/Icons.luau`); a few fall back to a digit (Halo = H1). Proper image icons can replace them later.
 
@@ -489,6 +493,8 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+36. **Factory queues, fire / move states and ammo on the wire (C-68, 2026-10-22):** the playable UI's unit panel and command card need them; today the client shows what it queued itself (`Core/FactoryQueue`) and the last state it sent, and no ammo. Suggested: own factories' queue (def indices, at most ~20, and the progress of the first) in State records when it changes; own units' fire state and move state (2 bits each, in the state field or a new one); aircraft ammo (rounds left / max) for own units. Owner only, like STOCK. Medium priority.
 
 35. **Done (S-58, protocol 19): the strategic icon is the def index; `def.icon` stays the family.** **A unique strategic icon per unit type (the user, 2026-10-22, overnight list):** "Every type of unit need to have its own unique icon." The wire's icon number comes from Shared/Net/Icons, which numbers icon *names*; 126 unit defs share 50 names (worker x10, radar x6 ...). Asked: an icon number unique per unit def (e.g. defs in sorted order, fits a u8), keeping `def.icon` as the shape family; ghosts and contacts keep their rules. The client then draws a unique glyph per def. Sent to sim-A directly.
 
