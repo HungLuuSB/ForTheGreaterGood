@@ -179,43 +179,70 @@ function Formation.assign(posX: { [number]: number }, posZ: { [number]: number }
 		buckets[i] = {}
 	end
 	local where: { [number]: number } = {} -- unit → bucket index
+	-- units left per bucket row and column (S-60): a ring's empty rows and
+	-- columns are skipped whole. The buckets that hold units are still all
+	-- examined, so picks and `checks` are the same as scanning every bucket
+	-- of the ring; with units spread thin (scouts, a long formation) most
+	-- of a ring is empty, which made big orders cost milliseconds.
+	local rowCount = table.create(nbz, 0)
+	local colCount = table.create(nbx, 0)
 	for _, id in members do
-		local b = ((posZ[id] - minZ) // B) * nbx + (posX[id] - minX) // B + 1
+		local bxi, bzi = (posX[id] - minX) // B, (posZ[id] - minZ) // B
+		local b = bzi * nbx + bxi + 1
 		table.insert(buckets[b], id)
 		where[id] = b
+		rowCount[bzi + 1] += 1
+		colCount[bxi + 1] += 1
 	end
 	local left = n
 	local maxRing = math.max(nbx, nbz)
+	local sx, sz = 0, 0
+	local best, bestD = 0, math.huge
+	local function scanBucket(b: number)
+		for _, id in buckets[b] do
+			local d = (posX[id] - sx) ^ 2 + (posZ[id] - sz) ^ 2
+			checks += 1
+			if d < bestD or (d == bestD and id < best) then
+				best, bestD = id, d
+			end
+		end
+	end
+	local function scanRow(oz: number, xa: number, xb: number)
+		if oz < 0 or oz >= nbz or rowCount[oz + 1] == 0 then
+			return
+		end
+		for ox = math.max(xa, 0), math.min(xb, nbx - 1) do
+			scanBucket(oz * nbx + ox + 1)
+		end
+	end
+	local function scanCol(ox: number, za: number, zb: number)
+		if ox < 0 or ox >= nbx or colCount[ox + 1] == 0 then
+			return
+		end
+		for oz = math.max(za, 0), math.min(zb, nbz - 1) do
+			scanBucket(oz * nbx + ox + 1)
+		end
+	end
 	for i, slot in slots do
 		if left == 0 then
 			pick[i] = 0
 			continue
 		end
-		local sx, sz = slot[1], slot[2]
+		sx, sz = slot[1], slot[2]
 		local qx, qz = math.clamp(sx, minX, maxX), math.clamp(sz, minZ, maxZ)
 		local base = (qx - sx) ^ 2 + (qz - sz) ^ 2
 		local bx, bz = (qx - minX) // B, (qz - minZ) // B
-		local best, bestD = 0, math.huge
+		best, bestD = 0, math.huge
 		for ring = 0, maxRing do
-			for oz = bz - ring, bz + ring do
-				if oz < 0 or oz >= nbz then
-					continue
-				end
-				local edge = oz == bz - ring or oz == bz + ring
-				local step = if edge then 1 else 2 * ring
-				local ox = bx - ring
-				while ox <= bx + ring do
-					if ox >= 0 and ox < nbx then
-						for _, id in buckets[oz * nbx + ox + 1] do
-							local d = (posX[id] - sx) ^ 2 + (posZ[id] - sz) ^ 2
-							checks += 1
-							if d < bestD or (d == bestD and id < best) then
-								best, bestD = id, d
-							end
-						end
-					end
-					ox += if step == 0 then 1 else step
-				end
+			-- the ring's perimeter: its top and bottom rows, then the rest of
+			-- its left and right columns
+			if ring == 0 then
+				scanRow(bz, bx, bx)
+			else
+				scanRow(bz - ring, bx - ring, bx + ring)
+				scanRow(bz + ring, bx - ring, bx + ring)
+				scanCol(bx - ring, bz - ring + 1, bz + ring - 1)
+				scanCol(bx + ring, bz - ring + 1, bz + ring - 1)
 			end
 			-- anything further out is at least base + (ring × B)² away
 			if best ~= 0 and bestD < base + (ring * B) ^ 2 then
@@ -224,10 +251,13 @@ function Formation.assign(posX: { [number]: number }, posZ: { [number]: number }
 		end
 		pick[i] = best
 		-- take the unit out of its bucket
-		local list = buckets[where[best]]
+		local b = where[best]
+		local list = buckets[b]
 		local k = table.find(list, best) :: number
 		list[k] = list[#list]
 		list[#list] = nil
+		rowCount[(b - 1) // nbx + 1] -= 1
+		colCount[(b - 1) % nbx + 1] -= 1
 		left -= 1
 	end
 	return pick, checks
