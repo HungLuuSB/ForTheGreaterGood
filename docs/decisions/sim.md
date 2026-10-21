@@ -570,3 +570,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - a flood fill gets every land class from the south start to the beach;
   - a Ravager drives over the x = 100 bridge;
   - the map is identical on every load. It has 662 hedge cells and 60 house cells.
+
+## S-54 — `map:normandy` re-oriented: the fight runs west–east (the user) (2026-10-22)
+
+- **The user:** "this map fight from the side (left - right) not the sea - land". S-53 followed the client's layout, which put Order on the beach and Chaos behind a river to the south, so the armies met along z, from the sea inland.
+- **Now:** player 1 is west and player 2 east. The coast (sea, beach, bluffs with three draws) is a north flank both sides share. South of the bluffs the map is a mirror image about x = 0:
+  - **Rear:** each side's rear at |x| > 672.
+  - **Rivers:** one at x = ±660, each with bridges at z = −700, −250 and 250, so both sides get a river between their rear and the front, where S-53 gave one only to Chaos.
+  - **Staging:** each side's staging field at |x| 420–640.
+  - **Bocage:** at |x| < 400, with villages at (±220, −150).
+  - **Starts:** (∓850, 0).
+- **Kept:** every S-53 feature size (hedges, houses, gaps, draws, river, bridges). `Normandy.spec` checks the mirror (features and heights) and a Ravager crossing the east bridge at z = 250; 1,044 hedge cells, 72 house cells.
+- **The client's `normandy` profile** places armies on the S-53 layout and has to move to the new zones.
