@@ -221,7 +221,11 @@ if RunService:IsStudio() then
 			end
 			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, vfx = fxRenderer.vfx.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n }, launches = { n = fx.launches.n, fromBarrel = fx.launches.fromBarrel, avgOffset = fx.launches.sumOffset / math.max(fx.launches.fromBarrel, 1) } }
 		elseif query == "ranges" then
-			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection }
+			local kinds = {}
+			for _, line in ranges.lines do
+				kinds[line.kind] = (kinds[line.kind] or 0) + 1
+			end
+			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection, lines = kinds, radars = #ranges.radars }
 		elseif query == "missiles" then
 			-- Invoke("missiles", on?): the missile sensor view (C-39), turned on or off if `on` is given
 			local on = ...

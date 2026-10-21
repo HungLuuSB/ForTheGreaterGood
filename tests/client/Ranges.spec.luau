@@ -225,4 +225,31 @@ return function(t: any)
 		t.expect(not Ranges.isDefense(sim.defs.units.chs_vehplant), "a factory doesn't")
 		t.expect(not Ranges.isDefense(sim.defs.units.ord_lancer), "a tank isn't a structure")
 	end)
+
+	t.test("own radar facilities always show their radar ring; radar SAM sites and enemy radars don't (C-63)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
+		local tower = Spawn.unit(sim, "ord_beacon", 1, -100, 0, 0)
+		local mobile = Spawn.unit(sim, "ord_oracle", 1, 0, 0, 0)
+		Spawn.unit(sim, "ord_aegis", 1, 100, 0, 0) -- a radar, but a SAM site
+		Spawn.unit(sim, "ord_lancer", 1, 0, 100, 0)
+		Spawn.unit(sim, "chs_eye", 2, 0, -60, 0) -- an enemy radar tower in sight
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 63, 63)))
+		for tick = 1, 3 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick / 15)
+		end
+		local rings = Ranges.radarFacilities(world)
+		t.equal(#rings, 2)
+		local byOwner = {}
+		for _, c in rings do
+			byOwner[c.owner :: number] = c
+			t.equal(c.kind, "radarFacility")
+		end
+		t.equal(byOwner[tower].r, sim.defs.units.ord_beacon.sensors.radar)
+		t.equal(byOwner[mobile].r, sim.defs.units.ord_oracle.sensors.radar)
+		t.expect(Ranges.isRadarFacility(sim.defs.units.chs_eye), "an enemy tower is a radar facility, just not ours")
+		t.expect(not Ranges.isRadarFacility(sim.defs.units.ord_aegis), "a radar SAM site isn't")
+	end)
 end

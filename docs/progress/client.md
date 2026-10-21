@@ -115,6 +115,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `48af47e` `99e8a8f` (merge of `main` with S-52; request 30 marked done); test_client 104, test 340, build passed.
 - Ready to merge: `cfa1424` (reload test override, nuke profile launches every 2 s); test_client 104, build passed.
 - Ready to merge: `82d0e5f` (large-scale battle profile `normandy`, formation spawns; request 31 for the sim); build passed.
+- Ready to merge: `242cecc` (normandy: stronger economy, startResources); build passed.
 
 ## Tasks
 
@@ -437,6 +438,12 @@ All with real mouse and keyboard input through the MCP tools.
 - A stronger economy after the user's playtest ("resources declined very fast"). Each side now has 16 fusion reactors, 50 converters and 10 depots, and starts with full stores (`startResources`: 10,000 supply, 20,000 power). Order had stalled because its power stayed at the converters' 50% reserve and supply fell to 8 within a minute. Now Order's supply keeps rising by about 10/s on top of ~33/s of SAM refills, and Chaos fills its 11,000 storage.
 - It runs on `flat:256` until sim-A's Normandy map lands (request 31). Headless: about 2 ms a tick on average, 7.5 ms at worst, over 4 minutes.
 
+## 2026-10-21: radar rings always on; normandy on its map
+
+- Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). The ring line is wider than the others so it shows from far out.
+- The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
+- SAM ranges cut on the user's word: IR -30% and radar -25% (S-55), and another -30% / -25% asked as request 33.
+
 ## Needs my review
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
@@ -469,7 +476,11 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
-31. **A Normandy map, `map:normandy` (the user, 2026-10-21):** "a large map, maybe make a map like Normandy". 256 x 256 cells around 0,0. Zones the `normandy` profile is laid out on: sea at z > 760 (scenery only); beach z 640-760 (sand, the Order rear); bluffs z 560-640 up to a plateau at ~34, with draws at x = -560, 0, 560; a bocage plateau z -360 to 560 with hedgerows and gaps, open staging fields at z 280-540 (Order) and z -340 to -200 (Chaos), and villages at (-300, 150) and (400, -100) with roads; a river at z ~ -380 with bridges at x = -500, 100, 650; open fields south of it (the Chaos rear). No deposits. Sent to sim-A directly.
+33. **SAM ranges again: IR -30%, radar -25% from S-55 (the user, 2026-10-21):** "Drop the IR range 30% more, the SAM 25% more." chs_ir_sam 294 -> 206, ord_ir_sam 210 -> 147; chs_radar_sam 1260 -> 945, ord_radar_sam 1350 -> 1013; sensors by the same factors. Sent to sim-A directly.
+
+32. **Done (S-55): IR SAM range / lockRange -30% (Thorn 294, Vigil 210), radar SAM -25% (Wyvern 1260, Aegis 1350); airSight and the SAM sites' own radars follow.** **Shorter SAM ranges (the user, 2026-10-21):** "the anti air should not cover this large range... reduce the SAM IR by 30%, the SAM radar by 25%". Sent to sim-A directly.
+
+31. **Done (S-53, S-54): `map:normandy`, re-oriented west against east at the user's word (coast and bluffs a shared north flank; rivers at x = +-660 with three bridges; staging |x| 420-640; bocage with hedgerows and two villages); the `normandy` profile is laid out on it.** **A Normandy map, `map:normandy` (the user, 2026-10-21):** "a large map, maybe make a map like Normandy". 256 x 256 cells around 0,0. Zones the `normandy` profile is laid out on: sea at z > 760 (scenery only); beach z 640-760 (sand, the Order rear); bluffs z 560-640 up to a plateau at ~34, with draws at x = -560, 0, 560; a bocage plateau z -360 to 560 with hedgerows and gaps, open staging fields at z 280-540 (Order) and z -340 to -200 (Chaos), and villages at (-300, 150) and (400, -100) with roads; a river at z ~ -380 with bridges at x = -500, 100, 650; open fields south of it (the Chaos rear). No deposits. Sent to sim-A directly.
 
 30. **Done (S-52): Wyvern / Aegis radar SAMs hold 15 and rebuild one every 6 s; cost per missile, Gorgon / Seraph (3) and IR SAMs unchanged. Past 10 missiles the client draws the stock as one filling bar instead of pips.** **Radar SAM stock 15, faster refill (the user, 2026-10-21):** "tell A to increase the SAM stock to 15, lower its recharge time too." Read as the radar SAM sites that intercept nukes: Wyvern (`chs_radar_sam`) and Aegis (`ord_radar_sam`), stockpile capacity 6 → 15; no refill number was given, suggested buildTime 12 → 6 s per missile. Cost per missile, the mobile radar SAMs (Gorgon / Seraph, 3) and the IR SAMs are the sim's call. Nothing changes on the client (it reads the defs). Sent to sim-A directly.
 

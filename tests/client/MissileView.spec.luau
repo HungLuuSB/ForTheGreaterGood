@@ -146,8 +146,9 @@ return function(t: any)
 		table.sort(errors)
 		local median, p90 = errors[math.max(1, n // 2)] or 0, errors[math.max(1, math.floor(n * 0.9))] or 0
 		print(string.format("    %d-tick predictions: %d, median %.2f studs off the server, 90th percentile %.2f, mean %.2f, worst %.1f; hit calls %d right, %d wrong", AHEAD, n, median, p90, mean, worst, agree, disagree))
-		-- overkill-aware targeting (S-29) fires fewer missiles at one jet
-		t.expect(n > 60, "plenty of predictions checked")
+		-- overkill-aware targeting (S-29) and the Thorn's shorter range (294
+		-- since S-55) fire fewer missiles at the jets
+		t.expect(n > 40, `plenty of predictions checked ({n})`)
 		-- the targets circle, and the prediction flies them straight on: most
 		-- paths stay close, the turning end game spreads (missiles fly 28 studs a tick)
 		t.expect(median < 3, `predicted {AHEAD} ticks ahead: median {median} studs off`)
