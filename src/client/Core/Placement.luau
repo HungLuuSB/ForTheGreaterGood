@@ -63,6 +63,43 @@ local function structures(world: World.World): { { any } }
 	return out
 end
 
+Placement.DEPOSIT_SNAP = 12 -- studs: an extractor ghost this close to a deposit jumps onto it
+
+-- Placement help for extractors: a deposit is one cell and the server wants
+-- it under the extractor's center (Sim/Placement), so the ghost snaps to the
+-- nearest deposit within DEPOSIT_SNAP of the cursor. Returns the point to
+-- check: the deposit cell's center (odd footprints) or its min corner (even
+-- footprints, whose center is a corner), or (x, z) unchanged.
+function Placement.assist(world: World.World, def: any, x: number, z: number): (number, number)
+	local layers = world.layers
+	if def.extractor == nil or layers == nil then
+		return x, z
+	end
+	local g = world.grid
+	local reach = math.ceil(Placement.DEPOSIT_SNAP / Grid.CELL_SIZE)
+	local cx, cz = g:cellAt(x, z)
+	local best, bestD = nil, Placement.DEPOSIT_SNAP ^ 2
+	for dz = -reach, reach do
+		for dx = -reach, reach do
+			local gx, gz = cx + dx, cz + dz
+			if g:inBounds(gx, gz) and Layers.getSupply(layers, g:index(gx, gz)) > 0 then
+				local wx, wz = g:cellCenter(gx, gz)
+				local d = (wx - x) ^ 2 + (wz - z) ^ 2
+				if d <= bestD then
+					best, bestD = { gx, gz, wx, wz }, d
+				end
+			end
+		end
+	end
+	if best == nil then
+		return x, z
+	end
+	if def.footprint % 2 == 1 then
+		return best[3], best[4]
+	end
+	return g.originX + best[1] * Grid.CELL_SIZE, g.originZ + best[2] * Grid.CELL_SIZE
+end
+
 function Placement.check(world: World.World, def: any, x: number, z: number): Result
 	local g = world.grid
 	local size = def.footprint

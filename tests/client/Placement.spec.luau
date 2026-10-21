@@ -90,6 +90,41 @@ return function(t: any)
 		t.expect((reasons["no deposit"] or 0) > 0 and (reasons["out of bounds"] or 0) > 0, "and deposits and bounds")
 	end)
 
+	t.test("an extractor ghost snaps onto a nearby deposit, and the server accepts it", function()
+		local sim, world, api, run = setup("start:48", "standard_start")
+		local cv = World.ownIds(world)[1]
+		api.actions.select({ cv })
+		local layers = world.layers :: any
+		local g = world.grid
+		local Layers = require("@shared/Grid/Layers")
+		local checked = 0
+		for cz = 0, g.cellsZ - 1 do
+			for cx = 0, g.cellsX - 1 do
+				if Layers.getSupply(layers, g:index(cx, cz)) > 0 then
+					local wx, wz = g:cellCenter(cx, cz)
+					t.expect(api.actions.beginPlacement("ord_extractor"))
+					-- anywhere within the snap radius, including off the cell
+					for _, off in { { 0, 0 }, { 5, 5 }, { -6, 4 }, { 9, 0 }, { 0, -10 } } do
+						local ok, why = api.actions.updatePlacement(wx + off[1], wz + off[2])
+						t.expect(ok, `deposit ({cx}, {cz}) from offset {off[1]}, {off[2]}: {why}`)
+						local p = api.state.placement :: any
+						t.expect(p.x == wx and p.z == wz, "the ghost sits on the deposit")
+						local sok = ServerPlacement.check(sim, defOf(sim, "ord_extractor"), p.x, p.z, 1, sim.players[1].allyTeam)
+						t.expect(sok, "the server agrees")
+						checked += 1
+					end
+					api.actions.cancelPlacement()
+				end
+			end
+		end
+		t.expect(checked >= 40, `checked {checked} spots`)
+		-- far from any deposit nothing snaps
+		t.expect(api.actions.beginPlacement("ord_extractor"))
+		local ok, why = api.actions.updatePlacement(0, 150)
+		t.expect(not ok and why == "no deposit")
+		local _ = run
+	end)
+
 	t.test("placing sends a BUILD and the server raises the frame", function()
 		local sim, world, api, run, sentCount = setup("start:48", "standard_start")
 		local cv = World.ownIds(world)[1]

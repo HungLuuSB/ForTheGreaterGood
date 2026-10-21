@@ -29,6 +29,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-19 | Range rings: merged same-kind outlines on the terrain, own units and the build ghost, V toggles, rebuilt on change at most 4 Hz |
 | C-20 | Target line for one selected unit: the attack order sent, else the known enemy on the turret's aim line (until targets are on the wire) |
 | C-21 | BAR-style controls: camera on the arrow keys, edge scroll (live) and middle-drag; S = stop; WASD free |
+| C-22 | Deposits are drawn on their exact cells (3D and minimap); the extractor ghost snaps onto a deposit within 12 studs |
 
 ---
 
@@ -189,3 +190,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 ### C-21 — BAR-style controls (2026-10-22, the user's answer)
 
 **Decision:** the camera pans with the arrow keys, screen-edge scroll (live games, off in Studio) and middle-drag; Q / E rotate as before; S stops; WASD is free for later hotkeys; V toggles range rings. Everything else in C-13 stays. Placing is cancelled with a right click only: Esc is Roblox's menu key, arrives as already processed and opens the menu (found in the step 4 playtest). Strategic zoom keeps sending the camera rectangle (answer to C-17).
+
+### C-22 — Placing extractors (2026-10-22)
+
+**Decision:** supply deposits are one cell (8 studs), and an extractor is valid only with its center on that cell (the server's rule, unchanged). The client now draws a gold Neon plate on each deposit cell in the 3D ground (brighter for richer deposits) and a small gold square per deposit on the minimap, instead of tinting the minimap's whole 4 x 4-cell tile. The extractor ghost snaps onto the nearest deposit within 12 studs of the cursor (`Placement.assist`: the cell's center for odd footprints, its min corner for even ones).
+
+**Why:** the user couldn't place extractors on "the golden spots": the gold the client showed was the minimap's 32-stud tile, the real target was an unmarked 8-stud cell, and the server (correctly) refused spots a few studs off. `Placement.spec` checks every deposit of the start map from five cursor offsets up to 10 studs away: the ghost lands on the deposit and the server's check accepts it. Studio: an aim point 5–6 studs off a deposit snapped onto it, the extractor was built there and supply income went from +1.0 to +3.0.

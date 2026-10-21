@@ -104,8 +104,7 @@ local function tileColor(tile: Minimap.Tile): Color3
 	if tile.water > 0 then
 		return Color3.fromRGB(40, 80, 130):Lerp(Color3.fromRGB(20, 40, 80), math.clamp(tile.water / 20, 0, 1))
 	end
-	local c = Color3.fromRGB(70, 92, 56):Lerp(Color3.fromRGB(130, 120, 95), math.clamp((tile.height + 10) / 40, 0, 1))
-	return if tile.supply > 0 then c:Lerp(Color3.fromRGB(230, 200, 90), 0.6) else c
+	return Color3.fromRGB(70, 92, 56):Lerp(Color3.fromRGB(130, 120, 95), math.clamp((tile.height + 10) / 40, 0, 1))
 end
 
 -- Rebuilds the terrain for a new map (after a WELCOME with another map).
@@ -117,6 +116,18 @@ function MinimapUI.setMap(ui: UI, layers: any)
 		f.Position = UDim2.fromScale(tile.u, tile.v)
 		f.Size = UDim2.fromScale(tile.w, tile.h)
 		f.BackgroundColor3 = tileColor(tile)
+		f.Parent = ui.terrain
+	end
+	-- deposits: small gold squares on the exact cells
+	for _, d in Minimap.deposits(layers) do
+		local f = Instance.new("Frame")
+		f.Name = "Deposit"
+		f.BorderSizePixel = 0
+		f.AnchorPoint = Vector2.new(0.5, 0.5)
+		f.Position = UDim2.fromScale(d[1], d[2])
+		f.Size = UDim2.fromOffset(4, 4)
+		f.BackgroundColor3 = Color3.fromRGB(245, 205, 80)
+		f.ZIndex = 2
 		f.Parent = ui.terrain
 	end
 end
