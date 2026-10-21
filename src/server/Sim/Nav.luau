@@ -15,6 +15,7 @@
 -- the coarse route and corridor, then the flow field job. Until the plan is
 -- done the order is pending and its units steer straight at their slots.
 
+local Formation = require("@shared/Grid/Formation")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -30,7 +31,7 @@ local Nav = {}
 Nav.ARRIVE_RADIUS = 1.5 -- studs: a unit this close to its own goal has arrived
 Nav.DIRECT_RANGE = 96 -- studs: line-of-sight checks for direct steering only this close
 Nav.LINE_STEP = 2 -- studs between line-of-sight samples
-Nav.SLOT_SPACING = 1.3 -- formation spacing, in unit diameters
+Nav.SLOT_SPACING = Formation.SLOT_SPACING -- formation spacing, in unit diameters (shared, S-12)
 Nav.RADIUS_PER_FOOTPRINT = PlacementRules.RADIUS_PER_FOOTPRINT -- collision radius per footprint cell (studs; shared, S-9)
 Nav.PATHING_BUDGET = 36000 -- flow field work units per tick (DECISIONS D33, D53)
 Nav.NEAREST_SEARCH_LIMIT = 4096 -- cells examined when snapping a goal to open ground
@@ -211,127 +212,21 @@ local function nearestOpen(tree: Quadtree.Tree, cell: number, component: number)
 end
 Nav.nearestOpen = nearestOpen
 
--- Lattice offsets sorted by distance from the center (then z, then x):
--- the formation slots around a goal, nearest first.
-local spiralCache: { { number } } = {}
-local function spiral(count: number): { { number } }
-	if #spiralCache < count then
-		local k = math.ceil(math.sqrt(count)) + 1
-		local pts = {}
-		for j = -k, k do
-			for i = -k, k do
-				table.insert(pts, { i, j })
-			end
-		end
-		table.sort(pts, function(a, b)
-			local da, db = a[1] * a[1] + a[2] * a[2], b[1] * b[1] + b[2] * b[2]
-			if da ~= db then
-				return da < db
-			end
-			if a[2] ~= b[2] then
-				return a[2] < b[2]
-			end
-			return a[1] < b[1]
-		end)
-		spiralCache = pts
-	end
-	return spiralCache
-end
-
 Nav.MAX_COMMAND_UNITS = 200 -- guide 22.3
-spiral(Nav.MAX_COMMAND_UNITS * 4) -- built at load, not in the first order's tick
+Formation.spiral(Nav.MAX_COMMAND_UNITS * 4) -- built at load, not in the first order's tick
 
--- Greedy slot assignment: slot by slot (in order), the closest unassigned
--- unit takes it; ties go to the lower ID. Returns the unit per slot (0 once
--- units run out) and the number of distance checks made. Same result as
--- scanning every unit for every slot, but the
--- units sit in a bucket grid over their bounding box, and each search scans
--- rings of buckets outward from the bucket nearest the slot, stopping once
--- no unscanned bucket can hold a unit as close as the best so far. (For a
--- point p in the box and q the slot clamped into it, |p - slot|² ≥
--- |p - q|² + |q - slot|², and buckets r + 1 rings out are ≥ r × size from q.)
-Nav.ASSIGN_BUCKET = 32 -- studs
+-- Greedy slot assignment (Shared/Grid/Formation, S-12): slot by slot, the
+-- closest unassigned unit; ties go to the lower ID. Returns the unit per
+-- slot (0 once units run out) and the number of distance checks made.
+Nav.ASSIGN_BUCKET = Formation.ASSIGN_BUCKET
 Nav.ISSUE_UNIT_COST = 10 -- work units per unit given an order (plus 1 per 4 assignment distance checks)
 function Nav.assignSlots(w: World.World, members: { number }, slots: { { number } }): ({ number }, number)
-	local pick: { number } = {}
-	local n = #members
-	if n == 0 then
-		for i = 1, #slots do
-			pick[i] = 0
-		end
-		return pick, 0
-	end
-	local checks = 0
-	local B = Nav.ASSIGN_BUCKET
-	local minX, minZ, maxX, maxZ = math.huge, math.huge, -math.huge, -math.huge
-	for _, id in members do
-		minX, maxX = math.min(minX, w.posX[id]), math.max(maxX, w.posX[id])
-		minZ, maxZ = math.min(minZ, w.posZ[id]), math.max(maxZ, w.posZ[id])
-	end
-	local nbx, nbz = (maxX - minX) // B + 1, (maxZ - minZ) // B + 1
-	local buckets: { { number } } = {}
-	for i = 1, nbx * nbz do
-		buckets[i] = {}
-	end
-	local where: { [number]: number } = {} -- unit → bucket index
-	for _, id in members do
-		local b = ((w.posZ[id] - minZ) // B) * nbx + (w.posX[id] - minX) // B + 1
-		table.insert(buckets[b], id)
-		where[id] = b
-	end
-	local left = n
-	local maxRing = math.max(nbx, nbz)
-	for i, slot in slots do
-		if left == 0 then
-			pick[i] = 0
-			continue
-		end
-		local sx, sz = slot[1], slot[2]
-		local qx, qz = math.clamp(sx, minX, maxX), math.clamp(sz, minZ, maxZ)
-		local base = (qx - sx) ^ 2 + (qz - sz) ^ 2
-		local bx, bz = (qx - minX) // B, (qz - minZ) // B
-		local best, bestD = 0, math.huge
-		for ring = 0, maxRing do
-			for oz = bz - ring, bz + ring do
-				if oz < 0 or oz >= nbz then
-					continue
-				end
-				local edge = oz == bz - ring or oz == bz + ring
-				local step = if edge then 1 else 2 * ring
-				local ox = bx - ring
-				while ox <= bx + ring do
-					if ox >= 0 and ox < nbx then
-						for _, id in buckets[oz * nbx + ox + 1] do
-							local d = (w.posX[id] - sx) ^ 2 + (w.posZ[id] - sz) ^ 2
-							checks += 1
-							if d < bestD or (d == bestD and id < best) then
-								best, bestD = id, d
-							end
-						end
-					end
-					ox += if step == 0 then 1 else step
-				end
-			end
-			-- anything further out is at least base + (ring × B)² away
-			if best ~= 0 and bestD < base + (ring * B) ^ 2 then
-				break
-			end
-		end
-		pick[i] = best
-		-- take the unit out of its bucket
-		local list = buckets[where[best]]
-		local k = table.find(list, best) :: number
-		list[k] = list[#list]
-		list[#list] = nil
-		left -= 1
-	end
-	return pick, checks
+	return Formation.assign(w.posX, w.posZ, members, slots)
 end
 
--- Candidate goal positions for `n` units: a formation around (cx, cz), or
--- evenly spaced along the line to (lx, lz) (extra rows step back toward
--- `back` when the line is too short). Only positions on open cells of the
--- group's component are kept.
+-- Candidate goal positions for `n` units (Formation.layout): only
+-- positions on open cells of the group's component are kept, and line
+-- slots on blocked cells snap to the nearest open cell center.
 local function slotsFor(
 	nav: Nav,
 	tree: Quadtree.Tree,
@@ -346,65 +241,26 @@ local function slotsFor(
 	backZ: number
 ): { { number } }
 	local g = nav.grid
-	local function ok(x: number, z: number): boolean
-		local gx, gz = g:cellAt(x, z)
-		if not g:inBounds(gx, gz) then
-			return false
-		end
-		local c = g:index(gx, gz)
-		return Quadtree.isOpen(tree, c) and Quadtree.component(tree, c) == component
-	end
-
-	local slots: { { number } } = {}
-	if lx ~= nil and lz ~= nil then
-		local dx, dz = lx - cx, lz - cz
-		local len = math.sqrt(dx * dx + dz * dz)
-		local perRow = math.max(1, math.min(n, math.floor(len / spacing) + 1))
-		local rows = math.ceil(n / perRow)
-		-- unit vector from the line toward `back`, perpendicular to the line
-		local ux, uz = if len > 0 then dx / len else 1, if len > 0 then dz / len else 0
-		local px, pz = -uz, ux
-		local mx, mz = (cx + lx) / 2, (cz + lz) / 2
-		if (backX - mx) * px + (backZ - mz) * pz < 0 then
-			px, pz = -px, -pz
-		end
-		local placed = 0
-		for row = 0, rows - 1 do
-			for i = 0, perRow - 1 do
-				if placed >= n then
-					break
-				end
-				local t = if perRow == 1 then 0.5 else i / (perRow - 1)
-				local x = cx + dx * t + px * spacing * row
-				local z = cz + dz * t + pz * spacing * row
-				if ok(x, z) then
-					table.insert(slots, { x, z })
-				else
-					-- snap to the nearest open cell center
-					local gx, gz = g:cellAt(x, z)
-					gx, gz = math.clamp(gx, 0, g.cellsX - 1), math.clamp(gz, 0, g.cellsZ - 1)
-					local snapped = nearestOpen(tree, g:index(gx, gz), component)
-					if snapped then
-						local sx, sz = g:coords(snapped)
-						table.insert(slots, { g:cellCenter(sx, sz) })
-					end
-				end
-				placed += 1
+	local ground: Formation.Ground = {
+		open = function(x: number, z: number): boolean
+			local gx, gz = g:cellAt(x, z)
+			if not g:inBounds(gx, gz) then
+				return false
 			end
-		end
-		return slots
-	end
-
-	for _, off in spiral(n * 4) do
-		if #slots >= n then
-			break
-		end
-		local x, z = cx + off[1] * spacing, cz + off[2] * spacing
-		if ok(x, z) then
-			table.insert(slots, { x, z })
-		end
-	end
-	return slots
+			local c = g:index(gx, gz)
+			return Quadtree.isOpen(tree, c) and Quadtree.component(tree, c) == component
+		end,
+		snap = function(x: number, z: number): (number?, number?)
+			local gx, gz = g:cellAt(x, z)
+			gx, gz = math.clamp(gx, 0, g.cellsX - 1), math.clamp(gz, 0, g.cellsZ - 1)
+			local snapped = nearestOpen(tree, g:index(gx, gz), component)
+			if snapped == nil then
+				return nil, nil
+			end
+			return g:cellCenter(g:coords(snapped))
+		end,
+	}
+	return Formation.layout(n, spacing, cx, cz, lx, lz, backX, backZ, ground)
 end
 
 -- Appends to the job FIFO. (table.insert would misplace entries once the
@@ -482,7 +338,7 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 			sumZ += w.posZ[id]
 		end
 		local backX, backZ = sumX / #members, sumZ / #members
-		local spacing = 2 * maxRadius * Nav.SLOT_SPACING
+		local spacing = Formation.spacing(maxRadius)
 
 		local order: Order = {
 			id = nav.nextOrderId,
@@ -506,13 +362,7 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 		local slots: { { number } }
 		local tree: Quadtree.Tree? = nil
 		if first.air then
-			slots = {}
-			for _, off in spiral(#members) do
-				if #slots >= #members then
-					break
-				end
-				table.insert(slots, { cx + off[1] * spacing, cz + off[2] * spacing })
-			end
+			slots = Formation.layout(#members, spacing, cx, cz, nil, nil, backX, backZ)
 			order.moveClass = "air"
 		else
 			local t = Nav.tree(nav, first.moveClass, first.need)
@@ -548,28 +398,9 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 			slots = slotsFor(nav, t, component, #members, spacing, if lx then tx else cx, if lx then tz else cz, lx, lz, backX, backZ)
 		end
 
-		-- Greedy assignment, far side of the formation first (along the
-		-- approach direction from the group's centroid): the units that
-		-- arrive first take the deepest slots, so later arrivals never have to
-		-- squeeze past units already standing still. Each slot takes the
-		-- closest unassigned unit; ties go to the lower ID (Nav.assignSlots).
-		local ax, az = cx - backX, cz - backZ
-		local alen = math.sqrt(ax * ax + az * az)
-		if alen > 1e-9 then
-			ax, az = ax / alen, az / alen
-		end
-		local depth: { [{ number }]: number } = {}
-		local rank: { [{ number }]: number } = {}
-		for i, slot in slots do
-			depth[slot] = math.floor(((slot[1] - cx) * ax + (slot[2] - cz) * az) / spacing + 0.5)
-			rank[slot] = i
-		end
-		table.sort(slots, function(a, b)
-			if depth[a] ~= depth[b] then
-				return depth[a] > depth[b]
-			end
-			return rank[a] < rank[b]
-		end)
+		-- Far side of the formation first, then each slot takes the closest
+		-- unassigned unit; ties go to the lower ID (Shared/Grid/Formation).
+		Formation.deepestFirst(slots, cx, cz, backX, backZ, spacing)
 		local assigned: { [number]: boolean } = {}
 		local pick, checks = Nav.assignSlots(w, members, slots)
 		-- issuing shares the tick's pathing budget (Pathing gets what's left)
