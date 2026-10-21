@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 110, power = 1100, buildTime = 2800 },
 	health = 1100,
 	footprint = 1,
-	sensors = { sight = 160, airSight = 224 },
+	sensors = { sight = 160, airSight = 157 },
 	weapons = { { def = "ord_ir_sam", turretPiece = "launcher", muzzle = "muzzle" } },
 	pieces = { "base", "launcher", "muzzle" },
 	model = "ord_vigil",
