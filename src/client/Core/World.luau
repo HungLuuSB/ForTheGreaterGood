@@ -57,7 +57,9 @@ export type Unit = {
 }
 
 -- A tactical unit that died: the renderer plays its death and drops the model.
-export type Death = { id: number, defIndex: number?, team: number, x: number, z: number, heading: number, severity: number, wreckId: number, tick: number }
+-- `alt`, `vx`, `vz`: its altitude and velocity (studs/s, from its last two
+-- snapshots) for an aircraft's fall (C-48).
+export type Death = { id: number, defIndex: number?, team: number, x: number, z: number, heading: number, severity: number, wreckId: number, tick: number, alt: number, vx: number, vz: number }
 
 export type Me = { player: number, team: number, allyTeam: number }
 

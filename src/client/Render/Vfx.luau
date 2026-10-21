@@ -138,6 +138,10 @@ local DECOY: { Spec } = {
 	{ name = "Pop", texture = TEX.sparkle, life = { 0.2, 0.35 }, speed = { 4, 10 }, size = { { 0, 1.6 }, { 1, 0.3 } }, transparency = { { 0, 0 }, { 1, 1 } }, color = colors({ { 0, Color3.new(1, 1, 1) }, { 1, Color3.fromRGB(190, 220, 255) } }), count = 6, light = 1 },
 }
 
+local JAM: { Spec } = {
+	{ name = "Glint", texture = TEX.sparkle, life = { 0.15, 0.3 }, speed = { 2, 6 }, size = { { 0, 2.2 }, { 1, 0.4 } }, transparency = { { 0, 0 }, { 1, 1 } }, color = colors({ { 0, Color3.new(1, 1, 1) }, { 1, Color3.fromRGB(255, 120, 90) } }), count = 6, light = 1, z = 2 },
+}
+
 local CHAFF: { Spec } = {
 	{ name = "Chaff", texture = TEX.sparkle, life = { 1.2, 2 }, speed = { 4, 12 }, size = { { 0, 0.5 }, { 1, 0.3 } }, transparency = { { 0, 0 }, { 0.7, 0.3 }, { 1, 1 } }, color = colors({ { 0, Color3.fromRGB(220, 225, 235) }, { 1, Color3.fromRGB(160, 165, 175) } }), count = 30, light = 0.6, drag = 2, accel = Vector3.new(0, -4, 0), rotSpeed = 400 },
 	{ name = "Haze", texture = TEX.smoke, life = { 1.5, 2.2 }, speed = { 1, 3 }, size = { { 0, 3 }, { 1, 7 } }, transparency = { { 0, 0.7 }, { 1, 1 } }, color = colors({ { 0, LIGHT_GREY }, { 1, LIGHT_GREY } }), count = 4, drag = 1 },
@@ -152,6 +156,7 @@ type Kind = {
 	ring: boolean?, -- ground bursts: an expanding dust ring on the ground
 	scorch: boolean?, -- ground bursts: a scorch mark
 	flares: number?, -- falling flares, each a bright ball with a smoke trail
+	laser: boolean?, -- a beam from the burst to its target point (DIRCM); the emitters play at the target
 }
 
 local function longest(specs: { Spec }): number
@@ -179,6 +184,7 @@ local KINDS: { [string]: Kind } = {
 	decoy = { specs = DECOY, cap = 8, life = longest(DECOY) },
 	flare = { specs = DECOY, cap = 6, life = 3, flares = 4 },
 	chaff = { specs = CHAFF, cap = 6, life = longest(CHAFF) },
+	dircm = { specs = JAM, cap = 6, life = longest(JAM), laser = true },
 }
 
 type Emitter = { spec: Spec, emitter: ParticleEmitter, scale: number }
@@ -191,6 +197,7 @@ type Rig = {
 	light: PointLight?,
 	flash: BasePart?,
 	ring: BasePart?,
+	laser: BasePart?,
 	flares: { Flare },
 	born: number,
 	freeAt: number,
@@ -199,7 +206,10 @@ type Rig = {
 	y: number,
 	z: number,
 	ground: boolean,
-	live: boolean, -- still animating (light, flash, ring, flares)
+	tx: number, -- the target point (flares head there, a laser ends there)
+	ty: number,
+	tz: number,
+	live: boolean, -- still animating (light, flash, ring, laser, flares)
 }
 
 type Scorch = { part: BasePart, born: number }
@@ -308,6 +318,14 @@ local function newRig(v: State, kind: string): Rig
 		r.Parent = v.folder
 		ring = r
 	end
+	local laser: BasePart? = nil
+	if k.laser then
+		local l = newPart("Laser")
+		l.Color = Color3.fromRGB(255, 70, 60)
+		l.Transparency = 1
+		l.Parent = v.folder
+		laser = l
+	end
 	local flares = {}
 	for _ = 1, k.flares or 0 do
 		local part = newPart("Flare")
@@ -338,7 +356,7 @@ local function newRig(v: State, kind: string): Rig
 		table.insert(flares, { part = part, trail = trail, vx = 0, vy = 0, vz = 0 })
 	end
 	carrier.Parent = v.folder
-	return { kind = kind, carrier = carrier, attachment = attachment, emitters = emitters, light = light, flash = flash, ring = ring, flares = flares, born = -math.huge, freeAt = -math.huge, scale = 1, x = 0, y = 0, z = 0, ground = false, live = false }
+	return { kind = kind, carrier = carrier, attachment = attachment, emitters = emitters, light = light, flash = flash, ring = ring, laser = laser, flares = flares, born = -math.huge, freeAt = -math.huge, scale = 1, x = 0, y = 0, z = 0, tx = 0, ty = 0, tz = 0, ground = false, live = false }
 end
 
 function Vfx.new(folder: Folder): State
@@ -572,9 +590,10 @@ local function stepTemplates(v: State, now: number, lightsUsed: number): number
 end
 
 -- Plays `kind` at (x, y, z). `scale`: 1 = a 7-stud explosion; `ground`: the
--- ground height under it; `dx, dy, dz`: the way it faces (a shot, a flight).
+-- ground height under it; `dx, dy, dz`: the way it faces (a shot, a flight);
+-- `tx, ty, tz`: where flares head, or where a laser ends.
 -- A template saved in ReplicatedStorage.Vfx plays instead, if there is one.
-function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scale: number, now: number, ground: number?, dx: number?, dy: number?, dz: number?)
+function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scale: number, now: number, ground: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number?)
 	local k = KINDS[kind]
 	if k == nil then
 		return
@@ -590,10 +609,14 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 	local rig = rigFor(v, kind, now)
 	rig.born, rig.freeAt, rig.scale, rig.live = now, now + k.life, s, true
 	rig.x, rig.y, rig.z = x, y, z
+	rig.tx, rig.ty, rig.tz = tx or x, ty or y, tz or z
 	rig.ground = ground ~= nil and y - ground <= Vfx.GROUND_BURST * math.max(1, s * 0.5)
 	local at = Vector3.new(x, y, z)
 	local dir = if dx then Vector3.new(dx, dy :: number, dz :: number) else Vector3.zero
 	local frame = if dir.Magnitude > 1e-3 then CFrame.lookAt(at, at + dir) else CFrame.new(at)
+	if k.laser then
+		frame = CFrame.new(rig.tx, rig.ty, rig.tz) -- the glint plays on the jammed missile
+	end
 	rig.carrier.CFrame = frame
 	local countScale = math.clamp(s, 1, 2.5)
 	for _, em in rig.emitters do
@@ -629,12 +652,13 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 		scorch(v, x, ground, z, 7 * s * 0.8, now)
 	end
 	for i, f in rig.flares do
-		-- flares pop out sideways and behind, then fall burning
+		-- flares pop out of the aircraft, fan out toward the decoy point the
+		-- missile went for (reached in ~0.6 s), then fall burning
 		local a = (i / #rig.flares + jitter(now, i) * 0.3) * 2 * math.pi
-		local back = if dir.Magnitude > 1e-3 then -dir else Vector3.zero
-		f.vx = math.cos(a) * 14 + back.X * 18
-		f.vy = 6 + jitter(now, i + 7) * 6
-		f.vz = math.sin(a) * 14 + back.Z * 18
+		local to = Vector3.new(rig.tx - x, rig.ty - y, rig.tz - z) / 0.6
+		f.vx = to.X + math.cos(a) * 8
+		f.vy = to.Y + 4 + jitter(now, i + 7) * 5
+		f.vz = to.Z + math.sin(a) * 8
 		f.part.CFrame = CFrame.new(at)
 		f.trail:Clear()
 		f.trail.Enabled = true
@@ -690,6 +714,20 @@ function Vfx.step(v: State, now: number, dt: number)
 					done = false
 				elseif rig.ring.Transparency < 1 then
 					rig.ring.Transparency = 1
+				end
+			end
+			if rig.laser then
+				local t = age / 0.4
+				if t < 1 then
+					local a, b = Vector3.new(rig.x, rig.y, rig.z), Vector3.new(rig.tx, rig.ty, rig.tz)
+					local len = (b - a).Magnitude
+					local flicker = 0.5 + 0.5 * math.sin(age * 90)
+					rig.laser.Size = Vector3.new(0.18, 0.18, math.max(len, 0.1))
+					rig.laser.CFrame = if len > 1e-3 then CFrame.lookAt((a + b) / 2, b) else CFrame.new(a)
+					rig.laser.Transparency = 0.1 + 0.35 * flicker + 0.5 * t
+					done = false
+				elseif rig.laser.Transparency < 1 then
+					rig.laser.Transparency = 1
 				end
 			end
 			if #rig.flares > 0 then

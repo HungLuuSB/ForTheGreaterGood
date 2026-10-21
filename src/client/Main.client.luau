@@ -360,7 +360,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local simDt = dt * speed
 	local t = Interp.advance(clock, world, now, dt, speed)
 	local t0 = os.clock()
-	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position)
+	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)

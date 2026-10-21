@@ -91,6 +91,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `d39ec8e` (SAM scene on flat:256).
 - Ready to merge: `58187a7` (log C-45, C-46; requests 14-16 for the sim session).
 - Ready to merge: `927a141` (detailed combat effects with ReplicatedStorage.Vfx templates, C-47).
+- Ready to merge: `a8d794e` (merge of `main` with S-29..S-32) with `a9ef27b` (spec threshold); test_client 92, test 313, build passed.
 
 ## Tasks
 
@@ -321,6 +322,13 @@ All with real mouse and keyboard input through the MCP tools.
 - Effects slow down and freeze with the sim speed, so paused playtests can be inspected.
 - **Your own effects:** save an effect as `ReplicatedStorage.Vfx.Impact` (or `Death`, `MuzzleFlash`, `Hit`, `Launch`, `Decoy`, `Flare`, `Chaff`) and it replaces the built-in one, e.g. one made with VFX Studio. Give each ParticleEmitter an `EmitCount` attribute (optional `EmitDelay`); C-47 lists the rest.
 
+## 2026-10-21: aircraft crash, countermeasures, merge of S-29..S-32 (C-48)
+
+- **Aircraft fall out of the sky** when they die in the air: jets dive and roll, helicopters spin down, burning and trailing smoke, and explode where they hit the ground; they leave no wreck (`debug_out/screens/c48_jet_falling.jpg`, `c48_crash_explosion.jpg`). Asked the sim not to make air wrecks at all (request 19).
+- **Countermeasures follow what the aircraft carries:** a jammer laser for aircraft with DIRCM only (Falcon, Archon, Guardian), flares dropped from the aircraft for those with flares (Wasp, Manticore), chaff against radar missiles (`c48_dircm_laser.jpg`). Request 18 asks for the exact one on the wire.
+- **Deaths and effects** now slow down and pause with the sim speed.
+- **Moving an aircraft to a point inside its circle** still doesn't work: the server counts it as arrived and circles from where the jet is. That is request 17 (high priority); the client's line will follow the fix.
+
 ## Needs my review
 
 - **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
@@ -344,6 +352,12 @@ All with real mouse and keyboard input through the MCP tools.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+19. **No wrecks for aircraft (C-48, the user, 2026-10-21):** "HELI/AIR death should be: they fall off the sky, crash onto the ground and their wreck explode, so air won't leave wreck." `Damage` makes a wreck for any unit dying at severity ≤ `WRECK_MAX_SEVERITY`, aircraft included, at the spot under the aircraft. The client now plays the fall and the crash explosion itself and draws no wreck for aircraft (C-48), but the server's wreck still exists (reclaimable, and WRECK records will put it on the client's map once the client reads them). Please skip `Combat.addWreck` for units of the air domain that die airborne (a landed aircraft may keep one). Medium priority.
+
+18. **Which countermeasure seduced a missile (C-48, 2026-10-21):** DECOYED doesn't say whether flares, DIRCM or chaff won, so the client guesses from the target's equipment and EW's order (radar → chaff; IR → DIRCM if it has no flares, else flares). An aircraft with both DIRCM and flares (none today, but the defs allow it) would be drawn wrong half the time. A `cm u8` in DECOYED (1 flares, 2 chaff, 3 DIRCM), e.g. in the top bits of `decoyTicks` (15 fits in 4 bits), would make it exact; a protocol bump. Low priority.
+
+17. **A jet ordered to a point inside its loiter radius never goes there (the user, 2026-10-21):** "when you click move on air plane, if the move is inside the white range, it will disappear shortly after and the plane move following its current facing direction, not the pre-defined position." In `Air.steerJet` an order whose goal is within `Air.LOITER_RADIUS` (220 studs) of the jet counts as arrived at once (`Nav.clearOrder`), and the jet starts circling the goal at 220 studs, from wherever it is: it never flies to the point, and a close order looks like nothing happened. Suggest: a new move flies to the goal until it passes within a small arrival radius (e.g. 40 studs, or the closest approach once past it), then loiters around it; the loiter stays at 220 (wider than the turn circle). The client's move line uses the arrival radius (C-45 mirrors `LOITER_RADIUS` today), so please name it (e.g. `Air.ARRIVE_RADIUS`) and the client will follow. High priority (the user asked).
 
 16. **Thorn SAM: longer range, bigger blast (the user, 2026-10-21):** "increase SAM range and the IR missile explosion" (blast radius, with a matching effect on the client). `chs_ir_sam` today: `range` / `lockRange` 280, `aoe` 5 (also its proximity fuse), `terminalRange` 30. Suggest `range` and `lockRange` 420 (1.5×) and `aoe` 12 (keep `edgeEffectiveness` 0.5, or add a separate `fuseRange` if 12 should not change the fuse), maybe `projectileSpeed` up so a 420-stud shot isn't slower to arrive than today's (420 → ~500 studs/s); `chs_thorn`'s turret and targeting follow `range`. The client reads all of these from the def (rings, seeker cone length, explosion size), so nothing changes on this side. The `sam` test scene is now 2048 studs long (`flat:256`), the Thorns at x 640–800, the Falcon circling at x = 600. Unit and weapon defs are yours; high priority (the user asked).
 

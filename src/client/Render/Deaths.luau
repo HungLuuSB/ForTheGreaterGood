@@ -7,6 +7,9 @@
 -- and tilted, pooled per def; they stay until the match restarts (the
 -- wire doesn't say when a wreck is reclaimed: request 10), at most
 -- MAX_WRECKS. Hidden at strategic zoom. Looks are placeholders.
+-- Aircraft that die in the air fall out of the sky instead (C-48,
+-- Core/Deaths.crash), burning and trailing smoke, and leave nothing: the
+-- ground explosion comes from Effects when they hit.
 
 local Deaths = require("../Core/Deaths")
 local Models = require("./Models")
@@ -29,6 +32,9 @@ type Playing = {
 	plan: Deaths.Plan,
 	start: number,
 	done: (() -> ())?, -- gives the model back
+	crash: Deaths.Crash?,
+	rootOffset: CFrame,
+	fire: Attachment?, -- a falling aircraft's flames and smoke
 }
 
 export type Wreck = { id: number, defId: string, model: Model }
@@ -38,14 +44,14 @@ export type State = {
 	wrecks: { Wreck }, -- oldest first
 	free: { [string]: { Model } },
 	folder: Folder,
-	stats: { shakes: number, flings: number, wrecks: number },
+	stats: { shakes: number, flings: number, wrecks: number, crashes: number },
 }
 
 function RenderDeaths.new(): State
 	local folder = Instance.new("Folder")
 	folder.Name = "Wrecks"
 	folder.Parent = workspace
-	return { playing = {}, wrecks = {}, free = {}, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0 } }
+	return { playing = {}, wrecks = {}, free = {}, folder = folder, stats = { shakes = 0, flings = 0, wrecks = 0, crashes = 0 } }
 end
 
 local function wreckModel(s: State, def: any, id: number): Model
@@ -89,23 +95,70 @@ local function placeWreck(s: State, id: number, def: any, base: CFrame)
 	s.stats.wrecks = #s.wrecks
 end
 
+-- Flames and a smoke trail on a falling aircraft (world-space particles).
+local function burning(root: BasePart, big: number): Attachment
+	local a = Instance.new("Attachment")
+	a.Name = "CrashFire"
+	local fire = Instance.new("ParticleEmitter")
+	fire.Texture = "rbxasset://textures/particles/fire_main.dds"
+	fire.Rate = 60
+	fire.Lifetime = NumberRange.new(0.2, 0.4)
+	fire.Speed = NumberRange.new(1, 3)
+	fire.SpreadAngle = Vector2.new(30, 30)
+	fire.LightEmission = 0.9
+	fire.LightInfluence = 0
+	fire.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.6 * big), NumberSequenceKeypoint.new(1, 0.4 * big) })
+	fire.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
+	fire.Color = ColorSequence.new(Color3.fromRGB(255, 220, 120), Color3.fromRGB(255, 90, 30))
+	fire.Parent = a
+	local smoke = Instance.new("ParticleEmitter")
+	smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	smoke.Rate = 50
+	smoke.Lifetime = NumberRange.new(1.8, 2.6)
+	smoke.Speed = NumberRange.new(0.5, 2)
+	smoke.SpreadAngle = Vector2.new(180, 180)
+	smoke.Acceleration = Vector3.new(0, 2, 0)
+	smoke.Drag = 1
+	smoke.Rotation = NumberRange.new(0, 360)
+	smoke.RotSpeed = NumberRange.new(-30, 30)
+	smoke.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.5 * big), NumberSequenceKeypoint.new(1, 6 * big) })
+	smoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(0.6, 0.7), NumberSequenceKeypoint.new(1, 1) })
+	smoke.Color = ColorSequence.new(Color3.fromRGB(50, 48, 46), Color3.fromRGB(120, 118, 115))
+	smoke.Parent = a
+	a.Parent = root
+	return a
+end
+
 -- Starts a death on a drawn model. `done` gives the model back when it ends.
-function RenderDeaths.start(s: State, id: number, def: any, model: Model, motors: { [string]: Motor6D }, severity: number, wreckId: number, now: number, done: () -> ())
-	local plan = Deaths.plan(id, def, severity, wreckId)
+-- `crash` (Core/Deaths.crash): an aircraft's fall instead, with the model's
+-- `rootOffset` (its root's frame against the unit's position and heading).
+function RenderDeaths.start(s: State, id: number, def: any, model: Model, motors: { [string]: Motor6D }, severity: number, wreckId: number, now: number, done: () -> (), crash: Deaths.Crash?, rootOffset: CFrame?)
+	local plan = if crash
+		then { kind = "crash", duration = crash.duration, wreck = false, pieces = {} } :: Deaths.Plan
+		else Deaths.plan(id, def, severity, wreckId)
 	local root = model.PrimaryPart :: BasePart
-	table.insert(s.playing, { id = id, def = def, model = model, root = root, base = root.CFrame, motors = motors, plan = plan, start = now, done = done })
+	local fire = if crash then burning(root, math.max(1, def.footprint or 1)) else nil
+	table.insert(s.playing, { id = id, def = def, model = model, root = root, base = root.CFrame, motors = motors, plan = plan, start = now, done = done, crash = crash, rootOffset = rootOffset or CFrame.identity, fire = fire })
 	if plan.kind == "shake" then
 		s.stats.shakes += 1
+	elseif plan.kind == "crash" then
+		s.stats.crashes += 1
 	else
 		s.stats.flings += 1
 	end
 end
 
-function RenderDeaths.step(s: State, now: number)
+-- `now`: render-clock seconds; `speed`: the sim speed (a falling aircraft's
+-- flames and smoke run at it, at most 1, like the other effects).
+function RenderDeaths.step(s: State, now: number, speed: number?)
+	local timeScale = math.clamp(speed or 1, 0, 1)
 	for i = #s.playing, 1, -1 do
 		local p = s.playing[i]
 		local t = now - p.start
 		if t >= p.plan.duration then
+			if p.fire then
+				p.fire:Destroy() -- its smoke stays in the air and fades
+			end
 			if p.plan.wreck then
 				placeWreck(s, p.id, p.def, p.base) -- same model geometry: the wreck's root takes the dying root's place
 			end
@@ -115,7 +168,15 @@ function RenderDeaths.step(s: State, now: number)
 			end
 			continue
 		end
-		if p.plan.kind == "shake" then
+		if p.plan.kind == "crash" then
+			for _, e in (p.fire :: Attachment):GetChildren() do
+				if e:IsA("ParticleEmitter") and e.TimeScale ~= timeScale then
+					e.TimeScale = timeScale
+				end
+			end
+			local x, y, z, heading, pitch, roll = Deaths.crashAt(p.crash :: Deaths.Crash, t)
+			p.root.CFrame = CFrame.new(x, y, z) * CFrame.Angles(0, heading + math.pi, 0) * CFrame.Angles(pitch, 0, roll) * p.rootOffset
+		elseif p.plan.kind == "shake" then
 			local dx, dz = Deaths.shakeAt(p.id, t)
 			p.root.CFrame = p.base + Vector3.new(dx, 0, dz)
 		else
@@ -145,6 +206,9 @@ end
 -- A match restart: every wreck and death goes.
 function RenderDeaths.clear(s: State)
 	for _, p in s.playing do
+		if p.fire then
+			p.fire:Destroy()
+		end
 		if p.done then
 			p.done()
 		end

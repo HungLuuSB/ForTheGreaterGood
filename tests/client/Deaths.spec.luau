@@ -6,6 +6,7 @@
 
 local Commands = require("../../src/client/Core/Commands")
 local Deaths = require("../../src/client/Core/Deaths")
+local Effects = require("../../src/client/Core/Effects")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
@@ -69,5 +70,65 @@ return function(t: any)
 		end
 		print(string.format("    duel: %d deaths, %d shakes into wrecks, %d flung apart", deaths, shakes, flings))
 		t.expect(deaths > 5, "plenty of deaths")
+	end)
+
+	local function flat(_x: number, _z: number): number
+		return 10
+	end
+
+	t.test("aircraft fall out of the sky: jets dive ahead and roll, helicopters spin down, both end on the ground (C-48)", function()
+		local jet = Deaths.crash({ id = 7, x = 0, z = 0, heading = math.pi / 2, alt = 110, vx = 200, vz = 0 }, defs.units.ord_falcon, flat) :: Deaths.Crash
+		t.expect(jet ~= nil, "a jet in the air falls")
+		t.expect(jet.duration > 1 and jet.duration < 4, `it falls for a couple of seconds ({jet.duration})`)
+		t.expect(math.abs(jet.ey - 10) < 1e-6 and jet.ex > 100, `it hits the ground well ahead ({jet.ex})`)
+		local x0, y0, z0 = Deaths.crashAt(jet, 0)
+		t.expect(x0 == 0 and z0 == 0 and math.abs(y0 - 120) < 1e-6, "it starts where it died, at its altitude")
+		local _, yEnd, _, _, pitch, roll = Deaths.crashAt(jet, jet.duration)
+		t.expect(math.abs(yEnd - 10) < 0.05, "it ends on the ground")
+		t.expect(pitch < -0.5 and math.abs(roll) > 1, `nose down and rolling at the end (pitch {pitch}, roll {roll})`)
+		local again = Deaths.crash({ id = 7, x = 0, z = 0, heading = math.pi / 2, alt = 110, vx = 200, vz = 0 }, defs.units.ord_falcon, flat) :: Deaths.Crash
+		t.equal(again.duration, jet.duration)
+		t.equal(again.roll, jet.roll)
+
+		local heli = Deaths.crash({ id = 9, x = 50, z = 50, heading = 0, alt = 40, vx = 0, vz = 20 }, defs.units.chs_wasp, flat) :: Deaths.Crash
+		t.expect(heli ~= nil and heli.heli, "a helicopter in the air falls")
+		local _, _, _, h0 = Deaths.crashAt(heli, 0)
+		local _, _, _, h1 = Deaths.crashAt(heli, heli.duration)
+		t.expect(math.abs(h1 - h0) > 3, `it spins on the way down ({h1 - h0} radians)`)
+		t.expect(math.sqrt((heli.ex - 50) ^ 2 + (heli.ez - 50) ^ 2) < 20, "it comes down close to where it died")
+
+		t.expect(Deaths.crash({ id = 3, x = 0, z = 0, heading = 0, alt = 0, vx = 0, vz = 0 }, defs.units.ord_lancer, flat) == nil, "ground units don't fall")
+		t.expect(Deaths.crash({ id = 4, x = 0, z = 0, heading = 0, alt = 1, vx = 0, vz = 0 }, defs.units.ord_falcon, flat) == nil, "a landed aircraft dies like a ground unit")
+	end)
+
+	t.test("a falling aircraft explodes where and when it hits the ground, not where it died (C-48)", function()
+		local world = World.new(defs)
+		local fx = Effects.new()
+		local defIndex = table.find(defs.unitByIndex, defs.units.ord_falcon)
+		local death = { id = 12, defIndex = defIndex, team = 1, x = 0, z = 0, heading = 0, severity = 50, wreckId = 3, tick = 1, alt = 110, vx = 0, vz = 180 }
+		table.insert(world.died, death :: any)
+		Effects.update(fx, world, 2, 0, 0, 0)
+		table.clear(world.died)
+		local crash = Deaths.crash(death, defs.units.ord_falcon, function(x: number, z: number): number
+			return World.groundY(world, x, z)
+		end) :: Deaths.Crash
+		local function deathBursts(): { any }
+			local out = {}
+			for _, b in fx.bursts do
+				if b.kind == "death" then
+					table.insert(out, b)
+				end
+			end
+			return out
+		end
+		t.equal(#deathBursts(), 0) -- nothing yet: it is still falling
+		-- the fall runs on the render clock (render tick 2 when it started)
+		Effects.update(fx, world, 2 + crash.duration * 15 * 0.5, 0.1, 0, 0)
+		t.equal(#deathBursts(), 0)
+		Effects.update(fx, world, 2 + crash.duration * 15 + 0.1, 0.2, 0, 0)
+		local bursts = deathBursts()
+		t.equal(#bursts, 1)
+		t.expect(math.abs(bursts[1].x - crash.ex) < 1e-6 and math.abs(bursts[1].z - crash.ez) < 1e-6, "at the crash point")
+		t.expect(bursts[1].ground ~= nil and math.abs(bursts[1].ground - crash.ey) < 1e-6, "on the ground")
 	end)
 end

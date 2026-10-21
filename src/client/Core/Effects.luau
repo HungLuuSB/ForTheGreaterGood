@@ -22,6 +22,7 @@ local Guidance = require("@shared/Combat/Guidance")
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
+local Deaths = require("./Deaths")
 local Interp = require("./Interp")
 local World = require("./World")
 
@@ -39,6 +40,7 @@ Effects.TRACER_SECONDS = 0.09
 Effects.EXPLOSION_SECONDS = 0.55
 Effects.LAUNCH_SECONDS = 0.5 -- a missile's launch flash (its smoke cloud lasts longer, Render/Vfx)
 Effects.FLARE_SECONDS = 1.6 -- flares or chaff falling where a decoyed missile went (C-47)
+Effects.DIRCM_SECONDS = 0.45 -- a jammer laser on a decoyed IR missile (C-48)
 Effects.DEATH_SECONDS = 0.9
 Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
 Effects.MAX_MARKS = 40
@@ -72,11 +74,13 @@ export type Proj = {
 }
 
 -- A flash, explosion or puff. `kind`: impact, death, muzzle, launch (a
--- missile leaving its launcher), decoy, flare or chaff (what a decoyed
--- missile follows, at the decoy point), lost. `ground`: the ground height
--- under it (air bursts sit well above it); `dx, dy, dz`: the direction it
--- faces (a muzzle's shot, a launch's flight), when known (C-47).
-export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, dx: number?, dy: number?, dz: number? }
+-- missile leaving its launcher), decoy, flare (dropped by the aircraft,
+-- falling toward the decoy point), chaff (a cloud at the decoy point), dircm
+-- (the aircraft's jammer laser on the missile), lost. `ground`: the ground
+-- height under it (air bursts sit well above it); `dx, dy, dz`: the
+-- direction it faces (a muzzle's shot, a launch's flight), when known
+-- (C-47); `tx, ty, tz`: where flares head, or the missile a laser hits (C-48).
+export type Burst = { x: number, y: number, z: number, radius: number, born: number, life: number, kind: string, size: number, ground: number?, dx: number?, dy: number?, dz: number?, tx: number?, ty: number?, tz: number? }
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
@@ -87,6 +91,7 @@ export type Fx = {
 	bursts: { Burst },
 	tracers: { Tracer },
 	pendingDeaths: { World.Death },
+	crashes: { { at: number, x: number, y: number, z: number, radius: number } }, -- falling aircraft: where and at which render tick they hit (C-48)
 	tick: number, -- projectiles are stepped up to this sim tick
 	focusX: number,
 	focusZ: number,
@@ -104,6 +109,7 @@ function Effects.new(): Fx
 		bursts = {},
 		tracers = {},
 		pendingDeaths = {},
+		crashes = {},
 		tick = -1,
 		focusX = 0,
 		focusZ = 0,
@@ -190,6 +196,23 @@ local function burst(fx: Fx, now: number, x: number, y: number, z: number, radiu
 	local b: Burst = { x = x, y = y, z = z, radius = radius, born = now, life = life, kind = kind, size = radius }
 	capped(fx, fx.bursts, b, Effects.MAX_EXPLOSIONS)
 	return b
+end
+
+-- Which countermeasure seduced a missile of `guidance` aimed at `unit`
+-- (C-48). The DECOYED record doesn't say (request 18), so it follows the
+-- server's order (EW): radar missiles meet chaff; IR missiles meet DIRCM
+-- first, then flares, so an aircraft with DIRCM and no flares jammed it and
+-- one with flares (with or without DIRCM) is drawn dropping flares.
+function Effects.countermeasure(world: World.World, unit: World.Unit?, guidance: string?): string
+	if guidance == "RADAR" then
+		return "chaff"
+	end
+	local def = if unit then World.def(world, unit) else nil
+	local cm = def and (def :: any).countermeasures
+	if cm and cm.dircm and not cm.flares then
+		return "dircm"
+	end
+	return "flare"
 end
 
 local function facing(b: Burst, dx: number, dy: number, dz: number)
@@ -524,15 +547,32 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			x, z = Effects.unclamp(world, p, x, z)
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
+			local target = if p.target ~= 0 then world.units[p.target] else nil
 			p.target = 0
 			p.decoy = nil
 			if kind == EK.DECOYED and (e.decoyTicks or 0) > 0 then
 				-- it follows the flare or chaff like the server (S-28)
 				local cx, cz = world.grid:decode(e.decoyCell, e.decoyOffX, e.decoyOffZ)
 				p.decoy = { cx, e.decoyY / Schema.Y_SCALE, cz, e.decoyTicks }
-				-- the flares (IR) or chaff (radar) it went for, falling there
-				local b = burst(fx, now, cx, e.decoyY / Schema.Y_SCALE, cz, 1, if p.weapon.guidance == "RADAR" then "chaff" else "flare", Effects.FLARE_SECONDS)
-				b.ground = World.groundY(world, cx, cz)
+				-- what seduced it (C-48): flares the aircraft drops toward the decoy
+				-- point, a chaff cloud there, or the aircraft's jammer laser
+				local cy = e.decoyY / Schema.Y_SCALE
+				local ax, ay, az = cx, cy, cz
+				if target and target.rx then
+					ax, ay, az = target.rx, target.ry :: number, target.rz :: number
+				end
+				local cm = Effects.countermeasure(world, target, p.weapon.guidance)
+				local b
+				if cm == "dircm" then
+					b = burst(fx, now, ax, ay, az, 1, "dircm", Effects.DIRCM_SECONDS)
+					b.tx, b.ty, b.tz = dx, dy, dz
+				elseif cm == "chaff" then
+					b = burst(fx, now, cx, cy, cz, 1, "chaff", Effects.FLARE_SECONDS)
+				else
+					b = burst(fx, now, ax, ay, az, 1, "flare", Effects.FLARE_SECONDS)
+					b.tx, b.ty, b.tz = cx, cy, cz
+				end
+				b.ground = World.groundY(world, b.x, b.z)
 				facing(b, vx, vy, vz)
 			end
 			mark(fx, if kind == EK.DECOYED then "decoy" else "lost", now, dx, dy, dz, x, y, z)
@@ -672,9 +712,26 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			table.remove(fx.pendingDeaths, i)
 			local def = if d.defIndex then world.defs.unitByIndex[d.defIndex] else nil
 			local r = (if def then def.footprint else 1) * 3 * (1 + d.severity / 255)
-			local ground = World.groundY(world, d.x, d.z)
-			local b = burst(fx, now, d.x, ground + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
-			b.ground = ground
+			-- an aircraft falls first and explodes where it hits (C-48)
+			local crash = Deaths.crash(d, def, function(x: number, z: number): number
+				return World.groundY(world, x, z)
+			end)
+			if crash then
+				-- on the render clock, as Render/Deaths plays the fall
+				table.insert(fx.crashes, { at = renderTick + crash.duration * 15, x = crash.ex, y = crash.ey, z = crash.ez, radius = r * 1.3 })
+			else
+				local ground = World.groundY(world, d.x, d.z)
+				local b = burst(fx, now, d.x, ground + 1.5, d.z, r, "death", Effects.DEATH_SECONDS)
+				b.ground = ground
+			end
+		end
+	end
+	for i = #fx.crashes, 1, -1 do
+		local c = fx.crashes[i]
+		if renderTick >= c.at then
+			table.remove(fx.crashes, i)
+			local b = burst(fx, now, c.x, c.y + 1.5, c.z, c.radius, "death", Effects.DEATH_SECONDS)
+			b.ground = c.y
 		end
 	end
 	for i = #fx.bursts, 1, -1 do
@@ -876,6 +933,7 @@ function Effects.clear(fx: Fx)
 	table.clear(fx.bursts)
 	table.clear(fx.tracers)
 	table.clear(fx.pendingDeaths)
+	table.clear(fx.crashes)
 	table.clear(fx.shots)
 	table.clear(fx.marks)
 	fx.tick = -1

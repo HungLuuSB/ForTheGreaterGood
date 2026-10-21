@@ -86,6 +86,13 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local id = e.unitId :: number
 			local u = world.units[id]
 			if u then
+				local vx, vz = 0, 0
+				local snaps = u.snaps
+				if #snaps >= 2 then
+					local a, b = snaps[#snaps - 1], snaps[#snaps]
+					local dt = math.max(b.tick - a.tick, 1) / 15
+					vx, vz = (b.x - a.x) / dt, (b.z - a.z) / dt
+				end
 				table.insert(world.died, {
 					id = id,
 					defIndex = u.defIndex,
@@ -96,6 +103,9 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 					severity = e.severity or 0,
 					wreckId = e.wreckId or 0,
 					tick = tick,
+					alt = u.alt,
+					vx = vx,
+					vz = vz,
 				})
 				world.units[id] = nil
 			end
