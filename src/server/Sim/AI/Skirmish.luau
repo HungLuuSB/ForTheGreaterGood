@@ -41,8 +41,8 @@
 --           waves of 4, 5, ... units at least 2 minutes apart.
 --   normal  everything above (the default); thinks every 4/3 s (S-31: a
 --           multiple of THINK_ALIGN; it was 1 s). S-57: from its second
---           generator, every builder helps the plant until 2 tanks are out
---           (its first tanks before more workers); an enemy wave of 3+
+--           generator, its plant builds 2–3 tanks before more workers and
+--           it builds no third generator until they are out; an enemy wave of 3+
 --           ground units near the base (the recall radius) brings the whole
 --           army home, and no wave leaves for 20 s after.
 -- Missile stockpiles (S-57): the generator rule plans for the power its
@@ -125,7 +125,7 @@ export type Level = {
 	firstAttack: number, -- ticks before the first wave may leave (S-57; easy: 8 min)
 	waveInterval: number, -- ticks at least between two waves leaving (S-57)
 	maxArmy: number, -- army units it keeps at most (S-57; easy)
-	tanksBeforeGen3: number, -- army units it has before its third generator: from its second, all builders help the plant (S-57; normal)
+	tanksBeforeGen3: number, -- tanks before its third generator (S-57; normal): this or one more, by its Prng
 	recall: boolean, -- pulls the whole army home against an enemy wave near the base (S-57)
 }
 
