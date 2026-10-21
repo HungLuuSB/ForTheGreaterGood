@@ -1,7 +1,7 @@
 --!strict
 -- Strategic missile warnings (C-57): while a nuke flies (Core/Effects'
 -- `warnings`, from LAUNCH_WARNING, which every player gets), a blinking
--- banner with the time to impact, a red marker where it was launched and a
+-- "NUCLEAR LAUNCH DETECTED" banner, a red marker where it was launched and a
 -- pulsing red ring of its blast radius where it will come down
 -- (Effects.landing, from the missile's own state); a white flash over the
 -- screen when one detonates in view. Rings are always-on-top line
@@ -11,7 +11,6 @@
 local Players = game:GetService("Players")
 
 local Effects = require("../Core/Effects")
-local MissileView = require("../Core/MissileView")
 local World = require("../Core/World")
 
 local NukeWarning = {}
@@ -41,7 +40,7 @@ function NukeWarning.new(): State
 	banner.Name = "Banner"
 	banner.AnchorPoint = Vector2.new(0.5, 0)
 	banner.Position = UDim2.new(0.5, 0, 0, 140)
-	banner.Size = UDim2.fromOffset(700, 34)
+	banner.Size = UDim2.fromOffset(360, 34)
 	banner.BackgroundColor3 = Color3.fromRGB(40, 5, 5)
 	banner.BackgroundTransparency = 0.2
 	banner.BorderSizePixel = 0
@@ -99,7 +98,9 @@ local function ring(s: State, world: World.World, x: number, z: number, r: numbe
 	end
 end
 
--- `now`: real seconds (blinking, the flash); the time to impact is in sim seconds.
+-- `now`: real seconds (blinking, the flash). The banner is one notice for
+-- any number of nukes in flight (the user, C-61): time to impact and radar
+-- tracks are in the sensor view (N, C-58).
 function NukeWarning.step(s: State, fx: Effects.Fx, world: World.World, now: number, cam: Camera)
 	s.used = 0
 	local text: string? = nil
@@ -109,8 +110,9 @@ function NukeWarning.step(s: State, fx: Effects.Fx, world: World.World, now: num
 		-- the launch point
 		ring(s, world, w.x, w.z, LAUNCH_RADIUS, 3, 0.2)
 		if live then
+			text = "NUCLEAR LAUNCH DETECTED"
 			local proj = p :: Effects.Proj
-			local x, z, secs = Effects.landing(world, proj)
+			local x, z = Effects.landing(world, proj)
 			if x then
 				local pulse = 0.5 + 0.5 * math.sin(now * 8)
 				ring(s, world, x, z :: number, proj.weapon.aoe or 150, 4, 0.15 + 0.4 * pulse)
@@ -118,14 +120,6 @@ function NukeWarning.step(s: State, fx: Effects.Fx, world: World.World, now: num
 				local y = World.groundY(world, x, z :: number) + 1
 				line(s, Vector3.new(x - cross, y, z :: number), Vector3.new(x + cross, y, z :: number), 3, 0.2)
 				line(s, Vector3.new(x, y, (z :: number) - cross), Vector3.new(x, y, (z :: number) + cross), 3, 0.2)
-				-- the radars holding it (C-58): ours on an enemy missile, the enemy's we know of on ours
-				local n = #MissileView.trackers(world, proj, proj.x, proj.z)
-				local tracking = if proj.own
-					then (if n > 0 then string.format("  -  %d enemy radar%s tracking", n, if n == 1 then "" else "s") else "")
-					else string.format("  -  %d radar%s tracking", n, if n == 1 then "" else "s")
-				text = string.format("NUCLEAR LAUNCH DETECTED  -  impact in %.1f s", secs :: number) .. tracking
-			else
-				text = "NUCLEAR LAUNCH DETECTED"
 			end
 		end
 	end

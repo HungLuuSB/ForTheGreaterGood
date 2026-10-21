@@ -482,3 +482,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** a match profile may set `weaponOverrides` (MatchConfig): the server entry (`src/roblox/Main.server.luau`) runs a copy of the registry's defs with those weapon fields merged in. Only numbers no client simulates can be overridden: an existing stockpile's `buildTime` and `cost`, and `intercepts.chance`; anything else is an error at startup. The copy keeps the registry's defs hash so clients still join (their defs keep the registry's numbers, which only the stock pip's animation between records reads; the server's progress records correct it every sixteenth). Each override is printed at startup. The `nuke` profile uses it for the user's test: nukes cost 1 supply and 1 power and build in 10 s, radar SAM interceptors kill with chance 0.2 (0.5 in the defs). The defs themselves stay the sim's.
 
 **Why / measured:** Studio (`nuke` profile): the four overrides printed at startup; with 2 nukes in stock fired 10 s apart, a third order 30 s later launched within 5 ticks (with the registry's 120 s the silo would have been empty for minutes); the economy showed the 0.1/s drain of a 1-supply nuke. No errors.
+
+### C-61 — One launch notice (2026-10-21)
+
+**Decision:** the warning banner says only "NUCLEAR LAUNCH DETECTED" while any nuke flies, however many (the user: "just a notice is fine, in case multiple nukes are present"). It no longer shows the time to impact (C-57) or the radars tracking (C-58); both stay in the sensor view (N). The launch markers and blast rings on the ground stay, one per nuke.
+
+**Why / measured:** Studio (`nuke` profile): with the Chaos nuke and one of yours in the air, the banner text is exactly "NUCLEAR LAUNCH DETECTED". No errors.

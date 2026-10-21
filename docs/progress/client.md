@@ -416,6 +416,10 @@ All with real mouse and keyboard input through the MCP tools.
 - Your silo's (and SAM sites') next pip now fills up as the missile is built, from the sim's new progress (S-49) (`debug_out/screens/c59_stock_progress_pip.jpg`). Nukes also fly lower now (300 studs up, same 13 s), so they stay on screen.
 - For testing, the `nuke` profile makes nukes cost 1 supply and 1 power and build in 10 s, and radar SAM interceptors kill only 20% of the time (the defs say 50%). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
 
+## 2026-10-21: one launch notice (C-61)
+
+- The warning banner now just says "NUCLEAR LAUNCH DETECTED", whatever the number of nukes in the air; the impact time and radar tracks are in the sensor view (N).
+
 ## Needs my review
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
