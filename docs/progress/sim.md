@@ -83,6 +83,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - `chs_jackal.health` 340 → 320.
   - Results: Lancer vs Ravager 0.38 / 0.39 → 1.00 / 0.82; Herald vs Jackal 0.61 / 0.59 → 0.82 / 0.80; Verdict vs Hellmouth 0.55 / 0.73 → 0.61 / 0.80.
   - **Not reached: Verdict vs Hellmouth at close range (0.61).** No number moved it by more than 0.1. Likely cause: precise Verdict volleys overkill one target while mortar spread and blast share damage. Fix would be a mechanic (a group spreading its fire / overkill avoidance in Targeting). Do you want that?
+  - **After S-23** (targeting stagger fix, three seeds): Lancer vs Ravager 1.26 / 1.00 (in band), Herald vs Jackal 0.91 / 0.71, Verdict vs Hellmouth 0.51 / 0.58. Artillery and the scouts' long-range fight need a second pass (and the artillery likely the overkill mechanic); not done, to avoid tuning on a moving base.
   - Side effects through shared weapons: Lancer vs Mire 1.36 / 1.57 → 2.39 / 2.04 (the Mire got the Chaos cannon's spread); Tideguard vs Ravager 0.27 → 0.53; Paladin vs Ravager 0.37 → 0.84 / 1.11.
 - **AI tuning numbers** (S-7, S-17): placeholders, as agreed.
 
@@ -162,8 +163,9 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 
 ## How to continue
 
-- Branch: `m0-foundations` (pushed to `origin`). Run `lune run test` from the repo root; everything must pass before starting the next task.
-- **Next:** wait for answers to the questions above. Everything left for the milestones needs Studio; follow `docs/STUDIO_HANDOFF.md` in order. Headless work that could still be done without Studio: M8 roster and balance (placeholder defs exist for guide 13's ground, air, naval and SAM roles), the Commands slot-assignment peak, and the guide 7.5 join/reconnect snapshot logic.
+- Branch: `m-sim-2` (pushed to `origin`); merged into `main` after every task. Run `lune run test` from the repo root (~65 s); everything must pass before starting the next task.
+- **Integration:** merges into `main` run in the worktree `../FTGG-integration` with `bash tools/integration/check.sh` and `bash tools/integration/integrate.sh <commit> "<description>"` (`CLAUDE.md`, "Integration"); never in this checkout, and never edit `docs/progress/client.md`.
+- **Next:** the answers under "Needs my review", then the gaps from the guide coverage audit above (move states, line of fire, terrain types, amphibious and hover, carriers, cancel), by importance.
 - Rules: `CLAUDE.md`, the `ftgg-roblox-dev` skill and the design guide (`docs/For_The_Greater_Good_Design_Guide.md`).
 - Unattended-session rules (from the user):
   - After each task passes the tests: commit, push, and update this file.

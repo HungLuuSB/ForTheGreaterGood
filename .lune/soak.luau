@@ -22,7 +22,7 @@ local Sim = require("../src/server/Sim/Sim")
 local Skirmish = require("../src/server/Sim/AI/Skirmish")
 local Replay = require("../src/server/Sim/Replay")
 
-local SEED = tonumber(process.args[1]) or 3 -- seed 3 plays the full 40 minutes (S-8); 1, 2, 4, 5 end at 10–18 min
+local SEED = tonumber(process.args[1]) or 2 -- seed 2 plays the full 40 minutes (S-25 AI; seeds 1 and 3–13 end at 8–26 min)
 local MINUTES = tonumber(process.args[2]) or 40
 local TICKS = MINUTES * 60 * 15
 local BUDGET_MS = 1000 / 15
