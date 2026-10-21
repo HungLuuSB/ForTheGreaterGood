@@ -160,13 +160,13 @@ return function(t: RunAll.Context)
 	-- Combat events (D99): every FIRE, SPAWN_PROJ, IMPACT and DECOYED a player
 	-- gets is something its ally team may know, and the client's own
 	-- projectile stepping follows the server's.
-	t.test("combat events: only what the ally team may see, and the client tracks projectiles", function()
+	t.test("combat events: projectiles in the camera area, shooters only when known, and the client tracks projectiles", function()
 		local sim, mine, theirs = battle(12)
 		local g = (sim.map :: any).grid
 		local c = sim.combat
 		local rng = Prng.new(98)
 		local views = { Client.new(g), Client.new(g) }
-		local counts = { FIRE = 0, SPAWN_PROJ = 0, IMPACT = 0, DECOYED = 0, LOST_LOCK = 0 }
+		local counts = { FIRE = 0, SHOT = 0, SPAWN_PROJ = 0, IMPACT = 0, DECOYED = 0, LOST_LOCK = 0 }
 		local known = { {}, {} } -- projectile IDs each client was sent
 		local drift = 0
 		local EK = Schema.EventKind
@@ -189,20 +189,25 @@ return function(t: RunAll.Context)
 						if e.kind == EK.FIRE then
 							counts.FIRE += 1
 							t.expect(pn.tactical[e.unitId :: number] == true, `FIRE from unit {e.unitId}, not tactical for player {pid}`)
+						elseif e.kind == EK.SHOT then
+							counts.SHOT += 1 -- no shooter on the wire (S-43)
+							local ex, ez = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+							local sx, sz = g:decode(e.fromCell :: number, e.fromOffX :: number, e.fromOffZ :: number)
+							t.expect(inCamera(ex, ez) or inCamera(sx, sz), "a SHOT touches the camera area")
 						elseif e.kind == EK.SPAWN_PROJ then
 							counts.SPAWN_PROJ += 1
 							local id = e.projId :: number
 							known[pid][id] = true
 							t.expect(c.projSlot[id] ~= nil, "SPAWN_PROJ for a live projectile")
 							local x, z = c.px[id], c.pz[id]
-							t.expect(Sensors.inSight(sim, ally, x, z) and inCamera(x, z), `projectile {id} sent to player {pid} outside its sight or camera`)
+							t.expect(inCamera(x, z), `projectile {id} sent to player {pid} outside its camera area`) -- seen or not (S-43)
 							local target = e.targetId :: number
 							t.expect(target == 0 or knows(sim, ally, target), "a homing target only when the ally team knows it")
 						elseif e.kind == EK.IMPACT then
 							counts.IMPACT += 1
 							local id = e.projId :: number
 							local gx, gz = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
-							t.expect(known[pid][id] or (Sensors.inSight(sim, ally, gx, gz) and inCamera(gx, gz)), `IMPACT of projectile {id} the player may not see`)
+							t.expect(known[pid][id] or inCamera(gx, gz), `IMPACT of projectile {id} outside the camera area`)
 							known[pid][id] = nil
 						elseif e.kind == EK.DECOYED or e.kind == EK.LOST_LOCK then
 							counts[if e.kind == EK.DECOYED then "DECOYED" else "LOST_LOCK"] += 1
@@ -227,9 +232,11 @@ return function(t: RunAll.Context)
 	end)
 
 	-- A Hellmouth mortar outside Order's sight shells an Order generator it
-	-- sees on its own radar. Order gets the shells only once they fly into
-	-- its sight, never at the muzzle, and never learns the mortar's ID.
-	t.test("a hidden shooter's shells appear only once they fly into sight", function()
+	-- sees on its own radar. Order's camera covers the map: it gets the
+	-- shells from the muzzle (S-43, client request 21: projectiles regardless
+	-- of sight; before, only once they flew into its sight), and never
+	-- learns the mortar's ID.
+	t.test("a hidden shooter's shells show from the muzzle, but never the shooter", function()
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:96" })
 		local g = (sim.map :: any).grid
 		local c = sim.combat
@@ -251,7 +258,6 @@ return function(t: RunAll.Context)
 					if e.kind == Schema.EventKind.SPAWN_PROJ and e.weaponIndex == sim.defs.weapons.chs_mortar.index then
 						shells += 1
 						local id = e.projId :: number
-						t.expect(Sensors.inSight(sim, 1, c.px[id], c.pz[id]), "the shell is in Order's sight when it is sent")
 						nearest = math.min(nearest, math.sqrt((c.px[id] - w.posX[mortar]) ^ 2 + (c.pz[id] - w.posZ[mortar]) ^ 2))
 					elseif e.kind == Schema.EventKind.IMPACT then
 						impacts += 1
@@ -263,7 +269,7 @@ return function(t: RunAll.Context)
 		end
 		t.expect(shells >= 3, `Order saw the shells coming ({shells})`)
 		t.expect(impacts >= 1, `and their impacts ({impacts})`)
-		t.expect(nearest > 150, `never at the muzzle: closest {nearest} studs from the mortar`)
+		t.expect(nearest < 40, `from the muzzle: first seen {nearest} studs from the mortar`)
 		t.expect(view.received[mortar] == nil, "Order's client never learned the mortar's ID")
 		-- both are untracked radar blips to the mortar (no type, so no priority):
 		-- it shells whichever it found first
@@ -401,8 +407,9 @@ return function(t: RunAll.Context)
 					if sim.defs.weaponByIndex[c.pWeapon[p]].turnRate == nil then
 						r.unguided += 1
 					end
+					-- the camera covers the map: in view = on the map (sight doesn't matter, S-43)
 					local cx, cz = g:cellAt(c.px[p], c.pz[p])
-					if not (g:inBounds(cx, cz) and Sensors.inSight(sim, 1, c.px[p], c.pz[p])) then
+					if not g:inBounds(cx, cz) then
 						r.outOfView += 1
 					end
 					lastSync[p] = sim.tick
@@ -631,6 +638,66 @@ return function(t: RunAll.Context)
 		end
 		t.equal(sameTick, true, "DEATH and its WRECK in the same tick")
 		t.equal(mismatches, 0, `sensor cells where the client's sight differs from the server's ({checks} sensor ticks)`)
+	end)
+
+	-- S-43 (client request 21): a hitscan shot from a shooter the player
+	-- doesn't have arrives as SHOT, with both ends and no shooter ID
+	t.test("a hidden shooter's gun shot: SHOT with both ends to others, FIRE to its owner", function()
+		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:64" })
+		local w, c = sim.world, sim.combat
+		local g = (sim.map :: any).grid
+		local victim = Spawn.unit(sim, "ord_lancer", 1, -100, 0, 0)
+		local gunner = Spawn.unit(sim, "chs_jackal", 2, 200, 150, 0) -- far outside Order's sight
+		for _, id in { victim, gunner } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+		end
+		camera(sim, 1, 0, 0, 63, 63)
+		camera(sim, 2, 0, 0, 63, 63)
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 1, gunner), L.HIDDEN, "Order doesn't see the gunner")
+		-- the gunner's shot this tick, as Weapons records it
+		Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = gunner, other = victim, slot = 1, hit = true, x = -100, y = 13, z = 0, sx = 200, sy = 14, sz = 150 })
+		NetOut.step(sim)
+		local function events(pid: number): { Schema.Event }
+			local all = {}
+			for _, msg in sim.net.players[pid].outbox.Events do
+				for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+					table.insert(all, e)
+				end
+			end
+			return all
+		end
+		local shot, fire, mentions = nil, 0, 0
+		for _, e in events(1) do
+			if e.kind == Schema.EventKind.SHOT then
+				shot = e
+			elseif e.kind == Schema.EventKind.FIRE then
+				fire += 1
+			end
+			if e.unitId == gunner then
+				mentions += 1
+			end
+		end
+		t.expect(shot ~= nil, "Order gets a SHOT")
+		t.equal(fire, 0, "no FIRE (it would name the shooter)")
+		t.equal(mentions, 0, "nothing names the gunner")
+		if shot then
+			local ex, ez = g:decode(shot.cell :: number, shot.offX :: number, shot.offZ :: number)
+			local sx, sz = g:decode(shot.fromCell :: number, shot.fromOffX :: number, shot.fromOffZ :: number)
+			t.expect(math.abs(ex + 100) < 0.1 and math.abs(ez) < 0.1, "with the end point")
+			t.expect(math.abs(sx - 200) < 0.1 and math.abs(sz - 150) < 0.1, "and the start point")
+			t.equal(shot.hit, true)
+		end
+		local owner = 0
+		for _, e in events(2) do
+			if e.kind == Schema.EventKind.FIRE and e.unitId == gunner then
+				owner += 1
+			end
+		end
+		t.equal(owner, 1, "the gunner's owner gets the usual FIRE")
 	end)
 
 	t.test("HELLO: matching versions are accepted, stale ones get REJECT with the reason", function()

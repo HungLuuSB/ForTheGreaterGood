@@ -257,6 +257,12 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				view.projectiles[e.projId :: number] = nil
 				table.insert(view.effects, { kind = "impact", x = x, y = y, z = z })
 				continue
+			elseif kind == EK.SHOT then
+				-- a hidden shooter's shot: a tracer between the two ends (S-43)
+				local x, y, z = pos(e)
+				local fx, fz = g:decode(e.fromCell :: number, e.fromOffX :: number, e.fromOffZ :: number)
+				table.insert(view.effects, { kind = "fire", x = x, y = y, z = z, fromX = fx, fromZ = fz })
+				continue
 			elseif kind == EK.WRECK then
 				local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 				assert(view.wrecks[e.wreckId :: number] == nil, `WRECK {e.wreckId} the client already has`)

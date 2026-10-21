@@ -602,11 +602,12 @@ for each player P:
   - The strategic snapshot runs every 5th tick and always sends at least a header, so clients drop units that disappeared.
   - DEATH goes to players that had the unit tactical.
   - Event records ENTER / LEAVE / DEATH were added in `PROTOCOL_VERSION` 2.
-  - Combat events (`PROTOCOL_VERSION` 3, D99) go only where the player's ally team may know. They are batched with the tick's other events:
-    - FIRE (hitscan and beams): only for shooters in the player's tactical tier. It carries the shot's end point, never a target ID.
-    - SPAWN_PROJ: once a projectile is in the ally team's sight and in the camera area (+2 cells), at launch or when it flies into view. A hidden shooter's shells appear mid-flight, never at the muzzle. The homing target's ID is sent only if the ally team knows that unit.
+  - Combat events (`PROTOCOL_VERSION` 3, D99) never reveal what the player's ally team doesn't know. **Projectiles and shots are the exception to sight (S-43, the user):** everything in flight in the camera area is shown, seen or not, because none of it names its shooter; a hidden shooter is revealed only by normal sight. They are batched with the tick's other events:
+    - FIRE (hitscan and beams): for shooters in the player's tactical tier. It carries the shot's end point, never a target ID.
+    - SHOT (`PROTOCOL_VERSION` 14): a hitscan or beam shot from a shooter the player doesn't have, when either end is in the camera area: start and end point, no shooter or target ID.
+    - SPAWN_PROJ: once a projectile is in the camera area (+2 cells), seen or not: at launch, or when it flies into the camera area. The homing target's ID is sent only if the ally team knows that unit.
     - DECOYED / LOST_LOCK: only for projectiles the client has, with the new velocity.
-    - IMPACT: for projectiles the client has, or anywhere in sight and in the camera area. Projectiles at the end of their life burst with an IMPACT (no damage).
+    - IMPACT: for projectiles the client has, or anywhere in the camera area. Projectiles at the end of their life burst with an IMPACT (no damage).
     - The client steps its projectiles itself. Unguided ones match the server exactly; homing ones are approximate (the client doesn't know a radar contact's altitude or true position), and the IMPACT corrects them.
   - Sight and wrecks (`PROTOCOL_VERSION` 10, S-26), on the Events channel:
     - The ally team's **sight map** (sensor cells in LOS, allies' units included), so the client's fog is the server's: SIGHT_ROWS (a bitset of the whole map) after a join, then SIGHT_CELLS with the cells that changed, on sensor ticks. Spectators get none (no fog).
@@ -711,6 +712,7 @@ WRECK       wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8   
 WRECK_GONE  wreckId u16                                                   3 B
 SIGHT_ROWS  firstRow u8, rowCount u8, rowBytes u8, bits (1 per sensor cell)  4 + rows × rowBytes
 SIGHT_CELLS count u8, cell u16 × count (bit 15 = now in sight)          2 + 2 × count
+SHOT        hit u8, start pos, end pos (v14: a hidden shooter's hitscan)  14 B
 pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
 vel = vx, vy, vz i16 (1/8 stud per second)
 ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
@@ -728,7 +730,7 @@ projId u16, pos, vel          14 B
 - Render time = latest tick − 2 ticks (≈ 133 ms at 15 Hz). Interpolate position and heading between the two surrounding snapshots.
 - If a snapshot is missing, extrapolate up to 1 tick, then hold.
 - A unit that hasn't moved sends nothing, and the client simply keeps its last position.
-- **Projectiles** (D99, D102): the client steps the projectiles it was sent itself (SPAWN_PROJ). Homing ones get corrections ~3 Hz, plus one when a projectile comes (back) into view, while they are in the player's view (camera + leave margin, in sight).
+- **Projectiles** (D99, D102): the client steps the projectiles it was sent itself (SPAWN_PROJ). Homing ones get corrections ~3 Hz, plus one when a projectile comes (back) into view, while they are in the player's view (camera + leave margin; sight doesn't matter, S-43).
   - On a correction the client snaps its prediction to the server's state and blends the drawn position toward it over 5 ticks.
   - Errors above 60 studs snap: they only happen when a projectile comes back into view.
   - Lost corrections (unreliable) just mean a longer blend.
@@ -1057,6 +1059,8 @@ for enemy unit U, observer team T:
 Compute this when a unit changes sensor cell or when the maps change around it, not every tick for every pair.
 
 ### 11.4 Radar error, jamming, stealth
+
+- **Cloak (not built yet; the `cloaked` state bit is reserved):** a cloaked unit that fires drops its cloak and is then seen by normal sight, so firing never stays hidden. Its shots and projectiles are shown like anyone's (7.2, S-43): they never name the shooter.
 
 - **Radar error ("wobble"):** a radar blip's position is offset by a pseudo-random amount that changes slowly (e.g., seeded by `unitId` and `tick // 30`). The **server sends the wobbled position**, never the true one — clients can't cheat it. Order radars have smaller error than Chaos radars.
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks (implemented in D108: `jamDrain`, the radius scales with the share of upkeep it gets, like tracking radars).
