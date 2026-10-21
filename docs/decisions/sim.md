@@ -27,6 +27,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-19: build ranges at 70% (client request 7); frames start in range of their snapped center.
 - S-20: aim rest pose and restore delay (`Shared/Combat/Aim`; client request 8); the Juggernaut's arms.
 - S-21: Eco records carry their team (protocol 9); spectators get every team's economy.
+- S-22: first balance pass, T1 ground (six numbers).
 
 ---
 
@@ -288,3 +289,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Who gets what:** a player still gets only its own team's record; a spectator gets every team's, in team order, on economy ticks when any of them changed and after its WELCOME. So spectator streams and player replays recorded from them carry every economy.
 - **Clients:** a player's message still has exactly one record (its own); a client that read the first record keeps working. The reference test client keeps `economies[team]` and `economy` (its own team's).
 - **Tests:** golden bytes with the team byte (protocol 9), round trip, truncation, team 0 and 9 refused (`Schema.spec`); in `PlayerReplay.spec` the spectator has both teams' accounts with the server's values while player 1 has only its own, and the playback digest compares every team's economy. Giving the spectator one team only fails it.
+
+## S-22 — First balance pass: T1 ground (2026-10-22)
+
+- **Goal (the user):** T1 ground equal-cost trades roughly 0.8–1.25, faction identity kept (guide 2.1), as few numbers as possible; record before and after in `BALANCE.md` and list the changes for review.
+- **Method:** a 3-seed probe of the T1 ground pairs (tanks, artillery, scouts, and their cross pairs), one change at a time, then the full report (one seed). Weapons shared with other units were changed only where the change sharpens the identity for all of them (Chaos less accurate, Order longer-ranged).
+- **Changes (six numbers):** `chs_light_cannon.accuracy` 1.2 → 2.0; `chs_ravager.cost` 130 / 1200 → 140 / 1400; `ord_light_cannon.range` 180 → 200; `chs_hellmouth.cost` 160 / 1600 → 175 / 1750; `chs_mg.damage.LIGHT` 44 → 40; `chs_jackal.health` 340 → 320.
+- **Results:** Lancer vs Ravager 1.00 / 0.82 (was 0.38 / 0.39); Herald vs Jackal 0.82 / 0.80 (was 0.61 / 0.59); Verdict vs Hellmouth 0.61 / 0.80 (was 0.55 / 0.73). Report: 448 of 568 pairs hold, 195 findings (was 203), same-role band 29 of 38 (was 25).
+- **Not reached:** artillery at close range. Health doesn't change hits-to-kill there (3 either way), and cost, blast and reload moved it < 0.1. Hellmouth groups fire twice the shots of Verdict groups: precise volleys overkill one target. A mechanic (spreading a group's fire) is the fix; listed for review, not done.
+- **Tooling:** `lune run balance` keeps a hand-written "## Balance passes" section when it rewrites `docs/BALANCE.md`.
+- **Tests:** two assertions hard-coded the old stats; `Defs.spec` now expects Lancer's derived `maxRange` 200, and `Build.spec` reads the Ravager's wreck value from its cost.

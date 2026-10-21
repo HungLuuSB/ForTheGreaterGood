@@ -3,7 +3,7 @@
 return {
 	id = "ord_light_cannon",
 	type = "BALLISTIC",
-	range = 180,
+	range = 200,
 	reload = 1.6,
 	salvo = { count = 1, delay = 0 },
 	projectileSpeed = 380,

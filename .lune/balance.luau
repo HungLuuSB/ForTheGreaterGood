@@ -603,6 +603,19 @@ out("- Bomber groups bring their faction's T1 radar tower (not part of the trade
 out("- Watch any fight: `lune run export matchup:<order id>:<chaos id>[:close|long]` (or `siege:<id>`), then open `tools/viewer/index.html`.")
 out(string.format("- %d battles, %.0f s on the dev PC.", battles, os.clock() - t0))
 out("")
+-- Balance passes (hand-written before / after tables, one per pass) survive
+-- regeneration: the section is copied from the old report (S-22).
+if fs.isFile("docs/BALANCE.md") then
+	local old = string.gsub(fs.readFile("docs/BALANCE.md"), "\r\n", "\n")
+	local start = string.find(old, "\n## Balance passes\n", 1, true)
+	if start then
+		local stop = string.find(old, "\n## ", start + 2, true)
+		local passes = string.sub(old, start + 1, if stop then stop else #old)
+		for line in string.gmatch(passes, "([^\n]*)\n") do
+			out(line)
+		end
+	end
+end
 -- M8 balance items: the user's list, top first, with this run's numbers.
 out("## M8 balance items")
 out("")
