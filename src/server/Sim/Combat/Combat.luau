@@ -109,6 +109,7 @@ export type Combat = {
 	wreckX: { [number]: number },
 	wreckZ: { [number]: number },
 	wreckDef: { [number]: number },
+	wreckHeading: { [number]: number }, -- the unit's heading when it died (radians; S-26)
 	wreckSupply: { [number]: number },
 	nextWreckId: number,
 
@@ -179,6 +180,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		wreckX = {},
 		wreckZ = {},
 		wreckDef = {},
+		wreckHeading = {},
 		wreckSupply = {},
 		nextWreckId = 1,
 		stats = { shots = 0, hits = 0, kills = 0 },
@@ -406,13 +408,14 @@ end
 -- Wrecks
 --------------------------------------------------------------------------------
 
-function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef): number
+function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef, heading: number?): number
 	local id = c.nextWreckId
 	c.nextWreckId += 1
 	table.insert(c.wreckIds, id)
 	c.wreckX[id] = x
 	c.wreckZ[id] = z
 	c.wreckDef[id] = def.index
+	c.wreckHeading[id] = heading or 0
 	c.wreckSupply[id] = def.cost.supply * Combat.WRECK_SUPPLY_FRACTION
 	return id
 end
@@ -422,7 +425,7 @@ function Combat.removeWreck(c: Combat, id: number)
 	if i then
 		table.remove(c.wreckIds, i)
 	end
-	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id] = nil, nil, nil, nil
+	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id], c.wreckHeading[id] = nil, nil, nil, nil, nil
 end
 
 --------------------------------------------------------------------------------
@@ -455,6 +458,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.number(h, c.wreckX[id])
 		h = Hash.number(h, c.wreckZ[id])
 		h = Hash.u32(h, c.wreckDef[id])
+		h = Hash.number(h, c.wreckHeading[id])
 		h = Hash.number(h, c.wreckSupply[id])
 	end
 	return h

@@ -118,6 +118,7 @@ export type WeaponDef = {
 	turnRate: number?,
 	lockRange: number?,
 	terminalRange: number?,
+	seekerAngle: number?, -- degrees off the nose the seeker sees; default by guidance (EW.SEEKER_ANGLE, S-27)
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
 	fx: { [string]: string }?,
@@ -334,6 +335,7 @@ local WEAPON_SPEC: Spec = {
 		turnRate = opt(POSITIVE),
 		lockRange = opt(POSITIVE),
 		terminalRange = opt(POSITIVE),
+		seekerAngle = { kind = "number", optional = true, min = 1, max = 180 },
 		burnThrough = opt(FRACTION),
 		canTargetRadar = { kind = "boolean", optional = true },
 		fx = {

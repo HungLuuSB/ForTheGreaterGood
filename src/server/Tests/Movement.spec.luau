@@ -317,6 +317,16 @@ return function(t: RunAll.Context)
 		Sim.step(sim)
 		local outbox = sim.net.players[1].outbox
 		t.equal(#outbox.Events, 1, "ENTER events on the first tick")
+		-- tick 2 is the first sensor pass: the team's sight appears (S-26)
+		Sim.step(sim)
+		local sight = 0
+		for _, msg in outbox.Events do
+			for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+				t.expect(e.kind == Schema.EventKind.SIGHT_CELLS or e.kind == Schema.EventKind.SIGHT_ROWS, `only sight on tick 2, got event kind {e.kind}`)
+				sight += 1
+			end
+		end
+		t.expect(sight > 0, "the first sensor pass sends the team's sight")
 		local dirtySeen = false
 		for _ = 1, 10 do
 			-- dirty bits are cleared by NetOut at the end of each tick; any set

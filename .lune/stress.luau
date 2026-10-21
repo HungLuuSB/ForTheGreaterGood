@@ -185,7 +185,7 @@ local function run(total: number)
 		end)
 		local parts = {}
 		for _, k in kinds do
-			table.insert(parts, string.format("%s %.1f/s", k.name, k.n / seconds))
+			table.insert(parts, string.format("%s %.1f/s (%.0f B/s)", k.name, k.n / seconds, ((pn.eventBytes or {})[Schema.EventKind[k.name]] or 0) / seconds))
 		end
 		if #parts > 0 then
 			out(string.format("  player %d event records: %s", pid, table.concat(parts, ", ")))

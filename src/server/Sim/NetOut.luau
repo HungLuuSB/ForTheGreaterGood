@@ -40,6 +40,12 @@
 --     also on the tick one comes (back) into that view.
 --   * Economy (Eco channel, S-2): the player's team account, on economy
 --     ticks when it changed.
+--   * Sight and wrecks (Events, protocol 10, S-26): the ally team's sight
+--     map (sensor cells) on sensor ticks when it changed, as SIGHT_CELLS
+--     changes or SIGHT_ROWS of the whole map (after a join); WRECK when the
+--     team learns of a wreck (its spot in sight), WRECK_GONE when it sees
+--     the spot without it. Spectators get no sight (they see everything) and
+--     every wreck.
 --   * Join / reconnect (Snapshot channel, S-2): NetOut.hello checks the
 --     client's versions; NetOut.join resets the player's replication state
 --     and queues a WELCOME, so the next outbox is a complete picture (full
@@ -322,6 +328,162 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 	end
 end
 
+--------------------------------------------------------------------------------
+-- Wrecks and sight on the wire (protocol 10, S-26)
+--------------------------------------------------------------------------------
+
+NetOut.SIGHT_EVERY = 2 -- ticks: the Sensors rate, so sight changes only then
+
+-- An ally team's knowledge of wrecks (spectators: every wreck, at once). On
+-- sensor ticks every unknown wreck in sight becomes known and every known
+-- wreck that is gone is forgotten once its spot is in sight; in between,
+-- only this tick's new and reclaimed wrecks are checked, so a DEATH and its
+-- WRECK arrive together.
+local function updateWrecks(sim: Types.Sim, net: NetState.NetState, ally: number, sensorTick: boolean, fresh: { number }, reclaimed: { number })
+	local c = sim.combat
+	local k = net.wrecks[ally]
+	if k == nil then
+		k = { known = {}, list = {}, version = 0 }
+		net.wrecks[ally] = k
+	end
+	local known, list = k.known, k.list
+	local changed = false
+	local function learn(wid: number)
+		local x, z = c.wreckX[wid], c.wreckZ[wid]
+		if known[wid] == nil and x ~= nil and inSightFor(sim, ally, x, z) then
+			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid] }
+			table.insert(list, wid)
+			changed = true
+		end
+	end
+	local function forgetIfSeen(i: number): boolean
+		local wid = list[i]
+		local p = known[wid]
+		if c.wreckX[wid] == nil and inSightFor(sim, ally, p[1], p[2]) then
+			known[wid] = nil
+			table.remove(list, i)
+			changed = true
+			return true
+		end
+		return false
+	end
+	if sensorTick then
+		for _, wid in c.wreckIds do
+			learn(wid)
+		end
+		local i = 1
+		while i <= #list do
+			if not forgetIfSeen(i) then
+				i += 1
+			end
+		end
+	else
+		for _, wid in fresh do
+			learn(wid)
+		end
+		for _, wid in reclaimed do
+			local i = if known[wid] then table.find(list, wid) else nil
+			if i then
+				forgetIfSeen(i)
+			end
+		end
+	end
+	if changed then
+		k.version += 1
+	end
+end
+
+-- WRECK / WRECK_GONE for what the viewer's team learned since the last send.
+local function wreckEvents(g: Grid.Grid, pn: NetState.PlayerNet, k: NetState.WreckKnowledge, events: { Schema.Event })
+	if pn.wreckVersion == k.version then
+		return
+	end
+	pn.wreckVersion = k.version
+	local sent, sentList = pn.wrecksSent, pn.wreckList
+	local i = 1
+	while i <= #sentList do
+		local wid = sentList[i]
+		if k.known[wid] == nil then
+			sent[wid] = nil
+			table.remove(sentList, i)
+			table.insert(events, { kind = Schema.EventKind.WRECK_GONE, wreckId = wid })
+		else
+			i += 1
+		end
+	end
+	for _, wid in k.list do
+		if not sent[wid] then
+			sent[wid] = true
+			table.insert(sentList, wid)
+			local p = k.known[wid]
+			local cell, ox, oz = g:encode(p[1], p[2])
+			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]) })
+		end
+	end
+end
+
+-- The ally team's sight as of this sensor tick (one byte, 0 / 1, per sensor
+-- cell), diffed in place against the last one: one pass per ally team, the
+-- changes shared by its players.
+local function updateSight(sim: Types.Sim, net: NetState.NetState, ally: number)
+	local s = sim.sensors
+	local n = s.width * s.depth
+	local st = net.sight[ally]
+	if st == nil then
+		st = { cells = buffer.create(n), version = 0, changes = {} }
+		net.sight[ally] = st
+	end
+	local los, cells = s.maps[ally].los, st.cells
+	local changes = {}
+	local readu16, readu8, writeu8 = buffer.readu16, buffer.readu8, buffer.writeu8
+	for i = 0, n - 1 do
+		local v = if readu16(los, i * 2) > 0 then 1 else 0
+		if v ~= readu8(cells, i) then
+			writeu8(cells, i, v)
+			table.insert(changes, if v == 1 then i + Schema.SIGHT_SEEN else i)
+		end
+	end
+	if #changes > 0 then
+		st.version += 1
+		st.changes = changes
+	end
+end
+
+-- SIGHT_CELLS with the team's latest changes when the client has the version
+-- before them and they are small; else SIGHT_ROWS of the whole map.
+local function sightEvents(sim: Types.Sim, pn: NetState.PlayerNet, st: NetState.Sight, events: { Schema.Event })
+	if pn.sightVersion == st.version then
+		return
+	end
+	local s = sim.sensors
+	local width, depth = s.width, s.depth
+	local changes = st.changes
+	if pn.sightVersion >= 0 and pn.sightVersion == st.version - 1 and #changes <= width * depth // 16 then -- 2 bytes per change against 1/8 per cell
+		for first = 1, #changes, Schema.SIGHT_MAX_CELLS do
+			table.insert(events, { kind = Schema.EventKind.SIGHT_CELLS, cells = table.move(changes, first, math.min(first + Schema.SIGHT_MAX_CELLS - 1, #changes), 1, {}) })
+		end
+	else
+		local now = st.cells
+		local rowBytes = (width + 7) // 8
+		local perRecord = math.min(255, Schema.SIGHT_MAX_ROW_BYTES // rowBytes)
+		for first = 0, depth - 1, perRecord do
+			local rows = math.min(perRecord, depth - first)
+			local bits = buffer.create(rows * rowBytes)
+			for r = 0, rows - 1 do
+				local base = (first + r) * width
+				for x = 0, width - 1 do
+					if buffer.readu8(now, base + x) == 1 then
+						local at = r * rowBytes + x // 8
+						buffer.writeu8(bits, at, bit32.bor(buffer.readu8(bits, at), bit32.lshift(1, x % 8)))
+					end
+				end
+			end
+			table.insert(events, { kind = Schema.EventKind.SIGHT_ROWS, firstRow = first, rowCount = rows, rowBytes = rowBytes, bits = bits })
+		end
+	end
+	pn.sightVersion = st.version
+end
+
 function NetOut.step(sim: Types.Sim)
 	local map = sim.map
 	if map == nil then
@@ -352,6 +514,28 @@ function NetOut.step(sim: Types.Sim)
 	end
 	for _, spn in net.spectators do
 		table.insert(viewers, { pid = 0, pn = spn, team = 0, ally = SPECTATOR })
+	end
+
+	-- wreck knowledge per ally team, and the teams' sight on sensor ticks (S-26)
+	local sensorTick = tick % NetOut.SIGHT_EVERY == 0
+	local fresh, reclaimed = {}, {}
+	for _, e in sim.combat.events do
+		if e.kind == "DEATH" and (e.other or 0) ~= 0 then
+			table.insert(fresh, e.other :: number)
+		elseif e.kind == "RECLAIMED" then
+			table.insert(reclaimed, e.other :: number)
+		end
+	end
+	local updated: { [number]: boolean } = {}
+	for _, viewer in viewers do
+		local a = viewer.ally
+		if not updated[a] then
+			updated[a] = true
+			updateWrecks(sim, net, a, sensorTick, fresh, reclaimed)
+			if a ~= SPECTATOR and (sensorTick or net.sight[a] == nil) then
+				updateSight(sim, net, a)
+			end
+		end
 	end
 	for _, viewer in viewers do
 		local pid, pn, team = viewer.pid, viewer.pn, viewer.team
@@ -511,8 +695,19 @@ function NetOut.step(sim: Types.Sim)
 		if cam ~= nil then
 			combatEvents(sim, g, pn, ally, cam, events)
 		end
+		if pn.forceFull then
+			pn.sightVersion = -1
+			table.clear(pn.wrecksSent)
+			table.clear(pn.wreckList)
+			pn.wreckVersion = -1
+		end
+		if ally ~= SPECTATOR then
+			sightEvents(sim, pn, net.sight[ally], events)
+		end
+		wreckEvents(g, pn, net.wrecks[ally], events)
 		for _, e in events do
 			pn.eventCounts[e.kind] = (pn.eventCounts[e.kind] or 0) + 1
+			pn.eventBytes[e.kind] = (pn.eventBytes[e.kind] or 0) + Schema.eventBytes(e)
 		end
 
 		local syncs: { Schema.ProjSync } = {}

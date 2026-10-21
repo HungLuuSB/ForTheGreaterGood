@@ -52,7 +52,7 @@ return function(sim: Types.Sim)
 		local severity = math.clamp(-w.health[id] / def.health, 0, 1)
 		local wreck = 0
 		if severity <= Combat.WRECK_MAX_SEVERITY then
-			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def)
+			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def, w.heading[id])
 		end
 		Combat.addEvent(c, {
 			kind = "DEATH",
