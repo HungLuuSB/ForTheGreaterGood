@@ -51,6 +51,7 @@ local CommandCard = require("./UI/CommandCard")
 local UnitPanel = require("./UI/UnitPanel")
 local LobbyUI = require("./UI/Lobby")
 local ReplayBar = require("./UI/ReplayBar")
+local SettingsMenu = require("./UI/SettingsMenu")
 local ReplayPlayer = require("./Core/ReplayPlayer")
 local PlayerReplay = require("@shared/Net/PlayerReplay")
 local AttackPreviewRender = require("./Render/AttackPreview")
@@ -258,6 +259,7 @@ local replayBar = ReplayBar.new({
 		snapshot:FireServer(NetIn.hello(defs.hash)) -- back to the live match: a fresh WELCOME
 	end,
 })
+local _settingsMenu = SettingsMenu.new() -- O: keys, camera, graphics, UI scale (C-81); after the other screens so the scale reaches them
 local replayChunks: { buffer } = {}
 local replayRemote = remotes:WaitForChild("Replay") :: RemoteEvent
 replayRemote.OnClientEvent:Connect(function(msg: any)

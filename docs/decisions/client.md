@@ -621,3 +621,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** NetIn keeps the OWNER field's CHARGES (protocol 21, S-63) as each own unit's `flares` / `chaff`; UnitStats shows them as "left / max" for own units and the def's maximum for others. The results screen takes the sim's `Stats.report` (S-63: units built, lost and killed, damage dealt, resources gathered and spent from the team account), replacing C-77's MatchStats (removed). Core/Precision sums `Pinpoint.weight` over finished Pinpointers (S-62). Specs now read unit numbers from the defs instead of hard-coding them, so balance passes don't break them.
 
 **Why:** sim-A shipped requests 37 and 38 and asked the client to follow S-62. The sim counts statistics where things happen (it knows the attacker for damage and kills), which C-77 couldn't.
+
+### C-81 — Settings menu (2026-10-22)
+
+**Decision:** `Core/Settings` (pure, Lune-tested) holds the settings, their limits and steps, three graphics presets and the key reference; `UI/SettingsMenu` (O, or a button bottom right) shows them and writes the values into the modules that read them each frame: Camera.PAN_SPEED / ZOOM_STEP / EDGE_SCROLL, Effects.MAX_EXPLOSIONS / MAX_TRACERS / MAX_PROJECTILES, Vfx.MAX_LIGHTS / TEMPLATE_CAP, PieceAnim.NEAR / MID (model detail distance), FogOfWar.ENABLED (fog lights), and a UIScale on the UI panel screens (not on overlays drawn at world positions, which would be misplaced, nor on Roblox's screens). High is today's numbers; fog lights default off. Settings last for the session (a client has no local storage; the server could keep them later).
+
+**Why:** the user asked for a functional placeholder settings menu with these items. Writing the existing module constants keeps every renderer unchanged.

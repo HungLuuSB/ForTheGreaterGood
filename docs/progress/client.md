@@ -464,6 +464,10 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: settings menu (C-81)
+
+- O (or "Settings" above the follow button) opens a settings panel: camera pan speed, zoom step and edge scroll; graphics quality Low / Medium / High (caps on explosions, tracers, projectiles, lights and copies of one effect, and the distance of full piece animation) and fog lights on / off; UI scale (0.7 to 1.5, the UI panels only: overlays at world positions keep screen pixels); and the key bindings reference. Values apply live; they last for the session. High is today's look; fog lights default off (your earlier call). `tests/client/Settings.spec`; screenshots `debug_out/screens/c81_settings.jpg`, `c81_settings_low_scale12.jpg`.
+
 ## 2026-10-22: requests 37 and 38 used, faction pass followed (C-80)
 
 - Countermeasure charges (request 37, S-63, protocol 21): the unit panel shows own units' flares and chaff left from the server ("Flares 6/6 · Chaff 6/6", `debug_out/screens/c80_charges.jpg`); other players' units keep "max". `OwnerFields.spec` checks the client's counts against the server's.
@@ -514,6 +518,9 @@ All with real mouse and keyboard input through the MCP tools.
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Settings defaults (C-81):** pan speed 1.1, zoom step 1.15, edge scroll on in live games (off in Studio), quality High (60 explosions, 100 tracers, 150 projectiles, 12 lights, 24 copies, full animation within 300 studs), Medium and Low below it, fog lights off, UI scale 1.0. In `src/client/Core/Settings.luau`; the key O opens it.
+- **UI placement (C-76, C-79, C-81):** the unit panel is 460 px wide (the build grid shows 2 rows), the command card right of it; the replay bar bottom centre with the replay / spectator banner under the resource bar; "Settings (O)" above the follow button bottom right; lobby and settings panels centred.
 
 - **Camera pitch range (C-69):** Alt + scroll, 35°–80° in 4° steps, starting at 55°; the detailed area stops at 1.8 camera distances (`Camera.MIN_PITCH`, `MAX_PITCH`, `PITCH_STEP`, `RECT_CAP` in `src/client/Camera.luau`).
 
