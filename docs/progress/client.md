@@ -75,6 +75,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `1b2866a` (merge of `main` with S-23, S-24 and the C-36, C-37 integrations; test_client 78, test 299, build passed).
 - Ready to merge: `4a014e9` (missile sensor view, C-39).
 - Ready to merge: `3671f2b` (recognizable missiles: model, smoke trail, exhaust glow, C-40).
+- Ready to merge: `d8f67eb` (request 13 for the sim session: IR SAM misses; docs only).
 
 ## Tasks
 
