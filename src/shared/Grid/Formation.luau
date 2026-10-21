@@ -157,23 +157,46 @@ end
 -- far. (For a point p in the box and q the slot clamped into it,
 -- |p - slot|² ≥ |p - q|² + |q - slot|², and buckets r + 1 rings out are
 -- ≥ r × size from q.)
-function Formation.assign(posX: { [number]: number }, posZ: { [number]: number }, members: { number }, slots: { { number } }): ({ number }, number)
-	local pick: { number } = {}
-	local n = #members
-	if n == 0 then
-		for i = 1, #slots do
-			pick[i] = 0
-		end
-		return pick, 0
-	end
-	local checks = 0
+--
+-- Resumable (S-67): `newAssigner` snapshots the members' positions and
+-- buckets them; `assignStep` assigns slots until it has made `maxChecks`
+-- checks (at least one slot per call), so a big order's assignment can be
+-- spread over ticks with exactly the picks of one call (Nav).
+export type Assigner = {
+	pick: { number }, -- unit per slot so far
+	checks: number, -- distance checks made so far
+	nextSlot: number,
+	slots: { { number } },
+	px: { [number]: number }, -- positions at the snapshot
+	pz: { [number]: number },
+	left: number,
+	buckets: { { number } },
+	where: { [number]: number },
+	rowCount: { number },
+	colCount: { number },
+	minX: number,
+	minZ: number,
+	maxX: number,
+	maxZ: number,
+	nbx: number,
+	nbz: number,
+}
+
+function Formation.newAssigner(posX: { [number]: number }, posZ: { [number]: number }, members: { number }, slots: { { number } }): Assigner
 	local B = Formation.ASSIGN_BUCKET
+	local px, pz = {}, {}
 	local minX, minZ, maxX, maxZ = math.huge, math.huge, -math.huge, -math.huge
 	for _, id in members do
-		minX, maxX = math.min(minX, posX[id]), math.max(maxX, posX[id])
-		minZ, maxZ = math.min(minZ, posZ[id]), math.max(maxZ, posZ[id])
+		local x, z = posX[id], posZ[id]
+		px[id], pz[id] = x, z
+		minX, maxX = math.min(minX, x), math.max(maxX, x)
+		minZ, maxZ = math.min(minZ, z), math.max(maxZ, z)
 	end
-	local nbx, nbz = (maxX - minX) // B + 1, (maxZ - minZ) // B + 1
+	local n = #members
+	local nbx, nbz = 1, 1
+	if n > 0 then
+		nbx, nbz = (maxX - minX) // B + 1, (maxZ - minZ) // B + 1
+	end
 	local buckets: { { number } } = {}
 	for i = 1, nbx * nbz do
 		buckets[i] = {}
@@ -187,20 +210,50 @@ function Formation.assign(posX: { [number]: number }, posZ: { [number]: number }
 	local rowCount = table.create(nbz, 0)
 	local colCount = table.create(nbx, 0)
 	for _, id in members do
-		local bxi, bzi = (posX[id] - minX) // B, (posZ[id] - minZ) // B
+		local bxi, bzi = (px[id] - minX) // B, (pz[id] - minZ) // B
 		local b = bzi * nbx + bxi + 1
 		table.insert(buckets[b], id)
 		where[id] = b
 		rowCount[bzi + 1] += 1
 		colCount[bxi + 1] += 1
 	end
-	local left = n
+	return {
+		pick = {},
+		checks = 0,
+		nextSlot = 1,
+		slots = slots,
+		px = px,
+		pz = pz,
+		left = n,
+		buckets = buckets,
+		where = where,
+		rowCount = rowCount,
+		colCount = colCount,
+		minX = minX,
+		minZ = minZ,
+		maxX = maxX,
+		maxZ = maxZ,
+		nbx = nbx,
+		nbz = nbz,
+	}
+end
+
+-- Assigns slots until `maxChecks` checks were made by this call (at least
+-- one slot); true once every slot has its pick.
+function Formation.assignStep(a: Assigner, maxChecks: number): boolean
+	local B = Formation.ASSIGN_BUCKET
+	local px, pz, buckets, rowCount, colCount = a.px, a.pz, a.buckets, a.rowCount, a.colCount
+	local nbx, nbz = a.nbx, a.nbz
+	local minX, minZ, maxX, maxZ = a.minX, a.minZ, a.maxX, a.maxZ
 	local maxRing = math.max(nbx, nbz)
+	local slots, pick = a.slots, a.pick
+	local checks = a.checks
+	local stopAt = checks + maxChecks
 	local sx, sz = 0, 0
 	local best, bestD = 0, math.huge
 	local function scanBucket(b: number)
 		for _, id in buckets[b] do
-			local d = (posX[id] - sx) ^ 2 + (posZ[id] - sz) ^ 2
+			local d = (px[id] - sx) ^ 2 + (pz[id] - sz) ^ 2
 			checks += 1
 			if d < bestD or (d == bestD and id < best) then
 				best, bestD = id, d
@@ -223,11 +276,17 @@ function Formation.assign(posX: { [number]: number }, posZ: { [number]: number }
 			scanBucket(oz * nbx + ox + 1)
 		end
 	end
-	for i, slot in slots do
-		if left == 0 then
+	local i = a.nextSlot
+	while i <= #slots do
+		if i > a.nextSlot and checks >= stopAt then
+			break
+		end
+		if a.left == 0 then
 			pick[i] = 0
+			i += 1
 			continue
 		end
+		local slot = slots[i]
 		sx, sz = slot[1], slot[2]
 		local qx, qz = math.clamp(sx, minX, maxX), math.clamp(sz, minZ, maxZ)
 		local base = (qx - sx) ^ 2 + (qz - sz) ^ 2
@@ -251,16 +310,25 @@ function Formation.assign(posX: { [number]: number }, posZ: { [number]: number }
 		end
 		pick[i] = best
 		-- take the unit out of its bucket
-		local b = where[best]
+		local b = a.where[best]
 		local list = buckets[b]
 		local k = table.find(list, best) :: number
 		list[k] = list[#list]
 		list[#list] = nil
 		rowCount[(b - 1) // nbx + 1] -= 1
 		colCount[(b - 1) % nbx + 1] -= 1
-		left -= 1
+		a.left -= 1
+		i += 1
 	end
-	return pick, checks
+	a.nextSlot = i
+	a.checks = checks
+	return i > #slots
+end
+
+function Formation.assign(posX: { [number]: number }, posZ: { [number]: number }, members: { number }, slots: { { number } }): ({ number }, number)
+	local a = Formation.newAssigner(posX, posZ, members, slots)
+	Formation.assignStep(a, math.huge)
+	return a.pick, a.checks
 end
 
 return Formation

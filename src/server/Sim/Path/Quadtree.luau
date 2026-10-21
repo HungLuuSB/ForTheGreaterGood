@@ -221,7 +221,9 @@ local OUTSIDE, BLOCKED, OPEN, SPLIT, KEPT_SPLIT = 0, 1, 2, 3, 4
 --      cover. IDs: removed and free IDs ascending, then new ones.
 --   4. Neighbor lists of the new leaves and of the old leaves around them
 --      are patched; components are recomputed.
-function Quadtree.update(tree: Tree, pm: Passability.PassMap, x0: number, z0: number, x1: number, z1: number): boolean
+-- `deferComponents`: leave the components to a later
+-- Quadtree.computeComponents (several updates in a row, Nav's lazy flush, S-67).
+function Quadtree.update(tree: Tree, pm: Passability.PassMap, x0: number, z0: number, x1: number, z1: number, deferComponents: boolean?): boolean
 	local w, h = tree.grid.cellsX, tree.grid.cellsZ
 	local clearance = pm.clearance[tree.moveClass]
 	local need = tree.need
@@ -390,9 +392,13 @@ function Quadtree.update(tree: Tree, pm: Passability.PassMap, x0: number, z0: nu
 	for _, n in touchedList do
 		table.sort(tree.neighbors[n])
 	end
-	computeComponents(tree)
+	if not deferComponents then
+		computeComponents(tree)
+	end
 	return true
 end
+
+Quadtree.computeComponents = computeComponents
 
 function Quadtree.leafAt(tree: Tree, cell: number): number
 	return readu32(tree.cellLeaf, cell * 4)
