@@ -68,16 +68,16 @@
 | | **Order** | **Chaos** |
 |---|---|---|
 | Ideology | Discipline, precision, control | Freedom, force, disruption |
-| Look | Western modern armies (Leopard 2, Abrams, Patriot) | Eastern modern armies (T-90M, T-14 Armata, Pantsir) |
-| Palette | Light grey or sand base | Dark olive or gunmetal base |
-| Shapes | Clean, angular wedge armor, flat-panel sensors | Heavier, blockier, covered in reactive-armor tiles and slat cages, more weapons per vehicle; no exposed engines, stacks, crates or rust |
+| Role | Heavy defense and strategy | The strength of armies |
+| Look | Western-inspired (Leopard 2, Abrams, Patriot): sleek, wedge-shaped, high-tech, fortress-like; heavy armor, sensors, shields, active protection | Eastern-inspired (T-14 Armata, T-90M, Pantsir): rugged, aggressive, built for mass and assault; rounder or domed turrets, visible reactive-armor blocks, rear slat cages, shorter and wider |
+| Palette | Sand base | Gunmetal base (recommended over olive, which disappears on grass) |
 | Doctrine | Better sensors, stealth, precision long range, DIRCM | Strong jamming, missile saturation, cheap mass, heavy armor |
 | Strength | Wins information fights; strong at range | Wins brawls and attrition; blinds enemy sensors |
 | Weakness | Expensive, fragile when cornered | Less accurate, weaker sensors, limited stealth |
 
 Both factions have the **same roles** (scout, MBT, SAM, fighter, etc.) so balancing stays manageable. They differ in stats and in which information-warfare tools they get.
 
-Both factions look like **modern armies**: long, low, wide hulls; flat turrets set toward the rear; long guns; side skirts with road wheels; sights and sensor boxes; canister launchers for SAMs; flat phased-array radars, never dishes; team color only on panels and stripes. Silhouette first, secondary shapes second, small details only if cheap. Details and swatches: [`docs/art/style-guide.md`](art/style-guide.md).
+Both factions look **near-future military, realistic-leaning**: real modern vehicles with restrained sci-fi accents (angular armor panels, sensor strips, active protection, rail-gun details). Long, low, wide hulls; turrets set toward the rear; long guns; side skirts with road wheels; sights and sensor boxes; canister launchers for SAMs; flat phased-array radars, never dishes; team color on top surfaces (turret roof, hull top). Silhouette first, secondary shapes second, small details only if cheap. Details: [`docs/art/style-guide.md`](art/style-guide.md).
 
 ### 2.2 Naming conventions
 

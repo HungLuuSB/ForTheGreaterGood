@@ -8,11 +8,14 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 
 - **Phase 1:** hand-made blockouts for every T1 unit and structure of both factions (guide 13), one batch at a time, each reviewed from the game camera.
   - [x] Batch 1: T1 ground units. Style rejected in review (M-2); new direction M-6.
-  - [ ] Style review: Lancer and Ravager, two variants each under M-6 (section below). **Waiting for your pick.** Then batch 1 is redone in the picked style.
+  - [x] Style review: Lancer and Ravager, two variants each under M-6 (section below). Lessons kept as style rules; Order takes variant B's sand.
+  - Blockouts are frozen as gameplay placeholders (M-9); the remaining batches are on hold.
   - [ ] Batch 2: T1 air units
   - [ ] Batch 3: T1 naval units
   - [ ] Batch 4: T1 structures
-- **Phase 2** (after the phase 1 silhouettes are approved): low-poly Blender meshes for the key units, exported as FBX, with an import path into Roblox approved first.
+- **Phase 2** (started early, M-9): detailed meshes with PBR textures.
+  - [x] Style guide rewritten for the near-future look ([`../art/style-guide.md`](../art/style-guide.md)); Chaos base color test on Coastline: gunmetal recommended (M-10).
+  - [ ] Lancer vertical slice. Pipeline proposed in [`../art/pipeline.md`](../art/pipeline.md) (M-11). **Waiting for your approval** before building.
 
 ## Style review: modern armies (2026-10-21)
 
@@ -77,6 +80,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 ## Merge queue
 
 - Ready to merge: `84ba52d` (batch 1: T1 ground unit blockouts, both factions; new `docs/decisions/models.md` and `docs/progress/models.md`; touches only `src/shared/Defs/Blockouts/` and those two files).
+- Ready to merge: `255dd9f` (new art direction: guide 2.1 and 20.3, `docs/art/style-guide.md`; style-review variants in `Blockouts/Review/`, not used by the game).
 
 ## Requests
 
