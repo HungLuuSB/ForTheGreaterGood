@@ -45,7 +45,7 @@ export type WreckKnowledge = {
 export type NetState = {
 	players: { [number]: PlayerNet },
 	spectators: { PlayerNet }, -- in the order they were added (S-18)
-	iconIndex: { [number]: number }, -- unit def index → strategic icon (1..63; 0 = unknown blip)
+	iconIndex: { [number]: number }, -- unit def index → strategic icon (Shared/Net/Icons: the def index; 0 = unknown blip)
 	wrecks: { [number]: WreckKnowledge }, -- per ally team (0: spectators)
 	sight: { [number]: Sight }, -- per ally team
 }

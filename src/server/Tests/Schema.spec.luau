@@ -209,7 +209,7 @@ local function randomStrategic(rng: Prng.Prng): Strategic
 	return {
 		unitId = rng:nextInteger(1, 65535),
 		cell = rng:nextInteger(0, 65535),
-		icon = rng:nextInteger(0, 63),
+		icon = rng:nextInteger(0, 255),
 		team = rng:nextInteger(1, Schema.MAX_TEAMS),
 		flags = rng:nextInteger(0, 15),
 	}
@@ -293,18 +293,18 @@ return function(t: RunAll.Context)
 		t.equal(buffer.len(encodeOne(Schema.encodeTickHeader, 0)), Schema.TICK_HEADER_BYTES)
 	end)
 
-	t.test("strategic bit layout: icon bits 0-5, team 6-8, flags 9-15", function()
+	t.test("strategic bit layout: icon bits 0-7, team 8-10, flags 11-15 (protocol 19)", function()
 		local rec: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
-		-- 1 + (2 - 1) * 2^6 + 1 * 2^9 = 0x0241; the team field straddles the byte boundary
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, rec)), { 0x02, 0x01, 0x04, 0x03, 0x41, 0x02 })
-		local top: Strategic = { unitId = 1, cell = 0, icon = 63, team = 8, flags = 15 }
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0x1F })
+		-- 1 + (2 - 1) * 2^8 + 1 * 2^11 = 0x0901
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, rec)), { 0x02, 0x01, 0x04, 0x03, 0x01, 0x09 })
+		local top: Strategic = { unitId = 1, cell = 0, icon = 255, team = 8, flags = 31 }
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF })
 	end)
 
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 18, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 19, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -357,7 +357,7 @@ return function(t: RunAll.Context)
 		}
 		t.equal(hex(encodeOne(Schema.encodeState, state)), "02 01 1f 03 05 04 81 06 07 08 09 01 c0 0a")
 		local strategic: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
-		t.equal(hex(encodeOne(Schema.encodeStrategic, strategic)), "02 01 04 03 41 02")
+		t.equal(hex(encodeOne(Schema.encodeStrategic, strategic)), "02 01 04 03 01 09") -- version 19 layout
 		t.equal(hex(encodeOne(Schema.encodeTickHeader, 0xABCD)), "cd ab")
 		-- version 2: events
 		local enter: Schema.Event = {
@@ -406,8 +406,8 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeProjSync, sync)), "02 01 04 03 05 06 fe ff 01 00 ff ff 03 02")
 		-- version 5: TRACKED strategic flag (16 = flag bit 4 = bit 13 overall)
 		local tracked: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = Schema.StrategicFlag.RADAR_ONLY + Schema.StrategicFlag.TRACKED }
-		-- 1 + (2 - 1) * 2^6 + 17 * 2^9 = 0x2241
-		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 41 22")
+		-- 1 + (2 - 1) * 2^8 + 17 * 2^11 = 0x8901 (version 19 layout)
+		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 01 89")
 		-- version 6: join handshake and economy
 		local SK = Schema.SnapshotKind
 		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.HELLO, protocol = 0x0102, defsHash = 0x03040506 })), "01 02 01 06 05 04 03")
@@ -609,8 +609,8 @@ return function(t: RunAll.Context)
 
 		roundTrip(t, {
 			{ unitId = 1, cell = 0, icon = 0, team = 1, flags = 0 },
-			{ unitId = 65535, cell = 65535, icon = 63, team = 8, flags = 15 },
-			{ unitId = 2, cell = 1, icon = 62, team = 7, flags = Schema.StrategicFlag.GHOST },
+			{ unitId = 65535, cell = 65535, icon = 255, team = 8, flags = 31 },
+			{ unitId = 2, cell = 1, icon = 126, team = 7, flags = Schema.StrategicFlag.GHOST },
 		}, Schema.encodeStrategic, Schema.decodeStrategic)
 	end)
 
@@ -669,7 +669,6 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.TARGET, 0 }, "target slot mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.AIM, 0 }, "aim slot mask is empty")
 
-		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0x00, 0x40 }, "reserved bits") -- flag bit 5 (bit 4 is TRACKED since v5)
 		expectRejected(t, Schema.decodeStrategic, { 0, 0, 0, 0, 0, 0 }, "unitId 0 is reserved")
 	end)
 
@@ -683,7 +682,7 @@ return function(t: RunAll.Context)
 		t.throws(enc(Schema.encodeTactical, { unitId = 1, cell = 0, offX = 256, offZ = 0, heading = 0 }), "u8 out of range")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 0, flags = 0 }), "team 0")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 9, flags = 0 }), "team 9")
-		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 64, team = 1, flags = 0 }), "6%-bit value")
+		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 256, team = 1, flags = 0 }), "8%-bit value")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 1, flags = 32 }), "reserved bits")
 		t.throws(enc(Schema.encodeState, { unitId = 1 }), "no fields")
 		t.throws(enc(Schema.encodeState, { unitId = 1, aim = {} }), "aim list is empty")
