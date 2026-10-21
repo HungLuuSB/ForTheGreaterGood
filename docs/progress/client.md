@@ -116,6 +116,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `cfa1424` (reload test override, nuke profile launches every 2 s); test_client 104, build passed.
 - Ready to merge: `82d0e5f` (large-scale battle profile `normandy`, formation spawns; request 31 for the sim); build passed.
 - Ready to merge: `242cecc` (normandy: stronger economy, startResources); build passed.
+- Ready to merge: `537ee67` `cafdbaa` `57ea548` (merges of `main` with S-53..S-55; radar rings always on, C-63; normandy on map:normandy; requests 31, 32 done, 33 sent); test_client 105, test 345, build passed.
 
 ## Tasks
 
@@ -440,7 +441,7 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## 2026-10-21: radar rings always on; normandy on its map
 
-- Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). The ring line is wider than the others so it shows from far out.
+- Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut on the user's word: IR -30% and radar -25% (S-55), and another -30% / -25% asked as request 33.
 

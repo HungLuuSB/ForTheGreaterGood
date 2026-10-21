@@ -10,7 +10,7 @@
 -- green, jammer yellow. Known enemy defenses (C-41) always show their
 -- weapon rings, dark red (ground) and violet (anti-air), looked up at most
 -- every MIN_INTERVAL. Toggled with V (on by default). Own radar
--- facilities' radar rings (C-63) are always drawn, V or not.
+-- facilities' always-on rings are Render/RadarRings' (C-63, C-64).
 
 local Api = require("../Api")
 local Ranges = require("../Core/Ranges")
@@ -33,10 +33,9 @@ local COLOR: { [string]: Color3 } = {
 	jammer = Color3.fromRGB(240, 210, 60),
 	enemyWeapon = Color3.fromRGB(190, 25, 25),
 	enemyAa = Color3.fromRGB(165, 70, 235),
-	radarFacility = Color3.fromRGB(90, 220, 110), -- always shown (C-63): radar green, wider to read from afar
 }
 local SHOWN = 0.25 -- transparency of a drawn segment
-local WIDTH: { [string]: number } = { weapon = 0.4, aa = 0.4, sight = 0.3, radar = 0.3, track = 0.3, jammer = 0.3, enemyWeapon = 0.5, enemyAa = 0.5, radarFacility = 1.5 }
+local WIDTH: { [string]: number } = { weapon = 0.4, aa = 0.4, sight = 0.3, radar = 0.3, track = 0.3, jammer = 0.3, enemyWeapon = 0.5, enemyAa = 0.5 }
 
 -- A drawn polyline: points (x, z) where its owner was at the rebuild;
 -- segments first .. first + #xs - 2 of the pool.
@@ -57,8 +56,6 @@ export type Overlay = {
 	enemy: { Ranges.Circle }, -- known enemy defenses' rings (C-41)
 	enemyKey: string,
 	enemyAt: number, -- when they were last looked up
-	radars: { Ranges.Circle }, -- own radar facilities' rings, always shown (C-63)
-	radarKey: string,
 }
 
 function RangeOverlay.new(): Overlay
@@ -80,8 +77,6 @@ function RangeOverlay.new(): Overlay
 		enemy = {},
 		enemyKey = "",
 		enemyAt = -math.huge,
-		radars = {},
-		radarKey = "",
 	}
 end
 
@@ -194,25 +189,16 @@ end
 
 -- `known`: what the client remembers of enemy structures (Ranges.Known).
 function RangeOverlay.step(o: Overlay, api: Api.Api, now: number, known: Ranges.Known?)
-	if now - o.enemyAt >= RangeOverlay.MIN_INTERVAL then
+	if o.enabled and now - o.enemyAt >= RangeOverlay.MIN_INTERVAL then
 		o.enemyAt = now
-		if o.enabled then
-			o.enemy = Ranges.enemyDefenses(api.world, known)
-			local keys = table.create(#o.enemy)
-			for i, c in o.enemy do
-				keys[i] = `{c.kind}:{math.floor(c.x)}:{math.floor(c.z)}:{c.r}`
-			end
-			o.enemyKey = table.concat(keys, ",")
+		o.enemy = Ranges.enemyDefenses(api.world, known)
+		local keys = table.create(#o.enemy)
+		for i, c in o.enemy do
+			keys[i] = `{c.kind}:{math.floor(c.x)}:{math.floor(c.z)}:{c.r}`
 		end
-		-- own radar facilities: always, selected or not (C-63)
-		o.radars = Ranges.radarFacilities(api.world)
-		local keys = table.create(#o.radars)
-		for i, c in o.radars do
-			keys[i] = `{c.owner}:{math.floor(c.x / RangeOverlay.MOVE_STEP)}:{math.floor(c.z / RangeOverlay.MOVE_STEP)}:{c.r}`
-		end
-		o.radarKey = table.concat(keys, ",")
+		o.enemyKey = table.concat(keys, ",")
 	end
-	local key = (if o.enabled then signature(api) .. "|" .. o.enemyKey else "") .. "|" .. o.radarKey
+	local key = if o.enabled then signature(api) .. "|" .. o.enemyKey else ""
 	if key == o.key or now - o.lastBuild < RangeOverlay.MIN_INTERVAL then
 		follow(o, api.world)
 		-- idle frame: grow the pool a little so the first rings don't stall
@@ -235,7 +221,6 @@ function RangeOverlay.step(o: Overlay, api: Api.Api, now: number, known: Ranges.
 	if o.enabled then
 		table.move(o.enemy, 1, #o.enemy, #circles + 1, circles)
 	end
-	table.move(o.radars, 1, #o.radars, #circles + 1, circles)
 	local arcs = Ranges.union(circles)
 	o.arcs = arcs
 	local polylines = Ranges.polylines(arcs, function(x, z)

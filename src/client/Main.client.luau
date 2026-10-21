@@ -43,6 +43,7 @@ local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
 local MissileViewRender = require("./Render/MissileView")
 local NukeWarning = require("./Render/NukeWarning")
+local RadarRings = require("./Render/RadarRings")
 local AttackPreviewRender = require("./Render/AttackPreview")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
@@ -94,6 +95,7 @@ local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
 local nukeWarning = NukeWarning.new() -- strategic launch warnings (C-57)
+local radarRings = RadarRings.new() -- own radar facilities' rings, always on top (C-63, C-64)
 local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-58)
 -- Camera follow (C-43), T or the placeholder button: the first selected
 -- unit, else the homing missile drawn nearest the screen centre.
@@ -225,7 +227,7 @@ if RunService:IsStudio() then
 			for _, line in ranges.lines do
 				kinds[line.kind] = (kinds[line.kind] or 0) + 1
 			end
-			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection, lines = kinds, radars = #ranges.radars }
+			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection, lines = kinds, radarRingSegments = radarRings.used }
 		elseif query == "missiles" then
 			-- Invoke("missiles", on?): the missile sensor view (C-39), turned on or off if `on` is given
 			local on = ...
@@ -428,6 +430,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now, knownEnemy)
+	RadarRings.step(radarRings, world, now)
 	mark("ranges", t0)
 	t0 = os.clock()
 	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)
