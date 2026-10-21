@@ -17,6 +17,31 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
   - [x] Style guide rewritten for the near-future look ([`../art/style-guide.md`](../art/style-guide.md)); Chaos base color test on Coastline: gunmetal recommended (M-10).
   - [x] Lancer vertical slice (M-11..M-13), section below. **Waiting for your review.**
 
+## Overnight 2026-10-22: T2 structures (task 4)
+
+28 blockouts, every T2 structure for both factions, registered, same rules as T1:
+
+| Role | Order | Chaos |
+|---|---|---|
+| Adv. vehicle plant (fp 5) | `ord_advvehplant`: two armored halls under one roof, two doors and ramps | `chs_advvehplant`: long shed plus two open gantry bays, row of tanks |
+| Adv. airfield (fp 5) | `ord_advairfield`: wide runway, two armored hangars, tall tower | `chs_advairfield`: two open roof-on-posts hangars, tanks, tall lattice mast |
+| Adv. shipyard (fp 5) | `ord_advshipyard`: armored piers, tall hall, two gantry cranes | `chs_advshipyard`: piers on pilings, two lattice tower cranes |
+| Adv. extractor | `ord_advextractor`: taller housing, twin drills | `chs_advextractor`: taller derrick, thick drill, cage |
+| Fusion (fp 3) | `ord_fusion`: stepped fortress round a glowing containment sphere | `chs_fusion` (Hellforge): round furnace stack with glowing bands in an open frame |
+| Long-range radar (fp 3) | `ord_beacon`: tall armored tower, very wide array | `chs_allseer`: tall lattice mast, wide array, big eye |
+| Radar SAM (fp 3) | `ord_aegis`: four-cell canister launcher, separate radar block | `chs_wyvern`: twelve bare tubes on a frame, lattice radar mast |
+| Artillery (fp 3) | `ord_edict`: casemate turret, very long gun | `chs_cataclysm`: open pit with reactive blocks, fat barrel |
+| Coastal battery (fp 3) | `ord_rampart`: sea-wall bunker, twin guns | `chs_breaker`: open platform, one long gun plus missile box |
+| Heavy turret | `ord_bastion`: twin long guns | `chs_maw`: squat turret, fat short "maw" gun |
+| Fire-control radar (fp 2) | `ord_tribunal`: block with twin back-to-back panels | `chs_seekerspire`: narrow lattice spire, panel, eye |
+| Jammer tower | `ord_veilspire`: tapered pylon, emitter fins | `chs_blackout`: lattice mast, rings of emitter rods |
+| Sonar station (fp 3) | `ord_choir`: floating armored platform, ring array | `chs_deepear`: pontoon floats, sonar drum |
+| Pinpointer (fp 2) | `ord_witness`: block with a turning flat array (`dish`) | `chs_augur`: lattice mast with a flat array (`dish`) |
+
+- Visual pieces: `radar` on the Beacon, All-Seer, Tribunal and Seeker Spire. The Pinpointers' `dish` piece is a flat array (no dishes, style guide).
+- Screenshots: `debug_out/screens/struct2_*.jpg`; in "FTGG Art": `T2Big*` (x 600–900, z 1000–1180), `T2Mid*` (z 580–720), `T2Small*` (z 820–900).
+- `lune run test_client`: 34 specs, 116 passed.
+
 ## Overnight 2026-10-22: T1 structures (task 3)
 
 22 blockouts, every T1 structure role for both factions, registered (they replace the generic boxes):
