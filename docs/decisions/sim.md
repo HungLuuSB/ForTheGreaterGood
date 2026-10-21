@@ -370,3 +370,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **State:** `World.wOverkill` per weapon (NONE / RETARGET / ALLOWED, hashed), `Combat.pAim / pAimGen / pAimDmg` per projectile (aim hashed), `Combat.pending / pendingGen / queued` derived. `Combat.AVOID_OVERKILL = false` turns it off for measurements.
 - **Results:** six Verdicts against six one-shot Ravagers in a column: first volley on 6 targets (1 without), all dead in 12 shells and 6.3 s (30 shells and 18.9 s without). Stress at 800 units: Targeting 1.95 ms average, 6.54 peak (2.04 / 7.51 before; budget 8).
 - **Tests (`Overkill.spec`, 4):** the estimate within 0.15 of measured damage for four weapon/range cases; the group volley spreads, kills faster and wastes fewer shells; a lone doomed target is still shot; an attack order is obeyed on a doomed target.
+
+## S-30 — T1 balance after overkill avoidance: Verdict sight 170 (2026-10-22)
+
+- **Re-check (3 seeds) after S-29:** Lancer vs Ravager 1.25 / 1.00, Herald vs Jackal 1.06 / 0.75, Verdict vs Hellmouth 0.50 / 0.58 (unchanged by S-29).
+- **Why artillery didn't move:** the matchups have no spotters, so both artillery groups fire at their own sight range (140 / 130); the Verdict's range and precision never apply, and at that distance the Hellmouth's health, damage and reload win. Six single-number probes (3 seeds each, `docs/BALANCE.md` Pass 2): reload, accuracy, range and health moved it by at most 0.07; sight 140 → 170 took the long fight to 0.97.
+- **Change:** `ord_verdict.sensors.sight` 140 → 170 (listed under "Needs my review"). Close-range artillery (0.50) and the scouts' long fight (0.75) stay outside the band; both are listed with what would move them.

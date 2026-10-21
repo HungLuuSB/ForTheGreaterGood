@@ -59,6 +59,33 @@ Not reached: **Verdict vs Hellmouth at close range (0.61).** Cost, health, blast
 
 The tanks stay in the band; artillery and the scouts' long-range fight fell below it. One-seed cells move by ±0.2 with changes like this, so later passes should use three seeds.
 
+### Pass 2 — overkill avoidance and one artillery retune (2026-10-22, S-29, S-30)
+
+First the mechanic Pass 1 asked for: overkill-aware targeting (S-29: a weapon doesn't fire at a visible target that shells already on their way will kill). Then the T1 pairs again, three seeds (`lune run balance 3 <unit>`):
+
+| Pair | After S-23 | After S-29 | After the retune |
+|---|---|---|---|
+| Lancer vs Ravager | 1.26 / 1.00 | 1.25 / 1.00 | (unchanged) |
+| Herald vs Jackal | 0.91 / 0.71 | **1.06 / 0.75** | (unchanged) |
+| Verdict vs Hellmouth | 0.51 / 0.58 | 0.50 / 0.58 | **0.50 / 0.97** |
+| Verdict vs Ravager | — | 0.53 / 0.57 | 0.54 / 0.72 |
+| Verdict vs Jackal | — | 1.52 / 2.12 | 1.64 / 1.75 |
+
+Overkill avoidance didn't move the artillery pair: it wasn't overkill. These fights have no spotters, so both groups fire at sight range (Verdict 140, Hellmouth 130), and the Verdict's longer gun (450 against 400) and precision never come into play; at that distance the Hellmouth's health (820 against 700), damage (320 against 300) and reload (3.5 s against 4 s) win. One number each, three seeds, Verdict vs Hellmouth:
+
+| Probe | Close / long |
+|---|---|
+| baseline | 0.50 / 0.58 |
+| `ord_howitzer.reload` 4 → 3.5 | 0.57 / 0.64 |
+| `chs_mortar.accuracy` 1.6 → 2.0 | 0.55 / 0.61 |
+| `ord_howitzer.range` 450 → 500 | 0.50 / 0.58 |
+| `ord_verdict.health` 700 → 800 | 0.52 / 0.63 |
+| `chs_mortar.reload` 3.5 → 4 | 0.56 / 0.64 |
+| **`ord_verdict.sensors.sight` 140 → 170** | **0.50 / 0.97** |
+
+**Change (one number):** `ord_verdict.sensors.sight` 140 → 170. It fits Order's identity (guide 2.1: longer-ranged and precise): the Verdict now sees far enough to open fire before the Hellmouth can answer. The close-range artillery duel (two groups 120 studs apart) stays at 0.50: there health and damage decide, which is where Chaos is tougher and harder-hitting by design. Not changed: the scouts' long-range fight (0.75, just outside), as only one retune was asked for.
+
+
 ## M8 balance items
 
 Recorded for M8 (balance), most important first. Numbers are this run's value trades for the attacker (close / long).
