@@ -159,6 +159,34 @@ local PROFILES = {
 			{ def = "chs_thorn", player = 2, x = 640, z = 120, count = 2, dx = 160 },
 		},
 	},
+	-- Air raid on a SAM belt (the user, 2026-10-21): your 2 Falcon jets, 2
+	-- Archon fighters and 3 Guardian helicopters (3x health) start far west
+	-- on the largest map and fly east into 5 Chaos SAM systems: 3 Thorn IR
+	-- sites in front (range 280) and 2 Wyvern radar SAM sites behind them
+	-- (range 560), so flares, chaff and DIRCM all come up. The jets head
+	-- for x = 600 through the belt, the helicopters stop short at x = 250;
+	-- your 4 long-range radars cover the map, and a fusion reactor powers
+	-- them and the aircraft's DIRCM jammers.
+	airsam = {
+		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
+		seed = 31,
+		mapId = "flat:256",
+		scenario = "empty",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		spawns = {
+			{ def = "ord_beacon", player = 1, x = -600, z = -600, count = 2, dz = 1200 },
+			{ def = "ord_beacon", player = 1, x = 200, z = -700, count = 2, dz = 1400 },
+			{ def = "ord_fusion", player = 1, x = -950, z = 650 }, -- power for the radars and the aircraft's DIRCM (115/s)
+			{ def = "ord_falcon", player = 1, x = -950, z = -120, heading = math.pi / 2, count = 2, dz = 80, health = 3, moveTo = { 600, -60 } },
+			{ def = "ord_archon", player = 1, x = -950, z = 120, heading = math.pi / 2, count = 2, dz = 80, health = 3, moveTo = { 600, 160 } },
+			{ def = "ord_guardian", player = 1, x = -900, z = -40, heading = math.pi / 2, count = 3, dz = 40, health = 3, moveTo = { 250, 0 } },
+			{ def = "chs_thorn", player = 2, x = 450, z = -220, count = 3, dz = 220 },
+			{ def = "chs_wyvern", player = 2, x = 720, z = -150, count = 2, dz = 300 },
+		},
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,
