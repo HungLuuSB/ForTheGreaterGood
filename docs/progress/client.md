@@ -67,6 +67,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `6093f19` (Task 5: deaths and wrecks (C-34)).
 - Ready to merge: `db75cf4` (Own team's Eco record (protocol 9)).
 - Ready to merge: `b2d2095` (merge of `main` with S-21, protocol 9, into this branch; clean, test_client, test and build pass).
+- Ready to merge: `ec6488d` (Playtest profiles (juggernaut, air, naval, radar)).
 
 ## Tasks
 
