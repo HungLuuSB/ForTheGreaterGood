@@ -85,6 +85,7 @@ export type World = {
 	entered: { number }, -- became tactical (ENTER)
 	left: { number }, -- stopped being tactical without dying (LEAVE)
 	died: { Death },
+	dying: { [number]: { unit: Unit, tick: number } }, -- units whose DEATH arrived but isn't drawn yet (C-50)
 	events: { Schema.Event }, -- combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK) with `tick`
 	dropped: number, -- records dropped as out of sync or malformed (diagnostics)
 	eventCounts: { [number]: number }, -- combat events received per Schema.EventKind (0 = homing correction)
@@ -110,6 +111,7 @@ function World.new(defs: Defs.DefSet): World
 		entered = {},
 		left = {},
 		died = {},
+		dying = {},
 		events = {},
 		dropped = 0,
 		eventCounts = {},
@@ -132,6 +134,7 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.entered)
 	table.clear(world.left)
 	table.clear(world.died)
+	table.clear(world.dying)
 	table.clear(world.events)
 	world.strategicTick = -1
 	world.economy = nil
@@ -175,6 +178,12 @@ end
 -- the hit that caused it, not when its record arrives (~2 ticks earlier).
 function World.settle(world: World, renderTick: number)
 	world.shownTick = renderTick
+	-- a unit that died stays a missile's target until its death is drawn (C-50)
+	for id, d in world.dying do
+		if renderTick >= d.tick + 1 then
+			world.dying[id] = nil
+		end
+	end
 	for _, u in world.units do
 		local log = u.healthLog
 		if log == nil then
@@ -188,6 +197,22 @@ function World.settle(world: World, renderTick: number)
 			u.healthLog = nil
 		end
 	end
+end
+
+-- A unit by ID, or one whose DEATH arrived but isn't drawn yet (C-50): the
+-- server's death record comes ~2 ticks ahead of the render clock, and a
+-- missile drawn chasing it must keep steering at it until its hit plays,
+-- not lose it and fly past.
+function World.unitOrDying(world: World, id: number): Unit?
+	if id == 0 then
+		return nil
+	end
+	local u = world.units[id]
+	if u then
+		return u
+	end
+	local d = world.dying[id]
+	return if d then d.unit else nil
 end
 
 -- The health the bars show: as of the render tick once World.settle runs,

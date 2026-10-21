@@ -386,7 +386,7 @@ local function advance(world: World.World, p: Proj, t: number): (number, number,
 	end
 	local weapon = p.weapon
 	local vx, vy, vz = p.vx, p.vy, p.vz
-	local target = if p.target ~= 0 then world.units[p.target] else nil
+	local target = World.unitOrDying(world, p.target)
 	local follow = true
 	if weapon.turnRate and target then
 		vx, vy, vz = steer(world, target, weapon, function(tt: number): (number, number, number)
@@ -547,7 +547,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			x, z = Effects.unclamp(world, p, x, z)
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
-			local target = if p.target ~= 0 then world.units[p.target] else nil
+			local target = World.unitOrDying(world, p.target)
 			p.target = 0
 			p.decoy = nil
 			if kind == EK.DECOYED and (e.decoyTicks or 0) > 0 then
@@ -791,7 +791,7 @@ end
 -- (default: its prediction): the led point lx, ly, lz and the target's
 -- centre cx, cy, cz; nil without a target (C-39).
 function Effects.aim(world: World.World, p: Proj, t: number, px: number?, py: number?, pz: number?): (number?, number?, number?, number?, number?, number?)
-	local target = if p.target ~= 0 then world.units[p.target] else nil
+	local target = World.unitOrDying(world, p.target)
 	if target == nil then
 		return nil, nil, nil, nil, nil, nil
 	end
@@ -822,7 +822,7 @@ export type Prediction = {
 -- the moving target, as the server's fuse does (C-39).
 function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Prediction
 	local weapon = p.weapon
-	local target = if p.target ~= 0 then world.units[p.target] else nil
+	local target = World.unitOrDying(world, p.target)
 	local out: Prediction = { path = table.create(ticks * 3), hit = false, ground = false }
 	local x, y, z, vx, vy, vz = p.x, p.y, p.z, p.vx, p.vy, p.vz
 	local lastTick, lx, lz, lalt, lheading, ltv, lturn = math.huge, 0, 0, 0, 0, 0, 0

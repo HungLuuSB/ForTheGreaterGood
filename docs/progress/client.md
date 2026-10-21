@@ -94,6 +94,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `a8d794e` (merge of `main` with S-29..S-32) with `a9ef27b` (spec threshold); test_client 92, test 313, build passed.
 - Ready to merge: `91a79a1` (aircraft crash, countermeasures by equipment, C-48; requests 17-19).
 - Ready to merge: `37c6142` (airsam test profile: planes and helicopters against 5 SAMs).
+- Ready to merge: `1ae6176` (health bars change on the hit's tick, C-49; airsam at normal health).
 
 ## Tasks
 
@@ -340,6 +341,11 @@ All with real mouse and keyboard input through the MCP tools.
 - **Health drops with the hit now:** bars used to drop about 2 ticks before the missile or shell that caused it was drawn arriving (half a second at 0.25x); they now change on the hit's tick.
 - **"The plane takes no damage":** it did, but `airsam` gave the aircraft 3x health and the wire can't show health above a unit's normal maximum, so bars stayed full until two-thirds of it was gone. `airsam` now uses normal health; the `sam` profile's Falcon still has 5x.
 - A message asking sim-A to do requests 17 and 18 expired undelivered (that session holds cross-session messages); they stand in the request list below.
+
+## 2026-10-21: missiles on dying aircraft (C-50)
+
+- **"IR no lock" just before a kill:** the client learned of the aircraft's death about 2 ticks before it drew the missile arriving, removed the aircraft, and the missile lost its target and flew past; then the explosion and the death played. The dying aircraft now stays the missile's target until its death is drawn, so the missile flies into it and explodes there.
+- **Missile damage varies on purpose:** SAM missiles burst next to the target, and the damage falls off with how close they got (a Thorn missile: 200 at the hull, 100 at 5 studs). Jammed or decoyed missiles do nothing.
 
 ## Needs my review
 
