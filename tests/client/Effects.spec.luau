@@ -8,6 +8,8 @@ local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
+local Spawn = require("../../src/server/Sim/Spawn")
+local ServerWorld = require("../../src/server/Sim/World")
 local Schema = require("@shared/Net/Schema")
 
 local DT = 1 / 15
@@ -283,6 +285,55 @@ return function(t: any)
 		print(string.format("    ew_test: %d missile frames, worst %.2f studs off a straight continuation, %d decoyed", frames, worst, decoys))
 		t.expect(frames > 100 and decoys > 0, "missiles flew, and one was decoyed")
 		t.expect(worst <= 3, `no jumps or corners (worst {worst} studs; a missile covers ~7 a frame)`)
+	end)
+
+	t.test("SAM missiles chasing circling jets bend smoothly, with no corner at tick boundaries (C-38)", function()
+		-- the `sam` test scene: 4 Thorn IR SAM sites, 4 Falcons (5x health) over them
+		local sim = Sim.new({ seed = 25, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "empty" })
+		for i = 0, 3 do
+			local f = Spawn.unit(sim, "ord_falcon", 1, -60, -60 + i * 40, math.pi / 2)
+			ServerWorld.setHealth(sim.world, f, sim.world.health[f] * 5)
+			Spawn.unit(sim, "chs_thorn", 2, -100 + (i % 2) * 200, -100 + (i // 2) * 200, 0)
+		end
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 127, 127)))
+		local fx = Effects.new()
+		local SUBS = 8
+		local last: { [any]: { any } } = {}
+		local sum, n, worst, atBoundary, boundaryN = 0, 0, 0, 0, 0
+		for tick = 1, 15 * 30 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for sub = 1, SUBS do
+				local rt = tick - 2 + sub / SUBS
+				Effects.update(fx, world, rt, rt * DT, 0, 0)
+				table.clear(world.died)
+				for _, v in Effects.visible(fx, rt) do
+					local p = v[1]
+					if p.weapon.turnRate then
+						local l = last[p]
+						if l and l[1] then
+							local a, b = l[1], l[2]
+							local d = math.sqrt((v[2] - (2 * b[1] - a[1])) ^ 2 + (v[3] - (2 * b[2] - a[2])) ^ 2 + (v[4] - (2 * b[3] - a[3])) ^ 2)
+							sum += d
+							n += 1
+							worst = math.max(worst, d)
+							if sub == 1 then -- the frame just past a tick boundary
+								atBoundary += d
+								boundaryN += 1
+							end
+						end
+						last[p] = { l and l[2], { v[2], v[3], v[4] } }
+					end
+				end
+			end
+		end
+		local mean, boundary = sum / math.max(n, 1), atBoundary / math.max(boundaryN, 1)
+		print(string.format("    sam scene: %d missile frames, bend mean %.3f studs (at tick boundaries %.3f), worst %.2f", n, mean, boundary, worst))
+		t.expect(n > 1000, "plenty of missile frames")
+		t.expect(worst <= 3, `no jumps (worst {worst} studs)`)
+		t.expect(boundary <= mean * 1.5, `no corner at tick boundaries ({boundary} vs {mean} on average)`)
 	end)
 
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()

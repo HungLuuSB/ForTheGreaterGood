@@ -122,6 +122,15 @@ function Overlay.step(o: Overlay, api: Api.Api, now: number, lineFrom: Vector3?,
 	local function groundY(x: number, z: number): number
 		return World.groundY(world, x, z) + LIFT
 	end
+	-- where a unit's ring and lines go: at an aircraft's drawn height (its
+	-- ground point can line up with another unit on screen, C-38), else
+	-- on the ground
+	local function drawnY(u: World.Unit, x: number, z: number): number
+		if u.ry and u.alt > 0 then
+			return u.ry + LIFT
+		end
+		return groundY(x, z)
+	end
 
 	for _, id in api.state.selection do
 		local u = world.units[id]
@@ -131,10 +140,10 @@ function Overlay.step(o: Overlay, api: Api.Api, now: number, lineFrom: Vector3?,
 		local x, z = u.rx or u.x, u.rz or u.z
 		local def = World.def(world, u)
 		local d = ((def and def.footprint) or 1) * 8 * 0.95
-		disc(take(o, "ring"), x, groundY(x, z), z, d, RING_COLOR, 0.55)
+		disc(take(o, "ring"), x, drawnY(u, x, z), z, d, RING_COLOR, 0.55)
 		local list = api.waypoints.byUnit[id]
 		if list then
-			local from = Vector3.new(x, groundY(x, z), z)
+			local from = Vector3.new(x, drawnY(u, x, z), z)
 			for _, point in list do
 				local to = Vector3.new(point.x, groundY(point.x, point.z), point.z)
 				local color = KIND_COLOR[point.kind] or RING_COLOR
@@ -154,9 +163,9 @@ function Overlay.step(o: Overlay, api: Api.Api, now: number, lineFrom: Vector3?,
 		if u and t then
 			local ux, uz, tx, tz = u.rx or u.x, u.rz or u.z, t.rx or t.x, t.rz or t.z
 			local red = Color3.fromRGB(235, 60, 50)
-			segment(o, Vector3.new(ux, groundY(ux, uz) + 1.5, uz), Vector3.new(tx, groundY(tx, tz) + 1.5, tz), red)
+			segment(o, Vector3.new(ux, drawnY(u, ux, uz) + 1.5, uz), Vector3.new(tx, drawnY(t, tx, tz) + 1.5, tz), red)
 			local tdef = World.def(world, t)
-			disc(take(o, "ring"), tx, groundY(tx, tz), tz, ((tdef and tdef.footprint) or 1) * 8 * 1.1, red, 0.35)
+			disc(take(o, "ring"), tx, drawnY(t, tx, tz), tz, ((tdef and tdef.footprint) or 1) * 8 * 1.1, red, 0.35)
 		end
 	end
 

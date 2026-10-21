@@ -193,6 +193,16 @@ function UnitRenderer.applyPieces(r: Renderer): number
 	return n
 end
 
+-- The unit a drawn model belongs to (click picking), or nil.
+function UnitRenderer.unitOfModel(r: Renderer, model: Instance): number?
+	for id, d in r.drawn do
+		if d.model == model then
+			return id
+		end
+	end
+	return nil
+end
+
 -- Model of a drawn unit (selection, effects), or nil.
 function UnitRenderer.modelOf(r: Renderer, id: number): Model?
 	local d = r.drawn[id]

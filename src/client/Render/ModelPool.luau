@@ -27,6 +27,11 @@ local function unitsFolder(): Folder
 	return folder :: Folder
 end
 
+-- The folder every drawn unit model is in (click picking raycasts it).
+function ModelPool.folder(): Folder
+	return unitsFolder()
+end
+
 -- Shows or hides every unit model at once (strategic zoom, guide 15.4).
 function ModelPool.setVisible(on: boolean)
 	visible = on
@@ -52,6 +57,13 @@ function ModelPool.acquire(def: any, team: number): Model
 		model = table.remove(list) :: Model
 	else
 		model = Models.template(def):Clone()
+		-- clicks raycast unit models (Controls.pickModel, C-38); other
+		-- raycasts include only the ground, so they never hit units
+		for _, d in model:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CanQuery = true
+			end
+		end
 	end
 	local color = TeamColors(team)
 	for _, d in model:GetDescendants() do

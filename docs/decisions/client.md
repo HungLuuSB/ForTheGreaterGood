@@ -301,3 +301,12 @@ Also: C-26's timing now measures along the drawn shell's actual move over the ti
 
 **Why / measured:** headless minute of `sam`: 94 missiles, 8 decoyed, 26 hits, all 4 Falcons (2,600 health) still flying. Studio: the match starts at 0.25×, normal lighting, missiles in the air within seconds. Vertical launch (IRIS-T style) needs the sim: request 12.
 
+### C-38 — Curved missile paths, aircraft markers, clicking models (2026-10-21)
+
+**Decision:**
+- **Projectiles bend through each tick:** a frame draws a cubic Hermite curve between the projectile's state at this tick and its predicted state one tick on (`nextState`, the same steer-and-step the client advances with), each with its velocity, instead of a straight line that turns at the tick's end. The ghost blend (C-36) now grows its gap with the prediction's velocity after this tick's steering (no step at tick boundaries), estimates the drawn velocity at a correction including how fast the blend closes, and a correction during a blend with more than 30 % left keeps the blend's progress (only the ghost is re-aimed) instead of restarting it.
+- **Aircraft markers:** icons, health bars, the selection ring, the target ring and line, and order lines start where an aircraft is drawn; they used to add its altitude again (bars and icons at twice the height) or sit on the ground under it.
+- **Clicking units:** unit model parts are raycastable (set once when the pool makes a model; other raycasts include only the ground), and a click selects (or right-click targets) the unit whose model is under the cursor, before falling back to the unit whose projected position is nearest.
+
+**Why:** the user still saw SAM missiles zig-zag, aircraft icons and health bars far off, and wanted clicks on a model to select it. Missile paths in the `sam` scene (Lune): the server's missiles hold their turn direction, but the drawn ones turned up to 10.7° in a corner at every tick (a Thorn missile turns 160°/s), and a missile corrected every tick or two trailed an ever older course (gap 4 → 9 → 16 studs); now at 8 frames a tick the worst bend is 1.05 studs a frame, tick boundaries bend like the rest of the curve (0.105 vs 0.077), and `Effects.spec` checks it. Studio at 0.25×: 719 missile frames, 19 turning more than 0.5° in a frame, worst 2.2°. Bars and icons: `Bars.spec` puts an aircraft at 110 studs' bar just over the model and its icon at the model. Studio: clicking a Falcon's model 110 studs up selected it; its ring and bar are at the aircraft.
+

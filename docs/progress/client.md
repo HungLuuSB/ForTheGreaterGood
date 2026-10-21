@@ -256,6 +256,12 @@ All with real mouse and keyboard input through the MCP tools.
 - `sam`, `air` and `naval` start at 0.25× speed (`-` / `=` / `P` still change it).
 - The fog-of-war darkening is off for now (`FogOfWar.ENABLED`); radar contacts and ghosts still show.
 
+## 2026-10-21: curved missile paths, aircraft markers, clicking models (C-38)
+
+- **Missile zig-zag:** missiles were drawn straight within each tick and turned at its end (up to 10.7° corners every tick), and frequently corrected missiles trailed an old course. They now follow a smooth curve through each tick and converge after corrections. At 0.25× in Studio: worst 2.2° of turn in a frame.
+- **Aircraft icon, health bar, selection ring and lines** now sit at the aircraft, not at twice its altitude or on the ground under it (`debug_out/screens/air_select_ring_bar.jpg`).
+- **Clicking a unit's model** selects it (right-click targets it), wherever it is drawn.
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
