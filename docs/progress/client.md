@@ -59,6 +59,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `9254e74` (Task 1: terrain from the map layers (C-28)).
 - Ready to merge: `f95efcc` (Smooth range rings (C-29)).
 - Ready to merge: `49e983c` (Task 2: piece scripts and the Juggernaut (C-30)).
+- Ready to merge: `e125dee` (Task 3: air and naval rendering (C-31)).
+- Ready to merge: `dfdd0e7` (merge of `main` into this branch: resolves the `docs/progress/client.md` conflict with f5b8093 by keeping request 6 done and requests 7 and 8; test_client, test and build pass).
 
 ## Tasks
 
@@ -215,6 +217,14 @@ All with real mouse and keyboard input through the MCP tools.
 - **Ships** sit in the water; **own submarines** are drawn just under the surface; **enemy submarines** appear only as sonar contacts, a hollow ring icon (`naval_ship_sub_sonar.jpg`).
 - Playtested with the new `ew` MatchConfig profile (the sim's `ew_test`; its helicopters are shot down within ~30 s, so extra aircraft were spawned) and on Coastline's sea with spawned ships and submarines. MatchConfig is back on `terrain`.
 
+## 2026-10-21: task 4, fog of war in 3D (C-32)
+
+- **Light fog (your idea, as in Astra Force's write-up):** the scene is darkened and a point light per 32-stud cell lights what your units see, fading in and out (`debug_out/screens/fog_lights.jpg`).
+- **The write-up's limit, measured:** Roblox stops rendering point lights a few hundred studs from the camera: lit at 320 studs of zoom, gone at 470 (`fog_lights_culled_470.jpg`). Our tactical zoom goes to 480, so beyond 330 the fog switches to dark plates over unseen ground with normal lighting (`fog_overlay_far.jpg`).
+- **Radar contacts** pulse on the ground in the dark (`fog_radar_contact.jpg`); **ghost structures** stay drawn where last seen, faintly glowing (`fog_ghost.jpg`).
+- The client works out what your team sees exactly like the server (tested cell for cell). Cost: 0.02 ms per frame for the fog code; GPU +1.6 ms with the light fog; 60 fps.
+- **Known gaps:** units never seen in the camera use a typical sight range for their icon, and allies' units don't count yet (request 9).
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
@@ -228,9 +238,12 @@ All with real mouse and keyboard input through the MCP tools.
 - **Terrain colors and materials (C-28):** Roblox Grass on open ground, Rock where steeper than ~50°, Sand on shores and under water, default Terrain water color; no custom material colors (that would change the place's Terrain settings). Rules in `src/client/Core/Terrain.luau` (`STEEP`, `SHORE`), materials in `Render/Terrain.luau`.
 - **Juggernaut's animation feel (C-30):** arms hang at -65°, rise at 120°/s, recoil 0.8 stud in turn, come down 3 s after the last aim; torso turns at 1.25 × the weapon's yaw rate. Values in `src/client/Core/PieceScripts/chs_juggernaut.luau`, model in `src/shared/Defs/Blockouts/chs_juggernaut.luau`. Exact timing waits on request 8.
 - **Aircraft and naval look (C-31):** jet bank up to 60°, helicopter bank 20° and nose-down 12°, rotor 4 turns a second; ships 0.8 stud into the water, own submarines 2.5 studs under it; sonar contacts as hollow rings. Values in `src/client/Core/Attitude.luau` and `Core/PieceScripts/Default.luau`.
+- **How fog of war looks (C-32):** near (≤ 330 studs): darkened scene (ColorCorrection, Lighting brightness 0.6, darker ambient) with a point light per 32-stud cell (brightness 1.4, range 40, 12 studs up, 0.4 s fade); the light grid shows as a soft checker. Far: dark plates (8, 10, 18) at transparency 0.4 over unseen ground, faint seams. Radar contacts as pulsing team-colored discs, sonar contacts larger and paler; ghosts glowing blue-grey at 0.7 transparency. Values in `src/client/Render/FogOfWar.luau` and `Render/Contacts.luau`.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+9. **The team's sight map on the wire (task 4, 2026-10-21):** the client rebuilds its team's sight from its own units (C-32: exact while it knows their defs), but own units never seen in the camera arrive as strategic records with only an icon (their sight range is a guess), and allied players' units can't be counted (the wire doesn't say who is allied). Sending the ally team's `los` map would make the fog exact and cover allies: e.g. on the Strategic channel at sensor rate, the sensor cells that turned seen / unseen since the last send (u16 cell indices; a few dozen per update while armies move; a full bitset on join: 64 × 64 cells = 512 bytes on a 128-cell map). Alternatively own units' strategic records could carry their def index. Medium priority.
 
 8. **Juggernaut arm timing on the server (the user, task 2, 2026-10-21):** "raises its arms to aim, fires, and lowers them after a delay, matching the server's aim timing". Today the heavy cannon rests at pitch 0 and reaches its firing pitch almost at once, so no arm raise exists in gameplay. Please give the Juggernaut's weapon (its own weapon def, or the heavy cannon if `chs_maw` may share it) a rest pose and a hold: `turret.restPitch = -65` (arms down; `minPitch` down to -65 so it can rest there), a `pitchRate` that makes the raise cost real time (e.g. 80°/s: ~0.85 s from rest to level), and `turret.restoreDelay = 3`: after losing its target the weapon keeps its aim for that long before turning back to rest. Weapons then rest at `restPitch` instead of 0. Also add `armL`, `armR` to `chs_juggernaut.pieces` (guide 14.2: piece names come from the def; the client lists them as visual pieces until then). The client script already reads `restPitch` / `restoreDelay` and switches to the server's rates when they exist (C-30). Medium priority.
 

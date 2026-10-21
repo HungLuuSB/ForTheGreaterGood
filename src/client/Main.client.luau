@@ -32,6 +32,8 @@ local MinimapUI = require("./UI/Minimap")
 local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
 local RenderEffects = require("./Render/Effects")
+local Contacts = require("./Render/Contacts")
+local FogOfWar = require("./Render/FogOfWar")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
@@ -79,6 +81,8 @@ local fxRenderer = RenderEffects.new()
 local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
+local fog = FogOfWar.new()
+local contacts = Contacts.new()
 local strategic = false
 local tiers: { [number]: string } = {}
 local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
@@ -160,6 +164,9 @@ if RunService:IsStudio() then
 				camState.distance = distance
 			end
 			return true
+		elseif query == "fog" then
+			-- fog of war: mode, plates, lights (made / lit), last rebuild; contacts and ghosts
+			return { mode = fog.mode, stats = fog.stats, contacts = contacts.stats, version = fog.vision and fog.vision.version }
 		elseif query == "anim" then
 			-- piece scripts: units by LOD, live threads and moving tracks, hooks run
 			local lods = { near = 0, mid = 0, far = 0 }
@@ -236,6 +243,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			if world.layers then
 				Ground.build(world.layers)
 				MinimapUI.setMap(minimap, world.layers)
+				FogOfWar.setMap(fog, world.layers)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
@@ -304,6 +312,11 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local barDraws = if strategic then {} else Bars.draws(world, Bars.list(world, api.selection.set), Controls.projector(cam), view.X, view.Y, right.X, right.Z)
 	HealthBars.step(healthBars, barDraws, not strategic)
 	mark("bars", t0)
+	t0 = os.clock()
+	-- fog of war, radar / sonar contacts and ghosts (C-32); before `died` is cleared
+	FogOfWar.step(fog, world, now, dt, camState.distance)
+	Contacts.step(contacts, world, now, strategic)
+	mark("fog", t0)
 	t0 = os.clock()
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
