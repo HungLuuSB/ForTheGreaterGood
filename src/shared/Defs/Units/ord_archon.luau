@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 360, power = 7000, buildTime = 11000 },
 	health = 800,
 	movement = { maxSpeed = 300, minSpeed = 160, accel = 80, brake = 60, turnRate = 85 },
-	sensors = { sight = 240, airSight = 480, radarSignature = 0.35 },
+	sensors = { sight = 240, airSight = 480, radarSignature = 0.6 }, -- 0.35 before (S-46, the user asked)
 	weapons = { { def = "ord_radar_aam", turretPiece = "turret", muzzle = "muzzle" } },
 	pieces = { "base", "turret", "pylon", "muzzle" },
 	icon = "fighter",
