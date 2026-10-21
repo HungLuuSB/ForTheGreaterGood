@@ -341,4 +341,45 @@ return function(t: RunAll.Context)
 		end
 		t.expect(not dirtySeen, "no dirty bits left after NetOut")
 	end)
+
+	-- client request 14: MOVING is set while a unit moves (aircraft: unless
+	-- landed) and cleared when it stops; the client sees it in State records
+	t.test("the MOVING state bit follows movement and reaches the client", function()
+		local Client = require("./Support/Client")
+		local Spawn = require("../Sim/Spawn")
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64" })
+		local w = sim.world
+		local MOVING = World.State.MOVING
+		local tank = Spawn.unit(sim, "ord_lancer", 1, -100, 0, 0)
+		local jet = Spawn.unit(sim, "ord_falcon", 1, 100, 0, 0)
+		assert(Sim.submit(sim, 1, encode({ cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 63, maxZ = 63 })))
+		local view = Client.new((sim.map :: any).grid)
+		local function step(n: number)
+			for _ = 1, n do
+				Sim.step(sim)
+				Client.receive(view, sim.net.players[1].outbox)
+			end
+		end
+		step(3)
+		t.equal(bit32.band(w.state[tank], MOVING), 0, "an idle tank isn't moving")
+		t.expect(bit32.band(w.state[jet], MOVING) ~= 0, "a flying jet is (it loiters)")
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(-20, 0)
+		assert(Sim.submit(sim, 1, encode({ cmdType = CT.MOVE, flags = 0, unitIds = { tank }, cell = cell, offX = ox, offZ = oz })))
+		step(2)
+		t.expect(bit32.band(w.state[tank], MOVING) ~= 0, "moving after a move order")
+		t.expect(bit32.band(view.units[tank].state :: number, MOVING) ~= 0, "and the client knows")
+		for _ = 1, 300 do
+			step(1)
+			if w.orderId[tank] == 0 and w.speed[tank] == 0 then
+				break
+			end
+		end
+		step(1)
+		t.equal(bit32.band(w.state[tank], MOVING), 0, "cleared once it stopped")
+		t.equal(bit32.band(view.units[tank].state :: number, MOVING), 0, "on the client too")
+		World.setState(w, jet, bit32.bor(w.state[jet], World.State.LANDED))
+		step(1)
+		t.equal(bit32.band(w.state[jet], MOVING), 0, "a landed aircraft isn't moving")
+	end)
 end

@@ -526,4 +526,28 @@ return function(t: RunAll.Context)
 		t.equal(hits, onGhost, "every bomb released on the ghost damaged the plant")
 		print(`    ghost structure: {onGhost} of {#drops} drops released on the ghost, {hits} damaged it`)
 	end)
+
+	-- client request 15: projectiles past the map's edge (where wire
+	-- positions are clamped) burst on it
+	t.test("projectiles leaving the map burst at the edge", function()
+		local sim = Sim.new({ seed = 2, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:160" })
+		local c = sim.combat
+		local half = (sim.map :: any).grid.sizeX / 2
+		-- a shell fired out of the map ends at the edge
+		local weapon = sim.defs.weapons.ord_light_cannon
+		local p = Combat.spawnProjectile(c, half - 20, 20, 0, 380, 0, 0, weapon.index, 0, 1, 5) :: number
+		local burst = nil
+		for _ = 1, 15 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if e.kind == "IMPACT" and e.other == p then
+					burst = e
+				end
+			end
+			if burst then
+				break
+			end
+		end
+		t.expect(burst ~= nil and math.abs((burst :: any).x - half) < 1e-6, "the shell bursts on the edge")
+	end)
 end

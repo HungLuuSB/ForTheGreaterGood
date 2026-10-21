@@ -20,6 +20,9 @@
 -- are collected and the order's field is extended to cover them.
 -- Idle units hold their spot: one pushed more than its radius from its goal
 -- (last move target, or spawn point) steers straight back to it.
+-- The MOVING state bit (client request 14): ground and naval units with a
+-- movement order or speed, aircraft unless landed (loitering included);
+-- written only when it changes, so idle units still cost nothing.
 
 local Air = require("../Air")
 local FlowField = require("../Path/FlowField")
@@ -29,6 +32,7 @@ local Types = require("../Types")
 local World = require("../World")
 
 local DT = 1 / 15
+local MOVING, LANDED = World.State.MOVING, World.State.LANDED
 local HASH_CELL = 16 -- studs per spatial hash bucket
 local SEPARATION_MARGIN = 2 -- studs beyond touching where separation starts
 local SEPARATION_WEIGHT = 1.5
@@ -90,6 +94,27 @@ local function buildHash(n: number, xs: { number }, zs: { number }, originX: num
 	end
 end
 
+-- Sets or clears every unit's MOVING bit to match what it is doing now.
+local function updateMoving(sim: Types.Sim, profiles: { [number]: any })
+	local w = sim.world
+	local band, bor, bnot = bit32.band, bit32.bor, bit32.bnot
+	for _, id in w.ids do
+		local p = profiles[w.defIndex[id]]
+		local state = w.state[id]
+		local now = false
+		if p ~= nil then
+			if p.air then
+				now = band(state, LANDED) == 0
+			else
+				now = w.orderId[id] ~= 0 or w.speed[id] > 0
+			end
+		end
+		if now ~= (band(state, MOVING) ~= 0) then
+			World.setState(w, id, if now then bor(state, MOVING) else band(state, bnot(MOVING)))
+		end
+	end
+end
+
 return function(sim: Types.Sim)
 	local nav = sim.nav
 	if nav == nil then
@@ -127,6 +152,7 @@ return function(sim: Types.Sim)
 	end
 	if not anyActive then
 		-- Nothing is moving: nothing can start overlapping either.
+		updateMoving(sim, profiles)
 		return
 	end
 	buildHash(n, nx, nz, originX, originZ, bw, bh)
@@ -381,4 +407,5 @@ return function(sim: Types.Sim)
 			Air.updateAltitude(sim, id)
 		end
 	end
+	updateMoving(sim, profiles)
 end

@@ -947,7 +947,7 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - Collision against **unit collision volumes** (sphere or cylinder per def), found through the dynamic spatial hash. No Roblox raycasts against Parts.
 - Fast projectiles and jets: test the segment travelled this tick (swept test), not just the end point.
 - Ground impact: compare projectile height to the `height` layer.
-- Lifetime cap per weapon; expired projectiles self-destruct: an IMPACT event with no unit and no damage (D99), so clients drop them.
+- Lifetime cap per weapon; expired projectiles self-destruct: an IMPACT event with no unit and no damage (D99), so clients drop them. So do projectiles that leave the map, on its edge (S-33).
 - Hard cap on live projectiles (e.g., 2,000). If exceeded, oldest ballistic shells resolve instantly at their predicted impact point.
 
 ### 10.6 Damage
