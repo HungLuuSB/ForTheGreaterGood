@@ -76,6 +76,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `4a014e9` (missile sensor view, C-39).
 - Ready to merge: `3671f2b` (recognizable missiles: model, smoke trail, exhaust glow, C-40).
 - Ready to merge: `d8f67eb` (request 13 for the sim session: IR SAM misses; docs only).
+- Ready to merge: `272b106` (merge of `main` with S-25 and the C-38 integration; test_client 81, test 299, build passed).
 
 ## Tasks
 
@@ -275,6 +276,10 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-21: recognizable missiles (C-40)
 
 - Missiles are now small models (body, nose, fins) with a flickering exhaust glow, a short flame and a grey smoke trail that widens behind them and fades after the missile is gone. IR missiles have a dark seeker nose, radar missiles a white radome; radar SAM missiles are bigger with thicker, longer smoke (`debug_out/screens/c40_missile_model_closeup.jpg`, `c40_missile_smoke_launch.jpg`).
+
+## 2026-10-21: SAM scene reworked
+
+- `sam` is now on a bigger map (`flat:160`): the 4 Thorns stand on the east side, and one Falcon (5× health) starts on the west side out of their range and flies over them (spawn entries take `moveTo`). Your radars still cover the map (`debug_out/screens/sam_east_falcon_inbound.jpg`).
 
 ## Needs my review
 
