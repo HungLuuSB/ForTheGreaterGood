@@ -12,9 +12,9 @@
 -- until they drop below their normal maximum). `moveTo = { x, z }` gives
 -- them a move order there as the match starts (their player's order);
 -- `fireAt = { x, z }` an attack-ground order there (how a nuke silo fires).
--- `weaponOverrides` (optional, tests only, C-60): { [weaponId] = { stockpile
--- = { buildTime?, cost? }, intercepts = { chance? } } }, numbers no client
--- simulates, changed for this server only.
+-- `weaponOverrides` (optional, tests only, C-60): { [weaponId] = { reload?,
+-- stockpile = { buildTime?, cost? }, intercepts = { chance? } } }, numbers
+-- no client simulates, changed for this server only.
 -- `speed` (optional, default 1): the sim speed the match starts at (C-35);
 -- in a playtest - / = change it and P pauses.
 
@@ -202,9 +202,10 @@ local PROFILES = {
 	-- reactors (1,250 power/s) and 12 supply converters (12 supply/s from
 	-- spare power; the flat map has no deposits) rebuild a nuke in its full
 	-- 120 s, back to back, with power left for the Aegis' interceptors.
-	-- For testing (the user, 2026-10-21) nukes cost 1 supply and 1 power and
-	-- build in 10 s. Radar SAM interceptors kill with chance 0.2 (the defs'
-	-- since S-50).
+	-- For testing (the user, 2026-10-21) nukes cost 1 supply and 1 power,
+	-- build in 10 s, and a silo can launch again 2 s after a launch (reload
+	-- 10 s in the defs). Radar SAM interceptors kill with chance 0.2 (the
+	-- defs' since S-50).
 	nuke = {
 		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
 		seed = 41,
@@ -230,8 +231,8 @@ local PROFILES = {
 			{ def = "chs_ravager", player = 2, x = 500, z = -60, count = 4, dz = 40, heading = -math.pi / 2 },
 		},
 		weaponOverrides = {
-			ord_nuke = { stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
-			chs_nuke = { stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
+			ord_nuke = { reload = 2, stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
+			chs_nuke = { reload = 2, stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders

@@ -418,7 +418,7 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-21: building pip, test overrides (C-59, C-60)
 
 - Your silo's (and SAM sites') next pip now fills up as the missile is built, from the sim's new progress (S-49) (`debug_out/screens/c59_stock_progress_pip.jpg`). Nukes also fly lower now (300 studs up, same 13 s), so they stay on screen.
-- For testing, the `nuke` profile makes nukes cost 1 supply and 1 power and build in 10 s. Radar SAM interceptors kill only 20% of the time: first as a test override, now the real number (S-50). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
+- For testing, the `nuke` profile makes nukes cost 1 supply and 1 power, build in 10 s, and lets a silo launch again 2 s after a launch (10 s in the defs). A silo fires with 1 nuke in stock; it was the 10 s reload, ending together with the 10 s rebuild, that made it look like it needed 2. Radar SAM interceptors kill only 20% of the time: first as a test override, now the real number (S-50). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
 
 ## 2026-10-21: one launch notice (C-61)
 

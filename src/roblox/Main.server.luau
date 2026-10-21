@@ -63,12 +63,12 @@ speedRemote.OnServerEvent:Connect(function(player: Player, value: any)
 end)
 -- Test-only weapon overrides from the match profile (MatchConfig
 -- `weaponOverrides`, C-60): numbers no client simulates (a stockpile's
--- build time and cost, an interception chance), merged into a copy of the
+-- build time and cost, an interception chance, the reload), merged into a copy of the
 -- registry's weapons for this server only. The copy keeps the registry's
 -- hash so clients still join; their defs keep the registry's numbers,
 -- which only the stock pip's animation between records reads (the server
 -- sends the progress every sixteenth anyway).
-local OVERRIDABLE = { stockpile = { buildTime = true, cost = true }, intercepts = { chance = true } }
+local OVERRIDABLE: { [string]: any } = { stockpile = { buildTime = true, cost = true }, intercepts = { chance = true }, reload = true }
 
 local function copy(v: any): any
 	if type(v) ~= "table" then
@@ -91,7 +91,11 @@ local function withOverrides(base: any, overrides: { [string]: any }?): any
 		for field, values in fields do
 			local allowed = OVERRIDABLE[field]
 			if allowed == nil or w[field] == nil then
-				error(`[Entry] weaponOverrides.{id}.{field}: only an existing stockpile's buildTime / cost or intercepts.chance can be overridden`)
+				error(`[Entry] weaponOverrides.{id}.{field}: only reload, an existing stockpile's buildTime / cost or intercepts.chance can be overridden`)
+			end
+			if allowed == true then
+				w[field] = values -- a number (reload)
+				continue
 			end
 			for k, v in values do
 				if not allowed[k] then
