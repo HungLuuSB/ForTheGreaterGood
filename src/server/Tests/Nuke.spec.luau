@@ -205,9 +205,13 @@ return function(t: RunAll.Context)
 			for _, e in c.events do
 				if e.kind == "LAUNCH" then
 					nuke = e.other
-				elseif e.kind == "SPAWN_PROJ" and table.find(sites, e.unit) and nuke ~= 0 then
-					interceptors += 1
-					t.equal(c.pTargetProj[e.other], nuke, "fired at the nuke, not the helicopter")
+				elseif e.kind == "SPAWN_PROJ" and table.find(sites, e.unit) and nuke ~= 0 and c.projSlot[nuke] then
+					-- once the nuke is in a site's range, that site fires only at it
+					local reach = sim.defs.weapons.chs_radar_sam.range
+					if math.sqrt((c.px[nuke] - w.posX[e.unit]) ^ 2 + (c.pz[nuke] - w.posZ[e.unit]) ^ 2) <= reach then
+						interceptors += 1
+						t.equal(c.pTargetProj[e.other], nuke, "fired at the nuke, not the helicopter")
+					end
 				elseif e.kind == "INTERCEPTED" and e.other == nuke then
 					intercepted = true
 				elseif e.kind == "IMPACT" and e.other == nuke then

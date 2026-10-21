@@ -31,10 +31,11 @@ end
 
 -- Registered defs plus neutral test units / weapons derived from existing ones.
 -- These tests check EW rules at fixed distances on a 1024-stud map, so the
--- radar SAMs keep the ranges they were written for: S-45 tripled them (a
--- balance change the rules don't depend on).
-local FIXED_RANGES = { ord_radar_sam = 600, chs_radar_sam = 560 }
+-- SAMs keep the ranges they were written for: S-45 tripled the radar SAMs'
+-- and S-55 cut both kinds (balance changes the rules don't depend on).
+local FIXED_RANGES = { ord_radar_sam = 600, chs_radar_sam = 560, ord_ir_sam = 300, chs_ir_sam = 420 }
 local FIXED_RADARS = { ord_aegis = 650, ord_seraph = 520, chs_wyvern = 600, chs_gorgon = 480 }
+local FIXED_AIR_SIGHT = { ord_vigil = 320, ord_halo = 320, chs_thorn = 420, chs_hornet = 300 }
 
 local function testDefs(units: { [string]: { from: string, with: { [string]: any } } }, weapons: { [string]: { from: string, with: { [string]: any } } }): Defs.DefSet
 	local raw = deepCopy(Registry)
@@ -43,6 +44,9 @@ local function testDefs(units: { [string]: { from: string, with: { [string]: any
 	end
 	for id, r in FIXED_RADARS do
 		raw.units[id].sensors.radar = r
+	end
+	for id, r in FIXED_AIR_SIGHT do
+		raw.units[id].sensors.airSight = r
 	end
 	for name, spec in units do
 		local u = Defs.extend(raw.units[spec.from], spec.with)
