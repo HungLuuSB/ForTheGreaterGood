@@ -24,6 +24,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-16: own units' weapon targets in State records (protocol 8; client request 6).
 - S-17: AI difficulty levels (Easy, Normal, Hard) as a match option; AI fairness fixes.
 - S-18: spectator stream and player replay files.
+- S-19: build ranges at 70% (client request 7); frames start in range of their snapped center.
 
 ---
 
@@ -261,3 +262,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Why not compressed:** pure Luau has no deflate; the stream is already quantized. Raw size: a spectator ~54 KB per game minute and a player ~33 KB on a 4-minute `skirmish:192` AI match; the 40-minute soak's spectator file is in the progress file. Whoever stores files can compress them (zstd in Lune tooling).
 - **Tests** (`PlayerReplay.spec`, 3): a spectator has every unit, tactical, with the right team and type, while player 1 doesn't (fog); the spectator's and player 1's recordings, serialized and parsed back, rebuild the live client's view exactly at every checkpoint (24 per viewer: units, tiers, positions, heading, altitude, health, build, state, targets, projectiles, economy) and at the end, and round-trip byte for byte; the file format (header, channel numbering equal to `NetState.CHANNELS`, empty ticks, a long message, bad magic, wrong format, truncation). Dropping the State channel in playback fails it (24 of 24 checkpoints differ).
 - `lune run soak` records the spectator for the whole match and writes `debug_out/soak.ftgp`.
+
+## S-19 — Shorter build ranges (client request 7, 2026-10-22)
+
+- **Request (the user, via the client):** build ranges about 70% of what they were. Command Vehicles 80 → **56**; constructors (`ord_mason`, `ord_architect`, `ord_harbormaster`, `ord_tidewright`, `chs_scrapper`, `chs_forgemaster`, `chs_reaver`, `chs_wrecker`) 64 → **45**; aircraft builders (`ord_skywright`, `ord_zenith`, `chs_condor`, `chs_vulture`) 48 → **34**. The client reads `buildRange` from the defs.
+- **Bug it uncovered:** a builder started a frame when it was in range of the *requested* point, but built only in range of the frame's *snapped* center (up to half a cell farther). With the long ranges it never showed; at 56 the Command Vehicle started a generator 64 studs away, then drove 4 more studs before building. `Build` now checks the range to the snapped center before starting the frame.
+- **Tests:** `Build.spec` checks the builder is in range of the frame's center when the frame starts (restoring the old check fails it: 64 studs) and reads the Command Vehicle's range from its def instead of a hard-coded 80.

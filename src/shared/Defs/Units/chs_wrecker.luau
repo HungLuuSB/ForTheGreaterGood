@@ -18,7 +18,7 @@ return Templates.extend(Templates.Unit, {
 	movement = { maxSpeed = 30, accel = 10, brake = 14, turnRate = 70 },
 	sensors = { sight = 120 },
 	buildPower = 100,
-	buildRange = 64,
+	buildRange = 45, -- 70% of 64 (client request 7, S-19)
 	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_tidal", "chs_shipyard", "chs_advshipyard", "chs_riptide", "chs_fang", "chs_listener" },
 	pieces = { "base", "nano" },
 	icon = "worker",

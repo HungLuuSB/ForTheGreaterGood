@@ -18,7 +18,7 @@ return Templates.extend(Templates.Unit, {
 	movement = { maxSpeed = 30, accel = 10, brake = 14, turnRate = 70 },
 	sensors = { sight = 120 },
 	buildPower = 100,
-	buildRange = 64,
+	buildRange = 45, -- 70% of 64 (client request 7, S-19)
 	buildOptions = { "ord_extractor", "ord_generator", "ord_solar", "ord_windmill", "ord_converter", "ord_depot", "ord_tidal", "ord_shipyard", "ord_advshipyard", "ord_moat", "ord_undertow", "ord_ear" },
 	pieces = { "base", "nano" },
 	icon = "worker",
