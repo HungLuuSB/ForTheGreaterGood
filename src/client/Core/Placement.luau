@@ -1,23 +1,20 @@
 --!strict
 -- Client-side placement check for the build ghost (guide 9.3, 15.6): the
--- server's rules (src/server/Sim/Placement.luau) applied to what this client
--- knows. Snapping and terrain are exact (same layers, same slope); occupancy
--- and units in the way use known units only, as the server's planning check
--- (D101) does. The server re-checks when the builder starts the frame.
--- Pure Luau (C-7).
+-- server's rules applied to what this client knows. Snapping, the terrain
+-- rule and the unit radius come from Shared/Grid/PlacementRules (S-9), the
+-- same functions the server uses; occupancy and units in the way use known
+-- units only, as the server's planning check (D101) does. The server
+-- re-checks when the builder starts the frame. Pure Luau (C-7).
 
 local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
 local Passability = require("@shared/Grid/Passability")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
 local Placement = {}
 
--- copies of the server's values (Sim/Placement.luau; request 4)
-Placement.LAND_MAX_SLOPE = 30 -- degrees
-Placement.WATER_MIN_DEPTH = 6 -- studs
-Placement.RADIUS_PER_FOOTPRINT = 8 * 0.45 -- unit collision radius per footprint cell
 
 export type Result = {
 	ok: boolean,
@@ -29,14 +26,9 @@ export type Result = {
 	replaces: number, -- extractor upgrade: the extractor it replaces, else 0
 }
 
--- Min-corner cell of a size-F footprint whose center is nearest (x, z), and
--- the snapped center: odd footprints center on a cell, even on a corner.
-function Placement.snap(grid: Grid.Grid, size: number, x: number, z: number): (number, number, number, number)
-	local fx = (x - grid.originX) / Grid.CELL_SIZE - size / 2
-	local fz = (z - grid.originZ) / Grid.CELL_SIZE - size / 2
-	local x0, z0 = math.floor(fx + 0.5), math.floor(fz + 0.5)
-	return x0, z0, (x0 + size / 2) * Grid.CELL_SIZE + grid.originX, (z0 + size / 2) * Grid.CELL_SIZE + grid.originZ
-end
+-- Min-corner cell and snapped center (odd footprints center on a cell, even
+-- on a corner): the server's own function.
+Placement.snap = PlacementRules.snap
 
 -- The client's passability map for its world (built once per map).
 local passCache: { [any]: Passability.PassMap } = setmetatable({}, { __mode = "k" }) :: any
@@ -120,11 +112,7 @@ function Placement.check(world: World.World, def: any, x: number, z: number): Re
 				end
 				replaces = id
 			end
-			local water = Layers.getWater(layers, i)
-			local land = water <= 0 and Passability.slopeDegrees(pm, i) <= Placement.LAND_MAX_SLOPE
-			local sea = water >= Placement.WATER_MIN_DEPTH
-			local ok = if placement == "land" then land elseif placement == "water" then sea else (land or sea)
-			if not ok then
+			if not PlacementRules.terrainOk(pm, i, placement) then
 				return fail("terrain")
 			end
 		end
@@ -140,7 +128,7 @@ function Placement.check(world: World.World, def: any, x: number, z: number): Re
 	for id, u in world.units do
 		local udef = World.def(world, u)
 		if udef and udef.domain ~= "air" and udef.domain ~= "structure" and id ~= replaces then
-			local r = udef.footprint * Placement.RADIUS_PER_FOOTPRINT
+			local r = udef.footprint * PlacementRules.RADIUS_PER_FOOTPRINT
 			local px, pz = u.rx or u.x, u.rz or u.z
 			if px + r > minX and px - r < maxX and pz + r > minZ and pz - r < maxZ then
 				return fail("units in the way")

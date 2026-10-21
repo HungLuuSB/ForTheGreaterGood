@@ -4,6 +4,7 @@
 -- their def; strategic records only carry an icon number (net.md section 3),
 -- mapped back to the icon name and to a representative def for its family.
 
+local NetIcons = require("@shared/Net/Icons")
 local Schema = require("@shared/Net/Schema")
 local World = require("./World")
 
@@ -25,23 +26,16 @@ export type Table = {
 	sample: { [number]: any }, -- icon number → a def using it (family, size)
 }
 
--- The server's numbering (NetOut.iconIndex): distinct icon names sorted,
--- numbered from 1, capped at 63. A copy until it's shared (request 5).
+-- The wire numbering, from Shared/Net/Icons (S-10), plus a sample def per
+-- icon number for its family and size.
 function Icons.table(defs: any): Table
-	local names: { string } = {}
-	for _, def in defs.unitByIndex do
-		if table.find(names, def.icon) == nil then
-			table.insert(names, def.icon)
-		end
-	end
-	table.sort(names)
-	local byDef, sample = {}, {}
+	local byDef = NetIcons.byDef(defs)
+	local sample = {}
 	for index, def in defs.unitByIndex do
-		local n = math.min(table.find(names, def.icon) :: number, 63)
-		byDef[index] = n
+		local n = byDef[index]
 		sample[n] = sample[n] or def
 	end
-	return { names = names, byDef = byDef, sample = sample }
+	return { names = NetIcons.names(defs), byDef = byDef, sample = sample }
 end
 
 local function shapeOf(def: any): Shape
