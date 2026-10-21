@@ -420,3 +420,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Test changes:** `NetOut.spec`'s weapon-target test and `LineOfFire.spec`'s "holds fire behind the ridge" put their units on Hold Position, to keep the static scenes they describe (on Maneuver the Lancer now goes round the ridge, which `MoveStates.spec` tests).
 - **Cost (stress, 800 units):** Commands 0.45 → 0.59 ms average (budget 1).
 - **Tests (`MoveStates.spec`, 5):** Hold Position stays; Maneuver closes on an enemy just out of range, kills it and walks back (at most 174 studs out); Maneuver ignores an enemy beyond its leash while Roam chases it down and stays; Maneuver repositions past a ridge to get a shot; a command replaces the chase and re-anchors.
+
+## S-35 — Cancel construction with a refund (guide 9.3; audit item 6) (2026-10-22)
+
+- **Command:** CANCEL 16 (protocol 12), `value u8` 0..50. On an unfinished frame: the frame is removed (no wreck, a BUILD_FAILED event with reason "cancelled"), and its builders stop. On a factory: queue item `value` (1-based) is dropped, 0 = the whole queue.
+- **Refund:** spending is proportional to progress (Build spends `cost × step` as progress grows), so a refund is progress × cost, credited like reclaim (`reclaimed`) at the next economy step and capped by storage. Only the frame or the item in production has progress; queued items cost nothing yet. 100% of what was spent, like BAR (the guide's "optional" choice).
+- **Tests (`Build.spec`):** a plant frame cancelled at 30–70% credits exactly progress × cost of supply and power and is gone; CANCEL through the command removes a frame; cancelling a factory's item in production refunds its progress and the next item starts from scratch; a queued item goes without a refund; CANCEL 0 clears the queue. `Schema.spec`: golden bytes and range check for CANCEL.

@@ -273,4 +273,78 @@ return function(t: RunAll.Context)
 		end
 		t.equal(run(), run())
 	end)
+
+	-- S-35 (guide 9.3): cancelling refunds what was spent
+	t.test("CANCEL: a frame goes and refunds its progress; a factory drops queue items, refunding the one in production", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		fund(sim)
+		local w = sim.world
+		local acc = sim.eco.accounts[1]
+		local cv = Spawn.unit(sim, "ord_sovereign", 1, -40, 0)
+		build(sim, { cv }, "ord_vehplant", -20, 40)
+		local frame = 0
+		runUntil(sim, 3000, function()
+			for _, id in w.ids do
+				if w.defIndex[id] == sim.defs.units.ord_vehplant.index and w.buildProgress[id] >= 0.3 then
+					frame = id
+					return true
+				end
+			end
+			return false
+		end)
+		local progress = w.buildProgress[frame]
+		t.expect(frame ~= 0 and progress < 0.7, `a part-built plant ({progress})`)
+		local cost = sim.defs.units.ord_vehplant.cost
+		local Build = require("../Sim/Build")
+		local s0, p0 = acc.supply.reclaimed, acc.power.reclaimed
+		t.expect(Build.cancelFrame(sim, frame), "cancelled")
+		t.expect(math.abs(acc.supply.reclaimed - s0 - cost.supply * progress) < 1e-6, "supply spent comes back")
+		t.expect(math.abs(acc.power.reclaimed - p0 - cost.power * progress) < 1e-6, "and power")
+		t.equal(w.slot[frame], nil, "the frame is gone")
+		Sim.step(sim)
+		t.expect(sim.build.target[cv] == nil or sim.build.target[cv] == 0, "its builder stopped")
+
+		-- through the command: another frame
+		build(sim, { cv }, "ord_vehplant", -20, 40)
+		local frame2 = 0
+		runUntil(sim, 3000, function()
+			for _, id in w.ids do
+				if w.defIndex[id] == sim.defs.units.ord_vehplant.index and w.buildProgress[id] > 0 then
+					frame2 = id
+					return true
+				end
+			end
+			return false
+		end)
+		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame2 }, value = 0 })
+		Sim.step(sim)
+		t.equal(w.slot[frame2], nil, "CANCEL on a frame removes it")
+
+		-- a factory: the head item in production is refunded its progress
+		local sim2 = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		fund(sim2)
+		local plant = Spawn.unit(sim2, "ord_vehplant", 1, 0, 0, math.pi / 2)
+		build(sim2, { plant }, "ord_lancer", 0, 0)
+		build(sim2, { plant }, "ord_mason", 0, 0)
+		build(sim2, { plant }, "ord_lancer", 0, 0)
+		for _ = 1, 300 do
+			Sim.step(sim2)
+		end
+		local b = sim2.build
+		local p = b.progress[plant]
+		t.expect(p > 0.2 and p < 1, `the first Lancer is in production ({p})`)
+		local acc2 = sim2.eco.accounts[1]
+		local lancer = sim2.defs.units.ord_lancer
+		local r0 = acc2.supply.reclaimed
+		Build.cancelQueued(sim2, plant, 1)
+		t.expect(math.abs(acc2.supply.reclaimed - r0 - lancer.cost.supply * p) < 1e-6, "the Lancer's spend is refunded")
+		t.equal(#b.queue[plant], 2, "two items left")
+		t.equal(b.queue[plant][1], sim2.defs.units.ord_mason.index, "the Mason is next")
+		t.equal(b.progress[plant], 0, "starting from scratch")
+		Build.cancelQueued(sim2, plant, 2)
+		t.equal(#b.queue[plant], 1, "a queued item goes without a refund")
+		submit(sim2, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { plant }, value = 0 })
+		Sim.step(sim2)
+		t.equal(#b.queue[plant], 0, "CANCEL 0 clears the queue")
+	end)
 end

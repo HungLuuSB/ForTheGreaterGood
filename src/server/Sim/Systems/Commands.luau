@@ -167,6 +167,11 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 			World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
 		elseif cmdType == CT.REPEAT then
 			Orders.setRepeat(sim, id, cmd.value == 1) -- factories only (S-13)
+		elseif cmdType == CT.CANCEL then
+			-- an unfinished frame goes; a factory drops a queue item (S-35)
+			if not Build.cancelFrame(sim, id) then
+				Build.cancelQueued(sim, id, cmd.value :: number)
+			end
 		elseif cmdType == CT.STOP then
 			Orders.stop(sim, id)
 		end

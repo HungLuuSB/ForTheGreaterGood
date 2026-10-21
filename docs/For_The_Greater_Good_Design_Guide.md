@@ -625,7 +625,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 ```
 cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
                   8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
-                  13 TOGGLE, 14 CAMERA, 15 REPEAT   (0 is invalid)
+                  13 TOGGLE, 14 CAMERA, 15 REPEAT, 16 CANCEL   (0 is invalid)
 flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
 count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
@@ -638,6 +638,8 @@ params    by cmdType:
   SET_FIRE_STATE / SET_MOVE_STATE      value u8: 0 hold, 1 return fire / maneuver, 2 fire at will / roam
   TOGGLE                               value u8: 0 off, 1 on
   REPEAT                               value u8: 0 off, 1 on (factories; others ignore it)
+  CANCEL                               value u8: 0..50. Unfinished frames: cancelled (value ignored).
+                                       Factories: drop queue item `value` (1-based), 0 = the whole queue
   CAMERA                               minX u8, minZ u8, maxX u8, maxZ u8  (camera area as a cell rectangle)
   STOP                                 none
 ```
@@ -882,7 +884,7 @@ Factories have build power and an optional rally point and repeat queue. Workers
 - **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.
 - The client shows a placement ghost using its own grid copy; the server re-validates.
 - Unfinished structures exist from the first tick with low health (they can be attacked).
-- Cancelling refunds what was spent (optional: 100% refund like BAR).
+- Cancelling refunds what was spent (S-35): the CANCEL command removes an unfinished frame (no wreck) or a factory queue item; the frame's progress, or the factory's progress on the item in production, times its cost comes back at the next economy step (capped by storage). Queued items not started cost nothing yet.
 - Upgrading a T1 extractor into T2: build the T2 on the same spot; the T1 is removed when construction starts.
 
 ### 9.4 Tech progression
