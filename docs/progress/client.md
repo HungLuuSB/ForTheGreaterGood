@@ -105,6 +105,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `186af86` `042e4c4` (merge of `main` with S-46; request 24 marked done); test_client 99, test 327, build passed.
 - Ready to merge: `b031b63` `0728784` (merge of `main` with S-47, protocol 15; SAM stock pips, C-56); test_client 100, test 334, build passed.
 - Ready to merge: `5d8a153` `d1ec2d3` (merge of `main` with S-48, protocol 16; nukes, interceptors, launch warning, A attack order, C-57; models request 1); test_client 102, test 339, build passed.
+- Ready to merge: `209312d` `b408822` (nuke profile: Order economy to refill the stockpiles; C-57 queue line); test_client 102, test 339, build passed.
 
 ## Tasks
 
