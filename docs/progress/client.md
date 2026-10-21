@@ -95,6 +95,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `91a79a1` (aircraft crash, countermeasures by equipment, C-48; requests 17-19).
 - Ready to merge: `37c6142` (airsam test profile: planes and helicopters against 5 SAMs).
 - Ready to merge: `1ae6176` (health bars change on the hit's tick, C-49; airsam at normal health).
+- Ready to merge: `073d5e7` (missiles keep their dying target until the hit is drawn, C-50).
 
 ## Tasks
 
