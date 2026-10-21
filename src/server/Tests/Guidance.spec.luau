@@ -224,10 +224,17 @@ return function(t: RunAll.Context)
 		moveTo(sim, 1, { jet }, 250, 0)
 		local launched, hits, decoyed, lost, vertical, aimMoved = 0, 0, 0, 0, 0, false
 		local mine: { [number]: boolean } = {}
+		local climbedTo: { [number]: number } = {} -- missile → height above ground when it first leaned over (S-44)
 		for _ = 1, 15 * 90 do
 			Sim.step(sim)
 			if w.wYaw[key] ~= restYaw or w.wPitch[key] ~= restPitch then
 				aimMoved = true
+			end
+			for p in mine do
+				if c.projSlot[p] ~= nil and climbedTo[p] == nil and (c.pvx[p] ~= 0 or c.pvz[p] ~= 0) then
+					-- the step that leaned it over started from its previous height
+					climbedTo[p] = c.py[p] - c.pvy[p] / 15 - Combat.groundHeight(c, c.px[p], c.pz[p])
+				end
 			end
 			for _, e in c.events do
 				if e.kind == "SPAWN_PROJ" and e.unit == site then
@@ -262,8 +269,16 @@ return function(t: RunAll.Context)
 		t.expect(launched >= 5, `it fired ({launched})`)
 		t.equal(vertical, launched, "every missile left climbing steeply")
 		t.expect(not aimMoved, "the launcher never turned")
+		local climb = sim.defs.weapons.chs_radar_sam.climbHeight :: number
+		local lowest = math.huge
+		for _, h in climbedTo do
+			lowest = math.min(lowest, h)
+		end
+		t.expect(lowest >= climb - 1, `every missile climbed straight to {climb} studs before pitching over (lowest {lowest})`)
 		-- the seeker cone only applies after the hand-over, so no lock is lost
 		-- in the climb; a few overshoot a jet passing close over the site
-		t.expect(hits >= launched * 0.75, `at least 75% hit ({hits} of {launched}, {lost} overshot)`)
+		-- since S-45 (range 1680) it also takes long shots at a jet weaving
+		-- far away, which miss more often
+		t.expect(hits >= launched * 0.7, `at least 70% hit ({hits} of {launched}, {lost} overshot)`)
 	end)
 end

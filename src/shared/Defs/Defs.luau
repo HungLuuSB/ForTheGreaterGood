@@ -119,6 +119,7 @@ export type WeaponDef = {
 	lockRange: number?,
 	terminalRange: number?,
 	seekerAngle: number?, -- degrees off the nose the seeker sees; default by guidance (EW.SEEKER_ANGLE, S-27)
+	climbHeight: number?, -- vertical launch: studs above the ground it climbs straight before pitching over (S-44)
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
@@ -338,6 +339,7 @@ local WEAPON_SPEC: Spec = {
 		terminalRange = opt(POSITIVE),
 		seekerAngle = { kind = "number", optional = true, min = 1, max = 180 },
 		launch = { kind = "string", optional = true, enum = set({ "turret", "vertical" }) },
+		climbHeight = opt(NON_NEGATIVE),
 		burnThrough = opt(FRACTION),
 		canTargetRadar = { kind = "boolean", optional = true },
 		fx = {

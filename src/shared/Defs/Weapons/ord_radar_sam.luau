@@ -3,14 +3,15 @@
 return {
 	id = "ord_radar_sam",
 	type = "HOMING",
-	range = 600,
+	range = 1800, -- ×3 (S-45, the user asked)
 	reload = 4,
 	projectileSpeed = 360,
 	accuracy = 1,
 	turnRate = 90,
 	launch = "vertical", -- IRIS-T SLM style: straight up, then over (S-42)
+	climbHeight = 100, -- studs above the ground it climbs straight first (S-44, the user asked)
 	guidance = "RADAR",
-	lockRange = 600,
+	lockRange = 1800,
 	burnThrough = 0.35,
 	terminalRange = 50,
 	canTargetRadar = true,
