@@ -25,8 +25,9 @@
 --   2. midcourse, every MIDCOURSE_PERIOD ticks: LOST_LOCK clears the target,
 --      so the missile flies straight until its lifetime runs out;
 --   3. terminal, once, when the missile could reach terminalRange this tick:
---      the target rolls its countermeasures; on success a DECOYED event and
---      the missile veers off DECOY_TURN with no target.
+--      the target rolls its countermeasures; on success a DECOYED event: the
+--      missile loses its target and follows the decoy point for up to a
+--      second (Guidance.decoy, S-28), then flies straight.
 --
 -- Countermeasures: flares (vs IR) and chaff (vs RADAR) spend a charge per
 -- roll and are restocked while an aircraft rearms, each charge costing its
@@ -54,10 +55,12 @@ EW.DT = 1 / 15
 EW.MIDCOURSE_PERIOD = 5 -- ticks between midcourse checks
 EW.BURN_THROUGH = 0.35 -- default fraction of lockRange
 EW.TERMINAL_RANGE = 40 -- studs, default
-EW.DECOY_TURN = math.rad(60) -- a decoyed missile's sideways veer
--- seeker half-angle (degrees off the nose) by guidance, unless the weapon sets
--- seekerAngle; COMMAND guidance (the launcher steers) has no seeker (S-27)
-EW.SEEKER_ANGLE = table.freeze({ IR = 60, RADAR = 70 } :: { [string]: number })
+-- the point a decoyed missile follows (S-28): the cloud of flares or chaff
+-- next to the target, DECOY_SIDE studs to one side of the missile's line of
+-- flight (a coin flip) and DECOY_DROP below the target (flares fall, chaff
+-- hangs), so following it draws the missile off the target in any approach
+EW.DECOY_SIDE = 25
+EW.DECOY_DROP = table.freeze({ IR = 20, RADAR = 6 } :: { [string]: number })
 EW.Flag = table.freeze({ TERMINAL = 1, LOST = 2 }) -- Combat.pFlags bits
 
 local L = Sensors.Level
@@ -241,7 +244,7 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 
 	-- 1b. seeker cone, every tick (S-27): a target outside the seeker's field
 	-- of view (the missile overshot it) breaks the lock for good
-	local cone = weapon.seekerAngle or EW.SEEKER_ANGLE[guidance]
+	local cone = Guidance.seekerAngle(weapon)
 	if cone then
 		-- where the target was when this step starts (it moved already), as
 		-- Projectiles navigates; inside one step's reach the fuse decides
@@ -286,9 +289,13 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 	end
 	c.pFlags[p] = bit32.bor(flags, TERMINAL)
 	if defeats(sim, target, guidance) then
-		local a = if sim.rng:chance(0.5) then EW.DECOY_TURN else -EW.DECOY_TURN
+		-- no kink: the missile turns toward the decoy over the next ticks
+		local side = if sim.rng:chance(0.5) then EW.DECOY_SIDE else -EW.DECOY_SIDE
+		local tvx, tvz = Guidance.velocity(w.heading[target], w.speed[target])
 		local vx, vz = c.pvx[p], c.pvz[p]
-		c.pvx[p], c.pvz[p] = vx * cos(a) + vz * sin(a), vz * cos(a) - vx * sin(a)
+		local vl = math.max(math.sqrt(vx * vx + vz * vz), 1e-6)
+		local sx, sz = vz / vl * side, -vx / vl * side -- across the missile's flight
+		c.pDecoy[p] = { w.posX[target] - tvx * EW.DT + sx, ty - (EW.DECOY_DROP[guidance] or 0), w.posZ[target] - tvz * EW.DT + sz, Guidance.DECOY_TICKS }
 		c.pTarget[p] = 0
 		Combat.addEvent(c, { kind = "DECOYED", tick = sim.tick, unit = target, other = p, x = x, y = y, z = z })
 	end

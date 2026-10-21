@@ -93,6 +93,7 @@ export type Combat = {
 	pTtl: { [number]: number }, -- seconds left
 	pTarget: { [number]: number }, -- unit a homing projectile steers toward (0 = none)
 	pFlags: { [number]: number }, -- guided missiles: EW.Flag bits (terminal rolled, lock lost)
+	pDecoy: { [number]: { number } }, -- decoyed missiles: { x, y, z, ticks left } of the point they follow (S-28)
 	nextProjId: number,
 	freeProj: { number }, -- FIFO of freed IDs
 	freeHead: number,
@@ -168,6 +169,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pTtl = {},
 		pTarget = {},
 		pFlags = {},
+		pDecoy = {},
 		nextProjId = 1,
 		freeProj = {},
 		freeHead = 1,
@@ -400,6 +402,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pvx[id], c.pvy[id], c.pvz[id] = nil, nil, nil
 	c.pWeapon[id], c.pOwner[id], c.pTeam[id], c.pTtl[id], c.pTarget[id], c.pFlags[id] = nil, nil, nil, nil, nil, nil
 	c.pOwnerGen[id], c.pTargetGen[id] = nil, nil
+	c.pDecoy[id] = nil
 	c.freeProj[c.freeTail] = id
 	c.freeTail += 1
 end
@@ -450,6 +453,10 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.pTarget[id])
 		h = Hash.u32(Hash.u32(h, c.pOwnerGen[id]), c.pTargetGen[id])
 		h = Hash.u32(h, c.pFlags[id])
+		local d = c.pDecoy[id]
+		if d then
+			h = Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4])
+		end
 	end
 	h = Hash.u32(h, c.nextProjId)
 	h = Hash.u32(h, #c.wreckIds)

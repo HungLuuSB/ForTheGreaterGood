@@ -56,6 +56,7 @@ export type Projectile = {
 	weaponIndex: number,
 	target: number, -- 0 = none
 	ttl: number, -- seconds left
+	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the point it follows (S-28)
 }
 
 -- A visual effect: a tracer (fire: from the shooter to the end point), an
@@ -150,6 +151,15 @@ local function advance(view: View)
 				p.vx, p.vy, p.vz = Guidance.pn(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, 0, tvz, maxTurn, DT)
 			else
 				p.vx, p.vy, p.vz = Guidance.lead(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, tvz, maxTurn)
+			end
+		elseif p.decoy and weapon.turnRate then
+			-- decoyed: follow the flare or chaff like the server (S-28)
+			local d = p.decoy :: { number }
+			local follow
+			p.vx, p.vy, p.vz, follow = Guidance.decoy(p.x, p.y, p.z, p.vx, p.vy, p.vz, d[1], d[2], d[3], math.rad(weapon.turnRate) * DT, Guidance.seekerAngle(weapon) :: number)
+			d[4] -= 1
+			if not follow or d[4] <= 0 then
+				p.decoy = nil
 			end
 		end
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, DT)
@@ -276,6 +286,12 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				p.x, p.y, p.z = pos(e)
 				p.vx, p.vy, p.vz = vel(e)
 				p.target = 0
+				if kind == EK.DECOYED and (e.decoyTicks :: number) > 0 then
+					local dx, dz = g:decode(e.decoyCell :: number, e.decoyOffX :: number, e.decoyOffZ :: number)
+					p.decoy = { dx, (e.decoyY :: number) / Schema.Y_SCALE, dz, e.decoyTicks :: number }
+				else
+					p.decoy = nil
+				end
 				table.insert(view.effects, { kind = if kind == EK.DECOYED then "decoy" else "lost", x = p.x, y = p.y, z = p.z })
 				continue
 			end

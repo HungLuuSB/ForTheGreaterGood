@@ -697,7 +697,7 @@ DEATH       unitId u16, severity u8, wreckId u16 (0 = none)               6 B
 FIRE        shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos  10 B
 SPAWN_PROJ  projId u16, weaponDefIndex u16, pos, vel, targetId u16 (0 = none)  19 B
 IMPACT      projId u16, pos                                               9 B
-DECOYED     projId u16, pos, vel (after the decoy turn)                  15 B
+DECOYED     projId u16, pos, vel, decoy pos, decoyTicks u8 (v11)         22 B
 LOST_LOCK   projId u16, pos, vel (flying on unguided)                    15 B
 WRECK       wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8   10 B
 WRECK_GONE  wreckId u16                                                   3 B
@@ -1081,7 +1081,7 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 1. **Launch:** lock check per the table. No lock → no launch.
 1b. **Seeker cone** (IR, RADAR; every tick; S-27): a target more than the seeker's half-angle off the missile's nose (`seekerAngle`; default IR 60°, RADAR 70°) breaks the lock: the missile overshot. `LOST_LOCK`, and it never re-acquires: no second pass.
 2. **Midcourse:** every ~5 ticks, re-check. Radar missile whose target entered an enemy jam field beyond burn-through → `LOST_LOCK` (flies straight, self-destructs at lifetime).
-3. **Terminal:** once, when within `terminalRange`, roll countermeasures (11.6). Success → `DECOYED` event; the missile veers off. Failure → it hits.
+3. **Terminal:** once, when within `terminalRange`, roll countermeasures (11.6). Success → `DECOYED` event; the missile loses its target and follows the flares or chaff for up to a second (a point 25 studs across its flight path, below the target for flares), turning at its `turnRate`, then flies on (S-28). Failure → it hits.
 
 Implementation (`Sim/EW.luau`, DECISIONS D79–D80, D82):
 - `EW.canLock` gates every guided launch.

@@ -26,8 +26,9 @@
 --                   the current position and velocity, and the homing
 --                   target if the ally team knows that unit (tactical or a
 --                   strategic record: its ID is no secret then);
---       DECOYED,    for projectiles the client has: position and the new
---       LOST_LOCK   velocity (after the decoy turn; or flying on unguided);
+--       DECOYED,    for projectiles the client has: position and velocity
+--       LOST_LOCK   (DECOYED: also the decoy point it follows and for how many
+--                   more ticks, S-28; LOST_LOCK: it flies on unguided);
 --       IMPACT      for projectiles the client has, or anywhere in sight and
 --                   in the camera rectangle (projectiles at the end of their
 --                   life burst with an IMPACT too).
@@ -319,7 +320,14 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			if c.projSlot[p] ~= nil then -- else its IMPACT follows
 				-- the state after this tick's step, like SPAWN_PROJ
 				local d = withPos({ kind = if kind == "DECOYED" then Schema.EventKind.DECOYED else Schema.EventKind.LOST_LOCK, projId = p }, g, c.px[p], c.py[p], c.pz[p])
-				table.insert(events, withVel(d, c.pvx[p], c.pvy[p], c.pvz[p]))
+				withVel(d, c.pvx[p], c.pvy[p], c.pvz[p])
+				if kind == "DECOYED" then
+					-- the point it follows and for how many more ticks (S-28)
+					local dp = c.pDecoy[p] or { c.px[p], c.py[p], c.pz[p], 0 }
+					d.decoyCell, d.decoyOffX, d.decoyOffZ = g:encode(dp[1], dp[3])
+					d.decoyY, d.decoyTicks = Schema.toI16(dp[2]), dp[4]
+				end
+				table.insert(events, d)
 			end
 		elseif kind == "IMPACT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
 			known[e.other] = nil

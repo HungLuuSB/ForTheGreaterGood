@@ -8,7 +8,9 @@ local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
+local NetOut = require("../Sim/NetOut")
 local World = require("../Sim/World")
+local Client = require("./Support/Client")
 local RunAll = require("./RunAll")
 
 local DT = 1 / 15
@@ -21,7 +23,15 @@ local function moveTo(sim: Sim.Sim, player: number, ids: { number }, x: number, 
 	assert(Sim.submit(sim, player, wr:finish()))
 end
 
-type Salvo = { launched: number, hits: number, decoyed: number, lost: number }
+type Salvo = {
+	launched: number,
+	hits: number,
+	decoyed: number,
+	lost: number,
+	worstTurn: number, -- largest turn in one tick of a decoyed missile (degrees)
+	decoyTicks: number, -- ticks decoyed missiles spent following their decoy
+	clientDrift: number, -- worst gap between a spectator client's decoyed missile and the server's
+}
 
 -- The client's `sam` scene (request 13): four Thorn IR SAM sites, one
 -- aircraft that can't die flying over them to (gx, 0) and staying there (a
@@ -35,10 +45,31 @@ local function salvo(defId: string, gx: number, ticks: number): Salvo
 		Spawn.unit(sim, "chs_thorn", 2, p[1], p[2], 0)
 	end
 	moveTo(sim, 1, { target }, gx, 0)
-	local r: Salvo = { launched = 0, hits = 0, decoyed = 0, lost = 0 }
+	local r: Salvo = { launched = 0, hits = 0, decoyed = 0, lost = 0, worstTurn = 0, decoyTicks = 0, clientDrift = 0 }
 	local sam: { [number]: boolean } = {}
+	local decoyed: { [number]: { number } } = {} -- projectile → its velocity last tick
+	local spec = NetOut.addSpectator(sim)
+	local view = Client.new((sim.map :: any).grid)
 	for _ = 1, ticks do
 		Sim.step(sim)
+		Client.receive(view, sim.net.spectators[spec].outbox)
+		for p, v in decoyed do
+			if c.projSlot[p] == nil then
+				decoyed[p] = nil
+				continue
+			end
+			local a, b = math.sqrt(v[1] ^ 2 + v[2] ^ 2 + v[3] ^ 2), math.sqrt(c.pvx[p] ^ 2 + c.pvy[p] ^ 2 + c.pvz[p] ^ 2)
+			local cosTurn = math.clamp((v[1] * c.pvx[p] + v[2] * c.pvy[p] + v[3] * c.pvz[p]) / (a * b), -1, 1)
+			r.worstTurn = math.max(r.worstTurn, math.deg(math.acos(cosTurn)))
+			if c.pDecoy[p] then
+				r.decoyTicks += 1
+			end
+			local cp = view.projectiles[p]
+			if cp and math.abs(c.px[p]) < 620 and math.abs(c.pz[p]) < 620 then -- the wire clamps positions to the map
+				r.clientDrift = math.max(r.clientDrift, math.sqrt((cp.x - c.px[p]) ^ 2 + (cp.y - c.py[p]) ^ 2 + (cp.z - c.pz[p]) ^ 2))
+			end
+			decoyed[p] = { c.pvx[p], c.pvy[p], c.pvz[p] }
+		end
 		for _, e in c.events do
 			if e.kind == "SPAWN_PROJ" and c.pTeam[e.other] == 2 then
 				r.launched += 1
@@ -51,6 +82,7 @@ local function salvo(defId: string, gx: number, ticks: number): Salvo
 					end
 				elseif e.kind == "DECOYED" then
 					r.decoyed += 1
+					decoyed[e.other] = { c.pvx[e.other], c.pvy[e.other], c.pvz[e.other] }
 				elseif e.kind == "LOST_LOCK" then
 					r.lost += 1
 				end
@@ -109,6 +141,12 @@ return function(t: RunAll.Context)
 			-- flares decoy 10–25% (more against a helicopter hovering in range)
 			t.expect(r.hits >= r.launched * 0.75, `{case[3]}: at least 75% hit ({r.hits} of {r.launched})`)
 			t.equal(r.lost, 0, `{case[3]}: no missile overshoots and loses its lock`)
+			-- decoyed missiles bend toward the flares (S-28, request 13d)
+			t.expect(r.worstTurn <= 160 / 15 + 1e-6, `{case[3]}: a decoyed missile turns at most turnRate per tick ({r.worstTurn}°)`)
+			-- the roll comes 20–60 studs out, so a missile passes its decoy within a
+			-- tick or two: a short bend instead of the old one-tick 60° kink
+			print(string.format("      decoyed: worst turn %.1f° per tick, %d ticks following decoys after the roll", r.worstTurn, r.decoyTicks))
+			t.expect(r.clientDrift < 1, `{case[3]}: a client steering decoyed missiles with Guidance.decoy stays on the server's path ({r.clientDrift} studs)`)
 		end
 	end)
 
