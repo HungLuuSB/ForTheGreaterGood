@@ -66,6 +66,7 @@ export type Fx = {
 	focusZ: number,
 	skipped: { bursts: number, tracers: number },
 	applied: { [string]: number }, -- events applied per kind name (diagnostics)
+	late: { n: number, sum: number, max: number }, -- render ticks between an event's tick and when it played (diagnostics)
 }
 
 function Effects.new(): Fx
@@ -79,6 +80,7 @@ function Effects.new(): Fx
 		focusZ = 0,
 		skipped = { bursts = 0, tracers = 0 },
 		applied = {},
+		late = { n = 0, sum = 0, max = 0 },
 	}
 end
 
@@ -267,6 +269,10 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 		local t = fx.tick + 1
 		stepProjectiles(fx, world)
 		while k <= #events and ((events[k] :: any).tick or 0) <= t do
+			local late = renderTick - ((events[k] :: any).tick or renderTick)
+			fx.late.n += 1
+			fx.late.sum += late
+			fx.late.max = math.max(fx.late.max, late)
 			apply(fx, world, events[k], now, muzzleOf)
 			k += 1
 		end
@@ -277,6 +283,28 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 		local rest = table.move(events, k, #events, 1, {})
 		table.clear(events)
 		table.move(rest, 1, #rest, 1, events)
+	end
+	-- a shell that hits during the coming tick bursts when its drawn path
+	-- reaches the impact point, not at the tick's end: drawn on, it would fly
+	-- up to a tick's travel past the target first (C-26). Events arrive
+	-- ahead of the render clock (Interp's delay), so the IMPACT is known.
+	local frac = renderTick - fx.tick
+	for i = #events, 1, -1 do
+		local e = events[i] :: any
+		if e.kind ~= EK.IMPACT or e.tick ~= fx.tick + 1 then
+			continue
+		end
+		local p = fx.projectiles[e.projId]
+		if p == nil then
+			continue
+		end
+		local x, y, z = pos(world, e)
+		local need = math.sqrt((x - p.x) ^ 2 + (y - p.y) ^ 2 + (z - p.z) ^ 2)
+		local step = math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz) * DT
+		if frac >= math.clamp(need / math.max(step, 1e-6), 0, 1) then
+			table.remove(events, i)
+			apply(fx, world, e, now, muzzleOf)
+		end
 	end
 	for i = #fx.pendingDeaths, 1, -1 do
 		local d = fx.pendingDeaths[i]

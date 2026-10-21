@@ -139,7 +139,7 @@ if RunService:IsStudio() then
 			for _ in fx.projectiles do
 				live += 1
 			end
-			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats }
+			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats, late = { avg = fx.late.sum / math.max(fx.late.n, 1), max = fx.late.max, n = fx.late.n } }
 		elseif query == "ranges" then
 			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection }
 		elseif query == "perf" then

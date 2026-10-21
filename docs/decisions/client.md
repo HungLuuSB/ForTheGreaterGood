@@ -216,3 +216,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 **Why:** `Targets.spec`: over 200 ticks of the duel, the line's target equals the server's (first slot with a live target) for every own unit on every tick; the guess without wire targets still agrees 1,393 times in 1,398.
 
+### C-26 — Shells burst where they hit, when they hit (2026-10-21)
+
+**Decision:** when a shell's IMPACT is due in the coming sim tick (events arrive ahead of the render clock, which runs two ticks behind), `Core/Effects` works out how far into that tick the drawn shell reaches the impact point (distance left / distance per tick) and plays the IMPACT as soon as the render clock passes that point, instead of at the tick's end. The shell is never drawn past the point. `Invoke("fx")` now also reports `late`: how many render ticks after its tick each event played.
+
+**Why:** the user saw a delay between the shell hitting and the explosion in the duel. Events were on time (Studio: played 0.19 tick after their tick on average). The gap was drawing: through the tick it hit in, the shell kept flying to the server's end-of-tick position, up to a tick's travel (~23 studs for a tank shell) past the target, and burst back at the hit point when the tick ended: 33 ms after reaching it on average, 67 ms at worst. `Effects.spec` now renders the duel at 8 frames per tick: the worst gap is one frame (8.3 ms; 66.7 ms with the fix switched off). Studio duel: 103 shells, 103 impacts, none left over or doubled.
+

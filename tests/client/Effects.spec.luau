@@ -102,6 +102,64 @@ return function(t: any)
 		t.expect(deaths > 0, "tanks died")
 	end)
 
+	t.test("a shell bursts when its drawn path reaches the impact point, not a tick later (C-26)", function()
+		local sim, world = duel()
+		local fx = Effects.new()
+		local SUBS = 8 -- frames per sim tick
+		local impactAt: { [number]: { number } } = {} -- projId → impact x, z
+		local path: { [number]: { { number } } } = {} -- projId → drawn { renderTick, x, z }
+		local delays = {}
+		for tick = 1, 300 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for _, e in world.events do
+				local ev = e :: any
+				if ev.kind == Schema.EventKind.IMPACT then
+					local x, z = world.grid:decode(ev.cell, ev.offX, ev.offZ)
+					impactAt[ev.projId] = { x, z }
+				end
+			end
+			for sub = 1, SUBS do
+				local rt = tick - 2 + sub / SUBS -- two ticks behind, as Interp
+				local live = {}
+				for id in fx.projectiles do
+					live[id] = true
+				end
+				Effects.update(fx, world, rt, rt * DT, 0, 0)
+				table.clear(world.died)
+				for id in live do
+					local hit, drawn = impactAt[id], path[id]
+					if fx.projectiles[id] == nil and hit and drawn then
+						-- first frame the drawn shell was as far from its start as the impact point
+						local s = drawn[1]
+						local need = math.sqrt((hit[1] - s[2]) ^ 2 + (hit[2] - s[3]) ^ 2)
+						for _, f in drawn do
+							if math.sqrt((f[2] - s[2]) ^ 2 + (f[3] - s[3]) ^ 2) >= need - 1 then
+								table.insert(delays, rt - f[1])
+								break
+							end
+						end
+					end
+					if fx.projectiles[id] == nil then
+						impactAt[id], path[id] = nil, nil -- projectile IDs are reused
+					end
+				end
+				for _, v in Effects.visible(fx, rt) do
+					local id = v[1].id
+					path[id] = path[id] or {}
+					table.insert(path[id], { rt, v[2], v[4] })
+				end
+			end
+		end
+		local worst = 0
+		for _, d in delays do
+			worst = math.max(worst, d)
+		end
+		print(string.format("    %d shells; worst delay after reaching the impact point %.1f ms", #delays, worst * DT * 1000))
+		t.expect(#delays > 50, "plenty of impacts")
+		t.expect(worst <= 1 / SUBS + 1e-9, `the burst comes within a frame of arrival (worst {worst} ticks)`)
+	end)
+
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()
 		local _sim, world = duel()
 		local fx = Effects.new()

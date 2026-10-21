@@ -175,6 +175,10 @@ All with real mouse and keyboard input through the MCP tools.
 
 - The target line now uses the server's targets (S-16) for your own units instead of guessing from the turret: equal to the server's on every tick of the duel in `Targets.spec`. Allies' units (no targets on the wire) keep the guess.
 
+## 2026-10-21: explosion delay after a hit (C-26)
+
+- **Your duel note:** a delay between the shot hitting and the explosion. Cause: during the tick a shell hit in, it was drawn on to the server's end-of-tick spot (up to ~23 studs past the tank) and burst only when that tick ended (33 ms later on average, 67 ms at worst). Now it bursts the frame its drawn path reaches the hit point (within 8 ms in `Effects.spec`); checked live in the Studio duel.
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
