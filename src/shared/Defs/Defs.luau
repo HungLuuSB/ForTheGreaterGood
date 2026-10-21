@@ -84,6 +84,7 @@ export type UnitDef = {
 	pinpointer: boolean?, -- raises its ally team's radar precision (Shared/Combat/Pinpoint, S-59)
 	pinpointFull: number?, -- this type's count for full precision (default Pinpoint.FULL, 6; S-62)
 	deploy: { time: number, armor: number }?, -- unpacks when it stands still: seconds each way, damage divisor deployed (S-64)
+	deathBlast: { damage: number, aoe: number, edge: number }?, -- explodes when killed: every unit in `aoe`, own included (S-70)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -306,6 +307,7 @@ local UNIT_SPEC: Spec = {
 		pinpointer = { kind = "boolean", optional = true },
 		pinpointFull = { kind = "number", optional = true, min = 1 },
 		deploy = { kind = "record", optional = true, fields = { time = POSITIVE, armor = { kind = "number", min = 1 } } },
+		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
 		storage = {
 			kind = "record",
 			optional = true,

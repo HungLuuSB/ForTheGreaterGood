@@ -917,3 +917,12 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests (`Salvo.spec`):**
   - A Hydra's 8 rockets 0.15 s apart, the next salvo one reload after the first rocket.
   - A Verdict's shells burst within 14 studs of a tank driving across its line of fire. Without the lead, 0 of 4 do.
+
+## S-70 — The Fusion Reactor explodes (audit item 11) (2026-10-22)
+
+- Guide 8.5: "Fusion Reactor: big explosion on death". New def field `deathBlast = { damage, aoe, edge }`.
+- When the unit is killed (Damage), the blast hits every unit in `aoe`: own, allied and enemy alike (team 0), with the usual falloff to `edge`. It's applied the next tick, so a blast can kill a neighbouring reactor and set it off too.
+- A cancelled frame never explodes: it doesn't die in Damage.
+- A `BLAST` combat event marks it. No wire change: the client sees the DEATH and can read `deathBlast` from the def to draw it.
+- **Numbers** (Order and Chaos reactors, my placeholder): 2,500 damage at the center, radius 120, edge 0.25: a T1 tank 40 studs away dies.
+- **Test:** `DeathBlast.spec`: a reactor kills tanks of both sides 40 studs off, leaves one 300 off untouched; a generator doesn't explode.

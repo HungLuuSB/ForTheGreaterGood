@@ -17,6 +17,22 @@ local World = require("../World")
 
 local dead: { number } = {}
 
+-- A def's death blast as the weapon table Combat.explode reads (S-70).
+local blastWeapon: { [any]: any } = setmetatable({}, { __mode = "k" }) :: any
+local function blastOf(def: any): any
+	local b = blastWeapon[def]
+	if b == nil then
+		local d = def.deathBlast
+		b = {
+			damage = { LIGHT = d.damage, ARMORED = d.damage, STRUCTURE = d.damage, SHIP = d.damage, AIR = 0, SUB = 0 },
+			aoe = d.aoe,
+			edgeEffectiveness = d.edge,
+		}
+		blastWeapon[def] = b
+	end
+	return b
+end
+
 return function(sim: Types.Sim)
 	local c = sim.combat
 	local count = c.dmgCount
@@ -94,6 +110,14 @@ return function(sim: Types.Sim)
 			z = w.posZ[id],
 		})
 		c.stats.kills += 1
+		if def.deathBlast then
+			-- a reactor's blast (guide 8.5, S-70): every unit in reach, own
+			-- and allied included (team 0 is nobody's); applied next tick, so
+			-- reactors can set each other off
+			local x, z = w.posX[id], w.posZ[id]
+			Combat.explode(c, w, x, Combat.groundHeight(c, x, z) + 4, z, blastOf(def), 0, 0, 0, w.owner[id])
+			Combat.addEvent(c, { kind = "BLAST", tick = sim.tick, unit = id, other = 0, x = x, z = z })
+		end
 		Lifecycle.remove(sim, id)
 	end
 end

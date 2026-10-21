@@ -54,6 +54,7 @@ export type Event = {
 		| "PRODUCED"
 		| "RECLAIMED"
 		| "LAUNCH" -- a strategic missile left its silo: unit = silo, other = projectile, x/y/z = launch (S-48)
+		| "BLAST" -- a unit with a deathBlast exploded as it died: unit = the dying unit, x/z = where (S-70)
 		| "INTERCEPTED" -- a strategic missile destroyed in flight: other = projectile, x/y/z = where (S-48)
 		| "ELIMINATED" -- other = player
 		| "MATCH_END", -- other = winning ally team (0 = nobody)
