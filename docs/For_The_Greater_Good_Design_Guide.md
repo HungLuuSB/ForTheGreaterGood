@@ -935,8 +935,8 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 | `HITSCAN` | MG, autocannon, CIWS | Instant hit roll | `FIRE` event | Tracer/flash |
 | `BEAM` | Laser defense | Instant hit, damage over duration | `FIRE` event | Beam for duration |
 | `BALLISTIC` | Tank shells, artillery, flak | Simulated arc | `SPAWN_PROJ` once, `IMPACT` | Simulates same arc |
-| `HOMING` | SAMs, AAMs, ATGMs | Simulated steering (lead pursuit) + EW checks + proximity fuse within `aoe` of the target's hull (D97) | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with same algorithm |
-| `TORPEDO` | Subs, ASW | Homing, restricted to water | Same as homing | Underwater trail |
+| `HOMING` | SAMs, AAMs, ATGMs | Proportional navigation (N = 4, capped by `turnRate`; S-27) + EW checks + proximity fuse within `aoe` of the target's hull (D97) | `SPAWN_PROJ`, `IMPACT` or `DECOYED` | Steers with the same function (`Shared/Combat/Guidance`) |
+| `TORPEDO` | Subs, ASW | Homing by lead pursuit, restricted to water | Same as homing | Underwater trail |
 | (all) | — | Every weapon aims at, and is judged against, `Combat.aimPoint`: the centre of the target's hull (ships float, submarines sit below the surface; D95) | | |
 | `BOMB` | Bombers | Ballistic with zero launch speed: released at the computed lead point (D91) | Same as ballistic | Falls |
 
@@ -1079,6 +1079,7 @@ Missiles have a guidance type. Each type has different rules for **locking**, **
 **Missile flight checks (cheap, event-based):**
 
 1. **Launch:** lock check per the table. No lock → no launch.
+1b. **Seeker cone** (IR, RADAR; every tick; S-27): a target more than the seeker's half-angle off the missile's nose (`seekerAngle`; default IR 60°, RADAR 70°) breaks the lock: the missile overshot. `LOST_LOCK`, and it never re-acquires: no second pass.
 2. **Midcourse:** every ~5 ticks, re-check. Radar missile whose target entered an enemy jam field beyond burn-through → `LOST_LOCK` (flies straight, self-destructs at lifetime).
 3. **Terminal:** once, when within `terminalRange`, roll countermeasures (11.6). Success → `DECOYED` event; the missile veers off. Failure → it hits.
 

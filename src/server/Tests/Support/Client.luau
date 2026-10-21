@@ -12,6 +12,7 @@
 -- them.
 
 local Ballistics = require("@shared/Combat/Ballistics")
+local Guidance = require("@shared/Combat/Guidance")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Packer = require("@shared/Net/Packer")
@@ -36,6 +37,9 @@ export type Unit = {
 	build: number?,
 	state: number?,
 	targets: { [number]: number }?, -- own units: weapon slot → target ID (0 = none; S-16)
+	vx: number?, -- tactical units: velocity estimated from the last two Tactical records (studs/s; S-27)
+	vz: number?,
+	movedAt: number?, -- view.tick of the last Tactical record
 }
 
 export type Projectile = {
@@ -73,6 +77,7 @@ export type View = {
 	log: { { channel: string, ids: { number } } }, -- this tick's mentions, for checks
 	wrecks: { [number]: Wreck }, -- wrecks the team knows (S-26)
 	sight: buffer?, -- the ally team's sight, one byte (0 / 1) per sensor cell; nil until the first SIGHT_ROWS (S-26)
+	tick: number, -- receive calls so far
 }
 
 export type Wreck = { defIndex: number, x: number, z: number, heading: number }
@@ -98,6 +103,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?): View
 		economies = {},
 		wrecks = {},
 		sight = nil,
+		tick = 0,
 	}
 end
 
@@ -120,10 +126,13 @@ local function ttlOf(weapon: Defs.WeaponDef): number
 	return 2 * weapon.range / math.max(weapon.projectileSpeed or 1, 1) + 1 + DT
 end
 
--- One tick of every known projectile: steer (homing, toward the target's
--- last known position: its altitude when the client has it, else level),
--- then the server's ballistic step. The server leads the target and knows
--- its true position, so homing missiles drift; IMPACT always wins.
+-- One tick of every known projectile: steer with the server's guidance
+-- (Shared/Combat/Guidance: missiles proportional navigation, torpedoes lead
+-- pursuit; S-27) against the target's last known position, which is where
+-- it was when this tick's step starts, and its estimated velocity (its
+-- altitude when the client has it, else level), then the server's
+-- ballistic step. The client doesn't know a contact's true position, so
+-- homing missiles still drift; corrections and IMPACT fix it.
 local function advance(view: View)
 	for id, p in view.projectiles do
 		p.ttl -= DT
@@ -134,9 +143,14 @@ local function advance(view: View)
 		local weapon = view.defs.weaponByIndex[p.weaponIndex]
 		local target = view.units[p.target]
 		if weapon.turnRate and target then
-			-- turn toward the target by at most turnRate, with the server's function
-			local dx, dy, dz = target.x - p.x, (if target.alt then target.alt - p.y else 0), target.z - p.z
-			p.vx, p.vy, p.vz = Ballistics.steer(p.vx, p.vy, p.vz, dx, dy, dz, math.rad(weapon.turnRate) * DT)
+			local ty = target.alt or p.y
+			local tvx, tvz = target.vx or 0, target.vz or 0
+			local maxTurn = math.rad(weapon.turnRate) * DT
+			if weapon.type == "HOMING" then
+				p.vx, p.vy, p.vz = Guidance.pn(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, 0, tvz, maxTurn, DT)
+			else
+				p.vx, p.vy, p.vz = Guidance.lead(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, tvz, maxTurn)
+			end
 		end
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, DT)
 		if p.blend > 0 then
@@ -158,6 +172,7 @@ end
 -- (call it every tick: it also advances the known projectiles one tick).
 function Client.receive(view: View, outbox: { [string]: { buffer } })
 	table.clear(view.log)
+	view.tick += 1
 	-- join handshake first: a WELCOME starts over from an empty view (S-2)
 	for _, msg in outbox.Snapshot or {} do
 		for _, rec in (Packer.readAll(msg, Schema.decodeSnapshot)) do
@@ -335,11 +350,19 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			table.insert(ids, r.unitId)
 			local u = view.units[r.unitId]
 			assert(u and u.tier == "tactical", `tactical record for unit {r.unitId} that never entered`)
-			u.x, u.z = g:decode(r.cell, r.offX, r.offZ)
+			local x, z = g:decode(r.cell, r.offX, r.offZ)
+			local dt = (view.tick - (u.movedAt or view.tick - 1)) * DT
+			u.vx, u.vz = (x - u.x) / dt, (z - u.z) / dt
+			u.x, u.z, u.movedAt = x, z, view.tick
 			u.alt = r.alt or 0
 			u.heading = r.heading
 		end
 		mention(view, "Tactical", ids)
+	end
+	for _, u in view.units do
+		if u.movedAt ~= nil and u.movedAt ~= view.tick then
+			u.vx, u.vz = 0, 0 -- no record: it didn't move
+		end
 	end
 	for _, msg in outbox.State do
 		local records = Packer.readAll(msg, Schema.decodeState, Schema.decodeTickHeader)

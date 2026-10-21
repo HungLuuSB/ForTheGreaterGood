@@ -138,9 +138,9 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 
 **Client projectiles** (guide 15.3):
 - From SPAWN_PROJ, step each projectile yourself every tick with the server's math:
-  - homing weapons (`weapon.turnRate`) first turn toward their target's position, if the client knows the target, with `Ballistics.steer(vx, vy, vz, dx, dy, dz, rad(turnRate) / 15)`;
-  - then `Ballistics.step(x, y, z, vx, vy, vz, weapon.gravity or 0, 1/15)`.
-  - Both are in **`Shared/Combat/Ballistics`**.
+  - homing weapons (`weapon.turnRate`) whose target the client knows first steer (S-27, **`Shared/Combat/Guidance`**): `HOMING` missiles with `Guidance.pn(x, y, z, vx, vy, vz, tx, ty, tz, tvx, 0, tvz, rad(turnRate) / 15, 1/15)` (proportional navigation), `TORPEDO` with `Guidance.lead(x, y, z, vx, vy, vz, tx, ty, tz, tvx, tvz, rad(turnRate) / 15)`. `t` is the target's position **at the start of the tick** (where the client had it before this tick's records) and `tv` its velocity: `Guidance.velocity(heading, speed)` on the server; the reference client estimates it from its last two Tactical records (0 when a tick brings none);
+  - then `Ballistics.step(x, y, z, vx, vy, vz, weapon.gravity or 0, 1/15)` (**`Shared/Combat/Ballistics`**).
+  - A guided missile whose target leaves its seeker cone gets LOST_LOCK and flies on unguided (S-27); the client gets the event.
 - Unguided projectiles then match the server exactly; homing ones are approximate.
 - Drop a projectile on IMPACT. As a fallback, drop it at its time to live: `2 × range / projectileSpeed + 1` s (bombs 8 s), plus a tick.
 - Projectile IDs are reused. A SPAWN_PROJ for an ID the client still has replaces it.
