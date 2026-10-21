@@ -92,6 +92,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `58187a7` (log C-45, C-46; requests 14-16 for the sim session).
 - Ready to merge: `927a141` (detailed combat effects with ReplicatedStorage.Vfx templates, C-47).
 - Ready to merge: `a8d794e` (merge of `main` with S-29..S-32) with `a9ef27b` (spec threshold); test_client 92, test 313, build passed.
+- Ready to merge: `91a79a1` (aircraft crash, countermeasures by equipment, C-48; requests 17-19).
 
 ## Tasks
 
@@ -328,6 +329,10 @@ All with real mouse and keyboard input through the MCP tools.
 - **Countermeasures follow what the aircraft carries:** a jammer laser for aircraft with DIRCM only (Falcon, Archon, Guardian), flares dropped from the aircraft for those with flares (Wasp, Manticore), chaff against radar missiles (`c48_dircm_laser.jpg`). Request 18 asks for the exact one on the wire.
 - **Deaths and effects** now slow down and pause with the sim speed.
 - **Moving an aircraft to a point inside its circle** still doesn't work: the server counts it as arrived and circles from where the jet is. That is request 17 (high priority); the client's line will follow the fix.
+
+## 2026-10-21: air raid on a SAM belt (`airsam` profile)
+
+- New test profile `airsam` (set `ACTIVE = "airsam"` in `src/roblox/MatchConfig.luau`): on the largest map (2048 studs, 0.25x), your 2 Falcon jets, 2 Archon fighters and 3 Guardian helicopters (3x health) start far west and fly east into 5 Chaos SAM systems: 3 Thorn IR sites in front, 2 Wyvern long-range radar SAM sites behind. 4 radars cover the map and a fusion reactor powers them and the aircraft's DIRCM jammers (without it power stalls at once and DIRCM never recharges). Studio: SAMs launch at the jets and helicopters across the belt, missiles get jammed (DIRCM) and aircraft go down (`debug_out/screens/airsam_engagement.jpg`, `airsam_dircm_jam.jpg`).
 
 ## Needs my review
 
