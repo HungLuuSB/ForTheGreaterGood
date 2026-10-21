@@ -100,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Archon radar signature 0.6 (S-46, the user asked through the client; was 0.35):** for your test in airsam.
 - **Radar SAM range ×3 (S-45, the user asked through the client):** ranges 1680 / 1800 and the four units' radars ×3; projectileSpeed left at 360 (~5 s to full range); burn-through follows (35% of lockRange: ~600 studs now). AI and balance effects not measured yet. Also `climbHeight` 100 (S-44).
 - **Radar SAM warheads (S-42, the user asked through the client):** `chs_radar_sam` and `ord_radar_sam` aoe 8 → 20 (bigger proximity fuse too), plus the vertical launch's pitch-over at 3× turnRate (`Guidance.PITCH_OVER`).
 - **AI level order (found at the end of this round):** Easy beats Normal 23–19, on the two 128-cell maps (early rush reaches Normal's Command Vehicle at ~4.5 min). Fix next round: Normal should hold its first army at home until it can match an incoming wave, or build its first tanks before its third generator. Your call on which.
@@ -125,6 +126,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 24), S-46:** `ord_archon` radarSignature 0.35 → 0.6 (Phantom unchanged at 0.2).
 - **Done (request 22: a longer vertical climb), S-44:** weapon field `climbHeight` (100 on both radar SAMs). Step vertical launches with `Guidance.vertical(..., turned, climbLeft)` and `climbLeft = Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z))`: while the missile flies exactly straight up (vx = vz = 0) and `climbLeft > 0` it doesn't steer. Ground height: `Layers.heightAt` (Shared, cell-based; the server's `Combat.groundHeight` now calls it), not a smoothed ground. No age needed. Contract section 7.
 - **Done (request 23: radar SAM range ×3), S-45:** `chs_radar_sam` 1680, `ord_radar_sam` 1800 (range and lockRange); radars Wyvern 1800, Gorgon 1440, Aegis 1950, Seraph 1560. projectileSpeed stays 360.
 - **Done (request 21: projectiles regardless of sight), protocol 14 (S-43):** SPAWN_PROJ (at launch), homing corrections and IMPACT now go to every player whose camera area (+ margin) has the projectile, seen or not; `targetId` as before. Gun shots of a shooter you don't have arrive as the new **SHOT 13**: `hit u8, start pos, end pos` (14 B), no IDs; draw the tracer from start to end. Shots of shooters you have stay FIRE. Cloak isn't built; the guide (11.4) records that firing drops it. Guide 7.2 / 7.3 and contract section 7 updated.

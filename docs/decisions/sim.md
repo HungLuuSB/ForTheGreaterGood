@@ -502,3 +502,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Left as is (my call):** `projectileSpeed` 360 (a full-range shot flies ~5 s; lifetime follows range); burn-through stays 35% of lockRange, so jamming now fails inside ~600 studs instead of ~200.
 - **Tests:** `EW.spec` checks EW rules at fixed distances on a 1024-stud map, so its defs keep the old radar SAM ranges and radars (its own test defs; the replay test keeps the registered defs). `Guidance.spec`'s Wyvern bound is 70% (it now also takes long shots at a weaving jet: 17 of 23).
 - **Not measured yet:** the effect on AI matches and balance (a Wyvern covers most of a 2048-stud map); next level report.
+
+## S-46 — Archon radar signature 0.35 → 0.6 (client request 24, the user asked) (2026-10-22)
+
+- With the ×3 radar SAM ranges (S-45) a Wyvern locked Archons only at ~552 studs (radar 1800 × 0.35, lock 1680 × 0.35), about where the Thorns in front open up. At 0.6 it locks them at ~1,000. Only the Archon; the Phantom stays at 0.2. For the user to test; under "Needs my review".
