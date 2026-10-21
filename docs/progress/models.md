@@ -148,6 +148,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `9dd4913` (BAR model style M-15: style guide, guide 2.1, BAR Lancer build; `assets/` and docs only).
 - Ready to merge: `5d37c43` (BAR-style Ravager build, up to import; `assets/` only).
 - Ready to merge: `e78eec0` (blockouts: silos registered, pending new units, palettes M-16/M-17; `src/shared/Defs/Blockouts/` and docs only).
+- Ready to merge: `afc6d73` (blockouts: every T1 structure, both factions; `src/shared/Defs/Blockouts/` and progress only).
 
 ## Requests
 
