@@ -434,6 +434,7 @@ All with real mouse and keyboard input through the MCP tools.
 
 - New test profile `normandy`: 150 units a side in formation with no orders. Each army has every land and air type (no naval, submarines, amphibious tanks, anti-sub helicopters or command vehicles). IR SAM sites stand near the battlefield; in the safe rear there are radar SAM sites, long-range radars, 10 fusion reactors, 30 converters, depots, a nuke silo and constructors. Order holds the north, Chaos the south (`debug_out/screens/normandy_order_lines.jpg`).
 - Spawns can now be laid out as formations (`cols`, `rowDx`, `rowDz` in MatchConfig).
+- A stronger economy after the user's playtest ("resources declined very fast"). Each side now has 16 fusion reactors, 50 converters and 10 depots, and starts with full stores (`startResources`: 10,000 supply, 20,000 power). Order had stalled because its power stayed at the converters' 50% reserve and supply fell to 8 within a minute. Now Order's supply keeps rising by about 10/s on top of ~33/s of SAM refills, and Chaos fills its 11,000 storage.
 - It runs on `flat:256` until sim-A's Normandy map lands (request 31). Headless: about 2 ms a tick on average, 7.5 ms at worst, over 4 minutes.
 
 ## Needs my review

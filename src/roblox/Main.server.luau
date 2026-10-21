@@ -205,6 +205,17 @@ local function startMatch()
 			Sim.submit(sim, s.player, encode({ cmdType = Schema.CmdType.ATTACK_GROUND, flags = 0, unitIds = ids, cell = cell, offX = offX, offZ = offZ }))
 		end
 	end
+	-- the profile's starting stores (tests: a strong economy from the start)
+	local start = Config.startResources
+	if start then
+		for _ = 1, 5 do
+			Sim.step(sim) -- the economy (every 5th tick) counts the spawned depots' storage
+		end
+		for _, acc in sim.eco.accounts do
+			acc.supply.stored = math.min(start.supply or acc.supply.stored, acc.supply.storage)
+			acc.power.stored = math.min(start.power or acc.power.stored, acc.power.storage)
+		end
+	end
 	matchId += 1
 	endedAt = nil
 	-- a new match is a fresh view for everyone connected: WELCOME again
