@@ -7,13 +7,44 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 ## Plan
 
 - **Phase 1:** hand-made blockouts for every T1 unit and structure of both factions (guide 13), one batch at a time, each reviewed from the game camera.
-  - [x] Batch 1: T1 ground units (this section). **Waiting for style review.**
+  - [x] Batch 1: T1 ground units. Style rejected in review (M-2); new direction M-6.
+  - [ ] Style review: Lancer and Ravager, two variants each under M-6 (section below). **Waiting for your pick.** Then batch 1 is redone in the picked style.
   - [ ] Batch 2: T1 air units
   - [ ] Batch 3: T1 naval units
   - [ ] Batch 4: T1 structures
 - **Phase 2** (after the phase 1 silhouettes are approved): low-poly Blender meshes for the key units, exported as FBX, with an import path into Roblox approved first.
 
+## Style review: modern armies (2026-10-21)
+
+The new direction (M-6) is in guide 2.1 and [`../art/style-guide.md`](../art/style-guide.md). Four candidates in `src/shared/Defs/Blockouts/Review/` (M-7), not used by the game yet:
+
+| Variant | Lines | Base | What it has |
+|---|---|---|---|
+| Lancer A | Leopard 2A6 | grey | arrowhead turret front, five road wheels, panoramic and gunner's sights, bustle |
+| Lancer B | Abrams | sand | steep glacis, six road wheels, wide flat slab turret, long bustle with rack, CITV, gunner's sight, remote gun |
+| Ravager A | T-90M | olive | reactive-armor tiles on the glacis, skirts and turret brow, six road wheels, slat cage round the turret back, remote gun, sight, fume extractor |
+| Ravager B | T-14 Armata | gunmetal | longer hull, seven road wheels, reactive-armor skirt panels, rear slat cage, tall faceted turret, flat protection radars, two sensor boxes, remote gun, active-protection launchers |
+
+All four: long low hull, skirts with road wheels, turret toward the rear, long gun, team color only on skirt stripes, turret side panels and a roof panel (M-8). Same pieces as the def (`base`, `turret`, `barrel`, `muzzle`); each validates against its def.
+
+- **Screenshots** (`debug_out/screens/`, gitignored), each with the current Lancer and Ravager for comparison (order: Lancer current, A, B, Ravager current, A, B):
+  - `style_tanks_1_threequarter.jpg`: game camera (55°), three-quarter heading, about 40 studs.
+  - `style_tanks_2_profile_camera.jpg`: game camera, units facing screen-left.
+  - `style_tanks_3_side_order.jpg`, `style_tanks_4_side_chaos.jpg`: true side views at ground level.
+  - `style_tanks_5_silhouette.jpg`: all black, game camera at about 100 studs.
+  - In "FTGG Art": folders `StyleReview`, `StyleProfile`, `StyleSilhouette` around x = 300.
+- **Budget:** 32–53 parts; estimated 1,350–2,000 triangles as primitives, so the Chaos variants go over 20.1's 1,500 until the phase 2 meshes (style guide 6).
+
+### Needs your review
+
+- Pick one variant per faction (or a mix), and grey or sand for Order, olive or gunmetal for Chaos.
+- At 100 studs, the four variants share one tank silhouette (long hull, rear turret, long gun), as the shared rules ask; the factions then differ by base color and secondary shapes (tiles, cages, sensor boxes) more than by outline.
+- The muzzles sit at 2.25–2.5 studs; the sim fires from 3.6 (`Combat.MUZZLE_HEIGHT`), so shells would start about 1.2 studs above the barrel. If the low hulls stay, I'll ask the sim session to lower it.
+- Batch 1's `84ba52d` is still in the merge queue with the old style for the other 10 units (better than generic blockouts until they're redone). Say if you'd rather hold it.
+
 ## Batch 1: T1 ground units (2026-10-21)
+
+Superseded style (M-2); kept until the redo.
 
 Twelve units, six roles, both factions. Lancer and Ravager (from the client stream's C-6) are kept as they were; the other ten are new.
 
@@ -45,6 +76,8 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 
 ## Merge queue
 
+- Ready to merge: `84ba52d` (batch 1: T1 ground unit blockouts, both factions; new `docs/decisions/models.md` and `docs/progress/models.md`; touches only `src/shared/Defs/Blockouts/` and those two files).
+
 ## Requests
 
-1. **Sim session (unit defs):** `ord_halo` and `chs_hornet` list a `turret` piece that nothing turns; their weapon turns `launcher` with no pitch. Suggest `turretPiece = "turret", pitchPiece = "launcher"` so the launcher turns on its pedestal and elevates. The blockouts already work either way (M-3). Low priority.
+1. **Sim session (unit defs):** `ord_halo` and `chs_hornet` list a `turret` piece that nothing turns; their weapon turns `launcher` with no pitch. Suggest `turretPiece = "turret", pitchPiece = "launcher"` so the launcher turns on its pedestal and elevates. The blockouts already work either way (M-3). Low priority. Accepted; in the sim session's queue.
