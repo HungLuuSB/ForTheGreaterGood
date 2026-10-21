@@ -467,6 +467,19 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: atmosphere presets (C-83)
+
+- Four lighting presets, chosen in the settings menu (O, "Atmosphere"); Current stays the default. Same fight in the normandy battle, same camera, 4 s each in Studio (60 fps cap, so the frame is 16.7 ms in all four; GPU and CPU are Roblox's render frame times):
+
+| Preset | Look | GPU | CPU | Screenshot |
+|---|---|---|---|---|
+| Current | the place as saved (Roblox's default sky, Atmosphere 0.3, Bloom) | 4.26 ms | 6.46 ms | `debug_out/screens/c83_atmosphere_current.jpg` |
+| Clear day | thinner, bluer air, a touch more colour and contrast, softer bloom | 4.80 ms | 7.12 ms | `c83_atmosphere_clear.jpg` |
+| Battlefield haze | thick warm-grey air, muted colours, sun rays through it | 4.76 ms | 6.24 ms | `c83_atmosphere_haze.jpg` |
+| Dusk | a low warm sun (17:12), orange horizon, stronger bloom and rays | 4.91 ms | 6.14 ms | `c83_atmosphere_dusk.jpg` |
+
+  The presets cost about 0.5 ms of GPU (the colour correction pass and the denser air); the CPU differences are the fight's own variation. Lighting technology (Future) can't be set from a script, so it isn't part of the presets.
+
 ## 2026-10-22: nuke crater, water splashes (C-82)
 
 - A nuke that bursts near the ground now digs a crater in the Terrain instead of leaving the 240-stud dark scorch decal (your idea): a shallow bowl (radius 0.45× the blast, depth 7% of that, at most 6 studs) with a scorched basalt floor, a ring of mud around it and an uneven earth rim. It is visual only and kept shallow, since units still drive at the sim's height. Each crater's area is copied first and put back on the next WELCOME (checked in Studio: 1,727 basalt voxels, then 0 after a new WELCOME). `debug_out/screens/c82_nuke_crater.jpg` (as it forms, under the mushroom cloud), `c82_crater_close.jpg` (one dug directly, close up).
@@ -530,6 +543,8 @@ All with real mouse and keyboard input through the MCP tools.
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Atmosphere options (C-83):** Current (default), Clear day, Battlefield haze, Dusk, in the settings menu; table with screenshots and frame cost under "atmosphere presets (C-83)" above. Values in `src/client/Render/Atmosphere.luau`. Pick one as the default, or none.
 
 - **Settings defaults (C-81):** pan speed 1.1, zoom step 1.15, edge scroll on in live games (off in Studio), quality High (60 explosions, 100 tracers, 150 projectiles, 12 lights, 24 copies, full animation within 300 studs), Medium and Low below it, fog lights off, UI scale 1.0. In `src/client/Core/Settings.luau`; the key O opens it.
 - **UI placement (C-76, C-79, C-81):** the unit panel is 460 px wide (the build grid shows 2 rows), the command card right of it; the replay bar bottom centre with the replay / spectator banner under the resource bar; "Settings (O)" above the follow button bottom right; lobby and settings panels centred.

@@ -2,7 +2,7 @@
 -- Settings menu (C-81), a functional PLACEHOLDER: O or the "Settings"
 -- button (bottom right) opens a panel with the key bindings reference,
 -- camera (pan speed, zoom step, edge scroll), graphics (quality Low /
--- Medium / High, fog lights) and the UI scale. Values come from
+-- Medium / High, fog lights, atmosphere preset) and the UI scale. Values come from
 -- Core/Settings; `apply` writes them into the modules that use them, live.
 
 local Players = game:GetService("Players")
@@ -13,6 +13,7 @@ local Camera = require("../Camera")
 local Effects = require("../Core/Effects")
 local PieceAnim = require("../Core/PieceAnim")
 local Settings = require("../Core/Settings")
+local Atmosphere = require("../Render/Atmosphere")
 local FogOfWar = require("../Render/FogOfWar")
 local Vfx = require("../Render/Vfx")
 
@@ -43,6 +44,7 @@ function SettingsMenu.apply(s: Settings.State)
 	PieceAnim.NEAR = g.detailNear
 	PieceAnim.MID = g.detailMid
 	FogOfWar.ENABLED = s.fogLights
+	Atmosphere.apply(s.atmosphere)
 	local playerGui = (Players.LocalPlayer :: Player):FindFirstChild("PlayerGui")
 	for _, gui in (if playerGui then playerGui:GetChildren() else {}) do
 		if gui:IsA("ScreenGui") and SCALED[gui.Name] then
@@ -155,6 +157,14 @@ render = function(ui: UI)
 	for _, v in { true, false } do
 		button(fog, if v then "On" else "Off", 56, s.fogLights == v, function()
 			Settings.set(ui.state, "fogLights", v)
+			SettingsMenu.apply(ui.state)
+			render(ui)
+		end)
+	end
+	local atm = row(ui.body, "Atmosphere")
+	for _, name in Settings.ATMOSPHERES do
+		button(atm, Atmosphere.NAMES[name] or name, 104, s.atmosphere == name, function()
+			Settings.set(ui.state, "atmosphere", name)
 			SettingsMenu.apply(ui.state)
 			render(ui)
 		end)

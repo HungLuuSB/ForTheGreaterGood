@@ -11,6 +11,8 @@
 --              model detail distance (piece animation LOD), and fog lights
 --              on / off (the near-zoom fog of war lights; off by default,
 --              the user's call from C-32's review)
+--   atmosphere a lighting preset (Render/Atmosphere, C-83): Current (the
+--              place as saved, the default), Clear day, Battlefield haze, Dusk
 --   interface  UI scale
 -- High is today's look; listed under "Needs my review".
 
@@ -24,6 +26,7 @@ export type State = {
 	edgeScroll: boolean,
 	quality: Quality,
 	fogLights: boolean,
+	atmosphere: string,
 	uiScale: number,
 }
 
@@ -45,6 +48,7 @@ Settings.QUALITY = table.freeze({
 }) :: { [Quality]: Graphics }
 
 Settings.QUALITIES = { "low", "medium", "high" } :: { Quality }
+Settings.ATMOSPHERES = { "current", "clear", "haze", "dusk" }
 
 Settings.LIMITS = table.freeze({
 	panSpeed = { 0.4, 3, 0.1 }, -- min, max, step
@@ -55,7 +59,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fogLights = false, uiScale = 1 }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fogLights = false, atmosphere = "current", uiScale = 1 }
 end
 
 local function round(x: number, step: number): number
@@ -78,6 +82,12 @@ function Settings.set(s: State, key: string, value: any): boolean
 			return false
 		end
 		t[key] = value
+		return true
+	elseif key == "atmosphere" then
+		if table.find(Settings.ATMOSPHERES, value) == nil then
+			return false
+		end
+		s.atmosphere = value
 		return true
 	elseif key == "quality" then
 		if Settings.QUALITY[value] == nil then
