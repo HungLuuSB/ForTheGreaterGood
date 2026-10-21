@@ -98,7 +98,7 @@ Suggest the user saves or commits (Rojo + git) before large changes.
 
 ### Verifying
 
-- **Logic:** from the project root run `lune run test` (`lune run test <filter>` for matching specs only) and report pass/fail. It runs every `*.spec.luau` under `src/server/Tests` through `Tests/RunAll`. In Studio (client session only), `execute_luau` (Edit) runs `require(game.ServerScriptService.Entry.RunTests).start(filter?)`, then polls `.status()` with plain calls (no waiting inside the call: `execute_luau` gives up before 20 s) until it returns the summary (`specs`, `passed`, `failed`, `failures`); the per-test lines go to the Output. "Target is not reachable" during a run means Studio is inside a long test: poll again.
+- **Logic:** from the project root run `lune run test` (`lune run test <filter>` for matching specs only) and report pass/fail. It runs every `*.spec.luau` under `src/server/Tests` through `Tests/RunAll`, without the slow tests (`t.slow`: AI matches, fairness), which `lune run test_slow` runs and the integration check runs before pushing `main`. In Studio (client session only), `execute_luau` (Edit) runs `require(game.ServerScriptService.Entry.RunTests).start(filter?)`, then polls `.status()` with plain calls (no waiting inside the call: `execute_luau` gives up before 20 s) until it returns the summary (`specs`, `passed`, `failed`, `failures`); the per-test lines go to the Output. "Target is not reachable" during a run means Studio is inside a long test: poll again.
 - **Runtime:** `start_stop_play` → `get_console_output` → `screen_capture` if visual → `start_stop_play` to stop.
 - Read errors from console output before guessing at fixes. Fix the cause, then re-run the same check.
 

@@ -187,7 +187,7 @@ return function(t: RunAll.Context)
 		print(string.format("    hard: a fleet by %.1f min", sim.tick / 900))
 	end)
 
-	t.test("hard beats easy", function()
+	t.slow("hard beats easy", function()
 		local sim = levelSim("map:ridgeline", 9, { [1] = "hard", [2] = "easy" })
 		local brains = Skirmish.forMatch(sim)
 		run(sim, brains, 900 * 20, false, function()

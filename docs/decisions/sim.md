@@ -457,3 +457,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Hover:** combat profiles of HOVER defs ride on the water surface: `Combat.baseAt` and the believed aim point use the surface over water (the sea floor before). No roster unit is HOVER yet (a roster decision, listed for review); the rule is tested on a ground profile switched to hover.
 - **Test map:** `beach:<cells>`, land sloping about 10° into a 30-stud-deep sea (the `sea:` map's coast is a cliff no ground class climbs).
 - **Tests (`Amphibious.spec`, 2):** a Tideguard drives into the sea and submerges; an enemy tank without sonar loses it; it holds its gun though the enemy is in range; back in the shallows it surfaces. A hover profile's aim point is on the water surface, a ground unit's on the sea floor, attack-ground's on the ground.
+
+## S-40 — Fast and slow test suites (2026-10-22)
+
+- **Asked:** a fast suite for every commit and the slow fairness and AI matches in a separate suite that the integration check runs.
+- **How:** specs register slow tests with `t.slow(name, fn)` instead of `t.test`; `RunAll.run(specs, mode)` runs "fast" (no slow tests), "slow" (only them) or "all" (the default, so the Studio runner, which is the client stream's, still runs everything). `lune run test` is the fast suite; `lune run test_slow` (`.lune/test_slow.luau`) the slow one. `tools/integration/integrate.sh` runs both, and the build, before pushing `main` (it skips the slow suite on a tree that doesn't have it yet). The runner now prints the time of every test that takes a second or more.
+- **Slow (7 tests, ~35 s):** Fairness.spec's mirror fights, Twin Lakes 2v2 mirror and Ridgeline mirror matches; AI.spec's "hard beats easy"; Skirmish.spec's full AI match and its replay determinism run. The fairness spec's ID-parity check is a unit test and stays fast.
+- **Fast:** 324 tests in ~33 s (was 331 in ~65 s). `CLAUDE.md` and the project skill describe both.

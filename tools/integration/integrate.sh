@@ -6,8 +6,9 @@
 #
 #   bash tools/integration/integrate.sh <commit-or-branch> "<description>"
 #
-# Merges --no-ff, runs `lune run test` and `lune run build` there, and pushes
-# main only if both pass. A conflict aborts the merge (exit 3); failed checks
+# Merges --no-ff, runs the fast suite (`lune run test`), the slow suite
+# (`lune run test_slow`: AI matches, fairness) and `lune run build` there,
+# and pushes main only if all pass. A conflict aborts the merge (exit 3); failed checks
 # drop the local, unpushed merge (main back to origin/main, exit 4). Nothing
 # is ever force-pushed. Record failures under "Integration notes" in the
 # stream's progress file.
@@ -30,9 +31,14 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" > /tmp/ftgg-merge.log 2
 fi
 T=$(lune run test 2>&1 | tail -1)
 echo "test: $T"
+S="0 failed (no slow suite)"
+if [ -f .lune/test_slow.luau ]; then
+	S=$(lune run test_slow 2>&1 | tail -1)
+fi
+echo "test_slow: $S"
 B=$(lune run build 2>&1 | tail -1)
 echo "build: $B"
-if echo "$T" | grep -q " 0 failed" && echo "$B" | grep -q "requires all resolve"; then
+if echo "$T" | grep -q " 0 failed" && echo "$S" | grep -q " 0 failed" && echo "$B" | grep -q "requires all resolve"; then
 	git push -q origin main && echo "PUSHED $(git log --oneline -1)"
 	exit 0
 fi

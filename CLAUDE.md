@@ -35,7 +35,7 @@ Maps, terrain and unit models live in the place file, not in this repo.
 
 - The sim session is the integrator. All merges into `main` and their checks run in the **integration worktree** `../FTGG-integration` (a worktree on `main`), never in a working checkout (`ForTheGreaterGood` on `m-sim-2`, `FTGG-client` on `m-client-foundation`).
 - `bash tools/integration/check.sh` lists "Ready to merge: <commit>" entries in `docs/progress/*.md` on every local branch that `main` doesn't contain, then the client's requests for the sim session.
-- `bash tools/integration/integrate.sh <commit-or-branch> "<description>"` merges `--no-ff` in the worktree, runs `lune run test` and `lune run build` there, and pushes `main` only if both pass. A conflict aborts the merge; failed checks drop the unpushed merge. Never force-push or rewrite history. Record failures under that stream's "Integration notes" in `docs/progress/sim.md`.
+- `bash tools/integration/integrate.sh <commit-or-branch> "<description>"` merges `--no-ff` in the worktree, runs `lune run test`, `lune run test_slow` and `lune run build` there, and pushes `main` only if all pass. A conflict aborts the merge; failed checks drop the unpushed merge. Never force-push or rewrite history. Record failures under that stream's "Integration notes" in `docs/progress/sim.md`.
 - After integrating, each stream merges `main` into its own branch itself. The sim stream doesn't edit `docs/progress/client.md` (it reports in its own progress file).
 - If the worktree is missing: `git worktree add ../FTGG-integration main`.
 
@@ -43,7 +43,10 @@ Maps, terrain and unit models live in the place file, not in this repo.
 
 Studio is now available to the client session only (`src/client`, `src/shared/Defs/Blockouts/`, place content), through the Roblox Studio MCP tools. The simulation stays headless: its code and tests run under [Lune](https://lune-org.github.io/docs) (version pinned in `rokit.toml`) and are still tested with `lune run test`.
 
-- Run the tests from the project root with `lune run test` (entry: `.lune/test.luau`). It runs every `*.spec.luau` under `src/server/Tests`. `lune run test <filter>` runs only the specs whose path contains `<filter>`.
+- Two suites (S-40), both from the project root:
+  - **Fast**, for every commit: `lune run test` (entry: `.lune/test.luau`) runs every `*.spec.luau` under `src/server/Tests` without the slow tests (~35 s). `lune run test <filter>` runs only the specs whose path contains `<filter>`.
+  - **Slow**: `lune run test_slow [filter]` runs only the tests registered with `t.slow` instead of `t.test`: whole AI matches and fairness runs (~35 s). The integration check runs both suites before pushing `main`.
+  - In Studio, `RunTests` runs both (RunAll's default mode is "all").
 - All code in `src/shared` and `src/server` must run in **both** Lune and Roblox:
   - String requires in exactly two forms, never mixed with anything else:
     - **Across roots** (e.g. `src/server` → `src/shared`): always the alias, `require("@shared/Util/Prng")`.
