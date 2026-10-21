@@ -83,6 +83,7 @@ export type UnitDef = {
 	converter: { power: number, supply: number }?, -- per second: power in, supply out (toggleable)
 	pinpointer: boolean?, -- raises its ally team's radar precision (Shared/Combat/Pinpoint, S-59)
 	pinpointFull: number?, -- this type's count for full precision (default Pinpoint.FULL, 6; S-62)
+	deploy: { time: number, armor: number }?, -- unpacks when it stands still: seconds each way, damage divisor deployed (S-64)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -304,6 +305,7 @@ local UNIT_SPEC: Spec = {
 		converter = { kind = "record", optional = true, fields = { power = POSITIVE, supply = POSITIVE } },
 		pinpointer = { kind = "boolean", optional = true },
 		pinpointFull = { kind = "number", optional = true, min = 1 },
+		deploy = { kind = "record", optional = true, fields = { time = POSITIVE, armor = { kind = "number", min = 1 } } },
 		storage = {
 			kind = "record",
 			optional = true,

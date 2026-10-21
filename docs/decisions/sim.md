@@ -790,3 +790,47 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Skirmish.spec:** Order (Normal) against Chaos on skirmish:192, seed 1: Chaos's second wave took Order's Command Vehicle at 7.3 min, before Order's first wave left.
     - The test required both players to attack. It now requires the winner, and any player still alive after 8 minutes.
     - Not an AI bug: the faction report has Normal Order beating Normal Chaos 7–1 in its first quick run.
+
+## S-64 — Faction-only units, stage 2: Warden and Minotaur (2026-10-22)
+
+- **Asked (the user):** Warden (Order deployable gun) and Minotaur (Chaos siege ram), with tests and counter-check rows (factions.md section 4).
+- **Warden, `ord_warden`** (T2, Order Advanced Vehicle Plant):
+  - **Stats:** value 600, health 2,200, speed 22, sight 280. Gun `ord_warden_gun`: range 280, 0.35°, 350 armored, 3 s.
+  - **New mechanic, `Sim/Deploy`** (def field `deploy = { time, armor }`):
+    - A deployer unpacks whenever it stands still: no move order, or an attack-move holding to engage, at speed 0. Packing and unpacking take `time` (4 s) each way.
+    - Packed it moves but doesn't fire. In between it neither moves nor fires. Deployed it fires, can't move, isn't pushed, and takes damage / `armor` (1.5).
+    - A move order packs it first.
+  - **My calls:**
+    - Deploy is automatic, not a separate command, so attack-moves and the AI use it with no new orders. A deploy toggle can be added if players want to hold it packed.
+    - Packed it can't fire at all (the proposal's "weak when caught packed").
+  - **Implementation:**
+    - Progress in `World.deploy`, deployers in `World.deployIds`. Hashed only for deployers, so other matches' hashes are unchanged.
+    - `Deploy.step` runs at the start of Movement. Movement anchors them; Weapons gates the shot; Damage divides by the armor.
+  - **Wire:** state bits DEPLOYED 32 and DEPLOYING 64, protocol 22.
+- **Minotaur, `chs_minotaur`** (T2, Chaos Advanced Vehicle Plant):
+  - **Stats:** value 680, health 4,200, speed 20, footprint 2.
+  - **Gun `chs_ram_cannon`:** range 160, 1.6°, 220 armored, 360 structure (+50% of its 240 light), 2.2 s.
+  - **Demolition charge `chs_demolition`:** a structures-only hitscan, 30 studs, 3,000, every 20 s.
+  - Defs only, no new mechanic.
+- **Counter matrix (guide 12.4):** rows "Deployable gun" (Ground ●●●, Ship ●●, Structure ●●) and "Siege" (Ground ●, Ship ●, Structure ●●●) in the balance report's roles.
+- **Tests:** `Deploy.spec`:
+  - unpacks in 4 s and fires only deployed;
+  - packs for 4 s on a move order;
+  - damage / 1.5, and not pushed;
+  - attack-move: holds, deploys, fires at range;
+  - the charge levels a Bulwark and ignores a tank.
+- **Blockouts:** requested from the models stream (`docs/progress/models.md`): Warden with `spades` to lower when deployed; Minotaur with a `ram`.
+
+## S-66 — Missile refills come first in a stall (the user, 2026-10-22)
+
+- **Asked:** "Missile refills take priority over construction, up to ~25% of income." It answers the S-57 review question: refills had shared a stalled economy evenly with construction (S-47), so SAMs under air attack stayed empty.
+- **Rule** (`Economy.REFILL_PRIORITY` = 0.25), per resource and economy window:
+  - Missile refills' demand is served first, up to a quarter of the window's income and what is available.
+  - Whatever they want beyond that shares the rest with construction, production, rearming and upkeep at the common ratio.
+  - Refills progress at their own `priorityRatio`; everything else at `ratio`.
+  - Without a stall both are 1, so nothing changes.
+- **Order:** `Stockpile.step` now runs before construction in `Build.step`, so a window's allowance goes to refills first.
+- **Test** (`Stockpile.spec`): a Chaos plant building Ravagers on a Warlord's income keeps the economy stalled 100% of the time.
+  - An empty Thorn rebuilds 2.49 missiles in 60 s with priority, against 1.81 sharing alike.
+  - Its floor is a quarter of 20 power/s, about 1.25 missiles a minute.
+- **AI under helicopter raids** (new `lune run sam_raids`, kept this time; Normal AI on skirmish:192, 15 min): numbers in the progress file. They are noisy: the AI builds few SAMs, and with the faction pass's prices Order's economy is stalled 85–90% of the time, a faction-AI question (task 11).

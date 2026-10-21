@@ -227,6 +227,8 @@ local targets: { number } = {}
 local power: { [number]: number } = {}
 local demandS: { [number]: number } = {}
 local demandP: { [number]: number } = {}
+local priorityS: { [number]: number } = {} -- missile refills' share of the demand (S-66)
+local priorityP: { [number]: number } = {}
 
 -- Cancelling (guide 9.3, S-35): what was spent comes back. Spending is
 -- proportional to progress, so a refund is progress × cost, credited like
@@ -313,6 +315,7 @@ function Build.step(sim: Types.Sim)
 	end
 	for _, team in eco.teams do
 		demandS[team], demandP[team] = 0, 0
+		priorityS[team], priorityP[team] = 0, 0
 	end
 
 	local function addPower(target: number, bp: number)
@@ -433,7 +436,10 @@ function Build.step(sim: Types.Sim)
 		end
 	end
 
-	-- 2. progress, spending, demand
+	-- 2. missile stockpiles (S-47) first: refills have priority in a stall (S-66)
+	Stockpile.step(sim, demandS, demandP, priorityS, priorityP)
+
+	-- 2b. progress, spending, demand
 	for _, t in targets do
 		local bp = power[t]
 		local frame = w.buildProgress[t] < 1
@@ -507,9 +513,6 @@ function Build.step(sim: Types.Sim)
 	-- 3. aircraft landing on pads and rearming (also economy consumers)
 	Air.rearmStep(sim, demandS, demandP)
 
-	-- 3b. missile stockpiles (S-47)
-	Stockpile.step(sim, demandS, demandP)
-
 	-- 4. DIRCM upkeep: continuous power drain, cooldown at the stall ratio
 	EW.drainStep(sim, demandP)
 
@@ -520,6 +523,8 @@ function Build.step(sim: Types.Sim)
 		local acc = eco.accounts[team]
 		acc.supply.demand = demandS[team]
 		acc.power.demand = demandP[team]
+		acc.supply.priorityDemand = priorityS[team]
+		acc.power.priorityDemand = priorityP[team]
 	end
 end
 

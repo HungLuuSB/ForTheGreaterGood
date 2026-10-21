@@ -9,6 +9,7 @@
 -- except aircraft shot down in flight (they crash and burn).
 
 local Combat = require("../Combat/Combat")
+local Deploy = require("../Deploy")
 local Lifecycle = require("../Lifecycle")
 local Types = require("../Types")
 local World = require("../World")
@@ -33,14 +34,18 @@ return function(sim: Types.Sim)
 		if before <= 0 then
 			continue -- already dying this tick
 		end
-		local after = before - c.dmgAmount[i]
+		local amount = c.dmgAmount[i]
+		if w.deploy[t] == 1 then
+			amount /= Deploy.armor(sim, t) -- a deployed Warden's fortification (S-64)
+		end
+		local after = before - amount
 		World.setHealth(w, t, after)
 		-- the results screen (S-63): enemy health removed, and who finished it
 		local player = c.dmgPlayer[i]
 		local ps = sim.playerStats[player]
 		local enemy = ps ~= nil and w.ally[t] ~= sim.players[player].allyTeam
 		if enemy and ps then
-			ps.damageDealt += math.min(c.dmgAmount[i], before)
+			ps.damageDealt += math.min(amount, before)
 		end
 		local attacker = c.dmgAttacker[i]
 		if attacker ~= t then
