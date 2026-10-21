@@ -226,11 +226,11 @@ end
 
 -- Optional per-system wall-clock timing for profiling and stress tests.
 -- Observes only: timings never feed back into the simulation.
-export type Timing = { total: { [string]: number }, peak: { [string]: number }, ticks: number }
+export type Timing = { total: { [string]: number }, peak: { [string]: number }, peakTick: { [string]: number }, ticks: number }
 local timings: { [any]: Timing } = setmetatable({}, { __mode = "k" }) :: any
 
 function Sim.enableTiming(sim: Sim): Timing
-	local t: Timing = { total = {}, peak = {}, ticks = 0 }
+	local t: Timing = { total = {}, peak = {}, peakTick = {}, ticks = 0 }
 	for _, s in SYSTEMS do
 		t.total[s.name] = 0
 		t.peak[s.name] = 0
@@ -253,7 +253,10 @@ function Sim.step(sim: Sim)
 				system.run(sim)
 				local dt = Profiler.now() - t0
 				timing.total[system.name] += dt
-				timing.peak[system.name] = math.max(timing.peak[system.name], dt)
+				if dt > timing.peak[system.name] then
+					timing.peak[system.name] = dt
+					timing.peakTick[system.name] = tick
+				end
 			else
 				system.run(sim)
 			end

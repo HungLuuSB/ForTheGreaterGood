@@ -145,21 +145,24 @@ local function run(total: number)
 	out(string.format("%-20s %9s %9s %8s  %s", "system", "avg ms", "peak ms", "budget", ""))
 	local firstOver = nil
 	for _, b in BUDGETS do
-		local sum, peak = 0, 0
+		local sum, peak, at = 0, 0, 0
 		for _, name in b[2] do
 			sum += timing.total[name]
-			peak = math.max(peak, timing.peak[name])
+			if timing.peak[name] > peak then
+				peak, at = timing.peak[name], timing.peakTick[name] or 0
+			end
 		end
 		local avg = sum * 1000 / timing.ticks
 		local over = avg > b[3]
 		if over and firstOver == nil then
 			firstOver = b[1]
 		end
-		out(string.format("%-20s %9.3f %9.2f %8.1f  %s", b[1], avg, peak * 1000, b[3], if over then "OVER (average)" elseif peak * 1000 > b[3] then "peak over" else "ok"))
+		out(string.format("%-20s %9.3f %9.2f %8.1f  %s (tick %d)", b[1], avg, peak * 1000, b[3], if over then "OVER (average)" elseif peak * 1000 > b[3] then "peak over" else "ok", at))
 	end
 	out("first system over budget (average): " .. (firstOver or "none"))
 	out(string.format("move orders (Commands + Pathing in one tick): worst tick %.2f ms", orderPeak))
 	out(string.format("structure placements mid-battle: %d, worst tick with a placement %.2f ms (placement itself: worst %.2f ms)", placements, placementPeak, placeCost))
+	out(string.format("state hash %08x (equal before and after an optimisation = same behaviour)", Sim.hash(sim)))
 	-- bandwidth per player
 	local seconds = TICKS / 15
 	for pid = 1, 2 do
