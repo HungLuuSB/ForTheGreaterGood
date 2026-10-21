@@ -90,6 +90,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `2d244af` (missiles past the map's edge, C-46).
 - Ready to merge: `d39ec8e` (SAM scene on flat:256).
 - Ready to merge: `58187a7` (log C-45, C-46; requests 14-16 for the sim session).
+- Ready to merge: `927a141` (detailed combat effects with ReplicatedStorage.Vfx templates, C-47).
 
 ## Tasks
 
