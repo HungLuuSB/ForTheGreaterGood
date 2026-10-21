@@ -450,6 +450,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
 - **Elevation:** hills give sight range bonus (optional); slopes limit wheeled units.
 - **Air lanes:** keep some areas without SAM-friendly terrain so air play is viable.
 - Tag maps with supported modes (`Team`, `FFA`, `Naval`).
+- Implementation (S-15): `Shared/Grid/MapGen` generates maps that follow these rules (1v1, 2v2, 4-player FFA; mirror or rotational symmetry; safe, expansion and contested deposits; ridges with passes at least 3 cells wide; optional lakes or a sea) and checks each candidate; `MapRegistry` has `mapgen:` IDs and the named maps `map:ridgeline`, `map:coastline`, `map:twin_lakes`, `map:crossroads`.
 
 ---
 
