@@ -94,6 +94,10 @@ return function(t: RunAll.Context)
 		end, function(s)
 			for _, e in events(s, "BUILD_START") do
 				frame, started = e.unit, s.tick
+				-- the frame starts only in range of where it stands (S-19: it used
+				-- to start in range of the requested point, then the builder drove on)
+				local reach = (s.defs.units.ord_sovereign.buildRange :: number) + s.defs.units.ord_generator.footprint * 4
+				t.expect(math.abs(w.posX[cv] - w.posX[frame]) <= reach + 1e-6, `in range when the frame starts ({math.abs(w.posX[cv] - w.posX[frame])} studs)`)
 			end
 			if frame ~= 0 then
 				maxDist = math.max(maxDist, math.abs(w.posX[cv] - w.posX[frame]))
@@ -105,7 +109,7 @@ return function(t: RunAll.Context)
 		-- 1,200 work units at BP 300 = 4 s = 60 ticks of building (no stall at 1,000 supply)
 		t.expect(math.abs((done :: number) - started - 60) <= 2, `build took {(done :: number) - started} ticks`)
 		t.equal(w.health[frame], d.health, "health grows to full with progress")
-		t.expect(maxDist <= 80 + 4 + 1, "the CV stayed within build range")
+		t.expect(maxDist <= (sim.defs.units.ord_sovereign.buildRange :: number) + 4 + 1, "the CV stayed within build range")
 		Sim.step(sim) -- (economy step comes at the next multiple of 5)
 		for _ = 1, 5 do
 			Sim.step(sim)
