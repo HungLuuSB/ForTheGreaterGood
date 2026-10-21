@@ -15,3 +15,8 @@ Thumbs.db
 
 # Debug output (images, logs) from Lune scripts
 /debug_out/
+
+# Blender preview renders (rebuilt by each unit's build.py)
+/assets/models/*/export/preview_*.png
+__pycache__/
+/assets/models/*/export/*.fbm/

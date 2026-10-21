@@ -1,61 +1,108 @@
 # Mesh pipeline
 
-**Status: proposal, waiting for approval (2026-10-21).** Once the Lancer vertical slice is built, this becomes the repeatable workflow with the exact commands and settings that worked.
+The repeatable workflow from a script in the repo to a rigged MeshPart model in Studio, one unit at a time (M-11, M-12). First run: the Lancer, 2026-10-21. Look: [`style-guide.md`](style-guide.md). Rig: [`../contracts/rig.md`](../contracts/rig.md).
 
-From a script in the repo to a rigged MeshPart model in Studio, for one unit at a time. Look: [`style-guide.md`](style-guide.md). Rig: [`../contracts/rig.md`](../contracts/rig.md).
+## Tools
 
-## Choices
-
-- **Blender 5.2, headless, scripted.** `blender -b --factory-startup -P <script>`: no Blender window, nothing for you to run. No Blender connector exists in the MCP registry; the scripts do the same thing and can be rerun.
-- **Modeled from parametric Python, not an AI base mesh.** Generated meshes of hard-surface vehicles come as one lumpy piece with messy topology; splitting them into rig pieces and retopologizing them to 1,500 triangles costs more than modeling from boxes and bevels. Scripted models are exact to the def's footprint, rig pivots and budget, and every number is reviewable in a diff.
-- **One texture set per unit** (1024 × 1024: color, normal, roughness, metalness), shared by its pieces.
-- **Team color by mask, not extra parts:** the color map's alpha is 0 on the team panels (turret roof, hull top). In `SurfaceAppearance.AlphaMode = Overlay` (the default) those pixels show the MeshPart's own `Color`, which the model pool already sets on parts tagged `TeamColor` (rig.md 5).
-
-### AI base mesh: options and licenses (not recommended for the Lancer)
-
-| Generator | Commercial use of outputs | Fit |
-|---|---|---|
-| Studio's `generate_mesh` (Roblox Cube, hosted) | Made inside Roblox under Roblox's terms, for use on Roblox | Stays in Studio as up to 8 parts, no clean path into Blender; hard surfaces come out soft |
-| Roblox Cube 3D open weights | Research-only license (Cube3D Research-Only RAIL-MS): no commercial use | Not usable |
-| Meshy | Free plan: CC BY 4.0, commercial with credit to Meshy; paid plans: commercial, no credit | Usable as a reference or for props |
-| Tripo | Paid plans: commercial; free-plan terms are contradictory between Tripo's own pages | Paid only |
-| Microsoft TRELLIS / TRELLIS.2 | MIT (code and weights), commercial allowed; hosted versions (e.g. NVIDIA NIM) add their own terms | Needs a 16 GB+ GPU (this PC has 6 GB) or a host |
-| Tencent Hunyuan3D 2.x | Community license: not valid in the EU, UK or South Korea; above 1 million monthly users needs Tencent's permission | Avoid for a Roblox game |
-
-If you want a generated base anyway: Meshy on a paid plan (cleanest terms) for props and structures (guide 20.5), with credits in `CREDITS.md`.
+- **Blender 5.2, headless:** `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe`. No window, nothing to click; a unit builds in about 2 minutes on the CPU.
+- **No AI base mesh for vehicles** (license survey below): generated hard-surface meshes need more cleanup than scripted modeling.
+- **Roblox Studio**, place "FTGG Art": the 3D Importer (your clicks) and `execute_luau` for the rig.
 
 ## Files
 
 ```
 assets/models/
   tools/
-    lib.py               Blender helpers: primitives, bevels, UVs, bakes, export, checks
-    rig_model.luau       Studio rig script (run through execute_luau)
-  ord_lancer/
-    build.py             the Lancer: dimensions, pieces, camouflage seed
+    lib.py            Blender helpers: shapes in Roblox space, materials, UV atlas, bakes, FBX, previews
+    rig_model.luau    Studio rig: normalize the import, check against rig.json, joint, save
+  <unit>/
+    build.py          the unit: dimensions, pieces, pivots, camouflage, budget
     export/
-      ord_lancer.fbx     three meshes: base, turret, barrel (Y up, 1 unit = 1 stud)
-      ord_lancer_ALB.png color + team mask in alpha (1024)
-      ord_lancer_NOR.png normal (1024)
-      ord_lancer_RGH.png roughness (1024, grey)
-      ord_lancer_MTL.png metalness (1024, grey)
-      rig.json           pivots, muzzle, RootOffset, footprint, triangle counts
+      <unit>.fbx      base, turret, barrel (...) as separate meshes, textures embedded
+      <unit>_ALB.png  color; alpha = team mask (0 = team color shows)
+      <unit>_NOR.png  tangent-space normal (OpenGL, as Roblox)
+      <unit>_RGH.png  roughness (grey)
+      <unit>_MTL.png  metalness (grey)
+      rig.json        piece centers and sizes, pivots, attachments, team pieces, triangles, textures
+      preview_*.png   Blender renders at 35°, 55°, 80° and side (gitignored)
 ```
-
-`.blend` files are build output (gitignored); a unit is about 3–5 MB in git (the PNGs).
 
 ## Steps
 
-1. **Model** (`build.py`, headless): low-poly hull, tracks, road wheels and skirts in `base`; `turret`; `barrel`. Object origins at the joint pivots (turret ring center, trunnion); the muzzle is an empty, written to `rig.json`. Budget target: ≤ 1,500 triangles for the whole unit (hull about 800, turret about 500, barrel about 150).
-2. **High-poly copy** in the same script: bevels, panel cuts, sensor strips, bolts. Baked into the low-poly's normal map, never exported.
-3. **UVs:** each piece unwrapped into its own region of one shared 1024 atlas, about 10 pixels per stud.
-4. **Bake** (Cycles; the GTX 1660 Super handles it): normal from the high-poly; base color = sand with a seeded two-tone disruptive camouflage, edge wear and ambient occlusion; team mask into alpha; roughness and metalness from material IDs (paint, bare metal, rubber, glass).
-5. **Export:** FBX with the three meshes, the four PNGs, `rig.json`. A check fails the build if names, pivots, footprint or budget are off.
-6. **Import (needs you):**
-   - **A, recommended for the slice:** in "FTGG Art", File → Import 3D → `ord_lancer.fbx`. The importer uploads the meshes and, when it picks up the PBR textures, builds the SurfaceAppearance. If it doesn't, the four PNGs go up through the Asset Manager (they pass moderation first). A few clicks per unit.
-   - **B, for the rest of the roster:** an Open Cloud API key with asset write permission for your account (or group), kept in an environment variable, never committed. A `lune run upload_model <id>` script uploads the FBX and PNGs, and I insert the uploaded asset into "FTGG Art" by its ID. No clicks after setup.
-7. **Rig** (`rig_model.luau` through `execute_luau`): `base` anchored and primary, one `Motor6D` per piece at the `rig.json` pivots, the `muzzle` Attachment, collisions off, `TeamColor` tags on the masked pieces, `RenderFidelity = Automatic` (Roblox's automatic level of detail), `RootOffset` and `FootprintStuds` attributes; saved as `ReplicatedStorage.Models.ord_lancer` in "FTGG Art". The client already uses that model over the blockout (`Render/Models.luau`).
-8. **Test in "FTGG Art"** next to the part-built blockout, on the Coastline terrain: pitch 35°, 55° and 80° at close (about 40 studs), normal (220) and far (450, the last distance before strategic icons) plus max (900). Frame time in a playtest: 100 meshed Lancers vs 100 blockouts vs none, average and worst frame over 10 seconds.
-9. **Report:** triangles per piece, texture sizes, frame times, screenshots, against guide 20.1.
+1. **Build** (no Studio needed):
+   ```
+   "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" -b --factory-startup --python-exit-code 1 -P assets/models/<unit>/build.py
+   ```
+   It models every piece in Roblox model space (studs, forward = −Z) with its origin at its joint pivot, fails if the triangle count is over the unit's budget, unwraps all pieces into one atlas, bakes color (camouflage, edge wear, ambient occlusion), team mask, roughness, metalness and normal (bevelled edges, grilles, tread) in Cycles, renders previews and exports the FBX with the textures embedded.
+2. **Look at the previews** (`export/preview_*.png`) before importing.
+3. **Import (your clicks)** in "FTGG Art": Import 3D → `export/<unit>.fbx`. Defaults are fine (Upload to Roblox, Import Only as a Model, Add to Workspace, Set Pivot to Scene Origin). The importer uploads the meshes and the four textures and builds the SurfaceAppearance itself (AlphaMode Overlay).
+   - Known import behavior (Blender FBX → Roblox): **×100 scale** (read as centimeters) and **turned 180° about Y**. The rig step undoes both; nothing to set in the importer.
+4. **Rig** (`rig_model.luau` through `execute_luau`, with the unit's `rig.json`): `normalize(src, rig, 0.01, true)`, then `check` (sizes within 5 %, piece offsets within 0.05 studs) and `rig`: pieces into a Model named after the unit, pivot offsets cleared, `base` anchored and primary, one `Motor6D` per piece at the rig.json pivots, attachments (`muzzle`), collisions off, `TeamColor` tags, `RenderFidelity = Automatic`, `RootOffset` / `FootprintStuds` / `Triangles` attributes. Saved as `ReplicatedStorage.Models.<unit>`; the client uses it over the blockout (`Render/Models.luau`).
+5. **Test** in "FTGG Art" on the Coastline terrain next to the part-built blockout: pitch 35°, 55°, 80° at close (40), normal (220) and far (450) zoom; frame time with 100 units (below).
+6. **Commit** the scripts and `export/` (except previews); add the uploaded asset IDs to `rig.json`'s notes in the progress file.
 
-Getting the model into the game place "For The Greater Good" is the client session's step (a request in `docs/progress/models.md`).
+Getting the models into the game place "For The Greater Good" is the client session's step.
+
+## Budgets and texture memory
+
+### The Lancer (first run)
+
+| | Value | Guide 20.1 |
+|---|---|---|
+| Triangles | 3,016 (base 2,036, turret 608, barrel 372), level of detail automatic | 300–1,500 (raised to about 4,000 for this test, M-12) |
+| Textures | one set of four 1024 × 1024 maps shared by the three pieces | one palette texture for all units |
+| Instances | 3 MeshParts (blockout: 13 Parts) | — |
+
+### 100 units, render CPU time per frame
+
+"FTGG Art", Edit mode, Coastline-sized flat area, 100 Lancers in a 10 × 10 grid 12 studs apart, game camera pitch 55°, two runs of 6–8 s each (the second in reverse order). Studio reports no GPU time, and its frame rate is throttled to about 15 fps when its window isn't focused, so frame time itself says nothing; `Stats.RenderCPUFrameTime` is the render thread's CPU work per frame either way.
+
+| Scene | Close (40 studs) run 1 / run 2 | Normal (220) run 1 / run 2 |
+|---|---|---|
+| Empty | 4.1 / 3.3 ms | 4.3 / 3.3 ms |
+| 100 blockouts | 5.4 / 3.9 ms | 6.0 / 3.5 ms |
+| 100 meshed Lancers | 5.1 / 4.9 ms | 5.5 / 3.8 ms |
+
+- Over the empty scene, 100 meshed Lancers add about 0.5–1.6 ms of render CPU and 100 blockouts about 0.3–1.6 ms: the same within the run-to-run noise (about 1 ms). Three MeshParts per unit cost no more CPU than thirteen Parts.
+- On the GPU, 100 meshed Lancers are about 300,000 triangles (blockouts about 40,000); automatic level of detail cuts that with distance. A desktop GPU doesn't notice either; phones are untested.
+- **Not measured yet:** GPU time and real frame rate. They need a focused Studio window or, better, a live server on a phone and a low-end PC.
+
+### Texture memory across the roster
+
+One unit set is four 1024² maps. Roblox doesn't document how it stores them on the GPU: compressed (about 1 byte per pixel for color and normal, 0.5 for the grey maps, plus a third for mip levels) it's about **4 MB per unit**; uncompressed RGBA it's about **22 MB**. "FTGG Art" reports 27 MB of `GraphicsTexture` with the Lancer, the terrain and the review parts loaded.
+
+| Textures | Per unit | 30 unit types in a match | Whole roster (about 120 defs) |
+|---|---|---|---|
+| 1024 set each | 4–22 MB | 120–670 MB | 0.5–2.7 GB |
+| 512 set each | 1–6 MB | 30–170 MB | 0.1–0.7 GB |
+| Shared faction set (two 1024 sets) | — | 8–45 MB | 8–45 MB |
+
+Only the unit types present in a match load, and Roblox lowers texture resolution on low-memory devices, but at 1024 per unit the upper end is too much for phones.
+
+**Is 1024 needed?** At normal zoom (220 studs) the Lancer is about 40 pixels across on a 1080p screen; at the closest zoom (40 studs) about 200. The atlas gives the hull top about 250 texels, so 512 is enough for line units at every zoom, and 1024 only shows on hero units seen close.
+
+**Shared faction sets:** a faction trim sheet (camouflage panels, armor plates, tracks, wheels, sensors, glass) that every unit's UVs map onto. Memory stays flat however big the roster gets, and the look is consistent. The costs: no per-unit baked ambient occlusion or edge wear (unless baked into vertex colors), the camouflage repeats, and modeling has to follow the sheet's layout. The team mask still works (alpha in the shared color map).
+
+### Proposed budgets (to confirm on devices)
+
+| Class | Examples | Triangles | Textures |
+|---|---|---|---|
+| Hero units | MBTs, command vehicles, capital ships, strategic bombers (6–8 per faction, few on screen) | up to 6,000 | unique 1024 set |
+| Line units | light tanks, artillery, SAMs, scouts, workers, fighters, helicopters | up to 3,000 (the Lancer is the reference) | unique 512 set, or the shared faction set |
+| Structures | turrets, factories, economy, sensors | up to 3,000 (footprint 1–2), 6,000 (footprint 3+) | shared faction set; unique 512 for landmarks |
+| Wrecks | all | up to 1,000 | the unit's own set, darkened through `SurfaceAppearance.Color` |
+
+Scene target: about 1 million triangles at normal zoom (for example 250 line units and 40 structures), to be checked on a phone. **Recommendation:** unique 512 sets for line units now (no change to the pipeline), 1024 for heroes, and a shared faction trim sheet for structures, which are many and static. Switch line units to the shared set if phones run short of memory.
+
+## AI base mesh: options and licenses
+
+| Generator | Commercial use of outputs | Fit |
+|---|---|---|
+| Studio's `generate_mesh` (Roblox Cube, hosted) | Made inside Roblox under Roblox's terms, for use on Roblox | Stays in Studio as up to 8 parts, no clean path into Blender |
+| Roblox Cube 3D open weights | Research-only license (Cube3D Research-Only RAIL-MS): no commercial use | Not usable |
+| Meshy | Free plan: CC BY 4.0, commercial with credit; paid plans: commercial, no credit | Props, references |
+| Tripo | Paid plans: commercial; free-plan terms contradict each other on Tripo's own pages | Paid only |
+| Microsoft TRELLIS / TRELLIS.2 | MIT (code and weights); hosted versions add their own terms | Needs a 16 GB+ GPU (this PC: 6 GB) or a host |
+| Tencent Hunyuan3D 2.x | Not valid in the EU, UK or South Korea; above 1 million monthly users needs Tencent's permission | Avoid |
+
+If generated bases are wanted for props or structures: Meshy on a paid plan, credited in `CREDITS.md`.
