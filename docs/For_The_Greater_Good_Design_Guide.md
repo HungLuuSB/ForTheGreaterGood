@@ -1257,10 +1257,12 @@ countermeasures = {
 | Submarines | — | — | — | ●●● | ●● | — |
 | Deployable gun | ●●● | — | — | ●● | — | ●● |
 | Siege | ● | — | — | ● | — | ●●● |
+| Swarm tank | ●● | — | — | ● | — | ● |
+| Siege mortar | — | — | — | — | — | ●●● |
 
 ● weak · ●● good · ●●● strong · — cannot target
 
-Faction-only rows (S-64): **Deployable gun** is Order's Warden (beats a frontal push once deployed), **Siege** is Chaos's Minotaur (breaks structures; weak against an army in the field).
+Faction-only rows (S-64, S-75): **Deployable gun** is Order's Warden (beats a frontal push once deployed), **Siege** is Chaos's Minotaur (breaks structures; weak against an army in the field), **Swarm tank** is Chaos's Locust (cheap numbers; dies to splash), **Siege mortar** is Chaos's Cyclops (structures only, from beyond their guns). Order's Barrier and Citadel are structures: the trade check measures them (`lune run factions`, "Faction-only units").
 
 Tanks and attack helicopters can't target helicopters (changed from ● in round 6: no ground gun or rocket targets `AIR`; D97). Same-role cells (a role against its own kind, e.g. tanks against tanks) are checked as a soft band, not as dots: both sides must be able to damage each other, and the equal-cost trade should stay within 0.5–2.0 (D98).
 
@@ -1301,6 +1303,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
 | Deployable gun (faction-only) | T2 | **Warden**: unpacks in 4 s whenever it stands still; deployed it fires (range 280), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
 | Siege ram (faction-only) | T2 | — | **Minotaur**: +50% gun damage to structures and a 30-stud demolition charge (3,000 to a structure, every 20 s) (S-64) |
+| Swarm tank (faction-only) | T1 | — | **Locust**: very cheap (value 150) and fast (45), a 120-stud autocannon (S-75) |
+| Siege mortar (faction-only) | T2 | — | **Cyclops**: structures only, range 520, 1,200 a shell every 8 s; can't fire at units (S-75) |
 
 ### 13.3 Air units
 

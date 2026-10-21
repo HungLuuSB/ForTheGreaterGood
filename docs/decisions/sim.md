@@ -989,3 +989,29 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
     - (a) check attack-move holds for half the units each tick (each unit every 2nd tick: 0.13 s later to stop);
     - (b) give a big order's queue entries over 2–4 ticks, like its slots (S-67).
 - Tool: `Sim.enableTiming` records each system's peak tick; `stress` prints it and the state hash.
+
+## S-75 — Faction-only units, stage 3: Locust, Cyclops, Barrier, Citadel (the user's task 10) (2026-10-22)
+
+- **Locust (`chs_locust`, Chaos T1, vehicle plant):** value 150, health 600, speed 45. Autocannon `chs_autocannon`: 120 studs, 26 armored every 0.5 s, 2.2°.
+  - My call: built one at a time, cheap and fast to build (20 s). The proposal's "built in pairs" would need a factory to produce two units per queue item, which the value accounting, the AI and the client queue don't model.
+- **Cyclops (`chs_cyclops`, Chaos T2, advanced vehicle plant):** value 520, health 1,100, speed 22, footprint 2. Siege mortar `chs_siege_mortar`: targets STRUCTURE only, range 520, 1,200 every 8 s, may shell radar contacts and ghosts of structures.
+- **Barrier (`ord_barrier`, Order T1 structure, Mason and Architect):** value 40, health 2,500, 1 cell.
+  - Movement: it blocks it, like any structure (passability and the quadtree update; S-67's lazy updates).
+  - Fire: low direct fire hits it like any unit in the shot's path. It is as tall as a tank (6 studs), so the odd shell clears it.
+  - No new mechanic, as the user suggested.
+- **Citadel (`ord_citadel`, Order T3 structure, Architect):** value 2,000, health 9,000, footprint 3.
+  - Gun `ord_citadel_gun`: 320 studs, 600 armored every 3.5 s, 0.3°.
+  - Also an IR SAM (`ord_ir_sam`) and a radar (900, error 16, upkeep 4).
+- **Blockouts:** the models stream's pending ones (Blockouts/Pending, M-17) already have these ids, footprints and pieces; the defs use them as they are.
+- **Counter matrix (guide 12.4):** new rows "Swarm tank" (Locust: Ground ●●, Ship ●, Structure ●) and "Siege mortar" (Cyclops: Structure ●●●, nothing else).
+- **Trade check** (`lune run factions`, new "Faction-only units" section, report only; the Order side's trade):
+  - Locust against Lancers: close 1.43, long 1.11, flank 0.72.
+  - Warden holding against Ravagers: 2.87.
+  - Citadel against a tank assault: 1.67.
+  - Citadel against Minotaurs: 0.35.
+  - Citadel against Cyclops with a Watcher radar: 0.31. Without a spotter, the Cyclops can't see the Citadel before its gun does: 1.46.
+- **Tests (`Fortify.spec`):**
+  - The Locust's value, speed and reach.
+  - A Cyclops shells a plant 500 studs off and never targets a tank in range.
+  - A Barrier wall: a tank drives round it; most shells at a tank behind a 3-segment wall hit the wall.
+  - A Citadel kills a Ravager 270 studs off and fires its SAM at a helicopter.
