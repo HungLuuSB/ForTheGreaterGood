@@ -215,7 +215,7 @@ return function(t: RunAll.Context)
 			submit(sim, pid, { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 0, minZ = 0, maxX = 63, maxZ = 63 })
 		end
 		local views = { Client.new(g), Client.new(g) }
-		local exact, leaked, changes = 0, 0, 0
+		local exact, leaked, changes, progressOff = 0, 0, 0, 0
 		local last = -1
 		for _ = 1, 300 do
 			Sim.step(sim)
@@ -227,6 +227,9 @@ return function(t: RunAll.Context)
 			if got == stock(sim, thorn) then
 				exact += 1
 			end
+			-- the next missile's progress, within one wire step (S-49)
+			local gotP = if u and u.stockProgress then u.stockProgress[1] / 255 else 0
+			progressOff = math.max(progressOff, math.abs(gotP - sim.world.wStockProgress[World.slotKey(thorn, 1)]))
 			if got ~= last then
 				changes += 1
 				last = got :: number
@@ -240,6 +243,7 @@ return function(t: RunAll.Context)
 		t.expect(exact >= 299, `the owner's view matches the stock every tick after the first ({exact} of 300)`)
 		t.expect(changes >= 3, `the stock changed on the wire ({changes} values)`)
 		t.equal(leaked, 0, "the other player never gets stock")
+		t.expect(progressOff <= 1 / Stockpile.WIRE_STEPS + 1 / 255, `the owner's progress stays within a step ({progressOff})`)
 	end)
 
 	t.test("stockpiles are deterministic and in the state hash", function()

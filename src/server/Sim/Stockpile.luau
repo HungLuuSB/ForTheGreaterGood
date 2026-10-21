@@ -88,6 +88,10 @@ function Stockpile.capacity(sim: Types.Sim, id: number, slot: number): number?
 	return s and s.stockCapacity
 end
 
+-- Steps of build progress that put a STOCK record on the wire (S-49): the
+-- client fills the next missile's pip from them.
+Stockpile.WIRE_STEPS = 16
+
 -- Construction-step economy consumer (Build.step): every finished unit
 -- below capacity builds its next missile.
 function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number })

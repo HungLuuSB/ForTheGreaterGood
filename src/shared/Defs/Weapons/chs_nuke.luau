@@ -7,8 +7,8 @@ return {
 	range = 8192, -- anywhere on the map
 	reload = 10,
 	projectileSpeed = 300, -- nominal: `apex` sets the launch velocity
-	gravity = 40,
-	apex = 800,
+	gravity = 15,
+	apex = 300, -- low enough to stay on screen (S-49, the user asked)
 	accuracy = 0,
 	strategic = true,
 	manualFire = true,

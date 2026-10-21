@@ -18,7 +18,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | M-8 | ~~Team color only on panels and stripes, including a roof panel~~ (superseded by M-9: team color on top surfaces) |
 | M-9 | Near-future military look; Order = heavy defense and strategy (sand), Chaos = strength of armies (domed turrets, reactive armor, shorter and wider); team color on top surfaces; blockouts frozen as gameplay placeholders |
 | M-10 | Chaos base color: gunmetal recommended over olive after the Coastline test (pending your confirmation) |
-| M-11 | Mesh pipeline: scripted headless Blender, no AI base mesh for vehicles, one 1024 PBR set per unit, team color through the color map's alpha (proposal, pending approval) |
+| M-11 | Mesh pipeline: scripted headless Blender, no AI base mesh for vehicles, one 1024 PBR set per unit, team color through the color map's alpha (approved) |
+| M-12 | Lancer budget up to 4,000 triangles with automatic level of detail; per-class budgets proposed from the 100-unit test (pipeline.md) |
+| M-13 | The Blender FBX imports at x100 and turned 180° about Y; the rig script undoes both rather than changing the export or the importer settings |
 
 ### M-1 — Review in "FTGG Art" (2026-10-21)
 
@@ -99,10 +101,22 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 
 **Alternatives:** olive (realistic camouflage, poor readability in an RTS).
 
-### M-11 — Mesh pipeline (2026-10-21, proposal)
+### M-11 — Mesh pipeline (2026-10-21, approved)
 
 **Decision:** units are modeled by Python scripts run in headless Blender 5.2 (no AI base mesh for vehicles), baked to one 1024 PBR texture set per unit, exported as FBX, imported with Studio's 3D Importer (or the Open Cloud Assets API with a key) and rigged in Studio by a script. Team color through the color map's alpha in `AlphaMode.Overlay`. Steps and the generator license survey: [`../art/pipeline.md`](../art/pipeline.md).
 
 **Alternatives:** AI-generated base meshes (license limits and cleanup cost, see pipeline.md); separate team-colored parts (more draw calls and pieces).
 
 **Why:** reproducible, reviewable as diffs, exact to the rig and the budget.
+
+### M-12 — Mesh budgets (2026-10-21)
+
+**Decision** (the user's): the Lancer is built at up to about 4,000 triangles with Roblox's automatic level of detail (`RenderFidelity.Automatic`), not guide 20.1's 1,500, which was meant for simple low-poly art. A 100-unit frame-time test decides whether the higher budget holds; per-class budgets (hero units, line units, structures) are proposed from it in [`../art/pipeline.md`](../art/pipeline.md). The Lancer came out at 3,016.
+
+### M-13 — Import fixes in the rig script (2026-10-21)
+
+**Decision:** Studio's 3D Importer reads the Blender FBX as centimeters (x100) and turns it 180° about Y. `rig_model.luau`'s `normalize(src, rig, 0.01, true)` undoes both, `check` compares every piece with `rig.json`, and `rig` clears the pivot offsets that "Set Pivot to Scene Origin" leaves. Importer defaults stay as they are.
+
+**Alternatives:** changing the FBX export (global scale, forward axis) or the importer's File Transform settings: each needs another import to verify, and a wrong guess costs a re-upload.
+
+**Why:** one fixed, checked correction is cheaper than tuning two tools' axis conventions; `check` catches it if either changes.
