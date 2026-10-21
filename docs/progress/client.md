@@ -127,6 +127,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `4240ff8` (match flow: lobby, match against the AI, results, C-70); test_client 115, build passed.
 - Ready to merge: `d76abd2` `3708a23` (merge of `main` with S-57, S-59; BAR-style layout and icon glyphs, C-71); test_client 115, test 349, build passed.
 - Ready to merge: `d05f3c6` (radar precision from Pinpointers, C-72); test_client 116, build passed.
+- Ready to merge: `12354ba` ("Accuracy 50%" wording, C-72); build passed.
 
 ## Tasks
 
