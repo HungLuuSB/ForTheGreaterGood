@@ -211,8 +211,8 @@ local function one(ui: UI, api: Api.Api, id: number)
 	end
 	if Precision.relevant(def) then
 		-- the team's radar precision from its Pinpointers (S-59, C-72)
-		local p, n = Precision.of(world)
-		table.insert(lines, string.format("Radar precision %d%% (%d/%d Pinpointers)", math.floor(p * 100 + 0.5), math.min(n, Precision.FULL), Precision.FULL))
+		local p = Precision.of(world)
+		table.insert(lines, string.format("Accuracy %d%%", math.floor(p * 100 + 0.5))) -- the user's wording
 	end
 	local st, flags = u.state or 0, {}
 	if def.converter then -- only converters read the on / off bit (Economy)
