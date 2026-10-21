@@ -63,6 +63,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `dfdd0e7` (merge of `main` into this branch: resolves the `docs/progress/client.md` conflict with f5b8093 by keeping request 6 done and requests 7 and 8; test_client, test and build pass).
 - Ready to merge: `4a98d03` (Task 4: fog of war in 3D (C-32)).
 - Ready to merge: `9c6d2d1` (Juggernaut follows the server arm timing (C-33)).
+- Ready to merge: `cc217a1` (merge of `main` with S-19 and S-20 into this branch; clean, test_client, test and build pass).
 
 ## Tasks
 
