@@ -9,7 +9,8 @@
 --
 -- Every THINK_PERIOD ticks (players spread over the period) it:
 --   1. Builders (the Command Vehicle stays home): a Vehicle Plant first;
---      generators when power runs short; extractors on the nearest free
+--      generators when power runs short (a stall within the last 5 s,
+--      S-31); extractors on the nearest free
 --      deposits (home first, then expansions); a radar tower once the plant
 --      and two extractors stand; an IR SAM site when enemy aircraft come
 --      near home; an Advanced Vehicle Plant once supply piles up (S-7); a
@@ -63,6 +64,7 @@ local World = require("../World")
 local Skirmish = {}
 
 Skirmish.THINK_PERIOD = 15 -- ticks (1 s)
+Skirmish.POWER_MEMORY = 75 -- ticks a power stall is remembered for the generator rule (S-31)
 Skirmish.QUEUE_TARGET = 2
 Skirmish.WORKERS = 3
 Skirmish.FIRST_WAVE = 8
@@ -210,6 +212,7 @@ export type Brain = {
 	lastFarZ: number?,
 	thinkOffset: number, -- ticks into the think period this player thinks at
 	lastArmyQueued: number, -- tick it last queued an army unit (easy's cooldown)
+	powerShortAt: number, -- last tick a think saw power stalling (S-31)
 }
 
 local function submit(sim: Types.Sim, player: number, cmd: Schema.Command)
@@ -328,6 +331,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		deposits = deposits,
 		waves = 0,
 		lastWaveOrder = -math.huge,
+		powerShortAt = -math.huge,
 		kiting = {},
 		level = levelName,
 		cfg = cfg,
@@ -634,6 +638,15 @@ local function think(brain: Brain)
 		table.insert(workers, 1, c.commander)
 	end
 	local cfg = brain.cfg
+	-- power is short if it stalled at any think in the last POWER_MEMORY
+	-- ticks: the stall ratio reads 1 for a moment whenever a builder has just
+	-- finished (its demand is gone), which is exactly when the AI picks the
+	-- next job; deciding on that moment made mirrored players choose
+	-- differently by when they think (S-31)
+	if acc.power.ratio < 0.95 then
+		brain.powerShortAt = sim.tick
+	end
+	local powerShort = sim.tick - brain.powerShortAt <= Skirmish.POWER_MEMORY
 	local plantsWanted = if cfg.secondPlant and acc.supply.stored > cfg.secondPlantSupply and c.extractors >= cfg.secondPlantExtractors then 2 else 1
 	-- hard extras come once the economy and an army stand
 	local established = c.extractors >= 6 and #c.army >= 6 and acc.supply.stored >= 200
@@ -725,7 +738,7 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if acc.power.ratio < 0.95 or acc.power.income < 20 * #c.factories + 20 then
+		if powerShort or acc.power.income < 20 * #c.factories + 20 then
 			local gen = faction(brain, "generator", "generator")
 			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
 			if x and z then
