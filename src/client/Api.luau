@@ -70,6 +70,7 @@ export type Api = {
 	send: (buffer) -> (),
 	alertState: Alerts.State,
 	seenSelection: number,
+	seenJoins: number, -- world.joins last frame: a new WELCOME starts a fresh view (C-78)
 	seenEconomy: any,
 }
 
@@ -394,6 +395,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		send = send,
 		alertState = alertState,
 		seenSelection = 0,
+		seenJoins = world.joins,
 		seenEconomy = nil,
 	}
 	return api
@@ -405,6 +407,20 @@ end
 -- refreshes the state and fires the signals.
 function Api.frame(api: Api, now: number, warnings: { any }?)
 	local world, sel, state = api.world, api.selection, api.state
+	if world.joins ~= api.seenJoins then
+		-- a new WELCOME (a rejoin or a new match): unit IDs start over, so the
+		-- old selection, groups, waypoints and command mode would point at
+		-- other units
+		api.seenJoins = world.joins
+		Selection.set(sel, world, {}, "replace")
+		for _, g in sel.groups do
+			table.clear(g)
+		end
+		table.clear(api.waypoints.byUnit)
+		table.clear(api.waypoints.idleSince)
+		state.commandMode = nil
+		state.placement = nil
+	end
 	Selection.prune(sel, world)
 	Waypoints.update(api.waypoints, world, now)
 	state.player = world.me
