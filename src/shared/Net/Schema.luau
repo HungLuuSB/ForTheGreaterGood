@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 13 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won
+Schema.PROTOCOL_VERSION = 14 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -638,6 +638,8 @@ end
 --               | rowCount × rowBytes bytes: one bit per sensor cell, row by
 --               row, bit (x % 8) of byte x // 8; 1 = in the ally team's sight
 --                                                          = 4 + rows × rowBytes
+--   SHOT        hit u8 (0 / 1) | start pos | end pos: a hitscan / beam shot
+--               whose shooter the player doesn't have (protocol 14)        = 14 bytes
 --   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
 --               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
@@ -657,11 +659,12 @@ Schema.EventKind = table.freeze({
 	WRECK_GONE = 10,
 	SIGHT_ROWS = 11,
 	SIGHT_CELLS = 12,
+	SHOT = 13, -- protocol 14 (S-43)
 })
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14 })
 Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
 Schema.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- DECOYED: what defeated the missile (protocol 13)
 Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
@@ -714,6 +717,11 @@ export type Event = {
 	bits: buffer?, -- rowCount × rowBytes
 	-- SIGHT_CELLS: cell index, + SIGHT_SEEN when the cell is now in sight
 	cells: { number }?,
+	-- SHOT: the start pos (end pos in cell / offX / offZ / y; hit as FIRE)
+	fromCell: number?,
+	fromOffX: number?,
+	fromOffZ: number?,
+	fromY: number?,
 }
 
 local function isProjEvent(kind: number): boolean
@@ -787,6 +795,14 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		for _, c in cells do
 			w:writeU16(c)
 		end
+		return
+	elseif kind == EK.SHOT then
+		w:writeU8(if e.hit then 1 else 0)
+		w:writeU16(required(e.fromCell, "fromCell"))
+		w:writeU8(required(e.fromOffX, "fromOffX"))
+		w:writeU8(required(e.fromOffZ, "fromOffZ"))
+		w:writeI16(required(e.fromY, "fromY"))
+		writePos(w, e)
 		return
 	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
 		writeId(w, required(e.wreckId, "wreckId"), "wreckId")
@@ -880,6 +896,18 @@ function Schema.decodeEvent(r: Reader): Event
 			cells[i] = r:readU16()
 		end
 		e.cells = cells
+		return e
+	elseif kind == EK.SHOT then
+		local hit = r:readU8()
+		if hit > 1 then
+			fail(r, `SHOT hit byte {hit}`)
+		end
+		e.hit = hit == 1
+		e.fromCell = r:readU16()
+		e.fromOffX = r:readU8()
+		e.fromOffZ = r:readU8()
+		e.fromY = r:readI16()
+		readPos(r, e)
 		return e
 	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
 		e.wreckId = readId(r, "wreckId")

@@ -65,6 +65,9 @@ export type Event = {
 	x: number?,
 	y: number?,
 	z: number?,
+	sx: number?, -- FIRE: where the shot started (the muzzle; S-43)
+	sy: number?,
+	sz: number?,
 }
 
 export type Combat = {

@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **13**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **14**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -117,13 +117,14 @@ A Tactical or State record always refers to a unit the client got an ENTER for. 
 
 ## 7. Combat events (Events channel)
 
-All of a tick's events are one reliable batch. Records start with `kind u8`; sizes include it. Sent only where P's ally team may know (D99):
+All of a tick's events are one reliable batch. Records start with `kind u8`; sizes include it. Shooters are sent only where P's ally team may know (D99). **Projectiles and shots are shown in P's camera area whatever the team sees (S-43, client request 21):** they carry no shooter, so a hidden shooter stays hidden; only normal sight reveals it.
 
 | Kind | Layout | When P gets it |
 |---|---|---|
 | `FIRE 4` | `shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos`, 10 B | Hitscan / beam shots of units in P's tactical tier. Draw a tracer from the shooter's muzzle to the end point (the target's hull centre on a hit, the ground on a miss). No target ID. |
-| `SPAWN_PROJ 5` | `projId u16, weaponIndex u16, pos, vel, targetId u16`, 19 B | A projectile the client doesn't have yet, once it is in P's sight and in the camera area (+2 cells): at launch, or when it flies into view (a hidden shooter's shells appear mid-flight). `targetId` is the homing target if P's team knows that unit, else 0. |
-| `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in sight and in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). |
+| `SHOT 13` | `hit u8 (0 / 1), start pos, end pos`, 14 B (protocol 14) | A hitscan / beam shot whose shooter P doesn't have (not in its tactical tier), when either end is in the camera area (+2 cells). Draw a tracer from the start (the muzzle) to the end. No shooter or target ID. |
+| `SPAWN_PROJ 5` | `projId u16, weaponIndex u16, pos, vel, targetId u16`, 19 B | A projectile the client doesn't have yet, once it is in the camera area (+2 cells), seen or not (S-43): at launch, or when it flies into the camera area. `targetId` is the homing target if P's team knows that unit, else 0. |
+| `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). |
 | `DECOYED 7` | `projId u16, pos, vel, decoy pos, decoyTicks u8, countermeasure u8`, 23 B (countermeasure: 1 flares, 2 chaff, 3 DIRCM, `Schema.Countermeasure`; protocol 13) | For projectiles the client has: a countermeasure seduced it. Snap to `pos`/`vel`, clear its target, and for the next `decoyTicks` ticks steer toward the decoy point with `Guidance.decoy` (stop early when it returns false), then fly straight (protocol 11, S-28). |
 | `LOST_LOCK 8` | `projId u16, pos, vel`, 15 B | Same, but the missile flies on unguided. |
 | `DEATH 3` | `unitId u16, severity u8, wreckId u16`, 6 B | Tactical units (section 5). |
@@ -166,7 +167,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 ## 8. Homing corrections (Projectiles channel, D102)
 
 - Record: `projId u16, pos, vel`, 14 B, after the tick header.
-- Sent for each homing projectile the client has while it is in P's view (camera + 5 cells, and in sight): about 3 Hz (every 5 ticks, staggered by ID), plus once on the tick it comes back into view.
+- Sent for each homing projectile the client has while it is in P's view (camera + 5 cells; sight doesn't matter since S-43): about 3 Hz (every 5 ticks, staggered by ID), plus once on the tick it comes back into view.
 - **Client:**
   - snap the prediction to `pos`/`vel` and keep drawing where it was;
   - blend the drawn offset to 0 over 5 ticks;
@@ -258,6 +259,7 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 14 | SHOT 13: a hidden shooter's hitscan shot with both ends; projectiles and homing corrections in the camera area whatever the team sees (S-43, client request 21) |
 | 13 | DECOYED ends with `countermeasure u8`: what defeated the missile (S-38, client request 18) |
 | 12 | CANCEL command 16 (S-35) |
 | 11 | DECOYED adds the decoy point (pos) and `decoyTicks u8` (22 B): decoyed missiles bend toward the flares or chaff instead of turning 60° in one tick (S-28, client request 13d) |

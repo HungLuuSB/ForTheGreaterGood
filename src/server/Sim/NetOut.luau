@@ -17,27 +17,30 @@
 --     (tracked radar contacts: the TRACKED flag and the real icon, D104);
 --     remembered structures carry the GHOST flag and their last position.
 --   * DEATH events for dead units the player had in its tactical tier.
---   * Combat events (D99), only what the ally team may know:
+--   * Combat events (D99; S-43: projectiles and shots regardless of sight,
+--     never revealing a shooter):
 --       FIRE        hitscan / beam shots of units in the tactical tier, with
 --                   the shot's end point (no target ID: it may be hidden);
+--       SHOT        the same for a shooter the player doesn't have: start and
+--                   end point, no ID, when either is in the camera rectangle;
 --       SPAWN_PROJ  a projectile the client doesn't have yet, once it is in
---                   the ally team's sight and in the camera rectangle (+2
---                   cells): at launch, or when it flies into view. It carries
+--                   the camera rectangle (+2 cells), seen or not: at launch,
+--                   or when it flies into view. It carries
 --                   the current position and velocity, and the homing
 --                   target if the ally team knows that unit (tactical or a
 --                   strategic record: its ID is no secret then);
 --       DECOYED,    for projectiles the client has: position and velocity
 --       LOST_LOCK   (DECOYED: also the decoy point it follows and for how many
 --                   more ticks, S-28; LOST_LOCK: it flies on unguided);
---       IMPACT      for projectiles the client has, or anywhere in sight and
---                   in the camera rectangle (projectiles at the end of their
+--       IMPACT      for projectiles the client has, or anywhere in the camera
+--                   rectangle (projectiles at the end of their
 --                   life burst with an IMPACT too).
 --     The client steps known projectiles itself and drops them on IMPACT or
 --     at their time to live. All of a tick's events form one batch.
 --   * Homing corrections (Projectiles channel, unreliable, D102): every
 --     HOMING_SYNC_EVERY ticks (staggered by projectile ID), the position and
 --     velocity of each homing projectile the client has that is in the
---     tactical area (camera + LEAVE_MARGIN) and in the ally team's sight;
+--     tactical area (camera + LEAVE_MARGIN), seen or not (S-43);
 --     also on the tick one comes (back) into that view.
 --   * Economy (Eco channel, S-2): the player's team account, on economy
 --     ticks when it changed.
@@ -289,8 +292,10 @@ end
 function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally: number, cam: { number }, events: { Schema.Event })
 	local c = sim.combat
 	local known = pn.projKnown
+	-- projectiles: everything in the camera area, whatever the team sees;
+	-- they carry no shooter, so they reveal none (S-43, client request 21)
 	local function shown(x: number, z: number): boolean
-		return inRect(g, cam, x, z, NetOut.ENTER_MARGIN) and inSightFor(sim, ally, x, z)
+		return inRect(g, cam, x, z, NetOut.ENTER_MARGIN)
 	end
 	for _, e in c.events do
 		if e.kind == "SPAWN_PROJ" then
@@ -315,6 +320,12 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 		local kind = e.kind
 		if kind == "FIRE" and pn.tactical[e.unit] and e.x then
 			table.insert(events, withPos({ kind = Schema.EventKind.FIRE, unitId = e.unit, slot = e.slot, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number))
+		elseif kind == "FIRE" and e.x and e.sx and (shown(e.x, e.z :: number) or shown(e.sx, e.sz :: number)) then
+			-- a shooter the player doesn't have: both ends, no ID (S-43)
+			local shot = withPos({ kind = Schema.EventKind.SHOT, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number)
+			shot.fromCell, shot.fromOffX, shot.fromOffZ = g:encode(e.sx, e.sz :: number)
+			shot.fromY = Schema.toI16(e.sy :: number)
+			table.insert(events, shot)
 		elseif (kind == "DECOYED" or kind == "LOST_LOCK") and known[e.other] and not sentNow[e.other] then
 			local p = e.other
 			if c.projSlot[p] ~= nil then -- else its IMPACT follows
@@ -733,7 +744,7 @@ function NetOut.step(sim: Types.Sim)
 			for _, p in c.proj do
 				if pn.projKnown[p] and weapons[c.pWeapon[p]].turnRate ~= nil then
 					local x, z = c.px[p], c.pz[p]
-					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) and inSightFor(sim, ally, x, z)
+					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) -- sight doesn't matter (S-43)
 					local entered = seen and not inView[p]
 					inView[p] = seen or nil
 					if seen and (entered or (p + tick) % every == 0) then
