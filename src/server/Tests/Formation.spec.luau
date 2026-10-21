@@ -3,6 +3,8 @@
 -- Shared/Grid/Formation, so a client that knows the units' positions and
 -- footprints computes exactly the server's goals.
 local Formation = require("@shared/Grid/Formation")
+local Packer = require("@shared/Net/Packer")
+local Schema = require("@shared/Net/Schema")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Nav = require("../Sim/Nav")
 local Orders = require("../Sim/Orders")
@@ -49,6 +51,73 @@ return function(t: RunAll.Context)
 		local posX, posZ = { [3] = 0, [7] = 10, [9] = 10 }, { [3] = 0, [7] = 0, [9] = 0 }
 		local pick = Formation.assign(posX, posZ, { 3, 7, 9 }, { { 10, 0 }, { 0, 1 }, { 50, 50 }, { 0, 0 } })
 		t.deepEqual(pick, { 7, 3, 9, 0 }, "closest unit per slot, ties to the lower ID, 0 once units run out")
+	end)
+
+	t.test("a sliced assignment picks exactly what one call picks (S-67)", function()
+		local posX, posZ, members, slots = {}, {}, {}, {}
+		for i = 1, 150 do
+			posX[i * 3], posZ[i * 3] = (i * 37) % 400 - 200, (i * 91) % 300 - 150
+			table.insert(members, i * 3)
+		end
+		for i = 1, 160 do
+			table.insert(slots, { (i % 13) * 12 + 300, (i // 13) * 12 })
+		end
+		local whole, checks = Formation.assign(posX, posZ, members, slots)
+		local a = Formation.newAssigner(posX, posZ, members, slots)
+		local calls = 0
+		repeat
+			calls += 1
+		until Formation.assignStep(a, 50)
+		t.deepEqual(a.pick, whole)
+		t.equal(a.checks, checks)
+		t.expect(calls > 10, `spread over {calls} calls`)
+	end)
+
+	t.test("a select-all order gets its slots from the Pathing job, as an immediate one would (S-67)", function()
+		local function goals(sliceMin: number): ({ [number]: { number } }, { [number]: { number } })
+			local saved, savedBudget = Nav.SLICED_ASSIGN_MIN, Nav.PATHING_BUDGET
+			Nav.SLICED_ASSIGN_MIN = sliceMin
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+			local ids = {}
+			for i = 0, 79 do
+				table.insert(ids, Spawn.unit(sim, "ord_lancer", 1, -300 + (i % 10) * 12, -60 + (i // 10) * 12, 0))
+			end
+			local cell, ox, oz = (sim.map :: any).grid:encode(200, 0)
+			local wr = Packer.Writer.new()
+			Schema.encodeCommand(wr, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = ids, cell = cell, offX = ox, offZ = oz })
+			assert(Sim.submit(sim, 1, wr:finish()))
+			Nav.PATHING_BUDGET, savedBudget = 0, Nav.PATHING_BUDGET -- the order is issued, its plan waits
+			Sim.step(sim)
+			local before = {}
+			for _, id in ids do
+				before[id] = { sim.world.goalX[id], sim.world.goalZ[id] }
+			end
+			Nav.PATHING_BUDGET = savedBudget
+			Sim.step(sim)
+			local after = {}
+			for _, id in ids do
+				after[id] = { sim.world.goalX[id], sim.world.goalZ[id] }
+			end
+			Nav.SLICED_ASSIGN_MIN = saved
+			return before, after
+		end
+		local nowBefore, nowAfter = goals(math.huge)
+		local slicedBefore, slicedAfter = goals(64)
+		local centers, distinct = 0, {}
+		local first = slicedBefore[next(slicedBefore) :: number]
+		for id, g in slicedBefore do
+			if g[1] == first[1] and g[2] == first[2] then
+				centers += 1
+			end
+			distinct[`{nowBefore[id][1]},{nowBefore[id][2]}`] = true
+		end
+		t.equal(centers, 80, "sliced: every unit heads for the center at first")
+		t.deepEqual(slicedAfter, nowAfter, "after one Pathing tick each unit has the slot an immediate assignment gave it")
+		local n = 0
+		for _ in distinct do
+			n += 1
+		end
+		t.equal(n, 80, "80 distinct slots")
 	end)
 
 	t.test("layout: n slots, a line fills rows stepping back toward the centroid", function()

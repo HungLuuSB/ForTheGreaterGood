@@ -834,3 +834,29 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - An empty Thorn rebuilds 2.49 missiles in 60 s with priority, against 1.81 sharing alike.
   - Its floor is a quarter of 20 power/s, about 1.25 missiles a minute.
 - **AI under helicopter raids** (new `lune run sam_raids`, kept this time; Normal AI on skirmish:192, 15 min): numbers in the progress file. They are noisy: the AI builds few SAMs, and with the faction pass's prices Order's economy is stalled 85–90% of the time, a faction-AI question (task 11).
+
+## S-67 — Select-all orders' slots in the Pathing job; lazy quadtree updates (the user, 2026-10-22)
+
+- **Asked:** the two S-60 peaks: spread a select-all order's slot assignment over the Pathing job, and update quadtrees lazily when a structure dies. Both change timing (not the state hash), as S-60 said.
+- **Sliced slot assignment:**
+  - **Rule:** an order for `Nav.SLICED_ASSIGN_MIN` (64) units or more gets its ground groups' slots in the plan job.
+    - At issue, Commands only snapshots the units' positions; its units head for the formation's center.
+    - The plan job sorts the slots (`deepestFirst`), buckets the units and assigns slots, at 4 distance checks per work unit, then gives each unit still in the order its slot.
+    - Smaller orders and air groups assign at once as before.
+  - **`Formation.assign` is now resumable** (`newAssigner` / `assignStep`). Picks and checks are identical however it is sliced: tested on 150 units over 50-check steps, and the Normandy hash didn't change with the refactor alone.
+  - **Test:** an 80-unit MOVE: every unit at the center at first; after one Pathing tick each has exactly the slot an immediate assignment gives.
+- **Lazy quadtree updates:**
+  - **Rule:** `Nav.terrainChanged` only records the changed rectangle per tree (the field cache is still invalidated at once). A tree applies its pending changes the first time it is used (`Nav.tree`, a plan job's tree), or on a Pathing tick with no job queued.
+  - **Batching:** the batch recomputes components once (`Quadtree.update(..., deferComponents)` + `Quadtree.computeComponents`); each update had recomputed them over the whole tree.
+  - **Backlog cap:** more than `Nav.MAX_PENDING` (8) pending changes on a tree are applied at once, so a map's structures placed at setup don't land on the first order's tick. First tried without the cap: that tick took 95 ms, then 21 with batching.
+  - **Test:** `Placement.spec`'s rebuild comparison now reads trees through `Nav.tree`.
+- **Normandy** (`profile_normandy 1800`, 3 interleaved runs each; the first pair was noisy):
+
+| | Before | After |
+|---|---|---|
+| Commands peak (budget 1) | 1.40 / 1.47 (4.9 noisy) | **0.86 / 0.96** (2.3 noisy) |
+| Projectiles+Damage peak (budget 8) | 7.6 / 10.7 (22.6 noisy) | **2.8 / 2.9 / 4.4** |
+| Pathing peak (budget 8) | 7.3 / 8.1 / 8.9 | 7.5 / 8.0 / 9.4 |
+| p99 tick (ms) | 9.0 / 9.3 / 14.3 | 8.4 / 8.7 / 9.7 |
+
+  - The state hash changed (5f72fafa against ae5ef52e), as expected: big orders' units start toward the center for a tick, and trees update later.
