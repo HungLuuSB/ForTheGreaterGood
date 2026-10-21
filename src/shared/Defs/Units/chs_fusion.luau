@@ -14,6 +14,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 3,
 	icon = "fusion",
 	production = { power = 250 },
+	deathBlast = { damage = 2500, aoe = 120, edge = 0.25 }, -- guide 8.5: "big explosion on death" (S-70)
 	storage = { power = 2000 },
 	model = "chs_fusion",
 })

@@ -54,6 +54,7 @@ export type Event = {
 		| "PRODUCED"
 		| "RECLAIMED"
 		| "LAUNCH" -- a strategic missile left its silo: unit = silo, other = projectile, x/y/z = launch (S-48)
+		| "BLAST" -- a unit with a deathBlast exploded as it died: unit = the dying unit, x/z = where (S-70)
 		| "INTERCEPTED" -- a strategic missile destroyed in flight: other = projectile, x/y/z = where (S-48)
 		| "ELIMINATED" -- other = player
 		| "MATCH_END", -- other = winning ally team (0 = nobody)
@@ -470,6 +471,16 @@ end
 
 local scratch: { number } = {}
 
+-- The armor class a hit uses: an aircraft parked on the ground (LANDED) is
+-- an easy target, LIGHT (guide 12.2, S-71).
+local LANDED = World.State.LANDED
+function Combat.armorOf(w: World.World, id: number, p: UnitProfile): string
+	if p.armorClass == "AIR" and bit32.band(w.state[id], LANDED) ~= 0 then
+		return "LIGHT"
+	end
+	return p.armorClass
+end
+
 -- Explosion at (x, y, z) from `weapon` fired by `attacker` of ally team `team`.
 -- `direct` (0 = none) is the unit the projectile struck: it takes full
 -- damage. (Projectiles never strike allies directly, guide 10.6, so `direct`
@@ -493,7 +504,7 @@ function Combat.explode(
 	player = player or (if attacker ~= 0 then w.owner[attacker] else 0)
 	if direct ~= 0 and w.slot[direct] ~= nil then
 		local p = c.profiles[w.defIndex[direct]]
-		Combat.queueDamage(c, direct, weapon.damage[p.armorClass], attacker, player)
+		Combat.queueDamage(c, direct, weapon.damage[Combat.armorOf(w, direct, p)], attacker, player)
 	end
 	if aoe <= 0 then
 		return
@@ -510,7 +521,7 @@ function Combat.explode(
 		local d = Ballistics.distanceToCylinder(x, y, z, w.posX[id], w.posZ[id], p.radius, base, base + p.height)
 		local f = Ballistics.falloff(d, aoe, edge)
 		if f > 0 then
-			Combat.queueDamage(c, id, weapon.damage[p.armorClass] * f, attacker, player)
+			Combat.queueDamage(c, id, weapon.damage[Combat.armorOf(w, id, p)] * f, attacker, player)
 		end
 	end
 end

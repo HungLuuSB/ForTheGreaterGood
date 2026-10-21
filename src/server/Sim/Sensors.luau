@@ -199,10 +199,11 @@ local function poweredRadius(sim: Types.Sim, id: number, radius: number?, drain:
 	if radius == nil or radius <= 0 then
 		return 0
 	end
-	if drain == nil or drain <= 0 then
-		return radius -- no upkeep: always full
+	local scale = sim.sensors.powerScale[id] or 1
+	if drain == nil or drain <= 0 or scale >= 1 then
+		return radius -- no upkeep, or fully powered: the def's radius
 	end
-	return math.floor(radius * (sim.sensors.powerScale[id] or 1) / CELL) * CELL
+	return math.floor(radius * scale / CELL) * CELL
 end
 local function radiiOf(sim: Types.Sim, id: number): { number }
 	local def = sim.defs.unitByIndex[sim.world.defIndex[id]]
@@ -214,13 +215,14 @@ local function radiiOf(sim: Types.Sim, id: number): { number }
 	local sensors = def.sensors
 	local track = poweredRadius(sim, id, sensors.track, sensors.trackDrain)
 	local jam = poweredRadius(sim, id, sensors.jam, sensors.jamDrain)
-	local key = track * 65536 + jam
+	local radar = poweredRadius(sim, id, sensors.radar, sensors.radarDrain) -- S-72
+	local key = (radar * 65536 + track) * 65536 + jam
 	local radii = byTrack[key]
 	if radii == nil then
 		radii = table.freeze({
 			sensors.sight,
 			sensors.airSight or sensors.sight * Sensors.AIR_SIGHT_FACTOR,
-			sensors.radar,
+			radar,
 			sensors.sonar,
 			jam,
 			track,
@@ -323,7 +325,7 @@ function Sensors.radarDetects(sim: Types.Sim, s: State, observer: number, id: nu
 	end
 	local x, z = w.posX[id], w.posZ[id]
 	for _, r in s.radars[observer] do
-		local reach = sim.defs.unitByIndex[w.defIndex[r]].sensors.radar * signature
+		local reach = radiiOf(sim, r)[3] * signature -- the radar's powered radius (S-72)
 		local dx, dz = w.posX[r] - x, w.posZ[r] - z
 		if dx * dx + dz * dz <= reach * reach then
 			return true
@@ -561,13 +563,20 @@ end
 -- The categories `team` knows unit `id` has, given its level and def index
 -- (from Sensors.knownTarget): all of them when its type is known, else
 -- those of its domain (D107).
+-- An aircraft parked on the ground (LANDED) counts as a ground unit: ground
+-- guns can hit it, anti-air can't (guide 12.2, S-71).
+local AIR_BITS = Sensors.DOMAIN_MASK.air
 function Sensors.knownCategories(sim: Types.Sim, team: number, id: number, level: number, defIndex: number): number
 	local def = sim.defs.unitByIndex[defIndex]
+	local w = sim.world
+	local landed = def.domain == "air" and w.slot[id] ~= nil and bit32.band(w.state[id], World.State.LANDED) ~= 0
 	if Sensors.typeKnown(sim, team, id, level) then
+		if landed then
+			return bit32.bor(bit32.band(def.categoryMask, bit32.bnot(AIR_BITS)), CB.GROUND)
+		end
 		return def.categoryMask
 	end
-	local w = sim.world
-	if def.domain == "air" then
+	if def.domain == "air" and not landed then
 		return Sensors.DOMAIN_MASK.air
 	elseif bit32.band(def.categoryMask, CB.SUB) ~= 0 or (w.slot[id] ~= nil and bit32.band(w.state[id], World.State.SUBMERGED) ~= 0) then
 		return Sensors.DOMAIN_MASK.submerged
@@ -582,10 +591,10 @@ function Sensors.isTracked(sim: Types.Sim, team: number, id: number): boolean
 end
 
 -- Powered-sensor upkeep (called by Build.step with the other economy
--- consumers; D104 tracking radars, D108 jammers): each finished unit drains
--- trackDrain + jamDrain power per second at the team's power stall ratio;
--- the share it gets scales its track and jam radii (applied at the next
--- sensor tick).
+-- consumers; D104 tracking radars, D108 jammers, S-72 plain radars): each
+-- finished unit drains trackDrain + jamDrain + radarDrain power per second
+-- at the team's power stall ratio; the share it gets scales its track, jam
+-- and radar radii (applied at the next sensor tick).
 function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 	local w = sim.world
 	local s = sim.sensors
@@ -599,6 +608,9 @@ function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 		end
 		if (sensors.jam or 0) > 0 then
 			drain += sensors.jamDrain or 0
+		end
+		if (sensors.radar or 0) > 0 then
+			drain += sensors.radarDrain or 0 -- plain radars (S-72)
 		end
 		if drain <= 0 or w.buildProgress[id] < 1 then
 			continue

@@ -16,7 +16,7 @@ return Templates.extend(Templates.Unit, {
 	cost = { supply = 320, power = 6000, buildTime = 10000 },
 	health = 900,
 	movement = { maxSpeed = 200, minSpeed = 120, accel = 80, brake = 60, turnRate = 40 },
-	sensors = { sight = 220, airSight = 420, radar = 1000, radarError = 15 },
+	sensors = { sight = 220, airSight = 420, radar = 1000, radarError = 15, radarDrain = 8 }, -- upkeep: S-72
 	pieces = { "base", "dish" },
 	icon = "awacs",
 	model = "ord_archangel",

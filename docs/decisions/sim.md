@@ -917,3 +917,45 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests (`Salvo.spec`):**
   - A Hydra's 8 rockets 0.15 s apart, the next salvo one reload after the first rocket.
   - A Verdict's shells burst within 14 studs of a tank driving across its line of fire. Without the lead, 0 of 4 do.
+
+## S-70 — The Fusion Reactor explodes (audit item 11) (2026-10-22)
+
+- Guide 8.5: "Fusion Reactor: big explosion on death". New def field `deathBlast = { damage, aoe, edge }`.
+- When the unit is killed (Damage), the blast hits every unit in `aoe`: own, allied and enemy alike (team 0), with the usual falloff to `edge`. It's applied the next tick, so a blast can kill a neighbouring reactor and set it off too.
+- A cancelled frame never explodes: it doesn't die in Damage.
+- A `BLAST` combat event marks it. No wire change: the client sees the DEATH and can read `deathBlast` from the def to draw it.
+- **Numbers** (Order and Chaos reactors, my placeholder): 2,500 damage at the center, radius 120, edge 0.25: a T1 tank 40 studs away dies.
+- **Test:** `DeathBlast.spec`: a reactor kills tanks of both sides 40 studs off, leaves one 300 off untouched; a generator doesn't explode.
+
+## S-71 — Landing details: parked aircraft are ground targets; full pads are skipped (audit item 10) (2026-10-22)
+
+- **Targeting:** a LANDED aircraft counts as a ground unit for targeting (`Sensors.knownCategories` swaps its AIR / JET / HELI bits for GROUND, and target priorities read the same), and takes LIGHT damage (`Combat.armorOf`): ground guns can kill it (guide 12.2: "easy targets"), anti-air can't engage it until it takes off.
+- **Altitude:** a rearming or docked aircraft settles on top of its pad (the pad's height) instead of the ground inside it, where the pad's collision cylinder had been catching every shell aimed at it.
+- **Fixed on the way:** Movement skipped aircraft altitude changes on ticks when nothing moved, so a jet that landed while the rest of the map stood still stayed at cruise height.
+- **Pads:** an aircraft heading to rearm picks the nearest pad with a free spot (counting aircraft already assigned to it against its `rearmPads`); if all are full, the nearest.
+- **Not done:** the flying sight bonus (audit item 10's third part); flying units have the sight their defs give. It would change every air unit's numbers, so it waits for a balance pass.
+- **Tests (`Landing.spec`):** a Ravager damages a Falcon parked on its pad, 131 a shell (its LIGHT damage), while a Hornet holds its fire; an empty Falcon skips a full pad for a free one farther away.
+
+## S-72 — Radar upkeep (audit item 9) (2026-10-22)
+
+- Audit item 9 had two parts.
+  - "Missile reloads for SAM sites and launchers are free" was already done by the stockpiles (S-47: each missile costs supply and power to rebuild).
+  - "Plain radars have no power upkeep" is done now.
+- **Rule:** new `sensors.radarDrain` (power per second). It is drained with the tracking and jamming upkeep (`Sensors.drainStep`, D104 / D108). In a power stall, the share a radar gets scales its radar radius, at whole sensor cells, like a tracker's. Fully powered it keeps its def radius exactly.
+- **Stealth reach:** range × signature (D78) now uses the powered radius.
+- **Numbers** (my placeholders; Order's radars are stronger and cost more):
+  - Watchtower 3, Eye 2;
+  - Beacon 12, All-Seer 9;
+  - Oracle 3, Watcher 2;
+  - Archangel (AWACS) 8.
+  - Radars on SAM sites and ships carry no upkeep: their weapons and stockpiles already cost.
+- **Tests:**
+  - `Fog.spec`: an Eye's 2 power/s shows as demand, a stall drops a tank at 530 studs off its radar, and power brings it back.
+  - `Tracking.spec`: its stall test uses an Aegis for the plain radar, since a Watchtower now shrinks too.
+
+## S-73 — Friendly fire as a match option (audit item 14) (2026-10-22)
+
+- `match.friendlyFire` (`MatchState.Config`; default true, as before): off, blasts and splash never hurt the shooter's allies (`Combat.friendlyFire`). Direct hits never did.
+- **Exception:** strategic blasts (nukes, team 0) and death blasts (S-70) still hurt everyone; they belong to no team.
+- **Replay header:** its match byte is 2 when friendly fire is off (1 as before otherwise), so old replays still read and a replayed match keeps the option. No format version change.
+- **Test:** `FriendlyFire.spec`: the default hurts both tanks under a blast, the option spares the own one; the option survives a replay round trip.

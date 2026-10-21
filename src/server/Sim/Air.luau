@@ -145,19 +145,33 @@ function Air.onSpawn(sim: Types.Sim, id: number)
 	end
 end
 
--- Nearest complete friendly rearm pad, or 0.
+-- Nearest complete friendly rearm pad with a free spot, counting the
+-- aircraft already headed to or on each (S-71); the nearest of all when
+-- every pad is full. 0 when there is none.
 local function nearestPad(sim: Types.Sim, id: number): number
 	local w = sim.world
+	local a = sim.air
+	local load: { [number]: number } = {}
+	for other, pad in a.pad do
+		if other ~= id and pad ~= 0 then
+			load[pad] = (load[pad] or 0) + 1
+		end
+	end
 	local best, bestD = 0, math.huge
+	local free, freeD = 0, math.huge
 	for _, other in w.ids do
-		if w.team[other] == w.team[id] and w.buildProgress[other] >= 1 and def(sim, other).rearmPads then
+		local pads = if w.team[other] == w.team[id] and w.buildProgress[other] >= 1 then def(sim, other).rearmPads else nil
+		if pads then
 			local d = (w.posX[other] - w.posX[id]) ^ 2 + (w.posZ[other] - w.posZ[id]) ^ 2
 			if d < bestD then
 				best, bestD = other, d
 			end
+			if (load[other] or 0) < pads and d < freeD then
+				free, freeD = other, d
+			end
 		end
 	end
-	return best
+	return if free ~= 0 then free else best
 end
 
 local function headTo(sim: Types.Sim, id: number, x: number, z: number)
@@ -455,7 +469,13 @@ function Air.updateAltitude(sim: Types.Sim, id: number)
 	local w = sim.world
 	local d = def(sim, id)
 	local phase = sim.air.phase[id]
-	local target = if phase == "rearm" or phase == "docked" then 0 else cruiseAltitude(sim, d)
+	local target = cruiseAltitude(sim, d)
+	if phase == "rearm" or phase == "docked" then
+		-- parked on top of its pad, where guns can see and hit it (S-71)
+		local pad = sim.air.pad[id]
+		local pp = if pad and w.slot[pad] then sim.combat.profiles[w.defIndex[pad]] else nil
+		target = if pp then pp.height else 0
+	end
 	local alt = w.alt[id]
 	if alt ~= target then
 		local step = Air.CLIMB_RATE * Air.DT
