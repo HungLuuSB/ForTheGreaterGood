@@ -1170,7 +1170,7 @@ countermeasures = {
   - Besides sonar, naval units and ASW helicopters (helicopters with a weapon that can target `SUB`) detect a submerged submarine within 40 studs as a SONAR contact: torpedo-targetable, never VISIBLE. No other unit can see it.
   - Torpedoes launch level just under the surface, stay between the sea floor and the surface, home on sonar contacts, and are removed harmlessly when they reach land.
   - Destroyers carry a radar-guided naval SAM (`ord_naval_sam` 380 studs / `chs_naval_sam` 360, about their 1.5 × sight against aircraft; D97).
-- **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base.
+- **Carriers:** mobile airfield: N rearm pads, radar, light point defense. Aircraft can be assigned a carrier as home base. (S-36) GUARD from an aircraft on a friendly carrier or airfield recovers it there: that pad becomes its home, and it lands, rearms and stays docked, carried along by a carrier, until any order launches it. Empty aircraft rearm at their home first, else at the nearest pad. Carriers don't build aircraft (not decided).
 - **Amphibious/hover units** bridge land and sea.
 - Naval structures: floating turret, torpedo launcher, sonar buoy, naval SAM platform, tidal generator.
 

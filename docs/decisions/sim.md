@@ -426,3 +426,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Command:** CANCEL 16 (protocol 12), `value u8` 0..50. On an unfinished frame: the frame is removed (no wreck, a BUILD_FAILED event with reason "cancelled"), and its builders stop. On a factory: queue item `value` (1-based) is dropped, 0 = the whole queue.
 - **Refund:** spending is proportional to progress (Build spends `cost × step` as progress grows), so a refund is progress × cost, credited like reclaim (`reclaimed`) at the next economy step and capped by storage. Only the frame or the item in production has progress; queued items cost nothing yet. 100% of what was spent, like BAR (the guide's "optional" choice).
 - **Tests (`Build.spec`):** a plant frame cancelled at 30–70% credits exactly progress × cost of supply and power and is gone; CANCEL through the command removes a frame; cancelling a factory's item in production refunds its progress and the next item starts from scratch; a queued item goes without a refund; CANCEL 0 clears the queue. `Schema.spec`: golden bytes and range check for CANCEL.
+
+## S-36 — Carriers: recovering, carrying and launching aircraft (guide 12.3; audit item 5) (2026-10-22)
+
+- **Before:** carriers' rearm pads were used by empty aircraft (nearest pad), but an aircraft couldn't take a carrier as home, a rearming aircraft stayed where the carrier had been, and nothing held aircraft aboard.
+- **Recover:** GUARD from an aircraft on a friendly unit with rearm pads (carrier or airfield) calls `Air.recover`: that pad becomes its **home** (`AirState.home`, hashed) and it is flagged to **hold**; it flies there, lands, rearms (aircraft without ammo are full at once) and then stays in a new phase **docked** instead of taking off.
+- **Carried along:** while rearming or docked, an aircraft's position is its pad's every tick; one flying to a carrier re-aims when the carrier has moved.
+- **Launch:** any order (`Orders.give` → `Air.release`) takes a docked aircraft off; one flying home only to be recovered turns back; an empty one still rearms first. A destroyed carrier launches its docked aircraft.
+- **Home first:** an empty aircraft goes to its home pad if it still exists, else the nearest.
+- **Not done:** carriers building aircraft (the guide doesn't say they do; it would change the tech tree, listed for review).
+- **Tests (`Carrier.spec`, 3):** recovery lands and holds a Falcon on a Sanctuary, which then sails with it aboard; a move order launches it; an empty Falcon heads for its carrier although an airfield is nearer, and lands on it.

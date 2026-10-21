@@ -116,6 +116,7 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 	o.nextBatch += 1
 	for _, id in ids do
 		o.anchorX[id], o.anchorZ[id] = nil, nil -- re-anchored where this leaves it (S-34)
+		Air.release(sim, id) -- a docked aircraft launches (S-36)
 		local d = def(sim, id)
 		if d.domain == "structure" then
 			if isFactory(d) and isMoveLike(spec.kind) and spec.x then
@@ -257,6 +258,9 @@ local function start(sim: Types.Sim, id: number, h: Order): boolean
 	elseif kind == "guard" then
 		local t = h.target :: number
 		local td = def(sim, t)
+		if def(sim, id).domain == "air" and td.rearmPads and Air.recover(sim, id, t) then
+			return false -- guarding a carrier or airfield: land there, it is home (S-36)
+		end
 		if def(sim, id).buildPower and (w.buildProgress[t] < 1 or isFactory(td)) then
 			Build.commandAssist(sim, { id }, t)
 		end
