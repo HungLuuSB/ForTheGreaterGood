@@ -138,6 +138,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `5aa4552` (requests 37 and 38 used, the faction pass followed, C-80; includes the merge of main at 1cbfb0d); test_client 137, test 355, build passed.
 - Ready to merge: `8ce4923` (settings menu, C-81); test_client 140, build passed.
 - Ready to merge: `cb7098f` (stable icon layout, S-64 units drawn as the Main Battle Tank, C-74 follow-up; includes the merge of main at a21d325); test_client 140, build passed.
+- Ready to merge: `9fac768` (nuke craters and water splashes, C-82); test_client 141, build passed.
 
 ## Tasks
 
