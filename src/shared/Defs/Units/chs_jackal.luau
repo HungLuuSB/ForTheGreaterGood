@@ -14,7 +14,7 @@ return Templates.extend(Templates.Unit, {
 	moveClass = "WHEELED",
 	footprint = 1,
 	cost = { supply = 50, power = 600, buildTime = 1500 },
-	health = 340,
+	health = 320,
 	movement = { maxSpeed = 66, accel = 30, brake = 50, turnRate = 180 },
 	sensors = { sight = 260 },
 	weapons = { { def = "chs_mg", turretPiece = "turret", muzzle = "muzzle" } },

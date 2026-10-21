@@ -8,7 +8,7 @@ return Templates.extend(Templates.TankT1, {
 	description = "Self-propelled mortar. Heavy, inaccurate indirect fire; can shell radar contacts.",
 	faction = "chaos",
 	categories = { "GROUND", "ARMORED", "ARTILLERY" },
-	cost = { supply = 160, power = 1600, buildTime = 4800 },
+	cost = { supply = 175, power = 1750, buildTime = 4800 },
 	health = 820,
 	movement = { maxSpeed = 24, accel = 9, brake = 18, turnRate = 85 },
 	sensors = { sight = 130 },
