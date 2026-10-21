@@ -4,24 +4,28 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: round of 2026-10-21, branch `m-sim-2`; everything merged into `main`)
+## Summary (latest: round of 2026-10-22, branch `m-sim-2`; everything merged into `main`)
 
-**This round:** the client's two open requests, then the queue.
+**This round** (the user's seven tasks, then the soak and the AI level report):
 
-| Item | Result | Decision |
+| Task | Result | Decision |
 |---|---|---|
-| Bomber `bay` pieces | S-3 had only added `bay` to `pieces`. Bombs have no turret (they fall from a fixed bay, D91), so `ord_absolution`, `ord_phantom`, `chs_behemoth` and `chs_plague` now drop `turretPiece` and keep only the muzzle. `Defs` checks every weapon piece is in `pieces` (S-3) and now also rejects turret or pitch pieces on a weapon without a turret | S-11 |
-| Formation slots in Shared | `Shared/Grid/Formation`: `layout` (line rows or spiral, terrain as a callback), `deepestFirst`, `assign` (bucketed greedy), `SLOT_SPACING`. `Nav` uses it; sim hashes of two AI matches and fifteen group-move rounds are unchanged; `Formation.spec` proves a client prediction from the module equals the server's goals. Marked done in the client's request list (with request 1) | S-12 |
-| Queue: command queue behaviors | **Already done** (S-4): shift-queue, PATROL, GUARD, REPAIR, RECLAIM, factory rally and repeat, `Orders.spec` | S-4 |
-| Queue: movement at 800 units | **Already done** (S-5): Movement peak 6.4 ms against the 10 ms budget | S-5 |
-| Queue: smarter AI | **Already done** (S-7): radar, fire-control radar escorts, kiting, anti-air; `AI.spec` | S-7 |
-| Queue: 40-minute AI-vs-AI match | **Already done** (S-8): `lune run soak`, peak tick 10.8 ms, heap 6–16 MB, replay identical | S-8 |
+| 1. Integration worktree | Merges and their checks run in `../FTGG-integration` (a worktree on `main`) with `tools/integration/check.sh` / `integrate.sh`; `CLAUDE.md` "Integration". The client's resolved merge `dfdd0e7` brought in its 8 blocked commits; 15 client commits integrated this round, all passing | — |
+| 2. Build ranges (client request 7) | 56 / 45 / 34 (70%). Found and fixed: frames started in range of the clicked point but built only in range of the snapped center | S-19 |
+| 3. Aim rest pose and restore delay (client request 8) | `restYaw` / `restPitch` / `restoreDelay` on turrets; `Shared/Combat/Aim` is the exact step for server and client. Juggernaut arms rest at -65°, rise at 80°/s (12 ticks before the first shot), hold 3 s | S-20 |
+| 4. Spectator economy | Eco records carry their team (protocol 9); spectators and replays get every team's | S-21 |
+| 5. T1 ground balance | Six numbers (all Chaos but Order's light-cannon range). Lancer vs Ravager 0.38 → 1.00 / 0.82 (1.26 / 1.00 with three seeds after S-23); scouts 0.61 → 0.82 / 0.80 (0.91 / 0.71 after S-23); artillery 0.55 / 0.73 → 0.61 / 0.80 (0.51 / 0.58 after S-23). See "Needs my review" | S-22 |
+| 6. Start-position bias | Cause: the targeting stagger `(id + tick) % 6` followed ID parity while Sensors runs on even ticks, so even IDs (player 2's in mirrored matches) reacted sooner: mirror tank fights 40-0 for the even side. Fixed with a hashed phase (4-10, 26 draws); mirror AI matches 6-6; `Fairness.spec`. Also: AI artillery now follows its tanks (S-24), Easy has a production handicap (S-25) | S-23, S-24, S-25 |
+| 7. Guide audit, sections 6-13 | 20 gaps by importance, below (move states, line of fire, terrain types, amphibious / hover, carriers, cancel, ...). Not implemented | — |
 
-**Tests:** `lune run test` gives **37 specs, 275 passed, 0 failed** (new `Formation.spec`, 3 tests; a new `Defs.spec` case). `lune run build`: 308 scripts, 940 requires.
+**Soak** (`lune run soak`, now seed 2: seed 3 ends at 8.4 min with the new AI): 40 min, 36,000 ticks in 36 s, at most 244 units; tick avg 0.99 ms, p99 3.26, peak 23.3 ms; heap 7.7 → 73 MB, flat per unit (~310 KB at minutes 5 and 40); replay identical; the spectator replay of the 40 minutes is 16.8 MB raw.
 
-**Integrated from the client stream this round:** `90c387d` (client uses Shared PlacementRules and Icons) and `5563c15` (readable shells, effect diagnostics). No conflicts or failed checks.
+**AI levels** (`docs/AI_LEVELS.md`, 126 matches, 3 seeds, 40 min, Command Ends): Normal beats Easy 29-13, Hard beats Easy 25-11, Hard beats Normal 24-18. Ridgeline is clean (Hard-Normal 10-2, Normal-Easy 11-1, Hard-Easy 12-0). Open:
+- **Coastline stalls:** 31 of 36 matches reach 40 minutes, and called on value a passive Easy "beats" Hard 9-3. Why the armies don't finish there (the northern sea, passes, or the waves) isn't diagnosed yet.
+- **Twin Lakes 2v2:** Hard-Normal goes to the east pair in all 6 matches, though a Normal-only 2v2 mirror splits 3-3. Not diagnosed.
+- `skirmish:256` is not exactly mirrored (S-23); its Hard-Normal 5-7 says little.
 
-**Next:** nothing left in the queue. Open items are under "Needs my review".
+**Tests:** `lune run test` gives **41 specs, 299 passed, 0 failed** (~65 s; `Fairness.spec`'s mirror matches take ~33 s). New this round: `Aim.spec` (4), `Fairness.spec` (3), `PlayerReplay.spec` economy checks, and Build, Defs, Schema cases. `lune run build`: 337 scripts, 1050 requires.
 
 ## Summary (overnight 2026-10-21)
 
