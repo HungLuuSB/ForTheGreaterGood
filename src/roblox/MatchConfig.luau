@@ -17,6 +17,8 @@
 -- `weaponOverrides` (optional, tests only, C-60): { [weaponId] = { reload?,
 -- stockpile = { buildTime?, cost? }, intercepts = { chance? } } }, numbers
 -- no client simulates, changed for this server only.
+-- `startResources = { supply, power }` (optional): what every team has
+-- stored at match start (default 1,000 each; capped by its storage).
 -- `speed` (optional, default 1): the sim speed the match starts at (C-35);
 -- in a playtest - / = change it and P pauses.
 
@@ -244,15 +246,17 @@ local PROFILES = {
 	-- 76 land units (tanks in front, mobile IR SAMs and scouts with them,
 	-- artillery, mobile radar SAMs, radars and jammers behind), 29
 	-- aircraft, 4 IR SAM sites near the battlefield, and in the safe rear 3
-	-- radar SAM sites, 2 long-range radars, 10 fusion reactors (2,500
-	-- power/s), 30 converters (30 supply/s from spare power), 4 depots, a
-	-- nuke silo (2 in stock) and 5 constructors.
+	-- radar SAM sites, 2 long-range radars, 16 fusion reactors (4,000
+	-- power/s), 50 converters (50 supply/s from spare power), 10 depots
+	-- (11,000 supply storage), a nuke silo (2 in stock) and 5 constructors;
+	-- stores start full (`startResources`).
 	-- Laid out for `map:normandy` (request 31: sea z > 760, beach and the
 	-- Order rear z 640-760, bluffs with draws, bocage battlefield, a river
 	-- at z -380, the Chaos rear south of it); on flat:256 until it lands.
 	normandy = {
 		seed = 44,
 		mapId = "flat:256",
+		startResources = { supply = 10000, power = 20000 },
 		scenario = "empty",
 		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
 		humanSlots = { 1 },
@@ -260,11 +264,11 @@ local PROFILES = {
 		restartAfter = nil,
 		spawns = {
 			-- Order (player 1): rear on the beach
-			{ def = "ord_fusion", player = 1, x = -980, z = 720, count = 10, dx = 50 },
-			{ def = "ord_converter", player = 1, x = 500, z = 664, count = 30, cols = 5, dx = 16, rowDz = 16 },
-			{ def = "ord_depot", player = 1, x = -440, z = 740, count = 4, dx = 30 },
+			{ def = "ord_fusion", player = 1, x = -980, z = 700, count = 16, cols = 8, dx = 50, rowDz = 40 },
+			{ def = "ord_converter", player = 1, x = 480, z = 664, count = 50, cols = 10, dx = 16, rowDz = 16 },
+			{ def = "ord_depot", player = 1, x = -560, z = 740, count = 10, dx = 30 },
 			{ def = "ord_reckoning", player = 1, x = 0, z = 715 },
-			{ def = "ord_aegis", player = 1, x = -470, z = 680 },
+			{ def = "ord_aegis", player = 1, x = -470, z = 690 },
 			{ def = "ord_aegis", player = 1, x = 250, z = 700 },
 			{ def = "ord_aegis", player = 1, x = 900, z = 700 },
 			{ def = "ord_beacon", player = 1, x = -200, z = 720 },
@@ -293,9 +297,9 @@ local PROFILES = {
 			{ def = "ord_phantom", player = 1, x = 750, z = 600, count = 2, dx = 50, heading = math.pi },
 			{ def = "ord_archangel", player = 1, x = 0, z = 620, heading = math.pi },
 			-- Chaos (player 2): rear south of the river
-			{ def = "chs_fusion", player = 2, x = -980, z = -800, count = 10, dx = 50 },
-			{ def = "chs_converter", player = 2, x = 500, z = -760, count = 30, cols = 5, dx = 16, rowDz = -16 },
-			{ def = "chs_depot", player = 2, x = -440, z = -840, count = 4, dx = 30 },
+			{ def = "chs_fusion", player = 2, x = -980, z = -800, count = 16, cols = 8, dx = 50, rowDz = -40 },
+			{ def = "chs_converter", player = 2, x = 480, z = -760, count = 50, cols = 10, dx = 16, rowDz = -16 },
+			{ def = "chs_depot", player = 2, x = -560, z = -840, count = 10, dx = 30 },
 			{ def = "chs_ragnarok", player = 2, x = 0, z = -800 },
 			{ def = "chs_wyvern", player = 2, x = -400, z = -760 },
 			{ def = "chs_wyvern", player = 2, x = 250, z = -760 },
