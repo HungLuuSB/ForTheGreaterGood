@@ -43,6 +43,35 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 **Balance** (re-run after FIGHT started holding to engage): 448 of 568 pairs hold (was 457); 206 findings (75 mechanic, 131 numbers); same-role band 24 of 38 (was 34). See "Needs my review".
 
+## Guide coverage audit, sections 6–13 (2026-10-22)
+
+What the guide asks of the simulation and isn't implemented (or only partly), most important for gameplay first. Not implemented yet, by request. Size: S small, M medium, L large.
+
+1. **Move states do nothing** (10.1, M). Maneuver (chase a little, come back), Roam (chase freely) and Hold Position are stored (`World.moveState`, SET_MOVE_STATE) but nothing reads them: idle units never chase, so everything behaves as Hold Position. Fire states work.
+2. **No line-of-fire check** (10.8, M). Hitscan, beams and direct shells should check the height layer and hold or reposition when terrain blocks; direct fire goes through hills (10.7 lists it as "not yet").
+3. **No terrain types or speed modifiers** (5.2 `terrainType`, 6.3, 12.1 "heavies slow on sand"; M). No `terrainType` layer, flow-field step cost always 1 (D30), Movement ignores terrain.
+4. **Amphibious and hover only half done** (6.1, 12.3; M). Pathing works (HOVER on any water, AMPHIB on the sea floor), but AMPHIB never becomes SUBMERGED underwater (stays a visible GROUND unit, torpedoes can't target it), no roster unit is HOVER, and `Combat.baseAt` would put a hover unit on the sea floor for aiming and hits.
+5. **Carriers partial** (12.2, 12.3; M). Sanctuary and Leviathan have rearm pads that `Air.nearestPad` uses, but aircraft can't be assigned a carrier as home base, a rearming aircraft doesn't move with its carrier (D88), and carriers don't hold, build or launch aircraft.
+6. **No cancel for construction** (9.3, S–M). No command to cancel an unfinished frame or a factory queue item (D62); "cancelling refunds what was spent" has nothing to act on.
+7. **Salvos and target leading** (10.7, 11.6, 13.2 Hydra; S–M). `salvo { count, delay }` is in the schema but never read (all defs use count 1); ballistic shells don't lead moving targets (only bombs and homing missiles do).
+8. **Targeting heuristics** (10.2, S). No focus-fire bonus, no overkill penalty (D44), one stagger for all weapons. The overkill penalty is also the likely fix for close-range artillery balance (S-22, "Needs my review").
+9. **Logistics costs incomplete** (8.6, S). Missile reloads for SAM sites and launchers are free; plain radars (towers, Oracle, AWACS) have no power upkeep; no power-drawing energy weapons.
+10. **Landing details** (12.2, S). Landed aircraft keep the AIR category (ground guns can't hit them, the guide says "easy targets"); `Air.nearestPad` ignores how busy a pad is; no flying sight bonus, so landing loses nothing.
+11. **Fusion Reactor has no death explosion** (8.5, S).
+12. **Group speed matching** (6.6, optional, S). No flag, Nav doesn't do it.
+13. **Non-square footprints** (9.3, S). `footprint` is one number, so facing changes nothing.
+14. **Friendly fire per match** (10.6, S). `Combat.friendlyFire` is fixed on; not a match option.
+15. **Roster holes** (9.1, 12.3; S): no naval SAM platform, no advanced rearm pad.
+16. **BEAM damage over time** (10.4, S): BEAM resolves like hitscan; no BEAM weapon exists yet.
+17. **Networking details** (7.2, 7.3; S): fast jets get no wider tactical margin; the ALERT event and the strategic "under attack" flag aren't sent.
+18. **ATTACK_GROUND only for bombers** (D100, S): artillery can't force-fire at a spot.
+19. **Optional:** terrain-occluded line of sight (11.2), elevation sight bonus (5.5).
+20. **Roblox-only, later:** Parallel Luau Actors for field generation (6.4, D28, D29).
+
+Not in sections 6–13 and also not implemented: transports (load / unload), cloaking, capture, self-destruct, stockpiled weapons (nukes, anti-nukes), shields, resurrect, veterancy, morph. The "stunned" and "cloaked" state bits named in 7.3 have no feature behind them.
+
+Deliberate differences from the guide (decided, recorded): submarines are never VISIBLE, only sonar contacts (D76–D78, guide 11.3 says "or VISIBLE within close sonar range"); sensor counts are u16 and visibility is recomputed every sensor tick (D65); economy income is recomputed each 3 Hz step instead of kept as a running total (8.3); at the projectile cap a new shot resolves like hitscan (the guide: the oldest ballistic shells resolve at their predicted impact); wrecks are a list in `Combat`, not grid features, and don't block movement (8.7).
+
 ## Needs my review
 
 - **T1 ground balance pass** (S-22; tables in `docs/BALANCE.md`, "Balance passes"). Exact changes:
@@ -54,6 +83,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
   - `chs_jackal.health` 340 → 320.
   - Results: Lancer vs Ravager 0.38 / 0.39 → 1.00 / 0.82; Herald vs Jackal 0.61 / 0.59 → 0.82 / 0.80; Verdict vs Hellmouth 0.55 / 0.73 → 0.61 / 0.80.
   - **Not reached: Verdict vs Hellmouth at close range (0.61).** No number moved it by more than 0.1. Likely cause: precise Verdict volleys overkill one target while mortar spread and blast share damage. Fix would be a mechanic (a group spreading its fire / overkill avoidance in Targeting). Do you want that?
+  - **After S-23** (targeting stagger fix, three seeds): Lancer vs Ravager 1.26 / 1.00 (in band), Herald vs Jackal 0.91 / 0.71, Verdict vs Hellmouth 0.51 / 0.58. Artillery and the scouts' long-range fight need a second pass (and the artillery likely the overkill mechanic); not done, to avoid tuning on a moving base.
   - Side effects through shared weapons: Lancer vs Mire 1.36 / 1.57 → 2.39 / 2.04 (the Mire got the Chaos cannon's spread); Tideguard vs Ravager 0.27 → 0.53; Paladin vs Ravager 0.37 → 0.84 / 1.11.
 - **AI tuning numbers** (S-7, S-17): placeholders, as agreed.
 
@@ -133,8 +163,9 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 
 ## How to continue
 
-- Branch: `m0-foundations` (pushed to `origin`). Run `lune run test` from the repo root; everything must pass before starting the next task.
-- **Next:** wait for answers to the questions above. Everything left for the milestones needs Studio; follow `docs/STUDIO_HANDOFF.md` in order. Headless work that could still be done without Studio: M8 roster and balance (placeholder defs exist for guide 13's ground, air, naval and SAM roles), the Commands slot-assignment peak, and the guide 7.5 join/reconnect snapshot logic.
+- Branch: `m-sim-2` (pushed to `origin`); merged into `main` after every task. Run `lune run test` from the repo root (~65 s); everything must pass before starting the next task.
+- **Integration:** merges into `main` run in the worktree `../FTGG-integration` with `bash tools/integration/check.sh` and `bash tools/integration/integrate.sh <commit> "<description>"` (`CLAUDE.md`, "Integration"); never in this checkout, and never edit `docs/progress/client.md`.
+- **Next:** the answers under "Needs my review", then the gaps from the guide coverage audit above (move states, line of fire, terrain types, amphibious and hover, carriers, cancel), by importance.
 - Rules: `CLAUDE.md`, the `ftgg-roblox-dev` skill and the design guide (`docs/For_The_Greater_Good_Design_Guide.md`).
 - Unattended-session rules (from the user):
   - After each task passes the tests: commit, push, and update this file.
