@@ -6,8 +6,8 @@
 -- maneuver yellow, hold red; repeat and on / off: green on, red off); the
 -- command modes (move, fight, attack, patrol, guard: the next left click
 -- gives the order) light up while active. Hotkeys (Input/Controls) show on
--- hover. Fire and move states show the last one sent (the wire doesn't
--- carry them yet). Acts only through the client API.
+-- hover. Fire and move states are the server's (protocol 20, S-61) for
+-- the first selected unit that has them. Acts only through the client API.
 
 local Players = game:GetService("Players")
 

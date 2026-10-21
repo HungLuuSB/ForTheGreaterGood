@@ -237,6 +237,18 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 			u.stock = stock
 			u.stockProgress = progress
 		end
+		-- own units' factory queue, fire / move state and ammo (protocol 20,
+		-- S-61): each part on change, all with the ENTER
+		if r.queue then
+			u.queue = r.queue
+			u.queueProgress = (r.queueProgress or 0) / 255
+		end
+		if r.fireState then
+			u.fireState, u.moveState = r.fireState, r.moveState
+		end
+		if r.ammo then
+			u.ammo, u.maxAmmo = r.ammo, r.maxAmmo
+		end
 	end
 end
 
