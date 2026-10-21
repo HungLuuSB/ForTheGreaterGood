@@ -47,6 +47,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `002cc39` (night run summary at the top of `docs/progress/client.md`).
 - Ready to merge: `90c387d` (client uses Shared PlacementRules and Net/Icons).
 - Ready to merge: `5563c15` (step 2: readable shells, effect diagnostics (C-18)).
+- Ready to merge: `6cff90b` (line-move goals from Shared Formation).
 
 ## Tasks
 
@@ -133,18 +134,27 @@ Rojo's serve crashed (`change_processor.rs` line 179, "The system cannot find th
 - **Shared modules:** line-move goals and waypoint reach use `Shared/Grid/Formation` (S-12). The client uses `Shared/Grid/PlacementRules` (S-9) and `Shared/Net/Icons` (S-10); its copies are gone; the agreement tests still pass (`90c387d`). Formation slots stay a copy until the sim marks them ready.
 - **Projectiles (C-18):** cause 1, a stale `MatchConfig` in Studio (`build` instead of `duel`: no enemy, no shots; re-synced by a real edit). Duel diagnostics: 92 SPAWN_PROJ / 92 IMPACT received and applied in 8 s, no FIRE (both tank guns are ballistic), up to 15 shell parts and 20 flashes at once; shells were 0.45 x 0.45 x 1.1 studs for 0.05–0.13 s (cause 2: too small for the RTS camera). Now Neon shells with a short Trail, bigger muzzle flashes and impacts. Mid-fight frame: `debug_out/screens/step2_shells_midfight.png` (scene dump of the live playtest).
 
+## 2026-10-22: range rings, target line, BAR controls
+
+- **Range rings (C-19):** `Core/Ranges` (union of same-kind circles as arcs, polylines on the terrain) and `Render/RangeOverlay` (pooled segments, rebuilt on change at most 4 Hz, V toggles, on by default; the build ghost of a turret or SAM shows its rings too). `Ranges.spec`: overlapping circles give one closed outline with no interior arcs, separate ones stay whole, nested and identical ones vanish, kinds don't merge. Studio, 50 Lancers selected: one merged red weapon outline and one white sight outline (`debug_out/screens/step3_ranges_50_selected.png`); cost in C-19 (0.024 ms per frame when nothing changes, rebuilds 3–5 ms at most 4 Hz while moving).
+- **Target line (C-20):** one unit selected → red line to its target and a red ring on it (`debug_out/screens/step3_target_line_and_rings.png`, live duel). The target is guessed from the turret aim (99.6 % equal to the server's in `Targets.spec`) until request 6 puts it on the wire.
+- **Controls (C-21):** arrows / edge scroll (live) / middle-drag pan, S stop, V rings; WASD free. Studio: S stopped 50 moving Lancers and cleared their lines without moving the camera; V hid and restored the rings (a first version didn't clear them: fixed).
+- **Your fog question:** units drawn as models are always VISIBLE to your ally team; radar-only contacts only ever arrive as blips (`Fog.spec`: 596 radar-blip unit-ticks without a def, 0 of 416 enemy model unit-ticks not VISIBLE on the server). In the duel all Ravagers are inside the Lancers' white sight ring (200 studs), so full models are right; that profile has no radar.
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
-- **Controls (C-13):** WASD / arrows pan, middle-drag pan, wheel zoom, Q/E rotate; left click / drag select (Shift add, Ctrl toggle), double-click same type, right click smart order, right-drag line move, Shift queue, Ctrl+1..9 / 1..9 groups (double tap jumps), X stop, F3 debug readout. S can't be stop (camera pan).
+- **Controls (C-13, answered: C-21):** BAR style now: arrow keys, edge scroll (live), middle-drag, S stop, V range rings, WASD free. Earlier: WASD / arrows pan, middle-drag pan, wheel zoom, Q/E rotate; left click / drag select (Shift add, Ctrl toggle), double-click same type, right click smart order, right-drag line move, Shift queue, Ctrl+1..9 / 1..9 groups (double tap jumps), X stop, F3 debug readout. S can't be stop (camera pan).
 - **Visual style:** blockout Lancer (low, light grey, blue glass) and Ravager (tall dark iron, rust, orange visor); faction palettes in `Blockouts/Blockout.luau`; team colors (blue, red, ...) in `Render/TeamColors.luau`; ground as a green 64-stud checkerboard. See `debug_out/screens/task4_brawl_topdown.png`.
 - **UI layout (placeholder):** resource bar top center (440 x 48), minimap bottom left (200 px), F3 debug readout top left below the Roblox buttons; all labelled as placeholders.
 - **Build ghost:** B cycles the selected builder's options as a stand-in for the build menu; Shift both queues and keeps placing (BAR style); the facing doesn't change square footprints but turns the model.
 - **Effects look:** shells as small glowing slugs, impact and death flashes in orange with a particle puff, white tracers, muzzle flashes; colors and sizes in `src/client/Render/Effects.luau`.
-- **Strategic zoom:** switches at 480 studs (back at 420); icon shapes and sizes in `src/client/Core/Icons.luau` and `Render/IconLayer.luau`; whether to stop sending the camera at strategic zoom (C-17).
+- **Strategic zoom:** switches at 480 studs (back at 420); icon shapes and sizes in `src/client/Core/Icons.luau` and `Render/IconLayer.luau`. Answered: keep sending the camera (C-17).
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+6. **Own units' weapon target on the wire:** the target line (C-20) guesses the target from the turret aim (99.6 % right in the duel). A `target u16` per weapon slot in State records for the player's own units (the target is always a unit the team knows) would make it exact, including before the turret has turned. A protocol bump; medium priority (the user asked for the line).
 
 1. **Done (S-3, S-11; marked by the sim session).** Bombs have no turret, so the bombers no longer name `turretPiece`; the muzzle is their only weapon piece, and `Defs` rejects turret pieces on turretless weapons. **Bomber weapon pieces:** `chs_behemoth`, `chs_plague` and `ord_absolution` name `turretPiece = "bay"`, which isn't in their `pieces`. Either add `bay` to `pieces` or drop `turretPiece`; and maybe have `Defs.validate` check that weapon pieces exist. The client works around it (muzzle on the hull).
 2. **Done (S-6), thanks.** **Unit state bits in shared:** `World.State` (MOVING, TOGGLED_ON, SUBMERGED, LANDED) is in `src/server`, which clients can't require. Please mirror it in Schema (e.g. `Schema.UnitState`) so the client decodes ENTER/State `state` without a copy. (net.md lists the values; the client copies them in `Core/World`.)

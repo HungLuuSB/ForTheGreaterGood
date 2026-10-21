@@ -1,6 +1,6 @@
 --!strict
--- RTS camera (guide 15.5): pan with WASD / arrows, screen-edge scroll and
--- middle-drag; zoom with the wheel; limited rotation with Q / E; clamped to
+-- RTS camera (guide 15.5), BAR style: pan with the arrow keys, screen-edge
+-- scroll (live games) and middle-drag (WASD stays free for hotkeys); zoom with the wheel; limited rotation with Q / E; clamped to
 -- the map. The ground hits of the four screen corners give the camera
 -- rectangle, sent as a CAMERA command when it changes, at most 5 per second:
 -- the server's tactical tier follows it (net.md section 5).
@@ -43,13 +43,9 @@ function Camera.new(x: number, z: number, distance: number): State
 end
 
 local keys = {
-	[Enum.KeyCode.W] = Vector2.new(0, -1),
 	[Enum.KeyCode.Up] = Vector2.new(0, -1),
-	[Enum.KeyCode.S] = Vector2.new(0, 1),
 	[Enum.KeyCode.Down] = Vector2.new(0, 1),
-	[Enum.KeyCode.A] = Vector2.new(-1, 0),
 	[Enum.KeyCode.Left] = Vector2.new(-1, 0),
-	[Enum.KeyCode.D] = Vector2.new(1, 0),
 	[Enum.KeyCode.Right] = Vector2.new(1, 0),
 }
 

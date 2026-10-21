@@ -33,6 +33,7 @@ local RenderEffects = require("./Render/Effects")
 local Ground = require("./Render/Ground")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
+local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
 
 local defs = Defs.load()
@@ -61,6 +62,12 @@ Camera.bind(camState)
 local controls = Controls.bind(api)
 local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
+local ranges = RangeOverlay.new()
+game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+	if not processed and input.KeyCode == RangeOverlay.TOGGLE_KEY then
+		RangeOverlay.setEnabled(ranges, not ranges.enabled)
+	end
+end)
 local fx = Effects.new()
 local fxRenderer = RenderEffects.new()
 local iconTable = Icons.table(defs)
@@ -94,6 +101,19 @@ local snapshot = remotes:WaitForChild("Snapshot") :: RemoteEvent
 snapshot:FireServer(NetIn.hello(defs.hash))
 
 local seenJoins, seenMap = 0, 0
+-- Per-frame cost of each part of the client (guide 18.2), for Invoke("perf").
+local perf: { [string]: { sum: number, n: number, max: number } } = {}
+local function mark(name: string, t0: number)
+	local ms = (os.clock() - t0) * 1000
+	local s = perf[name]
+	if s == nil then
+		s = { sum = 0, n = 0, max = 0 }
+		perf[name] = s
+	end
+	s.sum += ms
+	s.n += 1
+	s.max = math.max(s.max, ms)
+end
 local warned = false
 
 -- Studio inspection through execute_luau (its VM doesn't share `shared`):
@@ -103,7 +123,7 @@ if RunService:IsStudio() then
 	debugFn.Name = "FtggClientDebug"
 	debugFn.OnInvoke = function(query: string?, ...: any)
 		if query == "scene" then
-			return require("./Debug/SceneDump")(world.grid)
+			return require("./Debug/SceneDump")(world.grid, if ranges.enabled then ranges.arcs else nil)
 		elseif query == "fx" then
 			-- combat effects diagnostics: events received, applied, drawn
 			local received = {}
@@ -115,6 +135,16 @@ if RunService:IsStudio() then
 				live += 1
 			end
 			return { received = received, applied = fx.applied, skipped = fx.skipped, live = live, bursts = #fx.bursts, tracers = #fx.tracers, fxTick = fx.tick, renderTick = clock.tick, queued = #world.events, render = fxRenderer.stats }
+		elseif query == "ranges" then
+			return { enabled = ranges.enabled, stats = ranges.stats, selected = #api.state.selection }
+		elseif query == "perf" then
+			-- average and worst ms per frame since the last call, per part
+			local out = {}
+			for name, s in perf do
+				out[name] = { avg = s.sum / math.max(s.n, 1), max = s.max, frames = s.n }
+			end
+			table.clear(perf)
+			return out
 		elseif query == "act" then
 			-- Invoke("act", "smartOrder", x, z, unitId?, queue?): an API action, as the UI would call it
 			local name = (...)
@@ -187,10 +217,15 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
 	api.state.camera.rect = camState.rect
+	local frameT0 = os.clock()
 	local t = Interp.advance(clock, world, now, dt)
+	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, dt, strategic)
+	mark("units", t0)
+	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
 	RenderEffects.step(fxRenderer, fx, t, now)
+	mark("effects", t0)
 	Api.frame(api, now)
 	if api.state.placement then
 		local hover = Controls.hover()
@@ -199,7 +234,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		end
 	end
 	PlacementGhost.step(ghost, api)
+	t0 = os.clock()
+	RangeOverlay.step(ranges, api, now)
+	mark("ranges", t0)
+	t0 = os.clock()
 	Overlay.step(overlay, api, now, controls.lineFrom, controls.lineTo)
+	mark("overlay", t0)
+	t0 = os.clock()
 
 	-- strategic zoom (guide 15.4): icons for everything, models hidden; icons
 	-- for units without a model at any zoom
@@ -217,8 +258,12 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local view = cam.ViewportSize
 	local draws = Icons.draws(iconTable, world, Controls.projector(cam), view.X, view.Y, api.selection.set)
 	IconLayer.step(iconLayer, draws, tiers, strategic)
+	mark("icons", t0)
+	t0 = os.clock()
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
+	mark("ui", t0)
+	mark("frame", frameT0)
 	table.clear(world.died) -- the renderer and Effects have taken what they need
 	local drawn = 0
 	for _ in renderer.drawn do

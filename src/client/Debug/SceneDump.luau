@@ -7,6 +7,7 @@
 --   D x z diameter r g b alpha                    a disc under the units (selection ring, order dot)
 --   E x z diameter r g b alpha                    an effect disc over the units (shell, flash)
 --   L x1 z1 x2 z2 width r g b                     a line (order path, tracer)
+--   A x z r a0 a1 kind                            a range-ring arc (Render/RangeOverlay)
 
 local function rgb(c: Color3): string
 	return string.format("%d %d %d", c.R * 255, c.G * 255, c.B * 255)
@@ -22,7 +23,7 @@ local function jointAngles(model: Model, piece: string): (number, number)
 	return ry, rx
 end
 
-return function(grid: any): string
+return function(grid: any, arcs: { any }?): string
 	local out = { string.format("M %.0f %.0f %.0f %.0f", grid.originX, grid.originZ, grid.sizeX, grid.sizeZ) }
 	local units = workspace:FindFirstChild("Units")
 	for _, model in (if units then units:GetChildren() else {}) do
@@ -48,7 +49,7 @@ return function(grid: any): string
 		table.insert(out, string.format("U %s %s %.1f %.1f %.2f %.2f %.2f", model:GetAttribute("DefId") or model.Name, color, unit.Position.X, unit.Position.Z, heading, yaw, pitch))
 	end
 	local parts = {}
-	for _, folderName in { "Overlay", "Effects" } do
+	for _, folderName in { "Ranges", "Overlay", "Effects" } do
 		local folder = workspace:FindFirstChild(folderName)
 		for _, p in (if folder then folder:GetChildren() else {}) do
 			if p:IsA("BasePart") and p.Transparency < 0.98 then
@@ -65,7 +66,10 @@ return function(grid: any): string
 			local back = pos - p.CFrame.LookVector * trail
 			table.insert(out, string.format("T %.1f %.1f %.1f %.1f %.2f %s", back.X, back.Z, pos.X, pos.Z, p.Size.X, rgb(p.Color)))
 		end
-		if p.Name == "line" or p.Name == "Tracer" then
+		if p.Name == "RangeSegment" and arcs then
+			continue -- the arcs below describe them exactly, in far fewer lines
+		end
+		if p.Name == "line" or p.Name == "Tracer" or p.Name == "RangeSegment" then
 			local half = p.CFrame.LookVector * p.Size.Z / 2
 			local a, b = pos - half, pos + half
 			table.insert(out, string.format("L %.1f %.1f %.1f %.1f %.2f %s", a.X, a.Z, b.X, b.Z, p.Size.X, rgb(p.Color)))
@@ -73,6 +77,9 @@ return function(grid: any): string
 			local d = if p.Name == "Projectile" then 1.4 else p.Size.Y
 			table.insert(out, string.format("%s %.1f %.1f %.1f %s %.2f", if effect then "E" else "D", pos.X, pos.Z, d, rgb(p.Color), 1 - p.Transparency))
 		end
+	end
+	for _, a in arcs or {} do
+		table.insert(out, string.format("A %.1f %.1f %.1f %.4f %.4f %s", a.x, a.z, a.r, a.a0, a.a1, a.kind))
 	end
 	return table.concat(out, "\n")
 end
