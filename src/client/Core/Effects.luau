@@ -139,9 +139,29 @@ local function weaponSize(weapon: any): number
 	return math.max(1, (weapon and weapon.aoe) or 1)
 end
 
+local CELL_EDGE = 8 / 256 -- the last wire offset step short of the map's far edge
+
 local function pos(world: World.World, e: Schema.Event): (number, number, number)
 	local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 	return x, (e.y :: number) / Schema.Y_SCALE, z
+end
+
+-- The wire can't carry a position off the map: Grid.encode clamps it to the
+-- edge. A missile that overshoots past the edge (C-46) would be corrected
+-- back onto it every few ticks, so on an axis where the record sits on the
+-- clamp and the client's own prediction is already beyond it on that side,
+-- the prediction is kept (the server's position is somewhere out there).
+function Effects.unclamp(world: World.World, p: Proj, x: number, z: number): (number, number)
+	local g = world.grid
+	local x0, z0 = g.originX, g.originZ
+	local x1, z1 = x0 + g.sizeX - CELL_EDGE, z0 + g.sizeZ - CELL_EDGE
+	if (x <= x0 and p.x < x) or (x >= x1 and p.x > x) then
+		x = p.x
+	end
+	if (z <= z0 and p.z < z) or (z >= z1 and p.z > z) then
+		z = p.z
+	end
+	return x, z
 end
 
 local function vel(e: any): (number, number, number)
@@ -465,6 +485,9 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
 		local x, y, z = pos(world, e)
+		if p then
+			x, z = Effects.unclamp(world, p, x, z)
+		end
 		local r = if p then weaponSize(p.weapon) else 2
 		burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
@@ -473,6 +496,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			-- like a correction: the server's new state, drawn from where the
 			-- missile is and eased onto its new course (no jump, C-36)
 			local x, y, z = pos(world, e)
+			x, z = Effects.unclamp(world, p, x, z)
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
 			p.target = 0
@@ -512,7 +536,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		-- drawing where it was, blend the gap away
 		local p = fx.projectiles[e.projId]
 		if p then
-			local x, z = world.grid:decode(e.cell, e.offX, e.offZ)
+			local x, z = Effects.unclamp(world, p, world.grid:decode(e.cell, e.offX, e.offZ))
 			local y = e.y / Schema.Y_SCALE
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
