@@ -41,12 +41,23 @@ return function(t: any)
 		local predicted: { number }? = nil
 		local nukeBurst
 		local maxWarnings = 0
+		local nukeErr, nukeFrames, sawStrategic = 0, 0, false
 		for tick = 1, 15 * 20 do
 			Sim.step(sim)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			Effects.update(fx, world, tick, tick * DT, 0, 0)
 			table.clear(world.died)
 			maxWarnings = math.max(maxWarnings, #fx.warnings)
+			-- the drawn nuke against the server's: boost, pitch-over, arc (S-51)
+			for id, p in fx.projectiles do
+				if p.goal then
+					sawStrategic = true
+					if sim.combat.projSlot[id] then
+						nukeFrames += 1
+						nukeErr = math.max(nukeErr, math.sqrt((p.x - sim.combat.px[id]) ^ 2 + (p.y - sim.combat.py[id]) ^ 2 + (p.z - sim.combat.pz[id]) ^ 2))
+					end
+				end
+			end
 			local w = fx.warnings[1]
 			if predicted == nil and w and w.proj then
 				local x, z = Effects.landing(world, w.proj :: Effects.Proj)
@@ -62,7 +73,10 @@ return function(t: any)
 		end
 		t.expect(predicted ~= nil, "the client got a launch warning with its missile and predicted the landing")
 		t.expect(nukeBurst ~= nil, "it detonated")
-		t.equal(maxWarnings, 1) -- LAUNCH_WARNING and the missile's SPAWN_PROJ raise one warning
+		t.equal(maxWarnings, 1) -- LAUNCH_WARNING and the missile's SPAWN_STRATEGIC raise one warning
+		print(string.format("    the drawn nuke over %d frames: worst %.2f studs from the server's", nukeFrames, nukeErr))
+		t.expect(sawStrategic and nukeFrames > 150, "the nuke came as SPAWN_STRATEGIC with its goal")
+		t.expect(nukeErr < 0.5, `the drawn nuke flies the server's path (worst {nukeErr} studs)`)
 		if predicted and nukeBurst then
 			local off = math.sqrt((predicted[1] - nukeBurst.x) ^ 2 + (predicted[2] - nukeBurst.z) ^ 2)
 			print(string.format("    predicted landing %.1f studs from the detonation; detonation %.1f studs from the target", off, math.sqrt((nukeBurst.x - TARGET_X) ^ 2 + (nukeBurst.z - TARGET_Z) ^ 2)))
