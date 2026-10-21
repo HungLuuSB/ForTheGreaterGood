@@ -15,6 +15,7 @@ local Ballistics = require("@shared/Combat/Ballistics")
 local Guidance = require("@shared/Combat/Guidance")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
+local Layers = require("@shared/Grid/Layers")
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
 
@@ -67,6 +68,7 @@ export type Effect = { kind: "fire" | "impact" | "decoy" | "lost" | "death", x: 
 
 export type View = {
 	grid: Grid.Grid,
+	layers: Layers.Layers?, -- the map's layers when the caller gives them: the vertical-launch climb needs the ground height (S-44)
 	defs: Defs.DefSet,
 	units: { [number]: Unit },
 	projectiles: { [number]: Projectile },
@@ -93,9 +95,10 @@ function Client.drawn(p: Projectile): (number, number, number)
 	return p.x + p.ox, p.y + p.oy, p.z + p.oz
 end
 
-function Client.new(grid: Grid.Grid, defs: Defs.DefSet?): View
+function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?): View
 	return {
 		grid = grid,
+		layers = layers,
 		defs = defs or Defs.load(),
 		units = {},
 		projectiles = {},
@@ -151,7 +154,9 @@ local function advance(view: View)
 			local maxTurn = math.rad(weapon.turnRate) * DT
 			if weapon.type == "HOMING" and weapon.launch == "vertical" then
 				local turned
-				p.vx, p.vy, p.vz, turned = Guidance.vertical(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, 0, tvz, maxTurn, DT, p.turned == true)
+				local layers = view.layers
+				local climbLeft = if layers then Guidance.climbLeft(weapon, p.y, Layers.heightAt(layers, p.x, p.z)) else nil
+				p.vx, p.vy, p.vz, turned = Guidance.vertical(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, 0, tvz, maxTurn, DT, p.turned == true, climbLeft)
 				p.turned = turned
 			elseif weapon.type == "HOMING" then
 				p.vx, p.vy, p.vz = Guidance.pn(p.x, p.y, p.z, p.vx, p.vy, p.vz, target.x, ty, target.z, tvx, 0, tvz, maxTurn, DT)

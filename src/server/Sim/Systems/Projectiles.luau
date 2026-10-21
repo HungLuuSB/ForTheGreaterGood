@@ -66,7 +66,8 @@ return function(sim: Types.Sim)
 			if weapon.type == "HOMING" and weapon.launch == "vertical" then
 				-- climb, pitch over, then navigate (S-42)
 				local turned = bit32.band(c.pFlags[id], TURNED) ~= 0
-				pvx, pvy, pvz, turned = Guidance.vertical(x0, y0, z0, pvx, pvy, pvz, tx - tvx * DT, ty, tz - tvz * DT, tvx, 0, tvz, maxTurn, DT, turned)
+				local climbLeft = Guidance.climbLeft(weapon, y0, Combat.groundHeight(c, x0, z0))
+				pvx, pvy, pvz, turned = Guidance.vertical(x0, y0, z0, pvx, pvy, pvz, tx - tvx * DT, ty, tz - tvz * DT, tvx, 0, tvz, maxTurn, DT, turned, climbLeft)
 				if turned then
 					c.pFlags[id] = bit32.bor(c.pFlags[id], TURNED)
 				end

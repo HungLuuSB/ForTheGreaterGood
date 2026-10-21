@@ -30,8 +30,20 @@ local function deepCopy(v: any): any
 end
 
 -- Registered defs plus neutral test units / weapons derived from existing ones.
+-- These tests check EW rules at fixed distances on a 1024-stud map, so the
+-- radar SAMs keep the ranges they were written for: S-45 tripled them (a
+-- balance change the rules don't depend on).
+local FIXED_RANGES = { ord_radar_sam = 600, chs_radar_sam = 560 }
+local FIXED_RADARS = { ord_aegis = 650, ord_seraph = 520, chs_wyvern = 600, chs_gorgon = 480 }
+
 local function testDefs(units: { [string]: { from: string, with: { [string]: any } } }, weapons: { [string]: { from: string, with: { [string]: any } } }): Defs.DefSet
 	local raw = deepCopy(Registry)
+	for id, r in FIXED_RANGES do
+		raw.weapons[id].range, raw.weapons[id].lockRange = r, r
+	end
+	for id, r in FIXED_RADARS do
+		raw.units[id].sensors.radar = r
+	end
 	for name, spec in units do
 		local u = Defs.extend(raw.units[spec.from], spec.with)
 		u.id = `neu_{name}`
@@ -46,6 +58,8 @@ local function testDefs(units: { [string]: { from: string, with: { [string]: any
 	end
 	return Defs.build(raw)
 end
+
+local BASE = testDefs({}, {}) -- the registered defs with the fixed radar SAM ranges
 
 local function moveTo(sim: Sim.Sim, player: number, ids: { number }, x: number, z: number)
 	local g = (sim.map :: any).grid
@@ -66,7 +80,7 @@ end
 -- whatever the jammer does to radar); optionally a Chaos Shroud jammer next
 -- to the Wasp. Only the SAM may shoot.
 local function samScene(seed: number, waspX: number, jammer: boolean, defs: Defs.DefSet?): (Sim.Sim, number, number)
-	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP, defs = defs })
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP, defs = defs or BASE })
 	local aegis = Spawn.unit(sim, "ord_aegis", 1, -450, 0)
 	local wasp = Spawn.unit(sim, "chs_wasp", 2, waspX, 0)
 	hold(sim, { wasp, Spawn.unit(sim, "ord_lancer", 1, waspX, 150) })
@@ -120,7 +134,7 @@ end
 -- survives every missile. Returns the sim, the aircraft and a team-2 owner
 -- for launched missiles.
 local function targetRange(seed: number, defId: string, defs: Defs.DefSet?): (Sim.Sim, number, number)
-	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP, defs = defs })
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = MAP, defs = defs or BASE })
 	local target = Spawn.unit(sim, defId, 1, 0, 0)
 	Spawn.unit(sim, "ord_generator", 1, -300, 300)
 	local owner = Spawn.unit(sim, "chs_thorn", 2, 450, 450)
@@ -300,7 +314,7 @@ return function(t: RunAll.Context)
 		-- An empty Harpy lands on a Roost; team 2 has no income, so supply
 		-- stored minus spent only falls by what the rearm pays.
 		local function rearm(spent: boolean): (number, number, { number }, { number })
-			local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = MAP })
+			local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = MAP, defs = BASE })
 			Spawn.unit(sim, "chs_airpad", 2, 0, 0)
 			local harpy = Spawn.unit(sim, "chs_harpy", 2, 40, 0)
 			hold(sim, { harpy })
@@ -392,7 +406,7 @@ return function(t: RunAll.Context)
 		})
 		-- target under a Chaos jammer whose field also covers the launcher;
 		-- an Order spotter keeps it VISIBLE
-		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = MAP, defs = defs })
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = MAP, defs = defs or BASE })
 		local c = sim.combat
 		local target = Spawn.unit(sim, "neu_decoy_heli", 2, 0, 0)
 		World.setHealth(sim.world, target, 1e7)
@@ -457,7 +471,7 @@ return function(t: RunAll.Context)
 			escort = { from = "chs_harpy", with = { weapons = {}, sensors = { jam = 150 } } },
 			spotter = { from = "ord_lancer", with = { sensors = { airSight = 700 } } },
 		}, {})
-		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:256", defs = defs })
+		local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:256", defs = defs or BASE })
 		local aegis = Spawn.unit(sim, "ord_aegis", 1, 0, 0)
 		local a = Spawn.unit(sim, "chs_harpy", 2, 0, 450 + 220, math.pi / 2)
 		local b = Spawn.unit(sim, "chs_harpy", 2, 0, -450 + 220, math.pi / 2)
@@ -532,7 +546,7 @@ return function(t: RunAll.Context)
 	t.test("guided target choice doesn't flip-flop between similar targets", function()
 		-- Two Wasps hovering 500 and 505 studs from an Aegis, known only by
 		-- radar: the ±20-stud wobble keeps swapping which one looks closer.
-		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = MAP })
+		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = MAP, defs = BASE })
 		local w = sim.world
 		local aegis = Spawn.unit(sim, "ord_aegis", 1, -400, -200)
 		local near = Spawn.unit(sim, "chs_wasp", 2, 100, -200)

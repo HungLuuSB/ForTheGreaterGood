@@ -214,11 +214,7 @@ function Combat.groundHeight(c: Combat, x: number, z: number): number
 	if layers == nil then
 		return 0
 	end
-	local g = layers.grid
-	local cx, cz = g:cellAt(x, z)
-	cx = math.clamp(cx, 0, g.cellsX - 1)
-	cz = math.clamp(cz, 0, g.cellsZ - 1)
-	return Layers.getHeight(layers, cz * g.cellsX + cx)
+	return Layers.heightAt(layers, x, z) -- shared with the client (S-44)
 end
 
 -- Water surface height at (x, z) (= ground where dry).
