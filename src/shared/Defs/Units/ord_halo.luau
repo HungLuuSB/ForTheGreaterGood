@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	health = 660, -- faction pass, tuned (S-62)
 	movement = { maxSpeed = 38, accel = 16, brake = 30, turnRate = 130 },
 	sensors = { sight = 160, airSight = 206 },
-	weapons = { { def = "ord_ir_sam", turretPiece = "launcher", muzzle = "muzzle", stockpile = 4 } },
+	weapons = { { def = "ord_ir_sam", turretPiece = "turret", pitchPiece = "launcher", muzzle = "muzzle", stockpile = 4 } },
 	pieces = { "base", "launcher", "turret", "muzzle" },
 	icon = "sam_ir",
 	model = "ord_halo",

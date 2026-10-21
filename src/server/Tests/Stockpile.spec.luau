@@ -261,4 +261,39 @@ return function(t: RunAll.Context)
 		sim.world.wStock[World.slotKey(thorn, 1)] = 7
 		t.expect(Sim.hash(sim) ~= h, "the stock is hashed")
 	end)
+
+	t.test("in a stall, refills come first, up to a quarter of income (S-66)", function()
+		local function built(priority: number): (number, number)
+			local saved = Economy.REFILL_PRIORITY
+			Economy.REFILL_PRIORITY = priority
+			local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:64" })
+			Spawn.unit(sim, "chs_warlord", 2, -100, 0, 0) -- the only income
+			local plant = Spawn.unit(sim, "chs_vehplant", 2, 0, 0, 0)
+			for _ = 1, 5 do
+				submit(sim, 2, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.chs_ravager.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
+			end
+			local thorn = Spawn.unit(sim, "chs_thorn", 2, 100, 0, 0)
+			Stockpile.empty(sim, thorn)
+			local acc = sim.eco.accounts[2]
+			acc.supply.stored, acc.power.stored = 0, 0
+			local stalledSteps, steps = 0, 0
+			for tick = 1, 900 do
+				Sim.step(sim)
+				if tick % 5 == 0 then
+					steps += 1
+					if acc.power.ratio < 1 or acc.supply.ratio < 1 then
+						stalledSteps += 1
+					end
+				end
+			end
+			Economy.REFILL_PRIORITY = saved
+			local key = World.slotKey(thorn, 1)
+			return (stock(sim, thorn) :: number) + sim.world.wStockProgress[key], stalledSteps / steps
+		end
+		local shared, stall = built(0)
+		local first = built(0.25)
+		print(string.format("    Thorn refills in 60 s of a stall (%.0f%% of steps): %.2f missiles sharing alike, %.2f with priority", stall * 100, shared, first))
+		t.expect(stall > 0.9, `the plant keeps the economy stalled ({stall})`)
+		t.expect(first > shared * 1.3, `refills come first ({first} against {shared})`)
+	end)
 end

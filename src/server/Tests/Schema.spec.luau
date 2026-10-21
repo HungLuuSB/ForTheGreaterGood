@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 21, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 22, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -578,7 +578,7 @@ return function(t: RunAll.Context)
 	t.test("unit state bits live in Shared and are the sim's", function()
 		local World = require("../Sim/World")
 		t.equal(World.State, Schema.UnitState, "one table (S-6)")
-		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16 })
+		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16, DEPLOYED = 32, DEPLOYING = 64 })
 	end)
 
 	t.test("tactical layout is byte exact", function()

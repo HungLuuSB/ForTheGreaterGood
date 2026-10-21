@@ -94,7 +94,10 @@ Stockpile.WIRE_STEPS = 16
 
 -- Construction-step economy consumer (Build.step): every finished unit
 -- below capacity builds its next missile.
-function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number })
+-- Refills come first in a stall, up to Economy.REFILL_PRIORITY of income
+-- (S-66): their demand is also added to `priorityS` / `priorityP`, and they
+-- progress at the priority ratio. Build.step runs this before construction.
+function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number }, priorityS: { [number]: number }, priorityP: { [number]: number })
 	local w = sim.world
 	local eco = sim.eco
 	for _, id in w.ids do
@@ -115,7 +118,9 @@ function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: 
 			local acc = eco.accounts[team]
 			demandS[team] += cs * rate
 			demandP[team] += cp * rate
-			local step = rate * Stockpile.DT * Economy.effective(acc, cs, cp)
+			priorityS[team] += cs * rate
+			priorityP[team] += cp * rate
+			local step = rate * Stockpile.DT * Economy.priorityEffective(acc, cs, cp)
 			if cs > 0 then
 				step = math.min(step, Economy.allowance(acc.supply) / cs)
 			end

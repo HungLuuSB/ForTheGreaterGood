@@ -1254,8 +1254,12 @@ countermeasures = {
 | Attack helis | ●●● | — | — | ●● | — | ●● |
 | Destroyers | ● | ●● | ●● | ●● | ●● | ●● |
 | Submarines | — | — | — | ●●● | ●● | — |
+| Deployable gun | ●●● | — | — | ●● | — | ●● |
+| Siege | ● | — | — | ● | — | ●●● |
 
 ● weak · ●● good · ●●● strong · — cannot target
+
+Faction-only rows (S-64): **Deployable gun** is Order's Warden (beats a frontal push once deployed), **Siege** is Chaos's Minotaur (breaks structures; weak against an army in the field).
 
 Tanks and attack helicopters can't target helicopters (changed from ● in round 6: no ground gun or rocket targets `AIR`; D97). Same-role cells (a role against its own kind, e.g. tanks against tanks) are checked as a soft band, not as dots: both sides must be able to damage each other, and the equal-cost trade should stay within 0.5–2.0 (D98).
 
@@ -1294,6 +1298,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Mobile jammer | T2 | **Veil** (short range) | **Shroud** (long range) |
 | Mobile fire-control radar | T2 | **Arbiter** (precise) | **Stalker** (cheaper, weaker) |
 | Amphibious tank | T2 | **Tideguard** | **Mire** |
+| Deployable gun (faction-only) | T2 | **Warden**: unpacks in 4 s whenever it stands still; deployed it fires (range 280), can't move and takes damage / 1.5; packed it can't fire (S-64) | — |
+| Siege ram (faction-only) | T2 | — | **Minotaur**: +50% gun damage to structures and a 30-stud demolition charge (3,000 to a structure, every 20 s) (S-64) |
 
 ### 13.3 Air units
 
