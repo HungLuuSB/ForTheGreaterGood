@@ -98,6 +98,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `073d5e7` (missiles keep their dying target until the hit is drawn, C-50).
 - Ready to merge: `b66ff70` (merge of `main` with S-33..S-40, protocol 13) with `d69e3f8` (client follows requests 14-19, C-51); test_client 97, test 325, build passed.
 - Ready to merge: `5c92bb0` (crashes leave their smoke, radar SAM missiles drawn big, C-52; request 20).
+- Ready to merge: `d39244e` (merge of `main` with S-41, S-42) with `54f1532` (vertical-launch steering, C-53); test_client 98, test 326, build passed.
 
 ## Tasks
 
@@ -365,6 +366,11 @@ All with real mouse and keyboard input through the MCP tools.
 - **Radar SAM missiles** (Wyvern, Gorgon, Aegis, Seraph) are drawn about 2.3x the size of IR ones, with a heavier, longer plume, and their explosions are drawn 1.8x bigger (`c52_radar_sam_missile.jpg`).
 - **Vertical launch for radar SAMs** and a bigger radar SAM blast radius are server changes: request 20 for the sim session.
 
+## 2026-10-21: vertical-launch radar SAMs (C-53)
+
+- Merged `main` with the sim's vertical-launch radar SAMs (S-42): Wyvern, Gorgon, Aegis and Seraph missiles now leave straight up, pitch over onto their target and dive in, with a 20-stud blast. The client steers its copies the same way, so they stay within a few hundredths of a stud of the server's (`debug_out/screens/c53_vertical_launch.jpg`).
+- You only see a launch if your side can see the launcher: the server sends a missile once it's in your sight. In `airsam` the aircraft see the Wyverns only when they get close.
+
 ## Needs my review
 
 - **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
@@ -389,7 +395,14 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
-20. **Radar SAMs vertical-launch, and carry heavy warheads (the user, 2026-10-21; high priority):** "SAM system with RADAR should be the long range that cover large area, it does not need to turn its turret because they launch vertically like the IRIS-T SLM launching. Missile for RADAR SAM must be way bigger than IR (they carry a lot of TNT in real life)." This makes request 12 concrete:
+21. **Projectiles visible regardless of sight, without revealing the shooter (the user, 2026-10-21; high priority):** "Only render the projectile, not revealing the shooters; if the shooter is cloaked and they decide to shoot, they switch out of cloak mode and reveal themselves." Today SPAWN_PROJ, homing corrections and IMPACT reach a player only in its ally team's sight (D99, contract section 7), so missiles from a site you can't see appear mid-flight and vertical launches (S-42) are never seen leaving. Please:
+    - **Projectiles:** send SPAWN_PROJ (at launch), homing corrections and IMPACT for every projectile in the player's camera area (+ the usual margin), whatever the ally team sees. These records carry no shooter, so the shooter stays hidden; it is revealed only by the normal sight rules. Keep the camera-area limit (bandwidth), and keep `targetId` as now (0 when the team doesn't know the target).
+    - **Gun shots (FIRE):** a hitscan / beam shot from a shooter the player doesn't have carries `shooterId`, which would reveal it. For those, send the start point instead (e.g. `shooterId` 0 and a start `pos`, or a FIRE variant with both ends); the client draws the tracer from it. Shots of known shooters stay as they are.
+    - **Cloak (for when it is built; the guide lists a `cloaked` state bit only):** a cloaked unit that fires drops its cloak and is revealed by normal sight, so firing never stays hidden; record that in the guide's cloak section.
+    - This changes the guide's fog rule (section 2, rule 6, and D99): projectiles in the camera area are exempt; please update the guide and contract section 7 with it.
+    The client needs nothing for projectiles (it draws them from SPAWN_PROJ alone); it will draw tracers from the FIRE start point once the format is set.
+
+20. **Done (S-42): radar SAM weapons have `launch = "vertical"` and `aoe` 20; the client steers them with `Guidance.vertical` since C-53.** **Radar SAMs vertical-launch, and carry heavy warheads (the user, 2026-10-21; high priority):** "SAM system with RADAR should be the long range that cover large area, it does not need to turn its turret because they launch vertically like the IRIS-T SLM launching. Missile for RADAR SAM must be way bigger than IR (they carry a lot of TNT in real life)." This makes request 12 concrete:
     - **Vertical launch** for the radar SAM weapons (`chs_radar_sam`: Wyvern, Gorgon; `ord_radar_sam`: Aegis, Seraph): e.g. a weapon field `launch = "vertical"`. Weapons fires as soon as a target is in range and locked, with no turret aim (no yaw / pitch wait, no tolerance check; the turret can stay at rest); the missile spawns at the launcher pointing straight up at its speed (or a short boost), and Projectiles steers it over toward the target at its `turnRate` (PN once it points roughly at the target, or from the start), so it climbs, pitches over and dives in. IR sites (Thorn, Vigil) keep their trainable launchers. The client needs nothing: it draws missiles from SPAWN_PROJ and steers them with `Shared/Combat/Guidance` (C-44).
     - **Heavy warhead:** `chs_radar_sam` has `aoe` 8, now smaller than the IR Thorn's 12 (request 16), so its blast and explosions are the smaller ones. Suggest radar SAM `aoe` ~20 (both factions; `edgeEffectiveness` as is), keeping damage 400. The client already draws radar SAM missiles 2.3× the IR ones and scales `..._large` impact effects 1.8× (C-52); the explosion grows with `aoe` on its own.
 

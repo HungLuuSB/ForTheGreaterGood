@@ -71,6 +71,7 @@ export type Proj = {
 	launch: { number }?, -- launched early (C-27): the server's state at its spawn tick { tick, x, y, z, vx, vy, vz }, taken as is on that step
 	nextState: { number }?, -- the prediction one tick on { x, y, z, vx, vy, vz, dvx, dvy, dvz } (dv: this tick's steering): frames draw the curve between (C-38)
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the flare or chaff it follows (S-28)
+	turned: boolean?, -- a vertical launch has pitched over onto its target (Guidance.vertical, S-42, C-53)
 }
 
 -- A flash, explosion or puff. `kind`: impact, death, muzzle, launch (a
@@ -270,16 +271,22 @@ end
 -- torpedoes lead pursuit against where it is at the tick's end. `at(t)`
 -- gives the target's x, z and altitude at the end of sim tick t; its
 -- velocity is taken over the tick.
-local function steer(world: World.World, target: World.Unit, weapon: any, at: (number) -> (number, number, number), t: number, x: number, y: number, z: number, vx: number, vy: number, vz: number): (number, number, number)
+-- Vertical launches (`launch = "vertical"`, S-42) pitch over first
+-- (Guidance.vertical); `turned` is their state, returned updated.
+local function steer(world: World.World, target: World.Unit, weapon: any, at: (number) -> (number, number, number), t: number, x: number, y: number, z: number, vx: number, vy: number, vz: number, turned: boolean?): (number, number, number, boolean?)
 	local ex, ez, alt = at(t)
 	local sx, sz = at(t - 1)
 	local _, ty = Effects.aimFrom(world, target, ex, ez, alt, 0, 0, x, y, z, 1)
 	local tvx, tvz = (ex - sx) / DT, (ez - sz) / DT
 	local maxTurn = math.rad(weapon.turnRate) * DT
-	if weapon.type == "HOMING" then
-		return Guidance.pn(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT)
+	if weapon.type == "HOMING" and weapon.launch == "vertical" then
+		return Guidance.vertical(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT, turned == true)
+	elseif weapon.type == "HOMING" then
+		local nx, ny, nz = Guidance.pn(x, y, z, vx, vy, vz, sx, ty, sz, tvx, 0, tvz, maxTurn, DT)
+		return nx, ny, nz, turned
 	end
-	return Guidance.lead(x, y, z, vx, vy, vz, ex, ty, ez, tvx, tvz, maxTurn)
+	local nx, ny, nz = Guidance.lead(x, y, z, vx, vy, vz, ex, ty, ez, tvx, tvz, maxTurn)
+	return nx, ny, nz, turned
 end
 
 -- A decoyed missile's tick toward its decoy point (S-28): the new velocity
@@ -371,27 +378,29 @@ end
 -- order: steer, then step), without changing it; how steering changed its
 -- velocity; and, for a decoyed missile, whether it still follows the decoy.
 -- On its spawn tick (launched early, C-27) it is the server's own state (a
--- homing missile already steered during it).
-local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean)
+-- homing missile already steered during it). Last: a vertical launch's
+-- `turned` after this tick (C-53).
+local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean, boolean?)
 	local launch = p.launch
 	if launch and launch[1] == t then
-		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0, true
+		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0, true, p.turned
 	end
 	local weapon = p.weapon
 	local vx, vy, vz = p.vx, p.vy, p.vz
 	local target = World.unitOrDying(world, p.target)
 	local follow = true
+	local turned = p.turned
 	if weapon.turnRate and target then
-		vx, vy, vz = steer(world, target, weapon, function(tt: number): (number, number, number)
+		vx, vy, vz, turned = steer(world, target, weapon, function(tt: number): (number, number, number)
 			local x, z, alt = Interp.sample(target, tt)
 			return x, z, alt
-		end, t, p.x, p.y, p.z, vx, vy, vz)
+		end, t, p.x, p.y, p.z, vx, vy, vz, p.turned)
 	elseif weapon.turnRate and p.decoy then
 		vx, vy, vz, follow = followDecoy(weapon, p.decoy, p.x, p.y, p.z, vx, vy, vz)
 	end
 	local dvx, dvy, dvz = vx - p.vx, vy - p.vy, vz - p.vz
 	local x, y, z, nvx, nvy, nvz = Ballistics.step(p.x, p.y, p.z, vx, vy, vz, weapon.gravity or 0, DT)
-	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz, follow
+	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz, follow, turned
 end
 
 -- One sim tick of every projectile, into tick `t`.
@@ -402,8 +411,9 @@ local function stepProjectiles(fx: Fx, world: World.World, t: number)
 			fx.projectiles[id] = nil
 			continue
 		end
-		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow = advance(world, p, t)
+		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow, turned = advance(world, p, t)
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
+		p.turned = turned
 		p.launch = nil
 		local d = p.decoy
 		if d then
@@ -599,6 +609,14 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local y = e.y / Schema.Y_SCALE
 			local vx, vy, vz = vel(e)
 			local dx, dy, dz = reblend(p, x, y, z, vx, vy, vz)
+			-- a correction doesn't carry a vertical launch's `turned`: with the
+			-- target already near the nose, the server has handed over (C-53)
+			local target = World.unitOrDying(world, p.target)
+			if p.weapon.launch == "vertical" and not p.turned and target then
+				local tx, tz, alt = Interp.sample(target, fx.tick)
+				local _, ty = Effects.aimFrom(world, target, tx, tz, alt, 0, 0, x, y, z, 1)
+				p.turned = Guidance.inCone(x, y, z, vx, vy, vz, tx, ty, tz, math.rad(Guidance.HANDOVER))
+			end
 			mark(fx, "correction", now, dx, dy, dz, x, y, z)
 		end
 	end
@@ -859,6 +877,7 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 		return tx, tz, alt
 	end
 	local decoy = if p.decoy then table.clone(p.decoy) else nil
+	local turned = p.turned
 	local best = math.huge
 	local path = out.path
 	for k = 1, ticks do
@@ -872,7 +891,7 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 			local _, ay, _, cx, cz = Effects.aimFrom(world, target, tx, tz, alt, heading, tv, x, y, z, 1)
 			ccx, ccy, ccz = cx, ay, cz
 			if weapon.turnRate then
-				svx, svy, svz = steer(world, target, weapon, at, t, x, y, z, vx, vy, vz)
+				svx, svy, svz, turned = steer(world, target, weapon, at, t, x, y, z, vx, vy, vz, turned)
 			end
 		elseif decoy and weapon.turnRate then
 			local follow
