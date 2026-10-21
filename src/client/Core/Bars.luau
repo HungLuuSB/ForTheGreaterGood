@@ -17,7 +17,7 @@ Bars.FULL = 0.999 -- at or above: counts as full (health is a u8 on the wire)
 -- `stock` / `stockMax`: an own unit's missiles in stock and its capacity
 -- (S-47, C-56); a unit that isn't full shows its bar, so a refilling SAM site
 -- stays visible.
-export type Bar = { id: number, health: number, build: number?, own: boolean, selected: boolean, stock: number?, stockMax: number? }
+export type Bar = { id: number, health: number, build: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number? }
 
 -- Bars for the tactical units (the only ones whose health is known).
 function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
@@ -41,6 +41,7 @@ function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
 				selected = isSel,
 				stock = stock,
 				stockMax = stockMax,
+				stockProgress = if refilling then World.stockProgressOf(world, u, world.shownTick or 0) else nil,
 			})
 		end
 	end

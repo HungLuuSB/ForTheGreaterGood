@@ -409,6 +409,11 @@ All with real mouse and keyboard input through the MCP tools.
 - The silo didn't stop building: headless it fires and rebuilds every 120 s, but at sim speed 0.25 that's 8 real minutes and the pips only show whole nukes. Asked sim-A to send the build progress so the pips can fill as it builds (request 27b).
 - The sensor view (N) now shows radars tracking a nuke: lines from every radar SAM site that has it, "NUKE  RADAR TRACK x2", time to impact and interceptors up; interceptors show locked on it. The warning banner adds "2 radars tracking" (`c58_radar_tracks.jpg`).
 
+## 2026-10-21: building pip, test overrides (C-59, C-60)
+
+- Your silo's (and SAM sites') next pip now fills up as the missile is built, from the sim's new progress (S-49) (`debug_out/screens/c59_stock_progress_pip.jpg`). Nukes also fly lower now (300 studs up, same 13 s), so they stay on screen.
+- For testing, the `nuke` profile makes nukes cost 1 supply and 1 power and build in 10 s, and radar SAM interceptors kill only 20% of the time (the defs say 50%). These are test overrides for this profile only (`weaponOverrides` in MatchConfig); the real numbers are the sim's.
+
 ## Needs my review
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
@@ -441,7 +446,12 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Requests for the sim session
 
-27. **Lower nuke apex; stockpile build progress on the wire (the user, 2026-10-21):**
+28. **Nukes launch vertically, then turn onto their arc (the user, 2026-10-21):** "Can we make the nuke go vertical to a height then turn toward its destination?" Today a nuke leaves the silo already on its parabola (Weapons.fire's lofted branch: up at sqrt(2 g apex), across at dist / t). Suggested (numbers yours):
+    - A boost phase like the radar SAMs' (S-42 / S-44): straight up from the silo to `climbHeight` (e.g. 120 studs above the launcher), then a pitch-over at `turnRate` (e.g. 90°/s, about a second) toward the lofted velocity that, from where the missile is, peaks at `apex` (300 above the launcher) and lands on the aimed spot; then unpowered ballistic flight as now. Re-solving that velocity at the end of the turn keeps the landing exact. The flight can stay near 12.7 s so interceptors keep their window.
+    - As a shared function (e.g. in `Shared/Combat/Ballistics` or `Guidance`), so the client steps it the same way: its drawn flight and interceptor steering, the attack-mode arc preview (C-58) and the landing prediction under the warning (C-57) all mirror the server. The client needs the phase: derivable from the state if the rule only uses the position, height above the launch point and velocity (the client has the SPAWN_PROJ point), or on the wire.
+    - The guide (10.9) and contract need it. Medium priority; the user asked.
+
+27. **Done (S-49, protocol 17): apex 300 / gravity 15 (same 12.7 s); STOCK carries the next missile's progress; the client fills the next pip since C-59.** **Lower nuke apex; stockpile build progress on the wire (the user, 2026-10-21):**
     - (a) "limit its height so that the missile does not shoot over the screen height." At the camera's 55° pitch and 70° field of view a point above the view's focus stays on screen up to ~0.6 × the camera distance: ~290 studs at 480 (the last zoom before the icon view). `ord_nuke` / `chs_nuke` climb to `apex` 800 above the launch. Suggested: `apex` 300 with `gravity` 15, which keeps the flight time at 12.7 s (it only depends on apex / gravity: 2 × sqrt(2 × apex / gravity)), so interceptors keep the same window; the vertical launch speed drops from 253 to 95 studs/s. Numbers are yours; guide 10.9 needs them. The client reads both from the def (flight, arc preview, landing prediction), nothing to change on this side.
     - (b) The user fired 3 nukes in the `nuke` profile and thought the silo had stopped building more. Headless it hasn't (6 launches, each rebuilt in 120 s with the profile's economy), but at sim speed 0.25 one rebuild is 8 real minutes and STOCK only carries whole missiles, so the pips sit still the whole time. Suggested: the build progress of the next missile per stockpile slot with STOCK (e.g. a u8, 0–255 of `wStockProgress`, sent when it changes by a step, owner only, like STOCK; protocol 17), so the client can fill the next pip as it builds. Medium priority.
 

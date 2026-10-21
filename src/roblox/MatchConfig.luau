@@ -12,6 +12,9 @@
 -- until they drop below their normal maximum). `moveTo = { x, z }` gives
 -- them a move order there as the match starts (their player's order);
 -- `fireAt = { x, z }` an attack-ground order there (how a nuke silo fires).
+-- `weaponOverrides` (optional, tests only, C-60): { [weaponId] = { stockpile
+-- = { buildTime?, cost? }, intercepts = { chance? } } }, numbers no client
+-- simulates, changed for this server only.
 -- `speed` (optional, default 1): the sim speed the match starts at (C-35);
 -- in a playtest - / = change it and P pauses.
 
@@ -199,6 +202,9 @@ local PROFILES = {
 	-- reactors (1,250 power/s) and 12 supply converters (12 supply/s from
 	-- spare power; the flat map has no deposits) rebuild a nuke in its full
 	-- 120 s, back to back, with power left for the Aegis' interceptors.
+	-- For testing (the user, 2026-10-21) nukes cost 1 supply and 1 power and
+	-- build in 10 s, and radar SAM interceptors kill with chance 0.2 (0.5 in
+	-- the defs).
 	nuke = {
 		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
 		seed = 41,
@@ -222,6 +228,12 @@ local PROFILES = {
 			{ def = "chs_ragnarok", player = 2, x = 900, z = 0, fireAt = { -520, 0 } },
 			{ def = "chs_wyvern", player = 2, x = 650, z = -150, count = 2, dz = 300 },
 			{ def = "chs_ravager", player = 2, x = 500, z = -60, count = 4, dz = 40, heading = -math.pi / 2 },
+		},
+		weaponOverrides = {
+			ord_nuke = { stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
+			chs_nuke = { stockpile = { buildTime = 10, cost = { supply = 1, power = 1 } } },
+			ord_radar_sam = { intercepts = { chance = 0.2 } },
+			chs_radar_sam = { intercepts = { chance = 0.2 } },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders

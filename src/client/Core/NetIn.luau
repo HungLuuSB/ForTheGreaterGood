@@ -173,12 +173,16 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 			u.targets = targets
 		end
 		if r.stock then
-			-- own units' missile stockpiles (protocol 15, S-47)
+			-- own units' missile stockpiles (protocol 15, S-47) and the next
+			-- missile's build progress (protocol 17, S-49)
 			local stock = u.stock or {}
+			local progress = u.stockProgress or {}
 			for _, st in r.stock do
 				stock[st.slot] = st.count
+				progress[st.slot] = { st.progress / 255, tick }
 			end
 			u.stock = stock
+			u.stockProgress = progress
 		end
 	end
 end

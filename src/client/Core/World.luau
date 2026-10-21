@@ -53,6 +53,7 @@ export type Unit = {
 	aim: { [number]: Aim }, -- by weapon slot
 	targets: { [number]: number }?, -- own units (S-16): target unit id by weapon slot, 0 = none; nil until the server sends them
 	stock: { [number]: number }?, -- own units (S-47): missiles in stock by weapon slot (slots with a stockpile only)
+	stockProgress: { [number]: { number } }?, -- own units (S-49): the next missile's build progress (0..1) by slot, and the record's tick
 	-- where the renderer drew it this frame (ground + altitude for ry); nil when not drawn
 	rx: number?,
 	ry: number?,
@@ -245,6 +246,34 @@ function World.stockOf(world: World, u: Unit): (number?, number?)
 		return nil, nil
 	end
 	return count, capacity
+end
+
+-- The build progress (0..1) of the next missile of a unit's first
+-- stockpile slot that isn't full (S-49, C-59), at render tick `renderTick`:
+-- the server's last value grown at 1 / buildTime per second, capped at the
+-- next sixteenth (the server sends one every Stockpile.WIRE_STEPS), so a
+-- stalled economy stops it within a step. Nil when full or unknown.
+World.STOCK_WIRE_STEPS = 16
+function World.stockProgressOf(world: World, u: Unit, renderTick: number): number?
+	local def = World.def(world, u)
+	local stock, progress = u.stock, u.stockProgress
+	if def == nil or stock == nil or progress == nil then
+		return nil
+	end
+	for slot, ws in def.weapons do
+		local cap = (ws :: any).stockCapacity
+		local p = progress[slot]
+		if cap and p and (stock[slot] or 0) < cap then
+			local weapon = world.defs.weaponByIndex[(ws :: any).weaponIndex] :: any
+			local buildTime = weapon and weapon.stockpile and weapon.stockpile.buildTime or math.huge
+			local grown = p[1] + math.max(0, renderTick - p[2]) / 15 / buildTime
+			-- the wire floors progress to 1/255: a record sent on crossing a
+			-- sixteenth can read just under it
+			local cap16 = (math.floor((p[1] + 1 / 255) * World.STOCK_WIRE_STEPS) + 1) / World.STOCK_WIRE_STEPS
+			return math.min(grown, cap16, 1)
+		end
+	end
+	return nil
 end
 
 -- Whether a unit is moving: the server's MOVING state bit, or (the server
