@@ -117,6 +117,21 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Faction-only units, stage 3 (S-75):** Locust, Cyclops, Barrier, Citadel built with placeholder numbers (decision log).
+  - **Locust:** built singly, not in pairs. Against Lancers it loses close (1.43) and long (1.11) but wins the flank (0.72), so it may want a little more punch.
+  - **Mechanism designs, not built:**
+    - **Phalanx (Order shield dome):**
+      - A deployable vehicle (Sim/Deploy, like the Warden) that, deployed, holds a dome of radius 60 with a 3,000-point shield pool. Recharge: 100/s after 3 s without a hit.
+      - Projectiles (shells, rockets, missiles, bombs) whose path enters the dome from outside burst on its surface and take their damage from the pool, not from the units inside. Hitscan and beams too.
+      - Shots fired from inside pass out freely. Melee range (the Minotaur's charge, 30 studs) is inside the dome, so siege ignores it.
+      - At 0 the dome drops until the pool is back at 25%.
+      - Implementation: a dome list per ally team, a segment-sphere test in Projectiles and in hitscan resolution, and a DOME event and state bit for the client.
+      - Counters: sustained fire (it drains), siege at the edge, artillery saturation.
+    - **Wraith (Chaos decoy drones):**
+      - A cheap T2 aircraft (value ~60, health 120, no weapon), built from the advanced airfield in groups.
+      - To radar it shows as a fighter or bomber (`radarSignature` 1, `spoof` = a def id the enemy's radar contacts report until a fire-control radar or sight identifies it; D107 already hides types of untracked contacts). Radar SAMs and interceptors spend missiles on it.
+      - One new field (`spoof`), and the strategic icon of an untracked contact switches to the spoofed type's family.
+      - Counters: Pinpointers and fire-control tracking reveal it; IR SAMs (sight) aren't fooled.
 - **800 units (S-74):** Targeting is within budget (peaks 5.7–7.4 ms of 8; a third fewer sensor lookups, same state hash). Commands is not (average 0.47 ms, peaks 1.8–2.2 of 1): what remains needs a behaviour change. Pick one: (a) attack-move hold checks for half the units each tick (a unit stops up to 0.07 s later), or (b) spread a big order's queue entries over 2–4 ticks.
 - **Faction balance in AI matches (S-65, `docs/FACTION_AI.md`):** Order wins 89% of same-level matches (target 40–60%). Addressed next by the faction AI (task 11) and the ±10% tuning (task 12); Normandy (no deposits) leaves 43% of its matches undecided at 40 minutes.
 - **Warden and Minotaur (S-64):**
