@@ -243,6 +243,48 @@ return function(t: any)
 		t.expect(checkedJoin > 0 and joined == checkedJoin, "after the blend, drawn = the server's path")
 	end)
 
+	t.test("drawn missiles fly smooth paths through corrections and decoys (C-36)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "ew_test" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 127, 127)))
+		local fx = Effects.new()
+		local SUBS = 4 -- 60 fps
+		local last: { [any]: { any } } = {}
+		local worst, frames, decoys = 0, 0, 0
+		for tick = 1, 300 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "DECOYED" then
+					decoys += 1
+				end
+			end
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for sub = 1, SUBS do
+				local rt = tick - 2 + sub / SUBS
+				Effects.update(fx, world, rt, rt * DT, 0, 0)
+				table.clear(world.died)
+				for _, v in Effects.visible(fx, rt) do
+					local p = v[1]
+					if p.weapon.turnRate then
+						-- how far this frame's point is off the straight continuation of the last two
+						local l = last[p]
+						if l and l[1] then
+							local a, b = l[1], l[2]
+							local d = math.sqrt((v[2] - (2 * b[1] - a[1])) ^ 2 + (v[3] - (2 * b[2] - a[2])) ^ 2 + (v[4] - (2 * b[3] - a[3])) ^ 2)
+							worst = math.max(worst, d)
+							frames += 1
+						end
+						last[p] = { l and l[2], { v[2], v[3], v[4] } }
+					end
+				end
+			end
+		end
+		print(string.format("    ew_test: %d missile frames, worst %.2f studs off a straight continuation, %d decoyed", frames, worst, decoys))
+		t.expect(frames > 100 and decoys > 0, "missiles flew, and one was decoyed")
+		t.expect(worst <= 3, `no jumps or corners (worst {worst} studs; a missile covers ~7 a frame)`)
+	end)
+
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()
 		local _sim, world = duel()
 		local fx = Effects.new()
