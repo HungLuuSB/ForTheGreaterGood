@@ -98,7 +98,7 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
 <div class="wrap">
   <header>
     <div class="eyebrow">For The Greater Good · strategic zoom</div>
-    <h1>Unit icon set, draft 2</h1>
+    <h1>Unit icon set, draft 3</h1>
     <p class="lede">Built on BAR's documented three-part rule, with our own frames and symbols. The frame shape is the unit type, the dots under it are the tech level (none for T1, two for T2, three for T3), and the white symbol inside is the weapon or role. Every icon is drawn in white with a dark edge, so one image takes any team color in Roblox through <code>ImageColor3</code>.</p>
   </header>
 
@@ -165,7 +165,7 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
   const shell = (x, y, w = 4) => sf(`M${x} ${y-9} C${x+w} ${y-6} ${x+w} ${y-2} ${x+w} ${y+8} H${x-w} C${x-w} ${y-2} ${x-w} ${y-6} ${x} ${y-9} Z`);
   const rocket = (x, y, s = 1) => sf(`M${x} ${y-9*s} L${x+2.6*s} ${y-4*s} V${y+5*s} L${x+4.2*s} ${y+8.5*s} H${x-4.2*s} L${x-2.6*s} ${y+5*s} V${y-4*s} Z`);
   const bomb = (x, y, s = 1) => sf(`M${x} ${y+8*s} C${x+5*s} ${y+3*s} ${x+5*s} ${y-3*s} ${x} ${y-6*s} C${x-5*s} ${y-3*s} ${x-5*s} ${y+3*s} ${x} ${y+8*s} Z`) + sl(`M${x-3*s} ${y-8.5*s} H${x+3*s}`, 1.8);
-  const wave = (x, y, half = 9) => sl(`M${x-half} ${y} q${half/4} -3 ${half/2} 0 t${half/2} 0 t${half/2} 0 t${half/2} 0`, 2.4);
+  const wave = (x, y, half = 9) => sl(`M${x-half} ${y} q${half/4} -4.5 ${half/2} 0 t${half/2} 0 t${half/2} 0 t${half/2} 0`, 3.4);
   const plane = (x, y, s = 1) => sf(`M${x} ${y-8*s} L${x+8*s} ${y+6*s} L${x} ${y+2*s} L${x-8*s} ${y+6*s} Z`);
   function star(x, y, r1, r2) { let d = ""; for (let i = 0; i < 10; i++) { const r = i % 2 ? r2 : r1, a = -Math.PI/2 + i * Math.PI/5; d += (i ? "L" : "M") + f2(x + r*Math.cos(a)) + " " + f2(y + r*Math.sin(a)) + " "; } return sf(d + "Z"); }
   function wedge(cx, cy, r1, r2, a0, a1) {
@@ -181,20 +181,20 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     command: (x, y) => star(x, y + 1, 10, 4.3),
     scout: (x, y) => sf(`M${x-8} ${y-3} H${x+1} V${y-8} L${x+9} ${y} L${x+1} ${y+8} V${y+3} H${x-8} Z`),
     cannon: (x, y) => shell(x, y),
-    heavy: (x, y) => shell(x - 4.6, y, 3.2) + shell(x + 4.6, y, 3.2),
+    heavy: (x, y) => shell(x, y, 6.6) + `<path d="M${x-6.6} ${y+2} H${x+6.6}" stroke="${D}" stroke-width="2.2"/>`,
     artillery: (x, y) => sl(`M${x-10} ${y+8} Q${x-3} ${y-14} ${x+6} ${y+1}`, 2.2) + sc(x + 7, y + 3, 3.2),
-    rockets: (x, y) => rocket(x - 5, y) + rocket(x + 5, y),
+    rockets: (x, y) => sl(`M${x} ${y+9} V${y-4} M${x-2} ${y+9} L${x-8} ${y-2} M${x+2} ${y+9} L${x+8} ${y-2}`, 2.4) + sf(`M${x} ${y-11} L${x+3.5} ${y-4} H${x-3.5} Z`) + sf(`M${x-10} ${y-5} L${x-4.5} ${y-1.5} L${x-9} ${y+1.5} Z`) + sf(`M${x+10} ${y-5} L${x+4.5} ${y-1.5} L${x+9} ${y+1.5} Z`),
     aa: (x, y) => sl(`M${x-8} ${y+5} L${x} ${y-4} L${x+8} ${y+5}`, 3.6),
     aa2: (x, y) => sl(`M${x-8} ${y+1} L${x} ${y-7} L${x+8} ${y+1} M${x-8} ${y+9} L${x} ${y+1} L${x+8} ${y+9}`, 3.2),
     radar: (x, y) => sc(x - 6, y + 6, 2.6) + sl(`M${x-6} ${y-1} A7 7 0 0 1 ${x+1} ${y+6} M${x-6} ${y-7} A13 13 0 0 1 ${x+7} ${y+6}`, 2.4),
     tracking: (x, y) => sl(`${ell(x, y, 6, 6)} M${x} ${y-11} V${y-7} M${x} ${y+7} V${y+11} M${x-11} ${y} H${x-7} M${x+7} ${y} H${x+11}`, 2.2) + sc(x, y, 1.8),
     jammer: (x, y) => sl(`M${x-10} ${y+2} L${x-6} ${y-5} L${x-2} ${y+5} L${x+2} ${y-5} L${x+6} ${y+5} L${x+10} ${y-2}`, 2.6),
     pin: (x, y) => sf(`M${x} ${y+10} L${x-6} ${y} C${x-9} ${y-5} ${x-6} ${y-10} ${x} ${y-10} C${x+6} ${y-10} ${x+9} ${y-5} ${x+6} ${y} Z`) + dk(x, y - 4, 2.6),
-    bombs2: (x, y) => bomb(x - 5, y + 1) + bomb(x + 5, y + 1),
-    bombs3: (x, y) => bomb(x - 7, y + 1, .8) + bomb(x, y + 1, .8) + bomb(x + 7, y + 1, .8),
+    bombs2: (x, y) => sl(`M${x-8} ${y-4} L${x} ${y+5} L${x+8} ${y-4}`, 3.6),
+    bombs3: (x, y) => sl(`M${x-8} ${y-8} L${x} ${y+1} L${x+8} ${y-8} M${x-8} ${y} L${x} ${y+9} L${x+8} ${y}`, 3.2),
     torpedo: (x, y) => sf(`M${x-9} ${y-3} H${x+4} C${x+9} ${y-3} ${x+10} ${y+3} ${x+4} ${y+3} H${x-9} Z`) + sl(`M${x-9} ${y-6} V${y+6}`, 2),
     carrier: (x, y) => plane(x, y - 2) + sl(`M${x-10} ${y+8} H${x+10}`, 2.4),
-    walkerGun: (x, y) => shell(x - 4.6, y - 2, 3.2) + shell(x + 4.6, y - 2, 3.2) + sl(`M${x-6} ${y+9} H${x+6}`, 2.2),
+    walkerGun: (x, y) => shell(x, y - 3, 6) + `<path d="M${x-6} ${y-1} H${x+6}" stroke="${D}" stroke-width="2"/>` + sl(`M${x-4} ${y+6} L${x-8} ${y+11} M${x+4} ${y+6} L${x+8} ${y+11}`, 2.4),
     // structures
     fabVehicle: (x, y) => sf(`M${x} ${y-9} L${x+9} ${y} L${x} ${y+9} L${x-9} ${y} Z`) + sl(`M${x-12} ${y+12} H${x+12}`, 2),
     fabAir: (x, y) => sf(`M${x} ${y-9} L${x+10} ${y+8} H${x-10} Z`) + sl(`M${x-12} ${y+12} H${x+12}`, 2),
@@ -206,9 +206,9 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     fusion: (x, y) => sl(ell(x, y, 10, 3.8), 1.8) + `<g transform="rotate(60 ${x} ${y})">${sl(ell(x, y, 10, 3.8), 1.8)}</g><g transform="rotate(-60 ${x} ${y})">${sl(ell(x, y, 10, 3.8), 1.8)}</g>` + sc(x, y, 2.4),
     storage: (x, y) => sl(`M${x-8} ${y-6} H${x+8} M${x-8} ${y} H${x+8} M${x-8} ${y+6} H${x+8}`, 2.8),
     sonar: (x, y) => sc(x, y - 7, 2.6) + sl(`M${x-5} ${y-2} A6 6 0 0 0 ${x+5} ${y-2} M${x-9} ${y+2} A11 11 0 0 0 ${x+9} ${y+2}`, 2.4),
-    rearm: (x, y) => plane(x, y - 3) + sl(`M${x-10} ${y+8} H${x+10}`, 2.4),
-    coastal: (x, y) => shell(x - 4.6, y - 3, 3.2) + shell(x + 4.6, y - 3, 3.2) + wave(x, y + 9),
-    floating: (x, y) => shell(x, y - 3) + wave(x, y + 9),
+    rearm: (x, y) => sl(`M${x-7} ${y-9} V${y+9} M${x+7} ${y-9} V${y+9} M${x-7} ${y} H${x+7}`, 3.6),
+    coastal: (x, y) => shell(x, y - 4, 6) + `<path d="M${x-6} ${y-2} H${x+6}" stroke="${D}" stroke-width="2"/>` + wave(x, y + 9),
+    floating: (x, y) => shell(x, y - 5, 3.6) + wave(x, y + 8),
     nuke: (x, y) => sc(x, y, 2.6) + wedge(x, y, 4.3, 11, -Math.PI/2 - .55, -Math.PI/2 + .55) + wedge(x, y, 4.3, 11, Math.PI/6 - .55, Math.PI/6 + .55) + wedge(x, y, 4.3, 11, 5*Math.PI/6 - .55, 5*Math.PI/6 + .55),
   };
 
@@ -288,8 +288,8 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
   // ---- icon ----
   function dots(n) {
     if (!(n >= 2)) return "";
-    const gap = 7.5, x0 = 24 - (n - 1) * gap / 2;
-    let s = ""; for (let i = 0; i < n; i++) s += sc(f2(x0 + i * gap), 50, 2.7);
+    const gap = 9.5, x0 = 24 - (n - 1) * gap / 2;
+    let s = ""; for (let i = 0; i < n; i++) s += sc(f2(x0 + i * gap), 50.5, 3.8);
     return s;
   }
   function iconSVG(it, color, size, mode = "unit") {
