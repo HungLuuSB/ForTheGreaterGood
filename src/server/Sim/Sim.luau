@@ -122,7 +122,7 @@ function Sim.new(config: Config): Sim
 	table.sort(allyTeams)
 
 	local unitCap = if config.match then Match.validate(config.match, players, order) else 0
-	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap } else nil
+	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap, friendlyFire = if config.match.friendlyFire == false then false else nil } else nil
 
 	local defs = config.defs or Defs.load()
 	local mapId = config.mapId or "none"
@@ -177,6 +177,7 @@ function Sim.new(config: Config): Sim
 		alerts = Alerts.new(order),
 		net = nil :: any,
 	}
+	sim.combat.friendlyFire = not (config.match and config.match.friendlyFire == false) -- a match option (S-73)
 	sim.net = NetOut.new(sim)
 	setup(sim)
 	return sim

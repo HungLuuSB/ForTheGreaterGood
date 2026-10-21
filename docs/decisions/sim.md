@@ -952,3 +952,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Fog.spec`: an Eye's 2 power/s shows as demand, a stall drops a tank at 530 studs off its radar, and power brings it back.
   - `Tracking.spec`: its stall test uses an Aegis for the plain radar, since a Watchtower now shrinks too.
+
+## S-73 — Friendly fire as a match option (audit item 14) (2026-10-22)
+
+- `match.friendlyFire` (`MatchState.Config`; default true, as before): off, blasts and splash never hurt the shooter's allies (`Combat.friendlyFire`). Direct hits never did.
+- **Exception:** strategic blasts (nukes, team 0) and death blasts (S-70) still hurt everyone; they belong to no team.
+- **Replay header:** its match byte is 2 when friendly fire is off (1 as before otherwise), so old replays still read and a replayed match keeps the option. No format version change.
+- **Test:** `FriendlyFire.spec`: the default hurts both tanks under a blast, the option spares the own one; the option survives a replay round trip.

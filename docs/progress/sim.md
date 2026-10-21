@@ -173,6 +173,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **New (S-70..S-73), no wire change:** the Fusion Reactor explodes when killed (def `deathBlast = { damage, aoe, edge }`; the client can draw it from the DEATH and the def); landed aircraft sit on top of their pad and are ground targets (S-71); radar towers, mobile radars and AWACS drain power (`sensors.radarDrain`; their radar radius shrinks in a stall, S-72); `match.friendlyFire` is a match option, default on (S-73), for the lobby.
 - **Done (request 39), S-68, protocol 23:** event **ALERT 18** `alert u8, cell u16, defIndex u16` with `Schema.AlertKind` (UNIT_ATTACKED 1, STRUCTURE_ATTACKED 2, UNIT_LOST 3, STRUCTURE_LOST 4, BUILD_DONE 5, STALL_SUPPLY 6, STALL_POWER 7, NUKE_LAUNCH 8, COMMANDER_ATTACKED 9), rate-limited server-side as you suggested; strategic **UNDER_ATTACK** set on own and allied units hit in the last 3 s. Also: ATTACK_GROUND now works for every unit with a ballistic weapon (artillery, tanks, gun turrets), contract section 8.
 - **Done (request 37), S-63, protocol 21:** OWNER field bit **CHARGES 8**: `flares u8, chaff u8` (charges left; 0 for a kind the def lacks), own units with flares or chaff, on change and with ENTER.
 - **Done (request 38), S-63:** `Sim/Stats`: `Stats.report(sim)` → per player `{ unitsBuilt, unitsLost, unitsKilled, damageDealt, supplyGathered, powerGathered, supplySpent, powerSpent }`; server-side only. Definitions are in the module header.
