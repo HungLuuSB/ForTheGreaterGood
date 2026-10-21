@@ -79,6 +79,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `272b106` (merge of `main` with S-25 and the C-38 integration; test_client 81, test 299, build passed).
 - Ready to merge: `486d468` (SAM scene reworked: bigger map, Thorns east, one Falcon flying in).
 - Ready to merge: `b3c1d19` (range rings of known enemy defenses, C-41; request 13c).
+- Ready to merge: `849486c` (merge of `main` with the final AI level report; test_client 82, test 299, build passed).
 
 ## Tasks
 
@@ -286,6 +287,10 @@ All with real mouse and keyboard input through the MCP tools.
 ## 2026-10-21: enemy defense ranges (C-41)
 
 - Enemy defenses you have seen (or can identify on radar) show their weapon range: dark red for ground weapons, violet for anti-air. Seen-before ones keep the ring as ghosts. Factories don't get one, and unknown radar blips don't either (their type isn't known). V hides all rings (`debug_out/screens/c41_enemy_sam_rings.jpg`).
+
+## 2026-10-21: seeker cones (C-42)
+
+- The missile sensor view (N) now draws each guided missile's seeker cone out to its lock range: cyan while its target is inside the cone, red when it is outside (IR 60°, radar 70° off the nose; command-guided missiles have none). The label adds the target's angle off the nose, e.g. "34° / 60° off". In the `sam` scene most locked missiles turn out to have their target behind them after a miss, which is request 13c (`debug_out/screens/c42_seeker_cone.jpg`).
 
 ## Needs my review
 
