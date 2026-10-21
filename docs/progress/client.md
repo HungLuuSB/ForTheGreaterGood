@@ -288,6 +288,10 @@ All with real mouse and keyboard input through the MCP tools.
 
 - Enemy defenses you have seen (or can identify on radar) show their weapon range: dark red for ground weapons, violet for anti-air. Seen-before ones keep the ring as ghosts. Factories don't get one, and unknown radar blips don't either (their type isn't known). V hides all rings (`debug_out/screens/c41_enemy_sam_rings.jpg`).
 
+## 2026-10-21: seeker cones (C-42)
+
+- The missile sensor view (N) now draws each guided missile's seeker cone out to its lock range: cyan while its target is inside the cone, red when it is outside (IR 60°, radar 70° off the nose; command-guided missiles have none). The label adds the target's angle off the nose, e.g. "34° / 60° off". In the `sam` scene most locked missiles turn out to have their target behind them after a miss, which is request 13c (`debug_out/screens/c42_seeker_cone.jpg`).
+
 ## Needs my review
 
 - **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.

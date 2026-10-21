@@ -207,7 +207,7 @@ if RunService:IsStudio() then
 			end
 			local entries = {}
 			for _, e in missileView.entries do
-				table.insert(entries, { id = e.id, label = e.label, locked = e.locked, target = e.targetId, distance = e.distance, tgo = e.tgo, miss = e.miss, fuse = e.fuse, hit = e.hit, path = #e.path // 3 })
+				table.insert(entries, { id = e.id, label = e.label, locked = e.locked, target = e.targetId, distance = e.distance, tgo = e.tgo, miss = e.miss, fuse = e.fuse, hit = e.hit, path = #e.path // 3, seekerAngle = e.seekerAngle, offNose = e.offNose, inSeeker = e.inSeeker, pos = { e.x, e.y, e.z } })
 			end
 			local marks = {}
 			for _, m in fx.marks do

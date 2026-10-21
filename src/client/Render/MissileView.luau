@@ -5,7 +5,9 @@
 -- path (green when the prediction fuses, orange when it misses, grey
 -- without a lock), a yellow line to the point it steers at, the target's
 -- centre in red, the fuse envelope (the hull grown by the weapon's aoe)
--- and the predicted closest approach (magenta) joined to the centre. Corrections,
+-- and the predicted closest approach (magenta) joined to the centre, and the
+-- seeker cone as a wireframe out to the lock range (C-42: cyan while the
+-- target's centre is inside it, red when outside). Corrections,
 -- decoys and lost locks (Effects' marks) show as a line from where the
 -- missile was drawn to where the server had it, fading out. Labels are
 -- screen-space TextLabels. Pools never shrink; unused adornments are hidden.
@@ -30,7 +32,13 @@ local COLOR: { [string]: Color3 } = {
 	correction = Color3.fromRGB(240, 240, 240),
 	decoy = Color3.fromRGB(170, 210, 255),
 	lost = Color3.fromRGB(150, 150, 150),
+	seekerIn = Color3.fromRGB(110, 220, 255),
+	seekerOut = Color3.fromRGB(255, 60, 60),
 }
+
+local CONE_SEGMENTS = 24 -- rim segments of the seeker cone
+local CONE_EDGES = 8 -- lines from the apex to the rim
+local CONE_MAX_ANGLE = 85 -- degrees: a wider cone is drawn at this (its rim would run off to infinity)
 
 export type View = {
 	enabled: boolean,
@@ -99,6 +107,31 @@ local function line(v: View, a: Vector3, b: Vector3, color: Color3, thickness: n
 	l.Thickness = thickness
 	l.Color3 = color
 	l.Transparency = transparency
+end
+
+-- The seeker cone of entry `e` (C-42): apex at the missile, axis along its
+-- flight direction, slant length = the seeker range.
+local rim: { Vector3 } = table.create(CONE_SEGMENTS)
+local function cone(v: View, e: MissileView.Entry, at: Vector3)
+	local a = math.rad(math.min(e.seekerAngle :: number, CONE_MAX_ANGLE))
+	local f = Vector3.new(e.fx, e.fy, e.fz)
+	local centre = at + f * (e.seekerRange * math.cos(a))
+	local radius = e.seekerRange * math.sin(a)
+	-- two axes across the flight direction
+	local side = f:Cross(if math.abs(f.Y) < 0.9 then Vector3.yAxis else Vector3.xAxis).Unit
+	local up = side:Cross(f)
+	local color = if e.inSeeker then COLOR.seekerIn else COLOR.seekerOut
+	for k = 1, CONE_SEGMENTS do
+		local t = (k - 1) / CONE_SEGMENTS * 2 * math.pi
+		rim[k] = centre + (side * math.cos(t) + up * math.sin(t)) * radius
+	end
+	for k = 1, CONE_SEGMENTS do
+		line(v, rim[k], rim[k % CONE_SEGMENTS + 1], color, 2, 0.35)
+	end
+	local step = CONE_SEGMENTS // CONE_EDGES
+	for k = 1, CONE_SEGMENTS, step do
+		line(v, at, rim[k], color, 2, 0.35)
+	end
 end
 
 local function sphere(v: View, p: Vector3, radius: number, color: Color3, transparency: number)
@@ -186,6 +219,9 @@ function RenderMissileView.step(v: View, fx: Effects.Fx, world: World.World, ren
 		local at = Vector3.new(e.x, e.y, e.z)
 		local color = if not e.locked then COLOR.unguided elseif e.hit then COLOR.hit else COLOR.miss
 		sphere(v, at, 0.9, COLOR.missile, 0)
+		if e.seekerAngle and e.seekerRange > 0 then
+			cone(v, e, at)
+		end
 		local path = e.path
 		for k = 4, #path - 2, 3 do
 			line(v, Vector3.new(path[k - 3], path[k - 2], path[k - 1]), Vector3.new(path[k], path[k + 1], path[k + 2]), color, 3, 0.1)

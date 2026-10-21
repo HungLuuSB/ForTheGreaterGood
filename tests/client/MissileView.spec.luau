@@ -33,6 +33,7 @@ return function(t: any)
 		local sim, world = samScene()
 		local fx = Effects.new()
 		local entries, locked, maxShown, paths = 0, 0, 0, 0
+		local inside, outside = 0, 0
 		for tick = 1, 15 * 30 do
 			Sim.step(sim)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
@@ -47,6 +48,10 @@ return function(t: any)
 				t.expect(p ~= nil and p.weapon.type == "HOMING", "homing missiles only")
 				t.equal(e.fuse, 5) -- chs_ir_sam's aoe
 				t.expect(string.find(e.label, "IR", 1, true) == 1, `label starts with the guidance: {e.label}`)
+				-- the seeker cone (C-42): Thorn's IR seeker, 60° off the nose, out to its lock range
+				t.equal(e.seekerAngle, 60)
+				t.equal(e.seekerRange, 280)
+				t.expect(math.abs(e.fx * e.fx + e.fy * e.fy + e.fz * e.fz - 1) < 1e-6, "the flight direction is a unit vector")
 				if #e.path >= 6 then
 					paths += 1
 				end
@@ -55,12 +60,24 @@ return function(t: any)
 					t.expect(e.cx ~= nil and e.lx ~= nil and e.distance ~= nil, "a locked missile has its target's centre, its aim point and a distance")
 					t.expect(string.find(e.label, "LOCK", 1, true) ~= nil and string.find(e.label, "Falcon", 1, true) ~= nil, `label names the lock and the target: {e.label}`)
 					t.expect(e.hullRadius ~= nil and (e.hullRadius :: number) > 0, "the target's hull is known")
+					local off = e.offNose :: number
+					t.expect(off ~= nil and off >= 0 and off <= 180, `the target's angle off the nose is 0..180 ({off})`)
+					t.equal(e.inSeeker, off <= 60)
+					t.expect(string.find(e.label, `{math.floor(off + 0.5)}° / 60° off`, 1, true) ~= nil, `label shows the angle off the nose: {e.label}`)
+					if e.inSeeker then
+						inside += 1
+					else
+						outside += 1
+					end
 				else
 					t.expect(string.find(e.label, "no lock", 1, true) ~= nil, `label says no lock: {e.label}`)
 				end
 			end
 		end
-		print(string.format("    sam scene: %d entries (%d locked), up to %d at once, %d with a path", entries, locked, maxShown, paths))
+		print(string.format("    sam scene: %d entries (%d locked: %d with the target in the seeker cone, %d outside), up to %d at once, %d with a path", entries, locked, inside, outside, maxShown, paths))
+		-- the server has no seeker cone yet (request 13c): missiles that overshoot
+		-- keep their lock with the target behind them, so both cases show up
+		t.expect(inside > 50 and outside > 50, "targets inside and outside the seeker cone")
 		t.expect(entries > 100 and locked > 100, "missiles were shown, locked on")
 		t.expect(maxShown <= MissileView.MAX_MISSILES, "at most MAX_MISSILES")
 		t.expect(paths >= entries * 0.9, "almost every missile has a predicted path ahead")
