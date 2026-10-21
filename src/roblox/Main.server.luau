@@ -32,6 +32,7 @@ local NetOut = require(game:GetService("ServerScriptService"):WaitForChild("Sim"
 local Defs = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Defs"):WaitForChild("Defs")) :: any
 local Packer = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("Packer")) :: any
 local Schema = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("Schema")) :: any
+local PlayerReplay = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("PlayerReplay")) :: any
 local Config = require(script.Parent:WaitForChild("MatchConfig")) :: any
 local Combat = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Combat"):WaitForChild("Combat")) :: any
 local Spawn = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Spawn")) :: any
@@ -141,6 +142,15 @@ local seed = Config.seed
 local endedAt: number? = nil
 
 local slotOf: { [Player]: number } = {} -- Roblox player → sim player ID
+-- Spectators (C-79, S-18): Roblox players without a seat watch everything;
+-- their index in sim.net.spectators (0 until their HELLO)
+local specOf: { [Player]: number } = {}
+-- Player replays (C-79, S-18): each human's stream in a lobby match,
+-- recorded tick by tick; kept for the results' Save / Watch
+local recorders: { [number]: any } = {} -- sim player ID → PlayerReplay
+local recordedBytes = 0
+local MAX_RECORDED_BYTES = 32 * 1024 * 1024 -- all recordings together; past it they stop growing
+local savedReplays: { [number]: { { name: string, file: buffer } } } = {} -- UserId → saved this session
 local lobby: any = nil -- the lobby's state (C-70; seats since C-77)
 local lobbyMaps: { any } = {}
 local joined: { [Player]: boolean } = {} -- HELLO accepted: receives the outbox
@@ -244,6 +254,15 @@ local function startMatch()
 			brains = Skirmish.forMatch(sim)
 			matchStartTick = sim.tick
 			stats = MatchStats.new(sim)
+			recorders, recordedBytes = {}, 0
+			for _, id in Lobby.humans(lobby) do
+				local header = { protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, mapId = sim.mapId, viewer = id, players = {} }
+				for _, pid in sim.playerOrder do
+					local p = sim.players[pid]
+					table.insert(header.players, { id = pid, team = p.team, allyTeam = p.allyTeam })
+				end
+				recorders[id] = PlayerReplay.new(header, sim.tick + 1)
+			end
 		else
 			-- the lobby's preview: the chosen map, nobody on it; a sim player
 			-- for every seat, so any seated human can join it
@@ -295,8 +314,10 @@ local function startMatch()
 	endedAt = nil
 	-- a new match is a fresh view for everyone connected: WELCOME again
 	for player, ok in joined do
-		if ok then
+		if ok and slotOf[player] then
 			NetOut.join(sim, slotOf[player], true)
+		elseif ok and specOf[player] then
+			specOf[player] = NetOut.addSpectator(sim)
 		end
 	end
 	if Config.demoOrders then
@@ -352,7 +373,8 @@ local function assignSlot(player: Player)
 			tokens[player] = 40
 			print(`[Entry] {player.Name} takes seat {i}`)
 		else
-			print(`[Entry] {player.Name}: no free seat`)
+			specOf[player] = 0
+			print(`[Entry] {player.Name}: no free seat, watches as a spectator`)
 		end
 		publishLobby()
 		return
@@ -375,7 +397,8 @@ local function assignSlot(player: Player)
 			return
 		end
 	end
-	print(`[Entry] {player.Name}: no free slot, nothing is sent`)
+	specOf[player] = 0
+	print(`[Entry] {player.Name}: no free slot, watches as a spectator`)
 end
 
 Players.PlayerAdded:Connect(assignSlot)
@@ -384,6 +407,7 @@ for _, player in Players:GetPlayers() do
 end
 Players.PlayerRemoving:Connect(function(player)
 	slotOf[player] = nil
+	specOf[player] = nil -- its viewer stays in the sim until the next match (NetOut has no removal)
 	joined[player] = nil
 	tokens[player] = nil
 	if lobby then
@@ -395,7 +419,7 @@ end)
 
 remoteOf.Snapshot.OnServerEvent:Connect(function(player: Player, payload: any)
 	local id = slotOf[player]
-	if id == nil or typeof(payload) ~= "buffer" or buffer.len(payload) > 64 then
+	if (id == nil and specOf[player] == nil) or typeof(payload) ~= "buffer" or buffer.len(payload) > 64 then
 		return
 	end
 	local ok, reject = pcall(NetOut.hello, sim, payload)
@@ -407,8 +431,13 @@ remoteOf.Snapshot.OnServerEvent:Connect(function(player: Player, payload: any)
 		print(`[Entry] {player.Name}: stale client, rejected`)
 		return
 	end
-	NetOut.join(sim, id) -- a reconnect keeps the camera
 	joined[player] = true
+	if id == nil then
+		specOf[player] = NetOut.addSpectator(sim) -- a fresh viewer: its first outbox opens with a WELCOME
+		print(`[Entry] {player.Name} joined as a spectator`)
+		return
+	end
+	NetOut.join(sim, id) -- a reconnect keeps the camera
 	print(`[Entry] {player.Name} joined as sim player {id}`)
 end)
 
@@ -424,9 +453,81 @@ remoteOf.Cmd.OnServerEvent:Connect(function(player: Player, payload: any)
 	Sim.submit(sim, id, payload)
 end)
 
+-- The results screen's replays (C-79): "save" keeps the player's recording
+-- of the match for this server session (and, on a live server, a DataStore
+-- copy), "watch" sends a recording to the
+-- client in chunks, "list" names the saved ones.
+--   client → server: { op = "save" } | { op = "watch", index? } | { op = "list" }
+--   server → client: { op = "saved", name, bytes, datastore = string? } |
+--                    { op = "list", names } | { op = "chunk", index, count, data }
+local CHUNK_BYTES = 200 * 1024
+local replayRemote = Instance.new("RemoteEvent")
+replayRemote.Name = "Replay"
+replayRemote.Parent = remotes
+local function namesOf(list: { any }): { string }
+	local out = {}
+	for _, r in list do
+		table.insert(out, r.name)
+	end
+	return out
+end
+replayRemote.OnServerEvent:Connect(function(player: Player, msg: any)
+	if type(msg) ~= "table" then
+		return
+	end
+	local mine = savedReplays[player.UserId] or {}
+	savedReplays[player.UserId] = mine
+	local current = slotOf[player] and recorders[slotOf[player]]
+	if msg.op == "save" and current then
+		local file = PlayerReplay.serialize(current)
+		local name = string.format("Match %d · %s · %d:%02d", matchId, sim.mapId, math.floor((current.lastTick - current.firstTick + 1) / 15 / 60), math.floor((current.lastTick - current.firstTick + 1) / 15) % 60)
+		table.insert(mine, { name = name, file = file })
+		replayRemote:FireClient(player, { op = "saved", name = name, bytes = buffer.len(file) })
+		-- the DataStore copy only in a live server: Studio refuses it without API
+		-- access and logs an error even under pcall
+		if RunService:IsStudio() then
+			return
+		end
+		task.spawn(function()
+			local ok, err = pcall(function()
+				local store = game:GetService("DataStoreService"):GetDataStore("FtggReplays")
+				store:SetAsync(`{player.UserId}/{matchId}`, file)
+			end)
+			replayRemote:FireClient(player, { op = "saved", name = name, bytes = buffer.len(file), datastore = if ok then "saved" else tostring(err) })
+			print(`[Entry] replay {name} for {player.Name}: {buffer.len(file)} bytes, DataStore {if ok then "saved" else tostring(err)}`)
+		end)
+	elseif msg.op == "list" then
+		replayRemote:FireClient(player, { op = "list", names = namesOf(mine) })
+	elseif msg.op == "watch" then
+		local file: buffer?
+		if type(msg.index) == "number" and mine[msg.index] then
+			file = mine[msg.index].file
+		elseif current then
+			file = PlayerReplay.serialize(current)
+		end
+		if file == nil then
+			return
+		end
+		local count = math.max(1, math.ceil(buffer.len(file) / CHUNK_BYTES))
+		for i = 1, count do
+			local from = (i - 1) * CHUNK_BYTES
+			local n = math.min(CHUNK_BYTES, buffer.len(file) - from)
+			local part = buffer.create(n)
+			buffer.copy(part, 0, file, from, n)
+			replayRemote:FireClient(player, { op = "chunk", index = i, count = count, data = part })
+		end
+	end
+end)
+
 local function send()
+	local viewers: { [Player]: any } = {}
 	for player, id in slotOf do
-		local pn = sim.net.players[id]
+		viewers[player] = sim.net.players[id]
+	end
+	for player, index in specOf do
+		viewers[player] = sim.net.spectators[index]
+	end
+	for player, pn in viewers do
 		if pn and joined[player] then
 			for _, ch in SEND_ORDER do
 				local remote = remoteOf[ch]
@@ -508,12 +609,24 @@ RunService.Heartbeat:Connect(function(dt: number)
 		Sim.step(sim)
 		if stats and lobby and lobby.phase == "playing" then
 			MatchStats.step(stats, sim)
+			if recordedBytes < MAX_RECORDED_BYTES then
+				for id, rep in recorders do
+					local outbox = sim.net.players[id].outbox
+					PlayerReplay.record(rep, sim.tick, outbox)
+					for _, list in outbox do
+						for _, msg in list do
+							recordedBytes += buffer.len(msg)
+						end
+					end
+				end
+			end
 		end
 		-- the end for the humans: the match is over, or they are all out (the
 		-- AI may fight on in a free-for-all; the results don't wait for it)
 		if lobby and lobby.phase == "playing" and Lobby.done(lobby, sim) then
 			lobby.phase = "results"
 			lobby.results = Lobby.results(lobby, sim, matchStartTick, MatchStats.summary(stats))
+			lobby.results.replays = next(recorders) ~= nil
 			brains = {}
 			print(`[Entry] match over for the humans: {if sim.match.over then `ally team {sim.match.winner} won` else "all out"}`)
 			publishLobby()

@@ -9,7 +9,9 @@
 -- The host (seat 1) changes everything and starts; every human picks their
 -- own faction. Results: victory or defeat for you, the match's length, and
 -- a table per player (end, units built / lost, resources gathered / spent,
--- damage taken). Hidden while the match runs.
+-- damage taken), and the replays (C-79): Save replay keeps your view of
+-- the match for this server session, Watch replay plays it (or one saved
+-- earlier) with the replay controls. Hidden while the match runs.
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -21,7 +23,7 @@ local BTN = Color3.fromRGB(44, 50, 60)
 local ON = Color3.fromRGB(70, 110, 160)
 local WIN_NAMES = { COMMAND_ENDS = "Command Ends", ANNIHILATION = "Annihilation" }
 
-export type UI = { gui: ScreenGui, panel: Frame, body: Frame, remote: RemoteEvent, last: string?, host: boolean }
+export type UI = { gui: ScreenGui, panel: Frame, body: Frame, remote: RemoteEvent, last: string?, host: boolean, replay: RemoteEvent?, status: string, saved: { string }, data: any }
 
 local function label(parent: Instance, text: string, size: number, order: number): TextLabel
 	local l = Instance.new("TextLabel")
@@ -110,6 +112,27 @@ local function results(ui: UI, r: any, me: number, send: (any) -> ())
 		end
 		label(ui.body, line, 12, 3 + i)
 	end
+	if r.replays and ui.replay then
+		local replay = ui.replay :: RemoteEvent
+		local rr = row(ui.body, "Replay", 40)
+		button(rr, "Save replay", 120, false, function()
+			replay:FireServer({ op = "save" })
+		end)
+		button(rr, "Watch replay", 120, true, function()
+			replay:FireServer({ op = "watch" })
+		end)
+		for i, name in ui.saved do
+			if i > 3 then
+				break
+			end
+			button(rr, `▶ {name}`, 150, false, function()
+				replay:FireServer({ op = "watch", index = i })
+			end).TextTruncate = Enum.TextTruncate.AtEnd
+		end
+		if ui.status ~= "" then
+			label(ui.body, ui.status, 12, 41).TextColor3 = Color3.fromRGB(180, 210, 180)
+		end
+	end
 	local back = row(ui.body, "", 50)
 	if ui.host then
 		button(back, "Back to lobby", 160, true, function()
@@ -126,6 +149,7 @@ local function render(ui: UI, data: any)
 			c:Destroy()
 		end
 	end
+	ui.data = data
 	local s = data.state
 	local send = function(msg: any)
 		ui.remote:FireServer(msg)
@@ -253,7 +277,26 @@ function LobbyUI.new(remotes: Folder): UI
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = body
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	local ui: UI = { gui = gui, panel = panel, body = body, remote = remotes:WaitForChild("Lobby") :: RemoteEvent, last = nil, host = false }
+	local ui: UI = { gui = gui, panel = panel, body = body, remote = remotes:WaitForChild("Lobby") :: RemoteEvent, last = nil, host = false, replay = remotes:WaitForChild("Replay", 5) :: RemoteEvent?, status = "", saved = {}, data = nil }
+	local replayRemote = ui.replay
+	if replayRemote then
+		replayRemote.OnClientEvent:Connect(function(msg: any)
+			if type(msg) ~= "table" then
+				return
+			end
+			if msg.op == "saved" then
+				ui.status = string.format("Saved \"%s\" (%.1f KB) for this server session%s", msg.name, (msg.bytes or 0) / 1024, if msg.datastore == "saved" then "; also in the DataStore" elseif msg.datastore then "; DataStore: " .. string.sub(msg.datastore, 1, 80) else "")
+				replayRemote:FireServer({ op = "list" })
+			elseif msg.op == "list" and type(msg.names) == "table" then
+				ui.saved = msg.names
+			else
+				return
+			end
+			if ui.data then
+				render(ui, ui.data)
+			end
+		end)
+	end
 	local function refresh()
 		local json = remotes:GetAttribute("Lobby")
 		if type(json) ~= "string" or json == ui.last then

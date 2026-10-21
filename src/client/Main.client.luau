@@ -50,6 +50,9 @@ local BuildMenuUI = require("./UI/BuildMenu")
 local CommandCard = require("./UI/CommandCard")
 local UnitPanel = require("./UI/UnitPanel")
 local LobbyUI = require("./UI/Lobby")
+local ReplayBar = require("./UI/ReplayBar")
+local ReplayPlayer = require("./Core/ReplayPlayer")
+local PlayerReplay = require("@shared/Net/PlayerReplay")
 local AttackPreviewRender = require("./Render/AttackPreview")
 local QueuedBuilds = require("./Render/QueuedBuilds")
 local RangeOverlay = require("./Render/RangeOverlay")
@@ -62,8 +65,13 @@ local anim = PieceAnim.new(defs.weaponByIndex)
 local renderer = UnitRenderer.new(anim)
 local camState = Camera.new(0, 0, 220)
 local cmd = remotes:WaitForChild("Cmd") :: RemoteEvent
+-- a replay playing (C-79): it feeds the world instead of the live stream,
+-- and orders go nowhere
+local replay: ReplayPlayer.Player? = nil
 local api = Api.new(world, function(payload: buffer)
-	cmd:FireServer(payload)
+	if replay == nil then
+		cmd:FireServer(payload)
+	end
 end)
 
 -- bytes received per channel since the client started (Invoke("net"): bandwidth checks, C-69)
@@ -76,7 +84,9 @@ for name in Schema.Channel do
 	remote.OnClientEvent:Connect(function(msg: any)
 		if typeof(msg) == "buffer" then
 			received[name] = (received[name] or 0) + buffer.len(msg)
-			NetIn.apply(world, name, msg, os.clock())
+			if replay == nil then
+				NetIn.apply(world, name, msg, os.clock())
+			end
 		end
 	end)
 end
@@ -130,6 +140,9 @@ local followButton = FollowButton.new(toggleFollow)
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
 local resumeSpeed = 1
 local function simSpeed(): number
+	if replay then
+		return if replay.paused or ReplayPlayer.done(replay) then 0 else replay.speed
+	end
 	return (remotes:GetAttribute("SimSpeed") :: number?) or 1
 end
 local function requestSpeed(value: number)
@@ -212,6 +225,72 @@ end)
 -- Join: HELLO now; the WELCOME (or a REJECT) comes back on the Snapshot channel.
 local snapshot = remotes:WaitForChild("Snapshot") :: RemoteEvent
 snapshot:FireServer(NetIn.hello(defs.hash))
+
+-- Replays (C-79): the results screen asks the server for one (UI/Lobby);
+-- it arrives in chunks on the Replay remote, plays through NetIn like the
+-- live stream, and Exit rejoins the live match with a new HELLO.
+local function deliverReplay(_tick: number, outbox: { [string]: { buffer } })
+	NetIn.applyOutbox(world, outbox, os.clock())
+end
+local replayBar = ReplayBar.new({
+	toggle = function()
+		if replay then
+			if ReplayPlayer.done(replay) then
+				ReplayPlayer.seek(replay, replay.replay.firstTick, deliverReplay)
+			end
+			replay.paused = not replay.paused
+		end
+	end,
+	faster = function(up: boolean)
+		if replay then
+			ReplayPlayer.faster(replay, up)
+		end
+	end,
+	seek = function(fraction: number)
+		if replay then
+			local r = replay.replay
+			ReplayPlayer.seek(replay, r.firstTick + fraction * (r.lastTick - r.firstTick), deliverReplay)
+			clock = Interp.newClock() -- the render clock starts over at the new spot
+		end
+	end,
+	exit = function()
+		replay = nil
+		snapshot:FireServer(NetIn.hello(defs.hash)) -- back to the live match: a fresh WELCOME
+	end,
+})
+local replayChunks: { buffer } = {}
+local replayRemote = remotes:WaitForChild("Replay") :: RemoteEvent
+replayRemote.OnClientEvent:Connect(function(msg: any)
+	if type(msg) ~= "table" or msg.op ~= "chunk" or typeof(msg.data) ~= "buffer" then
+		return
+	end
+	replayChunks[msg.index] = msg.data
+	if #replayChunks < msg.count then
+		return
+	end
+	local size = 0
+	for _, part in replayChunks do
+		size += buffer.len(part)
+	end
+	local file = buffer.create(size)
+	local at = 0
+	for _, part in replayChunks do
+		buffer.copy(file, at, part)
+		at += buffer.len(part)
+	end
+	table.clear(replayChunks)
+	local ok, rep = pcall(PlayerReplay.parse, file)
+	if not ok then
+		warn(`[Client] replay unreadable: {rep}`)
+		return
+	end
+	if rep.header.protocol ~= Schema.PROTOCOL_VERSION or rep.header.defsHash ~= defs.hash then
+		warn(`[Client] replay from protocol {rep.header.protocol} / defs {rep.header.defsHash}; this client plays {Schema.PROTOCOL_VERSION} / {defs.hash}`)
+		return
+	end
+	replay = ReplayPlayer.new(rep)
+	print(`[Client] replay: {rep.header.mapId}, player {rep.header.viewer}, {(rep.lastTick - rep.firstTick + 1) // 15} s`)
+end)
 
 local seenJoins, seenMap = 0, 0
 local nextHover = 0 -- when the hovered unit is picked next (C-76)
@@ -377,6 +456,11 @@ end
 
 RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, function(dt: number)
 	local now = os.clock()
+	if replay then
+		ReplayPlayer.advance(replay, dt, deliverReplay)
+	end
+	_lobbyUI.gui.Enabled = replay == nil
+	ReplayBar.step(replayBar, replay, if replay then `REPLAY: player {replay.replay.header.viewer}'s view` elseif world.joined and world.me.player == 0 then "SPECTATING: every player, no fog" else nil)
 	if world.rejected then
 		if not warned then
 			warned = true
