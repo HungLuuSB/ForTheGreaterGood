@@ -1,0 +1,160 @@
+--!strict
+-- Health and build bars (C-24): who gets them, two bars while building and
+-- one when done, health growing with progress, and damage that lowers
+-- health but never build progress (as the client sees it on the wire).
+
+local Api = require("../../src/client/Api")
+local Bars = require("../../src/client/Core/Bars")
+local Commands = require("../../src/client/Core/Commands")
+local NetIn = require("../../src/client/Core/NetIn")
+local World = require("../../src/client/Core/World")
+local NetOut = require("../../src/server/Sim/NetOut")
+local Sim = require("../../src/server/Sim/Sim")
+local Spawn = require("../../src/server/Sim/Spawn")
+
+local DT = 1 / 15
+
+local function setup(players: { any })
+	local sim = Sim.new({ seed = 2, players = players, mapId = "start:48", scenario = "standard_start" })
+	local world = World.new(sim.defs)
+	NetOut.join(sim, 1)
+	local api = Api.new(world, function(p: buffer)
+		assert(Sim.submit(sim, 1, p))
+	end)
+	api.send(Commands.camera(0, 0, 47, 47))
+	local tick = 0
+	local function run(n: number, each: (() -> ())?)
+		for _ = 1, n do
+			tick += 1
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			table.clear(world.died)
+			Api.frame(api, tick * DT)
+			if each then
+				each()
+			end
+		end
+	end
+	run(2)
+	return sim, world, api, run
+end
+
+local function barOf(list: { any }, id: number): any
+	for _, b in list do
+		if b.id == id then
+			return b
+		end
+	end
+	return nil
+end
+
+return function(t: any)
+	t.test("a frame shows two bars while building, health rising with progress, then none", function()
+		local _sim, world, api, run = setup({ { id = 1, team = 1 } })
+		local cv = World.ownIds(world)[1]
+		t.equal(#Bars.list(world, {}), 0, "a healthy, unselected unit has no bar")
+		t.equal(#Bars.list(world, { [cv] = true }), 1, "selected: one bar")
+		api.actions.select({ cv })
+		local u = world.units[cv]
+		assert(api.actions.beginPlacement("ord_generator"))
+		assert(api.actions.place(u.x + 30, u.z - 20, false, false))
+		local frameId
+		local samples, twoBars = 0, 0
+		local lastBuild = -1
+		run(15 * 40, function()
+			for id, w in world.units do
+				local d = World.def(world, w)
+				if d and d.id == "ord_generator" then
+					frameId = id
+				end
+			end
+			if frameId then
+				local b = barOf(Bars.list(world, {}), frameId)
+				local w = world.units[frameId]
+				if w and (w.build or 1) < 1 then
+					t.expect(b ~= nil and b.build ~= nil, "a frame under construction has a build bar")
+					twoBars += 1
+					-- health grows with progress (start at 1 %, no damage here)
+					t.expect(math.abs(b.health - (0.01 + 0.99 * b.build)) < 0.03, `health {b.health} follows build {b.build}`)
+					t.expect(b.build >= lastBuild, "progress never goes back")
+					lastBuild = b.build
+					samples += 1
+				end
+			end
+		end)
+		t.expect(samples > 10, `sampled the build ({samples} ticks)`)
+		t.expect(twoBars > 0)
+		local w = world.units[frameId]
+		t.expect(w.build >= 1, "finished")
+		t.equal(barOf(Bars.list(world, {}), frameId), nil, "finished and healthy: no bar")
+		local sel = barOf(Bars.list(world, { [frameId] = true }), frameId)
+		t.expect(sel and sel.build == nil, "selected and finished: one bar (health only)")
+	end)
+
+	t.test("damage lowers a frame's health but not its build progress", function()
+		local sim, world, api, run = setup({ { id = 1, team = 1 }, { id = 2, team = 2 } })
+		local cv = World.ownIds(world)[1]
+		api.actions.select({ cv })
+		local u = world.units[cv]
+		-- a sturdy, slow structure, and an enemy tank parked next to it
+		assert(api.actions.beginPlacement("ord_vehplant"))
+		assert(api.actions.place(u.x + 40, u.z, false, false))
+		run(15 * 3)
+		local frameId
+		for id, w in world.units do
+			local d = World.def(world, w)
+			if d and d.id == "ord_vehplant" then
+				frameId = id
+			end
+		end
+		t.expect(frameId ~= nil, "the factory frame is up")
+		local f = world.units[frameId]
+		Spawn.unit(sim, "chs_ravager", 2, f.x + 60, f.z, -math.pi / 2)
+		local hits, lastBuild, lastHealth = 0, -1, f.health :: number
+		run(15 * 15, function()
+			local w = world.units[frameId]
+			if w == nil or (w.build or 1) >= 1 then
+				return
+			end
+			local b = barOf(Bars.list(world, {}), frameId)
+			t.expect(b.build >= lastBuild, "build progress never drops under fire")
+			lastBuild = b.build
+			if b.health < lastHealth - 1e-6 then
+				hits += 1
+			end
+			lastHealth = b.health
+		end)
+		t.expect(hits > 0, "the frame took hits while building")
+		t.expect(lastBuild > 0, "and kept building")
+	end)
+
+	t.test("damaged units get a bar; colors go green, yellow, red", function()
+		local world: any = World.new(require("@shared/Defs/Defs").load())
+		world.joined = true
+		world.me = { player = 1, team = 1, allyTeam = 1 }
+		world.units[1] = { id = 1, tier = "tactical", team = 2, health = 0.4, build = 1, state = 0, x = 0, z = 0, alt = 0 }
+		world.units[2] = { id = 2, tier = "tactical", team = 2, health = 1, build = 1, state = 0, x = 0, z = 0, alt = 0 }
+		world.units[3] = { id = 3, tier = "strategic", team = 2, x = 0, z = 0, alt = 0, state = 0 }
+		local list = Bars.list(world, {})
+		t.equal(#list, 1, "only the damaged enemy")
+		t.equal(list[1].id, 1)
+		t.expect(not list[1].own)
+		-- top-down projector, 2 px per stud: centered over the unit, footprint wide
+		world.units[1].x, world.units[1].z = 50, 40
+		local function project(x: number, _y: number, z: number)
+			return x * 2, z * 2, true
+		end
+		local d = Bars.draws(world, list, project, 400, 400, 1, 0)
+		t.equal(#d, 1)
+		t.equal(d[1].x, 100)
+		t.equal(d[1].y, 80)
+		t.equal(d[1].width, Bars.MIN_WIDTH, "an 8-stud unit at 2 px/stud: clamped up to the minimum")
+		t.equal(#Bars.draws(world, list, project, 50, 50, 1, 0), 0, "off screen: no bar")
+		local r, g = Bars.healthColor(1)
+		t.expect(g > r, "full: green")
+		r, g = Bars.healthColor(0.5)
+		t.expect(r > 200 and g > 200, "half: yellow")
+		r, g = Bars.healthColor(0.05)
+		t.expect(r > 200 and g < 100, "low: red")
+	end)
+end
