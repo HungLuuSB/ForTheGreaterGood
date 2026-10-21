@@ -450,6 +450,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
 - **Elevation:** hills give sight range bonus (optional); slopes limit wheeled units.
 - **Air lanes:** keep some areas without SAM-friendly terrain so air play is viable.
 - Tag maps with supported modes (`Team`, `FFA`, `Naval`).
+- Implementation (S-15): `Shared/Grid/MapGen` generates maps that follow these rules (1v1, 2v2, 4-player FFA; mirror or rotational symmetry; safe, expansion and contested deposits; ridges with passes at least 3 cells wide; optional lakes or a sea) and checks each candidate; `MapRegistry` has `mapgen:` IDs and the named maps `map:ridgeline`, `map:coastline`, `map:twin_lakes`, `map:crossroads`.
 
 ---
 
@@ -613,7 +614,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 - Unit, target and def IDs are 1-based; **0 is reserved** and rejected.
 - Decoders accept only what the schema defines: unknown enum values, reserved flag bits, empty masks and out-of-range counts are errors, and so is truncated input. Callers decoding client data wrap the decode in `pcall` and drop the packet (section 19).
 - A message is a run of records of one type, optionally preceded by a header. `Packer.chunk` splits a record list into messages of at most 900 bytes, never splitting a record. Tactical and Strategic messages start with a **tick header**: `tick u16`.
-- **`Schema.PROTOCOL_VERSION`** (currently 5) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
+- **`Schema.PROTOCOL_VERSION`** (currently 7) identifies the wire format. Bump it on any change to a layout, enum value or validation rule. It is checked on join (section 7.5) and written into replay headers (section 17.1). `Schema.spec` pins hand-computed golden bytes to it, so an unbumped format change fails the tests.
 - **Wire ticks wrap.** Ticks on the wire are `u16` (sim tick mod 65,536), which wraps every ~72.8 min at 15 Hz. Never compare them with `<`/`>`. `Shared/Net/Tick.luau` compares by signed shortest distance (`Tick.diff`, `Tick.isNewer`) and rebuilds full ticks near a reference (`Tick.unwrap`). That is correct while the two ticks are under 32,768 ticks (~36 min) apart, which always holds for live packets. Sim and replay ticks are full integers and never wrap.
 
 **Command (C → S)**
@@ -621,7 +622,7 @@ Implemented in `Shared/Net/Schema.luau` on top of `Shared/Net/Packer.luau`; `Tes
 ```
 cmdType   u8      1 MOVE, 2 FIGHT, 3 ATTACK, 4 ATTACK_GROUND, 5 PATROL, 6 GUARD, 7 STOP,
                   8 BUILD, 9 REPAIR, 10 RECLAIM, 11 SET_FIRE_STATE, 12 SET_MOVE_STATE,
-                  13 TOGGLE, 14 CAMERA   (0 is invalid)
+                  13 TOGGLE, 14 CAMERA, 15 REPEAT   (0 is invalid)
 flags     u8      bit0 = queue (shift), bit1 = line formation; other bits reserved
 count     u16     number of unit IDs: 1..200 (CAMERA: 0)
 unitIds   u16 × count
@@ -633,6 +634,7 @@ params    by cmdType:
                                        facing u8: 0..3 = 0/90/180/270° (bits 2–7 reserved)
   SET_FIRE_STATE / SET_MOVE_STATE      value u8: 0 hold, 1 return fire / maneuver, 2 fire at will / roam
   TOGGLE                               value u8: 0 off, 1 on
+  REPEAT                               value u8: 0 off, 1 on (factories; others ignore it)
   CAMERA                               minX u8, minZ u8, maxX u8, maxZ u8  (camera area as a cell rectangle)
   STOP                                 none
 ```
@@ -656,14 +658,16 @@ flags     u8      bit0 = has altitude; other bits reserved
 
 ```
 unitId    u16
-mask      u8      which fields follow: bit0 health, bit1 state, bit2 aim, bit3 weapon, bit4 build
-                  (never 0; bits 5–7 reserved)
+mask      u8      which fields follow: bit0 health, bit1 state, bit2 aim, bit3 weapon, bit4 build,
+                  bit5 targets (never 0; bits 6–7 reserved)
 [health]  u8      fraction 0..255
 [state]   u16     bit flags (moving, building, stunned, submerged, landed, cloaked...)
 [aim]     u8      slot mask: bit i-1 = weapon slot i (1..8) follows; never 0
           u8 ×2   yaw, pitch for each set slot, in slot order
 [weapon]  u16     2 bits per slot (slot 1 = bits 0–1): 0 IDLE, 1 AIMING, 2 READY, 3 RESTORING
 [build]   u8      build progress 0..255
+[targets] u8      slot mask, then targetId u16 per set slot (0 = none). Only to the unit's
+                  owner, when a weapon's target changes (protocol 8, S-16)
 ```
 
 Units have at most **8 weapon slots**; defs validation must enforce it. The aim slot mask means only weapons whose aim changed are sent, and the record can be decoded without knowing the unit's def. The 2-byte weapon field is sent only when a weapon state changes.
@@ -858,7 +862,7 @@ Every domain has a **T1 worker** and an **advanced (T2) worker**. Workers build 
 | Shipyard | T1 | Naval Worker, T1 ships, submarine |
 | Advanced Shipyard | T2 | Advanced Naval Worker, T2 ships, carrier |
 
-Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-4: a MOVE / FIGHT / PATROL order given to a factory sets its rally point; TOGGLE on a factory turns repeat on or off.)
+Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-4: a MOVE / FIGHT / PATROL order given to a factory sets its rally point. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
 
 ### 9.3 Build rules
 
@@ -1379,7 +1383,7 @@ When the camera is zoomed far out, hide models and draw icons (flat billboards o
 - Box select (project unit positions to screen), double-click selects all of type on screen, control groups (Ctrl+1–9).
 - Right-click **smart command**: enemy → attack, ally → guard, wreck → reclaim, unfinished structure → repair, ground → move.
 - Shift queues commands; queued paths draw as lines for selected units.
-  - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT holds to engage; PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
+  - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT (attack-move, BAR behavior, S-14) advances while no enemy is within weapon range, stops and fires while one is, and goes on when none are left; seeing an enemy doesn't stop it. PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
 - Line formation by right-click drag.
 - Build placement ghost with grid snapping, validity tint (green/red), shift for multiple, drag for rows.
 

@@ -35,6 +35,7 @@ export type Unit = {
 	health: number?,
 	build: number?,
 	state: number?,
+	targets: { [number]: number }?, -- own units: weapon slot → target ID (0 = none; S-16)
 }
 
 export type Projectile = {
@@ -294,6 +295,13 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			u.health = r.health or u.health
 			u.build = r.build or u.build
 			u.state = r.state or u.state
+			if r.targets then
+				local t = u.targets or {}
+				for _, tg in r.targets do
+					t[tg.slot] = tg.targetId
+				end
+				u.targets = t
+			end
 		end
 		mention(view, "State", ids)
 	end

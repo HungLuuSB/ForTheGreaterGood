@@ -19,6 +19,7 @@ export type PlayerNet = {
 	forceFull: boolean, -- after a join: strategic snapshot and Eco record now, not on cadence
 	lastEco: string?, -- the last Eco record sent (bytes), to send only changes
 	eventCounts: { [number]: number }, -- cumulative event records per Schema.EventKind
+	sentTargets: { [number]: string }, -- own tactical units → the weapon targets last sent (S-16)
 }
 
 export type NetState = {
@@ -48,6 +49,7 @@ function NetState.new(playerIds: { number }, iconIndex: { [number]: number }): N
 			forceFull = false,
 			lastEco = nil,
 			eventCounts = {},
+			sentTargets = {},
 		}
 	end
 	return { players = players, iconIndex = iconIndex }

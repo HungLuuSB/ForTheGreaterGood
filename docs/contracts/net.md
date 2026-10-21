@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **6**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **8**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2) and the REPEAT command (S-13).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -54,7 +54,7 @@ Names and reliability: `Schema.Channel`.
 | Icon | 6 bits | 0 = unknown (radar / sonar blip). Else the position (1-based) of the def's `icon` name in the **sorted list of distinct icon names** over all unit defs, capped at 63: `Shared/Net/Icons` (`Icons.byDef`, `Icons.names`), which the server uses too. |
 | Team | 3 bits (strategic) / u8 (ENTER) | 1..8. Ally teams come from the match config. |
 
-**Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1`, `TOGGLED_ON 2` (radar / jammer switched on), `SUBMERGED 4`, `LANDED 8`. Other bits are reserved (0).
+**Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1`, `TOGGLED_ON 2` (radar / jammer switched on), `SUBMERGED 4`, `LANDED 8`, `REPEAT 16` (factory repeat on, protocol 7). Other bits are reserved (0).
 
 **Weapon states** (2 bits per slot in a u16; slot 1 = bits 0–1; `Schema.weaponStateAt`):
 - `IDLE 0`: no target;
@@ -96,9 +96,10 @@ Per tick, for each player, in this order (the Events message carries them in thi
 Then:
 - **Tactical** (unreliable): `unitId, cell, offX, offZ, heading, flags (bit0 = has altitude), [alt]`, 8 or 9 B. Sent only for tactical units that moved, turned or changed altitude this tick, and never in the same tick as their ENTER. No record means it didn't move: keep the last value.
 - **State** (reliable): `unitId, mask` plus only the changed fields.
-  - Mask bits: health 1, state 2, aim 4, weapon 8, build 16.
+  - Mask bits: health 1, state 2, aim 4, weapon 8, build 16, targets 32 (protocol 8).
   - Aim: `slotMask u8` (bit i−1 = slot i), then `yaw u8, pitch u8` per set bit in slot order.
   - A change of state bits or turret aim sends the state, the aim of every slot and the weapon field together.
+  - **Targets** (S-16, own units only): `slotMask u8`, then `targetId u16` per set bit (0 = no target). Sent to the unit's owner whenever a weapon's target changes (every slot), and with the ENTER tick when it has any target; the ID is always a unit (or remembered structure) the team knows. Other players never get it. Exact from the tick Targeting picks the target, before the turret has turned.
 
 A Tactical or State record always refers to a unit the client got an ENTER for. If not, the client is out of sync: drop the record (the reference client asserts).
 
@@ -152,13 +153,13 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 ## 9. Client → server: commands (Cmd channel)
 
 - Layout: guide 7.3 and `Schema.encodeCommand`: `cmdType u8, flags u8, count u16, unitIds u16 × count, params`.
-- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10, SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14.
+- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10, SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14, REPEAT 15 (`value u8`: 0 off, 1 on; protocol 7).
 - Flags: bit0 queue (shift), bit1 line formation.
 - At most 200 unit IDs per command.
 - The server applies a command to the sender's own live units only and ignores the rest. Commands are validated server-side (guide 19); a rejected command just has no effect.
 - **All commands are effective** (S-4). With the queue flag, an order is appended to each unit's queue; without it, it replaces the queue:
   - MOVE;
-  - FIGHT: attack-move, holds to engage;
+  - FIGHT: attack-move: advances while no enemy is within weapon range, stops and fires while one is, then goes on (S-14);
   - PATROL: back and forth between the unit's start and the point, forever;
   - ATTACK: force-fire a unit the sender's team knows, even on hold fire; it chases into range. A target the team doesn't know is ignored;
   - GUARD: follow an allied unit (builders assist a frame or factory);
@@ -167,7 +168,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
   - RECLAIM;
   - BUILD: mobile builders. A factory queues the unit.
 - **STOP** clears the queue.
-- **Factories:** MOVE / FIGHT / PATROL given to a factory set its **rally point** (produced units roll out of the exit, then take the rally order). **TOGGLE** on a factory sets **repeat** on or off: a finished item goes back to the end of the queue. On other units TOGGLE switches `TOGGLED_ON` (radar, jammer).
+- **Factories:** MOVE / FIGHT / PATROL given to a factory set its **rally point** (produced units roll out of the exit, then take the rally order). **REPEAT** on a factory sets **repeat** on or off: a finished item goes back to the end of the queue; the factory's `REPEAT` state bit shows it. Other units ignore REPEAT. **TOGGLE** only switches `TOGGLED_ON` (radar, jammer, converters), on any unit (S-13; in protocol 6, TOGGLE on a factory meant repeat).
 - Order queues aren't replicated yet. The client draws queued paths from what it sent (guide 15.6).
 - **Formation goals** (S-12): the server splits a move's units into groups by move class and clearance (aircraft form one group) and places each group with `Shared/Grid/Formation`: `spacing(maxRadius)` with radius = footprint × `PlacementRules.RADIUS_PER_FOOTPRINT`, `layout` (a line from the first point to the second, or a spiral around the point; aircraft always take the spiral around the center), `deepestFirst`, then `assign`. A client that runs the same steps on the positions it knows gets the server's goals on open ground; near blocked cells the server also drops or snaps slots, which a client can't see exactly.
 
@@ -218,3 +219,5 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 4 | Projectiles channel: homing corrections (D102) |
 | 5 | Strategic TRACKED flag (D104) |
 | 6 | Snapshot handshake (HELLO / REJECT / WELCOME), Eco channel (S-2) |
+| 7 | REPEAT command (15) and `REPEAT` unit state bit (16); TOGGLE no longer sets repeat on factories (S-13) |
+| 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |

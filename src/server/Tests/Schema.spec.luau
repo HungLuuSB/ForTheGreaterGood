@@ -90,7 +90,7 @@ end
 
 local POS_TYPES = { CT.MOVE, CT.FIGHT, CT.ATTACK_GROUND, CT.PATROL }
 local TARGET_TYPES = { CT.ATTACK, CT.GUARD, CT.REPAIR, CT.RECLAIM }
-local VALUE_TYPES = { { CT.SET_FIRE_STATE, 2 }, { CT.SET_MOVE_STATE, 2 }, { CT.TOGGLE, 1 } }
+local VALUE_TYPES = { { CT.SET_FIRE_STATE, 2 }, { CT.SET_MOVE_STATE, 2 }, { CT.TOGGLE, 1 }, { CT.REPEAT, 1 } }
 
 local function randomCommand(rng: Prng.Prng): Command
 	local kind = rng:nextInteger(1, 6)
@@ -190,7 +190,18 @@ local function randomState(rng: Prng.Prng): State
 		if rng:chance(0.5) then
 			rec.build = rng:nextInteger(0, 255)
 		end
-	until rec.health or rec.state or rec.aim or rec.weapon or rec.build
+		if rng:chance(0.5) then
+			local targets = {}
+			for slot = 1, Schema.MAX_WEAPONS do
+				if rng:chance(0.5) then
+					table.insert(targets, { slot = slot, targetId = rng:nextInteger(0, 65535) })
+				end
+			end
+			if #targets > 0 then
+				rec.targets = targets
+			end
+		end
+	until rec.health or rec.state or rec.aim or rec.weapon or rec.build or rec.targets
 	return rec
 end
 
@@ -241,6 +252,16 @@ local FULL_STATE: State = {
 	},
 	weapon = 65535,
 	build = 255,
+	targets = {
+		{ slot = 1, targetId = 65535 },
+		{ slot = 2, targetId = 0 },
+		{ slot = 3, targetId = 1 },
+		{ slot = 4, targetId = 2 },
+		{ slot = 5, targetId = 3 },
+		{ slot = 6, targetId = 4 },
+		{ slot = 7, targetId = 5 },
+		{ slot = 8, targetId = 6 },
+	},
 }
 
 return function(t: RunAll.Context)
@@ -267,7 +288,7 @@ return function(t: RunAll.Context)
 		-- state: 3-byte header + fields; aim = slot mask + 2 per weapon; weapon = u16
 		t.equal(buffer.len(encodeOne(Schema.encodeState, { unitId = 1, health = 0 })), 4)
 		t.equal(buffer.len(encodeOne(Schema.encodeState, { unitId = 1, weapon = 0 })), 5)
-		t.equal(buffer.len(encodeOne(Schema.encodeState, FULL_STATE)), 3 + 1 + 2 + (1 + 16) + 2 + 1)
+		t.equal(buffer.len(encodeOne(Schema.encodeState, FULL_STATE)), 3 + 1 + 2 + (1 + 16) + 2 + 1 + (1 + 16))
 
 		t.equal(buffer.len(encodeOne(Schema.encodeTickHeader, 0)), Schema.TICK_HEADER_BYTES)
 	end)
@@ -283,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 6, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 8, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -309,6 +330,12 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeCommand, line)), "01 03 01 00 01 00 34 12 01 02 78 56 03 04")
 		local camera: Command = { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 1, minZ = 2, maxX = 3, maxZ = 4 }
 		t.equal(hex(encodeOne(Schema.encodeCommand, camera)), "0e 00 00 00 01 02 03 04")
+		-- version 7: REPEAT (S-13)
+		local repeatOn: Command = { cmdType = CT.REPEAT, flags = 0, unitIds = { 0x0102 }, value = 1 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, repeatOn)), "0f 00 01 00 02 01 01")
+		-- version 8: State TARGET field (S-16)
+		local aimed: State = { unitId = 0x0102, targets = { { slot = 1, targetId = 0x0304 }, { slot = 3, targetId = 0 } } }
+		t.equal(hex(encodeOne(Schema.encodeState, aimed)), "02 01 20 05 04 03 00 00")
 		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
 		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 07 01 09")
 		local state: State = {
@@ -457,7 +484,7 @@ return function(t: RunAll.Context)
 	t.test("unit state bits live in Shared and are the sim's", function()
 		local World = require("../Sim/World")
 		t.equal(World.State, Schema.UnitState, "one table (S-6)")
-		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8 })
+		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16 })
 	end)
 
 	t.test("tactical layout is byte exact", function()
@@ -536,7 +563,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 15, 0, 1, 0, 1, 0 }, "unknown cmdType 15")
+		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0 }, "unknown cmdType 16") -- 15 is REPEAT (protocol 7)
 		expectRejected(t, cmd, { CT.STOP, 4, 1, 0, 1, 0 }, "reserved bits")
 		expectRejected(t, cmd, { CT.STOP, LINE, 1, 0, 1, 0 }, "LINE flag")
 		expectRejected(t, cmd, { CT.STOP, 0, 0, 0 }, "unit count 0")
@@ -554,7 +581,8 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeTactical, { 1, 0, 0, 0, 0, 0, 0, 2 }, "reserved bits")
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
-		expectRejected(t, Schema.decodeState, { 1, 0, 32 }, "reserved bits")
+		expectRejected(t, Schema.decodeState, { 1, 0, 64 }, "reserved bits") -- 32 is TARGET since protocol 8
+		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.TARGET, 0 }, "target slot mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.AIM, 0 }, "aim slot mask is empty")
 
 		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0x00, 0x40 }, "reserved bits") -- flag bit 5 (bit 4 is TRACKED since v5)

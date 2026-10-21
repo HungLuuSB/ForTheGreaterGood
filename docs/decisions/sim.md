@@ -18,6 +18,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-10: strategic icon numbering in Shared (`Shared/Net/Icons`; client request).
 - S-11: bombers have no turret piece; turretless weapons can't name turret or pitch pieces (client request).
 - S-12: formation slots in Shared (`Shared/Grid/Formation`; client request).
+- S-13: REPEAT command and state bit (protocol 7); TOGGLE means on / off only.
+- S-14: attack-move holds only while an enemy is within firing range (BAR).
+- S-15: procedural skirmish maps (`Shared/Grid/MapGen`), four named maps.
+- S-16: own units' weapon targets in State records (protocol 8; client request 6).
 
 ---
 
@@ -184,3 +188,50 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Server:** `Nav.SLOT_SPACING`, `Nav.ASSIGN_BUCKET` and `Nav.assignSlots` remain as aliases / a thin wrapper; `slotsFor` builds the ground callbacks and calls `layout`; the issue path calls `deepestFirst`. Aircraft still ignore line moves (a spiral around the line's midpoint); the module documents it.
 - **Unchanged behavior:** before and after the move, 17 fingerprints (two 6-minute AI matches on `skirmish:256`, five group-move rounds of 36 tanks and 6 helicopters on three maps) give identical sim hashes.
 - **Test** (`Formation.spec`, 3): the shared constants and `assign` (ties, running out of units); `layout` and `deepestFirst` shapes; and on `flat:128`, for line, short-line, spot, two-move-class and aircraft orders, a client-side prediction from `Formation` alone equals every server goal. Removing the server's `deepestFirst` call fails it.
+
+## S-13 — REPEAT command; TOGGLE means on / off (2026-10-21, review answer)
+
+- **Answer to S-4's review item:** factory repeat gets its own command. Protocol **7**:
+  - `CmdType.REPEAT = 15`, params `value u8` (0 off, 1 on), like TOGGLE;
+  - `UnitState.REPEAT = 16`: a factory's repeat is a replicated state bit, so every client (and spectators) can show it;
+  - TOGGLE switches `TOGGLED_ON` on any unit again; on a factory it no longer touches repeat.
+- **Server:** `Orders.setRepeat` ignores non-factories, sets `repeatOn` and the state bit. Repeat behavior itself is unchanged (S-4).
+- **Tests:** golden bytes for a REPEAT command pinned to protocol 7; REPEAT's value range; the first unknown command type is now 16; the UnitState table; `Orders.spec` "REPEAT sets a factory's repeat (and its state bit); TOGGLE only switches on / off", and the rally / repeat test uses REPEAT.
+- **Client:** `Api.toggle` keeps sending TOGGLE; a repeat button needs `CmdType.REPEAT`. Replays recorded with protocol 6 don't play back (they carry their protocol version, guide 17.1).
+
+## S-14 — Attack-move holds only with an enemy in firing range (2026-10-21, review answer)
+
+- **Answer to S-4's review item:** BAR behavior. A FIGHT / PATROL move keeps advancing while no enemy is within weapon range, stops and fires when one is, and goes on when none are left. Seeing an enemy isn't a reason to stop.
+- **What changed:** S-4 held while any weapon slot *had a target*. Targeting keeps a target out to 110% of range (hysteresis against flip-flopping), but Weapons fires only at `range + target radius`. So a target that stepped just beyond range left the unit standing still without firing (and an AI kiting back 100 studs could exploit it).
+- **Now** (`Orders.engaged`): the move holds only while some slot's target, at the position the team believes it is (D100), is within that weapon's firing range: center distance ≤ `range + radius`, the radius counted only when the target's type is known (the same rule as Weapons). The hold is decided at the start of a tick (Commands) from the previous tick's positions. Jets still never hold.
+- **Test** (`Orders.spec`): a Lancer on attack-move sees a Ravager (through a spotter) long before it is in range and never holds then; holds and fires in range; when the Ravager backs off, it goes on to the goal without ever holding with the target beyond firing range. Restoring "any kept target holds" fails it (11 ticks held out of range).
+- **Balance re-run** (`docs/BALANCE.md`): 447 of 568 pairs hold (was 448); 203 findings, 79 mechanic and 124 numbers (was 206: 75 and 131); same-role band 25 of 38 (was 24). Tank mirrors are unchanged (Lancer vs Ravager 0.38–0.39), and ships still stand off at their own range (39 "can't see" findings): with BAR attack-move a ship that outranges the beach fires from there. Both are M8 numbers, per the review answer.
+
+## S-15 — Procedural skirmish maps (2026-10-21; guide 5.5)
+
+- **`Shared/Grid/MapGen`** (pure Luau, deterministic): `MapGen.generate({ seed, cells, layout, symmetry?, water? })` returns `Layers` (height, water depth, supply, starts: the format every map uses, so the client renders it from the map ID) and an `Info` (layout, symmetry, water, players, mode tags `Team` / `FFA` / `Naval`, attempts).
+  - Layouts: `1v1` (mirror or rotate2), `2v2` (mirror4: starts 1–2 are the west team, 3–4 the east team), `ffa4` (rotate4, one start per corner). Water: `none`, `lakes` (landlocked), `sea` (a northern sea on mirror maps, a central sea otherwise).
+  - **Exact symmetry:** each cell's orbit under the symmetry's transforms is computed once (its lowest-index cell) and copied. Noise is averaged over the transforms so it's continuous across the seams; features (hills, ridges, lakes, deposits) are drawn once and replicated.
+  - **Per start:** a flat plateau (9 cells) with 4 safe deposits (value 4); two expansion pairs (value 3) toward the middle; a rich deposit (value 6) halfway between the start and the nearest enemy start (contested by construction), moved part way toward the middle; deposits never in the sea.
+  - **Terrain:** gentle hills (passable by every land class); mountain ridges (impassable; a ridge blocks its half-width plus a one-cell rim) with a pass on each start's way to the middle: two ridge arms leaving a 5–8-cell gap; more ridges elsewhere. Lakes and seas get beaches (land slopes to the water level within 4 cells) and depth ramps 2 studs per cell from 1 at the shore (ships from ~2.5 cells out, submarines from ~5.5).
+  - **Checked candidates:** `MapGen.check` builds passability and requires: for TRACKED and HEAVY_TRACKED, every start in one component for footprint-3 units; **no gap narrower than 3 cells** (two areas big units can stand in that only small units travel between); every deposit buildable and reachable; on sea maps a sea of ≥ 400 ship cells within 48 cells of at least two starts. `generate` draws new features until a candidate passes (deterministic; up to 60 attempts; the winning attempt is cached per options).
+- **`MapRegistry`:** `"mapgen:<layout>:<seed>:<cells>[:<water>[:<symmetry>]]"` and four named maps, `"map:<name>"` (`MapRegistry.NAMED`, `MapRegistry.info(mapId)`):
+
+| ID | Name | Layout | Cells | Symmetry | Water |
+|---|---|---|---|---|---|
+| `map:ridgeline` | Ridgeline | 1v1 | 128 | mirror | none |
+| `map:coastline` | Coastline | 1v1 | 128 | mirror | northern sea (Naval) |
+| `map:twin_lakes` | Twin Lakes | 2v2 | 192 | mirror4 | lakes |
+| `map:crossroads` | Crossroads | ffa4 | 192 | rotate4 | central sea (Naval) |
+
+- **Tests** (`MapGen.spec`, 6): byte-exact symmetry under every transform, start k = image of start 1, determinism; every start reaches every other for TRACKED and HEAVY_TRACKED footprint-3 units and WHEELED, using the **server's Nav quadtrees** (not MapGen's checker); on sea maps, the nearest ship-navigable water of every coastal start is one sea shared by ≥ 2 starts; the checker reports a 2-cell pass and accepts a 3-cell one, and all generated maps pass it; deposit totals per start are equal (nearest-start assignment, ties split), each start has ≥ 4 safe deposits and there are contested ones; a skirmish start runs on the named maps.
+- **Tooling:** `lune run debug_map <mapId>` renders any registry map (impassable cells for TRACKED in dark red, deposits in yellow, starts in white).
+- **Not done:** sight bonus for elevation (guide 5.5 "optional"), terrain types (no `terrainType` layer yet), maps above 4 players.
+
+## S-16 — Own units' weapon targets on the wire (client request 6, 2026-10-21)
+
+- **Request:** the client's target line (C-20) guessed the target from the turret aim. It now gets it exactly.
+- **Protocol 8:** State records get a `targets` field, mask bit `TARGET = 32`: `slotMask u8`, then `targetId u16` per set slot (0 = no target), like `aim`.
+- **Who gets it:** only the unit's owner (not allies, not enemies: the target choice is the owner's information). NetOut keeps, per player, the last targets sent per own tactical unit (`sentTargets`, a string of slot targets); it sends all slots when any changed, and in the unit's ENTER tick when it has a target. A join clears `sentTargets`.
+- **Exact:** NetOut runs after Targeting in the same tick, so the client knows the target from the tick it is picked, before the turret has turned.
+- **Tests:** golden bytes for a targets record pinned to protocol 8; the full State record size; random round trips with targets; an empty target slot mask and reserved bit 64 rejected; `NetOut.spec` "own units' weapon targets reach their owner only, exactly": two Lancers against two Ravagers, the owner's view equals `wTarget` on all 480 unit-ticks, the enemy never gets targets. Sending only on ENTER fails it (7 of 480).

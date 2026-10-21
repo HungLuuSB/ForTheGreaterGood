@@ -163,13 +163,10 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		elseif cmdType == CT.SET_MOVE_STATE then
 			World.setMoveState(w, id, cmd.value :: number)
 		elseif cmdType == CT.TOGGLE then
-			local d = sim.defs.unitByIndex[w.defIndex[id]]
-			if d.domain == "structure" and d.buildOptions ~= nil then
-				Orders.setRepeat(sim, id, cmd.value == 1) -- factories: repeat (S-4)
-			else
-				local state = w.state[id]
-				World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
-			end
+			local state = w.state[id]
+			World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
+		elseif cmdType == CT.REPEAT then
+			Orders.setRepeat(sim, id, cmd.value == 1) -- factories only (S-13)
 		elseif cmdType == CT.STOP then
 			Orders.stop(sim, id)
 		end

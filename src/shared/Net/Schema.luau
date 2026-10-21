@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 6 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records
+Schema.PROTOCOL_VERSION = 8 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -97,6 +97,7 @@ Schema.CmdType = table.freeze({
 	SET_MOVE_STATE = 12,
 	TOGGLE = 13,
 	CAMERA = 14,
+	REPEAT = 15, -- factories: repeat the build queue on / off (S-13)
 })
 
 Schema.CmdFlag = table.freeze({
@@ -137,11 +138,13 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.SET_MOVE_STATE] = "value",
 	[CT.TOGGLE] = "value",
 	[CT.CAMERA] = "camera",
+	[CT.REPEAT] = "value",
 }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
 	[CT.SET_MOVE_STATE] = 2,
 	[CT.TOGGLE] = 1,
+	[CT.REPEAT] = 1,
 }
 
 export type Command = {
@@ -364,8 +367,10 @@ end
 
 --------------------------------------------------------------------------------
 -- State (S → C, reliable): only the fields that changed
---   unitId u16 | mask u8 | [health u8] | [state u16] | [aim] | [weapon u16] | [build u8]
+--   unitId u16 | mask u8 | [health u8] | [state u16] | [aim] | [weapon u16] | [build u8] | [targets]
 --   aim = slotMask u8 (bit i-1 = weapon slot i, 1..8) + yaw u8, pitch u8 per set bit
+--   targets = slotMask u8 + targetId u16 per set bit (0 = none); sent only to
+--             the unit's owner (protocol 8, S-16)
 --------------------------------------------------------------------------------
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
@@ -377,6 +382,7 @@ Schema.UnitState = table.freeze({
 	TOGGLED_ON = 2, -- radar / jammer switched on
 	SUBMERGED = 4, -- submarines (sonar-only detection)
 	LANDED = 8, -- aircraft on the ground / on a pad
+	REPEAT = 16, -- factory: finished items go back to the end of the queue (S-13)
 })
 
 Schema.StateField = table.freeze({
@@ -385,13 +391,15 @@ Schema.StateField = table.freeze({
 	AIM = 4,
 	WEAPON = 8,
 	BUILD = 16,
+	TARGET = 32, -- own units only: each weapon's target (protocol 8, S-16)
 })
-local STATE_MASK_ALL = 31
+local STATE_MASK_ALL = 63
 local SF = Schema.StateField
 
 Schema.WeaponState = table.freeze({ IDLE = 0, AIMING = 1, READY = 2, RESTORING = 3 })
 
 export type Aim = { slot: number, yaw: number, pitch: number }
+export type Target = { slot: number, targetId: number } -- targetId 0 = no target
 
 export type State = {
 	unitId: number,
@@ -400,6 +408,7 @@ export type State = {
 	aim: { Aim }?, -- changed weapons only, ascending slot order
 	weapon: number?, -- u16, 2 bits per slot; see packWeaponStates / weaponStateAt
 	build: number?, -- 0..255 build progress
+	targets: { Target }?, -- own units only (S-16): ascending slot order; targetId 0 = none
 }
 
 -- {slot1, slot2, ...} WeaponState values → the u16 weapon field.
@@ -433,6 +442,9 @@ function Schema.encodeState(w: Writer, rec: State)
 	end
 	if rec.build ~= nil then
 		mask += SF.BUILD
+	end
+	if rec.targets ~= nil then
+		mask += SF.TARGET
 	end
 	if mask == 0 then
 		error("Schema: state record has no fields", 2)
@@ -471,6 +483,24 @@ function Schema.encodeState(w: Writer, rec: State)
 	if rec.build ~= nil then
 		w:writeU8(rec.build)
 	end
+	if rec.targets ~= nil then
+		local slotMask = 0
+		local lastSlot = 0
+		for _, tg in rec.targets do
+			if tg.slot ~= math.floor(tg.slot) or tg.slot <= lastSlot or tg.slot > Schema.MAX_WEAPONS then
+				error("Schema: target slots must be ascending within 1..MAX_WEAPONS", 2)
+			end
+			slotMask += 2 ^ (tg.slot - 1)
+			lastSlot = tg.slot
+		end
+		if slotMask == 0 then
+			error("Schema: target list is empty", 2)
+		end
+		w:writeU8(slotMask)
+		for _, tg in rec.targets do
+			w:writeU16(tg.targetId) -- 0 = none
+		end
+	end
 end
 
 function Schema.decodeState(r: Reader): State
@@ -507,6 +537,19 @@ function Schema.decodeState(r: Reader): State
 	end
 	if band(mask, SF.BUILD) ~= 0 then
 		rec.build = r:readU8()
+	end
+	if band(mask, SF.TARGET) ~= 0 then
+		local slotMask = r:readU8()
+		if slotMask == 0 then
+			fail(r, "target slot mask is empty")
+		end
+		local targets: { Target } = {}
+		for slot = 1, Schema.MAX_WEAPONS do
+			if band(slotMask, 2 ^ (slot - 1)) ~= 0 then
+				table.insert(targets, { slot = slot, targetId = r:readU16() })
+			end
+		end
+		rec.targets = targets
 	end
 	return rec
 end
