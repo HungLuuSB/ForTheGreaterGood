@@ -9,10 +9,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | ID | Decision |
 |---|---|
 | M-1 | Blockouts are reviewed in the "FTGG Art" place as three lineups built from the synced data (team colors, profile, black silhouettes) at the game camera's 55° pitch |
-| M-2 | Faction shape language for blockouts: Order symmetric and sloped with glass; Chaos flat-faced, heavy, offset, with exposed machinery and orange glow |
+| M-2 | ~~Faction shape language: Order symmetric and sloped with glass; Chaos flat-faced, heavy, offset, with exposed machinery and orange glow~~ (superseded by M-6) |
 | M-3 | IR SAMs: `turret` is a fixed pedestal, `launcher` turns on the pedestal's axis; pods level at rest |
 | M-4 | Artillery reads by its gun, not its elevation: barrels are level at rest like every other unit |
 | M-5 | A wedge's slope faces forward (−Z) unrotated: glacis, noses and turret fronts take no `rot` |
+| M-6 | Visual direction: modern armies; Order after Western equipment (grey or sand), Chaos after Eastern equipment (olive or gunmetal); `docs/art/style-guide.md` |
+| M-7 | Style candidates live in `Blockouts/Review/` with their own palettes, outside the Registry; the game keeps the registered blockouts until one is picked |
+| M-8 | Team color only on panels and stripes, including a roof panel so the team reads from above |
 
 ### M-1 — Review in "FTGG Art" (2026-10-21)
 
@@ -22,7 +25,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 **Why:** the same builder the game uses, the game's camera angle, and a silhouette pass for guide 20.1's "silhouette first".
 
-### M-2 — Faction shape language (2026-10-21)
+### M-2 — Faction shape language (2026-10-21, superseded by M-6)
+
+Rejected in review the same day: Chaos read as post-apocalyptic or steampunk (exposed engines, stacks, crates, pistons, rust, a round dish) and Order's bright blue turrets looked like toys. The batch 1 blockouts other than Lancer and Ravager still use it until a direction from M-6 is picked.
 
 **Decision:**
 
@@ -56,3 +61,25 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 **Decision:** an unrotated wedge's slope faces forward (−Z) and up, its tall face at the back; checked in a Studio side view (Verdict's glacis and turret front). Glacis plates, noses, windshields and turret fronts use no `rot`.
 
 **Why:** settles the convention for every later blockout. Note: `chs_juggernaut`'s glacis has `rot = { 0, 180, 0 }`, which turns its tall face forward; to check in the T2 batch.
+
+### M-6 — Visual direction: modern armies (2026-10-21)
+
+**Decision** (the user's, after batch 1): Order is inspired by Western modern armies (Leopard 2, Abrams, Patriot): clean, angular wedge armor, flat-panel sensors, light grey or sand. Chaos is inspired by Eastern modern armies (T-90M, T-14 Armata, Pantsir): heavier, blockier, reactive-armor tiles and slat cages, more weapons per vehicle, dark olive or gunmetal; no exposed engines, stacks, crates or rust. Both: long, low, wide hulls; flat turrets toward the rear; long guns; side skirts with road wheels; sights and sensor boxes; canister launchers for SAMs; flat phased-array radars, never dishes; team color only on panels and stripes. Silhouette first, secondary shapes second, small details only if cheap. Guide 2.1 and 20.3 are updated; details in [`../art/style-guide.md`](../art/style-guide.md).
+
+**Alternatives:** M-2 (rejected).
+
+**Why:** a modern-warfare game; the factions should look like plausible modern armies, told apart by their real-world families and base colors.
+
+### M-7 — Style candidates outside the Registry (2026-10-21)
+
+**Decision:** variants for a style review go in `src/shared/Defs/Blockouts/Review/<id>_<letter>.luau`, each a valid Blockout for its def (same `id`), listed with a proposed palette in `Review/Variants.luau`. They aren't in `Blockouts/Registry`, so the game and `Blockouts.spec` keep using the registered blockouts. The review script builds them with the client's `BlockoutBuilder` and recolors each part from its palette key. Once a variant is picked it replaces the registered file, and its palette replaces the faction's entry in `Blockout.PALETTES` (which every unit uses, including the generic blockouts).
+
+**Alternatives:** changing `Blockout.PALETTES` now (would restyle all units before a direction is picked); variants in `assets/models/` (not synced into Studio).
+
+**Why:** compare candidates in the real builder without changing anything the game draws.
+
+### M-8 — Team color on panels and stripes (2026-10-21)
+
+**Decision:** team-colored parts are thin panels only: a stripe on each skirt, a panel on each turret side and a roof panel on the turret (like an air-recognition panel). Never a whole turret, hull or launcher.
+
+**Why:** M-6 (whole blue turrets looked like toys); the roof panel keeps the team readable from the RTS camera, which mostly sees roofs.

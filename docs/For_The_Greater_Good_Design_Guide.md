@@ -68,13 +68,16 @@
 | | **Order** | **Chaos** |
 |---|---|---|
 | Ideology | Discipline, precision, control | Freedom, force, disruption |
-| Palette | White / steel blue / gold accents | Gunmetal / crimson / rust accents |
-| Shapes | Clean, angular, symmetric, sloped armor | Heavy, asymmetric, exposed machinery, spikes kept subtle |
+| Look | Western modern armies (Leopard 2, Abrams, Patriot) | Eastern modern armies (T-90M, T-14 Armata, Pantsir) |
+| Palette | Light grey or sand base | Dark olive or gunmetal base |
+| Shapes | Clean, angular wedge armor, flat-panel sensors | Heavier, blockier, covered in reactive-armor tiles and slat cages, more weapons per vehicle; no exposed engines, stacks, crates or rust |
 | Doctrine | Better sensors, stealth, precision long range, DIRCM | Strong jamming, missile saturation, cheap mass, heavy armor |
 | Strength | Wins information fights; strong at range | Wins brawls and attrition; blinds enemy sensors |
 | Weakness | Expensive, fragile when cornered | Less accurate, weaker sensors, limited stealth |
 
 Both factions have the **same roles** (scout, MBT, SAM, fighter, etc.) so balancing stays manageable. They differ in stats and in which information-warfare tools they get.
+
+Both factions look like **modern armies**: long, low, wide hulls; flat turrets set toward the rear; long guns; side skirts with road wheels; sights and sensor boxes; canister launchers for SAMs; flat phased-array radars, never dishes; team color only on panels and stripes. Silhouette first, secondary shapes second, small details only if cheap. Details and swatches: [`docs/art/style-guide.md`](art/style-guide.md).
 
 ### 2.2 Naming conventions
 
@@ -1570,7 +1573,7 @@ Add an optional `blockout` table to UnitDefs (boxes, wedges, cylinders with size
 - Assemble each unit from kit parts, then add 1–2 unique pieces. T2 versions = T1 + extra kit parts.
 - Keep each animated piece as its own object named after its piece (`turret`, `barrel`, `armL`).
 - Export, import with Studio's 3D Importer as MeshParts, rig with Motor6Ds. Script the rigging: a Studio plugin that creates Motor6Ds from piece names saves hours.
-- Make Order and Chaos kits different (clean slopes vs heavy blocks) so the factions read apart even at low detail.
+- Make Order and Chaos kits different (clean wedge armor vs blocky reactive-armor tiles and slat cages, section 2.1) so the factions read apart even at low detail.
 
 ### 20.4 Free asset libraries (check every asset's license)
 
