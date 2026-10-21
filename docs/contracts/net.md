@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **9**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2) and the REPEAT command (S-13).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **10**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -17,7 +17,7 @@ Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client s
 | `Tactical` | S → C | UnreliableRemoteEvent | no | Positions of moving units in the tactical tier |
 | `State` | S → C | RemoteEvent | yes | Changed health / state bits / aim / weapon states / build progress |
 | `Strategic` | S → C | UnreliableRemoteEvent | no | Every known non-tactical unit, every 5th tick |
-| `Events` | S → C | RemoteEvent | yes | ENTER / LEAVE / DEATH and combat events |
+| `Events` | S → C | RemoteEvent | yes | ENTER / LEAVE / DEATH, combat events, sight and wrecks (7a) |
 | `Projectiles` | S → C | UnreliableRemoteEvent | no | Homing-projectile corrections |
 | `Eco` | S → C | RemoteEvent | yes | Own team's economy; a spectator's: every team's (section 10) |
 | `Snapshot` | both | RemoteEvent | yes | Join handshake (section 10) |
@@ -88,7 +88,7 @@ The camera is sent by the client as a `CAMERA` command (cell rectangle `minX, mi
 
 Per tick, for each player, in this order (the Events message carries them in this order too):
 
-1. **DEATH** for tactical units that died (the unit is removed: play the death effect, spawn the wreck; `wreckId` 0 = no wreck).
+1. **DEATH** for tactical units that died (the unit is removed: play the death effect; `wreckId` 0 = no wreck). Since protocol 10 the wreck itself arrives as a WRECK record in the same batch (section 7a): draw wrecks from WRECK / WRECK_GONE, and use `wreckId` only to link the death animation to it.
 2. **LEAVE** for tactical units removed without a death (reclaimed, cancelled frame, ID gone) or no longer tactical (left the camera area, out of sight). The client keeps the unit as *strategic* until the next strategic snapshot refreshes or drops it.
 3. **ENTER** for units that just joined the tactical tier. It carries the full state (`defIndex`, team, position, heading, altitude, health, build, state bits). It is the only way a unit becomes tactical. Spawn or reuse a model.
 4. Combat events (section 7), after the ENTERs: a FIRE's shooter is always already known.
@@ -129,7 +129,12 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `DEATH 3` | `unitId u16, severity u8, wreckId u16`, 6 B | Tactical units (section 5). |
 | `ENTER 1` / `LEAVE 2` | 16 B / 3 B | Section 5. |
 
-`pos` = `cell u16, offX u8, offZ u8, y i16` (6 B); `vel` = `vx, vy, vz i16` (6 B).
+| `WRECK 9` | `wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8`, 10 B | Section 7a. |
+| `WRECK_GONE 10` | `wreckId u16`, 3 B | Section 7a. |
+| `SIGHT_ROWS 11` | `firstRow u8, rowCount u8, rowBytes u8, bits`, 4 + rowCount × rowBytes B | Section 7a. |
+| `SIGHT_CELLS 12` | `count u8, cell u16 × count`, 2 + 2 × count B | Section 7a. |
+
+`pos` = `cell u16, offX u8, offZ u8, y i16` (6 B); `vel` = `vx, vy, vz i16` (6 B). Sizes per kind: `Schema.EVENT_BYTES` (fixed kinds), `Schema.eventBytes(e)` (all).
 
 **Client projectiles** (guide 15.3):
 - From SPAWN_PROJ, step each projectile yourself every tick with the server's math:
@@ -139,6 +144,22 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - Unguided projectiles then match the server exactly; homing ones are approximate.
 - Drop a projectile on IMPACT. As a fallback, drop it at its time to live: `2 × range / projectileSpeed + 1` s (bombs 8 s), plus a tick.
 - Projectile IDs are reused. A SPAWN_PROJ for an ID the client still has replaces it.
+
+## 7a. Sight map and wrecks (Events channel, protocol 10, S-26; client requests 9 and 10)
+
+**Sight.** The client's fog is the ally team's sight, exactly: sensor cells (16 studs, 2 × 2 grid cells; `grid.sensorX × grid.sensorZ`, index `z × sensorX + x`, `Grid:sensorCellAt(x, z)`) that any unit of the ally team (own or allied) has in LOS. Air sight (against aircraft only) is not part of it.
+- `SIGHT_ROWS`: rows `firstRow .. firstRow + rowCount − 1` of the map as a bitset, `rowBytes = ceil(sensorX / 8)` bytes per row; cell x of a row is bit `x % 8` of byte `x // 8`; 1 = in sight. Sent after a WELCOME (the whole map, in records of at most 640 bytes of bits), and instead of SIGHT_CELLS when a tick's changes are larger.
+- `SIGHT_CELLS`: up to 255 cells that changed since the last sight record, each `cell index | 0x8000` (`Schema.SIGHT_SEEN`) when it is now in sight, the bare index when it no longer is. Apply them in order.
+- Sent on sensor ticks (every 2nd tick, `NetOut.SIGHT_EVERY`) when something changed. The client's map then equals `Sensors` LOS at the end of every sensor tick (tested on every one).
+- Spectators get no sight records: they have no fog.
+
+**Wrecks.** Known per ally team, like structure ghosts:
+- `WRECK` when the team first has the wreck's spot in sight (in the same tick as the DEATH that made it, if the team saw it), on the whole map, not only the camera area (wrecks are on the minimap). `heading` is the dead unit's (u8 like ENTER); `defIndex` is the unit it was (the wreck model comes from its def).
+- `WRECK_GONE` when the team sees the spot without the wreck (reclaimed). A wreck removed out of the team's sight stays on the client's map until then.
+- After a WELCOME, a WRECK for every wreck the team knows. Spectators get every wreck at once and see it go at once.
+- Wreck IDs are the server's (1-based, never reused within a match); RECLAIM commands target them.
+
+**Cost** (`lune run stress`, 800 units, two players): sight ~0.3–0.4 KB/s and wrecks ~0.12 KB/s per player in a large battle (events 0.72 → 1.22 KB/s, total 15.4 KB/s of 35); a join adds the whole map once (2 KB on a 256-cell map) plus 10 B per known wreck.
 
 ## 8. Homing corrections (Projectiles channel, D102)
 
@@ -187,7 +208,8 @@ After WELCOME, the server resets the player's replication state, so the very nex
 - a **full strategic snapshot**, not waiting for the 5-tick cadence;
 - **ENTER** for every tactical unit, if a camera is set; a reconnect keeps the last camera, a first join has none until the client sends `CAMERA`;
 - **SPAWN_PROJ** for projectiles in view;
-- an **Eco** record.
+- an **Eco** record;
+- **SIGHT_ROWS** of the whole map and a **WRECK** for every wreck the team knows (protocol 10).
 
 The client drops everything it had before WELCOME.
 
@@ -233,3 +255,4 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 7 | REPEAT command (15) and `REPEAT` unit state bit (16); TOGGLE no longer sets repeat on factories (S-13) |
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
+| 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |

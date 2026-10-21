@@ -17,7 +17,7 @@ local CHECK_EVERY = 150
 
 -- Everything a client view holds, as a string: units (tier, team, type,
 -- icon, flags, position, heading, altitude, health, build, state, targets),
--- projectiles, the economy and the WELCOME.
+-- projectiles, the economy, wrecks and sight (S-26), and the WELCOME.
 local function digest(view: Client.View): string
 	local ids = {}
 	for id in view.units do
@@ -48,6 +48,18 @@ local function digest(view: Client.View): string
 		if e then
 			table.insert(parts, string.format("eco%d:%d:%d:%d:%d", team, e.supply.stored, e.supply.income, e.power.stored, e.power.income))
 		end
+	end
+	local wids = {}
+	for id in view.wrecks do
+		table.insert(wids, id)
+	end
+	table.sort(wids)
+	for _, id in wids do
+		local k = view.wrecks[id]
+		table.insert(parts, string.format("w%d:%d:%.6f:%.6f:%d", id, k.defIndex, k.x, k.z, k.heading))
+	end
+	if view.sight then
+		table.insert(parts, "sight:" .. buffer.tostring(view.sight :: buffer))
 	end
 	local wl = view.welcome
 	if wl then

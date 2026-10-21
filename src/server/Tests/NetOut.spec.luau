@@ -11,6 +11,7 @@ local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local Client = require("./Support/Client")
+local Combat = require("../Sim/Combat/Combat")
 local RunAll = require("./RunAll")
 
 local L = Sensors.Level
@@ -515,6 +516,118 @@ return function(t: RunAll.Context)
 		t.expect(tactical > 0, `tactical units were re-entered ({tactical})`)
 		t.expect(late.economy ~= nil, "the economy came with the join")
 		t.deepEqual(late.economy, always.economy, "and equals the connected client's")
+		t.expect(late.sight ~= nil and buffer.tostring(late.sight :: buffer) == buffer.tostring(always.sight :: buffer), "the team's sight came with the join, equal (S-26)")
+		t.deepEqual(late.wrecks, always.wrecks, "and the known wrecks")
+	end)
+
+	-- S-26 (client requests 9 and 10): the ally team's sight map and the
+	-- wrecks it knows, so the client's fog and wrecks match the server's.
+	t.test("sight and wrecks: the client's fog equals the ally team's sight, wrecks come and go as the team sees them", function()
+		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 1 }, { id = 3, team = 3, allyTeam = 2 } }
+		local sim = Sim.new({ seed = 5, players = players, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local c = sim.combat
+		local scout = Spawn.unit(sim, "ord_lancer", 1, -300, 0, math.pi / 2)
+		Spawn.unit(sim, "ord_lancer", 2, 300, 300, 0) -- the ally's: its sight is ours too
+		Spawn.unit(sim, "chs_ravager", 3, 300, -300, 0)
+		camera(sim, 1, 0, 0, 95, 95)
+		local view = Client.new(g)
+		local spectator = Client.new(g)
+		local spec = NetOut.addSpectator(sim)
+		local mismatches, checks = 0, 0
+		local function step(n: number)
+			for _ = 1, n do
+				Sim.step(sim)
+				Client.receive(view, sim.net.players[1].outbox)
+				Client.receive(spectator, sim.net.spectators[spec].outbox)
+				if sim.tick % 2 == 0 then
+					local los = sim.sensors.maps[1].los
+					for i = 0, sim.sensors.width * sim.sensors.depth - 1 do
+						local server = buffer.readu16(los, i * 2) > 0
+						local client = view.sight ~= nil and buffer.readu8(view.sight :: buffer, i) == 1
+						if server ~= client then
+							mismatches += 1
+						end
+					end
+					checks += 1
+				end
+			end
+		end
+		local function stepUntil(cond: () -> boolean, limit: number): boolean
+			for _ = 1, limit do
+				if cond() then
+					return true
+				end
+				step(1)
+			end
+			return cond()
+		end
+		step(4)
+		t.expect(Client.inSight(view, 300, 300), "the ally's unit's surroundings are in our sight")
+		t.expect(Client.inSight(view, -300, 0), "and our own unit's")
+		t.expect(not Client.inSight(view, 0, -300), "the middle of the south edge isn't")
+		t.equal(spectator.sight, nil, "spectators get no sight (they see everything)")
+
+		-- a wreck in fog: unknown to the team, known to spectators at once
+		local ravager = sim.defs.units.chs_ravager
+		local hidden = Combat.addWreck(c, 0, -300, ravager, math.pi / 2)
+		local near = Combat.addWreck(c, -300, 20, ravager, 1.0)
+		step(2)
+		t.equal(view.wrecks[hidden], nil, "a wreck in fog isn't sent")
+		t.expect(spectator.wrecks[hidden] ~= nil, "spectators get every wreck")
+		local nw = view.wrecks[near]
+		t.expect(nw ~= nil, "a wreck in sight is")
+		if nw then
+			t.equal(nw.defIndex, ravager.index, "with its def")
+			t.expect(math.abs(nw.x - -300) < 0.1 and math.abs(nw.z - 20) < 0.1, "position")
+			t.equal(nw.heading, NetOut.headingU8(1.0), "and heading")
+		end
+
+		-- scouting the hidden one, then it disappears while out of sight
+		moveTo(sim, 1, { scout }, 0, -270)
+		t.expect(stepUntil(function()
+			return view.wrecks[hidden] ~= nil
+		end, 400), "the wreck appears once the scout sees its spot")
+		moveTo(sim, 1, { scout }, -300, 0)
+		t.expect(stepUntil(function()
+			return not Client.inSight(view, 0, -300)
+		end, 400), "the scout left")
+		Combat.removeWreck(c, hidden)
+		step(10)
+		t.expect(view.wrecks[hidden] ~= nil, "a wreck reclaimed out of sight stays on the client's map (the team can't know)")
+		t.equal(spectator.wrecks[hidden], nil, "spectators see it go at once")
+		moveTo(sim, 1, { scout }, 0, -270)
+		t.expect(stepUntil(function()
+			return view.wrecks[hidden] == nil
+		end, 400), "WRECK_GONE once the team sees the empty spot")
+		moveTo(sim, 1, { scout }, -300, 0)
+		step(200)
+
+		-- a wreck removed in sight goes at once (by the next sensor tick)
+		Combat.removeWreck(c, near)
+		step(2)
+		t.equal(view.wrecks[near], nil, "a wreck removed in sight is gone")
+
+		-- a real kill in sight: the DEATH's wreck arrives in the same tick
+		local victim = Spawn.unit(sim, "chs_ravager", 3, w.posX[scout] + 60, w.posZ[scout], 0)
+		World.setHealth(w, victim, 1)
+		local sameTick = nil
+		for _ = 1, 300 do
+			step(1)
+			for _, msg in sim.net.players[1].outbox.Events do
+				for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+					if e.kind == Schema.EventKind.DEATH and e.unitId == victim and (e.wreckId :: number) ~= 0 then
+						sameTick = view.wrecks[e.wreckId :: number] ~= nil
+					end
+				end
+			end
+			if sameTick ~= nil then
+				break
+			end
+		end
+		t.equal(sameTick, true, "DEATH and its WRECK in the same tick")
+		t.equal(mismatches, 0, `sensor cells where the client's sight differs from the server's ({checks} sensor ticks)`)
 	end)
 
 	t.test("HELLO: matching versions are accepted, stale ones get REJECT with the reason", function()

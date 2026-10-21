@@ -71,7 +71,11 @@ export type View = {
 	strategicTick: number, -- wire tick of the current strategic snapshot
 	received: { [number]: boolean }, -- every unit ID ever mentioned
 	log: { { channel: string, ids: { number } } }, -- this tick's mentions, for checks
+	wrecks: { [number]: Wreck }, -- wrecks the team knows (S-26)
+	sight: buffer?, -- the ally team's sight, one byte (0 / 1) per sensor cell; nil until the first SIGHT_ROWS (S-26)
 }
+
+export type Wreck = { defIndex: number, x: number, z: number, heading: number }
 
 Client.BLEND_TICKS = 5 -- a correction is blended in over this many ticks
 Client.SNAP_STUDS = 60 -- larger errors snap: they only happen when a projectile comes back into view
@@ -92,7 +96,19 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?): View
 		received = {},
 		log = {},
 		economies = {},
+		wrecks = {},
+		sight = nil,
 	}
+end
+
+-- Whether the client's team sees world point x, z (from the sight records).
+function Client.inSight(view: View, x: number, z: number): boolean
+	local sight = view.sight
+	if sight == nil then
+		return false
+	end
+	local sx, sz = view.grid:sensorCellAt(x, z)
+	return buffer.readu8(sight, sz * view.grid.sensorX + sx) == 1
 end
 
 -- The server's time to live, plus a tick: the server's own expiry sends an
@@ -153,6 +169,8 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				view.strategicTick = -1
 				view.economy = nil
 				table.clear(view.economies)
+				table.clear(view.wrecks)
+				view.sight = nil
 			elseif rec.kind == Schema.SnapshotKind.REJECT then
 				view.rejected = rec
 			end
@@ -207,6 +225,35 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				local x, y, z = pos(e)
 				view.projectiles[e.projId :: number] = nil
 				table.insert(view.effects, { kind = "impact", x = x, y = y, z = z })
+				continue
+			elseif kind == EK.WRECK then
+				local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+				assert(view.wrecks[e.wreckId :: number] == nil, `WRECK {e.wreckId} the client already has`)
+				view.wrecks[e.wreckId :: number] = { defIndex = e.defIndex :: number, x = x, z = z, heading = e.heading :: number }
+				continue
+			elseif kind == EK.WRECK_GONE then
+				assert(view.wrecks[e.wreckId :: number] ~= nil, `WRECK_GONE for wreck {e.wreckId} the client doesn't have`)
+				view.wrecks[e.wreckId :: number] = nil
+				continue
+			elseif kind == EK.SIGHT_ROWS then
+				local width = g.sensorX
+				local sight = view.sight or buffer.create(width * g.sensorZ)
+				view.sight = sight
+				local bits, rowBytes = e.bits :: buffer, e.rowBytes :: number
+				for r = 0, (e.rowCount :: number) - 1 do
+					local row = (e.firstRow :: number) + r
+					for x = 0, width - 1 do
+						local b = buffer.readu8(bits, r * rowBytes + x // 8)
+						buffer.writeu8(sight, row * width + x, bit32.extract(b, x % 8))
+					end
+				end
+				continue
+			elseif kind == EK.SIGHT_CELLS then
+				local sight = view.sight
+				assert(sight, "SIGHT_CELLS before any SIGHT_ROWS")
+				for _, c in e.cells :: { number } do
+					buffer.writeu8(sight, c % Schema.SIGHT_SEEN, if c >= Schema.SIGHT_SEEN then 1 else 0)
+				end
 				continue
 			elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 				local p = view.projectiles[e.projId :: number]
