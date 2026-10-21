@@ -1,11 +1,15 @@
 --!strict
--- Lobby and results screens (C-70, guide 16.3), functional PLACEHOLDERS:
--- the server's lobby (src/roblox/Lobby) arrives as the Remotes folder's
--- "Lobby" attribute (JSON); changes go back through the "Lobby" remote.
--- Lobby: map, mode (FFA / Team), win rule (Command Ends / Annihilation),
--- faction (Order / Chaos), AI slots with Easy / Normal / Hard, Start.
--- Results: victory or defeat, the match's length, each player's end, and
--- back to the lobby. Hidden while the match runs.
+-- Lobby and results screens (C-70; seats since C-77, guide 16.3),
+-- functional PLACEHOLDERS: the server's lobby (src/roblox/Lobby) arrives as
+-- the Remotes folder's "Lobby" attribute (JSON); changes go back through
+-- the "Lobby" remote. Lobby: map (the named maps with their starts), mode
+-- (FFA / Teams), win rule (Command Ends / Annihilation), then a row per
+-- seat: who plays it (you, another human, an AI with Easy / Normal / Hard,
+-- or open for a human to join), its faction and, in Teams, its ally team.
+-- The host (seat 1) changes everything and starts; every human picks their
+-- own faction. Results: victory or defeat for you, the match's length, and
+-- a table per player (end, units built / lost, resources gathered / spent,
+-- damage taken). Hidden while the match runs.
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -17,7 +21,7 @@ local BTN = Color3.fromRGB(44, 50, 60)
 local ON = Color3.fromRGB(70, 110, 160)
 local WIN_NAMES = { COMMAND_ENDS = "Command Ends", ANNIHILATION = "Annihilation" }
 
-export type UI = { gui: ScreenGui, panel: Frame, body: Frame, remote: RemoteEvent, last: string? }
+export type UI = { gui: ScreenGui, panel: Frame, body: Frame, remote: RemoteEvent, last: string?, host: boolean }
 
 local function label(parent: Instance, text: string, size: number, order: number): TextLabel
 	local l = Instance.new("TextLabel")
@@ -75,6 +79,47 @@ local function row(parent: Instance, name: string, order: number): Frame
 	return f
 end
 
+local function clock(seconds: number): string
+	return string.format("%d:%02d", math.floor(seconds / 60), math.floor(seconds) % 60)
+end
+
+local function cap(text: string): string
+	return string.upper(string.sub(text, 1, 1)) .. string.sub(text, 2)
+end
+
+local function results(ui: UI, r: any, me: number, send: (any) -> ())
+	local mine
+	for _, p in r.players or {} do
+		if p.user == me then
+			mine = p
+		end
+	end
+	local won = mine ~= nil and mine.won
+	local title = if won then "VICTORY" elseif r.over then "DEFEAT" elseif mine and mine.outAt then "ELIMINATED" else "MATCH OVER"
+	label(ui.body, title, 30, 1).TextColor3 = if won then Color3.fromRGB(120, 230, 120) else Color3.fromRGB(240, 100, 90)
+	label(ui.body, `Match length {clock(r.seconds or 0)}`, 14, 2)
+	label(ui.body, "Player · faction · team · end  |  built / lost  |  supply gathered / spent  |  power gathered / spent  |  damage taken", 11, 3).TextColor3 = Color3.fromRGB(170, 170, 170)
+	for i, p in r.players or {} do
+		local out = if p.won then "won" elseif p.outAt then `out at {clock(p.outAt)}` else "standing"
+		local st = p.stats
+		local line = `{p.name}{if p.user == me then " (you)" else ""}  ·  {p.faction}  ·  {p.allyTeam}  ·  {out}`
+		if st then
+			line ..= `  |  {st.built} / {st.lost}  |  {st.supplyGathered} / {st.supplySpent}  |  {st.powerGathered} / {st.powerSpent}  |  {st.taken}`
+		else
+			line ..= `  |  {p.units} units`
+		end
+		label(ui.body, line, 12, 3 + i)
+	end
+	local back = row(ui.body, "", 50)
+	if ui.host then
+		button(back, "Back to lobby", 160, true, function()
+			send({ op = "lobby" })
+		end)
+	else
+		label(back, "The host returns to the lobby", 12, 1)
+	end
+end
+
 local function render(ui: UI, data: any)
 	for _, c in ui.body:GetChildren() do
 		if not c:IsA("UIListLayout") then
@@ -85,29 +130,27 @@ local function render(ui: UI, data: any)
 	local send = function(msg: any)
 		ui.remote:FireServer(msg)
 	end
+	local me = (Players.LocalPlayer :: Player).UserId
+	local mySeat
+	for i, sl in s.slots or {} do
+		if sl.kind == "human" and sl.user == me then
+			mySeat = i
+		end
+	end
+	ui.host = mySeat == 1
 	ui.panel.Visible = s.phase ~= "playing"
 	if s.phase == "results" then
-		local r = s.results or {}
-		local title = if r.youWon then "VICTORY" elseif r.over then "DEFEAT" else "ELIMINATED"
-		label(ui.body, title, 30, 1).TextColor3 = if r.youWon then Color3.fromRGB(120, 230, 120) else Color3.fromRGB(240, 100, 90)
-		label(ui.body, string.format("Match length %d:%02d", math.floor((r.seconds or 0) / 60), math.floor(r.seconds or 0) % 60), 14, 2)
-		for i, p in r.players or {} do
-			local out = if p.outAt then string.format("out at %d:%02d", math.floor(p.outAt / 60), math.floor(p.outAt) % 60) else "standing"
-			label(ui.body, `{p.name}  ·  {p.faction}  ·  ally team {p.allyTeam}  ·  {if p.won then "won" else out}  ·  {p.units} units`, 13, 2 + i)
-		end
-		local back = row(ui.body, "", 50)
-		button(back, "Back to lobby", 160, true, function()
-			send({ op = "lobby" })
-		end)
+		results(ui, s.results or {}, me, send)
 		return
 	end
-	label(ui.body, "SKIRMISH", 24, 1)
-	-- map
+	label(ui.body, if ui.host then "SKIRMISH: you host" elseif mySeat then "SKIRMISH: waiting for the host" else "SKIRMISH: no free seat", 22, 1)
+	local host = ui.host
 	local mapRow = row(ui.body, "Map", 2)
 	for _, m in data.maps do
-		button(mapRow, `{m.name} ({m.starts})`, 112, m.id == s.mapId, function()
+		local b = button(mapRow, `{m.name} ({m.starts})`, 112, m.id == s.mapId, function()
 			send({ op = "set", key = "mapId", value = m.id })
 		end)
+		b.Active = host
 	end
 	local modeRow = row(ui.body, "Mode", 3)
 	for _, mode in { "FFA", "TEAM" } do
@@ -121,42 +164,64 @@ local function render(ui: UI, data: any)
 			send({ op = "set", key = "win", value = w })
 		end)
 	end
-	local facRow = row(ui.body, "Faction", 5)
-	for _, f in { "order", "chaos" } do
-		button(facRow, if f == "order" then "Order" else "Chaos", 112, s.faction == f, function()
-			send({ op = "set", key = "faction", value = f })
-		end)
-	end
 	local starts = 2
 	for _, m in data.maps do
 		if m.id == s.mapId then
 			starts = m.starts
 		end
 	end
-	for i, level in s.ai do
-		local r = row(ui.body, `AI {i}`, 5 + i)
-		for _, l in data.levels do
-			button(r, string.upper(string.sub(l, 1, 1)) .. string.sub(l, 2), 80, l == level, function()
-				send({ op = "ai", index = i, level = l })
-			end)
+	for i, sl in s.slots or {} do
+		local who = if sl.kind == "human" then (if sl.user == me then "You" else sl.name or "Player") elseif sl.kind == "open" then "Open" else "AI"
+		local r = row(ui.body, `{i}. {who}`, 4 + i)
+		-- faction: your own seat, or the host for AI and open seats
+		if (sl.kind == "human" and sl.user == me) or (host and sl.kind ~= "human") then
+			for _, f in { "order", "chaos" } do
+				button(r, cap(f), 64, sl.faction == f, function()
+					send({ op = "faction", index = i, value = f })
+				end)
+			end
+		else
+			label(r, cap(sl.faction), 12, 1).Size = UDim2.fromOffset(64, 28)
 		end
-		if #s.ai > 1 then
-			button(r, "Remove", 80, false, function()
-				send({ op = "ai", index = i, level = nil })
+		if host and i > 1 and sl.kind ~= "human" then
+			for _, l in data.levels do
+				button(r, cap(l), 60, sl.kind == "ai" and l == sl.level, function()
+					send({ op = "slot", index = i, kind = "ai", level = l })
+				end)
+			end
+			button(r, "Open", 54, sl.kind == "open", function()
+				send({ op = "slot", index = i, kind = "open" })
 			end)
+			if #s.slots > 2 then
+				button(r, "×", 28, false, function()
+					send({ op = "slot", index = i, kind = nil })
+				end)
+			end
+		elseif sl.kind == "ai" then
+			label(r, cap(sl.level), 12, 2).Size = UDim2.fromOffset(60, 28)
+		end
+		if s.mode == "TEAM" then
+			for _, a in { 1, 2 } do
+				local b = button(r, `Team {a}`, 60, sl.ally == a, function()
+					send({ op = "ally", index = i, value = a })
+				end)
+				b.Active = host
+			end
 		end
 	end
 	local actions = row(ui.body, "", 30)
-	if #s.ai < starts - 1 then
-		button(actions, "Add AI", 100, false, function()
-			send({ op = "ai", index = #s.ai + 1, level = "normal" })
+	if host then
+		if #s.slots < starts then
+			button(actions, "Add AI", 90, false, function()
+				send({ op = "slot", index = #s.slots + 1, kind = "ai", level = "normal" })
+			end)
+			button(actions, "Add seat", 90, false, function()
+				send({ op = "slot", index = #s.slots + 1, kind = "open" })
+			end)
+		end
+		button(actions, "START", 140, true, function()
+			send({ op = "start" })
 		end)
-	end
-	button(actions, "START", 140, true, function()
-		send({ op = "start" })
-	end)
-	if s.mode == "TEAM" then
-		label(ui.body, "Teams: you and every second AI against the others", 12, 40)
 	end
 end
 
@@ -169,7 +234,7 @@ function LobbyUI.new(remotes: Folder): UI
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0.5, 0.5)
 	panel.Position = UDim2.fromScale(0.5, 0.5)
-	panel.Size = UDim2.fromOffset(720, 420)
+	panel.Size = UDim2.fromOffset(880, 460)
 	panel.BackgroundColor3 = BG
 	panel.BackgroundTransparency = 0.05
 	panel.BorderSizePixel = 0
@@ -188,7 +253,7 @@ function LobbyUI.new(remotes: Folder): UI
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = body
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	local ui: UI = { gui = gui, panel = panel, body = body, remote = remotes:WaitForChild("Lobby") :: RemoteEvent, last = nil }
+	local ui: UI = { gui = gui, panel = panel, body = body, remote = remotes:WaitForChild("Lobby") :: RemoteEvent, last = nil, host = false }
 	local function refresh()
 		local json = remotes:GetAttribute("Lobby")
 		if type(json) ~= "string" or json == ui.last then

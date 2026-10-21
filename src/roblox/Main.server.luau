@@ -9,13 +9,18 @@
 -- NetOut.join queues its WELCOME; nothing is sent to a player before that.
 -- Not yet: guide 19 checks beyond a rate limit and a size cap, replay saving.
 --
--- Match flow (C-70): a profile with `lobby = true` starts in a lobby
--- (src/roblox/Lobby: map, mode, win rule, faction, AI slots), published to
+-- Match flow (C-70; seats since C-77): a profile with `lobby = true` starts
+-- in a lobby (src/roblox/Lobby: map, mode, win rule, and seats: a human,
+-- an AI and its level, or open; factions and ally teams), published to
 -- clients as the Remotes folder's "Lobby" attribute (JSON) and changed
--- through the "Lobby" remote. In the lobby an empty sim on the chosen map
--- runs as a preview; Start builds the match (the human is player 1, the
--- skirmish AI plays the rest, S-17), the Match system ends it, the results
--- are published, and "back to lobby" returns to the preview.
+-- through the "Lobby" remote. Roblox players take open seats as they join
+-- (the first hosts; `seats` in the profile sets the starting ones); seat i
+-- plays sim player i. In the lobby an empty sim on the chosen map runs as
+-- a preview; Start builds the match (the skirmish AI plays its seats,
+-- S-17), the Match system ends it, the results (with MatchStats) are
+-- published once every human is out or the match is over, and "back to
+-- lobby" returns to the preview. A human who leaves mid-match keeps the
+-- seat and rejoins into it.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,6 +39,7 @@ local SimWorld = require(game:GetService("ServerScriptService"):WaitForChild("Si
 local Skirmish = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("AI"):WaitForChild("Skirmish")) :: any
 local MapRegistry = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Grid"):WaitForChild("MapRegistry")) :: any
 local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
+local MatchStats = require(script.Parent:WaitForChild("MatchStats")) :: any
 local HttpService = game:GetService("HttpService")
 
 local DT = 1 / Sim.TICK_RATE
@@ -127,12 +133,16 @@ local defs = withOverrides(Defs.load(), Config.weaponOverrides)
 
 local sim: any
 local brains: { any } = {} -- the skirmish AI's players in a lobby match (C-70)
+local stats: any = nil -- the lobby match's statistics (C-77)
+local PREVIEW_PLAYERS = 8 -- the lobby preview has a sim player for every seat a human may take
 local matchStartTick = 0
 local matchId = 0
 local seed = Config.seed
 local endedAt: number? = nil
 
 local slotOf: { [Player]: number } = {} -- Roblox player → sim player ID
+local lobby: any = nil -- the lobby's state (C-70; seats since C-77)
+local lobbyMaps: { any } = {}
 local joined: { [Player]: boolean } = {} -- HELLO accepted: receives the outbox
 local tokens: { [Player]: number } = {}
 
@@ -162,6 +172,9 @@ local function centroid(ids: { number }): (number, number)
 end
 
 local function isHuman(id: number): boolean
+	if lobby then
+		return lobby.slots[id] ~= nil and lobby.slots[id].kind == "human"
+	end
 	return table.find(Config.humanSlots, id) ~= nil
 end
 
@@ -194,9 +207,7 @@ local function demoOrders()
 	end
 end
 
--- The lobby (C-70): its maps with their start counts, its state, its remote.
-local lobby: any = nil
-local lobbyMaps: { any } = {}
+-- The lobby (C-70): its maps with their start counts, its remote.
 local lobbyRemote = Instance.new("RemoteEvent")
 lobbyRemote.Name = "Lobby"
 lobbyRemote.Parent = remotes
@@ -222,7 +233,7 @@ if Config.lobby then
 		local named = MapRegistry.NAMED[name]
 		table.insert(lobbyMaps, { id = id, name = if named then named.name else "Normandy", starts = #layers.starts })
 	end
-	lobby = Lobby.new(lobbyMaps)
+	lobby = Lobby.new(lobbyMaps, Config.seats)
 end
 
 local function startMatch()
@@ -232,9 +243,16 @@ local function startMatch()
 			sim = Sim.new(Lobby.config(lobby, seed))
 			brains = Skirmish.forMatch(sim)
 			matchStartTick = sim.tick
+			stats = MatchStats.new(sim)
 		else
-			-- the lobby's preview: the chosen map, nobody on it
-			sim = Sim.new({ seed = seed, players = { { id = 1, team = 1 } }, mapId = lobby.mapId, scenario = "empty", defs = defs })
+			-- the lobby's preview: the chosen map, nobody on it; a sim player
+			-- for every seat, so any seated human can join it
+			local preview = {}
+			for i = 1, PREVIEW_PLAYERS do
+				table.insert(preview, { id = i, team = i })
+			end
+			sim = Sim.new({ seed = seed, players = preview, mapId = lobby.mapId, scenario = "empty", defs = defs })
+			stats = nil
 		end
 	else
 		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
@@ -292,16 +310,31 @@ local function startMatch()
 	end
 end
 
+-- Seats move when a match starts (open slots drop out) or the host leaves:
+-- every seated human's sim player follows their slot.
+local function reseat()
+	for player in slotOf do
+		local i = Lobby.slotOf(lobby, player.UserId)
+		if i and i ~= slotOf[player] then
+			slotOf[player] = i
+			if joined[player] then
+				NetOut.join(sim, i, true) -- a fresh view as the seat's player
+			end
+		end
+	end
+end
+
 lobbyRemote.OnServerEvent:Connect(function(player: Player, msg: any)
-	if lobby == nil or slotOf[player] ~= 1 then
-		return -- the lobby is the human player's (player 1)
+	if lobby == nil or slotOf[player] == nil then
+		return
 	end
 	local before = lobby.mapId
-	local action, err = Lobby.apply(lobby, lobbyMaps, msg)
+	local action, err = Lobby.apply(lobby, lobbyMaps, msg, slotOf[player])
 	if err then
-		print(`[Entry] lobby: {err}`)
+		print(`[Entry] lobby ({player.Name}): {err}`)
 	end
 	if action == "start" then
+		reseat()
 		seed += 1
 		startMatch()
 	elseif action == "lobby" or lobby.mapId ~= before then
@@ -312,6 +345,18 @@ lobbyRemote.OnServerEvent:Connect(function(player: Player, msg: any)
 end)
 
 local function assignSlot(player: Player)
+	if lobby then
+		local i = Lobby.seat(lobby, player.UserId, player.DisplayName)
+		if i then
+			slotOf[player] = i
+			tokens[player] = 40
+			print(`[Entry] {player.Name} takes seat {i}`)
+		else
+			print(`[Entry] {player.Name}: no free seat`)
+		end
+		publishLobby()
+		return
+	end
 	local taken: { [number]: boolean } = {}
 	for _, id in slotOf do
 		taken[id] = true
@@ -341,6 +386,11 @@ Players.PlayerRemoving:Connect(function(player)
 	slotOf[player] = nil
 	joined[player] = nil
 	tokens[player] = nil
+	if lobby then
+		Lobby.leave(lobby, player.UserId) -- in a match the seat stays theirs to rejoin
+		reseat()
+		publishLobby()
+	end
 end)
 
 remoteOf.Snapshot.OnServerEvent:Connect(function(player: Player, payload: any)
@@ -456,13 +506,16 @@ RunService.Heartbeat:Connect(function(dt: number)
 			Skirmish.tick(b)
 		end
 		Sim.step(sim)
-		-- the end for the human: the match is over, or they are out (the AI
-		-- may fight on in a free-for-all; the results don't wait for it)
-		if lobby and lobby.phase == "playing" and (sim.match.over or sim.match.eliminated[1]) then
+		if stats and lobby and lobby.phase == "playing" then
+			MatchStats.step(stats, sim)
+		end
+		-- the end for the humans: the match is over, or they are all out (the
+		-- AI may fight on in a free-for-all; the results don't wait for it)
+		if lobby and lobby.phase == "playing" and Lobby.done(lobby, sim) then
 			lobby.phase = "results"
-			lobby.results = Lobby.results(lobby, sim, matchStartTick)
+			lobby.results = Lobby.results(lobby, sim, matchStartTick, MatchStats.summary(stats))
 			brains = {}
-			print(`[Entry] match over for the human: {if sim.match.over then `ally team {sim.match.winner} won` else "eliminated"}`)
+			print(`[Entry] match over for the humans: {if sim.match.over then `ally team {sim.match.winner} won` else "all out"}`)
 			publishLobby()
 		end
 		if Config.demoOrders and sim.tick % DEMO_EVERY == 0 then
