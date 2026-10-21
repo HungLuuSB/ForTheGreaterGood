@@ -622,3 +622,74 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Now (protocol 19):** the Strategic record's icon is 8 bits and is the unit's **def index** (`Shared/Net/Icons.byDef`); `def.icon` stays the family name for the shape. The record keeps its 6 bytes: the flags field shrinks from 7 to 5 bits, all five of which were in use (2 were reserved). At most 255 unit defs (an assert).
 - **Knowledge unchanged:** icons go only where the team knows the type (VISIBLE, ghosts, TRACKED contacts), as before; untracked blips stay icon 0 (D107). A tracked contact now shows its exact type instead of its family, which D107 already allows (tracking reveals the type).
 - **Tests:** `Schema.spec` bit layout, golden bytes and range checks; `NetOut.spec` checks every def's icon is its own index.
+
+## S-59 — Pinpointers: radar precision for the team (client request 34, the user asked) (2026-10-22)
+
+- **Asked (the user, through the client):** radar vehicles, and "radar enhance facility (pinpointer) that increase the team's accuracy, build around 6 and maximum accuracy achieved -> less to no wobble radar blip, radar missile will be able to hit more precisely (long range radar will likely to lose lock or miss without pinpointer enhancements)."
+- **Radar vehicles:** each faction already has one per tier. T1 mobile radar: Oracle (Order), Watcher (Chaos). T2 mobile fire-control radar: Arbiter, Stalker. No gap, nothing added.
+- **Pinpointer:** `ord_witness` (Witness) and `chs_augur` (Chaos: Augur), T2 structures built by the Architect and Forgemaster. Unit def field `pinpointer = true`.
+  - Stats: 250 supply + 3,000 power, health 1,000, footprint 2.
+- **Rule (`Shared/Combat/Pinpoint`, so a client computes the same):** precision p = min(count, 6) / 6, linear, where count is the ally team's finished Pinpointers. Sensors counts them every sensor step.
+  - Wobble: radar contacts' wobble and fire-control tracks scale by 1 − 0.9 p.
+  - Missiles: a RADAR-guided missile whose target its team has only on radar loses lock with chance 0.1 × (1 − p) per midcourse check (sim Prng).
+  - Wire: no change. Pinpointers have unique icons (S-58), so the client can count them.
+- **Numbers (under "Needs my review"):** 6 for full precision, 90% less error, lock loss 0.1 per check, the cost.
+- **Tests:**
+  - `Pinpoint.spec`: precision is linear; the worst wobble is 14.6 / 8.2 / 1.5 studs at 0 / 3 / 6 Pinpointers; radar-only shots at 700 studs lose lock 9 of 25 times with none and 0 of 25 with 6.
+  - `Guidance.spec`'s Wyvern test gets 6 Pinpointers: it measures guidance, not precision.
+
+## S-57 — AI levels: a gentle Easy, a defending Normal, missile refills (overnight task 1, the user) (2026-10-22)
+
+- **Asked (the user):**
+  - Easy must be easy for a new human player: no attack before about 8 minutes, smaller first waves.
+  - Normal builds 2–3 tanks before its third generator and pulls its army home when an enemy wave approaches its base.
+  - Measure and fix the AI's handling of SAM stockpiles.
+  - Target: Hard > Normal > Easy on every map.
+- **Before** (old report, before stockpiles): Easy beat Normal 23–19 overall. Easy won the 128-cell maps with its first wave of 8, which reached Normal's Command Vehicle at ~4.5 min.
+- **Easy:**
+  - No wave before 8 minutes (`firstAttack`), and at least 2 minutes between waves (`waveInterval`).
+  - Waves of 4, then 5, 6, …, and only that many units leave: the rest stay home.
+  - An army of at most 8 (`maxArmy`) and one army unit per 20 s (was 15).
+  - A cap of 12 made Easy a turtle that beat Normal's waves on defence (Coastline), so 8.
+- **Normal:**
+  - From its second generator, until 2 tanks are out, every builder helps the plant, and the plant builds tanks before more workers (`tanksBeforeGen3`).
+  - First tried as "no third generator until 2 tanks". That deadlocked: other construction split the 40 power/s, the tanks never finished, and Normal sat at 2 generators until minute 7.
+  - Recall: 3 or more known enemy ground units within the recall radius (570 studs, at most 45% of the distance between starts) bring the whole army, waves included, home; no wave leaves for 20 s after.
+  - The 45% fixes a false alarm: on 128-cell maps the enemy's rally point is within 570 studs of home.
+- **Missile stockpiles:** measured with scratch runs (not kept): a Normal AI against helicopter raids that fly at its base every minute from minute 4.
+  - In AI-vs-AI matches nobody builds aircraft, so the AI never fields SAMs.
+  - Before the fix, 2 helicopters per minute: refills cost 1,679 supply + 33,586 power over 15 min. The economy stalled 60% of the time, and SAMs sat empty 49% of the time, 44% with a target.
+  - Fixes:
+    - the generator rule adds the SAMs' refill power (capped at 60/s);
+    - with aircraft near home in the last minute, half the mobile SAMs stay home instead of leaving with waves;
+    - while SAMs refill under a stall (power ratio < 0.5) it queues no new army units.
+  - After: empty with a target 31% (2 helicopters). Against 4 helicopters per minute Normal still falls at ~9.5 min; it fires 44 missiles instead of 19.
+  - **Root cause, a design question:** refills get the same share of a stalled economy as construction (S-47). Should missile refills take priority? Under "Needs my review".
+- **Report** (`docs/AI_LEVELS.md`, now with a per-map tally): Hard > Normal > Easy on every map.
+  - Overall: Normal beat Easy 39–3, Hard beat Normal 42–0 and Easy 36–0.
+  - Per map, Normal–Easy: Ridgeline 10–2, Coastline 11–1, skirmish:256 12–0, Twin Lakes 6–0.
+  - Hard won all 6 FFAs.
+  - The report has no hard-vs-easy 2v2 pairing (Twin Lakes).
+- **Tests (`AI.spec`):**
+  - Easy sends no wave by 8 minutes, then a first wave of at most 4, with an army within its cap.
+  - Normal has at least 2 tanks when its third generator stands, and recalls a wave against 4 enemy tanks 220 studs from home.
+
+## S-57 (follow-up) — Mirror fairness: the integration slow suite failed (2026-10-22)
+
+- **Found by the integrator:** `Fairness.spec` (`test_slow`) failed on the first S-57 merge, so nothing was pushed. Normal mirrors on Ridgeline split 2–10 between the starts; the test wants at least 4 each.
+- **Bisected:** every form of Normal's army-first rule gave one start almost every mirror:
+  - helping the plant: east 9–11 of 12;
+  - builders idle: east 11–0;
+  - tanks-first alone: west 11–0;
+  - thinking every 10 ticks didn't help.
+- **Mechanism:**
+  - Both armies park at their rally points, 160 studs in front of home. On a 128-cell map those are ~375 studs apart, inside howitzer (450) and mortar (400) range.
+  - The side whose artillery saw the other first won the duel. With mirrored players and their fixed 10-tick think offset, that was always the same side, and army-first's uniform openings made it decide every match.
+- **Fixes:**
+  - **Rally points** sit (start distance − 520) / 2 in front of home, between 40 and 160 studs (`RALLY_GAP` = 520, beyond artillery range). Big maps are unchanged.
+  - **Waves** leave only in the first think of each 20 s window (`WAVE_ALIGN` = 300 ticks), so mirrored players that reach the wave size a think apart leave together.
+  - **"2–3 tanks":** each Normal AI draws 2 or 3 tanks before its third generator from its own Prng, so openings vary by match.
+  - **Army-first** keeps the factory's tanks-before-workers order and holds the third generator; builders keep their own jobs. Sending them all to the plant was dropped.
+- **After:**
+  - Mirrors split 4–8 (passes).
+  - The level report still shows Hard > Normal > Easy on every map: overall Normal–Easy 36–6, Hard–Normal 42–0, Hard–Easy 36–0. Per map Normal–Easy is Ridgeline 10–2, Coastline 8–4, skirmish:256 12–0, Twin Lakes 6–0, and Hard won 5 of 6 FFAs.

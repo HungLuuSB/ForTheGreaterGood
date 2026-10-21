@@ -38,6 +38,7 @@
 --
 -- Every roll draws from sim.rng in fixed system order, so replays are exact.
 
+local Pinpoint = require("@shared/Combat/Pinpoint")
 local Combat = require("./Combat/Combat")
 local Guidance = require("@shared/Combat/Guidance")
 local Defs = require("@shared/Defs/Defs")
@@ -274,6 +275,12 @@ function EW.guide(sim: Types.Sim, p: number, weapon: Defs.WeaponDef)
 			local dx, dz = w.posX[target] - x, w.posZ[target] - z
 			local bt = EW.burnThroughRange(weapon)
 			lost = dx * dx + dz * dz > bt * bt and EW.jammed(sim, target)
+			-- a target only on radar: without Pinpointers the track is too
+			-- coarse to hold (S-59)
+			if not lost and Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE then
+				local chance = Pinpoint.LOCK_LOSS * (1 - Sensors.precision(sim.sensors, c.pTeam[p]))
+				lost = chance > 0 and sim.rng:chance(chance)
+			end
 		elseif guidance == "COMMAND" then
 			local launcher = c.pOwner[p]
 			lost = not World.isRef(w, launcher, c.pOwnerGen[p]) or Sensors.level(sim, c.pTeam[p], target) ~= L.VISIBLE

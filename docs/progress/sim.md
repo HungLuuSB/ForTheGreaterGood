@@ -100,6 +100,8 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **AI levels (S-57):** Easy's numbers (first wave at 8 min, waves of 4 + 1, 2 min apart, army of 8, a unit per 20 s); Normal's 2 tanks before the third generator and its recall rule. **Design question:** missile refills share a stalled economy evenly with construction, so an AI (or player) under air attack keeps its SAMs empty. Should refills take priority over construction?
+- **Pinpointers (S-59, the user asked):** names Witness and Augur; full precision at 6 (linear); 90% less radar and track error at full; radar-only missile lock loss 10% per midcourse check without Pinpointers (a long shot fails about a third to half the time); cost 250 + 3,000.
 - **SAM ranges cut again (S-56, the user asked):** IR now 49% of its S-33 range, radar 56% of S-45's. **Nukes:** a nuke is now in a radar site's reach for only ~6 s, so two sites often let one through (the test now uses four). If interception should stay strong, raise the chance or the radar SAM stock again.
 - **Shorter SAM ranges (S-55, the user asked):** IR −30%, radar −25%. My call: the units' air sight and radars shrink by the same factor. A side effect is a shorter interception window for nukes.
 - **Radar SAM stock (S-52, the user asked):** Wyvern / Aegis capacity 15, 6 s per missile. My calls: the cost per missile stays 40 + 900 (a full refill 600 + 13,500), mobile radar SAMs stay at 3, IR SAMs unchanged.
@@ -131,6 +133,12 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 34), S-59:** Pinpointers `ord_witness` (Witness) and `chs_augur` (Augur).
+  - Defs: T2 structures with icon family `pinpointer`, pieces `base` and `dish`, built by the Architect and Forgemaster, unit def field `pinpointer = true`.
+  - Precision: `Shared/Combat/Pinpoint.precision(count)` = min(count, 6) / 6, where count is the team's finished Pinpointers. Error scales by `errorScale(p)` = 1 − 0.9 p.
+  - No new record: count your team's Pinpointers from their icons, which are unique per unit type since S-58.
+  - Contacts on the wire already arrive with the reduced wobble.
+  - Radar vehicles: Oracle and Watcher (T1), Arbiter and Stalker (T2 fire control) already exist.
 - **Done (request 35), S-58, protocol 19:** the Strategic record's icon is 8 bits (bits 0–7) and is the unit's **def index** (`Icons.byDef`): unique per unit type; team bits 8–10, flags bits 11–15 (5 bits, all in use). 0 = unknown blip as before. `def.icon` stays the family name (`Icons.names`). Still 6 bytes. Contract sections 3, 6.
 - **Done (request 33), S-56:** SAM range and lockRange: IR 206 (Chaos) / 147 (Order), radar 945 / 1013. airSight Thorn 206, Vigil 157, Hornet 147, Halo 157; radars Wyvern 1013, Aegis 1097, Gorgon 810, Seraph 878.
 - **Done (request 32), S-55:** SAM ranges and lockRanges: IR 294 (Chaos) / 210 (Order), radar 1260 / 1350. Sensors follow: airSight Thorn 294, Vigil 224, Hornet 210, Halo 224; radars Wyvern 1350, Aegis 1463, Gorgon 1080, Seraph 1170. projectileSpeed unchanged.

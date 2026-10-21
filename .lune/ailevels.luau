@@ -77,9 +77,13 @@ out("|---|---|---|---|---|---|")
 
 local wins: { [string]: { [string]: number } } = {}
 local undecided: { [string]: { [string]: number } } = {} -- called on value at the limit: leader → trailer
-local function tally(a: string, b: string)
+local mapWins: { [string]: { [string]: number } } = {} -- map → "a>b" → decided wins (S-57)
+local ffaWins: { [string]: { [string]: number } } = {} -- map → winning level → FFA wins
+local function tally(a: string, b: string, mapId: string)
 	wins[a] = wins[a] or {}
 	wins[a][b] = (wins[a][b] or 0) + 1
+	mapWins[mapId] = mapWins[mapId] or {}
+	mapWins[mapId][`{a}>{b}`] = (mapWins[mapId][`{a}>{b}`] or 0) + 1
 end
 
 local t0 = os.clock()
@@ -142,11 +146,15 @@ for _, m in matches do
 	-- called on value at the limit is undecided (S-32)
 	if #winLevels > 0 and (n == 2 or teams) then
 		if how == "" then
-			tally(winLevels[1], loseLevels[1])
+			tally(winLevels[1], loseLevels[1], m.mapId)
 		else
 			undecided[winLevels[1]] = undecided[winLevels[1]] or {}
 			undecided[winLevels[1]][loseLevels[1]] = (undecided[winLevels[1]][loseLevels[1]] or 0) + 1
 		end
+	end
+	if n == 4 and not teams and #winLevels > 0 and how == "" then
+		ffaWins[m.mapId] = ffaWins[m.mapId] or {}
+		ffaWins[m.mapId][winLevels[1]] = (ffaWins[m.mapId][winLevels[1]] or 0) + 1
 	end
 	out(string.format("| %s | %s | %d | %s | %.1f min | %d |", m.mapId, m.label, seed, winner, sim.tick / 900, peak))
 	lengths[m.mapId] = lengths[m.mapId] or {}
@@ -165,6 +173,21 @@ for _, a in { "easy", "normal", "hard" } do
 		table.insert(row, if a == b then "—" else tostring((wins[a] or {})[b] or 0) .. (if u > 0 then ` ({u})` else ""))
 	end
 	out(`| {a} | {table.concat(row, " | ")} |`)
+end
+out("")
+out("**Per map** (S-57; decided matches, the row's level first: hard–normal means hard's wins – normal's wins; FFA: wins per level):")
+out("")
+out("| Map | hard–normal | normal–easy | hard–easy | FFA (hard / normal / easy) |")
+out("|---|---|---|---|---|")
+for _, mapId in { "map:ridgeline", "map:coastline", "skirmish:256", "map:twin_lakes", "map:crossroads" } do
+	local mw = mapWins[mapId] or {}
+	local function pair(a: string, b: string): string
+		return `{mw[a .. ">" .. b] or 0}–{mw[b .. ">" .. a] or 0}`
+	end
+	local f = ffaWins[mapId]
+	local ffa = if f then `{f.hard or 0} / {f.normal or 0} / {f.easy or 0}` else "—"
+	local twoPlayer = mapId ~= "map:crossroads"
+	out(`| {mapId} | {if twoPlayer then pair("hard", "normal") else "—"} | {if twoPlayer then pair("normal", "easy") else "—"} | {if twoPlayer then pair("hard", "easy") else "—"} | {ffa} |`)
 end
 out("")
 out("**Match lengths** per map (minutes; matches stopped at the limit count as the limit):")
