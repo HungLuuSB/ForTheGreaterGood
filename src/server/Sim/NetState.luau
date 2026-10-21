@@ -21,6 +21,7 @@ export type PlayerNet = {
 	eventCounts: { [number]: number }, -- cumulative event records per Schema.EventKind
 	sentTargets: { [number]: string }, -- own tactical units → the weapon targets last sent (S-16)
 	sentStock: { [number]: string }, -- own tactical units → the missile stock last sent (S-47)
+	sentOwner: { [number]: { string } }, -- own tactical units → queue, states, ammo last sent (S-61)
 	spectator: boolean, -- sees everything, camera on the whole map (S-18)
 	eventBytes: { [number]: number }, -- cumulative bytes per Schema.EventKind (bandwidth reports)
 	sightVersion: number, -- the ally team's sight version the client has (-1: none; S-26)
@@ -73,6 +74,7 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		eventCounts = {},
 		sentTargets = {},
 		sentStock = {},
+		sentOwner = {},
 		spectator = spectator,
 		eventBytes = {},
 		sightVersion = -1,

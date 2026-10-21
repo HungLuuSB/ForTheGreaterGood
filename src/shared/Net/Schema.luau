@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 19 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type
+Schema.PROTOCOL_VERSION = 20 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -378,6 +378,12 @@ end
 --             stock of the weapon slots with a stockpile, and the next
 --             missile's build progress (0..255 of 1; protocol 17, S-49); sent
 --             only to the unit's owner (protocol 15, S-47)
+--   owner   = ownerMask u8, then the fields it sets (protocol 20, S-61; only
+--             to the unit's owner):
+--               QUEUE 1   count u8 (0..50) | progress u8 (the head item,
+--                         0..255 of 1) | defIndex u16 × count
+--               STATES 2  u8: fire state bits 0–1, move state bits 2–3
+--               AMMO 4    rounds u8 | max u8
 --------------------------------------------------------------------------------
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
@@ -400,8 +406,12 @@ Schema.StateField = table.freeze({
 	BUILD = 16,
 	TARGET = 32, -- own units only: each weapon's target (protocol 8, S-16)
 	STOCK = 64, -- own units only: missiles in stock per stockpile slot (protocol 15, S-47)
+	OWNER = 128, -- own units only: factory queue, fire / move state, ammo (protocol 20, S-61)
 })
-local STATE_MASK_ALL = 127
+local STATE_MASK_ALL = 255
+Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4 })
+local OWNER_MASK_ALL = 7
+Schema.MAX_QUEUE = 50 -- items a factory queue can hold (BuildState.MAX_QUEUE)
 local SF = Schema.StateField
 
 Schema.WeaponState = table.freeze({ IDLE = 0, AIMING = 1, READY = 2, RESTORING = 3 })
@@ -419,6 +429,13 @@ export type State = {
 	build: number?, -- 0..255 build progress
 	targets: { Target }?, -- own units only (S-16): ascending slot order; targetId 0 = none
 	stock: { Stock }?, -- own units only (S-47): stockpile slots, ascending slot order
+	-- own units only (S-61, protocol 20): each optional
+	queue: { number }?, -- factory queue: unit def indices, the head in production
+	queueProgress: number?, -- 0..255: the head item's progress (with `queue`)
+	fireState: number?, -- Schema.FireState (with `moveState`: the STATES field)
+	moveState: number?, -- Schema.MoveState
+	ammo: number?, -- rounds left (with `maxAmmo`: the AMMO field)
+	maxAmmo: number?,
 }
 
 -- {slot1, slot2, ...} WeaponState values → the u16 weapon field.
@@ -458,6 +475,19 @@ function Schema.encodeState(w: Writer, rec: State)
 	end
 	if rec.stock ~= nil then
 		mask += SF.STOCK
+	end
+	local owner = 0
+	if rec.queue ~= nil then
+		owner += Schema.OwnerField.QUEUE
+	end
+	if rec.fireState ~= nil or rec.moveState ~= nil then
+		owner += Schema.OwnerField.STATES
+	end
+	if rec.ammo ~= nil then
+		owner += Schema.OwnerField.AMMO
+	end
+	if owner ~= 0 then
+		mask += SF.OWNER
 	end
 	if mask == 0 then
 		error("Schema: state record has no fields", 2)
@@ -533,6 +563,31 @@ function Schema.encodeState(w: Writer, rec: State)
 			w:writeU8(st.progress)
 		end
 	end
+	if owner ~= 0 then
+		w:writeU8(owner)
+		if rec.queue ~= nil then
+			local q = rec.queue
+			if #q > Schema.MAX_QUEUE then
+				error(`Schema: queue of {#q} items (at most {Schema.MAX_QUEUE})`, 2)
+			end
+			w:writeU8(#q)
+			w:writeU8(rec.queueProgress or 0)
+			for _, defIndex in q do
+				writeId(w, defIndex, "defIndex")
+			end
+		end
+		if band(owner, Schema.OwnerField.STATES) ~= 0 then
+			local fs, ms = required(rec.fireState, "fireState"), required(rec.moveState, "moveState")
+			if fs > 3 or ms > 3 then
+				error(`Schema: fire / move state {fs} / {ms} outside 0..3`, 2)
+			end
+			w:writeU8(fs + ms * 4)
+		end
+		if rec.ammo ~= nil then
+			w:writeU8(rec.ammo)
+			w:writeU8(required(rec.maxAmmo, "maxAmmo"))
+		end
+	end
 end
 
 function Schema.decodeState(r: Reader): State
@@ -596,6 +651,38 @@ function Schema.decodeState(r: Reader): State
 			end
 		end
 		rec.stock = stock
+	end
+	if band(mask, SF.OWNER) ~= 0 then
+		local owner = r:readU8()
+		if owner == 0 then
+			fail(r, "owner field mask is empty")
+		end
+		if band(owner, OWNER_MASK_ALL) ~= owner then
+			fail(r, `owner field mask has reserved bits: {owner}`)
+		end
+		if band(owner, Schema.OwnerField.QUEUE) ~= 0 then
+			local count = r:readU8()
+			if count > Schema.MAX_QUEUE then
+				fail(r, `queue of {count} items`)
+			end
+			rec.queueProgress = r:readU8()
+			local q = table.create(count)
+			for i = 1, count do
+				q[i] = readId(r, "defIndex")
+			end
+			rec.queue = q
+		end
+		if band(owner, Schema.OwnerField.STATES) ~= 0 then
+			local b = r:readU8()
+			if b > 15 then
+				fail(r, `states byte has reserved bits: {b}`)
+			end
+			rec.fireState, rec.moveState = b % 4, b // 4
+		end
+		if band(owner, Schema.OwnerField.AMMO) ~= 0 then
+			rec.ammo = r:readU8()
+			rec.maxAmmo = r:readU8()
+		end
 	end
 	return rec
 end

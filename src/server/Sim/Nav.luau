@@ -530,6 +530,7 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 			order.unreachable = true -- (an extension that finds nothing leaves the order as it is)
 		end
 		order.pending = false
+		Route.releaseSearch(search)
 		return spent, true
 	end
 	-- corridor (and merge) cost about one unit per 8 cells of the area they
@@ -550,6 +551,7 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 		spent += corridor.cellCount // 8
 	end
 	entry.plan = nil
+	Route.releaseSearch(search) -- its arrays serve the next search (S-60)
 	entry.job = FlowField.newJob(t, corridor, order.goalCell)
 	return spent, false
 end
@@ -648,6 +650,7 @@ function Nav.runJobs(nav: Nav, w: World.World, budget: number)
 			entry.order.field = field
 			entry.order.pending = false
 			nav.stats.fieldsBuilt += 1
+			FlowField.release(job) -- its scratch serves the next field (S-60)
 			nav.jobs[nav.jobHead] = nil
 			nav.jobHead += 1
 		elseif spent == 0 then
