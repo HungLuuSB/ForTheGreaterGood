@@ -103,6 +103,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `6cafe85` (merge of `main` with S-43, protocol 14) with `9698380` (SHOT tracers, C-54); test_client 99, test 327, build passed.
 - Ready to merge: `95ff932` `8b54138` (merge of `main` with S-44, S-45; the climb mirrored, C-55); test_client 99, test 327, build passed.
 - Ready to merge: `186af86` `042e4c4` (merge of `main` with S-46; request 24 marked done); test_client 99, test 327, build passed.
+- Ready to merge: `b031b63` `0728784` (merge of `main` with S-47, protocol 15; SAM stock pips, C-56); test_client 100, test 334, build passed.
 
 ## Tasks
 
@@ -390,7 +391,16 @@ All with real mouse and keyboard input through the MCP tools.
 - SAM sites and mobile SAMs now hold a stock of missiles (Thorn / Vigil 8, Hornet / Halo 4, Wyvern / Aegis 6, Gorgon / Seraph 3) and rebuild it one missile at a time for supply and power (IR 6 s, 15 + 300; radar 12 s, 40 + 900). An empty site holds its fire.
 - Your own SAMs show their stock as a row of pips above the health bar (lit = in stock), and a site that isn't full keeps its bar up while it refills (`debug_out/screens/c56_sam_stock_pips.jpg`). You never see an enemy site's stock.
 
+## 2026-10-21: nukes and interception (C-57)
+
+- Nuke silos (Order Reckoning, Chaos Ragnarok) and radar SAM interception from the sim (S-48) are now drawn: a big missile on a high arc, Aegis / Wyvern interceptors flying at it, a burst in the air when one gets it, and a mushroom cloud with a shockwave and a screen flash when it lands.
+- Every player gets a warning while a nuke flies: a blinking "NUCLEAR LAUNCH DETECTED - impact in N s" banner, a red ring at the launch site and a pulsing red ring of the blast where it will land.
+- New key A (BAR's attack): select units, press A, left-click an enemy or the ground; Shift keeps attacking, right click cancels. With a silo selected that launches a nuke there.
+- New test profile `nuke`: the Chaos silo fires at your base when the match starts and your 2 Aegis try to stop it; your silo has 2 nukes for the Chaos base, which 2 Wyverns defend (`debug_out/screens/c57_chase.jpg`, `c57_warning.jpg`). Both nukes were intercepted in my Studio run, so the detonation itself is only checked in Lune so far.
+
 ## Needs my review
+
+- **Nuke look (C-57):** missile 4.5× an IR one; detonation flash, fireball, stem and cap (6–10 s), shockwave ring to ~3× the blast, 240-stud scorch; screen flash 1.2 s; warning banner and rings in red. Values in `src/client/Render/Vfx.luau` (`NUKE`), `Render/Effects.luau` (`smoke_huge`) and `Render/NukeWarning.luau`.
 
 - **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
 
@@ -398,7 +408,7 @@ All with real mouse and keyboard input through the MCP tools.
 - **Missile sensor view look (C-39):** colors, sizes and label text in `src/client/Render/MissileView.luau` and `Core/MissileView.luau`; path length 1 s, at most 12 missiles, marks 2.5 s.
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
-- **Controls (C-13, answered: C-21):** BAR style now: arrow keys, edge scroll (live), middle-drag, S stop, V range rings, WASD free. Earlier: WASD / arrows pan, middle-drag pan, wheel zoom, Q/E rotate; left click / drag select (Shift add, Ctrl toggle), double-click same type, right click smart order, right-drag line move, Shift queue, Ctrl+1..9 / 1..9 groups (double tap jumps), X stop, F3 debug readout. S can't be stop (camera pan).
+- **Controls (C-13, answered: C-21):** BAR style now: arrow keys, edge scroll (live), middle-drag, S stop, V range rings, A attack (C-57; W, D still free). Earlier: WASD / arrows pan, middle-drag pan, wheel zoom, Q/E rotate; left click / drag select (Shift add, Ctrl toggle), double-click same type, right click smart order, right-drag line move, Shift queue, Ctrl+1..9 / 1..9 groups (double tap jumps), X stop, F3 debug readout. S can't be stop (camera pan).
 - **Visual style:** blockout Lancer (low, light grey, blue glass) and Ravager (tall dark iron, rust, orange visor); faction palettes in `Blockouts/Blockout.luau`; team colors (blue, red, ...) in `Render/TeamColors.luau`; ground as a green 64-stud checkerboard. See `debug_out/screens/task4_brawl_topdown.png`.
 - **UI layout (placeholder):** resource bar top center (440 x 48), minimap bottom left (200 px), F3 debug readout top left below the Roblox buttons; all labelled as placeholders.
 - **Build ghost:** B cycles the selected builder's options as a stand-in for the build menu; Shift both queues and keeps placing (BAR style); the facing doesn't change square footprints but turns the model.
@@ -412,9 +422,13 @@ All with real mouse and keyboard input through the MCP tools.
 - **Deaths and wrecks (C-34):** shake 0.4 s; flung pieces 1 s, up to ~7–11 studs; wrecks charred (75 % to dark brown-black, corroded metal), turrets askew, tilted and sunk a little. Values in `src/client/Core/Deaths.luau` and `Render/Deaths.luau`.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
+## Requests for the models session
+
+1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
+
 ## Requests for the sim session
 
-26. **Nuke silo and radar SAM interception (the user, 2026-10-21; new design, not in the guide):** "apart from air, it needs to shoot down ICBMs or nukes from the enemy launched into its radar range." The user chose: a T3 nuke silo per faction that builds nukes into a stockpile, and the radar SAM sites themselves as the interceptors. Suggested (numbers are yours to balance):
+26. **Done (S-48, protocol 16): Reckoning / Ragnarok silos, `ord_nuke` / `chs_nuke` (strategic, manual fire, stockpile 2), radar SAMs intercept (chance 0.5), INTERCEPTOR / LAUNCH_WARNING / INTERCEPTED; the client draws them and fires silos with A since C-57.** **Nuke silo and radar SAM interception (the user, 2026-10-21; new design, not in the guide):** "apart from air, it needs to shoot down ICBMs or nukes from the enemy launched into its radar range." The user chose: a T3 nuke silo per faction that builds nukes into a stockpile, and the radar SAM sites themselves as the interceptors. Suggested (numbers are yours to balance):
     - **Silo:** one T3 structure per faction (names in the faction styles, e.g. Order "Judgement", Chaos "Ragnarok"; your call), built by the advanced builders. It builds one nuke at a time into a stockpile (capacity 1–2, ~120 s and very expensive, e.g. 1,500 supply + 40,000 power, drained like construction and slowed by stalls) and fires only on a manual ground-target order (never automatically), anywhere on the map.
     - **Nuke:** a slow ballistic missile on a high arc (apex several hundred studs; ~150–200 studs/s, so defenses get time), a huge blast (aoe ~150, `edgeEffectiveness` ~0.3) that damages everything in it, own units included (BAR). A new weapon type or a flag (e.g. `strategic = true`) so other systems can tell it apart.
     - **Interception:** radar SAM weapons (`chs_radar_sam`, `ord_radar_sam`) get e.g. `intercepts = true`: an enemy strategic missile inside the site's radar range (and detected by the team: strategic missiles could count as radar-visible) is a target, preferred over aircraft. The site fires interceptors from its stockpile (request 25) at it; each has a hit chance (sim Prng, e.g. 0.5) or a proximity fuse against the missile's path, so one site can be overwhelmed by several nukes or an empty stockpile. A destroyed nuke doesn't detonate (a small burst only).

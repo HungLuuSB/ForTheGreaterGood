@@ -10,6 +10,9 @@
 --     ends it and bursts; DECOYED / LOST_LOCK snap it and clear its target;
 --     homing corrections snap the prediction and blend the drawn offset away
 --     over 5 ticks (errors above 60 studs snap).
+--   * Strategic missiles (nukes, S-48) fly ballistic; INTERCEPTOR starts a
+--     missile that chases one (steered at its state, C-57), INTERCEPTED
+--     destroys one in the air, LAUNCH_WARNING is kept in `warnings`.
 --   * FIRE draws a tracer from the shooter's muzzle to the end point; SHOT
 --     (a shooter the client doesn't have, S-43) from the start point it gives.
 --   * DEATH bursts at the unit, bigger with severity.
@@ -42,6 +45,8 @@ Effects.EXPLOSION_SECONDS = 0.55
 Effects.LAUNCH_SECONDS = 0.5 -- a missile's launch flash (its smoke cloud lasts longer, Render/Vfx)
 Effects.FLARE_SECONDS = 1.6 -- flares or chaff falling where a decoyed missile went (C-47)
 Effects.DIRCM_SECONDS = 0.45 -- a jammer laser on a decoyed IR missile (C-48)
+Effects.NUKE_SECONDS = 4 -- a nuke's detonation flash and fireball (its cloud lasts longer, Render/Vfx; C-57)
+Effects.WARNING_LINGER = 4 -- seconds a launch warning stays after its missile is gone
 Effects.DEATH_SECONDS = 0.9
 Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
 Effects.MAX_MARKS = 40
@@ -73,7 +78,12 @@ export type Proj = {
 	nextState: { number }?, -- the prediction one tick on { x, y, z, vx, vy, vz, dvx, dvy, dvz } (dv: this tick's steering): frames draw the curve between (C-38)
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the flare or chaff it follows (S-28)
 	turned: boolean?, -- a vertical launch has pitched over onto its target (Guidance.vertical, S-42, C-53)
+	chase: Proj?, -- an interceptor's strategic missile (S-48, C-57)
+	gone: boolean?, -- ended (impact, interception, time out): interceptors chasing it fly on
 }
+
+-- A strategic missile's launch (LAUNCH_WARNING, S-48): every player gets one.
+export type Warning = { projId: number, x: number, y: number, z: number, born: number, proj: Proj?, endedAt: number? }
 
 -- A flash, explosion or puff. `kind`: impact, death, muzzle, launch (a
 -- missile leaving its launcher), decoy, flare (dropped by the aircraft,
@@ -103,6 +113,7 @@ export type Fx = {
 	launches: { n: number, fromBarrel: number, sumOffset: number }, -- shells started at a drawn barrel tip, and its distance from the server's launch point (diagnostics)
 	shots: { { number } }, -- { unitId, slot } of shots played since the caller last cleared it (piece scripts' FireWeapon)
 	marks: { Mark }, -- the sensor view's corrections, decoys and lost locks, oldest first (C-39)
+	warnings: { Warning }, -- strategic launches, kept while the missile flies and WARNING_LINGER after (C-57)
 }
 
 function Effects.new(): Fx
@@ -121,6 +132,7 @@ function Effects.new(): Fx
 		launches = { n = 0, fromBarrel = 0, sumOffset = 0 },
 		shots = {},
 		marks = {},
+		warnings = {},
 	}
 end
 
@@ -396,7 +408,19 @@ local function advance(world: World.World, p: Proj, t: number): (number, number,
 	local target = World.unitOrDying(world, p.target)
 	local follow = true
 	local turned = p.turned
-	if weapon.turnRate and target then
+	local chase = p.chase
+	if weapon.turnRate and chase and not chase.gone then
+		-- an interceptor (S-48): navigate against its missile's own state at
+		-- the step's start, vertical velocity included, as the server does
+		local maxTurn = math.rad(weapon.turnRate) * DT
+		if weapon.launch == "vertical" then
+			local layers = world.layers
+			local climbLeft = if layers then Guidance.climbLeft(weapon, p.y, Layers.heightAt(layers, p.x, p.z)) else nil
+			vx, vy, vz, turned = Guidance.vertical(p.x, p.y, p.z, vx, vy, vz, chase.x, chase.y, chase.z, chase.vx, chase.vy, chase.vz, maxTurn, DT, turned == true, climbLeft)
+		else
+			vx, vy, vz = Guidance.pn(p.x, p.y, p.z, vx, vy, vz, chase.x, chase.y, chase.z, chase.vx, chase.vy, chase.vz, maxTurn, DT)
+		end
+	elseif weapon.turnRate and target then
 		vx, vy, vz, turned = steer(world, target, weapon, function(tt: number): (number, number, number)
 			local x, z, alt = Interp.sample(target, tt)
 			return x, z, alt
@@ -409,15 +433,27 @@ local function advance(world: World.World, p: Proj, t: number): (number, number,
 	return x, y, z, nvx, nvy, nvz, dvx, dvy, dvz, follow, turned
 end
 
--- One sim tick of every projectile, into tick `t`.
+-- One sim tick of every projectile, into tick `t`. Every step is worked
+-- out from the tick's start states first, then applied, so an interceptor
+-- steers at its missile where it was at the tick's start (C-57).
+local stepped: { [Proj]: { any } } = {}
 local function stepProjectiles(fx: Fx, world: World.World, t: number)
+	table.clear(stepped)
 	for id, p in fx.projectiles do
 		p.ttl -= 1
 		if p.ttl <= 0 then
 			fx.projectiles[id] = nil
+			p.gone = true
 			continue
 		end
-		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow, turned = advance(world, p, t)
+		stepped[p] = { advance(world, p, t) }
+	end
+	for _, p in fx.projectiles do
+		local r = stepped[p]
+		if r == nil then
+			continue
+		end
+		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow, turned = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11]
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
 		p.turned = turned
 		p.launch = nil
@@ -439,7 +475,7 @@ local function mark(fx: Fx, kind: string, now: number, x0: number, y0: number, z
 	table.insert(fx.marks, { kind = kind, x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now })
 end
 
-local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
+local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED" }
 
 -- The unit (and weapon slot) that launched a `weaponIndex` shell from
 -- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
@@ -466,6 +502,18 @@ local function launcher(world: World.World, weaponIndex: number, x: number, z: n
 	return bestId, bestSlot
 end
 
+-- One warning per strategic launch (LAUNCH_WARNING and the missile's own
+-- SPAWN_PROJ both raise it; ids are reused once a missile has ended).
+local function warn(fx: Fx, p: Proj?, projId: number, x: number, y: number, z: number, now: number)
+	for _, w in fx.warnings do
+		if w.projId == projId and w.endedAt == nil then
+			w.proj = w.proj or p
+			return
+		end
+	end
+	table.insert(fx.warnings, { projId = projId, x = x, y = y, z = z, born = now, proj = p })
+end
+
 -- `early`: applied one tick before its tick (C-27). SPAWN_PROJ carries the
 -- state after the server's first step, so the shell is stepped back one
 -- tick to where the server launched it.
@@ -473,7 +521,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 	local kind = e.kind
 	local name = KIND_NAME[kind] or tostring(kind)
 	fx.applied[name] = (fx.applied[name] or 0) + 1
-	if kind == EK.SPAWN_PROJ then
+	if kind == EK.SPAWN_PROJ or kind == EK.INTERCEPTOR then
 		local weapon = world.defs.weaponByIndex[e.weaponIndex]
 		if weapon == nil then
 			return
@@ -523,23 +571,37 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			ovy = 0,
 			ovz = 0,
 			weapon = weapon,
-			target = e.targetId or 0,
+			-- an interceptor's target is a projectile, not a unit (S-48)
+			target = if kind == EK.INTERCEPTOR then 0 else e.targetId or 0,
+			chase = if kind == EK.INTERCEPTOR then fx.projectiles[e.targetId] else nil,
 			ttl = ttlTicks(weapon),
 			size = weaponSize(weapon),
 			launch = launch,
 		}
 		-- a missile leaves its launcher in a cloud (C-47); a gun just flashes
-		local b = if weapon.type == "HOMING"
+		local b = if weapon.type == "HOMING" or weapon.strategic
 			then burst(fx, now, x + ox, y + oy, z + oz, weaponSize(weapon), "launch", Effects.LAUNCH_SECONDS)
 			else burst(fx, now, x + ox, y + oy, z + oz, 0.8, "muzzle", 0.12)
 		b.ground = World.groundY(world, x + ox, z + oz)
 		facing(b, vx, vy, vz)
+		-- a strategic missile warns even without its LAUNCH_WARNING, which
+		-- comes only on its launch tick: a player who joins while it flies
+		if weapon.strategic then
+			warn(fx, fx.projectiles[e.projId], e.projId, x, y, z, now)
+		end
 	elseif kind == EK.IMPACT then
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
+		if p then
+			p.gone = true
+		end
 		local x, y, z = pos(world, e)
 		local r = if p then Effects.impactSize(p.weapon) else 2
-		local b = burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
+		-- a strategic missile's IMPACT is its detonation (S-48, C-57)
+		local nuke = p ~= nil and p.weapon.strategic == true
+		local b = if nuke
+			then burst(fx, now, x, y, z, (p :: Proj).weapon.aoe or 150, "nuke", Effects.NUKE_SECONDS)
+			else burst(fx, now, x, y, z, r, "impact", Effects.EXPLOSION_SECONDS)
 		b.ground = World.groundY(world, x, z)
 		if p then
 			facing(b, p.vx, p.vy, p.vz)
@@ -583,6 +645,19 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			mark(fx, if kind == EK.DECOYED then "decoy" else "lost", now, dx, dy, dz, x, y, z)
 			burst(fx, now, dx, dy, dz, 1.2, if kind == EK.DECOYED then "decoy" else "lost", 0.35)
 		end
+	elseif kind == EK.INTERCEPTED then
+		-- destroyed in flight: a burst in the air, no detonation (S-48, C-57)
+		local p = fx.projectiles[e.projId]
+		fx.projectiles[e.projId] = nil
+		if p then
+			p.gone = true
+		end
+		local x, y, z = pos(world, e)
+		local b = burst(fx, now, x, y, z, 12, "impact", Effects.EXPLOSION_SECONDS)
+		b.ground = World.groundY(world, x, z)
+	elseif kind == EK.LAUNCH_WARNING then
+		local x, y, z = pos(world, e)
+		warn(fx, fx.projectiles[e.projId], e.projId, x, y, z, now)
 	elseif kind == EK.FIRE then
 		table.insert(fx.shots, { e.unitId, e.slot })
 		local x1, y1, z1 = pos(world, e)
@@ -686,7 +761,7 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 	-- tick it would appear a tick's travel out of the barrel (C-27)
 	for i = 1, #events do
 		local e = events[i] :: any
-		if e.kind == EK.SPAWN_PROJ and e.tick == fx.tick + 1 and not e.launched then
+		if (e.kind == EK.SPAWN_PROJ or e.kind == EK.INTERCEPTOR) and e.tick == fx.tick + 1 and not e.launched then
 			e.launched = true
 			apply(fx, world, e, now, muzzleOf, true)
 		end
@@ -767,6 +842,17 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 	for i = #fx.tracers, 1, -1 do
 		if now - fx.tracers[i].born >= fx.tracers[i].life then
 			table.remove(fx.tracers, i)
+		end
+	end
+	for i = #fx.warnings, 1, -1 do
+		local wv = fx.warnings[i]
+		wv.proj = wv.proj or fx.projectiles[wv.projId]
+		local p = wv.proj
+		if wv.endedAt == nil and ((p == nil and now - wv.born > 1) or (p ~= nil and p.gone)) then
+			wv.endedAt = now
+		end
+		if wv.endedAt and now - (wv.endedAt :: number) > Effects.WARNING_LINGER then
+			table.remove(fx.warnings, i)
 		end
 	end
 	for i = #fx.marks, 1, -1 do
@@ -953,6 +1039,26 @@ function Effects.predict(fx: Fx, world: World.World, p: Proj, ticks: number): Pr
 	return out
 end
 
+-- Where a ballistic projectile comes down (C-57): its state stepped with
+-- gravity until it reaches the ground (the server's Layers.heightAt), at
+-- most `maxSeconds`. Returns x, z and the sim seconds to get there, or nil.
+function Effects.landing(world: World.World, p: Proj, maxSeconds: number?): (number?, number?, number?)
+	local layers = world.layers
+	local g = p.weapon.gravity or 0
+	local x, y, z, vx, vy, vz = p.x, p.y, p.z, p.vx, p.vy, p.vz
+	for k = 1, math.floor((maxSeconds or 60) * 15) do
+		local px, py, pz = x, y, z
+		x, y, z, vx, vy, vz = Ballistics.step(x, y, z, vx, vy, vz, g, DT)
+		local ground = if layers then Layers.heightAt(layers, x, z) else 0
+		if vy < 0 and y <= ground then
+			-- where the tick's chord meets the ground
+			local f = if py > y then math.clamp((py - ground) / (py - y), 0, 1) else 1
+			return px + (x - px) * f, pz + (z - pz) * f, (k - 1 + f) * DT
+		end
+	end
+	return nil, nil, nil
+end
+
 -- Forgets everything (a new WELCOME).
 function Effects.clear(fx: Fx)
 	table.clear(fx.projectiles)
@@ -960,6 +1066,7 @@ function Effects.clear(fx: Fx)
 	table.clear(fx.tracers)
 	table.clear(fx.pendingDeaths)
 	table.clear(fx.crashes)
+	table.clear(fx.warnings)
 	table.clear(fx.shots)
 	table.clear(fx.marks)
 	fx.tick = -1

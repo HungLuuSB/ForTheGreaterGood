@@ -1451,6 +1451,7 @@ When the camera is zoomed far out, hide models and draw icons (flat billboards o
 - Shift queues commands; queued paths draw as lines for selected units.
   - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT (attack-move, BAR behavior, S-14) advances while no enemy is within weapon range, stops and fires while one is, and goes on when none are left; seeing an enemy doesn't stop it. PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
 - Line formation by right-click drag.
+- Attack order (BAR's A key, C-57): A, then left-click an enemy unit (ATTACK) or the ground (ATTACK_GROUND, how a nuke silo fires, 10.9); Shift keeps the mode, right click cancels.
 - Build placement ghost with grid snapping, validity tint (green/red), shift for multiple, drag for rows.
 
 ### 15.7 UI checklist
