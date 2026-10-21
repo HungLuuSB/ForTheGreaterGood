@@ -71,6 +71,41 @@ local PI, TAU = math.pi, 2 * math.pi
 local HOLD_FIRE, RETURN_FIRE = World.FireState.HOLD_FIRE, World.FireState.RETURN_FIRE
 
 local candidates: { number } = {}
+local INTERCEPT_HYSTERESIS = 1.1
+
+-- An interceptor's strategic missile (S-48): the current one while it stays
+-- an enemy missile the team detects within range (+10%), else the nearest
+-- such missile in range, else 0.
+local function interceptTarget(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, key: number): number
+	local c = sim.combat
+	local w = sim.world
+	local ally = w.ally[id]
+	local x, z = w.posX[id], w.posZ[id]
+	local function valid(p: number, reach: number): number?
+		if c.pTeam[p] == ally then
+			return nil
+		end
+		local px, pz = c.px[p], c.pz[p]
+		local d2 = (px - x) ^ 2 + (pz - z) ^ 2
+		if d2 > reach * reach or not Sensors.detectsPoint(sim, ally, px, pz) then
+			return nil
+		end
+		return d2
+	end
+	local cur = w.wTargetProj[key]
+	if cur ~= 0 and Combat.isProjRef(c, cur, w.wTargetProjSerial[key]) and valid(cur, weapon.range * INTERCEPT_HYSTERESIS) then
+		return cur
+	end
+	local best, bestD2 = 0, math.huge
+	for _, p in c.strategic do
+		local d2 = valid(p, weapon.range)
+		if d2 and d2 < bestD2 then
+			best, bestD2 = p, d2
+		end
+	end
+	return best
+end
+
 local OK_NONE, OK_RETARGET, OK_ALLOWED = World.Overkill.NONE, World.Overkill.RETARGET, World.Overkill.ALLOWED
 
 local function wrapAngle(a: number): number
@@ -292,6 +327,20 @@ return function(sim: Types.Sim)
 			if groundOrder and weapon.type == "BOMB" then
 				World.setTarget(w, key, 0) -- bombing the ordered spot (Air.bombAim)
 				continue
+			end
+			if weapon.manualFire then
+				World.setTarget(w, key, 0) -- fires only at an attack-ground point (S-48)
+				continue
+			end
+			-- interceptors: enemy strategic missiles before anything else (S-48)
+			if weapon.intercepts then
+				local p = if fs ~= HOLD_FIRE and #sim.combat.strategic > 0 then interceptTarget(sim, id, weapon, key) else 0
+				w.wTargetProj[key] = p
+				w.wTargetProjSerial[key] = if p ~= 0 then sim.combat.pSerial[p] else 0
+				if p ~= 0 then
+					World.setTarget(w, key, 0)
+					continue
+				end
 			end
 
 			if forced and acceptable(sim, id, weapon, forced, 1, forcedGen) ~= nil then

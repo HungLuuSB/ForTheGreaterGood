@@ -126,6 +126,18 @@ export type WeaponDef = {
 	-- at a time (buildTime seconds, cost each) while below capacity. A unit's
 	-- slot may set its own capacity (WeaponSlot.stockpile).
 	stockpile: { capacity: number, buildTime: number, cost: { supply: number?, power: number? } }?,
+	-- strategic missiles (S-48): `strategic` = interceptable by `intercepts`
+	-- weapons, its blast hurts every side, it passes over units in flight
+	-- and every player is warned of its launch; `manualFire` = never picks a
+	-- target, fires one shot per attack-ground order; `apex` (BALLISTIC) =
+	-- lofted: climbs to `apex` studs above the launch whatever the distance,
+	-- the horizontal speed follows from the distance
+	strategic: boolean?,
+	manualFire: boolean?,
+	apex: number?,
+	-- HOMING: also targets enemy strategic missiles the team detects, before
+	-- anything else; a proximity burst destroys one with `chance` (S-48)
+	intercepts: { chance: number }?,
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
@@ -205,7 +217,7 @@ local UNIT_SPEC: Spec = {
 		name = STRING,
 		description = STRING,
 		faction = { kind = "string", enum = set({ "order", "chaos", "neutral" }) },
-		tier = { kind = "integer", min = 0, max = 2 },
+		tier = { kind = "integer", min = 0, max = 3 }, -- 3: strategic structures (S-48)
 		domain = { kind = "string", enum = set({ "ground", "air", "naval", "structure" }) },
 		categories = { kind = "list", item = CATEGORY, minItems = 1 },
 		cost = {
@@ -362,6 +374,10 @@ local WEAPON_SPEC: Spec = {
 			},
 		},
 		burnThrough = opt(FRACTION),
+		strategic = { kind = "boolean", optional = true },
+		manualFire = { kind = "boolean", optional = true },
+		apex = opt(POSITIVE),
+		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION } },
 		canTargetRadar = { kind = "boolean", optional = true },
 		fx = {
 			kind = "record",
@@ -525,6 +541,12 @@ function Defs.validate(raw: RawDefs): { string }
 			end
 		elseif w.guidance ~= nil then
 			report(`guidance: only HOMING and TORPEDO weapons are guided, not {tostring(wtype)}`)
+		end
+		if w.apex ~= nil and wtype ~= "BALLISTIC" then
+			report(`apex: only BALLISTIC weapons are lofted, not {tostring(wtype)}`)
+		end
+		if w.intercepts ~= nil and (wtype ~= "HOMING" or w.launch ~= "vertical") then
+			report(`intercepts: only vertical-launch HOMING weapons intercept (they need no aim)`)
 		end
 		local turret = w.turret
 		if
