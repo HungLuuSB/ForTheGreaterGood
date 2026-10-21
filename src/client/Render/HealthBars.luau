@@ -63,8 +63,9 @@ local function newSlot(parent: ScreenGui): Slot
 	return { root = root, healthFill = healthFill, buildBack = buildBack, buildFill = buildFill, stockRow = stockRow, pips = {} }
 end
 
--- The stock row: `count` of `capacity` pips lit (or one bar past MAX_PIPS).
-local function drawStock(slot: Slot, width: number, count: number?, capacity: number?)
+-- The stock row: `count` of `capacity` pips lit (or one bar past MAX_PIPS),
+-- the next one filling with `progress` (S-49, C-59).
+local function drawStock(slot: Slot, width: number, count: number?, capacity: number?, progress: number?)
 	local row = slot.stockRow
 	if count == nil or capacity == nil then
 		row.Visible = false
@@ -92,9 +93,24 @@ local function drawStock(slot: Slot, width: number, count: number?, capacity: nu
 			pip.Position = UDim2.fromOffset(math.floor((i - 1) * (w + gap) + 0.5), 0)
 			pip.Size = UDim2.fromOffset(math.max(1, math.floor(w + 0.5)), PIP_H)
 			pip.BackgroundColor3 = if i <= count then STOCK_COLOR else EMPTY_COLOR
+			-- the missile being built fills its pip from the left
+			local fill = pip:FindFirstChild("Fill") :: Frame?
+			local building = i == count + 1 and progress ~= nil and progress > 0
+			if building and fill == nil then
+				local f = bar(pip, "Fill", STOCK_COLOR)
+				f.BackgroundTransparency = 0.35
+				fill = f
+			end
+			if fill then
+				fill.Visible = building
+				if building then
+					fill.Position = UDim2.fromOffset(0, 0)
+					fill.Size = UDim2.new(progress :: number, 0, 1, 0)
+				end
+			end
 		else
 			pip.Position = UDim2.fromOffset(0, 0)
-			pip.Size = UDim2.fromOffset(math.max(1, math.floor(width * count / capacity + 0.5)), PIP_H)
+			pip.Size = UDim2.fromOffset(math.max(1, math.floor(width * (count + (progress or 0)) / capacity + 0.5)), PIP_H)
 			pip.BackgroundColor3 = STOCK_COLOR
 		end
 	end
@@ -124,7 +140,7 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 				slot.buildBack.Size = UDim2.new(1, 0, 0, BUILD_H)
 				slot.buildFill.Size = UDim2.new(math.clamp(b.build :: number, 0, 1), 0, 1, 0)
 			end
-			drawStock(slot, w, b.stock, b.stockMax)
+			drawStock(slot, w, b.stock, b.stockMax, b.stockProgress)
 			slot.root.Visible = true
 		end
 	end

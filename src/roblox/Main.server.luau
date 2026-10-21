@@ -61,7 +61,53 @@ speedRemote.OnServerEvent:Connect(function(player: Player, value: any)
 		print(`[Entry] {player.Name} set the sim speed to {speed}x`)
 	end
 end)
-local defs = Defs.load()
+-- Test-only weapon overrides from the match profile (MatchConfig
+-- `weaponOverrides`, C-60): numbers no client simulates (a stockpile's
+-- build time and cost, an interception chance), merged into a copy of the
+-- registry's weapons for this server only. The copy keeps the registry's
+-- hash so clients still join; their defs keep the registry's numbers,
+-- which only the stock pip's animation between records reads (the server
+-- sends the progress every sixteenth anyway).
+local OVERRIDABLE = { stockpile = { buildTime = true, cost = true }, intercepts = { chance = true } }
+
+local function copy(v: any): any
+	if type(v) ~= "table" then
+		return v
+	end
+	local out = {}
+	for k, x in v do
+		out[k] = copy(x)
+	end
+	return out
+end
+
+local function withOverrides(base: any, overrides: { [string]: any }?): any
+	if overrides == nil or next(overrides) == nil then
+		return base
+	end
+	local weapons, byIndex = table.clone(base.weapons), table.clone(base.weaponByIndex)
+	for id, fields in overrides do
+		local w = copy(base.weapons[id] or error(`[Entry] weaponOverrides: no weapon {id}`))
+		for field, values in fields do
+			local allowed = OVERRIDABLE[field]
+			if allowed == nil or w[field] == nil then
+				error(`[Entry] weaponOverrides.{id}.{field}: only an existing stockpile's buildTime / cost or intercepts.chance can be overridden`)
+			end
+			for k, v in values do
+				if not allowed[k] then
+					error(`[Entry] weaponOverrides.{id}.{field}.{k} can't be overridden (clients simulate it)`)
+				end
+				w[field][k] = copy(v)
+			end
+		end
+		weapons[id] = w
+		byIndex[w.index] = w
+		print(`[Entry] test override: {id} {game:GetService("HttpService"):JSONEncode(fields)}`)
+	end
+	return { units = base.units, weapons = weapons, unitByIndex = base.unitByIndex, weaponByIndex = byIndex, hash = base.hash }
+end
+
+local defs = withOverrides(Defs.load(), Config.weaponOverrides)
 
 local sim: any
 local matchId = 0
