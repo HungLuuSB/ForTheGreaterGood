@@ -600,3 +600,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `EW.spec` pins the old IR ranges and air sights for its fixed-distance rule checks, as it already did for the radar SAMs.
   - `Guidance.spec`'s hovering helicopter moves in to 260, inside every Thorn's reach: 86% hit.
   - `Nuke.spec` checks "nuke first" only once the nuke is in a site's range.
+
+## S-56 — SAM ranges cut again (client request 33, the user asked) (2026-10-22)
+
+- **Asked (the user, playtesting Normandy, right after S-55):** "Drop the IR range 30% more, the SAM 25% more".
+- **Weapons (range and lockRange, from the S-55 values):**
+  - `chs_ir_sam` 294 → 206, `ord_ir_sam` 210 → 147;
+  - `chs_radar_sam` 1260 → 945, `ord_radar_sam` 1350 → 1013.
+  - Overall since S-45: IR at 49% of before, radar at 56% (1.7× the pre-S-45 range).
+- **Sensors follow (as in S-55):**
+  - airSight: Thorn 206, Vigil 157, Hornet 147, Halo 157;
+  - radar: Wyvern 1013, Aegis 1097, Gorgon 810, Seraph 878.
+- **Nukes:** a nuke is now within a radar site's reach for only ~6 s of its 12.7 s flight, so a site gets one or two shots at 0.2 each. `Nuke.spec` now defends with four Wyverns, which destroy it with 4 interceptors; two sites now often let one through.
+- **Tests:**
+  - `Guidance.spec`: the hovering helicopter moves in to x = 400, inside every Thorn's reach (94% hit).
+  - The vertical-launch test no longer counts a missile still flying at the end as a steep launch.

@@ -178,11 +178,16 @@ return function(t: RunAll.Context)
 		end
 	end)
 
-	t.test("radar SAM sites shoot down a nuke in their radar range before anything else", function()
+	t.test("radar SAM sites shoot down a nuke in their range before anything else", function()
 		local sim, silo, units = range(3)
 		local w = sim.world
 		local c = sim.combat
-		local sites = { Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 60, TARGET_Z - 60, 0), Spawn.unit(sim, "chs_wyvern", 2, TARGET_X + 60, TARGET_Z - 60, 0) }
+		-- four sites: each burst destroys the nuke with chance 0.2 (S-50), and
+		-- since S-56 (radar SAMs 945 studs) it is in their reach for ~6 s
+		local sites = {}
+		for _, d in { { -60, -60 }, { 60, -60 }, { -60, 60 }, { 60, 60 } } do
+			table.insert(sites, Spawn.unit(sim, "chs_wyvern", 2, TARGET_X + d[1], TARGET_Z + d[2], 0))
+		end
 		-- an enemy helicopter hovering over the sites: they shoot at it until the nuke comes
 		local heli = Spawn.unit(sim, "ord_guardian", 1, TARGET_X, TARGET_Z - 150, 0)
 		World.setHealth(w, heli, 1e9)
