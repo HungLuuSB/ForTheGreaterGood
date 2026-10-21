@@ -209,6 +209,12 @@ All with real mouse and keyboard input through the MCP tools.
 - **Not exact yet:** the server has no rest pose or restore delay, so the Juggernaut can fire before its arms are fully up (request 8 makes the client follow the server exactly).
 - Studio-only helpers: `FtggDebug:Invoke("spawn", defId, player, x, z, heading, count, spacing)` on the server; `FtggClientDebug:Invoke("camera", x, z, distance)` and `Invoke("anim")` on the client.
 
+## 2026-10-21: task 3, air and naval rendering (C-31)
+
+- **Aircraft** fly at their replicated altitude; jets bank into turns, helicopters tilt and spin their rotors (wound down when landed) (`debug_out/screens/air_helicopters.jpg`, `air_jet_bank.jpg`).
+- **Ships** sit in the water; **own submarines** are drawn just under the surface; **enemy submarines** appear only as sonar contacts, a hollow ring icon (`naval_ship_sub_sonar.jpg`).
+- Playtested with the new `ew` MatchConfig profile (the sim's `ew_test`; its helicopters are shot down within ~30 s, so extra aircraft were spawned) and on Coastline's sea with spawned ships and submarines. MatchConfig is back on `terrain`.
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
@@ -221,6 +227,7 @@ All with real mouse and keyboard input through the MCP tools.
 - **Health and build bars (C-24):** 4 px health bar, 3 px light-blue build bar under it, 18–90 px wide, over the unit; shown for selected, damaged and unfinished units only. Sizes and colors in `src/client/Render/HealthBars.luau` and `Core/Bars.luau`.
 - **Terrain colors and materials (C-28):** Roblox Grass on open ground, Rock where steeper than ~50°, Sand on shores and under water, default Terrain water color; no custom material colors (that would change the place's Terrain settings). Rules in `src/client/Core/Terrain.luau` (`STEEP`, `SHORE`), materials in `Render/Terrain.luau`.
 - **Juggernaut's animation feel (C-30):** arms hang at -65°, rise at 120°/s, recoil 0.8 stud in turn, come down 3 s after the last aim; torso turns at 1.25 × the weapon's yaw rate. Values in `src/client/Core/PieceScripts/chs_juggernaut.luau`, model in `src/shared/Defs/Blockouts/chs_juggernaut.luau`. Exact timing waits on request 8.
+- **Aircraft and naval look (C-31):** jet bank up to 60°, helicopter bank 20° and nose-down 12°, rotor 4 turns a second; ships 0.8 stud into the water, own submarines 2.5 studs under it; sonar contacts as hollow rings. Values in `src/client/Core/Attitude.luau` and `Core/PieceScripts/Default.luau`.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session

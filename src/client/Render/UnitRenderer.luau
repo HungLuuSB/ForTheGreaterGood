@@ -3,8 +3,10 @@
 -- unit, placed at its interpolated position with one BulkMoveTo per frame.
 -- Pieces move through their Motor6D.Transform, driven by piece scripts
 -- (Core/PieceAnim, guide 14: visual only, the server decides when weapons
--- fire); each unit's LOD comes from its distance to the camera.
+-- fire); each unit's LOD comes from its distance to the camera. Aircraft
+-- bank and ships sit in the water as Core/Attitude says (C-31).
 
+local Attitude = require("../Core/Attitude")
 local Interp = require("../Core/Interp")
 local PieceAnim = require("../Core/PieceAnim")
 local PieceScripts = require("../Core/PieceScripts/Registry")
@@ -19,6 +21,9 @@ type Drawn = {
 	rootOffset: CFrame,
 	floats: boolean,
 	motors: { [string]: Motor6D }, -- by piece name
+	def: any,
+	attitude: Attitude.State,
+	hullHeight: number,
 }
 
 export type Renderer = {
@@ -52,6 +57,9 @@ local function show(r: Renderer, world: World.World, id: number)
 		rootOffset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity,
 		floats = def.domain == "naval",
 		motors = motors,
+		def = def,
+		attitude = Attitude.new(),
+		hullHeight = model:GetExtentsSize().Y,
 	}
 	PieceAnim.add(r.anim, id, def, PieceScripts.forDef(def))
 end
@@ -129,6 +137,9 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		end
 		local x, z, alt, heading = Interp.sample(u, t)
 		local y = World.groundY(world, x, z, d.floats) + alt
+		if d.floats then
+			y += Attitude.waterOffset(d.def, u.state or 0, d.hullHeight)
+		end
 		u.rx, u.ry, u.rz = x, y, z
 		if hidden then
 			continue
@@ -137,8 +148,13 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		if au and camera then
 			au.lod = PieceAnim.lodAt((camera - Vector3.new(x, y, z)).Magnitude)
 		end
+		local roll, pitch = Attitude.step(d.attitude, d.def, x, z, heading, dt)
 		table.insert(parts, d.root)
-		table.insert(frames, CFrame.new(x, y, z) * CFrame.Angles(0, heading + math.pi, 0) * d.rootOffset)
+		local frame = CFrame.new(x, y, z) * CFrame.Angles(0, heading + math.pi, 0)
+		if roll ~= 0 or pitch ~= 0 then
+			frame *= CFrame.Angles(pitch, 0, roll)
+		end
+		table.insert(frames, frame * d.rootOffset)
 	end
 	if #parts > 0 then
 		workspace:BulkMoveTo(parts, frames, Enum.BulkMoveMode.FireCFrameChanged)

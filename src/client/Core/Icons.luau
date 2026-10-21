@@ -10,7 +10,8 @@ local World = require("./World")
 
 local Icons = {}
 
-export type Shape = "square" | "circle" | "diamond" | "triangle" | "frame" | "blip" | "ghost"
+-- "sonar": a sonar contact (a submarine, or a ship heard but not seen), a hollow ring (C-31)
+export type Shape = "square" | "circle" | "diamond" | "triangle" | "frame" | "blip" | "ghost" | "sonar"
 
 export type Style = {
 	shape: Shape,
@@ -69,8 +70,11 @@ function Icons.style(t: Table, world: World.World, u: World.Unit, selected: bool
 	if bit32.band(flags, Schema.StrategicFlag.GHOST) ~= 0 then
 		return { shape = "ghost", size = if def then sizeOf(def) else 12, team = u.team, alpha = 0.55, selected = false }
 	end
+	if bit32.band(flags, Schema.StrategicFlag.SONAR_ONLY) ~= 0 then
+		return { shape = "sonar", size = if def then sizeOf(def) + 2 else 10, team = u.team, alpha = 0.8, selected = false }
+	end
 	if def == nil then
-		-- an unidentified radar or sonar contact: only its team is known
+		-- an unidentified radar contact: only its team is known
 		return { shape = "blip", size = 7, team = u.team, alpha = 0.6, selected = false }
 	end
 	local tracked = bit32.band(flags, Schema.StrategicFlag.TRACKED) ~= 0
