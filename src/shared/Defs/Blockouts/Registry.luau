@@ -8,6 +8,7 @@ return {
 	chs_hornet = require("./chs_hornet"),
 	chs_jackal = require("./chs_jackal"),
 	chs_juggernaut = require("./chs_juggernaut"),
+	chs_ragnarok = require("./chs_ragnarok"),
 	chs_ravager = require("./chs_ravager"),
 	chs_scrapper = require("./chs_scrapper"),
 	chs_watcher = require("./chs_watcher"),
@@ -16,5 +17,6 @@ return {
 	ord_lancer = require("./ord_lancer"),
 	ord_mason = require("./ord_mason"),
 	ord_oracle = require("./ord_oracle"),
+	ord_reckoning = require("./ord_reckoning"),
 	ord_verdict = require("./ord_verdict"),
 }
