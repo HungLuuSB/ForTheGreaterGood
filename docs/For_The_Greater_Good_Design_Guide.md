@@ -472,6 +472,8 @@ Ground units don't send height: the client looks it up from its own copy of the 
 
 Each move class gets one bit in `passMask` and its own `clearance` layer.
 
+Amphibious and hover units (S-39): an `AMPHIB` unit drives on the sea floor and is SUBMERGED in water at least as deep as its hull is tall: then only sonar finds it, torpedoes can target it, and its guns don't fire (it surfaces in the shallows). A `HOVER` unit rides on the water surface over water: weapons aim at it and hit it there. No roster unit is `HOVER` yet.
+
 ### 6.2 Footprints and clearance
 
 **Prefer odd footprints (1, 3) for ground units.** The clearance rule treats an even footprint like the next odd one, so a 2×2 unit costs as much passage width as a 3×3 one.

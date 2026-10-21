@@ -78,6 +78,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **No hover unit in the roster (S-39):** the HOVER rules work (surface riding), but no def uses the class. Add one (e.g. a hover worker or tank per guide 6.1)?
 - **Terrain speed factors (S-37):** placeholders in `Shared/Grid/Terrain.SPEED` (heavy tracked on sand 0.6, wheeled on road 1.25, ...; table in the guide, 12.1), and MapGen's painting rules (sand within 2 cells of water, rock above 15°; no roads). Both shape every generated map.
 - **Carriers don't build aircraft (S-36):** the guide doesn't say they do; it would change the tech tree. Should they?
 - **Thorn SAM (client request 16, the user asked), S-33:** `chs_ir_sam` range / lockRange 280 → 420, aoe 5 → 12, projectileSpeed 420 → 500; `chs_thorn.sensors.airSight` 300 → 420 (an IR site locks only what it sees). Order's IR SAM (`ord_ir_sam`, Vigil) stays at range 300 / aoe 5: should it follow?

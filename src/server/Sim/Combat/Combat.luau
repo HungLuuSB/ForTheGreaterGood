@@ -38,6 +38,7 @@ export type UnitProfile = {
 	maxHealth: number,
 	weapons: { Defs.WeaponDef }, -- by slot
 	naval: boolean, -- floats: hull from the water surface down by DRAFT
+	hover: boolean, -- HOVER move class: rides on the water surface over water (S-39)
 }
 
 export type Event = {
@@ -149,6 +150,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 			maxHealth = def.health,
 			weapons = weapons,
 			naval = def.domain == "naval",
+			hover = def.moveClass == "HOVER",
 		}
 	end
 	local grid = if layers then layers.grid else nil
@@ -260,6 +262,9 @@ function Combat.baseAt(c: Combat, w: World.World, id: number, x: number, z: numb
 		end
 		return surface - Combat.DRAFT
 	end
+	if c.profiles[w.defIndex[id]].hover then
+		return Combat.surfaceHeight(c, x, z) -- over water: on the surface (S-39)
+	end
 	return Combat.groundHeight(c, x, z) + w.alt[id]
 end
 
@@ -284,7 +289,9 @@ function Combat.knownAimPoint(c: Combat, w: World.World, id: number, defIndex: n
 		return x, Combat.groundHeight(c, x, z), z
 	end
 	local p = c.profiles[defIndex]
-	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT else Combat.groundHeight(c, x, z)
+	local base = if p.naval then Combat.surfaceHeight(c, x, z) - Combat.DRAFT
+		elseif p.hover then Combat.surfaceHeight(c, x, z)
+		else Combat.groundHeight(c, x, z)
 	return x, base + p.height / 2, z
 end
 
