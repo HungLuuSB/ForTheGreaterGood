@@ -26,8 +26,10 @@ local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
 local Bars = require("./Core/Bars")
 local Effects = require("./Core/Effects")
+local Follow = require("./Core/Follow")
 local Icons = require("./Core/Icons")
 local IconLayer = require("./Render/IconLayer")
+local FollowButton = require("./UI/FollowButton")
 local MinimapUI = require("./UI/Minimap")
 local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
@@ -89,6 +91,20 @@ local ghost = PlacementGhost.new()
 local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
+-- Camera follow (C-43), T or the placeholder button: the first selected
+-- unit, else the homing missile drawn nearest the screen centre.
+local FOLLOW_KEY = Enum.KeyCode.T
+local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
+local function toggleFollow()
+	if camState.follow then
+		camState.follow = nil
+		return
+	end
+	local cam = workspace.CurrentCamera
+	local view = cam.ViewportSize
+	camState.follow = Follow.pick(world, api.state.selection, lastVisibleFx, Controls.projector(cam), view.X / 2, view.Y / 2)
+end
+local followButton = FollowButton.new(toggleFollow)
 -- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
 -- The server publishes the speed as the Remotes folder's SimSpeed attribute.
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
@@ -111,6 +127,8 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
+	elseif key == FOLLOW_KEY then
+		toggleFollow()
 	elseif key == Enum.KeyCode.Minus or key == Enum.KeyCode.Equals then
 		local now = if simSpeed() == 0 then resumeSpeed else simSpeed()
 		local i = table.find(SPEEDS, now) or 4
@@ -156,6 +174,7 @@ Overlay.bind(overlay, api, os.clock)
 local hud = Hud.new()
 api.changed.focus:Connect(function(p)
 	camState.x, camState.z = p[1], p[2]
+	camState.follow = nil -- a jump (minimap, group double tap) is a manual move
 end)
 
 -- Join: HELLO now; the WELCOME (or a REJECT) comes back on the Snapshot channel.
@@ -207,7 +226,7 @@ if RunService:IsStudio() then
 			end
 			local entries = {}
 			for _, e in missileView.entries do
-				table.insert(entries, { id = e.id, label = e.label, locked = e.locked, target = e.targetId, distance = e.distance, tgo = e.tgo, miss = e.miss, fuse = e.fuse, hit = e.hit, path = #e.path // 3 })
+				table.insert(entries, { id = e.id, label = e.label, locked = e.locked, target = e.targetId, distance = e.distance, tgo = e.tgo, miss = e.miss, fuse = e.fuse, hit = e.hit, path = #e.path // 3, seekerAngle = e.seekerAngle, offNose = e.offNose, inSeeker = e.inSeeker, pos = { e.x, e.y, e.z } })
 			end
 			local marks = {}
 			for _, m in fx.marks do
@@ -222,6 +241,20 @@ if RunService:IsStudio() then
 			end
 			table.clear(perf)
 			return out
+		elseif query == "follow" then
+			-- Invoke("follow", "toggle" | "stop"?): camera follow (C-43); returns what it follows and the camera's focus
+			local action = ...
+			if action == "toggle" then
+				toggleFollow()
+			elseif action == "stop" then
+				camState.follow = nil
+			end
+			local f = camState.follow
+			local x, y, z
+			if f then
+				x, y, z = Follow.position(world, fx, lastVisibleFx, f, clock.tick)
+			end
+			return { kind = f and f.kind, id = f and f.id, at = x and { x, y, z }, focus = { camState.x, camState.z }, distance = camState.distance, yaw = camState.yaw }
 		elseif query == "camera" then
 			-- Invoke("camera", x, z, distance?): move the RTS camera (close-ups for proof screenshots)
 			local x, z, distance = ...
@@ -317,12 +350,9 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
 	end
-	local payload = Camera.update(camState, world, workspace.CurrentCamera, dt, now)
-	if payload then
-		cmd:FireServer(payload)
+	if Camera.input(camState, workspace.CurrentCamera, dt) then
+		camState.follow = nil -- a manual pan stops a follow (zooming doesn't)
 	end
-	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
-	api.state.camera.rect = camState.rect
 	local frameT0 = os.clock()
 	-- sim time this frame: units, shells, piece scripts and banking slow down
 	-- or pause with the sim; camera and UI stay in real time (C-35)
@@ -335,7 +365,35 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
 	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now)
+	lastVisibleFx = visibleFx
 	mark("effects", t0)
+	-- the camera goes on after units and missiles have their drawn positions
+	-- this frame, so a followed one sits still in the middle of the screen
+	local following = camState.follow
+	if following then
+		local x, y, z = Follow.position(world, fx, visibleFx, following, t)
+		if x then
+			camState.x, camState.z, camState.minDistance = Follow.focus(x, y :: number, z :: number, Camera.PITCH, camState.yaw, function(gx, gz)
+				return World.groundY(world, gx, gz)
+			end)
+		else
+			camState.follow = nil -- it ended: the camera stays where it is
+		end
+	end
+	if camState.follow == nil and camState.minDistance then
+		-- after a follow the camera keeps the distance it had
+		camState.distance = math.min(math.max(camState.distance, camState.minDistance), Camera.MAX_DISTANCE)
+		camState.minDistance = nil
+	end
+	local payload = Camera.apply(camState, world, workspace.CurrentCamera, now)
+	if payload then
+		cmd:FireServer(payload)
+	end
+	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
+	api.state.camera.rect = camState.rect
+	local followed = camState.follow
+	local followDef = followed and followed.kind == "unit" and world.units[followed.id] and World.def(world, world.units[followed.id])
+	FollowButton.step(followButton, if followed == nil then nil elseif followed.kind == "missile" then "missile" elseif followDef then followDef.name else `unit #{followed.id}`)
 	t0 = os.clock()
 	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
 	mark("missileView", t0)

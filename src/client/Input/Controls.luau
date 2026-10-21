@@ -9,6 +9,7 @@
 --   Ctrl + 1..9 / 1..9       set / recall a control group (double tap: jump the camera)
 --   S                        stop (BAR style; the camera pans with the arrow keys)
 --   V                        range rings on / off (Render/RangeOverlay)
+--   T                        camera follow on / off (Core/Follow, C-43; handled in Main)
 -- While placing a structure (build ghost, guide 15.6):
 --   left click / drag        place / a row (Shift: queue it and keep placing)
 --   R                        rotate

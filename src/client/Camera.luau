@@ -3,13 +3,16 @@
 -- scroll (live games) and middle-drag (WASD stays free for hotkeys); zoom with the wheel; limited rotation with Q / E; clamped to
 -- the map. The ground hits of the four screen corners give the camera
 -- rectangle, sent as a CAMERA command when it changes, at most 5 per second:
--- the server's tactical tier follows it (net.md section 5).
+-- the server's tactical tier follows it (net.md section 5). T follows a
+-- unit or a missile (C-43, Core/Follow): Main sets the focus each frame
+-- between `input` and `apply`; a manual pan stops it, zooming doesn't.
 --
 -- Feel values are first guesses: listed under "Needs my review".
 
 local UserInputService = game:GetService("UserInputService")
 
 local Commands = require("./Core/Commands")
+local Follow = require("./Core/Follow")
 local World = require("./Core/World")
 
 local Camera = {}
@@ -26,6 +29,7 @@ Camera.EDGE_SCROLL = not game:GetService("RunService"):IsStudio()
 Camera.MAX_YAW = math.rad(45) -- rotation limit either side of north-up
 Camera.YAW_SPEED = math.rad(90) -- per second with Q / E
 Camera.SEND_INTERVAL = 0.2 -- seconds between CAMERA commands (≤ 5 per second)
+Camera.FOLLOW_MARGIN = 400 -- studs: a follow may take the focus this far past the map's edge (missiles overshoot it, C-43)
 
 export type State = {
 	x: number,
@@ -36,10 +40,13 @@ export type State = {
 	lastRect: { number }?,
 	lastSent: number,
 	rect: { number }, -- minX, minZ, maxX, maxZ cells of the last computed view
+	follow: Follow.Target?, -- what the camera follows (C-43)
+	minDistance: number?, -- while following: the least distance that keeps the target in front (Follow.focus)
+	outside: number, -- studs the focus may sit past the map's edge: FOLLOW_MARGIN while following, after that only back inwards
 }
 
 function Camera.new(x: number, z: number, distance: number): State
-	return { x = x, z = z, distance = distance, yaw = 0, dragging = nil, lastRect = nil, lastSent = -math.huge, rect = { 0, 0, 0, 0 } }
+	return { x = x, z = z, distance = distance, yaw = 0, dragging = nil, lastRect = nil, lastSent = -math.huge, rect = { 0, 0, 0, 0 }, outside = 0 }
 end
 
 local keys = {
@@ -82,9 +89,9 @@ local function groundHit(cam: Camera, px: number, py: number, groundY: number): 
 	return ray.Origin + ray.Direction * t
 end
 
--- Moves the camera for this frame and returns a CAMERA payload to send, if any.
-function Camera.update(state: State, world: World.World, cam: Camera, dt: number, now: number): buffer?
-	local g = world.grid
+-- Applies this frame's pan, rotation and middle-drag to the focus; returns
+-- true when the player panned (which stops a follow, C-43).
+function Camera.input(state: State, cam: Camera, dt: number): boolean
 	-- pan direction in screen space, turned into world space by the yaw
 	local move = Vector2.zero
 	if not UserInputService:GetFocusedTextBox() then
@@ -128,23 +135,39 @@ function Camera.update(state: State, world: World.World, cam: Camera, dt: number
 	-- move.Y is positive downwards on screen
 	state.x += move.X * cos - move.Y * sin
 	state.z += move.X * sin + move.Y * cos
+	return move.Magnitude > 0
+end
+
+-- Places the camera on its focus (clamped to the map) for this frame and
+-- returns a CAMERA payload to send, if any. A follow may take the focus up
+-- to FOLLOW_MARGIN past the map's edge; once it ends, the camera stays where
+-- it stopped and can only move back towards the map.
+function Camera.apply(state: State, world: World.World, cam: Camera, now: number): buffer?
+	local g = world.grid
+	local view = cam.ViewportSize
+	local sin, cos = math.sin(state.yaw), math.cos(state.yaw)
+	local margin = if state.follow then Camera.FOLLOW_MARGIN else state.outside
 	local half = 0.5
-	state.x = math.clamp(state.x, g.originX + half, g.originX + g.sizeX - half)
-	state.z = math.clamp(state.z, g.originZ + half, g.originZ + g.sizeZ - half)
+	local x0, z0 = g.originX + half, g.originZ + half
+	local x1, z1 = g.originX + g.sizeX - half, g.originZ + g.sizeZ - half
+	state.x = math.clamp(state.x, x0 - margin, x1 + margin)
+	state.z = math.clamp(state.z, z0 - margin, z1 + margin)
+	state.outside = math.max(0, x0 - state.x, state.x - x1, z0 - state.z, state.z - z1)
 
 	local groundY = World.groundY(world, state.x, state.z)
 	local focus = Vector3.new(state.x, groundY, state.z)
 	-- camera sits south of the focus (looking north, -Z) at yaw 0
 	local back = Vector3.new(-sin, 0, cos) * math.cos(Camera.PITCH) + Vector3.new(0, math.sin(Camera.PITCH), 0)
+	local distance = math.max(state.distance, state.minDistance or 0)
 	cam.CameraType = Enum.CameraType.Scriptable
-	cam.CFrame = CFrame.lookAt(focus + back * state.distance, focus)
+	cam.CFrame = CFrame.lookAt(focus + back * distance, focus)
 
 	-- camera rectangle from the screen corners (sky corners clamp to far ground)
 	local xs, zs = {}, {}
 	for _, p in { Vector2.new(0, 0), Vector2.new(view.X, 0), Vector2.new(0, view.Y), view } do
 		local hit = groundHit(cam, p.X, p.Y, groundY)
 		if hit == nil then
-			local far = focus - back * state.distance * 3
+			local far = focus - back * distance * 3
 			hit = Vector3.new(far.X, groundY, far.Z)
 		end
 		table.insert(xs, hit.X)
