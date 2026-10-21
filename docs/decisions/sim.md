@@ -834,3 +834,128 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - An empty Thorn rebuilds 2.49 missiles in 60 s with priority, against 1.81 sharing alike.
   - Its floor is a quarter of 20 power/s, about 1.25 missiles a minute.
 - **AI under helicopter raids** (new `lune run sam_raids`, kept this time; Normal AI on skirmish:192, 15 min): numbers in the progress file. They are noisy: the AI builds few SAMs, and with the faction pass's prices Order's economy is stalled 85–90% of the time, a faction-AI question (task 11).
+
+## S-67 — Select-all orders' slots in the Pathing job; lazy quadtree updates (the user, 2026-10-22)
+
+- **Asked:** the two S-60 peaks: spread a select-all order's slot assignment over the Pathing job, and update quadtrees lazily when a structure dies. Both change timing (not the state hash), as S-60 said.
+- **Sliced slot assignment:**
+  - **Rule:** an order for `Nav.SLICED_ASSIGN_MIN` (64) units or more gets its ground groups' slots in the plan job.
+    - At issue, Commands only snapshots the units' positions; its units head for the formation's center.
+    - The plan job sorts the slots (`deepestFirst`), buckets the units and assigns slots, at 4 distance checks per work unit, then gives each unit still in the order its slot.
+    - Smaller orders and air groups assign at once as before.
+  - **`Formation.assign` is now resumable** (`newAssigner` / `assignStep`). Picks and checks are identical however it is sliced: tested on 150 units over 50-check steps, and the Normandy hash didn't change with the refactor alone.
+  - **Test:** an 80-unit MOVE: every unit at the center at first; after one Pathing tick each has exactly the slot an immediate assignment gives.
+- **Lazy quadtree updates:**
+  - **Rule:** `Nav.terrainChanged` only records the changed rectangle per tree (the field cache is still invalidated at once). A tree applies its pending changes the first time it is used (`Nav.tree`, a plan job's tree), or on a Pathing tick with no job queued.
+  - **Batching:** the batch recomputes components once (`Quadtree.update(..., deferComponents)` + `Quadtree.computeComponents`); each update had recomputed them over the whole tree.
+  - **Backlog cap:** more than `Nav.MAX_PENDING` (8) pending changes on a tree are applied at once, so a map's structures placed at setup don't land on the first order's tick. First tried without the cap: that tick took 95 ms, then 21 with batching.
+  - **Test:** `Placement.spec`'s rebuild comparison now reads trees through `Nav.tree`.
+- **Normandy** (`profile_normandy 1800`, 3 interleaved runs each; the first pair was noisy):
+
+| | Before | After |
+|---|---|---|
+| Commands peak (budget 1) | 1.40 / 1.47 (4.9 noisy) | **0.86 / 0.96** (2.3 noisy) |
+| Projectiles+Damage peak (budget 8) | 7.6 / 10.7 (22.6 noisy) | **2.8 / 2.9 / 4.4** |
+| Pathing peak (budget 8) | 7.3 / 8.1 / 8.9 | 7.5 / 8.0 / 9.4 |
+| p99 tick (ms) | 9.0 / 9.3 / 14.3 | 8.4 / 8.7 / 9.7 |
+
+  - The state hash changed (5f72fafa against ae5ef52e), as expected: big orders' units start toward the center for a tick, and trees update later.
+
+## S-65 — The faction axis: Order AI against Chaos AI (the user, 2026-10-22)
+
+- **Asked:** add the faction axis to the AI report: Order AI against Chaos AI at every level pair, every map, both starts, 3+ seeds. Targets: 40–60% overall, 35–65% per map, at most 10% undecided at the limit.
+- **Tool:** `lune run faction_ai [minutes] [seeds] [mapFilter] [mirrored]` writes `docs/FACTION_AI.md`.
+  - Matches: 1v1 on Ridgeline, Coastline, skirmish:256 and Normandy (9 level pairs × 2 starts); 2v2 on Twin Lakes (two of each faction per side); 4-player FFA on Crossroads (two of each, alternating, one level).
+  - `ailevels` keeps its faction mirrors: it measures levels, this measures factions.
+- **First report** (40 min, seeds 7–9, after S-62; 324 matches, 20 min of run time). **Out of target:**
+  - Order wins **89%** of the same-level matches (86–11, 11 undecided = 10%), on every map but Crossroads (60%).
+  - Levels still order across factions: Order easy loses to Chaos normal 7–20, Order normal loses to Chaos hard 5–24.
+  - Normandy has no deposits: 23 of its 54 matches are at the 40-minute limit.
+- **Why (my reading):**
+  - The trade check shows the per-value balance even (S-62), but the AI uses none of Chaos's conditions: it waves attack-moves into the enemy, which is Order's "defend" case (1.4–2.1). It never flanks or raids, and it doesn't expand wider.
+  - Chaos's cheaper units also make its economy-to-army choices the same as Order's, so its numbers advantage is only the value it saved.
+  - This is the faction AI's job (task 11, proposal section 7), then the ±10% tuning (task 12).
+
+## S-68 — Alerts, the under-attack flag, ground fire (the user's task 6; client request 39) (2026-10-22)
+
+- **Asked:** audit item 17 (the ALERT event and the strategic "under attack" flag, so the client's alerts come from the server) and item 18 (ATTACK_GROUND for artillery and any weapon with ground fire). The client asked for 17 at the same time (request 39), with suggested kinds and rate limits; built as suggested.
+- **ALERT, protocol 23** (`Sim/Alerts`; event 18, `alert u8, cell u16, defIndex u16`, owner only):
+  - UNIT_ATTACKED / STRUCTURE_ATTACKED: one per 400-stud zone per 20 s.
+  - COMMANDER_ATTACKED: one per 10 s.
+  - UNIT_LOST / STRUCTURE_LOST: one per zone per 5 s.
+  - BUILD_DONE: every factory unit and finished frame.
+  - STALL_SUPPLY / STALL_POWER: when the team's ratio drops below 1, at most once per 30 s.
+  - NUKE_LAUNCH: every player, at the silo; LAUNCH_WARNING stays as it was.
+  - **Sources:** Damage (enemy hits, deaths), Build (finished units), the Economy system (stalls), Weapons (launches). NetOut drains the player's queue each tick.
+  - **"Enemy":** the damage's player is on another ally team. Damage queued without a player falls back to its attacker's owner.
+- **UNDER_ATTACK (strategic flag 4):** own and allied units an enemy hit in the last 3 s (45 ticks).
+- **Ground fire:**
+  - Any unit with a BALLISTIC weapon (artillery, tanks, gun turrets, emplacements; `Air.groundFires`) takes ATTACK_GROUND.
+    - Mobile units close to their range (as ATTACK does), then those weapons shell the spot until another order, whatever the fire state.
+    - Its other weapons keep choosing targets.
+    - Structures with ballistic guns take it too.
+  - My call: "any weapon with ground fire" read as every ballistic weapon (shells can be aimed at a point; missiles and hitscan can't).
+- **Not hashed:** the alert state; nothing in the sim reads it.
+- **Tests:**
+  - `Alerts.spec`: rate limit per zone, owner only, UNIT_LOST with the type and place, UNDER_ATTACK set and cleared, BUILD_DONE, one power stall, NUKE_LAUNCH to both players.
+  - `GroundFire.spec`: artillery on hold fire shells a spot; out of range it drives closer; a move order ends it; an Edict takes it, a Halo doesn't.
+  - `Air.spec`: a tank now takes the bombers' ATTACK_GROUND too.
+  - `Schema.spec`: golden bytes.
+
+## S-69 — Salvos; shells lead moving targets (the user's task 7, audit item 7) (2026-10-22)
+
+- **Salvos:** `salvo = { count, delay }` is read now.
+  - The first shot starts the reload as before; the other `count - 1` follow `delay` apart along the turret's aim, as long as the weapon still has a target it may fire at. Losing it ends the salvo.
+  - State `World.wSalvo` / `wSalvoWait`, hashed only during a salvo.
+- **MLRS** (guide 13.2: "Judgement (precise)", "Hydra (large salvo)"):
+  - Judgement fires 4 rockets 0.3 s apart, Hydra 8 rockets 0.15 s apart. Each rocket does the old shot's damage / count; the Judgement's then −10% (see below).
+  - Trade check (`lune run factions 3`): MLRS 1.30 at full damage, **1.20 with the Judgement's rockets −10%** (in band; Order wins defending, 1.82; Chaos now wins the flank, 0.57, which it didn't before). Every Hydra number was already at its ±10% limit.
+- **Shell leading:**
+  - A ballistic weapon (not a lofted one) aims where a visible moving target will be after the shell's flight time. Two passes: the time from the launch pitch at the led distance; the target's speed along its heading.
+  - Radar contacts get no lead (their velocity isn't known); bombs and missiles already lead (D91, S-27).
+- **Re-run trade checks:** 12 of 12 roles still in band. Tanks, artillery and MLRS moved by ≤ 0.1 except the MLRS above.
+- **Tests (`Salvo.spec`):**
+  - A Hydra's 8 rockets 0.15 s apart, the next salvo one reload after the first rocket.
+  - A Verdict's shells burst within 14 studs of a tank driving across its line of fire. Without the lead, 0 of 4 do.
+
+## S-70 — The Fusion Reactor explodes (audit item 11) (2026-10-22)
+
+- Guide 8.5: "Fusion Reactor: big explosion on death". New def field `deathBlast = { damage, aoe, edge }`.
+- When the unit is killed (Damage), the blast hits every unit in `aoe`: own, allied and enemy alike (team 0), with the usual falloff to `edge`. It's applied the next tick, so a blast can kill a neighbouring reactor and set it off too.
+- A cancelled frame never explodes: it doesn't die in Damage.
+- A `BLAST` combat event marks it. No wire change: the client sees the DEATH and can read `deathBlast` from the def to draw it.
+- **Numbers** (Order and Chaos reactors, my placeholder): 2,500 damage at the center, radius 120, edge 0.25: a T1 tank 40 studs away dies.
+- **Test:** `DeathBlast.spec`: a reactor kills tanks of both sides 40 studs off, leaves one 300 off untouched; a generator doesn't explode.
+
+## S-71 — Landing details: parked aircraft are ground targets; full pads are skipped (audit item 10) (2026-10-22)
+
+- **Targeting:** a LANDED aircraft counts as a ground unit for targeting (`Sensors.knownCategories` swaps its AIR / JET / HELI bits for GROUND, and target priorities read the same), and takes LIGHT damage (`Combat.armorOf`): ground guns can kill it (guide 12.2: "easy targets"), anti-air can't engage it until it takes off.
+- **Altitude:** a rearming or docked aircraft settles on top of its pad (the pad's height) instead of the ground inside it, where the pad's collision cylinder had been catching every shell aimed at it.
+- **Fixed on the way:** Movement skipped aircraft altitude changes on ticks when nothing moved, so a jet that landed while the rest of the map stood still stayed at cruise height.
+- **Pads:** an aircraft heading to rearm picks the nearest pad with a free spot (counting aircraft already assigned to it against its `rearmPads`); if all are full, the nearest.
+- **Not done:** the flying sight bonus (audit item 10's third part); flying units have the sight their defs give. It would change every air unit's numbers, so it waits for a balance pass.
+- **Tests (`Landing.spec`):** a Ravager damages a Falcon parked on its pad, 131 a shell (its LIGHT damage), while a Hornet holds its fire; an empty Falcon skips a full pad for a free one farther away.
+
+## S-72 — Radar upkeep (audit item 9) (2026-10-22)
+
+- Audit item 9 had two parts.
+  - "Missile reloads for SAM sites and launchers are free" was already done by the stockpiles (S-47: each missile costs supply and power to rebuild).
+  - "Plain radars have no power upkeep" is done now.
+- **Rule:** new `sensors.radarDrain` (power per second). It is drained with the tracking and jamming upkeep (`Sensors.drainStep`, D104 / D108). In a power stall, the share a radar gets scales its radar radius, at whole sensor cells, like a tracker's. Fully powered it keeps its def radius exactly.
+- **Stealth reach:** range × signature (D78) now uses the powered radius.
+- **Numbers** (my placeholders; Order's radars are stronger and cost more):
+  - Watchtower 3, Eye 2;
+  - Beacon 12, All-Seer 9;
+  - Oracle 3, Watcher 2;
+  - Archangel (AWACS) 8.
+  - Radars on SAM sites and ships carry no upkeep: their weapons and stockpiles already cost.
+- **Tests:**
+  - `Fog.spec`: an Eye's 2 power/s shows as demand, a stall drops a tank at 530 studs off its radar, and power brings it back.
+  - `Tracking.spec`: its stall test uses an Aegis for the plain radar, since a Watchtower now shrinks too.
+
+## S-73 — Friendly fire as a match option (audit item 14) (2026-10-22)
+
+- `match.friendlyFire` (`MatchState.Config`; default true, as before): off, blasts and splash never hurt the shooter's allies (`Combat.friendlyFire`). Direct hits never did.
+- **Exception:** strategic blasts (nukes, team 0) and death blasts (S-70) still hurt everyone; they belong to no team.
+- **Replay header:** its match byte is 2 when friendly fire is off (1 as before otherwise), so old replays still read and a replayed match keeps the option. No format version change.
+- **Test:** `FriendlyFire.spec`: the default hurts both tanks under a blast, the option spares the own one; the option survives a replay round trip.

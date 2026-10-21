@@ -145,19 +145,33 @@ function Air.onSpawn(sim: Types.Sim, id: number)
 	end
 end
 
--- Nearest complete friendly rearm pad, or 0.
+-- Nearest complete friendly rearm pad with a free spot, counting the
+-- aircraft already headed to or on each (S-71); the nearest of all when
+-- every pad is full. 0 when there is none.
 local function nearestPad(sim: Types.Sim, id: number): number
 	local w = sim.world
+	local a = sim.air
+	local load: { [number]: number } = {}
+	for other, pad in a.pad do
+		if other ~= id and pad ~= 0 then
+			load[pad] = (load[pad] or 0) + 1
+		end
+	end
 	local best, bestD = 0, math.huge
+	local free, freeD = 0, math.huge
 	for _, other in w.ids do
-		if w.team[other] == w.team[id] and w.buildProgress[other] >= 1 and def(sim, other).rearmPads then
+		local pads = if w.team[other] == w.team[id] and w.buildProgress[other] >= 1 then def(sim, other).rearmPads else nil
+		if pads then
 			local d = (w.posX[other] - w.posX[id]) ^ 2 + (w.posZ[other] - w.posZ[id]) ^ 2
 			if d < bestD then
 				best, bestD = other, d
 			end
+			if (load[other] or 0) < pads and d < freeD then
+				free, freeD = other, d
+			end
 		end
 	end
-	return best
+	return if free ~= 0 then free else best
 end
 
 local function headTo(sim: Types.Sim, id: number, x: number, z: number)
@@ -257,13 +271,32 @@ function Air.isManualFire(sim: Types.Sim, d: Defs.UnitDef): boolean
 	return cached
 end
 
+-- Does this def carry a weapon that can fire at the ground (S-68, audit
+-- item 18): a ballistic gun, howitzer, mortar or rocket launcher? Cached.
+local groundCache: { [any]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+function Air.groundFires(sim: Types.Sim, d: Defs.UnitDef): boolean
+	local cached = groundCache[d]
+	if cached == nil then
+		cached = false
+		for _, slot in d.weapons do
+			if sim.defs.weaponByIndex[slot.weaponIndex].type == "BALLISTIC" then
+				cached = true
+			end
+		end
+		groundCache[d] = cached
+	end
+	return cached
+end
+
 -- Attack-ground order (D100): bombers make runs on (x, z) until another
 -- order replaces it; a unit with a manualFire weapon (a silo, S-48) fires
--- one shot there, then the order is done. Other units ignore it. The point
--- is kept here (AirState.groundX / groundZ) for both.
+-- one shot there, then the order is done; a unit with ballistic weapons
+-- (artillery, tanks, gun turrets; S-68) fires them at the spot until another
+-- order replaces it (Orders brings it into range). Other units ignore it.
+-- The point is kept here (AirState.groundX / groundZ) for all of them.
 function Air.attackGround(sim: Types.Sim, id: number, x: number, z: number)
 	if not Air.isBomber(sim, def(sim, id)) then
-		if Air.isManualFire(sim, def(sim, id)) then
+		if Air.isManualFire(sim, def(sim, id)) or Air.groundFires(sim, def(sim, id)) then
 			sim.air.groundX[id], sim.air.groundZ[id] = x, z
 		end
 		return
@@ -436,7 +469,13 @@ function Air.updateAltitude(sim: Types.Sim, id: number)
 	local w = sim.world
 	local d = def(sim, id)
 	local phase = sim.air.phase[id]
-	local target = if phase == "rearm" or phase == "docked" then 0 else cruiseAltitude(sim, d)
+	local target = cruiseAltitude(sim, d)
+	if phase == "rearm" or phase == "docked" then
+		-- parked on top of its pad, where guns can see and hit it (S-71)
+		local pad = sim.air.pad[id]
+		local pp = if pad and w.slot[pad] then sim.combat.profiles[w.defIndex[pad]] else nil
+		target = if pp then pp.height else 0
+	end
 	local alt = w.alt[id]
 	if alt ~= target then
 		local step = Air.CLIMB_RATE * Air.DT

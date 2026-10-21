@@ -8,7 +8,8 @@ return {
 	projectileSpeed = 260,
 	gravity = 60,
 	accuracy = 3.15, -- faction pass, tuned (S-62)
-	damage = { LIGHT = 264, ARMORED = 250, STRUCTURE = 244, SHIP = 166, AIR = 0, SUB = 0 },
+	salvo = { count = 8, delay = 0.15 }, -- a large salvo (S-69)
+	damage = { LIGHT = 33, ARMORED = 31, STRUCTURE = 31, SHIP = 21, AIR = 0, SUB = 0 }, -- per rocket: the salvo deals what one shot did (S-69)
 	aoe = 16,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

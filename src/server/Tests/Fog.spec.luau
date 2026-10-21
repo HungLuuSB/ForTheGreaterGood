@@ -107,6 +107,28 @@ return function(t: RunAll.Context)
 		t.equal(Sensors.level(sim, 2, tank), L.VISIBLE, "jamming never hides from sight")
 	end)
 
+	-- S-72: plain radars drain power too; in a stall their radius shrinks.
+	t.test("a radar tower costs power upkeep and loses reach in a power stall", function()
+		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:128" })
+		local tower = Spawn.unit(sim, "chs_eye", 2, -300, 0) -- radar 560
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 230, 0) -- 530 studs off: near the edge
+		quiet(sim, { tower, tank })
+		local acc = sim.eco.accounts[2]
+		local function run(n: number, power: boolean)
+			for _ = 1, n do
+				acc.power.stored = if power then acc.power.storage else 0
+				Sim.step(sim)
+			end
+		end
+		run(10, true)
+		t.equal(Sensors.level(sim, 2, tank), L.RADAR, "powered: on radar")
+		t.expect(acc.power.demand >= sim.defs.units.chs_eye.sensors.radarDrain :: number, `the tower's upkeep is power demand ({acc.power.demand})`)
+		run(150, false)
+		t.equal(Sensors.level(sim, 2, tank), L.HIDDEN, "no power: the radius shrank below 530 studs")
+		run(30, true)
+		t.equal(Sensors.level(sim, 2, tank), L.RADAR, "power back: on radar again")
+	end)
+
 	-- D108: jammers drain power; in a stall their jam radius shrinks.
 	t.test("a power stall shrinks a jammer's radius until its unit shows on radar", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })

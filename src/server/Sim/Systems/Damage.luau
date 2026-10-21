@@ -8,6 +8,7 @@
 -- unit killed with severity <= 0.5 leaves a wreck worth half its supply,
 -- except aircraft shot down in flight (they crash and burn).
 
+local Alerts = require("../Alerts")
 local Combat = require("../Combat/Combat")
 local Deploy = require("../Deploy")
 local Lifecycle = require("../Lifecycle")
@@ -15,6 +16,22 @@ local Types = require("../Types")
 local World = require("../World")
 
 local dead: { number } = {}
+
+-- A def's death blast as the weapon table Combat.explode reads (S-70).
+local blastWeapon: { [any]: any } = setmetatable({}, { __mode = "k" }) :: any
+local function blastOf(def: any): any
+	local b = blastWeapon[def]
+	if b == nil then
+		local d = def.deathBlast
+		b = {
+			damage = { LIGHT = d.damage, ARMORED = d.damage, STRUCTURE = d.damage, SHIP = d.damage, AIR = 0, SUB = 0 },
+			aoe = d.aoe,
+			edgeEffectiveness = d.edge,
+		}
+		blastWeapon[def] = b
+	end
+	return b
+end
 
 return function(sim: Types.Sim)
 	local c = sim.combat
@@ -42,10 +59,14 @@ return function(sim: Types.Sim)
 		World.setHealth(w, t, after)
 		-- the results screen (S-63): enemy health removed, and who finished it
 		local player = c.dmgPlayer[i]
+		if player == 0 and c.dmgAttacker[i] ~= 0 and w.slot[c.dmgAttacker[i]] then
+			player = w.owner[c.dmgAttacker[i]] -- queued without a player: its attacker's
+		end
 		local ps = sim.playerStats[player]
 		local enemy = ps ~= nil and w.ally[t] ~= sim.players[player].allyTeam
 		if enemy and ps then
 			ps.damageDealt += math.min(amount, before)
+			Alerts.attacked(sim, t) -- the owner's ALERT, the UNDER_ATTACK flag (S-68)
 		end
 		local attacker = c.dmgAttacker[i]
 		if attacker ~= t then
@@ -70,6 +91,7 @@ return function(sim: Types.Sim)
 		if lost then
 			lost.unitsLost += 1
 		end
+		Alerts.lost(sim, id)
 		local severity = math.clamp(-w.health[id] / def.health, 0, 1)
 		local wreck = 0
 		-- aircraft shot down in flight crash and burn: no wreck (client
@@ -88,6 +110,14 @@ return function(sim: Types.Sim)
 			z = w.posZ[id],
 		})
 		c.stats.kills += 1
+		if def.deathBlast then
+			-- a reactor's blast (guide 8.5, S-70): every unit in reach, own
+			-- and allied included (team 0 is nobody's); applied next tick, so
+			-- reactors can set each other off
+			local x, z = w.posX[id], w.posZ[id]
+			Combat.explode(c, w, x, Combat.groundHeight(c, x, z) + 4, z, blastOf(def), 0, 0, 0, w.owner[id])
+			Combat.addEvent(c, { kind = "BLAST", tick = sim.tick, unit = id, other = 0, x = x, z = z })
+		end
 		Lifecycle.remove(sim, id)
 	end
 end

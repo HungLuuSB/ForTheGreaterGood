@@ -173,7 +173,8 @@ local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: numb
 	local team = sim.world.ally[id]
 	local _, _, level, defIndex = Sensors.knownTarget(sim, team, t, gen)
 	-- type priorities only for targets whose type the team knows (D107)
-	local weight = if Sensors.typeKnown(sim, team, t, level) then priorityWeight(weapon.priorityMasks, sim.combat.profiles[defIndex :: number].categoryMask) else 1
+	-- (a landed aircraft ranks as the ground unit it is for now, S-71)
+	local weight = if Sensors.typeKnown(sim, team, t, level) then priorityWeight(weapon.priorityMasks, Sensors.knownCategories(sim, team, t, level, defIndex :: number)) else 1
 	local s = weight / math.max(dist, 1)
 	if isGuided(weapon) and EW.canLock(sim, id, weapon, t, dist) then
 		s *= LOCK_PREFERENCE
@@ -324,8 +325,8 @@ return function(sim: Types.Sim)
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
 			local searchNow = staggerTick or w.wOverkill[key] == OK_RETARGET
-			if groundOrder and weapon.type == "BOMB" then
-				World.setTarget(w, key, 0) -- bombing the ordered spot (Air.bombAim)
+			if groundOrder and (weapon.type == "BOMB" or weapon.type == "BALLISTIC") then
+				World.setTarget(w, key, 0) -- bombing / shelling the ordered spot (Air.bombAim, S-68)
 				continue
 			end
 			if weapon.manualFire then

@@ -22,7 +22,7 @@ Replay.FORMAT_VERSION = 2 -- 2: ally teams and match options in the header
 Replay.Kind = table.freeze({ COMMAND = 1, CHECKPOINT = 2 })
 
 export type PlayerInfo = { id: number, team: number, allyTeam: number? }
-export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number? }
+export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number?, friendlyFire: boolean? }
 
 export type Header = {
 	protocolVersion: number,
@@ -93,7 +93,7 @@ function Replay.serialize(log: Log): buffer
 	end
 	local m = h.match
 	if m then
-		w:writeU8(1)
+		w:writeU8(if m.friendlyFire == false then 2 else 1) -- 2: friendly fire off (S-73)
 		w:writeU8(if m.mode == "FFA" then 1 else 2)
 		w:writeU8(if m.win == "COMMAND_ENDS" then 1 else 2)
 		w:writeU16(m.unitCap or 0)
@@ -139,7 +139,8 @@ function Replay.parse(buf: buffer): Log
 	for _ = 1, r:readU8() do
 		table.insert(header.players, { id = r:readU8(), team = r:readU8(), allyTeam = r:readU8() })
 	end
-	if r:readU8() == 1 then
+	local hasMatch = r:readU8()
+	if hasMatch == 1 or hasMatch == 2 then
 		local mode, win, cap = r:readU8(), r:readU8(), r:readU16()
 		if (mode ~= 1 and mode ~= 2) or (win ~= 1 and win ~= 2) then
 			error(`Replay: bad match options (mode {mode}, win {win})`, 2)
@@ -148,6 +149,7 @@ function Replay.parse(buf: buffer): Log
 			mode = if mode == 1 then "FFA" else "TEAM",
 			win = if win == 1 then "COMMAND_ENDS" else "ANNIHILATION",
 			unitCap = if cap > 0 then cap else nil,
+			friendlyFire = if hasMatch == 2 then false else nil,
 		}
 	end
 

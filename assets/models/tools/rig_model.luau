@@ -132,6 +132,24 @@ function RigModel.rig(src: Instance, rig: any, suffix: string?, appearance: { [s
 		CollectionService:AddTag(parts[name], "TeamColor")
 	end
 
+	-- emissive mask (M-15): the FBX carries it on a probe quad's color map,
+	-- since the importer uploads only maps a material uses
+	if rig.emissive then
+		local probe = src:FindFirstChild(rig.emissive.probe, true)
+		local mask = probe and probe:IsA("MeshPart") and (probe:FindFirstChildOfClass("SurfaceAppearance") and probe:FindFirstChildOfClass("SurfaceAppearance").ColorMap or probe.TextureID)
+		assert(mask and mask ~= "", `rig: no emissive mask on {rig.emissive.probe}`)
+		local t = rig.emissive.tint
+		for _, part in parts do
+			local sa = part:FindFirstChildOfClass("SurfaceAppearance")
+			if sa then
+				sa.EmissiveMaskContent = Content.fromUri(mask)
+				sa.EmissiveTint = Color3.fromRGB(t[1], t[2], t[3])
+				sa.EmissiveStrength = rig.emissive.strength
+			end
+		end
+		model:SetAttribute("EmissiveMask", mask)
+	end
+
 	model.PrimaryPart = parts.base
 	model:SetAttribute("DefId", rig.id)
 	model:SetAttribute("RootOffset", parts.base.CFrame)

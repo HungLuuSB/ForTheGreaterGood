@@ -220,7 +220,7 @@ return function(t: RunAll.Context)
 	t.test("a power stall shrinks the tracking radius until nothing is tracked", function()
 		local sim = Sim.new({ seed = 46, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
-		Spawn.unit(sim, "ord_watchtower", 1, -250, 0)
+		Spawn.unit(sim, "ord_aegis", 1, -250, 0) -- a radar without upkeep: towers shrink in a stall too (S-72)
 		local tribunal = Spawn.unit(sim, "ord_tribunal", 1, -250, 100)
 		local tank = Spawn.unit(sim, "chs_ravager", 2, 300, 100) -- 550 from the Tribunal (track 700)
 		w.fireState[tank] = World.FireState.HOLD_FIRE

@@ -88,6 +88,8 @@ export type World = {
 	wTargetProj: { [number]: number }, -- interceptors: the enemy strategic missile targeted (projectile ID, 0 = none; S-48)
 	wTargetProjSerial: { [number]: number }, -- its Combat.pSerial
 	wStockProgress: { [number]: number }, -- 0..1 of the next missile
+	wSalvo: { [number]: number }, -- salvo weapons: shots left in the salvo under way (S-69)
+	wSalvoWait: { [number]: number }, -- seconds until its next shot
 
 	-- ID allocator
 	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
@@ -141,6 +143,8 @@ function World.new(): World
 		wTargetProj = {},
 		wTargetProjSerial = {},
 		wStockProgress = {},
+		wSalvo = {},
+		wSalvoWait = {},
 		gen = {},
 		pins = {},
 		nextFresh = 1,
@@ -351,6 +355,8 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wBlocked[key] = nil
 		w.wStock[key] = nil
 		w.wStockProgress[key] = nil
+		w.wSalvo[key] = nil
+		w.wSalvoWait[key] = nil
 		w.wTargetProj[key] = nil
 		w.wTargetProjSerial[key] = nil
 	end
@@ -469,6 +475,10 @@ function World.hash(w: World, h: number?): number
 			if stock ~= nil then
 				hv = Hash.u32(hv, stock)
 				hv = Hash.number(hv, w.wStockProgress[key])
+			end
+			local salvo = w.wSalvo[key]
+			if salvo ~= nil and salvo > 0 then -- only during a salvo: other hashes are as before (S-69)
+				hv = Hash.number(Hash.u32(hv, salvo), w.wSalvoWait[key])
 			end
 		end
 	end

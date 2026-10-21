@@ -52,23 +52,24 @@ function Blockout.pieceSet(bp: Blockout, def: any): { [string]: boolean }
 	return set
 end
 
--- RGB 0..255 per palette key and faction. Order: clean light greys and blue
--- glass; Chaos: dark iron, rust and orange glow (guide 2.1, 20.1).
+-- RGB 0..255 per palette key and faction, from docs/art/style-guide.md
+-- (M-15, M-16): Order light sand-grey paint with cyan accents; Chaos gunmetal
+-- with orange accents. `glass` is the faction's accent (sensors, lights).
 Blockout.PALETTES = table.freeze({
 	order = table.freeze({
-		hull = { 188, 194, 199 },
-		dark = { 96, 104, 114 },
-		track = { 52, 55, 60 },
-		metal = { 136, 142, 150 },
-		glass = { 86, 164, 224 },
+		hull = { 178, 174, 160 },
+		dark = { 112, 110, 102 },
+		track = { 54, 54, 52 },
+		metal = { 140, 140, 134 },
+		glass = { 90, 210, 255 },
 		team = { 210, 210, 210 },
 	}),
 	chaos = table.freeze({
-		hull = { 92, 82, 76 },
-		dark = { 56, 50, 48 },
-		track = { 38, 34, 32 },
-		metal = { 140, 84, 52 },
-		glass = { 236, 112, 36 },
+		hull = { 76, 80, 84 },
+		dark = { 46, 48, 52 },
+		track = { 36, 36, 36 },
+		metal = { 104, 108, 112 },
+		glass = { 255, 140, 50 },
 		team = { 210, 210, 210 },
 	}),
 	neutral = table.freeze({

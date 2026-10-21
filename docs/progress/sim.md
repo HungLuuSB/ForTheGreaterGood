@@ -117,6 +117,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Faction balance in AI matches (S-65, `docs/FACTION_AI.md`):** Order wins 89% of same-level matches (target 40–60%). Addressed next by the faction AI (task 11) and the ±10% tuning (task 12); Normandy (no deposits) leaves 43% of its matches undecided at 40 minutes.
 - **Warden and Minotaur (S-64):**
   - **My calls on the mechanic:** the Warden deploys automatically whenever it stands still, and can't fire while packed.
   - **Placeholder numbers:**
@@ -140,7 +141,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
     - Herald / Jackal costs 121 / 99;
     - machine gun accuracy 1.35 / 1.65.
   - **Look:** Order's units are now the tougher ones; guide 2.1's look row still reads "Chaos: built for mass and assault", which fits, but the art direction may want Order's armor to read heavier (factions.md, risks).
-- **Performance (S-60):** two peaks are still over their guide 18.1 budgets, because the fixes change timing. Commands takes 1.7 ms on a ~300-unit select-all order (budget 1); proposal: slice the order's slot assignment into the Pathing job. A structure's death costs ~6 ms in Damage (quadtree updates); proposal: lazy quadtree updates.
+- **Performance (S-60 → S-67):** both peaks fixed as you said. Commands on a select-all order 1.4 → 0.9 ms, Projectiles+Damage when a structure dies 7.6–10.7 → 2.8–4.4 ms; Pathing unchanged (7.5–8.0, at its 8 ms budget). My calls: orders of 64+ units slice; a tree defers at most 8 changes.
 - **AI levels (S-57):** Easy's numbers (first wave at 8 min, waves of 4 + 1, 2 min apart, army of 8, a unit per 20 s); Normal's 2 tanks before the third generator and its recall rule. (The refill question is answered: S-66.)
 - **Pinpointers (S-59, the user asked):** names Witness and Augur; full precision at 6 (linear); 90% less radar and track error at full; radar-only missile lock loss 10% per midcourse check without Pinpointers (a long shot fails about a third to half the time); cost 250 + 3,000.
 - **SAM ranges cut again (S-56, the user asked):** IR now 49% of its S-33 range, radar 56% of S-45's. **Nukes:** a nuke is now in a radar site's reach for only ~6 s, so two sites often let one through (the test now uses four). If interception should stay strong, raise the chance or the radar SAM stock again.
@@ -172,6 +173,8 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **New (S-70..S-73), no wire change:** the Fusion Reactor explodes when killed (def `deathBlast = { damage, aoe, edge }`; the client can draw it from the DEATH and the def); landed aircraft sit on top of their pad and are ground targets (S-71); radar towers, mobile radars and AWACS drain power (`sensors.radarDrain`; their radar radius shrinks in a stall, S-72); `match.friendlyFire` is a match option, default on (S-73), for the lobby.
+- **Done (request 39), S-68, protocol 23:** event **ALERT 18** `alert u8, cell u16, defIndex u16` with `Schema.AlertKind` (UNIT_ATTACKED 1, STRUCTURE_ATTACKED 2, UNIT_LOST 3, STRUCTURE_LOST 4, BUILD_DONE 5, STALL_SUPPLY 6, STALL_POWER 7, NUKE_LAUNCH 8, COMMANDER_ATTACKED 9), rate-limited server-side as you suggested; strategic **UNDER_ATTACK** set on own and allied units hit in the last 3 s. Also: ATTACK_GROUND now works for every unit with a ballistic weapon (artillery, tanks, gun turrets), contract section 8.
 - **Done (request 37), S-63, protocol 21:** OWNER field bit **CHARGES 8**: `flares u8, chaff u8` (charges left; 0 for a kind the def lacks), own units with flares or chaff, on change and with ENTER.
 - **Done (request 38), S-63:** `Sim/Stats`: `Stats.report(sim)` → per player `{ unitsBuilt, unitsLost, unitsKilled, damageDealt, supplyGathered, powerGathered, supplySpent, powerSpent }`; server-side only. Definitions are in the module header.
 - **Pinpointers (S-62):** a type may need a different count for full precision (`pinpointFull`: Witness 5, Augur 7). Please sum `Pinpoint.weight(def)` over the finished Pinpointers instead of counting them, then call `Pinpoint.precision(sum)` as now.
@@ -263,6 +266,8 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: client `073d5e7` (C-50) → `051456b`, passed test (47 specs / 327) and build, pushed. Then `m-sim-2` (S-38..S-40) → `dceb4fa`; that merge ran the old `integrate.sh` (fast suite and build), so the slow suite was run on `main` afterwards: 6 passed.
 - 2026-10-22: client `5c92bb0` (C-52) → `0a5f17b`; `d39244e`, `ad0c3b1` (request 21) → `8492ee2`; `6cafe85`, `9698380` (C-54, SHOT tracers) → `d4b8dab`. All passed test, test_slow and build and were pushed. `check.sh` read only the first commit of a "Ready to merge" line, so it missed `9698380`; it now lists every commit on such a line.
 - 2026-10-22: client `95ff932` (main with S-44, S-45) → `9bf4948`, `8b54138` (C-55, the climb mirrored on the client) → `dd72f27`; both passed test, test_slow and build and were pushed. Both were on one "Ready to merge" line, which the fixed `check.sh` lists.
+- 2026-10-22 (night, faction tasks): `m-sim-2` S-62..S-69 → `1cbfb0d`, `771ef03`, `2070acf`, `f487eea`, `30e9767`; client `5aa4552` (C-75..C-80) → `a21d325`, `c5888f5` (C-74, C-81..C-83) → `b1b4f50`. All passed test, test_slow and build and were pushed. The first S-62 merge failed the slow suite (Fairness and Skirmish after the faction pass); fixed in `f1f66f2` (S-62 follow-up) before it was pushed.
+- **2026-10-22, not merged: models `e78eec0` (M-14..M-17) conflicts in `docs/progress/models.md`**, so the merge was aborted and nothing was pushed. Cause: the sim session edited the models stream's Requests list for S-64 (request 1 marked done; request 3, Warden / Minotaur blockouts, added) in `2ea2c8e`, and the models branch rewrote the same list. Resolution for the models stream: merge `main` into `m-models` and keep both (its own text and requests 1's "Done" note and 3). Next time the sim session adds a request there (task 10 asks for more blockouts), it appends after the models branch's latest list, so it doesn't conflict.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 

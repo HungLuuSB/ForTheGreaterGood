@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 22 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING
+Schema.PROTOCOL_VERSION = 23 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -799,6 +799,9 @@ end
 --               doesn't detonate (protocol 16)                                =  9 bytes
 --   SPAWN_STRATEGIC as SPAWN_PROJ (targetId 0) | goal pos: a strategic missile
 --               and the spot it flies to (Shared/Combat/Lofted; protocol 18) = 25 bytes
+--   ALERT       alert u8 (Schema.AlertKind) | cell u16 | defIndex u16 (0 = none):
+--               something the player should know, rate-limited by the sim
+--               (Sim/Alerts; protocol 23)                                     =  6 bytes
 --   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
 --               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
@@ -823,11 +826,24 @@ Schema.EventKind = table.freeze({
 	LAUNCH_WARNING = 15,
 	INTERCEPTED = 16,
 	SPAWN_STRATEGIC = 17, -- protocol 18 (S-51)
+	ALERT = 18, -- protocol 23 (S-68)
 })
+Schema.AlertKind = table.freeze({
+	UNIT_ATTACKED = 1,
+	STRUCTURE_ATTACKED = 2,
+	UNIT_LOST = 3,
+	STRUCTURE_LOST = 4,
+	BUILD_DONE = 5,
+	STALL_SUPPLY = 6,
+	STALL_POWER = 7,
+	NUKE_LAUNCH = 8,
+	COMMANDER_ATTACKED = 9,
+})
+local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6 })
 Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
 Schema.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- DECOYED: what defeated the missile (protocol 13)
 Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
@@ -850,6 +866,7 @@ export type Event = {
 	health: number?,
 	build: number?,
 	state: number?,
+	alert: number?, -- ALERT: Schema.AlertKind (with cell, defIndex)
 	-- DEATH
 	severity: number?,
 	wreckId: number?,
@@ -972,6 +989,15 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		w:writeI16(required(e.fromY, "fromY"))
 		writePos(w, e)
 		return
+	elseif kind == EK.ALERT then
+		local a = required(e.alert, "alert")
+		if a < 1 or a > ALERT_MAX then
+			error(`Schema: alert kind {a} outside 1..{ALERT_MAX}`, 2)
+		end
+		w:writeU8(a)
+		w:writeU16(required(e.cell, "cell"))
+		w:writeU16(e.defIndex or 0)
+		return
 	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
 		writeId(w, required(e.wreckId, "wreckId"), "wreckId")
 		if kind == EK.WRECK then
@@ -1082,6 +1108,15 @@ function Schema.decodeEvent(r: Reader): Event
 		e.fromOffZ = r:readU8()
 		e.fromY = r:readI16()
 		readPos(r, e)
+		return e
+	elseif kind == EK.ALERT then
+		local a = r:readU8()
+		if a < 1 or a > ALERT_MAX then
+			fail(r, `alert kind {a}`)
+		end
+		e.alert = a
+		e.cell = r:readU16()
+		e.defIndex = r:readU16()
 		return e
 	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
 		e.wreckId = readId(r, "wreckId")

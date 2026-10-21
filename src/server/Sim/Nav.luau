@@ -14,6 +14,11 @@
 -- units like flow fields (DECISIONS D83): each unit's direct-line check, then
 -- the coarse route and corridor, then the flow field job. Until the plan is
 -- done the order is pending and its units steer straight at their slots.
+-- An order for SLICED_ASSIGN_MIN units or more (a select-all order) gets its
+-- ground groups' slots in the plan job too (S-67): sorted and assigned from
+-- a snapshot of positions taken when issued, so the picks are those of an
+-- immediate assignment, but the units head for the formation's center until
+-- their slots arrive.
 
 local Formation = require("@shared/Grid/Formation")
 local PlacementRules = require("@shared/Grid/PlacementRules")
@@ -69,6 +74,13 @@ export type Order = {
 -- Planning phase of an order (see the header).
 type Plan = {
 	tree: Quadtree.Tree,
+	-- big orders (S-67): slot sorting and assignment still to run, from the
+	-- positions when issued
+	slots: { { number } }?,
+	sort: { number }?, -- deepestFirst's cx, cz, backX, backZ, spacing
+	snapX: { [number]: number }?,
+	snapZ: { [number]: number }?,
+	assign: Formation.Assigner?,
 	members: { number }, -- unit IDs given the order, ascending
 	nextMember: number, -- next unit to line-check
 	cells: { number }, -- start cells of units that need the field
@@ -84,6 +96,8 @@ export type Nav = {
 	grid: Grid.Grid,
 	profiles: { [number]: Profile }, -- by unit def index; mobile units only
 	trees: { [string]: Quadtree.Tree },
+	treeKey: { [Quadtree.Tree]: string },
+	dirty: { [string]: { { number } } }, -- per tree: terrain changes not applied yet (S-67)
 	cache: FieldCache.Cache,
 	jobs: { JobEntry }, -- FIFO: entries jobHead .. jobTail - 1
 	jobHead: number,
@@ -126,6 +140,8 @@ function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 		grid = pm.grid,
 		profiles = profiles,
 		trees = {},
+		treeKey = {},
+		dirty = {},
 		cache = FieldCache.new(),
 		jobs = {},
 		jobHead = 1,
@@ -147,6 +163,28 @@ function Nav.new(pm: Passability.PassMap, defs: Defs.DefSet): Nav
 	return nav
 end
 
+-- Applies a tree's pending terrain changes (S-67), in the order they came.
+-- A plan's route search over the tree restarts if the leaves changed.
+local function flush(nav: Nav, k: string, tree: Quadtree.Tree)
+	local rects = nav.dirty[k]
+	nav.dirty[k] = nil
+	local changed = false
+	for _, r in rects do
+		if Quadtree.update(tree, nav.pm, r[1], r[2], r[3], r[4], true) then
+			changed = true
+		end
+	end
+	if changed then
+		Quadtree.computeComponents(tree) -- once for the batch
+		for i = nav.jobHead, nav.jobTail - 1 do
+			local plan = nav.jobs[i].plan
+			if plan and plan.tree == tree and plan.search then
+				plan.search = nil -- its leaf IDs are stale: search again
+			end
+		end
+	end
+end
+
 function Nav.tree(nav: Nav, moveClass: string, need: number, key: string?): Quadtree.Tree
 	local k = key or `{moveClass}:{need}`
 	local tree = nav.trees[k]
@@ -154,6 +192,9 @@ function Nav.tree(nav: Nav, moveClass: string, need: number, key: string?): Quad
 		tree = Quadtree.build(nav.pm, moveClass, need)
 		tree.stepCost = Terrain.stepCosts(nav.pm.layers, moveClass) -- S-37
 		nav.trees[k] = tree
+		nav.treeKey[tree] = k
+	elseif nav.dirty[k] then
+		flush(nav, k, tree)
 	end
 	return tree
 end
@@ -221,6 +262,8 @@ Formation.spiral(Nav.MAX_COMMAND_UNITS * 4) -- built at load, not in the first o
 -- closest unassigned unit; ties go to the lower ID. Returns the unit per
 -- slot (0 once units run out) and the number of distance checks made.
 Nav.ASSIGN_BUCKET = Formation.ASSIGN_BUCKET
+Nav.SLICED_ASSIGN_MIN = 64 -- orders this big assign their ground groups' slots in the Pathing job (S-67)
+Nav.MAX_PENDING = 8 -- terrain changes a quadtree may defer before they're applied at once (S-67)
 Nav.ISSUE_UNIT_COST = 10 -- work units per unit given an order (plus 1 per 4 assignment distance checks)
 function Nav.assignSlots(w: World.World, members: { number }, slots: { { number } }): ({ number }, number)
 	return Formation.assign(w.posX, w.posZ, members, slots)
@@ -329,6 +372,7 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 	table.sort(keys)
 
 	local g = nav.grid
+	local bigOrder = #ids >= Nav.SLICED_ASSIGN_MIN
 	for _, key in keys do
 		local members = groups[key]
 		local first = nav.profiles[w.defIndex[members[1]]]
@@ -402,15 +446,27 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 
 		-- Far side of the formation first, then each slot takes the closest
 		-- unassigned unit; ties go to the lower ID (Shared/Grid/Formation).
-		Formation.deepestFirst(slots, cx, cz, backX, backZ, spacing)
 		local assigned: { [number]: boolean } = {}
-		local pick, checks = Nav.assignSlots(w, members, slots)
+		local sliced = bigOrder and tree ~= nil and not order.unreachable
+		local pick, checks = {}, 0
+		local snapX, snapZ = nil, nil
+		if sliced then
+			-- a select-all order (S-67): the plan job sorts and assigns the
+			-- slots, from where the units are now
+			snapX, snapZ = {}, {}
+			for _, id in members do
+				snapX[id], snapZ[id] = w.posX[id], w.posZ[id]
+			end
+		else
+			Formation.deepestFirst(slots, cx, cz, backX, backZ, spacing)
+			pick, checks = Nav.assignSlots(w, members, slots)
+		end
 		-- issuing shares the tick's pathing budget (Pathing gets what's left)
 		nav.issueWork += Nav.ISSUE_UNIT_COST * #members + checks // 4
 		for i, slot in slots do
 			local best = pick[i]
-			if best == 0 then
-				break
+			if best == nil or best == 0 then
+				break -- (sliced: no picks yet, every unit goes to the center below)
 			end
 			local bestD = (w.posX[best] - slot[1]) ^ 2 + (w.posZ[best] - slot[2]) ^ 2
 			assigned[best] = true
@@ -443,7 +499,17 @@ function Nav.issueMove(nav: Nav, w: World.World, tick: number, unitIds: { number
 			order.pending = true
 			enqueue(nav, {
 				order = order,
-				plan = { tree = tree, members = table.clone(members), nextMember = 1, cells = {}, search = nil },
+				plan = {
+					tree = tree,
+					slots = if sliced then slots else nil,
+					sort = if sliced then { cx, cz, backX, backZ, spacing } else nil,
+					snapX = snapX,
+					snapZ = snapZ,
+					members = table.clone(members),
+					nextMember = 1,
+					cells = {},
+					search = nil,
+				},
 			})
 		end
 	end
@@ -462,10 +528,49 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 	local plan = entry.plan :: Plan
 	local g = nav.grid
 	local t = plan.tree
+	local tk = nav.treeKey[t]
+	if nav.dirty[tk] then
+		flush(nav, tk, t) -- terrain changed since the last call (S-67)
+	end
 	local spent = 0
 	if nav.orders[order.id] == nil then
 		order.pending = false
 		return 0, true -- every unit left the order: nothing to plan
+	end
+
+	-- 0. a big order's slot assignment (S-67): 4 distance checks per work
+	-- unit, as when issuing; then each unit still in the order gets its slot
+	if plan.slots then
+		local slots = plan.slots :: { { number } }
+		local sort = plan.sort :: { number }
+		Formation.deepestFirst(slots, sort[1], sort[2], sort[3], sort[4], sort[5])
+		plan.assign = Formation.newAssigner(plan.snapX :: any, plan.snapZ :: any, plan.members, slots)
+		spent += #slots // 4 + #plan.members // 4
+		plan.slots, plan.sort, plan.snapX, plan.snapZ = nil, nil, nil, nil
+	end
+	local a = plan.assign
+	if a then
+		local before = a.checks
+		local done = Formation.assignStep(a, math.max(budget - spent, 1) * 4)
+		spent += (a.checks - before) // 4 + 1
+		if not done then
+			return spent, false
+		end
+		for i, slot in a.slots do
+			local id = a.pick[i]
+			if id == 0 then
+				break
+			end
+			if w.slot[id] ~= nil and w.orderId[id] == order.id then
+				w.goalX[id], w.goalZ[id] = slot[1], slot[2]
+				w.bestDist[id] = math.sqrt((w.posX[id] - slot[1]) ^ 2 + (w.posZ[id] - slot[2]) ^ 2)
+				w.direct[id] = false
+			end
+		end
+		plan.assign = nil
+		if spent >= budget then
+			return spent, false
+		end
 	end
 
 	local members = plan.members
@@ -595,6 +700,10 @@ end
 -- units it now leads into the structure stall and get an extended field
 -- (D39).
 function Nav.terrainChanged(nav: Nav, x0: number, z0: number, x1: number, z1: number)
+	-- each tree applies the change the next time it is used (S-67): a
+	-- structure's death used to update every tree in the Damage system's tick
+	-- (a backlog past MAX_PENDING changes, e.g. a map's structures placed
+	-- at setup, is applied at once, so no single tick pays for it)
 	local pad = Passability.CLEARANCE_CAP
 	local keys: { string } = {}
 	for key in nav.trees do
@@ -602,14 +711,14 @@ function Nav.terrainChanged(nav: Nav, x0: number, z0: number, x1: number, z1: nu
 	end
 	table.sort(keys)
 	for _, key in keys do
-		local tree = nav.trees[key]
-		if Quadtree.update(tree, nav.pm, x0 - pad, z0 - pad, x1 + pad, z1 + pad) then
-			for i = nav.jobHead, nav.jobTail - 1 do
-				local plan = nav.jobs[i].plan
-				if plan and plan.tree == tree and plan.search then
-					plan.search = nil -- its leaf IDs are stale: search again
-				end
-			end
+		local rects = nav.dirty[key]
+		if rects == nil then
+			rects = {}
+			nav.dirty[key] = rects
+		end
+		table.insert(rects, { x0 - pad, z0 - pad, x1 + pad, z1 + pad })
+		if #rects > Nav.MAX_PENDING then
+			flush(nav, key, nav.trees[key])
 		end
 	end
 	local g = nav.grid
@@ -623,6 +732,7 @@ end
 -- Pathing system body: advances queued plan and field jobs, oldest first,
 -- within `budget` work units.
 function Nav.runJobs(nav: Nav, w: World.World, budget: number)
+	local idle = nav.jobs[nav.jobHead] == nil
 	local left = budget
 	while left > 0 and nav.jobs[nav.jobHead] do
 		local entry = nav.jobs[nav.jobHead]
@@ -655,6 +765,18 @@ function Nav.runJobs(nav: Nav, w: World.World, budget: number)
 			nav.jobHead += 1
 		elseif spent == 0 then
 			break
+		end
+	end
+	-- an idle Pathing tick (no job queued) applies pending terrain changes
+	-- (S-67), so the next order rarely finds any
+	if idle and next(nav.dirty) ~= nil then
+		local keys: { string } = {}
+		for key in nav.dirty do
+			table.insert(keys, key)
+		end
+		table.sort(keys)
+		for _, key in keys do
+			flush(nav, key, nav.trees[key])
 		end
 	end
 end

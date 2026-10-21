@@ -69,8 +69,8 @@
 |---|---|---|
 | Ideology | Discipline, precision, control | Freedom, force, disruption |
 | Role | Heavy defense and strategy | The strength of armies |
-| Look | Western-inspired (Leopard 2, Abrams, Patriot): sleek, wedge-shaped, high-tech, fortress-like; heavy armor, sensors, shields, active protection | Eastern-inspired (T-14 Armata, T-90M, Pantsir): rugged, aggressive, built for mass and assault; rounder or domed turrets, visible reactive-armor blocks, rear slat cages, shorter and wider |
-| Palette | Sand base | Gunmetal base (recommended over olive, which disappears on grass) |
+| Look | Western-inspired (Leopard 2, Abrams, Patriot): sleek, wedge-shaped, high-tech, fortress-like; reads heavy: thick plates, add-on armor, deep skirts, sensors, shields, active protection | Eastern-inspired (T-14 Armata, T-90M, Pantsir): rugged, aggressive, built for mass and assault; reads light: compact and high off the ground, exposed running gear, rounder or domed turrets, reactive-armor blocks, rear slat cages |
+| Palette | Light sand-grey paint, cyan emissive accents | Gunmetal paint, orange emissive accents |
 | Doctrine | Better sensors, stealth, precision long range, DIRCM, Pinpointers that reach full precision sooner (5 Witnesses; Chaos needs 7 Augurs) | Strong jamming, missile saturation, cheap mass |
 | Unit traits | Longer range, more accurate, more damage per shot, tougher; slower firing, slower moving, more expensive | Shorter range, less accurate, less per shot but faster firing; lighter, faster, cheaper: more units for the same economy |
 | Exclusive tools | Deployable defenses (Warden), fortress structures | Siege units (Minotaur), mass assault, jammers |
@@ -79,7 +79,7 @@
 
 Both factions have the **same roles** (scout, MBT, SAM, fighter, etc.) so balancing stays manageable. They differ in stats and in which information-warfare tools they get. Each trait differs by about 15–30% between the two versions of a role, and per unit of value (supply + power / 10) the two versions trade about evenly (0.8–1.25, `lune run factions`); what differs is the conditions each wins in. Numbers: `docs/design/factions.md` (approved 2026-10-22, S-62) and `docs/BALANCE.md`, "Faction pass". This replaced "Chaos: heavy armor".
 
-Both factions look **near-future military, realistic-leaning**: real modern vehicles with restrained sci-fi accents (angular armor panels, sensor strips, active protection, rail-gun details). Long, low, wide hulls; turrets set toward the rear; long guns; side skirts with road wheels; sights and sensor boxes; canister launchers for SAMs; flat phased-array radars, never dishes; team color on top surfaces (turret roof, hull top). Silhouette first, secondary shapes second, small details only if cheap. Details: [`docs/art/style-guide.md`](art/style-guide.md).
+Both factions are **near-future military shapes in Beyond All Reason's model style** (M-15): real modern vehicles (Leopard 2, Abrams, T-14) with strong, slightly exaggerated silhouettes (bigger turrets and guns), clean hard-surface painted metal with crisp panel lines and edge highlights, no camouflage, large bold team-color panels designed into the model (turret roof, hull top, side plates) and small emissive accents (sensor lights, weapon glow). Long, low, wide hulls; turrets set toward the rear; long guns; side skirts with road wheels; canister launchers for SAMs; flat phased-array radars, never dishes. Silhouette first, secondary shapes second, small details only if cheap. Details: [`docs/art/style-guide.md`](art/style-guide.md).
 
 ### 2.2 Naming conventions
 
@@ -748,7 +748,8 @@ SPAWN_STRATEGIC as SPAWN_PROJ, then goal pos (v18: a strategic missile)     25 B
 INTERCEPTED projId u16, pos (a strategic missile destroyed; v16)            9 B
 pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
 vel = vx, vy, vz i16 (1/8 stud per second)
-ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
+ALERT       alert u8, cell u16, defIndex u16 (v23: under attack, lost, built,
+            stall, nuke launch; rate-limited, to the player it concerns)  6 B
 ```
 
 **Projectile correction (S → C, unreliable, `Projectiles` channel, after the tick header)**

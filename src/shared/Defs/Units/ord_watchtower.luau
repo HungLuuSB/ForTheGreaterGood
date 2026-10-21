@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 70, power = 1000, buildTime = 2000 },
 	health = 690, -- faction pass (S-62)
 	footprint = 1,
-	sensors = { sight = 160, radar = 700, radarError = 16 },
+	sensors = { sight = 160, radar = 700, radarError = 16, radarDrain = 3 }, -- upkeep: S-72
 	icon = "radar",
 	model = "ord_watchtower",
 })
