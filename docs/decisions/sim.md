@@ -926,3 +926,12 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - A `BLAST` combat event marks it. No wire change: the client sees the DEATH and can read `deathBlast` from the def to draw it.
 - **Numbers** (Order and Chaos reactors, my placeholder): 2,500 damage at the center, radius 120, edge 0.25: a T1 tank 40 studs away dies.
 - **Test:** `DeathBlast.spec`: a reactor kills tanks of both sides 40 studs off, leaves one 300 off untouched; a generator doesn't explode.
+
+## S-71 — Landing details: parked aircraft are ground targets; full pads are skipped (audit item 10) (2026-10-22)
+
+- **Targeting:** a LANDED aircraft counts as a ground unit for targeting (`Sensors.knownCategories` swaps its AIR / JET / HELI bits for GROUND, and target priorities read the same), and takes LIGHT damage (`Combat.armorOf`): ground guns can kill it (guide 12.2: "easy targets"), anti-air can't engage it until it takes off.
+- **Altitude:** a rearming or docked aircraft settles on top of its pad (the pad's height) instead of the ground inside it, where the pad's collision cylinder had been catching every shell aimed at it.
+- **Fixed on the way:** Movement skipped aircraft altitude changes on ticks when nothing moved, so a jet that landed while the rest of the map stood still stayed at cruise height.
+- **Pads:** an aircraft heading to rearm picks the nearest pad with a free spot (counting aircraft already assigned to it against its `rearmPads`); if all are full, the nearest.
+- **Not done:** the flying sight bonus (audit item 10's third part); flying units have the sight their defs give. It would change every air unit's numbers, so it waits for a balance pass.
+- **Tests (`Landing.spec`):** a Ravager damages a Falcon parked on its pad, 131 a shell (its LIGHT damage), while a Hornet holds its fire; an empty Falcon skips a full pad for a free one farther away.

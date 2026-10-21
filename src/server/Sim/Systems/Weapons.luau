@@ -160,7 +160,7 @@ local function fire(
 			if World.isRef(w, target, w.wTargetGen[World.slotKey(id, slot)]) then
 				-- the damage it is expected to deal (S-29)
 				local tp = c.profiles[w.defIndex[target]]
-				Combat.addPending(c, w, projectile, target, weapon.damage[tp.armorClass] * Combat.hitChance(weapon, tp, dist))
+				Combat.addPending(c, w, projectile, target, weapon.damage[Combat.armorOf(w, target, tp)] * Combat.hitChance(weapon, tp, dist))
 			end
 			return
 		end

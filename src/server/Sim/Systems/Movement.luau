@@ -174,7 +174,15 @@ return function(sim: Types.Sim)
 		anyActive = anyActive or moving[k] or speed[id] > 0
 	end
 	if not anyActive then
-		-- Nothing is moving: nothing can start overlapping either.
+		-- Nothing is moving: nothing can start overlapping either. Aircraft
+		-- still climb or settle onto their pads (S-71: a jet landing while
+		-- nothing else moved stayed at cruise height).
+		for k = 1, n do
+			local p = prof[k]
+			if p and p.air then
+				Air.updateAltitude(sim, ids[k])
+			end
+		end
 		updateMoving(sim, profiles)
 		return
 	end

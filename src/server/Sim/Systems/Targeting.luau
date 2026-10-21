@@ -173,7 +173,8 @@ local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: numb
 	local team = sim.world.ally[id]
 	local _, _, level, defIndex = Sensors.knownTarget(sim, team, t, gen)
 	-- type priorities only for targets whose type the team knows (D107)
-	local weight = if Sensors.typeKnown(sim, team, t, level) then priorityWeight(weapon.priorityMasks, sim.combat.profiles[defIndex :: number].categoryMask) else 1
+	-- (a landed aircraft ranks as the ground unit it is for now, S-71)
+	local weight = if Sensors.typeKnown(sim, team, t, level) then priorityWeight(weapon.priorityMasks, Sensors.knownCategories(sim, team, t, level, defIndex :: number)) else 1
 	local s = weight / math.max(dist, 1)
 	if isGuided(weapon) and EW.canLock(sim, id, weapon, t, dist) then
 		s *= LOCK_PREFERENCE

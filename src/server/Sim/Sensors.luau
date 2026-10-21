@@ -561,13 +561,20 @@ end
 -- The categories `team` knows unit `id` has, given its level and def index
 -- (from Sensors.knownTarget): all of them when its type is known, else
 -- those of its domain (D107).
+-- An aircraft parked on the ground (LANDED) counts as a ground unit: ground
+-- guns can hit it, anti-air can't (guide 12.2, S-71).
+local AIR_BITS = Sensors.DOMAIN_MASK.air
 function Sensors.knownCategories(sim: Types.Sim, team: number, id: number, level: number, defIndex: number): number
 	local def = sim.defs.unitByIndex[defIndex]
+	local w = sim.world
+	local landed = def.domain == "air" and w.slot[id] ~= nil and bit32.band(w.state[id], World.State.LANDED) ~= 0
 	if Sensors.typeKnown(sim, team, id, level) then
+		if landed then
+			return bit32.bor(bit32.band(def.categoryMask, bit32.bnot(AIR_BITS)), CB.GROUND)
+		end
 		return def.categoryMask
 	end
-	local w = sim.world
-	if def.domain == "air" then
+	if def.domain == "air" and not landed then
 		return Sensors.DOMAIN_MASK.air
 	elseif bit32.band(def.categoryMask, CB.SUB) ~= 0 or (w.slot[id] ~= nil and bit32.band(w.state[id], World.State.SUBMERGED) ~= 0) then
 		return Sensors.DOMAIN_MASK.submerged
