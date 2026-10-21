@@ -173,7 +173,8 @@ local function shellFor(r: Renderer, id: number, inUse: { [number]: boolean }): 
 	return s
 end
 
-function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now: number)
+-- Returns Effects.visible's list (the missile sensor view draws from it).
+function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now: number): { { any } }
 	-- projectiles: keep each one's shell while it flies
 	local parts, frames = r.parts, r.frames
 	table.clear(parts)
@@ -268,6 +269,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		end
 	end
 	park(r.flashes, #fx.bursts + 1)
+	return visible
 end
 
 return RenderEffects
