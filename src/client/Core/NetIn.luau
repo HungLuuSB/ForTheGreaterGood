@@ -242,7 +242,15 @@ function NetIn.apply(world: World.World, channel: string, msg: buffer, now: numb
 	if channel == "Events" then
 		applyEvents(world, records :: any, tick)
 	elseif channel == "Eco" then
-		world.economy = (records :: any)[1]
+		-- protocol 9 (S-21): records carry their team; a player gets only its
+		-- own, a spectator every team's: keep the own team's
+		local own = (records :: any)[1]
+		for _, r in records :: any do
+			if r.team == world.me.team then
+				own = r
+			end
+		end
+		world.economy = own
 	elseif channel == "Tactical" then
 		applyTactical(world, records :: any, tick)
 	elseif channel == "State" then
