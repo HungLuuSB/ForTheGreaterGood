@@ -134,28 +134,29 @@ local PROFILES = {
 			{ def = "chs_generator", player = 2, x = 140, z = 60 },
 		},
 	},
-	-- SAM test: 4 Thorn IR SAM sites on the east side; your Falcon (5x
-	-- health) starts on the west side, out of their reach (range 280), and
-	-- flies in to circle at x = 300, just short of them (at 420 it circled
-	-- past the view's east edge); your 4 long-range radars cover the map.
+	-- SAM test: 4 Thorn IR SAM sites on the east side of a long map (2048
+	-- studs, the largest); your Falcon (5x health) starts far west, out of
+	-- their reach, and flies ~1,500 studs in to circle at x = 600, just short
+	-- of them (its 220-stud circle stays inside the map); your 4 long-range
+	-- radars cover the map.
 	-- For watching missile flight paths and the sensor view (N, C-39) with
 	-- its seeker cones (C-42). The Thorns launch
 	-- along their turret's aim until the sim adds vertical launch (request 12).
 	sam = {
 		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
 		seed = 25,
-		mapId = "flat:160",
+		mapId = "flat:256",
 		scenario = "empty",
 		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
 		humanSlots = { 1 },
 		demoOrders = false,
 		restartAfter = nil,
 		spawns = {
-			{ def = "ord_beacon", player = 1, x = -450, z = -450, count = 2, dx = 900 },
-			{ def = "ord_beacon", player = 1, x = -450, z = 450, count = 2, dx = 900 },
-			{ def = "ord_falcon", player = 1, x = -540, z = 0, heading = math.pi / 2, health = 5, moveTo = { 300, 0 } },
-			{ def = "chs_thorn", player = 2, x = 340, z = -120, count = 2, dx = 160 },
-			{ def = "chs_thorn", player = 2, x = 340, z = 120, count = 2, dx = 160 },
+			{ def = "ord_beacon", player = 1, x = -600, z = -600, count = 2, dx = 1200 },
+			{ def = "ord_beacon", player = 1, x = -600, z = 600, count = 2, dx = 1200 },
+			{ def = "ord_falcon", player = 1, x = -950, z = 0, heading = math.pi / 2, health = 5, moveTo = { 600, 0 } },
+			{ def = "chs_thorn", player = 2, x = 640, z = -120, count = 2, dx = 160 },
+			{ def = "chs_thorn", player = 2, x = 640, z = 120, count = 2, dx = 160 },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders
