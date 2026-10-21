@@ -137,6 +137,22 @@ for line in string.gmatch(fs.readFile(input), "[^\r\n]+") do
 			table.insert(rects, { cx = n(3), cz = n(4), ax = 1, az = 0, ha = half, bx = 0, bz = 1, hb = half, top = 0.1, r = tint[1], g = tint[2], b = tint[3], alpha = 0.45 })
 			addUnit(w[2], { 210, 210, 210 }, n(3), n(4), math.pi - n(5) * math.pi / 2, 0, tint)
 		end
+	elseif w[1] == "A" then
+		-- a range-ring arc: sampled like the client does (Core/Ranges)
+		local ARC = { weapon = { 235, 60, 50 }, aa = { 240, 120, 220 }, sight = { 235, 235, 235 }, radar = { 90, 220, 110 }, track = { 60, 170, 80 }, jammer = { 240, 210, 60 } }
+		local cx, cz, r, a0, a1 = n(2), n(3), n(4), n(5), n(6)
+		local c = ARC[w[7]] or ARC.weapon
+		local steps = math.max(1, math.ceil(math.clamp(math.ceil(2 * math.pi * r / 6), 24, 96) * (a1 - a0) / (2 * math.pi)))
+		for k = 0, steps - 1 do
+			local s0, s1 = a0 + (a1 - a0) * k / steps, a0 + (a1 - a0) * (k + 1) / steps
+			local sx, sz = cx + r * math.cos(s0), cz + r * math.sin(s0)
+			local ex, ez = cx + r * math.cos(s1), cz + r * math.sin(s1)
+			local dx, dz = ex - sx, ez - sz
+			local len = math.sqrt(dx * dx + dz * dz)
+			if len > 0.01 then
+				table.insert(rects, { cx = (sx + ex) / 2, cz = (sz + ez) / 2, ax = dx / len, az = dz / len, ha = len / 2 + 0.2, bx = -dz / len, bz = dx / len, hb = 0.8, top = 0.15, r = c[1], g = c[2], b = c[3], alpha = 0.9 })
+			end
+		end
 	elseif w[1] == "T" then
 		-- a trail: segments over the units, fading toward its tail
 		local x1, z1, x2, z2, width = n(2), n(3), n(4), n(5), math.max(n(6), 0.5)

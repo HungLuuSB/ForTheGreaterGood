@@ -26,6 +26,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | C-16 | Effects play on the render clock; every projectile is followed, caps apply to what is drawn, by size over distance |
 | C-17 | Strategic zoom: screen-space shape icons (no image assets), on beyond 480 studs, off below 420; units without a model always get one |
 | C-18 | Effects sized for the RTS camera: Neon shells 2.6 studs with a 0.06 s Trail, muzzle flashes >= 4 studs, impacts >= 7 studs |
+| C-19 | Range rings: merged same-kind outlines on the terrain, own units and the build ghost, V toggles, rebuilt on change at most 4 Hz |
+| C-20 | Target line for one selected unit: the attack order sent, else the known enemy on the turret's aim line (until targets are on the wire) |
+| C-21 | BAR-style controls: camera on the arrow keys, edge scroll (live) and middle-drag; S = stop; WASD free |
 
 ---
 
@@ -125,7 +128,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 ### C-13 — Default controls (2026-10-21)
 
-**Decision:** left click / drag selects (Shift adds, Ctrl toggles), double-click selects that type on screen, right click gives the smart order (enemy: attack; own unfinished frame: repair; own unit: guard; ground: move), right-drag gives a line move, Shift queues, Ctrl+1..9 sets and 1..9 recalls a group (Shift+digit adds it, a double tap jumps the camera), X stops. Picking uses projected unit centers (18 px), because unit parts don't take raycasts (rig.md).
+**Decision:** left click / drag selects (Shift adds, Ctrl toggles), double-click selects that type on screen, right click gives the smart order (enemy: attack; own unfinished frame: repair; own unit: guard; ground: move), right-drag gives a line move, Shift queues, Ctrl+1..9 sets and 1..9 recalls a group (Shift+digit adds it, a double tap jumps the camera), X stops (S since C-21). Picking uses projected unit centers (18 px), because unit parts don't take raycasts (rig.md).
 
 **Alternatives:** BAR's S for stop (S pans the camera here); raycast picking (needs `CanQuery` on every unit part).
 
@@ -168,3 +171,21 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 **Alternatives:** keep model-scale sizes (0.45-stud shells: about one pixel at RTS zoom); scale effects with camera distance (later, if the near view looks too big).
 
 **Why:** the user saw no projectiles. The first cause was a stale script, not the effects: Studio's `Entry.MatchConfig` said `ACTIVE = "build"` (no enemy, so no shots) while the file said `duel`, and Rojo only pushes a file when its content changes; a real edit re-synced it. In the actual duel the client received and applied 92 SPAWN_PROJ and 92 IMPACT in 8 s, but drew 0.45-stud shells for 0.05–0.13 s: invisible from the RTS camera.
+
+### C-19 — Range rings (2026-10-22)
+
+**Decision:** for the selected own units (own team: the wire doesn't say which other teams are allied) and for the build ghost, `Core/Ranges` makes one circle per weapon (anti-air-only weapons as their own kind) and per sensor (sight, radar, tracking, jammer). Circles of the same kind merge: each circle keeps only the arcs not inside another circle of that kind (overlap intervals of half-angle acos((r² + d² - r'²) / 2rd) around the direction to the neighbour; nested and identical circles drop out; near neighbours are checked first so interior circles of a dense group stop early). Arcs become polylines (at most 6 studs apart, 24–96 points per circle) on the terrain height + 0.35 studs, drawn as pooled thin Neon segments (`Render/RangeOverlay`). Colors: weapon red, anti-air pink, sight white, radar and tracking green, jammer yellow. A rebuild happens only when the selection, the ghost or a selected unit's position (2-stud steps) changes, at most 4 times a second. V toggles the rings; on by default.
+
+**Alternatives:** draw every circle (unreadable for groups); exact union every frame (3–4 ms for 50 tightly packed units in Lune); a raster (texture) overlay (needs EditableImage).
+
+**Why:** `Ranges.spec`: two overlapping circles give one closed outline (every arc end meets another) with no arc point inside the other circle; separate circles stay whole; nested and identical ones vanish; kinds don't cut each other; an outer arc across angle 0 stays one arc. Cost (Studio playtest, 50 Lancers selected): nothing when nothing changes (0.024 ms per frame); a rebuild while the group moves 3.1 ms on average, 4.7 ms at worst (union 1.6–2.6 ms, the rest part writes), at most 4 per second, so 0.21 ms per frame on average; the first build after selecting 4.7 ms. Made cheaper by an allocation-free interval sweep (sorted starts and ends), near neighbours first, segments kept parented and hidden by Transparency, Size written only when it changes by > 0.3 stud, one BulkMoveTo, and a 256-segment pool pre-made on idle frames. A further step, if the spikes matter: split a rebuild over two frames.
+
+### C-20 — Target line (2026-10-22)
+
+**Decision:** with one unit selected, a red line runs from it to its current target, with a red ring around the target. Targets aren't on the wire yet (request 6), so `Core/Targets` uses the attack order this client sent if there is one, else, while the first weapon is AIMING or READY, the known enemy within 1.1 x its range closest to the turret's aim line (hull heading + replicated turret yaw, within 12°).
+
+**Why:** `Targets.spec`: over 200 ticks of the duel the guess equals the server's `wTarget` 1,393 times in 1,398 (99.6 %); an attack order is exact. A wire field makes it exact always and also covers targets the turret hasn't turned to yet.
+
+### C-21 — BAR-style controls (2026-10-22, the user's answer)
+
+**Decision:** the camera pans with the arrow keys, screen-edge scroll (live games, off in Studio) and middle-drag; Q / E rotate as before; S stops; WASD is free for later hotkeys; V toggles range rings. Everything else in C-13 stays. Strategic zoom keeps sending the camera rectangle (answer to C-17).

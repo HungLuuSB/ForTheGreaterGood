@@ -7,7 +7,8 @@
 --   right drag               line move along the drag
 --   Shift + right click      queue the order
 --   Ctrl + 1..9 / 1..9       set / recall a control group (double tap: jump the camera)
---   X                        stop
+--   S                        stop (BAR style; the camera pans with the arrow keys)
+--   V                        range rings on / off (Render/RangeOverlay)
 -- While placing a structure (build ghost, guide 15.6):
 --   left click / drag        place / a row (Shift: queue it and keep placing)
 --   R                        rotate
@@ -27,7 +28,7 @@ local Controls = {}
 Controls.DRAG_PIXELS = 5 -- left drag beyond this is a box
 Controls.LINE_PIXELS = 12 -- right drag beyond this is a line move
 Controls.DOUBLE_CLICK = 0.35 -- seconds
-Controls.STOP_KEY = Enum.KeyCode.X
+Controls.STOP_KEY = Enum.KeyCode.S
 Controls.ROTATE_KEY = Enum.KeyCode.R
 Controls.BUILD_KEY = Enum.KeyCode.B -- placeholder until the build menu (UI)
 

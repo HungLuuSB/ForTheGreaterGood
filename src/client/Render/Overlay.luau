@@ -6,6 +6,7 @@
 
 local Schema = require("@shared/Net/Schema")
 local Api = require("../Api")
+local Targets = require("../Core/Targets")
 local World = require("../Core/World")
 
 local Overlay = {}
@@ -141,6 +142,21 @@ function Overlay.step(o: Overlay, api: Api.Api, now: number, lineFrom: Vector3?,
 				disc(take(o, "dot"), to.X, to.Y, to.Z, 1.4, color, 0.2)
 				from = to
 			end
+		end
+	end
+
+	-- one unit selected: a red line to what it is shooting at (C-20)
+	if #api.state.selection == 1 then
+		local id = api.state.selection[1]
+		local u = world.units[id]
+		local target = Targets.of(world, id, api.waypoints.byUnit)
+		local t = target and world.units[target]
+		if u and t then
+			local ux, uz, tx, tz = u.rx or u.x, u.rz or u.z, t.rx or t.x, t.rz or t.z
+			local red = Color3.fromRGB(235, 60, 50)
+			segment(o, Vector3.new(ux, groundY(ux, uz) + 1.5, uz), Vector3.new(tx, groundY(tx, tz) + 1.5, tz), red)
+			local tdef = World.def(world, t)
+			disc(take(o, "ring"), tx, groundY(tx, tz), tz, ((tdef and tdef.footprint) or 1) * 8 * 1.1, red, 0.35)
 		end
 	end
 
