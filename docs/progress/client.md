@@ -469,6 +469,10 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: sound plan
+
+- `docs/SOUND_PLAN.md`: the sounds the game needs and candidate Roblox audio IDs from Studio's Creator Store search, nothing inserted. ProSoundEffects (Roblox-licensed) where it has a fit; several community uploads are ripped from other games and marked "don't use".
+
 ## 2026-10-22: Warden and Minotaur animations (C-84)
 
 - S-64's faction units animate: the Warden swings its spades down, squats onto them and levels its gun over the 4 s it unpacks (when it stands still), and reverses while it packs before driving off, gun locked forward; the Minotaur's ram strikes forward on its demolition charge (weapon slot 2) and draws back slowly. Piece scripts `Core/PieceScripts/ord_warden`, `chs_minotaur`, with a new `Deploy(u, phase)` hook driven by the DEPLOYED / DEPLOYING bits (protocol 22). `tests/client/Deploy.spec` runs a real Warden through unpacking, deployed, packing and packed. The blockouts are the models stream's (request 3: Warden `spades`, Minotaur `ram`); until they land both draw as the generic placeholder, so there is no Studio screenshot yet. Barrier walls and the Citadel aren't in the sim yet.
@@ -549,6 +553,8 @@ All with real mouse and keyboard input through the MCP tools.
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Sound plan:** `docs/SOUND_PLAN.md` lists every sound the game needs (the defs' `fx.sound` keys, impacts, units, alerts, UI, ambience) with candidate Creator Store audio IDs; ProSoundEffects entries preferred, ripped uploads marked "don't use". Nothing inserted: pick the IDs.
 
 - **Atmosphere options (C-83):** Current (default), Clear day, Battlefield haze, Dusk, in the settings menu; table with screenshots and frame cost under "atmosphere presets (C-83)" above. Values in `src/client/Render/Atmosphere.luau`. Pick one as the default, or none.
 
