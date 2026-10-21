@@ -73,12 +73,12 @@ local function apply(slot: Slot, style: Icons.Style)
 	body.Rotation = if shape == "diamond" then 45 else 0
 	local k = if shape == "diamond" then 0.75 elseif shape == "blip" then 0.6 else 1
 	body.Size = UDim2.fromScale(k, k)
-	slot.corner.CornerRadius = if shape == "circle" or shape == "blip" then UDim.new(1, 0) else UDim.new(0, 2)
-	local hollow = shape == "ghost"
+	slot.corner.CornerRadius = if shape == "circle" or shape == "blip" or shape == "sonar" then UDim.new(1, 0) else UDim.new(0, 2)
+	local hollow = shape == "ghost" or shape == "sonar"
 	body.BackgroundColor3 = if shape == "frame" then color:Lerp(Color3.new(0, 0, 0), 0.45) else color
 	body.BackgroundTransparency = if hollow then 1 else 1 - style.alpha
 	slot.stroke.Color = if style.selected then Color3.new(1, 1, 1) elseif shape == "frame" or hollow then color else Color3.new(0, 0, 0)
-	slot.stroke.Thickness = if style.selected then 2 elseif shape == "frame" then 2 else 1
+	slot.stroke.Thickness = if style.selected then 2 elseif shape == "frame" or shape == "sonar" then 2 else 1
 	slot.stroke.Transparency = if hollow then 1 - style.alpha else 0.2
 end
 

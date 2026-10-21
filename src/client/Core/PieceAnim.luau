@@ -9,6 +9,7 @@
 -- Script hooks (all optional), each run in a new thread:
 --   Create(u)                        the unit got a model
 --   StartMoving(u) / StopMoving(u)   the MOVING state bit changed
+--   Land(u) / TakeOff(u)             the LANDED state bit changed (aircraft)
 --   AimWeapon(u, slot, yaw, pitch, active)
 --                                    the replicated aim changed, or every
 --                                    REAIM seconds while the weapon is
@@ -19,6 +20,9 @@
 -- second; a speed of 0 or nil is instant):
 --   u:Turn(piece, axis, angle, speed)   u:Move(piece, axis, offset, speed)
 --   u:WaitForTurn(piece, axis)          u:WaitForMove(piece, axis)
+--   u:Spin(piece, axis, speed, accel?)  u:StopSpin(piece, axis, decel?)
+--                                       (continuous rotation; accel in degrees/s²,
+--                                       none = at once)
 --   u:Sleep(seconds)                    u:StartThread(fn, ...)
 --   u:Signal(mask)                      u:SetSignalMask(mask)
 -- LOD by camera distance (guide 14.5): "near" runs everything; "mid" only
@@ -36,12 +40,14 @@ PieceAnim.REAIM = 0.5 -- seconds between AimWeapon calls while a weapon is engag
 
 local WS = Schema.WeaponState
 local MOVING = Schema.UnitState.MOVING
+local LANDED = Schema.UnitState.LANDED
 local AXES = { x = 1, y = 2, z = 3 }
 
 export type Axis = "x" | "y" | "z"
 export type Lod = "near" | "mid" | "far"
 
 type Track = { piece: Piece, kind: number, axis: number, cur: number, goal: number, speed: number } -- kind 1 turn (radians), 2 move (studs)
+type SpinState = { piece: Piece, axis: number, speed: number, target: number, accel: number } -- radians per second (per second²)
 
 export type Piece = {
 	unit: number, -- unit ID
@@ -72,12 +78,16 @@ export type Unit = {
 	seenAim: { [number]: { number } }, -- slot → { yaw, pitch } (radians)
 	lastAimCall: { [number]: number }, -- slot → scheduler time
 	moving: boolean,
+	landed: boolean,
+	spins: { [string]: SpinState }, -- "piece:axis" → spin
 	-- methods (see the header)
 	Turn: (Unit, string, Axis, number, number?) -> (),
 	Move: (Unit, string, Axis, number, number?) -> (),
 	WaitForTurn: (Unit, string, Axis) -> (),
 	WaitForMove: (Unit, string, Axis) -> (),
 	Sleep: (Unit, number) -> (),
+	Spin: (Unit, string, Axis, number, number?) -> (),
+	StopSpin: (Unit, string, Axis, number?) -> (),
 	StartThread: (Unit, (...any) -> (), ...any) -> (),
 	Signal: (Unit, number) -> (),
 	SetSignalMask: (Unit, number) -> (),
@@ -88,6 +98,7 @@ export type Sched = {
 	now: number,
 	units: { [number]: Unit },
 	active: { [Track]: boolean }, -- tracks still moving
+	spinning: { [SpinState]: boolean },
 	threads: { Thread }, -- waiting threads
 	current: Thread?, -- the thread running now
 	dirty: { Piece }, -- pieces changed since the last take
@@ -96,7 +107,7 @@ export type Sched = {
 }
 
 function PieceAnim.new(weaponDefs: { any }): Sched
-	return { now = 0, units = {}, active = {}, threads = {}, current = nil, dirty = {}, stats = { threads = 0, tracks = 0, hooks = 0 }, weaponDefs = weaponDefs }
+	return { now = 0, units = {}, active = {}, spinning = {}, threads = {}, current = nil, dirty = {}, stats = { threads = 0, tracks = 0, hooks = 0 }, weaponDefs = weaponDefs }
 end
 
 local function pieceOf(u: Unit, name: string): Piece
@@ -223,6 +234,45 @@ function Methods.Signal(u: Unit, mask: number)
 	end
 end
 
+local function spinOf(u: Unit, piece: string, axisName: Axis): SpinState?
+	local axis = AXES[axisName]
+	if axis == nil then
+		return nil
+	end
+	local key = `{piece}:{axisName}`
+	local sp = u.spins[key]
+	if sp == nil then
+		sp = { piece = pieceOf(u, piece), axis = axis, speed = 0, target = 0, accel = 0 }
+		u.spins[key] = sp
+	end
+	return sp
+end
+
+function Methods.Spin(u: Unit, piece: string, axis: Axis, speed: number, accel: number?)
+	local sp = spinOf(u, piece, axis)
+	if sp == nil then
+		return
+	end
+	sp.target = math.rad(speed)
+	sp.accel = if accel then math.rad(accel) else 0
+	if sp.accel <= 0 then
+		sp.speed = sp.target
+	end
+	u.sched.spinning[sp] = true
+end
+
+function Methods.StopSpin(u: Unit, piece: string, axis: Axis, decel: number?)
+	local sp = spinOf(u, piece, axis)
+	if sp == nil then
+		return
+	end
+	sp.target = 0
+	sp.accel = if decel then math.rad(decel) else 0
+	if sp.accel <= 0 then
+		sp.speed = 0
+	end
+end
+
 function Methods.SetSignalMask(u: Unit, mask: number)
 	running(u).mask = mask
 end
@@ -244,6 +294,8 @@ function PieceAnim.add(s: Sched, id: number, def: any, script: any): Unit
 		seenAim = {},
 		lastAimCall = {},
 		moving = false,
+		landed = false,
+		spins = {},
 	} :: any
 	for name, fn in Methods do
 		u[name] = fn
@@ -270,6 +322,9 @@ function PieceAnim.remove(s: Sched, id: number)
 		for _, tr in p.tracks do
 			s.active[tr] = nil
 		end
+	end
+	for _, sp in u.spins do
+		s.spinning[sp] = nil
 	end
 end
 
@@ -312,6 +367,11 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
 				PieceAnim.call(u, if moving then "StartMoving" else "StopMoving")
 			end
 		end
+		local landed = bit32.band(wu.state or 0, LANDED) ~= 0
+		if landed ~= u.landed then
+			u.landed = landed
+			PieceAnim.call(u, if landed then "Land" else "TakeOff")
+		end
 		for slot, a in wu.aim do
 			local seen = u.seenAim[slot]
 			local state = Schema.weaponStateAt(wu.weapon or 0, slot)
@@ -349,6 +409,20 @@ function PieceAnim.step(s: Sched, dt: number)
 		end
 		write(tr.piece, tr.kind, tr.axis, tr.cur)
 		markDirty(s, tr.piece)
+	end
+	for sp in s.spinning do
+		if sp.speed ~= sp.target then
+			local d = sp.target - sp.speed
+			local stepLen = sp.accel * dt
+			sp.speed = if math.abs(d) <= stepLen then sp.target else sp.speed + (if d > 0 then stepLen else -stepLen)
+		end
+		if sp.speed == 0 and sp.target == 0 then
+			s.spinning[sp] = nil
+			continue
+		end
+		local p = sp.piece
+		p.rot[sp.axis] = (p.rot[sp.axis] + sp.speed * dt) % (2 * math.pi)
+		markDirty(s, p)
 	end
 	-- resume what is due; resumed threads may add new waiting threads
 	local waiting = s.threads

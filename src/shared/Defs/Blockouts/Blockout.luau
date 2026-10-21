@@ -262,6 +262,15 @@ function Blockout.generic(def: any): Blockout
 				color = "track",
 			})
 		end
+	elseif domain == "air" and def.moveClass == "HELI" then
+		-- tail boom, a mast and a two-blade rotor (spun by the piece script, C-31)
+		add(parts, { name = "boom", parent = "base", shape = "box", size = { 0.4, 0.4, l * 0.6 }, at = { 0, h * 0.7, l * 0.75 }, color = "dark" })
+		add(parts, { name = "tail", parent = "base", shape = "box", size = { 0.25, 1.2, 0.8 }, at = { 0, h * 0.7 + 0.5, l * 1.0 }, color = "team" })
+		add(parts, { name = "mast", parent = "base", shape = "cylinder", axis = "y", size = { 0.35, 0.8, 0.35 }, at = { 0, h + 0.4, 0 }, color = "metal" })
+		if not table.find(def.pieces, "rotor") then
+			add(parts, { name = "rotor", parent = "base", shape = "box", size = { l * 1.6, 0.12, 0.45 }, at = { 0, h + 0.85, 0 }, color = "dark" })
+			add(parts, { name = "blade2", parent = "rotor", shape = "box", size = { 0.45, 0.12, l * 1.6 }, at = { 0, h + 0.85, 0 }, color = "dark" })
+		end
 	elseif domain == "air" then
 		add(parts, { name = "wings", parent = "base", shape = "box", size = { l * 1.1, 0.25, l * 0.3 }, at = { 0, h / 2, l * 0.05 }, color = "dark" })
 		add(parts, { name = "tail", parent = "base", shape = "box", size = { 0.25, 1.4, l * 0.2 }, at = { 0, h + 0.5, l * 0.4 }, color = "team" })
@@ -330,7 +339,8 @@ function Blockout.generic(def: any): Blockout
 		end
 	end
 
-	return { id = def.id, parts = parts, attachments = attachments }
+	local visual = if domain == "air" and def.moveClass == "HELI" and not table.find(def.pieces, "rotor") then { "rotor" } else nil
+	return { id = def.id, parts = parts, attachments = attachments, visualPieces = visual }
 end
 
 -- The hand-made blockout for `def` if there is one, else a generic one.

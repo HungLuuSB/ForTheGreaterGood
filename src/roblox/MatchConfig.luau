@@ -39,6 +39,18 @@ local PROFILES = {
 		demoOrders = true,
 		restartAfter = nil,
 	},
+	-- electronic warfare (guide 11.5–11.6): an Order radar SAM site, a spotter
+	-- and a helicopter with DIRCM against a Chaos helicopter under a jammer and
+	-- four IR SAM sites (air rendering, C-31)
+	ew = {
+		seed = 1,
+		mapId = "flat:128",
+		scenario = "ew_test",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,
