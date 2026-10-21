@@ -21,6 +21,7 @@ local Packer = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared
 local Schema = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("Schema")) :: any
 local Config = require(script.Parent:WaitForChild("MatchConfig")) :: any
 local Combat = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Combat"):WaitForChild("Combat")) :: any
+local Spawn = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Spawn")) :: any
 
 local DT = 1 / Sim.TICK_RATE
 local MAX_STEPS_PER_FRAME = 3
@@ -221,7 +222,10 @@ startMatch()
 -- Studio inspection through execute_luau (its VM doesn't share `shared`):
 -- game.ServerStorage.FtggDebug:Invoke() returns a summary of the live sim;
 -- Invoke("damage", unitId, amount) queues damage through the sim's own
--- damage step (as a hit with no attacker), for testing what the client shows.
+-- damage step (as a hit with no attacker), for testing what the client shows;
+-- Invoke("spawn", defId, playerId, x, z, heading, count?, spacing?) adds
+-- units in a row along x (the sim's own Spawn), for playtests of what the
+-- client draws.
 if RunService:IsStudio() then
 	local debugFn = Instance.new("BindableFunction")
 	debugFn.Name = "FtggDebug"
@@ -230,6 +234,13 @@ if RunService:IsStudio() then
 			local id, amount = ...
 			Combat.queueDamage(sim.combat, id, amount, 0)
 			return true
+		elseif query == "spawn" then
+			local defId, playerId, x, z, heading, count, spacing = ...
+			local ids = {}
+			for i = 0, (count or 1) - 1 do
+				table.insert(ids, Spawn.unit(sim, defId, playerId, x + i * (spacing or 12), z, heading or 0))
+			end
+			return ids
 		end
 		local byOwner: { [number]: number } = {}
 		for _, id in sim.world.ids do

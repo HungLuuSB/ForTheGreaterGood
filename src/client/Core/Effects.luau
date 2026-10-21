@@ -70,6 +70,7 @@ export type Fx = {
 	applied: { [string]: number }, -- events applied per kind name (diagnostics)
 	late: { n: number, sum: number, max: number }, -- render ticks between an event's tick and when it played (diagnostics)
 	launches: { n: number, fromBarrel: number, sumOffset: number }, -- shells started at a drawn barrel tip, and its distance from the server's launch point (diagnostics)
+	shots: { { number } }, -- { unitId, slot } of shots played since the caller last cleared it (piece scripts' FireWeapon)
 }
 
 function Effects.new(): Fx
@@ -85,6 +86,7 @@ function Effects.new(): Fx
 		applied = {},
 		late = { n = 0, sum = 0, max = 0 },
 		launches = { n = 0, fromBarrel = 0, sumOffset = 0 },
+		shots = {},
 	}
 end
 
@@ -167,13 +169,10 @@ end
 
 local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
 
--- The drawn muzzle of the unit that launched a `weaponIndex` shell from
+-- The unit (and weapon slot) that launched a `weaponIndex` shell from
 -- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
 -- server launches from the unit's center at muzzle height (Weapons.luau).
-local function launcherMuzzle(world: World.World, weaponIndex: number, x: number, z: number, muzzleOf: ((number, number) -> (number?, number?, number?))?): (number?, number?, number?)
-	if muzzleOf == nil then
-		return nil, nil, nil
-	end
+local function launcher(world: World.World, weaponIndex: number, x: number, z: number): (number?, number?)
 	local bestId, bestSlot, bestD = nil, nil, Effects.SHOOTER_RADIUS ^ 2
 	for id, u in world.units do
 		if u.tier ~= "tactical" then
@@ -192,10 +191,7 @@ local function launcherMuzzle(world: World.World, weaponIndex: number, x: number
 			end
 		end
 	end
-	if bestId == nil then
-		return nil, nil, nil
-	end
-	return muzzleOf(bestId, bestSlot :: number)
+	return bestId, bestSlot
 end
 
 -- `early`: applied one tick before its tick (C-27). SPAWN_PROJ carries the
@@ -219,7 +215,14 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			x, y, z = x - vx * DT, y - vy * DT + 0.5 * g * DT * DT, z - vz * DT
 		end
 		-- drawn from the shooter's barrel tip, blended onto the server's path
-		local mx, my, mz = launcherMuzzle(world, e.weaponIndex, x, z, muzzleOf)
+		local shooter, slot = launcher(world, e.weaponIndex, x, z)
+		if shooter and early then
+			table.insert(fx.shots, { shooter, slot :: number })
+		end
+		local mx, my, mz
+		if shooter and muzzleOf then
+			mx, my, mz = muzzleOf(shooter, slot :: number)
+		end
 		local ox, oy, oz, blend = 0, 0, 0, 0
 		if mx and (mx - x) ^ 2 + ((my :: number) - y) ^ 2 + ((mz :: number) - z) ^ 2 < Effects.SNAP_STUDS ^ 2 then
 			ox, oy, oz, blend = mx - x, (my :: number) - y, (mz :: number) - z, Effects.LAUNCH_BLEND
@@ -263,6 +266,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			burst(fx, now, p.x, p.y, p.z, 1.2, if kind == EK.DECOYED then "decoy" else "lost", 0.35)
 		end
 	elseif kind == EK.FIRE then
+		table.insert(fx.shots, { e.unitId, e.slot })
 		local x1, y1, z1 = pos(world, e)
 		local shooter = world.units[e.unitId]
 		local x0, y0, z0
@@ -423,6 +427,7 @@ function Effects.clear(fx: Fx)
 	table.clear(fx.bursts)
 	table.clear(fx.tracers)
 	table.clear(fx.pendingDeaths)
+	table.clear(fx.shots)
 	fx.tick = -1
 end
 
