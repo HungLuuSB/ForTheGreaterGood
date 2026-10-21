@@ -95,6 +95,30 @@ function Guidance.inCone(px: number, py: number, pz: number, vx: number, vy: num
 	return (rx * vx + ry * vy + rz * vz) / (rl * vl) >= cos(halfAngle)
 end
 
+-- Seeker half-angle in degrees by guidance, unless the weapon sets
+-- seekerAngle; COMMAND guidance (the launcher steers) has none (S-27).
+Guidance.SEEKER_ANGLE = table.freeze({ IR = 60, RADAR = 70 } :: { [string]: number })
+
+function Guidance.seekerAngle(weapon: { seekerAngle: number?, guidance: string? }): number?
+	return weapon.seekerAngle or (if weapon.guidance then Guidance.SEEKER_ANGLE[weapon.guidance] else nil)
+end
+
+-- A decoyed missile (S-28, client request 13d) follows the flare or chaff:
+-- for at most DECOY_TICKS ticks after the DECOYED roll it turns toward the
+-- decoy point at its turnRate, while that point stays in its seeker cone;
+-- then it flies straight to the end of its lifetime.
+Guidance.DECOY_TICKS = 15 -- 1 s
+
+-- One tick toward the decoy point (dx, dy, dz): the new velocity and whether
+-- the seeker still follows it (false: the point left the cone; fly straight).
+function Guidance.decoy(px: number, py: number, pz: number, vx: number, vy: number, vz: number, dx: number, dy: number, dz: number, maxTurn: number, coneDeg: number): (number, number, number, boolean)
+	if not Guidance.inCone(px, py, pz, vx, vy, vz, dx, dy, dz, math.rad(coneDeg)) then
+		return vx, vy, vz, false
+	end
+	local nx, ny, nz = Ballistics.steer(vx, vy, vz, dx - px, dy - py, dz - pz, maxTurn)
+	return nx, ny, nz, true
+end
+
 -- A target's velocity from the state the wire and the sim share: heading
 -- (0 = +Z) and ground speed. Aircraft climbs are left out.
 function Guidance.velocity(heading: number, speed: number): (number, number)

@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 10 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events
+Schema.PROTOCOL_VERSION = 11 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -624,7 +624,8 @@ end
 --   SPAWN_PROJ  projId u16 | weaponDefIndex u16 | pos | vel
 --               | targetId u16 (0 = none or not shown)                        = 19 bytes
 --   IMPACT      projId u16 | pos                                              =  9 bytes
---   DECOYED     projId u16 | pos | vel (after the decoy turn)                 = 15 bytes
+--   DECOYED     projId u16 | pos | vel | decoy pos (the point it follows)
+--               | decoyTicks u8 (ticks it still follows it; protocol 11)       = 22 bytes
 --   LOST_LOCK   projId u16 | pos | vel (the missile flies on unguided)       = 15 bytes
 --   WRECK       wreckId u16 | defIndex u16 | cell u16 | offX u8 | offZ u8
 --               | heading u8                                                  = 10 bytes
@@ -656,7 +657,7 @@ Schema.EventKind = table.freeze({
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 15, [8] = 15, [9] = 10, [10] = 3 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 22, [8] = 15, [9] = 10, [10] = 3 })
 Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
 Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
 Schema.SIGHT_MAX_ROW_BYTES = 640 -- per SIGHT_ROWS record (rowCount × rowBytes)
@@ -693,6 +694,12 @@ export type Event = {
 	-- SPAWN_PROJ
 	weaponIndex: number?,
 	targetId: number?, -- 0 = none
+	-- DECOYED: the decoy point (a pos) and the ticks the missile still follows it
+	decoyCell: number?,
+	decoyOffX: number?,
+	decoyOffZ: number?,
+	decoyY: number?,
+	decoyTicks: number?,
 	-- WRECK, WRECK_GONE: wreckId; WRECK: defIndex, cell, offX, offZ, heading
 	-- SIGHT_ROWS
 	firstRow: number?, -- 0-based sensor row
@@ -826,6 +833,13 @@ function Schema.encodeEvent(w: Writer, e: Event)
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		writePos(w, e)
 		writeVel(w, e)
+		if kind == EK.DECOYED then
+			w:writeU16(required(e.decoyCell, "decoyCell"))
+			w:writeU8(required(e.decoyOffX, "decoyOffX"))
+			w:writeU8(required(e.decoyOffZ, "decoyOffZ"))
+			w:writeI16(required(e.decoyY, "decoyY"))
+			w:writeU8(required(e.decoyTicks, "decoyTicks"))
+		end
 	end
 end
 
@@ -912,6 +926,13 @@ function Schema.decodeEvent(r: Reader): Event
 	elseif kind == EK.DECOYED or kind == EK.LOST_LOCK then
 		readPos(r, e)
 		readVel(r, e)
+		if kind == EK.DECOYED then
+			e.decoyCell = r:readU16()
+			e.decoyOffX = r:readU8()
+			e.decoyOffZ = r:readU8()
+			e.decoyY = r:readI16()
+			e.decoyTicks = r:readU8()
+		end
 	end
 	return e
 end

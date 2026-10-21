@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 10, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 11, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -387,9 +387,10 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeEvent, spawn)), "05 02 01 04 03 06 05 07 08 09 01 ff ff 00 02 03 00 0b 0a")
 		local impact: Schema.Event = { kind = Schema.EventKind.IMPACT, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, impact)), "06 01 00 02 00 03 04 05 00")
-		local decoyed: Schema.Event = { kind = Schema.EventKind.DECOYED, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5, vx = 6, vy = -7, vz = 8 }
-		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "07 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
+		local decoyed: Schema.Event = { kind = Schema.EventKind.DECOYED, projId = 1, cell = 2, offX = 3, offZ = 4, y = 5, vx = 6, vy = -7, vz = 8, decoyCell = 0x0109, decoyOffX = 10, decoyOffZ = 11, decoyY = -12, decoyTicks = 13 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "07 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00 09 01 0a 0b f4 ff 0d") -- decoy point and ticks since protocol 11
 		decoyed.kind = Schema.EventKind.LOST_LOCK
+		decoyed.decoyCell, decoyed.decoyOffX, decoyed.decoyOffZ, decoyed.decoyY, decoyed.decoyTicks = nil, nil, nil, nil, nil
 		t.equal(hex(encodeOne(Schema.encodeEvent, decoyed)), "08 01 00 02 00 03 04 05 00 06 00 f9 ff 08 00")
 		-- version 4: homing corrections on the Projectiles channel
 		local sync: Schema.ProjSync = { projId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = -2, vx = 1, vy = -1, vz = 0x0203 }
@@ -460,7 +461,7 @@ return function(t: RunAll.Context)
 			{ kind = Schema.EventKind.FIRE, unitId = 1, slot = 1, hit = true, cell = 0, offX = 0, offZ = 255, y = 32767 },
 			{ kind = Schema.EventKind.SPAWN_PROJ, projId = 65535, weaponIndex = 1, cell = 1, offX = 2, offZ = 3, y = 4, vx = -32768, vy = 32767, vz = 0, targetId = 0 },
 			{ kind = Schema.EventKind.IMPACT, projId = 1, cell = 65535, offX = 255, offZ = 255, y = -1 },
-			{ kind = Schema.EventKind.DECOYED, projId = 2, cell = 3, offX = 4, offZ = 5, y = 6, vx = -7, vy = 8, vz = -9 },
+			{ kind = Schema.EventKind.DECOYED, projId = 2, cell = 3, offX = 4, offZ = 5, y = 6, vx = -7, vy = 8, vz = -9, decoyCell = 65535, decoyOffX = 0, decoyOffZ = 255, decoyY = -32768, decoyTicks = 255 },
 			{ kind = Schema.EventKind.LOST_LOCK, projId = 3, cell = 4, offX = 5, offZ = 6, y = 7, vx = 8, vy = -9, vz = 10 },
 		}
 		roundTrip(t, events, Schema.encodeEvent, Schema.decodeEvent)

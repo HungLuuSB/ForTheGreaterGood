@@ -68,6 +68,15 @@ return function(sim: Types.Sim)
 			else
 				pvx, pvy, pvz = Guidance.lead(x0, y0, z0, pvx, pvy, pvz, tx, ty, tz, tvx, tvz, maxTurn)
 			end
+		elseif c.pDecoy[id] then
+			-- decoyed: follow the flare or chaff for a moment (S-28)
+			local d = c.pDecoy[id]
+			local follow
+			pvx, pvy, pvz, follow = Guidance.decoy(x0, y0, z0, pvx, pvy, pvz, d[1], d[2], d[3], math.rad(weapon.turnRate :: number) * DT, Guidance.seekerAngle(weapon) :: number)
+			d[4] -= 1
+			if not follow or d[4] <= 0 then
+				c.pDecoy[id] = nil
+			end
 		end
 		local x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
 		if weapon.type == "TORPEDO" then
