@@ -748,7 +748,8 @@ SPAWN_STRATEGIC as SPAWN_PROJ, then goal pos (v18: a strategic missile)     25 B
 INTERCEPTED projId u16, pos (a strategic missile destroyed; v16)            9 B
 pos = cell u16, offX u8, offZ u8, y i16 (1/8 stud)
 vel = vx, vy, vz i16 (1/8 stud per second)
-ALERT       type u8, cell u16    (unit under attack, structure lost, ...)   not implemented yet
+ALERT       alert u8, cell u16, defIndex u16 (v23: under attack, lost, built,
+            stall, nuke launch; rate-limited, to the player it concerns)  6 B
 ```
 
 **Projectile correction (S → C, unreliable, `Projectiles` channel, after the tick header)**

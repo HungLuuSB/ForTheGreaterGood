@@ -19,6 +19,7 @@
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Air = require("./Air")
+local Alerts = require("./Alerts")
 local BuildState = require("./BuildState")
 local Combat = require("./Combat/Combat")
 local EW = require("./EW")
@@ -280,6 +281,7 @@ function Build.countBuilt(sim: Types.Sim, id: number)
 	if s then
 		s.unitsBuilt += 1
 	end
+	Alerts.built(sim, id) -- BUILD_DONE (S-68)
 end
 
 local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)

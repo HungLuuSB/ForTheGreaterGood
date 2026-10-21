@@ -860,3 +860,44 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | p99 tick (ms) | 9.0 / 9.3 / 14.3 | 8.4 / 8.7 / 9.7 |
 
   - The state hash changed (5f72fafa against ae5ef52e), as expected: big orders' units start toward the center for a tick, and trees update later.
+
+## S-65 — The faction axis: Order AI against Chaos AI (the user, 2026-10-22)
+
+- **Asked:** add the faction axis to the AI report: Order AI against Chaos AI at every level pair, every map, both starts, 3+ seeds. Targets: 40–60% overall, 35–65% per map, at most 10% undecided at the limit.
+- **Tool:** `lune run faction_ai [minutes] [seeds] [mapFilter] [mirrored]` writes `docs/FACTION_AI.md`.
+  - Matches: 1v1 on Ridgeline, Coastline, skirmish:256 and Normandy (9 level pairs × 2 starts); 2v2 on Twin Lakes (two of each faction per side); 4-player FFA on Crossroads (two of each, alternating, one level).
+  - `ailevels` keeps its faction mirrors: it measures levels, this measures factions.
+- **First report** (40 min, seeds 7–9, after S-62; 324 matches, 20 min of run time). **Out of target:**
+  - Order wins **89%** of the same-level matches (86–11, 11 undecided = 10%), on every map but Crossroads (60%).
+  - Levels still order across factions: Order easy loses to Chaos normal 7–20, Order normal loses to Chaos hard 5–24.
+  - Normandy has no deposits: 23 of its 54 matches are at the 40-minute limit.
+- **Why (my reading):**
+  - The trade check shows the per-value balance even (S-62), but the AI uses none of Chaos's conditions: it waves attack-moves into the enemy, which is Order's "defend" case (1.4–2.1). It never flanks or raids, and it doesn't expand wider.
+  - Chaos's cheaper units also make its economy-to-army choices the same as Order's, so its numbers advantage is only the value it saved.
+  - This is the faction AI's job (task 11, proposal section 7), then the ±10% tuning (task 12).
+
+## S-68 — Alerts, the under-attack flag, ground fire (the user's task 6; client request 39) (2026-10-22)
+
+- **Asked:** audit item 17 (the ALERT event and the strategic "under attack" flag, so the client's alerts come from the server) and item 18 (ATTACK_GROUND for artillery and any weapon with ground fire). The client asked for 17 at the same time (request 39), with suggested kinds and rate limits; built as suggested.
+- **ALERT, protocol 23** (`Sim/Alerts`; event 18, `alert u8, cell u16, defIndex u16`, owner only):
+  - UNIT_ATTACKED / STRUCTURE_ATTACKED: one per 400-stud zone per 20 s.
+  - COMMANDER_ATTACKED: one per 10 s.
+  - UNIT_LOST / STRUCTURE_LOST: one per zone per 5 s.
+  - BUILD_DONE: every factory unit and finished frame.
+  - STALL_SUPPLY / STALL_POWER: when the team's ratio drops below 1, at most once per 30 s.
+  - NUKE_LAUNCH: every player, at the silo; LAUNCH_WARNING stays as it was.
+  - **Sources:** Damage (enemy hits, deaths), Build (finished units), the Economy system (stalls), Weapons (launches). NetOut drains the player's queue each tick.
+  - **"Enemy":** the damage's player is on another ally team. Damage queued without a player falls back to its attacker's owner.
+- **UNDER_ATTACK (strategic flag 4):** own and allied units an enemy hit in the last 3 s (45 ticks).
+- **Ground fire:**
+  - Any unit with a BALLISTIC weapon (artillery, tanks, gun turrets, emplacements; `Air.groundFires`) takes ATTACK_GROUND.
+    - Mobile units close to their range (as ATTACK does), then those weapons shell the spot until another order, whatever the fire state.
+    - Its other weapons keep choosing targets.
+    - Structures with ballistic guns take it too.
+  - My call: "any weapon with ground fire" read as every ballistic weapon (shells can be aimed at a point; missiles and hitscan can't).
+- **Not hashed:** the alert state; nothing in the sim reads it.
+- **Tests:**
+  - `Alerts.spec`: rate limit per zone, owner only, UNIT_LOST with the type and place, UNDER_ATTACK set and cleared, BUILD_DONE, one power stall, NUKE_LAUNCH to both players.
+  - `GroundFire.spec`: artillery on hold fire shells a spot; out of range it drives closer; a move order ends it; an Edict takes it, a Halo doesn't.
+  - `Air.spec`: a tank now takes the bombers' ATTACK_GROUND too.
+  - `Schema.spec`: golden bytes.

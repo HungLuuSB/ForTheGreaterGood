@@ -87,6 +87,7 @@ export type View = {
 	projectiles: { [number]: Projectile },
 	effects: { Effect },
 	warnings: { { projId: number, x: number, z: number } }, -- LAUNCH_WARNING records (S-48)
+	alerts: { { alert: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT records (S-68)
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
 	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
@@ -118,6 +119,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		projectiles = {},
 		effects = {},
 		warnings = {},
+		alerts = {},
 		strategicTick = -1,
 		received = {},
 		log = {},
@@ -288,6 +290,10 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 						else nil,
 					ttl = ttlOf(weapon),
 				}
+				continue
+			elseif kind == EK.ALERT then
+				local x, z = view.grid:decode(e.cell :: number, 128, 128)
+				table.insert(view.alerts, { alert = e.alert :: number, x = x, z = z, defIndex = e.defIndex :: number, tick = view.tick or 0 })
 				continue
 			elseif kind == EK.LAUNCH_WARNING then
 				local x, _, z = pos(e)

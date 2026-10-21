@@ -378,7 +378,7 @@ return function(t: RunAll.Context)
 		end
 		t.expect(drops >= 2, `bombs dropped on the spot ({drops})`)
 		t.expect(near >= drops - 1, `{near} of {drops} landed within 10 studs of it`)
-		t.equal(sim.air.groundX[tank], nil, "only bombers take the order")
+		t.expect(sim.air.groundX[tank] ~= nil, "the tank shells the spot too (ballistic ground fire, S-68)")
 		moveTo(sim, 1, { bomber }, -300, 0)
 		Sim.step(sim)
 		t.equal(sim.air.groundX[bomber], nil, "a move order cancels it")

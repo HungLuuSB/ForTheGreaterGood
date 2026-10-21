@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **22**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **23**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -116,7 +116,7 @@ A Tactical or State record always refers to a unit the client got an ENTER for. 
 - Every 5th tick (3 Hz) the server sends a full **snapshot** of every known unit that is not tactical for this player. That includes own units outside the camera and ghosts of structures that died unseen.
 - Record: `unitId u16, cell u16, icon 8 bits | team 3 bits (team − 1) | flags 5 bits`, 6 B (protocol 19; bits LSB-first: icon 0–7, team 8–10, flags 11–15).
 - Flags:
-  - `RADAR_ONLY 1`, `SONAR_ONLY 2`, `UNDER_ATTACK 4` (reserved, not sent yet), `GHOST 8`, `TRACKED 16`;
+  - `RADAR_ONLY 1`, `SONAR_ONLY 2`, `UNDER_ATTACK 4` (since protocol 23, S-68: own and allied units an enemy hit in the last 3 s), `GHOST 8`, `TRACKED 16`;
   - all 5 flag bits are in use.
 - A message whose tick differs from the last strategic tick **starts a new snapshot**: drop every non-tactical unit, then add the records. A snapshot can span several messages with the same tick.
 - An empty snapshot still sends one message holding only the tick header, so the client can drop units that disappeared.
@@ -134,6 +134,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). A strategic missile's IMPACT is its detonation (`aoe` 150). |
 | `INTERCEPTOR 14` | as SPAWN_PROJ, 19 B (protocol 16) | SPAWN_PROJ of a missile fired at a strategic missile (S-48). `targetId` is the **projectile ID** of the strategic missile it chases (always one the client has: see below), not a unit. Steer it with `Guidance.vertical` / `pn` against that projectile's predicted position and velocity (vy included). Its IMPACT is the interceptor's burst. |
 | `LAUNCH_WARNING 15` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile (`weapon.strategic`) was launched from `pos` (the silo). **Every player** gets it, camera or not, in the launch tick. **Strategic missiles are sent to every player wherever they fly:** its SPAWN_STRATEGIC arrives in the same tick. |
+| `ALERT 18` | `alert u8, cell u16, defIndex u16` (0 = none), 6 B (protocol 23, S-68) | To the player it concerns (Sim/Alerts): UNIT_ATTACKED 1 / STRUCTURE_ATTACKED 2 (one per 400-stud zone per 20 s), UNIT_LOST 3 / STRUCTURE_LOST 4 (one per zone per 5 s), BUILD_DONE 5 (each factory unit and finished frame), STALL_SUPPLY 6 / STALL_POWER 7 (the team's ratio dropped below 1; once per 30 s each; cell 0), NUKE_LAUNCH 8 (every player, at the silo), COMMANDER_ATTACKED 9 (one per 10 s). `cell` is where it happened. |
 | `SPAWN_STRATEGIC 17` | SPAWN_PROJ's fields (`targetId` 0), then `goal pos`, 25 B (protocol 18) | A strategic missile the client doesn't have yet, to **every player** wherever it is (S-48): at launch, or on joining mid-flight. `goal` is the spot it flies to. Step it every tick with `Lofted.step(x, y, z, vx, vy, vz, gx, gy, gz, gy + weapon.apex, weapon.gravity, rad(weapon.turnRate) / 15, Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)), 1/15)` (`Shared/Combat/Lofted`, S-51): straight up to `climbHeight`, the pitch-over, the arc. The phase comes from its state, so a copy first seen mid-flight steps the same (a client copy stays within 0.15 studs of the server's over a whole flight). Its IMPACT is the detonation, ~12.7 s after launch. |
 | `INTERCEPTED 16` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile was destroyed in flight at `pos`: a small burst, **no detonation**; drop the projectile. Sent instead of its IMPACT. |
 | `DECOYED 7` | `projId u16, pos, vel, decoy pos, decoyTicks u8, countermeasure u8`, 23 B (countermeasure: 1 flares, 2 chaff, 3 DIRCM, `Schema.Countermeasure`; protocol 13) | For projectiles the client has: a countermeasure seduced it. Snap to `pos`/`vel`, clear its target, and for the next `decoyTicks` ticks steer toward the decoy point with `Guidance.decoy` (stop early when it returns false), then fly straight (protocol 11, S-28). |
@@ -200,7 +201,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
   - PATROL: back and forth between the unit's start and the point, forever;
   - ATTACK: force-fire a unit the sender's team knows, even on hold fire; it chases into range. A target the team doesn't know is ignored;
   - GUARD: follow an allied unit (builders assist a frame or factory);
-  - ATTACK_GROUND: bombers;
+  - ATTACK_GROUND: bombers make runs on the spot; a silo fires once; units with ballistic weapons (artillery, tanks, gun turrets and emplacements; S-68) drive into range and shell it with those weapons, whatever their fire state, until another order. Missile-only units ignore it;
   - REPAIR: assist a frame or a factory's production, or heal a damaged allied unit, for free;
   - RECLAIM;
   - BUILD: mobile builders. A factory queues the unit.
@@ -271,6 +272,7 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 23 | Event ALERT 18 and the strategic UNDER_ATTACK flag (S-68, client request 39) |
 | 22 | Unit state bits DEPLOYED 32, DEPLOYING 64 (the Warden, S-64) |
 | 21 | State `owner` field CHARGES (bit 8): own units' flares and chaff left (S-63, client request 37) |
 | 20 | State `owner` field (mask bit 128): own units' factory queue, fire / move state, aircraft ammo (S-61, client request 36) |

@@ -58,6 +58,7 @@ export type Sim = {
 	replay: Replay.Log,
 	stats: { commandsApplied: number, commandsRejected: number },
 	playerStats: { [number]: Stats.PlayerStats }, -- the results screen's numbers (S-63); not hashed
+	alerts: any, -- Alerts.State: player alerts, last enemy hit per unit (S-68); not hashed
 }
 
 return {}
