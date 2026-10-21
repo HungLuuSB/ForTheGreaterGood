@@ -78,6 +78,9 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Pass 2 retune (S-30): `ord_verdict.sensors.sight` 140 → 170**, the one number changed this round. Three seeds, Verdict vs Hellmouth 0.50 / 0.58 → 0.50 / 0.97 (long fight in band); Verdict vs Ravager long 0.57 → 0.72. Overkill avoidance (S-29) didn't move artillery: without spotters both sides fire at sight range, so the Verdict's range and precision never applied. Still outside 0.8–1.25:
+  - close-range artillery duel 0.50 (two artillery groups 120 studs apart: health and damage decide, where Chaos is tougher by design; closing it would cost faction identity);
+  - Herald vs Jackal long 0.75 (close 1.06). Not touched, since one retune was asked for.
 - **T1 ground balance pass** (S-22; tables in `docs/BALANCE.md`, "Balance passes"). Exact changes:
   - `chs_light_cannon.accuracy` 1.2 → 2.0 (also the Spike gun turret and the Mire amphibious tank);
   - `chs_ravager.cost` 130 / 1200 → 140 / 1400 (value 250 → 280; Lancer is 300);

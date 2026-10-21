@@ -80,6 +80,8 @@ export type World = {
 	wTarget: { [number]: number }, -- target unit ID, 0 = none
 	wTargetGen: { [number]: number }, -- the target's generation (D109): a ghost's for dead structures
 	wHold: { [number]: number }, -- ticks the weapon still keeps its aim after losing its target (Shared/Combat/Aim, S-20)
+	wOverkill: { [number]: number }, -- World.Overkill: left a doomed target, search now / may shoot a doomed one (S-29)
+	wBlocked: { [number]: number }, -- 1 while terrain blocks the shot at the current target (line of fire, S-32)
 
 	-- ID allocator
 	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
@@ -125,6 +127,8 @@ function World.new(): World
 		wTarget = {},
 		wTargetGen = {},
 		wHold = {},
+		wOverkill = {},
+		wBlocked = {},
 		gen = {},
 		pins = {},
 		nextFresh = 1,
@@ -236,6 +240,8 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 		w.wYaw[key] = if rest then rest[1] else 0
 		w.wPitch[key] = if rest then rest[2] else 0
 		w.wHold[key] = 0
+		w.wOverkill[key] = 0
+		w.wBlocked[key] = 0
 		w.wReload[key] = 0
 		w.wTarget[key] = 0
 		w.wTargetGen[key] = 0
@@ -253,9 +259,19 @@ end
 -- Sets weapon slot `key`'s target to (id, gen); gen defaults to the live
 -- unit's.
 function World.setTarget(w: World, key: number, id: number, gen: number?)
+	if w.wTarget[key] ~= id then
+		w.wOverkill[key] = 0
+		w.wBlocked[key] = 0
+	end
 	w.wTarget[key] = id
 	w.wTargetGen[key] = if id == 0 then 0 else (gen or w.gen[id] or 0)
 end
+
+-- Overkill avoidance per weapon (S-29): RETARGET = it just left a target that
+-- hits already on the way will kill, so it searches on the next tick instead
+-- of waiting for its stagger tick; ALLOWED = its target is doomed but nothing
+-- else is in reach, so it fires anyway.
+World.Overkill = table.freeze({ NONE = 0, RETARGET = 1, ALLOWED = 2 })
 
 -- Ghost pins (D109): an ID remembered as a ghost by any team is never
 -- reused, so a ghost and a new unit can't share an ID (on the wire too).
@@ -311,6 +327,8 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wTarget[key] = nil
 		w.wTargetGen[key] = nil
 		w.wHold[key] = nil
+		w.wOverkill[key] = nil
+		w.wBlocked[key] = nil
 	end
 	w.weaponCount[id] = nil
 	w.lastAttacker[id] = nil
@@ -416,6 +434,8 @@ function World.hash(w: World, h: number?): number
 			hv = Hash.u32(hv, w.wTarget[key])
 			hv = Hash.u32(hv, w.wTargetGen[key])
 			hv = Hash.u32(hv, w.wHold[key])
+			hv = Hash.u32(hv, w.wOverkill[key])
+			hv = Hash.u32(hv, w.wBlocked[key])
 		end
 	end
 	hv = Hash.u32(hv, w.nextFresh)

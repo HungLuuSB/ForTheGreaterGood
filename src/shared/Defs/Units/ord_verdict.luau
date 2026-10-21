@@ -11,7 +11,7 @@ return Templates.extend(Templates.TankT1, {
 	cost = { supply = 180, power = 1800, buildTime = 5200 },
 	health = 700,
 	movement = { maxSpeed = 26, accel = 10, brake = 20, turnRate = 90 },
-	sensors = { sight = 140 },
+	sensors = { sight = 170 },
 	weapons = { { def = "ord_howitzer", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },
 	model = "ord_verdict",
 	icon = "artillery",

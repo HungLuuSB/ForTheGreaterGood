@@ -9,7 +9,8 @@
 --
 -- Every THINK_PERIOD ticks (players spread over the period) it:
 --   1. Builders (the Command Vehicle stays home): a Vehicle Plant first;
---      generators when power runs short; extractors on the nearest free
+--      generators when power runs short (a stall within the last 5 s,
+--      S-31); extractors on the nearest free
 --      deposits (home first, then expansions); a radar tower once the plant
 --      and two extractors stand; an IR SAM site when enemy aircraft come
 --      near home; an Advanced Vehicle Plant once supply piles up (S-7); a
@@ -36,7 +37,8 @@
 --   easy    thinks every 2 s, 2 workers, one item queued per factory and
 --           at most one army unit per 15 s, at most 6 extractors, one plant,
 --           no radar, anti-air, tech-up or kiting.
---   normal  everything above (the default).
+--   normal  everything above (the default); thinks every 4/3 s (S-31: a
+--           multiple of THINK_ALIGN; it was 1 s).
 --   hard    thinks every 2/3 s; expands only to deposits nearer its own
 --           start than any enemy start, escorting workers to the far ones;
 --           waits for bigger waves (12, growing by 4) that go for the enemy
@@ -62,7 +64,9 @@ local World = require("../World")
 
 local Skirmish = {}
 
-Skirmish.THINK_PERIOD = 15 -- ticks (1 s)
+Skirmish.THINK_PERIOD = 15 -- ticks (1 s): the AI's timers
+Skirmish.THINK_ALIGN = 10 -- ticks: think periods and offsets are multiples of it, the economy (5) and sensor (2) periods' common multiple (S-31)
+Skirmish.POWER_MEMORY = 75 -- ticks a power stall is remembered for the generator rule (S-31)
 Skirmish.QUEUE_TARGET = 2
 Skirmish.WORKERS = 3
 Skirmish.FIRST_WAVE = 8
@@ -128,7 +132,7 @@ Skirmish.LEVELS = table.freeze({
 		hunt = false,
 	},
 	normal = {
-		think = Skirmish.THINK_PERIOD,
+		think = 20, -- a multiple of THINK_ALIGN (S-31)
 		workers = Skirmish.WORKERS,
 		queue = Skirmish.QUEUE_TARGET,
 		armyCooldown = 0,
@@ -210,6 +214,7 @@ export type Brain = {
 	lastFarZ: number?,
 	thinkOffset: number, -- ticks into the think period this player thinks at
 	lastArmyQueued: number, -- tick it last queued an army unit (easy's cooldown)
+	powerShortAt: number, -- last tick power was stalling (S-31)
 }
 
 local function submit(sim: Types.Sim, player: number, cmd: Schema.Command)
@@ -328,6 +333,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		deposits = deposits,
 		waves = 0,
 		lastWaveOrder = -math.huge,
+		powerShortAt = -math.huge,
 		kiting = {},
 		level = levelName,
 		cfg = cfg,
@@ -339,10 +345,14 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		seaZ = seaZ,
 		lastFleetOrder = -math.huge,
 		lastArmyQueued = -math.huge,
-		-- players spread evenly over the think period: with `tick + player`
-		-- the higher player always thought a tick earlier and won every race
-		-- for a contested deposit (S-17)
-		thinkOffset = ((table.find(sim.playerOrder, player) :: number) - 1) * cfg.think // #sim.playerOrder,
+		-- players spread over the think period in steps of THINK_ALIGN, so
+		-- every player thinks at the same phase of the economy (5 ticks) and
+		-- sensor (2 ticks) steps: at other phases the same plan finished at
+		-- a different point of a player's cycle, and mirrored players made
+		-- different choices (S-31). With `tick + player` the higher player
+		-- always thought a tick earlier and won every race for a contested
+		-- deposit (S-17); players sharing a slot think in the same tick.
+		thinkOffset = (((table.find(sim.playerOrder, player) :: number) - 1) * Skirmish.THINK_ALIGN) % cfg.think,
 	}
 end
 
@@ -381,6 +391,8 @@ end
 -- Each ring is swept from the enemy's side, mirrored by `toward`, so the two
 -- starts of a mirrored map build mirrored bases (S-17: sweeping from +x for
 -- both gave the east start a different, safer base).
+local SNAP_NUDGE = 1e-3 -- studs
+
 local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (number?, number?)
 	local sim = brain.sim
 	local def = sim.defs.units[defId]
@@ -390,7 +402,10 @@ local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (n
 		local n = ring * 8
 		for k = 0, n - 1 do
 			local a = k / n * 2 * math.pi
-			local x, z = cx + brain.toward * math.cos(a) * ring * step, cz + math.sin(a) * ring * step
+			-- the nudge toward the enemy keeps points off exact half cells:
+			-- snapping rounds halves up (+x) for everyone, which made the
+			-- east player's site one cell off the west's mirror image (S-31)
+			local x, z = cx + brain.toward * (math.cos(a) * ring * step + SNAP_NUDGE), cz + math.sin(a) * ring * step
 			local gx, gz = g:cellAt(x, z)
 			if not g:inBounds(gx, gz) then
 				continue
@@ -634,6 +649,12 @@ local function think(brain: Brain)
 		table.insert(workers, 1, c.commander)
 	end
 	local cfg = brain.cfg
+	-- power is short if it stalled in the last POWER_MEMORY ticks (watched
+	-- every tick in Skirmish.tick): the stall ratio reads 1 for a moment
+	-- whenever a builder has just finished (its demand is gone), which is
+	-- exactly when the AI picks the next job; deciding on that moment made
+	-- mirrored players choose differently by when they think (S-31)
+	local powerShort = sim.tick - brain.powerShortAt <= Skirmish.POWER_MEMORY
 	local plantsWanted = if cfg.secondPlant and acc.supply.stored > cfg.secondPlantSupply and c.extractors >= cfg.secondPlantExtractors then 2 else 1
 	-- hard extras come once the economy and an army stand
 	local established = c.extractors >= 6 and #c.army >= 6 and acc.supply.stored >= 200
@@ -725,7 +746,7 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		if acc.power.ratio < 0.95 or acc.power.income < 20 * #c.factories + 20 then
+		if powerShort or acc.power.income < 20 * #c.factories + 20 then
 			local gen = faction(brain, "generator", "generator")
 			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
 			if x and z then
@@ -1051,7 +1072,16 @@ end
 -- Call once per tick, before Sim.step.
 function Skirmish.tick(brain: Brain)
 	local sim = brain.sim
-	if sim.match.eliminated[brain.player] or (sim.tick - brain.thinkOffset) % brain.cfg.think ~= 0 then
+	if sim.match.eliminated[brain.player] then
+		return
+	end
+	-- watched every tick, not only when thinking: which moments a think
+	-- samples must not decide what it sees (S-31)
+	local acc = sim.eco.accounts[brain.team]
+	if acc and acc.power.ratio < 0.95 then
+		brain.powerShortAt = sim.tick
+	end
+	if (sim.tick - brain.thinkOffset) % brain.cfg.think ~= 0 then
 		return
 	end
 	think(brain)

@@ -919,7 +919,8 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 - **Filter:** `bit32.band(target.categories, weapon.targetMask) ~= 0`, target known to the team (visible, or radar contact if `canTargetRadar`), within arc and range.
 - **Untracked contacts** reveal only their domain (D107): weapons filter them by domain, and type priorities apply only to visible, remembered or tracked targets. The AI follows the same rule.
 - **Team knowledge, never server truth** (D100, audit D101): every targeting, AI and auto-behavior decision uses what the deciding ally team knows; only physics (hits, collisions, seekers, the frame-start placement check) uses true positions. The AI plans build sites with its team's knowledge. A structure ghost stays a target for `canTargetRadar` weapons even if the structure died unseen (the shots hit empty ground), until the team sees the spot again.
-- **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional), penalty for overkill.
+- **Score:** priority category weight ÷ distance, bonus for units already being shot by allies (focus fire, optional, not built).
+- **Overkill** (S-29): a weapon doesn't fire at a visible target that damage already on its way will kill: shells and missiles in flight at it (each counted as its damage × `Combat.hitChance`, the chance its spread lets it reach the hull at that distance), plus damage queued this tick. It leaves the target and searches again on the next tick, skipping doomed targets; with nothing else in reach it takes the best doomed one and fires. Attack orders are always obeyed. Decided at the trigger, so a group firing in the same tick spreads its volley: six Verdicts against six one-shot tanks in a column put their first six shells on six targets, not one.
 - Long-range weapons (SAM sites, artillery): use the coarse bucket grid only, and re-evaluate less often.
 
 ### 10.3 Aim model (server)
@@ -965,12 +966,13 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - Projectile flight is exact, with a swept chord test. AoE is measured to the cylinder surface.
 - Damage is queued and applied in order. Deaths leave a wreck worth 50% of supply when overkill ≤ 50% of max health.
 - Per-tick events are in `sim.combat.events`.
-- Not yet: line-of-fire checks (10.8), target leading, salvos, guidance (M7), focus-fire and overkill heuristics.
+- Not yet: target leading, salvos, focus fire. Line of fire (10.8, S-32), guidance (11.5) and overkill (10.2, S-29) are built.
 
 ### 10.8 Line of fire
 
-- Ballistic and homing: no line check (they arc or steer).
-- Hitscan/beam/direct shells: sample the `height` layer along the line every cell; if terrain blocks, don't fire and try repositioning (Maneuver/Roam) or retarget.
+- Homing missiles, torpedoes and bombs: no line check (they steer or fall).
+- Hitscan and beams: the straight line from the muzzle to the target's aim point. Ballistic shells: their actual low arc (S-32), so an artillery shell lobs over a ridge a flat tank shell would hit. Both sample the `height` layer once per cell (`Combat.lineOfFire`); the last 6 studs before the target aren't checked.
+- Terrain in the way: the weapon doesn't fire and is marked blocked. Targeting prefers, among its best two candidates, one with a clear shot, and a blocked weapon looks for one on its stagger tick. A blocked weapon doesn't hold an attack-move (FIGHT, PATROL): the unit keeps advancing until it has a shot. Idle units reposition by their move state (10.1).
 
 ---
 

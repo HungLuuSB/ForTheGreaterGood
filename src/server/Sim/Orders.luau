@@ -189,7 +189,7 @@ local function engaged(sim: Types.Sim, id: number): boolean
 	for slot = 1, w.weaponCount[id] do
 		local key = World.slotKey(id, slot)
 		local t = w.wTarget[key]
-		if t ~= 0 then
+		if t ~= 0 and w.wBlocked[key] == 0 then -- terrain in the way: not engaged, move on (S-32)
 			local kx, kz, level, defIndex = Sensors.knownTarget(sim, ally, t, w.wTargetGen[key])
 			if kx ~= nil and kz ~= nil then
 				local radius = if defIndex and Sensors.typeKnown(sim, ally, t, level) then profiles[defIndex].radius else 0
