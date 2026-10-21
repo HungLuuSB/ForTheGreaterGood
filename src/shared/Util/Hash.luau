@@ -28,6 +28,17 @@ local function mul32(a: number, b: number): number
 end
 Hash.mul32 = mul32
 
+-- Mixes one u32 so every input bit affects every output bit (the murmur3
+-- finalizer). FNV of a small integer keeps structure: consecutive IDs get
+-- related values, which matters when the result picks a stagger slot (S-23).
+function Hash.mix32(h: number): number
+	h = bxor(h, rshift(h, 16))
+	h = mul32(h, 0x85EBCA6B)
+	h = bxor(h, rshift(h, 13))
+	h = mul32(h, 0xC2B2AE35)
+	return bxor(h, rshift(h, 16))
+end
+
 -- Continues hash state h over the bytes of s.
 function Hash.string(h: number, s: string): number
 	for i = 1, #s do

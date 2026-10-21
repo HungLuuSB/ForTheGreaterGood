@@ -264,7 +264,11 @@ return function(t: RunAll.Context)
 		t.expect(impacts >= 1, `and their impacts ({impacts})`)
 		t.expect(nearest > 150, `never at the muzzle: closest {nearest} studs from the mortar`)
 		t.expect(view.received[mortar] == nil, "Order's client never learned the mortar's ID")
-		t.expect(w.slot[gen] == nil or w.health[gen] < sim.defs.units.ord_generator.health, "the generator was shelled")
+		-- both are untracked radar blips to the mortar (no type, so no priority):
+		-- it shells whichever it found first
+		local hurt = (w.slot[gen] == nil or w.health[gen] < sim.defs.units.ord_generator.health)
+			or (w.slot[lancer] == nil or w.health[lancer] < sim.defs.units.ord_lancer.health)
+		t.expect(hurt, "Order's units were shelled")
 		print(string.format("    hidden mortar: %d shells shown, first seen %.0f studs from the muzzle", shells, nearest))
 	end)
 

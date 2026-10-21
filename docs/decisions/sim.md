@@ -28,6 +28,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-20: aim rest pose and restore delay (`Shared/Combat/Aim`; client request 8); the Juggernaut's arms.
 - S-21: Eco records carry their team (protocol 9); spectators get every team's economy.
 - S-22: first balance pass, T1 ground (six numbers).
+- S-23: start-position bias: the targeting stagger followed ID parity; hashed phase.
+- S-24: AI waves: artillery guards the lead tank.
 
 ---
 
@@ -299,3 +301,17 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Not reached:** artillery at close range. Health doesn't change hits-to-kill there (3 either way), and cost, blast and reload moved it < 0.1. Hellmouth groups fire twice the shots of Verdict groups: precise volleys overkill one target. A mechanic (spreading a group's fire) is the fix; listed for review, not done.
 - **Tooling:** `lune run balance` keeps a hand-written "## Balance passes" section when it rewrites `docs/BALANCE.md`.
 - **Tests:** two assertions hard-coded the old stats; `Defs.spec` now expects Lancer's derived `maxRange` 200, and `Build.spec` reads the Ravager's wreck value from its cost.
+
+## S-23 — Start-position bias: targeting stagger followed ID parity (2026-10-22)
+
+- **Symptom:** in mirror matches (same AI level both sides, mirrored map) one start won more often, and which one flipped as the AI changed (S-17).
+- **Cause, found with mirror fights** (identical groups in mirrored positions, which should draw): the side whose units had the **even IDs** won every Lancer fight (40 of 40 over 20 ID layouts and both spawn orders). A weapon without a target searched only when `(id + tick) % 6 == 0`, so its search ticks had its ID's parity; Sensors updates visibility on even ticks; so even-ID units reacted to a newly seen enemy a tick sooner on average (delays 0/2/4 vs 1/3/5). In a mirrored match both players produce units on the same ticks and player 1's commands are processed first, so player 1 gets the odd IDs and player 2 the even ones.
+- **Fix:** the stagger phase is `Hash.mix32(id) % STAGGER` (new `Hash.mix32`, the murmur3 finalizer). Two dead ends on the way: an FNV hash of the ID keeps its parity in the low bits and puts consecutive IDs (a mirror pair) exactly half a period apart; searching in every tick a team gains a contact was exactly fair but doubled Targeting's cost at 800 units (peak 7 → 26 ms). The mixed phase costs nothing extra.
+- **Not a cause:** small movement asymmetries (flow-field tie-breaks by cell index) make mirror matches diverge from the first minute, but favour neither side. `skirmish:` / `start:` maps are not exactly mirrored (middle deposits and expansions are a cell off between the halves): west leads there 14–6 in Normal mirrors; use `map:` IDs for fairness.
+- **Results:** Normal mirrors on Ridgeline 10–10 (was 8–12), Hard 11–9; mirror Lancer fights: even-ID side 4, odd-ID side 10, 26 draws (was 40–0).
+- **Tests** (`Fairness.spec`, 3): the mixed phases are spread evenly for odd and even IDs and for consecutive pairs; in 40 mirror Lancer fights (20 ID layouts × both spawn orders) neither parity wins over 80% (the old stagger: 100%); 12 mirror Normal matches on Ridgeline (6 seeds × both factions, 10 minutes, value lead if undecided) split with each start winning at least 4 (6–6 now). The suite now takes ~65 s (this spec ~33 s).
+
+## S-24 — AI waves: artillery follows the tanks (2026-10-22)
+
+- **Found while fixing S-23's tests:** a Hard AI with three times Easy's value couldn't finish it in 30 minutes. Under BAR attack-move (S-14) a wave's artillery stops at its 450-stud range as soon as anything (here a remembered extractor) is in range, while the tanks go in alone and die; the wave never pushes.
+- **Fix (all levels):** a wave's non-artillery units attack-move; its artillery GUARDs the lead tank, so it follows the push and fires at whatever is in range; radar and fire-control escorts guard the lead tank too. Hard now beats Easy on Ridgeline seed 9 at ~6 minutes (`AI.spec`).

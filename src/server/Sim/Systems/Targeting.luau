@@ -13,7 +13,11 @@
 -- filtered by domain, scored without type priorities, and its collision
 -- radius doesn't count toward range. An invalid target is dropped at once. A
 -- weapon without a target searches only on its unit's stagger tick
--- ((id + tick) % STAGGER == 0), so 1/STAGGER of units search per tick.
+-- ((phase(id) + tick) % STAGGER == 0), so 1/STAGGER of units search per
+-- tick. The phase is a mixed hash of the ID (S-23): with `id` itself, a unit's
+-- search ticks had its ID's parity, and Sensors updates on even ticks, so
+-- even-ID units reacted to new enemies a tick sooner on average; in
+-- mirrored matches player 2's units get the even IDs (a start bias).
 --
 -- Search: enemies from the contact grid within range; score = priority
 -- weight / distance, where the weight is 1 plus how early the target's
@@ -28,6 +32,7 @@
 -- (Weapons won't launch without a lock).
 
 local Combat = require("../Combat/Combat")
+local Hash = require("@shared/Util/Hash")
 local ContactGrid = require("../Combat/ContactGrid")
 local EW = require("../EW")
 local Sensors = require("../Sensors")
@@ -36,6 +41,18 @@ local Types = require("../Types")
 local World = require("../World")
 
 local STAGGER = 6
+
+-- Search phase per unit ID: hashed, so its parity doesn't follow the ID's
+-- (S-23). Cached: it depends only on the ID.
+local phases: { [number]: number } = {}
+local function phaseOf(id: number): number
+	local p = phases[id]
+	if p == nil then
+		p = Hash.mix32(id) % STAGGER
+		phases[id] = p
+	end
+	return p
+end
 local RANGE_HYSTERESIS = 1.1
 local LOCK_PREFERENCE = 1000
 local SWITCH_MARGIN = 1.25
@@ -189,7 +206,7 @@ return function(sim: Types.Sim)
 		end
 		local p = profiles[w.defIndex[id]]
 		local fs = w.fireState[id]
-		local searchNow = (id + tick) % STAGGER == 0
+		local searchNow = (phaseOf(id) + tick) % STAGGER == 0
 		local attacker = w.lastAttacker[id]
 		if not World.isRef(w, attacker, w.lastAttackerGen[id]) then
 			attacker = 0 -- gone, or its ID now belongs to another unit (D109)
