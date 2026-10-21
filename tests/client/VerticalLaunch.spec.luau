@@ -12,6 +12,7 @@ local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
 local Spawn = require("../../src/server/Sim/Spawn")
 local ServerWorld = require("../../src/server/Sim/World")
+local Layers = require("@shared/Grid/Layers")
 
 local DT = 1 / 15
 
@@ -33,6 +34,8 @@ return function(t: any)
 		assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
 		local fx = Effects.new()
 		local launched, upward, turnedSeen = 0, 0, 0
+		local climbHeight = sim.defs.weapons.chs_radar_sam.climbHeight :: number
+		local leveledAt: { [any]: number } = {} -- height above ground where it first moved sideways
 		local seen: { [any]: boolean } = {}
 		local errs = {}
 		for tick = 1, 15 * 30 do
@@ -53,6 +56,9 @@ return function(t: any)
 						upward += 1
 					end
 				end
+				if leveledAt[p] == nil and (p.vx ~= 0 or p.vz ~= 0) then
+					leveledAt[p] = p.y - Layers.heightAt(world.layers :: any, p.x, p.z)
+				end
 				if p.turned and seen[p] ~= "turned" then
 					seen[p] = "turned"
 					turnedSeen += 1
@@ -70,5 +76,14 @@ return function(t: any)
 		t.expect(upward == launched, "every missile leaves going up")
 		t.expect(turnedSeen >= launched - 1, "they pitch over onto their targets")
 		t.expect(median < 0.5 and p90 < 3, `the client's missiles stay with the server's (median {median}, p90 {p90})`)
+		-- the straight climb (S-44): no sideways turn below climbHeight (less
+		-- one tick's climb, as the turn starts on the tick it gets there)
+		local low = math.huge
+		for _, h in leveledAt do
+			low = math.min(low, h)
+		end
+		local step = sim.defs.weapons.chs_radar_sam.projectileSpeed * DT
+		print(string.format("    climbHeight %d: the lowest pitch-over started %.1f studs up", climbHeight, low))
+		t.expect(low >= climbHeight - step - 1e-6 and low < math.huge, `every missile climbs to its climbHeight before turning ({low})`)
 	end)
 end
