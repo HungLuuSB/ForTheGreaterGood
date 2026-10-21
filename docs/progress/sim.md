@@ -176,6 +176,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: client `a8d794e`, `91a79a1` (C-48), `37c6142`, `1ae6176` (C-49) → up to `100daff`; models `255dd9f` (M-6..M-8) → `1480dfa`. Each passed test and build and was pushed. No conflicts or failures this round.
 - 2026-10-22: client `073d5e7` (C-50) → `051456b`, passed test (47 specs / 327) and build, pushed. Then `m-sim-2` (S-38..S-40) → `dceb4fa`; that merge ran the old `integrate.sh` (fast suite and build), so the slow suite was run on `main` afterwards: 6 passed.
 - 2026-10-22: client `5c92bb0` (C-52) → `0a5f17b`; `d39244e`, `ad0c3b1` (request 21) → `8492ee2`; `6cafe85`, `9698380` (C-54, SHOT tracers) → `d4b8dab`. All passed test, test_slow and build and were pushed. `check.sh` read only the first commit of a "Ready to merge" line, so it missed `9698380`; it now lists every commit on such a line.
+- 2026-10-22: client `95ff932` (main with S-44, S-45) → `9bf4948`, `8b54138` (C-55, the climb mirrored on the client) → `dd72f27`; both passed test, test_slow and build and were pushed. Both were on one "Ready to merge" line, which the fixed `check.sh` lists.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 
