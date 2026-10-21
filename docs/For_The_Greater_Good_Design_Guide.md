@@ -1380,7 +1380,7 @@ When the camera is zoomed far out, hide models and draw icons (flat billboards o
 - Box select (project unit positions to screen), double-click selects all of type on screen, control groups (Ctrl+1–9).
 - Right-click **smart command**: enemy → attack, ally → guard, wreck → reclaim, unfinished structure → repair, ground → move.
 - Shift queues commands; queued paths draw as lines for selected units.
-  - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT holds to engage; PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
+  - Implementation (S-4, `Sim/Orders.luau`): per-unit order queues. FIGHT (attack-move, BAR behavior, S-14) advances while no enemy is within weapon range, stops and fires while one is, and goes on when none are left; seeing an enemy doesn't stop it. PATROL loops; ATTACK force-fires a known target even on hold fire; GUARD follows an ally; REPAIR also heals damaged units (free, at the build rate); queued BUILD and RECLAIM run in order.
 - Line formation by right-click drag.
 - Build placement ghost with grid snapping, validity tint (green/red), shift for multiple, drag for rows.
 

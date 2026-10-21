@@ -7,7 +7,8 @@
 -- end of the Commands system) the head order is started or checked:
 --   move     a Nav move; done on arrival (the Nav order ends).
 --   fight    attack-move: a move that holds (brakes, keeps the order) while
---            the unit has a weapon target, then goes on. Jets don't hold.
+--            an enemy is within a weapon's firing range, then goes on
+--            (S-14, BAR). Jets don't hold.
 --   patrol   fight back and forth between the unit's start and the point,
 --            forever (orders queued behind it never start).
 --   attack   force-fire a unit the team knows (VISIBLE, radar, ghost): its
@@ -175,11 +176,28 @@ local function pop(sim: Types.Sim, id: number, q: { Order })
 end
 type Order = OrdersState.Order
 
+-- Attack-move holds (S-14, BAR): while some weapon has a target within
+-- the range it fires at (Weapons: center distance to the target's believed
+-- position ≤ range + the target's radius when its type is known). Targeting
+-- keeps a target out to 110% of range (hysteresis); that alone doesn't
+-- stop the unit, it closes in. Seeing an enemy never does.
 local function engaged(sim: Types.Sim, id: number): boolean
 	local w = sim.world
+	local profiles = sim.combat.profiles
+	local weapons = profiles[w.defIndex[id]].weapons
+	local ally = w.ally[id]
 	for slot = 1, w.weaponCount[id] do
-		if w.wTarget[World.slotKey(id, slot)] ~= 0 then
-			return true
+		local key = World.slotKey(id, slot)
+		local t = w.wTarget[key]
+		if t ~= 0 then
+			local kx, kz, level, defIndex = Sensors.knownTarget(sim, ally, t, w.wTargetGen[key])
+			if kx ~= nil and kz ~= nil then
+				local radius = if defIndex and Sensors.typeKnown(sim, ally, t, level) then profiles[defIndex].radius else 0
+				local dx, dz = kx - w.posX[id], kz - w.posZ[id]
+				if dx * dx + dz * dz <= (weapons[slot].range + radius) ^ 2 then
+					return true
+				end
+			end
 		end
 	end
 	return false

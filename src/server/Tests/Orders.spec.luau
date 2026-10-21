@@ -113,6 +113,49 @@ return function(t: RunAll.Context)
 		t.equal(heldMove, 0, "a plain move never holds")
 	end)
 
+	-- S-14 (BAR attack-move): advance while no enemy is within weapon range,
+	-- stop and fire when one is, go on when none are left. Seeing an enemy
+	-- isn't a reason to stop, and neither is a target Targeting still keeps
+	-- just beyond range (its 10% hysteresis).
+	t.test("attack-move holds only while an enemy is within firing range", function()
+		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local tank = Spawn.unit(sim, "ord_lancer", 1, -220, 0, math.pi / 2)
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, 0, 110)
+		World.setFireState(w, enemy, World.FireState.HOLD_FIRE)
+		World.setHealth(w, enemy, 1e6)
+		local spotter = Spawn.unit(sim, "ord_herald", 1, 0, 70) -- the team sees the enemy from the start
+		World.setFireState(w, spotter, World.FireState.HOLD_FIRE)
+		World.setHealth(w, spotter, 1e6)
+		local range = sim.combat.profiles[w.defIndex[tank]].weapons[1].range + sim.combat.profiles[w.defIndex[enemy]].radius
+		at(sim, CT.FIGHT, 1, { tank }, 220, 0)
+		local heldOut, heldIn, seenOut, retreated = 0, 0, 0, false
+		-- the hold is decided at the start of a tick (Commands), from the
+		-- positions the previous tick ended with
+		local d = dist(w, tank, w.posX[enemy], w.posZ[enemy])
+		steps(sim, 1500, function(i)
+			local before = d
+			d = dist(w, tank, w.posX[enemy], w.posZ[enemy])
+			if before > range + 0.5 then
+				seenOut += 1
+				if sim.orders.hold[tank] then
+					heldOut += 1
+				end
+			elseif sim.orders.hold[tank] then
+				heldIn += 1
+			end
+			if heldIn >= 45 and not retreated then
+				retreated = true
+				at(sim, CT.MOVE, 2, { enemy }, 40, 240) -- backs off out of range
+			end
+			return retreated and dist(w, tank, 220, 0) < 30
+		end)
+		t.expect(seenOut > 30, `the enemy was seen out of range for a while ({seenOut} ticks)`)
+		t.equal(heldOut, 0, "never held with the enemy beyond firing range")
+		t.expect(heldIn >= 45, `held to fire once in range ({heldIn} ticks)`)
+		t.expect(dist(w, tank, 220, 0) < 30, `went on to the goal once nothing was in range ({dist(w, tank, 220, 0)} studs left)`)
+	end)
+
 	t.test("PATROL goes back and forth between the start and the point", function()
 		local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world
