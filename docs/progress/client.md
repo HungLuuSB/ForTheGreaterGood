@@ -429,6 +429,12 @@ All with real mouse and keyboard input through the MCP tools.
 
 - Nukes now leave the silo straight up, climb about 120 studs, then turn over onto their arc toward the target (S-51) (`debug_out/screens/c62_nuke_boost_turn.jpg`). The attack-mode preview draws that same path, and the landing ring follows it.
 
+## 2026-10-21: large-scale battle profile `normandy`
+
+- New test profile `normandy`: 150 units a side in formation with no orders. Each army has every land and air type (no naval, submarines, amphibious tanks, anti-sub helicopters or command vehicles). IR SAM sites stand near the battlefield; in the safe rear there are radar SAM sites, long-range radars, 10 fusion reactors, 30 converters, depots, a nuke silo and constructors. Order holds the north, Chaos the south (`debug_out/screens/normandy_order_lines.jpg`).
+- Spawns can now be laid out as formations (`cols`, `rowDx`, `rowDz` in MatchConfig).
+- It runs on `flat:256` until sim-A's Normandy map lands (request 31). Headless: about 2 ms a tick on average, 7.5 ms at worst, over 4 minutes.
+
 ## Needs my review
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
@@ -460,6 +466,8 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+31. **A Normandy map, `map:normandy` (the user, 2026-10-21):** "a large map, maybe make a map like Normandy". 256 x 256 cells around 0,0. Zones the `normandy` profile is laid out on: sea at z > 760 (scenery only); beach z 640-760 (sand, the Order rear); bluffs z 560-640 up to a plateau at ~34, with draws at x = -560, 0, 560; a bocage plateau z -360 to 560 with hedgerows and gaps, open staging fields at z 280-540 (Order) and z -340 to -200 (Chaos), and villages at (-300, 150) and (400, -100) with roads; a river at z ~ -380 with bridges at x = -500, 100, 650; open fields south of it (the Chaos rear). No deposits. Sent to sim-A directly.
 
 30. **Done (S-52): Wyvern / Aegis radar SAMs hold 15 and rebuild one every 6 s; cost per missile, Gorgon / Seraph (3) and IR SAMs unchanged. Past 10 missiles the client draws the stock as one filling bar instead of pips.** **Radar SAM stock 15, faster refill (the user, 2026-10-21):** "tell A to increase the SAM stock to 15, lower its recharge time too." Read as the radar SAM sites that intercept nukes: Wyvern (`chs_radar_sam`) and Aegis (`ord_radar_sam`), stockpile capacity 6 → 15; no refill number was given, suggested buildTime 12 → 6 s per missile. Cost per missile, the mobile radar SAMs (Gorgon / Seraph, 3) and the IR SAMs are the sim's call. Nothing changes on the client (it reads the defs). Sent to sim-A directly.
 

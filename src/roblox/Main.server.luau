@@ -185,8 +185,12 @@ local function startMatch()
 	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
 	for _, s in Config.spawns or {} do
 		local ids = {}
+		local cols = s.cols or s.count or 1 -- a formation: rows of `cols` units, each row `rowDx`, `rowDz` from the last
 		for i = 0, (s.count or 1) - 1 do
-			local id = Spawn.unit(sim, s.def, s.player, s.x + i * (s.dx or 0), s.z + i * (s.dz or 0), s.heading or 0)
+			local col, row = i % cols, i // cols
+			local x = s.x + col * (s.dx or 0) + row * (s.rowDx or 0)
+			local z = s.z + col * (s.dz or 0) + row * (s.rowDz or 0)
+			local id = Spawn.unit(sim, s.def, s.player, x, z, s.heading or 0)
 			if s.health then
 				SimWorld.setHealth(sim.world, id, sim.world.health[id] * s.health)
 			end
