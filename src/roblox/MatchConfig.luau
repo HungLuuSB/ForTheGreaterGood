@@ -9,7 +9,8 @@
 -- `count` units from (x, z), each `dx`, `dz` studs from the last (default
 -- one unit); heading in radians (0 faces +z, pi / 2 faces +x). `health`
 -- multiplies the units' starting health (test runs only; bars show full
--- until they drop below their normal maximum).
+-- until they drop below their normal maximum). `moveTo = { x, z }` gives
+-- them a move order there as the match starts (their player's order).
 -- `speed` (optional, default 1): the sim speed the match starts at (C-35);
 -- in a playtest - / = change it and P pauses.
 
@@ -133,25 +134,26 @@ local PROFILES = {
 			{ def = "chs_generator", player = 2, x = 140, z = 60 },
 		},
 	},
-	-- SAM test: your 4 long-range radars cover the map, your 4 Falcons (5x
-	-- health) circle over the middle, where 4 Thorn IR SAM sites keep firing
-	-- at them; for watching missile flight paths. The Thorns launch along
-	-- their turret's aim until the sim adds vertical launch (request 12).
+	-- SAM test: 4 Thorn IR SAM sites on the east side; your Falcon (5x
+	-- health) starts on the west side, out of their reach (range 280), and
+	-- flies over them; your 4 long-range radars cover the map. For watching
+	-- missile flight paths and the sensor view (N, C-39). The Thorns launch
+	-- along their turret's aim until the sim adds vertical launch (request 12).
 	sam = {
 		speed = 0.25, -- flight paths are easier to follow slowed down (the user's rule for these test scenes)
 		seed = 25,
-		mapId = "flat:128",
+		mapId = "flat:160",
 		scenario = "empty",
 		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
 		humanSlots = { 1 },
 		demoOrders = false,
 		restartAfter = nil,
 		spawns = {
-			{ def = "ord_beacon", player = 1, x = -350, z = -350, count = 2, dx = 700 },
-			{ def = "ord_beacon", player = 1, x = -350, z = 350, count = 2, dx = 700 },
-			{ def = "ord_falcon", player = 1, x = -60, z = -60, heading = math.pi / 2, count = 4, dz = 40, health = 5 },
-			{ def = "chs_thorn", player = 2, x = -100, z = -100, count = 2, dx = 200 },
-			{ def = "chs_thorn", player = 2, x = -100, z = 100, count = 2, dx = 200 },
+			{ def = "ord_beacon", player = 1, x = -450, z = -450, count = 2, dx = 900 },
+			{ def = "ord_beacon", player = 1, x = -450, z = 450, count = 2, dx = 900 },
+			{ def = "ord_falcon", player = 1, x = -540, z = 0, heading = math.pi / 2, health = 5, moveTo = { 420, 0 } },
+			{ def = "chs_thorn", player = 2, x = 340, z = -120, count = 2, dx = 160 },
+			{ def = "chs_thorn", player = 2, x = 340, z = 120, count = 2, dx = 160 },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders

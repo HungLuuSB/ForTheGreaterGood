@@ -134,11 +134,17 @@ local function startMatch()
 	sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
 	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
 	for _, s in Config.spawns or {} do
+		local ids = {}
 		for i = 0, (s.count or 1) - 1 do
 			local id = Spawn.unit(sim, s.def, s.player, s.x + i * (s.dx or 0), s.z + i * (s.dz or 0), s.heading or 0)
 			if s.health then
 				SimWorld.setHealth(sim.world, id, sim.world.health[id] * s.health)
 			end
+			table.insert(ids, id)
+		end
+		if s.moveTo then
+			local cell, offX, offZ = sim.map.layers.grid:encode(s.moveTo[1], s.moveTo[2])
+			Sim.submit(sim, s.player, encode({ cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = ids, cell = cell, offX = offX, offZ = offZ }))
 		end
 	end
 	matchId += 1
