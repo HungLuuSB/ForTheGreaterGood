@@ -75,8 +75,8 @@ return function(t: RunAll.Context)
 			ord_vigil = 8,
 			chs_hornet = 4,
 			ord_halo = 4,
-			chs_wyvern = 6,
-			ord_aegis = 6,
+			chs_wyvern = 15,
+			ord_aegis = 15,
 			chs_gorgon = 3,
 			ord_seraph = 3,
 		}

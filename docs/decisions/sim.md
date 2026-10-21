@@ -545,3 +545,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Numbers:** `apex` is now measured above the ordered spot (was: above the launch; the same on flat ground). `gravity` 15 → 12 keeps the flight at 12.7 s (measured, 1,400 studs) with the boost and turn; apex 310 studs above sea level on a flat map. Validation: lofted weapons need `turnRate`.
 - **Wire (protocol 18):** a client can't fly the turn without the goal, so a strategic missile now arrives as **SPAWN_STRATEGIC 17**: SPAWN_PROJ's fields plus `goal pos` (25 B), still to every player. It reveals the target spot to everyone, which the arc showed within a second or two anyway (my call).
 - **Tests:** `Nuke.spec` (6): flight 12.7 s, lands 0.0 studs from the spot; the warhead leans over only at 120.8 studs above the ground; a client far from everything flies its own copy within 0.15 studs of the server's for the whole flight; interception and the earlier tests unchanged. `Schema.spec` golden bytes.
+
+## S-52 — Radar SAM sites: stock 15, refill twice as fast (client request 30, the user asked) (2026-10-22)
+
+- **Asked (the user, after testing nukes, through the client):** "increase the SAM stock to 15, lower its recharge time too."
+- **Changed:** the radar SAM weapons' stockpile (`chs_radar_sam`, `ord_radar_sam`): capacity 6 → 15 (the Wyvern and Aegis sites, which intercept nukes), buildTime per missile 12 → 6 s (the user gave no number; the client suggested halving).
+- **Kept (my call, under "Needs my review"):** the cost per missile (40 supply + 900 power: a full refill is now 600 + 13,500, drained at twice the rate, 6.7 supply and 150 power per second per site); the mobile Gorgon and Seraph at 3 (slot override); the IR SAMs as they are. Read as the radar sites only, since the user was testing interception.
+- **Tests:** `Stockpile.spec` capacities. With chance 0.2 per burst (S-50), a full Wyvern now gives a nuke about a 96% chance of being destroyed if all 15 get to burst (1 − 0.8¹⁵).

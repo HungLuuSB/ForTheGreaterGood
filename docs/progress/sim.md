@@ -100,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Radar SAM stock (S-52, the user asked):** Wyvern / Aegis capacity 15, 6 s per missile. My calls: the cost per missile stays 40 + 900 (a full refill 600 + 13,500), mobile radar SAMs stay at 3, IR SAMs unchanged.
 - **Nuke silos (S-48, the user asked through the client):** names Reckoning (Order; "Judgement" was taken by the MLRS) and Ragnarok (Chaos); silo 2,400 supply + 24,000 power, health 7,000; warhead stockpile 2 × (120 s, 1,500 + 40,000), aoe 150, edge 0.3, 8,000–10,000 damage, ~12.7 s flight at apex 300 (was 800; S-49); radar SAM interception chance 0.2 per burst (was 0.5; the user set it, S-50). My calls: strategic missiles are sent to every player wherever they fly, and the launch warning shows the silo's position. The AI doesn't build silos.
 - **Missile stockpiles (S-47, the user asked through the client):** IR SAM missiles 6 s, 15 supply + 300 power; radar 12 s, 40 + 900; capacities Thorn / Vigil 8, Hornet / Halo 4, Wyvern / Aegis 6, Gorgon / Seraph 3 (the client's numbers; Halo mirrors Hornet). Naval SAMs stay unlimited (the user, through the client). AI effect not measured.
 - **Archon radar signature 0.6 (S-46, the user asked through the client; was 0.35):** for your test in airsam.
@@ -128,6 +129,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 30), S-52:** radar SAM weapons' stockpile capacity 15 (Wyvern, Aegis), buildTime 6 s per missile; Gorgon / Seraph stay at 3, IR SAMs and the cost per missile unchanged. Nothing on the wire changes.
 - **Done (request 28), S-51, protocol 18:** `Shared/Combat/Lofted`: `Lofted.step(x, y, z, vx, vy, vz, gx, gy, gz, gy + weapon.apex, weapon.gravity, rad(weapon.turnRate) / 15, Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z)), 1/15)` per tick, and `Lofted.velocity(...)` for the arc from any point (preview, landing prediction). Phases from state: boost while vx = vz = 0 and climbLeft > 0; turn / arc while vy > 0; ballistic after. Strategic missiles arrive as **SPAWN_STRATEGIC 17** = SPAWN_PROJ fields + `goal pos` (25 B). Nukes: projectileSpeed 150 (boost), climbHeight 120, turnRate 90, gravity 12, apex 300 above the goal; 12.7 s. Guide 4.3, 7, 10.9; contract section 7.
 - **Done (request 29), S-50:** `intercepts = { chance = 0.2 }` on both radar SAMs; drop the test override whenever you like. Request 28 (vertical climb for nukes) is next.
 - **Done (request 27), S-49, protocol 17:** (a) `ord_nuke` / `chs_nuke` `apex` 300, `gravity` 15 (flight still 12.7 s); (b) STOCK entries are now `count u8, progress u8` (next missile's progress × 255, 0 when full), sent when a count changes or a progress crosses a sixteenth (`Stockpile.WIRE_STEPS`); animate at 1 / buildTime per second between records if you like. Contract section 5, guide 8.6 and 10.9.
