@@ -4,7 +4,9 @@
 -- Pieces move through their Motor6D.Transform, driven by piece scripts
 -- (Core/PieceAnim, guide 14: visual only, the server decides when weapons
 -- fire); each unit's LOD comes from its distance to the camera. Aircraft
--- bank and ships sit in the water as Core/Attitude says (C-31).
+-- bank and ships sit in the water as Core/Attitude says (C-31). A dead
+-- unit's model stays where it was drawn until the render clock reaches the
+-- death, then plays its death (Render/Deaths, C-34) and leaves its wreck.
 
 local Attitude = require("../Core/Attitude")
 local Interp = require("../Core/Interp")
@@ -12,6 +14,7 @@ local PieceAnim = require("../Core/PieceAnim")
 local PieceScripts = require("../Core/PieceScripts/Registry")
 local World = require("../Core/World")
 local ModelPool = require("./ModelPool")
+local RenderDeaths = require("./Deaths")
 
 local UnitRenderer = {}
 
@@ -28,14 +31,15 @@ type Drawn = {
 
 export type Renderer = {
 	drawn: { [number]: Drawn },
-	dying: { { drawn: Drawn, tick: number } }, -- dead units' models, kept until the render clock reaches the death
+	dying: { { drawn: Drawn, death: World.Death } }, -- dead units' models, kept until the render clock reaches the death
 	parts: { BasePart },
 	frames: { CFrame },
 	anim: PieceAnim.Sched,
+	deaths: RenderDeaths.State,
 }
 
 function UnitRenderer.new(anim: PieceAnim.Sched): Renderer
-	return { drawn = {}, dying = {}, parts = {}, frames = {}, anim = anim }
+	return { drawn = {}, dying = {}, parts = {}, frames = {}, anim = anim, deaths = RenderDeaths.new() }
 end
 
 local function show(r: Renderer, world: World.World, id: number)
@@ -90,6 +94,7 @@ function UnitRenderer.clear(r: Renderer)
 		release(dying.drawn)
 	end
 	table.clear(r.dying)
+	RenderDeaths.clear(r.deaths)
 end
 
 -- Applies the world's queues, then draws every tactical unit at render tick
@@ -112,16 +117,27 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		if d then
 			PieceAnim.remove(r.anim, death.id)
 			r.drawn[death.id] = nil
-			table.insert(r.dying, { drawn = d, tick = death.tick })
+			table.insert(r.dying, { drawn = d, death = death })
 		end
 	end
+	local now = os.clock()
 	for i = #r.dying, 1, -1 do
 		local dying = r.dying[i]
-		if t < 0 or dying.tick <= t then
-			release(dying.drawn) -- the burst comes from Effects; wrecks later
+		local death = dying.death
+		if t < 0 or death.tick <= t then
 			table.remove(r.dying, i)
+			local d = dying.drawn
+			if t < 0 or hidden then
+				release(d) -- nothing to watch
+			else
+				-- the burst comes from Effects; the shake or the flung pieces and the wreck from here
+				RenderDeaths.start(r.deaths, death.id, d.def, d.model, d.motors, death.severity, death.wreckId, now, function()
+					release(d)
+				end)
+			end
 		end
 	end
+	RenderDeaths.step(r.deaths, now)
 	if t < 0 then
 		return
 	end

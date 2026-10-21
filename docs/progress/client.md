@@ -228,6 +228,11 @@ All with real mouse and keyboard input through the MCP tools.
 - The client works out what your team sees exactly like the server (tested cell for cell). Cost: 0.02 ms per frame for the fog code; GPU +1.6 ms with the light fog; 60 fps.
 - **Known gaps:** units never seen in the camera use a typical sight range for their icon, and allies' units don't count yet (request 9).
 
+## 2026-10-21: task 5, deaths and wrecks (C-34)
+
+- **Deaths by severity:** a death that leaves a wreck shakes briefly and becomes a charred wreck of the unit (`debug_out/screens/deaths_wrecks.jpg`); a big overkill flings the turret and other pieces up and away under the explosion and leaves nothing (`deaths_fling.jpg`). Same rule as the server for when a wreck exists.
+- **Gap:** the client only learns of wrecks from deaths it saw, and never of a wreck being reclaimed, so wrecks stay until the match restarts (request 10).
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
@@ -242,9 +247,12 @@ All with real mouse and keyboard input through the MCP tools.
 - **Juggernaut's animation feel (C-30, C-33):** arms hang at -65°, rise at the server's 80°/s, hold 3 s after the target is gone, recoil 0.8 stud in turn; the timing is the server's (S-20, `chs_juggernaut_cannon`), the recoil and model are the client's (`src/client/Core/PieceScripts/chs_juggernaut.luau`, `src/shared/Defs/Blockouts/chs_juggernaut.luau`).
 - **Aircraft and naval look (C-31):** jet bank up to 60°, helicopter bank 20° and nose-down 12°, rotor 4 turns a second; ships 0.8 stud into the water, own submarines 2.5 studs under it; sonar contacts as hollow rings. Values in `src/client/Core/Attitude.luau` and `Core/PieceScripts/Default.luau`.
 - **How fog of war looks (C-32):** near (≤ 330 studs): darkened scene (ColorCorrection, Lighting brightness 0.6, darker ambient) with a point light per 32-stud cell (brightness 1.4, range 40, 12 studs up, 0.4 s fade); the light grid shows as a soft checker. Far: dark plates (8, 10, 18) at transparency 0.4 over unseen ground, faint seams. Radar contacts as pulsing team-colored discs, sonar contacts larger and paler; ghosts glowing blue-grey at 0.7 transparency. Values in `src/client/Render/FogOfWar.luau` and `Render/Contacts.luau`.
+- **Deaths and wrecks (C-34):** shake 0.4 s; flung pieces 1 s, up to ~7–11 studs; wrecks charred (75 % to dark brown-black, corroded metal), turrets askew, tilted and sunk a little. Values in `src/client/Core/Deaths.luau` and `Render/Deaths.luau`.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+10. **Wrecks on the wire (task 5, 2026-10-21):** a wreck reaches the client only as `wreckId` in a DEATH of its tactical tier. It never hears of wrecks made outside that tier or before it joined, and never of a wreck being reclaimed (so drawn wrecks stay until the match restarts, C-34). Wreck records would fix both: e.g. WRECK `wreckId u16, cell, offX, offZ, heading u8, defIndex u16` when a wreck enters the camera area (and on join), WRECK_GONE `wreckId` when it is reclaimed or leaves; a reclaim's progress could show as a shrinking wreck later. Low to medium priority.
 
 9. **The team's sight map on the wire (task 4, 2026-10-21):** the client rebuilds its team's sight from its own units (C-32: exact while it knows their defs), but own units never seen in the camera arrive as strategic records with only an icon (their sight range is a guess), and allied players' units can't be counted (the wire doesn't say who is allied). Sending the ally team's `los` map would make the fog exact and cover allies: e.g. on the Strategic channel at sensor rate, the sensor cells that turned seen / unseen since the last send (u16 cell indices; a few dozen per update while armies move; a full bitset on join: 64 × 64 cells = 512 bytes on a 128-cell map). Alternatively own units' strategic records could carry their def index. Medium priority.
 

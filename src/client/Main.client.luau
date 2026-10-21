@@ -31,6 +31,7 @@ local IconLayer = require("./Render/IconLayer")
 local MinimapUI = require("./UI/Minimap")
 local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
+local RenderDeaths = require("./Render/Deaths")
 local RenderEffects = require("./Render/Effects")
 local Contacts = require("./Render/Contacts")
 local FogOfWar = require("./Render/FogOfWar")
@@ -167,6 +168,9 @@ if RunService:IsStudio() then
 		elseif query == "fog" then
 			-- fog of war: mode, plates, lights (made / lit), last rebuild; contacts and ghosts
 			return { mode = fog.mode, stats = fog.stats, contacts = contacts.stats, version = fog.vision and fog.vision.version }
+		elseif query == "deaths" then
+			-- deaths played (shakes, flings), wrecks standing
+			return renderer.deaths.stats
 		elseif query == "anim" then
 			-- piece scripts: units by LOD, live threads and moving tracks, hooks run
 			local lods = { near = 0, mid = 0, far = 0 }
@@ -295,6 +299,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	if nowStrategic ~= strategic then
 		strategic = nowStrategic
 		ModelPool.setVisible(not strategic)
+		RenderDeaths.setVisible(renderer.deaths, not strategic)
 	end
 	api.state.camera.strategic = strategic
 	table.clear(tiers)
