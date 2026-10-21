@@ -23,13 +23,16 @@ Waypoints.IDLE_SECONDS = 2 -- a unit standing still this long has no orders left
 -- (a fallback for a build the server dropped).
 Waypoints.BUILD_IDLE_SECONDS = 20
 Waypoints.MAX_PER_UNIT = 16
--- Aircraft arrive within the server's Air.LOITER_RADIUS of their goal and
--- circle it from then on (C-45), so their point is reached that far out.
-Waypoints.AIR_REACH = 220
+-- Aircraft fly to their goal and arrive within the server's
+-- Air.ARRIVE_RADIUS, or once the goal falls behind them after they flew
+-- toward it, within Air.LOITER_RADIUS (a goal inside their turn circle:
+-- the closest approach); then they circle it (S-38, C-51).
+Waypoints.AIR_REACH = 40
+Waypoints.AIR_PASS = 220
 
 local CT = Schema.CmdType
 
-export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number? }
+export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number?, approached: boolean? }
 export type Waypoints = { byUnit: { [number]: { Point } }, idleSince: { [number]: number } }
 
 function Waypoints.new(): Waypoints
@@ -172,7 +175,19 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 				break -- attack / guard / repair last until the target is gone
 			end
 			local x, z = u.rx or u.x, u.rz or u.z
-			if (first.x - x) ^ 2 + (first.z - z) ^ 2 <= first.reach ^ 2 and first.kind ~= CT.PATROL then
+			local d2 = (first.x - x) ^ 2 + (first.z - z) ^ 2
+			local passed = false
+			local def = World.def(world, u)
+			if def and def.domain == "air" then
+				-- the server's arrival (S-38): the goal fell behind after it was ahead
+				local ahead = math.sin(u.heading) * (first.x - x) + math.cos(u.heading) * (first.z - z) > 0
+				if ahead then
+					first.approached = true
+				elseif first.approached and d2 <= Waypoints.AIR_PASS ^ 2 then
+					passed = true
+				end
+			end
+			if (d2 <= first.reach ^ 2 or passed) and first.kind ~= CT.PATROL then
 				table.remove(list, 1)
 				first = list[1]
 			else
