@@ -901,3 +901,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `GroundFire.spec`: artillery on hold fire shells a spot; out of range it drives closer; a move order ends it; an Edict takes it, a Halo doesn't.
   - `Air.spec`: a tank now takes the bombers' ATTACK_GROUND too.
   - `Schema.spec`: golden bytes.
+
+## S-69 — Salvos; shells lead moving targets (the user's task 7, audit item 7) (2026-10-22)
+
+- **Salvos:** `salvo = { count, delay }` is read now.
+  - The first shot starts the reload as before; the other `count - 1` follow `delay` apart along the turret's aim, as long as the weapon still has a target it may fire at. Losing it ends the salvo.
+  - State `World.wSalvo` / `wSalvoWait`, hashed only during a salvo.
+- **MLRS** (guide 13.2: "Judgement (precise)", "Hydra (large salvo)"):
+  - Judgement fires 4 rockets 0.3 s apart, Hydra 8 rockets 0.15 s apart. Each rocket does the old shot's damage / count; the Judgement's then −10% (see below).
+  - Trade check (`lune run factions 3`): MLRS 1.30 at full damage, **1.20 with the Judgement's rockets −10%** (in band; Order wins defending, 1.82; Chaos now wins the flank, 0.57, which it didn't before). Every Hydra number was already at its ±10% limit.
+- **Shell leading:**
+  - A ballistic weapon (not a lofted one) aims where a visible moving target will be after the shell's flight time. Two passes: the time from the launch pitch at the led distance; the target's speed along its heading.
+  - Radar contacts get no lead (their velocity isn't known); bombs and missiles already lead (D91, S-27).
+- **Re-run trade checks:** 12 of 12 roles still in band. Tanks, artillery and MLRS moved by ≤ 0.1 except the MLRS above.
+- **Tests (`Salvo.spec`):**
+  - A Hydra's 8 rockets 0.15 s apart, the next salvo one reload after the first rocket.
+  - A Verdict's shells burst within 14 studs of a tank driving across its line of fire. Without the lead, 0 of 4 do.
