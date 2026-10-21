@@ -864,7 +864,7 @@ Route these through the same team account so shortages affect them naturally:
   | Weapon | Missile | Capacity |
   |---|---|---|
   | IR SAM (`chs_ir_sam`, `ord_ir_sam`) | 6 s, 15 supply + 300 power | Thorn, Vigil 8; Hornet, Halo 4 |
-  | Radar SAM (`chs_radar_sam`, `ord_radar_sam`) | 12 s, 40 supply + 900 power | Wyvern, Aegis 6; Gorgon, Seraph 3 |
+  | Radar SAM (`chs_radar_sam`, `ord_radar_sam`) | 6 s, 40 supply + 900 power (S-52) | Wyvern, Aegis 15 (S-52); Gorgon, Seraph 3 |
 
   The owner sees each unit's stock and the next missile's build progress (State `stock` field, protocols 15 and 17, section 7). Naval SAMs (Corsair, Crusader) stay unlimited (the user, 2026-10-22).
 - **Nuke silos** (S-48) build warheads the same way: capacity 2, 120 s, 1,500 supply + 40,000 power each (about 12.5 supply and 333 power per second while building, a T3 economy's worth).
