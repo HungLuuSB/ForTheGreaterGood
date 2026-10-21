@@ -459,7 +459,7 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## 2026-10-22: the user's icon set (C-74)
 
-- `node tools/icons/render.mjs` turns the user's icon set into two sprite sheets (`assets/icons/ftgg-icons-fill.png`, `ftgg-icons-overlay.png`) and `src/client/UI/IconAtlas.luau`; all 127 unit defs map to a catalogue entry. Waiting for the user to import the two sheets through the Asset Manager; then the icon layer, build grid and unit panel draw them, and the readability check in the normandy battle follows.
+- `node tools/icons/render.mjs` turns the user's icon set (draft 2, BAR style) into one sprite sheet, `assets/icons/ftgg-icons.png`, and `src/client/UI/IconAtlas.luau`; all 127 unit defs map to a catalogue entry. Waiting for the user to import the sheet through the Asset Manager; then the icon layer, build grid and unit panel draw it, and the readability check in the normandy battle follows.
 
 ## 2026-10-22: overnight run
 
