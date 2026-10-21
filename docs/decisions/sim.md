@@ -582,3 +582,21 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Starts:** (∓850, 0).
 - **Kept:** every S-53 feature size (hedges, houses, gaps, draws, river, bridges). `Normandy.spec` checks the mirror (features and heights) and a Ravager crossing the east bridge at z = 250; 1,044 hedge cells, 72 house cells.
 - **The client's `normandy` profile** places armies on the S-53 layout and has to move to the new zones.
+
+## S-55 — Shorter SAM ranges (client request 32, the user asked) (2026-10-22)
+
+- **Asked (the user, after playing the Normandy battle):** "the anti air should not cover this large range or maybe because the map is small, reduce the SAM IR by 30%, the SAM radar by 25%".
+- **Weapons:** range and lockRange together:
+  - `chs_ir_sam` 420 → 294 and `ord_ir_sam` 300 → 210 (Thorn, Hornet, Vigil, Halo).
+  - `chs_radar_sam` 1680 → 1260 and `ord_radar_sam` 1800 → 1350 (Wyvern, Gorgon, Aegis, Seraph).
+- **Sensors follow by the same factor (my call; S-33 and S-45 scaled them together):**
+  - IR airSight: Thorn 294, Vigil 224, Hornet 210, Halo 224.
+  - Radars: Wyvern 1350, Aegis 1463, Gorgon 1080, Seraph 1170.
+  - projectileSpeed unchanged.
+- **Side effects:**
+  - Burn-through stays 35% of lockRange (~440 studs now).
+  - A nuke reaches a radar site's range later, so the interception window is shorter. In `Nuke.spec` two Wyverns still destroy it, with 3 interceptors.
+- **Tests:**
+  - `EW.spec` pins the old IR ranges and air sights for its fixed-distance rule checks, as it already did for the radar SAMs.
+  - `Guidance.spec`'s hovering helicopter moves in to 260, inside every Thorn's reach: 86% hit.
+  - `Nuke.spec` checks "nuke first" only once the nuke is in a site's range.

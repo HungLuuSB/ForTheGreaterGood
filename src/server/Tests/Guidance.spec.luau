@@ -153,7 +153,8 @@ return function(t: RunAll.Context)
 	t.test("an IR SAM salvo hits a circling jet and a helicopter unless decoyed", function()
 		-- before S-27 (lead pursuit against the target's end-of-tick position):
 		-- the jet took 33% of the missiles, crossing shots passing 5–9 studs off
-		for _, case in { { "ord_falcon", 300, "circling jet" }, { "ord_guardian", 420, "helicopter flying in" }, { "ord_guardian", 200, "hovering helicopter" } } do
+		-- the hover point is inside every Thorn's range (294 since S-55)
+		for _, case in { { "ord_falcon", 300, "circling jet" }, { "ord_guardian", 420, "helicopter flying in" }, { "ord_guardian", 260, "hovering helicopter" } } do
 			local r = salvo(case[1] :: string, case[2] :: number, 1200)
 			print(string.format("    %s: %d launched, %d hits (%.0f%%), %d decoyed (DIRCM), %d lost lock", case[3], r.launched, r.hits, r.hits / math.max(r.launched, 1) * 100, r.decoyed, r.lost))
 			t.expect(r.launched >= 20, `{case[3]}: the Thorns fired ({r.launched})`)
