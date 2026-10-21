@@ -179,6 +179,9 @@ return function(t: RunAll.Context)
 			{ 'unit ord_lancer: weapons[1].turretPiece: piece "bay" is not in pieces', function(d)
 				d.units.ord_lancer.weapons[1].turretPiece = "bay" -- the client rig needs it (S-3)
 			end },
+			{ 'unit ord_absolution: weapons[1].turretPiece: weapon "ord_bomb" has no turret to turn it', function(d)
+				d.units.ord_absolution.weapons[1].turretPiece = "bay" -- bombs fall from a fixed bay (S-11)
+			end },
 			{ 'unit ord_lancer: moveClass: unknown move class "TRACKS"', function(d)
 				d.units.ord_lancer.moveClass = "TRACKS"
 			end },
