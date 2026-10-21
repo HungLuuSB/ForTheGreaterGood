@@ -1,6 +1,6 @@
 --!strict
 -- Reckoning warhead (S-48, client request 26): strategic missile, fired only
--- on an attack-ground order, anywhere on the map. Lofted to 800 studs, ~13 s
+-- on an attack-ground order, anywhere on the map. Lofted to 300 studs, ~12.7 s
 -- in the air whatever the distance, so radar SAMs get time to intercept it.
 return {
 	id = "ord_nuke",
@@ -8,8 +8,8 @@ return {
 	range = 8192, -- anywhere on the map
 	reload = 10,
 	projectileSpeed = 300, -- nominal: `apex` sets the launch velocity
-	gravity = 40,
-	apex = 800,
+	gravity = 15,
+	apex = 300, -- low enough to stay on screen (S-49, the user asked)
 	accuracy = 0,
 	strategic = true,
 	manualFire = true,

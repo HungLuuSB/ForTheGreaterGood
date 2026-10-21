@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 16 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles)
+Schema.PROTOCOL_VERSION = 17 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -374,9 +374,10 @@ end
 --   aim = slotMask u8 (bit i-1 = weapon slot i, 1..8) + yaw u8, pitch u8 per set bit
 --   targets = slotMask u8 + targetId u16 per set bit (0 = none); sent only to
 --             the unit's owner (protocol 8, S-16)
---   stock   = slotMask u8 + count u8 per set bit: missiles in stock of the
---             weapon slots with a stockpile; sent only to the unit's owner
---             (protocol 15, S-47)
+--   stock   = slotMask u8 + (count u8, progress u8) per set bit: missiles in
+--             stock of the weapon slots with a stockpile, and the next
+--             missile's build progress (0..255 of 1; protocol 17, S-49); sent
+--             only to the unit's owner (protocol 15, S-47)
 --------------------------------------------------------------------------------
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
@@ -407,7 +408,7 @@ Schema.WeaponState = table.freeze({ IDLE = 0, AIMING = 1, READY = 2, RESTORING =
 
 export type Aim = { slot: number, yaw: number, pitch: number }
 export type Target = { slot: number, targetId: number } -- targetId 0 = no target
-export type Stock = { slot: number, count: number } -- missiles in stock (0..255)
+export type Stock = { slot: number, count: number, progress: number } -- missiles in stock (0..255); next one's progress 0..255 (S-49)
 
 export type State = {
 	unitId: number,
@@ -529,6 +530,7 @@ function Schema.encodeState(w: Writer, rec: State)
 		w:writeU8(slotMask)
 		for _, st in rec.stock do
 			w:writeU8(st.count)
+			w:writeU8(st.progress)
 		end
 	end
 end
@@ -589,7 +591,8 @@ function Schema.decodeState(r: Reader): State
 		local stock: { Stock } = {}
 		for slot = 1, Schema.MAX_WEAPONS do
 			if band(slotMask, 2 ^ (slot - 1)) ~= 0 then
-				table.insert(stock, { slot = slot, count = r:readU8() })
+				local count = r:readU8()
+				table.insert(stock, { slot = slot, count = count, progress = r:readU8() })
 			end
 		end
 		rec.stock = stock

@@ -97,7 +97,7 @@ return function(t: RunAll.Context)
 		t.equal(sim.air.groundX[silo], nil, "the order is done")
 		local flight = (impact[1] - launchedAt) / 15
 		print(string.format("    nuke: flight %.1f s, apex %.0f studs, landed %.1f studs from the target", flight, apex, math.sqrt((impact[2] - TARGET_X) ^ 2 + (impact[3] - TARGET_Z) ^ 2)))
-		t.expect(apex >= 790, `lofted to ~800 studs (apex {apex})`)
+		t.expect(apex >= 295 and apex <= 340, `lofted to ~300 studs above the silo (apex {apex})`)
 		t.expect(flight > 10 and flight < 16, `slow: {flight} s in the air`)
 		t.expect(math.sqrt((impact[2] - TARGET_X) ^ 2 + (impact[3] - TARGET_Z) ^ 2) < 5, "lands on the ordered spot")
 		for _ = 1, 3 do

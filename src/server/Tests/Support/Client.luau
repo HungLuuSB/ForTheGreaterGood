@@ -39,6 +39,7 @@ export type Unit = {
 	state: number?,
 	targets: { [number]: number }?, -- own units: weapon slot → target ID (0 = none; S-16)
 	stock: { [number]: number }?, -- own units: weapon slot → missiles in stock (S-47)
+	stockProgress: { [number]: number }?, -- own units: weapon slot → next missile's progress 0..255 (S-49)
 	vx: number?, -- tactical units: velocity estimated from the last two Tactical records (studs/s; S-27)
 	vz: number?,
 	movedAt: number?, -- view.tick of the last Tactical record
@@ -434,10 +435,13 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			end
 			if r.stock then
 				local st = u.stock or {}
+				local sp = u.stockProgress or {}
 				for _, s in r.stock do
 					st[s.slot] = s.count
+					sp[s.slot] = s.progress
 				end
 				u.stock = st
+				u.stockProgress = sp
 			end
 		end
 		mention(view, "State", ids)

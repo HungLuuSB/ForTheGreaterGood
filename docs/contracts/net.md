@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **16**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **17**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -101,7 +101,7 @@ Then:
   - A change of state bits or turret aim sends the state, the aim of every slot and the weapon field together.
   - Aim rest and restore (S-20): a unit enters with its weapons at their turret's rest pose (`restYaw`, `restPitch`); after losing a target a weapon holds its aim `restoreDelay` seconds, then turns back to rest. `Shared/Combat/Aim.update` is the server's exact per-tick step, so a client can animate between aim updates with the same results.
   - **Targets** (S-16, own units only): `slotMask u8`, then `targetId u16` per set bit (0 = no target). Sent to the unit's owner whenever a weapon's target changes (every slot), and with the ENTER tick when it has any target; the ID is always a unit (or remembered structure) the team knows. Other players never get it. Exact from the tick Targeting picks the target, before the turret has turned.
-  - **Stock** (S-47, own units only; protocol 15): `slotMask u8`, then `count u8` per set bit: missiles in stock of each weapon slot that has a stockpile (`weapons[i].stockCapacity` in the defs; slots without one are never set). Sent to the unit's owner whenever any of its counts changes (every stockpile slot), and with the ENTER tick always. Other players and spectators never get it. Comes after `targets` in the record.
+  - **Stock** (S-47, own units only; protocol 15, progress since 17): `slotMask u8`, then `count u8, progress u8` per set bit: missiles in stock of each weapon slot that has a stockpile (`weapons[i].stockCapacity` in the defs; slots without one are never set), and the next missile's build progress (0..255 of one missile; 0 when full). Sent to the unit's owner whenever a count changes or a progress crosses a sixteenth (`Stockpile.WIRE_STEPS`; every stockpile slot together), and with the ENTER tick always. Between records the progress grows by at most 1/16 (it stalls with the economy), so a client may animate it at `1 / buildTime` per second and stop at the next sixteenth. Other players and spectators never get it. Comes after `targets` in the record.
 
 A Tactical or State record always refers to a unit the client got an ENTER for. If not, the client is out of sync: drop the record (the reference client asserts).
 
@@ -264,6 +264,7 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 17 | State `stock` entries gain `progress u8`: the next missile's build progress (S-49, client request 27b) |
 | 16 | Events INTERCEPTOR 14, LAUNCH_WARNING 15, INTERCEPTED 16; strategic missiles go to every player (S-48, client request 26) |
 | 15 | State `stock` field (mask bit 64): own units' missile stock per stockpile slot (S-47, client request 25) |
 | 14 | SHOT 13: a hidden shooter's hitscan shot with both ends; projectiles and homing corrections in the camera area whatever the team sees (S-43, client request 21) |
