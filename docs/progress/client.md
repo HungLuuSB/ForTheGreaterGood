@@ -135,6 +135,10 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `315ec04` (lobby seats for several humans, results with statistics, C-77; the 2-client Studio test not run); test_client 130, test 350, build passed.
 - Ready to merge: `3101bcf` (rejoin, late join, restart: a new WELCOME clears the client's references, C-78); test_client 133, build passed.
 - Ready to merge: `390df33` (spectators and the replay viewer, C-79); test_client 136, build passed.
+- Ready to merge: `5aa4552` (requests 37 and 38 used, the faction pass followed, C-80; includes the merge of main at 1cbfb0d); test_client 137, test 355, build passed.
+- Ready to merge: `8ce4923` (settings menu, C-81); test_client 140, build passed.
+- Ready to merge: `cb7098f` (stable icon layout, S-64 units drawn as the Main Battle Tank, C-74 follow-up; includes the merge of main at a21d325); test_client 140, build passed.
+- Ready to merge: `9fac768` (nuke craters and water splashes, C-82); test_client 141, build passed.
 
 ## Tasks
 
@@ -463,6 +467,32 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-22: atmosphere presets (C-83)
+
+- Four lighting presets, chosen in the settings menu (O, "Atmosphere"); Current stays the default. Same fight in the normandy battle, same camera, 4 s each in Studio (60 fps cap, so the frame is 16.7 ms in all four; GPU and CPU are Roblox's render frame times):
+
+| Preset | Look | GPU | CPU | Screenshot |
+|---|---|---|---|---|
+| Current | the place as saved (Roblox's default sky, Atmosphere 0.3, Bloom) | 4.26 ms | 6.46 ms | `debug_out/screens/c83_atmosphere_current.jpg` |
+| Clear day | thinner, bluer air, a touch more colour and contrast, softer bloom | 4.80 ms | 7.12 ms | `c83_atmosphere_clear.jpg` |
+| Battlefield haze | thick warm-grey air, muted colours, sun rays through it | 4.76 ms | 6.24 ms | `c83_atmosphere_haze.jpg` |
+| Dusk | a low warm sun (17:12), orange horizon, stronger bloom and rays | 4.91 ms | 6.14 ms | `c83_atmosphere_dusk.jpg` |
+
+  The presets cost about 0.5 ms of GPU (the colour correction pass and the denser air); the CPU differences are the fight's own variation. Lighting technology (Future) can't be set from a script, so it isn't part of the presets.
+
+## 2026-10-22: nuke crater, water splashes (C-82)
+
+- A nuke that bursts near the ground now digs a crater in the Terrain instead of leaving the 240-stud dark scorch decal (your idea): a shallow bowl (radius 0.45× the blast, depth 7% of that, at most 6 studs) with a scorched basalt floor, a ring of mud around it and an uneven earth rim. It is visual only and kept shallow, since units still drive at the sim's height. Each crater's area is copied first and put back on the next WELCOME (checked in Studio: 1,727 basalt voxels, then 0 after a new WELCOME). `debug_out/screens/c82_nuke_crater.jpg` (as it forms, under the mushroom cloud), `c82_crater_close.jpg` (one dug directly, close up).
+- Shells, bombs and torpedoes that land in open water splash: a white column that falls back, spray, mist and a foam ring on the surface, instead of fire, dust and a scorch mark; a hit on a ship (a hull under the point) still explodes. `tests/client/Splash.spec` (in a corvette fight 3 of 30 impacts splash, the hits explode; on land none do). In Studio the splash is too brief to catch in a screenshot (`c82_naval_hit.jpg` shows a hit on a ship).
+
+## 2026-10-22: icons for S-64's new units (C-74 follow-up)
+
+- The Warden and the Minotaur (S-64) have no entry in your icon set yet: they draw as the Main Battle Tank (T2 vehicle) until the catalogue has them, and `render.mjs` reports it on every run. The sheet's layout is now stable: tiles keep their spots when units or entries are added, so the uploaded sheet stays right until the next import (the rebuilt sheet is byte-identical).
+
+## 2026-10-22: settings menu (C-81)
+
+- O (or "Settings" above the follow button) opens a settings panel: camera pan speed, zoom step and edge scroll; graphics quality Low / Medium / High (caps on explosions, tracers, projectiles, lights and copies of one effect, and the distance of full piece animation) and fog lights on / off; UI scale (0.7 to 1.5, the UI panels only: overlays at world positions keep screen pixels); and the key bindings reference. Values apply live; they last for the session. High is today's look; fog lights default off (your earlier call). `tests/client/Settings.spec`; screenshots `debug_out/screens/c81_settings.jpg`, `c81_settings_low_scale12.jpg`.
+
 ## 2026-10-22: requests 37 and 38 used, faction pass followed (C-80)
 
 - Countermeasure charges (request 37, S-63, protocol 21): the unit panel shows own units' flares and chaff left from the server ("Flares 6/6 · Chaff 6/6", `debug_out/screens/c80_charges.jpg`); other players' units keep "max". `OwnerFields.spec` checks the client's counts against the server's.
@@ -513,6 +543,11 @@ All with real mouse and keyboard input through the MCP tools.
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Atmosphere options (C-83):** Current (default), Clear day, Battlefield haze, Dusk, in the settings menu; table with screenshots and frame cost under "atmosphere presets (C-83)" above. Values in `src/client/Render/Atmosphere.luau`. Pick one as the default, or none.
+
+- **Settings defaults (C-81):** pan speed 1.1, zoom step 1.15, edge scroll on in live games (off in Studio), quality High (60 explosions, 100 tracers, 150 projectiles, 12 lights, 24 copies, full animation within 300 studs), Medium and Low below it, fog lights off, UI scale 1.0. In `src/client/Core/Settings.luau`; the key O opens it.
+- **UI placement (C-76, C-79, C-81):** the unit panel is 460 px wide (the build grid shows 2 rows), the command card right of it; the replay bar bottom centre with the replay / spectator banner under the resource bar; "Settings (O)" above the follow button bottom right; lobby and settings panels centred.
 
 - **Camera pitch range (C-69):** Alt + scroll, 35°–80° in 4° steps, starting at 55°; the detailed area stops at 1.8 camera distances (`Camera.MIN_PITCH`, `MAX_PITCH`, `PITCH_STEP`, `RECT_CAP` in `src/client/Camera.luau`).
 
