@@ -291,7 +291,7 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		local cost = def.cost or {}
 		b.LayoutOrder = i
 		b.Visible = true
-		local style: any = { shape = if def.icon == "commander" then "star" else Icons.shapeOf(def), size = 30, team = world.me.team, alpha = 1, selected = false, glyph = ui.icons.glyphs[def.index] }
+		local style = Icons.ofDef(def, world.me.team, 24)
 		Glyph.apply(ui.itemGlyphs[i], style, TeamColors(world.me.team))
 		;(b :: any).Title.Text = def.name
 		;(b :: any).Hot.Text = if ui.armed and i <= 10 then tostring(i % 10) else ""

@@ -123,7 +123,7 @@ function UnitPanel.new(api: Api.Api): UI
 end
 
 local function styleOf(ui: UI, def: any, team: number, size: number): any
-	return { shape = if def.icon == "commander" then "star" else Icons.shapeOf(def), size = size, team = team, alpha = 1, selected = false, glyph = ui.icons.glyphs[def.index] }
+	return Icons.ofDef(def, team, size)
 end
 
 -- BAR's stat lines for one unit.
@@ -185,7 +185,7 @@ local function one(ui: UI, api: Api.Api, id: number)
 		ui.name.Text, ui.role.Text, ui.stats.Text = "(out of view)", "", ""
 		return
 	end
-	Glyph.apply(ui.portraitGlyph, styleOf(ui, def, u.team, 40), TeamColors(u.team))
+	Glyph.apply(ui.portraitGlyph, styleOf(ui, def, u.team, 38), TeamColors(u.team))
 	local h = World.shownHealth(world, u) or u.health or 1
 	ui.healthFill.Size = UDim2.fromScale(math.clamp(h, 0, 1), 1)
 	ui.healthText.Text = `{math.floor(h * (def.health or 0) + 0.5)}\n/ {def.health or 0}`
@@ -321,7 +321,7 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 		b.LayoutOrder = i
 		b.Visible = true
 		local def = world.defs.unitByIndex[d]
-		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 26), TeamColors(teams[d]))
+		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 24), TeamColors(teams[d]))
 		;(b :: any).Count.Text = tostring(counts[d])
 	end
 	for i = #order + 1, #ui.typeButtons do

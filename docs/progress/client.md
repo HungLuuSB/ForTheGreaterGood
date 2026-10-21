@@ -459,7 +459,7 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## 2026-10-22: the user's icon set (C-74)
 
-- `node tools/icons/render.mjs` turns the user's icon set (draft 2, BAR style) into one sprite sheet, `assets/icons/ftgg-icons.png`, and `src/client/UI/IconAtlas.luau`; all 127 unit defs map to a catalogue entry. Waiting for the user to import the sheet through the Asset Manager; then the icon layer, build grid and unit panel draw it, and the readability check in the normandy battle follows.
+- Your icon set (draft 2) is in the game (C-74): one sprite sheet (asset 96380571554418), team-tinted, drawn by the strategic icon layer, the build grid and the unit panel; ghosts at 45%, radar and sonar contacts as dashed frames. All 127 unit types map to your catalogue; `node tools/icons/render.mjs` rebuilds the sheet from the HTML. Readability at real size (22 px) in the normandy battle, on grass and sand: `debug_out/screens/c74_icons_grass.jpg`, `c74_icons_sand.jpg`, `c74_icons_real_size.jpg` (every icon, both teams, with ghosts), `c74_icons_ui.jpg`. Hard to tell apart: Bomber vs Strategic Bomber, Main Battle Tank vs MLRS, Airfield vs Rearm Pad, Gun Turret vs Floating Turret; close but readable: Fighter vs Air Superiority and the IR vs radar SAMs; T1 vs T2 dots are about 2 px.
 
 ## 2026-10-22: overnight run
 
@@ -480,7 +480,7 @@ All with real mouse and keyboard input through the MCP tools.
 - **Hotkey layout (C-68):** commands M move, F fight, A attack, Z patrol, G guard, S stop; L fire state, K move state; Y repeat, U on/off, X cancel; J last alert; B build menu (again: next tab), then 1..0 pick (Shift: 5 in a factory, right click drops one). P (patrol in BAR) stays the Studio pause key. In `src/client/Input/Controls.luau` and `UI/BuildMenu.luau`.
 - **UI placement (C-71, BAR layout):** minimap top left (280 px), build grid under it (5 x 52-px tiles, 3 rows then scrolling), unit panel bottom left, command card next to it (5 columns, state bars), resource bar top center, alerts under it, F3 readout top right, follow button bottom right. Sized for Studio's small viewport; a UI session can scale it.
 
-- **Unit icons (C-71):** BAR-like glyphs: domain shape in team color, a white role mark per family (`Icons.MARKS`), tier pips, a notch on Chaos types, variant dots; 13-30 px. The user prefers BAR's real icons, which their licence (CC BY-NC-ND) rules out; original BAR-style images would need uploading to the user's account.
+- **Unit icons (C-74):** the user's icon set, 22 px wide for T1 (×1.15 T2, ×1.3 T3, ×1.35 the Command Vehicle), selected lightened 55% toward white, ghosts 45%. `Icons.BASE` in `src/client/Core/Icons.luau`, the selection tint in `UI/Glyph.luau`. Hard pairs at that size: Bomber / Strategic Bomber, Main Battle Tank / MLRS, Airfield / Rearm Pad, Gun Turret / Floating Turret (C-74).
 
 - **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
 

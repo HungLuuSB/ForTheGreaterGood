@@ -1,12 +1,11 @@
 --!strict
 -- Icons on screen (guide 15.4): a pooled screen-space layer of unit-type
--- glyphs in team colors (UI/Glyph, BAR style, C-71), no image assets.
+-- icons in team colors (UI/Glyph: the user's icon sprite sheet, C-74).
 -- Units without a model (radar blips, ghosts, strategic records in view)
 -- always get an icon; at strategic zoom every unit does and the models are
 -- hidden. Each slot remembers the style and pixel it last showed, so a
 -- frame only writes what changed (C-73: the icon layer was the client's
--- biggest cost at full zoom). Looks are placeholders: listed under "Needs
--- my review".
+-- biggest cost at full zoom).
 
 local Players = game:GetService("Players")
 
@@ -17,7 +16,7 @@ local TeamColors = require("./TeamColors")
 local IconLayer = {}
 
 -- what a slot last showed
-type Shown = { shape: string?, size: number, team: number, alpha: number, selected: boolean, glyph: any, x: number, y: number, visible: boolean }
+type Shown = { tile: string?, size: number, team: number, alpha: number, selected: boolean, x: number, y: number, visible: boolean }
 
 export type Layer = { gui: ScreenGui, slots: { Glyph.G }, shown: { Shown }, used: number, stats: { styled: number, moved: number } }
 
@@ -45,7 +44,7 @@ function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: 
 		if slot == nil then
 			slot = Glyph.new(layer.gui)
 			layer.slots[n] = slot
-			shown = { shape = nil, size = 0, team = 0, alpha = 0, selected = false, glyph = nil, x = -1, y = -1, visible = false }
+			shown = { tile = nil, size = 0, team = 0, alpha = 0, selected = false, x = -1, y = -1, visible = false }
 			layer.shown[n] = shown
 		end
 		if not shown.visible then
@@ -59,9 +58,9 @@ function IconLayer.step(layer: Layer, draws: { Icons.Draw }, tiers: { [number]: 
 			layer.stats.moved += 1
 		end
 		local st = d.style
-		if st.shape ~= shown.shape or st.size ~= shown.size or st.team ~= shown.team or st.alpha ~= shown.alpha or st.selected ~= shown.selected or st.glyph ~= shown.glyph then
+		if st.tile ~= shown.tile or st.size ~= shown.size or st.team ~= shown.team or st.alpha ~= shown.alpha or st.selected ~= shown.selected then
 			Glyph.apply(slot, st, TeamColors(st.team))
-			shown.shape, shown.size, shown.team, shown.alpha, shown.selected, shown.glyph = st.shape, st.size, st.team, st.alpha, st.selected, st.glyph
+			shown.tile, shown.size, shown.team, shown.alpha, shown.selected = st.tile, st.size, st.team, st.alpha, st.selected
 			layer.stats.styled += 1
 		end
 	end

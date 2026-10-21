@@ -8,7 +8,7 @@ local IconAtlas = {}
 
 export type Entry = { tile: string, scale: number, frame: string, name: string }
 
-IconAtlas.image = ""
+IconAtlas.image = "rbxassetid://96380571554418"
 IconAtlas.TILE_W = 100 -- pixels per icon on the sheet
 IconAtlas.TILE_H = 117
 IconAtlas.GHOST_TRANSPARENCY = 0.55
