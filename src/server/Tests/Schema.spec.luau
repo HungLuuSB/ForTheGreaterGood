@@ -90,7 +90,7 @@ end
 
 local POS_TYPES = { CT.MOVE, CT.FIGHT, CT.ATTACK_GROUND, CT.PATROL }
 local TARGET_TYPES = { CT.ATTACK, CT.GUARD, CT.REPAIR, CT.RECLAIM }
-local VALUE_TYPES = { { CT.SET_FIRE_STATE, 2 }, { CT.SET_MOVE_STATE, 2 }, { CT.TOGGLE, 1 } }
+local VALUE_TYPES = { { CT.SET_FIRE_STATE, 2 }, { CT.SET_MOVE_STATE, 2 }, { CT.TOGGLE, 1 }, { CT.REPEAT, 1 } }
 
 local function randomCommand(rng: Prng.Prng): Command
 	local kind = rng:nextInteger(1, 6)
@@ -283,7 +283,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 6, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 7, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -309,6 +309,9 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeCommand, line)), "01 03 01 00 01 00 34 12 01 02 78 56 03 04")
 		local camera: Command = { cmdType = CT.CAMERA, flags = 0, unitIds = {}, minX = 1, minZ = 2, maxX = 3, maxZ = 4 }
 		t.equal(hex(encodeOne(Schema.encodeCommand, camera)), "0e 00 00 00 01 02 03 04")
+		-- version 7: REPEAT (S-13)
+		local repeatOn: Command = { cmdType = CT.REPEAT, flags = 0, unitIds = { 0x0102 }, value = 1 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, repeatOn)), "0f 00 01 00 02 01 01")
 		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
 		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 07 01 09")
 		local state: State = {
@@ -457,7 +460,7 @@ return function(t: RunAll.Context)
 	t.test("unit state bits live in Shared and are the sim's", function()
 		local World = require("../Sim/World")
 		t.equal(World.State, Schema.UnitState, "one table (S-6)")
-		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8 })
+		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16 })
 	end)
 
 	t.test("tactical layout is byte exact", function()
@@ -536,7 +539,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 15, 0, 1, 0, 1, 0 }, "unknown cmdType 15")
+		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0 }, "unknown cmdType 16") -- 15 is REPEAT (protocol 7)
 		expectRejected(t, cmd, { CT.STOP, 4, 1, 0, 1, 0 }, "reserved bits")
 		expectRejected(t, cmd, { CT.STOP, LINE, 1, 0, 1, 0 }, "LINE flag")
 		expectRejected(t, cmd, { CT.STOP, 0, 0, 0 }, "unit count 0")
