@@ -10,6 +10,10 @@
 --   Create(u)                        the unit got a model
 --   StartMoving(u) / StopMoving(u)   the unit started / stopped moving (World.moving, C-45)
 --   Land(u) / TakeOff(u)             the LANDED state bit changed (aircraft)
+--   Deploy(u, phase, instant)        a deployable unit's phase changed (S-64: the
+--                                    DEPLOYED / DEPLOYING bits, C-84): "unpacking",
+--                                    "deployed", "packing" or "packed"; `instant` the
+--                                    first time (a unit seen already deployed)
 --   AimWeapon(u, slot, yaw, pitch, active)
 --                                    the replicated aim changed, or every
 --                                    REAIM seconds while the weapon is
@@ -40,6 +44,8 @@ PieceAnim.REAIM = 0.5 -- seconds between AimWeapon calls while a weapon is engag
 
 local WS = Schema.WeaponState
 local LANDED = Schema.UnitState.LANDED
+local DEPLOYED = Schema.UnitState.DEPLOYED
+local DEPLOYING = Schema.UnitState.DEPLOYING
 local AXES = { x = 1, y = 2, z = 3 }
 
 export type Axis = "x" | "y" | "z"
@@ -370,6 +376,19 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
 		if landed ~= u.landed then
 			u.landed = landed
 			PieceAnim.call(u, if landed then "Land" else "TakeOff")
+		end
+		if u.def.deploy then
+			-- the deploy phase from the two bits; packing is DEPLOYING after deployed
+			local st = wu.state or 0
+			local phase = if bit32.band(st, DEPLOYING) ~= 0
+				then (if u.deploy == "deployed" or u.deploy == "packing" then "packing" else "unpacking")
+				elseif bit32.band(st, DEPLOYED) ~= 0 then "deployed"
+				else "packed"
+			if phase ~= u.deploy then
+				local first = u.deploy == nil
+				u.deploy = phase
+				PieceAnim.call(u, "Deploy", phase, first)
+			end
 		end
 		for slot, a in wu.aim do
 			local seen = u.seenAim[slot]
