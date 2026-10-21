@@ -67,6 +67,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `6093f19` (Task 5: deaths and wrecks (C-34)).
 - Ready to merge: `db75cf4` (Own team's Eco record (protocol 9)).
 - Ready to merge: `b2d2095` (merge of `main` with S-21, protocol 9, into this branch; clean, test_client, test and build pass).
+- Ready to merge: `ec6488d` (Playtest profiles (juggernaut, air, naval, radar)).
+- Ready to merge: `7f38c53` (global sim speed for debugging, C-35; C-26 timing fix).
+- Ready to merge: `89740cf` (smooth missile paths, C-36).
 
 ## Tasks
 
@@ -236,6 +239,22 @@ All with real mouse and keyboard input through the MCP tools.
 - **Deaths by severity:** a death that leaves a wreck shakes briefly and becomes a charred wreck of the unit (`debug_out/screens/deaths_wrecks.jpg`); a big overkill flings the turret and other pieces up and away under the explosion and leaves nothing (`deaths_fling.jpg`). Same rule as the server for when a wreck exists.
 - **Gap:** the client only learns of wrecks from deaths it saw, and never of a wreck being reclaimed, so wrecks stay until the match restarts (request 10).
 
+## 2026-10-21: global sim speed (C-35)
+
+- In a Studio playtest: `-` slower, `=` faster (0.1×, 0.25×, 0.5×, 1×, 2×, 4×), `P` pause / resume; the F3 readout shows the speed. A profile can start at another speed with `speed = 0.25` in `MatchConfig`. Everything simulated slows together; camera and UI stay real-time; a pause freezes the picture exactly (`debug_out/screens/sim_speed_quarter.jpg`).
+- Also fixed: a just-launched shell on a short shot could burst up to 0.9 tick late (C-26 timing with the C-27 barrel-tip offset).
+
+## 2026-10-21: smooth missile paths (C-36)
+
+- **Your note:** missiles bounced and zig-zagged. Causes: the client steered at the target's newest position without the server's lead, and every server correction (every 5 ticks) or decoy turned or moved the drawn missile at once. Now it steers like the server and eases from the old course to the new one. Worst jump in a frame: 27.7 studs before, 2.5 after (Lune), 5.3 in Studio.
+- **Still:** missiles chasing a target you only see on radar drift between corrections (the client doesn't know where the target really is); request 11.
+
+## 2026-10-21: SAM test scene, slowed flight tests, fog off (C-37)
+
+- `ACTIVE = "sam"`: your radars cover the map, 4 Falcons (5× health) circle over 4 enemy IR SAM sites that keep firing (`debug_out/screens/sam_profile.jpg`). Missiles launch along the launcher's aim until the sim adds vertical launch (request 12).
+- `sam`, `air` and `naval` start at 0.25× speed (`-` / `=` / `P` still change it).
+- The fog-of-war darkening is off for now (`FogOfWar.ENABLED`); radar contacts and ghosts still show.
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
@@ -254,6 +273,10 @@ All with real mouse and keyboard input through the MCP tools.
 - **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
 
 ## Requests for the sim session
+
+12. **Vertical-launch SAM, IRIS-T SLM style (the user, 2026-10-21):** "the enemy will have 4 SAM systems that launch missiles vertical ... to test missile flight path". Missiles leave the launcher straight up, then pitch over toward the target (at their turnRate, or after a short boost), so the launcher needs no turret aim. E.g. a weapon field `launch = "vertical"` (Weapons spawns at pitch 90°, ready to fire as soon as the target is in range and locked; Projectiles steers from there), and a Chaos (or Order) VLS SAM site using it; the client draws it with no change (it steers like the server, C-36, once request 11b shares the aim code; until then corrections cover it). The `sam` test profile would switch its Thorns to that unit. Medium priority.
+
+11. **Homing missiles on the wire (C-36, 2026-10-21):** (a) homing corrections more often than every 5 ticks (`NetOut.HOMING_SYNC_EVERY`), e.g. every 2, or every tick for missiles whose target the player only has as a radar contact: the client can't steer those like the server and drifts ~7 studs (up to 35) between corrections; a correction is ~14 bytes, a few dozen missiles at most. (b) The server's homing aim (`Combat.aimPoint` with `UNIT_HEIGHT`, `DRAFT`, `SUB_DEPTH`, and the lead in Projectiles) as a shared function, so the client calls it instead of mirroring it. (c) The user asked whether missiles should have a G limit: today a missile turns at most `turnRate` degrees per second; a G limit (turn rate = G × gravity / speed) would make fast missiles turn wider. Your call (weapon model, guide 10.4). Medium priority.
 
 10. **Wrecks on the wire (task 5, 2026-10-21):** a wreck reaches the client only as `wreckId` in a DEATH of its tactical tier. It never hears of wrecks made outside that tier or before it joined, and never of a wreck being reclaimed (so drawn wrecks stay until the match restarts, C-34). Wreck records would fix both: e.g. WRECK `wreckId u16, cell, offX, offZ, heading u8, defIndex u16` when a wreck enters the camera area (and on join), WRECK_GONE `wreckId` when it is reclaimed or leaves; a reclaim's progress could show as a shrinking wreck later. Low to medium priority.
 

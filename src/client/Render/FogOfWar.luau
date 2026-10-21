@@ -21,6 +21,9 @@ local World = require("../Core/World")
 
 local FogOfWar = {}
 
+-- Off for now (the user, 2026-10-21: the darkening makes things hard to
+-- see; to revisit). Vision, radar contacts and ghosts are unaffected.
+FogOfWar.ENABLED = false
 FogOfWar.LIGHT_MAX_ZOOM = 330 -- camera distance: lights up to here (back at 300)
 FogOfWar.LIGHT_BACK_ZOOM = 300
 FogOfWar.UPDATE = 0.25 -- seconds between vision updates
@@ -191,6 +194,13 @@ end
 function FogOfWar.step(f: FogOfWar, world: World.World, now: number, dt: number, cameraDistance: number)
 	local v = f.vision
 	if v == nil or f.layers == nil then
+		return
+	end
+	if not FogOfWar.ENABLED then
+		-- nothing darkened: normal Lighting, no lights, no plates
+		darken(f, false)
+		f.lightFolder.Parent = nil
+		f.plateFolder.Parent = nil
 		return
 	end
 	local lw = Fog.lightSize(v)

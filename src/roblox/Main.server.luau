@@ -22,6 +22,7 @@ local Schema = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared
 local Config = require(script.Parent:WaitForChild("MatchConfig")) :: any
 local Combat = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Combat"):WaitForChild("Combat")) :: any
 local Spawn = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Spawn")) :: any
+local SimWorld = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("World")) :: any
 
 local DT = 1 / Sim.TICK_RATE
 local MAX_STEPS_PER_FRAME = 3
@@ -42,6 +43,24 @@ for name, ch in Schema.Channel do
 	r.Parent = remotes
 	remoteOf[name] = r
 end
+
+-- Global sim speed for debugging (C-35): the tick loop runs `speed` times
+-- as fast (0 = paused); clients read it from the Remotes folder's SimSpeed
+-- attribute to pace their render clock. Changed with the client's - / = / P
+-- keys through SimSpeed requests, honored in Studio only.
+local SPEEDS = { 0, 0.1, 0.25, 0.5, 1, 2, 4 }
+local speed = Config.speed or 1
+remotes:SetAttribute("SimSpeed", speed)
+local speedRemote = Instance.new("RemoteEvent")
+speedRemote.Name = "SimSpeed"
+speedRemote.Parent = remotes
+speedRemote.OnServerEvent:Connect(function(player: Player, value: any)
+	if RunService:IsStudio() and type(value) == "number" and table.find(SPEEDS, value) then
+		speed = value
+		remotes:SetAttribute("SimSpeed", speed)
+		print(`[Entry] {player.Name} set the sim speed to {speed}x`)
+	end
+end)
 local defs = Defs.load()
 
 local sim: any
@@ -113,10 +132,13 @@ end
 
 local function startMatch()
 	sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
-	-- the profile's extra units (MatchConfig `spawns`)
+	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
 	for _, s in Config.spawns or {} do
 		for i = 0, (s.count or 1) - 1 do
-			Spawn.unit(sim, s.def, s.player, s.x + i * (s.dx or 0), s.z + i * (s.dz or 0), s.heading or 0)
+			local id = Spawn.unit(sim, s.def, s.player, s.x + i * (s.dx or 0), s.z + i * (s.dz or 0), s.heading or 0)
+			if s.health then
+				SimWorld.setHealth(sim.world, id, sim.world.health[id] * s.health)
+			end
 		end
 	end
 	matchId += 1
@@ -270,7 +292,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 	for player, t in tokens do
 		tokens[player] = math.min(40, t + dt * CMD_RATE)
 	end
-	acc += dt
+	acc += dt * speed
 	local n = 0
 	while acc >= DT and n < MAX_STEPS_PER_FRAME do
 		local t0 = os.clock()

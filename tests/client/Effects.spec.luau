@@ -106,33 +106,60 @@ return function(t: any)
 		local sim, world = duel()
 		local fx = Effects.new()
 		local SUBS = 8 -- frames per sim tick
-		local impactAt: { [number]: { number } } = {} -- projId → impact x, z
-		local path: { [number]: { { number } } } = {} -- projId → drawn { renderTick, x, z }
+		-- Projectile IDs are reused (and since C-27 the next shell with an ID
+		-- can launch before the last one has burst), so shells are tracked as
+		-- objects and paired with the server's own SPAWN_PROJ / IMPACT events:
+		-- a shell's impact is the first IMPACT of its ID at or after its spawn.
+		local spawns: { [number]: { number } } = {} -- projId → server spawn ticks
+		local impacts: { [number]: { { number } } } = {} -- projId → { tick, x, z }
+		local spawnOf: { [any]: number } = {} -- shell → its spawn tick
+		local path: { [any]: { { number } } } = {} -- shell → drawn { renderTick, x, z }
 		local delays = {}
 		for tick = 1, 300 do
 			Sim.step(sim)
-			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
-			for _, e in world.events do
-				local ev = e :: any
-				if ev.kind == Schema.EventKind.IMPACT then
-					local x, z = world.grid:decode(ev.cell, ev.offX, ev.offZ)
-					impactAt[ev.projId] = { x, z }
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" then
+					spawns[e.other] = spawns[e.other] or {}
+					table.insert(spawns[e.other], e.tick)
+				elseif e.kind == "IMPACT" then
+					impacts[e.other] = impacts[e.other] or {}
+					table.insert(impacts[e.other], { e.tick, e.x, e.z })
 				end
 			end
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			for sub = 1, SUBS do
 				local rt = tick - 2 + sub / SUBS -- two ticks behind, as Interp
 				local live = {}
-				for id in fx.projectiles do
-					live[id] = true
+				for _, shell in fx.projectiles do
+					live[shell] = true
 				end
 				Effects.update(fx, world, rt, rt * DT, 0, 0)
 				table.clear(world.died)
-				for id in live do
-					local hit, drawn = impactAt[id], path[id]
-					if fx.projectiles[id] == nil and hit and drawn then
+				for _, shell in fx.projectiles do
+					if spawnOf[shell] == nil then
+						-- launched now (a tick early, C-27): its spawn is the first one not before fx.tick
+						for _, st in spawns[shell.id] or {} do
+							if st >= fx.tick and (spawnOf[shell] == nil or st < spawnOf[shell]) then
+								spawnOf[shell] = st
+							end
+						end
+					end
+				end
+				for shell in live do
+					if fx.projectiles[shell.id] == shell then
+						continue -- still flying
+					end
+					local st, drawn = spawnOf[shell], path[shell]
+					local hit
+					for _, im in impacts[shell.id] or {} do
+						if st and im[1] >= st and (hit == nil or im[1] < hit[1]) then
+							hit = im
+						end
+					end
+					if hit and drawn then
 						-- first frame the drawn shell was as far from its start as the impact point
 						local s = drawn[1]
-						local need = math.sqrt((hit[1] - s[2]) ^ 2 + (hit[2] - s[3]) ^ 2)
+						local need = math.sqrt((hit[2] - s[2]) ^ 2 + (hit[3] - s[3]) ^ 2)
 						for _, f in drawn do
 							if math.sqrt((f[2] - s[2]) ^ 2 + (f[3] - s[3]) ^ 2) >= need - 1 then
 								table.insert(delays, rt - f[1])
@@ -140,14 +167,12 @@ return function(t: any)
 							end
 						end
 					end
-					if fx.projectiles[id] == nil then
-						impactAt[id], path[id] = nil, nil -- projectile IDs are reused
-					end
+					spawnOf[shell], path[shell] = nil, nil
 				end
 				for _, v in Effects.visible(fx, rt) do
-					local id = v[1].id
-					path[id] = path[id] or {}
-					table.insert(path[id], { rt, v[2], v[4] })
+					local shell = v[1]
+					path[shell] = path[shell] or {}
+					table.insert(path[shell], { rt, v[2], v[4] })
 				end
 			end
 		end
@@ -216,6 +241,48 @@ return function(t: any)
 		t.expect(launched > 50, "plenty of shells")
 		t.equal(atBarrel, launched, "every shell starts at its barrel")
 		t.expect(checkedJoin > 0 and joined == checkedJoin, "after the blend, drawn = the server's path")
+	end)
+
+	t.test("drawn missiles fly smooth paths through corrections and decoys (C-36)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "ew_test" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 127, 127)))
+		local fx = Effects.new()
+		local SUBS = 4 -- 60 fps
+		local last: { [any]: { any } } = {}
+		local worst, frames, decoys = 0, 0, 0
+		for tick = 1, 300 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "DECOYED" then
+					decoys += 1
+				end
+			end
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for sub = 1, SUBS do
+				local rt = tick - 2 + sub / SUBS
+				Effects.update(fx, world, rt, rt * DT, 0, 0)
+				table.clear(world.died)
+				for _, v in Effects.visible(fx, rt) do
+					local p = v[1]
+					if p.weapon.turnRate then
+						-- how far this frame's point is off the straight continuation of the last two
+						local l = last[p]
+						if l and l[1] then
+							local a, b = l[1], l[2]
+							local d = math.sqrt((v[2] - (2 * b[1] - a[1])) ^ 2 + (v[3] - (2 * b[2] - a[2])) ^ 2 + (v[4] - (2 * b[3] - a[3])) ^ 2)
+							worst = math.max(worst, d)
+							frames += 1
+						end
+						last[p] = { l and l[2], { v[2], v[3], v[4] } }
+					end
+				end
+			end
+		end
+		print(string.format("    ew_test: %d missile frames, worst %.2f studs off a straight continuation, %d decoyed", frames, worst, decoys))
+		t.expect(frames > 100 and decoys > 0, "missiles flew, and one was decoyed")
+		t.expect(worst <= 3, `no jumps or corners (worst {worst} studs; a missile covers ~7 a frame)`)
 	end)
 
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()
