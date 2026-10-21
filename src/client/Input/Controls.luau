@@ -54,6 +54,7 @@ export type Controls = {
 	placeFrom: Vector3?, -- left-drag start on the ground while placing (row preview)
 	lineFrom: Vector3?, -- right-drag start on the ground, while dragging
 	lineTo: Vector3?,
+	attacking: boolean, -- attack mode (A): the next left click attacks (C-57)
 }
 
 local function shift(): boolean
@@ -142,16 +143,15 @@ function Controls.bind(api: Api.Api): Controls
 	hint.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 
-	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil }
+	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil, attacking = false }
 	local leftStart: Vector2? = nil
 	local boxing = false
 	local rightStart: Vector2? = nil
 	local lastClick = { time = -math.huge, defIndex = -1 }
 	local lastGroup = { n = 0, time = -math.huge }
 	local world = api.world
-	local attacking = false
 	local function setAttacking(on: boolean)
-		attacking = on
+		self.attacking = on
 		hint.Visible = on
 	end
 
@@ -180,10 +180,10 @@ function Controls.bind(api: Api.Api): Controls
 		if input.KeyCode == Controls.ATTACK_KEY and #api.state.selection > 0 then
 			setAttacking(true)
 			return
-		elseif attacking and input.UserInputType == Enum.UserInputType.MouseButton2 then
+		elseif self.attacking and input.UserInputType == Enum.UserInputType.MouseButton2 then
 			setAttacking(false)
 			return
-		elseif attacking and input.UserInputType == Enum.UserInputType.MouseButton1 then
+		elseif self.attacking and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
 			local u = if id then world.units[id] else nil
 			if u and u.team ~= world.me.team then

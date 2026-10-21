@@ -34,6 +34,8 @@ local COLOR: { [string]: Color3 } = {
 	lost = Color3.fromRGB(150, 150, 150),
 	seekerIn = Color3.fromRGB(110, 220, 255),
 	seekerOut = Color3.fromRGB(255, 60, 60),
+	track = Color3.fromRGB(120, 255, 170), -- radar tracks on strategic missiles (C-58)
+	enemyTrack = Color3.fromRGB(255, 90, 90), -- enemy radars tracking your missile
 }
 
 local CONE_SEGMENTS = 24 -- rim segments of the seeker cone
@@ -238,10 +240,29 @@ function RenderMissileView.step(v: View, fx: Effects.Fx, world: World.World, ren
 				sphere(v, close, 0.8, COLOR.closest, 0)
 				line(v, close, centre, COLOR.closest, 2, 0.2)
 			end
+		elseif e.cx then
+			-- an interceptor: the line to its strategic missile
+			line(v, at, Vector3.new(e.cx, e.cy :: number, e.cz :: number), COLOR.aim, 2, 0.3)
 		end
 		local screen, onScreen = cam:WorldToViewportPoint(at)
 		if onScreen then
 			label(v, e.label, screen.X, screen.Y, color)
+		end
+	end
+	-- radar tracks on strategic missiles (C-58): a line from every site
+	-- holding one, and the track's label
+	for _, tr in MissileView.tracks(fx, world, visible) do
+		local at = Vector3.new(tr.x, tr.y, tr.z)
+		local color = if tr.own then COLOR.enemyTrack else COLOR.track
+		sphere(v, at, 3, color, 0.2)
+		for _, s in tr.sites do
+			local site = Vector3.new(s[1], s[2], s[3])
+			line(v, site, at, color, 2, 0.35)
+			sphere(v, site, 1.5, color, 0.2)
+		end
+		local screen, onScreen = cam:WorldToViewportPoint(at)
+		if onScreen then
+			label(v, tr.label, screen.X, screen.Y, color)
 		end
 	end
 	for _, m in fx.marks do
