@@ -49,6 +49,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `5563c15` (step 2: readable shells, effect diagnostics (C-18)).
 - Ready to merge: `6cff90b` (line-move goals from Shared Formation).
 - Ready to merge: `142b5c6` (step 3 and 5: range rings, target line, BAR controls; `.lune/render_scene.luau` draws ring arcs).
+- Ready to merge: `3e2066b` (step 4: tasks 6-9 re-verified in Studio; Esc removed).
 
 ## Tasks
 
