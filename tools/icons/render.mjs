@@ -52,6 +52,14 @@ const FAMILY = {
 	"structure:pinpointer": "Pinpointer",
 };
 
+// Defs the catalogue doesn't have yet, drawn with an existing entry until it
+// does (reported on every run): new units that would otherwise need a new
+// sheet and a re-import.
+const STOPGAP = {
+	ord_warden: "Main Battle Tank", // S-64: a deployable gun
+	chs_minotaur: "Main Battle Tank", // S-64: a siege ram
+};
+
 // Entries drawn in the frame of each def's own domain rather than the
 // catalogue's (the user: Pinpointers use their actual domain's frame).
 const OWN_FRAME = new Set(["Pinpointer"]);
@@ -71,12 +79,17 @@ for (const def of defs) {
 		item = byName.get(FAMILY[`${def.domain}:${def.family}`]);
 		how = "family";
 	}
+	if (!item && STOPGAP[def.id]) {
+		item = byName.get(STOPGAP[def.id]);
+		how = "stopgap";
+		problems.push(`${def.id} (${def.name}) has no catalogue entry yet: drawn as "${STOPGAP[def.id]}"`);
+	}
 	if (!item) {
 		problems.push(`${def.id} (${def.name}, ${def.domain} ${def.family}, T${def.tier}) fits no catalogue entry`);
 		continue;
 	}
 	// the catalogue's tier for named defs; a family entry covers T1 and T2 variants
-	const tier = how === "id" ? item.t : def.tier;
+	const tier = how === "family" ? def.tier : item.t;
 	if (how === "id" && item.t !== def.tier) problems.push(`${def.id}: catalogue says T${item.t}, the def T${def.tier} (the catalogue's is drawn)`);
 	mapping.push({ def, item, tier, how });
 }
@@ -111,8 +124,30 @@ for (const f of Object.keys(FR)) contacts[f] = tile(`contact_${f}`, { f }, "cont
 let TW = 128;
 const th = (w) => Math.round((w * VIEW_H) / VIEW_W);
 while (Math.floor(SHEET / TW) * Math.floor(SHEET / th(TW)) < tiles.length) TW -= 4;
-const TH = th(TW), COLS = Math.floor(SHEET / TW);
-tiles.forEach((t, i) => ((t.x = (i % COLS) * TW), (t.y = Math.floor(i / COLS) * TH)));
+const TH = th(TW), COLS = Math.floor(SHEET / TW), ROWS = Math.floor(SHEET / TH);
+// A stable layout: tiles keep the spot they had in the last IconAtlas.luau
+// (same tile size), so new units or entries don't move the others and an
+// uploaded sheet stays right until the next import; new tiles take free spots.
+const previous = new Map();
+const atlasPath = "src/client/UI/IconAtlas.luau";
+if (existsSync(atlasPath)) {
+	const old = readFileSync(atlasPath, "utf8");
+	const size = old.match(/TILE_W = (\d+)/);
+	if (size && +size[1] === TW) for (const m of old.matchAll(/^\t(\w+) = \{ (\d+), (\d+) \},\r?$/gm)) previous.set(m[1], [+m[2], +m[3]]);
+}
+const taken = new Set();
+for (const t of tiles) {
+	const p = previous.get(t.key);
+	if (p && !taken.has(p.join())) ((t.x = p[0]), (t.y = p[1]), taken.add(p.join()));
+}
+let slot = 0;
+for (const t of tiles) {
+	if (t.x !== undefined) continue;
+	while (taken.has([(slot % COLS) * TW, Math.floor(slot / COLS) * TH].join())) slot++;
+	if (Math.floor(slot / COLS) >= ROWS) throw new Error("the sheet is full");
+	((t.x = (slot % COLS) * TW), (t.y = Math.floor(slot / COLS) * TH));
+	taken.add([t.x, t.y].join());
+}
 
 // ---- the sheet: each tile is the Copy SVG export, placed on the grid ----
 const place = (svg, x, y, w) => svg.replace(/^<svg /, `<svg x="${x}" y="${y}" `).replace(/width="\d+" height="\d+"/, `width="${w}" height="${th(w)}"`);

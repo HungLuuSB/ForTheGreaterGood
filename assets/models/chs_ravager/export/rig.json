@@ -1,0 +1,99 @@
+{
+  "id": "chs_ravager",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.9943,
+        0.02
+      ],
+      "size": [
+        5.76,
+        1.9887,
+        7.51
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "pivot": [
+        0.0,
+        1.9,
+        0.15
+      ],
+      "center": [
+        -0.1544,
+        2.81,
+        0.4698
+      ],
+      "size": [
+        4.0112,
+        1.82,
+        5.1104
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "pivot": [
+        0.0,
+        2.4,
+        -1.5
+      ],
+      "center": [
+        0.0,
+        2.4,
+        -4.745
+      ],
+      "size": [
+        0.85,
+        0.62,
+        6.49
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        2.4,
+        -7.99
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 2136,
+    "turret": 904,
+    "barrel": 656,
+    "total": 3696
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

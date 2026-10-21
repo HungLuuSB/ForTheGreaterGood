@@ -621,3 +621,21 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** NetIn keeps the OWNER field's CHARGES (protocol 21, S-63) as each own unit's `flares` / `chaff`; UnitStats shows them as "left / max" for own units and the def's maximum for others. The results screen takes the sim's `Stats.report` (S-63: units built, lost and killed, damage dealt, resources gathered and spent from the team account), replacing C-77's MatchStats (removed). Core/Precision sums `Pinpoint.weight` over finished Pinpointers (S-62). Specs now read unit numbers from the defs instead of hard-coding them, so balance passes don't break them.
 
 **Why:** sim-A shipped requests 37 and 38 and asked the client to follow S-62. The sim counts statistics where things happen (it knows the attacker for damage and kills), which C-77 couldn't.
+
+### C-81 — Settings menu (2026-10-22)
+
+**Decision:** `Core/Settings` (pure, Lune-tested) holds the settings, their limits and steps, three graphics presets and the key reference; `UI/SettingsMenu` (O, or a button bottom right) shows them and writes the values into the modules that read them each frame: Camera.PAN_SPEED / ZOOM_STEP / EDGE_SCROLL, Effects.MAX_EXPLOSIONS / MAX_TRACERS / MAX_PROJECTILES, Vfx.MAX_LIGHTS / TEMPLATE_CAP, PieceAnim.NEAR / MID (model detail distance), FogOfWar.ENABLED (fog lights), and a UIScale on the UI panel screens (not on overlays drawn at world positions, which would be misplaced, nor on Roblox's screens). High is today's numbers; fog lights default off. Settings last for the session (a client has no local storage; the server could keep them later).
+
+**Why:** the user asked for a functional placeholder settings menu with these items. Writing the existing module constants keeps every renderer unchanged.
+
+### C-82 — Nuke craters and water splashes (2026-10-22)
+
+**Decision:** `Render/Crater` digs a crater where a nuke bursts within its blast radius of the ground, on Terrain ground (Ground's `ground` mode; "parts" mode gets nothing): FillCylinder for a mud ring and a basalt floor, a FillBall of air for a spherical-cap bowl (radius 0.45× the blast, 18–90 studs; depth 7% of it, at most 6 studs), and a rim of earth balls with a fixed pseudo-random size and spacing so every client digs the same. The nuke's scorch decal is dropped. The area is copied (CopyRegion) before digging and pasted back by `Crater.clear` on every new WELCOME (up to 8 craters remembered). Core/Effects marks an impact as a splash (`burst.water`, the surface height) when it ends within 4 studs above water at least 0.5 deep and no known unit's hull is under the point (IMPACT doesn't say what it hit); the renderer plays the new "splash" kind there (column, spray, mist, foam ring along the water).
+
+**Why:** the user asked for a nuke look without the dark circle, and the VFX pass covers weapon types that had no look of their own. The crater stays shallow because the sim's height map doesn't change, so units would otherwise float over a deep bowl. A crater from a strategic weapon could become a sim feature (a height change units drive into); that would be the sim's call.
+
+### C-83 — Atmosphere presets as options (2026-10-22)
+
+**Decision:** `Render/Atmosphere` holds four lighting presets (Current, Clear day, Battlefield haze, Dusk) that set Lighting's clock, brightness, ambient, exposure and shadow softness, the Atmosphere, Bloom, a ColorCorrection (made if missing, off in Current) and SunRays on this client. The first apply remembers the place's values; Current puts them back. The settings menu's "Atmosphere" row picks one; Current is the default, as the user asked. Measured in the same normandy fight: the presets cost about 0.5 ms of GPU over Current (4.3 → 4.8–4.9 ms), no CPU. Dusk was tuned after the first try came out too dark to read a fight.
+
+**Why:** the user asked for 2–3 atmosphere options to choose from, with before / after screenshots and frame cost, the current look staying the default. Lighting.Technology isn't scriptable, so "Future" lighting stays a place setting.
