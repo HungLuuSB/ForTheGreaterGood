@@ -56,6 +56,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `9abe9b0` (Exact target line from S-16 (C-25)).
 - Ready to merge: `f5740e0` (Explosion delay after a hit (C-26)).
 - Ready to merge: `a602502` (Shells from the barrel tip (C-27)).
+- Ready to merge: `9254e74` (Task 1: terrain from the map layers (C-28)).
 
 ## Tasks
 
