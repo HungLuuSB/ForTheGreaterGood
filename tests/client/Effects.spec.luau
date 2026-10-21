@@ -160,6 +160,64 @@ return function(t: any)
 		t.expect(worst <= 1 / SUBS + 1e-9, `the burst comes within a frame of arrival (worst {worst} ticks)`)
 	end)
 
+	t.test("a launched shell is first drawn at the shooter's barrel tip, then joins the server's path (C-27)", function()
+		local sim, world = duel()
+		local fx = Effects.new()
+		local SUBS = 8
+		-- a stand-in barrel tip: 5 studs ahead of the hull, 3 up
+		local muzzles: { { number } } = {}
+		local function muzzleOf(id: number, _slot: number)
+			local u = world.units[id]
+			local mx, my, mz = u.x + math.sin(u.heading) * 5, World.groundY(world, u.x, u.z) + 3, u.z + math.cos(u.heading) * 5
+			table.insert(muzzles, { mx, my, mz })
+			return mx, my, mz
+		end
+		local seen: { [number]: boolean } = {}
+		local launched, atBarrel, worst = 0, 0, 0
+		local joined, checkedJoin = 0, 0
+		for tick = 1, 240 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for sub = 1, SUBS do
+				local rt = tick - 2 + sub / SUBS
+				table.clear(muzzles)
+				Effects.update(fx, world, rt, rt * DT, 0, 0, muzzleOf)
+				table.clear(world.died)
+				for _, v in Effects.visible(fx, rt) do
+					local p = v[1]
+					if not seen[p.id] then
+						seen[p.id] = true
+						launched += 1
+						local best = math.huge
+						for _, m in muzzles do
+							best = math.min(best, math.sqrt((v[2] - m[1]) ^ 2 + (v[3] - m[2]) ^ 2 + (v[4] - m[3]) ^ 2))
+						end
+						worst = math.max(worst, if best < math.huge then best else 0)
+						-- at most an eighth of a tick's flight from the tip (the old way: a whole tick's, ~23 studs)
+						local speed = math.sqrt(p.vx ^ 2 + p.vy ^ 2 + p.vz ^ 2)
+						if best <= speed * DT / SUBS + 1.5 then
+							atBarrel += 1
+						end
+					elseif p.blend == 0 then
+						checkedJoin += 1
+						if p.ox == 0 and p.oy == 0 and p.oz == 0 then
+							joined += 1
+						end
+					end
+				end
+				for id in seen do
+					if fx.projectiles[id] == nil then
+						seen[id] = nil -- IDs are reused
+					end
+				end
+			end
+		end
+		print(string.format("    %d launches: %d drawn first at the barrel tip (worst %.1f studs off)", launched, atBarrel, worst))
+		t.expect(launched > 50, "plenty of shells")
+		t.equal(atBarrel, launched, "every shell starts at its barrel")
+		t.expect(checkedJoin > 0 and joined == checkedJoin, "after the blend, drawn = the server's path")
+	end)
+
 	t.test("caps: at most 150 drawn projectiles, 60 bursts, 100 tracers; the far, small ones go first", function()
 		local _sim, world = duel()
 		local fx = Effects.new()

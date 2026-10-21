@@ -180,6 +180,10 @@ All with real mouse and keyboard input through the MCP tools.
 
 - **Your duel note:** a delay between the shot hitting and the explosion. Cause: during the tick a shell hit in, it was drawn on to the server's end-of-tick spot (up to ~23 studs past the tank) and burst only when that tick ended (33 ms later on average, 67 ms at worst). Now it bursts the frame its drawn path reaches the hit point (within 8 ms in `Effects.spec`); checked live in the Studio duel.
 
+## 2026-10-21: shells from the barrel tip (C-27)
+
+- **Your note:** shells spawned far from the barrels. They appeared a tick's travel (~23 studs) out, measured from the hull center: the server sends a shell after its first step and launches from the unit's center. Now each shell starts a tick earlier at the server's launch point, drawn from the shooter's barrel tip, and joins the server's path within 3 ticks. Tested in `Effects.spec`; Studio duel: 101 of 101 shells left a barrel tip (`debug_out/screens/shells_from_barrels.jpg`).
+
 ## Needs my review
 
 - **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.

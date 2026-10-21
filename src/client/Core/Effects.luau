@@ -27,6 +27,8 @@ Effects.MAX_PROJECTILES = 150
 Effects.MAX_EXPLOSIONS = 60
 Effects.MAX_TRACERS = 100
 Effects.BLEND_TICKS = 5
+Effects.LAUNCH_BLEND = 3 -- ticks for a shell to go from the drawn barrel tip onto the server's path (C-27)
+Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with that weapon fired it
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
 Effects.EXPLOSION_SECONDS = 0.55
@@ -67,6 +69,7 @@ export type Fx = {
 	skipped: { bursts: number, tracers: number },
 	applied: { [string]: number }, -- events applied per kind name (diagnostics)
 	late: { n: number, sum: number, max: number }, -- render ticks between an event's tick and when it played (diagnostics)
+	launches: { n: number, fromBarrel: number, sumOffset: number }, -- shells started at a drawn barrel tip, and its distance from the server's launch point (diagnostics)
 }
 
 function Effects.new(): Fx
@@ -81,6 +84,7 @@ function Effects.new(): Fx
 		skipped = { bursts = 0, tracers = 0 },
 		applied = {},
 		late = { n = 0, sum = 0, max = 0 },
+		launches = { n = 0, fromBarrel = 0, sumOffset = 0 },
 	}
 end
 
@@ -163,7 +167,41 @@ end
 
 local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK" }
 
-local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: ((number, number) -> (number?, number?, number?))?)
+-- The drawn muzzle of the unit that launched a `weaponIndex` shell from
+-- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
+-- server launches from the unit's center at muzzle height (Weapons.luau).
+local function launcherMuzzle(world: World.World, weaponIndex: number, x: number, z: number, muzzleOf: ((number, number) -> (number?, number?, number?))?): (number?, number?, number?)
+	if muzzleOf == nil then
+		return nil, nil, nil
+	end
+	local bestId, bestSlot, bestD = nil, nil, Effects.SHOOTER_RADIUS ^ 2
+	for id, u in world.units do
+		if u.tier ~= "tactical" then
+			continue
+		end
+		local def = World.def(world, u)
+		if def == nil then
+			continue
+		end
+		for slot, wslot in def.weapons do
+			if wslot.weaponIndex == weaponIndex then
+				local d = ((u.rx or u.x) - x) ^ 2 + ((u.rz or u.z) - z) ^ 2
+				if d < bestD then
+					bestId, bestSlot, bestD = id, slot, d
+				end
+			end
+		end
+	end
+	if bestId == nil then
+		return nil, nil, nil
+	end
+	return muzzleOf(bestId, bestSlot :: number)
+end
+
+-- `early`: applied one tick before its tick (C-27). SPAWN_PROJ carries the
+-- state after the server's first step, so the shell is stepped back one
+-- tick to where the server launched it.
+local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: ((number, number) -> (number?, number?, number?))?, early: boolean?)
 	local kind = e.kind
 	local name = KIND_NAME[kind] or tostring(kind)
 	fx.applied[name] = (fx.applied[name] or 0) + 1
@@ -174,6 +212,23 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		end
 		local x, y, z = pos(world, e)
 		local vx, vy, vz = vel(e)
+		if early then
+			-- invert Ballistics.step over one tick
+			local g = weapon.gravity or 0
+			vy += g * DT
+			x, y, z = x - vx * DT, y - vy * DT + 0.5 * g * DT * DT, z - vz * DT
+		end
+		-- drawn from the shooter's barrel tip, blended onto the server's path
+		local mx, my, mz = launcherMuzzle(world, e.weaponIndex, x, z, muzzleOf)
+		local ox, oy, oz, blend = 0, 0, 0, 0
+		if mx and (mx - x) ^ 2 + ((my :: number) - y) ^ 2 + ((mz :: number) - z) ^ 2 < Effects.SNAP_STUDS ^ 2 then
+			ox, oy, oz, blend = mx - x, (my :: number) - y, (mz :: number) - z, Effects.LAUNCH_BLEND
+			fx.launches.fromBarrel += 1
+			fx.launches.sumOffset += math.sqrt(ox * ox + oy * oy + oz * oz)
+		end
+		if early then
+			fx.launches.n += 1
+		end
 		fx.projectiles[e.projId] = {
 			id = e.projId,
 			x = x,
@@ -182,16 +237,16 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			vx = vx,
 			vy = vy,
 			vz = vz,
-			ox = 0,
-			oy = 0,
-			oz = 0,
-			blend = 0,
+			ox = ox,
+			oy = oy,
+			oz = oz,
+			blend = blend,
 			weapon = weapon,
 			target = e.targetId or 0,
 			ttl = ttlTicks(weapon),
 			size = weaponSize(weapon),
 		}
-		burst(fx, now, x, y, z, 0.8, "muzzle", 0.12)
+		burst(fx, now, x + ox, y + oy, z + oz, 0.8, "muzzle", 0.12)
 	elseif kind == EK.IMPACT then
 		local p = fx.projectiles[e.projId]
 		fx.projectiles[e.projId] = nil
@@ -273,7 +328,9 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			fx.late.n += 1
 			fx.late.sum += late
 			fx.late.max = math.max(fx.late.max, late)
-			apply(fx, world, events[k], now, muzzleOf)
+			if not (events[k] :: any).launched then
+				apply(fx, world, events[k], now, muzzleOf)
+			end
 			k += 1
 		end
 		fx.tick = t
@@ -283,6 +340,17 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 		local rest = table.move(events, k, #events, 1, {})
 		table.clear(events)
 		table.move(rest, 1, #rest, 1, events)
+	end
+	-- a shell launched during the coming tick starts now, from its launch
+	-- point: SPAWN_PROJ arrives ahead of the render clock (Interp's delay)
+	-- and carries the position after a tick of flight, so played at its
+	-- tick it would appear a tick's travel out of the barrel (C-27)
+	for i = 1, #events do
+		local e = events[i] :: any
+		if e.kind == EK.SPAWN_PROJ and e.tick == fx.tick + 1 and not e.launched then
+			e.launched = true
+			apply(fx, world, e, now, muzzleOf, true)
+		end
 	end
 	-- a shell that hits during the coming tick bursts when its drawn path
 	-- reaches the impact point, not at the tick's end: drawn on, it would fly
@@ -299,7 +367,7 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			continue
 		end
 		local x, y, z = pos(world, e)
-		local need = math.sqrt((x - p.x) ^ 2 + (y - p.y) ^ 2 + (z - p.z) ^ 2)
+		local need = math.sqrt((x - p.x - p.ox) ^ 2 + (y - p.y - p.oy) ^ 2 + (z - p.z - p.oz) ^ 2) -- from where it is drawn
 		local step = math.sqrt(p.vx * p.vx + p.vy * p.vy + p.vz * p.vz) * DT
 		if frac >= math.clamp(need / math.max(step, 1e-6), 0, 1) then
 			table.remove(events, i)
@@ -334,7 +402,9 @@ function Effects.visible(fx: Fx, renderTick: number): { { any } }
 	local list = {}
 	for _, p in fx.projectiles do
 		local x, y, z = Ballistics.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, p.weapon.gravity or 0, frac)
-		table.insert(list, { p, x + p.ox, y + p.oy, z + p.oz, Effects.importance(fx, p.size, x, z) })
+		-- the offset shrinks smoothly through the tick (stepProjectiles cuts it a step at a time)
+		local k = if p.blend > 0 then 1 - math.clamp(renderTick - fx.tick, 0, 1) / p.blend else 1
+		table.insert(list, { p, x + p.ox * k, y + p.oy * k, z + p.oz * k, Effects.importance(fx, p.size, x, z) })
 	end
 	if #list > Effects.MAX_PROJECTILES then
 		table.sort(list, function(a, b)
