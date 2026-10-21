@@ -79,6 +79,7 @@ export type World = {
 	wReload: { [number]: number }, -- seconds until ready (<= 0 = ready)
 	wTarget: { [number]: number }, -- target unit ID, 0 = none
 	wTargetGen: { [number]: number }, -- the target's generation (D109): a ghost's for dead structures
+	wHold: { [number]: number }, -- ticks the weapon still keeps its aim after losing its target (Shared/Combat/Aim, S-20)
 
 	-- ID allocator
 	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
@@ -123,6 +124,7 @@ function World.new(): World
 		wReload = {},
 		wTarget = {},
 		wTargetGen = {},
+		wHold = {},
 		gen = {},
 		pins = {},
 		nextFresh = 1,
@@ -182,6 +184,7 @@ export type SpawnInfo = {
 	alt: number?,
 	health: number,
 	weaponCount: number?,
+	weaponRest: { { number } }?, -- per slot {yaw, pitch} (radians): the aim it starts at; default 0, 0 (S-20)
 	buildProgress: number?, -- default 1 (complete)
 }
 
@@ -229,8 +232,10 @@ function World.spawn(w: World, tick: number, info: SpawnInfo): number
 	w.lastAttackerGen[id] = 0
 	for slot = 1, weapons do
 		local key = id * 8 + slot - 1
-		w.wYaw[key] = 0
-		w.wPitch[key] = 0
+		local rest = info.weaponRest and info.weaponRest[slot]
+		w.wYaw[key] = if rest then rest[1] else 0
+		w.wPitch[key] = if rest then rest[2] else 0
+		w.wHold[key] = 0
 		w.wReload[key] = 0
 		w.wTarget[key] = 0
 		w.wTargetGen[key] = 0
@@ -305,6 +310,7 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wReload[key] = nil
 		w.wTarget[key] = nil
 		w.wTargetGen[key] = nil
+		w.wHold[key] = nil
 	end
 	w.weaponCount[id] = nil
 	w.lastAttacker[id] = nil
@@ -409,6 +415,7 @@ function World.hash(w: World, h: number?): number
 			hv = Hash.number(hv, w.wReload[key])
 			hv = Hash.u32(hv, w.wTarget[key])
 			hv = Hash.u32(hv, w.wTargetGen[key])
+			hv = Hash.u32(hv, w.wHold[key])
 		end
 	end
 	hv = Hash.u32(hv, w.nextFresh)

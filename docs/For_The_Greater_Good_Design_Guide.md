@@ -918,6 +918,8 @@ A T2 factory should cost roughly as much as a strong T1 army so players choose b
 
 Each weapon has numeric `yaw` and `pitch` that rotate toward the target at `yawRate`/`pitchRate`. A weapon fires only when within `tolerance` degrees and reloaded. This makes turret speed and "arm raising" real gameplay without any animation on the server (see section 14).
 
+A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) and, after losing its target, keeps its aim for `restoreDelay` seconds before turning back to rest at the same rates. The model is `Shared/Combat/Aim` (S-20), shared so a client animates with the same steps: the Juggernaut's arms rest at -65° and must rise before it can fire.
+
 ### 10.4 Weapon types & how they replicate
 
 | Type | Examples | Server | Network | Client |

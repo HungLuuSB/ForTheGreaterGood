@@ -190,6 +190,7 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		heading = facing * math.pi / 2,
 		health = math.max(1, d.health * Build.START_HEALTH),
 		weaponCount = #d.weapons,
+		weaponRest = Combat.restPoses(sim, d.index),
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)
@@ -284,7 +285,14 @@ function Build.step(sim: Types.Sim)
 		local pending = b.order[id]
 		if pending then
 			local sd = sim.defs.unitByIndex[pending.defIndex]
-			if inRange(sim, id, pending.x, pending.z, halfSize(sd)) then
+			-- in range of where the frame will stand (the snapped center),
+			-- the same point building is then measured from (S-19)
+			local sx, sz = pending.x, pending.z
+			if sim.map then
+				local _, _, cx, cz = Placement.snap(sim.map.grid, sd.footprint, pending.x, pending.z)
+				sx, sz = cx, cz
+			end
+			if inRange(sim, id, sx, sz, halfSize(sd)) then
 				halt(sim, id)
 				b.order[id] = nil
 				local existing = frameAt(sim, w.team[id], pending.defIndex, pending.x, pending.z)

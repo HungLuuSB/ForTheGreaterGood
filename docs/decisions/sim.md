@@ -24,6 +24,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - S-16: own units' weapon targets in State records (protocol 8; client request 6).
 - S-17: AI difficulty levels (Easy, Normal, Hard) as a match option; AI fairness fixes.
 - S-18: spectator stream and player replay files.
+- S-19: build ranges at 70% (client request 7); frames start in range of their snapped center.
+- S-20: aim rest pose and restore delay (`Shared/Combat/Aim`; client request 8); the Juggernaut's arms.
 
 ---
 
@@ -261,3 +263,20 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Why not compressed:** pure Luau has no deflate; the stream is already quantized. Raw size: a spectator ~54 KB per game minute and a player ~33 KB on a 4-minute `skirmish:192` AI match; the 40-minute soak's spectator file is in the progress file. Whoever stores files can compress them (zstd in Lune tooling).
 - **Tests** (`PlayerReplay.spec`, 3): a spectator has every unit, tactical, with the right team and type, while player 1 doesn't (fog); the spectator's and player 1's recordings, serialized and parsed back, rebuild the live client's view exactly at every checkpoint (24 per viewer: units, tiers, positions, heading, altitude, health, build, state, targets, projectiles, economy) and at the end, and round-trip byte for byte; the file format (header, channel numbering equal to `NetState.CHANNELS`, empty ticks, a long message, bad magic, wrong format, truncation). Dropping the State channel in playback fails it (24 of 24 checkpoints differ).
 - `lune run soak` records the spectator for the whole match and writes `debug_out/soak.ftgp`.
+
+## S-19 — Shorter build ranges (client request 7, 2026-10-22)
+
+- **Request (the user, via the client):** build ranges about 70% of what they were. Command Vehicles 80 → **56**; constructors (`ord_mason`, `ord_architect`, `ord_harbormaster`, `ord_tidewright`, `chs_scrapper`, `chs_forgemaster`, `chs_reaver`, `chs_wrecker`) 64 → **45**; aircraft builders (`ord_skywright`, `ord_zenith`, `chs_condor`, `chs_vulture`) 48 → **34**. The client reads `buildRange` from the defs.
+- **Bug it uncovered:** a builder started a frame when it was in range of the *requested* point, but built only in range of the frame's *snapped* center (up to half a cell farther). With the long ranges it never showed; at 56 the Command Vehicle started a generator 64 studs away, then drove 4 more studs before building. `Build` now checks the range to the snapped center before starting the frame.
+- **Tests:** `Build.spec` checks the builder is in range of the frame's center when the frame starts (restoring the old check fails it: 64 studs) and reads the Command Vehicle's range from its def instead of a hard-coded 80.
+
+## S-20 — Aim rest pose and restore delay (client request 8, 2026-10-22; guide 10.3, 14.4)
+
+- **Turret fields** (optional, degrees / seconds): `restYaw`, `restPitch` (default 0, 0) and `restoreDelay` (default 0). `Defs` checks `restPitch` lies within `minPitch..maxPitch` and `restYaw` within the arc.
+- **Model** (`Shared/Combat/Aim`, pure, shared so the client animates with the same code):
+  - a weapon spawns at its rest pose (units and frames: `World.spawn` takes `weaponRest`, from `Combat.restPoses`);
+  - with a target it turns toward the wanted aim at `yawRate` / `pitchRate` (unchanged), and can fire only within `tolerance` (unchanged), so it must rise from rest first;
+  - without a target it keeps its aim for `restoreDelay` (a per-slot `wHold` tick counter in the world, hashed), then turns back to rest at the same rates.
+  - `Aim.update(turret, state, wantYaw?, wantPitch?)` is the whole step; `Aim.step`, `Aim.rest`, `Aim.holdTicks`, `Aim.pitchTime` are its parts. Weapons without the new fields behave exactly as before (rest 0, 0; no hold).
+- **Juggernaut:** its own weapon def `chs_juggernaut_cannon` (the heavy cannon's numbers, since `chs_maw`, `ord_paladin` and `ord_bastion` share `chs_heavy_cannon`), with `minPitch = -65`, `restPitch = -65`, `pitchRate = 80` (~0.8 s from rest to level) and `restoreDelay = 3`. `armL`, `armR` added to its `pieces`.
+- **Tests** (`Aim.spec`, 4): a Juggernaut starts with its arms at -65° and first fires after 12 ticks of turning (the arm raise), at firing pitch, and never before; the level heavy cannon (Maw) fires at once; after its target is gone the arms stay up exactly 45 ticks (3 s), then lower to -65° at 80°/s; a client-side `Aim.update` from the rest pose with the same wanted aims matches the server's yaw and pitch bit for bit on every tick (raise, fire, hold, lower); weapons without the fields behave as before. `Defs.spec`: a rest pitch outside the limits and a rest yaw outside the arc are refused. Without the rest pose the tests fail.

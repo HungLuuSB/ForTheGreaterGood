@@ -5,7 +5,8 @@
 -- the target at the turret's yawRate / pitchRate. A weapon fires when it is
 -- reloaded, within `tolerance` degrees on both axes, the needed pitch is
 -- within [minPitch, maxPitch] (and ballistically reachable) and the target is
--- in range. Without a target the turret returns to its rest position.
+-- in range. Without a target the turret keeps its aim for the turret's
+-- restoreDelay, then returns to its rest pose (Shared/Combat/Aim, S-20).
 -- Turret speed is therefore real gameplay; animation only displays it.
 --
 -- Spread: each shot draws yaw and pitch errors uniformly in ±accuracy
@@ -19,6 +20,7 @@
 --     bomber's velocity and falls (guide 10.5, DECISIONS D91).
 -- Guided missiles launch only with a lock (EW.canLock, guide 11.5).
 
+local Aim = require("@shared/Combat/Aim")
 local Air = require("../Air")
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
@@ -33,6 +35,7 @@ local sqrt, sin, cos, tan, atan2, abs, rad = math.sqrt, math.sin, math.cos, math
 local max, min = math.max, math.min
 local PI, TAU = math.pi, 2 * math.pi
 local HOLD_FIRE = World.FireState.HOLD_FIRE
+local aimState: Aim.State = { yaw = 0, pitch = 0, hold = 0 } -- scratch, reused for every weapon
 
 local function wrapAngle(a: number): number
 	a = a % TAU
@@ -40,11 +43,6 @@ local function wrapAngle(a: number): number
 		a -= TAU
 	end
 	return a
-end
-
-local function rotateToward(current: number, target: number, maxStep: number): number
-	local diff = wrapAngle(target - current)
-	return wrapAngle(current + max(-maxStep, min(maxStep, diff)))
 end
 
 -- Hitscan-style resolution: does a shot with these errors hit target t?
@@ -192,6 +190,7 @@ return function(sim: Types.Sim)
 				end
 			end
 			local exactYaw, exactPitch = 0, 0
+			local aimed = kx ~= nil and kz ~= nil
 			if kx ~= nil and kz ~= nil then
 				local radius = if defIndex then profiles[defIndex].radius else 0
 				local dx, dz = kx - x, kz - z
@@ -237,20 +236,19 @@ return function(sim: Types.Sim)
 				end
 			end
 
-			-- rotate the turret (fixed mounts without a turret table aim instantly)
-			local yaw, pitchNow = w.wYaw[key], w.wPitch[key]
-			if turret then
-				yaw = rotateToward(yaw, wantYaw, rad(turret.yawRate) * DT)
-				if turret.arc < 360 then
-					local half = rad(turret.arc) / 2
-					yaw = max(-half, min(half, yaw))
-				end
-				local minP, maxP = rad(turret.minPitch), rad(turret.maxPitch)
-				local step = rad(turret.pitchRate) * DT
-				pitchNow = max(minP, min(maxP, pitchNow + max(-step, min(step, max(minP, min(maxP, wantPitch)) - pitchNow))))
+			-- rotate the turret (fixed mounts without a turret table aim
+			-- instantly); without a target: hold, then back to rest
+			aimState.yaw, aimState.pitch, aimState.hold = w.wYaw[key], w.wPitch[key], w.wHold[key]
+			if aimed then
+				Aim.update(turret, aimState, wantYaw, wantPitch)
 			else
-				yaw, pitchNow = wantYaw, wantPitch
+				Aim.update(turret, aimState, nil, nil)
 			end
+			if Aim.observer then
+				Aim.observer(key, if aimed then wantYaw else nil, if aimed then wantPitch else nil)
+			end
+			local yaw, pitchNow = aimState.yaw, aimState.pitch
+			w.wHold[key] = aimState.hold
 			if yaw ~= w.wYaw[key] or pitchNow ~= w.wPitch[key] then
 				w.wYaw[key] = yaw
 				w.wPitch[key] = pitchNow

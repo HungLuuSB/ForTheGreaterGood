@@ -17,8 +17,8 @@ return Templates.extend(Templates.TankT1, {
 	health = 3000,
 	movement = { maxSpeed = 25, accel = 10, brake = 20, turnRate = 80 },
 	sensors = { sight = 210 },
-	weapons = { { def = "chs_heavy_cannon", turretPiece = "turret", muzzle = "muzzle" } },
-	pieces = { "base", "turret", "muzzle" },
+	weapons = { { def = "chs_juggernaut_cannon", turretPiece = "turret", muzzle = "muzzle" } },
+	pieces = { "base", "turret", "armL", "armR", "muzzle" }, -- the arms raise to fire (guide 14.4, S-20)
 	icon = "tank_heavy",
 	model = "chs_juggernaut",
 })

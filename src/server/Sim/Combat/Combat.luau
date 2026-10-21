@@ -7,6 +7,7 @@
 -- studs (the same as movement), height UNIT_HEIGHT × footprint, standing on
 -- the terrain under the unit's center (plus altitude for air units).
 
+local Aim = require("@shared/Combat/Aim")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -457,6 +458,20 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.number(h, c.wreckSupply[id])
 	end
 	return h
+end
+
+-- The aim each weapon slot of a unit def starts at: its turret's rest pose
+-- (Shared/Combat/Aim, S-20). nil when every slot rests at 0, 0.
+function Combat.restPoses(sim: any, defIndex: number): { { number } }?
+	local out: { { number } }? = nil
+	for slot, weapon in sim.combat.profiles[defIndex].weapons do
+		local yaw, pitch = Aim.rest(weapon.turret)
+		if yaw ~= 0 or pitch ~= 0 then
+			out = out or {}
+			;(out :: { { number } })[slot] = { yaw, pitch }
+		end
+	end
+	return out
 end
 
 return Combat
