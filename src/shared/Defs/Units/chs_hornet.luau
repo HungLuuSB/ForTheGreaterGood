@@ -17,7 +17,7 @@ return Templates.extend(Templates.Unit, {
 	health = 560,
 	movement = { maxSpeed = 38, accel = 16, brake = 30, turnRate = 130 },
 	sensors = { sight = 160, airSight = 300 },
-	weapons = { { def = "chs_ir_sam", turretPiece = "launcher", muzzle = "muzzle" } },
+	weapons = { { def = "chs_ir_sam", turretPiece = "launcher", muzzle = "muzzle", stockpile = 4 } },
 	pieces = { "base", "launcher", "turret", "muzzle" },
 	icon = "sam_ir",
 	model = "chs_hornet",

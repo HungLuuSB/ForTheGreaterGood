@@ -100,6 +100,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
+- **Missile stockpiles (S-47, the user asked through the client):** IR SAM missiles 6 s, 15 supply + 300 power; radar 12 s, 40 + 900; capacities Thorn / Vigil 8, Hornet / Halo 4, Wyvern / Aegis 6, Gorgon / Seraph 3 (the client's numbers; Halo mirrors Hornet). **Question:** should the ships' naval SAMs (Corsair, Crusader) get stockpiles too? Not done yet. AI effect not measured.
 - **Archon radar signature 0.6 (S-46, the user asked through the client; was 0.35):** for your test in airsam.
 - **Radar SAM range ×3 (S-45, the user asked through the client):** ranges 1680 / 1800 and the four units' radars ×3; projectileSpeed left at 360 (~5 s to full range); burn-through follows (35% of lockRange: ~600 studs now). AI and balance effects not measured yet. Also `climbHeight` 100 (S-44).
 - **Radar SAM warheads (S-42, the user asked through the client):** `chs_radar_sam` and `ord_radar_sam` aoe 8 → 20 (bigger proximity fuse too), plus the vertical launch's pitch-over at 3× turnRate (`Guidance.PITCH_OVER`).
@@ -126,6 +127,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 25: missile stockpiles), protocol 15 (S-47):** State records gain **STOCK, mask bit 64**: `slotMask u8` + `count u8` per set bit, after `targets`. Only weapon slots with a stockpile are set; capacity is `defs.units[id].weapons[i].stockCapacity` (Shared defs; weapon field `stockpile = { capacity, buildTime, cost }`, slot override `stockpile = n`). Sent to the owner only, whenever a count changes and with every ENTER. Capacities: Thorn / Vigil 8, Hornet / Halo 4, Wyvern / Aegis 6, Gorgon / Seraph 3; naval SAMs none. Scenario spawns start full; built and produced units start empty. Guide 4.3, 4.5, 8.6 and contract section 5 updated. Request 26 (nuke silo) next.
 - **Done (request 24), S-46:** `ord_archon` radarSignature 0.35 → 0.6 (Phantom unchanged at 0.2).
 - **Done (request 22: a longer vertical climb), S-44:** weapon field `climbHeight` (100 on both radar SAMs). Step vertical launches with `Guidance.vertical(..., turned, climbLeft)` and `climbLeft = Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z))`: while the missile flies exactly straight up (vx = vz = 0) and `climbLeft > 0` it doesn't steer. Ground height: `Layers.heightAt` (Shared, cell-based; the server's `Combat.groundHeight` now calls it), not a smoothed ground. No age needed. Contract section 7.
 - **Done (request 23: radar SAM range ×3), S-45:** `chs_radar_sam` 1680, `ord_radar_sam` 1800 (range and lockRange); radars Wyvern 1800, Gorgon 1440, Aegis 1950, Seraph 1560. projectileSpeed stays 360.

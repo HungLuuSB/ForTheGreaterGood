@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 14, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 15, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -336,6 +336,14 @@ return function(t: RunAll.Context)
 		-- version 8: State TARGET field (S-16)
 		local aimed: State = { unitId = 0x0102, targets = { { slot = 1, targetId = 0x0304 }, { slot = 3, targetId = 0 } } }
 		t.equal(hex(encodeOne(Schema.encodeState, aimed)), "02 01 20 05 04 03 00 00")
+		-- version 15: State STOCK field (S-47)
+		local stocked: State = { unitId = 0x0102, stock = { { slot = 1, count = 8 }, { slot = 3, count = 0 } } }
+		t.equal(hex(encodeOne(Schema.encodeState, stocked)), "02 01 40 05 08 00")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, stocked), Schema.decodeState)[1], stocked)
+		local both: State = { unitId = 1, targets = { { slot = 2, targetId = 7 } }, stock = { { slot = 2, count = 255 } } }
+		t.equal(hex(encodeOne(Schema.encodeState, both)), "01 00 60 02 07 00 02 ff")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, both), Schema.decodeState)[1], both)
+		expectTruncated(t, "state record", Schema.decodeState, encodeOne(Schema.encodeState, both))
 		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
 		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 07 01 09")
 		local state: State = {
@@ -634,7 +642,8 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeTactical, { 1, 0, 0, 0, 0, 0, 0, 2 }, "reserved bits")
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
-		expectRejected(t, Schema.decodeState, { 1, 0, 64 }, "reserved bits") -- 32 is TARGET since protocol 8
+		expectRejected(t, Schema.decodeState, { 1, 0, 128 }, "reserved bits") -- 32 is TARGET since protocol 8, 64 STOCK since 15
+		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.STOCK, 0 }, "stock slot mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.TARGET, 0 }, "target slot mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.AIM, 0 }, "aim slot mask is empty")
 
@@ -659,6 +668,8 @@ return function(t: RunAll.Context)
 		t.throws(enc(Schema.encodeState, { unitId = 1, aim = { { slot = 2, yaw = 0, pitch = 0 }, { slot = 1, yaw = 0, pitch = 0 } } }), "ascending")
 		t.throws(enc(Schema.encodeState, { unitId = 1, aim = { { slot = 9, yaw = 0, pitch = 0 } } }), "ascending")
 		t.throws(enc(Schema.encodeState, { unitId = 1, weapon = 65536 }), "u16 out of range")
+		t.throws(enc(Schema.encodeState, { unitId = 1, stock = {} }), "stock list is empty")
+		t.throws(enc(Schema.encodeState, { unitId = 1, stock = { { slot = 3, count = 1 }, { slot = 2, count = 1 } } }), "ascending")
 		local badFacing: Command = { cmdType = CT.BUILD, flags = 0, unitIds = { 1 }, defIndex = 1, cell = 0, offX = 0, offZ = 0, facing = 4 }
 		t.throws(enc(Schema.encodeCommand, badFacing), "facing 4")
 		local noFacing: Command = { cmdType = CT.BUILD, flags = 0, unitIds = { 1 }, defIndex = 1, cell = 0, offX = 0, offZ = 0 }
