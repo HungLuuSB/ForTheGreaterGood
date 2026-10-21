@@ -268,6 +268,56 @@ return function(t: RunAll.Context)
 		print(string.format("    hidden mortar: %d shells shown, first seen %.0f studs from the muzzle", shells, nearest))
 	end)
 
+	-- S-16: the owner's client knows each weapon's target exactly, from the
+	-- tick Targeting picks it (before the turret has turned); nobody else
+	-- gets it.
+	t.test("own units' weapon targets reach their owner only, exactly", function()
+		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:64" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local mine = { Spawn.unit(sim, "ord_lancer", 1, -60, 0, 0), Spawn.unit(sim, "ord_lancer", 1, -60, 30, 0) } -- facing north: the turrets turn 90°
+		local theirs = { Spawn.unit(sim, "chs_ravager", 2, 120, 0, -math.pi / 2), Spawn.unit(sim, "chs_ravager", 2, 120, 40, -math.pi / 2) }
+		camera(sim, 1, 0, 0, 63, 63)
+		camera(sim, 2, 0, 0, 63, 63)
+		for _, id in theirs do
+			World.setHealth(w, id, 1e6)
+		end
+		local views = { Client.new(g), Client.new(g) }
+		local exact, targeted, beforeTurned, leaked = 0, 0, 0, 0
+		for _ = 1, 240 do
+			Sim.step(sim)
+			for pid = 1, 2 do
+				Client.receive(views[pid], sim.net.players[pid].outbox)
+			end
+			for _, id in mine do
+				if w.slot[id] then
+					local want = w.wTarget[World.slotKey(id, 1)]
+					local u = views[1].units[id]
+					local got = if u and u.targets then u.targets[1] else 0
+					if got == want then
+						exact += 1
+					end
+					if want ~= 0 then
+						targeted += 1
+						local yaw = math.abs(w.wYaw[World.slotKey(id, 1)])
+						if got == want and yaw < 0.2 and math.abs(math.atan2(w.posX[want] - w.posX[id], w.posZ[want] - w.posZ[id]) - w.heading[id]) > 0.3 then
+							beforeTurned += 1
+						end
+					end
+				end
+			end
+			for _, u in views[2].units do
+				if u.targets then
+					leaked += 1
+				end
+			end
+		end
+		t.equal(exact, 2 * 240, "the owner's view has every weapon target every tick")
+		t.expect(targeted > 100, `the tanks had targets ({targeted} unit-ticks)`)
+		t.equal(leaked, 0, "the other player never gets targets")
+		print(string.format("    targets: %d unit-ticks with a target, %d of them before the turret turned", targeted, beforeTurned))
+	end)
+
 	-- Hitscan flak (FIRE): a Dominion shoots at a Wasp hovering over it.
 	-- Chaos's camera covers the fight, Order's is elsewhere, so only Chaos
 	-- (which sees the ship) gets the shots, with their end points.

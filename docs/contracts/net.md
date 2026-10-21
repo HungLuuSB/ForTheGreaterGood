@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **7**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2) and the REPEAT command (S-13).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **8**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2) and the REPEAT command (S-13).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -96,9 +96,10 @@ Per tick, for each player, in this order (the Events message carries them in thi
 Then:
 - **Tactical** (unreliable): `unitId, cell, offX, offZ, heading, flags (bit0 = has altitude), [alt]`, 8 or 9 B. Sent only for tactical units that moved, turned or changed altitude this tick, and never in the same tick as their ENTER. No record means it didn't move: keep the last value.
 - **State** (reliable): `unitId, mask` plus only the changed fields.
-  - Mask bits: health 1, state 2, aim 4, weapon 8, build 16.
+  - Mask bits: health 1, state 2, aim 4, weapon 8, build 16, targets 32 (protocol 8).
   - Aim: `slotMask u8` (bit i−1 = slot i), then `yaw u8, pitch u8` per set bit in slot order.
   - A change of state bits or turret aim sends the state, the aim of every slot and the weapon field together.
+  - **Targets** (S-16, own units only): `slotMask u8`, then `targetId u16` per set bit (0 = no target). Sent to the unit's owner whenever a weapon's target changes (every slot), and with the ENTER tick when it has any target; the ID is always a unit (or remembered structure) the team knows. Other players never get it. Exact from the tick Targeting picks the target, before the turret has turned.
 
 A Tactical or State record always refers to a unit the client got an ENTER for. If not, the client is out of sync: drop the record (the reference client asserts).
 
@@ -219,3 +220,4 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 5 | Strategic TRACKED flag (D104) |
 | 6 | Snapshot handshake (HELLO / REJECT / WELCOME), Eco channel (S-2) |
 | 7 | REPEAT command (15) and `REPEAT` unit state bit (16); TOGGLE no longer sets repeat on factories (S-13) |
+| 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |

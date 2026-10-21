@@ -658,14 +658,16 @@ flags     u8      bit0 = has altitude; other bits reserved
 
 ```
 unitId    u16
-mask      u8      which fields follow: bit0 health, bit1 state, bit2 aim, bit3 weapon, bit4 build
-                  (never 0; bits 5–7 reserved)
+mask      u8      which fields follow: bit0 health, bit1 state, bit2 aim, bit3 weapon, bit4 build,
+                  bit5 targets (never 0; bits 6–7 reserved)
 [health]  u8      fraction 0..255
 [state]   u16     bit flags (moving, building, stunned, submerged, landed, cloaked...)
 [aim]     u8      slot mask: bit i-1 = weapon slot i (1..8) follows; never 0
           u8 ×2   yaw, pitch for each set slot, in slot order
 [weapon]  u16     2 bits per slot (slot 1 = bits 0–1): 0 IDLE, 1 AIMING, 2 READY, 3 RESTORING
 [build]   u8      build progress 0..255
+[targets] u8      slot mask, then targetId u16 per set slot (0 = none). Only to the unit's
+                  owner, when a weapon's target changes (protocol 8, S-16)
 ```
 
 Units have at most **8 weapon slots**; defs validation must enforce it. The aim slot mask means only weapons whose aim changed are sent, and the record can be decoded without knowing the unit's def. The 2-byte weapon field is sent only when a weapon state changes.

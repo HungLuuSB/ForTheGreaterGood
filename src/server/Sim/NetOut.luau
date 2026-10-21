@@ -117,6 +117,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	end
 	pn.forceFull = true
 	pn.lastEco = nil
+	table.clear(pn.sentTargets)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
 	Schema.encodeSnapshot(w, {
@@ -378,6 +379,43 @@ function NetOut.step(sim: Types.Sim)
 				table.insert(states, stateRecord(sim, id, dirty))
 			end
 		end
+
+		-- own units' weapon targets (S-16): when they change, and on entering
+		-- with any target
+		local sent = pn.sentTargets
+		local sentNow: { [number]: string } = {}
+		local recordOf: { [number]: Schema.State } = {}
+		for _, rec in states do
+			recordOf[rec.unitId] = rec
+		end
+		for _, id in pn.tacticalList do
+			local count = w.weaponCount[id]
+			if w.owner[id] ~= pid or count == 0 then
+				continue
+			end
+			local targets: { Schema.Target } = {}
+			local parts = {}
+			local any = false
+			for slot = 1, count do
+				local t = w.wTarget[World.slotKey(id, slot)]
+				targets[slot] = { slot = slot, targetId = t }
+				parts[slot] = t
+				any = any or t ~= 0
+			end
+			local sig = table.concat(parts, ",")
+			sentNow[id] = sig
+			local due = if entered[id] then any else sent[id] ~= sig
+			if due then
+				local rec = recordOf[id]
+				if rec == nil then
+					rec = { unitId = id }
+					recordOf[id] = rec
+					table.insert(states, rec)
+				end
+				rec.targets = targets
+			end
+		end
+		pn.sentTargets = sentNow
 
 		-- strategic snapshot of every other known unit
 		local strategic: { Schema.Strategic } = {}
