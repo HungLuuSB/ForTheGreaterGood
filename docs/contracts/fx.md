@@ -134,7 +134,7 @@ Roblox Beams lay a texture's width along the beam: the strips below run along X 
 | t (Order) | t (Chaos) | What happens |
 |---|---|---|
 | 0 – 0.08 | 0 – 0.06 | **charge:** the `charge` flipbook at the muzzle, frames 1 → 4, growing from 55% to 100% of `flareSize`; it fades over the next 0.04 s |
-| 0.08 | 0.06 | **beam on at full width:** core, glow and the filaments; the impact flare starts at the hit; the scorch appears 0.02 s later |
+| 0.08 | 0.06 | **beam on at full width:** core, glow and the filaments; the **muzzle flare** (the full star, frame 4 of `charge`) sits on the emitter ball while the beam is on, `muzzleFlareSize` × (1 − u)^0.8 × a random 0.85–1.15 each frame, turned a random ±15°, transparency 0.6·u; the impact flare starts at the hit; the scorch appears 0.02 s later |
 | 0.08 – 0.12 | 0.06 – 0.09 | **hold** at full width (`hold`) |
 | 0.12 – 0.50 | 0.09 – 0.36 | **taper** (`taper`), with `u` going 0 → 1: core width × (1 − u)^1.1, transparency 0.7·u^1.6; glow width × (1 − u)^0.8, transparency 0.35 + 0.65·u; filaments thin faster: width × (1 − u)^2.2, transparency 0.8·u^1.2. At the end every Beam is disabled |
 | 0.08 – 0.38 | 0.06 – 0.31 | **impact flare** (`impactTime`): grows to 120% of `impactSize` in the first quarter, transparency k^1.5 |
@@ -142,6 +142,10 @@ Roblox Beams lay a texture's width along the beam: the strips below run along X 
 | to 4.1 | to 3.1 | **scorch** (`scorchTime`) stays, fading over its last 1.5 s |
 
 **Filaments, every frame (30 times a second):** each filament Beam has its own pair of attachments, near the muzzle and at the hit. Give each a new perpendicular offset round the beam axis: angle = its slot (i / n of a turn) plus a random ± `jitter` turn; radius `spread` × (0.6–1.0) at the muzzle and × `fan` (small) at the target, so the filaments leave the emitter spread round the core and converge on the hit. Also new random `CurveSize0` / `CurveSize1` within ± `curve` (`Segments = 16`). Seeded per shot and frame (`Random.new(seed + frame)`), so a replay looks the same.
+
+**The muzzle end is sized to the emitter ball** (the user's feedback, 2026-10-23): the ball is 1.12 studs across on the Radiance and 0.6 on the Inferno; the core stays within it and the glow and filaments are about 1.5 × the ball, with a big star on the ball while firing.
+
+**Billboards are depth-tested:** the emitter ball and the target's face would hide half of a flare, so pull them towards the camera with `StudsOffset`: charge and muzzle flares (0, 0, 1.2), impact flare (0, 0, `impactSize` / 2).
 
 **Every Beam:** `FaceCamera = true`, `LightEmission = 1`, `LightInfluence = 0`, `TextureMode = Wrap`. **The beam narrows to a point at the target** (the user's feedback, 2026-10-23): `Width0` (muzzle end) is the full width, `Width1` (target end) = `Width0` × `tip`, for the core, the glow and the filaments. Beams add up: keep `Brightness` low (below), or the overlap washes out to a flat white bar in daylight.
 
@@ -152,9 +156,9 @@ Radiance is thicker and longer; Inferno shorter, hotter and more ragged.
 | Value | Radiance (`order`) | Inferno (`chaos`) |
 |---|---|---|
 | `charge` / `hold` / `taper` (s) | 0.08 / 0.04 / 0.38 (beam gone at 0.50) | 0.06 / 0.03 / 0.27 (beam gone at 0.36) |
-| core width / glow width at the muzzle (studs) | 1.6 / 7 | 1.2 / 5.5 |
-| filaments: count, width at the muzzle (studs) | 4, 2.5 | 3, 2.2 |
-| `spread` / `fan` / `jitter` / `curve` | 0.8 / 0.15 / 0.45 / 1.6 | 1.0 / 0.2 / 0.7 / 2.2 |
+| core width / glow width at the muzzle (studs) | 0.9 / 1.6 | 0.5 / 0.9 |
+| filaments: count, width at the muzzle (studs) | 4, 1.6 | 3, 0.9 |
+| `spread` / `fan` / `jitter` / `curve` | 0.15 / 0.3 / 0.45 / 1.6 | 0.08 / 0.3 / 0.7 / 2.2 |
 | `tip` (width at the target ÷ width at the muzzle) | 0.06 | 0.08 |
 | core color | (225, 248, 255) ice-white | (255, 205, 150) white-hot |
 | glow color | (80, 190, 255) cyan | (255, 85, 15) orange |
@@ -162,7 +166,7 @@ Radiance is thicker and longer; Inferno shorter, hotter and more ragged.
 | `Brightness`: core / glow / filaments | 2 / 0.6 / 3 | 2.4 / 0.8 / 3.4 |
 | `TextureLength`: core / glow / filament A / filament B (studs) | 30 / 60 / 20 / 15 | 24 / 50 / 16 / 12 |
 | `TextureSpeed`: filament A / B (tiles per second) | 30 / 40 (about 600 studs/s) | 40 / 52 (about 640 studs/s) |
-| `flareSize` / `impactSize` / `scorchSize` (studs) | 7 / 14 / 7 | 6 / 12 / 6 |
+| `flareSize` (charge) / `muzzleFlareSize` / `impactSize` / `scorchSize` (studs) | 6 / 8 / 5 / 7 | 4 / 5 / 4 / 6 |
 | `impactTime` / `scorchGlowTime` / `scorchTime` (s) | 0.3 / 1.2 / 4 | 0.25 / 1.0 / 3 |
 
 The flares and the core use the core color, the embers the glow color. Check the manifest entry with `Mesh.validateBeam(Meshes.beam)`.
@@ -211,6 +215,15 @@ The user's rules for the shield override parts of the table above: the dome is n
 | `beam` | 256 × 512 | The light beam from `Emitter.core` to the dome's top: a `Beam` with `Attachment0` = `core`, `Attachment1` at the top; `Texture` = beam, `TextureMode = Wrap`, `TextureLength` ≈ the beam's width × 2, `TextureSpeed` > 0 to scroll; `Color` = team color, `LightEmission = 1`, `FaceCamera = true`; `CurveSize0` / `CurveSize1` bend it. The strip runs along V (tiles vertically: seamless top to bottom); the core is the middle third of U. |
 | `speck` | 256 × 256 | Floating specks: a `ParticleEmitter` (e.g. on the `Dome` part, `Shape = Sphere`, `ShapeInOut = Inward`), `Texture` = speck, `Color` = team color, `LightEmission = 1`, small `Size` (0.2–0.6), slow `Speed`. |
 | `ripple` | 512 × 512 | A hit on the dome: one particle from a `ParticleEmitter` at the hit point, `Orientation = VelocityPerpendicular` with the velocity along the dome's normal (so it lies flat on the dome), `Speed` ≈ 0.01, `Emit(1)`; `Size` grows from 0 to the burst size, `Transparency` goes to 1; `Texture` = ripple, `Color` = team color, `LightEmission = 1`. |
+
+### Honeycomb shell (M-30, clients-B's request, status `review`)
+
+Scattered patches of hex cells laid over the dome (the user: "spread out like little patches"), full on the top of the dome and gone towards its base; the client tints it and scales its opacity with the shield's charge. In the mesh manifest as `Meshes.shieldShell` (check with `Mesh.validateShieldShell`); built by `assets/fx/shield/honeycomb/build.py`, IDs in `assets/fx/shield/honeycomb/roblox_assets.json`.
+
+- **Why bands:** Roblox meshes carry no per-vertex alpha and a tiling texture can't fade with height, so the shell is the dome surface (radius 1.003, 0.3% over `Dome`) cut into 11 bands: `shell_1` the top cap (0–30° from the top, opacity 1) and `shell_2` .. `shell_11` thin rings from 30° down to 72° (the dome's height down to about 31% above the ground; the last rings nearly 0), each with its own `opacity`. 11,880 triangles in all.
+- **Texture:** `texture`, one tile of pointy-top hex outlines (white RGB, the pattern in alpha), 12 × 10 cells per tile, only seeded blobs of cells drawn (each blob full in the middle, fading at its edge, with a faint fill inside the cells). The bands' UVs tile it evenly over the dome (azimuthal equidistant from the top), the cells 5 studs across at the default radius 120 (they scale with the dome). The pole pinches the tiling slightly (the azimuthal projection); at 55° and 220 it reads as one more patch.
+- **Build each band** as a MeshPart: `MeshId` = `bands[i].mesh`, `Size` = `bands[i].size` × R, `CFrame` = dome base center × `CFrame.new(0, bands[i].center[2] × R, 0)` (the same base center as `Dome`), `Anchored`, no collisions, queries, touches or shadows. Add a `SurfaceAppearance` with `ColorMap` = `texture`, `AlphaMode = Transparency` and `Color` = the tint (team color or the Order cyan). Set `Transparency = 1 − bands[i].opacity × charge` (charge 0..1); keep the cap at most 0.99 opaque if a fully opaque part sorts badly against the ForceField dome.
+- **No glow parts:** it reads through the tint; checked at 55° (full and 35% charge) and from the side: `honeycomb_55_full.jpg`, `honeycomb_55_charge35.jpg`, `honeycomb_25_side.jpg` in `debug_out/screens/`. Reference: "FTGG Art", `Workspace.ShieldHoneycomb` (R = 120, at (0, 0, 3000)).
 
 ### Asset IDs
 

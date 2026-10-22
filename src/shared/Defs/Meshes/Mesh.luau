@@ -28,7 +28,7 @@ end
 Mesh.BEAM_TEXTURES = { "core", "glow", "filamentA", "filamentB", "charge", "impact", "scorch", "scorchGlow" }
 Mesh.BEAM_VALUES = {
 	"charge", "hold", "taper", "coreWidth", "glowWidth", "filamentWidth", "filaments", "spread", "fan", "tip", "jitter", "curve",
-	"brightness", "glowBrightness", "filamentBrightness", "flareSize", "impactSize", "impactTime", "scorchSize", "scorchTime", "scorchGlowTime",
+	"brightness", "glowBrightness", "filamentBrightness", "flareSize", "muzzleFlareSize", "impactSize", "impactTime", "scorchSize", "scorchTime", "scorchGlowTime",
 }
 
 -- Problems with the manifest's `beam` entry, empty when valid.
@@ -57,6 +57,43 @@ function Mesh.validateBeam(e: any): { string }
 			if not isVec3(f[k]) then
 				table.insert(problems, `beam: {faction}.{k} must be three numbers`)
 			end
+		end
+	end
+	return problems
+end
+
+-- Problems with the manifest's `shieldShell` entry (M-30, fx.md "Honeycomb
+-- shell"), empty when valid.
+function Mesh.validateShieldShell(e: any): { string }
+	local problems: { string } = {}
+	local function bad(msg: string)
+		table.insert(problems, `shieldShell: {msg}`)
+	end
+	if not Mesh.STATUSES[e.status] then
+		bad(`status {tostring(e.status)} must be "approved" or "review"`)
+	end
+	if not isAssetId(e.texture) then
+		bad("texture asset ID missing")
+	end
+	if type(e.bands) ~= "table" or #e.bands == 0 then
+		bad("no bands")
+		return problems
+	end
+	local last = 0
+	for i, b in e.bands do
+		if not isAssetId(b.mesh) then
+			bad(`band {i}: mesh asset ID missing`)
+		end
+		if type(b.opacity) ~= "number" or b.opacity < 0 or b.opacity > 1 then
+			bad(`band {i}: opacity must be 0..1`)
+		end
+		if not isVec3(b.center) or not isVec3(b.size) then
+			bad(`band {i}: center and size must be three numbers`)
+		end
+		if type(b.theta) ~= "table" or b.theta[1] ~= last or not (b.theta[2] > b.theta[1]) then
+			bad(`band {i}: theta must continue from {last} degrees`)
+		else
+			last = b.theta[2]
 		end
 	end
 	return problems
