@@ -23,13 +23,19 @@
 --      plant: one mobile fire-control radar, then MLRS and main battle
 --      tanks.
 --   3. Army: idle new units gather at a rally point. Enemies near home are
---      attacked by everyone. When the army reaches the wave size, the wave
+--      attacked by everyone. When the army's value (supply + power / 10)
+--      reaches the wave value (S-92: the same for both factions), the wave
 --      attack-moves at the nearest known enemy (structures and the Command
 --      Vehicle first), or the enemy start if nothing is known; the next
 --      wave is larger. Radar and fire-control vehicles guard the wave, so
 --      its artillery can fire on radar contacts with tracking (S-7).
 --      Artillery kites: a known enemy inside KITE_RANGE of its range makes
 --      it back off, then rejoin the wave's attack.
+--      Retreat (S-92; normal and hard): a wave out in the field that knows
+--      enemy forces near it worth more than RETREAT_RATIO times its own
+--      value falls back to the rally point; the next wave waits until the
+--      army is worth RETREAT_MARGIN times what it fled, and none leaves
+--      for RETREAT_HOLD ticks.
 -- Its only randomness is its own Prng (seeded from the match seed and the
 -- player ID), used for the production mix.
 --
@@ -40,8 +46,7 @@
 --           more at home; its advanced
 --           plant builds Wardens (deployable guns) among its tanks; hard
 --           recalls its army against enemy waves too.
---   Chaos   a worker more (it expands wider); waves of 2 units more (its
---           units are cheaper: the same value), growing faster, split in two
+--   Chaos   a worker more (it expands wider); waves split in two
 --           lanes from LANE_MIN front units so half comes round a flank; a
 --           Shroud jammer guards each wave; its plant builds Locusts among its
 --           tanks and its advanced plant Minotaurs (siege).
@@ -113,6 +118,11 @@ Skirmish.RECALL_HOLD = 300 -- ticks no new wave leaves after a recall
 Skirmish.WAVE_ALIGN = 300 -- ticks: waves leave only at the start of these windows (S-57)
 Skirmish.FLANK_OFFSET = 300 -- studs off the straight line: a two-lane wave's flank waypoint (S-76)
 Skirmish.LANE_MIN = 12 -- front units a wave needs before it splits in two lanes (smaller halves arrive piecemeal; S-76)
+Skirmish.UNIT_VALUE = 300 -- a wave's size in units → its value: about a T1 tank's (S-92)
+Skirmish.RETREAT_RADIUS = 450 -- studs round a wave's centre where it counts known enemy forces (S-92)
+Skirmish.RETREAT_RATIO = 1.3 -- enemy value / wave value that makes a wave fall back (S-92)
+Skirmish.RETREAT_MARGIN = 1.2 -- the next wave needs this times the value it fled (S-92)
+Skirmish.RETREAT_HOLD = 300 -- ticks no wave leaves after a retreat (S-92)
 Skirmish.RALLY_GAP = 600 -- studs at least between two rally points: beyond artillery range (Verdict 480 since S-62) with room for the army's spread (S-57)
 
 export type Level = {
@@ -142,6 +152,7 @@ export type Level = {
 	maxArmy: number, -- army units it keeps at most (S-57; easy)
 	tanksBeforeGen3: number, -- tanks before its third generator (S-57; normal): this or one more, by its Prng
 	recall: boolean, -- pulls the whole army home against an enemy wave near the base (S-57)
+	retreat: boolean, -- a wave outnumbered in the field falls back (S-92)
 	-- faction style (S-76; set by Skirmish.styled)
 	wardenShare: number?, -- share of advanced-plant army items that are Wardens (Order)
 	minotaurShare: number?, -- share of advanced-plant army items that are Minotaurs (Chaos)
@@ -178,6 +189,7 @@ Skirmish.LEVELS = table.freeze({
 		maxArmy = 8, -- small enough that a normal wave breaks it (S-57)
 		tanksBeforeGen3 = 0,
 		recall = false,
+		retreat = false,
 	},
 	normal = {
 		think = 20, -- a multiple of THINK_ALIGN (S-31)
@@ -206,6 +218,7 @@ Skirmish.LEVELS = table.freeze({
 		maxArmy = math.huge,
 		tanksBeforeGen3 = 2, -- tanks before the third generator (S-57)
 		recall = true, -- defends the base against enemy waves (S-57)
+		retreat = true,
 	},
 	hard = {
 		think = 10,
@@ -234,6 +247,7 @@ Skirmish.LEVELS = table.freeze({
 		maxArmy = math.huge,
 		tanksBeforeGen3 = 0,
 		recall = false,
+		retreat = true,
 	},
 } :: { [string]: Level })
 
@@ -263,10 +277,8 @@ function Skirmish.styled(cfg: Level, prefix: string, levelName: string): Level
 		s.minotaurShare = 0.25
 		if strong then
 			s.workers = cfg.workers + 1
-			-- a wave counts units: Chaos's cheaper units make up a wave of the
-			-- same value with about 30% more of them
-			s.firstWave = cfg.firstWave + 2
-			s.waveGrowth = cfg.waveGrowth + 1
+			-- (waves are counted by value since S-92: Chaos's cheaper units
+			-- make up the same wave with more of them, no count bonus)
 			s.lanes = 2
 			s.jammer = true
 		end
@@ -286,7 +298,10 @@ export type Brain = {
 	enemyX: number,
 	enemyZ: number,
 	toward: number, -- +1 when the enemy start is east
-	waveSize: number,
+	waveSize: number, -- units (easy's cap)
+	waveValue: number, -- value the home army needs before a wave leaves (S-92)
+	lastRetreatAt: number, -- tick a wave last fell back (S-92)
+	retreats: number,
 	attacking: { [number]: boolean }, -- units sent with a wave
 	claims: { [number]: number }, -- cell → tick a builder was sent there
 	deposits: { number }, -- deposit cells, nearest home first
@@ -428,6 +443,9 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		enemyZ = enemyZ,
 		toward = if enemyX >= homeX then 1 else -1,
 		waveSize = cfg.firstWave,
+		waveValue = cfg.firstWave * Skirmish.UNIT_VALUE,
+		lastRetreatAt = -math.huge,
+		retreats = 0,
 		attacking = {},
 		claims = {},
 		deposits = deposits,
@@ -601,6 +619,38 @@ function Skirmish.knownTargets(brain: Brain): (number?, number?, number?, number
 		end
 	end
 	return threatX, threatZ, targetX, targetZ
+end
+
+-- A unit def's value: supply + power / 10 (S-92).
+function Skirmish.value(d: Defs.UnitDef): number
+	return d.cost.supply + d.cost.power / 10
+end
+
+-- The value of the known enemy forces within `radius` of (x, z) (S-92):
+-- armed units and structures whose type the team knows (visible, tracked
+-- or remembered, D107) by their value; unidentified contacts as one
+-- UNIT_VALUE each. Unarmed structures don't count.
+function Skirmish.enemyValueNear(brain: Brain, x: number, z: number, radius: number): number
+	local sim = brain.sim
+	local w = sim.world
+	local r2 = radius * radius
+	local v = 0
+	for _, id in w.ids do
+		if w.ally[id] ~= brain.ally then
+			local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
+			if kx and kz and (kx - x) ^ 2 + (kz - z) ^ 2 <= r2 then
+				if Sensors.typeKnown(sim, brain.ally, id, level) then
+					local d = sim.defs.unitByIndex[defIndex :: number]
+					if #d.weapons > 0 then
+						v += Skirmish.value(d)
+					end
+				else
+					v += Skirmish.UNIT_VALUE
+				end
+			end
+		end
+	end
+	return v
 end
 
 -- An enemy wave coming at the base (S-57): the known enemy ground units
@@ -1193,6 +1243,35 @@ local function think(brain: Brain)
 			brain.escortWanted[worker] = wanted[worker]
 		end
 	end
+	-- retreat (S-92): a wave out in the field facing known enemy forces
+	-- worth more than RETREAT_RATIO times its own value falls back
+	if cfg.retreat and #wave > 0 then
+		local wv, wx, wz = 0, 0, 0
+		for _, id in wave do
+			local v = Skirmish.value(unitDef(sim, id))
+			wv += v
+			wx += w.posX[id] * v
+			wz += w.posZ[id] * v
+		end
+		wx, wz = wx / wv, wz / wv
+		if (wx - brain.homeX) ^ 2 + (wz - brain.homeZ) ^ 2 > brain.recallRadius ^ 2 then
+			local ev = Skirmish.enemyValueNear(brain, wx, wz, Skirmish.RETREAT_RADIUS)
+			if ev > wv * Skirmish.RETREAT_RATIO then
+				local rx, rz = brain.homeX + brain.toward * brain.rallyDist, brain.homeZ
+				local cell, ox, oz = g:encode(rx, rz)
+				for i = 1, #wave, 200 do
+					submit(sim, brain.player, { cmdType = CT.MOVE, flags = 0, unitIds = table.move(wave, i, math.min(i + 199, #wave), 1, {}), cell = cell, offX = ox, offZ = oz })
+				end
+				for _, id in wave do
+					brain.attacking[id] = nil
+				end
+				brain.waveValue = math.max(brain.waveValue, ev * Skirmish.RETREAT_MARGIN)
+				brain.lastRetreatAt = sim.tick
+				brain.retreats += 1
+				wave = {}
+			end
+		end
+	end
 	local newWave = false
 	-- enemy aircraft came near home lately: half the mobile SAMs (at least
 	-- one) stay home as base air defence instead of leaving with a wave (S-57)
@@ -1230,20 +1309,29 @@ local function think(brain: Brain)
 	-- base every time (a side bias, S-57)
 	local onGrid = sim.tick % Skirmish.WAVE_ALIGN < cfg.think
 	local mayAttack = onGrid and sim.tick >= cfg.firstAttack and sim.tick - brain.lastWaveAt >= cfg.waveInterval and sim.tick >= brain.recallUntil
+		and sim.tick - brain.lastRetreatAt >= Skirmish.RETREAT_HOLD
+	local homeValue = 0
+	for _, id in home do
+		if not guardHome[id] then
+			homeValue += Skirmish.value(unitDef(sim, id))
+		end
+	end
 	if recalled then
 		-- defending: nothing else this think
 	elseif threatX and threatZ then
 		fight(home, threatX, threatZ) -- defend
-	elseif #home >= brain.waveSize and mayAttack then
-		-- easy (a wave interval) sends only the wave's size; the others wait
-		local cap = if cfg.waveInterval > 0 then brain.waveSize else math.huge
+	elseif homeValue >= brain.waveValue and mayAttack then
+		-- easy (a wave interval) sends only the wave's value; the others wait
+		local cap = if cfg.waveInterval > 0 then brain.waveValue else math.huge
 		local stay = {}
+		local sentValue = 0
 		for _, id in home do
-			if guardHome[id] or #wave >= cap then
+			if guardHome[id] or sentValue >= cap then
 				table.insert(stay, id)
 			else
 				brain.attacking[id] = true
 				table.insert(wave, id)
+				sentValue += Skirmish.value(unitDef(sim, id))
 			end
 		end
 		home = stay
@@ -1251,6 +1339,7 @@ local function think(brain: Brain)
 		newWave = true
 		brain.waves += 1
 		brain.waveSize += cfg.waveGrowth
+		brain.waveValue += cfg.waveGrowth * Skirmish.UNIT_VALUE
 	else
 		local idle = {}
 		for _, id in home do

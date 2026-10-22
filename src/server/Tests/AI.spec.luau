@@ -71,6 +71,9 @@ return function(t: RunAll.Context)
 		t.expect(c.workers > Skirmish.LEVELS.normal.workers and c.lanes == 2 and c.jammer, "Chaos: wider, two lanes, a jammer")
 		local easy = Skirmish.styled(Skirmish.LEVELS.easy, "chs_", "easy")
 		t.equal(easy.firstWave, Skirmish.LEVELS.easy.firstWave, "easy keeps its strength")
+		-- waves are counted by value (S-92): no count bonus for Chaos
+		t.equal(c.firstWave, o.firstWave, "the same wave value for both factions")
+		t.equal(c.waveGrowth, o.waveGrowth)
 		t.expect(Skirmish.styled(Skirmish.LEVELS.hard, "ord_", "hard").defenses > Skirmish.LEVELS.hard.defenses, "Order hard: a turret more")
 		-- rich economies, so both reach their advanced plants within the run
 		local sim = start(24)
@@ -263,5 +266,37 @@ return function(t: RunAll.Context)
 		t.expect(gained > 40, `and opened the distance by {gained} studs`)
 		local _, tankKited = closing("ord_lancer")
 		t.expect(not tankKited, "a Lancer never kites (it moves only with the army)")
+	end)
+
+	t.test("a wave outnumbered in the field falls back to the rally point; one that isn't presses on (S-92)", function()
+		local function trial(enemies: number): (Skirmish.Brain, { number }, Sim.Sim)
+			local sim = start(31)
+			local w = sim.world
+			local brain = Skirmish.new(sim, 1, "normal")
+			-- a wave of 4 Lancers halfway across, 4-plus Ravagers just ahead of it
+			local mx, mz = (brain.homeX + brain.enemyX) / 2, (brain.homeZ + brain.enemyZ) / 2
+			local wave = {}
+			for i = 1, 4 do
+				local id = Spawn.unit(sim, "ord_lancer", 1, mx + (i - 2.5) * 14, mz, 0)
+				World.setFireState(w, id, World.FireState.HOLD_FIRE)
+				brain.attacking[id] = true
+				table.insert(wave, id)
+			end
+			for i = 1, enemies do
+				local id = Spawn.unit(sim, "chs_ravager", 2, mx + brain.toward * 150, mz + (i - (enemies + 1) / 2) * 14, 0)
+				World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			end
+			brain.lastWaveAt = sim.tick
+			run(sim, { brain }, 60, true)
+			return brain, wave, sim
+		end
+		local brain, wave, sim = trial(10) -- 10 Ravagers (2,600) against 4 Lancers (1,360)
+		t.equal(brain.retreats, 1, "the wave fell back")
+		for _, id in wave do
+			t.equal(brain.attacking[id], nil, "no longer in a wave")
+		end
+		t.expect(brain.waveValue >= 10 * Skirmish.value(sim.defs.units.chs_ravager) * Skirmish.RETREAT_MARGIN - 1e-6, `the next wave must outweigh what it fled ({brain.waveValue})`)
+		local held = trial(3) -- 3 Ravagers (780): it presses on
+		t.equal(held.retreats, 0, "a wave that isn't outnumbered keeps going")
 	end)
 end
