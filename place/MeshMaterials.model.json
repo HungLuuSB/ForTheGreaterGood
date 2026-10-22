@@ -82,6 +82,18 @@
       }
     },
     {
+      "Name": "chs_forgemaster",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://72645322320143",
+        "NormalMapContent": "rbxassetid://73896753813195",
+        "RoughnessMapContent": "rbxassetid://108978978666618",
+        "MetalnessMapContent": "rbxassetid://103973791963352",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_generator",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -342,6 +354,18 @@
         "NormalMapContent": "rbxassetid://73462741273172",
         "RoughnessMapContent": "rbxassetid://81884786176088",
         "MetalnessMapContent": "rbxassetid://116943578427659",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_architect",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://129342336026778",
+        "NormalMapContent": "rbxassetid://138038729211202",
+        "RoughnessMapContent": "rbxassetid://105200683374597",
+        "MetalnessMapContent": "rbxassetid://98683837282654",
         "EmissiveStrength": 0
       }
     },
