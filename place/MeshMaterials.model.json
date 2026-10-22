@@ -142,6 +142,18 @@
       }
     },
     {
+      "Name": "chs_hydra",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://113983591618025",
+        "NormalMapContent": "rbxassetid://108288710210633",
+        "RoughnessMapContent": "rbxassetid://139071434073871",
+        "MetalnessMapContent": "rbxassetid://100150674392132",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_jackal",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -474,6 +486,18 @@
         "NormalMapContent": "rbxassetid://120329158733699",
         "RoughnessMapContent": "rbxassetid://79316417954705",
         "MetalnessMapContent": "rbxassetid://74785485849376",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_judgement",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://134235184611650",
+        "NormalMapContent": "rbxassetid://108527255503304",
+        "RoughnessMapContent": "rbxassetid://79635158791181",
+        "MetalnessMapContent": "rbxassetid://127952031353678",
         "EmissiveStrength": 0
       }
     },
