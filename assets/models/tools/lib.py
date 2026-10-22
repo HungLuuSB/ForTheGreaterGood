@@ -11,6 +11,7 @@ low-poly's textures: color (camouflage variants, wear, grime, ambient
 occlusion), team mask (alpha), roughness, metalness and normal.
 """
 
+import contextlib
 import json
 import math
 import os
@@ -119,6 +120,29 @@ class Piece:
         self.kinds = kinds  # material slot order
         self.pivot = pivot  # Roblox model space; becomes the object origin
         self.bm = bmesh.new()
+        self.subs = {}  # animated sub-pieces (M-27): name -> Piece
+        self.anim = None  # {"motion", "axis", "range"?} for a sub-piece (tools/animate.py)
+
+    @contextlib.contextmanager
+    def sub(self, name, pivot, motion, axis=(0, 1, 0), rng=None):
+        """Animated sub-piece (M-27, rig.md "Animated pieces"): every shell
+        built inside the `with` block goes into its own piece `name`, a
+        child of this one jointed at `pivot` (Roblox space), so the client
+        can move it (`motion`: spin, turn, scroll, slide, open, lower, pulse;
+        `axis` in model space). The same name reopens the same sub-piece."""
+        child = self.subs.get(name)
+        if child is None:
+            child = Piece(name, self.kinds, pivot)
+            child.anim = {"motion": motion, "axis": list(axis)}
+            if rng is not None:
+                child.anim["range"] = rng
+            self.subs[name] = child
+        saved = self.bm
+        self.bm = child.bm
+        try:
+            yield child
+        finally:
+            self.bm = saved
 
     def _slot(self, kind):
         return self.kinds.index(kind)
@@ -282,6 +306,8 @@ class Piece:
         sx, sy, sz = s
         bmesh.ops.scale(self.bm, vec=Vector((sx, sz, sy)), verts=self.bm.verts)  # R(): Blender (x, -z, y)
         self.pivot = scaled(self.pivot, s)
+        for child in self.subs.values():
+            child.scale(s)
 
     def to_object(self, materials, collection, name=None):
         mesh = bpy.data.meshes.new(name or self.name)
@@ -525,8 +551,12 @@ def make_material(kind, spec, variants, target):
             if spec.get("scorch_edges"):
                 # big roofs: soot along the edges and low down, a fine speckle
                 # between (broad patches read as clouds on a large flat roof)
+                occl = N.math("SUBTRACT", 1.0, ao.outputs["AO"])  # creases and corners
+                streak = N.map_range(N.noise(pos, 1.3, detail=3.0, mapping_scale=(4.0, 4.0, 0.35)), 0.45, 0.7, 0.0, 1.0)
                 fine = N.map_range(N.noise(pos, 1.8, detail=3.0), 0.5, 0.72, 0.0, 1.0)
-                burn = N.math("ADD", N.math("ADD", edge, N.math("MULTIPLY", fine, 0.35)), N.math("MULTIPLY", low, 0.4))
+                burn = N.math("ADD", N.math("ADD", edge, N.math("MULTIPLY", occl, 1.6)),
+                              N.math("ADD", N.math("MULTIPLY", streak, 0.55), N.math("MULTIPLY", fine, 0.3)))
+                burn = N.math("ADD", burn, N.math("MULTIPLY", low, 0.6))
             else:
                 # wreck soot: broad burnt patches, darker low and in creases
                 burn = N.map_range(N.noise(pos, 0.45, detail=4.0, roughness=0.65), 0.38, 0.62, 0.0, 1.0)

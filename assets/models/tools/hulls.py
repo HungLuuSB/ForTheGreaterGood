@@ -31,10 +31,11 @@ def tracked(p, faction, length=8.0, width=6.0, deck=1.9, track_w=0.8, wheels=6):
         x0, x1 = (tx - track_w / 2, tx + track_w / 2)
         if sx < 0:
             x0, x1 = -x1, -x0
-        p.band_x(outline, inner, x0, x1, "track")
-        for i in range(wheels):
-            z = -hl + 1.0 + i * (length - 2.0) / (wheels - 1)
-            p.cylinder("x", (sx * tx, 0.46, z), 0.4, track_w * 0.5, 10, "rubber", cap_kinds=("trim", "trim"))
+        with p.sub("trackL" if sx < 0 else "trackR", (sx * tx, 0.46, 0.0), "scroll", (1, 0, 0)):  # M-27
+            p.band_x(outline, inner, x0, x1, "track")
+            for i in range(wheels):
+                z = -hl + 1.0 + i * (length - 2.0) / (wheels - 1)
+                p.cylinder("x", (sx * tx, 0.46, z), 0.4, track_w * 0.5, 10, "rubber", cap_kinds=("trim", "trim"))
         if order:  # thick skirts with a team strip and a running strip
             p.box((sx * (hw + 0.13), deck - 0.65, 0.2), (0.24, 1.0, length - 0.8), "paint", bevel=0.04)
             p.box((sx * (hw + 0.26), deck - 0.6, 0.4), (0.04, 0.32, length * 0.45), "team", bevel=0.01)
@@ -64,7 +65,7 @@ def wheeled(p, faction, length=7.6, width=5.0, deck=2.2, axles=3):
     for sx in (-1, 1):
         for i in range(axles):
             z = -hl + 1.4 + i * (length - 2.6) / max(1, axles - 1)
-            wheel(p, sx * (hw - 0.2), 0.75, z, 0.75, 0.6)
+            wheel(p, sx * (hw - 0.2), 0.75, z, 0.75, 0.6, name=f"wheel{'L' if sx < 0 else 'R'}{i + 1}")
         if order:
             p.prism_x([(-hl + 0.6, 1.25), (hl - 0.2, 1.25), (hl - 0.2, 1.9), (-hl + 0.6, 1.9)],
                       *((hw - 0.4, hw - 0.05) if sx > 0 else (-hw + 0.05, -hw + 0.4)), "paint", bevel=0.03)

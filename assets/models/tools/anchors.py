@@ -46,6 +46,8 @@ ANCHORS = {
     "chs_forgemaster": {"nano1": (N, (1.1, 5.7, -3.0)), "nano2": (N, (0.2, 3.9, 1.9))},
     "ord_sovereign": {"nano1": (N, (0.0, 5.8, 4.75))},
     "chs_warlord": {"nano1": (N, (0.8, 5.3, 4.3))},
+    "ord_zenith": {"nano1": (N, (0.0, -0.5, -2.1)), "nano2": (N, (0.0, -0.5, 1.6))},
+    "chs_condor": {"nano1": (N, (0.0, 0.1, -1.9)), "nano2": (N, (0.0, 0.2, 2.1))},
 }
 
 
