@@ -754,6 +754,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://100339252582483",
 				},
 				model = "rbxassetid://139804711017792",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0095, 3.6638, -0.0042 },
@@ -761,6 +762,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 6.6408, 7.3605, 6.6779 },
 					},
 				},
+				status = "review",
 				triangles = 860,
 			},
 		},
@@ -937,6 +939,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://88227724577471",
 				},
 				model = "rbxassetid://86616436716256",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.02, 2.8647, -0.0041 },
@@ -944,6 +947,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 6.6584, 5.7949, 6.6344 },
 					},
 				},
+				status = "review",
 				triangles = 740,
 			},
 		},
@@ -1296,6 +1300,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://82220916837807",
 				},
 				model = "rbxassetid://70465420259273",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { 0.0501, 2.411, -2.492 },
@@ -1313,6 +1318,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 3.8504, 1.411, 3.4886 },
 					},
 				},
+				status = "review",
 				triangles = 3184,
 			},
 		},
@@ -1400,6 +1406,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://100965399853779",
 				},
 				model = "rbxassetid://130568500931700",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0078, 2.0729, 0.1461 },
@@ -1417,6 +1424,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 1.2708, 1.0275, 1.269 },
 					},
 				},
+				status = "review",
 				triangles = 1092,
 			},
 		},
@@ -1746,6 +1754,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://93921038430664",
 				},
 				model = "rbxassetid://81811433137706",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0338, 1.6324, -0.0443 },
@@ -1758,6 +1767,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 1.3916, 1.4324, 3.2409 },
 					},
 				},
+				status = "review",
 				triangles = 824,
 			},
 		},
@@ -2398,6 +2408,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://81467654059288",
 				},
 				model = "rbxassetid://102589472579647",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { -0.0227, 2.154, -4.4013 },
@@ -2415,6 +2426,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 3.9851, 1.6399, 4.7473 },
 					},
 				},
+				status = "review",
 				triangles = 3448,
 			},
 		},
@@ -2489,6 +2501,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://129728097881271",
 				},
 				model = "rbxassetid://93164408160690",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0298, 1.7521, -0.3092 },
@@ -2501,6 +2514,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 1.7066, 2.7776, 3.3481 },
 					},
 				},
+				status = "review",
 				triangles = 2636,
 			},
 		},
@@ -2689,6 +2703,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://133604035732359",
 				},
 				model = "rbxassetid://134308801366415",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.003, 1.595, 0.007 },
@@ -2696,6 +2711,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 6.6407, 3.2601, 6.6692 },
 					},
 				},
+				status = "review",
 				triangles = 408,
 			},
 		},
@@ -2775,6 +2791,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://80502531046069",
 				},
 				model = "rbxassetid://91108754474037",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0012, 1.2339, 0.0193 },
@@ -2787,6 +2804,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 3.7464, 1.2886, 7.1372 },
 					},
 				},
+				status = "review",
 				triangles = 988,
 			},
 		},
@@ -2978,6 +2996,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://76457519289687",
 				},
 				model = "rbxassetid://120454024990165",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0488, 3.943, -0.0145 },
@@ -2985,6 +3004,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 22.0578, 8.1502, 22.1101 },
 					},
 				},
+				status = "review",
 				triangles = 816,
 			},
 		},
@@ -3198,6 +3218,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://71839646555746",
 				},
 				model = "rbxassetid://101021283265742",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0237, 2.4228, -0.0597 },
@@ -3210,6 +3231,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 3.4933, 3.2196, 2.3698 },
 					},
 				},
+				status = "review",
 				triangles = 908,
 			},
 		},
@@ -3689,6 +3711,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://96192307919874",
 				},
 				model = "rbxassetid://109381430668906",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0311, 1.1479, -0.0056 },
@@ -3701,6 +3724,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 4.0594, 2.0268, 9.6778 },
 					},
 				},
+				status = "review",
 				triangles = 764,
 			},
 		},
@@ -3932,6 +3956,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://91839398223782",
 				},
 				model = "rbxassetid://86475752703240",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.005, 2.5865, 0.0181 },
@@ -3939,6 +3964,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 7.4345, 5.2881, 7.551 },
 					},
 				},
+				status = "review",
 				triangles = 616,
 			},
 		},
@@ -4064,6 +4090,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://77239839752183",
 				},
 				model = "rbxassetid://127995417543020",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { 0.0279, 2.6933, 0.0267 },
@@ -4071,6 +4098,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 7.4312, 5.3995, 7.3903 },
 					},
 				},
+				status = "review",
 				triangles = 696,
 			},
 		},
@@ -4255,6 +4283,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://79429040134246",
 				},
 				model = "rbxassetid://98890093160416",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.001, 1.5446, -0.3706 },
@@ -4272,6 +4301,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 1.5382, 1.4947, 1.5225 },
 					},
 				},
+				status = "review",
 				triangles = 1124,
 			},
 		},
@@ -4361,6 +4391,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://98393434962345",
 				},
 				model = "rbxassetid://103037837887737",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0066, 1.8358, -0.4481 },
@@ -4373,6 +4404,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 1.7138, 1.0163, 3.8842 },
 					},
 				},
+				status = "review",
 				triangles = 1020,
 			},
 		},
@@ -4568,6 +4600,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://113518297957713",
 				},
 				model = "rbxassetid://108229567309359",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { -0.0174, 2.4576, -4.9627 },
@@ -4585,6 +4618,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 4.8046, 1.8383, 6.4856 },
 					},
 				},
+				status = "review",
 				triangles = 2956,
 			},
 		},
@@ -4743,6 +4777,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://103474304929179",
 				},
 				model = "rbxassetid://127484874000713",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0069, 1.5728, -0.6644 },
@@ -4755,6 +4790,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 2.5705, 3.2128, 4.9916 },
 					},
 				},
+				status = "review",
 				triangles = 2876,
 			},
 		},
@@ -4819,6 +4855,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://70391224960734",
 				},
 				model = "rbxassetid://113163550349311",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0297, 1.9928, -0.4779 },
@@ -4831,6 +4868,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 4.6481, 2.3873, 1.106 },
 					},
 				},
+				status = "review",
 				triangles = 992,
 			},
 		},
@@ -5624,6 +5662,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://73243822805037",
 				},
 				model = "rbxassetid://127909187412542",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.0094, 2.0481, 0.0226 },
@@ -5631,6 +5670,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 7.4121, 4.1379, 7.3705 },
 					},
 				},
+				status = "review",
 				triangles = 320,
 			},
 		},
@@ -5742,6 +5782,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://138869564615462",
 				},
 				model = "rbxassetid://127452972337159",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
 						center = { -0.05, 4.3175, -0.0028 },
@@ -5749,6 +5790,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 22.2388, 8.7233, 22.023 },
 					},
 				},
+				status = "review",
 				triangles = 720,
 			},
 		},
@@ -5921,6 +5963,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					RGH = "rbxassetid://108201728881227",
 				},
 				model = "rbxassetid://89484745314472",
+				note = "wreck version, waiting for the user's review",
 				pieces = {
 					barrel = {
 						center = { -0.0166, 2.6381, -6.0034 },
@@ -5938,6 +5981,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 						size = { 4.3663, 2.6357, 5.2678 },
 					},
 				},
+				status = "review",
 				triangles = 3120,
 			},
 		},

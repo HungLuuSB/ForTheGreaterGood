@@ -86,13 +86,16 @@ return function(t: any)
 		local mesh = { mesh = "rbxassetid://1", center = { 0, 0, 0 }, size = { 1, 1, 1 } }
 		local maps = { ALB = "rbxassetid://2", NOR = "rbxassetid://3", RGH = "rbxassetid://4", MTL = "rbxassetid://5" }
 		has(with(function(e)
-			e.wreck = { model = "rbxassetid://6", maps = maps, pieces = { base = mesh, turret = mesh } }
+			e.wreck = { status = "review", model = "rbxassetid://6", maps = maps, pieces = { base = mesh, turret = mesh } }
 		end), "wreck: piece barrel mesh missing")
 		has(with(function(e)
-			e.wreck = { model = "rbxassetid://6", maps = { ALB = maps.ALB }, pieces = { base = mesh, turret = mesh, barrel = mesh } }
+			e.wreck = { status = "review", model = "rbxassetid://6", maps = { ALB = maps.ALB }, pieces = { base = mesh, turret = mesh, barrel = mesh } }
 		end), "wreck: map NOR asset ID missing")
-		t.equal(with(function(e)
+		has(with(function(e)
 			e.wreck = { model = "rbxassetid://6", maps = maps, pieces = { base = mesh, turret = mesh, barrel = mesh } }
+		end), 'wreck: status nil must be "approved" or "review"')
+		t.equal(with(function(e)
+			e.wreck = { status = "review", model = "rbxassetid://6", maps = maps, pieces = { base = mesh, turret = mesh, barrel = mesh } }
 		end), "")
 	end)
 end

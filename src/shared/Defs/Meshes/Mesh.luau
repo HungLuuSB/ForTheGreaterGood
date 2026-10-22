@@ -103,6 +103,9 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 	-- maps, no glow (EMI not needed)
 	local w = e.wreck
 	if w ~= nil then
+		if not Mesh.STATUSES[w.status] then
+			bad(`wreck: status {tostring(w.status)} must be "approved" or "review"`)
+		end
 		if not isAssetId(w.model) then
 			bad("wreck: model asset ID missing")
 		end

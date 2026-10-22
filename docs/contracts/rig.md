@@ -122,7 +122,7 @@ Meshes.units.ord_lancer    -- by unit def ID; Meshes.fx.shield_emitter for effec
 | `maps` | the SurfaceAppearance images: `ALB` (color map, alpha = team mask), `NOR`, `RGH`, `MTL`, `EMI` (the baked emissive mask, kept for reference; glow parts use `glowMask`) |
 | `glow` | the glow parts: `name` (`<piece>_glow_<channel>`), `piece` it's welded to, `channel` (`running`, `head`, `power`, `weapon`), `tint` (RGB 0–255), resting `strength`, `center`, `size`, `mesh` (docs/contracts/fx.md, "Unit glow") |
 | `glowShare`, `triangles` | measured coverage of the glow and the triangle count, for reference |
-| `wreck` | optional, the wreck version (M-24, fx.md "Wrecks"): `model`, `pieces` (by the same piece names: `mesh`, `center`, `size`; parents and pivots are the live entry's), `maps` (`ALB`, `NOR`, `RGH`, `MTL`), `triangles`. No glow parts, no team pieces |
+| `wreck` | optional, the wreck version (M-24, fx.md "Wrecks"): `status` (`"approved"` / `"review"`, its own review, separate from the live mesh's; `note` while under review), `model`, `pieces` (by the same piece names: `mesh`, `center`, `size`; parents and pivots are the live entry's), `maps` (`ALB`, `NOR`, `RGH`, `MTL`), `triangles`. No glow parts, no team pieces |
 
 **Building a model from an entry** (what the rig tool does in "FTGG Art", `assets/models/tools/rig_model.luau`):
 - every MeshPart (pieces and glow parts) gets `Size = size` and `CFrame = CFrame.new(center) * CFrame.Angles(0, math.pi, 0)` in model space (the meshes come in turned 180° about Y);
