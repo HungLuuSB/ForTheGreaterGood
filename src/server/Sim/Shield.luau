@@ -5,14 +5,14 @@
 -- round its base against enemy shells (Shared/Combat/ShieldField has the
 -- field itself):
 --   * enemy projectiles (shells, rockets, bombs, missiles; not torpedoes,
---     strategic missiles, or interceptors chasing one) that come into the field
---     band outside the dome on course for it are slowed and turned: head-on
---     ones back, off-centre ones round the dome and on (S-82). A turned
---     shell stays live: it flies on and explodes where it lands (a missile
---     loses its lock); one that comes back is caught again. One that reaches the dome still moving in breaks
---     through, slowed, and carries on inside. Shots fired from inside pass
---     out freely; allies' shells are never touched. Hitscan and beams pass
---     through (not in the rules);
+--     strategic missiles, or interceptors chasing one) that pass through the
+--     dome's surface are slowed and turned in the field inside it (S-83):
+--     head-on ones back out, off-centre ones round the dome and on (S-82). A
+--     turned shell stays live: it flies on and explodes where it lands (a
+--     missile loses its lock); one that comes back is caught again. One that
+--     reaches the dome's core still moving in breaks through, slowed, and
+--     carries on. Shots fired from inside pass out freely; allies' shells are
+--     never touched. Hitscan and beams pass through (not in the rules);
 --   * charge is counted in shell masses (ShieldField.mass): a turned shell
 --     costs HIT_COST × its mass, a breach BREACH_COST × its mass. The field's
 --     force follows the charge (full at 50% and above);
