@@ -206,6 +206,22 @@ return function(t: any)
 		t.expect(closest < 60, "it went through where the dome was")
 	end)
 
+	t.test("idle flickers keep clear of live hit patches", function()
+		local dome = Shield.newDome(v(0, 0, 0), 60)
+		Shield.hit(dome, v(0, 60, 0), 2.5, 0)
+		t.equal(Shield.idle(dome, v(3, 60, 2), 0.1), nil)
+		t.expect(Shield.idle(dome, v(60, 5, 0), 0.1) ~= nil, "away from it")
+		Shield.expire(dome, 5)
+		t.expect(Shield.idle(dome, v(3, 60, 2), 5) ~= nil, "and over the spot once it has faded")
+		-- a hit next to a running flicker clears it
+		Shield.idle(dome, v(60, 5, 0), 5)
+		Shield.hit(dome, v(0, 60, 0), 1, 5.1)
+		for _, idle in dome.idle do
+			t.expect(Shield.len(Shield.sub(idle.hit, v(0, 60, 0))) > Shield.IDLE_CLEAR, "no flicker left by the new hit")
+		end
+		t.expect(#dome.idle >= 1, "the far one stays")
+	end)
+
 	t.test("core colour: green full, orange low, red empty", function()
 		local r, g, b = Shield.coreColor(1)
 		t.expect(g > 240 and r < 100 and b > 100, "green")

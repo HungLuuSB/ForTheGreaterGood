@@ -315,6 +315,17 @@ local warned = false
 -- Studio inspection through execute_luau (its VM doesn't share `shared`):
 -- game.ReplicatedStorage.FtggClientDebug:Invoke(query?) returns a summary.
 if RunService:IsStudio() then
+	local function groundY(x: number, z: number): number
+		return World.groundY(world, x, z)
+	end
+	-- the rendered terrain's surface (can sit above the sim's ground height), for place content
+	local terrainOnly = RaycastParams.new()
+	terrainOnly.FilterType = Enum.RaycastFilterType.Include
+	terrainOnly.FilterDescendantsInstances = { workspace.Terrain }
+	local function surfaceY(x: number, z: number): number
+		local hit = workspace:Raycast(Vector3.new(x, 2000, z), Vector3.new(0, -4000, 0), terrainOnly)
+		return if hit then hit.Position.Y else groundY(x, z)
+	end
 	local debugFn = Instance.new("BindableFunction")
 	debugFn.Name = "FtggClientDebug"
 	debugFn.OnInvoke = function(query: string?, ...: any)
@@ -353,13 +364,116 @@ if RunService:IsStudio() then
 			end
 			return { enabled = missileView.enabled, entries = entries, marks = marks, stats = missileView.stats }
 		elseif query == "shield" then
-			-- Invoke("shield", seconds?): the shield dome prototype (C-87) under the camera's focus
-			local seconds = ...
-			local focus = workspace.CurrentCamera.Focus.Position
-			local ground = workspace:Raycast(focus + Vector3.new(0, 500, 0), Vector3.new(0, -1000, 0))
-			local y = if ground then ground.Position.Y else focus.Y
-			require("./Render/ShieldFx").demo(Vector3.new(focus.X, y, focus.Z), 60, if type(seconds) == "number" then seconds else 30)
-			return { center = { focus.X, y, focus.Z } }
+			-- Invoke("shield", seconds?, radius?): the shield mechanic demo (C-87) under the camera's focus
+			local seconds, radius = ...
+			local y = surfaceY(camState.x, camState.z)
+			require("./Render/ShieldDemo").run(Vector3.new(camState.x, y, camState.z), if type(radius) == "number" then radius else 120, if type(seconds) == "number" then seconds else 30)
+			return { center = { camState.x, y, camState.z } }
+		elseif query == "shieldfx" then
+			-- Invoke("shieldfx", op, ...): the shield domes (C-90):
+			--   "review": the placeholder generators in ReplicatedStorage.ShieldFxReview
+			--     (place content: an Emitter attachment, Radius and Offset attributes)
+			--     copied round the camera's focus onto the ground, each with its dome
+			--   "spawn", x, z, radius   "bench", n, radius (a grid round the camera's focus)
+			--   "deploy" | "collapse" | "hit", intensity? | "strength", f | "drain", to?, seconds?
+			--   "slow", timeScale | "stats" (the render loop's ms and Roblox's render times) | "clear"
+			local op, a, b = ...
+			local ShieldFx = require("./Render/ShieldFx")
+			local all = ShieldFx.all()
+			if op == "review" then
+				local made = {}
+				local source = game:GetService("ReplicatedStorage"):FindFirstChild("ShieldFxReview")
+				local live = workspace:FindFirstChild("ShieldFxReviewLive") or Instance.new("Folder")
+				live.Name = "ShieldFxReviewLive"
+				live.Parent = workspace
+				for _, original in (if source then source:GetChildren() else {}) do
+					local radius = original:GetAttribute("Radius")
+					local offset = original:GetAttribute("Offset")
+					if original:IsA("Model") and type(radius) == "number" then
+						local gen = original:Clone()
+						local x = camState.x + (if typeof(offset) == "Vector3" then offset.X else 0)
+						local z = camState.z + (if typeof(offset) == "Vector3" then offset.Z else 0)
+						gen:PivotTo(CFrame.new(x, surfaceY(x, z), z)) -- the pivot is the bottom centre, upright
+						gen.Parent = live
+						local emitter = gen:FindFirstChild("Emitter", true)
+						if emitter and emitter:IsA("Attachment") then
+							ShieldFx.new(emitter, radius):deploy()
+							table.insert(made, { gen.Name, radius })
+						end
+					end
+				end
+				return made
+			elseif op == "spawn" then
+				local x, z = a or camState.x, b or camState.z
+				local radius = select(4, ...) or 48
+				ShieldFx.new(Vector3.new(x, surfaceY(x, z), z), radius):deploy()
+			elseif op == "bench" then
+				local n, radius = a or 20, b or 24
+				local cols = math.ceil(math.sqrt(n))
+				local gap = radius * 2.2
+				for i = 0, n - 1 do
+					local x = camState.x + (i % cols - (cols - 1) / 2) * gap
+					local z = camState.z + (i // cols - (math.ceil(n / cols) - 1) / 2) * gap
+					ShieldFx.new(Vector3.new(x, surfaceY(x, z), z), radius):deploy()
+				end
+			elseif op == "deploy" or op == "collapse" then
+				for _, s in all do
+					(s :: any)[op](s)
+				end
+			elseif op == "hit" then
+				-- a hit on the camera's side of every dome, a little off its centre
+				for _, s in all do
+					local toCam = (workspace.CurrentCamera.CFrame.Position - s.position).Unit
+					local jitter = Vector3.new(math.random() - 0.5, math.random() * 0.5, math.random() - 0.5)
+					s:hit(s.position + (toCam + jitter).Unit * s.radius, a or 1)
+				end
+			elseif op == "strength" then
+				for _, s in all do
+					s:setStrength(a or 1)
+				end
+			elseif op == "drain" then
+				-- strength runs down to `a` (default 0) over `b` seconds (default 4)
+				local to, seconds = a or 0, b or 4
+				local from = {}
+				for i, s in all do
+					from[i] = s.strength
+				end
+				local t0 = os.clock()
+				local conn: RBXScriptConnection
+				conn = RunService.Heartbeat:Connect(function()
+					local k = math.min(1, (os.clock() - t0) / seconds)
+					for i, s in all do
+						s:setStrength((from[i] or 1) + (to - (from[i] or 1)) * k)
+					end
+					if k >= 1 then
+						conn:Disconnect()
+					end
+				end)
+			elseif op == "slow" then
+				ShieldFx.timeScale = a or 1 -- slow motion for screenshots (1 = normal)
+			elseif op == "clear" then
+				for i = #all, 1, -1 do
+					all[i]:destroy()
+				end
+				local live = workspace:FindFirstChild("ShieldFxReviewLive")
+				if live then
+					live:Destroy()
+				end
+			end
+			local stats = game:GetService("Stats") :: any
+			local st = table.clone(ShieldFx.stats)
+			st.renderCPU = stats.RenderCPUFrameTime
+			st.renderGPU = stats.RenderGPUFrameTime
+			return st
+		elseif query == "camera" then
+			-- Invoke("camera", x?, z?, distance?, pitchDegrees?): put the camera there (screenshots)
+			local x, z, distance, pitch = ...
+			camState.follow = nil
+			camState.x = x or camState.x
+			camState.z = z or camState.z
+			camState.distance = distance or camState.distance
+			camState.pitch = if pitch then math.rad(pitch) else camState.pitch
+			return { x = camState.x, z = camState.z, distance = camState.distance, pitch = math.deg(camState.pitch) }
 		elseif query == "perf" then
 			-- average and worst ms per frame since the last call, per part
 			local out = {}

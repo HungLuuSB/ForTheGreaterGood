@@ -10,9 +10,15 @@
 -- time to live, as a fallback). FIRE, IMPACT, DECOYED, LOST_LOCK and
 -- DEATH also leave visual effects in `effects` until the caller clears
 -- them.
+--
+-- Shield domes (S-79): SHIELD records each dome's charge and flags;
+-- SHIELD_FIELD puts a projectile in a dome's field, and the client steps it
+-- with Shared/Combat/ShieldField (the server's field) until it is done;
+-- SHIELD_HIT leaves a "shield" effect (and a turned missile loses its lock).
 
 local Ballistics = require("@shared/Combat/Ballistics")
 local Lofted = require("@shared/Combat/Lofted")
+local ShieldField = require("@shared/Combat/ShieldField")
 local Guidance = require("@shared/Combat/Guidance")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
@@ -73,11 +79,21 @@ export type Projectile = {
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the point it follows (S-28)
 	countermeasure: number?, -- decoyed: what defeated it (Schema.Countermeasure, S-38)
 	turned: boolean?, -- vertical launches: pitched over yet (Guidance.vertical, S-42)
+	field: { number }?, -- in a shield dome's field: { cx, cy, cz, radius, force 0..1, phase } (S-79)
 }
 
 -- A visual effect: a tracer (fire: from the shooter to the end point), an
 -- explosion (impact), a decoyed missile (decoy) or a unit's death (death).
-export type Effect = { kind: "fire" | "impact" | "decoy" | "lost" | "death" | "intercepted", x: number, y: number, z: number, fromX: number?, fromZ: number? }
+export type Effect = {
+	kind: "fire" | "impact" | "decoy" | "lost" | "death" | "intercepted" | "shield",
+	x: number,
+	y: number,
+	z: number,
+	fromX: number?,
+	fromZ: number?,
+	breach: boolean?, -- shield: the shell broke through (S-79)
+	mass: number?, -- shield: the shell's mass
+}
 
 export type View = {
 	grid: Grid.Grid,
@@ -88,6 +104,7 @@ export type View = {
 	effects: { Effect },
 	warnings: { { projId: number, x: number, z: number } }, -- LAUNCH_WARNING records (S-48)
 	alerts: { { alert: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT records (S-68)
+	shields: { [number]: { charge: number, flags: number } }, -- SHIELD records by generator (S-79)
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
 	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
@@ -120,6 +137,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		effects = {},
 		warnings = {},
 		alerts = {},
+		shields = {},
 		strategicTick = -1,
 		received = {},
 		log = {},
@@ -191,7 +209,16 @@ local function advance(view: View)
 			end
 		end
 		local goal = p.goal
-		if goal and weapon.apex and view.layers then
+		local field = p.field
+		if field then
+			-- in a shield dome's field: the server's field step (S-79)
+			local phase
+			p.x, p.y, p.z, p.vx, p.vy, p.vz, phase = ShieldField.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, weapon.gravity or 0, field[1], field[2], field[3], field[4], field[5], ShieldField.mass(weapon), field[6], DT)
+			field[6] = phase
+			if phase == ShieldField.DONE or phase == ShieldField.FREE then
+				p.field = nil
+			end
+		elseif goal and weapon.apex and view.layers then
 			-- a strategic missile: the server's flight (Shared/Combat/Lofted, S-51)
 			local climbLeft = Guidance.climbLeft(weapon, p.y, Layers.heightAt(view.layers, p.x, p.z))
 			p.x, p.y, p.z, p.vx, p.vy, p.vz = Lofted.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, goal[1], goal[2], goal[3], goal[2] + weapon.apex, weapon.gravity :: number, math.rad(weapon.turnRate :: number) * DT, climbLeft, DT)
@@ -290,6 +317,23 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 						else nil,
 					ttl = ttlOf(weapon),
 				}
+				continue
+			elseif kind == EK.SHIELD then
+				view.shields[e.unitId :: number] = { charge = e.charge :: number, flags = e.shieldFlags :: number }
+				continue
+			elseif kind == EK.SHIELD_FIELD then
+				local p = view.projectiles[e.projId :: number]
+				assert(p, `SHIELD_FIELD for projectile {e.projId} the client doesn't have`)
+				local x, y, z = pos(e)
+				p.field = { x, y, z, e.radius :: number, (e.force :: number) / 255, e.phase :: number }
+				continue
+			elseif kind == EK.SHIELD_HIT then
+				local x, y, z = pos(e)
+				local p = view.projectiles[e.projId :: number]
+				if p and not e.breach then
+					p.target = 0 -- turned: a missile loses its lock
+				end
+				table.insert(view.effects, { kind = "shield", x = x, y = y, z = z, breach = e.breach, mass = (e.mass :: number) / Schema.SHIELD_MASS_SCALE })
 				continue
 			elseif kind == EK.ALERT then
 				local x, z = view.grid:decode(e.cell :: number, 128, 128)

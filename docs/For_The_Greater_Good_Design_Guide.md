@@ -1013,6 +1013,14 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - **Interception:** radar SAM sites and mobile radar SAMs (`intercepts = { chance = 0.2 }`, S-50) fire interceptors from their stockpiles at an enemy strategic missile their team detects within their range, before any aircraft (10.2). An interceptor navigates against the missile's position and velocity and bursts at its closest approach within its fuse (`aoe`, 20 studs); the burst destroys the missile with probability `chance` (sim Prng). A destroyed missile doesn't detonate. Several sites, or full stockpiles, are needed against more than one missile; empty stockpiles stop nothing.
 - **Wire** (protocol 16, 7.3): every player gets LAUNCH_WARNING at a launch and the missile itself wherever it flies; INTERCEPTOR records name the missile they chase; INTERCEPTED replaces the IMPACT of a destroyed missile.
 
+### 10.10 Shield domes (S-79)
+
+- **Generators:** a T2 structure per faction (the user's decision: structure only, no vehicle): Order's Phalanx (dome radius 120) and Chaos's Carapace (radius 80, cheaper). The dome is a sphere round the generator's base.
+- **Field** (`Shared/Combat/ShieldField`, the user's rules through the client's C-87 prototype): a band 50 studs deep outside the dome. An enemy shell (shell, rocket, bomb or missile) that enters it moving in is braked along the dome's normal, stops (the hit), and is thrown back out, close to a mirror bounce off the dome where it turned (S-80, the user's rule: head-on shells go straight back, glancing ones are diverted at about their entry angle). It stays **live**: it flies on and explodes where it lands; a missile loses its lock. Heavier shells take longer to stop (force over mass^0.6; mass = best damage / 150). One that reaches the dome still moving in breaks through, slowed. Shots from inside pass out; allies' shells, torpedoes, nukes and hitscan or beam weapons pass.
+- **Charge:** counted in shell masses (Phalanx 300, Carapace 200; S-80, the user: 10× the first numbers). A hit costs the shell's mass, a breach half. The force is full at 50% charge and above and falls in proportion below. At 0% the dome collapses; it rises again at 25%. Recharging (15 / 12 per second, 20 s from empty to full) draws power (40 / 25 per second) at the team's stall ratio, nothing when full. A newly built generator starts empty.
+- **Counters:** sustained fire, heavy shells on a weakened dome, power stalls, hitscan weapons, units that drive in.
+- **Wire** (protocol 24, 7.3): SHIELD (charge, up, recharging), SHIELD_FIELD (a shell entered a field; clients step it with the shared field), SHIELD_HIT (turned or through).
+
 ### 10.6 Damage
 
 - `damage = weapon.damage[target.armorClass]`.
