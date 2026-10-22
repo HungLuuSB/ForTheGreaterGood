@@ -126,6 +126,8 @@ Skirmish.RETREAT_RADIUS = 450 -- studs round a wave's centre where it counts kno
 Skirmish.RETREAT_RATIO = 1.3 -- enemy value / wave value that makes a wave fall back (S-92)
 Skirmish.RETREAT_MARGIN = 1.2 -- the next wave needs this times the value it fled (S-92)
 Skirmish.RETREAT_HOLD = 300 -- ticks no wave leaves after a retreat (S-92)
+Skirmish.CONTESTED_ESCORT = 2 -- army units a Chaos worker needs to take a contested deposit (S-97)
+Skirmish.CONTESTED_RADIUS = 300 -- studs: known armed enemies this near a deposit make it contested (S-97)
 Skirmish.RALLY_GAP = 600 -- studs at least between two rally points: beyond artillery range (Verdict 480 since S-62) with room for the army's spread (S-57)
 
 export type Level = {
@@ -161,6 +163,7 @@ export type Level = {
 	minotaurShare: number?, -- share of advanced-plant army items that are Minotaurs (Chaos)
 	locustShare: number?, -- share of plant tanks that are Locusts (Chaos)
 	lanes: number?, -- 2: half of each wave attacks round a flank (Chaos)
+	contested: boolean?, -- workers take contested deposits only with an escort of `escorts` (Chaos, S-97)
 	jammer: boolean?, -- a mobile jammer guards each wave (Chaos)
 }
 
@@ -284,6 +287,10 @@ function Skirmish.styled(cfg: Level, prefix: string, levelName: string): Level
 			-- make up the same wave with more of them, no count bonus)
 			s.lanes = 2
 			s.jammer = true
+			-- workers stay off contested deposits until an escort can go
+			-- with them (S-97: Chaos lost 75 of 81 workers in Order's half)
+			s.contested = true
+			s.escorts = math.max(cfg.escorts, Skirmish.CONTESTED_ESCORT)
 		end
 	end
 	return table.freeze(s) :: Level
@@ -318,6 +325,7 @@ export type Brain = {
 	dirZ: number,
 	escorts: { [number]: number }, -- army unit → the worker it guards (hard)
 	escortWanted: { [number]: number }, -- workers on their way to a far deposit → tick sent; waiting for an escort
+	enemyStarts: { { number } }, -- the other starts' { x, z } (S-97: contested deposits)
 	seaX: number?, -- a navigable sea spot near home (hard, naval maps)
 	seaZ: number?,
 	lastFleetOrder: number,
@@ -476,6 +484,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		dirZ = (enemyZ - homeZ) / dl,
 		escorts = {},
 		escortWanted = {},
+		enemyStarts = enemyStarts,
 		seaX = seaX,
 		seaZ = seaZ,
 		lastFleetOrder = -math.huge,
@@ -564,19 +573,33 @@ end
 
 -- The nearest deposit with nothing on it, as far as the team knows, and
 -- nobody sent there lately.
-function Skirmish.freeDeposit(brain: Brain): number?
+-- The first free deposit, nearest home first; `accept` may refuse some
+-- (contested ones without an escort, S-97).
+function Skirmish.freeDeposit(brain: Brain, accept: ((number, number, number) -> boolean)?): number?
 	local sim = brain.sim
 	local pm = sim.map :: Passability.PassMap
 	local def = sim.defs.units[faction(brain, "extractor", "extractor")]
 	for _, cell in brain.deposits do
 		if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
 			local x, z = pm.grid:cellCenter(pm.grid:coords(cell))
-			if Placement.check(sim, def, x, z, nil, brain.ally) then
+			if Placement.check(sim, def, x, z, nil, brain.ally) and (accept == nil or accept(cell, x, z)) then
 				return cell
 			end
 		end
 	end
 	return nil
+end
+
+-- Is the deposit at (x, z) contested (S-97): nearer an enemy start than
+-- its own, or with known armed enemies within CONTESTED_RADIUS?
+function Skirmish.contested(brain: Brain, x: number, z: number): boolean
+	local own = (x - brain.homeX) ^ 2 + (z - brain.homeZ) ^ 2
+	for _, s in brain.enemyStarts do
+		if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < own then
+			return true
+		end
+	end
+	return Skirmish.enemyValueNear(brain, x, z, Skirmish.CONTESTED_RADIUS) > 0
 end
 local freeDeposit = Skirmish.freeDeposit
 
@@ -1009,7 +1032,22 @@ local function think(brain: Brain)
 				continue
 			end
 		end
-		local cell = if c.extractors < cfg.maxExtractors then freeDeposit(brain) else nil
+		-- contested deposits only with an escort ready (Chaos, S-97)
+		local escortReady = false
+		local accept = nil
+		if cfg.contested then
+			local free = 0
+			for _, a in c.army do
+				if not brain.attacking[a] and not brain.escorts[a] then
+					free += 1
+				end
+			end
+			escortReady = free >= cfg.escorts
+			accept = function(_cell: number, dx: number, dz: number): boolean
+				return escortReady or not Skirmish.contested(brain, dx, dz)
+			end
+		end
+		local cell = if c.extractors < cfg.maxExtractors then freeDeposit(brain, accept) else nil
 		if cell then
 			local g = (sim.map :: Passability.PassMap).grid
 			local x, z = g:cellCenter(g:coords(cell))
@@ -1021,7 +1059,10 @@ local function think(brain: Brain)
 				if cfg.maxExtractors < math.huge then
 					c.extractors += 1 -- counts toward the cap at once
 				end
-				if cfg.escorts > 0 and (x - brain.homeX) ^ 2 + (z - brain.homeZ) ^ 2 > Skirmish.ESCORT_RADIUS ^ 2 then
+				if cfg.contested and Skirmish.contested(brain, x, z) then
+					brain.escortWanted[id] = sim.tick -- Chaos: the escort goes with it (S-97)
+					brain.lastFarX, brain.lastFarZ = x, z
+				elseif cfg.escorts > 0 and not cfg.contested and (x - brain.homeX) ^ 2 + (z - brain.homeZ) ^ 2 > Skirmish.ESCORT_RADIUS ^ 2 then
 					brain.escortWanted[id] = sim.tick -- hard: an escort for the expansion
 					brain.lastFarX, brain.lastFarZ = x, z
 				end

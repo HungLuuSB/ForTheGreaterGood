@@ -480,7 +480,12 @@ Ground units don't send height: the client looks it up from its own copy of the 
     - each side's open staging field at |x| 420–640;
     - the bocage at |x| < 400: 176-stud fields bounded by hedgerows. A hedgerow is a 1-cell bank 6 studs high (rock) that blocks land units and low direct fire, with a 40-stud gap every 96 studs, 24 of them passable;
     - two villages at (±220, −150): 2 × 2-cell houses, 8 studs high.
-  - **Starts and deposits:** (−850, 0) and (850, 0). There are no deposits.
+  - **Starts and deposits:** (−850, 0) and (850, 0). Deposits (S-98), mirrored:
+    - four of value 4 round each start and two pairs of value 3 behind each river;
+    - a pair of value 3 in each side's staging fields;
+    - two pairs of value 3 in each half of the bocage (contested);
+    - a rich pair of value 6 in the middle.
+    - In all, 30 deposits worth 104, each on an open field cell.
   - **For drawing:** `Normandy.feature(cx, cz)` names each cell (sea, beach, bluff, draw, hedge, house, road, bridge, river, field).
 
 ---

@@ -1334,3 +1334,16 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - an Inferno ignores a radar-only Paladin and fires once a scout sees it;
   - switched off: no fire and 400 damage → 100; on again: fire and full damage;
   - both flak towers fire on and damage an enemy jet.
+
+## S-98 — Supply deposits on Normandy (next.md item 5, the user's queue task 5) (2026-10-23)
+
+- **Asked:** add supply deposits to Normandy, behind each river and some in the bocage.
+- **Built** (`Normandy.DEPOSITS`, `CENTRE_DEPOSITS`). Each west deposit goes on the nearest free field cell to its spot, and its east twin on the exactly mirrored cell, so the map stays symmetric:
+  - **home:** four of value 4 round each start;
+  - **rear:** a pair of value 3 north and one south of each start, behind the river;
+  - **staging:** a pair of value 3 in each side's staging fields;
+  - **bocage:** two pairs of value 3 in each half of the bocage, north and south of its village (contested ground);
+  - **centre:** a rich pair of value 6 south of the middle road.
+  - In all, 30 deposits worth 104. The other 1v1 maps have 18 worth 68; Normandy is twice their size.
+- **Tests:** `Normandy.spec`: 30 deposits worth 104, all on field cells, mirrored, 8 behind each river.
+- The faction_ai re-run is in task 3's report.
