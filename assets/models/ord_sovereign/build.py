@@ -72,12 +72,13 @@ def build_base(p):
     inner = lib.offset_polygon(outline, 0.1)
     for sx in (-1, 1):
         x0, x1 = (2.05, 3.0) if sx > 0 else (-3.0, -2.05)
-        p.band_x(outline, inner, x0, x1, "track")
-        for z in WHEELS:
-            p.cylinder("x", (sx * 2.52, 0.46, z), 0.4, 0.4, 12, "rubber", cap_kinds=("trim", "trim"))
-            p.cylinder("x", (sx * 2.52, 0.46, z), 0.14, 0.48, 8, "steel")
-        p.cylinder("x", (sx * 2.52, 0.5, 3.95), 0.44, 0.5, 12, "steel")
-        p.cylinder("x", (sx * 2.52, 0.62, -4.0), 0.34, 0.5, 12, "steel")
+        with p.sub("trackL" if sx < 0 else "trackR", (sx * 2.52, 0.46, 0.0), "scroll", (1, 0, 0)):  # M-27 track set
+            p.band_x(outline, inner, x0, x1, "track")
+            for z in WHEELS:
+                p.cylinder("x", (sx * 2.52, 0.46, z), 0.4, 0.4, 12, "rubber", cap_kinds=("trim", "trim"))
+                p.cylinder("x", (sx * 2.52, 0.46, z), 0.14, 0.48, 8, "steel")
+            p.cylinder("x", (sx * 2.52, 0.5, 3.95), 0.44, 0.5, 12, "steel")
+            p.cylinder("x", (sx * 2.52, 0.62, -4.0), 0.34, 0.5, 12, "steel")
     # thick skirts in four panels, the front one cut back; team plate, running strip
     for sx in (-1, 1):
         x0, x1 = (SKIRT_IN, SKIRT_OUT) if sx > 0 else (-SKIRT_OUT, -SKIRT_IN)

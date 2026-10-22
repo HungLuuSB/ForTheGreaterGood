@@ -1,7 +1,40 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 1844 triangles, glow share 5.0%",
+  "revision": "Animated pieces (M-27): 1844 triangles, glow share 5.0%",
   "bar": {
+    "model": "rbxassetid://98229801831237",
+    "meshes": {
+      "armL": "rbxassetid://125958134940904",
+      "armL_glow_running": "rbxassetid://120844694970766",
+      "armL_glow_weapon": "rbxassetid://139259505436777",
+      "armR": "rbxassetid://79025790211394",
+      "armR_glow_running": "rbxassetid://112788200830523",
+      "armR_glow_weapon": "rbxassetid://70436073290802",
+      "base": "rbxassetid://111556404150487",
+      "base_glow_head": "rbxassetid://104067457910288",
+      "base_glow_running": "rbxassetid://76826621455100",
+      "trackL": "rbxassetid://110041737626201",
+      "trackR": "rbxassetid://90406320327921",
+      "turret": "rbxassetid://119491082504258",
+      "turret_glow_running": "rbxassetid://115703380289263"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73285710295267",
+      "RGH": "rbxassetid://119712818627373",
+      "NOR": "rbxassetid://112261339992998",
+      "MTL": "rbxassetid://78802300811925",
+      "EMI": "rbxassetid://122541933358696"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://121805878728842",
+      "NOR": "rbxassetid://79850107131082",
+      "RGH": "rbxassetid://96588588716711",
+      "MTL": "rbxassetid://107738590716746",
+      "EMI": "rbxassetid://139821381842272"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_juggernaut_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://114402565517622",
     "meshes": {
       "armL": "rbxassetid://133403698041044",
@@ -30,6 +63,6 @@
       "MTL": "rbxassetid://72914391888578",
       "EMI": "rbxassetid://104842864265047"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_juggernaut_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 1844 triangles, glow share 5.0%"
   }
 }

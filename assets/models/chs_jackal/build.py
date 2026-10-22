@@ -45,8 +45,8 @@ def build_base(p):
     for sx in (-1, 1):
         p.box((sx * 1.3, 1.35, -2.62), (0.45, 0.2, 0.06), "head")
     for sx in (-1, 1):
-        wheel(p, sx * 2.05, 0.65, -1.9, 0.65, 0.6)
-        wheel(p, sx * 2.15, 0.9, 1.8, 0.9, 0.8)
+        wheel(p, sx * 2.05, 0.65, -1.9, 0.65, 0.6, name=f"wheel{'L' if sx < 0 else 'R'}1")
+        wheel(p, sx * 2.15, 0.9, 1.8, 0.9, 0.8, name=f"wheel{'L' if sx < 0 else 'R'}2")
 
 
 def build_turret(p):

@@ -9,27 +9,63 @@
     "base": {
       "parent": null,
       "center": [
-        -0.0069,
-        1.5728,
-        -0.6644
+        0.0047,
+        1.6364,
+        -0.6647
       ],
       "size": [
-        6.6223,
-        3.2031,
-        9.244
+        6.5985,
+        2.9688,
+        9.2054
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -2.4784,
+        0.5171,
+        0.0473
+      ],
+      "size": [
+        0.7538,
+        1.1151,
+        7.9215
+      ],
+      "pivot": [
+        -2.47,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        2.4909,
+        0.4999,
+        0.0136
+      ],
+      "size": [
+        0.8023,
+        1.0636,
+        7.817
+      ],
+      "pivot": [
+        2.47,
+        0.46,
+        0.0
       ]
     },
     "nano": {
       "parent": "base",
       "center": [
-        0.0158,
-        3.3411,
-        0.9502
+        0.0528,
+        3.3527,
+        0.9597
       ],
       "size": [
-        2.5705,
-        3.2128,
-        4.9916
+        2.5874,
+        3.2427,
+        4.9621
       ],
       "pivot": [
         0.0,
@@ -38,8 +74,39 @@
       ]
     }
   },
-  "attachments": {},
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        4.55,
+        -1.45
+      ]
+    }
+  },
   "teamColorPieces": [],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -52,7 +119,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 2292,
+    "base": 1152,
+    "trackL": 576,
+    "trackR": 564,
     "nano": 584,
     "total": 2876
   },

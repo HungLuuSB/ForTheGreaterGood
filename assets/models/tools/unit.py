@@ -100,11 +100,11 @@ FACTIONS["neutral"] = {
     "variants": {"bar": {"type": "plain", "base": (92, 88, 80), "mottle": 0.25, "chip": (120, 116, 108), "grime": (60, 56, 50)}},
     "specs": {**FACTIONS["chaos"]["specs"],
               "paint": {"base": None, "roughness": 0.85, "metallic": 0.0, "edge_wear": 0.25, "ao": 0.6},  # stone
-              "dark": {"base": (58, 55, 50), "roughness": 0.9, "metallic": 0.05, "edge_wear": 0.2, "ao": 0.55},  # dark rock
+              "dark": {"base": (74, 68, 60), "roughness": 0.9, "metallic": 0.05, "edge_wear": 0.2, "ao": 0.6},  # rock, scraped soil
               "trim": {"base": (104, 98, 88), "roughness": 0.85, "metallic": 0.0, "edge_wear": 0.3, "ao": 0.6},  # loose stones
               "steel": {"base": (128, 118, 98), "roughness": 0.32, "metallic": 0.85, "edge_mode": "highlight", "edge_wear": 0.35, "ao": 0.7},  # ore sheen
-              "team": {"base": (40, 38, 34), "roughness": 0.95, "metallic": 0.0, "mask": "team", "wash": 0.25,
-                       "chip_reveal": 0.2, "crease": 0.5, "edge_wear": 0.0},  # scraped ground, tinted per terrain
+              "team": {"base": (60, 56, 50), "roughness": 0.95, "metallic": 0.0, "mask": "team", "wash": 0.08,
+                       "chip_reveal": 0.15, "crease": 0.35, "edge_wear": 0.0},  # scraped ground, tinted per terrain (lighter at night: B's check)
               },
 }
 

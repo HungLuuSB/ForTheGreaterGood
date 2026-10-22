@@ -9,19 +9,76 @@
     "base": {
       "parent": null,
       "center": [
-        0.0488,
-        3.943,
-        -0.0145
+        -0.0549,
+        3.9927,
+        -0.0151
       ],
       "size": [
-        22.0578,
-        8.1502,
-        22.1101
+        21.888,
+        8.002,
+        22.1813
+      ]
+    },
+    "trolley": {
+      "parent": "base",
+      "center": [
+        3.8856,
+        5.5547,
+        -0.565
+      ],
+      "size": [
+        0.149,
+        2.0005,
+        0.6438
+      ],
+      "pivot": [
+        4.0,
+        7.0,
+        -0.5
       ]
     }
   },
-  "attachments": {},
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        3.5,
+        0.55,
+        2.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        4.0,
+        6.4,
+        -0.5
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        3.5,
+        6.8,
+        -4.0
+      ]
+    }
+  },
   "teamColorPieces": [],
+  "visualPieces": [
+    "trolley"
+  ],
+  "anim": {
+    "trolley": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 5
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -34,7 +91,8 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 816,
+    "base": 804,
+    "trolley": 12,
     "total": 816
   },
   "textures": {

@@ -35,9 +35,10 @@ def build_base(p):
     for z in (-4.0, 8.0):
         p.box((3.5, 7.2, z), (11.6, 0.7, 0.7), "steel", bevel=0.03)
     p.box((4.0, 7.65, 2.0), (0.8, 0.5, 12.6), "trim", bevel=0.03)
-    p.box((4.0, 7.0, -0.5), (1.6, 0.8, 1.4), "paint", bevel=0.04)
-    p.box((4.0, 5.6, -0.5), (0.12, 2.0, 0.12), "dark")
-    p.box((4.0, 6.5, -0.5), (1.4, 0.12, 1.2), "power")  # trolley build light
+    with p.sub("trolley", (4.0, 7.0, -0.5), "slide", (0, 0, 1), 5):  # M-27 along the crane rail
+        p.box((4.0, 7.0, -0.5), (1.6, 0.8, 1.4), "paint", bevel=0.04)
+        p.box((4.0, 5.6, -0.5), (0.12, 2.0, 0.12), "dark")
+        p.box((4.0, 6.5, -0.5), (1.4, 0.12, 1.2), "power")  # trolley build light
     for x in (-1.6, 8.6):  # bay guide lights
         p.box((x, 0.56, 2.0), (0.16, 0.08, 11.0), "light")
     for i in range(4):  # shed door build lights

@@ -1,7 +1,28 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Supply deposit (M-28): 552 triangles, glow share 0.0%",
+  "revision": "Lighter neutral look (B's feedback: deposit cells read nearly black at night): 552 triangles, glow share 0.0%",
   "bar": {
+    "model": "rbxassetid://71360785908151",
+    "meshes": {
+      "base": "rbxassetid://137415231258569"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94938053544457",
+      "RGH": "rbxassetid://82583455313204",
+      "NOR": "rbxassetid://88874553975879",
+      "MTL": "rbxassetid://132821838117904",
+      "EMI": "rbxassetid://86376419746824"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://91172502819732",
+      "NOR": "rbxassetid://138521678752571",
+      "RGH": "rbxassetid://137380328606408",
+      "MTL": "rbxassetid://121934015119820",
+      "EMI": "rbxassetid://136211037100110"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.deposit_3_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://106374999103836",
     "meshes": {
       "base": "rbxassetid://137415231258569"
@@ -20,6 +41,6 @@
       "MTL": "rbxassetid://79138621428428",
       "EMI": "rbxassetid://130888741245078"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.deposit_3_bar in FTGG Art"
+    "note": "Supply deposit (M-28): 552 triangles, glow share 0.0%"
   }
 }

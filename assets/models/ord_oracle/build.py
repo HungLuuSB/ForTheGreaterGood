@@ -40,7 +40,7 @@ def build_base(p):
     for sx in (-1, 1):
         p.box((sx * 1.4, 1.35, -4.48), (0.6, 0.2, 0.08), "head")
         for z in WHEELS_Z:
-            wheel(p, sx * 2.2, 0.75, z, 0.75, 0.6)
+            wheel(p, sx * 2.2, 0.75, z, 0.75, 0.6, name=f"wheel{'L' if sx < 0 else 'R'}{WHEELS_Z.index(z) + 1}")
 
 
 def build_dish(p):

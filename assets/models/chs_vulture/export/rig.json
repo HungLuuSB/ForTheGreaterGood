@@ -10,12 +10,30 @@
       "center": [
         0.0,
         1.625,
-        1.9
+        1.825
       ],
       "size": [
         1.85,
         3.25,
-        9.2
+        9.05
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.2,
+        2.1,
+        5.7
+      ],
+      "size": [
+        0.06,
+        1.6,
+        1.6
+      ],
+      "pivot": [
+        0.2,
+        2.1,
+        5.7
       ]
     },
     "rotor": {
@@ -67,8 +85,30 @@
   },
   "teamColorPieces": [
     "base",
-    "rotor"
+    "rotor",
+    "tailRotor"
   ],
+  "visualPieces": [
+    "tailRotor"
+  ],
+  "anim": {
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -145,7 +185,8 @@
   ],
   "glowShare": 0.0592,
   "triangles": {
-    "base": 506,
+    "base": 478,
+    "tailRotor": 28,
     "rotor": 76,
     "nano": 120,
     "total": 702

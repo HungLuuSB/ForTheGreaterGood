@@ -52,9 +52,10 @@ def build_base(p):
     inner = lib.offset_polygon(outline, 0.12)
     for sx in (-1, 1):
         x0, x1 = (3.8, 5.4) if sx > 0 else (-5.4, -3.8)
-        p.band_x(outline, inner, x0, x1, "track")
-        for z in WHEELS:
-            p.cylinder("x", (sx * 4.6, 0.55, z), 0.5, 0.5, 12, "rubber", cap_kinds=("trim", "trim"))
+        with p.sub("trackL" if sx < 0 else "trackR", (sx * 4.6, 0.55, 0.0), "scroll", (1, 0, 0)):  # M-27 track set
+            p.band_x(outline, inner, x0, x1, "track")
+            for z in WHEELS:
+                p.cylinder("x", (sx * 4.6, 0.55, z), 0.5, 0.5, 12, "rubber", cap_kinds=("trim", "trim"))
         p.box((sx * 4.6, 1.85, 0.5), (1.9, 0.25, 9.0), "paint", bevel=0.04)
         p.box((sx * 5.57, 1.85, 0.5), (0.05, 0.16, 8.0), "light")  # guard edge lights
 

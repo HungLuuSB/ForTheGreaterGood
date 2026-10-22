@@ -112,5 +112,15 @@
       "MTL",
       "EMI"
     ]
+  },
+  "anim": {
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        0,
+        1
+      ]
+    }
   }
 }

@@ -139,8 +139,17 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 			end
 		end
 		local wp = if type(w.pieces) == "table" then w.pieces else {}
+		-- the mesh's own animated sub-pieces (M-27) may stay merged into
+		-- their parent on a wreck: nothing moves on a wreck
+		local sub: { [string]: boolean } = {}
+		for _, name in e.visualPieces or {} do
+			sub[name] = true
+		end
 		for name in e.pieces do
 			local p = wp[name]
+			if p == nil and sub[name] then
+				continue
+			end
 			if p == nil or not isAssetId(p.mesh) then
 				bad(`wreck: piece {name} mesh missing`)
 			elseif not isVec3(p.center) or not isVec3(p.size) then

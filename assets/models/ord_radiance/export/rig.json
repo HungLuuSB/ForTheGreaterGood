@@ -306,5 +306,25 @@
       "MTL",
       "EMI"
     ]
+  },
+  "anim": {
+    "shellL": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        -1
+      ],
+      "range": 90
+    },
+    "shellR": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 90
+    }
   }
 }

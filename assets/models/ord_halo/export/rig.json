@@ -9,13 +9,121 @@
       "parent": null,
       "center": [
         0.0,
-        1.5225,
+        1.9225,
         -0.3
       ],
       "size": [
-        5.08,
-        3.045,
+        4.79,
+        2.245,
         7.8
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        -2.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.2,
+        0.75,
+        -2.4
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        0.2
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.2,
+        0.75,
+        0.2
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        2.6
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.2,
+        0.75,
+        2.6
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        -2.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.2,
+        0.75,
+        -2.4
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        0.2
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.2,
+        0.75,
+        0.2
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        2.6
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.2,
+        0.75,
+        2.6
       ]
     },
     "turret": {
@@ -67,9 +175,73 @@
   },
   "teamColorPieces": [
     "base",
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
     "turret",
     "launcher"
   ],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -167,7 +339,13 @@
   ],
   "glowShare": 0.0366,
   "triangles": {
-    "base": 792,
+    "base": 456,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelL3": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
+    "wheelR3": 56,
     "turret": 64,
     "launcher": 360,
     "total": 1216
