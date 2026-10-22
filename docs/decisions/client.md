@@ -822,3 +822,20 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
   - The device editable-mesh budget forced the 16-stud vertex grid.
   - Roblox samples the texture without smoothing, so the blend is done in the image.
   - The pixel cap bounds the cost of a whole-map change.
+
+### C-101 — A moonlit night is the default atmosphere; low environment specular; lighter explored fog (2026-10-23)
+
+**Decision:**
+- **Preset:** `Render/Atmosphere` gets a `night` preset, first in the order and the default (`Settings.ATMOSPHERES`, `atmosphere = "night"`).
+  - ClockTime 0, Brightness 2.5, ambient (112, 118, 132), outdoor (140, 146, 162), exposure 1.1, shadow softness 0.6.
+  - EnvironmentSpecularScale 0.15, EnvironmentDiffuseScale 0.6.
+  - Atmosphere density 0.2 / offset 0.15 / haze 0.6; bloom 0.8 / 26 / 1.2; sun rays 0; colour contrast 0.1, saturation −0.18, cool tint.
+- **New fields:** presets gain optional `specular` and `diffuse`, captured from the place.
+- **Fog blanket:** the explored look becomes grey 40, alpha 0.4.
+
+**Why:**
+- The user: the maps have no sun (a dark battlefield), and lighting with less brightness and with shadow control should counter the fog blanket's "plastic wrapping".
+- The glossy look came mostly from environment specular, so it is cut to 15%.
+- The light levels keep units readable at every zoom; a thicker atmosphere flattened the strategic view.
+- Under night light the old explored look read as never seen.
+- Lighting.Technology isn't scriptable, so it stays a place setting (Future recommended).
