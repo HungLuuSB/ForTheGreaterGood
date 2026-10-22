@@ -25,7 +25,9 @@ local Kit = {}
 Kit.FAMILY = "rbxasset://fonts/families/Montserrat.json"
 Kit.COLOR = table.freeze({
 	panel = Color3.fromRGB(20, 22, 27),
-	panelTransparency = 0.15, -- ~85% opaque
+	panelTransparency = 0.05, -- ~95% opaque: the HUD never shows through (C-106)
+	scrim = Color3.fromRGB(0, 0, 0),
+	scrimTransparency = 0.45, -- the dark veil over the game behind a modal panel
 	raised = Color3.fromRGB(255, 255, 255), -- light overlays, used very transparent
 	border = Color3.fromRGB(255, 255, 255),
 	borderTransparency = 0.86,
@@ -195,6 +197,8 @@ export type Panel = {
 	sidebar: Frame?,
 	select: (name: string) -> (),
 	selected: string?,
+	scrim: Frame, -- the dark veil behind it (shown with it; clicks on it stop there)
+	setHeight: (height: number) -> (), -- size to content: its height, never above the screen
 }
 
 -- A panel of `size` centred in `parent`, titled `title`. With `nav` (item
@@ -202,8 +206,19 @@ export type Panel = {
 -- highlighted pill on the selected one; `onSelect(name)` is called on a
 -- click and by panel.select.
 function Kit.panel(parent: Instance, title: string, size: Vector2, nav: { string }?, onSelect: ((string) -> ())?): Panel
+	-- modal: a dark scrim over the game, under the panel (C-106)
+	local scrim = Instance.new("Frame")
+	scrim.Name = title .. "Scrim"
+	scrim.BackgroundColor3 = Kit.COLOR.scrim
+	scrim.BackgroundTransparency = Kit.COLOR.scrimTransparency
+	scrim.BorderSizePixel = 0
+	scrim.Size = UDim2.fromScale(1, 1)
+	scrim.Active = true -- clicks on it don't reach the game
+	scrim.ZIndex = 1
+	scrim.Parent = parent
 	local root = Instance.new("Frame")
 	root.Name = title -- (the lobby's gui holds the lobby and the statistics panels)
+	root.ZIndex = 2
 	root.BackgroundTransparency = 1
 	root.AnchorPoint = Vector2.new(0.5, 0.5)
 	root.Position = UDim2.fromScale(0.5, 0.5)
@@ -246,16 +261,25 @@ function Kit.panel(parent: Instance, title: string, size: Vector2, nav: { string
 		corner(s, Kit.RADIUS)
 	end
 	-- never larger than the screen (at the settings' UI scale): contents scroll
+	local wanted = size
 	local function fit()
 		local camera = workspace.CurrentCamera
 		local vp = if camera then camera.ViewportSize else Vector2.new(1920, 1080)
 		local gui = root:FindFirstAncestorOfClass("ScreenGui")
 		local uiScale = gui and gui:FindFirstChild("SettingsScale")
 		local k = if uiScale and uiScale:IsA("UIScale") then uiScale.Scale else 1
-		root.Size = UDim2.fromOffset(math.min(size.X, vp.X / k - 24), math.min(size.Y, vp.Y / k - 24))
+		root.Size = UDim2.fromOffset(math.min(wanted.X, vp.X / k - 24), math.min(wanted.Y, vp.Y / k - 24))
 	end
 	fit()
-	root:GetPropertyChangedSignal("Visible"):Connect(fit)
+	scrim.Visible = root.Visible
+	root:GetPropertyChangedSignal("Visible"):Connect(function()
+		scrim.Visible = root.Visible
+		fit()
+	end)
+	local function setHeight(h: number)
+		wanted = Vector2.new(size.X, math.max(120, math.ceil(h)))
+		fit()
+	end
 	if workspace.CurrentCamera then
 		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
 	end
@@ -333,6 +357,8 @@ function Kit.panel(parent: Instance, title: string, size: Vector2, nav: { string
 			title = titleLabel,
 			sidebar = side,
 			selected = nil,
+			scrim = scrim,
+			setHeight = setHeight,
 			select = function(name: string)
 				p.selected = name
 				for n, b in buttons do
@@ -350,7 +376,7 @@ function Kit.panel(parent: Instance, title: string, size: Vector2, nav: { string
 		content.Position = UDim2.fromOffset(Kit.SPACE.xl, 60)
 		content.Size = UDim2.new(1, -Kit.SPACE.xl * 2, 1, -60 - Kit.SPACE.l)
 		content.Parent = frame
-		p = { root = root, frame = frame, content = content, title = titleLabel, sidebar = nil, selected = nil, select = function(_: string) end }
+		p = { root = root, frame = frame, content = content, title = titleLabel, sidebar = nil, selected = nil, scrim = scrim, setHeight = setHeight, select = function(_: string) end }
 	end
 	return p
 end
@@ -872,17 +898,15 @@ local function enqueue(job: () -> ())
 	end)
 end
 
-Kit.PLOT = Vector2.new(220, 118) -- plot area pixels (also the image size); three charts fit across the statistics panel
-
--- A small line chart titled `title` (e.g. "Supply · Produced"): minimal
--- axes (0, the top value, 0:00 and the end time), lines drawn into one
--- EditableImage.
+-- A line chart titled `title` (e.g. "Supply · Produced") that fills its
+-- parent cell: minimal axes (0, half, the top value, 0:00 and the end
+-- time), lines drawn into one EditableImage at the plot's real pixel size
+-- (redrawn when it changes size, C-106).
 function Kit.chart(parent: Instance, title: string, order: number?): LineChart
-	local W, H = Kit.PLOT.X, Kit.PLOT.Y
 	local f = Instance.new("Frame")
 	f.Name = "Chart"
 	f.BackgroundTransparency = 1
-	f.Size = UDim2.fromOffset(W + 44, H + 44)
+	f.Size = UDim2.fromScale(1, 1)
 	f.LayoutOrder = order or 0
 	f.Parent = parent
 	local t = Kit.text(f, title, "label")
@@ -890,10 +914,10 @@ function Kit.chart(parent: Instance, title: string, order: number?): LineChart
 	local plot = Instance.new("Frame")
 	plot.Name = "Plot"
 	plot.BackgroundTransparency = 1
-	plot.Position = UDim2.fromOffset(40, 22)
-	plot.Size = UDim2.fromOffset(W, H)
+	plot.Position = UDim2.fromOffset(42, 24)
+	plot.Size = UDim2.new(1, -50, 1, -46)
 	plot.Parent = f
-	-- axes: left and bottom lines, a faint middle grid line
+	-- axes: left and bottom lines, faint top and middle grid lines
 	local function rule(pos: UDim2, size: UDim2, alpha: number)
 		local r = Instance.new("Frame")
 		r.BackgroundColor3 = Kit.COLOR.raised
@@ -907,19 +931,19 @@ function Kit.chart(parent: Instance, title: string, order: number?): LineChart
 	rule(UDim2.new(0, 0, 1, -1), UDim2.new(1, 0, 0, 1), 0.25)
 	rule(UDim2.new(0, 0, 0.5, 0), UDim2.new(1, 0, 0, 1), 0.06)
 	rule(UDim2.fromOffset(0, 0), UDim2.new(1, 0, 0, 1), 0.06)
-	local function axisLabel(text: string, pos: UDim2, anchor: Vector2, align: Enum.TextXAlignment): TextLabel
-		local l = Kit.text(f, text, "small", Kit.COLOR.faint)
+	local function axisLabel(text: string, pos: UDim2, anchor: Vector2, align: Enum.TextXAlignment, parentOf: Instance?): TextLabel
+		local l = Kit.text(parentOf or plot, text, "small", Kit.COLOR.faint)
 		l.AnchorPoint = anchor
 		l.Position = pos
-		l.Size = UDim2.fromOffset(38, 14)
+		l.Size = UDim2.fromOffset(40, 14)
 		l.TextXAlignment = align
 		return l
 	end
-	local yTop = axisLabel("", UDim2.fromOffset(36, 22), Vector2.new(1, 0.5), Enum.TextXAlignment.Right)
-	local yMid = axisLabel("", UDim2.fromOffset(36, 22 + H / 2), Vector2.new(1, 0.5), Enum.TextXAlignment.Right)
-	axisLabel("0", UDim2.fromOffset(36, 22 + H), Vector2.new(1, 0.5), Enum.TextXAlignment.Right)
-	axisLabel("0:00", UDim2.fromOffset(40, 24 + H), Vector2.new(0, 0), Enum.TextXAlignment.Left)
-	local xEnd = axisLabel("", UDim2.fromOffset(40 + W, 24 + H), Vector2.new(1, 0), Enum.TextXAlignment.Right)
+	local yTop = axisLabel("", UDim2.fromOffset(-4, 0), Vector2.new(1, 0.5), Enum.TextXAlignment.Right)
+	local yMid = axisLabel("", UDim2.new(0, -4, 0.5, 0), Vector2.new(1, 0.5), Enum.TextXAlignment.Right)
+	axisLabel("0", UDim2.new(0, -4, 1, 0), Vector2.new(1, 0.5), Enum.TextXAlignment.Right)
+	axisLabel("0:00", UDim2.new(0, 0, 1, 3), Vector2.new(0, 0), Enum.TextXAlignment.Left)
+	local xEnd = axisLabel("", UDim2.new(1, 0, 1, 3), Vector2.new(1, 0), Enum.TextXAlignment.Right)
 	local image = Instance.new("ImageLabel")
 	image.BackgroundTransparency = 1
 	image.Size = UDim2.fromScale(1, 1)
@@ -929,13 +953,58 @@ function Kit.chart(parent: Instance, title: string, order: number?): LineChart
 	note.TextXAlignment = Enum.TextXAlignment.Center
 	note.TextWrapped = true
 	local editableImage: any = nil
-	local buf = buffer.create(W * H * 4)
+	local imageSize = Vector2.zero
+	local current: { lines: { ChartLine }, xMax: number, top: number }? = nil
+	local queued = false
+	local function draw()
+		queued = false
+		local data = current
+		if data == nil then
+			return
+		end
+		local size = plot.AbsoluteSize
+		local W, H = math.max(32, math.floor(size.X)), math.max(24, math.floor(size.Y))
+		if editableImage == nil or imageSize ~= Vector2.new(W, H) then
+			if editableImage then
+				editableImage:Destroy()
+				editableImage = nil
+			end
+			local ok, img = pcall(function()
+				return (AssetService :: any):CreateEditableImage({ Size = Vector2.new(W, H) })
+			end)
+			if not ok or img == nil then
+				note.Text = "not enough image memory for charts"
+				image.Visible = false
+				return
+			end
+			editableImage, imageSize = img, Vector2.new(W, H)
+			image.ImageContent = (Content :: any).fromObject(img)
+		end
+		local raster = {}
+		for _, l in data.lines do
+			local xs, ys = Chart.downsample(l.xs, l.ys)
+			table.insert(raster, { xs = xs, ys = ys, r = math.floor(l.color.R * 255), g = math.floor(l.color.G * 255), b = math.floor(l.color.B * 255) })
+		end
+		local buf = buffer.create(W * H * 4)
+		Chart.raster(buf, W, H, raster, math.max(data.xMax, 1e-6), data.top)
+		editableImage:WritePixelsBuffer(Vector2.zero, Vector2.new(W, H), buf)
+	end
+	local function redraw()
+		if current and not queued then
+			queued = true
+			enqueue(draw)
+		end
+	end
+	plot:GetPropertyChangedSignal("AbsoluteSize"):Connect(redraw)
 	local c: LineChart
 	c = {
 		frame = f,
 		note = function(text: string?)
 			note.Text = text or ""
 			image.Visible = text == nil
+			if text then
+				current = nil
+			end
 		end,
 		set = function(lines: { ChartLine }, xMax: number)
 			local top = 0
@@ -949,26 +1018,8 @@ function Kit.chart(parent: Instance, title: string, order: number?): LineChart
 			yMid.Text = Chart.format(top / 2)
 			xEnd.Text = Chart.clock(xMax)
 			c.note(nil)
-			enqueue(function()
-				if editableImage == nil then
-					local ok, img = pcall(function()
-						return (AssetService :: any):CreateEditableImage({ Size = Vector2.new(W, H) })
-					end)
-					if not ok or img == nil then
-						c.note("not enough image memory for charts")
-						return
-					end
-					editableImage = img
-					image.ImageContent = (Content :: any).fromObject(img)
-				end
-				local raster = {}
-				for _, l in lines do
-					local xs, ys = Chart.downsample(l.xs, l.ys)
-					table.insert(raster, { xs = xs, ys = ys, r = math.floor(l.color.R * 255), g = math.floor(l.color.G * 255), b = math.floor(l.color.B * 255) })
-				end
-				Chart.raster(buf, W, H, raster, math.max(xMax, 1e-6), top)
-				editableImage:WritePixelsBuffer(Vector2.zero, Vector2.new(W, H), buf)
-			end)
+			current = { lines = lines, xMax = xMax, top = top }
+			redraw()
 		end,
 	}
 	return c

@@ -32,7 +32,7 @@ MeshModels.GLOW_TAG = "Glow"
 local ready: { [string]: Model } = {}
 local pending: { [string]: boolean } = {}
 local listeners: { (string) -> () } = {}
-MeshModels.stats = { built = 0, failed = 0, seconds = 0, errors = {} :: { string }, caps = {} :: { [string]: boolean } }
+MeshModels.stats = { built = 0, failed = 0, seconds = 0, errors = {} :: { string }, caps = {} :: { [string]: boolean }, readyAt = {} :: { [string]: number }, order = "" }
 
 -- Sets `prop` if this script may; remembers whether it could.
 local function try(inst: Instance, prop: string, value: any): boolean
@@ -159,25 +159,58 @@ local function build(def: any, e: any): Model
 end
 
 -- Starts building every approved entry that has a def in `defs`.
+-- The order (C-106): a job's priority is the highest `want` it got (types
+-- drawn on screen first, then the player's faction, then the rest); ties
+-- go alphabetically. Priorities can rise while jobs wait.
+type Job = { def: any, entry: any, want: number }
+local waiting: { [string]: Job } = {}
+local started = false
+
+-- Raises def `id`'s place in the queue to at least `level` (if it waits).
+function MeshModels.want(id: string, level: number)
+	local job = waiting[id]
+	if job and level > job.want then
+		job.want = level
+	end
+end
+
+-- Whether start has run.
+function MeshModels.started(): boolean
+	return started
+end
+
+local function nextJob(): Job?
+	local best: Job? = nil
+	for _, job in waiting do
+		if best == nil or job.want > best.want or (job.want == best.want and job.def.id < best.def.id) then
+			best = job
+		end
+	end
+	return best
+end
+
 function MeshModels.start(defs: any)
-	local queue: { { def: any, entry: any } } = {}
+	started = true
 	for id, e in Meshes.units do
 		local def = defs.units and defs.units[id]
 		if e.status == "approved" and def and ready[id] == nil and not pending[id] then
 			pending[id] = true
-			table.insert(queue, { def = def, entry = e })
+			waiting[id] = { def = def, entry = e, want = 0 }
 		end
 	end
-	table.sort(queue, function(a, b)
-		return a.def.id < b.def.id
-	end)
 	local t0 = os.clock()
 	local running = 0
 	task.spawn(function()
-		for _, job in queue do
+		task.wait() -- let the caller set this frame's priorities first
+		while true do
 			while running >= MeshModels.AT_ONCE do
 				task.wait()
 			end
+			local job = nextJob()
+			if job == nil then
+				break
+			end
+			waiting[job.def.id] = nil
 			running += 1
 			task.spawn(function()
 				local id = job.def.id
@@ -187,6 +220,8 @@ function MeshModels.start(defs: any)
 				if ok then
 					ready[id] = result
 					MeshModels.stats.built += 1
+					MeshModels.stats.readyAt[id] = os.clock() - t0
+					MeshModels.stats.order ..= (if MeshModels.stats.order == "" then "" else " ") .. id
 					for _, f in listeners do
 						task.spawn(f, id)
 					end

@@ -6,6 +6,7 @@
 
 local CollectionService = game:GetService("CollectionService")
 
+local CoreGlow = require("../Core/Glow")
 local MeshModels = require("./MeshModels")
 local Models = require("./Models")
 local TeamColors = require("./TeamColors")
@@ -70,11 +71,31 @@ function ModelPool.acquire(def: any, team: number): Model
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") and CollectionService:HasTag(d, TEAM_TAG) then
 			d.Color = color
+		elseif d:IsA("BasePart") then
+			-- a glow part: white where the team color clashes with the glow (C-106)
+			local channel = d:GetAttribute("GlowChannel")
+			local tint = d:GetAttribute("GlowTint")
+			if type(channel) == "string" and typeof(tint) == "Color3" then
+				local w = CoreGlow.CLASH_WHITE
+				local c = if CoreGlow.clashes(def.faction, team, channel) then Color3.fromRGB(w[1], w[2], w[3]) else tint
+				d.Color = c
+				local sa = d:FindFirstChildOfClass("SurfaceAppearance")
+				if sa then
+					sa.EmissiveTint = c
+				end
+			end
 		end
 	end
 	resetJoints(model)
 	model.Parent = unitsFolder()
 	return model
+end
+
+-- Destroys every pooled model (the Detailed models setting flipped).
+function ModelPool.flushAll()
+	for id in free do
+		ModelPool.flush(id)
+	end
 end
 
 -- Destroys the pooled models of def `id` (a better model replaced them).
@@ -88,7 +109,8 @@ end
 function ModelPool.release(model: Model)
 	local id = model:GetAttribute("DefId") :: string?
 	model.Parent = nil
-	if id == nil or (model:GetAttribute("Blockout") and MeshModels.get(id)) then
+	local wrong = if Models.DETAILED then model:GetAttribute("Blockout") and MeshModels.get(id) ~= nil else model:GetAttribute("Blockout") == nil
+	if id == nil or wrong then
 		model:Destroy()
 		return
 	end

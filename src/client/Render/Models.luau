@@ -16,6 +16,9 @@ local MeshModels = require("./MeshModels")
 local Models = {}
 
 local templates: { [string]: Model } = {}
+-- the Detailed models setting (C-106): off draws blockouts only
+Models.DETAILED = true
+Models.version = 0 -- bumps when the setting flips (the renderer redraws every unit)
 local standIns: { [string]: Model } = {} -- blockouts drawn while the mesh model builds
 
 function Models.template(def: any): Model
@@ -26,7 +29,10 @@ function Models.template(def: any): Model
 	local folder = ReplicatedStorage:FindFirstChild("Models")
 	local real = folder and folder:FindFirstChild(def.model)
 	local template: Model
-	local meshed = MeshModels.get(def.id)
+	local meshed = if Models.DETAILED then MeshModels.get(def.id) else nil
+	if not Models.DETAILED then
+		real = nil
+	end
 	if real and real:IsA("Model") and real.PrimaryPart then
 		template = real:Clone()
 		template:SetAttribute("DefId", def.id)
@@ -35,7 +41,7 @@ function Models.template(def: any): Model
 		end
 	elseif meshed then
 		template = meshed
-	elseif MeshModels.pending(def.id) then
+	elseif Models.DETAILED and MeshModels.pending(def.id) then
 		local standIn = standIns[def.id]
 		if standIn == nil then
 			standIn = BlockoutBuilder.build(Blockout.forDef(def), def)
@@ -48,6 +54,18 @@ function Models.template(def: any): Model
 	end
 	templates[def.id] = template
 	return template
+end
+
+-- Turns detailed models on or off; the renderer redraws every unit when
+-- `version` changes.
+function Models.setDetailed(on: boolean)
+	if on == Models.DETAILED then
+		return
+	end
+	Models.DETAILED = on
+	table.clear(templates)
+	table.clear(standIns)
+	Models.version += 1
 end
 
 -- Drops def `id`'s template and stand-in (its mesh model just became ready).

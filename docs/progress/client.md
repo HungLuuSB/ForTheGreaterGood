@@ -4,6 +4,23 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, your C-103..105 review follow-ups)
+
+- **Your review (2026-10-23):** C-103, C-104 and C-105 approved.
+- **Modal panels (C-106):**
+  - settings, lobby and statistics are 95% opaque with a dark scrim over the game;
+  - they sit above every HUD screen, the F3 overlay included, so nothing draws through;
+  - clicking the scrim closes the settings.
+- **Panels fill their space:**
+  - statistics is a 3 × 2 grid of charts that fills the panel: Economy (supply and power produced, used, stored), Combat (damage dealt and taken, units killed, built, lost and alive);
+  - the settings and lobby panels size to their content (Graphics is no longer a full panel with three rows).
+- **Graphics settings:** "Detailed models" On/Off (Off draws blockouts and loads nothing), "Glow" Off/Low/High, "Headlights" On/Off. The detailed-models request wasn't anywhere in the repo, so it's new here.
+- **Model loading:** types drawn on screen load first, then every type in the match, then your faction, then the rest. Measured on the `fog` profile: the Order vehicle plant ready at 2.5 s and the Mason, Herald and Lancer by 5.3 s (they were 16–19 s, alphabetical behind Chaos). The whole set still takes about 18 s, in the background.
+- **Glow against team color (your second message):** with C's clash table, an Order unit on cyan (team 7) and a Chaos unit on orange (team 6) show their running and power glow white; head and weapon glow stay. Checked in a match.
+- **Factory pulse capped at 3** (was 4): at 3.9 the Order vehicle plant's door bloomed into a white block. At 3 it's still bright. Screenshot pair below; tell me if you want it lower.
+- **Statistics data from the sim:** sim-A delivered request 41 (S-88, `Stats.series`), so my stopgap sampler is gone and "Damage · Taken" now has data.
+- **Screenshots:** `debug_out/screens/uikit2_*.jpg`.
+
 ## Summary (2026-10-23, UI kit, settings, statistics, lobby)
 
 - **UI kit (C-105):** one theme module, `UI/Kit`, used by every panel.
@@ -615,6 +632,40 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: review follow-ups: modal panels, fitted layouts, graphics options, model loading order, glow against team color (C-106)
+
+- **Asked** (your review of C-103..105, approved): modal panels; fill the space; graphics options for detailed models, glow and headlights; load on-screen and own-faction models first. Then: white glow where a team color clashes, and the factory pulse capped at about 3.
+- **Modal** (`UI/Kit`):
+  - panels are 95% opaque (`panelTransparency` 0.05);
+  - every panel has a scrim (black at 55%, `Active` so clicks stop there) under it;
+  - the settings gui is at DisplayOrder 110 and the lobby / statistics gui at 100, above every HUD screen (5–40) and the debug HUD;
+  - a click on the settings scrim closes it.
+- **Fitted layouts:**
+  - `Kit.panel`'s `setHeight(h)` sizes a panel to its content, never above the screen;
+  - settings fit the selected page (at least the sidebar's height) and refit when it changes;
+  - the lobby fits its rows;
+  - statistics: a 3 × 2 `UIGridLayout` in scale units fills the panel (1180 × 660, shrinks to fit); Economy's six charts, and Combat with damage dealt / taken, units killed / built / lost / alive (alive = 1 + built − lost);
+  - `Kit.chart` fills its cell and draws at the plot's real pixel size, redrawing when it changes size.
+- **Graphics settings** (`Core/Settings`: `detailedModels`, `glow` `off`/`low`/`high`, `headlights`; `Settings.spec`):
+  - **Detailed models:** `Models.setDetailed` clears the templates; the pool drops its copies and every drawn unit is drawn again. Off draws blockouts and starts no mesh loading.
+  - **Glow** (`Core/Glow`, `Glow.spec`): off = dark; low = the resting glow and the stall dimming; high = also the factory pulse and the weapon flash.
+  - **Headlights:** on/off for the SpotLights.
+  - Checked in Studio: toggling Detailed models swapped units to blockouts and back, with no errors.
+- **Model loading order** (`Render/MeshModels.want`, `Main.wantMeshes`):
+  - loading starts when the first units arrive (2 s after joining at the latest);
+  - each job's priority is the highest it was given: 3 drawn on screen, 2 in the match (strategic records by their icon, S-58), 1 the player's faction; ties go alphabetically; refreshed twice a second while jobs wait;
+  - **Measured** on the `fog` profile: `ord_vehplant` 2.5 s, `ord_mason` 3.6, `ord_herald` 4.5, `ord_lancer` 5.3 (before: 16–19 s, behind every Chaos model); the full set 18.2 s.
+- **Glow against team color** (C's table in docs/contracts/fx.md):
+  - `Core/Glow.clashes(faction, team, channel)`: Order on team 7 (cyan) and Chaos on team 6 (orange) turn `running` and `power` white (235, 240, 245); head and weapon stay; yellow on Chaos stays (C: borderline, no switch);
+  - applied by `ModelPool.acquire` with the team color, from each glow part's own tint otherwise;
+  - checked in a `fog` match with teams 7 and 6: Order Lancers and plant white, Chaos Ravagers on team 6 white, a Chaos Ravager on team 7 amber (`uikit2_glow_clash.jpg`).
+- **Factory pulse** `PULSE_HIGH` 4 → 3:
+  - `uikit2_plant_pulse4_before.jpg` (3.93) is a flat white block under the night bloom;
+  - `uikit2_plant_pulse3.jpg` (3.0) is still bright;
+  - `uikit2_plant_stalled.jpg`: the same plant on an energy stall at the 0.3 floor.
+- **Statistics data:** `src/roblox/StatSeries` and its test are removed; the results carry `Stats.series(sim)` (S-88), with damage taken.
+- **Screenshots** (`debug_out/screens/uikit2_*.jpg`): settings Graphics (modal, fitted), lobby (modal, fitted), statistics Economy and Combat (3 × 2) at UI scale 1 and 1.2, the clash and pulse shots above.
+
 ## 2026-10-23: UI kit; settings, statistics and lobby rebuilt on it (C-105)
 
 - **Asked:** a UI kit in the BAR statistics panel's style (style only), then settings, a statistics panel and the lobby rebuilt on it, then the stats and selection panels.
@@ -1157,6 +1208,11 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Review follow-ups (C-106):** `debug_out/screens/uikit2_*.jpg`. Your calls:
+  - **Factory pulse at 3:** still bright on the Order plant's door; lower if wanted (`Core/Glow.PULSE_HIGH`).
+  - **Scrim darkness** (45%, `Kit.COLOR.scrimTransparency`).
+  - **The six Combat charts** (Units · Alive is derived).
+
 - **UI kit, settings, statistics, lobby (C-105):** `debug_out/screens/uikit_*.jpg`. Your calls:
   - **The kit's look:** amber accent, Montserrat, 85% panels, the stripe strength (`UI/Kit`).
   - **The statistics pages and charts:** which charts, their size.
@@ -1234,7 +1290,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-41. **Open.** **Match statistics over time (2026-10-23, the user asked, C-105):** the statistics panel charts each player's numbers over match time.
+41. **Done and used (S-88, `Stats.series`; C-106).** **Match statistics over time (2026-10-23, the user asked, C-105):** the statistics panel charts each player's numbers over match time.
     - **Please keep, in `Sim/Stats`, a sample every 150 ticks (10 s)** per player:
       - supply and power gathered, spent and stored (the team account's);
       - units built, lost and killed;

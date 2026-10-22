@@ -891,3 +891,17 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The user: the settings and results panels read as debug boxes, and the BAR statistics panel is the style target (style only).
 - Montserrat is the closest built-in to its geometric sans.
 - Charts: an EditableImage per chart is a fixed cost per redraw, against a Frame per segment per line (up to thousands of Frames) (measured: 4.6 ms per chart redraw and nothing standing, against 476 Frames a chart).
+
+### C-106 — Modal panels with a scrim; panels fit their content; graphics options for detailed models, glow and headlights; mesh models load by priority; white glow on clashing team colors; factory pulse to 3 (2026-10-23)
+
+**Decision:**
+- **Modal:** kit panels are 95% opaque over a 55% black scrim, in guis above the HUD (100 / 110).
+- **Layouts:** `setHeight` fits panels to content; statistics is a 3 × 2 scale grid of size-aware charts.
+- **Settings:** `detailedModels`, `glow` (off / low / high), `headlights`.
+- **Loading order:** mesh models load on screen > in the match > own faction > the rest.
+- **Clashes:** Order team 7 and Chaos team 6 show running / power glow white (C's fx.md table).
+- **Pulse:** `PULSE_HIGH` 3.
+
+**Why:**
+- The user's review: panels read through to the HUD, left empty space, missed graphics options, and models took ~21 s.
+- The user also asked for white glow where the team color matches the faction glow, and a lower pulse if 4 blew out (it did, measured on the Order vehicle plant).
