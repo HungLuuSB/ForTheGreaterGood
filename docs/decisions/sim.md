@@ -1071,3 +1071,29 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Lz.spec`: Lz round-trips empty, random, runs, repeats across the window, and refuses a cut stream; Huffman round-trips skewed data over three blocks and tiny inputs, and refuses a cut stream.
   - `PlayerReplay.spec`: format 2 round-trips, rebuilds the live view on playback, reads a format 1 file as the same replay, is under 70% of format 1, and refuses a flipped byte (hash) and a cut file.
+
+## S-78 — Full faction report; no ±10% tuning reaches the target (the user's task 12) (2026-10-22)
+
+- **Asked:** Order against Chaos at every level pair, every map, both starts, 3+ seeds. Targets: 40–60% overall, 35–65% per map, ≤10% undecided. Tune shared-role numbers within ±10% of the approved values to reach them, and list every change.
+- **Report** (`docs/FACTION_AI.md`, `lune run faction_ai 40 3`, 324 matches, after S-76's AI):
+  - Same-level: Order 88, Chaos 10, undecided 10 (**9%: the undecided target is met**). **Order 90%:** out of target overall and on every map (Ridgeline, Coastline, skirmish:256 94%; Normandy 91%; Twin Lakes 83%; Crossroads 80%).
+  - Levels still decide across factions: Chaos hard beats Order normal 24–4; Order easy against Chaos normal is 15–13.
+- **No tuning committed:** nothing within ±10% moved the share outside the run-to-run noise. Each experiment is a 36-match same-level run, 20 min, 1 seed; the baseline is 89–93%:
+
+| Experiment | Order share |
+|---|---|
+| Faction styles as proposed (Chaos waves 2 smaller and more frequent, two lanes from 4) | 93% |
+| Chaos waves 4 bigger | 86% |
+| Chaos expands only safely too | 90% / 86% |
+| Chaos waves bigger, safe, lanes only from 16 | 93% |
+| Verdict range 432, Hellmouth 418 (both ±10% limits) | 90% |
+| Lancer range 189, Ravager 187 (both limits) | 92% |
+| Lancer health 1,170, damage −10%; Ravager health 1,100, damage +10%, cost −10% (all limits at once) | 88% |
+| Diagnostic, not a proposal: the Ravager as accurate as the Lancer | 90% |
+
+- **What the matches show** (kill and death tallies, 6 Normal matches on Ridgeline):
+  - Lancers kill 39–52 Ravagers for 9–22 the other way.
+  - Chaos loses 75 of its 81 workers, 77 of its dead workers in Order's half (it expands into it). Half its army dies at home, against 27 of Order's 94 losses.
+  - Chaos gathers twice Order's power and still fields the smaller army.
+  - The equal-value trade check calls every pair even, so the gap is in how AI matches fight (piecemeal waves into rallied defenders, workers in the open), not in a number.
+  - Ranked first in `docs/design/next.md`, with a match-shaped trial to reproduce it outside the AI. Under "Needs my review".
