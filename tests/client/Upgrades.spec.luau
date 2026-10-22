@@ -60,8 +60,8 @@ local function setup()
 	for i = 1, 3 do
 		table.insert(t1, Spawn.unit(sim, "ord_extractor", 1, deposits[i][1], deposits[i][2]))
 	end
-	local architect = Spawn.unit(sim, "ord_architect", 1, sx + 20, sz + 20)
-	local mason = Spawn.unit(sim, "ord_mason", 1, sx - 20, sz + 20)
+	local architect = Spawn.unit(sim, "ord_architect", 1, sx + 70, sz + 70) -- clear of the T2s' 3×3 footprints (S-104)
+	local mason = Spawn.unit(sim, "ord_mason", 1, sx - 70, sz + 70)
 	run(3)
 	return sim, world, api, run, { t1 = t1, architect = architect, mason = mason, deposits = deposits }
 end

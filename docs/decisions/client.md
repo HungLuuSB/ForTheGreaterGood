@@ -1089,3 +1089,16 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** Shield.PLATE 3.2 (was 2.6); rings 4 + strength, clamped to 4..6 (61 / 91 / 127 cells); ShieldFx.PLATE_POOL 800.
 
 **Why:** the user: "honeycomb effect is good, make it cover a larger part of the shield".
+
+### C-137 — Client after S-104..S-116: stopgap icons, the extractor ghost on supplyUnder, specs on the new rules (2026-10-23)
+
+**Decision:**
+- **Icons:** stopgaps for ord_sanction / chs_scourge (Artillery Emplacement), chs_wraith (Strategic Bomber), ord_providence / chs_cerberus (Radar SAM Site) and ord_custodian / chs_chimera (Mobile Radar SAM). Same sheet, so no re-upload.
+- **Placement:** `Placement.check` uses `PlacementRules.supplyUnder`, so an extractor works any deposit under its footprint, as the server does.
+- **Specs:**
+  - Nuke: a Cerberus intercepts, and radar SAMs no longer track the nuke.
+  - Placement: the ghost covers the deposit.
+  - ShieldWire: measured from the real dome centre, drawn a tick behind like the game.
+  - Upgrades: builders kept clear of the 3×3 footprints.
+
+**Why:** sim-A's merge 522ca80 (S-104 footprints, S-108 upgrades, S-111 anti-nukes) broke 8 client specs, as sim-A warned.

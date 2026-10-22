@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, sim S-104..S-116 merged into the client)
+
+- **Main merged:** sim-A's S-104..S-116, with bigger structures, extractor upgrades kept running under the frame, anti-nukes, beams that last and pierce and stop at domes, manual targets, and the AI fixes. All 8 client specs it broke are fixed (C-137).
+- **New units** get stopgap icons until the icon catalogue has them: the Sanction and Scourge missile batteries, the Wraith decoy bomber, and the four anti-nukes.
+- **Extractor ghost:** an extractor works any deposit under its footprint, the sim's rule.
+- **Now testable in Studio:** beams glancing off shields (C-129), the full 3 s Radiance beam, and anti-nukes intercepting.
+
 ## Summary (2026-10-23, bigger shield hit patches)
 
 - **Shield hits (C-136):** each hit covers about twice the diameter: 3.2-stud cells, 4 to 6 rings (61 to 127 cells). Start a new playtest to see it.

@@ -68,6 +68,13 @@ const STOPGAP = {
 	chs_inferno: "Heavy Turret", // S-96: a long-range beam tower
 	ord_lumen: "IR SAM Site", // S-96: a flak tower (anti-air)
 	chs_hailstorm: "IR SAM Site", // S-96: a flak tower (anti-air)
+	ord_sanction: "Artillery Emplacement", // S-110: a T2 missile battery
+	chs_scourge: "Artillery Emplacement", // S-110: a T2 missile battery
+	chs_wraith: "Strategic Bomber", // S-109: a decoy heavy bomber
+	ord_providence: "Radar SAM Site", // S-111: an anti-nuke (family "antinuke")
+	chs_cerberus: "Radar SAM Site", // S-111: an anti-nuke
+	ord_custodian: "Mobile Radar SAM", // S-111: a mobile anti-nuke
+	chs_chimera: "Mobile Radar SAM", // S-111: a mobile anti-nuke
 };
 
 // Entries drawn in the frame of each def's own domain rather than the
