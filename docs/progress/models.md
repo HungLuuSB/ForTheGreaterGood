@@ -237,6 +237,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `5b2999a` (structure meshes and the shared Blender runner; `assets/` and docs only).
 - Ready to merge: `2f8e394` (shield thin ring and band meshes, fx.md; `assets/` and docs only).
 - Ready to merge: `3522f82` (shield RingThin and Band mesh IDs, Open Cloud upload tool; `assets/` and docs only).
+- Ready to merge: `53e4a34` (structure meshes and Hellmouth uploaded through Open Cloud: asset IDs, pipeline notes; `assets/` and docs only).
 
 ## Requests
 
