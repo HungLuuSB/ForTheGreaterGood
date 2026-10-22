@@ -1180,3 +1180,24 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Strength:** my call. It is about one shell's gravity, so the S-82 / S-83 shapes stay (head-on back, off-centre round and on) while turned shells arc down.
 - **Effect:** on the client's ShieldWire setup (a Ravager firing head-on at a Phalanx), turned shells land 116–134 studs from the centre, at the dome's edge, against 140–174 before. None reach the 72-stud core. More shells now burst in the band (review).
 - **Tests:** `Shield.spec` 14. Turned shells are checked to land outside the core rather than outside the dome. The flat head-on case checks that turned shells fly back or land (none hang), and that none land in the core.
+
+## S-85 — Light shots destroyed at the dome's surface (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "for small/light shots -> get destroyed instantly, for heavier shot -> use the same mechanic as now for them".
+- **Built:**
+  - `ShieldField.step` destroys a shell lighter than `ABSORB_MASS` (0.5, i.e. under 75 damage) where it crosses the surface moving in. The step stops there with the new `ABSORB` event and the surface point.
+  - `Shield.deflect` drains `HIT_COST` × its mass (as for a turn), emits SHIELD_HIT with `absorbed`, and Projectiles removes it with no burst and no damage.
+  - Heavier shells keep S-82..S-84's mechanic.
+- **Threshold** (my call; the client suggested ~0.5). Destroyed:
+  - machine guns (0.2–0.27);
+  - autocannons (Locust, 0.23);
+  - MLRS rockets (Hydra, Judgement; 0.22–0.39).
+  - Kept on the full mechanic: the Ravager's and Lancer's cannons (0.87, 1.1) and everything heavier.
+- **Wire, protocol 25:**
+  - SHIELD_HIT flag `SHIELD_ABSORBED` 2 (the decoder rejects 3: a shell is turned, through or absorbed).
+  - The client drops the shell with no burst; NetOut sends no IMPACT for it and forgets it.
+  - It never gets a SHIELD_FIELD (destroyed on the tick it enters).
+  - This is a flag rather than an IMPACT at the surface, so the client can tell a dome kill from a burst.
+- **Tests:**
+  - `Shield.spec` 15: a light-shell test (absorbed on the surface, mass in charge, no IMPACT, gone; the test client got the flag and dropped it); the shell-weight test splits light (destroyed) from heavy (turned); the field-shape tests use mass 0.6 for "light".
+  - `Schema.spec`: golden bytes for ABSORBED, the breach-and-absorbed encode error, flags 3 rejected.

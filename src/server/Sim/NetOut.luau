@@ -411,6 +411,10 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			local hit = withPos({ kind = Schema.EventKind.SHIELD_HIT, unitId = if pn.tactical[e.unit] then e.unit else 0, projId = e.other }, g, e.x, e.y :: number, e.z :: number)
 			hit.mass = math.clamp(math.floor((e.mass or 1) * Schema.SHIELD_MASS_SCALE + 0.5), 1, 255)
 			hit.breach = e.breach == true
+			hit.absorbed = e.absorbed == true
+			if e.absorbed then
+				known[e.other] = nil -- destroyed: this is its end, no IMPACT follows (S-85)
+			end
 			table.insert(events, hit)
 		elseif kind == "INTERCEPTED" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
 			known[e.other] = nil

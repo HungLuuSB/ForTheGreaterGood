@@ -130,10 +130,14 @@ return function(sim: Types.Sim)
 			x1, y1, z1, vx, vy, vz = Lofted.step(x0, y0, z0, pvx, pvy, pvz, goal[1], goal[2], goal[3], goal[2] + weapon.apex, g, math.rad(weapon.turnRate :: number) * DT, climbLeft, DT)
 		else
 			-- shield fields (S-79): enemy domes brake, turn or let through
-			local fielded = false
+			local fielded, absorbed = false, false
 			if #c.shieldIds > 0 and projTarget == 0 and Shield.affects(weapon) then
-				x1, y1, z1, vx, vy, vz, fielded = Shield.deflect(sim, id, weapon, x0, y0, z0, pvx, pvy, pvz, g)
+				x1, y1, z1, vx, vy, vz, fielded, absorbed = Shield.deflect(sim, id, weapon, x0, y0, z0, pvx, pvy, pvz, g)
 				homingTarget = c.pTarget[id] -- a turned missile lost its lock
+			end
+			if absorbed then
+				Combat.removeProjectile(c, id) -- destroyed at the dome's surface (S-85): its SHIELD_HIT says so
+				continue
 			end
 			if not fielded then
 				x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
