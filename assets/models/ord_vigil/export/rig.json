@@ -1,0 +1,146 @@
+{
+  "id": "ord_vigil",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.475,
+        0.0
+      ],
+      "size": [
+        7.376,
+        2.95,
+        7.376
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.6225,
+        -0.215
+      ],
+      "size": [
+        4.3,
+        1.545,
+        3.33
+      ],
+      "pivot": [
+        0.0,
+        3.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -1.77,
+        3.92,
+        -1.95
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "launcher"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.655,
+        0.0
+      ],
+      "size": [
+        5.74,
+        2.21,
+        7.16
+      ]
+    },
+    {
+      "name": "launcher_glow_running",
+      "piece": "launcher",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.95,
+        -0.2
+      ],
+      "size": [
+        4.38,
+        0.2,
+        2.8
+      ]
+    },
+    {
+      "name": "launcher_glow_weapon",
+      "piece": "launcher",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.6,
+        -1.3725
+      ],
+      "size": [
+        3.68,
+        0.78,
+        1.065
+      ]
+    }
+  ],
+  "glowShare": 0.0519,
+  "triangles": {
+    "base": 468,
+    "launcher": 532,
+    "total": 1000
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

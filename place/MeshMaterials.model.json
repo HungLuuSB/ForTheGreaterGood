@@ -130,6 +130,18 @@
       }
     },
     {
+      "Name": "chs_thorn",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://104834020701930",
+        "NormalMapContent": "rbxassetid://127814846175660",
+        "RoughnessMapContent": "rbxassetid://87443888108344",
+        "MetalnessMapContent": "rbxassetid://76554169272521",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_vehplant",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -282,6 +294,18 @@
         "NormalMapContent": "rbxassetid://106128478858735",
         "RoughnessMapContent": "rbxassetid://81307040432912",
         "MetalnessMapContent": "rbxassetid://135588284465675",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_vigil",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://127764516994590",
+        "NormalMapContent": "rbxassetid://74408674314427",
+        "RoughnessMapContent": "rbxassetid://72671795722287",
+        "MetalnessMapContent": "rbxassetid://104972724220456",
         "EmissiveStrength": 0
       }
     },

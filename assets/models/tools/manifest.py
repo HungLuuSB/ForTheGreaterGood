@@ -1,7 +1,10 @@
 """Writes the mesh manifest src/shared/Defs/Meshes/Registry.luau from every
 uploaded BAR-style mesh (docs/contracts/rig.md, section 7):
 
-    python assets/models/tools/manifest.py
+    python assets/models/tools/manifest.py [--skip id,id]
+
+(--skip leaves out meshes uploaded but not yet committed, so each pair's
+commit lists only its own.)
 
 Sources per unit: assets/models/<id>/export/rig.json (pieces, pivots,
 attachments, team pieces, glow parts) and assets/models/<id>/roblox_assets.json
@@ -96,12 +99,16 @@ def entry(rig, assets, status, note):
 
 
 def main():
+    import sys
+    skip = set()
+    if "--skip" in sys.argv:
+        skip = set(sys.argv[sys.argv.index("--skip") + 1].split(","))
     units = {}
     models = os.path.join(ROOT, "assets", "models")
     for uid in sorted(os.listdir(models)):
         rig_p = os.path.join(models, uid, "export", "rig.json")
         assets_p = os.path.join(models, uid, "roblox_assets.json")
-        if not (os.path.exists(rig_p) and os.path.exists(assets_p)):
+        if uid in skip or not (os.path.exists(rig_p) and os.path.exists(assets_p)):
             continue
         assets = load(assets_p)
         if "bar" not in assets or "surfaceAppearance" not in assets["bar"]:
