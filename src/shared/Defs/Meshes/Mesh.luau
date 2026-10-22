@@ -28,7 +28,7 @@ end
 Mesh.BEAM_TEXTURES = { "core", "glow", "filamentA", "filamentB", "charge", "impact", "scorch", "scorchGlow" }
 Mesh.BEAM_VALUES = {
 	"charge", "hold", "taper", "coreWidth", "glowWidth", "filamentWidth", "filaments", "spread", "fan", "tip", "jitter", "curve",
-	"brightness", "glowBrightness", "filamentBrightness", "flareSize", "impactSize", "impactTime", "scorchSize", "scorchTime", "scorchGlowTime",
+	"brightness", "glowBrightness", "filamentBrightness", "flareSize", "muzzleFlareSize", "impactSize", "impactTime", "scorchSize", "scorchTime", "scorchGlowTime",
 }
 
 -- Problems with the manifest's `beam` entry, empty when valid.
