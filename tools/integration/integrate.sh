@@ -7,8 +7,9 @@
 #   bash tools/integration/integrate.sh <commit-or-branch> "<description>"
 #
 # Merges --no-ff, runs the fast suite (`lune run test`), the slow suite
-# (`lune run test_slow`: AI matches, fairness) and `lune run build` there,
-# and pushes main only if all pass. A conflict aborts the merge (exit 3); failed checks
+# (`lune run test_slow`: AI matches, fairness), the client suite
+# (`lune run test_client`, when present: client specs a sim change breaks)
+# and `lune run build` there, and pushes main only if all pass. A conflict aborts the merge (exit 3); failed checks
 # drop the local, unpushed merge (main back to origin/main, exit 4). Nothing
 # is ever force-pushed. Record failures under "Integration notes" in the
 # stream's progress file.
@@ -36,9 +37,14 @@ if [ -f .lune/test_slow.luau ]; then
 	S=$(lune run test_slow 2>&1 | tail -1)
 fi
 echo "test_slow: $S"
+C="0 failed (no client suite)"
+if [ -f .lune/test_client.luau ]; then
+	C=$(lune run test_client 2>&1 | tail -1)
+fi
+echo "test_client: $C"
 B=$(lune run build 2>&1 | tail -1)
 echo "build: $B"
-if echo "$T" | grep -q " 0 failed" && echo "$S" | grep -q " 0 failed" && echo "$B" | grep -q "requires all resolve"; then
+if echo "$T" | grep -q " 0 failed" && echo "$S" | grep -q " 0 failed" && echo "$C" | grep -q " 0 failed" && echo "$B" | grep -q "requires all resolve"; then
 	git push -q origin main && echo "PUSHED $(git log --oneline -1)"
 	exit 0
 fi
