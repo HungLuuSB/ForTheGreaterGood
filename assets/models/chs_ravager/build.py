@@ -29,17 +29,21 @@ TEX = 1024
 BUDGET = 4000  # triangles, whole unit (M-12)
 FOOTPRINT = 1
 SAMPLES = 32
+# Review 2026-10-22: Chaos reads lighter, so the whole unit is about 10% lower
+# and narrower than the Lancer (M-14); applied after building, pivots included.
+SCALE = (0.985, 0.9, 0.93)
+lib.UPLOAD_REV = 1
 
 KINDS = ["paint", "trim", "team", "seam", "era", "track", "steel", "rubber", "glass", "light", "grille", "dark"]
 
-PAINT = (76, 80, 84)  # Chaos gunmetal (style guide)
+PAINT = (86, 90, 95)  # Chaos gunmetal, lifted from (76, 80, 84) so it reads at 35° (review 2026-10-22)
 ACCENT = (255, 140, 50)  # Chaos emissive accent
 VARIANTS = {
-    "bar": {"type": "paint", "base": PAINT, "chip": (150, 156, 162), "grime": PAINT},
+    "bar": {"type": "paint", "base": PAINT, "chip": (172, 178, 184), "grime": PAINT},
 }
 
 SPECS = {
-    "paint": {"base": None, "roughness": 0.45, "metallic": 0.12, "edge_mode": "highlight", "edge_wear": 0.5, "ao": 0.7},  # low metalness keeps gunmetal from reading black
+    "paint": {"base": None, "roughness": 0.45, "metallic": 0.12, "edge_mode": "highlight", "edge_wear": 0.7, "ao": 0.7},  # low metalness keeps gunmetal from reading black
     "trim": {"base": (46, 48, 52), "roughness": 0.5, "metallic": 0.35, "edge_mode": "highlight", "edge_wear": 0.45, "ao": 0.6},
     "team": {"base": (24, 24, 26), "roughness": 0.45, "metallic": 0.2, "mask": "team", "wash": 0.0,
              "chip_reveal": 0.85, "crease": 0.3, "edge_mode": "highlight", "edge_wear": 0.0},
@@ -278,10 +282,12 @@ def main():
     for name, pivot, build, details in pieces:
         p = lib.Piece(name, KINDS, pivot)
         build(p)
+        p.scale(SCALE)
         low.append(p.to_object(materials, col))
         h = lib.Piece(name + "_hi", KINDS, pivot)
         build(h)
         details(h)
+        h.scale(SCALE)
         high.append(h.to_object(materials, col))
 
     counts = {o.name: lib.tris(o) for o in low}
@@ -325,10 +331,10 @@ def main():
         "variants": {"bar": "BAR-style gunmetal (M-15)"},
         "pieces": {
             "base": {"parent": None, **lib.bounds(low[0])},
-            "turret": {"parent": "base", "pivot": list(TURRET_PIVOT), **lib.bounds(low[1])},
-            "barrel": {"parent": "turret", "pivot": list(BARREL_PIVOT), **lib.bounds(low[2])},
+            "turret": {"parent": "base", "pivot": list(lib.scaled(TURRET_PIVOT, SCALE)), **lib.bounds(low[1])},
+            "barrel": {"parent": "turret", "pivot": list(lib.scaled(BARREL_PIVOT, SCALE)), **lib.bounds(low[2])},
         },
-        "attachments": {"muzzle": {"parent": "barrel", "at": list(MUZZLE)}},
+        "attachments": {"muzzle": {"parent": "barrel", "at": list(lib.scaled(MUZZLE, SCALE))}},
         "teamColorPieces": ["base", "turret"],
         "emissive": {"probe": "emissive_probe", "tint": list(ACCENT), "strength": 2.0},
         "triangles": {**counts, "total": total},

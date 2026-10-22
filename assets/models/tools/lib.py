@@ -215,6 +215,13 @@ class Piece:
 
     # -- object ----------------------------------------------------------------
 
+    def scale(self, s):
+        """Scales the piece and its pivot about the unit origin by (sx, sy, sz)
+        in Roblox space (y = 0 stays on the ground)."""
+        sx, sy, sz = s
+        bmesh.ops.scale(self.bm, vec=Vector((sx, sz, sy)), verts=self.bm.verts)  # R(): Blender (x, -z, y)
+        self.pivot = scaled(self.pivot, s)
+
     def to_object(self, materials, collection, name=None):
         mesh = bpy.data.meshes.new(name or self.name)
         bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts, dist=1e-5)
@@ -231,6 +238,11 @@ class Piece:
         for poly in mesh.polygons:
             poly.use_smooth = False
         return obj
+
+
+def scaled(v, s):
+    """Roblox-space point `v` scaled about the origin by `s`."""
+    return (v[0] * s[0], v[1] * s[1], v[2] * s[2])
 
 
 def tris(obj):

@@ -76,10 +76,26 @@ return {
 
 `attachments` places Attachments (`muzzle`, later `exhaust`, `rotorHub`, ...) in model space under a piece.
 
-The generator checks: every def piece except `muzzle` is a part, `muzzle` is an attachment, names are unique, parents exist and come first, sizes are positive. The faction picks the palette (Order: clean light greys and blue glass; Chaos: dark iron and rust), so Order and Chaos read apart at a glance.
+The generator checks: every def piece except `muzzle` is a part, `muzzle` is an attachment, names are unique, parents exist and come first, sizes are positive. The faction picks the palette (M-16, style guide: Order light sand-grey with cyan glass; Chaos gunmetal with orange glass), so Order and Chaos read apart at a glance.
 
 ## 5. Model pool contract (guide 15.2)
 
 - Taking a model: clone from `ReplicatedStorage.Models.<model>` (or reuse a pooled one), color `TeamColor` parts, reset every `Motor6D.Transform` to identity, parent to `workspace.Units`.
 - Releasing a model: reset joints, parent it to a hidden folder (not destroyed).
 - All tactical unit roots move with one `workspace:BulkMoveTo` per frame (`Enum.BulkMoveMode.FireCFrameChanged`).
+
+## 6. Team color (blockouts and meshed models)
+
+Team color is applied at runtime, never baked: one model per unit serves every team. The method, which `ModelPool.acquire` already uses:
+
+- **What to set:** `BasePart.Color = TeamColors(team)` on every `BasePart` in the model that has the CollectionService tag `TeamColor`. Nothing else changes per team: not `SurfaceAppearance.Color`, not the maps, not the emissive properties.
+- **Blockouts:** the tagged parts are the `team`-colored parts; their `Color` is the panel color.
+- **Meshed models** (pipeline.md): the tagged pieces are MeshParts with a `SurfaceAppearance` in `AlphaMode.Overlay`. Their color map's alpha is the team mask: 1 on painted metal, 0 on the team panels, in between on panel edges and crevices. The rendered albedo is
+
+  `albedo = lerp(BasePart.Color, ColorMap.rgb × SurfaceAppearance.Color, ColorMap.alpha)`
+
+  so where the alpha is 0 the panel is the team color, and where it is 1 the paint is unaffected. `SurfaceAppearance.Color` stays white (1, 1, 1): tinting it would recolor the whole model. Normal, roughness and metalness maps still apply on the panels, so they keep their bevels and seams.
+- **Emissive:** the emissive mask, tint and strength (`SurfaceAppearance.EmissiveMaskContent`, `EmissiveTint`, `EmissiveStrength`) are set once by the rig (faction accent: Order cyan, Chaos orange) and are independent of `BasePart.Color`, so they never change with the team.
+- **Untagged pieces** (a barrel without team panels) keep their color map's alpha at 1, so their `BasePart.Color` has no effect.
+
+Checked in "FTGG Art" with the four first team colors on both BAR tanks (`debug_out/screens/team_*.jpg`, models progress 2026-10-22).
