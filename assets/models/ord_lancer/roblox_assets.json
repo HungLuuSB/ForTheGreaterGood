@@ -1,6 +1,6 @@
 {
   "note": "Roblox assets uploaded by Studio's 3D Importer from export/ord_lancer.fbx (creator: hungluu344). Rebuild the rigged models from these with rig_model.luau; no re-import needed. The importer reuses identical meshes, so base and turret are shared by both variants.",
-  "revision": "2026-10-22, review 3: BAR style (M-15), 3,782 triangles; maps re-uploaded with UPLOAD_REV 1",
+  "revision": "2026-10-22, review 4: M-18 color fix (UPLOAD_REV 2), 3,782 triangles",
   "previous": {
     "note": "first slice (3,016 triangles), ReplicatedStorage.Models.ord_lancer in FTGG Art",
     "meshes": {
@@ -45,6 +45,21 @@
   },
   "bar": {
     "meshes": {
+      "base": "rbxassetid://105266667546182",
+      "turret": "rbxassetid://80857855718437",
+      "barrel": "rbxassetid://127751306398256"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://99511165819087",
+      "NOR": "rbxassetid://90665870092736",
+      "RGH": "rbxassetid://87114952833211",
+      "MTL": "rbxassetid://73163426978483",
+      "EMI": "rbxassetid://110428279780570"
+    },
+    "model": "ReplicatedStorage.ModelReview.ord_lancer_bar in FTGG Art"
+  },
+  "bar_rev1": {
+    "meshes": {
       "base": "rbxassetid://115256792930547",
       "turret": "rbxassetid://113890418314185",
       "barrel": "rbxassetid://122631628436181"
@@ -56,7 +71,7 @@
       "MTL": "rbxassetid://79515799351264",
       "EMI": "rbxassetid://88650003600817"
     },
-    "model": "ReplicatedStorage.ModelReview.ord_lancer_bar in FTGG Art"
+    "note": "review 3 upload (UPLOAD_REV 1), before the M-18 color fix"
   },
   "bar_rev0": {
     "meshes": {
@@ -71,6 +86,6 @@
       "MTL": "rbxassetid://81483788380096",
       "EMI": "rbxassetid://80851524837017"
     },
-    "note": "first BAR upload (2026-10-21): its maps never drew as SurfaceAppearance (metalness HTTP 502 at import, reused on re-import); replaced by \"bar\" (UPLOAD_REV 1)"
+    "note": "first BAR upload (2026-10-21): its maps never drew as SurfaceAppearance (metalness HTTP 502 at import, reused on re-import); replaced by \"bar_rev1\" (UPLOAD_REV 1)"
   }
 }

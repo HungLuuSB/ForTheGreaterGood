@@ -1,0 +1,23 @@
+{
+  "note": "Roblox assets uploaded by Studio's 3D Importer from export/shield_fx.fbx (creator: hungluu344), 2026-10-22. Rigged into ReplicatedStorage.FX.Shield in FTGG Art. Usage: docs/contracts/fx.md.",
+  "meshes": {
+    "dome": "rbxassetid://85081416332401",
+    "dome_inner": "rbxassetid://78950571354329",
+    "ring": "rbxassetid://134054369788950",
+    "emitter": "rbxassetid://135426440555231"
+  },
+  "emitterSurfaceAppearance": {
+    "ALB": "rbxassetid://109779219047629",
+    "NOR": "rbxassetid://107445763486512",
+    "RGH": "rbxassetid://93021851240661",
+    "MTL": "rbxassetid://76106466609099",
+    "EMI": "rbxassetid://110966577891925"
+  },
+  "textures": {
+    "swirl": "rbxassetid://82204239648206",
+    "beam": "rbxassetid://115560588138247",
+    "speck": "rbxassetid://126444416961279",
+    "ripple": "rbxassetid://121307999666570"
+  },
+  "model": "ReplicatedStorage.FX.Shield in FTGG Art (Dome, DomeInner, Ring, Emitter; texture IDs as the folder's attributes Swirl, Beam, Speck, Ripple)"
+}

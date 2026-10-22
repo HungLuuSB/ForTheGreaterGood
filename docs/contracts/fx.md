@@ -32,4 +32,19 @@ The target look: a translucent dome with a bright edge, thin glowing rings flowi
 
 ### Asset IDs
 
-See `assets/fx/shield/roblox_assets.json` (filled after the import into "FTGG Art").
+All in `assets/fx/shield/roblox_assets.json`. The texture IDs are also attributes of the `ReplicatedStorage.FX.Shield` folder in "FTGG Art" (`Swirl`, `Beam`, `Speck`, `Ripple`).
+
+| Asset | ID |
+|---|---|
+| `Dome` mesh | `rbxassetid://85081416332401` |
+| `DomeInner` mesh | `rbxassetid://78950571354329` |
+| `Ring` mesh | `rbxassetid://134054369788950` |
+| `Emitter` mesh | `rbxassetid://135426440555231` (maps in the JSON) |
+| swirl | `rbxassetid://82204239648206` |
+| beam | `rbxassetid://115560588138247` |
+| speck | `rbxassetid://126444416961279` |
+| ripple | `rbxassetid://121307999666570` |
+
+### Checked assembly
+
+"FTGG Art", `Workspace.ShieldTest` at (−700, 0, −300): `R` = 40, team blue; `Dome` ForceField, `DomeInner` ForceField at 0.4 transparency, one `Ring` at h = 0.55R (`Size.Y` 0.35), the `Emitter`, a 16-stud swirl disc at the top, and a `Beam` from `core` to the disc (`Width0` 2.2, `Width1` 1.2, `CurveSize0` 18, `CurveSize1` −6, `TextureLength` 4). Screenshots: `debug_out/screens/shield_*.jpg`. Particles (specks, ripple) don't run in Edit mode, so they aren't in the shots. The emitter is about 4 studs across, small next to a 40-stud dome: scale its model if the generator needs a bigger device.
