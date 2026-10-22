@@ -178,6 +178,7 @@ function Glow.step(state: State, renderer: any, world: any, now: number, camera:
 			c.built = (u.build or 1) >= 1
 			c.ratio = if u.team == myTeam then ratio else 1
 			c.producing = u.queue ~= nil and #u.queue > 0
+			c.retracted = d.def.retract ~= nil and bit32.band(u.state or 0, 2) == 0 -- TOGGLED_ON clear (S-96)
 			local shot = state.lastShot[id]
 			c.sinceShot = if shot then now - shot else math.huge
 			c.phase = (id * 0.618) % 1
