@@ -438,6 +438,8 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `be76af7` (Supply deposit variants (fx.deposit), interceptor missiles (+ mobile aliases), Meshes.textures; manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/`, tools and docs).
 - Ready to merge: `6d79327` (Animation audit part 2: 44 meshes split into animated pieces (tracks, wheels, tail rotors, radars, trolleys, jib), re-uploaded and rigged; manifest `visualPieces` / `anim`; 13 wrecks rebuilt to match; deposits lighter; `assets/`, `src/shared/Defs/Meshes/`, `place/`, tools and docs).
 - Ready to merge: `5aa87cd` (Beam shot effect M-29: beam textures, fx.md "Beam shot" timing sheet and per-faction values, `Meshes.beam` + `Mesh.validateBeam`, reference module; `assets/fx/beam/`, `src/shared/Defs/Meshes/`, tools and docs).
+- Ready to merge: `0ccf6c3` (beam shot tapers to a point at the target: `tip` in `Meshes.beam`, filaments converge; fx.md values synced; `assets/fx/beam/`, `src/shared/Defs/Meshes/` and docs).
+- Ready to merge: `ff6072d` (beam shot: muzzle widths within the emitter ball, impact flare 5 / 4 studs, `muzzleFlareSize` star while firing, flare `StudsOffset`; `assets/fx/beam/`, `src/shared/Defs/Meshes/` and docs).
 
 ## Requests
 

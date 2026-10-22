@@ -134,16 +134,20 @@ Roblox Beams lay a texture's width along the beam: the strips below run along X 
 | t (Order) | t (Chaos) | What happens |
 |---|---|---|
 | 0 – 0.08 | 0 – 0.06 | **charge:** the `charge` flipbook at the muzzle, frames 1 → 4, growing from 55% to 100% of `flareSize`; it fades over the next 0.04 s |
-| 0.08 | 0.06 | **beam on at full width:** core, glow and the filaments; the impact flare starts at the hit; the scorch appears 0.02 s later |
+| 0.08 | 0.06 | **beam on at full width:** core, glow and the filaments; the **muzzle flare** (the full star, frame 4 of `charge`) sits on the emitter ball while the beam is on, `muzzleFlareSize` × (1 − u)^0.8 × a random 0.85–1.15 each frame, turned a random ±15°, transparency 0.6·u; the impact flare starts at the hit; the scorch appears 0.02 s later |
 | 0.08 – 0.12 | 0.06 – 0.09 | **hold** at full width (`hold`) |
 | 0.12 – 0.50 | 0.09 – 0.36 | **taper** (`taper`), with `u` going 0 → 1: core width × (1 − u)^1.1, transparency 0.7·u^1.6; glow width × (1 − u)^0.8, transparency 0.35 + 0.65·u; filaments thin faster: width × (1 − u)^2.2, transparency 0.8·u^1.2. At the end every Beam is disabled |
 | 0.08 – 0.38 | 0.06 – 0.31 | **impact flare** (`impactTime`): grows to 120% of `impactSize` in the first quarter, transparency k^1.5 |
 | to 1.3 | to 1.1 | **embers** (`scorchGlowTime`) fade out over the scorch |
 | to 4.1 | to 3.1 | **scorch** (`scorchTime`) stays, fading over its last 1.5 s |
 
-**Filaments, every frame (30 times a second):** each filament Beam has its own pair of attachments, near the muzzle and at the hit. Give each a new perpendicular offset round the beam axis: angle = its slot (i / n of a turn) plus a random ± `jitter` turn; radius `spread` × (0.6–1.0), times 0.25 at the muzzle and × `fan` at the target, so the filaments leave the emitter together and fan out towards the hit (as in the reference). Also new random `CurveSize0` / `CurveSize1` within ± `curve` (`Segments = 16`). Seeded per shot and frame (`Random.new(seed + frame)`), so a replay looks the same.
+**Filaments, every frame (30 times a second):** each filament Beam has its own pair of attachments, near the muzzle and at the hit. Give each a new perpendicular offset round the beam axis: angle = its slot (i / n of a turn) plus a random ± `jitter` turn; radius `spread` × (0.6–1.0) at the muzzle and × `fan` (small) at the target, so the filaments leave the emitter spread round the core and converge on the hit. Also new random `CurveSize0` / `CurveSize1` within ± `curve` (`Segments = 16`). Seeded per shot and frame (`Random.new(seed + frame)`), so a replay looks the same.
 
-**Every Beam:** `FaceCamera = true`, `LightEmission = 1`, `LightInfluence = 0`, `TextureMode = Wrap`, `Width0` (muzzle end) a little narrower than `Width1` (core 75%, glow 60%, filaments 70%). Beams add up: keep `Brightness` low (below), or the overlap washes out to a flat white bar in daylight.
+**Nothing at the muzzle is wider than the emitter ball** (the user's feedback, 2026-10-23): the ball is 1.12 studs across on the Radiance and 0.6 on the Inferno, so the core, glow and filament widths at the muzzle and the filament `spread` stay within it.
+
+**Billboards are depth-tested:** the emitter ball and the target's face would hide half of a flare, so pull them towards the camera with `StudsOffset`: charge and muzzle flares (0, 0, 1.2), impact flare (0, 0, `impactSize` / 2).
+
+**Every Beam:** `FaceCamera = true`, `LightEmission = 1`, `LightInfluence = 0`, `TextureMode = Wrap`. **The beam narrows to a point at the target** (the user's feedback, 2026-10-23): `Width0` (muzzle end) is the full width, `Width1` (target end) = `Width0` × `tip`, for the core, the glow and the filaments. Beams add up: keep `Brightness` low (below), or the overlap washes out to a flat white bar in daylight.
 
 ### Recommended values
 
@@ -152,16 +156,17 @@ Radiance is thicker and longer; Inferno shorter, hotter and more ragged.
 | Value | Radiance (`order`) | Inferno (`chaos`) |
 |---|---|---|
 | `charge` / `hold` / `taper` (s) | 0.08 / 0.04 / 0.38 (beam gone at 0.50) | 0.06 / 0.03 / 0.27 (beam gone at 0.36) |
-| core width / glow width (studs) | 1.6 / 7 | 1.2 / 5.5 |
-| filaments: count, width (studs) | 4, 5 | 3, 4.5 |
-| `spread` / `fan` / `jitter` / `curve` | 0.6 / 1.4 / 0.45 / 1.6 | 0.8 / 1.8 / 0.7 / 2.2 |
-| core color | (225, 248, 255) ice-white | (255, 236, 200) white-hot |
-| glow color | (80, 190, 255) cyan | (255, 110, 30) orange |
-| filament color | (165, 232, 255) | (255, 170, 70) |
-| `Brightness`: core and filaments / glow | 2 / 0.6 | 2.4 / 0.8 |
+| core width / glow width at the muzzle (studs) | 0.9 / 1.1 | 0.5 / 0.6 |
+| filaments: count, width at the muzzle (studs) | 4, 1.1 | 3, 0.6 |
+| `spread` / `fan` / `jitter` / `curve` | 0.15 / 0.3 / 0.45 / 1.6 | 0.08 / 0.3 / 0.7 / 2.2 |
+| `tip` (width at the target ÷ width at the muzzle) | 0.06 | 0.08 |
+| core color | (225, 248, 255) ice-white | (255, 205, 150) white-hot |
+| glow color | (80, 190, 255) cyan | (255, 85, 15) orange |
+| filament color | (165, 232, 255) | (255, 130, 35) |
+| `Brightness`: core / glow / filaments | 2 / 0.6 / 3 | 2.4 / 0.8 / 3.4 |
 | `TextureLength`: core / glow / filament A / filament B (studs) | 30 / 60 / 20 / 15 | 24 / 50 / 16 / 12 |
 | `TextureSpeed`: filament A / B (tiles per second) | 30 / 40 (about 600 studs/s) | 40 / 52 (about 640 studs/s) |
-| `flareSize` / `impactSize` / `scorchSize` (studs) | 7 / 14 / 7 | 6 / 12 / 6 |
+| `flareSize` (charge) / `muzzleFlareSize` / `impactSize` / `scorchSize` (studs) | 4 / 5 / 5 / 7 | 2.5 / 3 / 4 / 6 |
 | `impactTime` / `scorchGlowTime` / `scorchTime` (s) | 0.3 / 1.2 / 4 | 0.25 / 1.0 / 3 |
 
 The flares and the core use the core color, the embers the glow color. Check the manifest entry with `Mesh.validateBeam(Meshes.beam)`.

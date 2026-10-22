@@ -23,23 +23,23 @@ BeamShot.TEX = {
 BeamShot.FACTIONS = {
 	order = {
 		charge = 0.08, hold = 0.04, taper = 0.38, -- beam gone at 0.50 s
-		coreWidth = 1.6, glowWidth = 7, filamentWidth = 2.5, filaments = 4,
-		spread = 0.8, fan = 3, jitter = 0.45, curve = 1.6,
+		coreWidth = 0.9, glowWidth = 1.1, filamentWidth = 1.1, filaments = 4, -- nothing wider than the emitter ball (1.12 studs)
+		spread = 0.15, fan = 0.3, tip = 0.06, jitter = 0.45, curve = 1.6, -- tip: width at the target / at the muzzle
 		coreColor = Color3.fromRGB(225, 248, 255), glowColor = Color3.fromRGB(80, 190, 255),
 		filamentColor = Color3.fromRGB(165, 232, 255), brightness = 2, glowBrightness = 0.6, filamentBrightness = 3,
 		texLen = { core = 30, glow = 60, filamentA = 20, filamentB = 15 },
 		speed = { filamentA = 30, filamentB = 40 }, -- tiles per second: 600 studs/s
-		flareSize = 7, impactSize = 14, impactTime = 0.3, scorchSize = 7, scorchTime = 4, scorchGlowTime = 1.2,
+		flareSize = 4, muzzleFlareSize = 5, impactSize = 5, impactTime = 0.3, scorchSize = 7, scorchTime = 4, scorchGlowTime = 1.2,
 	},
 	chaos = {
 		charge = 0.06, hold = 0.03, taper = 0.27, -- beam gone at 0.36 s
-		coreWidth = 1.2, glowWidth = 5.5, filamentWidth = 2.2, filaments = 3,
-		spread = 1.0, fan = 3.5, jitter = 0.7, curve = 2.2,
+		coreWidth = 0.5, glowWidth = 0.6, filamentWidth = 0.6, filaments = 3, -- the emitter ball is 0.6 studs
+		spread = 0.08, fan = 0.3, tip = 0.08, jitter = 0.7, curve = 2.2,
 		coreColor = Color3.fromRGB(255, 205, 150), glowColor = Color3.fromRGB(255, 85, 15),
 		filamentColor = Color3.fromRGB(255, 130, 35), brightness = 2.4, glowBrightness = 0.8, filamentBrightness = 3.4,
 		texLen = { core = 24, glow = 50, filamentA = 16, filamentB = 12 },
 		speed = { filamentA = 40, filamentB = 52 }, -- tiles per second: 640 studs/s
-		flareSize = 6, impactSize = 12, impactTime = 0.25, scorchSize = 6, scorchTime = 3, scorchGlowTime = 1.0,
+		flareSize = 2.5, muzzleFlareSize = 3, impactSize = 4, impactTime = 0.25, scorchSize = 6, scorchTime = 3, scorchGlowTime = 1.0,
 	},
 }
 
@@ -99,7 +99,15 @@ function BeamShot.build(faction: string, muzzle: Attachment, hit: Attachment, gr
 	end
 	rig.charge = billboard("ChargeFlare", muzzle, BeamShot.TEX.charge, F.coreColor)
 	rig.charge.Image.ImageRectSize = Vector2.new(256, 256)
+	rig.flare = billboard("MuzzleFlare", muzzle, BeamShot.TEX.charge, F.coreColor)
+	rig.flare.Image.ImageRectSize = Vector2.new(256, 256)
+	rig.flare.Image.ImageRectOffset = Vector2.new(256, 256) -- the full star (frame 4)
 	rig.impact = billboard("ImpactFlare", hit, BeamShot.TEX.impact, F.coreColor)
+	-- billboards are depth-tested: pull the flares towards the camera so the
+	-- emitter ball and the target's face don't hide half of them
+	rig.charge.StudsOffset = Vector3.new(0, 0, 1.2)
+	rig.flare.StudsOffset = Vector3.new(0, 0, 1.2)
+	rig.impact.StudsOffset = Vector3.new(0, 0, F.impactSize * 0.5)
 	local s = Instance.new("Part")
 	s.Name = "Scorch"
 	s.Anchored, s.CanCollide, s.CanQuery, s.CanTouch = true, false, false, false
@@ -151,10 +159,10 @@ function BeamShot.apply(rig: any, t: number)
 	local u = math.clamp((t - tOn - F.hold) / F.taper, 0, 1)
 	rig.core.Enabled, rig.glow.Enabled = on, on
 	local w = F.coreWidth * (1 - u) ^ 1.1
-	rig.core.Width0, rig.core.Width1 = w * 0.75, w
+	rig.core.Width0, rig.core.Width1 = w, w * F.tip -- full at the muzzle, a point at the target
 	rig.core.Transparency = seq(0.7 * u ^ 1.6)
 	local gw = F.glowWidth * (1 - u) ^ 0.8
-	rig.glow.Width0, rig.glow.Width1 = gw * 0.6, gw
+	rig.glow.Width0, rig.glow.Width1 = gw, gw * F.tip
 	rig.glow.Transparency = seq(0.35 + 0.65 * u)
 	local p0, p1 = rig.muzzle.WorldPosition, rig.hit.WorldPosition
 	local dir = (p1 - p0).Unit
@@ -164,18 +172,29 @@ function BeamShot.apply(rig: any, t: number)
 	for i, f in rig.filaments do
 		f.beam.Enabled = on
 		local fw = F.filamentWidth * (1 - u) ^ 2.2
-		f.beam.Width0, f.beam.Width1 = fw * 0.7, fw
+		f.beam.Width0, f.beam.Width1 = fw, fw * F.tip
 		f.beam.Transparency = seq(0.8 * u ^ 1.2)
 		local rng = Random.new(rig.seed * 100000 + frame * 17 + i)
 		local a = (i / #rig.filaments) * 2 * math.pi + (rng:NextNumber() - 0.5) * F.jitter * 2
 		local r = F.spread * (0.6 + 0.4 * rng:NextNumber())
-		local o0 = (side * math.cos(a) + up * math.sin(a)) * r * 0.25
+		local o0 = (side * math.cos(a) + up * math.sin(a)) * r
 		local a2 = a + (rng:NextNumber() - 0.5) * F.jitter
 		local o1 = (side * math.cos(a2) + up * math.sin(a2)) * r * F.fan
 		f.a0.WorldPosition = p0 + o0
 		f.a1.WorldPosition = p1 + o1
 		f.beam.CurveSize0 = (rng:NextNumber() * 2 - 1) * F.curve
 		f.beam.CurveSize1 = (rng:NextNumber() * 2 - 1) * F.curve
+	end
+	-- muzzle flare: the full star on the emitter ball while the beam is on,
+	-- flickering and turning a little each frame, shrinking with the taper
+	local mf = rig.flare
+	mf.Enabled = on
+	if on then
+		local rng = Random.new(rig.seed * 7919 + frame)
+		local size = F.muzzleFlareSize * (1 - u) ^ 0.8 * (0.85 + 0.3 * rng:NextNumber())
+		mf.Size = UDim2.fromScale(size, size)
+		mf.Image.Rotation = rng:NextNumber() * 30 - 15
+		mf.Image.ImageTransparency = 0.6 * u
 	end
 	-- impact flare at the hit, as the beam lands
 	local im = rig.impact
