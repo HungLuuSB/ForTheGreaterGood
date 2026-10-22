@@ -21,6 +21,10 @@ The target look: a translucent dome with a bright edge, thin glowing rings flowi
 | `Ring` | thin torus, radius 1, tube radius 0.01, horizontal (axis = Y), 204 triangles | One ring of the flow: at height `h` on a dome of radius `R` the ring's radius is `r = sqrt(R² − h²)`; `Size = (2.02r, 0.02R·k, 2.02r)` (`k` thickens the tube, 1 = 1% of R), `CFrame = baseCenter * CFrame.new(0, h, 0)`. `Material = Neon`, `Color` = team color, `Transparency` fades it near the rim. Pool them and move `h` from `R` to 0. |
 | `Emitter` | Model: `base` MeshPart (588 triangles, BAR style, Order sand-grey, cyan emissive core; SurfaceAppearance like the units) and an `Attachment` named `core` | The device the beam rises from. Unit origin on the ground under its center; the model carries `RootOffset` like a unit (rig.md 2): `base.CFrame = origin * model:GetAttribute("RootOffset")`. About 4 studs wide and 2.9 tall. Its `TeamColor`-tagged `base` takes the team color on its team plates (rig.md 6). The `core` attachment is the beam's start (top of the glowing core, 2.75 studs up). The core's glow is the Order cyan accent (M-16), not the team color. |
 
+### Shield generators (blockouts)
+
+The defs (S-79) are `ord_phalanx` (Order, footprint 2, dome radius 120) and `chs_carapace` (Chaos, footprint 2, dome radius 80), pieces `base` and `core`. In both blockouts `core` is the glowing part the beam comes from, and an `Attachment` named `beam` sits on top of it (Phalanx 8.3 studs up, Carapace 7.6): use it as the beam's `Attachment0` the way the `Emitter` model's `core` attachment is used. The bright ring where the dome meets the ground is one more `Ring` at `h` = 0 (`r` = `R`).
+
 ### Textures
 
 | Asset | Size | How to use it |
