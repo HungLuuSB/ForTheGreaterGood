@@ -1057,3 +1057,14 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Dent:** depth DENT (1.4) × strength × (1 − (ring / (rings + 1))²) × e^(−7t) × sin(16t): in first, then a small bounce past flat. `plateLook` keeps the largest |dent|.
 
 **Why:** the user, from the reference GIF's later shots: "smaller outside, bigger inside... pushed back inward... curved in to repel the shot".
+
+### C-133 — models-C's beam shot draws the beam towers' shots (after approval) (2026-10-23)
+
+**Decision:**
+- `Render/BeamShots` builds C's rig (core, glow, filaments, charge flipbook, impact, scorch) from `Meshes.beam`, pooled and capped at 8. It preloads the 8 textures.
+- Timing follows the shot's duration (Core/Effects.beamSeconds): charge, then held, then the last BEAM_FADE narrows it.
+- Widths go to BeamShots.TIP (0.08) at the target end (the user: a point at the tip). Filaments converge there.
+- `Render/Effects` hides its placeholder ray while the rig draws.
+- It's used once `Meshes.beam.status` is approved; `Invoke("beamsanyway", true)` previews it.
+
+**Why:** the user asked models-C for the beam VFX; C's reference module `assets/fx/beam/BeamShot.luau`.

@@ -4,6 +4,17 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, C's beam shot wired; Needs my review)
+
+- **Merged m-models** (animated pieces on 44 meshes, rebuilt wrecks, lighter deposits, the beam shot effect). test_client stays green and the materials file was regenerated.
+- **Beam shot (C-133):** models-C's effect (a white core, a wide coloured glow, jittering filaments, a charge flash, an impact flare and a scorch mark) now draws the Radiance and Inferno shots. My adjustments for your notes:
+  - it lasts the shot's full duration (Radiance 3 s, Inferno 1.5 s), held, then narrowing away over the last second;
+  - it narrows to **a point at the target end**, and the filaments meet there instead of fanning out. models-C is updating their recommended widths for the same thing.
+- **Needs my review:** it's at "review", so in a normal game you still see the placeholder ray. To preview it, run `ReplicatedStorage.FtggClientDebug:Invoke("beamsanyway", true)` in a playtest. Approve it and models-C flips the status, then it shows everywhere.
+- **Shield hits (C-132), now seen in Studio:** a honeycomb patch on the dome where shots land (`debug_out/screens/shield_cavein.jpg`).
+- **Honeycomb shell over the dome:** asked models-C for the asset (fading out toward the base); I'll scale it with the shield's capacity.
+- **Screenshot:** `debug_out/screens/beam_shot_c.jpg` (both beams, the rig driven directly; the towers' own targets were out of sight in that scene).
+
 ## Summary (2026-10-23, shield hits cave in)
 
 - **Shield hits (C-132),** after your second look at the GIF (its 2nd and 3rd shots):
