@@ -19,10 +19,14 @@ local UP = Schema.ShieldFlag.UP
 
 type Dome = { fx: ShieldFx.ShieldFx, up: boolean, x: number, y: number, z: number, radius: number }
 
-export type State = { domes: { [number]: Dome } }
+export type State = {
+	domes: { [number]: Dome },
+	-- SHIELD_HITs seen (debug): totals and the last few breaches { mass, x, y, z }
+	stats: { hits: number, breaches: number, lastBreaches: { { number } } },
+}
 
 function ShieldDomes.new(): State
-	return { domes = {} }
+	return { domes = {}, stats = { hits = 0, breaches = 0, lastBreaches = {} } }
 end
 
 -- Each frame, after Effects.update.
@@ -63,6 +67,14 @@ function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx)
 		end
 	end
 	for _, h in fx.shieldHits do
+		s.stats.hits += 1
+		if h.breach then
+			s.stats.breaches += 1
+			table.insert(s.stats.lastBreaches, { h.mass, h.x, h.y, h.z })
+			if #s.stats.lastBreaches > 10 then
+				table.remove(s.stats.lastBreaches, 1)
+			end
+		end
 		local d = s.domes[h.unitId]
 		if d == nil then
 			-- a generator the client doesn't have: the nearest dome round the point
