@@ -14,6 +14,9 @@
 --                                    DEPLOYED / DEPLOYING bits, C-84): "unpacking",
 --                                    "deployed", "packing" or "packed"; `instant` the
 --                                    first time (a unit seen already deployed)
+--   Retract(u, retracted, instant)   a retractable tower (def.retract, S-96) was
+--                                    switched off (TOGGLED_ON clear: retracted)
+--                                    or on (C-112); `instant` the first time
 --   AimWeapon(u, slot, yaw, pitch, active)
 --                                    the replicated aim changed, or every
 --                                    REAIM seconds while the weapon is
@@ -44,6 +47,7 @@ PieceAnim.REAIM = 0.5 -- seconds between AimWeapon calls while a weapon is engag
 
 local WS = Schema.WeaponState
 local LANDED = Schema.UnitState.LANDED
+local TOGGLED_ON = Schema.UnitState.TOGGLED_ON
 local DEPLOYED = Schema.UnitState.DEPLOYED
 local DEPLOYING = Schema.UnitState.DEPLOYING
 local AXES = { x = 1, y = 2, z = 3 }
@@ -84,6 +88,7 @@ export type Unit = {
 	lastAimCall: { [number]: number }, -- slot → scheduler time
 	moving: boolean,
 	landed: boolean,
+	retracted: boolean?, -- def.retract towers: TOGGLED_ON clear (C-112)
 	spins: { [string]: SpinState }, -- "piece:axis" → spin
 	-- methods (see the header)
 	Turn: (Unit, string, Axis, number, number?) -> (),
@@ -381,6 +386,14 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
 		if landed ~= u.landed then
 			u.landed = landed
 			PieceAnim.call(u, if landed then "Land" else "TakeOff")
+		end
+		if u.def.retract then
+			local retracted = bit32.band(wu.state or 0, TOGGLED_ON) == 0
+			if retracted ~= u.retracted then
+				local first = u.retracted == nil
+				u.retracted = retracted
+				PieceAnim.call(u, "Retract", retracted, first)
+			end
 		end
 		if u.def.deploy then
 			-- the deploy phase from the two bits; packing is DEPLOYING after deployed

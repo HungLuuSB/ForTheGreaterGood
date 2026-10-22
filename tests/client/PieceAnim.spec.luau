@@ -83,6 +83,25 @@ return function(t: any)
 		t.expect(near(wrapped, math.rad(-170), 1e-6), `ends at -170° ({math.deg(wrapped)})`)
 	end)
 
+	t.test("a beam tower retracts when switched off and rises when on (S-96, C-112)", function()
+		local s = PieceAnim.new(defs.weaponByIndex)
+		local BeamTower = require("../../src/client/Core/PieceScripts/BeamTower")
+		PieceAnim.add(s, 1, defs.units.ord_radiance, BeamTower)
+		local u = s.units[1]
+		PieceAnim.call(u, "Retract", true, false)
+		for _ = 1, 120 do
+			PieceAnim.step(s, 1 / 60)
+		end
+		t.expect(near(u.pieces.turret.pos[2], -BeamTower.DROP.ord_radiance), `turret sunk ({u.pieces.turret.pos[2]})`)
+		t.expect(near(rotOf(s, 1, "barrel", 1), math.rad(-BeamTower.FOLD)), "barrel folded down")
+		t.expect(near(rotOf(s, 1, "shellL", 3), math.rad(-BeamTower.LID)), "lids closed")
+		PieceAnim.call(u, "Retract", false, false)
+		for _ = 1, 120 do
+			PieceAnim.step(s, 1 / 60)
+		end
+		t.expect(near(u.pieces.turret.pos[2], 0) and near(rotOf(s, 1, "barrel", 1), 0), "risen and unfolded")
+	end)
+
 	t.test("Signal kills the older threads of its mask; StartThread inherits the mask", function()
 		local s = PieceAnim.new(defs.weaponByIndex)
 		local finished = {}
