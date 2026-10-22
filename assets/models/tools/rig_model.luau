@@ -128,6 +128,9 @@ end
 
 -- The emissive settings of one SurfaceAppearance: a glow part glows in its
 -- channel's tint; a piece doesn't glow (its glow faces moved to glow parts).
+-- Emission is albedo × EmissiveTint × strength, so the baked near-white glow
+-- faces clip to white in daylight: a glow part drops the color map and takes
+-- its tint as BasePart.Color (M-22).
 function RigModel.applyGlow(part: MeshPart, mask: string?)
 	local sa = part:FindFirstChildOfClass("SurfaceAppearance")
 	if not sa then
@@ -135,8 +138,11 @@ function RigModel.applyGlow(part: MeshPart, mask: string?)
 	end
 	local channel = part:GetAttribute("GlowChannel")
 	if channel and mask and mask ~= "" then
+		local tint = part:GetAttribute("GlowTint") :: Color3
+		sa.ColorMap = ""
+		part.Color = tint
 		sa.EmissiveMaskContent = Content.fromUri(mask)
-		sa.EmissiveTint = part:GetAttribute("GlowTint") :: Color3
+		sa.EmissiveTint = tint
 		sa.EmissiveStrength = part:GetAttribute("GlowStrength") :: number
 	else
 		sa.EmissiveStrength = 0

@@ -32,7 +32,15 @@ Your glow pass is applied to every BAR-style mesh: 6 tanks / constructors / arti
 - **Asset IDs:** in each `roblox_assets.json`. The previous upload is kept as `bar_preglow`; for the emitter, `emitterGlow` and `emitter_rev1`.
 - **Fix:** the Open Cloud loader no longer leaves an empty import shell in Workspace (39 removed).
 
-**Screenshots: not taken yet.** The fresh texture uploads were cached as failed in this Studio session ("Asset content representation is being generated"), so every glow model draws flat team color for now. A Studio restart clears that (pipeline.md). The lineup is ready in `Workspace.GlowReview`: Order at z −700, Chaos at z −400, x −300 to −130. The shots (55° close and 220 studs, both factions, normal and B's dusk preset) come right after the restart, as `debug_out/screens/glow_*.jpg`.
+**Screenshots** (after the restart):
+- 55° close and 220 studs, both factions, in Studio's normal light and in B's dusk preset (the place lighting was restored afterwards).
+- Files in `debug_out/screens/`: `glow_<order|chaos>_55_close_veh[_dusk].jpg`, `glow_<order|chaos>_55_close_struct[_dusk].jpg` and `glow_<order|chaos>_55_220[_dusk].jpg`, with `_crop` versions of the 220-stud shots enlarged 4× around the row.
+- Close up, Order's glow reads as cool cyan strips and Chaos's as amber. Headlights are warm white on both, and team panels stay clear.
+- At 220 studs the glow reads as small faction-colored points (strongest at dusk) and doesn't wash out the panels. The Oracle and Watcher radar dishes are the brightest things on the field.
+
+**Fix found in the shots:** the first rig left the glow faces' near-white albedo in the color map. Roblox multiplies emission by the albedo, so every glow clipped to white in daylight. Glow parts now drop the color map and take their tint as `BasePart.Color` and `EmissiveTint`; this is in `rig_model.luau`, all 130 glow parts in "FTGG Art", fx.md and M-22 (`glow_fix_before.jpg`, `glow_fix_after.jpg`). Nothing needed re-uploading.
+
+**Still open:** two maps failed again with HTTP 502 after the restart: the Hellmouth's roughness map and the Jackal's normal map. The models draw, only without those maps. If they don't come back after the next restart, I'll re-upload the two images. The "Failure" status from `ContentProvider:PreloadAsync` in Edit mode is unreliable: it reported every map as failed although they draw.
 
 **Needs your review:**
 - **Below the 5–10% target:**
@@ -43,9 +51,10 @@ Your glow pass is applied to every BAR-style mesh: 6 tanks / constructors / arti
   - Builders' nano emitters (Mason, Scrapper) and the shield emitter's core are on `power` (brighten while building or charging).
   - The radar faces (Oracle, Watcher) are on `running`.
   - Missile seekers and ready lights are on `weapon`.
+- **Radar dishes:** the Oracle and Watcher dishes are on `running` and are the brightest glow on the field (7.5% / 8.8%, a whole dish face). Dim them or keep them as the radar's signature.
 - **Team color on barrels:** barrels and launchers are now in `teamColorPieces`. They carry little team paint, so it's harmless.
 
-**Your steps:** save "FTGG Art" and restart Studio, then tell me; I'll take the glow shots.
+**Your steps:** save "FTGG Art" (the 130 glow parts were changed in place).
 
 ## Earlier summary (review batch, 2026-10-22)
 

@@ -14,7 +14,7 @@ Every BAR-style unit and structure mesh carries its glow in **glow parts**: smal
 
 **How to find them:** CollectionService tag `Glow`; each glow part has the attributes `GlowChannel` (`running`, `head`, `power` or `weapon`), `GlowPiece` (the piece it's welded to, e.g. `turret`), `GlowTint` (Color3) and `GlowStrength` (number, the resting strength). Their names are `<piece>_glow_<channel>`. They're decorations by rig.md 1 (welded, unanchored, no collisions, no shadows), so they follow their piece's `Motor6D.Transform`.
 
-**What to drive:** only the glow part's `SurfaceAppearance.EmissiveStrength` (and, if wanted, `EmissiveTint`). `BasePart.Color` doesn't touch the glow: glow is **never team-colored**, and team color stays on the painted panels (rig.md 6). The glow faces are near-white in the color map; the color is the tint.
+**What to drive:** only the glow part's `SurfaceAppearance.EmissiveStrength`. A glow part has no color map: its `BasePart.Color` is its albedo and equals its tint, and its `EmissiveTint` is the same color (Roblox multiplies emission by the albedo, so a white albedo clipped every glow to white in daylight). To change a channel's hue, set `Color` and `EmissiveTint` together; never paint a glow part with the team color. Glow is **never team-colored**, and team color stays on the painted panels (rig.md 6).
 
 | Channel | What glows | Order tint | Chaos tint | Resting strength | Intended states (client) |
 |---|---|---|---|---|---|
