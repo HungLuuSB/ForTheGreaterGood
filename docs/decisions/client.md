@@ -1011,8 +1011,8 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 
 **Why:** the user's request, and their answer on the history.
 
-### C-127 — Inferno's beam is green (2026-10-23)
+### C-127 — Inferno's beam: green, then back to orange (2026-10-23)
 
-**Decision:** `Render/Effects` BEAM_COLOR chaos (110, 255, 120); Order stays (200, 240, 255).
+**Decision:** Inferno's beam stays orange (255, 170, 70). It was made green in `0d6ca37`, then reverted the same day.
 
-**Why:** the user. The towers' other differences (blip targeting, misses, a lingering beam, Inferno weaker) are sim request 47.
+**Why:** the user asked for green, then said orange is fine. The towers' other differences (blip targeting, misses, a lingering beam, Inferno weaker) are sim request 47.

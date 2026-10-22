@@ -36,7 +36,7 @@ local BURST_MIN: { [string]: number } = { impact = 7, death = 12 }
 local BURST_SCALE: { [string]: number } = { impact = 1.6, death = 1.4 }
 local TRACER_STREAK = 0.45 -- the streak's length as a share of the shot
 -- beam colors by the shooter's faction (fx.md's weapon glow tints, C-112)
-local BEAM_COLOR = { order = Color3.fromRGB(200, 240, 255), chaos = Color3.fromRGB(110, 255, 120) } -- Inferno green (the user, C-127; orange until then)
+local BEAM_COLOR = { order = Color3.fromRGB(200, 240, 255), chaos = Color3.fromRGB(255, 170, 70) }
 local TRAIL_SECONDS = 0.06 -- ~20 studs behind a tank shell (340–380 studs/s)
 
 type Shell = { part: BasePart, trail: Trail, owner: number?, fresh: boolean }

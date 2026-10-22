@@ -6,7 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-23, beam towers apart)
 
-- **Inferno's beam is green now (C-127)**; Radiance's stays ice white.
+- **Inferno's beam stays orange:** I made it green (C-127), then put it back at your word.
 - The rest of your note (Radiance targets radar blips and can miss them without a Pinpointer, a lingering high-damage beam; Inferno shorter and weaker) is sim work: **sim request 47** is with sim-A. Once they name the beam's duration, I'll hold the drawn beam that long.
 - A note on C-126: its first suite run had 1 failure that didn't come back in 3 reruns (213/213 each). It ran while you were playtesting; I couldn't see which spec it was.
 
@@ -1648,7 +1648,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-47. **Open (sent 2026-10-23).** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today); Inferno's beam is green (C-127, done).
+47. **Open (sent 2026-10-23).** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today). Inferno's beam stays orange (the user changed their mind on green).
 
 46. **Built (S-111, merging): radar SAMs air only (AIR 1,150 / 1,100); anti-nukes `ord_providence` / `chs_cerberus` and mobile `ord_custodian` / `chs_chimera`, INTERCEPTOR / INTERCEPTED, stock in STOCK; client side to do.** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
     - **Radar SAMs** (`ord_radar_sam`, `chs_radar_sam`): drop `intercepts`, air only; damage retuned so a T2 radar SAM one-shots T1 air.
