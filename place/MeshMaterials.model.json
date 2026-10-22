@@ -22,6 +22,18 @@
       }
     },
     {
+      "Name": "chs_barracuda",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://140370689323409",
+        "NormalMapContent": "rbxassetid://71185189102270",
+        "RoughnessMapContent": "rbxassetid://121287914448261",
+        "MetalnessMapContent": "rbxassetid://79775888134335",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_carapace",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -462,6 +474,18 @@
         "NormalMapContent": "rbxassetid://83974720212015",
         "RoughnessMapContent": "rbxassetid://115475433027160",
         "MetalnessMapContent": "rbxassetid://127200583957662",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_sentry",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://133130560090466",
+        "NormalMapContent": "rbxassetid://71186564232398",
+        "RoughnessMapContent": "rbxassetid://73037664499214",
+        "MetalnessMapContent": "rbxassetid://136940614658305",
         "EmissiveStrength": 0
       }
     },
