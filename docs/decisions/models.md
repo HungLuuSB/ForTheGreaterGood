@@ -220,3 +220,9 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user's request for B's BAR-style nanoframe (2026-10-23). The constructors' attachment is `nano1` rather than `nano` so it doesn't share a name with the `nano` piece, and one `nano1..N` lookup serves factories and constructors.
 
+### M-26 — Size shows tech level (proposal, 2026-10-23)
+
+**Proposal:** a size scale measured against the Lancer (docs/art/size-scale.md): T1 economy at footprint 2, T1 factories at 4–5, T1 defenses at 1–2; T2 economy at 3–4, T2 factories at 6, T2 defenses at 2–3; T3 at 6–8. T2 units 1.3–1.5× the T1 of the same role (heavy tanks at footprint 2), T3 units ≥ 2×. Sent to the sim stream (footprints are sim rules); nothing is rescaled until it answers. After that the structures are redesigned at their new sizes, not scaled.
+
+**Why:** the user (2026-10-23): structures read too small; factories and generators should take up space, and size should show tech level.
+
