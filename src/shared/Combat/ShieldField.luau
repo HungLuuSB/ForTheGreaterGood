@@ -17,7 +17,9 @@
 --     over it) and is thrown out through the surface: hard for one that
 --     stopped or came head-on (straight back), a lift for one sliding round.
 -- A shell still closing in when it reaches the core breaks through (the
--- breach) and carries on, slowed. Gravity acts throughout.
+-- breach) and carries on, slowed. Gravity acts throughout, and in the field
+-- the dome pulls the shell down by FIELD_GRAVITY more (S-84, the user), so
+-- turned shells arc down to land.
 --
 -- The field's force is `force` (0..1: Shield's charge over FULL_FORCE, so
 -- full at 50% charge and above) over the shell's mass to MASS_EXP: a heavy
@@ -37,6 +39,7 @@ ShieldField.TANGENT_DRAG = 0.3 -- 1/s on the speed along the surface while throw
 ShieldField.STEER = 8 -- rad/s of steering at full force, mass 1, mid-band (S-82)
 ShieldField.GLANCE_SLOW = 0.05 -- the share of the braking and the push for a shell whose line misses the dome (S-82)
 ShieldField.HEAD_ON_EXP = 2
+ShieldField.FIELD_GRAVITY = 60 -- studs/s² pulling a shell down while it is in the field, whatever its mass (S-84, the user)
 ShieldField.STOPPED = 60 -- studs/s: slower than this a shell is thrown out more like a head-on one (S-82)
 
 -- The share of the braking (and of the push out) for a shell whose line
@@ -181,11 +184,12 @@ function ShieldField.step(
 				end
 			end
 		end
-		-- exact ballistic substep
+		-- exact ballistic substep; in the field the dome pulls down too (S-84)
+		local gg = if phase == ShieldField.BRAKING or phase == ShieldField.REPELLED then g + ShieldField.FIELD_GRAVITY else g
 		x += vx * h
-		y += vy * h - 0.5 * g * h * h
+		y += vy * h - 0.5 * gg * h * h
 		z += vz * h
-		vy -= g * h
+		vy -= gg * h
 		if phase == ShieldField.BRAKING then
 			local ax, ay, az = x - cx, y - cy, z - cz
 			local r2 = ax * ax + ay * ay + az * az
