@@ -233,6 +233,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `cda7860` (Lancer re-uploaded with the upload revision stamp in `assets/models/tools/lib.py`, asset IDs, pipeline note, tank review status; `assets/` and docs only).
 - Ready to merge: `96800a0` (review fixes: BAR tank rebuilds with `lib.Piece.scale`, team color method in rig.md 6, Warden / Minotaur / Cyclops / Reckoning blockouts, Locust / Cyclops / Barrier / Citadel registered, palette key `hazard`, M-18, M-19; includes `fe6c02a` and a merge of `main`; `src/shared/Defs/Blockouts/`, `assets/` and docs only).
 - Ready to merge: `2543ee8` (shield effect assets and fx.md, BAR tank IDs and brightness pass, perf with 100 and 300 BAR tanks, T1 vs T2 structure signatures, hand-made blockouts for every remaining def (T2 ground, commanders, aircraft, ships, last structures), M-20, M-21; includes `200ac59` to `74ef97b`; `src/shared/Defs/Blockouts/`, `assets/`, `.gitignore` and docs only).
+- Ready to merge: `baaf5bb` (shield generator blockouts ord_phalanx / chs_carapace for the S-79 defs (request 8), fx.md beam attachment and ground ring, cloudy shield swirl, BAR meshes for Mason, Scrapper, Verdict and Hellmouth with asset IDs, merge of `main`; includes `f4a6eac`; `src/shared/Defs/Blockouts/`, `assets/` and docs only).
 
 ## Requests
 
