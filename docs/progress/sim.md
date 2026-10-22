@@ -465,6 +465,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
   - Client: C-102..C-105 → `9b05fe9`; C-106 → `5674020`; C-107..C-109 → `bbab862`; C-110/C-111 → `7c04764`; C-112 → `01d6436`; C-113/C-114 → `b1f4dca`.
   - Models: M-23 → `6d01933`; `b41e955` → `41a6ddf`; BAR pairs 1–4 → `4165d24`; pairs 5–26 came in with the client merges.
   - Every merge passed test, test_slow and build. `integrate.sh` also runs `lune run test_client` now, reported but not required: it flagged the S-96 towers' missing icons (fixed in C-112) and the obsolete shield specs (fixed in C-110).
+- 2026-10-23: the S-95 guard fix → `f84565e`; the queue summary → `509c3e8`; client C-115 (with models M-24) → `bbd9d6e`; models `69bbce2` → `dffb3b1`. All passed test, test_slow, test_client and build and were pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 

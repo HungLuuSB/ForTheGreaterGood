@@ -1594,8 +1594,8 @@ end
 -- Call once per tick, before Sim.step.
 function Skirmish.tick(brain: Brain)
 	local sim = brain.sim
-	if sim.match.eliminated[brain.player] then
-		return
+	if sim.match.eliminated[brain.player] or sim.cheats.aiPaused[brain.player] then
+		return -- out, or paused by the AI cheat (S-102)
 	end
 	-- watched every tick, not only when thinking: which moments a think
 	-- samples must not decide what it sees (S-31)

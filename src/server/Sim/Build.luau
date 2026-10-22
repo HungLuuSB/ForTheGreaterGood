@@ -463,24 +463,30 @@ function Build.step(sim: Types.Sim)
 		local cost = itemDef.cost
 		local team = w.team[t]
 		local acc = eco.accounts[team]
-		local rate = bp / cost.buildTime -- progress per second at full supply
-		demandS[team] += cost.supply * rate
-		demandP[team] += cost.power * rate
-		local step = rate * DT * Economy.effective(acc, cost.supply, cost.power)
-		-- never spend beyond what this window still allows
-		if cost.supply > 0 then
-			step = math.min(step, Economy.allowance(acc.supply) / cost.supply)
-		end
-		if cost.power > 0 then
-			step = math.min(step, Economy.allowance(acc.power) / cost.power)
-		end
-		if step <= 0 then
-			continue
+		local free = sim.cheats.instabuild -- (S-102) done at once, nothing spent
+		local step = 1
+		if not free then
+			local rate = bp / cost.buildTime -- progress per second at full supply
+			demandS[team] += cost.supply * rate
+			demandP[team] += cost.power * rate
+			step = rate * DT * Economy.effective(acc, cost.supply, cost.power)
+			-- never spend beyond what this window still allows
+			if cost.supply > 0 then
+				step = math.min(step, Economy.allowance(acc.supply) / cost.supply)
+			end
+			if cost.power > 0 then
+				step = math.min(step, Economy.allowance(acc.power) / cost.power)
+			end
+			if step <= 0 then
+				continue
+			end
 		end
 		if frame then
 			step = math.min(step, 1 - w.buildProgress[t])
-			acc.supply.spent += cost.supply * step
-			acc.power.spent += cost.power * step
+			if not free then
+				acc.supply.spent += cost.supply * step
+				acc.power.spent += cost.power * step
+			end
 			local p = w.buildProgress[t] + step
 			World.setHealth(w, t, math.min(itemDef.health, w.health[t] + itemDef.health * step))
 			if p >= 1 - 1e-9 then
@@ -495,8 +501,10 @@ function Build.step(sim: Types.Sim)
 			local q = b.queue[t] :: { number }
 			local p = b.progress[t] or 0
 			step = math.min(step, 1 - p)
-			acc.supply.spent += cost.supply * step
-			acc.power.spent += cost.power * step
+			if not free then
+				acc.supply.spent += cost.supply * step
+				acc.power.spent += cost.power * step
+			end
 			p += step
 			if p >= 1 - 1e-9 and Match.atCap(sim, w.owner[t]) then
 				b.progress[t] = 1 -- done; rolls out when the owner is under the cap

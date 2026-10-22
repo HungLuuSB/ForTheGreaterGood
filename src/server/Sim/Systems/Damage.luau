@@ -43,6 +43,7 @@ return function(sim: Types.Sim)
 	end
 	table.clear(c.queued)
 	local w = sim.world
+	local cheats = sim.cheats
 	local nDead = 0
 	for i = 1, count do
 		local t = c.dmgTarget[i]
@@ -52,6 +53,9 @@ return function(sim: Types.Sim)
 		local before = w.health[t]
 		if before <= 0 then
 			continue -- already dying this tick
+		end
+		if cheats.god[w.owner[t]] and not cheats.killing[t] then
+			continue -- god mode (S-102)
 		end
 		local amount = c.dmgAmount[i]
 		if w.deploy[t] == 1 then
@@ -90,6 +94,9 @@ return function(sim: Types.Sim)
 		end
 	end
 	c.dmgCount = 0
+	if next(cheats.killing) ~= nil then
+		table.clear(cheats.killing)
+	end
 
 	for i = 1, nDead do
 		local id = dead[i]
