@@ -4,6 +4,14 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, big-map fog fixed)
+
+- **Fog on big maps (C-130):**
+  - the cause, confirmed in the Studio log: "Failed to create empty EditableMesh ... memory budget limits". Normandy needed 16 fog chunks, and the device budget, shared with the shield effect, charts and vignette, ran out partway.
+  - the fix: the fog's vertices now spread out on bigger maps, so every map needs at most 4 chunks, as Coastline always did.
+  - Normandy now builds 4 of 4 and is dark everywhere it should be. From game height it looks the same.
+- **Screenshot:** `debug_out/screens/fog_normandy.jpg`.
+
 ## Summary (2026-10-23, beams glance off shields)
 
 - **Deflection (C-129), from your sketch:** a beam that ends on a shield dome's surface is drawn as two legs: up to the dome, then a shorter one mirrored off the surface and angled down into the ground nearby, fading with the beam.

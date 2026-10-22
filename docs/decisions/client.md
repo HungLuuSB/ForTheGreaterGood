@@ -1032,3 +1032,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** `Core/Effects.deflection` checks a missed BEAM FIRE that ends within 2 studs of a known dome's surface (generator position, `def.shield.radius`) and was fired from outside it. The ray is mirrored about the surface normal and tilted down at least 0.45, 8–90 studs long to the ground; `Render/Effects` draws that second leg from its own pool. It applies once the sim ends beams at domes (sim request 50).
 
 **Why:** the user's sketch ("the shield can deflect incoming laser").
+
+### C-130 — The fog blanket's vertex spacing grows with the map: at most 2 × 2 chunks (2026-10-23)
+
+**Decision:** `FogBlanket.stepFor(cellsX, cellsZ)` = max(STEP, ceil(max side / (2 × CHUNK))): 2 cells on 128-cell maps, 4 on 256-cell maps. Every map needs at most 4 EditableMeshes.
+
+**Why:** on Normandy, 16 chunks hit the device's editable memory budget (Studio: "Failed to create empty EditableMesh ... memory budget limits") and parts of the map lost their fog (the user's screenshot). The budget is shared with the shield fx, charts and vignette.

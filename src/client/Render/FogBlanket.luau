@@ -35,7 +35,7 @@ local FogBlanket = {}
 
 FogBlanket.ENABLED = true -- the settings menu's "Fog of war"
 FogBlanket.UPDATE = 1 / 15 -- seconds between vision reads and uploads (the sim rate)
-FogBlanket.STEP = 2 -- grid cells between vertices
+FogBlanket.STEP = 2 -- grid cells between vertices, at least (bigger maps space them wider: stepFor)
 FogBlanket.CHUNK = 32 -- vertex steps per chunk side
 FogBlanket.LIFT = 1 -- studs over the highest ground near a vertex
 FogBlanket.TRANSPARENCY = 0.02 -- the chunks' own (see above)
@@ -111,6 +111,15 @@ local function heightAt(world: World.World, x: number, z: number, r: number): nu
 	return y + FogBlanket.LIFT
 end
 
+-- Grid cells between vertices on a map of `cellsX` × `cellsZ`: STEP, or wider
+-- so the map needs at most 2 × 2 chunks. Every chunk is an EditableMesh and
+-- the device's editable memory budget is shared (shield fx, charts, the
+-- vignette): a 256-cell map at STEP 2 needed 16 and lost some to the budget
+-- (C-130, the user's Normandy screenshot).
+function FogBlanket.stepFor(cellsX: number, cellsZ: number): number
+	return math.max(FogBlanket.STEP, math.ceil(math.max(cellsX, cellsZ) / (2 * FogBlanket.CHUNK)))
+end
+
 -- One chunk's mesh: vertex steps [cx0, cx1) × [cz0, cz1), in world space,
 -- UVs onto the whole image (u east, v south) kept half a pixel in from its
 -- edges (no wrap-around bleed).
@@ -120,7 +129,7 @@ local function buildChunk(f: FogBlanket, world: World.World, grid: any, cx0: num
 		f.stats.mode = "no editable-mesh memory"
 		return
 	end
-	local cell = grid.sizeX / grid.cellsX * FogBlanket.STEP -- studs between vertices
+	local cell = grid.sizeX / grid.cellsX * FogBlanket.stepFor(grid.cellsX, grid.cellsZ) -- studs between vertices
 	local ids, uvs = {}, {}
 	local W, D = grid.cellsX, grid.cellsZ
 	local cols = cx1 - cx0 + 1
@@ -196,7 +205,8 @@ function FogBlanket.setMap(f: FogBlanket, world: World.World, layers: any)
 	task.spawn(function()
 		local t0 = os.clock()
 		local C = FogBlanket.CHUNK
-		local vx, vz = math.ceil(grid.cellsX / FogBlanket.STEP), math.ceil(grid.cellsZ / FogBlanket.STEP)
+		local step = FogBlanket.stepFor(grid.cellsX, grid.cellsZ)
+		local vx, vz = math.ceil(grid.cellsX / step), math.ceil(grid.cellsZ / step)
 		for cz = 0, vz - 1, C do
 			for cx = 0, vx - 1, C do
 				if f.image ~= img then
