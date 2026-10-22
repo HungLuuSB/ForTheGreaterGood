@@ -22,7 +22,7 @@ FogBlanket.FADE = 0.3 -- seconds from one state to another
 -- a grey layer both darkens and desaturates
 FogBlanket.LOOK = table.freeze({
 	visible = table.freeze({ grey = 30, alpha = 0 }),
-	explored = table.freeze({ grey = 30, alpha = 0.52 }),
+	explored = table.freeze({ grey = 40, alpha = 0.4 }), -- lighter than first tried: under the night lighting (C-101) it read as never seen
 	never = table.freeze({ grey = 8, alpha = 0.74 }),
 })
 FogBlanket.TINT = table.freeze({ 1, 1.04, 1.18 }) -- r, g, b multipliers on the grey (a cool shadow)

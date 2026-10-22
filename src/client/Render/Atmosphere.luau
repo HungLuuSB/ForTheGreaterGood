@@ -1,7 +1,13 @@
 --!strict
 -- Atmosphere presets (C-83), options for the user to choose from (listed
--- under "Needs my review"); "current" keeps the place's own lighting and
--- is the default. Applied on this client only (Lighting is drawn locally):
+-- under "Needs my review"); "night" is the default (C-101, the user: the
+-- maps have no sun, a dark battlefield), "current" keeps the place's own
+-- lighting. Applied on this client only (Lighting is drawn locally):
+--   night     a moonlit night, no sun: cool neutral ambient light bright
+--             enough to read units, soft shadows, low environment
+--             specular (no glossy "plastic" sheen on terrain, units or the
+--             fog blanket), desaturated, no sun rays, bloom that makes
+--             glows and fire stand out
 --   current   the place as saved (Roblox's default sky, Atmosphere 0.3,
 --             Bloom, faint sun rays)
 --   clear     a crisp midday: thinner air, a bluer horizon, a touch more
@@ -27,12 +33,29 @@ export type Preset = {
 	bloom: { intensity: number, size: number, threshold: number }?,
 	color: { brightness: number, contrast: number, saturation: number, tint: Color3 }?,
 	rays: { intensity: number, spread: number }?,
+	specular: number?, -- EnvironmentSpecularScale (sky reflections)
+	diffuse: number?, -- EnvironmentDiffuseScale
 }
 
-Atmosphere.ORDER = { "current", "clear", "haze", "dusk" }
-Atmosphere.NAMES = { current = "Current", clear = "Clear day", haze = "Battlefield haze", dusk = "Dusk" }
+Atmosphere.ORDER = { "night", "current", "clear", "haze", "dusk" }
+Atmosphere.NAMES = { night = "Night", current = "Current", clear = "Clear day", haze = "Battlefield haze", dusk = "Dusk" }
+Atmosphere.DEFAULT = "night"
 
 Atmosphere.PRESETS = {
+	night = { -- tuned in Studio on ridgeline at 330 studs, 55° (C-101)
+		clock = 0,
+		brightness = 2.5,
+		ambient = Color3.fromRGB(112, 118, 132),
+		outdoor = Color3.fromRGB(140, 146, 162),
+		exposure = 1.1,
+		shadowSoftness = 0.6,
+		specular = 0.15,
+		diffuse = 0.6,
+		air = { density = 0.2, offset = 0.15, haze = 0.6, glare = 0, color = Color3.fromRGB(80, 88, 104), decay = Color3.fromRGB(40, 44, 58) },
+		bloom = { intensity = 0.8, size = 26, threshold = 1.2 },
+		color = { brightness = 0, contrast = 0.1, saturation = -0.18, tint = Color3.fromRGB(236, 240, 255) },
+		rays = { intensity = 0, spread = 0 },
+	},
 	current = {},
 	clear = {
 		clock = 13,
@@ -99,6 +122,8 @@ local function capture(): Preset
 		bloom = { intensity = bloom.Intensity, size = bloom.Size, threshold = bloom.Threshold },
 		color = if cc.Enabled then { brightness = cc.Brightness, contrast = cc.Contrast, saturation = cc.Saturation, tint = cc.TintColor } else nil,
 		rays = { intensity = rays.Intensity, spread = rays.Spread },
+		specular = Lighting.EnvironmentSpecularScale,
+		diffuse = Lighting.EnvironmentDiffuseScale,
 	}
 end
 
@@ -109,6 +134,8 @@ local function set(p: Preset, base: Preset)
 	Lighting.OutdoorAmbient = p.outdoor or base.outdoor :: Color3
 	Lighting.ExposureCompensation = p.exposure or base.exposure :: number
 	Lighting.ShadowSoftness = p.shadowSoftness or base.shadowSoftness :: number
+	Lighting.EnvironmentSpecularScale = p.specular or base.specular :: number
+	Lighting.EnvironmentDiffuseScale = p.diffuse or base.diffuse :: number
 	local a = p.air or base.air
 	if a then
 		local air = child("Atmosphere", "Atmosphere") :: Atmosphere
