@@ -1389,3 +1389,4 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The census counts shields, Pinpointers, Citadels and Barriers. T2 builders are kept out of the T1 worker jobs and the worker count.
 - **Not done:** nukes and the anti-nuke umbrella (still next.md item 7).
 - **Tests:** `AI.spec` 12: with rich economies, Order hard fields an Architect, Phalanx, Witness, Barrier and Citadel, and Chaos normal a Forgemaster, Carapace, Augur and airfield, by 6 minutes. Fast and slow suites pass (mirror split 7–5).
+- **Fix (S-95, same day; found by the final faction_ai run):** a guard order queued behind others (a factory's list puts it after the exit move) could start after its target died, and `Orders` indexed the gone unit's def. A guard whose target is gone, or whose ID now belongs to another unit, now ends at once (`Orders.spec`: a factory guard order on a tank that dies before the unit rolls out). Repair already checked.

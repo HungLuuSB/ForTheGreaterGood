@@ -360,6 +360,30 @@ return function(t: RunAll.Context)
 		t.equal(o.rally[plant], nil, "STOP clears it")
 	end)
 
+	t.test("a factory's guard order for a unit that died since is dropped, not crashed on (S-95)", function()
+		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:64" })
+		local o = sim.orders
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, -150, -150)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 100, -100)
+		on(sim, CT.GUARD, 1, { plant }, tank)
+		steps(sim, 1)
+		Combat.queueDamage(sim.combat, tank, 1e6, 0) -- the guarded tank dies
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.ord_herald.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
+		local made = 0
+		steps(sim, 3000, function()
+			powered(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "PRODUCED" and e.other == plant then
+					made = e.unit
+				end
+			end
+			return made ~= 0
+		end)
+		t.expect(made ~= 0, "a unit was produced")
+		steps(sim, 300)
+		t.equal(o.queue[made], nil, "it rolled out, then dropped the guard order on a gone unit")
+	end)
+
 	t.test("REPEAT sets a factory's repeat (and its state bit); TOGGLE only switches on / off", function()
 		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world
