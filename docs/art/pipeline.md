@@ -68,6 +68,7 @@ Found on the first batch (ten units, 2026-10-22):
 - A mesh bigger than about 20 studs comes in clamped: the ×100 import is capped at 2048 studs on its longest side, so the 22-stud vehicle plants normalize at 22 / 2048, not 0.01 (`OpenCloud.load`'s `scale` argument; the size check catches it).
 - Now and then one fresh image fails in Studio with HTTP 502 and stays failed for the session. Re-uploading that image gives a new ID that loads: 2 of 50 images in the first batch.
 - A new SurfaceAppearance combination takes Studio a minute to build its texture pack; until then the part draws plain grey. No restart is needed.
+- A fresh image can also fail with `HttpError: NetFail` (4 of 6 units in the second batch). Like the HTTP 502s, Studio caches the failure until it restarts; after a restart every one of them drew. So after a batch: check the log for `NetFail` / `502`, and restart Studio once if any appear.
 
 Limits (Roblox docs): one asset per request, up to 20 MB; images under 8000 × 8000; a Model upload is a package; no published per-minute limit for creating assets, limits apply per key owner and a 429 carries `x-ratelimit-reset` (the tool waits and retries); moderation still applies to each upload. One unit is six uploads (five maps and the FBX); the FBX's embedded maps are uploaded too but not used.
 
