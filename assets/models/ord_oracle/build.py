@@ -3,7 +3,8 @@ blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_oracle/bu
 
 An armored 6 x 6 with a cab and a shelter box at the back carrying the
 `dish`: a big flat phased-array panel (a panel, never a dish, M-15 style
-rule) tilted back 20° on a turning mast, its face a glowing grid of cells.
+rule) tilted back 20° on a turning mast: an unlit face with a glowing edge
+and a thin glowing cell grid.
 Team plates on the panel's back, the cab roof and the flanks (BAR style,
 M-15; Order reads heavy, M-14). Writes export/ through tools/unit.py.
 """
@@ -47,8 +48,23 @@ def build_dish(p):
     p.cylinder("y", (0, 4.25, 1.6), 0.45, 0.3, 10, "trim")
     p.obox((0, 4.75, 1.75), (0, 1, 0.3), (1, 0, 0), 1.0, 0.3, 0.3, "dark")
     p.obox(c, U, N, 4.6, 2.2, 0.3, "paint", bevel=0.04)
+    # the array face is unlit; only its edge and a thin cell grid glow
+    # (review 2026-10-22: the all-glowing face outshone everything)
     face = tuple(c[i] + N[i] * 0.17 for i in range(3))
-    p.obox(face, U, N, 4.2, 1.9, 0.03, "light")
+    p.obox(face, U, N, 4.2, 1.9, 0.03, "dark")
+    v = (0.0, math.cos(TILT), math.sin(TILT))
+
+    def at(a, b):
+        return tuple(c[k] + N[k] * 0.195 + U[k] * a + v[k] * b for k in range(3))
+
+    for b in (-0.91, 0.91):  # edge, top and bottom
+        p.obox(at(0, b), U, N, 4.2, 0.08, 0.02, "light")
+    for a in (-2.06, 2.06):  # edge, sides
+        p.obox(at(a, 0), U, N, 0.08, 1.74, 0.02, "light")
+    for i in range(1, 6):  # grid columns
+        p.obox(at(-2.1 + i * 0.7, 0), U, N, 0.04, 1.74, 0.02, "light")
+    for b in (-0.32, 0.32):  # grid rows
+        p.obox(at(0, b), U, N, 4.04, 0.04, 0.02, "light")
     back = tuple(c[i] - N[i] * 0.17 for i in range(3))
     p.obox(back, U, N, 3.6, 1.5, 0.03, "team")
 
@@ -59,17 +75,7 @@ def details_base(p):
 
 
 def details_dish(p):
-    c = (0.0, 5.4, 1.6)
-    v = (0.0, math.cos(TILT), math.sin(TILT))
-    for i in range(1, 6):
-        a = -2.1 + i * 0.7
-        pa = tuple(c[k] + N[k] * 0.19 + U[k] * a - v[k] * 0.95 for k in range(3))
-        pb = tuple(c[k] + N[k] * 0.19 + U[k] * a + v[k] * 0.95 for k in range(3))
-        seam(p, pa, pb, N, width=0.05)
-    for j in (-0.32, 0.32):
-        pa = tuple(c[k] + N[k] * 0.19 - U[k] * 2.1 + v[k] * j for k in range(3))
-        pb = tuple(c[k] + N[k] * 0.19 + U[k] * 2.1 + v[k] * j for k in range(3))
-        seam(p, pa, pb, N, width=0.05)
+    pass
 
 
 unit.run(__file__, "ord_oracle", "order", footprint=1,

@@ -1,0 +1,130 @@
+--!strict
+-- Checks a mesh manifest entry (Meshes/Registry.luau, docs/contracts/rig.md
+-- section 7) against its unit def. Pure data: runs in Lune and Roblox.
+
+local Mesh = {}
+
+Mesh.STATUSES = { approved = true, review = true }
+Mesh.CHANNELS = { running = true, head = true, power = true, weapon = true }
+Mesh.MAPS = { "ALB", "NOR", "RGH", "MTL", "EMI" }
+
+local function isAssetId(v: any): boolean
+	return type(v) == "string" and string.match(v, "^rbxassetid://%d+$") ~= nil
+end
+Mesh.isAssetId = isAssetId
+
+local function isVec3(v: any): boolean
+	return type(v) == "table" and #v == 3 and type(v[1]) == "number" and type(v[2]) == "number" and type(v[3]) == "number"
+end
+
+local function isAttachmentPiece(name: string): boolean
+	return string.match(name, "^muzzle%d*$") ~= nil
+end
+
+-- Problems with one entry, empty when valid. `def` is the unit def (nil for
+-- an fx entry, which has no def to match).
+function Mesh.validate(id: string, e: any, def: any?): { string }
+	local problems: { string } = {}
+	local function bad(msg: string)
+		table.insert(problems, `{id}: {msg}`)
+	end
+	if not Mesh.STATUSES[e.status] then
+		bad(`status {tostring(e.status)} must be "approved" or "review"`)
+	end
+	if not isAssetId(e.model) then
+		bad("model asset ID missing")
+	end
+	for _, k in Mesh.MAPS do
+		if not isAssetId(e.maps and e.maps[k]) then
+			bad(`map {k} asset ID missing`)
+		end
+	end
+	if type(e.pieces) ~= "table" or e.pieces.base == nil then
+		bad("no base piece")
+		return problems
+	end
+	for name, p in e.pieces do
+		if not isAssetId(p.mesh) then
+			bad(`piece {name}: mesh asset ID missing`)
+		end
+		if not isVec3(p.center) or not isVec3(p.size) then
+			bad(`piece {name}: center and size must be three numbers`)
+		end
+		if name == "base" then
+			if p.parent ~= nil then
+				bad("base can't have a parent")
+			end
+		else
+			if p.parent == nil or e.pieces[p.parent] == nil then
+				bad(`piece {name}: parent {tostring(p.parent)} isn't a piece`)
+			end
+			if not isVec3(p.pivot) then
+				bad(`piece {name}: pivot missing`)
+			end
+		end
+	end
+	for name, a in e.attachments or {} do
+		if e.pieces[a.parent] == nil then
+			bad(`attachment {name}: parent {tostring(a.parent)} isn't a piece`)
+		end
+		if not isVec3(a.at) then
+			bad(`attachment {name}: at must be three numbers`)
+		end
+	end
+	for _, name in e.teamPieces or {} do
+		if e.pieces[name] == nil then
+			bad(`team piece {name} isn't a piece`)
+		end
+	end
+	local glowNames: { [string]: boolean } = {}
+	for _, g in e.glow or {} do
+		if glowNames[g.name] then
+			bad(`glow part {g.name} listed twice`)
+		end
+		glowNames[g.name] = true
+		if e.pieces[g.piece] == nil then
+			bad(`glow part {g.name}: piece {tostring(g.piece)} isn't a piece`)
+		end
+		if not Mesh.CHANNELS[g.channel] then
+			bad(`glow part {g.name}: unknown channel {tostring(g.channel)}`)
+		end
+		if g.name ~= `{g.piece}_glow_{g.channel}` then
+			bad(`glow part {g.name}: name must be <piece>_glow_<channel>`)
+		end
+		if not isAssetId(g.mesh) then
+			bad(`glow part {g.name}: mesh asset ID missing`)
+		end
+		if not isVec3(g.tint) or type(g.strength) ~= "number" or g.strength <= 0 then
+			bad(`glow part {g.name}: tint and strength required`)
+		end
+	end
+	if def then
+		if def.id ~= id then
+			bad("id doesn't match the def")
+		end
+		local inDef: { [string]: boolean } = {}
+		for _, name in def.pieces or {} do
+			inDef[name] = true
+			if isAttachmentPiece(name) then
+				if (e.attachments or {})[name] == nil then
+					bad(`def piece {name} must be an attachment`)
+				end
+			elseif e.pieces[name] == nil then
+				bad(`def piece {name} has no mesh piece`)
+			end
+		end
+		for name in e.pieces do
+			if not inDef[name] then
+				bad(`piece {name} isn't in the def's pieces`)
+			end
+		end
+		for name in e.attachments or {} do
+			if isAttachmentPiece(name) and not inDef[name] then
+				bad(`attachment {name} isn't in the def's pieces`)
+			end
+		end
+	end
+	return problems
+end
+
+return Mesh

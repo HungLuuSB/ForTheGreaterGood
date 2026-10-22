@@ -73,4 +73,5 @@ def details_dish(p):
 
 unit.run(__file__, "chs_watcher", "chaos", footprint=1,
          pieces=[unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
-                 unit.PieceSpec("dish", "base", DISH_PIVOT, build_dish, details_dish)])
+                 unit.PieceSpec("dish", "base", DISH_PIVOT, build_dish, details_dish)],
+         glow_strength={"dish_glow_running": 1.4})  # dish ring 30% dimmer (review 2026-10-22)

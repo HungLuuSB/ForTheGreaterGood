@@ -41,6 +41,7 @@ local Skirmish = require(game:GetService("ServerScriptService"):WaitForChild("Si
 local MapRegistry = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Grid"):WaitForChild("MapRegistry")) :: any
 local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
 local Stats = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Stats")) :: any
+local StatSeries = require(script.Parent:WaitForChild("StatSeries")) :: any
 local Build = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Build")) :: any
 local HttpService = game:GetService("HttpService")
 
@@ -137,6 +138,7 @@ local sim: any
 local brains: { any } = {} -- the skirmish AI's players in a lobby match (C-70)
 local PREVIEW_PLAYERS = 8 -- the lobby preview has a sim player for every seat a human may take
 local matchStartTick = 0
+local series: any = nil -- the statistics panel's samples over time (StatSeries, C-105)
 local matchId = 0
 local seed = Config.seed
 local endedAt: number? = nil
@@ -221,7 +223,25 @@ end
 local lobbyRemote = Instance.new("RemoteEvent")
 lobbyRemote.Name = "Lobby"
 lobbyRemote.Parent = remotes
-local function publishLobby()
+local publishLobby: () -> ()
+
+-- The match is over for the humans (or a Studio debug ended it): the
+-- results, with the statistics over time (C-105).
+local function finishMatch()
+	lobby.phase = "results"
+	local report = Stats.report(sim)
+	lobby.results = Lobby.results(lobby, sim, matchStartTick, report)
+	if series then
+		StatSeries.sample(series, sim, report)
+		lobby.results.series = series
+	end
+	lobby.results.replays = next(recorders) ~= nil
+	brains = {}
+	print(`[Entry] match over for the humans: {if sim.match.over then `ally team {sim.match.winner} won` else "all out"}`)
+	publishLobby()
+end
+
+function publishLobby()
 	if lobby then
 		local names = {}
 		for _, m in lobbyMaps do
@@ -253,6 +273,7 @@ local function startMatch()
 			sim = Sim.new(Lobby.config(lobby, seed))
 			brains = Skirmish.forMatch(sim)
 			matchStartTick = sim.tick
+			series = StatSeries.new(sim.tick)
 			recorders, recordedBytes = {}, 0
 			for _, id in Lobby.humans(lobby) do
 				local header = { protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, mapId = sim.mapId, viewer = id, players = {} }
@@ -576,6 +597,13 @@ if RunService:IsStudio() then
 				table.insert(ids, Spawn.unit(sim, defId, playerId, x + i * (spacing or 12), z, heading or 0))
 			end
 			return ids
+		elseif query == "results" then
+			-- ends a lobby match now and shows the results (the statistics panel, C-105)
+			if lobby and lobby.phase == "playing" then
+				finishMatch()
+				return true
+			end
+			return false
 		elseif query == "build" then
 			local builder, defId, x, z = ...
 			Build.commandBuild(sim, { builder }, sim.defs.units[defId].index, x, z, 0)
@@ -626,13 +654,11 @@ RunService.Heartbeat:Connect(function(dt: number)
 		end
 		-- the end for the humans: the match is over, or they are all out (the
 		-- AI may fight on in a free-for-all; the results don't wait for it)
+		if lobby and lobby.phase == "playing" and series and StatSeries.due(series, sim.tick) then
+			StatSeries.sample(series, sim, Stats.report(sim))
+		end
 		if lobby and lobby.phase == "playing" and Lobby.done(lobby, sim) then
-			lobby.phase = "results"
-			lobby.results = Lobby.results(lobby, sim, matchStartTick, Stats.report(sim))
-			lobby.results.replays = next(recorders) ~= nil
-			brains = {}
-			print(`[Entry] match over for the humans: {if sim.match.over then `ally team {sim.match.winner} won` else "all out"}`)
-			publishLobby()
+			finishMatch()
 		end
 		if Config.demoOrders and sim.tick % DEMO_EVERY == 0 then
 			demoOrders()

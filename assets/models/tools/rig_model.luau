@@ -128,15 +128,28 @@ end
 
 -- The emissive settings of one SurfaceAppearance: a glow part glows in its
 -- channel's tint; a piece doesn't glow (its glow faces moved to glow parts).
-function RigModel.applyGlow(part: MeshPart, mask: string?)
+-- Emission is albedo × EmissiveTint × strength, so the baked near-white glow
+-- faces clip to white in daylight: a glow part drops the color map and takes
+-- its tint as BasePart.Color (M-22). A glow part holds only glowing faces, so
+-- its mask is one shared white image (glow_mask.png): the unit's baked mask
+-- didn't line up on every mesh (the vehicle plant's door lights stayed dark),
+-- and no mask at all turns emission off. Precise fidelity: level of detail
+-- can drop thin strips spread over a large part.
+RigModel.GLOW_MASK = "rbxassetid://101169341901946"
+
+function RigModel.applyGlow(part: MeshPart, _mask: string?)
 	local sa = part:FindFirstChildOfClass("SurfaceAppearance")
 	if not sa then
 		return
 	end
 	local channel = part:GetAttribute("GlowChannel")
-	if channel and mask and mask ~= "" then
-		sa.EmissiveMaskContent = Content.fromUri(mask)
-		sa.EmissiveTint = part:GetAttribute("GlowTint") :: Color3
+	if channel then
+		local tint = part:GetAttribute("GlowTint") :: Color3
+		sa.ColorMap = ""
+		part.Color = tint
+		part.RenderFidelity = Enum.RenderFidelity.Precise
+		sa.EmissiveMaskContent = Content.fromUri(RigModel.GLOW_MASK)
+		sa.EmissiveTint = tint
 		sa.EmissiveStrength = part:GetAttribute("GlowStrength") :: number
 	else
 		sa.EmissiveStrength = 0

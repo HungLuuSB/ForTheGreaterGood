@@ -4,8 +4,11 @@
 -- darkened. One pixel per grid cell, each in one of three states from the
 -- server's ally-team sight (Core/Vision):
 --   visible  - clear;
---   explored - seen before, not now: desaturated grey, about 40% darker;
---   never    - never seen: about 70% darker.
+--   explored - seen before, not now: a light grey wash, the ground still
+--              showing through;
+--   never    - never seen: a flat grey haze.
+-- Grey, not dark (C-102, the user): under the night lighting a dark fog
+-- hid the ghost structures standing in it.
 -- A pixel's look is its four nearest sensor cells' looks blended by
 -- distance (Roblox samples this texture without smoothing, so the soft edge
 -- is made here, about a sensor cell wide), and it fades there over FADE
@@ -22,10 +25,10 @@ FogBlanket.FADE = 0.3 -- seconds from one state to another
 -- a grey layer both darkens and desaturates
 FogBlanket.LOOK = table.freeze({
 	visible = table.freeze({ grey = 30, alpha = 0 }),
-	explored = table.freeze({ grey = 40, alpha = 0.4 }), -- lighter than first tried: under the night lighting (C-101) it read as never seen
-	never = table.freeze({ grey = 8, alpha = 0.74 }),
+	explored = table.freeze({ grey = 80, alpha = 0.38 }),
+	never = table.freeze({ grey = 56, alpha = 0.7 }),
 })
-FogBlanket.TINT = table.freeze({ 1, 1.04, 1.18 }) -- r, g, b multipliers on the grey (a cool shadow)
+FogBlanket.TINT = table.freeze({ 1, 1.02, 1.08 }) -- r, g, b multipliers on the grey (a faintly cool haze)
 FogBlanket.BUDGET = 3000 -- pixels faded per step at most: a huge change spreads over a few steps
 
 local STATES = { FogBlanket.LOOK.visible, FogBlanket.LOOK.explored, FogBlanket.LOOK.never }

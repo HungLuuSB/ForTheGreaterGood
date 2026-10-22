@@ -4,7 +4,57 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, UI kit, settings, statistics, lobby)
+
+- **UI kit (C-105):** one theme module, `UI/Kit`, used by every panel.
+  - **Look:** dark translucent panels (85%), a thin light border, a soft shadow and a faint diagonal stripe. The stripe and shadow are our own, drawn in-game, with no textures or icons copied.
+  - **Text:** light-grey in Montserrat (Roblox's built-in geometric sans, the closest to the reference), one warm amber accent, rounded corners, a type and spacing scale.
+  - **Components:** panel with title and sidebar nav (highlighted pill), toggle (green on, red off), slider with value, dropdown, segmented buttons, filter chips with team swatches, thin scrollbar, table, line chart.
+- **Settings** rebuilt on it: sidebar Camera, Graphics, Interface, Audio (nothing yet: the game has no sound), Keys. Real sliders and toggles replace the +/- steppers; keys are a clean two-column table. Same settings and saving.
+- **Statistics panel** replaces the results screen:
+  - sidebar Overview, Economy, Combat, Units;
+  - chips All, You, Team 1, Team 2 with team swatches;
+  - small line charts over match time: supply and power produced, used and stored; units built and lost; damage dealt; units killed;
+  - Overview is the styled scoreboard under VICTORY / DEFEAT.
+- **Statistics data:** the sim keeps no samples over time, so the Roblox server samples its report every 10 s for now. I filed sim request 41 for real samples with damage taken; until then that chart says it's waiting.
+- **Charts:** at most 120 points per line, drawn into one EditableImage per chart (measured against pooled Frames below), one chart per frame, and the panel is built once. Opening it doesn't hitch.
+- **Lobby** rebuilt on the kit. The unit panel, command card, build menu and resource bar take the kit's colors, font and borders.
+- **Your 7 new reference images** (lobby, scenarios, in-game HUD, two settings panels, radar range, factory facing): written up in `docs/ui/references.md` with a "still to do" list for later UI work.
+- **Screenshots:** `debug_out/screens/uikit_*.jpg` (settings, statistics, lobby), at the Studio viewport (1548 × 601: Studio can't be set to 1080p from here) and at UI scale 1.2. Panels shrink to fit the screen and scroll.
+
+## Summary (2026-10-23, glow pass and BAR models in game)
+
+- **BAR models now draw in the game (C-103):** the client builds every approved model from C's mesh manifest at start: 19 models, about 21 s in the background, with blockouts standing in until each one is ready. Oracle, Watcher and the Order vehicle plant are still "review" in the manifest, so they stay blockouts.
+- **Full materials:** game scripts can't set a SurfaceAppearance's maps or emissive mask (Roblox's Plugin capability). Rojo can, so a generated `place/MeshMaterials.model.json` holds one appearance per model plus the glow mask, and the client clones them. That gives full PBR, team paint and real emission.
+- **Your glow pass:**
+  - **Power:** structures dim on an energy stall (rest × ratio, floor 0.3).
+  - **Factories** pulse 1.5–4 once a second while producing (measured: 1.51 → 3.99).
+  - **Weapons** flash to 6 per shot and settle over 0.3 s (measured peak 6.0).
+  - **Unfinished units** stay dark.
+  - **Headlights:** shadowless SpotLights on the 12 nearest on-screen vehicles (the quality's light budget) at close zoom or in the night and dusk atmospheres.
+- **Measured with 200 units** (100 Lancers against 100 Ravagers): 146 glowing models drawn, 615 glow parts, the glow driver 0.19 ms a frame (worst 0.76), 21 writes a frame, 60 fps held.
+- **Screenshots:** `debug_out/screens/glowfx_*.jpg` (vehicles, headlights, factory, stall full and low, fight, 200 units).
+- **Not done:** builders brightening while they build. The client doesn't know when a builder is building (no field on the wire).
+- **Shield hits fixed (C-104):** one shell looked like 5–6 hitting at once. Each shell lights the dome exactly once (measured), but its 7 hex plates were all near full white and bloomed into separate blobs. Now the centre plate is bright and each ring out is 30% as opaque and greyer, so a hit reads as one impact (`shieldhit_before.jpg` / `shieldhit_after.jpg`).
+- **Next:** your UI kit, settings, statistics and lobby task: done as C-105, summary above.
+
+## Summary (2026-10-23, environment and colour grade)
+
+- **Colour grade (C-102, your "most impressive part"):** a moonlit teal grade, deeper blacks and brighter whites, with a soft vignette framing the view.
+  - It eases off as you zoom out, so the strategic view stays readable.
+  - Big blasts near the camera (a nuke, a large unit's death) warm and brighten the whole picture for a moment. Impacts never flash, so a busy fight doesn't flicker.
+- **Night sky:** stars, a moon and a faint blue glow on the horizon, instead of the place's day skybox.
+- **Map edge:** the bright blue void past the border is now dark ground fading into the haze, at every zoom.
+- **Terrain colours:** cooler, duller greens and rocks that the grade turns moonlit.
+- **Ambient particles:** dust motes drift in the moonlight and a faint low mist hangs near the ground, at close zoom only and off at Low quality.
+- **Fog of war is grey now (your call):** never-seen ground is a flat grey haze, explored ground a lighter grey wash. The near-black fog hid the ghost structures; they now read clearly as see-through blue-grey copies.
+- **Fixed:** the settings menu's fifth atmosphere button (Dusk) was cut off. The buttons are narrower, and "Battlefield haze" is now "Battle haze".
+- **Screenshots:** `debug_out/screens/environment_*.jpg`: 35°, 55°, 80°, strategic zoom, the sky, ghosts, a night battle, and a before/after pair.
+- **Next:** your glow pass. C's glow assets are now in main (M-22).
+
 ## Summary (2026-10-23, night lighting)
+
+- **Your review of C-100 (2026-10-23):** you tested the fog blanket, "Look good", and it is the default fog of war. Removed from "Needs my review".
 
 - **Night by default (C-101):** you said the maps have no sun, so the default atmosphere is now a moonlit night: midnight sky, no sun rays, cool neutral light bright enough to read every unit, soft shadows.
 - **Less "plastic":** the sky reflections on terrain, units and the fog blanket are cut to 15% (EnvironmentSpecularScale 0.15), and the light is softer and duller. The shell over steep rocks still shows but is far calmer.
@@ -12,7 +62,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Glows stand out:** bloom picks up shells, fire, and the shield dome.
 - **Choice kept:** the settings menu still offers Current (the place as saved), Clear day, Battlefield haze and Dusk.
 - **Screenshots:** `debug_out/screens/lighting_*.jpg`: 35°, 55°, 80°, strategic zoom, a before/after pair (the place's day lighting vs night) and a shield battle at night.
-- **One thing for you:** set Lighting → Technology to **Future** in the place, if it isn't already. Scripts can't read or change it, and Future gives the soft shadows and the glow lights their best look.
+- **One thing for you:** set Lighting → Technology to **Realistic** in the place, if it isn't already (Roblox merged Future into Realistic). Scripts can't read or change it, and Realistic gives the soft shadows and the glow lights their best look.
 - **Not started:** your glow pass still waits for C's glow assets.
 
 ## Summary (2026-10-23, fog of war blanket)
@@ -231,6 +281,11 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `4f9fe7c` (shells in a shield field burn: bow shock and trail, C-98); test_client 167, test 401, build passed.
 - Ready to merge: `92be867` (shield hits on the crossing frame, absorbed shells end mid-tick, unfinished units see-through, minimap 10 Hz, server build debug query, C-99); test_client 169, test 404, build passed.
 - Ready to merge: `693a3b7` (fog of war blanket, point-light fog removed, fog profile, C-100); test_client 171, test 404, build passed.
+- Ready to merge: `92b9a43` (night lighting by default, low specular, lighter explored fog, C-101); test_client 171, test 404, build passed.
+- Ready to merge: `e8f5ce9` (docs only: Realistic lighting technology instead of Future; C-100 approved by the user).
+- Ready to merge: `d4ab33b` (environment and colour grade: night sky, map-edge ground, ambient particles, zoom-eased grade with blast flash and vignette, grey fog, C-102); test_client 176, test 404, build passed.
+- Ready to merge: `bdc88e8` (BAR models built from the mesh manifest with Rojo-written materials, glow driver and headlights, C-103; includes m-models `44880cc`; touches CLAUDE.md and the three project files, new `place/`); test_client 187, test 404, build passed.
+- Ready to merge: `51e4d07` (one shield hit reads as one impact: faint outer hex rings, C-104); test_client 187, build passed.
 
 ## Tasks
 
@@ -559,6 +614,141 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: UI kit; settings, statistics and lobby rebuilt on it (C-105)
+
+- **Asked:** a UI kit in the BAR statistics panel's style (style only), then settings, a statistics panel and the lobby rebuilt on it, then the stats and selection panels.
+- **`UI/Kit`** (one theme module):
+  - **Colors:** panel (20, 22, 27) at 15% transparency; border white at 86%; text (226, 229, 235), dim and faint greys; accent amber (238, 186, 92); green on, red off; a dark amber for chosen HUD buttons.
+  - **Font:** Montserrat (`rbxasset://fonts/families/Montserrat.json`), the closest built-in to the reference's geometric sans; Builder Sans was the other option.
+  - **Type scale** 26 / 16 / 14 / 12, **spacing scale** 4 / 8 / 12 / 16 / 24, **corners** 10 (panels) and 6 (controls).
+  - **Stripe and shadow:** a 16 px tile and a 64 px 9-slice soft shadow, drawn once into EditableImages (no asset).
+  - **Components:** `panel` (title, optional sidebar with a highlighted pill; shrinks to fit the screen at the UI scale), `section`, `row`, `toggle`, `slider`, `button`, `segmented`, `dropdown` (a drawn chevron: Montserrat has no arrow glyph), `chip`, `scroll` (4 px bar), `table`, `chart`.
+  - `skin(gui)` gives older HUD screens the kit's font, borders and corners, including elements added later.
+- **Settings** (`UI/SettingsMenu`): built once.
+  - **Camera:** pan speed and zoom step sliders, edge scroll toggle.
+  - **Graphics:** quality segmented, with what it caps; fog of war toggle; atmosphere dropdown.
+  - **Interface:** UI scale slider.
+  - **Audio:** says there's no sound yet.
+  - **Keys:** a two-column table per group.
+  - Same `Core/Settings` state and `apply`; settings last for the session.
+- **Statistics** (`UI/Statistics`), the results screen:
+  - **Overview:** the title (VICTORY, DEFEAT, ELIMINATED or MATCH OVER), the match length, the scoreboard (team swatch, faction, team, end, built / lost / killed, supply and power gathered / spent, damage), replay buttons, back to lobby.
+  - **Economy, Combat, Units:** charts of the server's samples in team colors, filtered by the chips.
+  - Damage taken shows "comes with sim request 41".
+- **Data:**
+  - `src/roblox/StatSeries` samples `Stats.report` and the team accounts' stored amounts every 150 ticks; past 120 samples it halves and doubles the interval.
+  - `Main.server` sends them with the results (`finishMatch`), and the results carry each player's `team` for colors.
+  - The Studio debug `FtggDebug:Invoke("results")` ends a lobby match now.
+- **Charts** (`Core/Chart`, pure): LTTB downsampling to at most 120 points, nice axis tops (1 / 2 / 5 × 10^n), short labels (1.5k, 3M), and an anti-aliased rasterizer into an RGBA buffer.
+- **Frames vs EditableImage, measured** (one chart: 4 lines × 120 points):
+  - **EditableImage:** 4.6 ms per redraw (raster and upload), one instance, about 100 KB of image memory, nothing after it's drawn.
+  - **Frames:** 476 rotated Frames per chart (5,712 for a 12-chart page), 8.5 ms to create, 0.57 ms to move them.
+  - Their standing cost while shown couldn't be isolated: Studio was pinned at 65 ms a frame by the 4× sim.
+  - **Chosen: EditableImage.** No standing instances, anti-aliased lines, and a redraw only on new results or a filter change, one chart a frame (12 charts in about 12 frames, under 5 ms each).
+- **Lobby** (`UI/Lobby`) rebuilt on a kit panel:
+  - map dropdown; mode and win segmented; friendly fire toggle;
+  - per seat: faction, AI level / open and team segmented, × to remove;
+  - Add AI, Add seat, Start (amber).
+- **HUD:** `UnitPanel`, `CommandCard`, `BuildMenu` and `ResourceBar` use the kit's panel, control and selected colors, and `Kit.skin`.
+- **Specs:** `Statistics.spec` (4): sampling and halving, downsampling keeps the ends and a spike, axis numbers, the rasterizer.
+- **Screenshots:** `debug_out/screens/uikit_*.jpg`, at Studio's viewport of 1548 × 601. A 1080p viewport can't be set from the tools here.
+
+## 2026-10-23: one shield hit reads as one impact (C-104)
+
+- **Your report:** the shield's touch effect looked like 5–6 shots happening at the same time.
+- **Measured** (`shield_one`: one Ravager against a Phalanx):
+  - 23 shells fired, 23 SHIELD_FIELD, 22 SHIELD_HIT, 22 domes lit: each shell lights the dome once;
+  - the lights came one every 1.4 s, the Ravager's reload, so they aren't bunched either.
+- **The cause was the look:**
+  - a hit lights a patch of 7 hexagon plates (the centre and one ring);
+  - the ring's plates were almost as opaque and white as the centre (×0.82 heat, full opacity);
+  - under the night bloom each Neon plate bloomed into its own white blob, so one shell read as a cluster of shots (`shieldhit_close_before.jpg`).
+- **Fix** (`Core/Shield.plateAt`):
+  - each ring out is `RING_ALPHA` (0.3) as opaque as the one inside it;
+  - its heat falls 40% a ring (floor 20%), so it reads grey;
+  - the centre stays white-hot. `Shield.spec` checks the centre outshines ring 1.
+- **Screenshots:** `shieldhit_before.jpg` / `shieldhit_after.jpg` (play distance) and `shieldhit_close_before.jpg` / `shieldhit_close_after.jpg`.
+- **Not changed:** the ripple: C's texture has three rings by design.
+
+## 2026-10-23: glow pass; BAR models built from the mesh manifest (C-103)
+
+- **Asked:** after C's glow pass (M-22), drive the glow states: power dims on an energy stall, factories pulse while producing, weapons flash per shot; optional SpotLights at close zoom or night, capped at the 12 nearest on screen, no shadows; measure with 200 units; `glowfx_*.jpg`.
+- **Models first:**
+  - The game place had no `ReplicatedStorage.Models`, so every unit was a blockout. C won't edit the game place and sent a mesh manifest instead (`@shared/Defs/Meshes/Registry`, M-23, merged from m-models).
+  - `Render/MeshModels` builds each "approved" entry once at start: `CreateMeshPartAsync` per piece and glow part, 4 models at a time; Motor6Ds at the pivots, muzzles, `TeamColor` on team pieces; glow parts welded, albedo = tint, tagged `Glow` with their attributes.
+  - `Render/Models` prefers a place model, then the mesh model, then the blockout. While a mesh builds, its blockout stands in and isn't kept as the template; when the mesh is ready the pool drops the old copies and the drawn units are drawn again (`UnitRenderer.reshow`).
+  - Measured: 19 models in about 21 s, none failed.
+- **The Plugin wall:**
+  - A game script can't set `SurfaceAppearance` maps or `EmissiveMaskContent`, nor `MeshPart.RenderFidelity` ("lacking capability Plugin"). Studio's own tool can, which is why a first test looked fine.
+  - Without the mask, `EmissiveStrength` shows nothing: tested at 20, no change.
+  - Fix: `place/MeshMaterials.model.json` (generated by `lune run mesh_materials` from the manifest, `Core/MeshMaterials`), mapped by the three project files to `ReplicatedStorage.MeshMaterials`: a SurfaceAppearance per model (color, normal, roughness and metalness maps, Overlay) and "Glow" (the shared white mask).
+  - Rojo writes those properties; the client clones them (cloning carries them). `RenderFidelity.Precise` goes in through `CreateMeshPartAsync`'s options.
+  - The file lives outside `src` because darklua turns a JSON file into a Lua module. Without the folder, a piece falls back to its color map as the MeshPart's `TextureContent`, and glow parts don't emit.
+- **Glow driver** (`Core/Glow`, pure, `Glow.spec` 5; `Render/Glow`):
+  - Glow parts are collected once when a model is drawn; `EmissiveStrength` is written only on a change of 0.02 or more.
+  - **States:**
+    - power = rest × the team's power stall ratio (floor 0.3), or the 1 Hz pulse 1.5–4 while a factory's queue isn't empty (also scaled by the ratio; out of step by unit);
+    - weapon = 6 on a shot (`fx.shots`), easing back to rest over 0.3 s;
+    - running and head stay at rest;
+    - everything is 0 while the unit is being built.
+  - Enemy structures assume no stall (the client only knows its own economy).
+  - **Headlights:** a pool of SpotLights (Front, 55°, range 36, brightness 2.5, warm white, no shadows) in Attachments on the chosen vehicles' roots, at their head glow parts, aimed along the heading. Every 0.25 s they go to the nearest on-screen vehicles, capped by the quality's light budget (12 at High), within 220 studs of camera distance or always in the night and dusk atmospheres; off at strategic zoom.
+  - **Debug:** `Invoke("glow")` stats, `Invoke("glowratio", r)` fakes a stall, `Invoke("meshes")` build stats and capabilities.
+- **Measured** (Studio, `fog` profile on ridgeline, test units spawned):
+  - factory pulse 1.51 → 3.99 at 1 Hz, one write a frame;
+  - Lancer weapon glow peak 6.0;
+  - stall at ratio 0.12: power parts at the 0.3 floor, clearly dimmer;
+  - 200 units: 146 glowing models, 615 parts, driver 0.19 ms average (0.76 worst), 21 writes a frame, frame 16.7 ms average (18.3 worst).
+- **Not done:** builders brightening while building (no "building" field on the wire; a sim request if wanted). C's "review" models (Oracle, Watcher, Order vehicle plant) stay blockouts until approved in the manifest.
+- **Seen:** at close zoom the C-102 mist reads as separate grey puffs; to tune with your review.
+- **Screenshots** (`debug_out/screens/`):
+  - `glowfx_vehicles.jpg`: both factions' vehicles, running strips and headlights;
+  - `glowfx_headlights.jpg`: the earlier TextureContent build, before the materials;
+  - `glowfx_factory.jpg`: the Chaos vehicle plant producing;
+  - `glowfx_stall_full.jpg` and `glowfx_stall_low.jpg`: generators and solars at full power and at a 0.12 stall;
+  - `glowfx_fight.jpg`;
+  - `glowfx_200.jpg`.
+- **CLAUDE.md:** the `place/` folder and `lune run mesh_materials`.
+
+## 2026-10-23: environment and colour grade (C-102)
+
+- **Asked:** map edge, night sky, terrain colours and ambient particles; then, mid-task, "pay attention to the ColorCorrection, this should be the most impressive part", and "leave the map grey" so the ghost structures can be seen.
+- **Colour grade** (`Core/Grade`, pure; `Render/Grade`):
+  - **Night grade:** brightness 0.05, contrast 0.32, saturation −0.02, tint (196, 218, 255): moonlight teal with deep blacks.
+    - The tint darkens the picture and the brightness gives it back.
+    - Three grades were compared side by side in Studio. C-101's grade was flat; a middle step was still too green.
+  - **Zoom easing:** the full grade within 150 studs of camera distance, eased (smoothstep) to the strategic grade by 800. There, contrast and saturation keep 55%, the tint goes halfway back to white, and the vignette keeps 60%.
+  - **Blast flash:**
+    - Every Vfx effect is reported (`Vfx.onSpawn`). Nukes add a flash level of 1; deaths at scale 1.5 and up add 0.35 × size, falling off to nothing 1.2 camera distances from the focus. Impacts never flash.
+    - The level is capped at 1 and falls to 1/e in 0.3 s. At level 1 it adds brightness +0.14, contrast +0.06, saturation +0.12 and a warm tint (255, 222, 186).
+    - Measured: three Juggernauts killed by the camera took brightness from 0.05 to 0.09 with a warm tint, gone in about 0.6 s.
+  - **Vignette:** a 256 × 256 EditableImage drawn once, on a full-screen ImageLabel under every other UI (DisplayOrder −10). Its strength comes from the preset (night 0.55, dusk 0.35, haze 0.3, none for Current and Clear day). Without editable memory there is simply no vignette.
+  - **Tonemapper:** Roblox has a ColorGradingEffect, but its only setting is the tonemapper (Default or Retro), so the grade is all ColorCorrection.
+- **Night sky** (the `night` preset's `sky`): the six skybox faces set to empty (Roblox's procedural sky, which follows the clock), 3,000 stars, moon size 14. Captured from the place, so Current puts the day skybox back.
+- **Terrain colours** (the preset's `ground`): Grass (72, 90, 66), LeafyGrass, Rock, Ground, Sand, Asphalt, Mud, WoodPlanks and water, cooler and duller. Captured from the place and put back by the other presets.
+- **Map edge** (`Core/Environment`, pure; `Render/Environment`):
+  - Dark Ground slabs (30, 32, 36) 6,000 studs round the map, their top 0.5 studs under the lowest edge surface.
+  - Parts are at most 2,048 studs a side, so the ring is 49 tiles (a first try with single huge parts was silently clamped and left gaps).
+  - The slabs are not queryable, so clicks go through, and cast no shadows.
+- **Ambient particles:** one invisible box (220 × 30 × 220) follows the camera focus within 320 studs of camera distance, with the built-in smoke texture (no asset):
+  - dust: 40 per second, 6–10 s, 0.6 studs, a light breeze;
+  - mist: 3 per second, 16–24 s, 30–55 studs, 92% transparent.
+  - Off at Low quality.
+- **Fog of war grey:** explored grey 80 at 38%, never seen grey 56 at 70%, tint (1, 1.02, 1.08).
+  - Never-seen ground reads as a flat haze, and explored ground still shows its terrain.
+  - The ghosts (C-32: blue-grey copies at 70% transparency) stand out against it. Checked with a Chaos vehicle plant and airfield spotted by a Herald that was then killed.
+- **Settings menu:** five atmosphere buttons at 80 px (Dusk was clipped at 104); "Battlefield haze" is shown as "Battle haze".
+- **Cost:**
+  - CPU: a few property writes a frame, skipped when nothing changed; 60 fps in the playtest.
+  - Memory: 256 KB of editable image; 49 static parts; at most about 400 dust and 60 mist particles at close zoom.
+- **Specs:** `Environment.spec` (5): the skirt's tiles exactly cover the ring within the part size; the skirt sits under the lowest edge, water included; zoom easing; flashes (impacts and small deaths don't, out of view doesn't, cap, decay); the vignette is clear in the middle.
+- **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline unless noted):
+  - `environment_35.jpg`, `environment_55.jpg`, `environment_80.jpg`, `environment_strategic.jpg`;
+  - `environment_sky.jpg` (low camera: stars, horizon glow, dust);
+  - `environment_ghosts.jpg` (two ghost structures in grey fog);
+  - `environment_battle.jpg` (the `shield` profile's fight);
+  - `environment_before.jpg` (C-101) and `environment_after.jpg`, the same view.
+
 ## 2026-10-23: night lighting by default (C-101)
 
 - **Why:** you said the maps have no sun ("we play in dark environment/time"), and asked for realistic lighting with no brightness and shadow control, to calm the "plastic wrapping" look of the fog blanket.
@@ -572,7 +762,7 @@ All with real mouse and keyboard input through the MCP tools.
 - **Presets** gain two optional fields, `specular` and `diffuse` (EnvironmentSpecularScale and EnvironmentDiffuseScale), captured with the place's own values so Current restores them.
 - **Fog blanket:** the explored look is now grey 40 at alpha 0.4 (was 30 at 0.52). Under the night light, explored and never-seen ground looked alike.
 - **Settings:** the default atmosphere is `night`. A player who saved another preset keeps it. `Settings.spec` updated.
-- **Lighting.Technology** can't be read or set by a script (RobloxScript capability), so the place keeps its own. Future is recommended.
+- **Lighting.Technology** can't be read or set by a script (RobloxScript capability), so the place keeps its own. Realistic is recommended (Roblox's unified technology, which replaced Future).
 - **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline):
   - `lighting_35.jpg`, `lighting_55.jpg`, `lighting_80.jpg`, `lighting_strategic.jpg`;
   - `lighting_before.jpg` (the place's day lighting) and `lighting_after.jpg` (night), the same view;
@@ -966,18 +1156,27 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **UI kit, settings, statistics, lobby (C-105):** `debug_out/screens/uikit_*.jpg`. Your calls:
+  - **The kit's look:** amber accent, Montserrat, 85% panels, the stripe strength (`UI/Kit`).
+  - **The statistics pages and charts:** which charts, their size.
+  - **Audio page:** stays a placeholder until there's sound.
+
+- **Glow pass and BAR models in game (C-103):** `debug_out/screens/glowfx_*.jpg`. Your calls:
+  - **Strengths:** the stall floor (0.3), the factory pulse (1.5–4 at 1 Hz) and the weapon flash (6, 0.3 s) (`Core/Glow`).
+  - **Headlights:** brightness, range and cone, 12 at High, always on at night (`Render/Glow`).
+  - **Which models C should approve next:** Oracle, Watcher and the Order vehicle plant.
+
+- **Environment and colour grade (C-102):** `debug_out/screens/environment_*.jpg`. Your calls:
+  - **The grade:** teal strength, contrast, the vignette (night 0.55), and how much it eases off at strategic zoom (`Core/Grade`, `Render/Atmosphere` `night`).
+  - **The blast flash** strength (`Grade.FLASH`, `FLASH_LOOK`).
+  - **The grey fog:** explored 80 at 38%, never 56 at 70% (`Core/FogBlanket.LOOK`).
+  - **Dust and mist** amount, and the dark ground beyond the map.
+
 - **Night lighting (C-101):** `debug_out/screens/lighting_*.jpg`. Your calls:
   - **How dark:** brightness and exposure (`Render/Atmosphere`, `night`), bright enough to read units today.
   - **The cool tint** and the desaturation.
   - **The lighter explored fog** (grey 40 at 40%).
-  - **Technology = Future** in the place (only you can set it).
-
-- **Fog of war blanket (C-100):** `debug_out/screens/fogblanket_*.jpg`. Your calls:
-  - **The three looks:** explored grey at 52%, never seen near black at 74%, a slightly cool tint (`Core/FogBlanket.LOOK`, `TINT`).
-  - **The soft edge,** about a sight cell (16 studs) wide.
-  - **The shell over steep rocks,** to revisit after the lighting pass.
-  - **The worst-case cost:** whole-map flips at 15.5 ms per update in Studio.
-  - **"Fog of war" on by default** in the settings menu.
+  - **Technology = Realistic** in the place (only you can set it; it replaced Future).
 
 - **ShieldFx look (C-90):** `debug_out/screens/shieldfx_*.jpg`. Your calls:
   - **Dome look:** a tinted ball with an edge ring, not the ForceField material (it read grey in the C-87 tests).
@@ -1033,6 +1232,15 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+41. **Open.** **Match statistics over time (2026-10-23, the user asked, C-105):** the statistics panel charts each player's numbers over match time.
+    - **Please keep, in `Sim/Stats`, a sample every 150 ticks (10 s)** per player:
+      - supply and power gathered, spent and stored (the team account's);
+      - units built, lost and killed;
+      - damage dealt and **damage taken** (new: health removed from this player's units by enemies, capped like damage dealt).
+    - Keep at most 120 samples per line: past that, drop every other sample and double the interval.
+    - Expose them with `Stats.report` or a `Stats.series(sim)`, in the shape `src/roblox/StatSeries.luau` uses (`t` in seconds; `players[tostring(pid)][field]` arrays).
+    - **Meanwhile** `src/roblox/StatSeries` samples `Stats.report` on the Roblox server. That's fine for live matches, but replays and headless runs don't have it, and it can't give damage taken. The client switches to the sim's series when it's there.
 
 40. **Done and used (S-79, protocol 24; C-91).** **Shield generators on the wire (2026-10-23, the user asked; the client draws them with `Render/ShieldFx`, C-90):**
     - **Mechanic** (the user's rules):

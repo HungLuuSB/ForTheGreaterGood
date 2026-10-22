@@ -12,7 +12,7 @@
 --              on / off (the near-zoom fog of war lights; off by default,
 --              the user's call from C-32's review)
 --   atmosphere a lighting preset (Render/Atmosphere, C-83): Night (C-101, the default: no sun), Current (the
---              place as saved), Clear day, Battlefield haze, Dusk
+--              place as saved), Clear day, Battle haze, Dusk
 --   interface  UI scale
 -- High is today's look; listed under "Needs my review".
 
@@ -117,7 +117,7 @@ Settings.KEYS = table.freeze({
 	{ "Selection", {
 		{ "Left click / drag", "select / box select (Shift adds, Ctrl toggles)" },
 		{ "Double click", "every own unit of that type on screen" },
-		{ "Ctrl + 1..9 / 1..9", "set / recall a group (double tap: jump there)" },
+		{ "Ctrl + 1–9 / 1–9", "set / recall a group (double tap: jump there)" },
 	} },
 	{ "Orders", {
 		{ "Right click", "smart order: attack, guard, repair or move" },
@@ -129,7 +129,7 @@ Settings.KEYS = table.freeze({
 		{ "Y / U / X", "repeat / on-off / cancel (factories)" },
 	} },
 	{ "Building", {
-		{ "B, then 1..0", "build menu: open, next tab, pick" },
+		{ "B, then 1–0", "build menu: open, next tab, pick" },
 		{ "R", "rotate the structure" },
 		{ "Right click", "stop placing" },
 	} },
