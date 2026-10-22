@@ -16,7 +16,7 @@ return Templates.extend(Templates.Structure, {
 	health = 2000,
 	footprint = 2,
 	sensors = { sight = 100 },
-	shield = { radius = 80, capacity = 200, recharge = 12, power = 25 }, -- 10x (S-80)
+	shield = { radius = 80, capacity = 1000, recharge = 60, power = 25 }, -- 50x S-79's (S-81)
 	pieces = { "base", "core" },
 	icon = "shield",
 	model = "chs_carapace",
