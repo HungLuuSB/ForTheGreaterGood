@@ -39,7 +39,7 @@ local RenderEffects = require("./Render/Effects")
 local ShieldDomes = require("./Render/ShieldDomes")
 local ShieldFx = require("./Render/ShieldFx")
 local Contacts = require("./Render/Contacts")
-local FogOfWar = require("./Render/FogOfWar")
+local FogBlanket = require("./Render/FogBlanket")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
@@ -186,7 +186,7 @@ local fxRenderer = RenderEffects.new()
 local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
-local fog = FogOfWar.new()
+local fog = FogBlanket.new()
 local contacts = Contacts.new()
 -- enemy structures seen before (kept by Contacts) and icon sample defs: enemy defense rings (C-41)
 local knownEnemy = { memory = contacts.memory.memory, sample = iconTable.sample }
@@ -479,6 +479,66 @@ if RunService:IsStudio() then
 			end
 			local st = shieldDomes.stats
 			return { domes = domes, records = records, hits = { hits = st.hits, breaches = st.breaches, enters = st.enters, lit = st.lit, lagTicks = st.lagSum / math.max(st.lagN, 1), lastBreaches = st.lastBreaches } }
+		elseif query == "fogshow" then
+			-- debug: the fog blanket on or off (as the settings menu does), for before / after views
+			local on = ...
+			FogBlanket.ENABLED = on ~= false
+			return FogBlanket.ENABLED
+		elseif query == "fogstress" then
+			-- debug: for a few seconds (default 4), every sensor cell of the team sight
+			-- flips at the sim rate (worse than any battle), through the real path;
+			-- the fog step's average and worst ms per update, the client's memory
+			local seconds = ... or 4
+			local sight = world.sight
+			if sight == nil then
+				return false
+			end
+			local n = sight.width * sight.depth
+			local on = 0
+			local sum, worst, count, lastUploads = 0, 0, 0, fog.stats.uploads
+			local t0 = os.clock()
+			local nextFlip = 0
+			while os.clock() - t0 < seconds do
+				if os.clock() >= nextFlip then
+					nextFlip = os.clock() + 1 / 15
+					on = 1 - on
+					for i = 0, n - 1 do
+						buffer.writeu8(sight.cells, i, if (i + on) % 2 == 0 then 1 else 0)
+					end
+					sight.full = true
+					sight.version += 1
+				end
+				RunService.Heartbeat:Wait()
+				if fog.stats.uploads ~= lastUploads then
+					lastUploads = fog.stats.uploads
+					sum += fog.stats.ms
+					worst = math.max(worst, fog.stats.ms)
+					count += 1
+				end
+			end
+			local stats = game:GetService("Stats") :: any
+			return { avgMs = sum / math.max(count, 1), worstMs = worst, updates = count, memoryMb = stats:GetTotalMemoryUsageMb() }
+		elseif query == "fogpattern" then
+			-- debug: a test pattern in the fog image (west half clear, a dark notch at
+			-- its north-west corner), frozen until the next real update of those pixels
+			local img = fog.image
+			if img == nil then
+				return false
+			end
+			local w, h = img.Size.X, img.Size.Y
+			local b = buffer.create(w * h * 4)
+			for y = 0, h - 1 do
+				for x = 0, w - 1 do
+					local a = if x < w / 2 then 0 else 150
+					if x < w / 8 and y < h / 8 then
+						a = 255
+					end
+					buffer.writeu32(b, (y * w + x) * 4, bit32.lshift(a, 24))
+				end
+			end
+			FogBlanket.frozen = true -- the step stops overwriting it
+			img:WritePixelsBuffer(Vector2.zero, Vector2.new(w, h), b)
+			return true
 		elseif query == "camera" then
 			-- Invoke("camera", x?, z?, distance?, pitchDegrees?, yawDegrees?): put the camera there (screenshots)
 			local x, z, distance, pitch, yaw = ...
@@ -529,7 +589,7 @@ if RunService:IsStudio() then
 			-- Invoke("net"): bytes received per channel since the client started (C-69)
 			return received
 		elseif query == "fog" then
-			-- fog of war: mode, plates, lights (made / lit), last rebuild; contacts and ghosts
+			-- fog of war (the blanket, C-100): its stats; contacts and ghosts
 			-- the server's ally-team sight (C-65): records applied, cells seen
 			local sight = world.sight
 			local seenCells = 0
@@ -538,7 +598,7 @@ if RunService:IsStudio() then
 					seenCells += buffer.readu8(sight.cells, i)
 				end
 			end
-			return { mode = fog.mode, stats = fog.stats, contacts = contacts.stats, version = fog.vision and fog.vision.version, sightVersion = sight and sight.version, seenCells = seenCells, wrecks = renderer.deaths.stats.wrecks }
+			return { stats = fog.stats, fading = fog.core and fog.core.stats.fading, contacts = contacts.stats, version = fog.vision and fog.vision.version, sightVersion = sight and sight.version, seenCells = seenCells, wrecks = renderer.deaths.stats.wrecks }
 		elseif query == "deaths" then
 			-- deaths played (shakes, flings), wrecks standing
 			return renderer.deaths.stats
@@ -624,7 +684,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			if world.layers then
 				Ground.build(world.layers, nil, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
-				FogOfWar.setMap(fog, world.layers)
+				FogBlanket.setMap(fog, world, world.layers)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
@@ -741,11 +801,12 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	HealthBars.step(healthBars, barDraws, not strategic)
 	mark("bars", t0)
 	t0 = os.clock()
-	-- fog of war, radar / sonar contacts and ghosts (C-32); before `died` is cleared
-	FogOfWar.step(fog, world, now, dt, camState.distance)
+	-- fog of war (the blanket, C-100), radar / sonar contacts and ghosts (C-32); before `died` is cleared
+	FogBlanket.step(fog, world, dt, not (world.joined and world.me.player == 0))
 	Contacts.step(contacts, world, now, strategic)
 	mark("fog", t0)
 	t0 = os.clock()
+	MinimapUI.setFog(minimap, FogBlanket.content(fog), FogBlanket.ENABLED and not (world.joined and world.me.player == 0))
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
 	BuildMenuUI.step(buildMenu, api)

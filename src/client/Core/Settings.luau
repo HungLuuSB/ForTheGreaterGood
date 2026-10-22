@@ -8,7 +8,7 @@
 --              notch, edge scroll on / off
 --   graphics   quality Low / Medium / High: effect caps (explosions,
 --              tracers, projectiles drawn, lights, copies of one effect),
---              model detail distance (piece animation LOD), and fog lights
+--              model detail distance (piece animation LOD), and fog of war shading
 --              on / off (the near-zoom fog of war lights; off by default,
 --              the user's call from C-32's review)
 --   atmosphere a lighting preset (Render/Atmosphere, C-83): Current (the
@@ -25,7 +25,7 @@ export type State = {
 	zoomStep: number,
 	edgeScroll: boolean,
 	quality: Quality,
-	fogLights: boolean,
+	fog: boolean, -- the fog blanket's shading (C-100); what is hidden stays hidden either way
 	atmosphere: string,
 	uiScale: number,
 }
@@ -59,7 +59,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fogLights = false, atmosphere = "current", uiScale = 1 }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "current", uiScale = 1 }
 end
 
 local function round(x: number, step: number): number
@@ -77,7 +77,7 @@ function Settings.set(s: State, key: string, value: any): boolean
 		end
 		t[key] = math.clamp(round(value, limits[3]), limits[1], limits[2])
 		return true
-	elseif key == "edgeScroll" or key == "fogLights" then
+	elseif key == "edgeScroll" or key == "fog" then
 		if type(value) ~= "boolean" then
 			return false
 		end

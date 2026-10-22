@@ -4,6 +4,23 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, fog of war blanket)
+
+- **Fog of war, BAR style (C-100):** normal lighting everywhere; what your team can't see is darkened by a "fog blanket" draped over the terrain. Visible ground is clear, explored ground desaturated grey (about 40% darker), never-seen ground about 70% darker. Edges are soft, and pixels fade over 0.3 s.
+- **Built on one image per map:** a pixel per grid cell, written live from the team's sight on the wire. The minimap shows the same image.
+- **Old fog removed:** the point-light fog and its plates are gone, with no fog lights and no lighting changes. The settings menu's "Fog lights" is now "Fog of war" (on by default).
+- **Roblox limits:** checked and worked round, details below.
+  - Editable images and meshes work in published games with the Mesh / Image APIs setting on (you turned it on).
+  - A SurfaceAppearance can't be fed from a game script, so the image is the mesh's own texture, with the part 2% transparent so its alpha blends.
+  - The device's editable-mesh memory budget forced a vertex every 16 studs: 4 meshes for a 128-cell map.
+- **Cost:**
+  - at rest: 0.013 ms per update;
+  - a big battle (5% of the map's sight changing every update): about 1.5 ms per update in Lune;
+  - the worst case, the whole map flipping every update: 15.5 ms per update in Studio, 4.9 ms in Lune.
+  - Updates run at most 15 times a second, and a per-update pixel cap spreads huge changes over several updates.
+- **Screenshots:** `debug_out/screens/fogblanket_*.jpg` on ridgeline: 35°, 55°, 80°, strategic zoom, and a before/after pair.
+- **Not started:** your glow pass waits for C's glow assets; realistic lighting is next, as you asked.
+
 ## Summary (2026-10-23, shield domes)
 
 - **Shield mechanic:** decided with you and handed to sim-A to build (request 40). The decisions:
@@ -530,6 +547,53 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: fog of war blanket (C-100)
+
+- **Why (your brief):** the point-light fog read as night with flashlights. It made bright blotches where circles overlapped, was capped by the light limit (470-stud culling) and didn't match the sim's cell vision. It's replaced by a BAR-style blanket: normal light everywhere, and what you can't see darkened.
+- **States:**
+  - **visible:** clear;
+  - **explored:** a cool grey layer at 52%, so desaturated and about 40% darker;
+  - **never seen:** near black at 74%, about 70% darker.
+  - Ghosts of structures show as before: they stand above the blanket.
+  - Each pixel's look blends its four nearest sight cells, for soft edges about a sight cell wide, and fades to a new look over 0.3 s.
+- **Pieces:**
+  - `Core/FogBlanket` (pure, `FogBlanket.spec`, 3 tests): states, the explored memory, blending, fades, the changed rectangle, and the real sim's sight driving it (a scout clears ground and leaves it explored).
+  - `Render/FogBlanket`:
+    - one EditableImage (128 × 128 for current maps, 64 KB) and 4 EditableMesh chunks draped over the terrain;
+    - a vertex every 16 studs, 1 stud above the highest ground within 8 studs, so ridges stay under it;
+    - vision read and only the changed rectangle uploaded, at most 15 times a second.
+  - The minimap has a Fog layer showing the same image, over the terrain and under the unit dots.
+- **Removed:**
+  - `Render/FogOfWar` (point lights, ColorCorrection, plates) and `Core/Fog`;
+  - their plate and light test (the ghost and contact tests stay in `FogOfWar.spec`);
+  - the "Fog lights" setting, now "Fog of war", on by default; it only turns the shading off, and hidden units stay hidden.
+  - Lights are now only for glow effects.
+- **Roblox rules found on the way:**
+  - EditableImage and EditableMesh work in published games with the experience's Mesh / Image APIs setting on. Images are up to 1024 × 1024, meshes up to 20,000 triangles, and each device has an editable-memory budget.
+  - A SurfaceAppearance in transparency mode shows the image with alpha, but a game script can't set its ColorMapContent (it needs Plugin capability). A Texture on the mesh projected wrongly.
+  - What works: the MeshPart's own TextureContent by UVs, with the part at Transparency 0.02. At 0 it shows the part's colour under clear pixels.
+  - A MeshPart made from an EditableMesh keeps the mesh's own origin, so the vertices are in world space and the part sits at (0, 0, 0).
+  - The mesh can't be freed while it's shown: destroying the EditableMesh empties the MeshPart.
+  - The Studio client's editable-mesh budget ran out after about 7,600 vertices at a vertex per 8 studs. At one per 16 studs a 128-cell map is 4,356 vertices in 4 chunks, and fits.
+  - Roblox samples this texture without smoothing, so the soft edges are blended in the image itself.
+- **Measured** (Studio playtest, `fog` profile, ridgeline):
+  - At rest: 0.013 ms per update (worst 0.31).
+  - Stress, `Invoke("fogstress")`: every sight cell on the map flips every update, the whole image rewritten and uploaded each time, worse than any battle. Average 15.5 ms per update, worst 17.6, at 15 updates a second.
+  - In Lune, the core alone per update: whole map flipping 4.9 ms (worst 7.1); a quarter of the map 3.0 ms; a big battle with 5% of the map's cells changing 1.45 ms (worst 2.7).
+  - A per-update cap of 3,000 pixels spreads larger changes over the next updates.
+  - Building the blanket: 0.4–1.1 s at match start in its own thread.
+  - **Memory:** the image 64 KB, CPU-side buffers about 400 KB, the meshes 4 × 1,089 vertices. The client's total in Studio didn't move measurably (2,343 → 2,351 MB during the stress, Studio noise).
+- **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline: your base south-west, a scout driven east along the south edge, the north never seen):
+  - `fogblanket_35.jpg`, `fogblanket_55.jpg`, `fogblanket_80.jpg`, `fogblanket_strategic.jpg`;
+  - before/after, the same view without and with the blanket: `fogblanket_before.jpg`, `fogblanket_after.jpg`.
+  - All three states show: clear round the units, grey along the scout's path, dark to the north.
+- **Known:**
+  - On steep rock formations the blanket floats as a visible shell over the peaks. It's a 16-stud drape over sharp terrain, and it's lit like a surface: your "plastic wrapping".
+  - Neon (unlit) looked worse, with a white glow on the rocks. Matte Fabric removes the sun glints.
+  - The lighting pass you asked for next (no brightness, shadow control) should calm the rest, and you said the maps may have no sun at all.
+- **Debug:** `Invoke("fogshow", on)`, `Invoke("fogstress", seconds)`, `Invoke("fogpattern")` (a test image), `Invoke("fog")` stats.
+- **New `fog` profile** on ridgeline.
+
 ## 2026-10-23: shield hits on the crossing frame; destroyed shells gone at once; unfinished units see-through; minimap 10 Hz (C-99)
 
 - **Reflect effect still late (found the cause):** SHIELD_FIELD is due on the tick a shell crosses. The client applied it only at that tick's end, so for a whole tick the shell flew on plainly, unbraked and a tick deep into the dome (about 13 studs for a Ravager shell), before its hit showed and the field took hold.
@@ -869,6 +933,13 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Fog of war blanket (C-100):** `debug_out/screens/fogblanket_*.jpg`. Your calls:
+  - **The three looks:** explored grey at 52%, never seen near black at 74%, a slightly cool tint (`Core/FogBlanket.LOOK`, `TINT`).
+  - **The soft edge,** about a sight cell (16 studs) wide.
+  - **The shell over steep rocks,** to revisit after the lighting pass.
+  - **The worst-case cost:** whole-map flips at 15.5 ms per update in Studio.
+  - **"Fog of war" on by default** in the settings menu.
 
 - **ShieldFx look (C-90):** `debug_out/screens/shieldfx_*.jpg`. Your calls:
   - **Dome look:** a tinted ball with an edge ring, not the ForceField material (it read grey in the C-87 tests).

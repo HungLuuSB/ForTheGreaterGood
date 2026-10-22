@@ -420,6 +420,26 @@ local PROFILES = {
 			{ def = "chs_ravager", player = 2, x = 0, z = 60, heading = math.pi },
 		},
 	},
+	-- the fog of war blanket (C-100) on a hilly map: an Order base in the
+	-- south-west corner (seen), a scout driving east along the south edge
+	-- (the ground behind it stays explored), the north never seen, with a
+	-- Chaos group there for the moment it is
+	fog = {
+		seed = 13,
+		mapId = "map:ridgeline",
+		scenario = "empty",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		spawns = {
+			{ def = "ord_vehplant", player = 1, x = -380, z = 380 },
+			{ def = "ord_mason", player = 1, x = -330, z = 360, count = 2, dx = 20 },
+			{ def = "ord_lancer", player = 1, x = -360, z = 300, count = 3, dx = 20 },
+			{ def = "ord_herald", player = 1, x = -300, z = 420, heading = math.pi / 2, moveTo = { 420, 420 } },
+			{ def = "chs_ravager", player = 2, x = 200, z = -380, count = 4, dx = 30 },
+		},
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,
