@@ -30,7 +30,6 @@ local Effects = require("./Core/Effects")
 local Follow = require("./Core/Follow")
 local Icons = require("./Core/Icons")
 local IconLayer = require("./Render/IconLayer")
-local FollowButton = require("./UI/FollowButton")
 local MinimapUI = require("./UI/Minimap")
 local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
@@ -150,8 +149,9 @@ local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
 local nukeWarning = NukeWarning.new() -- strategic launch warnings (C-57)
 local radarRings = RadarRings.new() -- own radar facilities' rings, always on top (C-63, C-64)
 local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-58)
--- Camera follow (C-43), T or the placeholder button: the first selected
--- unit, else the homing missile drawn nearest the screen centre.
+-- Camera follow (C-43), T in developer mode (C-124; the on-screen button is
+-- gone): the first selected unit, else the homing missile drawn nearest the
+-- screen centre.
 local FOLLOW_KEY = Enum.KeyCode.T
 local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
 local shieldDomes = ShieldDomes.new() -- shield generators' domes (C-91)
@@ -164,7 +164,6 @@ local function toggleFollow()
 	local view = cam.ViewportSize
 	camState.follow = Follow.pick(world, api.state.selection, lastVisibleFx, Controls.projector(cam), view.X / 2, view.Y / 2)
 end
-local followButton = FollowButton.new(toggleFollow)
 -- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
 -- The server publishes the speed as the Remotes folder's SimSpeed attribute.
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
@@ -193,7 +192,10 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
 	elseif key == FOLLOW_KEY then
-		toggleFollow()
+		local settings = SettingsMenu.state
+		if settings and settings.devMode then
+			toggleFollow()
+		end
 	elseif key == Enum.KeyCode.Minus or key == Enum.KeyCode.Equals then
 		local now = if simSpeed() == 0 then resumeSpeed else simSpeed()
 		local i = table.find(SPEEDS, now) or 4
@@ -894,9 +896,6 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	api.state.camera.rect = camState.rect
 	Environment.update(environment, camState.x, camState.z, camState.distance, World.groundY(world, camState.x, camState.z))
 	Grade.update(grade, camState.x, camState.z, camState.distance, dt)
-	local followed = camState.follow
-	local followDef = followed and followed.kind == "unit" and world.units[followed.id] and World.def(world, world.units[followed.id])
-	FollowButton.step(followButton, if followed == nil then nil elseif followed.kind == "missile" then "missile" elseif followDef then followDef.name else `unit #{followed.id}`)
 	t0 = os.clock()
 	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
 	NukeWarning.step(nukeWarning, fx, world, now, workspace.CurrentCamera)

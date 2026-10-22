@@ -985,3 +985,22 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Minimap:** neutral rings, filled in the holder's team colour.
 
 **Why:** the user's brief (no neon, no flat coloured squares; highlight only when it helps). models-C's `fx.deposit` contract.
+
+### C-124 — Settings top right; the Follow button removed (T in developer mode); the F3 readout bottom right (2026-10-23)
+
+**Decision:**
+- **Settings (O):** top right (was top left, C-109).
+- **Follow:** the on-screen button is gone; T follows only with `devMode` on. `devMode` is a new setting (Settings > Interface), on in Studio and off in a live game. `SettingsMenu.state` lets earlier key handlers read it.
+- **Debug readout (F3):** bottom right.
+- **Keys page:** a "Developer mode" group with T and F3.
+
+**Why:** the user's layout request ("keybind available in the developer mode").
+
+### C-125 — Unit panel: model portrait with the type icon; economy flow instead of HP numbers (2026-10-23)
+
+**Decision:**
+- **Portrait:** `UI/Portrait` (the build menu's) with the type glyph at 18 px bottom right; a contact keeps its icon alone. The health bar stays, the HP text is gone.
+- **Flow:** `Core/UnitFlow` gives own units' supply / power per second from defs and client state (production, wind × the team's wind, extractor rate × deposits under it, converters while on, upkeep, factory / builder drain = cost × buildpower ÷ buildTime × the slower stall ratio; frames 0). It's drawn as "+5" / "−10" in the cost colours.
+- A builder's target is the nearest own unfinished frame within its range + 16 studs, the Waypoints rule; the sim doesn't send it.
+
+**Why:** the user ("show its current ore and energy usage, like +5 or −10").

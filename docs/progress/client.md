@@ -4,6 +4,19 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, HUD layout, developer mode, unit panel)
+
+- **HUD (C-124):**
+  - Settings (O) is in the top right corner.
+  - The Follow (T) button is gone. T still follows the selection, but only in **developer mode**, a new toggle in Settings > Interface (on by default in Studio, off in a live game).
+  - The F3 debug readout is in the bottom right.
+  - Settings > Keys lists T and F3 under "Developer mode".
+- **Unit panel (C-125):**
+  - the portrait is the unit's model at an angle with its type icon bottom right, like the build menu's tiles;
+  - under the health bar, instead of HP numbers, it shows what the unit adds to or takes from the economy right now: supply in white, power in yellow ("+5", "−10").
+  - The wire has no per-unit flow, so the client works it out from the defs and what it sees: an extractor's deposits, generators, wind, converters, radar upkeep, and a factory or builder at work (the item's cost at its buildpower, slowed by a stall). Own units only.
+- **Screenshots:** `debug_out/screens/unitpanel_plant.jpg` (Settings top right, F3 bottom right, a plant building Lancers: −6.7 / −67), `unitpanel_fusion.jpg` (+250 power).
+
 ## Summary (2026-10-23, deposits without the yellow squares)
 
 - **Deposits (C-123):** the neon squares are gone. Each deposit is now a dark, subtle patch of scraped ground with a few stones, tinted from the terrain under it, with no glow.

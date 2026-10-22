@@ -26,8 +26,8 @@ function Hud.new(): Hud
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Top
 	label.AutomaticSize = Enum.AutomaticSize.XY
-	label.AnchorPoint = Vector2.new(1, 0)
-	label.Position = UDim2.new(1, -8, 0, 6) -- top right, up in the top strip (C-71, C-109)
+	label.AnchorPoint = Vector2.new(1, 1)
+	label.Position = UDim2.new(1, -8, 1, -8) -- bottom right (C-124; top right until then)
 	label.Text = ""
 	label.Parent = gui
 	local pad = Instance.new("UIPadding")

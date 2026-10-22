@@ -1,7 +1,10 @@
 --!strict
 -- Unit panel (C-68; BAR style since C-71), bottom left under the build
 -- grid, a functional PLACEHOLDER. One unit selected: a portrait tile (its
--- icon), name and role, health, then its stats as the player may know them
+-- model at an angle with its type icon bottom right, as in the build menu;
+-- a contact's icon alone), name and role, a health bar and, for own units,
+-- what it adds to or takes from the economy now ("+5" supply, "−10" power;
+-- Core/UnitFlow, C-125: no HP numbers), then its stats as the player may know them
 -- (Core/UnitStats, C-76: combat, mobility and sensors, economy, state with
 -- the server's fire / move state and ammo), the team's radar precision, the
 -- next missile's progress, on / off and repeat, and a factory's queue as the
@@ -19,6 +22,8 @@ local Precision = require("../Core/Precision")
 local UnitStats = require("../Core/UnitStats")
 local World = require("../Core/World")
 local Glyph = require("./Glyph")
+local Portrait = require("./Portrait")
+local UnitFlow = require("../Core/UnitFlow")
 local TeamColors = require("../Render/TeamColors")
 
 local UnitPanel = {}
@@ -31,13 +36,16 @@ export type UI = {
 	gui: ScreenGui,
 	panel: Frame,
 	portrait: Frame,
-	portraitGlyph: Glyph.G,
+	portraitGlyph: Glyph.G, -- a contact's icon (no known type)
+	portraitView: Portrait.Portrait, -- the model
+	cornerGlyph: Glyph.G, -- the type icon, bottom right
+	flowSupply: TextLabel,
+	flowPower: TextLabel,
 	name: TextLabel,
 	role: TextLabel,
 	stats: TextLabel,
 	health: Frame,
 	healthFill: Frame,
-	healthText: TextLabel,
 	types: Frame,
 	typeButtons: { TextButton },
 	typeGlyphs: { Glyph.G },
@@ -83,6 +91,11 @@ function UnitPanel.new(api: Api.Api): UI
 	portrait.Parent = panel
 	local pg = Glyph.new(portrait)
 	pg.root.Position = UDim2.fromScale(0.5, 0.5)
+	local view = Portrait.new(portrait)
+	local corner = Glyph.new(portrait)
+	corner.root.AnchorPoint = Vector2.new(1, 1)
+	corner.root.Position = UDim2.new(1, -2, 1, -2)
+	corner.root.ZIndex = 4
 	local health = Instance.new("Frame")
 	health.Name = "Health"
 	health.Position = UDim2.fromOffset(6, 70)
@@ -94,9 +107,13 @@ function UnitPanel.new(api: Api.Api): UI
 	fill.BackgroundColor3 = Color3.fromRGB(80, 200, 90)
 	fill.BorderSizePixel = 0
 	fill.Parent = health
-	local healthText = textLabel(panel, Enum.Font.GothamBold, 11, Color3.fromRGB(180, 230, 180))
-	healthText.Position = UDim2.fromOffset(6, 78)
-	healthText.Size = UDim2.fromOffset(64, 28)
+	-- the economy flow: supply white, power yellow (the build menu's cost colors)
+	local flowSupply = textLabel(panel, Enum.Font.GothamBold, 13, Color3.fromRGB(235, 235, 235))
+	flowSupply.Position = UDim2.fromOffset(6, 79)
+	flowSupply.Size = UDim2.fromOffset(64, 15)
+	local flowPower = textLabel(panel, Enum.Font.GothamBold, 13, Color3.fromRGB(255, 214, 60))
+	flowPower.Position = UDim2.fromOffset(6, 95)
+	flowPower.Size = UDim2.fromOffset(64, 15)
 	local name = textLabel(panel, Enum.Font.GothamBold, 15, Color3.new(1, 1, 1))
 	name.Position = UDim2.fromOffset(72, 4)
 	name.Size = UDim2.new(1, -78, 0, 18)
@@ -122,8 +139,9 @@ function UnitPanel.new(api: Api.Api): UI
 	Kit.skin(gui) -- the UI kit's look (C-105)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return {
-		gui = gui, panel = panel, portrait = portrait, portraitGlyph = pg, name = name, role = role, stats = stats,
-		health = health, healthFill = fill, healthText = healthText, types = types, typeButtons = {}, typeGlyphs = {},
+		gui = gui, panel = panel, portrait = portrait, portraitGlyph = pg, portraitView = view, cornerGlyph = corner,
+		flowSupply = flowSupply, flowPower = flowPower, name = name, role = role, stats = stats,
+		health = health, healthFill = fill, types = types, typeButtons = {}, typeGlyphs = {},
 		icons = Icons.table(api.world.defs), codes = Icons.codes(api.world.defs), key = "",
 	}
 end
@@ -143,15 +161,31 @@ local function one(ui: UI, api: Api.Api, id: number)
 	local def = if sheet.access == "contact" then nil else (World.def(world, u) or world.defs.unitByIndex[u.icon or 0])
 	-- the icon as drawn on the map (a contact's dashed frame, a ghost's faded type)
 	local style = Icons.style(ui.icons, world, u, false)
-	style.size = math.floor(style.size * 38 / Icons.BASE + 0.5)
-	Glyph.apply(ui.portraitGlyph, style, TeamColors(u.team))
+	if def then
+		-- the model at an angle, the type icon bottom right (the build menu's tile)
+		Portrait.set(ui.portraitView, def, u.team)
+		style.size = math.floor(style.size * 18 / Icons.BASE + 0.5)
+		Glyph.apply(ui.cornerGlyph, style, TeamColors(u.team))
+	else
+		style.size = math.floor(style.size * 38 / Icons.BASE + 0.5)
+		Glyph.apply(ui.portraitGlyph, style, TeamColors(u.team))
+	end
+	ui.portraitView.frame.Visible = def ~= nil
+	ui.cornerGlyph.root.Visible = def ~= nil
+	ui.portraitGlyph.root.Visible = def == nil
 	ui.health.Visible = sheet.health ~= nil
-	ui.healthText.Visible = sheet.maxHealth ~= nil
 	if sheet.health and sheet.maxHealth then
 		ui.healthFill.Size = UDim2.fromScale(math.clamp(sheet.health / sheet.maxHealth, 0, 1), 1)
-		ui.healthText.Text = `{math.floor(sheet.health + 0.5)}\n/ {sheet.maxHealth}`
-	elseif sheet.maxHealth then
-		ui.healthText.Text = `? / {sheet.maxHealth}`
+	end
+	-- what it adds to / takes from the economy now (own units: the client knows their state)
+	local own = def ~= nil and sheet.access == "own"
+	ui.flowSupply.Visible, ui.flowPower.Visible = own, own
+	if own then
+		local eco = api.state.economy
+		local ratio = if eco then math.min(eco.supply.ratio, eco.power.ratio) else 1
+		local s, p = UnitFlow.of(world, u, def, { queue = api.state.factoryQueues[id], wind = eco and eco.wind, ratio = ratio })
+		ui.flowSupply.Text = UnitFlow.text(s)
+		ui.flowPower.Text = UnitFlow.text(p)
 	end
 	ui.name.Text = sheet.name
 	ui.role.Text = if def then string.match(def.description or "", "^[^%.]*") or "" else ""
@@ -231,7 +265,7 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 	end
 	local world = api.world
 	local single = subject ~= nil
-	for _, f in { ui.portrait, ui.health, ui.healthText, ui.name, ui.role, ui.stats } :: { GuiObject } do
+	for _, f in { ui.portrait, ui.health, ui.name, ui.role, ui.stats, ui.flowSupply, ui.flowPower } :: { GuiObject } do
 		f.Visible = single
 	end
 	ui.types.Visible = not single
