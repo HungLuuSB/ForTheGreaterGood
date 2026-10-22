@@ -700,3 +700,19 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - a scenario to test the shield once the sim has it;
 - a grey/white dome, not team colour, whose capacity sets its transparency (invisible at 0%, full at 50%);
 - a bigger dome: ×3, then ×2. I read "×2" as replacing ×3, so 120 rather than 360.
+
+### C-90 — ShieldFx: the shield dome renderer with fixed pools, one loop and strategic detail (2026-10-23)
+
+**Decision:** `Render/ShieldFx` replaces the C-87 prototype's renderer. It keeps the hit plates and `Core/Shield`'s heat model, and adds the user's interface: `new(emitter, radius, teamColor)`, `deploy`, `setStrength`, `hit`, `collapse`, `destroy`.
+- **Look:** neutral white, with opacity following strength (the user's C-89 rule over the brief's team colour). A tinted ball with a camera-facing edge ring, not the ForceField material.
+- **Rings:** a fixed pool of 9 CylinderHandleAdornments per shield, resized each frame to the curve at their height and recycled at the top.
+- **Pools:** ripples (4) and vortex arcs (3) per shield; one shared pool of 160 hexagon plates.
+- **Loop and detail:** one RenderStepped loop for every shield. It skips domes off screen and draws only the dome and edge beyond 480 studs.
+- **Timing:** `Core/ShieldLook` (pure) owns the timings and curves. Effects run on their own clock with a time scale (screenshots).
+- **The mechanic demo** moved to `Render/ShieldDemo` and drives the new interface the way the sim will.
+- **Review generators:** place content in `ReplicatedStorage.ShieldFxReview` (an Emitter attachment, Radius and Offset attributes), copied into the world by a debug call and placed on the raycast terrain surface.
+
+**Why:** the user's brief and hard performance rules, with three changes:
+- **White dome:** the user's answers today (white dome, generator structures only, a smaller Chaos dome) override the brief's team colour and Warden dome.
+- **No ForceField:** it read grey with no edge in C-87.
+- **Raycast placement:** the Order placeholder lay on its side and sank into the grass. The pivot came from its turned base cylinder, and the sim's ground height sits below the rendered terrain.
