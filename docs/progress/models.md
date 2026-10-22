@@ -59,6 +59,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 - Beam tower IDs `ord_lucent` / `chs_basilisk` are my proposal (Order virtue name, Chaos gaze-beast) for the sim's request 43; the sim picks the final IDs and I will rename the blockouts to match.
 - Beam towers: the lids are client-only pieces (`shellL` / `shellR`, in the manifest as visual pieces); the retracted pose hides the turret completely. Should a retracted tower still show a faint glow (charge band on, lids shut), or go fully dark? Now the base `power` stays on unless the client dims it.
 - Wrecks: on the big flat roofs (vehicle plants, Bulwark) the soot reads as cloudy patches rather than burn marks. Keep it, or switch the large structures to finer, edge-focused scorching? Also: the shield emitter (fx) has no wreck; it disappears with its shield generator.
+- Approved by the user 2026-10-23: all 26 BAR pairs, the missiles and the 22 wrecks (manifest flipped). Fixes asked: Eye skid team plates bigger, Chaos runway matte, Chaos shipyard counter-jib inside the footprint, ship deck team plates bigger, helicopter flank plates slightly bigger, missile nozzle glow removed, wrecks lighter (grey-brown soot) with edge-focused scorching on big roofs.
 
 ## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 
