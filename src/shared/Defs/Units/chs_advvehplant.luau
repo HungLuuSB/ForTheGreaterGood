@@ -11,9 +11,9 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 2200, power = 9000, buildTime = 30000 },
 	health = 6000,
-	footprint = 5,
+	footprint = 6, -- size shows tech level (S-104)
 	icon = "factory",
 	buildPower = 200,
-	buildOptions = { "chs_forgemaster", "chs_juggernaut", "chs_hydra", "chs_gorgon", "chs_shroud", "chs_mire", "chs_stalker", "chs_minotaur", "chs_cyclops" },
+	buildOptions = { "chs_forgemaster", "chs_juggernaut", "chs_hydra", "chs_gorgon", "chs_shroud", "chs_mire", "chs_stalker", "chs_minotaur", "chs_cyclops", "chs_chimera" },
 	model = "chs_advvehplant",
 })

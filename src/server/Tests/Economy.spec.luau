@@ -195,7 +195,7 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(started ~= nil, "the upgrade started")
-		t.equal(w.slot[t1], nil, "the T1 extractor was removed when construction started")
+		t.expect(w.slot[t1] ~= nil, "the T1 extractor works on under the frame (S-108)")
 		local pm = sim.map :: Passability.PassMap
 		local gx, gz = g:cellAt(dx, dz)
 		t.equal(Passability.occupant(pm, g:index(gx, gz)), frame, "the frame holds the deposit")
@@ -212,6 +212,7 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(done, "the advanced extractor finished")
+		t.equal(w.slot[t1], nil, "the T1 went when the T2 was finished (S-108)")
 		step(sim, 5)
 		near(t, sim.eco.accounts[1].supply.income, 1.75 * 4, "advanced rate 1.75 × deposit value 4")
 	end)

@@ -28,14 +28,15 @@ Placement.snap = PlacementRules.snap
 
 -- Can `def` be placed centered near (x, z)? Returns ok, a reason when not,
 -- the snapped min corner and center, and the unit the placement replaces
--- (0 if none). With `team`, an extractor may go onto that team's own
--- complete extractor with a lower rate: the upgrade (guide 9.3) replaces it
--- when construction starts.
+-- (0 if none). With `owner` (a player), a def with `upgradesFrom` may go
+-- onto that player's own complete structure of a listed def (S-108; guide
+-- 9.3): the in-place upgrade. Allies' and enemies' structures block it;
+-- the old one works on until the new one is finished (Build).
 -- `knower` (an ally team) makes it a planning check that uses only that
 -- team's knowledge (D101): enemy structures and units it doesn't see don't
 -- block, structures it remembers (ghosts, alive or not) do. Without it the
 -- check is the physical one, done when a builder starts the frame.
-function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number, team: number?, knower: number?): (boolean, string?, number, number, number, number, number)
+function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number, owner: number?, knower: number?): (boolean, string?, number, number, number, number, number)
 	local pm = sim.map
 	if pm == nil then
 		return false, "no map", 0, 0, x, z, 0
@@ -62,12 +63,11 @@ function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number
 			end
 			if occupant ~= 0 then
 				local od = if w.slot[occupant] then sim.defs.unitByIndex[w.defIndex[occupant]] else nil
-				local upgrade = def.extractor ~= nil
-					and team ~= nil
+				local upgrade = def.upgradesFrom ~= nil
+					and owner ~= nil
 					and od ~= nil
-					and od.extractor ~= nil
-					and od.extractor.rate < def.extractor.rate
-					and w.team[occupant] == team
+					and table.find(def.upgradesFrom, od.id) ~= nil
+					and w.owner[occupant] == owner
 					and w.buildProgress[occupant] >= 1
 					and (replaces == 0 or replaces == occupant)
 				if not upgrade then
@@ -94,8 +94,7 @@ function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number
 		end
 	end
 	if def.extractor then
-		local gx, gz = g:cellAt(cx, cz)
-		if Layers.getSupply(layers, g:index(gx, gz)) == 0 then
+		if PlacementRules.supplyUnder(layers, size, cx, cz) == 0 then -- any covered cell (S-104)
 			return false, "no deposit", x0, z0, cx, cz, 0
 		end
 	end

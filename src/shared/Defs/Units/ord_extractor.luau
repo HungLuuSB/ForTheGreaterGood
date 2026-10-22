@@ -2,6 +2,7 @@
 local Templates = require("../Templates")
 
 return Templates.extend(Templates.Structure, {
+	footprint = 2, -- size shows tech level (S-104)
 	id = "ord_extractor",
 	name = "Extractor",
 	description = "Supply Extractor. Must stand on a supply deposit; income scales with its value.",

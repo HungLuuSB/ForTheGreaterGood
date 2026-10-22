@@ -78,6 +78,12 @@ export type Event = {
 	mass: number?, -- SHIELD_HIT: the shell's mass (ShieldField.mass)
 }
 
+-- A lingering beam (S-113): `ticks` more ticks of `1 / total` of its
+-- weapon's damage on `target`, while the shooter stands and the target is
+-- in range.
+-- A piercing beam (S-115) hurts every enemy on its fixed line (sx, sz) → (ex, ez) instead; its target is 0.
+export type Beam = { shooter: number, shooterGen: number, slot: number, target: number, targetGen: number, ticks: number, total: number, sx: number?, sz: number?, ex: number?, ez: number? }
+
 export type Combat = {
 	profiles: { [number]: UnitProfile }, -- by unit def index
 	maxRadius: number, -- largest collision radius of any def
@@ -121,6 +127,7 @@ export type Combat = {
 	-- shell masses, up (the dome stands), and the power share of their last
 	-- recharge step (0..1)
 	shieldIds: { number },
+	beams: { Beam }, -- lingering beams dealing their damage over time (S-113), in the order they were fired
 	shieldCharge: { [number]: number },
 	shieldUp: { [number]: boolean },
 	shieldPower: { [number]: number },
@@ -220,6 +227,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pShield = {},
 		pShieldPhase = {},
 		shieldIds = {},
+		beams = {},
 		shieldCharge = {},
 		shieldUp = {},
 		shieldPower = {},
@@ -715,6 +723,14 @@ function Combat.hash(c: Combat, h: number): number
 	h = Hash.u32(h, c.projSerial)
 	for _, id in c.strategic do
 		h = Hash.u32(h, id)
+	end
+	h = Hash.u32(h, #c.beams)
+	for _, b in c.beams do
+		h = Hash.u32(Hash.u32(Hash.u32(Hash.u32(h, b.shooter), b.shooterGen), b.target), b.targetGen)
+		h = Hash.u32(Hash.u32(h, b.slot), b.ticks)
+		if b.sx then
+			h = Hash.number(Hash.number(Hash.number(Hash.number(h, b.sx), b.sz :: number), b.ex :: number), b.ez :: number)
+		end
 	end
 	h = Hash.u32(h, #c.wreckIds)
 	for _, id in c.wreckIds do

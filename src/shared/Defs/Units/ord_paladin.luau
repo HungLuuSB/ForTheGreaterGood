@@ -12,7 +12,7 @@ return Templates.extend(Templates.TankT1, {
 	categories = { "GROUND", "ARMORED" },
 	armorClass = "ARMORED",
 	moveClass = "HEAVY_TRACKED",
-	footprint = 1,
+	footprint = 2, -- size shows tech level (S-104)
 	cost = { supply = 360, power = 3600, buildTime = 9000 },
 	health = 3200, -- faction pass (S-62)
 	movement = { maxSpeed = 28, accel = 10, brake = 20, turnRate = 80 },

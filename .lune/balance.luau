@@ -328,6 +328,8 @@ local ROLE_UNITS: { [string]: { string } } = {
 	["Siege"] = { "minotaur" }, -- Chaos only (S-64)
 	["Swarm tank"] = { "locust" }, -- Chaos only (S-75)
 	["Siege mortar"] = { "cyclops" }, -- Chaos only (S-75)
+	["Missile battery"] = { "sanction", "scourge" }, -- T2 structures (S-106)
+	["Anti-nuke"] = { "providence", "cerberus", "custodian", "chimera" }, -- strategic missiles only: every cell "—" (S-111)
 }
 local function idOf(name: string): string
 	return (if defs.units["ord_" .. name] then "ord_" else "chs_") .. name

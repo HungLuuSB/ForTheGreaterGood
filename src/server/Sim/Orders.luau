@@ -65,6 +65,7 @@ Orders.AUTO_PERIOD = 15 -- ticks between an idle unit's move-state checks (stagg
 Orders.MANEUVER_LEASH = 150 -- studs a Maneuver unit goes from its anchor to get a shot
 Orders.ROAM_CHASE = 500 -- studs beyond its range a Roam unit looks for something to chase
 Orders.ANCHOR_SLACK = 24 -- studs: a Maneuver unit farther than this from its anchor walks back
+Orders.HOLD_EVERY = 2 -- ticks between a unit's attack-move / patrol hold checks, spread by ID (S-107)
 
 export type OrderSpec = {
 	kind: OrdersState.Kind,
@@ -156,6 +157,13 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 			issued = -math.huge,
 		})
 	end
+end
+
+-- The player's STOP command: Orders.stop, and the manual target goes too
+-- (S-115; automatic orders stop units without touching it).
+function Orders.stopCommand(sim: Types.Sim, id: number)
+	Orders.stop(sim, id)
+	sim.orders.manual[id], sim.orders.manualGen[id] = nil, nil
 end
 
 -- STOP: clears the queue and halts.
@@ -306,8 +314,12 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 			end
 			return false
 		end
-		if kind ~= "move" then
+		-- the hold check (attack-move, patrol) runs for each unit every
+		-- HOLD_EVERY ticks, spread by ID, and on the order's first tick
+		-- (S-107, next.md item 3 option (a)): half the units each tick
+		if kind ~= "move" and (h.held == nil or (id + sim.tick) % Orders.HOLD_EVERY == 0) then
 			o.hold[id] = engaged(sim, id) and def(sim, id).moveClass ~= "JET" or nil
+			h.held = true
 		end
 		return true
 	elseif kind == "attack" then
@@ -318,6 +330,7 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 			return false -- the team lost it (or nothing to shoot with)
 		end
 		o.forced[id], o.forcedGen[id] = t, gen :: number
+		o.manual[id], o.manualGen[id] = t, gen :: number -- kept after the order ends, until STOP (S-115)
 		if d.domain == "air" then
 			return true -- aircraft chase their target themselves
 		end

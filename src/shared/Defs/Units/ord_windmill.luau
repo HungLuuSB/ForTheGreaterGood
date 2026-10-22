@@ -8,7 +8,7 @@ return Templates.extend(Templates.Structure, {
 	faction = "order",
 	tier = 1,
 	categories = { "STRUCTURE" },
-	footprint = 1,
+	footprint = 2, -- size shows tech level (S-104)
 	description = "Wind Turbine. Power that follows the wind (0-30 per second, changes every 30 s).",
 	cost = { supply = 35, power = 0, buildTime = 1000 },
 	health = 220,

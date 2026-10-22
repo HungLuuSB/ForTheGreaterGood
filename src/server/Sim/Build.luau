@@ -363,15 +363,18 @@ function Build.step(sim: Types.Sim)
 					b.targetGen[id] = w.gen[existing]
 					b.assist[id] = false
 				else
-					local ok, why, _, _, cx, cz, replaces = Placement.check(sim, sd, pending.x, pending.z, w.team[id])
+					local ok, why, _, _, cx, cz, replaces = Placement.check(sim, sd, pending.x, pending.z, w.owner[id])
 					if ok and Match.atCap(sim, w.owner[id]) then
 						ok, why = false, "unit_cap"
 					end
 					if ok then
-						if replaces ~= 0 then
-							Lifecycle.remove(sim, replaces) -- extractor upgrade: the T1 goes when the T2 starts (guide 9.3)
-						end
 						local frame = startFrame(sim, sd, w.owner[id], cx, cz, pending.facing)
+						if replaces ~= 0 then
+							-- in-place upgrade (S-108): the old structure works on
+							-- under the frame and goes when the frame is finished
+							b.upgrading[frame] = replaces
+							b.upgradingGen[frame] = w.gen[replaces]
+						end
 						b.target[id] = frame
 						b.targetGen[id] = w.gen[frame]
 						b.assist[id] = false
@@ -492,6 +495,7 @@ function Build.step(sim: Types.Sim)
 			if p >= 1 - 1e-9 then
 				World.setBuildProgress(w, t, 1)
 				Lifecycle.completed(sim, t)
+				Build.finishUpgrade(sim, t)
 				Combat.addEvent(sim.combat, { kind = "BUILD_DONE", tick = sim.tick, unit = t, other = 0 })
 				Build.countBuilt(sim, t)
 			else
@@ -542,8 +546,30 @@ function Build.step(sim: Types.Sim)
 	end
 end
 
+-- An in-place upgrade's frame `frame` is finished (S-108): the structure it
+-- replaces goes (no wreck, no refund) if it still stands.
+function Build.finishUpgrade(sim: Types.Sim, frame: number)
+	local b = sim.build
+	local old = b.upgrading[frame]
+	if old == nil then
+		return
+	end
+	local gen = b.upgradingGen[frame]
+	b.upgrading[frame], b.upgradingGen[frame] = nil, nil
+	if World.isRef(sim.world, old, gen) then
+		Lifecycle.remove(sim, old)
+	end
+end
+
 table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
-	BuildState.clearUnit(sim.build, id)
+	local b = sim.build
+	local old = b.upgrading[id]
+	if old ~= nil and World.isRef(sim.world, old, b.upgradingGen[id]) then
+		-- an upgrade frame cancelled or destroyed (S-108): the old structure
+		-- takes its cells back (Placement freed the frame's just before)
+		Placement.occupy(sim, old)
+	end
+	BuildState.clearUnit(b, id)
 end)
 
 return Build

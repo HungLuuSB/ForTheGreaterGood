@@ -56,6 +56,7 @@ export type Info = {
 MapGen.WATER_LEVEL = 8 -- studs: the surface of every lake and sea
 MapGen.MAX_ATTEMPTS = 60
 MapGen.MIN_GAP = 3 -- cells (guide 5.5)
+MapGen.MIN_DEPOSIT_GAP = 3 -- cells between deposits (Chebyshev): a footprint-3 T2 extractor on each (S-104)
 local PLATEAU = 9 -- cells: flat building ground around a start
 local CHECK_CLASSES = { "TRACKED", "HEAVY_TRACKED" } -- land classes with footprint-2 and -3 units
 
@@ -258,7 +259,7 @@ local function drawPlan(rng: Prng.Prng, n: number, symmetry: Symmetry, water: Wa
 		local off = side * rng:nextNumber(9, 14)
 		local ex, ez = sx + ux * along + px * off, sz + uz * along + pz * off
 		deposit(ex, ez, 3)
-		deposit(ex + ux * 3, ez + uz * 3, 3)
+		deposit(ex + ux * 5, ez + uz * 5, 3) -- 5 cells: room for footprint-3 T2 extractors on each (S-104)
 	end
 	-- rich deposits are contested: halfway between this start and the
 	-- nearest enemy start (the east twin on 2v2 maps), moved part of the
@@ -272,6 +273,27 @@ local function drawPlan(rng: Prng.Prng, n: number, symmetry: Symmetry, water: Wa
 		rx, rz = h + px * side, h + pz * side
 	end
 	deposit(rx, rz, 6)
+	-- keep deposits at least MIN_DEPOSIT_GAP cells apart (Chebyshev), room
+	-- for a footprint-3 T2 extractor on each (S-104): mirrored copies of the
+	-- rich deposit can meet in the middle; push each pair apart, equally,
+	-- so the map stays symmetric
+	local deps = plan.deposits
+	for i = 1, #deps do
+		for j = i + 1, #deps do
+			local a, b = deps[i], deps[j]
+			local dx, dz = math.floor(b.x) - math.floor(a.x), math.floor(b.z) - math.floor(a.z)
+			local gap = math.max(math.abs(dx), math.abs(dz))
+			if gap < MapGen.MIN_DEPOSIT_GAP then
+				if gap == 0 then
+					dx, dz, gap = 1, 0, 1
+				end
+				local push = math.ceil((MapGen.MIN_DEPOSIT_GAP - gap) / 2)
+				local ux, uz = dx / gap, dz / gap
+				a.x, a.z = math.floor(a.x - ux * push) + 0.5, math.floor(a.z - uz * push) + 0.5
+				b.x, b.z = math.floor(b.x + ux * push) + 0.5, math.floor(b.z + uz * push) + 0.5
+			end
+		end
+	end
 
 	local function farFrom(x: number, z: number, fromStarts: number, fromDeposits: number): boolean
 		if x < 3 or z < 3 or x > n - 3 or z > n - 3 then

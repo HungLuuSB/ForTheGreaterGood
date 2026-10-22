@@ -3,13 +3,13 @@
 return {
 	id = "ord_aam",
 	type = "HOMING",
-	range = 374, -- faction pass, tuned (S-62)
+	range = 393, -- faction pass, tuned (S-62); +5% (S-112: the Falcon's standoff)
 	reload = 1.4, -- faction pass (S-62)
 	projectileSpeed = 480,
 	accuracy = 0.5,
 	turnRate = 200,
 	guidance = "IR",
-	lockRange = 374, -- faction pass, tuned (S-62)
+	lockRange = 393, -- (S-112)
 	terminalRange = 40,
 	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 0, SHIP = 0, AIR = 280, SUB = 0 },
 	aoe = 4,

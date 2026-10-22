@@ -1,14 +1,20 @@
 --!strict
 -- Radiance's beam (S-96, client request 43; BAR's Pulsar): precise, long,
--- one very heavy hit on a long reload, each shot paid in power from the
--- team's stores. Visible targets only: weak against radar contacts.
+-- a very heavy beam on a long reload, each shot paid in power from the
+-- team's stores. S-113 (client request 47): it fires at radar contacts too
+-- (aimed at the believed position, so it misses wobbling blips unless
+-- Pinpointers sharpen them, S-59), and the beam lingers 3 s (S-115), dealing
+-- its damage over that time to every enemy its line crosses (a hit-ray).
 return {
 	id = "ord_radiance_beam",
 	type = "BEAM",
 	range = 650,
 	reload = 9,
 	accuracy = 0,
-	damage = { LIGHT = 2600, ARMORED = 2600, STRUCTURE = 2000, SHIP = 2600, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 3000, ARMORED = 3000, STRUCTURE = 2300, SHIP = 3000, AIR = 0, SUB = 0 }, -- over the whole beam (S-113)
+	beamDuration = 3, -- (S-115, the user: was 2.5)
+	pierce = true, -- a hit-ray: every enemy on its line takes the share each tick (S-115)
+	canTargetRadar = true,
 	aoe = 0,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },
