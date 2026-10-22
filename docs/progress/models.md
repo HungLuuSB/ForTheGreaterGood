@@ -411,6 +411,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `1efc5e9` (BAR pair 25: beam towers ord_radiance / chs_inferno as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `1429976` (BAR pair 26: flak towers ord_lumen / chs_hailstorm as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `6b94586` (Wreck meshes for the 22 approved meshes (`wreck` in each manifest entry, M-24); `assets/`, `src/shared/Defs/Meshes/`, `tests/client/Meshes.spec.luau`, `.gitignore` and docs).
+- Ready to merge: `69bbce2` (Wreck status field (`review` for all 22) in the mesh manifest; `src/shared/Defs/Meshes/`, `tests/client/Meshes.spec.luau`, tools and docs).
 
 ## Requests
 
