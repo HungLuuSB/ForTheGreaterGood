@@ -4,6 +4,33 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, cheats work)
+
+- **The cheat commands are live (C-120)**, now that sim-A's S-102 is in main. Tested in Studio:
+  - `/give Lancer 3` places 3 Lancers at the cursor (the log shows "→ give ord_lancer 3 at 43,24");
+  - `/res all max`, `/god on`, `/reveal on`, `/kill selected`, `/kill 2`, `/speed 2` (the game really runs at 2×) and `/speed 1` all work;
+  - mistakes say why in red ("unknown unit", "speed must be 0.25..8", "no AI on that team").
+- **Results:** green when a command worked, red when it didn't.
+- **"Cheats used":** the statistics Overview says "CHEATS USED (name ×n)" next to the match length, and a saved replay's name ends in "· cheats used".
+- **Log:** on a short window it shows only the newest lines that fit, so it never covers the resource bar.
+- **Screenshots:** `debug_out/screens/cheats_results.jpg`, `cheats_autocomplete.jpg`, `cheats_kill_speed.jpg`, `cheats_stats.jpg` (the stats panel shown with sample results, since a test profile never ends).
+
+## Summary (2026-10-23, cheat command line; shield hits)
+
+- **Cheat command line (C-119), BAR's /cheat:**
+  - Press Enter or "/" and type. Suggestions appear as you type: commands, then units by id or display name ("/give lanc" offers the Lancer). Tab takes the first.
+  - "/help" lists every command with an example. Results print in a log above the bar.
+  - "at" defaults to the cursor, and Ctrl+Shift+G repeats the last /give at the cursor.
+- **Until sim-A's S-102 is in main, the bar is a stub** that says what it would send. sim-A built the commands themselves (S-102: give, res, income, instabuild, reveal, god, kill, speed, ai), and they're integrating now. I'll hook them up next.
+- **Who may cheat:**
+  - only players on the allow list (`src/roblox/CheatConfig.luau`: your UserId);
+  - only in Studio, or in a match where the host turned on the new lobby toggle "Cheats" (off by default);
+  - anyone else's cheat commands are dropped on the server before the sim sees them.
+- **/cheat on|off** flips that lobby toggle (host only). sim-A has asked you whether it should also work mid-match.
+- **"Cheats used" on results and replays** comes with S-102's flags.
+- **Shield hits:** dimmer ripples, bigger hex patches (C-117), and each hit now sends a visible wave through its patch instead of freezing it lit (C-118).
+- **Screenshots:** `debug_out/screens/cheats_*.jpg`, `shield_hex_*.jpg`.
+
 ## Summary (2026-10-23, T2 beam towers in game)
 
 - **Beam towers (S-96 + C-112):** Radiance (Order) and Inferno (Chaos), Pulsar-style.
@@ -359,6 +386,10 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `ed5681f` (Ranges.spec timing check robust to machine load); test_client 196, test 414, build passed.
 - Ready to merge: `96973a5` (S-96 tower meshes merged from m-models `1efc5e9`, `1429976`; retracted glow dims, C-114); test_client 197, test 414, build passed.
 - Ready to merge: `1d738c9` (wreck meshes built and placed, wreck_<id> appearances, includes m-models `6b94586`, C-115); test_client 197, test 414, build passed.
+- Ready to merge: `f6e9cea` (shield ripples from fixed-size emitters, C-116); test_client 198, test 414, build passed.
+- Ready to merge: `a19380c` (dimmer ripples, bigger hex patches, C-117); test_client 198, test 414, build passed.
+- Ready to merge: `7ac3622` (hex patches animate: waves per hit, glassy plates, C-118); test_client 199, test 414, build passed.
+- Ready to merge: `bbaafa6` (cheat command line, gate, lobby Cheats toggle; stub until S-102; touches src/roblox Main.server, Lobby, new CheatConfig; C-119); test_client 202, test 419, build passed.
 
 ## Tasks
 
@@ -686,6 +717,57 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: cheat command line, permission gate, lobby Cheats toggle; stub until S-102 (C-119)
+
+- **Asked:** an in-game command line for testing (BAR's /cheat): TextChatService commands; give / res / income / instabuild / reveal / god / kill / speed / ai as the sim defines them; "at" = the cursor; ids or names with suggestions; /help; results in chat. Allowed only in Studio, or when the host enabled "Cheats" in the lobby AND the UserId is allow-listed; never in public matchmaking; "cheats used" on results and replays; Ctrl+Shift+G repeats the last give; a stub until the sim side merges.
+- **The commands are the sim's** (S-102, net.md "Cheat commands"): a CHEAT command on the Cmd channel, recorded in the replay. `Shared/Net/CheatText` parses chat text into it, and a CHEAT_RESULT event answers (`CheatText.describe`).
+- **`Core/CheatInput`** (pure, `CheatInput.spec` 3):
+  - the command list with usages and examples;
+  - suggestions: command names, then after "give" units whose id or display name starts with (or contains) the typed text, case-insensitive;
+  - `prepare`: drops "/" and "/cheat", turns a display name into its id, and adds " at x,z" (the cursor's ground point) to a give without one;
+  - /help's lines.
+- **`UI/CheatConsole`:**
+  - a UI-kit bar at the bottom centre, opened with Enter or "/";
+  - suggestions above it (Tab or a click takes one), Up / Down history, Escape closes;
+  - a log of up to 16 lines on a faint backing, kept above the suggestions and fading after 12 s;
+  - Ctrl+Shift+G repeats the last give at the cursor.
+  - Roblox's chat window is off (C-109), so this is the command line; the same commands are also registered as TextChatService commands for when chat is on.
+  - Enter is also taken from a focus loss while Return is down (Studio's input tool drops the TextBox's enterPressed).
+  - The debug hook `Invoke("cheatline", text)` enters a line.
+- **Gate** (`src/roblox/Main.server`, new `src/roblox/CheatConfig`):
+  - a Cmd payload whose byte 0 is CHEAT (17) is dropped unless the player's UserId is in `CheatConfig.allow` (the user's, 11846985184) and the game is in Studio or the lobby's `cheats` is on;
+  - lobby matches pass `match.cheats` (the toggle, or always in Studio); test profiles start with `cheats` and `offline` in Studio;
+  - sim-A confirmed the byte-0 rule.
+- **Lobby:** a host-only "Cheats" toggle (off by default; `Lobby.cheats`, `op = "set", key = "cheats"`). "/cheat on|off" sets it.
+- **Until S-102 is in main:** the bar answers "stub: would send …". Next: `CheatText.parse`, the Cmd channel, the CHEAT_RESULT lines, the speed driver and "cheats used" on results.
+- **Screenshots** (`debug_out/screens/`): `cheats_console.jpg` (three entered lines, "LANCER" turned into ord_lancer and the cursor's "at 47,104" added; "/give rad" suggesting the Radiance), `cheats_commands.jpg` (the command list), `cheats_help.jpg`.
+
+## 2026-10-23: hex patches animate: a wave per hit, glassy plates (C-118)
+
+- **Your notes:** the bigger patches change but look static, solid, not smooth.
+- **Cause 1:** a hit within 6 studs of a young patch merged into it by restarting its clock, so the patch snapped back to full heat. Under steady fire it sat lit and never animated. Hits after 0.25 s also stacked a second grid on the same spot.
+- **Cause 2:** under the night bloom, lit Neon plates at 95% opacity saturated to one white block.
+- **Fix** (`Core/Shield`, `Render/ShieldFx`):
+  - each patch keeps a wave per hit (up to 4); a merging hit adds a wave instead of restarting it;
+  - a plate shows the brightest of its waves (`Shield.plateLook`), and each wave runs out from the centre ring by ring;
+  - rings now light 0.07 s apart (was 0.045), so the spread shows;
+  - patches merge while they glow (`MERGE_AGE` 0.65), so the grids don't stack;
+  - plates peak at 60% opacity (`ShieldFx.PLATE_OPACITY`), glassy with the falloff visible.
+  - `Shield.spec`: the wave reaches ring 2 later than the centre, and a new hit keeps the old wave and relights the centre.
+- **Screenshot:** `debug_out/screens/shield_hex_waves.jpg`.
+
+## 2026-10-23: dimmer ripples, bigger hex patches (C-117)
+
+- **Your notes:** the ripple is too bright (light emission?), and the hex shield should be bigger or have more hexes.
+- **Ripple** (`Render/ShieldFx`): LightEmission 1 → 0.3, so it no longer glares white under the night bloom; it starts 30% transparent (was opaque).
+- **Hexes** (`Core/Shield`):
+  - plates 2.4 → 4.5 studs across (gap 0.4);
+  - every hit lights at least 2 rings (19 plates; 37 for a heavy shell);
+  - each ring out is 45% as opaque as the one inside (was 30%, so the second ring shows);
+  - the shared plate pool grows to 240.
+  - `Shield.spec`: the centre still outshines ring 1 (below half).
+- **Screenshot:** `debug_out/screens/shield_hex_bigger.jpg`.
 
 ## 2026-10-23: a heavy hit no longer enlarges every ripple on the dome (C-116)
 
@@ -1386,6 +1468,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Shield hit look (C-117):** ripple brightness (LightEmission 0.3) and hex size (4.5 studs, 19–37 plates a hit); `debug_out/screens/shield_hex_bigger.jpg`.
 
 - **Wreck meshes (C-115):** `debug_out/screens/wrecks_meshed.jpg` (review wrecks forced on). Approve them for game (models-C marks each `wreck` approved), and say if they're too dark under the night lighting.
 

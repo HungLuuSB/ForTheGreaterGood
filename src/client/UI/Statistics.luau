@@ -18,6 +18,8 @@ local TeamColors = require("../Render/TeamColors")
 local Chart = require("../Core/Chart")
 local Kit = require("./Kit")
 
+local CheatInput = require("../Core/CheatInput")
+
 local Statistics = {}
 
 local PAGES = { "Overview", "", "Economy", "Combat" }
@@ -134,6 +136,12 @@ local function fillOverview(ui: UI, actions: Actions, status: string?, saved: { 
 	head.LayoutOrder = 1
 	local length = Kit.text(o, `Match length {clock(r.seconds or 0)}`, "label", Kit.COLOR.dim)
 	length.LayoutOrder = 2
+	local cheaters = CheatInput.cheaters(r)
+	if cheaters then
+		-- S-102's flags: the series' `cheated`, each player's count (C-120)
+		length.Text ..= `   ·   CHEATS USED{if cheaters ~= "" then " (" .. cheaters .. ")" else ""}`
+		length.TextColor3 = Kit.COLOR.accent
+	end
 	local rows = {}
 	for _, p in r.players or {} do
 		local st = p.stats or {}

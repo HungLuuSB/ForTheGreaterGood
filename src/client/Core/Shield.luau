@@ -24,9 +24,10 @@ export type Plate = {
 export type Patch = {
 	hit: V3,
 	strength: number, -- 1 = a typical shell; heat, size and dent grow with it
-	born: number,
+	born: number, -- its latest hit
 	rings: number,
 	plates: { Plate },
+	waves: { number }, -- each hit's time: its own wave out from the centre (C-117)
 }
 
 export type Dome = {
@@ -38,14 +39,15 @@ export type Dome = {
 	up: boolean, -- false once collapsed at 0%, until recharged to RAISE_AT
 }
 
-Shield.PLATE = 2.4 -- studs across a hexagon's flats
-Shield.GAP = 0.25 -- studs between plates
-Shield.RING_DELAY = 0.045 -- seconds between rings lighting
+Shield.PLATE = 4.5 -- studs across a hexagon's flats (2.4 until C-116: the user, bigger hexes)
+Shield.GAP = 0.4 -- studs between plates
+Shield.RING_DELAY = 0.07 -- seconds between rings lighting: a visible wave out (0.045 until C-117)
+Shield.MAX_WAVES = 4 -- waves a patch keeps at once
 Shield.LIFE = 0.65 -- seconds a plate glows after it lights
-Shield.RING_ALPHA = 0.3 -- each ring out is this much as opaque as the one inside it
+Shield.RING_ALPHA = 0.45 -- each ring out is this much as opaque as the one inside it (0.3 in C-104; up with the second ring every hit lights, C-116)
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
-Shield.MERGE_AGE = 0.25
+Shield.MERGE_AGE = 0.65 -- while it glows (Shield.LIFE): a later hit adds a wave instead of a second grid on top (C-117)
 Shield.MAX_RINGS = 3
 Shield.DENT = 1.2 -- studs the centre pushes in at strength 1
 
@@ -81,7 +83,8 @@ Shield.unit, Shield.dot, Shield.len, Shield.sub = unit, dot, len, sub
 -- Rings of hexagons by a hit's strength: a light hit lights the centre and
 -- one ring (7 plates), a heavy one up to MAX_RINGS (37).
 function Shield.ringsFor(strength: number): number
-	return math.clamp(math.floor(1 + strength), 1, Shield.MAX_RINGS)
+	-- two rings at least (19 plates): the user wanted more hexes per hit (C-116)
+	return math.clamp(math.floor(2 + strength), 2, Shield.MAX_RINGS)
 end
 
 -- The plates of a patch on a sphere (`center`, `radius`) round the point
@@ -177,7 +180,7 @@ function Shield.idle(dome: Dome, at: V3, now: number): Patch?
 			return nil
 		end
 	end
-	local patch = { hit = on, strength = 0, born = now, rings = 1, plates = Shield.layout(dome.center, dome.radius, on, 1) }
+	local patch = { hit = on, strength = 0, born = now, rings = 1, plates = Shield.layout(dome.center, dome.radius, on, 1), waves = { now } }
 	table.insert(dome.idle, patch)
 	if #dome.idle > Shield.MAX_IDLE then
 		table.remove(dome.idle, 1)
@@ -202,7 +205,14 @@ function Shield.hit(dome: Dome, hit: V3, strength: number, now: number): Patch
 	for _, p in dome.patches do
 		if now - p.born < Shield.MERGE_AGE and len(sub(p.hit, on)) < Shield.MERGE then
 			p.strength = math.min(p.strength + strength * 0.6, 4)
+			-- a new wave through the same grid; the earlier ones keep fading.
+			-- Restarting the patch snapped it back to full heat, so under steady
+			-- fire it sat lit and looked solid, not animated (the user, C-117)
 			p.born = now
+			table.insert(p.waves, now)
+			if #p.waves > Shield.MAX_WAVES then
+				table.remove(p.waves, 1)
+			end
 			local rings = Shield.ringsFor(p.strength)
 			if rings > p.rings then
 				p.rings = rings
@@ -218,12 +228,25 @@ function Shield.hit(dome: Dome, hit: V3, strength: number, now: number): Patch
 		end
 	end
 	local rings = Shield.ringsFor(strength)
-	local patch = { hit = on, strength = strength, born = now, rings = rings, plates = Shield.layout(dome.center, dome.radius, on, rings) }
+	local patch = { hit = on, strength = strength, born = now, rings = rings, plates = Shield.layout(dome.center, dome.radius, on, rings), waves = { now } }
 	table.insert(dome.patches, patch)
 	if #dome.patches > Shield.MAX_PATCHES then
 		table.remove(dome.patches, 1)
 	end
 	return patch
+end
+
+-- A plate of `patch` at `now`: the brightest of its waves (heat, opacity, dent).
+function Shield.plateLook(patch: Patch, ring: number, now: number): (number, number, number)
+	local heat, alpha, dent = 0, 0, 0
+	for _, born in patch.waves do
+		local h, a, d = Shield.plateAt(now - born, ring, patch.strength)
+		if a > alpha then
+			heat, alpha = h, a
+		end
+		dent = math.max(dent, d)
+	end
+	return heat, alpha, dent
 end
 
 -- Drops patches whose last plate has faded.
