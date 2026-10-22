@@ -1171,3 +1171,4 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - turns happen inside the dome, between the core and the surface;
   - glancing shells through the rim keep up to 97% of their speed;
   - the shield profile checks the core (the radar and builder near the edge stand in the band).
+- **Decided (the user, via the client stream):** "Keep 0.4R for now." Checked in Studio on the shield profile (12 s): 230 shells crossed the surface, 219 turned, none got through, and the dome held at 100%. Ravager shells reach about 16 studs into the 48-stud band, Juggernaut shells about 30. The client now lights the hit ripple where a shell crosses the surface (from SHIELD_FIELD) rather than at the turn; no wire change.

@@ -157,7 +157,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
       - Counters: Pinpointers and fire-control tracking reveal it; IR SAMs (sight) aren't fooled.
 - **Shield domes (S-79, client request 40), placeholder numbers:**
   - **Generators:** Order `ord_phalanx` Phalanx (Architect, T2): radius 120, capacity 1,500 shell masses, recharge 75/s (20 s from empty), 40 power/s while recharging; supply 400, power 5,000, 2,800 health. Chaos `chs_carapace` Carapace (Forgemaster, T2): radius 80, capacity 1,000, recharge 60/s, 25 power/s; supply 280, power 3,500, 2,000 health. Capacity and recharge are 50× my first numbers (your rules: 10× in S-80, then 50× in S-81). Chaos's capacity and price, and keeping the power draw unchanged at 50× the recharge, are my calls. At 75 charge a second, a full Phalanx out-recharges about 30 mortar shells a second.
-  - **Field inside the dome (S-83, your rule):** shells pass through the dome's surface and are slowed, steered and turned inside it. The field fills the outer 40% of the radius, so the protected core is 72 studs for the Phalanx and 48 for the Carapace (my call; B suggested 35–40%).
+  - **Field inside the dome (S-83, your rule):** shells pass through the dome's surface and are slowed, steered and turned inside it. The field fills the outer 40% of the radius, so the protected core is 72 studs for the Phalanx and 48 for the Carapace. **Decided: kept at 0.4R for now (the user, 2026-10-22).**
     - Units standing in that band (between the core and the surface) can now be hit by shells still slowing down or bursting where they land.
     - At 40%, head-on at full charge: the Phalanx stops everything but the Citadel round; the Carapace's thinner band (32 studs) also lets the siege mortar through. A band of half the radius stops both on the Phalanx (only the Citadel round still gets through the Carapace), at the cost of a smaller core (60 / 40 studs).
   - **Field after your drawing (S-82):** head-on shells slow to a stop and come straight back (at ~40% of their speed); off-centre ones are slowed less and steered round the dome, carrying on forward (mass 1 at 260 studs/s: line 0.5 radii off the centre → 51° from its course, 0.7 → 32°, 0.95 → 14°). Braking 1.5× the prototype's, as you said. Two consequences to check in Studio:
@@ -336,6 +336,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: client docs (`408449f`) → `769c476`, models `baaf5bb` (Phalanx and Carapace blockouts, shield swirl, meshes) → `fa7d131`, sim S-82 (`6805ff6`) → `06da710`. All passed test, test_slow and build and were pushed.
 - 2026-10-22: sim S-82 fix (`57cce01`) → `28bc934`, passed test, test_slow and build, pushed.
 - 2026-10-22: client C-94 (`552330e`) → `cf3f461`, sim S-83 (`5998ce1`) → `d49af9a`. Both passed test, test_slow and build and were pushed.
+- 2026-10-22: client docs (`39ab1e1`, S-83 checked in Studio: 219 of 230 shells turned, none through) → `7b0136a`, passed test, test_slow and build, pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 
