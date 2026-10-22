@@ -23,23 +23,23 @@ BeamShot.TEX = {
 BeamShot.FACTIONS = {
 	order = {
 		charge = 0.08, hold = 0.04, taper = 0.38, -- beam gone at 0.50 s
-		coreWidth = 0.9, glowWidth = 1.1, filamentWidth = 1.1, filaments = 4, -- nothing wider than the emitter ball (1.12 studs)
+		coreWidth = 0.9, glowWidth = 1.6, filamentWidth = 1.6, filaments = 4, -- the emitter ball is 1.12 studs
 		spread = 0.15, fan = 0.3, tip = 0.06, jitter = 0.45, curve = 1.6, -- tip: width at the target / at the muzzle
 		coreColor = Color3.fromRGB(225, 248, 255), glowColor = Color3.fromRGB(80, 190, 255),
 		filamentColor = Color3.fromRGB(165, 232, 255), brightness = 2, glowBrightness = 0.6, filamentBrightness = 3,
 		texLen = { core = 30, glow = 60, filamentA = 20, filamentB = 15 },
 		speed = { filamentA = 30, filamentB = 40 }, -- tiles per second: 600 studs/s
-		flareSize = 4, muzzleFlareSize = 5, impactSize = 5, impactTime = 0.3, scorchSize = 7, scorchTime = 4, scorchGlowTime = 1.2,
+		flareSize = 6, muzzleFlareSize = 8, impactSize = 5, impactTime = 0.3, scorchSize = 7, scorchTime = 4, scorchGlowTime = 1.2,
 	},
 	chaos = {
 		charge = 0.06, hold = 0.03, taper = 0.27, -- beam gone at 0.36 s
-		coreWidth = 0.5, glowWidth = 0.6, filamentWidth = 0.6, filaments = 3, -- the emitter ball is 0.6 studs
+		coreWidth = 0.5, glowWidth = 0.9, filamentWidth = 0.9, filaments = 3, -- the emitter ball is 0.6 studs
 		spread = 0.08, fan = 0.3, tip = 0.08, jitter = 0.7, curve = 2.2,
 		coreColor = Color3.fromRGB(255, 205, 150), glowColor = Color3.fromRGB(255, 85, 15),
 		filamentColor = Color3.fromRGB(255, 130, 35), brightness = 2.4, glowBrightness = 0.8, filamentBrightness = 3.4,
 		texLen = { core = 24, glow = 50, filamentA = 16, filamentB = 12 },
 		speed = { filamentA = 40, filamentB = 52 }, -- tiles per second: 640 studs/s
-		flareSize = 2.5, muzzleFlareSize = 3, impactSize = 4, impactTime = 0.25, scorchSize = 6, scorchTime = 3, scorchGlowTime = 1.0,
+		flareSize = 4, muzzleFlareSize = 5, impactSize = 4, impactTime = 0.25, scorchSize = 6, scorchTime = 3, scorchGlowTime = 1.0,
 	},
 }
 
