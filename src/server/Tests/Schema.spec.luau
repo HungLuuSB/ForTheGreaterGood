@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 23, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 24, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -352,6 +352,23 @@ return function(t: RunAll.Context)
 		expectTruncated(t, "state record", Schema.decodeState, encodeOne(Schema.encodeState, own))
 		local onlyStates: State = { unitId = 1, fireState = 0, moveState = 2 }
 		t.equal(hex(encodeOne(Schema.encodeState, onlyStates)), "01 00 80 02 08")
+		-- version 24: shield domes (S-79): SHIELD state, SHIELD_HIT (generator 0 =
+		-- unknown), SHIELD_FIELD (the dome's centre, radius, force, phase)
+		local shield: Schema.Event = { kind = Schema.EventKind.SHIELD, unitId = 0x0102, charge = 0x80, shieldFlags = 3 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, shield)), "13 02 01 80 03")
+		local hit: Schema.Event = { kind = Schema.EventKind.SHIELD_HIT, unitId = 0, projId = 0x0304, cell = 0x0506, offX = 7, offZ = 8, y = 9, mass = 31, breach = true }
+		t.equal(hex(encodeOne(Schema.encodeEvent, hit)), "14 00 00 04 03 06 05 07 08 09 00 1f 01")
+		local field: Schema.Event = { kind = Schema.EventKind.SHIELD_FIELD, projId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = -8, radius = 120, force = 255, phase = 2 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, field)), "15 02 01 04 03 05 06 f8 ff 78 00 ff 02")
+		for _, e in { shield, hit, field } do
+			local bytes = encodeOne(Schema.encodeEvent, e)
+			t.deepEqual(Packer.readAll(bytes, Schema.decodeEvent)[1], e)
+			t.equal(buffer.len(bytes), Schema.eventBytes(e), "size table")
+			expectTruncated(t, "event record", Schema.decodeEvent, bytes)
+		end
+		expectRejected(t, Schema.decodeEvent, { 19, 1, 0, 0, 4 }, "shield flags 4")
+		expectRejected(t, Schema.decodeEvent, { 20, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2 }, "shield hit flags 2")
+		expectRejected(t, Schema.decodeEvent, { 21, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 3 }, "shield field phase 3")
 		-- version 23: ALERT (S-68): alert kind, cell, defIndex
 		local alert: Schema.Event = { kind = Schema.EventKind.ALERT, alert = Schema.AlertKind.UNIT_LOST, cell = 0x0102, defIndex = 0x0304 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, alert)), "12 03 02 01 04 03")
@@ -503,7 +520,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 19, 1, 0 }, "unknown event kind 19") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23
+		expectRejected(t, Schema.decodeEvent, { 22, 1, 0 }, "unknown event kind 22") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind

@@ -1097,3 +1097,23 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Chaos gathers twice Order's power and still fields the smaller army.
   - The equal-value trade check calls every pair even, so the gap is in how AI matches fight (piecemeal waves into rallied defenders, workers in the open), not in a number.
   - Ranked first in `docs/design/next.md`, with a match-shaped trial to reproduce it outside the AI. Under "Needs my review".
+
+## S-79 — Shield domes: generators, field, charge and power on the wire (client request 40) (2026-10-22)
+
+- **Asked** (the user, through the client stream's request 40 and the C-87 prototype): a shield generator structure (no vehicle) for each faction, Chaos's dome smaller (client placeholders: Order 120, Chaos 80); a field band outside the dome slows inbound shells to a stop, then throws them out; heavier shells take longer; full force at ≥ 50% charge, less below (big shells break through, slowed); recharging draws power; collapse at 0%, rise at 25%; bounced shells stay live and explode where they land. On the wire: per shield radius, strength and up / down / recharging, seen by whoever sees the generator; hit events with position, intensity and breakthrough.
+- **Built:**
+  - `Shared/Combat/ShieldField`: the field, shared so clients step a shell the same way. The prototype's model (radial braking = constant + drag, deeper is stronger; push out after the turn; tangential drag; force / mass^0.6), with exact ballistic substeps (≤ 10 studs each, ≤ 8 per tick) and gravity throughout. A shell enters only from outside the dome while moving in.
+  - `Sim/Shield`: generators (`shield = { radius, capacity, recharge, power }`) in `Combat.shieldIds`; per-projectile `pShield` / `pShieldPhase` / `pShieldDone` in Combat (all hashed). `Shield.deflect` runs in Projectiles in place of the ballistic step when a shell is in or about to enter an enemy dome's field; the usual chord tests (units, ground) follow. `Shield.drainStep` recharges with the other economy consumers in Build.step.
+  - Defs `ord_phalanx`, `chs_carapace` (numbers under "Needs my review"); weapon field `shieldMass` (optional).
+- **Technical calls:**
+  - **Braking doubled** from the prototype (BRAKE 1000, DRAG 20) so a full dome stops every shell in the game; a 1-D check put the Citadel round (480 studs/s, mass 4.3) and the siege mortar past the band at the prototype's numbers.
+  - **Mass** from damage (best damage / 150, 0.2..8), so new weapons need no extra field.
+  - **A turned shell** gets at least 6 s more life (it would otherwise burst mid-air on its old timer), drops its overkill booking (S-29), and a missile loses its lock. A shell is in one dome's field at a time and is done with a dome once out of the band after its turn, or through it.
+  - **Who:** enemies' projectiles only (by the projectile's side); not torpedoes, strategic missiles or interceptors chasing one; hitscan and beams untouched (not in the rules; review).
+  - **Wire (protocol 24):**
+    - A SHIELD event rather than a State field: the State mask byte is full, and the charge needs no per-tick rate. Sent after ENTER and on a change of 4/255 or of the flags.
+    - Generators' tactical margins grow by their dome's radius in cells, so the dome is known wherever it shows.
+    - **SHIELD_FIELD** exists because SPAWN_PROJ carries no side (S-43): without it a client can't tell an enemy shell the field will catch from an allied one passing over. It names the dome by its centre, radius and force, not the generator, so a hidden generator's dome still bends shells correctly.
+    - SHIELD_HIT names the generator only when the client has it.
+    - Shells in a field get Projectiles corrections like homing ones, plus one at the turn or breach and one as they leave.
+- **Tests:** `Shield.spec` (12): every shell weight turns at full charge and bursts outside, live; a turned shell lands on its own side's tank; heavier turns deeper; at 6% a siege shell breaks through slowed while an autocannon round turns; charge drain by mass, collapse, shells pass a fallen dome, no recharge without power, rise at 25%; power drawn only below capacity; allies' shells and shots from inside untouched; a built generator starts empty; SHIELD / SHIELD_FIELD / SHIELD_HIT on the wire and the test client's field step within a stud of the server's; generator 0 for a player without it; the C-89 shield profile (nothing under the dome hurt while it stands); determinism. `Schema.spec`: golden bytes, round-trips, rejects, truncation.
