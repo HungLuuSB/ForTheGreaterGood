@@ -312,6 +312,45 @@ function MeshModels.wreck(def: any): Model?
 	return nil
 end
 
+-- Supply deposit looks (Meshes.fx.deposit and its `variants`, C-123): the
+-- template for variant `i` (clone it), or nil (no entry, not approved yet
+-- unless DEPOSITS_ANYWAY, or still building: the build starts on the
+-- first ask). The `base` piece is the ground patch (TeamColor tag: the
+-- caller tints it to the terrain).
+MeshModels.DEPOSITS_ANYWAY = false
+local deposits: { [number]: Model } = {}
+local depositsPending: { [number]: boolean } = {}
+
+function MeshModels.depositVariants(): number
+	local e = ((Meshes :: any).fx or {}).deposit
+	if e == nil or (e.status ~= "approved" and not MeshModels.DEPOSITS_ANYWAY) then
+		return 0
+	end
+	return if e.variants then #e.variants else 1
+end
+
+function MeshModels.deposit(i: number): Model?
+	if deposits[i] then
+		return deposits[i]
+	end
+	local e = ((Meshes :: any).fx or {}).deposit
+	if e == nil or depositsPending[i] or i > MeshModels.depositVariants() then
+		return nil
+	end
+	local v = if e.variants then e.variants[i] else e
+	depositsPending[i] = true
+	task.spawn(function()
+		local name = if e.variants then `fx_deposit_{i}` else "fx_deposit"
+		local ok, result = pcall(build, { id = name, model = name, footprint = 1 }, v)
+		if ok then
+			deposits[i] = result
+		else
+			warn(`[Client] deposit mesh {i} failed, the plain patch stays: {result}`)
+		end
+	end)
+	return nil
+end
+
 -- The built model for def `id` (a template: clone it), if ready.
 function MeshModels.get(id: string): Model?
 	return ready[id]

@@ -538,6 +538,42 @@
       }
     },
     {
+      "Name": "fx_deposit_1",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://104885525379407",
+        "NormalMapContent": "rbxassetid://98865692097023",
+        "RoughnessMapContent": "rbxassetid://109462413668117",
+        "MetalnessMapContent": "rbxassetid://123614369721798",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "fx_deposit_2",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://98084583978773",
+        "NormalMapContent": "rbxassetid://124586945294563",
+        "RoughnessMapContent": "rbxassetid://95306325721524",
+        "MetalnessMapContent": "rbxassetid://79686300738536",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "fx_deposit_3",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://70436601869625",
+        "NormalMapContent": "rbxassetid://73996570095513",
+        "RoughnessMapContent": "rbxassetid://72318329923694",
+        "MetalnessMapContent": "rbxassetid://79138621428428",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "fx_ord_interceptor",
       "ClassName": "SurfaceAppearance",
       "Properties": {

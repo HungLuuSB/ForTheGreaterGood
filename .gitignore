@@ -23,6 +23,8 @@ Thumbs.db
 __pycache__/
 /assets/models/*/export/*.fbm/
 /assets/fx/*/export/preview_*.png
+/assets/fx/*/*/export/preview_*.png
+/assets/fx/*/*/export/*.fbm/
 /assets/fx/*/export/*.fbm/
 
 # Reference screenshots (style reference only, never committed)

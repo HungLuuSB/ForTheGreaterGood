@@ -1,7 +1,7 @@
 --!strict
 -- Draws a map's layers for maps without baked place terrain (guide 5.4):
--- the ground and water, and a gold plate on each supply deposit
--- (workspace.Map). Two ways to draw the ground (C-28):
+-- the ground and water (workspace.Map). Supply deposits are Render/Deposits'
+-- (C-123; gold plates until then). Two ways to draw the ground (C-28):
 --   "terrain"  Roblox Terrain voxels on Core/Terrain's smooth surface
 --              (Render/Terrain; the default: see C-28 for the measurements)
 --   "parts"    anchored columns, one height per cell: cells merge into
@@ -199,8 +199,6 @@ function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?, featu
 	end
 	local folder = Instance.new("Folder")
 	folder.Name = "Map"
-	local g = layers.grid
-	local cell = Grid.CELL_SIZE
 	local last: { [string]: any } = { mode = mode, ground = mode } -- `ground` stays: Terrain's build stats bring their own `mode`
 	Ground.last = last
 	local t0 = os.clock()
@@ -220,25 +218,6 @@ function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?, featu
 		end)
 	end
 
-	-- supply deposits: a gold plate on each deposit cell, where an extractor
-	-- must stand (brighter for richer deposits)
-	for cz = 0, g.cellsZ - 1 do
-		for cx = 0, g.cellsX - 1 do
-			local i = g:index(cx, cz)
-			local supply = Layers.getSupply(layers, i)
-			if supply > 0 then
-				-- over the drawn ground, which may tilt slightly under a deposit on a slope
-				local h = Layers.getHeight(layers, i) + Layers.getWater(layers, i) + CoreTerrain.DEPOSIT_LIFT
-				local x0, z0 = g.originX + cx * cell, g.originZ + cz * cell
-				local plate = newPart("Deposit", Vector3.new(cell - 1.2, 0.3, cell - 1.2), CFrame.new(x0 + cell / 2, h - 0.1, z0 + cell / 2), Color3.fromRGB(235, 190, 60):Lerp(Color3.fromRGB(255, 230, 120), math.clamp((supply - 3) / 4, 0, 1)))
-				plate.Material = Enum.Material.Neon
-				plate.Transparency = 0.15
-				plate.CanQuery = false
-				plate:SetAttribute("Supply", supply)
-				plate.Parent = folder
-			end
-		end
-	end
 	if feature then
 		last.houses = buildHouses(layers, feature, folder)
 	end

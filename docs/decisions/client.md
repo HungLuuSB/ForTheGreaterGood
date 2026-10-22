@@ -975,3 +975,38 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** minimap units are their strategic icons (`Core/Icons.style`, `UI/Glyph`) at `Minimap.ICON_SCALE` 0.5 (about 11 px). Ghosts, selection and under-attack look as on the icon layer; radar blips with no type stay dots. `Minimap.dots` carries each unit's id and sorts ghosts and structures first, the selection last.
 
 **Why:** the user asked for the unit icons on the minimap (BAR's minimap shows them).
+
+### C-123 — Deposits: C's models (or a dark patch) without glow, hidden under structures; a BAR-style overlay while placing extractors or on F4; minimap rings (2026-10-23)
+
+**Decision:**
+- **Data:** `Core/Deposits` lists deposits, finds their holders (known structures over the cell, ghosts as "remembered"), picks a variant and yaw from the cell, and formats the yield.
+- **Ground:** `Render/Deposits` draws C's `fx.deposit` variant once approved (`MeshModels.deposit`; the TeamColor `base` tinted to the terrain colour; materials `fx_deposit_<i>`), else a dark patch and stones. A live structure on the cell hides it. `Render/Ground` no longer draws plates.
+- **Overlay:** while placing an extractor (yield = rate × value) or toggled with F4 (the value). Free deposits get a ring and text, others' a dim marker, own nothing. It's a SurfaceGui on a flat part turned to face the camera; `AlwaysOnTop` stays false, since true hides a SurfaceGui under a Workspace part.
+- **Minimap:** neutral rings, filled in the holder's team colour.
+
+**Why:** the user's brief (no neon, no flat coloured squares; highlight only when it helps). models-C's `fx.deposit` contract.
+
+### C-124 — Settings top right; the Follow button removed (T in developer mode); the F3 readout bottom right (2026-10-23)
+
+**Decision:**
+- **Settings (O):** top right (was top left, C-109).
+- **Follow:** the on-screen button is gone; T follows only with `devMode` on. `devMode` is a new setting (Settings > Interface), on in Studio and off in a live game. `SettingsMenu.state` lets earlier key handlers read it.
+- **Debug readout (F3):** bottom right.
+- **Keys page:** a "Developer mode" group with T and F3.
+
+**Why:** the user's layout request ("keybind available in the developer mode").
+
+### C-125 — Unit panel: model portrait with the type icon; economy flow instead of HP numbers (2026-10-23)
+
+**Decision:**
+- **Portrait:** `UI/Portrait` (the build menu's) with the type glyph at 18 px bottom right; a contact keeps its icon alone. The health bar stays, the HP text is gone.
+- **Flow:** `Core/UnitFlow` gives own units' supply / power per second from defs and client state (production, wind × the team's wind, extractor rate × deposits under it, converters while on, upkeep, factory / builder drain = cost × buildpower ÷ buildTime × the slower stall ratio; frames 0). It's drawn as "+5" / "−10" in the cost colours.
+- A builder's target is the nearest own unfinished frame within its range + 16 studs, the Waypoints rule; the sim doesn't send it.
+
+**Why:** the user ("show its current ore and energy usage, like +5 or −10").
+
+### C-126 — The cheat line's arrow keys cycle suggestions first (2026-10-23)
+
+**Decision:** while suggestions show, Up / Down move a highlight through them (Up from none: the bottom one, next to the bar), and Tab or Enter takes the highlighted one without sending. With no suggestions showing, they walk the history. WASD camera panning is not added (the user: middle-drag is enough for now; A / S stay Attack / Stop).
+
+**Why:** the user's request, and their answer on the history.

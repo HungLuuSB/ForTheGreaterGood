@@ -31,6 +31,7 @@ export type State = {
 	detailedModels: boolean, -- BAR mesh models (Render/MeshModels); off: blockouts, nothing loaded (C-106)
 	glow: Glow, -- unit glow (Render/Glow): off, low (resting glow, stall dimming), high (also factory pulse, weapon flash)
 	headlights: boolean, -- vehicle headlights (Render/Glow's SpotLights)
+	devMode: boolean, -- developer mode (C-124): debug keys (T camera follow); on in Studio
 }
 
 export type Glow = "off" | "low" | "high"
@@ -65,7 +66,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "night", uiScale = 1, detailedModels = true, glow = "high", headlights = true }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "night", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio }
 end
 
 local function round(x: number, step: number): number
@@ -83,7 +84,7 @@ function Settings.set(s: State, key: string, value: any): boolean
 		end
 		t[key] = math.clamp(round(value, limits[3]), limits[1], limits[2])
 		return true
-	elseif key == "edgeScroll" or key == "fog" or key == "detailedModels" or key == "headlights" then
+	elseif key == "edgeScroll" or key == "fog" or key == "detailedModels" or key == "headlights" or key == "devMode" then
 		if type(value) ~= "boolean" then
 			return false
 		end
@@ -145,17 +146,22 @@ Settings.KEYS = table.freeze({
 	{ "Building", {
 		{ "B, then 1–0", "build menu: open, next tab, pick" },
 		{ "R", "rotate the structure" },
+		{ "Drag (extractor)", "an extractor on every deposit in the circle (upgrades too)" },
 		{ "Right click", "stop placing" },
 	} },
 	{ "Camera and views", {
 		{ "Arrow keys / edge", "pan" },
 		{ "Wheel / Alt + wheel", "zoom / pitch" },
 		{ "Q / E", "rotate" },
-		{ "T", "follow the selection" },
 		{ "V", "range rings" },
 		{ "N", "missile sensor view" },
+		{ "F4", "deposit view: free supply spots and their yield" },
 		{ "J", "jump to the last alert" },
 		{ "O", "this menu" },
+	} },
+	{ "Developer mode (Settings > Interface)", {
+		{ "T", "camera follows the selection (or the nearest missile)" },
+		{ "F3", "debug readout (bottom right)" },
 	} },
 })
 

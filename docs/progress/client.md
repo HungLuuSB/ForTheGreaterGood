@@ -4,6 +4,45 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, cheat line arrow keys)
+
+- **Cheat command line (C-126):** while suggestions show, Up / Down move through them, and Tab or Enter takes the highlighted one; with none showing they walk the history as before. Not checked in Studio (you were in a playtest); the camera already ignores the arrow keys while you type.
+- **Camera:** unchanged by your choice: middle-drag (and the arrow keys when not typing).
+
+## Summary (2026-10-23, C's deposit models in; Needs my review)
+
+- **Merged m-models** (models-C's deposits, interceptor missiles, effect textures, animated blockout pieces, S-104-scaled and anti-nuke blockouts). test_client stays green and the materials file has the three deposit variants.
+- **Deposit models, at review:** with them switched on (`Invoke("depositsanyway", true)`), every deposit is one of C's three variants at its own turn, a dark scraped patch with pale rocks.
+  - Grass blades covered the low rocks, so deposit cells are now bare ground in the terrain.
+  - The patch is tinted with the real colour of the terrain around it.
+  - They read quite dark at night. **Needs my review:** approve them (C flips the status and they replace the plain patch everywhere) or ask C for lighter patches.
+- **Screenshot:** `debug_out/screens/deposit_models.jpg`.
+
+## Summary (2026-10-23, HUD layout, developer mode, unit panel)
+
+- **HUD (C-124):**
+  - Settings (O) is in the top right corner.
+  - The Follow (T) button is gone. T still follows the selection, but only in **developer mode**, a new toggle in Settings > Interface (on by default in Studio, off in a live game).
+  - The F3 debug readout is in the bottom right.
+  - Settings > Keys lists T and F3 under "Developer mode".
+- **Unit panel (C-125):**
+  - the portrait is the unit's model at an angle with its type icon bottom right, like the build menu's tiles;
+  - under the health bar, instead of HP numbers, it shows what the unit adds to or takes from the economy right now: supply in white, power in yellow ("+5", "−10").
+  - The wire has no per-unit flow, so the client works it out from the defs and what it sees: an extractor's deposits, generators, wind, converters, radar upkeep, and a factory or builder at work (the item's cost at its buildpower, slowed by a stall). Own units only.
+- **Screenshots:** `debug_out/screens/unitpanel_plant.jpg` (Settings top right, F3 bottom right, a plant building Lancers: −6.7 / −67), `unitpanel_fusion.jpg` (+250 power).
+
+## Summary (2026-10-23, deposits without the yellow squares)
+
+- **Deposits (C-123):** the neon squares are gone. Each deposit is now a dark, subtle patch of scraped ground with a few stones, tinted from the terrain under it, with no glow.
+  - C's deposit models (`fx.deposit`, 3 variants) replace the patch automatically once you approve them. Each deposit gets its own variant and turn, and C's ground patch is tinted to the terrain. models-C is building them today.
+  - A structure built on a deposit hides it; it comes back when the structure is gone.
+- **Overlay, only when it helps (BAR's metal view):**
+  - while you place an extractor, free deposits get a soft ring with the yield your extractor would take ("+2.0");
+  - deposits other players hold get a dim marker, and your own show nothing;
+  - **F4** shows the same overlay any time, with each deposit's value. It's listed in Settings > Keys, with the extractor drag.
+- **Minimap:** small neutral rings for deposits, filled with the holder's team colour when taken (yours in your colour).
+- **Screenshots:** `debug_out/screens/deposit_normal.jpg` (patches, a deposit hidden under your extractor, minimap rings, one filled), `deposit_overlay.jpg` (placing an extractor), `deposit_f4.jpg` (F4).
+
 ## Summary (2026-10-23, minimap icons; anti-nukes coming)
 
 - **Minimap icons (C-122):** units on the minimap now show their type icon instead of a dot, the same icons as the zoomed-out view, about 11 px.
@@ -1755,3 +1794,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 3. **Done (S-12; marked by the sim session).** `Shared/Grid/Formation` (`layout`, `deepestFirst`, `assign`, `SLOT_SPACING`); `Formation.spec` checks a client prediction equals the server's goals. **Formation slots in shared:** the client mirrors `Nav.slotsFor` / `Nav.assignSlots` and the constants `SLOT_SPACING`, `RADIUS_PER_FOOTPRINT` to draw where line-moved units go (C-11). A pure function in `src/shared` (layout + greedy assignment, without the open-ground filter) would let both sides use one copy. Low priority.
 - Ready to merge: `5021d5f` (cheat commands live on S-102: results in the log, /speed drives the tick loop, "cheats used" on statistics and replay names; touches src/roblox Main.server; C-120); test_client 203, test 430, build passed.
 - Ready to merge: `4305d94` (extractor upgrades in place on S-108's rule with the D92 fallback: target discs, snap, extractor drags as areas, Upgrade extractors command, UPGRADE badge; ghost PivotTo and build waypoints fixes; touches src/roblox Main.server (Studio debug query "deposits"); C-121); test_client 207, test 430, build passed.
+- Ready to merge: `c74da88` (minimap unit icons, C-122); test_client 207, test 430, build passed.
+- Ready to merge: `22f0286` (deposits: dark patch / C's fx.deposit variants, hidden under structures, placement and F4 overlay, minimap rings; C-123); test_client 209, test 430, build passed.
+- Ready to merge: `7928550` (Settings top right, Follow button removed with T in developer mode, F3 bottom right; unit panel model portrait, type icon and +/- supply and power flow; C-124, C-125); test_client 213, test 430, build passed.
+- Ready to merge: `e943f2f` (merge of m-models eb8a768 with the materials regenerated; deposit cells bare ground, terrain-colored patch tint; C-123 follow-up); test_client 213, test 430, build passed.

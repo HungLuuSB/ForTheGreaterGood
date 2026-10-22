@@ -37,6 +37,10 @@ function MeshMaterials.render(): string
 	end
 	for id, e in (Meshes :: any).fx or {} do
 		table.insert(entries, { name = "fx_" .. id, maps = e.maps })
+		-- an fx entry with look variants (fx.deposit, C-123): fx_<id>_<i> each
+		for i, v in e.variants or {} do
+			table.insert(entries, { name = `fx_{id}_{i}`, maps = v.maps })
+		end
 	end
 	for id, e in Meshes.units do
 		local wreck = (e :: any).wreck

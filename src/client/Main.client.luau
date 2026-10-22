@@ -30,7 +30,6 @@ local Effects = require("./Core/Effects")
 local Follow = require("./Core/Follow")
 local Icons = require("./Core/Icons")
 local IconLayer = require("./Render/IconLayer")
-local FollowButton = require("./UI/FollowButton")
 local MinimapUI = require("./UI/Minimap")
 local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
@@ -50,6 +49,7 @@ local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
+local DepositsRender = require("./Render/Deposits")
 local MissileViewRender = require("./Render/MissileView")
 local NukeWarning = require("./Render/NukeWarning")
 local RadarRings = require("./Render/RadarRings")
@@ -142,14 +142,16 @@ Controls.pickModel = function(px: number, py: number): number?
 end
 local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
+local deposits = DepositsRender.new() -- supply deposits and their overlay (C-123)
 local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
 local nukeWarning = NukeWarning.new() -- strategic launch warnings (C-57)
 local radarRings = RadarRings.new() -- own radar facilities' rings, always on top (C-63, C-64)
 local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-58)
--- Camera follow (C-43), T or the placeholder button: the first selected
--- unit, else the homing missile drawn nearest the screen centre.
+-- Camera follow (C-43), T in developer mode (C-124; the on-screen button is
+-- gone): the first selected unit, else the homing missile drawn nearest the
+-- screen centre.
 local FOLLOW_KEY = Enum.KeyCode.T
 local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
 local shieldDomes = ShieldDomes.new() -- shield generators' domes (C-91)
@@ -162,7 +164,6 @@ local function toggleFollow()
 	local view = cam.ViewportSize
 	camState.follow = Follow.pick(world, api.state.selection, lastVisibleFx, Controls.projector(cam), view.X / 2, view.Y / 2)
 end
-local followButton = FollowButton.new(toggleFollow)
 -- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
 -- The server publishes the speed as the Remotes folder's SimSpeed attribute.
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
@@ -186,10 +187,15 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 	local key = input.KeyCode
 	if key == RangeOverlay.TOGGLE_KEY then
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
+	elseif key == DepositsRender.TOGGLE_KEY then
+		DepositsRender.setEnabled(deposits, not deposits.enabled)
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
 	elseif key == FOLLOW_KEY then
-		toggleFollow()
+		local settings = SettingsMenu.state
+		if settings and settings.devMode then
+			toggleFollow()
+		end
 	elseif key == Enum.KeyCode.Minus or key == Enum.KeyCode.Equals then
 		local now = if simSpeed() == 0 then resumeSpeed else simSpeed()
 		local i = table.find(SPEEDS, now) or 4
@@ -729,6 +735,10 @@ if RunService:IsStudio() then
 			-- Invoke("wrecksanyway", on): use review wreck meshes too (for the user's review, C-115)
 			MeshModels.WRECKS_ANYWAY = (...) == true
 			return true
+		elseif query == "depositsanyway" then
+			-- Invoke("depositsanyway", on): draw C's review deposit models (for the user's review, C-123)
+			MeshModels.DEPOSITS_ANYWAY = (...) == true
+			return true
 		elseif query == "meshes" then
 			-- BAR mesh models (C-103): built, failed, seconds, errors
 			return MeshModels.stats
@@ -765,6 +775,7 @@ if RunService:IsStudio() then
 			local mode = ...
 			if mode and world.layers then
 				Ground.build(world.layers, mode, mapFeature(world.mapId))
+				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 			end
 			return Ground.last
 		elseif query == "act" then
@@ -834,6 +845,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			seenMap = world.mapVersion
 			if world.layers then
 				Ground.build(world.layers, nil, mapFeature(world.mapId))
+				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogBlanket.setMap(fog, world, world.layers)
 				Environment.setMap(environment, world.layers)
@@ -888,9 +900,6 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	api.state.camera.rect = camState.rect
 	Environment.update(environment, camState.x, camState.z, camState.distance, World.groundY(world, camState.x, camState.z))
 	Grade.update(grade, camState.x, camState.z, camState.distance, dt)
-	local followed = camState.follow
-	local followDef = followed and followed.kind == "unit" and world.units[followed.id] and World.def(world, world.units[followed.id])
-	FollowButton.step(followButton, if followed == nil then nil elseif followed.kind == "missile" then "missile" elseif followDef then followDef.name else `unit #{followed.id}`)
 	t0 = os.clock()
 	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
 	NukeWarning.step(nukeWarning, fx, world, now, workspace.CurrentCamera)
@@ -947,6 +956,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now, knownEnemy)
+	DepositsRender.step(deposits, api, now)
 	RadarRings.step(radarRings, world, now)
 	mark("ranges", t0)
 	t0 = os.clock()
