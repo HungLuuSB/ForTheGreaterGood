@@ -17,4 +17,5 @@ for i, p in { { -1.8, -1.8 }, { 1.8, -1.8 }, { -1.8, 1.8 }, { 1.8, 1.8 } } do
 	table.insert(parts, { name = `leg{i}`, parent = "base", shape = "box", size = { 0.3, 6.2, 0.3 }, at = { p[1] * 0.75, 3.7, p[2] * 0.75 }, rot = { p[2] > 0 and -8 or 8, 0, p[1] > 0 and 8 or -8 }, color = "dark" })
 end
 
-return { id = "chs_extractor", parts = parts }
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({ id = "chs_extractor", parts = parts }, 2.0)

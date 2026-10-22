@@ -3,7 +3,8 @@
 -- sloped sides, twin drill heads with cyan rings, team plate between them.
 -- Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 3 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_advextractor",
 	parts = {
 		{ name = "base", shape = "box", size = { 8, 0.5, 7.4 }, at = { 0, 0.25, 0 }, color = "dark" },
@@ -23,4 +24,4 @@ return {
 		{ name = "ringL", parent = "base", shape = "cylinder", axis = "y", size = { 1.9, 0.25, 1.9 }, at = { -1.6, 4.3, 0 }, color = "glass" },
 		{ name = "ringR", parent = "base", shape = "cylinder", axis = "y", size = { 1.9, 0.25, 1.9 }, at = { 1.6, 4.3, 0 }, color = "glass" },
 	},
-}
+}, 2.85)

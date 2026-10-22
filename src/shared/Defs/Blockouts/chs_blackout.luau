@@ -19,4 +19,5 @@ for r, y in { 6.5, 8.5, 10.5 } do
 	end
 end
 
-return { id = "chs_blackout", parts = parts }
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({ id = "chs_blackout", parts = parts }, 2.0)

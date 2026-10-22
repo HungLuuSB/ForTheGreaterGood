@@ -43,7 +43,8 @@ for i = 0, 4 do
 	end
 end
 
-return {
+-- footprint 5 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_advshipyard",
 	parts = parts,
 	-- nanoframe anchors (M-25, rig.md 8)
@@ -52,4 +53,4 @@ return {
 		{ name = "nano1", parent = "base", at = { 3, 15.3, 4 } },
 		{ name = "nano2", parent = "base", at = { -3, 15.3, -6 } },
 	},
-}
+}, 1.14)

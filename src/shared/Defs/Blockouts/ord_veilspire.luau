@@ -3,7 +3,8 @@
 -- pylon with four cyan emitter fins near the top and a team band.
 -- Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_veilspire",
 	parts = {
 		{ name = "base", shape = "box", size = { 5.6, 1.2, 5.6 }, at = { 0, 0.6, 0 }, color = "hull" },
@@ -15,4 +16,4 @@ return {
 		{ name = "finL", parent = "base", shape = "box", size = { 1.4, 3, 0.2 }, at = { -1.8, 8.6, 0 }, color = "glass" },
 		{ name = "finR", parent = "base", shape = "box", size = { 1.4, 3, 0.2 }, at = { 1.8, 8.6, 0 }, color = "glass" },
 	},
-}
+}, 2.0)

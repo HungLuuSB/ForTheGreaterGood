@@ -3,7 +3,8 @@
 -- glowing band, exposed pipework and a stack on a skid.
 -- Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_converter",
 	parts = {
 		{ name = "base", shape = "box", size = { 6, 0.5, 6 }, at = { 0, 0.25, 0 }, color = "dark" },
@@ -14,4 +15,4 @@ return {
 		{ name = "pipeB", parent = "base", shape = "box", size = { 2.6, 0.4, 0.4 }, at = { -1, 3.1, -1.6 }, color = "dark" },
 		{ name = "stack", parent = "base", shape = "cylinder", axis = "y", size = { 0.5, 2.4, 0.5 }, at = { 2.2, 2.2, -1.8 }, color = "dark" },
 	},
-}
+}, 2.0)

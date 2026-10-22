@@ -4,7 +4,8 @@
 -- team plate on the platform. Model space, forward = -Z
 -- (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_generator",
 	parts = {
 		{ name = "base", shape = "box", size = { 6.6, 0.5, 6.6 }, at = { 0, 0.25, 0 }, color = "dark" },
@@ -18,4 +19,4 @@ return {
 		{ name = "postR", parent = "base", shape = "box", size = { 0.3, 3.6, 0.3 }, at = { 2.8, 2.2, -1.4 }, color = "dark" },
 		{ name = "team", parent = "base", shape = "box", size = { 4.6, 0.08, 1.2 }, at = { 0, 0.54, -2.4 }, color = "team" },
 	},
-}
+}, 2.0)

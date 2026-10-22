@@ -4,7 +4,8 @@
 -- biggest tank, an orange light. Model space, forward = -Z
 -- (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_depot",
 	parts = {
 		{ name = "base", shape = "box", size = { 6.6, 0.4, 6.6 }, at = { 0, 0.2, 0 }, color = "dark" },
@@ -15,4 +16,4 @@ return {
 		{ name = "pipe", parent = "base", shape = "cylinder", axis = "x", size = { 4, 0.4, 0.4 }, at = { 0.2, 2.9, -1.3 }, color = "dark" },
 		{ name = "light", parent = "base", shape = "box", size = { 0.4, 0.4, 0.4 }, at = { 1.8, 3, -1.4 }, color = "glass" },
 	},
-}
+}, 2.0)

@@ -31,7 +31,8 @@ for i = 0, 5 do
 	table.insert(parts, { name = `lightR{i}`, parent = "base", shape = "box", size = { 0.4, 0.3, 0.4 }, at = { 10.9, 0.55, z }, color = "glass" })
 end
 
-return {
+-- footprint 5 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_advairfield",
 	parts = parts,
 	-- nanoframe anchors (M-25, rig.md 8)
@@ -40,4 +41,4 @@ return {
 		{ name = "nano1", parent = "base", at = { -15.5, 5.35, -9 } },
 		{ name = "nano2", parent = "base", at = { -9.5, 5.35, -9 } },
 	},
-}
+}, 1.2)

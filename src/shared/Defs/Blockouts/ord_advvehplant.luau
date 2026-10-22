@@ -3,7 +3,8 @@
 -- side by side under one roof, two doors over ramps, team roof plates, cyan
 -- light strips, sloped buttresses. Model space, forward = -Z.
 
-return {
+-- footprint 5 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_advvehplant",
 	parts = {
 		{ name = "base", shape = "box", size = { 38, 0.6, 38 }, at = { 0, 0.3, 0 }, color = "dark" },
@@ -30,4 +31,4 @@ return {
 		{ name = "nano2", parent = "base", at = { -2.7, 6.8, -6.4 } },
 		{ name = "nano3", parent = "base", at = { -8, 7, -6.4 } },
 	},
-}
+}, 1.14)

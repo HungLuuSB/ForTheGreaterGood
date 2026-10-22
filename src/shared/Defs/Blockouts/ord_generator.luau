@@ -3,7 +3,8 @@
 -- reactor cap, cyan vent strips on the sides and a team plate on top.
 -- Model space, forward = -Z (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_generator",
 	parts = {
 		{ name = "base", shape = "box", size = { 7.4, 0.5, 7.4 }, at = { 0, 0.25, 0 }, color = "dark" },
@@ -16,4 +17,4 @@ return {
 		{ name = "ventL", parent = "base", shape = "box", size = { 0.1, 0.4, 4 }, at = { -3.05, 2.3, 0 }, color = "glass" },
 		{ name = "ventR", parent = "base", shape = "box", size = { 0.1, 0.4, 4 }, at = { 3.05, 2.3, 0 }, color = "glass" },
 	},
-}
+}, 2.0)

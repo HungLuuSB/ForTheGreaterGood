@@ -58,11 +58,12 @@ for side = 1, 4 do
 	table.insert(parts, { name = `hazardCorner{side}`, parent = "base", shape = "box", size = { 0.8, 0.25, 0.8 }, at = { cx, Y, cz }, color = "hazard" })
 end
 
-return {
+-- footprint 3 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_reckoning",
 	visualPieces = { "hatch2" },
 	parts = parts,
 	attachments = {
 		{ name = "muzzle", parent = "base", at = { 0, 2.8, 0 } },
 	},
-}
+}, 1.94)

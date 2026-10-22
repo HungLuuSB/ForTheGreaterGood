@@ -32,10 +32,11 @@ for i = 1, 3 do
 	table.insert(parts, { name = `cageBar{i}`, parent = "base", shape = "box", size = { 0.15, 3.0, 0.15 }, at = { ox * 1.45, 6.4, oz * 1.45 }, color = "dark" })
 end
 
-return {
+-- footprint 2 -> 3 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_carapace",
 	parts = parts,
 	attachments = {
 		{ name = "beam", parent = "core", at = { 0, 7.6, 0 } },
 	},
-}
+}, 1.5)

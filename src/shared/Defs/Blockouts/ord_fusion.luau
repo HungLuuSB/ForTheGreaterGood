@@ -3,7 +3,8 @@
 -- sloped walls round a glowing cyan containment sphere held in a ring, team
 -- plates on the corners. Model space, forward = -Z.
 
-return {
+-- footprint 3 -> 4 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_fusion",
 	parts = {
 		{ name = "base", shape = "box", size = { 20, 2, 20 }, at = { 0, 1, 0 }, color = "hull" },
@@ -22,4 +23,4 @@ return {
 		{ name = "teamSW", parent = "base", shape = "box", size = { 3, 0.1, 3 }, at = { -5, 4.45, 5 }, color = "team" },
 		{ name = "teamSE", parent = "base", shape = "box", size = { 3, 0.1, 3 }, at = { 5, 4.45, 5 }, color = "team" },
 	},
-}
+}, 0.724)

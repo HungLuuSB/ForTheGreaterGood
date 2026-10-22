@@ -19,4 +19,5 @@ for i, p in { { -1.4, -1.4 }, { 1.4, -1.4 }, { -1.4, 1.4 }, { 1.4, 1.4 } } do
 	table.insert(parts, { name = `leg{i}`, parent = "base", shape = "box", size = { 0.25, 9.6, 0.25 }, at = { p[1] * 0.7, 5.3, p[2] * 0.7 }, rot = { p[2] > 0 and -5 or 5, 0, p[1] > 0 and 5 or -5 }, color = "dark" })
 end
 
-return { id = "chs_windmill", visualPieces = { "rotor" }, parts = parts }
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({ id = "chs_windmill", visualPieces = { "rotor" }, parts = parts }, 2.0)

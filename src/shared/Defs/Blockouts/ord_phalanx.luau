@@ -38,10 +38,11 @@ for i = 1, 3 do
 	table.insert(parts, { name = `prongTip{i}`, parent = "base", shape = "box", size = { 0.75, 0.45, 0.9 }, at = { ox * 1.45, 9.35, oz * 1.45 }, color = "dark" })
 end
 
-return {
+-- footprint 2 -> 3 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_phalanx",
 	parts = parts,
 	attachments = {
 		{ name = "beam", parent = "core", at = { 0, 8.3, 0 } },
 	},
-}
+}, 1.5)

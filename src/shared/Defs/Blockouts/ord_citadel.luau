@@ -5,7 +5,8 @@
 -- pedestal and a flat radar array on a mast at the opposite corner.
 -- Model space, forward = -Z.
 
-return {
+-- footprint 3 -> 7 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_citadel",
 	parts = {
 		{ name = "base", shape = "box", size = { 20, 2, 20 }, at = { 0, 1, 0 }, color = "hull" },
@@ -38,4 +39,4 @@ return {
 		{ name = "muzzle", parent = "barrel", at = { 0, 5.9, -15.1 } },
 		{ name = "muzzle2", parent = "launcher", at = { -5.6, 6.6, -7.2 } },
 	},
-}
+}, 1.97)

@@ -3,7 +3,8 @@
 -- sides over the drill shaft, a team plate on top, a cyan ring round the
 -- drill head. Model space, forward = -Z (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_extractor",
 	parts = {
 		{ name = "base", shape = "box", size = { 7.4, 0.5, 7.4 }, at = { 0, 0.25, 0 }, color = "dark" },
@@ -17,4 +18,4 @@ return {
 		{ name = "ring", parent = "base", shape = "cylinder", axis = "y", size = { 2.3, 0.25, 2.3 }, at = { 0, 3.4, 0 }, color = "glass" },
 		{ name = "cap", parent = "base", shape = "cylinder", axis = "y", size = { 1.4, 0.4, 1.4 }, at = { 0, 4.8, 0 }, color = "dark" },
 	},
-}
+}, 2.0)

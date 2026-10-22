@@ -4,7 +4,8 @@
 -- spun by a piece script) and a cyan light on the nacelle.
 -- Model space, forward = -Z (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_windmill",
 	visualPieces = { "rotor" },
 	parts = {
@@ -18,4 +19,4 @@ return {
 		{ name = "blade2", parent = "rotor", shape = "box", size = { 0.5, 6, 0.15 }, at = { -2.6, 10.1, -1.75 }, rot = { 0, 0, 120 }, color = "hull" },
 		{ name = "blade3", parent = "rotor", shape = "box", size = { 0.5, 6, 0.15 }, at = { 2.6, 10.1, -1.75 }, rot = { 0, 0, -120 }, color = "hull" },
 	},
-}
+}, 1.407)

@@ -4,7 +4,8 @@
 -- glowing ring inside its mouth, team plate on the roof.
 -- Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 3 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_maw",
 	parts = {
 		{ name = "base", shape = "cylinder", axis = "y", size = { 6, 1.4, 6 }, at = { 0, 0.7, 0 }, color = "dark" },
@@ -27,4 +28,4 @@ return {
 	attachments = {
 		{ name = "muzzle", parent = "turret", at = { 0, 4, -5.5 } },
 	},
-}
+}, 2.682)

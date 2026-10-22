@@ -15,7 +15,7 @@ return {
 		-- emitter folds down, the lids close over the pit
 		ord_radiance = {
 			retracted = {
-				turret = { 0, 0, 0, 0, -7.6, 0 },
+				turret = { 0, 0, 0, 0, -11.4, 0 }, -- x1.5 with the fp 3 blockout (S-104)
 				barrel = { -90, 0, 0 },
 				shellL = { 0, 0, -90 },
 				shellR = { 0, 0, 90 },
@@ -23,7 +23,7 @@ return {
 		},
 		chs_inferno = {
 			retracted = {
-				turret = { 0, 0, 0, 0, -7.4, 0 },
+				turret = { 0, 0, 0, 0, -11.1, 0 }, -- x1.5 with the fp 3 blockout (S-104)
 				barrel = { -90, 0, 0 },
 				shellL = { 0, 0, -90 },
 				shellR = { 0, 0, 90 },

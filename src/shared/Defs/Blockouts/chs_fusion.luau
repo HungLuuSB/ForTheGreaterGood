@@ -21,4 +21,5 @@ for i, z in { -5.2, 5.2 } do
 	table.insert(parts, { name = `rail{i}`, parent = "base", shape = "box", size = { 11, 0.5, 0.5 }, at = { 0, 12.1, z }, color = "dark" })
 end
 
-return { id = "chs_fusion", parts = parts }
+-- footprint 3 -> 4 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({ id = "chs_fusion", parts = parts }, 1.333)

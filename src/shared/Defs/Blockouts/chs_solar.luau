@@ -3,7 +3,8 @@
 -- tilts on an open frame, an orange status light, a team plate on the base.
 -- Model space, forward = -Z (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_solar",
 	parts = {
 		{ name = "base", shape = "box", size = { 6.6, 0.4, 6.6 }, at = { 0, 0.2, 0 }, color = "dark" },
@@ -16,4 +17,4 @@ return {
 		{ name = "panelC", parent = "base", shape = "box", size = { 2, 0.15, 3.4 }, at = { 2.1, 2.05, -0.6 }, rot = { -35, 0, -3 }, color = "hull" },
 		{ name = "light", parent = "base", shape = "box", size = { 0.4, 0.4, 0.4 }, at = { -2.6, 1.8, 0.6 }, color = "glass" },
 	},
-}
+}, 2.0)

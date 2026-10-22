@@ -5,7 +5,8 @@
 -- and a cyan fire-control sensor between them. Muzzles at the outer barrels'
 -- tips. Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_lumen",
 	parts = {
 		{ name = "base", shape = "box", size = { 6, 1.6, 6 }, at = { 0, 0.8, 0 }, color = "hull" },
@@ -29,4 +30,4 @@ return {
 		{ name = "muzzle", parent = "turret", at = { -1.8, 6.02, -3.46 } },
 		{ name = "muzzle2", parent = "turret", at = { 1.8, 6.02, -3.46 } },
 	},
-}
+}, 2.0)
