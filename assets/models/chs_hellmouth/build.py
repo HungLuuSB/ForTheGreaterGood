@@ -112,7 +112,7 @@ def build_base(p):
         p.box((sx * 2.1, 1.6, -3.71), (0.32, 0.12, 0.05), "light")
         p.box((sx * 2.2, 1.55, 3.51), (0.24, 0.1, 0.04), "light")
     # team color on the hull top: plates either side of the engine deck
-    p.box((-1.6, 1.93, 2.3), (0.9, 0.05, 1.6), "team", bevel=0.012)
+    p.box((-1.4, 1.93, 2.4), (1.5, 0.05, 2.0), "team", bevel=0.012)
     # thin partial skirts (flaps) over the top of the track run, reactive bricks up front
     for sx in (-1, 1):
         x0, x1 = (HULL_X + 0.02, HULL_X + 0.1) if sx > 0 else (-HULL_X - 0.1, -HULL_X - 0.02)
@@ -159,9 +159,12 @@ def build_turret(p):
         p.prism_x([(-1.7, 2.1), (1.7, 2.1), (1.7, 2.95), (-1.2, 3.1)], sx * 1.55 - 0.13, sx * 1.55 + 0.13, "paint", bevel=0.03)
     p.prism_x([(-1.75, 2.1), (-1.45, 2.1), (-1.45, 2.55), (-1.75, 2.55)], -1.45, 1.45, "paint", bevel=0.03)  # low front wall
     p.box((0, 2.5, 1.7), (3.1, 0.8, 0.22), "paint", bevel=0.03)  # back wall
-    # team color: plates on the wall tops
+    # team color: plates on the wall tops and big panels on their outer faces
+    # (thin strips alone didn't read at 220 studs, team test 2026-10-22)
     for sx in (-1, 1):
         p.box((sx * 1.55, 3.0, 0.2), (0.24, 0.05, 2.4), "team", bevel=0.01)
+        p.box((sx * 1.69, 2.55, 0.0), (0.05, 0.6, 2.6), "team", bevel=0.01)
+    p.box((0, 2.62, 1.82), (2.4, 0.5, 0.05), "team", bevel=0.01)
     # loader arm on the right with its joint
     p.cylinder("y", (1.9, 2.55, 1.0), 0.28, 0.9, 10, "steel")
     p.obox((1.9, 3.05, 0.15), (0, 0.2, -1), (1, 0, 0), 1.8, 0.3, 0.3, "dark", bevel=0.02)
