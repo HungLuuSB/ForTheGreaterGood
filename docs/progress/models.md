@@ -364,6 +364,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `43cc013` (BAR pair 7: shield generators ord_phalanx / chs_carapace as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `9c0bc6f` (BAR pair 8: ord_warden / chs_minotaur as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `2f0c6f1` (BAR pair 9: air workers ord_skywright / chs_vulture as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `b282863` (missile meshes (IR / radar SAM, nuke per faction) as review in the manifest's fx, fx.md Missiles, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 
