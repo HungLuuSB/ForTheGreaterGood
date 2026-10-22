@@ -17,7 +17,7 @@ return Templates.extend(Templates.Structure, {
 	health = 2800,
 	footprint = 2,
 	sensors = { sight = 120 },
-	shield = { radius = 120, capacity = 1500, recharge = 75, power = 40 }, -- 50x S-79's (S-81)
+	shield = { radius = 120, capacity = 600, recharge = 30, power = 40 }, -- 20x S-79's (S-86)
 	pieces = { "base", "core" },
 	icon = "shield",
 	model = "ord_phalanx",
