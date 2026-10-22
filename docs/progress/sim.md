@@ -225,6 +225,9 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 41), S-88: statistics over time in `Sim/Stats`.** `Stats.series(sim)` returns `{ start, every, t, players }` in your StatSeries shape: `t` in seconds, `players[tostring(pid)][field]` arrays of whole numbers. The fields are `Stats.FIELDS`: your ten plus **`damageTaken`**, which is health enemies removed from that player's units, capped like `damageDealt`. `Stats.report` has `damageTaken` too.
+  - Sampling: one sample at tick 0 (after the scenario), then every 150 ticks at the end of the tick. Past 120 samples, every other one is dropped and the interval doubles (`series.every`).
+  - Replays and headless runs have it, since the sim keeps it. No wire change; the Roblox server reads it as it reads `Stats.report`, so `src/roblox/StatSeries` can go.
 - **Done (request 40), S-79, protocol 24: shield domes.** Generators `ord_phalanx` (radius 120) and `chs_carapace` (radius 80); the def's `shield = { radius, capacity, recharge, power }` (radius in the def, not on the wire). Three events (contract section 7):
   - **`SHIELD 19`** `unitId u16, charge u8 (0..255 of capacity), flags u8` (`Schema.ShieldFlag`: UP 1, RECHARGING 2; down = no UP): after the generator's ENTER and when the charge moved 4/255 or the flags changed. Generators enter the tactical tier as far out as their dome reaches (margins + radius).
   - **`SHIELD_HIT 20`** `unitId u16 (0 = a generator you don't have), projId u16, pos (the point on the dome), mass u8 (/ Schema.SHIELD_MASS_SCALE 31 = shell masses, 1 = a 150-damage shell), flags u8 (SHIELD_BREACH 1)`: a shell turned back (the hit) or broke through. Draw the hit patch at `pos` with intensity from `mass`.
@@ -346,6 +349,12 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: models `53e4a34` (with `5b2999a`, `2f8e394`, `3522f82`: BAR structure meshes, shield ring and band meshes, Open Cloud uploads) → `9303b0f`, passed test, test_slow and build, pushed.
 - 2026-10-22: sim S-84 (`2e54157`) → `4e2ea48`, sim S-85 (`1f95aea`, protocol 25) → `abd8bc3`. Both passed test, test_slow and build and were pushed.
 - 2026-10-22: client C-97, C-98 (`e191ed7`) → `78c7810`, passed test, test_slow and build, pushed.
+- 2026-10-22: sim S-86, S-87 (`7cef56c`) → `bdfda93`, passed test, test_slow and build, pushed.
+- 2026-10-22: client C-99 (`92be867`) → `72093b3`, models `5923128` (BAR meshes, remaining T1 ground pairs) → `929796f`. Both passed test, test_slow and build and were pushed.
+- 2026-10-22: client C-100 (`aa8f71b`, terrain-draped fog of war) → `ac2e1cf`, passed test, test_slow and build, pushed.
+- 2026-10-22: client C-101 (`92b9a43`, night lighting preset) → `4c9b315`, passed test, test_slow and build, pushed.
+- 2026-10-22: models `113202b` (with `674e394`: M-22 glow pass) → `5deaf4d`, passed test, test_slow and build, pushed.
+- 2026-10-23: client C-102..C-105 (`18195e5`, containing `e8f5ce9`, `d4ab33b`, `bdc88e8`, `44880cc`, `51e4d07` and models `639d555`, `cf819cc`) → `9b05fe9`; models `0f911df` (M-23, mesh_materials step) → `6d01933`. Both passed test, test_slow and build and were pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 

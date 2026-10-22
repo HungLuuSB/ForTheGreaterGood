@@ -69,6 +69,10 @@ return function(sim: Types.Sim)
 		if enemy and ps then
 			ps.damageDealt += math.min(amount, before)
 			Alerts.attacked(sim, t) -- the owner's ALERT, the UNDER_ATTACK flag (S-68)
+			local taken = sim.playerStats[w.owner[t]] -- damage taken (S-88, client request 41)
+			if taken then
+				taken.damageTaken += math.min(amount, before)
+			end
 		end
 		local attacker = c.dmgAttacker[i]
 		if attacker ~= t then

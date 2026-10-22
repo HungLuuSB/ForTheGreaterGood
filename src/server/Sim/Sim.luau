@@ -174,12 +174,14 @@ function Sim.new(config: Config): Sim
 		}),
 		stats = { commandsApplied = 0, commandsRejected = 0 },
 		playerStats = Stats.new(order),
+		statSeries = Stats.newSeries(0),
 		alerts = Alerts.new(order),
 		net = nil :: any,
 	}
 	sim.combat.friendlyFire = not (config.match and config.match.friendlyFire == false) -- a match option (S-73)
 	sim.net = NetOut.new(sim)
 	setup(sim)
+	Stats.sample(sim) -- the series' first point: tick 0, after the scenario (S-88)
 	return sim
 end
 
@@ -266,6 +268,7 @@ function Sim.step(sim: Sim)
 	if timing then
 		timing.ticks += 1
 	end
+	Stats.step(sim) -- statistics over time (S-88); reads only
 	if tick % Sim.CHECKPOINT_INTERVAL == 0 then
 		Replay.addCheckpoint(sim.replay, tick, Sim.hash(sim))
 	end
