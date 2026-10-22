@@ -7,6 +7,8 @@
 -- bank and ships sit in the water as Core/Attitude says (C-31). A dead
 -- unit's model stays where it was drawn until the render clock reaches the
 -- death, then plays its death (Render/Deaths, C-34) and leaves its wreck.
+-- A unit still being built is drawn semi-transparent (C-99, the user: it
+-- is inert until complete).
 
 local Attitude = require("../Core/Attitude")
 local Deaths = require("../Core/Deaths")
@@ -19,6 +21,8 @@ local RenderDeaths = require("./Deaths")
 
 local UnitRenderer = {}
 
+UnitRenderer.BUILD_TRANSPARENCY = 0.6 -- a unit under construction (parts already more see-through stay so)
+
 type Drawn = {
 	model: Model,
 	root: BasePart,
@@ -28,7 +32,32 @@ type Drawn = {
 	def: any,
 	attitude: Attitude.State,
 	hullHeight: number,
+	building: boolean, -- drawn semi-transparent
+	looks: { [BasePart]: number }?, -- each part's own transparency, while building
 }
+
+-- A unit under construction: see-through; complete: as modelled.
+local function setBuilding(d: Drawn, building: boolean)
+	if building == d.building then
+		return
+	end
+	d.building = building
+	if building then
+		local looks = {}
+		for _, p in d.model:GetDescendants() do
+			if p:IsA("BasePart") and p.Transparency < 1 then
+				looks[p] = p.Transparency
+				p.Transparency = math.max(p.Transparency, UnitRenderer.BUILD_TRANSPARENCY)
+			end
+		end
+		d.looks = looks
+	elseif d.looks then
+		for p, t in d.looks do
+			p.Transparency = t
+		end
+		d.looks = nil
+	end
+end
 
 export type Renderer = {
 	drawn: { [number]: Drawn },
@@ -65,12 +94,15 @@ local function show(r: Renderer, world: World.World, id: number)
 		def = def,
 		attitude = Attitude.new(),
 		hullHeight = model:GetExtentsSize().Y,
+		building = false,
+		looks = nil,
 	}
 	PieceAnim.add(r.anim, id, def, PieceScripts.forDef(def))
 end
 
 -- Back to the pool with every joint at rest (the next unit starts clean).
 local function release(d: Drawn)
+	setBuilding(d, false)
 	for _, motor in d.motors do
 		motor.Transform = CFrame.identity
 	end
@@ -170,6 +202,7 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		if hidden then
 			continue
 		end
+		setBuilding(d, u.build ~= nil and u.build < 1)
 		local au = r.anim.units[id]
 		if au and camera then
 			au.lod = PieceAnim.lodAt((camera - Vector3.new(x, y, z)).Magnitude)

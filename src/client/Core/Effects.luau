@@ -794,7 +794,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			-- shows here and now, not at the turn deep inside (the user, C-95)
 			local dx, dy, dz = p.x - x, p.y - y, p.z - z
 			local d = math.sqrt(dx * dx + dy * dy + dz * dz)
-			if e.phase == ShieldField.BRAKING and d > 1e-6 and #fx.shieldHits < 64 then
+			if e.phase == ShieldField.BRAKING and not e.lit and d > 1e-6 and #fx.shieldHits < 64 then
 				local k = e.radius / d
 				table.insert(fx.shieldHits, { unitId = 0, kind = "enter", x = x + dx * k, y = y + dy * k, z = z + dz * k, mass = ShieldField.mass(p.weapon), breach = false, projId = e.projId, tick = e.tick })
 			end
@@ -845,6 +845,26 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			mark(fx, "correction", now, dx, dy, dz, x, y, z)
 		end
 	end
+end
+
+-- The fraction (0..1) of the move from s to e, both relative to a sphere's
+-- centre, where it first comes inside `radius`: 0 when it starts inside, 1
+-- when it doesn't get in.
+local function crossing(sx: number, sy: number, sz: number, ex: number, ey: number, ez: number, radius: number): number
+	local r2 = radius * radius
+	local c = sx * sx + sy * sy + sz * sz - r2
+	if c <= 0 then
+		return 0
+	end
+	local dx, dy, dz = ex - sx, ey - sy, ez - sz
+	local a = dx * dx + dy * dy + dz * dz
+	local b = 2 * (sx * dx + sy * dy + sz * dz)
+	local disc = b * b - 4 * a * c
+	if a < 1e-12 or disc < 0 then
+		return 1
+	end
+	local t = (-b - math.sqrt(disc)) / (2 * a)
+	return if t >= 0 and t <= 1 then t else 1
 end
 
 -- Plays everything due by render tick `renderTick` (fractional sim tick).
@@ -901,11 +921,14 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 	-- a shell that hits during the coming tick bursts when its drawn path
 	-- reaches the impact point, not at the tick's end: drawn on, it would fly
 	-- up to a tick's travel past the target first (C-26). Events arrive
-	-- ahead of the render clock (Interp's delay), so the IMPACT is known.
+	-- ahead of the render clock (Interp's delay), so the IMPACT is known. A
+	-- light shell a dome destroys (SHIELD_HIT absorbed, S-85) goes the same way:
+	-- gone where its drawn path reaches the surface (C-99)
 	local frac = renderTick - fx.tick
 	for i = #events, 1, -1 do
 		local e = events[i] :: any
-		if e.kind ~= EK.IMPACT or e.tick ~= fx.tick + 1 then
+		local ends = e.kind == EK.IMPACT or (e.kind == EK.SHIELD_HIT and e.absorbed == true)
+		if not ends or e.tick ~= fx.tick + 1 then
 			continue
 		end
 		local p = fx.projectiles[e.projId]
@@ -926,6 +949,38 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 		if frac >= math.clamp(along, 0, 1) then
 			table.remove(events, i)
 			apply(fx, world, e, now, muzzleOf)
+		end
+	end
+	-- a shell that comes into a dome's field during the coming tick is
+	-- stepped through the field from the tick's start, as the server does
+	-- (the field takes hold where it crosses the surface), and its hit shows
+	-- when its drawn path crosses, not a tick later when the event is due
+	-- (C-99: drawn on plainly, it flew a tick into the dome unbraked first)
+	for i = 1, #events do
+		local e = events[i] :: any
+		if e.kind == EK.SHIELD_FIELD and e.tick == fx.tick + 1 and e.phase == ShieldField.BRAKING and not e.lit then
+			local p = fx.projectiles[e.projId]
+			if p then
+				local cx, cy, cz = pos(world, e)
+				if p.field == nil then
+					p.field = { cx, cy, cz, e.radius, e.force / 255, ShieldField.FREE }
+				end
+				local g0x, g0y, g0z = gapAt(p, 0)
+				local g1x, g1y, g1z = gapAt(p, 1)
+				local sx, sy, sz = p.x + g0x - cx, p.y + g0y - cy, p.z + g0z - cz
+				local nx, ny, nz = advance(world, p, fx.tick + 1)
+				local ex, ey, ez = nx + g1x - cx, ny + g1y - cy, nz + g1z - cz
+				local along = crossing(sx, sy, sz, ex, ey, ez, e.radius)
+				if frac >= along then
+					e.lit = true
+					local hx, hy, hz = sx + (ex - sx) * along, sy + (ey - sy) * along, sz + (ez - sz) * along
+					local d = math.sqrt(hx * hx + hy * hy + hz * hz)
+					if d > 1e-6 and #fx.shieldHits < 64 then
+						local k = e.radius / d
+						table.insert(fx.shieldHits, { unitId = 0, kind = "enter", x = cx + hx * k, y = cy + hy * k, z = cz + hz * k, mass = ShieldField.mass(p.weapon), breach = false, projId = e.projId, tick = e.tick })
+					end
+				end
+			end
 		end
 	end
 	-- each projectile's state one tick on: frames draw the curve between (C-38)

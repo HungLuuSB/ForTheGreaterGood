@@ -37,6 +37,7 @@ local ModelPool = require("./Render/ModelPool")
 local RenderDeaths = require("./Render/Deaths")
 local RenderEffects = require("./Render/Effects")
 local ShieldDomes = require("./Render/ShieldDomes")
+local ShieldFx = require("./Render/ShieldFx")
 local Contacts = require("./Render/Contacts")
 local FogOfWar = require("./Render/FogOfWar")
 local Ground = require("./Render/Ground")
@@ -645,6 +646,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
 	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now, speed)
 	lastVisibleFx = visibleFx
+	ShieldFx.simSpeed = speed
 	ShieldDomes.step(shieldDomes, world, fx, renderer)
 	ShieldDomes.forces(shieldDomes, visibleFx)
 	mark("effects", t0)
