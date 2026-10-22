@@ -27,6 +27,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 | 12 | Bombers: `ord_absolution` (long twin-engine strike bomber, broad wings, canted team tails, `bay` with ajar doors and an ice-white bay light on `weapon`, `pylon` hard points) / `chs_plague` (stretched Harpy delta, racks of small bombs on the `pylon`, amber bay light) | 672 / 638 | 7.8% / 6.1% | review | `t1_bomber_55_close.jpg`, `t1_bomber_55_220.jpg` (lifted 3 studs) |
 | 13 | Naval workers: `ord_tidewright` (armored work boat, raked bow, squared bridge, cargo hatch with status lights, stern `nano` crane with emitter on `power`) / `chs_wrecker` (narrow salvage tug, squat bridge with amber slit, funnel with heat band, stern crane) | 620 / 528 | 6.0% / 5.4% | review | `t1_navalworker_55_close.jpg`, `t1_navalworker_55_220.jpg` (waterline at the baseplate) |
 | 14 | Corvettes: `ord_sentry` (armored corvette, wedge-fronted forward gun `turret1`, small aft `turret2`, mast with a sensor array and cyan band) / `chs_barracuda` (narrow gunboat, round open gun mounts, braced mast with a sensor panel and beacon, funnel) | 804 / 660 | 6.3% / 5.4% | review | `t1_corvette_55_close.jpg`, `t1_corvette_55_220.jpg` |
+| 15 | Submarines: `ord_silence` (long round hull, tall armored sail, cross planes, team rudder, cyan hull strips, bow and aft torpedo blocks with tube lights on `weapon`) / `chs_lamprey` (crude diesel sub, long low sail, strapped salvage tanks, amber eye) | 472 / 540 | 5.0% / 6.2% | review | `t1_sub_55_close.jpg`, `t1_sub_55_220.jpg` (lifted 1.2 studs to show the hull) |
 
 **Needs your review (queue):**
 - **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
@@ -39,6 +40,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 - Missiles: their glow share runs 9–10.6% (the Order nuke 10.6%): on a 4-stud body, one stripe and the nozzle are a big share. They read as small lit bands in flight. The client already lights the exhaust, so the nozzle glow could go if it doubles up.
 - Chaos aircraft: the dark gunmetal reads low against the grey baseplate from above; over game terrain they read better (the ground is lighter and greener). The amber strips carry them at distance.
 - Ships: team color sits on the foredeck or afterdeck plate and the bridge roof; at 220 studs the ships read mostly by their faction glow. Larger deck plates if they should read more.
+- Submarines: team color sits on the rudder and the sail band. They are always submerged and mostly seen as contacts, so I kept it small.
 
 ## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 

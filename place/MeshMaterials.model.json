@@ -142,6 +142,18 @@
       }
     },
     {
+      "Name": "chs_lamprey",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://112827814634174",
+        "NormalMapContent": "rbxassetid://102909256202131",
+        "RoughnessMapContent": "rbxassetid://72876622193323",
+        "MetalnessMapContent": "rbxassetid://136749334637508",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_minotaur",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -498,6 +510,18 @@
         "NormalMapContent": "rbxassetid://116068069478023",
         "RoughnessMapContent": "rbxassetid://127138731862946",
         "MetalnessMapContent": "rbxassetid://80192060678058",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_silence",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://80284913224767",
+        "NormalMapContent": "rbxassetid://71593079222104",
+        "RoughnessMapContent": "rbxassetid://129941440572648",
+        "MetalnessMapContent": "rbxassetid://95526088059996",
         "EmissiveStrength": 0
       }
     },

@@ -1062,6 +1062,86 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			triangles = 912,
 		},
+		chs_lamprey = {
+			attachments = {
+				muzzle1 = {
+					at = { 0, 0.4, -3.9 },
+					parent = "turret1",
+				},
+				muzzle2 = {
+					at = { 0, 0.4, 2.6 },
+					parent = "turret2",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 0.0262, 1.25 },
+					channel = "running",
+					mesh = "rbxassetid://75384585444863",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 3.26, 2.5077, 8.7 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+				{
+					center = { 0, 0.4, -3.81 },
+					channel = "weapon",
+					mesh = "rbxassetid://87358056402444",
+					name = "turret1_glow_weapon",
+					piece = "turret1",
+					size = { 0.6, 0.2, 0.04 },
+					strength = 1.5,
+					tint = { 255, 175, 70 },
+				},
+				{
+					center = { 0, 0.4, 2.69 },
+					channel = "weapon",
+					mesh = "rbxassetid://133739220063827",
+					name = "turret2_glow_weapon",
+					piece = "turret2",
+					size = { 0.5, 0.14, 0.04 },
+					strength = 1.5,
+					tint = { 255, 175, 70 },
+				},
+			},
+			glowShare = 0.0622,
+			maps = {
+				ALB = "rbxassetid://112827814634174",
+				EMI = "rbxassetid://111398192790701",
+				MTL = "rbxassetid://136749334637508",
+				NOR = "rbxassetid://102909256202131",
+				RGH = "rbxassetid://72876622193323",
+			},
+			model = "rbxassetid://81076303898380",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 0.45, 0.3 },
+					mesh = "rbxassetid://99845518350955",
+					size = { 3.2, 4.3, 11.6 },
+				},
+				turret1 = {
+					center = { 0, 0.4, -3.4 },
+					mesh = "rbxassetid://78939996813830",
+					parent = "base",
+					pivot = { 0, 0.2, -3.4 },
+					size = { 1, 0.4, 0.8 },
+				},
+				turret2 = {
+					center = { 0, 0.4, 3 },
+					mesh = "rbxassetid://125892605908908",
+					parent = "base",
+					pivot = { 0, 0.2, 3 },
+					size = { 0.8, 0.3, 0.6 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 540,
+		},
 		chs_minotaur = {
 			attachments = {
 				muzzle = {
@@ -3050,6 +3130,86 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 1088,
+		},
+		ord_silence = {
+			attachments = {
+				muzzle1 = {
+					at = { 0, 0.4, -3.9 },
+					parent = "turret1",
+				},
+				muzzle2 = {
+					at = { 0, 0.4, 2.6 },
+					parent = "turret2",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 0.665, 1.3 },
+					channel = "running",
+					mesh = "rbxassetid://133479393380291",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 3.26, 2.63, 8.6 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+				{
+					center = { 0, 0.4, -3.81 },
+					channel = "weapon",
+					mesh = "rbxassetid://136410766646844",
+					name = "turret1_glow_weapon",
+					piece = "turret1",
+					size = { 0.6, 0.2, 0.04 },
+					strength = 1.5,
+					tint = { 190, 240, 255 },
+				},
+				{
+					center = { 0, 0.4, 2.69 },
+					channel = "weapon",
+					mesh = "rbxassetid://125005170831558",
+					name = "turret2_glow_weapon",
+					piece = "turret2",
+					size = { 0.5, 0.14, 0.04 },
+					strength = 1.5,
+					tint = { 190, 240, 255 },
+				},
+			},
+			glowShare = 0.0501,
+			maps = {
+				ALB = "rbxassetid://80284913224767",
+				EMI = "rbxassetid://105568102012043",
+				MTL = "rbxassetid://95526088059996",
+				NOR = "rbxassetid://71593079222104",
+				RGH = "rbxassetid://129941440572648",
+			},
+			model = "rbxassetid://97231615009756",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 0.5, 0.55 },
+					mesh = "rbxassetid://96982918825128",
+					size = { 3.2, 4.4, 11.7 },
+				},
+				turret1 = {
+					center = { 0, 0.4, -3.4 },
+					mesh = "rbxassetid://73305523161265",
+					parent = "base",
+					pivot = { 0, 0.2, -3.4 },
+					size = { 1, 0.4, 0.8 },
+				},
+				turret2 = {
+					center = { 0, 0.4, 3 },
+					mesh = "rbxassetid://77508984129372",
+					parent = "base",
+					pivot = { 0, 0.2, 3 },
+					size = { 0.8, 0.3, 0.6 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 472,
 		},
 		ord_skywright = {
 			attachments = {},
