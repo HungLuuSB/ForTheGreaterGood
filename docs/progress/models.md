@@ -400,6 +400,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `1e89c20` (BAR pair 21: jammers ord_veil / chs_shroud as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `f6387cd` (BAR pair 22: chs_locust / chs_cyclops as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `30b3e28` (BAR pair 23: ord_barrier / ord_citadel as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `0576073` (BAR pair 24: silos ord_reckoning / chs_ragnarok as review, pending beam tower blockouts with a retracted pose, manifest + mesh_materials; `assets/`, `src/shared/Defs/Blockouts/Pending/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 
