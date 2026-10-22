@@ -381,6 +381,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `7b50962` (BAR pair 13: naval workers ord_tidewright / chs_wrecker as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `aa5ff27` (BAR pair 14: corvettes ord_sentry / chs_barracuda as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `4997c27` (BAR pair 15: submarines ord_silence / chs_lamprey as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `90fceea` (BAR pair 16: T2 constructors ord_architect / chs_forgemaster as review, tools/hulls.py, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 
