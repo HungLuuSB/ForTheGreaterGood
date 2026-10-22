@@ -39,8 +39,20 @@ export type BeamShot = {
 	textures: { [string]: string },
 	factions: { [string]: { [string]: any } },
 }
+-- the honeycomb shell over the shield dome (M-30, fx.md "Honeycomb shell"):
+-- bands from the top cap down, each with its recommended opacity; center and
+-- size at dome radius 1 (multiply by the dome's radius)
+export type ShieldShell = {
+	status: string,
+	note: string?,
+	texture: string,
+	radius: number,
+	refRadius: number,
+	hex: number,
+	bands: { { name: string, mesh: string, opacity: number, theta: { number }, center: Vec3, size: Vec3 } },
+}
 
-local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot } = {
+local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot, shieldShell: ShieldShell } = {
 	glowMask = "rbxassetid://101169341901946",
 	textures = {
 		heatShimmer = "rbxassetid://105647146631109",
@@ -697,6 +709,104 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			triangles = 588,
 		},
+	},
+	shieldShell = {
+		bands = {
+			{
+				center = { 0, 0.9358, 0 },
+				mesh = "rbxassetid://138779876950060",
+				name = "shell_1",
+				opacity = 1,
+				size = { 1.003, 0.1344, 1.003 },
+				theta = { 0, 30 },
+			},
+			{
+				center = { 0, 0.8491, 0 },
+				mesh = "rbxassetid://104690751464444",
+				name = "shell_2",
+				opacity = 0.993,
+				size = { 1.1275, 0.0391, 1.1275 },
+				theta = { 30, 34.2 },
+			},
+			{
+				center = { 0, 0.8078, 0 },
+				mesh = "rbxassetid://95409116300707",
+				name = "shell_3",
+				opacity = 0.939,
+				size = { 1.246, 0.0435, 1.246 },
+				theta = { 34.2, 38.4 },
+			},
+			{
+				center = { 0, 0.7622, 0 },
+				mesh = "rbxassetid://129361574667780",
+				name = "shell_4",
+				opacity = 0.844,
+				size = { 1.3578, 0.0477, 1.3578 },
+				theta = { 38.4, 42.6 },
+			},
+			{
+				center = { 0, 0.7125, 0 },
+				mesh = "rbxassetid://139759362992934",
+				name = "shell_5",
+				opacity = 0.718,
+				size = { 1.4623, 0.0517, 1.4623 },
+				theta = { 42.6, 46.8 },
+			},
+			{
+				center = { 0, 0.6589, 0 },
+				mesh = "rbxassetid://127143479192477",
+				name = "shell_6",
+				opacity = 0.575,
+				size = { 1.559, 0.0554, 1.559 },
+				theta = { 46.8, 51 },
+			},
+			{
+				center = { 0, 0.6018, 0 },
+				mesh = "rbxassetid://94115484182625",
+				name = "shell_7",
+				opacity = 0.425,
+				size = { 1.6472, 0.0588, 1.6472 },
+				theta = { 51, 55.2 },
+			},
+			{
+				center = { 0, 0.5415, 0 },
+				mesh = "rbxassetid://138287442714394",
+				name = "shell_8",
+				opacity = 0.282,
+				size = { 1.7266, 0.0619, 1.7266 },
+				theta = { 55.2, 59.4 },
+			},
+			{
+				center = { 0, 0.4783, 0 },
+				mesh = "rbxassetid://133071797556808",
+				name = "shell_9",
+				opacity = 0.156,
+				size = { 1.7968, 0.0646, 1.7968 },
+				theta = { 59.4, 63.6 },
+			},
+			{
+				center = { 0, 0.4125, 0 },
+				mesh = "rbxassetid://117361711188894",
+				name = "shell_10",
+				opacity = 0.061,
+				size = { 1.8573, 0.067, 1.8573 },
+				theta = { 63.6, 67.8 },
+			},
+			{
+				center = { 0, 0.3445, 0 },
+				mesh = "rbxassetid://105733720201478",
+				name = "shell_11",
+				opacity = 0.007,
+				size = { 1.9078, 0.069, 1.9078 },
+				theta = { 67.8, 72 },
+			},
+		},
+		hex = 5,
+		note = "honeycomb shell bands, waiting for the user's review",
+		radius = 1.003,
+		refRadius = 120,
+		status = "review",
+		texture = "rbxassetid://90043421276653",
 	},
 	units = {
 		chs_airfield = {
