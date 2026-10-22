@@ -4,6 +4,16 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, Radiance's ray)
+
+- **Radiance (C-128):** a bluer beam, held about 3 s, its last second narrowing to nothing. Inferno stays orange and holds 1.5 s. Once sim-A's `beamDuration` is in main, the client draws exactly the sim's duration.
+- **Sim work (requests 47 and 49) with sim-A:**
+  - Radiance targets radar blips and can miss them without Pinpointers (S-113, merging);
+  - a hit-ray damaging every enemy on the line, for 3 s (request 49);
+  - manual targets override (request 49).
+- **Beam VFX:** models-C builds them, at your request; mine is a placeholder ray until then.
+- **Screenshot:** `debug_out/screens/beam_radiance.jpg`.
+
 ## Summary (2026-10-23, beam towers apart)
 
 - **Inferno's beam stays orange:** I made it green (C-127), then put it back at your word.
@@ -1647,6 +1657,10 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+49. **Open (sent 2026-10-23).** **Radiance a hit-ray; manual targets override (the user):**
+    - Radiance `beamDuration` 3.0; during the beam, damage goes to every enemy the beam's line crosses (a miss on a blip still hurts what's on the line). An amendment to S-113.
+    - An attack order on a unit beats the unit's own target choice. Out of range, the unit picks its own targets; back in range, it returns to the manual target. STOP clears it.
 
 48. **Open (sent 2026-10-23).** **The skirmish AI builds too many Furnaces (the user):** hard or normal AI puts up many `chs_generator`s instead of extractors on free deposits. Sim-A to check the Chaos AI's economy choice. Nothing on the client.
 

@@ -43,7 +43,25 @@ Effects.LAUNCH_BLEND = 3 -- ticks for a shell to go from the drawn barrel tip on
 Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with that weapon fired it
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
-Effects.BEAM_SECONDS = 0.45 -- a beam tower's shot (S-96, C-112): the line is held this long, fading
+Effects.BEAM_SECONDS = 0.45 -- a BEAM shot without a duration of its own (S-96, C-112)
+-- Beam durations until the sim's `beamDuration` (S-113) is in the defs: the
+-- user's look (C-128): Radiance's ray lingers 3 s, Inferno's 1.5 s.
+Effects.BEAM_FALLBACK = table.freeze({ ord_radiance_beam = 3, chs_inferno_beam = 1.5 }) :: { [string]: number }
+Effects.BEAM_FADE = 1 -- seconds: the last part of a beam's life, when it narrows to nothing
+
+-- How long a BEAM weapon's ray is drawn.
+function Effects.beamSeconds(weapon: any): number
+	return weapon.beamDuration or Effects.BEAM_FALLBACK[weapon.id] or Effects.BEAM_SECONDS
+end
+
+-- A beam's look `age` seconds into a `life`-second ray: its width (1 = full)
+-- and transparency. Full and bright until the last BEAM_FADE seconds (at
+-- most half the life), then it narrows to nothing as it fades (C-128).
+function Effects.beamLook(age: number, life: number): (number, number)
+	local fade = math.min(Effects.BEAM_FADE, life / 2)
+	local k = math.clamp((age - (life - fade)) / fade, 0, 1)
+	return 1 - k, 0.1 + 0.9 * k * k
+end
 Effects.EXPLOSION_SECONDS = 0.55
 Effects.LAUNCH_SECONDS = 0.5 -- a missile's launch flash (its smoke cloud lasts longer, Render/Vfx)
 Effects.FLARE_SECONDS = 1.6 -- flares or chaff falling where a decoyed missile went (C-47)
@@ -777,7 +795,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local slot = def and def.weapons[e.slot]
 			local weapon = slot and world.defs.weaponByIndex[slot.weaponIndex or 0]
 			local isBeam = weapon ~= nil and weapon.type == "BEAM"
-			local t: Tracer = { x0 = x0, y0 = y0 :: number, z0 = z0 :: number, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.BEAM_SECONDS else Effects.TRACER_SECONDS, hit = e.hit == true, size = weaponSize(weapon), beam = if isBeam then (def and def.faction or "order") else nil }
+			local t: Tracer = { x0 = x0, y0 = y0 :: number, z0 = z0 :: number, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = e.hit == true, size = weaponSize(weapon), beam = if isBeam then (def and def.faction or "order") else nil }
 			if #fx.tracers >= Effects.MAX_TRACERS then
 				fx.skipped.tracers += 1
 			end

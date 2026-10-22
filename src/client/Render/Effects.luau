@@ -36,7 +36,7 @@ local BURST_MIN: { [string]: number } = { impact = 7, death = 12 }
 local BURST_SCALE: { [string]: number } = { impact = 1.6, death = 1.4 }
 local TRACER_STREAK = 0.45 -- the streak's length as a share of the shot
 -- beam colors by the shooter's faction (fx.md's weapon glow tints, C-112)
-local BEAM_COLOR = { order = Color3.fromRGB(200, 240, 255), chaos = Color3.fromRGB(255, 170, 70) }
+local BEAM_COLOR = { order = Color3.fromRGB(120, 190, 255), chaos = Color3.fromRGB(255, 170, 70) } -- Radiance bluer (C-128), Inferno orange
 local TRAIL_SECONDS = 0.06 -- ~20 studs behind a tank shell (340–380 studs/s)
 
 type Shell = { part: BasePart, trail: Trail, owner: number?, fresh: boolean }
@@ -483,14 +483,15 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		local a, b = Vector3.new(t.x0, t.y0, t.z0), Vector3.new(t.x1, t.y1, t.z1)
 		local k = math.clamp((now - t.born) / t.life, 0, 1)
 		if t.beam then
-			-- a beam tower's shot (C-112): the whole line at once, a bright core
-			-- in the faction's beam color that thins and fades over its life
+			-- a beam tower's ray (C-112, C-128): the whole line at once in the
+			-- faction's beam color, held bright, narrowing to nothing over its last second
 			local len = (b - a).Magnitude
-			local w = 0.9 * (1 - 0.7 * k)
+			local width, alpha = Effects.beamLook(now - t.born, t.life)
+			local w = math.max(0.9 * width, 0.02)
 			part.Size = Vector3.new(w, w, math.max(len, 0.1))
 			part.CFrame = if len > 1e-3 then CFrame.lookAt((a + b) / 2, b) else CFrame.new(b)
 			part.Color = BEAM_COLOR[t.beam] or BEAM_COLOR.order
-			part.Transparency = math.clamp(k * k, 0, 1)
+			part.Transparency = alpha
 			continue
 		end
 		local head = math.min(1, k * (1 + TRACER_STREAK))

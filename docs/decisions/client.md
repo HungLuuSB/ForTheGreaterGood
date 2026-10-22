@@ -1016,3 +1016,13 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** Inferno's beam stays orange (255, 170, 70). It was made green in `0d6ca37`, then reverted the same day.
 
 **Why:** the user asked for green, then said orange is fine. The towers' other differences (blip targeting, misses, a lingering beam, Inferno weaker) are sim request 47.
+
+### C-128 — Radiance's ray: bluer, held 3 s, narrowing over its last second (2026-10-23)
+
+**Decision:**
+- `Core/Effects.beamSeconds(weapon)` = `weapon.beamDuration` (S-113), else BEAM_FALLBACK by id (Radiance 3, Inferno 1.5), else 0.45 s.
+- `Effects.beamLook(age, life)`: full width and bright, then the last BEAM_FADE (1 s, at most half the life) narrows the ray to nothing as it fades.
+- Radiance's colour is (120, 190, 255); Inferno stays orange.
+- models-C will build the beam VFX; this ray is the placeholder.
+
+**Why:** the user's description. The hit-ray damage and manual-target rules are sim request 49.
