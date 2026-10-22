@@ -10,6 +10,18 @@
       }
     },
     {
+      "Name": "chs_depot",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://94519638872081",
+        "NormalMapContent": "rbxassetid://123623802839971",
+        "RoughnessMapContent": "rbxassetid://70718880534000",
+        "MetalnessMapContent": "rbxassetid://113424109895911",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_extractor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -186,6 +198,18 @@
         "NormalMapContent": "rbxassetid://135190797651485",
         "RoughnessMapContent": "rbxassetid://77234305988914",
         "MetalnessMapContent": "rbxassetid://136852780265337",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_depot",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://140238481716141",
+        "NormalMapContent": "rbxassetid://129489480044406",
+        "RoughnessMapContent": "rbxassetid://125929822891940",
+        "MetalnessMapContent": "rbxassetid://91767351654810",
         "EmissiveStrength": 0
       }
     },
