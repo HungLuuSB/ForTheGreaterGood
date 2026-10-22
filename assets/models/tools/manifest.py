@@ -20,11 +20,7 @@ GLOW_MASK = "rbxassetid://101169341901946"  # glow_mask.png, shared by every glo
 
 # The user's approvals (2026-10-22): everything is approved except the glow
 # fixes still waiting for review.
-REVIEW = {
-    "ord_oracle": "glow fix: unlit array face with a glowing edge and grid",
-    "chs_watcher": "glow fix: dish ring 30% dimmer",
-    "ord_vehplant": "glow fix: door-frame build lights",
-}
+REVIEW = {}  # the glow fixes (Oracle, Watcher, Order vehicle plant) were approved on 2026-10-22
 
 
 def load(path):
