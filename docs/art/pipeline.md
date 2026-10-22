@@ -150,3 +150,5 @@ If generated bases are wanted for props or structures: Meshy on a paid plan, cre
 ## Mesh manifest (M-23)
 
 After every upload (or a status change): `python assets/models/tools/manifest.py`, then `lune run mesh_materials` (client tool, C-103: the SurfaceAppearances game scripts can't build themselves), then `lune run test_client Meshes` and `lune run test_client MeshMaterials`. Commit the mesh, `src/shared/Defs/Meshes/Registry.luau` and `place/MeshMaterials.model.json` together (rig.md section 7).
+
+**A model that draws white** (no team color, no glow) after an Open Cloud upload: Studio couldn't build its SurfaceAppearance because a map failed (HTTP 502). The log says "Unable to generate ... Change a TextureId property to retry", but a retry with the same image fails again. Re-upload the failing maps as new Decals (`opencloud.upload`) and swap the new images in. Note them in the unit's `roblox_assets.json`. **Flat team color** is different: the color map is still loading, and it fixes itself within minutes. Rigging a pair a few minutes after its upload (bake the next pair meanwhile) avoids most of these.

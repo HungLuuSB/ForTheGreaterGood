@@ -166,6 +166,18 @@
       }
     },
     {
+      "Name": "chs_windmill",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://91977748048820",
+        "NormalMapContent": "rbxassetid://133517863725127",
+        "RoughnessMapContent": "rbxassetid://105287463554030",
+        "MetalnessMapContent": "rbxassetid://125313242816485",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_bulwark",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -318,6 +330,18 @@
         "NormalMapContent": "rbxassetid://98563283604934",
         "RoughnessMapContent": "rbxassetid://138357025645682",
         "MetalnessMapContent": "rbxassetid://88075745130392",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_windmill",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://131039307475476",
+        "NormalMapContent": "rbxassetid://74850918160081",
+        "RoughnessMapContent": "rbxassetid://121987960582529",
+        "MetalnessMapContent": "rbxassetid://79079475731111",
         "EmissiveStrength": 0
       }
     }

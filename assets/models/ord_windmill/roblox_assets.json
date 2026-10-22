@@ -1,0 +1,28 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 908 triangles, glow share 5.2%",
+  "bar": {
+    "model": "rbxassetid://138420585799942",
+    "meshes": {
+      "base": "rbxassetid://121119585090985",
+      "base_glow_power": "rbxassetid://95779349898417",
+      "base_glow_running": "rbxassetid://139408782842121",
+      "rotor": "rbxassetid://107952985153411"
+    },
+    "decals": {
+      "ALB": "rbxassetid://121580735343135",
+      "RGH": "rbxassetid://74025121020175",
+      "NOR": "rbxassetid://95719930866487",
+      "MTL": "rbxassetid://81912738241000",
+      "EMI": "rbxassetid://134658947206227"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://131039307475476",
+      "NOR": "rbxassetid://74850918160081",
+      "RGH": "rbxassetid://121987960582529",
+      "MTL": "rbxassetid://79079475731111",
+      "EMI": "rbxassetid://77868563361134"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_windmill_bar in FTGG Art"
+  }
+}

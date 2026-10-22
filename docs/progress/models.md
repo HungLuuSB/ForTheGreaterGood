@@ -14,6 +14,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 |---|---|---|---|---|---|
 | 1 | Radar towers: `ord_watchtower` (armored square tower, cyan corner strips, unlit array with glowing edge and grid on the turning `radar`) / `chs_eye` (open lattice mast, amber eye sensor and leg beacons, unlit panel with amber edge) | 1,004 / 920 | 5.6% / 6.6% | review | `t1_radar_55_close.jpg`, `t1_radar_55_220.jpg` |
 | 2 | IR SAM sites: `ord_vigil` (heavy base, launcher with sensor head and two canister pods, ice-white seeker and cap ready lights on `weapon`) / `chs_thorn` (round skid, bare post, six staggered tubes with ready-light mouths on `weapon`) | 1,000 / 936 | 5.2% / 5.7% | review | `t1_sam_55_close.jpg`, `t1_sam_55_220.jpg` |
+| 3 | Wind turbines: `ord_windmill` (tapered round tower, armored nacelle with cyan generator vents on `power`, three broad blades with team tips on the client-spun `rotor`) / `chs_windmill` (lattice mast, boxy nacelle with an orange generator band, one long crooked two-ended blade) | 908 / 684 | 5.2% / 5.0% | review | `t1_wind_55_close.jpg`, `t1_wind_55_220.jpg` |
 
 **Needs your review (queue):**
 - **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
