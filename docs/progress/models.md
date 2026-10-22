@@ -423,6 +423,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `b02a62e` (Review fixes for 11 approved meshes and the 6 missiles (re-uploads, manifest + mesh_materials); `assets/`, `src/shared/Defs/Meshes/`, `place/` and docs).
 - Ready to merge: `0f31945` (BAR pair 27: Commanders ord_sovereign / chs_warlord as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/` and docs only).
 - Ready to merge: `529d7bf` (Helicopter re-uploads after HTTP 502 (manifest + mesh_materials), size-scale status; `assets/`, `src/shared/Defs/Meshes/`, `place/` and docs).
+- Ready to merge: `4912cd7` (Structure blockouts scaled to the S-104 footprints (placeholders until the redesigns); `src/shared/Defs/Blockouts/` and docs).
 
 ## Requests
 
