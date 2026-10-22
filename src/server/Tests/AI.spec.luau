@@ -64,6 +64,25 @@ return function(t: RunAll.Context)
 		print(string.format("    radar towers by tick %d (%.1f min)", sim.tick, sim.tick / 900))
 	end)
 
+	t.test("faction styles: Order fields Wardens, Chaos Locusts and a jammer (S-76)", function()
+		local o = Skirmish.styled(Skirmish.LEVELS.normal, "ord_", "normal")
+		local c = Skirmish.styled(Skirmish.LEVELS.normal, "chs_", "normal")
+		t.expect(o.artyChance > Skirmish.LEVELS.normal.artyChance and o.recall, "Order: more artillery, recalls")
+		t.expect(c.workers > Skirmish.LEVELS.normal.workers and c.lanes == 2 and c.jammer, "Chaos: wider, two lanes, a jammer")
+		local easy = Skirmish.styled(Skirmish.LEVELS.easy, "chs_", "easy")
+		t.equal(easy.firstWave, Skirmish.LEVELS.easy.firstWave, "easy keeps its strength")
+		t.expect(Skirmish.styled(Skirmish.LEVELS.hard, "ord_", "hard").defenses > Skirmish.LEVELS.hard.defenses, "Order hard: a turret more")
+		-- rich economies, so both reach their advanced plants within the run
+		local sim = start(24)
+		local brains = { Skirmish.new(sim, 1), Skirmish.new(sim, 2) }
+		run(sim, brains, 13500, true, function()
+			return #owned(sim, 1, "ord_warden") > 0 and #owned(sim, 2, "chs_locust") > 0 and #owned(sim, 2, "chs_shroud") > 0
+		end)
+		t.expect(#owned(sim, 1, "ord_warden") > 0, `Order fielded a Warden (tick {sim.tick})`)
+		t.expect(#owned(sim, 2, "chs_locust") > 0, "Chaos fielded Locusts")
+		t.expect(#owned(sim, 2, "chs_shroud") > 0, "and a Shroud jammer")
+	end)
+
 	t.test("with supply to spare the AI techs up to a fire-control radar escorting its waves", function()
 		local sim = start(22)
 		local brain = Skirmish.new(sim, 1)

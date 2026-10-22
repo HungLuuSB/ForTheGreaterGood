@@ -8,6 +8,8 @@ local Registry = {}
 
 Registry.SCRIPTS = table.freeze({
 	chs_juggernaut = require("./chs_juggernaut"),
+	ord_warden = require("./ord_warden"),
+	chs_minotaur = require("./chs_minotaur"),
 }) :: { [string]: any }
 
 function Registry.forDef(def: any): any

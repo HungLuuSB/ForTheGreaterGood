@@ -4,6 +4,34 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (overnight run, 2026-10-22 → 23)
+
+**Your list is done.** Server alerts landed overnight (C-85); you imported the draft 3 sheet and ran the 2-client test the next morning (C-86). Each item is committed, pushed and marked "Ready to merge" below. sim-A has already integrated C-75 to C-80 into main (`a21d325`).
+
+| # | What | Decision | Proof |
+|---|---|---|---|
+| 1 | Current work: request 36 used (server queues, fire / move states, ammo); icon sheet draft 3 built | C-75, C-74 | `OwnerFields.spec` (client = server every tick); sheet `assets/icons/ftgg-icons.png` |
+| 2 | Unit stats in the unit panel, enemies by hover, knowledge rules | C-76 | `UnitStats.spec` (Lancer vs armored), `c76_*.jpg` |
+| 3 | Two humans: lobby seats, host, factions, rejoin into the seat; `duo` profile | C-77 | `TwoPlayers.spec` (two client stacks: join, fog, commands, combat, win), `c77_*.jpg`; your 2-client Studio test (C-86): both seated, host-only lobby, a match on crossroads, `c86_duo_player*.jpg` |
+| 4 | Robustness: late join, rejoin, restart; the stale selection after a restart fixed | C-78 | `Robustness.spec`, `c78_rejoined.jpg` |
+| 5 | Spectators (no seat → watch everything) and the replay viewer (save, watch, pause, 0.25–8×, seek, exit) | C-79 | `Replay.spec` (every seek = the live view), `c79_*.jpg` |
+| 6 | Lobby choices (faction, AI level per seat, named maps) and results with the sim's statistics | C-77, C-80 | `Lobby.spec`, `c77_results_stats.jpg` |
+| 7 | Settings menu (O): camera, graphics quality, fog lights, atmosphere, UI scale, keys | C-81 | `Settings.spec`, `c81_*.jpg` |
+| 8 | Server alerts (request 39 landed overnight), under-attack blinking | C-85 | `Ui.spec`, `c85_server_alerts.jpg` |
+| 9 | Nuke crater (Terrain, put back on a new match), water splashes | C-82 | `Splash.spec`, `c82_nuke_crater.jpg`, `c82_crater_close.jpg` |
+| 10 | Atmosphere presets as options (Current stays the default) | C-83 | table with GPU / CPU cost and `c83_atmosphere_*.jpg` |
+| + | Requests 37, 38 used (live flares / chaff; sim statistics), S-62 Pinpointer weights followed | C-80 | `OwnerFields.spec`, `c80_charges.jpg` |
+| + | Warden deploy and Minotaur ram animations (S-64); their icons fall back to the Main Battle Tank | C-84, C-74 | `Deploy.spec`; no Studio image until the models stream's blockouts land |
+| + | Sound plan with candidate audio IDs, nothing inserted | — | `docs/SOUND_PLAN.md` |
+
+**Tests at the end:** `lune run test_client`: 43 specs, 143 passed, 0 failed. `lune run test` (sim): 53 specs, 355 passed. `lune run build`: 415 scripts compile, every require resolves.
+
+**What I need from you:**
+1. ~~Import the draft 3 sheet~~ (done: `87919807696998`, C-86).
+2. Add catalogue entries for the Warden, Minotaur, Locust, Cyclops, Barrier and Citadel to the icon HTML (drawn with stopgap icons until then), and look again at the gun turret vs floating turret pair (C-86).
+3. ~~Run the 2-client test~~ (done, C-86).
+4. Review the "Needs my review" list: settings defaults, UI placement, atmosphere options, sound picks.
+
 ## Summary (night run, 2026-10-21)
 
 **All nine queued tasks are done, committed, pushed and in the merge queue below.** Tasks 1–5 were verified in Studio playtests; Studio then closed its place (the instance reports "Place is not open"), so tasks 6–9 are verified headless only: Lune specs against the real sim, plus headless renders of the real client's view (C-15). Nothing was done to repair Studio.
@@ -132,6 +160,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `926e4a9` (the user's icon set on one sprite sheet, drawn in the game, C-74; includes the icon HTML commits `44dc172`, `a0e43e1`); test_client 119, test 350, build passed.
 - Ready to merge: `994ba89` (factory queues, fire / move states and ammo from the server, request 36, C-75); test_client 122, test 350, build passed.
 - Ready to merge: `8abbf6d` (unit stats in the unit panel, C-76; also the draft 3 icon commits `226ed70`, `c9ff356`, the sheet not yet re-imported); test_client 127, test 350, build passed.
+- Ready to merge: `0a83686` (shield dome prototype, client only, C-87); test_client 156, test 386, build passed.
+- Ready to merge: `a994ce5` (draft 3 icons wired in, S-75 units with stopgap icons, no build-menu error for units missing from the sheet, C-86); test_client 145, test 386, build passed.
 - Ready to merge: `315ec04` (lobby seats for several humans, results with statistics, C-77; the 2-client Studio test not run); test_client 130, test 350, build passed.
 - Ready to merge: `3101bcf` (rejoin, late join, restart: a new WELCOME clears the client's references, C-78); test_client 133, build passed.
 - Ready to merge: `390df33` (spectators and the replay viewer, C-79); test_client 136, build passed.
@@ -139,6 +169,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `8ce4923` (settings menu, C-81); test_client 140, build passed.
 - Ready to merge: `cb7098f` (stable icon layout, S-64 units drawn as the Main Battle Tank, C-74 follow-up; includes the merge of main at a21d325); test_client 140, build passed.
 - Ready to merge: `9fac768` (nuke craters and water splashes, C-82); test_client 141, build passed.
+- Ready to merge: `c5888f5` (atmosphere presets as options, C-83); test_client 141, build passed.
+- Ready to merge: `2d98701` (Warden and Minotaur piece scripts, deploy phases, C-84); test_client 143, build passed.
+- Ready to merge: `6ea62c3` (alerts from the server, S-69 to S-73 followed, C-85; includes the merge of main at f487eea); test_client 144, build passed.
 
 ## Tasks
 
@@ -467,6 +500,67 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shield dome prototype, client only (C-87)
+
+You asked for a client-only prototype of the plasma deflector, with no sim change. `Core/Shield` holds the logic (`Shield.spec`, 11 tests) and `Render/ShieldFx` draws it. `FtggClientDebug:Invoke("shield", seconds?)` starts a test dome under the camera with fake fire heavier than its recharge, so it runs down, collapses and rises again.
+
+- **Dome, in team colour:**
+  - a tinted field ball;
+  - a bright rim on the sphere's outline as the camera sees it: 64 thin Neon segments, recomputed each frame, so terrain and units in front still hide it;
+  - plasma sparkles on its surface;
+  - faint team-coloured hexagons flickering at random spots.
+  - The rim dims with the field's force and flickers below full force.
+  - The ForceField material (it read grey) and Highlight (its outline vanished on a transparent ball, and only 31 can show at once) were tried and dropped.
+- **Plasma core and capacity bar:**
+  - The core and its halo are green at full charge, orange as it drops, red near empty.
+  - The capacity bar sits above the dome's outline, in screen space, with a mark at 25%. A BillboardGui wouldn't render in the playtest.
+- **Collapse and rise:**
+  - At 0% the dome collapses: it flashes, shrinks and fades, and the core sputters. Shells then pass through, and the bar reads "Shield down · x% / 25%".
+  - At 25% it rises again, growing out of the core.
+- **Repulsor field** (your rules):
+  - In a 50-stud band outside the dome, an inbound shell slows down until it stops, which is the hit, then the field throws it back out, speeding up.
+  - Force is full at 50% charge and above, and scales with charge below that. It's divided by mass^0.6, so heavier shells take longer to stop.
+  - Measured at full force: mass 0.5 takes 0.17 s, mass 1 takes 0.22 s, mass 4 takes 0.40 s. At 35% charge a mass-4 shell breaks through, at 20% a mass-2.5 one. They get inside still slowed, and light shells are still turned back.
+  - Each shell turned back costs 0.04 charge per unit of mass. Recharge is a flat 0.05/s in the prototype; the real dome would draw power for it.
+- **Hit:** hexagon plates wrap the dome round the hit point, 7, 19 or 37 by strength.
+  - They go white hot, then yellow, orange and red, ripple outward ring by ring, and fade in about 0.65 s.
+  - The centre dents in and springs back, with sparks and a light flash.
+  - Hits within 6 studs of a young patch merge into one hotter patch.
+  - Caps: 6 patches per dome, 400 lit plates.
+- **Studio (normandy, playtest)**, in `debug_out/screens/`:
+  - `c87_shield_full.jpg`: 100%, green core, team rim, idle hexes, a red-hot hit, shells in flight.
+  - `c87_shield_low_breach.jpg`: 26%, orange core and bar, a heavy shell through by the core, a light one turned back.
+  - `c87_shield_collapsed.jpg`: the dome down, the core sputtering, "Shield down · 5% / 25%", a shell passing through.
+  - `c87_shield_rising.jpg`: the dome growing back from the core at 25%.
+  - `c87_shield_hex_merge.jpg`: a close-up of the hexagons and a merged burst (the earlier ForceField look).
+  - No script errors.
+  - The last tweak, a dimmer rim at low force, isn't in these shots.
+- **Hexagon shape:** three rectangles 60° apart, because EditableMesh is off in this experience's Security settings. They show faint star seams up close.
+
+## 2026-10-23: draft 3 icons wired in; your 2-client test; S-75 units drawn (C-86)
+
+- The draft 3 sheet is wired in (`tools/icons/assets.json`: `87919807696998`). Rebuilding it gives the same PNG byte for byte, so the import matches the atlas.
+- Main brought four new units (S-75). The sheet has no tiles for them yet, so they use existing icons until the catalogue lists them: Locust as Light Tank, Cyclops as Artillery, Barrier as Storage, Citadel as Heavy Turret. The renderer reports each one on every run.
+- **Your 2-client test** found a bug: every frame, Player 2's build menu errored at `Icons:95` on the Locust, which wasn't on the sheet, and left a blank "Label" button. Fixed two ways: the stopgap icon, and `Icons.ofDef` now gives a def with no tile its domain's plain frame instead of erroring (`IconAtlas.spec`). Apart from that, the test worked. The server seated both players and refused Player 2's lobby change ("only the host"). The match started on crossroads with both players building, and neither client logged a script error (`debug_out/screens/c86_duo_player1.jpg`, `c86_duo_player2.jpg`). The asset error `rbxassetid://203785492` in the log doesn't come from this repo.
+- **Icon pairs at real size** (cut from the imported sheet, tinted as ImageColor3 does, 22 px × tier scale, grass and sand; `debug_out/icons/pairs-real.png`, `pairs-4x.png`):
+  - fixed: bomber vs strategic bomber (one chevron vs two, dots and size), MBT vs MLRS (shell vs rocket fan), airfield vs rearm pad (triangle vs H), fighter vs air superiority;
+  - **still hard:** gun turret vs floating turret, the same shield and shell, where the floating turret's waves blur into a smudge at 22 px, worst in red on sand.
+  - The Studio check in normandy waits until your 2-client test is over: I didn't stop it.
+- S-77 (replay format 2) and the Citadel's second slot need no client change: `parse` reads both formats, and the default aim turns each slot's `turretPiece`.
+
+## 2026-10-23: alerts from the server, S-69 to S-73 followed (C-85)
+
+- Alerts now come from the server (request 39, S-68, protocol 23): unit or structure under attack, Command Vehicle under attack, unit or structure lost, construction complete, supply or power stall, nuclear launch, each with the unit's name, rate-limited by the server. The client's own guesses are gone. Own and allied units the server marks under attack blink red on the minimap and as strategic icons. `Ui.spec` runs a real fight, loss, stall and build through the server's alerts; `debug_out/screens/c85_server_alerts.jpg`.
+- S-70: a Fusion Reactor's death draws a blast as wide as its damage (`Splash.spec`). S-72: radar power drain shows as upkeep in the unit stats. S-73: "Friendly fire" On / Off in the lobby (on by default). S-69: ground attack already went out for any selection, so artillery, tanks and turrets can now shell a spot with no client change; MLRS salvos draw rocket by rocket.
+
+## 2026-10-22: sound plan
+
+- `docs/SOUND_PLAN.md`: the sounds the game needs and candidate Roblox audio IDs from Studio's Creator Store search, nothing inserted. ProSoundEffects (Roblox-licensed) where it has a fit; several community uploads are ripped from other games and marked "don't use".
+
+## 2026-10-22: Warden and Minotaur animations (C-84)
+
+- S-64's faction units animate: the Warden swings its spades down, squats onto them and levels its gun over the 4 s it unpacks (when it stands still), and reverses while it packs before driving off, gun locked forward; the Minotaur's ram strikes forward on its demolition charge (weapon slot 2) and draws back slowly. Piece scripts `Core/PieceScripts/ord_warden`, `chs_minotaur`, with a new `Deploy(u, phase)` hook driven by the DEPLOYED / DEPLOYING bits (protocol 22). `tests/client/Deploy.spec` runs a real Warden through unpacking, deployed, packing and packed. The blockouts are the models stream's (request 3: Warden `spades`, Minotaur `ram`); until they land both draw as the generic placeholder, so there is no Studio screenshot yet. Barrier walls and the Citadel aren't in the sim yet.
+
 ## 2026-10-22: atmosphere presets (C-83)
 
 - Four lighting presets, chosen in the settings menu (O, "Atmosphere"); Current stays the default. Same fight in the normandy battle, same camera, 4 s each in Studio (60 fps cap, so the frame is 16.7 ms in all four; GPU and CPU are Roblox's render frame times):
@@ -544,6 +638,13 @@ All with real mouse and keyboard input through the MCP tools.
 
 ## Needs my review
 
+- **Shield prototype (C-87):** the look, in `debug_out/screens/c87_shield_*.jpg`. Your calls:
+  - **Clean hexagons, without star seams:** turn on EditableMesh in Game Settings → Security ("Allow Mesh / Image APIs"), or let me upload one hexagon mesh to your account. Until then the rectangle fallback stays.
+  - **Placeholder tuning:** field band 50 studs, full force at 50%, rise at 25%, 0.04 charge per unit of mass, recharge 0.05/s.
+  - **Still open for sim-A:** harmless or live bounced shells, a Chaos version, vehicle or structure.
+
+- **Sound plan:** `docs/SOUND_PLAN.md` lists every sound the game needs (the defs' `fx.sound` keys, impacts, units, alerts, UI, ambience) with candidate Creator Store audio IDs; ProSoundEffects entries preferred, ripped uploads marked "don't use". Nothing inserted: pick the IDs.
+
 - **Atmosphere options (C-83):** Current (default), Clear day, Battlefield haze, Dusk, in the settings menu; table with screenshots and frame cost under "atmosphere presets (C-83)" above. Values in `src/client/Render/Atmosphere.luau`. Pick one as the default, or none.
 
 - **Settings defaults (C-81):** pan speed 1.1, zoom step 1.15, edge scroll on in live games (off in Studio), quality High (60 explosions, 100 tracers, 150 projectiles, 12 lights, 24 copies, full animation within 300 studs), Medium and Low below it, fog lights off, UI scale 1.0. In `src/client/Core/Settings.luau`; the key O opens it.
@@ -585,6 +686,8 @@ All with real mouse and keyboard input through the MCP tools.
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+39. **Done and used (S-68, protocol 23; C-85).** **The ALERT event and the strategic UNDER_ATTACK flag (2026-10-22, the user asked):** owner-only alerts (attacked, lost, built, stalls, nuke, commander attacked) rate-limited on the server, and the flag on units hit in the last ~3 s. Sent to sim-A directly.
 
 37. **Done and used (S-63, protocol 21; C-80): the unit panel shows own flares and chaff left.** **Live countermeasure charges for own units (C-76, 2026-10-22):** the unit panel shows ammo from S-61 but flares / chaff only as the def's maximum. Suggested: a 4th OwnerField bit, CHARGES 8: `flares u8, chaff u8` (charges left), on change and with the ENTER, for units with `countermeasures`. Low priority. Sent to sim-A directly.
 38. **Done and used (S-63, Sim/Stats; C-80): the results screen shows them.** **Match statistics per player (2026-10-22, the user asked):** for the results screen: units built, lost and killed, supply / power gathered and spent, damage dealt per player, counted by the sim (e.g. `Sim/Stats`), read by the Roblox server at match end; no wire change. Medium priority. Sent to sim-A directly.

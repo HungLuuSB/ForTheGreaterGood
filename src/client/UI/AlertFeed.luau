@@ -1,6 +1,6 @@
 --!strict
 -- Alert feed (C-68, guide 15.7), a functional PLACEHOLDER: the newest
--- alerts (Core/Alerts through the API's `alert` signal) as lines at the top
+-- alerts (the server's, Core/Alerts through the API's `alert` signal) as lines at the top
 -- right that fade after SHOW seconds; a click jumps the camera there (J jumps
 -- to the last one, Input/Controls). Each alert also pings the minimap.
 
@@ -17,6 +17,8 @@ local COLOR = {
 	lost = Color3.fromRGB(255, 90, 80),
 	stall = Color3.fromRGB(240, 220, 90),
 	nuke = Color3.fromRGB(255, 60, 60),
+	commander = Color3.fromRGB(255, 120, 60),
+	built = Color3.fromRGB(130, 220, 130),
 }
 AlertFeed.COLOR = COLOR
 
@@ -56,7 +58,7 @@ function AlertFeed.new(api: Api.Api): UI
 		b.LayoutOrder = -math.floor(alert.time * 100)
 		b.Parent = list
 		b.MouseButton1Click:Connect(function()
-			if alert.kind ~= "stall" then
+			if alert.at then
 				api.actions.focusCamera(alert.x, alert.z)
 			end
 		end)

@@ -74,7 +74,7 @@ function Minimap.deposits(layers: Layers.Layers): { { number } }
 	return out
 end
 
-export type Dot = { u: number, v: number, team: number, kind: "unit" | "structure" | "blip" | "ghost", selected: boolean }
+export type Dot = { u: number, v: number, team: number, kind: "unit" | "structure" | "blip" | "ghost", selected: boolean, attacked: boolean } -- attacked: the server's UNDER_ATTACK flag (S-68)
 
 -- One dot per known unit.
 function Minimap.dots(world: World.World, selected: { [number]: boolean }): { Dot }
@@ -93,7 +93,7 @@ function Minimap.dots(world: World.World, selected: { [number]: boolean }): { Do
 		elseif def and def.domain == "structure" then
 			kind = "structure"
 		end
-		table.insert(out, { u = mu, v = mv, team = u.team, kind = kind, selected = selected[id] == true })
+		table.insert(out, { u = mu, v = mv, team = u.team, kind = kind, selected = selected[id] == true, attacked = bit32.band(flags, Schema.StrategicFlag.UNDER_ATTACK) ~= 0 })
 	end
 	return out
 end

@@ -33,6 +33,19 @@
 -- Its only randomness is its own Prng (seeded from the match seed and the
 -- player ID), used for the production mix.
 --
+-- Faction styles (S-76; docs/design/factions.md section 7), on top of the
+-- level (Skirmish.styled; easy keeps only the production mix):
+--   Order   more artillery in its waves (its pricier units make them
+--           later); hard: only safe deposits (as before) and a gun turret
+--           more at home; its advanced
+--           plant builds Wardens (deployable guns) among its tanks; hard
+--           recalls its army against enemy waves too.
+--   Chaos   a worker more (it expands wider); waves of 2 units more (its
+--           units are cheaper: the same value), growing faster, split in two
+--           lanes from LANE_MIN front units so half comes round a flank; a
+--           Shroud jammer guards each wave; its plant builds Locusts among its
+--           tanks and its advanced plant Minotaurs (siege).
+--
 -- Levels (S-17; a match option, `match.ai = { [player] = level }`):
 --   easy    for a new player (S-57): thinks every 2 s, 2 workers, one item
 --           queued per factory and at most one army unit per 20 s, an army
@@ -98,6 +111,8 @@ Skirmish.RECALL_RADIUS = 570 -- studs from home: an enemy wave this close brings
 Skirmish.RECALL_MIN = 3 -- known enemy ground units that make a wave
 Skirmish.RECALL_HOLD = 300 -- ticks no new wave leaves after a recall
 Skirmish.WAVE_ALIGN = 300 -- ticks: waves leave only at the start of these windows (S-57)
+Skirmish.FLANK_OFFSET = 300 -- studs off the straight line: a two-lane wave's flank waypoint (S-76)
+Skirmish.LANE_MIN = 12 -- front units a wave needs before it splits in two lanes (smaller halves arrive piecemeal; S-76)
 Skirmish.RALLY_GAP = 600 -- studs at least between two rally points: beyond artillery range (Verdict 480 since S-62) with room for the army's spread (S-57)
 
 export type Level = {
@@ -127,6 +142,12 @@ export type Level = {
 	maxArmy: number, -- army units it keeps at most (S-57; easy)
 	tanksBeforeGen3: number, -- tanks before its third generator (S-57; normal): this or one more, by its Prng
 	recall: boolean, -- pulls the whole army home against an enemy wave near the base (S-57)
+	-- faction style (S-76; set by Skirmish.styled)
+	wardenShare: number?, -- share of advanced-plant army items that are Wardens (Order)
+	minotaurShare: number?, -- share of advanced-plant army items that are Minotaurs (Chaos)
+	locustShare: number?, -- share of plant tanks that are Locusts (Chaos)
+	lanes: number?, -- 2: half of each wave attacks round a flank (Chaos)
+	jammer: boolean?, -- a mobile jammer guards each wave (Chaos)
 }
 
 Skirmish.LEVELS = table.freeze({
@@ -219,6 +240,40 @@ Skirmish.LEVELS = table.freeze({
 local CT = Schema.CmdType
 local BIT = Categories.Bit
 
+-- The level's settings with the faction's style applied (S-76): `prefix`
+-- "ord_" or "chs_". Easy keeps its strength and only takes the production
+-- mix, so a new player meets either faction's units at the same pace.
+function Skirmish.styled(cfg: Level, prefix: string, levelName: string): Level
+	local s = table.clone(cfg) :: any
+	local strong = levelName ~= "easy"
+	if prefix == "ord_" then
+		s.wardenShare = 0.25
+		if strong then
+			s.artyChance = cfg.artyChance + 0.1
+			s.recall = true
+		end
+		if levelName == "hard" then
+			-- (on normal they made Order mirrors stall at their own bases
+			-- for the whole match, so normal keeps its expansion)
+			s.safeExpansion = true
+			s.defenses = cfg.defenses + 1
+		end
+	else
+		s.locustShare = 0.35
+		s.minotaurShare = 0.25
+		if strong then
+			s.workers = cfg.workers + 1
+			-- a wave counts units: Chaos's cheaper units make up a wave of the
+			-- same value with about 30% more of them
+			s.firstWave = cfg.firstWave + 2
+			s.waveGrowth = cfg.waveGrowth + 1
+			s.lanes = 2
+			s.jammer = true
+		end
+	end
+	return table.freeze(s) :: Level
+end
+
 export type Brain = {
 	sim: Types.Sim,
 	player: number,
@@ -238,6 +293,7 @@ export type Brain = {
 	waves: number,
 	lastWaveOrder: number, -- tick the wave was last sent at its target
 	kiting: { [number]: number }, -- unit → tick it last backed off (S-7)
+	flanked: { [number]: boolean }, -- two-lane waves: units past their flank waypoint (S-76)
 	level: string, -- "easy" | "normal" | "hard" (S-17)
 	cfg: Level,
 	dirX: number, -- unit vector from home toward the enemy start
@@ -275,9 +331,10 @@ end
 -- for the player, else "normal"). Needs a map with start positions.
 function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 	local levelName = level or sim.match.ai[player] or "normal"
-	local cfg = Skirmish.LEVELS[levelName]
-	assert(cfg, `Skirmish.new: unknown level {levelName}`)
+	local base = Skirmish.LEVELS[levelName]
+	assert(base, `Skirmish.new: unknown level {levelName}`)
 	local p = sim.players[player]
+	local cfg = Skirmish.styled(base, if p.team % 2 == 1 then "ord_" else "chs_", levelName) -- S-76
 	local map = sim.map :: Passability.PassMap
 	local layers = map.layers
 	local w = sim.world
@@ -389,6 +446,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		-- players that was always the same side (S-57)
 		rallyDist = math.clamp((dl - Skirmish.RALLY_GAP) / 2, 40, 160),
 		kiting = {},
+		flanked = {},
 		level = levelName,
 		cfg = cfg,
 		dirX = (enemyX - homeX) / dl,
@@ -588,6 +646,7 @@ type Census = {
 	aa: number, -- IR SAM trucks
 	radarTrucks: { number }, -- mobile radars
 	trackers: { number }, -- mobile fire-control radars
+	jammers: { number }, -- mobile jammers (S-76)
 	workers: number,
 	enemyAir: number, -- enemy aircraft the team knows (any detection: radar reveals the domain, D107)
 	enemyAirNearHome: number,
@@ -621,6 +680,7 @@ local function census(brain: Brain): Census
 		aa = 0,
 		radarTrucks = {},
 		trackers = {},
+		jammers = {},
 		workers = 0,
 		enemyAir = 0,
 		enemyAirNearHome = 0,
@@ -718,6 +778,8 @@ local function census(brain: Brain): Census
 					table.insert(c.aaTrucks, id)
 				end
 			end
+		elseif (d.sensors.jam or 0) > 0 then
+			table.insert(c.jammers, id) -- mobile jammers (S-76)
 		elseif (d.sensors.track or 0) > 0 then
 			table.insert(c.trackers, id)
 		elseif d.sensors.radar > 0 then
@@ -961,12 +1023,16 @@ local function think(brain: Brain)
 				break -- easy: a small army (S-57)
 			else
 				item = if brain.rng:chance(cfg.artyChance) then arty else tank
+				if item == tank and cfg.locustShare and brain.rng:chance(cfg.locustShare) then
+					item = "chs_locust" -- Chaos numbers (S-76)
+				end
 				brain.lastArmyQueued = sim.tick
 			end
 			queueItem(f, item)
 		end
 	end
 	local trackerPlanned = #c.trackers + queued(sim, c.advFactories, trackerUnit)
+	local jammerPlanned = #c.jammers + queued(sim, c.advFactories, "chs_shroud")
 	for _, f in c.advFactories do
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
@@ -974,8 +1040,16 @@ local function think(brain: Brain)
 			if trackerPlanned < 1 then
 				item = trackerUnit -- fire-control radar for the artillery (S-7)
 				trackerPlanned += 1
+			elseif cfg.jammer and jammerPlanned < 1 then
+				item = "chs_shroud" -- a jammer to cover the waves (S-76)
+				jammerPlanned += 1
 			else
 				item = if brain.rng:chance(0.5) then faction(brain, "judgement", "hydra") else faction(brain, "paladin", "juggernaut")
+				if cfg.wardenShare and brain.rng:chance(cfg.wardenShare) then
+					item = "ord_warden" -- Order's deployable guns (S-76)
+				elseif cfg.minotaurShare and brain.rng:chance(cfg.minotaurShare) then
+					item = "chs_minotaur" -- Chaos siege (S-76)
+				end
 			end
 			queueItem(f, item)
 		end
@@ -1212,7 +1286,45 @@ local function think(brain: Brain)
 			end
 		end
 		local lead = if #front > 0 then front[1] else wave[1]
-		if #front > 0 then
+		local tx, tz = targetX or brain.enemyX, targetZ or brain.enemyZ
+		if #front >= Skirmish.LANE_MIN and (cfg.lanes or 1) >= 2 then
+			-- two lanes (S-76): every second unit comes round a flank, through
+			-- a waypoint off the straight line, then joins the attack
+			local mx, mz = (brain.homeX + tx) / 2, (brain.homeZ + tz) / 2
+			local dx, dz = tx - brain.homeX, tz - brain.homeZ
+			local dl = math.max(math.sqrt(dx * dx + dz * dz), 1)
+			-- the flank side in world terms (+z on even waves): mirrored
+			-- players flank the same side of the map, not each its own left
+			local px, pz = -dz / dl, dx / dl
+			local side = if brain.waves % 2 == 0 then 1 else -1
+			if pz < 0 or (pz == 0 and px < 0) then
+				side = -side
+			end
+			local wx = math.clamp(mx + px * Skirmish.FLANK_OFFSET * side, g.originX + 40, g.originX + g.sizeX - 40)
+			local wz = math.clamp(mz + pz * Skirmish.FLANK_OFFSET * side, g.originZ + 40, g.originZ + g.sizeZ - 40)
+			local direct, flank = {}, {}
+			for i, id in front do
+				if i % 2 == 0 and not brain.flanked[id] then
+					if (w.posX[id] - wx) ^ 2 + (w.posZ[id] - wz) ^ 2 < 120 ^ 2 then
+						brain.flanked[id] = true -- round the flank: straight at the target from now
+						table.insert(direct, id)
+					else
+						table.insert(flank, id)
+					end
+				else
+					table.insert(direct, id)
+				end
+			end
+			fight(direct, tx, tz)
+			if #flank > 0 then
+				fight(flank, wx, wz)
+				local cell, ox, oz = g:encode(tx, tz)
+				submit(sim, brain.player, { cmdType = CT.FIGHT, flags = Schema.CmdFlag.QUEUE, unitIds = flank, cell = cell, offX = ox, offZ = oz })
+			end
+			if #support > 0 then
+				submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = support, targetId = lead })
+			end
+		elseif #front > 0 then
 			fight(front, targetX or brain.enemyX, targetZ or brain.enemyZ)
 			if #support > 0 then
 				submit(sim, brain.player, { cmdType = CT.GUARD, flags = 0, unitIds = support, targetId = lead })
@@ -1221,7 +1333,7 @@ local function think(brain: Brain)
 			fight(wave, targetX or brain.enemyX, targetZ or brain.enemyZ)
 		end
 		local escorts = {}
-		for _, list in { c.radarTrucks, c.trackers } do
+		for _, list in { c.radarTrucks, c.trackers, c.jammers } do
 			for _, id in list do
 				table.insert(escorts, id)
 			end

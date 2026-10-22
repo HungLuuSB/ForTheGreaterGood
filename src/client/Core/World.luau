@@ -113,6 +113,7 @@ export type World = {
 	wrecks: { [number]: Wreck }, -- known wrecks by wreck ID (C-65)
 	wreckAdded: { number }, -- queues the wreck renderer drains: WRECK
 	wreckGone: { number }, -- WRECK_GONE (reclaimed or gone)
+	alertQueue: { { kind: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT events (protocol 23, S-68) Core/Alerts drains
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
 }
 
@@ -144,6 +145,7 @@ function World.new(defs: Defs.DefSet): World
 		wrecks = {},
 		wreckAdded = {},
 		wreckGone = {},
+		alertQueue = {},
 		deathWrecks = {},
 	}
 end
@@ -170,6 +172,7 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.wrecks)
 	table.clear(world.wreckAdded)
 	table.clear(world.wreckGone)
+	table.clear(world.alertQueue)
 	table.clear(world.deathWrecks)
 	world.strategicTick = -1
 	world.economy = nil

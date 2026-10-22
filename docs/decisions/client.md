@@ -639,3 +639,45 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** `Render/Atmosphere` holds four lighting presets (Current, Clear day, Battlefield haze, Dusk) that set Lighting's clock, brightness, ambient, exposure and shadow softness, the Atmosphere, Bloom, a ColorCorrection (made if missing, off in Current) and SunRays on this client. The first apply remembers the place's values; Current puts them back. The settings menu's "Atmosphere" row picks one; Current is the default, as the user asked. Measured in the same normandy fight: the presets cost about 0.5 ms of GPU over Current (4.3 → 4.8–4.9 ms), no CPU. Dusk was tuned after the first try came out too dark to read a fight.
 
 **Why:** the user asked for 2–3 atmosphere options to choose from, with before / after screenshots and frame cost, the current look staying the default. Lighting.Technology isn't scriptable, so "Future" lighting stays a place setting.
+
+### C-84 — Deploy phases in piece scripts; the Warden and the Minotaur (2026-10-22)
+
+**Decision:** PieceAnim calls a new hook `Deploy(u, phase, instant)` for defs with `deploy` when the phase read from the state bits changes: DEPLOYING after deployed is "packing", DEPLOYING otherwise "unpacking", DEPLOYED "deployed", neither "packed"; `instant` the first time (a unit entering view already deployed snaps). The Warden's script turns `spades` 55° down and lowers `base` 0.4 studs over the def's deploy time, and on packing locks `turret` and `barrel` forward (its AimWeapon is ignored while packing or packed, when it can't fire); the Minotaur's script drives `ram` 2.5 studs forward on a slot 2 shot (the demolition charge) and back at 2 studs/s, and aims and recoils its gun like the default script.
+
+**Why:** the user asked for the faction-only units' visuals as they land (Warden deploying, Minotaur's charge). The timing follows the server's state bits, so the client never shows a deployed gun the server hasn't deployed. Piece names follow S-64's def (`pieces`) and the models request.
+
+### C-85 — Alerts from the server; S-69 to S-73 followed (2026-10-23)
+
+**Decision:** NetIn queues ALERT events (protocol 23, S-68) in `world.alertQueue` (cell decoded to its centre; stalls carry cell 0); Core/Alerts maps each kind to the feed's kind, text (with the unit's name when the event names one) and whether it has a place to jump to (`at`; stalls don't), and drains the queue each frame. The client's inference (health drops, deaths, the economy ratio, launch warnings) is removed; the server rate-limits. The strategic UNDER_ATTACK flag makes minimap dots and strategic icons blink red (4 Hz phase; the icon layer redraws only on a phase change). S-70: a def with `deathBlast` adds an impact burst of its `aoe` on its death. S-72: `sensors.radarDrain` counts in the stats' upkeep. S-73: the lobby has `friendlyFire` (default on) passed as `match.friendlyFire`.
+
+**Why:** request 39 landed; the server knows who hit whom, sees through no fog it shouldn't, and limits alerts the same for every client. sim-A asked the client to draw the death blast.
+
+### C-86 — Draft 3 icons wired in; units missing from the sheet show a plain frame (2026-10-23)
+
+**Decision:** The atlas points at the imported draft 3 sheet (`87919807696998`). Units added after an import get a `STOPGAP` entry in `tools/icons/render.mjs` that reuses an existing tile, so the sheet stays the imported one until the catalogue lists them (S-75: Locust, Cyclops, Barrier, Citadel). As a backstop, `Icons.ofDef` gives a def with no atlas entry its domain's dashed frame (ground → vehicle, air, naval → ship, structure → struct) instead of erroring.
+
+**Why:** in the user's 2-client test, the Locust (new in main) had no atlas entry and `Icons.ofDef` errored every frame in the build menu. Each new unit would otherwise need a re-import before the client works, and a missing icon must not break the UI.
+
+### C-87 — Shield dome prototype: a repulsor field, team-coloured dome, plasma core and capacity bar (2026-10-23)
+
+**Decision:** A client-only prototype, not wired to the sim.
+- **`Core/Shield` (pure):**
+  - **Hit patches:** hex rings walked along great circles so they wrap the dome. Strength sets 1–3 rings, outer rings light later and cooler and fade sooner, and centre plates dent. Young hits within 6 studs merge, up to 6 patches per dome. Idle flickers are 1-ring patches, up to 6.
+  - **Repulsor field:** in a 50-stud band, an inbound shell's radial speed bleeds off (a constant part plus drag, stronger deeper in) until it turns, which is the hit. Then the same field throws it out.
+  - **Force:** the charge over 50% (capped at 1), divided by mass^0.6. A shell still inbound at the surface is a breach.
+  - **Charge:** drained by mass on each turn or breach. At 0% the dome collapses, and it rises again at 25%.
+  - **Core colour:** green, then orange at 40%, then red at 0%.
+- **`Render/ShieldFx`:**
+  - **Field:** a 0.8-transparency team-coloured ball.
+  - **Rim:** a ring of Neon segments on the sphere's silhouette from the camera, recomputed each frame (a circle facing the camera, R²/D towards it, of radius R·√(1 − R²/D²)), with a fainter, wider band inside it.
+  - **Surface:** a sphere-surface ParticleEmitter of sparkles, and team-coloured idle hexes.
+  - **Core:** a Neon ball, halo and short-range light in the core colour.
+  - **Capacity bar:** in a ScreenGui with IgnoreGuiInset, placed at the projected top of the rim.
+  - **Animations:** a collapse (flash, shrink to 85%, fade) and a rise (grow from 10%).
+  - **Plates and shells:** hit plates on the heat ramp, Neon parts moved with BulkMoveTo from a pool capped at 400. Shells are coloured whiter as the field slows them.
+
+**Why:** the user's rules for the deflector: slow to a stop, then throw back with growing speed; heavier shells take longer; full force at ≥50% and weaker below, so big shells get through; a capacity bar; a core from green to red; collapse at 0%, rise at 25%. Tried and dropped:
+- the ForceField material read grey and didn't show the team colour;
+- a Highlight outline vanished on a transparent ball, and only 31 can show at once;
+- BillboardGuis don't render in the playtest, so the bar is a screen-space frame like the game's other overlays;
+- plates cooling into team colour turned pink against the red.

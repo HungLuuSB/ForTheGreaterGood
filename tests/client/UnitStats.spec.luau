@@ -105,7 +105,12 @@ return function(t: any)
 		local gen = own("ord_generator")
 		t.equal((gen.income :: any).power, defs.units.ord_generator.production.power)
 		local tribunal = own("ord_tribunal")
-		t.equal(tribunal.upkeep, defs.units.ord_tribunal.sensors.trackDrain, "tracking drains power")
+		local ts = defs.units.ord_tribunal.sensors
+		t.equal(tribunal.upkeep, (ts.trackDrain or 0) + (ts.radarDrain or 0), "tracking (and radar, S-72) drain power")
+		local beacon = defs.units.ord_beacon.sensors
+		if (beacon.radarDrain or 0) > 0 then
+			t.equal(own("ord_beacon").upkeep, beacon.radarDrain, "a radar tower drains power")
+		end
 		t.equal(tribunal.track, defs.units.ord_tribunal.sensors.track)
 		local mason = own("ord_mason")
 		t.equal(mason.buildPower, defs.units.ord_mason.buildPower)

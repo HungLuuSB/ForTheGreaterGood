@@ -56,4 +56,32 @@ return function(t: any)
 		t.equal(landSplash, 0, "no splashes on land")
 		print(string.format("    sea: %d of %d impacts splash; land: %d of %d", seaSplash, seaImpacts, landSplash, landImpacts))
 	end)
+
+	t.test("a Fusion Reactor's death blast (S-70) draws an explosion as wide as its damage", function()
+		local sim = Sim.new({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		local g = sim.map.layers.grid
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+		local id = Spawn.unit(sim, "chs_fusion", 1, 0, 0, 0)
+		local blast = sim.defs.units.chs_fusion.deathBlast
+		local fx = Effects.new()
+		local Combat = require("../../src/server/Sim/Combat/Combat")
+		local found = false
+		for tick = 1, 60 do
+			if tick == 5 then
+				Combat.queueDamage(sim.combat, id, 1e7, 0)
+			end
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			for _, b in fx.bursts do
+				if b.kind == "impact" and b.radius == blast.aoe then
+					found = true
+				end
+			end
+			table.clear(world.died)
+		end
+		t.expect(found, "a blast of the def's aoe")
+	end)
 end

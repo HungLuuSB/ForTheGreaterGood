@@ -196,8 +196,11 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 		f.BackgroundColor3 = TeamColors(d.team)
 		f.BackgroundTransparency = if d.kind == "ghost" then 1 elseif d.kind == "blip" then 0.4 else 0
 		local s = f:FindFirstChildOfClass("UIStroke") :: UIStroke
-		s.Color = if d.selected then Color3.new(1, 1, 1) else TeamColors(d.team)
-		s.Enabled = d.selected or d.kind == "ghost"
+		-- under attack (S-68): a red outline that blinks with the refresh
+		local blink = d.attacked and math.floor(now * 4) % 2 == 0
+		s.Color = if blink then Color3.fromRGB(255, 60, 50) elseif d.selected then Color3.new(1, 1, 1) else TeamColors(d.team)
+		s.Thickness = if blink then 2 else 1
+		s.Enabled = blink or d.selected or d.kind == "ghost"
 		f.Visible = true
 	end
 	for i = #dots + 1, #ui.pool do

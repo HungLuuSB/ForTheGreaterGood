@@ -4,7 +4,34 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: overnight 2026-10-22, branch `m-sim-2`; everything merged into `main`)
+## Summary (latest: faction night 2026-10-22, branch `m-sim-2`; everything merged into `main`)
+
+**This night** (the faction proposal approved; tasks 1–5, then the overnight list 6–12, replay compression and `docs/design/next.md`). Protocol 20 → 23. Tests: 350 fast in 52 specs → 386 fast in 62 (plus 6 slow). Every commit passed the fast suite; every merge into `main` passed fast, slow and the build.
+
+| Task | Result | Decision |
+|---|---|---|
+| 1. Shared-role trait pass | Sections 3.1–3.8 applied; IR SAMs Vigil 206 / Thorn 165 as you set. New `lune run factions` (equal value 6,000, 3 seeds; close / long / defend / flank): **12 of 12 roles in 0.8–1.25**. Tuned within ±10% except three steps (T1 turret yaw, T2 cannon damages where the proposal had none, Archon DIRCM); every changed number in `BALANCE.md` "Pass 3". Guide 2.1 has the new identity | S-62 |
+| 2. Warden, Minotaur | `Sim/Deploy` (unpacks when it stands still, 4 s; fires only deployed; damage / 1.5; protocol 22 state bits); Minotaur's siege gun and demolition charge. Counter-matrix rows | S-64 |
+| 3. Faction axis | `lune run faction_ai` → `docs/FACTION_AI.md` | S-65 |
+| 4. Refill priority | Missile refills first in a stall, up to 25% of income | S-66 |
+| 5. Performance | Select-all orders assign slots in the Pathing job; quadtrees update lazily. Normandy: Commands 1.4 → 0.9 ms, Projectiles+Damage 7.6–10.7 → 2.8–4.4 | S-67 |
+| 6. Alerts, ground fire | ALERT events (rate-limited, owner only) and the UNDER_ATTACK flag (protocol 23, also client request 39); ATTACK_GROUND for every ballistic weapon | S-68 |
+| 7. Weapons depth | Salvos (Judgement 4 rockets, Hydra 8); shells lead visible moving targets; MLRS back in band (1.20) | S-69 |
+| 8. Audit items | Fusion Reactor death blast; landed aircraft are ground targets and sit on their pad, busy pads skipped (and a fix: altitude stuck when nothing moved); radar upkeep; friendly fire as a match option | S-70..S-73 |
+| 9. 800 units | Same state hash, a third fewer sensor lookups: **Targeting within budget** (peaks 5.7–7.4 of 8). **Commands not** (peaks 1.8–2.2 of 1): needs a behaviour change, your pick under review | S-74 |
+| 10. Faction units, stage 3 | Locust, Cyclops, Barrier, Citadel; counter rows; Phalanx and Wraith designed (review); blockouts already existed (models request 5) | S-75 |
+| 11. Faction AI | `Skirmish.styled`: Order artillery, Wardens, recall (hard: safe expansion, a turret more); Chaos wider, same-value waves in two lanes, jammers, Locusts, Minotaurs. **Hard > Normal > Easy holds for each faction** | S-76 |
+| 12. Faction report | **Order wins 90%** of same-level matches (target 40–60%; undecided 9%, in target). Eight ±10% retunes and AI variants all stayed at 86–93%; no tuning committed. Kill tallies point at how AI matches fight; next step in `next.md` item 1 | S-78 |
+| Replay compression | Player replay format 2: delta transforms + pure-Luau LZ + Huffman, hashed. Soak spectator 4,738 → 1,679 KB (35%); a player's 21% | S-77 |
+| Client requests | 37 (countermeasure charges, protocol 21), 38 (`Sim/Stats` match statistics), 39 (alerts, with task 6) | S-63, S-68 |
+| Integration | Client C-74..C-85 and models M-14..M-18 merged. One conflict (models, `docs/progress/models.md`, from my S-64 request): aborted, resolved by the models stream, merged | — |
+| `next.md` | `docs/design/next.md`: the remaining sim work ranked, for your review | — |
+
+**Soak** (seed 4): 31.7 min in 21 s, tick avg 0.74 ms, p99 2.5, max 11.3; replay identical. **Levels** (`AI_LEVELS.md`): Normal–Easy 37–5, Hard–Normal 41–1, Hard–Easy 36–0.
+
+**Needs my review** gained: the faction pass's tuning and unmet conditions (S-62), Warden / Minotaur calls (S-64), Locust / Cyclops / Barrier / Citadel and the Phalanx and Wraith designs (S-75), Commands at 800 units (S-74), faction balance in AI matches (S-78).
+
+## Summary (previous round: overnight 2026-10-22)
 
 **Overnight** (the user's five tasks, with the client's requests 34–36 first, as they came). Protocol 18 → 20. Tests: 345 in 51 specs → 356 in 52 (350 fast, ~36 s; 6 slow, ~40 s). Every commit passed the fast suite; every merge into `main` passed fast, slow and the build.
 
@@ -117,7 +144,23 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## Needs my review
 
-- **Faction balance in AI matches (S-65, `docs/FACTION_AI.md`):** Order wins 89% of same-level matches (target 40–60%). Addressed next by the faction AI (task 11) and the ±10% tuning (task 12); Normandy (no deposits) leaves 43% of its matches undecided at 40 minutes.
+- **Faction-only units, stage 3 (S-75):** Locust, Cyclops, Barrier, Citadel built with placeholder numbers (decision log).
+  - **Locust:** built singly, not in pairs. Against Lancers it loses close (1.43) and long (1.11) but wins the flank (0.72), so it may want a little more punch.
+  - **Mechanism designs, not built:**
+    - **Phalanx (Order shield dome):**
+      - A deployable vehicle (Sim/Deploy, like the Warden) that, deployed, holds a dome of radius 60 with a 3,000-point shield pool. Recharge: 100/s after 3 s without a hit.
+      - Projectiles (shells, rockets, missiles, bombs) whose path enters the dome from outside burst on its surface and take their damage from the pool, not from the units inside. Hitscan and beams too.
+      - Shots fired from inside pass out freely. Melee range (the Minotaur's charge, 30 studs) is inside the dome, so siege ignores it.
+      - At 0 the dome drops until the pool is back at 25%.
+      - Implementation: a dome list per ally team, a segment-sphere test in Projectiles and in hitscan resolution, and a DOME event and state bit for the client.
+      - Counters: sustained fire (it drains), siege at the edge, artillery saturation.
+    - **Wraith (Chaos decoy drones):**
+      - A cheap T2 aircraft (value ~60, health 120, no weapon), built from the advanced airfield in groups.
+      - To radar it shows as a fighter or bomber (`radarSignature` 1, `spoof` = a def id the enemy's radar contacts report until a fire-control radar or sight identifies it; D107 already hides types of untracked contacts). Radar SAMs and interceptors spend missiles on it.
+      - One new field (`spoof`), and the strategic icon of an untracked contact switches to the spoofed type's family.
+      - Counters: Pinpointers and fire-control tracking reveal it; IR SAMs (sight) aren't fooled.
+- **800 units (S-74):** Targeting is within budget (peaks 5.7–7.4 ms of 8; a third fewer sensor lookups, same state hash). Commands is not (average 0.47 ms, peaks 1.8–2.2 of 1): what remains needs a behaviour change. Pick one: (a) attack-move hold checks for half the units each tick (a unit stops up to 0.07 s later), or (b) spread a big order's queue entries over 2–4 ticks.
+- **Faction balance in AI matches (S-65, S-78; `docs/FACTION_AI.md`):** Order wins 90% of same-level matches (target 40–60%; undecided 9%, in target). No ±10% retune moved it (S-78 lists eight tries); the kill tallies point at how AI matches fight, not at a number. My recommendation is `docs/design/next.md` item 1: reproduce it in a match-shaped trial first, then decide whether to fix the AI or retune beyond ±10% (your call).
 - **Warden and Minotaur (S-64):**
   - **My calls on the mechanic:** the Warden deploys automatically whenever it stands still, and can't fire while packed.
   - **Placeholder numbers:**
@@ -173,6 +216,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Player replays, format 2 (S-77):** `PlayerReplay.serialize` now writes format 2 (about a third of format 1's size; `parse` reads both, and refuses a damaged file). The API is unchanged, so `Main.server` / `ReplayPlayer` need nothing; a replay takes ~1 s to read per 25 minutes of spectator recording.
 - **New (S-70..S-73), no wire change:** the Fusion Reactor explodes when killed (def `deathBlast = { damage, aoe, edge }`; the client can draw it from the DEATH and the def); landed aircraft sit on top of their pad and are ground targets (S-71); radar towers, mobile radars and AWACS drain power (`sensors.radarDrain`; their radar radius shrinks in a stall, S-72); `match.friendlyFire` is a match option, default on (S-73), for the lobby.
 - **Done (request 39), S-68, protocol 23:** event **ALERT 18** `alert u8, cell u16, defIndex u16` with `Schema.AlertKind` (UNIT_ATTACKED 1, STRUCTURE_ATTACKED 2, UNIT_LOST 3, STRUCTURE_LOST 4, BUILD_DONE 5, STALL_SUPPLY 6, STALL_POWER 7, NUKE_LAUNCH 8, COMMANDER_ATTACKED 9), rate-limited server-side as you suggested; strategic **UNDER_ATTACK** set on own and allied units hit in the last 3 s. Also: ATTACK_GROUND now works for every unit with a ballistic weapon (artillery, tanks, gun turrets), contract section 8.
 - **Done (request 37), S-63, protocol 21:** OWNER field bit **CHARGES 8**: `flares u8, chaff u8` (charges left; 0 for a kind the def lacks), own units with flares or chaff, on change and with ENTER.
@@ -313,7 +357,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 
 ## Launch items (not built yet)
 
-- **Replay compression** (the user, 2026-10-22: note it, don't build it yet). Player replays (`Shared/Net/PlayerReplay`, "FTGP") are raw: a spectator recording runs ~420 KB per game minute at ~240 units (16.8 MB for the 40-minute soak), a player's ~33 KB per minute on a small 4-minute match. Before launch, where replays are stored or shared:
+- **Done (S-77): format 2, a third of format 1's size.** **Replay compression** (the user, 2026-10-22: note it, don't build it yet). Player replays (`Shared/Net/PlayerReplay`, "FTGP") are raw: a spectator recording runs ~420 KB per game minute at ~240 units (16.8 MB for the 40-minute soak), a player's ~33 KB per minute on a small 4-minute match. Before launch, where replays are stored or shared:
   - measure first: deflate / zstd-class compression of whole files vs. per-frame, on the soak's spectator recording and a player's;
   - cheap wins inside the format: delta-encode Tactical records against the unit's previous record, drop redundant tick headers inside a frame, run-length the Strategic snapshots (mostly unchanged every 5th tick);
   - it plugs in at `PlayerReplay.serialize` / `parse` (a new format byte, version 2), so recorders and players stay the same; Roblox has no built-in compressor, so a pure-Luau one (or a server-side store that compresses) is the likely path.

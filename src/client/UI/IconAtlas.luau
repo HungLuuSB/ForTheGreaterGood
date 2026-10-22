@@ -8,7 +8,7 @@ local IconAtlas = {}
 
 export type Entry = { tile: string, scale: number, frame: string, name: string }
 
-IconAtlas.image = "rbxassetid://96380571554418"
+IconAtlas.image = "rbxassetid://87919807696998"
 IconAtlas.TILE_W = 100 -- pixels per icon on the sheet
 IconAtlas.TILE_H = 117
 IconAtlas.GHOST_TRANSPARENCY = 0.55
@@ -32,6 +32,7 @@ IconAtlas.tiles = {
 	adv_air_worker_t2 = { 400, 117 },
 	supply_converter_t1 = { 500, 117 },
 	destroyer_t2 = { 600, 117 },
+	artillery_t1 = { 700, 234 },
 	sonar_station_t2 = { 700, 117 },
 	storage_t1 = { 800, 117 },
 	supply_extractor_t1 = { 900, 117 },
@@ -42,7 +43,6 @@ IconAtlas.tiles = {
 	power_generator_t1 = { 400, 234 },
 	mobile_radar_sam_t2 = { 500, 234 },
 	fighter_t1 = { 600, 234 },
-	artillery_t1 = { 700, 234 },
 	mobile_ir_sam_t1 = { 800, 234 },
 	mlrs_t2 = { 900, 234 },
 	scout_t1 = { 0, 351 },
@@ -52,13 +52,13 @@ IconAtlas.tiles = {
 	asw_helicopter_t2 = { 400, 351 },
 	carrier_t2 = { 500, 351 },
 	sonar_station_t1 = { 600, 351 },
+	light_tank_t1 = { 200, 468 },
 	air_superiority_t2 = { 700, 351 },
 	heavy_turret_t2 = { 800, 351 },
 	main_battle_tank_t2 = { 300, 702 },
 	amphibious_tank_t2 = { 900, 351 },
 	bomber_t1 = { 0, 468 },
 	nuke_silo_t3 = { 100, 468 },
-	light_tank_t1 = { 200, 468 },
 	adv_naval_worker_t2 = { 300, 468 },
 	floating_turret_t1 = { 400, 468 },
 	ground_worker_t1 = { 500, 468 },
@@ -110,6 +110,7 @@ IconAtlas.byDef = {
 	chs_condor = { tile = "adv_air_worker_t2", scale = 1.15, frame = "vtol", name = "Adv. Air Worker" },
 	chs_converter = { tile = "supply_converter_t1", scale = 1, frame = "struct", name = "Supply Converter" },
 	chs_corsair = { tile = "destroyer_t2", scale = 1.15, frame = "ship", name = "Destroyer" },
+	chs_cyclops = { tile = "artillery_t1", scale = 1, frame = "vehicle", name = "Artillery" },
 	chs_deepear = { tile = "sonar_station_t2", scale = 1, frame = "struct", name = "Sonar Station" },
 	chs_depot = { tile = "storage_t1", scale = 1, frame = "struct", name = "Storage" },
 	chs_extractor = { tile = "supply_extractor_t1", scale = 1, frame = "struct", name = "Supply Extractor" },
@@ -130,6 +131,7 @@ IconAtlas.byDef = {
 	chs_leech = { tile = "asw_helicopter_t2", scale = 1.15, frame = "vtol", name = "ASW Helicopter" },
 	chs_leviathan = { tile = "carrier_t2", scale = 1.15, frame = "ship", name = "Carrier" },
 	chs_listener = { tile = "sonar_station_t1", scale = 1, frame = "struct", name = "Sonar Station" },
+	chs_locust = { tile = "light_tank_t1", scale = 1, frame = "vehicle", name = "Light Tank" },
 	chs_manticore = { tile = "air_superiority_t2", scale = 1.15, frame = "air", name = "Air Superiority" },
 	chs_maw = { tile = "heavy_turret_t2", scale = 1.15, frame = "defense", name = "Heavy Turret" },
 	chs_minotaur = { tile = "main_battle_tank_t2", scale = 1.15, frame = "vehicle", name = "Main Battle Tank" },
@@ -170,10 +172,12 @@ IconAtlas.byDef = {
 	ord_archangel = { tile = "awacs_t2", scale = 1.15, frame = "air", name = "AWACS" },
 	ord_architect = { tile = "adv_ground_worker_t2", scale = 1.15, frame = "vehicle", name = "Adv. Ground Worker" },
 	ord_archon = { tile = "air_superiority_t2", scale = 1.15, frame = "air", name = "Air Superiority" },
+	ord_barrier = { tile = "storage_t1", scale = 1, frame = "struct", name = "Storage" },
 	ord_bastion = { tile = "heavy_turret_t2", scale = 1.15, frame = "defense", name = "Heavy Turret" },
 	ord_beacon = { tile = "radar_tower_t2", scale = 1, frame = "struct", name = "Radar Tower" },
 	ord_bulwark = { tile = "gun_turret_t1", scale = 1, frame = "defense", name = "Gun Turret" },
 	ord_choir = { tile = "sonar_station_t2", scale = 1, frame = "struct", name = "Sonar Station" },
+	ord_citadel = { tile = "heavy_turret_t2", scale = 1.15, frame = "defense", name = "Heavy Turret" },
 	ord_converter = { tile = "supply_converter_t1", scale = 1, frame = "struct", name = "Supply Converter" },
 	ord_crusader = { tile = "destroyer_t2", scale = 1.15, frame = "ship", name = "Destroyer" },
 	ord_curtain = { tile = "jammer_tower_t1", scale = 1, frame = "struct", name = "Jammer Tower" },

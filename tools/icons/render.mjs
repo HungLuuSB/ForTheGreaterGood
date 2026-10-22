@@ -58,6 +58,10 @@ const FAMILY = {
 const STOPGAP = {
 	ord_warden: "Main Battle Tank", // S-64: a deployable gun
 	chs_minotaur: "Main Battle Tank", // S-64: a siege ram
+	chs_locust: "Light Tank", // S-75: a cheap autocannon tank
+	chs_cyclops: "Artillery", // S-75: a siege mortar (structures only)
+	ord_barrier: "Storage", // S-75: a wall segment, no weapon
+	ord_citadel: "Heavy Turret", // S-75: a fortress gun with a SAM and a radar
 };
 
 // Entries drawn in the frame of each def's own domain rather than the
