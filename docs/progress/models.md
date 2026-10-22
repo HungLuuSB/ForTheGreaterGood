@@ -4,7 +4,36 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
-## Summary (overnight 2026-10-22)
+## Summary (review batch, 2026-10-22)
+
+Your review of the overnight batch: BAR style approved for both tanks (M-18), camouflage Lancers retired (their `ModelReview` copies removed; files kept). Every commit touches only `src/shared/Defs/Blockouts/`, `assets/`, `.gitignore` and docs. Tests at `74ef97b`: `test_client` 44 specs, 156 passed; `test` 62 specs, 386 passed; `build` 557 scripts compile, 1520 requires resolve.
+
+| # | What | Commits | Status |
+|---|---|---|---|
+| 1 | Lancer color: measured side by side in Studio, then two passes (warmer, rougher paint, darker seams, more AO; then 8% lighter so it draws like its blockout) | `fe6c02a`, `1eca1d7` | The first pass is imported and draws (`debug_out/screens/bar_lancer_fix_closeup.jpg`). **The second (brightness) pass needs one more import** (`assets/models/ord_lancer/export/ord_lancer.fbx`) |
+| 2 | Ravager: lighter gunmetal and edge highlight, 10% lower and narrower than the Lancer (`lib.Piece.scale`), orange accents unchanged | `fe6c02a`, `1eca1d7` | Same as 1: imported once, **its brightness pass needs an import** (`assets/models/chs_ravager/export/chs_ravager.fbx`) |
+| 3 | Team color swap: runtime `BasePart.Color` on `TeamColor` parts under the color map's alpha (B's `ModelPool` already does this); method in `docs/contracts/rig.md` 6 | `fe6c02a`, `08d2da5` | Done: `debug_out/screens/team_55_close.jpg`, `team_55_220.jpg` (blue, red, green, yellow on both tanks; emissive unchanged) |
+| 4 | Perf: 100 and 300 BAR tanks vs blockouts, render CPU per frame at close and normal zoom, appearance hitch | `08d2da5` | Done: no measurable render-CPU cost over blockouts; the appearance hitch is about half the blockouts' (pipeline.md). The cold first-load hitch (review 2: 320 ms) wasn't repeatable once the maps were loaded; preloading is the client's call |
+| 5 | Warden packed vs deployed: jacks, shield wings, bigger hazard-striped spades, hull drop, gun raised (M-19) | `96800a0` (in main) | Done as blockout and review pose; **B's piece script needs to animate the new pieces (Request 6)**; at 220 studs the yellow spades and the front wall read, but the change is still small |
+| 6 | Minotaur low, wide, front-heavy with a ram wider than the hull; Cyclops tall with a fixed 75° tube and the eye on a mast | `96800a0` (in main) | Done: `debug_out/screens/minotaur_cyclops_*.jpg` |
+| 7 | Reckoning silo top: split blast doors and a hazard edge (palette key `hazard`) | `96800a0` (in main) | Done: `debug_out/screens/fix_overview_55_220.jpg` |
+| Shield | Shield effect assets (Order): dome, inner dome, ring, emitter device, swirl / beam / speck / ripple textures, all white for team tint; pending `ord_shieldgen` blockout; `docs/contracts/fx.md` | `200ac59`, `08d2da5` | Done: in "FTGG Art" `ReplicatedStorage.FX.Shield`; `debug_out/screens/shield_*.jpg` |
+| 8 | T1 vs T2 per role: T2 structures that didn't read as the upgrade got a signature piece (Order radome and covered dock, Chaos ski jump and giant crane, raised Bastion and Maw, wider advanced extractors); T1 sonar and jammer made | `e993e36` | Done: `debug_out/screens/tier_*.jpg`; T2 ground units compared after item 9 (`ground_t1_t2_*.jpg`) |
+| 9 | Blockouts for everything still generic: T2 ground units and both commanders, T1/T2 aircraft, T1/T2 ships, the last generic structures. **All 133 defs now have a hand-made blockout** | `7506eae`, `fcc05b9`, `74ef97b` | Done: `debug_out/screens/ground_*`, `air_*`, `naval_*.jpg` |
+| 10 | BAR meshes for the rest of batch 1 T1 ground units | — | Not started in this batch: next, constructors first (Mason, Scrapper) |
+| 11 | BAR meshes for the most-seen structures | — | Not started |
+
+**Needs your review:**
+- No reference screenshot reached me with the shield request (not in the message or `assets/reference/`): the shield assets follow your written description.
+- Shield emitter core glows Order cyan (M-16), not the team color; dome radius is B's choice (the check used R = 40). The emitter is about 4 studs across.
+- Cyclops: the weapon pitches −5° to 60° from a level rest, so the tall tube is fixed and only a short cradle (`barrel`) pitches (M-19).
+- `assets/reference/` wasn't gitignored before; now its images are (only `bar/README.md` stays tracked).
+- Several T2 units' weapons turn `launcher` while their `turret` piece turns nothing (Seraph, Gorgon, Judgement, Hydra), like Halo/Hornet before S-64; the blockouts work either way (M-3). Your call whether to ask the sim session for `turretPiece = "turret", pitchPiece = "launcher"`.
+- Aircraft and ships are blockouts in the same faction language; their proportions (fuselage 7–9 studs, footprint-3 ships 24 long) follow the generic sizes.
+
+**Your steps:** import `ord_lancer.fbx` and `chs_ravager.fbx` (the brightness pass) so I can re-rig and re-measure them against their blockouts.
+
+## Earlier summary (overnight 2026-10-22)
 
 **All four tasks are done, committed, pushed and in the merge queue below.** Every commit touches only `src/shared/Defs/Blockouts/`, `assets/` and docs. Tests: `lune run test_client` 34 specs, 116 passed; `lune run build` 454 scripts compile, every require resolves.
 
