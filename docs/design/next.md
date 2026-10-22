@@ -76,7 +76,7 @@ Each makes AI matches look more like the game players will play, and they feed i
 
 Worth a pass after item 1, since the AI's way of fighting decides what "balanced" has to mean.
 
-## 9. Tooling that makes the above faster (S)
+## 9. Tooling that makes the above faster (S) — done (S-99, 2026-10-23)
 
 - `faction_ai` and `ailevels` take 5–20 minutes; matches are independent, so a Lune process per map in parallel would cut that to the longest map.
 - Deterministic work counters (sensor lookups, path work units) next to the noisy timings in `stress` / `profile_normandy`. S-74 had to count calls by hand to show its effect.

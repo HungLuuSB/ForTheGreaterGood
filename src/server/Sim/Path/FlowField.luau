@@ -27,6 +27,8 @@ local readu8, writeu8 = buffer.readu8, buffer.writeu8
 local SQRT2 = math.sqrt(2)
 local INF = math.huge
 
+local Work = require("../Work")
+
 local FlowField = {}
 
 FlowField.NONE = 255
@@ -322,6 +324,7 @@ function FlowField.run(job: Job, budget: number?): boolean
 	end
 
 	job.workDone += spent
+	Work.counts.flowWork += spent -- (S-99)
 	return job.phase == "done"
 end
 

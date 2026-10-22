@@ -11,6 +11,8 @@
 local Heap = require("./Heap")
 local Quadtree = require("./Quadtree")
 
+local Work = require("../Work")
+
 local Route = {}
 
 export type Corridor = {
@@ -257,6 +259,7 @@ function Route.runSearch(s: Search, budget: number): boolean
 		s.done = true
 	end
 	s.workDone += spent
+	Work.counts.routeWork += spent -- (S-99)
 	return s.done
 end
 
