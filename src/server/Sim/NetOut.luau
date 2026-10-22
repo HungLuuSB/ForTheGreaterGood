@@ -41,7 +41,17 @@
 --     HOMING_SYNC_EVERY ticks (staggered by projectile ID), the position and
 --     velocity of each homing projectile the client has that is in the
 --     tactical area (camera + LEAVE_MARGIN), seen or not (S-43);
---     also on the tick one comes (back) into that view.
+--     also on the tick one comes (back) into that view. Shells in a shield
+--     dome's field get the same, plus one on the tick they turn or break
+--     through and one on the tick they leave the field (S-79).
+--   * Shield domes (S-79, protocol 24): a generator in the tactical tier
+--     brings a SHIELD event (charge, up, recharging) after its ENTER and
+--     whenever its charge moved SHIELD_STEP/255 or its flags changed. Its
+--     tactical margins grow by its dome's radius, so the dome is known
+--     wherever it shows. SHIELD_HIT events (a shell turned or through) go
+--     with the combat events: for projectiles the client has, or anywhere
+--     in the camera rectangle; the generator's ID only when the client has
+--     it (else 0).
 --   * Economy (Eco channel, S-2): the player's team account, on economy
 --     ticks when it changed.
 --   * Sight and wrecks (Events, protocol 10, S-26): the ally team's sight
@@ -69,6 +79,7 @@ local Stockpile = require("./Stockpile")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
 local Sensors = require("./Sensors")
+local Shield = require("./Shield")
 local Types = require("./Types")
 local World = require("./World")
 
@@ -76,8 +87,16 @@ local NetOut = {}
 
 local combatEvents: (Types.Sim, Grid.Grid, NetState.PlayerNet, number, { number }, { Schema.Event }) -> ()
 
+-- shield domes this tick (S-79; set at the start of NetOut.step)
+local shieldNow: { [number]: number } = {}
+local shieldDirty: { [number]: boolean } = {}
+local fieldSync: { [number]: boolean } = {}
+local domeCells: { [number]: number } = {} -- unit def index → dome radius in cells (shield generators)
+local domeCellsOf: { [any]: { [number]: number } } = setmetatable({}, { __mode = "k" }) :: any
+
 NetOut.ENTER_MARGIN = 2 -- cells
 NetOut.LEAVE_MARGIN = 5
+NetOut.SHIELD_STEP = 4 -- of 255: charge change that sends a SHIELD event (~1.6%)
 NetOut.STRATEGIC_EVERY = 5 -- ticks (3 Hz)
 NetOut.HOMING_SYNC_EVERY = 5 -- ticks (3 Hz); 0 turns corrections off (measurements)
 
@@ -292,6 +311,16 @@ local function withVel(e: Schema.Event, vx: number, vy: number, vz: number): Sch
 	return e
 end
 
+-- SHIELD_FIELD for projectile `p`, in the field of generator `gen` (S-79).
+local function fieldEvent(sim: Types.Sim, g: Grid.Grid, p: number, gen: number): Schema.Event
+	local x, y, z = Shield.center(sim, gen)
+	local e = withPos({ kind = Schema.EventKind.SHIELD_FIELD, projId = p }, g, x, y, z)
+	e.radius = math.floor(sim.defs.unitByIndex[sim.world.defIndex[gen]].shield.radius + 0.5)
+	e.force = math.clamp(math.floor(Shield.force(sim, gen) * 255 + 0.5), 0, 255)
+	e.phase = sim.combat.pShieldPhase[p]
+	return e
+end
+
 -- Combat events for one player (see the header): appended to `events`
 -- after this tick's ENTER records, so a FIRE's shooter is already known.
 function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally: number, cam: { number }, events: { Schema.Event })
@@ -342,6 +371,9 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 				e = withPos({ kind = Schema.EventKind.SPAWN_PROJ, projId = p, weaponIndex = c.pWeapon[p], targetId = target }, g, c.px[p], c.py[p], c.pz[p])
 			end
 			table.insert(events, withVel(e, c.pvx[p], c.pvy[p], c.pvz[p]))
+			if c.pShield[p] then
+				table.insert(events, fieldEvent(sim, g, p, c.pShield[p])) -- already in a dome's field (S-79)
+			end
 		end
 	end
 	for _, e in c.events do
@@ -372,6 +404,14 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 		elseif kind == "IMPACT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
 			known[e.other] = nil
 			table.insert(events, withPos({ kind = Schema.EventKind.IMPACT, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
+		elseif kind == "SHIELD_FIELD" and known[e.other] and not sentNow[e.other] and c.pShield[e.other] == e.unit then
+			table.insert(events, fieldEvent(sim, g, e.other, e.unit))
+		elseif kind == "SHIELD_HIT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
+			-- the generator's ID only when the client has it (S-79)
+			local hit = withPos({ kind = Schema.EventKind.SHIELD_HIT, unitId = if pn.tactical[e.unit] then e.unit else 0, projId = e.other }, g, e.x, e.y :: number, e.z :: number)
+			hit.mass = math.clamp(math.floor((e.mass or 1) * Schema.SHIELD_MASS_SCALE + 0.5), 1, 255)
+			hit.breach = e.breach == true
+			table.insert(events, hit)
 		elseif kind == "INTERCEPTED" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
 			known[e.other] = nil
 			table.insert(events, withPos({ kind = Schema.EventKind.INTERCEPTED, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
@@ -567,6 +607,52 @@ function NetOut.step(sim: Types.Sim)
 		table.insert(viewers, { pid = 0, pn = spn, team = 0, ally = SPECTATOR })
 	end
 
+	-- shield domes (S-79): each generator's wire state (charge × 4 + flags),
+	-- dirty when the charge moved SHIELD_STEP or the flags changed; shells
+	-- that turned or broke through this tick, or left a field
+	local c = sim.combat
+	domeCells = domeCellsOf[sim.defs]
+	if domeCells == nil then
+		domeCells = {}
+		for index, def in sim.defs.unitByIndex do
+			if def.shield then
+				domeCells[index] = math.ceil(def.shield.radius / Grid.CELL_SIZE)
+			end
+		end
+		domeCellsOf[sim.defs] = domeCells
+	end
+	shieldNow = {}
+	shieldDirty = {}
+	for _, id in c.shieldIds do
+		local frac = Shield.fraction(sim, id) :: number
+		local q = math.clamp(math.floor(frac * 255 + 0.5), 0, 255)
+		local flags = (if c.shieldUp[id] then Schema.ShieldFlag.UP else 0) + (if Shield.recharging(sim, id) then Schema.ShieldFlag.RECHARGING else 0)
+		local last = net.shieldSent[id]
+		local lastQ = if last then last // 4 else -1
+		if last == nil or last % 4 ~= flags or math.abs(q - lastQ) >= NetOut.SHIELD_STEP or (q ~= lastQ and (q == 0 or q == 255)) then
+			shieldDirty[id] = true
+			last = q * 4 + flags
+		end
+		shieldNow[id] = last :: number
+	end
+	net.shieldSent = shieldNow
+	fieldSync = {}
+	for _, e in c.events do
+		if e.kind == "SHIELD_HIT" or e.kind == "SHIELD_FIELD" then
+			fieldSync[e.other] = true
+		end
+	end
+	local inField: { [number]: boolean } = {}
+	for p in c.pShield do
+		inField[p] = true
+	end
+	for p in net.inField do
+		if not inField[p] and c.projSlot[p] ~= nil then
+			fieldSync[p] = true -- it left the field this tick
+		end
+	end
+	net.inField = inField
+
 	-- wreck knowledge per ally team, and the teams' sight on sensor ticks (S-26)
 	local sensorTick = tick % NetOut.SIGHT_EVERY == 0
 	local fresh, reclaimed = {}, {}
@@ -624,20 +710,32 @@ function NetOut.step(sim: Types.Sim)
 			end
 		end
 
-		-- tier membership (fog first: only own or VISIBLE units can be tactical)
+		-- tier membership (fog first: only own or VISIBLE units can be tactical;
+		-- shield generators from as far as their dome reaches, S-79)
 		for _, id in w.ids do
 			local seen = w.ally[id] == ally or levelFor(sim, ally, id) == L.VISIBLE
+			local extra = domeCells[w.defIndex[id]] or 0
 			if pn.tactical[id] then
-				if not seen or cam == nil or not inRect(g, cam, w.posX[id], w.posZ[id], NetOut.LEAVE_MARGIN) then
+				if not seen or cam == nil or not inRect(g, cam, w.posX[id], w.posZ[id], NetOut.LEAVE_MARGIN + extra) then
 					pn.tactical[id] = nil
 					table.remove(pn.tacticalList, table.find(pn.tacticalList, id) :: number)
 					table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
 				end
-			elseif seen and cam ~= nil and inRect(g, cam, w.posX[id], w.posZ[id], NetOut.ENTER_MARGIN) then
+			elseif seen and cam ~= nil and inRect(g, cam, w.posX[id], w.posZ[id], NetOut.ENTER_MARGIN + extra) then
 				pn.tactical[id] = w.gen[id]
 				table.insert(pn.tacticalList, id)
 				entered[id] = true
 				table.insert(events, enterEvent(sim, g, id))
+			end
+		end
+
+		-- shield domes (S-79): after their ENTER, and when they changed
+		if #sim.combat.shieldIds > 0 then
+			for _, id in pn.tacticalList do
+				local sent = shieldNow[id]
+				if sent and (entered[id] or shieldDirty[id]) then
+					table.insert(events, { kind = Schema.EventKind.SHIELD, unitId = id, charge = sent // 4, shieldFlags = sent % 4 })
+				end
 			end
 		end
 
@@ -891,7 +989,6 @@ function NetOut.step(sim: Types.Sim)
 		local syncs: { Schema.ProjSync } = {}
 		local every = NetOut.HOMING_SYNC_EVERY
 		if cam ~= nil and every > 0 then
-			local c = sim.combat
 			local weapons = sim.defs.weaponByIndex
 			local inView = pn.projInView
 			for _, e in c.events do
@@ -900,12 +997,13 @@ function NetOut.step(sim: Types.Sim)
 				end
 			end
 			for _, p in c.proj do
-				if pn.projKnown[p] and weapons[c.pWeapon[p]].turnRate ~= nil then
+				-- homing projectiles, and shells in a shield's field (S-79)
+				if pn.projKnown[p] and (weapons[c.pWeapon[p]].turnRate ~= nil or c.pShield[p] ~= nil or fieldSync[p]) then
 					local x, z = c.px[p], c.pz[p]
 					local seen = inRect(g, cam, x, z, NetOut.LEAVE_MARGIN) -- sight doesn't matter (S-43)
 					local entered = seen and not inView[p]
 					inView[p] = seen or nil
-					if seen and (entered or (p + tick) % every == 0) then
+					if seen and (entered or fieldSync[p] or (p + tick) % every == 0) then
 						local rec: any = withVel(withPos({ kind = 0, projId = p } :: any, g, x, c.py[p], z), c.pvx[p], c.pvy[p], c.pvz[p])
 						rec.kind = nil
 						table.insert(syncs, rec :: Schema.ProjSync)

@@ -86,6 +86,11 @@ export type UnitDef = {
 	pinpointFull: number?, -- this type's count for full precision (default Pinpoint.FULL, 6; S-62)
 	deploy: { time: number, armor: number }?, -- unpacks when it stands still: seconds each way, damage divisor deployed (S-64)
 	deathBlast: { damage: number, aoe: number, edge: number }?, -- explodes when killed: every unit in `aoe`, own included (S-70)
+	-- shield dome generator (S-79; Shared/Combat/ShieldField, Sim/Shield):
+	-- a dome of `radius` round it; `capacity` charge in shell masses;
+	-- `recharge` charge per second, drawing `power` power per second while
+	-- it recharges
+	shield: { radius: number, capacity: number, recharge: number, power: number }?,
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -147,6 +152,7 @@ export type WeaponDef = {
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
+	shieldMass: number?, -- weight against shield fields (1 = a typical shell); default from damage (ShieldField.mass, S-79)
 	fx: { [string]: string }?,
 }
 
@@ -310,6 +316,7 @@ local UNIT_SPEC: Spec = {
 		pinpointFull = { kind = "number", optional = true, min = 1 },
 		deploy = { kind = "record", optional = true, fields = { time = POSITIVE, armor = { kind = "number", min = 1 } } },
 		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
+		shield = { kind = "record", optional = true, fields = { radius = POSITIVE, capacity = POSITIVE, recharge = POSITIVE, power = NON_NEGATIVE } },
 		storage = {
 			kind = "record",
 			optional = true,
@@ -390,6 +397,7 @@ local WEAPON_SPEC: Spec = {
 		apex = opt(POSITIVE),
 		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION } },
 		canTargetRadar = { kind = "boolean", optional = true },
+		shieldMass = opt(POSITIVE),
 		fx = {
 			kind = "record",
 			optional = true,

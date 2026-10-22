@@ -49,6 +49,8 @@ export type NetState = {
 	iconIndex: { [number]: number }, -- unit def index → strategic icon (Shared/Net/Icons: the def index; 0 = unknown blip)
 	wrecks: { [number]: WreckKnowledge }, -- per ally team (0: spectators)
 	sight: { [number]: Sight }, -- per ally team
+	shieldSent: { [number]: number }, -- shield generator → its last SHIELD state (charge × 4 + flags; S-79)
+	inField: { [number]: boolean }, -- projectiles in a shield's field last tick (S-79)
 }
 
 -- Replication state of one viewer (a player or a spectator).
@@ -89,7 +91,7 @@ function NetState.new(playerIds: { number }, iconIndex: { [number]: number }): N
 	for _, pid in playerIds do
 		players[pid] = NetState.viewer(false)
 	end
-	return { players = players, spectators = {}, iconIndex = iconIndex, wrecks = {}, sight = {} }
+	return { players = players, spectators = {}, iconIndex = iconIndex, wrecks = {}, sight = {}, shieldSent = {}, inField = {} }
 end
 
 return NetState

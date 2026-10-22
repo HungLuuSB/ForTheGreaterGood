@@ -31,6 +31,8 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 **Needs my review** gained: the faction pass's tuning and unmet conditions (S-62), Warden / Minotaur calls (S-64), Locust / Cyclops / Barrier / Citadel and the Phalanx and Wraith designs (S-75), Commands at 800 units (S-74), faction balance in AI matches (S-78).
 
+**After the night:** client request 40, **shield domes** (S-79, protocol 24): Order's Phalanx and Chaos's Carapace generators; the field turns enemy shells back live, heavy ones break through a weak dome; charge, collapse at 0%, rise at 25%, power to recharge; SHIELD / SHIELD_FIELD / SHIELD_HIT on the wire, with the field shared for the client (`Shared/Combat/ShieldField`). Tests 386 → 398. Numbers and my calls under "Needs my review".
+
 ## Summary (previous round: overnight 2026-10-22)
 
 **Overnight** (the user's five tasks, with the client's requests 34–36 first, as they came). Protocol 18 → 20. Tests: 345 in 51 specs → 356 in 52 (350 fast, ~36 s; 6 slow, ~40 s). Every commit passed the fast suite; every merge into `main` passed fast, slow and the build.
@@ -147,25 +149,17 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 - **Faction-only units, stage 3 (S-75):** Locust, Cyclops, Barrier, Citadel built with placeholder numbers (decision log).
   - **Locust:** built singly, not in pairs. Against Lancers it loses close (1.43) and long (1.11) but wins the flank (0.72), so it may want a little more punch.
   - **Mechanism designs, not built:**
-    - **Phalanx (Order shield dome):**
-      - **Revised by you (through the client's C-87 prototype, `src/client/Core/Shield.luau`):**
-        - Shells slow to a stop in a field band outside the dome, then are thrown back out; heavier shells take longer to stop.
-        - The force is full at 50% charge or more and scales down below, so big shells break through, slowed.
-        - Recharging draws power.
-        - The dome collapses at 0% and rises again at 25%.
-        - Still open on your side: harmless or live bounced shells, a Chaos version, vehicle or structure.
-        - The sim version would follow these rules (a field band stepped in Projectiles, a power drain like S-72's upkeep) once those are decided. The points below are my first design.
-      - A deployable vehicle (Sim/Deploy, like the Warden) that, deployed, holds a dome of radius 60 with a 3,000-point shield pool. Recharge: 100/s after 3 s without a hit.
-      - Projectiles (shells, rockets, missiles, bombs) whose path enters the dome from outside burst on its surface and take their damage from the pool, not from the units inside. Hitscan and beams too.
-      - Shots fired from inside pass out freely. Melee range (the Minotaur's charge, 30 studs) is inside the dome, so siege ignores it.
-      - At 0 the dome drops until the pool is back at 25%.
-      - Implementation: a dome list per ally team, a segment-sphere test in Projectiles and in hitscan resolution, and a DOME event and state bit for the client.
-      - Counters: sustained fire (it drains), siege at the edge, artillery saturation.
+    - **Phalanx:** built as a shield dome structure, with a Chaos version, from your rules (S-79; review items under "Shield domes" below).
     - **Wraith (Chaos decoy drones):**
       - A cheap T2 aircraft (value ~60, health 120, no weapon), built from the advanced airfield in groups.
       - To radar it shows as a fighter or bomber (`radarSignature` 1, `spoof` = a def id the enemy's radar contacts report until a fire-control radar or sight identifies it; D107 already hides types of untracked contacts). Radar SAMs and interceptors spend missiles on it.
       - One new field (`spoof`), and the strategic icon of an untracked contact switches to the spoofed type's family.
       - Counters: Pinpointers and fire-control tracking reveal it; IR SAMs (sight) aren't fooled.
+- **Shield domes (S-79, client request 40), placeholder numbers:**
+  - **Generators:** Order `ord_phalanx` Phalanx (Architect, T2): radius 120, capacity 30 shell masses, recharge 1.5/s (20 s from empty), 40 power/s while recharging; supply 400, power 5,000, 2,800 health. Chaos `chs_carapace` Carapace (Forgemaster, T2): radius 80, capacity 20, recharge 1.2/s, 25 power/s; supply 280, power 3,500, 2,000 health. Chaos's capacity and price are my calls (smaller dome, smaller pool).
+  - **Shell mass:** a weapon's best damage / 150, within 0.2–8 (machine gun 0.27, Ravager cannon 0.87, rockets 1.3, Juggernaut 1.65, heavy cannon 2.2, mortar 2.4, Citadel gun 4.3, siege mortar and heavy bombs 8); a def may set `shieldMass`. A turned shell costs its mass in charge, a breach half.
+  - **Field strength:** I doubled the prototype's braking (BRAKE 500 → 1000, DRAG 9 → 20) so a full dome stops every shell in the game, the Citadel's 480-stud/s round included. Measured on shells fired from 400 studs: everything turns down to 25% charge except heavy bombs; at 12% the heavy cannon, siege mortar, bombs and radar SAMs get through; at 5% most do.
+  - **My calls:** hitscan and beams pass through (your rules cover shells only); allies' shells are never touched; torpedoes, nukes and interceptors chasing a nuke ignore domes; a missile turned back loses its lock; a built generator starts empty and down (25% to rise), a scenario-spawned one full; a hit drains even while the dome's own units fire out.
 - **800 units (S-74):** Targeting is within budget (peaks 5.7–7.4 ms of 8; a third fewer sensor lookups, same state hash). Commands is not (average 0.47 ms, peaks 1.8–2.2 of 1): what remains needs a behaviour change. Pick one: (a) attack-move hold checks for half the units each tick (a unit stops up to 0.07 s later), or (b) spread a big order's queue entries over 2–4 ticks.
 - **Faction balance in AI matches (S-65, S-78; `docs/FACTION_AI.md`):** Order wins 90% of same-level matches (target 40–60%; undecided 9%, in target). No ±10% retune moved it (S-78 lists eight tries); the kill tallies point at how AI matches fight, not at a number. My recommendation is `docs/design/next.md` item 1: reproduce it in a match-shaped trial first, then decide whether to fix the AI or retune beyond ±10% (your call).
 - **Warden and Minotaur (S-64):**
@@ -223,6 +217,11 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 40), S-79, protocol 24: shield domes.** Generators `ord_phalanx` (radius 120) and `chs_carapace` (radius 80); the def's `shield = { radius, capacity, recharge, power }` (radius in the def, not on the wire). Three events (contract section 7):
+  - **`SHIELD 19`** `unitId u16, charge u8 (0..255 of capacity), flags u8` (`Schema.ShieldFlag`: UP 1, RECHARGING 2; down = no UP): after the generator's ENTER and when the charge moved 4/255 or the flags changed. Generators enter the tactical tier as far out as their dome reaches (margins + radius).
+  - **`SHIELD_HIT 20`** `unitId u16 (0 = a generator you don't have), projId u16, pos (the point on the dome), mass u8 (/ Schema.SHIELD_MASS_SCALE 31 = shell masses, 1 = a 150-damage shell), flags u8 (SHIELD_BREACH 1)`: a shell turned back (the hit) or broke through. Draw the hit patch at `pos` with intensity from `mass`.
+  - **`SHIELD_FIELD 21`** `projId u16, pos (the dome's centre), radius u16, force u8 (0..255), phase u8 (1 braking, 2 repelled)`: a projectile you have came into a dome's field (or is in one when it reaches you). From then step it with **`Shared/Combat/ShieldField.step`** (the server's field: the same constants and maths as your C-87 prototype, braking doubled) instead of `Ballistics.step`, until the phase is DONE; mass from `ShieldField.mass(weapon)`. The Projectiles channel also corrects shells in a field (every 5 ticks, on the turn or breach, and when they leave). The test client does it (`Support/Client`), and its shells stay within a stud of the server's.
+  - Turned shells stay live: they fly on and burst with their normal IMPACT where they land. Your `Core/Shield` can drop `stepShell`, `drain` and `recharge` for these.
 - **Player replays, format 2 (S-77):** `PlayerReplay.serialize` now writes format 2 (about a third of format 1's size; `parse` reads both, and refuses a damaged file). The API is unchanged, so `Main.server` / `ReplayPlayer` need nothing; a replay takes ~1 s to read per 25 minutes of spectator recording.
 - **New (S-70..S-73), no wire change:** the Fusion Reactor explodes when killed (def `deathBlast = { damage, aoe, edge }`; the client can draw it from the DEATH and the def); landed aircraft sit on top of their pad and are ground targets (S-71); radar towers, mobile radars and AWACS drain power (`sensors.radarDrain`; their radar radius shrinks in a stall, S-72); `match.friendlyFire` is a match option, default on (S-73), for the lobby.
 - **Done (request 39), S-68, protocol 23:** event **ALERT 18** `alert u8, cell u16, defIndex u16` with `Schema.AlertKind` (UNIT_ATTACKED 1, STRUCTURE_ATTACKED 2, UNIT_LOST 3, STRUCTURE_LOST 4, BUILD_DONE 5, STALL_SUPPLY 6, STALL_POWER 7, NUKE_LAUNCH 8, COMMANDER_ATTACKED 9), rate-limited server-side as you suggested; strategic **UNDER_ATTACK** set on own and allied units hit in the last 3 s. Also: ATTACK_GROUND now works for every unit with a ballistic weapon (artillery, tanks, gun turrets), contract section 8.
