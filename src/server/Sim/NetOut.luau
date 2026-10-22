@@ -406,13 +406,13 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			table.insert(events, withPos({ kind = Schema.EventKind.IMPACT, projId = e.other }, g, e.x, e.y :: number, e.z :: number))
 		elseif kind == "SHIELD_FIELD" and known[e.other] and not sentNow[e.other] and c.pShield[e.other] == e.unit then
 			table.insert(events, fieldEvent(sim, g, e.other, e.unit))
-		elseif kind == "SHIELD_HIT" and e.x and (known[e.other] or shown(e.x, e.z :: number)) then
+		elseif kind == "SHIELD_HIT" and e.x and ((e.other ~= 0 and known[e.other]) or shown(e.x, e.z :: number)) then
 			-- the generator's ID only when the client has it (S-79)
 			local hit = withPos({ kind = Schema.EventKind.SHIELD_HIT, unitId = if pn.tactical[e.unit] then e.unit else 0, projId = e.other }, g, e.x, e.y :: number, e.z :: number)
 			hit.mass = math.clamp(math.floor((e.mass or 1) * Schema.SHIELD_MASS_SCALE + 0.5), 1, 255)
 			hit.breach = e.breach == true
 			hit.absorbed = e.absorbed == true
-			if e.absorbed then
+			if e.absorbed and e.other ~= 0 then
 				known[e.other] = nil -- destroyed: this is its end, no IMPACT follows (S-85)
 			end
 			table.insert(events, hit)

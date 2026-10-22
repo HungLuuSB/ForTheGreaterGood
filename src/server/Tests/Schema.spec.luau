@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 25, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 26, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -366,7 +366,10 @@ return function(t: RunAll.Context)
 		end, "a breach or absorbed")
 		local field: Schema.Event = { kind = Schema.EventKind.SHIELD_FIELD, projId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = -8, radius = 120, force = 255, phase = 2 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, field)), "15 02 01 04 03 05 06 f8 ff 78 00 ff 02")
-		for _, e in { shield, hit, absorbed, field } do
+		-- version 26: projId 0, a hitscan shot stopped at the surface (S-89)
+		local scan: Schema.Event = { kind = Schema.EventKind.SHIELD_HIT, unitId = 0x0102, projId = 0, cell = 0x0506, offX = 7, offZ = 8, y = 9, mass = 31, breach = false, absorbed = true }
+		t.equal(hex(encodeOne(Schema.encodeEvent, scan)), "14 02 01 00 00 06 05 07 08 09 00 1f 02")
+		for _, e in { shield, hit, absorbed, scan, field } do
 			local bytes = encodeOne(Schema.encodeEvent, e)
 			t.deepEqual(Packer.readAll(bytes, Schema.decodeEvent)[1], e)
 			t.equal(buffer.len(bytes), Schema.eventBytes(e), "size table")

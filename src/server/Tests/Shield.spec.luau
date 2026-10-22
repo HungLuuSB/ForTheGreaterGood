@@ -268,6 +268,51 @@ return function(t: RunAll.Context)
 		t.equal(view.projectiles[p], nil, "and dropped the shell")
 	end)
 
+	t.test("hitscan from outside is stopped at the dome's surface; from inside it passes (S-89)", function()
+		local sim, gen = dome(14)
+		local w = sim.world
+		local c = sim.combat
+		local gx, gy, gz = Shield.center(sim, gen)
+		-- a wall just inside the dome's edge, and a Minotaur just outside with
+		-- its demolition charge (hitscan, 30 studs) in reach of it
+		local wall = Spawn.unit(sim, "ord_barrier", 1, gx, gz + 108)
+		local ram = Spawn.unit(sim, "chs_minotaur", 2, gx, gz + 134, math.pi)
+		local stopped, through = 0, 0
+		for _ = 1, 450 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if e.kind == "SHIELD_HIT" and e.other == 0 then
+					stopped += 1
+					t.equal(e.absorbed, true, "a hitscan stop is absorbed")
+					near(t, math.sqrt((e.x - gx) ^ 2 + (e.y - gy) ^ 2 + (e.z - gz) ^ 2), 120, 0.01, "on the surface")
+				elseif e.kind == "FIRE" and e.unit == ram and e.hit then
+					through += 1
+				end
+			end
+		end
+		t.expect(stopped >= 1, `the demolition charge was stopped ({stopped})`)
+		t.equal(through, 0, "no hitscan hit got through")
+		-- (the Minotaur's siege cannon may still reach the wall: it stands in
+		-- the field's band, S-83)
+		local _ = wall
+		-- inside the dome the same charge hits (the shield stops shots from outside only)
+		local target = Spawn.unit(sim, "ord_barrier", 1, gx + 40, gz + 60)
+		local full = w.health[target]
+		local inside = Spawn.unit(sim, "chs_minotaur", 2, gx + 40, gz + 85, math.pi)
+		local hits = 0
+		for _ = 1, 450 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if e.kind == "FIRE" and e.unit == inside and e.hit then
+					hits += 1
+				end
+			end
+		end
+		t.expect(hits >= 1 and (w.health[target] or 0) < full, `from inside it hits ({hits})`)
+		-- the geometry itself: a shot that misses the dome passes
+		t.equal((Shield.intercept(sim, 2, gx + 200, 10, gz, gx + 200, 10, gz + 300, sim.defs.weapons.chs_flak)), 0, "a line clear of the dome")
+	end)
+
 	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()
 		local sim, gen = dome(3, 0.06)
 		local light = fire(sim, "chs_autocannon", 0, 250)
