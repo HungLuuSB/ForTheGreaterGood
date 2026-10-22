@@ -27,7 +27,7 @@ The defs (S-79) are `ord_phalanx` (Order, footprint 2, dome radius 120) and `chs
 
 ### Thin rings (client request, C-94)
 
-A mesh's tube scales with its radius, so on a 120-stud dome the `Ring` above is a 2.4-stud ribbon. Two thinner meshes come in `assets/fx/shield/export/shield_rings.fbx` (`build_rings.py`; IDs in `roblox_assets.json` after the import):
+A mesh's tube scales with its radius, so on a 120-stud dome the `Ring` above is a 2.4-stud ribbon. Two thinner meshes come in `assets/fx/shield/export/shield_rings.fbx` (`build_rings.py`; IDs below and in `roblox_assets.json`):
 
 | Asset | Mesh | How to use it |
 |---|---|---|
@@ -56,6 +56,8 @@ All in `assets/fx/shield/roblox_assets.json`. The texture IDs are also attribute
 | `Dome` mesh | `rbxassetid://85081416332401` |
 | `DomeInner` mesh | `rbxassetid://78950571354329` |
 | `Ring` mesh | `rbxassetid://134054369788950` |
+| `RingThin` mesh | `rbxassetid://111379471786973` |
+| `Band` mesh | `rbxassetid://75299929805633` |
 | `Emitter` mesh | `rbxassetid://98339625291172` (maps in the JSON) |
 | swirl | `rbxassetid://113814321169730` (cloudy vortex, after the user's reference) |
 | beam | `rbxassetid://100117547859650` |

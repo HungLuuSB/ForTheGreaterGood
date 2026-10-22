@@ -98,6 +98,8 @@ def main():
             "MTL": f"{unit}_MTL.png", "EMI": f"{unit}_EMI.png"}
     for kind, name in maps.items():
         p = os.path.join(export, name)
+        if not os.path.exists(p):
+            continue  # untextured meshes (e.g. the shield rings) have no maps
         aid = upload(p, "Decal", f"{unit} {kind}", "For The Greater Good unit map", creator, key)
         out["decals"][kind] = aid
         print(f"  {kind}: decal {aid}")

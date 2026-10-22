@@ -4,7 +4,9 @@
     "dome": "rbxassetid://85081416332401",
     "dome_inner": "rbxassetid://78950571354329",
     "ring": "rbxassetid://134054369788950",
-    "emitter": "rbxassetid://98339625291172"
+    "emitter": "rbxassetid://98339625291172",
+    "ring_thin": "rbxassetid://111379471786973",
+    "band": "rbxassetid://75299929805633"
   },
   "emitterSurfaceAppearance": {
     "ALB": "rbxassetid://71264151642313",
@@ -37,5 +39,6 @@
       "EMI": "rbxassetid://110966577891925"
     }
   },
-  "meshes_reupload_note": "the second import re-uploaded the identical dome, inner dome and ring as 105303361552249, 133493098524109 and 120582464538122; FX.Shield keeps the first IDs"
+  "meshes_reupload_note": "the second import re-uploaded the identical dome, inner dome and ring as 105303361552249, 133493098524109 and 120582464538122; FX.Shield keeps the first IDs",
+  "ringsUpload": "shield_rings.fbx through Open Cloud (model 129753983804154), 2026-10-22; in FX.Shield as RingThin and Band"
 }
