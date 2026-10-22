@@ -197,17 +197,20 @@ return function(t: RunAll.Context)
 		local cap = sim.defs.units.ord_phalanx.shield.capacity
 		local p = fire(sim, "chs_mortar", 0, 250)
 		local mass = Shield.mass(sim.defs.weapons.chs_mortar)
-		local atHit = nil
+		local recharge = sim.defs.units.ord_phalanx.shield.recharge
+		c.shieldCharge[gen] = cap / 2 -- below full, so the tick's recharge shows apart from the hit
+		local drop = nil
 		for _ = 1, 100 do
+			local prev = c.shieldCharge[gen]
 			Sim.step(sim)
 			for _, e in c.events do
 				if e.kind == "SHIELD_HIT" and e.other == p then
-					atHit = c.shieldCharge[gen]
+					drop = prev - c.shieldCharge[gen]
 				end
 			end
 		end
-		near(t, atHit or 0, cap - Shield.HIT_COST * mass + sim.defs.units.ord_phalanx.shield.recharge / 15, 0.01, "one mortar shell's mass gone (and a tick's recharge)")
-		near(t, c.shieldCharge[gen], cap, 1e-9, "recharged to full since")
+		near(t, drop or 0, Shield.HIT_COST * mass - recharge / 15, 0.01, "one mortar shell's mass gone (less a tick's recharge)")
+		near(t, c.shieldCharge[gen], cap / 2 + 100 * recharge / 15 - Shield.HIT_COST * mass, 1e-6, "recharging at the full rate since")
 		-- run it down: power cut off, a nearly empty dome, shells until it falls
 		local acc = sim.eco.accounts[1]
 		acc.power.stored = 0
