@@ -4,20 +4,38 @@
     "dome": "rbxassetid://85081416332401",
     "dome_inner": "rbxassetid://78950571354329",
     "ring": "rbxassetid://134054369788950",
-    "emitter": "rbxassetid://135426440555231"
+    "emitter": "rbxassetid://98339625291172"
   },
   "emitterSurfaceAppearance": {
-    "ALB": "rbxassetid://109779219047629",
-    "NOR": "rbxassetid://107445763486512",
-    "RGH": "rbxassetid://93021851240661",
-    "MTL": "rbxassetid://76106466609099",
-    "EMI": "rbxassetid://110966577891925"
+    "ALB": "rbxassetid://71264151642313",
+    "NOR": "rbxassetid://107804609123251",
+    "RGH": "rbxassetid://112262724416590",
+    "MTL": "rbxassetid://75693850583616",
+    "EMI": "rbxassetid://119258840546762"
   },
   "textures": {
+    "swirl": "rbxassetid://113814321169730",
+    "beam": "rbxassetid://100117547859650",
+    "speck": "rbxassetid://90660161303538",
+    "ripple": "rbxassetid://129891612158965"
+  },
+  "model": "ReplicatedStorage.FX.Shield in FTGG Art (Dome, DomeInner, Ring, Emitter; texture IDs as the folder's attributes Swirl, Beam, Speck, Ripple)",
+  "textures_rev0": {
     "swirl": "rbxassetid://82204239648206",
     "beam": "rbxassetid://115560588138247",
     "speck": "rbxassetid://126444416961279",
     "ripple": "rbxassetid://121307999666570"
   },
-  "model": "ReplicatedStorage.FX.Shield in FTGG Art (Dome, DomeInner, Ring, Emitter; texture IDs as the folder's attributes Swirl, Beam, Speck, Ripple)"
+  "textures_rev0_note": "first upload; the swirl was a clean five-arm spiral, redrawn as a cloudy vortex after the user's reference (2026-10-22); beam, speck and ripple unchanged but re-uploaded",
+  "emitter_rev0": {
+    "mesh": "rbxassetid://135426440555231",
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109779219047629",
+      "NOR": "rbxassetid://107445763486512",
+      "RGH": "rbxassetid://93021851240661",
+      "MTL": "rbxassetid://76106466609099",
+      "EMI": "rbxassetid://110966577891925"
+    }
+  },
+  "meshes_reupload_note": "the second import re-uploaded the identical dome, inner dome and ring as 105303361552249, 133493098524109 and 120582464538122; FX.Shield keeps the first IDs"
 }

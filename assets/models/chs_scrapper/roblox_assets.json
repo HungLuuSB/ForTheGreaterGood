@@ -1,0 +1,18 @@
+{
+  "note": "Roblox assets uploaded by Studio's 3D Importer from export/chs_scrapper.fbx (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
+  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 2,828 triangles",
+  "bar": {
+    "meshes": {
+      "base": "rbxassetid://81146390260466",
+      "nano": "rbxassetid://88172729492686"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109981829773940",
+      "NOR": "rbxassetid://123354533224740",
+      "RGH": "rbxassetid://100199332879313",
+      "MTL": "rbxassetid://97138182533945",
+      "EMI": "rbxassetid://118892484383381"
+    },
+    "model": "ReplicatedStorage.ModelReview.chs_scrapper_bar in FTGG Art"
+  }
+}

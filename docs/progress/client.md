@@ -193,6 +193,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `0f8c297` (shield idle hexes keep clear of hit patches; hexagon mesh checked, C-88); test_client 157, test 386, build passed.
 - Ready to merge: `e066303` (shield test scenario, neutral dome fading with charge, radius 120, C-89); test_client 157, test 386, build passed.
 - Ready to merge: `7e2c5d7` (ShieldFx shield dome renderer, review generators, request 40, C-90); test_client 163, test 386, build passed.
+- Ready to merge: `ff3e146` (shield domes from the server, protocol 24, real Phalanx in the shield profile, C-91); test_client 165, test 399, build passed.
+- Ready to merge: `57a7610` (shield profile checked at 50x, docs only); test_client 165, test 399, build passed.
 
 ## Tasks
 
@@ -520,6 +522,12 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: shield profile checked at 50x strength (S-80, S-81)
+
+- After merging S-80 (your 10x, and the near-mirror bounce: PUSH 2800, TANGENT_DRAG 0.3) and S-81 (your 50x: Phalanx 1500 charge at 75/s, Carapace 1000 at 60/s; the power draw is still 40 / 25 per second, sim-A's call), I ran the `shield` profile in Studio. Under the full barrage the Phalanx dome stayed at 100% for all 12 s measured. 167 of 171 shells that entered its field turned back and 4 broke through. Turned shells fly back out and land in front of the attackers, live (`debug_out/screens/c92_shield_x50.jpg`).
+- No client change: the client reads the radius from the def and the charge from SHIELD, and steps shells with the shared field.
+- sim-A's note that main's client tests failed on the Phalanx and Carapace icons was already fixed by C-91 (both borrow the Jammer Tower icon). With main merged: test_client 46 specs, 165 passed.
 
 ## 2026-10-23: shield domes from the server (protocol 24, S-79, request 40) (C-91)
 

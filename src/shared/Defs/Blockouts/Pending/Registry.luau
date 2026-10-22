@@ -8,12 +8,8 @@
 -- fields each was built for (a proposal for the sim session, M-17).
 
 return {
-	blockouts = {
-		ord_shieldgen = require("./ord_shieldgen"),
-	},
-	defs = {
-		ord_shieldgen = { id = "ord_shieldgen", model = "ord_shieldgen", faction = "order", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "emitter" } },
-	},
+	blockouts = {},
+	defs = {},
 	poses = {
 		ord_warden = {
 			packed = {},

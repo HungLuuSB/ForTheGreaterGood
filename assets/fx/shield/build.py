@@ -163,17 +163,30 @@ def grid(w, h):
 
 
 def tex_swirl():
-    """A vortex seen from above: five spiral arms winding into a bright eye,
-    fading out at the rim (spins on a disc at the top of the dome)."""
+    """A vortex seen from above: wispy clouds wound into a whirlpool round a
+    bright eye, a few brighter knots on the arms, fading out at the rim
+    (spins on a disc at the top of the dome). Procedural: sums of waves in
+    (angle, log radius) with whole numbers of turns, so it wraps cleanly."""
     x, y = grid(512, 512)
-    r = np.sqrt(x * x + y * y)
+    r = np.sqrt(x * x + y * y) + 1e-6
     th = np.arctan2(y, x)
-    arms = 0.5 + 0.5 * np.cos(5 * (th + 2.6 * np.log(r + 0.05)))
-    arms = arms ** 3
-    body = arms * np.clip(1.0 - r, 0, 1) ** 0.8 * np.clip(r / 0.12, 0, 1)
-    eye = np.exp(-(r / 0.1) ** 2)
-    haze = 0.25 * np.clip(1.0 - r, 0, 1) ** 2
-    return np.clip(body * 0.9 + eye + haze, 0, 1) * (r < 1)
+    lr = np.log(r)
+    phi = th + 1.9 * lr  # the twist that winds the clouds in
+    rng = np.random.default_rng(11)
+    clouds = np.zeros_like(r)
+    for m, k, amp in ((3, 2.0, 1.0), (5, 3.5, 0.7), (7, 5.0, 0.5), (11, 8.0, 0.35), (17, 12.0, 0.25), (23, 18.0, 0.15)):
+        clouds += amp * np.sin(m * phi + k * lr + rng.random() * 6.283)
+        clouds += 0.5 * amp * np.sin(m * phi - 0.6 * k * lr + rng.random() * 6.283)
+    clouds = (clouds - clouds.min()) / (clouds.max() - clouds.min())
+    wisps = np.clip((clouds - 0.42) / 0.4, 0, 1) ** 1.6
+    envelope = np.clip(1.0 - r, 0, 1) ** 1.2 * np.clip(r / 0.08, 0, 1)
+    body = wisps * envelope * 0.9 + 0.18 * np.clip(1.0 - r, 0, 1) ** 2
+    eye = np.exp(-(r / 0.07) ** 2) + 0.35 * np.exp(-(r / 0.22) ** 2)
+    knots = np.zeros_like(r)
+    for kr, kt in ((0.32, 0.4), (0.5, 2.7), (0.44, 4.6)):
+        kx, ky = kr * np.cos(kt), kr * np.sin(kt)
+        knots += np.exp(-(((x - kx) ** 2 + (y - ky) ** 2) / 0.0012))
+    return np.clip(body + eye + 0.9 * knots, 0, 1) * (r < 1)
 
 
 def tex_beam():
