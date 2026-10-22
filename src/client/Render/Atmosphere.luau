@@ -55,6 +55,7 @@ local GROUND = { "Grass", "LeafyGrass", "Rock", "Ground", "Sand", "Asphalt", "Mu
 Atmosphere.ORDER = { "night", "current", "clear", "haze", "dusk" }
 Atmosphere.NAMES = { night = "Night", current = "Current", clear = "Clear day", haze = "Battle haze", dusk = "Dusk" }
 Atmosphere.DEFAULT = "night"
+Atmosphere.active = nil :: string? -- the applied preset's name (Render/Glow: headlights at night and dusk)
 
 Atmosphere.PRESETS = {
 	night = { -- tuned in Studio on ridgeline at 330 studs, 55° (C-101)
@@ -240,6 +241,7 @@ function Atmosphere.apply(name: string)
 	end
 	set(p, saved :: Preset)
 	active = p
+	Atmosphere.active = name
 end
 
 -- The applied preset's grade for Render/Grade: its colour correction (nil:

@@ -16,6 +16,7 @@ local Settings = require("../Core/Settings")
 local Atmosphere = require("../Render/Atmosphere")
 local FogBlanket = require("../Render/FogBlanket")
 local Environment = require("../Render/Environment")
+local Glow = require("../Render/Glow")
 local Vfx = require("../Render/Vfx")
 
 local SettingsMenu = {}
@@ -41,6 +42,7 @@ function SettingsMenu.apply(s: Settings.State)
 	Effects.MAX_TRACERS = g.tracers
 	Effects.MAX_PROJECTILES = g.projectiles
 	Vfx.MAX_LIGHTS = g.lights
+	Glow.MAX_HEADLIGHTS = g.lights
 	Vfx.TEMPLATE_CAP = g.copies
 	PieceAnim.NEAR = g.detailNear
 	PieceAnim.MID = g.detailMid

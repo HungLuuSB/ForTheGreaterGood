@@ -42,6 +42,7 @@ local Contacts = require("./Render/Contacts")
 local FogBlanket = require("./Render/FogBlanket")
 local Environment = require("./Render/Environment")
 local Grade = require("./Render/Grade")
+local Glow = require("./Render/Glow")
 local Vfx = require("./Render/Vfx")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
@@ -192,6 +193,7 @@ local healthBars = HealthBars.new()
 local fog = FogBlanket.new()
 local environment = Environment.new() -- ground beyond the map, ambient particles (C-102)
 local grade = Grade.new() -- colour grade: zoom easing, blast flashes, vignette (C-102)
+local glow = Glow.new() -- unit glow states and headlights (C-103)
 Vfx.onSpawn = function(kind: string, x: number, _y: number, z: number, scale: number)
 	Grade.burst(grade, kind, x, z, scale)
 end
@@ -596,6 +598,9 @@ if RunService:IsStudio() then
 		elseif query == "net" then
 			-- Invoke("net"): bytes received per channel since the client started (C-69)
 			return received
+		elseif query == "glow" then
+			-- unit glow (C-103): models with glow parts, parts, writes and ms last frame, headlights lit
+			return glow.stats
 		elseif query == "fog" then
 			-- fog of war (the blanket, C-100): its stats; contacts and ghosts
 			-- the server's ally-team sight (C-65): records applied, cells seen
@@ -755,10 +760,14 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
+	Glow.shots(glow, fx.shots, now)
 	if not strategic then
 		PieceAnim.drive(anim, world, fx.shots)
 		PieceAnim.step(anim, simDt)
 		UnitRenderer.applyPieces(renderer)
+		Glow.step(glow, renderer, world, now, workspace.CurrentCamera, camState.x, camState.z, camState.distance)
+	elseif glow.stats.headlights > 0 then
+		Glow.hide(glow)
 	end
 	table.clear(fx.shots)
 	mark("anim", t0)

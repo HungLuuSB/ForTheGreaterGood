@@ -16,6 +16,7 @@ local Interp = require("../Core/Interp")
 local PieceAnim = require("../Core/PieceAnim")
 local PieceScripts = require("../Core/PieceScripts/Registry")
 local World = require("../Core/World")
+local Glow = require("./Glow")
 local ModelPool = require("./ModelPool")
 local RenderDeaths = require("./Deaths")
 
@@ -34,6 +35,8 @@ type Drawn = {
 	hullHeight: number,
 	building: boolean, -- drawn semi-transparent
 	looks: { [BasePart]: number }?, -- each part's own transparency, while building
+	glows: { Glow.Part }?, -- its glow parts (C-103; BAR meshes only)
+	heads: { BasePart }?, -- its headlight glow parts
 }
 
 -- A unit under construction: see-through; complete: as modelled.
@@ -97,12 +100,15 @@ local function show(r: Renderer, world: World.World, id: number)
 		building = false,
 		looks = nil,
 	}
+	local d = r.drawn[id]
+	d.glows, d.heads = Glow.collect(model)
 	PieceAnim.add(r.anim, id, def, PieceScripts.forDef(def))
 end
 
 -- Back to the pool with every joint at rest (the next unit starts clean).
 local function release(d: Drawn)
 	setBuilding(d, false)
+	Glow.reset(d.glows, d.root)
 	for _, motor in d.motors do
 		motor.Transform = CFrame.identity
 	end
