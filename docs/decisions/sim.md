@@ -1171,3 +1171,12 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - turns happen inside the dome, between the core and the surface;
   - glancing shells through the rim keep up to 97% of their speed;
   - the shield profile checks the core (the radar and builder near the edge stand in the band).
+- **Decided (the user, via the client stream):** "Keep 0.4R for now." Checked in Studio on the shield profile (12 s): 230 shells crossed the surface, 219 turned, none got through, and the dome held at 100%. Ravager shells reach about 16 studs into the 48-stud band, Juggernaut shells about 30. The client now lights the hit ripple where a shell crosses the surface (from SHIELD_FIELD) rather than at the turn; no wire change.
+
+## S-84 — A downward pull inside the dome (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "shells should be apply a downward force (like gravity) when insde the dome".
+- **Built** (`Shared/Combat/ShieldField`): while a shell is in the field (braking or thrown out), its ballistic substep uses its weapon's gravity plus `FIELD_GRAVITY`, 60 studs/s² (a shell's own gravity; the same for every mass, like gravity). No wire change: clients step the same module.
+- **Strength:** my call. It is about one shell's gravity, so the S-82 / S-83 shapes stay (head-on back, off-centre round and on) while turned shells arc down.
+- **Effect:** on the client's ShieldWire setup (a Ravager firing head-on at a Phalanx), turned shells land 116–134 studs from the centre, at the dome's edge, against 140–174 before. None reach the 72-stud core. More shells now burst in the band (review).
+- **Tests:** `Shield.spec` 14. Turned shells are checked to land outside the core rather than outside the dome. The flat head-on case checks that turned shells fly back or land (none hang), and that none land in the core.

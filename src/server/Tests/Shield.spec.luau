@@ -81,7 +81,10 @@ return function(t: RunAll.Context)
 			local p = fire(sim, weaponId, 0, 250)
 			local hit, burst = follow(sim, p)
 			t.expect(hit ~= nil and hit.breach == false and hit.unit == gen, `{weaponId}: turned back`)
-			t.expect(burst ~= nil and distance(burst[1], burst[3]) > sim.defs.units.ord_phalanx.shield.radius, `{weaponId}: burst outside the dome`)
+			-- outside the core: the field's pull down (S-84) may land it in the band
+			local gx, _, gz = Shield.center(sim, gen)
+			local core = sim.defs.units.ord_phalanx.shield.radius * (1 - ShieldField.BAND_SHARE)
+			t.expect(burst ~= nil and math.sqrt((burst[1] - gx) ^ 2 + (burst[3] - gz) ^ 2) > core, `{weaponId}: burst outside the dome's core`)
 			t.equal(w.health[gen], health, `{weaponId}: the generator took nothing`)
 			if hit then
 				local gx, gy, gz = Shield.center(sim, gen) -- the generator snaps to its footprint
@@ -175,8 +178,10 @@ return function(t: RunAll.Context)
 		World.setHealth(w, mason, 1e6)
 		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
 		local c = sim.combat
-		local turned, through, back = 0, 0, 0
+		local turned, through, back, landed, inCore = 0, 0, 0, 0, 0
 		local watch: { [number]: boolean } = {}
+		local gx, _, gz = Shield.center(sim, gen)
+		local core = sim.defs.units.ord_phalanx.shield.radius * (1 - ShieldField.BAND_SHARE)
 		for _ = 1, 180 do
 			Sim.step(sim)
 			for _, e in c.events do
@@ -186,6 +191,13 @@ return function(t: RunAll.Context)
 					else
 						turned += 1
 						watch[e.other] = true
+					end
+				elseif e.kind == "IMPACT" and watch[e.other] then
+					-- pulled down in the field (S-84), some land in the band
+					landed += 1
+					watch[e.other] = nil
+					if math.sqrt((e.x :: number - gx) ^ 2 + (e.z :: number - gz) ^ 2) <= core then
+						inCore += 1
 					end
 				end
 			end
@@ -198,7 +210,8 @@ return function(t: RunAll.Context)
 		end
 		t.expect(turned >= 2, `shells turned ({turned})`)
 		t.equal(through, 0, "none broke through")
-		t.expect(back >= 2, `turned shells fly back toward the shooter ({back})`)
+		t.expect(back + landed >= turned - 1, `turned shells fly back or land, none hang ({back} back, {landed} landed of {turned})`)
+		t.equal(inCore, 0, "none landed in the core")
 	end)
 
 	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()
