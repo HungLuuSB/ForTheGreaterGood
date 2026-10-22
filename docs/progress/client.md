@@ -648,6 +648,11 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: smaller minimap; effect meshes in the materials file (C-108)
+
+- **Minimap:** 280 → 220 pixels (the user: smaller). The build menu now starts under it (`MinimapUI.SIZE`), so both tile rows fit above the unit panel on short screens. Screenshot `debug_out/screens/minimap_220.jpg`.
+- **Effect meshes** (models-C's request): `lune run mesh_materials` also writes a SurfaceAppearance per `Meshes.fx` entry, named `fx_<id>`: the six missiles and the shield emitter, merged from m-models `764874b`. `MeshMaterials.spec` checks them.
+
 ## 2026-10-23: build menu portraits and tooltip; On / Off; short-way turns; shield and T2 defense requests (C-107)
 
 - **Your notes** (after a shield test):

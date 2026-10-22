@@ -19,6 +19,7 @@ local Kit = require("./Kit")
 local BuildMenu = require("../Core/BuildMenu")
 local Icons = require("../Core/Icons")
 local Glyph = require("./Glyph")
+local MinimapUI = require("./Minimap")
 local Portrait = require("./Portrait")
 local UnitStats = require("../Core/UnitStats")
 local MeshModels = require("../Render/MeshModels")
@@ -39,7 +40,8 @@ local TILE = Color3.fromRGB(58, 62, 70)
 local ITEMS_PER_ROW = 4
 local CELL = 66
 local ROWS = 2 -- visible rows; more scroll (2 since C-76: room for the wider unit panel)
-local WIDTH = 280 -- the minimap's width: the grid sits under it (BAR layout)
+local WIDTH = 280 -- four 66-pixel tiles; the grid sits under the minimap (BAR layout)
+local TOP = MinimapUI.SIZE
 local FULL_HEIGHT = 26 + ROWS * (CELL + 3) + 8
 
 export type UI = {
@@ -142,7 +144,7 @@ function BuildMenuUI.new(api: Api.Api): UI
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0, 0)
-	panel.Position = UDim2.fromOffset(0, WIDTH) -- under the minimap
+	panel.Position = UDim2.fromOffset(0, TOP) -- under the minimap
 	panel.Size = UDim2.fromOffset(WIDTH, FULL_HEIGHT)
 	panel.BackgroundColor3 = BG
 	panel.BackgroundTransparency = 0.15
@@ -288,7 +290,7 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 	local scale = ui.gui:FindFirstChild("SettingsScale")
 	local k = if scale and scale:IsA("UIScale") then scale.Scale else 1
 	local inset = game:GetService("GuiService"):GetGuiInset()
-	local room = ((if camera then camera.ViewportSize.Y else 1080) - inset.Y) / k - WIDTH - 120 - 4
+	local room = ((if camera then camera.ViewportSize.Y else 1080) - inset.Y) / k - TOP - 120 - 4
 	ui.panel.Size = UDim2.fromOffset(WIDTH, math.clamp(room, 26 + CELL + 11, FULL_HEIGHT))
 	ui.tab = math.clamp(ui.tab, 1, #menu.tabs)
 	local items = menu.items[menu.tabs[ui.tab]] or {}
