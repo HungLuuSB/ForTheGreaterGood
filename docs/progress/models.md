@@ -429,6 +429,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `4912cd7` (Structure blockouts scaled to the S-104 footprints (placeholders until the redesigns); `src/shared/Defs/Blockouts/` and docs).
 - Ready to merge: `5dd3f5a` (Anti-nuke pending blockouts ord_providence / chs_cerberus with open / raised poses; `src/shared/Defs/Blockouts/Pending/` and docs only).
 - Ready to merge: `2f129da` (Mobile anti-nuke pending blockouts ord_custodian / chs_chimera with the raised pose; `src/shared/Defs/Blockouts/Pending/` and docs only).
+- Ready to merge: `48a18fd` (Animated pieces in the blockouts (anim on parts) and the effect textures, rig.md 9 / fx.md; `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/Mesh.luau`, `assets/fx/textures/` and docs).
 
 ## Requests
 
