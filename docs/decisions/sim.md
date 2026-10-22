@@ -1392,3 +1392,52 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Fix (S-95, same day; found by the final faction_ai run):** a guard order queued behind others (a factory's list puts it after the exit move) could start after its target died, and `Orders` indexed the gone unit's def. A guard whose target is gone, or whose ID now belongs to another unit, now ends at once (`Orders.spec`: a factory guard order on a tank that dies before the unit rolls out). Repair already checked.
 - **S-100 measured** (`lune run stress 450 800`, before at `8787089`, after at `c059616`, two runs each): Commands peak 1.54–1.56 ms at tick 180 before; 1.69–2.23 ms (tick 303, or tick 1) after. The select-all's start was never the peak: the peaks are mid-battle `Orders.step` hold checks, which option (a) would address (under review). The work counters (S-99) are identical run to run (route 519,072, flow field 910,823, sensor lookups 1,402,750).
 - **Item 1, final** (S-91 / S-92 / S-97 with S-94, S-98 and S-101 in, `lune run faction_ai 40 3 all mirrored --jobs=10`, 7 min): Order 83, Chaos 19, undecided 6 (6%) of the same-level matches: Order's share 81%, from 90%. Normal 16–13. Normandy 61%, in target, with no undecided match. `docs/FACTION_AI.md` rewritten.
+
+## S-102 — Cheat / test commands (the user's request, 2026-10-23)
+
+- **Asked:** a match option `cheats` (default off). Cheat commands are ordinary commands in the deterministic queue, recorded in replays and rejected unless cheats are on. A match where one was used is flagged. Commands: give, res, income, instabuild, reveal, god, kill, speed, ai. A result message for each, for the client's chat. Tests. The command format in docs/contracts. Tell the client stream.
+- **Built:**
+  - **Wire (protocol 27):**
+    - `CmdType.CHEAT 17` with fixed params (`op, arg, team, defIndex, amount, x, z, radius`; world studs);
+    - event `CHEAT_RESULT 22` (`op, result, count, total`) to the sender.
+  - **Shared parser:** `Shared/Net/CheatText` parses chat text into the command and turns an answer into a chat line, so the client keeps no copy.
+  - **Sim:** `Sim/Cheats` (logic) and `Sim/CheatsState` (hashed state).
+  - **Hooks:**
+    - Build: instabuild finishes items at once, free.
+    - Damage: god mode, and kill through it.
+    - Sensors: `reveal` stamps every cell of the sight, air sight, sonar and radar maps.
+    - Economy: `bonusIncome` and `bonusStorage`.
+    - Skirmish: paused AI players skip their turns.
+    - NetOut: sends the answers.
+  - **Enabling:**
+    - match option `cheats`, or the Sim config's `cheats` without match rules;
+    - Sim config `offline` allows `speed`, which the sim only stores (`sim.cheats.speed`) for the tick driver;
+    - who may send them (host, allow list, never public) is the Roblox entry's filter before `Sim.submit`.
+  - **Flags:**
+    - `sim.cheats.used`;
+    - replay header `cheated` (replay format 3 adds a cheats byte: allowed, used, offline);
+    - `Stats.series(sim).cheated`;
+    - `Stats.report(sim)[pid].cheats`.
+- **Choices (mine, under review):**
+  - `instabuild` has no team argument, so it applies to every team, and it makes items free as well as instant.
+  - `kill` leaves no wrecks (it's a self-destruct, like an eliminated player's).
+  - `give` ignores the unit cap.
+  - `/cheat on|off` mid-match (the client's brief) isn't in the sim: the option is per match, fixed at start.
+- **Tests:** `Cheats.spec` 10:
+  - off by default, and a match with only rejected cheats hashes like an empty one;
+  - give with a partial formation at the map's edge and NO_ROOM;
+  - res, max and income;
+  - instabuild, reveal, god with kill through it;
+  - kill a team and an area;
+  - speed offline only, AI pause and resume;
+  - a replay of a match with cheats matches at every checkpoint and keeps the header flags;
+  - the wire round-trip and chat text.
+- `Schema.spec` pins CHEAT_RESULT's bytes; contract: net.md section 9a.
+
+## S-103 — Allied factories' production on the wire (client request 45) (2026-10-23)
+
+- **Asked:** the client draws BAR-style progress bars and nanoframes on own and allied factories, but only the owner gets the queue. Send allied factories' current item and progress at the owner's rate.
+- **Built:** State owner field `PRODUCING 16`: `defIndex u16` (0 = idle) and `progress u8`. It goes to the owner's allies, never to the owner (who has QUEUE) or to enemies, with the ENTER and when the item or its progress (by sixteenths) changes. Protocol 27, with S-102.
+- **Tests:**
+  - `NetOut.spec`: with three players (two allied), the ally's view matches the factory every tick, and the enemy and the owner never get the field;
+  - `Schema.spec` pins its bytes.

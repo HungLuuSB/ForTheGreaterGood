@@ -50,6 +50,7 @@ export type Report = {
 	powerGathered: number,
 	supplySpent: number,
 	powerSpent: number,
+	cheats: number, -- cheat commands this player applied (S-102)
 }
 
 function Stats.new(playerIds: { number }): { [number]: PlayerStats }
@@ -76,6 +77,7 @@ function Stats.report(sim: any): { [number]: Report }
 			powerGathered = if acc then acc.power.gathered else 0,
 			supplySpent = if acc then acc.supply.drawn else 0,
 			powerSpent = if acc then acc.power.drawn else 0,
+			cheats = sim.cheats.usedBy[pid] or 0,
 		}
 	end
 	return out
@@ -102,6 +104,7 @@ export type Series = {
 	every: number, -- ticks between kept samples
 	t: { number }, -- seconds since the start
 	players: { [string]: { [string]: { number } } }, -- player id (as text, for JSON) → field → values
+	cheated: boolean?, -- a cheat was used in this match (S-102)
 }
 
 function Stats.newSeries(startTick: number): Series

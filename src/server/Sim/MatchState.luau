@@ -18,6 +18,7 @@ export type Config = {
 	unitCap: number?, -- per player; default from the player count (Match.defaultCap)
 	ai: { [number]: AiLevel }?, -- players the skirmish AI plays, and how well (S-17)
 	friendlyFire: boolean?, -- blasts hurt allies too; default true (guide 10.6, S-73)
+	cheats: boolean?, -- cheat / test commands allowed; default off (S-102)
 }
 
 export type MatchState = {

@@ -9,6 +9,7 @@
 --            | playerCount u8 | (player u8, team u8, allyTeam u8) × playerCount
 --            | hasMatch u8 [| mode u8 (1 FFA, 2 TEAM) | win u8 (1 COMMAND_ENDS,
 --              2 ANNIHILATION) | unitCap u16]
+--            | cheats u8 (bit 0 allowed, bit 1 used, bit 2 offline; S-102)
 --   entries  kind u8, then
 --            COMMAND     tick u32 | player u8 | length u16 | payload (Schema command record)
 --            CHECKPOINT  tick u32 | hash u32
@@ -18,7 +19,7 @@ local Packer = require("@shared/Net/Packer")
 local Replay = {}
 
 Replay.MAGIC = "FTGR"
-Replay.FORMAT_VERSION = 2 -- 2: ally teams and match options in the header
+Replay.FORMAT_VERSION = 3 -- 2: ally teams and match options in the header; 3: cheat flags (S-102)
 Replay.Kind = table.freeze({ COMMAND = 1, CHECKPOINT = 2 })
 
 export type PlayerInfo = { id: number, team: number, allyTeam: number? }
@@ -32,6 +33,9 @@ export type Header = {
 	scenario: string,
 	players: { PlayerInfo }, -- in player ID order
 	match: MatchInfo?, -- nil: no match rules
+	cheats: boolean?, -- cheat commands allowed (S-102)
+	cheated: boolean?, -- a cheat was used: set by Cheats when one applies
+	offline: boolean?, -- offline / Studio match
 }
 
 export type Entry = {
@@ -100,6 +104,7 @@ function Replay.serialize(log: Log): buffer
 	else
 		w:writeU8(0)
 	end
+	w:writeU8((if h.cheats then 1 else 0) + (if h.cheated then 2 else 0) + (if h.offline then 4 else 0))
 	for _, e in log.entries do
 		w:writeU8(e.kind)
 		w:writeU32(e.tick)
@@ -152,6 +157,10 @@ function Replay.parse(buf: buffer): Log
 			friendlyFire = if hasMatch == 2 then false else nil,
 		}
 	end
+	local cheatFlags = r:readU8()
+	header.cheats = if bit32.band(cheatFlags, 1) ~= 0 then true else nil
+	header.cheated = if bit32.band(cheatFlags, 2) ~= 0 then true else nil
+	header.offline = if bit32.band(cheatFlags, 4) ~= 0 then true else nil
 
 	local log = Replay.new(header)
 	r.context = "replay entry"

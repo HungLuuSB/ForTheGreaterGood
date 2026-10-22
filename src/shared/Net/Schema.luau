@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 26 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot)
+Schema.PROTOCOL_VERSION = 27 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -99,7 +99,26 @@ Schema.CmdType = table.freeze({
 	CAMERA = 14,
 	REPEAT = 15, -- factories: repeat the build queue on / off (S-13)
 	CANCEL = 16, -- unfinished frames: cancel them; factories: drop queue item `value` (0 = all), refunding what was spent (S-35)
+	CHEAT = 17, -- a cheat / test command (S-102; protocol 27); applied only when the match allows cheats
 })
+
+-- CHEAT commands (S-102, net.md "Cheat commands"): what to do.
+Schema.CheatOp = table.freeze({
+	GIVE = 1, -- defIndex, amount = count, team, x, z: spawn finished units
+	RES = 2, -- arg = CheatResource, amount (CHEAT_MAX = fill), team: set stores
+	INCOME = 3, -- arg = CheatResource, amount per second (0 clears), team
+	INSTABUILD = 4, -- arg 1 on / 0 off
+	REVEAL = 5, -- arg 1 on / 0 off, team
+	GOD = 6, -- arg 1 on / 0 off: the sender's units
+	KILL = 7, -- arg = CheatKill; unit IDs (SELECTED), team (TEAM), x, z, radius (AREA)
+	SPEED = 8, -- amount = speed × 100 (25..800)
+	AI = 9, -- arg 1 pause / 0 resume, team
+})
+Schema.CheatResource = table.freeze({ SUPPLY = 1, POWER = 2, ALL = 3 })
+Schema.CheatKill = table.freeze({ SELECTED = 1, TEAM = 2, AREA = 3 })
+Schema.CHEAT_MAX = 0xFFFFFFFF -- RES amount: fill to storage
+local CHEAT_OP_MAX = 9
+local CHEAT_ARG_MAX: { [number]: number } = { [1] = 0, [2] = 3, [3] = 3, [4] = 1, [5] = 1, [6] = 1, [7] = 3, [8] = 0, [9] = 1 }
 
 Schema.CmdFlag = table.freeze({
 	QUEUE = 1, -- shift: append to the order queue
@@ -120,8 +139,11 @@ Schema.MoveState = table.freeze({ HOLD_POSITION = 0, MANEUVER = 1, ROAM = 2 })
 --   build   defIndex u16, cell u16, offX u8, offZ u8, facing u8 (0..3; bits 2..7 reserved)
 --   value   value u8                              (0..VALUE_MAX[cmdType])
 --   camera  minX u8, minZ u8, maxX u8, maxZ u8    (cell rectangle, unit count 0)
+--   cheat   op u8, arg u8, team u8 (0 = the sender's), defIndex u16 (0 = none),
+--           amount u32, x i16, z i16 (world studs), radius u16 (studs)
+--           (unit count 0..MAX: KILL SELECTED's units; S-102)
 --   none
-type ParamKind = "pos" | "target" | "build" | "value" | "camera" | "none"
+type ParamKind = "pos" | "target" | "build" | "value" | "camera" | "cheat" | "none"
 
 local CT = Schema.CmdType
 local PARAMS: { [number]: ParamKind } = {
@@ -141,6 +163,7 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.CAMERA] = "camera",
 	[CT.REPEAT] = "value",
 	[CT.CANCEL] = "value",
+	[CT.CHEAT] = "cheat",
 }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
@@ -174,6 +197,14 @@ export type Command = {
 	minZ: number?,
 	maxX: number?,
 	maxZ: number?,
+	-- cheat (S-102; defIndex as build)
+	cheatOp: number?, -- Schema.CheatOp
+	cheatArg: number?, -- on / off, CheatResource, CheatKill
+	cheatTeam: number?, -- 0 = the sender's
+	amount: number?, -- u32
+	x: number?, -- world studs (i16)
+	z: number?,
+	radius: number?, -- studs (u16)
 }
 
 function Schema.encodeCommand(w: Writer, cmd: Command)
@@ -191,6 +222,10 @@ function Schema.encodeCommand(w: Writer, cmd: Command)
 	if kind == "camera" then
 		if count ~= 0 then
 			error("Schema: CAMERA commands carry no unit IDs", 2)
+		end
+	elseif kind == "cheat" then
+		if count > Schema.MAX_UNITS_PER_COMMAND then
+			error(`Schema: CHEAT with {count} unit IDs`, 2)
 		end
 	elseif count < 1 or count > Schema.MAX_UNITS_PER_COMMAND then
 		error(`Schema: command needs 1..{Schema.MAX_UNITS_PER_COMMAND} unit IDs, got {count}`, 2)
@@ -240,6 +275,19 @@ function Schema.encodeCommand(w: Writer, cmd: Command)
 		w:writeU8(minZ)
 		w:writeU8(maxX)
 		w:writeU8(maxZ)
+	elseif kind == "cheat" then
+		local op, arg = required(cmd.cheatOp, "cheatOp"), cmd.cheatArg or 0
+		if op < 1 or op > CHEAT_OP_MAX or arg > CHEAT_ARG_MAX[op] then
+			error(`Schema: cheat op {op} arg {arg}`, 2)
+		end
+		w:writeU8(op)
+		w:writeU8(arg)
+		w:writeU8(cmd.cheatTeam or 0)
+		w:writeU16(cmd.defIndex or 0)
+		w:writeU32(cmd.amount or 0)
+		w:writeI16(cmd.x or 0)
+		w:writeI16(cmd.z or 0)
+		w:writeU16(cmd.radius or 0)
 	end
 end
 
@@ -263,6 +311,10 @@ function Schema.decodeCommand(r: Reader): Command
 	if kind == "camera" then
 		if count ~= 0 then
 			fail(r, `CAMERA with {count} unit IDs`)
+		end
+	elseif kind == "cheat" then
+		if count > Schema.MAX_UNITS_PER_COMMAND then
+			fail(r, `CHEAT with {count} unit IDs`)
 		end
 	elseif count < 1 or count > Schema.MAX_UNITS_PER_COMMAND then
 		fail(r, `unit count {count} outside 1..{Schema.MAX_UNITS_PER_COMMAND}`)
@@ -310,6 +362,18 @@ function Schema.decodeCommand(r: Reader): Command
 			fail(r, "camera rectangle has min > max")
 		end
 		cmd.minX, cmd.minZ, cmd.maxX, cmd.maxZ = minX, minZ, maxX, maxZ
+	elseif kind == "cheat" then
+		local op, arg = r:readU8(), r:readU8()
+		if op < 1 or op > CHEAT_OP_MAX or arg > CHEAT_ARG_MAX[op] then
+			fail(r, `cheat op {op} arg {arg}`)
+		end
+		cmd.cheatOp, cmd.cheatArg = op, arg
+		cmd.cheatTeam = r:readU8()
+		cmd.defIndex = r:readU16()
+		cmd.amount = r:readU32()
+		cmd.x = r:readI16()
+		cmd.z = r:readI16()
+		cmd.radius = r:readU16()
 	end
 	return cmd
 end
@@ -387,6 +451,11 @@ end
 --               CHARGES 8 flares u8 | chaff u8: countermeasure charges
 --                         left, 0 for a kind the def lacks (protocol 21,
 --                         S-63)
+--               PRODUCING 16 defIndex u16 (0 = idle) | progress u8: an
+--                         allied player's factory's current item and its
+--                         progress (0..255 of 1); sent to allies, not the
+--                         owner, who has QUEUE (protocol 27, S-103, client
+--                         request 45). The only owner field allies get.
 --------------------------------------------------------------------------------
 
 Schema.MAX_WEAPONS = 8 -- aim slot mask is one byte; weapon field is 2 bits per slot in a u16
@@ -414,8 +483,8 @@ Schema.StateField = table.freeze({
 	OWNER = 128, -- own units only: factory queue, fire / move state, ammo (protocol 20, S-61)
 })
 local STATE_MASK_ALL = 255
-Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4, CHARGES = 8 })
-local OWNER_MASK_ALL = 15
+Schema.OwnerField = table.freeze({ QUEUE = 1, STATES = 2, AMMO = 4, CHARGES = 8, PRODUCING = 16 })
+local OWNER_MASK_ALL = 31
 Schema.MAX_QUEUE = 50 -- items a factory queue can hold (BuildState.MAX_QUEUE)
 local SF = Schema.StateField
 
@@ -443,6 +512,9 @@ export type State = {
 	maxAmmo: number?,
 	flares: number?, -- countermeasure charges left (with `chaff`: the CHARGES field, protocol 21)
 	chaff: number?,
+	-- allied factories (S-103, protocol 27): the PRODUCING field
+	producing: number?, -- def index of the item in production; 0 = idle
+	producingProgress: number?, -- 0..255
 }
 
 -- {slot1, slot2, ...} WeaponState values → the u16 weapon field.
@@ -495,6 +567,9 @@ function Schema.encodeState(w: Writer, rec: State)
 	end
 	if rec.flares ~= nil or rec.chaff ~= nil then
 		owner += Schema.OwnerField.CHARGES
+	end
+	if rec.producing ~= nil then
+		owner += Schema.OwnerField.PRODUCING
 	end
 	if owner ~= 0 then
 		mask += SF.OWNER
@@ -601,6 +676,10 @@ function Schema.encodeState(w: Writer, rec: State)
 			w:writeU8(rec.flares or 0)
 			w:writeU8(rec.chaff or 0)
 		end
+		if rec.producing ~= nil then
+			w:writeU16(rec.producing)
+			w:writeU8(rec.producingProgress or 0)
+		end
 	end
 end
 
@@ -700,6 +779,10 @@ function Schema.decodeState(r: Reader): State
 		if band(owner, Schema.OwnerField.CHARGES) ~= 0 then
 			rec.flares = r:readU8()
 			rec.chaff = r:readU8()
+		end
+		if band(owner, Schema.OwnerField.PRODUCING) ~= 0 then
+			rec.producing = r:readU16()
+			rec.producingProgress = r:readU8()
 		end
 	end
 	return rec
@@ -816,6 +899,11 @@ end
 --               flags u8 (SHIELD_BREACH, SHIELD_ABSORBED): a shell turned
 --               back by the dome's field, through it, or (protocol 25)
 --               destroyed at its surface (protocol 24)                      = 13 bytes
+--   CHEAT_RESULT op u8 (Schema.CheatOp) | result u8 (Schema.CheatResult) |
+--               count u16 | total u16: the answer to the player's CHEAT
+--               command, for the chat (GIVE: units placed of asked; KILL:
+--               units killed; RES / INCOME: the amount set; SPEED: speed × 100);
+--               owner only (protocol 27, S-102)                             =  7 bytes
 --   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
 --               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
@@ -844,7 +932,20 @@ Schema.EventKind = table.freeze({
 	SHIELD = 19, -- protocol 24 (S-79)
 	SHIELD_HIT = 20,
 	SHIELD_FIELD = 21,
+	CHEAT_RESULT = 22, -- protocol 27 (S-102)
 })
+-- CHEAT_RESULT result codes (S-102)
+Schema.CheatResult = table.freeze({
+	OK = 0,
+	CHEATS_OFF = 1, -- the match doesn't allow cheats
+	BAD_ARGS = 2, -- an unknown unit type, a count or amount out of range
+	NO_TEAM = 3, -- no player on that team
+	NO_ROOM = 4, -- GIVE: no valid spot in the formation
+	NOT_OFFLINE = 5, -- SPEED: only offline / in Studio
+	NO_AI = 6, -- AI: no AI player on that team
+	NO_MAP = 7, -- GIVE: the match has no map
+})
+local CHEAT_RESULT_MAX = 7
 Schema.AlertKind = table.freeze({
 	UNIT_ATTACKED = 1,
 	STRUCTURE_ATTACKED = 2,
@@ -860,7 +961,7 @@ local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7 })
 Schema.ShieldFlag = table.freeze({ UP = 1, RECHARGING = 2 }) -- SHIELD flags: the dome stands; it is recharging (protocol 24)
 Schema.SHIELD_BREACH = 1 -- SHIELD_HIT flags: the shell broke through (else it turned back)
 Schema.SHIELD_ABSORBED = 2 -- SHIELD_HIT flags: a light shell destroyed at the surface; drop it, no burst (protocol 25, S-85)
@@ -896,6 +997,10 @@ export type Event = {
 	radius: number?, -- SHIELD_FIELD: the dome's radius (studs; with its centre in cell / offX / offZ / y)
 	force: number?, -- SHIELD_FIELD: 0..255 of full force
 	phase: number?, -- SHIELD_FIELD: ShieldField.BRAKING (1) or REPELLED (2)
+	cheatOp: number?, -- CHEAT_RESULT: Schema.CheatOp
+	cheatResult: number?, -- CHEAT_RESULT: Schema.CheatResult
+	count: number?, -- CHEAT_RESULT
+	total: number?, -- CHEAT_RESULT
 	-- DEATH
 	severity: number?,
 	wreckId: number?,
@@ -1026,6 +1131,16 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		w:writeU8(a)
 		w:writeU16(required(e.cell, "cell"))
 		w:writeU16(e.defIndex or 0)
+		return
+	elseif kind == EK.CHEAT_RESULT then
+		local op, res = required(e.cheatOp, "cheatOp"), required(e.cheatResult, "cheatResult")
+		if op < 1 or op > CHEAT_OP_MAX or res > CHEAT_RESULT_MAX then
+			error(`Schema: cheat result op {op} result {res}`, 2)
+		end
+		w:writeU8(op)
+		w:writeU8(res)
+		w:writeU16(math.clamp(e.count or 0, 0, 65535))
+		w:writeU16(math.clamp(e.total or 0, 0, 65535))
 		return
 	elseif kind == EK.SHIELD then
 		local flags = required(e.shieldFlags, "shieldFlags")
@@ -1176,6 +1291,15 @@ function Schema.decodeEvent(r: Reader): Event
 		e.alert = a
 		e.cell = r:readU16()
 		e.defIndex = r:readU16()
+		return e
+	elseif kind == EK.CHEAT_RESULT then
+		local op, res = r:readU8(), r:readU8()
+		if op < 1 or op > CHEAT_OP_MAX or res > CHEAT_RESULT_MAX then
+			fail(r, `cheat result op {op} result {res}`)
+		end
+		e.cheatOp, e.cheatResult = op, res
+		e.count = r:readU16()
+		e.total = r:readU16()
 		return e
 	elseif kind == EK.SHIELD then
 		e.unitId = readId(r, "unitId")

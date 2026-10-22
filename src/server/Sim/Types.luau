@@ -7,6 +7,7 @@ local OrdersState = require("./OrdersState")
 local EWState = require("./EWState")
 local MatchState = require("./MatchState")
 local BuildState = require("./BuildState")
+local CheatsState = require("./CheatsState")
 local Combat = require("./Combat/Combat")
 local Defs = require("@shared/Defs/Defs")
 local Economy = require("./Economy")
@@ -60,6 +61,7 @@ export type Sim = {
 	playerStats: { [number]: Stats.PlayerStats }, -- the results screen's numbers (S-63); not hashed
 	statSeries: Stats.Series, -- the same over time (S-88, client request 41); not hashed
 	alerts: any, -- Alerts.State: player alerts, last enemy hit per unit (S-68); not hashed
+	cheats: CheatsState.State, -- cheat / test commands (S-102)
 }
 
 return {}
