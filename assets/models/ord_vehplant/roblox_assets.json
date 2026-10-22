@@ -1,0 +1,26 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
+  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 564 triangles",
+  "bar": {
+    "model": "rbxassetid://101076966633573",
+    "meshes": {
+      "base": "rbxassetid://123036204100982"
+    },
+    "decals": {
+      "ALB": "rbxassetid://107848591320428",
+      "RGH": "rbxassetid://81965380622690",
+      "NOR": "rbxassetid://133307292063888",
+      "MTL": "rbxassetid://100695350229730",
+      "EMI": "rbxassetid://123708653950314"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://128886865804795",
+      "NOR": "rbxassetid://124833061714145",
+      "RGH": "rbxassetid://138518421805143",
+      "MTL": "rbxassetid://115172092781773",
+      "EMI": "rbxassetid://74586901331220"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_bar in FTGG Art",
+    "note": "the 22-stud mesh imports clamped to 2048 studs, so it was normalized at 22/2048 instead of 0.01"
+  }
+}
