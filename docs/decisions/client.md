@@ -905,3 +905,5 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Why:**
 - The user's review: panels read through to the HUD, left empty space, missed graphics options, and models took ~21 s.
 - The user also asked for white glow where the team color matches the faction glow, and a lower pulse if 4 blew out (it did, measured on the Order vehicle plant).
+
+**C-106 addendum (2026-10-23):** the user confirmed the factory pulse peak at 3.

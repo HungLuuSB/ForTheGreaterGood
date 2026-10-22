@@ -17,7 +17,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Graphics settings:** "Detailed models" On/Off (Off draws blockouts and loads nothing), "Glow" Off/Low/High, "Headlights" On/Off. The detailed-models request wasn't anywhere in the repo, so it's new here.
 - **Model loading:** types drawn on screen load first, then every type in the match, then your faction, then the rest. Measured on the `fog` profile: the Order vehicle plant ready at 2.5 s and the Mason, Herald and Lancer by 5.3 s (they were 16–19 s, alphabetical behind Chaos). The whole set still takes about 18 s, in the background.
 - **Glow against team color (your second message):** with C's clash table, an Order unit on cyan (team 7) and a Chaos unit on orange (team 6) show their running and power glow white; head and weapon glow stay. Checked in a match.
-- **Factory pulse capped at 3** (was 4): at 3.9 the Order vehicle plant's door bloomed into a white block. At 3 it's still bright. Screenshot pair below; tell me if you want it lower.
+- **Factory pulse capped at 3** (was 4): at 3.9 the Order vehicle plant's door bloomed into a white block. At 3 it's still bright. Screenshot pair below. You confirmed 3 (2026-10-23).
 - **Statistics data from the sim:** sim-A delivered request 41 (S-88, `Stats.series`), so my stopgap sampler is gone and "Damage · Taken" now has data.
 - **Screenshots:** `debug_out/screens/uikit2_*.jpg`.
 
@@ -1210,7 +1210,6 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 ## Needs my review
 
 - **Review follow-ups (C-106):** `debug_out/screens/uikit2_*.jpg`. Your calls:
-  - **Factory pulse at 3:** still bright on the Order plant's door; lower if wanted (`Core/Glow.PULSE_HIGH`).
   - **Scrim darkness** (45%, `Kit.COLOR.scrimTransparency`).
   - **The six Combat charts** (Units · Alive is derived).
 
