@@ -56,6 +56,16 @@ Getting the models into the game place "For The Greater Good" is the client sess
 | Textures | one set of four 1024 × 1024 maps shared by the three pieces | one palette texture for all units |
 | Instances | 3 MeshParts (blockout: 13 Parts) | — |
 
+### Open Cloud route (2026-10-22)
+
+With an Open Cloud API key (user-owned, Assets read and write, IP-restricted, read from the `ROBLOX_API_KEY` user environment variable and never printed), the import needs no clicks:
+
+1. `python assets/models/tools/opencloud.py <export dir> <unit id> <creator user id>` uploads the five maps as Decals and the FBX as a Model (it arrives as a package with the MeshParts) and writes `export/opencloud.json`.
+2. In "FTGG Art", `InsertService:LoadAsset(<model id>)` gives the MeshParts at x100 and turned 180° like the 3D Importer's, so `rig_model.luau` normalizes and checks them unchanged. `LoadAsset(<decal id>)` gives each Decal's image ID.
+3. The rig step replaces the FBX's own SurfaceAppearance with one made from the Decal images (ALB, NOR, RGH, MTL; the EMI image as the emissive mask). On the first test the FBX's own maps drew grey (HTTP 502 on a fresh map, as importer uploads do until a restart), while the Decal images drew at once: **no Studio restart needed**.
+
+Limits (Roblox docs): one asset per request, up to 20 MB; images under 8000 × 8000; a Model upload is a package; no published per-minute limit for creating assets, limits apply per key owner and a 429 carries `x-ratelimit-reset` (the tool waits and retries); moderation still applies to each upload. One unit is six uploads (five maps and the FBX); the FBX's embedded maps are uploaded too but not used.
+
 ### Shared runner (2026-10-22)
 
 `assets/models/tools/unit.py` holds the faction looks (the approved tanks' paints, specs and accents, M-15, M-18), the detail helpers (bolts, seams, rings) and the whole flow after the geometry: bake, previews framed on the unit's size, FBX with the emissive probe, `rig.json`. A unit's `build.py` only describes its pieces (`unit.PieceSpec(name, parent, pivot, build, details)`) and calls `unit.run(...)`. The structures use it (extractors, generators, solars, vehicle plants, Bulwark, Spike); the tanks and the four vehicles derived from them keep their own scripts.
