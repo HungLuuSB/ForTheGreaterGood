@@ -734,3 +734,17 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The double dome came from a yield inside the frame loop.
 - The user's three tuning points (10× capacity, deceleration, glancing deflection) are sim numbers, sent to sim-A with measurements.
 
+
+### C-94 — ShieldFx on C's assets; meshes loaded at runtime; flowing rings stay adornments (2026-10-23)
+
+**Decision:**
+- **Assets:** `ShieldFx` uses C's shield assets by ID: the Dome hemisphere (Size 2R × R × 2R, centre half-way up), Ring for the foot ring, and the beam, swirl, speck and ripple textures.
+- **Loading:** the meshes come from `AssetService:CreateMeshPartAsync` once, in a spawned thread. `ShieldFx.ready()` gates new domes in `ShieldDomes`. If loading fails, the dome is a ball with no foot ring.
+- **Emitter:** `ShieldFx.new` takes an optional `base` (the dome centre), so the emitter can be the generator model's `beam` attachment. `setEmitter` follows the model as it streams in and out, and the core (the attachment's part) is tinted by charge and restored when released.
+- **Look over the contract:** neutral white, opacity from charge, no ForceField: the user's rules (C-89, C-90) over fx.md's team colour.
+- **Flowing rings:** they stay CylinderHandleAdornments.
+
+**Why:**
+- C's assets merged, and the user asked for them in place of the placeholders.
+- The game place can't take copies from FTGG Art (my rule), so the meshes are built from their uploaded IDs.
+- The Ring mesh's tube grows with its radius, a 2.4-stud ribbon at R=120, so it fits only the foot ring until a thinner ring comes.

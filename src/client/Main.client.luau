@@ -399,7 +399,7 @@ if RunService:IsStudio() then
 						gen.Parent = live
 						local emitter = gen:FindFirstChild("Emitter", true)
 						if emitter and emitter:IsA("Attachment") then
-							ShieldFx.new(emitter, radius):deploy()
+							ShieldFx.new(emitter, radius, nil, Vector3.new(x, surfaceY(x, z), z)):deploy()
 							table.insert(made, { gen.Name, radius })
 						end
 					end
@@ -476,7 +476,7 @@ if RunService:IsStudio() then
 			for id, r in world.shields do
 				records[tostring(id)] = r
 			end
-			return { domes = domes, records = records }
+			return { domes = domes, records = records, hits = shieldDomes.stats }
 		elseif query == "camera" then
 			-- Invoke("camera", x?, z?, distance?, pitchDegrees?): put the camera there (screenshots)
 			local x, z, distance, pitch = ...
@@ -643,7 +643,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
 	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now, speed)
 	lastVisibleFx = visibleFx
-	ShieldDomes.step(shieldDomes, world, fx)
+	ShieldDomes.step(shieldDomes, world, fx, renderer)
 	mark("effects", t0)
 	-- the camera goes on after units and missiles have their drawn positions
 	-- this frame, so a followed one sits still in the middle of the screen
