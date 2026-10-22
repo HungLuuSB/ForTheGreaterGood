@@ -10,7 +10,8 @@
 # (`lune run test_slow`: AI matches, fairness), the client suite
 # (`lune run test_client`, when present: client specs a sim change breaks)
 # and `lune run build` there, and pushes main only if all pass. A conflict aborts the merge (exit 3); failed checks
-# drop the local, unpushed merge (main back to origin/main, exit 4). Nothing
+# drop the local, unpushed merge (main back to origin/main, exit 4); a failed
+# push keeps the checked merge for a retry (exit 5). Nothing
 # is ever force-pushed. Record failures under "Integration notes" in the
 # stream's progress file.
 set -u
@@ -45,8 +46,14 @@ echo "test_client: $C"
 B=$(lune run build 2>&1 | tail -1)
 echo "build: $B"
 if echo "$T" | grep -q " 0 failed" && echo "$S" | grep -q " 0 failed" && echo "$C" | grep -q " 0 failed" && echo "$B" | grep -q "requires all resolve"; then
-	git push -q origin main && echo "PUSHED $(git log --oneline -1)"
-	exit 0
+	if git push -q origin main; then
+		echo "PUSHED $(git log --oneline -1)"
+		exit 0
+	fi
+	# checks passed but the push didn't (network): the merge stays on the
+	# worktree's main, ahead of origin; retry with `git push` there
+	echo "PUSH FAILED: the checked merge is kept on the worktree's main; run git push there"
+	exit 5
 fi
 echo "CHECKS FAILED: dropping the unpushed merge (main back to origin/main)"
 git reset -q --hard origin/main
