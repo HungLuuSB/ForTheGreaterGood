@@ -12,6 +12,10 @@
 -- A shell still moving in when it reaches the dome breaks through (the
 -- breach) and carries on inside, slowed. Speed along the surface bleeds off
 -- a little while in the field. Gravity acts throughout.
+-- The bounce is close to a mirror off the dome where the shell turned
+-- (S-80, the user's rule): head-on shells go straight back at ~60% of their
+-- speed, glancing ones leave within ~8° of their entry angle on the other
+-- side of the normal, at 70–85% of their speed.
 --
 -- The field's force is `force` (0..1: Shield's charge over FULL_FORCE, so
 -- full at 50% charge and above) over the shell's mass to MASS_EXP: a heavy
@@ -25,9 +29,9 @@ ShieldField.BAND = 50 -- studs outside the dome
 ShieldField.FULL_FORCE = 0.5 -- charge at and above which the field is at full force
 ShieldField.BRAKE = 1000 -- studs/s² of radial braking at full force, mass 1, mid-band (C-87's prototype: 500)
 ShieldField.DRAG = 20 -- 1/s of radial drag at full force, mass 1, mid-band (prototype: 9)
-ShieldField.PUSH = 1400 -- studs/s² outward after the turn, at full force, mass 1, at the dome
+ShieldField.PUSH = 2800 -- studs/s² outward after the turn, at full force, mass 1, at the dome (prototype: 1400; S-80)
 ShieldField.MASS_EXP = 0.6
-ShieldField.TANGENT_DRAG = 1.5 -- 1/s on the speed along the surface while in the field
+ShieldField.TANGENT_DRAG = 0.3 -- 1/s on the speed along the surface while in the field (prototype: 1.5; S-80)
 ShieldField.SUBSTEP = 10 -- studs a shell moves per substep at most (8 substeps at most)
 
 -- Phases of a shell against one dome.
