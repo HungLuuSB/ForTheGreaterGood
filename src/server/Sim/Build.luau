@@ -198,8 +198,8 @@ local function startFrame(sim: Types.Sim, d: Defs.UnitDef, owner: number, x: num
 		buildProgress = 0,
 	})
 	Placement.occupy(sim, id)
-	if d.converter then
-		World.setState(w, id, bit32.bor(w.state[id], World.State.TOGGLED_ON)) -- converters start on
+	if d.converter or d.retract then
+		World.setState(w, id, bit32.bor(w.state[id], World.State.TOGGLED_ON)) -- converters and retracting towers (S-96) start on
 	end
 	Lifecycle.added(sim, id)
 	return id

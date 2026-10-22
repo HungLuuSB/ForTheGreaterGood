@@ -29,7 +29,16 @@
 --
 -- The plateau undulates ±2 studs. Roads (ROAD terrain, 2 cells wide) run
 -- east–west over the bridges at z = -700, -250 and 250, and up the draws.
--- Starts: player 1 (-850, 0), player 2 (850, 0). No supply deposits.
+-- Starts: player 1 (-850, 0), player 2 (850, 0).
+-- Supply deposits (S-98, next.md item 5; the user's queue task 5), mirrored,
+-- each on the nearest field cell to its spot (DEPOSITS):
+--   home     four of value 4 round each start, behind its river;
+--   rear     a pair of value 3 north and one south of each start, still
+--            behind the river;
+--   staging  a pair of value 3 in each side's staging fields;
+--   bocage   two pairs of value 3 in each half of the bocage, north and
+--            south of its village: contested ground;
+--   centre   a rich pair of value 6 south of the middle road.
 --
 -- `Normandy.feature(cx, cz)` names what a cell is (for drawing): "sea",
 -- "beach", "bluff", "draw", "hedge", "house", "road", "bridge", "river" or
@@ -50,6 +59,19 @@ Normandy.RIVER_X = 660 -- both rivers: x = -660 and 660
 Normandy.BRIDGES = table.freeze({ -700, -250, 250 }) -- z of the bridges on each river
 Normandy.VILLAGES = table.freeze({ { -220, -150 }, { 220, -150 } })
 Normandy.STARTS = table.freeze({ { -850, 0 }, { 850, 0 } })
+-- Supply deposits (S-98): { x, z, value } of the west half, mirrored to the
+-- east; the centre pair is listed whole. Each lands on the nearest field cell.
+Normandy.DEPOSITS = table.freeze({
+	-- home: round the start
+	{ -890, -40, 4 }, { -810, -40, 4 }, { -890, 40, 4 }, { -810, 40, 4 },
+	-- rear: behind the river
+	{ -836, 380, 3 }, { -812, 380, 3 }, { -836, -420, 3 }, { -812, -420, 3 },
+	-- staging fields
+	{ -540, -500, 3 }, { -516, -500, 3 },
+	-- bocage, north and south of the village
+	{ -300, 120, 3 }, { -276, 120, 3 }, { -320, -420, 3 }, { -296, -420, 3 },
+})
+Normandy.CENTRE_DEPOSITS = table.freeze({ { -16, -520, 6 }, { 16, -520, 6 } })
 
 local CELL = Grid.CELL_SIZE
 local HALF = Normandy.CELLS * CELL / 2
@@ -228,6 +250,36 @@ function Normandy.build(): Layers.Layers
 		return land, 0, T.GRASS
 	end)
 	local g = layers.grid
+	-- deposits (S-98): each west one on the nearest free field cell to its
+	-- spot, and its mirror image exactly opposite (the map stays symmetric)
+	local function place(x: number, z: number, value: number)
+		local cx0, cz0 = g:cellAt(x, z)
+		for r = 0, 6 do
+			for dz = -r, r do
+				for dx = -r, r do
+					if math.max(abs(dx), abs(dz)) == r then
+						local cx, cz = cx0 + dx, cz0 + dz
+						local mx = n - 1 - cx
+						if cx >= 0 and cz >= 0 and cx < n / 2 and cz < n and Normandy.feature(cx, cz) == "field"
+							and Layers.getSupply(layers, g:index(cx, cz)) == 0 and Layers.getSupply(layers, g:index(mx, cz)) == 0 then
+							Layers.setSupply(layers, g:index(cx, cz), value)
+							Layers.setSupply(layers, g:index(mx, cz), value)
+							return
+						end
+					end
+				end
+			end
+		end
+		error(`Normandy: no field cell near the deposit at ({x}, {z})`)
+	end
+	for _, d in Normandy.DEPOSITS do
+		place(d[1], d[2], d[3])
+	end
+	for _, d in Normandy.CENTRE_DEPOSITS do
+		if d[1] < 0 then
+			place(d[1], d[2], d[3]) -- (its east twin is the other of the pair)
+		end
+	end
 	for _, s in Normandy.STARTS do
 		local cx, cz = g:cellAt(s[1], s[2])
 		table.insert(layers.starts, { g:cellCenter(cx, cz) })

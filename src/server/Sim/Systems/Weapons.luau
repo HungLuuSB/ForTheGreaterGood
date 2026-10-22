@@ -57,6 +57,21 @@ local VISIBLE = Sensors.Level.VISIBLE
 local OK_RETARGET, OK_ALLOWED = World.Overkill.RETARGET, World.Overkill.ALLOWED
 local aimState: Aim.State = { yaw = 0, pitch = 0, hold = 0 } -- scratch, reused for every weapon
 
+-- Can `team`'s stores pay `cost` now (S-96)?
+local function affordable(sim: Types.Sim, team: number, cost: { supply: number?, power: number? }): boolean
+	local acc = sim.eco.accounts[team]
+	return acc ~= nil and acc.supply.stored >= (cost.supply or 0) and acc.power.stored >= (cost.power or 0)
+end
+
+-- Draws a shot's `cost` from `team`'s stores at once (S-96).
+local function pay(sim: Types.Sim, team: number, cost: { supply: number?, power: number? })
+	local acc = sim.eco.accounts[team]
+	acc.supply.stored -= cost.supply or 0
+	acc.power.stored -= cost.power or 0
+	acc.supply.drawn += cost.supply or 0
+	acc.power.drawn += cost.power or 0
+end
+
 local function wrapAngle(a: number): number
 	a = a % TAU
 	if a > PI then
@@ -208,8 +223,8 @@ return function(sim: Types.Sim)
 
 	for _, id in w.ids do
 		local count = w.weaponCount[id]
-		if count == 0 or w.buildProgress[id] < 1 then
-			continue -- (S-87) a frame neither aims nor fires until it is complete
+		if count == 0 or w.buildProgress[id] < 1 or Combat.retracted(sim, id) then
+			continue -- (S-87) a frame, or (S-96) a retracted tower, neither aims nor fires
 		end
 		local p = profiles[w.defIndex[id]]
 		local x, z, heading = w.posX[id], w.posZ[id], w.heading[id]
@@ -330,6 +345,9 @@ return function(sim: Types.Sim)
 				if canFire and not Deploy.canFire(w, id) then
 					canFire = false -- packed or (un)packing (S-64)
 				end
+				if canFire and weapon.shotCost and not affordable(sim, w.team[id], weapon.shotCost) then
+					canFire = false -- the team's stores can't pay for the shot (S-96)
+				end
 			elseif projTarget ~= 0 then
 				-- interceptors launch vertically: in range and in stock is enough (S-48)
 				dist = sqrt((c.px[projTarget] - x) ^ 2 + (c.pz[projTarget] - z) ^ 2)
@@ -405,6 +423,9 @@ return function(sim: Types.Sim)
 					-- carry while firing continuously, never bank more than one tick.
 					w.wReload[key] = weapon.reload + max(reload, -DT)
 					Stockpile.take(w, key)
+					if weapon.shotCost then
+						pay(sim, w.team[id], weapon.shotCost) -- (S-96)
+					end
 					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch, projTarget)
 					local salvo = weapon.salvo
 					if salvo and salvo.count > 1 then

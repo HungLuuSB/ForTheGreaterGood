@@ -1307,3 +1307,43 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Guard and attack keep their target's generation, so an order to a unit since gone ends at once on the new unit, as any stale order does.
 - **No wire change.**
 - **Tests:** `Orders.spec` 11: a move-then-guard list reaches a produced unit in order, and it ends up by the guarded tank; a plain order replaces the list; STOP clears it.
+
+## S-96 — T2 beam towers and flak towers (client request 43, the user) (2026-10-23)
+
+- **Asked:**
+  - Start with a Pulsar-style beam tower per faction: a precise, long-range BEAM; a very heavy hit on a long reload; a large power cost per shot.
+  - Switched off, it retracts into an armored shell (about 4× effective HP) and can't fire.
+  - It fires over other defenses; it is precise, so weak against radar contacts.
+  - Then more T2 defenses for both factions, and the T2 builders' build options.
+- **Built:**
+  - **Beam towers:**
+    - Order `ord_radiance`: range 650, 2,600 (structures 2,000) every 9 s, 700 power a shot.
+    - Chaos `chs_inferno`: range 560, 2,000 / 1,600 every 7 s, 500 a shot; cheaper and lighter.
+    - Both are T2, footprint 2, with BEAM weapons at accuracy 0 that can't target radar contacts (`canTargetRadar` unset).
+    - Beams are blocked by terrain only (Combat.lineOfFire), so they fire over walls and other defenses.
+  - **Weapon `shotCost`:** a shot needs the team's stores to hold the cost, and draws it at once (`stored` and `drawn`, so Stats count it). It doesn't wait on the economy window.
+  - **Unit `retract = { armor }`:**
+    - TOGGLED_ON clear means retracted: Targeting and Weapons skip the unit, and Damage divides by `armor` (4).
+    - Spawned and built towers start switched on.
+    - The TOGGLE command and the state bit already existed, so there's no wire change.
+  - **Flak towers:** Order `ord_lumen` (2 × `ord_flak`) and Chaos `chs_hailstorm` (3 × `chs_flak`, cheaper), T2: no land flak tower existed. The existing T2 defenses (Bastion / Maw, Edict / Cataclysm, Aegis / Wyvern) stay.
+  - All four are in the Architect's and Forgemaster's build options; blockouts are requested from the models stream (request 10).
+- **Note:** a team without depots stores 1,000 power, so a beam tower fires once and then waits on income (under review).
+- **Tests:** `Defenses.spec` 4:
+  - Radiance hits twice in 12 s for 2,600 each at 700 power, and holds fire below 700;
+  - an Inferno ignores a radar-only Paladin and fires once a scout sees it;
+  - switched off: no fire and 400 damage → 100; on again: fire and full damage;
+  - both flak towers fire on and damage an enemy jet.
+
+## S-98 — Supply deposits on Normandy (next.md item 5, the user's queue task 5) (2026-10-23)
+
+- **Asked:** add supply deposits to Normandy, behind each river and some in the bocage.
+- **Built** (`Normandy.DEPOSITS`, `CENTRE_DEPOSITS`). Each west deposit goes on the nearest free field cell to its spot, and its east twin on the exactly mirrored cell, so the map stays symmetric:
+  - **home:** four of value 4 round each start;
+  - **rear:** a pair of value 3 north and one south of each start, behind the river;
+  - **staging:** a pair of value 3 in each side's staging fields;
+  - **bocage:** two pairs of value 3 in each half of the bocage, north and south of its village (contested ground);
+  - **centre:** a rich pair of value 6 south of the middle road.
+  - In all, 30 deposits worth 104. The other 1v1 maps have 18 worth 68; Normandy is twice their size.
+- **Tests:** `Normandy.spec`: 30 deposits worth 104, all on field cells, mirrored, 8 behind each river.
+- The faction_ai re-run is in task 3's report.

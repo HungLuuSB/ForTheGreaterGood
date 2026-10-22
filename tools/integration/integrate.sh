@@ -8,8 +8,12 @@
 #
 # Merges --no-ff, runs the fast suite (`lune run test`), the slow suite
 # (`lune run test_slow`: AI matches, fairness) and `lune run build` there,
-# and pushes main only if all pass. A conflict aborts the merge (exit 3); failed checks
-# drop the local, unpushed merge (main back to origin/main, exit 4). Nothing
+# and pushes main only if all pass. The client suite (`lune run test_client`,
+# when present) runs too and is reported, not required: a new sim def fails
+# it until the client stream draws its icon, so its failures go to the
+# client stream instead of blocking the merge. A conflict aborts the merge (exit 3); failed checks
+# drop the local, unpushed merge (main back to origin/main, exit 4); a failed
+# push keeps the checked merge for a retry (exit 5). Nothing
 # is ever force-pushed. Record failures under "Integration notes" in the
 # stream's progress file.
 set -u
@@ -36,11 +40,23 @@ if [ -f .lune/test_slow.luau ]; then
 	S=$(lune run test_slow 2>&1 | tail -1)
 fi
 echo "test_slow: $S"
+C="0 failed (no client suite)"
+if [ -f .lune/test_client.luau ]; then
+	C=$(lune run test_client 2>&1 | tail -1)
+fi
+echo "test_client: $C"
+echo "$C" | grep -q " 0 failed" || echo "CLIENT SUITE FAILURES (reported, not blocking): tell the client stream"
 B=$(lune run build 2>&1 | tail -1)
 echo "build: $B"
 if echo "$T" | grep -q " 0 failed" && echo "$S" | grep -q " 0 failed" && echo "$B" | grep -q "requires all resolve"; then
-	git push -q origin main && echo "PUSHED $(git log --oneline -1)"
-	exit 0
+	if git push -q origin main; then
+		echo "PUSHED $(git log --oneline -1)"
+		exit 0
+	fi
+	# checks passed but the push didn't (network): the merge stays on the
+	# worktree's main, ahead of origin; retry with `git push` there
+	echo "PUSH FAILED: the checked merge is kept on the worktree's main; run git push there"
+	exit 5
 fi
 echo "CHECKS FAILED: dropping the unpushed merge (main back to origin/main)"
 git reset -q --hard origin/main

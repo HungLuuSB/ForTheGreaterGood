@@ -339,6 +339,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `18195e5` (UI kit; settings, statistics panel and lobby rebuilt on it; server stat samples; sim request 41, C-105; touches src/roblox Main.server and Lobby); test_client 191, test 404, build passed.
 - Ready to merge: `b5b5d48` (review follow-ups: modal panels, fitted layouts, graphics options, model load order, glow vs team color, pulse 3, Stats.series, C-106 `767ae09`; merged with main at protocol 26, includes m-models `0af6ed7`); test_client 192, test 407, build passed.
 - Ready to merge: `ad2f474` (build menu portraits and stats tooltip, On / Off, short-way turns, sim requests 42-43, models request 2, C-107); test_client 193, test 407, build passed.
+- Ready to merge: `bb644b9` (per-unit command sets, factory orders kept, Roblox top bar cleared and HUD in the top strip, sim request 44, C-109; also C-108 `0cfa7d0`: minimap 220, fx materials, includes m-models `764874b`); test_client 195, test 407, build passed.
+- Ready to merge: `ecd03d2` (main with S-93 / S-94 merged; shield wire spec for heavy shells, C-110); test_client 194 (one unidentified failure in one of four runs, not repeated), test 409, build passed.
 
 ## Tasks
 
@@ -666,6 +668,20 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: factory order lists in game (S-95 merged; C-111)
+
+- **sim-A did request 44 (S-95):** MOVE, FIGHT, PATROL, GUARD, REPAIR and ATTACK on a factory go on its order list (shift appends, a plain order replaces, STOP clears). Each unit it builds rolls out, then takes a copy in order. Main is merged into this branch (with C-107..C-109, models' BAR pairs 5–9 and the missiles).
+- **Client:** factories now offer Attack too (`Core/CommandSet`, spec updated). Their drawn orders already stay until replaced (C-109).
+- **`FactoryOrders.spec`:** a move, then a shift-queued patrol, sent to a vehicle plant the way the client sends them (`Orders.encode`). The Lancer it builds carries the move, then the patrol.
+- **Studio** (`shield` profile): the plant got a move to (84, −108) and a queued patrol. The new Lancer rolled out and drove to the move point, then started its patrol and held at the first enemies in range, firing at the attackers (a patrol is an attack-move) (`debug_out/screens/factory_orders.jpg`).
+
+## 2026-10-23: shields destroy every shell, in game (S-93 merged; C-110)
+
+- **Your report:** shields still diverted shots. S-93 (every projectile destroyed at an up dome's surface) was on sim-A's branch, not yet in main. It's now merged (main `ead4014`, with S-94: T1 factories at 200 build power, a Lancer in 25.5 s) and merged into this branch.
+- **Client:** no change needed; an absorbed SHIELD_HIT already ends the shell at the surface (C-99) and lights the dome there.
+  - `ShieldWire.spec`: the two field tests (shells braked and turned inside the dome) are replaced by one for heavy shells: Ravager shells are destroyed exactly at the surface (within 0.5 stud, measured from the dome's real centre at the generator's base), with no turn, breach or field-entry hits and none drawn inside.
+- **Studio,** `shield` profile, 30 s of every attacker type: 663 SHIELD_HIT, all absorbed; no field entries, no breaches, nothing turned back (`debug_out/screens/shield_absorb_all.jpg`).
 
 ## 2026-10-23: per-unit command sets; factory orders; Roblox top bar cleared (C-109)
 
@@ -1385,7 +1401,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-44. **Open.** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
+44. **Done and used (S-95; C-111).** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
     - Today a MOVE / FIGHT / PATROL given to a factory sets one rally point (Orders.give; PATROL becomes fight).
     - **Please keep the factory's whole order list instead,** as for a unit: MOVE, FIGHT, PATROL, GUARD (a unit), REPAIR, ATTACK. Shift appends, a plain order replaces, STOP clears it.
     - Each unit the factory produces rolls out of the exit, then takes a copy of the list, so a pre-move then a patrol, or a move then guard a commander, works.
@@ -1402,7 +1418,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
     - **Builders:** the T2 builders' buildOptions.
     - **Client side:** I'll draw the beam (the user's reference: a thin bright line with a glow from the barrel to the target, held for the shot), the retract pose in the piece script, and the on/off button. The models stream needs the meshes (models request 2).
 
-42. **Open.** **Shield: destroy every projectile on contact; faster unit production (2026-10-23, the user):**
+42. **Done and used (S-93, S-94; C-110).** **Shield: destroy every projectile on contact; faster unit production (2026-10-23, the user):**
     - **Shield, made simple:** "destroy projectile on contact, that will ease thing out." Every projectile that reaches an up enemy dome is destroyed at the surface (SHIELD_HIT ABSORBED, as the light shells already are, S-85), whatever its mass: no braking field, no turning back, no breach.
       - Keep the charge drain per hit (by mass) and the collapse at 0% / rise at 25%.
       - The client already draws an absorbed hit at the surface; it will drop the field's bow-shock look once you confirm.

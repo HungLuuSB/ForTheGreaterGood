@@ -480,7 +480,12 @@ Ground units don't send height: the client looks it up from its own copy of the 
     - each side's open staging field at |x| 420–640;
     - the bocage at |x| < 400: 176-stud fields bounded by hedgerows. A hedgerow is a 1-cell bank 6 studs high (rock) that blocks land units and low direct fire, with a 40-stud gap every 96 studs, 24 of them passable;
     - two villages at (±220, −150): 2 × 2-cell houses, 8 studs high.
-  - **Starts and deposits:** (−850, 0) and (850, 0). There are no deposits.
+  - **Starts and deposits:** (−850, 0) and (850, 0). Deposits (S-98), mirrored:
+    - four of value 4 round each start and two pairs of value 3 behind each river;
+    - a pair of value 3 in each side's staging fields;
+    - two pairs of value 3 in each half of the bocage (contested);
+    - a rich pair of value 6 in the middle.
+    - In all, 30 deposits worth 104, each on an open field cell.
   - **For drawing:** `Normandy.feature(cx, cz)` names each cell (sea, beach, bluff, draw, hedge, house, road, bridge, river, field).
 
 ---
@@ -1351,6 +1356,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Artillery emplacement | T2 | **Edict** | **Cataclysm** | Adv. Ground |
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
+| Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (650, 2,600 every 9 s, 700 power a shot) | **Inferno** (560, 2,000 every 7 s, 500 power a shot) | Adv. Ground |
+| Flak tower (S-96) | T2 | **Lumen** (2 flak guns) | **Hailstorm** (3, cheaper) | Adv. Ground |
 | Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
 | Pinpointer (radar precision, S-59) | T2 | **Witness** | **Augur** | Adv. Ground |
 | Floating turret | T1 | **Moat** | **Riptide** | Naval |
@@ -1358,6 +1365,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |
 | Sonar buoy / station | T1 / T2 | **Ear / Choir** | **Listener / Deepear** | Naval / Adv. Naval |
 | Nuclear missile silo (S-48) | T3 | **Reckoning** | **Ragnarok** | Adv. Ground (Architect / Forgemaster) |
+
+Beam towers (S-96, client request 43): a precise BEAM, one very heavy hit on a long reload, each shot paid in power from the team's stores (`shotCost`; no shot without it). Like any beam, terrain is the only thing in the way: they fire over walls and other defenses. They fire only at targets the team sees, not radar contacts. Switched off (TOGGLE), a beam tower retracts into its armored shell: it can't fire, and damage to it is divided by 4 (`retract.armor`); it starts switched on.
 
 ---
 

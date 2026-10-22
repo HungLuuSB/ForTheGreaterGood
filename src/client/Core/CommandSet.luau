@@ -6,9 +6,9 @@
 --   armed        fire state, attack
 --   mobile       move, fight, patrol, guard; move state when armed
 --   builders     repair, reclaim (and move / guard to assist when mobile)
---   factories    repeat, cancel; move, fight, patrol, guard as orders for
---                the units they produce (the sim's rally point; a queue of
---                them is sim request 44)
+--   factories    repeat, cancel; move, fight, patrol, guard, attack as
+--                orders for the units they produce (the sim's order list
+--                per factory, copied to each new unit: S-95)
 --   switchable   on / off (converters; more with sim request 43)
 --   silos        stop (the launch), attack (a manual launch at a point)
 -- "alert" (jump to the last alert) is always there: it's not a unit order.
@@ -49,7 +49,7 @@ function CommandSet.forDef(def: any): { [string]: boolean }
 	end
 	if isFactory(def) then
 		set["repeat"], set.cancel = true, true
-		set.move, set.fight, set.patrol, set.guard = true, true, true, true
+		set.move, set.fight, set.patrol, set.guard, set.attack = true, true, true, true, true
 	end
 	if def.converter ~= nil or def.toggle ~= nil then
 		set.toggle = true
