@@ -20,7 +20,7 @@
       "filamentWidth": 2.5,
       "filaments": 4,
       "spread": 0.8,
-      "fan": 3,
+      "fan": 0.15,
       "jitter": 0.45,
       "curve": 1.6,
       "coreColor": [
@@ -56,7 +56,8 @@
       "impactTime": 0.3,
       "scorchSize": 7,
       "scorchTime": 4,
-      "scorchGlowTime": 1.2
+      "scorchGlowTime": 1.2,
+      "tip": 0.06
     },
     "chaos": {
       "charge": 0.06,
@@ -67,7 +68,7 @@
       "filamentWidth": 2.2,
       "filaments": 3,
       "spread": 1.0,
-      "fan": 3.5,
+      "fan": 0.2,
       "jitter": 0.7,
       "curve": 2.2,
       "coreColor": [
@@ -103,7 +104,8 @@
       "impactTime": 0.25,
       "scorchSize": 6,
       "scorchTime": 3,
-      "scorchGlowTime": 1.0
+      "scorchGlowTime": 1.0,
+      "tip": 0.08
     }
   }
 }

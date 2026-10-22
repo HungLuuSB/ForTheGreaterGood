@@ -24,7 +24,7 @@ BeamShot.FACTIONS = {
 	order = {
 		charge = 0.08, hold = 0.04, taper = 0.38, -- beam gone at 0.50 s
 		coreWidth = 1.6, glowWidth = 7, filamentWidth = 2.5, filaments = 4,
-		spread = 0.8, fan = 3, jitter = 0.45, curve = 1.6,
+		spread = 0.8, fan = 0.15, tip = 0.06, jitter = 0.45, curve = 1.6, -- tip: width at the target / at the muzzle
 		coreColor = Color3.fromRGB(225, 248, 255), glowColor = Color3.fromRGB(80, 190, 255),
 		filamentColor = Color3.fromRGB(165, 232, 255), brightness = 2, glowBrightness = 0.6, filamentBrightness = 3,
 		texLen = { core = 30, glow = 60, filamentA = 20, filamentB = 15 },
@@ -34,7 +34,7 @@ BeamShot.FACTIONS = {
 	chaos = {
 		charge = 0.06, hold = 0.03, taper = 0.27, -- beam gone at 0.36 s
 		coreWidth = 1.2, glowWidth = 5.5, filamentWidth = 2.2, filaments = 3,
-		spread = 1.0, fan = 3.5, jitter = 0.7, curve = 2.2,
+		spread = 1.0, fan = 0.2, tip = 0.08, jitter = 0.7, curve = 2.2,
 		coreColor = Color3.fromRGB(255, 205, 150), glowColor = Color3.fromRGB(255, 85, 15),
 		filamentColor = Color3.fromRGB(255, 130, 35), brightness = 2.4, glowBrightness = 0.8, filamentBrightness = 3.4,
 		texLen = { core = 24, glow = 50, filamentA = 16, filamentB = 12 },
@@ -151,10 +151,10 @@ function BeamShot.apply(rig: any, t: number)
 	local u = math.clamp((t - tOn - F.hold) / F.taper, 0, 1)
 	rig.core.Enabled, rig.glow.Enabled = on, on
 	local w = F.coreWidth * (1 - u) ^ 1.1
-	rig.core.Width0, rig.core.Width1 = w * 0.75, w
+	rig.core.Width0, rig.core.Width1 = w, w * F.tip -- full at the muzzle, a point at the target
 	rig.core.Transparency = seq(0.7 * u ^ 1.6)
 	local gw = F.glowWidth * (1 - u) ^ 0.8
-	rig.glow.Width0, rig.glow.Width1 = gw * 0.6, gw
+	rig.glow.Width0, rig.glow.Width1 = gw, gw * F.tip
 	rig.glow.Transparency = seq(0.35 + 0.65 * u)
 	local p0, p1 = rig.muzzle.WorldPosition, rig.hit.WorldPosition
 	local dir = (p1 - p0).Unit
@@ -164,12 +164,12 @@ function BeamShot.apply(rig: any, t: number)
 	for i, f in rig.filaments do
 		f.beam.Enabled = on
 		local fw = F.filamentWidth * (1 - u) ^ 2.2
-		f.beam.Width0, f.beam.Width1 = fw * 0.7, fw
+		f.beam.Width0, f.beam.Width1 = fw, fw * F.tip
 		f.beam.Transparency = seq(0.8 * u ^ 1.2)
 		local rng = Random.new(rig.seed * 100000 + frame * 17 + i)
 		local a = (i / #rig.filaments) * 2 * math.pi + (rng:NextNumber() - 0.5) * F.jitter * 2
 		local r = F.spread * (0.6 + 0.4 * rng:NextNumber())
-		local o0 = (side * math.cos(a) + up * math.sin(a)) * r * 0.25
+		local o0 = (side * math.cos(a) + up * math.sin(a)) * r
 		local a2 = a + (rng:NextNumber() - 0.5) * F.jitter
 		local o1 = (side * math.cos(a2) + up * math.sin(a2)) * r * F.fan
 		f.a0.WorldPosition = p0 + o0
