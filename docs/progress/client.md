@@ -689,6 +689,20 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: hex patches animate: a wave per hit, glassy plates (C-118)
+
+- **Your notes:** the bigger patches change but look static, solid, not smooth.
+- **Cause 1:** a hit within 6 studs of a young patch merged into it by restarting its clock, so the patch snapped back to full heat. Under steady fire it sat lit and never animated. Hits after 0.25 s also stacked a second grid on the same spot.
+- **Cause 2:** under the night bloom, lit Neon plates at 95% opacity saturated to one white block.
+- **Fix** (`Core/Shield`, `Render/ShieldFx`):
+  - each patch keeps a wave per hit (up to 4); a merging hit adds a wave instead of restarting it;
+  - a plate shows the brightest of its waves (`Shield.plateLook`), and each wave runs out from the centre ring by ring;
+  - rings now light 0.07 s apart (was 0.045), so the spread shows;
+  - patches merge while they glow (`MERGE_AGE` 0.65), so the grids don't stack;
+  - plates peak at 60% opacity (`ShieldFx.PLATE_OPACITY`), glassy with the falloff visible.
+  - `Shield.spec`: the wave reaches ring 2 later than the centre, and a new hit keeps the old wave and relights the centre.
+- **Screenshot:** `debug_out/screens/shield_hex_waves.jpg`.
+
 ## 2026-10-23: dimmer ripples, bigger hex patches (C-117)
 
 - **Your notes:** the ripple is too bright (light emission?), and the hex shield should be bigger or have more hexes.
