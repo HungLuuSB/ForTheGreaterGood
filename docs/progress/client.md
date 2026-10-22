@@ -1891,3 +1891,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `ccd9985` (m-models merge cf2e795 + materials 0285a54; C's beam shot wired, review-gated; C-133); test_client 214, build passed.
 - Ready to merge: `1c9b92f` (shield cells inward only, C-134); test_client 214, build passed (client render only).
 - Ready to merge: `33087cd` (m-models merge 2cbfb90; beam shot follows C's values and game speed; C-135); test_client 214, build passed.
+- Ready to merge: `23df21b` (larger shield hit patches, C-136); test_client 214, build passed (client render only).
