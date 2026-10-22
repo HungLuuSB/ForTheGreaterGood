@@ -1,7 +1,34 @@
 {
-  "note": "Roblox assets uploaded by Studio's 3D Importer from export/ord_verdict.fbx (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
-  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 3,212 triangles",
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 3376 triangles, glow share 5.1%",
   "bar": {
+    "model": "rbxassetid://120441124899965",
+    "meshes": {
+      "barrel": "rbxassetid://121125655000799",
+      "barrel_glow_weapon": "rbxassetid://97244986402385",
+      "base": "rbxassetid://91596574405236",
+      "base_glow_head": "rbxassetid://90368178262793",
+      "base_glow_running": "rbxassetid://123420616968071",
+      "turret": "rbxassetid://131723321354407",
+      "turret_glow_running": "rbxassetid://80618632829936"
+    },
+    "decals": {
+      "ALB": "rbxassetid://71195870251588",
+      "RGH": "rbxassetid://124206190100113",
+      "NOR": "rbxassetid://104976345857043",
+      "MTL": "rbxassetid://108240764433956",
+      "EMI": "rbxassetid://82126913814654"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://112372711368835",
+      "NOR": "rbxassetid://106128478858735",
+      "RGH": "rbxassetid://81307040432912",
+      "MTL": "rbxassetid://135588284465675",
+      "EMI": "rbxassetid://106512776572284"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_verdict_bar in FTGG Art"
+  },
+  "bar_preglow": {
     "meshes": {
       "base": "rbxassetid://113920084829646",
       "turret": "rbxassetid://105989736254113",
@@ -14,6 +41,7 @@
       "MTL": "rbxassetid://135206573753849",
       "EMI": "rbxassetid://128542626828990"
     },
-    "model": "ReplicatedStorage.ModelReview.ord_verdict_bar in FTGG Art"
+    "model": "ReplicatedStorage.ModelReview.ord_verdict_bar in FTGG Art",
+    "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 3,212 triangles)"
   }
 }

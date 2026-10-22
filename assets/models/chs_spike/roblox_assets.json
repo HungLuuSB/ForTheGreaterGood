@@ -1,7 +1,32 @@
 {
-  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
-  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 904 triangles",
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 1060 triangles, glow share 2.1%",
   "bar": {
+    "model": "rbxassetid://99498956024100",
+    "meshes": {
+      "base": "rbxassetid://124988338330390",
+      "base_glow_running": "rbxassetid://87796002934508",
+      "turret": "rbxassetid://95332529632220",
+      "turret_glow_running": "rbxassetid://79127721319974",
+      "turret_glow_weapon": "rbxassetid://120433343084546"
+    },
+    "decals": {
+      "ALB": "rbxassetid://92296382156465",
+      "RGH": "rbxassetid://103204230591441",
+      "NOR": "rbxassetid://121600804885641",
+      "MTL": "rbxassetid://133853982951902",
+      "EMI": "rbxassetid://83434151763571"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://132592916173022",
+      "NOR": "rbxassetid://87312122669670",
+      "RGH": "rbxassetid://88132403619141",
+      "MTL": "rbxassetid://75162748386220",
+      "EMI": "rbxassetid://137687574639144"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_spike_bar in FTGG Art"
+  },
+  "bar_preglow": {
     "model": "rbxassetid://127870733264110",
     "meshes": {
       "base": "rbxassetid://133746188789431",
@@ -21,7 +46,6 @@
       "MTL": "rbxassetid://113852007019150",
       "EMI": "rbxassetid://85823005393277"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_spike_bar in FTGG Art",
-    "note": "ALB re-uploaded as decal 137688283058361: the first upload's image failed with HTTP 502 in Studio"
+    "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 904 triangles)"
   }
 }

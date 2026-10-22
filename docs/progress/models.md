@@ -4,7 +4,50 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
-## Summary (review batch, 2026-10-22)
+## Summary (glow pass, 2026-10-22, M-22)
+
+Your glow pass is applied to every BAR-style mesh: 6 tanks / constructors / artillery, 6 T1 pairs, 10 structures (extractors, generators, solars, vehicle plants, Bulwark, Spike) and the shield emitter. All of them were rebuilt, uploaded through Open Cloud and rigged in "FTGG Art" (`ModelReview.*_bar`, `FX.Shield.Emitter`), each with its glow parts welded and tagged. Commits touch only `assets/` and docs.
+
+- **Channels** (the masks are split as you asked):
+  - `running`: always on, faction accent.
+  - `head`: headlights, warm white on both factions.
+  - `power`: structures, factories, builders' emitters.
+  - `weapon`: the muzzle area.
+- **How it's built:** each channel is its own small MeshPart per piece (`<piece>_glow_<channel>`) with its own tint and strength. B can drive each channel's `EmissiveStrength` on its own; the pieces don't glow. There are no Light objects, and glow is never team-colored.
+- **Where it's documented:**
+  - B's contract, with parts, attributes and intended states: `docs/contracts/fx.md`, "Unit glow".
+  - The standard for new meshes: `docs/art/style-guide.md`, "Glow".
+  - The decision: M-22.
+- **Glow share** (measured per mesh, `glowShare` in each `rig.json`):
+
+  | Group | Glow share |
+  |---|---|
+  | Vehicles | 3.3–7.5% |
+  | Radar trucks | 7.5% and 8.8% |
+  | Extractors, generators, solars | 3.4–8.9% |
+  | Vehicle plants | 3.0% and 2.0% |
+  | Bulwark and Spike | 3.2% and 2.1% |
+  | Shield emitter | 9.9% |
+
+- **Asset IDs:** in each `roblox_assets.json`. The previous upload is kept as `bar_preglow`; for the emitter, `emitterGlow` and `emitter_rev1`.
+- **Fix:** the Open Cloud loader no longer leaves an empty import shell in Workspace (39 removed).
+
+**Screenshots: not taken yet.** The fresh texture uploads were cached as failed in this Studio session ("Asset content representation is being generated"), so every glow model draws flat team color for now. A Studio restart clears that (pipeline.md). The lineup is ready in `Workspace.GlowReview`: Order at z −700, Chaos at z −400, x −300 to −130. The shots (55° close and 220 studs, both factions, normal and B's dusk preset) come right after the restart, as `debug_out/screens/glow_*.jpg`.
+
+**Needs your review:**
+- **Below the 5–10% target:**
+  - Factories (3.0% / 2.0%) and the Spike (2.1%). The glow sits on the doors, build lights and working parts, not on the big roofs, on purpose.
+  - Chaos vehicles at 3.3–4.2%. Their glow is denser than Order's, but on smaller strips.
+  - Raise them if the shots read too dark.
+- **Channel choices:**
+  - Builders' nano emitters (Mason, Scrapper) and the shield emitter's core are on `power` (brighten while building or charging).
+  - The radar faces (Oracle, Watcher) are on `running`.
+  - Missile seekers and ready lights are on `weapon`.
+- **Team color on barrels:** barrels and launchers are now in `teamColorPieces`. They carry little team paint, so it's harmless.
+
+**Your steps:** save "FTGG Art" and restart Studio, then tell me; I'll take the glow shots.
+
+## Earlier summary (review batch, 2026-10-22)
 
 Your review of the overnight batch: BAR style approved for both tanks (M-18), camouflage Lancers retired (their `ModelReview` copies removed; files kept). Every commit touches only `src/shared/Defs/Blockouts/`, `assets/`, `.gitignore` and docs. Tests at `74ef97b`: `test_client` 44 specs, 156 passed; `test` 62 specs, 386 passed; `build` 557 scripts compile, 1520 requires resolve.
 
@@ -21,8 +64,8 @@ Your review of the overnight batch: BAR style approved for both tanks (M-18), ca
 | 8 | T1 vs T2 per role: T2 structures that didn't read as the upgrade got a signature piece (Order radome and covered dock, Chaos ski jump and giant crane, raised Bastion and Maw, wider advanced extractors); T1 sonar and jammer made | `e993e36` | Done: `debug_out/screens/tier_*.jpg`; T2 ground units compared after item 9 (`ground_t1_t2_*.jpg`) |
 | 9 | Blockouts for everything still generic: T2 ground units and both commanders, T1/T2 aircraft, T1/T2 ships, the last generic structures. **All 133 defs now have a hand-made blockout** | `7506eae`, `fcc05b9`, `74ef97b` | Done: `debug_out/screens/ground_*`, `air_*`, `naval_*.jpg` |
 | 10 | BAR meshes for the rest of batch 1 T1 ground units, in build order (two normal AI matches, 20 min: Ravager 31, Scrapper 28, Mason 23, Lancer 21, Hellmouth 14, Verdict 8, Oracle 3, Watcher 2; scouts and mobile AA 0) | `c19023a`, `b9d7e91` | Mason, Scrapper, Verdict and Hellmouth imported and rigged (`ModelReview.*_bar`); team test in four colors passed for all four (`debug_out/screens/team_constructors_artillery_*.jpg`). The Hellmouth's team panels were too thin to read at 220 studs: enlarged, **needs one more import** of `chs_hellmouth.fbx`. Next pair: Oracle and Watcher (radar vehicles), then Herald / Jackal and Halo / Hornet |
-| 11 | BAR meshes for the most-seen structures, both factions | `5b2999a`, `53e4a34` | Done: extractors, generators, solars, vehicle plants, Bulwark and Spike, plus the Hellmouth with bigger team panels, uploaded through Open Cloud (no clicks), rigged and drawing in "FTGG Art" (`ModelReview.*_bar`); team test in four colors passed except the Spike copies, which drew grey in that test (a texture-pack hold-up; the Spike itself draws, `debug_out/screens/spike_vehplant_close.jpg`), to recheck after the next Studio restart. Shots: `debug_out/screens/structures_*.jpg`, `team_structures_55_close.jpg`. Next: the remaining T1 pairs (Oracle / Watcher, Herald / Jackal, Halo / Hornet) |
-| 12 | BAR meshes for the remaining T1 ground pairs: Herald / Jackal (scouts, 976 / 836 triangles), Halo / Hornet (mobile IR SAM, 1,132 / 1,008), Oracle / Watcher (mobile radar, 912 / 908) | (this commit) | Built with `tools/unit.py` (new `wheel` helper), uploaded through Open Cloud and rigged (`ModelReview.*_bar`). Jackal and Watcher draw; Herald, Halo, Hornet and Oracle drew grey after network failures loading some fresh images (`NetFail`, one HTTP 502), which Studio caches for the session: **recheck after a Studio restart**. Every batch-1 T1 ground unit now has a BAR mesh |
+| 11 | BAR meshes for the most-seen structures, both factions | `5b2999a`, `53e4a34` | Done: extractors, generators, solars, vehicle plants, Bulwark and Spike, plus the Hellmouth with bigger team panels, uploaded through Open Cloud (no clicks), rigged and drawing in "FTGG Art" (`ModelReview.*_bar`); team test in four colors passed for all of them (the Spike copies drew after the Studio restart). Shots: `debug_out/screens/structures_*.jpg`, `team_structures_55_close.jpg`. Next: the remaining T1 pairs (Oracle / Watcher, Herald / Jackal, Halo / Hornet) |
+| 12 | BAR meshes for the remaining T1 ground pairs: Herald / Jackal (scouts, 976 / 836 triangles), Halo / Hornet (mobile IR SAM, 1,132 / 1,008), Oracle / Watcher (mobile radar, 912 / 908) | `5923128` | Built with `tools/unit.py` (new `wheel` helper), uploaded through Open Cloud and rigged (`ModelReview.*_bar`). All six draw after a Studio restart (four had failed to load fresh images, `NetFail` and one HTTP 502, which Studio caches until it restarts); team test in four colors passed for all six (`debug_out/screens/t1_pairs_*.jpg`, `team_t1_pairs.jpg`). Every batch-1 T1 ground unit now has a BAR mesh |
 
 **Needs your review:**
 - Shield vs your reference: the dome, rim, thin rings and beam match the approach; the swirl is redrawn as a cloudy vortex with a bright eye and knots (original, procedural); the ground ring is one more `Ring` at h = 0 (fx.md). The specks and hit ripple are textures for particles, not in the static shots.
@@ -32,7 +75,7 @@ Your review of the overnight batch: BAR style approved for both tanks (M-18), ca
 - Several T2 units' weapons turn `launcher` while their `turret` piece turns nothing (Seraph, Gorgon, Judgement, Hydra), like Halo/Hornet before S-64; the blockouts work either way (M-3). Your call whether to ask the sim session for `turretPiece = "turret", pitchPiece = "launcher"`.
 - Aircraft and ships are blockouts in the same faction language; their proportions (fuselage 7–9 studs, footprint-3 ships 24 long) follow the generic sizes.
 
-**Your steps:** restart Studio (and reopen "FTGG Art") so the four T1 vehicles and the Spike copies that failed to load their images draw; then I recheck and take the final shots.
+**Your steps:** none. Uploads go through Open Cloud; a Studio restart clears a fresh image that failed to load.
 
 ## Earlier summary (overnight 2026-10-22)
 
@@ -239,6 +282,8 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `2f8e394` (shield thin ring and band meshes, fx.md; `assets/` and docs only).
 - Ready to merge: `3522f82` (shield RingThin and Band mesh IDs, Open Cloud upload tool; `assets/` and docs only).
 - Ready to merge: `53e4a34` (structure meshes and Hellmouth uploaded through Open Cloud: asset IDs, pipeline notes; `assets/` and docs only).
+- Ready to merge: `5923128` (BAR meshes for the remaining T1 ground pairs with asset IDs; `assets/` and docs only).
+- Ready to merge: `674e394` (glow pass M-22: four glow channels as welded glow parts in every BAR mesh, rebuilt and uploaded through Open Cloud; shield emitter in its own build; fx.md Unit glow, style guide Glow; `assets/` and docs only).
 
 ## Requests
 

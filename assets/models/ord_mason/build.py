@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "tools"))
 
 import bpy  # noqa: E402
 import lib  # noqa: E402
+import unit  # noqa: E402
 
 UNIT = "ord_mason"
 OUT = os.path.join(HERE, "export")
@@ -86,21 +87,26 @@ def build_base(p):
     # crew cab on the left front: a raised box with a wraparound window
     p.prism_y([(-2.3, -2.9), (-0.3, -2.9), (-0.3, -0.8), (-2.3, -0.8)], 1.85, 2.95, "paint", bevel=0.05, top_scale=0.92)
     p.box((-1.3, 2.55, -2.86), (1.7, 0.36, 0.05), "glass")
+    p.box((-2.27, 2.85, -1.85), (0.05, 0.1, 1.6), "light")  # cab sensor strip
     p.box((-2.26, 2.55, -1.85), (0.05, 0.36, 1.6), "glass")
     p.box((-1.3, 2.98, -1.85), (1.4, 0.06, 1.4), "team", bevel=0.015)
-    p.box((-1.3, 3.06, -1.0), (0.8, 0.12, 0.08), "light")  # roof work light
+    p.box((-1.3, 3.06, -1.0), (1.0, 0.16, 0.1), "head")  # roof work light
     # engine deck grille, rear exhaust grille
     p.box((0, 1.875, 2.7), (2.9, 0.05, 1.4), "grille")
-    p.box((0, 1.05, 3.915), (2.6, 0.4, 0.04), "grille")
+    for z in (2.25, 2.7, 3.15):  # engine-deck exhaust slots
+        p.box((0, 1.9, z), (2.6, 0.04, 0.22), "light")
+    for sx in (-1, 1):  # running strips along the skirt tops
+        p.box((sx * (SKIRT_OUT + 0.03), 1.72, 0.0), (0.05, 0.12, 7.2), "light")
+    p.box((0, 1.05, 3.915), (2.6, 0.4, 0.05), "light")  # exhaust (engine heat)
     # team color: plates on the hull top either side of the turret
     for sx in (-1, 1):
         p.box((sx * 2.47, 1.88, 0.75), (0.62, 0.06, 5.2), "team", bevel=0.015)
     # driver's hatch, sensor strip, head and tail lights (emissive)
     p.cylinder("y", (0.75, 1.88, -2.05), 0.28, 0.06, 10, "trim")
-    p.box((0, 1.33, -4.17), (3.2, 0.07, 0.04), "light")
+    p.box((0, 1.33, -4.17), (3.4, 0.12, 0.06), "light")  # glacis light bar
     for sx in (-1, 1):
-        p.box((sx * 2.3, 1.52, -3.96), (0.36, 0.12, 0.1), "light")
-        p.box((sx * 2.45, 1.52, 3.925), (0.3, 0.12, 0.04), "light")
+        p.box((sx * 2.3, 1.52, -3.96), (0.55, 0.2, 0.12), "head")
+        p.box((sx * 2.45, 1.52, 3.925), (0.5, 0.16, 0.06), "light")
     # thick side skirts in four panels down over the wheels; the front one cut back
     for sx in (-1, 1):
         x0, x1 = (SKIRT_IN, SKIRT_OUT) if sx > 0 else (-SKIRT_OUT, -SKIRT_IN)
@@ -133,6 +139,7 @@ def build_nano(p):
     # turntable: a low drum with a team-colored top ring
     p.cylinder("y", (0, py + 0.18, pz), 1.25, 0.36, 16, "paint")
     p.cylinder("y", (0, py + 0.38, pz), 1.05, 0.06, 16, "team")
+    p.cylinder("y", (0, py + 0.05, pz), 1.28, 0.1, 16, "power")  # turntable power ring
     # boom yoke and the boom rising forward over the cab
     for sx in (-1, 1):
         p.obox((sx * 0.45, py + 0.75, pz + 0.1), (0, 1, 0), (1, 0, 0), 0.8, 0.7, 0.18, "trim", bevel=0.03)
@@ -148,8 +155,8 @@ def build_nano(p):
     p.obox(tuple((a + b) / 2), tuple(b - a), (1, 0, 0), (b - a).length, 0.22, 0.22, "steel")
     # emitter head: a housing with a glowing lens aimed forward and down
     p.box(tuple(tip + lib.Vector((0, 0, -0.2))), (0.9, 0.7, 0.8), "trim", bevel=0.05)
-    p.cylinder("z", tuple(tip + lib.Vector((0, -0.05, -0.65))), 0.3, 0.12, 12, "light")
-    p.cylinder("y", tuple(tip + lib.Vector((0, -0.42, -0.2))), 0.22, 0.1, 10, "light")
+    p.cylinder("z", tuple(tip + lib.Vector((0, -0.05, -0.65))), 0.34, 0.14, 12, "power")
+    p.cylinder("y", tuple(tip + lib.Vector((0, -0.42, -0.2))), 0.26, 0.12, 10, "power")
     # counterweight behind the turntable
     p.box((0, py + 0.6, pz + 1.15), (1.9, 0.75, 0.75), "paint", bevel=0.05)
     p.box((0, py + 0.99, pz + 1.15), (1.5, 0.05, 0.5), "team", bevel=0.012)
@@ -227,79 +234,16 @@ def details_nano(p):
 # ---------------------------------------------------------------------------
 
 
-def main():
-    lib.reset_scene()
-    scene = bpy.context.scene
-    col = scene.collection
-
-    keys = list(VARIANTS.keys())
-    target = lib.new_image("bake_target", TEX, "sRGB")
-    materials = {k: lib.make_material(k, SPECS[k], [VARIANTS[v] for v in keys], target) for k in KINDS}
-
-    pieces = [
-        ("base", (0.0, 0.0, 0.0), build_base, details_base),
-        ("nano", NANO_PIVOT, build_nano, details_nano),
-    ]
-    low, high = [], []
-    for name, pivot, build, details in pieces:
-        p = lib.Piece(name, KINDS, pivot)
-        build(p)
-        low.append(p.to_object(materials, col))
-        h = lib.Piece(name + "_hi", KINDS, pivot)
-        build(h)
-        details(h)
-        high.append(h.to_object(materials, col))
-
-    counts = {o.name: lib.tris(o) for o in low}
-    total = sum(counts.values())
-    print(f"[{UNIT}] triangles {counts} total {total}")
-    if total > BUDGET:
-        raise SystemExit(f"[{UNIT}] over budget: {total} > {BUDGET}")
-
-    lib.unwrap(low)
-    sets = lib.bake_all(low, high, list(materials.values()), TEX, SAMPLES, OUT, UNIT, keys)
-    for h in high:
-        bpy.data.objects.remove(h, do_unlink=True)
-
-    lib.preview_lighting()
-    for key in keys:
-        lib.assign_single_material(low, lib.textured_material(f"preview_{key}", sets[key], (58, 120, 230), ACCENT))
-        for name, cam, look, lens in [
+unit.run(
+    __file__, UNIT, "order", footprint=FOOTPRINT,
+        pieces=[
+            unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
+            unit.PieceSpec("nano", "base", NANO_PIVOT, build_nano, details_nano),
+        ],
+        previews=[
             ("35", (-14, 11, 17), (0, 1.5, -0.5), 50),
             ("side", (19, 3, -2.0), (0, 1.6, -2.0), 50),
             ("80", (0, 27, 4.8), (0, 1.5, 0), 50),
             ("close", (-6.2, 5.0, -7.4), (0, 2.4, -1.0), 35),
-        ]:
-            lib.render_preview(os.path.join(OUT, f"preview_{key}_{name}.png"), cam, look, lens=lens)
-
-    exported = []
-    for key in keys:
-        mat = lib.textured_material(f"{UNIT}_{key}", sets[key])
-        for o in low:
-            c = o.copy()
-            c.data = o.data.copy()
-            c.name = f"{o.name}_{key}"
-            col.objects.link(c)
-            lib.assign_single_material([c], mat)
-            exported.append(c)
-    exported.append(lib.image_probe("emissive_probe", sets[keys[0]]["EMI"], col))
-    lib.export_fbx(exported, os.path.join(OUT, f"{UNIT}.fbx"))
-
-    lib.write_json(os.path.join(OUT, "rig.json"), {
-        "id": UNIT,
-        "footprintStuds": FOOTPRINT * 8,
-        "variants": {"bar": "BAR-style painted sand-grey (M-15)"},
-        "pieces": {
-            "base": {"parent": None, **lib.bounds(low[0])},
-            "nano": {"parent": "base", "pivot": list(NANO_PIVOT), **lib.bounds(low[1])},
-        },
-        "attachments": {},
-        "teamColorPieces": ["base", "nano"],
-        "emissive": {"probe": "emissive_probe", "tint": list(ACCENT), "strength": 2.0},
-        "triangles": {**counts, "total": total},
-        "textures": {"size": TEX, "perVariant": ["ALB", "RGH"], "shared": ["NOR", "MTL", "EMI"]},
-    })
-    print(f"[{UNIT}] done: {OUT}")
-
-
-main()
+        ],
+)

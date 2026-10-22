@@ -1,7 +1,35 @@
 {
-  "note": "Roblox assets uploaded by Studio's 3D Importer from export/chs_ravager.fbx (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
-  "revision": "2026-10-22, review 3: M-18 second lift (UPLOAD_REV 2), 3,696 triangles",
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 3832 triangles, glow share 3.4%",
   "bar": {
+    "model": "rbxassetid://113095814485337",
+    "meshes": {
+      "barrel": "rbxassetid://85458781451240",
+      "barrel_glow_weapon": "rbxassetid://83826639478546",
+      "base": "rbxassetid://92583675142106",
+      "base_glow_head": "rbxassetid://105173258245862",
+      "base_glow_running": "rbxassetid://79209971675958",
+      "turret": "rbxassetid://95479553189238",
+      "turret_glow_running": "rbxassetid://128886028934046",
+      "turret_glow_weapon": "rbxassetid://77465172309320"
+    },
+    "decals": {
+      "ALB": "rbxassetid://78987651521911",
+      "RGH": "rbxassetid://102775486523567",
+      "NOR": "rbxassetid://113410698711728",
+      "MTL": "rbxassetid://140444617884701",
+      "EMI": "rbxassetid://117168493302115"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://74185444271938",
+      "NOR": "rbxassetid://76266691034010",
+      "RGH": "rbxassetid://92244638886927",
+      "MTL": "rbxassetid://82848622143893",
+      "EMI": "rbxassetid://139023088759275"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_ravager_bar in FTGG Art"
+  },
+  "bar_preglow": {
     "meshes": {
       "base": "rbxassetid://72108674075310",
       "turret": "rbxassetid://94903279888143",
@@ -14,7 +42,8 @@
       "MTL": "rbxassetid://134761023520155",
       "EMI": "rbxassetid://111086854557436"
     },
-    "model": "ReplicatedStorage.ModelReview.chs_ravager_bar in FTGG Art"
+    "model": "ReplicatedStorage.ModelReview.chs_ravager_bar in FTGG Art",
+    "note": "before the glow pass (2026-10-22, review 3: M-18 second lift (UPLOAD_REV 2), 3,696 triangles)"
   },
   "bar_review2": {
     "meshes": {

@@ -10,21 +10,16 @@
       "center": [
         0.0,
         0.8949,
-        0.0187
+        0.0349
       ],
       "size": [
         5.6736,
         1.7898,
-        6.9843
+        6.9518
       ]
     },
     "turret": {
       "parent": "base",
-      "pivot": [
-        0.0,
-        1.71,
-        0.1395
-      ],
       "center": [
         -0.1521,
         2.529,
@@ -34,15 +29,15 @@
         3.951,
         1.638,
         4.7528
+      ],
+      "pivot": [
+        0.0,
+        1.71,
+        0.1395
       ]
     },
     "barrel": {
       "parent": "turret",
-      "pivot": [
-        0.0,
-        2.16,
-        -1.395
-      ],
       "center": [
         0.0,
         2.16,
@@ -52,6 +47,11 @@
         0.8372,
         0.558,
         6.0357
+      ],
+      "pivot": [
+        0.0,
+        2.16,
+        -1.395
       ]
     }
   },
@@ -67,7 +67,8 @@
   },
   "teamColorPieces": [
     "base",
-    "turret"
+    "turret",
+    "barrel"
   ],
   "emissive": {
     "probe": "emissive_probe",
@@ -78,11 +79,119 @@
     ],
     "strength": 2.0
   },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.548,
+        0.2046
+      ],
+      "size": [
+        5.4964,
+        0.45,
+        6.1752
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.44,
+        -3.4503
+      ],
+      "size": [
+        4.6294,
+        0.18,
+        0.0651
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.5065,
+        0.0047
+      ],
+      "size": [
+        3.1848,
+        0.981,
+        2.7807
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        -1.9207,
+        2.295,
+        -0.1488
+      ],
+      "size": [
+        0.2167,
+        0.36,
+        0.0466
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        2.16,
+        -5.6498
+      ],
+      "size": [
+        0.5812,
+        0.5176,
+        2.8551
+      ]
+    }
+  ],
+  "glowShare": 0.0343,
   "triangles": {
-    "base": 2136,
-    "turret": 904,
-    "barrel": 656,
-    "total": 3696
+    "base": 2196,
+    "turret": 928,
+    "barrel": 708,
+    "total": 3832
   },
   "textures": {
     "size": 1024,

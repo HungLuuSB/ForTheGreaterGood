@@ -1,7 +1,33 @@
 {
-  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
-  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 1,008 triangles",
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 1128 triangles, glow share 3.3%",
   "bar": {
+    "model": "rbxassetid://102397516141077",
+    "meshes": {
+      "base": "rbxassetid://115775535398177",
+      "base_glow_head": "rbxassetid://117212246141575",
+      "base_glow_running": "rbxassetid://114793401524553",
+      "launcher": "rbxassetid://117759264729615",
+      "launcher_glow_weapon": "rbxassetid://124789812477401",
+      "turret": "rbxassetid://135949750975317"
+    },
+    "decals": {
+      "ALB": "rbxassetid://125247353831398",
+      "RGH": "rbxassetid://104328090692315",
+      "NOR": "rbxassetid://82182391234579",
+      "MTL": "rbxassetid://132849634492776",
+      "EMI": "rbxassetid://108930278605056"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://115593098882080",
+      "NOR": "rbxassetid://106824107313309",
+      "RGH": "rbxassetid://119477238416882",
+      "MTL": "rbxassetid://128970836255542",
+      "EMI": "rbxassetid://71069472178320"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hornet_bar in FTGG Art"
+  },
+  "bar_preglow": {
     "model": "rbxassetid://78321069477274",
     "meshes": {
       "base": "rbxassetid://102540424918773",
@@ -22,6 +48,6 @@
       "MTL": "rbxassetid://136013435139541",
       "EMI": "rbxassetid://93449243550330"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_hornet_bar in FTGG Art"
+    "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 1,008 triangles)"
   }
 }
