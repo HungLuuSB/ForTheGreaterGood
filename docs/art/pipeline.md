@@ -146,3 +146,7 @@ Scene target: about 1 million triangles at normal zoom (for example 250 line uni
 | Tencent Hunyuan3D 2.x | Not valid in the EU, UK or South Korea; above 1 million monthly users needs Tencent's permission | Avoid |
 
 If generated bases are wanted for props or structures: Meshy on a paid plan, credited in `CREDITS.md`.
+
+## Mesh manifest (M-23)
+
+After every upload (or a status change): `python assets/models/tools/manifest.py`, then `lune run mesh_materials` (client tool, C-103: the SurfaceAppearances game scripts can't build themselves), then `lune run test_client Meshes` and `lune run test_client MeshMaterials`. Commit the mesh, `src/shared/Defs/Meshes/Registry.luau` and `place/MeshMaterials.model.json` together (rig.md section 7).

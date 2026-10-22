@@ -30,6 +30,8 @@ Your glow review (approved) and the mesh manifest. Commits touch only `src/share
 
 **Message to clients-B:** I didn't put the models into the game place ("FTGG Art" only). B can build them from the manifest; see the Requests section.
 
+**Update (clients-B, C-103, `bdc88e8`, not yet in main):** the 19 approved models draw in the game place, built from the manifest, with glow and team paint; the three `review` ones stay blockouts. Game scripts can't set SurfaceAppearance maps, the emissive mask or `RenderFidelity`, so B generates `place/MeshMaterials.model.json` from the manifest with `lune run mesh_materials`. **New rule for this stream:** every manifest change (upload or status flip) runs `manifest.py` then `lune run mesh_materials`, in the same commit (rig.md 7, pipeline.md). `main` merged into `m-models`: the `chs_carapace` icon failures are gone.
+
 ## Earlier summary (glow pass, 2026-10-22, M-22)
 
 Your glow pass is applied to every BAR-style mesh: 6 tanks / constructors / artillery, 6 T1 pairs, 10 structures (extractors, generators, solars, vehicle plants, Bulwark, Spike) and the shield emitter. All of them were rebuilt, uploaded through Open Cloud and rigged in "FTGG Art" (`ModelReview.*_bar`, `FX.Shield.Emitter`), each with its glow parts welded and tagged. Commits touch only `assets/` and docs.
