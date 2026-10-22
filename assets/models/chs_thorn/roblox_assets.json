@@ -1,0 +1,30 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 936 triangles, glow share 5.8%",
+  "bar": {
+    "model": "rbxassetid://114342846728427",
+    "meshes": {
+      "base": "rbxassetid://100188358422412",
+      "base_glow_running": "rbxassetid://79532705695938",
+      "launcher": "rbxassetid://113253336601166",
+      "launcher_glow_running": "rbxassetid://82812405335767",
+      "launcher_glow_weapon": "rbxassetid://100727311484837"
+    },
+    "decals": {
+      "ALB": "rbxassetid://132381041201596",
+      "RGH": "rbxassetid://119893947556567",
+      "NOR": "rbxassetid://99413671703267",
+      "MTL": "rbxassetid://78553577547827",
+      "EMI": "rbxassetid://134799865492220"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://104834020701930",
+      "NOR": "rbxassetid://127814846175660",
+      "RGH": "rbxassetid://87443888108344",
+      "MTL": "rbxassetid://76554169272521",
+      "EMI": "rbxassetid://97311154607046"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_thorn_bar in FTGG Art",
+    "reuploadNote": "ALB, NOR, RGH, MTL re-uploaded: the first images failed with HTTP 502 in Studio"
+  }
+}

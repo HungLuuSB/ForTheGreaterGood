@@ -1,7 +1,10 @@
 """Writes the mesh manifest src/shared/Defs/Meshes/Registry.luau from every
 uploaded BAR-style mesh (docs/contracts/rig.md, section 7):
 
-    python assets/models/tools/manifest.py
+    python assets/models/tools/manifest.py [--skip id,id]
+
+(--skip leaves out meshes uploaded but not yet committed, so each pair's
+commit lists only its own.)
 
 Sources per unit: assets/models/<id>/export/rig.json (pieces, pivots,
 attachments, team pieces, glow parts) and assets/models/<id>/roblox_assets.json
@@ -18,9 +21,18 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")
 OUT = os.path.join(ROOT, "src", "shared", "Defs", "Meshes", "Registry.luau")
 GLOW_MASK = "rbxassetid://101169341901946"  # glow_mask.png, shared by every glow part
 
-# The user's approvals (2026-10-22): everything is approved except the glow
-# fixes still waiting for review.
-REVIEW = {}  # the glow fixes (Oracle, Watcher, Order vehicle plant) were approved on 2026-10-22
+# The user's approvals: only these are "approved" (the game draws them);
+# every other mesh is "review" (the game keeps its blockout) until the user
+# approves it. Add an ID here when the user does.
+APPROVED = {
+    # 2026-10-22: tanks, constructors, artillery, T1 pairs, the 10 structures
+    "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth",
+    "ord_herald", "chs_jackal", "ord_halo", "chs_hornet", "ord_oracle", "chs_watcher",
+    "ord_extractor", "chs_extractor", "ord_generator", "chs_generator", "ord_solar", "chs_solar",
+    "ord_vehplant", "chs_vehplant", "ord_bulwark", "chs_spike",
+    "shield_emitter",
+}
+REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 
 
 def load(path):
@@ -87,18 +99,22 @@ def entry(rig, assets, status, note):
 
 
 def main():
+    import sys
+    skip = set()
+    if "--skip" in sys.argv:
+        skip = set(sys.argv[sys.argv.index("--skip") + 1].split(","))
     units = {}
     models = os.path.join(ROOT, "assets", "models")
     for uid in sorted(os.listdir(models)):
         rig_p = os.path.join(models, uid, "export", "rig.json")
         assets_p = os.path.join(models, uid, "roblox_assets.json")
-        if not (os.path.exists(rig_p) and os.path.exists(assets_p)):
+        if uid in skip or not (os.path.exists(rig_p) and os.path.exists(assets_p)):
             continue
         assets = load(assets_p)
         if "bar" not in assets or "surfaceAppearance" not in assets["bar"]:
             continue
-        status = "review" if uid in REVIEW else "approved"
-        units[uid] = entry(load(rig_p), assets, status, REVIEW.get(uid))
+        status = "approved" if uid in APPROVED else "review"
+        units[uid] = entry(load(rig_p), assets, status, None if status == "approved" else REVIEW_NOTE)
 
     shield = load(os.path.join(ROOT, "assets", "fx", "shield", "roblox_assets.json"))
     em_rig = load(os.path.join(ROOT, "assets", "fx", "shield", "emitter", "export", "rig.json"))
@@ -107,7 +123,7 @@ def main():
         "meshes": {"base": shield["meshes"]["emitter"], **shield["emitterGlow"]["glowMeshes"]},
         "surfaceAppearance": shield["emitterSurfaceAppearance"],
     }}
-    fx = {"shield_emitter": entry(em_rig, em_assets, "approved", None)}
+    fx = {"shield_emitter": entry(em_rig, em_assets, "approved" if "shield_emitter" in APPROVED else "review", None)}
 
     body = lua({"units": units, "fx": fx}, 0)
     text = f"""--!strict
