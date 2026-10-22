@@ -5,6 +5,7 @@
 local Mesh = require("@shared/Defs/Meshes/Mesh")
 local Registry = require("@shared/Defs/Meshes/Registry")
 local Defs = require("@shared/Defs/Defs")
+local Blockouts = require("@shared/Defs/Blockouts/Registry")
 
 local defs = Defs.load()
 
@@ -24,7 +25,8 @@ return function(t: any)
 			n += 1
 			local def = defById(id)
 			t.expect(def ~= nil, `{id}: no unit def`)
-			t.deepEqual(Mesh.validate(id, e, def), {}, id)
+			local bp = (Blockouts :: any)[id]
+			t.deepEqual(Mesh.validate(id, e, def, bp and bp.visualPieces), {}, id)
 		end
 		t.expect(n >= 22, "the 22 BAR meshes so far are listed")
 	end)
@@ -70,7 +72,7 @@ return function(t: any)
 		end), "map EMI asset ID missing")
 		has(with(function(e)
 			e.pieces.hatch = { mesh = "rbxassetid://1", center = { 0, 0, 0 }, size = { 1, 1, 1 }, parent = "base", pivot = { 0, 0, 0 } }
-		end), "piece hatch isn't in the def's pieces")
+		end), "piece hatch isn't in the def's pieces or the blockout's visualPieces")
 		has(with(function(e)
 			e.status = "draft"
 		end), 'status draft must be "approved" or "review"')

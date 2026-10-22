@@ -4,7 +4,36 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
-## Summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
+## Summary (BAR queue, 2026-10-22)
+
+Your queue: BAR-style Order + Chaos pairs, each with glow channels, a team test in four colors, 55° close and 220-stud shots (220 at the `bar_7` distance, cropped to its 955 × 568 framing), and the manifest with `lune run mesh_materials` in the same commit. Each pair has its own Ready to merge line. **New meshes go into the manifest as `review`, so the game keeps their blockouts until you approve them** (`APPROVED` in `assets/models/tools/manifest.py`).
+
+Before the queue: Oracle, Watcher and the Order vehicle plant were marked approved. The team-color clashes are documented in fx.md (team 7 cyan on Order and team 6 orange on Chaos: the client switches those units' `running` / `power` glow to white; yellow on Chaos is borderline). B's `mesh_materials` arrived with main.
+
+| # | Pair | Tris | Glow | Status | Shots (`debug_out/screens/`) |
+|---|---|---|---|---|---|
+| 1 | Radar towers: `ord_watchtower` (armored square tower, cyan corner strips, unlit array with glowing edge and grid on the turning `radar`) / `chs_eye` (open lattice mast, amber eye sensor and leg beacons, unlit panel with amber edge) | 1,004 / 920 | 5.6% / 6.6% | review | `t1_radar_55_close.jpg`, `t1_radar_55_220.jpg` |
+| 2 | IR SAM sites: `ord_vigil` (heavy base, launcher with sensor head and two canister pods, ice-white seeker and cap ready lights on `weapon`) / `chs_thorn` (round skid, bare post, six staggered tubes with ready-light mouths on `weapon`) | 1,000 / 936 | 5.2% / 5.7% | review | `t1_sam_55_close.jpg`, `t1_sam_55_220.jpg` |
+| 3 | Wind turbines: `ord_windmill` (tapered round tower, armored nacelle with cyan generator vents on `power`, three broad blades with team tips on the client-spun `rotor`) / `chs_windmill` (lattice mast, boxy nacelle with an orange generator band, one long crooked two-ended blade) | 908 / 684 | 5.2% / 5.0% | review | `t1_wind_55_close.jpg`, `t1_wind_55_220.jpg` |
+| 4 | Storage: `ord_depot` (low sloped bunker, roof team plate, back loading hatches, a cyan fill gauge on the front slope and charge strips on `power`) / `chs_depot` (salvaged drums with team caps and orange charge bands and gauges on `power`, a horizontal tank behind) | 496 / 780 | 5.2% / 5.1% | review | `t1_depot_55_close.jpg`, `t1_depot_55_220.jpg` |
+| 5 | Airfields (footprint 5): `ord_airfield` (concrete apron, runway with team dashes and cyan edge and approach lights, armored hangar with door-frame and door build lights on `power`, control tower with lit cab and radar panel, team pad) / `chs_airfield` (patched dark apron, runway with team stripe, open hangar on posts with post and roof build lights, fuel tanks with gauges, lattice mast with radar and beacon) | 1,624 / 1,472 | 2.5% / 2.3% | review | `t1_airfield_order_55_close.jpg`, `t1_airfield_chaos_55_close.jpg`, `t1_airfield_55_220.jpg` |
+| 6 | Shipyards (footprint 5, water): `ord_shipyard` (heavy quay and armored hall with door-frame and door build lights on `power`, two armored piers with team plates, edge and tip lights, gantry crane with team band and build lamps on `power`) / `chs_shipyard` (corrugated shed with door build lights, salvage tanks with gauges, narrow piers on piles with team plates, lattice tower crane with a long jib and a lit trolley) | 1,088 / 1,276 | 3.4% / 2.2% | review | `t1_shipyard_order_55_close.jpg`, `t1_shipyard_chaos_55_close.jpg`, `t1_shipyard_55_220.jpg` |
+| 7 | Shield generators: `ord_phalanx` (sloped fortress base with team plates, deck sensor ring, four pylons with power bands, three prongs round the glowing core column) / `chs_carapace` (skid with a glowing coil ring, tanks piped in, tripod cage round a glowing faceted orb). `core` is the def piece; its `beam` attachment sits exactly where ShieldFx expects it (8.3 / 7.6 studs up, checked in Studio) | 1,732 / 1,036 | 5.5% / 5.6% | review | `t2_shieldgen_55_close.jpg`, `t2_shieldgen_55_220.jpg` |
+| 8 | `ord_warden` (long gun on a low fortress hull, with the blockout's deploy pieces: `spades` with hazard stripes, `shieldL` / `shieldR` wings, `jacks`, all on the same pivots so the M-19 pose works unchanged) / `chs_minotaur` (wide slab hull on wide tracks, forward-leaning `ram` with crusher blocks, flat low turret, short fat barrel) | 3,036 / 1,932 | 5.0% / 5.1% | review | `t2_warden_minotaur_55_close.jpg` (deployed Warden on the right), `t2_warden_deployed_close.jpg`, `t2_warden_minotaur_55_220.jpg` |
+| 9 | Air workers: `ord_skywright` (armored utility helicopter, four-blade client-spun `rotor` with team tips, `nano` emitter on `power`) / `chs_vulture` (boxy pod, bubble nose, exposed engine, two long blades) | 856 / 702 | 5.4% / 6.0% | review | `t1_airworker_55_close.jpg`, `t1_airworker_55_220.jpg` (lifted 3 studs) |
+| M | Missiles (your extra request): `ord_ir_sam` / `chs_ir_sam` (slim, dark IR seeker, canards; Chaos three tail fins), `ord_radar_sam` / `chs_radar_sam` (white radome, mid-body strakes), `ord_nuke` / `chs_nuke` (dark re-entry cone over a warhead bus, stage rings; Chaos two strap-on boosters). One frame for all (4.4 studs, forward −Z), scaled by the client like its own parts (×1 / ×2.3 / ×4.5). In the manifest under `fx.<weapon id>`; fx.md "Missiles" | 364–584 | 9.0–10.6% | review | `missiles_55_close.jpg` (at game scale), `missiles_55_220.jpg` |
+
+**Needs your review (queue):**
+- **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
+- **Radar panels:** both panels' glowing edges follow the approved Oracle rule (unlit face, edge and grid). The Eye's amber edge is thicker relative to its panel.
+- Fresh uploads: the Thorn first drew white (Studio failed its maps with HTTP 502 and won't retry them). Re-uploading the four maps fixed it with no restart (pipeline.md). Its `roblox_assets.json` records the re-uploaded IDs.
+- Airfields: glow 2.3–2.5%, the large-building range (style guide, like the vehicle plants), not 5–10%. On a 38-stud apron, 5% would be a lit carpet. The Chaos runway is bare steel and catches the sun as bright metal at some angles; a matte surface is a one-line change if you prefer it.
+- Chaos shipyard: the tower crane's counter-jib sticks out about 4 studs past the 40-stud footprint on the left (as in its blockout). It could overlap a neighbor; I can shorten the counter-jib.
+- Queue order: clients-B relayed a new request from you (T2 defence meshes, starting with a BAR-Pulsar-style beam tower per faction with a retract pose). I queued it after the T1 aircraft and before T1 naval. It needs the sim defs (request 43) before its meshes can go in the manifest; I proposed the pieces to B. Tell me if it should go first.
+- Helicopters from the game camera: the rotor disc covers the roof, so team color shows on the fin, the blade tips and the flanks. Bigger flank plates if they should read more.
+- Missiles: their glow share runs 9–10.6% (the Order nuke 10.6%): on a 4-stud body, one stripe and the nozzle are a big share. They read as small lit bands in flight. The client already lights the exhaust, so the nozzle glow could go if it doubles up.
+
+## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 
 Your glow review (approved) and the mesh manifest. Commits touch only `src/shared/Defs/Meshes/`, `tests/client/Meshes.spec.luau`, `assets/` and docs.
 
@@ -326,6 +355,16 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `cf819cc` (glow review fixes: Oracle, Watcher, Order vehicle plant, shared glow mask; mesh manifest `src/shared/Defs/Meshes/` with its test `tests/client/Meshes.spec.luau`, M-23, rig.md 7, fx.md glow parts per model; `src/shared/Defs/Meshes/`, `tests/client/`, `assets/` and docs only).
 - Ready to merge: `0f911df` (merge of `main`; mesh_materials step for every manifest change in rig.md 7 and pipeline.md; includes `cf819cc`; `assets/` and docs only besides the merge).
 - Ready to merge: `b41e955` (manifest: Oracle, Watcher, Order vehicle plant approved; fx.md team-color clashes; `src/shared/Defs/Meshes/` and docs only. `lune run mesh_materials` not run: the tool isn't in main yet).
+- Ready to merge: `89753cc` (BAR pair 1: radar towers ord_watchtower / chs_eye as review, manifest + mesh_materials, merge of main; `assets/`, `src/shared/Defs/Meshes/`, `tests/client/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `7e21755` (BAR pair 2: IR SAM sites ord_vigil / chs_thorn as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `4654e72` (BAR pair 3: wind turbines ord_windmill / chs_windmill as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `246d2f0` (BAR pair 4: storage ord_depot / chs_depot as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `fa05a5f` (BAR pair 5: airfields ord_airfield / chs_airfield as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `0c824cd` (BAR pair 6: shipyards ord_shipyard / chs_shipyard as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `43cc013` (BAR pair 7: shield generators ord_phalanx / chs_carapace as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `9c0bc6f` (BAR pair 8: ord_warden / chs_minotaur as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `2f0c6f1` (BAR pair 9: air workers ord_skywright / chs_vulture as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `b282863` (missile meshes (IR / radar SAM, nuke per faction) as review in the manifest's fx, fx.md Missiles, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 

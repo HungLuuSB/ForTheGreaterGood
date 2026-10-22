@@ -1,0 +1,328 @@
+{
+  "id": "ord_warden",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.0775,
+        -0.225
+      ],
+      "size": [
+        7.1,
+        2.155,
+        8.45
+      ]
+    },
+    "spades": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.45,
+        4.05
+      ],
+      "size": [
+        5.8,
+        3.4,
+        0.6
+      ],
+      "pivot": [
+        0.0,
+        0.8,
+        4.05
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.05,
+        0.3058
+      ],
+      "size": [
+        4.66,
+        1.9,
+        5.5744
+      ],
+      "pivot": [
+        0.0,
+        2.1,
+        0.9
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        2.95,
+        -5.4875
+      ],
+      "size": [
+        1.1,
+        0.9,
+        7.775
+      ],
+      "pivot": [
+        0.0,
+        2.95,
+        -1.7
+      ]
+    },
+    "shieldL": {
+      "parent": "base",
+      "center": [
+        -3.8575,
+        2.0,
+        -2.99
+      ],
+      "size": [
+        0.395,
+        2.8,
+        3.38
+      ],
+      "pivot": [
+        -3.85,
+        2.0,
+        -4.5
+      ]
+    },
+    "shieldR": {
+      "parent": "base",
+      "center": [
+        3.8575,
+        2.0,
+        -2.99
+      ],
+      "size": [
+        0.395,
+        2.8,
+        3.38
+      ],
+      "pivot": [
+        3.85,
+        2.0,
+        -4.5
+      ]
+    },
+    "jacks": {
+      "parent": "base",
+      "center": [
+        0.0,
+        1.525,
+        1.15
+      ],
+      "size": [
+        8.6,
+        1.25,
+        4.3
+      ],
+      "pivot": [
+        -3.9,
+        1.525,
+        -0.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        2.95,
+        -9.4
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "spades",
+    "turret",
+    "shieldL",
+    "shieldR"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.53,
+        -0.3
+      ],
+      "size": [
+        7.1,
+        1.26,
+        8.32
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.55,
+        -4.25
+      ],
+      "size": [
+        5.15,
+        0.2,
+        0.12
+      ]
+    },
+    {
+      "name": "spades_glow_running",
+      "piece": "spades",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.6,
+        4.24
+      ],
+      "size": [
+        5.0,
+        0.24,
+        0.04
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.39,
+        1.1725
+      ],
+      "size": [
+        4.15,
+        1.0,
+        3.945
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        2.95,
+        -6.455
+      ],
+      "size": [
+        0.68,
+        0.68,
+        4.11
+      ]
+    },
+    {
+      "name": "shieldL_glow_running",
+      "piece": "shieldL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -4.03,
+        3.25,
+        -2.9
+      ],
+      "size": [
+        0.05,
+        0.14,
+        3.0
+      ]
+    },
+    {
+      "name": "shieldR_glow_running",
+      "piece": "shieldR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        4.03,
+        3.25,
+        -2.9
+      ],
+      "size": [
+        0.05,
+        0.14,
+        3.0
+      ]
+    }
+  ],
+  "glowShare": 0.0499,
+  "triangles": {
+    "base": 1328,
+    "spades": 276,
+    "turret": 348,
+    "barrel": 484,
+    "shieldL": 164,
+    "shieldR": 164,
+    "jacks": 272,
+    "total": 3036
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
