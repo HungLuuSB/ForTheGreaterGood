@@ -24,7 +24,7 @@ local function see(v: Vision.Vision, s: number, on: boolean)
 end
 
 return function(t: any)
-	t.test("starts all never seen; seen cells clear; left cells explored, darker grey; never stays darkest", function()
+	t.test("starts all never seen; seen cells clear; left cells explored, a lighter grey wash; never stays the thickest", function()
 		local v = vision(4, 4)
 		local b = FogBlanket.new(8, 8, 2)
 		local first = FogBlanket.step(b, 0)

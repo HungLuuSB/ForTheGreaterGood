@@ -841,3 +841,20 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The light levels keep units readable at every zoom; a thicker atmosphere flattened the strategic view.
 - Under night light the old explored look read as never seen.
 - Lighting.Technology isn't scriptable, so it stays a place setting (Realistic recommended: Roblox's unified technology, which replaced Future).
+
+### C-102 — The environment: night sky, map-edge ground, terrain colours, ambient particles; a graded picture (zoom easing, blast flash, vignette); grey fog of war (2026-10-23)
+
+**Decision:**
+- **Presets:** `Render/Atmosphere` presets gain `sky` (skybox faces, stars, moon), `ground` (Terrain material colours) and `vignette`, all captured from the place. Night: procedural sky, cool dull terrain, vignette 0.55, grade b 0.05 / k 0.32 / s −0.02 / tint (196, 218, 255).
+- **Grade:** `Core/Grade` + `Render/Grade` write the preset's ColorCorrection each frame.
+  - Zoom easing (smoothstep 150 → 800 studs: contrast and saturation ×0.55, tint halfway to white, vignette ×0.6).
+  - A warm flash for nukes and large deaths near the focus (`Vfx.onSpawn`; capped at 1, decay 0.3 s).
+  - A vignette drawn once into an EditableImage.
+- **Edge and particles:** `Core/Environment` + `Render/Environment`: 49 dark slabs (at most 2,048 studs) 6,000 studs round the map, just under the lowest edge; dust and mist in a box following the camera within 320 studs, off at Low.
+- **Fog:** `Core/FogBlanket.LOOK` becomes grey: explored 80 at 0.38, never 56 at 0.7.
+
+**Why:**
+- The user asked for map edge, night sky, terrain colours and ambient particles, with the colour correction "the most impressive part", and then asked for grey fog so ghost structures stay visible.
+- The void past the map showed the sky's blue.
+- The grade must not cost readability at strategic zoom, and frequent impacts must not flicker the screen.
+- Roblox's ColorGradingEffect only offers a tonemapper, so the grade is ColorCorrection.

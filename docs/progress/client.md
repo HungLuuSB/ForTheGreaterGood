@@ -4,6 +4,20 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, environment and colour grade)
+
+- **Colour grade (C-102, your "most impressive part"):** a moonlit teal grade, deeper blacks and brighter whites, with a soft vignette framing the view.
+  - It eases off as you zoom out, so the strategic view stays readable.
+  - Big blasts near the camera (a nuke, a large unit's death) warm and brighten the whole picture for a moment. Impacts never flash, so a busy fight doesn't flicker.
+- **Night sky:** stars, a moon and a faint blue glow on the horizon, instead of the place's day skybox.
+- **Map edge:** the bright blue void past the border is now dark ground fading into the haze, at every zoom.
+- **Terrain colours:** cooler, duller greens and rocks that the grade turns moonlit.
+- **Ambient particles:** dust motes drift in the moonlight and a faint low mist hangs near the ground, at close zoom only and off at Low quality.
+- **Fog of war is grey now (your call):** never-seen ground is a flat grey haze, explored ground a lighter grey wash. The near-black fog hid the ghost structures; they now read clearly as see-through blue-grey copies.
+- **Fixed:** the settings menu's fifth atmosphere button (Dusk) was cut off. The buttons are narrower, and "Battlefield haze" is now "Battle haze".
+- **Screenshots:** `debug_out/screens/environment_*.jpg`: 35°, 55°, 80°, strategic zoom, the sky, ghosts, a night battle, and a before/after pair.
+- **Next:** your glow pass. C's glow assets are now in main (M-22).
+
 ## Summary (2026-10-23, night lighting)
 
 - **Your review of C-100 (2026-10-23):** you tested the fog blanket, "Look good", and it is the default fog of war. Removed from "Needs my review".
@@ -563,6 +577,45 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: environment and colour grade (C-102)
+
+- **Asked:** map edge, night sky, terrain colours and ambient particles; then, mid-task, "pay attention to the ColorCorrection, this should be the most impressive part", and "leave the map grey" so the ghost structures can be seen.
+- **Colour grade** (`Core/Grade`, pure; `Render/Grade`):
+  - **Night grade:** brightness 0.05, contrast 0.32, saturation −0.02, tint (196, 218, 255): moonlight teal with deep blacks.
+    - The tint darkens the picture and the brightness gives it back.
+    - Three grades were compared side by side in Studio. C-101's grade was flat; a middle step was still too green.
+  - **Zoom easing:** the full grade within 150 studs of camera distance, eased (smoothstep) to the strategic grade by 800. There, contrast and saturation keep 55%, the tint goes halfway back to white, and the vignette keeps 60%.
+  - **Blast flash:**
+    - Every Vfx effect is reported (`Vfx.onSpawn`). Nukes add a flash level of 1; deaths at scale 1.5 and up add 0.35 × size, falling off to nothing 1.2 camera distances from the focus. Impacts never flash.
+    - The level is capped at 1 and falls to 1/e in 0.3 s. At level 1 it adds brightness +0.14, contrast +0.06, saturation +0.12 and a warm tint (255, 222, 186).
+    - Measured: three Juggernauts killed by the camera took brightness from 0.05 to 0.09 with a warm tint, gone in about 0.6 s.
+  - **Vignette:** a 256 × 256 EditableImage drawn once, on a full-screen ImageLabel under every other UI (DisplayOrder −10). Its strength comes from the preset (night 0.55, dusk 0.35, haze 0.3, none for Current and Clear day). Without editable memory there is simply no vignette.
+  - **Tonemapper:** Roblox has a ColorGradingEffect, but its only setting is the tonemapper (Default or Retro), so the grade is all ColorCorrection.
+- **Night sky** (the `night` preset's `sky`): the six skybox faces set to empty (Roblox's procedural sky, which follows the clock), 3,000 stars, moon size 14. Captured from the place, so Current puts the day skybox back.
+- **Terrain colours** (the preset's `ground`): Grass (72, 90, 66), LeafyGrass, Rock, Ground, Sand, Asphalt, Mud, WoodPlanks and water, cooler and duller. Captured from the place and put back by the other presets.
+- **Map edge** (`Core/Environment`, pure; `Render/Environment`):
+  - Dark Ground slabs (30, 32, 36) 6,000 studs round the map, their top 0.5 studs under the lowest edge surface.
+  - Parts are at most 2,048 studs a side, so the ring is 49 tiles (a first try with single huge parts was silently clamped and left gaps).
+  - The slabs are not queryable, so clicks go through, and cast no shadows.
+- **Ambient particles:** one invisible box (220 × 30 × 220) follows the camera focus within 320 studs of camera distance, with the built-in smoke texture (no asset):
+  - dust: 40 per second, 6–10 s, 0.6 studs, a light breeze;
+  - mist: 3 per second, 16–24 s, 30–55 studs, 92% transparent.
+  - Off at Low quality.
+- **Fog of war grey:** explored grey 80 at 38%, never seen grey 56 at 70%, tint (1, 1.02, 1.08).
+  - Never-seen ground reads as a flat haze, and explored ground still shows its terrain.
+  - The ghosts (C-32: blue-grey copies at 70% transparency) stand out against it. Checked with a Chaos vehicle plant and airfield spotted by a Herald that was then killed.
+- **Settings menu:** five atmosphere buttons at 80 px (Dusk was clipped at 104); "Battlefield haze" is shown as "Battle haze".
+- **Cost:**
+  - CPU: a few property writes a frame, skipped when nothing changed; 60 fps in the playtest.
+  - Memory: 256 KB of editable image; 49 static parts; at most about 400 dust and 60 mist particles at close zoom.
+- **Specs:** `Environment.spec` (5): the skirt's tiles exactly cover the ring within the part size; the skirt sits under the lowest edge, water included; zoom easing; flashes (impacts and small deaths don't, out of view doesn't, cap, decay); the vignette is clear in the middle.
+- **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline unless noted):
+  - `environment_35.jpg`, `environment_55.jpg`, `environment_80.jpg`, `environment_strategic.jpg`;
+  - `environment_sky.jpg` (low camera: stars, horizon glow, dust);
+  - `environment_ghosts.jpg` (two ghost structures in grey fog);
+  - `environment_battle.jpg` (the `shield` profile's fight);
+  - `environment_before.jpg` (C-101) and `environment_after.jpg`, the same view.
+
 ## 2026-10-23: night lighting by default (C-101)
 
 - **Why:** you said the maps have no sun ("we play in dark environment/time"), and asked for realistic lighting with no brightness and shadow control, to calm the "plastic wrapping" look of the fog blanket.
@@ -969,6 +1022,12 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Environment and colour grade (C-102):** `debug_out/screens/environment_*.jpg`. Your calls:
+  - **The grade:** teal strength, contrast, the vignette (night 0.55), and how much it eases off at strategic zoom (`Core/Grade`, `Render/Atmosphere` `night`).
+  - **The blast flash** strength (`Grade.FLASH`, `FLASH_LOOK`).
+  - **The grey fog:** explored 80 at 38%, never 56 at 70% (`Core/FogBlanket.LOOK`).
+  - **Dust and mist** amount, and the dark ground beyond the map.
 
 - **Night lighting (C-101):** `debug_out/screens/lighting_*.jpg`. Your calls:
   - **How dark:** brightness and exposure (`Render/Atmosphere`, `night`), bright enough to read units today.

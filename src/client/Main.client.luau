@@ -40,6 +40,9 @@ local ShieldDomes = require("./Render/ShieldDomes")
 local ShieldFx = require("./Render/ShieldFx")
 local Contacts = require("./Render/Contacts")
 local FogBlanket = require("./Render/FogBlanket")
+local Environment = require("./Render/Environment")
+local Grade = require("./Render/Grade")
+local Vfx = require("./Render/Vfx")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
@@ -187,6 +190,11 @@ local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
 local fog = FogBlanket.new()
+local environment = Environment.new() -- ground beyond the map, ambient particles (C-102)
+local grade = Grade.new() -- colour grade: zoom easing, blast flashes, vignette (C-102)
+Vfx.onSpawn = function(kind: string, x: number, _y: number, z: number, scale: number)
+	Grade.burst(grade, kind, x, z, scale)
+end
 local contacts = Contacts.new()
 -- enemy structures seen before (kept by Contacts) and icon sample defs: enemy defense rings (C-41)
 local knownEnemy = { memory = contacts.memory.memory, sample = iconTable.sample }
@@ -685,6 +693,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 				Ground.build(world.layers, nil, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogBlanket.setMap(fog, world, world.layers)
+				Environment.setMap(environment, world.layers)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
@@ -734,6 +743,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
 	api.state.camera.rect = camState.rect
+	Environment.update(environment, camState.x, camState.z, camState.distance, World.groundY(world, camState.x, camState.z))
+	Grade.update(grade, camState.x, camState.z, camState.distance, dt)
 	local followed = camState.follow
 	local followDef = followed and followed.kind == "unit" and world.units[followed.id] and World.def(world, world.units[followed.id])
 	FollowButton.step(followButton, if followed == nil then nil elseif followed.kind == "missile" then "missile" elseif followDef then followDef.name else `unit #{followed.id}`)

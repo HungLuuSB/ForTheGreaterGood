@@ -12,7 +12,7 @@
 --              on / off (the near-zoom fog of war lights; off by default,
 --              the user's call from C-32's review)
 --   atmosphere a lighting preset (Render/Atmosphere, C-83): Night (C-101, the default: no sun), Current (the
---              place as saved), Clear day, Battlefield haze, Dusk
+--              place as saved), Clear day, Battle haze, Dusk
 --   interface  UI scale
 -- High is today's look; listed under "Needs my review".
 

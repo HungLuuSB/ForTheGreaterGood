@@ -15,6 +15,7 @@ local PieceAnim = require("../Core/PieceAnim")
 local Settings = require("../Core/Settings")
 local Atmosphere = require("../Render/Atmosphere")
 local FogBlanket = require("../Render/FogBlanket")
+local Environment = require("../Render/Environment")
 local Vfx = require("../Render/Vfx")
 
 local SettingsMenu = {}
@@ -44,6 +45,7 @@ function SettingsMenu.apply(s: Settings.State)
 	PieceAnim.NEAR = g.detailNear
 	PieceAnim.MID = g.detailMid
 	FogBlanket.ENABLED = s.fog
+	Environment.AMBIENT = s.quality ~= "low"
 	Atmosphere.apply(s.atmosphere)
 	local playerGui = (Players.LocalPlayer :: Player):FindFirstChild("PlayerGui")
 	for _, gui in (if playerGui then playerGui:GetChildren() else {}) do
@@ -163,7 +165,7 @@ render = function(ui: UI)
 	end
 	local atm = row(ui.body, "Atmosphere")
 	for _, name in Settings.ATMOSPHERES do
-		button(atm, Atmosphere.NAMES[name] or name, 104, s.atmosphere == name, function()
+		button(atm, Atmosphere.NAMES[name] or name, 80, s.atmosphere == name, function() -- five fit in the row (C-102)
 			Settings.set(ui.state, "atmosphere", name)
 			SettingsMenu.apply(ui.state)
 			render(ui)
