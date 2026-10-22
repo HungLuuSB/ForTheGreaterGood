@@ -499,6 +499,43 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shield dome prototype, client only (C-87)
+
+You asked for a client-only prototype of the plasma deflector, with no sim change. `Core/Shield` holds the logic (`Shield.spec`, 11 tests) and `Render/ShieldFx` draws it. `FtggClientDebug:Invoke("shield", seconds?)` starts a test dome under the camera with fake fire heavier than its recharge, so it runs down, collapses and rises again.
+
+- **Dome, in team colour:**
+  - a tinted field ball;
+  - a bright rim on the sphere's outline as the camera sees it: 64 thin Neon segments, recomputed each frame, so terrain and units in front still hide it;
+  - plasma sparkles on its surface;
+  - faint team-coloured hexagons flickering at random spots.
+  - The rim dims with the field's force and flickers below full force.
+  - The ForceField material (it read grey) and Highlight (its outline vanished on a transparent ball, and only 31 can show at once) were tried and dropped.
+- **Plasma core and capacity bar:**
+  - The core and its halo are green at full charge, orange as it drops, red near empty.
+  - The capacity bar sits above the dome's outline, in screen space, with a mark at 25%. A BillboardGui wouldn't render in the playtest.
+- **Collapse and rise:**
+  - At 0% the dome collapses: it flashes, shrinks and fades, and the core sputters. Shells then pass through, and the bar reads "Shield down · x% / 25%".
+  - At 25% it rises again, growing out of the core.
+- **Repulsor field** (your rules):
+  - In a 50-stud band outside the dome, an inbound shell slows down until it stops, which is the hit, then the field throws it back out, speeding up.
+  - Force is full at 50% charge and above, and scales with charge below that. It's divided by mass^0.6, so heavier shells take longer to stop.
+  - Measured at full force: mass 0.5 takes 0.17 s, mass 1 takes 0.22 s, mass 4 takes 0.40 s. At 35% charge a mass-4 shell breaks through, at 20% a mass-2.5 one. They get inside still slowed, and light shells are still turned back.
+  - Each shell turned back costs 0.04 charge per unit of mass. Recharge is a flat 0.05/s in the prototype; the real dome would draw power for it.
+- **Hit:** hexagon plates wrap the dome round the hit point, 7, 19 or 37 by strength.
+  - They go white hot, then yellow, orange and red, ripple outward ring by ring, and fade in about 0.65 s.
+  - The centre dents in and springs back, with sparks and a light flash.
+  - Hits within 6 studs of a young patch merge into one hotter patch.
+  - Caps: 6 patches per dome, 400 lit plates.
+- **Studio (normandy, playtest)**, in `debug_out/screens/`:
+  - `c87_shield_full.jpg`: 100%, green core, team rim, idle hexes, a red-hot hit, shells in flight.
+  - `c87_shield_low_breach.jpg`: 26%, orange core and bar, a heavy shell through by the core, a light one turned back.
+  - `c87_shield_collapsed.jpg`: the dome down, the core sputtering, "Shield down · 5% / 25%", a shell passing through.
+  - `c87_shield_rising.jpg`: the dome growing back from the core at 25%.
+  - `c87_shield_hex_merge.jpg`: a close-up of the hexagons and a merged burst (the earlier ForceField look).
+  - No script errors.
+  - The last tweak, a dimmer rim at low force, isn't in these shots.
+- **Hexagon shape:** three rectangles 60° apart, because EditableMesh is off in this experience's Security settings. They show faint star seams up close.
+
 ## 2026-10-23: draft 3 icons wired in; your 2-client test; S-75 units drawn (C-86)
 
 - The draft 3 sheet is wired in (`tools/icons/assets.json`: `87919807696998`). Rebuilding it gives the same PNG byte for byte, so the import matches the atlas.
@@ -599,6 +636,11 @@ All with real mouse and keyboard input through the MCP tools.
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Shield prototype (C-87):** the look, in `debug_out/screens/c87_shield_*.jpg`. Your calls:
+  - **Clean hexagons, without star seams:** turn on EditableMesh in Game Settings → Security ("Allow Mesh / Image APIs"), or let me upload one hexagon mesh to your account. Until then the rectangle fallback stays.
+  - **Placeholder tuning:** field band 50 studs, full force at 50%, rise at 25%, 0.04 charge per unit of mass, recharge 0.05/s.
+  - **Still open for sim-A:** harmless or live bounced shells, a Chaos version, vehicle or structure.
 
 - **Sound plan:** `docs/SOUND_PLAN.md` lists every sound the game needs (the defs' `fx.sound` keys, impacts, units, alerts, UI, ambience) with candidate Creator Store audio IDs; ProSoundEffects entries preferred, ripped uploads marked "don't use". Nothing inserted: pick the IDs.
 
