@@ -11,6 +11,7 @@ local Schema = require("@shared/Net/Schema")
 local Selection = require("./Core/Selection")
 local Signal = require("./Core/Signal")
 local Waypoints = require("./Core/Waypoints")
+local Upgrades = require("./Core/Upgrades")
 local World = require("./Core/World")
 
 local Api = {}
@@ -27,6 +28,7 @@ export type PlacementState = {
 	facing: number, -- 0..3 = 0/90/180/270 degrees
 	valid: boolean,
 	reason: string?,
+	replaces: number?, -- an upgrade in place: the own extractor the ghost sits on (C-121)
 }
 
 export type Res = { stored: number, storage: number, income: number, demand: number, ratio: number }
@@ -349,6 +351,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		x, z = Placement.assist(world, def, x, z) -- extractors jump onto a nearby deposit
 		local r = Placement.check(world, def, x, z)
 		p.x, p.z, p.valid, p.reason = r.x, r.z, r.ok, r.reason
+		p.replaces = if r.ok and r.replaces ~= 0 then r.replaces else nil
 		return r.ok, r.reason
 	end
 
@@ -393,6 +396,74 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			actions.cancelPlacement()
 		end
 		return placed > 0, if placed == 0 then "no valid spot" else nil
+	end
+
+	-- The selected builders' center (where an area's visiting order starts).
+	local function buildersCenter(builders: { number }, x: number, z: number): (number, number)
+		local sx, sz, n = 0, 0, 0
+		for _, id in builders do
+			local u = world.units[id]
+			if u then
+				sx, sz, n = sx + u.x, sz + u.z, n + 1
+			end
+		end
+		if n == 0 then
+			return x, z
+		end
+		return sx / n, sz / n
+	end
+
+	-- An extractor drag: one BUILD on every free deposit and every own
+	-- extractor it upgrades within `radius` of (cx, cz), nearest the builders
+	-- first, queued after the first (BAR's area extractor; C-121). Other
+	-- structures place a row instead (placeRow).
+	function actions.placeArea(cx: number, cz: number, radius: number, queue: boolean?, keep: boolean?)
+		local p = state.placement
+		if p == nil then
+			return false, "not placing"
+		end
+		local def = world.defs.unitByIndex[p.defIndex]
+		local builders = buildersOf(p.defId)
+		local fx, fz = buildersCenter(builders, cx, cz)
+		local placed = 0
+		for _, r in Placement.area(world, def, cx, cz, radius, fx, fz) do
+			if issue({ cmdType = CT.BUILD, queue = queue == true or placed > 0, x = r.x, z = r.z, defIndex = p.defIndex, facing = p.facing }, builders) then
+				placed += 1
+			end
+		end
+		if placed > 0 and not keep then
+			actions.cancelPlacement()
+		end
+		return placed > 0, if placed == 0 then "no extractor spot there" else nil
+	end
+
+	-- The "Upgrade extractors" area command (C-121): the selected builders'
+	-- best upgrading extractor (Upgrades.upgraderFor) onto every own
+	-- extractor it upgrades within `radius` of (cx, cz), nearest first.
+	function actions.upgradeArea(cx: number, cz: number, radius: number, queue: boolean?)
+		local defs = {}
+		for _, id in sel.ids do
+			local u = world.units[id]
+			local def = u and World.def(world, u)
+			if def then
+				table.insert(defs, def)
+			end
+		end
+		local def = Upgrades.upgraderFor(world.defs, defs)
+		if def == nil then
+			return false, "no selected builder can upgrade extractors"
+		end
+		local builders = buildersOf(def.id)
+		local fx, fz = buildersCenter(builders, cx, cz)
+		local placed = 0
+		for _, id in Upgrades.inCircle(world, def, cx, cz, radius, fx, fz) do
+			local sx, sz = Upgrades.site(world, def, id)
+			local r = Placement.check(world, def, sx, sz)
+			if r.ok and issue({ cmdType = CT.BUILD, queue = queue == true or placed > 0, x = r.x, z = r.z, defIndex = def.index, facing = 0 }, builders) then
+				placed += 1
+			end
+		end
+		return placed > 0, if placed == 0 then "no extractor to upgrade there" else nil
 	end
 
 	api = {

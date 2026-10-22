@@ -55,12 +55,12 @@ end
 
 -- BAR's order: states, then orders.
 local ORDER = CommandSet.ORDER
-local KEYS = { move = "M", fight = "F", attack = "A", patrol = "Z", guard = "G", stop = "S", fire = "L", movestate = "K", ["repeat"] = "Y", toggle = "U", cancel = "X", alert = "J", repair = "", reclaim = "E" }
+local KEYS = { move = "M", fight = "F", attack = "A", patrol = "Z", guard = "G", stop = "S", fire = "L", movestate = "K", ["repeat"] = "Y", toggle = "U", cancel = "X", alert = "J", repair = "", reclaim = "E", upgrade = "" }
 local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true }
 
 local function act(api: Api.Api, name: string)
 	local a = api.actions
-	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" then
+	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" or name == "upgrade" then
 		a.setCommandMode(if api.state.commandMode == name then nil else name)
 	elseif name == "stop" then
 		a.stop()
@@ -161,7 +161,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 			table.insert(defs, d)
 		end
 	end
-	local list = CommandSet.of(defs)
+	local list = CommandSet.of(defs, api.world.defs)
 	local shown = table.concat(list, ",")
 	if shown ~= ui.shown then
 		ui.shown = shown
@@ -195,6 +195,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		alert = "Last alert",
 		repair = "Repair",
 		reclaim = "Reclaim",
+		upgrade = "Upgrade", -- Upgrade extractors (C-121)
 	}
 	local stateColor = {
 		fire = if fire then fire[2] else Color3.fromRGB(110, 110, 110),

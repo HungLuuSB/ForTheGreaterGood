@@ -36,6 +36,7 @@ local PlayerReplay = require(game:GetService("ReplicatedStorage"):WaitForChild("
 local Config = require(script.Parent:WaitForChild("MatchConfig")) :: any
 local Combat = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Combat"):WaitForChild("Combat")) :: any
 local Spawn = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Spawn")) :: any
+local Layers = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Grid"):WaitForChild("Layers")) :: any
 local SimWorld = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("World")) :: any
 local Skirmish = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("AI"):WaitForChild("Skirmish")) :: any
 local MapRegistry = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Grid"):WaitForChild("MapRegistry")) :: any
@@ -623,6 +624,22 @@ if RunService:IsStudio() then
 			local builder, defId, x, z = ...
 			Build.commandBuild(sim, { builder }, sim.defs.units[defId].index, x, z, 0)
 			return true
+		elseif query == "deposits" then
+			-- Invoke("deposits"): every deposit cell's center (upgrade screenshots, C-121)
+			local out = {}
+			local pm = sim.map :: any
+			if pm then
+				local g = pm.grid
+				for cz = 0, g.cellsZ - 1 do
+					for cx = 0, g.cellsX - 1 do
+						if Layers.getSupply(pm.layers, g:index(cx, cz)) > 0 then
+							local wx, wz = g:cellCenter(cx, cz)
+							table.insert(out, { wx, wz })
+						end
+					end
+				end
+			end
+			return out
 		end
 		local byOwner: { [number]: number } = {}
 		for _, id in sim.world.ids do

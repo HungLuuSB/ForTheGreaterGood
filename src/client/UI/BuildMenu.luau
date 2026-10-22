@@ -21,6 +21,7 @@ local Icons = require("../Core/Icons")
 local Glyph = require("./Glyph")
 local MinimapUI = require("./Minimap")
 local Portrait = require("./Portrait")
+local Upgrades = require("../Core/Upgrades")
 local UnitStats = require("../Core/UnitStats")
 local MeshModels = require("../Render/MeshModels")
 local Models = require("../Render/Models")
@@ -246,6 +247,9 @@ local function tooltip(ui: UI, api: Api.Api, items: { string })
 	if def.description then
 		table.insert(lines, def.description)
 	end
+	if Upgrades.isUpgrade(world.defs, def) then
+		table.insert(lines, Upgrades.TOOLTIP) -- C-121
+	end
 	local menu = ui.menu
 	local power = 0
 	for _, id in api.state.selection do
@@ -368,6 +372,20 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			hot.TextXAlignment = Enum.TextXAlignment.Left
 			hot.ZIndex = 4
 			hot.Parent = b
+			-- an upgrade in place (C-121): a green badge under the hotkey
+			local up = Instance.new("TextLabel")
+			up.Name = "Upgrade"
+			up.BackgroundTransparency = 1
+			up.Position = UDim2.fromOffset(2, 13)
+			up.Size = UDim2.fromOffset(50, 11)
+			up.Font = Enum.Font.GothamBold
+			up.TextSize = 9
+			up.TextColor3 = Color3.fromRGB(110, 235, 130)
+			up.TextStrokeTransparency = 0.35
+			up.TextXAlignment = Enum.TextXAlignment.Left
+			up.Text = "▲ UPGRADE"
+			up.ZIndex = 4
+			up.Parent = b
 			local count = Instance.new("TextLabel")
 			count.Name = "Count"
 			count.BackgroundTransparency = 1
@@ -414,6 +432,7 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		;(b :: any).Power.Text = tostring(cost.power or 0)
 		;(b :: any).Hot.Text = if ui.armed and i <= 10 then tostring(i % 10) else ""
 		;(b :: any).Count.Text = if n > 0 then tostring(n) else ""
+		;(b :: any).Upgrade.Visible = Upgrades.isUpgrade(world.defs, def)
 		b:SetAttribute("Cost", `{cost.supply or 0} supply, {cost.power or 0} power`)
 		b.BackgroundColor3 = if n > 0 then Color3.fromRGB(64, 84, 64) else TILE
 		b:SetAttribute("DefId", defId)

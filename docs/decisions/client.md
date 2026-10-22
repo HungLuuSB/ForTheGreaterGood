@@ -956,3 +956,22 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Permissions:** unchanged from C-119 (allow list AND Studio or the lobby's Cheats toggle; the server drops anyone else's CHEAT payloads).
 
 **Why:** the user's brief. The player replay file has no cheat flag of its own, so the name carries it rather than changing the sim's file format.
+
+### C-121 — Extractor upgrades in place: targets highlighted and snapped to, extractor drags as areas, an "Upgrade extractors" area command (2026-10-23)
+
+**Decision:**
+- **Rule:** `Core/Upgrades` follows S-108: `def.upgradesFrom` lists what a def replaces, on the player's own finished structure. Defs without the field fall back to D92 (a same-faction extractor with a lower rate) until S-108 merges. `Core/Placement.check` uses the same rule.
+- **Site:** an upgrade's BUILD goes to the deposit under the old extractor, as the point the new footprint snaps from (S-104: T1 2×2, T2 3×3).
+- **Ghost:** while the ghost upgrades (or in the Upgrade command), every target gets a pulsing disc. The ghost snaps onto a target within 16 studs (before deposits) and draws over it (highlight on top, plate raised).
+- **Extractor drags** are circles: `Placement.area`, every valid spot in the circle (free deposits and upgrades), visited nearest the builders first. Other structures still place rows.
+- **Upgrade extractors** (card button "Upgrade", T2 builders; `CommandSet` takes the def set): drag a circle, or click (16 studs), and `actions.upgradeArea` queues plain BUILDs nearest first.
+- **Build menu:** a "▲ UPGRADE" badge and the tooltip line "Upgrades a T1 extractor in place".
+- **Fixes:** the ghost moves its model with `PivotTo` (blockout parts are anchored, not welded). `Waypoints` no longer counts the extractor a build upgrades as that build's frame.
+
+**Why:** the user's brief; sim-A's S-108 contract (no new command or wire: each queued BUILD is checked when started).
+
+### C-122 — The minimap draws unit icons (2026-10-23)
+
+**Decision:** minimap units are their strategic icons (`Core/Icons.style`, `UI/Glyph`) at `Minimap.ICON_SCALE` 0.5 (about 11 px). Ghosts, selection and under-attack look as on the icon layer; radar blips with no type stay dots. `Minimap.dots` carries each unit's id and sorts ghosts and structures first, the selection last.
+
+**Why:** the user asked for the unit icons on the minimap (BAR's minimap shows them).

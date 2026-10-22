@@ -62,6 +62,7 @@ return function(t: any)
 		local dots = Minimap.dots(world, api.selection.set)
 		t.equal(#dots, 1, "the Command Vehicle")
 		t.expect(dots[1].selected and dots[1].kind == "unit")
+		t.equal(dots[1].id, cv, "each dot names its unit (the minimap draws its icon, C-122)")
 		local u0, v0, u1, v1 = Minimap.cameraBox(world.grid, { 0, 0, 47, 47 })
 		t.deepEqual({ u0, v0, u1, v1 }, { 0, 0, 1, 1 })
 		-- the economy: a full bar at the start
