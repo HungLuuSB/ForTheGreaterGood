@@ -1039,3 +1039,35 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Chaos: Normal–Easy 18–0, Hard–Normal 17–1, Hard–Easy 18–0.
 - **Tests:** `AI.spec` checks the overlay and that a rich Order AI fields a Warden and a Chaos AI Locusts and a Shroud. `Fairness.spec` mirrors split 5–7.
 - **Faction balance in AI matches:** still Order ~90% (task 12, S-78).
+
+## S-77 — Replay compression: player replay format 2 (launch item) (2026-10-22)
+
+- **Asked:**
+  - delta-encode Tactical records;
+  - run-length the Strategic snapshots;
+  - then a pure-Luau compressor if it still helps;
+  - measure on the soak's spectator recording and on a player's;
+  - keep the format versioned.
+- **PlayerReplay format 2** (the default; format 1 files still read): the header as before, then `bodyHash u32` (FNV-1a), then the frame stream after three stages:
+  1. **Transforms** (reversible, against the same unit's previous record in the file):
+     - each message's tick header becomes its difference from the frame's tick;
+     - **Tactical:** unitId | zigzag varint of the cell's change | offX, offZ, heading, alt changes mod 256 | flags XOR;
+     - **State:** unitId | length | the record XOR the unit's previous record of the same length;
+     - **Strategic:** XOR the previous snapshot (unchanged bytes become zero runs, which the next stages squeeze).
+     The transforms alone change little in size (4.85 → 4.47 MB); they turn slowly changing records into repeats.
+  2. **`Shared/Net/Lz`:** LZ77, the LZ4 block layout, greedy matching through a 4-byte hash, 64 KB window.
+  3. **`Shared/Net/Huffman`:** canonical order-0 Huffman per 64 KB block, codes ≤ 15 bits, table-driven decoding.
+  - The hash refuses a damaged file: LZ alone can't always tell.
+- **Measured** (`lune run replay_size [file] [minutes]`):
+
+| Recording | Format 1 | Transforms + LZ | + Huffman (format 2) | Write / read |
+|---|---|---|---|---|
+| Soak spectator, seed 4, 25.5 min | 4,738 KB (185 KB/min) | 2,150 KB (45%) | **1,679 KB (35%, 66 KB/min)** | 1.5 s / 1.1 s |
+| Normal AI match, spectator, 9.7 min | 911 KB (94 KB/min) | 372 KB (41%) | **290 KB (32%, 30 KB/min)** | 0.33 / 0.23 s |
+| Same match, player 1 (no camera: strategic only), 9.7 min | 375 KB (39 KB/min) | 89 KB (24%) | **77 KB (21%, 8 KB/min)** | 0.05 / 0.03 s |
+
+  - For reference, zlib on the same transformed stream: 1,371 KB (29%) for the soak. Huffman over LZ gets most of the way.
+  - LZ alone on format 1, no transforms: 2,618 KB (55%).
+- **Tests:**
+  - `Lz.spec`: Lz round-trips empty, random, runs, repeats across the window, and refuses a cut stream; Huffman round-trips skewed data over three blocks and tiny inputs, and refuses a cut stream.
+  - `PlayerReplay.spec`: format 2 round-trips, rebuilds the live view on playback, reads a format 1 file as the same replay, is under 70% of format 1, and refuses a flipped byte (hash) and a cut file.

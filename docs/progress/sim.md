@@ -189,6 +189,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Player replays, format 2 (S-77):** `PlayerReplay.serialize` now writes format 2 (about a third of format 1's size; `parse` reads both, and refuses a damaged file). The API is unchanged, so `Main.server` / `ReplayPlayer` need nothing; a replay takes ~1 s to read per 25 minutes of spectator recording.
 - **New (S-70..S-73), no wire change:** the Fusion Reactor explodes when killed (def `deathBlast = { damage, aoe, edge }`; the client can draw it from the DEATH and the def); landed aircraft sit on top of their pad and are ground targets (S-71); radar towers, mobile radars and AWACS drain power (`sensors.radarDrain`; their radar radius shrinks in a stall, S-72); `match.friendlyFire` is a match option, default on (S-73), for the lobby.
 - **Done (request 39), S-68, protocol 23:** event **ALERT 18** `alert u8, cell u16, defIndex u16` with `Schema.AlertKind` (UNIT_ATTACKED 1, STRUCTURE_ATTACKED 2, UNIT_LOST 3, STRUCTURE_LOST 4, BUILD_DONE 5, STALL_SUPPLY 6, STALL_POWER 7, NUKE_LAUNCH 8, COMMANDER_ATTACKED 9), rate-limited server-side as you suggested; strategic **UNDER_ATTACK** set on own and allied units hit in the last 3 s. Also: ATTACK_GROUND now works for every unit with a ballistic weapon (artillery, tanks, gun turrets), contract section 8.
 - **Done (request 37), S-63, protocol 21:** OWNER field bit **CHARGES 8**: `flares u8, chaff u8` (charges left; 0 for a kind the def lacks), own units with flares or chaff, on change and with ENTER.
@@ -329,7 +330,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 
 ## Launch items (not built yet)
 
-- **Replay compression** (the user, 2026-10-22: note it, don't build it yet). Player replays (`Shared/Net/PlayerReplay`, "FTGP") are raw: a spectator recording runs ~420 KB per game minute at ~240 units (16.8 MB for the 40-minute soak), a player's ~33 KB per minute on a small 4-minute match. Before launch, where replays are stored or shared:
+- **Done (S-77): format 2, a third of format 1's size.** **Replay compression** (the user, 2026-10-22: note it, don't build it yet). Player replays (`Shared/Net/PlayerReplay`, "FTGP") are raw: a spectator recording runs ~420 KB per game minute at ~240 units (16.8 MB for the 40-minute soak), a player's ~33 KB per minute on a small 4-minute match. Before launch, where replays are stored or shared:
   - measure first: deflate / zstd-class compression of whole files vs. per-frame, on the soak's spectator recording and a player's;
   - cheap wins inside the format: delta-encode Tactical records against the unit's previous record, drop redundant tick headers inside a frame, run-length the Strategic snapshots (mostly unchanged every 5th tick);
   - it plugs in at `PlayerReplay.serialize` / `parse` (a new format byte, version 2), so recorders and players stay the same; Roblox has no built-in compressor, so a pure-Luau one (or a server-side store that compresses) is the likely path.
