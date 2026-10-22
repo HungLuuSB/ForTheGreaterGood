@@ -356,6 +356,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `01a59d5` (main with S-95 merged; factories offer Attack; FactoryOrders.spec, C-111); test_client 195, test 410, build passed.
 - Ready to merge: `2a7b73f` (beam drawing, retract piece script and On / Off, stopgap icons for S-96 towers; fixes main's 2 icon specs; C-112); test_client 196, test 414, build passed.
 - Ready to merge: `b915691` (S-96 tower blockouts merged from m-models `aafbf19`; retract checked, C-113; docs only besides the merge); test 414, build passed; test_client 196 (the intermittent failure was Ranges.spec's timing check under load, fixed in the next commit).
+- Ready to merge: `ed5681f` (Ranges.spec timing check robust to machine load); test_client 196, test 414, build passed.
 
 ## Tasks
 
