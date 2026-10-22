@@ -4,7 +4,8 @@
 -- the mesh manifest (`lune run mesh_materials` writes it). A Folder of
 -- SurfaceAppearances: one per unit model in the manifest, named by def ID,
 -- and one per effect mesh (Meshes.fx: missiles, the shield emitter), named
--- `fx_<id>` (C-107, models-C's request), each with
+-- `fx_<id>` (C-107, models-C's request), and one per unit's wreck mesh
+-- (`wreck_<id>`, C-115), each with
 -- its color (alpha = team mask, Overlay), normal, roughness and metalness
 -- maps; and "Glow", the glow parts' shared white emissive mask. Rojo sets
 -- these (game scripts may not); Render/MeshModels clones them.
@@ -36,6 +37,12 @@ function MeshMaterials.render(): string
 	end
 	for id, e in (Meshes :: any).fx or {} do
 		table.insert(entries, { name = "fx_" .. id, maps = e.maps })
+	end
+	for id, e in Meshes.units do
+		local wreck = (e :: any).wreck
+		if wreck and wreck.maps then
+			table.insert(entries, { name = "wreck_" .. id, maps = wreck.maps })
+		end
 	end
 	table.sort(entries, function(a, b)
 		return a.name < b.name

@@ -659,6 +659,10 @@ if RunService:IsStudio() then
 		elseif query == "net" then
 			-- Invoke("net"): bytes received per channel since the client started (C-69)
 			return received
+		elseif query == "wrecksanyway" then
+			-- Invoke("wrecksanyway", on): use review wreck meshes too (for the user's review, C-115)
+			MeshModels.WRECKS_ANYWAY = (...) == true
+			return true
 		elseif query == "meshes" then
 			-- BAR mesh models (C-103): built, failed, seconds, errors
 			return MeshModels.stats

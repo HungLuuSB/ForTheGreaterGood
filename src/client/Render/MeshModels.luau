@@ -236,6 +236,82 @@ function MeshModels.start(defs: any)
 	end)
 end
 
+-- Wreck meshes (C-115, models-C's `wreck` per entry): the live entry's rig
+-- (piece names, parents, pivots) with the wreck's own meshes, centers and
+-- sizes and its maps (MeshMaterials `wreck_<id>`); no glow parts, no team
+-- pieces. Used once the wreck is approved (`wreck.status == "approved"`;
+-- they start as review) or with WRECKS_ANYWAY (a debug switch for review).
+-- Built on demand in the background; nil until ready.
+MeshModels.WRECKS_ANYWAY = false
+local wrecks: { [string]: Model } = {}
+local wrecksPending: { [string]: boolean } = {}
+
+local function buildWreck(def: any, e: any): Model
+	local w = e.wreck
+	local materials = ReplicatedStorage:FindFirstChild("MeshMaterials")
+	local look = materials and materials:FindFirstChild("wreck_" .. def.id)
+	local model = Instance.new("Model")
+	model.Name = def.model .. "_wreck"
+	local parts: { [string]: MeshPart } = {}
+	for name, p in w.pieces do
+		local part = meshPart(p.mesh, p.center, p.size)
+		part.Name = name
+		part.CastShadow = true
+		if look and look:IsA("SurfaceAppearance") then
+			look:Clone().Parent = part
+		else
+			part.TextureContent = (Content :: any).fromUri(w.maps.ALB)
+		end
+		parts[name] = part
+	end
+	for name, part in parts do
+		local live = e.pieces[name]
+		if live and live.parent and parts[live.parent] then
+			local parent = parts[live.parent]
+			local pivot = CFrame.new(v3(live.pivot))
+			local joint = Instance.new("Motor6D")
+			joint.Name = name
+			joint.Part0 = parent
+			joint.Part1 = part
+			joint.C0 = parent.CFrame:Inverse() * pivot
+			joint.C1 = part.CFrame:Inverse() * pivot
+			joint.Parent = part
+		end
+		part.Parent = model
+	end
+	parts.base.Anchored = true
+	model.PrimaryPart = parts.base
+	model:SetAttribute("DefId", def.id)
+	model:SetAttribute("RootOffset", parts.base.CFrame)
+	model:SetAttribute("Meshed", true)
+	return model
+end
+
+-- The meshed wreck template for def `def` (clone it), or nil (none, not
+-- approved, or still building: the build starts on the first ask).
+function MeshModels.wreck(def: any): Model?
+	local ready = wrecks[def.id]
+	if ready then
+		return ready
+	end
+	local e = Meshes.units[def.id] :: any
+	local w = e and e.wreck
+	if w == nil or e.status ~= "approved" or (w.status ~= "approved" and not MeshModels.WRECKS_ANYWAY) or wrecksPending[def.id] then
+		return nil
+	end
+	wrecksPending[def.id] = true
+	task.spawn(function()
+		local ok, result = pcall(buildWreck, def, e)
+		wrecksPending[def.id] = nil
+		if ok then
+			wrecks[def.id] = result
+		else
+			warn(`[Client] wreck mesh {def.id} failed, the darkened model stays: {result}`)
+		end
+	end)
+	return nil
+end
+
 -- The built model for def `id` (a template: clone it), if ready.
 function MeshModels.get(id: string): Model?
 	return ready[id]

@@ -64,6 +64,10 @@ const STOPGAP = {
 	ord_citadel: "Heavy Turret", // S-75: a fortress gun with a SAM and a radar
 	ord_phalanx: "Jammer Tower", // S-79: a shield dome generator
 	chs_carapace: "Jammer Tower", // S-79: a shield dome generator
+	ord_radiance: "Heavy Turret", // S-96: a long-range beam tower
+	chs_inferno: "Heavy Turret", // S-96: a long-range beam tower
+	ord_lumen: "IR SAM Site", // S-96: a flak tower (anti-air)
+	chs_hailstorm: "IR SAM Site", // S-96: a flak tower (anti-air)
 };
 
 // Entries drawn in the frame of each def's own domain rather than the

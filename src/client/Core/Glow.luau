@@ -51,6 +51,7 @@ export type Context = {
 	now: number, -- seconds, for the pulse
 	phase: number, -- 0..1, so factories don't pulse in step
 	level: string?, -- "off" | "low" | "high" (nil: high)
+	retracted: boolean?, -- a beam tower switched off (S-96): power at its floor, weapon dark (C-114, models-C's note)
 }
 
 -- The factory pulse at `now`: PULSE_LOW..PULSE_HIGH, a smooth 1 Hz wave.
@@ -65,6 +66,9 @@ function Glow.strength(channel: string, rest: number, c: Context): number
 		return 0
 	end
 	local full = c.level ~= "low"
+	if c.retracted and (channel == "power" or channel == "weapon") then
+		return if channel == "power" then Glow.POWER_FLOOR else 0
+	end
 	if channel == "power" then
 		local base = if c.producing and full then Glow.pulse(c.now, c.phase) else rest
 		return math.max(base * math.clamp(c.ratio, 0, 1), Glow.POWER_FLOOR)

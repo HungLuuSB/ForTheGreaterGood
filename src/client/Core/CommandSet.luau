@@ -9,7 +9,7 @@
 --   factories    repeat, cancel; move, fight, patrol, guard, attack as
 --                orders for the units they produce (the sim's order list
 --                per factory, copied to each new unit: S-95)
---   switchable   on / off (converters; more with sim request 43)
+--   switchable   on / off (converters; beam towers retract when off, S-96)
 --   silos        stop (the launch), attack (a manual launch at a point)
 -- "alert" (jump to the last alert) is always there: it's not a unit order.
 
@@ -51,7 +51,7 @@ function CommandSet.forDef(def: any): { [string]: boolean }
 		set["repeat"], set.cancel = true, true
 		set.move, set.fight, set.patrol, set.guard, set.attack = true, true, true, true, true
 	end
-	if def.converter ~= nil or def.toggle ~= nil then
+	if def.converter ~= nil or def.toggle ~= nil or def.retract ~= nil then
 		set.toggle = true
 	end
 	return set

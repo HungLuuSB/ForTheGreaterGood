@@ -4,6 +4,18 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, T2 beam towers in game)
+
+- **Beam towers (S-96 + C-112):** Radiance (Order) and Inferno (Chaos), Pulsar-style.
+  - **The beam:** a bright held line from the barrel to the target, ice-white for Order and hot orange for Chaos, fading over half a second, with a charge flash at the barrel and a heavy impact.
+  - **On / Off:** the command card shows a real On / Off for them. Off retracts the tower: the turret sinks into its shell, the barrel folds and the lids close. It can't fire and takes a quarter of the damage (sim). On raises it again.
+  - **Commands:** a beam tower shows Fire state, On / Off, Stop and Attack.
+  - Each shot costs 700 power from your stores.
+- **Flak towers** (Lumen, Hailstorm) work as normal defenses.
+- **Icons:** all four use existing icon tiles for now (beam towers: Heavy Turret; flak towers: IR SAM Site). No icon re-import needed.
+- **Models:** the towers draw as models-C's blockouts (C-113), and retract with closing lids; BAR meshes come next.
+- **Screenshots:** `debug_out/screens/beam_radiance.jpg`, `beam_tower_on.jpg`, `beam_tower_off.jpg`.
+
 ## Summary (2026-10-23, per-unit commands, factory orders, top strip)
 
 - **Each unit gets its own commands (C-109):** the command card shows only what the selection can do, and shrinks to fit.
@@ -341,6 +353,11 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `ad2f474` (build menu portraits and stats tooltip, On / Off, short-way turns, sim requests 42-43, models request 2, C-107); test_client 193, test 407, build passed.
 - Ready to merge: `bb644b9` (per-unit command sets, factory orders kept, Roblox top bar cleared and HUD in the top strip, sim request 44, C-109; also C-108 `0cfa7d0`: minimap 220, fx materials, includes m-models `764874b`); test_client 195, test 407, build passed.
 - Ready to merge: `ecd03d2` (main with S-93 / S-94 merged; shield wire spec for heavy shells, C-110); test_client 194 (one unidentified failure in one of four runs, not repeated), test 409, build passed.
+- Ready to merge: `01a59d5` (main with S-95 merged; factories offer Attack; FactoryOrders.spec, C-111); test_client 195, test 410, build passed.
+- Ready to merge: `2a7b73f` (beam drawing, retract piece script and On / Off, stopgap icons for S-96 towers; fixes main's 2 icon specs; C-112); test_client 196, test 414, build passed.
+- Ready to merge: `b915691` (S-96 tower blockouts merged from m-models `aafbf19`; retract checked, C-113; docs only besides the merge); test 414, build passed; test_client 196 (the intermittent failure was Ranges.spec's timing check under load, fixed in the next commit).
+- Ready to merge: `ed5681f` (Ranges.spec timing check robust to machine load); test_client 196, test 414, build passed.
+- Ready to merge: `96973a5` (S-96 tower meshes merged from m-models `1efc5e9`, `1429976`; retracted glow dims, C-114); test_client 197, test 414, build passed.
 
 ## Tasks
 
@@ -668,6 +685,58 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: wreck meshes (models-C) built and placed; wreck appearances (C-115)
+
+- **Merged** models-C's `6b94586`: a `wreck` per approved manifest entry (its own meshes, centers, sizes and maps; the live entry's rig; no glow, no team pieces).
+- **Materials:** `lune run mesh_materials` writes a `wreck_<id>` SurfaceAppearance per wreck (22), as C asked; `MeshMaterials.spec` checks them.
+- **`Render/MeshModels.wreck(def)`:**
+  - builds the wreck on first ask in the background: the live rig's joints, the wreck's meshes and the cloned `wreck_<id>` appearance;
+  - returns nil until it's ready, and only for an approved wreck (`wreck.status == "approved"`; C keeps them review until you look).
+  - `Invoke("wrecksanyway", true)` uses review wrecks too, for review screenshots.
+- **`Render/Deaths`:** a dying unit leaves the meshed wreck when there is one, with the same knocked-askew joints and no charring or CorrodedMetal; otherwise the darkened model as before.
+- **Studio** (`shield` profile, review wrecks on):
+  - the first Ravager and Lancer deaths left darkened copies while the wrecks built;
+  - the next ones left C's meshed wrecks with their materials (`debug_out/screens/wrecks_meshed.jpg`).
+  - They read very dark under the night preset (their maps are charred).
+- **Found on the way:** the debug kill with a million damage is overkill, and those deaths fling the hull and leave no wreck. Kill with just over full health to see wrecks.
+- **Your call:** approve the wreck meshes (models-C sets `status = "approved"` on each `wreck`), and whether they're too dark at night.
+
+## 2026-10-23: S-96 tower meshes merged (review); a retracted tower's glow dims (C-114)
+
+- **Meshes:** models-C's BAR meshes for the beam towers (`1efc5e9`) and flak towers (`1429976`) are merged from m-models. They're "review" in the manifest, so the towers keep their blockouts in game until you approve them; `MeshMaterials` was already current. The lids `shellL` / `shellR` are pieces under `shell`, which `Render/MeshModels` rigs like any other piece, so C-112's retract script drives them on the meshes too.
+- **Glow on retract** (models-C's suggestion): `Core/Glow` takes `retracted` (a `def.retract` tower with TOGGLED_ON clear). Power drops to its floor (0.3) and weapon goes dark; running stays on. `Glow.spec` covers it.
+- **Your call:** approve the four tower meshes (Radiance, Inferno, Lumen, Hailstorm) for them to draw in game.
+
+## 2026-10-23: S-96 tower blockouts merged; retract checked on them (C-113)
+
+- **Blockouts:** models-C's blockouts for `ord_radiance`, `chs_inferno`, `ord_lumen` and `chs_hailstorm` are merged from m-models `aafbf19`. The towers draw as their blockouts instead of generic boxes.
+- **Retract in Studio** (`shield` profile, all four spawned):
+  - switched off, both beam towers sink the turret, fold the barrel and close the lids flush with the collar;
+  - switched on, they rise and reopen (turret back at 5.0 / 4.5 studs);
+  - the Inferno's `tankL` above the lids is a fixed part of its base.
+- **Screenshots:** `debug_out/screens/beam_towers_deployed.jpg`, `beam_towers_retracted.jpg`.
+- **No code change:** C-112's piece script fits the blockouts' pivots as they are.
+
+## 2026-10-23: beam towers drawn, retract on / off, icons for S-96's towers (C-112)
+
+- **S-96 (sim-A, request 43, first part):**
+  - beam towers `ord_radiance` / `chs_inferno`: BEAM weapons, 700 power a shot, visible targets only; `retract = { armor = 4 }`, TOGGLED_ON clear = retracted;
+  - flak towers `ord_lumen` / `chs_hailstorm`.
+- **Beam drawing** (`Core/Effects`, `Render/Effects`):
+  - a FIRE from a BEAM weapon becomes a tracer with `beam` = the shooter's faction, held `BEAM_SECONDS` (0.45);
+  - drawn as the whole line at once, a Neon core 0.9 studs thick thinning to 0.27 and fading, in the faction's weapon glow tint (Order 200, 240, 255; Chaos 255, 170, 70);
+  - with a launch-size charge flash at the barrel and an impact burst at a hit.
+- **Retract** (`Core/PieceAnim` calls `Retract(u, retracted, instant)` for `def.retract` units on the TOGGLED_ON bit; `PieceScripts/BeamTower` for both):
+  - the turret faces front and sinks (7.6 / 7.4 studs, models-C's `retracted` pose), the barrel folds −90°, and the lids `shellL` / `shellR` close ∓90° when the model has them, over 1.5 s;
+  - no aiming while retracted;
+  - `PieceAnim.spec`: retract and rise.
+- **On / Off:** `Core/CommandSet` and the command card treat `def.retract` as switchable (green On, red Off); `CommandSet.spec` covers the Radiance.
+- **Icons** (`tools/icons/render.mjs` STOPGAP): Radiance and Inferno as "Heavy Turret", Lumen and Hailstorm as "IR SAM Site". The sheet image is unchanged (asset 87919807696998), and `IconAtlas` was regenerated: 139 of 139 defs mapped.
+- **Studio** (`shield` profile, a Radiance at (60, −150) and an Inferno on the enemy side):
+  - the Radiance's ice-white beam reached an enemy with an impact (`beam_radiance.jpg`);
+  - its card shows Fire at will / On / Stop / Attack (`beam_tower_on.jpg`);
+  - Off went red and the turret block sank into the shell on the placeholder model (`beam_tower_off.jpg`).
 
 ## 2026-10-23: factory order lists in game (S-95 merged; C-111)
 
@@ -1307,6 +1376,14 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Wreck meshes (C-115):** `debug_out/screens/wrecks_meshed.jpg` (review wrecks forced on). Approve them for game (models-C marks each `wreck` approved), and say if they're too dark under the night lighting.
+
+- **S-96 tower meshes (models-C):** Radiance, Inferno, Lumen, Hailstorm are "review" in the manifest; approve them (models-C flips the status) to see them in game. Their glow dims when a beam tower retracts (C-114).
+
+- **Beam towers (C-112):** `debug_out/screens/beam_*.jpg`. Your calls:
+  - **The beam's width, colors and 0.45 s hold.**
+  - **The retract timing** (1.5 s).
+
 - **Per-unit commands and top strip (C-109):** `debug_out/screens/hud_topstrip.jpg`. Your calls:
   - **Each type's command list** (`Core/CommandSet`).
   - **The minimap under Roblox's corner:** it can't go higher without being covered by Roblox's menu button.
@@ -1407,7 +1484,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
     - Each unit the factory produces rolls out of the exit, then takes a copy of the list, so a pre-move then a patrol, or a move then guard a commander, works.
     - The client already offers Move, Fight, Patrol and Guard on factories and keeps drawing the factory's orders until they're replaced or stopped (C-109). Nothing new is needed on the wire.
 
-43. **Open.** **More T2 defenses, a Pulsar-style beam tower first (2026-10-23, the user asked with BAR's Pulsar as the reference; the user corrected T3 to T2):** today the defenses above T1 are thin (Order's Citadel is T3).
+43. **First part done and used (S-96; C-112): beam towers `ord_radiance` / `chs_inferno`, flak towers `ord_lumen` / `chs_hailstorm`.** **More T2 defenses, a Pulsar-style beam tower first (2026-10-23, the user asked with BAR's Pulsar as the reference; the user corrected T3 to T2):** today the defenses above T1 are thin (Order's Citadel is T3).
     - **A long-range beam tower per faction, T2** (as BAR's Pulsar):
       - a precise ground-to-ground beam (`type = "BEAM"`) with very long range (Pulsar: 1400 against Citadel-class ranges here), a very heavy hit and a long reload (Pulsar: 10,800 damage every 9.9 s, small area);
       - a big **power cost per shot** (Pulsar: 1500), so the economy matters;

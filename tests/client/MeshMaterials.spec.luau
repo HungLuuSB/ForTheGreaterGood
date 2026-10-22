@@ -36,5 +36,13 @@ return function(t: any)
 			t.expect(c ~= nil, `fx {id} has an appearance`)
 			t.equal(c.Properties.ColorMapContent, e.maps.ALB)
 		end
+		for id, e in Meshes.units do
+			local wreck = (e :: any).wreck
+			if wreck then
+				local c = names["wreck_" .. id]
+				t.expect(c ~= nil, `wreck {id} has an appearance`)
+				t.equal(c.Properties.ColorMapContent, wreck.maps.ALB)
+			end
+		end
 	end)
 end

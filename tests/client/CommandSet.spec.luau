@@ -24,6 +24,8 @@ return function(t: any)
 		t.expect(not has(plant, "fire"), "factory: no fire state (no weapons)")
 		local silo = CommandSet.of({ defs.units.ord_reckoning })
 		t.expect(has(silo, "stop") and has(silo, "attack") and not has(silo, "fire") and not has(silo, "move"), "silo: stop and a manual attack only")
+		local radiance = CommandSet.of({ defs.units.ord_radiance })
+		t.expect(has(radiance, "toggle") and has(radiance, "attack") and has(radiance, "fire") and not has(radiance, "move"), "beam tower: on / off (retract), attack, fire state (S-96)")
 		local citadel = CommandSet.of({ defs.units.ord_citadel })
 		t.expect(has(citadel, "fire") and has(citadel, "attack") and not has(citadel, "move"), "defense: fire state and attack, no movement")
 		for _, list in { tank, mason, plant, silo, citadel } do

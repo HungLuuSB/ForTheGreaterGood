@@ -66,6 +66,12 @@ return function(t: any)
 		t.expect(not Glow.clashes(nil, 7, "running"), "no faction, no switch")
 	end)
 
+	t.test("a retracted beam tower dims: power at its floor, weapon dark, running on (C-114)", function()
+		t.equal(Glow.strength("power", 2.5, ctx({ retracted = true, producing = true })), Glow.POWER_FLOOR)
+		t.equal(Glow.strength("weapon", 1.5, ctx({ retracted = true, sinceShot = 0 })), 0)
+		t.equal(Glow.strength("running", 2, ctx({ retracted = true })), 2)
+	end)
+
 	t.test("only real changes are written", function()
 		t.expect(not Glow.changed(2, 2.01), "a hundredth is skipped")
 		t.expect(Glow.changed(2, 2.5), "a real change")

@@ -36,12 +36,12 @@ export type UI = { gui: ScreenGui, panel: Frame, buttons: { [string]: TextButton
 
 local function selected(api: Api.Api): (boolean, boolean, { number }, boolean)
 	local anyOn, anyRepeat, factories = false, false, {}
-	local switchable = false -- converters: the only units the on / off bit does something for
+	local switchable = false -- converters and beam towers: the units the on / off bit does something for
 	for _, id in api.state.selection do
 		local u = api.world.units[id]
 		if u then
 			local d = World.def(api.world, u)
-			switchable = switchable or (d ~= nil and d.converter ~= nil)
+			switchable = switchable or (d ~= nil and (d.converter ~= nil or d.retract ~= nil)) -- beam towers retract when off (S-96)
 			anyOn = anyOn or bit32.band(u.state or 0, 2) ~= 0
 			anyRepeat = anyRepeat or bit32.band(u.state or 0, 16) ~= 0
 			local def = World.def(api.world, u)
