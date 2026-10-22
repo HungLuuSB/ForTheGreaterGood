@@ -440,6 +440,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `5aa87cd` (Beam shot effect M-29: beam textures, fx.md "Beam shot" timing sheet and per-faction values, `Meshes.beam` + `Mesh.validateBeam`, reference module; `assets/fx/beam/`, `src/shared/Defs/Meshes/`, tools and docs).
 - Ready to merge: `0ccf6c3` (beam shot tapers to a point at the target: `tip` in `Meshes.beam`, filaments converge; fx.md values synced; `assets/fx/beam/`, `src/shared/Defs/Meshes/` and docs).
 - Ready to merge: `ff6072d` (beam shot: muzzle widths within the emitter ball, impact flare 5 / 4 studs, `muzzleFlareSize` star while firing, flare `StudsOffset`; `assets/fx/beam/`, `src/shared/Defs/Meshes/` and docs).
+- Ready to merge: `386e998` (beam shot: stars 6 / 8 and 4 / 5 studs, muzzle glow and filaments 1.6 / 0.9; `assets/fx/beam/`, manifest and docs).
 
 ## Requests
 

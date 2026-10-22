@@ -143,7 +143,7 @@ Roblox Beams lay a texture's width along the beam: the strips below run along X 
 
 **Filaments, every frame (30 times a second):** each filament Beam has its own pair of attachments, near the muzzle and at the hit. Give each a new perpendicular offset round the beam axis: angle = its slot (i / n of a turn) plus a random ± `jitter` turn; radius `spread` × (0.6–1.0) at the muzzle and × `fan` (small) at the target, so the filaments leave the emitter spread round the core and converge on the hit. Also new random `CurveSize0` / `CurveSize1` within ± `curve` (`Segments = 16`). Seeded per shot and frame (`Random.new(seed + frame)`), so a replay looks the same.
 
-**Nothing at the muzzle is wider than the emitter ball** (the user's feedback, 2026-10-23): the ball is 1.12 studs across on the Radiance and 0.6 on the Inferno, so the core, glow and filament widths at the muzzle and the filament `spread` stay within it.
+**The muzzle end is sized to the emitter ball** (the user's feedback, 2026-10-23): the ball is 1.12 studs across on the Radiance and 0.6 on the Inferno; the core stays within it and the glow and filaments are about 1.5 × the ball, with a big star on the ball while firing.
 
 **Billboards are depth-tested:** the emitter ball and the target's face would hide half of a flare, so pull them towards the camera with `StudsOffset`: charge and muzzle flares (0, 0, 1.2), impact flare (0, 0, `impactSize` / 2).
 
@@ -156,8 +156,8 @@ Radiance is thicker and longer; Inferno shorter, hotter and more ragged.
 | Value | Radiance (`order`) | Inferno (`chaos`) |
 |---|---|---|
 | `charge` / `hold` / `taper` (s) | 0.08 / 0.04 / 0.38 (beam gone at 0.50) | 0.06 / 0.03 / 0.27 (beam gone at 0.36) |
-| core width / glow width at the muzzle (studs) | 0.9 / 1.1 | 0.5 / 0.6 |
-| filaments: count, width at the muzzle (studs) | 4, 1.1 | 3, 0.6 |
+| core width / glow width at the muzzle (studs) | 0.9 / 1.6 | 0.5 / 0.9 |
+| filaments: count, width at the muzzle (studs) | 4, 1.6 | 3, 0.9 |
 | `spread` / `fan` / `jitter` / `curve` | 0.15 / 0.3 / 0.45 / 1.6 | 0.08 / 0.3 / 0.7 / 2.2 |
 | `tip` (width at the target ÷ width at the muzzle) | 0.06 | 0.08 |
 | core color | (225, 248, 255) ice-white | (255, 205, 150) white-hot |
@@ -166,7 +166,7 @@ Radiance is thicker and longer; Inferno shorter, hotter and more ragged.
 | `Brightness`: core / glow / filaments | 2 / 0.6 / 3 | 2.4 / 0.8 / 3.4 |
 | `TextureLength`: core / glow / filament A / filament B (studs) | 30 / 60 / 20 / 15 | 24 / 50 / 16 / 12 |
 | `TextureSpeed`: filament A / B (tiles per second) | 30 / 40 (about 600 studs/s) | 40 / 52 (about 640 studs/s) |
-| `flareSize` (charge) / `muzzleFlareSize` / `impactSize` / `scorchSize` (studs) | 4 / 5 / 5 / 7 | 2.5 / 3 / 4 / 6 |
+| `flareSize` (charge) / `muzzleFlareSize` / `impactSize` / `scorchSize` (studs) | 6 / 8 / 5 / 7 | 4 / 5 / 4 / 6 |
 | `impactTime` / `scorchGlowTime` / `scorchTime` (s) | 0.3 / 1.2 / 4 | 0.25 / 1.0 / 3 |
 
 The flares and the core use the core color, the embers the glow color. Check the manifest entry with `Mesh.validateBeam(Meshes.beam)`.

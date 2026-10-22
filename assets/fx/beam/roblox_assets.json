@@ -16,8 +16,8 @@
       "hold": 0.04,
       "taper": 0.38,
       "coreWidth": 0.9,
-      "glowWidth": 1.1,
-      "filamentWidth": 1.1,
+      "glowWidth": 1.6,
+      "filamentWidth": 1.6,
       "filaments": 4,
       "spread": 0.15,
       "fan": 0.3,
@@ -51,22 +51,22 @@
         "filamentA": 30,
         "filamentB": 40
       },
-      "flareSize": 4,
+      "flareSize": 6,
       "impactSize": 5,
       "impactTime": 0.3,
       "scorchSize": 7,
       "scorchTime": 4,
       "scorchGlowTime": 1.2,
       "tip": 0.06,
-      "muzzleFlareSize": 5
+      "muzzleFlareSize": 8
     },
     "chaos": {
       "charge": 0.06,
       "hold": 0.03,
       "taper": 0.27,
       "coreWidth": 0.5,
-      "glowWidth": 0.6,
-      "filamentWidth": 0.6,
+      "glowWidth": 0.9,
+      "filamentWidth": 0.9,
       "filaments": 3,
       "spread": 0.08,
       "fan": 0.3,
@@ -100,14 +100,14 @@
         "filamentA": 40,
         "filamentB": 52
       },
-      "flareSize": 2.5,
+      "flareSize": 4,
       "impactSize": 4,
       "impactTime": 0.25,
       "scorchSize": 6,
       "scorchTime": 3,
       "scorchGlowTime": 1.0,
       "tip": 0.08,
-      "muzzleFlareSize": 3
+      "muzzleFlareSize": 5
     }
   }
 }
