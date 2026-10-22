@@ -324,6 +324,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: models `fe6c02a` (M-18) alone failed the build: `Blockouts/Pending/Registry.luau` still required the four blockouts it moved up to `Blockouts/`. The merge was dropped and nothing was pushed. Its successor `96800a0` (M-19, which contains it and fixes the registry) passed test, test_slow and build → `e308570`, pushed.
 - 2026-10-22: client C-86 (`e7cb0ff`) → `f9366e8`, C-87 (`306bad4`) → `75f5a13`, C-88 (`0f8c297`) → `3dfdda9`, C-89 (`0c9ec43`) → `6838f11`; models `a6193c4` → `d2b2d4b`, `cda7860` → `d596f47`. All passed test, test_slow and build and were pushed.
 - 2026-10-22: sim S-79 (`1e35978`) → `dc895ef`, client C-90 (`ca84c0f`) → `74d5065`, models `2543ee8` (shield FX assets, blockouts for every def, M-20, M-21) → `6d1d9a4`, sim S-80 (`f7df131`) → `b535eca`. All passed test, test_slow and build and were pushed.
+- 2026-10-22: sim S-81 (`07f05b8`) → `e94b829`, client C-91 (`ff3e146`) → `f1b26f5`. Both passed test, test_slow and build and were pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 
