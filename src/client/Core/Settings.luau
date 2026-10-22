@@ -11,8 +11,8 @@
 --              model detail distance (piece animation LOD), and fog of war shading
 --              on / off (the near-zoom fog of war lights; off by default,
 --              the user's call from C-32's review)
---   atmosphere a lighting preset (Render/Atmosphere, C-83): Current (the
---              place as saved, the default), Clear day, Battlefield haze, Dusk
+--   atmosphere a lighting preset (Render/Atmosphere, C-83): Night (C-101, the default: no sun), Current (the
+--              place as saved), Clear day, Battlefield haze, Dusk
 --   interface  UI scale
 -- High is today's look; listed under "Needs my review".
 
@@ -48,7 +48,7 @@ Settings.QUALITY = table.freeze({
 }) :: { [Quality]: Graphics }
 
 Settings.QUALITIES = { "low", "medium", "high" } :: { Quality }
-Settings.ATMOSPHERES = { "current", "clear", "haze", "dusk" }
+Settings.ATMOSPHERES = { "night", "current", "clear", "haze", "dusk" }
 
 Settings.LIMITS = table.freeze({
 	panSpeed = { 0.4, 3, 0.1 }, -- min, max, step
@@ -59,7 +59,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "current", uiScale = 1 }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "night", uiScale = 1 }
 end
 
 local function round(x: number, step: number): number

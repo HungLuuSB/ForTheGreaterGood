@@ -4,6 +4,17 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, night lighting)
+
+- **Night by default (C-101):** you said the maps have no sun, so the default atmosphere is now a moonlit night: midnight sky, no sun rays, cool neutral light bright enough to read every unit, soft shadows.
+- **Less "plastic":** the sky reflections on terrain, units and the fog blanket are cut to 15% (EnvironmentSpecularScale 0.15), and the light is softer and duller. The shell over steep rocks still shows but is far calmer.
+- **Fog of war under night light:** "explored" is lighter (grey 40 at 40%, was 30 at 52%), otherwise it looked like never seen. All three states read apart, close and at strategic zoom.
+- **Glows stand out:** bloom picks up shells, fire, and the shield dome.
+- **Choice kept:** the settings menu still offers Current (the place as saved), Clear day, Battlefield haze and Dusk.
+- **Screenshots:** `debug_out/screens/lighting_*.jpg`: 35°, 55°, 80°, strategic zoom, a before/after pair (the place's day lighting vs night) and a shield battle at night.
+- **One thing for you:** set Lighting → Technology to **Future** in the place, if it isn't already. Scripts can't read or change it, and Future gives the soft shadows and the glow lights their best look.
+- **Not started:** your glow pass still waits for C's glow assets.
+
 ## Summary (2026-10-23, fog of war blanket)
 
 - **Fog of war, BAR style (C-100):** normal lighting everywhere; what your team can't see is darkened by a "fog blanket" draped over the terrain. Visible ground is clear, explored ground desaturated grey (about 40% darker), never-seen ground about 70% darker. Edges are soft, and pixels fade over 0.3 s.
@@ -548,6 +559,26 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: night lighting by default (C-101)
+
+- **Why:** you said the maps have no sun ("we play in dark environment/time"), and asked for realistic lighting with no brightness and shadow control, to calm the "plastic wrapping" look of the fog blanket.
+- **The `night` preset** (`Render/Atmosphere`, first in the list and the default in `Core/Settings`), tuned in Studio on ridgeline:
+  - **Sky:** ClockTime 0 (midnight), sun rays off.
+  - **Light:** Brightness 2.5, ambient (112, 118, 132), outdoor ambient (140, 146, 162), exposure +1.1, so units read clearly. Shadow softness 0.6.
+  - **Sheen:** environment specular 0.15 (was 1) and diffuse 0.6. This removes most of the glossy sky reflection that made the blanket and rocks look wrapped in plastic.
+  - **Air:** Atmosphere density 0.2, offset 0.15, haze 0.6, a dark blue-grey colour. First tried at 0.3 and haze 1, but that washed the map flat at strategic zoom.
+  - **Bloom:** intensity 0.8, size 26, threshold 1.2, so shells, fire and shield effects glow.
+  - **Colour:** contrast +0.1, saturation −0.18, a faint cool tint.
+- **Presets** gain two optional fields, `specular` and `diffuse` (EnvironmentSpecularScale and EnvironmentDiffuseScale), captured with the place's own values so Current restores them.
+- **Fog blanket:** the explored look is now grey 40 at alpha 0.4 (was 30 at 0.52). Under the night light, explored and never-seen ground looked alike.
+- **Settings:** the default atmosphere is `night`. A player who saved another preset keeps it. `Settings.spec` updated.
+- **Lighting.Technology** can't be read or set by a script (RobloxScript capability), so the place keeps its own. Future is recommended.
+- **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline):
+  - `lighting_35.jpg`, `lighting_55.jpg`, `lighting_80.jpg`, `lighting_strategic.jpg`;
+  - `lighting_before.jpg` (the place's day lighting) and `lighting_after.jpg` (night), the same view;
+  - `lighting_shield.jpg`: the `shield` profile's battle at night.
+- **Seen in the console:** `rbxassetid://203785492 failed due to: Asset type does not match requested type`. It isn't in this repo, so it's place content (probably the Sky); not new.
+
 ## 2026-10-23: fog of war blanket (C-100)
 
 - **Why (your brief):** the point-light fog read as night with flashlights. It made bright blotches where circles overlapped, was capped by the light limit (470-stud culling) and didn't match the sim's cell vision. It's replaced by a BAR-style blanket: normal light everywhere, and what you can't see darkened.
@@ -934,6 +965,12 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Night lighting (C-101):** `debug_out/screens/lighting_*.jpg`. Your calls:
+  - **How dark:** brightness and exposure (`Render/Atmosphere`, `night`), bright enough to read units today.
+  - **The cool tint** and the desaturation.
+  - **The lighter explored fog** (grey 40 at 40%).
+  - **Technology = Future** in the place (only you can set it).
 
 - **Fog of war blanket (C-100):** `debug_out/screens/fogblanket_*.jpg`. Your calls:
   - **The three looks:** explored grey at 52%, never seen near black at 74%, a slightly cool tint (`Core/FogBlanket.LOOK`, `TINT`).
