@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 25 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED
+Schema.PROTOCOL_VERSION = 26 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -810,7 +810,8 @@ end
 --               or REPELLED): a projectile the client has is in a dome's
 --               field from now on; the client steps it with
 --               Shared/Combat/ShieldField until it is done (protocol 24)    = 13 bytes
---   SHIELD_HIT  unitId u16 (the generator; 0 = one the client doesn't have) | projId u16 | pos (the point on
+--   SHIELD_HIT  unitId u16 (the generator; 0 = one the client doesn't have) |
+--               projId u16 (0 = a hitscan shot, protocol 26) | pos (the point on
 --               the dome) | mass u8 (SHIELD_MASS_SCALE per shell mass) |
 --               flags u8 (SHIELD_BREACH, SHIELD_ABSORBED): a shell turned
 --               back by the dome's field, through it, or (protocol 25)
@@ -1048,7 +1049,7 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		return
 	elseif kind == EK.SHIELD_HIT then
 		w:writeU16(e.unitId or 0) -- 0: a generator the client doesn't have
-		writeId(w, required(e.projId, "projId"), "projId")
+		w:writeU16(e.projId or 0) -- 0: a hitscan shot (protocol 26)
 		writePos(w, e)
 		w:writeU8(required(e.mass, "mass"))
 		if e.breach and e.absorbed then
@@ -1198,7 +1199,7 @@ function Schema.decodeEvent(r: Reader): Event
 		return e
 	elseif kind == EK.SHIELD_HIT then
 		e.unitId = r:readU16()
-		e.projId = readId(r, "projId")
+		e.projId = r:readU16()
 		readPos(r, e)
 		e.mass = r:readU8()
 		local flags = r:readU8()

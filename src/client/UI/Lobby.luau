@@ -206,12 +206,16 @@ function LobbyUI.new(remotes: Folder): UI
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "Lobby"
 	gui.ResetOnSpawn = false
-	gui.DisplayOrder = 20
+	gui.DisplayOrder = 100 -- modal: over every HUD screen and the debug overlay (C-106)
 	gui.IgnoreGuiInset = true
 	local panel = Kit.panel(gui, "Skirmish", Vector2.new(760, 520))
 	panel.root.Visible = false
 	local body = Kit.scroll(panel.content)
-	Kit.list(body, Kit.SPACE.xs)
+	local layout = Kit.list(body, Kit.SPACE.xs)
+	-- the panel's height follows its rows (C-106)
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		panel.setHeight(60 + layout.AbsoluteContentSize.Y + Kit.SPACE.l * 2)
+	end)
 	Kit.pad(body, 0, 0, Kit.SPACE.m, 0)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	local me = (Players.LocalPlayer :: Player).UserId

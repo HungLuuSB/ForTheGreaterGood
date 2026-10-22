@@ -33,10 +33,13 @@
 -- (one Nav order, formation slots). Aircraft away rearming pause their
 -- queue and restart the head order when they fly again.
 --
--- Factories: a MOVE / FIGHT / PATROL given to a factory sets its rally
--- point; each unit it produces rolls out of the exit, then takes the rally
--- order. REPEAT on a factory turns repeat on or off: a finished item goes
--- back to the end of the queue (S-13; the REPEAT state bit shows it).
+-- Factories keep an order list for the units they produce (S-95, client
+-- request 44): MOVE, FIGHT, PATROL, GUARD, REPAIR and ATTACK given to a
+-- factory go on its list (queued: appended; else the list is replaced),
+-- and STOP clears it. Each unit it produces rolls out of the exit, then
+-- takes a copy of the list, in order. REPEAT on a factory turns repeat on
+-- or off: a finished item goes back to the end of the queue (S-13; the
+-- REPEAT state bit shows it).
 
 local Air = require("./Air")
 local Build = require("./Build")
@@ -84,6 +87,7 @@ local function isFactory(d: Defs.UnitDef): boolean
 end
 
 local MOVE_LIKE: { [string]: boolean } = { move = true, fight = true, patrol = true }
+local FACTORY_ORDERS: { [string]: boolean } = { move = true, fight = true, patrol = true, guard = true, repair = true, attack = true } -- (S-95)
 local function isMoveLike(kind: string): boolean
 	return MOVE_LIKE[kind] == true
 end
@@ -109,8 +113,8 @@ local function halt(sim: Types.Sim, id: number)
 end
 
 -- Gives `spec` to units `ids` (already checked as the sender's own). With
--- `queued`, appends; else replaces their queues. Factories take move-like
--- orders as their rally point instead.
+-- `queued`, appends; else replaces their queues. Factories keep the
+-- orders for the units they produce instead (S-95).
 function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: boolean)
 	local o = sim.orders
 	local batch = o.nextBatch
@@ -121,9 +125,10 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 		local d = def(sim, id)
 		-- structures take no orders, except a silo's attack-ground (S-48)
 		if d.domain == "structure" and not (spec.kind == "attackGround" and (Air.isManualFire(sim, d) or Air.groundFires(sim, d))) then
-			if isFactory(d) and isMoveLike(spec.kind) and spec.x then
-				o.rallyKind[id] = if spec.kind == "move" then "move" else "fight"
-				o.rallyX[id], o.rallyZ[id] = spec.x :: number, spec.z :: number
+			if isFactory(d) and FACTORY_ORDERS[spec.kind] and (spec.x or spec.target) then
+				local list = if queued then o.rally[id] or {} else {}
+				table.insert(list, { kind = spec.kind, x = spec.x, z = spec.z, lx = spec.lx, lz = spec.lz, target = spec.target, gen = spec.gen })
+				o.rally[id] = list
 			end
 			continue
 		end
@@ -159,6 +164,7 @@ function Orders.stop(sim: Types.Sim, id: number)
 	if o.queue[id] then
 		o.queue[id] = nil
 	end
+	o.rally[id] = nil -- a factory's order list (S-95)
 	o.anchorX[id], o.anchorZ[id] = nil, nil
 	cancelCurrent(sim, id)
 	halt(sim, id)
@@ -175,13 +181,13 @@ function Orders.setRepeat(sim: Types.Sim, factory: number, on: boolean)
 	World.setState(w, factory, if on then bit32.bor(state, REPEAT) else bit32.band(state, bit32.bnot(REPEAT)))
 end
 
--- A factory produced `id` (Build): roll out of the exit, then the rally order.
+-- A factory produced `id` (Build): roll out of the exit, then the
+-- factory's orders, in order (S-95).
 local function onProduced(sim: Types.Sim, factory: number, id: number, exitX: number, exitZ: number)
 	local o = sim.orders
 	Orders.give(sim, { id }, { kind = "move", x = exitX, z = exitZ }, false)
-	local rally = o.rallyKind[factory]
-	if rally then
-		Orders.give(sim, { id }, { kind = rally, x = o.rallyX[factory], z = o.rallyZ[factory] }, true)
+	for _, r in o.rally[factory] or {} do
+		Orders.give(sim, { id }, { kind = r.kind, x = r.x, z = r.z, lx = r.lx, lz = r.lz, target = r.target, gen = r.gen }, true)
 	end
 end
 Build.producedHook = onProduced

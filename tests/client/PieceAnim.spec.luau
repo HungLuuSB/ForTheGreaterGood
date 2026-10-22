@@ -62,6 +62,27 @@ return function(t: any)
 		t.equal(#PieceAnim.take(s), 0, "and only once")
 	end)
 
+	t.test("a turn takes the short way round (170° to -170° is 20°, not 340°)", function()
+		local s = PieceAnim.new(defs.weaponByIndex)
+		local log = {}
+		local script = {
+			Create = function(u: any)
+				u:Turn("turret", "y", 170) -- snap
+				u:Turn("turret", "y", -170, 20) -- 1 s the short way, 17 s the long way
+				u:WaitForTurn("turret", "y")
+				table.insert(log, u.sched.now)
+			end,
+		}
+		PieceAnim.add(s, 1, { id = "test", weapons = {} }, script)
+		for _ = 1, 120 do
+			PieceAnim.step(s, 1 / 60)
+		end
+		t.expect(log[1] ~= nil and log[1] <= 1 + 1 / 60 + 1e-9, `done in about 1 s ({log[1]})`)
+		local r = rotOf(s, 1, "turret", 2)
+		local wrapped = (r + math.pi) % (2 * math.pi) - math.pi
+		t.expect(near(wrapped, math.rad(-170), 1e-6), `ends at -170° ({math.deg(wrapped)})`)
+	end)
+
 	t.test("Signal kills the older threads of its mask; StartThread inherits the mask", function()
 		local s = PieceAnim.new(defs.weaponByIndex)
 		local finished = {}

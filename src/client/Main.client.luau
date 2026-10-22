@@ -69,6 +69,18 @@ local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
 
 local defs = Defs.load()
+-- no Roblox HUD (C-109, the user): chat, player list, backpack, health and
+-- emotes off, and the top bar's items hidden where Roblox allows it (its
+-- menu button stays: the game's screens keep clear of TopbarInset)
+do
+	local StarterGui = game:GetService("StarterGui")
+	pcall(function()
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+	end)
+	pcall(function()
+		StarterGui:SetCore("TopbarEnabled", false)
+	end)
+end
 local world = World.new(defs)
 local clock = Interp.newClock()
 local anim = PieceAnim.new(defs.weaponByIndex)
@@ -202,7 +214,47 @@ local meshReady: { string } = {}
 MeshModels.onReady(function(id: string)
 	table.insert(meshReady, id)
 end)
-MeshModels.start(defs)
+local seenModels = Models.version
+local nextMeshWant = 0
+local joinedAt: number? = nil
+-- Mesh models load once a match is joined and detailed models are on:
+-- types drawn on screen first, then every type in the match (known units,
+-- icons included), then the player's faction, then the rest (C-106).
+local function wantMeshes(now: number)
+	if not Models.DETAILED or not world.joined then
+		return
+	end
+	joinedAt = joinedAt or now
+	if not MeshModels.started() then
+		-- wait for the first units (their types go first), 2 s at most
+		if next(world.units) == nil and now < (joinedAt :: number) + 2 then
+			return
+		end
+		MeshModels.start(defs)
+	end
+	if now < nextMeshWant then
+		return
+	end
+	nextMeshWant = now + 0.5
+	local faction
+	for _, u in world.units do
+		-- strategic records name their type by the icon (the def index, S-58)
+		local def = World.def(world, u) or (if u.icon and u.icon > 0 then defs.unitByIndex[u.icon] else nil)
+		if def then
+			MeshModels.want(def.id, if u.tier == "tactical" then 3 else 2)
+			if u.team == world.me.team then
+				faction = def.faction
+			end
+		end
+	end
+	if faction then
+		for id, def in defs.units do
+			if def.faction == faction then
+				MeshModels.want(id, 1)
+			end
+		end
+	end
+end
 Vfx.onSpawn = function(kind: string, x: number, _y: number, z: number, scale: number)
 	Grade.burst(grade, kind, x, z, scale)
 end
@@ -776,6 +828,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
+	wantMeshes(now)
+	if Models.version ~= seenModels then
+		seenModels = Models.version
+		ModelPool.flushAll()
+		UnitRenderer.reshowAll(renderer, world)
+		table.clear(meshReady)
+	end
 	for _, id in meshReady do
 		Models.forget(id)
 		ModelPool.flush(id)

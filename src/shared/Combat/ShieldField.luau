@@ -3,6 +3,10 @@
 -- client's C-87 prototype). Shared so the server and clients step a shell
 -- through a dome's field the same way.
 --
+-- Since S-93 (the user, client request 42) every enemy shell is destroyed
+-- where it reaches the dome (ABSORB_MASS is infinite); the field described
+-- below acts only for a finite ABSORB_MASS.
+--
 -- A dome is a sphere of `radius` round its generator's base. The field
 -- fills the outer BAND_SHARE of it (S-83, the user: shells pass through the
 -- dome's surface and are slowed and turned inside it); the core within is
@@ -42,7 +46,11 @@ ShieldField.TANGENT_DRAG = 0.3 -- 1/s on the speed along the surface while throw
 ShieldField.STEER = 8 -- rad/s of steering at full force, mass 1, mid-band (S-82)
 ShieldField.GLANCE_SLOW = 0.05 -- the share of the braking and the push for a shell whose line misses the dome (S-82)
 ShieldField.HEAD_ON_EXP = 2
-ShieldField.ABSORB_MASS = 0.5 -- shells lighter than this are destroyed at the surface (S-85, the user)
+-- Shells lighter than this are destroyed where they reach the surface. S-93
+-- (the user, client request 42): every shell is, whatever its mass: no
+-- braking field, no turning back, no breach. The field below stays for a
+-- finite ABSORB_MASS (S-85 had 0.5: heavier shells braked and turned).
+ShieldField.ABSORB_MASS = math.huge
 ShieldField.FIELD_GRAVITY = 60 -- studs/s² pulling a shell down while it is in the field, whatever its mass (S-84, the user)
 ShieldField.STOPPED = 60 -- studs/s: slower than this a shell is thrown out more like a head-on one (S-82)
 

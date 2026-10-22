@@ -8,12 +8,18 @@
 -- gives the order) light up while active. Hotkeys (Input/Controls) show on
 -- hover. Fire and move states are the server's (protocol 20, S-61) for
 -- the first selected unit that has them. Acts only through the client API.
+-- Only the selection's own commands show (Core/CommandSet, C-109): a
+-- defense has stop / attack / fire state, a builder movement, repair,
+-- reclaim and guard (assist), a silo stop and a manual attack, a factory
+-- its queue and orders for the units it builds. Repair and reclaim are
+-- command modes like attack (reclaim: the known wreck nearest the click).
 
 local Players = game:GetService("Players")
 
 local Api = require("../Api")
 local Kit = require("./Kit")
 local World = require("../Core/World")
+local CommandSet = require("../Core/CommandSet")
 
 local CommandCard = {}
 
@@ -26,7 +32,7 @@ local MOVE = { [0] = { "Hold pos", RED }, [1] = { "Maneuver", YELLOW }, [2] = { 
 local COLS = 5
 local W, H = 64, 24
 
-export type UI = { gui: ScreenGui, panel: Frame, buttons: { [string]: TextButton } }
+export type UI = { gui: ScreenGui, panel: Frame, buttons: { [string]: TextButton }, shown: string }
 
 local function selected(api: Api.Api): (boolean, boolean, { number }, boolean)
 	local anyOn, anyRepeat, factories = false, false, {}
@@ -48,13 +54,13 @@ local function selected(api: Api.Api): (boolean, boolean, { number }, boolean)
 end
 
 -- BAR's order: states, then orders.
-local ORDER = { "fire", "movestate", "repeat", "toggle", "cancel", "stop", "attack", "move", "patrol", "fight", "guard", "alert" }
-local KEYS = { move = "M", fight = "F", attack = "A", patrol = "Z", guard = "G", stop = "S", fire = "L", movestate = "K", ["repeat"] = "Y", toggle = "U", cancel = "X", alert = "J" }
+local ORDER = CommandSet.ORDER
+local KEYS = { move = "M", fight = "F", attack = "A", patrol = "Z", guard = "G", stop = "S", fire = "L", movestate = "K", ["repeat"] = "Y", toggle = "U", cancel = "X", alert = "J", repair = "", reclaim = "E" }
 local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true }
 
 local function act(api: Api.Api, name: string)
 	local a = api.actions
-	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" then
+	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" then
 		a.setCommandMode(if api.state.commandMode == name then nil else name)
 	elseif name == "stop" then
 		a.stop()
@@ -137,7 +143,7 @@ function CommandCard.new(api: Api.Api): UI
 	end
 	Kit.skin(gui) -- the UI kit's look (C-105)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	return { gui = gui, panel = panel, buttons = buttons }
+	return { gui = gui, panel = panel, buttons = buttons, shown = "" }
 end
 
 function CommandCard.step(ui: UI, api: Api.Api)
@@ -146,13 +152,39 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		return
 	end
 	local anyOn, anyRepeat, factories, switchable = selected(api)
+	-- this selection's commands only, packed into rows
+	local defs = {}
+	for _, id in api.state.selection do
+		local u = api.world.units[id]
+		local d = u and World.def(api.world, u)
+		if d then
+			table.insert(defs, d)
+		end
+	end
+	local list = CommandSet.of(defs)
+	local shown = table.concat(list, ",")
+	if shown ~= ui.shown then
+		ui.shown = shown
+		local on = {}
+		for i, name in list do
+			on[name] = i
+		end
+		for name, b in ui.buttons do
+			b.Visible = on[name] ~= nil
+			b.LayoutOrder = on[name] or 99
+		end
+		local rows = math.max(1, math.ceil(#list / COLS))
+		ui.panel.Size = UDim2.fromOffset(COLS * (W + 3) + 7, rows * (H + 4) + 8)
+	end
 	local fire = FIRE[api.state.fireState or -1]
 	local move = MOVE[api.state.moveState or -1]
 	local label = {
 		fire = if fire then fire[1] else "Fire state",
 		movestate = if move then move[1] else "Move state",
 		["repeat"] = "Repeat",
-		toggle = if anyOn then "On" else "Off",
+		-- only converters switch (the sim's TOGGLED_ON bit); for anything else
+		-- "Off" in red read as a stopped factory (the user, C-107)
+		toggle = if not switchable then "On / Off" elseif anyOn then "On" else "Off",
 		cancel = "Cancel",
 		stop = "Stop",
 		attack = "Attack",
@@ -161,12 +193,14 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		fight = "Fight",
 		guard = "Guard",
 		alert = "Last alert",
+		repair = "Repair",
+		reclaim = "Reclaim",
 	}
 	local stateColor = {
 		fire = if fire then fire[2] else Color3.fromRGB(110, 110, 110),
 		movestate = if move then move[2] else Color3.fromRGB(110, 110, 110),
 		["repeat"] = if anyRepeat then GREEN else RED,
-		toggle = if anyOn then GREEN else RED,
+		toggle = if not switchable then Color3.fromRGB(110, 110, 110) elseif anyOn then GREEN else RED,
 	}
 	local mouse = game:GetService("UserInputService"):GetMouseLocation()
 	local inset = game:GetService("GuiService"):GetGuiInset()
@@ -174,7 +208,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		-- the hotkey while hovered, else the label
 		local p, s = b.AbsolutePosition, b.AbsoluteSize
 		local over = mouse.X >= p.X and mouse.X <= p.X + s.X and mouse.Y - inset.Y >= p.Y and mouse.Y - inset.Y <= p.Y + s.Y
-		b.Text = if over then `{label[name]} [{KEYS[name]}]` else label[name]
+		b.Text = if over and KEYS[name] ~= "" then `{label[name]} [{KEYS[name]}]` else label[name]
 		b.BackgroundColor3 = if api.state.commandMode == name then ACTIVE else BTN
 		local bar = b:FindFirstChild("State") :: Frame?
 		if bar then

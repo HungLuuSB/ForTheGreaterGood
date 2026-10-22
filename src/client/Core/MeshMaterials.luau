@@ -2,7 +2,9 @@
 -- The Rojo model file of the meshed models' surface appearances (C-103),
 -- pure: `render` gives the text of place/MeshMaterials.model.json from
 -- the mesh manifest (`lune run mesh_materials` writes it). A Folder of
--- SurfaceAppearances: one per model in the manifest, named by def ID, with
+-- SurfaceAppearances: one per unit model in the manifest, named by def ID,
+-- and one per effect mesh (Meshes.fx: missiles, the shield emitter), named
+-- `fx_<id>` (C-107, models-C's request), each with
 -- its color (alpha = team mask, Overlay), normal, roughness and metalness
 -- maps; and "Glow", the glow parts' shared white emissive mask. Rojo sets
 -- these (game scripts may not); Render/MeshModels clones them.
@@ -28,22 +30,27 @@ local function appearance(name: string, props: { { string } }): string
 end
 
 function MeshMaterials.render(): string
-	local ids = {}
-	for id in Meshes.units do
-		table.insert(ids, id)
+	local entries: { { name: string, maps: any } } = {}
+	for id, e in Meshes.units do
+		table.insert(entries, { name = id, maps = e.maps })
 	end
-	table.sort(ids)
+	for id, e in (Meshes :: any).fx or {} do
+		table.insert(entries, { name = "fx_" .. id, maps = e.maps })
+	end
+	table.sort(entries, function(a, b)
+		return a.name < b.name
+	end)
 	local children = {
 		appearance("Glow", {
 			{ "EmissiveMaskContent", quote(Meshes.glowMask) },
 			{ "EmissiveStrength", "1" },
 		}),
 	}
-	for _, id in ids do
-		local maps = Meshes.units[id].maps
+	for _, entry in entries do
+		local maps = entry.maps
 		table.insert(
 			children,
-			appearance(id, {
+			appearance(entry.name, {
 				{ "AlphaMode", quote("Overlay") },
 				{ "ColorMapContent", quote(maps.ALB) },
 				{ "NormalMapContent", quote(maps.NOR) },

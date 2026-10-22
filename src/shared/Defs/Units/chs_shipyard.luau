@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	footprint = 5,
 	icon = "factory_naval",
 	placement = "water",
-	buildPower = 100,
+	buildPower = 200, -- doubled: T1 units in about half the time (S-94, client request 42b)
 	buildOptions = { "chs_wrecker", "chs_barracuda", "chs_lamprey" },
 	model = "chs_shipyard",
 })

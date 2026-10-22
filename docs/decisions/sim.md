@@ -1216,3 +1216,94 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Built:** Targeting and Weapons skip frames (no target, no turret motion, no shot). Damage gives a frame no wreck (DEATH `wreckId` 0) and no death blast.
 - **Wire:** none. Build progress already reaches every client that has the unit in its tactical tier, enemies included (ENTER `build`, State BUILD on change); strategic records don't carry it.
 - **Tests:** `Frames.spec` (3): a half-built Bulwark doesn't target or fire at a tank in range for 10 s, then fires once complete; a frame killed with little overkill leaves no wreck where a complete one does; a reactor frame sets off no blast where a complete one does.
+
+## S-88 — Match statistics over time in Sim/Stats (client request 41, the user's queue task 1) (2026-10-23)
+
+- **Asked:** keep the statistics history in the sim (a sample every 10 s, damage taken included), so the client stops sampling on the server.
+- **Built:**
+  - `Stats.series(sim)` in the shape of the client's `src/roblox/StatSeries` (C-105): `{ start, every, t, players[tostring(pid)][field] }`.
+  - `Stats.FIELDS`: supply and power gathered, spent and stored (the team account's), units built, lost and killed, damage dealt, and new **damage taken**.
+  - Damage taken is the health enemies removed from the player's units, capped at what the unit had left. It is counted in Damage beside damage dealt.
+  - **Sampling:** `Sim.new` takes the first sample at tick 0, after the scenario. `Stats.step`, at the end of `Sim.step`, takes one every `every` ticks (150 = 10 s). Past 120 samples, every other one is dropped and `every` doubles.
+  - Not hashed: it only reads the sim, like the report.
+- **Tests:** `Stats.spec` 6: damage taken mirrors damage dealt on a kill; the series' shape and timing over 30 s; the halving and the doubled interval.
+
+## S-89 — Shield domes stop hitscan shots (the user's queue, task 2) (2026-10-23)
+
+- **Asked:** finish the shield: "intercept of shells and hitscan, strength drain, energy refill, collapse at 0% / rise at 25%, the wire state and hit events". S-79..S-87 already did everything except hitscan (S-79 let hitscan and beams through, under review).
+- **Built:**
+  - `Shield.intercept`: a hitscan or beam shot, or a shell resolved like one at the projectile cap, is stopped where its segment first enters an enemy dome that's up, if the muzzle is outside that dome.
+  - The FIRE event ends at that surface point with no hit and no damage. The shot's mass (`ShieldField.mass`) comes off the charge, as for a light shell absorbed (S-85).
+  - SHIELD_HIT (absorbed) with projectile 0.
+  - Shots from inside a dome pass out, as shells do.
+- **Wire, protocol 26:** SHIELD_HIT's projId may be 0 (a hitscan shot); the decoder used to reject it.
+- **Which weapons:** today's hitscan weapons are the flak guns (AA: a plane over an enemy dome is out of their reach) and the Minotaur's demolition charge (30 studs: from outside, only structures in the band are in reach).
+- **Tests:**
+  - `Shield.spec` 16: a Minotaur outside a dome sees its charge stopped on the surface every time, with no hitscan hit getting through; inside the dome the same charge hits; a line clear of the dome passes.
+  - `Schema.spec`: golden bytes for projId 0.
+
+## S-90 — Shield dome radius and faction balance, measured (the user's queue task 2) (2026-10-23)
+
+- **Asked:** measure how the dome radius (Order 120, Chaos 80) affects faction balance; numbers at 120/80 and 64/48 under "Needs my review".
+- **Tool:** `lune run shield_trial [seeds] [orderR chaosR ...]` with `Scenes.shieldSiege`. Each faction holds a base under its own dome with an equal-value hold-position army (T1 tank, T2 tank, T1 artillery) against the other faction's raid of the same roles. The raid's budget is the army plus the generator; an unshielded defender spends the generator's value on army. Radii come from a rebuilt def set (`Defs.build`), so the game's defs are untouched.
+- **Result** (5 seeds): table in `docs/progress/sim.md` under "Needs my review".
+  - At 120 the Order dome makes the defending army untouchable, since it fires out freely: the raid destroys nothing.
+  - At 80 the Carapace turns Chaos's lost defence into a win.
+  - At 64 / 48 the domes protect the base more than the army.
+- **Not decided:** the fix (smaller domes, blocking outgoing fire, a higher cost per hit, or none) is for the user's review.
+
+## S-91 — The match-shaped trial (next.md item 1a, the user's queue task 3) (2026-10-23)
+
+- **Asked:** next.md item 1 (a): reproduce the AI matches' Order bias outside the AI, with small waves against a rallied defender that has turret and artillery support.
+- **Built:**
+  - `Scenes.waves(attacker, waves, seed)`: a rallied defender (T1 tank and T1 artillery, `TRIAL_BUDGET`, default move state) stands beside its base (vehicle plant and T1 turret).
+  - The other faction arrives in `waves` equal waves 30 s apart, each attack-moving on the base, with the same roles and value plus the turret's.
+  - `lune run factions [seeds] match` adds the section; `play` now counts units that join mid-run.
+- **Result** (3 seeds; Order's trade = Chaos value destroyed / Order value lost):
+
+  | Attacker | 1 wave | 4 waves | 8 waves | Base fell (1 / 4 / 8) |
+  |---|---|---|---|---|
+  | Order attacks | 0.81 | 0.62 | 2.62 | 0/3, 0/3, 3/3 |
+  | Chaos attacks | 0.82 | 9.29 | 18.61 | 3/3, 0/3, 0/3 |
+
+- **Reading:**
+  - In one big wave the factions trade alike (0.81 / 0.82), as the equal-value trial said (S-62).
+  - In 4–8 small waves Chaos loses 9–18 times what it kills against an Order defender, while Order's small waves still take a Chaos base.
+  - So the gap is how the AI fights (small waves into a rallied defender), and Order's range and accuracy edge makes it worse. That is what (b) and (c) address.
+
+## S-93 — Shields destroy every projectile at the surface (client request 42, the user) (2026-10-23)
+
+- **Asked** (relayed by the client stream): every projectile that reaches an up enemy dome is destroyed on contact, whatever its mass: no braking field, no turning back, no breach. Keep the drain per hit, the collapse at 0% and the rise at 25%, and the S-89 hitscan stop.
+- **Built:** `ShieldField.ABSORB_MASS` = ∞. Every enemy shell crossing the surface takes S-85's absorb path: destroyed there, its mass off the charge, SHIELD_HIT with ABSORBED, no IMPACT. SHIELD_FIELD is no longer sent.
+- **Kept, not deleted:** the S-79..S-85 field (braking, steering, push, gravity, breach) still runs for any finite `ABSORB_MASS`. Its tests run with it set to 0.5 (`fieldOn` in `Shield.spec`), so the user's earlier rules return with one constant if wanted.
+- **Measured:** the S-90 trial again (in `docs/progress/sim.md`): at 120 / 80 both factions' defending armies are now untouchable, so the radius decision (S-90) matters more.
+- **Tests:** `Shield.spec` 17: every shell weight is destroyed at the surface with its mass in charge and no burst. The field tests run with the field on.
+
+## S-94 — T1 factories at twice the build power; the AI's economy follows (client request 42b, the user) (2026-10-23)
+
+- **Asked:** "Build speed for a single unit take too much time" (a Lancer took 51 s; BAR's T1 tanks about 25–30 s). Halve the T1 build times or double the T1 plants' build power, my call.
+- **Built:** the T1 vehicle plant, airfield and shipyard of both factions build at 200 (was 100), as the T2 ones do: a Lancer in 25.5 s. Build power rather than build times, so only factory output speeds up; structures built by workers keep their pace.
+- **The AI** (its economy couldn't keep up): a plant at full speed draws about 66 power/s (a Lancer's 1,700 power over 25.5 s). The generator rule planned for 20 per plant, so normal stalled at 25% power with two generators for 8 minutes: every job slowed to a quarter, and its tanks-first opening (S-57) kept the builders off generators. Now:
+  - generators wanted = ⌈(factories' build power × `POWER_PER_WORK` (1/3) + 20 + refills) / `GENERATOR_POWER` (20)⌉, counted in generators, frames included, not income (a mirror's finishing tick mustn't change the next job);
+  - the tanks-first opening holds only while power hasn't run below `ARMY_FIRST_RATIO` (0.6) in the last `POWER_MEMORY` ticks, watched every tick (S-31's lesson: a think's sampling moment mustn't decide).
+  - Normal on Ridgeline at 8 minutes: 12 generators, power at 100%, 31 units (was 2 generators, 25% power, 6 units).
+- **Fairness:**
+  - Faster plants put more units on the road early, so the mirrored builders' trip jitter (flow-field tie-breaks) shows up sooner: Hard's mirrored 2v2 now parts after 7 jobs, not 8.
+  - One pair of mirrored players ends 12% apart at 3 minutes, the other 1% the other way. It's the same with the build power alone and the old AI; seeds don't matter.
+  - The test now asks for the first 7 jobs to match, the two teams within 10%, and no consistent side lead (both pairs > 5% the same way), which is what S-31's bug looked like.
+  - Mirror match split: west 4, east 8 of 12 (in tolerance).
+- **Tests:**
+  - `Build.spec`: a Lancer in 383 ticks.
+  - `AI.spec`: normal's economy keeps up (≥ 4 generators, ≥ 8 units and power ≥ 60% by 8 minutes) instead of tanks before the third generator.
+  - `Fairness.spec`: as above.
+
+## S-95 — Factory order lists (client request 44, the user) (2026-10-23)
+
+- **Asked:** queue orders for a factory's new units (pre-move to a spot, then guard a unit, patrol and so on); keep the whole list: MOVE, FIGHT, PATROL, GUARD, REPAIR, ATTACK; shift appends, a plain order replaces, STOP clears; each produced unit rolls out of the exit, then takes a copy.
+- **Built:**
+  - `OrdersState.rally[factory]` is a list of `RallyOrder { kind, x, z, lx, lz, target, gen }`, replacing S-4's single rally kind and point. It is hashed.
+  - `Orders.give` puts these six kinds on a factory's list (queued: appended; else replaced); `Orders.stop` clears it.
+  - `Build.producedHook` gives the new unit its exit move, then each listed order, queued, in order.
+  - Guard and attack keep their target's generation, so an order to a unit since gone ends at once on the new unit, as any stale order does.
+- **No wire change.**
+- **Tests:** `Orders.spec` 11: a move-then-guard list reaches a produced unit in order, and it ends up by the guarded tank; a plain order replaces the list; STOP clears it.

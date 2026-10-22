@@ -29,14 +29,23 @@ export type Order = {
 	auto: boolean?, -- given by the unit's move state, not a player (S-34): any command replaces it
 }
 
+-- One of a factory's orders for the units it produces (S-95).
+export type RallyOrder = {
+	kind: Kind, -- move, fight, patrol, guard, repair or attack
+	x: number?,
+	z: number?,
+	lx: number?,
+	lz: number?,
+	target: number?,
+	gen: number?,
+}
+
 export type OrdersState = {
 	queue: { [number]: { Order } }, -- unit → its orders, head first
 	hold: { [number]: boolean }, -- engaged while on a fight / patrol move: Movement brakes and keeps the order
 	forced: { [number]: number }, -- unit → its attack order's target (Targeting prefers it)
 	forcedGen: { [number]: number },
-	rallyKind: { [number]: Kind }, -- factory → order given to each unit it produces ("move" / "fight")
-	rallyX: { [number]: number },
-	rallyZ: { [number]: number },
+	rally: { [number]: { RallyOrder } }, -- factory → the orders each unit it produces takes, in order (S-95)
 	repeatOn: { [number]: boolean }, -- factory → finished items go back to the end of the queue
 	anchorX: { [number]: number }, -- idle units: the spot a Maneuver unit returns to (S-34)
 	anchorZ: { [number]: number },
@@ -49,9 +58,7 @@ function OrdersState.new(): OrdersState
 		hold = {},
 		forced = {},
 		forcedGen = {},
-		rallyKind = {},
-		rallyX = {},
-		rallyZ = {},
+		rally = {},
 		repeatOn = {},
 		anchorX = {},
 		anchorZ = {},
@@ -64,9 +71,7 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.hold[id] = nil
 	o.forced[id] = nil
 	o.forcedGen[id] = nil
-	o.rallyKind[id] = nil
-	o.rallyX[id] = nil
-	o.rallyZ[id] = nil
+	o.rally[id] = nil
 	o.repeatOn[id] = nil
 	o.anchorX[id] = nil
 	o.anchorZ[id] = nil
@@ -94,10 +99,15 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 		end
 		h = Hash.u32(h, if o.hold[id] then 1 else 0)
 		h = Hash.u32(Hash.u32(h, o.forced[id] or 0), o.forcedGen[id] or 0)
-		local rally = o.rallyKind[id]
+		local rally = o.rally[id]
 		if rally then
-			h = Hash.u32(h, KIND_CODE[rally])
-			h = Hash.number(Hash.number(h, o.rallyX[id]), o.rallyZ[id])
+			h = Hash.u32(h, #rally)
+			for _, r in rally do
+				h = Hash.u32(h, KIND_CODE[r.kind])
+				h = Hash.number(Hash.number(h, r.x or 0), r.z or 0)
+				h = Hash.number(Hash.number(h, r.lx or 0), r.lz or 0)
+				h = Hash.u32(Hash.u32(h, r.target or 0), r.gen or 0)
+			end
 		end
 		h = Hash.u32(h, if o.repeatOn[id] then 1 else 0)
 		if o.anchorX[id] then

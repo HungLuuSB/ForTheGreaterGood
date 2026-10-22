@@ -17,6 +17,7 @@ return function(t: any)
 	end)
 
 	t.test("one appearance per model, plus the glow mask; valid JSON", function()
+		-- (effect meshes too, as fx_<id>)
 		local data = serde.decode("json", MeshMaterials.render())
 		local names = {}
 		for _, c in data.Children do
@@ -29,6 +30,11 @@ return function(t: any)
 			t.expect(c ~= nil, `{id} has an appearance`)
 			t.equal(c.Properties.ColorMapContent, e.maps.ALB)
 			t.equal(c.Properties.AlphaMode, "Overlay")
+		end
+		for id, e in (Meshes :: any).fx or {} do
+			local c = names["fx_" .. id]
+			t.expect(c ~= nil, `fx {id} has an appearance`)
+			t.equal(c.Properties.ColorMapContent, e.maps.ALB)
 		end
 	end)
 end

@@ -29,10 +29,11 @@ function AlertFeed.new(api: Api.Api): UI
 	gui.Name = "Alerts"
 	gui.ResetOnSpawn = false
 	gui.DisplayOrder = 6
+	gui.IgnoreGuiInset = true -- the resource bar moved up into the top strip (C-109)
 	local list = Instance.new("Frame")
 	list.Name = "List"
 	list.AnchorPoint = Vector2.new(0, 0)
-	list.Position = UDim2.new(0.5, -273, 0, 46) -- under the resource bar, like BAR's messages (C-71)
+	list.Position = UDim2.new(0.5, -273, 0, 52) -- under the resource bar, like BAR's messages (C-71)
 	list.Size = UDim2.fromOffset(300, AlertFeed.LINES * 24)
 	list.BackgroundTransparency = 1
 	list.Parent = gui

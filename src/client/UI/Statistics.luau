@@ -1,15 +1,16 @@
 --!strict
 -- The statistics panel (C-105), the results screen: a UI kit panel with a
--- sidebar (Overview, Economy, Combat, Units) and filter chips (All, You,
--- one per ally team, with its team colors).
+-- sidebar (Overview, Economy, Combat) and filter chips (All, You, one per
+-- ally team, with its team colors). Chart pages are a 3 × 2 grid that fills
+-- the panel (C-106: combat and units together).
 --   Overview  VICTORY / DEFEAT, the match length, the scoreboard (units
 --             built / lost / killed, supply and power gathered / spent,
 --             damage dealt; the sim's Stats, S-63), replays and back
 --   Economy   supply and power produced, used, stored over match time
---   Combat    damage dealt and taken, units killed
---   Units     units built and lost
--- Lines are the players' team colors; the samples come from the server's
--- StatSeries every 10 s (damage taken waits for sim request 41). Built
+--   Combat    damage dealt and taken, units killed, built, lost and alive
+--             (alive = the starting Command Vehicle + built − lost)
+-- Lines are the players' team colors; the samples are the sim's
+-- (Stats.series, S-88: every 10 s, damage taken included). Built
 -- once and reused: `show` only refills it, and charts draw one per frame
 -- (UI/Kit), so opening it doesn't hitch.
 
@@ -19,7 +20,7 @@ local Kit = require("./Kit")
 
 local Statistics = {}
 
-local PAGES = { "Overview", "", "Economy", "Combat", "Units" }
+local PAGES = { "Overview", "", "Economy", "Combat" }
 local CHARTS = {
 	Economy = {
 		{ "supplyGathered", "Supply · Produced" },
@@ -33,10 +34,9 @@ local CHARTS = {
 		{ "damageDealt", "Damage · Dealt" },
 		{ "damageTaken", "Damage · Taken" },
 		{ "unitsKilled", "Units · Killed" },
-	},
-	Units = {
 		{ "unitsBuilt", "Units · Built" },
 		{ "unitsLost", "Units · Lost" },
+		{ "unitsAlive", "Units · Alive" },
 	},
 }
 
@@ -91,15 +91,19 @@ local function redrawCharts(ui: UI)
 			for _, p in r.players or {} do
 				local values = series.players and series.players[tostring(p.id)]
 				local ys = values and values[c[1]]
+				if c[1] == "unitsAlive" and values and values.unitsBuilt and values.unitsLost then
+					ys = {}
+					for i, built in values.unitsBuilt do
+						ys[i] = math.max(0, 1 + built - (values.unitsLost[i] or 0))
+					end
+				end
 				if shown(ui, p) and ys and #ys > 0 then
 					any = true
 					local xs = table.move(series.t, 1, #ys, 1, {})
 					table.insert(lines, { xs = xs, ys = ys, color = TeamColors(p.team or p.id) })
 				end
 			end
-			if c[1] == "damageTaken" and not any then
-				chart.note("Damage taken comes with sim request 41")
-			elseif not any then
+			if not any then
 				chart.note("No player in this filter")
 			else
 				chart.set(lines, series.t[#series.t])
@@ -256,7 +260,7 @@ end
 -- Builds the panel (hidden) in `gui`.
 function Statistics.new(gui: ScreenGui, me: number): UI
 	local ui: UI
-	local panel = Kit.panel(gui, "Statistics", Vector2.new(1120, 580), PAGES, function(name)
+	local panel = Kit.panel(gui, "Statistics", Vector2.new(1180, 660), PAGES, function(name)
 		for n, f in ui.pages do
 			f.Visible = n == name
 		end
@@ -289,15 +293,16 @@ function Statistics.new(gui: ScreenGui, me: number): UI
 			ui.overview = sc
 		else
 			f.Position = UDim2.fromOffset(0, 44)
-			f.Size = UDim2.new(1, 0, 1, -44)
-			local sc = Kit.scroll(f)
+			f.Size = UDim2.new(1, 0, 1, -44 - Kit.SPACE.s)
+			-- a 3 × 2 grid filling the page; each chart draws at its cell's size
+			local gap = Kit.SPACE.m
 			local grid = Instance.new("UIGridLayout")
-			grid.CellSize = UDim2.fromOffset(Kit.PLOT.X + 48, Kit.PLOT.Y + 54)
-			grid.CellPadding = UDim2.fromOffset(Kit.SPACE.s, Kit.SPACE.m)
+			grid.CellSize = UDim2.new(1 / 3, -gap * 2 / 3, 1 / 2, -gap / 2)
+			grid.CellPadding = UDim2.fromOffset(gap, gap)
 			grid.SortOrder = Enum.SortOrder.LayoutOrder
-			grid.Parent = sc
+			grid.Parent = f
 			for i, c in CHARTS[name] do
-				ui.charts[c[1]] = Kit.chart(sc, c[2], i)
+				ui.charts[c[1]] = Kit.chart(f, c[2], i)
 			end
 		end
 	end

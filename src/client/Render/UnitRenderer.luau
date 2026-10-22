@@ -135,6 +135,14 @@ function UnitRenderer.reshow(r: Renderer, world: World.World, defId: string)
 	end
 end
 
+-- Draws every unit again (the Detailed models setting flipped, C-106).
+function UnitRenderer.reshowAll(r: Renderer, world: World.World)
+	for id in r.drawn do
+		hide(r, id)
+		show(r, world, id)
+	end
+end
+
 -- Removes every model (match restart).
 function UnitRenderer.clear(r: Renderer)
 	for id in r.drawn do

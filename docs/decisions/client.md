@@ -891,3 +891,47 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The user: the settings and results panels read as debug boxes, and the BAR statistics panel is the style target (style only).
 - Montserrat is the closest built-in to its geometric sans.
 - Charts: an EditableImage per chart is a fixed cost per redraw, against a Frame per segment per line (up to thousands of Frames) (measured: 4.6 ms per chart redraw and nothing standing, against 476 Frames a chart).
+
+### C-106 — Modal panels with a scrim; panels fit their content; graphics options for detailed models, glow and headlights; mesh models load by priority; white glow on clashing team colors; factory pulse to 3 (2026-10-23)
+
+**Decision:**
+- **Modal:** kit panels are 95% opaque over a 55% black scrim, in guis above the HUD (100 / 110).
+- **Layouts:** `setHeight` fits panels to content; statistics is a 3 × 2 scale grid of size-aware charts.
+- **Settings:** `detailedModels`, `glow` (off / low / high), `headlights`.
+- **Loading order:** mesh models load on screen > in the match > own faction > the rest.
+- **Clashes:** Order team 7 and Chaos team 6 show running / power glow white (C's fx.md table).
+- **Pulse:** `PULSE_HIGH` 3.
+
+**Why:**
+- The user's review: panels read through to the HUD, left empty space, missed graphics options, and models took ~21 s.
+- The user also asked for white glow where the team color matches the faction glow, and a lower pulse if 4 blew out (it did, measured on the Order vehicle plant).
+
+**C-106 addendum (2026-10-23):** the user confirmed the factory pulse peak at 3.
+
+### C-107 — Build menu tiles with model portraits and a stats tooltip; On / Off only where it switches; piece turns take the short way (2026-10-23)
+
+**Decision:**
+- **Tiles:** model portraits in ViewportFrames (`UI/Portrait`), the icon bottom right, the cost bottom left, 4 × 66 px tiles.
+- **Tooltip:** a hover tooltip from `UnitStats.ofDef` with build time at the builders' power.
+- **On / Off:** neutral grey unless a converter is selected.
+- **Turns:** `PieceAnim` turn goals wrap to the nearest equivalent angle, and `Interp` extrapolates heading by the wrapped step.
+
+**Why:**
+- The user: BAR-style unit pictures and stats on hover; factories read as "OFF"; units rotated the long way (the client's turn interpolation crossing ±180°).
+
+### C-108 — Minimap 220 pixels; the materials file covers effect meshes (2026-10-23)
+
+**Decision:**
+- **Minimap:** 220 (was 280); the build menu starts under it.
+- **Materials:** `mesh_materials` writes `fx_<id>` appearances for `Meshes.fx`.
+
+**Why:** the user asked for a smaller minimap; models-C needed SurfaceAppearances for the missile meshes.
+
+### C-109 — Per-unit command sets; factory orders kept; Roblox's top bar cleared and the HUD moved into the top strip (2026-10-23)
+
+**Decision:**
+- **Commands:** `Core/CommandSet` decides each type's commands and the card shows the selection's union; repair and reclaim are command modes.
+- **Factory orders:** they stay drawn until replaced (full queues: sim request 44).
+- **Top strip:** Roblox's core UI is off; resource bars, alerts and the debug overlay draw from the top; Settings sits right after Roblox's corner (`GuiService.TopbarInset`).
+
+**Why:** the user's requests. Roblox keeps its menu button and the corner it needs whatever the game sets, so the minimap sits under it.

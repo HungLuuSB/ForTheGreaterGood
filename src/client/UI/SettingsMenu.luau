@@ -3,11 +3,13 @@
 -- "Settings" button (bottom right) opens a panel with a sidebar:
 --   Camera     pan speed and zoom step sliders, edge scroll toggle
 --   Graphics   quality (segmented Low / Medium / High, with what it caps),
---              fog of war toggle, atmosphere dropdown
+--              fog of war toggle, atmosphere dropdown, detailed models
+--              toggle, glow (Off / Low / High), headlights toggle (C-106)
 --   Interface  UI scale slider
 --   Audio      nothing yet (the game has no sound)
 --   Keys       the key bindings as a two-column table per group
--- Built once and shown or hidden. Values come from Core/Settings; `apply`
+-- Built once and shown or hidden; modal (a dark scrim behind, a click on
+-- it closes the panel), and the panel's height follows the page (C-106). Values come from Core/Settings; `apply`
 -- writes them into the modules that use them, live. Settings last for
 -- this session, as before.
 
@@ -23,6 +25,7 @@ local Atmosphere = require("../Render/Atmosphere")
 local FogBlanket = require("../Render/FogBlanket")
 local Environment = require("../Render/Environment")
 local Glow = require("../Render/Glow")
+local Models = require("../Render/Models")
 local Vfx = require("../Render/Vfx")
 local Kit = require("./Kit")
 
@@ -32,10 +35,20 @@ local KEY = Enum.KeyCode.O
 -- the screens the UI scale applies to: the panels; overlays drawn at world
 -- positions (icons, health bars, the selection box, missile labels) and
 -- Roblox's own screens keep screen pixels
-local SCALED = { Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
+local SCALED = { SettingsButton = true, BuildTooltip = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
 local PAGES = { "Camera", "Graphics", "Interface", "Audio", "Keys" }
 
-export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, state: Settings.State }
+export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, layouts: { [string]: UIListLayout }, state: Settings.State }
+
+local SIDEBAR_HEIGHT = 280 -- the sidebar's five sections need this much panel
+
+-- The panel's height for page `name`: its content, at least the sidebar.
+local function fitPage(ui: UI, name: string)
+	local layout = ui.layouts[name]
+	if layout then
+		ui.panel.setHeight(math.max(SIDEBAR_HEIGHT, layout.AbsoluteContentSize.Y + 2 * Kit.SPACE.l + Kit.SPACE.s))
+	end
+end
 
 -- Writes the settings into the modules that read them.
 function SettingsMenu.apply(s: Settings.State)
@@ -53,6 +66,9 @@ function SettingsMenu.apply(s: Settings.State)
 	PieceAnim.MID = g.detailMid
 	FogBlanket.ENABLED = s.fog
 	Environment.AMBIENT = s.quality ~= "low"
+	Glow.LEVEL = s.glow
+	Glow.HEADLIGHTS = s.headlights
+	Models.setDetailed(s.detailedModels)
 	Atmosphere.apply(s.atmosphere)
 	local playerGui = (Players.LocalPlayer :: Player):FindFirstChild("PlayerGui")
 	for _, gui in (if playerGui then playerGui:GetChildren() else {}) do
@@ -94,7 +110,13 @@ local function build(ui: UI)
 		holder.Visible = false
 		holder.Parent = ui.panel.content
 		local sc = Kit.scroll(holder)
-		Kit.list(sc, Kit.SPACE.xs)
+		local layout = Kit.list(sc, Kit.SPACE.xs)
+		ui.layouts[name] = layout
+		layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			if ui.panel.selected == name then
+				fitPage(ui, name)
+			end
+		end)
 		Kit.pad(sc, 0, 0, Kit.SPACE.m, 0)
 		ui.pages[name] = sc
 		Kit.section(sc, name, 0)
@@ -138,6 +160,19 @@ local function build(ui: UI)
 	Kit.dropdown(Kit.row(gfx, "Atmosphere", 4), atmospheres, s.atmosphere, function(name)
 		set("atmosphere", name)
 	end, 190)
+	Kit.toggle(Kit.row(gfx, "Detailed models", 5), s.detailedModels, function(on)
+		set("detailedModels", on)
+	end)
+	local glows = {}
+	for _, g in Settings.GLOWS do
+		table.insert(glows, { g, cap(g) })
+	end
+	Kit.segmented(Kit.row(gfx, "Glow", 6), glows, s.glow, function(g)
+		set("glow", g)
+	end, 70)
+	Kit.toggle(Kit.row(gfx, "Headlights", 7), s.headlights, function(on)
+		set("headlights", on)
+	end)
 
 	local ifc = page("Interface")
 	local scaleL = Settings.LIMITS.uiScale
@@ -168,29 +203,50 @@ function SettingsMenu.new(): UI
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "Settings"
 	gui.ResetOnSpawn = false
-	gui.DisplayOrder = 40
+	gui.DisplayOrder = 110 -- modal: over every HUD screen and the debug overlay (C-106)
 	gui.IgnoreGuiInset = true
-	local open = Kit.button(gui, "Settings (O)", "ghost", function() end, 116)
+	-- the open button lives with the HUD (under other modal panels); the panel's gui is on top
+	local buttonGui = Instance.new("ScreenGui")
+	buttonGui.Name = "SettingsButton"
+	buttonGui.ResetOnSpawn = false
+	buttonGui.DisplayOrder = 6
+	buttonGui.IgnoreGuiInset = true
+	buttonGui.IgnoreGuiInset = true
+	local open = Kit.button(buttonGui, "Settings (O)", "ghost", function() end, 116)
 	open.Name = "Open"
-	open.AnchorPoint = Vector2.new(1, 1)
-	open.Position = UDim2.new(1, -8, 1, -40) -- above the follow button
-	open.Size = UDim2.fromOffset(116, 26)
+	open.Size = UDim2.fromOffset(116, 28)
+	-- the upper left corner, right after Roblox's own buttons (they keep the
+	-- first ~164 pixels of the top strip; a resign button will join it), C-109
+	local GuiService = game:GetService("GuiService")
+	local function corner()
+		local inset = GuiService.TopbarInset
+		open.Position = UDim2.fromOffset(inset.Min.X + 8, math.max(4, (inset.Height - 28) / 2))
+	end
+	corner()
+	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(corner)
 	open.TextSize = 13
 	local ui: UI
 	local panel = Kit.panel(gui, "Settings", Vector2.new(780, 500), PAGES, function(name)
 		for n, p in ui.pages do
 			(p.Parent :: Frame).Visible = n == name
 		end
+		fitPage(ui, name)
 	end)
 	panel.root.Visible = false
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	ui = { gui = gui, panel = panel, pages = {}, state = Settings.new(RunService:IsStudio()) }
+	buttonGui.Parent = gui.Parent
+	ui = { gui = gui, panel = panel, pages = {}, layouts = {}, state = Settings.new(RunService:IsStudio()) }
 	build(ui)
 	panel.select("Camera")
 	local function toggle()
 		panel.root.Visible = not panel.root.Visible
 	end
 	open.MouseButton1Click:Connect(toggle)
+	panel.scrim.InputBegan:Connect(function(input: InputObject)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			panel.root.Visible = false
+		end
+	end)
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
 		if not processed and input.KeyCode == KEY then
 			toggle()

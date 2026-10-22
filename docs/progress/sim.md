@@ -155,6 +155,45 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
       - To radar it shows as a fighter or bomber (`radarSignature` 1, `spoof` = a def id the enemy's radar contacts report until a fire-control radar or sight identifies it; D107 already hides types of untracked contacts). Radar SAMs and interceptors spend missiles on it.
       - One new field (`spoof`), and the strategic icon of an untracked contact switches to the spoofed type's family.
       - Counters: Pinpointers and fire-control tracking reveal it; IR SAMs (sight) aren't fooled.
+- **Shield dome radius and faction balance (S-90, your queue task 2):**
+  - **Setup:** `lune run shield_trial [seeds] [orderR chaosR ...]`. Each faction holds a base (vehicle plant and generator) with an equal-value army of its T1 tank, T2 tank and T1 artillery on hold position. The other faction raids it from 600 studs with the same roles.
+    - The raid's budget is the defender's army plus the generator.
+    - Without a shield, the defender spends the generator's value on more army.
+    - Shields at 20× (S-86). 5 seeds, up to 8 minutes each.
+  - **Defender's trade** is raid value destroyed / defender value lost; above 1 favours the defender.
+
+    | Domes (Order / Chaos) | Defender | Defender's trade | Base fell | Fell after | Defender lost | Raid lost | Shield hits |
+    |---|---|---|---|---|---|---|---|
+    | no shield | Order | 2.74 | 0 / 5 | — | 2564 | 7030 | 0 |
+    | 120 / 80 | Order | ∞ (nothing lost) | 0 / 5 | — | 0 | 6955 | 248 |
+    | 64 / 48 | Order | 5.15 | 0 / 5 | — | 1338 | 6889 | 244 |
+    | no shield | Chaos | 0.30 | 5 / 5 | 44 s | 7370 | 2233 | 0 |
+    | 120 / 80 | Chaos | 2.29 | 0 / 5 | — | 2931 | 6700 | 304 |
+    | 64 / 48 | Chaos | 0.30 | 5 / 5 | 169 s | 7740 | 2347 | 512 |
+
+  - **After S-93** (your rule: every projectile destroyed at the surface), same trial:
+
+    | Domes (Order / Chaos) | Defender | Defender's trade | Base fell | Defender lost | Raid lost | Shield hits |
+    |---|---|---|---|---|---|---|
+    | 120 / 80 | Order | ∞ (nothing lost) | 0 / 5 | 0 | 6955 | 253 |
+    | 64 / 48 | Order | 59.28 | 0 / 5 | 117 | 6955 | 242 |
+    | 120 / 80 | Chaos | ∞ (nothing lost) | 0 / 5 | 0 | 6700 | 163 |
+    | 64 / 48 | Chaos | 2.06 | 0 / 5 | 3246 | 6700 | 486 |
+
+    With nothing getting through, both domes now make a defending army untouchable at the current radii. At 64 / 48 Order still wins 59 to 1, and Chaos's smaller dome turns its lost defence (0.30 unshielded) into a win (2.06). The options below matter more now.
+  - **What it showed (S-90, with the braking field):**
+    - At 120 the Order dome covers the whole defending army. Shells from outside are turned while the army fires out freely, so the raid destroys nothing.
+    - At 80 the Carapace turns a lost defence (0.30) into a won one (2.29).
+    - At 64 / 48 the domes cover only the base and part of the army. Order still trades 5.15. The Carapace no longer changes the trade but holds the base nearly four times as long (169 s against 44 s).
+    - So the radius decides whether the shield protects the army or only the base.
+    - It doesn't touch the AI-match faction balance yet: the AI builds no shields (next.md item 7).
+  - **Options (your call):**
+    - (a) smaller domes (64 / 48 or between), so a shield protects a base, not an army;
+    - (b) block shots going out as well as coming in, so units inside can't fire through their own dome (BAR's shields work this way);
+    - (c) a higher charge cost per hit, so a dome under fire drops sooner;
+    - (d) keep it and let the attacker answer with heavier artillery, hitscan-free siege units or a power raid.
+  - My suggestion: (b), since it keeps the dome as a fortress without making the army inside it untouchable. (a) is the cheaper change.
+- **Build speed (S-94, request 42b):** I doubled the T1 factories' build power (100 → 200) rather than halving T1 build times: only factory output speeds up, and structures keep their pace. A plant at full speed draws about 66 power/s, so it wants about three generators. The AI's generator rule now plans for that, and its tanks-first opening gives way while power stalls; it had stalled at 25% power for 8 minutes with 2 generators. Normal fields 31 units by 8 minutes, against 6. Your call if you'd rather have the build times halved instead (the same pace for factories; assisting workers would count for more).
 - **Shield domes (S-79, client request 40), placeholder numbers:**
   - **Generators:** Order `ord_phalanx` Phalanx (Architect, T2): radius 120, capacity 600 shell masses, recharge 30/s (20 s from empty), 40 power/s while recharging; supply 400, power 5,000, 2,800 health. Chaos `chs_carapace` Carapace (Forgemaster, T2): radius 80, capacity 400, recharge 24/s, 25 power/s; supply 280, power 3,500, 2,000 health. Capacity and recharge are 20× my first numbers (your rules: 10× in S-80, 50× in S-81, then down to 20× in S-86). Chaos's capacity and price, and keeping the power draw unchanged, are my calls. At 30 charge a second, a full Phalanx out-recharges about 12 mortar shells a second.
   - **Light shots destroyed (S-85, your rule):** shells under mass 0.5 (under 75 damage: machine guns, autocannons, MLRS rockets) vanish where they cross the dome's surface; heavier ones keep the slow, turn and push-out. The threshold, and that each one costs its mass in charge like a turn, are my calls.
@@ -167,7 +206,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
     - The S-80 mirror bounce is gone.
   - **Shell mass:** a weapon's best damage / 150, within 0.2–8 (machine gun 0.27, Ravager cannon 0.87, rockets 1.3, Juggernaut 1.65, heavy cannon 2.2, mortar 2.4, Citadel gun 4.3, siege mortar and heavy bombs 8); a def may set `shieldMass`. A turned shell costs its mass in charge, a breach half.
   - **Field strength:** I doubled the prototype's braking (BRAKE 500 → 1000, DRAG 9 → 20) so a full dome stops every shell in the game, the Citadel's 480-stud/s round included. Measured on shells fired from 400 studs: everything turns down to 25% charge except heavy bombs; at 12% the heavy cannon, siege mortar, bombs and radar SAMs get through; at 5% most do.
-  - **My calls:** hitscan and beams pass through (your rules cover shells only); allies' shells are never touched; torpedoes, nukes and interceptors chasing a nuke ignore domes; a missile turned back loses its lock; a built generator starts empty and down (25% to rise), a scenario-spawned one full; a hit drains even while the dome's own units fire out.
+  - **My calls:** hitscan and beam shots from outside are stopped at the surface like light shells (S-89, your queue: "intercept of shells and hitscan"); allies' shells are never touched; torpedoes, nukes and interceptors chasing a nuke ignore domes; a missile turned back loses its lock; a built generator starts empty and down (25% to rise), a scenario-spawned one full; a hit drains even while the dome's own units fire out.
 - **800 units (S-74):** Targeting is within budget (peaks 5.7–7.4 ms of 8; a third fewer sensor lookups, same state hash). Commands is not (average 0.47 ms, peaks 1.8–2.2 of 1): what remains needs a behaviour change. Pick one: (a) attack-move hold checks for half the units each tick (a unit stops up to 0.07 s later), or (b) spread a big order's queue entries over 2–4 ticks.
 - **Faction balance in AI matches (S-65, S-78; `docs/FACTION_AI.md`):** Order wins 90% of same-level matches (target 40–60%; undecided 9%, in target). No ±10% retune moved it (S-78 lists eight tries); the kill tallies point at how AI matches fight, not at a number. My recommendation is `docs/design/next.md` item 1: reproduce it in a match-shaped trial first, then decide whether to fix the AI or retune beyond ±10% (your call).
 - **Warden and Minotaur (S-64):**
@@ -225,11 +264,18 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 41), S-88: statistics over time in `Sim/Stats`.** `Stats.series(sim)` returns `{ start, every, t, players }` in your StatSeries shape: `t` in seconds, `players[tostring(pid)][field]` arrays of whole numbers. The fields are `Stats.FIELDS`: your ten plus **`damageTaken`**, which is health enemies removed from that player's units, capped like `damageDealt`. `Stats.report` has `damageTaken` too.
+  - Sampling: one sample at tick 0 (after the scenario), then every 150 ticks at the end of the tick. Past 120 samples, every other one is dropped and the interval doubles (`series.every`).
+  - Replays and headless runs have it, since the sim keeps it. No wire change; the Roblox server reads it as it reads `Stats.report`, so `src/roblox/StatSeries` can go.
 - **Done (request 40), S-79, protocol 24: shield domes.** Generators `ord_phalanx` (radius 120) and `chs_carapace` (radius 80); the def's `shield = { radius, capacity, recharge, power }` (radius in the def, not on the wire). Three events (contract section 7):
   - **`SHIELD 19`** `unitId u16, charge u8 (0..255 of capacity), flags u8` (`Schema.ShieldFlag`: UP 1, RECHARGING 2; down = no UP): after the generator's ENTER and when the charge moved 4/255 or the flags changed. Generators enter the tactical tier as far out as their dome reaches (margins + radius).
   - **`SHIELD_HIT 20`** `unitId u16 (0 = a generator you don't have), projId u16, pos (the point on the dome), mass u8 (/ Schema.SHIELD_MASS_SCALE 31 = shell masses, 1 = a 150-damage shell), flags u8 (SHIELD_BREACH 1)`: a shell turned back (the hit) or broke through. Draw the hit patch at `pos` with intensity from `mass`.
   - **`SHIELD_FIELD 21`** `projId u16, pos (the dome's centre), radius u16, force u8 (0..255), phase u8 (1 braking, 2 repelled)`: a projectile you have came into a dome's field (or is in one when it reaches you). From then step it with **`Shared/Combat/ShieldField.step`** (the server's field: the same constants and maths as your C-87 prototype, braking doubled) instead of `Ballistics.step`, until the phase is DONE; mass from `ShieldField.mass(weapon)`. The Projectiles channel also corrects shells in a field (every 5 ticks, on the turn or breach, and when they leave). The test client does it (`Support/Client`), and its shells stay within a stud of the server's.
   - Turned shells stay live: they fly on and burst with their normal IMPACT where they land. Your `Core/Shield` can drop `stepShell`, `drain` and `recharge` for these.
+  - **Done (request 44), S-95: factory order lists.** MOVE, FIGHT, PATROL, GUARD, REPAIR and ATTACK on a factory go on its list: shift appends, a plain order replaces, STOP clears. Each produced unit rolls out of the exit, then takes a copy, in order. No wire change; the list isn't on the wire (your client keeps drawing what it sent).
+  - **S-94 (request 42b):** T1 factories build at 200 (was 100): a Lancer in 25.5 s. No wire change.
+  - **S-93 (request 42):** every enemy projectile is destroyed where it reaches an up dome, whatever its mass. You get SHIELD_HIT with ABSORBED at the surface; SHIELD_FIELD is no longer sent and no shell turns or breaks through. Drain per hit (its mass), collapse at 0%, rise at 25% and the hitscan stop are unchanged. No wire change.
+  - **S-89 (the user's queue: hitscan intercepted), protocol 26:** a hitscan or beam shot from outside an enemy dome that's up is stopped where it enters: no damage, its mass in charge. The FIRE event ends at that surface point with no hit, and a SHIELD_HIT with ABSORBED and **projId 0** marks it (projId 0 is new in protocol 26, so the decoder no longer rejects it). Light the ripple; there's no shell to drop.
   - **S-86 (the user):** shield strength down to 20× S-79's: Phalanx 600 at 30/s, Carapace 400 at 24/s; power draw unchanged. No wire change.
   - **S-87 (the user: frames are inert):** a unit with build progress below 1 no longer aims, targets or fires (sensors, factories, economy, stockpiles, pads and shields already waited), and destroyed it leaves no wreck (DEATH `wreckId` 0) and no BLAST. Build progress already reaches every client that has the unit in its tactical tier, enemies included: ENTER's `build` and State's BUILD field (u8) on change. Strategic records don't carry it.
   - **S-85 (the user: light shots destroyed), protocol 25:** a shell lighter than `ShieldField.ABSORB_MASS` = 0.5 is destroyed where it crosses the surface. SHIELD_HIT carries the new flag **`SHIELD_ABSORBED` 2**: drop the shell, no burst; no IMPACT follows, and it never gets a SHIELD_FIELD. pos is the surface crossing; `ShieldField.step` returns the `ABSORB` event (3) for it. Light here: machine guns, autocannons (Locust), MLRS rockets (Hydra). Ravager cannon (0.87) and up keep the full mechanic.
@@ -346,6 +392,12 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: models `53e4a34` (with `5b2999a`, `2f8e394`, `3522f82`: BAR structure meshes, shield ring and band meshes, Open Cloud uploads) → `9303b0f`, passed test, test_slow and build, pushed.
 - 2026-10-22: sim S-84 (`2e54157`) → `4e2ea48`, sim S-85 (`1f95aea`, protocol 25) → `abd8bc3`. Both passed test, test_slow and build and were pushed.
 - 2026-10-22: client C-97, C-98 (`e191ed7`) → `78c7810`, passed test, test_slow and build, pushed.
+- 2026-10-22: sim S-86, S-87 (`7cef56c`) → `bdfda93`, passed test, test_slow and build, pushed.
+- 2026-10-22: client C-99 (`92be867`) → `72093b3`, models `5923128` (BAR meshes, remaining T1 ground pairs) → `929796f`. Both passed test, test_slow and build and were pushed.
+- 2026-10-22: client C-100 (`aa8f71b`, terrain-draped fog of war) → `ac2e1cf`, passed test, test_slow and build, pushed.
+- 2026-10-22: client C-101 (`92b9a43`, night lighting preset) → `4c9b315`, passed test, test_slow and build, pushed.
+- 2026-10-22: models `113202b` (with `674e394`: M-22 glow pass) → `5deaf4d`, passed test, test_slow and build, pushed.
+- 2026-10-23: client C-102..C-105 (`18195e5`, containing `e8f5ce9`, `d4ab33b`, `bdc88e8`, `44880cc`, `51e4d07` and models `639d555`, `cf819cc`) → `9b05fe9`; models `0f911df` (M-23, mesh_materials step) → `6d01933`. Both passed test, test_slow and build and were pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 

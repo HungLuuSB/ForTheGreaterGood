@@ -12,7 +12,9 @@
 --     missile loses its lock); one that comes back is caught again. One that
 --     reaches the dome's core still moving in breaks through, slowed, and
 --     carries on. Shots fired from inside pass out freely; allies' shells are
---     never touched. Hitscan and beams pass through (not in the rules);
+--     never touched. A hitscan or beam shot (or a shell resolved like one at
+--     the projectile cap) from outside a dome is stopped at its surface like
+--     a light shell (S-89): no damage, its mass in charge;
 --   * a shell lighter than ShieldField.ABSORB_MASS is destroyed where it
 --     crosses the surface (S-85): no burst, no damage;
 --   * charge is counted in shell masses (ShieldField.mass): a turned or
@@ -244,6 +246,47 @@ function Shield.deflect(
 		return x1, y1, z1, vx1, vy1, vz1, true, true
 	end
 	return x1, y1, z1, vx1, vy1, vz1, true, false
+end
+
+-- A hitscan shot by side `side` from (sx, sy, sz) to (ex, ey, ez): the
+-- first enemy dome, up, whose surface the segment enters from outside
+-- stops it there (S-89). Returns the generator (0 for none) and the point;
+-- drains the shot's mass and records a SHIELD_HIT (absorbed, projectile 0).
+function Shield.intercept(sim: Types.Sim, side: number, sx: number, sy: number, sz: number, ex: number, ey: number, ez: number, weapon: any): (number, number, number, number)
+	local c = sim.combat
+	local w = sim.world
+	local dx, dy, dz = ex - sx, ey - sy, ez - sz
+	local a = dx * dx + dy * dy + dz * dz
+	if a < 1e-9 then
+		return 0, 0, 0, 0
+	end
+	local best, bestT = 0, math.huge
+	for _, d in c.shieldIds do
+		if c.shieldUp[d] and w.ally[d] ~= side then
+			local cx, cy, cz = Shield.center(sim, d)
+			local r = shieldOf(sim, d).radius
+			local fx, fy, fz = sx - cx, sy - cy, sz - cz
+			local cc = fx * fx + fy * fy + fz * fz - r * r
+			if cc > 0 then -- the muzzle is outside this dome
+				local b = fx * dx + fy * dy + fz * dz
+				local disc = b * b - a * cc
+				if disc >= 0 then
+					local t = (-b - sqrt(disc)) / a -- the first crossing
+					if t >= 0 and t <= 1 and t < bestT then
+						best, bestT = d, t
+					end
+				end
+			end
+		end
+	end
+	if best == 0 then
+		return 0, 0, 0, 0
+	end
+	local hx, hy, hz = sx + dx * bestT, sy + dy * bestT, sz + dz * bestT
+	local mass = Shield.mass(weapon)
+	Shield.drain(sim, best, Shield.HIT_COST * mass)
+	Combat.addEvent(c, { kind = "SHIELD_HIT", tick = sim.tick, unit = best, other = 0, x = hx, y = hy, z = hz, absorbed = true, mass = mass })
+	return best, hx, hy, hz
 end
 
 table.insert(Lifecycle.addedHooks, Shield.added)

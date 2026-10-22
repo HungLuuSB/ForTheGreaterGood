@@ -7,20 +7,41 @@
 --   head     headlights: on
 --   power    structures' cores and bands: dim with the team's power on an
 --            energy stall (resting × ratio, floor POWER_FLOOR); factories
---            pulse while producing (PULSE_LOW..PULSE_HIGH at PULSE_HZ)
+--            pulse while producing (PULSE_LOW..PULSE_HIGH at PULSE_HZ; 1.5..3)
 --   weapon   muzzle rings, rails, seekers: flash to FLASH on each shot,
 --            back to resting over FLASH_SECONDS
 -- A unit still being built is dark (inert until complete, C-99).
+-- The graphics setting's level (C-106): "off" all dark; "low" the resting
+-- glow with the stall dimming (rare writes); "high" also the factory pulse
+-- and the weapon flash.
 
 local Glow = {}
 
 Glow.POWER_FLOOR = 0.3
 Glow.PULSE_LOW = 1.5
-Glow.PULSE_HIGH = 4
+Glow.PULSE_HIGH = 3 -- 4 blew the Order vehicle plant door out to a white block under the night bloom (C-106)
 Glow.PULSE_HZ = 1
 Glow.FLASH = 6
 Glow.FLASH_SECONDS = 0.3
 Glow.EPSILON = 0.02 -- smaller changes aren't written
+
+-- Team colors that clash with a faction's glow (docs/contracts/fx.md, C's
+-- check of the 8 lobby colors): there the unit's running and power glow
+-- turn white, strengths unchanged; head and weapon stay (C-106).
+Glow.CLASH_WHITE = table.freeze({ 235, 240, 245 })
+Glow.CLASHES = table.freeze({
+	order = table.freeze({ [7] = true }), -- cyan team on Order's cyan glow
+	chaos = table.freeze({ [6] = true }), -- orange team on Chaos's amber and orange glow
+}) :: { [string]: { [number]: boolean } }
+
+-- Whether a `faction` unit of team `team` shows its `channel` glow white.
+function Glow.clashes(faction: string?, team: number, channel: string): boolean
+	if channel ~= "running" and channel ~= "power" then
+		return false
+	end
+	local teams = faction and Glow.CLASHES[faction]
+	return teams ~= nil and teams[team] == true
+end
 
 export type Context = {
 	built: boolean, -- complete (build progress 1)
@@ -29,6 +50,7 @@ export type Context = {
 	sinceShot: number, -- seconds since its last shot (math.huge: none)
 	now: number, -- seconds, for the pulse
 	phase: number, -- 0..1, so factories don't pulse in step
+	level: string?, -- "off" | "low" | "high" (nil: high)
 }
 
 -- The factory pulse at `now`: PULSE_LOW..PULSE_HIGH, a smooth 1 Hz wave.
@@ -39,14 +61,15 @@ end
 
 -- The strength of a glow part of `channel` resting at `rest`.
 function Glow.strength(channel: string, rest: number, c: Context): number
-	if not c.built then
+	if not c.built or c.level == "off" then
 		return 0
 	end
+	local full = c.level ~= "low"
 	if channel == "power" then
-		local base = if c.producing then Glow.pulse(c.now, c.phase) else rest
+		local base = if c.producing and full then Glow.pulse(c.now, c.phase) else rest
 		return math.max(base * math.clamp(c.ratio, 0, 1), Glow.POWER_FLOOR)
 	elseif channel == "weapon" then
-		local t = c.sinceShot / Glow.FLASH_SECONDS
+		local t = if full then c.sinceShot / Glow.FLASH_SECONDS else 1
 		if t >= 1 then
 			return rest
 		end
