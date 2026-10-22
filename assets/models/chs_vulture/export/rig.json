@@ -1,0 +1,156 @@
+{
+  "id": "chs_vulture",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.625,
+        1.9
+      ],
+      "size": [
+        1.85,
+        3.25,
+        9.2
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.4,
+        0.2
+      ],
+      "size": [
+        8.3292,
+        0.2,
+        3.4002
+      ],
+      "pivot": [
+        0.0,
+        3.4,
+        0.2
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.0045,
+        -0.8359
+      ],
+      "size": [
+        1.2,
+        0.7911,
+        2.413
+      ],
+      "pivot": [
+        0.0,
+        0.25,
+        -0.2
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "rotor"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.0421,
+        2.8
+      ],
+      "size": [
+        1.69,
+        1.0243,
+        7.0
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.48,
+        -1.6
+      ],
+      "size": [
+        0.5,
+        0.06,
+        0.3
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        -0.3,
+        -1.7
+      ],
+      "size": [
+        0.64,
+        0.5,
+        0.6086
+      ]
+    }
+  ],
+  "glowShare": 0.0605,
+  "triangles": {
+    "base": 506,
+    "rotor": 76,
+    "nano": 120,
+    "total": 702
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

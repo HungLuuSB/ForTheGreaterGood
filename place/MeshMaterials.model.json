@@ -214,6 +214,18 @@
       }
     },
     {
+      "Name": "chs_vulture",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://93671321803995",
+        "NormalMapContent": "rbxassetid://107832004741852",
+        "RoughnessMapContent": "rbxassetid://103238632157324",
+        "MetalnessMapContent": "rbxassetid://101289298837826",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_watcher",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -378,6 +390,18 @@
         "NormalMapContent": "rbxassetid://116068069478023",
         "RoughnessMapContent": "rbxassetid://127138731862946",
         "MetalnessMapContent": "rbxassetid://80192060678058",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_skywright",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://89642581614291",
+        "NormalMapContent": "rbxassetid://106047400067474",
+        "RoughnessMapContent": "rbxassetid://128418473167541",
+        "MetalnessMapContent": "rbxassetid://92864455227450",
         "EmissiveStrength": 0
       }
     },
