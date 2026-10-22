@@ -22,7 +22,7 @@ M1's open items (map bake, tactical replication, interpolated rendering, overlay
 - The sim should follow with what a live server needs: a per-tick budget watchdog in Roblox (the Lune timings are noisy and not Roblox's).
 - It should also profile on Roblox's native code generation once the client runs matches.
 
-## 3. Commands at 800 units (S, a decision)
+## 3. Commands at 800 units (S, a decision) — done, option (b) (S-100, 2026-10-23)
 
 Targeting is within budget (S-74). Commands peaks 1.8–2.2 ms (budget 1) only by changing behaviour. Pick one:
 - (a) check attack-move holds for half the units each tick;
@@ -60,7 +60,7 @@ From the 2026-10-22 audit, still open:
 
 Not in the audit and not built: transports, cloaking, capture, self-destruct, resurrect, veterancy, morph. Each is a design decision first.
 
-## 7. AI completeness (M)
+## 7. AI completeness (M) — mostly done (S-101, 2026-10-23: T2 builder, shields, Pinpointers, Order hard's Barriers and Citadel, Normal's air and naval; nukes and the anti-nuke umbrella still to do)
 
 The AI never:
 - builds nukes or the anti-nuke umbrella;

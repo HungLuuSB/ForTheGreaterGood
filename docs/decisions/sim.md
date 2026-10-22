@@ -1362,3 +1362,30 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `Sensors.knownTarget` calls.
   - `lune run stress` and `lune run profile_normandy` print them beside the timings, so a change's effect shows without timing noise (S-74 counted sensor lookups by hand).
   - Process-wide and never hashed; nothing in the simulation reads them.
+
+## S-100 — Big orders spread over ticks (next.md item 3, option (b); the user's queue task 4) (2026-10-23)
+
+- **Asked:** Commands at 800 units, option (b): spread a big order's queue entries over 2–4 ticks, with the timing-only hash test.
+- **Where the cost was** (800 Lancers, a select-all attack-move, four commands of 200 in one tick): Commands at about 3–4 ms that tick, about half queuing the orders (`Orders.give`) and half starting them (`Orders.step`), against a 1 ms budget.
+- **Built** (`Systems/Commands`):
+  - Each tick applies a player's commands, in order, until `UNITS_PER_TICK` (200) unit IDs have gone. The rest wait in the queue, still in order, for the next tick, and a later command of that player waits behind them.
+  - Clients already send at most 200 IDs per command, so a select-all of 800 starts over 4 ticks, a quarter each tick. Another player's commands aren't held up.
+  - Commands are recorded in the replay on the tick they are applied, so a replay feeds each tick only what fits.
+- **Tests** (`Commands.spec`, 3):
+  - a 600-unit order starts 200, 400, 600 over three ticks, and player 2's order goes at once;
+  - a STOP sent the next tick still comes after the spread order's last chunk;
+  - **timing only:** the spread order's state hash after 8 s equals the same three chunks sent a tick apart with the spread off, and the chunks are recorded on ticks 1, 2 and 3.
+
+## S-101 — The AI builds T2 structures, and Normal uses air and naval (next.md item 7, the user's queue task 7) (2026-10-23)
+
+- **Asked:** if time remains, next.md item 7: the AI builds Pinpointers, Barriers, the Citadel and shields, and uses air and naval at Normal.
+- **Built** (`AI/Skirmish`):
+  - **T2 builder:** on normal and hard, with supply ≥ 600, the advanced plant builds one Architect / Forgemaster. When idle it builds, in order:
+    - a shield generator over the base (Phalanx / Carapace);
+    - two Pinpointers (Witness / Augur) behind it;
+    - Order hard only: a Citadel toward the enemy, once supply stored reaches 1,500 or 90% of storage.
+  - **Barriers:** Order hard's T1 builders wall the front with 6 Barrier segments, 140 studs out across the line to the enemy, once established.
+  - **Normal:** an airfield, and a shipyard on sea maps, once established (6 extractors, 6 army units, 200 supply), with hard's air and naval production.
+  - The census counts shields, Pinpointers, Citadels and Barriers. T2 builders are kept out of the T1 worker jobs and the worker count.
+- **Not done:** nukes and the anti-nuke umbrella (still next.md item 7).
+- **Tests:** `AI.spec` 12: with rich economies, Order hard fields an Architect, Phalanx, Witness, Barrier and Citadel, and Chaos normal a Forgemaster, Carapace, Augur and airfield, by 6 minutes. Fast and slow suites pass (mirror split 7–5).
