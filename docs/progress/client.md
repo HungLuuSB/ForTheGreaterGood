@@ -1825,3 +1825,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `646d404` (cheat line arrow keys cycle suggestions, C-126); test_client 213, build passed (client UI only).
 - Ready to merge: `0d6ca37` (Inferno beam green, C-127); test_client 213, build passed (client render only).
 - Ready to merge: `a6bff45` (Inferno beam back to orange, C-127; supersedes 0d6ca37's colour); render constant only.
+- Ready to merge: `3f2d1ea` (Radiance ray bluer, 3 s, narrowing fade; beamSeconds reads S-113's beamDuration; C-128); test_client 214, build passed (client render only).
