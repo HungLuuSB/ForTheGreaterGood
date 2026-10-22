@@ -197,6 +197,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `57a7610` (shield profile checked at 50x, docs only); test_client 165, test 399, build passed.
 - Ready to merge: `f5774f4` (ShieldFx on C's shield assets, beam from the generator, shield debug counts, S-82 checked, C-94); test_client 165, test 400, build passed.
 - Ready to merge: `f390838` (shield field inside the dome checked, docs only); test_client 165, test 400, build passed.
+- Ready to merge: `eae1f16` (shield hits on entry, white-grey hexagons, thin rings from RingThin, C-95); test_client 165, test 400, build passed. RingThin's ID is on m-models (models-C), used by its asset ID.
 
 ## Tasks
 
