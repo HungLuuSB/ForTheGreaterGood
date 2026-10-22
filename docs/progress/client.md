@@ -201,6 +201,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `c4b6c67` (shield ripple on its first frame, shield_one profile, C-96); test_client 165, test 400, build passed.
 - Ready to merge: `a1b6c7d` (force plumes on shells in a shield field, absorbed shells dropped (protocol 25), C-97); test_client 167, test 401, build passed.
 - Ready to merge: `4f9fe7c` (shells in a shield field burn: bow shock and trail, C-98); test_client 167, test 401, build passed.
+- Ready to merge: `92be867` (shield hits on the crossing frame, absorbed shells end mid-tick, unfinished units see-through, minimap 10 Hz, server build debug query, C-99); test_client 169, test 404, build passed.
 
 ## Tasks
 
