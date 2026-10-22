@@ -197,6 +197,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `57a7610` (shield profile checked at 50x, docs only); test_client 165, test 399, build passed.
 - Ready to merge: `f5774f4` (ShieldFx on C's shield assets, beam from the generator, shield debug counts, S-82 checked, C-94); test_client 165, test 400, build passed.
 - Ready to merge: `f390838` (shield field inside the dome checked, docs only); test_client 165, test 400, build passed.
+- Ready to merge: `eae1f16` (shield hits on entry, white-grey hexagons, thin rings from RingThin, C-95); test_client 165, test 400, build passed. RingThin's ID is on m-models (models-C), used by its asset ID.
 
 ## Tasks
 
@@ -524,6 +525,17 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: shield hits on entry, white-grey hexagons, thin rings (C-95)
+
+- **Band depth:** you kept the band at 0.4R. sim-A has closed the review item.
+- **Hit shows at once:** the hit effect was late because the server's SHIELD_HIT comes at the turn, 16–30 studs inside the dome after braking. The client now lights C's ripple and the hexagon plates the moment a shell crosses the surface: SHIELD_FIELD goes out on that tick, and the point is the shell's position projected onto the dome. The turn adds nothing more; a breach still flashes. No wire change, and sim-A has noted it in S-83.
+  - `ShieldWire.spec`: every turned shell first lit the dome on entry, on the surface, ticks before its turn.
+- **Hexagons white and grey (your call):** white at their hottest, fading to grey; no red or orange (`Shield.color`, `Shield.spec`).
+- **Thin rings:** the flowing rings use models-C's RingThin (`111379471786973`; tube 0.2% of the radius, about 0.24 studs on a 120-stud dome) instead of adornments. C's Ring stays as the foot ring.
+- **Studio, shield profile:** 149 turns and 0 breaches in 8 s, dome at 100%, and the meshes loaded (dome, foot, thin rings). Screenshots:
+  - `debug_out/screens/c95_shield_entry_close.jpg`: at 0.25× speed, the grey-white hexagons and ripple where shells crossed, the shells already inside;
+  - `c95_shield_thin_rings.jpg`: the whole dome with the thin rings.
 
 ## 2026-10-23: the shield field inside the dome checked (S-83)
 
