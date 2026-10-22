@@ -8,9 +8,23 @@
 -- fields each was built for (a proposal for the sim session, M-17).
 
 return {
-	blockouts = {},
-	defs = {},
+	blockouts = {
+		chs_cerberus = require("./chs_cerberus"),
+		ord_providence = require("./ord_providence"),
+	},
+	-- anti-nukes (the user's request 2026-10-23): proposed IDs and pieces for the sim
+	defs = {
+		ord_providence = { id = "ord_providence", model = "ord_providence", faction = "order", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "hatch", "muzzle" } },
+		chs_cerberus = { id = "chs_cerberus", model = "chs_cerberus", faction = "chaos", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "launcher", "muzzle" } },
+	},
 	poses = {
+		-- anti-nukes: ready to launch
+		ord_providence = {
+			open = { hatch = { 100, 0, 0 } },
+		},
+		chs_cerberus = {
+			raised = { launcher = { 75, 0, 0 } },
+		},
 		-- switched off (beam towers, S-96): the turret sinks into the drum, the
 		-- emitter folds down, the lids close over the pit
 		ord_radiance = {
