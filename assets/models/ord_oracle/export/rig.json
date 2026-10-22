@@ -85,21 +85,21 @@
       "strength": 2.0,
       "center": [
         0.0,
-        5.4581,
-        1.4403
+        5.4667,
+        1.4167
       ],
       "size": [
         4.2,
-        1.7957,
-        0.6781
+        1.7922,
+        0.6687
       ]
     }
   ],
-  "glowShare": 0.0754,
+  "glowShare": 0.0207,
   "triangles": {
     "base": 796,
-    "dish": 116,
-    "total": 912
+    "dish": 248,
+    "total": 1044
   },
   "textures": {
     "size": 1024,

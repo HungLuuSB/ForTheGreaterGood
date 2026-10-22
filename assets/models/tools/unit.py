@@ -185,7 +185,7 @@ def surface_stats(objs, glow_objs):
 
 def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_pieces=None,
         budget=4000, tex=1024, samples=32, upload_rev=0, preview_size=None, scale=None,
-        previews=None):
+        previews=None, glow_strength=None):
     lib.UPLOAD_REV = upload_rev
     here = os.path.dirname(os.path.abspath(build_file))
     out = os.path.join(here, "export")
@@ -287,7 +287,8 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
             entry["pivot"] = list(pivots[spec.name])
         rig_pieces[spec.name] = entry
     rig_glow = [{"name": g.name, "piece": piece, "channel": channel, "tint": list(look["glow"][channel]),
-                 "strength": GLOW_STRENGTH[channel], **lib.bounds(g)} for g, piece, channel in glow]
+                 "strength": (glow_strength or {}).get(g.name, GLOW_STRENGTH[channel]), **lib.bounds(g)}
+                for g, piece, channel in glow]
     lib.write_json(os.path.join(out, "rig.json"), {
         "id": unit_id,
         "footprintStuds": footprint * 8,
