@@ -7,7 +7,8 @@ Sources per unit: assets/models/<id>/export/rig.json (pieces, pivots,
 attachments, team pieces, glow parts) and assets/models/<id>/roblox_assets.json
 ("bar": the current Open Cloud upload as rigged in "FTGG Art"). The shield
 emitter comes from assets/fx/shield/. Run it after every upload and commit the
-result with the mesh (M-23).
+result with the mesh (M-23), together with `lune run mesh_materials`
+(the client's place/MeshMaterials.model.json, built from this manifest; C-103).
 """
 
 import json
@@ -19,11 +20,7 @@ GLOW_MASK = "rbxassetid://101169341901946"  # glow_mask.png, shared by every glo
 
 # The user's approvals (2026-10-22): everything is approved except the glow
 # fixes still waiting for review.
-REVIEW = {
-    "ord_oracle": "glow fix: unlit array face with a glowing edge and grid",
-    "chs_watcher": "glow fix: dish ring 30% dimmer",
-    "ord_vehplant": "glow fix: door-frame build lights",
-}
+REVIEW = {}  # the glow fixes (Oracle, Watcher, Order vehicle plant) were approved on 2026-10-22
 
 
 def load(path):
@@ -155,6 +152,7 @@ return manifest
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     print(f"{len(units)} units, {len(fx)} fx -> {os.path.relpath(OUT, ROOT)}")
+    print("next: lune run mesh_materials (place/MeshMaterials.model.json, client C-103), same commit")
 
 
 if __name__ == "__main__":

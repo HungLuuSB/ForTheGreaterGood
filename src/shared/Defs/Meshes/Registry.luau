@@ -765,7 +765,6 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				RGH = "rbxassetid://127137657559505",
 			},
 			model = "rbxassetid://100622791850437",
-			note = "glow fix: dish ring 30% dimmer",
 			pieces = {
 				base = {
 					center = { 0, 2.45, -0.0452 },
@@ -780,7 +779,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					size = { 3.4184, 3.1996, 2.3675 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 				"dish",
@@ -1298,7 +1297,6 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				RGH = "rbxassetid://102465023933565",
 			},
 			model = "rbxassetid://78762127381090",
-			note = "glow fix: unlit array face with a glowing edge and grid",
 			pieces = {
 				base = {
 					center = { 0, 2, -0.4 },
@@ -1313,7 +1311,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					size = { 4.6, 2.3713, 1.007 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 				"dish",
@@ -1399,7 +1397,6 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				RGH = "rbxassetid://90333783721729",
 			},
 			model = "rbxassetid://84674479644515",
-			note = "glow fix: door-frame build lights",
 			pieces = {
 				base = {
 					center = { 0, 4.3, 0 },
@@ -1407,7 +1404,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					size = { 22, 8.6, 21.9576 },
 				},
 			},
-			status = "review",
+			status = "approved",
 			teamPieces = {
 				"base",
 			},

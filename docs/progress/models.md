@@ -30,6 +30,8 @@ Your glow review (approved) and the mesh manifest. Commits touch only `src/share
 
 **Message to clients-B:** I didn't put the models into the game place ("FTGG Art" only). B can build them from the manifest; see the Requests section.
 
+**Update (clients-B, C-103, `bdc88e8`, not yet in main):** the 19 approved models draw in the game place, built from the manifest, with glow and team paint; the three `review` ones stay blockouts. Game scripts can't set SurfaceAppearance maps, the emissive mask or `RenderFidelity`, so B generates `place/MeshMaterials.model.json` from the manifest with `lune run mesh_materials`. **New rule for this stream:** every manifest change (upload or status flip) runs `manifest.py` then `lune run mesh_materials`, in the same commit (rig.md 7, pipeline.md). `main` merged into `m-models`: the `chs_carapace` icon failures are gone.
+
 ## Earlier summary (glow pass, 2026-10-22, M-22)
 
 Your glow pass is applied to every BAR-style mesh: 6 tanks / constructors / artillery, 6 T1 pairs, 10 structures (extractors, generators, solars, vehicle plants, Bulwark, Spike) and the shield emitter. All of them were rebuilt, uploaded through Open Cloud and rigged in "FTGG Art" (`ModelReview.*_bar`, `FX.Shield.Emitter`), each with its glow parts welded and tagged. Commits touch only `assets/` and docs.
@@ -322,6 +324,8 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `113202b` (glow pass asset IDs in every `roblox_assets.json`, emitter IDs in fx.md, Open Cloud loader cleanup, progress summary; `assets/` and docs only).
 - Ready to merge: `639d555` (glow parts take their tint as albedo, so the glow reads in daylight; rig_model.luau, fx.md, M-22, style guide; glow shots in the summary; `assets/` and docs only).
 - Ready to merge: `cf819cc` (glow review fixes: Oracle, Watcher, Order vehicle plant, shared glow mask; mesh manifest `src/shared/Defs/Meshes/` with its test `tests/client/Meshes.spec.luau`, M-23, rig.md 7, fx.md glow parts per model; `src/shared/Defs/Meshes/`, `tests/client/`, `assets/` and docs only).
+- Ready to merge: `0f911df` (merge of `main`; mesh_materials step for every manifest change in rig.md 7 and pipeline.md; includes `cf819cc`; `assets/` and docs only besides the merge).
+- Ready to merge: `b41e955` (manifest: Oracle, Watcher, Order vehicle plant approved; fx.md team-color clashes; `src/shared/Defs/Meshes/` and docs only. `lune run mesh_materials` not run: the tool isn't in main yet).
 
 ## Requests
 
