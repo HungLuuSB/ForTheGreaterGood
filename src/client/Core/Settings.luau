@@ -145,6 +145,7 @@ Settings.KEYS = table.freeze({
 	{ "Building", {
 		{ "B, then 1–0", "build menu: open, next tab, pick" },
 		{ "R", "rotate the structure" },
+		{ "Drag (extractor)", "an extractor on every deposit in the circle (upgrades too)" },
 		{ "Right click", "stop placing" },
 	} },
 	{ "Camera and views", {
@@ -154,6 +155,7 @@ Settings.KEYS = table.freeze({
 		{ "T", "follow the selection" },
 		{ "V", "range rings" },
 		{ "N", "missile sensor view" },
+		{ "F4", "deposit view: free supply spots and their yield" },
 		{ "J", "jump to the last alert" },
 		{ "O", "this menu" },
 	} },

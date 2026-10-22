@@ -13,8 +13,7 @@ local Layers = require("@shared/Grid/Layers")
 local Terrain = {}
 
 local CELL = Grid.CELL_SIZE
-
-Terrain.DEPOSIT_LIFT = 0.35 -- studs: deposit plates float this far over the cell's height (deposits on gentle slopes)
+Terrain.DEPOSIT_LIFT = 0.35 -- studs: the drawn ground stays this close to flat under a deposit (Render/Deposits sits on it, C-123)
 
 local function heightAt(layers: Layers.Layers, cx: number, cz: number): number
 	local g = layers.grid

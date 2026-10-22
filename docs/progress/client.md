@@ -4,6 +4,18 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, deposits without the yellow squares)
+
+- **Deposits (C-123):** the neon squares are gone. Each deposit is now a dark, subtle patch of scraped ground with a few stones, tinted from the terrain under it, with no glow.
+  - C's deposit models (`fx.deposit`, 3 variants) replace the patch automatically once you approve them. Each deposit gets its own variant and turn, and C's ground patch is tinted to the terrain. models-C is building them today.
+  - A structure built on a deposit hides it; it comes back when the structure is gone.
+- **Overlay, only when it helps (BAR's metal view):**
+  - while you place an extractor, free deposits get a soft ring with the yield your extractor would take ("+2.0");
+  - deposits other players hold get a dim marker, and your own show nothing;
+  - **F4** shows the same overlay any time, with each deposit's value. It's listed in Settings > Keys, with the extractor drag.
+- **Minimap:** small neutral rings for deposits, filled with the holder's team colour when taken (yours in your colour).
+- **Screenshots:** `debug_out/screens/deposit_normal.jpg` (patches, a deposit hidden under your extractor, minimap rings, one filled), `deposit_overlay.jpg` (placing an extractor), `deposit_f4.jpg` (F4).
+
 ## Summary (2026-10-23, minimap icons; anti-nukes coming)
 
 - **Minimap icons (C-122):** units on the minimap now show their type icon instead of a dot, the same icons as the zoomed-out view, about 11 px.

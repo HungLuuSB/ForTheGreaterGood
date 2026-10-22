@@ -975,3 +975,13 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** minimap units are their strategic icons (`Core/Icons.style`, `UI/Glyph`) at `Minimap.ICON_SCALE` 0.5 (about 11 px). Ghosts, selection and under-attack look as on the icon layer; radar blips with no type stay dots. `Minimap.dots` carries each unit's id and sorts ghosts and structures first, the selection last.
 
 **Why:** the user asked for the unit icons on the minimap (BAR's minimap shows them).
+
+### C-123 — Deposits: C's models (or a dark patch) without glow, hidden under structures; a BAR-style overlay while placing extractors or on F4; minimap rings (2026-10-23)
+
+**Decision:**
+- **Data:** `Core/Deposits` lists deposits, finds their holders (known structures over the cell, ghosts as "remembered"), picks a variant and yaw from the cell, and formats the yield.
+- **Ground:** `Render/Deposits` draws C's `fx.deposit` variant once approved (`MeshModels.deposit`; the TeamColor `base` tinted to the terrain colour; materials `fx_deposit_<i>`), else a dark patch and stones. A live structure on the cell hides it. `Render/Ground` no longer draws plates.
+- **Overlay:** while placing an extractor (yield = rate × value) or toggled with F4 (the value). Free deposits get a ring and text, others' a dim marker, own nothing. It's a SurfaceGui on a flat part turned to face the camera; `AlwaysOnTop` stays false, since true hides a SurfaceGui under a Workspace part.
+- **Minimap:** neutral rings, filled in the holder's team colour.
+
+**Why:** the user's brief (no neon, no flat coloured squares; highlight only when it helps). models-C's `fx.deposit` contract.

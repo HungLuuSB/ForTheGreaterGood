@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
+local CoreDeposits = require("../Core/Deposits")
 local Icons = require("../Core/Icons")
 local Minimap = require("../Core/Minimap")
 local TeamColors = require("../Render/TeamColors")
@@ -29,12 +30,15 @@ export type UI = {
 	camera: Frame,
 	pool: { Frame }, -- blip dots
 	glyphs: { Glyph.G }, -- unit icons
+	depositList: { CoreDeposits.Deposit },
+	depositDots: { Frame }, -- one per deposit: a neutral ring, filled in the holder's color when taken (C-123)
 	icons: Icons.Table,
 	nextDots: number,
 	pings: { { frame: Frame, at: number } }, -- alert pings (C-68)
 }
 
 MinimapUI.PING_SECONDS = 3
+local DEPOSIT_RING = Color3.fromRGB(205, 205, 195)
 
 function MinimapUI.new(api: Api.Api): UI
 	local gui = Instance.new("ScreenGui")
@@ -116,7 +120,7 @@ function MinimapUI.new(api: Api.Api): UI
 		end
 	end)
 
-	return { gui = gui, map = map, terrain = terrain, fog = fog, fogContent = nil, dots = dots, camera = camera, pool = {}, glyphs = {}, icons = Icons.table(api.world.defs), nextDots = 0, pings = {} }
+	return { gui = gui, map = map, terrain = terrain, fog = fog, fogContent = nil, dots = dots, camera = camera, pool = {}, glyphs = {}, depositList = {}, depositDots = {}, icons = Icons.table(api.world.defs), nextDots = 0, pings = {} }
 end
 
 local function tileColor(tile: Minimap.Tile): Color3
@@ -146,17 +150,29 @@ function MinimapUI.setMap(ui: UI, layers: any)
 		f.BackgroundColor3 = tileColor(tile)
 		f.Parent = ui.terrain
 	end
-	-- deposits: small gold squares on the exact cells
-	for _, d in Minimap.deposits(layers) do
+	-- deposits: small neutral rings on the exact cells, filled when taken (step)
+	ui.depositList = CoreDeposits.list(layers)
+	ui.depositDots = {}
+	local g = layers.grid
+	for _, d in ui.depositList do
 		local f = Instance.new("Frame")
 		f.Name = "Deposit"
 		f.BorderSizePixel = 0
 		f.AnchorPoint = Vector2.new(0.5, 0.5)
-		f.Position = UDim2.fromScale(d[1], d[2])
-		f.Size = UDim2.fromOffset(4, 4)
-		f.BackgroundColor3 = Color3.fromRGB(245, 205, 80)
+		f.Position = UDim2.fromScale((d.cx + 0.5) / g.cellsX, (d.cz + 0.5) / g.cellsZ)
+		f.Size = UDim2.fromOffset(5, 5)
+		f.BackgroundTransparency = 1
 		f.ZIndex = 2
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0.5, 0)
+		corner.Parent = f
+		local ring = Instance.new("UIStroke")
+		ring.Color = DEPOSIT_RING
+		ring.Thickness = 1
+		ring.Transparency = 0.2
+		ring.Parent = f
 		f.Parent = ui.terrain
+		table.insert(ui.depositDots, f)
 	end
 end
 
@@ -203,6 +219,15 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 		return
 	end
 	ui.nextDots = now + Minimap.REFRESH
+	-- deposits: filled in the holder's team color once a structure stands on them
+	local holders = CoreDeposits.holders(world, ui.depositList)
+	for k, f in ui.depositDots do
+		local h = holders[k]
+		f.BackgroundTransparency = if h then 0 else 1
+		if h then
+			f.BackgroundColor3 = TeamColors(h.team)
+		end
+	end
 	local dots = Minimap.dots(world, api.selection.set)
 	local nDots, nIcons = 0, 0
 	for _, d in dots do

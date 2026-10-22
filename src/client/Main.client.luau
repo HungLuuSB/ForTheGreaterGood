@@ -50,6 +50,7 @@ local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
+local DepositsRender = require("./Render/Deposits")
 local MissileViewRender = require("./Render/MissileView")
 local NukeWarning = require("./Render/NukeWarning")
 local RadarRings = require("./Render/RadarRings")
@@ -142,6 +143,7 @@ Controls.pickModel = function(px: number, py: number): number?
 end
 local overlay = Overlay.new()
 local ghost = PlacementGhost.new()
+local deposits = DepositsRender.new() -- supply deposits and their overlay (C-123)
 local queued = QueuedBuilds.new()
 local ranges = RangeOverlay.new()
 local missileView = MissileViewRender.new() -- missile sensor view (C-39), N
@@ -186,6 +188,8 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 	local key = input.KeyCode
 	if key == RangeOverlay.TOGGLE_KEY then
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
+	elseif key == DepositsRender.TOGGLE_KEY then
+		DepositsRender.setEnabled(deposits, not deposits.enabled)
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
 	elseif key == FOLLOW_KEY then
@@ -765,6 +769,7 @@ if RunService:IsStudio() then
 			local mode = ...
 			if mode and world.layers then
 				Ground.build(world.layers, mode, mapFeature(world.mapId))
+				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 			end
 			return Ground.last
 		elseif query == "act" then
@@ -834,6 +839,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			seenMap = world.mapVersion
 			if world.layers then
 				Ground.build(world.layers, nil, mapFeature(world.mapId))
+				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogBlanket.setMap(fog, world, world.layers)
 				Environment.setMap(environment, world.layers)
@@ -947,6 +953,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now, knownEnemy)
+	DepositsRender.step(deposits, api, now)
 	RadarRings.step(radarRings, world, now)
 	mark("ranges", t0)
 	t0 = os.clock()
