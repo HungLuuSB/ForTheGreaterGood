@@ -2,7 +2,7 @@
 -- Settings menu (C-81), a functional PLACEHOLDER: O or the "Settings"
 -- button (bottom right) opens a panel with the key bindings reference,
 -- camera (pan speed, zoom step, edge scroll), graphics (quality Low /
--- Medium / High, fog lights, atmosphere preset) and the UI scale. Values come from
+-- Medium / High, fog of war, atmosphere preset) and the UI scale. Values come from
 -- Core/Settings; `apply` writes them into the modules that use them, live.
 
 local Players = game:GetService("Players")
@@ -14,7 +14,7 @@ local Effects = require("../Core/Effects")
 local PieceAnim = require("../Core/PieceAnim")
 local Settings = require("../Core/Settings")
 local Atmosphere = require("../Render/Atmosphere")
-local FogOfWar = require("../Render/FogOfWar")
+local FogBlanket = require("../Render/FogBlanket")
 local Vfx = require("../Render/Vfx")
 
 local SettingsMenu = {}
@@ -43,7 +43,7 @@ function SettingsMenu.apply(s: Settings.State)
 	Vfx.TEMPLATE_CAP = g.copies
 	PieceAnim.NEAR = g.detailNear
 	PieceAnim.MID = g.detailMid
-	FogOfWar.ENABLED = s.fogLights
+	FogBlanket.ENABLED = s.fog
 	Atmosphere.apply(s.atmosphere)
 	local playerGui = (Players.LocalPlayer :: Player):FindFirstChild("PlayerGui")
 	for _, gui in (if playerGui then playerGui:GetChildren() else {}) do
@@ -153,10 +153,10 @@ render = function(ui: UI)
 	end
 	local g = Settings.graphics(s)
 	label(ui.body, string.format("  up to %d explosions, %d tracers, %d projectiles, %d lights; full animation within %d studs", g.explosions, g.tracers, g.projectiles, g.lights, g.detailNear), 11).TextColor3 = Color3.fromRGB(170, 170, 170)
-	local fog = row(ui.body, "Fog lights")
+	local fog = row(ui.body, "Fog of war")
 	for _, v in { true, false } do
-		button(fog, if v then "On" else "Off", 56, s.fogLights == v, function()
-			Settings.set(ui.state, "fogLights", v)
+		button(fog, if v then "On" else "Off", 56, s.fog == v, function()
+			Settings.set(ui.state, "fog", v)
 			SettingsMenu.apply(ui.state)
 			render(ui)
 		end)

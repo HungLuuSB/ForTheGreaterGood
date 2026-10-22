@@ -805,3 +805,20 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The user saw the reflect effect late. Applied at the tick's end, the field and the hit came a tick late, with the shell flown a tick into the dome unbraked.
 - The user asked that light shells vanish at once, and that units being built look unfinished.
 - The user asked for a faster minimap.
+
+### C-100 — Fog of war as a draped blanket with one live image (BAR style); the point-light fog removed (2026-10-23)
+
+**Decision:**
+- **Image:** `Core/FogBlanket` keeps one pixel per grid cell in three states from the team sight (visible, explored = seen once, never). It holds each sensor cell's state and blends each pixel's goal from its four nearest cells (bilinear). Pixels fade to their goal over 0.3 s, in a queue capped at 3,000 pixels per step, and only the changed rectangle is reported.
+- **Mesh:** `Render/FogBlanket` shows the image as the TextureContent (UVs) of 4 EditableMesh chunks draped 1 stud over the highest ground within 8 studs of each vertex (one vertex per 16 studs). The parts are at Transparency 0.02 (so texture alpha blends), Fabric, at the world origin.
+- **Updates:** at most every 1/15 s: Vision.update, apply, step, WritePixelsBuffer of the rectangle.
+- **Minimap:** a Fog ImageLabel shows the same EditableImage.
+- **Removed:** `Render/FogOfWar` and `Core/Fog`. The setting `fogLights` became `fog` (default on).
+
+**Why:**
+- The user's brief: the point-light fog read as night, blotched where lights overlapped, was capped by the light limit and didn't match the sim's cell vision.
+- Measured choices:
+  - SurfaceAppearance needs Plugin capability, and a Texture's projection didn't map.
+  - The device editable-mesh budget forced the 16-stud vertex grid.
+  - Roblox samples the texture without smoothing, so the blend is done in the image.
+  - The pixel cap bounds the cost of a whole-map change.
