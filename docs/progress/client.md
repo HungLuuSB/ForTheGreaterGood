@@ -319,6 +319,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `51e4d07` (one shield hit reads as one impact: faint outer hex rings, C-104); test_client 187, build passed.
 - Ready to merge: `18195e5` (UI kit; settings, statistics panel and lobby rebuilt on it; server stat samples; sim request 41, C-105; touches src/roblox Main.server and Lobby); test_client 191, test 404, build passed.
 - Ready to merge: `b5b5d48` (review follow-ups: modal panels, fitted layouts, graphics options, model load order, glow vs team color, pulse 3, Stats.series, C-106 `767ae09`; merged with main at protocol 26, includes m-models `0af6ed7`); test_client 192, test 407, build passed.
+- Ready to merge: `ad2f474` (build menu portraits and stats tooltip, On / Off, short-way turns, sim requests 42-43, models request 2, C-107); test_client 193, test 407, build passed.
 
 ## Tasks
 
