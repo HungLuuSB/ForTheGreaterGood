@@ -4,7 +4,50 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
-## Summary (review batch, 2026-10-22)
+## Summary (glow pass, 2026-10-22, M-22)
+
+Your glow pass is applied to every BAR-style mesh: 6 tanks / constructors / artillery, 6 T1 pairs, 10 structures (extractors, generators, solars, vehicle plants, Bulwark, Spike) and the shield emitter. All of them were rebuilt, uploaded through Open Cloud and rigged in "FTGG Art" (`ModelReview.*_bar`, `FX.Shield.Emitter`), each with its glow parts welded and tagged. Commits touch only `assets/` and docs.
+
+- **Channels** (the masks are split as you asked):
+  - `running`: always on, faction accent.
+  - `head`: headlights, warm white on both factions.
+  - `power`: structures, factories, builders' emitters.
+  - `weapon`: the muzzle area.
+- **How it's built:** each channel is its own small MeshPart per piece (`<piece>_glow_<channel>`) with its own tint and strength. B can drive each channel's `EmissiveStrength` on its own; the pieces don't glow. There are no Light objects, and glow is never team-colored.
+- **Where it's documented:**
+  - B's contract, with parts, attributes and intended states: `docs/contracts/fx.md`, "Unit glow".
+  - The standard for new meshes: `docs/art/style-guide.md`, "Glow".
+  - The decision: M-22.
+- **Glow share** (measured per mesh, `glowShare` in each `rig.json`):
+
+  | Group | Glow share |
+  |---|---|
+  | Vehicles | 3.3–7.5% |
+  | Radar trucks | 7.5% and 8.8% |
+  | Extractors, generators, solars | 3.4–8.9% |
+  | Vehicle plants | 3.0% and 2.0% |
+  | Bulwark and Spike | 3.2% and 2.1% |
+  | Shield emitter | 9.9% |
+
+- **Asset IDs:** in each `roblox_assets.json`. The previous upload is kept as `bar_preglow`; for the emitter, `emitterGlow` and `emitter_rev1`.
+- **Fix:** the Open Cloud loader no longer leaves an empty import shell in Workspace (39 removed).
+
+**Screenshots: not taken yet.** The fresh texture uploads were cached as failed in this Studio session ("Asset content representation is being generated"), so every glow model draws flat team color for now. A Studio restart clears that (pipeline.md). The lineup is ready in `Workspace.GlowReview`: Order at z −700, Chaos at z −400, x −300 to −130. The shots (55° close and 220 studs, both factions, normal and B's dusk preset) come right after the restart, as `debug_out/screens/glow_*.jpg`.
+
+**Needs your review:**
+- **Below the 5–10% target:**
+  - Factories (3.0% / 2.0%) and the Spike (2.1%). The glow sits on the doors, build lights and working parts, not on the big roofs, on purpose.
+  - Chaos vehicles at 3.3–4.2%. Their glow is denser than Order's, but on smaller strips.
+  - Raise them if the shots read too dark.
+- **Channel choices:**
+  - Builders' nano emitters (Mason, Scrapper) and the shield emitter's core are on `power` (brighten while building or charging).
+  - The radar faces (Oracle, Watcher) are on `running`.
+  - Missile seekers and ready lights are on `weapon`.
+- **Team color on barrels:** barrels and launchers are now in `teamColorPieces`. They carry little team paint, so it's harmless.
+
+**Your steps:** save "FTGG Art" and restart Studio, then tell me; I'll take the glow shots.
+
+## Earlier summary (review batch, 2026-10-22)
 
 Your review of the overnight batch: BAR style approved for both tanks (M-18), camouflage Lancers retired (their `ModelReview` copies removed; files kept). Every commit touches only `src/shared/Defs/Blockouts/`, `assets/`, `.gitignore` and docs. Tests at `74ef97b`: `test_client` 44 specs, 156 passed; `test` 62 specs, 386 passed; `build` 557 scripts compile, 1520 requires resolve.
 
@@ -240,6 +283,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `3522f82` (shield RingThin and Band mesh IDs, Open Cloud upload tool; `assets/` and docs only).
 - Ready to merge: `53e4a34` (structure meshes and Hellmouth uploaded through Open Cloud: asset IDs, pipeline notes; `assets/` and docs only).
 - Ready to merge: `5923128` (BAR meshes for the remaining T1 ground pairs with asset IDs; `assets/` and docs only).
+- Ready to merge: `674e394` (glow pass M-22: four glow channels as welded glow parts in every BAR mesh, rebuilt and uploaded through Open Cloud; shield emitter in its own build; fx.md Unit glow, style guide Glow; `assets/` and docs only).
 
 ## Requests
 

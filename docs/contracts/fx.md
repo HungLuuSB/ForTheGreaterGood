@@ -38,7 +38,7 @@ The target look: a translucent dome with a bright edge, thin glowing rings flowi
 | `Dome` | hemisphere, radius 1, open bottom, smooth outward normals, 920 triangles; UVs: U round, V from the rim (0) to the top (1) | `Size = (2R, R, 2R)`; the part's center is half-way up: `CFrame = baseCenter * CFrame.new(0, R / 2, 0)`. `Material = ForceField` (its rim-bright look gives the bright edge), `Color` = team color. ForceField uses the part's `TextureID` (if any) as its pattern. |
 | `DomeInner` | the same hemisphere at radius 0.96, normals **inward**, 920 triangles | The far wall seen through the dome: `Size = (1.92R, 0.96R, 1.92R)`, `CFrame = baseCenter * CFrame.new(0, 0.48R, 0)`, `Material = ForceField`, team color, usually a little more transparent than `Dome`. Optional. |
 | `Ring` | thin torus, radius 1, tube radius 0.01, horizontal (axis = Y), 204 triangles | One ring of the flow: at height `h` on a dome of radius `R` the ring's radius is `r = sqrt(R² − h²)`; `Size = (2.02r, 0.02R·k, 2.02r)` (`k` thickens the tube, 1 = 1% of R), `CFrame = baseCenter * CFrame.new(0, h, 0)`. `Material = Neon`, `Color` = team color, `Transparency` fades it near the rim. Pool them and move `h` from `R` to 0. |
-| `Emitter` | Model: `base` MeshPart (588 triangles, BAR style, Order sand-grey, cyan emissive core; SurfaceAppearance like the units) and an `Attachment` named `core` | The device the beam rises from. Unit origin on the ground under its center; the model carries `RootOffset` like a unit (rig.md 2): `base.CFrame = origin * model:GetAttribute("RootOffset")`. About 4 studs wide and 2.9 tall. Its `TeamColor`-tagged `base` takes the team color on its team plates (rig.md 6). The `core` attachment is the beam's start (top of the glowing core, 2.75 studs up). The core's glow is the Order cyan accent (M-16), not the team color. |
+| `Emitter` | Model: `base` MeshPart (588 triangles, BAR style, Order sand-grey; SurfaceAppearance like the units), two glow parts (`base_glow_power`: the core, `base_glow_running`: the foot ring; "Unit glow" above) and an `Attachment` named `core` | The device the beam rises from. Unit origin on the ground under its center; the model carries `RootOffset` like a unit (rig.md 2): `base.CFrame = origin * model:GetAttribute("RootOffset")`. About 4 studs wide and 2.9 tall. Its `TeamColor`-tagged `base` takes the team color on its team plates (rig.md 6). The `core` attachment is the beam's start (top of the glowing core, 2.75 studs up). The core's glow is the Order cyan accent (M-16), not the team color; drive `base_glow_power` with the shield's charge if wanted. Built by `assets/fx/shield/emitter/build.py` since the glow pass. |
 
 ### Shield generators (blockouts)
 
@@ -77,7 +77,7 @@ All in `assets/fx/shield/roblox_assets.json`. The texture IDs are also attribute
 | `Ring` mesh | `rbxassetid://134054369788950` |
 | `RingThin` mesh | `rbxassetid://111379471786973` |
 | `Band` mesh | `rbxassetid://75299929805633` |
-| `Emitter` mesh | `rbxassetid://98339625291172` (maps in the JSON) |
+| `Emitter` mesh | `rbxassetid://81558546555311` (glow pass; glow meshes and maps in the JSON, `emitterGlow`) |
 | swirl | `rbxassetid://113814321169730` (cloudy vortex, after the user's reference) |
 | beam | `rbxassetid://100117547859650` |
 | speck | `rbxassetid://90660161303538` |

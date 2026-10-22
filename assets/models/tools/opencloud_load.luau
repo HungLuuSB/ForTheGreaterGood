@@ -59,6 +59,10 @@ function OpenCloud.load(RigModel: any, modelId: number, rig: any, decals: { [str
 		end
 	end
 	model:SetAttribute("Upload", "OpenCloud")
+	-- rig() builds a new Model; the import shell (with the emissive probe) stays behind
+	if src ~= model then
+		src:Destroy()
+	end
 	holder:Destroy()
 	return model, {}, images
 end
