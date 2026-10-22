@@ -17,6 +17,8 @@ local Atmosphere = require("./Atmosphere")
 local Glow = {}
 
 Glow.MAX_HEADLIGHTS = 12 -- SettingsMenu: the quality's light budget
+Glow.LEVEL = "high" -- SettingsMenu: "off" | "low" | "high" (Core/Glow)
+Glow.HEADLIGHTS = true -- SettingsMenu: the Headlights setting
 Glow.HEAD_NEAR = 220 -- camera distance within which headlights always show
 Glow.HEAD_REFRESH = 0.25 -- seconds between choosing which vehicles get lights
 Glow.HEAD_COLOR = Color3.fromRGB(255, 236, 205) -- the contract's head tint
@@ -166,6 +168,7 @@ function Glow.step(state: State, renderer: any, world: any, now: number, camera:
 	local myTeam = world.me.team
 	local c = state.ctx
 	c.now = now
+	c.level = Glow.LEVEL
 	local models, parts, writes = 0, 0, 0
 	for id, d in renderer.drawn do
 		local glows = d.glows
@@ -195,7 +198,7 @@ function Glow.step(state: State, renderer: any, world: any, now: number, camera:
 	if now >= state.nextChoose then
 		state.nextChoose = now + Glow.HEAD_REFRESH
 		local name = Atmosphere.active
-		chooseHeadlights(state, renderer, world, camera, focusX, focusZ, distance < Glow.HEAD_NEAR or name == "night" or name == "dusk")
+		chooseHeadlights(state, renderer, world, camera, focusX, focusZ, Glow.HEADLIGHTS and (distance < Glow.HEAD_NEAR or name == "night" or name == "dusk"))
 	end
 	local s = state.stats
 	s.models, s.parts, s.writes, s.ms = models, parts, writes, (os.clock() - t0) * 1000

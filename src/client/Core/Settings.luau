@@ -28,7 +28,12 @@ export type State = {
 	fog: boolean, -- the fog blanket's shading (C-100); what is hidden stays hidden either way
 	atmosphere: string,
 	uiScale: number,
+	detailedModels: boolean, -- BAR mesh models (Render/MeshModels); off: blockouts, nothing loaded (C-106)
+	glow: Glow, -- unit glow (Render/Glow): off, low (resting glow, stall dimming), high (also factory pulse, weapon flash)
+	headlights: boolean, -- vehicle headlights (Render/Glow's SpotLights)
 }
+
+export type Glow = "off" | "low" | "high"
 
 -- What a quality preset sets.
 export type Graphics = {
@@ -49,6 +54,7 @@ Settings.QUALITY = table.freeze({
 
 Settings.QUALITIES = { "low", "medium", "high" } :: { Quality }
 Settings.ATMOSPHERES = { "night", "current", "clear", "haze", "dusk" }
+Settings.GLOWS = { "off", "low", "high" } :: { Glow }
 
 Settings.LIMITS = table.freeze({
 	panSpeed = { 0.4, 3, 0.1 }, -- min, max, step
@@ -59,7 +65,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "night", uiScale = 1 }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "night", uiScale = 1, detailedModels = true, glow = "high", headlights = true }
 end
 
 local function round(x: number, step: number): number
@@ -77,7 +83,7 @@ function Settings.set(s: State, key: string, value: any): boolean
 		end
 		t[key] = math.clamp(round(value, limits[3]), limits[1], limits[2])
 		return true
-	elseif key == "edgeScroll" or key == "fog" then
+	elseif key == "edgeScroll" or key == "fog" or key == "detailedModels" or key == "headlights" then
 		if type(value) ~= "boolean" then
 			return false
 		end
@@ -88,6 +94,12 @@ function Settings.set(s: State, key: string, value: any): boolean
 			return false
 		end
 		s.atmosphere = value
+		return true
+	elseif key == "glow" then
+		if table.find(Settings.GLOWS, value) == nil then
+			return false
+		end
+		s.glow = value
 		return true
 	elseif key == "quality" then
 		if Settings.QUALITY[value] == nil then

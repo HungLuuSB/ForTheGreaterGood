@@ -1,40 +1,11 @@
 --!strict
--- The statistics panel's data (C-105): samples over time from the sim's
--- report (StatSeries, halving to stay under MAX), downsampling that keeps a
--- line's shape, axis numbers, and the rasterized chart lines.
+-- The statistics panel's charts (C-105): downsampling that keeps a line's
+-- shape, axis numbers, and the rasterized chart lines. (The samples are the
+-- sim's Stats.series, S-88, tested with the sim.)
 
 local Chart = require("../../src/client/Core/Chart")
-local StatSeries = require("../../src/roblox/StatSeries")
-
-local function fakeSim(tick: number, stored: number): any
-	return {
-		tick = tick,
-		playerOrder = { 1, 2 },
-		players = { [1] = { team = 1 }, [2] = { team = 2 } },
-		eco = { accounts = { [1] = { supply = { stored = stored }, power = { stored = stored * 2 } }, [2] = { supply = { stored = 5 }, power = { stored = 6 } } } },
-	}
-end
 
 return function(t: any)
-	t.test("samples every EVERY ticks per player, stored from the team account; halves past MAX", function()
-		local s = StatSeries.new(100)
-		t.expect(StatSeries.due(s, 100) and StatSeries.due(s, 100 + StatSeries.EVERY) and not StatSeries.due(s, 101), "due on the interval")
-		StatSeries.sample(s, fakeSim(100 + StatSeries.EVERY, 40), { [1] = { unitsBuilt = 3, damageDealt = 12.4 }, [2] = {} })
-		t.equal(s.t[1], StatSeries.EVERY / 15)
-		t.equal(s.players["1"].unitsBuilt[1], 3)
-		t.equal(s.players["1"].damageDealt[1], 12)
-		t.equal(s.players["1"].supplyStored[1], 40)
-		t.equal(s.players["1"].powerStored[1], 80)
-		t.equal(s.players["2"].unitsBuilt[1], 0, "missing fields are 0")
-		for i = 2, StatSeries.MAX + 1 do
-			StatSeries.sample(s, fakeSim(100 + i * StatSeries.EVERY, i), { [1] = { unitsBuilt = i }, [2] = {} })
-		end
-		t.expect(#s.t <= StatSeries.MAX, `at most MAX samples ({#s.t})`)
-		t.equal(s.every, StatSeries.EVERY * 2, "the interval doubled")
-		t.equal(#s.players["1"].unitsBuilt, #s.t, "every line as long as the times")
-		t.equal(s.t[1], StatSeries.EVERY / 15, "the first sample is kept")
-	end)
-
 	t.test("downsampling keeps at most MAX points, the ends and the peaks", function()
 		local xs, ys = {}, {}
 		for i = 1, 1000 do
