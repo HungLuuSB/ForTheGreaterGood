@@ -4,7 +4,25 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: faction night 2026-10-22, branch `m-sim-2`; everything merged into `main`)
+## Summary (latest: the user's queue, 2026-10-23, branch `m-sim-2`; everything merged into `main`)
+
+**The queue** (merge check between every task), plus the client's requests 42–44 as they came. Protocol 24 → 26. Tests: 404 in 64 specs → 419 in 66 (fast), 6 slow; every merge passed fast, slow and build. The client suite (`test_client`) is now run and reported too.
+
+| Task | Result | Decision |
+|---|---|---|
+| Merge check | Client C-102..C-114 and models M-23, BAR pairs 1–26 merged. No conflicts | — |
+| 1. Request 41 | `Stats.series(sim)`: every player's numbers every 10 s, damage taken included; the client dropped its server-side sampler (C-106) | S-88 |
+| 2. Shields | Hitscan and beam shots stopped at the dome (protocol 26). **Radius and balance measured:** at 120 / 80 a dome makes the defending army untouchable; options under review. Then your request 42: every projectile destroyed at the surface (S-93), which makes domes stronger still | S-89, S-90, S-93 |
+| 3. next.md item 1 | (a) a match-shaped trial reproduces the gap: in small waves Chaos loses 9–18× against an Order defender, while one big wave trades even. (b) value-based waves and retreat for both factions. (c) Chaos workers take contested deposits only with an escort. **Order's share of same-level AI matches: 90% → 81%** (undecided 9% → 6%, in target). Normal 16–13, Normandy 61% (in target). Stat retunes beyond ±10% tested as a proposal: none fixes it (review) | S-91, S-92, S-97 |
+| 4. Commands at 800 units | Option (b): 200 unit IDs per player per tick, the timing-only hash test passes. **Measured: the select-all wasn't the peak**; the peaks (1.5–2.2 ms) are mid-battle hold checks, option (a)'s target (review) | S-100 |
+| 5. Normandy deposits | 30 mirrored deposits; its AI matches no longer stall (12 of 18 undecided → 0) | S-98 |
+| 6. Tooling | `--jobs=N` for faction_ai / ailevels (the full faction_ai: 33–67 min → 7 min at 10 jobs); deterministic work counters in stress / profile_normandy | S-99 |
+| 7. AI completeness | The AI builds a T2 builder, shields and Pinpointers; Order hard a Barrier wall and a Citadel; Normal uses air and naval. Not yet: nukes and the anti-nuke | S-101 |
+| Client requests | 42: shields absorb everything (S-93); 42b: T1 factories at double build power, and the AI's economy follows (S-94); 43: T2 beam towers and flak towers (S-96); 44: factory order lists (S-95, plus a crash fix the final AI run found) | S-93..S-96 |
+
+**Needs my review** gained: the dome radius options (S-90, now with S-93's numbers), the faction result and the retune trial (item 1), Commands' remaining peak (S-100), T2 defense numbers and more T2 ideas (S-96), build power vs build times (S-94).
+
+## Summary (previous round: faction night 2026-10-22)
 
 **This night** (the faction proposal approved; tasks 1–5, then the overnight list 6–12, replay compression and `docs/design/next.md`). Protocol 20 → 23. Tests: 350 fast in 52 specs → 386 fast in 62 (plus 6 slow). Every commit passed the fast suite; every merge into `main` passed fast, slow and the build.
 
@@ -219,6 +237,35 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - **Field strength:** I doubled the prototype's braking (BRAKE 500 → 1000, DRAG 9 → 20) so a full dome stops every shell in the game, the Citadel's 480-stud/s round included. Measured on shells fired from 400 studs: everything turns down to 25% charge except heavy bombs; at 12% the heavy cannon, siege mortar, bombs and radar SAMs get through; at 5% most do.
   - **My calls:** hitscan and beam shots from outside are stopped at the surface like light shells (S-89, your queue: "intercept of shells and hitscan"); allies' shells are never touched; torpedoes, nukes and interceptors chasing a nuke ignore domes; a missile turned back loses its lock; a built generator starts empty and down (25% to rise), a scenario-spawned one full; a hit drains even while the dome's own units fire out.
 - **800 units (S-74):** Targeting is within budget (peaks 5.7–7.4 ms of 8; a third fewer sensor lookups, same state hash). Commands is not (average 0.47 ms, peaks 1.8–2.2 of 1): what remains needs a behaviour change. Pick one: (a) attack-move hold checks for half the units each tick (a unit stops up to 0.07 s later), or (b) spread a big order's queue entries over 2–4 ticks.
+- **Faction balance after next.md item 1 (S-91, S-92, S-97; your queue task 3):**
+  - **Order's share of decided same-level AI matches**, per step (`lune run faction_ai 40 3 all mirrored`):
+
+    | Step | Order–Chaos | Order share | Undecided |
+    |---|---|---|---|
+    | baseline | 88–10 | 90% | 9% |
+    | (b) waves by value, retreat | 79–9 | 90% | 19% |
+    | (b) + your faster factories (S-94) | 82–4 | 95% | 20% |
+    | (c) escorted Chaos workers | 78–11 | 88% | 18% |
+    | final (with Normandy's deposits and the T2 AI) | 83–19 | **81%** | **6%** |
+
+    Final per level: Normal 16–13, Hard 23–4, Easy 30–0. Per map, Normandy is 61% (in target); Ridgeline 73%, Skirmish 76%, Coastline 89%, Crossroads 88%, Twin Lakes 100%.
+  - **Why it's still out of target:** in the match-shaped trial (S-91), Chaos waves of a quarter or an eighth of its army lose 9–19× what they kill against Order's rallied defender. Order's waves don't suffer that.
+  - **Retunes beyond ±10% (a proposal, tested on that trial, nothing changed):**
+
+    | Variant | Order's trade, Order attacks (1 / 4 / 8 waves) | Chaos attacks (1 / 4 / 8 waves) |
+    |---|---|---|
+    | as now | 0.81 / 0.62 / 2.62 | 0.82 / 9.29 / 18.61 |
+    | Ravager range 170 → 195 | 1.68 / 0.52 / 1.60 | 2.11 / 9.84 / 7.60 |
+    | Hellmouth range 380 → 440 | no change | no change |
+    | Ravager spread 1.45 → 1.0 | 0.72 / 0.96 / 0.57 | 0.80 / 8.37 / 19.18 |
+    | Verdict range 480 → 420 | 0.81 / 0.62 / 2.30 | no change |
+
+    No single stat closes the small-wave gap; Ravager range halves the worst case but costs Chaos its even one-wave fight.
+  - **My recommendation:** keep the numbers, and have the AI attack only with waves that outweigh the known defence (it now retreats when outnumbered, but still sends waves into a turret line it hasn't seen). Your call whether to retune anyway.
+- **Commands at 800 units after S-100 (your queue task 4):**
+  - Spreading big orders works: a select-all now starts over 4 ticks, and the timing-only test holds.
+  - The peak wasn't the select-all, though. `lune run stress 450 800`, Commands peak, before → after: 1.55 ms (tick 180) → 1.69–2.23 ms (tick 303 or 1; Lune timings are noisy).
+  - The peaks come mid-battle from `Orders.step`'s per-tick attack-move hold checks: option (a), checking holds for half the units each tick, is what would bring them under 1 ms. Your call whether to do (a) too.
 - **Faction balance in AI matches (S-65, S-78; `docs/FACTION_AI.md`):** Order wins 90% of same-level matches (target 40–60%; undecided 9%, in target). No ±10% retune moved it (S-78 lists eight tries); the kill tallies point at how AI matches fight, not at a number. My recommendation is `docs/design/next.md` item 1: reproduce it in a match-shaped trial first, then decide whether to fix the AI or retune beyond ±10% (your call).
 - **Warden and Minotaur (S-64):**
   - **My calls on the mechanic:** the Warden deploys automatically whenever it stands still, and can't fire while packed.
@@ -413,6 +460,11 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: client C-101 (`92b9a43`, night lighting preset) → `4c9b315`, passed test, test_slow and build, pushed.
 - 2026-10-22: models `113202b` (with `674e394`: M-22 glow pass) → `5deaf4d`, passed test, test_slow and build, pushed.
 - 2026-10-23: client C-102..C-105 (`18195e5`, containing `e8f5ce9`, `d4ab33b`, `bdc88e8`, `44880cc`, `51e4d07` and models `639d555`, `cf819cc`) → `9b05fe9`; models `0f911df` (M-23, mesh_materials step) → `6d01933`. Both passed test, test_slow and build and were pushed.
+- 2026-10-23 (the user's queue):
+  - Sim: S-88 → `ba21af4`; S-89 → `342d9ab`; S-90 → `1be7af1`; S-93/S-94 → `ead4014`; S-95 → `e954214`; S-96 → `875c9ba` (the first push failed on a network reset; pushed by hand, and `integrate.sh` now reports it, exit 5); S-97/S-98 → `e418b19`; S-99 → `884bf5d`; S-100/S-101 → `0ef5d14`.
+  - Client: C-102..C-105 → `9b05fe9`; C-106 → `5674020`; C-107..C-109 → `bbab862`; C-110/C-111 → `7c04764`; C-112 → `01d6436`; C-113/C-114 → `b1f4dca`.
+  - Models: M-23 → `6d01933`; `b41e955` → `41a6ddf`; BAR pairs 1–4 → `4165d24`; pairs 5–26 came in with the client merges.
+  - Every merge passed test, test_slow and build. `integrate.sh` also runs `lune run test_client` now, reported but not required: it flagged the S-96 towers' missing icons (fixed in C-112) and the obsolete shield specs (fixed in C-110).
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 

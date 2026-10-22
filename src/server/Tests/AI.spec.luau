@@ -306,4 +306,26 @@ return function(t: RunAll.Context)
 		local held = trial(3) -- 3 Ravagers (780): it presses on
 		t.equal(held.retreats, 0, "a wave that isn't outnumbered keeps going")
 	end)
+
+	t.test("T2: the AI builds a T2 builder, a shield and Pinpointers; Order hard a Barrier wall and a Citadel; normal an airfield (S-101)", function()
+		local sim = start(41)
+		local brains = { Skirmish.new(sim, 1, "hard"), Skirmish.new(sim, 2, "normal") }
+		local seen: { [string]: boolean } = {}
+		local want = { { 1, "ord_architect" }, { 1, "ord_phalanx" }, { 1, "ord_witness" }, { 1, "ord_barrier" }, { 1, "ord_citadel" }, { 2, "chs_forgemaster" }, { 2, "chs_carapace" }, { 2, "chs_augur" }, { 2, "chs_airfield" } }
+		run(sim, brains, 900 * 20, true, function()
+			local all = true
+			for _, pair in want do
+				local id = pair[2] :: string
+				if not seen[id] and #owned(sim, pair[1] :: number, id) > 0 then
+					seen[id] = true
+				end
+				all = all and seen[id] == true
+			end
+			return all
+		end)
+		for _, pair in want do
+			t.expect(seen[pair[2] :: string], `{pair[2]} built (tick {sim.tick})`)
+		end
+		print(string.format("    T2 structures by tick %d (%.1f min)", sim.tick, sim.tick / 900))
+	end)
 end

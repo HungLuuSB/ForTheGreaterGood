@@ -275,6 +275,9 @@ local function start(sim: Types.Sim, id: number, h: Order): boolean
 		Air.attackGround(sim, id, h.x :: number, h.z :: number)
 	elseif kind == "guard" then
 		local t = h.target :: number
+		if w.slot[t] == nil or (h.gen ~= nil and w.gen[t] ~= h.gen) then
+			return false -- the guarded unit is gone (an order queued behind others, S-95): done
+		end
 		local td = def(sim, t)
 		if def(sim, id).domain == "air" and td.rearmPads and Air.recover(sim, id, t) then
 			return false -- guarding a carrier or airfield: land there, it is home (S-36)

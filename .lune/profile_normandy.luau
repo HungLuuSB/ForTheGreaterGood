@@ -15,6 +15,7 @@ local Packer = require("../src/shared/Net/Packer")
 local Schema = require("../src/shared/Net/Schema")
 local Sim = require("../src/server/Sim/Sim")
 local Spawn = require("../src/server/Sim/Spawn")
+local Work = require("../src/server/Sim/Work")
 
 local TICKS = tonumber(process.args[1]) or 3600
 
@@ -74,6 +75,7 @@ local sysPeak: { [string]: number } = {}
 local sysPeakTick: { [string]: number } = {}
 local sysTotal: { [string]: number } = {}
 local tickTimes: { { number } } = {}
+Work.reset() -- counts from the first tick (S-99)
 for tick = 1, TICKS do
 	if tick == 30 then
 		-- attack-move: every armed mobile unit at the other side's staging field
@@ -130,6 +132,10 @@ out(string.format("ticks %d: avg %.2f ms, p99 %.2f ms, worst %.2f ms (tick %d, %
 for k = #sorted, math.max(#sorted - 4, 1), -1 do
 	local t = sorted[k]
 	out(string.format("  worst: tick %d %.2f ms (heap %+.0f KB): %s", t[2], t[1], t[6], table.concat(t[5], ", ")))
+end
+do
+	local wc = Work.counts
+	out(string.format("work (deterministic, S-99): route %d, flow field %d, sensor lookups %d, known-target lookups %d", wc.routeWork, wc.flowWork, wc.sensorLookups, wc.knownLookups))
 end
 out(string.format("%-20s %9s %9s %8s", "system", "avg ms", "peak ms", "budget"))
 for _, b in BUDGETS do
