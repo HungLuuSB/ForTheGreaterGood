@@ -4,6 +4,14 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, shield hits like BAR's plasma deflector)
+
+- **Shield hits (C-131),** after your BAR GIF:
+  - the ripple is gone;
+  - a hit now lights a patch of fine **outlined** honeycomb cells on the dome: 2.6-stud cells whose edges touch, 3 to 5 rings depending on the shot (37 to 91 cells);
+  - the cells are white-hot at the centre and fade outward, still curved with the dome. Each hit sends its wave through the patch as before.
+- **Screenshots:** `debug_out/screens/shield_honeycomb_1.jpg`, `shield_honeycomb_2.jpg` (the shield scene under fire, from outside).
+
 ## Summary (2026-10-23, big-map fog fixed)
 
 - **Fog on big maps (C-130):**

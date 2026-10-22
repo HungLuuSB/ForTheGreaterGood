@@ -12,8 +12,9 @@
 --     floating inside, a slow subtle pulse;
 --   - the emitter's core (the generator's `core` piece, else a placeholder
 --     ball) glowing green full, orange, red empty; a capacity bar above;
---   - hits, as a shell crosses the surface: C's ripple there, white-hot
---     hexagon plates fading to grey round it
+--   - hits, as a shell crosses the surface: a patch of fine honeycomb cells
+--     lights round it, white-hot at the centre, fading out (BAR's plasma
+--     deflector; no ripple since C-131)
 --     (Core/Shield) and a brief brightness pulse.
 -- Timings, flicker, ring flow, detail and culling are Core/ShieldLook's.
 --
@@ -51,7 +52,6 @@ ShieldFx.ASSETS = table.freeze({
 	swirl = "rbxassetid://113814321169730",
 	beam = "rbxassetid://100117547859650",
 	speck = "rbxassetid://90660161303538",
-	ripple = "rbxassetid://129891612158965",
 })
 
 ShieldFx.DOME_COLOR = Color3.fromRGB(225, 232, 240)
@@ -63,10 +63,9 @@ ShieldFx.FOOT_OPACITY = 0.8 -- the ring where the dome meets the ground
 ShieldFx.EDGE_OPACITY = 0.95
 ShieldFx.SWIRL_SIZE = 0.4 -- the swirl disc's diameter, × R (C's checked assembly: 16 on 40)
 ShieldFx.SWIRL_OPACITY = 0.85
-ShieldFx.RIPPLE_SECONDS = 0.6
-ShieldFx.RIPPLE_SIZE = 0.25 -- a ripple's size at intensity 1, × R
-ShieldFx.PLATE_POOL = 240 -- hexagon plates shared by every shield (6 patches of 37, C-116)
-ShieldFx.PLATE_OPACITY = 0.6 -- a plate at its brightest (0.95 until C-117: lit plates bloomed into one white block)
+ShieldFx.PLATE_POOL = 560 -- honeycomb cells shared by every shield (6 patches of up to 91, C-131)
+ShieldFx.PLATE_OPACITY = 0.85 -- a cell's outline at its brightest (outlines are thin: they don't bloom into a block)
+ShieldFx.OUTLINE = 0.16 -- a cell's outline width, of its corner radius (C-131: outlined cells, BAR's honeycomb)
 ShieldFx.PLATE_THICKNESS = 0.12
 
 local WHITE = Color3.new(1, 1, 1)
@@ -104,8 +103,6 @@ export type ShieldFx = {
 	ringMesh: boolean,
 	foot: BasePart?, -- C's ring at the dome's foot
 	flash: CylinderHandleAdornment,
-	ripples: { ParticleEmitter }, -- one per ShieldLook.RIPPLE_SCALES, never resized (C-116)
-	rippleAt: Attachment,
 	bar: Frame?,
 	barFill: Frame?,
 	barText: TextLabel?,
@@ -186,27 +183,34 @@ local function adornment(parent: Instance, adornee: BasePart, color: Color3): Cy
 	return a
 end
 
--- A hexagon prism (flats across X) where EditableMesh is allowed, else nil.
+-- A hexagon outline (flats across X; a frame OUTLINE wide, C-131: BAR's
+-- honeycomb cells) where EditableMesh is allowed, else nil.
 local function hexMesh(): MeshPart?
 	local ok, result = pcall(function()
 		local em = (AssetService :: any):CreateEditableMesh()
-		local top, bottom = {}, {}
+		local inner = 1 - ShieldFx.OUTLINE
+		local ot, ob, it, ib = {}, {}, {}, {}
 		for k = 0, 5 do
 			local a = math.rad(30 + 60 * k)
-			top[k + 1] = em:AddVertex(Vector3.new(math.cos(a), 0.5, math.sin(a)))
-			bottom[k + 1] = em:AddVertex(Vector3.new(math.cos(a), -0.5, math.sin(a)))
+			local c, s = math.cos(a), math.sin(a)
+			ot[k + 1] = em:AddVertex(Vector3.new(c, 0.5, s))
+			ob[k + 1] = em:AddVertex(Vector3.new(c, -0.5, s))
+			it[k + 1] = em:AddVertex(Vector3.new(c * inner, 0.5, s * inner))
+			ib[k + 1] = em:AddVertex(Vector3.new(c * inner, -0.5, s * inner))
 		end
-		local ct, cb = em:AddVertex(Vector3.new(0, 0.5, 0)), em:AddVertex(Vector3.new(0, -0.5, 0))
-		local function tri(a: number, b: number, c: number)
+		local function quad(a: number, b: number, c: number, d: number)
+			-- both windings: seen from either side of the dome
 			em:AddTriangle(a, b, c)
 			em:AddTriangle(a, c, b)
+			em:AddTriangle(a, c, d)
+			em:AddTriangle(a, d, c)
 		end
 		for k = 1, 6 do
 			local n = k % 6 + 1
-			tri(ct, top[k], top[n])
-			tri(cb, bottom[n], bottom[k])
-			tri(top[k], bottom[k], bottom[n])
-			tri(top[k], bottom[n], top[n])
+			quad(ot[k], ot[n], it[n], it[k]) -- top face of the frame
+			quad(ob[k], ob[n], ib[n], ib[k]) -- bottom
+			quad(ot[k], ob[k], ob[n], ot[n]) -- outer wall
+			quad(it[k], ib[k], ib[n], it[n]) -- inner wall
 		end
 		return (AssetService :: any):CreateMeshPartAsync((Content :: any).fromObject(em))
 	end)
@@ -294,15 +298,6 @@ function Methods.hit(s: ShieldFx, worldPos: Vector3, intensity: number)
 	if s.state ~= "up" and s.state ~= "deploying" then
 		return
 	end
-	local center = s.position
-	local d = worldPos - center
-	local n = if d.Magnitude > 1e-6 then d.Unit else Vector3.yAxis
-	local at = center + n * s.radius
-	-- C's ripple: one particle lying flat on the dome (its velocity along the normal)
-	local right = if math.abs(n.Y) < 0.95 then Vector3.yAxis:Cross(n).Unit else Vector3.xAxis:Cross(n).Unit
-	s.rippleAt.WorldCFrame = CFrame.fromMatrix(at + n * 0.2, right, n)
-	-- the emitter of the hit's size: resizing one would resize every live ripple (C-116)
-	s.ripples[ShieldLook.rippleBucket(intensity)]:Emit(1)
 	Shield.hit(s.model, { x = worldPos.X, y = worldPos.Y, z = worldPos.Z }, intensity, clock)
 	s.pulse = math.min(1, s.pulse + 0.3 * intensity)
 end
@@ -481,31 +476,6 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		f.Position = position + Vector3.new(0, 0.15, 0)
 		foot = f
 	end
-	-- C's ripple: emitters (one per size) moved to each hit
-	local rippleAt = Instance.new("Attachment")
-	rippleAt.Parent = anchor
-	local ripples: { ParticleEmitter } = {}
-	for _, scale in ShieldLook.RIPPLE_SCALES do
-		local ripple = Instance.new("ParticleEmitter")
-		ripple.Texture = ShieldFx.ASSETS.ripple
-		ripple.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
-		ripple.EmissionDirection = Enum.NormalId.Top
-		ripple.Speed = NumberRange.new(0.01)
-		ripple.SpreadAngle = Vector2.zero
-		ripple.Lifetime = NumberRange.new(ShieldFx.RIPPLE_SECONDS)
-		ripple.Rate = 0
-		ripple.LightEmission = 0.3 -- 1 glared white under the night bloom (the user, C-116)
-		ripple.Color = ColorSequence.new(WHITE)
-		ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(0.2, 0.4), NumberSequenceKeypoint.new(1, 1) })
-		ripple.TimeScale = math.max(particleScale, 0.001)
-		-- visible on its first frame (a third of its size, opaque), then spreading: a
-		-- shell turns about 0.1 s after it enters, and a ripple growing from 0 read
-		-- as starting at the turn (the user, C-96)
-		local size = radius * ShieldFx.RIPPLE_SIZE * scale
-		ripple.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size * 0.35), NumberSequenceKeypoint.new(0.15, size * 0.7), NumberSequenceKeypoint.new(1, size) })
-		ripple.Parent = rippleAt
-		table.insert(ripples, ripple)
-	end
 	-- the capacity bar
 	local bar, fill, text = nil, nil, nil
 	if gui then
@@ -576,8 +546,6 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		ringMesh = ringMesh,
 		foot = foot,
 		flash = flash,
-		ripples = ripples,
-		rippleAt = rippleAt,
 		bar = bar,
 		barFill = fill,
 		barText = text,
@@ -807,12 +775,9 @@ step = function(realDt: number)
 	local scale = ShieldFx.timeScale * ShieldFx.simSpeed
 	local dt = realDt * scale
 	if scale ~= particleScale then
-		-- particles (ripples, specks) keep the same clock
+		-- particles (specks) keep the same clock
 		particleScale = scale
 		for _, s in shields do
-			for _, r in s.ripples do
-				r.TimeScale = math.max(scale, 0.001)
-			end
 			s.specks.TimeScale = math.max(scale, 0.001)
 		end
 	end

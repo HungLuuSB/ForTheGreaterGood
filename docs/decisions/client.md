@@ -1038,3 +1038,13 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** `FogBlanket.stepFor(cellsX, cellsZ)` = max(STEP, ceil(max side / (2 × CHUNK))): 2 cells on 128-cell maps, 4 on 256-cell maps. Every map needs at most 4 EditableMeshes.
 
 **Why:** on Normandy, 16 chunks hit the device's editable memory budget (Studio: "Failed to create empty EditableMesh ... memory budget limits") and parts of the map lost their fog (the user's screenshot). The budget is shared with the shield fx, charts and vignette.
+
+### C-131 — Shield hits: no ripple; a patch of fine outlined honeycomb cells (BAR's plasma deflector) (2026-10-23)
+
+**Decision:**
+- The ripple emitters are removed (ShieldFx's ripples, ShieldLook.RIPPLE_SCALES / rippleBucket).
+- The plate mesh is a hexagon outline (OUTLINE 0.16 of its corner radius, both windings).
+- Shield.PLATE 2.6, GAP 0: the outlines form a honeycomb. Rings: 3 + strength, clamped to 3..5 (MAX_RINGS 5).
+- The plate pool is 560, with opacity 0.85 (thin lines don't bloom into a block).
+
+**Why:** the user's reference GIF of BAR's plasma deflector: no ripple, a lit honeycomb patch where the shot lands. "The current ripple takes too much space, drop it and enhance the hexes."

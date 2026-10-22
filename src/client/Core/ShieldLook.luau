@@ -11,27 +11,6 @@
 
 local ShieldLook = {}
 
--- Ripple sizes (C-116): a ParticleEmitter's Size applies to the particles
--- it already emitted, so one emitter resized per hit made every ripple on
--- the dome jump to a heavy shell's size at once (the user saw it as a burst).
--- Each dome has one emitter per size here, sized once; a hit uses the one
--- nearest its shell (× ShieldFx.RIPPLE_SIZE × R).
-ShieldLook.RIPPLE_SCALES = table.freeze({ 0.6, 0.85, 1.2, 1.7 })
-
--- The ripple emitter for a hit of `intensity` (1 = a typical shell): the
--- scale nearest sqrt(intensity), intensity clamped to 0.3..4.
-function ShieldLook.rippleBucket(intensity: number): number
-	local want = math.sqrt(math.clamp(intensity, 0.3, 4))
-	local best, bestD = 1, math.huge
-	for i, s in ShieldLook.RIPPLE_SCALES do
-		local d = math.abs(s - want)
-		if d < bestD then
-			best, bestD = i, d
-		end
-	end
-	return best
-end
-
 export type State = "down" | "deploying" | "up" | "collapsing"
 
 ShieldLook.BEAM_SECONDS = 0.4 -- the beam reaching the top

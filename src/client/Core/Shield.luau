@@ -39,8 +39,8 @@ export type Dome = {
 	up: boolean, -- false once collapsed at 0%, until recharged to RAISE_AT
 }
 
-Shield.PLATE = 4.5 -- studs across a hexagon's flats (2.4 until C-116: the user, bigger hexes)
-Shield.GAP = 0.4 -- studs between plates
+Shield.PLATE = 2.6 -- studs across a cell's flats (4.5 in C-116..C-130; outlined cells since C-131: BAR's fine honeycomb)
+Shield.GAP = 0 -- studs between cells: outlines touch, a honeycomb
 Shield.RING_DELAY = 0.07 -- seconds between rings lighting: a visible wave out (0.045 until C-117)
 Shield.MAX_WAVES = 4 -- waves a patch keeps at once
 Shield.LIFE = 0.65 -- seconds a plate glows after it lights
@@ -48,7 +48,7 @@ Shield.RING_ALPHA = 0.45 -- each ring out is this much as opaque as the one insi
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
 Shield.MERGE_AGE = 0.65 -- while it glows (Shield.LIFE): a later hit adds a wave instead of a second grid on top (C-117)
-Shield.MAX_RINGS = 3
+Shield.MAX_RINGS = 5
 Shield.DENT = 1.2 -- studs the centre pushes in at strength 1
 
 local SQRT3 = math.sqrt(3)
@@ -83,8 +83,9 @@ Shield.unit, Shield.dot, Shield.len, Shield.sub = unit, dot, len, sub
 -- Rings of hexagons by a hit's strength: a light hit lights the centre and
 -- one ring (7 plates), a heavy one up to MAX_RINGS (37).
 function Shield.ringsFor(strength: number): number
-	-- two rings at least (19 plates): the user wanted more hexes per hit (C-116)
-	return math.clamp(math.floor(2 + strength), 2, Shield.MAX_RINGS)
+	-- three rings at least (37 cells), four for a typical shell (61), five for
+	-- heavy ones (91): a wide patch of fine cells (C-131, the BAR reference)
+	return math.clamp(math.floor(3 + strength), 3, Shield.MAX_RINGS)
 end
 
 -- The plates of a patch on a sphere (`center`, `radius`) round the point
