@@ -20,18 +20,18 @@ Your review of the overnight batch: BAR style approved for both tanks (M-18), ca
 | Shield | Shield effect assets (Order): dome, inner dome, ring, emitter device, swirl / beam / speck / ripple textures, all white for team tint; pending `ord_shieldgen` blockout; `docs/contracts/fx.md` | `200ac59`, `08d2da5` | Done: in "FTGG Art" `ReplicatedStorage.FX.Shield`; `debug_out/screens/shield_*.jpg` |
 | 8 | T1 vs T2 per role: T2 structures that didn't read as the upgrade got a signature piece (Order radome and covered dock, Chaos ski jump and giant crane, raised Bastion and Maw, wider advanced extractors); T1 sonar and jammer made | `e993e36` | Done: `debug_out/screens/tier_*.jpg`; T2 ground units compared after item 9 (`ground_t1_t2_*.jpg`) |
 | 9 | Blockouts for everything still generic: T2 ground units and both commanders, T1/T2 aircraft, T1/T2 ships, the last generic structures. **All 133 defs now have a hand-made blockout** | `7506eae`, `fcc05b9`, `74ef97b` | Done: `debug_out/screens/ground_*`, `air_*`, `naval_*.jpg` |
-| 10 | BAR meshes for the rest of batch 1 T1 ground units, constructors first | `c19023a` | Mason (2,964 triangles) and Scrapper (2,828) built from the Lancer and Ravager chassis (`assets/models/ord_mason`, `chs_scrapper`); **waiting for your import**, then rig and the team test |
+| 10 | BAR meshes for the rest of batch 1 T1 ground units, in build order (two normal AI matches, 20 min: Ravager 31, Scrapper 28, Mason 23, Lancer 21, Hellmouth 14, Verdict 8, Oracle 3, Watcher 2; scouts and mobile AA 0) | `c19023a`, `b9d7e91` | Mason (2,964 triangles) and Scrapper (2,828) imported and rigged; Verdict (3,212) and Hellmouth (3,184) built, **waiting for your import**. The Lancer, Ravager and constructors get re-measured and team-tested after the restart below |
 | 11 | BAR meshes for the most-seen structures | — | Not started |
 
 **Needs your review:**
-- No reference screenshot reached me with the shield request (not in the message or `assets/reference/`): the shield assets follow your written description.
+- Shield vs your reference: the dome, rim, thin rings and beam match the approach; the swirl is redrawn as a cloudy vortex with a bright eye and knots (original, procedural); the ground ring is one more `Ring` at h = 0 (fx.md). The specks and hit ripple are textures for particles, not in the static shots.
 - Shield emitter core glows Order cyan (M-16), not the team color; dome radius is B's choice (the check used R = 40). The emitter is about 4 studs across.
 - Cyclops: the weapon pitches −5° to 60° from a level rest, so the tall tube is fixed and only a short cradle (`barrel`) pitches (M-19).
 - `assets/reference/` wasn't gitignored before; now its images are (only `bar/README.md` stays tracked).
 - Several T2 units' weapons turn `launcher` while their `turret` piece turns nothing (Seraph, Gorgon, Judgement, Hydra), like Halo/Hornet before S-64; the blockouts work either way (M-3). Your call whether to ask the sim session for `turretPiece = "turret", pitchPiece = "launcher"`.
 - Aircraft and ships are blockouts in the same faction language; their proportions (fuselage 7–9 studs, footprint-3 ships 24 long) follow the generic sizes.
 
-**Your steps:** import four FBX files into "FTGG Art": `assets/models/ord_lancer/export/ord_lancer.fbx` and `chs_ravager/export/chs_ravager.fbx` (the brightness pass), `ord_mason/export/ord_mason.fbx` and `chs_scrapper/export/chs_scrapper.fbx` (the constructors). Then I rig them, re-measure the tanks against their blockouts and run the team test on the constructors.
+**Your steps:** save "FTGG Art" and restart Studio (the new Lancer and Mason uploads draw grey until then), then import `assets/models/ord_verdict/export/ord_verdict.fbx`, `chs_hellmouth/export/chs_hellmouth.fbx` and `assets/fx/shield/export/shield_fx.fbx` (the cloudy swirl from your reference; the meshes are unchanged). Your reference is saved in `assets/reference/shield/` (gitignored).
 
 ## Earlier summary (overnight 2026-10-22)
 
