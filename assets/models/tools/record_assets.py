@@ -60,8 +60,10 @@ def main():
             record_wreck(uid, b, note)
             continue
         d = os.path.join(ROOT, "assets", "models", uid)
-        if not os.path.isdir(d):  # missiles live under assets/fx/missiles
+        if not os.path.isdir(d):  # missiles live under assets/fx/missiles, deposits under assets/fx/deposit
             d = os.path.join(ROOT, "assets", "fx", "missiles", uid)
+            if not os.path.isdir(d):
+                d = os.path.join(ROOT, "assets", "fx", "deposit", uid)
         oc = json.load(open(os.path.join(d, "export", "opencloud.json"), encoding="utf-8"))
         rig = json.load(open(os.path.join(d, "export", "rig.json"), encoding="utf-8"))
         path = os.path.join(d, "roblox_assets.json")

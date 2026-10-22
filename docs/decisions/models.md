@@ -232,3 +232,9 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user's animation audit for the client (2026-10-23). Track sets are one piece per side (band and wheels) rather than a piece per road wheel, to keep the part count per tank low; wheeled units get a piece per wheel.
 
+### M-28 — Supply deposits as terrain (2026-10-23)
+
+**Decision:** supply deposits are drawn with a neutral terrain prop, BAR metal-spot style (fx.md "Supply deposits"): three seeded variants of a scraped patch with ore outcrops, one cell wide, no glow, the patch tinted to the terrain through the alpha mask. A `neutral` look in tools/unit.py (stone, dark rock, metallic ore, a tintable ground patch).
+
+**Why:** the user (2026-10-23): the bright yellow squares read as UI; the deposit must be part of the terrain, cheap (on every map in dozens) and hidden under an extractor.
+

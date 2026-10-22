@@ -20,6 +20,9 @@ import os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 OUT = os.path.join(ROOT, "src", "shared", "Defs", "Meshes", "Registry.luau")
 GLOW_MASK = "rbxassetid://101169341901946"  # glow_mask.png, shared by every glow part
+# effect textures for the client (M-27, fx.md "Effect textures")
+TEXTURES = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "fx", "textures",
+                                       "roblox_assets.json"), encoding="utf-8"))["textures"]
 
 # The user's approvals: only these are "approved" (the game draws them);
 # every other mesh is "review" (the game keeps its blockout) until the user
@@ -44,6 +47,10 @@ APPROVED = {
     "ord_vigil", "ord_warden", "ord_watchtower", "ord_windmill",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
+DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
+                "tint the ground patch (teamPieces, alpha mask) to the terrain")
+# fx entries that reuse another weapon's mesh (the client looks meshes up by weapon ID)
+FX_ALIASES = {"ord_mobile_interceptor": "ord_interceptor", "chs_mobile_interceptor": "chs_interceptor"}
 # wreck versions (M-24) the user approved; the rest are "review"
 APPROVED_WRECKS = {
     # 2026-10-23: the first 22 wrecks
@@ -113,9 +120,19 @@ def entry(rig, assets, status, note):
         "glowShare": rig.get("glowShare", 0),
         "triangles": rig["triangles"]["total"],
     }
+    if rig.get("visualPieces"):  # animated sub-pieces (M-27)
+        e["visualPieces"] = list(rig["visualPieces"])
+    if rig.get("anim"):
+        e["anim"] = rig["anim"]
     if note:
         e["note"] = note
     return e
+
+
+def head_rig(path):
+    import subprocess
+    rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
+    return json.loads(subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=ROOT, capture_output=True, text=True, check=True).stdout)
 
 
 def wreck_entry(uid, rig, assets):
@@ -152,7 +169,11 @@ def main():
         if "bar" not in assets or "surfaceAppearance" not in assets["bar"]:
             continue
         status = "approved" if uid in APPROVED else "review"
-        units[uid] = entry(load(rig_p), assets, status, None if status == "approved" else REVIEW_NOTE)
+        try:
+            units[uid] = entry(load(rig_p), assets, status, None if status == "approved" else REVIEW_NOTE)
+        except KeyError:  # rebuilt with new pieces, not uploaded yet: the committed rig matches the upload
+            units[uid] = entry(head_rig(rig_p), assets, status, None if status == "approved" else REVIEW_NOTE)
+            print(f"{uid}: export ahead of its upload, using the committed rig.json")
         wreck_p = os.path.join(models, uid, "export_wreck", "rig.json")
         if "wreck" in assets and os.path.exists(wreck_p):
             units[uid]["wreck"] = wreck_entry(uid, load(wreck_p), assets)
@@ -175,6 +196,25 @@ def main():
         status = "approved" if wid in APPROVED else "review"
         fx[wid] = entry(load(rig_p), load(assets_p), status, None if status == "approved" else REVIEW_NOTE)
 
+    # supply deposits (M-28): one fx entry, variant 1's fields plus every variant
+    deposits = os.path.join(ROOT, "assets", "fx", "deposit")
+    variants = []
+    for vid in sorted(os.listdir(deposits)):
+        rig_p = os.path.join(deposits, vid, "export", "rig.json")
+        assets_p = os.path.join(deposits, vid, "roblox_assets.json")
+        if os.path.exists(rig_p) and os.path.exists(assets_p):
+            variants.append(entry(load(rig_p), load(assets_p), "review", None))
+    if variants:
+        status = "approved" if "deposit" in APPROVED else "review"
+        fx["deposit"] = {**variants[0], "status": status, "variants": variants}
+        for v in variants:
+            v["status"] = status
+        if status == "review":
+            fx["deposit"]["note"] = DEPOSIT_NOTE
+    # weapons that reuse another weapon's mesh (S-111: the mobile interceptors)
+    for alias, src in FX_ALIASES.items():
+        if src in fx:
+            fx[alias] = dict(fx[src])
     body = lua({"units": units, "fx": fx}, 0)
     text = f"""--!strict
 -- Mesh manifest (M-23, docs/contracts/rig.md section 7): every BAR-style mesh
@@ -205,10 +245,14 @@ export type Entry = {{
 	glowShare: number,
 	triangles: number,
 	note: string?,
+	visualPieces: {{ string }}?, -- animated sub-pieces (M-27)
+	anim: {{ [string]: {{ motion: string, axis: Vec3, range: number? }} }}?,
+	wreck: any?, -- the wreck version (M-24)
 }}
 
-local manifest: {{ glowMask: string, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }} }} = {{
+local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }} }} = {{
 	glowMask = "{GLOW_MASK}",
+	textures = {lua(TEXTURES, 1)},
 {body[2:-2]}
 }}
 

@@ -1,0 +1,55 @@
+{
+  "id": "deposit_1",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style neutral terrain prop (M-28)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0382,
+        0.0933,
+        0.0973
+      ],
+      "size": [
+        6.7871,
+        0.676,
+        6.2831
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      200,
+      200,
+      200
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 536,
+    "total": 536
+  },
+  "textures": {
+    "size": 512,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -88,6 +88,15 @@ One mesh per missile weapon def, by its ID: `ord_ir_sam`, `chs_ir_sam`, `ord_rad
 - **Glow:** a `running` stripe round the body (faction accent), at its resting strength. The nozzle throat is dark: the client lights the exhaust (user review 2026-10-23, no `weapon` glow part any more).
 - **Interceptors** (anti-nuke, S-111): `ord_interceptor` / `chs_interceptor`, and the mobile launchers' `ord_mobile_interceptor` / `chs_mobile_interceptor` reuse the same meshes (the manifest lists all four IDs). Fast and slim: a needle nose (Order white radome, Chaos dark) on a fatter booster, canards and booster fins. Unlike the other missiles, the nozzle throat glows bright on `weapon` (strength 3.0), so an interceptor reads at a glance; the client still draws the flame.
 
+## Supply deposits (M-28)
+
+The supply deposits drawn as part of the terrain, BAR metal-spot style: no neon, no glow, nothing that reads as UI. `Meshes.fx.deposit` is a normal fx entry (variant 1's fields) with `variants = { v1, v2, v3 }`, each a full entry with its own model, `pieces.base`, maps and triangles (536–552 each). Status "review" until the user approves.
+- **Look:** a shallow scraped patch with a ragged edge, a darker scraped-soil core under an off-centre cluster of ore outcrops (dark rock, metallic ore tops: metalness and roughness only), a broken berm of low lumps and loose stones at the edge.
+- **Size:** fits one 8-stud cell (about 7 across, origin on the ground at the deposit cell's centre), at most 0.7 studs tall. A T1 extractor (2 × 2) covers it whichever of its quadrants sits over the deposit, and a T2 (3 × 3) is centred on it. Extractor bases are at least 0.7 thick over the whole footprint, so the deposit disappears under them.
+- **Placement:** pick a variant and a random yaw per deposit, so a map's deposits don't look stamped.
+- **Terrain tint:** the outer patch is under the alpha mask (`teamPieces = { "base" }`). Set `BasePart.Color` to the plain terrain colour (grass, sand, rock), not a team colour. The mask darkens it to about 60–75% of the terrain, so the spot reads as darker ground on every map. The core, rocks and ore keep their own colours.
+- **MeshMaterials:** one SurfaceAppearance per variant (`variants[i].maps`).
+
 ## Effect textures (M-27)
 
 White RGB with the pattern in alpha, 512 × 512, so the client tints them (fx colors, faction accents). They're in the mesh manifest as `Meshes.textures` and built by `assets/fx/textures/build.py`.

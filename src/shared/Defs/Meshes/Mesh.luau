@@ -117,6 +117,12 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 			bad(`anim {name}: axis must be three numbers`)
 		end
 	end
+	-- variants (supply deposits, M-28): each a full entry
+	for i, v in e.variants or {} do
+		for _, problem in Mesh.validate(`{id}[{i}]`, v, nil, nil) do
+			table.insert(problems, problem)
+		end
+	end
 	-- the wreck version (M-24): the live mesh's pieces, its own meshes and
 	-- maps, no glow (EMI not needed)
 	local w = e.wreck
