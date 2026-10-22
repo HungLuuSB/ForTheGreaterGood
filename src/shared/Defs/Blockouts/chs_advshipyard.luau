@@ -25,6 +25,17 @@ for c, side in { -1, 1 } do
 	table.insert(parts, { name = `jibTeam{c}`, parent = "base", shape = "box", size = { 10, 0.08, 0.8 }, at = { x0 - side * 11, 15.64, z0 }, color = "team" })
 	table.insert(parts, { name = `jibLight{c}`, parent = "base", shape = "box", size = { 0.5, 0.5, 0.5 }, at = { x0 - side * 19.5, 15.8, z0 }, color = "glass" })
 end
+-- T2 signature (T1 vs T2 check, 2026-10-22): one giant hammerhead crane on
+-- the shore, its jib reaching across the whole slip
+for i, d in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
+	table.insert(parts, { name = `giantLeg{i}`, parent = "base", shape = "box", size = { 0.6, 24, 0.6 }, at = { 8 + d[1] * 1.4, 12.6, 11.3 + d[2] * 1.4 }, color = "dark" })
+end
+table.insert(parts, { name = "giantCab", parent = "base", shape = "box", size = { 3.6, 1.6, 3.6 }, at = { 8, 25.4, 11.3 }, color = "hull" })
+table.insert(parts, { name = "giantJib", parent = "base", shape = "box", size = { 34, 1.2, 1.4 }, at = { -4, 26.6, 11.3 }, color = "metal" })
+table.insert(parts, { name = "giantJibTeam", parent = "base", shape = "box", size = { 14, 0.08, 1.1 }, at = { -8, 27.24, 11.3 }, color = "team" })
+table.insert(parts, { name = "giantWeight", parent = "base", shape = "box", size = { 3, 2.2, 2.2 }, at = { 12.5, 25.6, 11.3 }, color = "dark" })
+table.insert(parts, { name = "giantHook", parent = "base", shape = "box", size = { 0.2, 9, 0.2 }, at = { -14, 21.6, 11.3 }, color = "dark" })
+table.insert(parts, { name = "giantLight", parent = "base", shape = "box", size = { 0.6, 0.6, 0.6 }, at = { -20.6, 27.5, 11.3 }, color = "glass" })
 for i = 0, 4 do
 	local z = -16 + i * 7.5
 	for _, x in { -16.5, 16.5 } do

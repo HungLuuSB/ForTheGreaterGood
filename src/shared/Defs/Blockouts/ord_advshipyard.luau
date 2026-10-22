@@ -14,8 +14,16 @@ local parts = {
 	{ name = "door", parent = "base", shape = "box", size = { 20, 8, 0.3 }, at = { 0, 4.6, 11.4 }, color = "dark" },
 	{ name = "lightL", parent = "base", shape = "box", size = { 0.8, 0.8, 0.8 }, at = { -16.5, 3.4, -17 }, color = "glass" },
 	{ name = "lightR", parent = "base", shape = "box", size = { 0.8, 0.8, 0.8 }, at = { 16.5, 3.4, -17 }, color = "glass" },
+	-- T2 signature (T1 vs T2 check, 2026-10-22): a covered building dock over
+	-- the slip, walls on the piers and a ribbed roof
+	{ name = "dockWallL", parent = "base", shape = "box", size = { 1.2, 9.4, 18 }, at = { -16.5, 7.7, 1 }, color = "hull" },
+	{ name = "dockWallR", parent = "base", shape = "box", size = { 1.2, 9.4, 18 }, at = { 16.5, 7.7, 1 }, color = "hull" },
+	{ name = "dockRoof", parent = "base", shape = "box", size = { 34.2, 1, 18 }, at = { 0, 12.9, 1 }, color = "hull" },
+	{ name = "dockRoofTeam", parent = "base", shape = "box", size = { 24, 0.12, 8 }, at = { 0, 13.46, 1 }, color = "team" },
+	{ name = "dockRibA", parent = "base", shape = "box", size = { 34.2, 0.5, 0.6 }, at = { 0, 13.65, -6.5 }, color = "dark" },
+	{ name = "dockRibB", parent = "base", shape = "box", size = { 34.2, 0.5, 0.6 }, at = { 0, 13.65, 8.5 }, color = "dark" },
 }
-for i, z in { -10, 2 } do
+for i, z in { -15 } do
 	table.insert(parts, { name = `craneLegL{i}`, parent = "base", shape = "box", size = { 1, 11, 1 }, at = { -16.5, 8.5, z }, color = "metal" })
 	table.insert(parts, { name = `craneLegR{i}`, parent = "base", shape = "box", size = { 1, 11, 1 }, at = { 16.5, 8.5, z }, color = "metal" })
 	table.insert(parts, { name = `craneBeam{i}`, parent = "base", shape = "box", size = { 34, 1.4, 1.6 }, at = { 0, 14.6, z }, color = "hull" })
