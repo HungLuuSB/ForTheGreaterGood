@@ -195,6 +195,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `7e2c5d7` (ShieldFx shield dome renderer, review generators, request 40, C-90); test_client 163, test 386, build passed.
 - Ready to merge: `ff3e146` (shield domes from the server, protocol 24, real Phalanx in the shield profile, C-91); test_client 165, test 399, build passed.
 - Ready to merge: `57a7610` (shield profile checked at 50x, docs only); test_client 165, test 399, build passed.
+- Ready to merge: `f5774f4` (ShieldFx on C's shield assets, beam from the generator, shield debug counts, S-82 checked, C-94); test_client 165, test 400, build passed.
 
 ## Tasks
 
@@ -522,6 +523,24 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: C's shield assets in ShieldFx; S-82's field checked (C-94)
+
+- **C's shield FX** (models request, `docs/contracts/fx.md`, `assets/fx/shield/roblox_assets.json`) replaces the placeholders:
+  - the Dome hemisphere mesh, so it no longer sinks into the ground as a full ball;
+  - C's Ring as the bright ring at the dome's foot;
+  - the beam texture, rising from the generator's own `beam` attachment (the Phalanx and Carapace blockouts);
+  - the swirl decal turning at the top;
+  - the speck and ripple textures (a hit is one ripple particle lying flat on the dome).
+- **Generator core:** it now glows green → orange → red with the charge, with no placeholder ball.
+- **Meshes:** built from their IDs at runtime, once, in their own thread (I don't touch FTGG Art). Domes wait for them.
+- **Your rules over the contract:** the dome stays neutral white, its opacity follows charge, and it isn't ForceField. Everything is tinted white, not team colour.
+- **Flowing rings:** they stay thin adornments. C's Ring scales its tube with the ring, a 2.4-stud ribbon on a 120-stud dome. I've asked models-C for a thinner one.
+- **S-82** (the field after your drawing) plus sim-A's stalling fix (28bc934), shield profile, 12 s: 271 of 288 shells turned back, 0 broke through, the dome stayed at 100%.
+  - Before the fix, about half the shells stalled in the field. I sent sim-A a reproduction from `ShieldWire.spec`, now in sim-A's `Shield.spec` too.
+  - In sim-A's measurements, off-centre shots now carry on round the dome: 51° at half the radius off-centre, 14° near the edge. Head-on shots come back at 180°.
+- **Screenshots:** `debug_out/screens/c94_shield_assets.jpg` (the scenario), `c94_shield_assets_side.jpg` (generator, beam, swirl, rings).
+- **Debug:** `Invoke("shielddomes")` now also counts hits and keeps the last breaches (mass, position) for sim-A.
 
 ## 2026-10-23: shield profile checked at 50x strength (S-80, S-81)
 

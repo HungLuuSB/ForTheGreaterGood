@@ -1,31 +1,38 @@
 --!strict
--- Shield domes (C-90; first a prototype, C-87 to C-89). The look:
---   - a translucent neutral white dome (no team colour, the user's call)
---     whose opacity follows strength: invisible at 0%, full from 50%;
+-- Shield domes (C-90, on C's assets since C-94; first a prototype, C-87 to
+-- C-89). The look:
+--   - C's hemisphere dome, neutral white (no team colour, the user's call),
+--     opacity following strength: invisible at 0%, full from 50%;
 --   - a bright edge on its outline as the camera sees it (two camera-facing
---     ring adornments);
---   - thin glowing rings flowing from the top down the dome;
---   - a curved beam rising from the emitter to the top, a swirling vortex
---     at the top, floating specks inside, a slow subtle pulse;
---   - the emitter's plasma core (green full, orange, red empty) and a
---     capacity bar above the dome;
---   - hits: a ripple at the impact point on the dome, red-hot hexagon plates
---     round it (Core/Shield) and a brief brightness pulse.
+--     ring adornments) and C's ring at the foot of the dome;
+--   - thin rings flowing from the top down the dome (adornments: C's Ring
+--     mesh scales its tube with the ring, a 2.4-stud ribbon on a 120-stud
+--     dome, so it is only the foot ring until a thinner one comes);
+--   - C's light beam rising from the emitter (a generator's `beam`
+--     attachment) to the top, C's swirl turning at the top, C's specks
+--     floating inside, a slow subtle pulse;
+--   - the emitter's core (the generator's `core` piece, else a placeholder
+--     ball) glowing green full, orange, red empty; a capacity bar above;
+--   - hits: C's ripple at the impact point, red-hot hexagon plates round it
+--     (Core/Shield) and a brief brightness pulse.
 -- Timings, flicker, ring flow, detail and culling are Core/ShieldLook's.
 --
---   local s = ShieldFx.new(emitter, radius, teamColor)  -- an Attachment or a Vector3
+--   ShieldFx.ready()  -- C's meshes loaded (false until then: wait before new())
+--   local s = ShieldFx.new(emitter, radius, teamColor, base?)  -- an Attachment or a Vector3
 --   s:deploy()  s:setStrength(0.6)  s:hit(worldPos, intensity)  s:collapse()  s:destroy()
+--   s:setEmitter(attachment?)  -- the beam's start (a model streamed in or out)
+--
+-- Assets: docs/contracts/fx.md, IDs from assets/fx/shield/roblox_assets.json.
+-- The meshes are made from their IDs at runtime (CreateMeshPartAsync, once,
+-- in its own thread); if that fails the dome is a ball and there is no
+-- foot ring.
 --
 -- Performance (the user's hard rules): every instance a shield uses is made
 -- in new() and only hidden or moved afterwards (rings are a fixed pool of
 -- ShieldLook.RINGS; the hexagon plates one shared pool made with the first
 -- shield). ONE render loop updates every shield and skips those off
 -- screen; at strategic distance only the dome and its edge are drawn.
--- Client-side only.
---
--- Placeholder parts and Studio textures for now; C's assets replace them
--- when they merge (docs/contracts/fx.md, assets/fx/shield/roblox_assets.json).
--- Ring and edge adornments keep the default ZIndex and culling off.
+-- Client-side only. Adornments keep the default ZIndex and culling off.
 
 local AssetService = game:GetService("AssetService")
 local Players = game:GetService("Players")
@@ -36,20 +43,31 @@ local ShieldLook = require("../Core/ShieldLook")
 
 local ShieldFx = {}
 
+-- C's shield assets (assets/fx/shield/roblox_assets.json)
+ShieldFx.ASSETS = table.freeze({
+	dome = "rbxassetid://85081416332401",
+	ring = "rbxassetid://134054369788950",
+	swirl = "rbxassetid://113814321169730",
+	beam = "rbxassetid://100117547859650",
+	speck = "rbxassetid://90660161303538",
+	ripple = "rbxassetid://129891612158965",
+})
+
 ShieldFx.DOME_COLOR = Color3.fromRGB(225, 232, 240)
-ShieldFx.DOME_OPACITY = 0.2 -- the dome ball at full strength (1 - transparency)
+ShieldFx.DOME_OPACITY = 0.2 -- the dome at full strength (1 - transparency)
 ShieldFx.RING_COLOR = Color3.fromRGB(235, 245, 255)
 ShieldFx.RING_OPACITY = 0.55
+ShieldFx.RING_TUBE = 0.004 -- a flowing ring's width, × R
+ShieldFx.FOOT_OPACITY = 0.8 -- the ring where the dome meets the ground
 ShieldFx.EDGE_OPACITY = 0.95
-ShieldFx.RIPPLES = 4 -- per shield, a fixed pool
+ShieldFx.SWIRL_SIZE = 0.4 -- the swirl disc's diameter, × R (C's checked assembly: 16 on 40)
+ShieldFx.SWIRL_OPACITY = 0.85
 ShieldFx.RIPPLE_SECONDS = 0.6
+ShieldFx.RIPPLE_SIZE = 0.25 -- a ripple's size at intensity 1, × R
 ShieldFx.PLATE_POOL = 160 -- hexagon plates shared by every shield
 ShieldFx.PLATE_THICKNESS = 0.12
-ShieldFx.SWIRL_ARCS = 3 -- per shield: glowing arcs turning under the top (the vortex)
 
 local WHITE = Color3.new(1, 1, 1)
-
-type Ripple = { adorn: CylinderHandleAdornment, at: Vector3, normal: Vector3, born: number, size: number }
 
 export type ShieldFx = {
 	radius: number,
@@ -61,26 +79,30 @@ export type ShieldFx = {
 	pulse: number, -- a hit's brightness pulse, 0..1
 	strategic: boolean,
 	visible: boolean,
-	emitter: Attachment?,
-	position: Vector3,
+	emitter: Attachment?, -- the beam's start (a generator's `beam` attachment)
+	coreTarget: BasePart?, -- the emitter's part, tinted by strength (the generator's core)
+	coreOriginal: Color3?, -- its own colour, put back when the dome lets go of it
+	position: Vector3, -- the dome's centre: the generator's base
 	model: Shield.Dome, -- hit patches (Core/Shield)
 	folder: Folder,
 	anchor: Part, -- invisible, at the centre: the adornee
-	dome: Part,
+	dome: BasePart,
+	domeMesh: boolean, -- C's hemisphere (else a ball)
 	specks: ParticleEmitter,
-	core: Part,
+	core: Part, -- placeholder core, shown without an emitter part
 	coreLight: PointLight,
 	beam: Beam,
 	beamTop: Attachment,
-	beamBase: Attachment,
+	beamBase: Attachment, -- the placeholder core's top
 	swirl: Part,
-	swirlEmitter: ParticleEmitter,
-	arcs: { CylinderHandleAdornment },
+	swirlDecal: Decal,
 	edge: CylinderHandleAdornment,
 	edgeGlow: CylinderHandleAdornment,
 	rings: { CylinderHandleAdornment },
+	foot: BasePart?, -- C's ring at the dome's foot
 	flash: CylinderHandleAdornment,
-	ripples: { Ripple },
+	ripple: ParticleEmitter,
+	rippleAt: Attachment,
 	bar: Frame?,
 	barFill: Frame?,
 	barText: TextLabel?,
@@ -88,6 +110,7 @@ export type ShieldFx = {
 	deploy: (ShieldFx, boolean?) -> (),
 	collapse: (ShieldFx) -> (),
 	setStrength: (ShieldFx, number) -> (),
+	setEmitter: (ShieldFx, Attachment?) -> (),
 	hit: (ShieldFx, Vector3, number) -> (),
 	destroy: (ShieldFx) -> (),
 }
@@ -105,7 +128,7 @@ type Plate = { parts: { BasePart } }
 local plates: { Plate } = {}
 local platesLit = 0
 
-ShieldFx.stats = { shields = 0, drawn = 0, culled = 0, strategic = 0, ms = 0, msMax = 0, frames = 0, plates = "", platesLit = 0 }
+ShieldFx.stats = { shields = 0, drawn = 0, culled = 0, strategic = 0, ms = 0, msMax = 0, frames = 0, plates = "", platesLit = 0, meshes = "" }
 
 local function bare(p: BasePart)
 	p.Anchored = true
@@ -113,6 +136,36 @@ local function bare(p: BasePart)
 	p.CanQuery = false
 	p.CanTouch = false
 	p.CastShadow = false
+end
+
+-- C's meshes, made once from their IDs in their own thread (it yields)
+local templates: { dome: MeshPart?, ring: MeshPart? } = {}
+local templatesState = "idle"
+
+local function loadTemplates()
+	templatesState = "loading"
+	for _, key in { "dome", "ring" } do
+		local ok, part = pcall(function()
+			return (AssetService :: any):CreateMeshPartAsync((Content :: any).fromUri((ShieldFx.ASSETS :: any)[key]))
+		end)
+		if ok and part then
+			bare(part)
+			part.Material = Enum.Material.SmoothPlastic
+			local slots: any = templates
+			slots[key] = part
+		end
+	end
+	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, rings {if templates.ring then "mesh" else "adornments"}`
+	templatesState = "done"
+end
+
+-- Whether C's meshes are loaded (or failed for good). The first call starts
+-- loading them; make shields once it returns true.
+function ShieldFx.ready(): boolean
+	if templatesState == "idle" then
+		task.spawn(loadTemplates)
+	end
+	return templatesState == "done"
 end
 
 local function adornment(parent: Instance, adornee: BasePart, color: Color3): CylinderHandleAdornment
@@ -214,27 +267,38 @@ function Methods.setStrength(s: ShieldFx, strength: number)
 	s.strength = math.clamp(strength, 0, 1)
 end
 
+-- The beam's start: a generator model's `beam` attachment (its parent, the
+-- core, glows by strength), or nil for the placeholder core.
+function Methods.setEmitter(s: ShieldFx, emitter: Attachment?)
+	if s.coreTarget and s.coreOriginal then
+		s.coreTarget.Color = s.coreOriginal
+	end
+	s.emitter = emitter
+	local part = if emitter then emitter.Parent else nil
+	s.coreTarget = if part and part:IsA("BasePart") then part else nil
+	s.coreOriginal = if s.coreTarget then s.coreTarget.Color else nil
+	s.beam.Attachment0 = emitter or s.beamBase
+	local placeholder = s.coreTarget == nil
+	s.core.Transparency = if placeholder then 0 else 1
+	s.coreLight.Enabled = placeholder
+end
+
 -- A hit at `worldPos` (projected onto the dome); `intensity` 1 = a typical shell.
 function Methods.hit(s: ShieldFx, worldPos: Vector3, intensity: number)
 	if s.state ~= "up" and s.state ~= "deploying" then
 		return
 	end
-	local now = clock
 	local center = s.position
 	local d = worldPos - center
 	local n = if d.Magnitude > 1e-6 then d.Unit else Vector3.yAxis
-	-- the oldest ripple is reused
-	local oldest = s.ripples[1]
-	for _, r in s.ripples do
-		if r.born < oldest.born then
-			oldest = r
-		end
-	end
-	oldest.at = center + n * s.radius
-	oldest.normal = n
-	oldest.born = now
-	oldest.size = math.clamp(intensity, 0.3, 4)
-	Shield.hit(s.model, { x = worldPos.X, y = worldPos.Y, z = worldPos.Z }, intensity, now)
+	local at = center + n * s.radius
+	-- C's ripple: one particle lying flat on the dome (its velocity along the normal)
+	local right = if math.abs(n.Y) < 0.95 then Vector3.yAxis:Cross(n).Unit else Vector3.xAxis:Cross(n).Unit
+	s.rippleAt.WorldCFrame = CFrame.fromMatrix(at + n * 0.2, right, n)
+	local size = s.radius * ShieldFx.RIPPLE_SIZE * math.sqrt(math.clamp(intensity, 0.3, 4))
+	s.ripple.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, size) })
+	s.ripple:Emit(1)
+	Shield.hit(s.model, { x = worldPos.X, y = worldPos.Y, z = worldPos.Z }, intensity, clock)
 	s.pulse = math.min(1, s.pulse + 0.3 * intensity)
 end
 
@@ -242,6 +306,9 @@ function Methods.destroy(s: ShieldFx)
 	local i = table.find(shields, s)
 	if i then
 		table.remove(shields, i)
+	end
+	if s.coreTarget then
+		s.setEmitter(s, nil) -- leave the generator's core as it was
 	end
 	s.folder:Destroy()
 	if s.bar then
@@ -258,9 +325,21 @@ end
 
 local step: (dt: number) -> ()
 
--- A shield dome round `emitter` (an Attachment, followed each frame, or a
--- position): `radius` studs, down until deploy().
-function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: Color3?): ShieldFx
+local function ringPart(folder: Folder, template: MeshPart): MeshPart
+	local p = template:Clone()
+	p.Material = Enum.Material.Neon
+	p.Color = ShieldFx.RING_COLOR
+	p.Transparency = 1
+	p.Parent = folder
+	return p
+end
+
+-- A shield dome of `radius` studs round `base` (default: the emitter's
+-- position), the beam rising from `emitter` (an Attachment, e.g. a
+-- generator's `beam`, or a position for a placeholder core); down until
+-- deploy(). Call once ShieldFx.ready() is true for C's meshes.
+function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: Color3?, base: Vector3?): ShieldFx
+	ShieldFx.ready()
 	if root == nil then
 		local f = Instance.new("Folder")
 		f.Name = "ShieldFx"
@@ -278,7 +357,8 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		g.Parent = playerGui
 		gui = g
 	end
-	local position = if typeof(emitter) == "Vector3" then emitter else (emitter :: Attachment).WorldPosition
+	local attachment = if typeof(emitter) == "Instance" then emitter :: Attachment else nil
+	local position = base or (if attachment then attachment.WorldPosition else emitter :: Vector3)
 	local folder = Instance.new("Folder")
 	folder.Name = "Shield"
 	folder.Parent = root
@@ -289,108 +369,126 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 	anchor.Size = Vector3.one
 	anchor.Position = position
 	anchor.Parent = folder
-	-- the dome
-	local dome = Instance.new("Part")
+	-- the dome: C's hemisphere (centre half-way up), else a ball
+	local dome: BasePart
+	local domeMesh = templates.dome ~= nil
+	if templates.dome then
+		local m = templates.dome:Clone()
+		m.Size = Vector3.new(2 * radius, radius, 2 * radius)
+		m.Position = position + Vector3.new(0, radius / 2, 0)
+		dome = m
+	else
+		local p = Instance.new("Part")
+		bare(p)
+		p.Shape = Enum.PartType.Ball
+		p.Size = Vector3.one * 2 * radius
+		p.Position = position
+		dome = p
+	end
 	dome.Name = "Dome"
-	bare(dome)
-	dome.Shape = Enum.PartType.Ball
 	dome.Material = Enum.Material.SmoothPlastic
 	dome.Color = ShieldFx.DOME_COLOR
 	dome.Transparency = 1
-	dome.Size = Vector3.one * 2 * radius
-	dome.Position = position
 	dome.Parent = folder
+	-- C's specks inside
 	local specks = Instance.new("ParticleEmitter")
-	specks.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	specks.Texture = ShieldFx.ASSETS.speck
 	specks.Shape = Enum.ParticleEmitterShape.Sphere
 	specks.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+	specks.ShapeInOut = Enum.ParticleEmitterShapeInOut.Inward
 	specks.Rate = math.clamp(radius / 3, 4, 40)
 	specks.Lifetime = NumberRange.new(3, 6)
 	specks.Speed = NumberRange.new(0.3, 1)
 	specks.SpreadAngle = Vector2.new(180, 180)
 	specks.LightEmission = 1
 	specks.Color = ColorSequence.new(WHITE)
-	specks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.35), NumberSequenceKeypoint.new(0.8, 0.35), NumberSequenceKeypoint.new(1, 0) })
-	specks.Transparency = NumberSequence.new(0.3)
+	specks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.5), NumberSequenceKeypoint.new(0.8, 0.5), NumberSequenceKeypoint.new(1, 0) })
+	specks.Transparency = NumberSequence.new(0.2)
 	specks.Enabled = false
 	specks.Parent = dome
-	-- the emitter's core
+	-- the placeholder core (hidden when the emitter is a generator's part)
 	local core = Instance.new("Part")
 	core.Name = "Core"
 	bare(core)
 	core.Shape = Enum.PartType.Ball
 	core.Material = Enum.Material.Neon
 	core.Size = Vector3.one * math.clamp(radius / 12, 1.5, 6)
-	core.Position = position + Vector3.new(0, core.Size.Y * 0.6, 0)
+	core.Position = (if attachment then attachment.WorldPosition else position) + Vector3.new(0, core.Size.Y * 0.6, 0)
 	core.Parent = folder
 	local coreLight = Instance.new("PointLight")
 	coreLight.Range = math.clamp(radius / 4, 8, 20)
 	coreLight.Brightness = 2
 	coreLight.Parent = core
-	-- the beam: from the emitter, bending, to the top (its top end climbs on deploy)
+	-- C's beam: from the emitter, bending, to the top (its top end climbs on deploy)
 	local beamBase = Instance.new("Attachment")
-	beamBase.Position = Vector3.new(0, core.Size.Y, 0)
 	beamBase.Parent = anchor
+	beamBase.WorldPosition = core.Position + Vector3.new(0, core.Size.Y / 2, 0)
 	local beamTop = Instance.new("Attachment")
 	beamTop.Parent = anchor
 	local beam = Instance.new("Beam")
-	beam.Attachment0 = beamBase
 	beam.Attachment1 = beamTop
 	beam.FaceCamera = true
 	beam.LightEmission = 1
 	beam.LightInfluence = 0
-	beam.Color = ColorSequence.new(WHITE, Color3.fromRGB(200, 230, 255))
-	beam.Width0 = math.clamp(radius / 60, 0.4, 2)
-	beam.Width1 = math.clamp(radius / 100, 0.25, 1.2)
-	beam.Texture = "" -- solid; C's beam texture replaces it
-	beam.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 0.25) })
-	beam.CurveSize0 = radius * 0.25
-	beam.CurveSize1 = -radius * 0.1
-	beam.Segments = 20
+	beam.Color = ColorSequence.new(WHITE)
+	beam.Width0 = math.clamp(radius / 55, 0.8, 3)
+	beam.Width1 = math.clamp(radius / 100, 0.5, 1.5)
+	beam.Texture = ShieldFx.ASSETS.beam
+	beam.TextureMode = Enum.TextureMode.Wrap
+	beam.TextureLength = beam.Width0 * 2
+	beam.TextureSpeed = 1
+	beam.Transparency = NumberSequence.new(0)
+	beam.CurveSize0 = radius * 0.4
+	beam.CurveSize1 = -radius * 0.12
+	beam.Segments = 24
 	beam.Enabled = false
 	beam.Parent = anchor
-	-- the vortex at the top: a disc of particles that turns with its part
+	-- C's swirl at the top: a disc with the swirl on its top face, turning
 	local swirl = Instance.new("Part")
 	swirl.Name = "Swirl"
 	bare(swirl)
 	swirl.Transparency = 1
-	swirl.Size = Vector3.new(radius * 0.5, 0.2, radius * 0.5)
-	swirl.Position = position + Vector3.new(0, radius * 0.97, 0)
+	swirl.Size = Vector3.new(radius * ShieldFx.SWIRL_SIZE, 0.05, radius * ShieldFx.SWIRL_SIZE)
+	swirl.Position = position + Vector3.new(0, radius - 0.3, 0)
 	swirl.Parent = folder
-	local swirlEmitter = Instance.new("ParticleEmitter")
-	swirlEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-	swirlEmitter.Shape = Enum.ParticleEmitterShape.Disc
-	swirlEmitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
-	swirlEmitter.LockedToPart = true
-	swirlEmitter.Rate = 30
-	swirlEmitter.Lifetime = NumberRange.new(1.2, 2)
-	swirlEmitter.Speed = NumberRange.new(0)
-	swirlEmitter.RotSpeed = NumberRange.new(60, 120)
-	swirlEmitter.Rotation = NumberRange.new(0, 360)
-	swirlEmitter.LightEmission = 1
-	swirlEmitter.Color = ColorSequence.new(WHITE, Color3.fromRGB(190, 220, 255))
-	swirlEmitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.3, math.clamp(radius * 0.03, 0.5, 3)), NumberSequenceKeypoint.new(1, 0) })
-	swirlEmitter.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.3, 0.2), NumberSequenceKeypoint.new(1, 1) })
-	swirlEmitter.Enabled = false
-	swirlEmitter.Parent = swirl
-	-- the edge, the rings, the ground flash, the ripples: adornments on the anchor
+	local swirlDecal = Instance.new("Decal")
+	swirlDecal.Face = Enum.NormalId.Top
+	swirlDecal.Texture = ShieldFx.ASSETS.swirl
+	swirlDecal.Color3 = WHITE
+	swirlDecal.Transparency = 1
+	swirlDecal.Parent = swirl
+	-- the edge and the ground flash: adornments on the anchor
 	local edge = adornment(folder, anchor, WHITE)
 	local edgeGlow = adornment(folder, anchor, ShieldFx.DOME_COLOR)
+	local flash = adornment(folder, anchor, WHITE)
+	-- the flowing rings (adornments) and C's ring at the foot
 	local rings = {}
+	local foot: BasePart? = nil
 	for i = 1, ShieldLook.RINGS do
 		rings[i] = adornment(folder, anchor, ShieldFx.RING_COLOR)
 	end
-	local arcs = {}
-	for i = 1, ShieldFx.SWIRL_ARCS do
-		local a = adornment(folder, anchor, WHITE)
-		a.Angle = 130
-		arcs[i] = a
+	if templates.ring then
+		local f = ringPart(folder, templates.ring)
+		f.Name = "Foot"
+		f.Size = Vector3.new(2.02 * radius, math.max(0.4, radius * ShieldFx.RING_TUBE * 2), 2.02 * radius)
+		f.Position = position + Vector3.new(0, 0.15, 0)
+		foot = f
 	end
-	local flash = adornment(folder, anchor, WHITE)
-	local ripples = {}
-	for i = 1, ShieldFx.RIPPLES do
-		ripples[i] = { adorn = adornment(folder, anchor, WHITE), at = position, normal = Vector3.yAxis, born = -math.huge, size = 1 }
-	end
+	-- C's ripple: one emitter, moved to each hit
+	local rippleAt = Instance.new("Attachment")
+	rippleAt.Parent = anchor
+	local ripple = Instance.new("ParticleEmitter")
+	ripple.Texture = ShieldFx.ASSETS.ripple
+	ripple.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
+	ripple.EmissionDirection = Enum.NormalId.Top
+	ripple.Speed = NumberRange.new(0.01)
+	ripple.SpreadAngle = Vector2.zero
+	ripple.Lifetime = NumberRange.new(ShieldFx.RIPPLE_SECONDS)
+	ripple.Rate = 0
+	ripple.LightEmission = 1
+	ripple.Color = ColorSequence.new(WHITE)
+	ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1) })
+	ripple.Parent = rippleAt
 	-- the capacity bar
 	local bar, fill, text = nil, nil, nil
 	if gui then
@@ -438,12 +536,15 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		pulse = 0,
 		strategic = false,
 		visible = true,
-		emitter = if typeof(emitter) == "Instance" then emitter :: Attachment else nil,
+		emitter = nil,
+		coreTarget = nil,
+		coreOriginal = nil,
 		position = position,
 		model = Shield.newDome({ x = position.X, y = position.Y, z = position.Z }, radius),
 		folder = folder,
 		anchor = anchor,
 		dome = dome,
+		domeMesh = domeMesh,
 		specks = specks,
 		core = core,
 		coreLight = coreLight,
@@ -451,17 +552,19 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		beamTop = beamTop,
 		beamBase = beamBase,
 		swirl = swirl,
-		swirlEmitter = swirlEmitter,
-		arcs = arcs,
+		swirlDecal = swirlDecal,
 		edge = edge,
 		edgeGlow = edgeGlow,
 		rings = rings,
+		foot = foot,
 		flash = flash,
-		ripples = ripples,
+		ripple = ripple,
+		rippleAt = rippleAt,
 		bar = bar,
 		barFill = fill,
 		barText = text,
 	}, Methods) :: any
+	s:setEmitter(attachment)
 	table.insert(shields, s)
 	ShieldFx.stats.shields = #shields
 	if loop == nil then
@@ -478,16 +581,10 @@ local function hideDetail(s: ShieldFx)
 	for _, r in s.rings do
 		r.Visible = false
 	end
-	for _, r in s.ripples do
-		r.adorn.Visible = false
-	end
 	s.flash.Visible = false
-	for _, a in s.arcs do
-		a.Visible = false
-	end
 	s.beam.Enabled = false
 	s.specks.Enabled = false
-	s.swirlEmitter.Enabled = false
+	s.swirlDecal.Transparency = 1
 end
 
 -- One shield's frame; false if it was skipped (down or off screen). Hit
@@ -499,13 +596,8 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		s.since = now
 	end
 	local since = now - s.since
-	if s.emitter then
-		local p = s.emitter.WorldPosition
-		if (p - s.position).Magnitude > 0.05 then
-			s.position = p
-			s.anchor.Position = p
-			s.model.center = { x = p.X, y = p.Y, z = p.Z }
-		end
+	if s.emitter and s.emitter.Parent == nil then
+		s:setEmitter(nil) -- its model went (streamed out, pooled)
 	end
 	local center = s.position
 	local beamK, scale, flashK, collapseFlicker = ShieldLook.phase(s.state, since)
@@ -513,8 +605,12 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 	-- the core shows the strength whatever the state
 	local r8, g8, b8 = Shield.coreColor(s.strength)
 	local coreColor = Color3.fromRGB(r8, g8, b8)
-	s.core.Color = coreColor
-	s.coreLight.Color = coreColor
+	if s.coreTarget then
+		s.coreTarget.Color = coreColor
+	else
+		s.core.Color = coreColor
+		s.coreLight.Color = coreColor
+	end
 	local camPos = cam.CFrame.Position
 	local toCam = camPos - center
 	local D = toCam.Magnitude
@@ -525,6 +621,9 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		s.dome.Transparency = 1
 		s.edge.Visible = false
 		s.edgeGlow.Visible = false
+		if s.foot then
+			s.foot.Transparency = 1
+		end
 		hideDetail(s)
 		return false
 	end
@@ -542,11 +641,28 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 	local opacity = ShieldLook.opacity(s.strength) * ShieldLook.flicker(s.strength, now) * collapseFlicker
 	local breathe = 1 + 0.06 * math.sin(now * 1.6)
 	local domeAlpha = math.min(1, ShieldFx.DOME_OPACITY * opacity * breathe * (1 + 1.5 * s.pulse))
-	local size = Vector3.one * math.max(2 * R, 0.01)
-	if s.dome.Size ~= size then
-		s.dome.Size = size
+	local Rs = math.max(R, 0.005)
+	if s.domeMesh then
+		local size = Vector3.new(2 * Rs, Rs, 2 * Rs)
+		if s.dome.Size ~= size then
+			s.dome.Size = size
+			s.dome.Position = center + Vector3.new(0, Rs / 2, 0)
+		end
+	else
+		local size = Vector3.one * 2 * Rs
+		if s.dome.Size ~= size then
+			s.dome.Size = size
+		end
 	end
 	s.dome.Transparency = if R > 0.05 then 1 - domeAlpha else 1
+	if s.foot then
+		local footAlpha = ShieldFx.FOOT_OPACITY * opacity
+		s.foot.Transparency = if R > 0.05 then 1 - footAlpha else 1
+		local size = Vector3.new(2.02 * Rs, s.foot.Size.Y, 2.02 * Rs)
+		if s.foot.Size ~= size then
+			s.foot.Size = size
+		end
+	end
 	-- the edge: the sphere's silhouette from the camera, a circle facing it,
 	-- R²/D towards the camera, of radius R·√(1 − R²/D²)
 	if R > 0.05 and D > R * 1.02 then
@@ -588,15 +704,15 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		hideDetail(s)
 		return true
 	end
-	-- the beam: its top end climbs to the dome's top on deploy
-	local topY = s.radius * 0.97
-	local baseY = s.beamBase.Position.Y
+	-- the beam: its top end climbs from the emitter to the dome's top on deploy
+	local startY = (s.beam.Attachment0 :: Attachment).WorldPosition.Y - center.Y
+	local topY = s.radius - 0.5
 	s.beam.Enabled = beamK > 0.01
-	s.beamTop.Position = Vector3.new(0, baseY + (topY - baseY) * beamK, 0)
+	s.beamTop.Position = Vector3.new(0, startY + (topY - startY) * beamK, 0)
 	-- the rings: slide down, resized to the curve at their height, fade near the ground
 	local speed, bright = ShieldLook.ringFlow(s.strength)
 	s.phase += dt * speed / ShieldLook.RING_PERIOD
-	local ringW = math.max(0.15, R * 0.004)
+	local ringW = math.max(0.15, R * ShieldFx.RING_TUBE)
 	for i, ring in s.rings do
 		local _, rf, yf, a = ShieldLook.ringAt(i, #s.rings, s.phase)
 		local alpha = ShieldFx.RING_OPACITY * a * bright * opacity
@@ -622,42 +738,12 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 	else
 		s.flash.Visible = false
 	end
-	-- the vortex turns; specks drift
+	-- C's swirl turns at the top; specks drift
 	local up = s.state == "up"
-	s.swirlEmitter.Enabled = up
 	s.specks.Enabled = up
+	s.swirlDecal.Transparency = if up then 1 - ShieldFx.SWIRL_OPACITY * opacity else 1
 	if up then
-		s.swirl.CFrame = CFrame.new(center + Vector3.new(0, s.radius * 0.97, 0)) * CFrame.Angles(0, now * 1.2 * speed, 0)
-	end
-	-- the vortex: arcs under the top, following the curve, inner ones turning faster
-	for i, a in s.arcs do
-		local rr = R * (0.08 + 0.1 * i)
-		local alpha = 0.75 * opacity * (if up then 1 else 0)
-		if rr > 0.2 and alpha > 0.01 then
-			local y = math.sqrt(math.max(R * R - rr * rr, 0)) - 0.4
-			a.CFrame = CFrame.new(0, y, 0) * FLAT * CFrame.Angles(0, 0, now * speed * (2.6 - 0.5 * i) + i * 2.1)
-			a.Radius = rr
-			a.InnerRadius = math.max(rr - math.max(0.2, R * 0.006), 0)
-			a.Transparency = 1 - alpha
-			a.Visible = true
-		else
-			a.Visible = false
-		end
-	end
-	-- ripples: rings growing out from the hit along the dome
-	for _, r in s.ripples do
-		local age = now - r.born
-		if age < ShieldFx.RIPPLE_SECONDS then
-			local k = age / ShieldFx.RIPPLE_SECONDS
-			local rr = math.max(0.5, s.radius * 0.3 * r.size ^ 0.5 * (1 - (1 - k) ^ 2))
-			r.adorn.CFrame = CFrame.lookAt(r.at, r.at + r.normal) - center
-			r.adorn.Radius = rr
-			r.adorn.InnerRadius = math.max(rr - math.max(0.3, rr * 0.12), 0)
-			r.adorn.Transparency = 0.1 + 0.9 * k
-			r.adorn.Visible = true
-		else
-			r.adorn.Visible = false
-		end
+		s.swirl.CFrame = CFrame.new(center + Vector3.new(0, R - 0.3, 0)) * CFrame.Angles(0, -now * 0.9 * speed, 0)
 	end
 	-- this shield's hit patches, plates from the shared pool
 	Shield.expire(s.model, now)
