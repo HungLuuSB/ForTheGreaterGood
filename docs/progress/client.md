@@ -4,6 +4,22 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, shield hits cave in)
+
+- **Shield hits (C-132),** after your second look at the GIF (its 2nd and 3rd shots):
+  - **the wave runs inward:** the outer ring lights first, each ring in after it, the centre last and hottest;
+  - **cells grow toward the centre:** small at the rim, bigger inside (1.3× at the centre, 0.75× at the rim), with the inner rings spread slightly wider;
+  - **the patch caves in like a bowl,** deepest at the centre, then springs back past flat once (a small bounce), as if the dome bends in to repel the shot.
+- **Not checked in Studio yet:** you were in a playtest (`shield_one`), so I didn't touch it. The specs cover the timing, sizes and bounce. Start a new playtest to see it.
+
+## Summary (2026-10-23, shield hits like BAR's plasma deflector)
+
+- **Shield hits (C-131),** after your BAR GIF:
+  - the ripple is gone;
+  - a hit now lights a patch of fine **outlined** honeycomb cells on the dome: 2.6-stud cells whose edges touch, 3 to 5 rings depending on the shot (37 to 91 cells);
+  - the cells are white-hot at the centre and fade outward, still curved with the dome. Each hit sends its wave through the patch as before.
+- **Screenshots:** `debug_out/screens/shield_honeycomb_1.jpg`, `shield_honeycomb_2.jpg` (the shield scene under fire, from outside).
+
 ## Summary (2026-10-23, big-map fog fixed)
 
 - **Fog on big maps (C-130):**
@@ -1674,15 +1690,15 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-50. **Open (sent 2026-10-23).** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
+50. **Built (S-116, merging): beams end at the first up enemy dome (FIRE hit = false on its surface, absorbed SHIELD_HIT); Radiance's pierce stops there; the client's glancing leg (C-129) shows once merged.** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
 
-49. **Open (sent 2026-10-23).** **Radiance a hit-ray; manual targets override (the user):**
+49. **Built (S-115, merging): Radiance beamDuration 3, pierce along its fixed line; manual targets kept until STOP, a new ATTACK or the target's death.** **Radiance a hit-ray; manual targets override (the user):**
     - Radiance `beamDuration` 3.0; during the beam, damage goes to every enemy the beam's line crosses (a miss on a blip still hurts what's on the line). An amendment to S-113.
     - An attack order on a unit beats the unit's own target choice. Out of range, the unit picks its own targets; back in range, it returns to the manual target. STOP clears it.
 
-48. **Open (sent 2026-10-23).** **The skirmish AI builds too many Furnaces (the user):** hard or normal AI puts up many `chs_generator`s instead of extractors on free deposits. Sim-A to check the Chaos AI's economy choice. Nothing on the client.
+48. **Built (S-114, S-116, merging): two Furnaces then extractors first; an enemy structure contests a deposit only within its weapon range + 40 (a hold-fire Bulwark by the base froze the Chaos AI's expansion).** **The skirmish AI builds too many Furnaces (the user):** hard or normal AI puts up many `chs_generator`s instead of extractors on free deposits. Sim-A to check the Chaos AI's economy choice. Nothing on the client.
 
-47. **Open (sent 2026-10-23).** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today). Inferno's beam stays orange (the user changed their mind on green).
+47. **Built (S-113, merging): beamDuration (Radiance 2.5, then 3 in S-115; Inferno 1.5, range 480), Radiance targets radar blips.** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today). Inferno's beam stays orange (the user changed their mind on green).
 
 46. **Built (S-111, merging): radar SAMs air only (AIR 1,150 / 1,100); anti-nukes `ord_providence` / `chs_cerberus` and mobile `ord_custodian` / `chs_chimera`, INTERCEPTOR / INTERCEPTED, stock in STOCK; client side to do.** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
     - **Radar SAMs** (`ord_radar_sam`, `chs_radar_sam`): drop `intercepts`, air only; damage retuned so a T2 radar SAM one-shots T1 air.
@@ -1846,3 +1862,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `3f2d1ea` (Radiance ray bluer, 3 s, narrowing fade; beamSeconds reads S-113's beamDuration; C-128); test_client 214, build passed (client render only).
 - Ready to merge: `5890cad` (beam deflection off shield domes, drawn; active once sim request 50 lands; C-129); test_client 215, build passed (client render only).
 - Ready to merge: `6bb8932` (big-map fog: at most 4 chunks, C-130); test_client 215, build passed (client render only).
+- Ready to merge: `0971cf3` (shield hits: no ripple, outlined honeycomb cells, C-131); test_client 214, build passed (client render only).
