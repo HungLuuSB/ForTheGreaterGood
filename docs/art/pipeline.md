@@ -56,6 +56,10 @@ Getting the models into the game place "For The Greater Good" is the client sess
 | Textures | one set of four 1024 × 1024 maps shared by the three pieces | one palette texture for all units |
 | Instances | 3 MeshParts (blockout: 13 Parts) | — |
 
+### Shared runner (2026-10-22)
+
+`assets/models/tools/unit.py` holds the faction looks (the approved tanks' paints, specs and accents, M-15, M-18), the detail helpers (bolts, seams, rings) and the whole flow after the geometry: bake, previews framed on the unit's size, FBX with the emissive probe, `rig.json`. A unit's `build.py` only describes its pieces (`unit.PieceSpec(name, parent, pivot, build, details)`) and calls `unit.run(...)`. The structures use it (extractors, generators, solars, vehicle plants, Bulwark, Spike); the tanks and the four vehicles derived from them keep their own scripts.
+
 ### 100 units, render CPU time per frame
 
 "FTGG Art", Edit mode, flat area, 100 Lancers in a 10 × 10 grid 12 studs apart, game camera pitch 55°, three runs of 6–8 s per case (run 2 in reverse order; run 3 after the Studio restart, with the textures drawing). Studio reports no GPU time, and its frame rate is throttled to about 15 fps when its window isn't focused, so frame time itself says nothing; `Stats.RenderCPUFrameTime` is the render thread's CPU work per frame either way.
