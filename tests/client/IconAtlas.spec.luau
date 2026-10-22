@@ -21,6 +21,13 @@ return function(t: any)
 		end
 	end)
 
+	t.test("a def the sheet has no tile for yet shows its domain's plain frame", function()
+		local Icons = require("../../src/client/Core/Icons")
+		t.equal(Icons.ofDef({ id = "chs_new_unit", domain = "naval" }, 2, 24).tile, IconAtlas.contacts.ship)
+		t.equal(Icons.ofDef({ id = "ord_new_wall", domain = "structure" }, 1).tile, IconAtlas.contacts.struct)
+		t.equal(Icons.ofDef({ id = "ord_new_tank" }, 1).tile, IconAtlas.contacts.vehicle)
+	end)
+
 	t.test("contacts have a tile per frame", function()
 		for f, key in IconAtlas.contacts do
 			t.expect(IconAtlas.tiles[key] ~= nil, `no contact tile for {f}`)

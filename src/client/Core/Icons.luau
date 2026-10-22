@@ -88,10 +88,18 @@ function Icons.table(defs: any): Table
 	return { names = NetIcons.names(defs), byDef = byDef, sample = sample, codes = Icons.codes(defs) }
 end
 
+-- the plain frame for a def the sheet has no tile for yet (a unit added after
+-- the last import): by its domain
+local DOMAIN_FRAME: { [string]: string } = { ground = "vehicle", air = "air", naval = "ship", structure = "struct" }
+
 -- A unit type's icon in `team` color, `base` pixels wide before its tier
 -- scale (the build grid and unit panel use this too).
 function Icons.ofDef(def: any, team: number, base: number?): Style
 	local e = IconAtlas.byDef[def.id]
+	if e == nil then
+		local tile = IconAtlas.contacts[DOMAIN_FRAME[def.domain] or "vehicle"]
+		return { kind = "unit", tile = tile, size = base or Icons.BASE, team = team, alpha = 1, selected = false }
+	end
 	return { kind = "unit", tile = e.tile, size = math.floor((base or Icons.BASE) * e.scale + 0.5), team = team, alpha = 1, selected = false }
 end
 

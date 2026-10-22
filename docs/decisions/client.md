@@ -651,3 +651,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** NetIn queues ALERT events (protocol 23, S-68) in `world.alertQueue` (cell decoded to its centre; stalls carry cell 0); Core/Alerts maps each kind to the feed's kind, text (with the unit's name when the event names one) and whether it has a place to jump to (`at`; stalls don't), and drains the queue each frame. The client's inference (health drops, deaths, the economy ratio, launch warnings) is removed; the server rate-limits. The strategic UNDER_ATTACK flag makes minimap dots and strategic icons blink red (4 Hz phase; the icon layer redraws only on a phase change). S-70: a def with `deathBlast` adds an impact burst of its `aoe` on its death. S-72: `sensors.radarDrain` counts in the stats' upkeep. S-73: the lobby has `friendlyFire` (default on) passed as `match.friendlyFire`.
 
 **Why:** request 39 landed; the server knows who hit whom, sees through no fog it shouldn't, and limits alerts the same for every client. sim-A asked the client to draw the death blast.
+
+### C-86 — Draft 3 icons wired in; units missing from the sheet show a plain frame (2026-10-23)
+
+**Decision:** The atlas points at the imported draft 3 sheet (`87919807696998`). Units added after an import get a `STOPGAP` entry in `tools/icons/render.mjs` that reuses an existing tile, so the sheet stays the imported one until the catalogue lists them (S-75: Locust, Cyclops, Barrier, Citadel). As a backstop, `Icons.ofDef` gives a def with no atlas entry its domain's dashed frame (ground → vehicle, air, naval → ship, structure → struct) instead of erroring.
+
+**Why:** in the user's 2-client test, the Locust (new in main) had no atlas entry and `Icons.ofDef` errored every frame in the build menu. Each new unit would otherwise need a re-import before the client works, and a missing icon must not break the UI.
