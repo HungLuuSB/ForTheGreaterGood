@@ -4,6 +4,14 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, shield hits cave in)
+
+- **Shield hits (C-132),** after your second look at the GIF (its 2nd and 3rd shots):
+  - **the wave runs inward:** the outer ring lights first, each ring in after it, the centre last and hottest;
+  - **cells grow toward the centre:** small at the rim, bigger inside (1.3× at the centre, 0.75× at the rim), with the inner rings spread slightly wider;
+  - **the patch caves in like a bowl,** deepest at the centre, then springs back past flat once (a small bounce), as if the dome bends in to repel the shot.
+- **Not checked in Studio yet:** you were in a playtest (`shield_one`), so I didn't touch it. The specs cover the timing, sizes and bounce. Start a new playtest to see it.
+
 ## Summary (2026-10-23, shield hits like BAR's plasma deflector)
 
 - **Shield hits (C-131),** after your BAR GIF:

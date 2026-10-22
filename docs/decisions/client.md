@@ -1048,3 +1048,12 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The plate pool is 560, with opacity 0.85 (thin lines don't bloom into a block).
 
 **Why:** the user's reference GIF of BAR's plasma deflector: no ripple, a lit honeycomb patch where the shot lands. "The current ripple takes too much space, drop it and enhance the hexes."
+
+### C-132 — Shield hits cave in: the wave runs inward, bigger centre cells, a bowl that bounces (2026-10-23)
+
+**Decision:**
+- **Timing:** `Shield.plateAt(age, ring, strength, rings)` delays a cell by (rings − ring) × RING_DELAY, so the rim lights first and the centre last. The centre stays hottest.
+- **Sizes:** `Shield.cellScale` = 1.3 − 0.55 × ring / rings. The layout spreads the arc by (1 + 0.3 × (1 − d / reach)), so inner rings sit wider apart. Render sets each cell's Size from its scale.
+- **Dent:** depth DENT (1.4) × strength × (1 − (ring / (rings + 1))²) × e^(−7t) × sin(16t): in first, then a small bounce past flat. `plateLook` keeps the largest |dent|.
+
+**Why:** the user, from the reference GIF's later shots: "smaller outside, bigger inside... pushed back inward... curved in to repel the shot".

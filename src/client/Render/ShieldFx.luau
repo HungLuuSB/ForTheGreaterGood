@@ -130,6 +130,7 @@ local root: Folder? = nil
 type Plate = { parts: { BasePart } }
 local plates: { Plate } = {}
 local platesLit = 0
+local plateSize = Vector3.new(Shield.PLATE, ShieldFx.PLATE_THICKNESS, Shield.PLATE * 2 / math.sqrt(3)) -- a mesh cell at scale 1
 
 ShieldFx.stats = { shields = 0, drawn = 0, culled = 0, strategic = 0, ms = 0, msMax = 0, frames = 0, plates = "", platesLit = 0, meshes = "" }
 
@@ -756,6 +757,7 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 				local plate = plates[platesLit]
 				local nrm = Vector3.new(p.normal.x, p.normal.y, p.normal.z)
 				local cf = CFrame.fromMatrix(Vector3.new(p.pos.x, p.pos.y, p.pos.z) + nrm * (0.15 - dent), Vector3.new(p.right.x, p.right.y, p.right.z), nrm)
+				local size = plateSize * p.scale -- bigger toward the centre (C-132)
 				local hr, hg, hb = Shield.color(heat)
 				local color = Color3.fromRGB(hr, hg, hb)
 				for k, part in plate.parts do
@@ -763,6 +765,9 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 					table.insert(plateCFrames, if #plate.parts == 1 then cf else cf * CFrame.Angles(0, math.rad(60 * (k - 1)), 0))
 					part.Color = color
 					part.Transparency = 1 - alpha * ShieldFx.PLATE_OPACITY
+					if #plate.parts == 1 then
+						part.Size = size
+					end
 				end
 			end
 		end
