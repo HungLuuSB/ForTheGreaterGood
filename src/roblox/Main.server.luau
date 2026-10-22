@@ -461,7 +461,7 @@ end)
 -- Cheat commands (C-119; the sim's CHEAT, net.md 9a) reach the sim only
 -- from allow-listed players (CheatConfig), in Studio or a lobby match whose
 -- host turned Cheats on; the sim also rejects them unless the match allows.
-local CHEAT_CMD = (Schema.CmdType :: any).CHEAT or 17
+local CHEAT_CMD = Schema.CmdType.CHEAT
 local function mayCheat(player: Player): boolean
 	if not CheatConfig.allow[player.UserId] then
 		return false
@@ -512,6 +512,9 @@ replayRemote.OnServerEvent:Connect(function(player: Player, msg: any)
 	if msg.op == "save" and current then
 		local file = PlayerReplay.serialize(current)
 		local name = string.format("Match %d · %s · %d:%02d", matchId, sim.mapId, math.floor((current.lastTick - current.firstTick + 1) / 15 / 60), math.floor((current.lastTick - current.firstTick + 1) / 15) % 60)
+		if sim.cheats.used then
+			name ..= " · cheats used" -- the replay list says so (C-120)
+		end
 		table.insert(mine, { name = name, file = file })
 		replayRemote:FireClient(player, { op = "saved", name = name, bytes = buffer.len(file) })
 		-- the DataStore copy only in a live server: Studio refuses it without API
@@ -636,12 +639,20 @@ if RunService:IsStudio() then
 end
 
 local acc = 0
+local cheatSpeed: number? = nil -- the last /speed the sim took (S-102; it never reads it itself)
 local stepTime, peak, steps = 0, 0, 0
 local reportAt = os.clock() + 10
 
 RunService.Heartbeat:Connect(function(dt: number)
 	for player, t in tokens do
 		tokens[player] = math.min(40, t + dt * CMD_RATE)
+	end
+	local wanted = sim.cheats and sim.cheats.speed
+	if wanted ~= cheatSpeed then
+		-- a new match (no /speed yet) goes back to normal speed
+		speed = if wanted ~= nil then wanted elseif cheatSpeed ~= nil then 1 else speed
+		cheatSpeed = wanted
+		remotes:SetAttribute("SimSpeed", speed)
 	end
 	acc += dt * speed
 	local n = 0

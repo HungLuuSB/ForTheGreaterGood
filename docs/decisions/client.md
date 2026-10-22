@@ -944,3 +944,15 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Icons:** stopgap tiles (Heavy Turret, IR SAM Site) until the icon catalogue has these towers.
 
 **Why:** the user's Pulsar reference (a bright line from the barrel, retract when off); new defs must have icons, and existing tiles avoid a re-import.
+
+### C-120 — The cheat command line sends the sim's CHEAT commands; results print in its log; "cheats used" on results and replay names (2026-10-23)
+
+**Decision:**
+- **Sending:** `Core/CheatInput.prepare` fills in unit ids and the cursor's "at"; `CheatText.parse` (S-102) builds the command; `Commands.encode` sends it on the Cmd channel (never during a replay). The console echoes the resolved line ("→ give ord_lancer 3 at 43,24"); parse errors print in red.
+- **Results:** CHEAT_RESULT events queue in `world.cheatResults`; Main prints `CheatText.describe` lines, green when OK, red otherwise.
+- **Speed:** the Roblox entry's tick driver takes `sim.cheats.speed` when it changes, and goes back to 1× for a match without one.
+- **"Cheats used":** the statistics Overview adds "CHEATS USED (name ×n)" from `Stats.report`'s `cheats` and `Stats.series`' `cheated`; a saved replay's name ends in "· cheats used".
+- **Log height:** the log shows only the newest lines that fit under the top HUD.
+- **Permissions:** unchanged from C-119 (allow list AND Studio or the lobby's Cheats toggle; the server drops anyone else's CHEAT payloads).
+
+**Why:** the user's brief. The player replay file has no cheat flag of its own, so the name carries it rather than changing the sim's file format.

@@ -20,6 +20,7 @@ local CheatConsole = {}
 
 CheatConsole.LOG_LINES = 16 -- /help alone is 13
 CheatConsole.LOG_SECONDS = 12 -- a line fades out after this long
+CheatConsole.TOP_CLEAR = 76 -- the log never climbs over the resource bar (its oldest lines clip)
 
 export type UI = {
 	gui: ScreenGui,
@@ -27,6 +28,7 @@ export type UI = {
 	box: TextBox,
 	suggest: Frame,
 	log: Frame,
+	logRoom: number, -- pixels the log may take (placeLog)
 	lines: { { label: TextLabel, at: number } },
 	history: { string },
 	historyAt: number,
@@ -36,6 +38,14 @@ export type UI = {
 	suggestions: { CheatInput.Suggestion },
 	sent: boolean, -- this line went already (Return seen before FocusLost)
 }
+
+-- The log's bottom `above` pixels up from the screen bottom, its height
+-- capped to the room under the top HUD.
+local function placeLog(ui: UI, above: number)
+	ui.log.Position = UDim2.new(0.5, 0, 1, -above)
+	local screen = ui.gui.AbsoluteSize.Y
+	ui.logRoom = math.max(40, screen - above - CheatConsole.TOP_CLEAR)
+end
 
 local function suggestionRows(ui: UI)
 	for _, c in ui.suggest:GetChildren() do
@@ -68,7 +78,7 @@ local function suggestionRows(ui: UI)
 	ui.suggest.Visible = #ui.suggestions > 0
 	ui.suggest.Size = UDim2.new(1, 0, 0, #ui.suggestions * 22 + 8)
 	-- the log stays above the suggestions
-	ui.log.Position = UDim2.new(0.5, 0, 1, -230 - (if ui.suggest.Visible then #ui.suggestions * 22 + 8 else 0))
+	placeLog(ui, 230 + (if ui.suggest.Visible then #ui.suggestions * 22 + 8 else 0))
 end
 
 -- Prints `text` in the log (`color`: dim for echoes, text for results).
@@ -122,7 +132,7 @@ end
 function CheatConsole.close(ui: UI)
 	ui.bar.Visible = false
 	ui.suggest.Visible = false
-	ui.log.Position = UDim2.new(0.5, 0, 1, -230)
+	placeLog(ui, 230)
 	ui.box:ReleaseFocus()
 end
 
@@ -209,7 +219,7 @@ function CheatConsole.new(defs: any, submit: (string) -> ()): UI
 	sc.Parent = suggest
 	Kit.pad(suggest, 4)
 	Kit.list(suggest, 0)
-	local ui: UI = { gui = gui, bar = bar, box = box, suggest = suggest, log = log, lines = {}, history = {}, historyAt = 1, lastGive = nil, submit = submit, defs = defs, suggestions = {}, sent = false }
+	local ui: UI = { gui = gui, bar = bar, box = box, suggest = suggest, log = log, logRoom = 1000, lines = {}, history = {}, historyAt = 1, lastGive = nil, submit = submit, defs = defs, suggestions = {}, sent = false }
 	box:GetPropertyChangedSignal("Text"):Connect(function()
 		-- Tab completes: Roblox types a tab character into the box
 		if string.find(box.Text, "\t", 1, true) then
@@ -260,6 +270,7 @@ function CheatConsole.new(defs: any, submit: (string) -> ()): UI
 		end
 	end)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
+	placeLog(ui, 230)
 	return ui
 end
 
@@ -277,6 +288,13 @@ function CheatConsole.step(ui: UI)
 			line.label.TextTransparency = fade
 			line.label.TextStrokeTransparency = 0.6 + 0.4 * fade
 		end
+	end
+	-- the newest lines that fit under the top HUD; older ones hide
+	local used = 2 * Kit.SPACE.xs
+	for i = #ui.lines, 1, -1 do
+		local label = ui.lines[i].label
+		used += label.AbsoluteSize.Y + 2
+		label.Visible = used <= ui.logRoom
 	end
 	ui.log.Visible = #ui.lines > 0 -- no empty backing
 end

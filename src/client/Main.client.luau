@@ -62,6 +62,8 @@ local ReplayBar = require("./UI/ReplayBar")
 local SettingsMenu = require("./UI/SettingsMenu")
 local CheatConsole = require("./UI/CheatConsole")
 local CheatInput = require("./Core/CheatInput")
+local CheatText = require("@shared/Net/CheatText")
+local Commands = require("./Core/Commands")
 local Kit = require("./UI/Kit")
 local Crater = require("./Render/Crater")
 local ReplayPlayer = require("./Core/ReplayPlayer")
@@ -358,7 +360,19 @@ local function submitCheat(text: string)
 		end
 		return
 	end
-	CheatConsole.print(cheatConsole, `stub: would send "{line}" (the sim's cheat commands aren't merged yet)`, Kit.COLOR.accent)
+	local command, why = CheatText.parse(line, defs, api.state.selection)
+	if command == nil then
+		CheatConsole.print(cheatConsole, why or "not a cheat command (/help)", Kit.COLOR.defeat)
+		return
+	end
+	if replay then
+		CheatConsole.print(cheatConsole, "not while watching a replay", Kit.COLOR.defeat)
+		return
+	end
+	if line ~= CheatInput.strip(text) then
+		CheatConsole.print(cheatConsole, "  → " .. line, Kit.COLOR.dim) -- the id and cursor position filled in
+	end
+	cmd:FireServer(Commands.encode(command)) -- the sim answers with CHEAT_RESULT
 end
 cheatConsole = CheatConsole.new(defs, submitCheat)
 -- the same commands for Roblox's chat, if it is ever turned back on
@@ -882,6 +896,12 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	NukeWarning.step(nukeWarning, fx, world, now, workspace.CurrentCamera)
 	AttackPreviewRender.step(attackPreview, world, api.state.selection, if api.state.commandMode == "attack" then Controls.hover() else nil, workspace.CurrentCamera)
 	CheatConsole.step(cheatConsole)
+	-- the sim's answers to cheat commands (S-102)
+	for _, e in world.cheatResults do
+		local ok = e.cheatResult == Schema.CheatResult.OK
+		CheatConsole.print(cheatConsole, CheatText.describe(e), if ok then Kit.COLOR.on else Kit.COLOR.defeat)
+	end
+	table.clear(world.cheatResults)
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom

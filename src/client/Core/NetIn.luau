@@ -165,6 +165,9 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
 			local x, z = g:decode(e.cell :: number, 128, 128)
 			table.insert(world.alertQueue, { kind = e.alert :: number, x = x, z = z, defIndex = e.defIndex or 0, tick = tick })
+		elseif kind == EK.CHEAT_RESULT then
+			-- the answer to this player's cheat command (protocol 27, S-102)
+			table.insert(world.cheatResults, e)
 		elseif kind == EK.SHIELD then
 			-- a generator's dome (protocol 24, S-79): charge and up / recharging
 			world.shields[e.unitId :: number] = { charge = (e.charge :: number) / 255, flags = e.shieldFlags :: number }

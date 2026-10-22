@@ -30,6 +30,12 @@ return function(t: any)
 		t.equal(CheatInput.unitId("nothing", defs), nil)
 	end)
 
+	t.test("names who cheated in the results, nil when nobody did", function()
+		t.equal(CheatInput.cheaters({ players = { { name = "A", stats = { cheats = 0 } } }, series = {} }), nil)
+		t.equal(CheatInput.cheaters({ players = { { name = "A", stats = { cheats = 3 } }, { name = "B", stats = { cheats = 0 } } } }), "A ×3")
+		t.equal(CheatInput.cheaters({ players = {}, series = { cheated = true } }), "", "the series flag alone")
+	end)
+
 	t.test("/help lists every command with an example", function()
 		local lines = CheatInput.help()
 		t.expect(#lines >= #CheatInput.COMMANDS + 1, "a line each")

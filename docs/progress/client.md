@@ -4,6 +4,17 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, cheats work)
+
+- **The cheat commands are live (C-120)**, now that sim-A's S-102 is in main. Tested in Studio:
+  - `/give Lancer 3` places 3 Lancers at the cursor (the log shows "→ give ord_lancer 3 at 43,24");
+  - `/res all max`, `/god on`, `/reveal on`, `/kill selected`, `/kill 2`, `/speed 2` (the game really runs at 2×) and `/speed 1` all work;
+  - mistakes say why in red ("unknown unit", "speed must be 0.25..8", "no AI on that team").
+- **Results:** green when a command worked, red when it didn't.
+- **"Cheats used":** the statistics Overview says "CHEATS USED (name ×n)" next to the match length, and a saved replay's name ends in "· cheats used".
+- **Log:** on a short window it shows only the newest lines that fit, so it never covers the resource bar.
+- **Screenshots:** `debug_out/screens/cheats_results.jpg`, `cheats_autocomplete.jpg`, `cheats_kill_speed.jpg`, `cheats_stats.jpg` (the stats panel shown with sample results, since a test profile never ends).
+
 ## Summary (2026-10-23, cheat command line; shield hits)
 
 - **Cheat command line (C-119), BAR's /cheat:**

@@ -128,6 +128,23 @@ function CheatInput.prepare(text: string, defs: any, cursorX: number?, cursorZ: 
 	return s
 end
 
+-- Who cheated in a finished match's results (Main.server's: `series` is
+-- Stats.series, each player's `stats` Stats.report's): nil when nobody did,
+-- else "Name ×n, ..." ("" when only the series' flag says so; C-120).
+function CheatInput.cheaters(results: any): string?
+	local names = {}
+	for _, p in results.players or {} do
+		local n = p.stats and p.stats.cheats or 0
+		if n > 0 then
+			table.insert(names, `{p.name} ×{n}`)
+		end
+	end
+	if #names == 0 and not (results.series and results.series.cheated) then
+		return nil
+	end
+	return table.concat(names, ", ")
+end
+
 -- /help's lines.
 function CheatInput.help(): { string }
 	local out = { "Cheat commands (the match must allow cheats):" }
