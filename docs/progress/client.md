@@ -304,6 +304,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `bdc88e8` (BAR models built from the mesh manifest with Rojo-written materials, glow driver and headlights, C-103; includes m-models `44880cc`; touches CLAUDE.md and the three project files, new `place/`); test_client 187, test 404, build passed.
 - Ready to merge: `51e4d07` (one shield hit reads as one impact: faint outer hex rings, C-104); test_client 187, build passed.
 - Ready to merge: `18195e5` (UI kit; settings, statistics panel and lobby rebuilt on it; server stat samples; sim request 41, C-105; touches src/roblox Main.server and Lobby); test_client 191, test 404, build passed.
+- Ready to merge: `b5b5d48` (review follow-ups: modal panels, fitted layouts, graphics options, model load order, glow vs team color, pulse 3, Stats.series, C-106 `767ae09`; merged with main at protocol 26, includes m-models `0af6ed7`); test_client 192, test 407, build passed.
 
 ## Tasks
 
