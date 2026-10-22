@@ -943,7 +943,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			api.actions.updatePlacement(hover.X, hover.Z)
 		end
 	end
-	PlacementGhost.step(ghost, api)
+	PlacementGhost.step(ghost, api, now, controls.areaFrom, controls.areaTo)
 	QueuedBuilds.step(queued, api)
 	t0 = os.clock()
 	RangeOverlay.step(ranges, api, now, knownEnemy)

@@ -4,6 +4,24 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, extractor upgrades in place)
+
+- **Upgrading extractors (C-121).** A T2 builder can now build an advanced extractor on top of your own T1:
+  - **Placing:** while you place an Advanced Extractor, every T1 extractor it can upgrade gets a pulsing green disc. The ghost snaps onto a T1 near the cursor and draws over it.
+  - **Shift-drag:** with an extractor ghost, a drag is now a circle (as in BAR's area extractor), not a row. It queues an extractor on every free deposit and every T1 it upgrades inside the circle, nearest the builder first.
+  - **"Upgrade" on the command card:** T2 builders only. Drag a circle to queue an upgrade on every own T1 inside it, nearest first, or click an extractor to upgrade just that one.
+  - **Build menu:** the tile has a green "▲ UPGRADE" badge, and the tooltip says "Upgrades a T1 extractor in place".
+- **sim-A's S-108 is coming with S-104** and changes the rules. The client already follows it, falling back to today's rule until it merges:
+  - upgrades are listed per def (`upgradesFrom`), and only your own extractors qualify;
+  - the T1 keeps producing under the frame and leaves only when the T2 finishes;
+  - the T1 is 2×2 and the T2 3×3, so the build goes on the deposit cell.
+  - The nanoframe (next task) will draw over the T1.
+- **Two fixes found while testing:**
+  - The build ghost of a blockout model left all its parts but the base far away (they're anchored, not welded); the ghost now moves the whole model.
+  - Queued builds on a spot where a T1 stood dropped off the waypoint display at once.
+- **Sim request 46** (your SAM and anti-nuke message) is filed with sim-A.
+- **Screenshots:** `debug_out/screens/upgrade_targets.jpg` (discs, badge, Upgrade button), `upgrade_ghost.jpg`, `upgrade_area.jpg` (the Upgrade circle), `upgrade_started.jpg`, `upgrade_drag.jpg` (an extractor Shift-drag).
+
 ## Summary (2026-10-23, cheats work)
 
 - **The cheat commands are live (C-120)**, now that sim-A's S-102 is in main. Tested in Studio:
@@ -1572,6 +1590,11 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+46. **Open (sent 2026-10-23).** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
+    - **Radar SAMs** (`ord_radar_sam`, `chs_radar_sam`): drop `intercepts`, air only; damage retuned so a T2 radar SAM one-shots T1 air.
+    - **Anti-nuke:** intercepts any enemy strategic missile whose target point is inside its cover range, with a certain hit and a delay after each shot, so several nukes on one spot overwhelm it. Tier, cost, range, delay and names are sim-A's call (Order and Chaos versions).
+    - Client side once it lands: blockouts, icons, interceptor visuals, a cover-range ring.
 
 44. **Done and used (S-95; C-111).** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
     - Today a MOVE / FIGHT / PATROL given to a factory sets one rally point (Orders.give; PATROL becomes fight).
