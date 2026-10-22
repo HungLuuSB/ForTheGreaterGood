@@ -4,6 +4,20 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, build menu portraits, turn fix, shield and defense requests)
+
+- **Build menu, BAR style (C-107):** each tile shows the unit's model at a three-quarter angle (the BAR mesh, or its blockout until the mesh loads), its type icon at the bottom right, and its cost stacked at the bottom left (supply white, power yellow). Four larger tiles per row.
+- **Hover a tile** to see its name, description, cost and build time at the selected builder's power ("51s at 100 buildpower"), health, weapons (DPS, range, reload) and speed / sight.
+- **"Off" on factories:** only converters use the on/off switch, so every factory showed "Off" in red. Units that can't switch now show a neutral grey "On / Off".
+- **Turrets turning the long way:** the client drew turret turns straight from one angle to the next. Aims crossing ±180° (170° to −170°) swung 340°. Turns now take the short way. The server's aim already did; the client also extrapolated a turning hull the long way across ±180°, now fixed too.
+- **Sent to sim-A (requests 42, 43):**
+  - **Shield, made simple:** destroy every projectile on contact.
+  - **Build speed:** a Lancer takes 51 s at the vehicle plant; asked to roughly halve T1 build times or double the plants' power.
+  - **T2 defenses** (you corrected T3 to T2): a Pulsar-style beam tower per faction (long-range precise beam, heavy hit, big power cost per shot; switched off it retracts into an armored shell), then more T2 defenses.
+- **Sent to models-C (request 2):** the beam tower meshes. C proposed pieces with the retract pose and queued them after the T1 aircraft.
+- **When those land, client side:** the beam effect (your reference: a thin bright line from the barrel), the retract pose, the on/off button.
+- **Screenshots:** `debug_out/screens/buildmenu_tooltip.jpg`, `buildmenu_structures.jpg`.
+
 ## Summary (2026-10-23, your C-103..105 review follow-ups)
 
 - **Your review (2026-10-23):** C-103, C-104 and C-105 approved.
@@ -633,6 +647,28 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: build menu portraits and tooltip; On / Off; short-way turns; shield and T2 defense requests (C-107)
+
+- **Your notes** (after a shield test):
+  - shield simple (destroy on contact);
+  - build speed too slow, and factories say OFF;
+  - units sometimes rotate the long way;
+  - build menu BAR style (model preview at an angle plus icon), stats on hover;
+  - more T2 defenses like the Pulsar (corrected from T3).
+- **Build menu** (`UI/BuildMenu`, `UI/Portrait`):
+  - **Tiles:** 66 px, 4 per row. Each holds a ViewportFrame with the unit's model template (`Render/Models`: the mesh when ready, else the blockout), team-colored, the camera at a three-quarter view from the front right and above, framed to the model's bounds. Portraits rebuild only when the def, the team or the template changes (a mesh replacing its stand-in).
+  - **On each tile:** the type glyph (18 px) at the bottom right; supply (white) and power (yellow) stacked at the bottom left; the hotkey top left; the queued count top right. The name moved to the tooltip.
+  - **Tooltip** (its own screen at DisplayOrder 30, over the unit panel and command card, kept on screen): the name in yellow-green as in BAR's unit panel, the description, cost with build time at the selected builders' highest build power, health, and `UnitStats.lines` (new `UnitStats.ofDef`: a type's sheet with no live state).
+  - **Height:** the menu fits between the minimap and the unit panel (top-bar inset included) and scrolls when short.
+- **On / Off** (`UI/CommandCard`): the sim's TOGGLED_ON is used by converters only, so other selections show "On / Off" with a grey bar instead of a red "Off".
+- **Short-way turns:**
+  - `Core/PieceAnim.setGoal` turns from the current angle by the wrapped difference;
+  - `Core/Interp` extrapolates heading by the wrapped step;
+  - `PieceAnim.spec`: 170° → −170° at 20°/s takes 1 s and ends at −170°;
+  - the server's `Shared/Combat/Aim` already wrapped. A hull that turns the long way would be the sim's movement; not seen in testing.
+- **Requests:** sim 42 (shield destroys every projectile on contact; T1 build speed) and 43 (T2 defenses: Pulsar-style beam tower with an off / retract state, then more); models 2 (the tower meshes; C's proposed pieces: `base`, `turret` sinking y −2.4 when retracted, `barrel`, `muzzle`, client-only shell lids `shellL` / `shellR`).
+- **Screenshots** (`debug_out/screens/`, `fog` profile): `buildmenu_tooltip.jpg` (vehicle plant menu, Lancer tooltip), `buildmenu_structures.jpg` (Masons' Economy tab).
+
 ## 2026-10-23: review follow-ups: modal panels, fitted layouts, graphics options, model loading order, glow against team color (C-106)
 
 - **Asked** (your review of C-103..105, approved): modal panels; fill the space; graphics options for detailed models, glow and headlights; load on-screen and own-faction models first. Then: white glow where a team color clashes, and the factory pulse capped at about 3.
@@ -1209,6 +1245,10 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Build menu (C-107):** `debug_out/screens/buildmenu_*.jpg`. Your calls:
+  - **Portrait angle and size:** 66 px tiles, 4 per row (`UI/Portrait`, `UI/BuildMenu`).
+  - **What the tooltip lists.**
+
 - **Review follow-ups (C-106):** `debug_out/screens/uikit2_*.jpg`. Your calls:
   - **Scrim darkness** (45%, `Kit.COLOR.scrimTransparency`).
   - **The six Combat charts** (Units · Alive is derived).
@@ -1286,9 +1326,34 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the models session
 
+2. **T2 defense meshes (2026-10-23, the user asked; sim request 43 brings the defs):**
+   - a Pulsar-style beam tower per faction, with a tall emitter barrel, glowing charge rails on the base (`power` glow), and a **retract pose**: an armored shell the turret sinks into when switched off (a piece the client moves down, e.g. `turret` dropping into `base`, plus shell plates);
+   - then the other T2 defenses as the sim defines them;
+   - BAR style, as for the T1 pairs, with glow parts and the manifest.
+
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+43. **Open.** **More T2 defenses, a Pulsar-style beam tower first (2026-10-23, the user asked with BAR's Pulsar as the reference; the user corrected T3 to T2):** today the defenses above T1 are thin (Order's Citadel is T3).
+    - **A long-range beam tower per faction, T2** (as BAR's Pulsar):
+      - a precise ground-to-ground beam (`type = "BEAM"`) with very long range (Pulsar: 1400 against Citadel-class ranges here), a very heavy hit and a long reload (Pulsar: 10,800 damage every 9.9 s, small area);
+      - a big **power cost per shot** (Pulsar: 1500), so the economy matters;
+      - **"Turn it OFF to retract into its armored shell":** off (TOGGLED_ON clear) it can't fire but takes far less damage (about 4× effective HP). This gives the on/off button a use beyond converters;
+      - high enough to fire over other defenses;
+      - poor against radar contacts (a precision weapon: the Pinpointer accuracy from S-59 applies).
+    - **More T2 defenses** for both factions, e.g. a heavy laser or plasma turret, a long-range AA site, a T2 artillery emplacement. Names in the faction styles (Order Latin / virtue / heraldic; Chaos myth beasts / ruin).
+    - **Builders:** the T2 builders' buildOptions.
+    - **Client side:** I'll draw the beam (the user's reference: a thin bright line with a glow from the barrel to the target, held for the shot), the retract pose in the piece script, and the on/off button. The models stream needs the meshes (models request 2).
+
+42. **Open.** **Shield: destroy every projectile on contact; faster unit production (2026-10-23, the user):**
+    - **Shield, made simple:** "destroy projectile on contact, that will ease thing out." Every projectile that reaches an up enemy dome is destroyed at the surface (SHIELD_HIT ABSORBED, as the light shells already are, S-85), whatever its mass: no braking field, no turning back, no breach.
+      - Keep the charge drain per hit (by mass) and the collapse at 0% / rise at 25%.
+      - The client already draws an absorbed hit at the surface; it will drop the field's bow-shock look once you confirm.
+      - Please keep the hitscan / beam stop from S-89.
+    - **Build speed:** "build speed for a single unit take too much time." A Lancer is 5,100 build time at the vehicle plant's 100 build power: **51 s each**, longer on a stall.
+      - BAR's T1 tanks take about 25–30 s at a plant. Halving T1 build times, or doubling the T1 plants' build power, would match.
+      - Your call which, with the balance report.
 
 41. **Done and used (S-88, `Stats.series`; C-106).** **Match statistics over time (2026-10-23, the user asked, C-105):** the statistics panel charts each player's numbers over match time.
     - **Please keep, in `Sim/Stats`, a sample every 150 ticks (10 s)** per player:

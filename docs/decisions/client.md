@@ -907,3 +907,14 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The user also asked for white glow where the team color matches the faction glow, and a lower pulse if 4 blew out (it did, measured on the Order vehicle plant).
 
 **C-106 addendum (2026-10-23):** the user confirmed the factory pulse peak at 3.
+
+### C-107 — Build menu tiles with model portraits and a stats tooltip; On / Off only where it switches; piece turns take the short way (2026-10-23)
+
+**Decision:**
+- **Tiles:** model portraits in ViewportFrames (`UI/Portrait`), the icon bottom right, the cost bottom left, 4 × 66 px tiles.
+- **Tooltip:** a hover tooltip from `UnitStats.ofDef` with build time at the builders' power.
+- **On / Off:** neutral grey unless a converter is selected.
+- **Turns:** `PieceAnim` turn goals wrap to the nearest equivalent angle, and `Interp` extrapolates heading by the wrapped step.
+
+**Why:**
+- The user: BAR-style unit pictures and stats on hover; factories read as "OFF"; units rotated the long way (the client's turn interpolation crossing ±180°).

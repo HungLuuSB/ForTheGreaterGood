@@ -35,7 +35,7 @@ local KEY = Enum.KeyCode.O
 -- the screens the UI scale applies to: the panels; overlays drawn at world
 -- positions (icons, health bars, the selection box, missile labels) and
 -- Roblox's own screens keep screen pixels
-local SCALED = { SettingsButton = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
+local SCALED = { SettingsButton = true, BuildTooltip = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
 local PAGES = { "Camera", "Graphics", "Interface", "Audio", "Keys" }
 
 export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, layouts: { [string]: UIListLayout }, state: Settings.State }

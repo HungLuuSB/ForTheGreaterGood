@@ -152,7 +152,9 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		fire = if fire then fire[1] else "Fire state",
 		movestate = if move then move[1] else "Move state",
 		["repeat"] = "Repeat",
-		toggle = if anyOn then "On" else "Off",
+		-- only converters switch (the sim's TOGGLED_ON bit); for anything else
+		-- "Off" in red read as a stopped factory (the user, C-107)
+		toggle = if not switchable then "On / Off" elseif anyOn then "On" else "Off",
 		cancel = "Cancel",
 		stop = "Stop",
 		attack = "Attack",
@@ -166,7 +168,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		fire = if fire then fire[2] else Color3.fromRGB(110, 110, 110),
 		movestate = if move then move[2] else Color3.fromRGB(110, 110, 110),
 		["repeat"] = if anyRepeat then GREEN else RED,
-		toggle = if anyOn then GREEN else RED,
+		toggle = if not switchable then Color3.fromRGB(110, 110, 110) elseif anyOn then GREEN else RED,
 	}
 	local mouse = game:GetService("UserInputService"):GetMouseLocation()
 	local inset = game:GetService("GuiService"):GetGuiInset()
