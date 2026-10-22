@@ -157,7 +157,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
       - Counters: Pinpointers and fire-control tracking reveal it; IR SAMs (sight) aren't fooled.
 - **Shield domes (S-79, client request 40), placeholder numbers:**
   - **Generators:** Order `ord_phalanx` Phalanx (Architect, T2): radius 120, capacity 1,500 shell masses, recharge 75/s (20 s from empty), 40 power/s while recharging; supply 400, power 5,000, 2,800 health. Chaos `chs_carapace` Carapace (Forgemaster, T2): radius 80, capacity 1,000, recharge 60/s, 25 power/s; supply 280, power 3,500, 2,000 health. Capacity and recharge are 50× my first numbers (your rules: 10× in S-80, then 50× in S-81). Chaos's capacity and price, and keeping the power draw unchanged at 50× the recharge, are my calls. At 75 charge a second, a full Phalanx out-recharges about 30 mortar shells a second.
-  - **Field after your drawing (S-82):** head-on shells slow to a stop and come straight back (at ~40% of their speed); off-centre ones are slowed less and steered round the dome, carrying on forward (mass 1 at 260 studs/s: line 0.5 radii off the centre → 94° from its course, 0.7 → 42°, 0.95 → 18°). Braking 1.5× the prototype's, as you said. Two consequences to check in Studio:
+  - **Field after your drawing (S-82):** head-on shells slow to a stop and come straight back (at ~40% of their speed); off-centre ones are slowed less and steered round the dome, carrying on forward (mass 1 at 260 studs/s: line 0.5 radii off the centre → 51° from its course, 0.7 → 32°, 0.95 → 14°). Braking 1.5× the prototype's, as you said. Two consequences to check in Studio:
     - Glancing shells now carry on **past** the dome and land behind it, outside it, where the S-80 mirror threw them back toward the attackers.
     - At 1.5× braking, one round breaks through a full dome head-on: the Citadel gun (mass 4.3, 480 studs/s). Siege shells, heavy bombs and every other shell still stop. More braking or a deeper band would stop it.
     - The S-80 mirror bounce is gone.
@@ -329,6 +329,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: client C-86 (`e7cb0ff`) → `f9366e8`, C-87 (`306bad4`) → `75f5a13`, C-88 (`0f8c297`) → `3dfdda9`, C-89 (`0c9ec43`) → `6838f11`; models `a6193c4` → `d2b2d4b`, `cda7860` → `d596f47`. All passed test, test_slow and build and were pushed.
 - 2026-10-22: sim S-79 (`1e35978`) → `dc895ef`, client C-90 (`ca84c0f`) → `74d5065`, models `2543ee8` (shield FX assets, blockouts for every def, M-20, M-21) → `6d1d9a4`, sim S-80 (`f7df131`) → `b535eca`. All passed test, test_slow and build and were pushed.
 - 2026-10-22: sim S-81 (`07f05b8`) → `e94b829`, client C-91 (`ff3e146`) → `f1b26f5`. Both passed test, test_slow and build and were pushed.
+- 2026-10-22: client docs (`408449f`) → `769c476`, models `baaf5bb` (Phalanx and Carapace blockouts, shield swirl, meshes) → `fa7d131`, sim S-82 (`6805ff6`) → `06da710`. All passed test, test_slow and build and were pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 
