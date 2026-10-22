@@ -31,7 +31,7 @@ Your review of the overnight batch: BAR style approved for both tanks (M-18), ca
 - Several T2 units' weapons turn `launcher` while their `turret` piece turns nothing (Seraph, Gorgon, Judgement, Hydra), like Halo/Hornet before S-64; the blockouts work either way (M-3). Your call whether to ask the sim session for `turretPiece = "turret", pitchPiece = "launcher"`.
 - Aircraft and ships are blockouts in the same faction language; their proportions (fuselage 7–9 studs, footprint-3 ships 24 long) follow the generic sizes.
 
-**Your steps:** import eleven FBX files from `assets/models/<id>/export/<id>.fbx`: chs_hellmouth (bigger team panels), ord_extractor, chs_extractor, ord_generator, chs_generator, ord_solar, chs_solar, ord_vehplant, chs_vehplant, ord_bulwark, chs_spike. Then save and restart Studio before the review shots.
+**Your steps:** import `assets/fx/shield/export/shield_rings.fbx` (thin ring and band for the client, C-94) and eleven FBX files from `assets/models/<id>/export/<id>.fbx`: chs_hellmouth (bigger team panels), ord_extractor, chs_extractor, ord_generator, chs_generator, ord_solar, chs_solar, ord_vehplant, chs_vehplant, ord_bulwark, chs_spike. Then save and restart Studio before the review shots.
 
 ## Earlier summary (overnight 2026-10-22)
 
