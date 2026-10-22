@@ -922,7 +922,7 @@ Every domain has a **T1 worker** and an **advanced (T2) worker**. Workers build 
 | Shipyard | T1 | Naval Worker, T1 ships, submarine |
 | Advanced Shipyard | T2 | Advanced Naval Worker, T2 ships, carrier |
 
-Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-4: a MOVE / FIGHT / PATROL order given to a factory sets its rally point. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
+Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-95: a factory keeps an order list for its units: move, fight, patrol, guard, repair and attack, appended with shift, replaced by a plain order, cleared by STOP; each new unit rolls out, then takes a copy, in order. It replaced S-4's single rally point. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
 
 ### 9.3 Build rules
 
