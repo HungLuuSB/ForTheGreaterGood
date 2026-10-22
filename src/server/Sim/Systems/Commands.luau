@@ -8,9 +8,18 @@
 -- Effects: fire state, move state, toggle (factories: repeat on / off);
 -- orders through Orders (S-4): MOVE, FIGHT, PATROL, ATTACK, GUARD,
 -- ATTACK_GROUND, REPAIR, RECLAIM and mobile builders' BUILD replace a unit's
--- queue, or append to it with the queue flag; STOP clears it. A move-like
--- order given to a factory sets its rally point; BUILD given to a factory
--- queues the unit. ATTACK and GUARD need a target the sender's team knows.
+-- queue, or append to it with the queue flag; STOP clears it. Orders given
+-- to a factory go on its order list for the units it produces (S-95); BUILD
+-- given to a factory queues the unit. ATTACK and GUARD need a target the
+-- sender's team knows.
+--
+-- Big orders are spread over ticks (S-100, next.md item 3): each tick
+-- applies a player's commands, in the order they came, until UNITS_PER_TICK
+-- of their unit IDs have gone; the rest wait in the queue, still in order,
+-- for the next tick (a later command of that player waits behind them). A
+-- select-all of 800 units, sent as four commands of 200, starts over four
+-- ticks: the same as the four arriving a tick apart. Commands are recorded
+-- in the replay on the tick they are applied, so replays match.
 
 local Schema = require("@shared/Net/Schema")
 local Build = require("../Build")
@@ -27,6 +36,9 @@ local bor, band, bnot = bit32.bor, bit32.band, bit32.bnot
 local TOGGLED_ON = World.State.TOGGLED_ON
 local LINE = Schema.CmdFlag.LINE
 local QUEUE = Schema.CmdFlag.QUEUE
+
+local Commands = {}
+Commands.UNITS_PER_TICK = 200 -- unit IDs per player per tick (S-100)
 
 local KIND_OF: { [number]: string } = { [CT.MOVE] = "move", [CT.FIGHT] = "fight", [CT.PATROL] = "patrol" }
 
@@ -178,13 +190,27 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	end
 end
 
-return function(sim: Types.Sim)
+function Commands.step(sim: Types.Sim)
 	local queue = sim.queue
+	local used: { [number]: number } = {} -- player → unit IDs applied this tick
+	local waiting: { [number]: boolean } = {} -- player → a command of theirs waits: later ones too
+	local keep = {}
 	for _, q in queue do
+		local n = #q.cmd.unitIds
+		local u = used[q.player] or 0
+		if waiting[q.player] or (u > 0 and u + n > Commands.UNITS_PER_TICK) then
+			waiting[q.player] = true
+			table.insert(keep, q) -- next tick (S-100)
+			continue
+		end
+		used[q.player] = u + n
 		Replay.addCommand(sim.replay, sim.tick, q.player, q.payload)
 		apply(sim, q.player, q.cmd)
 		sim.stats.commandsApplied += 1
 	end
 	table.clear(queue)
+	table.move(keep, 1, #keep, 1, queue)
 	Orders.step(sim) -- start and check every unit's head order
 end
+
+return Commands

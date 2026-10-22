@@ -58,7 +58,7 @@ type System = { name: string, every: number, run: (Sim) -> () }
 
 -- Fixed order; never changes at runtime (guide 3.3).
 local SYSTEMS: { System } = {
-	{ name = "Sim.Commands", every = 1, run = require("./Systems/Commands") },
+	{ name = "Sim.Commands", every = 1, run = require("./Systems/Commands").step },
 	{ name = "Sim.Economy", every = 5, run = require("./Systems/Economy") },
 	{ name = "Sim.Sensors", every = 2, run = require("./Systems/Sensors") },
 	{ name = "Sim.Targeting", every = 1, run = require("./Systems/Targeting") },
