@@ -630,6 +630,22 @@ function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 	end
 end
 
+-- The REVEAL cheat (S-102): adds `delta` (1 on, -1 off) to every cell of
+-- the ally team's sight, air sight, sonar and radar maps, so every enemy is
+-- VISIBLE and the client's sight map covers the whole map.
+function Sensors.reveal(sim: Types.Sim, team: number, delta: number)
+	local m = sim.sensors.maps[team]
+	if m == nil then
+		return
+	end
+	for _, kind in { "los", "airLos", "sonar", "radar" } do
+		local map = m[kind]
+		for o = 0, buffer.len(map) - 2, 2 do
+			writeu16(map, o, readu16(map, o) + delta)
+		end
+	end
+end
+
 -- Is point (x, z) in `team`'s line of sight? NetOut shows projectiles and
 -- impacts only where the player's ally team can see (guide 7.2).
 function Sensors.inSight(sim: Types.Sim, team: number, x: number, z: number): boolean

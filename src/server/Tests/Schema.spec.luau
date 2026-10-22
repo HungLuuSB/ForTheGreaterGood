@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 26, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 27, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -387,6 +387,14 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeState, charges)), "01 00 80 08 05 00")
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, charges), Schema.decodeState)[1], charges)
 		local emptyQueue: State = { unitId = 1, queue = {}, queueProgress = 0 }
+		-- version 27: OWNER PRODUCING (S-103): an allied factory's item and progress
+		local producing: State = { unitId = 1, producing = 0x0304, producingProgress = 0x80 }
+		t.equal(hex(encodeOne(Schema.encodeState, producing)), "01 00 80 10 04 03 80")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, producing), Schema.decodeState)[1], producing)
+		-- version 27: CHEAT_RESULT (S-102)
+		local answer: Schema.Event = { kind = Schema.EventKind.CHEAT_RESULT, cheatOp = Schema.CheatOp.GIVE, cheatResult = Schema.CheatResult.OK, count = 3, total = 0x0105 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, answer)), "16 01 00 03 00 05 01")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, answer), Schema.decodeEvent)[1], answer)
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, emptyQueue), Schema.decodeState)[1], emptyQueue)
 		local tactical: Tactical = { unitId = 0x0201, cell = 0x0403, offX = 5, offZ = 6, heading = 7, alt = 9 }
 		t.equal(hex(encodeOne(Schema.encodeTactical, tactical)), "01 02 03 04 05 06 07 01 09")
@@ -529,7 +537,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 22, 1, 0 }, "unknown event kind 22") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24
+		expectRejected(t, Schema.decodeEvent, { 23, 1, 0 }, "unknown event kind 23") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind
@@ -688,7 +696,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 17, 0, 1, 0, 1, 0 }, "unknown cmdType 17") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12)
+		expectRejected(t, cmd, { 18, 0, 1, 0, 1, 0 }, "unknown cmdType 18") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 4, 1, 0, 1, 0 }, "reserved bits")
@@ -709,7 +717,7 @@ return function(t: RunAll.Context)
 
 		expectRejected(t, Schema.decodeState, { 1, 0, 0 }, "mask is empty")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 0 }, "owner field mask is empty") -- 128 is OWNER since protocol 20
-		expectRejected(t, Schema.decodeState, { 1, 0, 128, 16 }, "owner field mask has reserved bits") -- 8 is CHARGES since protocol 21
+		expectRejected(t, Schema.decodeState, { 1, 0, 128, 32 }, "owner field mask has reserved bits") -- 8 is CHARGES since protocol 21, 16 PRODUCING since 27
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 2, 16 }, "states byte has reserved bits")
 		expectRejected(t, Schema.decodeState, { 1, 0, 128, 1, 51, 0 }, "queue of 51 items")
 		expectRejected(t, Schema.decodeState, { 1, 0, Schema.StateField.STOCK, 0 }, "stock slot mask is empty")

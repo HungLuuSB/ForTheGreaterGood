@@ -389,6 +389,46 @@ return function(t: RunAll.Context)
 		t.expect(p.queueProgress ~= nil and math.abs(p.queueProgress / 255 - (sim.build.progress[plant] or 0)) <= 1 / 16 + 1 / 255, "queue progress within a sixteenth")
 	end)
 
+	t.test("allied factories' item in production and its progress reach allies, not enemies (S-103, client request 45)", function()
+		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 }, { id = 3, team = 3, allyTeam = 1 } }
+		local sim = Sim.new({ seed = 9, players = players, mapId = "flat:64" })
+		local g = (sim.map :: any).grid
+		local plant = Spawn.unit(sim, "ord_vehplant", 3, -60, 0, 0)
+		Spawn.unit(sim, "ord_sovereign", 3, -150, -150)
+		Spawn.unit(sim, "chs_ravager", 2, 60, 0, 0)
+		for pid = 1, 3 do
+			camera(sim, pid, 0, 0, 63, 63)
+		end
+		local defs = sim.defs.units
+		local cell = g:encode(0, 0)
+		submit(sim, 3, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = defs.ord_lancer.index, cell = cell, offX = 0, offZ = 0, facing = 0 })
+		local views = { Client.new(g), Client.new(g), Client.new(g) }
+		local exact, leaked, ownerGot = 0, 0, 0
+		for _ = 1, 400 do
+			Sim.step(sim)
+			for pid = 1, 3 do
+				Client.receive(views[pid], sim.net.players[pid].outbox)
+			end
+			local q = sim.build.queue[plant] or {}
+			local u = views[1].units[plant]
+			local head = q[1] or 0
+			local p = if head ~= 0 then sim.build.progress[plant] or 0 else 0
+			if u and u.producing == head and math.abs((u.producingProgress or 0) / 255 - p) <= 1 / 16 + 1 / 255 then
+				exact += 1
+			end
+			if views[2].units[plant] and views[2].units[plant].producing then
+				leaked += 1
+			end
+			if views[3].units[plant] and views[3].units[plant].producing then
+				ownerGot += 1
+			end
+		end
+		t.expect(exact >= 398, `the ally's view matches every tick ({exact} of 400)`)
+		t.equal(views[1].units[plant].producing, (sim.build.queue[plant] or {})[1] or 0, "the last tick too")
+		t.equal(leaked, 0, "the enemy never gets it")
+		t.equal(ownerGot, 0, "the owner has its queue instead")
+	end)
+
 	-- Hitscan flak (FIRE): a Dominion shoots at a Wasp hovering over it.
 	-- Chaos's camera covers the fight, Order's is elsewhere, so only Chaos
 	-- (which sees the ship) gets the shots, with their end points.

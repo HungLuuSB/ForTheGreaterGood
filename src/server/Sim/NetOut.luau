@@ -70,6 +70,7 @@
 
 local Grid = require("@shared/Grid/Grid")
 local Alerts = require("./Alerts")
+local Cheats = require("./Cheats")
 local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
@@ -183,6 +184,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	table.clear(pn.sentTargets)
 	table.clear(pn.sentStock)
 	table.clear(pn.sentOwner)
+	table.clear(pn.sentProducing)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
 	Schema.encodeSnapshot(w, {
@@ -911,6 +913,34 @@ function NetOut.step(sim: Types.Sim)
 		end
 		pn.sentOwner = ownerNow
 
+		-- allied players' factories (S-103, client request 45): the item in
+		-- production and its progress (by sixteenths, like the owner's
+		-- queue), when it changes and with the ENTER
+		local sentProducing = pn.sentProducing
+		local producingNow: { [number]: string } = {}
+		for _, id in pn.tacticalList do
+			local q = sim.build.queue[id]
+			if q == nil or w.owner[id] == pid or w.ally[id] ~= ally then
+				continue
+			end
+			local head = q[1] or 0
+			local p = if head ~= 0 then sim.build.progress[id] or 0 else 0
+			local sig = head .. "@" .. math.floor(p * Stockpile.WIRE_STEPS)
+			producingNow[id] = sig
+			if entered[id] or sentProducing[id] ~= sig then
+				local rec = recordOf[id]
+				if rec == nil then
+					rec = { unitId = id }
+					recordOf[id] = rec
+					table.insert(states, rec :: Schema.State)
+				end
+				local r = rec :: Schema.State
+				r.producing = head
+				r.producingProgress = math.clamp(math.floor(p * 255), 0, 255)
+			end
+		end
+		pn.sentProducing = producingNow
+
 		-- strategic snapshot of every other known unit
 		local strategic: { Schema.Strategic } = {}
 		local fullNow = strategicTick or pn.forceFull
@@ -967,6 +997,10 @@ function NetOut.step(sim: Types.Sim)
 					local cell = g:encode(a.x, a.z)
 					table.insert(events, { kind = Schema.EventKind.ALERT, alert = a.kind, cell = cell, defIndex = a.defIndex })
 				end
+			end
+			local answers = Cheats.drain(sim, pid) -- CHEAT_RESULT (S-102)
+			if answers then
+				table.move(answers, 1, #answers, #events + 1, events)
 			end
 		end
 		-- strategic launches: every player, camera or not (S-48)
