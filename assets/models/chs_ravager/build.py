@@ -32,18 +32,20 @@ SAMPLES = 32
 # Review 2026-10-22: Chaos reads lighter, so the whole unit is about 10% lower
 # and narrower than the Lancer (M-14); applied after building, pivots included.
 SCALE = (0.985, 0.9, 0.93)
-lib.UPLOAD_REV = 1
+lib.UPLOAD_REV = 2
 
 KINDS = ["paint", "trim", "team", "seam", "era", "track", "steel", "rubber", "glass", "light", "grille", "dark"]
 
-PAINT = (86, 90, 95)  # Chaos gunmetal, lifted from (76, 80, 84) so it reads at 35° (review 2026-10-22)
+# Chaos gunmetal, lifted from (76, 80, 84) so it reads at 35° (review
+# 2026-10-22); a second lift after the side-by-side measurement (M-18)
+PAINT = (96, 100, 106)
 ACCENT = (255, 140, 50)  # Chaos emissive accent
 VARIANTS = {
     "bar": {"type": "paint", "base": PAINT, "chip": (172, 178, 184), "grime": PAINT},
 }
 
 SPECS = {
-    "paint": {"base": None, "roughness": 0.45, "metallic": 0.12, "edge_mode": "highlight", "edge_wear": 0.7, "ao": 0.7},  # low metalness keeps gunmetal from reading black
+    "paint": {"base": None, "roughness": 0.45, "metallic": 0.12, "edge_mode": "highlight", "edge_wear": 0.7, "ao": 0.78},  # low metalness keeps gunmetal from reading black
     "trim": {"base": (46, 48, 52), "roughness": 0.5, "metallic": 0.35, "edge_mode": "highlight", "edge_wear": 0.45, "ao": 0.6},
     "team": {"base": (24, 24, 26), "roughness": 0.45, "metallic": 0.2, "mask": "team", "wash": 0.0,
              "chip_reveal": 0.85, "crease": 0.3, "edge_mode": "highlight", "edge_wear": 0.0},
