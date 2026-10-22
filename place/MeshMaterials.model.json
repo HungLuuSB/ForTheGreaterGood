@@ -154,6 +154,18 @@
       }
     },
     {
+      "Name": "chs_juggernaut",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://87982680658310",
+        "NormalMapContent": "rbxassetid://112329290586756",
+        "RoughnessMapContent": "rbxassetid://111422990287492",
+        "MetalnessMapContent": "rbxassetid://72914391888578",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_lamprey",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -498,6 +510,18 @@
         "NormalMapContent": "rbxassetid://80305731112034",
         "RoughnessMapContent": "rbxassetid://102465023933565",
         "MetalnessMapContent": "rbxassetid://74759415228976",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_paladin",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://90044437388277",
+        "NormalMapContent": "rbxassetid://139139400678823",
+        "RoughnessMapContent": "rbxassetid://140092902790058",
+        "MetalnessMapContent": "rbxassetid://99959473473740",
         "EmissiveStrength": 0
       }
     },
