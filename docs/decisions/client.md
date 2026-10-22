@@ -716,3 +716,21 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **White dome:** the user's answers today (white dome, generator structures only, a smaller Chaos dome) override the brief's team colour and Warden dome.
 - **No ForceField:** it read grey with no edge in C-87.
 - **Raycast placement:** the Order placeholder lay on its side and sank into the grass. The pivot came from its turned base cylinder, and the sim's ground height sits below the rendered terrain.
+
+### C-91 — Shield domes from the server: SHIELD state, field stepping, hits; ShieldFx never yields (2026-10-23)
+
+**Decision:**
+- **NetIn:** keeps SHIELD records in `world.shields` (charge as 0..1).
+- **Core/Effects:**
+  - steps a projectile with `ShieldField.step` from its SHIELD_FIELD until the phase is DONE or FREE, the same function the server uses;
+  - the frame curve (`nextState`) comes from the same step, so drawing between ticks follows the field;
+  - SHIELD_HIT drops a turned missile's target and queues the hit.
+- **`Render/ShieldDomes`:** one ShieldFx per known generator, driven by charge and the UP flag, standing at once when it comes into view already up.
+- **ShieldFx.new never yields:** the hexagon pool builds in a spawned thread.
+- **Stand-in removed:** the client-only preview domes (a profile list, crossings of drawn shells) were dropped once S-79 landed. The `shield` profile spawns a real Phalanx.
+
+**Why:**
+- S-79 answered request 40, and the client steps shells with the shared field so they bend where the server bends them; corrections cover the rest.
+- The double dome came from a yield inside the frame loop.
+- The user's three tuning points (10× capacity, deceleration, glancing deflection) are sim numbers, sent to sim-A with measurements.
+

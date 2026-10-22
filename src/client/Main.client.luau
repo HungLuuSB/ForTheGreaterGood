@@ -36,6 +36,7 @@ local ResourceBar = require("./UI/ResourceBar")
 local ModelPool = require("./Render/ModelPool")
 local RenderDeaths = require("./Render/Deaths")
 local RenderEffects = require("./Render/Effects")
+local ShieldDomes = require("./Render/ShieldDomes")
 local Contacts = require("./Render/Contacts")
 local FogOfWar = require("./Render/FogOfWar")
 local Ground = require("./Render/Ground")
@@ -127,6 +128,7 @@ local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-
 -- unit, else the homing missile drawn nearest the screen centre.
 local FOLLOW_KEY = Enum.KeyCode.T
 local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
+local shieldDomes = ShieldDomes.new() -- shield generators' domes (C-91)
 local function toggleFollow()
 	if camState.follow then
 		camState.follow = nil
@@ -465,6 +467,16 @@ if RunService:IsStudio() then
 			st.renderCPU = stats.RenderCPUFrameTime
 			st.renderGPU = stats.RenderGPUFrameTime
 			return st
+		elseif query == "shielddomes" then
+			-- the match's shield domes (C-91): generator id → state, and the SHIELD records
+			local domes, records = {}, {}
+			for id, d in shieldDomes.domes do
+				domes[tostring(id)] = { up = d.up, x = d.x, z = d.z, state = d.fx.state, strength = d.fx.strength }
+			end
+			for id, r in world.shields do
+				records[tostring(id)] = r
+			end
+			return { domes = domes, records = records }
 		elseif query == "camera" then
 			-- Invoke("camera", x?, z?, distance?, pitchDegrees?): put the camera there (screenshots)
 			local x, z, distance, pitch = ...
@@ -631,6 +643,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
 	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now, speed)
 	lastVisibleFx = visibleFx
+	ShieldDomes.step(shieldDomes, world, fx)
 	mark("effects", t0)
 	-- the camera goes on after units and missiles have their drawn positions
 	-- this frame, so a followed one sits still in the middle of the screen

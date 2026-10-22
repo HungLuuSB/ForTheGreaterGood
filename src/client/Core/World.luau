@@ -114,6 +114,7 @@ export type World = {
 	wreckAdded: { number }, -- queues the wreck renderer drains: WRECK
 	wreckGone: { number }, -- WRECK_GONE (reclaimed or gone)
 	alertQueue: { { kind: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT events (protocol 23, S-68) Core/Alerts drains
+	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
 }
 
@@ -146,6 +147,7 @@ function World.new(defs: Defs.DefSet): World
 		wreckAdded = {},
 		wreckGone = {},
 		alertQueue = {},
+		shields = {},
 		deathWrecks = {},
 	}
 end
@@ -173,6 +175,7 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.wreckAdded)
 	table.clear(world.wreckGone)
 	table.clear(world.alertQueue)
+	table.clear(world.shields)
 	table.clear(world.deathWrecks)
 	world.strategicTick = -1
 	world.economy = nil

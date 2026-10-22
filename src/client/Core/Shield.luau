@@ -263,8 +263,8 @@ Shield.DRAG = 9 -- 1/s of radial drag at full force, mass 1, mid-band
 Shield.PUSH = 1400 -- studs/s² outward after the turn, at full force, mass 1, at the surface
 Shield.MASS_EXP = 0.6 -- the field divides by mass to this power: heavy shells take longer, not hopelessly
 Shield.TANGENT_DRAG = 1.5 -- 1/s on the speed along the surface while in the field
-Shield.HIT_COST = 0.04 -- charge per unit of mass turned back
-Shield.BREACH_COST = 0.02 -- charge per unit of mass that broke through
+Shield.HIT_COST = 0.004 -- charge per unit of mass turned back (the user: 10x the capacity of the first 0.04)
+Shield.BREACH_COST = 0.002 -- charge per unit of mass that broke through
 Shield.RECHARGE = 0.05 -- charge per second (from the team's power, in the real thing)
 Shield.RAISE_AT = 0.25 -- a collapsed dome rises again at this charge
 
