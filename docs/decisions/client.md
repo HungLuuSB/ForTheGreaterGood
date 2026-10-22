@@ -1010,3 +1010,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** while suggestions show, Up / Down move a highlight through them (Up from none: the bottom one, next to the bar), and Tab or Enter takes the highlighted one without sending. With no suggestions showing, they walk the history. WASD camera panning is not added (the user: middle-drag is enough for now; A / S stay Attack / Stop).
 
 **Why:** the user's request, and their answer on the history.
+
+### C-127 — Inferno's beam is green (2026-10-23)
+
+**Decision:** `Render/Effects` BEAM_COLOR chaos (110, 255, 120); Order stays (200, 240, 255).
+
+**Why:** the user. The towers' other differences (blip targeting, misses, a lingering beam, Inferno weaker) are sim request 47.
