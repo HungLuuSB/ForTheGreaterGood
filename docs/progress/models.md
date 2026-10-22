@@ -343,6 +343,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `0f911df` (merge of `main`; mesh_materials step for every manifest change in rig.md 7 and pipeline.md; includes `cf819cc`; `assets/` and docs only besides the merge).
 - Ready to merge: `b41e955` (manifest: Oracle, Watcher, Order vehicle plant approved; fx.md team-color clashes; `src/shared/Defs/Meshes/` and docs only. `lune run mesh_materials` not run: the tool isn't in main yet).
 - Ready to merge: `89753cc` (BAR pair 1: radar towers ord_watchtower / chs_eye as review, manifest + mesh_materials, merge of main; `assets/`, `src/shared/Defs/Meshes/`, `tests/client/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `7e21755` (BAR pair 2: IR SAM sites ord_vigil / chs_thorn as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 
