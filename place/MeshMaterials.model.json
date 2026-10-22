@@ -106,6 +106,18 @@
       }
     },
     {
+      "Name": "chs_gorgon",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://106203088887558",
+        "NormalMapContent": "rbxassetid://101301350703784",
+        "RoughnessMapContent": "rbxassetid://131028142722186",
+        "MetalnessMapContent": "rbxassetid://90841103010282",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_harpy",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -570,6 +582,18 @@
         "NormalMapContent": "rbxassetid://71186564232398",
         "RoughnessMapContent": "rbxassetid://73037664499214",
         "MetalnessMapContent": "rbxassetid://136940614658305",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_seraph",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://107819420657074",
+        "NormalMapContent": "rbxassetid://97659577649204",
+        "RoughnessMapContent": "rbxassetid://102415430685426",
+        "MetalnessMapContent": "rbxassetid://71731355979265",
         "EmissiveStrength": 0
       }
     },
