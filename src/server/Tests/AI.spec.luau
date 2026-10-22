@@ -78,12 +78,19 @@ return function(t: RunAll.Context)
 		-- rich economies, so both reach their advanced plants within the run
 		local sim = start(24)
 		local brains = { Skirmish.new(sim, 1), Skirmish.new(sim, 2) }
+		-- (fielded at any point: a side may lose them, or the match, later)
+		local seen: { [string]: boolean } = {}
 		run(sim, brains, 13500, true, function()
-			return #owned(sim, 1, "ord_warden") > 0 and #owned(sim, 2, "chs_locust") > 0 and #owned(sim, 2, "chs_shroud") > 0
+			for _, pair in { { 1, "ord_warden" }, { 2, "chs_locust" }, { 2, "chs_shroud" } } do
+				if #owned(sim, pair[1] :: number, pair[2] :: string) > 0 then
+					seen[pair[2] :: string] = true
+				end
+			end
+			return seen.ord_warden and seen.chs_locust and seen.chs_shroud or false
 		end)
-		t.expect(#owned(sim, 1, "ord_warden") > 0, `Order fielded a Warden (tick {sim.tick})`)
-		t.expect(#owned(sim, 2, "chs_locust") > 0, "Chaos fielded Locusts")
-		t.expect(#owned(sim, 2, "chs_shroud") > 0, "and a Shroud jammer")
+		t.expect(seen.ord_warden, `Order fielded a Warden (tick {sim.tick})`)
+		t.expect(seen.chs_locust, "Chaos fielded Locusts")
+		t.expect(seen.chs_shroud, "and a Shroud jammer")
 	end)
 
 	t.test("with supply to spare the AI techs up to a fire-control radar escorting its waves", function()
