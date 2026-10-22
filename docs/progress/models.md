@@ -284,6 +284,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `53e4a34` (structure meshes and Hellmouth uploaded through Open Cloud: asset IDs, pipeline notes; `assets/` and docs only).
 - Ready to merge: `5923128` (BAR meshes for the remaining T1 ground pairs with asset IDs; `assets/` and docs only).
 - Ready to merge: `674e394` (glow pass M-22: four glow channels as welded glow parts in every BAR mesh, rebuilt and uploaded through Open Cloud; shield emitter in its own build; fx.md Unit glow, style guide Glow; `assets/` and docs only).
+- Ready to merge: `113202b` (glow pass asset IDs in every `roblox_assets.json`, emitter IDs in fx.md, Open Cloud loader cleanup, progress summary; `assets/` and docs only).
 
 ## Requests
 
