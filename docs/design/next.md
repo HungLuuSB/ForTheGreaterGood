@@ -40,7 +40,7 @@ Both need wire additions (a DOME state bit, the spoofed icon) that the client wo
 
 ## 5. Maps the AI can play: Normandy (S)
 
-Normandy has no supply deposits, so 43% of its AI matches end undecided at 40 minutes (`FACTION_AI.md`). Either:
+**Done (S-98, 2026-10-23): deposits added (the first option).** Before that, Normandy had no supply deposits, so 43% of its AI matches ended undecided at 40 minutes (`FACTION_AI.md`). Either:
 - add deposits to `Shared/Grid/Normandy` (behind each side's river, some in the bocage);
 - or teach the AI a deposit-free economy (generators and converters only).
 
