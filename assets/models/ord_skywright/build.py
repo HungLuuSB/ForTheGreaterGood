@@ -34,7 +34,7 @@ def build_base(p):
     p.cylinder("y", (0, 2.45, 0.2), 0.18, 0.6, 8, "steel")  # mast
     # tail: boom, fin, stabilizer, tail rotor
     p.box((0, 1.3, 3.6), (0.5, 0.5, 4.0), "paint", bevel=0.04)
-    p.prism_x([(4.8, 1.4), (5.9, 1.4), (5.9, 2.8), (5.4, 2.8)], -0.08, 0.08, "team", bevel=0.02)
+    p.prism_x([(4.7, 1.32), (6.05, 1.32), (6.05, 3.0), (5.4, 3.0)], -0.08, 0.08, "team", bevel=0.02)
     p.box((0, 1.4, 5.0), (1.8, 0.12, 0.6), "paint", bevel=0.02)
     p.cylinder("x", (0.2, 2.0, 5.4), 0.8, 0.06, 10, "dark")
     p.cylinder("x", (0.16, 2.0, 5.4), 0.12, 0.2, 6, "steel")

@@ -30,4 +30,14 @@ for i, z in { -15 } do
 	table.insert(parts, { name = `craneTeam{i}`, parent = "base", shape = "box", size = { 20, 0.1, 1.2 }, at = { 0, 15.35, z }, color = "team" })
 end
 
-return { id = "ord_advshipyard", parts = parts }
+return {
+	id = "ord_advshipyard",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { 0, 0, 1 } },
+		{ name = "nano1", parent = "base", at = { -8, 12.35, 1 } },
+		{ name = "nano2", parent = "base", at = { 0, 12.35, 1 } },
+		{ name = "nano3", parent = "base", at = { 8, 12.35, 1 } },
+	},
+}

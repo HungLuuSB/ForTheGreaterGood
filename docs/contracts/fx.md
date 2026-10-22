@@ -85,7 +85,7 @@ One mesh per missile weapon def, by its ID: `ord_ir_sam`, `chs_ir_sam`, `ord_rad
   - Radar SAM: thicker, with an off-white radome, long mid-body strakes and tail fins.
   - Nuke: a heavy body with a dark re-entry cone over a warhead bus, stage rings and four fins (Chaos: two strap-on boosters).
   - All three: faction paint and a team band (`teamPieces` = `base`), tinted like a unit.
-- **Glow:** a `running` stripe round the body (faction accent) and the nozzle throat on `weapon`, at the resting strengths. A missile in flight can simply keep them on; brighten `weapon` with the exhaust if wanted.
+- **Glow:** a `running` stripe round the body (faction accent), at its resting strength. The nozzle throat is dark: the client lights the exhaust (user review 2026-10-23, no `weapon` glow part any more).
 
 ## Shield (Order deployable shield)
 

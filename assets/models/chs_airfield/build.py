@@ -35,7 +35,7 @@ def build_base(p):
     for x, z, w, d in ((-10, -12, 9, 7), (11, 4, 7, 10), (-14, 1, 6, 5)):  # patch plates
         p.box((x, 0.42, z), (w, 0.04, d), "trim")
     # runway, team stripe, edge lights
-    p.box((RX, 0.45, 0), (9, 0.1, 37), "steel")
+    p.box((RX, 0.45, 0), (9, 0.1, 37), "rubber")  # matte (user review 2026-10-23)
     p.box((RX, 0.51, 0), (0.6, 0.03, 30), "team")
     for i in range(6):
         z = -16 + i * 6.4

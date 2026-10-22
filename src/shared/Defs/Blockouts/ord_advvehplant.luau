@@ -23,4 +23,11 @@ return {
 		{ name = "buttressR", parent = "base", shape = "wedge", size = { 4, 6, 4 }, at = { 18, 3.6, -4 }, rot = { 0, -90, 0 }, color = "hull" },
 		{ name = "vents", parent = "base", shape = "box", size = { 10, 1.2, 4 }, at = { 0, 10.8, 13 }, color = "metal" },
 	},
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { -8, 0.6, -11 } },
+		{ name = "nano1", parent = "base", at = { -13.3, 6.8, -6.4 } },
+		{ name = "nano2", parent = "base", at = { -2.7, 6.8, -6.4 } },
+		{ name = "nano3", parent = "base", at = { -8, 7, -6.4 } },
+	},
 }

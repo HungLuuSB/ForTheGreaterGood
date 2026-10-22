@@ -95,11 +95,11 @@
       ]
     }
   ],
-  "glowShare": 0.0664,
+  "glowShare": 0.0637,
   "triangles": {
-    "base": 676,
+    "base": 720,
     "radar": 244,
-    "total": 920
+    "total": 964
   },
   "textures": {
     "size": 1024,

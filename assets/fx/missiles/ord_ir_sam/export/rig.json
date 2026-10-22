@@ -10,12 +10,12 @@
       "center": [
         0.0,
         0.0,
-        0.025
+        0.035
       ],
       "size": [
         0.9122,
         0.9122,
-        4.35
+        4.37
       ]
     }
   },
@@ -53,30 +53,9 @@
         0.58,
         0.12
       ]
-    },
-    {
-      "name": "base_glow_weapon",
-      "piece": "base",
-      "channel": "weapon",
-      "tint": [
-        190,
-        240,
-        255
-      ],
-      "strength": 1.5,
-      "center": [
-        0.0,
-        0.0,
-        2.21
-      ],
-      "size": [
-        0.308,
-        0.293,
-        0.02
-      ]
     }
   ],
-  "glowShare": 0.0904,
+  "glowShare": 0.0731,
   "triangles": {
     "base": 376,
     "total": 376

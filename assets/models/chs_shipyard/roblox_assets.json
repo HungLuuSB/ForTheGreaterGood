@@ -1,7 +1,30 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15), Open Cloud import clamped (scale 43.0 / 2048): 1276 triangles, glow share 2.2%",
+  "revision": "User review fixes 2026-10-23: 1276 triangles, glow share 2.2%",
   "bar": {
+    "model": "rbxassetid://139145564244203",
+    "meshes": {
+      "base": "rbxassetid://100678510186964",
+      "base_glow_power": "rbxassetid://139067875042415",
+      "base_glow_running": "rbxassetid://76957287212179"
+    },
+    "decals": {
+      "ALB": "rbxassetid://134003066335887",
+      "RGH": "rbxassetid://95202134891062",
+      "NOR": "rbxassetid://87066816464896",
+      "MTL": "rbxassetid://94881140226938",
+      "EMI": "rbxassetid://138062470099804"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://124094294696528",
+      "NOR": "rbxassetid://112450299239132",
+      "RGH": "rbxassetid://134769955232542",
+      "MTL": "rbxassetid://101382947458399",
+      "EMI": "rbxassetid://134192549971998"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_shipyard_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://100375881567024",
     "meshes": {
       "base": "rbxassetid://112334602999541",
@@ -22,6 +45,6 @@
       "MTL": "rbxassetid://108292866141122",
       "EMI": "rbxassetid://118282052708872"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_shipyard_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15), Open Cloud import clamped (scale 43.0 / 2048): 1276 triangles, glow share 2.2%"
   }
 }

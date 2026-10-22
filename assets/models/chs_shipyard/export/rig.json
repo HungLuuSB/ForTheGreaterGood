@@ -8,18 +8,35 @@
     "base": {
       "parent": null,
       "center": [
-        -2.5,
+        -0.4,
         7.1775,
         0.25
       ],
       "size": [
-        43.0,
+        38.8,
         14.955,
         37.5
       ]
     }
   },
-  "attachments": {},
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        4.0,
+        13.1,
+        4.0
+      ]
+    }
+  },
   "teamColorPieces": [
     "base"
   ],

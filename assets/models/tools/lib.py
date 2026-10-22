@@ -522,9 +522,16 @@ def make_material(kind, spec, variants, target):
         c = N.mix(wear, c, camo.get("chip", (214, 204, 176)))
         c = N.mix(grime, c, camo.get("grime", (104, 94, 76)))
         if spec.get("scorch"):
-            # wreck soot: broad burnt patches, blacker low and in creases
-            burn = N.map_range(N.noise(pos, 0.45, detail=4.0, roughness=0.65), 0.38, 0.62, 0.0, 1.0)
-            burn = N.math("MULTIPLY", N.math("ADD", burn, N.math("MULTIPLY", low, 0.5)), spec["scorch"], clamp=True)
+            if spec.get("scorch_edges"):
+                # big roofs: soot along the edges and low down, a fine speckle
+                # between (broad patches read as clouds on a large flat roof)
+                fine = N.map_range(N.noise(pos, 1.8, detail=3.0), 0.5, 0.72, 0.0, 1.0)
+                burn = N.math("ADD", N.math("ADD", edge, N.math("MULTIPLY", fine, 0.35)), N.math("MULTIPLY", low, 0.4))
+            else:
+                # wreck soot: broad burnt patches, darker low and in creases
+                burn = N.map_range(N.noise(pos, 0.45, detail=4.0, roughness=0.65), 0.38, 0.62, 0.0, 1.0)
+                burn = N.math("ADD", burn, N.math("MULTIPLY", low, 0.5))
+            burn = N.math("MULTIPLY", burn, spec["scorch"], clamp=True)
             c = N.mix(burn, c, spec.get("soot", (20, 18, 17)))
         colors.append(c)
     color = colors[0]

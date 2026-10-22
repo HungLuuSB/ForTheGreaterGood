@@ -30,4 +30,9 @@ return {
 		{ name = "podL", parent = "base", shape = "box", size = { 0.4, 0.6, 1.6 }, at = { -1.1, 1, 0 }, color = "hull" },
 		{ name = "podR", parent = "base", shape = "box", size = { 0.4, 0.6, 1.6 }, at = { 1.1, 1, 0 }, color = "hull" },
 	},
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "nano1", parent = "nano", at = { 0, -0.3, -1.7 } },
+		{ name = "nano2", parent = "nano", at = { 0, -0.3, 1.2 } },
+	},
 }

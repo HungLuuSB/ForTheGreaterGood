@@ -37,7 +37,16 @@
       ]
     }
   },
-  "attachments": {},
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        1.182,
+        3.6,
+        -1.814
+      ]
+    }
+  },
   "teamColorPieces": [
     "base",
     "nano"
