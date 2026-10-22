@@ -56,6 +56,63 @@ def reset_scene():
 # ---------------------------------------------------------------------------
 
 
+# Wreck mode (queue item 5, M-24): unit.run sets this when FTGG_WRECK=1.
+# Every shell is battered by rules that depend only on its own vertices and
+# on position (never on build order), so the low and the detailed build of a
+# piece break the same way and the bake still lines up:
+#   - small shells (antennas, lamps, boxes, bolts) are knocked off or bent;
+#   - medium shells are bent a little about their centre;
+#   - every vertex is dented by a smooth noise field (to_object).
+# {"size": unit size in studs, "seed": int}
+WRECK = None
+
+
+def _unit_hash(*xs):
+    """Deterministic 0..1 from numbers (Python's hash() is salted per run)."""
+    h = 2166136261
+    for x in xs:
+        h = ((h ^ (int(round(x * 1000)) & 0xFFFFFFFF)) * 16777619) & 0xFFFFFFFF
+        h ^= h >> 13
+    return h / 0xFFFFFFFF
+
+
+def _wreck_shell(verts):
+    """The battered shell's vertices (Roblox space), or None to drop it."""
+    n = len(verts)
+    c = [sum(v[i] for v in verts) / n for i in range(3)]
+    ext = max(max(v[i] for v in verts) - min(v[i] for v in verts) for i in range(3))
+    size, seed = WRECK["size"], WRECK["seed"]
+    r = [_unit_hash(seed, k, *c, ext) for k in range(5)]
+    if ext < 0.09 * size:
+        if r[0] < 0.4:
+            return None  # blown off
+        bend, sag = 22.0, 0.04 * ext
+    elif ext < 0.35 * size:
+        bend, sag = 9.0, 0.0
+    else:
+        return verts
+    axis = Vector((r[1] - 0.5, r[2] - 0.5, r[3] - 0.5))
+    if axis.length < 1e-3:
+        return verts
+    rot = Matrix.Rotation(math.radians((r[4] - 0.5) * 2 * bend), 3, axis.normalized())
+    cv = Vector(c)
+    out = []
+    for v in verts:
+        q = rot @ (Vector(v) - cv) + cv
+        out.append((q.x, q.y - sag, q.z))
+    return out
+
+
+def _wreck_dent(mesh):
+    """Dents every vertex (Blender space) along a smooth noise field."""
+    from mathutils import noise
+    size, seed = WRECK["size"], WRECK["seed"]
+    amp, freq = 0.015 * size, 2.2 / size
+    off = Vector((seed * 0.731, seed * 0.317, seed * 0.173))
+    for v in mesh.vertices:
+        v.co += noise.noise_vector(v.co * freq + off) * amp
+
+
 class Piece:
     def __init__(self, name, kinds, pivot):
         self.name = name
@@ -71,6 +128,10 @@ class Piece:
         lists (any winding: normals are recalculated per shell). `kinds`
         optionally gives a kind per face."""
         bm = self.bm
+        if WRECK:
+            verts = _wreck_shell(verts)
+            if verts is None:
+                return []
         vs = [bm.verts.new(R(*v)) for v in verts]
         fs = []
         for i, f in enumerate(faces):
@@ -227,6 +288,8 @@ class Piece:
         bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts, dist=1e-5)
         self.bm.to_mesh(mesh)
         self.bm.free()
+        if WRECK:
+            _wreck_dent(mesh)
         obj = bpy.data.objects.new(name or self.name, mesh)
         for kind in self.kinds:
             mesh.materials.append(materials[kind])
@@ -458,6 +521,11 @@ def make_material(kind, spec, variants, target):
             c = N.rgb(spec["base"])
         c = N.mix(wear, c, camo.get("chip", (214, 204, 176)))
         c = N.mix(grime, c, camo.get("grime", (104, 94, 76)))
+        if spec.get("scorch"):
+            # wreck soot: broad burnt patches, blacker low and in creases
+            burn = N.map_range(N.noise(pos, 0.45, detail=4.0, roughness=0.65), 0.38, 0.62, 0.0, 1.0)
+            burn = N.math("MULTIPLY", N.math("ADD", burn, N.math("MULTIPLY", low, 0.5)), spec["scorch"], clamp=True)
+            c = N.mix(burn, c, spec.get("soot", (20, 18, 17)))
         colors.append(c)
     color = colors[0]
     for i, c in enumerate(colors[1:], start=1):

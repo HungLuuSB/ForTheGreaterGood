@@ -99,6 +99,33 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 			bad(`glow part {g.name}: tint and strength required`)
 		end
 	end
+	-- the wreck version (M-24): the live mesh's pieces, its own meshes and
+	-- maps, no glow (EMI not needed)
+	local w = e.wreck
+	if w ~= nil then
+		if not isAssetId(w.model) then
+			bad("wreck: model asset ID missing")
+		end
+		for _, k in Mesh.MAPS do
+			if k ~= "EMI" and not isAssetId(w.maps and w.maps[k]) then
+				bad(`wreck: map {k} asset ID missing`)
+			end
+		end
+		local wp = if type(w.pieces) == "table" then w.pieces else {}
+		for name in e.pieces do
+			local p = wp[name]
+			if p == nil or not isAssetId(p.mesh) then
+				bad(`wreck: piece {name} mesh missing`)
+			elseif not isVec3(p.center) or not isVec3(p.size) then
+				bad(`wreck: piece {name}: center and size must be three numbers`)
+			end
+		end
+		for name in wp do
+			if e.pieces[name] == nil then
+				bad(`wreck: piece {name} isn't a live piece`)
+			end
+		end
+	end
 	if def then
 		if def.id ~= id then
 			bad("id doesn't match the def")

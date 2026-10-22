@@ -154,3 +154,11 @@ After every upload (or a status change): `python assets/models/tools/manifest.py
 **A model that draws white** (no team color, no glow) after an Open Cloud upload: Studio couldn't build its SurfaceAppearance because a map failed (HTTP 502). The log says "Unable to generate ... Change a TextureId property to retry", but a retry with the same image fails again. Re-upload the failing maps as new Decals (`opencloud.upload`) and swap the new images in. Note them in the unit's `roblox_assets.json`. **Flat team color** is different: the color map is still loading, and it fixes itself within minutes. Rigging a pair a few minutes after its upload (bake the next pair meanwhile) avoids most of these.
 
 **Clamped imports:** Roblox clamps an Open Cloud model by its **largest single mesh** (2048 studs at the ×100 import), not the whole scene. So the rig scale is that mesh's longest side / 2048. For example, the Citadel's base is 23.53 studs (its barrel reaching further doesn't count), and the vehicle plants use 22 / 2048.
+
+## Wrecks (M-24)
+
+`FTGG_WRECK=1 blender -b --factory-startup --python-exit-code 1 -P assets/models/<id>/build.py` builds the wreck into `export_wreck/` as `<id>_wreck` (`lib.WRECK`, `unit.wreck_look`). Then:
+1. upload it: `python assets/models/tools/opencloud.py assets/models/<id>/export_wreck <id>_wreck 11846985184` (same clamp rule);
+2. rig it with `Batch.run` in "FTGG Art" (`ReplicatedStorage.ModelReview.<id>_wreck_bar`);
+3. `record_assets.py` writes it under `wreck` in the unit's `roblox_assets.json`;
+4. then `manifest.py` as above.

@@ -98,6 +98,19 @@ def entry(rig, assets, status, note):
     return e
 
 
+def wreck_entry(rig, assets):
+    """The wreck version (M-24, fx.md "Wrecks"): the same pieces and pivots
+    as the live mesh, its own meshes and maps, no glow and no team pieces."""
+    w = assets["wreck"]
+    return {
+        "model": w.get("model", ""),
+        "pieces": {name: {"center": p["center"], "size": p["size"], "mesh": w["meshes"][name]}
+                   for name, p in rig["pieces"].items()},
+        "maps": {k: w["surfaceAppearance"][k] for k in ("ALB", "NOR", "RGH", "MTL")},
+        "triangles": rig["triangles"]["total"],
+    }
+
+
 def main():
     import sys
     skip = set()
@@ -115,6 +128,9 @@ def main():
             continue
         status = "approved" if uid in APPROVED else "review"
         units[uid] = entry(load(rig_p), assets, status, None if status == "approved" else REVIEW_NOTE)
+        wreck_p = os.path.join(models, uid, "export_wreck", "rig.json")
+        if "wreck" in assets and os.path.exists(wreck_p):
+            units[uid]["wreck"] = wreck_entry(load(wreck_p), assets)
 
     shield = load(os.path.join(ROOT, "assets", "fx", "shield", "roblox_assets.json"))
     em_rig = load(os.path.join(ROOT, "assets", "fx", "shield", "emitter", "export", "rig.json"))

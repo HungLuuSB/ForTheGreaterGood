@@ -74,5 +74,29 @@
       "EMI": "rbxassetid://131789373327335"
     },
     "note": "review 1 upload, before the M-18 lift and scale"
+  },
+  "wreck": {
+    "model": "rbxassetid://102589472579647",
+    "meshes": {
+      "barrel": "rbxassetid://119663227914924",
+      "base": "rbxassetid://116473571581844",
+      "turret": "rbxassetid://88452212400680"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73663052789643",
+      "RGH": "rbxassetid://132619444778357",
+      "NOR": "rbxassetid://126226204968489",
+      "MTL": "rbxassetid://119328338469370",
+      "EMI": "rbxassetid://80694121832221"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://107381547124061",
+      "NOR": "rbxassetid://123854126781276",
+      "RGH": "rbxassetid://81467654059288",
+      "MTL": "rbxassetid://131778683287115",
+      "EMI": "rbxassetid://134690557880977"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_ravager_wreck_bar in FTGG Art",
+    "revision": "Wreck (M-24): 3448 triangles"
   }
 }

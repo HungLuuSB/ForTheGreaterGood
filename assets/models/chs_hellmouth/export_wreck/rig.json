@@ -1,0 +1,99 @@
+{
+  "id": "chs_hellmouth_wreck",
+  "wreckOf": "chs_hellmouth",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0122,
+        1.489,
+        0.2476
+      ],
+      "size": [
+        5.7782,
+        3.0973,
+        7.4838
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.2202,
+        2.3187,
+        0.0633
+      ],
+      "size": [
+        3.8504,
+        1.411,
+        3.4886
+      ],
+      "pivot": [
+        0.0,
+        1.71,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0501,
+        2.411,
+        -2.492
+      ],
+      "size": [
+        1.6895,
+        1.4535,
+        3.9214
+      ],
+      "pivot": [
+        0.0,
+        2.475,
+        -0.651
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        2.475,
+        -4.4175
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2236,
+    "turret": 564,
+    "barrel": 384,
+    "total": 3184
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -22,12 +22,42 @@ def rid(v):
     return v if str(v).startswith("rbxassetid://") else "rbxassetid://" + str(v)
 
 
+def record_wreck(uid, b, note):
+    """A wreck (M-24) goes under "wreck" in its live unit's roblox_assets.json;
+    an earlier one is kept as "wreck_<n>"."""
+    live = uid[: -len("_wreck")]
+    d = os.path.join(ROOT, "assets", "models", live)
+    oc = json.load(open(os.path.join(d, "export_wreck", "opencloud.json"), encoding="utf-8"))
+    rig = json.load(open(os.path.join(d, "export_wreck", "rig.json"), encoding="utf-8"))
+    path = os.path.join(d, "roblox_assets.json")
+    out = json.load(open(path, encoding="utf-8"))
+    if "wreck" in out:
+        n = 1
+        while f"wreck_{n}" in out:
+            n += 1
+        out[f"wreck_{n}"] = out["wreck"]
+    out["wreck"] = {
+        "model": rid(oc["model"]),
+        "meshes": {k: b["meshes"][k] for k in sorted(b["meshes"])},
+        "decals": {k: rid(v) for k, v in oc["decals"].items()},
+        "surfaceAppearance": {k: b["sa"][k] for k in ("ALB", "NOR", "RGH", "MTL", "EMI")},
+        "modelPath": f"ReplicatedStorage.ModelReview.{uid}_bar in FTGG Art",
+        "revision": f"{note}: {rig['triangles']['total']} triangles",
+    }
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(out, indent=2) + "\n")
+    print(f"ok {uid}")
+
+
 def main():
     batch = json.load(open(sys.argv[1], encoding="utf-8"))
     note = sys.argv[2]
     for uid, b in sorted(batch.items()):
         if "error" in b:
             print(f"skip {uid}: {b['error']}")
+            continue
+        if uid.endswith("_wreck"):
+            record_wreck(uid, b, note)
             continue
         d = os.path.join(ROOT, "assets", "models", uid)
         if not os.path.isdir(d):  # missiles live under assets/fx/missiles

@@ -65,6 +65,16 @@ Blue on Order and red on Chaos read apart (darker, more saturated than the glow)
 
 **Cost:** 1–4 extra MeshParts per model, a few dozen triangles each, sharing the unit's maps; nothing animates unless the client changes a property.
 
+## Wrecks (BAR-style meshes, M-24)
+
+Every approved meshed unit and structure has a wreck version: `Meshes.units.<id>.wreck` (rig.md 7). It has the live mesh's pieces and pivots with its own meshes and maps:
+- dented and bent, with small fittings blown off;
+- darkened and sooted;
+- **no glow parts:** the sockets are dead and dark, so drive no channels on a wreck;
+- **no team color:** the panels are scorched grey; the alpha is 1, so the team tint doesn't show even with `AlphaMode.Overlay`.
+
+To show one, build it like the live model with the wreck's `pieces[name].mesh` / `center` / `size` and `maps`, and skip `glow` and `teamPieces`. Keep the joint pose the death left (turret turned, barrel drooping); no color lerp or `CorrodedMetal` is needed. Aircraft shot down in flight leave no wreck (net.md 5), but a landed one can.
+
 ## Missiles (BAR-style meshes, the user's request 2026-10-22)
 
 One mesh per missile weapon def, by its ID: `ord_ir_sam`, `chs_ir_sam`, `ord_radar_sam`, `chs_radar_sam`, `ord_nuke`, `chs_nuke`. They're listed in the mesh manifest under `fx` (`Meshes.fx.<weapon id>`: piece `base`, maps, glow parts, status; rig.md 7). Each replaces the primitive missile parts in `Render/Effects.luau`; the client keeps drawing the flame, the light and the smoke.

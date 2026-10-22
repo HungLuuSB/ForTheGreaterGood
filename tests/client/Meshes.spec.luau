@@ -83,5 +83,16 @@ return function(t: any)
 		has(with(function(e)
 			table.insert(e.teamPieces, "nope")
 		end), "team piece nope isn't a piece")
+		local mesh = { mesh = "rbxassetid://1", center = { 0, 0, 0 }, size = { 1, 1, 1 } }
+		local maps = { ALB = "rbxassetid://2", NOR = "rbxassetid://3", RGH = "rbxassetid://4", MTL = "rbxassetid://5" }
+		has(with(function(e)
+			e.wreck = { model = "rbxassetid://6", maps = maps, pieces = { base = mesh, turret = mesh } }
+		end), "wreck: piece barrel mesh missing")
+		has(with(function(e)
+			e.wreck = { model = "rbxassetid://6", maps = { ALB = maps.ALB }, pieces = { base = mesh, turret = mesh, barrel = mesh } }
+		end), "wreck: map NOR asset ID missing")
+		t.equal(with(function(e)
+			e.wreck = { model = "rbxassetid://6", maps = maps, pieces = { base = mesh, turret = mesh, barrel = mesh } }
+		end), "")
 	end)
 end

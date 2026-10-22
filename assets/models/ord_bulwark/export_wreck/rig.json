@@ -1,0 +1,80 @@
+{
+  "id": "ord_bulwark_wreck",
+  "wreckOf": "ord_bulwark",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0311,
+        1.1479,
+        -0.0056
+      ],
+      "size": [
+        7.4045,
+        2.4037,
+        7.4583
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0199,
+        3.2933,
+        -2.6359
+      ],
+      "size": [
+        4.0594,
+        2.0268,
+        9.6778
+      ],
+      "pivot": [
+        0.0,
+        2.3,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        3.15,
+        -7.45
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 244,
+    "turret": 520,
+    "total": 764
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

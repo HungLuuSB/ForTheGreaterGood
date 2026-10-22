@@ -8,13 +8,16 @@
 -- (protocol 10, C-65, `syncWrecks`): one the client didn't see die (on
 -- join, off camera) is placed from its record; a reclaimed one goes; a
 -- death the client draws places its own at the end of the shake. At most
--- MAX_WRECKS. Hidden at strategic zoom. Looks are placeholders.
+-- MAX_WRECKS. Hidden at strategic zoom. Looks are placeholders. Units with
+-- an approved wreck mesh (models-C, C-115) leave that instead, with the same
+-- knocked-askew joints and no charring (its maps are the damage).
 -- Aircraft that die in the air fall out of the sky instead (C-48,
 -- Core/Deaths.crash), burning and trailing smoke, and leave nothing: the
 -- ground explosion comes from Effects when they hit.
 
 local Deaths = require("../Core/Deaths")
 local World = require("../Core/World")
+local MeshModels = require("./MeshModels")
 local Models = require("./Models")
 local Prng = require("@shared/Util/Prng")
 
@@ -67,9 +70,10 @@ local function wreckModel(s: State, def: any, id: number): Model
 	if list and #list > 0 then
 		return table.remove(list) :: Model
 	end
-	local model = Models.template(def):Clone()
+	local meshed = MeshModels.wreck(def)
+	local model = (meshed or Models.template(def)):Clone()
 	for _, d in model:GetDescendants() do
-		if d:IsA("BasePart") then
+		if d:IsA("BasePart") and not meshed then
 			d.Color = d.Color:Lerp(RenderDeaths.CHAR, RenderDeaths.CHAR_AMOUNT)
 			d.Material = Enum.Material.CorrodedMetal
 			d.CastShadow = true
