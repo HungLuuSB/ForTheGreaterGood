@@ -4,34 +4,55 @@
 -- through a dome's field the same way.
 --
 -- A dome is a sphere of `radius` round its generator's base; the field is a
--- band BAND studs deep outside it. An inbound shell that enters the band
--- (outside the dome, moving in) brakes: the field takes off its speed along
--- the dome's normal (a constant part plus drag, stronger deeper in). When
--- that radial speed reaches 0 the shell turns (the hit), and the same field
--- throws it back out, harder the deeper it got, until it leaves the band.
--- A shell still moving in when it reaches the dome breaks through (the
--- breach) and carries on inside, slowed. Speed along the surface bleeds off
--- a little while in the field. Gravity acts throughout.
--- The bounce is close to a mirror off the dome where the shell turned
--- (S-80, the user's rule): head-on shells go straight back at ~60% of their
--- speed, glancing ones leave within ~8° of their entry angle on the other
--- side of the normal, at 70–85% of their speed.
+-- band BAND studs deep outside it. It takes hold of a shell in the band,
+-- outside the dome, moving in, whose straight line would hit the dome
+-- (shells that would pass it by are left alone). Then (S-82, the user's
+-- drawing):
+--   * it slows the shell along its path, the more the more head-on its line
+--     is (the line's closest approach to the centre against the radius;
+--     GLANCE_SLOW of it for one that grazes), stronger deeper in;
+--   * it steers the shell away from the dome, at most until its line passes
+--     GRAZE radii from the centre: a shell off the centre bends round the
+--     dome and carries on forward, slowed;
+--   * when the shell no longer closes in (its speed toward the centre
+--     reaches 0) it turns (the hit, on the dome under it) and is thrown
+--     out: hard for one that stopped head-on (straight back), a lift for
+--     one sliding past.
+-- Measured (mass 1, 260 studs/s, full force; offset of the line from the
+-- centre in radii → direction out against the direction in, speed kept):
+-- 0 → 180° (39%), 0.3 → 141° (68%), 0.5 → 94° (53%), 0.7 → 42° (37%),
+-- 0.85 → 25° (51%), 0.95 → 18° (56%).
+-- A shell still closing in when it reaches the dome breaks through (the
+-- breach) and carries on inside, slowed. Gravity acts throughout.
 --
 -- The field's force is `force` (0..1: Shield's charge over FULL_FORCE, so
 -- full at 50% charge and above) over the shell's mass to MASS_EXP: a heavy
--- shell takes longer to stop, and a weak dome lets it through. A dome that
--- goes down (force 0) under a shell lets it carry on: a braking shell then
--- counts as through, without a breach event.
+-- shell takes longer to stop and turn, and a weak dome lets it through. A
+-- dome that goes down (force 0) under a shell lets it carry on: a braking
+-- shell then counts as through, without a breach event.
 
 local ShieldField = {}
 
 ShieldField.BAND = 50 -- studs outside the dome
 ShieldField.FULL_FORCE = 0.5 -- charge at and above which the field is at full force
-ShieldField.BRAKE = 1000 -- studs/s² of radial braking at full force, mass 1, mid-band (C-87's prototype: 500)
-ShieldField.DRAG = 20 -- 1/s of radial drag at full force, mass 1, mid-band (prototype: 9)
-ShieldField.PUSH = 2800 -- studs/s² outward after the turn, at full force, mass 1, at the dome (prototype: 1400; S-80)
+ShieldField.BRAKE = 750 -- studs/s² of braking at full force, mass 1, mid-band, head-on (1.5× C-87's prototype; S-82)
+ShieldField.DRAG = 13.5 -- 1/s of drag on the same terms (prototype: 9)
+ShieldField.PUSH = 700 -- studs/s² outward after the turn, at full force, mass 1, at the dome, head-on (S-82)
 ShieldField.MASS_EXP = 0.6
-ShieldField.TANGENT_DRAG = 0.3 -- 1/s on the speed along the surface while in the field (prototype: 1.5; S-80)
+ShieldField.TANGENT_DRAG = 0.3 -- 1/s on the speed along the surface while thrown out (S-80)
+ShieldField.STEER = 8 -- rad/s of steering at full force, mass 1, mid-band (S-82)
+ShieldField.GLANCE_SLOW = 0.05 -- the share of the braking and the push for a shell whose line misses the dome (S-82)
+ShieldField.HEAD_ON_EXP = 2
+ShieldField.GRAZE = 1.08 -- steering stops once a shell's line passes this many radii from the centre (S-82)
+
+-- The share of the braking (and of the push out) for a shell whose line
+-- passes sqrt(b2) radii from the centre: 1 head-on, cos² of its incidence
+-- on the dome, GLANCE_SLOW at least.
+function ShieldField.headOn(b2: number): number
+	local c = math.sqrt(math.max(0, 1 - b2))
+	return math.max(c ^ ShieldField.HEAD_ON_EXP, ShieldField.GLANCE_SLOW)
+end
+
 ShieldField.SUBSTEP = 10 -- studs a shell moves per substep at most (8 substeps at most)
 
 -- Phases of a shell against one dome.
@@ -45,7 +66,7 @@ ShieldField.NONE = 0
 ShieldField.TURN = 1
 ShieldField.BREACH = 2
 
-local sqrt, exp, abs, ceil = math.sqrt, math.exp, math.abs, math.ceil
+local sqrt, exp, ceil = math.sqrt, math.exp, math.ceil
 local clamp = math.clamp
 
 -- The field's force at `charge` (0..1), before the shell's mass.
@@ -109,26 +130,60 @@ function ShieldField.step(
 			if force <= 0 and phase ~= ShieldField.FREE then
 				phase = ShieldField.DONE -- the dome went down under it
 			elseif force > 0 and phase == ShieldField.FREE and r <= edge and r > radius and vr < 0 then
-				phase = ShieldField.BRAKING
+				if ShieldField.onCourse(x, y, z, vx, vy, vz, cx, cy, cz, radius) then
+					phase = ShieldField.BRAKING -- only a shell on a collision course (S-82)
+				end
 			end
 			if phase == ShieldField.BRAKING or phase == ShieldField.REPELLED then
-				local tx, ty, tz = vx - nx * vr, vy - ny * vr, vz - nz * vr
 				local depth = clamp((edge - r) / ShieldField.BAND, 0, 1)
 				if phase == ShieldField.BRAKING then
-					vr += k * (0.4 + depth) * (ShieldField.BRAKE + ShieldField.DRAG * abs(vr)) * h
-					if vr >= 0 and event == ShieldField.NONE then
-						vr = 0
+					-- slowed along its path, the more the more head-on it comes
+					-- in; steered away from the dome, the more the more glancing
+					-- (S-82: the user's drawing)
+					local sp = sqrt(vx * vx + vy * vy + vz * vz)
+					if sp > 1e-9 then
+						local ux, uy, uz = vx / sp, vy / sp, vz / sp
+						local c = clamp(-vr / sp, 0, 1)
+						-- how head-on against the dome itself: its line's closest
+						-- approach to the centre, b, against the radius
+						local qx, qy, qz = ry * uz - rz * uy, rz * ux - rx * uz, rx * uy - ry * ux
+						local b2 = (qx * qx + qy * qy + qz * qz) / (radius * radius)
+						local headOn = ShieldField.headOn(b2)
+						sp = math.max(0, sp - k * (0.4 + depth) * (ShieldField.BRAKE + ShieldField.DRAG * sp) * headOn * h)
+						-- steered: while its line still hits the dome, the path turns
+						-- away (the outward normal's part across it), at most to the
+						-- line that grazes the dome
+						local px, py, pz = nx + c * ux, ny + c * uy, nz + c * uz
+						local pl = sqrt(px * px + py * py + pz * pz)
+						local graze = ShieldField.GRAZE
+						if pl > 1e-9 and b2 < graze * graze then
+							local needed = math.asin(math.min(1, radius * graze / r)) - math.acos(c)
+							local angle = math.min(k * (0.4 + depth) * ShieldField.STEER * h, math.max(needed, 0))
+							local ca, sa = math.cos(angle), math.sin(angle) / pl
+							ux, uy, uz = ux * ca + px * sa, uy * ca + py * sa, uz * ca + pz * sa
+						end
+						vx, vy, vz = ux * sp, uy * sp, uz * sp
+					end
+					if vx * nx + vy * ny + vz * nz >= 0 and event == ShieldField.NONE then
 						phase = ShieldField.REPELLED
 						event, hx, hy, hz = ShieldField.TURN, cx + nx * radius, cy + ny * radius, cz + nz * radius
 					end
 				else
-					vr += k * ShieldField.PUSH * (0.2 + depth) * h
+					-- thrown out: hard for a shell coming straight back, a lift
+					-- for one sliding round the dome (S-82)
+					local sp = sqrt(vx * vx + vy * vy + vz * vz)
+					local headOn = 1
+					if sp > 1e-6 then
+						local qx, qy, qz = ry * vz - rz * vy, rz * vx - rx * vz, rx * vy - ry * vx
+						headOn = ShieldField.headOn((qx * qx + qy * qy + qz * qz) / (sp * sp * radius * radius))
+					end
+					local tx, ty, tz = (vx - nx * vr) * tangentKeep, (vy - ny * vr) * tangentKeep, (vz - nz * vr) * tangentKeep
+					vr += k * ShieldField.PUSH * (0.2 + depth) * headOn * h
+					vx, vy, vz = nx * vr + tx, ny * vr + ty, nz * vr + tz
 					if r > edge then
 						phase = ShieldField.DONE
 					end
 				end
-				tx, ty, tz = tx * tangentKeep, ty * tangentKeep, tz * tangentKeep
-				vx, vy, vz = nx * vr + tx, ny * vr + ty, nz * vr + tz
 			end
 		end
 		-- exact ballistic substep
@@ -150,6 +205,18 @@ function ShieldField.step(
 		end
 	end
 	return x, y, z, vx, vy, vz, phase, event, hx, hy, hz
+end
+
+-- Is a shell at (x, y, z) moving at (vx, vy, vz) closing in on the dome
+-- round (cx, cy, cz) on a line that hits it? (The field takes hold only of
+-- such a shell; S-82.)
+function ShieldField.onCourse(x: number, y: number, z: number, vx: number, vy: number, vz: number, cx: number, cy: number, cz: number, radius: number): boolean
+	local rx, ry, rz = x - cx, y - cy, z - cz
+	if rx * vx + ry * vy + rz * vz >= 0 then
+		return false
+	end
+	local qx, qy, qz = ry * vz - rz * vy, rz * vx - rx * vz, rx * vy - ry * vx
+	return qx * qx + qy * qy + qz * qz < (vx * vx + vy * vy + vz * vz) * radius * radius
 end
 
 -- Can a shell at (x, y, z) moving at `speed` reach the band of a dome round

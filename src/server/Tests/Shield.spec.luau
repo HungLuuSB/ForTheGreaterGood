@@ -30,6 +30,10 @@ end
 local function fire(sim: Sim.Sim, weaponId: string, x: number, z: number, side: number?): number
 	local weapon = sim.defs.weapons[weaponId]
 	local g = weapon.gravity or 0
+	if weapon.type == "BOMB" then
+		-- dropped 200 studs above the dome's top, drifting at 8 studs/s
+		return Combat.spawnProjectile(sim.combat, CX + 20, 320, CZ + 40, 0, 0, -8, weapon.index, 0, side or 2, 10) :: number
+	end
 	local speed = weapon.projectileSpeed or 300
 	local dx, dz = CX - x, CZ - z
 	local d = math.sqrt(dx * dx + dz * dz)
@@ -121,38 +125,42 @@ return function(t: RunAll.Context)
 		t.expect(light > medium and medium > heavy and heavy > 120, `turn heights {light}, {medium}, {heavy} (dome top 120, band to 170)`)
 	end)
 
-	t.test("the bounce is close to a mirror off the dome where the shell turned (S-80)", function()
-		-- shells from 200 studs out at the dome's top, at angles to its normal
-		local function bounce(angle: number, mass: number): (number, number, number)
-			local a = math.rad(angle)
-			local dx, dy = math.sin(a), -math.cos(a)
-			local x, y, z, vx, vy, vz = -dx * 200, 120 - dy * 200, 0, dx * 300, dy * 300, 0
-			local phase, nx, ny, inAngle = ShieldField.FREE, 0, 1, 0
-			for _ = 1, 300 do
+	t.test("head-on shells stop and come back; off-centre ones bend round the dome and carry on (S-82)", function()
+		-- parallel shots up at a dome of radius 120, offset from its centre;
+		-- returns the angle between the way out and the way in, the speed kept
+		-- and whether it broke through
+		local function shot(offset: number, mass: number, speed: number): (number, number, boolean)
+			local x, y, z, vx, vy, vz = offset * 120, -200, 0, 0, speed, 0
+			local phase, breach = ShieldField.FREE, false
+			for _ = 1, 400 do
 				local event
 				x, y, z, vx, vy, vz, phase, event = ShieldField.step(x, y, z, vx, vy, vz, 0, 0, 0, 0, 120, 1, mass, phase, 1 / 15)
-				if event == ShieldField.TURN then
-					local r = math.sqrt(x * x + y * y)
-					nx, ny = x / r, y / r
-					inAngle = math.deg(math.acos(-(dx * nx + dy * ny)))
-				end
+				breach = breach or event == ShieldField.BREACH
 				if phase == ShieldField.DONE then
 					break
 				end
 			end
-			local speed = math.sqrt(vx * vx + vy * vy)
-			return inAngle, math.deg(math.acos((vx * nx + vy * ny) / speed)), speed / 300
+			local s = math.sqrt(vx * vx + vy * vy)
+			return math.deg(math.acos(math.clamp(vy / s, -1, 1))), s / speed, breach
 		end
-		for _, mass in { 0.3, 1, 4 } do
-			local i0, o0, keep0 = bounce(0, mass)
-			t.expect(i0 < 0.5 and o0 < 0.5, `mass {mass}: head-on goes straight back ({o0}°)`)
-			t.expect(keep0 > 0.5 and keep0 < 0.7, `mass {mass}: at {keep0 * 100}% of its speed`)
-			for _, angle in { 30, 50, 70 } do
-				local i, o, keep = bounce(angle, mass)
-				t.expect(math.abs(o - i) <= 10, `mass {mass}, {angle}°: in {i}° → out {o}° (a mirror within 10°)`)
-				t.expect(keep > 0.6 and keep < 1, `mass {mass}, {angle}°: keeps {keep * 100}% of its speed`)
-			end
+		local last = 181
+		for _, offset in { 0, 0.3, 0.5, 0.7, 0.85, 0.95 } do
+			local angle, keep, breach = shot(offset, 1, 260)
+			t.equal(breach, false, `offset {offset}: turned`)
+			t.expect(angle < last, `offset {offset}: bent less than a shot nearer the centre ({angle}° after {last}°)`)
+			t.expect(keep > 0.3 and keep < 0.75, `offset {offset}: slowed, keeping {keep * 100}%`)
+			last = angle
 		end
+		t.expect(shot(0, 1, 260) > 179, "head-on: straight back")
+		t.expect(shot(0.7, 1, 260) < 60 and shot(0.95, 1, 260) < 30, "glancing: steered off, carrying on forward")
+		for _, mass in { 0.25, 2.4, 8 } do
+			local headOn, _, through = shot(0, mass, 240)
+			t.expect(headOn > 179 and not through, `mass {mass} at 240 studs/s head-on: straight back`)
+			t.expect(shot(0.85, mass, 420) < 40, `mass {mass} at 420 studs/s, glancing: carries on`)
+		end
+		-- a shot whose line misses the dome is left alone
+		local angle, keep = shot(1.2, 1, 260)
+		t.expect(angle < 1e-6 and math.abs(keep - 1) < 1e-9, "a line past the dome: untouched")
 	end)
 
 	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()

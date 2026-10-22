@@ -1131,3 +1131,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Power draw unchanged** (40 / 25 per s while recharging): my call, as in S-80; under review.
 - **Effect:** a full Phalanx recharges 75 shell masses a second: about 30 mortar shells, 85 Ravager rounds or 9 siege shells a second before it loses ground. Breaches still happen only below 50% charge, which only a large, sustained barrage or a power stall now reaches.
 - **Tests:** the drain test starts half full and compares the hit tick with the tick before (a tick's recharge, 5, now exceeds a mortar shell's 2.4).
+
+## S-82 — Shield field after the user's drawing: head-on back, off-centre steered round and on (2026-10-22)
+
+- **Asked** (the user via the client stream, with a drawing): "If straight forward then it will by slowly slowed down and bounce off, if hit at an angle (like the right side), it will slowly be slowed down + steered off. Also reduce the de-acceleration to 1.5x, not 2x". The drawing: a head-on shot stops and goes straight back; a parallel shot near the right edge slows, bends along the dome's curve and carries on, not back toward the shooter.
+- **Why S-79/S-80's field couldn't:** it acts only along the normal, starting 50 studs out, so an off-centre shell is turned to the band's own curve far from the dome and leaves sideways or back (0.5 radii off the centre: 123°; even with no push at all, 90°).
+- **The new braking phase** (`Shared/Combat/ShieldField`):
+  - **Takes hold** only of a shell in the band whose straight line would hit the dome (`ShieldField.onCourse`). Shells that would pass the dome by are left alone; the sim also picks the dome a shell is on course for, not the first one near.
+  - **Slows** the shell along its path by BRAKE + DRAG × speed (750 / 13.5: 1.5× the prototype's 500 / 9, the user) × (0.4 + depth) × the head-on share: cos² of its incidence on the dome itself, from its line's closest approach to the centre (`ShieldField.headOn`), at least GLANCE_SLOW 0.05.
+  - **Steers** it away from the dome at STEER 8 rad/s × (0.4 + depth), while its line still passes within GRAZE 1.08 radii of the centre, and never past that line. A rotation, so it never overshoots.
+  - **Turns** (the hit, on the dome under the shell) when it stops closing in. Then it is thrown out: PUSH 700 × the head-on share, so a shell stopped head-on goes straight back and one sliding past only gets a lift.
+  - Mass divides the braking, steering and push by mass^0.6, as before.
+- **Measured** (mass 1, 260 studs/s, full force; offset of the line → angle between the way out and the way in, speed kept): 0 → 180° (39%), 0.3 → 141° (68%), 0.5 → 94° (53%), 0.7 → 42° (37%), 0.85 → 25° (51%), 0.95 → 18° (56%). Heavy (2.4, 8) and light (0.25) shells at 240–480 studs/s: head-on straight back, glancing 17–60°.
+- **Not stopped head-on at full force:** the Citadel round (mass 4.3, 480 studs/s) at the reduced braking; the siege mortar (8 at 240) and heavy bombs still stop. Under review.
+- **Caught again:** a shell thrown out that comes back (a bomb bounced up falls again) is caught again; `pShieldDone` is gone. A shell inside the dome can't be caught (the field starts outside it), so breaches still pass.
+- **Tests:** `Shield.spec` 13: the S-80 mirror test replaced by the drawing's (head-on back, the angle shrinking with the offset, glancing under 60° from 0.7 radii and under 30° at 0.95, heavy and light shells, a line past the dome untouched); bombs in the shell-weight test now drop from above the dome. The client's S-80 note no longer holds.

@@ -113,10 +113,9 @@ export type Combat = {
 	strategic: { number }, -- strategic missiles in flight, in launch order (S-48)
 	pGoal: { [number]: { number } }, -- lofted missiles: the ordered spot { x, y, z } (S-51)
 	-- shield fields (S-79, Sim/Shield): the dome generator a projectile is in
-	-- the field of and its ShieldField phase there; the last dome done with it
+	-- the field of and its ShieldField phase there
 	pShield: { [number]: number },
 	pShieldPhase: { [number]: number },
-	pShieldDone: { [number]: number },
 	-- shield dome generators (S-79), in the order they entered: charge in
 	-- shell masses, up (the dome stands), and the power share of their last
 	-- recharge step (0..1)
@@ -219,7 +218,6 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pGoal = {},
 		pShield = {},
 		pShieldPhase = {},
-		pShieldDone = {},
 		shieldIds = {},
 		shieldCharge = {},
 		shieldUp = {},
@@ -634,7 +632,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pDecoy[id] = nil
 	c.pSerial[id], c.pTargetProj[id], c.pTargetSerial[id] = nil, nil, nil
 	c.pGoal[id] = nil
-	c.pShield[id], c.pShieldPhase[id], c.pShieldDone[id] = nil, nil, nil
+	c.pShield[id], c.pShieldPhase[id] = nil, nil
 	local si = table.find(c.strategic, id)
 	if si then
 		table.remove(c.strategic, si)
@@ -700,7 +698,7 @@ function Combat.hash(c: Combat, h: number): number
 		if d then
 			h = Hash.u32(Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4]), d[5] or 0)
 		end
-		h = Hash.u32(Hash.u32(Hash.u32(h, c.pShield[id] or 0), c.pShieldPhase[id] or 0), c.pShieldDone[id] or 0)
+		h = Hash.u32(Hash.u32(h, c.pShield[id] or 0), c.pShieldPhase[id] or 0)
 	end
 	for _, id in c.shieldIds do
 		h = Hash.u32(Hash.number(Hash.u32(h, id), c.shieldCharge[id]), if c.shieldUp[id] then 1 else 0)
