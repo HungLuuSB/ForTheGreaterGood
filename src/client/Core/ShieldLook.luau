@@ -124,4 +124,26 @@ function ShieldLook.onScreen(sx: number, sy: number, depth: number, radiusPx: nu
 	return sx + radiusPx >= 0 and sx - radiusPx <= w and sy + radiusPx >= 0 and sy - radiusPx <= h
 end
 
+-- The field's force on a shell over one tick (C-97): its velocity now
+-- (vx, vy, vz) and one tick on (nvx, nvy, nvz, from the field step), minus
+-- what its own gravity `g` did. Returns the force's unit direction and its
+-- size (studs/s gained per tick); size 0 when the field does nothing.
+ShieldLook.TICK = 1 / 15
+function ShieldLook.force(vx: number, vy: number, vz: number, nvx: number, nvy: number, nvz: number, g: number): (number, number, number, number)
+	local fx, fy, fz = nvx - vx, nvy - vy + g * ShieldLook.TICK, nvz - vz
+	local size = math.sqrt(fx * fx + fy * fy + fz * fz)
+	if size < 1e-6 then
+		return 0, 0, 0, 0
+	end
+	return fx / size, fy / size, fz / size, size
+end
+
+-- How long the force plume is (studs) for a force of `size`.
+ShieldLook.PLUME_PER_SPEED = 0.2 -- studs per stud/s of change per tick
+ShieldLook.PLUME_MIN = 2
+ShieldLook.PLUME_MAX = 14
+function ShieldLook.plume(size: number): number
+	return math.clamp(size * ShieldLook.PLUME_PER_SPEED, ShieldLook.PLUME_MIN, ShieldLook.PLUME_MAX)
+end
+
 return ShieldLook

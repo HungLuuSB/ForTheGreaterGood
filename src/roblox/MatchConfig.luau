@@ -400,6 +400,26 @@ local PROFILES = {
 			{ def = "chs_watcher", player = 2, x = 200, z = 60, heading = math.pi },
 		},
 	},
+	-- one shell at a time against the shield (C-96, the user): a Phalanx at
+	-- (0, -150) with its fusion plant, a builder in the dome's core (72 studs)
+	-- as the target, and one Ravager to the north firing at it, its shells
+	-- crossing the dome's north face. Change the Ravager's def to try other
+	-- shells (in range of the builder: chs_juggernaut, chs_locust).
+	shield_one = {
+		seed = 12,
+		mapId = "flat:128",
+		scenario = "empty",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		spawns = {
+			{ def = "ord_phalanx", player = 1, x = 0, z = -150, health = 50 },
+			{ def = "ord_fusion", player = 1, x = 0, z = -215, health = 50 },
+			{ def = "ord_mason", player = 1, x = 0, z = -100, health = 50 },
+			{ def = "chs_ravager", player = 2, x = 0, z = 60, heading = math.pi },
+		},
+	},
 	-- 50 Lancers, no enemy: for trying selection and orders
 	march = {
 		seed = 1,

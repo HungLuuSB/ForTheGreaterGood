@@ -198,6 +198,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `f5774f4` (ShieldFx on C's shield assets, beam from the generator, shield debug counts, S-82 checked, C-94); test_client 165, test 400, build passed.
 - Ready to merge: `f390838` (shield field inside the dome checked, docs only); test_client 165, test 400, build passed.
 - Ready to merge: `eae1f16` (shield hits on entry, white-grey hexagons, thin rings from RingThin, C-95); test_client 165, test 400, build passed. RingThin's ID is on m-models (models-C), used by its asset ID.
+- Ready to merge: `c4b6c67` (shield ripple on its first frame, shield_one profile, C-96); test_client 165, test 400, build passed.
+- Ready to merge: `a1b6c7d` (force plumes on shells in a shield field, absorbed shells dropped (protocol 25), C-97); test_client 167, test 401, build passed.
+- Ready to merge: `4f9fe7c` (shells in a shield field burn: bow shock and trail, C-98); test_client 167, test 401, build passed.
 
 ## Tasks
 
@@ -525,6 +528,41 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: shells burn in the field like a meteor (C-98)
+
+- **Your drawing:** a curved front ahead of the shell, like atmospheric entry. This replaces C-97's plume, which stretched ahead of the shell.
+  - **Bow shock:** C's dome mesh flattened into a glowing cap, curved round the shell's nose on the side the field pushes from.
+  - **Burning trail:** streams back from the shell along the force.
+  - Both grow with the force, and with the shell's weight.
+- **Colour:** white-hot with a little orange (burning). The hexagons stay white and grey, as you asked; say if you want the shock white too.
+- **Pool:** the same fixed pool of 32, made once C's dome mesh has loaded.
+- **Screenshot:** `debug_out/screens/c98_shield_bow_shock.jpg`: `shield_one`, frozen with a Ravager shell braking, side on. The shock front is on its nose, the trail behind it, and its entry hexagons on the right.
+
+## 2026-10-23: force plumes on shells in the dome; light shells absorbed (C-97, S-84, S-85)
+
+- **Force plume (your request):** a shell inside the dome shows the force on it, a glowing plume on the side the field pushes from, flowing into the shell.
+  - The force is the field step's change of velocity over a tick, minus the weapon's own gravity (`ShieldLook.force`, `ShieldLook.spec`). So it follows the shot and the dome's centre: braking against the shot, steering and the push out.
+  - The plume is 2–14 studs long by strength, and wider for heavier shells.
+  - A fixed pool of 32 beams, made on first use.
+  - `debug_out/screens/c97_shield_force_plume.jpg`: `shield_one` at 0.1× speed, frozen with a Ravager shell braking. Its entry hexagons are on the right, and its plume stretches ahead of it toward the centre.
+- **S-84 (sim-A):** inside the field shells feel an extra 60 studs/s² of gravity on top of their own, so turned shells arc down at the dome's edge. Nothing to change on the client: it steps them with the shared field.
+- **S-85 (sim-A, protocol 25):** shells under mass 0.5 (75 damage: machine guns, the Locust autocannon, Hydra and Judgement rockets) are destroyed where they cross the surface. SHIELD_HIT carries the new ABSORBED flag.
+  - The client drops the shell with no burst and lights the dome at the crossing.
+  - `ShieldWire.spec`: a Locust's rounds are destroyed at the surface, none is drawn inside, and nothing bursts inside.
+- **Debug:** `Invoke("camera", x, z, distance, pitch, yaw)` now takes a yaw.
+
+## 2026-10-23: the shield ripple shows on its first frame; a one-attacker test profile (C-96)
+
+- **You still saw the ripple late.** The entry effect did fire on the crossing tick: in Studio it lit for 197 of 197 shells. But a Ravager shell turns only about 1.5 ticks (0.1 s) after it enters, and C's ripple grew from size 0, so it was barely visible until around the turn.
+  - **Fix:** the ripple now starts at a third of its size and fully opaque on its first frame, then spreads and fades.
+  - **Checked** in `shield_one` at 0.1× speed, freezing sim and effects on the frame the entry fires: the white hexagon and the ripple rings sit at the surface with the shell just crossing it (`debug_out/screens/c96_shield_entry_frozen.jpg`).
+- **`shield_one` profile (your idea):** one Phalanx, its fusion plant, a builder in the dome's core as the target, one Ravager to the north. Change the Ravager's def to try other shells.
+- **A shell that never showed entering** (one destroyed on contact, or a missed SHIELD_FIELD) now lights the dome at its SHIELD_HIT. That's ready for your next rule.
+- **Sent to sim-A** (field rules, theirs to build):
+  - extra downward force on shells inside the dome, like gravity;
+  - light shots destroyed instantly on contact, heavy ones on the current mechanic. I suggested a cut near mass 0.5 (75 damage): the Locust autocannon and Hydra rockets destroyed, cannon shells turned.
+- **Debug:** `Invoke("shielddomes")` now reports entries, domes lit, and the average ticks from entry to turn.
 
 ## 2026-10-23: shield hits on entry, white-grey hexagons, thin rings (C-95)
 
