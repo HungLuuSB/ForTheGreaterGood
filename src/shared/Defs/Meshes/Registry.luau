@@ -1250,19 +1250,19 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				model = "rbxassetid://70465420259273",
 				pieces = {
 					barrel = {
-						center = { 0.0501, 2.411, -2.492 },
+						center = { 0.0797, 2.4514, -2.503 },
 						mesh = "rbxassetid://72831725349935",
-						size = { 1.6895, 1.4535, 3.9214 },
+						size = { 1.8429, 1.4284, 3.8742 },
 					},
 					base = {
-						center = { -0.0122, 1.489, 0.2476 },
+						center = { -0.0026, 1.4678, 0.2261 },
 						mesh = "rbxassetid://84034667672000",
-						size = { 5.7782, 3.0973, 7.4838 },
+						size = { 5.8069, 3.0355, 7.5166 },
 					},
 					turret = {
-						center = { 0.2202, 2.3187, 0.0633 },
+						center = { 0.2281, 2.3715, 0.0626 },
 						mesh = "rbxassetid://134686560383268",
-						size = { 3.8504, 1.411, 3.4886 },
+						size = { 3.9616, 1.369, 3.4385 },
 					},
 				},
 				status = "approved",
@@ -3004,13 +3004,13 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			glowShare = 0.0592,
 			maps = {
-				ALB = "rbxassetid://107660670914982",
-				EMI = "rbxassetid://114430192808761",
-				MTL = "rbxassetid://107530442248506",
-				NOR = "rbxassetid://77364840591185",
-				RGH = "rbxassetid://108141342918171",
+				ALB = "rbxassetid://116244857218894",
+				EMI = "rbxassetid://111459716678875",
+				MTL = "rbxassetid://94479430155663",
+				NOR = "rbxassetid://128589925720350",
+				RGH = "rbxassetid://125795108023893",
 			},
-			model = "rbxassetid://111384704771570",
+			model = "rbxassetid://87123043117991",
 			pieces = {
 				base = {
 					center = { 0, 1.625, 1.9 },
@@ -4198,13 +4198,13 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			glowShare = 0.0502,
 			maps = {
-				ALB = "rbxassetid://81625871160518",
-				EMI = "rbxassetid://115097975555561",
-				MTL = "rbxassetid://108904350375199",
-				NOR = "rbxassetid://118994932108519",
-				RGH = "rbxassetid://83286424519799",
+				ALB = "rbxassetid://85100153293670",
+				EMI = "rbxassetid://94466988144161",
+				MTL = "rbxassetid://92550492334048",
+				NOR = "rbxassetid://116429279782426",
+				RGH = "rbxassetid://102268287231471",
 			},
-			model = "rbxassetid://80613242558609",
+			model = "rbxassetid://96261421827136",
 			pieces = {
 				base = {
 					center = { 0, 1.5025, 1.1304 },
@@ -4436,14 +4436,14 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				model = "rbxassetid://103037837887737",
 				pieces = {
 					base = {
-						center = { -0.0066, 1.8358, -0.4481 },
+						center = { 0.0266, 1.8826, -0.4268 },
 						mesh = "rbxassetid://85208518241518",
-						size = { 4.7486, 3.7454, 7.1351 },
+						size = { 4.799, 3.8079, 7.1281 },
 					},
 					turret = {
-						center = { 0.0088, 2.5048, 0.3984 },
+						center = { -0.0129, 2.5589, 0.4316 },
 						mesh = "rbxassetid://84104072414412",
-						size = { 1.7138, 1.0163, 3.8842 },
+						size = { 1.7299, 1.0446, 3.841 },
 					},
 				},
 				status = "approved",
@@ -5637,13 +5637,13 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			glowShare = 0.0535,
 			maps = {
-				ALB = "rbxassetid://88238120817615",
-				EMI = "rbxassetid://86302669861254",
-				MTL = "rbxassetid://116552130711177",
-				NOR = "rbxassetid://139251563130082",
-				RGH = "rbxassetid://98511460043410",
+				ALB = "rbxassetid://101128315011444",
+				EMI = "rbxassetid://118727568968903",
+				MTL = "rbxassetid://119715069551299",
+				NOR = "rbxassetid://136447215842508",
+				RGH = "rbxassetid://105422983167034",
 			},
-			model = "rbxassetid://116443585004390",
+			model = "rbxassetid://130920831859078",
 			pieces = {
 				base = {
 					center = { 0, 1.5025, 1.1304 },
@@ -6126,19 +6126,19 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				model = "rbxassetid://89484745314472",
 				pieces = {
 					barrel = {
-						center = { -0.0166, 2.6381, -6.0034 },
+						center = { 0.0532, 2.6893, -5.9545 },
 						mesh = "rbxassetid://91841424009719",
-						size = { 1.4044, 1.0157, 9.4923 },
+						size = { 1.3569, 1.0558, 9.5418 },
 					},
 					base = {
-						center = { 0.0422, 1.0073, -0.1594 },
+						center = { 0.0018, 1.0054, -0.1025 },
 						mesh = "rbxassetid://121241666567816",
-						size = { 6.5169, 2.0593, 8.2442 },
+						size = { 6.4053, 2.0675, 8.21 },
 					},
 					turret = {
-						center = { 0.0423, 3.1129, 1.3737 },
+						center = { 0.0358, 3.133, 1.4229 },
 						mesh = "rbxassetid://87869788561044",
-						size = { 4.3663, 2.6357, 5.2678 },
+						size = { 4.378, 2.657, 5.2851 },
 					},
 				},
 				status = "approved",

@@ -1,7 +1,34 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "User review fixes 2026-10-23: 856 triangles, glow share 5.3%",
+  "revision": "User review fixes 2026-10-23, full re-upload after HTTP 502: 856 triangles, glow share 5.3%",
   "bar": {
+    "model": "rbxassetid://130920831859078",
+    "meshes": {
+      "base": "rbxassetid://102986440605788",
+      "base_glow_head": "rbxassetid://116780192415008",
+      "base_glow_running": "rbxassetid://111453346343477",
+      "nano": "rbxassetid://137511413386604",
+      "nano_glow_power": "rbxassetid://108149656166754",
+      "rotor": "rbxassetid://130259912344165"
+    },
+    "decals": {
+      "ALB": "rbxassetid://112411765774732",
+      "RGH": "rbxassetid://134671356832178",
+      "NOR": "rbxassetid://121926862564044",
+      "MTL": "rbxassetid://97978831163946",
+      "EMI": "rbxassetid://132357218954060"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://101128315011444",
+      "NOR": "rbxassetid://136447215842508",
+      "RGH": "rbxassetid://105422983167034",
+      "MTL": "rbxassetid://119715069551299",
+      "EMI": "rbxassetid://118727568968903"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_skywright_bar in FTGG Art",
+    "reuploadNote": "Fully re-uploaded 2026-10-23: the first upload's maps failed with HTTP 502 in Studio; swapping single maps didn't recover (pipeline.md, white model)."
+  },
+  "bar_2": {
     "model": "rbxassetid://116443585004390",
     "meshes": {
       "base": "rbxassetid://102986440605788",
@@ -25,8 +52,8 @@
       "MTL": "rbxassetid://116552130711177",
       "EMI": "rbxassetid://86302669861254"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_skywright_bar in FTGG Art",
-    "reuploadNote": "NOR re-uploaded 2026-10-23: the first image (rbxassetid://116200328202275) failed with HTTP 502 in Studio (pipeline.md, white model)."
+    "reuploadNote": "NOR re-uploaded 2026-10-23: the first image (rbxassetid://116200328202275) failed with HTTP 502 in Studio (pipeline.md, white model).",
+    "note": "User review fixes 2026-10-23: 856 triangles, glow share 5.3%"
   },
   "bar_1": {
     "model": "rbxassetid://91195586313673",

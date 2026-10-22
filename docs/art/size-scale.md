@@ -1,6 +1,6 @@
-# Size scale (proposal, 2026-10-23)
+# Size scale (2026-10-23, accepted: S-104)
 
-**Status: proposal, waiting for the sim stream.** Footprints and unit sizes are sim rules (blocking, pathing, collision, build range), so nothing is rescaled until the sim agrees (models stream, M-26). The user's direction: size shows tech level. T1 can stay modest; T2 is clearly larger; T3 is the largest of all. The same holds for units.
+**Status: accepted by the sim stream in full (S-104, 2026-10-23).** Footprints and unit sizes are sim rules (blocking, pathing, collision, build range). The sim's notes: a 2×2 T1 extractor snaps to a corner of its deposit cell (the deposit sits under one quadrant, so no drill has to line up with the centre); a 3×3 T2 extractor is centred on its deposit; fp-2 heavy tanks share the Minotaur/Cyclops clearance class; the AI leaves 3-cell lanes; factory exits stay at model −Z (half the footprint + 1 cell out). The user's direction: size shows tech level. T1 can stay modest; T2 is clearly larger; T3 is the largest of all. The same holds for units.
 
 ## Reference: the Lancer (T1 tank)
 
