@@ -17,7 +17,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Measured with 200 units** (100 Lancers against 100 Ravagers): 146 glowing models drawn, 615 glow parts, the glow driver 0.19 ms a frame (worst 0.76), 21 writes a frame, 60 fps held.
 - **Screenshots:** `debug_out/screens/glowfx_*.jpg` (vehicles, headlights, factory, stall full and low, fight, 200 units).
 - **Not done:** builders brightening while they build. The client doesn't know when a builder is building (no field on the wire).
-- **Next:** your UI kit, settings, statistics and lobby task (started: chart maths and the stat sampler are written, not committed); then the shield ripple firing like 5–6 shots at once.
+- **Shield hits fixed (C-104):** one shell looked like 5–6 hitting at once. Each shell lights the dome exactly once (measured), but its 7 hex plates were all near full white and bloomed into separate blobs. Now the centre plate is bright and each ring out is 30% as opaque and greyer, so a hit reads as one impact (`shieldhit_before.jpg` / `shieldhit_after.jpg`).
+- **Next:** your UI kit, settings, statistics and lobby task (started: chart maths and the stat sampler are written, not committed).
 
 ## Summary (2026-10-23, environment and colour grade)
 
@@ -593,6 +594,23 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: one shield hit reads as one impact (C-104)
+
+- **Your report:** the shield's touch effect looked like 5–6 shots happening at the same time.
+- **Measured** (`shield_one`: one Ravager against a Phalanx):
+  - 23 shells fired, 23 SHIELD_FIELD, 22 SHIELD_HIT, 22 domes lit: each shell lights the dome once;
+  - the lights came one every 1.4 s, the Ravager's reload, so they aren't bunched either.
+- **The cause was the look:**
+  - a hit lights a patch of 7 hexagon plates (the centre and one ring);
+  - the ring's plates were almost as opaque and white as the centre (×0.82 heat, full opacity);
+  - under the night bloom each Neon plate bloomed into its own white blob, so one shell read as a cluster of shots (`shieldhit_close_before.jpg`).
+- **Fix** (`Core/Shield.plateAt`):
+  - each ring out is `RING_ALPHA` (0.3) as opaque as the one inside it;
+  - its heat falls 40% a ring (floor 20%), so it reads grey;
+  - the centre stays white-hot. `Shield.spec` checks the centre outshines ring 1.
+- **Screenshots:** `shieldhit_before.jpg` / `shieldhit_after.jpg` (play distance) and `shieldhit_close_before.jpg` / `shieldhit_close_after.jpg`.
+- **Not changed:** the ripple: C's texture has three rings by design.
 
 ## 2026-10-23: glow pass; BAR models built from the mesh manifest (C-103)
 

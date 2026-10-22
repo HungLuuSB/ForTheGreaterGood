@@ -871,3 +871,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The user's glow pass needed the models in game. C keeps to "FTGG Art" and gave a manifest.
 - Game scripts lack the Plugin capability for SurfaceAppearance maps, the emissive mask and RenderFidelity, and emission needs the mask. Rojo has it and clones keep it, so the repo stays the source and nothing has to be saved into the place by hand.
 - Measured at 200 units: 0.19 ms a frame.
+
+### C-104 — A shield hit's hex patch: one bright centre, faint outer rings (2026-10-23)
+
+**Decision:** in `Core/Shield.plateAt`, each ring's opacity is `RING_ALPHA` (0.3) to the power of its ring number, and its heat peak falls 40% a ring (floor 20%).
+
+**Why:** the user saw one shell's touch as 5–6 shots. Events were one per shell (measured), but the 7 equally white Neon plates bloomed into separate blobs under the night grade.
