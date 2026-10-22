@@ -28,6 +28,8 @@ TEX = 1024
 BUDGET = 4000  # triangles, whole unit (M-12)
 FOOTPRINT = 1  # cells of 8 studs (unit def)
 SAMPLES = 32
+# 1: the first upload's metalness map broke (HTTP 502) and the importer reused it
+lib.UPLOAD_REV = 1
 
 KINDS = ["paint", "trim", "team", "seam", "track", "steel", "rubber", "glass", "light", "grille", "dark"]
 

@@ -148,6 +148,13 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - **Locust:** built singly, not in pairs. Against Lancers it loses close (1.43) and long (1.11) but wins the flank (0.72), so it may want a little more punch.
   - **Mechanism designs, not built:**
     - **Phalanx (Order shield dome):**
+      - **Revised by you (through the client's C-87 prototype, `src/client/Core/Shield.luau`):**
+        - Shells slow to a stop in a field band outside the dome, then are thrown back out; heavier shells take longer to stop.
+        - The force is full at 50% charge or more and scales down below, so big shells break through, slowed.
+        - Recharging draws power.
+        - The dome collapses at 0% and rises again at 25%.
+        - Still open on your side: harmless or live bounced shells, a Chaos version, vehicle or structure.
+        - The sim version would follow these rules (a field band stepped in Projectiles, a power drain like S-72's upkeep) once those are decided. The points below are my first design.
       - A deployable vehicle (Sim/Deploy, like the Warden) that, deployed, holds a dome of radius 60 with a 3,000-point shield pool. Recharge: 100/s after 3 s without a hit.
       - Projectiles (shells, rockets, missiles, bombs) whose path enters the dome from outside burst on its surface and take their damage from the pool, not from the units inside. Hitscan and beams too.
       - Shots fired from inside pass out freely. Melee range (the Minotaur's charge, 30 studs) is inside the dome, so siege ignores it.

@@ -623,7 +623,18 @@ def bake_all(low, high, materials, size, samples, out_dir, prefix, variants):
     return result
 
 
+# Upload revision (pipeline.md, import notes): Studio's 3D Importer reuses an
+# image it has uploaded before when the file is identical, so a map whose
+# upload broke stays broken on every re-import. Bumping a unit's UPLOAD_REV
+# changes one corner pixel of every map so the importer uploads them anew.
+UPLOAD_REV = 0
+
+
 def save_png(img, path, mode):
+    if UPLOAD_REV:
+        v = (UPLOAD_REV * 37 % 255) / 255
+        i = len(img.pixels) - img.channels  # last pixel: top-right corner
+        img.pixels[i:i + 3] = (v, v, v)
     scene = bpy.context.scene
     s = scene.render.image_settings
     s.file_format = "PNG"
