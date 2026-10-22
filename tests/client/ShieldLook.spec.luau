@@ -116,4 +116,12 @@ return function(t: any)
 		t.expect(not ShieldLook.onScreen(500, 300, -10, 50, 1000, 600, false), "behind the camera")
 		t.expect(ShieldLook.onScreen(500, 300, -10, 50, 1000, 600, true), "the camera inside it")
 	end)
+
+	t.test("ripples come from fixed-size emitters: a heavy hit picks a big one, a light hit a small one (C-116)", function()
+		local small, big = ShieldLook.rippleBucket(0.3), ShieldLook.rippleBucket(4)
+		t.equal(small, 1)
+		t.equal(big, #ShieldLook.RIPPLE_SCALES)
+		t.expect(ShieldLook.rippleBucket(1) > small and ShieldLook.rippleBucket(1) < big, "a typical shell in between")
+		t.equal(ShieldLook.rippleBucket(100), big, "clamped")
+	end)
 end

@@ -103,7 +103,7 @@ export type ShieldFx = {
 	ringMesh: boolean,
 	foot: BasePart?, -- C's ring at the dome's foot
 	flash: CylinderHandleAdornment,
-	ripple: ParticleEmitter,
+	ripples: { ParticleEmitter }, -- one per ShieldLook.RIPPLE_SCALES, never resized (C-116)
 	rippleAt: Attachment,
 	bar: Frame?,
 	barFill: Frame?,
@@ -300,12 +300,8 @@ function Methods.hit(s: ShieldFx, worldPos: Vector3, intensity: number)
 	-- C's ripple: one particle lying flat on the dome (its velocity along the normal)
 	local right = if math.abs(n.Y) < 0.95 then Vector3.yAxis:Cross(n).Unit else Vector3.xAxis:Cross(n).Unit
 	s.rippleAt.WorldCFrame = CFrame.fromMatrix(at + n * 0.2, right, n)
-	local size = s.radius * ShieldFx.RIPPLE_SIZE * math.sqrt(math.clamp(intensity, 0.3, 4))
-	-- visible on its first frame (a third of its size, opaque), then spreading: a
-	-- shell turns about 0.1 s after it enters, and a ripple growing from 0 read
-	-- as starting at the turn (the user, C-96)
-	s.ripple.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size * 0.35), NumberSequenceKeypoint.new(0.15, size * 0.7), NumberSequenceKeypoint.new(1, size) })
-	s.ripple:Emit(1)
+	-- the emitter of the hit's size: resizing one would resize every live ripple (C-116)
+	s.ripples[ShieldLook.rippleBucket(intensity)]:Emit(1)
 	Shield.hit(s.model, { x = worldPos.X, y = worldPos.Y, z = worldPos.Z }, intensity, clock)
 	s.pulse = math.min(1, s.pulse + 0.3 * intensity)
 end
@@ -484,22 +480,31 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		f.Position = position + Vector3.new(0, 0.15, 0)
 		foot = f
 	end
-	-- C's ripple: one emitter, moved to each hit
+	-- C's ripple: emitters (one per size) moved to each hit
 	local rippleAt = Instance.new("Attachment")
 	rippleAt.Parent = anchor
-	local ripple = Instance.new("ParticleEmitter")
-	ripple.Texture = ShieldFx.ASSETS.ripple
-	ripple.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
-	ripple.EmissionDirection = Enum.NormalId.Top
-	ripple.Speed = NumberRange.new(0.01)
-	ripple.SpreadAngle = Vector2.zero
-	ripple.Lifetime = NumberRange.new(ShieldFx.RIPPLE_SECONDS)
-	ripple.Rate = 0
-	ripple.LightEmission = 1
-	ripple.Color = ColorSequence.new(WHITE)
-	ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.1), NumberSequenceKeypoint.new(1, 1) })
-	ripple.TimeScale = math.max(particleScale, 0.001)
-	ripple.Parent = rippleAt
+	local ripples: { ParticleEmitter } = {}
+	for _, scale in ShieldLook.RIPPLE_SCALES do
+		local ripple = Instance.new("ParticleEmitter")
+		ripple.Texture = ShieldFx.ASSETS.ripple
+		ripple.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
+		ripple.EmissionDirection = Enum.NormalId.Top
+		ripple.Speed = NumberRange.new(0.01)
+		ripple.SpreadAngle = Vector2.zero
+		ripple.Lifetime = NumberRange.new(ShieldFx.RIPPLE_SECONDS)
+		ripple.Rate = 0
+		ripple.LightEmission = 1
+		ripple.Color = ColorSequence.new(WHITE)
+		ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.1), NumberSequenceKeypoint.new(1, 1) })
+		ripple.TimeScale = math.max(particleScale, 0.001)
+		-- visible on its first frame (a third of its size, opaque), then spreading: a
+		-- shell turns about 0.1 s after it enters, and a ripple growing from 0 read
+		-- as starting at the turn (the user, C-96)
+		local size = radius * ShieldFx.RIPPLE_SIZE * scale
+		ripple.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size * 0.35), NumberSequenceKeypoint.new(0.15, size * 0.7), NumberSequenceKeypoint.new(1, size) })
+		ripple.Parent = rippleAt
+		table.insert(ripples, ripple)
+	end
 	-- the capacity bar
 	local bar, fill, text = nil, nil, nil
 	if gui then
@@ -570,7 +575,7 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		ringMesh = ringMesh,
 		foot = foot,
 		flash = flash,
-		ripple = ripple,
+		ripples = ripples,
 		rippleAt = rippleAt,
 		bar = bar,
 		barFill = fill,
@@ -805,7 +810,9 @@ step = function(realDt: number)
 		-- particles (ripples, specks) keep the same clock
 		particleScale = scale
 		for _, s in shields do
-			s.ripple.TimeScale = math.max(scale, 0.001)
+			for _, r in s.ripples do
+				r.TimeScale = math.max(scale, 0.001)
+			end
 			s.specks.TimeScale = math.max(scale, 0.001)
 		end
 	end

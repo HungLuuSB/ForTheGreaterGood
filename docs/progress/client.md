@@ -358,6 +358,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b915691` (S-96 tower blockouts merged from m-models `aafbf19`; retract checked, C-113; docs only besides the merge); test 414, build passed; test_client 196 (the intermittent failure was Ranges.spec's timing check under load, fixed in the next commit).
 - Ready to merge: `ed5681f` (Ranges.spec timing check robust to machine load); test_client 196, test 414, build passed.
 - Ready to merge: `96973a5` (S-96 tower meshes merged from m-models `1efc5e9`, `1429976`; retracted glow dims, C-114); test_client 197, test 414, build passed.
+- Ready to merge: `1d738c9` (wreck meshes built and placed, wreck_<id> appearances, includes m-models `6b94586`, C-115); test_client 197, test 414, build passed.
 
 ## Tasks
 
@@ -685,6 +686,16 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: a heavy hit no longer enlarges every ripple on the dome (C-116)
+
+- **Your find:** with small ripples on the dome, one large shell turned them all big at once: the "burst" of shield effects.
+- **Cause:** each dome had one ripple ParticleEmitter. Every hit set its `Size` for that shell, then emitted one particle. A ParticleEmitter's `Size` applies to the particles it already emitted, so one heavy hit resized every live ripple.
+- **Fix:**
+  - each dome now has one emitter per size in `ShieldLook.RIPPLE_SCALES` (0.6, 0.85, 1.2, 1.7 × `RIPPLE_SIZE` × R), each sized once;
+  - a hit emits from the nearest one (`ShieldLook.rippleBucket`, by √intensity); nothing is resized after creation;
+  - `ShieldLook.spec` covers the choice.
+- **Studio** (`shield` profile): over 245 mixed hits in 15 s the four emitters kept their sizes (18 / 25.5 / 36 / 51 studs), and big and small ripples show side by side (`debug_out/screens/shield_ripples_mixed.jpg`).
 
 ## 2026-10-23: wreck meshes (models-C) built and placed; wreck appearances (C-115)
 
