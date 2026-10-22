@@ -18,6 +18,8 @@ Thumbs.db
 
 # Blender preview renders (rebuilt by each unit's build.py)
 /assets/models/*/export/preview_*.png
+/assets/models/*/export_wreck/preview_*.png
+/assets/models/*/export_wreck/*.fbm/
 __pycache__/
 /assets/models/*/export/*.fbm/
 /assets/fx/*/export/preview_*.png

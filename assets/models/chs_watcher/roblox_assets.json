@@ -46,5 +46,28 @@
       "EMI": "rbxassetid://85516507155410"
     },
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 908 triangles)"
+  },
+  "wreck": {
+    "model": "rbxassetid://101021283265742",
+    "meshes": {
+      "base": "rbxassetid://91585815309122",
+      "dish": "rbxassetid://81047278259187"
+    },
+    "decals": {
+      "ALB": "rbxassetid://81162069528440",
+      "RGH": "rbxassetid://137173382862379",
+      "NOR": "rbxassetid://115105831233752",
+      "MTL": "rbxassetid://124667638603036",
+      "EMI": "rbxassetid://133327416261515"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://89572492174096",
+      "NOR": "rbxassetid://137713370751546",
+      "RGH": "rbxassetid://71839646555746",
+      "MTL": "rbxassetid://104052600092843",
+      "EMI": "rbxassetid://72778385451583"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_watcher_wreck_bar in FTGG Art",
+    "revision": "Wreck (M-24): 908 triangles"
   }
 }

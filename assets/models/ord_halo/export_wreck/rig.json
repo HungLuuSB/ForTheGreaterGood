@@ -1,0 +1,99 @@
+{
+  "id": "ord_halo_wreck",
+  "wreckOf": "ord_halo",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.001,
+        1.5446,
+        -0.3706
+      ],
+      "size": [
+        5.2705,
+        3.2351,
+        8.0325
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0104,
+        3.0858,
+        1.5764
+      ],
+      "size": [
+        1.5382,
+        1.4947,
+        1.5225
+      ],
+      "pivot": [
+        0.0,
+        2.2,
+        1.6
+      ]
+    },
+    "launcher": {
+      "parent": "turret",
+      "center": [
+        -0.0638,
+        4.1011,
+        1.2359
+      ],
+      "size": [
+        3.9025,
+        1.339,
+        3.2535
+      ],
+      "pivot": [
+        0.0,
+        4.0,
+        1.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -1.25,
+        4.0,
+        -0.35
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 712,
+    "turret": 64,
+    "launcher": 348,
+    "total": 1124
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

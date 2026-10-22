@@ -65,5 +65,29 @@
       "EMI": "rbxassetid://116103214465065"
     },
     "model": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://70465420259273",
+    "meshes": {
+      "barrel": "rbxassetid://72831725349935",
+      "base": "rbxassetid://84034667672000",
+      "turret": "rbxassetid://134686560383268"
+    },
+    "decals": {
+      "ALB": "rbxassetid://139260365733071",
+      "RGH": "rbxassetid://103343239896590",
+      "NOR": "rbxassetid://138985465664413",
+      "MTL": "rbxassetid://130094671455874",
+      "EMI": "rbxassetid://83797250011950"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://101637405171552",
+      "NOR": "rbxassetid://126083855987185",
+      "RGH": "rbxassetid://82220916837807",
+      "MTL": "rbxassetid://105908263717621",
+      "EMI": "rbxassetid://133603203437631"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hellmouth_wreck_bar in FTGG Art",
+    "revision": "Wreck (M-24): 3184 triangles"
   }
 }

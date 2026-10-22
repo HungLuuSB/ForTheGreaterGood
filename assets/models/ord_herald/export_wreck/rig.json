@@ -1,0 +1,80 @@
+{
+  "id": "ord_herald_wreck",
+  "wreckOf": "ord_herald",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0066,
+        1.8358,
+        -0.4481
+      ],
+      "size": [
+        4.7486,
+        3.7454,
+        7.1351
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0088,
+        2.5048,
+        0.3984
+      ],
+      "size": [
+        1.7138,
+        1.0163,
+        3.8842
+      ],
+      "pivot": [
+        0.0,
+        2.15,
+        1.5
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        2.55,
+        -1.45
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 756,
+    "turret": 264,
+    "total": 1020
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

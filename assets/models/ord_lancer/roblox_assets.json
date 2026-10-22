@@ -130,5 +130,29 @@
       "EMI": "rbxassetid://80851524837017"
     },
     "note": "first BAR upload (2026-10-21): its maps never drew as SurfaceAppearance (metalness HTTP 502 at import, reused on re-import); replaced by \"bar_rev1\" (UPLOAD_REV 1)"
+  },
+  "wreck": {
+    "model": "rbxassetid://108229567309359",
+    "meshes": {
+      "barrel": "rbxassetid://122500284226925",
+      "base": "rbxassetid://109116201761410",
+      "turret": "rbxassetid://103546880156430"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117516166520437",
+      "RGH": "rbxassetid://108856160073021",
+      "NOR": "rbxassetid://125646351668411",
+      "MTL": "rbxassetid://94474683142972",
+      "EMI": "rbxassetid://76747966501011"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://131730122689529",
+      "NOR": "rbxassetid://122892228292673",
+      "RGH": "rbxassetid://113518297957713",
+      "MTL": "rbxassetid://108014870949234",
+      "EMI": "rbxassetid://91237737482338"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_lancer_wreck_bar in FTGG Art",
+    "revision": "Wreck (M-24): 2956 triangles"
   }
 }

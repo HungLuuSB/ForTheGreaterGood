@@ -1,0 +1,52 @@
+{
+  "id": "chs_solar_wreck",
+  "wreckOf": "chs_solar",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.003,
+        1.595,
+        0.007
+      ],
+      "size": [
+        6.6407,
+        3.2601,
+        6.6692
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 408,
+    "total": 408
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

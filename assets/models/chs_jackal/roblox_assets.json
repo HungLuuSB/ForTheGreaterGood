@@ -47,5 +47,28 @@
       "EMI": "rbxassetid://137994077728220"
     },
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 836 triangles)"
+  },
+  "wreck": {
+    "model": "rbxassetid://81811433137706",
+    "meshes": {
+      "base": "rbxassetid://105508380749136",
+      "turret": "rbxassetid://77255006143763"
+    },
+    "decals": {
+      "ALB": "rbxassetid://87698479315383",
+      "RGH": "rbxassetid://81076517070482",
+      "NOR": "rbxassetid://136994771808007",
+      "MTL": "rbxassetid://93327953871937",
+      "EMI": "rbxassetid://90239934426041"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://103044877521461",
+      "NOR": "rbxassetid://80600735917196",
+      "RGH": "rbxassetid://93921038430664",
+      "MTL": "rbxassetid://118403078705165",
+      "EMI": "rbxassetid://120844198280151"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_jackal_wreck_bar in FTGG Art",
+    "revision": "Wreck (M-24): 824 triangles"
   }
 }

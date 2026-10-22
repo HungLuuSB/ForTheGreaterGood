@@ -1,0 +1,80 @@
+{
+  "id": "chs_jackal_wreck",
+  "wreckOf": "chs_jackal",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0338,
+        1.6324,
+        -0.0443
+      ],
+      "size": [
+        5.2125,
+        3.3134,
+        5.9369
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.8411,
+        2.4891,
+        -0.7308
+      ],
+      "size": [
+        1.3916,
+        1.4324,
+        3.2409
+      ],
+      "pivot": [
+        0.9,
+        1.8,
+        0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.9,
+        2.5,
+        -2.35
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 620,
+    "turret": 204,
+    "total": 824
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

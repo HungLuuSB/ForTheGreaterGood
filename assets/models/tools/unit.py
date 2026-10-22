@@ -88,6 +88,37 @@ FACTIONS = {
 
 UP = (0, 1, 0)
 
+# Wrecks (queue item 5, M-24; docs/contracts/fx.md "Wrecks"): FTGG_WRECK=1
+# builds the same pieces battered (lib.WRECK), darkened and sooted, with the
+# glow faces as dead sockets and the team panels scorched grey, into
+# export_wreck/ as <id>_wreck. Same pieces and pivots as the live mesh.
+SOOT = (20, 18, 17)
+
+
+def _char(c, k):
+    return tuple(int(c[i] * (1 - k) + SOOT[i] * k) for i in range(3))
+
+
+def wreck_look(look):
+    specs = {}
+    for kind, sp in look["specs"].items():
+        if kind in GLOW_KINDS:
+            sp = {"base": (30, 28, 26), "roughness": 0.6, "metallic": 0.2, "edge_wear": 0.0, "ao": 0.6}
+        elif kind == "team":
+            sp = {"base": (86, 84, 82), "roughness": 0.6, "metallic": 0.15, "edge_mode": "highlight",
+                  "edge_wear": 0.25, "ao": 0.6}
+        else:
+            sp = dict(sp)
+            if sp.get("base"):
+                sp["base"] = _char(sp["base"], 0.4)
+        sp["roughness"] = min(0.95, sp["roughness"] + 0.25)
+        sp["metallic"] = sp["metallic"] * 0.6
+        sp["scorch"], sp["soot"], sp["grime"] = 0.75, SOOT, 0.5
+        specs[kind] = sp
+    paint = _char(look["paint"], 0.4)
+    return {**look, "label": "BAR-style wreck (M-24)", "specs": specs,
+            "variants": {"bar": {"type": "paint", "base": paint, "chip": (92, 88, 84), "grime": SOOT}}}
+
 
 @dataclass
 class PieceSpec:
@@ -194,6 +225,14 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     here = os.path.dirname(os.path.abspath(build_file))
     out = os.path.join(here, "export")
     look = FACTIONS[faction]
+    wreck = bool(os.environ.get("FTGG_WRECK"))
+    live_id = unit_id
+    lib.WRECK = None
+    if wreck:
+        out = os.path.join(here, "export_wreck")
+        look = wreck_look(look)
+        lib.WRECK = {"size": footprint * 8, "seed": sum(ord(ch) * (i + 1) for i, ch in enumerate(unit_id)) % 9973}
+        unit_id = f"{unit_id}_wreck"
     lib.reset_scene()
     col = bpy.context.scene.collection
     keys = list(look["variants"].keys())
@@ -248,7 +287,7 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     # split the glow into its channel parts (after the bake: same UVs, same maps)
     glow = []  # (object, piece name, channel)
     for spec, o in zip(pieces, low):
-        for g, channel in split_glow(o):
+        for g, channel in ([] if wreck else split_glow(o)):
             glow.append((g, spec.name, channel))
     glow_area, visible = surface_stats(low, [g for g, _, _ in glow])
     share = glow_area / visible if visible else 0.0
@@ -261,7 +300,7 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     cy = b["size"][1] / 2
     lib.preview_lighting()
     for key in keys:
-        lib.assign_single_material(low, lib.textured_material(f"preview_{key}", sets[key], look["team_preview"], None))
+        lib.assign_single_material(low, lib.textured_material(f"preview_{key}", sets[key], None if wreck else look["team_preview"], None))
         for g, _, channel in glow:
             lib.assign_single_material([g], lib.textured_material(f"preview_{key}_{channel}", sets[key], None, look["glow"][channel]))
         for name, cam, at, lens in previews or [
@@ -295,11 +334,12 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
                 for g, piece, channel in glow]
     lib.write_json(os.path.join(out, "rig.json"), {
         "id": unit_id,
+        **({"wreckOf": live_id} if wreck else {}),
         "footprintStuds": footprint * 8,
         "variants": {"bar": look["label"]},
         "pieces": rig_pieces,
         "attachments": attachments or {},
-        "teamColorPieces": team_pieces or [s.name for s in pieces],
+        "teamColorPieces": [] if wreck else (team_pieces or [s.name for s in pieces]),
         "emissive": {"probe": "emissive_probe", "tint": list(look["accent"]), "strength": 2.0},
         "glow": rig_glow,
         "glowShare": round(share, 4),
