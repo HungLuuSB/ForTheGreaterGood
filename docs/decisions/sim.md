@@ -1201,3 +1201,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Shield.spec` 15: a light-shell test (absorbed on the surface, mass in charge, no IMPACT, gone; the test client got the flag and dropped it); the shell-weight test splits light (destroyed) from heavy (turned); the field-shape tests use mass 0.6 for "light".
   - `Schema.spec`: golden bytes for ABSORBED, the breach-and-absorbed encode error, flags 3 rejected.
+
+## S-86 — Shield domes at 20× strength (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "Lower the shield from the previous x50 down to x20 (its too powerful for now)."
+- **Built:** capacity and recharge 20× S-79's, the same 20 s refill: Phalanx 600 / 30 per s, Carapace 400 / 24 per s. Power draw unchanged (40 / 25 per s), my call as before. A full Phalanx now loses ground to more than ~12 mortar shells a second.
+
+## S-87 — Frames are inert until complete; destroyed, they leave nothing (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "The Bulwark is being built and it still be able to shoot ? No. Every unit in the building process is just a semi-transparent model, if get destroyed, it leaves no wrecks, just gone. It will only be activated when complete".
+- **Audit** of build progress < 1:
+  - already inert: sensors and jamming (Sensors unstamps frames), factory production (only finished factories queue and build), economy output (producers register on completion), missile stockpiles, rearm pads, the shield (empty and down until built);
+  - not inert: weapons (Targeting and Weapons ran for any unit with weapons) and death (wreck and death blast).
+- **Built:** Targeting and Weapons skip frames (no target, no turret motion, no shot). Damage gives a frame no wreck (DEATH `wreckId` 0) and no death blast.
+- **Wire:** none. Build progress already reaches every client that has the unit in its tactical tier, enemies included (ENTER `build`, State BUILD on change); strategic records don't carry it.
+- **Tests:** `Frames.spec` (3): a half-built Bulwark doesn't target or fire at a tank in range for 10 s, then fires once complete; a frame killed with little overkill leaves no wreck where a complete one does; a reactor frame sets off no blast where a complete one does.

@@ -6,7 +6,9 @@
 -- Return Fire), then removes the dead in the order they died. Severity =
 -- overkill as a fraction of max health (0..1 → u8 in the DEATH event); a
 -- unit killed with severity <= 0.5 leaves a wreck worth half its supply,
--- except aircraft shot down in flight (they crash and burn).
+-- except aircraft shot down in flight (they crash and burn) and frames
+-- still under construction (S-87: they leave nothing and set off no death
+-- blast; they only become the real thing when complete).
 
 local Alerts = require("../Alerts")
 local Combat = require("../Combat/Combat")
@@ -97,7 +99,8 @@ return function(sim: Types.Sim)
 		-- aircraft shot down in flight crash and burn: no wreck (client
 		-- request 19); a landed one may leave one
 		local airborne = def.domain == "air" and bit32.band(w.state[id], World.State.LANDED) == 0
-		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne then
+		local frame = w.buildProgress[id] < 1
+		if severity <= Combat.WRECK_MAX_SEVERITY and not airborne and not frame then
 			wreck = Combat.addWreck(c, w.posX[id], w.posZ[id], def, w.heading[id])
 		end
 		Combat.addEvent(c, {
@@ -110,7 +113,7 @@ return function(sim: Types.Sim)
 			z = w.posZ[id],
 		})
 		c.stats.kills += 1
-		if def.deathBlast then
+		if def.deathBlast and not frame then
 			-- a reactor's blast (guide 8.5, S-70): every unit in reach, own
 			-- and allied included (team 0 is nobody's); applied next tick, so
 			-- reactors can set each other off
