@@ -415,6 +415,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `6b94586` (Wreck meshes for the 22 approved meshes (`wreck` in each manifest entry, M-24); `assets/`, `src/shared/Defs/Meshes/`, `tests/client/Meshes.spec.luau`, `.gitignore` and docs).
 - Ready to merge: `69bbce2` (Wreck status field (`review` for all 22) in the mesh manifest; `src/shared/Defs/Meshes/`, `tests/client/Meshes.spec.luau`, tools and docs).
 - Ready to merge: `73de0d7` (All BAR meshes, missiles and wrecks approved in the mesh manifest; `src/shared/Defs/Meshes/`, tools and docs only).
+- Ready to merge: `9a5f486` (Nanoframe anchors on factories and constructors (blockouts + mesh manifest attachments, rig.md 8); `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/`, tools and docs).
 
 ## Requests
 
