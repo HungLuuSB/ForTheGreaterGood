@@ -1074,3 +1074,12 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** the dent is depth × x × e^(1 − x) with x = t / DENT_PEAK (0.12 s): pushed in, then eased back to the surface, never past it. C-132's damped swing went outward after its first half-cycle.
 
 **Why:** the user saw the honeycomb moving outward instead of into the shield.
+
+### C-135 — The beam shot follows models-C's update (tip, fan, muzzle star, flare offsets) and the game speed (2026-10-23)
+
+**Decision:**
+- Widths and filament convergence come from `Meshes.beam` (`tip` order 0.06 / chaos 0.08, `fan` 0.3), replacing my own constants.
+- The muzzle star flare comes from `muzzleFlareSize`, and the charge, star and impact flares carry C's StudsOffsets.
+- Rigs age by game time (dt × speed), so a slowed game slows the shot.
+
+**Why:** models-C's beam update (0ccf6c3, ff6072d), from the user's notes to them, and the user's 0.25× test.

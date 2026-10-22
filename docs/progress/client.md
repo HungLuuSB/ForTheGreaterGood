@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, beam update from models-C; slowed test)
+
+- **Beam shot (C-135):** models-C's update is merged and used: a point at the target, nothing wider than the emitter ball at the muzzle, a smaller impact flare, and a flickering star on the ball while firing. The shot also slows with the game speed now.
+- **0.25× test:** running in Studio (`shield_one` + a Radiance + Juggernauts, with C's beam previewed). `debug_out/screens/shield_slow_honeycomb.jpg` shows a hit's patch at that speed.
+
 ## Summary (2026-10-23, shield cells only cave in)
 
 - **Shield hits (C-134):** the cells now only move inward. They're pushed in, deepest at the centre, then ease back to the surface. C-132's bounce took them past the surface, outward, which is what you saw.

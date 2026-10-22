@@ -539,7 +539,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 	end
 	park(r.tracers, #fx.tracers + 1)
 	park(r.deflects, nDeflects + 1)
-	BeamShots.step(r.beams, fx.tracers, now, groundBelow)
+	BeamShots.step(r.beams, fx.tracers, now, groundBelow, speed)
 
 	-- bursts: each plays its Vfx rig once (or the place's saved effect)
 	for _, b in fx.bursts do
