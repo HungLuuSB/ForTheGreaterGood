@@ -10,6 +10,18 @@
       }
     },
     {
+      "Name": "chs_airfield",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://81880080729410",
+        "NormalMapContent": "rbxassetid://133241701441023",
+        "RoughnessMapContent": "rbxassetid://113653288432740",
+        "MetalnessMapContent": "rbxassetid://95681958104241",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_depot",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -186,6 +198,18 @@
         "NormalMapContent": "rbxassetid://133517863725127",
         "RoughnessMapContent": "rbxassetid://105287463554030",
         "MetalnessMapContent": "rbxassetid://125313242816485",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_airfield",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://119644368576910",
+        "NormalMapContent": "rbxassetid://73462741273172",
+        "RoughnessMapContent": "rbxassetid://81884786176088",
+        "MetalnessMapContent": "rbxassetid://116943578427659",
         "EmissiveStrength": 0
       }
     },

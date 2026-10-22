@@ -16,11 +16,13 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 | 2 | IR SAM sites: `ord_vigil` (heavy base, launcher with sensor head and two canister pods, ice-white seeker and cap ready lights on `weapon`) / `chs_thorn` (round skid, bare post, six staggered tubes with ready-light mouths on `weapon`) | 1,000 / 936 | 5.2% / 5.7% | review | `t1_sam_55_close.jpg`, `t1_sam_55_220.jpg` |
 | 3 | Wind turbines: `ord_windmill` (tapered round tower, armored nacelle with cyan generator vents on `power`, three broad blades with team tips on the client-spun `rotor`) / `chs_windmill` (lattice mast, boxy nacelle with an orange generator band, one long crooked two-ended blade) | 908 / 684 | 5.2% / 5.0% | review | `t1_wind_55_close.jpg`, `t1_wind_55_220.jpg` |
 | 4 | Storage: `ord_depot` (low sloped bunker, roof team plate, back loading hatches, a cyan fill gauge on the front slope and charge strips on `power`) / `chs_depot` (salvaged drums with team caps and orange charge bands and gauges on `power`, a horizontal tank behind) | 496 / 780 | 5.2% / 5.1% | review | `t1_depot_55_close.jpg`, `t1_depot_55_220.jpg` |
+| 5 | Airfields (footprint 5): `ord_airfield` (concrete apron, runway with team dashes and cyan edge and approach lights, armored hangar with door-frame and door build lights on `power`, control tower with lit cab and radar panel, team pad) / `chs_airfield` (patched dark apron, runway with team stripe, open hangar on posts with post and roof build lights, fuel tanks with gauges, lattice mast with radar and beacon) | 1,624 / 1,472 | 2.5% / 2.3% | review | `t1_airfield_order_55_close.jpg`, `t1_airfield_chaos_55_close.jpg`, `t1_airfield_55_220.jpg` |
 
 **Needs your review (queue):**
 - **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
 - **Radar panels:** both panels' glowing edges follow the approved Oracle rule (unlit face, edge and grid). The Eye's amber edge is thicker relative to its panel.
 - Fresh uploads: the Thorn first drew white (Studio failed its maps with HTTP 502 and won't retry them). Re-uploading the four maps fixed it with no restart (pipeline.md). Its `roblox_assets.json` records the re-uploaded IDs.
+- Airfields: glow 2.3–2.5%, the large-building range (style guide, like the vehicle plants), not 5–10%. On a 38-stud apron, 5% would be a lit carpet. The Chaos runway is bare steel and catches the sun as bright metal at some angles; a matte surface is a one-line change if you prefer it.
 
 ## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 
