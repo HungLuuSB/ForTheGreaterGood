@@ -808,6 +808,8 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 
 ### C-100 — Fog of war as a draped blanket with one live image (BAR style); the point-light fog removed (2026-10-23)
 
+**Status:** approved by the user on 2026-10-23 after their own test; it is the default fog of war.
+
 **Decision:**
 - **Image:** `Core/FogBlanket` keeps one pixel per grid cell in three states from the team sight (visible, explored = seen once, never). It holds each sensor cell's state and blends each pixel's goal from its four nearest cells (bilinear). Pixels fade to their goal over 0.3 s, in a queue capped at 3,000 pixels per step, and only the changed rectangle is reported.
 - **Mesh:** `Render/FogBlanket` shows the image as the TextureContent (UVs) of 4 EditableMesh chunks draped 1 stud over the highest ground within 8 studs of each vertex (one vertex per 16 studs). The parts are at Transparency 0.02 (so texture alpha blends), Fabric, at the world origin.
@@ -838,4 +840,4 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The glossy look came mostly from environment specular, so it is cut to 15%.
 - The light levels keep units readable at every zoom; a thicker atmosphere flattened the strategic view.
 - Under night light the old explored look read as never seen.
-- Lighting.Technology isn't scriptable, so it stays a place setting (Future recommended).
+- Lighting.Technology isn't scriptable, so it stays a place setting (Realistic recommended: Roblox's unified technology, which replaced Future).

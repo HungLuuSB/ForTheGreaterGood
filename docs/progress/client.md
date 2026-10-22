@@ -6,13 +6,15 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-23, night lighting)
 
+- **Your review of C-100 (2026-10-23):** you tested the fog blanket, "Look good", and it is the default fog of war. Removed from "Needs my review".
+
 - **Night by default (C-101):** you said the maps have no sun, so the default atmosphere is now a moonlit night: midnight sky, no sun rays, cool neutral light bright enough to read every unit, soft shadows.
 - **Less "plastic":** the sky reflections on terrain, units and the fog blanket are cut to 15% (EnvironmentSpecularScale 0.15), and the light is softer and duller. The shell over steep rocks still shows but is far calmer.
 - **Fog of war under night light:** "explored" is lighter (grey 40 at 40%, was 30 at 52%), otherwise it looked like never seen. All three states read apart, close and at strategic zoom.
 - **Glows stand out:** bloom picks up shells, fire, and the shield dome.
 - **Choice kept:** the settings menu still offers Current (the place as saved), Clear day, Battlefield haze and Dusk.
 - **Screenshots:** `debug_out/screens/lighting_*.jpg`: 35°, 55°, 80°, strategic zoom, a before/after pair (the place's day lighting vs night) and a shield battle at night.
-- **One thing for you:** set Lighting → Technology to **Future** in the place, if it isn't already. Scripts can't read or change it, and Future gives the soft shadows and the glow lights their best look.
+- **One thing for you:** set Lighting → Technology to **Realistic** in the place, if it isn't already (Roblox merged Future into Realistic). Scripts can't read or change it, and Realistic gives the soft shadows and the glow lights their best look.
 - **Not started:** your glow pass still waits for C's glow assets.
 
 ## Summary (2026-10-23, fog of war blanket)
@@ -573,7 +575,7 @@ All with real mouse and keyboard input through the MCP tools.
 - **Presets** gain two optional fields, `specular` and `diffuse` (EnvironmentSpecularScale and EnvironmentDiffuseScale), captured with the place's own values so Current restores them.
 - **Fog blanket:** the explored look is now grey 40 at alpha 0.4 (was 30 at 0.52). Under the night light, explored and never-seen ground looked alike.
 - **Settings:** the default atmosphere is `night`. A player who saved another preset keeps it. `Settings.spec` updated.
-- **Lighting.Technology** can't be read or set by a script (RobloxScript capability), so the place keeps its own. Future is recommended.
+- **Lighting.Technology** can't be read or set by a script (RobloxScript capability), so the place keeps its own. Realistic is recommended (Roblox's unified technology, which replaced Future).
 - **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline):
   - `lighting_35.jpg`, `lighting_55.jpg`, `lighting_80.jpg`, `lighting_strategic.jpg`;
   - `lighting_before.jpg` (the place's day lighting) and `lighting_after.jpg` (night), the same view;
@@ -971,14 +973,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
   - **How dark:** brightness and exposure (`Render/Atmosphere`, `night`), bright enough to read units today.
   - **The cool tint** and the desaturation.
   - **The lighter explored fog** (grey 40 at 40%).
-  - **Technology = Future** in the place (only you can set it).
-
-- **Fog of war blanket (C-100):** `debug_out/screens/fogblanket_*.jpg`. Your calls:
-  - **The three looks:** explored grey at 52%, never seen near black at 74%, a slightly cool tint (`Core/FogBlanket.LOOK`, `TINT`).
-  - **The soft edge,** about a sight cell (16 studs) wide.
-  - **The shell over steep rocks,** to revisit after the lighting pass.
-  - **The worst-case cost:** whole-map flips at 15.5 ms per update in Studio.
-  - **"Fog of war" on by default** in the settings menu.
+  - **Technology = Realistic** in the place (only you can set it; it replaced Future).
 
 - **ShieldFx look (C-90):** `debug_out/screens/shieldfx_*.jpg`. Your calls:
   - **Dome look:** a tinted ball with an edge ring, not the ForceField material (it read grey in the C-87 tests).
