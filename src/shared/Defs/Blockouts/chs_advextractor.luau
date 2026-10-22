@@ -12,6 +12,11 @@ local parts = {
 	{ name = "head", parent = "base", shape = "box", size = { 2.4, 1, 2.4 }, at = { 0, 8.4, 0 }, color = "hull" },
 	{ name = "light", parent = "base", shape = "box", size = { 0.4, 0.4, 0.4 }, at = { 0, 9.1, 0 }, color = "glass" },
 	{ name = "engine", parent = "base", shape = "box", size = { 1.8, 1.8, 2.4 }, at = { 2.4, 1.8, 1.8 }, color = "hull" },
+	-- T2: fuel tanks and a second engine round the derrick (T1 vs T2 check, 2026-10-22)
+	{ name = "engine2", parent = "base", shape = "box", size = { 1.8, 1.8, 2.4 }, at = { 2.4, 1.8, -1.8 }, color = "hull" },
+	{ name = "fuelA", parent = "base", shape = "cylinder", axis = "y", size = { 1.5, 2.6, 1.5 }, at = { -2.5, 2.2, -1.7 }, color = "metal" },
+	{ name = "fuelB", parent = "base", shape = "cylinder", axis = "y", size = { 1.5, 2.6, 1.5 }, at = { -2.5, 2.2, 1.7 }, color = "metal" },
+	{ name = "exhaust", parent = "base", shape = "cylinder", axis = "y", size = { 0.5, 2.4, 0.5 }, at = { 3.0, 3.9, 2.6 }, color = "dark" },
 	{ name = "cageF", parent = "base", shape = "box", size = { 6, 0.15, 0.15 }, at = { 0, 1.8, -3.1 }, color = "dark" },
 	{ name = "cageB", parent = "base", shape = "box", size = { 6, 0.15, 0.15 }, at = { 0, 1.8, 3.1 }, color = "dark" },
 }

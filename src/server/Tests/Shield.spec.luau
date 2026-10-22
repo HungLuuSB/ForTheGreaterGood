@@ -121,16 +121,51 @@ return function(t: RunAll.Context)
 		t.expect(light > medium and medium > heavy and heavy > 120, `turn heights {light}, {medium}, {heavy} (dome top 120, band to 170)`)
 	end)
 
+	t.test("the bounce is close to a mirror off the dome where the shell turned (S-80)", function()
+		-- shells from 200 studs out at the dome's top, at angles to its normal
+		local function bounce(angle: number, mass: number): (number, number, number)
+			local a = math.rad(angle)
+			local dx, dy = math.sin(a), -math.cos(a)
+			local x, y, z, vx, vy, vz = -dx * 200, 120 - dy * 200, 0, dx * 300, dy * 300, 0
+			local phase, nx, ny, inAngle = ShieldField.FREE, 0, 1, 0
+			for _ = 1, 300 do
+				local event
+				x, y, z, vx, vy, vz, phase, event = ShieldField.step(x, y, z, vx, vy, vz, 0, 0, 0, 0, 120, 1, mass, phase, 1 / 15)
+				if event == ShieldField.TURN then
+					local r = math.sqrt(x * x + y * y)
+					nx, ny = x / r, y / r
+					inAngle = math.deg(math.acos(-(dx * nx + dy * ny)))
+				end
+				if phase == ShieldField.DONE then
+					break
+				end
+			end
+			local speed = math.sqrt(vx * vx + vy * vy)
+			return inAngle, math.deg(math.acos((vx * nx + vy * ny) / speed)), speed / 300
+		end
+		for _, mass in { 0.3, 1, 4 } do
+			local i0, o0, keep0 = bounce(0, mass)
+			t.expect(i0 < 0.5 and o0 < 0.5, `mass {mass}: head-on goes straight back ({o0}°)`)
+			t.expect(keep0 > 0.5 and keep0 < 0.7, `mass {mass}: at {keep0 * 100}% of its speed`)
+			for _, angle in { 30, 50, 70 } do
+				local i, o, keep = bounce(angle, mass)
+				t.expect(math.abs(o - i) <= 10, `mass {mass}, {angle}°: in {i}° → out {o}° (a mirror within 10°)`)
+				t.expect(keep > 0.6 and keep < 1, `mass {mass}, {angle}°: keeps {keep * 100}% of its speed`)
+			end
+		end
+	end)
+
 	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()
 		local sim, gen = dome(3, 0.06)
 		local light = fire(sim, "chs_autocannon", 0, 250)
 		local hitLight = follow(sim, light)
 		t.expect(hitLight ~= nil and not hitLight.breach, "the autocannon round turned")
-		local before = sim.combat.shieldCharge[gen]
+		sim.combat.shieldCharge[gen] = 0.06 * sim.defs.units.ord_phalanx.shield.capacity -- it recharged meanwhile
 		local heavy = fire(sim, "chs_siege_mortar", 0, 250)
 		local entry, through = 0, nil
-		local hit
+		local hit, drop = nil, 0
 		for _ = 1, 200 do
+			local prev = sim.combat.shieldCharge[gen]
 			Sim.step(sim)
 			local c = sim.combat
 			if c.projSlot[heavy] == nil then
@@ -141,6 +176,7 @@ return function(t: RunAll.Context)
 				if e.kind == "SHIELD_HIT" and e.other == heavy then
 					hit = e
 					through = speed
+					drop = prev - c.shieldCharge[gen]
 				end
 			end
 			if c.pShield[heavy] == nil and hit == nil then
@@ -149,7 +185,8 @@ return function(t: RunAll.Context)
 		end
 		t.expect(hit ~= nil and hit.breach == true, "the siege shell broke through")
 		t.expect(through ~= nil and through < entry * 0.8, `slowed ({entry} → {through})`)
-		t.expect(sim.combat.shieldCharge[gen] < before, "a breach costs charge too")
+		local def = sim.defs.units.ord_phalanx.shield
+		near(t, drop, Shield.BREACH_COST * Shield.mass(sim.defs.weapons.chs_siege_mortar) - def.recharge / 15, 0.01, "a breach costs half the shell's mass (less a tick's recharge)")
 		t.equal(ShieldField.force(0.5), 1, "full force at 50%")
 		t.equal(ShieldField.force(0.25), 0.5, "half force at 25%")
 	end)
@@ -169,12 +206,13 @@ return function(t: RunAll.Context)
 				end
 			end
 		end
-		near(t, atHit or 0, cap - Shield.HIT_COST * mass, 0.2, "one mortar shell's mass gone (a tick's recharge aside)")
+		near(t, atHit or 0, cap - Shield.HIT_COST * mass + sim.defs.units.ord_phalanx.shield.recharge / 15, 0.01, "one mortar shell's mass gone (and a tick's recharge)")
 		near(t, c.shieldCharge[gen], cap, 1e-9, "recharged to full since")
-		-- run it down: power cut off, shells until it falls
+		-- run it down: power cut off, a nearly empty dome, shells until it falls
 		local acc = sim.eco.accounts[1]
 		acc.power.stored = 0
 		acc.power.storage = 0
+		c.shieldCharge[gen] = 6
 		local fell = false
 		for i = 1, 200 do
 			local q = fire(sim, "chs_heavy_cannon", (i % 7 - 3) * 30, 250)
@@ -277,9 +315,17 @@ return function(t: RunAll.Context)
 		t.expect(view.units[gen] ~= nil, "the generator is tactical (its dome reaches the camera)")
 		local s = view.shields[gen]
 		t.expect(s ~= nil and s.charge == 255 and s.flags == Schema.ShieldFlag.UP, "SHIELD after ENTER: full, up, not recharging")
+		-- half drained: a SHIELD with the charge, recharging
+		sim.combat.shieldCharge[gen] = sim.defs.units.ord_phalanx.shield.capacity / 2
+		local acc = sim.eco.accounts[1]
+		acc.power.storage, acc.power.stored = 1e6, 1e6
+		Sim.step(sim)
+		Client.receive(view, sim.net.players[1].outbox)
+		near(t, view.shields[gen].charge, 128, 2, "SHIELD on the change")
+		t.equal(view.shields[gen].flags, Schema.ShieldFlag.UP + Schema.ShieldFlag.RECHARGING, "up, recharging")
+		local half = view.shields[gen].charge
 		local p = fire(sim, "chs_mortar", 0, 250)
 		local worst, fieldTicks, hits = 0, 0, 0
-		local lowest = 255
 		for _ = 1, 120 do
 			Sim.step(sim)
 			Client.receive(view, sim.net.players[1].outbox)
@@ -295,10 +341,6 @@ return function(t: RunAll.Context)
 				end
 			end
 			table.clear(view.effects)
-			if view.shields[gen].charge < lowest then
-				lowest = view.shields[gen].charge
-				t.equal(view.shields[gen].flags, Schema.ShieldFlag.UP + Schema.ShieldFlag.RECHARGING, "SHIELD after the hit: up, recharging")
-			end
 			if c.projSlot[p] == nil then
 				break
 			end
@@ -306,7 +348,7 @@ return function(t: RunAll.Context)
 		t.expect(fieldTicks >= 3, `the client stepped the shell in the field ({fieldTicks} ticks)`)
 		t.expect(worst < 1, `the client's field step tracks the server's ({worst} studs at worst)`)
 		t.equal(hits, 1, "one SHIELD_HIT")
-		near(t, lowest, 255 * (1 - Shield.mass(sim.defs.weapons.chs_mortar) / sim.defs.units.ord_phalanx.shield.capacity), 3, "SHIELD with the charge after the hit")
+		t.expect(view.shields[gen].charge > half + 8, `SHIELD records follow the recharge ({half} → {view.shields[gen].charge})`)
 	end)
 
 	t.test("a player without the generator gets SHIELD_HIT with generator 0", function()

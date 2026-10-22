@@ -71,6 +71,22 @@ Getting the models into the game place "For The Greater Good" is the client sess
 - On the GPU, 100 meshed Lancers are about 300,000 triangles (blockouts about 40,000); automatic level of detail cuts that with distance. A desktop GPU doesn't notice either; phones are untested.
 - **Not measured yet:** GPU time and real frame rate. They need a focused Studio window or, better, a live server on a phone and a low-end PC.
 
+### 100 and 300 BAR tanks, render CPU time per frame (2026-10-22)
+
+Same method as above, BAR Lancers and Ravagers alternating (M-18 rebuild, textures already loaded), on the open baseplate, grid 12 studs apart (10 × 10 and 15 × 20), pitch 55°. Two passes, the second in reverse order; `Stats.RenderCPUFrameTime` averaged over 3–5 s. The appearance hitch is the worst frame gap in the 1.5 s after the folder of units is parented (instance creation, textures warm).
+
+| Scene | Close (40 studs), pass 1 / 2 | Normal (220), pass 1 / 2 | Appearance hitch, pass 1 / 2 |
+|---|---|---|---|
+| Empty | 4.7 / 5.9 ms | 5.4 / 4.8 ms | — |
+| 100 blockouts | 4.5 / 5.5 ms | 4.9 / 6.1 ms | 66 / 50 ms |
+| 100 BAR tanks | 4.8 / 3.9 ms | 4.5 / 4.3 ms | 21 / 32 ms |
+| 300 blockouts | 4.1 / 4.4 ms | 4.2 / 4.4 ms | 125 / 102 ms |
+| 300 BAR tanks | 4.4 / 4.0 ms | 4.1 / 4.0 ms | 56 / 46 ms |
+
+- Run-to-run noise (about ±1 ms, the empty scene included) is bigger than any difference between the cases: 300 BAR tanks cost no measurable render CPU over the empty scene or over 300 blockouts.
+- Creating and parenting the units hitches about half as long for meshes (3 MeshParts each) as for blockouts (13 Parts each): about 0.15–0.2 ms per BAR tank.
+- **First appearance with cold textures** is extra: the first time a unit type's maps are drawn they load (review 2 measured a one-off 320 ms on the Lancer's first appearance). It can't be repeated once a session has loaded them; preloading each unit type's maps at match start (`ContentProvider:PreloadAsync` on a template) moves that cost out of the battle. The client stream's call.
+
 ### Texture memory across the roster
 
 One unit set is four 1024² maps. Roblox doesn't document how it stores them on the GPU: compressed (about 1 byte per pixel for color and normal, 0.5 for the grey maps, plus a third for mip levels) it's about **4 MB per unit**; uncompressed RGBA it's about **22 MB**. "FTGG Art" reports 24–27 MB of `GraphicsTexture` with the Lancer, the terrain and the review parts loaded.

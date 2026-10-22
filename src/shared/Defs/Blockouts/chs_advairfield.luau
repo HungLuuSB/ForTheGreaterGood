@@ -13,6 +13,10 @@ local parts = {
 	{ name = "mastBraceA", parent = "base", shape = "box", size = { 0.3, 12, 0.3 }, at = { 16.8, 6.4, 14 }, rot = { 0, 0, 7 }, color = "dark" },
 	{ name = "radarPanel", parent = "base", shape = "box", size = { 3.6, 2.4, 0.3 }, at = { 15.5, 15, 14 }, rot = { 20, 0, 0 }, color = "dark" },
 	{ name = "beacon", parent = "base", shape = "box", size = { 0.6, 0.6, 0.6 }, at = { 15.5, 16.6, 14 }, color = "glass" },
+	-- T2 signature (T1 vs T2 check, 2026-10-22): a ski-jump ramp at the
+	-- runway's end and a blast deflector at its start
+	{ name = "skiJump", parent = "base", shape = "wedge", size = { 11, 3.2, 6.5 }, at = { 5, 2.2, -15.2 }, rot = { 0, 180, 0 }, color = "team" },
+	{ name = "deflector", parent = "base", shape = "box", size = { 11, 3.4, 0.4 }, at = { 5, 2.0, 18.2 }, rot = { -35, 0, 0 }, color = "dark" },
 }
 for h, z in { -9, 8 } do
 	table.insert(parts, { name = `roof{h}`, parent = "base", shape = "box", size = { 11, 0.4, 12 }, at = { -12.5, 5.6, z }, color = "hull" })
