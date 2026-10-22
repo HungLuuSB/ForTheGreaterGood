@@ -171,10 +171,18 @@ end
 -- IDLE_LIFE, at most MAX_IDLE at once (the oldest goes).
 Shield.IDLE_LIFE = 1.4
 Shield.MAX_IDLE = 6
+Shield.IDLE_CLEAR = 14 -- studs: no flicker this close to a live hit patch
 
-function Shield.idle(dome: Dome, at: V3, now: number): Patch
+-- Returns nil (no flicker) next to a live hit patch: idle hexes drawn over
+-- red-hot ones look wrong.
+function Shield.idle(dome: Dome, at: V3, now: number): Patch?
 	local n = unit(sub(at, dome.center))
 	local on = add(dome.center, mul(n, dome.radius))
+	for _, p in dome.patches do
+		if len(sub(p.hit, on)) < Shield.IDLE_CLEAR + p.rings * (Shield.PLATE + Shield.GAP) then
+			return nil
+		end
+	end
 	local patch = { hit = on, strength = 0, born = now, rings = 1, plates = Shield.layout(dome.center, dome.radius, on, 1) }
 	table.insert(dome.idle, patch)
 	if #dome.idle > Shield.MAX_IDLE then
@@ -207,6 +215,12 @@ function Shield.hit(dome: Dome, hit: V3, strength: number, now: number): Patch
 				p.plates = Shield.layout(dome.center, dome.radius, p.hit, rings)
 			end
 			return p
+		end
+	end
+	-- idle flickers next to a new hit go
+	for i = #dome.idle, 1, -1 do
+		if len(sub(dome.idle[i].hit, on)) < Shield.IDLE_CLEAR + Shield.ringsFor(strength) * (Shield.PLATE + Shield.GAP) then
+			table.remove(dome.idle, i)
 		end
 	end
 	local rings = Shield.ringsFor(strength)
