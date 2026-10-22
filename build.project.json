@@ -5,6 +5,9 @@
     "ReplicatedStorage": {
       "Shared": {
         "$path": "build/ci/src/shared"
+      },
+      "MeshMaterials": {
+        "$path": "place/MeshMaterials.model.json"
       }
     },
     "ServerScriptService": {

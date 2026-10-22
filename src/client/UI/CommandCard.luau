@@ -12,13 +12,14 @@
 local Players = game:GetService("Players")
 
 local Api = require("../Api")
+local Kit = require("./Kit")
 local World = require("../Core/World")
 
 local CommandCard = {}
 
-local BG = Color3.fromRGB(18, 20, 24)
-local BTN = Color3.fromRGB(52, 56, 64)
-local ACTIVE = Color3.fromRGB(70, 110, 160)
+local BG = Kit.COLOR.panel
+local BTN = Kit.COLOR.control
+local ACTIVE = Kit.COLOR.selected
 local GREEN, YELLOW, RED = Color3.fromRGB(90, 210, 90), Color3.fromRGB(230, 200, 60), Color3.fromRGB(220, 70, 60)
 local FIRE = { [0] = { "Hold fire", RED }, [1] = { "Return fire", YELLOW }, [2] = { "Fire at will", GREEN } }
 local MOVE = { [0] = { "Hold pos", RED }, [1] = { "Maneuver", YELLOW }, [2] = { "Roam", GREEN } }
@@ -134,6 +135,7 @@ function CommandCard.new(api: Api.Api): UI
 		end)
 		buttons[name] = b
 	end
+	Kit.skin(gui) -- the UI kit's look (C-105)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return { gui = gui, panel = panel, buttons = buttons }
 end

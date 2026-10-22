@@ -40,6 +40,12 @@ local ShieldDomes = require("./Render/ShieldDomes")
 local ShieldFx = require("./Render/ShieldFx")
 local Contacts = require("./Render/Contacts")
 local FogBlanket = require("./Render/FogBlanket")
+local Environment = require("./Render/Environment")
+local Grade = require("./Render/Grade")
+local Glow = require("./Render/Glow")
+local MeshModels = require("./Render/MeshModels")
+local Models = require("./Render/Models")
+local Vfx = require("./Render/Vfx")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local Overlay = require("./Render/Overlay")
@@ -187,6 +193,19 @@ local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
 local fog = FogBlanket.new()
+local environment = Environment.new() -- ground beyond the map, ambient particles (C-102)
+local grade = Grade.new() -- colour grade: zoom easing, blast flashes, vignette (C-102)
+local glow = Glow.new() -- unit glow states and headlights (C-103)
+-- BAR mesh models from the manifest (C-103): built in the background; each
+-- one replaces its blockout when ready
+local meshReady: { string } = {}
+MeshModels.onReady(function(id: string)
+	table.insert(meshReady, id)
+end)
+MeshModels.start(defs)
+Vfx.onSpawn = function(kind: string, x: number, _y: number, z: number, scale: number)
+	Grade.burst(grade, kind, x, z, scale)
+end
 local contacts = Contacts.new()
 -- enemy structures seen before (kept by Contacts) and icon sample defs: enemy defense rings (C-41)
 local knownEnemy = { memory = contacts.memory.memory, sample = iconTable.sample }
@@ -588,6 +607,16 @@ if RunService:IsStudio() then
 		elseif query == "net" then
 			-- Invoke("net"): bytes received per channel since the client started (C-69)
 			return received
+		elseif query == "meshes" then
+			-- BAR mesh models (C-103): built, failed, seconds, errors
+			return MeshModels.stats
+		elseif query == "glow" then
+			-- unit glow (C-103): models with glow parts, parts, writes and ms last frame, headlights lit
+			return glow.stats
+		elseif query == "glowratio" then
+			-- Invoke("glowratio", r?): pretend the team's power ratio is r (an energy stall), nil: the real one
+			Glow.RATIO_OVERRIDE = (...)
+			return true
 		elseif query == "fog" then
 			-- fog of war (the blanket, C-100): its stats; contacts and ghosts
 			-- the server's ally-team sight (C-65): records applied, cells seen
@@ -685,6 +714,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 				Ground.build(world.layers, nil, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogBlanket.setMap(fog, world, world.layers)
+				Environment.setMap(environment, world.layers)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
@@ -734,6 +764,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
 	api.state.camera.rect = camState.rect
+	Environment.update(environment, camState.x, camState.z, camState.distance, World.groundY(world, camState.x, camState.z))
+	Grade.update(grade, camState.x, camState.z, camState.distance, dt)
 	local followed = camState.follow
 	local followDef = followed and followed.kind == "unit" and world.units[followed.id] and World.def(world, world.units[followed.id])
 	FollowButton.step(followButton, if followed == nil then nil elseif followed.kind == "missile" then "missile" elseif followDef then followDef.name else `unit #{followed.id}`)
@@ -744,10 +776,20 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
+	for _, id in meshReady do
+		Models.forget(id)
+		ModelPool.flush(id)
+		UnitRenderer.reshow(renderer, world, id)
+	end
+	table.clear(meshReady)
+	Glow.shots(glow, fx.shots, now)
 	if not strategic then
 		PieceAnim.drive(anim, world, fx.shots)
 		PieceAnim.step(anim, simDt)
 		UnitRenderer.applyPieces(renderer)
+		Glow.step(glow, renderer, world, now, workspace.CurrentCamera, camState.x, camState.z, camState.distance)
+	elseif glow.stats.headlights > 0 then
+		Glow.hide(glow)
 	end
 	table.clear(fx.shots)
 	mark("anim", t0)
