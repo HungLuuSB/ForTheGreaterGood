@@ -1068,3 +1068,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - It's used once `Meshes.beam.status` is approved; `Invoke("beamsanyway", true)` previews it.
 
 **Why:** the user asked models-C for the beam VFX; C's reference module `assets/fx/beam/BeamShot.luau`.
+
+### C-134 — Shield hit cells move inward only (2026-10-23)
+
+**Decision:** the dent is depth × x × e^(1 − x) with x = t / DENT_PEAK (0.12 s): pushed in, then eased back to the surface, never past it. C-132's damped swing went outward after its first half-cycle.
+
+**Why:** the user saw the honeycomb moving outward instead of into the shield.

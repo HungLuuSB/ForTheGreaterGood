@@ -10,8 +10,9 @@
 -- wave runs inward: the outermost ring lights first, each ring in RING_DELAY
 -- later, the centre last and hottest. Cells grow toward the centre (smaller
 -- at the rim, bigger inside, spaced a little wider), and the whole patch is
--- pushed in like a bowl, deepest at the centre, then springs back past
--- flat once: the dome caving in to repel the shot.
+-- pushed in like a bowl, deepest at the centre, then eases back to the
+-- surface (never past it: the bounce out read as cells moving outward, the
+-- user, C-134): the dome caving in to repel the shot.
 
 local Shield = {}
 
@@ -57,6 +58,7 @@ Shield.DENT = 1.4 -- studs the centre pushes in at strength 1 (the rings less, a
 Shield.CENTER_SCALE = 1.3 -- the centre cell's size, × PLATE; the rim's is CENTER_SCALE − RIM_SHRINK
 Shield.RIM_SHRINK = 0.55
 Shield.SPREAD = 0.3 -- inner rings sit this much further apart than the rim's (positions follow the sizes)
+Shield.DENT_PEAK = 0.12 -- seconds after a cell lights when it is pushed in deepest
 
 -- A cell's size in a patch of `rings` rings, × PLATE.
 function Shield.cellScale(ring: number, rings: number): number
@@ -138,7 +140,7 @@ end
 
 -- A cell's look `age` seconds after its wave was born, in a patch of
 -- `rings` rings: heat (1 = white hot, 0 = cold), opacity (0..1) and dent
--- (studs inward; negative: the bounce back past flat).
+-- (studs inward, never outward).
 function Shield.plateAt(age: number, ring: number, strength: number, rings: number): (number, number, number)
 	-- the wave runs in: the rim first, the centre last (C-132)
 	local t = age - (rings - ring) * Shield.RING_DELAY
@@ -157,10 +159,11 @@ function Shield.plateAt(age: number, ring: number, strength: number, rings: numb
 	local peak = math.clamp(0.55 + 0.25 * strength, 0.4, 1) * math.max(0.2, 1 - ring * 0.4)
 	local heat = peak * (1 - k) ^ 1.6
 	local alpha = math.min(1, t / 0.04) * (1 - k ^ 2) * Shield.RING_ALPHA ^ ring
-	-- the patch caves in like a bowl (deepest at the centre) and springs back
-	-- past flat once, a small bounce (a damped swing, C-132)
+	-- the patch caves in like a bowl (deepest at the centre) and eases back
+	-- to the surface: in, then home, no swing past it (C-134)
 	local depth = Shield.DENT * math.min(strength, 3) * (1 - (ring / (rings + 1)) ^ 2)
-	local dent = depth * math.exp(-t * 7) * math.sin(t * 16)
+	local x = t / Shield.DENT_PEAK
+	local dent = depth * x * math.exp(1 - x)
 	return heat, alpha, dent
 end
 

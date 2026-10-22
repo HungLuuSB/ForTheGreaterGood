@@ -4,6 +4,10 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, shield cells only cave in)
+
+- **Shield hits (C-134):** the cells now only move inward. They're pushed in, deepest at the centre, then ease back to the surface. C-132's bounce took them past the surface, outward, which is what you saw.
+
 ## Summary (2026-10-23, C's beam shot wired; Needs my review)
 
 - **Merged m-models** (animated pieces on 44 meshes, rebuilt wrecks, lighter deposits, the beam shot effect). test_client stays green and the materials file was regenerated.
