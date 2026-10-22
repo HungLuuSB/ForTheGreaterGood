@@ -378,6 +378,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `f6e9cea` (shield ripples from fixed-size emitters, C-116); test_client 198, test 414, build passed.
 - Ready to merge: `a19380c` (dimmer ripples, bigger hex patches, C-117); test_client 198, test 414, build passed.
 - Ready to merge: `7ac3622` (hex patches animate: waves per hit, glassy plates, C-118); test_client 199, test 414, build passed.
+- Ready to merge: `bbaafa6` (cheat command line, gate, lobby Cheats toggle; stub until S-102; touches src/roblox Main.server, Lobby, new CheatConfig; C-119); test_client 202, test 419, build passed.
 
 ## Tasks
 
