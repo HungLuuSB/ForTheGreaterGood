@@ -686,6 +686,22 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: wreck meshes (models-C) built and placed; wreck appearances (C-115)
+
+- **Merged** models-C's `6b94586`: a `wreck` per approved manifest entry (its own meshes, centers, sizes and maps; the live entry's rig; no glow, no team pieces).
+- **Materials:** `lune run mesh_materials` writes a `wreck_<id>` SurfaceAppearance per wreck (22), as C asked; `MeshMaterials.spec` checks them.
+- **`Render/MeshModels.wreck(def)`:**
+  - builds the wreck on first ask in the background: the live rig's joints, the wreck's meshes and the cloned `wreck_<id>` appearance;
+  - returns nil until it's ready, and only for an approved wreck (`wreck.status == "approved"`; C keeps them review until you look).
+  - `Invoke("wrecksanyway", true)` uses review wrecks too, for review screenshots.
+- **`Render/Deaths`:** a dying unit leaves the meshed wreck when there is one, with the same knocked-askew joints and no charring or CorrodedMetal; otherwise the darkened model as before.
+- **Studio** (`shield` profile, review wrecks on):
+  - the first Ravager and Lancer deaths left darkened copies while the wrecks built;
+  - the next ones left C's meshed wrecks with their materials (`debug_out/screens/wrecks_meshed.jpg`).
+  - They read very dark under the night preset (their maps are charred).
+- **Found on the way:** the debug kill with a million damage is overkill, and those deaths fling the hull and leave no wreck. Kill with just over full health to see wrecks.
+- **Your call:** approve the wreck meshes (models-C sets `status = "approved"` on each `wreck`), and whether they're too dark at night.
+
 ## 2026-10-23: S-96 tower meshes merged (review); a retracted tower's glow dims (C-114)
 
 - **Meshes:** models-C's BAR meshes for the beam towers (`1efc5e9`) and flak towers (`1429976`) are merged from m-models. They're "review" in the manifest, so the towers keep their blockouts in game until you approve them; `MeshMaterials` was already current. The lids `shellL` / `shellR` are pieces under `shell`, which `Render/MeshModels` rigs like any other piece, so C-112's retract script drives them on the meshes too.
@@ -1359,6 +1375,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Wreck meshes (C-115):** `debug_out/screens/wrecks_meshed.jpg` (review wrecks forced on). Approve them for game (models-C marks each `wreck` approved), and say if they're too dark under the night lighting.
 
 - **S-96 tower meshes (models-C):** Radiance, Inferno, Lumen, Hailstorm are "review" in the manifest; approve them (models-C flips the status) to see them in game. Their glow dims when a beam tower retracts (C-114).
 
