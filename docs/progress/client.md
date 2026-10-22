@@ -4,6 +4,24 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, shield domes)
+
+- **Shield mechanic:** decided with you and handed to sim-A to build (request 40). The decisions:
+  - shield generator structure only;
+  - Order and Chaos both get one, Chaos's dome smaller;
+  - bounced shells stay live;
+  - full force from 50% charge;
+  - collapse at 0%, rise at 25%.
+- **Client side:**
+  - **Prototype (C-87 to C-89):** the repulsor field, hexagon hits, plasma core and capacity bar, the `shield` test profile.
+  - **`Render/ShieldFx` (C-90):** your interface (`new`, `deploy`, `setStrength`, `hit`, `collapse`, `destroy`), with the deploy, up, hit, low and collapse states.
+  - **Performance rules:** fixed pools, one render loop, off-screen skip, strategic detail.
+  - **Placement:** generators sit upright on the terrain.
+- **Measured** (table under C-90 below): 20 shields on screen cost 1.9 ms a frame of render-loop CPU at close zoom, 0.34 ms at strategic zoom, 0.07 ms off screen.
+- **Waiting on:**
+  - sim-A: request 40, the shield on the wire;
+  - session C: the shield assets (`docs/contracts/fx.md`, `assets/fx/shield/roblox_assets.json`).
+
 ## Summary (overnight run, 2026-10-22 → 23)
 
 **Your list is done.** Server alerts landed overnight (C-85); you imported the draft 3 sheet and ran the 2-client test the next morning (C-86). Each item is committed, pushed and marked "Ready to merge" below. sim-A has already integrated C-75 to C-80 into main (`a21d325`).
@@ -502,6 +520,66 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: ShieldFx — the shield dome renderer (C-90)
+
+- **`Render/ShieldFx`**, your interface: `ShieldFx.new(emitterAttachmentOrPosition, radius, teamColor)`, then `:deploy()`, `:setStrength(0..1)`, `:hit(worldPos, intensity)`, `:collapse()`, `:destroy()`. `Core/ShieldLook` (pure, `ShieldLook.spec`, 6 tests) holds:
+  - the timings, deploy and collapse phases;
+  - ring positions on the curve (r = R·sin θ, y = R·cos θ);
+  - the low-strength flicker and ring flow;
+  - the opacity rule, the strategic-detail hysteresis and the off-screen test.
+- **Look:**
+  - **Dome:** a neutral white dome with a bright edge (your rule: no team colour), opacity following strength, invisible at 0% and full from 50%.
+  - **Rings:** 9 thin rings flowing from the top down the dome.
+  - **Beam and vortex:** a curved beam from the emitter to the top, a vortex at the top (sparkles turning on a disc plus 3 glowing arcs), floating specks inside, a slow pulse.
+  - **Core and bar:** the plasma core (green → orange → red) and the capacity bar above the dome.
+  - The "ForceField material" in the brief read grey with no edge in the earlier tests (C-87), so the dome is a tinted ball with a camera-facing edge ring.
+- **States:**
+  - **Deploy:** the beam reaches the top in 0.4 s, then the dome grows in 0.6 s (ease-out) with a ring flash on the ground.
+  - **Up:** the rings flow, the vortex turns, specks drift.
+  - **Hit:** a ripple ring spreading from the impact on the dome, red-hot hexagon plates, a brightness pulse.
+  - **Low (<30%):** the flicker gets faster and deeper, and the rings dim and slow.
+  - **Collapse:** it flickers, the dome shrinks, then the beam retracts. Deploying again works.
+- **Performance** (your hard rules):
+  - **Fixed pools:** every instance is made in `new()` and only moved or hidden afterwards. That's 9 rings, 4 ripples and 3 vortex arcs per shield, and 160 hexagon plates shared by all shields.
+  - **One render loop:** a single RenderStepped loop updates every shield and skips those off screen.
+  - **Strategic detail** (beyond 480 studs from the camera): only the dome and its edge.
+  - Client-side only.
+- **Placeholders:** Studio textures and parts. C's shield assets replace them when they merge (`docs/contracts/fx.md`, `assets/fx/shield/roblox_assets.json`; neither exists yet).
+- **Review content** in the place: `ReplicatedStorage.ShieldFxReview`.
+  - Two placeholder shield generators: Order, radius 120, a clean stepped plinth with four pylons; Chaos, radius 80, a rusty slab with scrap spikes and a cage.
+  - Each has an `Emitter` attachment and `Radius` and `Offset` attributes. It lives in ReplicatedStorage so a playtest's terrain doesn't swallow it.
+  - **Not built, by your answers:** the Warden's small dome (shield generators only), and radius 48 for the generator (you set 120 earlier). Both are easy to add.
+- **Debug calls** (Studio playtest), `FtggClientDebug:Invoke("shieldfx", op, ...)`:
+  - `review` places the generators round the camera's focus, each with its dome;
+  - `spawn`; `bench` (n, radius) puts a grid round the focus;
+  - `deploy`, `collapse`, `hit` (intensity), `strength` (f), `drain` (to, seconds);
+  - `slow` (time scale, for screenshots), `stats`, `clear`.
+  - `Invoke("camera", x, z, distance, pitch)` places the camera.
+  - `Invoke("shield")` still runs the mechanic demo, now on this dome (`Render/ShieldDemo`).
+- **Fixed after your question:** the Order generator lay on its side and sank into the grass. The model's pivot came from its base cylinder, which is turned 90°, and placement used the sim's ground height rather than the rendered terrain. The models now pivot upright at their bottom centre, and placement raycasts the terrain (`shieldfx_generator.jpg`).
+- **Screenshots** (`debug_out/screens/`, the `shield` profile, both generators, hits running):
+  - camera angles at 220 studs: `shieldfx_35.jpg`, `shieldfx_55.jpg`, `shieldfx_80.jpg`;
+  - deploy: `shieldfx_deploy_beam.jpg`, `shieldfx_deploy_grow.jpg`;
+  - other states: `shieldfx_low.jpg` (15%), `shieldfx_collapse.jpg`;
+  - the 20-shield test: `shieldfx_20_close.jpg`, `shieldfx_20_strategic.jpg`.
+- **Measured** in a Studio playtest, `shield` profile, radius-24 domes in a grid, deployed and settled, averaged over 2.5–3 s. "Loop" is ShieldFx's own render-loop CPU per frame; render CPU and GPU are Roblox's `Stats` frame times, which are noisy in Studio and include the whole scene.
+
+| Shields | Zoom | Loop ms (avg / max) | Render CPU ms | Render GPU ms |
+|---|---|---|---|---|
+| 0 | close (220 studs, 55°) | 0.04 | 6.8 | 4.0 |
+| 1 | close | 0.12 / 0.21 | 6.2 | 3.6 |
+| 5 | close | 0.53 / 0.72 | 7.1 | 3.9 |
+| 20 | close | 1.87 / 2.32 | 9.8 | 5.6 |
+| 0 | strategic (600 studs) | — | 7.0 | 4.6 |
+| 1 | strategic | 0.10 / 0.33 | 10.2 (noise) | 3.8 |
+| 5 | strategic | 0.13 / 0.28 | 5.3 | 0.5 |
+| 20 | strategic | 0.34 (without the bars) | 5.2 | 2.8 |
+| 20 | off screen | 0.07 (20 skipped) | — | — |
+
+  - The first strategic 20-shield run cost 0.72 ms. Hiding the capacity bars at strategic detail brought it to 0.34 ms.
+  - At close zoom the loop costs about 0.09 ms per shield. Most of that is the rings and the edge.
+  - Final numbers need a live device; Studio adds its own overhead.
+
 ## 2026-10-23: shield test scenario; a neutral, bigger dome that fades with its charge (C-89)
 
 - **`shield` profile** (set `ACTIVE = "shield"`), the test ground for when the sim has the Phalanx:
@@ -661,6 +739,12 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **ShieldFx look (C-90):** `debug_out/screens/shieldfx_*.jpg`. Your calls:
+  - **Dome look:** a tinted ball with an edge ring, not the ForceField material (it read grey in the C-87 tests).
+  - **Placeholder shapes and timings:** 9 rings, a 5 s ring trip, flicker below 30%.
+  - **Generators:** the two placeholder designs.
+  - **Strategic detail:** domes switch at 480 studs from the camera.
+
 - **Shield prototype (C-87):** the look, in `debug_out/screens/c87_shield_*.jpg`. Your calls:
   - ~~Clean hexagons~~: done, you turned on EditableMesh (C-88).
   - **Placeholder tuning:** field band 50 studs, full force at 50%, rise at 25%, 0.04 charge per unit of mass, recharge 0.05/s.
@@ -709,6 +793,23 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+40. **Open.** **Shield generators on the wire (2026-10-23, the user asked; the client draws them with `Render/ShieldFx`, C-90):**
+    - **Mechanic** (the user's rules):
+      - A shield generator structure (no vehicle shield). Order's dome is bigger than Chaos's; the client prototype uses radius 120 (Order) and 80 (Chaos), placeholders.
+      - Charge draws power to recharge.
+      - Inside a field band outside the dome, an inbound shell slows to a stop and is thrown back out. Heavier shells take longer to stop.
+      - Full force at ≥50% charge, scaling down below that, so big shells break through, slowed.
+      - The dome collapses at 0% and rises again at 25%.
+      - Bounced shells stay **live**: they explode where they land.
+      - The client's placeholder numbers are in `src/client/Core/Shield.luau`.
+    - **Per shield, on the generator's record**, for everyone who can see it (enemies included, since the dome is visible):
+      - radius;
+      - strength fraction (u8 is enough);
+      - state: up, down (collapsed) or recharging (rising).
+      - It changes rarely, so it suits a State record or the strategic flags.
+    - **Hit events:** the world position of each shell turned back or broken through, plus intensity (the shell's mass or damage) and whether it broke through. The client lights the hit ripple and hex patch there.
+    - Bounced shells already arrive as projectiles, so they need nothing new.
 
 39. **Done and used (S-68, protocol 23; C-85).** **The ALERT event and the strategic UNDER_ATTACK flag (2026-10-22, the user asked):** owner-only alerts (attacked, lost, built, stalls, nuke, commander attacked) rate-limited on the server, and the flag on units hit in the last ~3 s. Sent to sim-A directly.
 
