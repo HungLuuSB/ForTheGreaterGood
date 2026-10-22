@@ -250,6 +250,18 @@
       }
     },
     {
+      "Name": "chs_ragnarok",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://73825706356176",
+        "NormalMapContent": "rbxassetid://77672004282123",
+        "RoughnessMapContent": "rbxassetid://134388859044450",
+        "MetalnessMapContent": "rbxassetid://132152218614281",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_ravager",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -738,6 +750,18 @@
         "NormalMapContent": "rbxassetid://83974720212015",
         "RoughnessMapContent": "rbxassetid://115475433027160",
         "MetalnessMapContent": "rbxassetid://127200583957662",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_reckoning",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://135603633579034",
+        "NormalMapContent": "rbxassetid://95298228876551",
+        "RoughnessMapContent": "rbxassetid://114616432641977",
+        "MetalnessMapContent": "rbxassetid://130612191637615",
         "EmissiveStrength": 0
       }
     },

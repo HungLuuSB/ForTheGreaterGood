@@ -1885,6 +1885,65 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			triangles = 638,
 		},
+		chs_ragnarok = {
+			attachments = {
+				muzzle = {
+					at = { 0, 3, 0 },
+					parent = "base",
+				},
+			},
+			glow = {
+				{
+					center = { 0.27, 2.1, 0.92 },
+					channel = "power",
+					mesh = "rbxassetid://126520768729567",
+					name = "base_glow_power",
+					piece = "base",
+					size = { 9.84, 1.4, 11.14 },
+					strength = 2.5,
+					tint = { 255, 125, 35 },
+				},
+				{
+					center = { 0, 6.18, 0 },
+					channel = "running",
+					mesh = "rbxassetid://112453640701979",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 18.7384, 10.84, 18.7384 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+			},
+			glowShare = 0.0318,
+			maps = {
+				ALB = "rbxassetid://73825706356176",
+				EMI = "rbxassetid://100756322747083",
+				MTL = "rbxassetid://132152218614281",
+				NOR = "rbxassetid://77672004282123",
+				RGH = "rbxassetid://134388859044450",
+			},
+			model = "rbxassetid://108230814579679",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 5.887, 0 },
+					mesh = "rbxassetid://124111119473503",
+					size = { 20, 11.774, 20 },
+				},
+				hatch = {
+					center = { 0, 3.325, 0.15 },
+					mesh = "rbxassetid://135345854237491",
+					parent = "base",
+					pivot = { 0, 3.25, 3.8 },
+					size = { 7.6, 0.65, 7.9 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 1512,
+		},
 		chs_ravager = {
 			attachments = {
 				muzzle = {
@@ -4187,6 +4246,72 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"core",
 			},
 			triangles = 1732,
+		},
+		ord_reckoning = {
+			attachments = {
+				muzzle = {
+					at = { 0, 2.8, 0 },
+					parent = "base",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 2.74, 0 },
+					channel = "power",
+					mesh = "rbxassetid://120466851140508",
+					name = "base_glow_power",
+					piece = "base",
+					size = { 15.7, 0.2, 15.7 },
+					strength = 2.5,
+					tint = { 130, 225, 255 },
+				},
+				{
+					center = { 0, 1.35, 0 },
+					channel = "running",
+					mesh = "rbxassetid://106151310542642",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 23.26, 1.5, 23.26 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+			},
+			glowShare = 0.033,
+			maps = {
+				ALB = "rbxassetid://135603633579034",
+				EMI = "rbxassetid://133485569840526",
+				MTL = "rbxassetid://130612191637615",
+				NOR = "rbxassetid://95298228876551",
+				RGH = "rbxassetid://114616432641977",
+			},
+			model = "rbxassetid://93314110587858",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 1.425, 0 },
+					mesh = "rbxassetid://77221544430240",
+					size = { 23.5186, 2.85, 23.5186 },
+				},
+				hatch = {
+					center = { -3.025, 2.875, 0 },
+					mesh = "rbxassetid://92019033239171",
+					parent = "base",
+					pivot = { -6.05, 3.1, 0 },
+					size = { 6.05, 0.55, 12 },
+				},
+				hatch2 = {
+					center = { 3.025, 2.875, 0 },
+					mesh = "rbxassetid://111071135682321",
+					parent = "base",
+					pivot = { 6.05, 3.1, 0 },
+					size = { 6.05, 0.55, 12 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 1100,
 		},
 		ord_sentry = {
 			attachments = {
