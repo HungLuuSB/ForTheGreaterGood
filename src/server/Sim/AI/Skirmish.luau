@@ -36,6 +36,14 @@
 --      value falls back to the rally point; the next wave waits until the
 --      army is worth RETREAT_MARGIN times what it fled, and none leaves
 --      for RETREAT_HOLD ticks.
+--   4. T2 (S-101, next.md item 7; normal and hard): once its advanced plant
+--      stands and supply passes ADV_BUILDER_SUPPLY, the plant builds one
+--      T2 builder (Architect / Forgemaster). It builds a shield generator
+--      over the base, then PINPOINTERS Pinpointers behind it, then (Order
+--      hard, with CITADEL_SUPPLY stored) a Citadel toward the enemy. Order
+--      hard's T1 builders also raise a wall of BARRIERS Barrier segments
+--      across the front once the base is established. Normal builds an
+--      airfield (and a shipyard on a sea map) once established, as hard did.
 -- Its only randomness is its own Prng (seeded from the match seed and the
 -- player ID), used for the production mix.
 --
@@ -128,6 +136,10 @@ Skirmish.RETREAT_MARGIN = 1.2 -- the next wave needs this times the value it fle
 Skirmish.RETREAT_HOLD = 300 -- ticks no wave leaves after a retreat (S-92)
 Skirmish.CONTESTED_ESCORT = 2 -- army units a Chaos worker needs to take a contested deposit (S-97)
 Skirmish.CONTESTED_RADIUS = 300 -- studs: known armed enemies this near a deposit make it contested (S-97)
+Skirmish.ADV_BUILDER_SUPPLY = 600 -- supply stored before the advanced plant builds a T2 builder (S-101)
+Skirmish.PINPOINTERS = 2 -- Pinpointers the T2 builder raises (S-101)
+Skirmish.CITADEL_SUPPLY = 1500 -- supply stored (or 90% of storage, if less) before Order hard's Citadel (S-101)
+Skirmish.BARRIERS = 6 -- Barrier segments in Order hard's wall (S-101)
 Skirmish.RALLY_GAP = 600 -- studs at least between two rally points: beyond artillery range (Verdict 480 since S-62) with room for the army's spread (S-57)
 
 export type Level = {
@@ -164,6 +176,9 @@ export type Level = {
 	locustShare: number?, -- share of plant tanks that are Locusts (Chaos)
 	lanes: number?, -- 2: half of each wave attacks round a flank (Chaos)
 	contested: boolean?, -- workers take contested deposits only with an escort of `escorts` (Chaos, S-97)
+	t2Builder: boolean?, -- one T2 builder: shield, Pinpointers (S-101)
+	citadel: boolean?, -- the T2 builder adds a Citadel when rich (Order hard, S-101)
+	barriers: number?, -- Barrier segments its T1 builders wall the front with (Order hard, S-101)
 	jammer: boolean?, -- a mobile jammer guards each wave (Chaos)
 }
 
@@ -215,8 +230,8 @@ Skirmish.LEVELS = table.freeze({
 		artyChance = 0.25,
 		defenses = 0,
 		escorts = 0,
-		air = false,
-		naval = false,
+		air = true, -- an airfield once established (S-101)
+		naval = true, -- a shipyard on a sea map once established (S-101)
 		safeExpansion = false,
 		hunt = false,
 		firstAttack = 0,
@@ -225,6 +240,7 @@ Skirmish.LEVELS = table.freeze({
 		tanksBeforeGen3 = 2, -- tanks before the third generator (S-57)
 		recall = true, -- defends the base against enemy waves (S-57)
 		retreat = true,
+		t2Builder = true,
 	},
 	hard = {
 		think = 10,
@@ -254,6 +270,7 @@ Skirmish.LEVELS = table.freeze({
 		tanksBeforeGen3 = 0,
 		recall = false,
 		retreat = true,
+		t2Builder = true,
 	},
 } :: { [string]: Level })
 
@@ -277,6 +294,8 @@ function Skirmish.styled(cfg: Level, prefix: string, levelName: string): Level
 			-- for the whole match, so normal keeps its expansion)
 			s.safeExpansion = true
 			s.defenses = cfg.defenses + 1
+			s.citadel = true -- (S-101)
+			s.barriers = Skirmish.BARRIERS
 		end
 	else
 		s.locustShare = 0.35
@@ -739,6 +758,11 @@ type Census = {
 	refillPower: number, -- power per second its missile stockpiles below capacity want (S-57)
 	generators: number, -- generators, frames included
 	aaTrucks: { number }, -- own mobile SAMs, in ID order
+	t2Builders: { number }, -- T2 builders (Architect / Forgemaster; S-101)
+	shields: number, -- shield generators, frames included (S-101)
+	pinpointers: number, -- frames included (S-101)
+	citadels: number, -- frames included (S-101)
+	barriers: number, -- frames included (S-101)
 }
 
 local function census(brain: Brain): Census
@@ -773,6 +797,11 @@ local function census(brain: Brain): Census
 		refillPower = 0,
 		generators = 0,
 		aaTrucks = {},
+		t2Builders = {},
+		shields = 0,
+		pinpointers = 0,
+		citadels = 0,
+		barriers = 0,
 	}
 	local advPlant = faction(brain, "advvehplant", "advvehplant")
 	local generator = faction(brain, "generator", "generator")
@@ -829,6 +858,14 @@ local function census(brain: Brain): Census
 				end
 			elseif d.id == generator then
 				c.generators += 1
+			elseif d.shield then
+				c.shields += 1 -- (S-101)
+			elseif d.pinpointer then
+				c.pinpointers += 1
+			elseif d.id == "ord_citadel" then
+				c.citadels += 1
+			elseif d.id == "ord_barrier" then
+				c.barriers += 1
 			elseif d.extractor then
 				c.extractors += 1
 				if (w.posX[id] - brain.homeX) ^ 2 + (w.posZ[id] - brain.homeZ) ^ 2 > Skirmish.HOME_RADIUS ^ 2 then
@@ -841,6 +878,8 @@ local function census(brain: Brain): Census
 			elseif #d.weapons > 0 then
 				c.turrets += 1
 			end
+		elseif d.buildOptions and d.tier >= 2 then
+			table.insert(c.t2Builders, id) -- (S-101) its own jobs, below
 		elseif d.buildOptions then
 			table.insert(c.builders, id)
 			c.workers += 1
@@ -972,6 +1011,19 @@ local function think(brain: Brain)
 				continue
 			end
 		end
+		if not isCommander and (cfg.barriers or 0) > c.barriers and established and #c.factories > 0 then
+			-- Order hard: a wall of Barrier segments across the front (S-101)
+			local n = cfg.barriers :: number
+			local off = (c.barriers - (n - 1) / 2) * 8
+			local cx = brain.homeX + brain.dirX * 140 - brain.dirZ * off
+			local cz = brain.homeZ + brain.dirZ * 140 + brain.dirX * off
+			local x, z = spotNear(brain, "ord_barrier", cx, cz)
+			if x and z then
+				build(brain, id, "ord_barrier", x, z, 0)
+				c.barriers += 1
+				continue
+			end
+		end
 		if not isCommander and wantTurret and c.turrets < turretsWanted then
 			-- hard: gun turrets, first on the way home, then by far extractors (S-17)
 			local turret = faction(brain, "bulwark", "spike")
@@ -1089,6 +1141,30 @@ local function think(brain: Brain)
 			end
 		end
 	end
+	-- T2 builders (S-101): a shield over the base, Pinpointers behind it,
+	-- then (Order hard, when rich) a Citadel toward the enemy
+	for _, id in c.t2Builders do
+		if not idleBuilder(sim, id) then
+			continue
+		end
+		local job, cx, cz = nil, 0, 0
+		if c.shields == 0 then
+			job, cx, cz = faction(brain, "phalanx", "carapace"), brain.homeX + brain.toward * 40, brain.homeZ
+			c.shields += 1
+		elseif c.pinpointers < Skirmish.PINPOINTERS then
+			job, cx, cz = faction(brain, "witness", "augur"), brain.homeX - brain.toward * 70, brain.homeZ + (if c.pinpointers == 0 then 60 else -60)
+			c.pinpointers += 1
+		elseif cfg.citadel and c.citadels == 0 and acc.supply.stored >= math.min(Skirmish.CITADEL_SUPPLY, acc.supply.storage * 0.9) then
+			job, cx, cz = "ord_citadel", brain.homeX + brain.dirX * 120, brain.homeZ + brain.dirZ * 120
+			c.citadels += 1
+		end
+		if job then
+			local x, z = spotNear(brain, job, cx, cz)
+			if x and z then
+				build(brain, id, job, x, z, 0)
+			end
+		end
+	end
 	local aaUnit = faction(brain, "halo", "hornet")
 	local radarUnit = faction(brain, "oracle", "watcher")
 	local trackerUnit = faction(brain, "arbiter", "stalker")
@@ -1144,11 +1220,16 @@ local function think(brain: Brain)
 	end
 	local trackerPlanned = #c.trackers + queued(sim, c.advFactories, trackerUnit)
 	local jammerPlanned = #c.jammers + queued(sim, c.advFactories, "chs_shroud")
+	local t2BuilderUnit = faction(brain, "architect", "forgemaster")
+	local t2Planned = #c.t2Builders + queued(sim, c.advFactories, t2BuilderUnit)
 	for _, f in c.advFactories do
 		local q = sim.build.queue[f] or {}
 		for _ = #q + 1, cfg.queue do
 			local item
-			if trackerPlanned < 1 then
+			if cfg.t2Builder and t2Planned < 1 and acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY then
+				item = t2BuilderUnit -- shield and Pinpointers (S-101)
+				t2Planned += 1
+			elseif trackerPlanned < 1 then
 				item = trackerUnit -- fire-control radar for the artillery (S-7)
 				trackerPlanned += 1
 			elseif cfg.jammer and jammerPlanned < 1 then
