@@ -13,7 +13,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - Each shot costs 700 power from your stores.
 - **Flak towers** (Lumen, Hailstorm) work as normal defenses.
 - **Icons:** all four use existing icon tiles for now (beam towers: Heavy Turret; flak towers: IR SAM Site). No icon re-import needed.
-- **Models:** the towers are placeholder boxes until models-C's meshes land (C has the blockouts and the retract pose ready).
+- **Models:** the towers draw as models-C's blockouts (C-113), and retract with closing lids; BAR meshes come next.
 - **Screenshots:** `debug_out/screens/beam_radiance.jpg`, `beam_tower_on.jpg`, `beam_tower_off.jpg`.
 
 ## Summary (2026-10-23, per-unit commands, factory orders, top strip)
@@ -682,6 +682,16 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: S-96 tower blockouts merged; retract checked on them (C-113)
+
+- **Blockouts:** models-C's blockouts for `ord_radiance`, `chs_inferno`, `ord_lumen` and `chs_hailstorm` are merged from m-models `aafbf19`. The towers draw as their blockouts instead of generic boxes.
+- **Retract in Studio** (`shield` profile, all four spawned):
+  - switched off, both beam towers sink the turret, fold the barrel and close the lids flush with the collar;
+  - switched on, they rise and reopen (turret back at 5.0 / 4.5 studs);
+  - the Inferno's `tankL` above the lids is a fixed part of its base.
+- **Screenshots:** `debug_out/screens/beam_towers_deployed.jpg`, `beam_towers_retracted.jpg`.
+- **No code change:** C-112's piece script fits the blockouts' pivots as they are.
 
 ## 2026-10-23: beam towers drawn, retract on / off, icons for S-96's towers (C-112)
 
