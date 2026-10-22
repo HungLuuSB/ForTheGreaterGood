@@ -782,3 +782,13 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Why:**
 - The user asked for a visible force on shells inside the dome, following the shot's direction and the shield's centre. The change of velocity is exactly the field's push, so the plume shows what the field does.
 - S-85 destroys light shells at the surface with no IMPACT, so the client must drop them itself.
+
+### C-98 — Shells in a field: a bow shock and a burning trail (2026-10-23)
+
+**Decision:**
+- **Pool:** `ShieldDomes.forces` keeps its pool of 32, each with a beam and a cap, a clone of C's dome mesh (`ShieldFx.cloneMesh`).
+- **Cap:** Neon, (2r, 0.7r, 2r) with r = (1.3 + 0.5·mass)·(0.7 + 0.3·heat), its pole along minus the field's force, centred just ahead of the shell. Moved with BulkMoveTo.
+- **Trail:** the beam runs from the shell along the force, white fading to orange, streaming backward.
+- **Heat:** the force's share of the plume's maximum, setting opacity and size.
+
+**Why:** the user drew a curved front ahead of the shell, "like when an asteroid enter the earth atmosphere". C-97's plume read as a beam, not as burning.

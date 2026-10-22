@@ -13,10 +13,12 @@
 -- docs/contracts/fx.md) while the model is drawn; domes wait until
 -- ShieldFx has C's meshes.
 --
--- Shells in a field show the force on them (C-97): a glowing plume on the
--- side the field pushes from, flowing into the shell, as long as the force
--- is strong (Core/ShieldLook.force: the field step's change of velocity
--- over a tick). A fixed pool of PLUMES beams, made once.
+-- Shells in a field burn like a meteor entering the atmosphere (C-97, the
+-- user's drawing): a glowing bow shock, C's dome mesh flattened into a cap,
+-- curved round the shell's nose on the side the field pushes from, and a
+-- burning trail behind it, both as strong as the force (Core/ShieldLook.
+-- force: the field step's change of velocity over a tick). A fixed pool of
+-- PLUMES, made once.
 
 local Schema = require("@shared/Net/Schema")
 local ShieldField = require("@shared/Combat/ShieldField")
@@ -31,7 +33,10 @@ local ShieldDomes = {}
 local UP = Schema.ShieldFlag.UP
 ShieldDomes.PLUMES = 32 -- force plumes at once (the fixed pool)
 
-type Plume = { beam: Beam, at: Attachment, tip: Attachment }
+type Plume = { beam: Beam, at: Attachment, tip: Attachment, cap: MeshPart? }
+
+ShieldDomes.SHOCK_COLOR = Color3.fromRGB(255, 226, 180) -- white-hot, a little orange
+ShieldDomes.TRAIL_COLOR = ColorSequence.new(Color3.fromRGB(255, 240, 215), Color3.fromRGB(255, 130, 50))
 
 type Dome = { fx: ShieldFx.ShieldFx, up: boolean, x: number, y: number, z: number, radius: number, model: Model? }
 
@@ -47,14 +52,19 @@ export type State = {
 	stats: { hits: number, breaches: number, lastBreaches: { { number } }, enters: number, lit: number, lagSum: number, lagN: number, enteredAt: { [number]: number } },
 	plumes: { Plume }, -- made on first use
 	plumesShown: number,
+	capFolder: Folder?,
 }
 
 function ShieldDomes.new(): State
-	return { domes = {}, stats = { hits = 0, breaches = 0, lastBreaches = {}, enters = 0, lit = 0, lagSum = 0, lagN = 0, enteredAt = {} }, plumes = {}, plumesShown = 0 }
+	return { domes = {}, stats = { hits = 0, breaches = 0, lastBreaches = {}, enters = 0, lit = 0, lagSum = 0, lagN = 0, enteredAt = {} }, plumes = {}, plumesShown = 0, capFolder = nil }
 end
 
 local function makePlumes(s: State)
 	local holder = workspace.Terrain
+	local folder = Instance.new("Folder")
+	folder.Name = "ShieldShocks"
+	folder.Parent = workspace
+	s.capFolder = folder
 	for _ = 1, ShieldDomes.PLUMES do
 		local at = Instance.new("Attachment")
 		at.Name = "ShieldForce"
@@ -69,24 +79,39 @@ local function makePlumes(s: State)
 		beam.LightEmission = 1
 		beam.LightInfluence = 0
 		beam.Brightness = 3
-		beam.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(190, 220, 255))
+		beam.Color = ShieldDomes.TRAIL_COLOR
 		beam.Texture = ShieldFx.ASSETS.beam
 		beam.TextureMode = Enum.TextureMode.Wrap
 		beam.TextureLength = 4
-		beam.TextureSpeed = -2 -- flowing into the shell
-		beam.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.6, 0.35), NumberSequenceKeypoint.new(1, 1) })
-		beam.Width1 = 0.2
+		beam.TextureSpeed = 3 -- streaming back off the shell
+		beam.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.5, 0.4), NumberSequenceKeypoint.new(1, 1) })
+		beam.Width1 = 0.3
 		beam.Segments = 2
 		beam.Enabled = false
 		beam.Parent = holder
-		table.insert(s.plumes, { beam = beam, at = at, tip = tip })
+		-- the bow shock: C's dome mesh as a flat cap (none until the meshes load)
+		local cap = ShieldFx.cloneMesh("dome")
+		if cap then
+			cap.Name = "ShieldShock"
+			cap.Anchored, cap.CanCollide, cap.CanQuery, cap.CanTouch, cap.CastShadow = true, false, false, false, false
+			cap.Material = Enum.Material.Neon
+			cap.Color = ShieldDomes.SHOCK_COLOR
+			cap.Transparency = 1
+			cap.Parent = s.capFolder
+		end
+		table.insert(s.plumes, { beam = beam, at = at, tip = tip, cap = cap })
 	end
 end
 
 -- Each frame after Effects.visible: the force plumes on shells in a field
 -- (`drawn`: { proj, x, y, z } entries).
 function ShieldDomes.forces(s: State, drawn: { { any } })
+	if #s.plumes == 0 and not ShieldFx.ready() then
+		return -- the pool waits for C's dome mesh (the bow shock)
+	end
 	local used = 0
+	local caps: { BasePart } = {}
+	local capFrames: { CFrame } = {}
 	for _, e in drawn do
 		local p = e[1]
 		local n = p.nextState
@@ -100,17 +125,38 @@ function ShieldDomes.forces(s: State, drawn: { { any } })
 				used += 1
 				local plume = s.plumes[used]
 				local at = Vector3.new(e[2], e[3], e[4])
-				-- on the side the force pushes from: ahead of the shell, toward the dome
-				local len = ShieldLook.plume(size)
+				local push = Vector3.new(dx, dy, dz) -- the field's force: out of the dome, against the shot
+				local mass = math.min(ShieldField.mass(w), 4)
+				local heat = math.clamp(ShieldLook.plume(size) / ShieldLook.PLUME_MAX, 0.25, 1)
+				-- the burning trail streams back from the shell, along the force
 				plume.at.WorldPosition = at
-				plume.tip.WorldPosition = at - Vector3.new(dx, dy, dz) * len
-				plume.beam.Width0 = 2.5 + 0.8 * math.min(ShieldField.mass(w), 4)
+				plume.tip.WorldPosition = at + push * ShieldLook.plume(size)
+				plume.beam.Width0 = 1.2 + 0.5 * mass
 				plume.beam.Enabled = true
+				-- the bow shock: a cap curved round the nose, its pole into the push
+				local cap = plume.cap
+				if cap then
+					local r = (1.3 + 0.5 * mass) * (0.7 + 0.3 * heat)
+					cap.Size = Vector3.new(2 * r, 0.7 * r, 2 * r)
+					local up = -push
+					local right = if math.abs(up.Y) < 0.95 then up:Cross(Vector3.yAxis).Unit else up:Cross(Vector3.xAxis).Unit
+					-- its rim sits just behind the nose, its pole a little ahead
+					table.insert(caps, cap)
+					table.insert(capFrames, CFrame.fromMatrix(at + up * (0.15 * r), right, up))
+					cap.Transparency = 1 - 0.75 * heat
+				end
 			end
 		end
 	end
+	if #caps > 0 then
+		workspace:BulkMoveTo(caps, capFrames, Enum.BulkMoveMode.FireCFrameChanged)
+	end
 	for i = used + 1, s.plumesShown do
-		s.plumes[i].beam.Enabled = false
+		local plume = s.plumes[i]
+		plume.beam.Enabled = false
+		if plume.cap then
+			plume.cap.Transparency = 1
+		end
 	end
 	s.plumesShown = used
 end

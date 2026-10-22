@@ -830,6 +830,13 @@ step = function(realDt: number)
 	st.frames += 1
 end
 
+-- A clone of one of C's meshes ("dome", "ring", "ringThin"), or nil before
+-- they load or if they failed.
+function ShieldFx.cloneMesh(key: string): MeshPart?
+	local t = (templates :: any)[key]
+	return if t then t:Clone() else nil
+end
+
 -- Every shield (debug calls).
 function ShieldFx.all(): { ShieldFx }
 	return shields

@@ -528,6 +528,16 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shells burn in the field like a meteor (C-98)
+
+- **Your drawing:** a curved front ahead of the shell, like atmospheric entry. This replaces C-97's plume, which stretched ahead of the shell.
+  - **Bow shock:** C's dome mesh flattened into a glowing cap, curved round the shell's nose on the side the field pushes from.
+  - **Burning trail:** streams back from the shell along the force.
+  - Both grow with the force, and with the shell's weight.
+- **Colour:** white-hot with a little orange (burning). The hexagons stay white and grey, as you asked; say if you want the shock white too.
+- **Pool:** the same fixed pool of 32, made once C's dome mesh has loaded.
+- **Screenshot:** `debug_out/screens/c98_shield_bow_shock.jpg`: `shield_one`, frozen with a Ravager shell braking, side on. The shock front is on its nose, the trail behind it, and its entry hexagons on the right.
+
 ## 2026-10-23: force plumes on shells in the dome; light shells absorbed (C-97, S-84, S-85)
 
 - **Force plume (your request):** a shell inside the dome shows the force on it, a glowing plume on the side the field pushes from, flowing into the shell.
