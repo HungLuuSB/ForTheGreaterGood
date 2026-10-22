@@ -4,6 +4,10 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, bigger shield hit patches)
+
+- **Shield hits (C-136):** each hit covers about twice the diameter: 3.2-stud cells, 4 to 6 rings (61 to 127 cells). Start a new playtest to see it.
+
 ## Summary (2026-10-23, beam update from models-C; slowed test)
 
 - **Beam shot (C-135):** models-C's update is merged and used: a point at the target, nothing wider than the emitter ball at the muzzle, a smaller impact flare, and a flickering star on the ball while firing. The shot also slows with the game speed now.

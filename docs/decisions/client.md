@@ -1083,3 +1083,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - Rigs age by game time (dt × speed), so a slowed game slows the shot.
 
 **Why:** models-C's beam update (0ccf6c3, ff6072d), from the user's notes to them, and the user's 0.25× test.
+
+### C-136 — Larger shield hit patches (2026-10-23)
+
+**Decision:** Shield.PLATE 3.2 (was 2.6); rings 4 + strength, clamped to 4..6 (61 / 91 / 127 cells); ShieldFx.PLATE_POOL 800.
+
+**Why:** the user: "honeycomb effect is good, make it cover a larger part of the shield".
