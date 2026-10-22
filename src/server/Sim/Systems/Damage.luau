@@ -56,6 +56,8 @@ return function(sim: Types.Sim)
 		local amount = c.dmgAmount[i]
 		if w.deploy[t] == 1 then
 			amount /= Deploy.armor(sim, t) -- a deployed Warden's fortification (S-64)
+		elseif Combat.retracted(sim, t) then
+			amount /= sim.defs.unitByIndex[w.defIndex[t]].retract.armor -- retracted into its shell (S-96)
 		end
 		local after = before - amount
 		World.setHealth(w, t, after)

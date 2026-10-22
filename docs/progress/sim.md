@@ -193,6 +193,17 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
     - (c) a higher charge cost per hit, so a dome under fire drops sooner;
     - (d) keep it and let the attacker answer with heavier artillery, hitscan-free siege units or a power raid.
   - My suggestion: (b), since it keeps the dome as a fortress without making the army inside it untouchable. (a) is the cheaper change.
+- **T2 defenses (S-96, request 43), placeholder numbers:**
+  - **Radiance:** range 650, 2,600 damage every 9 s, 700 power a shot; 550 supply, 6,500 power, 3,200 health.
+  - **Inferno:** range 560, 2,000 every 7 s, 500 a shot; 420 supply, 5,000 power, 2,600 health.
+  - **Both:** a quarter of the damage while retracted.
+  - **Flak towers:** Lumen has 2 Order flak guns (260 supply, 2,600 power); Hailstorm has 3 Chaos flak guns (220 / 2,200).
+  - **Power per shot:** a team without depots stores only 1,000 power, so a beam tower fires once and then waits on income. That's BAR-like (Pulsars want energy storage), but your call.
+  - **More T2 defenses, your pick:**
+    - (a) a T2 missile battery (long-range, radar-guided against ground: an answer to artillery);
+    - (b) a T2 torpedo battery for coasts;
+    - (c) a T2 mine field or anti-tank trap structure;
+    - (d) the AI building these (next.md item 7, queue task 7).
 - **Build speed (S-94, request 42b):** I doubled the T1 factories' build power (100 → 200) rather than halving T1 build times: only factory output speeds up, and structures keep their pace. A plant at full speed draws about 66 power/s, so it wants about three generators. The AI's generator rule now plans for that, and its tanks-first opening gives way while power stalls; it had stalled at 25% power for 8 minutes with 2 generators. Normal fields 31 units by 8 minutes, against 6. Your call if you'd rather have the build times halved instead (the same pace for factories; assisting workers would count for more).
 - **Shield domes (S-79, client request 40), placeholder numbers:**
   - **Generators:** Order `ord_phalanx` Phalanx (Architect, T2): radius 120, capacity 600 shell masses, recharge 30/s (20 s from empty), 40 power/s while recharging; supply 400, power 5,000, 2,800 health. Chaos `chs_carapace` Carapace (Forgemaster, T2): radius 80, capacity 400, recharge 24/s, 25 power/s; supply 280, power 3,500, 2,000 health. Capacity and recharge are 20× my first numbers (your rules: 10× in S-80, 50× in S-81, then down to 20× in S-86). Chaos's capacity and price, and keeping the power draw unchanged, are my calls. At 30 charge a second, a full Phalanx out-recharges about 12 mortar shells a second.
@@ -272,6 +283,10 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - **`SHIELD_HIT 20`** `unitId u16 (0 = a generator you don't have), projId u16, pos (the point on the dome), mass u8 (/ Schema.SHIELD_MASS_SCALE 31 = shell masses, 1 = a 150-damage shell), flags u8 (SHIELD_BREACH 1)`: a shell turned back (the hit) or broke through. Draw the hit patch at `pos` with intensity from `mass`.
   - **`SHIELD_FIELD 21`** `projId u16, pos (the dome's centre), radius u16, force u8 (0..255), phase u8 (1 braking, 2 repelled)`: a projectile you have came into a dome's field (or is in one when it reaches you). From then step it with **`Shared/Combat/ShieldField.step`** (the server's field: the same constants and maths as your C-87 prototype, braking doubled) instead of `Ballistics.step`, until the phase is DONE; mass from `ShieldField.mass(weapon)`. The Projectiles channel also corrects shells in a field (every 5 ticks, on the turn or breach, and when they leave). The test client does it (`Support/Client`), and its shells stay within a stud of the server's.
   - Turned shells stay live: they fly on and burst with their normal IMPACT where they land. Your `Core/Shield` can drop `stepShell`, `drain` and `recharge` for these.
+  - **Done (request 43, first part), S-96: T2 beam towers and flak towers.** New defs `ord_radiance` / `chs_inferno` (beam towers) and `ord_lumen` / `chs_hailstorm` (flak towers), in the Architect's and Forgemaster's build options. No wire change.
+    - **Beam:** weapons `ord_radiance_beam` / `chs_inferno_beam` are type BEAM (hitscan): FIRE events, as for other beams. fx names are `beam_charge`, `beam_impact`, `beam_heavy` (yours to draw).
+    - **On / off:** the TOGGLE button works on them like a radar's. **TOGGLED_ON clear means retracted:** draw the retract pose, with the turret into the `shell` piece. They start switched on. Pieces are `base`, `shell`, `turret`, `barrel`, `muzzle`.
+    - **Flak towers:** pieces `base`, `turret`, `muzzle`, `muzzle2` (Hailstorm also `muzzle3`).
   - **Done (request 44), S-95: factory order lists.** MOVE, FIGHT, PATROL, GUARD, REPAIR and ATTACK on a factory go on its list: shift appends, a plain order replaces, STOP clears. Each produced unit rolls out of the exit, then takes a copy, in order. No wire change; the list isn't on the wire (your client keeps drawing what it sent).
   - **S-94 (request 42b):** T1 factories build at 200 (was 100): a Lancer in 25.5 s. No wire change.
   - **S-93 (request 42):** every enemy projectile is destroyed where it reaches an up dome, whatever its mass. You get SHIELD_HIT with ABSORBED at the surface; SHIELD_FIELD is no longer sent and no shell turns or breaks through. Drain per hit (its mass), collapse at 0%, rise at 25% and the hitscan stop are unchanged. No wire change.

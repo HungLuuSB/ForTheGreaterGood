@@ -1351,6 +1351,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Artillery emplacement | T2 | **Edict** | **Cataclysm** | Adv. Ground |
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
+| Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (650, 2,600 every 9 s, 700 power a shot) | **Inferno** (560, 2,000 every 7 s, 500 power a shot) | Adv. Ground |
+| Flak tower (S-96) | T2 | **Lumen** (2 flak guns) | **Hailstorm** (3, cheaper) | Adv. Ground |
 | Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
 | Pinpointer (radar precision, S-59) | T2 | **Witness** | **Augur** | Adv. Ground |
 | Floating turret | T1 | **Moat** | **Riptide** | Naval |
@@ -1358,6 +1360,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |
 | Sonar buoy / station | T1 / T2 | **Ear / Choir** | **Listener / Deepear** | Naval / Adv. Naval |
 | Nuclear missile silo (S-48) | T3 | **Reckoning** | **Ragnarok** | Adv. Ground (Architect / Forgemaster) |
+
+Beam towers (S-96, client request 43): a precise BEAM, one very heavy hit on a long reload, each shot paid in power from the team's stores (`shotCost`; no shot without it). Like any beam, terrain is the only thing in the way: they fire over walls and other defenses. They fire only at targets the team sees, not radar contacts. Switched off (TOGGLE), a beam tower retracts into its armored shell: it can't fire, and damage to it is divided by 4 (`retract.armor`); it starts switched on.
 
 ---
 
