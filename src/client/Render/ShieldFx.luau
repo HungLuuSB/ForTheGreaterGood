@@ -298,7 +298,10 @@ function Methods.hit(s: ShieldFx, worldPos: Vector3, intensity: number)
 	local right = if math.abs(n.Y) < 0.95 then Vector3.yAxis:Cross(n).Unit else Vector3.xAxis:Cross(n).Unit
 	s.rippleAt.WorldCFrame = CFrame.fromMatrix(at + n * 0.2, right, n)
 	local size = s.radius * ShieldFx.RIPPLE_SIZE * math.sqrt(math.clamp(intensity, 0.3, 4))
-	s.ripple.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, size) })
+	-- visible on its first frame (a third of its size, opaque), then spreading: a
+	-- shell turns about 0.1 s after it enters, and a ripple growing from 0 read
+	-- as starting at the turn (the user, C-96)
+	s.ripple.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size * 0.35), NumberSequenceKeypoint.new(0.15, size * 0.7), NumberSequenceKeypoint.new(1, size) })
 	s.ripple:Emit(1)
 	Shield.hit(s.model, { x = worldPos.X, y = worldPos.Y, z = worldPos.Z }, intensity, clock)
 	s.pulse = math.min(1, s.pulse + 0.3 * intensity)
@@ -490,7 +493,7 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 	ripple.Rate = 0
 	ripple.LightEmission = 1
 	ripple.Color = ColorSequence.new(WHITE)
-	ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1) })
+	ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.1), NumberSequenceKeypoint.new(1, 1) })
 	ripple.Parent = rippleAt
 	-- the capacity bar
 	local bar, fill, text = nil, nil, nil
@@ -825,6 +828,13 @@ step = function(realDt: number)
 	st.ms = ms
 	st.msMax = math.max(st.msMax, ms)
 	st.frames += 1
+end
+
+-- A clone of one of C's meshes ("dome", "ring", "ringThin"), or nil before
+-- they load or if they failed.
+function ShieldFx.cloneMesh(key: string): MeshPart?
+	local t = (templates :: any)[key]
+	return if t then t:Clone() else nil
 end
 
 -- Every shield (debug calls).

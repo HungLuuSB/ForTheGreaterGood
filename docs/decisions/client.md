@@ -760,3 +760,35 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - Since S-83 the turn happens deep inside the dome after braking, so the hit at the turn read as late. The user wants it as the shell enters.
 - The user asked for the hexagons in white or grey, not red or orange.
 - models-C made RingThin for C-94's request.
+
+### C-96 — Shield ripple visible on its first frame; a one-attacker shield profile (2026-10-23)
+
+**Decision:**
+- **Ripple:** C's ripple particle starts at 35% of its size, opaque, reaches 70% at 15% of its life, then 100% while fading.
+- **Turn hits:** `ShieldDomes` lights a SHIELD_HIT turn only for a shell it hasn't seen enter (tracked by projectile id).
+- **`shield_one` profile:** one Phalanx, one Ravager, one target in the core.
+
+**Why:**
+- With S-83's inner band a light shell turns about 0.1 s after crossing. A ripple growing from 0 became visible only then, so the user read it as playing at the push-back.
+- The user suggested testing with one unit.
+- Light shots may soon be destroyed on contact (sent to sim-A), and those may never send a SHIELD_FIELD.
+
+### C-97 — Force plumes on shells in a shield field; absorbed shells dropped (2026-10-23)
+
+**Decision:**
+- **Plumes:** `ShieldDomes.forces` draws a beam on each drawn shell that is in a field (up to 32, pooled on Terrain attachments), from the shell toward minus the field's force. The force is `nextState` velocity minus velocity, minus the weapon's gravity for a tick. Length is 0.2 studs per stud/s of change, from 2 to 14. C's beam texture flows into the shell; width is 2.5 + 0.8 × mass.
+- **Absorbed shells:** a SHIELD_HIT with ABSORBED (protocol 25) removes the projectile and queues an "absorb" hit, which lights the dome.
+
+**Why:**
+- The user asked for a visible force on shells inside the dome, following the shot's direction and the shield's centre. The change of velocity is exactly the field's push, so the plume shows what the field does.
+- S-85 destroys light shells at the surface with no IMPACT, so the client must drop them itself.
+
+### C-98 — Shells in a field: a bow shock and a burning trail (2026-10-23)
+
+**Decision:**
+- **Pool:** `ShieldDomes.forces` keeps its pool of 32, each with a beam and a cap, a clone of C's dome mesh (`ShieldFx.cloneMesh`).
+- **Cap:** Neon, (2r, 0.7r, 2r) with r = (1.3 + 0.5·mass)·(0.7 + 0.3·heat), its pole along minus the field's force, centred just ahead of the shell. Moved with BulkMoveTo.
+- **Trail:** the beam runs from the shell along the force, white fading to orange, streaming backward.
+- **Heat:** the force's share of the plume's maximum, setting opacity and size.
+
+**Why:** the user drew a curved front ahead of the shell, "like when an asteroid enter the earth atmosphere". C-97's plume read as a beam, not as burning.
