@@ -1241,3 +1241,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Shield.spec` 16: a Minotaur outside a dome sees its charge stopped on the surface every time, with no hitscan hit getting through; inside the dome the same charge hits; a line clear of the dome passes.
   - `Schema.spec`: golden bytes for projId 0.
+
+## S-90 — Shield dome radius and faction balance, measured (the user's queue task 2) (2026-10-23)
+
+- **Asked:** measure how the dome radius (Order 120, Chaos 80) affects faction balance; numbers at 120/80 and 64/48 under "Needs my review".
+- **Tool:** `lune run shield_trial [seeds] [orderR chaosR ...]` with `Scenes.shieldSiege`. Each faction holds a base under its own dome with an equal-value hold-position army (T1 tank, T2 tank, T1 artillery) against the other faction's raid of the same roles. The raid's budget is the army plus the generator; an unshielded defender spends the generator's value on army. Radii come from a rebuilt def set (`Defs.build`), so the game's defs are untouched.
+- **Result** (5 seeds): table in `docs/progress/sim.md` under "Needs my review".
+  - At 120 the Order dome makes the defending army untouchable, since it fires out freely: the raid destroys nothing.
+  - At 80 the Carapace turns Chaos's lost defence into a win.
+  - At 64 / 48 the domes protect the base more than the army.
+- **Not decided:** the fix (smaller domes, blocking outgoing fire, a higher cost per hit, or none) is for the user's review.

@@ -155,6 +155,34 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
       - To radar it shows as a fighter or bomber (`radarSignature` 1, `spoof` = a def id the enemy's radar contacts report until a fire-control radar or sight identifies it; D107 already hides types of untracked contacts). Radar SAMs and interceptors spend missiles on it.
       - One new field (`spoof`), and the strategic icon of an untracked contact switches to the spoofed type's family.
       - Counters: Pinpointers and fire-control tracking reveal it; IR SAMs (sight) aren't fooled.
+- **Shield dome radius and faction balance (S-90, your queue task 2):**
+  - **Setup:** `lune run shield_trial [seeds] [orderR chaosR ...]`. Each faction holds a base (vehicle plant and generator) with an equal-value army of its T1 tank, T2 tank and T1 artillery on hold position. The other faction raids it from 600 studs with the same roles.
+    - The raid's budget is the defender's army plus the generator.
+    - Without a shield, the defender spends the generator's value on more army.
+    - Shields at 20× (S-86). 5 seeds, up to 8 minutes each.
+  - **Defender's trade** is raid value destroyed / defender value lost; above 1 favours the defender.
+
+    | Domes (Order / Chaos) | Defender | Defender's trade | Base fell | Fell after | Defender lost | Raid lost | Shield hits |
+    |---|---|---|---|---|---|---|---|
+    | no shield | Order | 2.74 | 0 / 5 | — | 2564 | 7030 | 0 |
+    | 120 / 80 | Order | ∞ (nothing lost) | 0 / 5 | — | 0 | 6955 | 248 |
+    | 64 / 48 | Order | 5.15 | 0 / 5 | — | 1338 | 6889 | 244 |
+    | no shield | Chaos | 0.30 | 5 / 5 | 44 s | 7370 | 2233 | 0 |
+    | 120 / 80 | Chaos | 2.29 | 0 / 5 | — | 2931 | 6700 | 304 |
+    | 64 / 48 | Chaos | 0.30 | 5 / 5 | 169 s | 7740 | 2347 | 512 |
+
+  - **What it shows:**
+    - At 120 the Order dome covers the whole defending army. Shells from outside are turned while the army fires out freely, so the raid destroys nothing.
+    - At 80 the Carapace turns a lost defence (0.30) into a won one (2.29).
+    - At 64 / 48 the domes cover only the base and part of the army. Order still trades 5.15. The Carapace no longer changes the trade but holds the base nearly four times as long (169 s against 44 s).
+    - So the radius decides whether the shield protects the army or only the base.
+    - It doesn't touch the AI-match faction balance yet: the AI builds no shields (next.md item 7).
+  - **Options (your call):**
+    - (a) smaller domes (64 / 48 or between), so a shield protects a base, not an army;
+    - (b) block shots going out as well as coming in, so units inside can't fire through their own dome (BAR's shields work this way);
+    - (c) a higher charge cost per hit, so a dome under fire drops sooner;
+    - (d) keep it and let the attacker answer with heavier artillery, hitscan-free siege units or a power raid.
+  - My suggestion: (b), since it keeps the dome as a fortress without making the army inside it untouchable. (a) is the cheaper change.
 - **Shield domes (S-79, client request 40), placeholder numbers:**
   - **Generators:** Order `ord_phalanx` Phalanx (Architect, T2): radius 120, capacity 600 shell masses, recharge 30/s (20 s from empty), 40 power/s while recharging; supply 400, power 5,000, 2,800 health. Chaos `chs_carapace` Carapace (Forgemaster, T2): radius 80, capacity 400, recharge 24/s, 25 power/s; supply 280, power 3,500, 2,000 health. Capacity and recharge are 20× my first numbers (your rules: 10× in S-80, 50× in S-81, then down to 20× in S-86). Chaos's capacity and price, and keeping the power draw unchanged, are my calls. At 30 charge a second, a full Phalanx out-recharges about 12 mortar shells a second.
   - **Light shots destroyed (S-85, your rule):** shells under mass 0.5 (under 75 damage: machine guns, autocannons, MLRS rockets) vanish where they cross the dome's surface; heavier ones keep the slow, turn and push-out. The threshold, and that each one costs its mass in charge like a turn, are my calls.
