@@ -153,17 +153,22 @@ return function(t: any)
 		world.units[999] = fake :: any
 		t.equal(#Ranges.circles(world, { 999 }), 0)
 		world.units[999] = nil
-		-- the cost of a full recompute (what a selection or position change does)
-		local runs = 50
-		local t0 = Profiler.now()
+		-- the cost of a full recompute (what a selection or position change does):
+		-- the fastest of 5 batches of 10, so a busy machine (Studio, another
+		-- suite) doesn't fail it; usually ~1.3 ms (C-113: one 50-run average
+		-- went past 8 ms twice in 17 runs under load)
 		local arcs, lines
-		for _ = 1, runs do
-			arcs = Ranges.union(Ranges.circles(world, ids))
-			lines = Ranges.polylines(arcs, function()
-				return 10
-			end)
+		local ms = math.huge
+		for _ = 1, 5 do
+			local t0 = Profiler.now()
+			for _ = 1, 10 do
+				arcs = Ranges.union(Ranges.circles(world, ids))
+				lines = Ranges.polylines(arcs, function()
+					return 10
+				end)
+			end
+			ms = math.min(ms, (Profiler.now() - t0) / 10 * 1000)
 		end
-		local ms = (Profiler.now() - t0) / runs * 1000
 		local points = 0
 		for _, l in lines do
 			points += #l.points
