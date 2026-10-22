@@ -30,4 +30,12 @@ for i = 0, 4 do
 	end
 end
 
-return { id = "chs_shipyard", parts = parts }
+return {
+	id = "chs_shipyard",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { 0, 0, 1 } },
+		{ name = "nano1", parent = "base", at = { 4, 13.1, 4 } },
+	},
+}

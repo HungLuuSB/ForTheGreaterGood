@@ -19,7 +19,24 @@
       ]
     }
   },
-  "attachments": {},
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        4.0,
+        13.1,
+        4.0
+      ]
+    }
+  },
   "teamColorPieces": [
     "base"
   ],

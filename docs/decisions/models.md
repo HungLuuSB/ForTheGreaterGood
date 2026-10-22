@@ -213,3 +213,10 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user's queue, item 5: "wreck versions (darkened, broken, no glow, team panels scorched grey) for every approved mesh, listed in the manifest for B". Same pieces, rather than one merged mesh, because B's death code already poses the live model's joints for the wreck.
+
+### M-25 — Construction anchors for the nanoframe (2026-10-23)
+
+**Decision:** every factory has a `buildpad` Attachment where the unit in production sits (centred on its pad, forward = the exit, model −Z) and `nano1`, `nano2`, … at its emitters and build lights. Every constructor has `nano1` (and `nano2` with a second emitter) at the emitter on its `nano` piece. They are in the blockouts and the meshes alike (rig.md section 8). The mesh anchors are kept in one table (`tools/anchors.py`), merged into `rig.json` by the runner, so no mesh had to be re-uploaded.
+
+**Why:** the user's request for B's BAR-style nanoframe (2026-10-23). The constructors' attachment is `nano1` rather than `nano` so it doesn't share a name with the `nano` piece, and one `nano1..N` lookup serves factories and constructors.
+

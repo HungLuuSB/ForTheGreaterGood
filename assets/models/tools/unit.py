@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 import bpy
 
+import anchors
 import lib
 
 KINDS = ["paint", "trim", "team", "seam", "era", "track", "steel", "rubber", "glass", "light", "grille", "dark",
@@ -92,14 +93,16 @@ UP = (0, 1, 0)
 # builds the same pieces battered (lib.WRECK), darkened and sooted, with the
 # glow faces as dead sockets and the team panels scorched grey, into
 # export_wreck/ as <id>_wreck. Same pieces and pivots as the live mesh.
-SOOT = (20, 18, 17)
+# Soot is grey-brown, not black, so wrecks read on dark grass at night; big
+# structures (footprint 2+) scorch along their edges (user review 2026-10-23).
+SOOT = (62, 55, 48)
 
 
 def _char(c, k):
     return tuple(int(c[i] * (1 - k) + SOOT[i] * k) for i in range(3))
 
 
-def wreck_look(look):
+def wreck_look(look, edges=False):
     specs = {}
     for kind, sp in look["specs"].items():
         if kind in GLOW_KINDS:
@@ -113,11 +116,12 @@ def wreck_look(look):
                 sp["base"] = _char(sp["base"], 0.4)
         sp["roughness"] = min(0.95, sp["roughness"] + 0.25)
         sp["metallic"] = sp["metallic"] * 0.6
-        sp["scorch"], sp["soot"], sp["grime"] = 0.75, SOOT, 0.5
+        sp["scorch"], sp["soot"], sp["grime"] = 0.7, SOOT, 0.4
+        sp["scorch_edges"] = edges
         specs[kind] = sp
     paint = _char(look["paint"], 0.4)
     return {**look, "label": "BAR-style wreck (M-24)", "specs": specs,
-            "variants": {"bar": {"type": "paint", "base": paint, "chip": (92, 88, 84), "grime": SOOT}}}
+            "variants": {"bar": {"type": "paint", "base": paint, "chip": (112, 106, 98), "grime": SOOT}}}
 
 
 @dataclass
@@ -230,7 +234,7 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     lib.WRECK = None
     if wreck:
         out = os.path.join(here, "export_wreck")
-        look = wreck_look(look)
+        look = wreck_look(look, edges=footprint >= 2)
         lib.WRECK = {"size": footprint * 8, "seed": sum(ord(ch) * (i + 1) for i, ch in enumerate(unit_id)) % 9973}
         unit_id = f"{unit_id}_wreck"
     lib.reset_scene()
@@ -338,7 +342,7 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
         "footprintStuds": footprint * 8,
         "variants": {"bar": look["label"]},
         "pieces": rig_pieces,
-        "attachments": attachments or {},
+        "attachments": {**(attachments or {}), **anchors.for_unit(live_id)},  # + nanoframe anchors (M-25)
         "teamColorPieces": [] if wreck else (team_pieces or [s.name for s in pieces]),
         "emissive": {"probe": "emissive_probe", "tint": list(look["accent"]), "strength": 2.0},
         "glow": rig_glow,

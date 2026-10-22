@@ -55,7 +55,16 @@
       ]
     }
   },
-  "attachments": {},
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        -0.55,
+        -1.7
+      ]
+    }
+  },
   "teamColorPieces": [
     "base",
     "rotor"

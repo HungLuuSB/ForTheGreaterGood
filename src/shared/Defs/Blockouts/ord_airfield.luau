@@ -24,4 +24,14 @@ for i = 0, 5 do
 	table.insert(parts, { name = `lightR{i}`, parent = "base", shape = "box", size = { 0.4, 0.3, 0.4 }, at = { 7.4, 0.55, z }, color = "glass" })
 end
 
-return { id = "ord_airfield", parts = parts }
+return {
+	id = "ord_airfield",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { -12, 0.55, -9 } },
+		{ name = "nano1", parent = "base", at = { -16.75, 5.4, 1.75 } },
+		{ name = "nano2", parent = "base", at = { -7.25, 5.4, 1.75 } },
+		{ name = "nano3", parent = "base", at = { -12, 5.5, 1.75 } },
+	},
+}

@@ -27,4 +27,8 @@ return {
 		{ name = "claw", parent = "nano", shape = "box", size = { 1.0, 0.9, 0.6 }, at = { 1.5, 5.1, -2.3 }, color = "dark" },
 		{ name = "glow", parent = "nano", shape = "ball", size = { 0.6, 0.6, 0.6 }, at = { 1.5, 4.75, -2.6 }, color = "glass" },
 	},
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "nano1", parent = "nano", at = { 1.5, 4.75, -2.6 } },
+	},
 }

@@ -29,4 +29,12 @@ for i, z in { -2.4, -0.8, 0.8, 2.4 } do
 	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { 2.6, 0.8, z }, color = "track" })
 end
 
-return { id = "chs_forgemaster", parts = parts }
+return {
+	id = "chs_forgemaster",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "nano1", parent = "nano", at = { 1.1, 7, -3 } },
+		{ name = "nano2", parent = "nano", at = { 0.2, 3.9, 1.9 } },
+	},
+}

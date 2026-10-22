@@ -362,7 +362,24 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 	},
 	units = {
 		chs_airfield = {
-			attachments = {},
+			attachments = {
+				buildpad = {
+					at = { -12, 0.4, 7.5 },
+					parent = "base",
+				},
+				nano1 = {
+					at = { -16, 5.05, 8 },
+					parent = "base",
+				},
+				nano2 = {
+					at = { -12, 5.05, 8 },
+					parent = "base",
+				},
+				nano3 = {
+					at = { -8, 5.05, 8 },
+					parent = "base",
+				},
+			},
 			glow = {
 				{
 					center = { -3.27, 2.875, -1.795 },
@@ -809,7 +826,16 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 920,
 		},
 		chs_forgemaster = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { 1.1, 5.7, -3 },
+					parent = "nano",
+				},
+				nano2 = {
+					at = { 0.2, 3.9, 1.9 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 1.45, -4.05 },
@@ -2401,7 +2427,12 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 		},
 		chs_scrapper = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { 1.182, 3.6, -1.814 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 1.44, -3.4503 },
@@ -2488,7 +2519,16 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 		},
 		chs_shipyard = {
-			attachments = {},
+			attachments = {
+				buildpad = {
+					at = { 0, 0, 1 },
+					parent = "base",
+				},
+				nano1 = {
+					at = { 4, 13.1, 4 },
+					parent = "base",
+				},
+			},
 			glow = {
 				{
 					center = { -0.6, 6.85, 8.8 },
@@ -2907,7 +2947,20 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 936,
 		},
 		chs_vehplant = {
-			attachments = {},
+			attachments = {
+				buildpad = {
+					at = { 3.5, 0.55, 2 },
+					parent = "base",
+				},
+				nano1 = {
+					at = { 4, 6.4, -0.5 },
+					parent = "base",
+				},
+				nano2 = {
+					at = { 3.5, 6.8, -4 },
+					parent = "base",
+				},
+			},
 			glow = {
 				{
 					center = { -0.225, 3.855, 2.805 },
@@ -2971,7 +3024,12 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 		},
 		chs_vulture = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { 0, -0.55, -1.7 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 0.48, -1.6 },
@@ -3249,7 +3307,12 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 684,
 		},
 		chs_wrecker = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { 0, 3.5, 0.1 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 2.09, 0.8275 },
@@ -3378,7 +3441,24 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 672,
 		},
 		ord_airfield = {
-			attachments = {},
+			attachments = {
+				buildpad = {
+					at = { -12, 0.55, -9 },
+					parent = "base",
+				},
+				nano1 = {
+					at = { -16.75, 5.4, 1.75 },
+					parent = "base",
+				},
+				nano2 = {
+					at = { -7.25, 5.4, 1.75 },
+					parent = "base",
+				},
+				nano3 = {
+					at = { -12, 5.5, 1.75 },
+					parent = "base",
+				},
+			},
 			glow = {
 				{
 					center = { -12, 3.05, 1.85 },
@@ -3488,7 +3568,16 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 1116,
 		},
 		ord_architect = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { -0.8, 5.4, -1.4 },
+					parent = "nano",
+				},
+				nano2 = {
+					at = { 0.8, 5.4, -1.4 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 1.55, -4.25 },
@@ -4097,7 +4186,7 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 					tint = { 190, 240, 255 },
 				},
 			},
-			glowShare = 0.051,
+			glowShare = 0.0502,
 			maps = {
 				ALB = "rbxassetid://116551190938957",
 				EMI = "rbxassetid://100346437639566",
@@ -4108,9 +4197,9 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			model = "rbxassetid://115931091846194",
 			pieces = {
 				base = {
-					center = { 0, 1.4025, 1.1304 },
+					center = { 0, 1.5025, 1.1304 },
 					mesh = "rbxassetid://117249740132818",
-					size = { 3.4, 2.795, 10.0608 },
+					size = { 3.4, 2.995, 10.0608 },
 				},
 				pylon = {
 					center = { 0, 0.55, -0.52 },
@@ -4544,19 +4633,19 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				model = "rbxassetid://108229567309359",
 				pieces = {
 					barrel = {
-						center = { -0.0174, 2.4576, -4.9627 },
+						center = { -0.0067, 2.4876, -4.9703 },
 						mesh = "rbxassetid://122500284226925",
-						size = { 1.0452, 0.859, 6.4096 },
+						size = { 1.1349, 0.8468, 6.3947 },
 					},
 					base = {
-						center = { 0.0392, 1.0093, -0.0223 },
+						center = { -0.0157, 0.995, -0.0833 },
 						mesh = "rbxassetid://109116201761410",
-						size = { 6.3649, 2.1088, 8.3114 },
+						size = { 6.435, 2.1167, 8.2435 },
 					},
 					turret = {
-						center = { 0.0188, 2.7279, 0.4206 },
+						center = { 0.0313, 2.7107, 0.4034 },
 						mesh = "rbxassetid://103546880156430",
-						size = { 4.8046, 1.8383, 6.4856 },
+						size = { 4.8362, 1.8224, 6.4169 },
 					},
 				},
 				status = "approved",
@@ -4647,7 +4736,12 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 1336,
 		},
 		ord_mason = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { 0, 4.55, -1.45 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 2.28, -2.485 },
@@ -5343,7 +5437,32 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 1316,
 		},
 		ord_shipyard = {
-			attachments = {},
+			attachments = {
+				buildpad = {
+					at = { 0, 0, -6 },
+					parent = "base",
+				},
+				nano1 = {
+					at = { -10, 11, -6 },
+					parent = "base",
+				},
+				nano2 = {
+					at = { -4, 11, -6 },
+					parent = "base",
+				},
+				nano3 = {
+					at = { 2, 11, -6 },
+					parent = "base",
+				},
+				nano4 = {
+					at = { 8, 11, -6 },
+					parent = "base",
+				},
+				nano5 = {
+					at = { 4, 10.2, -6 },
+					parent = "base",
+				},
+			},
 			glow = {
 				{
 					center = { -0.65, 5.805, 2.44 },
@@ -5468,7 +5587,12 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 472,
 		},
 		ord_skywright = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { 0, -0.55, -1.7 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 0.56, -3.2 },
@@ -5603,7 +5727,12 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 		},
 		ord_tidewright = {
-			attachments = {},
+			attachments = {
+				nano1 = {
+					at = { 0, 3.5, 0.1 },
+					parent = "nano",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 2.28, 0.5275 },
@@ -5657,7 +5786,24 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			triangles = 620,
 		},
 		ord_vehplant = {
-			attachments = {},
+			attachments = {
+				buildpad = {
+					at = { 0, 0.6, -7.4 },
+					parent = "base",
+				},
+				nano1 = {
+					at = { -5.12, 5.5, -4.8 },
+					parent = "base",
+				},
+				nano2 = {
+					at = { 5.12, 5.5, -4.8 },
+					parent = "base",
+				},
+				nano3 = {
+					at = { 0, 5.85, -4.8 },
+					parent = "base",
+				},
+			},
 			glow = {
 				{
 					center = { 0, 4.5975, 1.835 },
@@ -5711,9 +5857,9 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				model = "rbxassetid://127452972337159",
 				pieces = {
 					base = {
-						center = { -0.05, 4.3175, -0.0028 },
+						center = { 0.0458, 4.2849, 0.0107 },
 						mesh = "rbxassetid://116908009574326",
-						size = { 22.2388, 8.7233, 22.023 },
+						size = { 22.3842, 8.6872, 22.2131 },
 					},
 				},
 				status = "approved",

@@ -22,4 +22,9 @@ return {
 		{ name = "deckCrane", parent = "base", shape = "box", size = { 0.3, 2.4, 0.3 }, at = { 1.08, 2.5, -1.4 }, color = "dark" },
 		{ name = "deckJib", parent = "base", shape = "box", size = { 0.3, 0.3, 2.4 }, at = { 1.08, 3.6, -2.4 }, color = "dark" },
 	},
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "nano1", parent = "nano", at = { 0, 3.5, 0.1 } },
+		{ name = "nano2", parent = "nano", at = { 0, 3, 4.8 } },
+	},
 }
