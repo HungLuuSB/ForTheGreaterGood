@@ -1015,3 +1015,27 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - A Cyclops shells a plant 500 studs off and never targets a tank in range.
   - A Barrier wall: a tank drives round it; most shells at a tank behind a 3-segment wall hit the wall.
   - A Citadel kills a Ravager 270 studs off and fires its SAM at a helicopter.
+
+## S-76 — Faction AI (the user's task 11; factions.md section 7) (2026-10-22)
+
+- **Asked:** Order expands safely, defends first, attacks later with artillery and radar escort, builds Wardens; Chaos expands wide, sends earlier and more frequent waves on two lanes, brings jammers and Minotaurs. Hard > Normal > Easy must hold for each faction.
+- **Built** as an overlay on the level (`Skirmish.styled`). Easy keeps its strength and only takes the production mix.
+  - **Order:**
+    - Its advanced plant builds Wardens (a quarter of its army items); more artillery in its waves (+0.1); Normal and Hard recall the army against enemy waves.
+    - Hard only: safe expansion (Hard already had it) and a gun turret more at home.
+  - **Chaos:**
+    - A worker more.
+    - Waves of 2 units more: a wave counts units, and Chaos's cheaper units make the same value with ~30% more of them. Waves grow faster.
+    - From 12 front units a wave splits in two lanes: every second unit goes through a flank waypoint 300 studs off the straight line (the side alternates per wave, in world terms so mirrored players flank alike), then joins the attack.
+    - A Shroud jammer guards each wave with the radar escorts.
+    - Its plant builds Locusts among its tanks (35%), its advanced plant Minotaurs (25%).
+- **Tried and dropped (the faction report's quick runs; the slow suite):**
+  - Order's safe expansion and turret on Normal: Order mirrors then stalled at their bases for all 10 minutes of `Fairness.spec`, called on value, east 6–0.
+  - Order's first wave 2 bigger: on skirmish:192 it never attacked before Chaos killed it.
+  - Chaos waves 2 smaller (as the proposal said, "earlier and more frequent") fed Order's defence piecemeal: Order 93%.
+  - Lanes from 4 units: the halves arrived apart.
+- **Levels** (`docs/AI_LEVELS.md`, 40 min, 3 seeds; mirrors per faction): Normal–Easy 37–5, Hard–Normal 41–1, Hard–Easy 36–0, Hard won all 6 FFAs. Per faction:
+  - Order: Normal–Easy 13–5, Hard–Normal 18–0, Hard–Easy 18–0.
+  - Chaos: Normal–Easy 18–0, Hard–Normal 17–1, Hard–Easy 18–0.
+- **Tests:** `AI.spec` checks the overlay and that a rich Order AI fields a Warden and a Chaos AI Locusts and a Shroud. `Fairness.spec` mirrors split 5–7.
+- **Faction balance in AI matches:** still Order ~90% (task 12, S-78).
