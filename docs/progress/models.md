@@ -24,8 +24,10 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 
 **Merge fix (after the summary):** `main` merged in (conflicts in guide 2.1 and the Requests list resolved, both sides kept); Warden and Minotaur adapted to the S-64 defs and registered (Warden footprint 1 with one `spades` plate; Minotaur `ram` jointed); `debug_out/screens/s64_warden_minotaur.jpg`. Tests on the merged tree: `test_client` 42 specs, 141 passed; `test` 57 specs, 371 passed; `build` 476 scripts.
 
-**Morning 2026-10-22, tank review:** the Ravager is imported and rigged as `ReplicatedStorage.ModelReview.chs_ravager_bar` (sizes and pivots match Blender; asset IDs in `assets/models/chs_ravager/roblox_assets.json`). It draws correctly in Studio. Lineup `Workspace.TankTest` at x 1176–1228, z −250, left to right: previous Lancer (review 2a), BAR Lancer, Lancer blockout, BAR Ravager, Ravager blockout. Screenshots: `debug_out/screens/ravager_bar_closeup.jpg`, `tanks_close_35/55/80.jpg`, `tanks_220_55.jpg`.
-- **The BAR Lancer still draws grey** after two restarts (`debug_out/screens/lancer_bar_grey.jpg`). Its meshes are fine (they draw the Ravager's maps), and its color map loads on a Decal. Its maps fail only as SurfaceAppearance content (the metalness map hit HTTP 502 at import). **Next step: re-import `assets/models/ord_lancer/export/ord_lancer.fbx`**, then I re-rig it from the new IDs (pipeline.md, import notes).
+**Morning 2026-10-22, tank review: both BAR tanks draw in Studio and wait for your review.** Lineup `Workspace.TankTest` in FTGG Art (x 1176–1228, z −250), left to right: previous Lancer (review 2a), BAR Lancer, Lancer blockout, BAR Ravager, Ravager blockout. Rigged models: `ReplicatedStorage.ModelReview.ord_lancer_bar` and `chs_ravager_bar`; asset IDs in each unit's `roblox_assets.json`. Screenshots: `debug_out/screens/bar_1_lancer_closeup.jpg` … `bar_8_pitch80_dist220.jpg` (close-ups; pitch 35°, 55°, 80° at 50 and 220 studs).
+- The Lancer's first upload never drew (a map failed with HTTP 502, and a re-import reused the broken upload). Fixed by an upload revision stamp in the Blender pipeline (`lib.UPLOAD_REV`, pipeline.md) and a fresh import, save and restart.
+- Notes for the review: in Studio's lighting the Lancer's sand-grey reads cooler than in the Blender previews. The emissive accents are subtle in daylight. At 220 studs the factions read by paint (light with blue against dark with red) more than by mass.
+- Terrain grass decoration shows in the close shots since the restart (a place setting; not changed by me).
 
 ## Plan
 
@@ -37,7 +39,7 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 - **Phase 2** (started early, M-9): detailed meshes with PBR textures.
   - [x] Style guide; Chaos base color: gunmetal (M-10). BAR model style (M-15).
   - [x] Lancer vertical slice (M-11..M-13), review 2 (camouflage), review 3 (BAR style).
-  - [ ] Ravager in BAR style: imported and rigged, waiting for review (with the Lancer, which needs a re-import).
+  - [ ] Ravager in BAR style: imported and rigged; both BAR tanks waiting for review.
 
 ## Overnight 2026-10-22: T2 structures (task 4)
 
