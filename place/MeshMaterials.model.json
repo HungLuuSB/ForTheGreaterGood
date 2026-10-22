@@ -130,6 +130,18 @@
       }
     },
     {
+      "Name": "chs_hailstorm",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://132113504442352",
+        "NormalMapContent": "rbxassetid://139431534796538",
+        "RoughnessMapContent": "rbxassetid://122241381818154",
+        "MetalnessMapContent": "rbxassetid://110656838151116",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_harpy",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -174,6 +186,18 @@
         "NormalMapContent": "rbxassetid://108288710210633",
         "RoughnessMapContent": "rbxassetid://139071434073871",
         "MetalnessMapContent": "rbxassetid://100150674392132",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "chs_inferno",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://112844101296110",
+        "NormalMapContent": "rbxassetid://82735108081281",
+        "RoughnessMapContent": "rbxassetid://106265863656154",
+        "MetalnessMapContent": "rbxassetid://100082113987396",
         "EmissiveStrength": 0
       }
     },
@@ -706,6 +730,18 @@
       }
     },
     {
+      "Name": "ord_lumen",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://138442284445033",
+        "NormalMapContent": "rbxassetid://114848452400668",
+        "RoughnessMapContent": "rbxassetid://71624204945740",
+        "MetalnessMapContent": "rbxassetid://91463532141351",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_mason",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -750,6 +786,18 @@
         "NormalMapContent": "rbxassetid://83974720212015",
         "RoughnessMapContent": "rbxassetid://115475433027160",
         "MetalnessMapContent": "rbxassetid://127200583957662",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_radiance",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://122711167066327",
+        "NormalMapContent": "rbxassetid://98136231321427",
+        "RoughnessMapContent": "rbxassetid://118943869326043",
+        "MetalnessMapContent": "rbxassetid://116429165683462",
         "EmissiveStrength": 0
       }
     },
