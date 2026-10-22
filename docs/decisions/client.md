@@ -1119,3 +1119,13 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Patches:** Shield.PLATE 4.8; rings 5 + strength, clamped to 5..7 (91 / 127 / 169 cells); pool 1000.
 
 **Why:** the user: "do the reflect effect every 0.2s, and I did tell you to make the reflect patches bigger". The drain behind it is sim request 51 (S-117).
+
+### C-140 — The `shield_beams` test profile (2026-10-23)
+
+**Decision:** MatchConfig profile `shield_beams` on flat:128.
+- **Yours:** a Phalanx, Fusion, Vehicle Plant and 3 Masons at 50× health.
+- **The enemy:** Radiances east, west and south and an Inferno south-east, all on attack-ground at the dome's middle; Juggernauts and Ravagers shelling it; an Eye radar; 2 Fusions and 6 depots for beam power (startResources 20,000 power).
+
+Until sim request 52 (the weapon on SHOT), beams from shooters you can't see draw as plain tracers, so play it with `/reveal on`.
+
+**Why:** the user: "a scenario of a shield of mine against some radiance from different angles + some shots".

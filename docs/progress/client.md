@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, shield vs Radiances scenario)
+
+- **New test profile `shield_beams` (C-140):** your Phalanx dome against three Radiances (east, west, south) and an Inferno (south-east), every beam aimed at the dome so it glances off, plus Juggernauts and Ravagers shelling it. Your units are tough so it lasts. Set `ACTIVE = "shield_beams"` (your local MatchConfig already is).
+- **Play it with `/reveal on` for now:** a beam from an enemy you can't see reaches the client as a plain shot with no weapon, so it draws as a quick tracer. Sim request 52 asks for the weapon on those shots.
+- **Your earlier question:** your own dome's hit patches show without /reveal (204 cells lit with the shooter unseen). It was the scattered shell (`shellanyway`) and these hidden-shooter beams that looked tied to /reveal.
+- **Screenshot:** `debug_out/screens/shield_beams_scene.jpg`.
+
 ## Summary (2026-10-23, beams pulse on shields; bigger patches)
 
 - **A beam held on a shield (C-139)** lights its honeycomb again every 0.2 s for as long as it burns.
@@ -1733,6 +1740,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+52. **Open (sent 2026-10-23).** **SHOT should say it's a beam:** a hidden shooter's beam arrives as SHOT (both ends, no weapon), so the client draws a plain tracer: no held beam, glancing leg or shield pulses. Asked for the weapon's def index on SHOT (protocol bump).
 
 51. **Built (S-117, merging): a beam stopped by a dome drains it over its duration (best damage / 150 × 12.5: Radiance 250, Inferno ~142). The user: shields were far too strong against beams.**
 

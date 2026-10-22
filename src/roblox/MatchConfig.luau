@@ -405,6 +405,38 @@ local PROFILES = {
 	-- as the target, and one Ravager to the north firing at it, its shells
 	-- crossing the dome's north face. Change the Ravager's def to try other
 	-- shells (in range of the builder: chs_juggernaut, chs_locust).
+	-- your shield dome against beam towers (C-140, the user): Radiances east,
+	-- west and south and an Inferno south-east, every beam fired at the dome's
+	-- middle so it ends on the dome and glances off (C-129), pulsing the
+	-- honeycomb every 0.2 s (C-139); Juggernauts and Ravagers shelling it too.
+	-- Yours are 50x health so the test lasts; the enemy has a radar and power
+	-- for the beams. Preview the review effects with
+	-- FtggClientDebug:Invoke("beamsanyway", true) / ("shellanyway", true).
+	shield_beams = {
+		seed = 14,
+		mapId = "flat:128",
+		scenario = "empty",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		startResources = { supply = 5000, power = 20000 },
+		spawns = {
+			{ def = "ord_phalanx", player = 1, x = 0, z = -150, health = 50 },
+			{ def = "ord_fusion", player = 1, x = 0, z = -215, health = 50 },
+			{ def = "ord_vehplant", player = 1, x = 0, z = -110, health = 50 },
+			{ def = "ord_mason", player = 1, x = -40, z = -170, count = 3, dx = 40, health = 50 },
+			{ def = "chs_fusion", player = 2, x = -40, z = 300, count = 2, dx = 80 },
+			{ def = "chs_depot", player = 2, x = -100, z = 340, count = 6, dx = 40 },
+			{ def = "chs_eye", player = 2, x = 0, z = 240 },
+			{ def = "ord_radiance", player = 2, x = 260, z = -150, heading = -math.pi / 2, fireAt = { 0, -150 } },
+			{ def = "ord_radiance", player = 2, x = -260, z = -150, heading = math.pi / 2, fireAt = { 0, -150 } },
+			{ def = "ord_radiance", player = 2, x = 0, z = 110, heading = math.pi, fireAt = { 0, -150 } },
+			{ def = "chs_inferno", player = 2, x = 170, z = 0, heading = math.pi, fireAt = { 0, -150 } },
+			{ def = "chs_juggernaut", player = 2, x = -160, z = 20, count = 2, dx = 40, heading = math.pi, fireAt = { 0, -150 } },
+			{ def = "chs_ravager", player = 2, x = 100, z = 60, count = 3, dx = 25, heading = math.pi, fireAt = { 0, -150 } },
+		},
+	},
 	shield_one = {
 		seed = 12,
 		mapId = "flat:128",
