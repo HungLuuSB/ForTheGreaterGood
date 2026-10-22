@@ -90,13 +90,17 @@ return function(t: any)
 		t.equal(inside, 0, "none drawn well inside the dome")
 	end)
 
-	-- every frame of `seconds` at 4 frames a tick, `frame(renderTick)` after Effects.update
+	-- every frame of `seconds` at 4 frames a tick, `frame(renderTick)` after
+	-- Effects.update; drawn a tick behind the newest, as the game is (Interp's
+	-- delay), so a hit due next tick is already known: a fast shell the server
+	-- lets sit a tick inside the dome before absorbing it is stopped at the
+	-- surface (it showed once S-104 moved the dome half a cell)
 	local function subTicks(sim: any, world: any, fx: any, seconds: number, frame: (number) -> ())
 		for tick = 1, math.floor(15 * seconds) do
 			Sim.step(sim)
 			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
 			for q = 1, 4 do
-				local t = tick - 1 + q / 4
+				local t = tick - 2 + q / 4
 				Effects.update(fx, world, t, t * DT, 0, 0)
 				frame(t)
 			end
@@ -107,7 +111,15 @@ return function(t: any)
 	t.test("a light shell vanishes where its drawn path meets the dome (C-99)", function()
 		local sim, world, fx = scene()
 		Spawn.unit(sim, "chs_locust", 2, 0, 40, math.pi)
-		local gy = World.groundY(world, 0, -100)
+		-- the dome's real centre: the generator snaps to its footprint (fp 3 since S-104)
+		local dx, dz = 0, -100
+		for _, id in sim.world.ids do
+			local def = sim.defs.unitByIndex[sim.world.defIndex[id]]
+			if def.shield then
+				dx, dz = sim.world.posX[id], sim.world.posZ[id]
+			end
+		end
+		local gy = World.groundY(world, dx, dz)
 		local deepest, absorbs = 0, 0
 		subTicks(sim, world, fx, 8, function(t: number)
 			for _, h in fx.shieldHits do
@@ -117,7 +129,7 @@ return function(t: any)
 			end
 			table.clear(fx.shieldHits)
 			for _, e in Effects.visible(fx, t) do
-				local r = math.sqrt(e[2] ^ 2 + (e[3] - gy) ^ 2 + (e[4] + 100) ^ 2)
+				local r = math.sqrt((e[2] - dx) ^ 2 + (e[3] - gy) ^ 2 + (e[4] - dz) ^ 2)
 				deepest = math.max(deepest, 120 - r)
 			end
 		end)

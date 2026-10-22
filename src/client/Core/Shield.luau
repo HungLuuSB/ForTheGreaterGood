@@ -10,8 +10,9 @@
 -- wave runs inward: the outermost ring lights first, each ring in RING_DELAY
 -- later, the centre last and hottest. Cells grow toward the centre (smaller
 -- at the rim, bigger inside, spaced a little wider), and the whole patch is
--- pushed in like a bowl, deepest at the centre, then springs back past
--- flat once: the dome caving in to repel the shot.
+-- pushed in like a bowl, deepest at the centre, then eases back to the
+-- surface (never past it: the bounce out read as cells moving outward, the
+-- user, C-134): the dome caving in to repel the shot.
 
 local Shield = {}
 
@@ -43,7 +44,7 @@ export type Dome = {
 	up: boolean, -- false once collapsed at 0%, until recharged to RAISE_AT
 }
 
-Shield.PLATE = 2.6 -- studs across a cell's flats (4.5 in C-116..C-130; outlined cells since C-131: BAR's fine honeycomb)
+Shield.PLATE = 3.2 -- studs across a cell's flats (4.5 in C-116..C-130; 2.6 outlined cells in C-131..C-135; larger patches since C-136, the user)
 Shield.GAP = 0 -- studs between cells: outlines touch, a honeycomb
 Shield.RING_DELAY = 0.07 -- seconds between rings lighting: a visible wave out (0.045 until C-117)
 Shield.MAX_WAVES = 4 -- waves a patch keeps at once
@@ -52,11 +53,12 @@ Shield.RING_ALPHA = 0.45 -- each ring out is this much as opaque as the one insi
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
 Shield.MERGE_AGE = 0.65 -- while it glows (Shield.LIFE): a later hit adds a wave instead of a second grid on top (C-117)
-Shield.MAX_RINGS = 5
+Shield.MAX_RINGS = 6
 Shield.DENT = 1.4 -- studs the centre pushes in at strength 1 (the rings less, a bowl)
 Shield.CENTER_SCALE = 1.3 -- the centre cell's size, × PLATE; the rim's is CENTER_SCALE − RIM_SHRINK
 Shield.RIM_SHRINK = 0.55
 Shield.SPREAD = 0.3 -- inner rings sit this much further apart than the rim's (positions follow the sizes)
+Shield.DENT_PEAK = 0.12 -- seconds after a cell lights when it is pushed in deepest
 
 -- A cell's size in a patch of `rings` rings, × PLATE.
 function Shield.cellScale(ring: number, rings: number): number
@@ -95,9 +97,9 @@ Shield.unit, Shield.dot, Shield.len, Shield.sub = unit, dot, len, sub
 -- Rings of hexagons by a hit's strength: a light hit lights the centre and
 -- one ring (7 plates), a heavy one up to MAX_RINGS (37).
 function Shield.ringsFor(strength: number): number
-	-- three rings at least (37 cells), four for a typical shell (61), five for
-	-- heavy ones (91): a wide patch of fine cells (C-131, the BAR reference)
-	return math.clamp(math.floor(3 + strength), 3, Shield.MAX_RINGS)
+	-- four rings at least (61 cells), five for a typical shell (91), six for
+	-- heavy ones (127): a patch covering a good part of the dome (C-136, the user)
+	return math.clamp(math.floor(4 + strength), 4, Shield.MAX_RINGS)
 end
 
 -- The plates of a patch on a sphere (`center`, `radius`) round the point
@@ -138,7 +140,7 @@ end
 
 -- A cell's look `age` seconds after its wave was born, in a patch of
 -- `rings` rings: heat (1 = white hot, 0 = cold), opacity (0..1) and dent
--- (studs inward; negative: the bounce back past flat).
+-- (studs inward, never outward).
 function Shield.plateAt(age: number, ring: number, strength: number, rings: number): (number, number, number)
 	-- the wave runs in: the rim first, the centre last (C-132)
 	local t = age - (rings - ring) * Shield.RING_DELAY
@@ -157,10 +159,11 @@ function Shield.plateAt(age: number, ring: number, strength: number, rings: numb
 	local peak = math.clamp(0.55 + 0.25 * strength, 0.4, 1) * math.max(0.2, 1 - ring * 0.4)
 	local heat = peak * (1 - k) ^ 1.6
 	local alpha = math.min(1, t / 0.04) * (1 - k ^ 2) * Shield.RING_ALPHA ^ ring
-	-- the patch caves in like a bowl (deepest at the centre) and springs back
-	-- past flat once, a small bounce (a damped swing, C-132)
+	-- the patch caves in like a bowl (deepest at the centre) and eases back
+	-- to the surface: in, then home, no swing past it (C-134)
 	local depth = Shield.DENT * math.min(strength, 3) * (1 - (ring / (rings + 1)) ^ 2)
-	local dent = depth * math.exp(-t * 7) * math.sin(t * 16)
+	local x = t / Shield.DENT_PEAK
+	local dent = depth * x * math.exp(1 - x)
 	return heat, alpha, dent
 end
 

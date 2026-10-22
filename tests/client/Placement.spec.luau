@@ -108,7 +108,10 @@ return function(t: any)
 						local ok, why = api.actions.updatePlacement(wx + off[1], wz + off[2])
 						t.expect(ok, `deposit ({cx}, {cz}) from offset {off[1]}, {off[2]}: {why}`)
 						local p = api.state.placement :: any
-						t.expect(p.x == wx and p.z == wz, "the ghost sits on the deposit")
+						-- S-104: the extractor's footprint (2 cells, centred on a corner) covers the deposit
+						local fp = defOf(sim, "ord_extractor").footprint
+						local x0, z0 = require("@shared/Grid/PlacementRules").snap(g, fp, p.x, p.z)
+						t.expect(cx >= x0 and cx < x0 + fp and cz >= z0 and cz < z0 + fp, "the ghost covers the deposit")
 						local sok = ServerPlacement.check(sim, defOf(sim, "ord_extractor"), p.x, p.z, 1, sim.players[1].allyTeam)
 						t.expect(sok, "the server agrees")
 						checked += 1

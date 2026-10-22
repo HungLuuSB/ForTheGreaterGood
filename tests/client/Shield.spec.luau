@@ -56,7 +56,7 @@ return function(t: any)
 		end
 	end)
 
-	t.test("cells: the wave runs in (rim first, centre last and hottest); all fade; a bowl that bounces (C-132)", function()
+	t.test("cells: the wave runs in (rim first, centre last and hottest); all fade; a bowl that never bulges out (C-132, C-134)", function()
 		local R2 = 2 -- a two-ring patch
 		local centreLit = 2 * Shield.RING_DELAY -- when the wave reaches the centre
 		local hRim = Shield.plateAt(0.02, 2, 1, R2)
@@ -74,14 +74,16 @@ return function(t: any)
 		t.expect(Shield.plateAt(centreLit + 0.05, 0, 3, R2) > Shield.plateAt(centreLit + 0.05, 0, 0.5, R2), "a heavier hit is hotter")
 		local h, a, d = Shield.plateAt(5, 0, 3, R2)
 		t.equal(h + a + d, 0)
-		-- the bowl: the centre goes deepest, then springs back past flat once
-		local _, _, dentC = Shield.plateAt(centreLit + 0.09, 0, 1, R2)
-		local _, _, dentR = Shield.plateAt(0.09, 2, 1, R2)
-		local _, _, bounce = Shield.plateAt(centreLit + 0.28, 0, 1, R2)
-		local _, _, settled = Shield.plateAt(centreLit + 0.9, 0, 1, R2)
+		-- the bowl: the centre goes deepest, then eases home, never outward
+		local _, _, dentC = Shield.plateAt(centreLit + Shield.DENT_PEAK, 0, 1, R2)
+		local _, _, dentR = Shield.plateAt(Shield.DENT_PEAK, 2, 1, R2)
 		t.expect(dentC > 0.5 and dentC > dentR, `deepest at the centre ({dentC} vs rim {dentR})`)
-		t.expect(bounce < 0, `a small bounce back past flat ({bounce})`)
-		t.expect(math.abs(settled) < 0.05, "then still")
+		for k = 0, 40 do
+			local _, _, d = Shield.plateAt(centreLit + k * 0.02, 0, 1, R2)
+			t.expect(d >= 0, `never pushed outward ({d} at {k * 0.02} s)`)
+		end
+		local _, _, late = Shield.plateAt(centreLit + 0.6, 0, 1, R2)
+		t.expect(late < dentC * 0.1, "back home as it fades")
 	end)
 
 	t.test("colour: white at its hottest, fading to grey; never red or orange", function()

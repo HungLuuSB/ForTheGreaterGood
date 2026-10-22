@@ -4,6 +4,37 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, sim S-104..S-116 merged into the client)
+
+- **Main merged:** sim-A's S-104..S-116, with bigger structures, extractor upgrades kept running under the frame, anti-nukes, beams that last and pierce and stop at domes, manual targets, and the AI fixes. All 8 client specs it broke are fixed (C-137).
+- **New units** get stopgap icons until the icon catalogue has them: the Sanction and Scourge missile batteries, the Wraith decoy bomber, and the four anti-nukes.
+- **Extractor ghost:** an extractor works any deposit under its footprint, the sim's rule.
+- **Now testable in Studio:** beams glancing off shields (C-129), the full 3 s Radiance beam, and anti-nukes intercepting.
+
+## Summary (2026-10-23, bigger shield hit patches)
+
+- **Shield hits (C-136):** each hit covers about twice the diameter: 3.2-stud cells, 4 to 6 rings (61 to 127 cells). Start a new playtest to see it.
+
+## Summary (2026-10-23, beam update from models-C; slowed test)
+
+- **Beam shot (C-135):** models-C's update is merged and used: a point at the target, nothing wider than the emitter ball at the muzzle, a smaller impact flare, and a flickering star on the ball while firing. The shot also slows with the game speed now.
+- **0.25× test:** running in Studio (`shield_one` + a Radiance + Juggernauts, with C's beam previewed). `debug_out/screens/shield_slow_honeycomb.jpg` shows a hit's patch at that speed.
+
+## Summary (2026-10-23, shield cells only cave in)
+
+- **Shield hits (C-134):** the cells now only move inward. They're pushed in, deepest at the centre, then ease back to the surface. C-132's bounce took them past the surface, outward, which is what you saw.
+
+## Summary (2026-10-23, C's beam shot wired; Needs my review)
+
+- **Merged m-models** (animated pieces on 44 meshes, rebuilt wrecks, lighter deposits, the beam shot effect). test_client stays green and the materials file was regenerated.
+- **Beam shot (C-133):** models-C's effect (a white core, a wide coloured glow, jittering filaments, a charge flash, an impact flare and a scorch mark) now draws the Radiance and Inferno shots. My adjustments for your notes:
+  - it lasts the shot's full duration (Radiance 3 s, Inferno 1.5 s), held, then narrowing away over the last second;
+  - it narrows to **a point at the target end**, and the filaments meet there instead of fanning out. models-C is updating their recommended widths for the same thing.
+- **Needs my review:** it's at "review", so in a normal game you still see the placeholder ray. To preview it, run `ReplicatedStorage.FtggClientDebug:Invoke("beamsanyway", true)` in a playtest. Approve it and models-C flips the status, then it shows everywhere.
+- **Shield hits (C-132), now seen in Studio:** a honeycomb patch on the dome where shots land (`debug_out/screens/shield_cavein.jpg`).
+- **Honeycomb shell over the dome:** asked models-C for the asset (fading out toward the base); I'll scale it with the shield's capacity.
+- **Screenshot:** `debug_out/screens/beam_shot_c.jpg` (both beams, the rig driven directly; the towers' own targets were out of sight in that scene).
+
 ## Summary (2026-10-23, shield hits cave in)
 
 - **Shield hits (C-132),** after your second look at the GIF (its 2nd and 3rd shots):
@@ -1863,3 +1894,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `5890cad` (beam deflection off shield domes, drawn; active once sim request 50 lands; C-129); test_client 215, build passed (client render only).
 - Ready to merge: `6bb8932` (big-map fog: at most 4 chunks, C-130); test_client 215, build passed (client render only).
 - Ready to merge: `0971cf3` (shield hits: no ripple, outlined honeycomb cells, C-131); test_client 214, build passed (client render only).
+- Ready to merge: `391ff62` (shield hits cave in: inward wave, bigger centre cells, bowl dent with bounce; C-132); test_client 214, build passed (client render only; not checked in Studio, the user was playtesting).
+- Ready to merge: `ccd9985` (m-models merge cf2e795 + materials 0285a54; C's beam shot wired, review-gated; C-133); test_client 214, build passed.
+- Ready to merge: `1c9b92f` (shield cells inward only, C-134); test_client 214, build passed (client render only).
+- Ready to merge: `33087cd` (m-models merge 2cbfb90; beam shot follows C's values and game speed; C-135); test_client 214, build passed.
+- Ready to merge: `23df21b` (larger shield hit patches, C-136); test_client 214, build passed (client render only).

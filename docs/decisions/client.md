@@ -1057,3 +1057,48 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Dent:** depth DENT (1.4) × strength × (1 − (ring / (rings + 1))²) × e^(−7t) × sin(16t): in first, then a small bounce past flat. `plateLook` keeps the largest |dent|.
 
 **Why:** the user, from the reference GIF's later shots: "smaller outside, bigger inside... pushed back inward... curved in to repel the shot".
+
+### C-133 — models-C's beam shot draws the beam towers' shots (after approval) (2026-10-23)
+
+**Decision:**
+- `Render/BeamShots` builds C's rig (core, glow, filaments, charge flipbook, impact, scorch) from `Meshes.beam`, pooled and capped at 8. It preloads the 8 textures.
+- Timing follows the shot's duration (Core/Effects.beamSeconds): charge, then held, then the last BEAM_FADE narrows it.
+- Widths go to BeamShots.TIP (0.08) at the target end (the user: a point at the tip). Filaments converge there.
+- `Render/Effects` hides its placeholder ray while the rig draws.
+- It's used once `Meshes.beam.status` is approved; `Invoke("beamsanyway", true)` previews it.
+
+**Why:** the user asked models-C for the beam VFX; C's reference module `assets/fx/beam/BeamShot.luau`.
+
+### C-134 — Shield hit cells move inward only (2026-10-23)
+
+**Decision:** the dent is depth × x × e^(1 − x) with x = t / DENT_PEAK (0.12 s): pushed in, then eased back to the surface, never past it. C-132's damped swing went outward after its first half-cycle.
+
+**Why:** the user saw the honeycomb moving outward instead of into the shield.
+
+### C-135 — The beam shot follows models-C's update (tip, fan, muzzle star, flare offsets) and the game speed (2026-10-23)
+
+**Decision:**
+- Widths and filament convergence come from `Meshes.beam` (`tip` order 0.06 / chaos 0.08, `fan` 0.3), replacing my own constants.
+- The muzzle star flare comes from `muzzleFlareSize`, and the charge, star and impact flares carry C's StudsOffsets.
+- Rigs age by game time (dt × speed), so a slowed game slows the shot.
+
+**Why:** models-C's beam update (0ccf6c3, ff6072d), from the user's notes to them, and the user's 0.25× test.
+
+### C-136 — Larger shield hit patches (2026-10-23)
+
+**Decision:** Shield.PLATE 3.2 (was 2.6); rings 4 + strength, clamped to 4..6 (61 / 91 / 127 cells); ShieldFx.PLATE_POOL 800.
+
+**Why:** the user: "honeycomb effect is good, make it cover a larger part of the shield".
+
+### C-137 — Client after S-104..S-116: stopgap icons, the extractor ghost on supplyUnder, specs on the new rules (2026-10-23)
+
+**Decision:**
+- **Icons:** stopgaps for ord_sanction / chs_scourge (Artillery Emplacement), chs_wraith (Strategic Bomber), ord_providence / chs_cerberus (Radar SAM Site) and ord_custodian / chs_chimera (Mobile Radar SAM). Same sheet, so no re-upload.
+- **Placement:** `Placement.check` uses `PlacementRules.supplyUnder`, so an extractor works any deposit under its footprint, as the server does.
+- **Specs:**
+  - Nuke: a Cerberus intercepts, and radar SAMs no longer track the nuke.
+  - Placement: the ghost covers the deposit.
+  - ShieldWire: measured from the real dome centre, drawn a tick behind like the game.
+  - Upgrades: builders kept clear of the 3×3 footprints.
+
+**Why:** sim-A's merge 522ca80 (S-104 footprints, S-108 upgrades, S-111 anti-nukes) broke 8 client specs, as sim-A warned.

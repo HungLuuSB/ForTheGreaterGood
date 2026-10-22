@@ -14,10 +14,20 @@
 
 local Effects = require("../Core/Effects")
 local Vfx = require("./Vfx")
+local BeamShots = require("./BeamShots")
 local Crater = require("./Crater")
 local Ground = require("./Ground")
 
 local RenderEffects = {}
+
+-- The ground under (x, z) for a beam's scorch (the map's parts or terrain).
+local groundParams = RaycastParams.new()
+groundParams.FilterType = Enum.RaycastFilterType.Include
+local function groundBelow(x: number, z: number): number
+	groundParams.FilterDescendantsInstances = { workspace.Terrain, workspace:FindFirstChild("Map") :: Instance? or workspace.Terrain }
+	local hit = workspace:Raycast(Vector3.new(x, 500, z), Vector3.new(0, -1000, 0), groundParams)
+	return if hit then hit.Position.Y else 0
+end
 
 local PROJ_COLOR: { [string]: Color3 } = {
 	BALLISTIC = Color3.fromRGB(255, 225, 120),
@@ -49,6 +59,7 @@ export type Renderer = {
 	missileOf: { [number]: any }, -- projectile ID → its Missile
 	tracers: { BasePart },
 	deflects: { BasePart }, -- beams' glancing legs off shield domes (C-129)
+	beams: BeamShots.State, -- models-C's beam shot effect once approved (C-133)
 	vfx: Vfx.State,
 	lastNow: number,
 	vfxNow: number, -- effect time: real time scaled by the sim speed (bursts slow down and pause with the sim)
@@ -288,6 +299,7 @@ function RenderEffects.new(): Renderer
 		missileOf = {},
 		tracers = {},
 		deflects = {},
+		beams = BeamShots.new(folder),
 		vfx = Vfx.new(folder),
 		lastNow = 0,
 		vfxNow = 0,
@@ -494,7 +506,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			part.Size = Vector3.new(w, w, math.max(len, 0.1))
 			part.CFrame = if len > 1e-3 then CFrame.lookAt((a + b) / 2, b) else CFrame.new(b)
 			part.Color = BEAM_COLOR[t.beam] or BEAM_COLOR.order
-			part.Transparency = alpha
+			part.Transparency = if BeamShots.enabled() then 1 else alpha -- models-C's effect draws it (C-133)
 			-- glanced off a shield dome (C-129): the second leg into the ground
 			if t.deflect then
 				nDeflects += 1
@@ -527,6 +539,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 	end
 	park(r.tracers, #fx.tracers + 1)
 	park(r.deflects, nDeflects + 1)
+	BeamShots.step(r.beams, fx.tracers, now, groundBelow, speed)
 
 	-- bursts: each plays its Vfx rig once (or the place's saved effect)
 	for _, b in fx.bursts do

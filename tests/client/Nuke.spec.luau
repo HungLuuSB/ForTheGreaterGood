@@ -22,8 +22,11 @@ local function scene(defended: boolean)
 	local sim = Sim.new({ seed = 3, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:256", scenario = "empty" })
 	local silo = Spawn.unit(sim, "ord_reckoning", 1, -800, 0, 0)
 	if defended then
+		-- since S-111 only an anti-nuke intercepts (the Cerberus covers the aim
+		-- point); the Wyverns stay to show radar SAMs leave the nuke alone
 		Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 100, -150, 0)
 		Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 100, 150, 0)
+		Spawn.unit(sim, "chs_cerberus", 2, TARGET_X + 400, 800, 0) -- the aim point near the edge of its cover, the silo far: it engages late, after the radars track the nuke
 		Spawn.unit(sim, "ord_lancer", 1, TARGET_X - 200, 0, 0) -- a spotter: the client knows enemy radars it sees
 	end
 	local world = World.new(sim.defs)
@@ -85,7 +88,7 @@ return function(t: any)
 		end
 	end)
 
-	t.test("Wyverns intercept: interceptors chase the nuke in step with the server's", function()
+	t.test("an anti-nuke intercepts: interceptors chase the nuke in step with the server's (S-111)", function()
 		local sim, world = scene(true)
 		local fx = Effects.new()
 		local interceptors, chasing, errs = 0, 0, {}
@@ -150,7 +153,9 @@ return function(t: any)
 		t.expect(intercepted ~= detonated, "the nuke either was intercepted or detonated, as the server says")
 		print(string.format("    sensor view: %d radar tracks at most on our nuke; interceptors locked on it in %d of %d frames", maxTracks, lockedFrames, lockFrames))
 		t.expect(ownSeen, "the client knows the nuke is its own (launched from its silo)")
-		t.equal(maxTracks, 2) -- both Wyverns hold it
+		-- no radar tracks on it any more: radar SAMs no longer engage strategic
+		-- missiles and anti-nukes carry no radar (S-111)
+		t.equal(maxTracks, 0)
 		t.expect(lockFrames > 0 and lockedFrames == lockFrames, "interceptors show locked on the nuke")
 	end)
 end

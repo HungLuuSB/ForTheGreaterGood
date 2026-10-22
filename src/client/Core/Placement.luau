@@ -155,11 +155,8 @@ function Placement.check(world: World.World, def: any, x: number, z: number): Re
 			end
 		end
 	end
-	if def.extractor then
-		local gx, gz = g:cellAt(cx, cz)
-		if Layers.getSupply(layers, g:index(gx, gz)) == 0 then
-			return fail("no deposit")
-		end
+	if def.extractor and PlacementRules.supplyUnder(layers, size, cx, cz) == 0 then
+		return fail("no deposit") -- any covered cell (S-104), the server's own rule
 	end
 	local minX, minZ = x0 * Grid.CELL_SIZE + g.originX, z0 * Grid.CELL_SIZE + g.originZ
 	local maxX, maxZ = minX + size * Grid.CELL_SIZE, minZ + size * Grid.CELL_SIZE
