@@ -130,6 +130,18 @@
       }
     },
     {
+      "Name": "chs_shipyard",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://127847062687322",
+        "NormalMapContent": "rbxassetid://119559880909280",
+        "RoughnessMapContent": "rbxassetid://78554252560234",
+        "MetalnessMapContent": "rbxassetid://108292866141122",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_solar",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -318,6 +330,18 @@
         "NormalMapContent": "rbxassetid://80305731112034",
         "RoughnessMapContent": "rbxassetid://102465023933565",
         "MetalnessMapContent": "rbxassetid://74759415228976",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_shipyard",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://80458727810138",
+        "NormalMapContent": "rbxassetid://116068069478023",
+        "RoughnessMapContent": "rbxassetid://127138731862946",
+        "MetalnessMapContent": "rbxassetid://80192060678058",
         "EmissiveStrength": 0
       }
     },
