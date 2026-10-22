@@ -352,6 +352,14 @@ if RunService:IsStudio() then
 				marks[m.kind] = (marks[m.kind] or 0) + 1
 			end
 			return { enabled = missileView.enabled, entries = entries, marks = marks, stats = missileView.stats }
+		elseif query == "shield" then
+			-- Invoke("shield", seconds?): the shield dome prototype (C-87) under the camera's focus
+			local seconds = ...
+			local focus = workspace.CurrentCamera.Focus.Position
+			local ground = workspace:Raycast(focus + Vector3.new(0, 500, 0), Vector3.new(0, -1000, 0))
+			local y = if ground then ground.Position.Y else focus.Y
+			require("./Render/ShieldFx").demo(Vector3.new(focus.X, y, focus.Z), 60, if type(seconds) == "number" then seconds else 30)
+			return { center = { focus.X, y, focus.Z } }
 		elseif query == "perf" then
 			-- average and worst ms per frame since the last call, per part
 			local out = {}
