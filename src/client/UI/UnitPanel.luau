@@ -13,6 +13,7 @@
 local Players = game:GetService("Players")
 
 local Api = require("../Api")
+local Kit = require("./Kit")
 local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
 local UnitStats = require("../Core/UnitStats")
@@ -22,7 +23,7 @@ local TeamColors = require("../Render/TeamColors")
 
 local UnitPanel = {}
 
-local BG = Color3.fromRGB(18, 20, 24)
+local BG = Kit.COLOR.panel
 local TILE = Color3.fromRGB(58, 62, 70)
 local WIDTH = 460 -- wide enough for a stat line at a glance (C-76)
 
@@ -118,6 +119,7 @@ function UnitPanel.new(api: Api.Api): UI
 	gl.CellPadding = UDim2.fromOffset(3, 3)
 	gl.SortOrder = Enum.SortOrder.LayoutOrder
 	gl.Parent = types
+	Kit.skin(gui) -- the UI kit's look (C-105)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return {
 		gui = gui, panel = panel, portrait = portrait, portraitGlyph = pg, name = name, role = role, stats = stats,

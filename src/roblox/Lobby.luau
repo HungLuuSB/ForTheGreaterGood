@@ -324,6 +324,7 @@ function Lobby.results(s: State, sim: any, startTick: number, stats: { [number]:
 			name = name,
 			human = sl ~= nil and sl.kind == "human",
 			faction = if p.team % 2 == 1 then "Order" else "Chaos",
+			team = p.team, -- its team color (the statistics panel, C-105)
 			allyTeam = p.allyTeam,
 			won = sim.match.over and p.allyTeam == sim.match.winner,
 			outAt = if out_ then (out_ - startTick) / 15 else nil,

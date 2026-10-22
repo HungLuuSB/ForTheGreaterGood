@@ -8,10 +8,11 @@
 local Players = game:GetService("Players")
 
 local Api = require("../Api")
+local Kit = require("./Kit")
 
 local ResourceBar = {}
 
-local BG = Color3.fromRGB(18, 20, 24)
+local BG = Kit.COLOR.panel
 local FILL = { Supply = Color3.fromRGB(200, 205, 215), Power = Color3.fromRGB(240, 210, 60) }
 local SYMBOL = { Supply = "■", Power = "ϟ" }
 local STALL = Color3.fromRGB(230, 70, 60)
@@ -92,6 +93,7 @@ function ResourceBar.new(): Bar
 		fill.Parent = back
 		blocks[name] = { demand = demand, income = income, stored = stored, storage = storage, fill = fill }
 	end
+	Kit.skin(gui) -- the UI kit's look (C-105)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return { gui = gui, blocks = blocks, nextUpdate = 0 }
 end

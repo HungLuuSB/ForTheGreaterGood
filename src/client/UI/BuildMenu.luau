@@ -11,6 +11,7 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
+local Kit = require("./Kit")
 local BuildMenu = require("../Core/BuildMenu")
 local Icons = require("../Core/Icons")
 local Glyph = require("./Glyph")
@@ -23,9 +24,9 @@ local DIGITS = {
 	[Enum.KeyCode.One] = 1, [Enum.KeyCode.Two] = 2, [Enum.KeyCode.Three] = 3, [Enum.KeyCode.Four] = 4, [Enum.KeyCode.Five] = 5,
 	[Enum.KeyCode.Six] = 6, [Enum.KeyCode.Seven] = 7, [Enum.KeyCode.Eight] = 8, [Enum.KeyCode.Nine] = 9, [Enum.KeyCode.Zero] = 10,
 }
-local BG = Color3.fromRGB(18, 20, 24)
-local ON = Color3.fromRGB(70, 110, 160)
-local OFF = Color3.fromRGB(46, 50, 58)
+local BG = Kit.COLOR.panel
+local ON = Kit.COLOR.selected
+local OFF = Kit.COLOR.control
 local TILE = Color3.fromRGB(58, 62, 70)
 local ITEMS_PER_ROW = 5
 local CELL = 52
@@ -159,6 +160,7 @@ function BuildMenuUI.new(api: Api.Api): UI
 	gl.CellPadding = UDim2.fromOffset(2, 3)
 	gl.SortOrder = Enum.SortOrder.LayoutOrder
 	gl.Parent = grid
+	Kit.skin(gui) -- the UI kit's look (C-105)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	return { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
 end

@@ -1,9 +1,15 @@
 --!strict
--- Settings menu (C-81), a functional PLACEHOLDER: O or the "Settings"
--- button (bottom right) opens a panel with the key bindings reference,
--- camera (pan speed, zoom step, edge scroll), graphics (quality Low /
--- Medium / High, fog of war, atmosphere preset) and the UI scale. Values come from
--- Core/Settings; `apply` writes them into the modules that use them, live.
+-- Settings menu (C-81; rebuilt on the UI kit in C-105): O or the
+-- "Settings" button (bottom right) opens a panel with a sidebar:
+--   Camera     pan speed and zoom step sliders, edge scroll toggle
+--   Graphics   quality (segmented Low / Medium / High, with what it caps),
+--              fog of war toggle, atmosphere dropdown
+--   Interface  UI scale slider
+--   Audio      nothing yet (the game has no sound)
+--   Keys       the key bindings as a two-column table per group
+-- Built once and shown or hidden. Values come from Core/Settings; `apply`
+-- writes them into the modules that use them, live. Settings last for
+-- this session, as before.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -18,19 +24,18 @@ local FogBlanket = require("../Render/FogBlanket")
 local Environment = require("../Render/Environment")
 local Glow = require("../Render/Glow")
 local Vfx = require("../Render/Vfx")
+local Kit = require("./Kit")
 
 local SettingsMenu = {}
 
-local BG = Color3.fromRGB(16, 18, 22)
-local BTN = Color3.fromRGB(44, 50, 60)
-local ON = Color3.fromRGB(70, 110, 160)
 local KEY = Enum.KeyCode.O
 -- the screens the UI scale applies to: the panels; overlays drawn at world
 -- positions (icons, health bars, the selection box, missile labels) and
 -- Roblox's own screens keep screen pixels
 local SCALED = { Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
+local PAGES = { "Camera", "Graphics", "Interface", "Audio", "Keys" }
 
-export type UI = { gui: ScreenGui, panel: Frame, body: ScrollingFrame, state: Settings.State }
+export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, state: Settings.State }
 
 -- Writes the settings into the modules that read them.
 function SettingsMenu.apply(s: Settings.State)
@@ -65,125 +70,98 @@ function SettingsMenu.apply(s: Settings.State)
 	end
 end
 
-local function label(parent: Instance, text: string, size: number, w: number?): TextLabel
-	local l = Instance.new("TextLabel")
-	l.BackgroundTransparency = 1
-	l.Size = if w then UDim2.fromOffset(w, size + 10) else UDim2.new(1, 0, 0, size + 8)
-	l.Font = if size >= 14 then Enum.Font.GothamBold else Enum.Font.Gotham
-	l.TextSize = size
-	l.TextColor3 = Color3.new(1, 1, 1)
-	l.TextXAlignment = Enum.TextXAlignment.Left
-	l.Text = text
-	l.LayoutOrder = #parent:GetChildren()
-	l.Parent = parent
-	return l
+local function cap(text: string): string
+	return string.upper(string.sub(text, 1, 1)) .. string.sub(text, 2)
 end
 
-local function button(parent: Instance, text: string, w: number, on: boolean, click: () -> ()): TextButton
-	local b = Instance.new("TextButton")
-	b.Size = UDim2.fromOffset(w, 24)
-	b.BackgroundColor3 = if on then ON else BTN
-	b.BorderSizePixel = 0
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 12
-	b.TextColor3 = Color3.new(1, 1, 1)
-	b.Text = text
-	b.LayoutOrder = #parent:GetChildren()
-	b.Parent = parent
-	b.MouseButton1Click:Connect(click)
-	return b
-end
-
-local function row(parent: Instance, name: string): Frame
-	local f = Instance.new("Frame")
-	f.BackgroundTransparency = 1
-	f.Size = UDim2.new(1, 0, 0, 26)
-	f.LayoutOrder = #parent:GetChildren()
-	f.Parent = parent
-	local l = Instance.new("UIListLayout")
-	l.FillDirection = Enum.FillDirection.Horizontal
-	l.Padding = UDim.new(0, 6)
-	l.VerticalAlignment = Enum.VerticalAlignment.Center
-	l.SortOrder = Enum.SortOrder.LayoutOrder
-	l.Parent = f
-	label(f, name, 12, 130).TextColor3 = Color3.fromRGB(200, 200, 200)
-	return f
-end
-
-local render: (ui: UI) -> ()
-
-local function stepper(ui: UI, parent: Instance, key: string, fmt: string)
-	local s = ui.state :: any
-	button(parent, "−", 26, false, function()
-		Settings.nudge(ui.state, key, false)
-		SettingsMenu.apply(ui.state)
-		render(ui)
-	end)
-	label(parent, string.format(fmt, s[key]), 12, 60).TextXAlignment = Enum.TextXAlignment.Center
-	button(parent, "+", 26, false, function()
-		Settings.nudge(ui.state, key, true)
-		SettingsMenu.apply(ui.state)
-		render(ui)
-	end)
-end
-
-render = function(ui: UI)
-	for _, c in ui.body:GetChildren() do
-		if not c:IsA("UIListLayout") then
-			c:Destroy()
-		end
-	end
-	local s = ui.state
-	label(ui.body, "SETTINGS", 18)
-	label(ui.body, "Camera", 14)
-	stepper(ui, row(ui.body, "Pan speed"), "panSpeed", "%.1f")
-	stepper(ui, row(ui.body, "Zoom step"), "zoomStep", "%.2f")
-	local edge = row(ui.body, "Edge scroll")
-	for _, v in { true, false } do
-		button(edge, if v then "On" else "Off", 56, s.edgeScroll == v, function()
-			Settings.set(ui.state, "edgeScroll", v)
-			SettingsMenu.apply(ui.state)
-			render(ui)
-		end)
-	end
-	label(ui.body, "Graphics", 14)
-	local q = row(ui.body, "Quality")
-	for _, name in Settings.QUALITIES do
-		button(q, string.upper(string.sub(name, 1, 1)) .. string.sub(name, 2), 70, s.quality == name, function()
-			Settings.set(ui.state, "quality", name)
-			SettingsMenu.apply(ui.state)
-			render(ui)
-		end)
-	end
+local function capsText(s: Settings.State): string
 	local g = Settings.graphics(s)
-	label(ui.body, string.format("  up to %d explosions, %d tracers, %d projectiles, %d lights; full animation within %d studs", g.explosions, g.tracers, g.projectiles, g.lights, g.detailNear), 11).TextColor3 = Color3.fromRGB(170, 170, 170)
-	local fog = row(ui.body, "Fog of war")
-	for _, v in { true, false } do
-		button(fog, if v then "On" else "Off", 56, s.fog == v, function()
-			Settings.set(ui.state, "fog", v)
-			SettingsMenu.apply(ui.state)
-			render(ui)
-		end)
+	return string.format("Up to %d explosions, %d tracers, %d projectiles and %d lights; full animation within %d studs.", g.explosions, g.tracers, g.projectiles, g.lights, g.detailNear)
+end
+
+-- Builds every page once.
+local function build(ui: UI)
+	local s = ui.state
+	local function set(key: string, value: any)
+		Settings.set(s, key, value)
+		SettingsMenu.apply(s)
 	end
-	local atm = row(ui.body, "Atmosphere")
+	local function page(name: string): ScrollingFrame
+		local holder = Instance.new("Frame")
+		holder.Name = name
+		holder.BackgroundTransparency = 1
+		holder.Size = UDim2.fromScale(1, 1)
+		holder.Visible = false
+		holder.Parent = ui.panel.content
+		local sc = Kit.scroll(holder)
+		Kit.list(sc, Kit.SPACE.xs)
+		Kit.pad(sc, 0, 0, Kit.SPACE.m, 0)
+		ui.pages[name] = sc
+		Kit.section(sc, name, 0)
+		return sc
+	end
+
+	local cam = page("Camera")
+	local panL = Settings.LIMITS.panSpeed
+	Kit.slider(Kit.row(cam, "Pan speed", 1), panL[1], panL[2], panL[3], s.panSpeed, "%.1f", function(v)
+		set("panSpeed", v)
+	end)
+	local zoomL = Settings.LIMITS.zoomStep
+	Kit.slider(Kit.row(cam, "Zoom step", 2), zoomL[1], zoomL[2], zoomL[3], s.zoomStep, "%.2f", function(v)
+		set("zoomStep", v)
+	end)
+	Kit.toggle(Kit.row(cam, "Edge scroll", 3), s.edgeScroll, function(on)
+		set("edgeScroll", on)
+	end)
+
+	local gfx = page("Graphics")
+	local info: TextLabel
+	local qualities = {}
+	for _, q in Settings.QUALITIES do
+		table.insert(qualities, { q, cap(q) })
+	end
+	Kit.segmented(Kit.row(gfx, "Quality", 1), qualities, s.quality, function(q)
+		set("quality", q)
+		info.Text = capsText(s)
+	end)
+	info = Kit.text(gfx, capsText(s), "small")
+	info.LayoutOrder = 2
+	info.TextWrapped = true
+	info.Size = UDim2.new(1, 0, 0, 22)
+	Kit.toggle(Kit.row(gfx, "Fog of war", 3), s.fog, function(on)
+		set("fog", on)
+	end)
+	local atmospheres = {}
 	for _, name in Settings.ATMOSPHERES do
-		button(atm, Atmosphere.NAMES[name] or name, 80, s.atmosphere == name, function() -- five fit in the row (C-102)
-			Settings.set(ui.state, "atmosphere", name)
-			SettingsMenu.apply(ui.state)
-			render(ui)
-		end)
+		table.insert(atmospheres, { name, Atmosphere.NAMES[name] or name })
 	end
-	label(ui.body, "Interface", 14)
-	stepper(ui, row(ui.body, "UI scale"), "uiScale", "%.1f")
-	label(ui.body, "Keys", 14)
-	for _, group in Settings.KEYS do
-		label(ui.body, group[1], 12).TextColor3 = Color3.fromRGB(255, 220, 120)
+	Kit.dropdown(Kit.row(gfx, "Atmosphere", 4), atmospheres, s.atmosphere, function(name)
+		set("atmosphere", name)
+	end, 190)
+
+	local ifc = page("Interface")
+	local scaleL = Settings.LIMITS.uiScale
+	Kit.slider(Kit.row(ifc, "UI scale", 1), scaleL[1], scaleL[2], scaleL[3], s.uiScale, "%.1f", function(v)
+		set("uiScale", v)
+	end)
+	local note = Kit.text(ifc, "Settings last for this session.", "small")
+	note.LayoutOrder = 2
+
+	local audio = page("Audio")
+	local none = Kit.text(audio, "The game has no sound yet; volume controls come with it.", "small")
+	none.LayoutOrder = 1
+
+	local keys = page("Keys")
+	for i, group in Settings.KEYS do
+		local head = Kit.text(keys, group[1], "label", Kit.COLOR.accent)
+		head.LayoutOrder = i * 2 - 1
+		head.Size = UDim2.new(1, 0, 0, 26)
+		local rows = {}
 		for _, k in group[2] do
-			local r = row(ui.body, k[1])
-			label(r, k[2], 12, 380)
+			table.insert(rows, { k[1], k[2] })
 		end
+		Kit.table(keys, { { title = "Key", width = 0.36 }, { title = "Action", width = 0.64 } }, rows, 28, i * 2)
 	end
-	label(ui.body, "Settings last for this session.", 11).TextColor3 = Color3.fromRGB(150, 150, 150)
 end
 
 function SettingsMenu.new(): UI
@@ -191,50 +169,26 @@ function SettingsMenu.new(): UI
 	gui.Name = "Settings"
 	gui.ResetOnSpawn = false
 	gui.DisplayOrder = 40
-	local open = Instance.new("TextButton")
+	gui.IgnoreGuiInset = true
+	local open = Kit.button(gui, "Settings (O)", "ghost", function() end, 116)
 	open.Name = "Open"
 	open.AnchorPoint = Vector2.new(1, 1)
 	open.Position = UDim2.new(1, -8, 1, -40) -- above the follow button
-	open.Size = UDim2.fromOffset(110, 24)
-	open.BackgroundColor3 = BG
-	open.BackgroundTransparency = 0.15
-	open.BorderSizePixel = 0
-	open.Font = Enum.Font.Gotham
+	open.Size = UDim2.fromOffset(116, 26)
 	open.TextSize = 13
-	open.TextColor3 = Color3.fromRGB(220, 220, 220)
-	open.Text = "Settings (O)"
-	open.Parent = gui
-	local panel = Instance.new("Frame")
-	panel.Name = "Panel"
-	panel.AnchorPoint = Vector2.new(0.5, 0.5)
-	panel.Position = UDim2.fromScale(0.5, 0.5)
-	panel.Size = UDim2.fromOffset(600, 440)
-	panel.BackgroundColor3 = BG
-	panel.BackgroundTransparency = 0.05
-	panel.BorderSizePixel = 0
-	panel.Visible = false
-	panel.Parent = gui
-	local body = Instance.new("ScrollingFrame")
-	body.Name = "Body"
-	body.BackgroundTransparency = 1
-	body.BorderSizePixel = 0
-	body.Position = UDim2.fromOffset(14, 10)
-	body.Size = UDim2.new(1, -20, 1, -16)
-	body.ScrollBarThickness = 6
-	body.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	body.CanvasSize = UDim2.new()
-	body.Parent = panel
-	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 3)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Parent = body
-	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	local ui: UI = { gui = gui, panel = panel, body = body, state = Settings.new(RunService:IsStudio()) }
-	local function toggle()
-		panel.Visible = not panel.Visible
-		if panel.Visible then
-			render(ui)
+	local ui: UI
+	local panel = Kit.panel(gui, "Settings", Vector2.new(780, 500), PAGES, function(name)
+		for n, p in ui.pages do
+			(p.Parent :: Frame).Visible = n == name
 		end
+	end)
+	panel.root.Visible = false
+	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
+	ui = { gui = gui, panel = panel, pages = {}, state = Settings.new(RunService:IsStudio()) }
+	build(ui)
+	panel.select("Camera")
+	local function toggle()
+		panel.root.Visible = not panel.root.Visible
 	end
 	open.MouseButton1Click:Connect(toggle)
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)

@@ -4,6 +4,24 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, UI kit, settings, statistics, lobby)
+
+- **UI kit (C-105):** one theme module, `UI/Kit`, used by every panel.
+  - **Look:** dark translucent panels (85%), a thin light border, a soft shadow and a faint diagonal stripe. The stripe and shadow are our own, drawn in-game, with no textures or icons copied.
+  - **Text:** light-grey in Montserrat (Roblox's built-in geometric sans, the closest to the reference), one warm amber accent, rounded corners, a type and spacing scale.
+  - **Components:** panel with title and sidebar nav (highlighted pill), toggle (green on, red off), slider with value, dropdown, segmented buttons, filter chips with team swatches, thin scrollbar, table, line chart.
+- **Settings** rebuilt on it: sidebar Camera, Graphics, Interface, Audio (nothing yet: the game has no sound), Keys. Real sliders and toggles replace the +/- steppers; keys are a clean two-column table. Same settings and saving.
+- **Statistics panel** replaces the results screen:
+  - sidebar Overview, Economy, Combat, Units;
+  - chips All, You, Team 1, Team 2 with team swatches;
+  - small line charts over match time: supply and power produced, used and stored; units built and lost; damage dealt; units killed;
+  - Overview is the styled scoreboard under VICTORY / DEFEAT.
+- **Statistics data:** the sim keeps no samples over time, so the Roblox server samples its report every 10 s for now. I filed sim request 41 for real samples with damage taken; until then that chart says it's waiting.
+- **Charts:** at most 120 points per line, drawn into one EditableImage per chart (measured against pooled Frames below), one chart per frame, and the panel is built once. Opening it doesn't hitch.
+- **Lobby** rebuilt on the kit. The unit panel, command card, build menu and resource bar take the kit's colors, font and borders.
+- **Your 7 new reference images** (lobby, scenarios, in-game HUD, two settings panels, radar range, factory facing): written up in `docs/ui/references.md` with a "still to do" list for later UI work.
+- **Screenshots:** `debug_out/screens/uikit_*.jpg` (settings, statistics, lobby), at the Studio viewport (1548 × 601: Studio can't be set to 1080p from here) and at UI scale 1.2. Panels shrink to fit the screen and scroll.
+
 ## Summary (2026-10-23, glow pass and BAR models in game)
 
 - **BAR models now draw in the game (C-103):** the client builds every approved model from C's mesh manifest at start: 19 models, about 21 s in the background, with blockouts standing in until each one is ready. Oracle, Watcher and the Order vehicle plant are still "review" in the manifest, so they stay blockouts.
@@ -18,7 +36,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Screenshots:** `debug_out/screens/glowfx_*.jpg` (vehicles, headlights, factory, stall full and low, fight, 200 units).
 - **Not done:** builders brightening while they build. The client doesn't know when a builder is building (no field on the wire).
 - **Shield hits fixed (C-104):** one shell looked like 5–6 hitting at once. Each shell lights the dome exactly once (measured), but its 7 hex plates were all near full white and bloomed into separate blobs. Now the centre plate is bright and each ring out is 30% as opaque and greyer, so a hit reads as one impact (`shieldhit_before.jpg` / `shieldhit_after.jpg`).
-- **Next:** your UI kit, settings, statistics and lobby task (started: chart maths and the stat sampler are written, not committed).
+- **Next:** your UI kit, settings, statistics and lobby task: done as C-105, summary above.
 
 ## Summary (2026-10-23, environment and colour grade)
 
@@ -596,6 +614,45 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: UI kit; settings, statistics and lobby rebuilt on it (C-105)
+
+- **Asked:** a UI kit in the BAR statistics panel's style (style only), then settings, a statistics panel and the lobby rebuilt on it, then the stats and selection panels.
+- **`UI/Kit`** (one theme module):
+  - **Colors:** panel (20, 22, 27) at 15% transparency; border white at 86%; text (226, 229, 235), dim and faint greys; accent amber (238, 186, 92); green on, red off; a dark amber for chosen HUD buttons.
+  - **Font:** Montserrat (`rbxasset://fonts/families/Montserrat.json`), the closest built-in to the reference's geometric sans; Builder Sans was the other option.
+  - **Type scale** 26 / 16 / 14 / 12, **spacing scale** 4 / 8 / 12 / 16 / 24, **corners** 10 (panels) and 6 (controls).
+  - **Stripe and shadow:** a 16 px tile and a 64 px 9-slice soft shadow, drawn once into EditableImages (no asset).
+  - **Components:** `panel` (title, optional sidebar with a highlighted pill; shrinks to fit the screen at the UI scale), `section`, `row`, `toggle`, `slider`, `button`, `segmented`, `dropdown` (a drawn chevron: Montserrat has no arrow glyph), `chip`, `scroll` (4 px bar), `table`, `chart`.
+  - `skin(gui)` gives older HUD screens the kit's font, borders and corners, including elements added later.
+- **Settings** (`UI/SettingsMenu`): built once.
+  - **Camera:** pan speed and zoom step sliders, edge scroll toggle.
+  - **Graphics:** quality segmented, with what it caps; fog of war toggle; atmosphere dropdown.
+  - **Interface:** UI scale slider.
+  - **Audio:** says there's no sound yet.
+  - **Keys:** a two-column table per group.
+  - Same `Core/Settings` state and `apply`; settings last for the session.
+- **Statistics** (`UI/Statistics`), the results screen:
+  - **Overview:** the title (VICTORY, DEFEAT, ELIMINATED or MATCH OVER), the match length, the scoreboard (team swatch, faction, team, end, built / lost / killed, supply and power gathered / spent, damage), replay buttons, back to lobby.
+  - **Economy, Combat, Units:** charts of the server's samples in team colors, filtered by the chips.
+  - Damage taken shows "comes with sim request 41".
+- **Data:**
+  - `src/roblox/StatSeries` samples `Stats.report` and the team accounts' stored amounts every 150 ticks; past 120 samples it halves and doubles the interval.
+  - `Main.server` sends them with the results (`finishMatch`), and the results carry each player's `team` for colors.
+  - The Studio debug `FtggDebug:Invoke("results")` ends a lobby match now.
+- **Charts** (`Core/Chart`, pure): LTTB downsampling to at most 120 points, nice axis tops (1 / 2 / 5 × 10^n), short labels (1.5k, 3M), and an anti-aliased rasterizer into an RGBA buffer.
+- **Frames vs EditableImage, measured** (one chart: 4 lines × 120 points):
+  - **EditableImage:** 4.6 ms per redraw (raster and upload), one instance, about 100 KB of image memory, nothing after it's drawn.
+  - **Frames:** 476 rotated Frames per chart (5,712 for a 12-chart page), 8.5 ms to create, 0.57 ms to move them.
+  - Their standing cost while shown couldn't be isolated: Studio was pinned at 65 ms a frame by the 4× sim.
+  - **Chosen: EditableImage.** No standing instances, anti-aliased lines, and a redraw only on new results or a filter change, one chart a frame (12 charts in about 12 frames, under 5 ms each).
+- **Lobby** (`UI/Lobby`) rebuilt on a kit panel:
+  - map dropdown; mode and win segmented; friendly fire toggle;
+  - per seat: faction, AI level / open and team segmented, × to remove;
+  - Add AI, Add seat, Start (amber).
+- **HUD:** `UnitPanel`, `CommandCard`, `BuildMenu` and `ResourceBar` use the kit's panel, control and selected colors, and `Kit.skin`.
+- **Specs:** `Statistics.spec` (4): sampling and halving, downsampling keeps the ends and a spike, axis numbers, the rasterizer.
+- **Screenshots:** `debug_out/screens/uikit_*.jpg`, at Studio's viewport of 1548 × 601. A 1080p viewport can't be set from the tools here.
+
 ## 2026-10-23: one shield hit reads as one impact (C-104)
 
 - **Your report:** the shield's touch effect looked like 5–6 shots happening at the same time.
@@ -1099,6 +1156,11 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **UI kit, settings, statistics, lobby (C-105):** `debug_out/screens/uikit_*.jpg`. Your calls:
+  - **The kit's look:** amber accent, Montserrat, 85% panels, the stripe strength (`UI/Kit`).
+  - **The statistics pages and charts:** which charts, their size.
+  - **Audio page:** stays a placeholder until there's sound.
+
 - **Glow pass and BAR models in game (C-103):** `debug_out/screens/glowfx_*.jpg`. Your calls:
   - **Strengths:** the stall floor (0.3), the factory pulse (1.5–4 at 1 Hz) and the weapon flash (6, 0.3 s) (`Core/Glow`).
   - **Headlights:** brightness, range and cone, 12 at High, always on at night (`Render/Glow`).
@@ -1170,6 +1232,15 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+41. **Open.** **Match statistics over time (2026-10-23, the user asked, C-105):** the statistics panel charts each player's numbers over match time.
+    - **Please keep, in `Sim/Stats`, a sample every 150 ticks (10 s)** per player:
+      - supply and power gathered, spent and stored (the team account's);
+      - units built, lost and killed;
+      - damage dealt and **damage taken** (new: health removed from this player's units by enemies, capped like damage dealt).
+    - Keep at most 120 samples per line: past that, drop every other sample and double the interval.
+    - Expose them with `Stats.report` or a `Stats.series(sim)`, in the shape `src/roblox/StatSeries.luau` uses (`t` in seconds; `players[tostring(pid)][field]` arrays).
+    - **Meanwhile** `src/roblox/StatSeries` samples `Stats.report` on the Roblox server. That's fine for live matches, but replays and headless runs don't have it, and it can't give damage taken. The client switches to the sim's series when it's there.
 
 40. **Done and used (S-79, protocol 24; C-91).** **Shield generators on the wire (2026-10-23, the user asked; the client draws them with `Render/ShieldFx`, C-90):**
     - **Mechanic** (the user's rules):

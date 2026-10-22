@@ -877,3 +877,17 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** in `Core/Shield.plateAt`, each ring's opacity is `RING_ALPHA` (0.3) to the power of its ring number, and its heat peak falls 40% a ring (floor 20%).
 
 **Why:** the user saw one shell's touch as 5–6 shots. Events were one per shell (measured), but the 7 equally white Neon plates bloomed into separate blobs under the night grade.
+
+### C-105 — One UI kit for every panel; settings, statistics and lobby rebuilt on it; statistics sampled on the server until the sim keeps them (2026-10-23)
+
+**Decision:**
+- **Kit:** `UI/Kit` holds the theme (colors, Montserrat, type and spacing scales, corners) and the components.
+- **Panels:** settings, lobby and the new statistics panel (the results screen) are built from it, once, and shown or hidden.
+- **HUD:** the older HUD screens take the kit's tokens and `Kit.skin`.
+- **Charts:** `Core/Chart` downsamples to 120 points and rasterizes into one EditableImage per chart, one chart per frame.
+- **Samples:** taken by `src/roblox/StatSeries` every 10 s until sim request 41.
+
+**Why:**
+- The user: the settings and results panels read as debug boxes, and the BAR statistics panel is the style target (style only).
+- Montserrat is the closest built-in to its geometric sans.
+- Charts: an EditableImage per chart is a fixed cost per redraw, against a Frame per segment per line (up to thousands of Frames) (measured: 4.6 ms per chart redraw and nothing standing, against 476 Frames a chart).
