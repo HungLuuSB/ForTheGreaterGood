@@ -669,6 +669,13 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: factory order lists in game (S-95 merged; C-111)
+
+- **sim-A did request 44 (S-95):** MOVE, FIGHT, PATROL, GUARD, REPAIR and ATTACK on a factory go on its order list (shift appends, a plain order replaces, STOP clears). Each unit it builds rolls out, then takes a copy in order. Main is merged into this branch (with C-107..C-109, models' BAR pairs 5–9 and the missiles).
+- **Client:** factories now offer Attack too (`Core/CommandSet`, spec updated). Their drawn orders already stay until replaced (C-109).
+- **`FactoryOrders.spec`:** a move, then a shift-queued patrol, sent to a vehicle plant the way the client sends them (`Orders.encode`). The Lancer it builds carries the move, then the patrol.
+- **Studio** (`shield` profile): the plant got a move to (84, −108) and a queued patrol. The new Lancer rolled out and drove to the move point, then started its patrol and held at the first enemies in range, firing at the attackers (a patrol is an attack-move) (`debug_out/screens/factory_orders.jpg`).
+
 ## 2026-10-23: shields destroy every shell, in game (S-93 merged; C-110)
 
 - **Your report:** shields still diverted shots. S-93 (every projectile destroyed at an up dome's surface) was on sim-A's branch, not yet in main. It's now merged (main `ead4014`, with S-94: T1 factories at 200 build power, a Lancer in 25.5 s) and merged into this branch.
@@ -1394,7 +1401,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-44. **Open.** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
+44. **Done and used (S-95; C-111).** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
     - Today a MOVE / FIGHT / PATROL given to a factory sets one rally point (Orders.give; PATROL becomes fight).
     - **Please keep the factory's whole order list instead,** as for a unit: MOVE, FIGHT, PATROL, GUARD (a unit), REPAIR, ATTACK. Shift appends, a plain order replaces, STOP clears it.
     - Each unit the factory produces rolls out of the exit, then takes a copy of the list, so a pre-move then a patrol, or a move then guard a commander, works.
