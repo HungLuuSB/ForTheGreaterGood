@@ -231,6 +231,13 @@ function UnitStats.of(world: World.World, u: World.Unit): Sheet
 	return sheet
 end
 
+-- The sheet of a unit type (the build menu's tooltip, C-107): the type's
+-- numbers, no live state.
+function UnitStats.ofDef(world: World.World, def: any): Sheet
+	local u: any = { id = 0, tier = "strategic", team = -1, flags = Schema.StrategicFlag.GHOST, icon = def.index, x = 0, z = 0, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} }
+	return UnitStats.of(world, u)
+end
+
 local FIRE = { [0] = "Hold fire", [1] = "Return fire", [2] = "Fire at will" }
 local MOVE = { [0] = "Hold position", [1] = "Maneuver", [2] = "Roam" }
 local CLASS_NAME = { LIGHT = "light", ARMORED = "armored", STRUCTURE = "structures", AIR = "air", SHIP = "ships", SUB = "subs" }

@@ -6,6 +6,10 @@
 -- queued count. B opens the menu's keys / goes to the next tab; while they
 -- are on, 1..0 pick the tab's items (the menu takes those keys before the
 -- control groups). Acts only through the client API.
+-- Tiles are BAR's (C-107): the unit's model portrait at an angle
+-- (UI/Portrait), its type icon at the bottom right, the cost stacked at the
+-- bottom left (supply white, power yellow), the hotkey top left and the
+-- queued count top right. Hovering a tile shows its name and stats.
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -15,6 +19,11 @@ local Kit = require("./Kit")
 local BuildMenu = require("../Core/BuildMenu")
 local Icons = require("../Core/Icons")
 local Glyph = require("./Glyph")
+local MinimapUI = require("./Minimap")
+local Portrait = require("./Portrait")
+local UnitStats = require("../Core/UnitStats")
+local MeshModels = require("../Render/MeshModels")
+local Models = require("../Render/Models")
 local TeamColors = require("../Render/TeamColors")
 
 local BuildMenuUI = {}
@@ -28,10 +37,12 @@ local BG = Kit.COLOR.panel
 local ON = Kit.COLOR.selected
 local OFF = Kit.COLOR.control
 local TILE = Color3.fromRGB(58, 62, 70)
-local ITEMS_PER_ROW = 5
-local CELL = 52
+local ITEMS_PER_ROW = 4
+local CELL = 66
 local ROWS = 2 -- visible rows; more scroll (2 since C-76: room for the wider unit panel)
-local WIDTH = 280 -- the minimap's width: the grid sits under it (BAR layout)
+local WIDTH = 280 -- four 66-pixel tiles; the grid sits under the minimap (BAR layout)
+local TOP = MinimapUI.SIZE
+local FULL_HEIGHT = 26 + ROWS * (CELL + 3) + 8
 
 export type UI = {
 	gui: ScreenGui,
@@ -41,6 +52,11 @@ export type UI = {
 	tabButtons: { TextButton },
 	itemButtons: { TextButton },
 	itemGlyphs: { Glyph.G },
+	portraits: { Portrait.Portrait },
+	tip: Frame, -- the hover tooltip
+	tipTitle: TextLabel,
+	tipBody: TextLabel,
+	hovered: number?, -- the tile under the mouse
 	icons: Icons.Table,
 	menu: BuildMenu.Menu?,
 	tab: number,
@@ -128,8 +144,8 @@ function BuildMenuUI.new(api: Api.Api): UI
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(0, 0)
-	panel.Position = UDim2.fromOffset(0, WIDTH) -- under the minimap
-	panel.Size = UDim2.fromOffset(WIDTH, 26 + ROWS * (CELL + 3) + 8)
+	panel.Position = UDim2.fromOffset(0, TOP) -- under the minimap
+	panel.Size = UDim2.fromOffset(WIDTH, FULL_HEIGHT)
 	panel.BackgroundColor3 = BG
 	panel.BackgroundTransparency = 0.15
 	panel.BorderSizePixel = 0
@@ -160,9 +176,35 @@ function BuildMenuUI.new(api: Api.Api): UI
 	gl.CellPadding = UDim2.fromOffset(2, 3)
 	gl.SortOrder = Enum.SortOrder.LayoutOrder
 	gl.Parent = grid
+	-- the hover tooltip: name, then the type's stats (C-107)
+	-- (its own screen, over the unit panel and the command card)
+	local tipGui = Instance.new("ScreenGui")
+	tipGui.Name = "BuildTooltip"
+	tipGui.ResetOnSpawn = false
+	tipGui.DisplayOrder = 30
+	local tip = Instance.new("Frame")
+	tip.Name = "Tooltip"
+	tip.BackgroundColor3 = BG
+	tip.BackgroundTransparency = 0.05
+	tip.BorderSizePixel = 0
+	tip.AutomaticSize = Enum.AutomaticSize.Y
+	tip.Size = UDim2.fromOffset(300, 0)
+	tip.Visible = false
+	tip.Parent = tipGui
+	Kit.pad(tip, Kit.SPACE.m, Kit.SPACE.s)
+	Kit.list(tip, 2)
+	local tipTitle = Kit.text(tip, "", "section", Color3.fromRGB(176, 230, 120))
+	tipTitle.LayoutOrder = 1
+	local tipBody = Kit.text(tip, "", "small", Kit.COLOR.text)
+	tipBody.LayoutOrder = 2
+	tipBody.TextWrapped = true
+	tipBody.AutomaticSize = Enum.AutomaticSize.Y
+	tipBody.Size = UDim2.new(1, 0, 0, 0)
 	Kit.skin(gui) -- the UI kit's look (C-105)
+	Kit.skin(tipGui)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
-	return { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
+	tipGui.Parent = gui.Parent
+	return { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, portraits = {}, tip = tip, tipTitle = tipTitle, tipBody = tipBody, hovered = nil, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
 end
 
 -- The menu's keys (Controls.capture): true when it took the key.
@@ -188,6 +230,50 @@ function BuildMenuUI.capture(ui: UI, api: Api.Api, input: InputObject): boolean
 	return false
 end
 
+-- The tooltip for the hovered tile, beside the menu.
+local function tooltip(ui: UI, api: Api.Api, items: { string })
+	local i = ui.hovered
+	local defId = i and items[i]
+	local b = i and ui.itemButtons[i]
+	if defId == nil or b == nil or not b.Visible then
+		ui.tip.Visible = false
+		return
+	end
+	local world = api.world
+	local def = world.defs.units[defId]
+	local sheet = UnitStats.ofDef(world, def)
+	local lines = {}
+	if def.description then
+		table.insert(lines, def.description)
+	end
+	local menu = ui.menu
+	local power = 0
+	for _, id in api.state.selection do
+		local u = world.units[id]
+		local d = u and world.defs.unitByIndex[u.defIndex or 0]
+		power = math.max(power, d and d.buildPower or 0)
+	end
+	local cost = def.cost or {}
+	local time = if power > 0 and cost.buildTime then string.format("  ·  %ds at %d buildpower", math.ceil(cost.buildTime / power), power) else ""
+	table.insert(lines, `Cost {cost.supply or 0} supply / {cost.power or 0} power{time}`)
+	if sheet.maxHealth then
+		table.insert(lines, `Health {sheet.maxHealth}`)
+	end
+	for _, l in UnitStats.lines(sheet) do
+		if not string.find(l, "^Cost ") then
+			table.insert(lines, l)
+		end
+	end
+	ui.tipTitle.Text = def.name
+	ui.tipBody.Text = table.concat(lines, "\n")
+	-- beside the menu, level with the tile, kept on screen
+	local p = b.AbsolutePosition
+	local screen = (ui.tip.Parent :: ScreenGui).AbsoluteSize
+	local y = math.min(p.Y, screen.Y - ui.tip.AbsoluteSize.Y - 4)
+	ui.tip.Position = UDim2.fromOffset(ui.panel.AbsolutePosition.X + ui.panel.AbsoluteSize.X + 6, math.max(0, y))
+	ui.tip.Visible = menu ~= nil
+end
+
 function BuildMenuUI.step(ui: UI, api: Api.Api)
 	local world = api.world
 	local menu = BuildMenu.of(world, api.state.selection)
@@ -195,12 +281,21 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 	ui.panel.Visible = #menu.tabs > 0
 	if #menu.tabs == 0 then
 		ui.armed = false
+		ui.tip.Visible = false
 		return
 	end
+	tooltip(ui, api, menu.items[menu.tabs[math.clamp(ui.tab, 1, #menu.tabs)]] or {})
+	-- between the minimap and the unit panel (120 high) on short screens: the grid scrolls
+	local camera = workspace.CurrentCamera
+	local scale = ui.gui:FindFirstChild("SettingsScale")
+	local k = if scale and scale:IsA("UIScale") then scale.Scale else 1
+	local inset = game:GetService("GuiService"):GetGuiInset()
+	local room = ((if camera then camera.ViewportSize.Y else 1080) - inset.Y) / k - TOP - 120 - 4
+	ui.panel.Size = UDim2.fromOffset(WIDTH, math.clamp(room, 26 + CELL + 11, FULL_HEIGHT))
 	ui.tab = math.clamp(ui.tab, 1, #menu.tabs)
 	local items = menu.items[menu.tabs[ui.tab]] or {}
 	-- redraw when the tabs, the tab, the armed state or a queued count change
-	local parts = { table.concat(menu.tabs, ","), tostring(ui.tab), tostring(ui.armed) }
+	local parts = { table.concat(menu.tabs, ","), tostring(ui.tab), tostring(ui.armed), tostring(Models.version), tostring(MeshModels.stats.built), tostring(world.me.team) }
 	for _, defId in items do
 		table.insert(parts, tostring(queuedCount(api, menu, world.defs.units[defId].index)))
 	end
@@ -235,22 +330,33 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			b = button(ui.grid, "Item")
 			b.Text = ""
 			b.BackgroundColor3 = TILE
-			-- the type's glyph, its name, the hotkey and the queued count (BAR tiles)
+			b.ClipsDescendants = true
+			-- the model portrait, the type's icon bottom right, the cost bottom
+			-- left, the hotkey and the queued count (BAR tiles, C-107)
+			ui.portraits[i] = Portrait.new(b)
 			local g = Glyph.new(b)
-			g.root.Position = UDim2.fromScale(0.5, 0.42)
+			g.root.AnchorPoint = Vector2.new(1, 1)
+			g.root.Position = UDim2.new(1, -2, 1, -2)
+			g.root.ZIndex = 4
 			ui.itemGlyphs[i] = g
-			local name = Instance.new("TextLabel")
-			name.Name = "Title"
-			name.BackgroundTransparency = 1
-			name.AnchorPoint = Vector2.new(0.5, 1)
-			name.Position = UDim2.new(0.5, 0, 1, -1)
-			name.Size = UDim2.new(1, -2, 0, 11)
-			name.Font = Enum.Font.Gotham
-			name.TextSize = 9
-			name.TextColor3 = Color3.fromRGB(225, 225, 225)
-			name.TextTruncate = Enum.TextTruncate.AtEnd
-			name.ZIndex = 4
-			name.Parent = b
+			local function costLabel(name: string, y: number, color: Color3): TextLabel
+				local l = Instance.new("TextLabel")
+				l.Name = name
+				l.BackgroundTransparency = 1
+				l.AnchorPoint = Vector2.new(0, 1)
+				l.Position = UDim2.new(0, 3, 1, y)
+				l.Size = UDim2.new(1, -24, 0, 12)
+				l.Font = Enum.Font.GothamBold
+				l.TextSize = 11
+				l.TextColor3 = color
+				l.TextStrokeTransparency = 0.35
+				l.TextXAlignment = Enum.TextXAlignment.Left
+				l.ZIndex = 4
+				l.Parent = b
+				return l
+			end
+			costLabel("Supply", -13, Color3.fromRGB(235, 235, 235))
+			costLabel("Power", -1, Color3.fromRGB(255, 214, 60))
 			local hot = Instance.new("TextLabel")
 			hot.Name = "Hot"
 			hot.BackgroundTransparency = 1
@@ -276,6 +382,14 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			count.ZIndex = 4
 			count.Parent = b
 			local index = i
+			b.MouseEnter:Connect(function()
+				ui.hovered = index
+			end)
+			b.MouseLeave:Connect(function()
+				if ui.hovered == index then
+					ui.hovered = nil
+				end
+			end)
 			b.MouseButton1Click:Connect(function()
 				pick(ui, api, index, shift())
 			end)
@@ -293,13 +407,16 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		local cost = def.cost or {}
 		b.LayoutOrder = i
 		b.Visible = true
-		local style = Icons.ofDef(def, world.me.team, 24)
+		local style = Icons.ofDef(def, world.me.team, 18)
 		Glyph.apply(ui.itemGlyphs[i], style, TeamColors(world.me.team))
-		;(b :: any).Title.Text = def.name
+		Portrait.set(ui.portraits[i], def, world.me.team)
+		;(b :: any).Supply.Text = tostring(cost.supply or 0)
+		;(b :: any).Power.Text = tostring(cost.power or 0)
 		;(b :: any).Hot.Text = if ui.armed and i <= 10 then tostring(i % 10) else ""
 		;(b :: any).Count.Text = if n > 0 then tostring(n) else ""
 		b:SetAttribute("Cost", `{cost.supply or 0} supply, {cost.power or 0} power`)
 		b.BackgroundColor3 = if n > 0 then Color3.fromRGB(64, 84, 64) else TILE
+		b:SetAttribute("DefId", defId)
 	end
 	for i = #items + 1, #ui.itemButtons do
 		ui.itemButtons[i].Visible = false

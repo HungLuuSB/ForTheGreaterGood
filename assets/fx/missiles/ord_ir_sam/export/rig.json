@@ -1,0 +1,96 @@
+{
+  "id": "ord_ir_sam",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.0,
+        0.025
+      ],
+      "size": [
+        0.9122,
+        0.9122,
+        4.35
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        0.0,
+        0.9
+      ],
+      "size": [
+        0.58,
+        0.58,
+        0.12
+      ]
+    },
+    {
+      "name": "base_glow_weapon",
+      "piece": "base",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        0.0,
+        2.21
+      ],
+      "size": [
+        0.308,
+        0.293,
+        0.02
+      ]
+    }
+  ],
+  "glowShare": 0.0904,
+  "triangles": {
+    "base": 376,
+    "total": 376
+  },
+  "textures": {
+    "size": 256,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -79,7 +79,7 @@ function Interp.sample(unit: World.Unit, t: number): (number, number, number, nu
 		local prev = snaps[n - 1]
 		local span = last.tick - prev.tick
 		local k = math.min(over, Interp.MAX_EXTRAPOLATE) / span
-		return last.x + (last.x - prev.x) * k, last.z + (last.z - prev.z) * k, last.alt + (last.alt - prev.alt) * k, lerpAngle(last.heading, last.heading + (last.heading - prev.heading), k)
+		return last.x + (last.x - prev.x) * k, last.z + (last.z - prev.z) * k, last.alt + (last.alt - prev.alt) * k, lerpAngle(last.heading, last.heading + ((last.heading - prev.heading + math.pi) % (2 * math.pi) - math.pi), k) -- the turn's short way (C-107)
 	end
 	return last.x, last.z, last.alt, last.heading
 end

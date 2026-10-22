@@ -4,7 +4,9 @@
 -- for selected units (guide 15.6) and as translucent queued structures. A
 -- point is dropped when its unit gets close; a unit target follows that unit
 -- and is dropped when it's gone; a queued build is done once an own frame of
--- that structure stands on its spot (C-23).
+-- that structure stands on its spot (C-23). A factory's orders are for the
+-- units it builds (the sim's rally point): they stay until replaced or
+-- stopped (C-109).
 -- Pure Luau (C-7).
 
 local Formation = require("@shared/Grid/Formation")
@@ -139,6 +141,10 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 			wp.byUnit[id] = nil
 			wp.idleSince[id] = nil
 			continue
+		end
+		local udef = World.def(world, u)
+		if udef and udef.domain == "structure" and udef.buildOptions and #udef.buildOptions > 0 then
+			continue -- a factory's orders for its new units: kept until replaced or stopped
 		end
 		-- queued builds anywhere in the list: done once their frame stands
 		for i = #list, 1, -1 do

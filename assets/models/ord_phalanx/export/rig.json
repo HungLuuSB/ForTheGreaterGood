@@ -1,0 +1,146 @@
+{
+  "id": "ord_phalanx",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        4.7875,
+        0.0
+      ],
+      "size": [
+        14.6954,
+        9.575,
+        14.6954
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        0.0,
+        7.0,
+        0.0
+      ],
+      "size": [
+        1.6,
+        2.6,
+        1.5598
+      ],
+      "pivot": [
+        0.0,
+        5.7,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "beam": {
+      "parent": "core",
+      "at": [
+        0,
+        8.3,
+        0
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "core"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.435,
+        0.0
+      ],
+      "size": [
+        14.66,
+        7.93,
+        14.66
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        3.6,
+        0.0
+      ],
+      "size": [
+        12.16,
+        0.3,
+        12.0934
+      ]
+    },
+    {
+      "name": "core_glow_power",
+      "piece": "core",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        7.0,
+        0.0
+      ],
+      "size": [
+        1.1,
+        2.4,
+        1.0724
+      ]
+    }
+  ],
+  "glowShare": 0.0553,
+  "triangles": {
+    "base": 1472,
+    "core": 260,
+    "total": 1732
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

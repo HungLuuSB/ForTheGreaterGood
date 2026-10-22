@@ -152,6 +152,11 @@ local function setGoal(u: Unit, name: string, kind: number, axisName: Axis, goal
 		tr = { piece = p, kind = kind, axis = axis, cur = 0, goal = 0, speed = 0 }
 		p.tracks[key] = tr
 	end
+	if kind == 1 then
+		-- a turn takes the short way round: aims arrive in -180..180°, and
+		-- from 170° to -170° a straight step swung 340° (the user, C-107)
+		goal = tr.cur + (goal - tr.cur + math.pi) % (2 * math.pi) - math.pi
+	end
 	tr.goal = goal
 	tr.speed = speed or 0
 	if tr.speed <= 0 or u.lod == "far" then

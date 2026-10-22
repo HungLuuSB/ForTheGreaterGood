@@ -4,6 +4,39 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, per-unit commands, factory orders, top strip)
+
+- **Each unit gets its own commands (C-109):** the command card shows only what the selection can do, and shrinks to fit.
+  - defenses: stop, attack, fire state (plus on / off once request 43's towers exist);
+  - builders: movement, stop, repair, reclaim (E, then click a wreck), guard to assist;
+  - silos: stop (the launch) and attack (a manual launch);
+  - tanks, aircraft and ships: movement, attack, fire and move state;
+  - factories: repeat, cancel, and Move / Fight / Patrol / Guard as orders for the units they build;
+  - a mixed selection gets the union.
+- **Factory orders for new units:** the sim keeps one rally point today, so I asked sim-A for a full order queue per factory (request 44: pre-move, then guard or patrol). The client already offers the orders on factories and keeps drawing them until replaced.
+- **Roblox top bar gone where Roblox allows it:**
+  - chat, player list, backpack and health are off;
+  - the resource bars and debug overlay moved up into the top strip;
+  - Settings sits in the upper-left corner (Resign will join it).
+  - **Not removable:** Roblox's own menu button keeps the first ~164 × 58 pixels of the top left (measured: `GuiService.TopbarInset`), even with the top bar disabled, so the minimap starts right under it instead of at the very top.
+- **Minimap:** smaller, 220 pixels (was 280); the build menu follows it up.
+- **Missile meshes:** `lune run mesh_materials` now also covers C's effect meshes (missiles, shield emitter) for when they're approved.
+- **Screenshots:** `debug_out/screens/hud_topstrip.jpg`, `minimap_220.jpg`.
+
+## Summary (2026-10-23, build menu portraits, turn fix, shield and defense requests)
+
+- **Build menu, BAR style (C-107):** each tile shows the unit's model at a three-quarter angle (the BAR mesh, or its blockout until the mesh loads), its type icon at the bottom right, and its cost stacked at the bottom left (supply white, power yellow). Four larger tiles per row.
+- **Hover a tile** to see its name, description, cost and build time at the selected builder's power ("51s at 100 buildpower"), health, weapons (DPS, range, reload) and speed / sight.
+- **"Off" on factories:** only converters use the on/off switch, so every factory showed "Off" in red. Units that can't switch now show a neutral grey "On / Off".
+- **Turrets turning the long way:** the client drew turret turns straight from one angle to the next. Aims crossing ±180° (170° to −170°) swung 340°. Turns now take the short way. The server's aim already did; the client also extrapolated a turning hull the long way across ±180°, now fixed too.
+- **Sent to sim-A (requests 42, 43):**
+  - **Shield, made simple:** destroy every projectile on contact.
+  - **Build speed:** a Lancer takes 51 s at the vehicle plant; asked to roughly halve T1 build times or double the plants' power.
+  - **T2 defenses** (you corrected T3 to T2): a Pulsar-style beam tower per faction (long-range precise beam, heavy hit, big power cost per shot; switched off it retracts into an armored shell), then more T2 defenses.
+- **Sent to models-C (request 2):** the beam tower meshes. C proposed pieces with the retract pose and queued them after the T1 aircraft.
+- **When those land, client side:** the beam effect (your reference: a thin bright line from the barrel), the retract pose, the on/off button.
+- **Screenshots:** `debug_out/screens/buildmenu_tooltip.jpg`, `buildmenu_structures.jpg`.
+
 ## Summary (2026-10-23, your C-103..105 review follow-ups)
 
 - **Your review (2026-10-23):** C-103, C-104 and C-105 approved.
@@ -17,7 +50,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Graphics settings:** "Detailed models" On/Off (Off draws blockouts and loads nothing), "Glow" Off/Low/High, "Headlights" On/Off. The detailed-models request wasn't anywhere in the repo, so it's new here.
 - **Model loading:** types drawn on screen load first, then every type in the match, then your faction, then the rest. Measured on the `fog` profile: the Order vehicle plant ready at 2.5 s and the Mason, Herald and Lancer by 5.3 s (they were 16–19 s, alphabetical behind Chaos). The whole set still takes about 18 s, in the background.
 - **Glow against team color (your second message):** with C's clash table, an Order unit on cyan (team 7) and a Chaos unit on orange (team 6) show their running and power glow white; head and weapon glow stay. Checked in a match.
-- **Factory pulse capped at 3** (was 4): at 3.9 the Order vehicle plant's door bloomed into a white block. At 3 it's still bright. Screenshot pair below; tell me if you want it lower.
+- **Factory pulse capped at 3** (was 4): at 3.9 the Order vehicle plant's door bloomed into a white block. At 3 it's still bright. Screenshot pair below. You confirmed 3 (2026-10-23).
 - **Statistics data from the sim:** sim-A delivered request 41 (S-88, `Stats.series`), so my stopgap sampler is gone and "Damage · Taken" now has data.
 - **Screenshots:** `debug_out/screens/uikit2_*.jpg`.
 
@@ -304,6 +337,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `bdc88e8` (BAR models built from the mesh manifest with Rojo-written materials, glow driver and headlights, C-103; includes m-models `44880cc`; touches CLAUDE.md and the three project files, new `place/`); test_client 187, test 404, build passed.
 - Ready to merge: `51e4d07` (one shield hit reads as one impact: faint outer hex rings, C-104); test_client 187, build passed.
 - Ready to merge: `18195e5` (UI kit; settings, statistics panel and lobby rebuilt on it; server stat samples; sim request 41, C-105; touches src/roblox Main.server and Lobby); test_client 191, test 404, build passed.
+- Ready to merge: `b5b5d48` (review follow-ups: modal panels, fitted layouts, graphics options, model load order, glow vs team color, pulse 3, Stats.series, C-106 `767ae09`; merged with main at protocol 26, includes m-models `0af6ed7`); test_client 192, test 407, build passed.
+- Ready to merge: `ad2f474` (build menu portraits and stats tooltip, On / Off, short-way turns, sim requests 42-43, models request 2, C-107); test_client 193, test 407, build passed.
 
 ## Tasks
 
@@ -631,6 +666,54 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: per-unit command sets; factory orders; Roblox top bar cleared (C-109)
+
+- **Asked:** each unit its own commands (defense on / off and stop; builders move, stop, repair, assist; silos stop the launch and attack manually; air its own); queued orders for units new from factories; remove Roblox's top bar, minimap and resource bars up there, settings and resign in the upper-left corner.
+- **Command sets** (`Core/CommandSet`, pure, `CommandSet.spec` 2):
+  - every type: stop;
+  - armed: attack and fire state (silos, whose weapons are all stockpiled launchers: attack only);
+  - mobile: move, fight, patrol, guard, and move state when armed;
+  - builders that aren't factories: repair and reclaim;
+  - factories: repeat, cancel, and move / fight / patrol / guard;
+  - switchable (converters, or a def with `toggle`): on / off;
+  - the alert jump always.
+  - `UI/CommandCard` shows the selection's union in card order and resizes. Repair (target an own unit) and reclaim (the known wreck nearest the click, within 24 studs) are new command modes in `Api.commandAt`; E starts reclaim, with hints and the keys table updated.
+  - Checked in Studio: Mason stop / move / patrol / fight / guard / repair / reclaim; vehicle plant repeat / cancel / stop / move / patrol / fight / guard; shield generator and fusion stop only; Oracle movement only.
+- **Factory orders:** `Core/Waypoints` keeps a factory's orders (they don't expire on idle). The sim uses only the last move-like one as its rally point; sim request 44 asks for the full list copied to each new unit.
+- **Top bar:**
+  - `Main` turns off Roblox's core UI and asks `SetCore("TopbarEnabled", false)`;
+  - the resource bars (y 6), the alert feed (y 52) and the debug overlay (y 6) draw from the top of the window (IgnoreGuiInset);
+  - the Settings button sits in the top strip right after Roblox's corner, following `GuiService.TopbarInset` (measured 164 × 58 at the top left, unchanged with the top bar disabled: Roblox keeps its menu button);
+  - the minimap stays just under that corner.
+- **Screenshot:** `debug_out/screens/hud_topstrip.jpg` (Mason selected: its 8 commands; resource bars and debug overlay at the top; Settings top left).
+
+## 2026-10-23: smaller minimap; effect meshes in the materials file (C-108)
+
+- **Minimap:** 280 → 220 pixels (the user: smaller). The build menu now starts under it (`MinimapUI.SIZE`), so both tile rows fit above the unit panel on short screens. Screenshot `debug_out/screens/minimap_220.jpg`.
+- **Effect meshes** (models-C's request): `lune run mesh_materials` also writes a SurfaceAppearance per `Meshes.fx` entry, named `fx_<id>`: the six missiles and the shield emitter, merged from m-models `764874b`. `MeshMaterials.spec` checks them.
+
+## 2026-10-23: build menu portraits and tooltip; On / Off; short-way turns; shield and T2 defense requests (C-107)
+
+- **Your notes** (after a shield test):
+  - shield simple (destroy on contact);
+  - build speed too slow, and factories say OFF;
+  - units sometimes rotate the long way;
+  - build menu BAR style (model preview at an angle plus icon), stats on hover;
+  - more T2 defenses like the Pulsar (corrected from T3).
+- **Build menu** (`UI/BuildMenu`, `UI/Portrait`):
+  - **Tiles:** 66 px, 4 per row. Each holds a ViewportFrame with the unit's model template (`Render/Models`: the mesh when ready, else the blockout), team-colored, the camera at a three-quarter view from the front right and above, framed to the model's bounds. Portraits rebuild only when the def, the team or the template changes (a mesh replacing its stand-in).
+  - **On each tile:** the type glyph (18 px) at the bottom right; supply (white) and power (yellow) stacked at the bottom left; the hotkey top left; the queued count top right. The name moved to the tooltip.
+  - **Tooltip** (its own screen at DisplayOrder 30, over the unit panel and command card, kept on screen): the name in yellow-green as in BAR's unit panel, the description, cost with build time at the selected builders' highest build power, health, and `UnitStats.lines` (new `UnitStats.ofDef`: a type's sheet with no live state).
+  - **Height:** the menu fits between the minimap and the unit panel (top-bar inset included) and scrolls when short.
+- **On / Off** (`UI/CommandCard`): the sim's TOGGLED_ON is used by converters only, so other selections show "On / Off" with a grey bar instead of a red "Off".
+- **Short-way turns:**
+  - `Core/PieceAnim.setGoal` turns from the current angle by the wrapped difference;
+  - `Core/Interp` extrapolates heading by the wrapped step;
+  - `PieceAnim.spec`: 170° → −170° at 20°/s takes 1 s and ends at −170°;
+  - the server's `Shared/Combat/Aim` already wrapped. A hull that turns the long way would be the sim's movement; not seen in testing.
+- **Requests:** sim 42 (shield destroys every projectile on contact; T1 build speed) and 43 (T2 defenses: Pulsar-style beam tower with an off / retract state, then more); models 2 (the tower meshes; C's proposed pieces: `base`, `turret` sinking y −2.4 when retracted, `barrel`, `muzzle`, client-only shell lids `shellL` / `shellR`).
+- **Screenshots** (`debug_out/screens/`, `fog` profile): `buildmenu_tooltip.jpg` (vehicle plant menu, Lancer tooltip), `buildmenu_structures.jpg` (Masons' Economy tab).
 
 ## 2026-10-23: review follow-ups: modal panels, fitted layouts, graphics options, model loading order, glow against team color (C-106)
 
@@ -1208,8 +1291,15 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Per-unit commands and top strip (C-109):** `debug_out/screens/hud_topstrip.jpg`. Your calls:
+  - **Each type's command list** (`Core/CommandSet`).
+  - **The minimap under Roblox's corner:** it can't go higher without being covered by Roblox's menu button.
+
+- **Build menu (C-107):** `debug_out/screens/buildmenu_*.jpg`. Your calls:
+  - **Portrait angle and size:** 66 px tiles, 4 per row (`UI/Portrait`, `UI/BuildMenu`).
+  - **What the tooltip lists.**
+
 - **Review follow-ups (C-106):** `debug_out/screens/uikit2_*.jpg`. Your calls:
-  - **Factory pulse at 3:** still bright on the Order plant's door; lower if wanted (`Core/Glow.PULSE_HIGH`).
   - **Scrim darkness** (45%, `Kit.COLOR.scrimTransparency`).
   - **The six Combat charts** (Units · Alive is derived).
 
@@ -1286,9 +1376,40 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the models session
 
+2. **T2 defense meshes (2026-10-23, the user asked; sim request 43 brings the defs):**
+   - a Pulsar-style beam tower per faction, with a tall emitter barrel, glowing charge rails on the base (`power` glow), and a **retract pose**: an armored shell the turret sinks into when switched off (a piece the client moves down, e.g. `turret` dropping into `base`, plus shell plates);
+   - then the other T2 defenses as the sim defines them;
+   - BAR style, as for the T1 pairs, with glow parts and the manifest.
+
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+44. **Open.** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
+    - Today a MOVE / FIGHT / PATROL given to a factory sets one rally point (Orders.give; PATROL becomes fight).
+    - **Please keep the factory's whole order list instead,** as for a unit: MOVE, FIGHT, PATROL, GUARD (a unit), REPAIR, ATTACK. Shift appends, a plain order replaces, STOP clears it.
+    - Each unit the factory produces rolls out of the exit, then takes a copy of the list, so a pre-move then a patrol, or a move then guard a commander, works.
+    - The client already offers Move, Fight, Patrol and Guard on factories and keeps drawing the factory's orders until they're replaced or stopped (C-109). Nothing new is needed on the wire.
+
+43. **Open.** **More T2 defenses, a Pulsar-style beam tower first (2026-10-23, the user asked with BAR's Pulsar as the reference; the user corrected T3 to T2):** today the defenses above T1 are thin (Order's Citadel is T3).
+    - **A long-range beam tower per faction, T2** (as BAR's Pulsar):
+      - a precise ground-to-ground beam (`type = "BEAM"`) with very long range (Pulsar: 1400 against Citadel-class ranges here), a very heavy hit and a long reload (Pulsar: 10,800 damage every 9.9 s, small area);
+      - a big **power cost per shot** (Pulsar: 1500), so the economy matters;
+      - **"Turn it OFF to retract into its armored shell":** off (TOGGLED_ON clear) it can't fire but takes far less damage (about 4× effective HP). This gives the on/off button a use beyond converters;
+      - high enough to fire over other defenses;
+      - poor against radar contacts (a precision weapon: the Pinpointer accuracy from S-59 applies).
+    - **More T2 defenses** for both factions, e.g. a heavy laser or plasma turret, a long-range AA site, a T2 artillery emplacement. Names in the faction styles (Order Latin / virtue / heraldic; Chaos myth beasts / ruin).
+    - **Builders:** the T2 builders' buildOptions.
+    - **Client side:** I'll draw the beam (the user's reference: a thin bright line with a glow from the barrel to the target, held for the shot), the retract pose in the piece script, and the on/off button. The models stream needs the meshes (models request 2).
+
+42. **Open.** **Shield: destroy every projectile on contact; faster unit production (2026-10-23, the user):**
+    - **Shield, made simple:** "destroy projectile on contact, that will ease thing out." Every projectile that reaches an up enemy dome is destroyed at the surface (SHIELD_HIT ABSORBED, as the light shells already are, S-85), whatever its mass: no braking field, no turning back, no breach.
+      - Keep the charge drain per hit (by mass) and the collapse at 0% / rise at 25%.
+      - The client already draws an absorbed hit at the surface; it will drop the field's bow-shock look once you confirm.
+      - Please keep the hitscan / beam stop from S-89.
+    - **Build speed:** "build speed for a single unit take too much time." A Lancer is 5,100 build time at the vehicle plant's 100 build power: **51 s each**, longer on a stall.
+      - BAR's T1 tanks take about 25–30 s at a plant. Halving T1 build times, or doubling the T1 plants' build power, would match.
+      - Your call which, with the balance report.
 
 41. **Done and used (S-88, `Stats.series`; C-106).** **Match statistics over time (2026-10-23, the user asked, C-105):** the statistics panel charts each player's numbers over match time.
     - **Please keep, in `Sim/Stats`, a sample every 150 ticks (10 s)** per player:

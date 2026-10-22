@@ -35,7 +35,7 @@ local KEY = Enum.KeyCode.O
 -- the screens the UI scale applies to: the panels; overlays drawn at world
 -- positions (icons, health bars, the selection box, missile labels) and
 -- Roblox's own screens keep screen pixels
-local SCALED = { SettingsButton = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
+local SCALED = { SettingsButton = true, BuildTooltip = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
 local PAGES = { "Camera", "Graphics", "Interface", "Audio", "Keys" }
 
 export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, layouts: { [string]: UIListLayout }, state: Settings.State }
@@ -211,11 +211,19 @@ function SettingsMenu.new(): UI
 	buttonGui.ResetOnSpawn = false
 	buttonGui.DisplayOrder = 6
 	buttonGui.IgnoreGuiInset = true
+	buttonGui.IgnoreGuiInset = true
 	local open = Kit.button(buttonGui, "Settings (O)", "ghost", function() end, 116)
 	open.Name = "Open"
-	open.AnchorPoint = Vector2.new(1, 1)
-	open.Position = UDim2.new(1, -8, 1, -40) -- above the follow button
-	open.Size = UDim2.fromOffset(116, 26)
+	open.Size = UDim2.fromOffset(116, 28)
+	-- the upper left corner, right after Roblox's own buttons (they keep the
+	-- first ~164 pixels of the top strip; a resign button will join it), C-109
+	local GuiService = game:GetService("GuiService")
+	local function corner()
+		local inset = GuiService.TopbarInset
+		open.Position = UDim2.fromOffset(inset.Min.X + 8, math.max(4, (inset.Height - 28) / 2))
+	end
+	corner()
+	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(corner)
 	open.TextSize = 13
 	local ui: UI
 	local panel = Kit.panel(gui, "Settings", Vector2.new(780, 500), PAGES, function(name)

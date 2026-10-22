@@ -124,6 +124,15 @@ def main():
         "surfaceAppearance": shield["emitterSurfaceAppearance"],
     }}
     fx = {"shield_emitter": entry(em_rig, em_assets, "approved" if "shield_emitter" in APPROVED else "review", None)}
+    # missiles, by weapon def ID (fx.md "Missiles")
+    missiles = os.path.join(ROOT, "assets", "fx", "missiles")
+    for wid in sorted(os.listdir(missiles)):
+        rig_p = os.path.join(missiles, wid, "export", "rig.json")
+        assets_p = os.path.join(missiles, wid, "roblox_assets.json")
+        if wid in skip or not (os.path.exists(rig_p) and os.path.exists(assets_p)):
+            continue
+        status = "approved" if wid in APPROVED else "review"
+        fx[wid] = entry(load(rig_p), load(assets_p), status, None if status == "approved" else REVIEW_NOTE)
 
     body = lua({"units": units, "fx": fx}, 0)
     text = f"""--!strict

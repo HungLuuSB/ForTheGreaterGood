@@ -13,7 +13,8 @@ local TeamColors = require("../Render/TeamColors")
 
 local MinimapUI = {}
 
-local SIZE = 280 -- pixels: top left, BAR layout (C-71)
+local SIZE = 220 -- pixels: top left, BAR layout (C-71; 280 until C-107, the user: smaller)
+MinimapUI.SIZE = SIZE -- the build menu sits under it
 
 export type UI = {
 	gui: ScreenGui,

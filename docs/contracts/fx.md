@@ -65,6 +65,18 @@ Blue on Order and red on Chaos read apart (darker, more saturated than the glow)
 
 **Cost:** 1–4 extra MeshParts per model, a few dozen triangles each, sharing the unit's maps; nothing animates unless the client changes a property.
 
+## Missiles (BAR-style meshes, the user's request 2026-10-22)
+
+One mesh per missile weapon def, by its ID: `ord_ir_sam`, `chs_ir_sam`, `ord_radar_sam`, `chs_radar_sam`, `ord_nuke`, `chs_nuke`. They're listed in the mesh manifest under `fx` (`Meshes.fx.<weapon id>`: piece `base`, maps, glow parts, status; rig.md 7). Each replaces the primitive missile parts in `Render/Effects.luau`; the client keeps drawing the flame, the light and the smoke.
+
+- **Frame:** forward = −Z, the middle at the origin, 4.4 studs from the tip (z = −2.2) to the nozzle (z = 2.2). That's the client's 1× style frame, so the client scales it the way it scales its own parts: IR SAMs ×1 (`smoke_thin`), radar SAMs ×2.3 (`smoke_thick`), strategic missiles ×4.5 (`smoke_huge`). Scale `Size` and positions together.
+- **Looks:**
+  - IR SAM: slim, with a dark IR seeker dome, canards and tail fins (Chaos: three tail fins).
+  - Radar SAM: thicker, with an off-white radome, long mid-body strakes and tail fins.
+  - Nuke: a heavy body with a dark re-entry cone over a warhead bus, stage rings and four fins (Chaos: two strap-on boosters).
+  - All three: faction paint and a team band (`teamPieces` = `base`), tinted like a unit.
+- **Glow:** a `running` stripe round the body (faction accent) and the nozzle throat on `weapon`, at the resting strengths. A missile in flight can simply keep them on; brighten `weapon` with the exhaust if wanted.
+
 ## Shield (Order deployable shield)
 
 The target look: a translucent dome with a bright edge, thin glowing rings flowing from the top down the dome, a curved light beam rising from a small emitter device to the top of the dome, a swirling vortex at the top, floating specks inside, and a ring burst where a shell hits. `R` below is the dome radius in studs.
