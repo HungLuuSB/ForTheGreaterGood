@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 
 import bpy
 
+import anchors
+import animate
 import lib
 
 KINDS = ["paint", "trim", "team", "seam", "era", "track", "steel", "rubber", "glass", "light", "grille", "dark",
@@ -86,20 +88,42 @@ FACTIONS = {
     },
 }
 
+# Neutral props (deposits, M-28): no faction, no glow. The `team` kind is the
+# ground patch the client tints per terrain (alpha mask, like a team plate).
+_NEUTRAL_GLOW = {"running": (200, 200, 200), "head": (200, 200, 200), "power": (200, 200, 200), "weapon": (200, 200, 200)}
+FACTIONS["neutral"] = {
+    "label": "BAR-style neutral terrain prop (M-28)",
+    "paint": (92, 88, 80),
+    "accent": (200, 200, 200),
+    "team_preview": (78, 96, 58),  # grass, for the previews
+    "glow": _NEUTRAL_GLOW,
+    "variants": {"bar": {"type": "plain", "base": (92, 88, 80), "mottle": 0.25, "chip": (120, 116, 108), "grime": (60, 56, 50)}},
+    "specs": {**FACTIONS["chaos"]["specs"],
+              "paint": {"base": None, "roughness": 0.85, "metallic": 0.0, "edge_wear": 0.25, "ao": 0.6},  # stone
+              "dark": {"base": (58, 55, 50), "roughness": 0.9, "metallic": 0.05, "edge_wear": 0.2, "ao": 0.55},  # dark rock
+              "trim": {"base": (104, 98, 88), "roughness": 0.85, "metallic": 0.0, "edge_wear": 0.3, "ao": 0.6},  # loose stones
+              "steel": {"base": (128, 118, 98), "roughness": 0.32, "metallic": 0.85, "edge_mode": "highlight", "edge_wear": 0.35, "ao": 0.7},  # ore sheen
+              "team": {"base": (40, 38, 34), "roughness": 0.95, "metallic": 0.0, "mask": "team", "wash": 0.25,
+                       "chip_reveal": 0.2, "crease": 0.5, "edge_wear": 0.0},  # scraped ground, tinted per terrain
+              },
+}
+
 UP = (0, 1, 0)
 
 # Wrecks (queue item 5, M-24; docs/contracts/fx.md "Wrecks"): FTGG_WRECK=1
 # builds the same pieces battered (lib.WRECK), darkened and sooted, with the
 # glow faces as dead sockets and the team panels scorched grey, into
 # export_wreck/ as <id>_wreck. Same pieces and pivots as the live mesh.
-SOOT = (20, 18, 17)
+# Soot is grey-brown, not black, so wrecks read on dark grass at night; big
+# structures (footprint 2+) scorch along their edges (user review 2026-10-23).
+SOOT = (62, 55, 48)
 
 
 def _char(c, k):
     return tuple(int(c[i] * (1 - k) + SOOT[i] * k) for i in range(3))
 
 
-def wreck_look(look):
+def wreck_look(look, edges=False):
     specs = {}
     for kind, sp in look["specs"].items():
         if kind in GLOW_KINDS:
@@ -113,11 +137,22 @@ def wreck_look(look):
                 sp["base"] = _char(sp["base"], 0.4)
         sp["roughness"] = min(0.95, sp["roughness"] + 0.25)
         sp["metallic"] = sp["metallic"] * 0.6
-        sp["scorch"], sp["soot"], sp["grime"] = 0.75, SOOT, 0.5
+        sp["scorch"], sp["soot"], sp["grime"] = 0.7, SOOT, 0.4
+        sp["scorch_edges"] = edges
         specs[kind] = sp
     paint = _char(look["paint"], 0.4)
     return {**look, "label": "BAR-style wreck (M-24)", "specs": specs,
-            "variants": {"bar": {"type": "paint", "base": paint, "chip": (92, 88, 84), "grime": SOOT}}}
+            "variants": {"bar": {"type": "paint", "base": paint, "chip": (112, 106, 98), "grime": SOOT}}}
+
+
+@dataclass
+class Rec:
+    """A piece in rig order (specs and their animated sub-pieces)."""
+    name: str
+    parent: str | None
+    pivot: tuple
+    anim: dict | None
+    sub: bool
 
 
 @dataclass
@@ -169,8 +204,13 @@ def box_seams(p, center, size, y):
         seam(p, corners[i], corners[(i + 1) % 4], UP, width=0.03)
 
 
-def wheel(p, x, y, z, r, width, sides=10, hub="steel"):
-    """A road wheel along X: rubber tyre, a painted rim face, a steel hub."""
+def wheel(p, x, y, z, r, width, sides=10, hub="steel", name=None):
+    """A road wheel along X: rubber tyre, a painted rim face, a steel hub.
+    With `name` it is its own spinning sub-piece (M-27), pivot at the axle."""
+    if name:
+        with p.sub(name, (x, y, z), "spin", (1, 0, 0)):
+            wheel(p, x, y, z, r, width, sides, hub)
+        return
     p.cylinder("x", (x, y, z), r, width, sides, "rubber", cap_kinds=("trim", "trim"))
     p.cylinder("x", (x, y, z), r * 0.42, width + 0.08, 6, hub)
 
@@ -230,7 +270,7 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     lib.WRECK = None
     if wreck:
         out = os.path.join(here, "export_wreck")
-        look = wreck_look(look)
+        look = wreck_look(look, edges=footprint >= 2)
         lib.WRECK = {"size": footprint * 8, "seed": sum(ord(ch) * (i + 1) for i, ch in enumerate(unit_id)) % 9973}
         unit_id = f"{unit_id}_wreck"
     lib.reset_scene()
@@ -239,20 +279,30 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     target = lib.new_image("bake_target", tex, "sRGB")
     materials = {k: lib.make_material(k, look["specs"][k], [look["variants"][v] for v in keys], target) for k in KINDS}
 
+    # rig order: each spec, then its animated sub-pieces (lib.Piece.sub, M-27)
+    order = []  # Rec(name, parent, pivot, anim)
     low, high = [], []
+    piece_anim = animate.for_unit(live_id)
     for spec in pieces:
         p = lib.Piece(spec.name, KINDS, spec.pivot)
         spec.build(p)
         if scale:
             p.scale(scale)
-        low.append(p.to_object(materials, col))
         h = lib.Piece(spec.name + "_hi", KINDS, spec.pivot)
         spec.build(h)
         spec.details(h)
         if scale:
             h.scale(scale)
+        order.append(Rec(spec.name, spec.parent, lib.scaled(spec.pivot, scale) if scale else spec.pivot,
+                         piece_anim.get(spec.name), False))
+        low.append(p.to_object(materials, col))
         high.append(h.to_object(materials, col))
-    pivots = {s.name: (lib.scaled(s.pivot, scale) if scale else s.pivot) for s in pieces}
+        for name, child in p.subs.items():
+            order.append(Rec(name, spec.name, child.pivot, child.anim, True))
+            low.append(child.to_object(materials, col))
+        for name, child in h.subs.items():
+            high.append(child.to_object(materials, col, name=name + "_hi"))
+    pivots = {r.name: r.pivot for r in order}
     if scale and attachments:
         attachments = {k: {**a, "at": list(lib.scaled(a["at"], scale))} for k, a in attachments.items()}
 
@@ -286,9 +336,9 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
 
     # split the glow into its channel parts (after the bake: same UVs, same maps)
     glow = []  # (object, piece name, channel)
-    for spec, o in zip(pieces, low):
+    for r, o in zip(order, low):
         for g, channel in ([] if wreck else split_glow(o)):
-            glow.append((g, spec.name, channel))
+            glow.append((g, r.name, channel))
     glow_area, visible = surface_stats(low, [g for g, _, _ in glow])
     share = glow_area / visible if visible else 0.0
     print(f"[{unit_id}] glow {glow_area:.2f} of {visible:.2f} visible studs^2 = {share * 100:.1f}% "
@@ -324,11 +374,13 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
     lib.export_fbx(exported, os.path.join(out, f"{unit_id}.fbx"))
 
     rig_pieces = {}
-    for spec, o in zip(pieces, low):
-        entry = {"parent": spec.parent, **lib.bounds(o)}
-        if spec.parent:
-            entry["pivot"] = list(pivots[spec.name])
-        rig_pieces[spec.name] = entry
+    for r, o in zip(order, low):
+        entry = {"parent": r.parent, **lib.bounds(o)}
+        if r.parent:
+            entry["pivot"] = list(pivots[r.name])
+        rig_pieces[r.name] = entry
+    if team_pieces:  # a sub-piece carries its parent's team plates
+        team_pieces = list(team_pieces) + [r.name for r in order if r.sub and r.parent in team_pieces]
     rig_glow = [{"name": g.name, "piece": piece, "channel": channel, "tint": list(look["glow"][channel]),
                  "strength": (glow_strength or {}).get(g.name, GLOW_STRENGTH[channel]), **lib.bounds(g)}
                 for g, piece, channel in glow]
@@ -338,8 +390,10 @@ def run(build_file, unit_id, faction, footprint, pieces, attachments=None, team_
         "footprintStuds": footprint * 8,
         "variants": {"bar": look["label"]},
         "pieces": rig_pieces,
-        "attachments": attachments or {},
-        "teamColorPieces": [] if wreck else (team_pieces or [s.name for s in pieces]),
+        "attachments": {**(attachments or {}), **anchors.for_unit(live_id)},  # + nanoframe anchors (M-25)
+        "teamColorPieces": [] if wreck else (team_pieces or [r.name for r in order]),
+        "visualPieces": [r.name for r in order if r.sub],
+        "anim": {r.name: r.anim for r in order if r.anim},
         "emissive": {"probe": "emissive_probe", "tint": list(look["accent"]), "strength": 2.0},
         "glow": rig_glow,
         "glowShare": round(share, 4),

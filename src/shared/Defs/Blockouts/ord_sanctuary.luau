@@ -18,7 +18,7 @@ return {
 		{ name = "island", parent = "base", shape = "box", size = { 2, 4.4, 5 }, at = { 4.1, 4.9, 2 }, color = "hull" },
 		{ name = "islandGlass", parent = "base", shape = "box", size = { 2.05, 0.4, 5.05 }, at = { 4.1, 6.3, 2 }, color = "glass" },
 		{ name = "mast", parent = "base", shape = "box", size = { 1.2, 2, 1.2 }, at = { 4.1, 8.1, 2.6 }, color = "hull" },
-		{ name = "mastArray", parent = "base", shape = "box", size = { 1.5, 1, 1.5 }, at = { 4.1, 8.3, 2.6 }, color = "dark" },
+		{ name = "mastArray", parent = "base", shape = "box", size = { 1.5, 1, 1.5 }, at = { 4.1, 8.3, 2.6 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "mastGlass", parent = "base", shape = "box", size = { 1.55, 0.25, 1.55 }, at = { 4.1, 8.3, 2.6 }, color = "glass" },
 		{ name = "turret1", parent = "base", shape = "box", size = { 1.2, 0.7, 1.2 }, at = { -3.3, 3.05, -9.5 }, pivot = { -3.3, 2.7, -9.5 }, color = "hull" },
 		{ name = "turret1Front", parent = "turret1", shape = "wedge", size = { 1.2, 0.7, 0.48 }, at = { -3.3, 3.05, -10.34 }, color = "hull" },

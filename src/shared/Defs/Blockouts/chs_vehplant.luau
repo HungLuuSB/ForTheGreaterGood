@@ -23,4 +23,14 @@ for i, p in { { -2, -4 }, { 9, -4 }, { -2, 8 }, { 9, 8 } } do
 	table.insert(parts, { name = `column{i}`, parent = "base", shape = "box", size = { 0.6, 6.6, 0.6 }, at = { p[1], 3.8, p[2] }, color = "dark" })
 end
 
-return { id = "chs_vehplant", parts = parts }
+-- footprint 3 -> 4 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
+	id = "chs_vehplant",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { 3.5, 0.55, 2 } },
+		{ name = "nano1", parent = "base", at = { 4, 6.4, -0.5 } },
+		{ name = "nano2", parent = "base", at = { 3.5, 6.8, -4 } },
+	},
+}, 1.333)

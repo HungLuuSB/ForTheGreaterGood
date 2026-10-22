@@ -13,8 +13,8 @@ return {
 	id = "chs_cyclops",
 	parts = {
 		{ name = "base", shape = "box", size = { 6.0, 1.6, 10 }, at = { 0, 1.8, 0.5 }, color = "hull" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 1.3, 1.8, 11 }, at = { -3.7, 0.9, 0.3 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 1.3, 1.8, 11 }, at = { 3.7, 0.9, 0.3 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 1.3, 1.8, 11 }, at = { -3.7, 0.9, 0.3 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 1.3, 1.8, 11 }, at = { 3.7, 0.9, 0.3 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 		{ name = "spade", parent = "base", shape = "box", size = { 5.6, 1.8, 0.4 }, at = { 0, 1.2, 6.0 }, rot = { 25, 0, 0 }, color = "dark" },
 		{ name = "deckTeamL", parent = "base", shape = "box", size = { 1.3, 0.1, 3.0 }, at = { -2.1, 2.65, -2.8 }, color = "team" },
 		{ name = "deckTeamR", parent = "base", shape = "box", size = { 1.3, 0.1, 3.0 }, at = { 2.1, 2.65, -2.8 }, color = "team" },

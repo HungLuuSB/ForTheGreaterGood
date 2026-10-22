@@ -117,7 +117,7 @@ Meshes.units.ord_lancer    -- by unit def ID; Meshes.fx.shield_emitter for effec
 | `status` | `"approved"` (the user approved the look: use it in game) or `"review"` (uploaded, waiting for review: keep the blockout); `note` says what's under review |
 | `model` | the Open Cloud Model asset (all MeshParts, as uploaded) |
 | `pieces` | by piece name (the def's `pieces`): `mesh` (MeshId), `center` and `size` in model space (section 2, studs), `parent` and `pivot` (joint pivot, model space) for every piece but `base` |
-| `attachments` | `muzzle`, `muzzle2`, … (and e.g. the emitter's `core`): `parent` piece and `at` (model space) |
+| `attachments` | `muzzle`, `muzzle2`, … (and e.g. the emitter's `core`; the nanoframe's `buildpad` and `nano1`, `nano2`, …, section 8): `parent` piece and `at` (model space) |
 | `teamPieces` | the pieces tagged `TeamColor` (section 6) |
 | `maps` | the SurfaceAppearance images: `ALB` (color map, alpha = team mask), `NOR`, `RGH`, `MTL`, `EMI` (the baked emissive mask, kept for reference; glow parts use `glowMask`) |
 | `glow` | the glow parts: `name` (`<piece>_glow_<channel>`), `piece` it's welded to, `channel` (`running`, `head`, `power`, `weapon`), `tint` (RGB 0–255), resting `strength`, `center`, `size`, `mesh` (docs/contracts/fx.md, "Unit glow") |
@@ -132,3 +132,36 @@ Meshes.units.ord_lancer    -- by unit def ID; Meshes.fx.shield_emitter for effec
 - every glow part gets a `SurfaceAppearance` with no color map: `BasePart.Color` = tint, `EmissiveTint` = tint, `EmissiveMaskContent` = `glowMask`, `EmissiveStrength` = strength, `RenderFidelity.Precise` (in a game script: through `AssetService:CreateMeshPartAsync`'s options, and the SurfaceAppearances cloned from `ReplicatedStorage.MeshMaterials`, see above).
 
 **Checks** (`lune run test_client Meshes`): every entry's pieces are exactly the def's pieces (muzzles as attachments), parents and glow pieces exist, team pieces are pieces, channels are known, and every asset ID is present. A `wreck` has exactly the live entry's pieces.
+
+## 8. Construction anchors (nanoframe, M-25)
+
+Owner: models stream. Attachments for the client's BAR-style nanoframe, on every factory (vehicle plants, airfields, shipyards and their advanced versions, both factions) and every constructor (every def with a `nano` piece, Commanders included). They are in the blockouts (`attachments`, section 4) and in the mesh manifest (`attachments`, section 7), at the same places.
+
+| Attachment | On | Meaning |
+|---|---|---|
+| `buildpad` | factories, parent `base` | where the unit in production sits, centred on the pad (vehicle plants: the ramp or bay; airfields: the landing pad or under the open hangar; shipyards: in the slip at the waterline, y = 0). Its forward (−Z) faces the exit: every factory exits at model −Z (the sim spawns a finished unit one cell out along the factory's heading), so it carries no rotation |
+| `nano1`, `nano2`, … | factories (parent `base`): at the emitters and build lights (door jambs and lintel, crane trolleys, lamps under gantries and roofs); constructors (parent `nano`): at the emitter at the tip of the `nano` piece, so they turn with it | where nano-spray starts; spray from every one of them to the frame |
+
+Constructors use `nano1`, not `nano`: an Attachment named like the `nano` piece would make `FindFirstChild("nano", true)` ambiguous, and factories and constructors then share one lookup (`nano1` … `nanoN`, stop at the first missing).
+
+Mesh anchors live in `assets/models/tools/anchors.py` (final model space); `tools/unit.py` merges them into `rig.json`, and `python assets/models/tools/anchors.py --patch` writes them into existing exports without a rebuild. A new factory or constructor gets its anchors in the same commit as its blockout or mesh.
+
+## 9. Animated pieces (M-27)
+
+Owner: models stream. Every part that should move is its own jointed piece with its pivot where it turns or slides, so the client can animate it. **No geometry changed:** existing shapes were split into pieces. Each animated piece carries `anim = { motion, axis, range? }`, with `axis` in model space and a positive rotation as the opening / forward direction:
+- **meshes:** the manifest entry's `anim` (by piece name), with the pieces that exist only for animation listed in its `visualPieces` (section 7);
+- **blockouts:** an `anim` field on the part itself. A part with `anim` is jointed like a visual piece (`Blockout.pieceSet`; `Blockout.anims(bp)` lists them).
+
+| Motion | Meaning | Pieces |
+|---|---|---|
+| `spin` | continuous rotation about `axis` | helicopter `rotor` (Y) and `tailRotor` (X); windmill `rotor` (Z); wheels `wheelL1..N` / `wheelR1..N` (X); jammer emitters (Y): Veilspire `band`, Curtain `tip`, Smog / Blackout `spine` (the rods ride on it) |
+| `turn` | slow rotation or sweep about `axis` (Y) | `radar`, `dish`, `array`, `radarPanel`, `mastArray` (radar dishes and arrays, airfield and ship radars, the Sentry's mast); extractor `drill`; crane `jib`, `deckJib`, `deckCrane`; sonar station `drum` / `ring` |
+| `scroll` | a track set: the band with its road wheels, as one piece (`trackL`, `trackR`, axis X). Bob or judder it with speed. The band's UVs run along its length, so a texture offset can fake the movement | every tracked unit |
+| `slide` | translation along `axis` up to `range` studs | factory `trolley` (Order shipyard gantry, Chaos vehicle plant crane rail) |
+| `open` | rotation about `axis` up to `range` degrees | silo `hatch` / `hatch2`, bomber `bay`, beam tower lids `shellL` / `shellR`, the anti-nuke `hatch` |
+| `lower` | translation along `axis` up to `range` studs | dipping `sonar` (ASW helicopters, torpedo launchers) |
+| `pulse` | scale and emissive pulse about the pivot | shield generator / fusion / generator `core` |
+
+The piece names stay the same in a unit's blockout, mesh and wreck, so one piece script serves all three. Builders' `nano` and weapon pieces (`turret`, `barrel`, `launcher`, …) are driven by the sim's aim model as before and aren't listed here. Factories' gantries, cranes and conveyors, extractor drill heads, and generator / fusion cores get their pieces as each structure is redesigned at its new size (size scale, M-26).
+
+How it's built (models stream): `with p.sub(name, pivot, motion, axis, range)` in a build script moves the shells made inside the block into their own piece (`tools/lib.py`); `unit.wheel(..., name=)` and the shared hulls do it for wheels and track sets. `tools/animate.py` lists `anim` for pieces that were already pieces.

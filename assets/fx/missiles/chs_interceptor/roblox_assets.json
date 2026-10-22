@@ -1,0 +1,27 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Anti-nuke interceptor (S-111): 406 triangles, glow share 8.7%",
+  "bar": {
+    "model": "rbxassetid://125827269341294",
+    "meshes": {
+      "base": "rbxassetid://119477550533898",
+      "base_glow_running": "rbxassetid://117852233773735",
+      "base_glow_weapon": "rbxassetid://135334397655838"
+    },
+    "decals": {
+      "ALB": "rbxassetid://130591208794251",
+      "RGH": "rbxassetid://122399968636037",
+      "NOR": "rbxassetid://132375586141785",
+      "MTL": "rbxassetid://73137875336454",
+      "EMI": "rbxassetid://127666981272840"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://113000366355102",
+      "NOR": "rbxassetid://77327195524306",
+      "RGH": "rbxassetid://110536129388890",
+      "MTL": "rbxassetid://93911769249652",
+      "EMI": "rbxassetid://107848012252002"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_interceptor_bar in FTGG Art"
+  }
+}

@@ -19,8 +19,8 @@ local parts = {
 	{ name = "gun", parent = "turret", shape = "cylinder", axis = "z", size = { 0.4, 0.4, 3.4 }, at = { 0, 2.8, -2.2 }, color = "metal" },
 }
 for i, z in { -2.2, 0.2, 2.6 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.5, 1.2, 1.2 }, at = { -1.7, 0.6, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.5, 1.2, 1.2 }, at = { 1.7, 0.6, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.5, 1.2, 1.2 }, at = { -1.7, 0.6, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.5, 1.2, 1.2 }, at = { 1.7, 0.6, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 
 return {

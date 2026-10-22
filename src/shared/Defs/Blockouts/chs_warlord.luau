@@ -8,8 +8,8 @@
 
 local parts = {
 	{ name = "base", shape = "box", size = { 5.2, 1.3, 7.0 }, at = { 0, 1.8, 0.2 }, color = "hull" },
-	{ name = "trackL", parent = "base", shape = "box", size = { 1.0, 0.5, 7.6 }, at = { -2.8, 0.25, 0 }, color = "track" },
-	{ name = "trackR", parent = "base", shape = "box", size = { 1.0, 0.5, 7.6 }, at = { 2.8, 0.25, 0 }, color = "track" },
+	{ name = "trackL", parent = "base", shape = "box", size = { 1.0, 0.5, 7.6 }, at = { -2.8, 0.25, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+	{ name = "trackR", parent = "base", shape = "box", size = { 1.0, 0.5, 7.6 }, at = { 2.8, 0.25, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 	{ name = "ram", parent = "base", shape = "box", size = { 5.6, 0.9, 0.4 }, at = { 0, 1.4, -3.8 }, rot = { -20, 0, 0 }, color = "dark" },
 	{ name = "cabin", parent = "base", shape = "box", size = { 4.0, 1.6, 2.6 }, at = { 0, 3.25, -1.2 }, color = "hull" },
 	{ name = "cabinSlit", parent = "base", shape = "box", size = { 3.0, 0.22, 0.08 }, at = { 0, 3.5, -2.54 }, color = "glass" },
@@ -26,8 +26,15 @@ local parts = {
 	{ name = "emitter", parent = "nano", shape = "ball", size = { 1.1, 1.1, 1.1 }, at = { 0.8, 5.3, 4.3 }, color = "glass" },
 }
 for i, z in { -2.5, -0.85, 0.85, 2.5 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.4, 1.4 }, at = { -2.8, 0.85, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.4, 1.4 }, at = { 2.8, 0.85, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.4, 1.4 }, at = { -2.8, 0.85, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.4, 1.4 }, at = { 2.8, 0.85, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 
-return { id = "chs_warlord", parts = parts }
+return {
+	id = "chs_warlord",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "nano1", parent = "nano", at = { 0.8, 5.3, 4.3 } },
+	},
+}

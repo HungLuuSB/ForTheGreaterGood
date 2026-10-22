@@ -1,7 +1,61 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 702 triangles, glow share 6.0%",
+  "revision": "User review fixes 2026-10-23, full re-upload after HTTP 502: 702 triangles, glow share 5.9%",
   "bar": {
+    "model": "rbxassetid://87123043117991",
+    "meshes": {
+      "base": "rbxassetid://98499768429264",
+      "base_glow_head": "rbxassetid://80953439588320",
+      "base_glow_running": "rbxassetid://99908491742506",
+      "nano": "rbxassetid://120029119778769",
+      "nano_glow_power": "rbxassetid://133681994675522",
+      "rotor": "rbxassetid://70698612867886"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122147500207200",
+      "RGH": "rbxassetid://97853517094294",
+      "NOR": "rbxassetid://130600825533261",
+      "MTL": "rbxassetid://95345869117917",
+      "EMI": "rbxassetid://137579244377764"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://116244857218894",
+      "NOR": "rbxassetid://128589925720350",
+      "RGH": "rbxassetid://125795108023893",
+      "MTL": "rbxassetid://94479430155663",
+      "EMI": "rbxassetid://111459716678875"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_vulture_bar in FTGG Art",
+    "reuploadNote": "Fully re-uploaded 2026-10-23: the first upload's maps failed with HTTP 502 in Studio; swapping single maps didn't recover (pipeline.md, white model)."
+  },
+  "bar_2": {
+    "model": "rbxassetid://111384704771570",
+    "meshes": {
+      "base": "rbxassetid://98499768429264",
+      "base_glow_head": "rbxassetid://80953439588320",
+      "base_glow_running": "rbxassetid://99908491742506",
+      "nano": "rbxassetid://120029119778769",
+      "nano_glow_power": "rbxassetid://133681994675522",
+      "rotor": "rbxassetid://70698612867886"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84883546552573",
+      "RGH": "rbxassetid://99716384195778",
+      "NOR": "rbxassetid://140219587394987",
+      "MTL": "rbxassetid://140387422566047",
+      "EMI": "rbxassetid://130841758688722"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://107660670914982",
+      "NOR": "rbxassetid://77364840591185",
+      "RGH": "rbxassetid://108141342918171",
+      "MTL": "rbxassetid://107530442248506",
+      "EMI": "rbxassetid://114430192808761"
+    },
+    "reuploadNote": "NOR re-uploaded 2026-10-23: the first image (rbxassetid://83556050525532) failed with HTTP 502 in Studio (pipeline.md, white model).",
+    "note": "User review fixes 2026-10-23: 702 triangles, glow share 5.9%"
+  },
+  "bar_1": {
     "model": "rbxassetid://94979824678962",
     "meshes": {
       "base": "rbxassetid://74516661521492",
@@ -25,6 +79,6 @@
       "MTL": "rbxassetid://101289298837826",
       "EMI": "rbxassetid://70789529225948"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_vulture_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 702 triangles, glow share 6.0%"
   }
 }

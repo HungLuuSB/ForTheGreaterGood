@@ -11,7 +11,7 @@ return {
 		{ name = "wallF", parent = "base", shape = "wedge", size = { 20, 1.4, 2 }, at = { 0, 0.7, -11 }, color = "hull" },
 		{ name = "pedestal", parent = "base", shape = "cylinder", axis = "y", size = { 3.4, 2, 3.4 }, at = { -3, 2.4, 1 }, color = "dark" },
 		{ name = "radarBlock", parent = "base", shape = "box", size = { 4.4, 3, 4.4 }, at = { 6, 2.9, 5 }, color = "hull" },
-		{ name = "radarPanel", parent = "base", shape = "box", size = { 5.4, 4, 0.5 }, at = { 6, 6.4, 4.6 }, rot = { 15, 0, 0 }, color = "dark" },
+		{ name = "radarPanel", parent = "base", shape = "box", size = { 5.4, 4, 0.5 }, at = { 6, 6.4, 4.6 }, rot = { 15, 0, 0 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "radarFace", parent = "base", shape = "box", size = { 4.8, 3.4, 0.1 }, at = { 6, 6.45, 4.27 }, rot = { 15, 0, 0 }, color = "glass" },
 		{ name = "teamA", parent = "base", shape = "box", size = { 4, 0.1, 4 }, at = { 6, 1.45, -6 }, color = "team" },
 

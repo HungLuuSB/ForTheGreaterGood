@@ -4,7 +4,8 @@
 -- in a row, laid up at 40 degrees behind a slab shield, and an orange
 -- spotter eye. The def turns only `turret`. Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_hailstorm",
 	parts = {
 		{ name = "base", shape = "cylinder", axis = "y", size = { 6.2, 1.4, 6.2 }, at = { 0, 0.7, 0 }, color = "dark" },
@@ -27,4 +28,4 @@ return {
 		{ name = "muzzle2", parent = "turret", at = { 0, 5.57, -3.19 } },
 		{ name = "muzzle3", parent = "turret", at = { 0.9, 5.57, -3.19 } },
 	},
-}
+}, 2.0)

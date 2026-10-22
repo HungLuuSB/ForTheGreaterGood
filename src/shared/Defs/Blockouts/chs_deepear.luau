@@ -6,7 +6,7 @@
 
 local parts = {
 	{ name = "base", shape = "box", size = { 16, 0.6, 16 }, at = { 0, 1.1, 0 }, color = "dark" },
-	{ name = "drum", parent = "base", shape = "cylinder", axis = "y", size = { 6, 2.4, 6 }, at = { 0, 0.2, 0 }, color = "hull" },
+	{ name = "drum", parent = "base", shape = "cylinder", axis = "y", size = { 6, 2.4, 6 }, at = { 0, 0.2, 0 }, color = "hull", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "ring", parent = "base", shape = "cylinder", axis = "y", size = { 6.2, 0.3, 6.2 }, at = { 0, 0.9, 0 }, color = "glass" },
 	{ name = "teamA", parent = "base", shape = "box", size = { 3.4, 0.1, 3.4 }, at = { -5, 1.45, 5 }, color = "team" },
 	{ name = "teamB", parent = "base", shape = "box", size = { 3.4, 0.1, 3.4 }, at = { 5, 1.45, -5 }, color = "team" },

@@ -4,7 +4,8 @@
 -- orange sensor, team plate on the roof. Model space, forward = -Z
 -- (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_spike",
 	parts = {
 		{ name = "base", shape = "cylinder", axis = "y", size = { 5.6, 1.2, 5.6 }, at = { 0, 0.6, 0 }, color = "dark" },
@@ -22,4 +23,4 @@ return {
 	attachments = {
 		{ name = "muzzle", parent = "turret", at = { 0, 3.0, -5.1 } },
 	},
-}
+}, 1.831)

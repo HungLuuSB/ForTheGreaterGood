@@ -3,7 +3,8 @@
 -- sloped sides and a broad wedge turret with twin long guns, team plate on
 -- the roof, cyan sight. Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 3 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_bastion",
 	parts = {
 		{ name = "base", shape = "box", size = { 5.6, 2.6, 5.6 }, at = { 0, 1.3, 0 }, color = "hull" },
@@ -28,4 +29,4 @@ return {
 	attachments = {
 		{ name = "muzzle", parent = "turret", at = { -0.7, 5, -8.25 } },
 	},
-}
+}, 1.884)

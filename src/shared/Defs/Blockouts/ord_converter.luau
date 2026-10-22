@@ -3,7 +3,8 @@
 -- with a glowing coil and cap, side pipes, a team plate.
 -- Model space, forward = -Z.
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_converter",
 	parts = {
 		{ name = "base", shape = "box", size = { 6, 1.2, 6 }, at = { 0, 0.6, 0 }, color = "hull" },
@@ -14,4 +15,4 @@ return {
 		{ name = "pipeL", parent = "base", shape = "box", size = { 0.5, 0.5, 5.6 }, at = { -2.6, 1.5, 0 }, color = "metal" },
 		{ name = "pipeR", parent = "base", shape = "box", size = { 0.5, 0.5, 5.6 }, at = { 2.6, 1.5, 0 }, color = "metal" },
 	},
-}
+}, 2.0)

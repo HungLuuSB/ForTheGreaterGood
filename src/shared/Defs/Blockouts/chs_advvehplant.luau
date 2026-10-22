@@ -23,4 +23,14 @@ for i = 0, 3 do
 	table.insert(parts, { name = `tank{i}`, parent = "base", shape = "cylinder", axis = "y", size = { 3, 5, 3 }, at = { -4 + i * 6, 2.75, 16.2 }, color = "metal" })
 end
 
-return { id = "chs_advvehplant", parts = parts }
+-- footprint 5 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
+	id = "chs_advvehplant",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { 5, 0.5, 2 } },
+		{ name = "nano1", parent = "base", at = { 0, 10, 2 } },
+		{ name = "nano2", parent = "base", at = { 11, 10, 2 } },
+	},
+}, 1.036)

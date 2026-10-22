@@ -14,7 +14,7 @@ local parts = {
 	{ name = "tankB", parent = "base", shape = "cylinder", axis = "y", size = { 3.4, 3, 3.4 }, at = { 13, 1.9, -7.6 }, color = "metal" },
 	{ name = "mast", parent = "base", shape = "box", size = { 0.6, 10, 0.6 }, at = { 13, 5.4, 10 }, color = "dark" },
 	{ name = "mastBrace", parent = "base", shape = "box", size = { 0.3, 9, 0.3 }, at = { 14.2, 4.9, 10 }, rot = { 0, 0, 8 }, color = "dark" },
-	{ name = "radarPanel", parent = "base", shape = "box", size = { 3, 2, 0.3 }, at = { 13, 11, 10 }, rot = { 20, 0, 0 }, color = "dark" },
+	{ name = "radarPanel", parent = "base", shape = "box", size = { 3, 2, 0.3 }, at = { 13, 11, 10 }, rot = { 20, 0, 0 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "beacon", parent = "base", shape = "box", size = { 0.5, 0.5, 0.5 }, at = { 13, 12.3, 10 }, color = "glass" },
 }
 for i, p in { { -17.6, 2.4 }, { -6.4, 2.4 }, { -17.6, 13.6 }, { -6.4, 13.6 } } do
@@ -26,4 +26,14 @@ for i = 0, 5 do
 	table.insert(parts, { name = `lightR{i}`, parent = "base", shape = "box", size = { 0.4, 0.3, 0.4 }, at = { 7.8, 0.55, z }, color = "glass" })
 end
 
-return { id = "chs_airfield", parts = parts }
+return {
+	id = "chs_airfield",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { -12, 0.4, 7.5 } },
+		{ name = "nano1", parent = "base", at = { -16, 5.05, 8 } },
+		{ name = "nano2", parent = "base", at = { -12, 5.05, 8 } },
+		{ name = "nano3", parent = "base", at = { -8, 5.05, 8 } },
+	},
+}

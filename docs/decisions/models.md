@@ -213,3 +213,28 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user's queue, item 5: "wreck versions (darkened, broken, no glow, team panels scorched grey) for every approved mesh, listed in the manifest for B". Same pieces, rather than one merged mesh, because B's death code already poses the live model's joints for the wreck.
+
+### M-25 — Construction anchors for the nanoframe (2026-10-23)
+
+**Decision:** every factory has a `buildpad` Attachment where the unit in production sits (centred on its pad, forward = the exit, model −Z) and `nano1`, `nano2`, … at its emitters and build lights. Every constructor has `nano1` (and `nano2` with a second emitter) at the emitter on its `nano` piece. They are in the blockouts and the meshes alike (rig.md section 8). The mesh anchors are kept in one table (`tools/anchors.py`), merged into `rig.json` by the runner, so no mesh had to be re-uploaded.
+
+**Why:** the user's request for B's BAR-style nanoframe (2026-10-23). The constructors' attachment is `nano1` rather than `nano` so it doesn't share a name with the `nano` piece, and one `nano1..N` lookup serves factories and constructors.
+
+### M-26 — Size shows tech level (proposal, 2026-10-23)
+
+**Proposal:** a size scale measured against the Lancer (docs/art/size-scale.md): T1 economy at footprint 2, T1 factories at 4–5, T1 defenses at 1–2; T2 economy at 3–4, T2 factories at 6, T2 defenses at 2–3; T3 at 6–8. T2 units 1.3–1.5× the T1 of the same role (heavy tanks at footprint 2), T3 units ≥ 2×. Sent to the sim stream (footprints are sim rules); nothing is rescaled until it answers. After that the structures are redesigned at their new sizes, not scaled.
+
+**Why:** the user (2026-10-23): structures read too small; factories and generators should take up space, and size should show tech level.
+
+### M-27 — Animated pieces and effect textures (2026-10-23)
+
+**Decision:** every part that should move is its own piece with a pivot and an `anim` record (motion, axis, range), in the meshes (manifest `anim` / `visualPieces`) and the blockouts (`anim` on the part): rotors and tail rotors, wheels, track sets, radar dishes and arrays, drills, cranes and trolleys, jammer emitters, sonar drums and dipping sonars, hatches and covers, cores. Splitting only (no geometry change), done in the build scripts with `lib.Piece.sub` so the bake and the wreck build stay the same. Four white effect textures (radar pulse, sonar ping, jammer static, heat shimmer) for the client to tint. Spec: rig.md section 9, fx.md "Effect textures".
+
+**Why:** the user's animation audit for the client (2026-10-23). Track sets are one piece per side (band and wheels) rather than a piece per road wheel, to keep the part count per tank low; wheeled units get a piece per wheel.
+
+### M-28 — Supply deposits as terrain (2026-10-23)
+
+**Decision:** supply deposits are drawn with a neutral terrain prop, BAR metal-spot style (fx.md "Supply deposits"): three seeded variants of a scraped patch with ore outcrops, one cell wide, no glow, the patch tinted to the terrain through the alpha mask. A `neutral` look in tools/unit.py (stone, dark rock, metallic ore, a tintable ground patch).
+
+**Why:** the user (2026-10-23): the bright yellow squares read as UI; the deposit must be part of the terrain, cheap (on every map in dozens) and hidden under an extractor.
+

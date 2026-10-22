@@ -7,8 +7,8 @@ return {
 	parts = {
 		{ name = "base", shape = "box", size = { 5.6, 1.5, 7.0 }, at = { 0, 1.65, 0.2 }, color = "hull" },
 		{ name = "ram", parent = "base", shape = "box", size = { 6.0, 1.1, 0.5 }, at = { 0, 1.0, -3.6 }, rot = { -25, 0, 0 }, color = "dark" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 1.3, 1.5, 7.6 }, at = { -2.95, 0.75, 0 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 1.3, 1.5, 7.6 }, at = { 2.95, 0.75, 0 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 1.3, 1.5, 7.6 }, at = { -2.95, 0.75, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 1.3, 1.5, 7.6 }, at = { 2.95, 0.75, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 		{ name = "skirtL", parent = "base", shape = "box", size = { 0.3, 1.1, 6.6 }, at = { -3.75, 1.5, 0.1 }, color = "dark" },
 		{ name = "skirtR", parent = "base", shape = "box", size = { 0.3, 1.1, 6.6 }, at = { 3.75, 1.5, 0.1 }, color = "dark" },
 		{ name = "stackL", parent = "base", shape = "cylinder", axis = "y", size = { 0.5, 1.4, 0.5 }, at = { -1.9, 3.1, 3.1 }, color = "metal" },

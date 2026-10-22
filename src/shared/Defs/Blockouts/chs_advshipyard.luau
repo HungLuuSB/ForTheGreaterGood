@@ -21,7 +21,7 @@ for c, side in { -1, 1 } do
 	for i, d in { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } } do
 		table.insert(parts, { name = `tower{c}{i}`, parent = "base", shape = "box", size = { 0.5, 13, 0.5 }, at = { x0 + d[1], 8.5, z0 + d[2] }, color = "dark" })
 	end
-	table.insert(parts, { name = `jib{c}`, parent = "base", shape = "box", size = { 22, 0.8, 1 }, at = { x0 - side * 9, 15.2, z0 }, color = "metal" })
+	table.insert(parts, { name = `jib{c}`, parent = "base", shape = "box", size = { 22, 0.8, 1 }, at = { x0 - side * 9, 15.2, z0 }, color = "metal", anim = { motion = "turn", axis = { 0, 1, 0 } } })
 	table.insert(parts, { name = `jibTeam{c}`, parent = "base", shape = "box", size = { 10, 0.08, 0.8 }, at = { x0 - side * 11, 15.64, z0 }, color = "team" })
 	table.insert(parts, { name = `jibLight{c}`, parent = "base", shape = "box", size = { 0.5, 0.5, 0.5 }, at = { x0 - side * 19.5, 15.8, z0 }, color = "glass" })
 end
@@ -43,4 +43,14 @@ for i = 0, 4 do
 	end
 end
 
-return { id = "chs_advshipyard", parts = parts }
+-- footprint 5 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
+	id = "chs_advshipyard",
+	parts = parts,
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { 0, 0, -1 } },
+		{ name = "nano1", parent = "base", at = { 3, 15.3, 4 } },
+		{ name = "nano2", parent = "base", at = { -3, 15.3, -6 } },
+	},
+}, 1.14)

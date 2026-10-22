@@ -25,8 +25,8 @@ for i, x in { -1.2, -0.4, 0.4, 1.2 } do
 	table.insert(parts, { name = `lid{i}`, parent = "launcher", shape = "box", size = { 0.6, 0.06, 0.6 }, at = { x, 5.0, 0.6 }, rot = { 35, 0, 0 }, color = "team" })
 end
 for i, z in { -2.9, -1.3, 1.3, 2.9 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { -2.2, 0.75, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { 2.2, 0.75, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { -2.2, 0.75, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { 2.2, 0.75, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 
 return {

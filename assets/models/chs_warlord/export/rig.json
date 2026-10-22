@@ -1,0 +1,146 @@
+{
+  "id": "chs_warlord",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        4.25,
+        -0.3704
+      ],
+      "size": [
+        6.94,
+        8.5,
+        8.7592
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.8,
+        3.8588,
+        3.0544
+      ],
+      "size": [
+        2.2,
+        2.8177,
+        3.4535
+      ],
+      "pivot": [
+        0.8,
+        2.45,
+        2.4
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.8,
+        5.3,
+        4.3
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "nano"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.225,
+        0.5835
+      ],
+      "size": [
+        6.84,
+        7.15,
+        6.8895
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        2.05,
+        -3.86
+      ],
+      "size": [
+        4.56,
+        0.16,
+        0.04
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.8,
+        4.065,
+        3.0392
+      ],
+      "size": [
+        2.26,
+        3.23,
+        3.4817
+      ]
+    }
+  ],
+  "glowShare": 0.0511,
+  "triangles": {
+    "base": 2668,
+    "nano": 546,
+    "total": 3214
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

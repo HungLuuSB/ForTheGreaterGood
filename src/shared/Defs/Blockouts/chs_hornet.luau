@@ -15,12 +15,12 @@ return {
 		{ name = "cab", parent = "base", shape = "box", size = { 2.6, 1.2, 1.8 }, at = { -0.9, 2.9, -2.1 }, color = "hull" },
 		{ name = "slit", parent = "base", shape = "box", size = { 2.0, 0.25, 0.1 }, at = { -0.9, 3.2, -3.02 }, color = "glass" },
 		{ name = "stack", parent = "base", shape = "cylinder", axis = "y", size = { 0.5, 2.0, 0.5 }, at = { 1.4, 3.2, -2.4 }, color = "metal" },
-		{ name = "wheel1L", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { -2.4, 0.9, -2.3 }, color = "track" },
-		{ name = "wheel1R", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { 2.4, 0.9, -2.3 }, color = "track" },
-		{ name = "wheel2L", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { -2.4, 0.9, 1.3 }, color = "track" },
-		{ name = "wheel2R", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { 2.4, 0.9, 1.3 }, color = "track" },
-		{ name = "wheel3L", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { -2.4, 0.9, 3.1 }, color = "track" },
-		{ name = "wheel3R", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { 2.4, 0.9, 3.1 }, color = "track" },
+		{ name = "wheel1L", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { -2.4, 0.9, -2.3 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel1R", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { 2.4, 0.9, -2.3 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel2L", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { -2.4, 0.9, 1.3 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel2R", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { 2.4, 0.9, 1.3 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel3L", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { -2.4, 0.9, 3.1 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel3R", parent = "base", shape = "cylinder", axis = "x", size = { 1.0, 1.8, 1.8 }, at = { 2.4, 0.9, 3.1 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
 
 		{ name = "ring", parent = "base", shape = "cylinder", axis = "y", size = { 2.2, 0.3, 2.2 }, at = { 0.2, 2.45, 1.6 }, color = "dark" },
 

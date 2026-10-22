@@ -12,7 +12,7 @@ local parts = {
 	{ name = "generator", parent = "base", shape = "box", size = { 3.0, 0.9, 1.4 }, at = { 0, 2.65, -0.6 }, color = "metal" },
 	{ name = "mastFoot", parent = "base", shape = "box", size = { 1.4, 0.5, 1.4 }, at = { 0, 2.45, 2.2 }, color = "dark" },
 
-	{ name = "array", parent = "base", shape = "cylinder", axis = "y", size = { 0.6, 6.4, 0.6 }, at = { 0, 5.9, 2.2 }, color = "hull" },
+	{ name = "array", parent = "base", shape = "cylinder", axis = "y", size = { 0.6, 6.4, 0.6 }, at = { 0, 5.9, 2.2 }, color = "hull", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "arrayUpper", parent = "array", shape = "cylinder", axis = "y", size = { 0.4, 2.4, 0.4 }, at = { 0, 10.3, 2.2 }, color = "hull" },
 	{ name = "beacon", parent = "array", shape = "ball", size = { 0.5, 0.5, 0.5 }, at = { 0, 11.7, 2.2 }, color = "glass" },
 	{ name = "guyL", parent = "base", shape = "box", size = { 0.08, 6.2, 0.08 }, at = { -1.3, 5.1, 2.2 }, rot = { 0, 0, -12 }, color = "dark" },
@@ -26,8 +26,8 @@ for r, y in { 8.4, 9.9 } do
 	end
 end
 for i, z in { -2.5, 0.6, 2.5 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.6, 1.6 }, at = { -2.1, 0.8, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.6, 1.6 }, at = { 2.1, 0.8, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.6, 1.6 }, at = { -2.1, 0.8, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.6, 1.6 }, at = { 2.1, 0.8, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 
 return { id = "chs_shroud", parts = parts }

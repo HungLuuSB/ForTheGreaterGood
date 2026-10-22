@@ -4,7 +4,8 @@
 -- a cyan light strip over the door. Order reads heavy (M-14).
 -- Model space, forward = -Z (docs/contracts/rig.md).
 
-return {
+-- footprint 3 -> 4 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_vehplant",
 	parts = {
 		{ name = "base", shape = "box", size = { 22, 0.6, 22 }, at = { 0, 0.3, 0 }, color = "dark" },
@@ -22,4 +23,11 @@ return {
 		{ name = "beaconL", parent = "base", shape = "box", size = { 0.6, 0.6, 0.6 }, at = { -10, 1.2, -10 }, color = "glass" },
 		{ name = "beaconR", parent = "base", shape = "box", size = { 0.6, 0.6, 0.6 }, at = { 10, 1.2, -10 }, color = "glass" },
 	},
-}
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { 0, 0.6, -7.4 } },
+		{ name = "nano1", parent = "base", at = { -5.12, 5.5, -4.8 } },
+		{ name = "nano2", parent = "base", at = { 5.12, 5.5, -4.8 } },
+		{ name = "nano3", parent = "base", at = { 0, 5.85, -4.8 } },
+	},
+}, 1.333)

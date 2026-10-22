@@ -27,7 +27,12 @@ export type Part = {
 	rot: Vec?, -- degrees, Roblox Orientation order (Y, then X, then Z)
 	pivot: Vec?, -- pieces only, default = at
 	color: Color,
+	-- an animated piece (rig.md "Animated pieces", M-27): jointed like a
+	-- visual piece; the client moves it as `motion` about / along `axis`
+	anim: Anim?,
 }
+
+export type Anim = { motion: string, axis: Vec, range: number? }
 
 export type Attachment = { name: string, parent: string, at: Vec }
 
@@ -49,7 +54,26 @@ function Blockout.pieceSet(bp: Blockout, def: any): { [string]: boolean }
 	for _, piece in bp.visualPieces or {} do
 		set[piece] = true
 	end
+	for _, p in bp.parts do
+		if p.anim ~= nil then
+			set[p.name] = true
+		end
+	end
 	return set
+end
+
+-- How the client may move each animated piece (rig.md "Animated pieces").
+Blockout.MOTIONS = table.freeze({ spin = true, turn = true, scroll = true, slide = true, open = true, lower = true, pulse = true })
+
+-- name → anim for every part that carries one.
+function Blockout.anims(bp: Blockout): { [string]: Anim }
+	local out: { [string]: Anim } = {}
+	for _, p in bp.parts do
+		if p.anim ~= nil then
+			out[p.name] = p.anim
+		end
+	end
+	return out
 end
 
 -- RGB 0..255 per palette key and faction, from docs/art/style-guide.md
@@ -154,6 +178,15 @@ function Blockout.validate(bp: Blockout, def: any): { string }
 		end
 		if Blockout.PALETTES.order[p.color] == nil then
 			bad(`{label}: unknown color {tostring(p.color)}`)
+		end
+		if p.anim ~= nil then
+			if p.name == "base" then
+				bad(`{label}: base can't be animated`)
+			elseif not Blockout.MOTIONS[p.anim.motion] then
+				bad(`{label}: unknown motion {tostring(p.anim.motion)}`)
+			elseif not isVec(p.anim.axis, false) then
+				bad(`{label}: anim axis must be three numbers`)
+			end
 		end
 		if p.pivot ~= nil then
 			if not isPiece[p.name] then

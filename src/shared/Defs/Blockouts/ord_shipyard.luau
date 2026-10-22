@@ -22,4 +22,13 @@ return {
 		{ name = "lightL", parent = "base", shape = "box", size = { 0.8, 0.8, 0.8 }, at = { -16, 2.8, -17 }, color = "glass" },
 		{ name = "lightR", parent = "base", shape = "box", size = { 0.8, 0.8, 0.8 }, at = { 16, 2.8, -17 }, color = "glass" },
 	},
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "buildpad", parent = "base", at = { 0, 0, -6 } },
+		{ name = "nano1", parent = "base", at = { -10, 11, -6 } },
+		{ name = "nano2", parent = "base", at = { -4, 11, -6 } },
+		{ name = "nano3", parent = "base", at = { 2, 11, -6 } },
+		{ name = "nano4", parent = "base", at = { 8, 11, -6 } },
+		{ name = "nano5", parent = "base", at = { 4, 10.2, -6 } },
+	},
 }

@@ -4,7 +4,8 @@
 -- on the turret roof, cyan sight. Model space, forward = -Z
 -- (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_bulwark",
 	parts = {
 		{ name = "base", shape = "box", size = { 5.4, 2, 5.4 }, at = { 0, 1, 0 }, color = "hull" },
@@ -24,4 +25,4 @@ return {
 	attachments = {
 		{ name = "muzzle", parent = "turret", at = { 0, 3.1, -7.4 } },
 	},
-}
+}, 1.357)

@@ -10,7 +10,7 @@ local parts = {
 	{ name = "teamA", parent = "base", shape = "box", size = { 4, 0.1, 4 }, at = { 5, 0.85, -5 }, color = "team" },
 	{ name = "mast", parent = "base", shape = "box", size = { 0.6, 8, 0.6 }, at = { 6, 4.8, 5 }, color = "dark" },
 	{ name = "mastBrace", parent = "base", shape = "box", size = { 0.3, 7, 0.3 }, at = { 7, 4.3, 5 }, rot = { 0, 0, 10 }, color = "dark" },
-	{ name = "radarPanel", parent = "base", shape = "box", size = { 5, 3.2, 0.4 }, at = { 6, 9.8, 5 }, rot = { 15, 0, 0 }, color = "hull" },
+	{ name = "radarPanel", parent = "base", shape = "box", size = { 5, 3.2, 0.4 }, at = { 6, 9.8, 5 }, rot = { 15, 0, 0 }, color = "hull", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "radarEye", parent = "base", shape = "box", size = { 1, 0.6, 0.2 }, at = { 6, 9.4, 4.5 }, color = "glass" },
 
 	{ name = "launcher", parent = "base", shape = "box", size = { 2.4, 2, 3 }, at = { -3, 4.8, 1 }, pivot = { -3, 3.8, 1 }, color = "hull" },

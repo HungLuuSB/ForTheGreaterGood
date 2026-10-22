@@ -26,11 +26,11 @@ local parts = {
 	{ name = "lightSE", parent = "base", shape = "box", size = { 0.6, 0.6, 0.6 }, at = { 9.3, 1.5, 6.6 }, color = "glass" },
 
 	-- the doors: 6 × 12 each with a seam between, ribbed, a team stripe each
-	{ name = "hatch", parent = "base", shape = "box", size = { 6.0, 0.5, 12 }, at = { -3.05, 2.85, 0 }, pivot = { -6.05, 3.1, 0 }, color = "metal" },
+	{ name = "hatch", parent = "base", shape = "box", size = { 6.0, 0.5, 12 }, at = { -3.05, 2.85, 0 }, pivot = { -6.05, 3.1, 0 }, color = "metal", anim = { motion = "open", axis = { 0, 0, 1 }, range = 110 } },
 	{ name = "ribL1", parent = "hatch", shape = "box", size = { 5.4, 0.2, 0.4 }, at = { -3.05, 3.2, -3.5 }, color = "dark" },
 	{ name = "ribL2", parent = "hatch", shape = "box", size = { 5.4, 0.2, 0.4 }, at = { -3.05, 3.2, 3.5 }, color = "dark" },
 	{ name = "doorTeamL", parent = "hatch", shape = "box", size = { 1.4, 0.08, 5.6 }, at = { -3.05, 3.14, 0 }, color = "team" },
-	{ name = "hatch2", parent = "base", shape = "box", size = { 6.0, 0.5, 12 }, at = { 3.05, 2.85, 0 }, pivot = { 6.05, 3.1, 0 }, color = "metal" },
+	{ name = "hatch2", parent = "base", shape = "box", size = { 6.0, 0.5, 12 }, at = { 3.05, 2.85, 0 }, pivot = { 6.05, 3.1, 0 }, color = "metal", anim = { motion = "open", axis = { 0, 0, -1 }, range = 110 } },
 	{ name = "ribR1", parent = "hatch2", shape = "box", size = { 5.4, 0.2, 0.4 }, at = { 3.05, 3.2, -3.5 }, color = "dark" },
 	{ name = "ribR2", parent = "hatch2", shape = "box", size = { 5.4, 0.2, 0.4 }, at = { 3.05, 3.2, 3.5 }, color = "dark" },
 	{ name = "doorTeamR", parent = "hatch2", shape = "box", size = { 1.4, 0.08, 5.6 }, at = { 3.05, 3.14, 0 }, color = "team" },
@@ -58,11 +58,12 @@ for side = 1, 4 do
 	table.insert(parts, { name = `hazardCorner{side}`, parent = "base", shape = "box", size = { 0.8, 0.25, 0.8 }, at = { cx, Y, cz }, color = "hazard" })
 end
 
-return {
+-- footprint 3 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_reckoning",
 	visualPieces = { "hatch2" },
 	parts = parts,
 	attachments = {
 		{ name = "muzzle", parent = "base", at = { 0, 2.8, 0 } },
 	},
-}
+}, 1.94)

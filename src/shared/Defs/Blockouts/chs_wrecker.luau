@@ -18,4 +18,8 @@ return {
 		{ name = "emitter", parent = "nano", shape = "ball", size = { 0.8, 0.8, 0.8 }, at = { 0, 3.5, 0.1 }, color = "glass" },
 		{ name = "cargo", parent = "base", shape = "box", size = { 1.92, 0.6, 1.6 }, at = { 0, 1.6, -2.6 }, color = "dark" },
 	},
+	-- nanoframe anchors (M-25, rig.md 8)
+	attachments = {
+		{ name = "nano1", parent = "nano", at = { 0, 3.5, 0.1 } },
+	},
 }
