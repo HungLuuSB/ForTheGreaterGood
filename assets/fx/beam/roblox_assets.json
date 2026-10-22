@@ -1,0 +1,111 @@
+{
+  "note": "Beam shot textures (M-29, docs/contracts/fx.md \"Beam shot\"): white RGB with the pattern in alpha (the scorch is grey soot), uploaded as Decals through Open Cloud (opencloud.json, assets/fx/beam/build.py), image IDs from the Decals. Recommended values per faction as in FTGG Art's Workspace.BeamFxReference.BeamShot.",
+  "textures": {
+    "core": "rbxassetid://84580715736855",
+    "glow": "rbxassetid://140653615912799",
+    "filamentA": "rbxassetid://130559041254740",
+    "filamentB": "rbxassetid://71590951128896",
+    "charge": "rbxassetid://95187819936446",
+    "impact": "rbxassetid://121983330106046",
+    "scorch": "rbxassetid://108024950155994",
+    "scorchGlow": "rbxassetid://83492274682254"
+  },
+  "factions": {
+    "order": {
+      "charge": 0.08,
+      "hold": 0.04,
+      "taper": 0.38,
+      "coreWidth": 1.6,
+      "glowWidth": 7,
+      "filamentWidth": 2.5,
+      "filaments": 4,
+      "spread": 0.8,
+      "fan": 0.15,
+      "jitter": 0.45,
+      "curve": 1.6,
+      "coreColor": [
+        225,
+        248,
+        255
+      ],
+      "glowColor": [
+        80,
+        190,
+        255
+      ],
+      "filamentColor": [
+        165,
+        232,
+        255
+      ],
+      "brightness": 2,
+      "glowBrightness": 0.6,
+      "filamentBrightness": 3,
+      "texLen": {
+        "core": 30,
+        "glow": 60,
+        "filamentA": 20,
+        "filamentB": 15
+      },
+      "speed": {
+        "filamentA": 30,
+        "filamentB": 40
+      },
+      "flareSize": 7,
+      "impactSize": 14,
+      "impactTime": 0.3,
+      "scorchSize": 7,
+      "scorchTime": 4,
+      "scorchGlowTime": 1.2,
+      "tip": 0.06
+    },
+    "chaos": {
+      "charge": 0.06,
+      "hold": 0.03,
+      "taper": 0.27,
+      "coreWidth": 1.2,
+      "glowWidth": 5.5,
+      "filamentWidth": 2.2,
+      "filaments": 3,
+      "spread": 1.0,
+      "fan": 0.2,
+      "jitter": 0.7,
+      "curve": 2.2,
+      "coreColor": [
+        255,
+        205,
+        150
+      ],
+      "glowColor": [
+        255,
+        85,
+        15
+      ],
+      "filamentColor": [
+        255,
+        130,
+        35
+      ],
+      "brightness": 2.4,
+      "glowBrightness": 0.8,
+      "filamentBrightness": 3.4,
+      "texLen": {
+        "core": 24,
+        "glow": 50,
+        "filamentA": 16,
+        "filamentB": 12
+      },
+      "speed": {
+        "filamentA": 40,
+        "filamentB": 52
+      },
+      "flareSize": 6,
+      "impactSize": 12,
+      "impactTime": 0.25,
+      "scorchSize": 6,
+      "scorchTime": 3,
+      "scorchGlowTime": 1.0,
+      "tip": 0.08
+    }
+  }
+}

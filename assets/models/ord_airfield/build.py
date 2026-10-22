@@ -62,12 +62,13 @@ def build_base(p):
     t = math.radians(20)
     n, v = (0, math.sin(t), -math.cos(t)), (0, math.cos(t), math.sin(t))
     c = (tx, 10.5, tz)
-    p.obox(c, (1, 0, 0), n, 3.0, 2.0, 0.3, "paint", bevel=0.03)
-    p.obox(tuple(c[k] + n[k] * 0.16 for k in range(3)), (1, 0, 0), n, 2.7, 1.7, 0.03, "dark")
-    for b in (-0.85, 0.85):
-        p.obox(tuple(c[k] + n[k] * 0.18 + v[k] * b for k in range(3)), (1, 0, 0), n, 2.7, 0.08, 0.02, "light")
-    for a in (-1.35, 1.35):
-        p.obox((c[0] + a, c[1] + n[1] * 0.18, c[2] + n[2] * 0.18), (1, 0, 0), n, 0.08, 1.7, 0.02, "light")
+    with p.sub("radar", (tx, 9.8, tz), "turn", (0, 1, 0)):  # M-27
+        p.obox(c, (1, 0, 0), n, 3.0, 2.0, 0.3, "paint", bevel=0.03)
+        p.obox(tuple(c[k] + n[k] * 0.16 for k in range(3)), (1, 0, 0), n, 2.7, 1.7, 0.03, "dark")
+        for b in (-0.85, 0.85):
+            p.obox(tuple(c[k] + n[k] * 0.18 + v[k] * b for k in range(3)), (1, 0, 0), n, 2.7, 0.08, 0.02, "light")
+        for a in (-1.35, 1.35):
+            p.obox((c[0] + a, c[1] + n[1] * 0.18, c[2] + n[2] * 0.18), (1, 0, 0), n, 0.08, 1.7, 0.02, "light")
     # landing pad: team square, corner lights
     px, pz = -12.0, -9.0
     p.box((px, 0.47, pz), (7, 0.15, 7), "steel", bevel=0.04)

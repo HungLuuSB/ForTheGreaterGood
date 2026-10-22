@@ -144,12 +144,13 @@ def build_base(p):
     inner = lib.offset_polygon(outline, 0.09)
     for sx in (-1, 1):
         x0, x1 = (1.9, 2.64) if sx > 0 else (-2.64, -1.9)
-        p.band_x(outline, inner, x0, x1, "track")
-        for z in WHEELS:
-            p.cylinder("x", (sx * 2.27, 0.5, z), 0.42, 0.32, 10, "rubber", cap_kinds=("paint", "paint"))
-            p.cylinder("x", (sx * 2.27, 0.5, z), 0.15, 0.4, 6, "steel")
-        p.cylinder("x", (sx * 2.27, 0.55, 3.15), 0.44, 0.44, 12, "steel")
-        p.cylinder("x", (sx * 2.27, 0.65, -3.25), 0.34, 0.44, 12, "steel")
+        with p.sub("trackL" if sx < 0 else "trackR", (sx * 2.27, 0.5, 0.0), "scroll", (1, 0, 0)):  # M-27 track set
+            p.band_x(outline, inner, x0, x1, "track")
+            for z in WHEELS:
+                p.cylinder("x", (sx * 2.27, 0.5, z), 0.42, 0.32, 10, "rubber", cap_kinds=("paint", "paint"))
+                p.cylinder("x", (sx * 2.27, 0.5, z), 0.15, 0.4, 6, "steel")
+            p.cylinder("x", (sx * 2.27, 0.55, 3.15), 0.44, 0.44, 12, "steel")
+            p.cylinder("x", (sx * 2.27, 0.65, -3.25), 0.34, 0.44, 12, "steel")
 
 
 def build_turret(p):

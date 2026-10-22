@@ -9,13 +9,85 @@
       "parent": null,
       "center": [
         0.0,
-        1.875,
+        2.25,
         -0.45
       ],
       "size": [
-        4.58,
-        3.75,
+        4.3,
+        3.0,
         6.9
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -1.95,
+        0.75,
+        -2.0
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -1.95,
+        0.75,
+        -2.0
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -1.95,
+        0.75,
+        2.0
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -1.95,
+        0.75,
+        2.0
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        1.95,
+        0.75,
+        -2.0
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        1.95,
+        0.75,
+        -2.0
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        1.95,
+        0.75,
+        2.0
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        1.95,
+        0.75,
+        2.0
       ]
     },
     "turret": {
@@ -49,8 +121,52 @@
   },
   "teamColorPieces": [
     "base",
+    "wheelL1",
+    "wheelL2",
+    "wheelR1",
+    "wheelR2",
     "turret"
   ],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelR1",
+    "wheelR2"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -148,7 +264,11 @@
   ],
   "glowShare": 0.0421,
   "triangles": {
-    "base": 776,
+    "base": 552,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
     "turret": 264,
     "total": 1040
   },

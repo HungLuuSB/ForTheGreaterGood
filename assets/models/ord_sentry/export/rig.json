@@ -18,6 +18,24 @@
         11.0054
       ]
     },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.3,
+        1.2
+      ],
+      "size": [
+        1.5,
+        0.9,
+        1.5
+      ],
+      "pivot": [
+        0,
+        4.3,
+        1.2
+      ]
+    },
     "turret1": {
       "parent": "base",
       "center": [
@@ -75,9 +93,23 @@
   },
   "teamColorPieces": [
     "base",
+    "radar",
     "turret1",
     "turret2"
   ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -107,6 +139,27 @@
         3.71,
         4.71,
         8.055
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.3,
+        1.2
+      ],
+      "size": [
+        1.56,
+        0.2,
+        1.56
       ]
     },
     {
@@ -154,7 +207,8 @@
   ],
   "glowShare": 0.0623,
   "triangles": {
-    "base": 436,
+    "base": 380,
+    "radar": 56,
     "turret1": 232,
     "turret2": 136,
     "total": 804

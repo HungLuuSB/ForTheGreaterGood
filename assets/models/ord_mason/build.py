@@ -126,12 +126,13 @@ def build_base(p):
     inner = lib.offset_polygon(outline, 0.1)
     for sx in (-1, 1):
         x0, x1 = (2.1, 2.84) if sx > 0 else (-2.84, -2.1)
-        p.band_x(outline, inner, x0, x1, "track")
-        for z in WHEELS:
-            p.cylinder("x", (sx * 2.47, 0.46, z), 0.4, 0.34, 12, "rubber", cap_kinds=("trim", "trim"))
-            p.cylinder("x", (sx * 2.47, 0.46, z), 0.14, 0.42, 8, "steel")
-        p.cylinder("x", (sx * 2.47, 0.5, 3.45), 0.42, 0.46, 12, "steel")
-        p.cylinder("x", (sx * 2.47, 0.6, -3.5), 0.32, 0.46, 12, "steel")
+        with p.sub("trackL" if sx < 0 else "trackR", (sx * 2.47, 0.46, 0.0), "scroll", (1, 0, 0)):  # M-27 track set
+            p.band_x(outline, inner, x0, x1, "track")
+            for z in WHEELS:
+                p.cylinder("x", (sx * 2.47, 0.46, z), 0.4, 0.34, 12, "rubber", cap_kinds=("trim", "trim"))
+                p.cylinder("x", (sx * 2.47, 0.46, z), 0.14, 0.42, 8, "steel")
+            p.cylinder("x", (sx * 2.47, 0.5, 3.45), 0.42, 0.46, 12, "steel")
+            p.cylinder("x", (sx * 2.47, 0.6, -3.5), 0.32, 0.46, 12, "steel")
 
 
 def build_nano(p):

@@ -17,6 +17,24 @@
         7.9,
         22.0
       ]
+    },
+    "trolley": {
+      "parent": "base",
+      "center": [
+        4.0,
+        6.0,
+        -0.5
+      ],
+      "size": [
+        1.6,
+        2.8,
+        1.4
+      ],
+      "pivot": [
+        4.0,
+        7.0,
+        -0.5
+      ]
     }
   },
   "attachments": {
@@ -46,8 +64,23 @@
     }
   },
   "teamColorPieces": [
-    "base"
+    "base",
+    "trolley"
   ],
+  "visualPieces": [
+    "trolley"
+  ],
+  "anim": {
+    "trolley": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 5
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -91,19 +124,41 @@
       "strength": 2.5,
       "center": [
         -0.225,
-        3.855,
+        3.075,
         2.805
       ],
       "size": [
         17.55,
-        5.41,
+        3.85,
         15.89
+      ]
+    },
+    {
+      "name": "trolley_glow_power",
+      "piece": "trolley",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        4.0,
+        6.5,
+        -0.5
+      ],
+      "size": [
+        1.4,
+        0.12,
+        1.2
       ]
     }
   ],
   "glowShare": 0.0203,
   "triangles": {
-    "base": 872,
+    "base": 804,
+    "trolley": 68,
     "total": 872
   },
   "textures": {

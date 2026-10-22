@@ -23,6 +23,9 @@ GLOW_MASK = "rbxassetid://101169341901946"  # glow_mask.png, shared by every glo
 # effect textures for the client (M-27, fx.md "Effect textures")
 TEXTURES = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "fx", "textures",
                                        "roblox_assets.json"), encoding="utf-8"))["textures"]
+# the beam towers' shot (M-29, fx.md "Beam shot"): textures and recommended values per faction
+BEAM = json.load(open(os.path.join(ROOT, "assets", "fx", "beam", "roblox_assets.json"), encoding="utf-8"))
+BEAM_NOTE = "beam shot textures and recommended values (fx.md \"Beam shot\"), waiting for the user's review"
 
 # The user's approvals: only these are "approved" (the game draws them);
 # every other mesh is "review" (the game keeps its blockout) until the user
@@ -215,7 +218,13 @@ def main():
     for alias, src in FX_ALIASES.items():
         if src in fx:
             fx[alias] = dict(fx[src])
-    body = lua({"units": units, "fx": fx}, 0)
+    beam = {"status": "approved" if "beam" in APPROVED else "review", "textures": BEAM["textures"],
+            "factions": BEAM["factions"]}
+    if beam["status"] == "review":
+        beam["note"] = BEAM_NOTE
+    for k, v in beam["textures"].items():
+        assert v.startswith("rbxassetid://"), k
+    body = lua({"units": units, "fx": fx, "beam": beam}, 0)
     text = f"""--!strict
 -- Mesh manifest (M-23, docs/contracts/rig.md section 7): every BAR-style mesh
 -- by unit def ID, with its asset IDs, rig, team pieces and glow parts.
@@ -249,8 +258,16 @@ export type Entry = {{
 	anim: {{ [string]: {{ motion: string, axis: Vec3, range: number? }} }}?,
 	wreck: any?, -- the wreck version (M-24)
 }}
+-- the beam towers' shot (M-29, fx.md "Beam shot"): white textures and the
+-- recommended values per faction ("order" / "chaos"; colors are RGB 0-255)
+export type BeamShot = {{
+	status: string,
+	note: string?,
+	textures: {{ [string]: string }},
+	factions: {{ [string]: {{ [string]: any }} }},
+}}
 
-local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }} }} = {{
+local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot }} = {{
 	glowMask = "{GLOW_MASK}",
 	textures = {lua(TEXTURES, 1)},
 {body[2:-2]}

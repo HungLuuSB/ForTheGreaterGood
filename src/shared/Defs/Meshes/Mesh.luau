@@ -23,6 +23,45 @@ local function isAttachmentPiece(name: string): boolean
 	return string.match(name, "^muzzle%d*$") ~= nil
 end
 
+-- the beam shot (M-29, fx.md "Beam shot"): its textures and the values each
+-- faction needs
+Mesh.BEAM_TEXTURES = { "core", "glow", "filamentA", "filamentB", "charge", "impact", "scorch", "scorchGlow" }
+Mesh.BEAM_VALUES = {
+	"charge", "hold", "taper", "coreWidth", "glowWidth", "filamentWidth", "filaments", "spread", "fan", "tip", "jitter", "curve",
+	"brightness", "glowBrightness", "filamentBrightness", "flareSize", "impactSize", "impactTime", "scorchSize", "scorchTime", "scorchGlowTime",
+}
+
+-- Problems with the manifest's `beam` entry, empty when valid.
+function Mesh.validateBeam(e: any): { string }
+	local problems: { string } = {}
+	if not Mesh.STATUSES[e.status] then
+		table.insert(problems, `beam: status {tostring(e.status)} must be "approved" or "review"`)
+	end
+	for _, k in Mesh.BEAM_TEXTURES do
+		if not isAssetId(e.textures and e.textures[k]) then
+			table.insert(problems, `beam: texture {k} asset ID missing`)
+		end
+	end
+	for _, faction in { "order", "chaos" } do
+		local f = e.factions and e.factions[faction]
+		if type(f) ~= "table" then
+			table.insert(problems, `beam: no values for {faction}`)
+			continue
+		end
+		for _, k in Mesh.BEAM_VALUES do
+			if type(f[k]) ~= "number" then
+				table.insert(problems, `beam: {faction}.{k} must be a number`)
+			end
+		end
+		for _, k in { "coreColor", "glowColor", "filamentColor" } do
+			if not isVec3(f[k]) then
+				table.insert(problems, `beam: {faction}.{k} must be three numbers`)
+			end
+		end
+	end
+	return problems
+end
+
 -- Problems with one entry, empty when valid. `def` is the unit def (nil for
 -- an fx entry, which has no def to match); `visual` is the blockout's
 -- `visualPieces` (client-only jointed pieces, rig.md 4), also allowed.
@@ -139,8 +178,17 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 			end
 		end
 		local wp = if type(w.pieces) == "table" then w.pieces else {}
+		-- the mesh's own animated sub-pieces (M-27) may stay merged into
+		-- their parent on a wreck: nothing moves on a wreck
+		local sub: { [string]: boolean } = {}
+		for _, name in e.visualPieces or {} do
+			sub[name] = true
+		end
 		for name in e.pieces do
 			local p = wp[name]
+			if p == nil and sub[name] then
+				continue
+			end
 			if p == nil or not isAssetId(p.mesh) then
 				bad(`wreck: piece {name} mesh missing`)
 			elseif not isVec3(p.center) or not isVec3(p.size) then

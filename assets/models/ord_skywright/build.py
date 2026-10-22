@@ -36,8 +36,9 @@ def build_base(p):
     p.box((0, 1.3, 3.6), (0.5, 0.5, 4.0), "paint", bevel=0.04)
     p.prism_x([(4.7, 1.32), (6.05, 1.32), (6.05, 3.0), (5.4, 3.0)], -0.08, 0.08, "team", bevel=0.02)
     p.box((0, 1.4, 5.0), (1.8, 0.12, 0.6), "paint", bevel=0.02)
-    p.cylinder("x", (0.2, 2.0, 5.4), 0.8, 0.06, 10, "dark")
-    p.cylinder("x", (0.16, 2.0, 5.4), 0.12, 0.2, 6, "steel")
+    with p.sub("tailRotor", (0.2, 2.0, 5.4), "spin", (1, 0, 0)):  # M-27
+        p.cylinder("x", (0.2, 2.0, 5.4), 0.8, 0.06, 10, "dark")
+        p.cylinder("x", (0.16, 2.0, 5.4), 0.12, 0.2, 6, "steel")
     # skids on struts
     for sx in (-1, 1):
         p.box((sx * 0.9, 0.08, -0.4), (0.15, 0.15, 4.4), "dark")

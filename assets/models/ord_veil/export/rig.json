@@ -9,13 +9,157 @@
       "parent": null,
       "center": [
         0.0,
-        1.8775,
+        2.2775,
         -0.15
       ],
       "size": [
-        5.08,
-        3.755,
+        4.81,
+        2.955,
         7.9
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        -2.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.1999999999999997,
+        0.75,
+        -2.4
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        -0.7333
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.1999999999999997,
+        0.75,
+        -0.7333333333333332
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        0.9333
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.1999999999999997,
+        0.75,
+        0.9333333333333336
+      ]
+    },
+    "wheelL4": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        2.6
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.1999999999999997,
+        0.75,
+        2.6
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        -2.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.1999999999999997,
+        0.75,
+        -2.4
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        -0.7333
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.1999999999999997,
+        0.75,
+        -0.7333333333333332
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        0.9333
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.1999999999999997,
+        0.75,
+        0.9333333333333336
+      ]
+    },
+    "wheelR4": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        2.6
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.1999999999999997,
+        0.75,
+        2.6
       ]
     },
     "array": {
@@ -40,8 +184,100 @@
   "attachments": {},
   "teamColorPieces": [
     "base",
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelL4",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
+    "wheelR4",
     "array"
   ],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelL4",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
+    "wheelR4"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL4": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR4": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "array": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -139,7 +375,15 @@
   ],
   "glowShare": 0.0703,
   "triangles": {
-    "base": 928,
+    "base": 480,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelL3": 56,
+    "wheelL4": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
+    "wheelR3": 56,
+    "wheelR4": 56,
     "array": 368,
     "total": 1296
   },

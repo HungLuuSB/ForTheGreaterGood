@@ -1,7 +1,37 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 3832 triangles, glow share 3.4%",
+  "revision": "Animated pieces (M-27): 3832 triangles, glow share 3.4%",
   "bar": {
+    "model": "rbxassetid://83195630507216",
+    "meshes": {
+      "barrel": "rbxassetid://99992499321003",
+      "barrel_glow_weapon": "rbxassetid://122139720756866",
+      "base": "rbxassetid://82668379111096",
+      "base_glow_head": "rbxassetid://107476442224041",
+      "base_glow_running": "rbxassetid://124287640521404",
+      "trackL": "rbxassetid://133583129032002",
+      "trackR": "rbxassetid://93718969964515",
+      "turret": "rbxassetid://129816552517701",
+      "turret_glow_running": "rbxassetid://84228880259760",
+      "turret_glow_weapon": "rbxassetid://80166564221901"
+    },
+    "decals": {
+      "ALB": "rbxassetid://130366454760455",
+      "RGH": "rbxassetid://129690018269558",
+      "NOR": "rbxassetid://104245536453663",
+      "MTL": "rbxassetid://140044900934017",
+      "EMI": "rbxassetid://72043885453395"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://121061232054444",
+      "NOR": "rbxassetid://119377362821143",
+      "RGH": "rbxassetid://119394686972821",
+      "MTL": "rbxassetid://133957361834805",
+      "EMI": "rbxassetid://124552335980588"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_ravager_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://113095814485337",
     "meshes": {
       "barrel": "rbxassetid://85458781451240",
@@ -27,7 +57,7 @@
       "MTL": "rbxassetid://82848622143893",
       "EMI": "rbxassetid://139023088759275"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_ravager_bar in FTGG Art"
+    "note": "2026-10-22, glow pass (M-22): 3832 triangles, glow share 3.4%"
   },
   "bar_preglow": {
     "meshes": {
@@ -76,6 +106,32 @@
     "note": "review 1 upload, before the M-18 lift and scale"
   },
   "wreck": {
+    "model": "rbxassetid://126120543521995",
+    "meshes": {
+      "barrel": "rbxassetid://78366219651279",
+      "base": "rbxassetid://103992762778528",
+      "trackL": "rbxassetid://93037611632343",
+      "trackR": "rbxassetid://75174349295120",
+      "turret": "rbxassetid://132810421488490"
+    },
+    "decals": {
+      "ALB": "rbxassetid://130492124159304",
+      "RGH": "rbxassetid://104972706183643",
+      "NOR": "rbxassetid://84636802407010",
+      "MTL": "rbxassetid://96472035003933",
+      "EMI": "rbxassetid://132490328846115"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://135209712886402",
+      "NOR": "rbxassetid://88578184256186",
+      "RGH": "rbxassetid://121102317096457",
+      "MTL": "rbxassetid://115626226404028",
+      "EMI": "rbxassetid://115953495365700"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_ravager_wreck_bar in FTGG Art",
+    "revision": "Wreck rebuilt with the animated pieces (M-27): 3448 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://102589472579647",
     "meshes": {
       "barrel": "rbxassetid://119663227914924",

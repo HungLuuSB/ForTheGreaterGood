@@ -120,5 +120,16 @@
       "MTL",
       "EMI"
     ]
+  },
+  "anim": {
+    "hatch": {
+      "motion": "open",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": 110
+    }
   }
 }

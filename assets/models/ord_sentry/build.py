@@ -32,8 +32,9 @@ def build_base(p):
     p.box((0, 2.94, 0.6), (1.89, 0.05, 1.32), "team", bevel=0.012)
     # mast with a sensor array
     p.box((0, 3.6, 1.2), (0.9, 1.4, 0.9), "paint", bevel=0.04)
-    p.box((0, 4.3, 1.2), (1.5, 0.9, 1.5), "dark", bevel=0.04)
-    p.box((0, 4.3, 1.2), (1.56, 0.2, 1.56), "light")  # sensor band
+    with p.sub("radar", (0, 4.3, 1.2), "turn", (0, 1, 0)):  # M-27
+        p.box((0, 4.3, 1.2), (1.5, 0.9, 1.5), "dark", bevel=0.04)
+        p.box((0, 4.3, 1.2), (1.56, 0.2, 1.56), "light")  # sensor band
     p.cylinder("y", (0, 4.95, 1.2), 0.06, 0.5, 6, "steel")
     p.box((0, 5.25, 1.2), (0.16, 0.12, 0.16), "light")
     for sx in (-1, 1):

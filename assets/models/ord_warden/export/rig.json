@@ -144,6 +144,8 @@
     "shieldL",
     "shieldR"
   ],
+  "visualPieces": [],
+  "anim": {},
   "emissive": {
     "probe": "emissive_probe",
     "tint": [

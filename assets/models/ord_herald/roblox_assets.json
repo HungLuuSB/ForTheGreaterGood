@@ -1,7 +1,37 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 1040 triangles, glow share 4.2%",
+  "revision": "Animated pieces (M-27): 1040 triangles, glow share 4.2%",
   "bar": {
+    "model": "rbxassetid://96698290612318",
+    "meshes": {
+      "base": "rbxassetid://96264512663610",
+      "base_glow_head": "rbxassetid://131577033134378",
+      "base_glow_running": "rbxassetid://110813806681556",
+      "turret": "rbxassetid://109080695363921",
+      "turret_glow_running": "rbxassetid://131056230797159",
+      "turret_glow_weapon": "rbxassetid://101358391662684",
+      "wheelL1": "rbxassetid://104997836318047",
+      "wheelL2": "rbxassetid://95263716136799",
+      "wheelR1": "rbxassetid://75410484073907",
+      "wheelR2": "rbxassetid://138198756760958"
+    },
+    "decals": {
+      "ALB": "rbxassetid://139838204697633",
+      "RGH": "rbxassetid://116487233062443",
+      "NOR": "rbxassetid://98723747886604",
+      "MTL": "rbxassetid://108895411305712",
+      "EMI": "rbxassetid://113360507021554"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://135373892910528",
+      "NOR": "rbxassetid://137582501036822",
+      "RGH": "rbxassetid://73508210480224",
+      "MTL": "rbxassetid://75637299155672",
+      "EMI": "rbxassetid://108417662876156"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_herald_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://132124462418782",
     "meshes": {
       "base": "rbxassetid://100723090026773",
@@ -25,7 +55,7 @@
       "MTL": "rbxassetid://74785485849376",
       "EMI": "rbxassetid://91272060685787"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_herald_bar in FTGG Art"
+    "note": "2026-10-22, glow pass (M-22): 1040 triangles, glow share 4.2%"
   },
   "bar_preglow": {
     "model": "rbxassetid://131619765971099",
@@ -50,6 +80,33 @@
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 976 triangles)"
   },
   "wreck": {
+    "model": "rbxassetid://103346198540852",
+    "meshes": {
+      "base": "rbxassetid://129798595064991",
+      "turret": "rbxassetid://88817953332724",
+      "wheelL1": "rbxassetid://123079264103026",
+      "wheelL2": "rbxassetid://94875618662386",
+      "wheelR1": "rbxassetid://134299438321269",
+      "wheelR2": "rbxassetid://103348279809714"
+    },
+    "decals": {
+      "ALB": "rbxassetid://140099006184734",
+      "RGH": "rbxassetid://82907848625292",
+      "NOR": "rbxassetid://106785537102913",
+      "MTL": "rbxassetid://137985050168988",
+      "EMI": "rbxassetid://95838722485160"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://123610574534675",
+      "NOR": "rbxassetid://85893572162478",
+      "RGH": "rbxassetid://87193452889864",
+      "MTL": "rbxassetid://83029945273901",
+      "EMI": "rbxassetid://140294041522498"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_herald_wreck_bar in FTGG Art",
+    "revision": "Wreck rebuilt with the animated pieces (M-27): 1020 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://103037837887737",
     "meshes": {
       "base": "rbxassetid://85208518241518",

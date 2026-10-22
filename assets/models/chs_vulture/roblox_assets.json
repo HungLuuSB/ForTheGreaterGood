@@ -1,7 +1,34 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "User review fixes 2026-10-23, full re-upload after HTTP 502: 702 triangles, glow share 5.9%",
+  "revision": "Animated pieces (M-27): 702 triangles, glow share 5.9%",
   "bar": {
+    "model": "rbxassetid://73961675283834",
+    "meshes": {
+      "base": "rbxassetid://123727069788148",
+      "base_glow_head": "rbxassetid://132310561225141",
+      "base_glow_running": "rbxassetid://72178976525928",
+      "nano": "rbxassetid://129173401263246",
+      "nano_glow_power": "rbxassetid://89484475743832",
+      "rotor": "rbxassetid://131295501473437",
+      "tailRotor": "rbxassetid://123429191196412"
+    },
+    "decals": {
+      "ALB": "rbxassetid://88525638273745",
+      "RGH": "rbxassetid://101010977433674",
+      "NOR": "rbxassetid://101867264991121",
+      "MTL": "rbxassetid://135858058205027",
+      "EMI": "rbxassetid://83264230679189"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://105236784945960",
+      "NOR": "rbxassetid://78327130741487",
+      "RGH": "rbxassetid://117139450755465",
+      "MTL": "rbxassetid://77913559766028",
+      "EMI": "rbxassetid://112104471613762"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_vulture_bar in FTGG Art"
+  },
+  "bar_3": {
     "model": "rbxassetid://87123043117991",
     "meshes": {
       "base": "rbxassetid://98499768429264",
@@ -25,8 +52,8 @@
       "MTL": "rbxassetid://94479430155663",
       "EMI": "rbxassetid://111459716678875"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_vulture_bar in FTGG Art",
-    "reuploadNote": "Fully re-uploaded 2026-10-23: the first upload's maps failed with HTTP 502 in Studio; swapping single maps didn't recover (pipeline.md, white model)."
+    "reuploadNote": "Fully re-uploaded 2026-10-23: the first upload's maps failed with HTTP 502 in Studio; swapping single maps didn't recover (pipeline.md, white model).",
+    "note": "User review fixes 2026-10-23, full re-upload after HTTP 502: 702 triangles, glow share 5.9%"
   },
   "bar_2": {
     "model": "rbxassetid://111384704771570",

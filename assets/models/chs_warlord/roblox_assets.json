@@ -1,7 +1,34 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Commander (2026-10-23): 3214 triangles, glow share 5.1%",
+  "revision": "Animated pieces (M-27): 3214 triangles, glow share 5.1%",
   "bar": {
+    "model": "rbxassetid://92685267331231",
+    "meshes": {
+      "base": "rbxassetid://94376888388325",
+      "base_glow_head": "rbxassetid://105188434163105",
+      "base_glow_running": "rbxassetid://112541679245462",
+      "nano": "rbxassetid://109771122164427",
+      "nano_glow_power": "rbxassetid://80517032129555",
+      "trackL": "rbxassetid://104476633924709",
+      "trackR": "rbxassetid://98888625432555"
+    },
+    "decals": {
+      "ALB": "rbxassetid://70734183172428",
+      "RGH": "rbxassetid://115983467341082",
+      "NOR": "rbxassetid://93336332389324",
+      "MTL": "rbxassetid://122772044879197",
+      "EMI": "rbxassetid://114873659182697"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://71488780583199",
+      "NOR": "rbxassetid://77513019813683",
+      "RGH": "rbxassetid://127432223759457",
+      "MTL": "rbxassetid://72340702554762",
+      "EMI": "rbxassetid://128818308652738"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_warlord_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://111874546178569",
     "meshes": {
       "base": "rbxassetid://108646012274922",
@@ -24,6 +51,6 @@
       "MTL": "rbxassetid://75419966648700",
       "EMI": "rbxassetid://95516047595076"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_warlord_bar in FTGG Art"
+    "note": "Commander (2026-10-23): 3214 triangles, glow share 5.1%"
   }
 }

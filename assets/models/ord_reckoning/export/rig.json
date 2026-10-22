@@ -139,5 +139,25 @@
       "MTL",
       "EMI"
     ]
+  },
+  "anim": {
+    "hatch": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 110
+    },
+    "hatch2": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        -1
+      ],
+      "range": 110
+    }
   }
 }

@@ -108,6 +108,71 @@ White RGB with the pattern in alpha, 512 × 512, so the client tints them (fx co
 | `jammerStatic` | `rbxassetid://124485150689074` | tileable speckle and scan lines | jammer shimmer / static on a sphere or a cylinder round a jammer, scrolled |
 | `heatShimmer` | `rbxassetid://105647146631109` | tileable soft wavy bands, low alpha | heat shimmer over exhausts, stacks, reactors and beam emitters, scrolled upward |
 
+## Beam shot (Radiance / Inferno, M-29)
+
+The beam towers' shot (`ord_radiance_beam`, `chs_inferno_beam`; the weapons' `fx.muzzle = "beam_charge"`, `fx.impact = "beam_impact"`), BAR Pulsar style but original: a bright laser from the muzzle to the target with thin crackling energy filaments racing along it, thinning and gone within about half a second. Textures are white (the scorch is grey), so the client tints them: Order ice-white / cyan, Chaos hot orange. They are in the mesh manifest as `Meshes.beam` (status `review`): `textures` plus the recommended values per faction under `factions.order` / `factions.chaos`, all listed below. Built by `assets/fx/beam/build.py`.
+
+**Reference build:** "FTGG Art", `Workspace.BeamFxReference`: a Radiance lane and an Inferno lane, each tower firing at a `DummyTarget` 100 studs away, driven by the ModuleScript `BeamFxReference.BeamShot`. `BeamShot.build(faction, muzzle, hit, groundY)` makes every instance once; `BeamShot.apply(rig, t)` sets them all for `t` seconds after the shot started (a pure function of `t`: the same `t` gives the same frame); `BeamShot.play(rig)` loops it as a preview. The same module is in the repo as `assets/fx/beam/BeamShot.luau` (not synced): copy `build` and `apply` into the client's beam effect.
+
+### Textures
+
+Roblox Beams lay a texture's width along the beam: the strips below run along X (the beam's length) and tile in X; Y runs across the beam.
+
+| Key | Asset | Size | Look | Use |
+|---|---|---|---|---|
+| `core` | `rbxassetid://84580715736855` | 512 × 64 | flat-topped soft core with a hot centre line, a faint ripple along X | Beam `BeamCore`, `TextureMode = Wrap` |
+| `glow` | `rbxassetid://140653615912799` | 512 × 64 | wide faint haze, zero at the edges | Beam `BeamGlow`, wider than the core |
+| `filamentA` | `rbxassetid://130559041254740` | 1024 × 128 | three thin crackling lines that wander across the strip, with gaps and flicker | odd filament Beams, scrolled fast (`TextureSpeed`) |
+| `filamentB` | `rbxassetid://71590951128896` | 1024 × 128 | two lines on a different wave and seed | even filament Beams, so stacked filaments don't sync |
+| `charge` | `rbxassetid://95187819936446` | 512 × 512, 2 × 2 flipbook (256 px frames, reading order) | a tight glint opening into a four-ray star | charge flare at the muzzle: a BillboardGui `ImageRectOffset` per frame, or a ParticleEmitter with `FlipbookLayout = Grid2x2`, `FlipbookMode = OneShot` |
+| `impact` | `rbxassetid://121983330106046` | 512 × 512 | hot core, uneven rays, a soft shock ring | impact flare at the hit point |
+| `scorch` | `rbxassetid://108024950155994` | 512 × 512 | dark grey soot blotch with radiating streaks (greyscale RGB, **not** tinted) | ground Decal under the hit point |
+| `scorchGlow` | `rbxassetid://83492274682254` | 512 × 512 | a broken ember rim and a hot centre (white) | Decal over the scorch, tinted with the glow color, fading in the first second |
+
+### Timing (t = seconds since the shot started)
+
+| t (Order) | t (Chaos) | What happens |
+|---|---|---|
+| 0 – 0.08 | 0 – 0.06 | **charge:** the `charge` flipbook at the muzzle, frames 1 → 4, growing from 55% to 100% of `flareSize`; it fades over the next 0.04 s |
+| 0.08 | 0.06 | **beam on at full width:** core, glow and the filaments; the impact flare starts at the hit; the scorch appears 0.02 s later |
+| 0.08 – 0.12 | 0.06 – 0.09 | **hold** at full width (`hold`) |
+| 0.12 – 0.50 | 0.09 – 0.36 | **taper** (`taper`), with `u` going 0 → 1: core width × (1 − u)^1.1, transparency 0.7·u^1.6; glow width × (1 − u)^0.8, transparency 0.35 + 0.65·u; filaments thin faster: width × (1 − u)^2.2, transparency 0.8·u^1.2. At the end every Beam is disabled |
+| 0.08 – 0.38 | 0.06 – 0.31 | **impact flare** (`impactTime`): grows to 120% of `impactSize` in the first quarter, transparency k^1.5 |
+| to 1.3 | to 1.1 | **embers** (`scorchGlowTime`) fade out over the scorch |
+| to 4.1 | to 3.1 | **scorch** (`scorchTime`) stays, fading over its last 1.5 s |
+
+**Filaments, every frame (30 times a second):** each filament Beam has its own pair of attachments, near the muzzle and at the hit. Give each a new perpendicular offset round the beam axis: angle = its slot (i / n of a turn) plus a random ± `jitter` turn; radius `spread` × (0.6–1.0) at the muzzle and × `fan` (small) at the target, so the filaments leave the emitter spread round the core and converge on the hit. Also new random `CurveSize0` / `CurveSize1` within ± `curve` (`Segments = 16`). Seeded per shot and frame (`Random.new(seed + frame)`), so a replay looks the same.
+
+**Every Beam:** `FaceCamera = true`, `LightEmission = 1`, `LightInfluence = 0`, `TextureMode = Wrap`. **The beam narrows to a point at the target** (the user's feedback, 2026-10-23): `Width0` (muzzle end) is the full width, `Width1` (target end) = `Width0` × `tip`, for the core, the glow and the filaments. Beams add up: keep `Brightness` low (below), or the overlap washes out to a flat white bar in daylight.
+
+### Recommended values
+
+Radiance is thicker and longer; Inferno shorter, hotter and more ragged.
+
+| Value | Radiance (`order`) | Inferno (`chaos`) |
+|---|---|---|
+| `charge` / `hold` / `taper` (s) | 0.08 / 0.04 / 0.38 (beam gone at 0.50) | 0.06 / 0.03 / 0.27 (beam gone at 0.36) |
+| core width / glow width at the muzzle (studs) | 1.6 / 7 | 1.2 / 5.5 |
+| filaments: count, width at the muzzle (studs) | 4, 2.5 | 3, 2.2 |
+| `spread` / `fan` / `jitter` / `curve` | 0.8 / 0.15 / 0.45 / 1.6 | 1.0 / 0.2 / 0.7 / 2.2 |
+| `tip` (width at the target ÷ width at the muzzle) | 0.06 | 0.08 |
+| core color | (225, 248, 255) ice-white | (255, 205, 150) white-hot |
+| glow color | (80, 190, 255) cyan | (255, 85, 15) orange |
+| filament color | (165, 232, 255) | (255, 130, 35) |
+| `Brightness`: core / glow / filaments | 2 / 0.6 / 3 | 2.4 / 0.8 / 3.4 |
+| `TextureLength`: core / glow / filament A / filament B (studs) | 30 / 60 / 20 / 15 | 24 / 50 / 16 / 12 |
+| `TextureSpeed`: filament A / B (tiles per second) | 30 / 40 (about 600 studs/s) | 40 / 52 (about 640 studs/s) |
+| `flareSize` / `impactSize` / `scorchSize` (studs) | 7 / 14 / 7 | 6 / 12 / 6 |
+| `impactTime` / `scorchGlowTime` / `scorchTime` (s) | 0.3 / 1.2 / 4 | 0.25 / 1.0 / 3 |
+
+The flares and the core use the core color, the embers the glow color. Check the manifest entry with `Mesh.validateBeam(Meshes.beam)`.
+
+**Notes from the reference build:**
+- **Embers glow through an overbright Decal color:** a Decal can't emit light, so set `Color3` to the glow color × 4 (`Color3.new(r * 4, g * 4, b * 4)`); at plain 0–1 values the embers read as dull paint.
+- **Additive tints mix with the ground:** over green grass the Inferno's orange reads amber up close (orange + green); at 220 studs and on brown or dark ground it reads orange. Don't push the Chaos colors redder to compensate: on dark ground they would go red.
+- **Fresh images stream in:** right after a texture is first used, Roblox draws a low-resolution version for a moment (the filaments look smeared), and a Beam whose image hasn't loaded draws as a flat bar. Preload the eight textures (`ContentProvider:PreloadAsync`) when the match loads.
+- **`TextureSpeed`** only animates while the game runs (not in Studio's edit view), so the scroll direction isn't checked yet: the energy should travel from the muzzle (`Attachment0`) to the hit; if it runs backwards in a playtest, flip the sign of both speeds.
+
 ## Shield (Order deployable shield)
 
 The target look: a translucent dome with a bright edge, thin glowing rings flowing from the top down the dome, a curved light beam rising from a small emitter device to the top of the dome, a swirling vortex at the top, floating specks inside, and a ring burst where a shell hits. `R` below is the dome radius in studs.

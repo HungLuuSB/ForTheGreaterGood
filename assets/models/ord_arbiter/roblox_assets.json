@@ -1,7 +1,38 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 1116 triangles, glow share 4.8%",
+  "revision": "Animated pieces (M-27): 1116 triangles, glow share 4.8%",
   "bar": {
+    "model": "rbxassetid://123291096875495",
+    "meshes": {
+      "base": "rbxassetid://127202697548656",
+      "base_glow_head": "rbxassetid://117910351963179",
+      "base_glow_running": "rbxassetid://134727625954218",
+      "dish": "rbxassetid://116259456660589",
+      "dish_glow_running": "rbxassetid://84556883551380",
+      "wheelL1": "rbxassetid://70600323450188",
+      "wheelL2": "rbxassetid://132982446144896",
+      "wheelL3": "rbxassetid://85809564225907",
+      "wheelR1": "rbxassetid://115765115121048",
+      "wheelR2": "rbxassetid://79163053698211",
+      "wheelR3": "rbxassetid://86185289957194"
+    },
+    "decals": {
+      "ALB": "rbxassetid://111558899867655",
+      "RGH": "rbxassetid://131021415202498",
+      "NOR": "rbxassetid://72510227170117",
+      "MTL": "rbxassetid://99268414900760",
+      "EMI": "rbxassetid://71806699260533"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://94163971833060",
+      "NOR": "rbxassetid://84717702707648",
+      "RGH": "rbxassetid://129554636774966",
+      "MTL": "rbxassetid://85915708378979",
+      "EMI": "rbxassetid://112629296993917"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_arbiter_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://101832372878682",
     "meshes": {
       "base": "rbxassetid://81670671095395",
@@ -24,6 +55,6 @@
       "MTL": "rbxassetid://83806522728995",
       "EMI": "rbxassetid://75899029453666"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_arbiter_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 1116 triangles, glow share 4.8%"
   }
 }
