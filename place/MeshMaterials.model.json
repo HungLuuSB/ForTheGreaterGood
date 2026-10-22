@@ -22,6 +22,18 @@
       }
     },
     {
+      "Name": "chs_carapace",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://82866142591832",
+        "NormalMapContent": "rbxassetid://125586489989383",
+        "RoughnessMapContent": "rbxassetid://113905328768594",
+        "MetalnessMapContent": "rbxassetid://82863466469280",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_depot",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -330,6 +342,18 @@
         "NormalMapContent": "rbxassetid://80305731112034",
         "RoughnessMapContent": "rbxassetid://102465023933565",
         "MetalnessMapContent": "rbxassetid://74759415228976",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_phalanx",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://108727817922291",
+        "NormalMapContent": "rbxassetid://83974720212015",
+        "RoughnessMapContent": "rbxassetid://115475433027160",
+        "MetalnessMapContent": "rbxassetid://127200583957662",
         "EmissiveStrength": 0
       }
     },

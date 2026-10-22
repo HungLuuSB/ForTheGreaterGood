@@ -1,0 +1,29 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 1036 triangles, glow share 5.6%",
+  "bar": {
+    "model": "rbxassetid://136855577755960",
+    "meshes": {
+      "base": "rbxassetid://94278081321491",
+      "base_glow_power": "rbxassetid://76557878958943",
+      "base_glow_running": "rbxassetid://128768603788070",
+      "core": "rbxassetid://77090388121802",
+      "core_glow_power": "rbxassetid://129557552166800"
+    },
+    "decals": {
+      "ALB": "rbxassetid://109196387172139",
+      "RGH": "rbxassetid://127710084998865",
+      "NOR": "rbxassetid://95984973713093",
+      "MTL": "rbxassetid://100830055689416",
+      "EMI": "rbxassetid://81046768378212"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://82866142591832",
+      "NOR": "rbxassetid://125586489989383",
+      "RGH": "rbxassetid://113905328768594",
+      "MTL": "rbxassetid://82863466469280",
+      "EMI": "rbxassetid://123640390649188"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_carapace_bar in FTGG Art"
+  }
+}
