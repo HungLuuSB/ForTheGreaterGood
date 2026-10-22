@@ -103,4 +103,39 @@ return function(t: any)
 		t.expect(worst < 3, `client and server agree on shells in the field (worst {worst} studs)`)
 		print(string.format("    %d shell-ticks in the field, %d hits, worst %.2f studs off", inField, hits, worst))
 	end)
+
+	t.test("light shells (S-85): destroyed at the surface, dropped with no burst, the dome lit there", function()
+		local sim, world, fx, _, step = scene()
+		Spawn.unit(sim, "chs_locust", 2, 0, 40, math.pi) -- autocannon, mass ~0.23
+		local absorbs, inside, bursts = 0, 0, 0
+		local seen: { [any]: boolean } = {}
+		step(15 * 8, function()
+			for _, h in fx.shieldHits do
+				if h.kind == "absorb" then
+					absorbs += 1
+					local r = math.sqrt(h.x ^ 2 + (h.z + 100) ^ 2 + (h.y - World.groundY(world, 0, -100)) ^ 2)
+					t.expect(math.abs(r - 120) < 4, `at the surface (r {r})`)
+				end
+			end
+			table.clear(fx.shieldHits)
+			for _, p in fx.projectiles do
+				local r = math.sqrt(p.x ^ 2 + (p.z + 100) ^ 2 + (p.y - World.groundY(world, 0, -100)) ^ 2)
+				if r < 110 then
+					inside += 1
+				end
+			end
+			for _, b in fx.bursts do
+				if not seen[b] then
+					seen[b] = true
+					local r = math.sqrt(b.x ^ 2 + (b.z + 100) ^ 2)
+					if r < 110 then
+						bursts += 1
+					end
+				end
+			end
+		end)
+		t.expect(absorbs >= 3, `autocannon rounds destroyed at the dome ({absorbs})`)
+		t.equal(inside, 0, "none drawn well inside the dome")
+		t.equal(bursts, 0, "no bursts inside the dome")
+	end)
 end

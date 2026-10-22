@@ -479,13 +479,14 @@ if RunService:IsStudio() then
 			local st = shieldDomes.stats
 			return { domes = domes, records = records, hits = { hits = st.hits, breaches = st.breaches, enters = st.enters, lit = st.lit, lagTicks = st.lagSum / math.max(st.lagN, 1), lastBreaches = st.lastBreaches } }
 		elseif query == "camera" then
-			-- Invoke("camera", x?, z?, distance?, pitchDegrees?): put the camera there (screenshots)
-			local x, z, distance, pitch = ...
+			-- Invoke("camera", x?, z?, distance?, pitchDegrees?, yawDegrees?): put the camera there (screenshots)
+			local x, z, distance, pitch, yaw = ...
 			camState.follow = nil
 			camState.x = x or camState.x
 			camState.z = z or camState.z
 			camState.distance = distance or camState.distance
 			camState.pitch = if pitch then math.rad(pitch) else camState.pitch
+			camState.yaw = if yaw then math.rad(yaw) else camState.yaw
 			return { x = camState.x, z = camState.z, distance = camState.distance, pitch = math.deg(camState.pitch) }
 		elseif query == "perf" then
 			-- average and worst ms per frame since the last call, per part
@@ -645,6 +646,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local visibleFx = RenderEffects.step(fxRenderer, fx, t, now, speed)
 	lastVisibleFx = visibleFx
 	ShieldDomes.step(shieldDomes, world, fx, renderer)
+	ShieldDomes.forces(shieldDomes, visibleFx)
 	mark("effects", t0)
 	-- the camera goes on after units and missiles have their drawn positions
 	-- this frame, so a followed one sits still in the middle of the screen

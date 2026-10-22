@@ -93,7 +93,8 @@ export type Proj = {
 -- A shell turned back by a shield dome or breaking through it (SHIELD_HIT,
 -- protocol 24, S-79): Render/ShieldDomes lights the dome there.
 -- `kind`: "enter" (the shell crossed the dome's surface: SHIELD_FIELD, drawn
--- at once, C-95), "turn" or "breach" (SHIELD_HIT, at the turn deep inside).
+-- at once, C-95), "turn" or "breach" (SHIELD_HIT, at the turn deep inside),
+-- "absorb" (SHIELD_HIT: a light shell destroyed at the surface, S-85).
 export type ShieldHit = { unitId: number, kind: string, x: number, y: number, z: number, mass: number, breach: boolean, projId: number, tick: number }
 
 -- A strategic missile's launch (LAUNCH_WARNING, S-48): every player gets one.
@@ -799,14 +800,18 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			end
 		end
 	elseif kind == EK.SHIELD_HIT then
-		-- turned back (a missile loses its lock) or broke through
+		-- turned back (a missile loses its lock), broke through, or a light shell
+		-- destroyed at the surface (protocol 25): dropped, no burst, no IMPACT follows
 		local p = fx.projectiles[e.projId]
-		if p and not e.breach then
+		if p and e.absorbed then
+			fx.projectiles[e.projId] = nil
+			p.gone = true
+		elseif p and not e.breach then
 			p.target = 0
 		end
 		local x, y, z = pos(world, e)
 		if #fx.shieldHits < 64 then
-			table.insert(fx.shieldHits, { unitId = e.unitId or 0, kind = if e.breach then "breach" else "turn", x = x, y = y, z = z, mass = e.mass / Schema.SHIELD_MASS_SCALE, breach = e.breach == true, projId = e.projId, tick = e.tick })
+			table.insert(fx.shieldHits, { unitId = e.unitId or 0, kind = if e.breach then "breach" elseif e.absorbed then "absorb" else "turn", x = x, y = y, z = z, mass = e.mass / Schema.SHIELD_MASS_SCALE, breach = e.breach == true, projId = e.projId, tick = e.tick })
 		end
 	elseif kind == EK.SHOT then
 		-- a hidden shooter's hitscan shot (protocol 14, S-43, C-54): a tracer

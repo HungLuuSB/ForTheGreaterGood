@@ -6,14 +6,21 @@
 -- collapsing when it clears and deploying again when it returns. A shell
 -- crossing the surface (Core/Effects' "enter" hits) lights the dome at once;
 -- the server's turn (SHIELD_HIT, deep inside) doesn't light it again, a
--- breach does. Hits go to the dome they name, else the nearest one round
+-- breach does, and so does a light shell destroyed at the surface ("absorb"). Hits go to the dome they name, else the nearest one round
 -- the point. Shells
 -- in a field are stepped by Core/Effects with Shared/Combat/ShieldField.
 -- The beam rises from the generator model's `beam` attachment (its blockout,
 -- docs/contracts/fx.md) while the model is drawn; domes wait until
 -- ShieldFx has C's meshes.
+--
+-- Shells in a field show the force on them (C-97): a glowing plume on the
+-- side the field pushes from, flowing into the shell, as long as the force
+-- is strong (Core/ShieldLook.force: the field step's change of velocity
+-- over a tick). A fixed pool of PLUMES beams, made once.
 
 local Schema = require("@shared/Net/Schema")
+local ShieldField = require("@shared/Combat/ShieldField")
+local ShieldLook = require("../Core/ShieldLook")
 local Effects = require("../Core/Effects")
 local World = require("../Core/World")
 local ShieldFx = require("./ShieldFx")
@@ -22,6 +29,9 @@ local UnitRenderer = require("./UnitRenderer")
 local ShieldDomes = {}
 
 local UP = Schema.ShieldFlag.UP
+ShieldDomes.PLUMES = 32 -- force plumes at once (the fixed pool)
+
+type Plume = { beam: Beam, at: Attachment, tip: Attachment }
 
 type Dome = { fx: ShieldFx.ShieldFx, up: boolean, x: number, y: number, z: number, radius: number, model: Model? }
 
@@ -35,10 +45,74 @@ export type State = {
 	domes: { [number]: Dome },
 	-- SHIELD_HITs seen (debug): totals and the last few breaches { mass, x, y, z }
 	stats: { hits: number, breaches: number, lastBreaches: { { number } }, enters: number, lit: number, lagSum: number, lagN: number, enteredAt: { [number]: number } },
+	plumes: { Plume }, -- made on first use
+	plumesShown: number,
 }
 
 function ShieldDomes.new(): State
-	return { domes = {}, stats = { hits = 0, breaches = 0, lastBreaches = {}, enters = 0, lit = 0, lagSum = 0, lagN = 0, enteredAt = {} } }
+	return { domes = {}, stats = { hits = 0, breaches = 0, lastBreaches = {}, enters = 0, lit = 0, lagSum = 0, lagN = 0, enteredAt = {} }, plumes = {}, plumesShown = 0 }
+end
+
+local function makePlumes(s: State)
+	local holder = workspace.Terrain
+	for _ = 1, ShieldDomes.PLUMES do
+		local at = Instance.new("Attachment")
+		at.Name = "ShieldForce"
+		at.Parent = holder
+		local tip = Instance.new("Attachment")
+		tip.Name = "ShieldForceTip"
+		tip.Parent = holder
+		local beam = Instance.new("Beam")
+		beam.Attachment0 = at
+		beam.Attachment1 = tip
+		beam.FaceCamera = true
+		beam.LightEmission = 1
+		beam.LightInfluence = 0
+		beam.Brightness = 3
+		beam.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(190, 220, 255))
+		beam.Texture = ShieldFx.ASSETS.beam
+		beam.TextureMode = Enum.TextureMode.Wrap
+		beam.TextureLength = 4
+		beam.TextureSpeed = -2 -- flowing into the shell
+		beam.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.6, 0.35), NumberSequenceKeypoint.new(1, 1) })
+		beam.Width1 = 0.2
+		beam.Segments = 2
+		beam.Enabled = false
+		beam.Parent = holder
+		table.insert(s.plumes, { beam = beam, at = at, tip = tip })
+	end
+end
+
+-- Each frame after Effects.visible: the force plumes on shells in a field
+-- (`drawn`: { proj, x, y, z } entries).
+function ShieldDomes.forces(s: State, drawn: { { any } })
+	local used = 0
+	for _, e in drawn do
+		local p = e[1]
+		local n = p.nextState
+		if p.field and n and used < ShieldDomes.PLUMES then
+			local w = p.weapon
+			local dx, dy, dz, size = ShieldLook.force(p.vx, p.vy, p.vz, n[4], n[5], n[6], w.gravity or 0)
+			if size > 0 then
+				if #s.plumes == 0 then
+					makePlumes(s)
+				end
+				used += 1
+				local plume = s.plumes[used]
+				local at = Vector3.new(e[2], e[3], e[4])
+				-- on the side the force pushes from: ahead of the shell, toward the dome
+				local len = ShieldLook.plume(size)
+				plume.at.WorldPosition = at
+				plume.tip.WorldPosition = at - Vector3.new(dx, dy, dz) * len
+				plume.beam.Width0 = 2.5 + 0.8 * math.min(ShieldField.mass(w), 4)
+				plume.beam.Enabled = true
+			end
+		end
+	end
+	for i = used + 1, s.plumesShown do
+		s.plumes[i].beam.Enabled = false
+	end
+	s.plumesShown = used
 end
 
 -- Each frame, after Effects.update.

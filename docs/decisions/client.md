@@ -772,3 +772,13 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - With S-83's inner band a light shell turns about 0.1 s after crossing. A ripple growing from 0 became visible only then, so the user read it as playing at the push-back.
 - The user suggested testing with one unit.
 - Light shots may soon be destroyed on contact (sent to sim-A), and those may never send a SHIELD_FIELD.
+
+### C-97 — Force plumes on shells in a shield field; absorbed shells dropped (2026-10-23)
+
+**Decision:**
+- **Plumes:** `ShieldDomes.forces` draws a beam on each drawn shell that is in a field (up to 32, pooled on Terrain attachments), from the shell toward minus the field's force. The force is `nextState` velocity minus velocity, minus the weapon's gravity for a tick. Length is 0.2 studs per stud/s of change, from 2 to 14. C's beam texture flows into the shell; width is 2.5 + 0.8 × mass.
+- **Absorbed shells:** a SHIELD_HIT with ABSORBED (protocol 25) removes the projectile and queues an "absorb" hit, which lights the dome.
+
+**Why:**
+- The user asked for a visible force on shells inside the dome, following the shot's direction and the shield's centre. The change of velocity is exactly the field's push, so the plume shows what the field does.
+- S-85 destroys light shells at the surface with no IMPACT, so the client must drop them itself.
