@@ -24,7 +24,7 @@ Gameplay identity (A's [`../design/factions.md`](../design/factions.md), 2026-10
 | Character | Sleek, wedge-shaped, high-tech, fortress-like: heavy | Rugged, aggressive, built for mass and assault: light and nimble |
 | Shapes | Wedge armor, flat faces, long, low and broad; massive | Rounder or domed turrets; compact: shorter, narrower, higher off the ground |
 | Signature details | Thick armor plates and add-on modules, sensor strips, shields, active protection | Visible reactive-armor blocks, slat cages at the rear, more weapons per vehicle, exposed running gear |
-| Paint | Light sand-grey (178, 174, 160); trim a darker warm grey | Gunmetal (76, 80, 84); trim near-black |
+| Paint | Light sand-grey (178, 174, 160; the mesh bakes a slightly warmer (174, 168, 150) with rougher paint so it draws like the blockout, M-18); trim a darker warm grey | Gunmetal (86, 90, 95; lifted from 76, 80, 84 so it reads at 35°, M-18); trim near-black; bright edge highlights |
 | Emissive accent | Cool cyan (90, 210, 255) | Hot orange (255, 140, 50) |
 
 ### Reading heavy vs light

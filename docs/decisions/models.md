@@ -25,6 +25,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | M-15 | BAR model style on near-future shapes: exaggerated turret and gun, painted metal with panel lines and edge highlights, no camouflage, bold team plates, small emissive accents |
 | M-16 | Blockout palettes follow the style guide paints: Order sand-grey with cyan accents, Chaos gunmetal with orange accents |
 | M-17 | Blockouts for units without a def go in `Blockouts/Pending/` with the def fields they assume and review poses, outside the Registry until the def exists |
+| M-18 | BAR style approved for both tanks; review fixes: Lancer paint warmed to match its blockout, Ravager lifted and 10% lower and narrower than the Lancer; team color stays a runtime `BasePart.Color` under the color map's alpha (rig.md 6) |
+| M-19 | Blockout review fixes: Warden deploy pieces (jacks, shield wings, hazard-striped spades), Minotaur low and wide vs Cyclops tall (fixed mortar tube, eye on a mast), Reckoning split silo doors with a hazard edge; palette key `hazard`; Chaos hull lifted to (86, 90, 95) |
 
 ### M-1 — Review in "FTGG Art" (2026-10-21)
 
@@ -150,3 +152,22 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 **Review poses in Edit mode:** Studio doesn't apply `Motor6D.Transform` in Edit mode, so the review script places posed pieces directly on review copies.
 
 **Update (2026-10-22, S-64):** the sim session added defs for the Warden (`ord_warden`, footprint 1, pieces base / spades / turret / barrel / muzzle) and the Minotaur (`chs_minotaur`, footprint 2, pieces base / ram / turret / barrel / muzzle; `ram` is the demolition charge's turret piece and muzzle). Both blockouts moved up and are registered: the Warden was rebuilt at footprint 1 with one hinged `spades` plate (no shield), the Minotaur's ram plate became the jointed `ram` piece. M-3's SAM rig now matches the defs too (S-64: turn `turret`, pitch `launcher`).
+
+### M-18 — BAR tanks approved; review fixes (2026-10-22)
+
+**Decision:** the user approved the BAR style (M-15) for both tanks and retired the camouflage Lancers (review 2a/2b: their files stay, the Studio copies under `ModelReview` are removed). Fixes from the review:
+- **Lancer paint:** it rendered near-white with a blue tint in Studio. Measured in the same shot, the mesh's hull top drew (180, 188, 187) against the blockout's (170, 177, 169): sky reflections on fairly glossy paint plus a near-white edge highlight. The paint is now rougher (0.62), a touch warmer and darker (174, 168, 150), with a sand edge highlight (214, 210, 196), darker seams and more ambient occlusion. Target: the mesh draws like the M-16 blockout.
+- **Ravager:** gunmetal lifted to (86, 90, 95) with a brighter edge highlight, so it doesn't sink into its own shadow at 35°. The whole unit is scaled (0.985, 0.9, 0.93) after building (`lib.Piece.scale`, pivots included): 5.67 × 3.35 studs against the Lancer's 6.3 × 3.70, so 10% narrower and lower (Chaos reads lighter, M-14). Orange emissive unchanged (small).
+- **Team color:** applied at runtime, never baked. B's `ModelPool` sets `BasePart.Color` on `TeamColor`-tagged parts; on a meshed piece the color map's alpha (Overlay) masks it to the panels, and the emissive properties are independent. Written into `docs/contracts/rig.md` section 6 and checked with four team colors.
+
+**Why:** the user's review of the overnight batch (2026-10-22).
+
+### M-19 — Blockout review fixes (2026-10-22)
+
+**Decision:**
+- **Warden** (packed vs deployed must read at 220 studs): client-only pieces `jacks` (four legs, pads to the ground when deployed), `shieldL` / `shieldR` (front shield wings hinged at the hull's front corners: along the sides when packed, closed into a wall wider than the hull with a gun slot when deployed), a bigger `spades` plate (5.8 × 3.2) whose front face carries hazard stripes: hidden behind the turret when packed, face up on the ground when deployed. The deployed review pose also lowers the hull 0.4 and raises the gun 12°. The client's piece script still needs to animate the new pieces (progress, request 6).
+- **Minotaur vs Cyclops** (they read alike as black shapes): the Minotaur is now low (turret top 3.4), wide and front-heavy, with an 11.8-stud ram plate wider than its tracks. The Cyclops is tall: a 7-stud mortar tube at 75° and the big eye on a 4.6-stud mast (top at 10.5). The tube is fixed to the turret: the weapon pitches −5° to 60° from a level rest (rig.md 2), and a tube authored near-vertical would point backwards when aiming. So the `barrel` piece is the short elevating cradle at the tube's foot, and the muzzle sits at the tube's mouth on the turret (a mortar ranges by charge).
+- **Reckoning** (must never read as a Citadel from above): two split blast doors (6 × 12 each) fill most of the roof, ringed by a yellow and black hazard edge. `hatch` is the left door; the right door is the client-only `hatch2`.
+- **Palette:** new key `hazard` (228, 184, 40), the same in every faction (rig.md 4). The Chaos `hull` moved to (86, 90, 95) with the Ravager's paint, so mesh and blockout match.
+
+**Why:** the user's review of the overnight batch (2026-10-22).

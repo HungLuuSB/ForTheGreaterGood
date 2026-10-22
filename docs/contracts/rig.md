@@ -70,7 +70,7 @@ return {
 | `at` | the part's center in model space (section 2), studs |
 | `rot` | `{ x, y, z }` degrees, optional (wedges usually need it) |
 | `pivot` | joint pivot in model space, pieces only; default = `at` |
-| `color` | palette key: `hull`, `dark`, `track`, `metal`, `glass`, `team` (`team` also tags `TeamColor`) |
+| `color` | palette key: `hull`, `dark`, `track`, `metal`, `glass`, `team` (`team` also tags `TeamColor`), `hazard` (warning yellow, every faction) |
 
 `visualPieces` (optional) lists extra jointed pieces only the client animates (piece scripts, C-30) that the def doesn't list yet, e.g. the Juggernaut's `armL` / `armR`; they must be parts and not repeat a def piece.
 
