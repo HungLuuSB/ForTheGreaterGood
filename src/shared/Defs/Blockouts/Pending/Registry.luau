@@ -11,6 +11,24 @@ return {
 	blockouts = {},
 	defs = {},
 	poses = {
+		-- switched off (beam towers, S-96): the turret sinks into the drum, the
+		-- emitter folds down, the lids close over the pit
+		ord_radiance = {
+			retracted = {
+				turret = { 0, 0, 0, 0, -7.6, 0 },
+				barrel = { -90, 0, 0 },
+				shellL = { 0, 0, -90 },
+				shellR = { 0, 0, 90 },
+			},
+		},
+		chs_inferno = {
+			retracted = {
+				turret = { 0, 0, 0, 0, -7.4, 0 },
+				barrel = { -90, 0, 0 },
+				shellL = { 0, 0, -90 },
+				shellR = { 0, 0, 90 },
+			},
+		},
 		ord_warden = {
 			packed = {},
 			deployed = {

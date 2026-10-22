@@ -1,0 +1,187 @@
+{
+  "id": "chs_locust",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.9225,
+        -0.1
+      ],
+      "size": [
+        3.78,
+        1.845,
+        5.4
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.35,
+        0.675
+      ],
+      "size": [
+        1.9882,
+        1.1,
+        2.1372
+      ],
+      "pivot": [
+        0.0,
+        1.8,
+        0.7
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        2.2,
+        -1.85
+      ],
+      "size": [
+        0.6,
+        0.5,
+        3.2
+      ],
+      "pivot": [
+        0.0,
+        2.2,
+        -0.3
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        2.2,
+        -3.5
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret",
+    "barrel"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.425,
+        -0.075
+      ],
+      "size": [
+        3.84,
+        0.87,
+        5.47
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.45,
+        -2.65
+      ],
+      "size": [
+        2.6,
+        0.2,
+        0.1
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.48,
+        0.68
+      ],
+      "size": [
+        2.06,
+        0.72,
+        1.64
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        2.2,
+        -3.05
+      ],
+      "size": [
+        0.3,
+        0.3,
+        0.08
+      ]
+    }
+  ],
+  "glowShare": 0.0588,
+  "triangles": {
+    "base": 1032,
+    "turret": 104,
+    "barrel": 128,
+    "total": 1264
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

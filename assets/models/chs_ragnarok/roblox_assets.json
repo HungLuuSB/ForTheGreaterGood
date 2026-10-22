@@ -1,0 +1,28 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 1512 triangles, glow share 3.2%",
+  "bar": {
+    "model": "rbxassetid://108230814579679",
+    "meshes": {
+      "base": "rbxassetid://124111119473503",
+      "base_glow_power": "rbxassetid://126520768729567",
+      "base_glow_running": "rbxassetid://112453640701979",
+      "hatch": "rbxassetid://135345854237491"
+    },
+    "decals": {
+      "ALB": "rbxassetid://130630072486298",
+      "RGH": "rbxassetid://83165144119089",
+      "NOR": "rbxassetid://98833910868773",
+      "MTL": "rbxassetid://139692619814309",
+      "EMI": "rbxassetid://104663868796268"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://73825706356176",
+      "NOR": "rbxassetid://77672004282123",
+      "RGH": "rbxassetid://134388859044450",
+      "MTL": "rbxassetid://132152218614281",
+      "EMI": "rbxassetid://100756322747083"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_ragnarok_bar in FTGG Art"
+  }
+}

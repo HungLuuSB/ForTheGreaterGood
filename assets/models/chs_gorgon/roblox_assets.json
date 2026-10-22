@@ -1,0 +1,60 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15), radar panel edge-only after a lit-face first try: 1144 triangles, glow share 5.1%",
+  "bar": {
+    "model": "rbxassetid://81965608343693",
+    "meshes": {
+      "base": "rbxassetid://123035400578930",
+      "base_glow_head": "rbxassetid://117682423690969",
+      "base_glow_running": "rbxassetid://107087031139997",
+      "launcher": "rbxassetid://77708042147853",
+      "launcher_glow_running": "rbxassetid://88214850858703",
+      "launcher_glow_weapon": "rbxassetid://135836098558990",
+      "turret": "rbxassetid://92363262500427",
+      "turret_glow_running": "rbxassetid://139968485311249"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84617643654958",
+      "RGH": "rbxassetid://89363354458482",
+      "NOR": "rbxassetid://85843979896490",
+      "MTL": "rbxassetid://75970739498524",
+      "EMI": "rbxassetid://89071868536699"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://106203088887558",
+      "NOR": "rbxassetid://101301350703784",
+      "RGH": "rbxassetid://131028142722186",
+      "MTL": "rbxassetid://90841103010282",
+      "EMI": "rbxassetid://83127967867433"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gorgon_bar in FTGG Art"
+  },
+  "bar_1": {
+    "model": "rbxassetid://80621445187925",
+    "meshes": {
+      "base": "rbxassetid://80654211215823",
+      "base_glow_head": "rbxassetid://139930920184397",
+      "base_glow_running": "rbxassetid://95765292799751",
+      "launcher": "rbxassetid://110111855975761",
+      "launcher_glow_running": "rbxassetid://115903737549463",
+      "launcher_glow_weapon": "rbxassetid://133780931636296",
+      "turret": "rbxassetid://127619005438798",
+      "turret_glow_running": "rbxassetid://125805735318650"
+    },
+    "decals": {
+      "ALB": "rbxassetid://78517459623251",
+      "RGH": "rbxassetid://111065043077576",
+      "NOR": "rbxassetid://88475865842228",
+      "MTL": "rbxassetid://71151891282115",
+      "EMI": "rbxassetid://121620513814787"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://132024556756564",
+      "NOR": "rbxassetid://90403542313648",
+      "RGH": "rbxassetid://110207886418454",
+      "MTL": "rbxassetid://101763020028259",
+      "EMI": "rbxassetid://110793014617334"
+    },
+    "note": "2026-10-22, first BAR upload (M-15): 1108 triangles, glow share 6.3%"
+  }
+}

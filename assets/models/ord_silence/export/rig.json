@@ -1,0 +1,172 @@
+{
+  "id": "ord_silence",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.5,
+        0.55
+      ],
+      "size": [
+        3.2,
+        4.4,
+        11.7
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.4,
+        -3.4
+      ],
+      "size": [
+        1.0,
+        0.4,
+        0.8
+      ],
+      "pivot": [
+        0.0,
+        0.2,
+        -3.4
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.4,
+        3.0
+      ],
+      "size": [
+        0.8,
+        0.3,
+        0.6
+      ],
+      "pivot": [
+        0.0,
+        0.2,
+        3.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0,
+        0.4,
+        -3.9
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        0,
+        0.4,
+        2.6
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        0.665,
+        1.3
+      ],
+      "size": [
+        3.26,
+        2.63,
+        8.6
+      ]
+    },
+    {
+      "name": "turret1_glow_weapon",
+      "piece": "turret1",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        0.4,
+        -3.81
+      ],
+      "size": [
+        0.6,
+        0.2,
+        0.04
+      ]
+    },
+    {
+      "name": "turret2_glow_weapon",
+      "piece": "turret2",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        0.4,
+        2.69
+      ],
+      "size": [
+        0.5,
+        0.14,
+        0.04
+      ]
+    }
+  ],
+  "glowShare": 0.0501,
+  "triangles": {
+    "base": 360,
+    "turret1": 56,
+    "turret2": 56,
+    "total": 472
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

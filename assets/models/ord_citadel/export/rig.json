@@ -1,0 +1,277 @@
+{
+  "id": "ord_citadel",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.1,
+        0.0
+      ],
+      "size": [
+        23.5318,
+        6.2,
+        23.5318
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        6.0,
+        0.0
+      ],
+      "size": [
+        7.971,
+        3.2,
+        7.971
+      ],
+      "pivot": [
+        0.0,
+        4.4,
+        0.5
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        5.9,
+        -9.45
+      ],
+      "size": [
+        2.0,
+        1.6,
+        11.5
+      ],
+      "pivot": [
+        0.0,
+        5.9,
+        -4.0
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -5.6,
+        6.3475,
+        -5.82
+      ],
+      "size": [
+        2.9,
+        1.695,
+        2.84
+      ],
+      "pivot": [
+        -5.6,
+        5.8,
+        -5.6
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        5.6,
+        7.6,
+        5.6
+      ],
+      "size": [
+        4.4,
+        2.7304,
+        1.266
+      ],
+      "pivot": [
+        5.6,
+        6.2,
+        5.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0,
+        5.9,
+        -15.1
+      ]
+    },
+    "muzzle2": {
+      "parent": "launcher",
+      "at": [
+        -5.6,
+        6.6,
+        -7.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret",
+    "barrel",
+    "launcher",
+    "radar"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.3,
+        0.0
+      ],
+      "size": [
+        23.26,
+        2.4,
+        23.26
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.25,
+        0.5
+      ],
+      "size": [
+        9.0,
+        0.14,
+        9.0
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        6.575,
+        0.455
+      ],
+      "size": [
+        8.09,
+        1.79,
+        5.09
+      ]
+    },
+    {
+      "name": "barrel_glow_weapon",
+      "piece": "barrel",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        5.9,
+        -10.85
+      ],
+      "size": [
+        1.66,
+        1.66,
+        5.86
+      ]
+    },
+    {
+      "name": "launcher_glow_weapon",
+      "piece": "launcher",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        -5.6,
+        6.6,
+        -7.25
+      ],
+      "size": [
+        2.16,
+        0.66,
+        0.03
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        5.6,
+        7.6684,
+        5.4121
+      ],
+      "size": [
+        4.1,
+        2.3372,
+        0.867
+      ]
+    }
+  ],
+  "glowShare": 0.0405,
+  "triangles": {
+    "base": 664,
+    "turret": 216,
+    "barrel": 328,
+    "launcher": 252,
+    "radar": 152,
+    "total": 1612
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

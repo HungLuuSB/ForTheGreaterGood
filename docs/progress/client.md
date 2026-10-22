@@ -13,7 +13,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - Each shot costs 700 power from your stores.
 - **Flak towers** (Lumen, Hailstorm) work as normal defenses.
 - **Icons:** all four use existing icon tiles for now (beam towers: Heavy Turret; flak towers: IR SAM Site). No icon re-import needed.
-- **Models:** the towers are placeholder boxes until models-C's meshes land (C has the blockouts and the retract pose ready).
+- **Models:** the towers draw as models-C's blockouts (C-113), and retract with closing lids; BAR meshes come next.
 - **Screenshots:** `debug_out/screens/beam_radiance.jpg`, `beam_tower_on.jpg`, `beam_tower_off.jpg`.
 
 ## Summary (2026-10-23, per-unit commands, factory orders, top strip)
@@ -354,6 +354,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `bb644b9` (per-unit command sets, factory orders kept, Roblox top bar cleared and HUD in the top strip, sim request 44, C-109; also C-108 `0cfa7d0`: minimap 220, fx materials, includes m-models `764874b`); test_client 195, test 407, build passed.
 - Ready to merge: `ecd03d2` (main with S-93 / S-94 merged; shield wire spec for heavy shells, C-110); test_client 194 (one unidentified failure in one of four runs, not repeated), test 409, build passed.
 - Ready to merge: `01a59d5` (main with S-95 merged; factories offer Attack; FactoryOrders.spec, C-111); test_client 195, test 410, build passed.
+- Ready to merge: `2a7b73f` (beam drawing, retract piece script and On / Off, stopgap icons for S-96 towers; fixes main's 2 icon specs; C-112); test_client 196, test 414, build passed.
+- Ready to merge: `b915691` (S-96 tower blockouts merged from m-models `aafbf19`; retract checked, C-113; docs only besides the merge); test 414, build passed; test_client 196 (the intermittent failure was Ranges.spec's timing check under load, fixed in the next commit).
+- Ready to merge: `ed5681f` (Ranges.spec timing check robust to machine load); test_client 196, test 414, build passed.
 
 ## Tasks
 
@@ -681,6 +684,22 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: S-96 tower meshes merged (review); a retracted tower's glow dims (C-114)
+
+- **Meshes:** models-C's BAR meshes for the beam towers (`1efc5e9`) and flak towers (`1429976`) are merged from m-models. They're "review" in the manifest, so the towers keep their blockouts in game until you approve them; `MeshMaterials` was already current. The lids `shellL` / `shellR` are pieces under `shell`, which `Render/MeshModels` rigs like any other piece, so C-112's retract script drives them on the meshes too.
+- **Glow on retract** (models-C's suggestion): `Core/Glow` takes `retracted` (a `def.retract` tower with TOGGLED_ON clear). Power drops to its floor (0.3) and weapon goes dark; running stays on. `Glow.spec` covers it.
+- **Your call:** approve the four tower meshes (Radiance, Inferno, Lumen, Hailstorm) for them to draw in game.
+
+## 2026-10-23: S-96 tower blockouts merged; retract checked on them (C-113)
+
+- **Blockouts:** models-C's blockouts for `ord_radiance`, `chs_inferno`, `ord_lumen` and `chs_hailstorm` are merged from m-models `aafbf19`. The towers draw as their blockouts instead of generic boxes.
+- **Retract in Studio** (`shield` profile, all four spawned):
+  - switched off, both beam towers sink the turret, fold the barrel and close the lids flush with the collar;
+  - switched on, they rise and reopen (turret back at 5.0 / 4.5 studs);
+  - the Inferno's `tankL` above the lids is a fixed part of its base.
+- **Screenshots:** `debug_out/screens/beam_towers_deployed.jpg`, `beam_towers_retracted.jpg`.
+- **No code change:** C-112's piece script fits the blockouts' pivots as they are.
 
 ## 2026-10-23: beam towers drawn, retract on / off, icons for S-96's towers (C-112)
 
@@ -1339,6 +1358,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **S-96 tower meshes (models-C):** Radiance, Inferno, Lumen, Hailstorm are "review" in the manifest; approve them (models-C flips the status) to see them in game. Their glow dims when a beam tower retracts (C-114).
 
 - **Beam towers (C-112):** `debug_out/screens/beam_*.jpg`. Your calls:
   - **The beam's width, colors and 0.45 s hold.**

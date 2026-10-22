@@ -1,0 +1,186 @@
+{
+  "id": "ord_guardian",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.4025,
+        1.1304
+      ],
+      "size": [
+        3.4,
+        2.795,
+        10.0608
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.8,
+        0.2
+      ],
+      "size": [
+        6.3782,
+        0.2,
+        6.3782
+      ],
+      "pivot": [
+        0.0,
+        2.8,
+        0.2
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.55,
+        -0.52
+      ],
+      "size": [
+        3.14,
+        0.5136,
+        1.64
+      ],
+      "pivot": [
+        0.0,
+        0.6,
+        -0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "pylon",
+      "at": [
+        0,
+        0.55,
+        -1.4
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "rotor"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.53,
+        1.65
+      ],
+      "size": [
+        3.5,
+        1.38,
+        7.3
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.56,
+        -3.2
+      ],
+      "size": [
+        0.5,
+        0.06,
+        0.3
+      ]
+    },
+    {
+      "name": "base_glow_weapon",
+      "piece": "base",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        0.45,
+        -3.69
+      ],
+      "size": [
+        0.3,
+        0.16,
+        0.04
+      ]
+    },
+    {
+      "name": "pylon_glow_weapon",
+      "piece": "pylon",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        0.55,
+        -1.35
+      ],
+      "size": [
+        2.92,
+        0.304,
+        0.03
+      ]
+    }
+  ],
+  "glowShare": 0.051,
+  "triangles": {
+    "base": 768,
+    "rotor": 132,
+    "pylon": 348,
+    "total": 1248
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

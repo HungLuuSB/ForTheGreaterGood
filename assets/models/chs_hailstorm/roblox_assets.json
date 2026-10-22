@@ -1,0 +1,30 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "BAR pair 26, flak towers (S-96): 1440 triangles, glow share 5.6%",
+  "bar": {
+    "model": "rbxassetid://106630800373704",
+    "meshes": {
+      "base": "rbxassetid://128434624600708",
+      "base_glow_power": "rbxassetid://138480287075836",
+      "base_glow_running": "rbxassetid://140302101468808",
+      "turret": "rbxassetid://75411126241051",
+      "turret_glow_running": "rbxassetid://76453123329707",
+      "turret_glow_weapon": "rbxassetid://89878593387338"
+    },
+    "decals": {
+      "ALB": "rbxassetid://80594941245916",
+      "RGH": "rbxassetid://117947256707604",
+      "NOR": "rbxassetid://87471130781546",
+      "MTL": "rbxassetid://119330709766098",
+      "EMI": "rbxassetid://107532498288858"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://132113504442352",
+      "NOR": "rbxassetid://139431534796538",
+      "RGH": "rbxassetid://122241381818154",
+      "MTL": "rbxassetid://110656838151116",
+      "EMI": "rbxassetid://91382441822086"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hailstorm_bar in FTGG Art"
+  }
+}
