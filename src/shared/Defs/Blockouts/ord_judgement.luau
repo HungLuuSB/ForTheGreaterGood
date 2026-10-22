@@ -8,8 +8,8 @@
 
 local parts = {
 	{ name = "base", shape = "box", size = { 5.6, 1.4, 7.4 }, at = { 0, 1.5, 0.2 }, color = "hull" },
-	{ name = "trackL", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { -2.8, 0.65, 0 }, color = "track" },
-	{ name = "trackR", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { 2.8, 0.65, 0 }, color = "track" },
+	{ name = "trackL", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { -2.8, 0.65, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+	{ name = "trackR", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { 2.8, 0.65, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 	{ name = "skirtL", parent = "base", shape = "box", size = { 0.4, 1.2, 7.4 }, at = { -3.5, 1.15, 0 }, color = "hull" },
 	{ name = "skirtR", parent = "base", shape = "box", size = { 0.4, 1.2, 7.4 }, at = { 3.5, 1.15, 0 }, color = "hull" },
 	{ name = "cab", parent = "base", shape = "box", size = { 5.0, 1.1, 1.8 }, at = { 0, 2.75, -2.6 }, color = "hull" },

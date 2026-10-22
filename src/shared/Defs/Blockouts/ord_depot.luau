@@ -3,7 +3,8 @@
 -- sides, two loading hatches and a team plate on the roof.
 -- Model space, forward = -Z (docs/contracts/rig.md).
 
-return {
+-- footprint 1 -> 2 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_depot",
 	parts = {
 		{ name = "base", shape = "box", size = { 5.6, 2.2, 5.6 }, at = { 0, 1.1, 0 }, color = "hull" },
@@ -16,4 +17,4 @@ return {
 		{ name = "hatchB", parent = "base", shape = "box", size = { 1.6, 0.3, 1.6 }, at = { 1.2, 2.35, 1.4 }, color = "metal" },
 		{ name = "light", parent = "base", shape = "box", size = { 2, 0.2, 0.1 }, at = { 0, 1.9, -2.83 }, color = "glass" },
 	},
-}
+}, 2.0)

@@ -8,7 +8,8 @@
 -- hinged on the collar) slammed over the pit (pose `retracted`). Model
 -- space, forward = -Z.
 
-return {
+-- footprint 2 -> 3 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "chs_inferno",
 	visualPieces = { "shellL", "shellR" },
 	parts = {
@@ -38,4 +39,4 @@ return {
 	attachments = {
 		{ name = "muzzle", parent = "barrel", at = { 0, 9.6, -5.5 } },
 	},
-}
+}, 1.5)

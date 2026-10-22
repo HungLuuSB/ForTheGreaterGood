@@ -8,7 +8,8 @@
 -- `shellR`, hinged on the collar) close over the pit (pose `retracted`,
 -- Pending/Registry). Model space, forward = -Z.
 
-return {
+-- footprint 2 -> 3 (size scale, M-26 / S-104): scaled until the redesign lands
+return require("./Scale").scaled({
 	id = "ord_radiance",
 	visualPieces = { "shellL", "shellR" },
 	parts = {
@@ -50,4 +51,4 @@ return {
 	attachments = {
 		{ name = "muzzle", parent = "barrel", at = { 0, 10.8, -7.1 } },
 	},
-}
+}, 1.5)

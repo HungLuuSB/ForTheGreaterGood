@@ -8,8 +8,8 @@
 
 local parts = {
 	{ name = "base", shape = "box", size = { 4.6, 1.1, 6.8 }, at = { 0, 1.65, 0.3 }, color = "hull" },
-	{ name = "trackL", parent = "base", shape = "box", size = { 0.9, 0.5, 7.4 }, at = { -2.6, 0.25, 0 }, color = "track" },
-	{ name = "trackR", parent = "base", shape = "box", size = { 0.9, 0.5, 7.4 }, at = { 2.6, 0.25, 0 }, color = "track" },
+	{ name = "trackL", parent = "base", shape = "box", size = { 0.9, 0.5, 7.4 }, at = { -2.6, 0.25, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+	{ name = "trackR", parent = "base", shape = "box", size = { 0.9, 0.5, 7.4 }, at = { 2.6, 0.25, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 	{ name = "cab", parent = "base", shape = "box", size = { 2.6, 1.0, 1.4 }, at = { -0.8, 2.7, -2.4 }, color = "hull" },
 	{ name = "cabSlit", parent = "base", shape = "box", size = { 2.0, 0.2, 0.08 }, at = { -0.8, 2.9, -3.14 }, color = "glass" },
 	{ name = "cabCage", parent = "base", shape = "box", size = { 2.8, 0.12, 0.12 }, at = { -0.8, 3.3, -3.2 }, color = "dark" },
@@ -25,8 +25,8 @@ local parts = {
 	{ name = "emitter2", parent = "nano", shape = "ball", size = { 0.6, 0.6, 0.6 }, at = { 0.2, 3.9, 1.9 }, color = "glass" },
 }
 for i, z in { -2.4, -0.8, 0.8, 2.4 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { -2.6, 0.8, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { 2.6, 0.8, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { -2.6, 0.8, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { 2.6, 0.8, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 
 return {

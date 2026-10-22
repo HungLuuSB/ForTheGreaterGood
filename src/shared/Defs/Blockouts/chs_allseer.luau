@@ -9,7 +9,7 @@ local parts = {
 	{ name = "teamA", parent = "base", shape = "box", size = { 4, 0.1, 4 }, at = { -5.5, 0.85, -5.5 }, color = "team" },
 	{ name = "teamB", parent = "base", shape = "box", size = { 4, 0.1, 4 }, at = { 5.5, 0.85, 5.5 }, color = "team" },
 	{ name = "eye", parent = "base", shape = "ball", size = { 2.4, 2.4, 2.4 }, at = { 0, 13.4, -1.6 }, color = "glass" },
-	{ name = "radar", parent = "base", shape = "box", size = { 12, 4.6, 0.5 }, at = { 0, 17.6, 0 }, rot = { 15, 0, 0 }, pivot = { 0, 15.4, 0 }, color = "hull" },
+	{ name = "radar", parent = "base", shape = "box", size = { 12, 4.6, 0.5 }, at = { 0, 17.6, 0 }, rot = { 15, 0, 0 }, pivot = { 0, 15.4, 0 }, color = "hull", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "radarTeam", parent = "radar", shape = "box", size = { 11, 0.6, 0.1 }, at = { 0, 19.55, 0.75 }, rot = { 15, 0, 0 }, color = "team" },
 }
 for i, p in { { -2.6, -2.6 }, { 2.6, -2.6 }, { -2.6, 2.6 }, { 2.6, 2.6 } } do

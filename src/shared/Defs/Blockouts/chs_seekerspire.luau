@@ -8,7 +8,7 @@ local parts = {
 	{ name = "base", shape = "cylinder", axis = "y", size = { 12, 0.8, 12 }, at = { 0, 0.4, 0 }, color = "dark" },
 	{ name = "teamA", parent = "base", shape = "box", size = { 3, 0.1, 3 }, at = { -3.6, 0.85, 3 }, color = "team" },
 	{ name = "eye", parent = "base", shape = "ball", size = { 1.4, 1.4, 1.4 }, at = { 0, 10.5, -1 }, color = "glass" },
-	{ name = "radar", parent = "base", shape = "box", size = { 4.4, 3.4, 0.4 }, at = { 0, 13.4, 0 }, pivot = { 0, 11.6, 0 }, color = "hull" },
+	{ name = "radar", parent = "base", shape = "box", size = { 4.4, 3.4, 0.4 }, at = { 0, 13.4, 0 }, pivot = { 0, 11.6, 0 }, color = "hull", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "radarTeam", parent = "radar", shape = "box", size = { 4, 0.4, 0.08 }, at = { 0, 14.7, 0.24 }, color = "team" },
 }
 for i, p in { { -1.6, -1.6 }, { 1.6, -1.6 }, { -1.6, 1.6 }, { 1.6, 1.6 } } do

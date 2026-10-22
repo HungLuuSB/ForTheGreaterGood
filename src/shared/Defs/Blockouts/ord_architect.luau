@@ -10,8 +10,8 @@ return {
 	parts = {
 		{ name = "base", shape = "box", size = { 5.4, 1.4, 7.0 }, at = { 0, 1.6, 0.4 }, color = "hull" },
 		{ name = "glacis", parent = "base", shape = "wedge", size = { 5.4, 1.4, 1.2 }, at = { 0, 1.6, -3.7 }, color = "hull" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 1.1, 1.3, 8.0 }, at = { -2.8, 0.65, 0 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 1.1, 1.3, 8.0 }, at = { 2.8, 0.65, 0 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 1.1, 1.3, 8.0 }, at = { -2.8, 0.65, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 1.1, 1.3, 8.0 }, at = { 2.8, 0.65, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 		{ name = "skirtL", parent = "base", shape = "box", size = { 0.35, 1.1, 7.4 }, at = { -3.5, 1.15, 0 }, color = "hull" },
 		{ name = "skirtR", parent = "base", shape = "box", size = { 0.35, 1.1, 7.4 }, at = { 3.5, 1.15, 0 }, color = "hull" },
 		{ name = "blade", parent = "base", shape = "box", size = { 6.6, 1.2, 0.35 }, at = { 0, 0.9, -4.8 }, rot = { -12, 0, 0 }, color = "metal" },

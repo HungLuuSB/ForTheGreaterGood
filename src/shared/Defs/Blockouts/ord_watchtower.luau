@@ -13,7 +13,7 @@ return {
 		{ name = "tower", parent = "base", shape = "box", size = { 2.4, 8, 2.4 }, at = { 0, 5, 0 }, color = "hull" },
 		{ name = "band", parent = "base", shape = "box", size = { 2.5, 0.8, 2.5 }, at = { 0, 7.6, 0 }, color = "team" },
 		{ name = "light", parent = "base", shape = "box", size = { 0.4, 0.4, 0.1 }, at = { 0, 3, -1.25 }, color = "glass" },
-		{ name = "radar", parent = "base", shape = "box", size = { 5.6, 2.8, 0.4 }, at = { 0, 10.2, 0 }, rot = { 15, 0, 0 }, pivot = { 0, 9, 0 }, color = "dark" },
+		{ name = "radar", parent = "base", shape = "box", size = { 5.6, 2.8, 0.4 }, at = { 0, 10.2, 0 }, rot = { 15, 0, 0 }, pivot = { 0, 9, 0 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "radarFace", parent = "radar", shape = "box", size = { 5, 2.3, 0.1 }, at = { 0, 10.25, -0.24 }, rot = { 15, 0, 0 }, color = "glass" },
 	},
 }

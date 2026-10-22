@@ -13,8 +13,8 @@ return {
 	parts = {
 		{ name = "base", shape = "box", size = { 7.6, 1.5, 8 }, at = { 0, 1.55, 1.4 }, color = "hull" },
 		{ name = "glacis", parent = "base", shape = "wedge", size = { 7.6, 1.5, 3.6 }, at = { 0, 1.55, -4.4 }, color = "hull" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 1.6, 1.7, 12 }, at = { -4.6, 0.85, 0 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 1.6, 1.7, 12 }, at = { 4.6, 0.85, 0 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 1.6, 1.7, 12 }, at = { -4.6, 0.85, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 1.6, 1.7, 12 }, at = { 4.6, 0.85, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 
 		-- ram: 11.8 wide, wider than the tracks (10.8), its top leaning forward
 		{ name = "ram", parent = "base", shape = "box", size = { 11.8, 2.4, 0.8 }, at = { 0, 1.5, -6.9 }, rot = { -25, 0, 0 }, pivot = { 0, 1.5, -6.4 }, color = "metal" },

@@ -11,8 +11,8 @@ return {
 	parts = {
 		{ name = "base", shape = "box", size = { 5.8, 1.4, 7.0 }, at = { 0, 1.5, 0.4 }, color = "hull" },
 		{ name = "glacis", parent = "base", shape = "wedge", size = { 5.8, 1.4, 1.6 }, at = { 0, 1.5, -3.9 }, color = "hull" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 1.2, 1.3, 8.2 }, at = { -2.9, 0.65, 0 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 1.2, 1.3, 8.2 }, at = { 2.9, 0.65, 0 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 1.2, 1.3, 8.2 }, at = { -2.9, 0.65, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 1.2, 1.3, 8.2 }, at = { 2.9, 0.65, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 		{ name = "skirtL", parent = "base", shape = "box", size = { 0.45, 1.3, 7.8 }, at = { -3.65, 1.2, 0 }, color = "hull" },
 		{ name = "skirtR", parent = "base", shape = "box", size = { 0.45, 1.3, 7.8 }, at = { 3.65, 1.2, 0 }, color = "hull" },
 		{ name = "skirtTeamL", parent = "base", shape = "box", size = { 0.06, 0.4, 4.0 }, at = { -3.9, 1.4, 0.4 }, color = "team" },

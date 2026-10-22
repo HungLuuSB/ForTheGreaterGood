@@ -7,6 +7,8 @@ local Mesh = {}
 Mesh.STATUSES = { approved = true, review = true }
 Mesh.CHANNELS = { running = true, head = true, power = true, weapon = true }
 Mesh.MAPS = { "ALB", "NOR", "RGH", "MTL", "EMI" }
+-- how the client may move an animated piece (rig.md "Animated pieces", M-27)
+Mesh.MOTIONS = { spin = true, turn = true, scroll = true, slide = true, open = true, lower = true, pulse = true }
 
 local function isAssetId(v: any): boolean
 	return type(v) == "string" and string.match(v, "^rbxassetid://%d+$") ~= nil
@@ -99,6 +101,22 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 			bad(`glow part {g.name}: tint and strength required`)
 		end
 	end
+	for _, name in e.visualPieces or {} do
+		if e.pieces[name] == nil then
+			bad(`visual piece {name} isn't a piece`)
+		end
+	end
+	for name, a in e.anim or {} do
+		if e.pieces[name] == nil then
+			bad(`anim {name} isn't a piece`)
+		end
+		if not Mesh.MOTIONS[a.motion] then
+			bad(`anim {name}: unknown motion {tostring(a.motion)}`)
+		end
+		if not isVec3(a.axis) then
+			bad(`anim {name}: axis must be three numbers`)
+		end
+	end
 	-- the wreck version (M-24): the live mesh's pieces, its own meshes and
 	-- maps, no glow (EMI not needed)
 	local w = e.wreck
@@ -146,6 +164,9 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 		end
 		local inVisual: { [string]: boolean } = {}
 		for _, name in visual or {} do
+			inVisual[name] = true
+		end
+		for _, name in e.visualPieces or {} do -- the mesh's own animated sub-pieces
 			inVisual[name] = true
 		end
 		for name in e.pieces do

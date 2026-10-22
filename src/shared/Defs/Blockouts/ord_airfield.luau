@@ -14,7 +14,7 @@ local parts = {
 	{ name = "tower", parent = "base", shape = "box", size = { 4, 7, 4 }, at = { 13, 3.9, 12 }, color = "hull" },
 	{ name = "towerGlass", parent = "base", shape = "box", size = { 4.4, 1.4, 4.4 }, at = { 13, 8.1, 12 }, color = "glass" },
 	{ name = "towerRoof", parent = "base", shape = "box", size = { 5, 0.4, 5 }, at = { 13, 9.0, 12 }, color = "hull" },
-	{ name = "radarPanel", parent = "base", shape = "box", size = { 3, 2, 0.3 }, at = { 13, 10.4, 12 }, rot = { 20, 0, 0 }, color = "dark" },
+	{ name = "radarPanel", parent = "base", shape = "box", size = { 3, 2, 0.3 }, at = { 13, 10.4, 12 }, rot = { 20, 0, 0 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "padA", parent = "base", shape = "box", size = { 7, 0.15, 7 }, at = { -12, 0.47, -9 }, color = "metal" },
 	{ name = "padATeam", parent = "base", shape = "box", size = { 4, 0.06, 4 }, at = { -12, 0.58, -9 }, color = "team" },
 }

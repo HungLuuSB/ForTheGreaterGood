@@ -7,8 +7,8 @@
 
 local parts = {
 	{ name = "base", shape = "box", size = { 4.6, 1.2, 7.2 }, at = { 0, 1.7, 0.2 }, color = "hull" },
-	{ name = "trackL", parent = "base", shape = "box", size = { 0.9, 0.5, 7.6 }, at = { -2.75, 0.25, 0 }, color = "track" },
-	{ name = "trackR", parent = "base", shape = "box", size = { 0.9, 0.5, 7.6 }, at = { 2.75, 0.25, 0 }, color = "track" },
+	{ name = "trackL", parent = "base", shape = "box", size = { 0.9, 0.5, 7.6 }, at = { -2.75, 0.25, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+	{ name = "trackR", parent = "base", shape = "box", size = { 0.9, 0.5, 7.6 }, at = { 2.75, 0.25, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 	{ name = "cab", parent = "base", shape = "box", size = { 4.0, 1.0, 1.6 }, at = { 0, 2.8, -2.6 }, color = "hull" },
 	{ name = "slit", parent = "base", shape = "box", size = { 3.0, 0.2, 0.08 }, at = { 0, 3.0, -3.44 }, color = "glass" },
 	{ name = "cabTeam", parent = "base", shape = "box", size = { 2.8, 0.08, 1.0 }, at = { 0, 3.34, -2.6 }, color = "team" },
@@ -27,8 +27,8 @@ for row = 0, 2 do
 	end
 end
 for i, z in { -2.3, -0.8, 0.8, 2.3 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { -2.75, 0.8, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { 2.75, 0.8, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { -2.75, 0.8, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.6, 1.3, 1.3 }, at = { 2.75, 0.8, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 for i, x in { -2, 0, 2 } do
 	table.insert(parts, { name = `cage{i}`, parent = "base", shape = "box", size = { 0.1, 1.1, 0.1 }, at = { x, 2.35, 3.9 }, color = "dark" })
