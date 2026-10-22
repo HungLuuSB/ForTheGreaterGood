@@ -1798,3 +1798,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `22f0286` (deposits: dark patch / C's fx.deposit variants, hidden under structures, placement and F4 overlay, minimap rings; C-123); test_client 209, test 430, build passed.
 - Ready to merge: `7928550` (Settings top right, Follow button removed with T in developer mode, F3 bottom right; unit panel model portrait, type icon and +/- supply and power flow; C-124, C-125); test_client 213, test 430, build passed.
 - Ready to merge: `e943f2f` (merge of m-models eb8a768 with the materials regenerated; deposit cells bare ground, terrain-colored patch tint; C-123 follow-up); test_client 213, test 430, build passed.
+- Ready to merge: `646d404` (cheat line arrow keys cycle suggestions, C-126); test_client 213, build passed (client UI only).
