@@ -340,6 +340,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b5b5d48` (review follow-ups: modal panels, fitted layouts, graphics options, model load order, glow vs team color, pulse 3, Stats.series, C-106 `767ae09`; merged with main at protocol 26, includes m-models `0af6ed7`); test_client 192, test 407, build passed.
 - Ready to merge: `ad2f474` (build menu portraits and stats tooltip, On / Off, short-way turns, sim requests 42-43, models request 2, C-107); test_client 193, test 407, build passed.
 - Ready to merge: `bb644b9` (per-unit command sets, factory orders kept, Roblox top bar cleared and HUD in the top strip, sim request 44, C-109; also C-108 `0cfa7d0`: minimap 220, fx materials, includes m-models `764874b`); test_client 195, test 407, build passed.
+- Ready to merge: `ecd03d2` (main with S-93 / S-94 merged; shield wire spec for heavy shells, C-110); test_client 195, test 409, build passed.
 
 ## Tasks
 
