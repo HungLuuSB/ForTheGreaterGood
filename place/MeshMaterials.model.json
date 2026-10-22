@@ -262,6 +262,18 @@
       }
     },
     {
+      "Name": "chs_shroud",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://108299177094666",
+        "NormalMapContent": "rbxassetid://111040930007238",
+        "RoughnessMapContent": "rbxassetid://91125292843256",
+        "MetalnessMapContent": "rbxassetid://120772999230431",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_solar",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -690,6 +702,18 @@
         "NormalMapContent": "rbxassetid://98762483027190",
         "RoughnessMapContent": "rbxassetid://90333783721729",
         "MetalnessMapContent": "rbxassetid://109397542384179",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_veil",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://98612425261871",
+        "NormalMapContent": "rbxassetid://109592553628990",
+        "RoughnessMapContent": "rbxassetid://91847377654074",
+        "MetalnessMapContent": "rbxassetid://130662296737620",
         "EmissiveStrength": 0
       }
     },
