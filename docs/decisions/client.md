@@ -792,3 +792,16 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Heat:** the force's share of the plume's maximum, setting opacity and size.
 
 **Why:** the user drew a curved front ahead of the shell, "like when an asteroid enter the earth atmosphere". C-97's plume read as a beam, not as burning.
+
+### C-99 — Shield field primed a tick early; absorbed shells end mid-tick; unfinished units see-through; minimap 10 Hz (2026-10-23)
+
+**Decision:**
+- **Field priming:** `Core/Effects.update` primes a SHIELD_FIELD due next tick. It gives the projectile its field in phase FREE, so the coming step uses ShieldField (which takes hold at the surface), and queues the "enter" hit once the frame's fraction passes the drawn path's crossing of the sphere. An absorbed SHIELD_HIT ends its projectile mid-tick, like IMPACT (C-26).
+- **Shield clock:** ShieldFx's clock and particle TimeScale follow the sim speed.
+- **Unfinished units:** `UnitRenderer` draws a unit with build < 1 at 0.6 transparency (parts' own transparency kept above that) and restores it when complete or released to the pool.
+- **Minimap:** `Minimap.REFRESH` 1/3 → 1/10 s.
+
+**Why:**
+- The user saw the reflect effect late. Applied at the tick's end, the field and the hit came a tick late, with the shell flown a tick into the dome unbraked.
+- The user asked that light shells vanish at once, and that units being built look unfinished.
+- The user asked for a faster minimap.

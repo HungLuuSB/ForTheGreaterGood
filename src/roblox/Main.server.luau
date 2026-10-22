@@ -41,6 +41,7 @@ local Skirmish = require(game:GetService("ServerScriptService"):WaitForChild("Si
 local MapRegistry = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Grid"):WaitForChild("MapRegistry")) :: any
 local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
 local Stats = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Stats")) :: any
+local Build = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Build")) :: any
 local HttpService = game:GetService("HttpService")
 
 local DT = 1 / Sim.TICK_RATE
@@ -557,7 +558,9 @@ startMatch()
 -- damage step (as a hit with no attacker), for testing what the client shows;
 -- Invoke("spawn", defId, playerId, x, z, heading, count?, spacing?) adds
 -- units in a row along x (the sim's own Spawn), for playtests of what the
--- client draws.
+-- client draws; Invoke("build", builderId, defId, x, z) orders a builder to
+-- construct there (the sim's own build command), for what an unfinished
+-- unit looks like.
 if RunService:IsStudio() then
 	local debugFn = Instance.new("BindableFunction")
 	debugFn.Name = "FtggDebug"
@@ -573,6 +576,10 @@ if RunService:IsStudio() then
 				table.insert(ids, Spawn.unit(sim, defId, playerId, x + i * (spacing or 12), z, heading or 0))
 			end
 			return ids
+		elseif query == "build" then
+			local builder, defId, x, z = ...
+			Build.commandBuild(sim, { builder }, sim.defs.units[defId].index, x, z, 0)
+			return true
 		end
 		local byOwner: { [number]: number } = {}
 		for _, id in sim.world.ids do
