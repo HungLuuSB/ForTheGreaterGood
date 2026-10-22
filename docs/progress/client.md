@@ -1854,3 +1854,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `3f2d1ea` (Radiance ray bluer, 3 s, narrowing fade; beamSeconds reads S-113's beamDuration; C-128); test_client 214, build passed (client render only).
 - Ready to merge: `5890cad` (beam deflection off shield domes, drawn; active once sim request 50 lands; C-129); test_client 215, build passed (client render only).
 - Ready to merge: `6bb8932` (big-map fog: at most 4 chunks, C-130); test_client 215, build passed (client render only).
+- Ready to merge: `0971cf3` (shield hits: no ripple, outlined honeycomb cells, C-131); test_client 214, build passed (client render only).
