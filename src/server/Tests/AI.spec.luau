@@ -206,7 +206,9 @@ return function(t: RunAll.Context)
 		local army = #owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict")
 		t.expect(#owned(sim, 1, "ord_generator") >= 4, `generators keep up with the plant ({#owned(sim, 1, "ord_generator")})`)
 		t.expect(army >= 8, `an army by 8 minutes ({army})`)
-		t.expect(sim.eco.accounts[1].power.ratio >= 0.6, `power no longer stalled ({sim.eco.accounts[1].power.ratio})`)
+		-- (0.5 since S-114: extractors alternate with generators from the
+		-- start, so more is built on about the same power)
+		t.expect(sim.eco.accounts[1].power.ratio >= 0.5, `power no longer badly stalled ({sim.eco.accounts[1].power.ratio})`)
 		-- send a wave out, then bring an enemy wave to the base
 		run(sim, { brain }, 900 * 4, true, function()
 			return next(brain.attacking) ~= nil
@@ -310,9 +312,13 @@ return function(t: RunAll.Context)
 	t.test("T2: the AI builds a T2 builder, a shield and Pinpointers; Order hard a Barrier wall and a Citadel; normal an airfield (S-101)", function()
 		local sim = start(41)
 		local brains = { Skirmish.new(sim, 1, "hard"), Skirmish.new(sim, 2, "normal") }
+		for _, b in brains do
+			b.lastRetreatAt = math.huge -- no waves: building, not fighting (Order hard would end Chaos first)
+		end
 		local seen: { [string]: boolean } = {}
 		local want = { { 1, "ord_architect" }, { 1, "ord_phalanx" }, { 1, "ord_witness" }, { 1, "ord_barrier" }, { 1, "ord_citadel" }, { 2, "chs_forgemaster" }, { 2, "chs_carapace" }, { 2, "chs_augur" }, { 2, "chs_airfield" } }
-		run(sim, brains, 900 * 20, true, function()
+		-- (30 min: since S-108 the T2 builder upgrades its extractors first)
+		run(sim, brains, 900 * 30, true, function()
 			local all = true
 			for _, pair in want do
 				local id = pair[2] :: string
@@ -327,5 +333,34 @@ return function(t: RunAll.Context)
 			t.expect(seen[pair[2] :: string], `{pair[2]} built (tick {sim.tick})`)
 		end
 		print(string.format("    T2 structures by tick %d (%.1f min)", sim.tick, sim.tick / 900))
+	end)
+
+	t.slow("T2 extras: extractor upgrades, T2 defences, the anti-nuke umbrella; hard a silo that launches (S-106, S-108, S-110)", function()
+		local sim = start(43)
+		local brains = { Skirmish.new(sim, 1, "hard"), Skirmish.new(sim, 2, "normal") }
+		for _, b in brains do
+			b.lastRetreatAt = math.huge -- no waves: building, not fighting (Order hard would end Chaos first)
+		end
+		local seen: { [string]: boolean } = {}
+		local want = {
+			{ 1, "ord_advextractor" }, { 1, "ord_bastion" }, { 1, "ord_sanction" }, { 1, "ord_providence" }, { 1, "ord_reckoning" },
+			{ 2, "chs_advextractor" }, { 2, "chs_maw" }, { 2, "chs_scourge" }, { 2, "chs_cerberus" },
+		}
+		run(sim, brains, 900 * 30, true, function()
+			local all = brains[1].nukes > 0
+			for _, pair in want do
+				local id = pair[2] :: string
+				if not seen[id] and #owned(sim, pair[1] :: number, id) > 0 then
+					seen[id] = true
+				end
+				all = all and seen[id] == true
+			end
+			return all
+		end)
+		for _, pair in want do
+			t.expect(seen[pair[2] :: string], `{pair[2]} built (tick {sim.tick})`)
+		end
+		t.expect(brains[1].nukes > 0, "Order hard launched a nuke")
+		print(string.format("    T2 extras by tick %d (%.1f min); nukes %d", sim.tick, sim.tick / 900, brains[1].nukes))
 	end)
 end

@@ -73,6 +73,7 @@ local HOLD_FIRE, RETURN_FIRE = World.FireState.HOLD_FIRE, World.FireState.RETURN
 
 local candidates: { number } = {}
 local INTERCEPT_HYSTERESIS = 1.1
+local INTERCEPT_REACH = 1.5 -- anti-nukes: engage a missile aimed inside the cover this far out, × the radius (S-111)
 
 -- An interceptor's strategic missile (S-48): the current one while it stays
 -- an enemy missile the team detects within range (+10%), else the nearest
@@ -86,20 +87,41 @@ local function interceptTarget(sim: Types.Sim, id: number, weapon: Defs.WeaponDe
 		if c.pTeam[p] == ally then
 			return nil
 		end
+		-- anti-nukes (S-111, client request 46): a missile whose aim point is
+		-- inside the cover radius, engaged on its way in (within
+		-- INTERCEPT_REACH × the radius)
+		local goal = c.pGoal[p]
+		if weapon.interceptOnly then
+			if goal == nil or (goal[1] - x) ^ 2 + (goal[3] - z) ^ 2 > weapon.range * weapon.range then
+				return nil
+			end
+			reach *= INTERCEPT_REACH
+		end
 		local px, pz = c.px[p], c.pz[p]
 		local d2 = (px - x) ^ 2 + (pz - z) ^ 2
-		if d2 > reach * reach or not Sensors.detectsPoint(sim, ally, px, pz) then
+		-- (anti-nukes spot strategic missiles anywhere, whatever the team's
+		-- sensors: the user, S-111)
+		if d2 > reach * reach or (not weapon.interceptOnly and not Sensors.detectsPoint(sim, ally, px, pz)) then
 			return nil
 		end
 		return d2
 	end
+	-- one interceptor per missile (S-111): skip a missile one of the team's
+	-- interceptors already chases
+	local chased: { [number]: boolean } = {}
+	for _, q in c.proj do
+		local tp = c.pTargetProj[q]
+		if tp ~= nil and tp ~= 0 and c.pTeam[q] == ally then
+			chased[tp] = true
+		end
+	end
 	local cur = w.wTargetProj[key]
-	if cur ~= 0 and Combat.isProjRef(c, cur, w.wTargetProjSerial[key]) and valid(cur, weapon.range * INTERCEPT_HYSTERESIS) then
+	if cur ~= 0 and not chased[cur] and Combat.isProjRef(c, cur, w.wTargetProjSerial[key]) and valid(cur, weapon.range * INTERCEPT_HYSTERESIS) then
 		return cur
 	end
 	local best, bestD2 = 0, math.huge
 	for _, p in c.strategic do
-		local d2 = valid(p, weapon.range)
+		local d2 = if chased[p] then nil else valid(p, weapon.range)
 		if d2 and d2 < bestD2 then
 			best, bestD2 = p, d2
 		end
@@ -144,7 +166,7 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 		return nil
 	end
 	local tp = c.profiles[defIndex :: number]
-	local known = Sensors.typeKnown(sim, w.ally[id], t, level)
+	local known = Sensors.typeKnown(sim, w.ally[id], t, level) or (level == Sensors.Level.RADAR and sim.defs.unitByIndex[w.defIndex[t]].spoof ~= nil) -- a decoy passes for its spoof (S-109)
 	local cats = Sensors.knownCategories(sim, w.ally[id], t, level, defIndex :: number)
 	if band(weapon.targetMask, cats) == 0 then
 		return nil
@@ -204,7 +226,7 @@ local function score(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: numb
 	local _, _, level, defIndex = Sensors.knownTarget(sim, team, t, gen)
 	-- type priorities only for targets whose type the team knows (D107)
 	-- (a landed aircraft ranks as the ground unit it is for now, S-71)
-	local weight = if Sensors.typeKnown(sim, team, t, level) then priorityWeight(weapon.priorityMasks, Sensors.knownCategories(sim, team, t, level, defIndex :: number)) else 1
+	local weight = if Sensors.shownDef(sim, team, t, level, defIndex :: number) ~= nil then priorityWeight(weapon.priorityMasks, Sensors.knownCategories(sim, team, t, level, defIndex :: number)) else 1
 	local s = weight / math.max(dist, 1)
 	if isGuided(weapon) and EW.canLock(sim, id, weapon, t, dist) then
 		s *= LOCK_PREFERENCE
@@ -359,6 +381,18 @@ return function(sim: Types.Sim)
 		local groundOrder = sim.air.groundX[id] ~= nil
 		local forced = sim.orders.forced[id] -- an attack order's target (Orders, S-4)
 		local forcedGen = sim.orders.forcedGen[id]
+		if forced == nil and fs ~= HOLD_FIRE then
+			-- the last attack order's target, kept until STOP (S-115, client
+			-- request 49): taken whenever it is in range; else the search
+			local m = sim.orders.manual[id]
+			if m ~= nil then
+				if World.isRef(w, m, sim.orders.manualGen[id]) then
+					forced, forcedGen = m, sim.orders.manualGen[id]
+				else
+					sim.orders.manual[id], sim.orders.manualGen[id] = nil, nil -- gone
+				end
+			end
+		end
 		for slot = 1, count do
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
@@ -371,13 +405,19 @@ return function(sim: Types.Sim)
 				World.setTarget(w, key, 0) -- fires only at an attack-ground point (S-48)
 				continue
 			end
+			-- fires only standing still (S-111: the mobile anti-nuke's launcher raises)
+			if weapon.stationary and bit32.band(w.state[id], World.State.MOVING) ~= 0 then
+				World.setTarget(w, key, 0)
+				w.wTargetProj[key] = 0
+				continue
+			end
 			-- interceptors: enemy strategic missiles before anything else (S-48)
 			if weapon.intercepts then
 				local p = if fs ~= HOLD_FIRE and #sim.combat.strategic > 0 then interceptTarget(sim, id, weapon, key) else 0
 				w.wTargetProj[key] = p
 				w.wTargetProjSerial[key] = if p ~= 0 then sim.combat.pSerial[p] else 0
-				if p ~= 0 then
-					World.setTarget(w, key, 0)
+				if p ~= 0 or weapon.interceptOnly then
+					World.setTarget(w, key, 0) -- (anti-nukes never take units, S-111)
 					continue
 				end
 			end

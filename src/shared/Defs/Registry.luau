@@ -27,6 +27,9 @@ return {
 		ord_phalanx = require("./Units/ord_phalanx"),
 		ord_radiance = require("./Units/ord_radiance"),
 		ord_lumen = require("./Units/ord_lumen"),
+		ord_sanction = require("./Units/ord_sanction"), -- (S-106)
+		ord_providence = require("./Units/ord_providence"), -- (S-111)
+		ord_custodian = require("./Units/ord_custodian"),
 		ord_reckoning = require("./Units/ord_reckoning"),
 		chs_condor = require("./Units/chs_condor"),
 		chs_converter = require("./Units/chs_converter"),
@@ -58,6 +61,10 @@ return {
 		chs_carapace = require("./Units/chs_carapace"),
 		chs_inferno = require("./Units/chs_inferno"),
 		chs_hailstorm = require("./Units/chs_hailstorm"),
+		chs_scourge = require("./Units/chs_scourge"), -- (S-106)
+		chs_wraith = require("./Units/chs_wraith"), -- (S-109)
+		chs_cerberus = require("./Units/chs_cerberus"), -- (S-111)
+		chs_chimera = require("./Units/chs_chimera"),
 		chs_cyclops = require("./Units/chs_cyclops"),
 		chs_mire = require("./Units/chs_mire"),
 		chs_plague = require("./Units/chs_plague"),
@@ -188,6 +195,12 @@ return {
 		ord_citadel_gun = require("./Weapons/ord_citadel_gun"),
 		ord_radiance_beam = require("./Weapons/ord_radiance_beam"),
 		chs_inferno_beam = require("./Weapons/chs_inferno_beam"),
+		ord_sanction_missile = require("./Weapons/ord_sanction_missile"), -- (S-106)
+		chs_scourge_missile = require("./Weapons/chs_scourge_missile"),
+		ord_interceptor = require("./Weapons/ord_interceptor"), -- (S-111)
+		chs_interceptor = require("./Weapons/chs_interceptor"),
+		ord_mobile_interceptor = require("./Weapons/ord_mobile_interceptor"),
+		chs_mobile_interceptor = require("./Weapons/chs_mobile_interceptor"),
 		ord_mlrs = require("./Weapons/ord_mlrs"),
 		ord_naval_gun = require("./Weapons/ord_naval_gun"),
 		ord_naval_sam = require("./Weapons/ord_naval_sam"),

@@ -35,4 +35,22 @@ function PlacementRules.terrainOk(pm: Passability.PassMap, i: number, placement:
 	return if placement == "land" then land elseif placement == "water" then sea else (land or sea)
 end
 
+-- Supply under a footprint of `size` cells snapped at (x, z): the sum of its
+-- cells' deposits (S-104). An extractor works any deposit its footprint
+-- covers, so a footprint-2 or -3 extractor finds a one-cell deposit wherever
+-- the snap puts its corner or centre.
+function PlacementRules.supplyUnder(layers: Layers.Layers, size: number, x: number, z: number): number
+	local g = layers.grid
+	local x0, z0 = PlacementRules.snap(g, size, x, z)
+	local sum = 0
+	for cz = z0, z0 + size - 1 do
+		for cx = x0, x0 + size - 1 do
+			if g:inBounds(cx, cz) then
+				sum += Layers.getSupply(layers, g:index(cx, cz))
+			end
+		end
+	end
+	return sum
+end
+
 return PlacementRules

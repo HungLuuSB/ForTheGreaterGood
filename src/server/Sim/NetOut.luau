@@ -966,7 +966,7 @@ function NetOut.step(sim: Types.Sim)
 				table.insert(strategic, {
 					unitId = id,
 					cell = cell,
-					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[w.defIndex[id]] else 0,
+					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[w.defIndex[id]] else (if level == L.RADAR and sim.defs.unitByIndex[w.defIndex[id]].spoof then net.iconIndex[sim.defs.units[sim.defs.unitByIndex[w.defIndex[id]].spoof :: string].index] else 0), -- a decoy shows its spoof's icon (S-109)
 					team = w.team[id],
 					flags = flags,
 				})

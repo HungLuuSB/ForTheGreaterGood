@@ -8,7 +8,7 @@ return Templates.extend(Templates.Structure, {
 	faction = "chaos",
 	tier = 1,
 	categories = { "STRUCTURE" },
-	footprint = 1,
+	footprint = 2, -- size shows tech level (S-104)
 	description = "Supply Converter. Turns spare power into supply (switch off with TOGGLE).",
 	cost = { supply = 60, power = 1200, buildTime = 2200 },
 	health = 400,

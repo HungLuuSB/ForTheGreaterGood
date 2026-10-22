@@ -11,7 +11,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 2400, power = 10000, buildTime = 34000 },
 	health = 6500,
-	footprint = 5,
+	footprint = 6, -- size shows tech level (S-104)
 	icon = "factory_naval",
 	placement = "water",
 	buildPower = 200,

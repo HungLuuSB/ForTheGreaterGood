@@ -141,6 +141,9 @@ return function(t: RunAll.Context)
 			GROUND = { "LIGHT", "ARMORED" }, STRUCTURE = { "STRUCTURE" }, NAVAL = { "SHIP" }, AIR = { "AIR" }, SUB = { "SUB" },
 		}
 		for id, wd in defs.weapons do
+			if wd.interceptOnly then
+				continue -- anti-nukes hit strategic missiles only (S-111)
+			end
 			local best = 0
 			for _, cat in wd.targets do
 				for _, armor in classOf[cat] or {} do

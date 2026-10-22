@@ -8,7 +8,7 @@ return {
 	projectileSpeed = 420,
 	gravity = 60,
 	accuracy = 0.6,
-	damage = { LIGHT = 310, ARMORED = 290, STRUCTURE = 248, SHIP = 228, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 341, ARMORED = 319, STRUCTURE = 273, SHIP = 251, AIR = 0, SUB = 0 }, -- +10% (S-112: T2 tanks back in band after S-104)
 	aoe = 5,
 	edgeEffectiveness = 0.4,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

@@ -187,8 +187,8 @@ return function(t: RunAll.Context)
 			for _, defId in { "ord_generator", "ord_tidal" } do
 				local def = sim.defs.units[defId]
 				local placement = def.placement or "land"
-				for cz = 0, g.cellsZ - 1, 3 do
-					for cx = 0, g.cellsX - 1, 3 do
+				for cz = 0, g.cellsZ - 1, 2 do -- (every other cell: footprint-2 tidals fit wall:64's small lake, S-104)
+					for cx = 0, g.cellsX - 1, 2 do
 						local x, z = g:cellCenter(cx, cz)
 						local ok, why, x0, z0 = Placement.check(sim, def, x, z)
 						if ok or why == "terrain" then

@@ -94,12 +94,11 @@ local function give(sim: Types.Sim, owner: number, cmd: Schema.Command): (number
 	end
 	local structure = d.domain == "structure"
 	local size = if structure then d.footprint * Grid.CELL_SIZE + Grid.CELL_SIZE else math.max(2 * Grid.CELL_SIZE, (d.footprint or 1) * Grid.CELL_SIZE + Grid.CELL_SIZE)
-	local team = sim.players[owner].team
 	local placed = 0
 	for _, spot in formation(count, cmd.x :: number, cmd.z :: number, size) do
 		local x, z = spot[1], spot[2]
 		if structure then
-			local ok, _, _, _, _, _, replaces = Placement.check(sim, d, x, z, team)
+			local ok, _, _, _, _, _, replaces = Placement.check(sim, d, x, z, owner)
 			if not ok or replaces ~= 0 then
 				continue
 			end
