@@ -1,0 +1,99 @@
+{
+  "id": "chs_hornet_wreck",
+  "wreckOf": "chs_hornet",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0078,
+        2.0729,
+        0.1461
+      ],
+      "size": [
+        5.8925,
+        4.279,
+        7.8106
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.2484,
+        3.1307,
+        1.6072
+      ],
+      "size": [
+        1.2708,
+        1.0275,
+        1.269
+      ],
+      "pivot": [
+        0.2,
+        2.6,
+        1.6
+      ]
+    },
+    "launcher": {
+      "parent": "turret",
+      "center": [
+        0.5809,
+        4.0884,
+        1.4627
+      ],
+      "size": [
+        3.0622,
+        1.4654,
+        3.5549
+      ],
+      "pivot": [
+        0.2,
+        4.0,
+        1.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -0.65,
+        4.3,
+        -0.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 668,
+    "turret": 44,
+    "launcher": 380,
+    "total": 1092
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

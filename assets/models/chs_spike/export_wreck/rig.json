@@ -1,0 +1,80 @@
+{
+  "id": "chs_spike_wreck",
+  "wreckOf": "chs_spike",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0012,
+        1.2339,
+        0.0193
+      ],
+      "size": [
+        6.3691,
+        2.536,
+        6.3817
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.1579,
+        3.0151,
+        -1.6003
+      ],
+      "size": [
+        3.7464,
+        1.2886,
+        7.1372
+      ],
+      "pivot": [
+        0.0,
+        2.4,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        3.0,
+        -5.15
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 588,
+    "turret": 400,
+    "total": 988
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

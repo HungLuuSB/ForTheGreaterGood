@@ -1,0 +1,71 @@
+{
+  "id": "chs_scrapper_wreck",
+  "wreckOf": "chs_scrapper",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0298,
+        1.7521,
+        -0.3092
+      ],
+      "size": [
+        5.9199,
+        3.622,
+        7.7636
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        1.2077,
+        2.9848,
+        -0.467
+      ],
+      "size": [
+        1.7066,
+        2.7776,
+        3.3481
+      ],
+      "pivot": [
+        1.182,
+        1.71,
+        0.279
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2248,
+    "nano": 388,
+    "total": 2636
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "id": "chs_ravager_wreck",
+  "wreckOf": "chs_ravager",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0251,
+        0.9436,
+        0.0018
+      ],
+      "size": [
+        5.9213,
+        1.8955,
+        7.0345
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.2014,
+        2.5371,
+        0.4339
+      ],
+      "size": [
+        3.9851,
+        1.6399,
+        4.7473
+      ],
+      "pivot": [
+        0.0,
+        1.71,
+        0.1395
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        -0.0227,
+        2.154,
+        -4.4013
+      ],
+      "size": [
+        0.8789,
+        0.6105,
+        6.0773
+      ],
+      "pivot": [
+        0.0,
+        2.16,
+        -1.395
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        2.16,
+        -7.430700000000001
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2008,
+    "turret": 840,
+    "barrel": 600,
+    "total": 3448
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "id": "chs_generator_wreck",
+  "wreckOf": "chs_generator",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.02,
+        2.8647,
+        -0.0041
+      ],
+      "size": [
+        6.6584,
+        5.7949,
+        6.6344
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 740,
+    "total": 740
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

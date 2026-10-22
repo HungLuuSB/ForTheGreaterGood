@@ -201,3 +201,15 @@ Both factions share each role's key silhouette cue, so a role reads the same eit
 **Decision:** every BAR-style mesh is listed in `src/shared/Defs/Meshes/Registry.luau` (owned by the models stream, like the blockouts): asset IDs (model, piece and glow meshes, maps), the rig (pieces, parents, pivots, attachments), team pieces, glow parts per channel and a status, `approved` or `review`. `assets/models/tools/manifest.py` generates it from each mesh's `rig.json` and `roblox_assets.json`, so it can't drift from the uploads; a test (`tests/client/Meshes.spec.luau`) checks every entry against its unit def. Every new or changed mesh goes into the manifest in the same commit. Format: rig.md section 7.
 
 **Why:** the user's request (2026-10-22): the game needs the approved meshes without the "FTGG Art" place, and the client needs to know which ones are approved.
+
+### M-24 — Wreck meshes (2026-10-22)
+
+**Decision:** every approved BAR-style unit and structure gets a wreck version, built by the same `build.py` with `FTGG_WRECK=1` (`assets/models/<id>/export_wreck/`, uploaded as `<id>_wreck`). It has the same pieces, parents and pivots as the live mesh, so the client can swap it in piece for piece and keep tilting the turret and barrel joints the way `Render/Deaths` does now.
+- Battered: small shells (lamps, antennas, boxes, bolts) are knocked off (40%) or bent up to 22°, medium plates bent up to 9°, and every vertex dented by a smooth noise field. Each rule depends only on the shell's own vertices and position, so the low and the detailed build break alike and the bake lines up.
+- Darkened: paint 40% toward soot, broad burnt patches (blacker low on the hull and in creases), rougher, less metallic, edges showing scorched bare metal.
+- No glow: the glow faces stay in the mesh as dead dark sockets (no glow parts).
+- No team color: the team panels are scorched grey, and the color map's alpha is 1 everywhere.
+
+The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
+
+**Why:** the user's queue, item 5: "wreck versions (darkened, broken, no glow, team panels scorched grey) for every approved mesh, listed in the manifest for B". Same pieces, rather than one merged mesh, because B's death code already poses the live model's joints for the wreck.

@@ -45,5 +45,27 @@
     },
     "unusedFbxMaps": "the FBX's embedded maps (ALB 105281899893976 and others) drew grey on the first load and aren't used",
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 568 triangles)"
+  },
+  "wreck": {
+    "model": "rbxassetid://86475752703240",
+    "meshes": {
+      "base": "rbxassetid://107718392420376"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117054223241400",
+      "RGH": "rbxassetid://87796921608816",
+      "NOR": "rbxassetid://100846013607231",
+      "MTL": "rbxassetid://87713126045527",
+      "EMI": "rbxassetid://128801611759104"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://133858640503158",
+      "NOR": "rbxassetid://126465348380384",
+      "RGH": "rbxassetid://91839398223782",
+      "MTL": "rbxassetid://135953103760018",
+      "EMI": "rbxassetid://127410552163110"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_extractor_wreck_bar in FTGG Art",
+    "revision": "Wreck (M-24): 616 triangles"
   }
 }

@@ -746,6 +746,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 860,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://134994005535314",
+					MTL = "rbxassetid://101214173124257",
+					NOR = "rbxassetid://111541886592342",
+					RGH = "rbxassetid://100339252582483",
+				},
+				model = "rbxassetid://139804711017792",
+				pieces = {
+					base = {
+						center = { -0.0095, 3.6638, -0.0042 },
+						mesh = "rbxassetid://104524370135507",
+						size = { 6.6408, 7.3605, 6.6779 },
+					},
+				},
+				triangles = 860,
+			},
 		},
 		chs_eye = {
 			attachments = {},
@@ -912,6 +929,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 752,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://71801642380904",
+					MTL = "rbxassetid://77188462657934",
+					NOR = "rbxassetid://124275210038272",
+					RGH = "rbxassetid://88227724577471",
+				},
+				model = "rbxassetid://86616436716256",
+				pieces = {
+					base = {
+						center = { 0.02, 2.8647, -0.0041 },
+						mesh = "rbxassetid://132850667618081",
+						size = { 6.6584, 5.7949, 6.6344 },
+					},
+				},
+				triangles = 740,
+			},
 		},
 		chs_gorgon = {
 			attachments = {
@@ -1254,6 +1288,33 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 3428,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://101637405171552",
+					MTL = "rbxassetid://105908263717621",
+					NOR = "rbxassetid://126083855987185",
+					RGH = "rbxassetid://82220916837807",
+				},
+				model = "rbxassetid://70465420259273",
+				pieces = {
+					barrel = {
+						center = { 0.0501, 2.411, -2.492 },
+						mesh = "rbxassetid://72831725349935",
+						size = { 1.6895, 1.4535, 3.9214 },
+					},
+					base = {
+						center = { -0.0122, 1.489, 0.2476 },
+						mesh = "rbxassetid://84034667672000",
+						size = { 5.7782, 3.0973, 7.4838 },
+					},
+					turret = {
+						center = { 0.2202, 2.3187, 0.0633 },
+						mesh = "rbxassetid://134686560383268",
+						size = { 3.8504, 1.411, 3.4886 },
+					},
+				},
+				triangles = 3184,
+			},
 		},
 		chs_hornet = {
 			attachments = {
@@ -1331,6 +1392,33 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 1128,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://97633958280871",
+					MTL = "rbxassetid://137243688409643",
+					NOR = "rbxassetid://119719244501049",
+					RGH = "rbxassetid://100965399853779",
+				},
+				model = "rbxassetid://130568500931700",
+				pieces = {
+					base = {
+						center = { -0.0078, 2.0729, 0.1461 },
+						mesh = "rbxassetid://84796823026658",
+						size = { 5.8925, 4.279, 7.8106 },
+					},
+					launcher = {
+						center = { 0.5809, 4.0884, 1.4627 },
+						mesh = "rbxassetid://96843567124621",
+						size = { 3.0622, 1.4654, 3.5549 },
+					},
+					turret = {
+						center = { 0.2484, 3.1307, 1.6072 },
+						mesh = "rbxassetid://95672807116073",
+						size = { 1.2708, 1.0275, 1.269 },
+					},
+				},
+				triangles = 1092,
+			},
 		},
 		chs_hydra = {
 			attachments = {
@@ -1650,6 +1738,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 912,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://103044877521461",
+					MTL = "rbxassetid://118403078705165",
+					NOR = "rbxassetid://80600735917196",
+					RGH = "rbxassetid://93921038430664",
+				},
+				model = "rbxassetid://81811433137706",
+				pieces = {
+					base = {
+						center = { 0.0338, 1.6324, -0.0443 },
+						mesh = "rbxassetid://105508380749136",
+						size = { 5.2125, 3.3134, 5.9369 },
+					},
+					turret = {
+						center = { 0.8411, 2.4891, -0.7308 },
+						mesh = "rbxassetid://77255006143763",
+						size = { 1.3916, 1.4324, 3.2409 },
+					},
+				},
+				triangles = 824,
+			},
 		},
 		chs_juggernaut = {
 			attachments = {
@@ -2280,6 +2390,33 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 3832,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://107381547124061",
+					MTL = "rbxassetid://131778683287115",
+					NOR = "rbxassetid://123854126781276",
+					RGH = "rbxassetid://81467654059288",
+				},
+				model = "rbxassetid://102589472579647",
+				pieces = {
+					barrel = {
+						center = { -0.0227, 2.154, -4.4013 },
+						mesh = "rbxassetid://119663227914924",
+						size = { 0.8789, 0.6105, 6.0773 },
+					},
+					base = {
+						center = { -0.0251, 0.9436, 0.0018 },
+						mesh = "rbxassetid://116473571581844",
+						size = { 5.9213, 1.8955, 7.0345 },
+					},
+					turret = {
+						center = { -0.2014, 2.5371, 0.4339 },
+						mesh = "rbxassetid://88452212400680",
+						size = { 3.9851, 1.6399, 4.7473 },
+					},
+				},
+				triangles = 3448,
+			},
 		},
 		chs_scrapper = {
 			attachments = {},
@@ -2344,6 +2481,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"nano",
 			},
 			triangles = 2932,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://73665667496940",
+					MTL = "rbxassetid://113468719953394",
+					NOR = "rbxassetid://79417459803985",
+					RGH = "rbxassetid://129728097881271",
+				},
+				model = "rbxassetid://93164408160690",
+				pieces = {
+					base = {
+						center = { -0.0298, 1.7521, -0.3092 },
+						mesh = "rbxassetid://107451640528854",
+						size = { 5.9199, 3.622, 7.7636 },
+					},
+					nano = {
+						center = { 1.2077, 2.9848, -0.467 },
+						mesh = "rbxassetid://113641320482342",
+						size = { 1.7066, 2.7776, 3.3481 },
+					},
+				},
+				triangles = 2636,
+			},
 		},
 		chs_shipyard = {
 			attachments = {},
@@ -2522,6 +2681,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 432,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://108145413131221",
+					MTL = "rbxassetid://126601839603262",
+					NOR = "rbxassetid://124986649458370",
+					RGH = "rbxassetid://133604035732359",
+				},
+				model = "rbxassetid://134308801366415",
+				pieces = {
+					base = {
+						center = { -0.003, 1.595, 0.007 },
+						mesh = "rbxassetid://137566308080706",
+						size = { 6.6407, 3.2601, 6.6692 },
+					},
+				},
+				triangles = 408,
+			},
 		},
 		chs_spike = {
 			attachments = {
@@ -2591,6 +2767,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 1060,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://135693362409213",
+					MTL = "rbxassetid://122339861095902",
+					NOR = "rbxassetid://111854261534503",
+					RGH = "rbxassetid://80502531046069",
+				},
+				model = "rbxassetid://91108754474037",
+				pieces = {
+					base = {
+						center = { -0.0012, 1.2339, 0.0193 },
+						mesh = "rbxassetid://98246414870591",
+						size = { 6.3691, 2.536, 6.3817 },
+					},
+					turret = {
+						center = { 0.1579, 3.0151, -1.6003 },
+						mesh = "rbxassetid://94971927650970",
+						size = { 3.7464, 1.2886, 7.1372 },
+					},
+				},
+				triangles = 988,
+			},
 		},
 		chs_stalker = {
 			attachments = {},
@@ -2772,6 +2970,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 872,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://97426608694295",
+					MTL = "rbxassetid://128977350152881",
+					NOR = "rbxassetid://126550372668226",
+					RGH = "rbxassetid://76457519289687",
+				},
+				model = "rbxassetid://120454024990165",
+				pieces = {
+					base = {
+						center = { 0.0488, 3.943, -0.0145 },
+						mesh = "rbxassetid://106798805211489",
+						size = { 22.0578, 8.1502, 22.1101 },
+					},
+				},
+				triangles = 816,
+			},
 		},
 		chs_vulture = {
 			attachments = {},
@@ -2975,6 +3190,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"dish",
 			},
 			triangles = 908,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://89572492174096",
+					MTL = "rbxassetid://104052600092843",
+					NOR = "rbxassetid://137713370751546",
+					RGH = "rbxassetid://71839646555746",
+				},
+				model = "rbxassetid://101021283265742",
+				pieces = {
+					base = {
+						center = { 0.0237, 2.4228, -0.0597 },
+						mesh = "rbxassetid://91585815309122",
+						size = { 5.9327, 4.9623, 7.7254 },
+					},
+					dish = {
+						center = { -1.0197, 5.6302, 1.0712 },
+						mesh = "rbxassetid://81047278259187",
+						size = { 3.4933, 3.2196, 2.3698 },
+					},
+				},
+				triangles = 908,
+			},
 		},
 		chs_windmill = {
 			attachments = {},
@@ -3444,6 +3681,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 868,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://119601444892031",
+					MTL = "rbxassetid://133424014173691",
+					NOR = "rbxassetid://110733337975888",
+					RGH = "rbxassetid://96192307919874",
+				},
+				model = "rbxassetid://109381430668906",
+				pieces = {
+					base = {
+						center = { -0.0311, 1.1479, -0.0056 },
+						mesh = "rbxassetid://120634697091683",
+						size = { 7.4045, 2.4037, 7.4583 },
+					},
+					turret = {
+						center = { 0.0199, 3.2933, -2.6359 },
+						mesh = "rbxassetid://122976930714825",
+						size = { 4.0594, 2.0268, 9.6778 },
+					},
+				},
+				triangles = 764,
+			},
 		},
 		ord_citadel = {
 			attachments = {
@@ -3665,6 +3924,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 628,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://133858640503158",
+					MTL = "rbxassetid://135953103760018",
+					NOR = "rbxassetid://126465348380384",
+					RGH = "rbxassetid://91839398223782",
+				},
+				model = "rbxassetid://86475752703240",
+				pieces = {
+					base = {
+						center = { -0.005, 2.5865, 0.0181 },
+						mesh = "rbxassetid://107718392420376",
+						size = { 7.4345, 5.2881, 7.551 },
+					},
+				},
+				triangles = 616,
+			},
 		},
 		ord_falcon = {
 			attachments = {
@@ -3780,6 +4056,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 696,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://137256034408935",
+					MTL = "rbxassetid://70704452674185",
+					NOR = "rbxassetid://131100056805734",
+					RGH = "rbxassetid://77239839752183",
+				},
+				model = "rbxassetid://127995417543020",
+				pieces = {
+					base = {
+						center = { 0.0279, 2.6933, 0.0267 },
+						mesh = "rbxassetid://80133194809927",
+						size = { 7.4312, 5.3995, 7.3903 },
+					},
+				},
+				triangles = 696,
+			},
 		},
 		ord_guardian = {
 			attachments = {
@@ -3954,6 +4247,33 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 1216,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://93579245783540",
+					MTL = "rbxassetid://133084401729393",
+					NOR = "rbxassetid://112702881735295",
+					RGH = "rbxassetid://79429040134246",
+				},
+				model = "rbxassetid://98890093160416",
+				pieces = {
+					base = {
+						center = { -0.001, 1.5446, -0.3706 },
+						mesh = "rbxassetid://90656165241777",
+						size = { 5.2705, 3.2351, 8.0325 },
+					},
+					launcher = {
+						center = { -0.0638, 4.1011, 1.2359 },
+						mesh = "rbxassetid://75011859217565",
+						size = { 3.9025, 1.339, 3.2535 },
+					},
+					turret = {
+						center = { -0.0104, 3.0858, 1.5764 },
+						mesh = "rbxassetid://118976882572080",
+						size = { 1.5382, 1.4947, 1.5225 },
+					},
+				},
+				triangles = 1124,
+			},
 		},
 		ord_herald = {
 			attachments = {
@@ -4033,6 +4353,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 1040,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://85485320627555",
+					MTL = "rbxassetid://86826592978798",
+					NOR = "rbxassetid://130863943810205",
+					RGH = "rbxassetid://98393434962345",
+				},
+				model = "rbxassetid://103037837887737",
+				pieces = {
+					base = {
+						center = { -0.0066, 1.8358, -0.4481 },
+						mesh = "rbxassetid://85208518241518",
+						size = { 4.7486, 3.7454, 7.1351 },
+					},
+					turret = {
+						center = { 0.0088, 2.5048, 0.3984 },
+						mesh = "rbxassetid://84104072414412",
+						size = { 1.7138, 1.0163, 3.8842 },
+					},
+				},
+				triangles = 1020,
+			},
 		},
 		ord_judgement = {
 			attachments = {
@@ -4218,6 +4560,33 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 3962,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://131730122689529",
+					MTL = "rbxassetid://108014870949234",
+					NOR = "rbxassetid://122892228292673",
+					RGH = "rbxassetid://113518297957713",
+				},
+				model = "rbxassetid://108229567309359",
+				pieces = {
+					barrel = {
+						center = { -0.0174, 2.4576, -4.9627 },
+						mesh = "rbxassetid://122500284226925",
+						size = { 1.0452, 0.859, 6.4096 },
+					},
+					base = {
+						center = { 0.0392, 1.0093, -0.0223 },
+						mesh = "rbxassetid://109116201761410",
+						size = { 6.3649, 2.1088, 8.3114 },
+					},
+					turret = {
+						center = { 0.0188, 2.7279, 0.4206 },
+						mesh = "rbxassetid://103546880156430",
+						size = { 4.8046, 1.8383, 6.4856 },
+					},
+				},
+				triangles = 2956,
+			},
 		},
 		ord_lumen = {
 			attachments = {
@@ -4366,6 +4735,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"nano",
 			},
 			triangles = 3096,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://77534637587998",
+					MTL = "rbxassetid://72786416610630",
+					NOR = "rbxassetid://127606549662458",
+					RGH = "rbxassetid://103474304929179",
+				},
+				model = "rbxassetid://127484874000713",
+				pieces = {
+					base = {
+						center = { -0.0069, 1.5728, -0.6644 },
+						mesh = "rbxassetid://103470434536331",
+						size = { 6.6223, 3.2031, 9.244 },
+					},
+					nano = {
+						center = { 0.0158, 3.3411, 0.9502 },
+						mesh = "rbxassetid://121705260142959",
+						size = { 2.5705, 3.2128, 4.9916 },
+					},
+				},
+				triangles = 2876,
+			},
 		},
 		ord_oracle = {
 			attachments = {},
@@ -4420,6 +4811,28 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"dish",
 			},
 			triangles = 1044,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://111281910363255",
+					MTL = "rbxassetid://96989850386799",
+					NOR = "rbxassetid://76009549620670",
+					RGH = "rbxassetid://70391224960734",
+				},
+				model = "rbxassetid://113163550349311",
+				pieces = {
+					base = {
+						center = { -0.0297, 1.9928, -0.4779 },
+						mesh = "rbxassetid://131432665126230",
+						size = { 5.2409, 4.0161, 8.3527 },
+					},
+					dish = {
+						center = { -0.0131, 5.2782, 1.5877 },
+						mesh = "rbxassetid://111134062298475",
+						size = { 4.6481, 2.3873, 1.106 },
+					},
+				},
+				triangles = 992,
+			},
 		},
 		ord_paladin = {
 			attachments = {
@@ -5203,6 +5616,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 344,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://134336976631206",
+					MTL = "rbxassetid://124055137940409",
+					NOR = "rbxassetid://125484540166083",
+					RGH = "rbxassetid://73243822805037",
+				},
+				model = "rbxassetid://127909187412542",
+				pieces = {
+					base = {
+						center = { -0.0094, 2.0481, 0.0226 },
+						mesh = "rbxassetid://136214868672738",
+						size = { 7.4121, 4.1379, 7.3705 },
+					},
+				},
+				triangles = 320,
+			},
 		},
 		ord_tidewright = {
 			attachments = {},
@@ -5304,6 +5734,23 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 768,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://75740072780800",
+					MTL = "rbxassetid://133566238292153",
+					NOR = "rbxassetid://129834961902068",
+					RGH = "rbxassetid://138869564615462",
+				},
+				model = "rbxassetid://127452972337159",
+				pieces = {
+					base = {
+						center = { -0.05, 4.3175, -0.0028 },
+						mesh = "rbxassetid://116908009574326",
+						size = { 22.2388, 8.7233, 22.023 },
+					},
+				},
+				triangles = 720,
+			},
 		},
 		ord_veil = {
 			attachments = {},
@@ -5466,6 +5913,33 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"turret",
 			},
 			triangles = 3376,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://100337176677443",
+					MTL = "rbxassetid://87039601312741",
+					NOR = "rbxassetid://119242337424190",
+					RGH = "rbxassetid://108201728881227",
+				},
+				model = "rbxassetid://89484745314472",
+				pieces = {
+					barrel = {
+						center = { -0.0166, 2.6381, -6.0034 },
+						mesh = "rbxassetid://91841424009719",
+						size = { 1.4044, 1.0157, 9.4923 },
+					},
+					base = {
+						center = { 0.0422, 1.0073, -0.1594 },
+						mesh = "rbxassetid://121241666567816",
+						size = { 6.5169, 2.0593, 8.2442 },
+					},
+					turret = {
+						center = { 0.0423, 3.1129, 1.3737 },
+						mesh = "rbxassetid://87869788561044",
+						size = { 4.3663, 2.6357, 5.2678 },
+					},
+				},
+				triangles = 3120,
+			},
 		},
 		ord_vigil = {
 			attachments = {

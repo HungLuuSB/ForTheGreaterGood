@@ -1,0 +1,71 @@
+{
+  "id": "ord_oracle_wreck",
+  "wreckOf": "ord_oracle",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0297,
+        1.9928,
+        -0.4779
+      ],
+      "size": [
+        5.2409,
+        4.0161,
+        8.3527
+      ]
+    },
+    "dish": {
+      "parent": "base",
+      "center": [
+        -0.0131,
+        5.2782,
+        1.5877
+      ],
+      "size": [
+        4.6481,
+        2.3873,
+        1.106
+      ],
+      "pivot": [
+        0.0,
+        4.4,
+        1.6
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 744,
+    "dish": 248,
+    "total": 992
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
