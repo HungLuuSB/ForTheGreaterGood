@@ -7,7 +7,8 @@ Sources per unit: assets/models/<id>/export/rig.json (pieces, pivots,
 attachments, team pieces, glow parts) and assets/models/<id>/roblox_assets.json
 ("bar": the current Open Cloud upload as rigged in "FTGG Art"). The shield
 emitter comes from assets/fx/shield/. Run it after every upload and commit the
-result with the mesh (M-23).
+result with the mesh (M-23), together with `lune run mesh_materials`
+(the client's place/MeshMaterials.model.json, built from this manifest; C-103).
 """
 
 import json
@@ -155,6 +156,7 @@ return manifest
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
     print(f"{len(units)} units, {len(fx)} fx -> {os.path.relpath(OUT, ROOT)}")
+    print("next: lune run mesh_materials (place/MeshMaterials.model.json, client C-103), same commit")
 
 
 if __name__ == "__main__":
