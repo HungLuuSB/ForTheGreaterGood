@@ -201,6 +201,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `442394f` (blockouts: every T2 structure, both factions; `src/shared/Defs/Blockouts/` and progress only).
 - Ready to merge: `a739890` (merge of `main` with conflicts resolved, both Requests lists kept; Warden and Minotaur blockouts on the S-64 defs, registered; includes every earlier entry above).
 - Ready to merge: `a6193c4` (Ravager imported: asset IDs, pipeline note on re-importing when a restart doesn't fix grey textures, progress; `assets/` and docs only).
+- Ready to merge: `cda7860` (Lancer re-uploaded with the upload revision stamp in `assets/models/tools/lib.py`, asset IDs, pipeline note, tank review status; `assets/` and docs only).
 
 ## Requests
 
