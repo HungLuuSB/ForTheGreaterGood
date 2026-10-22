@@ -28,25 +28,29 @@ TEX = 1024
 BUDGET = 4000  # triangles, whole unit (M-12)
 FOOTPRINT = 1  # cells of 8 studs (unit def)
 SAMPLES = 32
-# 1: the first upload's metalness map broke (HTTP 502) and the importer reused it
-lib.UPLOAD_REV = 1
+# upload revisions: 1 = the first upload's metalness map broke (HTTP 502) and
+# the importer reused it; 2 = review 2026-10-22 color fix
+lib.UPLOAD_REV = 2
 
 KINDS = ["paint", "trim", "team", "seam", "track", "steel", "rubber", "glass", "light", "grille", "dark"]
 
-PAINT = (178, 174, 160)  # Order light sand-grey (style guide)
+# Order sand-grey (style guide, M-16 blockout hull (178, 174, 160)), a touch
+# warmer and darker so the rendered mesh matches the rendered blockout
+# (review 2026-10-22: it read near-white with a blue tint)
+PAINT = (174, 168, 150)
 ACCENT = (90, 210, 255)  # Order emissive accent
 VARIANTS = {
-    "bar": {"type": "paint", "base": PAINT, "chip": (232, 230, 220), "grime": PAINT},
+    "bar": {"type": "paint", "base": PAINT, "chip": (214, 210, 196), "grime": PAINT},
 }
 
 SPECS = {
     # painted metal: low metalness keeps the paint light (0.25 read mid-grey)
-    "paint": {"base": None, "roughness": 0.5, "metallic": 0.1, "edge_mode": "highlight", "edge_wear": 0.45, "ao": 0.68},
+    "paint": {"base": None, "roughness": 0.62, "metallic": 0.1, "edge_mode": "highlight", "edge_wear": 0.45, "ao": 0.58},
     "trim": {"base": (112, 110, 102), "roughness": 0.5, "metallic": 0.35, "edge_mode": "highlight", "edge_wear": 0.35, "ao": 0.55},
     # team plates: the team color at full strength, a dark outline on the bevel
     "team": {"base": (40, 40, 38), "roughness": 0.45, "metallic": 0.2, "mask": "team", "wash": 0.0,
              "chip_reveal": 0.85, "crease": 0.3, "edge_mode": "highlight", "edge_wear": 0.0},
-    "seam": {"base": None, "darken": 0.45, "roughness": 0.6, "metallic": 0.2, "edge_wear": 0.0, "ao": 0.45},
+    "seam": {"base": None, "darken": 0.32, "roughness": 0.6, "metallic": 0.2, "edge_wear": 0.0, "ao": 0.45},
     "track": {"base": (66, 66, 64), "roughness": 0.5, "metallic": 0.6, "edge_mode": "highlight", "edge_wear": 0.4, "bump": "tread"},
     "steel": {"base": (150, 150, 146), "roughness": 0.35, "metallic": 0.85, "edge_mode": "highlight", "edge_wear": 0.3},
     "rubber": {"base": (34, 34, 33), "roughness": 0.9, "metallic": 0.0, "edge_wear": 0.0},

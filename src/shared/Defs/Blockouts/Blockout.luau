@@ -15,7 +15,7 @@ local Blockout = {}
 
 export type Vec = { number } -- { x, y, z }
 export type Shape = "box" | "wedge" | "cylinder" | "ball"
-export type Color = "hull" | "dark" | "track" | "metal" | "glass" | "team"
+export type Color = "hull" | "dark" | "track" | "metal" | "glass" | "team" | "hazard"
 
 export type Part = {
 	name: string,
@@ -54,7 +54,8 @@ end
 
 -- RGB 0..255 per palette key and faction, from docs/art/style-guide.md
 -- (M-15, M-16): Order light sand-grey paint with cyan accents; Chaos gunmetal
--- with orange accents. `glass` is the faction's accent (sensors, lights).
+-- with orange accents. `glass` is the faction's accent (sensors, lights);
+-- `hazard` is warning yellow (silo doors, M-19), the same for every faction.
 Blockout.PALETTES = table.freeze({
 	order = table.freeze({
 		hull = { 178, 174, 160 },
@@ -63,14 +64,16 @@ Blockout.PALETTES = table.freeze({
 		metal = { 140, 140, 134 },
 		glass = { 90, 210, 255 },
 		team = { 210, 210, 210 },
+		hazard = { 228, 184, 40 },
 	}),
 	chaos = table.freeze({
-		hull = { 76, 80, 84 },
+		hull = { 86, 90, 95 }, -- lifted with the BAR Ravager (review 2026-10-22, M-18, M-19)
 		dark = { 46, 48, 52 },
 		track = { 36, 36, 36 },
 		metal = { 104, 108, 112 },
 		glass = { 255, 140, 50 },
 		team = { 210, 210, 210 },
+		hazard = { 228, 184, 40 },
 	}),
 	neutral = table.freeze({
 		hull = { 150, 150, 140 },
@@ -79,6 +82,7 @@ Blockout.PALETTES = table.freeze({
 		metal = { 120, 120, 120 },
 		glass = { 160, 200, 220 },
 		team = { 210, 210, 210 },
+		hazard = { 228, 184, 40 },
 	}),
 })
 
