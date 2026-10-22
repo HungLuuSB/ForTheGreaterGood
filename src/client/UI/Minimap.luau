@@ -19,6 +19,8 @@ export type UI = {
 	gui: ScreenGui,
 	map: Frame,
 	terrain: Frame,
+	fog: ImageLabel,
+	fogContent: Content?,
 	dots: Frame,
 	camera: Frame,
 	pool: { Frame },
@@ -68,11 +70,19 @@ function MinimapUI.new(api: Api.Api): UI
 		return f
 	end
 	local terrain = layer("Terrain", 1)
-	local dots = layer("Dots", 2)
+	-- the fog of war: the fog blanket's own image (C-100), over the terrain, under the dots
+	local fog = Instance.new("ImageLabel")
+	fog.Name = "Fog"
+	fog.BackgroundTransparency = 1
+	fog.Size = UDim2.fromScale(1, 1)
+	fog.ZIndex = 2
+	fog.Visible = false
+	fog.Parent = map
+	local dots = layer("Dots", 3)
 	local camera = Instance.new("Frame")
 	camera.Name = "Camera"
 	camera.BackgroundTransparency = 1
-	camera.ZIndex = 3
+	camera.ZIndex = 4
 	local camStroke = Instance.new("UIStroke")
 	camStroke.Color = Color3.new(1, 1, 1)
 	camStroke.Thickness = 1
@@ -100,7 +110,7 @@ function MinimapUI.new(api: Api.Api): UI
 		end
 	end)
 
-	return { gui = gui, map = map, terrain = terrain, dots = dots, camera = camera, pool = {}, nextDots = 0, pings = {} }
+	return { gui = gui, map = map, terrain = terrain, fog = fog, fogContent = nil, dots = dots, camera = camera, pool = {}, nextDots = 0, pings = {} }
 end
 
 local function tileColor(tile: Minimap.Tile): Color3
@@ -111,6 +121,15 @@ local function tileColor(tile: Minimap.Tile): Color3
 end
 
 -- Rebuilds the terrain for a new map (after a WELCOME with another map).
+-- The fog of war: the fog blanket's image (nil: none, e.g. a spectator or fog off).
+function MinimapUI.setFog(ui: UI, content: Content?, show: boolean)
+	if content ~= ui.fogContent then
+		ui.fogContent = content
+		ui.fog.ImageContent = content or Content.none
+	end
+	ui.fog.Visible = show and content ~= nil
+end
+
 function MinimapUI.setMap(ui: UI, layers: any)
 	ui.terrain:ClearAllChildren()
 	for _, tile in Minimap.terrain(layers) do
