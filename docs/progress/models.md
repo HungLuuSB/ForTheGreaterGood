@@ -371,6 +371,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `b282863` (missile meshes (IR / radar SAM, nuke per faction) as review in the manifest's fx, fx.md Missiles, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `3892b9e` (BAR pair 10: attack helicopters ord_guardian / chs_wasp as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `964bf9d` (BAR pair 11: fighters ord_falcon / chs_harpy as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `1e27511` (BAR pair 12: bombers ord_absolution / chs_plague as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 
