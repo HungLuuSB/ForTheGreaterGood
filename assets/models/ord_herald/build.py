@@ -46,7 +46,7 @@ def build_base(p):
     p.box((0, 1.4, 3.02), (1.4, 0.3, 0.05), "light")  # exhaust grille
     for sx in (-1, 1):
         for z in WHEELS_Z:
-            wheel(p, sx * 1.95, 0.75, z, 0.75, 0.6)
+            wheel(p, sx * 1.95, 0.75, z, 0.75, 0.6, name=f"wheel{'L' if sx < 0 else 'R'}{WHEELS_Z.index(z) + 1}")
 
 
 def build_turret(p):

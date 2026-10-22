@@ -112,5 +112,15 @@
       "MTL",
       "EMI"
     ]
+  },
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
   }
 }

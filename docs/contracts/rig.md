@@ -131,7 +131,7 @@ Meshes.units.ord_lancer    -- by unit def ID; Meshes.fx.shield_emitter for effec
 - every piece gets a `SurfaceAppearance` from `maps` (`AlphaMode.Overlay`, `EmissiveStrength` 0);
 - every glow part gets a `SurfaceAppearance` with no color map: `BasePart.Color` = tint, `EmissiveTint` = tint, `EmissiveMaskContent` = `glowMask`, `EmissiveStrength` = strength, `RenderFidelity.Precise` (in a game script: through `AssetService:CreateMeshPartAsync`'s options, and the SurfaceAppearances cloned from `ReplicatedStorage.MeshMaterials`, see above).
 
-**Checks** (`lune run test_client Meshes`): every entry's pieces are exactly the def's pieces (muzzles as attachments), parents and glow pieces exist, team pieces are pieces, channels are known, and every asset ID is present. A `wreck` has exactly the live entry's pieces.
+**Checks** (`lune run test_client Meshes`): every entry's pieces are exactly the def's pieces (muzzles as attachments), parents and glow pieces exist, team pieces are pieces, channels are known, and every asset ID is present. A `wreck` has exactly the live entry's pieces, except that it may leave out the mesh's own animated sub-pieces (`visualPieces`, section 9): their geometry then stays merged into the parent, and nothing moves on a wreck. Every rebuilt wreck so far carries them all.
 
 ## 8. Construction anchors (nanoframe, M-25)
 

@@ -160,5 +160,16 @@
       "MTL",
       "EMI"
     ]
+  },
+  "anim": {
+    "bay": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 60
+    }
   }
 }

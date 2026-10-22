@@ -1,7 +1,36 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 1788 triangles, glow share 5.1%",
+  "revision": "Animated pieces (M-27): 1788 triangles, glow share 5.1%",
   "bar": {
+    "model": "rbxassetid://83825752661042",
+    "meshes": {
+      "barrel": "rbxassetid://83117180665160",
+      "base": "rbxassetid://137260024676194",
+      "base_glow_head": "rbxassetid://81414688560447",
+      "base_glow_running": "rbxassetid://102382191166975",
+      "trackL": "rbxassetid://127294592261156",
+      "trackR": "rbxassetid://87377000544471",
+      "turret": "rbxassetid://128009779573701",
+      "turret_glow_running": "rbxassetid://75049708830222",
+      "turret_glow_weapon": "rbxassetid://126236943103443"
+    },
+    "decals": {
+      "ALB": "rbxassetid://76474396942187",
+      "RGH": "rbxassetid://96595813477570",
+      "NOR": "rbxassetid://95848577914168",
+      "MTL": "rbxassetid://72004709556506",
+      "EMI": "rbxassetid://134724071809475"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://125680073092353",
+      "NOR": "rbxassetid://131482549705969",
+      "RGH": "rbxassetid://100744301464232",
+      "MTL": "rbxassetid://133078091618452",
+      "EMI": "rbxassetid://99375000983588"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_cyclops_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://103504149374244",
     "meshes": {
       "barrel": "rbxassetid://121453958383875",
@@ -26,7 +55,7 @@
       "MTL": "rbxassetid://82238267534507",
       "EMI": "rbxassetid://133594062206958"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_cyclops_bar in FTGG Art",
-    "reuploadNote": "ALB, NOR, RGH, MTL re-uploaded: the first color map failed with HTTP 502 in Studio"
+    "reuploadNote": "ALB, NOR, RGH, MTL re-uploaded: the first color map failed with HTTP 502 in Studio",
+    "note": "2026-10-22, first BAR upload (M-15): 1788 triangles, glow share 5.1%"
   }
 }

@@ -49,12 +49,13 @@ def build_base(p):
     inner = lib.offset_polygon(outline, 0.1)
     for sx in (-1, 1):
         x0, x1 = (2.3, 3.3) if sx > 0 else (-3.3, -2.3)
-        p.band_x(outline, inner, x0, x1, "track")
-        for z in WHEELS:
-            p.cylinder("x", (sx * 2.8, 0.8, z), 0.62, 0.7, 12, "rubber", cap_kinds=("trim", "trim"))
-            p.ocyl((sx * 3.15, 0.8, z), (sx, 0, 0), 0.18, 0.32, 6, "steel", radius2=0.02)  # hub spike
-        for z in (-3.2, 3.2):
-            p.cylinder("x", (sx * 2.8, 0.8, z), 0.44, 0.74, 10, "steel")
+        with p.sub("trackL" if sx < 0 else "trackR", (sx * 2.8, 0.8, 0.0), "scroll", (1, 0, 0)):  # M-27 track set
+            p.band_x(outline, inner, x0, x1, "track")
+            for z in WHEELS:
+                p.cylinder("x", (sx * 2.8, 0.8, z), 0.62, 0.7, 12, "rubber", cap_kinds=("trim", "trim"))
+                p.ocyl((sx * 3.15, 0.8, z), (sx, 0, 0), 0.18, 0.32, 6, "steel", radius2=0.02)  # hub spike
+            for z in (-3.2, 3.2):
+                p.cylinder("x", (sx * 2.8, 0.8, z), 0.44, 0.74, 10, "steel")
         # mudguard over the track, a team plate on it, a running strip on its edge
         p.prism_x([(-3.6, 1.62), (3.7, 1.62), (3.7, 1.78), (-3.3, 1.86)], sx * 2.25, sx * 3.38, "trim", bevel=0.02) \
             if sx > 0 else p.prism_x([(-3.6, 1.62), (3.7, 1.62), (3.7, 1.78), (-3.3, 1.86)], -3.38, -2.25, "trim", bevel=0.02)

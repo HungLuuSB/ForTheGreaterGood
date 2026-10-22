@@ -8,14 +8,32 @@
     "base": {
       "parent": null,
       "center": [
-        -0.4,
-        7.1775,
+        0.0,
+        6.85,
         0.25
       ],
       "size": [
-        38.8,
-        14.955,
+        38.0,
+        14.3,
         37.5
+      ]
+    },
+    "jib": {
+      "parent": "base",
+      "center": [
+        -5.4,
+        13.6775,
+        4.0
+      ],
+      "size": [
+        28.8,
+        1.955,
+        1.2
+      ],
+      "pivot": [
+        -16.5,
+        14.2,
+        4.0
       ]
     }
   },
@@ -38,8 +56,22 @@
     }
   },
   "teamColorPieces": [
-    "base"
+    "base",
+    "jib"
   ],
+  "visualPieces": [
+    "jib"
+  ],
+  "anim": {
+    "jib": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -62,12 +94,12 @@
       "strength": 2.0,
       "center": [
         0.0,
-        8.21,
+        1.96,
         -4.4
       ],
       "size": [
         33.6,
-        13.78,
+        1.28,
         27.8
       ]
     },
@@ -83,19 +115,62 @@
       "strength": 2.5,
       "center": [
         -0.6,
-        6.85,
-        8.8
+        2.6,
+        13.17
       ],
       "size": [
         21.5,
-        12.7,
-        10.4
+        4.2,
+        1.66
+      ]
+    },
+    {
+      "name": "jib_glow_running",
+      "piece": "jib",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        9.0,
+        14.8,
+        4.0
+      ],
+      "size": [
+        0.6,
+        0.6,
+        0.6
+      ]
+    },
+    {
+      "name": "jib_glow_power",
+      "piece": "jib",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        4.0,
+        13.17,
+        4.0
+      ],
+      "size": [
+        0.8,
+        0.06,
+        0.8
       ]
     }
   ],
   "glowShare": 0.0223,
   "triangles": {
-    "base": 1276,
+    "base": 1160,
+    "jib": 116,
     "total": 1276
   },
   "textures": {

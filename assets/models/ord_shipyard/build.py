@@ -47,10 +47,12 @@ def build_base(p):
         p.box((sx * 16, 2.7, -6), (1.6, 0.6, 2.2), "trim", bevel=0.03)
     p.box((0, 11.8, -6), (33, 1.4, 1.6), "paint", bevel=0.05)
     p.box((0, 12.53, -6), (20, 0.05, 1.2), "team", bevel=0.012)
-    p.box((4.0, 10.7, -6), (2.0, 0.8, 2.0), "trim", bevel=0.04)  # trolley
+    with p.sub("trolley", (4.0, 10.7, -6.0), "slide", (1, 0, 0), 12):  # M-27 along the gantry
+        p.box((4.0, 10.7, -6), (2.0, 0.8, 2.0), "trim", bevel=0.04)  # trolley
     for x in (-10.0, -4.0, 2.0, 8.0):
         p.box((x, 11.08, -6), (1.6, 0.06, 0.9), "power")  # build lamps under the beam
-    p.box((4.0, 10.28, -6), (1.0, 0.06, 1.0), "power")
+    with p.sub("trolley", (4.0, 10.7, -6.0), "slide", (1, 0, 0), 12):
+        p.box((4.0, 10.28, -6), (1.0, 0.06, 1.0), "power")
 
 
 def details_base(p):

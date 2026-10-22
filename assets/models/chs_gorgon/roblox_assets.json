@@ -1,7 +1,41 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15), radar panel edge-only after a lit-face first try: 1144 triangles, glow share 5.1%",
+  "revision": "Animated pieces (M-27): 1144 triangles, glow share 5.1%",
   "bar": {
+    "model": "rbxassetid://82317151571594",
+    "meshes": {
+      "base": "rbxassetid://98702971372947",
+      "base_glow_head": "rbxassetid://80798519128346",
+      "base_glow_running": "rbxassetid://93674864119598",
+      "launcher": "rbxassetid://133572758440085",
+      "launcher_glow_running": "rbxassetid://108355870928631",
+      "launcher_glow_weapon": "rbxassetid://71368776447413",
+      "turret": "rbxassetid://109744258906014",
+      "turret_glow_running": "rbxassetid://73595209823517",
+      "wheelL1": "rbxassetid://105076294687184",
+      "wheelL2": "rbxassetid://73650924257215",
+      "wheelL3": "rbxassetid://131991753138867",
+      "wheelR1": "rbxassetid://130794228053197",
+      "wheelR2": "rbxassetid://112268541020983",
+      "wheelR3": "rbxassetid://81202765314988"
+    },
+    "decals": {
+      "ALB": "rbxassetid://136373883344027",
+      "RGH": "rbxassetid://97530297923698",
+      "NOR": "rbxassetid://104704777963042",
+      "MTL": "rbxassetid://126099968602189",
+      "EMI": "rbxassetid://87325943407169"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://100516134309795",
+      "NOR": "rbxassetid://122646362635707",
+      "RGH": "rbxassetid://99538460740363",
+      "MTL": "rbxassetid://117189226454147",
+      "EMI": "rbxassetid://115346502689978"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_gorgon_bar in FTGG Art"
+  },
+  "bar_2": {
     "model": "rbxassetid://81965608343693",
     "meshes": {
       "base": "rbxassetid://123035400578930",
@@ -27,7 +61,7 @@
       "MTL": "rbxassetid://90841103010282",
       "EMI": "rbxassetid://83127967867433"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_gorgon_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15), radar panel edge-only after a lit-face first try: 1144 triangles, glow share 5.1%"
   },
   "bar_1": {
     "model": "rbxassetid://80621445187925",

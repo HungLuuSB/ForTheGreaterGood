@@ -9,13 +9,49 @@
       "parent": null,
       "center": [
         0.0,
-        1.19,
-        -0.0983
+        1.44,
+        -0.15
       ],
       "size": [
         11.1,
-        2.38,
+        1.88,
+        12.1
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -4.6,
+        0.7,
+        -0.0983
+      ],
+      "size": [
+        1.6,
+        1.4,
         12.5967
+      ],
+      "pivot": [
+        -4.6,
+        0.55,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        4.6,
+        0.7,
+        -0.0983
+      ],
+      "size": [
+        1.6,
+        1.4,
+        12.5967
+      ],
+      "pivot": [
+        4.6,
+        0.55,
+        0.0
       ]
     },
     "ram": {
@@ -85,8 +121,32 @@
   },
   "teamColorPieces": [
     "base",
-    "turret"
+    "turret",
+    "trackL",
+    "trackR"
   ],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -205,7 +265,9 @@
   ],
   "glowShare": 0.0509,
   "triangles": {
-    "base": 1240,
+    "base": 456,
+    "trackL": 392,
+    "trackR": 392,
     "ram": 300,
     "turret": 192,
     "barrel": 200,

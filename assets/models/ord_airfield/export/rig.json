@@ -9,13 +9,31 @@
       "parent": null,
       "center": [
         0.0,
-        5.7404,
+        4.9,
         0.0
       ],
       "size": [
         37.963,
-        11.4807,
+        9.8,
         37.963
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        13.0,
+        10.5,
+        12.0
+      ],
+      "size": [
+        3.0,
+        1.9614,
+        0.9454
+      ],
+      "pivot": [
+        13.0,
+        9.8,
+        12.0
       ]
     }
   },
@@ -54,8 +72,22 @@
     }
   },
   "teamColorPieces": [
-    "base"
+    "base",
+    "radar"
   ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -78,12 +110,12 @@
       "strength": 2.0,
       "center": [
         0.0,
-        5.8157,
+        3.9,
         0.0
       ],
       "size": [
         38.2,
-        11.1713,
+        7.34,
         38.2
       ]
     },
@@ -107,11 +139,33 @@
         5.2,
         0.14
       ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        13.0,
+        10.5616,
+        11.8308
+      ],
+      "size": [
+        2.78,
+        1.6795,
+        0.6275
+      ]
     }
   ],
   "glowShare": 0.0254,
   "triangles": {
-    "base": 1624,
+    "base": 1520,
+    "radar": 104,
     "total": 1624
   },
   "textures": {

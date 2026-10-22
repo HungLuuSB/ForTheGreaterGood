@@ -238,3 +238,9 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user (2026-10-23): the bright yellow squares read as UI; the deposit must be part of the terrain, cheap (on every map in dozens) and hidden under an extractor.
 
+### M-29 — Beam shot effect (2026-10-23)
+
+**Decision:** the beam towers' shot is built from Roblox Beams, not meshes: a core, a wide glow and 3–4 filament Beams with their own attachments, re-offset round the beam axis 30 times a second and fanning out towards the target, plus a charge flipbook, an impact flare and a scorch Decal with overbright embers. All textures are white (the scorch grey) and tinted per faction; the timing is a pure function of the time since the shot started (fx.md "Beam shot"). The manifest carries them as `Meshes.beam` (textures plus the recommended values per faction), not under `Meshes.fx`, because every `fx.<id>` entry is a mesh that the client's MeshMaterials gives a SurfaceAppearance.
+
+**Why:** the user's request (2026-10-23): a BAR Pulsar-style beam (bright laser, thin crackling filaments racing along it, thinning and gone within about half a second), original assets the client tints. Beams draw this cheaply and face the camera; a pure function of time lets replays and the reference build in "FTGG Art" (`Workspace.BeamFxReference.BeamShot`) match the client.
+

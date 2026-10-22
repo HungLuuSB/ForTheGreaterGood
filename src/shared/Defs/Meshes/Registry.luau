@@ -31,14 +31,108 @@ export type Entry = {
 	anim: { [string]: { motion: string, axis: Vec3, range: number? } }?,
 	wreck: any?, -- the wreck version (M-24)
 }
+-- the beam towers' shot (M-29, fx.md "Beam shot"): white textures and the
+-- recommended values per faction ("order" / "chaos"; colors are RGB 0-255)
+export type BeamShot = {
+	status: string,
+	note: string?,
+	textures: { [string]: string },
+	factions: { [string]: { [string]: any } },
+}
 
-local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry } } = {
+local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot } = {
 	glowMask = "rbxassetid://101169341901946",
 	textures = {
 		heatShimmer = "rbxassetid://105647146631109",
 		jammerStatic = "rbxassetid://124485150689074",
 		radarPulse = "rbxassetid://113771866546969",
 		sonarPing = "rbxassetid://120009987380670",
+	},
+	beam = {
+		factions = {
+			chaos = {
+				brightness = 2.4,
+				charge = 0.06,
+				coreColor = { 255, 205, 150 },
+				coreWidth = 1.2,
+				curve = 2.2,
+				fan = 3.5,
+				filamentBrightness = 3.4,
+				filamentColor = { 255, 130, 35 },
+				filamentWidth = 2.2,
+				filaments = 3,
+				flareSize = 6,
+				glowBrightness = 0.8,
+				glowColor = { 255, 85, 15 },
+				glowWidth = 5.5,
+				hold = 0.03,
+				impactSize = 12,
+				impactTime = 0.25,
+				jitter = 0.7,
+				scorchGlowTime = 1,
+				scorchSize = 6,
+				scorchTime = 3,
+				speed = {
+					filamentA = 40,
+					filamentB = 52,
+				},
+				spread = 1,
+				taper = 0.27,
+				texLen = {
+					core = 24,
+					filamentA = 16,
+					filamentB = 12,
+					glow = 50,
+				},
+			},
+			order = {
+				brightness = 2,
+				charge = 0.08,
+				coreColor = { 225, 248, 255 },
+				coreWidth = 1.6,
+				curve = 1.6,
+				fan = 3,
+				filamentBrightness = 3,
+				filamentColor = { 165, 232, 255 },
+				filamentWidth = 2.5,
+				filaments = 4,
+				flareSize = 7,
+				glowBrightness = 0.6,
+				glowColor = { 80, 190, 255 },
+				glowWidth = 7,
+				hold = 0.04,
+				impactSize = 14,
+				impactTime = 0.3,
+				jitter = 0.45,
+				scorchGlowTime = 1.2,
+				scorchSize = 7,
+				scorchTime = 4,
+				speed = {
+					filamentA = 30,
+					filamentB = 40,
+				},
+				spread = 0.8,
+				taper = 0.38,
+				texLen = {
+					core = 30,
+					filamentA = 20,
+					filamentB = 15,
+					glow = 60,
+				},
+			},
+		},
+		note = "beam shot textures and recommended values (fx.md \"Beam shot\"), waiting for the user's review",
+		status = "review",
+		textures = {
+			charge = "rbxassetid://95187819936446",
+			core = "rbxassetid://84580715736855",
+			filamentA = "rbxassetid://130559041254740",
+			filamentB = "rbxassetid://71590951128896",
+			glow = "rbxassetid://140653615912799",
+			impact = "rbxassetid://121983330106046",
+			scorch = "rbxassetid://108024950155994",
+			scorchGlow = "rbxassetid://83492274682254",
+		},
 	},
 	fx = {
 		chs_interceptor = {
@@ -248,13 +342,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			glow = {  },
 			glowShare = 0,
 			maps = {
-				ALB = "rbxassetid://104885525379407",
-				EMI = "rbxassetid://136985807436793",
-				MTL = "rbxassetid://123614369721798",
-				NOR = "rbxassetid://98865692097023",
-				RGH = "rbxassetid://109462413668117",
+				ALB = "rbxassetid://81223779035836",
+				EMI = "rbxassetid://81504846557836",
+				MTL = "rbxassetid://106206250665203",
+				NOR = "rbxassetid://102885139985790",
+				RGH = "rbxassetid://75906413652676",
 			},
-			model = "rbxassetid://129108520737198",
+			model = "rbxassetid://100294747470075",
 			note = "supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; tint the ground patch (teamPieces, alpha mask) to the terrain",
 			pieces = {
 				base = {
@@ -274,13 +368,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					glow = {  },
 					glowShare = 0,
 					maps = {
-						ALB = "rbxassetid://104885525379407",
-						EMI = "rbxassetid://136985807436793",
-						MTL = "rbxassetid://123614369721798",
-						NOR = "rbxassetid://98865692097023",
-						RGH = "rbxassetid://109462413668117",
+						ALB = "rbxassetid://81223779035836",
+						EMI = "rbxassetid://81504846557836",
+						MTL = "rbxassetid://106206250665203",
+						NOR = "rbxassetid://102885139985790",
+						RGH = "rbxassetid://75906413652676",
 					},
-					model = "rbxassetid://129108520737198",
+					model = "rbxassetid://100294747470075",
 					pieces = {
 						base = {
 							center = { 0.0382, 0.0933, 0.0973 },
@@ -299,13 +393,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					glow = {  },
 					glowShare = 0,
 					maps = {
-						ALB = "rbxassetid://98084583978773",
-						EMI = "rbxassetid://103192520668830",
-						MTL = "rbxassetid://79686300738536",
-						NOR = "rbxassetid://124586945294563",
-						RGH = "rbxassetid://95306325721524",
+						ALB = "rbxassetid://140296076053426",
+						EMI = "rbxassetid://77373953110915",
+						MTL = "rbxassetid://98117278219155",
+						NOR = "rbxassetid://134174435535792",
+						RGH = "rbxassetid://101559695265961",
 					},
-					model = "rbxassetid://107674865233641",
+					model = "rbxassetid://137409970107048",
 					pieces = {
 						base = {
 							center = { -0.0897, 0.1036, 0.0782 },
@@ -324,13 +418,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					glow = {  },
 					glowShare = 0,
 					maps = {
-						ALB = "rbxassetid://70436601869625",
-						EMI = "rbxassetid://130888741245078",
-						MTL = "rbxassetid://79138621428428",
-						NOR = "rbxassetid://73996570095513",
-						RGH = "rbxassetid://72318329923694",
+						ALB = "rbxassetid://91172502819732",
+						EMI = "rbxassetid://136211037100110",
+						MTL = "rbxassetid://121934015119820",
+						NOR = "rbxassetid://138521678752571",
+						RGH = "rbxassetid://137380328606408",
 					},
-					model = "rbxassetid://106374999103836",
+					model = "rbxassetid://71360785908151",
 					pieces = {
 						base = {
 							center = { 0.0666, 0.0467, 0.0119 },
@@ -602,6 +696,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 	},
 	units = {
 		chs_airfield = {
+			anim = {
+				radar = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+			},
 			attachments = {
 				buildpad = {
 					at = { -12, 0.4, 7.5 },
@@ -624,7 +724,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -3.27, 2.875, -1.795 },
 					channel = "power",
-					mesh = "rbxassetid://117867769496157",
+					mesh = "rbxassetid://85983908242748",
 					name = "base_glow_power",
 					piece = "base",
 					size = { 29.06, 4.75, 20.59 },
@@ -634,35 +734,56 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 6.39, 0 },
 					channel = "running",
-					mesh = "rbxassetid://131548000249465",
+					mesh = "rbxassetid://89780315441943",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 38.2, 12.32, 38.2 },
 					strength = 2,
 					tint = { 255, 150, 55 },
 				},
+				{
+					center = { 13, 11.0616, 9.8308 },
+					channel = "running",
+					mesh = "rbxassetid://132482530832705",
+					name = "radar_glow_running",
+					piece = "radar",
+					size = { 2.7, 1.6795, 0.6275 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
 			},
 			glowShare = 0.0235,
 			maps = {
-				ALB = "rbxassetid://121610772700553",
-				EMI = "rbxassetid://99167675913546",
-				MTL = "rbxassetid://134214489641080",
-				NOR = "rbxassetid://129249641958037",
-				RGH = "rbxassetid://95465254649719",
+				ALB = "rbxassetid://70890677274379",
+				EMI = "rbxassetid://100789068835893",
+				MTL = "rbxassetid://119583282614481",
+				NOR = "rbxassetid://130788258474705",
+				RGH = "rbxassetid://89107903393116",
 			},
-			model = "rbxassetid://111567167029284",
+			model = "rbxassetid://96361857018256",
 			pieces = {
 				base = {
-					center = { 0, 5.9904, 0 },
-					mesh = "rbxassetid://87507668955184",
-					size = { 38, 11.9807, 38 },
+					center = { 0, 5.1, 0 },
+					mesh = "rbxassetid://133480541403601",
+					size = { 38, 10.2, 38 },
+				},
+				radar = {
+					center = { 13, 11, 10 },
+					mesh = "rbxassetid://108774856303964",
+					parent = "base",
+					pivot = { 13, 10.2, 10 },
+					size = { 3, 1.9614, 0.9454 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
+				"radar",
 			},
 			triangles = 1472,
+			visualPieces = {
+				"radar",
+			},
 		},
 		chs_barracuda = {
 			attachments = {
@@ -746,6 +867,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 660,
 		},
 		chs_carapace = {
+			anim = {
+				core = {
+					axis = { 0, 1, 0 },
+					motion = "pulse",
+				},
+			},
 			attachments = {
 				beam = {
 					at = { 0, 7.6, 0 },
@@ -815,6 +942,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 1036,
 		},
 		chs_cyclops = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 10.45, -0.85 },
@@ -825,7 +962,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.25, -5.05 },
 					channel = "head",
-					mesh = "rbxassetid://132419342435425",
+					mesh = "rbxassetid://81414688560447",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5, 0.2, 0.1 },
@@ -835,7 +972,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.225, 0.1825 },
 					channel = "running",
-					mesh = "rbxassetid://83362687357969",
+					mesh = "rbxassetid://102382191166975",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.24, 0.87, 10.785 },
@@ -845,7 +982,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0.06, 6.05, 1 },
 					channel = "running",
-					mesh = "rbxassetid://136965275401040",
+					mesh = "rbxassetid://75049708830222",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 4.78, 5.8, 4.2 },
@@ -855,7 +992,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 9.5967, -0.3925 },
 					channel = "weapon",
-					mesh = "rbxassetid://112132181885576",
+					mesh = "rbxassetid://126236943103443",
 					name = "turret_glow_weapon",
 					piece = "turret",
 					size = { 1.96, 0.6491, 1.8871 },
@@ -865,29 +1002,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0507,
 			maps = {
-				ALB = "rbxassetid://103742692247981",
-				EMI = "rbxassetid://133594062206958",
-				MTL = "rbxassetid://82238267534507",
-				NOR = "rbxassetid://85145820073846",
-				RGH = "rbxassetid://117741955946792",
+				ALB = "rbxassetid://125680073092353",
+				EMI = "rbxassetid://99375000983588",
+				MTL = "rbxassetid://133078091618452",
+				NOR = "rbxassetid://131482549705969",
+				RGH = "rbxassetid://100744301464232",
 			},
-			model = "rbxassetid://103504149374244",
+			model = "rbxassetid://83825752661042",
 			pieces = {
 				barrel = {
 					center = { 0, 4.3, 1 },
-					mesh = "rbxassetid://121453958383875",
+					mesh = "rbxassetid://83117180665160",
 					parent = "turret",
 					pivot = { 0, 4.3, 1 },
 					size = { 3.1, 1, 1.6 },
 				},
 				base = {
-					center = { 0, 1.3225, 0.1969 },
-					mesh = "rbxassetid://112069029938201",
-					size = { 6.18, 2.645, 10.7938 },
+					center = { 0, 1.4725, 0.1969 },
+					mesh = "rbxassetid://137260024676194",
+					size = { 6.18, 2.345, 10.7938 },
+				},
+				trackL = {
+					center = { -2.6, 0.5, 0.0011 },
+					mesh = "rbxassetid://127294592261156",
+					parent = "base",
+					pivot = { -2.6, 0.46, 0 },
+					size = { 0.8, 1, 9.9978 },
+				},
+				trackR = {
+					center = { 2.6, 0.5, 0.0011 },
+					mesh = "rbxassetid://87377000544471",
+					parent = "base",
+					pivot = { 2.6, 0.46, 0 },
+					size = { 0.8, 1, 9.9978 },
 				},
 				turret = {
 					center = { 0.1533, 6.7108, 0.837 },
-					mesh = "rbxassetid://136250875889540",
+					mesh = "rbxassetid://128009779573701",
 					parent = "base",
 					pivot = { 0, 2.6, 1 },
 					size = { 4.8935, 8.2216, 4.9129 },
@@ -897,9 +1048,15 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"barrel",
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 1788,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		chs_depot = {
 			attachments = {},
@@ -1012,6 +1169,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_eye = {
+			anim = {
+				radar = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
@@ -1066,6 +1229,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 964,
 		},
 		chs_forgemaster = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { 1.1, 5.7, -3 },
@@ -1080,7 +1253,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.45, -4.05 },
 					channel = "head",
-					mesh = "rbxassetid://103415659694538",
+					mesh = "rbxassetid://128965187330503",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 4.6, 0.2, 0.1 },
@@ -1090,7 +1263,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.87, -0.075 },
 					channel = "running",
-					mesh = "rbxassetid://135814326537181",
+					mesh = "rbxassetid://115476626701057",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 5.84, 1.76, 8.27 },
@@ -1100,7 +1273,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0.71, 4.8625, -0.6002 },
 					channel = "power",
-					mesh = "rbxassetid://125844962068228",
+					mesh = "rbxassetid://77264697026538",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 1.58, 2.375, 5.5604 },
@@ -1110,33 +1283,53 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0508,
 			maps = {
-				ALB = "rbxassetid://72645322320143",
-				EMI = "rbxassetid://83502149176426",
-				MTL = "rbxassetid://103973791963352",
-				NOR = "rbxassetid://73896753813195",
-				RGH = "rbxassetid://108978978666618",
+				ALB = "rbxassetid://94871192217430",
+				EMI = "rbxassetid://125490892995581",
+				MTL = "rbxassetid://108956488008348",
+				NOR = "rbxassetid://136250140944758",
+				RGH = "rbxassetid://98030828202501",
 			},
-			model = "rbxassetid://127636317897812",
+			model = "rbxassetid://138990827779554",
 			pieces = {
 				base = {
-					center = { 0, 1.53, -0.1 },
-					mesh = "rbxassetid://101331736771325",
-					size = { 5.78, 3.06, 8.2 },
+					center = { 0, 1.755, -0.1 },
+					mesh = "rbxassetid://95478414080809",
+					size = { 5.78, 2.61, 8.2 },
 				},
 				nano = {
 					center = { 0.8, 4.6, -0.5895 },
-					mesh = "rbxassetid://82133536870971",
+					mesh = "rbxassetid://132744545805509",
 					parent = "base",
 					pivot = { 0.8, 2.2, -0.2 },
 					size = { 2.4, 4.8, 5.0055 },
+				},
+				trackL = {
+					center = { -2.4, 0.5, 0.0011 },
+					mesh = "rbxassetid://140640966970299",
+					parent = "base",
+					pivot = { -2.4, 0.46, 0 },
+					size = { 0.8, 1, 7.9978 },
+				},
+				trackR = {
+					center = { 2.4, 0.5, 0.0011 },
+					mesh = "rbxassetid://76235134300152",
+					parent = "base",
+					pivot = { 2.4, 0.46, 0 },
+					size = { 0.8, 1, 7.9978 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"nano",
+				"trackL",
+				"trackR",
 			},
 			triangles = 1548,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		chs_generator = {
 			attachments = {},
@@ -1203,6 +1396,32 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_gorgon = {
+			anim = {
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0.3, 5.4, -0.3 },
@@ -1213,7 +1432,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.25, -4.03 },
 					channel = "head",
-					mesh = "rbxassetid://117682423690969",
+					mesh = "rbxassetid://80798519128346",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 2.95, 0.2, 0.08 },
@@ -1223,7 +1442,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.11, 0.165 },
 					channel = "running",
-					mesh = "rbxassetid://107087031139997",
+					mesh = "rbxassetid://93674864119598",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.69, 1.18, 7.19 },
@@ -1233,7 +1452,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -1.12, 2.35, 2.2 },
 					channel = "running",
-					mesh = "rbxassetid://88214850858703",
+					mesh = "rbxassetid://108355870928631",
 					name = "launcher_glow_running",
 					piece = "launcher",
 					size = { 0.04, 0.16, 2.2 },
@@ -1243,7 +1462,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0.3, 2.7641, 2.3359 },
 					channel = "weapon",
-					mesh = "rbxassetid://135836098558990",
+					mesh = "rbxassetid://71368776447413",
 					name = "launcher_glow_weapon",
 					piece = "launcher",
 					size = { 2.2, 0.2334, 0.2334 },
@@ -1253,7 +1472,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -1.4, 5.9945, -1.2616 },
 					channel = "running",
-					mesh = "rbxassetid://139968485311249",
+					mesh = "rbxassetid://73595209823517",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 1.45, 1.211, 0.3633 },
@@ -1263,32 +1482,74 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0514,
 			maps = {
-				ALB = "rbxassetid://106203088887558",
-				EMI = "rbxassetid://83127967867433",
-				MTL = "rbxassetid://90841103010282",
-				NOR = "rbxassetid://101301350703784",
-				RGH = "rbxassetid://131028142722186",
+				ALB = "rbxassetid://100516134309795",
+				EMI = "rbxassetid://115346502689978",
+				MTL = "rbxassetid://117189226454147",
+				NOR = "rbxassetid://122646362635707",
+				RGH = "rbxassetid://99538460740363",
 			},
-			model = "rbxassetid://81965608343693",
+			model = "rbxassetid://82317151571594",
 			pieces = {
 				base = {
-					center = { 0, 1.45, -0.15 },
-					mesh = "rbxassetid://123035400578930",
-					size = { 4.68, 2.9, 7.7 },
+					center = { 0, 1.85, -0.15 },
+					mesh = "rbxassetid://98702971372947",
+					size = { 4.3, 2.1, 7.7 },
 				},
 				launcher = {
 					center = { 0.3, 3.5621, 1.8378 },
-					mesh = "rbxassetid://77708042147853",
+					mesh = "rbxassetid://133572758440085",
 					parent = "base",
 					pivot = { 0.3, 2.2, 2.2 },
 					size = { 2.8, 2.7243, 3.3243 },
 				},
 				turret = {
 					center = { -1.4, 4.2519, -1.2019 },
-					mesh = "rbxassetid://92363262500427",
+					mesh = "rbxassetid://109744258906014",
 					parent = "base",
 					pivot = { -1.4, 2.2, -1.2 },
 					size = { 1.6, 4.1037, 0.4454 },
+				},
+				wheelL1 = {
+					center = { -2, 0.75, -2.3 },
+					mesh = "rbxassetid://105076294687184",
+					parent = "base",
+					pivot = { -2, 0.75, -2.3 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -2, 0.75, 0.1 },
+					mesh = "rbxassetid://73650924257215",
+					parent = "base",
+					pivot = { -2, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -2, 0.75, 2.5 },
+					mesh = "rbxassetid://131991753138867",
+					parent = "base",
+					pivot = { -2, 0.75, 2.5 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 2, 0.75, -2.3 },
+					mesh = "rbxassetid://130794228053197",
+					parent = "base",
+					pivot = { 2, 0.75, -2.3 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 2, 0.75, 0.1 },
+					mesh = "rbxassetid://112268541020983",
+					parent = "base",
+					pivot = { 2, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 2, 0.75, 2.5 },
+					mesh = "rbxassetid://81202765314988",
+					parent = "base",
+					pivot = { 2, 0.75, 2.5 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
@@ -1296,8 +1557,22 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"base",
 				"launcher",
 				"turret",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1144,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 		},
 		chs_hailstorm = {
 			attachments = {
@@ -1455,6 +1730,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 710,
 		},
 		chs_hellmouth = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.475, -4.4175 },
@@ -1465,7 +1750,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.475, -3.0132 },
 					channel = "weapon",
-					mesh = "rbxassetid://119195196848190",
+					mesh = "rbxassetid://99469995705164",
 					name = "barrel_glow_weapon",
 					piece = "barrel",
 					size = { 1.3594, 1.2108, 1.7484 },
@@ -1475,7 +1760,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.44, -3.4503 },
 					channel = "head",
-					mesh = "rbxassetid://130680867801516",
+					mesh = "rbxassetid://99422771671738",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 4.6294, 0.18, 0.0651 },
@@ -1485,7 +1770,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.187, 0.2046 },
 					channel = "running",
-					mesh = "rbxassetid://112730069204939",
+					mesh = "rbxassetid://102764586207929",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 5.4964, 1.728, 6.1752 },
@@ -1495,7 +1780,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.475, -1.5067 },
 					channel = "running",
-					mesh = "rbxassetid://74560994563262",
+					mesh = "rbxassetid://133338068284430",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 2.7974, 0.162, 0.0465 },
@@ -1505,29 +1790,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.042,
 			maps = {
-				ALB = "rbxassetid://133250943382330",
-				EMI = "rbxassetid://99889052201586",
-				MTL = "rbxassetid://96028010475822",
-				NOR = "rbxassetid://113690180137647",
-				RGH = "rbxassetid://131946209972922",
+				ALB = "rbxassetid://135435341239967",
+				EMI = "rbxassetid://117233198381589",
+				MTL = "rbxassetid://97997030121104",
+				NOR = "rbxassetid://106588896520546",
+				RGH = "rbxassetid://93471672862256",
 			},
-			model = "rbxassetid://103765052722993",
+			model = "rbxassetid://102858304523576",
 			pieces = {
 				barrel = {
 					center = { 0, 2.475, -2.5017 },
-					mesh = "rbxassetid://115232943024375",
+					mesh = "rbxassetid://95251907588641",
 					parent = "turret",
 					pivot = { 0, 2.475, -0.651 },
 					size = { 1.773, 1.4038, 3.7944 },
 				},
 				base = {
-					center = { 0, 1.485, 0.2498 },
-					mesh = "rbxassetid://136561413122474",
-					size = { 5.6736, 2.97, 7.3815 },
+					center = { 0, 1.5975, 0.2498 },
+					mesh = "rbxassetid://115150428273683",
+					size = { 5.6736, 2.745, 7.3815 },
+				},
+				trackL = {
+					center = { -2.2359, 0.495, 0.003 },
+					mesh = "rbxassetid://138820154853715",
+					parent = "base",
+					pivot = { -2.2359, 0.45, 0 },
+					size = { 0.7289, 0.99, 6.8751 },
+				},
+				trackR = {
+					center = { 2.2359, 0.495, 0.003 },
+					mesh = "rbxassetid://70908530415871",
+					parent = "base",
+					pivot = { 2.2359, 0.45, 0 },
+					size = { 0.7289, 0.99, 6.8751 },
 				},
 				turret = {
 					center = { 0.2118, 2.3714, 0.0442 },
-					mesh = "rbxassetid://76803932440729",
+					mesh = "rbxassetid://134385702635208",
 					parent = "base",
 					pivot = { 0, 1.71, 0 },
 					size = { 3.871, 1.3227, 3.3433 },
@@ -1537,32 +1836,48 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"barrel",
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 3428,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://101637405171552",
-					MTL = "rbxassetid://105908263717621",
-					NOR = "rbxassetid://126083855987185",
-					RGH = "rbxassetid://82220916837807",
+					ALB = "rbxassetid://119199353251359",
+					MTL = "rbxassetid://87797750258215",
+					NOR = "rbxassetid://103126263413465",
+					RGH = "rbxassetid://117950571640513",
 				},
-				model = "rbxassetid://70465420259273",
+				model = "rbxassetid://117970705335156",
 				pieces = {
 					barrel = {
-						center = { 0.0501, 2.411, -2.492 },
-						mesh = "rbxassetid://72831725349935",
-						size = { 1.6895, 1.4535, 3.9214 },
+						center = { 0.0442, 2.4878, -2.5079 },
+						mesh = "rbxassetid://85994145745488",
+						size = { 1.7162, 1.4668, 3.8818 },
 					},
 					base = {
-						center = { -0.0122, 1.489, 0.2476 },
-						mesh = "rbxassetid://84034667672000",
-						size = { 5.7782, 3.0973, 7.4838 },
+						center = { -0.0309, 1.591, 0.2536 },
+						mesh = "rbxassetid://98062756555119",
+						size = { 5.7224, 2.8001, 7.5016 },
+					},
+					trackL = {
+						center = { -2.2618, 0.471, -0.0219 },
+						mesh = "rbxassetid://83630102902789",
+						size = { 0.7843, 1.0333, 6.9264 },
+					},
+					trackR = {
+						center = { 2.2488, 0.5297, 0.027 },
+						mesh = "rbxassetid://100597201415733",
+						size = { 0.8633, 1.0645, 6.9751 },
 					},
 					turret = {
-						center = { 0.2202, 2.3187, 0.0633 },
-						mesh = "rbxassetid://134686560383268",
-						size = { 3.8504, 1.411, 3.4886 },
+						center = { 0.2489, 2.3521, 0.0464 },
+						mesh = "rbxassetid://82666580027779",
+						size = { 3.8484, 1.369, 3.3291 },
 					},
 				},
 				status = "approved",
@@ -1570,6 +1885,32 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_hornet = {
+			anim = {
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { -0.65, 4.3, -0.2 },
@@ -1580,7 +1921,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.55, -3.55 },
 					channel = "head",
-					mesh = "rbxassetid://117212246141575",
+					mesh = "rbxassetid://83780256313506",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.7, 0.2, 0.08 },
@@ -1590,7 +1931,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.63, 0.1775 },
 					channel = "running",
-					mesh = "rbxassetid://114793401524553",
+					mesh = "rbxassetid://83035431111500",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.89, 1.36, 6.445 },
@@ -1600,7 +1941,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0.35, 4.0556, 0 },
 					channel = "weapon",
-					mesh = "rbxassetid://124789812477401",
+					mesh = "rbxassetid://80784200589107",
 					name = "launcher_glow_weapon",
 					piece = "launcher",
 					size = { 2.46, 1.0487, 0.1 },
@@ -1610,32 +1951,74 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0326,
 			maps = {
-				ALB = "rbxassetid://115593098882080",
-				EMI = "rbxassetid://71069472178320",
-				MTL = "rbxassetid://128970836255542",
-				NOR = "rbxassetid://106824107313309",
-				RGH = "rbxassetid://119477238416882",
+				ALB = "rbxassetid://97051011530262",
+				EMI = "rbxassetid://93900275796241",
+				MTL = "rbxassetid://87073966694172",
+				NOR = "rbxassetid://126708855961007",
+				RGH = "rbxassetid://130281705325248",
 			},
-			model = "rbxassetid://102397516141077",
+			model = "rbxassetid://93879159946466",
 			pieces = {
 				base = {
-					center = { 0, 2.1, 0.1196 },
-					mesh = "rbxassetid://115775535398177",
-					size = { 5.68, 4.2, 7.6729 },
+					center = { 0, 2.5665, 0.0366 },
+					mesh = "rbxassetid://76907075827723",
+					size = { 5, 3.267, 7.5069 },
 				},
 				launcher = {
 					center = { 0.565, 4.0725, 1.45 },
-					mesh = "rbxassetid://117759264729615",
+					mesh = "rbxassetid://86041161846611",
 					parent = "turret",
 					pivot = { 0.2, 4, 1.6 },
 					size = { 2.87, 1.345, 3.5 },
 				},
 				turret = {
 					center = { 0.2, 3.1, 1.6 },
-					mesh = "rbxassetid://135949750975317",
+					mesh = "rbxassetid://100080418669973",
 					parent = "base",
 					pivot = { 0.2, 2.6, 1.6 },
 					size = { 1.2, 1, 1.2 },
+				},
+				wheelL1 = {
+					center = { -2.4, 0.9, -2.3 },
+					mesh = "rbxassetid://90761585522412",
+					parent = "base",
+					pivot = { -2.4, 0.9, -2.3 },
+					size = { 0.88, 1.8, 1.712 },
+				},
+				wheelL2 = {
+					center = { -2.4, 0.9, 1.3 },
+					mesh = "rbxassetid://99974897844425",
+					parent = "base",
+					pivot = { -2.4, 0.9, 1.3 },
+					size = { 0.88, 1.8, 1.712 },
+				},
+				wheelL3 = {
+					center = { -2.4, 0.9, 3.1 },
+					mesh = "rbxassetid://131387747400995",
+					parent = "base",
+					pivot = { -2.4, 0.9, 3.1 },
+					size = { 0.88, 1.8, 1.712 },
+				},
+				wheelR1 = {
+					center = { 2.4, 0.9, -2.3 },
+					mesh = "rbxassetid://135886582550959",
+					parent = "base",
+					pivot = { 2.4, 0.9, -2.3 },
+					size = { 0.88, 1.8, 1.712 },
+				},
+				wheelR2 = {
+					center = { 2.4, 0.9, 1.3 },
+					mesh = "rbxassetid://133027011311126",
+					parent = "base",
+					pivot = { 2.4, 0.9, 1.3 },
+					size = { 0.88, 1.8, 1.712 },
+				},
+				wheelR3 = {
+					center = { 2.4, 0.9, 3.1 },
+					mesh = "rbxassetid://100522201274476",
+					parent = "base",
+					pivot = { 2.4, 0.9, 3.1 },
+					size = { 0.88, 1.8, 1.712 },
 				},
 			},
 			status = "approved",
@@ -1643,31 +2026,75 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"base",
 				"launcher",
 				"turret",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1128,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://97633958280871",
-					MTL = "rbxassetid://137243688409643",
-					NOR = "rbxassetid://119719244501049",
-					RGH = "rbxassetid://100965399853779",
+					ALB = "rbxassetid://111542473608775",
+					MTL = "rbxassetid://92314011668727",
+					NOR = "rbxassetid://115038098898129",
+					RGH = "rbxassetid://90063485493637",
 				},
-				model = "rbxassetid://130568500931700",
+				model = "rbxassetid://102673774986182",
 				pieces = {
 					base = {
-						center = { -0.0078, 2.0729, 0.1461 },
-						mesh = "rbxassetid://84796823026658",
-						size = { 5.8925, 4.279, 7.8106 },
+						center = { 0.0131, 2.5497, 0.0352 },
+						mesh = "rbxassetid://87694474570120",
+						size = { 4.9689, 3.3281, 7.5256 },
 					},
 					launcher = {
-						center = { 0.5809, 4.0884, 1.4627 },
-						mesh = "rbxassetid://96843567124621",
-						size = { 3.0622, 1.4654, 3.5549 },
+						center = { 0.5507, 4.076, 1.4335 },
+						mesh = "rbxassetid://127339175500732",
+						size = { 3.0466, 1.4537, 3.4837 },
 					},
 					turret = {
-						center = { 0.2484, 3.1307, 1.6072 },
-						mesh = "rbxassetid://95672807116073",
-						size = { 1.2708, 1.0275, 1.269 },
+						center = { 0.1857, 3.0866, 1.5736 },
+						mesh = "rbxassetid://136065069090995",
+						size = { 1.1965, 1.0105, 1.1913 },
+					},
+					wheelL1 = {
+						center = { -2.3752, 0.8931, -2.2987 },
+						mesh = "rbxassetid://101883433983985",
+						size = { 0.948, 1.7872, 1.7842 },
+					},
+					wheelL2 = {
+						center = { -2.3653, 0.9265, 1.3022 },
+						mesh = "rbxassetid://139446194450144",
+						size = { 0.9233, 1.8441, 1.7141 },
+					},
+					wheelL3 = {
+						center = { -2.3972, 0.9301, 3.1099 },
+						mesh = "rbxassetid://134495246370897",
+						size = { 1.0568, 1.8667, 1.8503 },
+					},
+					wheelR1 = {
+						center = { 2.4031, 0.868, -2.299 },
+						mesh = "rbxassetid://112230868258286",
+						size = { 1.0236, 1.8286, 1.8105 },
+					},
+					wheelR2 = {
+						center = { 2.4203, 0.861, 1.3224 },
+						mesh = "rbxassetid://102738420994954",
+						size = { 0.9036, 1.8067, 1.7546 },
+					},
+					wheelR3 = {
+						center = { 2.3779, 0.9012, 3.1052 },
+						mesh = "rbxassetid://74354124413687",
+						size = { 0.9645, 1.855, 1.782 },
 					},
 				},
 				status = "approved",
@@ -1675,6 +2102,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_hydra = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 4.3, -1.8 },
@@ -1685,7 +2122,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.75, -3.85 },
 					channel = "head",
-					mesh = "rbxassetid://101696448060233",
+					mesh = "rbxassetid://105656351136424",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.8, 0.2, 0.1 },
@@ -1695,7 +2132,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.1, -0.075 },
 					channel = "running",
-					mesh = "rbxassetid://115069871658404",
+					mesh = "rbxassetid://105836931494084",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 5.04, 1.62, 7.87 },
@@ -1705,7 +2142,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 3.5598, 0.95 },
 					channel = "running",
-					mesh = "rbxassetid://114801779735580",
+					mesh = "rbxassetid://95931058986186",
 					name = "launcher_glow_running",
 					piece = "launcher",
 					size = { 3.784, 2.2772, 3.6242 },
@@ -1715,7 +2152,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.4125, -1.1269 },
 					channel = "weapon",
-					mesh = "rbxassetid://93057756597467",
+					mesh = "rbxassetid://101437760870043",
 					name = "launcher_glow_weapon",
 					piece = "launcher",
 					size = { 2.66, 0.8464, 0.506 },
@@ -1725,7 +2162,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.62, 1.2 },
 					channel = "running",
-					mesh = "rbxassetid://97027966291848",
+					mesh = "rbxassetid://139859043690530",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 3.04, 0.14, 3.04 },
@@ -1735,29 +2172,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0512,
 			maps = {
-				ALB = "rbxassetid://113983591618025",
-				EMI = "rbxassetid://139033054282529",
-				MTL = "rbxassetid://100150674392132",
-				NOR = "rbxassetid://108288710210633",
-				RGH = "rbxassetid://139071434073871",
+				ALB = "rbxassetid://106033624426437",
+				EMI = "rbxassetid://116206571496136",
+				MTL = "rbxassetid://118668943811732",
+				NOR = "rbxassetid://131070647633257",
+				RGH = "rbxassetid://75786387160035",
 			},
-			model = "rbxassetid://127052729070774",
+			model = "rbxassetid://81244112200673",
 			pieces = {
 				base = {
-					center = { 0, 1.55, -0.1 },
-					mesh = "rbxassetid://123338705414701",
-					size = { 4.98, 3.1, 7.8 },
+					center = { 0, 1.775, -0.1 },
+					mesh = "rbxassetid://82132931911015",
+					size = { 4.98, 2.65, 7.8 },
 				},
 				launcher = {
 					center = { 0, 3.3, 0.8 },
-					mesh = "rbxassetid://123859890929218",
+					mesh = "rbxassetid://106234594084260",
 					parent = "turret",
 					pivot = { 0, 2.8, 3 },
 					size = { 3.72, 3.3566, 4.5938 },
 				},
+				trackL = {
+					center = { -2, 0.5, 0.0011 },
+					mesh = "rbxassetid://92822521646360",
+					parent = "base",
+					pivot = { -2, 0.46, 0 },
+					size = { 0.8, 1, 7.5978 },
+				},
+				trackR = {
+					center = { 2, 0.5, 0.0011 },
+					mesh = "rbxassetid://126017568978452",
+					parent = "base",
+					pivot = { 2, 0.46, 0 },
+					size = { 0.8, 1, 7.5978 },
+				},
 				turret = {
 					center = { 0, 2.75, 1.39 },
-					mesh = "rbxassetid://135809970498004",
+					mesh = "rbxassetid://103678146711875",
 					parent = "base",
 					pivot = { 0, 2.5, 1.2 },
 					size = { 3.04, 0.9, 3.42 },
@@ -1767,11 +2218,29 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"base",
 				"launcher",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 2100,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		chs_inferno = {
+			anim = {
+				shellL = {
+					axis = { 0, 0, -1 },
+					motion = "open",
+					range = 90,
+				},
+				shellR = {
+					axis = { 0, 0, 1 },
+					motion = "open",
+					range = 90,
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 9.6, -5.5 },
@@ -1923,6 +2392,24 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 3088,
 		},
 		chs_jackal = {
+			anim = {
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0.9, 2.5, -2.35 },
@@ -1933,7 +2420,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.19, -1.625 },
 					channel = "head",
-					mesh = "rbxassetid://115191279282464",
+					mesh = "rbxassetid://78384948755190",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.05, 1.88, 2.05 },
@@ -1943,7 +2430,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -0.57, 2.525, 0.5936 },
 					channel = "running",
-					mesh = "rbxassetid://119786313644410",
+					mesh = "rbxassetid://91176752754742",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 2.04, 1.55, 4.5029 },
@@ -1953,7 +2440,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0.9, 2.5, -2.2 },
 					channel = "weapon",
-					mesh = "rbxassetid://73285988159615",
+					mesh = "rbxassetid://106865914304203",
 					name = "turret_glow_weapon",
 					piece = "turret",
 					size = { 0.24, 0.24, 0.1 },
@@ -1963,51 +2450,109 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0374,
 			maps = {
-				ALB = "rbxassetid://98241612725650",
-				EMI = "rbxassetid://87971631501522",
-				MTL = "rbxassetid://124463801880946",
-				NOR = "rbxassetid://108700200823869",
-				RGH = "rbxassetid://122509045003956",
+				ALB = "rbxassetid://125612878248600",
+				EMI = "rbxassetid://81271918034560",
+				MTL = "rbxassetid://130655110111590",
+				NOR = "rbxassetid://77587197478977",
+				RGH = "rbxassetid://83252801519125",
 			},
-			model = "rbxassetid://77120117158123",
+			model = "rbxassetid://86908572350255",
 			pieces = {
 				base = {
-					center = { 0, 1.625, -0.05 },
-					mesh = "rbxassetid://73975646003893",
-					size = { 5.18, 3.25, 5.9 },
+					center = { 0, 1.9875, -0.05 },
+					mesh = "rbxassetid://84862392750883",
+					size = { 4.2, 2.525, 5.9 },
 				},
 				turret = {
 					center = { 0.9, 2.45, -0.7135 },
-					mesh = "rbxassetid://115355600454765",
+					mesh = "rbxassetid://105668925404479",
 					parent = "base",
 					pivot = { 0.9, 1.8, 0.4 },
 					size = { 1.3, 1.35, 3.2731 },
+				},
+				wheelL1 = {
+					center = { -2.05, 0.65, -1.9 },
+					mesh = "rbxassetid://140683198052986",
+					parent = "base",
+					pivot = { -2.05, 0.65, -1.9 },
+					size = { 0.68, 1.3, 1.2364 },
+				},
+				wheelL2 = {
+					center = { -2.15, 0.9, 1.8 },
+					mesh = "rbxassetid://136265713709130",
+					parent = "base",
+					pivot = { -2.15, 0.9, 1.8 },
+					size = { 0.88, 1.8, 1.712 },
+				},
+				wheelR1 = {
+					center = { 2.05, 0.65, -1.9 },
+					mesh = "rbxassetid://79192385658937",
+					parent = "base",
+					pivot = { 2.05, 0.65, -1.9 },
+					size = { 0.68, 1.3, 1.2364 },
+				},
+				wheelR2 = {
+					center = { 2.15, 0.9, 1.8 },
+					mesh = "rbxassetid://128991982539524",
+					parent = "base",
+					pivot = { 2.15, 0.9, 1.8 },
+					size = { 0.88, 1.8, 1.712 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"turret",
+				"wheelL1",
+				"wheelL2",
+				"wheelR1",
+				"wheelR2",
 			},
 			triangles = 912,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelR1",
+				"wheelR2",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://103044877521461",
-					MTL = "rbxassetid://118403078705165",
-					NOR = "rbxassetid://80600735917196",
-					RGH = "rbxassetid://93921038430664",
+					ALB = "rbxassetid://103916098966302",
+					MTL = "rbxassetid://125400191447562",
+					NOR = "rbxassetid://92888417199900",
+					RGH = "rbxassetid://96891444464649",
 				},
-				model = "rbxassetid://81811433137706",
+				model = "rbxassetid://132982970248996",
 				pieces = {
 					base = {
-						center = { 0.0338, 1.6324, -0.0443 },
-						mesh = "rbxassetid://105508380749136",
-						size = { 5.2125, 3.3134, 5.9369 },
+						center = { -0.007, 2.0065, -0.0753 },
+						mesh = "rbxassetid://75007988745909",
+						size = { 4.2399, 2.6029, 5.9561 },
 					},
 					turret = {
-						center = { 0.8411, 2.4891, -0.7308 },
-						mesh = "rbxassetid://77255006143763",
-						size = { 1.3916, 1.4324, 3.2409 },
+						center = { 0.8715, 2.4855, -0.7168 },
+						mesh = "rbxassetid://74548592873810",
+						size = { 1.3582, 1.3932, 3.2857 },
+					},
+					wheelL1 = {
+						center = { -2.0934, 0.6773, -1.8896 },
+						mesh = "rbxassetid://94112853378637",
+						size = { 0.648, 1.3529, 1.2422 },
+					},
+					wheelL2 = {
+						center = { -2.1768, 0.8987, 1.7533 },
+						mesh = "rbxassetid://106959032902742",
+						size = { 0.8867, 1.7951, 1.7886 },
+					},
+					wheelR1 = {
+						center = { 2.0548, 0.6192, -1.9295 },
+						mesh = "rbxassetid://119099778086249",
+						size = { 0.7669, 1.2877, 1.2627 },
+					},
+					wheelR2 = {
+						center = { 2.1488, 0.9106, 1.7899 },
+						mesh = "rbxassetid://131014032021291",
+						size = { 0.9371, 1.8095, 1.7856 },
 					},
 				},
 				status = "approved",
@@ -2015,6 +2560,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_juggernaut = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 2.3, 4.6, -5.2 },
@@ -2025,7 +2580,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -2.82, 4.6, -0.6 },
 					channel = "running",
-					mesh = "rbxassetid://109380910494970",
+					mesh = "rbxassetid://120844694970766",
 					name = "armL_glow_running",
 					piece = "armL",
 					size = { 0.04, 0.2, 2.2 },
@@ -2035,7 +2590,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -2.3, 4.6, -4.2 },
 					channel = "weapon",
-					mesh = "rbxassetid://105295960678557",
+					mesh = "rbxassetid://139259505436777",
 					name = "armL_glow_weapon",
 					piece = "armL",
 					size = { 0.72, 0.72, 0.1 },
@@ -2045,7 +2600,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 2.82, 4.6, -0.6 },
 					channel = "running",
-					mesh = "rbxassetid://138687794088102",
+					mesh = "rbxassetid://112788200830523",
 					name = "armR_glow_running",
 					piece = "armR",
 					size = { 0.04, 0.2, 2.2 },
@@ -2055,7 +2610,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 2.3, 4.6, -4.2 },
 					channel = "weapon",
-					mesh = "rbxassetid://140293176130570",
+					mesh = "rbxassetid://70436073290802",
 					name = "armR_glow_weapon",
 					piece = "armR",
 					size = { 0.72, 0.72, 0.1 },
@@ -2065,7 +2620,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.25, -4.25 },
 					channel = "head",
-					mesh = "rbxassetid://77411540574050",
+					mesh = "rbxassetid://104067457910288",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5.2, 0.2, 0.1 },
@@ -2075,7 +2630,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.225, -0.075 },
 					channel = "running",
-					mesh = "rbxassetid://92396899889296",
+					mesh = "rbxassetid://76826621455100",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.44, 0.87, 8.67 },
@@ -2085,7 +2640,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 5.17, 0.2725 },
 					channel = "running",
-					mesh = "rbxassetid://124392661287688",
+					mesh = "rbxassetid://115703380289263",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 3.48, 3.56, 2.855 },
@@ -2095,36 +2650,50 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0496,
 			maps = {
-				ALB = "rbxassetid://87982680658310",
-				EMI = "rbxassetid://104842864265047",
-				MTL = "rbxassetid://72914391888578",
-				NOR = "rbxassetid://112329290586756",
-				RGH = "rbxassetid://111422990287492",
+				ALB = "rbxassetid://121805878728842",
+				EMI = "rbxassetid://139821381842272",
+				MTL = "rbxassetid://107738590716746",
+				NOR = "rbxassetid://79850107131082",
+				RGH = "rbxassetid://96588588716711",
 			},
-			model = "rbxassetid://114402565517622",
+			model = "rbxassetid://98229801831237",
 			pieces = {
 				armL = {
 					center = { -2.3, 4.6225, -2.1 },
-					mesh = "rbxassetid://133403698041044",
+					mesh = "rbxassetid://125958134940904",
 					parent = "turret",
 					pivot = { -2.3, 4.6, 0.4 },
 					size = { 1, 1.145, 5.6 },
 				},
 				armR = {
 					center = { 2.3, 4.6225, -2.1 },
-					mesh = "rbxassetid://73408287705270",
+					mesh = "rbxassetid://79025790211394",
 					parent = "turret",
 					pivot = { 2.3, 4.6, 0.4 },
 					size = { 1, 1.145, 5.6 },
 				},
 				base = {
-					center = { 0, 1.3225, -0.1 },
-					mesh = "rbxassetid://135137819162120",
-					size = { 6.38, 2.645, 8.6 },
+					center = { 0, 1.5475, -0.1 },
+					mesh = "rbxassetid://111556404150487",
+					size = { 6.38, 2.195, 8.6 },
+				},
+				trackL = {
+					center = { -2.7, 0.5, 0.0011 },
+					mesh = "rbxassetid://110041737626201",
+					parent = "base",
+					pivot = { -2.7, 0.46, 0 },
+					size = { 0.8, 1, 8.3978 },
+				},
+				trackR = {
+					center = { 2.7, 0.5, 0.0011 },
+					mesh = "rbxassetid://90406320327921",
+					parent = "base",
+					pivot = { 2.7, 0.46, 0 },
+					size = { 0.8, 1, 8.3978 },
 				},
 				turret = {
 					center = { 0, 4.85, 0.5515 },
-					mesh = "rbxassetid://116021011093180",
+					mesh = "rbxassetid://119491082504258",
 					parent = "base",
 					pivot = { 0, 3, 0.3 },
 					size = { 4.1, 3.9, 3.297 },
@@ -2135,9 +2704,15 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"armL",
 				"armR",
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 1844,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		chs_lamprey = {
 			attachments = {
@@ -2219,6 +2794,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 540,
 		},
 		chs_locust = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.2, -3.5 },
@@ -2229,7 +2814,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.2, -3.05 },
 					channel = "weapon",
-					mesh = "rbxassetid://74685286669180",
+					mesh = "rbxassetid://103285839629803",
 					name = "barrel_glow_weapon",
 					piece = "barrel",
 					size = { 0.3, 0.3, 0.08 },
@@ -2239,7 +2824,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.45, -2.65 },
 					channel = "head",
-					mesh = "rbxassetid://73945983359708",
+					mesh = "rbxassetid://83566300200295",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 2.6, 0.2, 0.1 },
@@ -2249,7 +2834,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.425, -0.075 },
 					channel = "running",
-					mesh = "rbxassetid://77777376863333",
+					mesh = "rbxassetid://120788706245678",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.84, 0.87, 5.47 },
@@ -2259,7 +2844,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.48, 0.68 },
 					channel = "running",
-					mesh = "rbxassetid://103290620177588",
+					mesh = "rbxassetid://79870559931486",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 2.06, 0.72, 1.64 },
@@ -2269,29 +2854,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0588,
 			maps = {
-				ALB = "rbxassetid://111040701359063",
-				EMI = "rbxassetid://112374665605872",
-				MTL = "rbxassetid://87105131495867",
-				NOR = "rbxassetid://89146506765099",
-				RGH = "rbxassetid://74253416151763",
+				ALB = "rbxassetid://128344872561736",
+				EMI = "rbxassetid://92485742256370",
+				MTL = "rbxassetid://121136613678173",
+				NOR = "rbxassetid://117526712443931",
+				RGH = "rbxassetid://121865435337415",
 			},
-			model = "rbxassetid://76389120246003",
+			model = "rbxassetid://74471453354970",
 			pieces = {
 				barrel = {
 					center = { 0, 2.2, -1.85 },
-					mesh = "rbxassetid://123737486579941",
+					mesh = "rbxassetid://81295945471933",
 					parent = "turret",
 					pivot = { 0, 2.2, -0.3 },
 					size = { 0.6, 0.5, 3.2 },
 				},
 				base = {
-					center = { 0, 0.9225, -0.1 },
-					mesh = "rbxassetid://126448789172564",
-					size = { 3.78, 1.845, 5.4 },
+					center = { 0, 1.1475, -0.1 },
+					mesh = "rbxassetid://92331294387328",
+					size = { 3.78, 1.395, 5.4 },
+				},
+				trackL = {
+					center = { -1.5, 0.5, 0.0011 },
+					mesh = "rbxassetid://116550226987055",
+					parent = "base",
+					pivot = { -1.5, 0.46, 0 },
+					size = { 0.6, 1, 5.1978 },
+				},
+				trackR = {
+					center = { 1.5, 0.5, 0.0011 },
+					mesh = "rbxassetid://104109743384915",
+					parent = "base",
+					pivot = { 1.5, 0.46, 0 },
+					size = { 0.6, 1, 5.1978 },
 				},
 				turret = {
 					center = { 0, 2.35, 0.675 },
-					mesh = "rbxassetid://115879746259598",
+					mesh = "rbxassetid://101033363393359",
 					parent = "base",
 					pivot = { 0, 1.8, 0.7 },
 					size = { 1.9882, 1.1, 2.1372 },
@@ -2301,11 +2900,27 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"barrel",
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 1264,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		chs_minotaur = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.8, -5.95 },
@@ -2316,7 +2931,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.8, -5.1 },
 					channel = "weapon",
-					mesh = "rbxassetid://98544262781414",
+					mesh = "rbxassetid://95578448638654",
 					name = "barrel_glow_weapon",
 					piece = "barrel",
 					size = { 1.56, 1.5208, 0.14 },
@@ -2326,7 +2941,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.5, -6.05 },
 					channel = "head",
-					mesh = "rbxassetid://124050366543297",
+					mesh = "rbxassetid://103499102817290",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 6.8, 0.3, 0.12 },
@@ -2336,7 +2951,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.875, 0.9875 },
 					channel = "running",
-					mesh = "rbxassetid://94857268594146",
+					mesh = "rbxassetid://131815692253294",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 11.19, 0.95, 8.975 },
@@ -2346,7 +2961,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.2742, -7.7244 },
 					channel = "running",
-					mesh = "rbxassetid://121250714407392",
+					mesh = "rbxassetid://129708069490760",
 					name = "ram_glow_running",
 					piece = "ram",
 					size = { 9, 0.1619, 0.1038 },
@@ -2356,7 +2971,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.928, -1.1098 },
 					channel = "running",
-					mesh = "rbxassetid://90928857708242",
+					mesh = "rbxassetid://131364021879328",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 5.09, 0.4161, 4.8195 },
@@ -2366,36 +2981,50 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0509,
 			maps = {
-				ALB = "rbxassetid://117794370815838",
-				EMI = "rbxassetid://81551073846648",
-				MTL = "rbxassetid://87583348873209",
-				NOR = "rbxassetid://123463014163030",
-				RGH = "rbxassetid://73818240114993",
+				ALB = "rbxassetid://72760161927879",
+				EMI = "rbxassetid://135752995888875",
+				MTL = "rbxassetid://100090132026256",
+				NOR = "rbxassetid://101554175151243",
+				RGH = "rbxassetid://98798450112721",
 			},
-			model = "rbxassetid://105862376219281",
+			model = "rbxassetid://79965338534904",
 			pieces = {
 				barrel = {
 					center = { 0, 2.8, -4.52 },
-					mesh = "rbxassetid://115574414702787",
+					mesh = "rbxassetid://96708047438915",
 					parent = "turret",
 					pivot = { 0, 2.8, -3.4 },
 					size = { 1.9, 1.8524, 2.84 },
 				},
 				base = {
-					center = { 0, 1.19, -0.0983 },
-					mesh = "rbxassetid://87378964194846",
-					size = { 11.1, 2.38, 12.5967 },
+					center = { 0, 1.44, -0.15 },
+					mesh = "rbxassetid://110271415948295",
+					size = { 11.1, 1.88, 12.1 },
 				},
 				ram = {
 					center = { 0, 1.3901, -6.503 },
-					mesh = "rbxassetid://93989568009842",
+					mesh = "rbxassetid://109604491567144",
 					parent = "base",
 					pivot = { 0, 1.5, -6.4 },
 					size = { 12, 2.6823, 3.4059 },
 				},
+				trackL = {
+					center = { -4.6, 0.7, -0.0983 },
+					mesh = "rbxassetid://79052456324791",
+					parent = "base",
+					pivot = { -4.6, 0.55, 0 },
+					size = { 1.6, 1.4, 12.5967 },
+				},
+				trackR = {
+					center = { 4.6, 0.7, -0.0983 },
+					mesh = "rbxassetid://114819985887595",
+					parent = "base",
+					pivot = { 4.6, 0.55, 0 },
+					size = { 1.6, 1.4, 12.5967 },
+				},
 				turret = {
 					center = { 0, 3, -1.1872 },
-					mesh = "rbxassetid://109929795466711",
+					mesh = "rbxassetid://89935824415696",
 					parent = "base",
 					pivot = { 0, 2.8, -0.6 },
 					size = { 5, 1.4, 5.1642 },
@@ -2404,11 +3033,24 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			status = "approved",
 			teamPieces = {
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 1932,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		chs_plague = {
+			anim = {
+				bay = {
+					axis = { 0, 0, 1 },
+					motion = "open",
+					range = 60,
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, -0.1, 0.2 },
@@ -2484,6 +3126,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 638,
 		},
 		chs_ragnarok = {
+			anim = {
+				hatch = {
+					axis = { 1, 0, 0 },
+					motion = "open",
+					range = 110,
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 3, 0 },
@@ -2542,6 +3191,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 1512,
 		},
 		chs_ravager = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.16, -7.4307 },
@@ -2552,7 +3211,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.16, -5.6498 },
 					channel = "weapon",
-					mesh = "rbxassetid://83826639478546",
+					mesh = "rbxassetid://122139720756866",
 					name = "barrel_glow_weapon",
 					piece = "barrel",
 					size = { 0.5812, 0.5176, 2.8551 },
@@ -2562,7 +3221,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.44, -3.4503 },
 					channel = "head",
-					mesh = "rbxassetid://105173258245862",
+					mesh = "rbxassetid://107476442224041",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 4.6294, 0.18, 0.0651 },
@@ -2572,7 +3231,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.548, 0.2046 },
 					channel = "running",
-					mesh = "rbxassetid://79209971675958",
+					mesh = "rbxassetid://124287640521404",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 5.4964, 0.45, 6.1752 },
@@ -2582,7 +3241,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.5065, 0.0047 },
 					channel = "running",
-					mesh = "rbxassetid://128886028934046",
+					mesh = "rbxassetid://84228880259760",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 3.1848, 0.981, 2.7807 },
@@ -2592,7 +3251,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -1.9207, 2.295, -0.1488 },
 					channel = "weapon",
-					mesh = "rbxassetid://77465172309320",
+					mesh = "rbxassetid://80166564221901",
 					name = "turret_glow_weapon",
 					piece = "turret",
 					size = { 0.2167, 0.36, 0.0466 },
@@ -2602,29 +3261,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0343,
 			maps = {
-				ALB = "rbxassetid://74185444271938",
-				EMI = "rbxassetid://139023088759275",
-				MTL = "rbxassetid://82848622143893",
-				NOR = "rbxassetid://76266691034010",
-				RGH = "rbxassetid://92244638886927",
+				ALB = "rbxassetid://121061232054444",
+				EMI = "rbxassetid://124552335980588",
+				MTL = "rbxassetid://133957361834805",
+				NOR = "rbxassetid://119377362821143",
+				RGH = "rbxassetid://119394686972821",
 			},
-			model = "rbxassetid://113095814485337",
+			model = "rbxassetid://83195630507216",
 			pieces = {
 				barrel = {
 					center = { 0, 2.16, -4.4128 },
-					mesh = "rbxassetid://85458781451240",
+					mesh = "rbxassetid://99992499321003",
 					parent = "turret",
 					pivot = { 0, 2.16, -1.395 },
 					size = { 0.8372, 0.558, 6.0357 },
 				},
 				base = {
-					center = { 0, 0.8949, 0.0349 },
-					mesh = "rbxassetid://92583675142106",
-					size = { 5.6736, 1.7898, 6.9518 },
+					center = { 0, 1.2099, 0.0349 },
+					mesh = "rbxassetid://82668379111096",
+					size = { 5.6736, 1.1598, 6.9518 },
+				},
+				trackL = {
+					center = { -2.2359, 0.495, 0.003 },
+					mesh = "rbxassetid://133583129032002",
+					parent = "base",
+					pivot = { -2.2359, 0.45, 0 },
+					size = { 0.7289, 0.99, 6.8751 },
+				},
+				trackR = {
+					center = { 2.2359, 0.495, 0.003 },
+					mesh = "rbxassetid://93718969964515",
+					parent = "base",
+					pivot = { 2.2359, 0.45, 0 },
+					size = { 0.7289, 0.99, 6.8751 },
 				},
 				turret = {
 					center = { -0.1521, 2.529, 0.4369 },
-					mesh = "rbxassetid://95479553189238",
+					mesh = "rbxassetid://129816552517701",
 					parent = "base",
 					pivot = { 0, 1.71, 0.1395 },
 					size = { 3.951, 1.638, 4.7528 },
@@ -2634,32 +3307,48 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"barrel",
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 3832,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://107381547124061",
-					MTL = "rbxassetid://131778683287115",
-					NOR = "rbxassetid://123854126781276",
-					RGH = "rbxassetid://81467654059288",
+					ALB = "rbxassetid://135209712886402",
+					MTL = "rbxassetid://115626226404028",
+					NOR = "rbxassetid://88578184256186",
+					RGH = "rbxassetid://121102317096457",
 				},
-				model = "rbxassetid://102589472579647",
+				model = "rbxassetid://126120543521995",
 				pieces = {
 					barrel = {
-						center = { -0.0227, 2.154, -4.4013 },
-						mesh = "rbxassetid://119663227914924",
-						size = { 0.8789, 0.6105, 6.0773 },
+						center = { -0.0055, 2.1467, -4.3967 },
+						mesh = "rbxassetid://78366219651279",
+						size = { 0.9263, 0.6325, 6.1363 },
 					},
 					base = {
-						center = { -0.0251, 0.9436, 0.0018 },
-						mesh = "rbxassetid://116473571581844",
-						size = { 5.9213, 1.8955, 7.0345 },
+						center = { 0.0138, 1.2491, 0.0741 },
+						mesh = "rbxassetid://103992762778528",
+						size = { 5.8005, 1.2529, 7.101 },
+					},
+					trackL = {
+						center = { -2.1843, 0.5343, 0.0307 },
+						mesh = "rbxassetid://93037611632343",
+						size = { 0.7506, 1.0706, 6.9119 },
+					},
+					trackR = {
+						center = { 2.2219, 0.4994, 0.0264 },
+						mesh = "rbxassetid://75174349295120",
+						size = { 0.7506, 0.9825, 7.0357 },
 					},
 					turret = {
-						center = { -0.2014, 2.5371, 0.4339 },
-						mesh = "rbxassetid://88452212400680",
-						size = { 3.9851, 1.6399, 4.7473 },
+						center = { -0.1651, 2.5071, 0.4827 },
+						mesh = "rbxassetid://132810421488490",
+						size = { 4.0436, 1.6833, 4.8025 },
 					},
 				},
 				status = "approved",
@@ -2667,6 +3356,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_scrapper = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { 1.182, 3.6, -1.814 },
@@ -2677,7 +3376,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.44, -3.4503 },
 					channel = "head",
-					mesh = "rbxassetid://108564358446657",
+					mesh = "rbxassetid://131087962208858",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 4.6294, 0.18, 0.0651 },
@@ -2687,7 +3386,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.4975, 0.2046 },
 					channel = "running",
-					mesh = "rbxassetid://100928551570467",
+					mesh = "rbxassetid://83807574112895",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 5.4964, 2.349, 6.1752 },
@@ -2697,7 +3396,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 1.182, 2.7675, -0.4642 },
 					channel = "power",
-					mesh = "rbxassetid://127787977891873",
+					mesh = "rbxassetid://95257558971074",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 1.7336, 2.151, 3.1232 },
@@ -2707,51 +3406,81 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0377,
 			maps = {
-				ALB = "rbxassetid://121006961901028",
-				EMI = "rbxassetid://111984690950268",
-				MTL = "rbxassetid://88833128933258",
-				NOR = "rbxassetid://104471490813505",
-				RGH = "rbxassetid://97957773213684",
+				ALB = "rbxassetid://90296711837621",
+				EMI = "rbxassetid://112878381893052",
+				MTL = "rbxassetid://139404351821265",
+				NOR = "rbxassetid://126713890222186",
+				RGH = "rbxassetid://134729249752928",
 			},
-			model = "rbxassetid://136928142631109",
+			model = "rbxassetid://121317422727812",
 			pieces = {
 				base = {
-					center = { 0, 1.8, -0.3128 },
-					mesh = "rbxassetid://115697721233037",
-					size = { 5.91, 3.6, 7.6471 },
+					center = { 0, 1.809, -0.3128 },
+					mesh = "rbxassetid://128991998962747",
+					size = { 5.91, 3.582, 7.6471 },
 				},
 				nano = {
 					center = { 1.182, 2.9925, -0.4289 },
-					mesh = "rbxassetid://121862138282209",
+					mesh = "rbxassetid://103191257959813",
 					parent = "base",
 					pivot = { 1.182, 1.71, 0.279 },
 					size = { 1.6745, 2.565, 3.2758 },
+				},
+				trackL = {
+					center = { -2.2359, 0.495, 0.003 },
+					mesh = "rbxassetid://125203281801134",
+					parent = "base",
+					pivot = { -2.2359, 0.45, 0 },
+					size = { 0.7289, 0.99, 6.8751 },
+				},
+				trackR = {
+					center = { 2.2359, 0.495, 0.003 },
+					mesh = "rbxassetid://123339485112856",
+					parent = "base",
+					pivot = { 2.2359, 0.45, 0 },
+					size = { 0.7289, 0.99, 6.8751 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"nano",
+				"trackL",
+				"trackR",
 			},
 			triangles = 2932,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://73665667496940",
-					MTL = "rbxassetid://113468719953394",
-					NOR = "rbxassetid://79417459803985",
-					RGH = "rbxassetid://129728097881271",
+					ALB = "rbxassetid://101011379406600",
+					MTL = "rbxassetid://115539919006893",
+					NOR = "rbxassetid://80574127520938",
+					RGH = "rbxassetid://84153864373230",
 				},
-				model = "rbxassetid://93164408160690",
+				model = "rbxassetid://106277156213028",
 				pieces = {
 					base = {
-						center = { -0.0298, 1.7521, -0.3092 },
-						mesh = "rbxassetid://107451640528854",
-						size = { 5.9199, 3.622, 7.7636 },
+						center = { -0.0213, 1.7937, -0.2907 },
+						mesh = "rbxassetid://71093348270736",
+						size = { 5.8414, 3.6153, 7.6886 },
 					},
 					nano = {
-						center = { 1.2077, 2.9848, -0.467 },
-						mesh = "rbxassetid://113641320482342",
-						size = { 1.7066, 2.7776, 3.3481 },
+						center = { 1.1591, 2.968, -0.4343 },
+						mesh = "rbxassetid://104936815688573",
+						size = { 1.7436, 2.6036, 3.356 },
+					},
+					trackL = {
+						center = { -2.2664, 0.4884, -0.0184 },
+						mesh = "rbxassetid://119937924321270",
+						size = { 0.8092, 1.0439, 6.8732 },
+					},
+					trackR = {
+						center = { 2.2391, 0.5229, 0.0208 },
+						mesh = "rbxassetid://115109319989316",
+						size = { 0.8129, 1.0351, 6.7718 },
 					},
 				},
 				status = "approved",
@@ -2759,6 +3488,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_shipyard = {
+			anim = {
+				jib = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+			},
 			attachments = {
 				buildpad = {
 					at = { 0, 0, 1 },
@@ -2771,55 +3506,116 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glow = {
 				{
-					center = { -0.6, 6.85, 8.8 },
+					center = { -0.6, 2.6, 13.17 },
 					channel = "power",
-					mesh = "rbxassetid://139067875042415",
+					mesh = "rbxassetid://106105376654191",
 					name = "base_glow_power",
 					piece = "base",
-					size = { 21.5, 12.7, 10.4 },
+					size = { 21.5, 4.2, 1.66 },
 					strength = 2.5,
 					tint = { 255, 125, 35 },
 				},
 				{
-					center = { 0, 8.21, -4.4 },
+					center = { 0, 1.96, -4.4 },
 					channel = "running",
-					mesh = "rbxassetid://76957287212179",
+					mesh = "rbxassetid://104167922444560",
 					name = "base_glow_running",
 					piece = "base",
-					size = { 33.6, 13.78, 27.8 },
+					size = { 33.6, 1.28, 27.8 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+				{
+					center = { 4, 13.17, 4 },
+					channel = "power",
+					mesh = "rbxassetid://82789103208920",
+					name = "jib_glow_power",
+					piece = "jib",
+					size = { 0.8, 0.06, 0.8 },
+					strength = 2.5,
+					tint = { 255, 125, 35 },
+				},
+				{
+					center = { 9, 14.8, 4 },
+					channel = "running",
+					mesh = "rbxassetid://105634974648876",
+					name = "jib_glow_running",
+					piece = "jib",
+					size = { 0.6, 0.6, 0.6 },
 					strength = 2,
 					tint = { 255, 150, 55 },
 				},
 			},
 			glowShare = 0.0223,
 			maps = {
-				ALB = "rbxassetid://124094294696528",
-				EMI = "rbxassetid://134192549971998",
-				MTL = "rbxassetid://101382947458399",
-				NOR = "rbxassetid://112450299239132",
-				RGH = "rbxassetid://134769955232542",
+				ALB = "rbxassetid://127877490531575",
+				EMI = "rbxassetid://125231634807731",
+				MTL = "rbxassetid://117575507833939",
+				NOR = "rbxassetid://104661689064776",
+				RGH = "rbxassetid://135255565772654",
 			},
-			model = "rbxassetid://139145564244203",
+			model = "rbxassetid://94655096243674",
 			pieces = {
 				base = {
-					center = { -0.4, 7.1775, 0.25 },
-					mesh = "rbxassetid://100678510186964",
-					size = { 38.8, 14.955, 37.5 },
+					center = { 0, 6.85, 0.25 },
+					mesh = "rbxassetid://114904917649281",
+					size = { 38, 14.3, 37.5 },
+				},
+				jib = {
+					center = { -5.4, 13.6775, 4 },
+					mesh = "rbxassetid://121492818123946",
+					parent = "base",
+					pivot = { -16.5, 14.2, 4 },
+					size = { 28.8, 1.955, 1.2 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
+				"jib",
 			},
 			triangles = 1276,
+			visualPieces = {
+				"jib",
+			},
 		},
 		chs_shroud = {
+			anim = {
+				array = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
 					center = { 0, 9.15, 2.2 },
 					channel = "power",
-					mesh = "rbxassetid://79609615480705",
+					mesh = "rbxassetid://109087551008757",
 					name = "array_glow_power",
 					piece = "array",
 					size = { 3.4, 1.78, 3.4 },
@@ -2829,7 +3625,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 11.7, 2.2 },
 					channel = "running",
-					mesh = "rbxassetid://124548346197719",
+					mesh = "rbxassetid://113605291673444",
 					name = "array_glow_running",
 					piece = "array",
 					size = { 0.5, 0.4, 0.5 },
@@ -2839,7 +3635,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.25, -3.93 },
 					channel = "head",
-					mesh = "rbxassetid://119152990852059",
+					mesh = "rbxassetid://130045647580716",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 2.75, 0.2, 0.08 },
@@ -2849,7 +3645,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.65, -1.31 },
 					channel = "power",
-					mesh = "rbxassetid://127510431513680",
+					mesh = "rbxassetid://131124999751147",
 					name = "base_glow_power",
 					piece = "base",
 					size = { 2.4, 0.3, 0.04 },
@@ -2859,7 +3655,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.29, 0.0475 },
 					channel = "running",
-					mesh = "rbxassetid://88063622909125",
+					mesh = "rbxassetid://135422693383212",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.49, 1.54, 7.225 },
@@ -2869,33 +3665,89 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0648,
 			maps = {
-				ALB = "rbxassetid://108299177094666",
-				EMI = "rbxassetid://109287761673397",
-				MTL = "rbxassetid://120772999230431",
-				NOR = "rbxassetid://111040930007238",
-				RGH = "rbxassetid://91125292843256",
+				ALB = "rbxassetid://108821890610723",
+				EMI = "rbxassetid://129006686621498",
+				MTL = "rbxassetid://77277359933688",
+				NOR = "rbxassetid://92945489545303",
+				RGH = "rbxassetid://83081396819684",
 			},
-			model = "rbxassetid://101514530400414",
+			model = "rbxassetid://130556587085692",
 			pieces = {
 				array = {
 					center = { 0, 7.1, 2.2 },
-					mesh = "rbxassetid://113930200730984",
+					mesh = "rbxassetid://119617394688085",
 					parent = "base",
 					pivot = { 0, 5.9, 2.2 },
 					size = { 3, 8.8, 3 },
 				},
 				base = {
-					center = { 0, 4.004, -0.15 },
-					mesh = "rbxassetid://82537566732070",
-					size = { 4.48, 8.008, 7.5 },
+					center = { 0, 4.404, -0.15 },
+					mesh = "rbxassetid://98282464792811",
+					size = { 4.1, 7.208, 7.5 },
+				},
+				wheelL1 = {
+					center = { -1.9, 0.75, -2.2 },
+					mesh = "rbxassetid://82818975117880",
+					parent = "base",
+					pivot = { -1.9, 0.75, -2.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -1.9, 0.75, 0.1 },
+					mesh = "rbxassetid://102500461950097",
+					parent = "base",
+					pivot = { -1.9, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -1.9, 0.75, 2.4 },
+					mesh = "rbxassetid://94088538096229",
+					parent = "base",
+					pivot = { -1.9, 0.75, 2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 1.9, 0.75, -2.2 },
+					mesh = "rbxassetid://85620561391798",
+					parent = "base",
+					pivot = { 1.9, 0.75, -2.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 1.9, 0.75, 0.1 },
+					mesh = "rbxassetid://99412954440351",
+					parent = "base",
+					pivot = { 1.9, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 1.9, 0.75, 2.4 },
+					mesh = "rbxassetid://123164059216679",
+					parent = "base",
+					pivot = { 1.9, 0.75, 2.4 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"array",
 				"base",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1168,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 		},
 		chs_solar = {
 			attachments = {},
@@ -3054,12 +3906,42 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_stalker = {
+			anim = {
+				dish = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
 					center = { 0, 1.25, -3.93 },
 					channel = "head",
-					mesh = "rbxassetid://116004252539624",
+					mesh = "rbxassetid://108791597955069",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 2.75, 0.2, 0.08 },
@@ -3069,7 +3951,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.29, 0.0475 },
 					channel = "running",
-					mesh = "rbxassetid://74163570233184",
+					mesh = "rbxassetid://107047625992045",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.49, 1.54, 7.225 },
@@ -3079,7 +3961,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -0.4, 6.3415, 2.0454 },
 					channel = "running",
-					mesh = "rbxassetid://117810179476756",
+					mesh = "rbxassetid://115902215958966",
 					name = "dish_glow_running",
 					piece = "dish",
 					size = { 2.52, 1.4927, 0.4179 },
@@ -3089,33 +3971,89 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0533,
 			maps = {
-				ALB = "rbxassetid://122900201332767",
-				EMI = "rbxassetid://129063661964266",
-				MTL = "rbxassetid://117173531954936",
-				NOR = "rbxassetid://136673706718357",
-				RGH = "rbxassetid://112112726624564",
+				ALB = "rbxassetid://109070621264002",
+				EMI = "rbxassetid://137746851795769",
+				MTL = "rbxassetid://71152104380844",
+				NOR = "rbxassetid://71116943969942",
+				RGH = "rbxassetid://114164132918956",
 			},
-			model = "rbxassetid://133057068439691",
+			model = "rbxassetid://135323840601922",
 			pieces = {
 				base = {
-					center = { 0, 2.763, -0.15 },
-					mesh = "rbxassetid://106639445088458",
-					size = { 4.48, 5.526, 7.5 },
+					center = { 0, 3.163, -0.15 },
+					mesh = "rbxassetid://103571977076878",
+					size = { 4.1, 4.726, 7.5 },
 				},
 				dish = {
 					center = { -0.15, 6.2756, 2.2173 },
-					mesh = "rbxassetid://132730374850822",
+					mesh = "rbxassetid://113284531125035",
 					parent = "base",
 					pivot = { -0.4, 5.6, 2.2 },
 					size = { 3.3, 1.8366, 0.7346 },
+				},
+				wheelL1 = {
+					center = { -1.9, 0.75, -2.2 },
+					mesh = "rbxassetid://134560799145825",
+					parent = "base",
+					pivot = { -1.9, 0.75, -2.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -1.9, 0.75, 0.1 },
+					mesh = "rbxassetid://98820406143198",
+					parent = "base",
+					pivot = { -1.9, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -1.9, 0.75, 2.4 },
+					mesh = "rbxassetid://130805827547175",
+					parent = "base",
+					pivot = { -1.9, 0.75, 2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 1.9, 0.75, -2.2 },
+					mesh = "rbxassetid://99451728761542",
+					parent = "base",
+					pivot = { 1.9, 0.75, -2.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 1.9, 0.75, 0.1 },
+					mesh = "rbxassetid://88413806582368",
+					parent = "base",
+					pivot = { 1.9, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 1.9, 0.75, 2.4 },
+					mesh = "rbxassetid://100454869191255",
+					parent = "base",
+					pivot = { 1.9, 0.75, 2.4 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"dish",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1044,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 		},
 		chs_thorn = {
 			attachments = {
@@ -3187,6 +4125,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 936,
 		},
 		chs_vehplant = {
+			anim = {
+				trolley = {
+					axis = { 0, 0, 1 },
+					motion = "slide",
+					range = 5,
+				},
+			},
 			attachments = {
 				buildpad = {
 					at = { 3.5, 0.55, 2 },
@@ -3203,60 +4148,86 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glow = {
 				{
-					center = { -0.225, 3.855, 2.805 },
+					center = { -0.225, 3.075, 2.805 },
 					channel = "power",
-					mesh = "rbxassetid://89381148755131",
+					mesh = "rbxassetid://108904777835831",
 					name = "base_glow_power",
 					piece = "base",
-					size = { 17.55, 5.41, 15.89 },
+					size = { 17.55, 3.85, 15.89 },
 					strength = 2.5,
 					tint = { 255, 125, 35 },
 				},
 				{
 					center = { 3.5, 4.185, 1.625 },
 					channel = "running",
-					mesh = "rbxassetid://93562213812617",
+					mesh = "rbxassetid://71814903865543",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 11.5, 7.33, 11.75 },
 					strength = 2,
 					tint = { 255, 150, 55 },
 				},
+				{
+					center = { 4, 6.5, -0.5 },
+					channel = "power",
+					mesh = "rbxassetid://105612973684639",
+					name = "trolley_glow_power",
+					piece = "trolley",
+					size = { 1.4, 0.12, 1.2 },
+					strength = 2.5,
+					tint = { 255, 125, 35 },
+				},
 			},
 			glowShare = 0.0203,
 			maps = {
-				ALB = "rbxassetid://107564019189591",
-				EMI = "rbxassetid://136290124284900",
-				MTL = "rbxassetid://76222817730226",
-				NOR = "rbxassetid://90603046268500",
-				RGH = "rbxassetid://131313548603226",
+				ALB = "rbxassetid://116357855253005",
+				EMI = "rbxassetid://124767426006284",
+				MTL = "rbxassetid://86367172595431",
+				NOR = "rbxassetid://90813006177907",
+				RGH = "rbxassetid://138849324573067",
 			},
-			model = "rbxassetid://79272744120009",
+			model = "rbxassetid://73460642607077",
 			pieces = {
 				base = {
 					center = { 0, 3.95, 0 },
-					mesh = "rbxassetid://77370853495254",
+					mesh = "rbxassetid://100522311745897",
 					size = { 22, 7.9, 22 },
+				},
+				trolley = {
+					center = { 4, 6, -0.5 },
+					mesh = "rbxassetid://127436708402442",
+					parent = "base",
+					pivot = { 4, 7, -0.5 },
+					size = { 1.6, 2.8, 1.4 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
+				"trolley",
 			},
 			triangles = 872,
+			visualPieces = {
+				"trolley",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://97426608694295",
-					MTL = "rbxassetid://128977350152881",
-					NOR = "rbxassetid://126550372668226",
-					RGH = "rbxassetid://76457519289687",
+					ALB = "rbxassetid://100607307434775",
+					MTL = "rbxassetid://99132895336653",
+					NOR = "rbxassetid://123587486187986",
+					RGH = "rbxassetid://85617656323223",
 				},
-				model = "rbxassetid://120454024990165",
+				model = "rbxassetid://79907636130440",
 				pieces = {
 					base = {
-						center = { 0.0488, 3.943, -0.0145 },
-						mesh = "rbxassetid://106798805211489",
-						size = { 22.0578, 8.1502, 22.1101 },
+						center = { -0.0549, 3.9927, -0.0151 },
+						mesh = "rbxassetid://130721608588741",
+						size = { 21.888, 8.002, 22.1813 },
+					},
+					trolley = {
+						center = { 3.8856, 5.5547, -0.565 },
+						mesh = "rbxassetid://114391136586199",
+						size = { 0.149, 2.0005, 0.6438 },
 					},
 				},
 				status = "approved",
@@ -3264,6 +4235,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_vulture = {
+			anim = {
+				rotor = {
+					axis = { 0, 1, 0 },
+					motion = "spin",
+				},
+				tailRotor = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { 0, -0.55, -1.7 },
@@ -3274,7 +4255,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 0.48, -1.6 },
 					channel = "head",
-					mesh = "rbxassetid://80953439588320",
+					mesh = "rbxassetid://132310561225141",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 0.5, 0.06, 0.3 },
@@ -3284,7 +4265,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.0421, 2.8 },
 					channel = "running",
-					mesh = "rbxassetid://99908491742506",
+					mesh = "rbxassetid://72178976525928",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 1.69, 1.0243, 7 },
@@ -3294,7 +4275,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, -0.3, -1.7 },
 					channel = "power",
-					mesh = "rbxassetid://133681994675522",
+					mesh = "rbxassetid://89484475743832",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 0.64, 0.5, 0.6086 },
@@ -3304,42 +4285,63 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0592,
 			maps = {
-				ALB = "rbxassetid://116244857218894",
-				EMI = "rbxassetid://111459716678875",
-				MTL = "rbxassetid://94479430155663",
-				NOR = "rbxassetid://128589925720350",
-				RGH = "rbxassetid://125795108023893",
+				ALB = "rbxassetid://105236784945960",
+				EMI = "rbxassetid://112104471613762",
+				MTL = "rbxassetid://77913559766028",
+				NOR = "rbxassetid://78327130741487",
+				RGH = "rbxassetid://117139450755465",
 			},
-			model = "rbxassetid://87123043117991",
+			model = "rbxassetid://73961675283834",
 			pieces = {
 				base = {
-					center = { 0, 1.625, 1.9 },
-					mesh = "rbxassetid://98499768429264",
-					size = { 1.85, 3.25, 9.2 },
+					center = { 0, 1.625, 1.825 },
+					mesh = "rbxassetid://123727069788148",
+					size = { 1.85, 3.25, 9.05 },
 				},
 				nano = {
 					center = { 0, 0.0045, -0.8359 },
-					mesh = "rbxassetid://120029119778769",
+					mesh = "rbxassetid://129173401263246",
 					parent = "base",
 					pivot = { 0, 0.25, -0.2 },
 					size = { 1.2, 0.7911, 2.413 },
 				},
 				rotor = {
 					center = { 0, 3.4, 0.2 },
-					mesh = "rbxassetid://70698612867886",
+					mesh = "rbxassetid://131295501473437",
 					parent = "base",
 					pivot = { 0, 3.4, 0.2 },
 					size = { 8.3292, 0.2, 3.4002 },
+				},
+				tailRotor = {
+					center = { 0.2, 2.1, 5.7 },
+					mesh = "rbxassetid://123429191196412",
+					parent = "base",
+					pivot = { 0.2, 2.1, 5.7 },
+					size = { 0.06, 1.6, 1.6 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"rotor",
+				"tailRotor",
 			},
 			triangles = 702,
+			visualPieces = {
+				"tailRotor",
+			},
 		},
 		chs_warlord = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { 0.8, 5.3, 4.3 },
@@ -3350,7 +4352,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.05, -3.86 },
 					channel = "head",
-					mesh = "rbxassetid://72902458259582",
+					mesh = "rbxassetid://105188434163105",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 4.56, 0.16, 0.04 },
@@ -3360,7 +4362,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 5.225, 0.5835 },
 					channel = "running",
-					mesh = "rbxassetid://107717944866213",
+					mesh = "rbxassetid://112541679245462",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.84, 7.15, 6.8895 },
@@ -3370,7 +4372,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0.8, 4.065, 3.0392 },
 					channel = "power",
-					mesh = "rbxassetid://105167294339166",
+					mesh = "rbxassetid://80517032129555",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 2.26, 3.23, 3.4817 },
@@ -3380,36 +4382,66 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0511,
 			maps = {
-				ALB = "rbxassetid://96467175827341",
-				EMI = "rbxassetid://95516047595076",
-				MTL = "rbxassetid://75419966648700",
-				NOR = "rbxassetid://91652384410505",
-				RGH = "rbxassetid://119855909601722",
+				ALB = "rbxassetid://71488780583199",
+				EMI = "rbxassetid://128818308652738",
+				MTL = "rbxassetid://72340702554762",
+				NOR = "rbxassetid://77513019813683",
+				RGH = "rbxassetid://127432223759457",
 			},
-			model = "rbxassetid://111874546178569",
+			model = "rbxassetid://92685267331231",
 			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
-					center = { 0, 4.25, -0.3704 },
-					mesh = "rbxassetid://108646012274922",
-					size = { 6.94, 8.5, 8.7592 },
+					center = { 0, 4.425, -0.3704 },
+					mesh = "rbxassetid://94376888388325",
+					size = { 6.76, 8.15, 8.7592 },
 				},
 				nano = {
 					center = { 0.8, 3.8588, 3.0544 },
-					mesh = "rbxassetid://85110895890907",
+					mesh = "rbxassetid://109771122164427",
 					parent = "base",
 					pivot = { 0.8, 2.45, 2.4 },
 					size = { 2.2, 2.8177, 3.4535 },
+				},
+				trackL = {
+					center = { -2.885, 0.8, 0 },
+					mesh = "rbxassetid://104476633924709",
+					parent = "base",
+					pivot = { -2.8, 0.8, 0 },
+					size = { 1.17, 1.6, 7.8 },
+				},
+				trackR = {
+					center = { 2.885, 0.8, 0 },
+					mesh = "rbxassetid://98888625432555",
+					parent = "base",
+					pivot = { 2.8, 0.8, 0 },
+					size = { 1.17, 1.6, 7.8 },
 				},
 			},
 			status = "review",
 			teamPieces = {
 				"base",
 				"nano",
+				"trackL",
+				"trackR",
 			},
 			triangles = 3214,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		chs_wasp = {
+			anim = {
+				rotor = {
+					axis = { 0, 1, 0 },
+					motion = "spin",
+				},
+				tailRotor = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 0.55, -1.4 },
@@ -3420,7 +4452,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 0.48, -1.6 },
 					channel = "head",
-					mesh = "rbxassetid://87847543344596",
+					mesh = "rbxassetid://80197373409946",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 0.5, 0.06, 0.3 },
@@ -3430,7 +4462,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.6971, 2.8 },
 					channel = "running",
-					mesh = "rbxassetid://106799907631565",
+					mesh = "rbxassetid://72225172707430",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.56, 1.7143, 7 },
@@ -3440,7 +4472,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 0.55, -1.32 },
 					channel = "weapon",
-					mesh = "rbxassetid://79696077172279",
+					mesh = "rbxassetid://124894253905033",
 					name = "pylon_glow_weapon",
 					piece = "pylon",
 					size = { 3.08, 0.48, 0.04 },
@@ -3450,48 +4482,81 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0503,
 			maps = {
-				ALB = "rbxassetid://132898705280701",
-				EMI = "rbxassetid://75110930155967",
-				MTL = "rbxassetid://91928775425333",
-				NOR = "rbxassetid://126016621442007",
-				RGH = "rbxassetid://130701926896512",
+				ALB = "rbxassetid://136963961573176",
+				EMI = "rbxassetid://87906400376826",
+				MTL = "rbxassetid://107141451017828",
+				NOR = "rbxassetid://71580938985353",
+				RGH = "rbxassetid://72625498690878",
 			},
-			model = "rbxassetid://83575803522837",
+			model = "rbxassetid://83329416087721",
 			pieces = {
 				base = {
-					center = { 0, 1.625, 1.9 },
-					mesh = "rbxassetid://122450716862377",
-					size = { 3.4, 3.25, 9.2 },
+					center = { 0, 1.625, 1.825 },
+					mesh = "rbxassetid://128213538299029",
+					size = { 3.4, 3.25, 9.05 },
 				},
 				pylon = {
 					center = { 0, 0.55, -0.5 },
-					mesh = "rbxassetid://88422953978558",
+					mesh = "rbxassetid://114289384221655",
 					parent = "base",
 					pivot = { 0, 0.6, -0.4 },
 					size = { 3.2, 0.6, 1.6 },
 				},
 				rotor = {
 					center = { 0, 3.4, 0.2 },
-					mesh = "rbxassetid://97746965138344",
+					mesh = "rbxassetid://134169091243836",
 					parent = "base",
 					pivot = { 0, 3.4, 0.2 },
 					size = { 8.3292, 0.2, 3.4002 },
+				},
+				tailRotor = {
+					center = { 0.2, 2.1, 5.7 },
+					mesh = "rbxassetid://126956666572803",
+					parent = "base",
+					pivot = { 0.2, 2.1, 5.7 },
+					size = { 0.06, 1.6, 1.6 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"rotor",
+				"tailRotor",
 			},
 			triangles = 742,
+			visualPieces = {
+				"tailRotor",
+			},
 		},
 		chs_watcher = {
+			anim = {
+				dish = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
 					center = { 0, 3.3, -3.32 },
 					channel = "running",
-					mesh = "rbxassetid://90364797376858",
+					mesh = "rbxassetid://77979582120976",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3, 0.22, 0.05 },
@@ -3501,7 +4566,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -1, 5.6719, 0.8973 },
 					channel = "running",
-					mesh = "rbxassetid://128134693776359",
+					mesh = "rbxassetid://126416502781915",
 					name = "dish_glow_running",
 					piece = "dish",
 					size = { 3.2, 2.9171, 2.0857 },
@@ -3511,51 +4576,109 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0877,
 			maps = {
-				ALB = "rbxassetid://76812391513114",
-				EMI = "rbxassetid://90229566359784",
-				MTL = "rbxassetid://132138877866233",
-				NOR = "rbxassetid://81329841319394",
-				RGH = "rbxassetid://127137657559505",
+				ALB = "rbxassetid://95803996109823",
+				EMI = "rbxassetid://103882710384104",
+				MTL = "rbxassetid://87684933005489",
+				NOR = "rbxassetid://122095474236964",
+				RGH = "rbxassetid://135260291683731",
 			},
-			model = "rbxassetid://100622791850437",
+			model = "rbxassetid://114004063332827",
 			pieces = {
 				base = {
-					center = { 0, 2.45, -0.0452 },
-					mesh = "rbxassetid://127187843142645",
-					size = { 5.83, 4.9, 7.6904 },
+					center = { 0, 2.8873, -0.0452 },
+					mesh = "rbxassetid://127119813853625",
+					size = { 5, 4.0255, 7.6904 },
 				},
 				dish = {
 					center = { -1, 5.6, 1.0618 },
-					mesh = "rbxassetid://107137332301484",
+					mesh = "rbxassetid://79636557634568",
 					parent = "base",
 					pivot = { -1, 4.4, 1.4 },
 					size = { 3.4184, 3.1996, 2.3675 },
+				},
+				wheelL1 = {
+					center = { -2.45, 0.9, -2.3 },
+					mesh = "rbxassetid://102931564752937",
+					parent = "base",
+					pivot = { -2.45, 0.9, -2.3 },
+					size = { 0.93, 1.8, 1.712 },
+				},
+				wheelL2 = {
+					center = { -2.45, 0.9, 2.3 },
+					mesh = "rbxassetid://95520647918067",
+					parent = "base",
+					pivot = { -2.45, 0.9, 2.3 },
+					size = { 0.93, 1.8, 1.712 },
+				},
+				wheelR1 = {
+					center = { 2.45, 0.9, -2.3 },
+					mesh = "rbxassetid://116817215110249",
+					parent = "base",
+					pivot = { 2.45, 0.9, -2.3 },
+					size = { 0.93, 1.8, 1.712 },
+				},
+				wheelR2 = {
+					center = { 2.45, 0.9, 2.3 },
+					mesh = "rbxassetid://91095216948093",
+					parent = "base",
+					pivot = { 2.45, 0.9, 2.3 },
+					size = { 0.93, 1.8, 1.712 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"dish",
+				"wheelL1",
+				"wheelL2",
+				"wheelR1",
+				"wheelR2",
 			},
 			triangles = 908,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelR1",
+				"wheelR2",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://89572492174096",
-					MTL = "rbxassetid://104052600092843",
-					NOR = "rbxassetid://137713370751546",
-					RGH = "rbxassetid://71839646555746",
+					ALB = "rbxassetid://125879598895106",
+					MTL = "rbxassetid://132953967256105",
+					NOR = "rbxassetid://84852461478168",
+					RGH = "rbxassetid://121891902156643",
 				},
-				model = "rbxassetid://101021283265742",
+				model = "rbxassetid://85355096884337",
 				pieces = {
 					base = {
-						center = { 0.0237, 2.4228, -0.0597 },
-						mesh = "rbxassetid://91585815309122",
-						size = { 5.9327, 4.9623, 7.7254 },
+						center = { -0.007, 2.8708, -0.0385 },
+						mesh = "rbxassetid://105796360611496",
+						size = { 5.045, 4.1028, 7.6758 },
 					},
 					dish = {
-						center = { -1.0197, 5.6302, 1.0712 },
-						mesh = "rbxassetid://81047278259187",
-						size = { 3.4933, 3.2196, 2.3698 },
+						center = { -1.0098, 5.5939, 1.039 },
+						mesh = "rbxassetid://78580900788352",
+						size = { 3.5208, 3.154, 2.3758 },
+					},
+					wheelL1 = {
+						center = { -2.4604, 0.9397, -2.2699 },
+						mesh = "rbxassetid://116937978341295",
+						size = { 1.0172, 1.8375, 1.7382 },
+					},
+					wheelL2 = {
+						center = { -2.4827, 0.8855, 2.2851 },
+						mesh = "rbxassetid://91405092974903",
+						size = { 0.9902, 1.8236, 1.7706 },
+					},
+					wheelR1 = {
+						center = { 2.4307, 0.8541, -2.3084 },
+						mesh = "rbxassetid://96683915168477",
+						size = { 1.0396, 1.8484, 1.8016 },
+					},
+					wheelR2 = {
+						center = { 2.4503, 0.9195, 2.325 },
+						mesh = "rbxassetid://92021884140083",
+						size = { 1.1004, 1.8628, 1.7582 },
 					},
 				},
 				status = "approved",
@@ -3563,6 +4686,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		chs_windmill = {
+			anim = {
+				rotor = {
+					axis = { 0, 0, 1 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
@@ -3676,6 +4805,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 528,
 		},
 		ord_absolution = {
+			anim = {
+				bay = {
+					axis = { 0, 0, 1 },
+					motion = "open",
+					range = 60,
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, -0.1, 0.2 },
@@ -3751,6 +4887,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 672,
 		},
 		ord_airfield = {
+			anim = {
+				radar = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+			},
 			attachments = {
 				buildpad = {
 					at = { -12, 0.55, -9 },
@@ -3773,7 +4915,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { -12, 3.05, 1.85 },
 					channel = "power",
-					mesh = "rbxassetid://140540612953795",
+					mesh = "rbxassetid://91959672263943",
 					name = "base_glow_power",
 					piece = "base",
 					size = { 9.74, 5.2, 0.14 },
@@ -3781,45 +4923,96 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					tint = { 130, 225, 255 },
 				},
 				{
-					center = { 0, 5.8157, 0 },
+					center = { 0, 3.9, 0 },
 					channel = "running",
-					mesh = "rbxassetid://119872970749978",
+					mesh = "rbxassetid://110189198931583",
 					name = "base_glow_running",
 					piece = "base",
-					size = { 38.2, 11.1713, 38.2 },
+					size = { 38.2, 7.34, 38.2 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+				{
+					center = { 13, 10.5616, 11.8308 },
+					channel = "running",
+					mesh = "rbxassetid://75108964210816",
+					name = "radar_glow_running",
+					piece = "radar",
+					size = { 2.78, 1.6795, 0.6275 },
 					strength = 2,
 					tint = { 90, 210, 255 },
 				},
 			},
 			glowShare = 0.0254,
 			maps = {
-				ALB = "rbxassetid://119644368576910",
-				EMI = "rbxassetid://112651370477642",
-				MTL = "rbxassetid://116943578427659",
-				NOR = "rbxassetid://73462741273172",
-				RGH = "rbxassetid://81884786176088",
+				ALB = "rbxassetid://76409281007881",
+				EMI = "rbxassetid://112502619621830",
+				MTL = "rbxassetid://126696914370766",
+				NOR = "rbxassetid://83165288640054",
+				RGH = "rbxassetid://118680930794481",
 			},
-			model = "rbxassetid://106433717007720",
+			model = "rbxassetid://129789184787286",
 			pieces = {
 				base = {
-					center = { 0, 5.7404, 0 },
-					mesh = "rbxassetid://111103221075828",
-					size = { 37.963, 11.4807, 37.963 },
+					center = { 0, 4.9, 0 },
+					mesh = "rbxassetid://90005629636584",
+					size = { 37.963, 9.8, 37.963 },
+				},
+				radar = {
+					center = { 13, 10.5, 12 },
+					mesh = "rbxassetid://72460699168449",
+					parent = "base",
+					pivot = { 13, 9.8, 12 },
+					size = { 3, 1.9614, 0.9454 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
+				"radar",
 			},
 			triangles = 1624,
+			visualPieces = {
+				"radar",
+			},
 		},
 		ord_arbiter = {
+			anim = {
+				dish = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
 					center = { 0, 1.25, -4.13 },
 					channel = "head",
-					mesh = "rbxassetid://103220728063108",
+					mesh = "rbxassetid://117910351963179",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.35, 0.2, 0.08 },
@@ -3829,7 +5022,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.21, 0.055 },
 					channel = "running",
-					mesh = "rbxassetid://118502199548556",
+					mesh = "rbxassetid://134727625954218",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 4.09, 1.38, 7.61 },
@@ -3839,7 +5032,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.8787, 1.9839 },
 					channel = "running",
-					mesh = "rbxassetid://110970755062418",
+					mesh = "rbxassetid://84556883551380",
 					name = "dish_glow_running",
 					piece = "dish",
 					size = { 3.9, 2.5252, 0.9354 },
@@ -3849,35 +5042,101 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0483,
 			maps = {
-				ALB = "rbxassetid://106470179853759",
-				EMI = "rbxassetid://75899029453666",
-				MTL = "rbxassetid://83806522728995",
-				NOR = "rbxassetid://79482912364672",
-				RGH = "rbxassetid://113986093957870",
+				ALB = "rbxassetid://94163971833060",
+				EMI = "rbxassetid://112629296993917",
+				MTL = "rbxassetid://85915708378979",
+				NOR = "rbxassetid://84717702707648",
+				RGH = "rbxassetid://129554636774966",
 			},
-			model = "rbxassetid://101832372878682",
+			model = "rbxassetid://123291096875495",
 			pieces = {
 				base = {
-					center = { 0, 1.7275, -0.15 },
-					mesh = "rbxassetid://81670671095395",
-					size = { 5.08, 3.455, 7.9 },
+					center = { 0, 2.1275, -0.15 },
+					mesh = "rbxassetid://127202697548656",
+					size = { 4.81, 2.655, 7.9 },
 				},
 				dish = {
 					center = { 0, 4.6322, 2.2 },
-					mesh = "rbxassetid://112894300285951",
+					mesh = "rbxassetid://116259456660589",
 					parent = "base",
 					pivot = { 0, 3, 2.2 },
 					size = { 4.2, 3.2643, 1.3746 },
+				},
+				wheelL1 = {
+					center = { -2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://70600323450188",
+					parent = "base",
+					pivot = { -2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -2.2, 0.75, 0.1 },
+					mesh = "rbxassetid://132982446144896",
+					parent = "base",
+					pivot = { -2.2, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://85809564225907",
+					parent = "base",
+					pivot = { -2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://115765115121048",
+					parent = "base",
+					pivot = { 2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 2.2, 0.75, 0.1 },
+					mesh = "rbxassetid://79163053698211",
+					parent = "base",
+					pivot = { 2.2, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://86185289957194",
+					parent = "base",
+					pivot = { 2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"dish",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1116,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 		},
 		ord_architect = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { -0.8, 5.4, -1.4 },
@@ -3892,7 +5151,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.55, -4.25 },
 					channel = "head",
-					mesh = "rbxassetid://83476415786595",
+					mesh = "rbxassetid://101197747773994",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5, 0.2, 0.1 },
@@ -3902,7 +5161,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.25, -0.075 },
 					channel = "running",
-					mesh = "rbxassetid://95002022189262",
+					mesh = "rbxassetid://130189048398627",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.56, 2.32, 8.67 },
@@ -3912,7 +5171,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 5.4, -1.4 },
 					channel = "power",
-					mesh = "rbxassetid://139559582846548",
+					mesh = "rbxassetid://126549903335744",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 2.5, 0.8, 0.9 },
@@ -3922,33 +5181,53 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0501,
 			maps = {
-				ALB = "rbxassetid://129342336026778",
-				EMI = "rbxassetid://88472888195998",
-				MTL = "rbxassetid://98683837282654",
-				NOR = "rbxassetid://138038729211202",
-				RGH = "rbxassetid://105200683374597",
+				ALB = "rbxassetid://128706553767002",
+				EMI = "rbxassetid://79619517686097",
+				MTL = "rbxassetid://94478998937926",
+				NOR = "rbxassetid://95770588120676",
+				RGH = "rbxassetid://138563154081621",
 			},
-			model = "rbxassetid://115399069423367",
+			model = "rbxassetid://73124160379075",
 			pieces = {
 				base = {
-					center = { 0, 1.6725, -0.3479 },
-					mesh = "rbxassetid://127502679488816",
-					size = { 6.6, 3.345, 9.0959 },
+					center = { 0, 1.8725, -0.3479 },
+					mesh = "rbxassetid://91145809608250",
+					size = { 6.6, 2.945, 9.0959 },
 				},
 				nano = {
 					center = { 0, 4.1, 0.865 },
-					mesh = "rbxassetid://113222270573488",
+					mesh = "rbxassetid://139034438303275",
 					parent = "base",
 					pivot = { 0, 2.3, 1.9 },
 					size = { 3, 3.6, 5.53 },
+				},
+				trackL = {
+					center = { -2.6, 0.5, 0.0011 },
+					mesh = "rbxassetid://90531863850941",
+					parent = "base",
+					pivot = { -2.6, 0.46, 0 },
+					size = { 0.8, 1, 8.3978 },
+				},
+				trackR = {
+					center = { 2.6, 0.5, 0.0011 },
+					mesh = "rbxassetid://86082073710501",
+					parent = "base",
+					pivot = { 2.6, 0.46, 0 },
+					size = { 0.8, 1, 8.3978 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"nano",
+				"trackL",
+				"trackR",
 			},
 			triangles = 1776,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		ord_barrier = {
 			attachments = {},
@@ -4079,6 +5358,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_citadel = {
+			anim = {
+				radar = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 5.9, -15.1 },
@@ -4448,6 +5733,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_guardian = {
+			anim = {
+				rotor = {
+					axis = { 0, 1, 0 },
+					motion = "spin",
+				},
+				tailRotor = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 0.55, -1.4 },
@@ -4458,7 +5753,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 0.56, -3.2 },
 					channel = "head",
-					mesh = "rbxassetid://80695456487280",
+					mesh = "rbxassetid://110643228690560",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 0.5, 0.06, 0.3 },
@@ -4468,7 +5763,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.53, 1.65 },
 					channel = "running",
-					mesh = "rbxassetid://130094915477367",
+					mesh = "rbxassetid://124528427519757",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.5, 1.38, 7.3 },
@@ -4478,7 +5773,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 0.45, -3.69 },
 					channel = "weapon",
-					mesh = "rbxassetid://121008344534907",
+					mesh = "rbxassetid://79480197116009",
 					name = "base_glow_weapon",
 					piece = "base",
 					size = { 0.3, 0.16, 0.04 },
@@ -4488,7 +5783,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 0.55, -1.35 },
 					channel = "weapon",
-					mesh = "rbxassetid://113121027963908",
+					mesh = "rbxassetid://129354048771926",
 					name = "pylon_glow_weapon",
 					piece = "pylon",
 					size = { 2.92, 0.304, 0.03 },
@@ -4498,42 +5793,79 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0502,
 			maps = {
-				ALB = "rbxassetid://85100153293670",
-				EMI = "rbxassetid://94466988144161",
-				MTL = "rbxassetid://92550492334048",
-				NOR = "rbxassetid://116429279782426",
-				RGH = "rbxassetid://102268287231471",
+				ALB = "rbxassetid://95315809380441",
+				EMI = "rbxassetid://140335983175398",
+				MTL = "rbxassetid://102814319270634",
+				NOR = "rbxassetid://117301211096317",
+				RGH = "rbxassetid://74293416556734",
 			},
-			model = "rbxassetid://96261421827136",
+			model = "rbxassetid://126542956095017",
 			pieces = {
 				base = {
-					center = { 0, 1.5025, 1.1304 },
-					mesh = "rbxassetid://77804031023812",
-					size = { 3.4, 2.995, 10.0608 },
+					center = { 0, 1.5025, 1.075 },
+					mesh = "rbxassetid://89203450317126",
+					size = { 3.4, 2.995, 9.95 },
 				},
 				pylon = {
 					center = { 0, 0.55, -0.52 },
-					mesh = "rbxassetid://109684731956491",
+					mesh = "rbxassetid://104489406739923",
 					parent = "base",
 					pivot = { 0, 0.6, -0.4 },
 					size = { 3.14, 0.5136, 1.64 },
 				},
 				rotor = {
 					center = { 0, 2.8, 0.2 },
-					mesh = "rbxassetid://70509004322467",
+					mesh = "rbxassetid://137215479437842",
 					parent = "base",
 					pivot = { 0, 2.8, 0.2 },
 					size = { 6.3782, 0.2, 6.3782 },
+				},
+				tailRotor = {
+					center = { 0.16, 2, 5.4 },
+					mesh = "rbxassetid://101792910388885",
+					parent = "base",
+					pivot = { 0.2, 2, 5.4 },
+					size = { 0.2, 1.6, 1.5216 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"rotor",
+				"tailRotor",
 			},
 			triangles = 1248,
+			visualPieces = {
+				"tailRotor",
+			},
 		},
 		ord_halo = {
+			anim = {
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { -1.25, 4, -0.35 },
@@ -4544,7 +5876,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.35, -4.18 },
 					channel = "head",
-					mesh = "rbxassetid://134187352325632",
+					mesh = "rbxassetid://136999353448651",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.4, 0.2, 0.08 },
@@ -4554,7 +5886,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.445, 0.2 },
 					channel = "running",
-					mesh = "rbxassetid://76445899947585",
+					mesh = "rbxassetid://80641827829269",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 4.8, 1.09, 6 },
@@ -4564,7 +5896,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4, 1.3 },
 					channel = "running",
-					mesh = "rbxassetid://136085074027724",
+					mesh = "rbxassetid://108340022857557",
 					name = "launcher_glow_running",
 					piece = "launcher",
 					size = { 3.68, 0.14, 2.6 },
@@ -4574,7 +5906,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.15, 0.32 },
 					channel = "weapon",
-					mesh = "rbxassetid://113834152667691",
+					mesh = "rbxassetid://85906008166643",
 					name = "launcher_glow_weapon",
 					piece = "launcher",
 					size = { 3.1, 0.46, 1.18 },
@@ -4584,32 +5916,74 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0366,
 			maps = {
-				ALB = "rbxassetid://81461843865660",
-				EMI = "rbxassetid://115581004616143",
-				MTL = "rbxassetid://113157767133887",
-				NOR = "rbxassetid://124508137951180",
-				RGH = "rbxassetid://89763421994727",
+				ALB = "rbxassetid://112157845661427",
+				EMI = "rbxassetid://101033795257049",
+				MTL = "rbxassetid://107620357991142",
+				NOR = "rbxassetid://72413011037212",
+				RGH = "rbxassetid://90842467680114",
 			},
-			model = "rbxassetid://111935419770836",
+			model = "rbxassetid://86744619903814",
 			pieces = {
 				base = {
-					center = { 0, 1.5225, -0.3 },
-					mesh = "rbxassetid://135998924794861",
-					size = { 5.08, 3.045, 7.8 },
+					center = { 0, 1.9225, -0.3 },
+					mesh = "rbxassetid://103888891884553",
+					size = { 4.79, 2.245, 7.8 },
 				},
 				launcher = {
 					center = { 0, 4.0225, 1.275 },
-					mesh = "rbxassetid://90018720057155",
+					mesh = "rbxassetid://92178722809026",
 					parent = "turret",
 					pivot = { 0, 4, 1.6 },
 					size = { 3.6, 1.245, 3.05 },
 				},
 				turret = {
 					center = { 0, 3.025, 1.6 },
-					mesh = "rbxassetid://78717270308610",
+					mesh = "rbxassetid://77806614545065",
 					parent = "base",
 					pivot = { 0, 2.2, 1.6 },
 					size = { 1.5, 1.45, 1.4624 },
+				},
+				wheelL1 = {
+					center = { -2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://84436854113943",
+					parent = "base",
+					pivot = { -2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -2.2, 0.75, 0.2 },
+					mesh = "rbxassetid://79505865113807",
+					parent = "base",
+					pivot = { -2.2, 0.75, 0.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://137911527244341",
+					parent = "base",
+					pivot = { -2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://120055082605350",
+					parent = "base",
+					pivot = { 2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 2.2, 0.75, 0.2 },
+					mesh = "rbxassetid://136091876533907",
+					parent = "base",
+					pivot = { 2.2, 0.75, 0.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://82336375056444",
+					parent = "base",
+					pivot = { 2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
@@ -4617,31 +5991,75 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"base",
 				"launcher",
 				"turret",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1216,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://93579245783540",
-					MTL = "rbxassetid://133084401729393",
-					NOR = "rbxassetid://112702881735295",
-					RGH = "rbxassetid://79429040134246",
+					ALB = "rbxassetid://111668518766092",
+					MTL = "rbxassetid://106576825620483",
+					NOR = "rbxassetid://83997277862449",
+					RGH = "rbxassetid://100719659008867",
 				},
-				model = "rbxassetid://98890093160416",
+				model = "rbxassetid://90539942239662",
 				pieces = {
 					base = {
-						center = { -0.001, 1.5446, -0.3706 },
-						mesh = "rbxassetid://90656165241777",
-						size = { 5.2705, 3.2351, 8.0325 },
+						center = { -0.0063, 1.9666, -0.3017 },
+						mesh = "rbxassetid://135100792783801",
+						size = { 4.8685, 2.3418, 7.8842 },
 					},
 					launcher = {
-						center = { -0.0638, 4.1011, 1.2359 },
-						mesh = "rbxassetid://75011859217565",
-						size = { 3.9025, 1.339, 3.2535 },
+						center = { -0.051, 4.0609, 1.2502 },
+						mesh = "rbxassetid://114763658880656",
+						size = { 3.9292, 1.3915, 3.1778 },
 					},
 					turret = {
-						center = { -0.0104, 3.0858, 1.5764 },
-						mesh = "rbxassetid://118976882572080",
-						size = { 1.5382, 1.4947, 1.5225 },
+						center = { 0.0238, 3.0122, 1.5898 },
+						mesh = "rbxassetid://122010822625971",
+						size = { 1.5377, 1.5503, 1.5388 },
+					},
+					wheelL1 = {
+						center = { -2.2272, 0.7593, -2.355 },
+						mesh = "rbxassetid://122262389310783",
+						size = { 0.6696, 1.5252, 1.4437 },
+					},
+					wheelL2 = {
+						center = { -2.2349, 0.7952, 0.232 },
+						mesh = "rbxassetid://112263209545005",
+						size = { 0.7753, 1.5553, 1.4567 },
+					},
+					wheelL3 = {
+						center = { -2.1774, 0.814, 2.6042 },
+						mesh = "rbxassetid://128448712113859",
+						size = { 0.6639, 1.5195, 1.4597 },
+					},
+					wheelR1 = {
+						center = { 2.1921, 0.7431, -2.3381 },
+						mesh = "rbxassetid://79528596060907",
+						size = { 0.7681, 1.5192, 1.5114 },
+					},
+					wheelR2 = {
+						center = { 2.2182, 0.7319, 0.1797 },
+						mesh = "rbxassetid://110270667074298",
+						size = { 0.6516, 1.4918, 1.4294 },
+					},
+					wheelR3 = {
+						center = { 2.1966, 0.7363, 2.6231 },
+						mesh = "rbxassetid://110977190011613",
+						size = { 0.7475, 1.5706, 1.515 },
 					},
 				},
 				status = "approved",
@@ -4649,6 +6067,24 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_herald = {
+			anim = {
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.55, -1.45 },
@@ -4659,7 +6095,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.25, -3.88 },
 					channel = "head",
-					mesh = "rbxassetid://125165148156832",
+					mesh = "rbxassetid://131577033134378",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 2.95, 0.2, 0.08 },
@@ -4669,7 +6105,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.575, 0.225 },
 					channel = "running",
-					mesh = "rbxassetid://71537548518303",
+					mesh = "rbxassetid://110813806681556",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.62, 0.65, 5.65 },
@@ -4679,7 +6115,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0.45, 2.96, 1.04 },
 					channel = "running",
-					mesh = "rbxassetid://110221380089795",
+					mesh = "rbxassetid://131056230797159",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 0.26, 0.12, 0.04 },
@@ -4689,7 +6125,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.55, -1.4 },
 					channel = "weapon",
-					mesh = "rbxassetid://96780177670841",
+					mesh = "rbxassetid://101358391662684",
 					name = "turret_glow_weapon",
 					piece = "turret",
 					size = { 0.26, 0.26, 0.1 },
@@ -4699,51 +6135,109 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0421,
 			maps = {
-				ALB = "rbxassetid://116310768442819",
-				EMI = "rbxassetid://91272060685787",
-				MTL = "rbxassetid://74785485849376",
-				NOR = "rbxassetid://120329158733699",
-				RGH = "rbxassetid://79316417954705",
+				ALB = "rbxassetid://135373892910528",
+				EMI = "rbxassetid://108417662876156",
+				MTL = "rbxassetid://75637299155672",
+				NOR = "rbxassetid://137582501036822",
+				RGH = "rbxassetid://73508210480224",
 			},
-			model = "rbxassetid://132124462418782",
+			model = "rbxassetid://96698290612318",
 			pieces = {
 				base = {
-					center = { 0, 1.875, -0.45 },
-					mesh = "rbxassetid://100723090026773",
-					size = { 4.58, 3.75, 6.9 },
+					center = { 0, 2.25, -0.45 },
+					mesh = "rbxassetid://96264512663610",
+					size = { 4.3, 3, 6.9 },
 				},
 				turret = {
 					center = { 0, 2.55, 0.475 },
-					mesh = "rbxassetid://73779531549930",
+					mesh = "rbxassetid://109080695363921",
 					parent = "base",
 					pivot = { 0, 2.15, 1.5 },
 					size = { 1.7, 0.98, 3.75 },
+				},
+				wheelL1 = {
+					center = { -1.95, 0.75, -2 },
+					mesh = "rbxassetid://104997836318047",
+					parent = "base",
+					pivot = { -1.95, 0.75, -2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -1.95, 0.75, 2 },
+					mesh = "rbxassetid://95263716136799",
+					parent = "base",
+					pivot = { -1.95, 0.75, 2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 1.95, 0.75, -2 },
+					mesh = "rbxassetid://75410484073907",
+					parent = "base",
+					pivot = { 1.95, 0.75, -2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 1.95, 0.75, 2 },
+					mesh = "rbxassetid://138198756760958",
+					parent = "base",
+					pivot = { 1.95, 0.75, 2 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"turret",
+				"wheelL1",
+				"wheelL2",
+				"wheelR1",
+				"wheelR2",
 			},
 			triangles = 1040,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelR1",
+				"wheelR2",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://85485320627555",
-					MTL = "rbxassetid://86826592978798",
-					NOR = "rbxassetid://130863943810205",
-					RGH = "rbxassetid://98393434962345",
+					ALB = "rbxassetid://123610574534675",
+					MTL = "rbxassetid://83029945273901",
+					NOR = "rbxassetid://85893572162478",
+					RGH = "rbxassetid://87193452889864",
 				},
-				model = "rbxassetid://103037837887737",
+				model = "rbxassetid://103346198540852",
 				pieces = {
 					base = {
-						center = { -0.0066, 1.8358, -0.4481 },
-						mesh = "rbxassetid://85208518241518",
-						size = { 4.7486, 3.7454, 7.1351 },
+						center = { -0.0039, 2.2228, -0.412 },
+						mesh = "rbxassetid://129798595064991",
+						size = { 4.4614, 3.0001, 7.1172 },
 					},
 					turret = {
-						center = { 0.0088, 2.5048, 0.3984 },
-						mesh = "rbxassetid://84104072414412",
-						size = { 1.7138, 1.0163, 3.8842 },
+						center = { 0.0039, 2.5211, 0.4347 },
+						mesh = "rbxassetid://88817953332724",
+						size = { 1.7489, 1.0242, 3.7915 },
+					},
+					wheelL1 = {
+						center = { -1.9512, 0.8026, -2.0343 },
+						mesh = "rbxassetid://123079264103026",
+						size = { 0.6803, 1.5331, 1.4649 },
+					},
+					wheelL2 = {
+						center = { -1.9796, 0.7345, 1.9998 },
+						mesh = "rbxassetid://94875618662386",
+						size = { 0.8329, 1.516, 1.5411 },
+					},
+					wheelR1 = {
+						center = { 1.9848, 0.8014, -2.0625 },
+						mesh = "rbxassetid://134299438321269",
+						size = { 0.6722, 1.5199, 1.5083 },
+					},
+					wheelR2 = {
+						center = { 1.9567, 0.7654, 2.0318 },
+						mesh = "rbxassetid://103348279809714",
+						size = { 0.7885, 1.5678, 1.46 },
 					},
 				},
 				status = "approved",
@@ -4751,6 +6245,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_judgement = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 4, -1.4 },
@@ -4761,7 +6265,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.65, -4.05 },
 					channel = "head",
-					mesh = "rbxassetid://129327755789580",
+					mesh = "rbxassetid://118548791086058",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 4.6, 0.2, 0.1 },
@@ -4771,7 +6275,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.625, -0.075 },
 					channel = "running",
-					mesh = "rbxassetid://137724429724084",
+					mesh = "rbxassetid://99935577441579",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.16, 0.87, 8.27 },
@@ -4781,7 +6285,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.641, 1.3222 },
 					channel = "running",
-					mesh = "rbxassetid://83286730537685",
+					mesh = "rbxassetid://107750460955461",
 					name = "launcher_glow_running",
 					piece = "launcher",
 					size = { 4.28, 1.9005, 3.5813 },
@@ -4791,7 +6295,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.9431, -1.1298 },
 					channel = "weapon",
-					mesh = "rbxassetid://76760511356538",
+					mesh = "rbxassetid://137456160777543",
 					name = "launcher_glow_weapon",
 					piece = "launcher",
 					size = { 2.9, 0.8785, 0.4238 },
@@ -4801,7 +6305,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.72, 1.4 },
 					channel = "running",
-					mesh = "rbxassetid://134150701286764",
+					mesh = "rbxassetid://105885155468406",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 3.64, 0.12, 3.64 },
@@ -4811,29 +6315,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0492,
 			maps = {
-				ALB = "rbxassetid://134235184611650",
-				EMI = "rbxassetid://136411335554606",
-				MTL = "rbxassetid://127952031353678",
-				NOR = "rbxassetid://108527255503304",
-				RGH = "rbxassetid://79635158791181",
+				ALB = "rbxassetid://109646940250012",
+				EMI = "rbxassetid://135685755241286",
+				MTL = "rbxassetid://93991662862069",
+				NOR = "rbxassetid://130538778393887",
+				RGH = "rbxassetid://88643183796357",
 			},
-			model = "rbxassetid://132600215144608",
+			model = "rbxassetid://125967106206701",
 			pieces = {
 				base = {
-					center = { 0, 1.5275, -0.1 },
-					mesh = "rbxassetid://78066672916278",
-					size = { 6.16, 3.055, 8.2 },
+					center = { 0, 1.7525, -0.1 },
+					mesh = "rbxassetid://137712641922263",
+					size = { 6.16, 2.605, 8.2 },
 				},
 				launcher = {
 					center = { 0, 3.95, 1 },
-					mesh = "rbxassetid://87672762323029",
+					mesh = "rbxassetid://97257178118905",
 					parent = "turret",
 					pivot = { 0, 2.9, 3.2 },
 					size = { 4.28, 3.5246, 4.879 },
 				},
+				trackL = {
+					center = { -2.4, 0.5, 0.0011 },
+					mesh = "rbxassetid://70538536524134",
+					parent = "base",
+					pivot = { -2.4, 0.46, 0 },
+					size = { 0.8, 1, 7.9978 },
+				},
+				trackR = {
+					center = { 2.4, 0.5, 0.0011 },
+					mesh = "rbxassetid://71936869203608",
+					parent = "base",
+					pivot = { 2.4, 0.46, 0 },
+					size = { 0.8, 1, 7.9978 },
+				},
 				turret = {
 					center = { 0, 2.75, 1.44 },
-					mesh = "rbxassetid://82851620288182",
+					mesh = "rbxassetid://110990036294799",
 					parent = "base",
 					pivot = { 0, 2.45, 1.4 },
 					size = { 3.64, 1.1, 3.72 },
@@ -4843,11 +6361,27 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"base",
 				"launcher",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 1636,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		ord_lancer = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.45, -8.17 },
@@ -4858,7 +6392,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.45, -6 },
 					channel = "weapon",
-					mesh = "rbxassetid://125395694823105",
+					mesh = "rbxassetid://101344574435335",
 					name = "barrel_glow_weapon",
 					piece = "barrel",
 					size = { 0.704, 0.704, 3.4 },
@@ -4868,7 +6402,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.52, -3.96 },
 					channel = "head",
-					mesh = "rbxassetid://133916730659917",
+					mesh = "rbxassetid://92850331807143",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5.15, 0.2, 0.12 },
@@ -4878,7 +6412,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.385, -0.1225 },
 					channel = "running",
-					mesh = "rbxassetid://88923520876315",
+					mesh = "rbxassetid://80496137208881",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.31, 1.07, 8.155 },
@@ -4888,7 +6422,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.955, 0.98 },
 					channel = "running",
-					mesh = "rbxassetid://85988901814580",
+					mesh = "rbxassetid://83547626920950",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 4.1422, 1.17, 5.29 },
@@ -4898,29 +6432,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0491,
 			maps = {
-				ALB = "rbxassetid://77640856515241",
-				EMI = "rbxassetid://74963188569277",
-				MTL = "rbxassetid://91318758771336",
-				NOR = "rbxassetid://96021924052867",
-				RGH = "rbxassetid://126294571454496",
+				ALB = "rbxassetid://106908331415410",
+				EMI = "rbxassetid://103263285991492",
+				MTL = "rbxassetid://137266608918862",
+				NOR = "rbxassetid://100115520203660",
+				RGH = "rbxassetid://129019872642293",
 			},
-			model = "rbxassetid://109756253853544",
+			model = "rbxassetid://102922573572436",
 			pieces = {
 				barrel = {
 					center = { 0, 2.45, -4.9725 },
-					mesh = "rbxassetid://88552851327951",
+					mesh = "rbxassetid://72540072378127",
 					parent = "turret",
 					pivot = { 0, 2.45, -1.8 },
 					size = { 1.05, 0.78, 6.365 },
 				},
 				base = {
-					center = { 0, 1.0012, -0.1 },
-					mesh = "rbxassetid://110033995627196",
-					size = { 6.3, 2.0025, 8.1 },
+					center = { 0, 1.2263, -0.125 },
+					mesh = "rbxassetid://129374184109907",
+					size = { 6.3, 1.5525, 8.05 },
+				},
+				trackL = {
+					center = { -2.47, 0.5, 0.0261 },
+					mesh = "rbxassetid://120494256818728",
+					parent = "base",
+					pivot = { -2.47, 0.46, 0 },
+					size = { 0.74, 1, 7.8478 },
+				},
+				trackR = {
+					center = { 2.47, 0.5, 0.0261 },
+					mesh = "rbxassetid://92988031100115",
+					parent = "base",
+					pivot = { 2.47, 0.46, 0 },
+					size = { 0.74, 1, 7.8478 },
 				},
 				turret = {
 					center = { 0, 2.775, 0.3981 },
-					mesh = "rbxassetid://82985815345107",
+					mesh = "rbxassetid://134056097639990",
 					parent = "base",
 					pivot = { 0, 1.85, 0.3 },
 					size = { 4.8, 1.85, 6.3438 },
@@ -4930,32 +6478,48 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"barrel",
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 3962,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://131730122689529",
-					MTL = "rbxassetid://108014870949234",
-					NOR = "rbxassetid://122892228292673",
-					RGH = "rbxassetid://113518297957713",
+					ALB = "rbxassetid://109135591933106",
+					MTL = "rbxassetid://73049385019869",
+					NOR = "rbxassetid://136413228629831",
+					RGH = "rbxassetid://70499016230591",
 				},
-				model = "rbxassetid://108229567309359",
+				model = "rbxassetid://119181218492178",
 				pieces = {
 					barrel = {
-						center = { -0.0174, 2.4576, -4.9627 },
-						mesh = "rbxassetid://122500284226925",
-						size = { 1.0452, 0.859, 6.4096 },
+						center = { -0.0115, 2.5071, -5.0053 },
+						mesh = "rbxassetid://104855738455513",
+						size = { 1.0793, 0.8676, 6.4297 },
 					},
 					base = {
-						center = { 0.0392, 1.0093, -0.0223 },
-						mesh = "rbxassetid://109116201761410",
-						size = { 6.3649, 2.1088, 8.3114 },
+						center = { -0.001, 1.1829, -0.072 },
+						mesh = "rbxassetid://100850834055550",
+						size = { 6.4041, 1.69, 8.2502 },
+					},
+					trackL = {
+						center = { -2.4767, 0.4752, 0.0273 },
+						mesh = "rbxassetid://85600472982805",
+						size = { 0.8225, 1.1197, 7.7952 },
+					},
+					trackR = {
+						center = { 2.4736, 0.4801, 0.0292 },
+						mesh = "rbxassetid://123821793403698",
+						size = { 0.7799, 1.0746, 7.8321 },
 					},
 					turret = {
-						center = { 0.0188, 2.7279, 0.4206 },
-						mesh = "rbxassetid://103546880156430",
-						size = { 4.8046, 1.8383, 6.4856 },
+						center = { -0.0066, 2.7506, 0.4283 },
+						mesh = "rbxassetid://109713708831599",
+						size = { 4.9064, 1.8388, 6.4604 },
 					},
 				},
 				status = "approved",
@@ -5046,6 +6610,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 1336,
 		},
 		ord_mason = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { 0, 4.55, -1.45 },
@@ -5056,7 +6630,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.28, -2.485 },
 					channel = "head",
-					mesh = "rbxassetid://121477863486802",
+					mesh = "rbxassetid://78535170737662",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5.15, 1.72, 3.07 },
@@ -5066,7 +6640,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.875, -0.1225 },
 					channel = "running",
-					mesh = "rbxassetid://93261959981469",
+					mesh = "rbxassetid://76125737118478",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.31, 2.05, 8.155 },
@@ -5076,7 +6650,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 3.37, 0.88 },
 					channel = "power",
-					mesh = "rbxassetid://90803771197911",
+					mesh = "rbxassetid://84638616461860",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 2.56, 3.04, 4.6 },
@@ -5086,51 +6660,81 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0604,
 			maps = {
-				ALB = "rbxassetid://101658128417126",
-				EMI = "rbxassetid://86518803371638",
-				MTL = "rbxassetid://120470189298748",
-				NOR = "rbxassetid://135489028001674",
-				RGH = "rbxassetid://138698968612314",
+				ALB = "rbxassetid://122984329414156",
+				EMI = "rbxassetid://120497617730294",
+				MTL = "rbxassetid://83324661114311",
+				NOR = "rbxassetid://109795399047335",
+				RGH = "rbxassetid://99842981870549",
 			},
-			model = "rbxassetid://86406969294519",
+			model = "rbxassetid://128342637345462",
 			pieces = {
 				base = {
-					center = { 0, 1.505, -0.6448 },
-					mesh = "rbxassetid://108825781376842",
-					size = { 6.6, 3.01, 9.1897 },
+					center = { 0, 1.58, -0.6699 },
+					mesh = "rbxassetid://71171404539544",
+					size = { 6.6, 2.86, 9.1397 },
 				},
 				nano = {
 					center = { 0, 3.4, 1.0625 },
-					mesh = "rbxassetid://70764427312156",
+					mesh = "rbxassetid://131332305463655",
 					parent = "base",
 					pivot = { 0, 1.85, 1.9 },
 					size = { 2.5, 3.1, 4.725 },
+				},
+				trackL = {
+					center = { -2.47, 0.5, 0.0261 },
+					mesh = "rbxassetid://135264531012109",
+					parent = "base",
+					pivot = { -2.47, 0.46, 0 },
+					size = { 0.74, 1, 7.8478 },
+				},
+				trackR = {
+					center = { 2.47, 0.5, 0.0261 },
+					mesh = "rbxassetid://121945765337569",
+					parent = "base",
+					pivot = { 2.47, 0.46, 0 },
+					size = { 0.74, 1, 7.8478 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"nano",
+				"trackL",
+				"trackR",
 			},
 			triangles = 3096,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://77534637587998",
-					MTL = "rbxassetid://72786416610630",
-					NOR = "rbxassetid://127606549662458",
-					RGH = "rbxassetid://103474304929179",
+					ALB = "rbxassetid://95466655105160",
+					MTL = "rbxassetid://118559643350777",
+					NOR = "rbxassetid://116079877475386",
+					RGH = "rbxassetid://100479402611192",
 				},
-				model = "rbxassetid://127484874000713",
+				model = "rbxassetid://80492345746330",
 				pieces = {
 					base = {
-						center = { -0.0069, 1.5728, -0.6644 },
-						mesh = "rbxassetid://103470434536331",
-						size = { 6.6223, 3.2031, 9.244 },
+						center = { 0.0047, 1.6364, -0.6647 },
+						mesh = "rbxassetid://99231446054094",
+						size = { 6.5985, 2.9688, 9.2054 },
 					},
 					nano = {
-						center = { 0.0158, 3.3411, 0.9502 },
-						mesh = "rbxassetid://121705260142959",
-						size = { 2.5705, 3.2128, 4.9916 },
+						center = { 0.0528, 3.3527, 0.9597 },
+						mesh = "rbxassetid://116959350233293",
+						size = { 2.5874, 3.2427, 4.9621 },
+					},
+					trackL = {
+						center = { -2.4784, 0.5171, 0.0473 },
+						mesh = "rbxassetid://121871817976988",
+						size = { 0.7538, 1.1151, 7.9215 },
+					},
+					trackR = {
+						center = { 2.4909, 0.4999, 0.0136 },
+						mesh = "rbxassetid://93242605475369",
+						size = { 0.8023, 1.0636, 7.817 },
 					},
 				},
 				status = "approved",
@@ -5138,12 +6742,42 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_oracle = {
+			anim = {
+				dish = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
 					center = { 0, 1.35, -4.48 },
 					channel = "head",
-					mesh = "rbxassetid://108168789833436",
+					mesh = "rbxassetid://132612830705315",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.4, 0.2, 0.08 },
@@ -5153,7 +6787,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 5.4667, 1.4167 },
 					channel = "running",
-					mesh = "rbxassetid://88029978809305",
+					mesh = "rbxassetid://72648714541124",
 					name = "dish_glow_running",
 					piece = "dish",
 					size = { 4.2, 1.7922, 0.6687 },
@@ -5163,51 +6797,137 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0207,
 			maps = {
-				ALB = "rbxassetid://121142158347769",
-				EMI = "rbxassetid://98254042910701",
-				MTL = "rbxassetid://74759415228976",
-				NOR = "rbxassetid://80305731112034",
-				RGH = "rbxassetid://102465023933565",
+				ALB = "rbxassetid://97345897819968",
+				EMI = "rbxassetid://86867657575088",
+				MTL = "rbxassetid://75315851494354",
+				NOR = "rbxassetid://110270225347938",
+				RGH = "rbxassetid://138322841450902",
 			},
-			model = "rbxassetid://78762127381090",
+			model = "rbxassetid://128556764089754",
 			pieces = {
 				base = {
-					center = { 0, 2, -0.4 },
-					mesh = "rbxassetid://119438275220636",
-					size = { 5.08, 4, 8.2 },
+					center = { 0, 2.4, -0.4 },
+					mesh = "rbxassetid://71990725722085",
+					size = { 4.79, 3.2, 8.2 },
 				},
 				dish = {
 					center = { 0, 5.2857, 1.6 },
-					mesh = "rbxassetid://138801371331332",
+					mesh = "rbxassetid://102451542512193",
 					parent = "base",
 					pivot = { 0, 4.4, 1.6 },
 					size = { 4.6, 2.3713, 1.007 },
+				},
+				wheelL1 = {
+					center = { -2.2, 0.75, -2.6 },
+					mesh = "rbxassetid://117537871382773",
+					parent = "base",
+					pivot = { -2.2, 0.75, -2.6 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -2.2, 0.75, 0.2 },
+					mesh = "rbxassetid://126689021057609",
+					parent = "base",
+					pivot = { -2.2, 0.75, 0.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -2.2, 0.75, 2.8 },
+					mesh = "rbxassetid://126665120608878",
+					parent = "base",
+					pivot = { -2.2, 0.75, 2.8 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 2.2, 0.75, -2.6 },
+					mesh = "rbxassetid://137895256224315",
+					parent = "base",
+					pivot = { 2.2, 0.75, -2.6 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 2.2, 0.75, 0.2 },
+					mesh = "rbxassetid://127086096067848",
+					parent = "base",
+					pivot = { 2.2, 0.75, 0.2 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 2.2, 0.75, 2.8 },
+					mesh = "rbxassetid://89419497990155",
+					parent = "base",
+					pivot = { 2.2, 0.75, 2.8 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"dish",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1044,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://111281910363255",
-					MTL = "rbxassetid://96989850386799",
-					NOR = "rbxassetid://76009549620670",
-					RGH = "rbxassetid://70391224960734",
+					ALB = "rbxassetid://118935813681563",
+					MTL = "rbxassetid://89722363009599",
+					NOR = "rbxassetid://104183408049345",
+					RGH = "rbxassetid://80131368904986",
 				},
-				model = "rbxassetid://113163550349311",
+				model = "rbxassetid://87379246363823",
 				pieces = {
 					base = {
-						center = { -0.0297, 1.9928, -0.4779 },
-						mesh = "rbxassetid://131432665126230",
-						size = { 5.2409, 4.0161, 8.3527 },
+						center = { 0.0091, 2.4003, -0.4556 },
+						mesh = "rbxassetid://131139092489183",
+						size = { 4.8376, 3.2625, 8.3262 },
 					},
 					dish = {
-						center = { -0.0131, 5.2782, 1.5877 },
-						mesh = "rbxassetid://111134062298475",
-						size = { 4.6481, 2.3873, 1.106 },
+						center = { 0.0052, 5.2928, 1.609 },
+						mesh = "rbxassetid://88289728522608",
+						size = { 4.6549, 2.3832, 1.1077 },
+					},
+					wheelL1 = {
+						center = { -2.234, 0.8276, -2.6031 },
+						mesh = "rbxassetid://76764689963571",
+						size = { 0.8397, 1.5085, 1.4773 },
+					},
+					wheelL2 = {
+						center = { -2.1951, 0.7932, 0.1979 },
+						mesh = "rbxassetid://106733595516566",
+						size = { 0.6285, 1.5341, 1.4639 },
+					},
+					wheelL3 = {
+						center = { -2.1397, 0.7534, 2.7682 },
+						mesh = "rbxassetid://138955863219837",
+						size = { 0.7305, 1.51, 1.4132 },
+					},
+					wheelR1 = {
+						center = { 2.2008, 0.7484, -2.588 },
+						mesh = "rbxassetid://90704053139888",
+						size = { 0.7811, 1.5042, 1.4439 },
+					},
+					wheelR2 = {
+						center = { 2.2517, 0.7516, 0.1407 },
+						mesh = "rbxassetid://113178502723983",
+						size = { 0.6155, 1.528, 1.4252 },
+					},
+					wheelR3 = {
+						center = { 2.2139, 0.7464, 2.7723 },
+						mesh = "rbxassetid://128397822162591",
+						size = { 0.6782, 1.4646, 1.4942 },
 					},
 				},
 				status = "approved",
@@ -5215,6 +6935,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_paladin = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.95, -11.05 },
@@ -5225,7 +6955,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.85, -4.25 },
 					channel = "head",
-					mesh = "rbxassetid://92319139661315",
+					mesh = "rbxassetid://109699883871835",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5, 0.2, 0.1 },
@@ -5235,7 +6965,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.825, -0.075 },
 					channel = "running",
-					mesh = "rbxassetid://114378588963247",
+					mesh = "rbxassetid://137654148889945",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.56, 0.87, 8.67 },
@@ -5245,7 +6975,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 3.515, 0.9975 },
 					channel = "running",
-					mesh = "rbxassetid://113758709646108",
+					mesh = "rbxassetid://129855282454173",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 4.88, 1.19, 4.195 },
@@ -5255,7 +6985,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.95, -7.575 },
 					channel = "weapon",
-					mesh = "rbxassetid://79756131316340",
+					mesh = "rbxassetid://140062782264469",
 					name = "turret_glow_weapon",
 					piece = "turret",
 					size = { 0.84, 0.84, 5.27 },
@@ -5265,22 +6995,36 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0498,
 			maps = {
-				ALB = "rbxassetid://90044437388277",
-				EMI = "rbxassetid://72729883319955",
-				MTL = "rbxassetid://99959473473740",
-				NOR = "rbxassetid://139139400678823",
-				RGH = "rbxassetid://140092902790058",
+				ALB = "rbxassetid://132306800603737",
+				EMI = "rbxassetid://73760214933962",
+				MTL = "rbxassetid://125627994352431",
+				NOR = "rbxassetid://110136422773435",
+				RGH = "rbxassetid://78874365885591",
 			},
-			model = "rbxassetid://78425516991036",
+			model = "rbxassetid://136101729863443",
 			pieces = {
 				base = {
-					center = { 0, 1.1275, -0.1 },
-					mesh = "rbxassetid://80384118246866",
-					size = { 6.56, 2.255, 8.6 },
+					center = { 0, 1.3525, -0.1 },
+					mesh = "rbxassetid://85673009224060",
+					size = { 6.56, 1.805, 8.6 },
+				},
+				trackL = {
+					center = { -2.6, 0.5, 0.0011 },
+					mesh = "rbxassetid://90988429245700",
+					parent = "base",
+					pivot = { -2.6, 0.46, 0 },
+					size = { 0.8, 1, 8.3978 },
+				},
+				trackR = {
+					center = { 2.6, 0.5, 0.0011 },
+					mesh = "rbxassetid://125473303054429",
+					parent = "base",
+					pivot = { 2.6, 0.46, 0 },
+					size = { 0.8, 1, 8.3978 },
 				},
 				turret = {
 					center = { 0, 3.225, -4.025 },
-					mesh = "rbxassetid://109194903906054",
+					mesh = "rbxassetid://121597794849665",
 					parent = "base",
 					pivot = { 0, 2.2, 0.3 },
 					size = { 4.7848, 2.05, 14.15 },
@@ -5289,11 +7033,23 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			status = "approved",
 			teamPieces = {
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 1920,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		ord_phalanx = {
+			anim = {
+				core = {
+					axis = { 0, 1, 0 },
+					motion = "pulse",
+				},
+			},
 			attachments = {
 				beam = {
 					at = { 0, 8.3, 0 },
@@ -5363,6 +7119,18 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 1732,
 		},
 		ord_radiance = {
+			anim = {
+				shellL = {
+					axis = { 0, 0, -1 },
+					motion = "open",
+					range = 90,
+				},
+				shellR = {
+					axis = { 0, 0, 1 },
+					motion = "open",
+					range = 90,
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 10.8, -7.1 },
@@ -5504,6 +7272,18 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 2692,
 		},
 		ord_reckoning = {
+			anim = {
+				hatch = {
+					axis = { 0, 0, 1 },
+					motion = "open",
+					range = 110,
+				},
+				hatch2 = {
+					axis = { 0, 0, -1 },
+					motion = "open",
+					range = 110,
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.8, 0 },
@@ -5569,6 +7349,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 1100,
 		},
 		ord_sentry = {
+			anim = {
+				radar = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+			},
 			attachments = {
 				muzzle1 = {
 					at = { 0, 1.75, -6.06 },
@@ -5583,7 +7369,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.955, 0.5275 },
 					channel = "running",
-					mesh = "rbxassetid://138048318446149",
+					mesh = "rbxassetid://120186153515047",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 3.71, 4.71, 8.055 },
@@ -5591,9 +7377,19 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 					tint = { 90, 210, 255 },
 				},
 				{
+					center = { 0, 4.3, 1.2 },
+					channel = "running",
+					mesh = "rbxassetid://106162002287100",
+					name = "radar_glow_running",
+					piece = "radar",
+					size = { 1.56, 0.2, 1.56 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+				{
 					center = { 0, 1.75, -5.4 },
 					channel = "weapon",
-					mesh = "rbxassetid://72810303890704",
+					mesh = "rbxassetid://88864733640011",
 					name = "turret1_glow_weapon",
 					piece = "turret1",
 					size = { 0.34, 0.3234, 0.1 },
@@ -5603,7 +7399,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.65, 1.75 },
 					channel = "weapon",
-					mesh = "rbxassetid://102286275071558",
+					mesh = "rbxassetid://131775859300201",
 					name = "turret2_glow_weapon",
 					piece = "turret2",
 					size = { 0.24, 0.24, 0.08 },
@@ -5613,29 +7409,36 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0623,
 			maps = {
-				ALB = "rbxassetid://92890315008285",
-				EMI = "rbxassetid://113963681775321",
-				MTL = "rbxassetid://93135406324504",
-				NOR = "rbxassetid://109091107345006",
-				RGH = "rbxassetid://74718065412003",
+				ALB = "rbxassetid://128790655821708",
+				EMI = "rbxassetid://80922659269117",
+				MTL = "rbxassetid://81712092215644",
+				NOR = "rbxassetid://129625590526948",
+				RGH = "rbxassetid://131256031397618",
 			},
-			model = "rbxassetid://117719932104477",
+			model = "rbxassetid://121305342645862",
 			pieces = {
 				base = {
 					center = { 0, 2.35, -0.9527 },
-					mesh = "rbxassetid://110483449543148",
+					mesh = "rbxassetid://103069438022418",
 					size = { 3.72, 5.7, 11.0054 },
+				},
+				radar = {
+					center = { 0, 4.3, 1.2 },
+					mesh = "rbxassetid://134271039843780",
+					parent = "base",
+					pivot = { 0, 4.3, 1.2 },
+					size = { 1.5, 0.9, 1.5 },
 				},
 				turret1 = {
 					center = { 0, 1.72, -3.825 },
-					mesh = "rbxassetid://122697396466984",
+					mesh = "rbxassetid://131706391319976",
 					parent = "base",
 					pivot = { 0, 1.3, -2.6 },
 					size = { 1.5, 0.84, 4.05 },
 				},
 				turret2 = {
 					center = { 0, 1.6, 2.7628 },
-					mesh = "rbxassetid://138096441502273",
+					mesh = "rbxassetid://92460651229539",
 					parent = "base",
 					pivot = { 0, 1.3, 3.3 },
 					size = { 1, 0.6, 2.0255 },
@@ -5644,12 +7447,42 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			status = "approved",
 			teamPieces = {
 				"base",
+				"radar",
 				"turret1",
 				"turret2",
 			},
 			triangles = 804,
+			visualPieces = {
+				"radar",
+			},
 		},
 		ord_seraph = {
+			anim = {
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 5.2, 0.3 },
@@ -5660,7 +7493,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.25, -4.13 },
 					channel = "head",
-					mesh = "rbxassetid://136165060230536",
+					mesh = "rbxassetid://78619143625048",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.35, 0.2, 0.08 },
@@ -5670,7 +7503,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.16, 0.105 },
 					channel = "running",
-					mesh = "rbxassetid://98927959986198",
+					mesh = "rbxassetid://130020381499121",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 4.09, 1.28, 7.51 },
@@ -5680,7 +7513,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.65, 2.3 },
 					channel = "running",
-					mesh = "rbxassetid://107347739498970",
+					mesh = "rbxassetid://114160424899049",
 					name = "launcher_glow_running",
 					piece = "launcher",
 					size = { 3.46, 0.16, 2.4 },
@@ -5690,7 +7523,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 5.0928, -0.0023 },
 					channel = "weapon",
-					mesh = "rbxassetid://129450123501048",
+					mesh = "rbxassetid://133342677276670",
 					name = "launcher_glow_weapon",
 					piece = "launcher",
 					size = { 2.38, 0.2273, 0.1953 },
@@ -5700,7 +7533,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.8466, -0.9738 },
 					channel = "running",
-					mesh = "rbxassetid://110587535498043",
+					mesh = "rbxassetid://126035488504320",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 2.78, 1.5314, 0.4283 },
@@ -5710,32 +7543,74 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.049,
 			maps = {
-				ALB = "rbxassetid://107819420657074",
-				EMI = "rbxassetid://79423522314289",
-				MTL = "rbxassetid://71731355979265",
-				NOR = "rbxassetid://97659577649204",
-				RGH = "rbxassetid://102415430685426",
+				ALB = "rbxassetid://102777499475401",
+				EMI = "rbxassetid://93459253704382",
+				MTL = "rbxassetid://102948795728171",
+				NOR = "rbxassetid://93076357326914",
+				RGH = "rbxassetid://84399159078399",
 			},
-			model = "rbxassetid://104316218232591",
+			model = "rbxassetid://104706125479380",
 			pieces = {
 				base = {
-					center = { 0, 1.55, -0.15 },
-					mesh = "rbxassetid://139854780030413",
-					size = { 5.08, 3.1, 7.9 },
+					center = { 0, 1.95, -0.15 },
+					mesh = "rbxassetid://79056170250297",
+					size = { 4.81, 2.3, 7.9 },
 				},
 				launcher = {
 					center = { 0, 3.8784, 1.7903 },
-					mesh = "rbxassetid://104177746942695",
+					mesh = "rbxassetid://84180844854935",
 					parent = "base",
 					pivot = { 0, 2.4, 2.3 },
 					size = { 3.4, 2.9567, 4.0193 },
 				},
 				turret = {
 					center = { 0, 4.0002, -0.8 },
-					mesh = "rbxassetid://134719579938393",
+					mesh = "rbxassetid://75497751538813",
 					parent = "base",
 					pivot = { 0, 2.4, -0.8 },
 					size = { 3, 3.4004, 0.7402 },
+				},
+				wheelL1 = {
+					center = { -2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://127395392863074",
+					parent = "base",
+					pivot = { -2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -2.2, 0.75, 0.1 },
+					mesh = "rbxassetid://83446140891682",
+					parent = "base",
+					pivot = { -2.2, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://109794847814720",
+					parent = "base",
+					pivot = { -2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://88364696432229",
+					parent = "base",
+					pivot = { 2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 2.2, 0.75, 0.1 },
+					mesh = "rbxassetid://126207998852926",
+					parent = "base",
+					pivot = { 2.2, 0.75, 0.1 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://75819477761737",
+					parent = "base",
+					pivot = { 2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
@@ -5743,10 +7618,31 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"base",
 				"launcher",
 				"turret",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
 			},
 			triangles = 1316,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+			},
 		},
 		ord_shipyard = {
+			anim = {
+				trolley = {
+					axis = { 1, 0, 0 },
+					motion = "slide",
+					range = 12,
+				},
+			},
 			attachments = {
 				buildpad = {
 					at = { 0, 0, -6 },
@@ -5775,47 +7671,68 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glow = {
 				{
-					center = { -0.65, 5.805, 2.44 },
+					center = { -0.65, 5.805, 2.465 },
 					channel = "power",
-					mesh = "rbxassetid://124089299863871",
+					mesh = "rbxassetid://108073377129079",
 					name = "base_glow_power",
 					piece = "base",
-					size = { 20.3, 10.61, 17.88 },
+					size = { 20.3, 10.61, 17.83 },
 					strength = 2.5,
 					tint = { 130, 225, 255 },
 				},
 				{
 					center = { 0, 2.36, 0.3 },
 					channel = "running",
-					mesh = "rbxassetid://85244702847839",
+					mesh = "rbxassetid://89477423250776",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 32.8, 1.68, 35.4 },
 					strength = 2,
 					tint = { 90, 210, 255 },
 				},
+				{
+					center = { 4, 10.28, -6 },
+					channel = "power",
+					mesh = "rbxassetid://130577315927528",
+					name = "trolley_glow_power",
+					piece = "trolley",
+					size = { 1, 0.06, 1 },
+					strength = 2.5,
+					tint = { 130, 225, 255 },
+				},
 			},
 			glowShare = 0.0338,
 			maps = {
-				ALB = "rbxassetid://80458727810138",
-				EMI = "rbxassetid://74151609273553",
-				MTL = "rbxassetid://80192060678058",
-				NOR = "rbxassetid://116068069478023",
-				RGH = "rbxassetid://127138731862946",
+				ALB = "rbxassetid://82113950434335",
+				EMI = "rbxassetid://123808638346875",
+				MTL = "rbxassetid://127060871162269",
+				NOR = "rbxassetid://110732559450425",
+				RGH = "rbxassetid://107328032307234",
 			},
-			model = "rbxassetid://73243507301713",
+			model = "rbxassetid://102120608414159",
 			pieces = {
 				base = {
 					center = { 0, 6.2775, -0.9721 },
-					mesh = "rbxassetid://135152844347736",
+					mesh = "rbxassetid://102358407279110",
 					size = { 38, 12.555, 39.9443 },
+				},
+				trolley = {
+					center = { 4, 10.7, -6 },
+					mesh = "rbxassetid://102187125060538",
+					parent = "base",
+					pivot = { 4, 10.7, -6 },
+					size = { 2, 0.8, 2 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
+				"trolley",
 			},
 			triangles = 1088,
+			visualPieces = {
+				"trolley",
+			},
 		},
 		ord_silence = {
 			attachments = {
@@ -5897,6 +7814,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 472,
 		},
 		ord_skywright = {
+			anim = {
+				rotor = {
+					axis = { 0, 1, 0 },
+					motion = "spin",
+				},
+				tailRotor = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { 0, -0.55, -1.7 },
@@ -5907,7 +7834,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 0.56, -3.2 },
 					channel = "head",
-					mesh = "rbxassetid://116780192415008",
+					mesh = "rbxassetid://86541212753579",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 0.5, 0.06, 0.3 },
@@ -5917,7 +7844,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.675, 1.575 },
 					channel = "running",
-					mesh = "rbxassetid://111453346343477",
+					mesh = "rbxassetid://123331184021242",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 1.92, 1.09, 7.15 },
@@ -5927,7 +7854,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, -0.3, -1.7 },
 					channel = "power",
-					mesh = "rbxassetid://108149656166754",
+					mesh = "rbxassetid://109853504630457",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 0.64, 0.5, 0.6086 },
@@ -5937,40 +7864,51 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0535,
 			maps = {
-				ALB = "rbxassetid://101128315011444",
-				EMI = "rbxassetid://118727568968903",
-				MTL = "rbxassetid://119715069551299",
-				NOR = "rbxassetid://136447215842508",
-				RGH = "rbxassetid://105422983167034",
+				ALB = "rbxassetid://112658365870515",
+				EMI = "rbxassetid://104463866346470",
+				MTL = "rbxassetid://96688096744997",
+				NOR = "rbxassetid://84578298973835",
+				RGH = "rbxassetid://140015976599648",
 			},
-			model = "rbxassetid://130920831859078",
+			model = "rbxassetid://108713125915035",
 			pieces = {
 				base = {
-					center = { 0, 1.5025, 1.1304 },
-					mesh = "rbxassetid://102986440605788",
-					size = { 1.95, 2.995, 10.0608 },
+					center = { 0, 1.5025, 1.075 },
+					mesh = "rbxassetid://134567740390287",
+					size = { 1.95, 2.995, 9.95 },
 				},
 				nano = {
 					center = { 0, 0, -0.8212 },
-					mesh = "rbxassetid://137511413386604",
+					mesh = "rbxassetid://85683760103938",
 					parent = "base",
 					pivot = { 0, 0.25, -0.2 },
 					size = { 1.2, 0.8292, 2.4424 },
 				},
 				rotor = {
 					center = { 0, 2.8, 0.2 },
-					mesh = "rbxassetid://130259912344165",
+					mesh = "rbxassetid://81119468068852",
 					parent = "base",
 					pivot = { 0, 2.8, 0.2 },
 					size = { 6.3782, 0.2, 6.3782 },
+				},
+				tailRotor = {
+					center = { 0.16, 2, 5.4 },
+					mesh = "rbxassetid://83904961130462",
+					parent = "base",
+					pivot = { 0.2, 2, 5.4 },
+					size = { 0.2, 1.6, 1.5216 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"base",
 				"rotor",
+				"tailRotor",
 			},
 			triangles = 856,
+			visualPieces = {
+				"tailRotor",
+			},
 		},
 		ord_solar = {
 			attachments = {},
@@ -6037,6 +7975,16 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_sovereign = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				nano1 = {
 					at = { 0, 5.8, 4.75 },
@@ -6047,7 +7995,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 3.18, -2.845 },
 					channel = "head",
-					mesh = "rbxassetid://97495340459969",
+					mesh = "rbxassetid://115436419365202",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5.58, 2.88, 3.91 },
@@ -6057,7 +8005,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.21, -0.0636 },
 					channel = "running",
-					mesh = "rbxassetid://105991948401437",
+					mesh = "rbxassetid://95504730289130",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.75, 6.2, 9.0671 },
@@ -6067,7 +8015,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 4.05, 3.4301 },
 					channel = "power",
-					mesh = "rbxassetid://104358676168602",
+					mesh = "rbxassetid://96652370745219",
 					name = "nano_glow_power",
 					piece = "nano",
 					size = { 2.66, 3.5, 3.7798 },
@@ -6077,7 +8025,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 5.35, 4.55 },
 					channel = "running",
-					mesh = "rbxassetid://74931697804083",
+					mesh = "rbxassetid://132496345686230",
 					name = "nano_glow_running",
 					piece = "nano",
 					size = { 1.57, 0.12, 0.5 },
@@ -6087,34 +8035,54 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0702,
 			maps = {
-				ALB = "rbxassetid://86597743734877",
-				EMI = "rbxassetid://132450350042936",
-				MTL = "rbxassetid://74743822712597",
-				NOR = "rbxassetid://127835594010242",
-				RGH = "rbxassetid://90421706851762",
+				ALB = "rbxassetid://87193481392018",
+				EMI = "rbxassetid://92658788251612",
+				MTL = "rbxassetid://125865071861256",
+				NOR = "rbxassetid://96298268111551",
+				RGH = "rbxassetid://90627141630657",
 			},
-			model = "rbxassetid://119658360799073",
+			model = "rbxassetid://126088644946329",
 			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
-					center = { 0, 3.575, -0.085 },
-					mesh = "rbxassetid://77961190907937",
-					size = { 6.74, 7.15, 9.37 },
+					center = { 0, 3.8, -0.085 },
+					mesh = "rbxassetid://138424153646836",
+					size = { 6.74, 6.7, 9.37 },
 				},
 				nano = {
 					center = { 0, 4.03, 3.428 },
-					mesh = "rbxassetid://96893311045579",
+					mesh = "rbxassetid://128133036345853",
 					parent = "base",
 					pivot = { 0, 2.3, 2.85 },
 					size = { 2.6, 3.46, 3.7165 },
+				},
+				trackL = {
+					center = { -2.525, 0.525, 0.0112 },
+					mesh = "rbxassetid://72091165664634",
+					parent = "base",
+					pivot = { -2.52, 0.46, 0 },
+					size = { 0.95, 1.05, 8.8776 },
+				},
+				trackR = {
+					center = { 2.525, 0.525, 0.0112 },
+					mesh = "rbxassetid://110499619480524",
+					parent = "base",
+					pivot = { 2.52, 0.46, 0 },
+					size = { 0.95, 1.05, 8.8776 },
 				},
 			},
 			status = "review",
 			teamPieces = {
 				"base",
 				"nano",
+				"trackL",
+				"trackR",
 			},
 			triangles = 4040,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 		},
 		ord_tidewright = {
 			attachments = {
@@ -6257,12 +8225,50 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 		},
 		ord_veil = {
+			anim = {
+				array = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+				wheelL1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelL4 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR1 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR2 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR3 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+				wheelR4 = {
+					axis = { 1, 0, 0 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
 					center = { 0, 4.7, 1.6 },
 					channel = "power",
-					mesh = "rbxassetid://76246719825813",
+					mesh = "rbxassetid://87066258163075",
 					name = "array_glow_power",
 					piece = "array",
 					size = { 3.554, 1.1, 3.554 },
@@ -6272,7 +8278,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 5.25, 1.6 },
 					channel = "running",
-					mesh = "rbxassetid://85632257960354",
+					mesh = "rbxassetid://83017120091261",
 					name = "array_glow_running",
 					piece = "array",
 					size = { 0.4, 0.1, 0.4 },
@@ -6282,7 +8288,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.25, -4.13 },
 					channel = "head",
-					mesh = "rbxassetid://82420415000731",
+					mesh = "rbxassetid://121712079548024",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 3.35, 0.2, 0.08 },
@@ -6292,7 +8298,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.19, 0.055 },
 					channel = "running",
-					mesh = "rbxassetid://116612515240362",
+					mesh = "rbxassetid://94657034505399",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 4.09, 1.34, 7.61 },
@@ -6302,35 +8308,119 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0703,
 			maps = {
-				ALB = "rbxassetid://98612425261871",
-				EMI = "rbxassetid://96462196732981",
-				MTL = "rbxassetid://130662296737620",
-				NOR = "rbxassetid://109592553628990",
-				RGH = "rbxassetid://91847377654074",
+				ALB = "rbxassetid://131007862629753",
+				EMI = "rbxassetid://125329083724853",
+				MTL = "rbxassetid://73677044404712",
+				NOR = "rbxassetid://137758551672773",
+				RGH = "rbxassetid://117968245494452",
 			},
-			model = "rbxassetid://108758394530902",
+			model = "rbxassetid://91348600736577",
 			pieces = {
 				array = {
 					center = { 0, 3.9, 1.6 },
-					mesh = "rbxassetid://105479070956334",
+					mesh = "rbxassetid://76063489824397",
 					parent = "base",
 					pivot = { 0, 3.2, 1.6 },
 					size = { 3.4, 3, 3.4 },
 				},
 				base = {
-					center = { 0, 1.8775, -0.15 },
-					mesh = "rbxassetid://70549367017361",
-					size = { 5.08, 3.755, 7.9 },
+					center = { 0, 2.2775, -0.15 },
+					mesh = "rbxassetid://94787115867866",
+					size = { 4.81, 2.955, 7.9 },
+				},
+				wheelL1 = {
+					center = { -2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://102051913397086",
+					parent = "base",
+					pivot = { -2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL2 = {
+					center = { -2.2, 0.75, -0.7333 },
+					mesh = "rbxassetid://128334064634614",
+					parent = "base",
+					pivot = { -2.2, 0.75, -0.7333 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL3 = {
+					center = { -2.2, 0.75, 0.9333 },
+					mesh = "rbxassetid://124743914797219",
+					parent = "base",
+					pivot = { -2.2, 0.75, 0.9333 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelL4 = {
+					center = { -2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://78681566447193",
+					parent = "base",
+					pivot = { -2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR1 = {
+					center = { 2.2, 0.75, -2.4 },
+					mesh = "rbxassetid://82774357957655",
+					parent = "base",
+					pivot = { 2.2, 0.75, -2.4 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR2 = {
+					center = { 2.2, 0.75, -0.7333 },
+					mesh = "rbxassetid://104964186083977",
+					parent = "base",
+					pivot = { 2.2, 0.75, -0.7333 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR3 = {
+					center = { 2.2, 0.75, 0.9333 },
+					mesh = "rbxassetid://75280606895970",
+					parent = "base",
+					pivot = { 2.2, 0.75, 0.9333 },
+					size = { 0.68, 1.5, 1.4266 },
+				},
+				wheelR4 = {
+					center = { 2.2, 0.75, 2.6 },
+					mesh = "rbxassetid://125515800872480",
+					parent = "base",
+					pivot = { 2.2, 0.75, 2.6 },
+					size = { 0.68, 1.5, 1.4266 },
 				},
 			},
 			status = "approved",
 			teamPieces = {
 				"array",
 				"base",
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelL4",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+				"wheelR4",
 			},
 			triangles = 1296,
+			visualPieces = {
+				"wheelL1",
+				"wheelL2",
+				"wheelL3",
+				"wheelL4",
+				"wheelR1",
+				"wheelR2",
+				"wheelR3",
+				"wheelR4",
+			},
 		},
 		ord_verdict = {
+			anim = {
+				trackL = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+				trackR = {
+					axis = { 1, 0, 0 },
+					motion = "scroll",
+				},
+			},
 			attachments = {
 				muzzle = {
 					at = { 0, 2.65, -10.75 },
@@ -6341,7 +8431,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.65, -7.11 },
 					channel = "weapon",
-					mesh = "rbxassetid://97244986402385",
+					mesh = "rbxassetid://132551659016636",
 					name = "barrel_glow_weapon",
 					piece = "barrel",
 					size = { 0.744, 0.744, 5.02 },
@@ -6351,7 +8441,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.52, -3.96 },
 					channel = "head",
-					mesh = "rbxassetid://90368178262793",
+					mesh = "rbxassetid://128454497240862",
 					name = "base_glow_head",
 					piece = "base",
 					size = { 5.15, 0.2, 0.12 },
@@ -6361,7 +8451,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 1.385, -0.1225 },
 					channel = "running",
-					mesh = "rbxassetid://123420616968071",
+					mesh = "rbxassetid://107797825006397",
 					name = "base_glow_running",
 					piece = "base",
 					size = { 6.31, 1.07, 8.155 },
@@ -6371,7 +8461,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				{
 					center = { 0, 2.815, 1.5625 },
 					channel = "running",
-					mesh = "rbxassetid://80618632829936",
+					mesh = "rbxassetid://140098911380848",
 					name = "turret_glow_running",
 					piece = "turret",
 					size = { 4.0614, 1.79, 4.125 },
@@ -6381,29 +8471,43 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0507,
 			maps = {
-				ALB = "rbxassetid://112372711368835",
-				EMI = "rbxassetid://106512776572284",
-				MTL = "rbxassetid://135588284465675",
-				NOR = "rbxassetid://106128478858735",
-				RGH = "rbxassetid://81307040432912",
+				ALB = "rbxassetid://115844524788176",
+				EMI = "rbxassetid://115960291900275",
+				MTL = "rbxassetid://103650954947641",
+				NOR = "rbxassetid://138198173633097",
+				RGH = "rbxassetid://104811495183244",
 			},
-			model = "rbxassetid://120441124899965",
+			model = "rbxassetid://106993326459704",
 			pieces = {
 				barrel = {
 					center = { 0, 2.65, -6 },
-					mesh = "rbxassetid://121125655000799",
+					mesh = "rbxassetid://113966211658485",
 					parent = "turret",
 					pivot = { 0, 2.65, -1.35 },
 					size = { 1.3, 1, 9.4 },
 				},
 				base = {
-					center = { 0, 1.0012, -0.1 },
-					mesh = "rbxassetid://91596574405236",
-					size = { 6.3, 2.0025, 8.1 },
+					center = { 0, 1.2263, -0.125 },
+					mesh = "rbxassetid://79891025251882",
+					size = { 6.3, 1.5525, 8.05 },
+				},
+				trackL = {
+					center = { -2.47, 0.5, 0.0261 },
+					mesh = "rbxassetid://85844471232568",
+					parent = "base",
+					pivot = { -2.47, 0.46, 0 },
+					size = { 0.74, 1, 7.8478 },
+				},
+				trackR = {
+					center = { 2.47, 0.5, 0.0261 },
+					mesh = "rbxassetid://136130478522496",
+					parent = "base",
+					pivot = { 2.47, 0.46, 0 },
+					size = { 0.74, 1, 7.8478 },
 				},
 				turret = {
 					center = { 0, 3.125, 1.3525 },
-					mesh = "rbxassetid://131723321354407",
+					mesh = "rbxassetid://89613624344154",
 					parent = "base",
 					pivot = { 0, 1.85, 1 },
 					size = { 4.2032, 2.55, 5.195 },
@@ -6413,32 +8517,48 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			teamPieces = {
 				"barrel",
 				"base",
+				"trackL",
+				"trackR",
 				"turret",
 			},
 			triangles = 3376,
+			visualPieces = {
+				"trackL",
+				"trackR",
+			},
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://100337176677443",
-					MTL = "rbxassetid://87039601312741",
-					NOR = "rbxassetid://119242337424190",
-					RGH = "rbxassetid://108201728881227",
+					ALB = "rbxassetid://93703433146395",
+					MTL = "rbxassetid://132311857799842",
+					NOR = "rbxassetid://97151706649714",
+					RGH = "rbxassetid://99949994030733",
 				},
-				model = "rbxassetid://89484745314472",
+				model = "rbxassetid://127049869427033",
 				pieces = {
 					barrel = {
-						center = { -0.0166, 2.6381, -6.0034 },
-						mesh = "rbxassetid://91841424009719",
-						size = { 1.4044, 1.0157, 9.4923 },
+						center = { -0.0005, 2.6782, -6.0099 },
+						mesh = "rbxassetid://72277044249305",
+						size = { 1.3753, 1.0637, 9.4819 },
 					},
 					base = {
-						center = { 0.0422, 1.0073, -0.1594 },
-						mesh = "rbxassetid://121241666567816",
-						size = { 6.5169, 2.0593, 8.2442 },
+						center = { 0.0177, 1.2521, -0.0774 },
+						mesh = "rbxassetid://115283226146852",
+						size = { 6.4818, 1.6312, 8.2621 },
+					},
+					trackL = {
+						center = { -2.4543, 0.5103, -0.0026 },
+						mesh = "rbxassetid://85137209562900",
+						size = { 0.8057, 1.0445, 7.8512 },
+					},
+					trackR = {
+						center = { 2.4776, 0.5435, 0.0408 },
+						mesh = "rbxassetid://78999301452212",
+						size = { 0.813, 1.0566, 7.8592 },
 					},
 					turret = {
-						center = { 0.0423, 3.1129, 1.3737 },
-						mesh = "rbxassetid://87869788561044",
-						size = { 4.3663, 2.6357, 5.2678 },
+						center = { 0.0091, 3.1311, 1.4293 },
+						mesh = "rbxassetid://119947140390772",
+						size = { 4.3303, 2.6799, 5.3214 },
 					},
 				},
 				status = "approved",
@@ -6662,6 +8782,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 3036,
 		},
 		ord_watchtower = {
+			anim = {
+				radar = {
+					axis = { 0, 1, 0 },
+					motion = "turn",
+				},
+			},
 			attachments = {},
 			glow = {
 				{
@@ -6716,6 +8842,12 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 1004,
 		},
 		ord_windmill = {
+			anim = {
+				rotor = {
+					axis = { 0, 0, 1 },
+					motion = "spin",
+				},
+			},
 			attachments = {},
 			glow = {
 				{

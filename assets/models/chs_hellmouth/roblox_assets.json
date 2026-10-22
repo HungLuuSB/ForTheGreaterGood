@@ -1,7 +1,36 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 3428 triangles, glow share 4.2%",
+  "revision": "Animated pieces (M-27): 3428 triangles, glow share 4.2%",
   "bar": {
+    "model": "rbxassetid://102858304523576",
+    "meshes": {
+      "barrel": "rbxassetid://95251907588641",
+      "barrel_glow_weapon": "rbxassetid://99469995705164",
+      "base": "rbxassetid://115150428273683",
+      "base_glow_head": "rbxassetid://99422771671738",
+      "base_glow_running": "rbxassetid://102764586207929",
+      "trackL": "rbxassetid://138820154853715",
+      "trackR": "rbxassetid://70908530415871",
+      "turret": "rbxassetid://134385702635208",
+      "turret_glow_running": "rbxassetid://133338068284430"
+    },
+    "decals": {
+      "ALB": "rbxassetid://132133365714547",
+      "RGH": "rbxassetid://78782269490117",
+      "NOR": "rbxassetid://103901512711862",
+      "MTL": "rbxassetid://119419940135235",
+      "EMI": "rbxassetid://95238097424427"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://135435341239967",
+      "NOR": "rbxassetid://106588896520546",
+      "RGH": "rbxassetid://93471672862256",
+      "MTL": "rbxassetid://97997030121104",
+      "EMI": "rbxassetid://117233198381589"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://103765052722993",
     "meshes": {
       "barrel": "rbxassetid://115232943024375",
@@ -26,7 +55,7 @@
       "MTL": "rbxassetid://96028010475822",
       "EMI": "rbxassetid://99889052201586"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
+    "note": "2026-10-22, glow pass (M-22): 3428 triangles, glow share 4.2%"
   },
   "bar_preglow": {
     "model": "rbxassetid://106342302528805",
@@ -67,6 +96,32 @@
     "model": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
   },
   "wreck": {
+    "model": "rbxassetid://117970705335156",
+    "meshes": {
+      "barrel": "rbxassetid://85994145745488",
+      "base": "rbxassetid://98062756555119",
+      "trackL": "rbxassetid://83630102902789",
+      "trackR": "rbxassetid://100597201415733",
+      "turret": "rbxassetid://82666580027779"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85344174517517",
+      "RGH": "rbxassetid://130129693472562",
+      "NOR": "rbxassetid://140039697264704",
+      "MTL": "rbxassetid://99048445413495",
+      "EMI": "rbxassetid://112974613919677"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://119199353251359",
+      "NOR": "rbxassetid://103126263413465",
+      "RGH": "rbxassetid://117950571640513",
+      "MTL": "rbxassetid://87797750258215",
+      "EMI": "rbxassetid://84575745676192"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hellmouth_wreck_bar in FTGG Art",
+    "revision": "Wreck rebuilt with the animated pieces (M-27): 3184 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://70465420259273",
     "meshes": {
       "barrel": "rbxassetid://72831725349935",

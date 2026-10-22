@@ -9,13 +9,85 @@
       "parent": null,
       "center": [
         0.0,
-        2.45,
+        2.8873,
         -0.0452
       ],
       "size": [
-        5.83,
-        4.9,
+        5.0,
+        4.0255,
         7.6904
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -2.45,
+        0.9,
+        -2.3
+      ],
+      "size": [
+        0.93,
+        1.8,
+        1.712
+      ],
+      "pivot": [
+        -2.45,
+        0.9,
+        -2.3
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -2.45,
+        0.9,
+        2.3
+      ],
+      "size": [
+        0.93,
+        1.8,
+        1.712
+      ],
+      "pivot": [
+        -2.45,
+        0.9,
+        2.3
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        2.45,
+        0.9,
+        -2.3
+      ],
+      "size": [
+        0.93,
+        1.8,
+        1.712
+      ],
+      "pivot": [
+        2.45,
+        0.9,
+        -2.3
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        2.45,
+        0.9,
+        2.3
+      ],
+      "size": [
+        0.93,
+        1.8,
+        1.712
+      ],
+      "pivot": [
+        2.45,
+        0.9,
+        2.3
       ]
     },
     "dish": {
@@ -40,8 +112,60 @@
   "attachments": {},
   "teamColorPieces": [
     "base",
+    "wheelL1",
+    "wheelL2",
+    "wheelR1",
+    "wheelR2",
     "dish"
   ],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelR1",
+    "wheelR2"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "dish": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -97,7 +221,11 @@
   ],
   "glowShare": 0.0877,
   "triangles": {
-    "base": 540,
+    "base": 316,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
     "dish": 368,
     "total": 908
   },

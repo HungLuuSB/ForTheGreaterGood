@@ -75,10 +75,11 @@ def build_base(p):
     t = math.radians(20)
     n, v = (0, math.sin(t), -math.cos(t)), (0, math.cos(t), math.sin(t))
     c = (mx, 11.0, mz)
-    p.obox(c, (1, 0, 0), n, 3.0, 2.0, 0.3, "paint", bevel=0.03)
-    p.obox(tuple(c[k] + n[k] * 0.16 for k in range(3)), (1, 0, 0), n, 2.7, 1.7, 0.03, "dark")
-    for b in (-0.85, 0.85):
-        p.obox(tuple(c[k] + n[k] * 0.18 + v[k] * b for k in range(3)), (1, 0, 0), n, 2.7, 0.08, 0.02, "light")
+    with p.sub("radar", (mx, 10.2, mz), "turn", (0, 1, 0)):  # M-27
+        p.obox(c, (1, 0, 0), n, 3.0, 2.0, 0.3, "paint", bevel=0.03)
+        p.obox(tuple(c[k] + n[k] * 0.16 for k in range(3)), (1, 0, 0), n, 2.7, 1.7, 0.03, "dark")
+        for b in (-0.85, 0.85):
+            p.obox(tuple(c[k] + n[k] * 0.18 + v[k] * b for k in range(3)), (1, 0, 0), n, 2.7, 0.08, 0.02, "light")
     p.box((mx, 12.3, mz), (0.5, 0.5, 0.5), "light")  # beacon
     p.box((mx, 10.1, mz), (1.2, 0.2, 1.2), "trim")
 

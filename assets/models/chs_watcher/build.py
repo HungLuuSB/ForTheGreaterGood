@@ -36,7 +36,7 @@ def build_base(p):
     p.obox((-1.6, 3.2, 2.1), (0.3, 1, 0.35), (1, 0, 0), 1.8, 0.2, 0.2, "dark")
     for sx in (-1, 1):
         for z in (-2.3, 2.3):
-            wheel(p, sx * 2.45, 0.9, z, 0.9, 0.85)
+            wheel(p, sx * 2.45, 0.9, z, 0.9, 0.85, name=f"wheel{'L' if sx < 0 else 'R'}{1 if z < 0 else 2}")
 
 
 def build_dish(p):

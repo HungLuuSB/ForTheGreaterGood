@@ -9,13 +9,121 @@
       "parent": null,
       "center": [
         0.0,
-        4.004,
+        4.404,
         -0.15
       ],
       "size": [
-        4.48,
-        8.008,
+        4.1,
+        7.208,
         7.5
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -1.9,
+        0.75,
+        -2.2
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -1.9000000000000001,
+        0.75,
+        -2.2
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -1.9,
+        0.75,
+        0.1
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -1.9000000000000001,
+        0.75,
+        0.09999999999999964
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -1.9,
+        0.75,
+        2.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -1.9000000000000001,
+        0.75,
+        2.3999999999999995
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        1.9,
+        0.75,
+        -2.2
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        1.9000000000000001,
+        0.75,
+        -2.2
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        1.9,
+        0.75,
+        0.1
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        1.9000000000000001,
+        0.75,
+        0.09999999999999964
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        1.9,
+        0.75,
+        2.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        1.9000000000000001,
+        0.75,
+        2.3999999999999995
       ]
     },
     "array": {
@@ -40,8 +148,80 @@
   "attachments": {},
   "teamColorPieces": [
     "base",
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
     "array"
   ],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "array": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -160,7 +340,13 @@
   ],
   "glowShare": 0.0648,
   "triangles": {
-    "base": 756,
+    "base": 420,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelL3": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
+    "wheelR3": 56,
     "array": 412,
     "total": 1168
   },

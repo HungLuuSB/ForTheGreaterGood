@@ -1,7 +1,37 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 1636 triangles, glow share 4.9%",
+  "revision": "Animated pieces (M-27): 1636 triangles, glow share 4.9%",
   "bar": {
+    "model": "rbxassetid://125967106206701",
+    "meshes": {
+      "base": "rbxassetid://137712641922263",
+      "base_glow_head": "rbxassetid://118548791086058",
+      "base_glow_running": "rbxassetid://99935577441579",
+      "launcher": "rbxassetid://97257178118905",
+      "launcher_glow_running": "rbxassetid://107750460955461",
+      "launcher_glow_weapon": "rbxassetid://137456160777543",
+      "trackL": "rbxassetid://70538536524134",
+      "trackR": "rbxassetid://71936869203608",
+      "turret": "rbxassetid://110990036294799",
+      "turret_glow_running": "rbxassetid://105885155468406"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117702843481305",
+      "RGH": "rbxassetid://123571977363979",
+      "NOR": "rbxassetid://134078164532038",
+      "MTL": "rbxassetid://86994256270002",
+      "EMI": "rbxassetid://138869429305570"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109646940250012",
+      "NOR": "rbxassetid://130538778393887",
+      "RGH": "rbxassetid://88643183796357",
+      "MTL": "rbxassetid://93991662862069",
+      "EMI": "rbxassetid://135685755241286"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_judgement_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://132600215144608",
     "meshes": {
       "base": "rbxassetid://78066672916278",
@@ -27,6 +57,6 @@
       "MTL": "rbxassetid://127952031353678",
       "EMI": "rbxassetid://136411335554606"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_judgement_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 1636 triangles, glow share 4.9%"
   }
 }

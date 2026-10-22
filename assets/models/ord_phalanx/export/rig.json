@@ -142,5 +142,15 @@
       "MTL",
       "EMI"
     ]
+  },
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
   }
 }
