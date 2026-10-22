@@ -6,9 +6,10 @@
 -- field itself):
 --   * enemy projectiles (shells, rockets, bombs, missiles; not torpedoes,
 --     strategic missiles, or interceptors chasing one) that come into the field
---     band outside the dome brake, turn and are thrown back out. A turned
+--     band outside the dome on course for it are slowed and turned: head-on
+--     ones back, off-centre ones round the dome and on (S-82). A turned
 --     shell stays live: it flies on and explodes where it lands (a missile
---     loses its lock). One that reaches the dome still moving in breaks
+--     loses its lock); one that comes back is caught again. One that reaches the dome still moving in breaks
 --     through, slowed, and carries on inside. Shots fired from inside pass
 --     out freely; allies' shells are never touched. Hitscan and beams pass
 --     through (not in the rules);
@@ -191,11 +192,11 @@ function Shield.deflect(
 	if dome == nil then
 		local speed = sqrt(vx * vx + vy * vy + vz * vz)
 		local side = c.pTeam[id]
-		local done = c.pShieldDone[id]
 		for _, d in c.shieldIds do
-			if c.shieldUp[d] and d ~= done and w.ally[d] ~= side then
+			if c.shieldUp[d] and w.ally[d] ~= side then
 				local cx, cy, cz = Shield.center(sim, d)
-				if ShieldField.near(x, y, z, speed, cx, cy, cz, shieldOf(sim, d).radius, dt) then
+				local radius = shieldOf(sim, d).radius
+				if ShieldField.near(x, y, z, speed, cx, cy, cz, radius, dt) and ShieldField.onCourse(x, y, z, vx, vy, vz, cx, cy, cz, radius) then
 					dome = d
 					break
 				end
@@ -216,11 +217,9 @@ function Shield.deflect(
 	if before == FREE and phase ~= FREE and phase ~= DONE then
 		Combat.addEvent(c, { kind = "SHIELD_FIELD", tick = sim.tick, unit = d, other = id })
 	end
-	if phase == FREE then
+	if phase == FREE or phase == DONE then
+		-- (a shell thrown out that comes back is caught again)
 		c.pShield[id], c.pShieldPhase[id] = nil, nil
-	elseif phase == DONE then
-		c.pShield[id], c.pShieldPhase[id] = nil, nil
-		c.pShieldDone[id] = d
 	else
 		c.pShield[id], c.pShieldPhase[id] = d, phase
 	end
