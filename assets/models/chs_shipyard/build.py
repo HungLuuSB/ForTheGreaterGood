@@ -60,8 +60,8 @@ def build_base(p):
             beam(p, (-16.5 + a[0], y, 4 + a[1]), (-16.5 + b[0], y, 4 + b[1]), 0.14, "steel")
     p.box((-4, 14.2, 4), (26, 0.8, 1.0), "paint", bevel=0.03)
     p.box((0, 14.63, 4), (12, 0.05, 0.8), "team")
-    p.box((-21.5, 14.2, 4), (5, 0.7, 1.0), "trim")
-    p.box((-22.5, 13.3, 4), (1.6, 1.2, 1.2), "steel")  # counterweight
+    p.box((-18.4, 14.2, 4), (2.8, 0.7, 1.0), "trim")  # counter-jib, inside the footprint (user review 2026-10-23)
+    p.box((-19.0, 13.3, 4), (1.4, 1.2, 1.2), "steel")  # counterweight
     p.box((4.0, 13.5, 4), (1.4, 0.6, 1.2), "trim")  # trolley
     p.box((4.0, 13.17, 4), (0.8, 0.06, 0.8), "power")
     p.box((9, 14.8, 4), (0.6, 0.6, 0.6), "light")

@@ -45,7 +45,7 @@ def build_base(p):
     # tail boom with brace, fin, tail rotor
     p.box((0, 1.4, 3.8), (0.35, 0.35, 4.2), "trim")
     beam(p, (0, 0.6, 1.5), (0, 1.3, 5.6), 0.15, "dark")
-    p.prism_x([(5.2, 1.4), (6.2, 1.4), (6.2, 3.0), (5.8, 3.0)], -0.08, 0.08, "team", bevel=0.02)
+    p.prism_x([(5.1, 1.32), (6.35, 1.32), (6.35, 3.2), (5.75, 3.2)], -0.08, 0.08, "team", bevel=0.02)
     p.cylinder("x", (0.2, 2.1, 5.7), 0.8, 0.06, 8, "dark")
     for sx in (-1, 1):
         p.cylinder("x", (sx * 0.8, 0.3, -0.8), 0.3, 0.25, 10, "rubber", cap_kinds=("steel", "steel"))

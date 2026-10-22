@@ -46,7 +46,8 @@ def beam(p, a, b, w, kind):
 
 def build_base(p):
     p.prism_y([(-3.3, -3.3), (3.3, -3.3), (3.3, 3.3), (-3.3, 3.3)], 0.0, 0.45, "dark", bevel=0.03)
-    p.box((0, 0.49, 2.4), (4.2, 0.05, 1.1), "team", bevel=0.012)
+    for sz in (-1, 1):  # skid team plates between the foot pads (bigger, user review 2026-10-23)
+        p.box((0, 0.49, sz * 2.35), (3.7, 0.05, 1.7), "team", bevel=0.012)
     for sx in (-1, 1):  # skid edge lights, all four sides
         p.box((sx * 3.25, 0.3, 0), (0.06, 0.12, 4.6), "light")
         p.box((0, 0.3, sx * 3.25), (4.6, 0.12, 0.06), "light")

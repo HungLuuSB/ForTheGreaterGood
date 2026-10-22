@@ -1,7 +1,35 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 1248 triangles, glow share 5.1%",
+  "revision": "User review fixes 2026-10-23: 1248 triangles, glow share 5.0%",
   "bar": {
+    "model": "rbxassetid://80613242558609",
+    "meshes": {
+      "base": "rbxassetid://77804031023812",
+      "base_glow_head": "rbxassetid://80695456487280",
+      "base_glow_running": "rbxassetid://130094915477367",
+      "base_glow_weapon": "rbxassetid://121008344534907",
+      "pylon": "rbxassetid://109684731956491",
+      "pylon_glow_weapon": "rbxassetid://113121027963908",
+      "rotor": "rbxassetid://70509004322467"
+    },
+    "decals": {
+      "ALB": "rbxassetid://83298212518456",
+      "RGH": "rbxassetid://99144111932535",
+      "NOR": "rbxassetid://99103255583920",
+      "MTL": "rbxassetid://116112663436512",
+      "EMI": "rbxassetid://86948177289563"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://81625871160518",
+      "NOR": "rbxassetid://118994932108519",
+      "RGH": "rbxassetid://83286424519799",
+      "MTL": "rbxassetid://108904350375199",
+      "EMI": "rbxassetid://115097975555561"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_guardian_bar in FTGG Art",
+    "reuploadNote": "ALB re-uploaded 2026-10-23: the first image (rbxassetid://87943858826056) failed with HTTP 502 in Studio (pipeline.md, white model)."
+  },
+  "bar_1": {
     "model": "rbxassetid://115931091846194",
     "meshes": {
       "base": "rbxassetid://117249740132818",
@@ -26,6 +54,6 @@
       "MTL": "rbxassetid://92970609189293",
       "EMI": "rbxassetid://100346437639566"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_guardian_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 1248 triangles, glow share 5.1%"
   }
 }

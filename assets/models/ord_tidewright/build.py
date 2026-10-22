@@ -26,7 +26,7 @@ def build_base(p):
     # hull: flat stern, raked bow, a dark band at the waterline
     p.prism_x([(-6.5, 1.3), (-4.5, -0.5), (4.5, -0.5), (4.5, 1.3)], -1.8, 1.8, "paint", bevel=0.06)
     p.prism_x([(-5.9, 0.0), (-4.3, -0.35), (4.55, -0.35), (4.55, 0.0)], -1.86, 1.86, "dark", bevel=0.02)
-    p.box((0, 1.33, -2.7), (1.8, 0.05, 1.08), "team", bevel=0.012)
+    p.box((0, 1.33, -2.7), (2.8, 0.05, 1.5), "team", bevel=0.012)
     p.box((0, 1.6, -2.6), (2.16, 0.6, 1.6), "trim", bevel=0.04)  # cargo hatch
     for sx in (-1, 1):  # hatch status lights
         p.box((sx * 1.09, 1.75, -2.6), (0.04, 0.16, 1.4), "light")
