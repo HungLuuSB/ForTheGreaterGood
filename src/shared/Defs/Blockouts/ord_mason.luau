@@ -11,8 +11,8 @@ return {
 	parts = {
 		{ name = "base", shape = "box", size = { 5.0, 1.3, 6.6 }, at = { 0, 1.55, 0.4 }, color = "hull" },
 		{ name = "glacis", parent = "base", shape = "wedge", size = { 5.0, 1.3, 1.2 }, at = { 0, 1.55, -3.5 }, color = "hull" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { -2.65, 0.65, -0.1 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { 2.65, 0.65, -0.1 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { -2.65, 0.65, -0.1 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 1.1, 1.3, 7.8 }, at = { 2.65, 0.65, -0.1 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 		{ name = "fenderL", parent = "base", shape = "box", size = { 1.3, 0.2, 7.4 }, at = { -2.65, 1.4, -0.1 }, color = "dark" },
 		{ name = "fenderR", parent = "base", shape = "box", size = { 1.3, 0.2, 7.4 }, at = { 2.65, 1.4, -0.1 }, color = "dark" },
 		{ name = "blade", parent = "base", shape = "box", size = { 6.0, 1.1, 0.3 }, at = { 0, 0.85, -4.6 }, rot = { -12, 0, 0 }, color = "metal" },

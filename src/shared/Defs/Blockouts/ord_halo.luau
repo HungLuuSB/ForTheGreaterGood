@@ -13,12 +13,12 @@ return {
 		{ name = "nose", parent = "base", shape = "wedge", size = { 4.4, 1.2, 1.4 }, at = { 0, 1.6, -3.5 }, color = "hull" },
 		{ name = "cab", parent = "base", shape = "box", size = { 3.6, 0.8, 1.4 }, at = { 0, 2.6, -1.6 }, color = "hull" },
 		{ name = "windshield", parent = "base", shape = "wedge", size = { 3.6, 0.8, 0.7 }, at = { 0, 2.6, -2.65 }, color = "glass" },
-		{ name = "wheel1L", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { -2.4, 0.75, -2.4 }, color = "track" },
-		{ name = "wheel1R", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { 2.4, 0.75, -2.4 }, color = "track" },
-		{ name = "wheel2L", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { -2.4, 0.75, 0.2 }, color = "track" },
-		{ name = "wheel2R", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { 2.4, 0.75, 0.2 }, color = "track" },
-		{ name = "wheel3L", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { -2.4, 0.75, 2.6 }, color = "track" },
-		{ name = "wheel3R", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { 2.4, 0.75, 2.6 }, color = "track" },
+		{ name = "wheel1L", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { -2.4, 0.75, -2.4 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel1R", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { 2.4, 0.75, -2.4 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel2L", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { -2.4, 0.75, 0.2 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel2R", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { 2.4, 0.75, 0.2 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel3L", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { -2.4, 0.75, 2.6 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
+		{ name = "wheel3R", parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.5, 1.5 }, at = { 2.4, 0.75, 2.6 }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } },
 
 		{ name = "turret", parent = "base", shape = "cylinder", axis = "y", size = { 1.4, 1.2, 1.4 }, at = { 0, 2.8, 1.6 }, color = "dark" },
 

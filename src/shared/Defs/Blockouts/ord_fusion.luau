@@ -14,7 +14,7 @@ return require("./Scale").scaled({
 		{ name = "wallR", parent = "base", shape = "wedge", size = { 20, 2, 2 }, at = { 11, 1, 0 }, rot = { 0, -90, 0 }, color = "hull" },
 		{ name = "block", parent = "base", shape = "box", size = { 14, 2.4, 14 }, at = { 0, 3.2, 0 }, color = "hull" },
 		{ name = "ring", parent = "base", shape = "cylinder", axis = "y", size = { 9, 1.2, 9 }, at = { 0, 5, 0 }, color = "metal" },
-		{ name = "core", parent = "base", shape = "ball", size = { 6.5, 6.5, 6.5 }, at = { 0, 7.4, 0 }, color = "glass" },
+		{ name = "core", parent = "base", shape = "ball", size = { 6.5, 6.5, 6.5 }, at = { 0, 7.4, 0 }, color = "glass", anim = { motion = "pulse", axis = { 0, 1, 0 } } },
 		{ name = "clampA", parent = "base", shape = "box", size = { 0.8, 5, 0.8 }, at = { -4.2, 7.4, 0 }, color = "dark" },
 		{ name = "clampB", parent = "base", shape = "box", size = { 0.8, 5, 0.8 }, at = { 4.2, 7.4, 0 }, color = "dark" },
 		{ name = "clampTop", parent = "base", shape = "box", size = { 9.2, 0.8, 0.8 }, at = { 0, 10.3, 0 }, color = "dark" },

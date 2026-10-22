@@ -1,0 +1,9 @@
+{
+  "note": "Effect textures (M-27, docs/contracts/fx.md \"Effect textures\"): white RGB, the pattern in alpha; uploaded as Decals through Open Cloud (opencloud.json), image IDs from the Decals.",
+  "textures": {
+    "radarPulse": "rbxassetid://113771866546969",
+    "sonarPing": "rbxassetid://120009987380670",
+    "jammerStatic": "rbxassetid://124485150689074",
+    "heatShimmer": "rbxassetid://105647146631109"
+  }
+}

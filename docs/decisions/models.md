@@ -226,3 +226,9 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user (2026-10-23): structures read too small; factories and generators should take up space, and size should show tech level.
 
+### M-27 — Animated pieces and effect textures (2026-10-23)
+
+**Decision:** every part that should move is its own piece with a pivot and an `anim` record (motion, axis, range), in the meshes (manifest `anim` / `visualPieces`) and the blockouts (`anim` on the part): rotors and tail rotors, wheels, track sets, radar dishes and arrays, drills, cranes and trolleys, jammer emitters, sonar drums and dipping sonars, hatches and covers, cores. Splitting only (no geometry change), done in the build scripts with `lib.Piece.sub` so the bake and the wreck build stay the same. Four white effect textures (radar pulse, sonar ping, jammer static, heat shimmer) for the client to tint. Spec: rig.md section 9, fx.md "Effect textures".
+
+**Why:** the user's animation audit for the client (2026-10-23). Track sets are one piece per side (band and wheels) rather than a piece per road wheel, to keep the part count per tank low; wheeled units get a piece per wheel.
+

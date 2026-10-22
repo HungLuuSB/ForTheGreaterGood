@@ -15,7 +15,7 @@ return {
 		{ name = "bridgeGlass", parent = "base", shape = "box", size = { 4.128, 0.3, 0.08 }, at = { 0, 4.9, -1.84 }, color = "glass" },
 		{ name = "bridgeTeam", parent = "base", shape = "box", size = { 3.612, 0.08, 3.6 }, at = { 0, 5.34, 1.2 }, color = "team" },
 		{ name = "mast", parent = "base", shape = "box", size = { 1.2, 4, 1.2 }, at = { 0, 7.3, 2.4 }, color = "hull" },
-		{ name = "mastArray", parent = "base", shape = "box", size = { 1.5, 1, 1.5 }, at = { 0, 8.5, 2.4 }, color = "dark" },
+		{ name = "mastArray", parent = "base", shape = "box", size = { 1.5, 1, 1.5 }, at = { 0, 8.5, 2.4 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "mastGlass", parent = "base", shape = "box", size = { 1.55, 0.25, 1.55 }, at = { 0, 8.5, 2.4 }, color = "glass" },
 		{ name = "turret1", parent = "base", shape = "box", size = { 3, 1.4, 3 }, at = { 0, 2.8, -7 }, pivot = { 0, 2.1, -7 }, color = "hull" },
 		{ name = "turret1Front", parent = "turret1", shape = "wedge", size = { 3, 1.4, 1.2 }, at = { 0, 2.8, -9.1 }, color = "hull" },

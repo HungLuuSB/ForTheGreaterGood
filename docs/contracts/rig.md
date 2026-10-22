@@ -145,3 +145,23 @@ Owner: models stream. Attachments for the client's BAR-style nanoframe, on every
 Constructors use `nano1`, not `nano`: an Attachment named like the `nano` piece would make `FindFirstChild("nano", true)` ambiguous, and factories and constructors then share one lookup (`nano1` … `nanoN`, stop at the first missing).
 
 Mesh anchors live in `assets/models/tools/anchors.py` (final model space); `tools/unit.py` merges them into `rig.json`, and `python assets/models/tools/anchors.py --patch` writes them into existing exports without a rebuild. A new factory or constructor gets its anchors in the same commit as its blockout or mesh.
+
+## 9. Animated pieces (M-27)
+
+Owner: models stream. Every part that should move is its own jointed piece with its pivot where it turns or slides, so the client can animate it. **No geometry changed:** existing shapes were split into pieces. Each animated piece carries `anim = { motion, axis, range? }`, with `axis` in model space and a positive rotation as the opening / forward direction:
+- **meshes:** the manifest entry's `anim` (by piece name), with the pieces that exist only for animation listed in its `visualPieces` (section 7);
+- **blockouts:** an `anim` field on the part itself. A part with `anim` is jointed like a visual piece (`Blockout.pieceSet`; `Blockout.anims(bp)` lists them).
+
+| Motion | Meaning | Pieces |
+|---|---|---|
+| `spin` | continuous rotation about `axis` | helicopter `rotor` (Y) and `tailRotor` (X); windmill `rotor` (Z); wheels `wheelL1..N` / `wheelR1..N` (X); jammer emitters (Y): Veilspire `band`, Curtain `tip`, Smog / Blackout `spine` (the rods ride on it) |
+| `turn` | slow rotation or sweep about `axis` (Y) | `radar`, `dish`, `array`, `radarPanel`, `mastArray` (radar dishes and arrays, airfield and ship radars, the Sentry's mast); extractor `drill`; crane `jib`, `deckJib`, `deckCrane`; sonar station `drum` / `ring` |
+| `scroll` | a track set: the band with its road wheels, as one piece (`trackL`, `trackR`, axis X). Bob or judder it with speed. The band's UVs run along its length, so a texture offset can fake the movement | every tracked unit |
+| `slide` | translation along `axis` up to `range` studs | factory `trolley` (Order shipyard gantry, Chaos vehicle plant crane rail) |
+| `open` | rotation about `axis` up to `range` degrees | silo `hatch` / `hatch2`, bomber `bay`, beam tower lids `shellL` / `shellR`, the anti-nuke `hatch` |
+| `lower` | translation along `axis` up to `range` studs | dipping `sonar` (ASW helicopters, torpedo launchers) |
+| `pulse` | scale and emissive pulse about the pivot | shield generator / fusion / generator `core` |
+
+The piece names stay the same in a unit's blockout, mesh and wreck, so one piece script serves all three. Builders' `nano` and weapon pieces (`turret`, `barrel`, `launcher`, …) are driven by the sim's aim model as before and aren't listed here. Factories' gantries, cranes and conveyors, extractor drill heads, and generator / fusion cores get their pieces as each structure is redesigned at its new size (size scale, M-26).
+
+How it's built (models stream): `with p.sub(name, pivot, motion, axis, range)` in a build script moves the shells made inside the block into their own piece (`tools/lib.py`); `unit.wheel(..., name=)` and the shared hulls do it for wheels and track sets. `tools/animate.py` lists `anim` for pieces that were already pieces.

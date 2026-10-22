@@ -12,7 +12,7 @@ local parts = {
 	{ name = "braceD", parent = "base", shape = "box", size = { 2, 0.2, 0.2 }, at = { 0, 7.5, 0.7 }, color = "dark" },
 	{ name = "nacelle", parent = "base", shape = "box", size = { 1.2, 1, 2.4 }, at = { 0, 10.4, 0.3 }, color = "hull" },
 	{ name = "light", parent = "base", shape = "box", size = { 0.4, 0.3, 0.4 }, at = { 0, 11.05, 1.1 }, color = "glass" },
-	{ name = "rotor", parent = "base", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 0.6 }, at = { 0, 10.4, -1.2 }, color = "metal" },
+	{ name = "rotor", parent = "base", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 0.6 }, at = { 0, 10.4, -1.2 }, color = "metal", anim = { motion = "spin", axis = { 0, 0, 1 } } },
 	{ name = "bladeA", parent = "rotor", shape = "box", size = { 0.45, 9, 0.12 }, at = { 0, 10.4, -1.4 }, rot = { 0, 0, 20 }, color = "hull" },
 }
 for i, p in { { -1.4, -1.4 }, { 1.4, -1.4 }, { -1.4, 1.4 }, { 1.4, 1.4 } } do

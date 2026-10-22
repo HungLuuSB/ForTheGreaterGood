@@ -23,11 +23,11 @@ local parts = {
 	{ name = "ready", parent = "launcher", shape = "cylinder", axis = "z", size = { 2.0, 2.0, 0.1 }, at = { 0, 4.1, -2.9 }, color = "glass" },
 	-- compact radar on the cab roof
 	{ name = "radarMast", parent = "base", shape = "cylinder", axis = "y", size = { 0.4, 0.8, 0.4 }, at = { 1.6, 4.8, -3.4 }, color = "metal" },
-	{ name = "radar", parent = "base", shape = "box", size = { 1.8, 1.1, 0.2 }, at = { 1.6, 5.6, -3.4 }, rot = { 15, 0, 0 }, pivot = { 1.6, 5.2, -3.4 }, color = "dark" },
+	{ name = "radar", parent = "base", shape = "box", size = { 1.8, 1.1, 0.2 }, at = { 1.6, 5.6, -3.4 }, rot = { 15, 0, 0 }, pivot = { 1.6, 5.2, -3.4 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 }
 for i, z in { -3.9, -1.6, 1.8, 4.1 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.7, 1.7 }, at = { -2.6, 0.85, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.7, 1.7 }, at = { 2.6, 0.85, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.7, 1.7 }, at = { -2.6, 0.85, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.8, 1.7, 1.7 }, at = { 2.6, 0.85, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 
 return {

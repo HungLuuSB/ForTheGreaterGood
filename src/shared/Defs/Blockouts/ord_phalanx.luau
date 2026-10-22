@@ -23,7 +23,7 @@ local parts = {
 	{ name = "collar", parent = "base", shape = "cylinder", axis = "y", size = { 3.0, 0.8, 3.0 }, at = { 0, 5.3, 0 }, color = "dark" },
 
 	-- the core: a glowing column, the def's piece
-	{ name = "core", parent = "base", shape = "cylinder", axis = "y", size = { 1.2, 2.6, 1.2 }, at = { 0, 7.0, 0 }, color = "glass" },
+	{ name = "core", parent = "base", shape = "cylinder", axis = "y", size = { 1.2, 2.6, 1.2 }, at = { 0, 7.0, 0 }, color = "glass", anim = { motion = "pulse", axis = { 0, 1, 0 } } },
 }
 for i, c in { { -5.4, -5.4 }, { 5.4, -5.4 }, { -5.4, 5.4 }, { 5.4, 5.4 } } do
 	table.insert(parts, { name = `post{i}`, parent = "base", shape = "cylinder", axis = "y", size = { 1.2, 3.2, 1.2 }, at = { c[1], 2.8, c[2] }, color = "metal" })

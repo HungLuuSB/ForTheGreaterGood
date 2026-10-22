@@ -10,7 +10,7 @@ local parts = {
 	{ name = "tower", parent = "base", shape = "box", size = { 4, 10, 4 }, at = { 15.5, 5.4, 15 }, color = "hull" },
 	{ name = "towerGlass", parent = "base", shape = "box", size = { 4.6, 1.6, 4.6 }, at = { 15.5, 11.2, 15 }, color = "glass" },
 	{ name = "towerRoof", parent = "base", shape = "box", size = { 5.2, 0.5, 5.2 }, at = { 15.5, 12.25, 15 }, color = "hull" },
-	{ name = "radarPanel", parent = "base", shape = "box", size = { 3.4, 2.2, 0.3 }, at = { 15.5, 13.8, 15 }, rot = { 20, 0, 0 }, color = "dark" },
+	{ name = "radarPanel", parent = "base", shape = "box", size = { 3.4, 2.2, 0.3 }, at = { 15.5, 13.8, 15 }, rot = { 20, 0, 0 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	-- T2 signature (T1 vs T2 check, 2026-10-22): a big approach-radar radome
 	{ name = "radomeBlock", parent = "base", shape = "box", size = { 6, 4, 6 }, at = { 15.5, 2.4, -13 }, color = "hull" },
 	{ name = "radomeTeam", parent = "base", shape = "box", size = { 5.5, 0.6, 0.06 }, at = { 15.5, 3.4, -15.73 }, color = "team" },

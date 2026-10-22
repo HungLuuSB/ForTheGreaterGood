@@ -19,7 +19,7 @@ return {
 		{ name = "engineR", parent = "base", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 0.3 }, at = { 0.45, 0.6, 4.4 }, color = "glass" },
 		{ name = "strutF", parent = "base", shape = "box", size = { 0.25, 0.8, 0.25 }, at = { 0, 1.4, -0.8 }, color = "dark" },
 		{ name = "strutB", parent = "base", shape = "box", size = { 0.25, 0.8, 0.25 }, at = { 0, 1.4, 1.4 }, color = "dark" },
-		{ name = "dish", parent = "base", shape = "box", size = { 0.5, 0.5, 5.2 }, at = { 0, 2, 0.3 }, color = "hull" },
+		{ name = "dish", parent = "base", shape = "box", size = { 0.5, 0.5, 5.2 }, at = { 0, 2, 0.3 }, color = "hull", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "dishFaceL", parent = "dish", shape = "box", size = { 0.06, 0.35, 4.8 }, at = { -0.27, 2, 0.3 }, color = "glass" },
 		{ name = "dishFaceR", parent = "dish", shape = "box", size = { 0.06, 0.35, 4.8 }, at = { 0.27, 2, 0.3 }, color = "glass" },
 	},

@@ -22,11 +22,11 @@ local parts = {
 	-- lattice radar mast at the back right, the array on top
 	{ name = "mast", parent = "base", shape = "box", size = { 0.4, 5.6, 0.4 }, at = { 1.7, 5.1, 4.2 }, color = "dark" },
 	{ name = "brace", parent = "base", shape = "box", size = { 0.18, 5.2, 0.18 }, at = { 1.7, 4.9, 3.6 }, rot = { 8, 0, 0 }, color = "dark" },
-	{ name = "radar", parent = "base", shape = "box", size = { 2.4, 1.4, 0.2 }, at = { 1.7, 8.3, 4.2 }, rot = { 15, 0, 0 }, pivot = { 1.7, 7.8, 4.2 }, color = "metal" },
+	{ name = "radar", parent = "base", shape = "box", size = { 2.4, 1.4, 0.2 }, at = { 1.7, 8.3, 4.2 }, rot = { 15, 0, 0 }, pivot = { 1.7, 7.8, 4.2 }, color = "metal", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 }
 for i, z in { -3.6, 1.2, 3.6 } do
-	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { -2.3, 0.75, z }, color = "track" })
-	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { 2.3, 0.75, z }, color = "track" })
+	table.insert(parts, { name = `wheelL{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { -2.3, 0.75, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
+	table.insert(parts, { name = `wheelR{i}`, parent = "base", shape = "cylinder", axis = "x", size = { 0.7, 1.5, 1.5 }, at = { 2.3, 0.75, z }, color = "track", anim = { motion = "spin", axis = { 1, 0, 0 } } })
 end
 
 return {

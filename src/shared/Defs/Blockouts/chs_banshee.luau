@@ -18,7 +18,7 @@ return {
 		{ name = "podR", parent = "base", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 2.4 }, at = { 1, 0.45, 2.7 }, color = "metal" },
 		{ name = "glowL", parent = "base", shape = "cylinder", axis = "z", size = { 0.55, 0.55, 0.2 }, at = { -1, 0.45, 3.95 }, color = "glass" },
 		{ name = "glowR", parent = "base", shape = "cylinder", axis = "z", size = { 0.55, 0.55, 0.2 }, at = { 1, 0.45, 3.95 }, color = "glass" },
-		{ name = "dish", parent = "base", shape = "box", size = { 2.6, 0.5, 2.2 }, at = { 0, 1.7, 0.6 }, color = "dark" },
+		{ name = "dish", parent = "base", shape = "box", size = { 2.6, 0.5, 2.2 }, at = { 0, 1.7, 0.6 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "dishGlow", parent = "dish", shape = "box", size = { 2.2, 0.06, 1.8 }, at = { 0, 1.97, 0.6 }, color = "glass" },
 		{ name = "podGlowL", parent = "base", shape = "box", size = { 0.12, 0.3, 1.2 }, at = { -1.4, 0.45, 2.4 }, color = "glass" },
 		{ name = "podGlowR", parent = "base", shape = "box", size = { 0.12, 0.3, 1.2 }, at = { 1.4, 0.45, 2.4 }, color = "glass" },

@@ -25,7 +25,7 @@ local parts = {
 	{ name = "mast", parent = "base", shape = "box", size = { 0.6, 11, 0.6 }, at = { -7, 6.7, 7 }, color = "dark" },
 	{ name = "braceA", parent = "base", shape = "box", size = { 0.25, 10, 0.25 }, at = { -6.2, 6.2, 7 }, rot = { 0, 0, -6 }, color = "dark" },
 	{ name = "braceB", parent = "base", shape = "box", size = { 0.25, 10, 0.25 }, at = { -7, 6.2, 6.2 }, rot = { 6, 0, 0 }, color = "dark" },
-	{ name = "radar", parent = "base", shape = "box", size = { 4.2, 2.4, 0.3 }, at = { -7, 13.2, 7 }, rot = { 20, 0, 0 }, pivot = { -7, 12.2, 7 }, color = "metal" },
+	{ name = "radar", parent = "base", shape = "box", size = { 4.2, 2.4, 0.3 }, at = { -7, 13.2, 7 }, rot = { 20, 0, 0 }, pivot = { -7, 12.2, 7 }, color = "metal", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "radarFace", parent = "radar", shape = "box", size = { 3.8, 2.0, 0.06 }, at = { -7, 13.25, 6.82 }, rot = { 20, 0, 0 }, color = "glass" },
 	{ name = "beacon", parent = "base", shape = "ball", size = { 0.5, 0.5, 0.5 }, at = { -7, 12.4, 7 }, color = "glass" },
 }

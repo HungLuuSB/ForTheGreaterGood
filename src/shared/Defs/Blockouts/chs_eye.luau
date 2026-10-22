@@ -11,7 +11,7 @@ local parts = {
 	{ name = "braceB", parent = "base", shape = "box", size = { 2.4, 0.2, 0.2 }, at = { 0, 3.5, 1 }, color = "dark" },
 	{ name = "braceC", parent = "base", shape = "box", size = { 1.8, 0.2, 0.2 }, at = { 0, 6.5, -0.7 }, color = "dark" },
 	{ name = "eye", parent = "base", shape = "ball", size = { 1.1, 1.1, 1.1 }, at = { 0, 7.6, -0.9 }, color = "glass" },
-	{ name = "radar", parent = "base", shape = "box", size = { 4.8, 2.4, 0.3 }, at = { 0, 9.8, 0 }, rot = { 15, 0, 0 }, pivot = { 0, 8.6, 0 }, color = "hull" },
+	{ name = "radar", parent = "base", shape = "box", size = { 4.8, 2.4, 0.3 }, at = { 0, 9.8, 0 }, rot = { 15, 0, 0 }, pivot = { 0, 8.6, 0 }, color = "hull", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "radarTeam", parent = "radar", shape = "box", size = { 4.2, 0.4, 0.08 }, at = { 0, 10.85, 0.47 }, rot = { 15, 0, 0 }, color = "team" },
 }
 for i, p in { { -1.3, -1.3 }, { 1.3, -1.3 }, { -1.3, 1.3 }, { 1.3, 1.3 } } do

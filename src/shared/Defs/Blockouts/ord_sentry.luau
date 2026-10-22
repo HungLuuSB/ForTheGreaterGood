@@ -21,7 +21,7 @@ return {
 		{ name = "turret2Front", parent = "turret2", shape = "wedge", size = { 0.9, 0.6, 0.36 }, at = { 0, 1.6, 2.67 }, color = "hull" },
 		{ name = "turret2Barrel0", parent = "turret2", shape = "cylinder", axis = "z", size = { 0.3, 0.3, 0.8 }, at = { 0, 1.6, 2.09 }, color = "metal" },
 		{ name = "mast", parent = "base", shape = "box", size = { 1.2, 1.8, 1.2 }, at = { 0, 3.8, 1.2 }, color = "hull" },
-		{ name = "mastArray", parent = "base", shape = "box", size = { 1.5, 1, 1.5 }, at = { 0, 3.9, 1.2 }, color = "dark" },
+		{ name = "mastArray", parent = "base", shape = "box", size = { 1.5, 1, 1.5 }, at = { 0, 3.9, 1.2 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "mastGlass", parent = "base", shape = "box", size = { 1.55, 0.25, 1.55 }, at = { 0, 3.9, 1.2 }, color = "glass" },
 	},
 	attachments = {

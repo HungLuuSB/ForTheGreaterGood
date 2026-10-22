@@ -20,7 +20,7 @@ local parts = {
 	{ name = "pipeB", parent = "base", shape = "box", size = { 0.35, 0.35, 4.2 }, at = { -3.6, 1.0, -2.6 }, rot = { 0, 40, 0 }, color = "dark" },
 
 	-- the core: a bare glowing sphere, the def's piece
-	{ name = "core", parent = "base", shape = "ball", size = { 2.2, 2.2, 2.2 }, at = { 0, 6.4, 0 }, color = "glass" },
+	{ name = "core", parent = "base", shape = "ball", size = { 2.2, 2.2, 2.2 }, at = { 0, 6.4, 0 }, color = "glass", anim = { motion = "pulse", axis = { 0, 1, 0 } } },
 	{ name = "cageTop", parent = "base", shape = "cylinder", axis = "y", size = { 3.0, 0.2, 3.0 }, at = { 0, 7.9, 0 }, color = "dark" },
 	{ name = "cageLow", parent = "base", shape = "cylinder", axis = "y", size = { 3.0, 0.2, 3.0 }, at = { 0, 4.9, 0 }, color = "dark" },
 }

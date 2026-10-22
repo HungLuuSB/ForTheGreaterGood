@@ -7,7 +7,7 @@ local parts = {
 	{ name = "base", shape = "box", size = { 6.6, 0.4, 6.6 }, at = { 0, 0.2, 0 }, color = "dark" },
 	{ name = "platform", parent = "base", shape = "box", size = { 4.8, 0.5, 4.8 }, at = { 0, 0.65, 0 }, color = "hull" },
 	{ name = "team", parent = "base", shape = "box", size = { 3.4, 0.08, 1.2 }, at = { 0, 0.94, -1.6 }, color = "team" },
-	{ name = "drill", parent = "base", shape = "cylinder", axis = "y", size = { 1.8, 7, 1.8 }, at = { 0, 4.4, 0 }, color = "metal" },
+	{ name = "drill", parent = "base", shape = "cylinder", axis = "y", size = { 1.8, 7, 1.8 }, at = { 0, 4.4, 0 }, color = "metal", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "glow", parent = "base", shape = "cylinder", axis = "y", size = { 1.9, 0.3, 1.9 }, at = { 0, 2.4, 0 }, color = "glass" },
 	{ name = "head", parent = "base", shape = "box", size = { 2.4, 1, 2.4 }, at = { 0, 8.4, 0 }, color = "hull" },
 	{ name = "light", parent = "base", shape = "box", size = { 0.4, 0.4, 0.4 }, at = { 0, 9.1, 0 }, color = "glass" },

@@ -9,7 +9,7 @@ return require("./Scale").scaled({
 		{ name = "base", shape = "box", size = { 5.6, 0.4, 3.2 }, at = { 0, 0.8, 0 }, color = "dark" },
 		{ name = "floatL", parent = "base", shape = "cylinder", axis = "z", size = { 1.4, 1.4, 5.4 }, at = { -2, 0.3, 0 }, color = "metal" },
 		{ name = "floatR", parent = "base", shape = "cylinder", axis = "z", size = { 1.4, 1.4, 5.4 }, at = { 2, 0.3, 0 }, color = "metal" },
-		{ name = "rotor", parent = "base", shape = "cylinder", axis = "x", size = { 2.6, 0.3, 2.6 }, at = { 0, -0.3, 0 }, color = "hull" },
+		{ name = "rotor", parent = "base", shape = "cylinder", axis = "x", size = { 2.6, 0.3, 2.6 }, at = { 0, -0.3, 0 }, color = "hull", anim = { motion = "spin", axis = { 0, 0, 1 } } },
 		{ name = "team", parent = "base", shape = "box", size = { 1.6, 0.08, 1 }, at = { 0, 1.04, 0 }, color = "team" },
 		{ name = "light", parent = "base", shape = "box", size = { 0.4, 0.4, 0.4 }, at = { 2, 1.2, 2.4 }, color = "glass" },
 	},

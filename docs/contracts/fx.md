@@ -86,6 +86,18 @@ One mesh per missile weapon def, by its ID: `ord_ir_sam`, `chs_ir_sam`, `ord_rad
   - Nuke: a heavy body with a dark re-entry cone over a warhead bus, stage rings and four fins (Chaos: two strap-on boosters).
   - All three: faction paint and a team band (`teamPieces` = `base`), tinted like a unit.
 - **Glow:** a `running` stripe round the body (faction accent), at its resting strength. The nozzle throat is dark: the client lights the exhaust (user review 2026-10-23, no `weapon` glow part any more).
+- **Interceptors** (anti-nuke, S-111): `ord_interceptor` / `chs_interceptor`, and the mobile launchers' `ord_mobile_interceptor` / `chs_mobile_interceptor` reuse the same meshes (the manifest lists all four IDs). Fast and slim: a needle nose (Order white radome, Chaos dark) on a fatter booster, canards and booster fins. Unlike the other missiles, the nozzle throat glows bright on `weapon` (strength 3.0), so an interceptor reads at a glance; the client still draws the flame.
+
+## Effect textures (M-27)
+
+White RGB with the pattern in alpha, 512 × 512, so the client tints them (fx colors, faction accents). They're in the mesh manifest as `Meshes.textures` and built by `assets/fx/textures/build.py`.
+
+| Key | Asset | Look | Use |
+|---|---|---|---|
+| `radarPulse` | `rbxassetid://113771866546969` | a bright thin ring with a soft glow trailing inward | radar sweep pulse: grow a flat disc outward from a turning radar and fade it |
+| `sonarPing` | `rbxassetid://120009987380670` | two soft concentric rings | sonar ping: expand on the water surface and fade |
+| `jammerStatic` | `rbxassetid://124485150689074` | tileable speckle and scan lines | jammer shimmer / static on a sphere or a cylinder round a jammer, scrolled |
+| `heatShimmer` | `rbxassetid://105647146631109` | tileable soft wavy bands, low alpha | heat shimmer over exhausts, stacks, reactors and beam emitters, scrolled upward |
 
 ## Shield (Order deployable shield)
 

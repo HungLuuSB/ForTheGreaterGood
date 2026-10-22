@@ -43,7 +43,7 @@ for i = 0, 7 do
 end
 
 -- hatch: swings up about its back edge
-table.insert(parts, { name = "hatch", parent = "base", shape = "cylinder", axis = "y", size = { 7.6, 0.5, 7.6 }, at = { 0, 3.25, 0 }, pivot = { 0, 3.25, 3.8 }, color = "metal" })
+table.insert(parts, { name = "hatch", parent = "base", shape = "cylinder", axis = "y", size = { 7.6, 0.5, 7.6 }, at = { 0, 3.25, 0 }, pivot = { 0, 3.25, 3.8 }, color = "metal", anim = { motion = "open", axis = { 1, 0, 0 }, range = 110 } })
 table.insert(parts, { name = "hatchCross", parent = "hatch", shape = "box", size = { 4.4, 0.08, 1.1 }, at = { 0, 3.54, 0 }, color = "team" })
 
 -- footprint 3 -> 6 (size scale, M-26 / S-104): scaled until the redesign lands

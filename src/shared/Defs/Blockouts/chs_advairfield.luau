@@ -11,7 +11,7 @@ local parts = {
 	{ name = "tankB", parent = "base", shape = "cylinder", axis = "y", size = { 3.4, 3, 3.4 }, at = { 15.5, 1.9, -9.6 }, color = "metal" },
 	{ name = "mast", parent = "base", shape = "box", size = { 0.7, 14, 0.7 }, at = { 15.5, 7.4, 14 }, color = "dark" },
 	{ name = "mastBraceA", parent = "base", shape = "box", size = { 0.3, 12, 0.3 }, at = { 16.8, 6.4, 14 }, rot = { 0, 0, 7 }, color = "dark" },
-	{ name = "radarPanel", parent = "base", shape = "box", size = { 3.6, 2.4, 0.3 }, at = { 15.5, 15, 14 }, rot = { 20, 0, 0 }, color = "dark" },
+	{ name = "radarPanel", parent = "base", shape = "box", size = { 3.6, 2.4, 0.3 }, at = { 15.5, 15, 14 }, rot = { 20, 0, 0 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 	{ name = "beacon", parent = "base", shape = "box", size = { 0.6, 0.6, 0.6 }, at = { 15.5, 16.6, 14 }, color = "glass" },
 	-- T2 signature (T1 vs T2 check, 2026-10-22): a ski-jump ramp at the
 	-- runway's end and a blast deflector at its start

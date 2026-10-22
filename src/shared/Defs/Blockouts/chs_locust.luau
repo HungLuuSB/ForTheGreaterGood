@@ -9,8 +9,8 @@ return {
 	parts = {
 		{ name = "base", shape = "box", size = { 3.4, 0.9, 4.8 }, at = { 0, 1.35, 0.3 }, color = "hull" },
 		{ name = "nose", parent = "base", shape = "wedge", size = { 3.4, 0.9, 1.2 }, at = { 0, 1.35, -2.7 }, color = "hull" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 0.9, 1.1, 5.6 }, at = { -2.15, 0.55, -0.1 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 0.9, 1.1, 5.6 }, at = { 2.15, 0.55, -0.1 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 0.9, 1.1, 5.6 }, at = { -2.15, 0.55, -0.1 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 0.9, 1.1, 5.6 }, at = { 2.15, 0.55, -0.1 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 		{ name = "eraL", parent = "base", shape = "box", size = { 0.2, 0.5, 1.4 }, at = { -1.8, 1.4, -1.4 }, color = "metal" },
 		{ name = "eraR", parent = "base", shape = "box", size = { 0.2, 0.5, 1.4 }, at = { 1.8, 1.4, -1.4 }, color = "metal" },
 		{ name = "light", parent = "base", shape = "box", size = { 1.4, 0.12, 0.08 }, at = { 0, 1.3, -3.32 }, color = "glass" },

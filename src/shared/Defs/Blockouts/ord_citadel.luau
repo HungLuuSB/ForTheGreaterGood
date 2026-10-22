@@ -32,7 +32,7 @@ return require("./Scale").scaled({
 		{ name = "launcher", parent = "base", shape = "box", size = { 2.8, 1.6, 3 }, at = { -5.6, 6.6, -5.6 }, pivot = { -5.6, 5.8, -5.6 }, color = "metal" },
 		{ name = "launcherCaps", parent = "launcher", shape = "box", size = { 2.4, 1.2, 0.1 }, at = { -5.6, 6.6, -7.12 }, color = "dark" },
 
-		{ name = "radar", parent = "base", shape = "box", size = { 4.4, 2.8, 0.35 }, at = { 5.6, 7.6, 5.6 }, rot = { 20, 0, 0 }, pivot = { 5.6, 6.2, 5.6 }, color = "dark" },
+		{ name = "radar", parent = "base", shape = "box", size = { 4.4, 2.8, 0.35 }, at = { 5.6, 7.6, 5.6 }, rot = { 20, 0, 0 }, pivot = { 5.6, 6.2, 5.6 }, color = "dark", anim = { motion = "turn", axis = { 0, 1, 0 } } },
 		{ name = "radarFace", parent = "radar", shape = "box", size = { 4.0, 2.4, 0.1 }, at = { 5.6, 7.66, 5.38 }, rot = { 20, 0, 0 }, color = "glass" },
 	},
 	attachments = {

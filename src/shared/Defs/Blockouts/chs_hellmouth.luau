@@ -8,8 +8,8 @@ return {
 	id = "chs_hellmouth",
 	parts = {
 		{ name = "base", shape = "box", size = { 5.8, 1.6, 7.2 }, at = { 0, 1.6, 0.2 }, color = "hull" },
-		{ name = "trackL", parent = "base", shape = "box", size = { 1.4, 1.6, 7.8 }, at = { -3.0, 0.8, 0 }, color = "track" },
-		{ name = "trackR", parent = "base", shape = "box", size = { 1.4, 1.6, 7.8 }, at = { 3.0, 0.8, 0 }, color = "track" },
+		{ name = "trackL", parent = "base", shape = "box", size = { 1.4, 1.6, 7.8 }, at = { -3.0, 0.8, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
+		{ name = "trackR", parent = "base", shape = "box", size = { 1.4, 1.6, 7.8 }, at = { 3.0, 0.8, 0 }, color = "track", anim = { motion = "scroll", axis = { 1, 0, 0 } } },
 		{ name = "skirtL", parent = "base", shape = "box", size = { 0.3, 1.1, 6.8 }, at = { -3.85, 1.5, 0.1 }, color = "dark" },
 		{ name = "spade", parent = "base", shape = "box", size = { 5.0, 1.4, 0.35 }, at = { 0, 1.0, 4.2 }, rot = { 25, 0, 0 }, color = "dark" },
 		{ name = "crate1", parent = "base", shape = "box", size = { 1.3, 0.8, 1.6 }, at = { 2.0, 2.8, 2.7 }, color = "metal" },
