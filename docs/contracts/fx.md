@@ -51,6 +51,16 @@ Every BAR-style unit and structure mesh carries its glow in **glow parts**: smal
 | `ord_verdict` | `base_glow_running`, `turret_glow_running` | `base_glow_head` | – | `barrel_glow_weapon` | 5.1% |
 | `shield_emitter` (FX.Shield.Emitter) | `base_glow_running` | – | `base_glow_power` | – | 9.9% |
 
+**Team colors that clash with a faction glow** (checked with all 8 lobby colors of `src/client/Render/TeamColors.luau`, 55° close and 220 studs, normal and dusk; `debug_out/screens/glow2_team_*.jpg`). The user keeps all 8 team colors; for these pairs the client switches that unit's `running` and `power` glow to white (`Color` = `EmissiveTint` = (235, 240, 245), strengths unchanged). `head` is warm white already, and `weapon` flashes stay as they are:
+
+| Team color | Faction | Clashes with | Switch |
+|---|---|---|---|
+| 7 cyan (60, 200, 210) | Order | `running` cyan (90, 210, 255), `power` (130, 225, 255) | yes: team panels read as glow strips |
+| 6 orange (238, 132, 40) | Chaos | `running` amber (255, 150, 55), `power` (255, 125, 35) | yes: panels and glow merge into one color, the accents vanish at 220 studs |
+| 4 yellow (232, 196, 52) | Chaos | `running` amber | borderline, no switch: reads apart (yellower, brighter); the client's call |
+
+Blue on Order and red on Chaos read apart (darker, more saturated than the glow). Other pairs don't share a hue.
+
 **Coverage** (glow area as a share of the surfaces that don't face down, in each `rig.json` as `glowShare`): 2–9% (table above): most units and structures 3–8%; the Spike turret and the Oracle (since its array face went dark) about 2%; the vehicle plants 2–3.5% (big roofs). The art rule is in `docs/art/style-guide.md` ("Glow").
 
 **Cost:** 1–4 extra MeshParts per model, a few dozen triangles each, sharing the unit's maps; nothing animates unless the client changes a property.
