@@ -1,0 +1,27 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
+  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 1,008 triangles",
+  "bar": {
+    "model": "rbxassetid://78321069477274",
+    "meshes": {
+      "base": "rbxassetid://102540424918773",
+      "turret": "rbxassetid://124375691181804",
+      "launcher": "rbxassetid://135982380363122"
+    },
+    "decals": {
+      "ALB": "rbxassetid://99755642510666",
+      "RGH": "rbxassetid://130496560811939",
+      "NOR": "rbxassetid://118711995845215",
+      "MTL": "rbxassetid://89985966610890",
+      "EMI": "rbxassetid://76110377837069"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://72916388880923",
+      "NOR": "rbxassetid://135515217070512",
+      "RGH": "rbxassetid://87558261206291",
+      "MTL": "rbxassetid://136013435139541",
+      "EMI": "rbxassetid://93449243550330"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hornet_bar in FTGG Art"
+  }
+}
