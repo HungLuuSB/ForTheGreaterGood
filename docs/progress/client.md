@@ -525,6 +525,17 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shield hits on entry, white-grey hexagons, thin rings (C-95)
+
+- **Band depth:** you kept the band at 0.4R. sim-A has closed the review item.
+- **Hit shows at once:** the hit effect was late because the server's SHIELD_HIT comes at the turn, 16–30 studs inside the dome after braking. The client now lights C's ripple and the hexagon plates the moment a shell crosses the surface: SHIELD_FIELD goes out on that tick, and the point is the shell's position projected onto the dome. The turn adds nothing more; a breach still flashes. No wire change, and sim-A has noted it in S-83.
+  - `ShieldWire.spec`: every turned shell first lit the dome on entry, on the surface, ticks before its turn.
+- **Hexagons white and grey (your call):** white at their hottest, fading to grey; no red or orange (`Shield.color`, `Shield.spec`).
+- **Thin rings:** the flowing rings use models-C's RingThin (`111379471786973`; tube 0.2% of the radius, about 0.24 studs on a 120-stud dome) instead of adornments. C's Ring stays as the foot ring.
+- **Studio, shield profile:** 149 turns and 0 breaches in 8 s, dome at 100%, and the meshes loaded (dome, foot, thin rings). Screenshots:
+  - `debug_out/screens/c95_shield_entry_close.jpg`: at 0.25× speed, the grey-white hexagons and ripple where shells crossed, the shells already inside;
+  - `c95_shield_thin_rings.jpg`: the whole dome with the thin rings.
+
 ## 2026-10-23: the shield field inside the dome checked (S-83)
 
 - You asked for shells to pass through the surface and be slowed and turned inside the dome, not stopped outside it. sim-A moved the field band into the outer 40% of the dome (S-83): the core is 72 studs on the Phalanx and 48 on the Carapace. No client change: the client steps shells with the shared field, and hits stay on the surface where the ripple is drawn.

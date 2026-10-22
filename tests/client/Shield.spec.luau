@@ -63,13 +63,14 @@ return function(t: any)
 		t.expect(dentPeak > 0.5 and dentLate < 0.05, `dent {dentPeak} then {dentLate}`)
 	end)
 
-	t.test("colour: white hot to dark red", function()
+	t.test("colour: white at its hottest, fading to grey; never red or orange", function()
 		local r, g, b = Shield.color(1)
-		t.expect(r > 250 and g > 245 and b > 200, "white hot")
-		local r2, g2 = Shield.color(0.55)
-		t.expect(r2 == 255 and g2 < 130, "orange")
-		local r3, g3, b3 = Shield.color(0)
-		t.expect(r3 < 130 and g3 < 30 and b3 < 20, "dark red")
+		t.expect(r == 255 and g == 255 and b == 255, "white")
+		for _, h in { 0, 0.3, 0.55, 0.8 } do
+			local r2, g2, b2 = Shield.color(h)
+			t.expect(math.abs(r2 - g2) < 8 and b2 >= r2, `grey at {h} ({r2}, {g2}, {b2})`)
+		end
+		t.expect(Shield.color(0.2) < Shield.color(0.8), "cooler is darker")
 	end)
 
 	t.test("hits: close young hits merge into a hotter patch; at most MAX_PATCHES; old ones expire", function()

@@ -748,3 +748,15 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - C's assets merged, and the user asked for them in place of the placeholders.
 - The game place can't take copies from FTGG Art (my rule), so the meshes are built from their uploaded IDs.
 - The Ring mesh's tube grows with its radius, a 2.4-stud ribbon at R=120, so it fits only the foot ring until a thinner ring comes.
+
+### C-95 — Shield hits drawn on entry; white-grey plates; flowing rings from RingThin (2026-10-23)
+
+**Decision:**
+- **Entry hit:** `Core/Effects` queues an "enter" hit when SHIELD_FIELD arrives in phase BRAKING, at the shell's predicted position projected onto the dome radius, with mass `ShieldField.mass(weapon)`. `Render/ShieldDomes` lights the dome for entries and breaches, not for turns.
+- **Plate colour:** `Shield.color` ramps grey (150, 154, 160) to white by heat.
+- **Rings:** `ShieldFx` builds the flowing rings from C's RingThin (Size 2.004r × height × 2.004r) when it loads; adornments are the fallback.
+
+**Why:**
+- Since S-83 the turn happens deep inside the dome after braking, so the hit at the turn read as late. The user wants it as the shell enters.
+- The user asked for the hexagons in white or grey, not red or orange.
+- models-C made RingThin for C-94's request.

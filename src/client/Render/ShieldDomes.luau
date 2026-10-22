@@ -3,9 +3,11 @@
 -- generator the client has a SHIELD record for (protocol 24, S-79), round
 -- its base, of its def's `shield.radius`. Strength is the server's charge
 -- (0..1 of capacity), and the dome stands while the UP flag is set:
--- collapsing when it clears and deploying again when it returns. SHIELD_HIT
--- events (Core/Effects' `shieldHits`) light the dome they name, or the
--- nearest known dome round the point when the generator is hidden. Shells
+-- collapsing when it clears and deploying again when it returns. A shell
+-- crossing the surface (Core/Effects' "enter" hits) lights the dome at once;
+-- the server's turn (SHIELD_HIT, deep inside) doesn't light it again, a
+-- breach does. Hits go to the dome they name, else the nearest one round
+-- the point. Shells
 -- in a field are stepped by Core/Effects with Shared/Combat/ShieldField.
 -- The beam rises from the generator model's `beam` attachment (its blockout,
 -- docs/contracts/fx.md) while the model is drawn; domes wait until
@@ -87,7 +89,9 @@ function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx, renderer
 		end
 	end
 	for _, h in fx.shieldHits do
-		s.stats.hits += 1
+		if h.kind ~= "enter" then
+			s.stats.hits += 1
+		end
 		if h.breach then
 			s.stats.breaches += 1
 			table.insert(s.stats.lastBreaches, { h.mass, h.x, h.y, h.z })
@@ -106,7 +110,7 @@ function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx, renderer
 				end
 			end
 		end
-		if d then
+		if d and h.kind ~= "turn" then
 			d.fx:hit(Vector3.new(h.x, h.y, h.z), if h.breach then h.mass * 1.5 else h.mass)
 		end
 	end
