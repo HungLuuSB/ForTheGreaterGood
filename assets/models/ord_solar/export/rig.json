@@ -1,0 +1,51 @@
+{
+  "id": "ord_solar",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.0305,
+        0.0
+      ],
+      "size": [
+        7.374,
+        4.0611,
+        7.374
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 272,
+    "total": 272
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

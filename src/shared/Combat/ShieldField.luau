@@ -16,8 +16,13 @@
 --   * when the shell no longer closes in it turns (the hit, on the dome
 --     over it) and is thrown out through the surface: hard for one that
 --     stopped or came head-on (straight back), a lift for one sliding round.
+-- A shell lighter than ABSORB_MASS is destroyed where it crosses the
+-- surface instead (S-85, the user: "small/light shots -> get destroyed
+-- instantly"): the step stops there with the ABSORB event.
 -- A shell still closing in when it reaches the core breaks through (the
--- breach) and carries on, slowed. Gravity acts throughout.
+-- breach) and carries on, slowed. Gravity acts throughout, and in the field
+-- the dome pulls the shell down by FIELD_GRAVITY more (S-84, the user), so
+-- turned shells arc down to land.
 --
 -- The field's force is `force` (0..1: Shield's charge over FULL_FORCE, so
 -- full at 50% charge and above) over the shell's mass to MASS_EXP: a heavy
@@ -37,6 +42,8 @@ ShieldField.TANGENT_DRAG = 0.3 -- 1/s on the speed along the surface while throw
 ShieldField.STEER = 8 -- rad/s of steering at full force, mass 1, mid-band (S-82)
 ShieldField.GLANCE_SLOW = 0.05 -- the share of the braking and the push for a shell whose line misses the dome (S-82)
 ShieldField.HEAD_ON_EXP = 2
+ShieldField.ABSORB_MASS = 0.5 -- shells lighter than this are destroyed at the surface (S-85, the user)
+ShieldField.FIELD_GRAVITY = 60 -- studs/s² pulling a shell down while it is in the field, whatever its mass (S-84, the user)
 ShieldField.STOPPED = 60 -- studs/s: slower than this a shell is thrown out more like a head-on one (S-82)
 
 -- The share of the braking (and of the push out) for a shell whose line
@@ -59,6 +66,7 @@ ShieldField.DONE = 3 -- out of the band after the turn, or through: this dome is
 ShieldField.NONE = 0
 ShieldField.TURN = 1
 ShieldField.BREACH = 2
+ShieldField.ABSORB = 3 -- a light shell destroyed where it crossed the surface (S-85)
 
 local sqrt, exp, ceil = math.sqrt, math.exp, math.ceil
 local clamp = math.clamp
@@ -88,7 +96,7 @@ end
 -- Steps a shell (position, velocity, gravity `g`) by `dt` against the dome
 -- round (cx, cy, cz) of `radius`, with field `force` (0 = down) and the
 -- shell's `mass` (1 = a typical shell), from `phase`. Returns the new
--- position, velocity and phase, the event (NONE, TURN or BREACH) and, with
+-- position, velocity and phase, the event (NONE, TURN, BREACH or ABSORB) and, with
 -- an event, the point on the dome's surface over the shell (on its radial
 -- line), where the client draws the hit.
 function ShieldField.step(
@@ -125,6 +133,12 @@ function ShieldField.step(
 			if force <= 0 and phase ~= ShieldField.FREE then
 				phase = ShieldField.DONE -- the dome went down under it
 			elseif force > 0 and phase == ShieldField.FREE and r <= radius and r > core and vr < 0 then
+				if mass < ShieldField.ABSORB_MASS then
+					-- a light shell is destroyed where it crosses the surface (S-85)
+					phase = ShieldField.DONE
+					event, hx, hy, hz = ShieldField.ABSORB, cx + nx * radius, cy + ny * radius, cz + nz * radius
+					break
+				end
 				phase = ShieldField.BRAKING -- through the surface, moving in (S-83)
 			end
 			if phase == ShieldField.BRAKING or phase == ShieldField.REPELLED then
@@ -181,11 +195,12 @@ function ShieldField.step(
 				end
 			end
 		end
-		-- exact ballistic substep
+		-- exact ballistic substep; in the field the dome pulls down too (S-84)
+		local gg = if phase == ShieldField.BRAKING or phase == ShieldField.REPELLED then g + ShieldField.FIELD_GRAVITY else g
 		x += vx * h
-		y += vy * h - 0.5 * g * h * h
+		y += vy * h - 0.5 * gg * h * h
 		z += vz * h
-		vy -= g * h
+		vy -= gg * h
 		if phase == ShieldField.BRAKING then
 			local ax, ay, az = x - cx, y - cy, z - cz
 			local r2 = ax * ax + ay * ay + az * az

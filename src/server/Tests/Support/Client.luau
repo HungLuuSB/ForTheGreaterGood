@@ -92,6 +92,7 @@ export type Effect = {
 	fromX: number?,
 	fromZ: number?,
 	breach: boolean?, -- shield: the shell broke through (S-79)
+	absorbed: boolean?, -- shield: destroyed at the surface (S-85)
 	mass: number?, -- shield: the shell's mass
 }
 
@@ -330,10 +331,12 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			elseif kind == EK.SHIELD_HIT then
 				local x, y, z = pos(e)
 				local p = view.projectiles[e.projId :: number]
-				if p and not e.breach then
+				if e.absorbed then
+					view.projectiles[e.projId :: number] = nil -- destroyed at the surface (S-85)
+				elseif p and not e.breach then
 					p.target = 0 -- turned: a missile loses its lock
 				end
-				table.insert(view.effects, { kind = "shield", x = x, y = y, z = z, breach = e.breach, mass = (e.mass :: number) / Schema.SHIELD_MASS_SCALE })
+				table.insert(view.effects, { kind = "shield", x = x, y = y, z = z, breach = e.breach, absorbed = e.absorbed, mass = (e.mass :: number) / Schema.SHIELD_MASS_SCALE })
 				continue
 			elseif kind == EK.ALERT then
 				local x, z = view.grid:decode(e.cell :: number, 128, 128)

@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 24, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 25, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -356,18 +356,24 @@ return function(t: RunAll.Context)
 		-- unknown), SHIELD_FIELD (the dome's centre, radius, force, phase)
 		local shield: Schema.Event = { kind = Schema.EventKind.SHIELD, unitId = 0x0102, charge = 0x80, shieldFlags = 3 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, shield)), "13 02 01 80 03")
-		local hit: Schema.Event = { kind = Schema.EventKind.SHIELD_HIT, unitId = 0, projId = 0x0304, cell = 0x0506, offX = 7, offZ = 8, y = 9, mass = 31, breach = true }
+		local hit: Schema.Event = { kind = Schema.EventKind.SHIELD_HIT, unitId = 0, projId = 0x0304, cell = 0x0506, offX = 7, offZ = 8, y = 9, mass = 31, breach = true, absorbed = false }
 		t.equal(hex(encodeOne(Schema.encodeEvent, hit)), "14 00 00 04 03 06 05 07 08 09 00 1f 01")
+		-- version 25: SHIELD_HIT flag ABSORBED (S-85), a light shell destroyed at the surface
+		local absorbed: Schema.Event = { kind = Schema.EventKind.SHIELD_HIT, unitId = 0x0102, projId = 0x0304, cell = 0x0506, offX = 7, offZ = 8, y = 9, mass = 7, breach = false, absorbed = true }
+		t.equal(hex(encodeOne(Schema.encodeEvent, absorbed)), "14 02 01 04 03 06 05 07 08 09 00 07 02")
+		t.throws(function()
+			encodeOne(Schema.encodeEvent, { kind = Schema.EventKind.SHIELD_HIT, unitId = 1, projId = 1, cell = 0, offX = 0, offZ = 0, y = 0, mass = 1, breach = true, absorbed = true })
+		end, "a breach or absorbed")
 		local field: Schema.Event = { kind = Schema.EventKind.SHIELD_FIELD, projId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = -8, radius = 120, force = 255, phase = 2 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, field)), "15 02 01 04 03 05 06 f8 ff 78 00 ff 02")
-		for _, e in { shield, hit, field } do
+		for _, e in { shield, hit, absorbed, field } do
 			local bytes = encodeOne(Schema.encodeEvent, e)
 			t.deepEqual(Packer.readAll(bytes, Schema.decodeEvent)[1], e)
 			t.equal(buffer.len(bytes), Schema.eventBytes(e), "size table")
 			expectTruncated(t, "event record", Schema.decodeEvent, bytes)
 		end
 		expectRejected(t, Schema.decodeEvent, { 19, 1, 0, 0, 4 }, "shield flags 4")
-		expectRejected(t, Schema.decodeEvent, { 20, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2 }, "shield hit flags 2")
+		expectRejected(t, Schema.decodeEvent, { 20, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 3 }, "shield hit flags 3")
 		expectRejected(t, Schema.decodeEvent, { 21, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 3 }, "shield field phase 3")
 		-- version 23: ALERT (S-68): alert kind, cell, defIndex
 		local alert: Schema.Event = { kind = Schema.EventKind.ALERT, alert = Schema.AlertKind.UNIT_LOST, cell = 0x0102, defIndex = 0x0304 }

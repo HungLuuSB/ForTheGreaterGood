@@ -73,15 +73,25 @@ end
 local ALL_WEIGHTS = { "chs_mg", "chs_autocannon", "chs_mlrs", "chs_light_cannon", "chs_rockets", "chs_heavy_cannon", "chs_mortar", "chs_heavy_bomb", "chs_siege_mortar", "chs_radar_sam" }
 
 return function(t: RunAll.Context)
-	t.test("a charged dome turns every shell weight back; the shells burst outside, live", function()
+	t.test("a charged dome turns every shell weight back, or destroys light ones; turned shells burst outside, live", function()
 		for _, weaponId in ALL_WEIGHTS do
 			local sim, gen = dome(1)
 			local w = sim.world
 			local health = w.health[gen]
 			local p = fire(sim, weaponId, 0, 250)
 			local hit, burst = follow(sim, p)
-			t.expect(hit ~= nil and hit.breach == false and hit.unit == gen, `{weaponId}: turned back`)
-			t.expect(burst ~= nil and distance(burst[1], burst[3]) > sim.defs.units.ord_phalanx.shield.radius, `{weaponId}: burst outside the dome`)
+			if Shield.mass(sim.defs.weapons[weaponId]) < ShieldField.ABSORB_MASS then
+				-- light: destroyed at the surface, no burst (S-85)
+				t.expect(hit ~= nil and hit.absorbed == true and hit.unit == gen, `{weaponId}: destroyed at the surface`)
+				t.equal(burst, nil, `{weaponId}: no burst`)
+				t.equal(sim.combat.projSlot[p], nil, `{weaponId}: gone`)
+				continue
+			end
+			t.expect(hit ~= nil and hit.breach == false and not hit.absorbed and hit.unit == gen, `{weaponId}: turned back`)
+			-- outside the core: the field's pull down (S-84) may land it in the band
+			local gx, _, gz = Shield.center(sim, gen)
+			local core = sim.defs.units.ord_phalanx.shield.radius * (1 - ShieldField.BAND_SHARE)
+			t.expect(burst ~= nil and math.sqrt((burst[1] - gx) ^ 2 + (burst[3] - gz) ^ 2) > core, `{weaponId}: burst outside the dome's core`)
 			t.equal(w.health[gen], health, `{weaponId}: the generator took nothing`)
 			if hit then
 				local gx, gy, gz = Shield.center(sim, gen) -- the generator snaps to its footprint
@@ -121,7 +131,7 @@ return function(t: RunAll.Context)
 			end
 			return 0
 		end
-		local light, medium, heavy = turnAt(0.25), turnAt(1), turnAt(6)
+		local light, medium, heavy = turnAt(0.6), turnAt(1), turnAt(6)
 		local core = 120 * (1 - ShieldField.BAND_SHARE)
 		t.expect(light < 120 and light > medium and medium > heavy and heavy > core, `turn heights {light}, {medium}, {heavy} (inside the dome: surface 120, core {core})`)
 	end)
@@ -154,7 +164,7 @@ return function(t: RunAll.Context)
 		end
 		t.expect(shot(0, 1, 260) > 179, "head-on: straight back")
 		t.expect(shot(0.7, 1, 260) < 60 and shot(0.95, 1, 260) < 30, "glancing: steered off, carrying on forward")
-		for _, mass in { 0.25, 2.4, 8 } do
+		for _, mass in { 0.6, 2.4, 8 } do
 			local headOn, _, through = shot(0, mass, 240)
 			t.expect(headOn > 179 and not through, `mass {mass} at 240 studs/s head-on: straight back`)
 			t.expect(shot(0.85, mass, 420) < 40, `mass {mass} at 420 studs/s, glancing: carries on`)
@@ -175,8 +185,10 @@ return function(t: RunAll.Context)
 		World.setHealth(w, mason, 1e6)
 		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
 		local c = sim.combat
-		local turned, through, back = 0, 0, 0
+		local turned, through, back, landed, inCore = 0, 0, 0, 0, 0
 		local watch: { [number]: boolean } = {}
+		local gx, _, gz = Shield.center(sim, gen)
+		local core = sim.defs.units.ord_phalanx.shield.radius * (1 - ShieldField.BAND_SHARE)
 		for _ = 1, 180 do
 			Sim.step(sim)
 			for _, e in c.events do
@@ -186,6 +198,13 @@ return function(t: RunAll.Context)
 					else
 						turned += 1
 						watch[e.other] = true
+					end
+				elseif e.kind == "IMPACT" and watch[e.other] then
+					-- pulled down in the field (S-84), some land in the band
+					landed += 1
+					watch[e.other] = nil
+					if math.sqrt((e.x :: number - gx) ^ 2 + (e.z :: number - gz) ^ 2) <= core then
+						inCore += 1
 					end
 				end
 			end
@@ -198,14 +217,62 @@ return function(t: RunAll.Context)
 		end
 		t.expect(turned >= 2, `shells turned ({turned})`)
 		t.equal(through, 0, "none broke through")
-		t.expect(back >= 2, `turned shells fly back toward the shooter ({back})`)
+		t.expect(back + landed >= turned - 1, `turned shells fly back or land, none hang ({back} back, {landed} landed of {turned})`)
+		t.equal(inCore, 0, "none landed in the core")
+	end)
+
+	t.test("light shells are destroyed at the surface: charge by mass, no burst, the client drops them (S-85)", function()
+		local sim, gen = dome(13, 0.5)
+		local c = sim.combat
+		local g = (sim.map :: any).grid
+		local cx, cz = g:cellAt(0, 50)
+		local w = Packer.Writer.new()
+		Schema.encodeCommand(w, { cmdType = Schema.CmdType.CAMERA, flags = 0, unitIds = {}, minX = cx - 20, minZ = cz - 20, maxX = cx + 20, maxZ = cz + 20 })
+		assert(Sim.submit(sim, 1, w:finish()))
+		local view = Client.new(g, sim.defs, (sim.map :: any).layers)
+		local weapon = sim.defs.weapons.chs_autocannon
+		local mass = Shield.mass(weapon)
+		t.expect(mass < ShieldField.ABSORB_MASS, "the autocannon round is light")
+		local p = fire(sim, "chs_autocannon", 0, 250)
+		local hit, drop, impacts, wireHit = nil, 0, 0, nil
+		local recharge = sim.defs.units.ord_phalanx.shield.recharge
+		for _ = 1, 60 do
+			local prev = c.shieldCharge[gen]
+			Sim.step(sim)
+			Client.receive(view, sim.net.players[1].outbox)
+			for _, e in c.events do
+				if e.other == p and e.kind == "SHIELD_HIT" then
+					hit = e
+					drop = prev - c.shieldCharge[gen]
+				elseif e.other == p and e.kind == "IMPACT" then
+					impacts += 1
+				end
+			end
+			for _, e in view.effects do
+				if e.kind == "shield" then
+					wireHit = e
+				end
+			end
+			table.clear(view.effects)
+			if hit then
+				break
+			end
+		end
+		t.expect(hit ~= nil and hit.absorbed == true, "SHIELD_HIT, absorbed")
+		local gx, gy, gz = Shield.center(sim, gen)
+		near(t, math.sqrt((hit.x - gx) ^ 2 + (hit.y - gy) ^ 2 + (hit.z - gz) ^ 2), 120, 0.01, "on the surface")
+		near(t, drop, Shield.HIT_COST * mass - recharge / 15, 0.01, "its mass in charge (less a tick's recharge)")
+		t.equal(impacts, 0, "no burst")
+		t.equal(c.projSlot[p], nil, "the projectile is gone")
+		t.expect(wireHit ~= nil and wireHit.absorbed == true, "the client got SHIELD_HIT with ABSORBED")
+		t.equal(view.projectiles[p], nil, "and dropped the shell")
 	end)
 
 	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()
 		local sim, gen = dome(3, 0.06)
 		local light = fire(sim, "chs_autocannon", 0, 250)
 		local hitLight = follow(sim, light)
-		t.expect(hitLight ~= nil and not hitLight.breach, "the autocannon round turned")
+		t.expect(hitLight ~= nil and not hitLight.breach, "the autocannon round was stopped (destroyed at the surface, S-85)")
 		sim.combat.shieldCharge[gen] = 0.06 * sim.defs.units.ord_phalanx.shield.capacity -- it recharged meanwhile
 		local heavy = fire(sim, "chs_siege_mortar", 0, 250)
 		local entry, through = 0, nil

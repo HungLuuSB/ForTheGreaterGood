@@ -25,6 +25,19 @@ The target look: a translucent dome with a bright edge, thin glowing rings flowi
 
 The defs (S-79) are `ord_phalanx` (Order, footprint 2, dome radius 120) and `chs_carapace` (Chaos, footprint 2, dome radius 80), pieces `base` and `core`. In both blockouts `core` is the glowing part the beam comes from, and an `Attachment` named `beam` sits on top of it (Phalanx 8.3 studs up, Carapace 7.6): use it as the beam's `Attachment0` the way the `Emitter` model's `core` attachment is used. The bright ring where the dome meets the ground is one more `Ring` at `h` = 0 (`r` = `R`).
 
+### Thin rings (client request, C-94)
+
+A mesh's tube scales with its radius, so on a 120-stud dome the `Ring` above is a 2.4-stud ribbon. Two thinner meshes come in `assets/fx/shield/export/shield_rings.fbx` (`build_rings.py`; IDs below and in `roblox_assets.json`):
+
+| Asset | Mesh | How to use it |
+|---|---|---|
+| `RingThin` | torus, radius 1, tube 0.002 (a fifth of `Ring`), horizontal, 288 triangles | As `Ring`: `Size = (2.004r, t, 2.004r)`; its radial thickness is 0.2% of the radius (0.24 studs at r = 120), `Size.Y` sets the vertical thickness. |
+| `Band` | open cylinder wall, radius 1, height 1, faces both ways, 192 triangles; UV U round, V across | A flat ribbon whose width is set apart from its radius: `Size = (2.002r, w, 2.002r)` for a ribbon `w` studs wide at radius `r`, `CFrame = baseCenter * CFrame.new(0, h, 0)`. The wall is 0.2% of the radius thick. |
+
+### The client's look (C-94)
+
+The user's rules for the shield override parts of the table above: the dome is neutral white rather than team-colored, its opacity follows the charge (invisible at 0%, full from 50%), and it doesn't use the ForceField material. Every asset here is white, so these choices need no other assets.
+
 ### Textures
 
 | Asset | Size | How to use it |
@@ -43,6 +56,8 @@ All in `assets/fx/shield/roblox_assets.json`. The texture IDs are also attribute
 | `Dome` mesh | `rbxassetid://85081416332401` |
 | `DomeInner` mesh | `rbxassetid://78950571354329` |
 | `Ring` mesh | `rbxassetid://134054369788950` |
+| `RingThin` mesh | `rbxassetid://111379471786973` |
+| `Band` mesh | `rbxassetid://75299929805633` |
 | `Emitter` mesh | `rbxassetid://98339625291172` (maps in the JSON) |
 | swirl | `rbxassetid://113814321169730` (cloudy vortex, after the user's reference) |
 | beam | `rbxassetid://100117547859650` |

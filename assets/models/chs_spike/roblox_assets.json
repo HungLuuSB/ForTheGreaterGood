@@ -1,0 +1,27 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
+  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 904 triangles",
+  "bar": {
+    "model": "rbxassetid://127870733264110",
+    "meshes": {
+      "base": "rbxassetid://133746188789431",
+      "turret": "rbxassetid://133164013222756"
+    },
+    "decals": {
+      "ALB": "rbxassetid://72907512258438",
+      "RGH": "rbxassetid://89114733652096",
+      "NOR": "rbxassetid://133209253910988",
+      "MTL": "rbxassetid://70643753291192",
+      "EMI": "rbxassetid://110142905792089"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://72591298770420",
+      "NOR": "rbxassetid://104947796584873",
+      "RGH": "rbxassetid://94969906640818",
+      "MTL": "rbxassetid://113852007019150",
+      "EMI": "rbxassetid://85823005393277"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_spike_bar in FTGG Art",
+    "note": "ALB re-uploaded as decal 137688283058361: the first upload's image failed with HTTP 502 in Studio"
+  }
+}

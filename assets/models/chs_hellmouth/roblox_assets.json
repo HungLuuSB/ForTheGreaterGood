@@ -1,7 +1,7 @@
 {
-  "note": "Roblox assets uploaded by Studio's 3D Importer from export/chs_hellmouth.fbx (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
-  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 3,184 triangles",
-  "bar": {
+  "note": "Assets uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py) or, for review 1, Studio's 3D Importer (creator: hungluu344).",
+  "revision": "2026-10-22, review 2: bigger team panels, 3,316 triangles (Open Cloud)",
+  "bar_review1": {
     "meshes": {
       "base": "rbxassetid://109373661390550",
       "turret": "rbxassetid://88008532381250",
@@ -15,5 +15,29 @@
       "EMI": "rbxassetid://116103214465065"
     },
     "model": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
+  },
+  "bar": {
+    "model": "rbxassetid://106342302528805",
+    "meshes": {
+      "base": "rbxassetid://85086711077874",
+      "turret": "rbxassetid://126486795687120",
+      "barrel": "rbxassetid://96811099889403"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115032516955261",
+      "RGH": "rbxassetid://108979190144553",
+      "NOR": "rbxassetid://116851050092132",
+      "MTL": "rbxassetid://139331547079641",
+      "EMI": "rbxassetid://131237719354328"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://137818253979639",
+      "NOR": "rbxassetid://85719389612379",
+      "RGH": "rbxassetid://104320464382908",
+      "MTL": "rbxassetid://89411190720672",
+      "EMI": "rbxassetid://112548824462184"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art",
+    "note": "RGH re-uploaded as decal 112795935467126: the first upload's image failed with HTTP 502 in Studio"
   }
 }
