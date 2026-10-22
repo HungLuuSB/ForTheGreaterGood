@@ -524,6 +524,15 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: the shield field inside the dome checked (S-83)
+
+- You asked for shells to pass through the surface and be slowed and turned inside the dome, not stopped outside it. sim-A moved the field band into the outer 40% of the dome (S-83): the core is 72 studs on the Phalanx and 48 on the Carapace. No client change: the client steps shells with the shared field, and hits stay on the surface where the ripple is drawn.
+- **Lune:** `ShieldWire.spec` passes unchanged. With the same setup, Ravager shells go about 16 studs inside the dome before turning, and the heavier Juggernaut shells about 30, out of a 48-stud band.
+- **Studio, shield profile, 12 s:** 230 shells crossed the surface, 219 turned back, 0 broke through, and the dome held at 100% (`debug_out/screens/c95_shield_inner.jpg`). At 0.1x sim speed the shells show inside the foot ring, slowing there (`c95_shield_inner_slow.jpg`).
+- **For your review (from sim-A):**
+  - **Head-on at full charge:** the Phalanx stops everything except the Citadel round. The Carapace's 32-stud band also lets the siege mortar through. A band of 0.5R would stop both on the Phalanx and leave only the Citadel round on the Carapace.
+  - **Units in the band** can be hit by shells still slowing down there.
+
 ## 2026-10-23: C's shield assets in ShieldFx; S-82's field checked (C-94)
 
 - **C's shield FX** (models request, `docs/contracts/fx.md`, `assets/fx/shield/roblox_assets.json`) replaces the placeholders:
