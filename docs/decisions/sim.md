@@ -1251,3 +1251,48 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - At 80 the Carapace turns Chaos's lost defence into a win.
   - At 64 / 48 the domes protect the base more than the army.
 - **Not decided:** the fix (smaller domes, blocking outgoing fire, a higher cost per hit, or none) is for the user's review.
+
+## S-91 — The match-shaped trial (next.md item 1a, the user's queue task 3) (2026-10-23)
+
+- **Asked:** next.md item 1 (a): reproduce the AI matches' Order bias outside the AI, with small waves against a rallied defender that has turret and artillery support.
+- **Built:**
+  - `Scenes.waves(attacker, waves, seed)`: a rallied defender (T1 tank and T1 artillery, `TRIAL_BUDGET`, default move state) stands beside its base (vehicle plant and T1 turret).
+  - The other faction arrives in `waves` equal waves 30 s apart, each attack-moving on the base, with the same roles and value plus the turret's.
+  - `lune run factions [seeds] match` adds the section; `play` now counts units that join mid-run.
+- **Result** (3 seeds; Order's trade = Chaos value destroyed / Order value lost):
+
+  | Attacker | 1 wave | 4 waves | 8 waves | Base fell (1 / 4 / 8) |
+  |---|---|---|---|---|
+  | Order attacks | 0.81 | 0.62 | 2.62 | 0/3, 0/3, 3/3 |
+  | Chaos attacks | 0.82 | 9.29 | 18.61 | 3/3, 0/3, 0/3 |
+
+- **Reading:**
+  - In one big wave the factions trade alike (0.81 / 0.82), as the equal-value trial said (S-62).
+  - In 4–8 small waves Chaos loses 9–18 times what it kills against an Order defender, while Order's small waves still take a Chaos base.
+  - So the gap is how the AI fights (small waves into a rallied defender), and Order's range and accuracy edge makes it worse. That is what (b) and (c) address.
+
+## S-93 — Shields destroy every projectile at the surface (client request 42, the user) (2026-10-23)
+
+- **Asked** (relayed by the client stream): every projectile that reaches an up enemy dome is destroyed on contact, whatever its mass: no braking field, no turning back, no breach. Keep the drain per hit, the collapse at 0% and the rise at 25%, and the S-89 hitscan stop.
+- **Built:** `ShieldField.ABSORB_MASS` = ∞. Every enemy shell crossing the surface takes S-85's absorb path: destroyed there, its mass off the charge, SHIELD_HIT with ABSORBED, no IMPACT. SHIELD_FIELD is no longer sent.
+- **Kept, not deleted:** the S-79..S-85 field (braking, steering, push, gravity, breach) still runs for any finite `ABSORB_MASS`. Its tests run with it set to 0.5 (`fieldOn` in `Shield.spec`), so the user's earlier rules return with one constant if wanted.
+- **Measured:** the S-90 trial again (in `docs/progress/sim.md`): at 120 / 80 both factions' defending armies are now untouchable, so the radius decision (S-90) matters more.
+- **Tests:** `Shield.spec` 17: every shell weight is destroyed at the surface with its mass in charge and no burst. The field tests run with the field on.
+
+## S-94 — T1 factories at twice the build power; the AI's economy follows (client request 42b, the user) (2026-10-23)
+
+- **Asked:** "Build speed for a single unit take too much time" (a Lancer took 51 s; BAR's T1 tanks about 25–30 s). Halve the T1 build times or double the T1 plants' build power, my call.
+- **Built:** the T1 vehicle plant, airfield and shipyard of both factions build at 200 (was 100), as the T2 ones do: a Lancer in 25.5 s. Build power rather than build times, so only factory output speeds up; structures built by workers keep their pace.
+- **The AI** (its economy couldn't keep up): a plant at full speed draws about 66 power/s (a Lancer's 1,700 power over 25.5 s). The generator rule planned for 20 per plant, so normal stalled at 25% power with two generators for 8 minutes: every job slowed to a quarter, and its tanks-first opening (S-57) kept the builders off generators. Now:
+  - generators wanted = ⌈(factories' build power × `POWER_PER_WORK` (1/3) + 20 + refills) / `GENERATOR_POWER` (20)⌉, counted in generators, frames included, not income (a mirror's finishing tick mustn't change the next job);
+  - the tanks-first opening holds only while power hasn't run below `ARMY_FIRST_RATIO` (0.6) in the last `POWER_MEMORY` ticks, watched every tick (S-31's lesson: a think's sampling moment mustn't decide).
+  - Normal on Ridgeline at 8 minutes: 12 generators, power at 100%, 31 units (was 2 generators, 25% power, 6 units).
+- **Fairness:**
+  - Faster plants put more units on the road early, so the mirrored builders' trip jitter (flow-field tie-breaks) shows up sooner: Hard's mirrored 2v2 now parts after 7 jobs, not 8.
+  - One pair of mirrored players ends 12% apart at 3 minutes, the other 1% the other way. It's the same with the build power alone and the old AI; seeds don't matter.
+  - The test now asks for the first 7 jobs to match, the two teams within 10%, and no consistent side lead (both pairs > 5% the same way), which is what S-31's bug looked like.
+  - Mirror match split: west 4, east 8 of 12 (in tolerance).
+- **Tests:**
+  - `Build.spec`: a Lancer in 383 ticks.
+  - `AI.spec`: normal's economy keeps up (≥ 4 generators, ≥ 8 units and power ≥ 60% by 8 minutes) instead of tanks before the third generator.
+  - `Fairness.spec`: as above.

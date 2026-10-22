@@ -332,6 +332,73 @@ function Scenes.siege(aId: string, seed: number): Scene
 	}
 end
 
+-- The match-shaped trial (S-91; next.md item 1a): how AI matches fight. A
+-- rallied defender (T1 tank and T1 artillery, `TRIAL_BUDGET`, default
+-- move state) beside its base (vehicle plant and T1 turret) meets the
+-- other faction arriving in `waves` equal waves 30 s apart, each
+-- attack-moving on the base, the same roles and value (plus the turret's,
+-- so both sides spend alike). Sides are filled in as waves spawn.
+Scenes.WAVE_ROLES = table.freeze({
+	order = table.freeze({ "ord_lancer", "ord_verdict" }),
+	chaos = table.freeze({ "chs_ravager", "chs_hellmouth" }),
+})
+Scenes.WAVE_GAP = 450 -- ticks between waves (30 s)
+function Scenes.waves(attacker: string, waves: number, seed: number): Scene
+	local set = Defs.load()
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+	local ap = if attacker == "order" then 1 else 2
+	local dp = 3 - ap
+	local defender = if attacker == "order" then "chaos" else "order"
+	local dpre = if defender == "order" then "ord_" else "chs_"
+	local bx, ax = 250, -350
+	local turretId = if defender == "order" then "ord_bulwark" else "chs_spike"
+	local base = { Spawn.unit(sim, dpre .. "vehplant", dp, bx, 0), Spawn.unit(sim, turretId, dp, bx - 40, 30) }
+	local defenders = table.clone(base)
+	for i, id in Scenes.WAVE_ROLES[defender] do
+		for _, u in spawnGroup(sim, set.units[id], dp, bx - 70, -math.pi / 2, Scenes.TRIAL_BUDGET / 2, (i - 1.5) * 80, 60) do
+			table.insert(defenders, u)
+		end
+	end
+	local raid: { number } = {}
+	local total = Scenes.TRIAL_BUDGET + Scenes.value(set.units[turretId])
+	local sent = 0
+	local function spawnWave()
+		sent += 1
+		for i, id in Scenes.WAVE_ROLES[attacker] do
+			for _, u in spawnGroup(sim, set.units[id], ap, ax, math.pi / 2, total / waves / 2, (i - 1.5) * 80, 60) do
+				table.insert(raid, u)
+			end
+		end
+	end
+	spawnWave()
+	local function alive(ids: { number }): number
+		local n = 0
+		for _, id in ids do
+			if sim.world.slot[id] then
+				n += 1
+			end
+		end
+		return n
+	end
+	local fight = fightDriver(30, ap)
+	return {
+		sim = sim,
+		drive = function(sm: Sim.Sim)
+			topUp(sm, { 1, 2 })
+			if sent < waves and sm.tick >= sent * Scenes.WAVE_GAP then
+				spawnWave()
+			end
+			fight(sm)
+		end,
+		done = function(_sm: Sim.Sim): boolean
+			return alive(base) == 0 or (sent >= waves and alive(raid) == 0)
+		end,
+		maxTicks = waves * Scenes.WAVE_GAP + 2 * Scenes.MATCHUP_TICKS,
+		sides = if ap == 1 then { raid, defenders } else { defenders, raid },
+		base = base,
+	}
+end
+
 -- A shielded base under siege (S-90, the user's queue task 2): `defender`
 -- ("order" or "chaos") holds a base (vehicle plant and generator under its
 -- shield dome, unless `shielded` is false) with an army of its T1 tank, T2

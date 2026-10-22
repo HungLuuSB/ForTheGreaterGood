@@ -171,7 +171,17 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
     | 120 / 80 | Chaos | 2.29 | 0 / 5 | — | 2931 | 6700 | 304 |
     | 64 / 48 | Chaos | 0.30 | 5 / 5 | 169 s | 7740 | 2347 | 512 |
 
-  - **What it shows:**
+  - **After S-93** (your rule: every projectile destroyed at the surface), same trial:
+
+    | Domes (Order / Chaos) | Defender | Defender's trade | Base fell | Defender lost | Raid lost | Shield hits |
+    |---|---|---|---|---|---|---|
+    | 120 / 80 | Order | ∞ (nothing lost) | 0 / 5 | 0 | 6955 | 253 |
+    | 64 / 48 | Order | 59.28 | 0 / 5 | 117 | 6955 | 242 |
+    | 120 / 80 | Chaos | ∞ (nothing lost) | 0 / 5 | 0 | 6700 | 163 |
+    | 64 / 48 | Chaos | 2.06 | 0 / 5 | 3246 | 6700 | 486 |
+
+    With nothing getting through, both domes now make a defending army untouchable at the current radii. At 64 / 48 Order still wins 59 to 1, and Chaos's smaller dome turns its lost defence (0.30 unshielded) into a win (2.06). The options below matter more now.
+  - **What it showed (S-90, with the braking field):**
     - At 120 the Order dome covers the whole defending army. Shells from outside are turned while the army fires out freely, so the raid destroys nothing.
     - At 80 the Carapace turns a lost defence (0.30) into a won one (2.29).
     - At 64 / 48 the domes cover only the base and part of the army. Order still trades 5.15. The Carapace no longer changes the trade but holds the base nearly four times as long (169 s against 44 s).
@@ -183,6 +193,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
     - (c) a higher charge cost per hit, so a dome under fire drops sooner;
     - (d) keep it and let the attacker answer with heavier artillery, hitscan-free siege units or a power raid.
   - My suggestion: (b), since it keeps the dome as a fortress without making the army inside it untouchable. (a) is the cheaper change.
+- **Build speed (S-94, request 42b):** I doubled the T1 factories' build power (100 → 200) rather than halving T1 build times: only factory output speeds up, and structures keep their pace. A plant at full speed draws about 66 power/s, so it wants about three generators. The AI's generator rule now plans for that, and its tanks-first opening gives way while power stalls; it had stalled at 25% power for 8 minutes with 2 generators. Normal fields 31 units by 8 minutes, against 6. Your call if you'd rather have the build times halved instead (the same pace for factories; assisting workers would count for more).
 - **Shield domes (S-79, client request 40), placeholder numbers:**
   - **Generators:** Order `ord_phalanx` Phalanx (Architect, T2): radius 120, capacity 600 shell masses, recharge 30/s (20 s from empty), 40 power/s while recharging; supply 400, power 5,000, 2,800 health. Chaos `chs_carapace` Carapace (Forgemaster, T2): radius 80, capacity 400, recharge 24/s, 25 power/s; supply 280, power 3,500, 2,000 health. Capacity and recharge are 20× my first numbers (your rules: 10× in S-80, 50× in S-81, then down to 20× in S-86). Chaos's capacity and price, and keeping the power draw unchanged, are my calls. At 30 charge a second, a full Phalanx out-recharges about 12 mortar shells a second.
   - **Light shots destroyed (S-85, your rule):** shells under mass 0.5 (under 75 damage: machine guns, autocannons, MLRS rockets) vanish where they cross the dome's surface; heavier ones keep the slow, turn and push-out. The threshold, and that each one costs its mass in charge like a turn, are my calls.
@@ -261,6 +272,8 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - **`SHIELD_HIT 20`** `unitId u16 (0 = a generator you don't have), projId u16, pos (the point on the dome), mass u8 (/ Schema.SHIELD_MASS_SCALE 31 = shell masses, 1 = a 150-damage shell), flags u8 (SHIELD_BREACH 1)`: a shell turned back (the hit) or broke through. Draw the hit patch at `pos` with intensity from `mass`.
   - **`SHIELD_FIELD 21`** `projId u16, pos (the dome's centre), radius u16, force u8 (0..255), phase u8 (1 braking, 2 repelled)`: a projectile you have came into a dome's field (or is in one when it reaches you). From then step it with **`Shared/Combat/ShieldField.step`** (the server's field: the same constants and maths as your C-87 prototype, braking doubled) instead of `Ballistics.step`, until the phase is DONE; mass from `ShieldField.mass(weapon)`. The Projectiles channel also corrects shells in a field (every 5 ticks, on the turn or breach, and when they leave). The test client does it (`Support/Client`), and its shells stay within a stud of the server's.
   - Turned shells stay live: they fly on and burst with their normal IMPACT where they land. Your `Core/Shield` can drop `stepShell`, `drain` and `recharge` for these.
+  - **S-94 (request 42b):** T1 factories build at 200 (was 100): a Lancer in 25.5 s. No wire change.
+  - **S-93 (request 42):** every enemy projectile is destroyed where it reaches an up dome, whatever its mass. You get SHIELD_HIT with ABSORBED at the surface; SHIELD_FIELD is no longer sent and no shell turns or breaks through. Drain per hit (its mass), collapse at 0%, rise at 25% and the hitscan stop are unchanged. No wire change.
   - **S-89 (the user's queue: hitscan intercepted), protocol 26:** a hitscan or beam shot from outside an enemy dome that's up is stopped where it enters: no damage, its mass in charge. The FIRE event ends at that surface point with no hit, and a SHIELD_HIT with ABSORBED and **projId 0** marks it (projId 0 is new in protocol 26, so the decoder no longer rejects it). Light the ripple; there's no shell to drop.
   - **S-86 (the user):** shield strength down to 20× S-79's: Phalanx 600 at 30/s, Carapace 400 at 24/s; power draw unchanged. No wire change.
   - **S-87 (the user: frames are inert):** a unit with build progress below 1 no longer aims, targets or fires (sensors, factories, economy, stockpiles, pads and shields already waited), and destroyed it leaves no wreck (DEATH `wreckId` 0) and no BLAST. Build progress already reaches every client that has the unit in its tactical tier, enemies included: ENTER's `build` and State's BUILD field (u8) on change. Strategic records don't carry it.

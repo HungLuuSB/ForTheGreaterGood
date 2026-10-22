@@ -72,8 +72,23 @@ end
 
 local ALL_WEIGHTS = { "chs_mg", "chs_autocannon", "chs_mlrs", "chs_light_cannon", "chs_rockets", "chs_heavy_cannon", "chs_mortar", "chs_heavy_bomb", "chs_siege_mortar", "chs_radar_sam" }
 
+-- Runs `fn` with the braking field on (S-93 destroys every projectile at
+-- the surface; the field of S-79..S-85 stays behind ShieldField.ABSORB_MASS
+-- and these tests keep it working).
+local function fieldOn(fn: () -> ()): () -> ()
+	return function()
+		local saved = ShieldField.ABSORB_MASS
+		ShieldField.ABSORB_MASS = 0.5
+		local ok, err = pcall(fn)
+		ShieldField.ABSORB_MASS = saved
+		if not ok then
+			error(err, 0)
+		end
+	end
+end
+
 return function(t: RunAll.Context)
-	t.test("a charged dome turns every shell weight back, or destroys light ones; turned shells burst outside, live", function()
+	t.test("a charged dome turns every shell weight back, or destroys light ones; turned shells burst outside, live", fieldOn(function()
 		for _, weaponId in ALL_WEIGHTS do
 			local sim, gen = dome(1)
 			local w = sim.world
@@ -98,9 +113,9 @@ return function(t: RunAll.Context)
 				near(t, math.sqrt((hit.x - gx) ^ 2 + (hit.y - gy) ^ 2 + (hit.z - gz) ^ 2), 120, 0.01, `{weaponId}: the hit point is on the dome`)
 			end
 		end
-	end)
+	end))
 
-	t.test("a turned shell explodes where it lands and hurts what it lands on", function()
+	t.test("a turned shell explodes where it lands and hurts what it lands on", fieldOn(function()
 		local sim = dome(2)
 		local w = sim.world
 		-- a mortar shell from the north turns back north: a Chaos tank waits there
@@ -115,9 +130,9 @@ return function(t: RunAll.Context)
 		follow(sim2, p2)
 		t.expect(sim2.world.health[tank] < full, `the shell came down on its own side's tank ({full} → {sim2.world.health[tank]})`)
 		local _ = w
-	end)
+	end))
 
-	t.test("heavier shells take longer to stop: they turn deeper in the field", function()
+	t.test("heavier shells take longer to stop: they turn deeper in the field", fieldOn(function()
 		local function turnAt(mass: number): number
 			-- straight down onto the top of a dome of radius 120 at 240 studs/s
 			local x, y, z, vx, vy, vz = 0, 175, 0, 0, -240, 0
@@ -134,9 +149,9 @@ return function(t: RunAll.Context)
 		local light, medium, heavy = turnAt(0.6), turnAt(1), turnAt(6)
 		local core = 120 * (1 - ShieldField.BAND_SHARE)
 		t.expect(light < 120 and light > medium and medium > heavy and heavy > core, `turn heights {light}, {medium}, {heavy} (inside the dome: surface 120, core {core})`)
-	end)
+	end))
 
-	t.test("head-on shells stop and come back; off-centre ones bend round the dome and carry on (S-82)", function()
+	t.test("head-on shells stop and come back; off-centre ones bend round the dome and carry on (S-82)", fieldOn(function()
 		-- parallel shots up at a dome of radius 120, offset from its centre;
 		-- returns the angle between the way out and the way in, the speed kept
 		-- and whether it broke through
@@ -172,9 +187,9 @@ return function(t: RunAll.Context)
 		-- a shot whose line misses the dome is left alone
 		local angle, keep = shot(1.2, 1, 260)
 		t.expect(angle < 1e-6 and math.abs(keep - 1) < 1e-9, "a line past the dome: untouched")
-	end)
+	end))
 
-	t.test("flat head-on shots near the ground turn and fly back (the client's ShieldWire case)", function()
+	t.test("flat head-on shots near the ground turn and fly back (the client's ShieldWire case)", fieldOn(function()
 		-- a Ravager firing straight at a Mason under the dome, low over flat
 		-- ground: slowed almost to a stop, gravity bends them down, and they
 		-- used to sink through the band without ever turning
@@ -219,6 +234,38 @@ return function(t: RunAll.Context)
 		t.equal(through, 0, "none broke through")
 		t.expect(back + landed >= turned - 1, `turned shells fly back or land, none hang ({back} back, {landed} landed of {turned})`)
 		t.equal(inCore, 0, "none landed in the core")
+	end))
+
+	t.test("every shell weight is destroyed where it reaches the dome: no burst, its mass in charge (S-93)", function()
+		for _, weaponId in ALL_WEIGHTS do
+			local sim, gen = dome(15, 0.5)
+			local c = sim.combat
+			local p = fire(sim, weaponId, 0, 250)
+			local hit, drop, impacts = nil, 0, 0
+			for _ = 1, 200 do
+				local prev = c.shieldCharge[gen]
+				Sim.step(sim)
+				for _, e in c.events do
+					if e.other == p and e.kind == "SHIELD_HIT" then
+						hit = e
+						drop = prev - c.shieldCharge[gen]
+					elseif e.other == p and e.kind == "IMPACT" then
+						impacts += 1
+					end
+				end
+				if c.projSlot[p] == nil then
+					break
+				end
+			end
+			local mass = Shield.mass(sim.defs.weapons[weaponId])
+			t.expect(hit ~= nil and hit.absorbed == true and not hit.breach, `{weaponId}: destroyed at the surface`)
+			t.equal(impacts, 0, `{weaponId}: no burst`)
+			near(t, drop, Shield.HIT_COST * mass - sim.defs.units.ord_phalanx.shield.recharge / 15, 0.01, `{weaponId}: its mass in charge`)
+			if hit then
+				local gx, gy, gz = Shield.center(sim, gen)
+				near(t, math.sqrt((hit.x - gx) ^ 2 + (hit.y - gy) ^ 2 + (hit.z - gz) ^ 2), 120, 0.01, `{weaponId}: on the surface`)
+			end
+		end
 	end)
 
 	t.test("light shells are destroyed at the surface: charge by mass, no burst, the client drops them (S-85)", function()
@@ -313,7 +360,7 @@ return function(t: RunAll.Context)
 		t.equal((Shield.intercept(sim, 2, gx + 200, 10, gz, gx + 200, 10, gz + 300, sim.defs.weapons.chs_flak)), 0, "a line clear of the dome")
 	end)
 
-	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()
+	t.test("below half charge heavy shells break through, slowed; light ones still turn", fieldOn(function()
 		local sim, gen = dome(3, 0.06)
 		local light = fire(sim, "chs_autocannon", 0, 250)
 		local hitLight = follow(sim, light)
@@ -347,7 +394,7 @@ return function(t: RunAll.Context)
 		near(t, drop, Shield.BREACH_COST * Shield.mass(sim.defs.weapons.chs_siege_mortar) - def.recharge / 15, 0.01, "a breach costs half the shell's mass (less a tick's recharge)")
 		t.equal(ShieldField.force(0.5), 1, "full force at 50%")
 		t.equal(ShieldField.force(0.25), 0.5, "half force at 25%")
-	end)
+	end))
 
 	t.test("hits drain the charge by mass; at 0 the dome falls and shells pass; it rises at 25% on power", function()
 		local sim, gen = dome(4)
@@ -463,7 +510,7 @@ return function(t: RunAll.Context)
 		near(t, c.shieldCharge[gen], sim.defs.units.ord_phalanx.shield.recharge, 0.1, "a second's recharge")
 	end)
 
-	t.test("the wire: SHIELD after ENTER and on change, SHIELD_FIELD and SHIELD_HIT; the client's field matches", function()
+	t.test("the wire: SHIELD after ENTER and on change, SHIELD_FIELD and SHIELD_HIT; the client's field matches", fieldOn(function()
 		local sim, gen = dome(9)
 		local g = (sim.map :: any).grid
 		local cx, cz = g:cellAt(0, 50)
@@ -510,7 +557,7 @@ return function(t: RunAll.Context)
 		t.expect(worst < 1, `the client's field step tracks the server's ({worst} studs at worst)`)
 		t.equal(hits, 1, "one SHIELD_HIT")
 		t.expect(view.shields[gen].charge > half + 8, `SHIELD records follow the recharge ({half} → {view.shields[gen].charge})`)
-	end)
+	end))
 
 	t.test("a player without the generator gets SHIELD_HIT with generator 0", function()
 		local sim, gen = dome(10)
