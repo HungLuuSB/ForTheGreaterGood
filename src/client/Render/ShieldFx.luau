@@ -85,7 +85,7 @@ export type ShieldFx = {
 	barFill: Frame?,
 	barText: TextLabel?,
 	-- methods
-	deploy: (ShieldFx) -> (),
+	deploy: (ShieldFx, boolean?) -> (),
 	collapse: (ShieldFx) -> (),
 	setStrength: (ShieldFx, number) -> (),
 	hit: (ShieldFx, Vector3, number) -> (),
@@ -160,11 +160,11 @@ local function hexMesh(): MeshPart?
 	return nil
 end
 
--- The shared plate pool, made once with the first shield.
+-- The shared plate pool, made once with the first shield, in its own
+-- thread: making the hexagon mesh yields (CreateMeshPartAsync), and new()
+-- must not (the frame loop would carry on and make a second dome). Hit
+-- plates show once it is ready.
 local function makePlates(folder: Folder)
-	if #plates > 0 then
-		return
-	end
 	local w = Shield.PLATE
 	local template = hexMesh()
 	ShieldFx.stats.plates = if template then "hexagon mesh" else "three rectangles"
@@ -199,8 +199,9 @@ local function setState(s: ShieldFx, state: ShieldLook.State)
 	s.since = clock
 end
 
-function Methods.deploy(s: ShieldFx)
-	setState(s, "deploying")
+-- `instant`: already up (a dome that comes into view standing), no deploy animation.
+function Methods.deploy(s: ShieldFx, instant: boolean?)
+	setState(s, if instant then "up" else "deploying")
 end
 
 function Methods.collapse(s: ShieldFx)
@@ -265,15 +266,16 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		f.Name = "ShieldFx"
 		f.Parent = workspace
 		root = f
-		makePlates(f)
+		task.spawn(makePlates, f)
 	end
 	local player = Players.LocalPlayer
-	if gui == nil and player then
+	local playerGui = if player then player:FindFirstChildOfClass("PlayerGui") else nil -- never wait: new() runs in the frame loop
+	if gui == nil and playerGui then
 		local g = Instance.new("ScreenGui")
 		g.Name = "ShieldBars"
 		g.ResetOnSpawn = false
 		g.IgnoreGuiInset = true -- placed in viewport pixels
-		g.Parent = player:WaitForChild("PlayerGui")
+		g.Parent = playerGui
 		gui = g
 	end
 	local position = if typeof(emitter) == "Vector3" then emitter else (emitter :: Attachment).WorldPosition

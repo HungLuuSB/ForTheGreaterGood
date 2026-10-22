@@ -365,8 +365,9 @@ local PROFILES = {
 		demoOrders = false,
 		restartAfter = nil,
 	},
-	-- the shield dome's test ground (C-89), for when the sim has the Phalanx:
-	-- a dome of radius 120 on (0, -150), Order units under it that don't
+	-- the shield dome's test ground (C-89; a real Phalanx since S-79, C-91):
+	-- its dome of radius 120 on (0, -150), a fusion plant powering its
+	-- recharge, Order units under it that don't
 	-- shoot back (50x health so the test lasts): a vehicle plant at the
 	-- centre for the Cyclops, a radar and three builders near the
 	-- north edge for the short guns to aim at, so their shells cross the
@@ -374,8 +375,7 @@ local PROFILES = {
 	-- weight: Locust autocannons (lightest), Ravager and Juggernaut shells,
 	-- Hellmouth mortars and Hydra rockets on attack-ground at the centre,
 	-- Cyclops siege mortars (heaviest, structures only, spotted by a
-	-- Watcher). Until the sim has it, Invoke("shield") shows the client
-	-- prototype under the camera.
+	-- Watcher).
 	shield = {
 		seed = 11,
 		mapId = "flat:128",
@@ -385,7 +385,9 @@ local PROFILES = {
 		demoOrders = false,
 		restartAfter = nil,
 		spawns = {
-			{ def = "ord_vehplant", player = 1, x = 0, z = -150, health = 50 },
+			{ def = "ord_phalanx", player = 1, x = 0, z = -150, health = 50 },
+			{ def = "ord_fusion", player = 1, x = 0, z = -215, health = 50 },
+			{ def = "ord_vehplant", player = 1, x = 0, z = -110, health = 50 },
 			{ def = "ord_oracle", player = 1, x = -30, z = -60, health = 50 },
 			{ def = "ord_mason", player = 1, x = 30, z = -60, health = 50 },
 			{ def = "ord_mason", player = 1, x = -70, z = -60, count = 2, dx = 140, health = 50 },

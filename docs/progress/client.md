@@ -521,6 +521,32 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shield domes from the server (protocol 24, S-79, request 40) (C-91)
+
+- **You couldn't see a shield in the shield scenario:** the profile only spawned units, and until S-79 the sim had no shield. I first added a client-only stand-in. While it was in review, sim-A shipped the real thing (S-79: `ord_phalanx`, `chs_carapace`, `Shared/Combat/ShieldField`, events SHIELD, SHIELD_FIELD, SHIELD_HIT), so the stand-in went and the client now draws the server's shields:
+  - **SHIELD:** `world.shields[generatorId] = { charge 0..1, flags }`, dropped on LEAVE, DEATH and WELCOME.
+  - **SHIELD_FIELD:** the shell steps with `ShieldField.step` instead of the plain ballistic step until its phase is DONE, both per tick and drawn between ticks (`Core/Effects`).
+  - **SHIELD_HIT:** a turned missile loses its target, and the hit goes to `fx.shieldHits`.
+  - **`Render/ShieldDomes`:** a ShieldFx dome on every generator the client has, round its base, with radius from the def. Strength is the server's charge. It collapses when UP clears, deploys when UP returns, and comes into view already standing without a deploy animation. Hits light the dome they name, or the nearest dome round the point if the generator is hidden.
+- **Lune** (`ShieldWire.spec`, real sim and client stack):
+  - the client's charge and UP flag follow the server's, collapse included;
+  - shells in the field are stepped like the server's (worst 0.07 studs off over 43 shell-ticks);
+  - 9 Ravager shells turned back on a full dome, no breach, each hit on the dome surface.
+- **`shield` profile:** a real Phalanx on the spot (radius 120, 50× health), a fusion plant powering it, the vehicle plant moved north of it.
+- **Studio:**
+  - The dome stands on the Phalanx. In 15 s, 72 shells entered its field and 63 turned back, and the turned shells land back outside, live (`debug_out/screens/c91_shield_scenario.jpg`).
+  - **Still too weak at today's numbers:** the barrage drains the server's capacity of 30 within a second of each rise. Your 10× is with sim-A (below).
+- **Fixed:** two domes appeared on one generator. The first ShieldFx built its hexagon mesh with `CreateMeshPartAsync`, which yields, and the next frame made a second dome. `new()` now never yields: the plate pool builds in its own thread, and the capacity bar's PlayerGui is looked up, not waited for.
+- **Icons:** `ord_phalanx` and `chs_carapace` borrow the Jammer Tower icon until the catalogue lists them. The sheet is byte-identical, so no re-import is needed.
+- **Sent to sim-A** (the numbers are theirs):
+  - **Your "boost 10x":** capacity ×10 with the same refill time, so Phalanx 30 → 300 and recharge 1.5 → 15; Carapace 20 → 200 and 1.2 → 12.
+  - **Your "the deceleration is so weak, it reflected 0 shots":** that was my stand-in, which couldn't move shells; the server's field (braking doubled in S-79) turns them back.
+  - **Your new deflection rule:** a head-on shot goes straight back, and a glancing one bounces off at an angle. I measured the shared field:
+    - head-on shells go straight back;
+    - glancing shells are diverted the right way, but leave much steeper than a mirror bounce (30° → 20°, 50° → 29°, 70° → 36°), because the field's sideways drag (TANGENT_DRAG 1.5) takes most of their sideways speed;
+    - suggested 0.2–0.3 or none.
+- **Debug:** `Invoke("shielddomes")` returns the client's domes and SHIELD records.
+
 ## 2026-10-23: ShieldFx — the shield dome renderer (C-90)
 
 - **`Render/ShieldFx`**, your interface: `ShieldFx.new(emitterAttachmentOrPosition, radius, teamColor)`, then `:deploy()`, `:setStrength(0..1)`, `:hit(worldPos, intensity)`, `:collapse()`, `:destroy()`. `Core/ShieldLook` (pure, `ShieldLook.spec`, 6 tests) holds:
@@ -795,7 +821,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-40. **Open.** **Shield generators on the wire (2026-10-23, the user asked; the client draws them with `Render/ShieldFx`, C-90):**
+40. **Done and used (S-79, protocol 24; C-91).** **Shield generators on the wire (2026-10-23, the user asked; the client draws them with `Render/ShieldFx`, C-90):**
     - **Mechanic** (the user's rules):
       - A shield generator structure (no vehicle shield). Order's dome is bigger than Chaos's; the client prototype uses radius 120 (Order) and 80 (Chaos), placeholders.
       - Charge draws power to recharge.
@@ -803,7 +829,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
       - Full force at ≥50% charge, scaling down below that, so big shells break through, slowed.
       - The dome collapses at 0% and rises again at 25%.
       - Bounced shells stay **live**: they explode where they land.
-      - The client's placeholder numbers are in `src/client/Core/Shield.luau`.
+      - The client's placeholder numbers are in `src/client/Core/Shield.luau`. Since C-91 the shield is 10x stronger (the user): 0.004 charge per unit of shell weight turned back, 0.002 per breach, recharge 5%/s.
     - **Per shield, on the generator's record**, for everyone who can see it (enemies included, since the dome is visible):
       - radius;
       - strength fraction (u8 is enough);

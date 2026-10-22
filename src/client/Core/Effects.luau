@@ -23,6 +23,7 @@
 
 local Ballistics = require("@shared/Combat/Ballistics")
 local Guidance = require("@shared/Combat/Guidance")
+local ShieldField = require("@shared/Combat/ShieldField")
 local Lofted = require("@shared/Combat/Lofted")
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
@@ -86,7 +87,12 @@ export type Proj = {
 	own: boolean?, -- a strategic missile launched by the local player's team (C-58)
 	goal: { number }?, -- a strategic missile's ordered spot x, y, z (SPAWN_STRATEGIC, S-51): it flies Shared/Combat/Lofted
 	gone: boolean?, -- ended (impact, interception, time out): interceptors chasing it fly on
+	field: { number }?, -- in a shield dome's field (SHIELD_FIELD, S-79, C-91): { cx, cy, cz, radius, force 0..1, phase }; stepped with Shared/Combat/ShieldField
 }
+
+-- A shell turned back by a shield dome or breaking through it (SHIELD_HIT,
+-- protocol 24, S-79): Render/ShieldDomes lights the dome there.
+export type ShieldHit = { unitId: number, x: number, y: number, z: number, mass: number, breach: boolean }
 
 -- A strategic missile's launch (LAUNCH_WARNING, S-48): every player gets one.
 export type Warning = { projId: number, x: number, y: number, z: number, born: number, proj: Proj?, endedAt: number? }
@@ -120,6 +126,7 @@ export type Fx = {
 	shots: { { number } }, -- { unitId, slot } of shots played since the caller last cleared it (piece scripts' FireWeapon)
 	marks: { Mark }, -- the sensor view's corrections, decoys and lost locks, oldest first (C-39)
 	warnings: { Warning }, -- strategic launches, kept while the missile flies and WARNING_LINGER after (C-57)
+	shieldHits: { ShieldHit }, -- since the caller last cleared it (C-91)
 }
 
 function Effects.new(): Fx
@@ -139,6 +146,7 @@ function Effects.new(): Fx
 		shots = {},
 		marks = {},
 		warnings = {},
+		shieldHits = {},
 	}
 end
 
@@ -433,10 +441,17 @@ end
 -- On its spawn tick (launched early, C-27) it is the server's own state (a
 -- homing missile already steered during it). Last: a vertical launch's
 -- `turned` after this tick (C-53).
-local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean, boolean?)
+local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean, boolean?, number?)
 	local launch = p.launch
 	if launch and launch[1] == t then
 		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0, true, p.turned
+	end
+	local field = p.field
+	if field then
+		-- in a shield dome's field: the server's field step (S-79), unsteered
+		local w = p.weapon
+		local x, y, z, vx, vy, vz, phase = ShieldField.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, w.gravity or 0, field[1], field[2], field[3], field[4], field[5], ShieldField.mass(w), field[6], DT)
+		return x, y, z, vx, vy, vz, 0, 0, 0, true, p.turned, phase
 	end
 	local weapon = p.weapon
 	local vx, vy, vz = p.vx, p.vy, p.vz
@@ -496,6 +511,13 @@ local function stepProjectiles(fx: Fx, world: World.World, t: number)
 		end
 		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow, turned = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11]
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
+		local field, phase = p.field, r[12]
+		if field and phase then
+			field[6] = phase
+			if phase == ShieldField.DONE or phase == ShieldField.FREE then
+				p.field = nil -- out of the field: it flies on plainly
+			end
+		end
 		p.turned = turned
 		p.launch = nil
 		local d = p.decoy
@@ -516,7 +538,7 @@ local function mark(fx: Fx, kind: string, now: number, x0: number, y0: number, z
 	table.insert(fx.marks, { kind = kind, x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now })
 end
 
-local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED", [EK.SPAWN_STRATEGIC] = "SPAWN_STRATEGIC" }
+local KIND_NAME = { [EK.SHIELD_FIELD] = "SHIELD_FIELD", [EK.SHIELD_HIT] = "SHIELD_HIT", [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED", [EK.SPAWN_STRATEGIC] = "SPAWN_STRATEGIC" }
 
 -- The unit (and weapon slot) that launched a `weaponIndex` shell from
 -- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
@@ -757,6 +779,24 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			capped(fx, fx.tracers, t, Effects.MAX_TRACERS)
 			local b = burst(fx, now, x0, y0 :: number, z0 :: number, 0.7 * t.size, "muzzle", 0.1)
 			facing(b, x1 - x0, y1 - (y0 :: number), z1 - (z0 :: number))
+		end
+	elseif kind == EK.SHIELD_FIELD then
+		-- the shell came into an enemy dome's field (protocol 24, S-79): step it
+		-- through the field from now on, as the server does
+		local p = fx.projectiles[e.projId]
+		if p then
+			local x, y, z = pos(world, e)
+			p.field = { x, y, z, e.radius, e.force / 255, e.phase }
+		end
+	elseif kind == EK.SHIELD_HIT then
+		-- turned back (a missile loses its lock) or broke through
+		local p = fx.projectiles[e.projId]
+		if p and not e.breach then
+			p.target = 0
+		end
+		local x, y, z = pos(world, e)
+		if #fx.shieldHits < 64 then
+			table.insert(fx.shieldHits, { unitId = e.unitId or 0, x = x, y = y, z = z, mass = e.mass / Schema.SHIELD_MASS_SCALE, breach = e.breach == true })
 		end
 	elseif kind == EK.SHOT then
 		-- a hidden shooter's hitscan shot (protocol 14, S-43, C-54): a tracer

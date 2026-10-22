@@ -87,6 +87,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			}
 			table.insert(world.entered, id)
 		elseif kind == EK.LEAVE then
+			world.shields[e.unitId :: number] = nil -- its dome is sent again on the next ENTER
 			local u = world.units[e.unitId :: number]
 			if u and u.tier == "tactical" then
 				u.tier = "strategic" -- refreshed or dropped by the next strategic snapshot
@@ -96,6 +97,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			end
 		elseif kind == EK.DEATH then
 			local id = e.unitId :: number
+			world.shields[id] = nil
 			local u = world.units[id]
 			if u then
 				local vx, vz = 0, 0
@@ -163,6 +165,9 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
 			local x, z = g:decode(e.cell :: number, 128, 128)
 			table.insert(world.alertQueue, { kind = e.alert :: number, x = x, z = z, defIndex = e.defIndex or 0, tick = tick })
+		elseif kind == EK.SHIELD then
+			-- a generator's dome (protocol 24, S-79): charge and up / recharging
+			world.shields[e.unitId :: number] = { charge = (e.charge :: number) / 255, flags = e.shieldFlags :: number }
 		elseif kind == EK.WRECK_GONE then
 			local id = e.wreckId :: number
 			world.wrecks[id] = nil
