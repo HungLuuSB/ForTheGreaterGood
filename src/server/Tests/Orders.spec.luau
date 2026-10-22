@@ -319,6 +319,47 @@ return function(t: RunAll.Context)
 		t.equal(#(sim.build.queue[plant] :: any), 1, "the queue still holds the repeated item")
 	end)
 
+	t.test("a factory's order list: each new unit takes a copy, in order; a plain order replaces it, STOP clears it (S-95)", function()
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local o = sim.orders
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, -150, -150)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 100, -100)
+		at(sim, CT.MOVE, 1, { plant }, 0, 0) -- pre-move
+		on(sim, CT.GUARD, 1, { plant }, tank, true) -- then guard the tank
+		steps(sim, 1)
+		t.equal(#o.rally[plant], 2, "two orders kept")
+		t.equal(o.rally[plant][1].kind, "move")
+		t.equal(o.rally[plant][2].kind, "guard")
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.ord_herald.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
+		local made = 0
+		steps(sim, 3000, function()
+			powered(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "PRODUCED" and e.other == plant then
+					made = e.unit
+				end
+			end
+			return made ~= 0
+		end)
+		t.expect(made ~= 0, "a unit was produced")
+		local q = o.queue[made] :: any
+		t.expect(q ~= nil and #q == 3, "out of the exit, then the two orders")
+		t.equal(q[2].kind, "move")
+		t.equal(q[3].kind, "guard")
+		t.equal(q[3].target, tank, "guarding the tank")
+		steps(sim, 900)
+		t.expect(dist(w, made, w.posX[tank], w.posZ[tank]) < 120, "it went to the spot, then to the tank")
+		-- a plain order replaces the list; STOP clears it
+		at(sim, CT.FIGHT, 1, { plant }, 50, 50)
+		steps(sim, 1)
+		t.equal(#o.rally[plant], 1, "a plain order replaces")
+		t.equal(o.rally[plant][1].kind, "fight")
+		submit(sim, 1, { cmdType = CT.STOP, flags = 0, unitIds = { plant } })
+		steps(sim, 1)
+		t.equal(o.rally[plant], nil, "STOP clears it")
+	end)
+
 	t.test("REPEAT sets a factory's repeat (and its state bit); TOGGLE only switches on / off", function()
 		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:64" })
 		local w = sim.world

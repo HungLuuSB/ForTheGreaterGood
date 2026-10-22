@@ -1296,3 +1296,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `Build.spec`: a Lancer in 383 ticks.
   - `AI.spec`: normal's economy keeps up (≥ 4 generators, ≥ 8 units and power ≥ 60% by 8 minutes) instead of tanks before the third generator.
   - `Fairness.spec`: as above.
+
+## S-95 — Factory order lists (client request 44, the user) (2026-10-23)
+
+- **Asked:** queue orders for a factory's new units (pre-move to a spot, then guard a unit, patrol and so on); keep the whole list: MOVE, FIGHT, PATROL, GUARD, REPAIR, ATTACK; shift appends, a plain order replaces, STOP clears; each produced unit rolls out of the exit, then takes a copy.
+- **Built:**
+  - `OrdersState.rally[factory]` is a list of `RallyOrder { kind, x, z, lx, lz, target, gen }`, replacing S-4's single rally kind and point. It is hashed.
+  - `Orders.give` puts these six kinds on a factory's list (queued: appended; else replaced); `Orders.stop` clears it.
+  - `Build.producedHook` gives the new unit its exit move, then each listed order, queued, in order.
+  - Guard and attack keep their target's generation, so an order to a unit since gone ends at once on the new unit, as any stale order does.
+- **No wire change.**
+- **Tests:** `Orders.spec` 11: a move-then-guard list reaches a produced unit in order, and it ends up by the guarded tank; a plain order replaces the list; STOP clears it.
