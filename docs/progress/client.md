@@ -60,7 +60,6 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Merge queue
 
-- Ready to merge: `0f8c297` (shield idle hexes keep clear of hit patches; hexagon mesh checked, C-88); test_client 157, test 386, build passed.
 - Ready to merge: `a2371cd` (CLAUDE.md: Studio is available to the client session only; the sim stays headless and is tested with `lune run test`).
 - Ready to merge: `f815a5d` (task 1: Rojo live sync and the in-Studio test entry; touches `CLAUDE.md`, both project files and the skill).
 - Ready to merge: `7bbaa7b` (separate `build/serve` and `build/ci` folders, `lune run serve`; touches `.lune/`, `CLAUDE.md`, the project files and the skill; C-3).
@@ -161,8 +160,6 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `926e4a9` (the user's icon set on one sprite sheet, drawn in the game, C-74; includes the icon HTML commits `44dc172`, `a0e43e1`); test_client 119, test 350, build passed.
 - Ready to merge: `994ba89` (factory queues, fire / move states and ammo from the server, request 36, C-75); test_client 122, test 350, build passed.
 - Ready to merge: `8abbf6d` (unit stats in the unit panel, C-76; also the draft 3 icon commits `226ed70`, `c9ff356`, the sheet not yet re-imported); test_client 127, test 350, build passed.
-- Ready to merge: `0a83686` (shield dome prototype, client only, C-87); test_client 156, test 386, build passed.
-- Ready to merge: `a994ce5` (draft 3 icons wired in, S-75 units with stopgap icons, no build-menu error for units missing from the sheet, C-86); test_client 145, test 386, build passed.
 - Ready to merge: `315ec04` (lobby seats for several humans, results with statistics, C-77; the 2-client Studio test not run); test_client 130, test 350, build passed.
 - Ready to merge: `3101bcf` (rejoin, late join, restart: a new WELCOME clears the client's references, C-78); test_client 133, build passed.
 - Ready to merge: `390df33` (spectators and the replay viewer, C-79); test_client 136, build passed.
@@ -173,6 +170,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `c5888f5` (atmosphere presets as options, C-83); test_client 141, build passed.
 - Ready to merge: `2d98701` (Warden and Minotaur piece scripts, deploy phases, C-84); test_client 143, build passed.
 - Ready to merge: `6ea62c3` (alerts from the server, S-69 to S-73 followed, C-85; includes the merge of main at f487eea); test_client 144, build passed.
+- Ready to merge: `a994ce5` (draft 3 icons wired in, S-75 units with stopgap icons, no build-menu error for units missing from the sheet, C-86); test_client 145, test 386, build passed.
+- Ready to merge: `0a83686` (shield dome prototype, client only, C-87); test_client 156, test 386, build passed.
+- Ready to merge: `0f8c297` (shield idle hexes keep clear of hit patches; hexagon mesh checked, C-88); test_client 157, test 386, build passed.
 
 ## Tasks
 
