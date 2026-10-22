@@ -48,6 +48,7 @@ export type Renderer = {
 	missiles: { any }, -- Missile
 	missileOf: { [number]: any }, -- projectile ID → its Missile
 	tracers: { BasePart },
+	deflects: { BasePart }, -- beams' glancing legs off shield domes (C-129)
 	vfx: Vfx.State,
 	lastNow: number,
 	vfxNow: number, -- effect time: real time scaled by the sim speed (bursts slow down and pause with the sim)
@@ -286,6 +287,7 @@ function RenderEffects.new(): Renderer
 		missiles = {},
 		missileOf = {},
 		tracers = {},
+		deflects = {},
 		vfx = Vfx.new(folder),
 		lastNow = 0,
 		vfxNow = 0,
@@ -476,6 +478,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 
 	-- tracers: a glowing streak flying from the muzzle to the end point
 	-- over the tracer's life, sparks where a hit lands
+	local nDeflects = 0
 	for i, t in fx.tracers do
 		local part = take(r.tracers, i, function()
 			return newPart("Tracer")
@@ -492,6 +495,20 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 			part.CFrame = if len > 1e-3 then CFrame.lookAt((a + b) / 2, b) else CFrame.new(b)
 			part.Color = BEAM_COLOR[t.beam] or BEAM_COLOR.order
 			part.Transparency = alpha
+			-- glanced off a shield dome (C-129): the second leg into the ground
+			if t.deflect then
+				nDeflects += 1
+				local g = take(r.deflects, nDeflects, function()
+					return newPart("Deflect")
+				end, r.folder)
+				local c = Vector3.new(t.deflect[1], t.deflect[2], t.deflect[3])
+				local dl = (c - b).Magnitude
+				local dw = w * 0.7
+				g.Size = Vector3.new(dw, dw, math.max(dl, 0.1))
+				g.CFrame = if dl > 1e-3 then CFrame.lookAt((b + c) / 2, c) else CFrame.new(c)
+				g.Color = part.Color
+				g.Transparency = math.min(1, alpha + 0.15)
+			end
 			continue
 		end
 		local head = math.min(1, k * (1 + TRACER_STREAK))
@@ -509,6 +526,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		end
 	end
 	park(r.tracers, #fx.tracers + 1)
+	park(r.deflects, nDeflects + 1)
 
 	-- bursts: each plays its Vfx rig once (or the place's saved effect)
 	for _, b in fx.bursts do

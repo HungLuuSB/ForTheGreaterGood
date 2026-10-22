@@ -49,6 +49,41 @@ Effects.BEAM_SECONDS = 0.45 -- a BEAM shot without a duration of its own (S-96, 
 Effects.BEAM_FALLBACK = table.freeze({ ord_radiance_beam = 3, chs_inferno_beam = 1.5 }) :: { [string]: number }
 Effects.BEAM_FADE = 1 -- seconds: the last part of a beam's life, when it narrows to nothing
 
+Effects.DEFLECT_SURFACE = 2 -- studs: a beam ending this close to a dome's surface was stopped by it (sim request 50)
+Effects.DEFLECT_DOWN = 0.45 -- the glancing ray points at least this steeply into the ground
+Effects.DEFLECT_MIN, Effects.DEFLECT_MAX = 8, 90 -- studs: the glancing ray's length
+
+-- A beam from (x0, y0, z0) that ended at (x1, y1, z1) on the surface of one
+-- of `domes` ({ x, y, z, radius }, centers on the ground) from outside: where
+-- it glances to, mirrored about the dome's surface and tilted down into the
+-- ground (`groundY`), or nil (the user's sketch, C-129; sim request 50).
+function Effects.deflection(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, domes: { { number } }, groundY: (number, number) -> number): (number?, number?, number?)
+	for _, d in domes do
+		local cx, cy, cz, r = d[1], d[2], d[3], d[4]
+		local ex, ey, ez = x1 - cx, y1 - cy, z1 - cz
+		local de = math.sqrt(ex * ex + ey * ey + ez * ez)
+		local sx, sy, sz = x0 - cx, y0 - cy, z0 - cz
+		if math.abs(de - r) <= Effects.DEFLECT_SURFACE and sx * sx + sy * sy + sz * sz > r * r and de > 1e-6 then
+			local nx, ny, nz = ex / de, ey / de, ez / de
+			local vx, vy, vz = x1 - x0, y1 - y0, z1 - z0
+			local len = math.sqrt(vx * vx + vy * vy + vz * vz)
+			if len < 1e-6 then
+				return nil, nil, nil
+			end
+			vx, vy, vz = vx / len, vy / len, vz / len
+			local dot = vx * nx + vy * ny + vz * nz
+			local rx, ry, rz = vx - 2 * dot * nx, vy - 2 * dot * ny, vz - 2 * dot * nz
+			ry = math.min(ry, -Effects.DEFLECT_DOWN)
+			local rl = math.sqrt(rx * rx + ry * ry + rz * rz)
+			rx, ry, rz = rx / rl, ry / rl, rz / rl
+			local reach = math.clamp((y1 - groundY(x1, z1)) / -ry, Effects.DEFLECT_MIN, Effects.DEFLECT_MAX)
+			local gx, gz = x1 + rx * reach, z1 + rz * reach
+			return gx, math.max(y1 + ry * reach, groundY(gx, gz)), gz
+		end
+	end
+	return nil, nil, nil
+end
+
 -- How long a BEAM weapon's ray is drawn.
 function Effects.beamSeconds(weapon: any): number
 	return weapon.beamDuration or Effects.BEAM_FALLBACK[weapon.id] or Effects.BEAM_SECONDS
@@ -130,7 +165,7 @@ export type Burst = { x: number, y: number, z: number, radius: number, born: num
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
-export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak
+export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
 
 export type Fx = {
 	projectiles: { [number]: Proj },
@@ -796,6 +831,24 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local weapon = slot and world.defs.weaponByIndex[slot.weaponIndex or 0]
 			local isBeam = weapon ~= nil and weapon.type == "BEAM"
 			local t: Tracer = { x0 = x0, y0 = y0 :: number, z0 = z0 :: number, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = e.hit == true, size = weaponSize(weapon), beam = if isBeam then (def and def.faction or "order") else nil }
+			if isBeam and not t.hit then
+				-- stopped by a shield dome: it glances off into the ground (C-129)
+				local domes = {}
+				for id in world.shields do
+					local g = world.units[id]
+					local gdef = g and World.def(world, g)
+					local r = gdef and gdef.shield and gdef.shield.radius
+					if r then
+						table.insert(domes, { g.x, World.groundY(world, g.x, g.z), g.z, r })
+					end
+				end
+				local gx, gy, gz = Effects.deflection(x0, y0 :: number, z0 :: number, x1, y1, z1, domes, function(x: number, z: number): number
+					return World.groundY(world, x, z)
+				end)
+				if gx then
+					t.deflect = { gx, gy :: number, gz :: number }
+				end
+			end
 			if #fx.tracers >= Effects.MAX_TRACERS then
 				fx.skipped.tracers += 1
 			end

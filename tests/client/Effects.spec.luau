@@ -484,4 +484,21 @@ return function(t: any)
 		local ws, _ = Effects.beamLook(1.0, 1.5)
 		t.expect(ws < 1, "a short ray fades over its last half")
 	end)
+
+	t.test("a beam stopped on a shield dome glances off downward (C-129)", function()
+		local flat = function(_x: number, _z: number): number
+			return 0
+		end
+		local domes = { { 0, 0, 0, 100 } }
+		-- level shot from the south hitting the dome's side 10 up
+		local hz = -math.sqrt(100 ^ 2 - 10 ^ 2)
+		local gx, gy, gz = Effects.deflection(0, 10, -400, 0, 10, hz, domes, flat)
+		t.expect(gx ~= nil, "deflected")
+		t.expect((gz :: number) < hz, "back away from the dome, as in the sketch")
+		t.expect(math.abs(gy :: number) < 1e-6, "into the ground")
+		local reach = math.sqrt(((gx :: number) - 0) ^ 2 + ((gz :: number) - hz) ^ 2 + 10 ^ 2)
+		t.expect(reach >= Effects.DEFLECT_MIN - 1e-6 and reach <= Effects.DEFLECT_MAX + 1e-6, "a short leg")
+		t.equal((Effects.deflection(0, 10, -400, 0, 10, -250, domes, flat)), nil, "a beam ending away from any dome isn't deflected")
+		t.equal((Effects.deflection(0, 10, -50, 0, 10, hz, domes, flat)), nil, "nor one fired from inside")
+	end)
 end

@@ -1026,3 +1026,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - models-C will build the beam VFX; this ray is the placeholder.
 
 **Why:** the user's description. The hit-ray damage and manual-target rules are sim request 49.
+
+### C-129 — Beams glance off shield domes (drawn) (2026-10-23)
+
+**Decision:** `Core/Effects.deflection` checks a missed BEAM FIRE that ends within 2 studs of a known dome's surface (generator position, `def.shield.radius`) and was fired from outside it. The ray is mirrored about the surface normal and tilted down at least 0.45, 8–90 studs long to the ground; `Render/Effects` draws that second leg from its own pool. It applies once the sim ends beams at domes (sim request 50).
+
+**Why:** the user's sketch ("the shield can deflect incoming laser").
