@@ -249,6 +249,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `693a3b7` (fog of war blanket, point-light fog removed, fog profile, C-100); test_client 171, test 404, build passed.
 - Ready to merge: `92b9a43` (night lighting by default, low specular, lighter explored fog, C-101); test_client 171, test 404, build passed.
 - Ready to merge: `e8f5ce9` (docs only: Realistic lighting technology instead of Future; C-100 approved by the user).
+- Ready to merge: `d4ab33b` (environment and colour grade: night sky, map-edge ground, ambient particles, zoom-eased grade with blast flash and vignette, grey fog, C-102); test_client 176, test 404, build passed.
 
 ## Tasks
 
