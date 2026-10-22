@@ -3039,6 +3039,76 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			triangles = 702,
 		},
+		chs_warlord = {
+			attachments = {
+				nano1 = {
+					at = { 0.8, 5.3, 4.3 },
+					parent = "nano",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 2.05, -3.86 },
+					channel = "head",
+					mesh = "rbxassetid://72902458259582",
+					name = "base_glow_head",
+					piece = "base",
+					size = { 4.56, 0.16, 0.04 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 5.225, 0.5835 },
+					channel = "running",
+					mesh = "rbxassetid://107717944866213",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 6.84, 7.15, 6.8895 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+				{
+					center = { 0.8, 4.065, 3.0392 },
+					channel = "power",
+					mesh = "rbxassetid://105167294339166",
+					name = "nano_glow_power",
+					piece = "nano",
+					size = { 2.26, 3.23, 3.4817 },
+					strength = 2.5,
+					tint = { 255, 125, 35 },
+				},
+			},
+			glowShare = 0.0511,
+			maps = {
+				ALB = "rbxassetid://96467175827341",
+				EMI = "rbxassetid://95516047595076",
+				MTL = "rbxassetid://75419966648700",
+				NOR = "rbxassetid://91652384410505",
+				RGH = "rbxassetid://119855909601722",
+			},
+			model = "rbxassetid://111874546178569",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 4.25, -0.3704 },
+					mesh = "rbxassetid://108646012274922",
+					size = { 6.94, 8.5, 8.7592 },
+				},
+				nano = {
+					center = { 0.8, 3.8588, 3.0544 },
+					mesh = "rbxassetid://85110895890907",
+					parent = "base",
+					pivot = { 0.8, 2.45, 2.4 },
+					size = { 2.2, 2.8177, 3.4535 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+				"nano",
+			},
+			triangles = 3214,
+		},
 		chs_wasp = {
 			attachments = {
 				muzzle = {
@@ -5665,6 +5735,86 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				status = "approved",
 				triangles = 320,
 			},
+		},
+		ord_sovereign = {
+			attachments = {
+				nano1 = {
+					at = { 0, 5.8, 4.75 },
+					parent = "nano",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 3.18, -2.845 },
+					channel = "head",
+					mesh = "rbxassetid://97495340459969",
+					name = "base_glow_head",
+					piece = "base",
+					size = { 5.58, 2.88, 3.91 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 4.21, -0.0636 },
+					channel = "running",
+					mesh = "rbxassetid://105991948401437",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 6.75, 6.2, 9.0671 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+				{
+					center = { 0, 4.05, 3.4301 },
+					channel = "power",
+					mesh = "rbxassetid://104358676168602",
+					name = "nano_glow_power",
+					piece = "nano",
+					size = { 2.66, 3.5, 3.7798 },
+					strength = 2.5,
+					tint = { 130, 225, 255 },
+				},
+				{
+					center = { 0, 5.35, 4.55 },
+					channel = "running",
+					mesh = "rbxassetid://74931697804083",
+					name = "nano_glow_running",
+					piece = "nano",
+					size = { 1.57, 0.12, 0.5 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+			},
+			glowShare = 0.0702,
+			maps = {
+				ALB = "rbxassetid://86597743734877",
+				EMI = "rbxassetid://132450350042936",
+				MTL = "rbxassetid://74743822712597",
+				NOR = "rbxassetid://127835594010242",
+				RGH = "rbxassetid://90421706851762",
+			},
+			model = "rbxassetid://119658360799073",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 3.575, -0.085 },
+					mesh = "rbxassetid://77961190907937",
+					size = { 6.74, 7.15, 9.37 },
+				},
+				nano = {
+					center = { 0, 4.03, 3.428 },
+					mesh = "rbxassetid://96893311045579",
+					parent = "base",
+					pivot = { 0, 2.3, 2.85 },
+					size = { 2.6, 3.46, 3.7165 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+				"nano",
+			},
+			triangles = 4040,
 		},
 		ord_tidewright = {
 			attachments = {
