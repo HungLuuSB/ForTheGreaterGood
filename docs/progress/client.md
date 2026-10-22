@@ -267,6 +267,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `e8f5ce9` (docs only: Realistic lighting technology instead of Future; C-100 approved by the user).
 - Ready to merge: `d4ab33b` (environment and colour grade: night sky, map-edge ground, ambient particles, zoom-eased grade with blast flash and vignette, grey fog, C-102); test_client 176, test 404, build passed.
 - Ready to merge: `bdc88e8` (BAR models built from the mesh manifest with Rojo-written materials, glow driver and headlights, C-103; includes m-models `44880cc`; touches CLAUDE.md and the three project files, new `place/`); test_client 187, test 404, build passed.
+- Ready to merge: `51e4d07` (one shield hit reads as one impact: faint outer hex rings, C-104); test_client 187, build passed.
 
 ## Tasks
 
