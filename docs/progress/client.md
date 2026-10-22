@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, shield shell, beams glancing off shields; Needs my review)
+
+- **Beams glance off shields: done and checked in Studio.** A Radiance firing at an enemy dome stops at its surface, a short leg glances off downward into the ground, the dome takes the hit, and the units inside are untouched (`debug_out/screens/beam_deflect_side.jpg`).
+- **Honeycomb shell (C-138):** models-C's shell is on every dome as scattered hex patches, strongest on top and fading toward the base, with its opacity following the shield's charge (`shield_shell_top.jpg`, `shield_shell_beam.jpg`).
+- **Beam shot:** stays on for the shot's full duration (Radiance 3 s, Inferno 1.5 s) with a hot spot at the impact, per your note to models-C.
+- **Needs my review:** the shell and the beam shot are both at "review". Preview them in a playtest with `ReplicatedStorage.FtggClientDebug:Invoke("shellanyway", true)` and `Invoke("beamsanyway", true)`. Approve them through models-C and they show everywhere.
+
 ## Summary (2026-10-23, sim S-104..S-116 merged into the client)
 
 - **Main merged:** sim-A's S-104..S-116, with bigger structures, extractor upgrades kept running under the frame, anti-nukes, beams that last and pierce and stop at domes, manual targets, and the AI fixes. All 8 client specs it broke are fixed (C-137).

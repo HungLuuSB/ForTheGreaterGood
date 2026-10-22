@@ -1102,3 +1102,12 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
   - Upgrades: builders kept clear of the 3×3 footprints.
 
 **Why:** sim-A's merge 522ca80 (S-104 footprints, S-108 upgrades, S-111 anti-nukes) broke 8 client specs, as sim-A warned.
+
+### C-138 — models-C's honeycomb shell on shield domes (after approval); the beam shot held for the sim's beamDuration (2026-10-23)
+
+**Decision:**
+- **Shell:** `Meshes.shieldShell` bands are loaded once (CreateMeshPartAsync), cloned per dome, and sized and placed each frame with the dome (band.size × R, band.center[2] × R above the base). Transparency = 1 − band.opacity × charge × the dome's opacity.
+- **Shell look:** the "shieldShell" SurfaceAppearance (texture, AlphaMode Transparency) is written to MeshMaterials, because scripts can't set ColorMap; it's tinted where allowed. It's shown once approved; `Invoke("shellanyway", true)` previews it.
+- **Beam shot:** BeamShots runs C's latest apply (on from the charge for the shot's duration, the sim's `beamDuration` with C's `duration` as fallback, C's taper at the end, the impact hot spot held, the embers and soot after).
+
+**Why:** the user's honeycomb shell request (models-C's asset, 8fcf418), and their beamDuration note to models-C (8c1281a).

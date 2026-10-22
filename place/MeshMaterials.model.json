@@ -10,6 +10,14 @@
       }
     },
     {
+      "Name": "shieldShell",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Transparency",
+        "ColorMapContent": "rbxassetid://90043421276653"
+      }
+    },
+    {
       "Name": "chs_airfield",
       "ClassName": "SurfaceAppearance",
       "Properties": {
