@@ -17,6 +17,7 @@ local Schema = require("../src/shared/Net/Schema")
 local Sim = require("../src/server/Sim/Sim")
 local Spawn = require("../src/server/Sim/Spawn")
 local Nav = require("../src/server/Sim/Nav")
+local Work = require("../src/server/Sim/Work")
 
 local TICKS = tonumber(process.args[1]) or 450
 local SIZES = {}
@@ -110,6 +111,7 @@ local function run(total: number)
 	-- structures placed mid-battle (every 30 ticks from tick 60), timed with
 	-- the tick they land in: passability, quadtree and field-cache updates
 	local placements, placementPeak, placeCost = 0, 0, 0
+	Work.reset() -- counts from the first tick (S-99)
 	local t0 = os.clock()
 	for tick = 1, TICKS do
 		local s = os.clock()
@@ -161,6 +163,8 @@ local function run(total: number)
 	end
 	out("first system over budget (average): " .. (firstOver or "none"))
 	out(string.format("move orders (Commands + Pathing in one tick): worst tick %.2f ms", orderPeak))
+	local wc = Work.counts
+	out(string.format("work (deterministic, S-99): route %d, flow field %d, sensor lookups %d, known-target lookups %d", wc.routeWork, wc.flowWork, wc.sensorLookups, wc.knownLookups))
 	out(string.format("structure placements mid-battle: %d, worst tick with a placement %.2f ms (placement itself: worst %.2f ms)", placements, placementPeak, placeCost))
 	out(string.format("state hash %08x (equal before and after an optimisation = same behaviour)", Sim.hash(sim)))
 	-- bandwidth per player

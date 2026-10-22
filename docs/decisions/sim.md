@@ -1347,3 +1347,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - In all, 30 deposits worth 104. The other 1v1 maps have 18 worth 68; Normandy is twice their size.
 - **Tests:** `Normandy.spec`: 30 deposits worth 104, all on field cells, mirrored, 8 behind each river.
 - The faction_ai re-run is in task 3's report.
+
+## S-99 — Parallel report runs and deterministic work counters (next.md item 9, the user's queue task 6) (2026-10-23)
+
+- **Parallel runs:**
+  - `lune run faction_ai ... --jobs=N` and `lune run ailevels ... --jobs=N` (default 6; `--jobs=1` runs in one process).
+  - The parent starts N Lune processes (`--worker=k/N`, through `.lune/parallel.luau` and `process.exec` in `task.spawn`). Each plays every N-th match and prints `RESULT` lines; the parent gathers them and writes the report in match order.
+  - The report is identical to a one-process run apart from the run-time line, now wall-clock with the job count. Checked: faction_ai (Ridgeline, same-level, 3 min) and ailevels (Ridgeline, 3 min) give the same tables at 1 and 3–4 jobs.
+  - Speed: ailevels 25 s → 12 s at 4 jobs on a small run. The 12-core dev PC runs a full faction_ai in about the time of its slowest map.
+- **Work counters:** `Sim/Work` counts what the hot loops did, deterministically:
+  - route-search units (heap pops and neighbour checks, `Route.runSearch`);
+  - flow-field units (`FlowField.run`);
+  - `Sensors.level` calls;
+  - `Sensors.knownTarget` calls.
+  - `lune run stress` and `lune run profile_normandy` print them beside the timings, so a change's effect shows without timing noise (S-74 counted sensor lookups by hand).
+  - Process-wide and never hashed; nothing in the simulation reads them.

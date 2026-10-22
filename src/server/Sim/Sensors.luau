@@ -49,6 +49,7 @@ local Economy = require("./Economy")
 local Lifecycle = require("./Lifecycle")
 local SensorsState = require("./SensorsState")
 local Types = require("./Types")
+local Work = require("./Work")
 local World = require("./World")
 
 local Sensors = {}
@@ -528,6 +529,7 @@ end
 -- With `gen` (a remembered reference, D109): if (id, gen) is no longer the
 -- live unit, only a ghost of that very unit can answer; else hidden.
 function Sensors.knownTarget(sim: Types.Sim, team: number, id: number, gen: number?): (number?, number?, number, number?)
+	Work.counts.knownLookups += 1 -- (S-99)
 	if gen ~= nil and not World.isRef(sim.world, id, gen) then
 		local ghosts = sim.sensors.ghosts[team]
 		local g = ghosts and ghosts[id]
@@ -656,6 +658,7 @@ end
 -- What `team` knows about unit `id`: VISIBLE for its own units; GHOST for a
 -- dead structure it still remembers; HIDDEN when nothing is known.
 function Sensors.level(sim: Types.Sim, team: number, id: number): number
+	Work.counts.sensorLookups += 1 -- (S-99)
 	local w = sim.world
 	if w.slot[id] ~= nil and w.ally[id] == team then
 		return L.VISIBLE
