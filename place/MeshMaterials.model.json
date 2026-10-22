@@ -82,6 +82,18 @@
       }
     },
     {
+      "Name": "chs_harpy",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://84357491892679",
+        "NormalMapContent": "rbxassetid://93632523054234",
+        "RoughnessMapContent": "rbxassetid://80067728916755",
+        "MetalnessMapContent": "rbxassetid://137093630971874",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_hellmouth",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -306,6 +318,18 @@
         "NormalMapContent": "rbxassetid://95808240312401",
         "RoughnessMapContent": "rbxassetid://77470155549054",
         "MetalnessMapContent": "rbxassetid://121886893676855",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_falcon",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://85439688994124",
+        "NormalMapContent": "rbxassetid://136516729456941",
+        "RoughnessMapContent": "rbxassetid://115195965067121",
+        "MetalnessMapContent": "rbxassetid://105926328402591",
         "EmissiveStrength": 0
       }
     },

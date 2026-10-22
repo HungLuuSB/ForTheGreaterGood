@@ -678,6 +678,75 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			triangles = 752,
 		},
+		chs_harpy = {
+			attachments = {
+				muzzle = {
+					at = { 0, -0.3, -1.2 },
+					parent = "pylon",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 0.1, -2.4 },
+					channel = "head",
+					mesh = "rbxassetid://122688164456039",
+					name = "base_glow_head",
+					piece = "base",
+					size = { 0.3, 0.06, 0.3 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 1.6168, 1.2716 },
+					channel = "running",
+					mesh = "rbxassetid://79477881134202",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 6.78, 2.8663, 4.9567 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+				{
+					center = { 0, -0.3, -1.1 },
+					channel = "weapon",
+					mesh = "rbxassetid://121788397686090",
+					name = "pylon_glow_weapon",
+					piece = "pylon",
+					size = { 3.04, 0.24, 0.2 },
+					strength = 1.5,
+					tint = { 255, 175, 70 },
+				},
+			},
+			glowShare = 0.0586,
+			maps = {
+				ALB = "rbxassetid://84357491892679",
+				EMI = "rbxassetid://105025462869845",
+				MTL = "rbxassetid://137093630971874",
+				NOR = "rbxassetid://93632523054234",
+				RGH = "rbxassetid://80067728916755",
+			},
+			model = "rbxassetid://135035392229492",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 1.54, -0.7 },
+					mesh = "rbxassetid://110221991757631",
+					size = { 6.7762, 2.92, 8.8 },
+				},
+				pylon = {
+					center = { 0, -0.1475, 0 },
+					mesh = "rbxassetid://140285605635752",
+					parent = "base",
+					pivot = { 0, -0.05, 0 },
+					size = { 3.04, 0.545, 2.4 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 710,
+		},
 		chs_hellmouth = {
 			attachments = {
 				muzzle = {
@@ -1920,6 +1989,75 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 628,
+		},
+		ord_falcon = {
+			attachments = {
+				muzzle = {
+					at = { 0, -0.15, -1.2 },
+					parent = "pylon",
+				},
+			},
+			glow = {
+				{
+					center = { 0, 0.3, -3.8 },
+					channel = "head",
+					mesh = "rbxassetid://109659116383545",
+					name = "base_glow_head",
+					piece = "base",
+					size = { 0.3, 0.06, 0.3 },
+					strength = 2.5,
+					tint = { 255, 236, 205 },
+				},
+				{
+					center = { 0, 1.29, 1.26 },
+					channel = "running",
+					mesh = "rbxassetid://100352448162902",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 6.9, 1.8, 5.72 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+				{
+					center = { 0, -0.15, -1.225 },
+					channel = "weapon",
+					mesh = "rbxassetid://128690788079060",
+					name = "pylon_glow_weapon",
+					piece = "pylon",
+					size = { 2.1, 0.3, 0.25 },
+					strength = 1.5,
+					tint = { 190, 240, 255 },
+				},
+			},
+			glowShare = 0.0891,
+			maps = {
+				ALB = "rbxassetid://85439688994124",
+				EMI = "rbxassetid://122572314777812",
+				MTL = "rbxassetid://105926328402591",
+				NOR = "rbxassetid://136516729456941",
+				RGH = "rbxassetid://115195965067121",
+			},
+			model = "rbxassetid://138430456646130",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 1.2199, -0.5754 },
+					mesh = "rbxassetid://134412151392417",
+					size = { 6.8, 1.8399, 9.3508 },
+				},
+				pylon = {
+					center = { 0, -0.025, -0.075 },
+					mesh = "rbxassetid://70688197988694",
+					parent = "base",
+					pivot = { 0, 0.05, 0.2 },
+					size = { 2.2, 0.55, 2.05 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+			},
+			triangles = 792,
 		},
 		ord_generator = {
 			attachments = {},

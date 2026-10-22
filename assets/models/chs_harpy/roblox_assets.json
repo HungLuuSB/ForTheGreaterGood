@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 710 triangles, glow share 5.9%",
+  "bar": {
+    "model": "rbxassetid://135035392229492",
+    "meshes": {
+      "base": "rbxassetid://110221991757631",
+      "base_glow_head": "rbxassetid://122688164456039",
+      "base_glow_running": "rbxassetid://79477881134202",
+      "pylon": "rbxassetid://140285605635752",
+      "pylon_glow_weapon": "rbxassetid://121788397686090"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128605828864736",
+      "RGH": "rbxassetid://90946608865425",
+      "NOR": "rbxassetid://123775636815716",
+      "MTL": "rbxassetid://133846882007884",
+      "EMI": "rbxassetid://94490030270249"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://84357491892679",
+      "NOR": "rbxassetid://93632523054234",
+      "RGH": "rbxassetid://80067728916755",
+      "MTL": "rbxassetid://137093630971874",
+      "EMI": "rbxassetid://105025462869845"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_harpy_bar in FTGG Art"
+  },
+  "bar_1": {
+    "model": "rbxassetid://76511811644390",
+    "meshes": {
+      "base": "rbxassetid://116562268080859",
+      "base_glow_head": "rbxassetid://93808481675111",
+      "base_glow_running": "rbxassetid://138761524252389",
+      "pylon": "rbxassetid://93603893766254",
+      "pylon_glow_weapon": "rbxassetid://97671225111981"
+    },
+    "decals": {
+      "ALB": "rbxassetid://106040960624029",
+      "RGH": "rbxassetid://127516847790425",
+      "NOR": "rbxassetid://128315526749102",
+      "MTL": "rbxassetid://81565712643035",
+      "EMI": "rbxassetid://107452924821486"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://112428252477917",
+      "NOR": "rbxassetid://113861045535253",
+      "RGH": "rbxassetid://140473003307407",
+      "MTL": "rbxassetid://71838567447894",
+      "EMI": "rbxassetid://87597956730486"
+    },
+    "note": "2026-10-22, first BAR upload (M-15): 710 triangles, glow share 5.2%"
+  }
+}

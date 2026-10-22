@@ -23,6 +23,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 | 9 | Air workers: `ord_skywright` (armored utility helicopter, four-blade client-spun `rotor` with team tips, `nano` emitter on `power`) / `chs_vulture` (boxy pod, bubble nose, exposed engine, two long blades) | 856 / 702 | 5.4% / 6.0% | review | `t1_airworker_55_close.jpg`, `t1_airworker_55_220.jpg` (lifted 3 studs) |
 | M | Missiles (your extra request): `ord_ir_sam` / `chs_ir_sam` (slim, dark IR seeker, canards; Chaos three tail fins), `ord_radar_sam` / `chs_radar_sam` (white radome, mid-body strakes), `ord_nuke` / `chs_nuke` (dark re-entry cone over a warhead bus, stage rings; Chaos two strap-on boosters). One frame for all (4.4 studs, forward −Z), scaled by the client like its own parts (×1 / ×2.3 / ×4.5). In the manifest under `fx.<weapon id>`; fx.md "Missiles" | 364–584 | 9.0–10.6% | review | `missiles_55_close.jpg` (at game scale), `missiles_55_220.jpg` |
 | 10 | Attack helicopters: `ord_guardian` (narrow armored gunship, stepped tandem canopy, chin sensor on `weapon`, stub wings with two rocket pods on the `pylon`, ready-lit tube mouths) / `chs_wasp` (boxy pod, exposed engine, open stub rail with two heavy rocket pods) | 1,248 / 742 | 5.1% / 5.1% | review | `t1_gunship_55_close.jpg`, `t1_gunship_55_220.jpg` |
+| 11 | Fighters: `ord_falcon` (heavy twin-engine, canted team tails, formation strips, two missiles with ice-white seekers on the `pylon`) / `chs_harpy` (light delta, bubble canopy, tall team fin, engine pods, four cheap missiles, strips along the leading edges) | 792 / 710 | 8.9% / 5.9% | review | `t1_fighter_55_close.jpg`, `t1_fighter_55_220.jpg` (lifted 3 studs) |
 
 **Needs your review (queue):**
 - **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
@@ -33,6 +34,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 - Queue order: clients-B relayed a new request from you (T2 defence meshes, starting with a BAR-Pulsar-style beam tower per faction with a retract pose). I queued it after the T1 aircraft and before T1 naval. It needs the sim defs (request 43) before its meshes can go in the manifest; I proposed the pieces to B. Tell me if it should go first.
 - Helicopters from the game camera: the rotor disc covers the roof, so team color shows on the fin, the blade tips and the flanks. Bigger flank plates if they should read more.
 - Missiles: their glow share runs 9–10.6% (the Order nuke 10.6%): on a 4-stud body, one stripe and the nozzle are a big share. They read as small lit bands in flight. The client already lights the exhaust, so the nozzle glow could go if it doubles up.
+- Chaos aircraft: the dark gunmetal reads low against the grey baseplate from above; over game terrain they read better (the ground is lighter and greener). The amber strips carry them at distance.
 
 ## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 
