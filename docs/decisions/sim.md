@@ -1746,3 +1746,21 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Changed (request 48):** an enemy structure contests a deposit only within its weapon range + `CONTESTED_REACH` (40 studs). Mobile armed enemies still contest within 300, and an unidentified contact still does.
   - The repro reaches 3 extractors and 4 workers by minute 2 while the Bulwark stands (was 2 and 3), and 55 units by minute 8 (47).
 - **Tests:** `Shield.spec`: Order's Radiance fires at a Juggernaut under a full Carapace. The FIRE ends on the dome (hit = false), nothing inside is hurt, and the Chaos worker on the line outside is.
+
+## S-117 — Beams drain domes by a lot (client request 51, the user) (2026-10-23)
+
+- **Asked:** shields are so strong that a whole beam barely dents them (a Radiance beam took a Carapace from 100% to 98%). "Drop it down, by a lot." The client suggested a third to a half of a Phalanx's charge for a full Radiance beam.
+- **Cause:** a beam stopped by a dome cost only its shell mass (damage / 150, capped at 8) once.
+- **Built:**
+  - A lingering beam (`beamDuration`) stopped by an up enemy dome also drains it over the beam's duration, in equal shares each tick, while the shooter stands and the dome stays up.
+  - In all it drains its best damage / 150 × `Shield.BEAM_DRAIN` (12.5): Radiance 250, Inferno about 142. Radiance's hit-ray still hurts enemies on its line outside the dome (S-116).
+  - Capacities unchanged (Phalanx 600, Carapace 400).
+
+  | Beam | Phalanx (600) | Carapace (400) |
+  |---|---|---|
+  | Radiance | 42% | 62% |
+  | Inferno | 24% | 35% |
+
+  Recharge during the beam gives some back: measured, one Radiance beam took a full Carapace to 54% (46%).
+- **Wire:** nothing new; SHIELD charge records follow the drain.
+- **Tests:** `Shield.spec`: one Radiance beam on a full Carapace takes 40–80% of its capacity (measured 46%).

@@ -22,6 +22,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 | Anti-nukes (your request, requests 46) | Providence / Cerberus (structures) and Custodian / Chimera (mobile, only while stopped). Cover by aim point, one interceptor per nuke, certain hit, a delay longer than a nuke's flight. They spot nukes anywhere. Radar SAMs shoot aircraft only and now one-shot T1 air | S-111 |
 | Item 8 balance pass | Locust +10% damage, Order heavy cannon +10%, Order radar SAM reload −10%, Falcon range +5%. 12 of 12 shared roles in band (was 10). Fighters, the Herald and the T2 tank Chaos condition still short: proposals below | S-112 |
 | Beams (requests 47, 49, 50) | Lingering beams (`beamDuration`). Radiance fires at blips (misses without Pinpointers) and is a 3 s hit-ray (`pierce`). Domes stop beams at the surface. Manual targets kept until STOP | S-113, S-115, S-116 |
+| Beams vs domes (request 51) | A beam held on a dome drains it over the beam: Radiance 250 (42% of a Phalanx, 62% of a Carapace; measured 100% → 54%), Inferno about 142 | S-117 |
 | AI economy (request 48) | Two generators, then extractors alternating with generators, capped at the planned need (builders counted). A turret by the base no longer contests every home deposit | S-114, S-116 |
 | Faction balance (item 1) | faction_ai, same-level matches: Order 84 – Chaos 18, **82%** (was 81% before this round; 86% with the sizes alone), 6% undecided; Normal 16–14, Hard 28–0; Normandy and Crossroads 71%. Retunes beyond ±10% stay proposals (S-91) | S-105 |
 
@@ -206,6 +207,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - **T1 fighters:** neither condition is met (Order long 1.08, Chaos flank 0.86), and the duels are noisy. My proposal: judge fighters in the SAM raids or AI matches instead.
   - **Herald:** doesn't win at range (0.92), and range doesn't help. My proposal: +20% speed.
   - **T2 tanks:** Chaos close 0.86 (needs 0.8).
+- **Beams on domes (S-117):** a beam drains a dome by its best damage / 150 × 12.5 over its duration (Radiance 250, Inferno ~142); capacities unchanged. Your call whether that's "a lot" enough.
 - **Beams (S-113, S-115):**
   - Radiance 3,000 / 2,300 over 3 s, hit-ray, fires at blips.
   - Inferno 1,700 / 1,350 over 1.5 s, range 480, single target.
