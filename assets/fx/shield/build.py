@@ -231,51 +231,6 @@ def tex_ripple():
 
 
 # ---------------------------------------------------------------------------
-# Emitter device: a squat hexagonal plinth, a collar, three prongs leaning in
-# round a glowing core column; team plates on the plinth's top
-# ---------------------------------------------------------------------------
-
-
-def hexagon(r, rot=0.0):
-    return [(r * math.cos(rot + i * math.pi / 3), r * math.sin(rot + i * math.pi / 3)) for i in range(6)]
-
-
-def build_emitter(p):
-    p.prism_y(hexagon(2.0, math.pi / 6), 0.0, 0.55, "paint", bevel=0.05, top_scale=0.92)
-    p.prism_y(hexagon(1.45, math.pi / 6), 0.55, 1.05, "trim", bevel=0.04, top_scale=0.9)
-    p.cylinder("y", (0, 1.15, 0), 0.75, 0.2, 12, "dark")
-    p.cylinder("y", (0, 1.85, 0), 0.38, 1.3, 10, "light", radius2=0.3)
-    p.cylinder("y", (0, 2.62, 0), 0.3, 0.26, 10, "light", radius2=0.12)
-    for i in range(3):
-        a = math.pi / 2 + i * 2 * math.pi / 3
-        out = (math.cos(a), 0.0, math.sin(a))
-        foot = (out[0] * 1.15, 1.0, out[2] * 1.15)
-        top = (out[0] * 0.62, 2.7, out[2] * 0.62)
-        axis = (top[0] - foot[0], top[1] - foot[1], top[2] - foot[2])
-        mid = tuple((foot[k] + top[k]) / 2 for k in range(3))
-        length = math.sqrt(sum(c * c for c in axis))
-        p.obox(mid, axis, out, length, 0.5, 0.32, "paint", bevel=0.04)
-        tip = (out[0] * 0.55, 2.78, out[2] * 0.55)
-        p.obox(tip, (0, 1, 0), out, 0.18, 0.36, 0.42, "dark", bevel=0.02)
-        # team plate on the plinth's top over a flat face, a sensor light below
-        c = a - math.pi / 6
-        p.obox((math.cos(c) * 1.48, 0.56, math.sin(c) * 1.48), (-math.sin(c), 0, math.cos(c)), (0, 1, 0),
-               0.9, 0.26, 0.05, "team")
-        p.obox((math.cos(c) * 1.73, 0.28, math.sin(c) * 1.73), (-math.sin(c), 0, math.cos(c)), (math.cos(c), 0, math.sin(c)),
-               0.6, 0.1, 0.05, "light")
-
-
-def details_emitter(p):
-    for i in range(6):
-        a = math.pi / 6 + i * math.pi / 3
-        p.cylinder("y", (math.cos(a) * 1.3, 1.07, math.sin(a) * 1.3), 0.06, 0.04, 6, "dark")
-    for i in range(3):
-        a = math.pi / 2 + i * 2 * math.pi / 3
-        out = (math.cos(a), 0.0, math.sin(a))
-        p.obox((out[0] * 0.95, 1.6, out[2] * 0.95), (0, 1, 0), out, 0.04, 0.4, 0.34, "seam")
-
-
-# ---------------------------------------------------------------------------
 
 
 def main():
@@ -292,23 +247,8 @@ def main():
         o.data.materials.append(white)
     counts = {o.name: lib.tris(o) for o in (dome, inner, ring)}
 
-    # emitter, baked like a unit
-    keys = list(VARIANTS.keys())
-    target = lib.new_image("bake_target", TEX, "sRGB")
-    materials = {k: lib.make_material(k, SPECS[k], [VARIANTS[v] for v in keys], target) for k in KINDS}
-    p = lib.Piece("emitter", KINDS, (0.0, 0.0, 0.0))
-    build_emitter(p)
-    low = p.to_object(materials, col)
-    h = lib.Piece("emitter_hi", KINDS, (0.0, 0.0, 0.0))
-    build_emitter(h)
-    details_emitter(h)
-    high = h.to_object(materials, col)
-    counts["emitter"] = lib.tris(low)
+    # the emitter device is built by emitter/build.py (the glow pass, M-22)
     print(f"[shield] triangles {counts}")
-    lib.unwrap([low])
-    sets = lib.bake_all([low], [high], list(materials.values()), TEX, SAMPLES, OUT, UNIT, keys)
-    bpy.data.objects.remove(high, do_unlink=True)
-    lib.assign_single_material([low], lib.textured_material(f"{UNIT}_bar", sets["bar"]))
 
     textures = {
         "swirl": save_texture("fx_shield_swirl", tex_swirl()),
@@ -317,16 +257,7 @@ def main():
         "ripple": save_texture("fx_shield_ripple", tex_ripple()),
     }
     probes = [lib.image_probe(f"tex_{k}", img, col, at=(6.0 + 1.0 * i, -2.0, 0.0)) for i, (k, img) in enumerate(textures.items())]
-    probes.append(lib.image_probe("emissive_probe", sets["bar"]["EMI"], col, at=(5.0, -2.0, 0.0)))
-
-    # preview of the emitter alone (the dome and ring are plain white)
-    lib.preview_lighting()
-    for o in [dome, inner, ring] + probes:
-        o.hide_render = True
-    lib.assign_single_material([low], lib.textured_material("preview", sets["bar"], (58, 120, 230), ACCENT))
-    lib.render_preview(os.path.join(OUT, "preview_emitter.png"), (5.5, 5.0, 7.0), (0, 1.4, 0), lens=50)
-    lib.assign_single_material([low], lib.textured_material(f"{UNIT}_bar", sets["bar"]))
-    exported = [dome, inner, ring, low] + probes
+    exported = [dome, inner, ring] + probes
     lib.export_fbx(exported, os.path.join(OUT, "shield_fx.fbx"))
 
     lib.write_json(os.path.join(OUT, "fx.json"), {
@@ -335,10 +266,7 @@ def main():
             "dome": {"radius": 1.0, "pivot": "center of the open bottom", "triangles": counts["dome"], "normals": "outward"},
             "dome_inner": {"radius": INNER_RADIUS, "pivot": "center of the open bottom", "triangles": counts["dome_inner"], "normals": "inward"},
             "ring": {"radius": 1.0, "tube": RING_TUBE, "pivot": "center", "plane": "horizontal", "triangles": counts["ring"]},
-            "emitter": {"pivot": "ground under its center", **lib.bounds(low), "triangles": counts["emitter"],
-                        "attachments": {"core": {"at": list(CORE_AT)}}},
         },
-        "emissive": {"probe": "emissive_probe", "tint": list(ACCENT), "strength": 2.0},
         "textures": {k: {"probe": f"tex_{k}", "size": list(img.size)} for k, img in textures.items()},
     })
     print(f"[shield] done: {OUT}")

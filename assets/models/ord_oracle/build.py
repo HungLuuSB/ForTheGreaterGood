@@ -37,7 +37,7 @@ def build_base(p):
     p.box((0, 2.8, 3.02), (2.4, 0.8, 0.05), "grille")
     p.cylinder("y", (0, 3.6, 1.6), 0.35, 0.8, 10, "steel")
     for sx in (-1, 1):
-        p.box((sx * 1.4, 1.35, -4.48), (0.45, 0.14, 0.06), "light")
+        p.box((sx * 1.4, 1.35, -4.48), (0.6, 0.2, 0.08), "head")
         for z in WHEELS_Z:
             wheel(p, sx * 2.2, 0.75, z, 0.75, 0.6)
 

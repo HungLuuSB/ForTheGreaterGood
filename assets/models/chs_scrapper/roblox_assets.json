@@ -1,7 +1,32 @@
 {
-  "note": "Roblox assets uploaded by Studio's 3D Importer from export/chs_scrapper.fbx (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
-  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 2,828 triangles",
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 2932 triangles, glow share 3.8%",
   "bar": {
+    "model": "rbxassetid://136928142631109",
+    "meshes": {
+      "base": "rbxassetid://115697721233037",
+      "base_glow_head": "rbxassetid://108564358446657",
+      "base_glow_running": "rbxassetid://100928551570467",
+      "nano": "rbxassetid://121862138282209",
+      "nano_glow_power": "rbxassetid://127787977891873"
+    },
+    "decals": {
+      "ALB": "rbxassetid://83249530334548",
+      "RGH": "rbxassetid://120477122437090",
+      "NOR": "rbxassetid://135344954567154",
+      "MTL": "rbxassetid://103904056564472",
+      "EMI": "rbxassetid://70372111698255"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://121006961901028",
+      "NOR": "rbxassetid://104471490813505",
+      "RGH": "rbxassetid://97957773213684",
+      "MTL": "rbxassetid://88833128933258",
+      "EMI": "rbxassetid://111984690950268"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_scrapper_bar in FTGG Art"
+  },
+  "bar_preglow": {
     "meshes": {
       "base": "rbxassetid://81146390260466",
       "nano": "rbxassetid://88172729492686"
@@ -13,6 +38,7 @@
       "MTL": "rbxassetid://97138182533945",
       "EMI": "rbxassetid://118892484383381"
     },
-    "model": "ReplicatedStorage.ModelReview.chs_scrapper_bar in FTGG Art"
+    "model": "ReplicatedStorage.ModelReview.chs_scrapper_bar in FTGG Art",
+    "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 2,828 triangles)"
   }
 }

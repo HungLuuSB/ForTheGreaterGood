@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "tools"))
 
 import bpy  # noqa: E402
 import lib  # noqa: E402
+import unit  # noqa: E402
 
 UNIT = "chs_scrapper"
 OUT = os.path.join(HERE, "export")
@@ -94,12 +95,16 @@ def build_base(p):
                           ((-1.2, 2.95, 2.5), (0.5, 0.4, 0.5), (0.6, 0, -1))):
         p.obox(at, rot, (0.2, 1, 0.1), size[0], size[2], size[1], "steel", bevel=0.02)
     p.cylinder("y", (-2.0, 3.0, 3.25), 0.2, 2.0, 8, "steel")
-    p.cylinder("y", (-2.0, 4.02, 3.25), 0.23, 0.08, 8, "light")
+    p.cylinder("y", (-2.0, 4.02, 3.25), 0.26, 0.12, 8, "light")  # stack glow
     # engine deck grille, front lights (emissive)
     p.box((1.0, 1.92, 2.6), (1.4, 0.05, 1.2), "grille")
+    for z in (2.25, 2.6, 2.95):  # engine-deck exhaust slots
+        p.box((1.0, 1.95, z), (1.3, 0.04, 0.18), "light")
+    for sx in (-1, 1):  # running strips along the flaps
+        p.box((sx * (HULL_X + 0.12), 1.75, 0.0), (0.04, 0.1, 6.2), "light")
     for sx in (-1, 1):
-        p.box((sx * 2.1, 1.6, -3.71), (0.32, 0.12, 0.05), "light")
-        p.box((sx * 2.2, 1.55, 3.51), (0.24, 0.1, 0.04), "light")
+        p.box((sx * 2.1, 1.6, -3.71), (0.5, 0.2, 0.07), "head")
+        p.box((sx * 2.2, 1.55, 3.51), (0.42, 0.16, 0.06), "light")
     # team color on the hull top: a plate on the right rear
     p.box((1.95, 1.93, 2.5), (0.8, 0.05, 1.6), "team", bevel=0.012)
     # thin partial skirts (flaps) over the top of the track run, reactive bricks up front
@@ -136,6 +141,7 @@ def build_nano(p):
     px, py, pz = NANO_PIVOT
     p.cylinder("y", (px, py + 0.15, pz), 0.85, 0.3, 12, "paint")
     p.cylinder("y", (px, py + 0.32, pz), 0.7, 0.05, 12, "team")
+    p.cylinder("y", (px, py + 0.02, pz), 0.88, 0.08, 12, "power")  # turntable power ring
     # arm: a lattice-like boom of two rails rising forward, a piston under it
     base = lib.vec((px, py + 0.55, pz + 0.2))
     tip = lib.vec((px, py + 2.6, pz - 2.2))
@@ -151,7 +157,7 @@ def build_nano(p):
     p.box(tuple(tip), (0.7, 0.5, 0.6), "paint", bevel=0.03)
     for dx in (-0.25, 0.25):
         p.obox(tuple(tip + lib.Vector((dx, -0.45, -0.15))), (0, 1, 0.3), (1, 0, 0), 0.6, 0.18, 0.12, "steel")
-    p.cylinder("y", tuple(tip + lib.Vector((0, -0.35, -0.05))), 0.2, 0.2, 10, "light")
+    p.cylinder("y", tuple(tip + lib.Vector((0, -0.35, -0.05))), 0.24, 0.24, 10, "power")
     # hydraulic tank on the turntable's back
     p.cylinder("x", (px, py + 0.55, pz + 0.75), 0.25, 0.9, 8, "trim")
 
@@ -206,79 +212,17 @@ def details_nano(p):
 # ---------------------------------------------------------------------------
 
 
-def main():
-    lib.reset_scene()
-    col = bpy.context.scene.collection
-    keys = list(VARIANTS.keys())
-    target = lib.new_image("bake_target", TEX, "sRGB")
-    materials = {k: lib.make_material(k, SPECS[k], [VARIANTS[v] for v in keys], target) for k in KINDS}
-
-    pieces = [
-        ("base", (0.0, 0.0, 0.0), build_base, details_base),
-        ("nano", NANO_PIVOT, build_nano, details_nano),
-    ]
-    low, high = [], []
-    for name, pivot, build, details in pieces:
-        p = lib.Piece(name, KINDS, pivot)
-        build(p)
-        p.scale(SCALE)
-        low.append(p.to_object(materials, col))
-        h = lib.Piece(name + "_hi", KINDS, pivot)
-        build(h)
-        details(h)
-        h.scale(SCALE)
-        high.append(h.to_object(materials, col))
-
-    counts = {o.name: lib.tris(o) for o in low}
-    total = sum(counts.values())
-    print(f"[{UNIT}] triangles {counts} total {total}")
-    if total > BUDGET:
-        raise SystemExit(f"[{UNIT}] over budget: {total} > {BUDGET}")
-
-    lib.unwrap(low)
-    sets = lib.bake_all(low, high, list(materials.values()), TEX, SAMPLES, OUT, UNIT, keys)
-    for h in high:
-        bpy.data.objects.remove(h, do_unlink=True)
-
-    lib.preview_lighting()
-    for key in keys:
-        lib.assign_single_material(low, lib.textured_material(f"preview_{key}", sets[key], (214, 62, 48), ACCENT))
-        for name, cam, look, lens in [
+unit.run(
+    __file__, UNIT, "chaos", footprint=FOOTPRINT,
+        pieces=[
+            unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
+            unit.PieceSpec("nano", "base", NANO_PIVOT, build_nano, details_nano),
+        ],
+        scale=SCALE,
+        previews=[
             ("35", (-14, 11, 17), (0, 1.5, -0.5), 50),
             ("side", (19, 3, -2.0), (0, 1.6, -2.0), 50),
             ("80", (0, 27, 4.8), (0, 1.5, 0), 50),
             ("close", (-5.8, 4.6, -7.0), (0, 2.1, -1.6), 35),
-        ]:
-            lib.render_preview(os.path.join(OUT, f"preview_{key}_{name}.png"), cam, look, lens=lens)
-
-    exported = []
-    for key in keys:
-        mat = lib.textured_material(f"{UNIT}_{key}", sets[key])
-        for o in low:
-            c = o.copy()
-            c.data = o.data.copy()
-            c.name = f"{o.name}_{key}"
-            col.objects.link(c)
-            lib.assign_single_material([c], mat)
-            exported.append(c)
-    exported.append(lib.image_probe("emissive_probe", sets[keys[0]]["EMI"], col))
-    lib.export_fbx(exported, os.path.join(OUT, f"{UNIT}.fbx"))
-
-    lib.write_json(os.path.join(OUT, "rig.json"), {
-        "id": UNIT,
-        "footprintStuds": FOOTPRINT * 8,
-        "variants": {"bar": "BAR-style gunmetal (M-15)"},
-        "pieces": {
-            "base": {"parent": None, **lib.bounds(low[0])},
-            "nano": {"parent": "base", "pivot": list(lib.scaled(NANO_PIVOT, SCALE)), **lib.bounds(low[1])},
-        },
-        "attachments": {},
-        "teamColorPieces": ["base", "nano"],
-        "emissive": {"probe": "emissive_probe", "tint": list(ACCENT), "strength": 2.0},
-        "triangles": {**counts, "total": total},
-        "textures": {"size": TEX, "perVariant": ["ALB", "RGH"], "shared": ["NOR", "MTL", "EMI"]},
-    })
-    print(f"[{UNIT}] done: {OUT}")
-
-
-main()
+        ],
+)

@@ -31,6 +31,7 @@ def build_base(p):
         for z in WHEELS_Z:
             p.prism_x([(z - 1.0, 1.2), (z + 1.0, 1.2), (z + 0.75, 1.75), (z - 0.75, 1.75)], x0, x1, "paint", bevel=0.03)
         p.box((sx * 1.78, 1.45, 0.0), (0.05, 0.3, 2.0), "team", bevel=0.01)
+        p.box((sx * 1.78, 1.85, 0.0), (0.06, 0.1, 5.2), "light")  # flank running strip
     # crew cab with a glass band
     p.prism_y([(-1.45, -1.6), (1.45, -1.6), (1.45, 0.4), (-1.45, 0.4)], 2.05, 2.85, "paint", bevel=0.04, top_scale=0.86)
     p.box((0, 2.5, -1.62), (2.4, 0.3, 0.05), "glass")
@@ -39,9 +40,10 @@ def build_base(p):
     p.box((0, 2.87, -0.6), (1.6, 0.05, 1.2), "team", bevel=0.012)
     # lights, antenna, wheels
     for sx in (-1, 1):
-        p.box((sx * 1.2, 1.25, -3.88), (0.4, 0.14, 0.06), "light")
-        p.box((sx * 1.4, 1.6, 3.02), (0.3, 0.12, 0.04), "light")
+        p.box((sx * 1.2, 1.25, -3.88), (0.55, 0.2, 0.08), "head")
+        p.box((sx * 1.4, 1.6, 3.02), (0.45, 0.16, 0.06), "light")
     p.cylinder("y", (1.3, 2.9, 2.6), 0.03, 1.7, 4, "dark")
+    p.box((0, 1.4, 3.02), (1.4, 0.3, 0.05), "light")  # exhaust grille
     for sx in (-1, 1):
         for z in WHEELS_Z:
             wheel(p, sx * 1.95, 0.75, z, 0.75, 0.6)
@@ -53,8 +55,9 @@ def build_turret(p):
     p.box((0, 2.87, 1.65), (1.1, 0.05, 0.9), "team", bevel=0.01)
     p.cylinder("z", (0, 2.55, -0.1), 0.09, 2.0, 8, "steel")
     p.cylinder("z", (0, 2.55, -1.2), 0.12, 0.4, 8, "dark")
+    p.cylinder("z", (0, 2.55, -1.4), 0.13, 0.1, 8, "weapon")  # muzzle ring
     p.box((0.45, 2.95, 1.2), (0.3, 0.18, 0.3), "trim")
-    p.box((0.45, 2.96, 1.04), (0.22, 0.08, 0.03), "light")
+    p.box((0.45, 2.96, 1.04), (0.26, 0.12, 0.04), "light")
 
 
 def details_base(p):

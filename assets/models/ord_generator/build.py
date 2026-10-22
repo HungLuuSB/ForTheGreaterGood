@@ -26,12 +26,13 @@ def build_base(p):
     # stepped dome and the core
     p.cylinder("y", (0, 3.75, 0), 2.0, 0.7, 16, "paint")
     p.cylinder("y", (0, 4.4, 0), 1.6, 0.6, 16, "trim", radius2=1.35)
+    p.cylinder("y", (0, 4.1, 0), 1.65, 0.14, 16, "power")  # dome ring
     p.cylinder("y", (0, 4.85, 0), 1.0, 0.3, 14, "steel")
-    p.cylinder("y", (0, 5.15, 0), 0.75, 0.3, 14, "light")
+    p.cylinder("y", (0, 5.15, 0), 0.78, 0.34, 14, "power")
     p.cylinder("y", (0, 5.35, 0), 0.5, 0.1, 10, "dark")
     # glowing vents on the sides, louvred grilles, conduits
     for sx in (-1, 1):
-        p.box((sx * 2.86, 2.2, 0), (0.05, 0.25, 3.6), "light")
+        p.box((sx * 2.88, 2.2, 0), (0.06, 0.32, 3.8), "power")
         p.box((sx * 2.84, 1.4, 0), (0.06, 0.9, 3.6), "grille")
         p.cylinder("z", (sx * 2.2, 3.55, 0), 0.16, 3.4, 8, "steel")
     for sz in (-1, 1):

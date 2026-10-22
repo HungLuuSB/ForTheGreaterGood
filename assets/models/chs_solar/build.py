@@ -41,6 +41,10 @@ def build_base(p):
         p.box((x, 1.95, 0.1), (0.25, 0.5, 0.25), "dark")
     p.box((-2.6, 0.85, 1.6), (0.9, 0.9, 0.7), "paint", bevel=0.03)
     p.box((-2.6, 1.4, 1.6), (0.3, 0.2, 0.3), "light")
+    p.box((-2.26, 0.85, 1.6), (0.05, 0.5, 0.5), "power")  # junction box charge window
+    p.box((0, 1.92, 0), (6.0, 0.08, 0.16), "power")  # charge conduit along the rail
+    for sx in (-1, 1):  # charge lights on the posts
+        p.box((sx * 2.9, 1.0, -0.17), (0.2, 1.0, 0.04), "power")
 
 
 def details_base(p):

@@ -34,10 +34,15 @@ def build_base(p):
     p.box((0, 0.58, 2.9), (5.6, 0.05, 1.2), "team", bevel=0.012)
     p.prism_y([(-0.9, -0.9), (0.9, -0.9), (0.9, 0.9), (-0.9, 0.9)], 0.55, 2.3, "trim", bevel=0.04, top_scale=0.7)
     p.cylinder("x", (0, 2.45, 0), 0.3, 1.6, 10, "steel")
+    for sz in (-1, 1):  # power conduits down the pedestal
+        p.box((0, 1.45, sz * 0.66), (0.5, 1.5, 0.06), "power")
+    for sx in (-1, 1):  # pad edge lights
+        for sz in (-1, 1):
+            p.box((sx * 3.5, 0.6, sz * 3.5), (0.35, 0.12, 0.35), "light")
     # the panel: a frame slab, a glass face, a team band along the top edge
     p.obox(on_panel(0, 0), U, N, 7.0, 5.6, 0.22, "paint", bevel=0.04)
     p.obox(on_panel(0, 0, 0.12), U, N, 6.6, 5.2, 0.03, "glass")
-    p.obox(on_panel(0, 2.65, 0.1), U, N, 6.8, 0.25, 0.05, "light")  # low front edge
+    p.obox(on_panel(0, 2.65, 0.1), U, N, 6.8, 0.3, 0.06, "power")  # charge strip
     p.obox(on_panel(0, -2.62, 0.13), U, N, 6.8, 0.3, 0.05, "team")  # top back edge
     # back struts to the pad
     for sx in (-1, 1):

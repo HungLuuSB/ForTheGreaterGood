@@ -40,14 +40,16 @@ def build_base(p):
             p.box((sx * w, y, 0), (0.14, 0.14, 2 * w), "dark")
     # drill shaft, glowing collar, the head with its beacon
     p.cylinder("y", (0, 3.4, 0), 0.5, 5.2, 10, "steel")
+    for y in (2.6, 3.8, 5.0):  # drill-shaft power bands
+        p.cylinder("y", (0, y, 0), 0.53, 0.14, 10, "power")
     p.cylinder("y", (0, 1.2, 0), 0.85, 0.5, 12, "trim")
-    p.cylinder("y", (0, 1.5, 0), 0.8, 0.14, 12, "light")
+    p.cylinder("y", (0, 1.5, 0), 0.82, 0.2, 12, "power")
     p.box((0, TOP_Y + 0.35, 0), (1.9, 0.8, 1.9), "paint", bevel=0.05)
     p.box((0, TOP_Y + 0.77, 0), (1.3, 0.05, 1.3), "team", bevel=0.012)
     p.cylinder("y", (0, TOP_Y + 0.95, 0), 0.22, 0.3, 8, "light")
     # engine block with a stack on the right rear
     p.box((2.1, 1.45, 1.8), (1.6, 1.3, 2.2), "paint", bevel=0.05)
-    p.box((2.92, 1.45, 1.8), (0.04, 0.6, 1.4), "grille")
+    p.box((2.92, 1.45, 1.8), (0.05, 0.5, 1.4), "power")  # engine vent
     p.cylinder("y", (2.4, 2.75, 2.5), 0.2, 1.4, 8, "steel")
     p.box((2.1, 1.6, 0.68), (0.9, 0.12, 0.04), "light")
 
