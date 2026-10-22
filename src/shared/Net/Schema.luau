@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 23 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events
+Schema.PROTOCOL_VERSION = 24 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -802,6 +802,18 @@ end
 --   ALERT       alert u8 (Schema.AlertKind) | cell u16 | defIndex u16 (0 = none):
 --               something the player should know, rate-limited by the sim
 --               (Sim/Alerts; protocol 23)                                     =  6 bytes
+--   SHIELD      unitId u16 | charge u8 (0..255 of capacity) | flags u8
+--               (Schema.ShieldFlag): a shield dome generator's state, after
+--               its ENTER and when it changes (Sim/Shield; protocol 24)      =  5 bytes
+--   SHIELD_FIELD projId u16 | pos (the dome's centre) | radius u16 (studs) |
+--               force u8 (0..255 of full) | phase u8 (ShieldField.BRAKING
+--               or REPELLED): a projectile the client has is in a dome's
+--               field from now on; the client steps it with
+--               Shared/Combat/ShieldField until it is done (protocol 24)    = 13 bytes
+--   SHIELD_HIT  unitId u16 (the generator; 0 = one the client doesn't have) | projId u16 | pos (the point on
+--               the dome) | mass u8 (SHIELD_MASS_SCALE per shell mass) |
+--               flags u8 (SHIELD_BREACH): a shell turned back by the dome's
+--               field, or through it (protocol 24)                          = 13 bytes
 --   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
 --               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
@@ -827,6 +839,9 @@ Schema.EventKind = table.freeze({
 	INTERCEPTED = 16,
 	SPAWN_STRATEGIC = 17, -- protocol 18 (S-51)
 	ALERT = 18, -- protocol 23 (S-68)
+	SHIELD = 19, -- protocol 24 (S-79)
+	SHIELD_HIT = 20,
+	SHIELD_FIELD = 21,
 })
 Schema.AlertKind = table.freeze({
 	UNIT_ATTACKED = 1,
@@ -843,7 +858,10 @@ local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 14, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13 })
+Schema.ShieldFlag = table.freeze({ UP = 1, RECHARGING = 2 }) -- SHIELD flags: the dome stands; it is recharging (protocol 24)
+Schema.SHIELD_BREACH = 1 -- SHIELD_HIT flags: the shell broke through (else it turned back)
+Schema.SHIELD_MASS_SCALE = 31 -- SHIELD_HIT mass units per shell mass (8 masses fit a u8)
 Schema.SIGHT_SEEN = 0x8000 -- SIGHT_CELLS: bit 15 of a cell entry
 Schema.Countermeasure = table.freeze({ FLARES = 1, CHAFF = 2, DIRCM = 3 }) -- DECOYED: what defeated the missile (protocol 13)
 Schema.SIGHT_MAX_CELLS = 255 -- per SIGHT_CELLS record
@@ -867,6 +885,13 @@ export type Event = {
 	build: number?,
 	state: number?,
 	alert: number?, -- ALERT: Schema.AlertKind (with cell, defIndex)
+	charge: number?, -- SHIELD: 0..255 of capacity
+	shieldFlags: number?, -- SHIELD: Schema.ShieldFlag bits
+	mass: number?, -- SHIELD_HIT: the shell's mass × SHIELD_MASS_SCALE (u8)
+	breach: boolean?, -- SHIELD_HIT: it broke through
+	radius: number?, -- SHIELD_FIELD: the dome's radius (studs; with its centre in cell / offX / offZ / y)
+	force: number?, -- SHIELD_FIELD: 0..255 of full force
+	phase: number?, -- SHIELD_FIELD: ShieldField.BRAKING (1) or REPELLED (2)
 	-- DEATH
 	severity: number?,
 	wreckId: number?,
@@ -998,6 +1023,33 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		w:writeU16(required(e.cell, "cell"))
 		w:writeU16(e.defIndex or 0)
 		return
+	elseif kind == EK.SHIELD then
+		local flags = required(e.shieldFlags, "shieldFlags")
+		if flags > 3 then
+			error(`Schema: shield flags {flags} have reserved bits`, 2)
+		end
+		writeId(w, required(e.unitId, "unitId"), "unitId")
+		w:writeU8(required(e.charge, "charge"))
+		w:writeU8(flags)
+		return
+	elseif kind == EK.SHIELD_FIELD then
+		local phase = required(e.phase, "phase")
+		if phase ~= 1 and phase ~= 2 then
+			error(`Schema: shield field phase {phase} (1 or 2)`, 2)
+		end
+		writeId(w, required(e.projId, "projId"), "projId")
+		writePos(w, e)
+		w:writeU16(required(e.radius, "radius"))
+		w:writeU8(required(e.force, "force"))
+		w:writeU8(phase)
+		return
+	elseif kind == EK.SHIELD_HIT then
+		w:writeU16(e.unitId or 0) -- 0: a generator the client doesn't have
+		writeId(w, required(e.projId, "projId"), "projId")
+		writePos(w, e)
+		w:writeU8(required(e.mass, "mass"))
+		w:writeU8(if e.breach then Schema.SHIELD_BREACH else 0)
+		return
 	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
 		writeId(w, required(e.wreckId, "wreckId"), "wreckId")
 		if kind == EK.WRECK then
@@ -1117,6 +1169,37 @@ function Schema.decodeEvent(r: Reader): Event
 		e.alert = a
 		e.cell = r:readU16()
 		e.defIndex = r:readU16()
+		return e
+	elseif kind == EK.SHIELD then
+		e.unitId = readId(r, "unitId")
+		e.charge = r:readU8()
+		local flags = r:readU8()
+		if flags > 3 then
+			fail(r, `shield flags {flags}`)
+		end
+		e.shieldFlags = flags
+		return e
+	elseif kind == EK.SHIELD_FIELD then
+		e.projId = readId(r, "projId")
+		readPos(r, e)
+		e.radius = r:readU16()
+		e.force = r:readU8()
+		local phase = r:readU8()
+		if phase ~= 1 and phase ~= 2 then
+			fail(r, `shield field phase {phase}`)
+		end
+		e.phase = phase
+		return e
+	elseif kind == EK.SHIELD_HIT then
+		e.unitId = r:readU16()
+		e.projId = readId(r, "projId")
+		readPos(r, e)
+		e.mass = r:readU8()
+		local flags = r:readU8()
+		if flags > 1 then
+			fail(r, `shield hit flags {flags}`)
+		end
+		e.breach = flags == Schema.SHIELD_BREACH
 		return e
 	elseif kind == EK.WRECK or kind == EK.WRECK_GONE then
 		e.wreckId = readId(r, "wreckId")

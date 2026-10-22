@@ -35,6 +35,7 @@ local Lofted = require("@shared/Combat/Lofted")
 local Combat = require("../Combat/Combat")
 local ContactGrid = require("../Combat/ContactGrid")
 local EW = require("../EW")
+local Shield = require("../Shield")
 local Types = require("../Types")
 local World = require("../World")
 
@@ -128,7 +129,15 @@ return function(sim: Types.Sim)
 			local climbLeft = Guidance.climbLeft(weapon, y0, Combat.groundHeight(c, x0, z0))
 			x1, y1, z1, vx, vy, vz = Lofted.step(x0, y0, z0, pvx, pvy, pvz, goal[1], goal[2], goal[3], goal[2] + weapon.apex, g, math.rad(weapon.turnRate :: number) * DT, climbLeft, DT)
 		else
-			x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
+			-- shield fields (S-79): enemy domes brake, turn or let through
+			local fielded = false
+			if #c.shieldIds > 0 and projTarget == 0 and Shield.affects(weapon) then
+				x1, y1, z1, vx, vy, vz, fielded = Shield.deflect(sim, id, weapon, x0, y0, z0, pvx, pvy, pvz, g)
+				homingTarget = c.pTarget[id] -- a turned missile lost its lock
+			end
+			if not fielded then
+				x1, y1, z1, vx, vy, vz = Ballistics.step(x0, y0, z0, pvx, pvy, pvz, g, DT)
+			end
 		end
 		local grid = c.grid
 		if grid and (x1 < grid.originX or z1 < grid.originZ or x1 > grid.originX + grid.sizeX or z1 > grid.originZ + grid.sizeZ) then

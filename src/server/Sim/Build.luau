@@ -29,6 +29,7 @@ local Match = require("./Match")
 local Nav = require("./Nav")
 local Placement = require("./Placement")
 local Sensors = require("./Sensors")
+local Shield = require("./Shield")
 local Spawn = require("./Spawn")
 local Stockpile = require("./Stockpile")
 local Types = require("./Types")
@@ -520,6 +521,9 @@ function Build.step(sim: Types.Sim)
 
 	-- 5. tracking radars: power drain, radius at the stall ratio (D104)
 	Sensors.drainStep(sim, demandP)
+
+	-- 6. shield domes recharging (S-79)
+	Shield.drainStep(sim, demandP)
 
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]

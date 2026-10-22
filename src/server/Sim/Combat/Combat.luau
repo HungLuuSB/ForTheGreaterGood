@@ -56,6 +56,8 @@ export type Event = {
 		| "LAUNCH" -- a strategic missile left its silo: unit = silo, other = projectile, x/y/z = launch (S-48)
 		| "BLAST" -- a unit with a deathBlast exploded as it died: unit = the dying unit, x/z = where (S-70)
 		| "INTERCEPTED" -- a strategic missile destroyed in flight: other = projectile, x/y/z = where (S-48)
+		| "SHIELD_HIT" -- a shell turned or broke through a dome: unit = generator, other = projectile, x/y/z = the dome point (S-79)
+		| "SHIELD_FIELD" -- a projectile came into a dome's field: unit = generator, other = projectile (S-79)
 		| "ELIMINATED" -- other = player
 		| "MATCH_END", -- other = winning ally team (0 = nobody)
 	tick: number,
@@ -71,6 +73,8 @@ export type Event = {
 	sx: number?, -- FIRE: where the shot started (the muzzle; S-43)
 	sy: number?,
 	sz: number?,
+	breach: boolean?, -- SHIELD_HIT: it broke through (else it turned back)
+	mass: number?, -- SHIELD_HIT: the shell's mass (ShieldField.mass)
 }
 
 export type Combat = {
@@ -108,6 +112,18 @@ export type Combat = {
 	projSerial: number, -- last serial given
 	strategic: { number }, -- strategic missiles in flight, in launch order (S-48)
 	pGoal: { [number]: { number } }, -- lofted missiles: the ordered spot { x, y, z } (S-51)
+	-- shield fields (S-79, Sim/Shield): the dome generator a projectile is in
+	-- the field of and its ShieldField phase there; the last dome done with it
+	pShield: { [number]: number },
+	pShieldPhase: { [number]: number },
+	pShieldDone: { [number]: number },
+	-- shield dome generators (S-79), in the order they entered: charge in
+	-- shell masses, up (the dome stands), and the power share of their last
+	-- recharge step (0..1)
+	shieldIds: { number },
+	shieldCharge: { [number]: number },
+	shieldUp: { [number]: boolean },
+	shieldPower: { [number]: number },
 	-- overkill accounting (S-29, guide 10.2): the unit a projectile was fired
 	-- at, its generation, and the direct damage it would deal
 	pAim: { [number]: number },
@@ -201,6 +217,13 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		projSerial = 0,
 		strategic = {},
 		pGoal = {},
+		pShield = {},
+		pShieldPhase = {},
+		pShieldDone = {},
+		shieldIds = {},
+		shieldCharge = {},
+		shieldUp = {},
+		shieldPower = {},
 		pAim = {},
 		pAimGen = {},
 		pAimDmg = {},
@@ -611,6 +634,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pDecoy[id] = nil
 	c.pSerial[id], c.pTargetProj[id], c.pTargetSerial[id] = nil, nil, nil
 	c.pGoal[id] = nil
+	c.pShield[id], c.pShieldPhase[id], c.pShieldDone[id] = nil, nil, nil
 	local si = table.find(c.strategic, id)
 	if si then
 		table.remove(c.strategic, si)
@@ -676,6 +700,10 @@ function Combat.hash(c: Combat, h: number): number
 		if d then
 			h = Hash.u32(Hash.u32(Hash.number(Hash.number(Hash.number(h, d[1]), d[2]), d[3]), d[4]), d[5] or 0)
 		end
+		h = Hash.u32(Hash.u32(Hash.u32(h, c.pShield[id] or 0), c.pShieldPhase[id] or 0), c.pShieldDone[id] or 0)
+	end
+	for _, id in c.shieldIds do
+		h = Hash.u32(Hash.number(Hash.u32(h, id), c.shieldCharge[id]), if c.shieldUp[id] then 1 else 0)
 	end
 	h = Hash.u32(h, c.nextProjId)
 	h = Hash.u32(h, c.projSerial)
