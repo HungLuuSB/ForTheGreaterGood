@@ -43,11 +43,11 @@ All in `assets/fx/shield/roblox_assets.json`. The texture IDs are also attribute
 | `Dome` mesh | `rbxassetid://85081416332401` |
 | `DomeInner` mesh | `rbxassetid://78950571354329` |
 | `Ring` mesh | `rbxassetid://134054369788950` |
-| `Emitter` mesh | `rbxassetid://135426440555231` (maps in the JSON) |
-| swirl | `rbxassetid://82204239648206` |
-| beam | `rbxassetid://115560588138247` |
-| speck | `rbxassetid://126444416961279` |
-| ripple | `rbxassetid://121307999666570` |
+| `Emitter` mesh | `rbxassetid://98339625291172` (maps in the JSON) |
+| swirl | `rbxassetid://113814321169730` (cloudy vortex, after the user's reference) |
+| beam | `rbxassetid://100117547859650` |
+| speck | `rbxassetid://90660161303538` |
+| ripple | `rbxassetid://129891612158965` |
 
 ### Checked assembly
 
