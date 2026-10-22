@@ -1875,3 +1875,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `6bb8932` (big-map fog: at most 4 chunks, C-130); test_client 215, build passed (client render only).
 - Ready to merge: `0971cf3` (shield hits: no ripple, outlined honeycomb cells, C-131); test_client 214, build passed (client render only).
 - Ready to merge: `391ff62` (shield hits cave in: inward wave, bigger centre cells, bowl dent with bounce; C-132); test_client 214, build passed (client render only; not checked in Studio, the user was playtesting).
+- Ready to merge: `ccd9985` (m-models merge cf2e795 + materials 0285a54; C's beam shot wired, review-gated; C-133); test_client 214, build passed.
