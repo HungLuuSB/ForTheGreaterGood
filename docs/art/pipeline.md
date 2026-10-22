@@ -56,6 +56,25 @@ Getting the models into the game place "For The Greater Good" is the client sess
 | Textures | one set of four 1024 × 1024 maps shared by the three pieces | one palette texture for all units |
 | Instances | 3 MeshParts (blockout: 13 Parts) | — |
 
+### Open Cloud route (2026-10-22)
+
+With an Open Cloud API key (user-owned, Assets read and write, IP-restricted, read from the `ROBLOX_API_KEY` user environment variable and never printed), the import needs no clicks:
+
+1. `python assets/models/tools/opencloud.py <export dir> <unit id> <creator user id>` uploads the five maps as Decals and the FBX as a Model (it arrives as a package with the MeshParts) and writes `export/opencloud.json`.
+2. In "FTGG Art", `InsertService:LoadAsset(<model id>)` gives the MeshParts at x100 and turned 180° like the 3D Importer's, so `rig_model.luau` normalizes and checks them unchanged. `LoadAsset(<decal id>)` gives each Decal's image ID.
+3. The rig step replaces the FBX's own SurfaceAppearance with one made from the Decal images (ALB, NOR, RGH, MTL; the EMI image as the emissive mask). On the first test the FBX's own maps drew grey (HTTP 502 on a fresh map, as importer uploads do until a restart), while the Decal images drew at once: **no Studio restart needed**.
+
+Found on the first batch (ten units, 2026-10-22):
+- A mesh bigger than about 20 studs comes in clamped: the ×100 import is capped at 2048 studs on its longest side, so the 22-stud vehicle plants normalize at 22 / 2048, not 0.01 (`OpenCloud.load`'s `scale` argument; the size check catches it).
+- Now and then one fresh image fails in Studio with HTTP 502 and stays failed for the session. Re-uploading that image gives a new ID that loads: 2 of 50 images in the first batch.
+- A new SurfaceAppearance combination takes Studio a minute to build its texture pack; until then the part draws plain grey. No restart is needed.
+
+Limits (Roblox docs): one asset per request, up to 20 MB; images under 8000 × 8000; a Model upload is a package; no published per-minute limit for creating assets, limits apply per key owner and a 429 carries `x-ratelimit-reset` (the tool waits and retries); moderation still applies to each upload. One unit is six uploads (five maps and the FBX); the FBX's embedded maps are uploaded too but not used.
+
+### Shared runner (2026-10-22)
+
+`assets/models/tools/unit.py` holds the faction looks (the approved tanks' paints, specs and accents, M-15, M-18), the detail helpers (bolts, seams, rings) and the whole flow after the geometry: bake, previews framed on the unit's size, FBX with the emissive probe, `rig.json`. A unit's `build.py` only describes its pieces (`unit.PieceSpec(name, parent, pivot, build, details)`) and calls `unit.run(...)`. The structures use it (extractors, generators, solars, vehicle plants, Bulwark, Spike); the tanks and the four vehicles derived from them keep their own scripts.
+
 ### 100 units, render CPU time per frame
 
 "FTGG Art", Edit mode, flat area, 100 Lancers in a 10 × 10 grid 12 studs apart, game camera pitch 55°, three runs of 6–8 s per case (run 2 in reverse order; run 3 after the Studio restart, with the textures drawing). Studio reports no GPU time, and its frame rate is throttled to about 15 fps when its window isn't focused, so frame time itself says nothing; `Stats.RenderCPUFrameTime` is the render thread's CPU work per frame either way.

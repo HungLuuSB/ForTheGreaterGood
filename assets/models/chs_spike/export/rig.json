@@ -1,0 +1,80 @@
+{
+  "id": "chs_spike",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.2,
+        0.0
+      ],
+      "size": [
+        6.4,
+        2.4,
+        6.4
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.075,
+        3.0275,
+        -1.575
+      ],
+      "size": [
+        3.65,
+        1.255,
+        7.05
+      ],
+      "pivot": [
+        0.0,
+        2.4,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        3.0,
+        -5.15
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 516,
+    "turret": 388,
+    "total": 904
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

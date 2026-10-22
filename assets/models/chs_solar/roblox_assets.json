@@ -1,0 +1,25 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
+  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 384 triangles",
+  "bar": {
+    "model": "rbxassetid://127789578059230",
+    "meshes": {
+      "base": "rbxassetid://135955262816824"
+    },
+    "decals": {
+      "ALB": "rbxassetid://89747491938704",
+      "RGH": "rbxassetid://106208224585364",
+      "NOR": "rbxassetid://126273415630856",
+      "MTL": "rbxassetid://125386919015665",
+      "EMI": "rbxassetid://80637853196955"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://130531467023071",
+      "NOR": "rbxassetid://75633671704011",
+      "RGH": "rbxassetid://114843559604892",
+      "MTL": "rbxassetid://113164476828312",
+      "EMI": "rbxassetid://93580684569009"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_solar_bar in FTGG Art"
+  }
+}
