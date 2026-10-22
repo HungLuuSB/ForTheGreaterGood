@@ -14,14 +14,14 @@
 --   * it steers the shell away from the dome, at most until its line passes
 --     GRAZE radii from the centre: a shell off the centre bends round the
 --     dome and carries on forward, slowed;
---   * when the shell no longer closes in (its speed toward the centre
---     reaches 0) it turns (the hit, on the dome under it) and is thrown
---     out: hard for one that stopped head-on (straight back), a lift for
+--   * when the shell no longer closes in, or its line no longer hits the
+--     dome, it turns (the hit, on the dome under it) and is thrown out:
+--     hard for one that stopped or came head-on (straight back), a lift for
 --     one sliding past.
 -- Measured (mass 1, 260 studs/s, full force; offset of the line from the
 -- centre in radii → direction out against the direction in, speed kept):
--- 0 → 180° (39%), 0.3 → 141° (68%), 0.5 → 94° (53%), 0.7 → 42° (37%),
--- 0.85 → 25° (51%), 0.95 → 18° (56%).
+-- 0 → 180° (39%), 0.2 → 135° (30%), 0.3 → 80° (28%), 0.5 → 51° (42%),
+-- 0.7 → 32° (60%), 0.85 → 21° (73%), 0.95 → 14° (78%).
 -- A shell still closing in when it reaches the dome breaks through (the
 -- breach) and carries on inside, slowed. Gravity acts throughout.
 --
@@ -43,6 +43,7 @@ ShieldField.TANGENT_DRAG = 0.3 -- 1/s on the speed along the surface while throw
 ShieldField.STEER = 8 -- rad/s of steering at full force, mass 1, mid-band (S-82)
 ShieldField.GLANCE_SLOW = 0.05 -- the share of the braking and the push for a shell whose line misses the dome (S-82)
 ShieldField.HEAD_ON_EXP = 2
+ShieldField.STOPPED = 60 -- studs/s: slower than this a shell is thrown out more like a head-on one (S-82)
 ShieldField.GRAZE = 1.08 -- steering stops once a shell's line passes this many radii from the centre (S-82)
 
 -- The share of the braking (and of the push out) for a shell whose line
@@ -164,7 +165,10 @@ function ShieldField.step(
 						end
 						vx, vy, vz = ux * sp, uy * sp, uz * sp
 					end
-					if vx * nx + vy * ny + vz * nz >= 0 and event == ShieldField.NONE then
+					-- the turn: it no longer closes in, or its line no longer hits
+					-- the dome (a shell slowed to almost nothing and bent down by
+					-- gravity would otherwise sink through the band)
+					if event == ShieldField.NONE and (vx * nx + vy * ny + vz * nz >= 0 or not ShieldField.onCourse(x, y, z, vx, vy, vz, cx, cy, cz, radius)) then
 						phase = ShieldField.REPELLED
 						event, hx, hy, hz = ShieldField.TURN, cx + nx * radius, cy + ny * radius, cz + nz * radius
 					end
@@ -172,10 +176,11 @@ function ShieldField.step(
 					-- thrown out: hard for a shell coming straight back, a lift
 					-- for one sliding round the dome (S-82)
 					local sp = sqrt(vx * vx + vy * vy + vz * vz)
-					local headOn = 1
+					-- a shell all but stopped counts as head-on
+					local headOn = clamp(1 - sp / ShieldField.STOPPED, 0, 1)
 					if sp > 1e-6 then
 						local qx, qy, qz = ry * vz - rz * vy, rz * vx - rx * vz, rx * vy - ry * vx
-						headOn = ShieldField.headOn((qx * qx + qy * qy + qz * qz) / (sp * sp * radius * radius))
+						headOn = math.max(headOn, ShieldField.headOn((qx * qx + qy * qy + qz * qz) / (sp * sp * radius * radius)))
 					end
 					local tx, ty, tz = (vx - nx * vr) * tangentKeep, (vy - ny * vr) * tangentKeep, (vz - nz * vr) * tangentKeep
 					vr += k * ShieldField.PUSH * (0.2 + depth) * headOn * h

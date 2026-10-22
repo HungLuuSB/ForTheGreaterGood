@@ -148,7 +148,7 @@ return function(t: RunAll.Context)
 			local angle, keep, breach = shot(offset, 1, 260)
 			t.equal(breach, false, `offset {offset}: turned`)
 			t.expect(angle < last, `offset {offset}: bent less than a shot nearer the centre ({angle}° after {last}°)`)
-			t.expect(keep > 0.3 and keep < 0.75, `offset {offset}: slowed, keeping {keep * 100}%`)
+			t.expect(keep > 0.25 and keep < 0.85, `offset {offset}: slowed, keeping {keep * 100}%`)
 			last = angle
 		end
 		t.expect(shot(0, 1, 260) > 179, "head-on: straight back")
@@ -161,6 +161,43 @@ return function(t: RunAll.Context)
 		-- a shot whose line misses the dome is left alone
 		local angle, keep = shot(1.2, 1, 260)
 		t.expect(angle < 1e-6 and math.abs(keep - 1) < 1e-9, "a line past the dome: untouched")
+	end)
+
+	t.test("flat head-on shots near the ground turn and fly back (the client's ShieldWire case)", function()
+		-- a Ravager firing straight at a Mason under the dome, low over flat
+		-- ground: slowed almost to a stop, gravity bends them down, and they
+		-- used to sink through the band without ever turning
+		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local gen = Spawn.unit(sim, "ord_phalanx", 1, 0, -100)
+		local mason = Spawn.unit(sim, "ord_mason", 1, 0, -40)
+		World.setHealth(w, mason, 1e6)
+		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
+		local c = sim.combat
+		local turned, through, back = 0, 0, 0
+		local watch: { [number]: boolean } = {}
+		for _ = 1, 180 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if e.kind == "SHIELD_HIT" and e.unit == gen then
+					if e.breach then
+						through += 1
+					else
+						turned += 1
+						watch[e.other] = true
+					end
+				end
+			end
+			for p in watch do
+				if c.projSlot[p] and c.pShieldPhase[p] == nil and c.pvz[p] > 50 then
+					back += 1 -- out of the field, flying back north toward the Ravager
+					watch[p] = nil
+				end
+			end
+		end
+		t.expect(turned >= 2, `shells turned ({turned})`)
+		t.equal(through, 0, "none broke through")
+		t.expect(back >= 2, `turned shells fly back toward the shooter ({back})`)
 	end)
 
 	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()
