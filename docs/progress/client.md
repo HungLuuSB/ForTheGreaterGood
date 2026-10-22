@@ -358,6 +358,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b915691` (S-96 tower blockouts merged from m-models `aafbf19`; retract checked, C-113; docs only besides the merge); test 414, build passed; test_client 196 (the intermittent failure was Ranges.spec's timing check under load, fixed in the next commit).
 - Ready to merge: `ed5681f` (Ranges.spec timing check robust to machine load); test_client 196, test 414, build passed.
 - Ready to merge: `96973a5` (S-96 tower meshes merged from m-models `1efc5e9`, `1429976`; retracted glow dims, C-114); test_client 197, test 414, build passed.
+- Ready to merge: `1d738c9` (wreck meshes built and placed, wreck_<id> appearances, includes m-models `6b94586`, C-115); test_client 197, test 414, build passed.
 
 ## Tasks
 
