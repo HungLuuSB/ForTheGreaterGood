@@ -130,6 +130,18 @@
       }
     },
     {
+      "Name": "chs_hailstorm",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://132113504442352",
+        "NormalMapContent": "rbxassetid://139431534796538",
+        "RoughnessMapContent": "rbxassetid://122241381818154",
+        "MetalnessMapContent": "rbxassetid://110656838151116",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_harpy",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -714,6 +726,18 @@
         "NormalMapContent": "rbxassetid://96021924052867",
         "RoughnessMapContent": "rbxassetid://126294571454496",
         "MetalnessMapContent": "rbxassetid://91318758771336",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_lumen",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://138442284445033",
+        "NormalMapContent": "rbxassetid://114848452400668",
+        "RoughnessMapContent": "rbxassetid://71624204945740",
+        "MetalnessMapContent": "rbxassetid://91463532141351",
         "EmissiveStrength": 0
       }
     },
