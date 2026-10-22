@@ -170,7 +170,7 @@ end
 -- Idle flickers: a centre plate and one ring, fading in and out over
 -- IDLE_LIFE, at most MAX_IDLE at once (the oldest goes).
 Shield.IDLE_LIFE = 1.4
-Shield.MAX_IDLE = 6
+Shield.MAX_IDLE = 18
 Shield.IDLE_CLEAR = 14 -- studs: no flicker this close to a live hit patch
 
 -- Returns nil (no flicker) next to a live hit patch: idle hexes drawn over

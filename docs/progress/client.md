@@ -160,8 +160,6 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `926e4a9` (the user's icon set on one sprite sheet, drawn in the game, C-74; includes the icon HTML commits `44dc172`, `a0e43e1`); test_client 119, test 350, build passed.
 - Ready to merge: `994ba89` (factory queues, fire / move states and ammo from the server, request 36, C-75); test_client 122, test 350, build passed.
 - Ready to merge: `8abbf6d` (unit stats in the unit panel, C-76; also the draft 3 icon commits `226ed70`, `c9ff356`, the sheet not yet re-imported); test_client 127, test 350, build passed.
-- Ready to merge: `0a83686` (shield dome prototype, client only, C-87); test_client 156, test 386, build passed.
-- Ready to merge: `a994ce5` (draft 3 icons wired in, S-75 units with stopgap icons, no build-menu error for units missing from the sheet, C-86); test_client 145, test 386, build passed.
 - Ready to merge: `315ec04` (lobby seats for several humans, results with statistics, C-77; the 2-client Studio test not run); test_client 130, test 350, build passed.
 - Ready to merge: `3101bcf` (rejoin, late join, restart: a new WELCOME clears the client's references, C-78); test_client 133, build passed.
 - Ready to merge: `390df33` (spectators and the replay viewer, C-79); test_client 136, build passed.
@@ -172,6 +170,10 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `c5888f5` (atmosphere presets as options, C-83); test_client 141, build passed.
 - Ready to merge: `2d98701` (Warden and Minotaur piece scripts, deploy phases, C-84); test_client 143, build passed.
 - Ready to merge: `6ea62c3` (alerts from the server, S-69 to S-73 followed, C-85; includes the merge of main at f487eea); test_client 144, build passed.
+- Ready to merge: `a994ce5` (draft 3 icons wired in, S-75 units with stopgap icons, no build-menu error for units missing from the sheet, C-86); test_client 145, test 386, build passed.
+- Ready to merge: `0a83686` (shield dome prototype, client only, C-87); test_client 156, test 386, build passed.
+- Ready to merge: `0f8c297` (shield idle hexes keep clear of hit patches; hexagon mesh checked, C-88); test_client 157, test 386, build passed.
+- Ready to merge: `e066303` (shield test scenario, neutral dome fading with charge, radius 120, C-89); test_client 157, test 386, build passed.
 
 ## Tasks
 
@@ -499,6 +501,22 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: shield test scenario; a neutral, bigger dome that fades with its charge (C-89)
+
+- **`shield` profile** (set `ACTIVE = "shield"`), the test ground for when the sim has the Phalanx:
+  - **Defended spot:** a 120-stud dome position on (0, -150) on flat land. Under it, Order units that don't shoot back, at 50× health so the test lasts: a vehicle plant at the centre (for the Cyclops), a radar and three builders near the north edge.
+  - **Attackers:** from the north, all outside the dome and its field, every shell weight:
+    - Locust autocannons (lightest);
+    - Ravager and Juggernaut shells, aimed at the edge units so they cross the dome;
+    - Hellmouth mortars and Hydra rockets on attack-ground at the centre;
+    - Cyclops siege mortars (heaviest, structures only, spotted by a Watcher).
+  - **Checked in Studio:** 21 units spawn, every row fires, and the server's "under attack" alerts come in. The sim still has no shield, so the shells hit for real.
+- **Dome look (your call):** neutral white-grey, no team colour. Rim, field, idle hexes and sparkles are all white.
+  - **Opacity follows the charge:** invisible at 0%, full from 50% up. The rim fades on a squared curve because white Neon blooms.
+  - Hits stay red-hot; the core and bar still run green → orange → red.
+- **Size (your call):** the demo dome is now 120 studs radius, twice the Phalanx design's 60 (`ShieldFx.DEMO_RADIUS`). Idle hexes and sparkles scale with the size.
+- **Screenshots** (`debug_out/screens/`): `c89_shield_scenario.jpg` (the attack rows firing at the dome), `c89_shield_full.jpg` (100%), `c89_shield_30.jpg` (30%, fainter).
 
 ## 2026-10-23: shield hexagons as one mesh (C-88)
 
