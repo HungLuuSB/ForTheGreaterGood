@@ -46,6 +46,18 @@
       }
     },
     {
+      "Name": "chs_cyclops",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://103742692247981",
+        "NormalMapContent": "rbxassetid://85145820073846",
+        "RoughnessMapContent": "rbxassetid://117741955946792",
+        "MetalnessMapContent": "rbxassetid://82238267534507",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_depot",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -198,6 +210,18 @@
         "NormalMapContent": "rbxassetid://102909256202131",
         "RoughnessMapContent": "rbxassetid://72876622193323",
         "MetalnessMapContent": "rbxassetid://136749334637508",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "chs_locust",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://111040701359063",
+        "NormalMapContent": "rbxassetid://89146506765099",
+        "RoughnessMapContent": "rbxassetid://74253416151763",
+        "MetalnessMapContent": "rbxassetid://87105131495867",
         "EmissiveStrength": 0
       }
     },
