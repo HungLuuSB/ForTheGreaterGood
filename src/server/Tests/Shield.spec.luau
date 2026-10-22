@@ -122,7 +122,8 @@ return function(t: RunAll.Context)
 			return 0
 		end
 		local light, medium, heavy = turnAt(0.25), turnAt(1), turnAt(6)
-		t.expect(light > medium and medium > heavy and heavy > 120, `turn heights {light}, {medium}, {heavy} (dome top 120, band to 170)`)
+		local core = 120 * (1 - ShieldField.BAND_SHARE)
+		t.expect(light < 120 and light > medium and medium > heavy and heavy > core, `turn heights {light}, {medium}, {heavy} (inside the dome: surface 120, core {core})`)
 	end)
 
 	t.test("head-on shells stop and come back; off-centre ones bend round the dome and carry on (S-82)", function()
@@ -148,7 +149,7 @@ return function(t: RunAll.Context)
 			local angle, keep, breach = shot(offset, 1, 260)
 			t.equal(breach, false, `offset {offset}: turned`)
 			t.expect(angle < last, `offset {offset}: bent less than a shot nearer the centre ({angle}° after {last}°)`)
-			t.expect(keep > 0.25 and keep < 0.85, `offset {offset}: slowed, keeping {keep * 100}%`)
+			t.expect(keep > 0.25 and keep < 0.97, `offset {offset}: slowed, keeping {keep * 100}%`)
 			last = angle
 		end
 		t.expect(shot(0, 1, 260) > 179, "head-on: straight back")
@@ -426,11 +427,16 @@ return function(t: RunAll.Context)
 		t.expect(got ~= nil and got.unitId == 0 and got.projId == p, "SHIELD_HIT, generator 0")
 	end)
 
-	t.test("the shield profile: every attacker row fires, nothing under the dome is hurt while it stands", function()
+	t.test("the shield profile: every attacker row fires, nothing in the dome's core is hurt while it stands", function()
 		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local gen = Spawn.unit(sim, "ord_phalanx", 1, CX, CZ)
-		local inside = { Spawn.unit(sim, "ord_vehplant", 1, 0, -150 + 40), Spawn.unit(sim, "ord_oracle", 1, -30, -60), Spawn.unit(sim, "ord_mason", 1, 30, -60) }
+		-- the plant in the core; the radar and builder near the edge stand in the
+		-- field's band (S-83), where shells still slowing can reach them
+		local inside = { Spawn.unit(sim, "ord_vehplant", 1, 0, -150 + 40) }
+		for _, id in { Spawn.unit(sim, "ord_oracle", 1, -30, -60), Spawn.unit(sim, "ord_mason", 1, 30, -60) } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+		end
 		local acc = sim.eco.accounts[1]
 		acc.power.storage, acc.power.stored = 1e6, 1e6
 		local attackers = {}
@@ -471,7 +477,7 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(turned >= 20, `the dome turned shells ({turned} turned, {through} through)`)
-		t.equal(hurtWhileUp, 0, "nothing under the dome hurt while it stood and nothing broke through")
+		t.equal(hurtWhileUp, 0, "nothing in the core hurt while the dome stood and nothing broke through")
 	end)
 
 	t.test("two runs with domes give the same state hash", function()

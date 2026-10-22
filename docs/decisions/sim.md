@@ -1147,3 +1147,27 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Caught again:** a shell thrown out that comes back (a bomb bounced up falls again) is caught again; `pShieldDone` is gone. A shell inside the dome can't be caught (the field starts outside it), so breaches still pass.
 - **Tests:** `Shield.spec` 13: the S-80 mirror test replaced by the drawing's (head-on back, the angle shrinking with the offset, glancing under 60° from 0.7 radii and under 30° at 0.95, heavy and light shells, a line past the dome untouched); bombs in the shell-weight test now drop from above the dome. The client's S-80 note no longer holds.
 - **Fix (same day, the client's ShieldWire spec and Studio run):** flat head-on shots low over the ground never turned. Braked almost to a stop, they were bent down by gravity until their line missed the dome. That left them almost no braking and no turn, so they sank through the band and burst in front of the dome (Studio: 146 of 310 shells in 12 s). Now a shell also turns once its line no longer hits the dome, and one slower than STOPPED (60 studs/s) counts as head-on for the push out, so it is thrown back. The client's case is a test. New measurements (mass 1, 260 studs/s): 0 → 180° (39%), 0.2 → 135° (30%), 0.3 → 80° (28%), 0.5 → 51° (42%), 0.7 → 32° (60%), 0.85 → 21° (73%), 0.95 → 14° (78%).
+
+## S-83 — The shield field inside the dome (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "shell can pass through the shield as it will be slowed down and bounced off while inside the shield. Right now, the shield forces every shell to be outside of it".
+- **Built** (`Shared/Combat/ShieldField`): the field fills the outer `BAND_SHARE` (0.4) of the dome, between the core (0.6 R) and the surface; nothing acts outside the dome.
+  - It takes hold of any enemy shell that crosses the surface moving in.
+  - Braking and the head-on share are as in S-82, measured against the dome's radius.
+  - Steering now turns the path toward the tangent where the shell is (at most to it): inside a sphere, the S-82 "line that grazes the dome" is the local tangent. An off-centre shell bends round inside the dome and leaves through its surface.
+  - The turn is when it no longer closes in. Steering also turns a shell slowed to nothing and bent down by gravity, so the S-82 fix's "line misses the dome" test is gone.
+  - Thrown out until it leaves through the surface. A breach is reaching the core, still closing in.
+  - Hit and breach points are on the surface over the shell, where the client draws them. No wire change.
+- **Band depth** (my call; the client suggested 0.35–0.4 R). Head-on at full charge, at 0.4:
+  - the Phalanx (band 48) stops everything but the Citadel round;
+  - the Carapace (band 32) also lets the siege mortar through.
+  - At 0.5 the Phalanx stops all and the Carapace all but the Citadel round, with cores of 60 / 40 studs. Under review.
+- **Measured** (mass 1, 260 studs/s, full force, R 120; offset → angle out against in, speed kept):
+  - 0 → 180° (38%), 0.2 → 164° (42%), 0.3 → 149° (37%), 0.5 → 81° (31%);
+  - 0.7 → 39° (58%), 0.85 → 24° (81%), 0.95 → 12° (94%);
+  - R 80 within a few degrees.
+- **Consequence (review):** units standing in the band are under shells still slowing down, and a turned shell may burst there.
+- **Tests:** `Shield.spec` 14:
+  - turns happen inside the dome, between the core and the surface;
+  - glancing shells through the rim keep up to 97% of their speed;
+  - the shield profile checks the core (the radar and builder near the edge stand in the band).
