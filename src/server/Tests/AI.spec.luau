@@ -189,17 +189,17 @@ return function(t: RunAll.Context)
 		t.expect(#owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict") <= Skirmish.LEVELS.easy.maxArmy + 1, "a small army")
 	end)
 
-	t.test("normal: tanks before its third generator, and the army comes home against an enemy wave", function()
+	t.test("normal: its economy keeps up with the plant, and the army comes home against an enemy wave", function()
 		local sim = levelSim("map:ridgeline", 34)
 		local brain = Skirmish.new(sim, 1, "normal")
-		local armyAtGen3: number? = nil
-		run(sim, { brain }, 900 * 8, false, function()
-			if armyAtGen3 == nil and #owned(sim, 1, "ord_generator") >= 3 then
-				armyAtGen3 = #owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict")
-			end
-			return false
-		end)
-		t.expect(armyAtGen3 ~= nil and armyAtGen3 >= 2, `at least 2 tanks when the third generator went down ({armyAtGen3})`)
+		-- (S-94: the plant draws about 3 generators' power at full speed, so
+		-- the tanks-first rule gives way to generators while power stalls;
+		-- the economy grows and the army follows)
+		run(sim, { brain }, 900 * 8, false)
+		local army = #owned(sim, 1, "ord_lancer") + #owned(sim, 1, "ord_verdict")
+		t.expect(#owned(sim, 1, "ord_generator") >= 4, `generators keep up with the plant ({#owned(sim, 1, "ord_generator")})`)
+		t.expect(army >= 8, `an army by 8 minutes ({army})`)
+		t.expect(sim.eco.accounts[1].power.ratio >= 0.6, `power no longer stalled ({sim.eco.accounts[1].power.ratio})`)
 		-- send a wave out, then bring an enemy wave to the base
 		run(sim, { brain }, 900 * 4, true, function()
 			return next(brain.attacking) ~= nil

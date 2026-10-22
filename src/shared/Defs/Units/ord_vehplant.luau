@@ -9,7 +9,7 @@ return Templates.extend(Templates.Structure, {
 	cost = { supply = 600, power = 1200, buildTime = 7000 },
 	health = 3000,
 	footprint = 3,
-	buildPower = 100,
+	buildPower = 200, -- doubled: T1 units in about half the time (S-94, client request 42b)
 	buildOptions = { "ord_mason", "ord_herald", "ord_lancer", "ord_verdict", "ord_halo", "ord_oracle" },
 	model = "ord_vehplant",
 	icon = "factory",

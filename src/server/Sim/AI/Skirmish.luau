@@ -110,6 +110,9 @@ Skirmish.KITE_TICKS = 45 -- how long a kiting unit is left out of wave orders
 Skirmish.FLEET_SIZE = 4 -- ships gathered before the fleet attacks (hard)
 Skirmish.MAX_TURRETS = 6
 Skirmish.ESCORT_RADIUS = 160 -- studs: workers sent to deposits farther from home get an escort (hard)
+Skirmish.ARMY_FIRST_RATIO = 0.6 -- normal's tanks-before-the-third-generator rule holds only while power runs at least this well (S-94)
+Skirmish.GENERATOR_POWER = 20 -- power per second a generator makes (the generator rule's unit; S-94)
+Skirmish.POWER_PER_WORK = 1 / 3 -- power per work unit of a T1 tank (Lancer 1,700 / 5,100): what a building factory draws per build power (S-94)
 Skirmish.REFILL_POWER_CAP = 60 -- power/s of missile refills the generator rule plans for, at most (S-57)
 Skirmish.AIR_MEMORY = 900 -- ticks enemy aircraft near home are remembered: half the mobile SAMs stay home (S-57)
 Skirmish.RECALL_RADIUS = 570 -- studs from home: an enemy wave this close brings the army home (S-57)
@@ -323,6 +326,7 @@ export type Brain = {
 	thinkOffset: number, -- ticks into the think period this player thinks at
 	lastArmyQueued: number, -- tick it last queued an army unit (easy's cooldown)
 	powerShortAt: number, -- last tick power was stalling (S-31)
+	powerLowAt: number, -- last tick power ran below ARMY_FIRST_RATIO (S-94)
 	airNearAt: number, -- last tick enemy aircraft were known near home (S-57)
 	lastWaveAt: number, -- tick the last wave left (S-57)
 	recallUntil: number, -- no new wave before this tick (S-57)
@@ -452,6 +456,7 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		waves = 0,
 		lastWaveOrder = -math.huge,
 		powerShortAt = -math.huge,
+		powerLowAt = -math.huge,
 		airNearAt = -math.huge,
 		lastWaveAt = -math.huge,
 		recallUntil = -math.huge,
@@ -894,7 +899,18 @@ local function think(brain: Brain)
 	-- `tanksBeforeGen3` units; other jobs would split the power and stall
 	-- them. (Sending the builders to help the plant gave mirrored players
 	-- a side bias: east won 9–11 of 12 Normal mirrors.)
+	-- the power its factories draw building at full speed: their build
+	-- power times a tank's power per work unit (S-94: plants build twice as
+	-- fast as before, so they want about 3 generators each, not 1)
+	local factoryPower = 0
+	for _, f in c.factories do
+		factoryPower += (unitDef(sim, f).buildPower or 0) * Skirmish.POWER_PER_WORK
+	end
+	-- (but not while power stalls below ARMY_FIRST_RATIO: the plant would
+	-- never finish those tanks, the builders would go on to extractors that
+	-- draw more, and no generator would come; S-94)
 	local armyFirst = brain.tanksFirst > 0 and c.generators >= 2 and #c.army < brain.tanksFirst and #c.factories > 0
+		and sim.tick - brain.powerLowAt > Skirmish.POWER_MEMORY
 	for _, id in workers do
 		local isCommander = id == c.commander
 		if not idleBuilder(sim, id) then
@@ -981,7 +997,11 @@ local function think(brain: Brain)
 		-- SAMs sit empty wants the generators for them (S-57)
 		-- normal: no third generator before its first tanks (S-57)
 		local genAllowed = not armyFirst
-		if genAllowed and (powerShort or acc.power.income < 20 * #c.factories + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) then
+		-- (counted in generators, frames included, not income: a generator
+		-- finishing a few ticks earlier on one side of a mirror must not
+		-- change the next job; S-94)
+		local genWanted = math.ceil((factoryPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) / Skirmish.GENERATOR_POWER)
+		if genAllowed and (powerShort or c.generators < genWanted) then
 			local gen = faction(brain, "generator", "generator")
 			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
 			if x and z then
@@ -1460,6 +1480,9 @@ function Skirmish.tick(brain: Brain)
 	local acc = sim.eco.accounts[brain.team]
 	if acc and acc.power.ratio < 0.95 then
 		brain.powerShortAt = sim.tick
+	end
+	if acc and acc.power.ratio < Skirmish.ARMY_FIRST_RATIO then
+		brain.powerLowAt = sim.tick -- (S-94; watched every tick like the stall, S-31)
 	end
 	if (sim.tick - brain.thinkOffset) % brain.cfg.think ~= 0 then
 		return

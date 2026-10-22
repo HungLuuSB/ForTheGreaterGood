@@ -13,7 +13,7 @@ return Templates.extend(Templates.Structure, {
 	health = 2800,
 	footprint = 5,
 	icon = "factory_air",
-	buildPower = 100,
+	buildPower = 200, -- doubled: T1 units in about half the time (S-94, client request 42b)
 	rearmPads = 1,
 	buildOptions = { "ord_skywright", "ord_falcon", "ord_guardian", "ord_absolution" },
 	model = "ord_airfield",

@@ -182,8 +182,8 @@ return function(t: RunAll.Context)
 		local w = sim.world
 		t.equal(w.defIndex[produced[1].unit], sim.defs.units.ord_lancer.index, "first in queue first out")
 		t.equal(w.defIndex[produced[2].unit], sim.defs.units.ord_mason.index)
-		-- 5,100 work units at BP 100 = 51 s = 765 ticks
-		t.expect(math.abs(produced[1].tick - 765) <= 3, `lancer finished at tick {produced[1].tick}`)
+		-- 5,100 work units at BP 200 (S-94) = 25.5 s = 383 ticks
+		t.expect(math.abs(produced[1].tick - 383) <= 3, `lancer finished at tick {produced[1].tick}`)
 		for _ = 1, 60 do
 			Sim.step(sim)
 		end
