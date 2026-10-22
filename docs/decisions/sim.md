@@ -1227,3 +1227,17 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Sampling:** `Sim.new` takes the first sample at tick 0, after the scenario. `Stats.step`, at the end of `Sim.step`, takes one every `every` ticks (150 = 10 s). Past 120 samples, every other one is dropped and `every` doubles.
   - Not hashed: it only reads the sim, like the report.
 - **Tests:** `Stats.spec` 6: damage taken mirrors damage dealt on a kill; the series' shape and timing over 30 s; the halving and the doubled interval.
+
+## S-89 — Shield domes stop hitscan shots (the user's queue, task 2) (2026-10-23)
+
+- **Asked:** finish the shield: "intercept of shells and hitscan, strength drain, energy refill, collapse at 0% / rise at 25%, the wire state and hit events". S-79..S-87 already did everything except hitscan (S-79 let hitscan and beams through, under review).
+- **Built:**
+  - `Shield.intercept`: a hitscan or beam shot, or a shell resolved like one at the projectile cap, is stopped where its segment first enters an enemy dome that's up, if the muzzle is outside that dome.
+  - The FIRE event ends at that surface point with no hit and no damage. The shot's mass (`ShieldField.mass`) comes off the charge, as for a light shell absorbed (S-85).
+  - SHIELD_HIT (absorbed) with projectile 0.
+  - Shots from inside a dome pass out, as shells do.
+- **Wire, protocol 26:** SHIELD_HIT's projId may be 0 (a hitscan shot); the decoder used to reject it.
+- **Which weapons:** today's hitscan weapons are the flak guns (AA: a plane over an enemy dome is out of their reach) and the Minotaur's demolition charge (30 studs: from outside, only structures in the band are in reach).
+- **Tests:**
+  - `Shield.spec` 16: a Minotaur outside a dome sees its charge stopped on the surface every time, with no hitscan hit getting through; inside the dome the same charge hits; a line clear of the dome passes.
+  - `Schema.spec`: golden bytes for projId 0.

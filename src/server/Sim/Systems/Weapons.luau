@@ -25,6 +25,9 @@
 -- searches for another on the next tick. So a group's volley spreads over
 -- several targets. Attack orders, and a doomed target with nothing else in
 -- reach (Targeting marks it ALLOWED), still get fired at.
+-- Shield domes (S-89): an enemy dome between the muzzle and a hitscan
+-- shot's end stops the shot at its surface (Shield.intercept); the FIRE
+-- event ends there, with no hit.
 -- Line of fire (S-32, guide 10.8): hitscan, beams and ballistic shells fire
 -- only when the shot clears the terrain (Combat.lineOfFire); otherwise the
 -- weapon is marked blocked (World.wBlocked) and holds.
@@ -38,6 +41,7 @@ local Defs = require("@shared/Defs/Defs")
 local Guidance = require("@shared/Combat/Guidance")
 local Lofted = require("@shared/Combat/Lofted")
 local Deploy = require("../Deploy")
+local Shield = require("../Shield")
 local EW = require("../EW")
 local Sensors = require("../Sensors")
 local Stockpile = require("../Stockpile")
@@ -178,6 +182,14 @@ local function fire(
 		ex = w.posX[id] + sin(worldYaw + yawErr) * dist
 		ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
 		ey = Combat.groundHeight(c, ex, ez)
+	end
+	if #c.shieldIds > 0 then
+		-- an enemy shield dome on the way stops the shot at its surface (S-89)
+		local gen, hx, hy, hz = Shield.intercept(sim, w.ally[id], w.posX[id], muzzleY, w.posZ[id], ex, ey, ez, weapon)
+		if gen ~= 0 then
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = false, x = hx, y = hy, z = hz, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+			return
+		end
 	end
 	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
 	if hit then
