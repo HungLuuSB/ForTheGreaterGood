@@ -26,19 +26,22 @@ def build_base(p):
     for sx in (-1, 1):
         p.box((sx * 4.4, 7.63, 3.4), (7.0, 0.06, 9.0), "team", bevel=0.02)
     p.box((0, 8.1, 7.2), (6.0, 1.0, 3.0), "trim", bevel=0.05)
-    p.box((0, 8.62, 7.2), (5.2, 0.04, 2.4), "grille")
+    p.box((0, 8.62, 7.2), (5.2, 0.05, 2.4), "power")  # roof vent
     # the door, its glowing lintel, the ramp
     p.box((0, 3.1, -4.55), (10.0, 5.0, 0.12), "dark")
     for i in range(5):
         p.box((0, 1.0 + i * 1.0, -4.62), (9.8, 0.06, 0.04), "seam")
-    p.box((0, 5.85, -4.66), (10.0, 0.3, 0.1), "light")
+        p.box((0, 1.0 + i * 1.0, -4.64), (9.6, 0.12, 0.05), "power")  # build lights through the door
+    p.box((0, 5.85, -4.66), (10.0, 0.4, 0.12), "power")  # door lintel
     p.prism_x([(-9.6, 0.6), (-4.6, 0.6), (-4.6, 1.2)], -6.0, 6.0, "steel", bevel=0.03)
+    for sx in (-1, 1):  # ramp guide lights
+        p.box((sx * 6.1, 0.75, -7.1), (0.16, 0.12, 5.0), "light")
     # buttresses either side of the door
     for sx in (-1, 1):
         x0, x1 = (9.0, 11.0) if sx > 0 else (-11.0, -9.0)
         p.prism_x([(-6.0, 0.6), (-1.0, 0.6), (-1.0, 5.6), (-3.0, 5.6)], x0, x1, "paint", bevel=0.05)
         p.box((sx * 10.0, 1.2, -10.0), (0.6, 0.6, 0.6), "light")
-        p.box((sx * 9.05, 3.4, 4.0), (0.08, 0.3, 8.0), "light")
+        p.box((sx * 9.06, 3.4, 4.0), (0.1, 0.36, 9.0), "light")
 
 
 def details_base(p):

@@ -30,6 +30,9 @@ def build_base(p):
     p.prism_y([(-2.2, -3.0), (0.4, -3.0), (0.4, -1.2), (-2.2, -1.2)], 2.3, 3.5, "paint", bevel=0.04, top_scale=0.88)
     p.box((-0.9, 3.2, -3.02), (2.0, 0.22, 0.05), "light")
     p.box((-0.9, 3.52, -2.1), (1.6, 0.05, 1.2), "team", bevel=0.012)
+    for sx in (-1, 1):  # headlights on the ram
+        p.box((sx * 1.6, 1.55, -3.55), (0.5, 0.2, 0.08), "head")
+        p.box((sx * 1.92, 2.0, 0.4), (0.05, 0.1, 6.0), "light")  # flank running strip
     p.cylinder("y", (1.4, 3.2, -2.4), 0.24, 2.0, 8, "steel")
     p.cylinder("y", (0.2, 2.45, 1.6), 1.1, 0.3, 12, "dark")
     for y in (1.0, 2.0):
@@ -47,11 +50,12 @@ def build_launcher(p):
     p.box((0.2, 4.0, 1.6), (0.8, 1.0, 1.0), "steel", bevel=0.03)
     p.box((1.3, 4.1, 1.3), (1.4, 1.2, 2.6), "paint", bevel=0.04)
     p.box((1.3, 4.72, 1.3), (1.1, 0.05, 2.0), "team", bevel=0.012)
-    p.box((1.3, 4.3, -0.02), (0.5, 0.5, 0.05), "light")
+    p.box((1.3, 4.3, -0.02), (0.56, 0.56, 0.06), "weapon")  # seeker
     p.box((-0.3, 4.0, 1.3), (0.2, 1.2, 2.6), "dark")
     for y in (4.3, 3.75):
         p.cylinder("z", (-0.65, y, 1.1), 0.22, 2.6, 10, "steel")
         p.cylinder("z", (-0.65, y, -0.25), 0.22, 0.1, 10, "era", radius2=0.05)
+        p.cylinder("z", (-0.65, y, 0.0), 0.23, 0.1, 10, "weapon")  # missile ready band
     p.box((0.2, 3.9, 2.9), (1.6, 0.8, 0.6), "dark", bevel=0.03)
 
 

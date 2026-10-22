@@ -1,7 +1,30 @@
 {
-  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
-  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 564 triangles",
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 648 triangles, glow share 3.0%",
   "bar": {
+    "model": "rbxassetid://123916061747114",
+    "meshes": {
+      "base": "rbxassetid://77770515257890",
+      "base_glow_power": "rbxassetid://91211966738868",
+      "base_glow_running": "rbxassetid://103718713428586"
+    },
+    "decals": {
+      "ALB": "rbxassetid://77055610906742",
+      "RGH": "rbxassetid://94855046212826",
+      "NOR": "rbxassetid://113957992847072",
+      "MTL": "rbxassetid://85547748086134",
+      "EMI": "rbxassetid://114745968515422"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://136526951401821",
+      "NOR": "rbxassetid://131838609231584",
+      "RGH": "rbxassetid://125728428029770",
+      "MTL": "rbxassetid://115148716759332",
+      "EMI": "rbxassetid://82904189408907"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_bar in FTGG Art"
+  },
+  "bar_preglow": {
     "model": "rbxassetid://101076966633573",
     "meshes": {
       "base": "rbxassetid://123036204100982"
@@ -20,7 +43,6 @@
       "MTL": "rbxassetid://115172092781773",
       "EMI": "rbxassetid://74586901331220"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_bar in FTGG Art",
-    "note": "the 22-stud mesh imports clamped to 2048 studs, so it was normalized at 22/2048 instead of 0.01"
+    "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 564 triangles)"
   }
 }

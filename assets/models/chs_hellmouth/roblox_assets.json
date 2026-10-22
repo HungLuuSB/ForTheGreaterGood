@@ -1,22 +1,34 @@
 {
-  "note": "Assets uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py) or, for review 1, Studio's 3D Importer (creator: hungluu344).",
-  "revision": "2026-10-22, review 2: bigger team panels, 3,316 triangles (Open Cloud)",
-  "bar_review1": {
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 3428 triangles, glow share 4.2%",
+  "bar": {
+    "model": "rbxassetid://103765052722993",
     "meshes": {
-      "base": "rbxassetid://109373661390550",
-      "turret": "rbxassetid://88008532381250",
-      "barrel": "rbxassetid://81268291192451"
+      "barrel": "rbxassetid://115232943024375",
+      "barrel_glow_weapon": "rbxassetid://119195196848190",
+      "base": "rbxassetid://136561413122474",
+      "base_glow_head": "rbxassetid://130680867801516",
+      "base_glow_running": "rbxassetid://112730069204939",
+      "turret": "rbxassetid://76803932440729",
+      "turret_glow_running": "rbxassetid://74560994563262"
+    },
+    "decals": {
+      "ALB": "rbxassetid://71741462354581",
+      "RGH": "rbxassetid://136202718350766",
+      "NOR": "rbxassetid://116338283527257",
+      "MTL": "rbxassetid://71570883739737",
+      "EMI": "rbxassetid://95835985514018"
     },
     "surfaceAppearance": {
-      "ALB": "rbxassetid://111213069805332",
-      "NOR": "rbxassetid://80972646943817",
-      "RGH": "rbxassetid://86468022691609",
-      "MTL": "rbxassetid://92215894419815",
-      "EMI": "rbxassetid://116103214465065"
+      "ALB": "rbxassetid://133250943382330",
+      "NOR": "rbxassetid://113690180137647",
+      "RGH": "rbxassetid://131946209972922",
+      "MTL": "rbxassetid://96028010475822",
+      "EMI": "rbxassetid://99889052201586"
     },
-    "model": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
   },
-  "bar": {
+  "bar_preglow": {
     "model": "rbxassetid://106342302528805",
     "meshes": {
       "base": "rbxassetid://85086711077874",
@@ -37,7 +49,21 @@
       "MTL": "rbxassetid://89411190720672",
       "EMI": "rbxassetid://112548824462184"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art",
-    "note": "RGH re-uploaded as decal 112795935467126: the first upload's image failed with HTTP 502 in Studio"
+    "note": "before the glow pass (2026-10-22, review 2: bigger team panels, 3,316 triangles (Open Cloud))"
+  },
+  "bar_review1": {
+    "meshes": {
+      "base": "rbxassetid://109373661390550",
+      "turret": "rbxassetid://88008532381250",
+      "barrel": "rbxassetid://81268291192451"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://111213069805332",
+      "NOR": "rbxassetid://80972646943817",
+      "RGH": "rbxassetid://86468022691609",
+      "MTL": "rbxassetid://92215894419815",
+      "EMI": "rbxassetid://116103214465065"
+    },
+    "model": "ReplicatedStorage.ModelReview.chs_hellmouth_bar in FTGG Art"
   }
 }

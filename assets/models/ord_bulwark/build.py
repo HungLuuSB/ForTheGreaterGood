@@ -27,6 +27,8 @@ def build_base(p):
     for sz in (-1, 1):
         p.prism_x([(sz * 3.05, 0.9), (sz * 2.85, 0.9), (sz * 2.65, 1.6), (sz * 2.85, 1.6)], -1.6, 1.6, "team")
     p.cylinder("y", (0, 2.2, 0), 2.0, 0.2, 16, "dark")
+    for sx in (-1, 1):  # wall-top running strips
+        p.box((sx * 2.6, 2.05, 0), (0.12, 0.08, 4.6), "light")
     for sx in (-1, 1):
         p.box((sx * 3.5, 0.45, 3.5), (0.3, 0.12, 0.3), "light")
         p.box((sx * 3.5, 0.45, -3.5), (0.3, 0.12, 0.3), "light")
@@ -37,8 +39,11 @@ def build_turret(p):
     p.prism_x([(-1.9, 2.35), (-1.2, 2.35), (-1.2, 3.8), (-1.75, 3.6)], -1.4, 1.4, "paint", bevel=0.04)  # brow
     p.box((0, 3.88, 0.4), (2.8, 0.06, 2.4), "team", bevel=0.015)
     p.box((1.2, 4.05, -0.6), (0.55, 0.35, 0.55), "trim", bevel=0.03)
-    p.box((1.2, 4.06, -0.885), (0.4, 0.14, 0.03), "light")
+    p.box((1.2, 4.06, -0.885), (0.44, 0.2, 0.04), "light")
     p.box((0, 3.0, 2.06), (2.4, 0.9, 0.12), "grille")
+    p.box((0, 3.4, 2.07), (2.2, 0.14, 0.05), "light")  # rear sensor strip
+    for sx in (-1, 1):  # side sensor strips
+        p.box((sx * 1.95, 3.3, 0.4), (0.05, 0.14, 2.6), "light")
     # mantlet, gun, evacuator, brake
     p.box((0, 3.15, -2.2), (1.1, 0.85, 0.6), "trim", bevel=0.05)
     p.cylinder("z", (0, 3.15, -4.6), 0.25, 4.4, 14, "paint")
@@ -47,7 +52,8 @@ def build_turret(p):
         p.cylinder("z", (0, 3.15, z), 0.27, 0.08, 14, "steel")
     p.cylinder("z", (0, 3.15, -7.05), 0.32, 0.8, 12, "steel")
     p.box((0, 3.15, -7.0), (0.8, 0.2, 0.14), "dark")
-    p.box((0, 3.42, -5.0), (0.06, 0.035, 1.6), "light")
+    p.cylinder("z", (0, 3.15, -6.6), 0.34, 0.14, 12, "weapon")  # brake ring
+    p.box((0, 3.44, -5.0), (0.09, 0.05, 2.4), "weapon")
 
 
 def details_base(p):

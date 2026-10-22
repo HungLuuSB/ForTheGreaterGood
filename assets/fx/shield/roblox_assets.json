@@ -4,16 +4,42 @@
     "dome": "rbxassetid://85081416332401",
     "dome_inner": "rbxassetid://78950571354329",
     "ring": "rbxassetid://134054369788950",
-    "emitter": "rbxassetid://98339625291172",
+    "emitter": "rbxassetid://81558546555311",
     "ring_thin": "rbxassetid://111379471786973",
     "band": "rbxassetid://75299929805633"
   },
   "emitterSurfaceAppearance": {
-    "ALB": "rbxassetid://71264151642313",
-    "NOR": "rbxassetid://107804609123251",
-    "RGH": "rbxassetid://112262724416590",
-    "MTL": "rbxassetid://75693850583616",
-    "EMI": "rbxassetid://119258840546762"
+    "ALB": "rbxassetid://82702442051683",
+    "NOR": "rbxassetid://81716223542164",
+    "RGH": "rbxassetid://123883233131418",
+    "MTL": "rbxassetid://101545001697493",
+    "EMI": "rbxassetid://78705670527927"
+  },
+  "emitterGlow": {
+    "note": "glow pass (M-22), 2026-10-22: emitter rebuilt by assets/fx/shield/emitter/build.py and uploaded through Open Cloud; glow parts welded to base",
+    "model": "rbxassetid://126390060008701",
+    "decals": {
+      "ALB": "rbxassetid://72564657926430",
+      "RGH": "rbxassetid://96354802365003",
+      "NOR": "rbxassetid://137257934419874",
+      "MTL": "rbxassetid://133073035210096",
+      "EMI": "rbxassetid://129528407143646"
+    },
+    "glowMeshes": {
+      "base_glow_power": "rbxassetid://134219593730777",
+      "base_glow_running": "rbxassetid://119745245219660"
+    }
+  },
+  "emitter_rev1": {
+    "mesh": "rbxassetid://98339625291172",
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://71264151642313",
+      "NOR": "rbxassetid://107804609123251",
+      "RGH": "rbxassetid://112262724416590",
+      "MTL": "rbxassetid://75693850583616",
+      "EMI": "rbxassetid://119258840546762"
+    },
+    "note": "shield_fx.fbx import, before the glow pass"
   },
   "textures": {
     "swirl": "rbxassetid://113814321169730",

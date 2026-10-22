@@ -1,7 +1,33 @@
 {
-  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route).",
-  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 976 triangles",
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, glow pass (M-22): 1040 triangles, glow share 4.2%",
   "bar": {
+    "model": "rbxassetid://132124462418782",
+    "meshes": {
+      "base": "rbxassetid://100723090026773",
+      "base_glow_head": "rbxassetid://125165148156832",
+      "base_glow_running": "rbxassetid://71537548518303",
+      "turret": "rbxassetid://73779531549930",
+      "turret_glow_running": "rbxassetid://110221380089795",
+      "turret_glow_weapon": "rbxassetid://96780177670841"
+    },
+    "decals": {
+      "ALB": "rbxassetid://89912111637156",
+      "RGH": "rbxassetid://110481849359150",
+      "NOR": "rbxassetid://135368702588803",
+      "MTL": "rbxassetid://107298905988202",
+      "EMI": "rbxassetid://92436374902479"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://116310768442819",
+      "NOR": "rbxassetid://120329158733699",
+      "RGH": "rbxassetid://79316417954705",
+      "MTL": "rbxassetid://74785485849376",
+      "EMI": "rbxassetid://91272060685787"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_herald_bar in FTGG Art"
+  },
+  "bar_preglow": {
     "model": "rbxassetid://131619765971099",
     "meshes": {
       "base": "rbxassetid://95145619182320",
@@ -21,6 +47,6 @@
       "MTL": "rbxassetid://119057463145605",
       "EMI": "rbxassetid://128223630391854"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_herald_bar in FTGG Art"
+    "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 976 triangles)"
   }
 }
