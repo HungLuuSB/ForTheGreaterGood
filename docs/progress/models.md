@@ -443,6 +443,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `ff6072d` (beam shot: muzzle widths within the emitter ball, impact flare 5 / 4 studs, `muzzleFlareSize` star while firing, flare `StudsOffset`; `assets/fx/beam/`, `src/shared/Defs/Meshes/` and docs).
 - Ready to merge: `386e998` (beam shot: stars 6 / 8 and 4 / 5 studs, muzzle glow and filaments 1.6 / 0.9; `assets/fx/beam/`, manifest and docs).
 - Ready to merge: `8fcf418` (shield honeycomb shell M-30: `assets/fx/shield/honeycomb/`, `Meshes.shieldShell`, `Mesh.validateShieldShell`, fx.md "Honeycomb shell", M-30).
+- Ready to merge: `8c1281a` (beam shot holds for `beamDuration`, `Meshes.beam` `hold` replaced by `duration`; `assets/fx/beam/`, `src/shared/Defs/Meshes/` and docs).
 
 ## Requests
 

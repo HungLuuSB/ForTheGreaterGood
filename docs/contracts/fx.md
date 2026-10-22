@@ -110,7 +110,7 @@ White RGB with the pattern in alpha, 512 × 512, so the client tints them (fx co
 
 ## Beam shot (Radiance / Inferno, M-29)
 
-The beam towers' shot (`ord_radiance_beam`, `chs_inferno_beam`; the weapons' `fx.muzzle = "beam_charge"`, `fx.impact = "beam_impact"`), BAR Pulsar style but original: a bright laser from the muzzle to the target with thin crackling energy filaments racing along it, thinning and gone within about half a second. Textures are white (the scorch is grey), so the client tints them: Order ice-white / cyan, Chaos hot orange. They are in the mesh manifest as `Meshes.beam` (status `review`): `textures` plus the recommended values per faction under `factions.order` / `factions.chaos`, all listed below. Built by `assets/fx/beam/build.py`.
+The beam towers' shot (`ord_radiance_beam`, `chs_inferno_beam`; the weapons' `fx.muzzle = "beam_charge"`, `fx.impact = "beam_impact"`), BAR Pulsar style but original: a bright laser from the muzzle to the target with thin crackling energy filaments racing along it, holding for the weapon's `beamDuration` (3 s / 1.5 s) and narrowing away at its end. Textures are white (the scorch is grey), so the client tints them: Order ice-white / cyan, Chaos hot orange. They are in the mesh manifest as `Meshes.beam` (status `review`): `textures` plus the recommended values per faction under `factions.order` / `factions.chaos`, all listed below. Built by `assets/fx/beam/build.py`.
 
 **Reference build:** "FTGG Art", `Workspace.BeamFxReference`: a Radiance lane and an Inferno lane, each tower firing at a `DummyTarget` 100 studs away, driven by the ModuleScript `BeamFxReference.BeamShot`. `BeamShot.build(faction, muzzle, hit, groundY)` makes every instance once; `BeamShot.apply(rig, t)` sets them all for `t` seconds after the shot started (a pure function of `t`: the same `t` gives the same frame); `BeamShot.play(rig)` loops it as a preview. The same module is in the repo as `assets/fx/beam/BeamShot.luau` (not synced): copy `build` and `apply` into the client's beam effect.
 
@@ -131,21 +131,23 @@ Roblox Beams lay a texture's width along the beam: the strips below run along X 
 
 ### Timing (t = seconds since the shot started)
 
+The beam stays on for the weapon's `beamDuration` (the user, 2026-10-23): 3 s on the Radiance, 1.5 s on the Inferno, the server's damage window (S-115). `duration` in the values below is that number; take it from the weapon def if it changes. The taper happens inside it, at its end.
+
 | t (Order) | t (Chaos) | What happens |
 |---|---|---|
 | 0 – 0.08 | 0 – 0.06 | **charge:** the `charge` flipbook at the muzzle, frames 1 → 4, growing from 55% to 100% of `flareSize`; it fades over the next 0.04 s |
 | 0.08 | 0.06 | **beam on at full width:** core, glow and the filaments; the **muzzle flare** (the full star, frame 4 of `charge`) sits on the emitter ball while the beam is on, `muzzleFlareSize` × (1 − u)^0.8 × a random 0.85–1.15 each frame, turned a random ±15°, transparency 0.6·u; the impact flare starts at the hit; the scorch appears 0.02 s later |
-| 0.08 – 0.12 | 0.06 – 0.09 | **hold** at full width (`hold`) |
-| 0.12 – 0.50 | 0.09 – 0.36 | **taper** (`taper`), with `u` going 0 → 1: core width × (1 − u)^1.1, transparency 0.7·u^1.6; glow width × (1 − u)^0.8, transparency 0.35 + 0.65·u; filaments thin faster: width × (1 − u)^2.2, transparency 0.8·u^1.2. At the end every Beam is disabled |
-| 0.08 – 0.38 | 0.06 – 0.31 | **impact flare** (`impactTime`): grows to 120% of `impactSize` in the first quarter, transparency k^1.5 |
-| to 1.3 | to 1.1 | **embers** (`scorchGlowTime`) fade out over the scorch |
-| to 4.1 | to 3.1 | **scorch** (`scorchTime`) stays, fading over its last 1.5 s |
+| 0.08 – 2.70 | 0.06 – 1.29 | **hold** at full width; the core's width breathes ±6% (a new random each frame), the filaments re-jitter 30 times a second, the impact settles into a flickering hot spot (below) |
+| 2.70 – 3.08 | 1.29 – 1.56 | **taper** (`taper`, the end of `duration`), with `u` going 0 → 1: core width × (1 − u)^1.1, transparency 0.7·u^1.6; glow width × (1 − u)^0.8, transparency 0.35 + 0.65·u; filaments thin faster: width × (1 − u)^2.2, transparency 0.8·u^1.2. At the end every Beam is disabled |
+| 0.08 – 3.08 | 0.06 – 1.56 | **impact flare** while the beam is on: a burst in the first `impactTime` (to 120% of `impactSize`, settling to 70%), then a hot spot at 70% × a random 0.9–1.1 each frame, turned ±20°, transparency 0.15, shrinking and fading with the taper (× (1 − u)^0.7, transparency 0.15 + 0.6·u). Its `StudsOffset` is (0, 0, half its size) |
+| to 4.28 | to 2.56 | **embers** (`scorchGlowTime`): full while the beam burns, fading out after it ends |
+| to 7.08 | to 4.56 | **scorch** (`scorchTime` after the beam ends) stays, fading over its last 1.5 s |
 
 **Filaments, every frame (30 times a second):** each filament Beam has its own pair of attachments, near the muzzle and at the hit. Give each a new perpendicular offset round the beam axis: angle = its slot (i / n of a turn) plus a random ± `jitter` turn; radius `spread` × (0.6–1.0) at the muzzle and × `fan` (small) at the target, so the filaments leave the emitter spread round the core and converge on the hit. Also new random `CurveSize0` / `CurveSize1` within ± `curve` (`Segments = 16`). Seeded per shot and frame (`Random.new(seed + frame)`), so a replay looks the same.
 
 **The muzzle end is sized to the emitter ball** (the user's feedback, 2026-10-23): the ball is 1.12 studs across on the Radiance and 0.6 on the Inferno; the core stays within it and the glow and filaments are about 1.5 × the ball, with a big star on the ball while firing.
 
-**Billboards are depth-tested:** the emitter ball and the target's face would hide half of a flare, so pull them towards the camera with `StudsOffset`: charge and muzzle flares (0, 0, 1.2), impact flare (0, 0, `impactSize` / 2).
+**Billboards are depth-tested:** the emitter ball and the target's face would hide half of a flare, so pull them towards the camera with `StudsOffset`: charge and muzzle flares (0, 0, 1.2), impact flare (0, 0, its current size / 2).
 
 **Every Beam:** `FaceCamera = true`, `LightEmission = 1`, `LightInfluence = 0`, `TextureMode = Wrap`. **The beam narrows to a point at the target** (the user's feedback, 2026-10-23): `Width0` (muzzle end) is the full width, `Width1` (target end) = `Width0` × `tip`, for the core, the glow and the filaments. Beams add up: keep `Brightness` low (below), or the overlap washes out to a flat white bar in daylight.
 
@@ -155,7 +157,7 @@ Radiance is thicker and longer; Inferno shorter, hotter and more ragged.
 
 | Value | Radiance (`order`) | Inferno (`chaos`) |
 |---|---|---|
-| `charge` / `hold` / `taper` (s) | 0.08 / 0.04 / 0.38 (beam gone at 0.50) | 0.06 / 0.03 / 0.27 (beam gone at 0.36) |
+| `charge` / `duration` (the weapon's `beamDuration`) / `taper` (s) | 0.08 / 3 / 0.38 (beam gone at 3.08) | 0.06 / 1.5 / 0.27 (beam gone at 1.56) |
 | core width / glow width at the muzzle (studs) | 0.9 / 1.6 | 0.5 / 0.9 |
 | filaments: count, width at the muzzle (studs) | 4, 1.6 | 3, 0.9 |
 | `spread` / `fan` / `jitter` / `curve` | 0.15 / 0.3 / 0.45 / 1.6 | 0.08 / 0.3 / 0.7 / 2.2 |

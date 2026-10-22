@@ -13,7 +13,6 @@
   "factions": {
     "order": {
       "charge": 0.08,
-      "hold": 0.04,
       "taper": 0.38,
       "coreWidth": 0.9,
       "glowWidth": 1.6,
@@ -58,11 +57,11 @@
       "scorchTime": 4,
       "scorchGlowTime": 1.2,
       "tip": 0.06,
-      "muzzleFlareSize": 8
+      "muzzleFlareSize": 8,
+      "duration": 3
     },
     "chaos": {
       "charge": 0.06,
-      "hold": 0.03,
       "taper": 0.27,
       "coreWidth": 0.5,
       "glowWidth": 0.9,
@@ -107,7 +106,8 @@
       "scorchTime": 3,
       "scorchGlowTime": 1.0,
       "tip": 0.08,
-      "muzzleFlareSize": 5
+      "muzzleFlareSize": 5,
+      "duration": 1.5
     }
   }
 }
