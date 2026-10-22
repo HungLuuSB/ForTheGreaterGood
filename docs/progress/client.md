@@ -1782,3 +1782,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `4305d94` (extractor upgrades in place on S-108's rule with the D92 fallback: target discs, snap, extractor drags as areas, Upgrade extractors command, UPGRADE badge; ghost PivotTo and build waypoints fixes; touches src/roblox Main.server (Studio debug query "deposits"); C-121); test_client 207, test 430, build passed.
 - Ready to merge: `c74da88` (minimap unit icons, C-122); test_client 207, test 430, build passed.
 - Ready to merge: `22f0286` (deposits: dark patch / C's fx.deposit variants, hidden under structures, placement and F4 overlay, minimap rings; C-123); test_client 209, test 430, build passed.
+- Ready to merge: `7928550` (Settings top right, Follow button removed with T in developer mode, F3 bottom right; unit panel model portrait, type icon and +/- supply and power flow; C-124, C-125); test_client 213, test 430, build passed.
