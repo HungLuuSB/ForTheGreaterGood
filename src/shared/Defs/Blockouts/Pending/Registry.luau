@@ -10,12 +10,17 @@
 return {
 	blockouts = {
 		chs_cerberus = require("./chs_cerberus"),
+		chs_chimera = require("./chs_chimera"),
+		ord_custodian = require("./ord_custodian"),
 		ord_providence = require("./ord_providence"),
 	},
 	-- anti-nukes (the user's request 2026-10-23): proposed IDs and pieces for the sim
 	defs = {
 		ord_providence = { id = "ord_providence", model = "ord_providence", faction = "order", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "hatch", "muzzle" } },
 		chs_cerberus = { id = "chs_cerberus", model = "chs_cerberus", faction = "chaos", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "launcher", "muzzle" } },
+		-- mobile anti-nukes (the user's request 2026-10-23): proposed IDs and pieces
+		ord_custodian = { id = "ord_custodian", model = "ord_custodian", faction = "order", tier = 2, domain = "ground", footprint = 1, pieces = { "base", "launcher", "muzzle" } },
+		chs_chimera = { id = "chs_chimera", model = "chs_chimera", faction = "chaos", tier = 2, domain = "ground", footprint = 1, pieces = { "base", "launcher", "muzzle" } },
 	},
 	poses = {
 		-- anti-nukes: ready to launch
@@ -23,6 +28,12 @@ return {
 			open = { hatch = { 100, 0, 0 } },
 		},
 		chs_cerberus = {
+			raised = { launcher = { 75, 0, 0 } },
+		},
+		ord_custodian = {
+			raised = { launcher = { 80, 0, 0 } },
+		},
+		chs_chimera = {
 			raised = { launcher = { 75, 0, 0 } },
 		},
 		-- switched off (beam towers, S-96): the turret sinks into the drum, the
