@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 280, power = 3500, buildTime = 10000 },
 	health = 2000,
-	footprint = 2,
+	footprint = 3, -- size shows tech level (S-104)
 	sensors = { sight = 100 },
 	shield = { radius = 80, capacity = 400, recharge = 24, power = 25 }, -- 20x S-79's (S-86)
 	pieces = { "base", "core" },

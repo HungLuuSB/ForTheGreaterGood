@@ -22,7 +22,7 @@ M1's open items (map bake, tactical replication, interpolated rendering, overlay
 - The sim should follow with what a live server needs: a per-tick budget watchdog in Roblox (the Lune timings are noisy and not Roblox's).
 - It should also profile on Roblox's native code generation once the client runs matches.
 
-## 3. Commands at 800 units (S, a decision) — done, option (b) (S-100, 2026-10-23)
+## 3. Commands at 800 units (S, a decision) — done, options (b) and (a) (S-100, S-107, 2026-10-23); peak still 1.78 ms (review)
 
 Targeting is within budget (S-74). Commands peaks 1.8–2.2 ms (budget 1) only by changing behaviour. Pick one:
 - (a) check attack-move holds for half the units each tick;
@@ -30,7 +30,7 @@ Targeting is within budget (S-74). Commands peaks 1.8–2.2 ms (budget 1) only b
 
 Either is an evening's work, with a test that the hash difference is only the timing.
 
-## 4. The two designed faction units: Phalanx and Wraith (M each)
+## 4. The two designed faction units: Phalanx and Wraith (M each) — done (Phalanx as shield domes S-79..S-93; Wraith S-109, 2026-10-23)
 
 Mechanism designs are under "Needs my review" in `docs/progress/sim.md`.
 - **Phalanx (shield dome):** a new projectile and hitscan intercept test.
@@ -60,7 +60,7 @@ From the 2026-10-22 audit, still open:
 
 Not in the audit and not built: transports, cloaking, capture, self-destruct, resurrect, veterancy, morph. Each is a design decision first.
 
-## 7. AI completeness (M) — mostly done (S-101, 2026-10-23: T2 builder, shields, Pinpointers, Order hard's Barriers and Citadel, Normal's air and naval; nukes and the anti-nuke umbrella still to do)
+## 7. AI completeness (M) — done (S-101, S-106, S-110, S-111, 2026-10-23: T2 builder, shields, Pinpointers, Barriers, Citadel, air and naval at Normal, T2 defences, nukes and anti-nukes)
 
 The AI never:
 - builds nukes or the anti-nuke umbrella;
@@ -69,7 +69,7 @@ The AI never:
 
 Each makes AI matches look more like the game players will play, and they feed item 1's measurements.
 
-## 8. Balance passes on what's measured but out of target (S–M)
+## 8. Balance passes on what's measured but out of target (S–M) — one pass done (S-112, 2026-10-23: 12 of 12 roles in band; fighters, Herald and a T2 tank condition left as proposals)
 
 - **Conditions not met:** the T1 fighters, the Herald at range, and the Locust (which loses to Lancers close and long).
 - **Counter check:** 266 findings (87 mechanic, 179 numbers).

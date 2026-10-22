@@ -11,7 +11,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 2400, power = 12000, buildTime = 34000 },
 	health = 5000,
-	footprint = 5,
+	footprint = 6, -- size shows tech level (S-104)
 	icon = "factory_air",
 	buildPower = 200,
 	rearmPads = 2,

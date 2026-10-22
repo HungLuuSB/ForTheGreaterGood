@@ -11,7 +11,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE", "JAMMER" },
 	cost = { supply = 260, power = 4200, buildTime = 6800 },
 	health = 1400,
-	footprint = 1,
+	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 140, jam = 400, jamDrain = 30 },
 	icon = "jammer",
 	model = "ord_veilspire",

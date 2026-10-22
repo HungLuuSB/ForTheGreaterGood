@@ -20,6 +20,7 @@
 local Defs = require("@shared/Defs/Defs")
 local Hash = require("@shared/Util/Hash")
 local Layers = require("@shared/Grid/Layers")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local World = require("./World")
 
 local Economy = {}
@@ -265,11 +266,8 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 		end
 		local ex = def.extractor
 		if ex and layers then
-			local g = layers.grid
-			local cx, cz = g:cellAt(w.posX[id], w.posZ[id])
-			if g:inBounds(cx, cz) then
-				acc.supply.income += ex.rate * Layers.getSupply(layers, g:index(cx, cz))
-			end
+			-- every deposit cell under the footprint (S-104)
+			acc.supply.income += ex.rate * PlacementRules.supplyUnder(layers, def.footprint, w.posX[id], w.posZ[id])
 		end
 		local s = def.storage
 		if s then

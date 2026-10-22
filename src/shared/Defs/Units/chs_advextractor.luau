@@ -11,8 +11,9 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 300, power = 4000, buildTime = 7000 },
 	health = 1200,
-	footprint = 1,
+	footprint = 3, -- size shows tech level (S-104)
 	icon = "extractor",
 	extractor = { rate = 1.75 },
+	upgradesFrom = { "chs_extractor" }, -- built over its own T1 extractor, which works on until this finishes (S-108)
 	model = "chs_advextractor",
 })

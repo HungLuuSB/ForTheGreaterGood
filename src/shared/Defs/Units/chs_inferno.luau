@@ -14,7 +14,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 420, power = 5000, buildTime = 13000 },
 	health = 2600,
-	footprint = 2,
+	footprint = 3, -- size shows tech level (S-104)
 	sensors = { sight = 180 },
 	retract = { armor = 4 },
 	weapons = { { def = "chs_inferno_beam", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },

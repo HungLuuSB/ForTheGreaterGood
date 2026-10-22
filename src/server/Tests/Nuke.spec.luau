@@ -1,6 +1,7 @@
 --!strict
 -- Strategic missiles (S-48, client request 26): nuke silos launch on an
--- attack-ground order only; radar SAMs intercept them.
+-- attack-ground order only; anti-nukes intercept them (S-111: radar SAMs
+-- shoot aircraft only).
 local Layers = require("@shared/Grid/Layers")
 local Packer = require("@shared/Net/Packer")
 local Schema = require("@shared/Net/Schema")
@@ -178,17 +179,13 @@ return function(t: RunAll.Context)
 		end
 	end)
 
-	t.test("radar SAM sites shoot down a nuke in their range before anything else", function()
+	t.test("an anti-nuke shoots the nuke down with one interceptor; a radar SAM site beside it ignores the nuke (S-111)", function()
 		local sim, silo, units = range(3)
 		local w = sim.world
 		local c = sim.combat
-		-- four sites: each burst destroys the nuke with chance 0.2 (S-50), and
-		-- since S-56 (radar SAMs 945 studs) it is in their reach for ~6 s
-		local sites = {}
-		for _, d in { { -60, -60 }, { 60, -60 }, { -60, 60 }, { 60, 60 } } do
-			table.insert(sites, Spawn.unit(sim, "chs_wyvern", 2, TARGET_X + d[1], TARGET_Z + d[2], 0))
-		end
-		-- an enemy helicopter hovering over the sites: they shoot at it until the nuke comes
+		local antinuke = Spawn.unit(sim, "chs_cerberus", 2, TARGET_X - 60, TARGET_Z - 60, 0)
+		local sam = Spawn.unit(sim, "chs_wyvern", 2, TARGET_X + 60, TARGET_Z + 60, 0)
+		-- an enemy helicopter hovering over the sites: the SAM shoots at it, the anti-nuke never does
 		local heli = Spawn.unit(sim, "ord_guardian", 1, TARGET_X, TARGET_Z - 150, 0)
 		World.setHealth(w, heli, 1e9)
 		World.setMoveState(w, heli, World.MoveState.HOLD_POSITION)
@@ -197,12 +194,23 @@ return function(t: RunAll.Context)
 		local g = (sim.map :: any).grid
 		camera(sim, 2, TARGET_X, TARGET_Z - 200)
 		local view = Client.new(g)
+		local antinukeShots = 0
 		for _ = 1, 30 do
 			Sim.step(sim)
 			Client.receive(view, sim.net.players[2].outbox)
+			antinukeShots += #(function()
+				local out = {}
+				for _, e in eventsOf(sim, "SPAWN_PROJ") do
+					if e.unit == antinuke then
+						table.insert(out, e)
+					end
+				end
+				return out
+			end)()
 		end
+		t.equal(antinukeShots, 0, "the anti-nuke doesn't fire at the helicopter")
 		attackGround(sim, 1, { silo }, TARGET_X, TARGET_Z)
-		local nuke, interceptors, intercepted, detonated = 0, 0, false, false
+		local nuke, interceptors, samAtNuke, intercepted, detonated = 0, 0, 0, false, false
 		local chased = 0
 		for _ = 1, 400 do
 			Sim.step(sim)
@@ -210,14 +218,11 @@ return function(t: RunAll.Context)
 			for _, e in c.events do
 				if e.kind == "LAUNCH" then
 					nuke = e.other
-				elseif e.kind == "SPAWN_PROJ" and table.find(sites, e.unit) and nuke ~= 0 and c.projSlot[nuke] then
-					-- once the nuke is in a site's range, that site fires only at it
-					-- (targeting saw it a tick earlier: less this tick's step)
-					local reach = sim.defs.weapons.chs_radar_sam.range - math.sqrt(c.pvx[nuke] ^ 2 + c.pvz[nuke] ^ 2) / Sim.TICK_RATE
-					if math.sqrt((c.px[nuke] - w.posX[e.unit]) ^ 2 + (c.pz[nuke] - w.posZ[e.unit]) ^ 2) <= reach then
-						interceptors += 1
-						t.equal(c.pTargetProj[e.other], nuke, "fired at the nuke, not the helicopter")
-					end
+				elseif e.kind == "SPAWN_PROJ" and e.unit == antinuke then
+					interceptors += 1
+					t.equal(c.pTargetProj[e.other], nuke, "fired at the nuke")
+				elseif e.kind == "SPAWN_PROJ" and e.unit == sam and nuke ~= 0 and c.pTargetProj[e.other] == nuke then
+					samAtNuke += 1
 				elseif e.kind == "INTERCEPTED" and e.other == nuke then
 					intercepted = true
 				elseif e.kind == "IMPACT" and e.other == nuke then
@@ -233,23 +238,128 @@ return function(t: RunAll.Context)
 				break
 			end
 		end
-		print(`    interception: {interceptors} interceptors, intercepted {intercepted}`)
-		t.expect(interceptors >= 1, "the sites fired interceptors")
+		print(`    interception: {interceptors} interceptor(s), intercepted {intercepted}`)
+		t.equal(interceptors, 1, "one interceptor for one nuke")
+		t.equal(samAtNuke, 0, "the radar SAM site never fired at the nuke")
 		t.expect(intercepted and not detonated, "the nuke was destroyed in flight")
-		t.expect(chased > 0, "the client got the interceptors with the nuke as their target")
+		t.expect(chased > 0, "the client got the interceptor with the nuke as its target")
 		for _ = 1, 30 do
 			Sim.step(sim)
 		end
-		for _, id in sites do
-			t.equal(w.health[id], sim.defs.units.chs_wyvern.health, "no blast: the sites are untouched")
-		end
+		t.equal(w.health[antinuke], sim.defs.units.chs_cerberus.health, "no blast: the sites are untouched")
 		t.equal(w.health[units.enemy], sim.defs.units.chs_ravager.health, "nor the tank at the target")
 	end)
 
-	t.test("with empty stockpiles the sites can't stop it", function()
+	t.test("radar SAM sites alone can't stop a nuke (S-111)", function()
+		local sim, silo = range(4)
+		for _, d in { { -60, -60 }, { 60, -60 }, { -60, 60 }, { 60, 60 } } do
+			Spawn.unit(sim, "chs_wyvern", 2, TARGET_X + d[1], TARGET_Z + d[2], 0)
+		end
+		attackGround(sim, 1, { silo }, TARGET_X, TARGET_Z)
+		local detonated, fired = false, 0
+		for _ = 1, 400 do
+			Sim.step(sim)
+			fired += #eventsOf(sim, "SPAWN_PROJ") - #eventsOf(sim, "LAUNCH")
+			for _, e in eventsOf(sim, "LAUNCH") do
+				local _ = e
+			end
+			if #eventsOf(sim, "INTERCEPTED") > 0 then
+				break
+			end
+			for _, e in eventsOf(sim, "IMPACT") do
+				if sim.combat.pWeapon[e.other] == nil then
+					local _ = e
+				end
+			end
+			if #eventsOf(sim, "BLAST") > 0 or #eventsOf(sim, "DEATH") > 0 then
+				detonated = true
+				break
+			end
+		end
+		t.equal(fired, 0, "four radar SAM sites fire nothing at it")
+		t.expect(detonated, "it lands")
+	end)
+
+	t.test("a mobile anti-nuke intercepts only while stopped (S-111)", function()
+		for _, moving in { false, true } do
+			local sim, silo = range(6)
+			local w = sim.world
+			local truck = Spawn.unit(sim, "chs_chimera", 2, TARGET_X - 80, TARGET_Z - 80, 0)
+			if moving then
+				-- driving back and forth under the nuke's path
+				local cell, ox, oz = (sim.map :: any).grid:encode(TARGET_X - 80, TARGET_Z + 600)
+				submit(sim, 2, { cmdType = CT.PATROL, flags = 0, unitIds = { truck }, cell = cell, offX = ox, offZ = oz })
+			end
+			for _ = 1, 15 do
+				Sim.step(sim)
+			end
+			attackGround(sim, 1, { silo }, TARGET_X, TARGET_Z)
+			local fired, intercepted = 0, false
+			for _ = 1, 400 do
+				Sim.step(sim)
+				for _, e in eventsOf(sim, "SPAWN_PROJ") do
+					if e.unit == truck then
+						fired += 1
+					end
+				end
+				if #eventsOf(sim, "INTERCEPTED") > 0 then
+					intercepted = true
+					break
+				end
+				if w.slot[truck] == nil then
+					break
+				end
+			end
+			if moving then
+				t.equal(fired, 0, "on the move it can't launch")
+				t.equal(intercepted, false)
+			else
+				t.equal(fired, 1, "stopped, one interceptor")
+				t.equal(intercepted, true, "and the nuke is down")
+			end
+		end
+	end)
+
+	t.test("cover is by aim point; two nukes at one spot overwhelm one anti-nuke (client request 46)", function()
+		-- the site under the flight path, the aim point 1,100 studs past it: outside the 1,000 cover
+		local sim, silo = range(7)
+		local site = Spawn.unit(sim, "chs_cerberus", 2, -100, TARGET_Z, 0)
+		local stock = World.slotKey(site, 1)
+		attackGround(sim, 1, { silo }, 1000, TARGET_Z) -- (flat:256 spans ±1,024)
+		local fired = 0
+		for _ = 1, 400 do
+			Sim.step(sim)
+			for _, e in eventsOf(sim, "SPAWN_PROJ") do
+				if e.unit == site then
+					fired += 1
+				end
+			end
+		end
+		t.equal(fired, 0, "a nuke aimed outside the cover isn't engaged")
+		-- two silos fire at the site's own spot the same tick
+		local sim2, silo2 = range(8)
+		local silo3 = Spawn.unit(sim2, "ord_reckoning", 1, -800, 300, 0)
+		local site2 = Spawn.unit(sim2, "chs_cerberus", 2, TARGET_X, TARGET_Z, 0)
+		attackGround(sim2, 1, { silo2 }, TARGET_X, TARGET_Z)
+		attackGround(sim2, 1, { silo3 }, TARGET_X + 10, TARGET_Z)
+		local intercepted, landed = 0, 0
+		for _ = 1, 400 do
+			Sim.step(sim2)
+			intercepted += #eventsOf(sim2, "INTERCEPTED")
+			landed += #eventsOf(sim2, "BLAST")
+			if sim2.world.slot[site2] == nil then
+				break
+			end
+		end
+		t.equal(intercepted, 1, "one shot down")
+		t.equal(sim2.world.slot[site2], nil, "the other got through during the cooldown")
+		local _ = stock
+	end)
+
+	t.test("with an empty stockpile the anti-nuke can't stop it", function()
 		local sim, silo = range(3)
 		local w = sim.world
-		local site = Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 60, TARGET_Z - 60, 0)
+		local site = Spawn.unit(sim, "chs_cerberus", 2, TARGET_X - 60, TARGET_Z - 60, 0)
 		w.wStock[World.slotKey(site, 1)] = 0
 		local acc = sim.eco.accounts[2]
 		acc.supply.stored, acc.power.stored = 0, 0
@@ -269,7 +379,7 @@ return function(t: RunAll.Context)
 	t.test("nuke matches are deterministic", function()
 		local function run(): number
 			local sim, silo = range(5)
-			Spawn.unit(sim, "chs_wyvern", 2, TARGET_X - 60, TARGET_Z - 60, 0)
+			Spawn.unit(sim, "chs_cerberus", 2, TARGET_X - 60, TARGET_Z - 60, 0)
 			attackGround(sim, 1, { silo }, TARGET_X, TARGET_Z)
 			for _ = 1, 300 do
 				Sim.step(sim)

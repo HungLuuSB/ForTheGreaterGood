@@ -25,6 +25,16 @@
 -- searches for another on the next tick. So a group's volley spreads over
 -- several targets. Attack orders, and a doomed target with nothing else in
 -- reach (Targeting marks it ALLOWED), still get fired at.
+-- Lingering beams (S-113, client request 47): a BEAM weapon with
+-- `beamDuration` deals its damage over that many seconds, an even share each
+-- tick, from the tick it fires: hit or miss is decided when it fires (FIRE's
+-- hit flag); each share needs the shooter alive and not retracted and the
+-- target alive and within the weapon's range. No overkill accounting for
+-- the later shares. A `pierce` beam (S-115, client request 49: Radiance)
+-- is a hit-ray instead: its line from the muzzle to where the shot ends
+-- (the target, or the ground beyond it on a miss) stays fixed for the
+-- beam's life, and each tick every enemy unit the line crosses (its
+-- collision radius, the weapon's target classes) takes the share.
 -- Shield domes (S-89): an enemy dome between the muzzle and a hitscan
 -- shot's end stops the shot at its surface (Shield.intercept); the FIRE
 -- event ends there, with no hit.
@@ -37,6 +47,7 @@ local Air = require("../Air")
 local Alerts = require("../Alerts")
 local Ballistics = require("../Combat/Ballistics")
 local Combat = require("../Combat/Combat")
+local ContactGrid = require("../Combat/ContactGrid")
 local Defs = require("@shared/Defs/Defs")
 local Guidance = require("@shared/Combat/Guidance")
 local Lofted = require("@shared/Combat/Lofted")
@@ -203,11 +214,29 @@ local function fire(
 		local gen, hx, hy, hz = Shield.intercept(sim, w.ally[id], w.posX[id], muzzleY, w.posZ[id], ex, ey, ez, weapon)
 		if gen ~= 0 then
 			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = false, x = hx, y = hy, z = hz, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+			if weapon.pierce then
+				-- a hit-ray stops at the dome (S-116, client request 50): it still
+				-- hurts enemies on its line up to the surface, none inside; the
+				-- glancing leg the client draws does nothing
+				local ticks = math.max(1, math.floor((weapon.beamDuration :: number) * 15 + 0.5))
+				table.insert(c.beams, { shooter = id, shooterGen = w.gen[id], slot = slot, target = 0, targetGen = 0, ticks = ticks, total = ticks, sx = w.posX[id], sz = w.posZ[id], ex = hx, ez = hz })
+			end
 			return
 		end
 	end
 	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
-	if hit then
+	if weapon.pierce then
+		if hit then
+			c.stats.hits += 1
+		end
+		local ticks = math.max(1, math.floor((weapon.beamDuration :: number) * 15 + 0.5))
+		table.insert(c.beams, { shooter = id, shooterGen = w.gen[id], slot = slot, target = 0, targetGen = 0, ticks = ticks, total = ticks, sx = w.posX[id], sz = w.posZ[id], ex = ex, ez = ez })
+	elseif hit and weapon.beamDuration then
+		c.stats.hits += 1
+		-- a lingering beam (S-113): its damage over beamDuration, from this tick
+		local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
+		table.insert(c.beams, { shooter = id, shooterGen = w.gen[id], slot = slot, target = target, targetGen = w.gen[target], ticks = ticks, total = ticks })
+	elseif hit then
 		c.stats.hits += 1
 		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
@@ -216,10 +245,76 @@ local function fire(
 	end
 end
 
+local rayHits: { number } = {}
+
+-- One tick's share of a piercing beam (S-115): every enemy unit its line
+-- crosses, by its collision radius, in the weapon's target classes.
+local function rayShare(sim: Types.Sim, b: Combat.Beam)
+	local c = sim.combat
+	local w = sim.world
+	local weapon = c.profiles[w.defIndex[b.shooter]].weapons[b.slot]
+	local sx, sz, ex, ez = b.sx :: number, b.sz :: number, b.ex :: number, b.ez :: number
+	local dx, dz = ex - sx, ez - sz
+	local len2 = math.max(dx * dx + dz * dz, 1e-6)
+	local mx, mz = (sx + ex) / 2, (sz + ez) / 2
+	local n = ContactGrid.query(c.contacts, w, mx, mz, math.sqrt(len2) / 2 + c.maxRadius, w.ally[b.shooter], rayHits)
+	for k = 1, n do
+		local u = rayHits[k]
+		local tp = c.profiles[w.defIndex[u]]
+		if bit32.band(weapon.targetMask, tp.categoryMask) ~= 0 then
+			local t = math.clamp(((w.posX[u] - sx) * dx + (w.posZ[u] - sz) * dz) / len2, 0, 1)
+			local px, pz = sx + dx * t - w.posX[u], sz + dz * t - w.posZ[u]
+			if px * px + pz * pz <= tp.radius * tp.radius then
+				local amount = (weapon.damage[Combat.armorOf(w, u, tp)] or 0) / b.total
+				Combat.queueDamage(c, u, amount, b.shooter, w.owner[b.shooter])
+			end
+		end
+	end
+end
+
+-- One tick of every lingering beam (S-113).
+local function beamStep(sim: Types.Sim)
+	local c = sim.combat
+	local w = sim.world
+	local beams = c.beams
+	local i = 1
+	while i <= #beams do
+		local b = beams[i]
+		local ok = false
+		if b.sx ~= nil then
+			ok = World.isRef(w, b.shooter, b.shooterGen) and not Combat.retracted(sim, b.shooter)
+			if ok then
+				rayShare(sim, b)
+			end
+		else
+			ok = World.isRef(w, b.shooter, b.shooterGen) and World.isRef(w, b.target, b.targetGen) and not Combat.retracted(sim, b.shooter)
+		end
+		if ok and b.sx == nil then
+			local weapon = c.profiles[w.defIndex[b.shooter]].weapons[b.slot]
+			local tp = c.profiles[w.defIndex[b.target]]
+			local dx, dz = w.posX[b.target] - w.posX[b.shooter], w.posZ[b.target] - w.posZ[b.shooter]
+			ok = dx * dx + dz * dz <= (weapon.range + tp.radius) ^ 2
+			if ok then
+				local amount = (weapon.damage[Combat.armorOf(w, b.target, tp)] or 0) / b.total
+				Combat.queueDamage(c, b.target, amount, b.shooter, w.owner[b.shooter])
+			end
+		end
+		b.ticks -= 1
+		if not ok or b.ticks <= 0 then
+			table.remove(beams, i)
+		else
+			i += 1
+		end
+	end
+end
+
 return function(sim: Types.Sim)
 	local c = sim.combat
 	local w = sim.world
 	local profiles = c.profiles
+	if #c.beams > 0 then
+		beamStep(sim)
+	end
 
 	for _, id in w.ids do
 		local count = w.weaponCount[id]

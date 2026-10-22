@@ -423,4 +423,34 @@ return function(t: RunAll.Context)
 		end
 		t.equal(run(), run())
 	end)
+
+	t.test("an attack order's target stays the unit's pick whenever in range, through later orders, until STOP (S-115)", function()
+		local sim = Sim.new({ seed = 4, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0, 0)
+		local manual = Spawn.unit(sim, "chs_ravager", 2, 0, 160, math.pi)
+		local other = Spawn.unit(sim, "chs_ravager", 2, 0, -160, 0)
+		for _, id in { manual, other } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+			World.setHealth(w, id, 1e6)
+		end
+		local key = World.slotKey(tank, 1)
+		steps(sim, 4) -- sensors first: an attack order needs a target the team knows
+		on(sim, CT.ATTACK, 1, { tank }, manual)
+		steps(sim, 20)
+		t.equal(w.wTarget[key], manual, "the attack order's target")
+		-- a plain move south: the attack order ends, the manual target stays
+		at(sim, CT.MOVE, 1, { tank }, 0, -120)
+		steps(sim, 15 * 12)
+		t.equal(sim.orders.manual[tank], manual, "kept after the order ended")
+		t.equal(w.wTarget[key], other, "out of range: it picks its own target")
+		-- back north: both in range, the manual target wins
+		at(sim, CT.MOVE, 1, { tank }, 0, 0)
+		steps(sim, 15 * 12)
+		t.equal(w.wTarget[key], manual, "back in range: the manual target again")
+		submit(sim, 1, { cmdType = CT.STOP, flags = 0, unitIds = { tank } })
+		steps(sim, 15)
+		t.equal(sim.orders.manual[tank], nil, "STOP drops it")
+	end)
 end

@@ -22,6 +22,7 @@ export type Order = {
 	defIndex: number?, -- build
 	facing: number?,
 	started: boolean,
+	held: boolean?, -- attack-move / patrol: its hold was checked at least once (S-107)
 	nav: number, -- Nav order ID of the move this order issued (0 = none)
 	gx: number?, -- chase moves (attack, guard): where the last move was aimed
 	gz: number?,
@@ -45,6 +46,8 @@ export type OrdersState = {
 	hold: { [number]: boolean }, -- engaged while on a fight / patrol move: Movement brakes and keeps the order
 	forced: { [number]: number }, -- unit → its attack order's target (Targeting prefers it)
 	forcedGen: { [number]: number },
+	manual: { [number]: number }, -- unit → its last attack order's target: preferred whenever in range, until STOP (S-115)
+	manualGen: { [number]: number },
 	rally: { [number]: { RallyOrder } }, -- factory → the orders each unit it produces takes, in order (S-95)
 	repeatOn: { [number]: boolean }, -- factory → finished items go back to the end of the queue
 	anchorX: { [number]: number }, -- idle units: the spot a Maneuver unit returns to (S-34)
@@ -58,6 +61,8 @@ function OrdersState.new(): OrdersState
 		hold = {},
 		forced = {},
 		forcedGen = {},
+		manual = {},
+		manualGen = {},
 		rally = {},
 		repeatOn = {},
 		anchorX = {},
@@ -71,6 +76,8 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.hold[id] = nil
 	o.forced[id] = nil
 	o.forcedGen[id] = nil
+	o.manual[id] = nil
+	o.manualGen[id] = nil
 	o.rally[id] = nil
 	o.repeatOn[id] = nil
 	o.anchorX[id] = nil
@@ -99,6 +106,7 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 		end
 		h = Hash.u32(h, if o.hold[id] then 1 else 0)
 		h = Hash.u32(Hash.u32(h, o.forced[id] or 0), o.forcedGen[id] or 0)
+		h = Hash.u32(Hash.u32(h, o.manual[id] or 0), o.manualGen[id] or 0)
 		local rally = o.rally[id]
 		if rally then
 			h = Hash.u32(h, #rally)

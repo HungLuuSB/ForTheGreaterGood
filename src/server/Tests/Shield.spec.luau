@@ -389,7 +389,7 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(hit ~= nil and hit.breach == true, "the siege shell broke through")
-		t.expect(through ~= nil and through < entry * 0.8, `slowed ({entry} → {through})`)
+		t.expect(through ~= nil and through < entry * 0.85, `slowed ({entry} → {through})`) -- 0.80 with the footprint-3 Phalanx (S-104)
 		local def = sim.defs.units.ord_phalanx.shield
 		near(t, drop, Shield.BREACH_COST * Shield.mass(sim.defs.weapons.chs_siege_mortar) - def.recharge / 15, 0.01, "a breach costs half the shell's mass (less a tick's recharge)")
 		t.equal(ShieldField.force(0.5), 1, "full force at 50%")
@@ -653,5 +653,43 @@ return function(t: RunAll.Context)
 			return Sim.hash(sim)
 		end
 		t.equal(run(), run(), "deterministic")
+	end)
+
+	t.test("a dome stops a beam at its surface; Radiance's hit-ray hurts only up to it (client request 50, S-116)", function()
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local carapace = Spawn.unit(sim, "chs_carapace", 2, 0, 200)
+		local capacity = sim.defs.units.chs_carapace.shield.capacity
+		sim.combat.shieldCharge[carapace] = capacity
+		local inside = Spawn.unit(sim, "chs_juggernaut", 2, 0, 215, math.pi)
+		local outside = Spawn.unit(sim, "chs_scrapper", 2, 0, 110, math.pi) -- (far enough that the Juggernaut is the pick)
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local scout = Spawn.unit(sim, "ord_herald", 1, 60, 100, 0) -- sees the Juggernaut: an exact aim, a straight line
+		for _, id in { inside, outside, scout } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+			World.setHealth(w, id, 1e6)
+		end
+		local fire = nil
+		for _ = 1, 15 * 8 do
+			local acc = sim.eco.accounts[1]
+			acc.power.storage = math.max(acc.power.storage, 5000)
+			acc.power.stored = 5000
+			sim.combat.shieldCharge[carapace] = math.max(sim.combat.shieldCharge[carapace], capacity * 0.9)
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower and fire == nil then
+					fire = e
+				end
+			end
+		end
+		t.expect(fire ~= nil, "Radiance fired")
+		if fire then
+			t.equal(fire.hit, false, "the shot didn't hit")
+			local r = math.sqrt((fire.x - 0) ^ 2 + (fire.z - 200) ^ 2)
+			t.expect(r > sim.defs.units.chs_carapace.shield.radius * 0.8, `it ended on the dome's surface ({r} studs from its centre)`)
+		end
+		t.equal(w.health[inside], 1e6, "nothing inside the dome is hurt")
+		t.expect(w.health[outside] < 1e6, "the worker on the line outside the dome is")
 	end)
 end

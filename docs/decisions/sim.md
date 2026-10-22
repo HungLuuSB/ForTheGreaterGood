@@ -1441,3 +1441,308 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `NetOut.spec`: with three players (two allied), the ally's view matches the factory every tick, and the enemy and the owner never get the field;
   - `Schema.spec` pins its bytes.
+
+## S-104 — Size shows tech level: bigger footprints (the user, via models-C) (2026-10-23)
+
+- **Asked:** structures and higher-tier units should be larger, with size showing tech level: T1 modest, T2 clearly larger, T3 the largest. Review models-C's size table (`docs/art/size-scale.md` on `m-models`, e208d2a) for gameplay: pathing between buildings, base space on every map, build-site validity, collision and move classes. Apply what works, check the start areas still fit a base, run the usual checks.
+- **Applied, all of C's table:**
+
+  | Defs | Before → after |
+  |---|---|
+  | T1 economy (extractor, solar, windmill, generator, depot, converter, tidal; both factions) | 1 → 2 |
+  | Vehicle plants | 3 → 4 |
+  | T1 gun turrets (Bulwark, Spike) | 1 → 2 |
+  | Fusion | 3 → 4 |
+  | T2 extractors | 1 → 3 |
+  | T2 factories (advanced vehicle plant, airfield, shipyard) | 5 → 6 |
+  | Beam towers, shield generators, heavy turrets (Bastion, Maw) | 2 or 1 → 3 |
+  | Flak (Lumen, Hailstorm), advanced jammers (Veilspire, Blackout) | 1 → 2 |
+  | Citadel | 3 → 7 |
+  | Nuke silos (Reckoning, Ragnarok) | 3 → 6 |
+  | Paladin, Warden, Juggernaut | 1 → 2 (like the Minotaur and Cyclops) |
+
+- **What had to change for it:**
+  - **Extractors on one-cell deposits:**
+    - an extractor now works every deposit cell its footprint covers (`PlacementRules.supplyUnder`: Placement's "no deposit" check and Economy's income);
+    - a 2×2 T1 snaps to a corner of the deposit cell, and a 3×3 T2 centred on the deposit covers the T1 it replaces;
+    - the upgrade rule is unchanged.
+  - **Deposit spacing:**
+    - MapGen's expansion pairs were 3 cells apart on a diagonal (1–2 cells after flooring), and mirrored copies of the rich middle deposit could meet 1 cell apart. Two 3×3 T2 extractors couldn't stand on such a pair.
+    - The pair is now 5 cells apart, and a pass pushes any two deposits closer than `MapGen.MIN_DEPOSIT_GAP` (3, Chebyshev) apart, equally, so maps stay symmetric.
+    - Ridgeline, Coastline, Twin Lakes and Crossroads move a few deposits by 1–2 cells. Normandy, start:64 and skirmish maps were already ≥ 3.
+  - **AI base layout:**
+    - I first gave `spotNear` 3-cell lanes between buildings (was 2), since under guide 6.2 a footprint-2 or -3 unit needs a 3-cell gap.
+    - The final checks showed that it broke mirror fairness: east won 10 of 12 mirror matches, and Twin Lakes' mirrored players parted by 15% at 3 minutes (trip times differ by up to a think).
+    - Back to 2-cell lanes (the tests pass: 4–8, Twin Lakes even). Footprint-2 tanks go round adjacent AI buildings rather than between them. Under review.
+  - **AI on the 2×2 extractors:**
+    - it keeps other buildings a cell clear of deposits (room for the extractor and its 3×3 upgrade);
+    - it counts extractors ordered but not started toward Easy's cap;
+    - it nudges a 2×2 extractor's site toward the enemy, because a cell centre is a snap tie that rounds toward +x for everyone (as S-31).
+  - **Factory exits** move out with the footprint by themselves (spawn at half size + 1 cell, the model's −Z).
+  - **Footprint-2 heavy tanks:** they join the existing footprint-2 clearance class (Minotaur, Cyclops), which counts as 3 wide (guide 6.2), so they need 3-cell gaps. No new flow-field group.
+- **Tests:** `Placement.spec` scans every other cell, so 2×2 tidals find wall:64's small lake. `Shield.spec`'s field-mode breach slows to 0.80 of entry with the 3×3 Phalanx's centre half a cell over; the bound is now 0.85.
+
+## S-105 — The AI scouts and attacks only when it outweighs the known defence (the user's decision on next.md item 1) (2026-10-23)
+
+- **Asked (the user's decision on the review item):**
+  - keep the numbers;
+  - do my recommendation: the AI scouts, and attacks only with waves that outweigh the known defence (turrets included); otherwise it masses up;
+  - re-run faction_ai.
+- **Built** (`AI/Skirmish`, normal and hard):
+  - **Scout:** the T1 plant builds one Herald / Jackal at a time, a new one at most every `SCOUT_EVERY` (2 min) after the last was queued. Idle, it drives a loop of 4 points `SCOUT_RADIUS` (260 studs) round every enemy start. The team then remembers the turrets and structures it saw (ghosts), and keeps seeing whatever it lives long enough to watch. Scouts aren't part of the army.
+  - **Waves outweigh the known defence:**
+    - when a wave would leave, the AI adds up the known enemy armed units and structures within `DEFENSE_RADIUS` (450 studs) of its target (`enemyValueNear`: by value when the type is known, one unit's worth for an unidentified contact);
+    - the wave leaves only if the army at home is worth `ATTACK_MARGIN` (1.5) times that;
+    - otherwise it masses at the rally point;
+    - an army of `MASS_SHARE` of the unit cap (half; at most `MASS_UNITS`, 150) goes anyway, so a turtle can't freeze it forever.
+  - `brain.held` counts the thinks a ready wave waited.
+- **faction_ai** (same-level, 3 seeds, all maps, with every change of the round): Order 84 – Chaos 18, 82% (81% before the round, 86% with S-104 alone, 84% with S-104 + S-105); 6% undecided; Normal 16–14, Hard 28–0.
+
+## S-106 — T2 missile batteries; the AI builds T2 defences (the user's picks (a) and (d) of S-96's T2 ideas) (2026-10-23)
+
+- **Asked:** keep power per shot as is (BAR-like). Add (a) the T2 missile battery (anti-artillery) and (d) the AI building T2 defences. No mines or torpedo battery for now.
+- **Built:**
+
+  | | Order `ord_sanction` Sanction | Chaos `chs_scourge` Scourge |
+  |---|---|---|
+  | Cost | 380 supply, 4,200 power, 8,000 build | 320 supply, 3,600 power, 7,000 build |
+  | Health | 2,600 | 2,100 |
+  | Weapon | 2-missile salvo every 6 s, range 760 | 3-missile salvo every 5 s, range 700 |
+  | Damage per missile (light / armored / structure / ship) | 300 / 240 / 180 / 200 | 200 / 160 / 120 / 140 |
+
+  - **Both:**
+    - footprint 3, sight 200;
+    - built by the Architect / Forgemaster;
+    - the missiles launch vertically, are radar-guided (`canTargetRadar`, chaff and jamming as for radar SAMs), fly at 300–320 studs/s with aoe 14;
+    - priority artillery, then ground units, then structures.
+  - **Range:** both outrange every mobile artillery piece (380–560) and the Verdict.
+  - **Identifying targets:** like every weapon, a battery picks artillery over a nearer tank only when the team knows the types: seen, or tracked by a fire-control radar (D107). An untracked radar contact is just "a ground unit". So a battery wants a Tribunal / Seekerspire beside it.
+- **AI (d):** after the shield and Pinpointers, the T2 builder raises, once each:
+  - a heavy turret (Bastion / Maw) 110 studs toward the enemy;
+  - a missile battery 50 studs out;
+  - a flak tower (Lumen / Hailstorm) once enemy aircraft are known;
+  - a beam tower (Radiance / Inferno) 90 studs out;
+  - then Order hard's Citadel as before.
+- **Tests:** `Defenses.spec`: with a radar tower and a fire-control radar, each battery aims its first salvo at the artillery piece rather than the nearer tank, from beyond the artillery's range, and destroys it within 30 s.
+
+## S-107 — Hold checks spread over two ticks (next.md item 3, option (a); the user's decision) (2026-10-23)
+
+- **Asked:** do option (a) too: hold checks for half the units each tick.
+- **Built:** an attack-move or patrol order re-checks its hold (an enemy in weapon range: stop and fire) every `Orders.HOLD_EVERY` (2) ticks per unit, spread by ID (`(id + tick) % 2`), and always on the order's first tick. A unit reacts to an enemy coming into range at most one tick (67 ms) later.
+- **Measured** (`lune run stress 450 800`): Commands peak 1.78 ms (tick 184), against 1.69–2.23 after S-100. Not under the 1 ms budget; what's left is order starts and auto-orders (review).
+
+## S-108 — In-place upgrades: a T2 extractor over its own T1 (the user's request) (2026-10-23)
+
+- **Asked:**
+  - **Field:** a generic def field (`upgradesFrom`). A structure with it may be placed over one of the listed structures owned by the same player. Allies' and enemies' don't count: enemies' must be destroyed first. For now only the advanced extractors use it, each over its own faction's T1 extractor.
+  - **Behaviour:**
+    - the T1 keeps producing while the T2 is built on top of it;
+    - when the T2 finishes, the T1 is removed (no wreck, no refund) and the T2 takes over the deposit;
+    - if the T2 frame is cancelled or destroyed, the T1 stays and keeps producing;
+    - the T1 can still be damaged and destroyed while upgrading; if it dies, the frame stays and finishes normally.
+  - Placement validation, the deposit link, the AI and replays all handle it; build-site checks still reject everything else.
+  - **AI:** T2 builders upgrade the safest own extractors first once T2 is reached (Normal and Hard).
+  - Tests; tell the client stream.
+- **Built:**
+  - **Defs:** `upgradesFrom` (a list of structure def IDs; validated). `ord_advextractor` lists `ord_extractor`, `chs_advextractor` lists `chs_extractor`. The old rule ("an extractor with a higher rate over the team's own") is gone.
+  - **Placement:** `Placement.check`'s fourth argument is now the builder's player (was its team). A cell occupied by that player's own finished structure of a listed def doesn't block. Any other occupant does: an ally's, an enemy's, a frame, or a structure not in the list.
+  - **Build:**
+    - **Start:** the frame starts over the old structure and takes its cells (the occupancy layer holds one ID per cell). `BuildState.upgrading` links the frame to the old structure, with its generation (D109), and is hashed.
+    - **During:** the old structure stays a producer, so its income goes on.
+    - **Finish:** `Build.finishUpgrade` removes the old structure through `Lifecycle.remove` (no wreck, no refund, no death event).
+    - **Frame removed (cancelled, destroyed, reclaimed):** a removal hook gives the old structure its cells back (`Placement.occupy`).
+    - **Old structure dies first:** the link is dropped and the frame finishes alone.
+  - **Deposit link:** the T2 works every deposit cell under its footprint (S-104), so it takes over the deposit at completion.
+  - **AI:** described under S-106's AI entry. The T2 builder first upgrades its own finished T1 extractors, nearest home first, skipping any with known enemies within `CONTESTED_RADIUS` or with a builder sent there lately. The T2 is placed centred on the deposit cell.
+- **Wire:** nothing new. The frame is an ordinary ENTER with its build progress; the T1 leaves (LEAVE, no DEATH) when the T2 finishes. The client's build ghost has to accept the T2 over the player's own T1 (its own placement copy).
+- **Tests:** `Upgrade.spec`:
+  - over its own T1, the T1's income goes on until the T2 is finished, then it goes (no wreck) and the T2 works the deposit;
+  - an enemy's or ally's extractor blocks it, while an empty deposit takes a T2 directly and a generator can't go over an extractor;
+  - a cancelled or destroyed frame leaves the T1 on its cells, producing;
+  - when the T1 is destroyed mid-upgrade, the frame stays and finishes;
+  - a replay of an upgrade (set up with cheat commands) matches.
+
+## S-109 — The Wraith decoy drone (next.md item 4, as designed in S-75; the user's queue) (2026-10-23)
+
+- **Asked:** Wraith decoy drones as designed:
+  - a cheap T2 Chaos aircraft without a weapon;
+  - it shows on radar as a bomber (a `spoof` field) until a fire-control radar or sight identifies it, so radar SAMs and interceptors spend missiles on it;
+  - the strategic icon of an untracked contact shows the spoofed type.
+- **Built:**
+  - **`chs_wraith` Wraith:**
+    - built at the Chaos advanced airfield: 40 supply, 200 power, 900 build (about 60 value), health 120;
+    - a jet (max speed 200), no weapon;
+    - `radarSignature` 1, `spoof = "chs_behemoth"`.
+  - **Defs:** `spoof` (a unit def ID, validated).
+  - **Sensors:**
+    - `Sensors.shownDef` gives the def a team takes an enemy for: its own when the type is known (seen, remembered or tracked; D107), its spoof when it is an untracked radar contact with one, else nil;
+    - `knownCategories` gives a spoofer on radar its spoof's categories (bomber: AIR, JET).
+  - **Targeting:** type priorities apply to a spoofer on radar as to the spoofed type, so radar SAMs and fighters rank a "Behemoth" as they would a real one.
+  - **AI:** `enemyValueNear` counts it at the Behemoth's value: Order's waves and defence sums see a bomber raid.
+  - **NetOut:** an untracked radar contact with a spoof carries the spoofed type's icon in its Strategic record (no TRACKED flag). Other untracked contacts keep icon 0. Seen or tracked, it shows its own.
+  - **Wire:** no format change, but a new meaning: an untracked contact's icon can be nonzero (a decoy pretending). The client just draws the icon.
+- **Not done:** the AI doesn't build Wraiths yet. Chaos hard could send a group ahead of its bombers; that's a follow-up.
+- **Tests:** `Decoys.spec`:
+  - three Wraiths on an Aegis's radar, out of sight, draw its missiles; they are taken for Behemoths (`shownDef`), and Order's minimap view gets the Behemoth's icon;
+  - under a Tribunal's tracking, a Wraith is known for what it is and shows its own icon.
+
+## S-110 — The AI builds nukes and the anti-nuke umbrella (next.md item 7's rest; the user's queue) (2026-10-23)
+
+- **Asked:** the AI building nukes and the anti-nuke.
+- **Built** (`AI/Skirmish`, the T2 builder's job list, after the T2 defences):
+  - **Anti-nuke umbrella (normal and hard):** a radar SAM site (Aegis / Wyvern) 40 studs behind home. Their missiles intercept strategic missiles (S-48). A second one goes up once the team knows an enemy silo (seen or remembered).
+  - **Nukes (hard):** once supply stored reaches `NUKE_RICH` (90%) of storage (and, for Order, after its Citadel), a silo (Reckoning / Ragnarok) 120 studs behind home.
+    - The silo builds warheads into its stockpile as any silo does.
+    - The AI launches one (ATTACK_GROUND) at its best known target (structures and the Command Vehicle first, `knownTargets`) at most every `NUKE_EVERY` (1 min).
+    - `brain.nukes` counts launches.
+- **Tests:** `AI.spec` (slow): with rich economies, by 30 minutes:
+  - Order hard upgrades extractors and builds a Bastion, Sanction, Aegis and Reckoning, and launches;
+  - Chaos normal upgrades extractors and builds a Maw, Scourge and Wyvern.
+
+## S-111 — Anti-nukes, structure and mobile; radar SAMs shoot aircraft only (the user, via models-C and client request 46) (2026-10-23)
+
+- **Asked:**
+  - **Interception:** only new anti-nuke units stop nukes, and SAMs shoot only aircraft. A certain hit, a delay after each shot so several nukes at one spot overwhelm one, and cover by the missile's aim point.
+  - **Mobile version (the user):** a T2 vehicle from the advanced vehicle plant with about 60% of the structure's coverage and 1 interceptor (the structure holds more), slower to restock, light armour, no other weapon; it intercepts only while stopped.
+  - **Radar SAMs:** T2, so they should one-shot T1 air.
+  - **AI:** Normal and Hard escort big armies with a mobile anti-nuke once the enemy has a silo, and build a structure over the base.
+  - **Also:** models-C's IDs and pieces, counter rows, tests, the wire for the range ring and stock, numbers under review.
+- **Built:**
+  - **Defs:**
+    - `ord_providence` Providence and `chs_cerberus` Cerberus (structures);
+    - `ord_custodian` Custodian and `chs_chimera` Chimera (vehicles; C's IDs and pieces);
+    - weapons `ord_interceptor`, `chs_interceptor`, `ord_mobile_interceptor`, `chs_mobile_interceptor`;
+    - new weapon fields: `interceptOnly` (never fires at units; needs `intercepts`) and `stationary` (fires only while its unit's MOVING bit is clear).
+    - Numbers below; all placeholders.
+  - **Radar SAMs:** `intercepts` removed from `ord_radar_sam` and `chs_radar_sam` (Aegis, Seraph, Wyvern, Gorgon). AIR damage 420 → 1,150 (Order) and 340 → 1,100 (Chaos): every T1 aircraft (Plague 1,000 the toughest) dies to one hit.
+  - **Targeting (`interceptTarget`):**
+    - an `interceptOnly` weapon takes a missile only if its aim point (`pGoal`) is within the weapon's range (the cover);
+    - it engages it within `INTERCEPT_REACH` (1.5) × the range;
+    - any interceptor skips a missile one of its team's interceptors already chases (one per missile);
+    - `stationary` weapons drop their target while their unit moves;
+    - **anti-nukes spot strategic missiles anywhere** (the user, same day): `interceptOnly` weapons skip the team-detection check, and the four anti-nuke units carry no radar (sight only, no RADAR_EMITTER).
+  - **Delay after a shot:** `reload` 18 s (Order) / 15 s (Chaos), longer than a nuke's ~13 s flight, so two nukes at one spot get one through.
+  - **AI (S-110 updated):**
+    - the umbrella is now the anti-nuke structure (one after the T2 defences, a second once an enemy silo is known);
+    - with an enemy silo known, the advanced plant builds one mobile anti-nuke, which joins the wave escorts (it guards the wave's lead unit).
+  - **Wire:** nothing new.
+    - The shot is INTERCEPTOR (with the missile's ID), the kill INTERCEPTED.
+    - The owner's interceptor stock rides in the State STOCK field.
+    - The client takes the cover ring from the weapon's `range` and the delay from its `reload`.
+  - **Guide:** 10.9 rewritten; counter matrix rows for the missile battery and anti-nuke (12.4).
+- **Numbers (placeholders, under review):**
+
+  | | Providence | Cerberus | Custodian | Chimera |
+  |---|---|---|---|---|
+  | Cost (supply / power / build) | 900 / 14,000 / 20,000 | 780 / 12,000 / 18,000 | 420 / 6,000 / 9,000 | 360 / 5,200 / 8,000 |
+  | Health | 4,000 | 3,400 | 900 | 760 |
+  | Cover | 1,100 | 1,000 | 660 | 600 |
+  | Stock | 3 | 3 | 1 | 1 |
+  | Per interceptor | 60 s, 400 + 10,000 | 50 s, 360 + 9,000 | 90 s, 400 + 10,000 | 75 s, 360 + 9,000 |
+  | Delay after a shot | 18 s | 15 s | 18 s | 15 s |
+
+- **Tests** (`Nuke.spec`):
+  - an anti-nuke fires one interceptor at the nuke and destroys it; a radar SAM site beside it never fires at the nuke and nothing on the ground is hurt;
+  - four radar SAM sites alone fire nothing at a nuke, and it lands;
+  - a mobile anti-nuke intercepts when stopped and can't on the move;
+  - a nuke aimed outside the cover flies over a site untouched;
+  - two nukes at one spot get one through;
+  - an empty stockpile stops nothing; determinism.
+  - `AI.spec` (slow) checks the umbrella structures.
+
+## S-112 — Balance pass (next.md item 8; the user's queue) (2026-10-23)
+
+- **Asked:** next.md item 8's balance pass, after the AI work. Item 8: the conditions the faction pass didn't meet (T1 fighters, the Herald at range, the Locust against Lancers) and the counter check.
+- **Done:** steps of at most ±10% (beyond that only as proposals), each re-measured with `lune run factions 3`. Two more roles had left the band since S-104 and S-111 and were brought back.
+
+  | Change | Why | Measured (before → after) |
+  |---|---|---|
+  | Locust's autocannon damage +10% (34/26/20/18 → 37/29/22/20) | the Locust lost to Lancers close and long | close 1.57 → 1.39, long 1.07 → 0.86, flank 0.75 → 0.62: it wins long and on the flank now |
+  | Order heavy cannon damage +10% (Paladin and the Bastion turret) | T2 tanks fell to 0.79 with S-104's footprint-2 tanks | overall 0.79 → 1.05; Order's long 0.87 → 1.28 |
+  | Order radar SAM reload 4.1 → 3.7 s (Aegis, Seraph) | the sites fell to 0.78 after S-111's damage raise | Aegis / Wyvern 0.78 → 0.82; Seraph / Gorgon 0.82 → 1.17 |
+  | Falcon missile range 374 → 393 (+5%) | Order's standoff condition | +10% overshot (overall 1.28); at +5%: overall 1.06, long 1.08 |
+
+  - **Tried and reverted:** Paladin gun range +10% (no change in the long fight), Herald machine-gun range +10% (long 0.92 → 0.88: the Jackal closes the gap anyway).
+- **Still not met (proposals for review):**
+  - **T1 fighters:** Order's standoff condition (long 1.08, defend 1.22, needs 1.25) and Chaos's (close 1.05, flank 0.86, needs 0.8). Jets close 600 studs in about 2 s, so the starts barely separate them, and the numbers swing 0.8–1.3 between runs on small changes. Proposal: judge fighters in the AI matches or the SAM raids instead of this duel.
+  - **Herald:** doesn't win at range (0.92); a range step doesn't help. Proposal: +20% speed, so it can hold its range.
+  - **T2 tanks:** Chaos's condition is close (0.86, needs 0.8).
+- **Result:** 12 of 12 shared roles in band (was 10 of 12 at the start of the pass).
+
+## S-113 — Lingering beams; Radiance fires at radar blips (client request 47, the user) (2026-10-23)
+
+- **Asked:**
+  - **Radiance (BAR's Pulsar):** it can target radar blips, and against a blip it can miss without a Pinpointer, as radar precision works for other weapons (S-59). Its beam lingers longer and deals high damage over that time.
+  - **Inferno:** a smaller range than Radiance and a weaker beam.
+- **Built:**
+  - **`beamDuration`** (seconds, BEAM weapons only, validated):
+    - a hit's damage is dealt as an even share every tick over that time, from the tick the beam fires (`Combat.beams`, hashed);
+    - each share needs the shooter alive and not retracted, and the target alive and within range;
+    - hit or miss is decided when the beam fires (FIRE's hit flag), and later shares get no overkill accounting.
+  - **Radiance:** `canTargetRadar`.
+    - A beam aims at the believed position, so a wobbling blip is missed unless Pinpointers sharpen it (S-59).
+    - Test: 2 of 7 beams missed without Pinpointers, 0 of 7 with six.
+    - `beamDuration` 2.5 s; damage over the beam 3,000 (light / armored / ship) and 2,300 (structure), was 2,600 / 2,000 at once; range 650, reload 9 s, 700 power unchanged.
+  - **Inferno:** range 560 → 480; `beamDuration` 1.5 s; damage 1,700 / 1,350 (was 2,000 / 1,600); reload 7 s, 500 power; visible targets only.
+- **Wire:** nothing new. The client holds the line for `beamDuration` from FIRE, and a miss is FIRE with hit = false.
+- **Tests:** `Defenses.spec`:
+  - Radiance's first beam deals one tick's share first and twice its total over two beams;
+  - it fires at a blip, misses some without Pinpointers and fewer with them;
+  - the Inferno ignores radar-only contacts.
+
+## S-114 — The AI's economy: extractors before generators while deposits stand free (client request 48, the user) (2026-10-23)
+
+- **Asked:** the skirmish AI builds a lot of Furnaces (generators) instead of going for extractors on free deposits. Check the power / supply choice and the extractor priority.
+- **Cause:**
+  - since S-94 a builder took the generator job whenever power had stalled in the last `POWER_MEMORY` ticks, with no limit;
+  - building always draws power, so that was nearly always;
+  - the generator job came before the extractor job.
+  - In the Twin Lakes mirror, hard opened with 6–7 generators before its first extractor.
+- **Changed** (`AI/Skirmish`):
+  - **Stall memory:** supply stalls are watched every tick like power stalls (`supplyShortAt`).
+  - **Job order:**
+    - two generators first (`MIN_GENERATORS`);
+    - then a free deposit in reach comes first while supply stalls, or while extractors trail generators;
+    - past that, generators up to the planned need (S-94's `genWanted`), and `GEN_SLACK` (1) more only while power stalls and supply doesn't.
+  - Counts and stall memories only, never the moment's income, so mirrored players still choose alike (S-31).
+- **Measured** (Twin Lakes, hard 2v2, 3 minutes):
+  - the openings now alternate generators and extractors after the first two;
+  - the teams are worth 10,283 / 10,113 (were 7,383 / 8,494 with the old rule plus S-104);
+  - the mirrored players' build orders match.
+
+## S-115 — Radiance's hit-ray; manual targets until STOP (client request 49, the user) (2026-10-23)
+
+- **Asked:**
+  - **Radiance:** `beamDuration` 3.0, and the beam is a hit-ray: during it, damage goes to every enemy unit the beam's line crosses, not only the target, so a missed shot at a blip still hurts whatever stands on the line.
+  - **Manual targets (all units):** an attack order's target beats the unit's own choice; while it is out of range the unit picks its own targets, and it switches back once the target is in range. STOP removes it.
+- **Built:**
+  - **`pierce`** (lingering BEAM weapons only, validated):
+    - the beam is a fixed line from the muzzle to where the shot ends: the target, or the ground beside or beyond it on a miss;
+    - each tick of `beamDuration`, every enemy unit within its collision radius of the line and in the weapon's target classes takes that tick's share (contact grid query, hashed with `Combat.beams`).
+    - Radiance: `beamDuration` 3, `pierce`. The Inferno stays single-target (S-113).
+  - **Manual targets:**
+    - an attack order stores its target in `OrdersState.manual` (hashed), kept after the order ends;
+    - Targeting uses it like an attack order's target whenever the unit isn't on hold fire and the target is in range, else the normal search;
+    - the player's STOP (`Orders.stopCommand`), a new ATTACK, or the target's death clears it, but the automatic move-state orders don't.
+  - **Wire:** nothing new.
+- **Tests:**
+  - `Defenses.spec`: Radiance's beam at a Juggernaut also hurts the enemy worker standing on its line, and not the Order tank on it;
+  - `Orders.spec`: after an attack order and a plain move, the unit fires at another enemy while its manual target is out of range, switches back when it's in range, and STOP clears it.
+
+## S-116 — Beams stop at domes; turrets contest only the deposits they reach (client requests 50 and 48, the user) (2026-10-23)
+
+- **Asked (request 50):** shield domes deflect incoming beams. A Radiance or Inferno ray that meets an enemy's active dome stops at its surface and glances off downward into the ground nearby, instead of reaching anything inside. Proposed contract:
+  - FIRE ends at the contact with hit = false;
+  - pierce damage only up to the contact;
+  - the dome pays as for an absorbed projectile;
+  - the glancing leg is drawn only.
+- **Built (request 50):**
+  - **Already true:** since S-89, a beam that meets an up enemy dome ends there. That's a FIRE with hit = false at the contact, and an absorbed SHIELD_HIT (projId 0) that costs the dome the shot's mass (a beam's mass is capped at 8).
+  - **New:** Radiance's hit-ray (S-115) is then registered with its line ending at the contact. Enemies on the line outside the dome take its share each tick, and nothing inside does.
+  - The glancing leg is the client's drawing.
+- **Asked (request 48, the user's finding):** a hold-fire Bulwark spawned beside the AI's base made it "nervous": its economy stalled.
+- **Cause (request 48):** Chaos takes contested deposits only with an escort (S-97), and any known armed enemy within `CONTESTED_RADIUS` (300 studs, more than the AI's home radius of 260) contested a deposit. One turret by the base contested every home deposit, and expansion waited for an army.
+  - Headless (coastline, seed 104, normal), the AI's tanks killed the Bulwark after about 3 minutes and it recovered. In the user's match it didn't, maybe because its early army never came.
+- **Changed (request 48):** an enemy structure contests a deposit only within its weapon range + `CONTESTED_REACH` (40 studs). Mobile armed enemies still contest within 300, and an unidentified contact still does.
+  - The repro reaches 3 extractors and 4 workers by minute 2 while the Bulwark stands (was 2 and 3), and 55 units by minute 8 (47).
+- **Tests:** `Shield.spec`: Order's Radiance fires at a Juggernaut under a full Carapace. The FIRE ends on the dome (hit = false), nothing inside is hurt, and the Chaos worker on the line outside is.
