@@ -41,6 +41,7 @@ local Skirmish = require(game:GetService("ServerScriptService"):WaitForChild("Si
 local MapRegistry = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Grid"):WaitForChild("MapRegistry")) :: any
 local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
 local Stats = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Stats")) :: any
+local CheatConfig = require(script.Parent:WaitForChild("CheatConfig")) :: any
 local Build = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Build")) :: any
 local HttpService = game:GetService("HttpService")
 
@@ -264,7 +265,10 @@ local function startMatch()
 	brains = {}
 	if lobby then
 		if lobby.phase == "playing" then
-			sim = Sim.new(Lobby.config(lobby, seed))
+			local config = Lobby.config(lobby, seed)
+			-- cheats: the host's lobby toggle, or always in Studio (C-119)
+			config.match.cheats = config.match.cheats or RunService:IsStudio()
+			sim = Sim.new(config)
 			brains = Skirmish.forMatch(sim)
 			matchStartTick = sim.tick
 			recorders, recordedBytes = {}, 0
@@ -286,7 +290,8 @@ local function startMatch()
 			sim = Sim.new({ seed = seed, players = preview, mapId = lobby.mapId, scenario = "empty", defs = defs })
 		end
 	else
-		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs })
+		-- test profiles: cheats in Studio, and "speed" (the sim's offline option), C-119
+		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs, cheats = RunService:IsStudio(), offline = RunService:IsStudio() })
 	end
 	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
 	for _, s in Config.spawns or {} do
@@ -453,10 +458,24 @@ remoteOf.Snapshot.OnServerEvent:Connect(function(player: Player, payload: any)
 	print(`[Entry] {player.Name} joined as sim player {id}`)
 end)
 
+-- Cheat commands (C-119; the sim's CHEAT, net.md 9a) reach the sim only
+-- from allow-listed players (CheatConfig), in Studio or a lobby match whose
+-- host turned Cheats on; the sim also rejects them unless the match allows.
+local CHEAT_CMD = (Schema.CmdType :: any).CHEAT or 17
+local function mayCheat(player: Player): boolean
+	if not CheatConfig.allow[player.UserId] then
+		return false
+	end
+	return RunService:IsStudio() or (lobby ~= nil and lobby.cheats == true)
+end
+
 remoteOf.Cmd.OnServerEvent:Connect(function(player: Player, payload: any)
 	local id = slotOf[player]
 	if id == nil or not joined[player] or typeof(payload) ~= "buffer" or buffer.len(payload) > CMD_MAX_BYTES then
 		return
+	end
+	if buffer.len(payload) >= 1 and buffer.readu8(payload, 0) == CHEAT_CMD and not mayCheat(player) then
+		return -- not allowed to cheat: dropped before the sim (and its replay) sees it
 	end
 	if (tokens[player] or 0) < 1 then
 		return -- rate limited

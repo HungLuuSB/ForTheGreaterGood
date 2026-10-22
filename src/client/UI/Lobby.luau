@@ -176,6 +176,10 @@ local function render(ui: UI, data: any)
 	Kit.toggle(Kit.row(ui.body, "Friendly fire", 5), s.friendlyFire ~= false, function(on)
 		send({ op = "set", key = "friendlyFire", value = on })
 	end)
+	-- cheat commands for allow-listed players (C-119); off by default
+	Kit.toggle(Kit.row(ui.body, "Cheats", 6), s.cheats == true, function(on)
+		send({ op = "set", key = "cheats", value = on })
+	end)
 	Kit.section(ui.body, "Seats", 10)
 	for i, sl in s.slots or {} do
 		seatRow(ui, data, s, i, sl, me, send)

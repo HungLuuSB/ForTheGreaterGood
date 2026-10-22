@@ -60,6 +60,9 @@ local UnitPanel = require("./UI/UnitPanel")
 local LobbyUI = require("./UI/Lobby")
 local ReplayBar = require("./UI/ReplayBar")
 local SettingsMenu = require("./UI/SettingsMenu")
+local CheatConsole = require("./UI/CheatConsole")
+local CheatInput = require("./Core/CheatInput")
+local Kit = require("./UI/Kit")
 local Crater = require("./Render/Crater")
 local ReplayPlayer = require("./Core/ReplayPlayer")
 local PlayerReplay = require("@shared/Net/PlayerReplay")
@@ -335,6 +338,51 @@ local replayBar = ReplayBar.new({
 	end,
 })
 local _settingsMenu = SettingsMenu.new() -- O: keys, camera, graphics, UI scale (C-81); after the other screens so the scale reaches them
+
+-- the cheat command line (C-119): Enter or "/" opens it. The commands are
+-- the sim's (Shared/Net/CheatText, net.md 9a); until that lands this is a
+-- stub that echoes what it would send. "/cheat on|off" is the lobby's
+-- Cheats toggle (host only).
+local cheatConsole: CheatConsole.UI
+local function submitCheat(text: string)
+	local cursor = Controls.hover() -- "at" defaults to the cursor ground position
+	local line = CheatInput.prepare(text, defs, cursor and cursor.X, cursor and cursor.Z)
+	local lower = string.lower(line)
+	if lower == "cheat on" or lower == "cheat off" then
+		local lobbyRemote = remotes:FindFirstChild("Lobby") :: RemoteEvent?
+		if lobbyRemote then
+			lobbyRemote:FireServer({ op = "set", key = "cheats", value = lower == "cheat on" })
+			CheatConsole.print(cheatConsole, `lobby: Cheats {if lower == "cheat on" then "on" else "off"} (host only; takes effect at the next match)`)
+		else
+			CheatConsole.print(cheatConsole, "cheat on|off: no lobby here (Studio profiles always allow cheats)")
+		end
+		return
+	end
+	CheatConsole.print(cheatConsole, `stub: would send "{line}" (the sim's cheat commands aren't merged yet)`, Kit.COLOR.accent)
+end
+cheatConsole = CheatConsole.new(defs, submitCheat)
+-- the same commands for Roblox's chat, if it is ever turned back on
+do
+	local TextChatService = game:GetService("TextChatService")
+	local folder = TextChatService:FindFirstChild("TextChatCommands")
+	if folder then
+		for _, c in CheatInput.COMMANDS do
+			local command = Instance.new("TextChatCommand")
+			command.Name = "Ftgg_" .. c[1]
+			command.PrimaryAlias = "/" .. c[1]
+			command.Parent = folder
+			command.Triggered:Connect(function(_source: TextSource, text: string)
+				if c[1] == "help" then
+					for _, h in CheatInput.help() do
+						CheatConsole.print(cheatConsole, h, Kit.COLOR.dim)
+					end
+				else
+					submitCheat(text)
+				end
+			end)
+		end
+	end
+end
 local replayChunks: { buffer } = {}
 local replayRemote = remotes:WaitForChild("Replay") :: RemoteEvent
 replayRemote.OnClientEvent:Connect(function(msg: any)
@@ -659,6 +707,10 @@ if RunService:IsStudio() then
 		elseif query == "net" then
 			-- Invoke("net"): bytes received per channel since the client started (C-69)
 			return received
+		elseif query == "cheatline" then
+			-- Invoke("cheatline", text): the cheat command line as if typed and entered (C-119)
+			CheatConsole.enter(cheatConsole, (...))
+			return true
 		elseif query == "wrecksanyway" then
 			-- Invoke("wrecksanyway", on): use review wreck meshes too (for the user's review, C-115)
 			MeshModels.WRECKS_ANYWAY = (...) == true
@@ -829,6 +881,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	MissileViewRender.step(missileView, fx, world, t, now, visibleFx, workspace.CurrentCamera)
 	NukeWarning.step(nukeWarning, fx, world, now, workspace.CurrentCamera)
 	AttackPreviewRender.step(attackPreview, world, api.state.selection, if api.state.commandMode == "attack" then Controls.hover() else nil, workspace.CurrentCamera)
+	CheatConsole.step(cheatConsole)
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom

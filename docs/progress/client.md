@@ -4,6 +4,22 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, cheat command line; shield hits)
+
+- **Cheat command line (C-119), BAR's /cheat:**
+  - Press Enter or "/" and type. Suggestions appear as you type: commands, then units by id or display name ("/give lanc" offers the Lancer). Tab takes the first.
+  - "/help" lists every command with an example. Results print in a log above the bar.
+  - "at" defaults to the cursor, and Ctrl+Shift+G repeats the last /give at the cursor.
+- **Until sim-A's S-102 is in main, the bar is a stub** that says what it would send. sim-A built the commands themselves (S-102: give, res, income, instabuild, reveal, god, kill, speed, ai), and they're integrating now. I'll hook them up next.
+- **Who may cheat:**
+  - only players on the allow list (`src/roblox/CheatConfig.luau`: your UserId);
+  - only in Studio, or in a match where the host turned on the new lobby toggle "Cheats" (off by default);
+  - anyone else's cheat commands are dropped on the server before the sim sees them.
+- **/cheat on|off** flips that lobby toggle (host only). sim-A has asked you whether it should also work mid-match.
+- **"Cheats used" on results and replays** comes with S-102's flags.
+- **Shield hits:** dimmer ripples, bigger hex patches (C-117), and each hit now sends a visible wave through its patch instead of freezing it lit (C-118).
+- **Screenshots:** `debug_out/screens/cheats_*.jpg`, `shield_hex_*.jpg`.
+
 ## Summary (2026-10-23, T2 beam towers in game)
 
 - **Beam towers (S-96 + C-112):** Radiance (Order) and Inferno (Chaos), Pulsar-style.
@@ -689,6 +705,31 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: cheat command line, permission gate, lobby Cheats toggle; stub until S-102 (C-119)
+
+- **Asked:** an in-game command line for testing (BAR's /cheat): TextChatService commands; give / res / income / instabuild / reveal / god / kill / speed / ai as the sim defines them; "at" = the cursor; ids or names with suggestions; /help; results in chat. Allowed only in Studio, or when the host enabled "Cheats" in the lobby AND the UserId is allow-listed; never in public matchmaking; "cheats used" on results and replays; Ctrl+Shift+G repeats the last give; a stub until the sim side merges.
+- **The commands are the sim's** (S-102, net.md "Cheat commands"): a CHEAT command on the Cmd channel, recorded in the replay. `Shared/Net/CheatText` parses chat text into it, and a CHEAT_RESULT event answers (`CheatText.describe`).
+- **`Core/CheatInput`** (pure, `CheatInput.spec` 3):
+  - the command list with usages and examples;
+  - suggestions: command names, then after "give" units whose id or display name starts with (or contains) the typed text, case-insensitive;
+  - `prepare`: drops "/" and "/cheat", turns a display name into its id, and adds " at x,z" (the cursor's ground point) to a give without one;
+  - /help's lines.
+- **`UI/CheatConsole`:**
+  - a UI-kit bar at the bottom centre, opened with Enter or "/";
+  - suggestions above it (Tab or a click takes one), Up / Down history, Escape closes;
+  - a log of up to 16 lines on a faint backing, kept above the suggestions and fading after 12 s;
+  - Ctrl+Shift+G repeats the last give at the cursor.
+  - Roblox's chat window is off (C-109), so this is the command line; the same commands are also registered as TextChatService commands for when chat is on.
+  - Enter is also taken from a focus loss while Return is down (Studio's input tool drops the TextBox's enterPressed).
+  - The debug hook `Invoke("cheatline", text)` enters a line.
+- **Gate** (`src/roblox/Main.server`, new `src/roblox/CheatConfig`):
+  - a Cmd payload whose byte 0 is CHEAT (17) is dropped unless the player's UserId is in `CheatConfig.allow` (the user's, 11846985184) and the game is in Studio or the lobby's `cheats` is on;
+  - lobby matches pass `match.cheats` (the toggle, or always in Studio); test profiles start with `cheats` and `offline` in Studio;
+  - sim-A confirmed the byte-0 rule.
+- **Lobby:** a host-only "Cheats" toggle (off by default; `Lobby.cheats`, `op = "set", key = "cheats"`). "/cheat on|off" sets it.
+- **Until S-102 is in main:** the bar answers "stub: would send …". Next: `CheatText.parse`, the Cmd channel, the CHEAT_RESULT lines, the speed driver and "cheats used" on results.
+- **Screenshots** (`debug_out/screens/`): `cheats_console.jpg` (three entered lines, "LANCER" turned into ord_lancer and the cursor's "at 47,104" added; "/give rad" suggesting the Radiance), `cheats_commands.jpg` (the command list), `cheats_help.jpg`.
 
 ## 2026-10-23: hex patches animate: a wave per hit, glassy plates (C-118)
 
