@@ -5,15 +5,18 @@
 -- round its base against enemy shells (Shared/Combat/ShieldField has the
 -- field itself):
 --   * enemy projectiles (shells, rockets, bombs, missiles; not torpedoes,
---     strategic missiles, or interceptors chasing one) that come into the field
---     band outside the dome brake, turn and are thrown back out. A turned
---     shell stays live: it flies on and explodes where it lands (a missile
---     loses its lock). One that reaches the dome still moving in breaks
---     through, slowed, and carries on inside. Shots fired from inside pass
---     out freely; allies' shells are never touched. Hitscan and beams pass
---     through (not in the rules);
---   * charge is counted in shell masses (ShieldField.mass): a turned shell
---     costs HIT_COST × its mass, a breach BREACH_COST × its mass. The field's
+--     strategic missiles, or interceptors chasing one) that pass through the
+--     dome's surface are slowed and turned in the field inside it (S-83):
+--     head-on ones back out, off-centre ones round the dome and on (S-82). A
+--     turned shell stays live: it flies on and explodes where it lands (a
+--     missile loses its lock); one that comes back is caught again. One that
+--     reaches the dome's core still moving in breaks through, slowed, and
+--     carries on. Shots fired from inside pass out freely; allies' shells are
+--     never touched. Hitscan and beams pass through (not in the rules);
+--   * a shell lighter than ShieldField.ABSORB_MASS is destroyed where it
+--     crosses the surface (S-85): no burst, no damage;
+--   * charge is counted in shell masses (ShieldField.mass): a turned or
+--     destroyed shell costs HIT_COST × its mass, a breach BREACH_COST × it. The field's
 --     force follows the charge (full at 50% and above);
 --   * at 0 the dome collapses; it rises again at RAISE_AT of capacity;
 --   * recharging draws `power` power per second (called by Build.step with
@@ -166,7 +169,8 @@ end
 -- Steps projectile `id` (state x..vz after guidance, gravity g) through a
 -- dome's field when it is in one or about to enter one this tick. Returns
 -- the stepped state and true, or false when no dome is involved (the
--- caller steps it plainly).
+-- caller steps it plainly), then true when the dome destroyed it (the
+-- caller removes it: S-85).
 function Shield.deflect(
 	sim: Types.Sim,
 	id: number,
@@ -178,7 +182,7 @@ function Shield.deflect(
 	vy: number,
 	vz: number,
 	g: number
-): (number, number, number, number, number, number, boolean)
+): (number, number, number, number, number, number, boolean, boolean)
 	local c = sim.combat
 	local w = sim.world
 	local dt = Shield.DT
@@ -191,18 +195,18 @@ function Shield.deflect(
 	if dome == nil then
 		local speed = sqrt(vx * vx + vy * vy + vz * vz)
 		local side = c.pTeam[id]
-		local done = c.pShieldDone[id]
 		for _, d in c.shieldIds do
-			if c.shieldUp[d] and d ~= done and w.ally[d] ~= side then
+			if c.shieldUp[d] and w.ally[d] ~= side then
 				local cx, cy, cz = Shield.center(sim, d)
-				if ShieldField.near(x, y, z, speed, cx, cy, cz, shieldOf(sim, d).radius, dt) then
+				local radius = shieldOf(sim, d).radius
+				if ShieldField.near(x, y, z, speed, cx, cy, cz, radius, dt) and ShieldField.onCourse(x, y, z, vx, vy, vz, cx, cy, cz, radius) then
 					dome = d
 					break
 				end
 			end
 		end
 		if dome == nil then
-			return x, y, z, vx, vy, vz, false
+			return x, y, z, vx, vy, vz, false, false
 		end
 	end
 	local d = dome :: number
@@ -216,11 +220,9 @@ function Shield.deflect(
 	if before == FREE and phase ~= FREE and phase ~= DONE then
 		Combat.addEvent(c, { kind = "SHIELD_FIELD", tick = sim.tick, unit = d, other = id })
 	end
-	if phase == FREE then
+	if phase == FREE or phase == DONE then
+		-- (a shell thrown out that comes back is caught again)
 		c.pShield[id], c.pShieldPhase[id] = nil, nil
-	elseif phase == DONE then
-		c.pShield[id], c.pShieldPhase[id] = nil, nil
-		c.pShieldDone[id] = d
 	else
 		c.pShield[id], c.pShieldPhase[id] = d, phase
 	end
@@ -236,8 +238,12 @@ function Shield.deflect(
 	elseif event == ShieldField.BREACH then
 		Shield.drain(sim, d, Shield.BREACH_COST * mass)
 		Combat.addEvent(c, { kind = "SHIELD_HIT", tick = sim.tick, unit = d, other = id, x = hx, y = hy, z = hz, breach = true, mass = mass })
+	elseif event == ShieldField.ABSORB then
+		Shield.drain(sim, d, Shield.HIT_COST * mass)
+		Combat.addEvent(c, { kind = "SHIELD_HIT", tick = sim.tick, unit = d, other = id, x = hx, y = hy, z = hz, absorbed = true, mass = mass })
+		return x1, y1, z1, vx1, vy1, vz1, true, true
 	end
-	return x1, y1, z1, vx1, vy1, vz1, true
+	return x1, y1, z1, vx1, vy1, vz1, true, false
 end
 
 table.insert(Lifecycle.addedHooks, Shield.added)

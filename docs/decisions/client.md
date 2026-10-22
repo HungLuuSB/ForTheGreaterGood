@@ -716,3 +716,126 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **White dome:** the user's answers today (white dome, generator structures only, a smaller Chaos dome) override the brief's team colour and Warden dome.
 - **No ForceField:** it read grey with no edge in C-87.
 - **Raycast placement:** the Order placeholder lay on its side and sank into the grass. The pivot came from its turned base cylinder, and the sim's ground height sits below the rendered terrain.
+
+### C-91 — Shield domes from the server: SHIELD state, field stepping, hits; ShieldFx never yields (2026-10-23)
+
+**Decision:**
+- **NetIn:** keeps SHIELD records in `world.shields` (charge as 0..1).
+- **Core/Effects:**
+  - steps a projectile with `ShieldField.step` from its SHIELD_FIELD until the phase is DONE or FREE, the same function the server uses;
+  - the frame curve (`nextState`) comes from the same step, so drawing between ticks follows the field;
+  - SHIELD_HIT drops a turned missile's target and queues the hit.
+- **`Render/ShieldDomes`:** one ShieldFx per known generator, driven by charge and the UP flag, standing at once when it comes into view already up.
+- **ShieldFx.new never yields:** the hexagon pool builds in a spawned thread.
+- **Stand-in removed:** the client-only preview domes (a profile list, crossings of drawn shells) were dropped once S-79 landed. The `shield` profile spawns a real Phalanx.
+
+**Why:**
+- S-79 answered request 40, and the client steps shells with the shared field so they bend where the server bends them; corrections cover the rest.
+- The double dome came from a yield inside the frame loop.
+- The user's three tuning points (10× capacity, deceleration, glancing deflection) are sim numbers, sent to sim-A with measurements.
+
+
+### C-94 — ShieldFx on C's assets; meshes loaded at runtime; flowing rings stay adornments (2026-10-23)
+
+**Decision:**
+- **Assets:** `ShieldFx` uses C's shield assets by ID: the Dome hemisphere (Size 2R × R × 2R, centre half-way up), Ring for the foot ring, and the beam, swirl, speck and ripple textures.
+- **Loading:** the meshes come from `AssetService:CreateMeshPartAsync` once, in a spawned thread. `ShieldFx.ready()` gates new domes in `ShieldDomes`. If loading fails, the dome is a ball with no foot ring.
+- **Emitter:** `ShieldFx.new` takes an optional `base` (the dome centre), so the emitter can be the generator model's `beam` attachment. `setEmitter` follows the model as it streams in and out, and the core (the attachment's part) is tinted by charge and restored when released.
+- **Look over the contract:** neutral white, opacity from charge, no ForceField: the user's rules (C-89, C-90) over fx.md's team colour.
+- **Flowing rings:** they stay CylinderHandleAdornments.
+
+**Why:**
+- C's assets merged, and the user asked for them in place of the placeholders.
+- The game place can't take copies from FTGG Art (my rule), so the meshes are built from their uploaded IDs.
+- The Ring mesh's tube grows with its radius, a 2.4-stud ribbon at R=120, so it fits only the foot ring until a thinner ring comes.
+
+### C-95 — Shield hits drawn on entry; white-grey plates; flowing rings from RingThin (2026-10-23)
+
+**Decision:**
+- **Entry hit:** `Core/Effects` queues an "enter" hit when SHIELD_FIELD arrives in phase BRAKING, at the shell's predicted position projected onto the dome radius, with mass `ShieldField.mass(weapon)`. `Render/ShieldDomes` lights the dome for entries and breaches, not for turns.
+- **Plate colour:** `Shield.color` ramps grey (150, 154, 160) to white by heat.
+- **Rings:** `ShieldFx` builds the flowing rings from C's RingThin (Size 2.004r × height × 2.004r) when it loads; adornments are the fallback.
+
+**Why:**
+- Since S-83 the turn happens deep inside the dome after braking, so the hit at the turn read as late. The user wants it as the shell enters.
+- The user asked for the hexagons in white or grey, not red or orange.
+- models-C made RingThin for C-94's request.
+
+### C-96 — Shield ripple visible on its first frame; a one-attacker shield profile (2026-10-23)
+
+**Decision:**
+- **Ripple:** C's ripple particle starts at 35% of its size, opaque, reaches 70% at 15% of its life, then 100% while fading.
+- **Turn hits:** `ShieldDomes` lights a SHIELD_HIT turn only for a shell it hasn't seen enter (tracked by projectile id).
+- **`shield_one` profile:** one Phalanx, one Ravager, one target in the core.
+
+**Why:**
+- With S-83's inner band a light shell turns about 0.1 s after crossing. A ripple growing from 0 became visible only then, so the user read it as playing at the push-back.
+- The user suggested testing with one unit.
+- Light shots may soon be destroyed on contact (sent to sim-A), and those may never send a SHIELD_FIELD.
+
+### C-97 — Force plumes on shells in a shield field; absorbed shells dropped (2026-10-23)
+
+**Decision:**
+- **Plumes:** `ShieldDomes.forces` draws a beam on each drawn shell that is in a field (up to 32, pooled on Terrain attachments), from the shell toward minus the field's force. The force is `nextState` velocity minus velocity, minus the weapon's gravity for a tick. Length is 0.2 studs per stud/s of change, from 2 to 14. C's beam texture flows into the shell; width is 2.5 + 0.8 × mass.
+- **Absorbed shells:** a SHIELD_HIT with ABSORBED (protocol 25) removes the projectile and queues an "absorb" hit, which lights the dome.
+
+**Why:**
+- The user asked for a visible force on shells inside the dome, following the shot's direction and the shield's centre. The change of velocity is exactly the field's push, so the plume shows what the field does.
+- S-85 destroys light shells at the surface with no IMPACT, so the client must drop them itself.
+
+### C-98 — Shells in a field: a bow shock and a burning trail (2026-10-23)
+
+**Decision:**
+- **Pool:** `ShieldDomes.forces` keeps its pool of 32, each with a beam and a cap, a clone of C's dome mesh (`ShieldFx.cloneMesh`).
+- **Cap:** Neon, (2r, 0.7r, 2r) with r = (1.3 + 0.5·mass)·(0.7 + 0.3·heat), its pole along minus the field's force, centred just ahead of the shell. Moved with BulkMoveTo.
+- **Trail:** the beam runs from the shell along the force, white fading to orange, streaming backward.
+- **Heat:** the force's share of the plume's maximum, setting opacity and size.
+
+**Why:** the user drew a curved front ahead of the shell, "like when an asteroid enter the earth atmosphere". C-97's plume read as a beam, not as burning.
+
+### C-99 — Shield field primed a tick early; absorbed shells end mid-tick; unfinished units see-through; minimap 10 Hz (2026-10-23)
+
+**Decision:**
+- **Field priming:** `Core/Effects.update` primes a SHIELD_FIELD due next tick. It gives the projectile its field in phase FREE, so the coming step uses ShieldField (which takes hold at the surface), and queues the "enter" hit once the frame's fraction passes the drawn path's crossing of the sphere. An absorbed SHIELD_HIT ends its projectile mid-tick, like IMPACT (C-26).
+- **Shield clock:** ShieldFx's clock and particle TimeScale follow the sim speed.
+- **Unfinished units:** `UnitRenderer` draws a unit with build < 1 at 0.6 transparency (parts' own transparency kept above that) and restores it when complete or released to the pool.
+- **Minimap:** `Minimap.REFRESH` 1/3 → 1/10 s.
+
+**Why:**
+- The user saw the reflect effect late. Applied at the tick's end, the field and the hit came a tick late, with the shell flown a tick into the dome unbraked.
+- The user asked that light shells vanish at once, and that units being built look unfinished.
+- The user asked for a faster minimap.
+
+### C-100 — Fog of war as a draped blanket with one live image (BAR style); the point-light fog removed (2026-10-23)
+
+**Decision:**
+- **Image:** `Core/FogBlanket` keeps one pixel per grid cell in three states from the team sight (visible, explored = seen once, never). It holds each sensor cell's state and blends each pixel's goal from its four nearest cells (bilinear). Pixels fade to their goal over 0.3 s, in a queue capped at 3,000 pixels per step, and only the changed rectangle is reported.
+- **Mesh:** `Render/FogBlanket` shows the image as the TextureContent (UVs) of 4 EditableMesh chunks draped 1 stud over the highest ground within 8 studs of each vertex (one vertex per 16 studs). The parts are at Transparency 0.02 (so texture alpha blends), Fabric, at the world origin.
+- **Updates:** at most every 1/15 s: Vision.update, apply, step, WritePixelsBuffer of the rectangle.
+- **Minimap:** a Fog ImageLabel shows the same EditableImage.
+- **Removed:** `Render/FogOfWar` and `Core/Fog`. The setting `fogLights` became `fog` (default on).
+
+**Why:**
+- The user's brief: the point-light fog read as night, blotched where lights overlapped, was capped by the light limit and didn't match the sim's cell vision.
+- Measured choices:
+  - SurfaceAppearance needs Plugin capability, and a Texture's projection didn't map.
+  - The device editable-mesh budget forced the 16-stud vertex grid.
+  - Roblox samples the texture without smoothing, so the blend is done in the image.
+  - The pixel cap bounds the cost of a whole-map change.
+
+### C-101 — A moonlit night is the default atmosphere; low environment specular; lighter explored fog (2026-10-23)
+
+**Decision:**
+- **Preset:** `Render/Atmosphere` gets a `night` preset, first in the order and the default (`Settings.ATMOSPHERES`, `atmosphere = "night"`).
+  - ClockTime 0, Brightness 2.5, ambient (112, 118, 132), outdoor (140, 146, 162), exposure 1.1, shadow softness 0.6.
+  - EnvironmentSpecularScale 0.15, EnvironmentDiffuseScale 0.6.
+  - Atmosphere density 0.2 / offset 0.15 / haze 0.6; bloom 0.8 / 26 / 1.2; sun rays 0; colour contrast 0.1, saturation −0.18, cool tint.
+- **New fields:** presets gain optional `specular` and `diffuse`, captured from the place.
+- **Fog blanket:** the explored look becomes grey 40, alpha 0.4.
+
+**Why:**
+- The user: the maps have no sun (a dark battlefield), and lighting with less brightness and with shadow control should counter the fog blanket's "plastic wrapping".
+- The glossy look came mostly from environment specular, so it is cut to 15%.
+- The light levels keep units readable at every zoom; a thicker atmosphere flattened the strategic view.
+- Under night light the old explored look read as never seen.
+- Lighting.Technology isn't scriptable, so it stays a place setting (Future recommended).

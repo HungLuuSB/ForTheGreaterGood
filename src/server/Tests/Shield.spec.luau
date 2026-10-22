@@ -30,6 +30,10 @@ end
 local function fire(sim: Sim.Sim, weaponId: string, x: number, z: number, side: number?): number
 	local weapon = sim.defs.weapons[weaponId]
 	local g = weapon.gravity or 0
+	if weapon.type == "BOMB" then
+		-- dropped 200 studs above the dome's top, drifting at 8 studs/s
+		return Combat.spawnProjectile(sim.combat, CX + 20, 320, CZ + 40, 0, 0, -8, weapon.index, 0, side or 2, 10) :: number
+	end
 	local speed = weapon.projectileSpeed or 300
 	local dx, dz = CX - x, CZ - z
 	local d = math.sqrt(dx * dx + dz * dz)
@@ -69,15 +73,25 @@ end
 local ALL_WEIGHTS = { "chs_mg", "chs_autocannon", "chs_mlrs", "chs_light_cannon", "chs_rockets", "chs_heavy_cannon", "chs_mortar", "chs_heavy_bomb", "chs_siege_mortar", "chs_radar_sam" }
 
 return function(t: RunAll.Context)
-	t.test("a charged dome turns every shell weight back; the shells burst outside, live", function()
+	t.test("a charged dome turns every shell weight back, or destroys light ones; turned shells burst outside, live", function()
 		for _, weaponId in ALL_WEIGHTS do
 			local sim, gen = dome(1)
 			local w = sim.world
 			local health = w.health[gen]
 			local p = fire(sim, weaponId, 0, 250)
 			local hit, burst = follow(sim, p)
-			t.expect(hit ~= nil and hit.breach == false and hit.unit == gen, `{weaponId}: turned back`)
-			t.expect(burst ~= nil and distance(burst[1], burst[3]) > sim.defs.units.ord_phalanx.shield.radius, `{weaponId}: burst outside the dome`)
+			if Shield.mass(sim.defs.weapons[weaponId]) < ShieldField.ABSORB_MASS then
+				-- light: destroyed at the surface, no burst (S-85)
+				t.expect(hit ~= nil and hit.absorbed == true and hit.unit == gen, `{weaponId}: destroyed at the surface`)
+				t.equal(burst, nil, `{weaponId}: no burst`)
+				t.equal(sim.combat.projSlot[p], nil, `{weaponId}: gone`)
+				continue
+			end
+			t.expect(hit ~= nil and hit.breach == false and not hit.absorbed and hit.unit == gen, `{weaponId}: turned back`)
+			-- outside the core: the field's pull down (S-84) may land it in the band
+			local gx, _, gz = Shield.center(sim, gen)
+			local core = sim.defs.units.ord_phalanx.shield.radius * (1 - ShieldField.BAND_SHARE)
+			t.expect(burst ~= nil and math.sqrt((burst[1] - gx) ^ 2 + (burst[3] - gz) ^ 2) > core, `{weaponId}: burst outside the dome's core`)
 			t.equal(w.health[gen], health, `{weaponId}: the generator took nothing`)
 			if hit then
 				local gx, gy, gz = Shield.center(sim, gen) -- the generator snaps to its footprint
@@ -117,49 +131,148 @@ return function(t: RunAll.Context)
 			end
 			return 0
 		end
-		local light, medium, heavy = turnAt(0.25), turnAt(1), turnAt(6)
-		t.expect(light > medium and medium > heavy and heavy > 120, `turn heights {light}, {medium}, {heavy} (dome top 120, band to 170)`)
+		local light, medium, heavy = turnAt(0.6), turnAt(1), turnAt(6)
+		local core = 120 * (1 - ShieldField.BAND_SHARE)
+		t.expect(light < 120 and light > medium and medium > heavy and heavy > core, `turn heights {light}, {medium}, {heavy} (inside the dome: surface 120, core {core})`)
 	end)
 
-	t.test("the bounce is close to a mirror off the dome where the shell turned (S-80)", function()
-		-- shells from 200 studs out at the dome's top, at angles to its normal
-		local function bounce(angle: number, mass: number): (number, number, number)
-			local a = math.rad(angle)
-			local dx, dy = math.sin(a), -math.cos(a)
-			local x, y, z, vx, vy, vz = -dx * 200, 120 - dy * 200, 0, dx * 300, dy * 300, 0
-			local phase, nx, ny, inAngle = ShieldField.FREE, 0, 1, 0
-			for _ = 1, 300 do
+	t.test("head-on shells stop and come back; off-centre ones bend round the dome and carry on (S-82)", function()
+		-- parallel shots up at a dome of radius 120, offset from its centre;
+		-- returns the angle between the way out and the way in, the speed kept
+		-- and whether it broke through
+		local function shot(offset: number, mass: number, speed: number): (number, number, boolean)
+			local x, y, z, vx, vy, vz = offset * 120, -200, 0, 0, speed, 0
+			local phase, breach = ShieldField.FREE, false
+			for _ = 1, 400 do
 				local event
 				x, y, z, vx, vy, vz, phase, event = ShieldField.step(x, y, z, vx, vy, vz, 0, 0, 0, 0, 120, 1, mass, phase, 1 / 15)
-				if event == ShieldField.TURN then
-					local r = math.sqrt(x * x + y * y)
-					nx, ny = x / r, y / r
-					inAngle = math.deg(math.acos(-(dx * nx + dy * ny)))
-				end
+				breach = breach or event == ShieldField.BREACH
 				if phase == ShieldField.DONE then
 					break
 				end
 			end
-			local speed = math.sqrt(vx * vx + vy * vy)
-			return inAngle, math.deg(math.acos((vx * nx + vy * ny) / speed)), speed / 300
+			local s = math.sqrt(vx * vx + vy * vy)
+			return math.deg(math.acos(math.clamp(vy / s, -1, 1))), s / speed, breach
 		end
-		for _, mass in { 0.3, 1, 4 } do
-			local i0, o0, keep0 = bounce(0, mass)
-			t.expect(i0 < 0.5 and o0 < 0.5, `mass {mass}: head-on goes straight back ({o0}°)`)
-			t.expect(keep0 > 0.5 and keep0 < 0.7, `mass {mass}: at {keep0 * 100}% of its speed`)
-			for _, angle in { 30, 50, 70 } do
-				local i, o, keep = bounce(angle, mass)
-				t.expect(math.abs(o - i) <= 10, `mass {mass}, {angle}°: in {i}° → out {o}° (a mirror within 10°)`)
-				t.expect(keep > 0.6 and keep < 1, `mass {mass}, {angle}°: keeps {keep * 100}% of its speed`)
+		local last = 181
+		for _, offset in { 0, 0.3, 0.5, 0.7, 0.85, 0.95 } do
+			local angle, keep, breach = shot(offset, 1, 260)
+			t.equal(breach, false, `offset {offset}: turned`)
+			t.expect(angle < last, `offset {offset}: bent less than a shot nearer the centre ({angle}° after {last}°)`)
+			t.expect(keep > 0.25 and keep < 0.97, `offset {offset}: slowed, keeping {keep * 100}%`)
+			last = angle
+		end
+		t.expect(shot(0, 1, 260) > 179, "head-on: straight back")
+		t.expect(shot(0.7, 1, 260) < 60 and shot(0.95, 1, 260) < 30, "glancing: steered off, carrying on forward")
+		for _, mass in { 0.6, 2.4, 8 } do
+			local headOn, _, through = shot(0, mass, 240)
+			t.expect(headOn > 179 and not through, `mass {mass} at 240 studs/s head-on: straight back`)
+			t.expect(shot(0.85, mass, 420) < 40, `mass {mass} at 420 studs/s, glancing: carries on`)
+		end
+		-- a shot whose line misses the dome is left alone
+		local angle, keep = shot(1.2, 1, 260)
+		t.expect(angle < 1e-6 and math.abs(keep - 1) < 1e-9, "a line past the dome: untouched")
+	end)
+
+	t.test("flat head-on shots near the ground turn and fly back (the client's ShieldWire case)", function()
+		-- a Ravager firing straight at a Mason under the dome, low over flat
+		-- ground: slowed almost to a stop, gravity bends them down, and they
+		-- used to sink through the band without ever turning
+		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:64" })
+		local w = sim.world
+		local gen = Spawn.unit(sim, "ord_phalanx", 1, 0, -100)
+		local mason = Spawn.unit(sim, "ord_mason", 1, 0, -40)
+		World.setHealth(w, mason, 1e6)
+		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
+		local c = sim.combat
+		local turned, through, back, landed, inCore = 0, 0, 0, 0, 0
+		local watch: { [number]: boolean } = {}
+		local gx, _, gz = Shield.center(sim, gen)
+		local core = sim.defs.units.ord_phalanx.shield.radius * (1 - ShieldField.BAND_SHARE)
+		for _ = 1, 180 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if e.kind == "SHIELD_HIT" and e.unit == gen then
+					if e.breach then
+						through += 1
+					else
+						turned += 1
+						watch[e.other] = true
+					end
+				elseif e.kind == "IMPACT" and watch[e.other] then
+					-- pulled down in the field (S-84), some land in the band
+					landed += 1
+					watch[e.other] = nil
+					if math.sqrt((e.x :: number - gx) ^ 2 + (e.z :: number - gz) ^ 2) <= core then
+						inCore += 1
+					end
+				end
+			end
+			for p in watch do
+				if c.projSlot[p] and c.pShieldPhase[p] == nil and c.pvz[p] > 50 then
+					back += 1 -- out of the field, flying back north toward the Ravager
+					watch[p] = nil
+				end
 			end
 		end
+		t.expect(turned >= 2, `shells turned ({turned})`)
+		t.equal(through, 0, "none broke through")
+		t.expect(back + landed >= turned - 1, `turned shells fly back or land, none hang ({back} back, {landed} landed of {turned})`)
+		t.equal(inCore, 0, "none landed in the core")
+	end)
+
+	t.test("light shells are destroyed at the surface: charge by mass, no burst, the client drops them (S-85)", function()
+		local sim, gen = dome(13, 0.5)
+		local c = sim.combat
+		local g = (sim.map :: any).grid
+		local cx, cz = g:cellAt(0, 50)
+		local w = Packer.Writer.new()
+		Schema.encodeCommand(w, { cmdType = Schema.CmdType.CAMERA, flags = 0, unitIds = {}, minX = cx - 20, minZ = cz - 20, maxX = cx + 20, maxZ = cz + 20 })
+		assert(Sim.submit(sim, 1, w:finish()))
+		local view = Client.new(g, sim.defs, (sim.map :: any).layers)
+		local weapon = sim.defs.weapons.chs_autocannon
+		local mass = Shield.mass(weapon)
+		t.expect(mass < ShieldField.ABSORB_MASS, "the autocannon round is light")
+		local p = fire(sim, "chs_autocannon", 0, 250)
+		local hit, drop, impacts, wireHit = nil, 0, 0, nil
+		local recharge = sim.defs.units.ord_phalanx.shield.recharge
+		for _ = 1, 60 do
+			local prev = c.shieldCharge[gen]
+			Sim.step(sim)
+			Client.receive(view, sim.net.players[1].outbox)
+			for _, e in c.events do
+				if e.other == p and e.kind == "SHIELD_HIT" then
+					hit = e
+					drop = prev - c.shieldCharge[gen]
+				elseif e.other == p and e.kind == "IMPACT" then
+					impacts += 1
+				end
+			end
+			for _, e in view.effects do
+				if e.kind == "shield" then
+					wireHit = e
+				end
+			end
+			table.clear(view.effects)
+			if hit then
+				break
+			end
+		end
+		t.expect(hit ~= nil and hit.absorbed == true, "SHIELD_HIT, absorbed")
+		local gx, gy, gz = Shield.center(sim, gen)
+		near(t, math.sqrt((hit.x - gx) ^ 2 + (hit.y - gy) ^ 2 + (hit.z - gz) ^ 2), 120, 0.01, "on the surface")
+		near(t, drop, Shield.HIT_COST * mass - recharge / 15, 0.01, "its mass in charge (less a tick's recharge)")
+		t.equal(impacts, 0, "no burst")
+		t.equal(c.projSlot[p], nil, "the projectile is gone")
+		t.expect(wireHit ~= nil and wireHit.absorbed == true, "the client got SHIELD_HIT with ABSORBED")
+		t.equal(view.projectiles[p], nil, "and dropped the shell")
 	end)
 
 	t.test("below half charge heavy shells break through, slowed; light ones still turn", function()
 		local sim, gen = dome(3, 0.06)
 		local light = fire(sim, "chs_autocannon", 0, 250)
 		local hitLight = follow(sim, light)
-		t.expect(hitLight ~= nil and not hitLight.breach, "the autocannon round turned")
+		t.expect(hitLight ~= nil and not hitLight.breach, "the autocannon round was stopped (destroyed at the surface, S-85)")
 		sim.combat.shieldCharge[gen] = 0.06 * sim.defs.units.ord_phalanx.shield.capacity -- it recharged meanwhile
 		local heavy = fire(sim, "chs_siege_mortar", 0, 250)
 		local entry, through = 0, nil
@@ -197,17 +310,20 @@ return function(t: RunAll.Context)
 		local cap = sim.defs.units.ord_phalanx.shield.capacity
 		local p = fire(sim, "chs_mortar", 0, 250)
 		local mass = Shield.mass(sim.defs.weapons.chs_mortar)
-		local atHit = nil
+		local recharge = sim.defs.units.ord_phalanx.shield.recharge
+		c.shieldCharge[gen] = cap / 2 -- below full, so the tick's recharge shows apart from the hit
+		local drop = nil
 		for _ = 1, 100 do
+			local prev = c.shieldCharge[gen]
 			Sim.step(sim)
 			for _, e in c.events do
 				if e.kind == "SHIELD_HIT" and e.other == p then
-					atHit = c.shieldCharge[gen]
+					drop = prev - c.shieldCharge[gen]
 				end
 			end
 		end
-		near(t, atHit or 0, cap - Shield.HIT_COST * mass + sim.defs.units.ord_phalanx.shield.recharge / 15, 0.01, "one mortar shell's mass gone (and a tick's recharge)")
-		near(t, c.shieldCharge[gen], cap, 1e-9, "recharged to full since")
+		near(t, drop or 0, Shield.HIT_COST * mass - recharge / 15, 0.01, "one mortar shell's mass gone (less a tick's recharge)")
+		near(t, c.shieldCharge[gen], cap / 2 + 100 * recharge / 15 - Shield.HIT_COST * mass, 1e-6, "recharging at the full rate since")
 		-- run it down: power cut off, a nearly empty dome, shells until it falls
 		local acc = sim.eco.accounts[1]
 		acc.power.stored = 0
@@ -378,11 +494,16 @@ return function(t: RunAll.Context)
 		t.expect(got ~= nil and got.unitId == 0 and got.projId == p, "SHIELD_HIT, generator 0")
 	end)
 
-	t.test("the shield profile: every attacker row fires, nothing under the dome is hurt while it stands", function()
+	t.test("the shield profile: every attacker row fires, nothing in the dome's core is hurt while it stands", function()
 		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local gen = Spawn.unit(sim, "ord_phalanx", 1, CX, CZ)
-		local inside = { Spawn.unit(sim, "ord_vehplant", 1, 0, -150 + 40), Spawn.unit(sim, "ord_oracle", 1, -30, -60), Spawn.unit(sim, "ord_mason", 1, 30, -60) }
+		-- the plant in the core; the radar and builder near the edge stand in the
+		-- field's band (S-83), where shells still slowing can reach them
+		local inside = { Spawn.unit(sim, "ord_vehplant", 1, 0, -150 + 40) }
+		for _, id in { Spawn.unit(sim, "ord_oracle", 1, -30, -60), Spawn.unit(sim, "ord_mason", 1, 30, -60) } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+		end
 		local acc = sim.eco.accounts[1]
 		acc.power.storage, acc.power.stored = 1e6, 1e6
 		local attackers = {}
@@ -423,7 +544,7 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(turned >= 20, `the dome turned shells ({turned} turned, {through} through)`)
-		t.equal(hurtWhileUp, 0, "nothing under the dome hurt while it stood and nothing broke through")
+		t.equal(hurtWhileUp, 0, "nothing in the core hurt while the dome stood and nothing broke through")
 	end)
 
 	t.test("two runs with domes give the same state hash", function()

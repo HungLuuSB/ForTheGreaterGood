@@ -23,6 +23,7 @@
 
 local Ballistics = require("@shared/Combat/Ballistics")
 local Guidance = require("@shared/Combat/Guidance")
+local ShieldField = require("@shared/Combat/ShieldField")
 local Lofted = require("@shared/Combat/Lofted")
 local Layers = require("@shared/Grid/Layers")
 local PlacementRules = require("@shared/Grid/PlacementRules")
@@ -86,7 +87,15 @@ export type Proj = {
 	own: boolean?, -- a strategic missile launched by the local player's team (C-58)
 	goal: { number }?, -- a strategic missile's ordered spot x, y, z (SPAWN_STRATEGIC, S-51): it flies Shared/Combat/Lofted
 	gone: boolean?, -- ended (impact, interception, time out): interceptors chasing it fly on
+	field: { number }?, -- in a shield dome's field (SHIELD_FIELD, S-79, C-91): { cx, cy, cz, radius, force 0..1, phase }; stepped with Shared/Combat/ShieldField
 }
+
+-- A shell turned back by a shield dome or breaking through it (SHIELD_HIT,
+-- protocol 24, S-79): Render/ShieldDomes lights the dome there.
+-- `kind`: "enter" (the shell crossed the dome's surface: SHIELD_FIELD, drawn
+-- at once, C-95), "turn" or "breach" (SHIELD_HIT, at the turn deep inside),
+-- "absorb" (SHIELD_HIT: a light shell destroyed at the surface, S-85).
+export type ShieldHit = { unitId: number, kind: string, x: number, y: number, z: number, mass: number, breach: boolean, projId: number, tick: number }
 
 -- A strategic missile's launch (LAUNCH_WARNING, S-48): every player gets one.
 export type Warning = { projId: number, x: number, y: number, z: number, born: number, proj: Proj?, endedAt: number? }
@@ -120,6 +129,7 @@ export type Fx = {
 	shots: { { number } }, -- { unitId, slot } of shots played since the caller last cleared it (piece scripts' FireWeapon)
 	marks: { Mark }, -- the sensor view's corrections, decoys and lost locks, oldest first (C-39)
 	warnings: { Warning }, -- strategic launches, kept while the missile flies and WARNING_LINGER after (C-57)
+	shieldHits: { ShieldHit }, -- since the caller last cleared it (C-91)
 }
 
 function Effects.new(): Fx
@@ -139,6 +149,7 @@ function Effects.new(): Fx
 		shots = {},
 		marks = {},
 		warnings = {},
+		shieldHits = {},
 	}
 end
 
@@ -433,10 +444,17 @@ end
 -- On its spawn tick (launched early, C-27) it is the server's own state (a
 -- homing missile already steered during it). Last: a vertical launch's
 -- `turned` after this tick (C-53).
-local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean, boolean?)
+local function advance(world: World.World, p: Proj, t: number): (number, number, number, number, number, number, number, number, number, boolean, boolean?, number?)
 	local launch = p.launch
 	if launch and launch[1] == t then
 		return launch[2], launch[3], launch[4], launch[5], launch[6], launch[7], 0, 0, 0, true, p.turned
+	end
+	local field = p.field
+	if field then
+		-- in a shield dome's field: the server's field step (S-79), unsteered
+		local w = p.weapon
+		local x, y, z, vx, vy, vz, phase = ShieldField.step(p.x, p.y, p.z, p.vx, p.vy, p.vz, w.gravity or 0, field[1], field[2], field[3], field[4], field[5], ShieldField.mass(w), field[6], DT)
+		return x, y, z, vx, vy, vz, 0, 0, 0, true, p.turned, phase
 	end
 	local weapon = p.weapon
 	local vx, vy, vz = p.vx, p.vy, p.vz
@@ -496,6 +514,13 @@ local function stepProjectiles(fx: Fx, world: World.World, t: number)
 		end
 		local x, y, z, vx, vy, vz, dvx, dvy, dvz, follow, turned = r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11]
 		p.x, p.y, p.z, p.vx, p.vy, p.vz = x, y, z, vx, vy, vz
+		local field, phase = p.field, r[12]
+		if field and phase then
+			field[6] = phase
+			if phase == ShieldField.DONE or phase == ShieldField.FREE then
+				p.field = nil -- out of the field: it flies on plainly
+			end
+		end
 		p.turned = turned
 		p.launch = nil
 		local d = p.decoy
@@ -516,7 +541,7 @@ local function mark(fx: Fx, kind: string, now: number, x0: number, y0: number, z
 	table.insert(fx.marks, { kind = kind, x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now })
 end
 
-local KIND_NAME = { [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED", [EK.SPAWN_STRATEGIC] = "SPAWN_STRATEGIC" }
+local KIND_NAME = { [EK.SHIELD_FIELD] = "SHIELD_FIELD", [EK.SHIELD_HIT] = "SHIELD_HIT", [0] = "correction", [EK.FIRE] = "FIRE", [EK.SHOT] = "SHOT", [EK.SPAWN_PROJ] = "SPAWN_PROJ", [EK.IMPACT] = "IMPACT", [EK.DECOYED] = "DECOYED", [EK.LOST_LOCK] = "LOST_LOCK", [EK.INTERCEPTOR] = "INTERCEPTOR", [EK.LAUNCH_WARNING] = "LAUNCH_WARNING", [EK.INTERCEPTED] = "INTERCEPTED", [EK.SPAWN_STRATEGIC] = "SPAWN_STRATEGIC" }
 
 -- The unit (and weapon slot) that launched a `weaponIndex` shell from
 -- (x, z): the nearest unit with that weapon within SHOOTER_RADIUS. The
@@ -758,6 +783,36 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local b = burst(fx, now, x0, y0 :: number, z0 :: number, 0.7 * t.size, "muzzle", 0.1)
 			facing(b, x1 - x0, y1 - (y0 :: number), z1 - (z0 :: number))
 		end
+	elseif kind == EK.SHIELD_FIELD then
+		-- the shell came into an enemy dome's field (protocol 24, S-79): step it
+		-- through the field from now on, as the server does
+		local p = fx.projectiles[e.projId]
+		if p then
+			local x, y, z = pos(world, e)
+			p.field = { x, y, z, e.radius, e.force / 255, e.phase }
+			-- it just crossed the surface (the field is inside the dome, S-83): the hit
+			-- shows here and now, not at the turn deep inside (the user, C-95)
+			local dx, dy, dz = p.x - x, p.y - y, p.z - z
+			local d = math.sqrt(dx * dx + dy * dy + dz * dz)
+			if e.phase == ShieldField.BRAKING and not e.lit and d > 1e-6 and #fx.shieldHits < 64 then
+				local k = e.radius / d
+				table.insert(fx.shieldHits, { unitId = 0, kind = "enter", x = x + dx * k, y = y + dy * k, z = z + dz * k, mass = ShieldField.mass(p.weapon), breach = false, projId = e.projId, tick = e.tick })
+			end
+		end
+	elseif kind == EK.SHIELD_HIT then
+		-- turned back (a missile loses its lock), broke through, or a light shell
+		-- destroyed at the surface (protocol 25): dropped, no burst, no IMPACT follows
+		local p = fx.projectiles[e.projId]
+		if p and e.absorbed then
+			fx.projectiles[e.projId] = nil
+			p.gone = true
+		elseif p and not e.breach then
+			p.target = 0
+		end
+		local x, y, z = pos(world, e)
+		if #fx.shieldHits < 64 then
+			table.insert(fx.shieldHits, { unitId = e.unitId or 0, kind = if e.breach then "breach" elseif e.absorbed then "absorb" else "turn", x = x, y = y, z = z, mass = e.mass / Schema.SHIELD_MASS_SCALE, breach = e.breach == true, projId = e.projId, tick = e.tick })
+		end
 	elseif kind == EK.SHOT then
 		-- a hidden shooter's hitscan shot (protocol 14, S-43, C-54): a tracer
 		-- between the two ends the server sends, with no shooter and no muzzle
@@ -790,6 +845,26 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			mark(fx, "correction", now, dx, dy, dz, x, y, z)
 		end
 	end
+end
+
+-- The fraction (0..1) of the move from s to e, both relative to a sphere's
+-- centre, where it first comes inside `radius`: 0 when it starts inside, 1
+-- when it doesn't get in.
+local function crossing(sx: number, sy: number, sz: number, ex: number, ey: number, ez: number, radius: number): number
+	local r2 = radius * radius
+	local c = sx * sx + sy * sy + sz * sz - r2
+	if c <= 0 then
+		return 0
+	end
+	local dx, dy, dz = ex - sx, ey - sy, ez - sz
+	local a = dx * dx + dy * dy + dz * dz
+	local b = 2 * (sx * dx + sy * dy + sz * dz)
+	local disc = b * b - 4 * a * c
+	if a < 1e-12 or disc < 0 then
+		return 1
+	end
+	local t = (-b - math.sqrt(disc)) / (2 * a)
+	return if t >= 0 and t <= 1 then t else 1
 end
 
 -- Plays everything due by render tick `renderTick` (fractional sim tick).
@@ -846,11 +921,14 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 	-- a shell that hits during the coming tick bursts when its drawn path
 	-- reaches the impact point, not at the tick's end: drawn on, it would fly
 	-- up to a tick's travel past the target first (C-26). Events arrive
-	-- ahead of the render clock (Interp's delay), so the IMPACT is known.
+	-- ahead of the render clock (Interp's delay), so the IMPACT is known. A
+	-- light shell a dome destroys (SHIELD_HIT absorbed, S-85) goes the same way:
+	-- gone where its drawn path reaches the surface (C-99)
 	local frac = renderTick - fx.tick
 	for i = #events, 1, -1 do
 		local e = events[i] :: any
-		if e.kind ~= EK.IMPACT or e.tick ~= fx.tick + 1 then
+		local ends = e.kind == EK.IMPACT or (e.kind == EK.SHIELD_HIT and e.absorbed == true)
+		if not ends or e.tick ~= fx.tick + 1 then
 			continue
 		end
 		local p = fx.projectiles[e.projId]
@@ -871,6 +949,38 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 		if frac >= math.clamp(along, 0, 1) then
 			table.remove(events, i)
 			apply(fx, world, e, now, muzzleOf)
+		end
+	end
+	-- a shell that comes into a dome's field during the coming tick is
+	-- stepped through the field from the tick's start, as the server does
+	-- (the field takes hold where it crosses the surface), and its hit shows
+	-- when its drawn path crosses, not a tick later when the event is due
+	-- (C-99: drawn on plainly, it flew a tick into the dome unbraked first)
+	for i = 1, #events do
+		local e = events[i] :: any
+		if e.kind == EK.SHIELD_FIELD and e.tick == fx.tick + 1 and e.phase == ShieldField.BRAKING and not e.lit then
+			local p = fx.projectiles[e.projId]
+			if p then
+				local cx, cy, cz = pos(world, e)
+				if p.field == nil then
+					p.field = { cx, cy, cz, e.radius, e.force / 255, ShieldField.FREE }
+				end
+				local g0x, g0y, g0z = gapAt(p, 0)
+				local g1x, g1y, g1z = gapAt(p, 1)
+				local sx, sy, sz = p.x + g0x - cx, p.y + g0y - cy, p.z + g0z - cz
+				local nx, ny, nz = advance(world, p, fx.tick + 1)
+				local ex, ey, ez = nx + g1x - cx, ny + g1y - cy, nz + g1z - cz
+				local along = crossing(sx, sy, sz, ex, ey, ez, e.radius)
+				if frac >= along then
+					e.lit = true
+					local hx, hy, hz = sx + (ex - sx) * along, sy + (ey - sy) * along, sz + (ez - sz) * along
+					local d = math.sqrt(hx * hx + hy * hy + hz * hz)
+					if d > 1e-6 and #fx.shieldHits < 64 then
+						local k = e.radius / d
+						table.insert(fx.shieldHits, { unitId = 0, kind = "enter", x = cx + hx * k, y = cy + hy * k, z = cz + hz * k, mass = ShieldField.mass(p.weapon), breach = false, projId = e.projId, tick = e.tick })
+					end
+				end
+			end
 		end
 	end
 	-- each projectile's state one tick on: frames draw the curve between (C-38)

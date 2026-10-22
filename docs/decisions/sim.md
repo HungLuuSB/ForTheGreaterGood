@@ -1124,3 +1124,95 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **10×:** capacity and recharge both ×10, as the client read it (same refill time, a tenth of the share per shell): Phalanx 300 / 15 per s, Carapace 200 / 12 per s. **Power draw unchanged** (40 / 25 per s while recharging): my call, so the dome's running cost stays what it was; under review.
 - **Bounce:** measured the exit angle against the normal **where the shell turns** (on a sphere with a 50-stud band, a glancing shell turns well before its aim point, so the aim point's normal misleads). With S-79's numbers mass-1 shells already left near the mirror angle, but heavy ones left 15–18° steeper and head-on shells came back at ~45%. A sweep of PUSH × TANGENT_DRAG over masses 0.3 / 1 / 4 and angles 0–70°: **PUSH 2800, TANGENT_DRAG 0.3** keeps every case within ~8° of a mirror, head-on straight back at ~60% of its speed, glancing ones at 70–85%. No new state and no wire change: the client gets it through `Shared/Combat/ShieldField`.
 - **Tests:** `Shield.spec` 13: a mirror test (head-on back at 50–70% speed; 30°, 50°, 70° within 10° of a mirror, keeping 60–100% of speed, for masses 0.3, 1 and 4); the drain, breach and wire tests now read the charge on the hit tick (a tick's recharge is 1 now).
+
+## S-81 — Shield domes at 50× strength (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "Increase strength to x50". Read, as for S-80's 10×, as 50× S-79's capacity and recharge with the same refill time (20 s from empty): Phalanx 1,500 / 75 per s, Carapace 1,000 / 60 per s. The client's Studio run explains why: at capacity 30 the shield profile's barrage collapsed the dome within a second of each rise.
+- **Power draw unchanged** (40 / 25 per s while recharging): my call, as in S-80; under review.
+- **Effect:** a full Phalanx recharges 75 shell masses a second: about 30 mortar shells, 85 Ravager rounds or 9 siege shells a second before it loses ground. Breaches still happen only below 50% charge, which only a large, sustained barrage or a power stall now reaches.
+- **Tests:** the drain test starts half full and compares the hit tick with the tick before (a tick's recharge, 5, now exceeds a mortar shell's 2.4).
+
+## S-82 — Shield field after the user's drawing: head-on back, off-centre steered round and on (2026-10-22)
+
+- **Asked** (the user via the client stream, with a drawing): "If straight forward then it will by slowly slowed down and bounce off, if hit at an angle (like the right side), it will slowly be slowed down + steered off. Also reduce the de-acceleration to 1.5x, not 2x". The drawing: a head-on shot stops and goes straight back; a parallel shot near the right edge slows, bends along the dome's curve and carries on, not back toward the shooter.
+- **Why S-79/S-80's field couldn't:** it acts only along the normal, starting 50 studs out, so an off-centre shell is turned to the band's own curve far from the dome and leaves sideways or back (0.5 radii off the centre: 123°; even with no push at all, 90°).
+- **The new braking phase** (`Shared/Combat/ShieldField`):
+  - **Takes hold** only of a shell in the band whose straight line would hit the dome (`ShieldField.onCourse`). Shells that would pass the dome by are left alone; the sim also picks the dome a shell is on course for, not the first one near.
+  - **Slows** the shell along its path by BRAKE + DRAG × speed (750 / 13.5: 1.5× the prototype's 500 / 9, the user) × (0.4 + depth) × the head-on share: cos² of its incidence on the dome itself, from its line's closest approach to the centre (`ShieldField.headOn`), at least GLANCE_SLOW 0.05.
+  - **Steers** it away from the dome at STEER 8 rad/s × (0.4 + depth), while its line still passes within GRAZE 1.08 radii of the centre, and never past that line. A rotation, so it never overshoots.
+  - **Turns** (the hit, on the dome under the shell) when it stops closing in. Then it is thrown out: PUSH 700 × the head-on share, so a shell stopped head-on goes straight back and one sliding past only gets a lift.
+  - Mass divides the braking, steering and push by mass^0.6, as before.
+- **Measured** (mass 1, 260 studs/s, full force; offset of the line → angle between the way out and the way in, speed kept): 0 → 180° (39%), 0.3 → 141° (68%), 0.5 → 94° (53%), 0.7 → 42° (37%), 0.85 → 25° (51%), 0.95 → 18° (56%). Heavy (2.4, 8) and light (0.25) shells at 240–480 studs/s: head-on straight back, glancing 17–60°.
+- **Not stopped head-on at full force:** the Citadel round (mass 4.3, 480 studs/s) at the reduced braking; the siege mortar (8 at 240) and heavy bombs still stop. Under review.
+- **Caught again:** a shell thrown out that comes back (a bomb bounced up falls again) is caught again; `pShieldDone` is gone. A shell inside the dome can't be caught (the field starts outside it), so breaches still pass.
+- **Tests:** `Shield.spec` 13: the S-80 mirror test replaced by the drawing's (head-on back, the angle shrinking with the offset, glancing under 60° from 0.7 radii and under 30° at 0.95, heavy and light shells, a line past the dome untouched); bombs in the shell-weight test now drop from above the dome. The client's S-80 note no longer holds.
+- **Fix (same day, the client's ShieldWire spec and Studio run):** flat head-on shots low over the ground never turned. Braked almost to a stop, they were bent down by gravity until their line missed the dome. That left them almost no braking and no turn, so they sank through the band and burst in front of the dome (Studio: 146 of 310 shells in 12 s). Now a shell also turns once its line no longer hits the dome, and one slower than STOPPED (60 studs/s) counts as head-on for the push out, so it is thrown back. The client's case is a test. New measurements (mass 1, 260 studs/s): 0 → 180° (39%), 0.2 → 135° (30%), 0.3 → 80° (28%), 0.5 → 51° (42%), 0.7 → 32° (60%), 0.85 → 21° (73%), 0.95 → 14° (78%).
+
+## S-83 — The shield field inside the dome (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "shell can pass through the shield as it will be slowed down and bounced off while inside the shield. Right now, the shield forces every shell to be outside of it".
+- **Built** (`Shared/Combat/ShieldField`): the field fills the outer `BAND_SHARE` (0.4) of the dome, between the core (0.6 R) and the surface; nothing acts outside the dome.
+  - It takes hold of any enemy shell that crosses the surface moving in.
+  - Braking and the head-on share are as in S-82, measured against the dome's radius.
+  - Steering now turns the path toward the tangent where the shell is (at most to it): inside a sphere, the S-82 "line that grazes the dome" is the local tangent. An off-centre shell bends round inside the dome and leaves through its surface.
+  - The turn is when it no longer closes in. Steering also turns a shell slowed to nothing and bent down by gravity, so the S-82 fix's "line misses the dome" test is gone.
+  - Thrown out until it leaves through the surface. A breach is reaching the core, still closing in.
+  - Hit and breach points are on the surface over the shell, where the client draws them. No wire change.
+- **Band depth** (my call; the client suggested 0.35–0.4 R). Head-on at full charge, at 0.4:
+  - the Phalanx (band 48) stops everything but the Citadel round;
+  - the Carapace (band 32) also lets the siege mortar through.
+  - At 0.5 the Phalanx stops all and the Carapace all but the Citadel round, with cores of 60 / 40 studs. Under review.
+- **Measured** (mass 1, 260 studs/s, full force, R 120; offset → angle out against in, speed kept):
+  - 0 → 180° (38%), 0.2 → 164° (42%), 0.3 → 149° (37%), 0.5 → 81° (31%);
+  - 0.7 → 39° (58%), 0.85 → 24° (81%), 0.95 → 12° (94%);
+  - R 80 within a few degrees.
+- **Consequence (review):** units standing in the band are under shells still slowing down, and a turned shell may burst there.
+- **Tests:** `Shield.spec` 14:
+  - turns happen inside the dome, between the core and the surface;
+  - glancing shells through the rim keep up to 97% of their speed;
+  - the shield profile checks the core (the radar and builder near the edge stand in the band).
+- **Decided (the user, via the client stream):** "Keep 0.4R for now." Checked in Studio on the shield profile (12 s): 230 shells crossed the surface, 219 turned, none got through, and the dome held at 100%. Ravager shells reach about 16 studs into the 48-stud band, Juggernaut shells about 30. The client now lights the hit ripple where a shell crosses the surface (from SHIELD_FIELD) rather than at the turn; no wire change.
+
+## S-84 — A downward pull inside the dome (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "shells should be apply a downward force (like gravity) when insde the dome".
+- **Built** (`Shared/Combat/ShieldField`): while a shell is in the field (braking or thrown out), its ballistic substep uses its weapon's gravity plus `FIELD_GRAVITY`, 60 studs/s² (a shell's own gravity; the same for every mass, like gravity). No wire change: clients step the same module.
+- **Strength:** my call. It is about one shell's gravity, so the S-82 / S-83 shapes stay (head-on back, off-centre round and on) while turned shells arc down.
+- **Effect:** on the client's ShieldWire setup (a Ravager firing head-on at a Phalanx), turned shells land 116–134 studs from the centre, at the dome's edge, against 140–174 before. None reach the 72-stud core. More shells now burst in the band (review).
+- **Tests:** `Shield.spec` 14. Turned shells are checked to land outside the core rather than outside the dome. The flat head-on case checks that turned shells fly back or land (none hang), and that none land in the core.
+
+## S-85 — Light shots destroyed at the dome's surface (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "for small/light shots -> get destroyed instantly, for heavier shot -> use the same mechanic as now for them".
+- **Built:**
+  - `ShieldField.step` destroys a shell lighter than `ABSORB_MASS` (0.5, i.e. under 75 damage) where it crosses the surface moving in. The step stops there with the new `ABSORB` event and the surface point.
+  - `Shield.deflect` drains `HIT_COST` × its mass (as for a turn), emits SHIELD_HIT with `absorbed`, and Projectiles removes it with no burst and no damage.
+  - Heavier shells keep S-82..S-84's mechanic.
+- **Threshold** (my call; the client suggested ~0.5). Destroyed:
+  - machine guns (0.2–0.27);
+  - autocannons (Locust, 0.23);
+  - MLRS rockets (Hydra, Judgement; 0.22–0.39).
+  - Kept on the full mechanic: the Ravager's and Lancer's cannons (0.87, 1.1) and everything heavier.
+- **Wire, protocol 25:**
+  - SHIELD_HIT flag `SHIELD_ABSORBED` 2 (the decoder rejects 3: a shell is turned, through or absorbed).
+  - The client drops the shell with no burst; NetOut sends no IMPACT for it and forgets it.
+  - It never gets a SHIELD_FIELD (destroyed on the tick it enters).
+  - This is a flag rather than an IMPACT at the surface, so the client can tell a dome kill from a burst.
+- **Tests:**
+  - `Shield.spec` 15: a light-shell test (absorbed on the surface, mass in charge, no IMPACT, gone; the test client got the flag and dropped it); the shell-weight test splits light (destroyed) from heavy (turned); the field-shape tests use mass 0.6 for "light".
+  - `Schema.spec`: golden bytes for ABSORBED, the breach-and-absorbed encode error, flags 3 rejected.
+
+## S-86 — Shield domes at 20× strength (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "Lower the shield from the previous x50 down to x20 (its too powerful for now)."
+- **Built:** capacity and recharge 20× S-79's, the same 20 s refill: Phalanx 600 / 30 per s, Carapace 400 / 24 per s. Power draw unchanged (40 / 25 per s), my call as before. A full Phalanx now loses ground to more than ~12 mortar shells a second.
+
+## S-87 — Frames are inert until complete; destroyed, they leave nothing (the user, via the client stream) (2026-10-22)
+
+- **Asked:** "The Bulwark is being built and it still be able to shoot ? No. Every unit in the building process is just a semi-transparent model, if get destroyed, it leaves no wrecks, just gone. It will only be activated when complete".
+- **Audit** of build progress < 1:
+  - already inert: sensors and jamming (Sensors unstamps frames), factory production (only finished factories queue and build), economy output (producers register on completion), missile stockpiles, rearm pads, the shield (empty and down until built);
+  - not inert: weapons (Targeting and Weapons ran for any unit with weapons) and death (wreck and death blast).
+- **Built:** Targeting and Weapons skip frames (no target, no turret motion, no shot). Damage gives a frame no wreck (DEATH `wreckId` 0) and no death blast.
+- **Wire:** none. Build progress already reaches every client that has the unit in its tactical tier, enemies included (ENTER `build`, State BUILD on change); strategic records don't carry it.
+- **Tests:** `Frames.spec` (3): a half-built Bulwark doesn't target or fire at a tank in range for 10 s, then fires once complete; a frame killed with little overkill leaves no wreck where a complete one does; a reactor frame sets off no blast where a complete one does.

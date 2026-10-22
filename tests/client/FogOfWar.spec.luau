@@ -1,77 +1,20 @@
 --!strict
--- Fog of war in 3D (C-32): overlay plates cover exactly the unseen sensor
--- cells and never dip under the drawn ground; light cells are lit by the
--- share of their cells in sight; ghosts come back with the def and spot
--- the client saw; radar contacts are listed for the world.
+-- Fog of war (C-32; the shading itself is the fog blanket since C-100,
+-- FogBlanket.spec): ghosts come back with the def and spot the client saw;
+-- radar contacts are listed for the world.
 
 local Api = require("../../src/client/Api")
 local Commands = require("../../src/client/Core/Commands")
-local Fog = require("../../src/client/Core/Fog")
 local Ghosts = require("../../src/client/Core/Ghosts")
 local NetIn = require("../../src/client/Core/NetIn")
-local Terrain = require("../../src/client/Core/Terrain")
-local Vision = require("../../src/client/Core/Vision")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
 local Spawn = require("../../src/server/Sim/Spawn")
-local MapRegistry = require("@shared/Grid/MapRegistry")
 
 local DT = 1 / 15
 
 return function(t: any)
-	t.test("plates cover exactly the unseen cells, over the terrain, merged where flat", function()
-		local layers = assert(MapRegistry.load("map:coastline"))
-		local v = Vision.new(layers.grid)
-		-- a fake sight map: a disc of seen cells
-		local seenCells = 0
-		for cz = 0, v.depth - 1 do
-			for cx = 0, v.width - 1 do
-				if (cx - 20) ^ 2 + (cz - 30) ^ 2 <= 100 then
-					buffer.writeu16(v.seen, (cz * v.width + cx) * 2, 1)
-					seenCells += 1
-				end
-			end
-		end
-		local bw, bd = Fog.blocks(v)
-		local area, plates, under = 0, 0, 0
-		for bz = 0, bd - 1 do
-			for bx = 0, bw - 1 do
-				for _, p in Fog.blockPlates(v, layers, bx, bz) do
-					plates += 1
-					area += p.sx * p.sz
-					-- the drawn ground stays under the plate across it
-					for _, f in { { -0.5, -0.5 }, { 0.5, -0.5 }, { -0.5, 0.5 }, { 0.5, 0.5 }, { 0, 0 } } do
-						local x, z = p.x + f[1] * (p.sx - 0.01), p.z + f[2] * (p.sz - 0.01)
-						local planeY = p.y + (x - p.x) * p.slopeX + (z - p.z) * p.slopeZ
-						if Terrain.surfaceY(layers, x, z) > planeY + 1e-6 then
-							under += 1
-						end
-					end
-				end
-			end
-		end
-		local unseen = v.width * v.depth - seenCells
-		t.equal(area, unseen * 16 * 16, "the plates' area is exactly the unseen cells'")
-		t.equal(under, 0, "no ground pokes through a plate")
-		print(string.format("    coastline: %d unseen cells in %d plates", unseen, plates))
-		t.expect(plates < unseen / 2, "flat runs merge")
-		-- light levels: full inside the disc, none far away, partial on its edge
-		t.equal(Fog.lightLevel(v, 10, 15), 1)
-		t.equal(Fog.lightLevel(v, 0, 0), 0)
-		local partial = false
-		local lw, ld = Fog.lightSize(v)
-		for lz = 0, ld - 1 do
-			for lx = 0, lw - 1 do
-				local l = Fog.lightLevel(v, lx, lz)
-				if l > 0 and l < 1 then
-					partial = true
-				end
-			end
-		end
-		t.expect(partial, "edge light cells are partly lit")
-	end)
-
 	t.test("a structure seen and then left behind comes back as a ghost where it stood", function()
 		local sim = Sim.new({ seed = 4, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
 		local world = World.new(sim.defs)

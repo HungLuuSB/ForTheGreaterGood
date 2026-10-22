@@ -365,8 +365,9 @@ local PROFILES = {
 		demoOrders = false,
 		restartAfter = nil,
 	},
-	-- the shield dome's test ground (C-89), for when the sim has the Phalanx:
-	-- a dome of radius 120 on (0, -150), Order units under it that don't
+	-- the shield dome's test ground (C-89; a real Phalanx since S-79, C-91):
+	-- its dome of radius 120 on (0, -150), a fusion plant powering its
+	-- recharge, Order units under it that don't
 	-- shoot back (50x health so the test lasts): a vehicle plant at the
 	-- centre for the Cyclops, a radar and three builders near the
 	-- north edge for the short guns to aim at, so their shells cross the
@@ -374,8 +375,7 @@ local PROFILES = {
 	-- weight: Locust autocannons (lightest), Ravager and Juggernaut shells,
 	-- Hellmouth mortars and Hydra rockets on attack-ground at the centre,
 	-- Cyclops siege mortars (heaviest, structures only, spotted by a
-	-- Watcher). Until the sim has it, Invoke("shield") shows the client
-	-- prototype under the camera.
+	-- Watcher).
 	shield = {
 		seed = 11,
 		mapId = "flat:128",
@@ -385,7 +385,9 @@ local PROFILES = {
 		demoOrders = false,
 		restartAfter = nil,
 		spawns = {
-			{ def = "ord_vehplant", player = 1, x = 0, z = -150, health = 50 },
+			{ def = "ord_phalanx", player = 1, x = 0, z = -150, health = 50 },
+			{ def = "ord_fusion", player = 1, x = 0, z = -215, health = 50 },
+			{ def = "ord_vehplant", player = 1, x = 0, z = -110, health = 50 },
 			{ def = "ord_oracle", player = 1, x = -30, z = -60, health = 50 },
 			{ def = "ord_mason", player = 1, x = 30, z = -60, health = 50 },
 			{ def = "ord_mason", player = 1, x = -70, z = -60, count = 2, dx = 140, health = 50 },
@@ -396,6 +398,46 @@ local PROFILES = {
 			{ def = "chs_hydra", player = 2, x = -40, z = 260, count = 2, dx = 80, heading = math.pi, fireAt = { 0, -150 } },
 			{ def = "chs_cyclops", player = 2, x = -50, z = 330, count = 2, dx = 100, heading = math.pi },
 			{ def = "chs_watcher", player = 2, x = 200, z = 60, heading = math.pi },
+		},
+	},
+	-- one shell at a time against the shield (C-96, the user): a Phalanx at
+	-- (0, -150) with its fusion plant, a builder in the dome's core (72 studs)
+	-- as the target, and one Ravager to the north firing at it, its shells
+	-- crossing the dome's north face. Change the Ravager's def to try other
+	-- shells (in range of the builder: chs_juggernaut, chs_locust).
+	shield_one = {
+		seed = 12,
+		mapId = "flat:128",
+		scenario = "empty",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		spawns = {
+			{ def = "ord_phalanx", player = 1, x = 0, z = -150, health = 50 },
+			{ def = "ord_fusion", player = 1, x = 0, z = -215, health = 50 },
+			{ def = "ord_mason", player = 1, x = 0, z = -100, health = 50 },
+			{ def = "chs_ravager", player = 2, x = 0, z = 60, heading = math.pi },
+		},
+	},
+	-- the fog of war blanket (C-100) on a hilly map: an Order base in the
+	-- south-west corner (seen), a scout driving east along the south edge
+	-- (the ground behind it stays explored), the north never seen, with a
+	-- Chaos group there for the moment it is
+	fog = {
+		seed = 13,
+		mapId = "map:ridgeline",
+		scenario = "empty",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		spawns = {
+			{ def = "ord_vehplant", player = 1, x = -380, z = 380 },
+			{ def = "ord_mason", player = 1, x = -330, z = 360, count = 2, dx = 20 },
+			{ def = "ord_lancer", player = 1, x = -360, z = 300, count = 3, dx = 20 },
+			{ def = "ord_herald", player = 1, x = -300, z = 420, heading = math.pi / 2, moveTo = { 420, 420 } },
+			{ def = "chs_ravager", player = 2, x = 200, z = -380, count = 4, dx = 30 },
 		},
 	},
 	-- 50 Lancers, no enemy: for trying selection and orders

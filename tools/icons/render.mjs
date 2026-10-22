@@ -62,6 +62,8 @@ const STOPGAP = {
 	chs_cyclops: "Artillery", // S-75: a siege mortar (structures only)
 	ord_barrier: "Storage", // S-75: a wall segment, no weapon
 	ord_citadel: "Heavy Turret", // S-75: a fortress gun with a SAM and a radar
+	ord_phalanx: "Jammer Tower", // S-79: a shield dome generator
+	chs_carapace: "Jammer Tower", // S-79: a shield dome generator
 };
 
 // Entries drawn in the frame of each def's own domain rather than the

@@ -4,6 +4,34 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, night lighting)
+
+- **Night by default (C-101):** you said the maps have no sun, so the default atmosphere is now a moonlit night: midnight sky, no sun rays, cool neutral light bright enough to read every unit, soft shadows.
+- **Less "plastic":** the sky reflections on terrain, units and the fog blanket are cut to 15% (EnvironmentSpecularScale 0.15), and the light is softer and duller. The shell over steep rocks still shows but is far calmer.
+- **Fog of war under night light:** "explored" is lighter (grey 40 at 40%, was 30 at 52%), otherwise it looked like never seen. All three states read apart, close and at strategic zoom.
+- **Glows stand out:** bloom picks up shells, fire, and the shield dome.
+- **Choice kept:** the settings menu still offers Current (the place as saved), Clear day, Battlefield haze and Dusk.
+- **Screenshots:** `debug_out/screens/lighting_*.jpg`: 35°, 55°, 80°, strategic zoom, a before/after pair (the place's day lighting vs night) and a shield battle at night.
+- **One thing for you:** set Lighting → Technology to **Future** in the place, if it isn't already. Scripts can't read or change it, and Future gives the soft shadows and the glow lights their best look.
+- **Not started:** your glow pass still waits for C's glow assets.
+
+## Summary (2026-10-23, fog of war blanket)
+
+- **Fog of war, BAR style (C-100):** normal lighting everywhere; what your team can't see is darkened by a "fog blanket" draped over the terrain. Visible ground is clear, explored ground desaturated grey (about 40% darker), never-seen ground about 70% darker. Edges are soft, and pixels fade over 0.3 s.
+- **Built on one image per map:** a pixel per grid cell, written live from the team's sight on the wire. The minimap shows the same image.
+- **Old fog removed:** the point-light fog and its plates are gone, with no fog lights and no lighting changes. The settings menu's "Fog lights" is now "Fog of war" (on by default).
+- **Roblox limits:** checked and worked round, details below.
+  - Editable images and meshes work in published games with the Mesh / Image APIs setting on (you turned it on).
+  - A SurfaceAppearance can't be fed from a game script, so the image is the mesh's own texture, with the part 2% transparent so its alpha blends.
+  - The device's editable-mesh memory budget forced a vertex every 16 studs: 4 meshes for a 128-cell map.
+- **Cost:**
+  - at rest: 0.013 ms per update;
+  - a big battle (5% of the map's sight changing every update): about 1.5 ms per update in Lune;
+  - the worst case, the whole map flipping every update: 15.5 ms per update in Studio, 4.9 ms in Lune.
+  - Updates run at most 15 times a second, and a per-update pixel cap spreads huge changes over several updates.
+- **Screenshots:** `debug_out/screens/fogblanket_*.jpg` on ridgeline: 35°, 55°, 80°, strategic zoom, and a before/after pair.
+- **Not started:** your glow pass waits for C's glow assets; realistic lighting is next, as you asked.
+
 ## Summary (2026-10-23, shield domes)
 
 - **Shield mechanic:** decided with you and handed to sim-A to build (request 40). The decisions:
@@ -193,6 +221,16 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `0f8c297` (shield idle hexes keep clear of hit patches; hexagon mesh checked, C-88); test_client 157, test 386, build passed.
 - Ready to merge: `e066303` (shield test scenario, neutral dome fading with charge, radius 120, C-89); test_client 157, test 386, build passed.
 - Ready to merge: `7e2c5d7` (ShieldFx shield dome renderer, review generators, request 40, C-90); test_client 163, test 386, build passed.
+- Ready to merge: `ff3e146` (shield domes from the server, protocol 24, real Phalanx in the shield profile, C-91); test_client 165, test 399, build passed.
+- Ready to merge: `57a7610` (shield profile checked at 50x, docs only); test_client 165, test 399, build passed.
+- Ready to merge: `f5774f4` (ShieldFx on C's shield assets, beam from the generator, shield debug counts, S-82 checked, C-94); test_client 165, test 400, build passed.
+- Ready to merge: `f390838` (shield field inside the dome checked, docs only); test_client 165, test 400, build passed.
+- Ready to merge: `eae1f16` (shield hits on entry, white-grey hexagons, thin rings from RingThin, C-95); test_client 165, test 400, build passed. RingThin's ID is on m-models (models-C), used by its asset ID.
+- Ready to merge: `c4b6c67` (shield ripple on its first frame, shield_one profile, C-96); test_client 165, test 400, build passed.
+- Ready to merge: `a1b6c7d` (force plumes on shells in a shield field, absorbed shells dropped (protocol 25), C-97); test_client 167, test 401, build passed.
+- Ready to merge: `4f9fe7c` (shells in a shield field burn: bow shock and trail, C-98); test_client 167, test 401, build passed.
+- Ready to merge: `92be867` (shield hits on the crossing frame, absorbed shells end mid-tick, unfinished units see-through, minimap 10 Hz, server build debug query, C-99); test_client 169, test 404, build passed.
+- Ready to merge: `693a3b7` (fog of war blanket, point-light fog removed, fog profile, C-100); test_client 171, test 404, build passed.
 
 ## Tasks
 
@@ -521,6 +559,194 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: night lighting by default (C-101)
+
+- **Why:** you said the maps have no sun ("we play in dark environment/time"), and asked for realistic lighting with no brightness and shadow control, to calm the "plastic wrapping" look of the fog blanket.
+- **The `night` preset** (`Render/Atmosphere`, first in the list and the default in `Core/Settings`), tuned in Studio on ridgeline:
+  - **Sky:** ClockTime 0 (midnight), sun rays off.
+  - **Light:** Brightness 2.5, ambient (112, 118, 132), outdoor ambient (140, 146, 162), exposure +1.1, so units read clearly. Shadow softness 0.6.
+  - **Sheen:** environment specular 0.15 (was 1) and diffuse 0.6. This removes most of the glossy sky reflection that made the blanket and rocks look wrapped in plastic.
+  - **Air:** Atmosphere density 0.2, offset 0.15, haze 0.6, a dark blue-grey colour. First tried at 0.3 and haze 1, but that washed the map flat at strategic zoom.
+  - **Bloom:** intensity 0.8, size 26, threshold 1.2, so shells, fire and shield effects glow.
+  - **Colour:** contrast +0.1, saturation −0.18, a faint cool tint.
+- **Presets** gain two optional fields, `specular` and `diffuse` (EnvironmentSpecularScale and EnvironmentDiffuseScale), captured with the place's own values so Current restores them.
+- **Fog blanket:** the explored look is now grey 40 at alpha 0.4 (was 30 at 0.52). Under the night light, explored and never-seen ground looked alike.
+- **Settings:** the default atmosphere is `night`. A player who saved another preset keeps it. `Settings.spec` updated.
+- **Lighting.Technology** can't be read or set by a script (RobloxScript capability), so the place keeps its own. Future is recommended.
+- **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline):
+  - `lighting_35.jpg`, `lighting_55.jpg`, `lighting_80.jpg`, `lighting_strategic.jpg`;
+  - `lighting_before.jpg` (the place's day lighting) and `lighting_after.jpg` (night), the same view;
+  - `lighting_shield.jpg`: the `shield` profile's battle at night.
+- **Seen in the console:** `rbxassetid://203785492 failed due to: Asset type does not match requested type`. It isn't in this repo, so it's place content (probably the Sky); not new.
+
+## 2026-10-23: fog of war blanket (C-100)
+
+- **Why (your brief):** the point-light fog read as night with flashlights. It made bright blotches where circles overlapped, was capped by the light limit (470-stud culling) and didn't match the sim's cell vision. It's replaced by a BAR-style blanket: normal light everywhere, and what you can't see darkened.
+- **States:**
+  - **visible:** clear;
+  - **explored:** a cool grey layer at 52%, so desaturated and about 40% darker;
+  - **never seen:** near black at 74%, about 70% darker.
+  - Ghosts of structures show as before: they stand above the blanket.
+  - Each pixel's look blends its four nearest sight cells, for soft edges about a sight cell wide, and fades to a new look over 0.3 s.
+- **Pieces:**
+  - `Core/FogBlanket` (pure, `FogBlanket.spec`, 3 tests): states, the explored memory, blending, fades, the changed rectangle, and the real sim's sight driving it (a scout clears ground and leaves it explored).
+  - `Render/FogBlanket`:
+    - one EditableImage (128 × 128 for current maps, 64 KB) and 4 EditableMesh chunks draped over the terrain;
+    - a vertex every 16 studs, 1 stud above the highest ground within 8 studs, so ridges stay under it;
+    - vision read and only the changed rectangle uploaded, at most 15 times a second.
+  - The minimap has a Fog layer showing the same image, over the terrain and under the unit dots.
+- **Removed:**
+  - `Render/FogOfWar` (point lights, ColorCorrection, plates) and `Core/Fog`;
+  - their plate and light test (the ghost and contact tests stay in `FogOfWar.spec`);
+  - the "Fog lights" setting, now "Fog of war", on by default; it only turns the shading off, and hidden units stay hidden.
+  - Lights are now only for glow effects.
+- **Roblox rules found on the way:**
+  - EditableImage and EditableMesh work in published games with the experience's Mesh / Image APIs setting on. Images are up to 1024 × 1024, meshes up to 20,000 triangles, and each device has an editable-memory budget.
+  - A SurfaceAppearance in transparency mode shows the image with alpha, but a game script can't set its ColorMapContent (it needs Plugin capability). A Texture on the mesh projected wrongly.
+  - What works: the MeshPart's own TextureContent by UVs, with the part at Transparency 0.02. At 0 it shows the part's colour under clear pixels.
+  - A MeshPart made from an EditableMesh keeps the mesh's own origin, so the vertices are in world space and the part sits at (0, 0, 0).
+  - The mesh can't be freed while it's shown: destroying the EditableMesh empties the MeshPart.
+  - The Studio client's editable-mesh budget ran out after about 7,600 vertices at a vertex per 8 studs. At one per 16 studs a 128-cell map is 4,356 vertices in 4 chunks, and fits.
+  - Roblox samples this texture without smoothing, so the soft edges are blended in the image itself.
+- **Measured** (Studio playtest, `fog` profile, ridgeline):
+  - At rest: 0.013 ms per update (worst 0.31).
+  - Stress, `Invoke("fogstress")`: every sight cell on the map flips every update, the whole image rewritten and uploaded each time, worse than any battle. Average 15.5 ms per update, worst 17.6, at 15 updates a second.
+  - In Lune, the core alone per update: whole map flipping 4.9 ms (worst 7.1); a quarter of the map 3.0 ms; a big battle with 5% of the map's cells changing 1.45 ms (worst 2.7).
+  - A per-update cap of 3,000 pixels spreads larger changes over the next updates.
+  - Building the blanket: 0.4–1.1 s at match start in its own thread.
+  - **Memory:** the image 64 KB, CPU-side buffers about 400 KB, the meshes 4 × 1,089 vertices. The client's total in Studio didn't move measurably (2,343 → 2,351 MB during the stress, Studio noise).
+- **Screenshots** (`debug_out/screens/`, `fog` profile on ridgeline: your base south-west, a scout driven east along the south edge, the north never seen):
+  - `fogblanket_35.jpg`, `fogblanket_55.jpg`, `fogblanket_80.jpg`, `fogblanket_strategic.jpg`;
+  - before/after, the same view without and with the blanket: `fogblanket_before.jpg`, `fogblanket_after.jpg`.
+  - All three states show: clear round the units, grey along the scout's path, dark to the north.
+- **Known:**
+  - On steep rock formations the blanket floats as a visible shell over the peaks. It's a 16-stud drape over sharp terrain, and it's lit like a surface: your "plastic wrapping".
+  - Neon (unlit) looked worse, with a white glow on the rocks. Matte Fabric removes the sun glints.
+  - The lighting pass you asked for next (no brightness, shadow control) should calm the rest, and you said the maps may have no sun at all.
+- **Debug:** `Invoke("fogshow", on)`, `Invoke("fogstress", seconds)`, `Invoke("fogpattern")` (a test image), `Invoke("fog")` stats.
+- **New `fog` profile** on ridgeline.
+
+## 2026-10-23: shield hits on the crossing frame; destroyed shells gone at once; unfinished units see-through; minimap 10 Hz (C-99)
+
+- **Reflect effect still late (found the cause):** SHIELD_FIELD is due on the tick a shell crosses. The client applied it only at that tick's end, so for a whole tick the shell flew on plainly, unbraked and a tick deep into the dome (about 13 studs for a Ravager shell), before its hit showed and the field took hold.
+  - Now, during the tick before, the client steps the shell through the field from the tick's start, as the server does, and shows the hit on the frame its drawn path crosses the surface.
+  - `ShieldWire.spec` renders in quarter-tick frames like the game: the shell is within 6 studs of the surface when its hit shows. It was 12.6 studs off before the fix; checked by turning the fix off.
+- **Destroyed shells travelling on (S-85 rounds):** the absorbed SHIELD_HIT now ends the shell where its drawn path meets the dome, like an IMPACT, instead of at the tick's end. Spec: never drawn more than 4 studs inside.
+- **Shield effects follow the sim speed:** the ripple and plates pause and slow with the shells, which helps to see them at 0.1x.
+- **Units under construction (your rule):** drawn semi-transparent until complete, then solid.
+  - Studio: a Bulwark see-through with its build bar, solid at 1800/1800 when done (`debug_out/screens/c99_bulwark_building.jpg`, `c99_bulwark_done.jpg`).
+  - The rest is the server's and is in main (S-87): no firing or other function while unfinished, and no wreck when destroyed.
+- **Minimap:** unit dots refresh 10 times a second, up from 3. The guide says the strategic rate (guide 15.8), and the strategic records themselves still come at 2–4 Hz.
+- **Shield 20x (your call):** done by sim-A (S-86): Phalanx 600 at 30/s, Carapace 400 at 24/s. Unfinished units are inert and leave no wreck (S-87), and enemies get build progress too, so their frames are drawn see-through as well.
+- **Studio:** `c99_shield_entry.jpg` (shield profile, 0.1x, frozen on the hit's frame): the ripple and hexagon at the point where the shell is crossing the surface.
+- **Debug:** a server query `FtggDebug:Invoke("build", builderId, defId, x, z)`.
+- **Not done yet:** your glow pass (emissive states, lights, 200-unit cost). It waits for C's glow assets to merge (`docs/contracts/fx.md` has no glow section yet).
+
+## 2026-10-23: shells burn in the field like a meteor (C-98)
+
+- **Your drawing:** a curved front ahead of the shell, like atmospheric entry. This replaces C-97's plume, which stretched ahead of the shell.
+  - **Bow shock:** C's dome mesh flattened into a glowing cap, curved round the shell's nose on the side the field pushes from.
+  - **Burning trail:** streams back from the shell along the force.
+  - Both grow with the force, and with the shell's weight.
+- **Colour:** white-hot with a little orange (burning); you chose to keep it. The hexagons stay white and grey.
+- **Pool:** the same fixed pool of 32, made once C's dome mesh has loaded.
+- **Screenshot:** `debug_out/screens/c98_shield_bow_shock.jpg`: `shield_one`, frozen with a Ravager shell braking, side on. The shock front is on its nose, the trail behind it, and its entry hexagons on the right.
+
+## 2026-10-23: force plumes on shells in the dome; light shells absorbed (C-97, S-84, S-85)
+
+- **Force plume (your request):** a shell inside the dome shows the force on it, a glowing plume on the side the field pushes from, flowing into the shell.
+  - The force is the field step's change of velocity over a tick, minus the weapon's own gravity (`ShieldLook.force`, `ShieldLook.spec`). So it follows the shot and the dome's centre: braking against the shot, steering and the push out.
+  - The plume is 2–14 studs long by strength, and wider for heavier shells.
+  - A fixed pool of 32 beams, made on first use.
+  - `debug_out/screens/c97_shield_force_plume.jpg`: `shield_one` at 0.1× speed, frozen with a Ravager shell braking. Its entry hexagons are on the right, and its plume stretches ahead of it toward the centre.
+- **S-84 (sim-A):** inside the field shells feel an extra 60 studs/s² of gravity on top of their own, so turned shells arc down at the dome's edge. Nothing to change on the client: it steps them with the shared field.
+- **S-85 (sim-A, protocol 25):** shells under mass 0.5 (75 damage: machine guns, the Locust autocannon, Hydra and Judgement rockets) are destroyed where they cross the surface. SHIELD_HIT carries the new ABSORBED flag.
+  - The client drops the shell with no burst and lights the dome at the crossing.
+  - `ShieldWire.spec`: a Locust's rounds are destroyed at the surface, none is drawn inside, and nothing bursts inside.
+- **Debug:** `Invoke("camera", x, z, distance, pitch, yaw)` now takes a yaw.
+
+## 2026-10-23: the shield ripple shows on its first frame; a one-attacker test profile (C-96)
+
+- **You still saw the ripple late.** The entry effect did fire on the crossing tick: in Studio it lit for 197 of 197 shells. But a Ravager shell turns only about 1.5 ticks (0.1 s) after it enters, and C's ripple grew from size 0, so it was barely visible until around the turn.
+  - **Fix:** the ripple now starts at a third of its size and fully opaque on its first frame, then spreads and fades.
+  - **Checked** in `shield_one` at 0.1× speed, freezing sim and effects on the frame the entry fires: the white hexagon and the ripple rings sit at the surface with the shell just crossing it (`debug_out/screens/c96_shield_entry_frozen.jpg`).
+- **`shield_one` profile (your idea):** one Phalanx, its fusion plant, a builder in the dome's core as the target, one Ravager to the north. Change the Ravager's def to try other shells.
+- **A shell that never showed entering** (one destroyed on contact, or a missed SHIELD_FIELD) now lights the dome at its SHIELD_HIT. That's ready for your next rule.
+- **Sent to sim-A** (field rules, theirs to build):
+  - extra downward force on shells inside the dome, like gravity;
+  - light shots destroyed instantly on contact, heavy ones on the current mechanic. I suggested a cut near mass 0.5 (75 damage): the Locust autocannon and Hydra rockets destroyed, cannon shells turned.
+- **Debug:** `Invoke("shielddomes")` now reports entries, domes lit, and the average ticks from entry to turn.
+
+## 2026-10-23: shield hits on entry, white-grey hexagons, thin rings (C-95)
+
+- **Band depth:** you kept the band at 0.4R. sim-A has closed the review item.
+- **Hit shows at once:** the hit effect was late because the server's SHIELD_HIT comes at the turn, 16–30 studs inside the dome after braking. The client now lights C's ripple and the hexagon plates the moment a shell crosses the surface: SHIELD_FIELD goes out on that tick, and the point is the shell's position projected onto the dome. The turn adds nothing more; a breach still flashes. No wire change, and sim-A has noted it in S-83.
+  - `ShieldWire.spec`: every turned shell first lit the dome on entry, on the surface, ticks before its turn.
+- **Hexagons white and grey (your call):** white at their hottest, fading to grey; no red or orange (`Shield.color`, `Shield.spec`).
+- **Thin rings:** the flowing rings use models-C's RingThin (`111379471786973`; tube 0.2% of the radius, about 0.24 studs on a 120-stud dome) instead of adornments. C's Ring stays as the foot ring.
+- **Studio, shield profile:** 149 turns and 0 breaches in 8 s, dome at 100%, and the meshes loaded (dome, foot, thin rings). Screenshots:
+  - `debug_out/screens/c95_shield_entry_close.jpg`: at 0.25× speed, the grey-white hexagons and ripple where shells crossed, the shells already inside;
+  - `c95_shield_thin_rings.jpg`: the whole dome with the thin rings.
+
+## 2026-10-23: the shield field inside the dome checked (S-83)
+
+- You asked for shells to pass through the surface and be slowed and turned inside the dome, not stopped outside it. sim-A moved the field band into the outer 40% of the dome (S-83): the core is 72 studs on the Phalanx and 48 on the Carapace. No client change: the client steps shells with the shared field, and hits stay on the surface where the ripple is drawn.
+- **Lune:** `ShieldWire.spec` passes unchanged. With the same setup, Ravager shells go about 16 studs inside the dome before turning, and the heavier Juggernaut shells about 30, out of a 48-stud band.
+- **Studio, shield profile, 12 s:** 230 shells crossed the surface, 219 turned back, 0 broke through, and the dome held at 100% (`debug_out/screens/c95_shield_inner.jpg`). At 0.1x sim speed the shells show inside the foot ring, slowing there (`c95_shield_inner_slow.jpg`).
+- **For your review (from sim-A):**
+  - **Head-on at full charge:** the Phalanx stops everything except the Citadel round. The Carapace's 32-stud band also lets the siege mortar through. A band of 0.5R would stop both on the Phalanx and leave only the Citadel round on the Carapace.
+  - **Units in the band** can be hit by shells still slowing down there.
+
+## 2026-10-23: C's shield assets in ShieldFx; S-82's field checked (C-94)
+
+- **C's shield FX** (models request, `docs/contracts/fx.md`, `assets/fx/shield/roblox_assets.json`) replaces the placeholders:
+  - the Dome hemisphere mesh, so it no longer sinks into the ground as a full ball;
+  - C's Ring as the bright ring at the dome's foot;
+  - the beam texture, rising from the generator's own `beam` attachment (the Phalanx and Carapace blockouts);
+  - the swirl decal turning at the top;
+  - the speck and ripple textures (a hit is one ripple particle lying flat on the dome).
+- **Generator core:** it now glows green → orange → red with the charge, with no placeholder ball.
+- **Meshes:** built from their IDs at runtime, once, in their own thread (I don't touch FTGG Art). Domes wait for them.
+- **Your rules over the contract:** the dome stays neutral white, its opacity follows charge, and it isn't ForceField. Everything is tinted white, not team colour.
+- **Flowing rings:** they stay thin adornments. C's Ring scales its tube with the ring, a 2.4-stud ribbon on a 120-stud dome. I've asked models-C for a thinner one.
+- **S-82** (the field after your drawing) plus sim-A's stalling fix (28bc934), shield profile, 12 s: 271 of 288 shells turned back, 0 broke through, the dome stayed at 100%.
+  - Before the fix, about half the shells stalled in the field. I sent sim-A a reproduction from `ShieldWire.spec`, now in sim-A's `Shield.spec` too.
+  - In sim-A's measurements, off-centre shots now carry on round the dome: 51° at half the radius off-centre, 14° near the edge. Head-on shots come back at 180°.
+- **Screenshots:** `debug_out/screens/c94_shield_assets.jpg` (the scenario), `c94_shield_assets_side.jpg` (generator, beam, swirl, rings).
+- **Debug:** `Invoke("shielddomes")` now also counts hits and keeps the last breaches (mass, position) for sim-A.
+
+## 2026-10-23: shield profile checked at 50x strength (S-80, S-81)
+
+- After merging S-80 (your 10x, and the near-mirror bounce: PUSH 2800, TANGENT_DRAG 0.3) and S-81 (your 50x: Phalanx 1500 charge at 75/s, Carapace 1000 at 60/s; the power draw is still 40 / 25 per second, sim-A's call), I ran the `shield` profile in Studio. Under the full barrage the Phalanx dome stayed at 100% for all 12 s measured. 167 of 171 shells that entered its field turned back and 4 broke through. Turned shells fly back out and land in front of the attackers, live (`debug_out/screens/c92_shield_x50.jpg`).
+- No client change: the client reads the radius from the def and the charge from SHIELD, and steps shells with the shared field.
+- sim-A's note that main's client tests failed on the Phalanx and Carapace icons was already fixed by C-91 (both borrow the Jammer Tower icon). With main merged: test_client 46 specs, 165 passed.
+
+## 2026-10-23: shield domes from the server (protocol 24, S-79, request 40) (C-91)
+
+- **You couldn't see a shield in the shield scenario:** the profile only spawned units, and until S-79 the sim had no shield. I first added a client-only stand-in. While it was in review, sim-A shipped the real thing (S-79: `ord_phalanx`, `chs_carapace`, `Shared/Combat/ShieldField`, events SHIELD, SHIELD_FIELD, SHIELD_HIT), so the stand-in went and the client now draws the server's shields:
+  - **SHIELD:** `world.shields[generatorId] = { charge 0..1, flags }`, dropped on LEAVE, DEATH and WELCOME.
+  - **SHIELD_FIELD:** the shell steps with `ShieldField.step` instead of the plain ballistic step until its phase is DONE, both per tick and drawn between ticks (`Core/Effects`).
+  - **SHIELD_HIT:** a turned missile loses its target, and the hit goes to `fx.shieldHits`.
+  - **`Render/ShieldDomes`:** a ShieldFx dome on every generator the client has, round its base, with radius from the def. Strength is the server's charge. It collapses when UP clears, deploys when UP returns, and comes into view already standing without a deploy animation. Hits light the dome they name, or the nearest dome round the point if the generator is hidden.
+- **Lune** (`ShieldWire.spec`, real sim and client stack):
+  - the client's charge and UP flag follow the server's, collapse included;
+  - shells in the field are stepped like the server's (worst 0.07 studs off over 43 shell-ticks);
+  - 9 Ravager shells turned back on a full dome, no breach, each hit on the dome surface.
+- **`shield` profile:** a real Phalanx on the spot (radius 120, 50× health), a fusion plant powering it, the vehicle plant moved north of it.
+- **Studio:**
+  - The dome stands on the Phalanx. In 15 s, 72 shells entered its field and 63 turned back, and the turned shells land back outside, live (`debug_out/screens/c91_shield_scenario.jpg`).
+  - **Still too weak at today's numbers:** the barrage drains the server's capacity of 30 within a second of each rise. Your 10× is with sim-A (below).
+- **Fixed:** two domes appeared on one generator. The first ShieldFx built its hexagon mesh with `CreateMeshPartAsync`, which yields, and the next frame made a second dome. `new()` now never yields: the plate pool builds in its own thread, and the capacity bar's PlayerGui is looked up, not waited for.
+- **Icons:** `ord_phalanx` and `chs_carapace` borrow the Jammer Tower icon until the catalogue lists them. The sheet is byte-identical, so no re-import is needed.
+- **Sent to sim-A** (the numbers are theirs):
+  - **Your "boost 10x":** capacity ×10 with the same refill time, so Phalanx 30 → 300 and recharge 1.5 → 15; Carapace 20 → 200 and 1.2 → 12.
+  - **Your "the deceleration is so weak, it reflected 0 shots":** that was my stand-in, which couldn't move shells; the server's field (braking doubled in S-79) turns them back.
+  - **Your new deflection rule:** a head-on shot goes straight back, and a glancing one bounces off at an angle. I measured the shared field:
+    - head-on shells go straight back;
+    - glancing shells are diverted the right way, but leave much steeper than a mirror bounce (30° → 20°, 50° → 29°, 70° → 36°), because the field's sideways drag (TANGENT_DRAG 1.5) takes most of their sideways speed;
+    - suggested 0.2–0.3 or none.
+- **Debug:** `Invoke("shielddomes")` returns the client's domes and SHIELD records.
+
 ## 2026-10-23: ShieldFx — the shield dome renderer (C-90)
 
 - **`Render/ShieldFx`**, your interface: `ShieldFx.new(emitterAttachmentOrPosition, radius, teamColor)`, then `:deploy()`, `:setStrength(0..1)`, `:hit(worldPos, intensity)`, `:collapse()`, `:destroy()`. `Core/ShieldLook` (pure, `ShieldLook.spec`, 6 tests) holds:
@@ -740,6 +966,19 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Night lighting (C-101):** `debug_out/screens/lighting_*.jpg`. Your calls:
+  - **How dark:** brightness and exposure (`Render/Atmosphere`, `night`), bright enough to read units today.
+  - **The cool tint** and the desaturation.
+  - **The lighter explored fog** (grey 40 at 40%).
+  - **Technology = Future** in the place (only you can set it).
+
+- **Fog of war blanket (C-100):** `debug_out/screens/fogblanket_*.jpg`. Your calls:
+  - **The three looks:** explored grey at 52%, never seen near black at 74%, a slightly cool tint (`Core/FogBlanket.LOOK`, `TINT`).
+  - **The soft edge,** about a sight cell (16 studs) wide.
+  - **The shell over steep rocks,** to revisit after the lighting pass.
+  - **The worst-case cost:** whole-map flips at 15.5 ms per update in Studio.
+  - **"Fog of war" on by default** in the settings menu.
+
 - **ShieldFx look (C-90):** `debug_out/screens/shieldfx_*.jpg`. Your calls:
   - **Dome look:** a tinted ball with an edge ring, not the ForceField material (it read grey in the C-87 tests).
   - **Placeholder shapes and timings:** 9 rings, a 5 s ring trip, flicker below 30%.
@@ -795,7 +1034,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-40. **Open.** **Shield generators on the wire (2026-10-23, the user asked; the client draws them with `Render/ShieldFx`, C-90):**
+40. **Done and used (S-79, protocol 24; C-91).** **Shield generators on the wire (2026-10-23, the user asked; the client draws them with `Render/ShieldFx`, C-90):**
     - **Mechanic** (the user's rules):
       - A shield generator structure (no vehicle shield). Order's dome is bigger than Chaos's; the client prototype uses radius 120 (Order) and 80 (Chaos), placeholders.
       - Charge draws power to recharge.
@@ -803,7 +1042,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
       - Full force at ≥50% charge, scaling down below that, so big shells break through, slowed.
       - The dome collapses at 0% and rises again at 25%.
       - Bounced shells stay **live**: they explode where they land.
-      - The client's placeholder numbers are in `src/client/Core/Shield.luau`.
+      - The client's placeholder numbers are in `src/client/Core/Shield.luau`. Since C-91 the shield is 10x stronger (the user): 0.004 charge per unit of shell weight turned back, 0.002 per breach, recharge 5%/s.
     - **Per shield, on the generator's record**, for everyone who can see it (enemies included, since the dome is visible):
       - radius;
       - strength fraction (u8 is enough);
