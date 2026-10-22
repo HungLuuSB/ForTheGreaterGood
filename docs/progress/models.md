@@ -389,6 +389,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `8280442` (BAR pair 17: MBTs ord_paladin / chs_juggernaut as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `34fb5f0` (BAR pair 18: MLRS ord_judgement / chs_hydra as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `a27b0c7` (BAR pair 19: radar SAM trucks ord_seraph / chs_gorgon as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `8114092` (BAR pair 20: fire-control radars ord_arbiter / chs_stalker as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 
