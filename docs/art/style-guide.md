@@ -58,7 +58,10 @@ The standard for every BAR-style mesh, new ones included:
 - **Glow has a job.** Faction accent (Order cool cyan / white, Chaos hot amber / orange) on things that would light up: sensors and sensor eyes, running and tail lights, engine exhausts, reactor and generator cores, extractor drills, factory doors and build lights, the muzzle area. Never glow for decoration only.
 - **Never team-colored.** Team color stays on the painted panels. Headlights are neutral warm white on both factions.
 - **Small and bright beats big and dim.** About 5–10% of the visible surface; it must still read at 55° and 220 studs without washing out the team panels. Large flat buildings sit lower (2–3%): concentrate their glow at the door and the working parts, not on the roof.
-- **All in the emissive mask**, never `Light` objects: in Blender, glowing faces use the kinds `light` (running), `head`, `power` and `weapon` (`assets/models/tools/unit.py`); the runner bakes them into the maps and splits each kind into its own glow part, so the client can drive the channels apart (docs/contracts/fx.md, "Unit glow").
+- **All in the emissive mask**, never `Light` objects: in Blender, glowing faces use the kinds `light` (running), `head`, `power` and `weapon` (`assets/models/tools/unit.py`); the runner bakes them into the maps and splits each kind into its own glow part, so the client can drive the channels apart (docs/contracts/fx.md, "Unit glow"). In Studio a glow part's color is its channel tint (`BasePart.Color` and `EmissiveTint`, no color map); a white albedo washes the glow out to white.
+- **Factories show production:** every factory gets door-frame build lights on `power` (jambs and lintel, proud of the wall), so the client's production pulse reads (Order vehicle plant: jambs, ticks and lintel; Chaos: the shed-door slats).
+- **Sensor faces:** a radar or sensor face is unlit with a glowing edge and thin lines, never a whole glowing panel: it outshines everything at the game camera.
+- **Team colors:** check each new glow against the lobby's team colors (`src/client/Render/TeamColors.luau`); a team color in the faction's glow hue makes the glow read as team paint.
 
 ## Size
 
