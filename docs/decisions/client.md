@@ -681,3 +681,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - a Highlight outline vanished on a transparent ball, and only 31 can show at once;
 - BillboardGuis don't render in the playtest, so the bar is a screen-space frame like the game's other overlays;
 - plates cooling into team colour turned pink against the red.
+
+### C-88 — Shield idle hexes keep clear of hit patches (2026-10-23)
+
+**Decision:** `Shield.idle` starts no flicker near a live hit patch: within IDLE_CLEAR (14 studs) plus the patch's rings. `Shield.hit` removes idle flickers that close to a new hit. With EditableMesh now on in the experience, plates are the one-mesh hexagon prism. The three-rectangle fallback stays for places without the API.
+
+**Why:** in the Studio re-check with the real hexagons, a pale blue idle flicker drew over a red-hot patch and read as a glitch.

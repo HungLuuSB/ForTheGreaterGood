@@ -500,6 +500,11 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shield hexagons as one mesh (C-88)
+
+- You turned on EditableMesh, so the plates now use the hexagon prism: one MeshPart each, clean edges, no star seams. That's a third of the parts the three-rectangle fallback needed (`debug_out/screens/c88_shield_hex_mesh.jpg`, normandy). No warning or error in the console.
+- Idle team-coloured flickers no longer draw over a live hit patch. A flicker won't start next to one, and a new hit clears the flickers around it (`Shield.spec`, 12 tests).
+
 ## 2026-10-23: shield dome prototype, client only (C-87)
 
 You asked for a client-only prototype of the plasma deflector, with no sim change. `Core/Shield` holds the logic (`Shield.spec`, 11 tests) and `Render/ShieldFx` draws it. `FtggClientDebug:Invoke("shield", seconds?)` starts a test dome under the camera with fake fire heavier than its recharge, so it runs down, collapses and rises again.
@@ -639,7 +644,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 ## Needs my review
 
 - **Shield prototype (C-87):** the look, in `debug_out/screens/c87_shield_*.jpg`. Your calls:
-  - **Clean hexagons, without star seams:** turn on EditableMesh in Game Settings → Security ("Allow Mesh / Image APIs"), or let me upload one hexagon mesh to your account. Until then the rectangle fallback stays.
+  - ~~Clean hexagons~~: done, you turned on EditableMesh (C-88).
   - **Placeholder tuning:** field band 50 studs, full force at 50%, rise at 25%, 0.04 charge per unit of mass, recharge 0.05/s.
   - **Still open for sim-A:** harmless or live bounced shells, a Chaos version, vehicle or structure.
 
