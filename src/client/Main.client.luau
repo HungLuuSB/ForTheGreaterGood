@@ -476,7 +476,8 @@ if RunService:IsStudio() then
 			for id, r in world.shields do
 				records[tostring(id)] = r
 			end
-			return { domes = domes, records = records, hits = shieldDomes.stats }
+			local st = shieldDomes.stats
+			return { domes = domes, records = records, hits = { hits = st.hits, breaches = st.breaches, enters = st.enters, lit = st.lit, lagTicks = st.lagSum / math.max(st.lagN, 1), lastBreaches = st.lastBreaches } }
 		elseif query == "camera" then
 			-- Invoke("camera", x?, z?, distance?, pitchDegrees?): put the camera there (screenshots)
 			local x, z, distance, pitch = ...

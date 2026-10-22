@@ -760,3 +760,15 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - Since S-83 the turn happens deep inside the dome after braking, so the hit at the turn read as late. The user wants it as the shell enters.
 - The user asked for the hexagons in white or grey, not red or orange.
 - models-C made RingThin for C-94's request.
+
+### C-96 — Shield ripple visible on its first frame; a one-attacker shield profile (2026-10-23)
+
+**Decision:**
+- **Ripple:** C's ripple particle starts at 35% of its size, opaque, reaches 70% at 15% of its life, then 100% while fading.
+- **Turn hits:** `ShieldDomes` lights a SHIELD_HIT turn only for a shell it hasn't seen enter (tracked by projectile id).
+- **`shield_one` profile:** one Phalanx, one Ravager, one target in the core.
+
+**Why:**
+- With S-83's inner band a light shell turns about 0.1 s after crossing. A ripple growing from 0 became visible only then, so the user read it as playing at the push-back.
+- The user suggested testing with one unit.
+- Light shots may soon be destroyed on contact (sent to sim-A), and those may never send a SHIELD_FIELD.

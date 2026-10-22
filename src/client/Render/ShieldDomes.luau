@@ -34,11 +34,11 @@ end
 export type State = {
 	domes: { [number]: Dome },
 	-- SHIELD_HITs seen (debug): totals and the last few breaches { mass, x, y, z }
-	stats: { hits: number, breaches: number, lastBreaches: { { number } } },
+	stats: { hits: number, breaches: number, lastBreaches: { { number } }, enters: number, lit: number, lagSum: number, lagN: number, enteredAt: { [number]: number } },
 }
 
 function ShieldDomes.new(): State
-	return { domes = {}, stats = { hits = 0, breaches = 0, lastBreaches = {} } }
+	return { domes = {}, stats = { hits = 0, breaches = 0, lastBreaches = {}, enters = 0, lit = 0, lagSum = 0, lagN = 0, enteredAt = {} } }
 end
 
 -- Each frame, after Effects.update.
@@ -89,8 +89,18 @@ function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx, renderer
 		end
 	end
 	for _, h in fx.shieldHits do
-		if h.kind ~= "enter" then
-			s.stats.hits += 1
+		local st = s.stats
+		if h.kind == "enter" then
+			st.enters += 1
+			st.enteredAt[h.projId] = h.tick
+		else
+			st.hits += 1
+			local at = st.enteredAt[h.projId]
+			if at then
+				-- ticks from the shell's entry to its turn (debug)
+				st.lagSum += h.tick - at
+				st.lagN += 1
+			end
 		end
 		if h.breach then
 			s.stats.breaches += 1
@@ -110,8 +120,15 @@ function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx, renderer
 				end
 			end
 		end
-		if d and h.kind ~= "turn" then
+		-- a turn lights the dome only for a shell that never showed entering
+		-- (destroyed on contact, or one whose SHIELD_FIELD the client missed)
+		local entered = h.kind == "turn" and st.enteredAt[h.projId] ~= nil
+		if h.kind ~= "enter" then
+			st.enteredAt[h.projId] = nil -- done with this shell
+		end
+		if d and not entered then
 			d.fx:hit(Vector3.new(h.x, h.y, h.z), if h.breach then h.mass * 1.5 else h.mass)
+			st.lit += 1
 		end
 	end
 	table.clear(fx.shieldHits)

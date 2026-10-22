@@ -526,6 +526,18 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: the shield ripple shows on its first frame; a one-attacker test profile (C-96)
+
+- **You still saw the ripple late.** The entry effect did fire on the crossing tick: in Studio it lit for 197 of 197 shells. But a Ravager shell turns only about 1.5 ticks (0.1 s) after it enters, and C's ripple grew from size 0, so it was barely visible until around the turn.
+  - **Fix:** the ripple now starts at a third of its size and fully opaque on its first frame, then spreads and fades.
+  - **Checked** in `shield_one` at 0.1× speed, freezing sim and effects on the frame the entry fires: the white hexagon and the ripple rings sit at the surface with the shell just crossing it (`debug_out/screens/c96_shield_entry_frozen.jpg`).
+- **`shield_one` profile (your idea):** one Phalanx, its fusion plant, a builder in the dome's core as the target, one Ravager to the north. Change the Ravager's def to try other shells.
+- **A shell that never showed entering** (one destroyed on contact, or a missed SHIELD_FIELD) now lights the dome at its SHIELD_HIT. That's ready for your next rule.
+- **Sent to sim-A** (field rules, theirs to build):
+  - extra downward force on shells inside the dome, like gravity;
+  - light shots destroyed instantly on contact, heavy ones on the current mechanic. I suggested a cut near mass 0.5 (75 damage): the Locust autocannon and Hydra rockets destroyed, cannon shells turned.
+- **Debug:** `Invoke("shielddomes")` now reports entries, domes lit, and the average ticks from entry to turn.
+
 ## 2026-10-23: shield hits on entry, white-grey hexagons, thin rings (C-95)
 
 - **Band depth:** you kept the band at 0.4R. sim-A has closed the review item.
