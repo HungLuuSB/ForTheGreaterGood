@@ -31,14 +31,108 @@ export type Entry = {
 	anim: { [string]: { motion: string, axis: Vec3, range: number? } }?,
 	wreck: any?, -- the wreck version (M-24)
 }
+-- the beam towers' shot (M-29, fx.md "Beam shot"): white textures and the
+-- recommended values per faction ("order" / "chaos"; colors are RGB 0-255)
+export type BeamShot = {
+	status: string,
+	note: string?,
+	textures: { [string]: string },
+	factions: { [string]: { [string]: any } },
+}
 
-local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry } } = {
+local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot } = {
 	glowMask = "rbxassetid://101169341901946",
 	textures = {
 		heatShimmer = "rbxassetid://105647146631109",
 		jammerStatic = "rbxassetid://124485150689074",
 		radarPulse = "rbxassetid://113771866546969",
 		sonarPing = "rbxassetid://120009987380670",
+	},
+	beam = {
+		factions = {
+			chaos = {
+				brightness = 2.4,
+				charge = 0.06,
+				coreColor = { 255, 205, 150 },
+				coreWidth = 1.2,
+				curve = 2.2,
+				fan = 3.5,
+				filamentBrightness = 3.4,
+				filamentColor = { 255, 130, 35 },
+				filamentWidth = 2.2,
+				filaments = 3,
+				flareSize = 6,
+				glowBrightness = 0.8,
+				glowColor = { 255, 85, 15 },
+				glowWidth = 5.5,
+				hold = 0.03,
+				impactSize = 12,
+				impactTime = 0.25,
+				jitter = 0.7,
+				scorchGlowTime = 1,
+				scorchSize = 6,
+				scorchTime = 3,
+				speed = {
+					filamentA = 40,
+					filamentB = 52,
+				},
+				spread = 1,
+				taper = 0.27,
+				texLen = {
+					core = 24,
+					filamentA = 16,
+					filamentB = 12,
+					glow = 50,
+				},
+			},
+			order = {
+				brightness = 2,
+				charge = 0.08,
+				coreColor = { 225, 248, 255 },
+				coreWidth = 1.6,
+				curve = 1.6,
+				fan = 3,
+				filamentBrightness = 3,
+				filamentColor = { 165, 232, 255 },
+				filamentWidth = 2.5,
+				filaments = 4,
+				flareSize = 7,
+				glowBrightness = 0.6,
+				glowColor = { 80, 190, 255 },
+				glowWidth = 7,
+				hold = 0.04,
+				impactSize = 14,
+				impactTime = 0.3,
+				jitter = 0.45,
+				scorchGlowTime = 1.2,
+				scorchSize = 7,
+				scorchTime = 4,
+				speed = {
+					filamentA = 30,
+					filamentB = 40,
+				},
+				spread = 0.8,
+				taper = 0.38,
+				texLen = {
+					core = 30,
+					filamentA = 20,
+					filamentB = 15,
+					glow = 60,
+				},
+			},
+		},
+		note = "beam shot textures and recommended values (fx.md \"Beam shot\"), waiting for the user's review",
+		status = "review",
+		textures = {
+			charge = "rbxassetid://95187819936446",
+			core = "rbxassetid://84580715736855",
+			filamentA = "rbxassetid://130559041254740",
+			filamentB = "rbxassetid://71590951128896",
+			glow = "rbxassetid://140653615912799",
+			impact = "rbxassetid://121983330106046",
+			scorch = "rbxassetid://108024950155994",
+			scorchGlow = "rbxassetid://83492274682254",
+		},
 	},
 	fx = {
 		chs_interceptor = {
