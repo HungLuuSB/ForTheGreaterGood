@@ -52,6 +52,7 @@ Effects.BEAM_FADE = 1 -- seconds: the last part of a beam's life, when it narrow
 Effects.DEFLECT_SURFACE = 2 -- studs: a beam ending this close to a dome's surface was stopped by it (sim request 50)
 Effects.DEFLECT_DOWN = 0.45 -- the glancing ray points at least this steeply into the ground
 Effects.DEFLECT_MIN, Effects.DEFLECT_MAX = 8, 90 -- studs: the glancing ray's length
+Effects.SHIELD_PULSE = 0.2 -- seconds: a beam held on a dome lights it again this often (the user, C-139)
 
 -- A beam from (x0, y0, z0) that ended at (x1, y1, z1) on the surface of one
 -- of `domes` ({ x, y, z, radius }, centers on the ground) from outside: where
@@ -165,7 +166,7 @@ export type Burst = { x: number, y: number, z: number, radius: number, born: num
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
-export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
+export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }?, pulseAt: number?, pulseMass: number? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
 
 export type Fx = {
 	projectiles: { [number]: Proj },
@@ -847,6 +848,9 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 				end)
 				if gx then
 					t.deflect = { gx, gy :: number, gz :: number }
+					-- held on the dome: its honeycomb lights again every SHIELD_PULSE (C-139)
+					t.pulseAt = now + Effects.SHIELD_PULSE
+					t.pulseMass = math.min(ShieldField.mass(weapon), 3)
 				end
 			end
 			if #fx.tracers >= Effects.MAX_TRACERS then
@@ -1102,6 +1106,15 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			table.remove(fx.crashes, i)
 			local b = burst(fx, now, c.x, c.y + 1.5, c.z, c.radius, "death", Effects.DEATH_SECONDS)
 			b.ground = c.y
+		end
+	end
+	-- beams held on a shield dome: a fresh hit at the contact every
+	-- SHIELD_PULSE while they burn (the server's SHIELD_HIT lit the first)
+	for _, t in fx.tracers do
+		local at = t.pulseAt
+		if at and now < t.born + t.life and now >= at and #fx.shieldHits < 64 then
+			t.pulseAt = at + Effects.SHIELD_PULSE
+			table.insert(fx.shieldHits, { unitId = 0, kind = "absorb", x = t.x1, y = t.y1, z = t.z1, mass = t.pulseMass or 1, breach = false, projId = 0, tick = fx.tick })
 		end
 	end
 	for i = #fx.bursts, 1, -1 do

@@ -44,7 +44,7 @@ export type Dome = {
 	up: boolean, -- false once collapsed at 0%, until recharged to RAISE_AT
 }
 
-Shield.PLATE = 3.2 -- studs across a cell's flats (4.5 in C-116..C-130; 2.6 outlined cells in C-131..C-135; larger patches since C-136, the user)
+Shield.PLATE = 4.8 -- studs across a cell's flats (4.5 in C-116..C-130; outlined since C-131: 2.6, then 3.2 in C-136; 4.8 since C-139, the user: bigger patches)
 Shield.GAP = 0 -- studs between cells: outlines touch, a honeycomb
 Shield.RING_DELAY = 0.07 -- seconds between rings lighting: a visible wave out (0.045 until C-117)
 Shield.MAX_WAVES = 4 -- waves a patch keeps at once
@@ -53,7 +53,7 @@ Shield.RING_ALPHA = 0.45 -- each ring out is this much as opaque as the one insi
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
 Shield.MERGE_AGE = 0.65 -- while it glows (Shield.LIFE): a later hit adds a wave instead of a second grid on top (C-117)
-Shield.MAX_RINGS = 6
+Shield.MAX_RINGS = 7
 Shield.DENT = 1.4 -- studs the centre pushes in at strength 1 (the rings less, a bowl)
 Shield.CENTER_SCALE = 1.3 -- the centre cell's size, × PLATE; the rim's is CENTER_SCALE − RIM_SHRINK
 Shield.RIM_SHRINK = 0.55
@@ -97,9 +97,9 @@ Shield.unit, Shield.dot, Shield.len, Shield.sub = unit, dot, len, sub
 -- Rings of hexagons by a hit's strength: a light hit lights the centre and
 -- one ring (7 plates), a heavy one up to MAX_RINGS (37).
 function Shield.ringsFor(strength: number): number
-	-- four rings at least (61 cells), five for a typical shell (91), six for
-	-- heavy ones (127): a patch covering a good part of the dome (C-136, the user)
-	return math.clamp(math.floor(4 + strength), 4, Shield.MAX_RINGS)
+	-- five rings at least (91 cells), six for a typical shell (127), seven for
+	-- heavy ones (169): a patch covering a good part of the dome (C-136, C-139: the user)
+	return math.clamp(math.floor(5 + strength), 5, Shield.MAX_RINGS)
 end
 
 -- The plates of a patch on a sphere (`center`, `radius`) round the point

@@ -4,6 +4,12 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, beams pulse on shields; bigger patches)
+
+- **A beam held on a shield (C-139)** lights its honeycomb again every 0.2 s for as long as it burns.
+- **Bigger hit patches:** 4.8-stud cells, 5 to 7 rings (91 to 127 to 169 cells), about three times the diameter of the patches before C-136.
+- **Shields vs beams (sim request 51, built as S-117, merging):** a Radiance beam drains 250 charge over its 3 s (42% of a Phalanx, 62% of a Carapace), an Inferno about 142. Capacities are unchanged.
+
 ## Summary (2026-10-23, shield shell, beams glancing off shields; Needs my review)
 
 - **Beams glance off shields: done and checked in Studio.** A Radiance firing at an enemy dome stops at its surface, a short leg glances off downward into the ground, the dome takes the hit, and the units inside are untouched (`debug_out/screens/beam_deflect_side.jpg`).
@@ -1727,6 +1733,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+51. **Built (S-117, merging): a beam stopped by a dome drains it over its duration (best damage / 150 × 12.5: Radiance 250, Inferno ~142). The user: shields were far too strong against beams.**
 
 50. **Built (S-116, merging): beams end at the first up enemy dome (FIRE hit = false on its surface, absorbed SHIELD_HIT); Radiance's pierce stops there; the client's glancing leg (C-129) shows once merged.** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
 

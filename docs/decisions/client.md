@@ -1111,3 +1111,11 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Beam shot:** BeamShots runs C's latest apply (on from the charge for the shot's duration, the sim's `beamDuration` with C's `duration` as fallback, C's taper at the end, the impact hot spot held, the embers and soot after).
 
 **Why:** the user's honeycomb shell request (models-C's asset, 8fcf418), and their beamDuration note to models-C (8c1281a).
+
+### C-139 — A beam held on a shield lights it every 0.2 s; bigger hit patches (2026-10-23)
+
+**Decision:**
+- **Pulses:** a BEAM tracer stopped by a dome (C-129's deflect) gets `pulseAt` and `pulseMass` (the weapon's shield mass, at most 3). `Effects.update` adds a "absorb" ShieldHit at the contact every SHIELD_PULSE (0.2 s) while the beam burns. ShieldDomes maps it to the nearest dome, and it adds a wave to the same patch.
+- **Patches:** Shield.PLATE 4.8; rings 5 + strength, clamped to 5..7 (91 / 127 / 169 cells); pool 1000.
+
+**Why:** the user: "do the reflect effect every 0.2s, and I did tell you to make the reflect patches bigger". The drain behind it is sim request 51 (S-117).
