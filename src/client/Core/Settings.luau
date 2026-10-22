@@ -139,6 +139,7 @@ Settings.KEYS = table.freeze({
 		{ "S", "stop" },
 		{ "L / K", "fire state / move state" },
 		{ "Y / U / X", "repeat / on-off / cancel (factories)" },
+		{ "E", "reclaim, then left click a wreck (builders)" },
 	} },
 	{ "Building", {
 		{ "B, then 1–0", "build menu: open, next tab, pick" },

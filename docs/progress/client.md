@@ -4,6 +4,25 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, per-unit commands, factory orders, top strip)
+
+- **Each unit gets its own commands (C-109):** the command card shows only what the selection can do, and shrinks to fit.
+  - defenses: stop, attack, fire state (plus on / off once request 43's towers exist);
+  - builders: movement, stop, repair, reclaim (E, then click a wreck), guard to assist;
+  - silos: stop (the launch) and attack (a manual launch);
+  - tanks, aircraft and ships: movement, attack, fire and move state;
+  - factories: repeat, cancel, and Move / Fight / Patrol / Guard as orders for the units they build;
+  - a mixed selection gets the union.
+- **Factory orders for new units:** the sim keeps one rally point today, so I asked sim-A for a full order queue per factory (request 44: pre-move, then guard or patrol). The client already offers the orders on factories and keeps drawing them until replaced.
+- **Roblox top bar gone where Roblox allows it:**
+  - chat, player list, backpack and health are off;
+  - the resource bars and debug overlay moved up into the top strip;
+  - Settings sits in the upper-left corner (Resign will join it).
+  - **Not removable:** Roblox's own menu button keeps the first ~164 × 58 pixels of the top left (measured: `GuiService.TopbarInset`), even with the top bar disabled, so the minimap starts right under it instead of at the very top.
+- **Minimap:** smaller, 220 pixels (was 280); the build menu follows it up.
+- **Missile meshes:** `lune run mesh_materials` now also covers C's effect meshes (missiles, shield emitter) for when they're approved.
+- **Screenshots:** `debug_out/screens/hud_topstrip.jpg`, `minimap_220.jpg`.
+
 ## Summary (2026-10-23, build menu portraits, turn fix, shield and defense requests)
 
 - **Build menu, BAR style (C-107):** each tile shows the unit's model at a three-quarter angle (the BAR mesh, or its blockout until the mesh loads), its type icon at the bottom right, and its cost stacked at the bottom left (supply white, power yellow). Four larger tiles per row.
@@ -648,6 +667,27 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: per-unit command sets; factory orders; Roblox top bar cleared (C-109)
+
+- **Asked:** each unit its own commands (defense on / off and stop; builders move, stop, repair, assist; silos stop the launch and attack manually; air its own); queued orders for units new from factories; remove Roblox's top bar, minimap and resource bars up there, settings and resign in the upper-left corner.
+- **Command sets** (`Core/CommandSet`, pure, `CommandSet.spec` 2):
+  - every type: stop;
+  - armed: attack and fire state (silos, whose weapons are all stockpiled launchers: attack only);
+  - mobile: move, fight, patrol, guard, and move state when armed;
+  - builders that aren't factories: repair and reclaim;
+  - factories: repeat, cancel, and move / fight / patrol / guard;
+  - switchable (converters, or a def with `toggle`): on / off;
+  - the alert jump always.
+  - `UI/CommandCard` shows the selection's union in card order and resizes. Repair (target an own unit) and reclaim (the known wreck nearest the click, within 24 studs) are new command modes in `Api.commandAt`; E starts reclaim, with hints and the keys table updated.
+  - Checked in Studio: Mason stop / move / patrol / fight / guard / repair / reclaim; vehicle plant repeat / cancel / stop / move / patrol / fight / guard; shield generator and fusion stop only; Oracle movement only.
+- **Factory orders:** `Core/Waypoints` keeps a factory's orders (they don't expire on idle). The sim uses only the last move-like one as its rally point; sim request 44 asks for the full list copied to each new unit.
+- **Top bar:**
+  - `Main` turns off Roblox's core UI and asks `SetCore("TopbarEnabled", false)`;
+  - the resource bars (y 6), the alert feed (y 52) and the debug overlay (y 6) draw from the top of the window (IgnoreGuiInset);
+  - the Settings button sits in the top strip right after Roblox's corner, following `GuiService.TopbarInset` (measured 164 × 58 at the top left, unchanged with the top bar disabled: Roblox keeps its menu button);
+  - the minimap stays just under that corner.
+- **Screenshot:** `debug_out/screens/hud_topstrip.jpg` (Mason selected: its 8 commands; resource bars and debug overlay at the top; Settings top left).
+
 ## 2026-10-23: smaller minimap; effect meshes in the materials file (C-108)
 
 - **Minimap:** 280 → 220 pixels (the user: smaller). The build menu now starts under it (`MinimapUI.SIZE`), so both tile rows fit above the unit panel on short screens. Screenshot `debug_out/screens/minimap_220.jpg`.
@@ -1251,6 +1291,10 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Per-unit commands and top strip (C-109):** `debug_out/screens/hud_topstrip.jpg`. Your calls:
+  - **Each type's command list** (`Core/CommandSet`).
+  - **The minimap under Roblox's corner:** it can't go higher without being covered by Roblox's menu button.
+
 - **Build menu (C-107):** `debug_out/screens/buildmenu_*.jpg`. Your calls:
   - **Portrait angle and size:** 66 px tiles, 4 per row (`UI/Portrait`, `UI/BuildMenu`).
   - **What the tooltip lists.**
@@ -1340,6 +1384,12 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+44. **Open.** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
+    - Today a MOVE / FIGHT / PATROL given to a factory sets one rally point (Orders.give; PATROL becomes fight).
+    - **Please keep the factory's whole order list instead,** as for a unit: MOVE, FIGHT, PATROL, GUARD (a unit), REPAIR, ATTACK. Shift appends, a plain order replaces, STOP clears it.
+    - Each unit the factory produces rolls out of the exit, then takes a copy of the list, so a pre-move then a patrol, or a move then guard a commander, works.
+    - The client already offers Move, Fight, Patrol and Guard on factories and keeps drawing the factory's orders until they're replaced or stopped (C-109). Nothing new is needed on the wire.
 
 43. **Open.** **More T2 defenses, a Pulsar-style beam tower first (2026-10-23, the user asked with BAR's Pulsar as the reference; the user corrected T3 to T2):** today the defenses above T1 are thin (Order's Citadel is T3).
     - **A long-range beam tower per faction, T2** (as BAR's Pulsar):

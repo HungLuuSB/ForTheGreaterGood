@@ -918,3 +918,20 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 
 **Why:**
 - The user: BAR-style unit pictures and stats on hover; factories read as "OFF"; units rotated the long way (the client's turn interpolation crossing ±180°).
+
+### C-108 — Minimap 220 pixels; the materials file covers effect meshes (2026-10-23)
+
+**Decision:**
+- **Minimap:** 220 (was 280); the build menu starts under it.
+- **Materials:** `mesh_materials` writes `fx_<id>` appearances for `Meshes.fx`.
+
+**Why:** the user asked for a smaller minimap; models-C needed SurfaceAppearances for the missile meshes.
+
+### C-109 — Per-unit command sets; factory orders kept; Roblox's top bar cleared and the HUD moved into the top strip (2026-10-23)
+
+**Decision:**
+- **Commands:** `Core/CommandSet` decides each type's commands and the card shows the selection's union; repair and reclaim are command modes.
+- **Factory orders:** they stay drawn until replaced (full queues: sim request 44).
+- **Top strip:** Roblox's core UI is off; resource bars, alerts and the debug overlay draw from the top; Settings sits right after Roblox's corner (`GuiService.TopbarInset`).
+
+**Why:** the user's requests. Roblox keeps its menu button and the corner it needs whatever the game sets, so the minimap sits under it.

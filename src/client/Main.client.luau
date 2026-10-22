@@ -69,6 +69,18 @@ local RangeOverlay = require("./Render/RangeOverlay")
 local UnitRenderer = require("./Render/UnitRenderer")
 
 local defs = Defs.load()
+-- no Roblox HUD (C-109, the user): chat, player list, backpack, health and
+-- emotes off, and the top bar's items hidden where Roblox allows it (its
+-- menu button stays: the game's screens keep clear of TopbarInset)
+do
+	local StarterGui = game:GetService("StarterGui")
+	pcall(function()
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+	end)
+	pcall(function()
+		StarterGui:SetCore("TopbarEnabled", false)
+	end)
+end
 local world = World.new(defs)
 local clock = Interp.newClock()
 local anim = PieceAnim.new(defs.weaponByIndex)

@@ -47,6 +47,7 @@ Controls.COMMAND_KEYS = {
 	[Enum.KeyCode.M] = "move",
 	[Enum.KeyCode.Z] = "patrol",
 	[Enum.KeyCode.G] = "guard",
+	[Enum.KeyCode.E] = "reclaim", -- C-109 (BAR's key)
 }
 Controls.FIRE_STATE_KEY = Enum.KeyCode.L
 Controls.MOVE_STATE_KEY = Enum.KeyCode.K
@@ -61,7 +62,9 @@ Controls.HINT = {
 	fight = "FIGHT: left-click where to fight to",
 	move = "MOVE: left-click where to go",
 	patrol = "PATROL: left-click the far end of the patrol",
-	guard = "GUARD: left-click a unit to guard",
+	guard = "GUARD: left-click a unit to guard (or a builder to assist)",
+	repair = "REPAIR: left-click an own unit or frame",
+	reclaim = "RECLAIM: left-click a wreck",
 }
 
 local DIGITS = {

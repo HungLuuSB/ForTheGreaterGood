@@ -249,6 +249,24 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 				return false, "guard needs a unit"
 			end
 			ok, why = actions.order("guard", unitId, queue)
+		elseif kind == "repair" then
+			if u == nil or u.team ~= world.me.team then
+				return false, "repair needs an own unit"
+			end
+			ok, why = actions.order("repair", unitId, queue)
+		elseif kind == "reclaim" then
+			-- the known wreck nearest the click (wrecks aren't pickable models), C-109
+			local best, bestD2 = nil, 24 * 24
+			for wid, w in world.wrecks do
+				local d2 = (w.x - x) ^ 2 + (w.z - z) ^ 2
+				if d2 < bestD2 then
+					best, bestD2 = wid, d2
+				end
+			end
+			if best == nil then
+				return false, "no wreck there"
+			end
+			ok, why = issue({ cmdType = CT.RECLAIM, queue = queue == true, targetId = best })
 		else
 			ok, why = actions.order(kind, { x = x, z = z }, queue)
 		end

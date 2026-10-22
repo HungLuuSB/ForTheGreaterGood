@@ -48,10 +48,11 @@ function ResourceBar.new(): Bar
 	gui.Name = "ResourceBar"
 	gui.ResetOnSpawn = false
 	gui.DisplayOrder = 5
+	gui.IgnoreGuiInset = true -- up in Roblox's top strip (C-109)
 	local root = Instance.new("Frame")
 	root.Name = "Bar"
 	root.AnchorPoint = Vector2.new(0.5, 0)
-	root.Position = UDim2.new(0.5, 0, 0, 0)
+	root.Position = UDim2.new(0.5, 0, 0, 6)
 	root.Size = UDim2.fromOffset(2 * 270 + 6, 40)
 	root.BackgroundTransparency = 1
 	root.Parent = gui
