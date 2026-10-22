@@ -178,6 +178,18 @@
       }
     },
     {
+      "Name": "chs_inferno",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://112844101296110",
+        "NormalMapContent": "rbxassetid://82735108081281",
+        "RoughnessMapContent": "rbxassetid://106265863656154",
+        "MetalnessMapContent": "rbxassetid://100082113987396",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_jackal",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -750,6 +762,18 @@
         "NormalMapContent": "rbxassetid://83974720212015",
         "RoughnessMapContent": "rbxassetid://115475433027160",
         "MetalnessMapContent": "rbxassetid://127200583957662",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_radiance",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://122711167066327",
+        "NormalMapContent": "rbxassetid://98136231321427",
+        "RoughnessMapContent": "rbxassetid://118943869326043",
+        "MetalnessMapContent": "rbxassetid://116429165683462",
         "EmissiveStrength": 0
       }
     },
