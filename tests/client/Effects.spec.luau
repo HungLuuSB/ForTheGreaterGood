@@ -469,4 +469,36 @@ return function(t: any)
 		t.expect(near >= Effects.MAX_EXPLOSIONS / 2 + 10, `near bursts kept first ({near})`)
 		local _ = weapon
 	end)
+
+	t.test("beam rays: Radiance lingers 3 s, the last second narrowing to nothing (C-128)", function()
+		t.equal(Effects.beamSeconds({ id = "ord_radiance_beam" }), 3)
+		t.equal(Effects.beamSeconds({ id = "chs_inferno_beam" }), 1.5)
+		t.equal(Effects.beamSeconds({ id = "ord_radiance_beam", beamDuration = 2.5 }), 2.5, "the sim's duration wins once it is in the defs")
+		local w0, a0 = Effects.beamLook(0, 3)
+		local w1, _ = Effects.beamLook(1.9, 3)
+		local w2, a2 = Effects.beamLook(2.5, 3)
+		local w3, a3 = Effects.beamLook(3, 3)
+		t.expect(w0 == 1 and w1 == 1, "full width for the first two seconds")
+		t.expect(math.abs(w2 - 0.5) < 1e-9 and a2 > a0, "half way through the last second: half as wide, fainter")
+		t.expect(w3 == 0 and a3 == 1, "gone at the end")
+		local ws, _ = Effects.beamLook(1.0, 1.5)
+		t.expect(ws < 1, "a short ray fades over its last half")
+	end)
+
+	t.test("a beam stopped on a shield dome glances off downward (C-129)", function()
+		local flat = function(_x: number, _z: number): number
+			return 0
+		end
+		local domes = { { 0, 0, 0, 100 } }
+		-- level shot from the south hitting the dome's side 10 up
+		local hz = -math.sqrt(100 ^ 2 - 10 ^ 2)
+		local gx, gy, gz = Effects.deflection(0, 10, -400, 0, 10, hz, domes, flat)
+		t.expect(gx ~= nil, "deflected")
+		t.expect((gz :: number) < hz, "back away from the dome, as in the sketch")
+		t.expect(math.abs(gy :: number) < 1e-6, "into the ground")
+		local reach = math.sqrt(((gx :: number) - 0) ^ 2 + ((gz :: number) - hz) ^ 2 + 10 ^ 2)
+		t.expect(reach >= Effects.DEFLECT_MIN - 1e-6 and reach <= Effects.DEFLECT_MAX + 1e-6, "a short leg")
+		t.equal((Effects.deflection(0, 10, -400, 0, 10, -250, domes, flat)), nil, "a beam ending away from any dome isn't deflected")
+		t.equal((Effects.deflection(0, 10, -50, 0, 10, hz, domes, flat)), nil, "nor one fired from inside")
+	end)
 end

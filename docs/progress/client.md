@@ -4,6 +4,38 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, big-map fog fixed)
+
+- **Fog on big maps (C-130):**
+  - the cause, confirmed in the Studio log: "Failed to create empty EditableMesh ... memory budget limits". Normandy needed 16 fog chunks, and the device budget, shared with the shield effect, charts and vignette, ran out partway.
+  - the fix: the fog's vertices now spread out on bigger maps, so every map needs at most 4 chunks, as Coastline always did.
+  - Normandy now builds 4 of 4 and is dark everywhere it should be. From game height it looks the same.
+- **Screenshot:** `debug_out/screens/fog_normandy.jpg`.
+
+## Summary (2026-10-23, beams glance off shields)
+
+- **Deflection (C-129), from your sketch:** a beam that ends on a shield dome's surface is drawn as two legs: up to the dome, then a shorter one mirrored off the surface and angled down into the ground nearby, fading with the beam.
+- It shows up once sim-A stops beams at domes (**sim request 50**). Today beams still pass through, so there was nothing to screenshot yet.
+- **sim-A built request 49 (S-115, merging):**
+  - Radiance pierces: every enemy on its fixed 3 s line takes damage;
+  - manual targets stay until STOP, a new attack order or the target's death; the unit fights on its own while the target is out of range.
+
+## Summary (2026-10-23, Radiance's ray)
+
+- **Radiance (C-128):** a bluer beam, held about 3 s, its last second narrowing to nothing. Inferno stays orange and holds 1.5 s. Once sim-A's `beamDuration` is in main, the client draws exactly the sim's duration.
+- **Sim work (requests 47 and 49) with sim-A:**
+  - Radiance targets radar blips and can miss them without Pinpointers (S-113, merging);
+  - a hit-ray damaging every enemy on the line, for 3 s (request 49);
+  - manual targets override (request 49).
+- **Beam VFX:** models-C builds them, at your request; mine is a placeholder ray until then.
+- **Screenshot:** `debug_out/screens/beam_radiance.jpg`.
+
+## Summary (2026-10-23, beam towers apart)
+
+- **Inferno's beam stays orange:** I made it green (C-127), then put it back at your word.
+- The rest of your note (Radiance targets radar blips and can miss them without a Pinpointer, a lingering high-damage beam; Inferno shorter and weaker) is sim work: **sim request 47** is with sim-A. Once they name the beam's duration, I'll hold the drawn beam that long.
+- A note on C-126: its first suite run had 1 failure that didn't come back in 3 reruns (213/213 each). It ran while you were playtesting; I couldn't see which spec it was.
+
 ## Summary (2026-10-23, cheat line arrow keys)
 
 - **Cheat command line (C-126):** while suggestions show, Up / Down move through them, and Tab or Enter takes the highlighted one; with none showing they walk the history as before. Not checked in Studio (you were in a playtest); the camera already ignores the arrow keys while you type.
@@ -1642,6 +1674,16 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
+50. **Open (sent 2026-10-23).** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
+
+49. **Open (sent 2026-10-23).** **Radiance a hit-ray; manual targets override (the user):**
+    - Radiance `beamDuration` 3.0; during the beam, damage goes to every enemy the beam's line crosses (a miss on a blip still hurts what's on the line). An amendment to S-113.
+    - An attack order on a unit beats the unit's own target choice. Out of range, the unit picks its own targets; back in range, it returns to the manual target. STOP clears it.
+
+48. **Open (sent 2026-10-23).** **The skirmish AI builds too many Furnaces (the user):** hard or normal AI puts up many `chs_generator`s instead of extractors on free deposits. Sim-A to check the Chaos AI's economy choice. Nothing on the client.
+
+47. **Open (sent 2026-10-23).** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today). Inferno's beam stays orange (the user changed their mind on green).
+
 46. **Built (S-111, merging): radar SAMs air only (AIR 1,150 / 1,100); anti-nukes `ord_providence` / `chs_cerberus` and mobile `ord_custodian` / `chs_chimera`, INTERCEPTOR / INTERCEPTED, stock in STOCK; client side to do.** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
     - **Radar SAMs** (`ord_radar_sam`, `chs_radar_sam`): drop `intercepts`, air only; damage retuned so a T2 radar SAM one-shots T1 air.
     - **Anti-nuke:** intercepts any enemy strategic missile whose target point is inside its cover range, with a certain hit and a delay after each shot, so several nukes on one spot overwhelm it. Tier, cost, range, delay and names are sim-A's call (Order and Chaos versions).
@@ -1798,3 +1840,9 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `22f0286` (deposits: dark patch / C's fx.deposit variants, hidden under structures, placement and F4 overlay, minimap rings; C-123); test_client 209, test 430, build passed.
 - Ready to merge: `7928550` (Settings top right, Follow button removed with T in developer mode, F3 bottom right; unit panel model portrait, type icon and +/- supply and power flow; C-124, C-125); test_client 213, test 430, build passed.
 - Ready to merge: `e943f2f` (merge of m-models eb8a768 with the materials regenerated; deposit cells bare ground, terrain-colored patch tint; C-123 follow-up); test_client 213, test 430, build passed.
+- Ready to merge: `646d404` (cheat line arrow keys cycle suggestions, C-126); test_client 213, build passed (client UI only).
+- Ready to merge: `0d6ca37` (Inferno beam green, C-127); test_client 213, build passed (client render only).
+- Ready to merge: `a6bff45` (Inferno beam back to orange, C-127; supersedes 0d6ca37's colour); render constant only.
+- Ready to merge: `3f2d1ea` (Radiance ray bluer, 3 s, narrowing fade; beamSeconds reads S-113's beamDuration; C-128); test_client 214, build passed (client render only).
+- Ready to merge: `5890cad` (beam deflection off shield domes, drawn; active once sim request 50 lands; C-129); test_client 215, build passed (client render only).
+- Ready to merge: `6bb8932` (big-map fog: at most 4 chunks, C-130); test_client 215, build passed (client render only).

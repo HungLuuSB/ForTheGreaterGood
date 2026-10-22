@@ -1010,3 +1010,31 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 **Decision:** while suggestions show, Up / Down move a highlight through them (Up from none: the bottom one, next to the bar), and Tab or Enter takes the highlighted one without sending. With no suggestions showing, they walk the history. WASD camera panning is not added (the user: middle-drag is enough for now; A / S stay Attack / Stop).
 
 **Why:** the user's request, and their answer on the history.
+
+### C-127 — Inferno's beam: green, then back to orange (2026-10-23)
+
+**Decision:** Inferno's beam stays orange (255, 170, 70). It was made green in `0d6ca37`, then reverted the same day.
+
+**Why:** the user asked for green, then said orange is fine. The towers' other differences (blip targeting, misses, a lingering beam, Inferno weaker) are sim request 47.
+
+### C-128 — Radiance's ray: bluer, held 3 s, narrowing over its last second (2026-10-23)
+
+**Decision:**
+- `Core/Effects.beamSeconds(weapon)` = `weapon.beamDuration` (S-113), else BEAM_FALLBACK by id (Radiance 3, Inferno 1.5), else 0.45 s.
+- `Effects.beamLook(age, life)`: full width and bright, then the last BEAM_FADE (1 s, at most half the life) narrows the ray to nothing as it fades.
+- Radiance's colour is (120, 190, 255); Inferno stays orange.
+- models-C will build the beam VFX; this ray is the placeholder.
+
+**Why:** the user's description. The hit-ray damage and manual-target rules are sim request 49.
+
+### C-129 — Beams glance off shield domes (drawn) (2026-10-23)
+
+**Decision:** `Core/Effects.deflection` checks a missed BEAM FIRE that ends within 2 studs of a known dome's surface (generator position, `def.shield.radius`) and was fired from outside it. The ray is mirrored about the surface normal and tilted down at least 0.45, 8–90 studs long to the ground; `Render/Effects` draws that second leg from its own pool. It applies once the sim ends beams at domes (sim request 50).
+
+**Why:** the user's sketch ("the shield can deflect incoming laser").
+
+### C-130 — The fog blanket's vertex spacing grows with the map: at most 2 × 2 chunks (2026-10-23)
+
+**Decision:** `FogBlanket.stepFor(cellsX, cellsZ)` = max(STEP, ceil(max side / (2 × CHUNK))): 2 cells on 128-cell maps, 4 on 256-cell maps. Every map needs at most 4 EditableMeshes.
+
+**Why:** on Normandy, 16 chunks hit the device's editable memory budget (Studio: "Failed to create empty EditableMesh ... memory budget limits") and parts of the map lost their fog (the user's screenshot). The budget is shared with the shield fx, charts and vignette.
