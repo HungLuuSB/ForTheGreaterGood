@@ -33,6 +33,9 @@ APPROVED = {
     "shield_emitter",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
+# wreck versions (M-24) the user approved; the rest are "review"
+APPROVED_WRECKS = set()
+WRECK_NOTE = "wreck version, waiting for the user's review"
 
 
 def load(path):
@@ -98,17 +101,22 @@ def entry(rig, assets, status, note):
     return e
 
 
-def wreck_entry(rig, assets):
+def wreck_entry(uid, rig, assets):
     """The wreck version (M-24, fx.md "Wrecks"): the same pieces and pivots
     as the live mesh, its own meshes and maps, no glow and no team pieces."""
     w = assets["wreck"]
-    return {
+    status = "approved" if uid in APPROVED_WRECKS else "review"
+    e = {
+        "status": status,
         "model": w.get("model", ""),
         "pieces": {name: {"center": p["center"], "size": p["size"], "mesh": w["meshes"][name]}
                    for name, p in rig["pieces"].items()},
         "maps": {k: w["surfaceAppearance"][k] for k in ("ALB", "NOR", "RGH", "MTL")},
         "triangles": rig["triangles"]["total"],
     }
+    if status == "review":
+        e["note"] = WRECK_NOTE
+    return e
 
 
 def main():
@@ -130,7 +138,7 @@ def main():
         units[uid] = entry(load(rig_p), assets, status, None if status == "approved" else REVIEW_NOTE)
         wreck_p = os.path.join(models, uid, "export_wreck", "rig.json")
         if "wreck" in assets and os.path.exists(wreck_p):
-            units[uid]["wreck"] = wreck_entry(load(wreck_p), assets)
+            units[uid]["wreck"] = wreck_entry(uid, load(wreck_p), assets)
 
     shield = load(os.path.join(ROOT, "assets", "fx", "shield", "roblox_assets.json"))
     em_rig = load(os.path.join(ROOT, "assets", "fx", "shield", "emitter", "export", "rig.json"))
