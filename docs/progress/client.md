@@ -668,6 +668,13 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shields destroy every shell, in game (S-93 merged; C-110)
+
+- **Your report:** shields still diverted shots. S-93 (every projectile destroyed at an up dome's surface) was on sim-A's branch, not yet in main. It's now merged (main `ead4014`, with S-94: T1 factories at 200 build power, a Lancer in 25.5 s) and merged into this branch.
+- **Client:** no change needed; an absorbed SHIELD_HIT already ends the shell at the surface (C-99) and lights the dome there.
+  - `ShieldWire.spec`: the two field tests (shells braked and turned inside the dome) are replaced by one for heavy shells: Ravager shells are destroyed exactly at the surface (within 0.5 stud, measured from the dome's real centre at the generator's base), with no turn, breach or field-entry hits and none drawn inside.
+- **Studio,** `shield` profile, 30 s of every attacker type: 663 SHIELD_HIT, all absorbed; no field entries, no breaches, nothing turned back (`debug_out/screens/shield_absorb_all.jpg`).
+
 ## 2026-10-23: per-unit command sets; factory orders; Roblox top bar cleared (C-109)
 
 - **Asked:** each unit its own commands (defense on / off and stop; builders move, stop, repair, assist; silos stop the launch and attack manually; air its own); queued orders for units new from factories; remove Roblox's top bar, minimap and resource bars up there, settings and resign in the upper-left corner.
@@ -1403,7 +1410,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
     - **Builders:** the T2 builders' buildOptions.
     - **Client side:** I'll draw the beam (the user's reference: a thin bright line with a glow from the barrel to the target, held for the shot), the retract pose in the piece script, and the on/off button. The models stream needs the meshes (models request 2).
 
-42. **Open.** **Shield: destroy every projectile on contact; faster unit production (2026-10-23, the user):**
+42. **Done and used (S-93, S-94; C-110).** **Shield: destroy every projectile on contact; faster unit production (2026-10-23, the user):**
     - **Shield, made simple:** "destroy projectile on contact, that will ease thing out." Every projectile that reaches an up enemy dome is destroyed at the surface (SHIELD_HIT ABSORBED, as the light shells already are, S-85), whatever its mass: no braking field, no turning back, no breach.
       - Keep the charge drain per hit (by mass) and the collapse at 0% / rise at 25%.
       - The client already draws an absorbed hit at the surface; it will drop the field's bow-shock look once you confirm.

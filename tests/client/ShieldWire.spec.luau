@@ -1,8 +1,8 @@
 --!strict
 -- Shield domes on the wire (protocol 24, S-79; C-91): the client's view of a
--- generator's charge and up flag follows the server's, shells in a dome's
--- field are stepped like the server's and drawn where the server has them,
--- and turned-back shells arrive as hits for the dome renderer.
+-- generator's charge and up flag follows the server's, and every shell
+-- reaching an up dome is destroyed at its surface (S-93: no field, no
+-- turning back), drawn up to there and lit there for the dome renderer.
 
 local Commands = require("../../src/client/Core/Commands")
 local Effects = require("../../src/client/Core/Effects")
@@ -62,50 +62,35 @@ return function(t: any)
 		t.equal(sim.combat.shieldUp[gen], false)
 	end)
 
-	t.test("shells in the field: stepped like the server's, turned back, hits for the renderer", function()
-		local sim, world, fx, gen, step = scene()
-		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
-		local inField, worst, hits, breaches, enters = 0, 0, 0, 0, 0
-		local firstEnter, firstTurn = math.huge, math.huge
+	t.test("heavy shells too (S-93): every shell is destroyed at the surface, none turned back or breaking through", function()
+		local sim, _, fx, gen, step = scene()
+		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi) -- a heavy cannon: turned back before S-93
+		local absorbs, other, inside = 0, 0, 0
+		local cx, cy, cz = require("../../src/server/Sim/Shield").center(sim, gen) -- the dome's centre: the generator's base
 		step(15 * 12, function()
-			for id, p in fx.projectiles do
-				if p.field and sim.combat.px[id] then
-					inField += 1
-					-- the client steps to fx.tick; compare at the same tick
-					local d = math.sqrt((p.x - sim.combat.px[id]) ^ 2 + (p.y - sim.combat.py[id]) ^ 2 + (p.z - sim.combat.pz[id]) ^ 2)
-					if fx.tick == sim.tick then
-						worst = math.max(worst, d)
-					end
-				end
-			end
 			for _, h in fx.shieldHits do
-				if h.kind == "enter" then
-					enters += 1
-					firstEnter = math.min(firstEnter, fx.tick)
+				if h.kind == "absorb" then
+					absorbs += 1
+					local r = math.sqrt((h.x - cx) ^ 2 + (h.z - cz) ^ 2 + (h.y - cy) ^ 2)
+					t.expect(math.abs(r - 120) < 0.5, `at the surface (r {r})`)
 				else
-					hits += 1
-					firstTurn = math.min(firstTurn, fx.tick)
-					t.equal(h.unitId, gen)
+					other += 1
 				end
-				if h.breach then
-					breaches += 1
-				end
-				local r = math.sqrt(h.x ^ 2 + (h.z + 100) ^ 2 + (h.y - World.groundY(world, 0, -100)) ^ 2)
-				t.expect(math.abs(r - 120) < 4, `the hit is on the dome (r {r})`)
 			end
 			table.clear(fx.shieldHits)
+			for _, p in fx.projectiles do
+				local r = math.sqrt((p.x - cx) ^ 2 + (p.z - cz) ^ 2 + (p.y - cy) ^ 2)
+				if r < 110 then
+					inside += 1
+				end
+			end
 		end)
-		t.expect(inField > 0, "shells came into the field")
-		t.expect(hits >= 2, `shells turned back ({hits})`)
-		t.expect(enters >= hits, `every shell lights the dome as it enters ({enters} entries, {hits} turns)`)
-		t.expect(firstEnter < firstTurn, `the entry shows before the turn (ticks {firstEnter}, {firstTurn})`)
-		t.equal(breaches, 0, "a full dome lets no Ravager shell through")
-		t.expect(worst < 3, `client and server agree on shells in the field (worst {worst} studs)`)
-		print(string.format("    %d shell-ticks in the field, %d hits, worst %.2f studs off", inField, hits, worst))
+		t.expect(absorbs >= 3, `heavy shells destroyed at the dome ({absorbs})`)
+		t.equal(other, 0, "no turn, breach or field entry hits")
+		t.equal(inside, 0, "none drawn well inside the dome")
 	end)
 
-	-- renders a tick behind the server in quarter-tick frames, as the game
-	-- does (events arrive ahead of the render clock); `frame(t)` after each
+	-- every frame of `seconds` at 4 frames a tick, `frame(renderTick)` after Effects.update
 	local function subTicks(sim: any, world: any, fx: any, seconds: number, frame: (number) -> ())
 		for tick = 1, math.floor(15 * seconds) do
 			Sim.step(sim)
@@ -118,30 +103,6 @@ return function(t: any)
 			table.clear(world.died)
 		end
 	end
-
-	t.test("a shell's hit shows when its drawn path crosses the surface, not a tick later (C-99)", function()
-		local sim, world, fx = scene()
-		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
-		local gy = World.groundY(world, 0, -100)
-		local lit, worst = 0, 0
-		subTicks(sim, world, fx, 10, function(t: number)
-			local drawn = Effects.visible(fx, t)
-			for _, h in fx.shieldHits do
-				if h.kind == "enter" then
-					for _, e in drawn do
-						if fx.projectiles[h.projId] == e[1] then
-							lit += 1
-							local r = math.sqrt(e[2] ^ 2 + (e[3] - gy) ^ 2 + (e[4] + 100) ^ 2)
-							worst = math.max(worst, math.abs(r - 120))
-						end
-					end
-				end
-			end
-			table.clear(fx.shieldHits)
-		end)
-		t.expect(lit >= 3, `entries seen ({lit})`)
-		t.expect(worst < 6, `the shell is at the surface when its hit shows (worst {worst} studs off)`)
-	end)
 
 	t.test("a light shell vanishes where its drawn path meets the dome (C-99)", function()
 		local sim, world, fx = scene()
