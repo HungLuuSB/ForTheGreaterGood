@@ -354,6 +354,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `bb644b9` (per-unit command sets, factory orders kept, Roblox top bar cleared and HUD in the top strip, sim request 44, C-109; also C-108 `0cfa7d0`: minimap 220, fx materials, includes m-models `764874b`); test_client 195, test 407, build passed.
 - Ready to merge: `ecd03d2` (main with S-93 / S-94 merged; shield wire spec for heavy shells, C-110); test_client 194 (one unidentified failure in one of four runs, not repeated), test 409, build passed.
 - Ready to merge: `01a59d5` (main with S-95 merged; factories offer Attack; FactoryOrders.spec, C-111); test_client 195, test 410, build passed.
+- Ready to merge: `2a7b73f` (beam drawing, retract piece script and On / Off, stopgap icons for S-96 towers; fixes main's 2 icon specs; C-112); test_client 196, test 414, build passed.
 
 ## Tasks
 
