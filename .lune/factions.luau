@@ -51,8 +51,18 @@ local function play(scene: Scenes.Scene): (number, number)
 			defOf[id] = defs.unitByIndex[w.defIndex[id]]
 		end
 	end
+	local function note()
+		for s = 1, 2 do
+			for _, id in sides[s] do
+				if defOf[id] == nil and w.slot[id] then
+					defOf[id] = defs.unitByIndex[w.defIndex[id]]
+				end
+			end
+		end
+	end
 	while sim.tick < scene.maxTicks and not scene.done(sim) do
 		scene.drive(sim)
+		note() -- units that joined (waves)
 		Sim.step(sim)
 	end
 	local function lost(ids: { number }): number
@@ -229,6 +239,41 @@ for _, sp in SPECIALS do
 		table.insert(parts, `{kind} {fmt(trade(sp[2], sp[3], kind))}`)
 	end
 	out(string.format("| %s | %s | %s |", sp[1], table.concat(sp[4], ", "), table.concat(parts, "; ")))
+end
+
+-- The match-shaped trial (S-91; next.md item 1a): waves against a rallied
+-- defender with a turret, both directions. Report only.
+out("")
+out("### Match-shaped: waves against a rallied defender with a turret (report only; the Order side's trade)")
+out("")
+out("| Attacker | 1 wave | 4 waves | 8 waves | base fell (1 / 4 / 8) |")
+out("|---|---|---|---|---|")
+if wanted("match") or FILTER == nil then
+	for _, attacker in { "order", "chaos" } do
+		local parts, fell = {}, {}
+		for _, waves in { 1, 4, 8 } do
+			local lostO, lostC, falls = 0, 0, 0
+			for seed = 1, SEEDS do
+				local scene = Scenes.waves(attacker, waves, seed)
+				local lo, lc = play(scene)
+				lostO += lo
+				lostC += lc
+				local base = scene.base :: { number }
+				local standing = 0
+				for _, id in base do
+					if scene.sim.world.slot[id] then
+						standing += 1
+					end
+				end
+				if standing == 0 then
+					falls += 1
+				end
+			end
+			table.insert(parts, fmt(if lostO > 0 then lostC / lostO else math.huge))
+			table.insert(fell, `{falls}/{SEEDS}`)
+		end
+		out(string.format("| %s | %s | %s |", if attacker == "order" then "Order attacks" else "Chaos attacks", table.concat(parts, " | "), table.concat(fell, " / ")))
+	end
 end
 
 out("")

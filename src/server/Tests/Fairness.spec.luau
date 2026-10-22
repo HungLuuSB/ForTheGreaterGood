@@ -141,6 +141,7 @@ return function(t: RunAll.Context)
 			end
 			Sim.step(sim)
 		end
+		local leads = {}
 		for _, pair in { { 1, 3 }, { 2, 4 } } do
 			local a, b = orders[pair[1]], orders[pair[2]]
 			local same = 0
@@ -148,11 +149,19 @@ return function(t: RunAll.Context)
 				same += 1
 			end
 			-- later, single trips taking a few ticks more on one side or the other
-			-- (flow-field tie-breaks, no net direction) reorder jobs
-			t.expect(same >= 8, `players {pair[1]} and {pair[2]}: the first {same} structures match (before S-31 they parted at the 3rd: extractor against generator)`)
-			local va, vb = value(pair[1]), value(pair[2])
-			t.expect(math.abs(va - vb) <= 0.1 * math.max(va, vb), `players {pair[1]} and {pair[2]} at 3 minutes: value {va} against {vb} (before S-31 the east led by 7–15% every game)`)
+			-- (flow-field tie-breaks, no net direction) reorder jobs. Since S-94
+			-- (plants at twice the build power) Hard opens with six generators,
+			-- so that jitter reaches the 8th job; the first 7 must match
+			t.expect(same >= 7, `players {pair[1]} and {pair[2]}: the first {same} structures match (before S-31 they parted at the 3rd: extractor against generator)`)
+			table.insert(leads, value(pair[1]) / value(pair[2]) - 1) -- the west's lead
 		end
+		-- no side leads: the teams within 10%, and the two pairs not both
+		-- ahead on the same side by more than 5% (before S-31 the east led
+		-- by 7–15% for every player). One pair may drift on its own: since
+		-- S-94's faster plants, trip jitter moves a mirror ~12% either way
+		local west, east = value(1) + value(2), value(3) + value(4)
+		t.expect(math.abs(west - east) <= 0.1 * math.max(west, east), `teams at 3 minutes: west {west} against east {east}`)
+		t.expect(not ((leads[1] > 0.05 and leads[2] > 0.05) or (leads[1] < -0.05 and leads[2] < -0.05)), `both pairs lean the same way: {leads[1] * 100}%, {leads[2] * 100}%`)
 	end)
 
 	-- The same AI level on both starts of a mirrored map, both factions, six
