@@ -14,6 +14,7 @@
 local CoreDeposits = require("../Core/Deposits")
 local CoreTerrain = require("../Core/Terrain")
 local MeshModels = require("./MeshModels")
+local RenderTerrain = require("./Terrain")
 
 local Deposits = {}
 
@@ -74,11 +75,12 @@ local function part(name: string, size: Vector3, cf: CFrame, color: Color3, mate
 	return p
 end
 
--- The terrain's color at (x, z) (the patch is tinted to it).
-local function terrainTint(layers: any, feature: any, x: number, z: number): Color3
-	local name = CoreTerrain.material(layers, x, z, feature)
+-- The surrounding terrain's color at (x, z) (grass, sand, rock: the patch is
+-- tinted to it; the deposit cell itself is bare ground, Core/Terrain).
+local function terrainTint(layers: any, x: number, z: number): Color3
+	local material = RenderTerrain.MATERIAL[CoreTerrain.kind(layers, x, z)] or Enum.Material.Grass
 	local ok, color = pcall(function()
-		return workspace.Terrain:GetMaterialColor((Enum.Material :: any)[name])
+		return workspace.Terrain:GetMaterialColor(material)
 	end)
 	return if ok and typeof(color) == "Color3" then color else Color3.fromRGB(96, 110, 70)
 end
@@ -122,7 +124,7 @@ local function meshedPatch(s: Site, variants: number): Model?
 end
 
 -- Draws every deposit of the map (call after Ground.build).
-function Deposits.build(v: View, layers: any, feature: any)
+function Deposits.build(v: View, layers: any, _feature: any)
 	v.folder:ClearAllChildren()
 	v.overlayFolder:ClearAllChildren()
 	v.sites = {}
@@ -131,7 +133,7 @@ function Deposits.build(v: View, layers: any, feature: any)
 		local s: Site = {
 			d = d,
 			y = CoreTerrain.groundY(layers, d.x, d.z),
-			tint = terrainTint(layers, feature, d.x, d.z),
+			tint = terrainTint(layers, d.x, d.z),
 			patch = nil :: any,
 			meshed = false,
 			hidden = false,

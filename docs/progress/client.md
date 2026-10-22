@@ -4,6 +4,15 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, C's deposit models in; Needs my review)
+
+- **Merged m-models** (models-C's deposits, interceptor missiles, effect textures, animated blockout pieces, S-104-scaled and anti-nuke blockouts). test_client stays green and the materials file has the three deposit variants.
+- **Deposit models, at review:** with them switched on (`Invoke("depositsanyway", true)`), every deposit is one of C's three variants at its own turn, a dark scraped patch with pale rocks.
+  - Grass blades covered the low rocks, so deposit cells are now bare ground in the terrain.
+  - The patch is tinted with the real colour of the terrain around it.
+  - They read quite dark at night. **Needs my review:** approve them (C flips the status and they replace the plain patch everywhere) or ask C for lighter patches.
+- **Screenshot:** `debug_out/screens/deposit_models.jpg`.
+
 ## Summary (2026-10-23, HUD layout, developer mode, unit panel)
 
 - **HUD (C-124):**

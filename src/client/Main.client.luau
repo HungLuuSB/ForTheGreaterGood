@@ -735,6 +735,10 @@ if RunService:IsStudio() then
 			-- Invoke("wrecksanyway", on): use review wreck meshes too (for the user's review, C-115)
 			MeshModels.WRECKS_ANYWAY = (...) == true
 			return true
+		elseif query == "depositsanyway" then
+			-- Invoke("depositsanyway", on): draw C's review deposit models (for the user's review, C-123)
+			MeshModels.DEPOSITS_ANYWAY = (...) == true
+			return true
 		elseif query == "meshes" then
 			-- BAR mesh models (C-103): built, failed, seconds, errors
 			return MeshModels.stats
