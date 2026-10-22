@@ -22,6 +22,18 @@
       }
     },
     {
+      "Name": "chs_eye",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://113198079728093",
+        "NormalMapContent": "rbxassetid://103721350915353",
+        "RoughnessMapContent": "rbxassetid://121911269433013",
+        "MetalnessMapContent": "rbxassetid://134838540372258",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_generator",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -270,6 +282,18 @@
         "NormalMapContent": "rbxassetid://106128478858735",
         "RoughnessMapContent": "rbxassetid://81307040432912",
         "MetalnessMapContent": "rbxassetid://135588284465675",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_watchtower",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://128076006849058",
+        "NormalMapContent": "rbxassetid://98563283604934",
+        "RoughnessMapContent": "rbxassetid://138357025645682",
+        "MetalnessMapContent": "rbxassetid://88075745130392",
         "EmissiveStrength": 0
       }
     }

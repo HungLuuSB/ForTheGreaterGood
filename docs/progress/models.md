@@ -4,7 +4,21 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
-## Summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
+## Summary (BAR queue, 2026-10-22)
+
+Your queue: BAR-style Order + Chaos pairs, each with glow channels, a team test in four colors, 55° close and 220-stud shots (220 at the `bar_7` distance, cropped to its 955 × 568 framing), and the manifest with `lune run mesh_materials` in the same commit. Each pair has its own Ready to merge line. **New meshes go into the manifest as `review`, so the game keeps their blockouts until you approve them** (`APPROVED` in `assets/models/tools/manifest.py`).
+
+Before the queue: Oracle, Watcher and the Order vehicle plant were marked approved. The team-color clashes are documented in fx.md (team 7 cyan on Order and team 6 orange on Chaos: the client switches those units' `running` / `power` glow to white; yellow on Chaos is borderline). B's `mesh_materials` arrived with main.
+
+| # | Pair | Tris | Glow | Status | Shots (`debug_out/screens/`) |
+|---|---|---|---|---|---|
+| 1 | Radar towers: `ord_watchtower` (armored square tower, cyan corner strips, unlit array with glowing edge and grid on the turning `radar`) / `chs_eye` (open lattice mast, amber eye sensor and leg beacons, unlit panel with amber edge) | 1,004 / 920 | 5.6% / 6.6% | review | `t1_radar_55_close.jpg`, `t1_radar_55_220.jpg` |
+
+**Needs your review (queue):**
+- **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
+- **Radar panels:** both panels' glowing edges follow the approved Oracle rule (unlit face, edge and grid). The Eye's amber edge is thicker relative to its panel.
+
+## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 
 Your glow review (approved) and the mesh manifest. Commits touch only `src/shared/Defs/Meshes/`, `tests/client/Meshes.spec.luau`, `assets/` and docs.
 

@@ -22,8 +22,9 @@ local function isAttachmentPiece(name: string): boolean
 end
 
 -- Problems with one entry, empty when valid. `def` is the unit def (nil for
--- an fx entry, which has no def to match).
-function Mesh.validate(id: string, e: any, def: any?): { string }
+-- an fx entry, which has no def to match); `visual` is the blockout's
+-- `visualPieces` (client-only jointed pieces, rig.md 4), also allowed.
+function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { string }
 	local problems: { string } = {}
 	local function bad(msg: string)
 		table.insert(problems, `{id}: {msg}`)
@@ -113,9 +114,13 @@ function Mesh.validate(id: string, e: any, def: any?): { string }
 				bad(`def piece {name} has no mesh piece`)
 			end
 		end
+		local inVisual: { [string]: boolean } = {}
+		for _, name in visual or {} do
+			inVisual[name] = true
+		end
 		for name in e.pieces do
-			if not inDef[name] then
-				bad(`piece {name} isn't in the def's pieces`)
+			if not inDef[name] and not inVisual[name] then
+				bad(`piece {name} isn't in the def's pieces or the blockout's visualPieces`)
 			end
 		end
 		for name in e.attachments or {} do
