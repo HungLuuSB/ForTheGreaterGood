@@ -216,6 +216,15 @@ The user's rules for the shield override parts of the table above: the dome is n
 | `speck` | 256 × 256 | Floating specks: a `ParticleEmitter` (e.g. on the `Dome` part, `Shape = Sphere`, `ShapeInOut = Inward`), `Texture` = speck, `Color` = team color, `LightEmission = 1`, small `Size` (0.2–0.6), slow `Speed`. |
 | `ripple` | 512 × 512 | A hit on the dome: one particle from a `ParticleEmitter` at the hit point, `Orientation = VelocityPerpendicular` with the velocity along the dome's normal (so it lies flat on the dome), `Speed` ≈ 0.01, `Emit(1)`; `Size` grows from 0 to the burst size, `Transparency` goes to 1; `Texture` = ripple, `Color` = team color, `LightEmission = 1`. |
 
+### Honeycomb shell (M-30, clients-B's request, status `review`)
+
+Scattered patches of hex cells laid over the dome (the user: "spread out like little patches"), full on the top of the dome and gone towards its base; the client tints it and scales its opacity with the shield's charge. In the mesh manifest as `Meshes.shieldShell` (check with `Mesh.validateShieldShell`); built by `assets/fx/shield/honeycomb/build.py`, IDs in `assets/fx/shield/honeycomb/roblox_assets.json`.
+
+- **Why bands:** Roblox meshes carry no per-vertex alpha and a tiling texture can't fade with height, so the shell is the dome surface (radius 1.003, 0.3% over `Dome`) cut into 11 bands: `shell_1` the top cap (0–30° from the top, opacity 1) and `shell_2` .. `shell_11` thin rings from 30° down to 72° (the dome's height down to about 31% above the ground; the last rings nearly 0), each with its own `opacity`. 11,880 triangles in all.
+- **Texture:** `texture`, one tile of pointy-top hex outlines (white RGB, the pattern in alpha), 12 × 10 cells per tile, only seeded blobs of cells drawn (each blob full in the middle, fading at its edge, with a faint fill inside the cells). The bands' UVs tile it evenly over the dome (azimuthal equidistant from the top), the cells 5 studs across at the default radius 120 (they scale with the dome). The pole pinches the tiling slightly (the azimuthal projection); at 55° and 220 it reads as one more patch.
+- **Build each band** as a MeshPart: `MeshId` = `bands[i].mesh`, `Size` = `bands[i].size` × R, `CFrame` = dome base center × `CFrame.new(0, bands[i].center[2] × R, 0)` (the same base center as `Dome`), `Anchored`, no collisions, queries, touches or shadows. Add a `SurfaceAppearance` with `ColorMap` = `texture`, `AlphaMode = Transparency` and `Color` = the tint (team color or the Order cyan). Set `Transparency = 1 − bands[i].opacity × charge` (charge 0..1); keep the cap at most 0.99 opaque if a fully opaque part sorts badly against the ForceField dome.
+- **No glow parts:** it reads through the tint; checked at 55° (full and 35% charge) and from the side: `honeycomb_55_full.jpg`, `honeycomb_55_charge35.jpg`, `honeycomb_25_side.jpg` in `debug_out/screens/`. Reference: "FTGG Art", `Workspace.ShieldHoneycomb` (R = 120, at (0, 0, 3000)).
+
 ### Asset IDs
 
 All in `assets/fx/shield/roblox_assets.json`. The texture IDs are also attributes of the `ReplicatedStorage.FX.Shield` folder in "FTGG Art" (`Swirl`, `Beam`, `Speck`, `Ripple`).

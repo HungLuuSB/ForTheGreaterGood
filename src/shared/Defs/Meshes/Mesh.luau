@@ -62,6 +62,43 @@ function Mesh.validateBeam(e: any): { string }
 	return problems
 end
 
+-- Problems with the manifest's `shieldShell` entry (M-30, fx.md "Honeycomb
+-- shell"), empty when valid.
+function Mesh.validateShieldShell(e: any): { string }
+	local problems: { string } = {}
+	local function bad(msg: string)
+		table.insert(problems, `shieldShell: {msg}`)
+	end
+	if not Mesh.STATUSES[e.status] then
+		bad(`status {tostring(e.status)} must be "approved" or "review"`)
+	end
+	if not isAssetId(e.texture) then
+		bad("texture asset ID missing")
+	end
+	if type(e.bands) ~= "table" or #e.bands == 0 then
+		bad("no bands")
+		return problems
+	end
+	local last = 0
+	for i, b in e.bands do
+		if not isAssetId(b.mesh) then
+			bad(`band {i}: mesh asset ID missing`)
+		end
+		if type(b.opacity) ~= "number" or b.opacity < 0 or b.opacity > 1 then
+			bad(`band {i}: opacity must be 0..1`)
+		end
+		if not isVec3(b.center) or not isVec3(b.size) then
+			bad(`band {i}: center and size must be three numbers`)
+		end
+		if type(b.theta) ~= "table" or b.theta[1] ~= last or not (b.theta[2] > b.theta[1]) then
+			bad(`band {i}: theta must continue from {last} degrees`)
+		else
+			last = b.theta[2]
+		end
+	end
+	return problems
+end
+
 -- Problems with one entry, empty when valid. `def` is the unit def (nil for
 -- an fx entry, which has no def to match); `visual` is the blockout's
 -- `visualPieces` (client-only jointed pieces, rig.md 4), also allowed.

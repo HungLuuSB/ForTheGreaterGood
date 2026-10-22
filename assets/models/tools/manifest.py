@@ -25,6 +25,9 @@ TEXTURES = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)
                                        "roblox_assets.json"), encoding="utf-8"))["textures"]
 # the beam towers' shot (M-29, fx.md "Beam shot"): textures and recommended values per faction
 BEAM = json.load(open(os.path.join(ROOT, "assets", "fx", "beam", "roblox_assets.json"), encoding="utf-8"))
+# the honeycomb shell over the shield dome (M-30, fx.md "Honeycomb shell")
+SHELL_DIR = os.path.join(ROOT, "assets", "fx", "shield", "honeycomb")
+SHELL_NOTE = "honeycomb shell bands, waiting for the user's review"
 BEAM_NOTE = "beam shot textures and recommended values (fx.md \"Beam shot\"), waiting for the user's review"
 
 # The user's approvals: only these are "approved" (the game draws them);
@@ -224,7 +227,15 @@ def main():
         beam["note"] = BEAM_NOTE
     for k, v in beam["textures"].items():
         assert v.startswith("rbxassetid://"), k
-    body = lua({"units": units, "fx": fx, "beam": beam}, 0)
+    rig = load(os.path.join(SHELL_DIR, "export", "shell.json"))
+    ids = load(os.path.join(SHELL_DIR, "roblox_assets.json"))
+    shell = {"status": "approved" if "shieldShell" in APPROVED else "review", "texture": ids["texture"],
+             "radius": rig["radius"], "refRadius": rig["refRadius"], "hex": rig["hex"],
+             "bands": [{"name": b["name"], "mesh": ids["meshes"][b["name"]], "opacity": b["opacity"], "theta": b["theta"],
+                        "center": b["center"], "size": b["size"]} for b in rig["bands"]]}
+    if shell["status"] == "review":
+        shell["note"] = SHELL_NOTE
+    body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell}, 0)
     text = f"""--!strict
 -- Mesh manifest (M-23, docs/contracts/rig.md section 7): every BAR-style mesh
 -- by unit def ID, with its asset IDs, rig, team pieces and glow parts.
@@ -266,8 +277,20 @@ export type BeamShot = {{
 	textures: {{ [string]: string }},
 	factions: {{ [string]: {{ [string]: any }} }},
 }}
+-- the honeycomb shell over the shield dome (M-30, fx.md "Honeycomb shell"):
+-- bands from the top cap down, each with its recommended opacity; center and
+-- size at dome radius 1 (multiply by the dome's radius)
+export type ShieldShell = {{
+	status: string,
+	note: string?,
+	texture: string,
+	radius: number,
+	refRadius: number,
+	hex: number,
+	bands: {{ {{ name: string, mesh: string, opacity: number, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
+}}
 
-local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot }} = {{
+local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell }} = {{
 	glowMask = "{GLOW_MASK}",
 	textures = {lua(TEXTURES, 1)},
 {body[2:-2]}
