@@ -349,6 +349,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
 - 2026-10-22: sim S-86, S-87 (`7cef56c`) → `bdfda93`, passed test, test_slow and build, pushed.
 - 2026-10-22: client C-99 (`92be867`) → `72093b3`, models `5923128` (BAR meshes, remaining T1 ground pairs) → `929796f`. Both passed test, test_slow and build and were pushed.
 - 2026-10-22: client C-100 (`aa8f71b`, terrain-draped fog of war) → `ac2e1cf`, passed test, test_slow and build, pushed.
+- 2026-10-22: client C-101 (`92b9a43`, night lighting preset) → `4c9b315`, passed test, test_slow and build, pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 
