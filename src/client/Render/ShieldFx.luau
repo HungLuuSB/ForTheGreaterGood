@@ -65,7 +65,7 @@ ShieldFx.SWIRL_SIZE = 0.4 -- the swirl disc's diameter, × R (C's checked assemb
 ShieldFx.SWIRL_OPACITY = 0.85
 ShieldFx.RIPPLE_SECONDS = 0.6
 ShieldFx.RIPPLE_SIZE = 0.25 -- a ripple's size at intensity 1, × R
-ShieldFx.PLATE_POOL = 160 -- hexagon plates shared by every shield
+ShieldFx.PLATE_POOL = 240 -- hexagon plates shared by every shield (6 patches of 37, C-116)
 ShieldFx.PLATE_THICKNESS = 0.12
 
 local WHITE = Color3.new(1, 1, 1)
@@ -493,9 +493,9 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		ripple.SpreadAngle = Vector2.zero
 		ripple.Lifetime = NumberRange.new(ShieldFx.RIPPLE_SECONDS)
 		ripple.Rate = 0
-		ripple.LightEmission = 1
+		ripple.LightEmission = 0.3 -- 1 glared white under the night bloom (the user, C-116)
 		ripple.Color = ColorSequence.new(WHITE)
-		ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.1), NumberSequenceKeypoint.new(1, 1) })
+		ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(0.2, 0.4), NumberSequenceKeypoint.new(1, 1) })
 		ripple.TimeScale = math.max(particleScale, 0.001)
 		-- visible on its first frame (a third of its size, opaque), then spreading: a
 		-- shell turns about 0.1 s after it enters, and a ripple growing from 0 read

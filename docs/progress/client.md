@@ -688,6 +688,18 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: dimmer ripples, bigger hex patches (C-117)
+
+- **Your notes:** the ripple is too bright (light emission?), and the hex shield should be bigger or have more hexes.
+- **Ripple** (`Render/ShieldFx`): LightEmission 1 → 0.3, so it no longer glares white under the night bloom; it starts 30% transparent (was opaque).
+- **Hexes** (`Core/Shield`):
+  - plates 2.4 → 4.5 studs across (gap 0.4);
+  - every hit lights at least 2 rings (19 plates; 37 for a heavy shell);
+  - each ring out is 45% as opaque as the one inside (was 30%, so the second ring shows);
+  - the shared plate pool grows to 240.
+  - `Shield.spec`: the centre still outshines ring 1 (below half).
+- **Screenshot:** `debug_out/screens/shield_hex_bigger.jpg`.
+
 ## 2026-10-23: a heavy hit no longer enlarges every ripple on the dome (C-116)
 
 - **Your find:** with small ripples on the dome, one large shell turned them all big at once: the "burst" of shield effects.
@@ -1387,6 +1399,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Terrain from the sim's terrain layer (C-66): sand, rock and roads are drawn where the sim has them, so what looks like sand slows units. On Normandy: leafy hedgerows, asphalt roads, plank bridges, and brick houses with slate roofs in the villages (`debug_out/screens/c66_village.jpg`, `c66_bridge.jpg`). Also merged S-58 (protocol 19: unique icon numbers per unit type).
 
 ## Needs my review
+
+- **Shield hit look (C-117):** ripple brightness (LightEmission 0.3) and hex size (4.5 studs, 19–37 plates a hit); `debug_out/screens/shield_hex_bigger.jpg`.
 
 - **Wreck meshes (C-115):** `debug_out/screens/wrecks_meshed.jpg` (review wrecks forced on). Approve them for game (models-C marks each `wreck` approved), and say if they're too dark under the night lighting.
 

@@ -38,11 +38,11 @@ export type Dome = {
 	up: boolean, -- false once collapsed at 0%, until recharged to RAISE_AT
 }
 
-Shield.PLATE = 2.4 -- studs across a hexagon's flats
-Shield.GAP = 0.25 -- studs between plates
+Shield.PLATE = 4.5 -- studs across a hexagon's flats (2.4 until C-116: the user, bigger hexes)
+Shield.GAP = 0.4 -- studs between plates
 Shield.RING_DELAY = 0.045 -- seconds between rings lighting
 Shield.LIFE = 0.65 -- seconds a plate glows after it lights
-Shield.RING_ALPHA = 0.3 -- each ring out is this much as opaque as the one inside it
+Shield.RING_ALPHA = 0.45 -- each ring out is this much as opaque as the one inside it (0.3 in C-104; up with the second ring every hit lights, C-116)
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
 Shield.MERGE_AGE = 0.25
@@ -81,7 +81,8 @@ Shield.unit, Shield.dot, Shield.len, Shield.sub = unit, dot, len, sub
 -- Rings of hexagons by a hit's strength: a light hit lights the centre and
 -- one ring (7 plates), a heavy one up to MAX_RINGS (37).
 function Shield.ringsFor(strength: number): number
-	return math.clamp(math.floor(1 + strength), 1, Shield.MAX_RINGS)
+	-- two rings at least (19 plates): the user wanted more hexes per hit (C-116)
+	return math.clamp(math.floor(2 + strength), 2, Shield.MAX_RINGS)
 end
 
 -- The plates of a patch on a sphere (`center`, `radius`) round the point
