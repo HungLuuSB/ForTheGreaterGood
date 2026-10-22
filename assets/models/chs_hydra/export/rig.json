@@ -1,0 +1,208 @@
+{
+  "id": "chs_hydra",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.55,
+        -0.1
+      ],
+      "size": [
+        4.98,
+        3.1,
+        7.8
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.75,
+        1.39
+      ],
+      "size": [
+        3.04,
+        0.9,
+        3.42
+      ],
+      "pivot": [
+        0.0,
+        2.5,
+        1.2
+      ]
+    },
+    "launcher": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        3.3,
+        0.8
+      ],
+      "size": [
+        3.72,
+        3.3566,
+        4.5938
+      ],
+      "pivot": [
+        0.0,
+        2.8,
+        3.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        0,
+        4.3,
+        -1.8
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret",
+    "launcher"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.1,
+        -0.075
+      ],
+      "size": [
+        5.04,
+        1.62,
+        7.87
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.75,
+        -3.85
+      ],
+      "size": [
+        3.8,
+        0.2,
+        0.1
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.62,
+        1.2
+      ],
+      "size": [
+        3.04,
+        0.14,
+        3.04
+      ]
+    },
+    {
+      "name": "launcher_glow_running",
+      "piece": "launcher",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.5598,
+        0.95
+      ],
+      "size": [
+        3.784,
+        2.2772,
+        3.6242
+      ]
+    },
+    {
+      "name": "launcher_glow_weapon",
+      "piece": "launcher",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        4.4125,
+        -1.1269
+      ],
+      "size": [
+        2.66,
+        0.8464,
+        0.506
+      ]
+    }
+  ],
+  "glowShare": 0.0512,
+  "triangles": {
+    "base": 1232,
+    "turret": 112,
+    "launcher": 756,
+    "total": 2100
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

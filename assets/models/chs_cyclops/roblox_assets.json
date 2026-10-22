@@ -1,0 +1,32 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 1788 triangles, glow share 5.1%",
+  "bar": {
+    "model": "rbxassetid://103504149374244",
+    "meshes": {
+      "barrel": "rbxassetid://121453958383875",
+      "base": "rbxassetid://112069029938201",
+      "base_glow_head": "rbxassetid://132419342435425",
+      "base_glow_running": "rbxassetid://83362687357969",
+      "turret": "rbxassetid://136250875889540",
+      "turret_glow_running": "rbxassetid://136965275401040",
+      "turret_glow_weapon": "rbxassetid://112132181885576"
+    },
+    "decals": {
+      "ALB": "rbxassetid://71272842018688",
+      "RGH": "rbxassetid://76311842146200",
+      "NOR": "rbxassetid://76037620912094",
+      "MTL": "rbxassetid://84880087010822",
+      "EMI": "rbxassetid://86713922956389"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://103742692247981",
+      "NOR": "rbxassetid://85145820073846",
+      "RGH": "rbxassetid://117741955946792",
+      "MTL": "rbxassetid://82238267534507",
+      "EMI": "rbxassetid://133594062206958"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_cyclops_bar in FTGG Art",
+    "reuploadNote": "ALB, NOR, RGH, MTL re-uploaded: the first color map failed with HTTP 502 in Studio"
+  }
+}

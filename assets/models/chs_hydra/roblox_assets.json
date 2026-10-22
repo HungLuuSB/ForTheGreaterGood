@@ -1,0 +1,32 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 2100 triangles, glow share 5.1%",
+  "bar": {
+    "model": "rbxassetid://127052729070774",
+    "meshes": {
+      "base": "rbxassetid://123338705414701",
+      "base_glow_head": "rbxassetid://101696448060233",
+      "base_glow_running": "rbxassetid://115069871658404",
+      "launcher": "rbxassetid://123859890929218",
+      "launcher_glow_running": "rbxassetid://114801779735580",
+      "launcher_glow_weapon": "rbxassetid://93057756597467",
+      "turret": "rbxassetid://135809970498004",
+      "turret_glow_running": "rbxassetid://97027966291848"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128702341426746",
+      "RGH": "rbxassetid://85124806478207",
+      "NOR": "rbxassetid://134786230716692",
+      "MTL": "rbxassetid://88577004641363",
+      "EMI": "rbxassetid://75246294828536"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://113983591618025",
+      "NOR": "rbxassetid://108288710210633",
+      "RGH": "rbxassetid://139071434073871",
+      "MTL": "rbxassetid://100150674392132",
+      "EMI": "rbxassetid://139033054282529"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_hydra_bar in FTGG Art"
+  }
+}

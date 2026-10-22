@@ -61,7 +61,34 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(mirrored, "west and east are mirror images")
-		t.equal(Layers.getSupply(layers, cell(0, 0)), 0, "no deposits")
+		-- supply deposits (S-98): mirrored, on open fields, 15 per side
+		local count, value, onField, symmetric = 0, 0, true, true
+		for cz = 0, 255 do
+			for cx = 0, 255 do
+				local v = Layers.getSupply(layers, g:index(cx, cz))
+				if v > 0 then
+					count += 1
+					value += v
+					onField = onField and Normandy.feature(cx, cz) == "field"
+					symmetric = symmetric and Layers.getSupply(layers, g:index(255 - cx, cz)) == v
+				end
+			end
+		end
+		t.equal(count, 30, "30 deposits: 14 a side and a rich pair in the middle")
+		t.equal(value, 104, "worth 104 in all")
+		t.expect(onField, "every deposit on an open field cell")
+		t.expect(symmetric, "west and east deposits mirror each other")
+		local west = 0
+		for cx = 0, 127 do
+			for cz = 0, 255 do
+				local v = Layers.getSupply(layers, g:index(cx, cz))
+				local x = g:cellCenter(cx, cz)
+				if v > 0 and x < -Normandy.RIVER_X then
+					west += 1
+				end
+			end
+		end
+		t.equal(west, 8, "8 behind the west river: home and rear")
 	end)
 
 	t.test("the bluffs, river, hedges and houses stop land units; draws, bridges and gaps let them through", function()

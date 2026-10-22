@@ -1,0 +1,29 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 1116 triangles, glow share 4.8%",
+  "bar": {
+    "model": "rbxassetid://101832372878682",
+    "meshes": {
+      "base": "rbxassetid://81670671095395",
+      "base_glow_head": "rbxassetid://103220728063108",
+      "base_glow_running": "rbxassetid://118502199548556",
+      "dish": "rbxassetid://112894300285951",
+      "dish_glow_running": "rbxassetid://110970755062418"
+    },
+    "decals": {
+      "ALB": "rbxassetid://105308853985543",
+      "RGH": "rbxassetid://103806334151125",
+      "NOR": "rbxassetid://108412343448227",
+      "MTL": "rbxassetid://92046509043263",
+      "EMI": "rbxassetid://82521791958246"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://106470179853759",
+      "NOR": "rbxassetid://79482912364672",
+      "RGH": "rbxassetid://113986093957870",
+      "MTL": "rbxassetid://83806522728995",
+      "EMI": "rbxassetid://75899029453666"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_arbiter_bar in FTGG Art"
+  }
+}

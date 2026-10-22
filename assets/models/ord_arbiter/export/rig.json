@@ -1,0 +1,137 @@
+{
+  "id": "ord_arbiter",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.7275,
+        -0.15
+      ],
+      "size": [
+        5.08,
+        3.455,
+        7.9
+      ]
+    },
+    "dish": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.6322,
+        2.2
+      ],
+      "size": [
+        4.2,
+        3.2643,
+        1.3746
+      ],
+      "pivot": [
+        0.0,
+        3.0,
+        2.2
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "dish"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.21,
+        0.055
+      ],
+      "size": [
+        4.09,
+        1.38,
+        7.61
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.25,
+        -4.13
+      ],
+      "size": [
+        3.35,
+        0.2,
+        0.08
+      ]
+    },
+    {
+      "name": "dish_glow_running",
+      "piece": "dish",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.8787,
+        1.9839
+      ],
+      "size": [
+        3.9,
+        2.5252,
+        0.9354
+      ]
+    }
+  ],
+  "glowShare": 0.0483,
+  "triangles": {
+    "base": 868,
+    "dish": 248,
+    "total": 1116
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

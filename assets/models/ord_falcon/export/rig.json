@@ -1,0 +1,145 @@
+{
+  "id": "ord_falcon",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.2199,
+        -0.5754
+      ],
+      "size": [
+        6.8,
+        1.8399,
+        9.3508
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        0.0,
+        -0.025,
+        -0.075
+      ],
+      "size": [
+        2.2,
+        0.55,
+        2.05
+      ],
+      "pivot": [
+        0.0,
+        0.05,
+        0.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "pylon",
+      "at": [
+        0,
+        -0.15,
+        -1.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.29,
+        1.26
+      ],
+      "size": [
+        6.9,
+        1.8,
+        5.72
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.3,
+        -3.8
+      ],
+      "size": [
+        0.3,
+        0.06,
+        0.3
+      ]
+    },
+    {
+      "name": "pylon_glow_weapon",
+      "piece": "pylon",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        -0.15,
+        -1.225
+      ],
+      "size": [
+        2.1,
+        0.3,
+        0.25
+      ]
+    }
+  ],
+  "glowShare": 0.0891,
+  "triangles": {
+    "base": 624,
+    "pylon": 168,
+    "total": 792
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

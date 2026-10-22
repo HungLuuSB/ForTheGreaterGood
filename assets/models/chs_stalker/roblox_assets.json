@@ -1,0 +1,29 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "2026-10-22, first BAR upload (M-15): 1044 triangles, glow share 5.3%",
+  "bar": {
+    "model": "rbxassetid://133057068439691",
+    "meshes": {
+      "base": "rbxassetid://106639445088458",
+      "base_glow_head": "rbxassetid://116004252539624",
+      "base_glow_running": "rbxassetid://74163570233184",
+      "dish": "rbxassetid://132730374850822",
+      "dish_glow_running": "rbxassetid://117810179476756"
+    },
+    "decals": {
+      "ALB": "rbxassetid://140246575881389",
+      "RGH": "rbxassetid://92304085901480",
+      "NOR": "rbxassetid://93487420997787",
+      "MTL": "rbxassetid://104894066176125",
+      "EMI": "rbxassetid://131605931192941"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://122900201332767",
+      "NOR": "rbxassetid://136673706718357",
+      "RGH": "rbxassetid://112112726624564",
+      "MTL": "rbxassetid://117173531954936",
+      "EMI": "rbxassetid://129063661964266"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_stalker_bar in FTGG Art"
+  }
+}
