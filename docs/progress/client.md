@@ -6,13 +6,13 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (overnight run, 2026-10-22 → 23)
 
-**Your list is done, except where someone else is needed:** the 2-client Studio test (my Studio tools only start a solo playtest) and the draft 3 icon sheet (waiting for you to import it). Server alerts landed overnight (C-85). Each item is committed, pushed and marked "Ready to merge" below. sim-A has already integrated C-75 to C-80 into main (`a21d325`).
+**Your list is done.** Server alerts landed overnight (C-85); you imported the draft 3 sheet and ran the 2-client test the next morning (C-86). Each item is committed, pushed and marked "Ready to merge" below. sim-A has already integrated C-75 to C-80 into main (`a21d325`).
 
 | # | What | Decision | Proof |
 |---|---|---|---|
 | 1 | Current work: request 36 used (server queues, fire / move states, ammo); icon sheet draft 3 built | C-75, C-74 | `OwnerFields.spec` (client = server every tick); sheet `assets/icons/ftgg-icons.png` |
 | 2 | Unit stats in the unit panel, enemies by hover, knowledge rules | C-76 | `UnitStats.spec` (Lancer vs armored), `c76_*.jpg` |
-| 3 | Two humans: lobby seats, host, factions, rejoin into the seat; `duo` profile | C-77 | `TwoPlayers.spec` (two client stacks: join, fog, commands, combat, win), `c77_*.jpg`. **2-client Studio test not run:** `ACTIVE = "duo"`, Test → Clients and Servers → 2 players |
+| 3 | Two humans: lobby seats, host, factions, rejoin into the seat; `duo` profile | C-77 | `TwoPlayers.spec` (two client stacks: join, fog, commands, combat, win), `c77_*.jpg`; your 2-client Studio test (C-86): both seated, host-only lobby, a match on crossroads, `c86_duo_player*.jpg` |
 | 4 | Robustness: late join, rejoin, restart; the stale selection after a restart fixed | C-78 | `Robustness.spec`, `c78_rejoined.jpg` |
 | 5 | Spectators (no seat → watch everything) and the replay viewer (save, watch, pause, 0.25–8×, seek, exit) | C-79 | `Replay.spec` (every seek = the live view), `c79_*.jpg` |
 | 6 | Lobby choices (faction, AI level per seat, named maps) and results with the sim's statistics | C-77, C-80 | `Lobby.spec`, `c77_results_stats.jpg` |
@@ -27,9 +27,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 **Tests at the end:** `lune run test_client`: 43 specs, 143 passed, 0 failed. `lune run test` (sim): 53 specs, 355 passed. `lune run build`: 415 scripts compile, every require resolves.
 
 **What I need from you:**
-1. Import `assets/icons/ftgg-icons.png` (draft 3; same layout, so only the ID changes) and send me the asset ID. I'll then re-check the pairs you fixed at real size.
-2. Add catalogue entries for the Warden and the Minotaur to the icon HTML.
-3. Run the 2-client test once (above), or tell me to.
+1. ~~Import the draft 3 sheet~~ (done: `87919807696998`, C-86).
+2. Add catalogue entries for the Warden, Minotaur, Locust, Cyclops, Barrier and Citadel to the icon HTML (drawn with stopgap icons until then), and look again at the gun turret vs floating turret pair (C-86).
+3. ~~Run the 2-client test~~ (done, C-86).
 4. Review the "Needs my review" list: settings defaults, UI placement, atmosphere options, sound picks.
 
 ## Summary (night run, 2026-10-21)
@@ -160,6 +160,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `926e4a9` (the user's icon set on one sprite sheet, drawn in the game, C-74; includes the icon HTML commits `44dc172`, `a0e43e1`); test_client 119, test 350, build passed.
 - Ready to merge: `994ba89` (factory queues, fire / move states and ammo from the server, request 36, C-75); test_client 122, test 350, build passed.
 - Ready to merge: `8abbf6d` (unit stats in the unit panel, C-76; also the draft 3 icon commits `226ed70`, `c9ff356`, the sheet not yet re-imported); test_client 127, test 350, build passed.
+- Ready to merge: `a994ce5` (draft 3 icons wired in, S-75 units with stopgap icons, no build-menu error for units missing from the sheet, C-86); test_client 145, test 386, build passed.
 - Ready to merge: `315ec04` (lobby seats for several humans, results with statistics, C-77; the 2-client Studio test not run); test_client 130, test 350, build passed.
 - Ready to merge: `3101bcf` (rejoin, late join, restart: a new WELCOME clears the client's references, C-78); test_client 133, build passed.
 - Ready to merge: `390df33` (spectators and the replay viewer, C-79); test_client 136, build passed.
@@ -169,6 +170,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `9fac768` (nuke craters and water splashes, C-82); test_client 141, build passed.
 - Ready to merge: `c5888f5` (atmosphere presets as options, C-83); test_client 141, build passed.
 - Ready to merge: `2d98701` (Warden and Minotaur piece scripts, deploy phases, C-84); test_client 143, build passed.
+- Ready to merge: `6ea62c3` (alerts from the server, S-69 to S-73 followed, C-85; includes the merge of main at f487eea); test_client 144, build passed.
 
 ## Tasks
 
@@ -496,6 +498,17 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: draft 3 icons wired in; your 2-client test; S-75 units drawn (C-86)
+
+- The draft 3 sheet is wired in (`tools/icons/assets.json`: `87919807696998`). Rebuilding it gives the same PNG byte for byte, so the import matches the atlas.
+- Main brought four new units (S-75). The sheet has no tiles for them yet, so they use existing icons until the catalogue lists them: Locust as Light Tank, Cyclops as Artillery, Barrier as Storage, Citadel as Heavy Turret. The renderer reports each one on every run.
+- **Your 2-client test** found a bug: every frame, Player 2's build menu errored at `Icons:95` on the Locust, which wasn't on the sheet, and left a blank "Label" button. Fixed two ways: the stopgap icon, and `Icons.ofDef` now gives a def with no tile its domain's plain frame instead of erroring (`IconAtlas.spec`). Apart from that, the test worked. The server seated both players and refused Player 2's lobby change ("only the host"). The match started on crossroads with both players building, and neither client logged a script error (`debug_out/screens/c86_duo_player1.jpg`, `c86_duo_player2.jpg`). The asset error `rbxassetid://203785492` in the log doesn't come from this repo.
+- **Icon pairs at real size** (cut from the imported sheet, tinted as ImageColor3 does, 22 px × tier scale, grass and sand; `debug_out/icons/pairs-real.png`, `pairs-4x.png`):
+  - fixed: bomber vs strategic bomber (one chevron vs two, dots and size), MBT vs MLRS (shell vs rocket fan), airfield vs rearm pad (triangle vs H), fighter vs air superiority;
+  - **still hard:** gun turret vs floating turret, the same shield and shell, where the floating turret's waves blur into a smudge at 22 px, worst in red on sand.
+  - The Studio check in normandy waits until your 2-client test is over: I didn't stop it.
+- S-77 (replay format 2) and the Citadel's second slot need no client change: `parse` reads both formats, and the default aim turns each slot's `turretPiece`.
 
 ## 2026-10-23: alerts from the server, S-69 to S-73 followed (C-85)
 
