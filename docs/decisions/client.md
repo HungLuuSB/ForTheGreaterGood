@@ -1004,3 +1004,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - A builder's target is the nearest own unfinished frame within its range + 16 studs, the Waypoints rule; the sim doesn't send it.
 
 **Why:** the user ("show its current ore and energy usage, like +5 or −10").
+
+### C-126 — The cheat line's arrow keys cycle suggestions first (2026-10-23)
+
+**Decision:** while suggestions show, Up / Down move a highlight through them (Up from none: the bottom one, next to the bar), and Tab or Enter takes the highlighted one without sending. With no suggestions showing, they walk the history. WASD camera panning is not added (the user: middle-drag is enough for now; A / S stay Attack / Stop).
+
+**Why:** the user's request, and their answer on the history.

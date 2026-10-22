@@ -2,8 +2,9 @@
 -- The cheat command line (C-119, BAR's /cheat): Enter or "/" opens a UI-kit
 -- bar at the bottom centre; typing shows suggestions (Core/CheatInput:
 -- commands, then unit ids or names after "give"; Tab or a click takes the
--- first / that one); Enter sends, Escape closes, Up / Down walk the
--- history. Lines and the server's results print in a log above the bar,
+-- first / that one); Enter sends, Escape closes. Up / Down cycle the
+-- suggestions while some show (Tab or Enter then takes the highlighted
+-- one, C-126), else walk the history. Lines and the server's results print in a log above the bar,
 -- fading after a while. Ctrl+Shift+G repeats the last give at the cursor.
 -- Roblox's chat window is off (C-109), so this is the game's command line;
 -- the same commands are also TextChatService commands (Main), for when it
@@ -36,6 +37,7 @@ export type UI = {
 	submit: (string) -> (),
 	defs: any,
 	suggestions: { CheatInput.Suggestion },
+	pick: number, -- the suggestion Up / Down highlighted (0: none; Tab takes the first)
 	sent: boolean, -- this line went already (Return seen before FocusLost)
 }
 
@@ -47,6 +49,18 @@ local function placeLog(ui: UI, above: number)
 	ui.logRoom = math.max(40, screen - above - CheatConsole.TOP_CLEAR)
 end
 
+-- Highlights the suggestion Tab would take (the picked one, else the first).
+local function paint(ui: UI)
+	local on = math.max(ui.pick, 1)
+	for _, b in ui.suggest:GetChildren() do
+		if b:IsA("TextButton") then
+			local mine = b.LayoutOrder == on
+			b.BackgroundTransparency = if mine then (if ui.pick > 0 then 0.75 else 0.9) else 1
+			b.TextColor3 = if mine then Kit.COLOR.text else Kit.COLOR.dim
+		end
+	end
+end
+
 local function suggestionRows(ui: UI)
 	for _, c in ui.suggest:GetChildren() do
 		if c:IsA("TextButton") then
@@ -54,6 +68,7 @@ local function suggestionRows(ui: UI)
 		end
 	end
 	ui.suggestions = CheatInput.suggest(ui.box.Text, ui.defs)
+	ui.pick = 0
 	for i, s in ui.suggestions do
 		local b = Instance.new("TextButton")
 		b.AutoButtonColor = false
@@ -75,6 +90,7 @@ local function suggestionRows(ui: UI)
 			ui.box:CaptureFocus()
 		end)
 	end
+	paint(ui)
 	ui.suggest.Visible = #ui.suggestions > 0
 	ui.suggest.Size = UDim2.new(1, 0, 0, #ui.suggestions * 22 + 8)
 	-- the log stays above the suggestions
@@ -219,11 +235,11 @@ function CheatConsole.new(defs: any, submit: (string) -> ()): UI
 	sc.Parent = suggest
 	Kit.pad(suggest, 4)
 	Kit.list(suggest, 0)
-	local ui: UI = { gui = gui, bar = bar, box = box, suggest = suggest, log = log, logRoom = 1000, lines = {}, history = {}, historyAt = 1, lastGive = nil, submit = submit, defs = defs, suggestions = {}, sent = false }
+	local ui: UI = { gui = gui, bar = bar, box = box, suggest = suggest, log = log, logRoom = 1000, lines = {}, history = {}, historyAt = 1, lastGive = nil, submit = submit, defs = defs, suggestions = {}, pick = 0, sent = false }
 	box:GetPropertyChangedSignal("Text"):Connect(function()
 		-- Tab completes: Roblox types a tab character into the box
 		if string.find(box.Text, "\t", 1, true) then
-			local first = ui.suggestions[1]
+			local first = ui.suggestions[math.max(ui.pick, 1)]
 			box.Text = if first then first.text else string.gsub(box.Text, "\t", "")
 			box.CursorPosition = #box.Text + 1
 			return
@@ -243,12 +259,26 @@ function CheatConsole.new(defs: any, submit: (string) -> ()): UI
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
 		local k = input.KeyCode
 		if box:IsFocused() then
-			if k == Enum.KeyCode.Return or k == Enum.KeyCode.KeypadEnter then
+			if (k == Enum.KeyCode.Return or k == Enum.KeyCode.KeypadEnter) and ui.pick > 0 and ui.suggestions[ui.pick] then
+				-- Enter on a highlighted suggestion takes it (and keeps typing)
+				ui.sent = true
+				local text = ui.suggestions[ui.pick].text
+				task.defer(CheatConsole.open, ui, text)
+			elseif k == Enum.KeyCode.Return or k == Enum.KeyCode.KeypadEnter then
 				-- some input paths drop the TextBox's enterPressed: send here, once
 				ui.sent = true
 				local text = box.Text
 				CheatConsole.close(ui)
 				send(ui, text)
+			elseif (k == Enum.KeyCode.Up or k == Enum.KeyCode.Down) and #ui.suggestions > 0 then
+				-- cycle the suggestions (Up from none: the bottom one, next to the bar)
+				local n = #ui.suggestions
+				if k == Enum.KeyCode.Down then
+					ui.pick = ui.pick % n + 1
+				else
+					ui.pick = if ui.pick <= 1 then n else ui.pick - 1
+				end
+				paint(ui)
 			elseif k == Enum.KeyCode.Up or k == Enum.KeyCode.Down then
 				ui.historyAt = math.clamp(ui.historyAt + (if k == Enum.KeyCode.Up then -1 else 1), 1, #ui.history + 1)
 				box.Text = ui.history[ui.historyAt] or ""

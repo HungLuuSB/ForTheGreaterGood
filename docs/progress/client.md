@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, cheat line arrow keys)
+
+- **Cheat command line (C-126):** while suggestions show, Up / Down move through them, and Tab or Enter takes the highlighted one; with none showing they walk the history as before. Not checked in Studio (you were in a playtest); the camera already ignores the arrow keys while you type.
+- **Camera:** unchanged by your choice: middle-drag (and the arrow keys when not typing).
+
 ## Summary (2026-10-23, C's deposit models in; Needs my review)
 
 - **Merged m-models** (models-C's deposits, interceptor missiles, effect textures, animated blockout pieces, S-104-scaled and anti-nuke blockouts). test_client stays green and the materials file has the three deposit variants.
