@@ -60,10 +60,76 @@
     ],
     "strength": 2.0
   },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        5.6808,
+        0.14,
+        6.04
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.2,
+        3.35,
+        -1.51
+      ],
+      "size": [
+        0.42,
+        0.2,
+        0.05
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.6325,
+        3.0,
+        -1.46
+      ],
+      "size": [
+        2.625,
+        0.4374,
+        6.42
+      ]
+    }
+  ],
+  "glowShare": 0.0211,
   "triangles": {
-    "base": 516,
-    "turret": 388,
-    "total": 904
+    "base": 588,
+    "turret": 472,
+    "total": 1060
   },
   "textures": {
     "size": 1024,

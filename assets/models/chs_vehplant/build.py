@@ -28,7 +28,7 @@ def build_base(p):
     p.prism_x([(-5.0, 5.5), (9.0, 5.5), (9.0, 6.2), (2.0, 7.0), (-5.0, 6.2)], -10.5, -2.5, "paint", bevel=0.05)
     p.box((-6.5, 6.25, -2.8), (5.0, 0.05, 4.0), "team", bevel=0.015)
     p.box((-6.5, 2.6, -5.04), (5.0, 4.0, 0.1), "dark")
-    p.box((-6.5, 4.85, -5.1), (5.0, 0.2, 0.06), "light")
+    p.box((-6.5, 4.85, -5.1), (5.0, 0.3, 0.08), "power")  # shed door light
     # the gantry: four columns, two beams, the crane rail and its trolley
     for x, z in COLUMNS:
         p.box((x, 3.8, z), (0.6, 6.6, 0.6), "trim", bevel=0.03)
@@ -37,12 +37,17 @@ def build_base(p):
     p.box((4.0, 7.65, 2.0), (0.8, 0.5, 12.6), "trim", bevel=0.03)
     p.box((4.0, 7.0, -0.5), (1.6, 0.8, 1.4), "paint", bevel=0.04)
     p.box((4.0, 5.6, -0.5), (0.12, 2.0, 0.12), "dark")
+    p.box((4.0, 6.5, -0.5), (1.4, 0.12, 1.2), "power")  # trolley build light
+    for x in (-1.6, 8.6):  # bay guide lights
+        p.box((x, 0.56, 2.0), (0.16, 0.08, 11.0), "light")
+    for i in range(4):  # shed door build lights
+        p.box((-6.5, 1.2 + i * 0.9, -5.1), (4.6, 0.1, 0.06), "power")
     for x, z in ((9.0, -4.0), (-2.0, -4.0)):
         p.box((x, 7.65, z), (0.5, 0.4, 0.5), "light")
     # tanks behind the bay
     p.cylinder("y", (7.0, 3.0, 9.2), 1.5, 5.0, 12, "steel")
     p.cylinder("y", (3.4, 2.5, 9.6), 1.2, 4.0, 12, "steel")
-    p.cylinder("y", (7.0, 3.6, 9.2), 1.55, 0.25, 12, "light")
+    p.cylinder("y", (7.0, 3.6, 9.2), 1.55, 0.3, 12, "power")
 
 
 def details_base(p):

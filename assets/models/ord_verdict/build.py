@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "tools"))
 
 import bpy  # noqa: E402
 import lib  # noqa: E402
+import unit  # noqa: E402
 
 UNIT = "ord_verdict"
 OUT = os.path.join(HERE, "export")
@@ -103,16 +104,20 @@ def build_base(p):
     p.prism_x([(a[1], a[0]), (b[1], b[0]), (b2[1], b2[0]), (a2[1], a2[0])], -2.4, 2.4, "paint", bevel=0.05)
     # engine deck grille, rear exhaust grille
     p.box((0, 1.875, 2.7), (2.9, 0.05, 1.4), "grille")
-    p.box((0, 1.05, 3.915), (2.6, 0.4, 0.04), "grille")
+    for z in (2.25, 2.7, 3.15):  # engine-deck exhaust slots
+        p.box((0, 1.9, z), (2.6, 0.04, 0.22), "light")
+    for sx in (-1, 1):  # running strips along the skirt tops
+        p.box((sx * (SKIRT_OUT + 0.03), 1.72, 0.0), (0.05, 0.12, 7.2), "light")
+    p.box((0, 1.05, 3.915), (2.6, 0.4, 0.05), "light")  # exhaust (engine heat)
     # team color: plates on the hull top either side of the turret
     for sx in (-1, 1):
         p.box((sx * 2.47, 1.88, 0.75), (0.62, 0.06, 5.2), "team", bevel=0.015)
     # driver's hatch, sensor strip, head and tail lights (emissive)
     p.cylinder("y", (0.75, 1.88, -2.05), 0.28, 0.06, 10, "trim")
-    p.box((0, 1.33, -4.17), (3.2, 0.07, 0.04), "light")
+    p.box((0, 1.33, -4.17), (3.4, 0.12, 0.06), "light")  # glacis light bar
     for sx in (-1, 1):
-        p.box((sx * 2.3, 1.52, -3.96), (0.36, 0.12, 0.1), "light")
-        p.box((sx * 2.45, 1.52, 3.925), (0.3, 0.12, 0.04), "light")
+        p.box((sx * 2.3, 1.52, -3.96), (0.55, 0.2, 0.12), "head")
+        p.box((sx * 2.45, 1.52, 3.925), (0.5, 0.16, 0.06), "light")
     # thick side skirts in four panels down over the wheels; the front one cut back
     for sx in (-1, 1):
         x0, x1 = (SKIRT_IN, SKIRT_OUT) if sx > 0 else (-SKIRT_OUT, -SKIRT_IN)
@@ -156,10 +161,10 @@ def build_turret(p):
     # commander hatch, gunner sight, sensor strips (emissive)
     p.cylinder("y", (-1.1, ROOF_Y + 0.05, 2.4), 0.32, 0.1, 10, "trim")
     p.box((1.15, ROOF_Y + 0.2, 0.0), (0.6, 0.38, 0.6), "trim", bevel=0.03)
-    p.box((1.15, ROOF_Y + 0.21, -0.315), (0.44, 0.16, 0.03), "light")
+    p.box((1.15, ROOF_Y + 0.21, -0.315), (0.5, 0.2, 0.04), "light")
     for sx in (-1, 1):
-        p.box((sx * (turret_side_x(2.95) + 0.012), 2.95, 0.4), (0.03, 0.1, 1.4), "light")
-    p.box((0, 2.0, 3.6), (1.2, 0.12, 0.03), "light")
+        p.box((sx * (turret_side_x(2.95) + 0.015), 2.95, 1.2), (0.04, 0.16, 3.4), "light")
+    p.box((0, 2.0, 3.6), (2.6, 0.16, 0.05), "light")
     # antennas
     for sx in (-1, 1):
         p.cylinder("y", (sx * 1.5, ROOF_Y + 0.5, 3.1), 0.03, 1.0, 4, "dark")
@@ -179,7 +184,9 @@ def build_barrel(p):
     for z in (-9.9, -10.35):
         p.box((0, y, z), (0.9, 0.22, 0.14), "dark")
     p.cylinder("z", (0, y, -10.68), 0.14, 0.04, 10, "dark")
-    p.box((0, y + 0.24, -6.5), (0.06, 0.035, 2.4), "light")  # rail strip (emissive)
+    p.cylinder("z", (0, y, -9.55), 0.36, 0.14, 12, "weapon")  # muzzle-brake root ring
+    p.cylinder("z", (0, y, -5.2), 0.372, 0.16, 16, "weapon")  # evacuator band
+    p.box((0, y + 0.25, -6.6), (0.09, 0.05, 4.0), "weapon")  # rail strip
 
 
 # ---------------------------------------------------------------------------
@@ -262,81 +269,18 @@ def details_barrel(p):
 # ---------------------------------------------------------------------------
 
 
-def main():
-    lib.reset_scene()
-    scene = bpy.context.scene
-    col = scene.collection
-
-    keys = list(VARIANTS.keys())
-    target = lib.new_image("bake_target", TEX, "sRGB")
-    materials = {k: lib.make_material(k, SPECS[k], [VARIANTS[v] for v in keys], target) for k in KINDS}
-
-    pieces = [
-        ("base", (0.0, 0.0, 0.0), build_base, details_base),
-        ("turret", TURRET_PIVOT, build_turret, details_turret),
-        ("barrel", BARREL_PIVOT, build_barrel, details_barrel),
-    ]
-    low, high = [], []
-    for name, pivot, build, details in pieces:
-        p = lib.Piece(name, KINDS, pivot)
-        build(p)
-        low.append(p.to_object(materials, col))
-        h = lib.Piece(name + "_hi", KINDS, pivot)
-        build(h)
-        details(h)
-        high.append(h.to_object(materials, col))
-
-    counts = {o.name: lib.tris(o) for o in low}
-    total = sum(counts.values())
-    print(f"[{UNIT}] triangles {counts} total {total}")
-    if total > BUDGET:
-        raise SystemExit(f"[{UNIT}] over budget: {total} > {BUDGET}")
-
-    lib.unwrap(low)
-    sets = lib.bake_all(low, high, list(materials.values()), TEX, SAMPLES, OUT, UNIT, keys)
-    for h in high:
-        bpy.data.objects.remove(h, do_unlink=True)
-
-    lib.preview_lighting()
-    for key in keys:
-        lib.assign_single_material(low, lib.textured_material(f"preview_{key}", sets[key], (58, 120, 230), ACCENT))
-        for name, cam, look, lens in [
+unit.run(
+    __file__, UNIT, "order", footprint=FOOTPRINT,
+        pieces=[
+            unit.PieceSpec("base", None, (0.0, 0.0, 0.0), build_base, details_base),
+            unit.PieceSpec("turret", "base", TURRET_PIVOT, build_turret, details_turret),
+            unit.PieceSpec("barrel", "turret", BARREL_PIVOT, build_barrel, details_barrel),
+        ],
+        attachments={"muzzle": {"parent": "barrel", "at": list(MUZZLE)}},
+        previews=[
             ("35", (-14, 11, 17), (0, 1.5, -0.5), 50),
             ("side", (19, 3, -2.0), (0, 1.6, -2.0), 50),
             ("80", (0, 27, 4.8), (0, 1.5, 0), 50),
             ("close", (-6.5, 5.0, -7.5), (0, 2.4, -2.5), 35),
-        ]:
-            lib.render_preview(os.path.join(OUT, f"preview_{key}_{name}.png"), cam, look, lens=lens)
-
-    exported = []
-    for key in keys:
-        mat = lib.textured_material(f"{UNIT}_{key}", sets[key])
-        for o in low:
-            c = o.copy()
-            c.data = o.data.copy()
-            c.name = f"{o.name}_{key}"
-            col.objects.link(c)
-            lib.assign_single_material([c], mat)
-            exported.append(c)
-    exported.append(lib.image_probe("emissive_probe", sets[keys[0]]["EMI"], col))
-    lib.export_fbx(exported, os.path.join(OUT, f"{UNIT}.fbx"))
-
-    lib.write_json(os.path.join(OUT, "rig.json"), {
-        "id": UNIT,
-        "footprintStuds": FOOTPRINT * 8,
-        "variants": {"bar": "BAR-style painted sand-grey (M-15)"},
-        "pieces": {
-            "base": {"parent": None, **lib.bounds(low[0])},
-            "turret": {"parent": "base", "pivot": list(TURRET_PIVOT), **lib.bounds(low[1])},
-            "barrel": {"parent": "turret", "pivot": list(BARREL_PIVOT), **lib.bounds(low[2])},
-        },
-        "attachments": {"muzzle": {"parent": "barrel", "at": list(MUZZLE)}},
-        "teamColorPieces": ["base", "turret"],
-        "emissive": {"probe": "emissive_probe", "tint": list(ACCENT), "strength": 2.0},
-        "triangles": {**counts, "total": total},
-        "textures": {"size": TEX, "perVariant": ["ALB", "RGH"], "shared": ["NOR", "MTL", "EMI"]},
-    })
-    print(f"[{UNIT}] done: {OUT}")
-
-
-main()
+        ],
+)

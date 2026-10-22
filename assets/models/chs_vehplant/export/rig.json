@@ -32,9 +32,54 @@
     ],
     "strength": 2.0
   },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        3.5,
+        4.185,
+        1.625
+      ],
+      "size": [
+        11.5,
+        7.33,
+        11.75
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -0.225,
+        3.855,
+        2.805
+      ],
+      "size": [
+        17.55,
+        5.41,
+        15.89
+      ]
+    }
+  ],
+  "glowShare": 0.0203,
   "triangles": {
-    "base": 788,
-    "total": 788
+    "base": 872,
+    "total": 872
   },
   "textures": {
     "size": 1024,

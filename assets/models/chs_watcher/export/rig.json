@@ -23,12 +23,12 @@
       "center": [
         -1.0,
         5.6,
-        1.05
+        1.0618
       ],
       "size": [
         3.4184,
         3.1996,
-        2.3911
+        2.3675
       ],
       "pivot": [
         -1.0,
@@ -51,6 +51,51 @@
     ],
     "strength": 2.0
   },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.3,
+        -3.32
+      ],
+      "size": [
+        3.0,
+        0.22,
+        0.05
+      ]
+    },
+    {
+      "name": "dish_glow_running",
+      "piece": "dish",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.0,
+        5.6719,
+        0.8973
+      ],
+      "size": [
+        3.2,
+        2.9171,
+        2.0857
+      ]
+    }
+  ],
+  "glowShare": 0.0877,
   "triangles": {
     "base": 540,
     "dish": 368,

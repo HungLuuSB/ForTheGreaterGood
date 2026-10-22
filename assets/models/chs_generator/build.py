@@ -22,7 +22,7 @@ def build_base(p):
     # tank A (tall) and tank B (short)
     for x, z, r, h in ((-1.3, 0.6, 1.6, 4.6), (1.7, 1.2, 1.3, 3.2)):
         p.cylinder("y", (x, 0.45 + h / 2, z), r, h, 14, "paint")
-        p.cylinder("y", (x, 0.45 + h * 0.62, z), r + 0.06, 0.3, 14, "light")
+        p.cylinder("y", (x, 0.45 + h * 0.62, z), r + 0.06, 0.3, 14, "power")
         for y in (0.45 + h * 0.25, 0.45 + h * 0.9):
             p.cylinder("y", (x, y, z), r + 0.04, 0.1, 14, "steel")
         p.cylinder("y", (x, 0.45 + h + 0.2, z), r * 0.7, 0.4, 12, "trim")

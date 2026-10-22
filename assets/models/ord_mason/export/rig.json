@@ -9,31 +9,31 @@
       "parent": null,
       "center": [
         0.0,
-        1.56,
+        1.505,
         -0.6448
       ],
       "size": [
         6.6,
-        3.12,
+        3.01,
         9.1897
       ]
     },
     "nano": {
       "parent": "base",
-      "pivot": [
-        0.0,
-        1.85,
-        1.9
-      ],
       "center": [
         0.0,
         3.4,
-        1.0075
+        1.0625
       ],
       "size": [
         2.5,
         3.1,
-        4.835
+        4.725
+      ],
+      "pivot": [
+        0.0,
+        1.85,
+        1.9
       ]
     }
   },
@@ -51,10 +51,76 @@
     ],
     "strength": 2.0
   },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.875,
+        -0.1225
+      ],
+      "size": [
+        6.31,
+        2.05,
+        8.155
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        2.28,
+        -2.485
+      ],
+      "size": [
+        5.15,
+        1.72,
+        3.07
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        3.37,
+        0.88
+      ],
+      "size": [
+        2.56,
+        3.04,
+        4.6
+      ]
+    }
+  ],
+  "glowShare": 0.0604,
   "triangles": {
-    "base": 2440,
-    "nano": 524,
-    "total": 2964
+    "base": 2512,
+    "nano": 584,
+    "total": 3096
   },
   "textures": {
     "size": 1024,

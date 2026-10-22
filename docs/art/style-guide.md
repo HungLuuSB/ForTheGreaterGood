@@ -51,6 +51,15 @@ Keep the faction's look under these cues: Order stays clean and wedge-shaped (he
 - **Emissive:** an emissive mask in the texture set, for sensor glass, lights and a strip on the gun; the faction's accent color.
 - **Never:** camouflage, dirt, rust, exposed engines, smoke stacks, crates, pistons, round dishes, decal-like team markings, toy proportions (oversize turret on a short hull: exaggerate the turret and gun, not the hull).
 
+## Glow (the emissive pass, M-22)
+
+The standard for every BAR-style mesh, new ones included:
+
+- **Glow has a job.** Faction accent (Order cool cyan / white, Chaos hot amber / orange) on things that would light up: sensors and sensor eyes, running and tail lights, engine exhausts, reactor and generator cores, extractor drills, factory doors and build lights, the muzzle area. Never glow for decoration only.
+- **Never team-colored.** Team color stays on the painted panels. Headlights are neutral warm white on both factions.
+- **Small and bright beats big and dim.** About 5–10% of the visible surface; it must still read at 55° and 220 studs without washing out the team panels. Large flat buildings sit lower (2–3%): concentrate their glow at the door and the working parts, not on the roof.
+- **All in the emissive mask**, never `Light` objects: in Blender, glowing faces use the kinds `light` (running), `head`, `power` and `weapon` (`assets/models/tools/unit.py`); the runner bakes them into the maps and splits each kind into its own glow part, so the client can drive the channels apart (docs/contracts/fx.md, "Unit glow").
+
 ## Size
 
 Models match their def's footprint: one cell is 8 studs, and a footprint-1 vehicle fits in about 6 × 8 studs (rig.md 3). The gun may reach past the footprint. Check every model from the game camera at 35°, 55° and 80° pitch, at close, normal and maximum zoom.

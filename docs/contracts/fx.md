@@ -8,6 +8,25 @@ General rules:
 - **Textures** are PNG with a transparent background; the shape is in the alpha, the color is white.
 - The models stream keeps the source copies in "FTGG Art" under `ReplicatedStorage.FX.<Effect>`; copy them into the game place (they reference uploaded assets, so they work in any place of the same creator).
 
+## Unit glow (every BAR-style mesh, M-22)
+
+Every BAR-style unit and structure mesh carries its glow in **glow parts**: small MeshParts holding only the glowing faces, one per glow channel per piece, welded to that piece. No `Light` objects anywhere in the models. The pieces themselves don't glow (`EmissiveStrength` 0).
+
+**How to find them:** CollectionService tag `Glow`; each glow part has the attributes `GlowChannel` (`running`, `head`, `power` or `weapon`), `GlowPiece` (the piece it's welded to, e.g. `turret`), `GlowTint` (Color3) and `GlowStrength` (number, the resting strength). Their names are `<piece>_glow_<channel>`. They're decorations by rig.md 1 (welded, unanchored, no collisions, no shadows), so they follow their piece's `Motor6D.Transform`.
+
+**What to drive:** only the glow part's `SurfaceAppearance.EmissiveStrength` (and, if wanted, `EmissiveTint`). `BasePart.Color` doesn't touch the glow: glow is **never team-colored**, and team color stays on the painted panels (rig.md 6). The glow faces are near-white in the color map; the color is the tint.
+
+| Channel | What glows | Order tint | Chaos tint | Resting strength | Intended states (client) |
+|---|---|---|---|---|---|
+| `running` | sensor strips and eyes, tail and edge lights, engine exhaust slots, radar faces | cool cyan (90, 210, 255) | amber (255, 150, 55) | 2.0 | Always on while the unit exists. Optional: off for a dead / wreck model. |
+| `head` | headlights and work lights (vehicles) | warm white (255, 236, 205), both factions | same | 2.5 | Always on. |
+| `power` | structure cores, generator bands, extractor rings and vents, solar charge strips, factory door and build lights; on builders (Mason, Scrapper, shield emitter) the build / field emitter | cyan-white (130, 225, 255) | orange (255, 125, 35) | 2.5 | Structures: scale with the team's power ratio on an energy stall (e.g. `2.5 × ratio`, floor 0.3). Factories: pulse while producing (e.g. 1.5–4 at 1 Hz). Builders: brighten while building (≈ 4). |
+| `weapon` | muzzle rings and brake bands, barrel rail strips, missile seekers and ready lights | ice white (190, 240, 255) | hot orange (255, 175, 70) | 1.5 | Flash on fire (≈ 6, back to 1.5 over ≈ 0.3 s); missile ready lights may drop to 0 while reloading. |
+
+**Coverage** (glow area as a share of the surfaces that don't face down, in each `rig.json` as `glowShare`): 3–8% on most units and structures, 2–3% on the large factories (big roofs) and the small Spike turret. The art rule is in `docs/art/style-guide.md` ("Glow").
+
+**Cost:** 1–4 extra MeshParts per model, a few dozen triangles each, sharing the unit's maps; nothing animates unless the client changes a property.
+
 ## Shield (Order deployable shield)
 
 The target look: a translucent dome with a bright edge, thin glowing rings flowing from the top down the dome, a curved light beam rising from a small emitter device to the top of the dome, a swirling vortex at the top, floating specks inside, and a ring burst where a shell hits. `R` below is the dome radius in studs.
