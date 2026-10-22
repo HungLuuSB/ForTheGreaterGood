@@ -1,0 +1,100 @@
+{
+  "id": "chs_hornet",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.1,
+        0.1196
+      ],
+      "size": [
+        5.68,
+        4.2,
+        7.6729
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.2,
+        3.1,
+        1.6
+      ],
+      "size": [
+        1.2,
+        1.0,
+        1.2
+      ],
+      "pivot": [
+        0.2,
+        2.6,
+        1.6
+      ]
+    },
+    "launcher": {
+      "parent": "turret",
+      "center": [
+        0.565,
+        4.0725,
+        1.45
+      ],
+      "size": [
+        2.87,
+        1.345,
+        3.5
+      ],
+      "pivot": [
+        0.2,
+        4.0,
+        1.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -0.65,
+        4.3,
+        -0.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret",
+    "launcher"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 620,
+    "turret": 44,
+    "launcher": 344,
+    "total": 1008
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
