@@ -118,6 +118,18 @@
       }
     },
     {
+      "Name": "chs_minotaur",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://117794370815838",
+        "NormalMapContent": "rbxassetid://123463014163030",
+        "RoughnessMapContent": "rbxassetid://73818240114993",
+        "MetalnessMapContent": "rbxassetid://87583348873209",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_ravager",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -414,6 +426,18 @@
         "NormalMapContent": "rbxassetid://74408674314427",
         "RoughnessMapContent": "rbxassetid://72671795722287",
         "MetalnessMapContent": "rbxassetid://104972724220456",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_warden",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://95348089726174",
+        "NormalMapContent": "rbxassetid://94270444533420",
+        "RoughnessMapContent": "rbxassetid://131738930715833",
+        "MetalnessMapContent": "rbxassetid://110964916082489",
         "EmissiveStrength": 0
       }
     },

@@ -20,7 +20,7 @@ import bpy
 import lib
 
 KINDS = ["paint", "trim", "team", "seam", "era", "track", "steel", "rubber", "glass", "light", "grille", "dark",
-         "head", "power", "weapon"]
+         "head", "power", "weapon", "radome", "hazard"]
 
 # Glow (the emissive pass, 2026-10-22; docs/contracts/fx.md "Unit glow"): every
 # glowing face is one of four kinds, and each kind becomes its own small
@@ -54,6 +54,8 @@ FACTIONS = {
             "light": GLOW_SPEC, "head": GLOW_SPEC, "power": GLOW_SPEC, "weapon": GLOW_SPEC,
             "grille": {"base": None, "darken": 0.55, "roughness": 0.6, "metallic": 0.3, "edge_wear": 0.0, "bump": "grille", "ao": 0.35},
             "dark": {"base": (50, 50, 48), "roughness": 0.55, "metallic": 0.3, "edge_mode": "highlight", "edge_wear": 0.3},
+            "radome": {"base": (232, 230, 222), "roughness": 0.4, "metallic": 0.0, "edge_wear": 0.05, "ao": 0.85},  # missile radomes
+            "hazard": {"base": (226, 182, 36), "roughness": 0.55, "metallic": 0.1, "edge_mode": "highlight", "edge_wear": 0.5, "ao": 0.7},  # warning yellow, every faction
         },
     },
     "chaos": {
@@ -78,6 +80,8 @@ FACTIONS = {
             "light": GLOW_SPEC, "head": GLOW_SPEC, "power": GLOW_SPEC, "weapon": GLOW_SPEC,
             "grille": {"base": None, "darken": 0.5, "roughness": 0.6, "metallic": 0.3, "edge_wear": 0.0, "bump": "grille", "ao": 0.35},
             "dark": {"base": (34, 35, 38), "roughness": 0.55, "metallic": 0.3, "edge_mode": "highlight", "edge_wear": 0.35},
+            "radome": {"base": (232, 230, 222), "roughness": 0.4, "metallic": 0.0, "edge_wear": 0.05, "ao": 0.85},  # missile radomes
+            "hazard": {"base": (226, 182, 36), "roughness": 0.55, "metallic": 0.1, "edge_mode": "highlight", "edge_wear": 0.5, "ao": 0.7},  # warning yellow, every faction
         },
     },
 }
