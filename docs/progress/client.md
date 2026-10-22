@@ -535,7 +535,7 @@ All with real mouse and keyboard input through the MCP tools.
   - **Bow shock:** C's dome mesh flattened into a glowing cap, curved round the shell's nose on the side the field pushes from.
   - **Burning trail:** streams back from the shell along the force.
   - Both grow with the force, and with the shell's weight.
-- **Colour:** white-hot with a little orange (burning). The hexagons stay white and grey, as you asked; say if you want the shock white too.
+- **Colour:** white-hot with a little orange (burning); you chose to keep it. The hexagons stay white and grey.
 - **Pool:** the same fixed pool of 32, made once C's dome mesh has loaded.
 - **Screenshot:** `debug_out/screens/c98_shield_bow_shock.jpg`: `shield_one`, frozen with a Ravager shell braking, side on. The shock front is on its nose, the trail behind it, and its entry hexagons on the right.
 
