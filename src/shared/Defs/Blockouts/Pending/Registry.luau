@@ -4,11 +4,16 @@
 -- studs, as Motor6D.Transform = CFrame.Angles(rx, ry, rz) * CFrame.new(dx, dy, dz)
 -- (rig.md 2). `base` moves the whole model. The client's piece scripts own
 -- the real animation; these are what the review lineups show.
--- (`blockouts` and `defs` held blockouts waiting for a def; empty now.)
+-- `blockouts` holds blockouts for units without a def yet, `defs` the def
+-- fields each was built for (a proposal for the sim session, M-17).
 
 return {
-	blockouts = {},
-	defs = {},
+	blockouts = {
+		ord_shieldgen = require("./ord_shieldgen"),
+	},
+	defs = {
+		ord_shieldgen = { id = "ord_shieldgen", model = "ord_shieldgen", faction = "order", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "emitter" } },
+	},
 	poses = {
 		ord_warden = {
 			packed = {},

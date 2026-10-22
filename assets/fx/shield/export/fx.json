@@ -1,0 +1,86 @@
+{
+  "id": "fx_shield",
+  "meshes": {
+    "dome": {
+      "radius": 1.0,
+      "pivot": "center of the open bottom",
+      "triangles": 920,
+      "normals": "outward"
+    },
+    "dome_inner": {
+      "radius": 0.96,
+      "pivot": "center of the open bottom",
+      "triangles": 920,
+      "normals": "inward"
+    },
+    "ring": {
+      "radius": 1.0,
+      "tube": 0.01,
+      "pivot": "center",
+      "plane": "horizontal",
+      "triangles": 204
+    },
+    "emitter": {
+      "pivot": "ground under its center",
+      "center": [
+        -0.0176,
+        1.435,
+        0.0
+      ],
+      "size": [
+        3.4748,
+        2.87,
+        3.9212
+      ],
+      "triangles": 588,
+      "attachments": {
+        "core": {
+          "at": [
+            0.0,
+            2.75,
+            0.0
+          ]
+        }
+      }
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "textures": {
+    "swirl": {
+      "probe": "tex_swirl",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "beam": {
+      "probe": "tex_beam",
+      "size": [
+        256,
+        512
+      ]
+    },
+    "speck": {
+      "probe": "tex_speck",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "ripple": {
+      "probe": "tex_ripple",
+      "size": [
+        512,
+        512
+      ]
+    }
+  }
+}
