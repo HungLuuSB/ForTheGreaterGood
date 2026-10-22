@@ -343,9 +343,9 @@ Scenes.WAVE_ROLES = table.freeze({
 	chaos = table.freeze({ "chs_ravager", "chs_hellmouth" }),
 })
 Scenes.WAVE_GAP = 450 -- ticks between waves (30 s)
-function Scenes.waves(attacker: string, waves: number, seed: number): Scene
-	local set = Defs.load()
-	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+function Scenes.waves(attacker: string, waves: number, seed: number, defs: Defs.DefSet?): Scene
+	local set = defs or Defs.load()
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128", defs = set })
 	local ap = if attacker == "order" then 1 else 2
 	local dp = 3 - ap
 	local defender = if attacker == "order" then "chaos" else "order"
