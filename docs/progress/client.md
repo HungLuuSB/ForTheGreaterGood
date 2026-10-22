@@ -1674,15 +1674,15 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-50. **Open (sent 2026-10-23).** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
+50. **Built (S-116, merging): beams end at the first up enemy dome (FIRE hit = false on its surface, absorbed SHIELD_HIT); Radiance's pierce stops there; the client's glancing leg (C-129) shows once merged.** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
 
-49. **Open (sent 2026-10-23).** **Radiance a hit-ray; manual targets override (the user):**
+49. **Built (S-115, merging): Radiance beamDuration 3, pierce along its fixed line; manual targets kept until STOP, a new ATTACK or the target's death.** **Radiance a hit-ray; manual targets override (the user):**
     - Radiance `beamDuration` 3.0; during the beam, damage goes to every enemy the beam's line crosses (a miss on a blip still hurts what's on the line). An amendment to S-113.
     - An attack order on a unit beats the unit's own target choice. Out of range, the unit picks its own targets; back in range, it returns to the manual target. STOP clears it.
 
-48. **Open (sent 2026-10-23).** **The skirmish AI builds too many Furnaces (the user):** hard or normal AI puts up many `chs_generator`s instead of extractors on free deposits. Sim-A to check the Chaos AI's economy choice. Nothing on the client.
+48. **Built (S-114, S-116, merging): two Furnaces then extractors first; an enemy structure contests a deposit only within its weapon range + 40 (a hold-fire Bulwark by the base froze the Chaos AI's expansion).** **The skirmish AI builds too many Furnaces (the user):** hard or normal AI puts up many `chs_generator`s instead of extractors on free deposits. Sim-A to check the Chaos AI's economy choice. Nothing on the client.
 
-47. **Open (sent 2026-10-23).** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today). Inferno's beam stays orange (the user changed their mind on green).
+47. **Built (S-113, merging): beamDuration (Radiance 2.5, then 3 in S-115; Inferno 1.5, range 480), Radiance targets radar blips.** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today). Inferno's beam stays orange (the user changed their mind on green).
 
 46. **Built (S-111, merging): radar SAMs air only (AIR 1,150 / 1,100); anti-nukes `ord_providence` / `chs_cerberus` and mobile `ord_custodian` / `chs_chimera`, INTERCEPTOR / INTERCEPTED, stock in STOCK; client side to do.** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
     - **Radar SAMs** (`ord_radar_sam`, `chs_radar_sam`): drop `intercepts`, air only; damage retuned so a T2 radar SAM one-shots T1 air.
