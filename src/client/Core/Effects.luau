@@ -43,6 +43,7 @@ Effects.LAUNCH_BLEND = 3 -- ticks for a shell to go from the drawn barrel tip on
 Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with that weapon fired it
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
+Effects.BEAM_SECONDS = 0.45 -- a beam tower's shot (S-96, C-112): the line is held this long, fading
 Effects.EXPLOSION_SECONDS = 0.55
 Effects.LAUNCH_SECONDS = 0.5 -- a missile's launch flash (its smoke cloud lasts longer, Render/Vfx)
 Effects.FLARE_SECONDS = 1.6 -- flares or chaff falling where a decoyed missile went (C-47)
@@ -111,7 +112,7 @@ export type Burst = { x: number, y: number, z: number, radius: number, born: num
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
-export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number }
+export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak
 
 export type Fx = {
 	projectiles: { [number]: Proj },
@@ -775,13 +776,18 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local def = shooter and World.def(world, shooter)
 			local slot = def and def.weapons[e.slot]
 			local weapon = slot and world.defs.weaponByIndex[slot.weaponIndex or 0]
-			local t: Tracer = { x0 = x0, y0 = y0 :: number, z0 = z0 :: number, x1 = x1, y1 = y1, z1 = z1, born = now, life = Effects.TRACER_SECONDS, hit = e.hit == true, size = weaponSize(weapon) }
+			local isBeam = weapon ~= nil and weapon.type == "BEAM"
+			local t: Tracer = { x0 = x0, y0 = y0 :: number, z0 = z0 :: number, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.BEAM_SECONDS else Effects.TRACER_SECONDS, hit = e.hit == true, size = weaponSize(weapon), beam = if isBeam then (def and def.faction or "order") else nil }
 			if #fx.tracers >= Effects.MAX_TRACERS then
 				fx.skipped.tracers += 1
 			end
 			capped(fx, fx.tracers, t, Effects.MAX_TRACERS)
-			local b = burst(fx, now, x0, y0 :: number, z0 :: number, 0.7 * t.size, "muzzle", 0.1)
+			-- a beam: a big charge flash at the barrel and a heavy hit at the end (C-112)
+			local b = burst(fx, now, x0, y0 :: number, z0 :: number, if isBeam then 2.2 else 0.7 * t.size, if isBeam then "launch" else "muzzle", if isBeam then 0.3 else 0.1)
 			facing(b, x1 - x0, y1 - (y0 :: number), z1 - (z0 :: number))
+			if isBeam and t.hit then
+				burst(fx, now, x1, y1, z1, 2.4, "impact", Effects.EXPLOSION_SECONDS)
+			end
 		end
 	elseif kind == EK.SHIELD_FIELD then
 		-- the shell came into an enemy dome's field (protocol 24, S-79): step it

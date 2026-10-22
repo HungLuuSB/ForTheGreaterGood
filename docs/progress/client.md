@@ -4,6 +4,18 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, T2 beam towers in game)
+
+- **Beam towers (S-96 + C-112):** Radiance (Order) and Inferno (Chaos), Pulsar-style.
+  - **The beam:** a bright held line from the barrel to the target, ice-white for Order and hot orange for Chaos, fading over half a second, with a charge flash at the barrel and a heavy impact.
+  - **On / Off:** the command card shows a real On / Off for them. Off retracts the tower: the turret sinks into its shell, the barrel folds and the lids close. It can't fire and takes a quarter of the damage (sim). On raises it again.
+  - **Commands:** a beam tower shows Fire state, On / Off, Stop and Attack.
+  - Each shot costs 700 power from your stores.
+- **Flak towers** (Lumen, Hailstorm) work as normal defenses.
+- **Icons:** all four use existing icon tiles for now (beam towers: Heavy Turret; flak towers: IR SAM Site). No icon re-import needed.
+- **Models:** the towers are placeholder boxes until models-C's meshes land (C has the blockouts and the retract pose ready).
+- **Screenshots:** `debug_out/screens/beam_radiance.jpg`, `beam_tower_on.jpg`, `beam_tower_off.jpg`.
+
 ## Summary (2026-10-23, per-unit commands, factory orders, top strip)
 
 - **Each unit gets its own commands (C-109):** the command card shows only what the selection can do, and shrinks to fit.
@@ -670,6 +682,26 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: beam towers drawn, retract on / off, icons for S-96's towers (C-112)
+
+- **S-96 (sim-A, request 43, first part):**
+  - beam towers `ord_radiance` / `chs_inferno`: BEAM weapons, 700 power a shot, visible targets only; `retract = { armor = 4 }`, TOGGLED_ON clear = retracted;
+  - flak towers `ord_lumen` / `chs_hailstorm`.
+- **Beam drawing** (`Core/Effects`, `Render/Effects`):
+  - a FIRE from a BEAM weapon becomes a tracer with `beam` = the shooter's faction, held `BEAM_SECONDS` (0.45);
+  - drawn as the whole line at once, a Neon core 0.9 studs thick thinning to 0.27 and fading, in the faction's weapon glow tint (Order 200, 240, 255; Chaos 255, 170, 70);
+  - with a launch-size charge flash at the barrel and an impact burst at a hit.
+- **Retract** (`Core/PieceAnim` calls `Retract(u, retracted, instant)` for `def.retract` units on the TOGGLED_ON bit; `PieceScripts/BeamTower` for both):
+  - the turret faces front and sinks (7.6 / 7.4 studs, models-C's `retracted` pose), the barrel folds −90°, and the lids `shellL` / `shellR` close ∓90° when the model has them, over 1.5 s;
+  - no aiming while retracted;
+  - `PieceAnim.spec`: retract and rise.
+- **On / Off:** `Core/CommandSet` and the command card treat `def.retract` as switchable (green On, red Off); `CommandSet.spec` covers the Radiance.
+- **Icons** (`tools/icons/render.mjs` STOPGAP): Radiance and Inferno as "Heavy Turret", Lumen and Hailstorm as "IR SAM Site". The sheet image is unchanged (asset 87919807696998), and `IconAtlas` was regenerated: 139 of 139 defs mapped.
+- **Studio** (`shield` profile, a Radiance at (60, −150) and an Inferno on the enemy side):
+  - the Radiance's ice-white beam reached an enemy with an impact (`beam_radiance.jpg`);
+  - its card shows Fire at will / On / Stop / Attack (`beam_tower_on.jpg`);
+  - Off went red and the turret block sank into the shell on the placeholder model (`beam_tower_off.jpg`).
+
 ## 2026-10-23: factory order lists in game (S-95 merged; C-111)
 
 - **sim-A did request 44 (S-95):** MOVE, FIGHT, PATROL, GUARD, REPAIR and ATTACK on a factory go on its order list (shift appends, a plain order replaces, STOP clears). Each unit it builds rolls out, then takes a copy in order. Main is merged into this branch (with C-107..C-109, models' BAR pairs 5–9 and the missiles).
@@ -1308,6 +1340,10 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Beam towers (C-112):** `debug_out/screens/beam_*.jpg`. Your calls:
+  - **The beam's width, colors and 0.45 s hold.**
+  - **The retract timing** (1.5 s).
+
 - **Per-unit commands and top strip (C-109):** `debug_out/screens/hud_topstrip.jpg`. Your calls:
   - **Each type's command list** (`Core/CommandSet`).
   - **The minimap under Roblox's corner:** it can't go higher without being covered by Roblox's menu button.
@@ -1408,7 +1444,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
     - Each unit the factory produces rolls out of the exit, then takes a copy of the list, so a pre-move then a patrol, or a move then guard a commander, works.
     - The client already offers Move, Fight, Patrol and Guard on factories and keeps drawing the factory's orders until they're replaced or stopped (C-109). Nothing new is needed on the wire.
 
-43. **Open.** **More T2 defenses, a Pulsar-style beam tower first (2026-10-23, the user asked with BAR's Pulsar as the reference; the user corrected T3 to T2):** today the defenses above T1 are thin (Order's Citadel is T3).
+43. **First part done and used (S-96; C-112): beam towers `ord_radiance` / `chs_inferno`, flak towers `ord_lumen` / `chs_hailstorm`.** **More T2 defenses, a Pulsar-style beam tower first (2026-10-23, the user asked with BAR's Pulsar as the reference; the user corrected T3 to T2):** today the defenses above T1 are thin (Order's Citadel is T3).
     - **A long-range beam tower per faction, T2** (as BAR's Pulsar):
       - a precise ground-to-ground beam (`type = "BEAM"`) with very long range (Pulsar: 1400 against Citadel-class ranges here), a very heavy hit and a long reload (Pulsar: 10,800 damage every 9.9 s, small area);
       - a big **power cost per shot** (Pulsar: 1500), so the economy matters;

@@ -935,3 +935,12 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Top strip:** Roblox's core UI is off; resource bars, alerts and the debug overlay draw from the top; Settings sits right after Roblox's corner (`GuiService.TopbarInset`).
 
 **Why:** the user's requests. Roblox keeps its menu button and the corner it needs whatever the game sets, so the minimap sits under it.
+
+### C-112 — Beam weapons as held lines; retractable towers' piece script and on / off; stopgap icons for S-96's towers (2026-10-23)
+
+**Decision:**
+- **Beams:** a BEAM FIRE draws a held, fading Neon line in the faction's beam tint for 0.45 s, with a charge flash and an impact.
+- **Retract:** `def.retract` units get a `Retract` hook from the TOGGLED_ON bit; `PieceScripts/BeamTower` plays models-C's retracted pose; the command card offers On / Off.
+- **Icons:** stopgap tiles (Heavy Turret, IR SAM Site) until the icon catalogue has these towers.
+
+**Why:** the user's Pulsar reference (a bright line from the barrel, retract when off); new defs must have icons, and existing tiles avoid a re-import.
