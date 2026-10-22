@@ -38,6 +38,8 @@ local TEX = {
 }
 
 Vfx.MAX_SCALE = 6
+-- told of every effect played (kind, x, y, z, scale): Render/Grade's blast flash (C-102)
+Vfx.onSpawn = nil :: ((kind: string, x: number, y: number, z: number, scale: number) -> ())?
 Vfx.GROUND_BURST = 4 -- studs: a burst this close to the ground is a ground burst (dust, ring, scorch)
 Vfx.SCORCH_SECONDS = 14
 Vfx.MAX_LIGHTS = 12 -- explosion and muzzle lights at once
@@ -628,6 +630,10 @@ function Vfx.spawn(v: State, kind: string, x: number, y: number, z: number, scal
 		return
 	end
 	local s = math.clamp(scale, 0.3, Vfx.MAX_SCALE)
+	local onSpawn = Vfx.onSpawn
+	if onSpawn then
+		onSpawn(kind, x, y, z, s)
+	end
 	local template = Vfx.template(kind)
 	if template then
 		local at = Vector3.new(x, y, z)

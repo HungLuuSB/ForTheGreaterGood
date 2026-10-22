@@ -2,7 +2,7 @@
 rig data. blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_vehplant/build.py
 
 A heavy armored hall on an apron: sloped front roof edge over a big door
-with a glowing lintel, a ramp out, angled buttresses either side, a roof
+with a glowing lintel and door frame (the power channel's build lights), a ramp out, angled buttresses either side, a roof
 with two big team plates and a vent block, beacons on the apron corners
 (BAR style, M-15; Order reads heavy, M-14). Writes export/ through tools/unit.py.
 """
@@ -33,6 +33,10 @@ def build_base(p):
         p.box((0, 1.0 + i * 1.0, -4.62), (9.8, 0.06, 0.04), "seam")
         p.box((0, 1.0 + i * 1.0, -4.64), (9.6, 0.12, 0.05), "power")  # build lights through the door
     p.box((0, 5.85, -4.66), (10.0, 0.4, 0.12), "power")  # door lintel
+    for sx in (-1, 1):  # door-frame build lights up both jambs (pulse with production)
+        p.box((sx * 5.12, 3.1, -4.66), (0.22, 5.1, 0.14), "power")
+        for i in range(4):  # short chevron ticks, like the Chaos plant's slats
+            p.box((sx * 5.45, 1.3 + i * 1.15, -4.56), (0.4, 0.12, 0.08), "power")
     p.prism_x([(-9.6, 0.6), (-4.6, 0.6), (-4.6, 1.2)], -6.0, 6.0, "steel", bevel=0.03)
     for sx in (-1, 1):  # ramp guide lights
         p.box((sx * 6.1, 0.75, -7.1), (0.16, 0.12, 5.0), "light")

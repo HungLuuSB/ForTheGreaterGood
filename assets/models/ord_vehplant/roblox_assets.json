@@ -1,7 +1,30 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 648 triangles, glow share 3.0%",
+  "revision": "2026-10-22, glow fix (review 2026-10-22): door-frame build lights on power: 768 triangles, glow share 3.4%",
   "bar": {
+    "model": "rbxassetid://84674479644515",
+    "meshes": {
+      "base": "rbxassetid://81382716175990",
+      "base_glow_power": "rbxassetid://136031960651214",
+      "base_glow_running": "rbxassetid://108313735058688"
+    },
+    "decals": {
+      "ALB": "rbxassetid://92846758395160",
+      "RGH": "rbxassetid://103165668381448",
+      "NOR": "rbxassetid://115514897777787",
+      "MTL": "rbxassetid://82822589763837",
+      "EMI": "rbxassetid://100319826019668"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://76029575577514",
+      "NOR": "rbxassetid://98762483027190",
+      "RGH": "rbxassetid://90333783721729",
+      "MTL": "rbxassetid://109397542384179",
+      "EMI": "rbxassetid://137448427939203"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_bar in FTGG Art"
+  },
+  "bar_glow1": {
     "model": "rbxassetid://123916061747114",
     "meshes": {
       "base": "rbxassetid://77770515257890",
@@ -22,7 +45,7 @@
       "MTL": "rbxassetid://115148716759332",
       "EMI": "rbxassetid://82904189408907"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_bar in FTGG Art"
+    "note": "glow pass upload (M-22), before the review fix"
   },
   "bar_preglow": {
     "model": "rbxassetid://101076966633573",

@@ -6,6 +6,7 @@
 
 local CollectionService = game:GetService("CollectionService")
 
+local MeshModels = require("./MeshModels")
 local Models = require("./Models")
 local TeamColors = require("./TeamColors")
 
@@ -76,10 +77,18 @@ function ModelPool.acquire(def: any, team: number): Model
 	return model
 end
 
+-- Destroys the pooled models of def `id` (a better model replaced them).
+function ModelPool.flush(id: string)
+	for _, m in free[id] or {} do
+		m:Destroy()
+	end
+	free[id] = nil
+end
+
 function ModelPool.release(model: Model)
 	local id = model:GetAttribute("DefId") :: string?
 	model.Parent = nil
-	if id == nil then
+	if id == nil or (model:GetAttribute("Blockout") and MeshModels.get(id)) then
 		model:Destroy()
 		return
 	end

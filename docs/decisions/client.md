@@ -808,6 +808,8 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 
 ### C-100 — Fog of war as a draped blanket with one live image (BAR style); the point-light fog removed (2026-10-23)
 
+**Status:** approved by the user on 2026-10-23 after their own test; it is the default fog of war.
+
 **Decision:**
 - **Image:** `Core/FogBlanket` keeps one pixel per grid cell in three states from the team sight (visible, explored = seen once, never). It holds each sensor cell's state and blends each pixel's goal from its four nearest cells (bilinear). Pixels fade to their goal over 0.3 s, in a queue capped at 3,000 pixels per step, and only the changed rectangle is reported.
 - **Mesh:** `Render/FogBlanket` shows the image as the TextureContent (UVs) of 4 EditableMesh chunks draped 1 stud over the highest ground within 8 studs of each vertex (one vertex per 16 studs). The parts are at Transparency 0.02 (so texture alpha blends), Fabric, at the world origin.
@@ -838,4 +840,54 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The glossy look came mostly from environment specular, so it is cut to 15%.
 - The light levels keep units readable at every zoom; a thicker atmosphere flattened the strategic view.
 - Under night light the old explored look read as never seen.
-- Lighting.Technology isn't scriptable, so it stays a place setting (Future recommended).
+- Lighting.Technology isn't scriptable, so it stays a place setting (Realistic recommended: Roblox's unified technology, which replaced Future).
+
+### C-102 — The environment: night sky, map-edge ground, terrain colours, ambient particles; a graded picture (zoom easing, blast flash, vignette); grey fog of war (2026-10-23)
+
+**Decision:**
+- **Presets:** `Render/Atmosphere` presets gain `sky` (skybox faces, stars, moon), `ground` (Terrain material colours) and `vignette`, all captured from the place. Night: procedural sky, cool dull terrain, vignette 0.55, grade b 0.05 / k 0.32 / s −0.02 / tint (196, 218, 255).
+- **Grade:** `Core/Grade` + `Render/Grade` write the preset's ColorCorrection each frame.
+  - Zoom easing (smoothstep 150 → 800 studs: contrast and saturation ×0.55, tint halfway to white, vignette ×0.6).
+  - A warm flash for nukes and large deaths near the focus (`Vfx.onSpawn`; capped at 1, decay 0.3 s).
+  - A vignette drawn once into an EditableImage.
+- **Edge and particles:** `Core/Environment` + `Render/Environment`: 49 dark slabs (at most 2,048 studs) 6,000 studs round the map, just under the lowest edge; dust and mist in a box following the camera within 320 studs, off at Low.
+- **Fog:** `Core/FogBlanket.LOOK` becomes grey: explored 80 at 0.38, never 56 at 0.7.
+
+**Why:**
+- The user asked for map edge, night sky, terrain colours and ambient particles, with the colour correction "the most impressive part", and then asked for grey fog so ghost structures stay visible.
+- The void past the map showed the sky's blue.
+- The grade must not cost readability at strategic zoom, and frequent impacts must not flicker the screen.
+- Roblox's ColorGradingEffect only offers a tonemapper, so the grade is ColorCorrection.
+
+### C-103 — BAR models built on the client from the mesh manifest, with Rojo-written materials; the unit glow driver; headlights (2026-10-23)
+
+**Decision:**
+- **Models:** `Render/MeshModels` builds every "approved" manifest entry at start (CreateMeshPartAsync, rig.md 1–2, glow parts per fx.md). `Render/Models` order: place model > mesh model > blockout. Stand-ins are swapped when the mesh is ready.
+- **Materials:** SurfaceAppearances (maps, emissive mask) come from `place/MeshMaterials.model.json` (`lune run mesh_materials`, Rojo → `ReplicatedStorage.MeshMaterials`) and are cloned. RenderFidelity goes through CreateMeshPartAsync's options.
+- **Glow:** `Core/Glow` + `Render/Glow` drive EmissiveStrength: power × stall ratio (floor 0.3), factory pulse 1.5–4 at 1 Hz, weapon flash 6 → rest over 0.3 s, dark while built; only changes are written.
+- **Headlights:** pooled shadowless SpotLights on the nearest on-screen vehicles, capped by the light budget, at close zoom or night and dusk.
+
+**Why:**
+- The user's glow pass needed the models in game. C keeps to "FTGG Art" and gave a manifest.
+- Game scripts lack the Plugin capability for SurfaceAppearance maps, the emissive mask and RenderFidelity, and emission needs the mask. Rojo has it and clones keep it, so the repo stays the source and nothing has to be saved into the place by hand.
+- Measured at 200 units: 0.19 ms a frame.
+
+### C-104 — A shield hit's hex patch: one bright centre, faint outer rings (2026-10-23)
+
+**Decision:** in `Core/Shield.plateAt`, each ring's opacity is `RING_ALPHA` (0.3) to the power of its ring number, and its heat peak falls 40% a ring (floor 20%).
+
+**Why:** the user saw one shell's touch as 5–6 shots. Events were one per shell (measured), but the 7 equally white Neon plates bloomed into separate blobs under the night grade.
+
+### C-105 — One UI kit for every panel; settings, statistics and lobby rebuilt on it; statistics sampled on the server until the sim keeps them (2026-10-23)
+
+**Decision:**
+- **Kit:** `UI/Kit` holds the theme (colors, Montserrat, type and spacing scales, corners) and the components.
+- **Panels:** settings, lobby and the new statistics panel (the results screen) are built from it, once, and shown or hidden.
+- **HUD:** the older HUD screens take the kit's tokens and `Kit.skin`.
+- **Charts:** `Core/Chart` downsamples to 120 points and rasterizes into one EditableImage per chart, one chart per frame.
+- **Samples:** taken by `src/roblox/StatSeries` every 10 s until sim request 41.
+
+**Why:**
+- The user: the settings and results panels read as debug boxes, and the BAR statistics panel is the style target (style only).
+- Montserrat is the closest built-in to its geometric sans.
+- Charts: an EditableImage per chart is a fixed cost per redraw, against a Frame per segment per line (up to thousands of Frames) (measured: 4.6 ms per chart redraw and nothing standing, against 476 Frames a chart).

@@ -42,6 +42,7 @@ Shield.PLATE = 2.4 -- studs across a hexagon's flats
 Shield.GAP = 0.25 -- studs between plates
 Shield.RING_DELAY = 0.045 -- seconds between rings lighting
 Shield.LIFE = 0.65 -- seconds a plate glows after it lights
+Shield.RING_ALPHA = 0.3 -- each ring out is this much as opaque as the one inside it
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
 Shield.MERGE_AGE = 0.25
@@ -130,9 +131,12 @@ function Shield.plateAt(age: number, ring: number, strength: number): (number, n
 		return 0, 0, 0
 	end
 	local k = t / life
-	local peak = math.clamp(0.55 + 0.25 * strength, 0.4, 1) * (1 - ring * 0.18)
+	-- one bright centre, the rings around it much fainter and greyer: equal
+	-- rings bloomed into separate white blobs and one shell read as five or
+	-- six hitting at once (the user, C-104)
+	local peak = math.clamp(0.55 + 0.25 * strength, 0.4, 1) * math.max(0.2, 1 - ring * 0.4)
 	local heat = peak * (1 - k) ^ 1.6
-	local alpha = math.min(1, t / 0.04) * (1 - k ^ 2)
+	local alpha = math.min(1, t / 0.04) * (1 - k ^ 2) * Shield.RING_ALPHA ^ ring
 	-- the centre dents first and springs back (a damped half-swing)
 	local dent = 0
 	if ring <= 1 then
