@@ -19,6 +19,7 @@ BAR-style modern-warfare RTS on Roblox. Factions: Order / Chaos. Domains: ground
 | `docs/` | design documents (not synced) |
 | `.lune/` | Lune scripts: test entry, tooling (not synced) |
 | `.luaurc` | require aliases (`@shared`) for Lune and tooling (not synced) |
+| `place/` | ReplicatedStorage instances Rojo writes straight from the repo, outside darklua (`MeshMaterials.model.json`: the meshed models' SurfaceAppearances, C-103) |
 
 Maps, terrain and unit models live in the place file, not in this repo.
 
@@ -58,6 +59,7 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
 - `.lune/` holds Lune-only scripts (test entry, tooling). They may use `@lune/*`.
   - `lune run test_client [filter]`: the client stream's Lune specs in `tests/client/` (pure client logic and blockout data; C-7).
   - `lune run client_demo <build|combat|icons|minimap> <out>`: headless client scene from the real sim and client API, for `render_scene` (C-15).
+  - `lune run mesh_materials`: regenerates `place/MeshMaterials.model.json` from the mesh manifest (SurfaceAppearances game scripts can't set; C-103). `lune run test_client MeshMaterials` fails while it is stale.
   - `lune run render_scene <dump> <png>`: top-down PNG of a client scene dump (`ReplicatedStorage.FtggClientDebug:Invoke("scene")` in a Studio playtest; C-10).
   - `lune run bench`: flow field benchmark (results in `docs/progress/sim.md`).
   - `lune run debug_map [seed | mapId]`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored); `debug_map map:crossroads` renders a registry map (S-15).

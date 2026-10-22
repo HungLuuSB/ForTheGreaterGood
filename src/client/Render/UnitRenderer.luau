@@ -124,6 +124,17 @@ local function hide(r: Renderer, id: number)
 	end
 end
 
+-- Draws def `defId`'s units again with their current template (a mesh
+-- model became ready, C-103).
+function UnitRenderer.reshow(r: Renderer, world: World.World, defId: string)
+	for id, d in r.drawn do
+		if d.def.id == defId then
+			hide(r, id)
+			show(r, world, id)
+		end
+	end
+end
+
 -- Removes every model (match restart).
 function UnitRenderer.clear(r: Renderer)
 	for id in r.drawn do

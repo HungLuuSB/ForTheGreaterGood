@@ -23,6 +23,7 @@ Glow.HEAD_COLOR = Color3.fromRGB(255, 236, 205) -- the contract's head tint
 Glow.HEAD_BRIGHTNESS = 2.5
 Glow.HEAD_RANGE = 36
 Glow.HEAD_ANGLE = 55
+Glow.RATIO_OVERRIDE = nil :: number? -- debug (Invoke("glowratio", r)): pretend the team's power ratio is r
 
 export type Part = { sa: SurfaceAppearance, channel: string, rest: number, shown: number }
 
@@ -161,7 +162,7 @@ end
 function Glow.step(state: State, renderer: any, world: any, now: number, camera: Camera, focusX: number, focusZ: number, distance: number)
 	local t0 = os.clock()
 	local eco = world.economy
-	local ratio = if eco then eco.power.ratio / 255 else 1
+	local ratio = Glow.RATIO_OVERRIDE or (if eco then eco.power.ratio / 255 else 1)
 	local myTeam = world.me.team
 	local c = state.ctx
 	c.now = now

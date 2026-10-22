@@ -858,3 +858,16 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - The void past the map showed the sky's blue.
 - The grade must not cost readability at strategic zoom, and frequent impacts must not flicker the screen.
 - Roblox's ColorGradingEffect only offers a tonemapper, so the grade is ColorCorrection.
+
+### C-103 — BAR models built on the client from the mesh manifest, with Rojo-written materials; the unit glow driver; headlights (2026-10-23)
+
+**Decision:**
+- **Models:** `Render/MeshModels` builds every "approved" manifest entry at start (CreateMeshPartAsync, rig.md 1–2, glow parts per fx.md). `Render/Models` order: place model > mesh model > blockout. Stand-ins are swapped when the mesh is ready.
+- **Materials:** SurfaceAppearances (maps, emissive mask) come from `place/MeshMaterials.model.json` (`lune run mesh_materials`, Rojo → `ReplicatedStorage.MeshMaterials`) and are cloned. RenderFidelity goes through CreateMeshPartAsync's options.
+- **Glow:** `Core/Glow` + `Render/Glow` drive EmissiveStrength: power × stall ratio (floor 0.3), factory pulse 1.5–4 at 1 Hz, weapon flash 6 → rest over 0.3 s, dark while built; only changes are written.
+- **Headlights:** pooled shadowless SpotLights on the nearest on-screen vehicles, capped by the light budget, at close zoom or night and dusk.
+
+**Why:**
+- The user's glow pass needed the models in game. C keeps to "FTGG Art" and gave a manifest.
+- Game scripts lack the Plugin capability for SurfaceAppearance maps, the emissive mask and RenderFidelity, and emission needs the mask. Rojo has it and clones keep it, so the repo stays the source and nothing has to be saved into the place by hand.
+- Measured at 200 units: 0.19 ms a frame.

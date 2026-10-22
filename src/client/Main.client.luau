@@ -43,6 +43,8 @@ local FogBlanket = require("./Render/FogBlanket")
 local Environment = require("./Render/Environment")
 local Grade = require("./Render/Grade")
 local Glow = require("./Render/Glow")
+local MeshModels = require("./Render/MeshModels")
+local Models = require("./Render/Models")
 local Vfx = require("./Render/Vfx")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
@@ -194,6 +196,13 @@ local fog = FogBlanket.new()
 local environment = Environment.new() -- ground beyond the map, ambient particles (C-102)
 local grade = Grade.new() -- colour grade: zoom easing, blast flashes, vignette (C-102)
 local glow = Glow.new() -- unit glow states and headlights (C-103)
+-- BAR mesh models from the manifest (C-103): built in the background; each
+-- one replaces its blockout when ready
+local meshReady: { string } = {}
+MeshModels.onReady(function(id: string)
+	table.insert(meshReady, id)
+end)
+MeshModels.start(defs)
 Vfx.onSpawn = function(kind: string, x: number, _y: number, z: number, scale: number)
 	Grade.burst(grade, kind, x, z, scale)
 end
@@ -598,9 +607,16 @@ if RunService:IsStudio() then
 		elseif query == "net" then
 			-- Invoke("net"): bytes received per channel since the client started (C-69)
 			return received
+		elseif query == "meshes" then
+			-- BAR mesh models (C-103): built, failed, seconds, errors
+			return MeshModels.stats
 		elseif query == "glow" then
 			-- unit glow (C-103): models with glow parts, parts, writes and ms last frame, headlights lit
 			return glow.stats
+		elseif query == "glowratio" then
+			-- Invoke("glowratio", r?): pretend the team's power ratio is r (an energy stall), nil: the real one
+			Glow.RATIO_OVERRIDE = (...)
+			return true
 		elseif query == "fog" then
 			-- fog of war (the blanket, C-100): its stats; contacts and ghosts
 			-- the server's ally-team sight (C-65): records applied, cells seen
@@ -760,6 +776,12 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	mark("missileView", t0)
 	t0 = os.clock()
 	-- piece scripts (guide 14): not for models hidden at strategic zoom
+	for _, id in meshReady do
+		Models.forget(id)
+		ModelPool.flush(id)
+		UnitRenderer.reshow(renderer, world, id)
+	end
+	table.clear(meshReady)
 	Glow.shots(glow, fx.shots, now)
 	if not strategic then
 		PieceAnim.drive(anim, world, fx.shots)
