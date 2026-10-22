@@ -1216,3 +1216,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Built:** Targeting and Weapons skip frames (no target, no turret motion, no shot). Damage gives a frame no wreck (DEATH `wreckId` 0) and no death blast.
 - **Wire:** none. Build progress already reaches every client that has the unit in its tactical tier, enemies included (ENTER `build`, State BUILD on change); strategic records don't carry it.
 - **Tests:** `Frames.spec` (3): a half-built Bulwark doesn't target or fire at a tank in range for 10 s, then fires once complete; a frame killed with little overkill leaves no wreck where a complete one does; a reactor frame sets off no blast where a complete one does.
+
+## S-88 — Match statistics over time in Sim/Stats (client request 41, the user's queue task 1) (2026-10-23)
+
+- **Asked:** keep the statistics history in the sim (a sample every 10 s, damage taken included), so the client stops sampling on the server.
+- **Built:**
+  - `Stats.series(sim)` in the shape of the client's `src/roblox/StatSeries` (C-105): `{ start, every, t, players[tostring(pid)][field] }`.
+  - `Stats.FIELDS`: supply and power gathered, spent and stored (the team account's), units built, lost and killed, damage dealt, and new **damage taken**.
+  - Damage taken is the health enemies removed from the player's units, capped at what the unit had left. It is counted in Damage beside damage dealt.
+  - **Sampling:** `Sim.new` takes the first sample at tick 0, after the scenario. `Stats.step`, at the end of `Sim.step`, takes one every `every` ticks (150 = 10 s). Past 120 samples, every other one is dropped and `every` doubles.
+  - Not hashed: it only reads the sim, like the report.
+- **Tests:** `Stats.spec` 6: damage taken mirrors damage dealt on a kill; the series' shape and timing over 30 s; the halving and the doubled interval.

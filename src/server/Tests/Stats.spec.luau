@@ -44,6 +44,8 @@ return function(t: RunAll.Context)
 		t.equal(r[2].unitsLost, 1)
 		t.equal(r[1].unitsLost, 0)
 		t.equal(r[2].damageDealt, 0, "it never fired")
+		t.expect(math.abs(r[2].damageTaken - hp) < 1e-6, `damage taken mirrors it, capped the same ({r[2].damageTaken} of {hp})`)
+		t.equal(r[1].damageTaken, 0, "the Lancers took nothing")
 	end)
 
 	t.test("a shell keeps its shooter's player after the shooter dies", function()
@@ -118,5 +120,49 @@ return function(t: RunAll.Context)
 		end
 		local rep = Stats.report(sim)
 		t.expect(rep[1].powerGathered > 0 and rep[1].supplyGathered > 0, "the Command Vehicle's production counts")
+	end)
+
+	t.test("over time: a sample at tick 0 and every 10 s, in the client's shape (S-88, request 41)", function()
+		local sim = Sim.new({ seed = 5, players = PLAYERS, mapId = "skirmish:192", scenario = "standard_start" })
+		local s = Stats.series(sim)
+		t.equal(#s.t, 1, "the first sample at creation")
+		t.equal(s.t[1], 0)
+		for _ = 1, 450 do
+			Sim.step(sim)
+		end
+		t.deepEqual(s.t, { 0, 10, 20, 30 }, "every 150 ticks, in seconds")
+		for _, pid in { 1, 2 } do
+			local p = s.players[tostring(pid)]
+			t.expect(p ~= nil, `player {pid} keyed as text`)
+			for _, f in Stats.FIELDS do
+				t.equal(#p[f], 4, `player {pid} {f}: one value per sample`)
+			end
+		end
+		local r = Stats.report(sim)
+		local last = s.players["1"]
+		t.equal(last.supplyGathered[4], math.floor(r[1].supplyGathered + 0.5), "the last sample is the report then")
+		t.equal(last.powerStored[4], math.floor(sim.eco.accounts[1].power.stored + 0.5), "stored from the team account")
+	end)
+
+	t.test("over time: past 120 samples every other one goes and the interval doubles", function()
+		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:64" })
+		local s = Stats.series(sim)
+		-- sample directly, as the step would, without running 20 minutes of sim
+		for i = 1, Stats.MAX do
+			sim.tick = i * s.every
+			Stats.sample(sim)
+		end
+		t.equal(#s.t, Stats.MAX / 2 + 1, `halved once at {Stats.MAX + 1} samples`)
+		t.equal(s.every, Stats.EVERY * 2, "the interval doubled")
+		t.equal(s.t[2], 20, "kept every other: 0, 20, 40 ... s")
+		t.equal(s.t[#s.t], Stats.MAX * 10, "the newest kept")
+		t.equal(#s.players["1"].damageTaken, #s.t, "every line halved with it")
+		-- the step now samples on the doubled interval
+		sim.tick += Stats.EVERY
+		Stats.step(sim)
+		t.equal(#s.t, Stats.MAX / 2 + 1, "no sample 10 s later")
+		sim.tick += Stats.EVERY
+		Stats.step(sim)
+		t.equal(#s.t, Stats.MAX / 2 + 2, "one 20 s later")
 	end)
 end

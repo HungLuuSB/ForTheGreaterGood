@@ -225,6 +225,9 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **Done (request 41), S-88: statistics over time in `Sim/Stats`.** `Stats.series(sim)` returns `{ start, every, t, players }` in your StatSeries shape: `t` in seconds, `players[tostring(pid)][field]` arrays of whole numbers. The fields are `Stats.FIELDS`: your ten plus **`damageTaken`**, which is health enemies removed from that player's units, capped like `damageDealt`. `Stats.report` has `damageTaken` too.
+  - Sampling: one sample at tick 0 (after the scenario), then every 150 ticks at the end of the tick. Past 120 samples, every other one is dropped and the interval doubles (`series.every`).
+  - Replays and headless runs have it, since the sim keeps it. No wire change; the Roblox server reads it as it reads `Stats.report`, so `src/roblox/StatSeries` can go.
 - **Done (request 40), S-79, protocol 24: shield domes.** Generators `ord_phalanx` (radius 120) and `chs_carapace` (radius 80); the def's `shield = { radius, capacity, recharge, power }` (radius in the def, not on the wire). Three events (contract section 7):
   - **`SHIELD 19`** `unitId u16, charge u8 (0..255 of capacity), flags u8` (`Schema.ShieldFlag`: UP 1, RECHARGING 2; down = no UP): after the generator's ENTER and when the charge moved 4/255 or the flags changed. Generators enter the tactical tier as far out as their dome reaches (margins + radius).
   - **`SHIELD_HIT 20`** `unitId u16 (0 = a generator you don't have), projId u16, pos (the point on the dome), mass u8 (/ Schema.SHIELD_MASS_SCALE 31 = shell masses, 1 = a 150-damage shell), flags u8 (SHIELD_BREACH 1)`: a shell turned back (the hit) or broke through. Draw the hit patch at `pos` with intensity from `mass`.
