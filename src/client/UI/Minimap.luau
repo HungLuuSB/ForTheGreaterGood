@@ -1,6 +1,7 @@
 --!strict
 -- PLACEHOLDER minimap (guide 15.7, 15.8), bottom left. Terrain tiles from
--- the map's layers, unit dots refreshed at the strategic rate, the camera
+-- the map's layers, units as their icons (the strategic layer's, smaller:
+-- C-122; radar blips stay dots) refreshed at the strategic rate, the camera
 -- outline; left click moves the camera, right click orders the selection
 -- there (Shift queues). Reads and calls only the client API (C-5).
 
@@ -8,8 +9,10 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
+local Icons = require("../Core/Icons")
 local Minimap = require("../Core/Minimap")
 local TeamColors = require("../Render/TeamColors")
+local Glyph = require("./Glyph")
 
 local MinimapUI = {}
 
@@ -24,7 +27,9 @@ export type UI = {
 	fogContent: Content?,
 	dots: Frame,
 	camera: Frame,
-	pool: { Frame },
+	pool: { Frame }, -- blip dots
+	glyphs: { Glyph.G }, -- unit icons
+	icons: Icons.Table,
 	nextDots: number,
 	pings: { { frame: Frame, at: number } }, -- alert pings (C-68)
 }
@@ -111,7 +116,7 @@ function MinimapUI.new(api: Api.Api): UI
 		end
 	end)
 
-	return { gui = gui, map = map, terrain = terrain, fog = fog, fogContent = nil, dots = dots, camera = camera, pool = {}, nextDots = 0, pings = {} }
+	return { gui = gui, map = map, terrain = terrain, fog = fog, fogContent = nil, dots = dots, camera = camera, pool = {}, glyphs = {}, icons = Icons.table(api.world.defs), nextDots = 0, pings = {} }
 end
 
 local function tileColor(tile: Minimap.Tile): Color3
@@ -199,7 +204,26 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 	end
 	ui.nextDots = now + Minimap.REFRESH
 	local dots = Minimap.dots(world, api.selection.set)
-	for i, d in dots do
+	local nDots, nIcons = 0, 0
+	for _, d in dots do
+		if d.kind ~= "blip" then
+			-- the unit's icon (ghosts faint, selected lightened, under attack blinking: Glyph)
+			nIcons += 1
+			local g = ui.glyphs[nIcons]
+			if g == nil then
+				g = Glyph.new(ui.dots)
+				ui.glyphs[nIcons] = g
+			end
+			local style = Icons.style(ui.icons, world, world.units[d.id], d.selected)
+			style.size = math.max(6, math.floor(style.size * Minimap.ICON_SCALE + 0.5))
+			Glyph.apply(g, style, TeamColors(d.team))
+			g.root.Position = UDim2.fromScale(d.u, d.v)
+			g.root.ZIndex = nIcons
+			g.root.Visible = true
+			continue
+		end
+		nDots += 1
+		local i = nDots
 		local f = ui.pool[i]
 		if f == nil then
 			f = Instance.new("Frame")
@@ -223,8 +247,11 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 		s.Enabled = blink or d.selected or d.kind == "ghost"
 		f.Visible = true
 	end
-	for i = #dots + 1, #ui.pool do
+	for i = nDots + 1, #ui.pool do
 		ui.pool[i].Visible = false
+	end
+	for i = nIcons + 1, #ui.glyphs do
+		ui.glyphs[i].root.Visible = false
 	end
 end
 

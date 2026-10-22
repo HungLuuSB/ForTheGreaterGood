@@ -969,3 +969,9 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Fixes:** the ghost moves its model with `PivotTo` (blockout parts are anchored, not welded). `Waypoints` no longer counts the extractor a build upgrades as that build's frame.
 
 **Why:** the user's brief; sim-A's S-108 contract (no new command or wire: each queued BUILD is checked when started).
+
+### C-122 — The minimap draws unit icons (2026-10-23)
+
+**Decision:** minimap units are their strategic icons (`Core/Icons.style`, `UI/Glyph`) at `Minimap.ICON_SCALE` 0.5 (about 11 px). Ghosts, selection and under-attack look as on the icon layer; radar blips with no type stay dots. `Minimap.dots` carries each unit's id and sorts ghosts and structures first, the selection last.
+
+**Why:** the user asked for the unit icons on the minimap (BAR's minimap shows them).

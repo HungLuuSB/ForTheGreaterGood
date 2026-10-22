@@ -4,6 +4,18 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, minimap icons; anti-nukes coming)
+
+- **Minimap icons (C-122):** units on the minimap now show their type icon instead of a dot, the same icons as the zoomed-out view, about 11 px.
+  - Ghosts are faint, the selection is lightened and drawn on top, and units under attack blink red.
+  - Radar blips with no known type stay dots.
+- **Screenshot:** `debug_out/screens/minimap_icons.jpg` (shield scene, enemies shown with /reveal).
+- **Sim request 46 is built (S-111, merging):**
+  - radar SAMs shoot only aircraft and one-shot every T1 aircraft;
+  - new anti-nukes: Providence / Cerberus (structures, 3 interceptors, 18 s / 15 s between shots) and Custodian / Chimera (mobile, 1 interceptor, only while stopped);
+  - each intercepts any enemy nuke aimed inside its cover, with a certain hit, so two nukes on one spot get one through.
+  - I'll do their client side (icons, cover ring, stock and shot delay, blockouts from models-C) once it's in main.
+
 ## Summary (2026-10-23, extractor upgrades in place)
 
 - **Upgrading extractors (C-121).** A T2 builder can now build an advanced extractor on top of your own T1:
@@ -1591,7 +1603,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-46. **Open (sent 2026-10-23).** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
+46. **Built (S-111, merging): radar SAMs air only (AIR 1,150 / 1,100); anti-nukes `ord_providence` / `chs_cerberus` and mobile `ord_custodian` / `chs_chimera`, INTERCEPTOR / INTERCEPTED, stock in STOCK; client side to do.** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
     - **Radar SAMs** (`ord_radar_sam`, `chs_radar_sam`): drop `intercepts`, air only; damage retuned so a T2 radar SAM one-shots T1 air.
     - **Anti-nuke:** intercepts any enemy strategic missile whose target point is inside its cover range, with a certain hit and a delay after each shot, so several nukes on one spot overwhelm it. Tier, cost, range, delay and names are sim-A's call (Order and Chaos versions).
     - Client side once it lands: blockouts, icons, interceptor visuals, a cover-range ring.
