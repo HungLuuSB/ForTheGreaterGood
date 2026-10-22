@@ -959,3 +959,115 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Exception:** strategic blasts (nukes, team 0) and death blasts (S-70) still hurt everyone; they belong to no team.
 - **Replay header:** its match byte is 2 when friendly fire is off (1 as before otherwise), so old replays still read and a replayed match keeps the option. No format version change.
 - **Test:** `FriendlyFire.spec`: the default hurts both tanks under a blast, the option spares the own one; the option survives a replay round trip.
+
+## S-74 — 800 units: Targeting and Commands, same behaviour (the user's task 9) (2026-10-22)
+
+- **Asked:** bring Commands (5.1 ms, budget 1) and Targeting (8.6, budget 8) at 800 units within budget without changing behaviour (same game-state hash), with before/after numbers.
+- **Where things stood:** S-67 had already moved a select-all order's slot assignment into the Pathing job. On today's code (`lune run stress 450 800`, which now prints the state hash and each system's peak tick):
+  - Commands averages 0.47 ms, peaks 1.9–3.7.
+  - Targeting averages 1.9–2.1 ms, peaks 5.6–9.1.
+- **Changes** (the state hash stays `75cd2a2c` in every run):
+  - **Targeting's search:**
+    - `acceptable()` hands back the level, def index, "type known" and known categories it looked up, and the search scores from them, where `score()` asked the sensors again. The doomed check reuses the level.
+    - A per-def `possibleMask`, every category the sensors could ever report for a live unit of that def (its own, its domain's, GROUND for aircraft), rejects candidates a weapon can never target (anti-air over a tank column, guns over jets) before any sensor lookup.
+  - **Orders' attack-move hold check (`engaged`):** a live enemy in sight is read straight from the world. That is exactly what `Sensors.knownTarget` would return; any other target still asks it.
+  - **Orders:** move-like kinds by table lookup.
+- **Deterministic effect:** sensor lookups per 30 s stress run: `knownTarget` 1,173,143 → 811,243 (−31%), `typeKnown` 1,867,852 → 1,192,546 (−36%), `knownCategories` 876,257 → 562,851 (−36%), `level` 1,680,111 → 1,274,427 (−24%).
+- **Timings** (3 runs each; the PC is noisy, ±30% run to run):
+
+| | Before | After |
+|---|---|---|
+| Targeting peak (budget 8) | 9.10 / 5.74 / 5.59 | 5.65 / 6.52 / 7.39 |
+| Targeting average | 2.06 / 1.93 / 1.91 | 1.83 / 1.80 / 2.07 |
+| Commands peak (budget 1) | 3.67 / 1.93 / 1.97 | 1.76 / 1.77 / 2.15 |
+| Commands average | 0.54 / 0.47 / 0.47 | 0.48 / 0.46 / 0.57 |
+
+- **Targeting:** within budget in every run since. **Commands is not:**
+  - Its average is 0.47 ms, half of it the attack-move hold check for ~700 units a tick.
+  - Its peak is the order tick (applying and issuing 800 units' FIGHT: ~0.4 ms giving orders, ~0.8 ms issuing them) and odd mid-battle ticks at ~1.2–1.5 ms.
+  - What's left needs a behaviour change; under "Needs my review":
+    - (a) check attack-move holds for half the units each tick (each unit every 2nd tick: 0.13 s later to stop);
+    - (b) give a big order's queue entries over 2–4 ticks, like its slots (S-67).
+- Tool: `Sim.enableTiming` records each system's peak tick; `stress` prints it and the state hash.
+
+## S-75 — Faction-only units, stage 3: Locust, Cyclops, Barrier, Citadel (the user's task 10) (2026-10-22)
+
+- **Locust (`chs_locust`, Chaos T1, vehicle plant):** value 150, health 600, speed 45. Autocannon `chs_autocannon`: 120 studs, 26 armored every 0.5 s, 2.2°.
+  - My call: built one at a time, cheap and fast to build (20 s). The proposal's "built in pairs" would need a factory to produce two units per queue item, which the value accounting, the AI and the client queue don't model.
+- **Cyclops (`chs_cyclops`, Chaos T2, advanced vehicle plant):** value 520, health 1,100, speed 22, footprint 2. Siege mortar `chs_siege_mortar`: targets STRUCTURE only, range 520, 1,200 every 8 s, may shell radar contacts and ghosts of structures.
+- **Barrier (`ord_barrier`, Order T1 structure, Mason and Architect):** value 40, health 2,500, 1 cell.
+  - Movement: it blocks it, like any structure (passability and the quadtree update; S-67's lazy updates).
+  - Fire: low direct fire hits it like any unit in the shot's path. It is as tall as a tank (6 studs), so the odd shell clears it.
+  - No new mechanic, as the user suggested.
+- **Citadel (`ord_citadel`, Order T3 structure, Architect):** value 2,000, health 9,000, footprint 3.
+  - Gun `ord_citadel_gun`: 320 studs, 600 armored every 3.5 s, 0.3°.
+  - Also an IR SAM (`ord_ir_sam`) and a radar (900, error 16, upkeep 4).
+- **Blockouts:** the models stream's pending ones (Blockouts/Pending, M-17) already have these ids, footprints and pieces; the defs use them as they are.
+- **Counter matrix (guide 12.4):** new rows "Swarm tank" (Locust: Ground ●●, Ship ●, Structure ●) and "Siege mortar" (Cyclops: Structure ●●●, nothing else).
+- **Trade check** (`lune run factions`, new "Faction-only units" section, report only; the Order side's trade):
+  - Locust against Lancers: close 1.43, long 1.11, flank 0.72.
+  - Warden holding against Ravagers: 2.87.
+  - Citadel against a tank assault: 1.67.
+  - Citadel against Minotaurs: 0.35.
+  - Citadel against Cyclops with a Watcher radar: 0.31. Without a spotter, the Cyclops can't see the Citadel before its gun does: 1.46.
+- **Tests (`Fortify.spec`):**
+  - The Locust's value, speed and reach.
+  - A Cyclops shells a plant 500 studs off and never targets a tank in range.
+  - A Barrier wall: a tank drives round it; most shells at a tank behind a 3-segment wall hit the wall.
+  - A Citadel kills a Ravager 270 studs off and fires its SAM at a helicopter.
+
+## S-76 — Faction AI (the user's task 11; factions.md section 7) (2026-10-22)
+
+- **Asked:** Order expands safely, defends first, attacks later with artillery and radar escort, builds Wardens; Chaos expands wide, sends earlier and more frequent waves on two lanes, brings jammers and Minotaurs. Hard > Normal > Easy must hold for each faction.
+- **Built** as an overlay on the level (`Skirmish.styled`). Easy keeps its strength and only takes the production mix.
+  - **Order:**
+    - Its advanced plant builds Wardens (a quarter of its army items); more artillery in its waves (+0.1); Normal and Hard recall the army against enemy waves.
+    - Hard only: safe expansion (Hard already had it) and a gun turret more at home.
+  - **Chaos:**
+    - A worker more.
+    - Waves of 2 units more: a wave counts units, and Chaos's cheaper units make the same value with ~30% more of them. Waves grow faster.
+    - From 12 front units a wave splits in two lanes: every second unit goes through a flank waypoint 300 studs off the straight line (the side alternates per wave, in world terms so mirrored players flank alike), then joins the attack.
+    - A Shroud jammer guards each wave with the radar escorts.
+    - Its plant builds Locusts among its tanks (35%), its advanced plant Minotaurs (25%).
+- **Tried and dropped (the faction report's quick runs; the slow suite):**
+  - Order's safe expansion and turret on Normal: Order mirrors then stalled at their bases for all 10 minutes of `Fairness.spec`, called on value, east 6–0.
+  - Order's first wave 2 bigger: on skirmish:192 it never attacked before Chaos killed it.
+  - Chaos waves 2 smaller (as the proposal said, "earlier and more frequent") fed Order's defence piecemeal: Order 93%.
+  - Lanes from 4 units: the halves arrived apart.
+- **Levels** (`docs/AI_LEVELS.md`, 40 min, 3 seeds; mirrors per faction): Normal–Easy 37–5, Hard–Normal 41–1, Hard–Easy 36–0, Hard won all 6 FFAs. Per faction:
+  - Order: Normal–Easy 13–5, Hard–Normal 18–0, Hard–Easy 18–0.
+  - Chaos: Normal–Easy 18–0, Hard–Normal 17–1, Hard–Easy 18–0.
+- **Tests:** `AI.spec` checks the overlay and that a rich Order AI fields a Warden and a Chaos AI Locusts and a Shroud. `Fairness.spec` mirrors split 5–7.
+- **Faction balance in AI matches:** still Order ~90% (task 12, S-78).
+
+## S-77 — Replay compression: player replay format 2 (launch item) (2026-10-22)
+
+- **Asked:**
+  - delta-encode Tactical records;
+  - run-length the Strategic snapshots;
+  - then a pure-Luau compressor if it still helps;
+  - measure on the soak's spectator recording and on a player's;
+  - keep the format versioned.
+- **PlayerReplay format 2** (the default; format 1 files still read): the header as before, then `bodyHash u32` (FNV-1a), then the frame stream after three stages:
+  1. **Transforms** (reversible, against the same unit's previous record in the file):
+     - each message's tick header becomes its difference from the frame's tick;
+     - **Tactical:** unitId | zigzag varint of the cell's change | offX, offZ, heading, alt changes mod 256 | flags XOR;
+     - **State:** unitId | length | the record XOR the unit's previous record of the same length;
+     - **Strategic:** XOR the previous snapshot (unchanged bytes become zero runs, which the next stages squeeze).
+     The transforms alone change little in size (4.85 → 4.47 MB); they turn slowly changing records into repeats.
+  2. **`Shared/Net/Lz`:** LZ77, the LZ4 block layout, greedy matching through a 4-byte hash, 64 KB window.
+  3. **`Shared/Net/Huffman`:** canonical order-0 Huffman per 64 KB block, codes ≤ 15 bits, table-driven decoding.
+  - The hash refuses a damaged file: LZ alone can't always tell.
+- **Measured** (`lune run replay_size [file] [minutes]`):
+
+| Recording | Format 1 | Transforms + LZ | + Huffman (format 2) | Write / read |
+|---|---|---|---|---|
+| Soak spectator, seed 4, 25.5 min | 4,738 KB (185 KB/min) | 2,150 KB (45%) | **1,679 KB (35%, 66 KB/min)** | 1.5 s / 1.1 s |
+| Normal AI match, spectator, 9.7 min | 911 KB (94 KB/min) | 372 KB (41%) | **290 KB (32%, 30 KB/min)** | 0.33 / 0.23 s |
+| Same match, player 1 (no camera: strategic only), 9.7 min | 375 KB (39 KB/min) | 89 KB (24%) | **77 KB (21%, 8 KB/min)** | 0.05 / 0.03 s |
+
+  - For reference, zlib on the same transformed stream: 1,371 KB (29%) for the soak. Huffman over LZ gets most of the way.
+  - LZ alone on format 1, no transforms: 2,618 KB (55%).
+- **Tests:**
+  - `Lz.spec`: Lz round-trips empty, random, runs, repeats across the window, and refuses a cut stream; Huffman round-trips skewed data over three blocks and tiny inputs, and refuses a cut stream.
+  - `PlayerReplay.spec`: format 2 round-trips, rebuilds the live view on playback, reads a format 1 file as the same replay, is under 70% of format 1, and refuses a flipped byte (hash) and a cut file.

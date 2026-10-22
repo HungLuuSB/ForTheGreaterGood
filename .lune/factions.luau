@@ -206,6 +206,31 @@ for _, r in EMPLACEMENTS do
 	out(string.format("| %s | %s / %s | %s | %s | **%s** | %s |", role, defs.units[o].name, defs.units[c].name, fmt(to), fmt(tc), fmt(ratio), if band then "yes" else "**no**"))
 end
 
+-- Faction-only units (S-64, S-75): report only, no band. Each line: the
+-- Order side's trade (Chaos value destroyed / Order value lost).
+local SPECIALS = {
+	{ "Locust swarm against Lancers", { "ord_lancer" }, { "chs_locust" }, { "close", "long", "flank" } },
+	{ "Warden holding against Ravagers", { "ord_warden" }, { "chs_ravager" }, { "defend" } },
+	{ "Citadel holding against a tank assault", { "ord_citadel" }, { "chs_ravager", "chs_juggernaut" }, { "defend" } },
+	{ "Citadel holding against Cyclops siege mortars with a Watcher radar", { "ord_citadel" }, { "chs_cyclops", "chs_watcher" }, { "defend" } },
+	{ "Citadel holding against Minotaurs", { "ord_citadel" }, { "chs_minotaur" }, { "defend" } },
+}
+out("")
+out("### Faction-only units (report only; the Order side's trade)")
+out("")
+out("| Matchup | Starts | Trade |")
+out("|---|---|---|")
+for _, sp in SPECIALS do
+	if not wanted(sp[1]) then
+		continue
+	end
+	local parts = {}
+	for _, kind in sp[4] do
+		table.insert(parts, `{kind} {fmt(trade(sp[2], sp[3], kind))}`)
+	end
+	out(string.format("| %s | %s | %s |", sp[1], table.concat(sp[4], ", "), table.concat(parts, "; ")))
+end
+
 out("")
 out(string.format("**%d of %d roles in band.**", inBand, total))
 for _, f in failures do

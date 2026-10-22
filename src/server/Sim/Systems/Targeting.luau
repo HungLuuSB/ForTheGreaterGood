@@ -39,6 +39,7 @@
 -- With nothing lockable they keep tracking the best target and hold fire
 -- (Weapons won't launch without a lock).
 
+local Categories = require("@shared/Defs/Categories")
 local Combat = require("../Combat/Combat")
 local Hash = require("@shared/Util/Hash")
 local ContactGrid = require("../Combat/ContactGrid")
@@ -130,7 +131,9 @@ end
 local VISIBLE, RADAR, GHOST, SONAR = Sensors.Level.VISIBLE, Sensors.Level.RADAR, Sensors.Level.GHOST, Sensors.Level.SONAR
 
 -- `gen` is the remembered target's generation (D109); nil = the live unit.
-local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number, gen: number?): number?
+-- Also returns what it looked up (level, def index, type known, known
+-- categories), so a search scores the target without asking again (S-74).
+local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number, gen: number?): (number?, number, number, boolean, number)
 	local c = sim.combat
 	local w = sim.world
 	if w.slot[t] ~= nil and w.ally[t] == w.ally[id] and (gen == nil or w.gen[t] == gen) then
@@ -142,7 +145,8 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 	end
 	local tp = c.profiles[defIndex :: number]
 	local known = Sensors.typeKnown(sim, w.ally[id], t, level)
-	if band(weapon.targetMask, Sensors.knownCategories(sim, w.ally[id], t, level, defIndex :: number)) == 0 then
+	local cats = Sensors.knownCategories(sim, w.ally[id], t, level, defIndex :: number)
+	if band(weapon.targetMask, cats) == 0 then
 		return nil
 	end
 	local radius = if known then tp.radius else 0
@@ -162,7 +166,33 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 	if turret and turret.arc < 360 and not maneuvers and abs(wrapAngle(atan2(dx, dz) - w.heading[id])) > rad(turret.arc) / 2 then
 		return nil
 	end
-	return dist
+	return dist, level, defIndex :: number, known, cats
+end
+
+-- Every category bit Sensors.knownCategories can ever report for a live unit
+-- of this def: its own, its domain's (an unidentified contact, D107) and,
+-- for aircraft, GROUND (landed, S-71). A weapon whose targets share none
+-- can't accept it, whatever the team knows (S-74: skips the sensor lookups).
+local CB = Categories.Bit
+local possibleCache: { [any]: { [number]: number } } = setmetatable({}, { __mode = "k" }) :: any
+local function possibleMask(sim: Types.Sim, defIndex: number): number
+	local byDef = possibleCache[sim.defs]
+	if byDef == nil then
+		byDef = {}
+		possibleCache[sim.defs] = byDef
+	end
+	local m = byDef[defIndex]
+	if m == nil then
+		local def = sim.defs.unitByIndex[defIndex]
+		m = def.categoryMask
+		if def.domain == "air" then
+			m = bit32.bor(m, Sensors.DOMAIN_MASK.air, CB.GROUND)
+		else
+			m = bit32.bor(m, Sensors.DOMAIN_MASK.surface, Sensors.DOMAIN_MASK.submerged)
+		end
+		byDef[defIndex] = m
+	end
+	return m
 end
 
 local function isGuided(weapon: Defs.WeaponDef): boolean
@@ -240,11 +270,19 @@ local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (numb
 	local n = ContactGrid.query(c.contacts, w, w.posX[id], w.posZ[id], reach, w.ally[id], candidates)
 	for i = 1, n do
 		local t = candidates[i]
-		local dist = acceptable(sim, id, weapon, t, 1)
+		if band(weapon.targetMask, possibleMask(sim, w.defIndex[t])) == 0 then
+			continue -- (S-74) it can never be this weapon's target
+		end
+		local dist, level, _, known, cats = acceptable(sim, id, weapon, t, 1)
 		if dist ~= nil then
 			m += 1
-			cT[m], cGen[m], cScore[m] = t, w.gen[t], score(sim, id, weapon, t, dist)
-			cDoomed[m] = Combat.doomed(c, w, t) and Sensors.level(sim, w.ally[id], t) == VISIBLE
+			-- the score as score() gives it, from what acceptable looked up (S-74)
+			local s = (if known then priorityWeight(weapon.priorityMasks, cats) else 1) / math.max(dist, 1)
+			if isGuided(weapon) and EW.canLock(sim, id, weapon, t, dist) then
+				s *= LOCK_PREFERENCE
+			end
+			cT[m], cGen[m], cScore[m] = t, w.gen[t], s
+			cDoomed[m] = Combat.doomed(c, w, t) and level == VISIBLE
 		end
 	end
 	-- remembered structures that are no longer there: the team doesn't know

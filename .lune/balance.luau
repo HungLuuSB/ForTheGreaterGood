@@ -326,6 +326,8 @@ local ROLE_UNITS: { [string]: { string } } = {
 	["Coastal battery (13.5)"] = { "rampart", "breaker" },
 	["Deployable gun"] = { "warden" }, -- Order only (S-64)
 	["Siege"] = { "minotaur" }, -- Chaos only (S-64)
+	["Swarm tank"] = { "locust" }, -- Chaos only (S-75)
+	["Siege mortar"] = { "cyclops" }, -- Chaos only (S-75)
 }
 local function idOf(name: string): string
 	return (if defs.units["ord_" .. name] then "ord_" else "chs_") .. name
