@@ -8,18 +8,12 @@
 -- fields each was built for (a proposal for the sim session, M-17).
 
 return {
-	blockouts = {
-		chs_basilisk = require("./chs_basilisk"),
-		ord_lucent = require("./ord_lucent"),
-	},
-	-- beam towers (client request 2, sim request 43): proposed IDs and pieces
-	defs = {
-		ord_lucent = { id = "ord_lucent", model = "ord_lucent", faction = "order", tier = 2, domain = "structure", footprint = 2, pieces = { "base", "turret", "barrel", "muzzle" } },
-		chs_basilisk = { id = "chs_basilisk", model = "chs_basilisk", faction = "chaos", tier = 2, domain = "structure", footprint = 2, pieces = { "base", "turret", "barrel", "muzzle" } },
-	},
+	blockouts = {},
+	defs = {},
 	poses = {
-		-- switched off: the turret sinks into the drum, the emitter folds down, the shells close
-		ord_lucent = {
+		-- switched off (beam towers, S-96): the turret sinks into the drum, the
+		-- emitter folds down, the lids close over the pit
+		ord_radiance = {
 			retracted = {
 				turret = { 0, 0, 0, 0, -7.6, 0 },
 				barrel = { -90, 0, 0 },
@@ -27,7 +21,7 @@ return {
 				shellR = { 0, 0, 90 },
 			},
 		},
-		chs_basilisk = {
+		chs_inferno = {
 			retracted = {
 				turret = { 0, 0, 0, 0, -7.4, 0 },
 				barrel = { -90, 0, 0 },
