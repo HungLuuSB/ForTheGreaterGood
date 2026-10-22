@@ -120,6 +120,12 @@ def box_seams(p, center, size, y):
         seam(p, corners[i], corners[(i + 1) % 4], UP, width=0.03)
 
 
+def wheel(p, x, y, z, r, width, sides=10, hub="steel"):
+    """A road wheel along X: rubber tyre, a painted rim face, a steel hub."""
+    p.cylinder("x", (x, y, z), r, width, sides, "rubber", cap_kinds=("trim", "trim"))
+    p.cylinder("x", (x, y, z), r * 0.42, width + 0.08, 6, hub)
+
+
 # ---------------------------------------------------------------------------
 
 

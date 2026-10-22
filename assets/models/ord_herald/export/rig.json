@@ -1,0 +1,80 @@
+{
+  "id": "ord_herald",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.875,
+        -0.435
+      ],
+      "size": [
+        4.58,
+        3.75,
+        6.95
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.55,
+        0.475
+      ],
+      "size": [
+        1.7,
+        0.98,
+        3.75
+      ],
+      "pivot": [
+        0.0,
+        2.15,
+        1.5
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        2.55,
+        -1.45
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 740,
+    "turret": 236,
+    "total": 976
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

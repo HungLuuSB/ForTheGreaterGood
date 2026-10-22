@@ -529,13 +529,29 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shield hits on the crossing frame; destroyed shells gone at once; unfinished units see-through; minimap 10 Hz (C-99)
+
+- **Reflect effect still late (found the cause):** SHIELD_FIELD is due on the tick a shell crosses. The client applied it only at that tick's end, so for a whole tick the shell flew on plainly, unbraked and a tick deep into the dome (about 13 studs for a Ravager shell), before its hit showed and the field took hold.
+  - Now, during the tick before, the client steps the shell through the field from the tick's start, as the server does, and shows the hit on the frame its drawn path crosses the surface.
+  - `ShieldWire.spec` renders in quarter-tick frames like the game: the shell is within 6 studs of the surface when its hit shows. It was 12.6 studs off before the fix; checked by turning the fix off.
+- **Destroyed shells travelling on (S-85 rounds):** the absorbed SHIELD_HIT now ends the shell where its drawn path meets the dome, like an IMPACT, instead of at the tick's end. Spec: never drawn more than 4 studs inside.
+- **Shield effects follow the sim speed:** the ripple and plates pause and slow with the shells, which helps to see them at 0.1x.
+- **Units under construction (your rule):** drawn semi-transparent until complete, then solid.
+  - Studio: a Bulwark see-through with its build bar, solid at 1800/1800 when done (`debug_out/screens/c99_bulwark_building.jpg`, `c99_bulwark_done.jpg`).
+  - The rest is the server's and is in main (S-87): no firing or other function while unfinished, and no wreck when destroyed.
+- **Minimap:** unit dots refresh 10 times a second, up from 3. The guide says the strategic rate (guide 15.8), and the strategic records themselves still come at 2–4 Hz.
+- **Shield 20x (your call):** done by sim-A (S-86): Phalanx 600 at 30/s, Carapace 400 at 24/s. Unfinished units are inert and leave no wreck (S-87), and enemies get build progress too, so their frames are drawn see-through as well.
+- **Studio:** `c99_shield_entry.jpg` (shield profile, 0.1x, frozen on the hit's frame): the ripple and hexagon at the point where the shell is crossing the surface.
+- **Debug:** a server query `FtggDebug:Invoke("build", builderId, defId, x, z)`.
+- **Not done yet:** your glow pass (emissive states, lights, 200-unit cost). It waits for C's glow assets to merge (`docs/contracts/fx.md` has no glow section yet).
+
 ## 2026-10-23: shells burn in the field like a meteor (C-98)
 
 - **Your drawing:** a curved front ahead of the shell, like atmospheric entry. This replaces C-97's plume, which stretched ahead of the shell.
   - **Bow shock:** C's dome mesh flattened into a glowing cap, curved round the shell's nose on the side the field pushes from.
   - **Burning trail:** streams back from the shell along the force.
   - Both grow with the force, and with the shell's weight.
-- **Colour:** white-hot with a little orange (burning). The hexagons stay white and grey, as you asked; say if you want the shock white too.
+- **Colour:** white-hot with a little orange (burning); you chose to keep it. The hexagons stay white and grey.
 - **Pool:** the same fixed pool of 32, made once C's dome mesh has loaded.
 - **Screenshot:** `debug_out/screens/c98_shield_bow_shock.jpg`: `shield_one`, frozen with a Ravager shell braking, side on. The shock front is on its nose, the trail behind it, and its entry hexagons on the right.
 

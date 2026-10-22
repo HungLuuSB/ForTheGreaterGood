@@ -11,7 +11,7 @@ local World = require("./World")
 local Minimap = {}
 
 Minimap.BLOCK = 4 -- cells per terrain tile side
-Minimap.REFRESH = 1 / 3 -- seconds between unit dot refreshes (strategic rate, guide 15.8)
+Minimap.REFRESH = 1 / 10 -- seconds between unit dot refreshes (guide 15.8 says the strategic rate; the user asked for faster, C-99)
 
 -- World studs → minimap fraction (0..1), north (-Z) up.
 function Minimap.toMap(grid: Grid.Grid, x: number, z: number): (number, number)

@@ -104,6 +104,66 @@ return function(t: any)
 		print(string.format("    %d shell-ticks in the field, %d hits, worst %.2f studs off", inField, hits, worst))
 	end)
 
+	-- renders a tick behind the server in quarter-tick frames, as the game
+	-- does (events arrive ahead of the render clock); `frame(t)` after each
+	local function subTicks(sim: any, world: any, fx: any, seconds: number, frame: (number) -> ())
+		for tick = 1, math.floor(15 * seconds) do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			for q = 1, 4 do
+				local t = tick - 1 + q / 4
+				Effects.update(fx, world, t, t * DT, 0, 0)
+				frame(t)
+			end
+			table.clear(world.died)
+		end
+	end
+
+	t.test("a shell's hit shows when its drawn path crosses the surface, not a tick later (C-99)", function()
+		local sim, world, fx = scene()
+		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
+		local gy = World.groundY(world, 0, -100)
+		local lit, worst = 0, 0
+		subTicks(sim, world, fx, 10, function(t: number)
+			local drawn = Effects.visible(fx, t)
+			for _, h in fx.shieldHits do
+				if h.kind == "enter" then
+					for _, e in drawn do
+						if fx.projectiles[h.projId] == e[1] then
+							lit += 1
+							local r = math.sqrt(e[2] ^ 2 + (e[3] - gy) ^ 2 + (e[4] + 100) ^ 2)
+							worst = math.max(worst, math.abs(r - 120))
+						end
+					end
+				end
+			end
+			table.clear(fx.shieldHits)
+		end)
+		t.expect(lit >= 3, `entries seen ({lit})`)
+		t.expect(worst < 6, `the shell is at the surface when its hit shows (worst {worst} studs off)`)
+	end)
+
+	t.test("a light shell vanishes where its drawn path meets the dome (C-99)", function()
+		local sim, world, fx = scene()
+		Spawn.unit(sim, "chs_locust", 2, 0, 40, math.pi)
+		local gy = World.groundY(world, 0, -100)
+		local deepest, absorbs = 0, 0
+		subTicks(sim, world, fx, 8, function(t: number)
+			for _, h in fx.shieldHits do
+				if h.kind == "absorb" then
+					absorbs += 1
+				end
+			end
+			table.clear(fx.shieldHits)
+			for _, e in Effects.visible(fx, t) do
+				local r = math.sqrt(e[2] ^ 2 + (e[3] - gy) ^ 2 + (e[4] + 100) ^ 2)
+				deepest = math.max(deepest, 120 - r)
+			end
+		end)
+		t.expect(absorbs >= 3, `rounds destroyed ({absorbs})`)
+		t.expect(deepest < 4, `never drawn more than a few studs inside ({deepest})`)
+	end)
+
 	t.test("light shells (S-85): destroyed at the surface, dropped with no burst, the dome lit there", function()
 		local sim, world, fx, _, step = scene()
 		Spawn.unit(sim, "chs_locust", 2, 0, 40, math.pi) -- autocannon, mass ~0.23

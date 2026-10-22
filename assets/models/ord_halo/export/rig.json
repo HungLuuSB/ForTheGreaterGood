@@ -1,0 +1,100 @@
+{
+  "id": "ord_halo",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.5225,
+        -0.305
+      ],
+      "size": [
+        5.08,
+        3.045,
+        7.81
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.025,
+        1.6
+      ],
+      "size": [
+        1.5,
+        1.45,
+        1.4624
+      ],
+      "pivot": [
+        0.0,
+        2.2,
+        1.6
+      ]
+    },
+    "launcher": {
+      "parent": "turret",
+      "center": [
+        0.0,
+        4.0225,
+        1.275
+      ],
+      "size": [
+        3.6,
+        1.245,
+        3.05
+      ],
+      "pivot": [
+        0.0,
+        4.0,
+        1.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -1.25,
+        4.0,
+        -0.35
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret",
+    "launcher"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 756,
+    "turret": 64,
+    "launcher": 312,
+    "total": 1132
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -118,9 +118,12 @@ export type ShieldFx = {
 }
 
 local shields: { ShieldFx } = {}
--- the effects' own clock: real time × timeScale (slow motion for screenshots)
+-- the effects' own clock: real time × the sim speed (they slow and pause with
+-- the shells they react to, C-99) × timeScale (debug slow motion)
 local clock = 0
 ShieldFx.timeScale = 1
+ShieldFx.simSpeed = 1 -- set each frame by the caller
+local particleScale = 1
 local loop: RBXScriptConnection? = nil
 local gui: ScreenGui? = nil
 local root: Folder? = nil
@@ -410,6 +413,7 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 	specks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.5), NumberSequenceKeypoint.new(0.8, 0.5), NumberSequenceKeypoint.new(1, 0) })
 	specks.Transparency = NumberSequence.new(0.2)
 	specks.Enabled = false
+	specks.TimeScale = math.max(particleScale, 0.001)
 	specks.Parent = dome
 	-- the placeholder core (hidden when the emitter is a generator's part)
 	local core = Instance.new("Part")
@@ -494,6 +498,7 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 	ripple.LightEmission = 1
 	ripple.Color = ColorSequence.new(WHITE)
 	ripple.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.2, 0.1), NumberSequenceKeypoint.new(1, 1) })
+	ripple.TimeScale = math.max(particleScale, 0.001)
 	ripple.Parent = rippleAt
 	-- the capacity bar
 	local bar, fill, text = nil, nil, nil
@@ -794,7 +799,16 @@ end
 
 step = function(realDt: number)
 	local t0 = os.clock()
-	local dt = realDt * ShieldFx.timeScale
+	local scale = ShieldFx.timeScale * ShieldFx.simSpeed
+	local dt = realDt * scale
+	if scale ~= particleScale then
+		-- particles (ripples, specks) keep the same clock
+		particleScale = scale
+		for _, s in shields do
+			s.ripple.TimeScale = math.max(scale, 0.001)
+			s.specks.TimeScale = math.max(scale, 0.001)
+		end
+	end
 	clock += dt
 	local cam = workspace.CurrentCamera
 	local view = cam.ViewportSize
