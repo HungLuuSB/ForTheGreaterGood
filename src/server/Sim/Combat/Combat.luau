@@ -335,6 +335,13 @@ function Combat.knownAimPoint(c: Combat, w: World.World, id: number, defIndex: n
 	return x, base + p.height / 2, z
 end
 
+-- Is unit `id` a retracting structure switched off (S-96)? Then it can't
+-- fire and damage to it is divided by its def's retract.armor.
+function Combat.retracted(sim: any, id: number): boolean
+	local w = sim.world
+	return sim.defs.unitByIndex[w.defIndex[id]].retract ~= nil and bit32.band(w.state[id], World.State.TOGGLED_ON) == 0
+end
+
 function Combat.addEvent(c: Combat, e: Event)
 	table.insert(c.events, e)
 end

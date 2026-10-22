@@ -91,6 +91,9 @@ export type UnitDef = {
 	-- `recharge` charge per second, drawing `power` power per second while
 	-- it recharges
 	shield: { radius: number, capacity: number, recharge: number, power: number }?,
+	-- switched off (TOGGLE), it retracts: can't fire, and damage to it is
+	-- divided by `armor` (S-96, client request 43). It starts switched on.
+	retract: { armor: number }?,
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -153,6 +156,7 @@ export type WeaponDef = {
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
 	shieldMass: number?, -- weight against shield fields (1 = a typical shell); default from damage (ShieldField.mass, S-79)
+	shotCost: { supply: number?, power: number? }?, -- drawn from the team's stores per shot; no shot without it (S-96)
 	fx: { [string]: string }?,
 }
 
@@ -317,6 +321,7 @@ local UNIT_SPEC: Spec = {
 		deploy = { kind = "record", optional = true, fields = { time = POSITIVE, armor = { kind = "number", min = 1 } } },
 		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
 		shield = { kind = "record", optional = true, fields = { radius = POSITIVE, capacity = POSITIVE, recharge = POSITIVE, power = NON_NEGATIVE } },
+		retract = { kind = "record", optional = true, fields = { armor = { kind = "number", min = 1 } } },
 		storage = {
 			kind = "record",
 			optional = true,
@@ -398,6 +403,7 @@ local WEAPON_SPEC: Spec = {
 		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION } },
 		canTargetRadar = { kind = "boolean", optional = true },
 		shieldMass = opt(POSITIVE),
+		shotCost = { kind = "record", optional = true, fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) } },
 		fx = {
 			kind = "record",
 			optional = true,

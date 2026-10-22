@@ -345,8 +345,8 @@ return function(sim: Types.Sim)
 
 	for _, id in w.ids do
 		local count = w.weaponCount[id]
-		if count == 0 or w.buildProgress[id] < 1 then
-			continue -- (S-87) a frame's weapons are inert until it is complete
+		if count == 0 or w.buildProgress[id] < 1 or Combat.retracted(sim, id) then
+			continue -- (S-87) a frame's weapons are inert until it is complete; (S-96) so are a retracted tower's
 		end
 		local p = profiles[w.defIndex[id]]
 		local fs = w.fireState[id]
