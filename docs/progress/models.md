@@ -350,6 +350,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `7e21755` (BAR pair 2: IR SAM sites ord_vigil / chs_thorn as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `4654e72` (BAR pair 3: wind turbines ord_windmill / chs_windmill as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 - Ready to merge: `246d2f0` (BAR pair 4: storage ord_depot / chs_depot as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
+- Ready to merge: `fa05a5f` (BAR pair 5: airfields ord_airfield / chs_airfield as review, manifest + mesh_materials; `assets/`, `src/shared/Defs/Meshes/`, `place/MeshMaterials.model.json` and docs only).
 
 ## Requests
 
