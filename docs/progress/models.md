@@ -21,7 +21,7 @@ Your review of the overnight batch: BAR style approved for both tanks (M-18), ca
 | 8 | T1 vs T2 per role: T2 structures that didn't read as the upgrade got a signature piece (Order radome and covered dock, Chaos ski jump and giant crane, raised Bastion and Maw, wider advanced extractors); T1 sonar and jammer made | `e993e36` | Done: `debug_out/screens/tier_*.jpg`; T2 ground units compared after item 9 (`ground_t1_t2_*.jpg`) |
 | 9 | Blockouts for everything still generic: T2 ground units and both commanders, T1/T2 aircraft, T1/T2 ships, the last generic structures. **All 133 defs now have a hand-made blockout** | `7506eae`, `fcc05b9`, `74ef97b` | Done: `debug_out/screens/ground_*`, `air_*`, `naval_*.jpg` |
 | 10 | BAR meshes for the rest of batch 1 T1 ground units, in build order (two normal AI matches, 20 min: Ravager 31, Scrapper 28, Mason 23, Lancer 21, Hellmouth 14, Verdict 8, Oracle 3, Watcher 2; scouts and mobile AA 0) | `c19023a`, `b9d7e91` | Mason, Scrapper, Verdict and Hellmouth imported and rigged (`ModelReview.*_bar`); team test in four colors passed for all four (`debug_out/screens/team_constructors_artillery_*.jpg`). The Hellmouth's team panels were too thin to read at 220 studs: enlarged, **needs one more import** of `chs_hellmouth.fbx`. Next pair: Oracle and Watcher (radar vehicles), then Herald / Jackal and Halo / Hornet |
-| 11 | BAR meshes for the most-seen structures | — | Not started |
+| 11 | BAR meshes for the most-seen structures, both factions (your order: before the remaining T1 pairs) | (this commit) | Built through the new shared runner `tools/unit.py`: extractors (568 / 752 triangles), generators (636 / 752), solars (272 / 384), vehicle plants (564 / 788), Bulwark (764) and Spike (904). **Waiting for your import** of the ten FBX files |
 
 **Needs your review:**
 - Shield vs your reference: the dome, rim, thin rings and beam match the approach; the swirl is redrawn as a cloudy vortex with a bright eye and knots (original, procedural); the ground ring is one more `Ring` at h = 0 (fx.md). The specks and hit ripple are textures for particles, not in the static shots.
@@ -31,7 +31,7 @@ Your review of the overnight batch: BAR style approved for both tanks (M-18), ca
 - Several T2 units' weapons turn `launcher` while their `turret` piece turns nothing (Seraph, Gorgon, Judgement, Hydra), like Halo/Hornet before S-64; the blockouts work either way (M-3). Your call whether to ask the sim session for `turretPiece = "turret", pitchPiece = "launcher"`.
 - Aircraft and ships are blockouts in the same faction language; their proportions (fuselage 7–9 studs, footprint-3 ships 24 long) follow the generic sizes.
 
-**Your steps:** import `assets/models/chs_hellmouth/export/chs_hellmouth.fbx` again (bigger team panels) with the next pair.
+**Your steps:** import `assets/fx/shield/export/shield_rings.fbx` (thin ring and band for the client, C-94) and eleven FBX files from `assets/models/<id>/export/<id>.fbx`: chs_hellmouth (bigger team panels), ord_extractor, chs_extractor, ord_generator, chs_generator, ord_solar, chs_solar, ord_vehplant, chs_vehplant, ord_bulwark, chs_spike. Then save and restart Studio before the review shots.
 
 ## Earlier summary (overnight 2026-10-22)
 
@@ -233,6 +233,10 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `cda7860` (Lancer re-uploaded with the upload revision stamp in `assets/models/tools/lib.py`, asset IDs, pipeline note, tank review status; `assets/` and docs only).
 - Ready to merge: `96800a0` (review fixes: BAR tank rebuilds with `lib.Piece.scale`, team color method in rig.md 6, Warden / Minotaur / Cyclops / Reckoning blockouts, Locust / Cyclops / Barrier / Citadel registered, palette key `hazard`, M-18, M-19; includes `fe6c02a` and a merge of `main`; `src/shared/Defs/Blockouts/`, `assets/` and docs only).
 - Ready to merge: `2543ee8` (shield effect assets and fx.md, BAR tank IDs and brightness pass, perf with 100 and 300 BAR tanks, T1 vs T2 structure signatures, hand-made blockouts for every remaining def (T2 ground, commanders, aircraft, ships, last structures), M-20, M-21; includes `200ac59` to `74ef97b`; `src/shared/Defs/Blockouts/`, `assets/`, `.gitignore` and docs only).
+- Ready to merge: `baaf5bb` (shield generator blockouts ord_phalanx / chs_carapace for the S-79 defs (request 8), fx.md beam attachment and ground ring, cloudy shield swirl, BAR meshes for Mason, Scrapper, Verdict and Hellmouth with asset IDs, merge of `main`; includes `f4a6eac`; `src/shared/Defs/Blockouts/`, `assets/` and docs only).
+- Ready to merge: `5b2999a` (structure meshes and the shared Blender runner; `assets/` and docs only).
+- Ready to merge: `2f8e394` (shield thin ring and band meshes, fx.md; `assets/` and docs only).
+- Ready to merge: `3522f82` (shield RingThin and Band mesh IDs, Open Cloud upload tool; `assets/` and docs only).
 
 ## Requests
 
