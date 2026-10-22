@@ -1,7 +1,9 @@
 --!strict
 -- Shield dome prototype (C-87): draws Core/Shield.
 --
--- The dome, in team colour:
+-- The dome is neutral white-grey (no team colour, the user's call: C-89),
+-- and its opacity follows the charge: invisible at 0%, full from 50%
+-- (Shield.FULL_FORCE) up, so a weakening shield fades out. It has
 --   - a tinted ball (the field),
 --   - a rim of thin Neon segments on the sphere's silhouette as the camera
 --     sees it, recomputed each frame (the bright edge where the eye looks
@@ -11,8 +13,9 @@
 --   - faint hexagon flickers at random spots (the hex shell at rest).
 -- The rim dims with the field's force and flickers below full force.
 -- At the centre, the plasma core: green full, orange, red empty. Above it, a
--- capacity bar (screen space, above the dome's outline). At 0% the dome collapses (flash, shrink, gone) and the core
--- sputters; at 25% it rises again, growing from the core.
+-- capacity bar (screen space, above the dome's outline). At 0% the dome
+-- collapses (a flash, shrink, gone) and the core sputters; at 25% it rises
+-- again, growing from the core, half visible.
 --
 -- A hit lights a patch of hexagon plates round the hit point (Neon, white
 -- hot to red, rippling outward), dents the
@@ -43,10 +46,11 @@ ShieldFx.MAX_SHELLS = 40
 ShieldFx.IDLE_EVERY = 0.12 -- seconds between idle hex flickers on a dome at rest
 ShieldFx.COLLAPSE_SECONDS = 0.45
 ShieldFx.RISE_SECONDS = 0.6
+ShieldFx.DOME_COLOR = Color3.fromRGB(225, 232, 240)
+ShieldFx.DEMO_RADIUS = 120 -- studs (the user: twice the Phalanx design's 60)
 
 export type DomeView = {
 	model: Shield.Dome,
-	color: Color3,
 	tint: Part,
 	rim: { Part },
 	glow: { Part }, -- a wider, fainter rim just inside the bright one
@@ -226,7 +230,8 @@ function ShieldFx.new(parent: Instance?): Fx
 	return fx
 end
 
-function ShieldFx.addDome(fx: Fx, center: Vector3, radius: number, color: Color3): DomeView
+function ShieldFx.addDome(fx: Fx, center: Vector3, radius: number): DomeView
+	local color = ShieldFx.DOME_COLOR
 	local tint = Instance.new("Part")
 	tint.Name = "DomeField"
 	bare(tint)
@@ -250,7 +255,7 @@ function ShieldFx.addDome(fx: Fx, center: Vector3, radius: number, color: Color3
 		end
 		return out
 	end
-	local rim = ring(ShieldFx.RIM_WIDTH, color:Lerp(WHITE, 0.15))
+	local rim = ring(ShieldFx.RIM_WIDTH, WHITE)
 	local glow = ring(ShieldFx.RIM_WIDTH * 4, color)
 	local sparkles = Instance.new("ParticleEmitter")
 	sparkles.Texture = "rbxasset://textures/particles/sparkles_main.dds"
@@ -261,7 +266,7 @@ function ShieldFx.addDome(fx: Fx, center: Vector3, radius: number, color: Color3
 	sparkles.Lifetime = NumberRange.new(0.5, 1.1)
 	sparkles.Speed = NumberRange.new(0.5, 1.5)
 	sparkles.LightEmission = 1
-	sparkles.Color = ColorSequence.new(color:Lerp(WHITE, 0.5), color)
+	sparkles.Color = ColorSequence.new(WHITE, color)
 	sparkles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.3, 1.1), NumberSequenceKeypoint.new(1, 0) })
 	sparkles.Transparency = NumberSequence.new(0.2)
 	sparkles.Parent = tint
@@ -321,7 +326,6 @@ function ShieldFx.addDome(fx: Fx, center: Vector3, radius: number, color: Color3
 	text.Parent = bar
 	local d: DomeView = {
 		model = Shield.newDome(toV3(center), radius),
-		color = color,
 		tint = tint,
 		rim = rim,
 		glow = glow,
@@ -414,7 +418,9 @@ local function drawDome(fx: Fx, d: DomeView, now: number, dt: number)
 	if d.tint.Size ~= size then
 		d.tint.Size = size
 	end
-	local glow = show * (0.2 + 0.8 * force) * flicker
+	-- opacity follows the charge (invisible at 0%, full from 50%); a collapse
+	-- flashes out on its own
+	local glow = if m.up then show * force * flicker else show * 0.7
 	d.tint.Transparency = 1 - (1 - ShieldFx.TINT_TRANSPARENCY) * math.min(1.4, glow + 0.5 * d.pulse)
 	-- the rim: the sphere's silhouette from the camera, a circle on the plane
 	-- facing it, R²/D towards the camera, of radius R·√(1 − R²/D²)
@@ -423,7 +429,8 @@ local function drawDome(fx: Fx, d: DomeView, now: number, dt: number)
 	local R = m.radius * scale
 	local toCam = cam.CFrame.Position - center
 	local D = toCam.Magnitude
-	local rimAlpha = math.clamp(0.95 * glow + 0.4 * d.pulse, 0, 1)
+	-- Neon blooms, so the rim fades on a curve to read as fading with the field
+	local rimAlpha = math.clamp(0.95 * glow * glow + 0.4 * d.pulse, 0, 1)
 	-- the bar sits above the top of the outline
 	local barAt = center + cam.CFrame.UpVector * m.radius * 1.1
 	if D > R * 1.05 and rimAlpha > 0.01 then
@@ -465,7 +472,7 @@ local function drawDome(fx: Fx, d: DomeView, now: number, dt: number)
 		end
 	end
 	d.sparkles.Enabled = m.up and since > 0.2
-	d.sparkles.Rate = 15 + 40 * force
+	d.sparkles.Rate = (15 + 40 * force) * m.radius / 60
 	-- the core: its charge colour, sputtering while the dome is down
 	local r, g, b = Shield.coreColor(m.charge)
 	local coreColor = Color3.fromRGB(r, g, b)
@@ -490,7 +497,7 @@ local function drawDome(fx: Fx, d: DomeView, now: number, dt: number)
 	if m.up and now >= d.nextIdle then
 		local dir = Vector3.new(fx.rng:NextNumber(-1, 1), fx.rng:NextNumber(0.05, 1), fx.rng:NextNumber(-1, 1)).Unit
 		Shield.idle(m, toV3(fromV3(m.center) + dir * m.radius), now)
-		d.nextIdle = now + ShieldFx.IDLE_EVERY
+		d.nextIdle = now + ShieldFx.IDLE_EVERY * (60 / m.radius) ^ 2 -- the same density on any size
 	end
 end
 
@@ -568,7 +575,7 @@ function ShieldFx.step(fx: Fx, now: number, dt: number)
 				for _, p in patch.plates do
 					local a = Shield.idleAt(age, p.ring)
 					if a > 0 then
-						plate(p, 0, d.color:Lerp(WHITE, 0.2), a * 0.6)
+						plate(p, 0, ShieldFx.DOME_COLOR, a * 0.6 * Shield.domeForce(d.model))
 					end
 				end
 			end
@@ -599,9 +606,9 @@ end
 -- light, typical and heavy shells, and quick bursts that merge. The fire is
 -- heavier than the dome recharges, so it runs down, collapses at 0% (shells
 -- go through), rises at 25% and runs down again. Returns a stop function.
-function ShieldFx.demo(center: Vector3, radius: number, seconds: number?, color: Color3?): () -> ()
+function ShieldFx.demo(center: Vector3, radius: number, seconds: number?): () -> ()
 	local fx = ShieldFx.new()
-	local d = ShieldFx.addDome(fx, center, radius, color or Color3.fromRGB(80, 150, 255))
+	local d = ShieldFx.addDome(fx, center, radius)
 	local rng = Random.new()
 	local MASSES = { 0.5, 1, 1, 1, 2.5, 4 }
 	local t0 = os.clock()

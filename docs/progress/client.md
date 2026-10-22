@@ -501,6 +501,22 @@ All with real mouse and keyboard input through the MCP tools.
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
 
+## 2026-10-23: shield test scenario; a neutral, bigger dome that fades with its charge (C-89)
+
+- **`shield` profile** (set `ACTIVE = "shield"`), the test ground for when the sim has the Phalanx:
+  - **Defended spot:** a 120-stud dome position on (0, -150) on flat land. Under it, Order units that don't shoot back, at 50× health so the test lasts: a vehicle plant at the centre (for the Cyclops), a radar and three builders near the north edge.
+  - **Attackers:** from the north, all outside the dome and its field, every shell weight:
+    - Locust autocannons (lightest);
+    - Ravager and Juggernaut shells, aimed at the edge units so they cross the dome;
+    - Hellmouth mortars and Hydra rockets on attack-ground at the centre;
+    - Cyclops siege mortars (heaviest, structures only, spotted by a Watcher).
+  - **Checked in Studio:** 21 units spawn, every row fires, and the server's "under attack" alerts come in. The sim still has no shield, so the shells hit for real.
+- **Dome look (your call):** neutral white-grey, no team colour. Rim, field, idle hexes and sparkles are all white.
+  - **Opacity follows the charge:** invisible at 0%, full from 50% up. The rim fades on a squared curve because white Neon blooms.
+  - Hits stay red-hot; the core and bar still run green → orange → red.
+- **Size (your call):** the demo dome is now 120 studs radius, twice the Phalanx design's 60 (`ShieldFx.DEMO_RADIUS`). Idle hexes and sparkles scale with the size.
+- **Screenshots** (`debug_out/screens/`): `c89_shield_scenario.jpg` (the attack rows firing at the dome), `c89_shield_full.jpg` (100%), `c89_shield_30.jpg` (30%, fainter).
+
 ## 2026-10-23: shield hexagons as one mesh (C-88)
 
 - You turned on EditableMesh, so the plates now use the hexagon prism: one MeshPart each, clean edges, no star seams. That's a third of the parts the three-rectangle fallback needed (`debug_out/screens/c88_shield_hex_mesh.jpg`, normandy). No warning or error in the console.
