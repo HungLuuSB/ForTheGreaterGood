@@ -1857,6 +1857,61 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 			},
 			triangles = 684,
 		},
+		chs_wrecker = {
+			attachments = {},
+			glow = {
+				{
+					center = { 0, 2.09, 0.8275 },
+					channel = "running",
+					mesh = "rbxassetid://120084507606032",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 3.31, 2.98, 7.655 },
+					strength = 2,
+					tint = { 255, 150, 55 },
+				},
+				{
+					center = { 0, 3.5, 0.1 },
+					channel = "power",
+					mesh = "rbxassetid://88058949313303",
+					name = "nano_glow_power",
+					piece = "nano",
+					size = { 0.76, 0.6, 0.7228 },
+					strength = 2.5,
+					tint = { 255, 125, 35 },
+				},
+			},
+			glowShare = 0.0536,
+			maps = {
+				ALB = "rbxassetid://115212436546627",
+				EMI = "rbxassetid://91681830185427",
+				MTL = "rbxassetid://72864361703535",
+				NOR = "rbxassetid://98782054387412",
+				RGH = "rbxassetid://85926343678243",
+			},
+			model = "rbxassetid://116866853376365",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 1.62, -0.9564 },
+					mesh = "rbxassetid://140560248695765",
+					size = { 3.32, 4.24, 11.2128 },
+				},
+				nano = {
+					center = { 0, 2.6, 1.6307 },
+					mesh = "rbxassetid://76312069303193",
+					parent = "base",
+					pivot = { 0, 1.5, 2.8 },
+					size = { 1.6, 2.6, 3.8602 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+				"nano",
+			},
+			triangles = 528,
+		},
 		ord_absolution = {
 			attachments = {
 				muzzle = {
@@ -2949,6 +3004,61 @@ local manifest: { glowMask: string, units: { [string]: Entry }, fx: { [string]: 
 				"base",
 			},
 			triangles = 344,
+		},
+		ord_tidewright = {
+			attachments = {},
+			glow = {
+				{
+					center = { 0, 2.28, 0.5275 },
+					channel = "running",
+					mesh = "rbxassetid://72166557996925",
+					name = "base_glow_running",
+					piece = "base",
+					size = { 3.71, 3.36, 8.055 },
+					strength = 2,
+					tint = { 90, 210, 255 },
+				},
+				{
+					center = { 0, 3.5, 0.1 },
+					channel = "power",
+					mesh = "rbxassetid://91159092377276",
+					name = "nano_glow_power",
+					piece = "nano",
+					size = { 0.76, 0.6, 0.7228 },
+					strength = 2.5,
+					tint = { 130, 225, 255 },
+				},
+			},
+			glowShare = 0.0604,
+			maps = {
+				ALB = "rbxassetid://88521400497765",
+				EMI = "rbxassetid://93201884383705",
+				MTL = "rbxassetid://112945874778064",
+				NOR = "rbxassetid://99656581177102",
+				RGH = "rbxassetid://90090735662860",
+			},
+			model = "rbxassetid://88886612389206",
+			note = "new BAR mesh, waiting for the user's review",
+			pieces = {
+				base = {
+					center = { 0, 1.675, -0.9527 },
+					mesh = "rbxassetid://98721833215991",
+					size = { 3.72, 4.35, 11.0054 },
+				},
+				nano = {
+					center = { 0, 2.6, 1.6402 },
+					mesh = "rbxassetid://114581367300190",
+					parent = "base",
+					pivot = { 0, 1.5, 2.8 },
+					size = { 1.6, 2.6, 3.8793 },
+				},
+			},
+			status = "review",
+			teamPieces = {
+				"base",
+				"nano",
+			},
+			triangles = 620,
 		},
 		ord_vehplant = {
 			attachments = {},

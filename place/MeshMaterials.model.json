@@ -286,6 +286,18 @@
       }
     },
     {
+      "Name": "chs_wrecker",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://115212436546627",
+        "NormalMapContent": "rbxassetid://98782054387412",
+        "RoughnessMapContent": "rbxassetid://85926343678243",
+        "MetalnessMapContent": "rbxassetid://72864361703535",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_absolution",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -486,6 +498,18 @@
         "NormalMapContent": "rbxassetid://86634972323141",
         "RoughnessMapContent": "rbxassetid://121383646860114",
         "MetalnessMapContent": "rbxassetid://80015266887662",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_tidewright",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://88521400497765",
+        "NormalMapContent": "rbxassetid://99656581177102",
+        "RoughnessMapContent": "rbxassetid://90090735662860",
+        "MetalnessMapContent": "rbxassetid://112945874778064",
         "EmissiveStrength": 0
       }
     },

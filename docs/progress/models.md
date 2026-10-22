@@ -25,6 +25,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 | 10 | Attack helicopters: `ord_guardian` (narrow armored gunship, stepped tandem canopy, chin sensor on `weapon`, stub wings with two rocket pods on the `pylon`, ready-lit tube mouths) / `chs_wasp` (boxy pod, exposed engine, open stub rail with two heavy rocket pods) | 1,248 / 742 | 5.1% / 5.1% | review | `t1_gunship_55_close.jpg`, `t1_gunship_55_220.jpg` |
 | 11 | Fighters: `ord_falcon` (heavy twin-engine, canted team tails, formation strips, two missiles with ice-white seekers on the `pylon`) / `chs_harpy` (light delta, bubble canopy, tall team fin, engine pods, four cheap missiles, strips along the leading edges) | 792 / 710 | 8.9% / 5.9% | review | `t1_fighter_55_close.jpg`, `t1_fighter_55_220.jpg` (lifted 3 studs) |
 | 12 | Bombers: `ord_absolution` (long twin-engine strike bomber, broad wings, canted team tails, `bay` with ajar doors and an ice-white bay light on `weapon`, `pylon` hard points) / `chs_plague` (stretched Harpy delta, racks of small bombs on the `pylon`, amber bay light) | 672 / 638 | 7.8% / 6.1% | review | `t1_bomber_55_close.jpg`, `t1_bomber_55_220.jpg` (lifted 3 studs) |
+| 13 | Naval workers: `ord_tidewright` (armored work boat, raked bow, squared bridge, cargo hatch with status lights, stern `nano` crane with emitter on `power`) / `chs_wrecker` (narrow salvage tug, squat bridge with amber slit, funnel with heat band, stern crane) | 620 / 528 | 6.0% / 5.4% | review | `t1_navalworker_55_close.jpg`, `t1_navalworker_55_220.jpg` (waterline at the baseplate) |
 
 **Needs your review (queue):**
 - **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
@@ -36,6 +37,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 - Helicopters from the game camera: the rotor disc covers the roof, so team color shows on the fin, the blade tips and the flanks. Bigger flank plates if they should read more.
 - Missiles: their glow share runs 9–10.6% (the Order nuke 10.6%): on a 4-stud body, one stripe and the nozzle are a big share. They read as small lit bands in flight. The client already lights the exhaust, so the nozzle glow could go if it doubles up.
 - Chaos aircraft: the dark gunmetal reads low against the grey baseplate from above; over game terrain they read better (the ground is lighter and greener). The amber strips carry them at distance.
+- Ships: team color sits on the foredeck or afterdeck plate and the bridge roof; at 220 studs the ships read mostly by their faction glow. Larger deck plates if they should read more.
 
 ## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 

@@ -1,0 +1,116 @@
+{
+  "id": "chs_wrecker",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.62,
+        -0.9564
+      ],
+      "size": [
+        3.32,
+        4.24,
+        11.2128
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.6,
+        1.6307
+      ],
+      "size": [
+        1.6,
+        2.6,
+        3.8602
+      ],
+      "pivot": [
+        0.0,
+        1.5,
+        2.8
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "nano"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.09,
+        0.8275
+      ],
+      "size": [
+        3.31,
+        2.98,
+        7.655
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        3.5,
+        0.1
+      ],
+      "size": [
+        0.76,
+        0.6,
+        0.7228
+      ]
+    }
+  ],
+  "glowShare": 0.0536,
+  "triangles": {
+    "base": 408,
+    "nano": 120,
+    "total": 528
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
