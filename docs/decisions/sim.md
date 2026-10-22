@@ -1251,3 +1251,22 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - At 80 the Carapace turns Chaos's lost defence into a win.
   - At 64 / 48 the domes protect the base more than the army.
 - **Not decided:** the fix (smaller domes, blocking outgoing fire, a higher cost per hit, or none) is for the user's review.
+
+## S-91 — The match-shaped trial (next.md item 1a, the user's queue task 3) (2026-10-23)
+
+- **Asked:** next.md item 1 (a): reproduce the AI matches' Order bias outside the AI, with small waves against a rallied defender that has turret and artillery support.
+- **Built:**
+  - `Scenes.waves(attacker, waves, seed)`: a rallied defender (T1 tank and T1 artillery, `TRIAL_BUDGET`, default move state) stands beside its base (vehicle plant and T1 turret).
+  - The other faction arrives in `waves` equal waves 30 s apart, each attack-moving on the base, with the same roles and value plus the turret's.
+  - `lune run factions [seeds] match` adds the section; `play` now counts units that join mid-run.
+- **Result** (3 seeds; Order's trade = Chaos value destroyed / Order value lost):
+
+  | Attacker | 1 wave | 4 waves | 8 waves | Base fell (1 / 4 / 8) |
+  |---|---|---|---|---|
+  | Order attacks | 0.81 | 0.62 | 2.62 | 0/3, 0/3, 3/3 |
+  | Chaos attacks | 0.82 | 9.29 | 18.61 | 3/3, 0/3, 0/3 |
+
+- **Reading:**
+  - In one big wave the factions trade alike (0.81 / 0.82), as the equal-value trial said (S-62).
+  - In 4–8 small waves Chaos loses 9–18 times what it kills against an Order defender, while Order's small waves still take a Chaos base.
+  - So the gap is how the AI fights (small waves into a rallied defender), and Order's range and accuracy edge makes it worse. That is what (b) and (c) address.
