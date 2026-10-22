@@ -5,15 +5,15 @@
 --     opacity following strength: invisible at 0%, full from 50%;
 --   - a bright edge on its outline as the camera sees it (two camera-facing
 --     ring adornments) and C's ring at the foot of the dome;
---   - thin rings flowing from the top down the dome (adornments: C's Ring
---     mesh scales its tube with the ring, a 2.4-stud ribbon on a 120-stud
---     dome, so it is only the foot ring until a thinner one comes);
+--   - C's thin rings (RingThin) flowing from the top down the dome (C's
+--     Ring, whose tube grows with the ring, is only the foot ring);
 --   - C's light beam rising from the emitter (a generator's `beam`
 --     attachment) to the top, C's swirl turning at the top, C's specks
 --     floating inside, a slow subtle pulse;
 --   - the emitter's core (the generator's `core` piece, else a placeholder
 --     ball) glowing green full, orange, red empty; a capacity bar above;
---   - hits: C's ripple at the impact point, red-hot hexagon plates round it
+--   - hits, as a shell crosses the surface: C's ripple there, white-hot
+--     hexagon plates fading to grey round it
 --     (Core/Shield) and a brief brightness pulse.
 -- Timings, flicker, ring flow, detail and culling are Core/ShieldLook's.
 --
@@ -24,8 +24,8 @@
 --
 -- Assets: docs/contracts/fx.md, IDs from assets/fx/shield/roblox_assets.json.
 -- The meshes are made from their IDs at runtime (CreateMeshPartAsync, once,
--- in its own thread); if that fails the dome is a ball and there is no
--- foot ring.
+-- in its own thread); if that fails the dome is a ball, the flowing rings
+-- adornments and there is no foot ring.
 --
 -- Performance (the user's hard rules): every instance a shield uses is made
 -- in new() and only hidden or moved afterwards (rings are a fixed pool of
@@ -47,6 +47,7 @@ local ShieldFx = {}
 ShieldFx.ASSETS = table.freeze({
 	dome = "rbxassetid://85081416332401",
 	ring = "rbxassetid://134054369788950",
+	ringThin = "rbxassetid://111379471786973", -- tube 0.2% of its radius (models: C-94 request)
 	swirl = "rbxassetid://113814321169730",
 	beam = "rbxassetid://100117547859650",
 	speck = "rbxassetid://90660161303538",
@@ -57,7 +58,7 @@ ShieldFx.DOME_COLOR = Color3.fromRGB(225, 232, 240)
 ShieldFx.DOME_OPACITY = 0.2 -- the dome at full strength (1 - transparency)
 ShieldFx.RING_COLOR = Color3.fromRGB(235, 245, 255)
 ShieldFx.RING_OPACITY = 0.55
-ShieldFx.RING_TUBE = 0.004 -- a flowing ring's width, × R
+ShieldFx.RING_TUBE = 0.004 -- a flowing ring's height (RingThin) or width (adornment), × R
 ShieldFx.FOOT_OPACITY = 0.8 -- the ring where the dome meets the ground
 ShieldFx.EDGE_OPACITY = 0.95
 ShieldFx.SWIRL_SIZE = 0.4 -- the swirl disc's diameter, × R (C's checked assembly: 16 on 40)
@@ -98,7 +99,8 @@ export type ShieldFx = {
 	swirlDecal: Decal,
 	edge: CylinderHandleAdornment,
 	edgeGlow: CylinderHandleAdornment,
-	rings: { CylinderHandleAdornment },
+	rings: { any }, -- C's RingThin MeshParts, or adornments
+	ringMesh: boolean,
 	foot: BasePart?, -- C's ring at the dome's foot
 	flash: CylinderHandleAdornment,
 	ripple: ParticleEmitter,
@@ -139,12 +141,12 @@ local function bare(p: BasePart)
 end
 
 -- C's meshes, made once from their IDs in their own thread (it yields)
-local templates: { dome: MeshPart?, ring: MeshPart? } = {}
+local templates: { dome: MeshPart?, ring: MeshPart?, ringThin: MeshPart? } = {}
 local templatesState = "idle"
 
 local function loadTemplates()
 	templatesState = "loading"
-	for _, key in { "dome", "ring" } do
+	for _, key in { "dome", "ring", "ringThin" } do
 		local ok, part = pcall(function()
 			return (AssetService :: any):CreateMeshPartAsync((Content :: any).fromUri((ShieldFx.ASSETS :: any)[key]))
 		end)
@@ -155,7 +157,7 @@ local function loadTemplates()
 			slots[key] = part
 		end
 	end
-	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, rings {if templates.ring then "mesh" else "adornments"}`
+	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, foot {if templates.ring then "mesh" else "none"}, rings {if templates.ringThin then "thin mesh" else "adornments"}`
 	templatesState = "done"
 end
 
@@ -461,11 +463,12 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 	local edge = adornment(folder, anchor, WHITE)
 	local edgeGlow = adornment(folder, anchor, ShieldFx.DOME_COLOR)
 	local flash = adornment(folder, anchor, WHITE)
-	-- the flowing rings (adornments) and C's ring at the foot
-	local rings = {}
+	-- the flowing rings (C's RingThin, else adornments) and C's ring at the foot
+	local rings: { any } = {}
 	local foot: BasePart? = nil
+	local ringMesh = templates.ringThin ~= nil
 	for i = 1, ShieldLook.RINGS do
-		rings[i] = adornment(folder, anchor, ShieldFx.RING_COLOR)
+		rings[i] = if templates.ringThin then ringPart(folder, templates.ringThin) else adornment(folder, anchor, ShieldFx.RING_COLOR)
 	end
 	if templates.ring then
 		local f = ringPart(folder, templates.ring)
@@ -556,6 +559,7 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		edge = edge,
 		edgeGlow = edgeGlow,
 		rings = rings,
+		ringMesh = ringMesh,
 		foot = foot,
 		flash = flash,
 		ripple = ripple,
@@ -577,9 +581,17 @@ end
 -- turns it upright (a horizontal ring)
 local FLAT = CFrame.Angles(math.pi / 2, 0, 0)
 
+local function hideRing(s: ShieldFx, ring: any)
+	if s.ringMesh then
+		ring.Transparency = 1
+	else
+		ring.Visible = false
+	end
+end
+
 local function hideDetail(s: ShieldFx)
 	for _, r in s.rings do
-		r.Visible = false
+		hideRing(s, r)
 	end
 	s.flash.Visible = false
 	s.beam.Enabled = false
@@ -718,13 +730,20 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		local alpha = ShieldFx.RING_OPACITY * a * bright * opacity
 		if R > 0.05 and alpha > 0.01 then
 			local rr = R * rf
-			ring.CFrame = CFrame.new(0, R * yf, 0) * FLAT
-			ring.Radius = rr
-			ring.InnerRadius = math.max(rr - ringW, 0)
-			ring.Transparency = 1 - alpha
-			ring.Visible = true
+			if s.ringMesh then
+				-- C's RingThin: Size (2.004r, height, 2.004r) at height h, r = √(R² − h²)
+				ring.Size = Vector3.new(2.004 * rr, ringW, 2.004 * rr)
+				ring.CFrame = CFrame.new(center.X, center.Y + R * yf, center.Z)
+				ring.Transparency = 1 - alpha
+			else
+				ring.CFrame = CFrame.new(0, R * yf, 0) * FLAT
+				ring.Radius = rr
+				ring.InnerRadius = math.max(rr - ringW, 0)
+				ring.Transparency = 1 - alpha
+				ring.Visible = true
+			end
 		else
-			ring.Visible = false
+			hideRing(s, ring)
 		end
 	end
 	-- the ground flash while it grows

@@ -92,7 +92,9 @@ export type Proj = {
 
 -- A shell turned back by a shield dome or breaking through it (SHIELD_HIT,
 -- protocol 24, S-79): Render/ShieldDomes lights the dome there.
-export type ShieldHit = { unitId: number, x: number, y: number, z: number, mass: number, breach: boolean }
+-- `kind`: "enter" (the shell crossed the dome's surface: SHIELD_FIELD, drawn
+-- at once, C-95), "turn" or "breach" (SHIELD_HIT, at the turn deep inside).
+export type ShieldHit = { unitId: number, kind: string, x: number, y: number, z: number, mass: number, breach: boolean }
 
 -- A strategic missile's launch (LAUNCH_WARNING, S-48): every player gets one.
 export type Warning = { projId: number, x: number, y: number, z: number, born: number, proj: Proj?, endedAt: number? }
@@ -787,6 +789,14 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		if p then
 			local x, y, z = pos(world, e)
 			p.field = { x, y, z, e.radius, e.force / 255, e.phase }
+			-- it just crossed the surface (the field is inside the dome, S-83): the hit
+			-- shows here and now, not at the turn deep inside (the user, C-95)
+			local dx, dy, dz = p.x - x, p.y - y, p.z - z
+			local d = math.sqrt(dx * dx + dy * dy + dz * dz)
+			if e.phase == ShieldField.BRAKING and d > 1e-6 and #fx.shieldHits < 64 then
+				local k = e.radius / d
+				table.insert(fx.shieldHits, { unitId = 0, kind = "enter", x = x + dx * k, y = y + dy * k, z = z + dz * k, mass = ShieldField.mass(p.weapon), breach = false })
+			end
 		end
 	elseif kind == EK.SHIELD_HIT then
 		-- turned back (a missile loses its lock) or broke through
@@ -796,7 +806,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		end
 		local x, y, z = pos(world, e)
 		if #fx.shieldHits < 64 then
-			table.insert(fx.shieldHits, { unitId = e.unitId or 0, x = x, y = y, z = z, mass = e.mass / Schema.SHIELD_MASS_SCALE, breach = e.breach == true })
+			table.insert(fx.shieldHits, { unitId = e.unitId or 0, kind = if e.breach then "breach" else "turn", x = x, y = y, z = z, mass = e.mass / Schema.SHIELD_MASS_SCALE, breach = e.breach == true })
 		end
 	elseif kind == EK.SHOT then
 		-- a hidden shooter's hitscan shot (protocol 14, S-43, C-54): a tracer

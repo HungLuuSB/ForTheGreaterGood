@@ -141,26 +141,16 @@ function Shield.plateAt(age: number, ring: number, strength: number): (number, n
 	return heat, alpha, dent
 end
 
--- The plate colour for a heat: white, yellow, orange, red, dark red.
 local RAMP = {
-	{ 0, 120, 24, 14 },
-	{ 0.3, 200, 40, 18 },
-	{ 0.55, 255, 110, 30 },
-	{ 0.8, 255, 200, 90 },
-	{ 1, 255, 250, 235 },
+	{ 0, 150, 154, 160 },
+	{ 1, 255, 255, 255 },
 }
+-- The plate colour for a heat: white at its hottest, fading to grey (the
+-- user: no red or orange, C-95).
 function Shield.color(heat: number): (number, number, number)
 	local h = math.clamp(heat, 0, 1)
-	for i = 2, #RAMP do
-		local b = RAMP[i]
-		if h <= b[1] then
-			local a = RAMP[i - 1]
-			local k = (h - a[1]) / (b[1] - a[1])
-			return a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k, a[4] + (b[4] - a[4]) * k
-		end
-	end
-	local e = RAMP[#RAMP]
-	return e[2], e[3], e[4]
+	local a, b = RAMP[1], RAMP[2]
+	return a[2] + (b[2] - a[2]) * h, a[3] + (b[3] - a[3]) * h, a[4] + (b[4] - a[4]) * h
 end
 
 function Shield.newDome(center: V3, radius: number): Dome
@@ -174,7 +164,7 @@ Shield.MAX_IDLE = 18
 Shield.IDLE_CLEAR = 14 -- studs: no flicker this close to a live hit patch
 
 -- Returns nil (no flicker) next to a live hit patch: idle hexes drawn over
--- red-hot ones look wrong.
+-- hot ones look wrong.
 function Shield.idle(dome: Dome, at: V3, now: number): Patch?
 	local n = unit(sub(at, dome.center))
 	local on = add(dome.center, mul(n, dome.radius))

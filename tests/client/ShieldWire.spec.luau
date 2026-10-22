@@ -65,7 +65,8 @@ return function(t: any)
 	t.test("shells in the field: stepped like the server's, turned back, hits for the renderer", function()
 		local sim, world, fx, gen, step = scene()
 		Spawn.unit(sim, "chs_ravager", 2, 0, 120, math.pi)
-		local inField, worst, hits, breaches = 0, 0, 0, 0
+		local inField, worst, hits, breaches, enters = 0, 0, 0, 0, 0
+		local firstEnter, firstTurn = math.huge, math.huge
 		step(15 * 12, function()
 			for id, p in fx.projectiles do
 				if p.field and sim.combat.px[id] then
@@ -78,11 +79,17 @@ return function(t: any)
 				end
 			end
 			for _, h in fx.shieldHits do
-				hits += 1
+				if h.kind == "enter" then
+					enters += 1
+					firstEnter = math.min(firstEnter, fx.tick)
+				else
+					hits += 1
+					firstTurn = math.min(firstTurn, fx.tick)
+					t.equal(h.unitId, gen)
+				end
 				if h.breach then
 					breaches += 1
 				end
-				t.equal(h.unitId, gen)
 				local r = math.sqrt(h.x ^ 2 + (h.z + 100) ^ 2 + (h.y - World.groundY(world, 0, -100)) ^ 2)
 				t.expect(math.abs(r - 120) < 4, `the hit is on the dome (r {r})`)
 			end
@@ -90,6 +97,8 @@ return function(t: any)
 		end)
 		t.expect(inField > 0, "shells came into the field")
 		t.expect(hits >= 2, `shells turned back ({hits})`)
+		t.expect(enters >= hits, `every shell lights the dome as it enters ({enters} entries, {hits} turns)`)
+		t.expect(firstEnter < firstTurn, `the entry shows before the turn (ticks {firstEnter}, {firstTurn})`)
 		t.equal(breaches, 0, "a full dome lets no Ravager shell through")
 		t.expect(worst < 3, `client and server agree on shells in the field (worst {worst} studs)`)
 		print(string.format("    %d shell-ticks in the field, %d hits, worst %.2f studs off", inField, hits, worst))
