@@ -54,6 +54,7 @@ export type Scene = {
 	done: (Sim.Sim) -> boolean,
 	maxTicks: number,
 	sides: { { number } }?, -- matchup: the two groups' unit IDs
+	base: { number }?, -- shieldSiege: the defended structures
 }
 
 local PLAYERS = { { id = 1, team = 1 }, { id = 2, team = 2 } }
@@ -328,6 +329,72 @@ function Scenes.siege(aId: string, seed: number): Scene
 		end,
 		maxTicks = Scenes.MATCHUP_TICKS,
 		sides = if attacker == 1 then { group, base } else { base, group },
+	}
+end
+
+-- A shielded base under siege (S-90, the user's queue task 2): `defender`
+-- ("order" or "chaos") holds a base (vehicle plant and generator under its
+-- shield dome, unless `shielded` is false) with an army of its T1 tank, T2
+-- tank and T1 artillery; the other faction attacks with the same roles
+-- from 600 studs. Equal value: the attacker's budget is the defender's army
+-- plus the generator; an unshielded defender spends the generator's value
+-- on more army. `defs` carries the dome radius under test.
+Scenes.SHIELD_ROLES = table.freeze({
+	order = table.freeze({ "ord_lancer", "ord_paladin", "ord_verdict" }),
+	chaos = table.freeze({ "chs_ravager", "chs_juggernaut", "chs_hellmouth" }),
+})
+function Scenes.shieldSiege(defender: string, shielded: boolean, seed: number, defs: Defs.DefSet?): Scene
+	local set = defs or Defs.load()
+	local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128", defs = set })
+	local dp = if defender == "order" then 1 else 2
+	local ap = 3 - dp
+	local attacker = if defender == "order" then "chaos" else "order"
+	local genId = if defender == "order" then "ord_phalanx" else "chs_carapace"
+	local gen = set.units[genId]
+	local genValue = Scenes.value(gen)
+	local bx, ax = 250, -350
+	local base = { Spawn.unit(sim, (if defender == "order" then "ord_" else "chs_") .. "vehplant", dp, bx, 0) }
+	if shielded then
+		table.insert(base, Spawn.unit(sim, genId, dp, bx - 28, 0))
+	end
+	local army = {}
+	local budget = Scenes.TRIAL_BUDGET + (if shielded then 0 else genValue)
+	for i, id in Scenes.SHIELD_ROLES[defender] do
+		for _, u in spawnGroup(sim, set.units[id], dp, bx - 60, -math.pi / 2, budget / 3, (i - 2) * 60, 60) do
+			sim.world.moveState[u] = World.MoveState.HOLD_POSITION
+			table.insert(army, u)
+		end
+	end
+	local raid = {}
+	for i, id in Scenes.SHIELD_ROLES[attacker] do
+		for _, u in spawnGroup(sim, set.units[id], ap, ax, math.pi / 2, (Scenes.TRIAL_BUDGET + genValue) / 3, (i - 2) * 90, 60) do
+			table.insert(raid, u)
+		end
+	end
+	local defenders = table.clone(army)
+	table.move(base, 1, #base, #defenders + 1, defenders)
+	local function alive(ids: { number }): number
+		local n = 0
+		for _, id in ids do
+			if sim.world.slot[id] then
+				n += 1
+			end
+		end
+		return n
+	end
+	local fight = fightDriver(30, ap)
+	return {
+		sim = sim,
+		drive = function(sm: Sim.Sim)
+			topUp(sm, { 1, 2 })
+			fight(sm)
+		end,
+		done = function(_sm: Sim.Sim): boolean
+			return alive(base) == 0 or alive(raid) == 0
+		end,
+		maxTicks = 4 * Scenes.MATCHUP_TICKS,
+		sides = if dp == 1 then { defenders, raid } else { raid, defenders },
+		base = base,
 	}
 end
 
