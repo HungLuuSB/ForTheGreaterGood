@@ -35,6 +35,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 | 20 | Fire-control radars: `ord_arbiter` (6 x 6 with a shelter, big `dish` array tilted back 20°, unlit face with glowing edge and fine grid) / `chs_stalker` (light truck, lattice mast, smaller `dish` panel with amber edge and cell lines, counterweight) | 1,116 / 1,044 | 4.8% / 5.3% | review | `t2_firecontrol_55_close.jpg`, `t2_firecontrol_55_220.jpg` |
 | 21 | Mobile jammers: `ord_veil` (8 x 8 armored truck, compact `array` block with a team band and four emitter fins glowing on `power`) / `chs_shroud` (light truck with a generator, tall guyed telescoping mast `array` with two rings of emitter rods, tips on `power`, and a beacon). With this pair every T2 ground unit has a BAR mesh | 1,296 / 1,168 | 7.0% / 6.5% | review | `t2_jammer_55_close.jpg`, `t2_jammer_55_220.jpg` |
 | 22 | Chaos faction units: `chs_locust` (tiny high swarm tank, small turret, long thin autocannon) / `chs_cyclops` (tall siege mortar: one huge tube fixed at 75° on the casemate `turret`, the short pitching cradle as `barrel` (M-19), muzzle at the tube mouth, amber eye on a mast, recoil spade) | 1,264 / 1,788 | 5.9% / 5.1% | review | `locust_cyclops_55_close.jpg`, `locust_cyclops_55_220.jpg` |
+| 23 | Order faction structures: `ord_barrier` (armored wall segment with sloped faces, cap beam, team stripe, cap running lights and lit end caps; segments line up at 8 studs) / `ord_citadel` (T3 fortress: stepped octagonal blast walls with team plates, big `turret` with a long `barrel`, IR SAM `launcher` on a corner pedestal, static `radar` mast) | 412 / 1,612 | 7.1% / 4.0% | review | `barrier_citadel_55_close.jpg`, `barrier_citadel_55_220.jpg` |
 
 **Needs your review (queue):**
 - **Eye:** at 220 studs it reads as a dark lattice with amber points; its team color sits only on the skid stripe and the panel's back, so it's weak from the game camera. Bigger skid plates if you want more team color.
@@ -48,6 +49,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 - Chaos aircraft: the dark gunmetal reads low against the grey baseplate from above; over game terrain they read better (the ground is lighter and greener). The amber strips carry them at distance.
 - Ships: team color sits on the foredeck or afterdeck plate and the bridge roof; at 220 studs the ships read mostly by their faction glow. Larger deck plates if they should read more.
 - Submarines: team color sits on the rudder and the sail band. They are always submerged and mostly seen as contacts, so I kept it small.
+- Citadel: glow 4.0%, between the unit range and the large-building range, about right for a 24-stud fortress; it reads as a fortress, not a silo, from above.
 
 ## Earlier summary (glow review fixes and mesh manifest, 2026-10-22, M-23)
 

@@ -466,6 +466,18 @@
       }
     },
     {
+      "Name": "ord_barrier",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://92495878856670",
+        "NormalMapContent": "rbxassetid://112175264066222",
+        "RoughnessMapContent": "rbxassetid://75756770847375",
+        "MetalnessMapContent": "rbxassetid://114920612690957",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_bulwark",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -474,6 +486,18 @@
         "NormalMapContent": "rbxassetid://135190797651485",
         "RoughnessMapContent": "rbxassetid://77234305988914",
         "MetalnessMapContent": "rbxassetid://136852780265337",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_citadel",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://120217917805222",
+        "NormalMapContent": "rbxassetid://135357595683653",
+        "RoughnessMapContent": "rbxassetid://77068226608007",
+        "MetalnessMapContent": "rbxassetid://72386453050120",
         "EmissiveStrength": 0
       }
     },
