@@ -196,8 +196,8 @@ return function(sim: Types.Sim)
 
 	for _, id in w.ids do
 		local count = w.weaponCount[id]
-		if count == 0 then
-			continue
+		if count == 0 or w.buildProgress[id] < 1 then
+			continue -- (S-87) a frame neither aims nor fires until it is complete
 		end
 		local p = profiles[w.defIndex[id]]
 		local x, z, heading = w.posX[id], w.posZ[id], w.heading[id]
