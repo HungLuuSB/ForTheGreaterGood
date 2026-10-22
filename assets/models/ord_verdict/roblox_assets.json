@@ -1,0 +1,19 @@
+{
+  "note": "Roblox assets uploaded by Studio's 3D Importer from export/ord_verdict.fbx (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
+  "revision": "2026-10-22, review 1: BAR style (M-15, M-18), 3,212 triangles",
+  "bar": {
+    "meshes": {
+      "base": "rbxassetid://113920084829646",
+      "turret": "rbxassetid://105989736254113",
+      "barrel": "rbxassetid://71383386009334"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75877780026545",
+      "NOR": "rbxassetid://128417853592679",
+      "RGH": "rbxassetid://133128342378081",
+      "MTL": "rbxassetid://135206573753849",
+      "EMI": "rbxassetid://128542626828990"
+    },
+    "model": "ReplicatedStorage.ModelReview.ord_verdict_bar in FTGG Art"
+  }
+}

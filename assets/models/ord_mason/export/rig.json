@@ -1,0 +1,71 @@
+{
+  "id": "ord_mason",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.56,
+        -0.6448
+      ],
+      "size": [
+        6.6,
+        3.12,
+        9.1897
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "pivot": [
+        0.0,
+        1.85,
+        1.9
+      ],
+      "center": [
+        0.0,
+        3.4,
+        1.0075
+      ],
+      "size": [
+        2.5,
+        3.1,
+        4.835
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "nano"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 2440,
+    "nano": 524,
+    "total": 2964
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

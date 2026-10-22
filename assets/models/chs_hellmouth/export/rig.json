@@ -1,0 +1,99 @@
+{
+  "id": "chs_hellmouth",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.5165,
+        0.2335
+      ],
+      "size": [
+        5.6736,
+        3.033,
+        7.414
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "pivot": [
+        0.0,
+        1.71,
+        0.0
+      ],
+      "center": [
+        0.2118,
+        2.3714,
+        0.0442
+      ],
+      "size": [
+        3.871,
+        1.3227,
+        3.3433
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "pivot": [
+        0.0,
+        2.475,
+        -0.651
+      ],
+      "center": [
+        0.0,
+        2.475,
+        -2.5017
+      ],
+      "size": [
+        1.773,
+        1.4038,
+        3.7944
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        2.475,
+        -4.4175
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 2380,
+    "turret": 576,
+    "barrel": 360,
+    "total": 3316
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

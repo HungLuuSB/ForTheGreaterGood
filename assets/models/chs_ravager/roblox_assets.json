@@ -1,7 +1,22 @@
 {
   "note": "Roblox assets uploaded by Studio's 3D Importer from export/chs_ravager.fbx (creator: hungluu344). Rebuild the rigged model from these with rig_model.luau; no re-import needed.",
-  "revision": "2026-10-22, review 2: M-18 lift and scale, 3,696 triangles",
+  "revision": "2026-10-22, review 3: M-18 second lift (UPLOAD_REV 2), 3,696 triangles",
   "bar": {
+    "meshes": {
+      "base": "rbxassetid://72108674075310",
+      "turret": "rbxassetid://94903279888143",
+      "barrel": "rbxassetid://78640823139523"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95991991004911",
+      "NOR": "rbxassetid://79579822285918",
+      "RGH": "rbxassetid://96749356721024",
+      "MTL": "rbxassetid://134761023520155",
+      "EMI": "rbxassetid://111086854557436"
+    },
+    "model": "ReplicatedStorage.ModelReview.chs_ravager_bar in FTGG Art"
+  },
+  "bar_review2": {
     "meshes": {
       "base": "rbxassetid://72108674075310",
       "turret": "rbxassetid://95904494972410",
@@ -14,7 +29,7 @@
       "MTL": "rbxassetid://80416428712177",
       "EMI": "rbxassetid://118139152354641"
     },
-    "model": "ReplicatedStorage.ModelReview.chs_ravager_bar in FTGG Art"
+    "note": "review 2: the M-18 lift and scale"
   },
   "bar_review1": {
     "meshes": {

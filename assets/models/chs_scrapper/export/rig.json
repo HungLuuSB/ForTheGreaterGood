@@ -1,0 +1,71 @@
+{
+  "id": "chs_scrapper",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.827,
+        -0.3128
+      ],
+      "size": [
+        5.91,
+        3.654,
+        7.6471
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "pivot": [
+        1.182,
+        1.71,
+        0.279
+      ],
+      "center": [
+        1.182,
+        2.9925,
+        -0.4289
+      ],
+      "size": [
+        1.6745,
+        2.565,
+        3.2758
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "nano"
+  ],
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "triangles": {
+    "base": 2472,
+    "nano": 356,
+    "total": 2828
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
