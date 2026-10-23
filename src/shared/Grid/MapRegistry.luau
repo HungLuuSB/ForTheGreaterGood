@@ -26,10 +26,12 @@
 --                       a MapGen skirmish map (guide 5.5, S-15): layout 1v1,
 --                       2v2 or ffa4; water none (default), lakes or sea
 --   "map:<name>"        a named MapGen map (MapRegistry.NAMED below), or a
---                       hand-made one (MapRegistry.HANDMADE: "map:normandy", S-53)
+--                       hand-made one (MapRegistry.HANDMADE: "map:normandy", S-53;
+--                       "map:canyon", S-132)
 --
 -- Baked Studio maps (guide 5.4) will be added as "baked:<name>".
 
+local Canyon = require("./Canyon")
 local Layers = require("./Layers")
 local MapGen = require("./MapGen")
 local Normandy = require("./Normandy")
@@ -51,6 +53,7 @@ MapRegistry.NAMED = table.freeze({
 export type Handmade = { name: string, build: () -> Layers.Layers }
 MapRegistry.HANDMADE = table.freeze({
 	normandy = { name = "Normandy", build = Normandy.build },
+	canyon = { name = "The Canyon", build = Canyon.build },
 } :: { [string]: Handmade })
 
 -- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs (and for
