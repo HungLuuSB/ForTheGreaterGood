@@ -44,8 +44,8 @@ ANCHORS = {
     "chs_wrecker": {"nano1": (N, (0.0, 3.5, 0.1))},
     "ord_architect": {"nano1": (N, (-0.8, 5.4, -1.4)), "nano2": (N, (0.8, 5.4, -1.4))},
     "chs_forgemaster": {"nano1": (N, (1.1, 5.7, -3.0)), "nano2": (N, (0.2, 3.9, 1.9))},
-    "ord_sovereign": {"nano1": (N, (-2.05, 2.9, -1.66))},  # the mech's emitter forearm (M-31)
-    "chs_warlord": {"nano1": (N, (-2.25, 2.45, -2.62))},
+    "ord_sovereign": {"nano1": (N, (-3.35, 3.55, -1.64))},  # the heroic mech's emitter (M-32)
+    "chs_warlord": {"nano1": (N, (-3.5, 3.25, -2.45))},
     "ord_zenith": {"nano1": (N, (0.0, -0.5, -2.1)), "nano2": (N, (0.0, -0.5, 1.6))},
     "chs_condor": {"nano1": (N, (0.0, 0.1, -1.9)), "nano2": (N, (0.0, 0.2, 2.1))},
 }
