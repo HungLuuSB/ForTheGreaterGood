@@ -10,6 +10,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - Building the ground in game wasn't possible: Roblox's budget for such meshes runs out after a few thousand points, and The Canyon needs about 160,000.
   - The client loader, the export tool (`lune run export_ground`) and the contract are done. Until C's tiles arrive, every map keeps the voxel terrain.
   - The Canyon comes first, for you to compare in Studio.
+- Ready to merge: `3fbca98` (C-167: export_ground tool, map-ground contract, mesh ground loader; client and .lune only)
 
 ## Summary (2026-10-23, assist, minimap drag, build grid, no overlapping plans)
 
