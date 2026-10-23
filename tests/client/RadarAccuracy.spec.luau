@@ -65,5 +65,7 @@ return function(t: any)
 		t.equal(RadarAccuracy.readout(acc), "Radar accuracy: no radar")
 		local tracked = RadarAccuracy.of({ team = 1, supply = {} :: any, power = {} :: any, wind = 0, radarError = 160, trackError = 4, precision = 128 }) :: RadarAccuracy.Accuracy
 		t.equal(RadarAccuracy.readout(tracked), "Radar accuracy ±16 studs  ·  tracked ±0.4  ·  Pinpointers 50%")
+		t.equal(RadarAccuracy.readout(tracked, true), "Radar accuracy ±16 studs  ·  tracked ±0.4  ·  Pinpointers 50%")
+		t.equal(RadarAccuracy.readout(tracked, false), `Radar accuracy ±16 studs  ·  <font color="{RadarAccuracy.GREY}">tracked ±0.4</font>  ·  Pinpointers 50%`, "greyed while no blip is tracked")
 	end)
 end

@@ -88,6 +88,7 @@ function RenderMissileView.new(): View
 	readout.Font = Enum.Font.Code
 	readout.TextSize = 14
 	readout.TextColor3 = COLOR.radarRing
+	readout.RichText = true -- the tracked part greys while nothing is tracked
 	readout.Visible = false
 	local pad = Instance.new("UIPadding")
 	pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 6), UDim.new(0, 6)
@@ -255,9 +256,14 @@ end
 -- the readout.
 local function radarAccuracy(v: View, world: World.World)
 	local acc = RadarAccuracy.of(world.economy)
-	v.readout.Text = RadarAccuracy.readout(acc)
+	local rings = RadarAccuracy.rings(world, acc)
+	local anyTracked = false
+	for _, r in rings do
+		anyTracked = anyTracked or r.tracked
+	end
+	v.readout.Text = RadarAccuracy.readout(acc, anyTracked)
 	local layers = world.layers
-	for i, r in RadarAccuracy.rings(world, acc) do
+	for i, r in rings do
 		if i > RenderMissileView.MAX_RINGS then
 			break
 		end

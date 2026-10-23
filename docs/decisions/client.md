@@ -1553,6 +1553,7 @@ Existing calls are unchanged.
   - at most 80 circles; sonar contacts and ghosts get none.
   - RadarAccuracy.spec checks the radius against the server's own, and that two Pinpointers shrink it (±12 → ±7.7 studs).
 - Studio: `debug_out/screens/c181_radar_readout.jpg`, `c181_radar_rings.jpg`, `c181_tracked_rings.jpg`.
+- **Follow-up (sim-A, S-147):** under a partial power stall a fire-control radar's reach shrinks, so `trackError` holds only for blips still TRACKED. The readout greys its "tracked" part while no blip is TRACKED (rich text, `RadarAccuracy.GREY`); circles already use trackError only on TRACKED blips.
 
 **Why:** the user's report (SAMs flying into the sky when their target died) and request (show the missiles' radar accuracy), both through sim-A.
 
