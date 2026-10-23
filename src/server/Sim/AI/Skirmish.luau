@@ -126,6 +126,12 @@ Skirmish.FIRST_WAVE = 8
 Skirmish.WAVE_GROWTH = 2
 Skirmish.HOME_RADIUS = 260 -- studs: enemies inside it are attacked by everyone
 Skirmish.CLAIM_TICKS = 900 -- a deposit someone was sent to stays reserved this long
+-- A builder sent to build that gets no closer to the site for this long
+-- (walled in, or the site is out of its reach) gives up; the site is left
+-- alone for BAD_SITE_TICKS (S-133: footprint-2 Commanders can't pass
+-- 1-cell gaps between buildings of different sizes)
+Skirmish.STALL_TICKS = 300 -- 20 s
+Skirmish.BAD_SITE_TICKS = 2700 -- 3 min
 Skirmish.SECOND_PLANT_SUPPLY = 600
 Skirmish.ADV_PLANT_SUPPLY = 900 -- supply stored before the Advanced Vehicle Plant (S-7)
 Skirmish.MAX_AA = 4 -- IR SAM trucks wanted at most
@@ -374,6 +380,8 @@ export type Brain = {
 	held: number, -- thinks a ready wave waited for the known defence (S-105)
 	attacking: { [number]: boolean }, -- units sent with a wave
 	claims: { [number]: number }, -- cell → tick a builder was sent there
+	approach: { [number]: { x: number, z: number, best: number, at: number } }, -- builder → its build site, closest so far, when (S-133)
+	gaveUp: number, -- build orders given up as unreachable
 	deposits: { number }, -- deposit cells, nearest home first
 	waves: number,
 	lastWaveOrder: number, -- tick the wave was last sent at its target
@@ -525,6 +533,8 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		held = 0,
 		attacking = {},
 		claims = {},
+		approach = {},
+		gaveUp = 0,
 		deposits = deposits,
 		waves = 0,
 		lastWaveOrder = -math.huge,
@@ -1062,6 +1072,28 @@ local function think(brain: Brain)
 	local workers = table.clone(c.builders)
 	if c.commander ~= 0 then
 		table.insert(workers, 1, c.commander)
+	end
+	-- a builder getting no closer to its site gives up on it (S-133)
+	for _, id in workers do
+		local o = sim.build.order[id]
+		local a = brain.approach[id]
+		if o == nil then
+			brain.approach[id] = nil
+			continue
+		end
+		local d = math.sqrt((w.posX[id] - o.x) ^ 2 + (w.posZ[id] - o.z) ^ 2)
+		if a == nil or a.x ~= o.x or a.z ~= o.z then
+			brain.approach[id] = { x = o.x, z = o.z, best = d, at = sim.tick }
+		elseif d < a.best - 8 then
+			a.best, a.at = d, sim.tick
+		elseif sim.tick - a.at > Skirmish.STALL_TICKS then
+			submit(sim, brain.player, { cmdType = CT.STOP, flags = 0, unitIds = { id } })
+			local g = (sim.map :: Passability.PassMap).grid
+			local gx, gz = g:cellAt(o.x, o.z)
+			brain.claims[g:index(gx, gz)] = sim.tick + Skirmish.BAD_SITE_TICKS
+			brain.approach[id] = nil
+			brain.gaveUp += 1
+		end
 	end
 	local cfg = brain.cfg
 	-- power is short if it stalled in the last POWER_MEMORY ticks (watched
