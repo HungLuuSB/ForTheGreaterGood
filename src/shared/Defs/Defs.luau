@@ -152,8 +152,12 @@ export type WeaponDef = {
 	manualFire: boolean?,
 	apex: number?,
 	-- HOMING: also targets enemy strategic missiles the team detects, before
-	-- anything else; a proximity burst destroys one with `chance` (S-48)
-	intercepts: { chance: number }?,
+	-- anything else; a proximity burst destroys one with `chance` (S-48).
+	-- `tactical`: enemy missiles and rockets (HOMING weapons and `rocket`
+	-- ones; not strategic missiles or interceptors) within range that the
+	-- team detects, instead (point defence, S-149)
+	intercepts: { chance: number, tactical: boolean? }?,
+	rocket: boolean?, -- BALLISTIC: an unguided rocket, which point defence intercepts (S-149)
 	interceptOnly: boolean?, -- with intercepts: never fires at units (anti-nukes, S-111)
 	stationary: boolean?, -- fires only while its unit stands still (S-111)
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
@@ -408,7 +412,8 @@ local WEAPON_SPEC: Spec = {
 		strategic = { kind = "boolean", optional = true },
 		manualFire = { kind = "boolean", optional = true },
 		apex = opt(POSITIVE),
-		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION } },
+		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION, tactical = { kind = "boolean", optional = true } } },
+		rocket = { kind = "boolean", optional = true },
 		interceptOnly = { kind = "boolean", optional = true },
 		stationary = { kind = "boolean", optional = true },
 		canTargetRadar = { kind = "boolean", optional = true },

@@ -3,6 +3,7 @@
 return {
 	id = "ord_mlrs",
 	type = "BALLISTIC",
+	rocket = true, -- point defence intercepts it (S-149)
 	range = 560, -- faction pass (S-62)
 	reload = 7.15, -- faction pass, tuned (S-62)
 	projectileSpeed = 260,
