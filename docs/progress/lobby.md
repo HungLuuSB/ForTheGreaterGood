@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `fb34ced` (lobby UI, background scene, `docs/contracts/match.md`, lobby decisions and progress; nothing outside `src/lobby`, `lobby.project.json` and the lobby docs)
 
 ## Connecting Studio
 
