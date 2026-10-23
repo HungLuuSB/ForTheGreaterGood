@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
+
+- **The approved T1 structure models are merged here** (models-C's batch), so a playtest draws them. All 31 built with no failure in Studio.
+- **Your Commander no longer rotates (C-172):** my animation pass was spinning the mech's torso and head like a radar. It now moves only the parts it knows.
+
 ## Summary (2026-10-23, queue in a frame, Ctrl moves, server idle counts)
 
 - **You can queue units in a factory that's still being built** (sim-A's S-138): pick from the build menu with the frame selected, and production starts the moment it's finished.

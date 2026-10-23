@@ -13,7 +13,9 @@
 -- Powered pieces run slower when the team's power stalls and stop when
 -- it's out, the unit is switched off or not finished. `open`, `lower`,
 -- `pulse` and `swing` belong to other scripts (beam tower lids, Commander
--- walk) or the glow (cores).
+-- walk) or the glow (cores). Only the pieces named here move: any other
+-- spin or turn piece (the Commander mech's torso and head) is left to its
+-- unit's own script (the user: the Commander kept rotating, C-172).
 
 local Ambient = {}
 
@@ -34,7 +36,8 @@ Ambient.JUDDER_SECONDS = 0.09
 
 local RADARS = { radar = true, dish = true, array = true, radarPanel = true, mastArray = true }
 local DRUMS = { drum = true, ring = true }
-local JIBS = { jib = true, deckJib = true, deckCrane = true }
+local JIBS = { jib = true, jib1 = true, jib2 = true, deckJib = true, deckCrane = true }
+local JAMMERS = { band = true, tip = true, spine = true }
 
 local function spinTo(u: any, m: any, speed: number)
 	if speed == 0 then
@@ -67,7 +70,7 @@ function Ambient.apply(u: any, motions: { any }, mode: any)
 				end
 			elseif name == "rotor" then
 				u:Spin(name, m.axis, Ambient.WINDMILL * m.sign, Ambient.SPIN_UP) -- the wind always blows
-			else
+			elseif JAMMERS[name] then
 				spinTo(u, m, Ambient.JAMMER * mode.power) -- jammer emitters
 			end
 		elseif m.motion == "turn" then
@@ -92,8 +95,6 @@ function Ambient.apply(u: any, motions: { any }, mode: any)
 				else
 					u:Turn(name, m.axis, 0, Ambient.JIB / Ambient.JIB_SECONDS)
 				end
-			else
-				spinTo(u, m, Ambient.RADAR * mode.power)
 			end
 		elseif m.motion == "slide" then
 			local range = (m.range or 4) * m.sign
