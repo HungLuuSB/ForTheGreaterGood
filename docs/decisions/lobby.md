@@ -20,6 +20,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | L-10 | The lobby UI follows BAR's lobby (top tabs, battle room in three columns) in the client's UI kit; green to go, red to leave |
 | L-11 | Replays and Settings pages: listed and local for now |
 | L-12 | The menu background is a live scene of the game's own unit models with a mouse parallax camera |
+| L-13 | Loading screens show layered key art from the models stream with mouse parallax (`docs/contracts/key-art.md`) |
 
 ## L-1 (2026-10-23): a separate lobby place, its own converted tree
 
@@ -79,3 +80,9 @@ Replays lists your recent matches; "Watch" stays off until the match place can p
 - **Decision:** the menu's background is a live scene: Order Paladins, Lancers and a Seraph SAM against Chaos Ravagers, a Minotaur and a Hydra MLRS, Harpies making passes, all from the game's own approved meshes (the client's `MeshModels`, read-only), in team colors, under evening light (Atmosphere, bloom, sun rays, a color grade, light depth of field). Turrets turn to targets, guns fire shells that burst near them, the MLRS fires arcing salvos, the SAM's missiles chase the Harpies and sometimes bring one down. Nothing is simulated. The camera drifts slowly and eases toward the mouse (parallax). A model that isn't ready in 20 s gets a box stand-in. Settings can turn the scene or the parallax off.
 - **Alternatives:** a pre-rendered image (an upload, and static); the real sim running a match (needs the server sim and the renderer in the lobby place).
 - **Why:** the user's request ("rendered in-game model like TANK, SAM fighting with lighting, move a little with the mouse").
+
+## L-13 (2026-10-23): layered key art with parallax for the loading screens
+
+- **Decision:** the user's call. models-C renders key art (tanks, aircraft, ships on the far side, SAM missiles, ground explosions, realistic light, a sci-fi edge) as 4 layers from one camera (`sky`, `far`, `mid`, `near`, each with a depth). The loading screens shift each layer with the mouse in proportion to its depth, plus an idle drift. Layers are 2048 × 1152 in 2 × 2 tiles of 1024 × 576, because Roblox shrinks images above 1024 px. The tiles are listed in the mesh manifest's `keyArt` table (C's generated file); "review" art shows only in Studio. The lobby's viewer is `src/lobby/client/KeyArt.luau`; client-B's match loading screen copies its behaviour, so the two screens match across the teleport. Without approved art the lobby keeps the live battle behind the loading screen.
+- **Alternatives:** a single flat image (no depth); the live 3D scene on the match side too (the match place loads its own assets while that screen shows, so a picture is lighter).
+- **Why:** the user asked for stunning key art that keeps the parallax feel of the menu.

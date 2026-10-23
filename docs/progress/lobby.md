@@ -46,7 +46,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
 8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
 9. **Decided (2026-10-23): the config validator moves to `src/shared`.** sim-A moves validate / validateResult and their constants to `src/shared/Match/MatchConfig.luau` (from m-lobby 287b99e). Then the lobby and client-B drop their copies. `build` and `summary` stay in `src/lobby`.
-11. **Loading-screen art:** client-B's match loading screen uses a dark gradient where BAR has key art. The lobby's own screen draws over the live 3D battle instead. A shared key-art image (a render from models-C, uploaded with your OK) would make both screens match. Want one?
+11. **Decided (2026-10-23): layered key art with parallax** from models-C for both loading screens (L-13, `docs/contracts/key-art.md`). Uploads still need your approval.
 10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. sim-A agreed to add `lune run src/lobby/tools/test` (a failure blocks the push) once its running merges finish; until then I run them before every "Ready to merge" line.
 
 ## Requests
@@ -72,6 +72,15 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 - **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
 - **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
 
+### For models-C (models session)
+
+- **C-1. Key art with parallax layers (2026-10-23, the user):** 3 key arts per `docs/contracts/key-art.md`:
+  1. a dusk land battle with ships firing on the far sea;
+  2. a SAM site under air attack at night;
+  3. a beach assault.
+
+  Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed.
+
 ## Plan and status
 
 | Step | Status |
@@ -83,6 +92,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio (last fixes pending a re-check) |
 | Background battle scene with parallax (L-12) | done; checked with box stand-ins, real meshes pending a re-check |
 | Contract v1 and requests | done |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; waiting for C's art |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue
