@@ -140,6 +140,15 @@ export type Combat = {
 	projSerial: number, -- last serial given
 	strategic: { number }, -- strategic missiles in flight, in launch order (S-48)
 	pGoal: { [number]: { number } }, -- lofted missiles: the ordered spot { x, y, z } (S-51)
+	-- radar missiles (S-146): ticks flown, the target's last known aim point,
+	-- the point flown to when the target died in the launch phase, and ticks
+	-- since the target was lost (spiraling)
+	pAge: { [number]: number },
+	pKnownX: { [number]: number },
+	pKnownY: { [number]: number },
+	pKnownZ: { [number]: number },
+	pPoint: { [number]: { number } },
+	pLost: { [number]: number },
 	-- shield fields (S-79, Sim/Shield): the dome generator a projectile is in
 	-- the field of and its ShieldField phase there
 	pShield: { [number]: number },
@@ -245,6 +254,12 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		projSerial = 0,
 		strategic = {},
 		pGoal = {},
+		pAge = {},
+		pKnownX = {},
+		pKnownY = {},
+		pKnownZ = {},
+		pPoint = {},
+		pLost = {},
 		pShield = {},
 		pShieldPhase = {},
 		shieldIds = {},
@@ -669,6 +684,7 @@ function Combat.removeProjectile(c: Combat, id: number)
 	c.pDecoy[id] = nil
 	c.pSerial[id], c.pTargetProj[id], c.pTargetSerial[id] = nil, nil, nil
 	c.pGoal[id] = nil
+	c.pAge[id], c.pKnownX[id], c.pKnownY[id], c.pKnownZ[id], c.pPoint[id], c.pLost[id] = nil, nil, nil, nil, nil, nil
 	c.pShield[id], c.pShieldPhase[id] = nil, nil
 	local si = table.find(c.strategic, id)
 	if si then
@@ -730,6 +746,14 @@ function Combat.hash(c: Combat, h: number): number
 		local goal = c.pGoal[id]
 		if goal then
 			h = Hash.number(Hash.number(Hash.number(h, goal[1]), goal[2]), goal[3])
+		end
+		if c.pAge[id] then
+			h = Hash.u32(Hash.u32(h, c.pAge[id]), c.pLost[id] or 0xFFFFFFFF)
+			h = Hash.number(Hash.number(Hash.number(h, c.pKnownX[id] or 0), c.pKnownY[id] or 0), c.pKnownZ[id] or 0)
+			local pt = c.pPoint[id]
+			if pt then
+				h = Hash.number(Hash.number(Hash.number(h, pt[1]), pt[2]), pt[3])
+			end
 		end
 		local d = c.pDecoy[id]
 		if d then

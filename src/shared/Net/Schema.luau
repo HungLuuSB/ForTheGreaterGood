@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 31 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137)
+Schema.PROTOCOL_VERSION = 32 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -1582,13 +1582,18 @@ end
 --   per resource (supply, then power):
 --     stored u32 (whole) | storage u32 (whole) | income u32 (tenths per second)
 --     | demand u32 (tenths per second) | ratio u8 (stall ratio × 255)
---   wind u8 (× 255)                                                     = 36 bytes
+--   wind u8 (× 255)
+--   radarError u16 (tenths of a stud; 0 = no radar) | trackError u16 (tenths;
+--   0 = no fire-control radar) | precision u8 (Pinpointers, × 255): the
+--   team's radar accuracy, what radar-fired weapons miss by: the hidden aim
+--   point circles a contact at radarError, a tracked one at trackError,
+--   both already scaled by the precision (guide 11.4; protocol 32, S-147) = 41 bytes
 --------------------------------------------------------------------------------
 
 export type EcoResource = { stored: number, storage: number, income: number, demand: number, ratio: number }
-export type Eco = { team: number, supply: EcoResource, power: EcoResource, wind: number }
+export type Eco = { team: number, supply: EcoResource, power: EcoResource, wind: number, radarError: number?, trackError: number?, precision: number? }
 
-Schema.ECO_BYTES = 36
+Schema.ECO_BYTES = 41
 
 local function writeResource(w: Writer, r: EcoResource)
 	w:writeU32(r.stored)
@@ -1610,6 +1615,9 @@ function Schema.encodeEco(w: Writer, rec: Eco)
 	writeResource(w, rec.supply)
 	writeResource(w, rec.power)
 	w:writeU8(rec.wind)
+	w:writeU16(rec.radarError or 0)
+	w:writeU16(rec.trackError or 0)
+	w:writeU8(rec.precision or 0)
 end
 
 function Schema.decodeEco(r: Reader): Eco
@@ -1620,7 +1628,7 @@ function Schema.decodeEco(r: Reader): Eco
 	end
 	local supply = readResource(r)
 	local power = readResource(r)
-	return { team = team, supply = supply, power = power, wind = r:readU8() }
+	return { team = team, supply = supply, power = power, wind = r:readU8(), radarError = r:readU16(), trackError = r:readU16(), precision = r:readU8() }
 end
 
 --------------------------------------------------------------------------------
