@@ -1,7 +1,7 @@
 {
   "id": "chs_extractor_wreck",
   "wreckOf": "chs_extractor",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,19 +9,50 @@
     "base": {
       "parent": null,
       "center": [
-        -0.0095,
-        3.6638,
-        -0.0042
+        -0.0422,
+        4.3518,
+        0.0168
       ],
       "size": [
-        6.6408,
-        7.3605,
-        6.6779
+        15.5933,
+        8.8433,
+        15.5603
+      ]
+    },
+    "drill": {
+      "parent": "base",
+      "center": [
+        -0.0339,
+        4.3193,
+        0.0205
+      ],
+      "size": [
+        2.4588,
+        6.1731,
+        2.4671
+      ],
+      "pivot": [
+        0.0,
+        1.25,
+        0.0
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [],
+  "visualPieces": [
+    "drill"
+  ],
+  "anim": {
+    "drill": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -34,8 +65,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 860,
-    "total": 860
+    "base": 1620,
+    "drill": 320,
+    "total": 1940
   },
   "textures": {
     "size": 1024,

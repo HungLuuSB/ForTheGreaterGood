@@ -1929,3 +1929,39 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `EW.spec` (hysteresis): the far Wasp's bearing moved so the two orbits keep swapping which one looks closer.
   - `Skirmish.spec`: seed 1's Order now falls at 10.3 min without a wave, so the loser-attacks bar moves from 10 to 11 min.
 - **Guide 11.4:** updated.
+
+## S-131 — Drawn blips orbit at 1.5 studs; the radar error moves to a hidden aim point (client request 60, the user) (2026-10-23)
+
+- **Asked:** after checking S-130 in Studio, the user said "that radius is huge, in BAR, just 1-2 studs". They chose:
+  - a drawn (sent) blip that orbits about 1.5 studs from the real unit;
+  - radar-fired weapons that aim at a separate hidden point at the radar error, so they miss as before.
+- **Built:**
+  - `Sensors.blipOffset` is the drawn orbit: radius `Sensors.BLIP_ORBIT` = 1.5, or the radar error if smaller. It uses the same 90-tick turn and a salted (unit, observer) hash, so its phase and direction are its own.
+  - `Sensors.wobble` stays the aim orbit at the radar error or track error, scaled by Pinpointers. It is exactly S-130's orbit, so aiming is unchanged.
+  - `knownPosition(sim, team, id)` returns the drawn blip. NetOut and the player view use it.
+  - `knownPosition(..., true)` and `knownTarget` return the aim point. Targeting, Weapons, Air, Orders, Commands and the skirmish AI use them.
+- **Relaxes guide 11.4's "never the true position":** the sent position is now within 1.5 studs of the true one. The user accepted that. The aim point is never sent. Guide 11.4, 11.2 (Pinpointers), 10 (net tiers) and the bomber line are updated, and D67's wobble line points here.
+- **Tests:**
+  - `Fog.spec` (new test): the drawn blip stays at BLIP_ORBIT, repeats every 90 ticks, is never wider than the radar error, and comes 10 or more studs from the aim point.
+  - `Air`, `EW`, `Knowledge`, `Pinpoint` and `Tracking` specs now measure the aim point (`knownPosition(..., true)`).
+  - `NetOut.spec`, homing drift: the worst uncorrected torpedo drift fell from over 40 to 36.6 studs, because the sonar blips the client sees now sit on the subs. The bar is now 30. Corrections still cut it 3.5× (to 10.5).
+
+## S-132 — The Canyon, a hand-made map after BAR's Classic Glitters (the user) (2026-10-23)
+
+- **Asked:** the user sent the BAR map "Classic Glitters" (12 × 20, 2 teams): a 3D view, the colour texture, the heightmap and the metal-spot overview. They asked for a copy named The Canyon, "featuring harsh land, mountains".
+- **Built:** `map:canyon` (`Shared/Grid/Canyon`, in `MapRegistry.HANDMADE`).
+  - **Size:** 154 × 256 cells (1232 × 2048 studs), keeping the 12 : 20 shape. 256 cells is the grid's limit, so it can't be bigger.
+  - **Sides:** north (player 1) against south (player 2). The map is point-symmetric about the centre: every cell matches its twin at (-x, -z) exactly, because the south half is copied, not recomputed.
+  - **Mesas:** 18 traced from the reference heightmap's north half (pixel centres and radii in `Canyon.MESAS`), turned 180° for the south: 36 in all. Each is 48 studs high with irregular lobed outlines and a terraced cliff (a ledge at 60%) that no land unit climbs. A 5-stud apron of rough ground surrounds each foot. Jagged corner plateaus fill the north-west and south-east.
+  - **Badlands:** ROCK terrain (0.8–0.9 speed) over the two mesa belts, 3 studs above the open canyon floor. The floor is GRASS, so the client should draw it as pale desert ground.
+  - **Boulders:** 18 seeded outcrops (1–3 cells, +7 studs, impassable), each with its twin.
+  - **Deposits:** the reference has about 200 small metal spots. Ours are the same "glitter" at our economy's scale: value-2 deposits on a jittered grid every 160 studs over open ground, plus four value-4 home deposits round each start. That's 92 in all: 8 home and 84 glitter.
+- **Not a pixel copy:** only the reference's north half is traced. The south is its rotation, so lone mesas in the middle band sit a little differently from the original, whose two halves differ slightly.
+- **Tests:** `Canyon.spec`:
+  - size and starts;
+  - exact point symmetry;
+  - mesa tops high and cliffs closed to every land class;
+  - starts on the floor;
+  - deposit values, with every deposit and the other start reachable for WHEELED, TRACKED and HEAVY_TRACKED;
+  - determinism;
+  - slow: a 12-minute AI-vs-AI match. Both sides expanded (23 and 25 extractors), each sent 3 waves, and no command was rejected.

@@ -1,6 +1,6 @@
 {
   "id": "ord_extractor",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style painted sand-grey (M-15)"
   },
@@ -9,20 +9,52 @@
       "parent": null,
       "center": [
         0.0,
-        2.425,
+        2.185,
         0.0
       ],
       "size": [
-        7.376,
-        4.85,
-        7.376
+        15.5584,
+        4.37,
+        15.5584
+      ]
+    },
+    "drill": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.8375,
+        0.275
+      ],
+      "size": [
+        3.8274,
+        2.425,
+        3.65
+      ],
+      "pivot": [
+        0.0,
+        3.62,
+        0.0
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [
-    "base"
+    "base",
+    "drill"
   ],
+  "visualPieces": [
+    "drill"
+  ],
+  "anim": {
+    "drill": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -45,13 +77,13 @@
       "strength": 2.0,
       "center": [
         0.0,
-        1.35,
+        2.23,
         0.0
       ],
       "size": [
-        7.4,
-        1.82,
-        7.4
+        13.05,
+        1.26,
+        13.05
       ]
     },
     {
@@ -66,20 +98,63 @@
       "strength": 2.5,
       "center": [
         0.0,
-        3.57,
+        2.12,
         0.0
       ],
       "size": [
-        5.15,
+        11.6,
+        0.4,
+        11.6
+      ]
+    },
+    {
+      "name": "drill_glow_running",
+      "piece": "drill",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.3,
+        0.5
+      ],
+      "size": [
+        3.7642,
+        0.12,
+        3.3
+      ]
+    },
+    {
+      "name": "drill_glow_power",
+      "piece": "drill",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        5.065,
+        0.0
+      ],
+      "size": [
         3.16,
-        2.6
+        2.57,
+        3.16
       ]
     }
   ],
-  "glowShare": 0.0755,
+  "glowShare": 0.0298,
   "triangles": {
-    "base": 628,
-    "total": 628
+    "base": 1966,
+    "drill": 564,
+    "total": 2530
   },
   "textures": {
     "size": 1024,

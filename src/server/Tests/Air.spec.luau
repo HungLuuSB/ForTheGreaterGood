@@ -452,7 +452,7 @@ return function(t: RunAll.Context)
 			for _, e in sim.combat.events do
 				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
 					local target = w.wTarget[World.slotKey(bomber, 1)]
-					local bx, bz, level = Sensors.knownPosition(sim, w.ally[bomber], target)
+					local bx, bz, level = Sensors.knownPosition(sim, w.ally[bomber], target, true)
 					pending[e.other] = { level = level, target = target, bx = bx :: number, bz = bz :: number, tx = w.posX[target], tz = w.posZ[target], hp = w.health[target] }
 				elseif e.kind == "IMPACT" and pending[e.other] and e.x then
 					local r = pending[e.other]

@@ -37,7 +37,7 @@ APPROVED = {
     # 2026-10-22: tanks, constructors, artillery, T1 pairs, the 10 structures
     "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth",
     "ord_herald", "chs_jackal", "ord_halo", "chs_hornet", "ord_oracle", "chs_watcher",
-    "ord_extractor", "chs_extractor", "ord_generator", "chs_generator", "ord_solar", "chs_solar",
+    "ord_generator", "chs_generator", "ord_solar", "chs_solar",
     "ord_vehplant", "chs_vehplant", "ord_bulwark", "chs_spike",
     "shield_emitter",
     # 2026-10-23: the BAR queue, pairs 1-26, and the missiles
@@ -61,11 +61,14 @@ DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a ran
 # fx entries that reuse another weapon's mesh (the client looks meshes up by weapon ID)
 FX_ALIASES = {"ord_mobile_interceptor": "ord_interceptor", "chs_mobile_interceptor": "chs_interceptor"}
 # wreck versions (M-24) the user approved; the rest are "review"
+# Structures redesigned at the size scale (S-104) go back to "review" with
+# their wrecks until the user approves the new designs; their earlier
+# approvals: ord_extractor, chs_extractor (2026-10-23, fp 1).
 APPROVED_WRECKS = {
     # 2026-10-23: the first 22 wrecks
     "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth",
     "ord_herald", "chs_jackal", "ord_halo", "chs_hornet", "ord_oracle", "chs_watcher",
-    "ord_extractor", "chs_extractor", "ord_generator", "chs_generator", "ord_solar", "chs_solar",
+    "ord_generator", "chs_generator", "ord_solar", "chs_solar",
     "ord_vehplant", "chs_vehplant", "ord_bulwark", "chs_spike",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"

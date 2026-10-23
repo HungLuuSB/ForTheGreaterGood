@@ -1,7 +1,33 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 628 triangles, glow share 7.5%",
+  "revision": "Redesign at footprint 2 (size scale S-104, M-26): 2530 triangles, glow share 3.0%",
   "bar": {
+    "model": "rbxassetid://96609959685084",
+    "meshes": {
+      "base": "rbxassetid://107212962169969",
+      "base_glow_power": "rbxassetid://136430067186083",
+      "base_glow_running": "rbxassetid://75719407118594",
+      "drill": "rbxassetid://119147259387096",
+      "drill_glow_power": "rbxassetid://96054788911248",
+      "drill_glow_running": "rbxassetid://137865555110635"
+    },
+    "decals": {
+      "ALB": "rbxassetid://124784413624182",
+      "RGH": "rbxassetid://96388428322548",
+      "NOR": "rbxassetid://138472563871073",
+      "MTL": "rbxassetid://71144084189688",
+      "EMI": "rbxassetid://132204853044946"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75867190640169",
+      "NOR": "rbxassetid://92366962766682",
+      "RGH": "rbxassetid://99532525137780",
+      "MTL": "rbxassetid://87689575754752",
+      "EMI": "rbxassetid://133719340925645"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_extractor_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://122262948402374",
     "meshes": {
       "base": "rbxassetid://97749494652973",
@@ -22,7 +48,7 @@
       "MTL": "rbxassetid://121886893676855",
       "EMI": "rbxassetid://111176347320723"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_extractor_bar in FTGG Art"
+    "note": "2026-10-22, glow pass (M-22): 628 triangles, glow share 7.5%"
   },
   "bar_preglow": {
     "model": "rbxassetid://115748010057494",
@@ -47,6 +73,29 @@
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 568 triangles)"
   },
   "wreck": {
+    "model": "rbxassetid://79243637758284",
+    "meshes": {
+      "base": "rbxassetid://139634707399124",
+      "drill": "rbxassetid://104542540998989"
+    },
+    "decals": {
+      "ALB": "rbxassetid://100496469048463",
+      "RGH": "rbxassetid://116367633561729",
+      "NOR": "rbxassetid://132359216883018",
+      "MTL": "rbxassetid://104172340509589",
+      "EMI": "rbxassetid://92974508451107"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://117829056951805",
+      "NOR": "rbxassetid://103724103356094",
+      "RGH": "rbxassetid://140564539152072",
+      "MTL": "rbxassetid://92736240936804",
+      "EMI": "rbxassetid://77990519948180"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_extractor_wreck_bar in FTGG Art",
+    "revision": "Wreck of the fp-2 redesign (M-24 rules): 2402 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://86475752703240",
     "meshes": {
       "base": "rbxassetid://107718392420376"

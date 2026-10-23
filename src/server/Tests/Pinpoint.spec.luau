@@ -65,7 +65,7 @@ return function(t: RunAll.Context)
 			local worst = 0
 			for _ = 1, 600 do
 				Sim.step(sim)
-				local x, z, level = Sensors.knownPosition(sim, 1, tank)
+				local x, z, level = Sensors.knownPosition(sim, 1, tank, true)
 				if x and z and level == L.RADAR then
 					worst = math.max(worst, math.sqrt((x - sim.world.posX[tank]) ^ 2 + (z - sim.world.posZ[tank]) ^ 2))
 				end
