@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, factories show what they build)
+
+- **You can now watch a factory build (C-152):** the unit in production stands on the factory's pad as a translucent team-coloured hologram. It fills in from the bottom up behind a glowing line, with nano spray from the factory's emitters. The spray stops when the economy stalls. This works for your factories and your allies'. Checked in Studio on a vehicle plant and an airfield.
+- **Coming:** finished units start on the pad and drive out, instead of appearing a cell outside the factory (sim request 61).
+
 ## Summary (2026-10-23, radar blips circle their unit)
 
 - **Radar blips orbit the real unit now,** like BAR (sim-A's S-130 with the client's glide). In the radar scene a blip swept a full turn in about 6 s, 13–17 studs out, and the real position never reaches the client. Guide 11.4 is updated.
@@ -1836,6 +1841,11 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
+61. **Open (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
+    - The finished unit spawns at the factory's `buildpad` (from the blockout's attachments, model space, rotated with the facing) with the factory's heading. Today it's halfSize + one cell out, then EXIT_ROLL: ~12 studs past the pad on a vehicle plant.
+    - It then drives out along the heading through the factory's own footprint, then takes the rally order.
+    - The client draws the frame there already (C-152).
+    - Your call how it leaves the impassable footprint: a scripted roll or own-team yard cells.
 60. **Open (2026-10-23, the user: "that radius is huge, in BAR, just 1-2 studs"):** **Small blip orbit, hidden aim error.** S-130's orbit radius (= radar error, 13–45 studs) is far bigger than BAR's. At the user's choice:
     - The drawn blip orbits ~1.5 studs around the real unit (same ~6 s turn, own phase and direction per contact).
     - The radar error stays as now, but only in the server's aiming: weapons firing at a radar contact aim at a hidden offset point (radius = radar error, or the Pinpointer's tracking error), so radar shots still miss as before. The client never learns that point.

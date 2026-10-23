@@ -36,6 +36,7 @@ local ModelPool = require("./Render/ModelPool")
 local RenderDeaths = require("./Render/Deaths")
 local RenderEffects = require("./Render/Effects")
 local ShieldDomes = require("./Render/ShieldDomes")
+local FactoryFrames = require("./Render/FactoryFrames")
 local ShieldFx = require("./Render/ShieldFx")
 local Contacts = require("./Render/Contacts")
 local FogBlanket = require("./Render/FogBlanket")
@@ -155,6 +156,7 @@ local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-
 local FOLLOW_KEY = Enum.KeyCode.T
 local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
 local shieldDomes = ShieldDomes.new() -- shield generators' domes (C-91)
+local factoryFrames = FactoryFrames.new() -- units in production on their factory's pad (C-152)
 local function toggleFollow()
 	if camState.follow then
 		camState.follow = nil
@@ -844,6 +846,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	if world.joins ~= seenJoins then
 		-- a (re)join: start over from the server's full picture
 		seenJoins = world.joins
+		FactoryFrames.clear(factoryFrames)
 		UnitRenderer.clear(renderer)
 		Effects.clear(fx)
 		Crater.clear() -- the last match's nuke craters (C-82)
@@ -874,6 +877,11 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	World.smoothStrategic(world, dt) -- radar blips glide, not jump (C-151)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
+	if strategic then
+		FactoryFrames.clear(factoryFrames)
+	else
+		FactoryFrames.step(factoryFrames, world, renderer, now)
+	end
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
@@ -926,11 +934,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	wantMeshes(now)
 	if Models.version ~= seenModels then
 		seenModels = Models.version
+		FactoryFrames.clear(factoryFrames)
 		ModelPool.flushAll()
 		UnitRenderer.reshowAll(renderer, world)
 		table.clear(meshReady)
 	end
 	for _, id in meshReady do
+		FactoryFrames.clear(factoryFrames)
 		Models.forget(id)
 		ModelPool.flush(id)
 		UnitRenderer.reshow(renderer, world, id)

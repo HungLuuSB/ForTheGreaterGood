@@ -59,6 +59,8 @@ export type Unit = {
 	-- own units only (S-61, protocol 20); nil until the server sends them
 	queue: { number }?, -- a factory's queue: unit def indices, the head in production
 	queueProgress: number?, -- the head item's progress, 0..1 (to a 255th)
+	producing: number?, -- allied factories (protocol 27, S-103): the def index in production, 0 = idle
+	producingProgress: number?, -- its progress, 0..1
 	fireState: number?, -- Schema.FireState
 	moveState: number?, -- Schema.MoveState
 	ammo: number?, -- aircraft with an ammo count: rounds left
