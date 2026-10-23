@@ -55,6 +55,7 @@ export type Unit = {
 	maxAmmo: number?,
 	flares: number?, -- own units: countermeasure charges left (S-63)
 	producing: number?, -- allied factories: def index in production, 0 = idle (S-103)
+	aim: { [number]: { number } }?, -- weapon slot → { yaw u8, pitch u8 } (S-119)
 	producingProgress: number?,
 	chaff: number?,
 	vx: number?, -- tactical units: velocity estimated from the last two Tactical records (studs/s; S-27)
@@ -504,6 +505,13 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			u.health = r.health or u.health
 			u.build = r.build or u.build
 			u.state = r.state or u.state
+			if r.aim then
+				local a = u.aim or {}
+				for _, ai in r.aim do
+					a[ai.slot] = { ai.yaw, ai.pitch }
+				end
+				u.aim = a
+			end
 			if r.targets then
 				local t = u.targets or {}
 				for _, tg in r.targets do

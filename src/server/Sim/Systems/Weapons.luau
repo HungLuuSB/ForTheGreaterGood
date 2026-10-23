@@ -106,6 +106,32 @@ local function hitscanHits(
 	return lateral <= tp.radius and vertical <= tp.height / 2
 end
 
+local lineHits: { number } = {}
+
+-- The first enemy unit (by its collision radius, in the weapon's target
+-- classes) on the line from (sx, sz) to (ex, ez), or 0 (S-119: an
+-- attack-ground hitscan or beam shot).
+local function firstOnLine(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, sx: number, sz: number, ex: number, ez: number): number
+	local c = sim.combat
+	local w = sim.world
+	local dx, dz = ex - sx, ez - sz
+	local len2 = math.max(dx * dx + dz * dz, 1e-6)
+	local n = ContactGrid.query(c.contacts, w, (sx + ex) / 2, (sz + ez) / 2, math.sqrt(len2) / 2 + c.maxRadius, w.ally[id], lineHits)
+	local best, bestT = 0, math.huge
+	for k = 1, n do
+		local u = lineHits[k]
+		local tp = c.profiles[w.defIndex[u]]
+		if bit32.band(weapon.targetMask, tp.categoryMask) ~= 0 then
+			local t = math.clamp(((w.posX[u] - sx) * dx + (w.posZ[u] - sz) * dz) / len2, 0, 1)
+			local px, pz = sx + dx * t - w.posX[u], sz + dz * t - w.posZ[u]
+			if px * px + pz * pz <= tp.radius * tp.radius and (t < bestT or (t == bestT and u < best)) then
+				best, bestT = u, t
+			end
+		end
+	end
+	return best
+end
+
 local function fire(
 	sim: Types.Sim,
 	id: number,
@@ -198,16 +224,34 @@ local function fire(
 
 	-- hitscan, or a projectile shot at the pool cap: the total error is the
 	-- turret's remaining aim offset (within tolerance) plus the spread
-	local hit = hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
-	-- where the shot ends: the target's aim point, or the ground beyond or
-	-- beside it on a miss (FIRE carries it for clients, guide 7.3)
+	local hit
 	local ex, ey, ez
-	if hit then
-		ex, ey, ez = Combat.aimPoint(c, w, target)
+	if target == 0 then
+		-- an attack-ground shot (S-119, client request 53): along the aim to
+		-- the ordered point; it hits the first enemy on the line, if any (a
+		-- hit-ray runs on to the point and hurts everyone on it)
+		local gx = w.posX[id] + sin(worldYaw + yawErr) * dist
+		local gz = w.posZ[id] + cos(worldYaw + yawErr) * dist
+		local first = firstOnLine(sim, id, weapon, w.posX[id], w.posZ[id], gx, gz)
+		hit = first ~= 0
+		if hit and not weapon.pierce then
+			target = first
+			ex, ey, ez = Combat.aimPoint(c, w, first)
+		else
+			ex, ez = gx, gz
+			ey = Combat.groundHeight(c, ex, ez)
+		end
 	else
-		ex = w.posX[id] + sin(worldYaw + yawErr) * dist
-		ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
-		ey = Combat.groundHeight(c, ex, ez)
+		hit = hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
+		-- where the shot ends: the target's aim point, or the ground beyond or
+		-- beside it on a miss (FIRE carries it for clients, guide 7.3)
+		if hit then
+			ex, ey, ez = Combat.aimPoint(c, w, target)
+		else
+			ex = w.posX[id] + sin(worldYaw + yawErr) * dist
+			ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
+			ey = Combat.groundHeight(c, ex, ez)
+		end
 	end
 	if #c.shieldIds > 0 then
 		-- an enemy shield dome on the way stops the shot at its surface (S-89)
@@ -275,6 +319,16 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam)
 			end
 		end
 	end
+end
+
+-- Is a lingering beam of (shooter, slot) burning? (S-119: its aim holds)
+local function beaming(c: Combat.Combat, id: number, slot: number): boolean
+	for _, b in c.beams do
+		if b.shooter == id and b.slot == slot then
+			return true
+		end
+	end
+	return false
 end
 
 -- One tick of every lingering beam (S-113).
@@ -365,7 +419,7 @@ return function(sim: Types.Sim)
 			-- ordered spot for a bomber's attack-ground.
 			local kx, kz, defIndex = nil, nil, nil
 			local projTarget = 0
-			if (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC") and sim.air.groundX[id] ~= nil then
+			if (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
 			elseif weapon.manualFire then
 				target = 0 -- nothing without an attack-ground order (S-48)
@@ -428,7 +482,7 @@ return function(sim: Types.Sim)
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
 				-- an attack-ground order's shelling ignores the fire state (S-68)
-				local ordered = target == 0 and weapon.type == "BALLISTIC" and sim.air.groundX[id] ~= nil
+				local ordered = target == 0 and (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil
 				canFire = (ordered or not holdFire) and dist <= weapon.range + radius
 				if pitch == nil then
 					canFire = false
@@ -468,7 +522,10 @@ return function(sim: Types.Sim)
 			-- rotate the turret (fixed mounts without a turret table aim
 			-- instantly); without a target: hold, then back to rest
 			aimState.yaw, aimState.pitch, aimState.hold = w.wYaw[key], w.wPitch[key], w.wHold[key]
-			if aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
+			if weapon.beamDuration and beaming(c, id, slot) then
+				-- a lingering beam burning (S-119, client request 53): the
+				-- barrel stays on the fired line until the beam ends
+			elseif aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
 				Aim.update(turret, aimState, wantYaw, wantPitch)
 			else
 				Aim.update(turret, aimState, nil, nil)

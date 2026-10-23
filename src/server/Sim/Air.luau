@@ -279,7 +279,8 @@ function Air.groundFires(sim: Types.Sim, d: Defs.UnitDef): boolean
 	if cached == nil then
 		cached = false
 		for _, slot in d.weapons do
-			if sim.defs.weaponByIndex[slot.weaponIndex].type == "BALLISTIC" then
+			local t = sim.defs.weaponByIndex[slot.weaponIndex].type
+			if t == "BALLISTIC" or t == "BEAM" or t == "HITSCAN" then -- (beams and hitscan since S-119, client request 53)
 				cached = true
 			end
 		end
