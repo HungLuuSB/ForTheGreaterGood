@@ -8,6 +8,7 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 
 Done so far:
 - Approvals flipped: beam shot, deposits, interceptors.
+- Approved by the user 2026-10-23: all T1 structure redesigns and new T1 meshes (`t1v2_*`, rows R1–R11 and N1–N7) and their wrecks; manifest flipped. The v3 Commander mechs were already approved (`7fbd495`); they have no wreck yet.
 - Unit codex portraits: 146, in `debug_out/portraits/` with `portraits.json`; not committed, renderer in `tools/portraits.py`.
 - Honeycomb: fewer, smaller patches.
 - Commander mechs, blockouts and meshes, status `review`.
