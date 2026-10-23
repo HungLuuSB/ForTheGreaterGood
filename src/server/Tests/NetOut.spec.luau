@@ -756,7 +756,8 @@ return function(t: RunAll.Context)
 		end
 		t.equal(Sensors.level(sim, 1, gunner), L.HIDDEN, "Order doesn't see the gunner")
 		-- the gunner's shot this tick, as Weapons records it
-		Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = gunner, other = victim, slot = 1, hit = true, x = -100, y = 13, z = 0, sx = 200, sy = 14, sz = 150 })
+		local weaponIndex = c.profiles[sim.world.defIndex[gunner]].weapons[1].index
+		Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = gunner, other = victim, slot = 1, weaponIndex = weaponIndex, hit = true, x = -100, y = 13, z = 0, sx = 200, sy = 14, sz = 150 })
 		NetOut.step(sim)
 		local function events(pid: number): { Schema.Event }
 			local all = {}
@@ -787,6 +788,7 @@ return function(t: RunAll.Context)
 			t.expect(math.abs(ex + 100) < 0.1 and math.abs(ez) < 0.1, "with the end point")
 			t.expect(math.abs(sx - 200) < 0.1 and math.abs(sz - 150) < 0.1, "and the start point")
 			t.equal(shot.hit, true)
+			t.equal(shot.weaponIndex, weaponIndex, "and the weapon (protocol 28, S-118)")
 		end
 		local owner = 0
 		for _, e in events(2) do
