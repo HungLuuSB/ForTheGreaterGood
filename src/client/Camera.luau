@@ -108,6 +108,10 @@ local function groundHit(cam: Camera, px: number, py: number, groundY: number): 
 	return ray.Origin + ray.Direction * t
 end
 
+-- Turn keys (Settings > Keys, C-159; E was also BAR's reclaim, so right is C)
+Camera.ROTATE_LEFT = Enum.KeyCode.Q
+Camera.ROTATE_RIGHT = Enum.KeyCode.C
+
 -- Applies this frame's pan, rotation and middle-drag to the focus; returns
 -- true when the player panned (which stops a follow, C-43).
 function Camera.input(state: State, cam: Camera, dt: number): boolean
@@ -119,9 +123,9 @@ function Camera.input(state: State, cam: Camera, dt: number): boolean
 				move += dir
 			end
 		end
-		if UserInputService:IsKeyDown(Enum.KeyCode.Q) then
+		if UserInputService:IsKeyDown(Camera.ROTATE_LEFT) then
 			state.yaw = math.clamp(state.yaw + Camera.YAW_SPEED * dt, -Camera.MAX_YAW, Camera.MAX_YAW)
-		elseif UserInputService:IsKeyDown(Enum.KeyCode.E) then
+		elseif UserInputService:IsKeyDown(Camera.ROTATE_RIGHT) then
 			state.yaw = math.clamp(state.yaw - Camera.YAW_SPEED * dt, -Camera.MAX_YAW, Camera.MAX_YAW)
 		end
 	end

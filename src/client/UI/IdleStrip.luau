@@ -56,13 +56,14 @@ function IdleStrip.new(pick: (string) -> ()): Strip
 	return { gui = gui, builders = builders, factories = factories, shown = "" }
 end
 
-function IdleStrip.step(strip: Strip, builders: number, factories: number)
-	local key = `{builders}/{factories}`
+-- `keyName`: the next-idle key (Settings > Keys).
+function IdleStrip.step(strip: Strip, builders: number, factories: number, keyName: string)
+	local key = `{builders}/{factories}/{keyName}`
 	if key == strip.shown then
 		return
 	end
 	strip.shown = key
-	strip.builders.Text = `Idle builders (I): {builders}`
+	strip.builders.Text = `Idle builders ({keyName}): {builders}`
 	strip.builders.TextColor3 = if builders > 0 then Kit.COLOR.accent else DIM
 	strip.factories.Text = `Idle factories: {factories}`
 	strip.factories.TextColor3 = if factories > 0 then Kit.COLOR.accent else DIM

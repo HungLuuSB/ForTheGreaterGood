@@ -20,6 +20,7 @@ local Api = require("../Api")
 local Kit = require("./Kit")
 local World = require("../Core/World")
 local CommandSet = require("../Core/CommandSet")
+local SettingsMenu = require("./SettingsMenu")
 
 local CommandCard = {}
 
@@ -55,7 +56,12 @@ end
 
 -- BAR's order: states, then orders.
 local ORDER = CommandSet.ORDER
-local KEYS = { move = "M", fight = "F", attack = "A", patrol = "Z", guard = "G", stop = "S", fire = "L", movestate = "K", ["repeat"] = "Y", toggle = "U", cancel = "X", alert = "J", repair = "", reclaim = "E", upgrade = "" }
+-- each button's key action (Core/Keybinds; rebindable, C-159)
+local ACTION = { move = "move", fight = "fight", attack = "attack", patrol = "patrol", guard = "guard", stop = "stop", fire = "fireState", movestate = "moveState", ["repeat"] = "repeat", toggle = "toggle", cancel = "cancel", alert = "lastAlert", reclaim = "reclaim" }
+local function keyOf(name: string): string
+	local id = ACTION[name]
+	return if id then SettingsMenu.binds[id] or "" else ""
+end
 local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true }
 
 local function act(api: Api.Api, name: string)
@@ -209,7 +215,8 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		-- the hotkey while hovered, else the label
 		local p, s = b.AbsolutePosition, b.AbsoluteSize
 		local over = mouse.X >= p.X and mouse.X <= p.X + s.X and mouse.Y - inset.Y >= p.Y and mouse.Y - inset.Y <= p.Y + s.Y
-		b.Text = if over and KEYS[name] ~= "" then `{label[name]} [{KEYS[name]}]` else label[name]
+		local key = keyOf(name)
+		b.Text = if over and key ~= "" then `{label[name]} [{key}]` else label[name]
 		b.BackgroundColor3 = if api.state.commandMode == name then ACTIVE else BTN
 		local bar = b:FindFirstChild("State") :: Frame?
 		if bar then

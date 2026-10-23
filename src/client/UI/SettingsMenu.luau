@@ -7,7 +7,11 @@
 --              toggle, glow (Off / Low / High), headlights toggle (C-106)
 --   Interface  UI scale slider
 --   Audio      nothing yet (the game has no sound)
---   Keys       the key bindings as a two-column table per group
+--   Keys       every single-key action with a button to rebind it (C-159:
+--              click, press the new key; Escape cancels), a warning on keys
+--              two actions share, Reset to defaults, then the fixed keys
+--              (mouse, groups, modifiers) as a table; saved per player on
+--              the server (the Keybinds remote)
 -- Built once and shown or hidden; modal (a dark scrim behind, a click on
 -- it closes the panel), and the panel's height follows the page (C-106). Values come from Core/Settings; `apply`
 -- writes them into the modules that use them, live. Settings last for
@@ -20,7 +24,13 @@ local UserInputService = game:GetService("UserInputService")
 local Camera = require("../Camera")
 local Effects = require("../Core/Effects")
 local PieceAnim = require("../Core/PieceAnim")
+local Keybinds = require("../Core/Keybinds")
 local Settings = require("../Core/Settings")
+local Controls = require("../Input/Controls")
+local Deposits = require("../Render/Deposits")
+local RenderMissileView = require("../Render/MissileView")
+local RangeOverlay = require("../Render/RangeOverlay")
+local BuildMenuUI = require("./BuildMenu")
 local Atmosphere = require("../Render/Atmosphere")
 local FogBlanket = require("../Render/FogBlanket")
 local Environment = require("../Render/Environment")
@@ -32,14 +42,74 @@ local Kit = require("./Kit")
 local SettingsMenu = {}
 SettingsMenu.state = nil :: Settings.State? -- the live settings once the menu exists (developer mode keys, C-124)
 
-local KEY = Enum.KeyCode.O
+SettingsMenu.binds = Keybinds.defaults() -- the player's keys (C-159)
+SettingsMenu.capturing = false -- waiting for a key to bind: the game ignores keys
+SettingsMenu.openButton = nil :: TextButton? -- its label names the key
+
+-- The KeyCode bound to action `id` (Core/Keybinds).
+function SettingsMenu.key(id: string): Enum.KeyCode
+	local name = SettingsMenu.binds[id]
+	local ok, code = pcall(function()
+		return (Enum.KeyCode :: any)[name]
+	end)
+	return if ok and code then code else Enum.KeyCode.Unknown
+end
+
+-- Writes the bindings into the modules that read keys.
+function SettingsMenu.applyKeys()
+	local k = SettingsMenu.key
+	Controls.COMMAND_KEYS = {
+		[k("attack")] = "attack",
+		[k("fight")] = "fight",
+		[k("move")] = "move",
+		[k("patrol")] = "patrol",
+		[k("guard")] = "guard",
+		[k("reclaim")] = "reclaim",
+	}
+	Controls.STOP_KEY = k("stop")
+	Controls.ROTATE_KEY = k("rotate")
+	Controls.FIRE_STATE_KEY = k("fireState")
+	Controls.MOVE_STATE_KEY = k("moveState")
+	Controls.REPEAT_KEY = k("repeat")
+	Controls.TOGGLE_KEY = k("toggle")
+	Controls.CANCEL_KEY = k("cancel")
+	Controls.ALERT_KEY = k("lastAlert")
+	BuildMenuUI.KEY = k("build")
+	Camera.ROTATE_LEFT = k("rotateLeft")
+	Camera.ROTATE_RIGHT = k("rotateRight")
+	RangeOverlay.TOGGLE_KEY = k("ranges")
+	RenderMissileView.TOGGLE_KEY = k("missileView")
+	Deposits.TOGGLE_KEY = k("deposits")
+	local open = SettingsMenu.openButton
+	if open then
+		open.Text = `Settings ({SettingsMenu.binds.settings})`
+	end
+end
+
+local function remote(): RemoteFunction?
+	local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+	local r = remotes and remotes:FindFirstChild("Keybinds")
+	return if r and r:IsA("RemoteFunction") then r else nil
+end
+
+local function saveKeys()
+	local r = remote()
+	if r then
+		local text = Keybinds.encode(SettingsMenu.binds)
+		task.spawn(function()
+			pcall(function()
+				r:InvokeServer("set", text)
+			end)
+		end)
+	end
+end
 -- the screens the UI scale applies to: the panels; overlays drawn at world
 -- positions (icons, health bars, the selection box, missile labels) and
 -- Roblox's own screens keep screen pixels
 local SCALED = { SettingsButton = true, BuildTooltip = true, CheatConsole = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, NukeWarning = true, DebugHud = true }
 local PAGES = { "Camera", "Graphics", "Interface", "Audio", "Keys" }
 
-export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, layouts: { [string]: UIListLayout }, state: Settings.State }
+export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, layouts: { [string]: UIListLayout }, state: Settings.State, refreshKeys: (() -> ())? }
 
 local SIDEBAR_HEIGHT = 280 -- the sidebar's five sections need this much panel
 
@@ -192,15 +262,96 @@ local function build(ui: UI)
 	none.LayoutOrder = 1
 
 	local keys = page("Keys")
-	for i, group in Settings.KEYS do
-		local head = Kit.text(keys, group[1], "label", Kit.COLOR.accent)
-		head.LayoutOrder = i * 2 - 1
+	-- rebindable keys (C-159)
+	local order = 0
+	local function nextOrder(): number
+		order += 1
+		return order
+	end
+	local hint = Kit.text(keys, "Click a key, then press the new one (Escape cancels). Saved for your account.", "small")
+	hint.LayoutOrder = nextOrder()
+	hint.TextWrapped = true
+	local buttons: { [string]: TextButton } = {}
+	local warnings: { [string]: TextLabel } = {}
+	local waiting: string? = nil
+	local function refresh()
+		local clashes = Keybinds.conflicts(SettingsMenu.binds)
+		for id, b in buttons do
+			b.Text = if waiting == id then "Press a key…" else SettingsMenu.binds[id]
+			local others = clashes[id]
+			local w = warnings[id]
+			if others then
+				local names = {}
+				for _, o in others do
+					table.insert(names, Keybinds.label(o))
+				end
+				w.Text = "also: " .. table.concat(names, ", ")
+				w.Visible = true
+			else
+				w.Visible = false
+			end
+		end
+	end
+	ui.refreshKeys = refresh
+	local group = ""
+	for _, a in Keybinds.ACTIONS do
+		if a.group ~= group then
+			group = a.group
+			local head = Kit.text(keys, group, "label", Kit.COLOR.accent)
+			head.LayoutOrder = nextOrder()
+			head.Size = UDim2.new(1, 0, 0, 26)
+		end
+		local control = Kit.row(keys, a.label, nextOrder())
+		local warn = Kit.text(control, "", "small", Kit.COLOR.defeat)
+		warn.Size = UDim2.new(1, -104, 1, 0)
+		warn.TextXAlignment = Enum.TextXAlignment.Right
+		warn.TextTruncate = Enum.TextTruncate.AtEnd
+		warn.LayoutOrder = 1
+		warn.Visible = false
+		warnings[a.id] = warn
+		local b = Kit.button(control, a.default, nil, function()
+			waiting = if waiting == a.id then nil else a.id
+			SettingsMenu.capturing = waiting ~= nil
+			refresh()
+		end, 96)
+		b.LayoutOrder = 2
+		buttons[a.id] = b
+	end
+	local reset = Kit.button(keys, "Reset to defaults", nil, function()
+		SettingsMenu.binds = Keybinds.defaults()
+		waiting = nil
+		SettingsMenu.applyKeys()
+		saveKeys()
+		refresh()
+	end, 160)
+	reset.LayoutOrder = nextOrder()
+	UserInputService.InputBegan:Connect(function(input: InputObject)
+		local id = waiting
+		if id == nil or input.UserInputType ~= Enum.UserInputType.Keyboard then
+			return
+		end
+		waiting = nil
+		if input.KeyCode ~= Enum.KeyCode.Escape and Keybinds.set(SettingsMenu.binds, id, input.KeyCode.Name) then
+			SettingsMenu.applyKeys()
+			saveKeys()
+		end
+		refresh()
+		-- the other key handlers see this press as captured too
+		task.defer(function()
+			SettingsMenu.capturing = waiting ~= nil
+		end)
+	end)
+	refresh()
+	-- fixed keys (mouse, groups, modifiers): the reference table
+	for _, g in Settings.KEYS do
+		local head = Kit.text(keys, g[1], "label", Kit.COLOR.accent)
+		head.LayoutOrder = nextOrder()
 		head.Size = UDim2.new(1, 0, 0, 26)
 		local rows = {}
-		for _, k in group[2] do
+		for _, k in g[2] do
 			table.insert(rows, { k[1], k[2] })
 		end
-		Kit.table(keys, { { title = "Key", width = 0.36 }, { title = "Action", width = 0.64 } }, rows, 28, i * 2)
+		Kit.table(keys, { { title = "Key", width = 0.36 }, { title = "Action", width = 0.64 } }, rows, 28, nextOrder())
 	end
 end
 
@@ -219,6 +370,7 @@ function SettingsMenu.new(): UI
 	buttonGui.IgnoreGuiInset = true
 	local open = Kit.button(buttonGui, "Settings (O)", "ghost", function() end, 116)
 	open.Name = "Open"
+	SettingsMenu.openButton = open
 	open.Size = UDim2.fromOffset(116, 28)
 	-- the upper right corner (C-124, the user; the upper left until then, C-109)
 	open.AnchorPoint = Vector2.new(1, 0)
@@ -248,11 +400,34 @@ function SettingsMenu.new(): UI
 		end
 	end)
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
-		if not processed and input.KeyCode == KEY then
+		if not processed and not SettingsMenu.capturing and input.KeyCode == SettingsMenu.key("settings") then
 			toggle()
 		end
 	end)
 	SettingsMenu.apply(ui.state)
+	SettingsMenu.applyKeys()
+	-- the player's saved keys (C-159), once the server answers
+	task.spawn(function()
+		local r = remote()
+		local wait = 0
+		while r == nil and wait < 10 do
+			task.wait(0.5)
+			wait += 0.5
+			r = remote()
+		end
+		if r then
+			local ok, text = pcall(function()
+				return r:InvokeServer("get")
+			end)
+			if ok and type(text) == "string" and text ~= "" then
+				SettingsMenu.binds = Keybinds.decode(text)
+				SettingsMenu.applyKeys()
+				if ui.refreshKeys then
+					ui.refreshKeys()
+				end
+			end
+		end
+	end)
 	-- screens made later (the replay bar, a lobby) get the scale too
 	gui.Parent.ChildAdded:Connect(function(child: Instance)
 		if child:IsA("ScreenGui") then

@@ -1312,3 +1312,18 @@ Spec: SelectionTiles.spec. Screen: `c157_selection_tiles.jpg` (2 Masons and 3 La
 **Limits until sim request 62:** only units in the tactical tier count, and a builder repairing or assisting without a client-sent order can read as idle. Request 62 asks the server for an owner-only idle signal that covers off-camera units too.
 
 **Why:** the user's queue item 4.
+
+### C-159 — Rebindable keys in Settings > Keys, saved per player, with clash warnings (2026-10-23)
+
+**Decision:**
+- `Core/Keybinds` lists the 23 single-key actions with their defaults: orders, building, camera and views, the developer follow key.
+- Keys that can't be bound: digits, arrows, modifiers, Enter / slash, Escape, the sim-speed keys, F3.
+- `Keybinds.conflicts` reports actions that share a key; encode / decode save only what differs from the defaults.
+- `SettingsMenu.applyKeys` writes the bindings into Controls, Camera, BuildMenu, RangeOverlay, MissileView and Deposits. Main reads the idle and follow keys through `SettingsMenu.key`.
+- The command card's hover hint, the idle strip and the Settings button show the bound keys.
+- **The Keys page:** a button per action. Click it, press the new key (Escape cancels); while it waits, the game ignores keys. A clash shows "also: …" in red on both rows. Reset to defaults. Then the fixed keys (mouse, groups, camera) as a table.
+- **Saving:** the `Keybinds` RemoteFunction (src/roblox): "get" / "set". A live server keeps them in the FtggSettings DataStore. Studio refuses DataStores without API access, so there they last for the server session.
+- **Defaults change:** camera turn right moves from E to C, because E was both reclaim (C-109, BAR's) and turn right.
+- Checked in Studio: Stop rebound to A showed the clash on Stop and Attack, and the server returned "stop=A" (reset afterwards). Specs: Keybinds.spec, Settings.spec. Screen: `c159_keys_conflict.jpg`.
+
+**Why:** the user's queue item 6.

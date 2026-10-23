@@ -126,43 +126,28 @@ function Settings.graphics(s: State): Graphics
 	return Settings.QUALITY[s.quality]
 end
 
--- The key bindings reference (Input/Controls, Camera, Main), in groups.
+-- The fixed keys reference (mouse, groups, modifiers), in groups; the
+-- single-key actions are rebindable (Core/Keybinds, C-159).
 Settings.KEYS = table.freeze({
-	{ "Selection", {
+	{ "Fixed: selection", {
 		{ "Left click / drag", "select / box select (Shift adds, Ctrl toggles)" },
 		{ "Double click", "every own unit of that type on screen" },
 		{ "Ctrl + 1–9 / 1–9", "set / recall a group (double tap: jump there)" },
 	} },
-	{ "Orders", {
+	{ "Fixed: orders and building", {
 		{ "Right click", "smart order: attack, guard, repair or move" },
 		{ "Right drag", "line move" },
 		{ "Shift + order", "queue it" },
-		{ "A / F / M / Z / G", "attack / fight / move / patrol / guard, then left click" },
-		{ "S", "stop" },
-		{ "L / K", "fire state / move state" },
-		{ "Y / U / X", "repeat / on-off / cancel (factories)" },
-		{ "E", "reclaim, then left click a wreck (builders)" },
+		{ "1–0 (build menu open)", "pick (Shift: 5 in a factory, right click drops one)" },
+		{ "Drag (extractor)", "an extractor on every deposit in the circle (upgrades too)" },
 		{ "Enter or /", "the cheat command line (/help); Ctrl+Shift+G repeats the last /give" },
 	} },
-	{ "Building", {
-		{ "B, then 1–0", "build menu: open, next tab, pick" },
-		{ "R", "rotate the structure" },
-		{ "Drag (extractor)", "an extractor on every deposit in the circle (upgrades too)" },
-		{ "Right click", "stop placing" },
-	} },
-	{ "Camera and views", {
+	{ "Fixed: camera", {
 		{ "Arrow keys / edge", "pan" },
 		{ "Wheel / Alt + wheel", "zoom / pitch" },
-		{ "Q / E", "rotate" },
-		{ "V", "range rings" },
-		{ "N", "missile sensor view" },
-		{ "F4", "deposit view: free supply spots and their yield" },
-		{ "J", "jump to the last alert" },
-		{ "O", "this menu" },
-	} },
-	{ "Developer mode (Settings > Interface)", {
-		{ "T", "camera follows the selection (or the nearest missile)" },
-		{ "F3", "debug readout (bottom right)" },
+		{ "Middle drag", "pan" },
+		{ "F3", "debug readout (developer mode)" },
+		{ "- / = / P", "sim speed and pause (Studio)" },
 	} },
 })
 

@@ -157,9 +157,8 @@ local nukeWarning = NukeWarning.new() -- strategic launch warnings (C-57)
 local radarRings = RadarRings.new() -- own radar facilities' rings, always on top (C-63, C-64)
 local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-58)
 -- Camera follow (C-43), T in developer mode (C-124; the on-screen button is
--- gone): the first selected unit, else the homing missile drawn nearest the
--- screen centre.
-local FOLLOW_KEY = Enum.KeyCode.T
+-- gone; rebindable, C-159): the first selected unit, else the homing
+-- missile drawn nearest the screen centre.
 local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
 local shieldDomes = ShieldDomes.new() -- shield generators' domes (C-91)
 local factoryFrames = FactoryFrames.new() -- units in production on their factory's pad (C-152)
@@ -174,7 +173,6 @@ local function toggleFollow()
 end
 -- Idle builders and factories (C-158): counts in the top strip, I jumps to
 -- the next idle builder (selected, the camera follows it), a tag over each.
-Idle.KEY = Enum.KeyCode.I
 local idle = Idle.new()
 local idleMarks = IdleMarks.new()
 local nextIdleCount = 0
@@ -203,7 +201,7 @@ local function requestSpeed(value: number)
 	end
 end
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-	if processed then
+	if processed or SettingsMenu.capturing then
 		return
 	end
 	local key = input.KeyCode
@@ -213,9 +211,9 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 		DepositsRender.setEnabled(deposits, not deposits.enabled)
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
-	elseif key == Idle.KEY then
+	elseif key == SettingsMenu.key("idle") then
 		pickIdle("builder")
-	elseif key == FOLLOW_KEY then
+	elseif key == SettingsMenu.key("follow") then
 		local settings = SettingsMenu.state
 		if settings and settings.devMode then
 			toggleFollow()
@@ -307,6 +305,9 @@ local unitPanel = UnitPanel.new(api)
 local alertFeed = AlertFeed.new(api)
 local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; profiles with a lobby only)
 Controls.capture = function(input: InputObject): boolean
+	if SettingsMenu.capturing and input.UserInputType == Enum.UserInputType.Keyboard then
+		return true -- Settings > Keys is taking this key (C-159)
+	end
 	return BuildMenuUI.capture(buildMenu, api, input)
 end
 api.changed.alert:Connect(function(alert: any)
@@ -1045,7 +1046,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 			return api.waypoints.byUnit[id] ~= nil
 		end, now)
 	end
-	IdleStrip.step(idleStrip, #idle.builders, #idle.factories)
+	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
 	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
 	BuildMenuUI.step(buildMenu, api)
 	CommandCard.step(commandCard, api)

@@ -60,7 +60,7 @@ return function(t: any)
 		end
 	end)
 
-	t.test("the key reference lists every command key", function()
+	t.test("the fixed keys reference lists the mouse, groups and camera", function()
 		local text = {}
 		for _, group in Settings.KEYS do
 			for _, k in group[2] do
@@ -68,8 +68,8 @@ return function(t: any)
 			end
 		end
 		local all = table.concat(text, " ")
-		for _, key in { "A", "F", "M", "Z", "G", "S", "L", "K", "Y", "U", "X", "B", "R", "T", "V", "N", "J", "O" } do
-			t.expect(string.find(all, "%f[%w]" .. key .. "%f[%W]") ~= nil, `{key} is listed`)
+		for _, key in { "Left click", "Right click", "Ctrl", "Shift", "Arrow keys", "Wheel", "F3" } do
+			t.expect(string.find(all, key, 1, true) ~= nil, `{key} is listed`)
 		end
 	end)
 end

@@ -16,6 +16,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Selection panel like BAR (C-157):** with several units selected, click a type tile to keep it, Shift-click to drop it, Ctrl-click for every one of that type on screen.
 - **Idle indicators (C-158):** idle builder and factory counts beside the resource bar, **I** jumps to the next idle builder (the camera follows), an IDLE tag over each. For now only what's in view counts: sim request 62 asks the server for a proper idle signal.
 - Ready to merge: `946b6a7` (C-157, C-158: selection tiles, idle indicators)
+- **Rebindable keys (C-159):** Settings > Keys has a button per action: click, press the new key. Two actions on one key show a red warning on both. Saved for your account (the session only in Studio). Camera turn-right moved from E to C, because E is also reclaim.
 
 ## Summary (2026-10-23, factories show what they build)
 
@@ -1759,6 +1760,7 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - the extractors at footprint 2 (and their wrecks);
   - on m-models, not merged here yet: the T1 structure redesigns, pairs 2–7 (generators, solar, wind, depots, Bulwark / Spike, vehicle plants).
 - **Sound IDs:** `docs/SOUND_PLAN.md` lists candidate Creator Store audio for every sound. Nothing is inserted until you pick.
+- **Camera turn keys (C-159):** turn right moved from E to C, since E is also BAR's reclaim. Rebind it in Settings > Keys if you prefer something else.
 - **Lighting technology:** set `Lighting.Technology` to Realistic in the place (a place setting scripts can't change).
 - **New since C-130, for a look in your playtest:**
   - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
