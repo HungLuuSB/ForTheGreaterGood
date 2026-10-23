@@ -1270,7 +1270,7 @@ countermeasures = {
 - **Support aircraft:** AWACS (Order), EW jammer aircraft (Chaos).
 - **Air workers** (`HELI`): build air structures; fragile.
 - **Ammo & rearm:** aircraft have `ammo` (missiles/bombs). Empty → return to the nearest free rearm pad (airfield or carrier). Rearm costs supply + power over time.
-- **Landing:** landed aircraft are `landed` state: no LOS bonus, easy targets.
+- **Landing:** landed aircraft are `landed` state: no LOS bonus, easy targets. In flight an aircraft's ground sight is `sensors.sight` × `Sensors.FLYING_SIGHT_BONUS` (1.25); landed, its plain sight (S-139).
 
 ### 12.3 Naval
 
@@ -1667,6 +1667,8 @@ Debug flag that decodes every incoming/outgoing packet into readable text and lo
 | **Headroom** | **~12 ms** |
 
 If a system goes over budget repeatedly: stagger more, lower its rate, move work to Actors, or lower unit caps.
+
+On a live server the sim watches itself (S-140): `Sim/Watchdog` compares every tick's system times with this table (projectiles 6 + damage 2, construction 1.5 + match 0.5; 54 ms together). It logs a WARN line for a tick over 54 ms, or with a system over 2× its own budget (at most one a second, the rest counted), and a one-minute INFO summary.
 
 ### 18.2 Client frame budget (60 FPS = 16.7 ms)
 

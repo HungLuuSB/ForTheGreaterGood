@@ -4,7 +4,37 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: the user's decisions and requests, 2026-10-23, branch `m-sim-2`)
+## Summary (latest: your queue while away, plus B's requests 59–63, 2026-10-23 evening, branch `m-sim-2`)
+
+**Your queue (items 1–6), The Canyon, and B's requests 59–63**, B's first as you asked. Fast tests and build on every commit, the slow suite on every merge; no balance reports. Protocol 30 → 31. Tests: 457 in 69 specs → 472 in 71 (fast), 7 → 8 slow. Merged into main: S-127..S-138 and the client's C-149..C-156; C-157..C-167 is merging, S-139 and S-140 follow.
+
+| Task | Result | Decision |
+|---|---|---|
+| Budget watchdog for the Roblox server (your queue item 5, next.md item 2) | `Sim/Watchdog`: after each step, compares the tick's system times with guide 18.1; a WARN line per second while over budget (worst systems first), an INFO summary a minute. B wires it into the server loop | S-140 |
+| Flying sight bonus (your queue item 4, audit item 10) | Aircraft in flight see the ground 1.25× farther; landed, no bonus | S-139 |
+| Queue in a factory being built (client request 63, the user) | An unfinished factory takes BUILD queue items (QUEUE owner field sent) and starts on them when finished; CANCEL on it drops queue items first | S-138 |
+| Discord notify (your queue item 2) | Built, then removed at your request (`lune run notify` is gone) | — |
+| Group speed (your queue item 3) | Command flag GROUP 4 (Ctrl, agreed with B): a move / fight / patrol keeps ground units at the slowest one's speed | S-137 |
+| Idle builders and factories (client request 62) | Owner-only IDLE event on change, on camera or not; every idle one on join (protocol 31) | S-136 |
+| Builder crawl along structures (your approval) | A unit sliding along a blocked cell keeps at least half its top speed (it halved the speed every tick and crawled at <1 stud/s); seed 43's Mason no longer crawls. A first, stronger version tilted the mirror-fairness test east and was replaced | S-135 |
+| Blips sent at their unit's cell (B's follow-up to S-131) | The 1.5-stud orbit never reached the client (strategic records carry only a cell) and made blips hop at cell edges; the server now sends the true cell and the client circles the blip (C-154). Aim unchanged | S-134 |
+| Units leave from the build pad (client request 61, the user) | A finished unit appears on the factory's `buildpad` (from the blockout) and drives straight out through the footprint; the factory waits while a unit still stands on its pad. The AI now gives up a build site its builder can't get closer to in 20 s (a walled-in footprint-2 Commander) | S-133 |
+| The Canyon (the user) | `map:canyon`: 154 × 256-cell desert map after BAR's Classic Glitters; 36 mesas, badland belts, 92 deposits; point-symmetric, north vs south | S-132 |
+| Blip orbit 1.5 studs; radar error in a hidden aim point (client request 60, the user) | The sent blip stays within 1.5 studs of the unit; radar-fired weapons aim at the hidden point, so they miss as before | S-131 |
+| Radar blips orbit the unit, like BAR (client request 59, the user) | Wobble is a 6 s circle at the radar error; still only the wobbled point is sent | S-130 |
+| Ally teams on the client (client request) | WELCOME lists every team's ally team (protocol 30) | S-129 |
+
+**Needs my review** gained:
+- **The slide fix's first version** (S-135) tilted the mirror-fairness test east, and I didn't find why. The shipped version only floors a sliding unit's speed at half its top speed. next.md item 6 proposes a longer fairness run.
+- **The AI's give-up** (S-133): 20 s without getting closer, then the site is left alone for 3 minutes. A safety net; next.md item 3 proposes reach checks in the site picker.
+- **CANCEL on a frame with a queue** (S-138): the first CANCEL 0 clears the queue, the second removes the frame. Another rule is easy if you prefer.
+- **The flying sight bonus** (S-139): 1.25× is a placeholder.
+- **Own units off camera** (B's question, next.md item 4): they keep their last health, build progress and queue. A slim owner record would fix it at some bandwidth. Your call.
+- **A rule conflict:** your new rule says to mark requests done in `client.md`, but CLAUDE.md keeps the sim stream out of that file. B marks them; I log them here.
+- **Discord notify:** built, then removed at your request.
+- **next.md** is refreshed and ranked: measuring the real server comes first, once B wires the watchdog.
+
+## Summary (previous round: the user's decisions and requests, 2026-10-23, branch `m-sim-2`)
 
 **Your decisions on the review items, your new requests (cheats, sizes, upgrades, anti-nukes) and the client's requests 45–50**, with a merge check between tasks. Protocol 26 → 30. Tests: 430 in 67 specs → 445 in 69 (fast), 6 → 7 slow; every merge passed fast, slow and build.
 
@@ -22,17 +52,6 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 | Anti-nukes (your request, requests 46) | Providence / Cerberus (structures) and Custodian / Chimera (mobile, only while stopped). Cover by aim point, one interceptor per nuke, certain hit, a delay longer than a nuke's flight. They spot nukes anywhere. Radar SAMs shoot aircraft only and now one-shot T1 air | S-111 |
 | Item 8 balance pass | Locust +10% damage, Order heavy cannon +10%, Order radar SAM reload −10%, Falcon range +5%. 12 of 12 shared roles in band (was 10). Fighters, the Herald and the T2 tank Chaos condition still short: proposals below | S-112 |
 | Beams (requests 47, 49, 50) | Lingering beams (`beamDuration`). Radiance fires at blips (misses without Pinpointers) and is a 3 s hit-ray (`pierce`). Domes stop beams at the surface. Manual targets kept until STOP | S-113, S-115, S-116 |
-| Queue in a factory being built (client request 63, the user) | An unfinished factory takes BUILD queue items (QUEUE owner field sent) and starts on them when finished; CANCEL on it drops queue items first | S-138 |
-| Discord notify (your queue item 2) | Built, then removed at your request (`lune run notify` is gone) | — |
-| Group speed (your queue item 3) | Command flag GROUP 4 (Ctrl, agreed with B): a move / fight / patrol keeps ground units at the slowest one's speed | S-137 |
-| Idle builders and factories (client request 62) | Owner-only IDLE event on change, on camera or not; every idle one on join (protocol 31) | S-136 |
-| Builder crawl along structures (your approval) | A unit sliding along a blocked cell keeps at least half its top speed (it halved the speed every tick and crawled at <1 stud/s); seed 43's Mason no longer crawls. A first, stronger version tilted the mirror-fairness test east and was replaced | S-135 |
-| Blips sent at their unit's cell (B's follow-up to S-131) | The 1.5-stud orbit never reached the client (strategic records carry only a cell) and made blips hop at cell edges; the server now sends the true cell and the client circles the blip (C-154). Aim unchanged | S-134 |
-| Units leave from the build pad (client request 61, the user) | A finished unit appears on the factory's `buildpad` (from the blockout) and drives straight out through the footprint; the factory waits while a unit still stands on its pad. The AI now gives up a build site its builder can't get closer to in 20 s (a walled-in footprint-2 Commander) | S-133 |
-| The Canyon (the user) | `map:canyon`: 154 × 256-cell desert map after BAR's Classic Glitters; 36 mesas, badland belts, 92 deposits; point-symmetric, north vs south | S-132 |
-| Blip orbit 1.5 studs; radar error in a hidden aim point (client request 60, the user) | The sent blip stays within 1.5 studs of the unit; radar-fired weapons aim at the hidden point, so they miss as before | S-131 |
-| Radar blips orbit the unit, like BAR (client request 59, the user) | Wobble is a 6 s circle at the radar error; still only the wobbled point is sent | S-130 |
-| Ally teams on the client (client request) | WELCOME lists every team's ally team (protocol 30) | S-129 |
 | ASSIST a builder (the user) | A builder guarding another builder helps with its frame or factory production, then follows it | S-128 |
 | No auto-fire at ghosts (the user) | Remembered structures not in sight are targets only on an order; a crash on dead ghosts fixed (S-126) | S-126, S-127 |
 | Manual target kept, unseen too (request 57) | It was lost when the team stopped seeing it; now the unit fires at its last known position while it lives, and searches at once when it dies | S-125 |
