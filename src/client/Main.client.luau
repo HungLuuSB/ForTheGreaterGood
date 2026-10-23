@@ -21,6 +21,7 @@ local Canyon = require("@shared/Grid/Canyon")
 local MapLook = require("./Core/MapLook")
 local Atmosphere = require("./Render/Atmosphere")
 local Idle = require("./Core/Idle")
+local GroundMeshes = require("./Core/GroundMeshes")
 local IdleStrip = require("./UI/IdleStrip")
 local IdleMarks = require("./Render/IdleMarks")
 local Api = require("./Api")
@@ -772,6 +773,13 @@ if RunService:IsStudio() then
 			-- Invoke("depositsanyway", on): draw C's review deposit models (for the user's review, C-123)
 			MeshModels.DEPOSITS_ANYWAY = (...) == true
 			return true
+		elseif query == "groundanyway" then
+			-- Invoke("groundanyway", on): draw the map's review mesh ground (C-167) and rebuild it
+			GroundMeshes.ANYWAY = (...) == true
+			if world.layers then
+				Ground.build(world.layers, nil, mapFeature(world.mapId), world.mapId)
+			end
+			return Ground.last
 		elseif query == "reviewmesh" then
 			-- Invoke("reviewmesh", defId): build and draw one review unit mesh (C-160)
 			local id = ...
@@ -815,7 +823,7 @@ if RunService:IsStudio() then
 			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
 			local mode = ...
 			if mode and world.layers then
-				Ground.build(world.layers, mode, mapFeature(world.mapId))
+				Ground.build(world.layers, mode, mapFeature(world.mapId), world.mapId)
 				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 			end
 			return Ground.last
@@ -886,7 +894,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		if world.mapVersion ~= seenMap then
 			seenMap = world.mapVersion
 			if world.layers then
-				Ground.build(world.layers, nil, mapFeature(world.mapId))
+				Ground.build(world.layers, nil, mapFeature(world.mapId), world.mapId)
 				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogBlanket.setMap(fog, world, world.layers)

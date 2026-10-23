@@ -1400,3 +1400,18 @@ Extractor drags also drop spots that share cells with an earlier spot of the sam
 - Checked in Studio: `c164_c166_grid_trapezoid.jpg`.
 
 **Why:** the user's item 3: "Add grid box guidance (toggle in setting)".
+
+### C-167 — Baked mesh ground for the named maps (with models-C); terrain keeps only the water (2026-10-23)
+
+**Decision:** the named maps' ground will be uploaded mesh tiles, baked by the models stream from the client's own surface data. The contract is `docs/contracts/map-ground.md`.
+- `lune run export_ground [mapId | all]` writes each map's ground.json:
+  - heights every 4 studs from Core/Terrain.groundY, so the bake matches what units stand on;
+  - the ground type per cell, and the Canyon / Normandy features (where rock detail goes);
+  - water depth, deposits and starts.
+- The tiles go in a `ground` table in the mesh manifest, their textures in `groundMaterials`. `lune run mesh_materials` writes the textures as `ground_<key>` SurfaceAppearances.
+- `Core/GroundMeshes` picks a map's entry: approved, or review with `FtggClientDebug:Invoke("groundanyway", true)` in Studio. Until a texture exists, a tile gets a plain material and colour matching the voxel terrain.
+- `Render/MeshGround` builds the tiles 12 at a time with CreateMeshPartAsync: Precise fidelity, anchored, queryable for ground clicks.
+- `Ground.build` takes the map ID: with an entry, the terrain gets only the water (`RenderTerrain.build(..., waterOnly)`). Maps without one keep the voxel terrain as before.
+- Spec: GroundMeshes.spec. Nothing to see in Studio until models-C's first tiles.
+
+**Why EditableMesh isn't used:** the user rejected the terrain's coarse-then-sharp redraw after camera jumps (C-162). Ground built in game as an EditableMesh would need about 160,000 vertices on The Canyon, but the device's editable-memory budget ran out at about 7,600 (Render/FogBlanket's note). Uploaded meshes have no such budget and render at full detail at any distance.

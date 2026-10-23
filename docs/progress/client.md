@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, mesh ground on the way)
+
+- **The ground is moving off Roblox terrain (C-167):** the named maps will use mesh tiles that models-C bakes from the game's own height data (requested). They stay sharp at any distance, so a minimap jump lands crisp. Terrain keeps only the water.
+  - Building the ground in game wasn't possible: Roblox's budget for such meshes runs out after a few thousand points, and The Canyon needs about 160,000.
+  - The client loader, the export tool (`lune run export_ground`) and the contract are done. Until C's tiles arrive, every map keeps the voxel terrain.
+  - The Canyon comes first, for you to compare in Studio.
+
 ## Summary (2026-10-23, assist, minimap drag, build grid, no overlapping plans)
 
 - **Assist (C-163):** right-click your own factory with builders selected and they help its production; right-click your own frame and they build it; right-click your own builder and they follow its lead, helping whatever it builds. With only builders selected, the Guard button reads "Assist".
@@ -1803,6 +1810,8 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - radar blips circling 1.5 studs out (C-154).
 
 ## Requests for the models session
+
+3. **Baked map ground (2026-10-23, the user; C-167, `docs/contracts/map-ground.md`):** mesh tiles of each named map's ground from `lune run export_ground` (the Canyon first, status review), ground textures for desert, redrock, grass, rock, sand, road, leafy and ground, and rock detail (Canyon mesa rims, cliff terraces, boulders; then Normandy's bluffs). Uploads need the user's approval.
 
 2. **T2 defense meshes (2026-10-23, the user asked; sim request 43 brings the defs):**
    - a Pulsar-style beam tower per faction, with a tall emitter barrel, glowing charge rails on the base (`power` glow), and a **retract pose**: an armored shell the turret sinks into when switched off (a piece the client moves down, e.g. `turret` dropping into `base`, plus shell plates);

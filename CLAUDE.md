@@ -60,6 +60,7 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - `lune run test_client [filter]`: the client stream's Lune specs in `tests/client/` (pure client logic and blockout data; C-7).
   - `lune run client_demo <build|combat|icons|minimap> <out>`: headless client scene from the real sim and client API, for `render_scene` (C-15).
   - `lune run mesh_materials`: regenerates `place/MeshMaterials.model.json` from the mesh manifest (SurfaceAppearances game scripts can't set; C-103). `lune run test_client MeshMaterials` fails while it is stale.
+  - `lune run export_ground [mapId | all] [outDir]`: each named map's drawn ground (heights every 4 studs, ground types, features, water, deposits) as `assets/maps/<name>/ground.json`, for the models stream to bake mesh tiles (C-167, `docs/contracts/map-ground.md`).
   - `lune run render_scene <dump> <png>`: top-down PNG of a client scene dump (`ReplicatedStorage.FtggClientDebug:Invoke("scene")` in a Studio playtest; C-10).
   - `lune run bench`: flow field benchmark (results in `docs/progress/sim.md`).
   - `lune run debug_map [seed | mapId]`, `lune run debug_flowfield`: debug images in `debug_out/` (gitignored); `debug_map map:crossroads` renders a registry map (S-15).

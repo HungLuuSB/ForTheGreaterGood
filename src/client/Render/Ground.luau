@@ -7,6 +7,9 @@
 --   "parts"    anchored columns, one height per cell: cells merge into
 --              rectangles of equal height inside 8 × 8-cell blocks, so a flat
 --              map is a checkerboard of 64-stud tiles
+-- A named map with baked mesh ground in the models stream's manifest
+-- (C-167, docs/contracts/map-ground.md) draws those tiles instead
+-- (Render/MeshGround), the terrain then holding only the water.
 -- Units are placed on the smooth surface either way (World.groundY).
 -- Materials follow the sim's terrain types, or a hand-made map's features
 -- (`feature`, e.g. Normandy.feature: hedgerows, roads, bridges); its house
@@ -16,6 +19,8 @@ local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
 local CoreTerrain = require("../Core/Terrain")
 local RenderTerrain = require("./Terrain")
+local GroundMeshes = require("../Core/GroundMeshes")
+local MeshGround = require("./MeshGround")
 
 local Ground = {}
 
@@ -191,7 +196,9 @@ local function buildHouses(layers: Layers.Layers, feature: CoreTerrain.Feature, 
 	return n
 end
 
-function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?, feature: CoreTerrain.Feature?): Folder
+-- `mapId`: a named map with baked mesh ground (Core/GroundMeshes, C-167)
+-- draws its tiles, and the terrain only its water.
+function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?, feature: CoreTerrain.Feature?, mapId: string?): Folder
 	mode = mode or Ground.MODE
 	local old = workspace:FindFirstChild("Map")
 	if old then
@@ -202,7 +209,19 @@ function Ground.build(layers: Layers.Layers, mode: ("terrain" | "parts")?, featu
 	local last: { [string]: any } = { mode = mode, ground = mode } -- `ground` stays: Terrain's build stats bring their own `mode`
 	Ground.last = last
 	local t0 = os.clock()
-	if mode == "parts" then
+	local baked = if mode ~= "parts" then GroundMeshes.entryFor(mapId) else nil
+	if baked then
+		last.ground = "mesh"
+		last.parts = 0
+		task.spawn(function()
+			RenderTerrain.build(layers, feature, true) -- the water
+			local stats = MeshGround.build(baked :: any, folder)
+			if Ground.last == last then
+				last.mesh = stats
+				last.seconds = os.clock() - t0
+			end
+		end)
+	elseif mode == "parts" then
 		RenderTerrain.clear()
 		last.parts = buildParts(layers, folder)
 		last.seconds = os.clock() - t0
