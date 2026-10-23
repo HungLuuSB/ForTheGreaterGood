@@ -15,6 +15,7 @@ local World = require("./World")
 local NetIn = {}
 
 local EK = Schema.EventKind
+local SF = Schema.StrategicFlag
 
 -- Sim tick of a message from its wire tick; also advances world.latestTick.
 local function stamp(world: World.World, wireTick: number, now: number): number
@@ -98,6 +99,8 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 		elseif kind == EK.DEATH then
 			local id = e.unitId :: number
 			world.shields[id] = nil
+			world.idle[id] = nil
+			world.lastShot[id] = nil
 			local u = world.units[id]
 			if u then
 				local vx, vz = 0, 0
@@ -165,9 +168,20 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
 			local x, z = g:decode(e.cell :: number, 128, 128)
 			table.insert(world.alertQueue, { kind = e.alert :: number, x = x, z = z, defIndex = e.defIndex or 0, tick = tick })
+		elseif EK.IDLE ~= nil and kind == EK.IDLE then
+			-- one of this player's builders or factories became idle or busy (S-136)
+			world.idle[e.unitId :: number] = if e.idle then true else nil
 		elseif kind == EK.CHEAT_RESULT then
 			-- the answer to this player's cheat command (protocol 27, S-102)
 			table.insert(world.cheatResults, e)
+		elseif EK.DOME ~= nil and kind == EK.DOME then
+			-- a dome whose generator this player doesn't have (protocol 29, S-122):
+			-- its centre, radius and state, whatever the team sees (C-145)
+			local x, z = world.grid:decode(e.cell, e.offX, e.offZ)
+			world.remoteDomes[e.unitId :: number] = { x = x, y = (e.y :: number) / Schema.Y_SCALE, z = z, radius = e.radius :: number, charge = (e.charge :: number) / 255, flags = e.shieldFlags or 0 }
+		elseif EK.DOME_GONE ~= nil and kind == EK.DOME_GONE then
+			-- (when the generator came into view, its ENTER and SHIELD take over)
+			world.remoteDomes[e.unitId :: number] = nil
 		elseif kind == EK.SHIELD then
 			-- a generator's dome (protocol 24, S-79): charge and up / recharging
 			world.shields[e.unitId :: number] = { charge = (e.charge :: number) / 255, flags = e.shieldFlags :: number }
@@ -255,6 +269,11 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 			u.queue = r.queue
 			u.queueProgress = (r.queueProgress or 0) / 255
 		end
+		if r.producing ~= nil then
+			-- an allied factory's current item (protocol 27, S-103)
+			u.producing = r.producing
+			u.producingProgress = (r.producingProgress or 0) / 255
+		end
 		if r.fireState then
 			u.fireState, u.moveState = r.fireState, r.moveState
 		end
@@ -292,26 +311,47 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 		end
 		local x, z = g:decode(r.cell, 128, 128)
 		local old = before[r.unitId] or u
+		-- own, allied and seen units keep their type and their last tactical
+		-- detail out of the camera area (C-161): still drawn, selectable and
+		-- buildable from; and their exact spot while they stay in its cell
+		-- (a strategic record carries only the cell)
+		local typed = r.icon > 0 and bit32.band(r.flags, SF.RADAR_ONLY + SF.SONAR_ONLY + SF.GHOST) == 0
+		local keep = if typed and old and old.defIndex == r.icon then old else nil
+		if keep and g:encode(keep.x, keep.z) == r.cell then
+			x, z = keep.x, keep.z
+		end
 		local movedTick = if old == nil then nil elseif old.x ~= x or old.z ~= z then tick else old.movedTick
 		world.units[r.unitId] = {
 			id = r.unitId,
 			tier = "strategic",
 			team = r.team,
-			defIndex = nil,
+			defIndex = if typed then r.icon else nil,
 			icon = r.icon,
 			flags = r.flags,
 			x = x,
 			z = z,
-			alt = 0,
-			heading = 0,
+			sx = if old and old.tier ~= "tactical" then old.sx else nil, -- the drawn spot carries over (C-151)
+			sz = if old and old.tier ~= "tactical" then old.sz else nil,
+			gx = if old and old.tier ~= "tactical" then old.gx else nil,
+			gz = if old and old.tier ~= "tactical" then old.gz else nil,
+			alt = if keep then keep.alt else 0,
+			heading = if keep then keep.heading else 0,
 			snaps = {},
 			lastTick = tick,
 			movedTick = movedTick,
-			health = nil,
-			build = nil,
-			state = 0,
+			health = if keep then keep.health else nil,
+			shownHealth = if keep then keep.shownHealth else nil,
+			build = if keep then keep.build else nil,
+			state = if keep then keep.state else 0,
 			weapon = 0,
-			aim = {},
+			aim = if keep then keep.aim else {},
+			queue = if keep then keep.queue else nil,
+			queueProgress = if keep then keep.queueProgress else nil,
+			fireState = if keep then keep.fireState else nil,
+			moveState = if keep then keep.moveState else nil,
+			ammo = if keep then keep.ammo else nil,
+			maxAmmo = if keep then keep.maxAmmo else nil,
+			stock = if keep then keep.stock else nil,
 		}
 	end
 end

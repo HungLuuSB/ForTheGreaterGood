@@ -16,6 +16,7 @@
 -- Targets are processed in the order their first builder appears in
 -- world.ids, so results are deterministic.
 
+local Blockouts = require("@shared/Defs/Blockouts/Registry")
 local Defs = require("@shared/Defs/Defs")
 local Grid = require("@shared/Grid/Grid")
 local Air = require("./Air")
@@ -86,7 +87,8 @@ end
 --------------------------------------------------------------------------------
 
 -- BUILD from player-owned `ids`: mobile builders get a pending structure at
--- (x, z); factories (complete structures with buildOptions) queue the unit.
+-- (x, z); factories (structures with buildOptions) queue the unit, unfinished
+-- ones too: they start producing when finished (S-138, client request 63).
 function Build.commandBuild(sim: Types.Sim, ids: { number }, defIndex: number, x: number, z: number, facing: number)
 	local w = sim.world
 	local b = sim.build
@@ -100,7 +102,7 @@ function Build.commandBuild(sim: Types.Sim, ids: { number }, defIndex: number, x
 			continue -- can't build that
 		end
 		if d.domain == "structure" then
-			if w.buildProgress[id] >= 1 and target.domain ~= "structure" then
+			if target.domain ~= "structure" then
 				local q = b.queue[id] or {}
 				if #q < BuildState.MAX_QUEUE then
 					table.insert(q, defIndex)
@@ -285,17 +287,60 @@ function Build.countBuilt(sim: Types.Sim, id: number)
 	Alerts.built(sim, id) -- BUILD_DONE (S-68)
 end
 
+-- A factory's build pad in its model space (x right, z back: forward is -z;
+-- rig.md 8): the blockout's `buildpad` attachment (C-152), else the middle
+-- of the front edge. Cached per def.
+local padCache: { [string]: { number } } = {}
+function Build.padOffset(d: Defs.UnitDef): (number, number)
+	local c = padCache[d.id]
+	if c == nil then
+		c = { 0, -halfSize(d) }
+		local bp = (Blockouts :: any)[d.id]
+		for _, a in (bp and bp.attachments) or {} do
+			if a.name == "buildpad" then
+				c = { a.at[1], a.at[3] }
+			end
+		end
+		padCache[d.id] = c
+	end
+	return c[1], c[2]
+end
+
+-- World position of factory `factory`'s build pad. The client turns a model
+-- by heading + π about +Y (CFrame.Angles), so model (ax, az) lands at
+-- (-ax cos h - az sin h, ax sin h - az cos h) from the factory's centre.
+function Build.padPosition(sim: Types.Sim, factory: number): (number, number)
+	local w = sim.world
+	local ax, az = Build.padOffset(def(sim, factory))
+	local h = w.heading[factory]
+	local c, s = math.cos(h), math.sin(h)
+	return w.posX[factory] - ax * c - az * s, w.posZ[factory] + ax * s - az * c
+end
+
+-- A finished unit appears on its factory's build pad, where the client drew
+-- it in production (S-133, client request 61), facing the exit. Units that
+-- move on the ground or water then drive straight out through the factory's
+-- own footprint (BuildState.exiting, Movement) to EXIT_ROLL past the
+-- front edge, then take the factory's orders.
+local padBusy: { [number]: boolean } = {}
+
 local function produce(sim: Types.Sim, factory: number, unitDef: Defs.UnitDef)
 	local w = sim.world
 	local fd = def(sim, factory)
 	local h = w.heading[factory]
 	local fx, fz = math.sin(h), math.cos(h)
-	local out = halfSize(fd) + Grid.CELL_SIZE
-	local x, z = w.posX[factory] + fx * out, w.posZ[factory] + fz * out
+	local x, z = Build.padPosition(sim, factory)
 	local id = Spawn.unit(sim, unitDef.id, w.owner[factory], x, z, h)
 	Stockpile.empty(sim, id) -- produced units start empty and fill up (S-47)
 	if sim.nav and unitDef.domain ~= "structure" then
-		local ex, ez = x + fx * Build.EXIT_ROLL, z + fz * Build.EXIT_ROLL
+		-- from the pad along the heading to EXIT_ROLL past the factory's front edge
+		local _, az = Build.padOffset(fd)
+		local roll = halfSize(fd) + az + Grid.CELL_SIZE + Build.EXIT_ROLL
+		local ex, ez = x + fx * roll, z + fz * roll
+		local p = sim.nav.profiles[w.defIndex[id]]
+		if p and not p.air then
+			sim.build.exiting[id] = { w.posX[factory], w.posZ[factory], halfSize(fd), ex, ez, factory }
+		end
 		if Build.producedHook then
 			Build.producedHook(sim, factory, id, ex, ez) -- exit roll, then the rally order (Orders)
 		else
@@ -445,10 +490,29 @@ function Build.step(sim: Types.Sim)
 	-- 2. missile stockpiles (S-47) first: refills have priority in a stall (S-66)
 	Stockpile.step(sim, demandS, demandP, priorityS, priorityP)
 
+	-- a factory waits while a unit it made still stands on its build pad
+	-- (within twice its radius: the next one would appear on top of it; S-133,
+	-- the user: a stuck unit holds its factory)
+	table.clear(padBusy)
+	for id, e in b.exiting do
+		local f = e[6]
+		if w.slot[f] ~= nil and w.posX[f] == e[1] and w.posZ[f] == e[2] and not padBusy[f] then
+			local px, pz = Build.padPosition(sim, f)
+			local p = sim.nav and sim.nav.profiles[w.defIndex[id]]
+			local r = 2 * (if p then p.radius else 2) + 1
+			if (w.posX[id] - px) ^ 2 + (w.posZ[id] - pz) ^ 2 < r * r then
+				padBusy[f] = true
+			end
+		end
+	end
+
 	-- 2b. progress, spending, demand
 	for _, t in targets do
 		local bp = power[t]
 		local frame = w.buildProgress[t] < 1
+		if not frame and padBusy[t] then
+			continue
+		end
 		local itemDef = if frame then def(sim, t) else sim.defs.unitByIndex[(b.queue[t] :: { number })[1]]
 		if not frame and (b.progress[t] or 0) >= 1 - 1e-9 then
 			-- finished item waiting at the exit for room under the unit cap

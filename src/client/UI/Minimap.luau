@@ -1,9 +1,10 @@
 --!strict
 -- PLACEHOLDER minimap (guide 15.7, 15.8), bottom left. Terrain tiles from
 -- the map's layers, units as their icons (the strategic layer's, smaller:
--- C-122; radar blips stay dots) refreshed at the strategic rate, the camera
--- outline; left click moves the camera, right click orders the selection
--- there (Shift queues). Reads and calls only the client API (C-5).
+-- C-122; radar blips stay dots) refreshed at the strategic rate, the
+-- camera's view as the ground trapezoid the screen shows (C-164); left click
+-- or drag moves the camera, right click orders the selection there (Shift
+-- queues). Reads and calls only the client API (C-5).
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -28,6 +29,7 @@ export type UI = {
 	fogContent: Content?,
 	dots: Frame,
 	camera: Frame,
+	edges: { Frame }, -- the view trapezoid's four lines (C-164)
 	pool: { Frame }, -- blip dots
 	glyphs: { Glyph.G }, -- unit icons
 	depositList: { CoreDeposits.Deposit },
@@ -89,6 +91,8 @@ function MinimapUI.new(api: Api.Api): UI
 	fog.Visible = false
 	fog.Parent = map
 	local dots = layer("Dots", 3)
+	-- the camera's view: the ground trapezoid the screen shows (C-164), four
+	-- thin lines; a box from the cell rectangle until the camera has corners
 	local camera = Instance.new("Frame")
 	camera.Name = "Camera"
 	camera.BackgroundTransparency = 1
@@ -98,8 +102,36 @@ function MinimapUI.new(api: Api.Api): UI
 	camStroke.Thickness = 1
 	camStroke.Parent = camera
 	camera.Parent = map
+	local edges: { Frame } = {}
+	for i = 1, 4 do
+		local e = Instance.new("Frame")
+		e.Name = "ViewEdge" .. i
+		e.AnchorPoint = Vector2.new(0.5, 0.5)
+		e.BackgroundColor3 = Color3.new(1, 1, 1)
+		e.BorderSizePixel = 0
+		e.ZIndex = 4
+		e.Visible = false
+		e.Parent = map
+		edges[i] = e
+	end
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 
+	-- left click or drag: the camera goes there (and follows the drag, C-164)
+	local dragging = false
+	local function worldAt(pos: Vector3 | Vector2): (number, number)
+		local rel = Vector2.new(pos.X, pos.Y) - map.AbsolutePosition
+		return Minimap.toWorld(api.world.grid, rel.X / map.AbsoluteSize.X, rel.Y / map.AbsoluteSize.Y)
+	end
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			api.actions.focusCamera(worldAt(input.Position))
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
 	map.InputBegan:Connect(function(input)
 		local world = api.world
 		if not world.joined then
@@ -110,17 +142,18 @@ function MinimapUI.new(api: Api.Api): UI
 		if not (isLeft or isRight) then
 			return
 		end
-		local rel = Vector2.new(input.Position.X, input.Position.Y) - map.AbsolutePosition
-		local x, z = Minimap.toWorld(world.grid, rel.X / map.AbsoluteSize.X, rel.Y / map.AbsoluteSize.Y)
+		local x, z = worldAt(input.Position)
 		if isLeft then
+			dragging = true
 			api.actions.focusCamera(x, z)
 		else
 			local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
-			api.actions.smartOrder(x, z, nil, shift)
+			local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+			api.actions.smartOrder(x, z, nil, shift, ctrl)
 		end
 	end)
 
-	return { gui = gui, map = map, terrain = terrain, fog = fog, fogContent = nil, dots = dots, camera = camera, pool = {}, glyphs = {}, depositList = {}, depositDots = {}, icons = Icons.table(api.world.defs), nextDots = 0, pings = {} }
+	return { gui = gui, map = map, terrain = terrain, fog = fog, fogContent = nil, dots = dots, camera = camera, edges = edges, pool = {}, glyphs = {}, depositList = {}, depositDots = {}, icons = Icons.table(api.world.defs), nextDots = 0, pings = {} }
 end
 
 local function tileColor(tile: Minimap.Tile): Color3
@@ -212,9 +245,27 @@ function MinimapUI.step(ui: UI, api: Api.Api, now: number)
 			s.Transparency = t
 		end
 	end
-	local u0, v0, u1, v1 = Minimap.cameraBox(world.grid, api.state.camera.rect)
-	ui.camera.Position = UDim2.fromScale(u0, v0)
-	ui.camera.Size = UDim2.fromScale(u1 - u0, v1 - v0)
+	local corners = api.state.camera.corners
+	if corners then
+		-- the trapezoid: each edge a 1-px line from corner to corner
+		ui.camera.Visible = false
+		local s = Minimap.cameraShape(world.grid, corners)
+		local size = ui.map.AbsoluteSize
+		for i = 1, 4 do
+			local a, b = i * 2 - 1, (i % 4) * 2 + 1
+			local ax, ay, bx, by = s[a] * size.X, s[a + 1] * size.Y, s[b] * size.X, s[b + 1] * size.Y
+			local e = ui.edges[i]
+			e.Position = UDim2.fromOffset((ax + bx) / 2, (ay + by) / 2)
+			e.Size = UDim2.fromOffset(math.sqrt((bx - ax) ^ 2 + (by - ay) ^ 2) + 1, 1)
+			e.Rotation = math.deg(math.atan2(by - ay, bx - ax))
+			e.Visible = true
+		end
+	else
+		local u0, v0, u1, v1 = Minimap.cameraBox(world.grid, api.state.camera.rect)
+		ui.camera.Position = UDim2.fromScale(u0, v0)
+		ui.camera.Size = UDim2.fromScale(u1 - u0, v1 - v0)
+		ui.camera.Visible = true
+	end
 	if now < ui.nextDots then
 		return
 	end

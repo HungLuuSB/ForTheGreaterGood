@@ -7,6 +7,7 @@ local Nav = require("../Sim/Nav")
 local Quadtree = require("../Sim/Path/Quadtree")
 local Replay = require("../Sim/Replay")
 local Sim = require("../Sim/Sim")
+local Spawn = require("../Sim/Spawn")
 local World = require("../Sim/World")
 local RunAll = require("./RunAll")
 
@@ -184,6 +185,45 @@ return function(t: RunAll.Context)
 			local cx = g:cellAt(sim.world.posX[id], 0)
 			t.expect(cx > g.cellsX // 2 + 1, `unit {id} is still west of the wall`)
 		end
+	end)
+
+	t.test("a unit blocked along a structure slides past it at speed, no crawl (S-135, seed 43's Mason)", function()
+		-- a Mason leaves a plant and is sent north-west at once, past a second
+		-- plant offset by 16 studs: its straight line hits that plant's east
+		-- face, so it slides along it (it crawled at 0.8 studs/s for 23 s)
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64" })
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 0, 0, math.pi / 2)
+		Spawn.unit(sim, "ord_vehplant", 1, -16, 32, math.pi / 2)
+		Spawn.unit(sim, "ord_sovereign", 1, -200, -200)
+		local function submit(cmd: Schema.Command)
+			assert(Sim.submit(sim, 1, encode(cmd)))
+		end
+		submit({ cmdType = Schema.CmdType.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.ord_mason.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
+		local g = (sim.nav :: Nav.Nav).grid
+		local u, slow, start, took = 0, 0, 0, nil
+		for i = 1, 4000 do
+			sim.eco.accounts[1].supply.stored = 1000
+			sim.eco.accounts[1].power.stored = 1000
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "PRODUCED" and u == 0 then
+					u, start = e.unit, i
+					local cell, ox, oz = g:encode(-116, 116)
+					submit({ cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = { u }, cell = cell, offX = ox, offZ = oz })
+				end
+			end
+			if u ~= 0 and i > start + 2 then
+				if sim.world.orderId[u] ~= 0 and sim.world.speed[u] < 2 then
+					slow += 1
+				end
+				if sim.world.orderId[u] == 0 then
+					took = i - start
+					break
+				end
+			end
+		end
+		t.expect(took ~= nil and took < 220, `it got there in {took} ticks (529 before)`)
+		t.expect(slow < 15, `ticks under 2 studs/s on the way: {slow} (354 before)`)
 	end)
 
 	t.test("one move order shares one field", function()

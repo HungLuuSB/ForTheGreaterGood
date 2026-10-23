@@ -1861,3 +1861,264 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Starts:** standard starts are unchanged (mobile units don't occupy cells).
   - **AI and slow suites:** the AI spec and the fairness tests pass (mirror split 5–7).
   - `Skirmish.spec`'s seed-1 match changed: Chaos raids Order down to 2 extractors by minute 5, Order's army never reaches its first wave (1,700 of 2,400), and Chaos wins at 9.9 min. The test wanted a wave from a loser lasting past 8 minutes; the bar is now 10. Under review: it's the Order-side weakness item 1 is about, shown by one seed.
+
+## S-125 — A manual target stays while it lives, unseen too; when it dies the unit picks its own at once (client request 57, the user) (2026-10-23)
+
+- **Asked:**
+  1. The manual target was dropped while it lived. Two Radiances ordered onto a Juggernaut inside a Phalanx, with a Carapace in front, switched to a dome generator after a few shots. The ordered target must stay while it lives, even when every shot is stopped by a dome.
+  2. The user: "when the unit I chose dies, it should switch back to auto-targeting."
+- **Cause (1):** the Juggernaut killed the Lancer spotter, the team stopped seeing it, and Targeting treated an unknown manual target like one out of range: the weapons searched and took a generator. Domes had nothing to do with it.
+- **Built:**
+  - **Last known position:** while a manual target lives, the unit remembers where the team last knew it (`OrdersState.manualX / Z`; hashed).
+  - **Unseen target:** while the target lives but is unknown (`manualBlind`) and that position is within a weapon's range, weapons that can shoot a point (ballistic, beam, hitscan) fire at it, as at an attack-ground point. Beams drain the domes in the way and go through when they drop (S-123). Other weapons hold. None takes another target. Farther than its range, the weapon searches as for a seen target out of range (S-115). The S-115 test, a tank driving away from its manual target, needs this.
+  - **Out of range:** a known target out of range still lets the unit pick its own (S-115).
+  - **Target dies:** the manual target is dropped (`Orders.dropManual`) and every weapon of the unit searches on that tick, not on its next staggered search tick.
+- **Tests:** `Defenses.spec`:
+  - a Radiance ordered onto a Juggernaut keeps it after the spotter dies: it never switches to the visible Ravager, and keeps firing blind;
+  - when the Juggernaut dies, the manual target is gone and the tower is on the Ravager the next tick.
+
+## S-126 — Fix: a beam or hitscan shot at a destroyed structure's ghost crashed the tick (client request 57's repro) (2026-10-23)
+
+- **Found by the client:** in request 57's repro, after the ordered tank died the Radiances took the Phalanx generator, then the Phalanx died. Weapons that can fire at radar contacts may target a remembered structure's ghost, alive or not (D101). Since S-113 Radiance is one, and its next beam called `hitscanHits` on the dead unit: `Weapons:106: attempt to index nil with 'radius'`. The whole server tick crashed.
+- **Fixed:** a hitscan or beam shot at a target that no longer exists is a miss at the believed spot (FIRE hit = false), like any miss.
+- **Test:** `Defenses.spec`: a Radiance with radar fires at a destroyed generator's ghost for 20 s without an error (the test fails without the fix).
+
+## S-127 — Units don't auto-target structure ghosts (the user) (2026-10-23)
+
+- **Asked:** "Make the unit not auto target ghost radar; a user can manually tell them to shoot at ghost radar, but by default they don't." Asked which contacts: **ghosts only** (remembered structures not in sight); radar blips stay as they were.
+- **Changed** (`Targeting`):
+  - The automatic search never takes a ghost, and a weapon's kept target is dropped once it becomes a ghost (an unseen remembered structure, alive or dead).
+  - An attack order's target or a manual target may still be one (`acceptable(..., manual)`).
+  - A manual target that is a ghost of a structure that died unseen stays valid while the team remembers it, at the ghost's spot; it was dropped as "dead" before.
+  - Radar contacts (blips) are unchanged: still targets for weapons that can fire at radar.
+- **Effect:** artillery and Radiance no longer shell remembered structures on their own; they do on an order. The AI gives no attack orders on structures, so its artillery fires only at what its team sees or tracks.
+- **Tests:** `Defenses.spec`:
+  - a Radiance never keeps or picks a living generator once it is only a ghost;
+  - at a destroyed generator's ghost it doesn't fire on its own, and on an attack order it fires, each shot a miss.
+  - `Air.spec`'s two ghost-bombing tests now order the bomber onto the ghost (it bombed ghosts on its own before).
+
+## S-128 — ASSIST a builder: help with what it builds (the user, playtesting) (2026-10-23)
+
+- **Asked:** any unit that can build can help build units and structures (not stockpiles), and the ASSIST command on a worker makes the assistant follow its leader and help with its building.
+- **Before:** helping a frame or a factory's production was already open to every mobile builder (REPAIR, or GUARD on the frame or factory; stockpiles were never assistable). GUARD on another builder only followed it.
+- **Built** (`Orders`, the guard order): a unit with build power guarding (ASSIST) a mobile builder:
+  - helps with what that builder is doing: its frame, or the factory production it is assisting (`Build.commandAssist`, which walks it into range);
+  - never follows the leader into repairs or stockpiles;
+  - when the leader's job ends, follows it again, and helps with the next one.
+- **Wire:** nothing new; ASSIST is the existing GUARD command on a builder.
+- **Tests:** `Orders.spec`: a Mason assisting another Mason builds its generator with it (finished in under 80% of the time alone), then follows it when it drives off.
+
+## S-129 — WELCOME lists every team's ally team (client request, after S-128) (2026-10-23)
+
+- **Asked:** the client knew only its own ally team, so in team games a right-click on an ally's unit sent ATTACK. With every team's ally team it treats allies as friends: right-click is GUARD / assist, and their health bars and minimap dots get friend colours.
+- **Built:** protocol 30. WELCOME ends with `teamCount u8, allyTeam u8 × teamCount`: team 1 first, 0 for a team not in the match. Decoded as `teamAllies`. Spectators get it too.
+- **Tests:** `Schema.spec` pins the new bytes; `NetOut.spec`: player 3's WELCOME in a 2v2 lists `{ 1, 2, 1, 2 }`.
+
+## S-130 — Radar blips orbit the real unit, like BAR (client request 59, the user) (2026-10-23)
+
+- **Asked:** the user wanted radar blips to circle around the real unit, as in BAR, not drift between random points. Guide 11.4's rule stays: only the wobbled position is ever sent.
+- **Built:** `Sensors.wobble` gives offset = radius × (cos θ, sin θ), θ = phase0 + dir × 2π × (tick mod 90) / 90.
+  - One turn takes `Sensors.ORBIT_TICKS` = 90 ticks (6 s). It replaces `WOBBLE_PERIOD`.
+  - phase0 and dir (±1) are a stateless hash of (unit, observer), so every player of a team sees the same orbit.
+  - The radius is unchanged: the observer's best radarError, or the trackError when tracked, scaled by Pinpointers.
+- **Effects:**
+  - Targeting still aims at the wobbled point, so radar-fired artillery still misses at low precision. Fog.spec reports a direct-hit rate of 1 in 28 on radar.
+  - A blip now always sits exactly one radius from the unit. A sharp player can read the true position as the centre of the circle. The user accepted that by choosing BAR's behaviour.
+- **Tests:**
+  - `Fog.spec`: the blip stays on the circle, moves smoothly, turns one way once every 90 ticks and repeats; units orbit both ways.
+  - `EW.spec` (hysteresis): the far Wasp's bearing moved so the two orbits keep swapping which one looks closer.
+  - `Skirmish.spec`: seed 1's Order now falls at 10.3 min without a wave, so the loser-attacks bar moves from 10 to 11 min.
+- **Guide 11.4:** updated.
+
+## S-131 — Drawn blips orbit at 1.5 studs; the radar error moves to a hidden aim point (client request 60, the user) (2026-10-23)
+
+- **Asked:** after checking S-130 in Studio, the user said "that radius is huge, in BAR, just 1-2 studs". They chose:
+  - a drawn (sent) blip that orbits about 1.5 studs from the real unit;
+  - radar-fired weapons that aim at a separate hidden point at the radar error, so they miss as before.
+- **Built:**
+  - `Sensors.blipOffset` is the drawn orbit: radius `Sensors.BLIP_ORBIT` = 1.5, or the radar error if smaller. It uses the same 90-tick turn and a salted (unit, observer) hash, so its phase and direction are its own.
+  - `Sensors.wobble` stays the aim orbit at the radar error or track error, scaled by Pinpointers. It is exactly S-130's orbit, so aiming is unchanged.
+  - `knownPosition(sim, team, id)` returns the drawn blip. NetOut and the player view use it.
+  - `knownPosition(..., true)` and `knownTarget` return the aim point. Targeting, Weapons, Air, Orders, Commands and the skirmish AI use them.
+- **Relaxes guide 11.4's "never the true position":** the sent position is now within 1.5 studs of the true one. The user accepted that. The aim point is never sent. Guide 11.4, 11.2 (Pinpointers), 10 (net tiers) and the bomber line are updated, and D67's wobble line points here.
+- **Tests:**
+  - `Fog.spec` (new test): the drawn blip stays at BLIP_ORBIT, repeats every 90 ticks, is never wider than the radar error, and comes 10 or more studs from the aim point.
+  - `Air`, `EW`, `Knowledge`, `Pinpoint` and `Tracking` specs now measure the aim point (`knownPosition(..., true)`).
+  - `NetOut.spec`, homing drift: the worst uncorrected torpedo drift fell from over 40 to 36.6 studs, because the sonar blips the client sees now sit on the subs. The bar is now 30. Corrections still cut it 3.5× (to 10.5).
+
+## S-132 — The Canyon, a hand-made map after BAR's Classic Glitters (the user) (2026-10-23)
+
+- **Asked:** the user sent the BAR map "Classic Glitters" (12 × 20, 2 teams): a 3D view, the colour texture, the heightmap and the metal-spot overview. They asked for a copy named The Canyon, "featuring harsh land, mountains".
+- **Built:** `map:canyon` (`Shared/Grid/Canyon`, in `MapRegistry.HANDMADE`).
+  - **Size:** 154 × 256 cells (1232 × 2048 studs), keeping the 12 : 20 shape. 256 cells is the grid's limit, so it can't be bigger.
+  - **Sides:** north (player 1) against south (player 2). The map is point-symmetric about the centre: every cell matches its twin at (-x, -z) exactly, because the south half is copied, not recomputed.
+  - **Mesas:** 18 traced from the reference heightmap's north half (pixel centres and radii in `Canyon.MESAS`), turned 180° for the south: 36 in all. Each is 48 studs high with irregular lobed outlines and a terraced cliff (a ledge at 60%) that no land unit climbs. A 5-stud apron of rough ground surrounds each foot. Jagged corner plateaus fill the north-west and south-east.
+  - **Badlands:** ROCK terrain (0.8–0.9 speed) over the two mesa belts, 3 studs above the open canyon floor. The floor is GRASS, so the client should draw it as pale desert ground.
+  - **Boulders:** 18 seeded outcrops (1–3 cells, +7 studs, impassable), each with its twin.
+  - **Deposits:** the reference has about 200 small metal spots. Ours are the same "glitter" at our economy's scale: value-2 deposits on a jittered grid every 160 studs over open ground, plus four value-4 home deposits round each start. That's 92 in all: 8 home and 84 glitter.
+- **Not a pixel copy:** only the reference's north half is traced. The south is its rotation, so lone mesas in the middle band sit a little differently from the original, whose two halves differ slightly.
+- **Tests:** `Canyon.spec`:
+  - size and starts;
+  - exact point symmetry;
+  - mesa tops high and cliffs closed to every land class;
+  - starts on the floor;
+  - deposit values, with every deposit and the other start reachable for WHEELED, TRACKED and HEAVY_TRACKED;
+  - determinism;
+  - slow: a 12-minute AI-vs-AI match. Both sides expanded (23 and 25 extractors), each sent 3 waves, and no command was rejected.
+
+## S-133 — Units leave from the build pad; a factory waits while its pad is taken (client request 61, the user) (2026-10-23)
+
+- **Asked:** "why the spawn point of the unit when finished building was too far off? It starts where its built". The client draws the unit in production on the factory's `buildpad` (C-152). The finished unit used to appear one cell outside the footprint (12+ studs past the pad) and visibly jumped. Then the user added: "in case of unit stuck, every plant must wait for no unit standing in the build pad to continue building".
+- **Built:**
+  - **Spawn:** `Build.padOffset(def)` reads the factory blockout's `buildpad` attachment (model space, forward = -Z), else the middle of the front edge. `Build.padPosition` turns it like the client does (heading + π about +Y). A produced unit appears there, facing the exit.
+  - **Exit:** ground and naval units get `BuildState.exiting[id] = { factory x, z, half size, exit x, z, factory }`. While it's set, Movement drives them straight at the exit point (EXIT_ROLL past the front edge, in line with the pad), through the factory's blocked cells, with no separation jostling, whatever their order. It ends once they are clear of the footprint on open ground, or 24 studs past it. A unit stopped inside still drives out. Then the factory's orders as before (S-95).
+  - **Aircraft:** they appear on the airfield's pad with no exit drive (air always fits).
+  - **Factory waits:** a factory makes no progress (and spends nothing) while a unit it made is within twice that unit's radius of its pad. A stuck unit holds its factory. Pausing for the whole drive out cost too much production, and the user asked only about the pad.
+- **Hashed:** `exiting` is in the BuildState hash.
+- **Tests:** `Build.spec`:
+  - a Lancer appears on the Vehicle Plant's pad at four headings and drives straight out of the door;
+  - a plant whose tank is held on the pad makes no progress, then builds again once it drives out;
+  - an aircraft appears on the airfield's pad.
+- **Side effect found:** the AI's timeline shifted. In seed 43, a Mason leaving the pad then crawled along a second plant's edge at 0.8 studs/s for about 20 s, and Order hard's nuke came at 28.2 min instead of 22.4 (the T2 extras test allows 30). That is a movement weakness (sliding along blocked cells at half speed, repeatedly). It's under review, not fixed here.
+- **Follow-up, the AI gives up unreachable build sites:** with S-133 the AI's timeline shifted, and on Coastline (seed 34) Order hard's footprint-2 Commander got walled in by generators. It sat in a 1-cell gap for 8 minutes trying to reach an airfield site, so no shipyard was ever built (`AI.spec`, naval test). The AI's site picker doesn't check reach, and its 2-cell lanes only hold between buildings of one size.
+  - Now a builder that gets no closer than 8 studs to its build site in `Skirmish.STALL_TICKS` (20 s) is stopped. The site is left alone for `BAD_SITE_TICKS` (3 min) through the brain's claims, and `brain.gaveUp` counts these.
+  - The shipyard then comes at 5.0 min and the fleet by 6.2.
+
+## S-134 — Radar / sonar blips are sent at their unit's cell; the client draws the orbit (client follow-up to S-131) (2026-10-23)
+
+- **Found by B in Studio:** strategic records carry only a cell (`cell u16`, no offsets), so S-131's 1.5-stud drawn orbit never reached the client. Blips sat still on cell centres, and one near a cell edge hopped between cells as the orbit crossed the edge. The client now circles blips itself: 1.5 studs, 6 s a turn, phase and direction from the id (C-154).
+- **Changed:** `Sensors.blipOffset` and `BLIP_ORBIT` are gone. `knownPosition` returns the true position for RADAR / SONAR contacts, so NetOut sends the unit's own cell. `knownPosition(..., true)` and `knownTarget` still return the hidden aim point (S-130's orbit at the radar error), so targeting is unchanged.
+- **What a player learns:** the cell, within half a cell (about 5.7 studs) of the unit. S-131's drawn orbit gave the same, since it was sent as a cell anyway, plus the edge hops. Guide 11.4 and the net tiers line are updated.
+- **Tests:** `Fog.spec`: a radar contact's drawn position is the unit's, and its aim point is more than 10 studs off.
+
+## S-135 — Blocked units slide along structures at speed (the user's approval, from S-133's review item) (2026-10-23)
+
+- **The crawl:** a unit whose next step is blocked slid along the free axis, but Movement halved its speed every such tick. Steering re-accelerated it by one tick's worth each time, so it settled near `accel × DT`, under 1 stud/s, for as long as it touched the wall.
+  - It mattered when a unit kept heading into a structure. The example: a straight-line ("shortcut") order issued while the unit was still inside its factory, which never asks for a flow field because the slow slide still counts as progress.
+  - Seen with S-133 in seed 43: the first Mason crawled along a second plant's east face for 23 s, and the AI's T2 came about 3 minutes late.
+- **Fix:** a blocked unit slides along the axis its heading leans to first (then the other), by at least `SLIDE_MIN` (half) of a full step, and keeps its speed. Only when both axes are blocked does it stop.
+- **Measured** (`Movement.spec`, seed 43's geometry: a Mason leaving a plant, sent north-west past a second plant offset 16 studs):
+  - arrival 529 → 160 ticks;
+  - ticks under 2 studs/s 354 → 0;
+  - in the AI match, that Mason starts the T2 plant at 0.86 min (1.27 before, 0.84 before S-133).
+
+## S-136 — IDLE events for the player's builders and factories (client request 62) (2026-10-23)
+
+- **Asked:** the client needs idle builder and factory counts, a key to cycle idle builders and an icon over them, like BAR. It can't tell an idle builder from one that is repairing, assisting, reclaiming or guarding. B's follow-up: a per-unit bit on tactical records misses off-camera units, and BAR counts and jumps to all of them.
+- **Built:** protocol 31, event `IDLE 25`: `unitId u16, idle u8`, owner only, on camera or not.
+  - `NetOut.isIdle`: a factory with an empty queue; a builder with no order of its own (automatic reactions don't count) and no build, assist, repair or reclaim work.
+  - Every `NetOut.IDLE_EVERY` (5) ticks, each player's finished units with `buildOptions` are checked. A change is sent, tracked by generation in `PlayerNet.sentIdle`, so a reused ID starts busy.
+  - On join / reconnect (forceFull) every idle one is sent again. Units never reported are busy.
+- **Not chosen:** a STATES bit. It only reaches units in the tactical tier.
+- **Tests:**
+  - `Schema.spec`: golden bytes `19 02 01 01`, and event kind 26 is now the unknown one.
+  - `NetOut.spec`: an off-camera Mason and plant are reported idle, owner only. Given work they go busy, and idle again when done. A late join hears of both.
+
+## S-137 — Group moves at the slowest unit's speed: command flag GROUP (the user's queue item 3) (2026-10-23)
+
+- **Asked:** a move or fight order given with a modifier keeps the group together at its slowest unit's speed (BAR's ctrl-move). The key was agreed with B: Ctrl, which is free on right-click and in the move / fight command modes.
+- **Built:** protocol 31 (with S-136): `Schema.CmdFlag.GROUP = 4`, valid with QUEUE and LINE.
+  - On MOVE, FIGHT and PATROL, `Orders.give` sets each order's `speedCap` to the lowest `maxSpeed` among the selection's ground units. Structures and aircraft are left out, so aircraft fly as usual.
+  - While that order is the started head, Movement caps the unit's top speed (after terrain) at it.
+  - The cap is hashed with the order. Other commands ignore the flag.
+- **Not done:** faster units don't wait for stragglers at the start. Units start where they stand, at one speed, so the group arrives as it left. BAR's ctrl-move behaves about the same.
+- **Tests:**
+  - `Orders.spec`: a Herald (60 studs/s) and a Lancer (28). Without the flag the Herald arrives far ahead. With it, it never passes 28 studs/s and they arrive within 30 ticks of each other, while a Falcon in the selection flies at its own speed.
+  - `Schema.spec`: golden bytes of a GROUP + QUEUE move; flag bit 8 is reserved.
+
+## S-138 — Queue units in a factory still being built (client request 63, the user) (2026-10-23)
+
+- **Asked:** "Add the ability to queue inside the factory while it being built". `Build.commandBuild` used to drop a queue order on an unfinished factory.
+- **Built:**
+  - An unfinished factory takes BUILD queue items, and REPEAT as before. Its queue is sent in the QUEUE owner field like any factory's.
+  - It produces nothing and spends nothing until finished: the builders loop skips unfinished factories, and assistants build the frame. It starts on the queue the tick it's finished.
+  - **CANCEL:** while a factory's queue isn't empty, CANCEL drops queue items (`value` 1-based, 0 = all) and leaves the frame. A CANCEL with an empty queue cancels the frame as before (S-35). So on a frame with a queue, the first CANCEL 0 clears the queue and the second removes the frame. net.md section 9 says so.
+- **Tests:** `Build.spec`: a Vehicle Plant frame takes three items, and CANCEL 3 drops one. No progress or PRODUCED before it's finished; it starts at once after. A second frame's first CANCEL 0 clears its queue and the second removes it.
+- **Revised the same day (fairness):** the first fix (slide along the leaning axis by at least half a step, speed kept) made the mirrored-map fairness test fail (west 2, east 10 of 12). Over 36 matches: west 9, east 27; main had 15 / 21.
+  - Varying `SLIDE_MIN` (0.3–1.0) moved the split around but kept it tilted east. The cause in that rule wasn't found.
+  - The fix is now smaller: the old slide (x first, then z, the step along the heading) stays, and a sliding unit's speed no longer decays below `SLIDE_MIN` (0.5) of its top speed. It used to halve every tick.
+  - Results: crawl test passes; seed 43's Mason starts at 0.89 min; fairness 6 / 6 of 12, and 17 / 19 over seeds 1–18.
+
+## S-139 — Flying sight bonus (the user's queue item 4; guide audit item 10, third part) (2026-10-23)
+
+- **Guide 12.2:** "landed aircraft are `landed` state: no LOS bonus". So far there was no bonus, so landing cost an aircraft nothing in sight.
+- **Built:** an aircraft not LANDED stamps its ground sight at `sensors.sight × Sensors.FLYING_SIGHT_BONUS` (1.25). Landed, it stamps its plain sight. `airSight` (sight against aircraft) is unchanged.
+  - The radii cache key includes "flying", so landing or taking off restamps the unit.
+  - Sight isn't terrain-occluded (that's still optional, audit item 19), so the bonus is reach only.
+- **Numbers:** 1.25 is a placeholder (a Wasp's 300-stud sight becomes 375 in flight). It's under review with the other balance numbers. No balance report was run (the user's rule).
+- **Tests:** `Fog.spec`: a flying Wasp sees a tank at 1.12 × its sight; landed, it doesn't, and it still sees one at 0.8 ×.
+
+## S-140 — Per-tick budget watchdog for the live server (the user's queue item 5; next.md item 2) (2026-10-23)
+
+- **Asked:** a per-tick budget watchdog that runs in the Roblox server and logs ticks over budget with the system breakdown, so B can measure the real server in Studio. The Lune timings are noisy and not Roblox's.
+- **Built:**
+  - `Sim.enableTiming` also keeps the latest tick's time per system (`last`, 0 when the system didn't run) and the total (`lastTotal`). It returns the existing timing if called twice.
+  - `Sim/Watchdog`: `Watchdog.new(sim, { tickBudgetMs?, logger? })`, then `Watchdog.afterStep(dog)` after every `Sim.step`. Budgets are guide 18.1's per system: projectiles 6 + damage 2 share the 8 ms row, construction 1.5 + match 0.5 share the 2 ms row. Together that's 54 ms, the 66.7 ms tick minus the ~12 ms headroom.
+  - **WARN line:** for a tick over 54 ms, or with any system over 2× its own budget. It names the tick, the total and the top 3 systems by budget share, at most one line per 15 ticks; skipped ticks are counted into the next line.
+  - **INFO summary:** every 900 ticks: the share of ticks over budget, the mean and worst tick, the worst tick's top systems and the unit count.
+  - It only observes: wall-clock timings never feed back into the sim. It runs in Lune too.
+- **Wiring:** the server loop is in `src/roblox` (the client stream's), so B adds `Watchdog.new` after `Sim.new` and `Watchdog.afterStep` after each step.
+- **Tests:** `Watchdog.spec`:
+  - with a tiny budget, 40 ticks give 3 WARN lines (ticks 1, 16, 31), the second counting 14 skipped ticks, and one summary at 100%;
+  - within budget, nothing is logged;
+  - the latest tick's systems add up to its total.
+
+## S-141 — Players choose their start (client request 64) — built, then held (2026-10-23)
+
+- **Asked:** for the alpha match flow, the match config chooses each player's start.
+- **Built** (commit 4793451):
+  - `players[i].start` is an index into the map's starts. `standard_start` places that Commander there, and refuses a start that is shared or off the map.
+  - Replay format 4 keeps each player's start.
+  - The skirmish AI already homes on its Commander.
+  - `Match.spec` covers it.
+- **Held:** a fourth session, D (lobby stream, `m-lobby`), now owns rooms, match start and the return to the lobby. B asked to hold this until D's `docs/contracts/match.md` says whether the match place does a start pick.
+  - Reverted on m-sim-2 (cd82cd0) so it doesn't block other merges.
+  - The commit is kept on branch `s141-starts`. If the contract has a start pick, bring it back by reverting the revert.
+
+## S-142 — AI build sites: reachable for their builder, off factory exit lanes (next.md item 3) (2026-10-23)
+
+- **Why:** the AI's site picker didn't check that the builder could get to a site. S-133's walled-in Commander made that a real failure; S-133 only added a give-up as a safety net.
+- **Built:** `spotNear` takes the builder (every call in the worker loop passes it).
+  - **Reach:** a site is accepted only if some cell on the rings around its footprint, out to the builder's build range (2 cells at least), is open ground in the builder's connected region. That's its move class's quadtree component, which Nav keeps current. So a shipyard on the water is built from the shore. Aircraft, and builders not standing on open ground (inside their factory), always pass.
+  - **Exit lanes:** sites may not cover the 3 cells (`Skirmish.EXIT_LANE`) in front of any of the player's factories, across the factory's width (S-133's exit path).
+- **Measured** (12 min, hard against normal, Coastline 34, skirmish:192 43, Canyon 1, Ridgeline 3):
+  - 404 sites checked; the reach check never fired; the lane rule fired twice.
+  - Give-ups (S-133) stayed at 1–2 per match, the same as before, so their cause is something else (crowding units, a site taken meanwhile). That's under review.
+  - Fast and slow suites pass; mirror fairness 6 / 6.
+
+## S-143 — The lobby stream's match contract v1: the sim side (lobby requests A-1..A-3) (2026-10-23)
+
+- **A-1, starts:** contract v1 gives player IDs 1..n in the room's order (teams grouped) and `start == id`. `Scenarios.standard_start` already puts player i (in sorted ID order) on start i, so `Sim.new` needs nothing new. Factions follow team parity, as `src/roblox/Lobby.config` maps them. Client request 64 / S-141 (chosen starts) is closed against D's L-4; the code stays on branch `s141-starts` in case a later version adds a start pick.
+  - IDs must be contiguous from 1: with IDs 1 and 3, player 3 would take start 2.
+- **A-2, shared validation:** yes. `MatchConfig.validate` (and `validateResult`) may move to `src/shared`, so the lobby and match places run one copy.
+  - D owns that module.
+  - It follows the shared-code rules: `--!strict`, string requires only (`@shared` across roots, relative within), no Roblox globals, it runs in Lune.
+  - Its spec goes under `src/server/Tests`, so `lune run test` covers it.
+  - `Sim.new` stays the final check of the sim config it is turned into.
+- **A-3, guide 16.3:** rewritten for the lobby place and battle room (the host picks the map), reserved servers with the config in MemoryStore, loading and the wait for players, starts and factions in v1, heartbeat and rejoin, the results record and the return. It also keeps the Studio / dev path with the local MatchConfig.
+
+## S-144 — Cheaper structure placement and staggered self-destruct (the live server's watchdog, B's Studio run) (2026-10-23)
+
+- **Reported:** the watchdog (S-140) in B's Studio run flagged Construction at 10–13 ms once early on, and NetOut at 47.6 ms on the tick the match ended.
+- **Construction, measured headless** (skirmish:192, seed 3, hard against normal): the peak was 10.5 ms on a BUILD_START tick. Each structure's `Placement.occupy` cost 2.4–4.7 ms: `Passability.updateRect` re-ran the Chebyshev distance transform over (size + 4 × CAP)² cells (CAP 16) for all 9 move classes.
+- **Fix, placing:**
+  - Occupying only adds obstacles, so `Passability.setOccupied` now sets each ground class's clearance to min(old, Chebyshev distance to the block) over (size + 2 × CAP)², which is exact. Air classes don't change.
+  - Measured: occupy 0.20–0.25 ms; Construction peak 0.87 ms.
+- **Fix, removing:** `updateRect` (still a full transform, since clearance grows) skips classes none of whose cells' pass bits changed, for one the air classes.
+- **Test:** `Passability.recomputeClearance` (a forced full recompute) is the reference in `Passability.spec`. After 40 random blocks, some over the map's edge, and after removing half of them, every class's clearance equals it byte for byte.
+- **NetOut at match end:** an eliminated player's whole army and base self-destructed in one tick. That's one tick of deaths, wrecks, freed footprints (each a full transform) and sight changes; harmless at the very end, a hitch mid-match in FFA.
+  - Now their units queue in `MatchState.doomed` (id, gen; hashed) and go `Match.SELF_DESTRUCT_PER_TICK` (20) a tick.
+  - `Match.spec`: a 46-unit army goes over several ticks, at most 20 a tick.
+  - The rest of B's 47.6 ms may be the match place's own end-of-match work (results, resends). The next Studio run will tell.
+
+## S-145 — The match contract's validator moves to `src/shared` (the user's choice, lobby request A-2) (2026-10-23)
+
+- **Asked:** the match server should check the lobby's config and its own result with the lobby's code, not a copy. The lobby stream may not edit `src/shared`, so the user chose that A moves it (option a, relayed by D).
+- **Built:** `Shared/Match/MatchConfig` (pure Luau, both runtimes), taken from m-lobby 287b99e:
+  - the contract's constants: `CONFIG_VERSION`, `MODES`, `WINS`, `LEVELS`, `FACTIONS`, `MAX_ALLY_TEAMS`, `MAX_TEAM_SIZE`, `MAX_FFA`, and the 12-color palette `COLORS`;
+  - the `Player`, `MatchConfig`, `ResultPlayer` and `Result` types;
+  - `validate`, `validateResult` (with today's rule that a "finished" result may omit `winner`), `users` and `OUTCOMES`.
+  - `build` and `summary` stay in `src/lobby`, since they need the lobby's Rooms.
+  - D switches its require to `@shared/Match/MatchConfig` and drops its copy; B drops its copy in `src/roblox`.
+- **Tests:** `src/server/Tests/MatchConfig.spec`, moved from the lobby's spec with a hand-written config of the same Teams room. It covers tampered configs (version, IDs and starts, colors, users, AI levels, FFA ally teams, spectators, no human, options, lobby, seed) and results checked against their config.
+- **Merge check:** `integrate.sh` now also runs the lobby's own suite (`lune run src/lobby/tools/test`, when present) and requires it to pass, as D asked.

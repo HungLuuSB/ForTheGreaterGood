@@ -606,7 +606,7 @@ Open points are listed in each stream's progress file (`docs/progress/`) → Sum
 ## D67 — Radar wobble, jamming, stealth, and fog-aware targeting (2026-10-20, task 12)
 
 - **Decision:**
-  - **Wobble:** a stateless hash of (unit, tick // 30, observing team) gives a point in the unit disc. The offset interpolates linearly to the next period's point, so blips drift smoothly. Its radius is the observing team's best `sensors.radarError` among its radar emitters (Oracle 20 studs, Watcher 45, default 40). It never touches `sim.rng`.
+  - **Wobble** (superseded by sim S-130 / S-131, `docs/decisions/sim.md`: blips orbit the unit at 1.5 studs; the radar error is a hidden aim point): a stateless hash of (unit, tick // 30, observing team) gives a point in the unit disc. The offset interpolates linearly to the next period's point, so blips drift smoothly. Its radius is the observing team's best `sensors.radarError` among its radar emitters (Oracle 20 studs, Watcher 45, default 40). It never touches `sim.rng`.
   - **Jamming:** a unit standing in its own team's jam map can't be a RADAR contact. Sight is unaffected.
   - **Stealth:** `radarSignature < 1` requires the unit to be within `radar × signature` of one of the observer's radar emitters (exact distance, emitter list rebuilt each sensor tick).
   - **Targeting** only accepts VISIBLE targets. RADAR contacts and ghosts of living structures are accepted only by `canTargetRadar` weapons, which aim at the wobbled (or ghost) position. Range is measured to the known position.

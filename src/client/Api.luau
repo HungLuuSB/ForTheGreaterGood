@@ -39,7 +39,7 @@ export type State = {
 	units: { [number]: World.Unit },
 	selection: { number },
 	groups: { [number]: { number } },
-	camera: { x: number, z: number, zoom: number, strategic: boolean, rect: { number } },
+	camera: { x: number, z: number, zoom: number, strategic: boolean, rect: { number }, corners: { number }? },
 	hover: { unit: number?, x: number, z: number }?,
 	placement: PlacementState?,
 	economy: { supply: Res, power: Res, wind: number }?,
@@ -152,7 +152,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return true
 	end
 
-	function actions.order(kind: string, target: any, queue: boolean?)
+	function actions.order(kind: string, target: any, queue: boolean?, group: boolean?)
 		local cmdType = Orders.KIND[kind]
 		if cmdType == nil then
 			return false, `unknown order {kind}`
@@ -163,15 +163,22 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			end
 			return issue({ cmdType = cmdType, queue = queue == true, targetId = target })
 		end
-		return issue({ cmdType = cmdType, queue = queue == true, x = target.x, z = target.z })
+		return issue({ cmdType = cmdType, queue = queue == true, x = target.x, z = target.z, group = group == true })
 	end
 
-	function actions.smartOrder(x: number, z: number, unitId: number?, queue: boolean?)
-		return issue(Orders.smart(world, x, z, unitId, queue))
+	-- `group` (Ctrl): a move keeps the selection together (GROUP, S-137, C-169).
+	function actions.smartOrder(x: number, z: number, unitId: number?, queue: boolean?, group: boolean?)
+		if #sel.ids == 0 then
+			return false, "nothing selected"
+		end
+		for _, part in Orders.smartFor(world, x, z, unitId, queue, sel.ids, group) do
+			issue(part.intent, part.ids)
+		end
+		return true
 	end
 
-	function actions.lineMove(x1: number, z1: number, x2: number, z2: number, queue: boolean?)
-		return issue({ cmdType = CT.MOVE, queue = queue == true, x = x1, z = z1, x2 = x2, z2 = z2 })
+	function actions.lineMove(x1: number, z1: number, x2: number, z2: number, queue: boolean?, group: boolean?)
+		return issue({ cmdType = CT.MOVE, queue = queue == true, x = x1, z = z1, x2 = x2, z2 = z2, group = group == true })
 	end
 
 	function actions.stop()
@@ -233,7 +240,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	-- Gives the current command at (x, z) or on unit `unitId` (input and UI
 	-- both use this): attack an enemy or the ground, guard a unit, or fight /
 	-- move / patrol to the point. Keeps the mode with `keep` (Shift).
-	function actions.commandAt(x: number, z: number, unitId: number?, queue: boolean?, keep: boolean?)
+	function actions.commandAt(x: number, z: number, unitId: number?, queue: boolean?, keep: boolean?, group: boolean?)
 		local kind = state.commandMode
 		if kind == nil then
 			return false, "no command"
@@ -270,7 +277,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			end
 			ok, why = issue({ cmdType = CT.RECLAIM, queue = queue == true, targetId = best })
 		else
-			ok, why = actions.order(kind, { x = x, z = z }, queue)
+			ok, why = actions.order(kind, { x = x, z = z }, queue, group)
 		end
 		if not keep then
 			actions.setCommandMode(nil)
@@ -349,7 +356,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		end
 		local def = world.defs.unitByIndex[p.defIndex]
 		x, z = Placement.assist(world, def, x, z) -- extractors jump onto a nearby deposit
-		local r = Placement.check(world, def, x, z)
+		local r = Placement.check(world, def, x, z, Placement.planned(world, api.waypoints.byUnit))
 		p.x, p.z, p.valid, p.reason = r.x, r.z, r.ok, r.reason
 		p.replaces = if r.ok and r.replaces ~= 0 then r.replaces else nil
 		return r.ok, r.reason
@@ -384,7 +391,8 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		local builders = buildersOf(p.defId)
 		local placed = 0
 		for _, spot in Placement.row(world, def, x1, z1, x2, z2) do
-			local r = Placement.check(world, def, spot[1], spot[2])
+			-- queued builds, this row's earlier spots included (C-165)
+			local r = Placement.check(world, def, spot[1], spot[2], Placement.planned(world, api.waypoints.byUnit))
 			if r.ok then
 				local sent = issue({ cmdType = CT.BUILD, queue = queue == true or placed > 0, x = r.x, z = r.z, defIndex = p.defIndex, facing = p.facing }, builders)
 				if sent then
@@ -426,7 +434,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		local builders = buildersOf(p.defId)
 		local fx, fz = buildersCenter(builders, cx, cz)
 		local placed = 0
-		for _, r in Placement.area(world, def, cx, cz, radius, fx, fz) do
+		for _, r in Placement.area(world, def, cx, cz, radius, fx, fz, Placement.planned(world, api.waypoints.byUnit)) do
 			if issue({ cmdType = CT.BUILD, queue = queue == true or placed > 0, x = r.x, z = r.z, defIndex = p.defIndex, facing = p.facing }, builders) then
 				placed += 1
 			end
@@ -458,7 +466,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		local placed = 0
 		for _, id in Upgrades.inCircle(world, def, cx, cz, radius, fx, fz) do
 			local sx, sz = Upgrades.site(world, def, id)
-			local r = Placement.check(world, def, sx, sz)
+			local r = Placement.check(world, def, sx, sz, Placement.planned(world, api.waypoints.byUnit))
 			if r.ok and issue({ cmdType = CT.BUILD, queue = queue == true or placed > 0, x = r.x, z = r.z, defIndex = def.index, facing = 0 }, builders) then
 				placed += 1
 			end

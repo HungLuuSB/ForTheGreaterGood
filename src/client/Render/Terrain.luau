@@ -34,15 +34,25 @@ local MATERIAL: { [string]: Enum.Material } = {
 	leafy = Enum.Material.LeafyGrass,
 	ground = Enum.Material.Ground,
 	bridge = Enum.Material.WoodPlanks,
+	-- The Canyon's desert (C-153): materials no other map or atmosphere
+	-- preset uses, so their colors (below) touch nothing else
+	desert = Enum.Material.Limestone,
+	redrock = Enum.Material.Sandstone,
 }
-RenderTerrain.MATERIAL = MATERIAL -- deposits tint their patch with the surrounding terrain's color (C-123)
+RenderTerrain.MATERIAL = MATERIAL
+local COLORS: { [Enum.Material]: Color3 } = {
+	[Enum.Material.Limestone] = Color3.fromRGB(186, 148, 100), -- pale desert ground (a lighter tan read as snow at night)
+	[Enum.Material.Sandstone] = Color3.fromRGB(168, 88, 58), -- reddish rock
+} -- deposits tint their patch with the surrounding terrain's color (C-123)
 
 export type Stats = { seconds: number, cpu: number, voxels: number, chunks: number, mode: string } -- seconds: wall time (yields included)
 
 -- Builds the terrain for `layers` (yielding), materials from the sim's
 -- terrain types or the map's features (Core/Terrain.material). Returns nil
 -- when the place has terrain of its own (left alone).
-function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature?): Stats?
+-- `waterOnly`: the ground is drawn by baked mesh tiles (Render/MeshGround,
+-- C-167): only the water goes into the terrain.
+function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature?, waterOnly: boolean?): Stats?
 	local terrain = workspace.Terrain
 	if terrain:GetAttribute(MARKER) then
 		terrain:Clear() -- ours, from an earlier map
@@ -51,6 +61,9 @@ function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature
 		return nil
 	end
 	terrain:SetAttribute(MARKER, true)
+	for material, color in COLORS do
+		terrain:SetMaterialColor(material, color)
+	end
 	local t0 = os.clock()
 	local g = layers.grid
 	local lo, hi = CoreTerrain.bounds(layers)
@@ -78,7 +91,7 @@ function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature
 					local mat = MATERIAL[CoreTerrain.material(layers, x, z, feature)] or Enum.Material.Grass
 					for j = 1, ny do
 						local vy = y0 + (j - 1) * VOXEL
-						local o = math.clamp((ground - RenderTerrain.SURFACE_BIAS - vy) / VOXEL, 0, 1)
+						local o = if waterOnly then 0 else math.clamp((ground - RenderTerrain.SURFACE_BIAS - vy) / VOXEL, 0, 1)
 						mi[j][k] = if o > 0 then mat else Enum.Material.Air
 						oi[j][k] = o
 						li[j][k] = if water then math.clamp((water - vy) / VOXEL, 0, 1) else 0

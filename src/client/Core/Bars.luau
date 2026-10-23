@@ -3,7 +3,9 @@
 -- and what they show. Only selected units, damaged units and frames under
 -- construction (own, or enemies in sight) get bars; a healthy, finished,
 -- unselected unit gets none, so big armies stay clean. A frame shows two
--- bars (health over build progress); a finished unit one. The sim grows a
+-- bars (health over build progress); a finished unit one, and a factory
+-- that is producing a second (amber) bar with the item's progress, always
+-- shown for own and allied factories (C-168). The sim grows a
 -- frame's health with its progress and damage never lowers progress
 -- (Sim/Build), so the client only displays both numbers. Pure Luau (C-7).
 
@@ -17,7 +19,18 @@ Bars.FULL = 0.999 -- at or above: counts as full (health is a u8 on the wire)
 -- `stock` / `stockMax`: an own unit's missiles in stock and its capacity
 -- (S-47, C-56); a unit that isn't full shows its bar, so a refilling SAM site
 -- stays visible.
-export type Bar = { id: number, health: number, build: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number? }
+export type Bar = { id: number, health: number, build: number?, production: number?, reload: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number? }
+
+-- A factory's item progress 0..1 while it produces, else nil: as drawn
+-- (eased) when the renderer has it, else the server's.
+function Bars.production(u: World.Unit): number?
+	local q = u.queue
+	local producing = (q ~= nil and #q > 0) or (u.producing ~= nil and u.producing > 0)
+	if not producing then
+		return nil
+	end
+	return u.productionShown or (if q and #q > 0 then u.queueProgress else u.producingProgress) or 0
+end
 
 -- Bars for the tactical units (the only ones whose health is known).
 function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
@@ -32,11 +45,17 @@ function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
 		local isSel = selected[id] == true
 		local stock, stockMax = World.stockOf(world, u)
 		local refilling = stock ~= nil and (stock :: number) < (stockMax :: number)
-		if isSel or building or health < Bars.FULL or refilling then
+		local production = if building then nil else Bars.production(u)
+		-- own and allied long-reload weapons recharging (C-170)
+		local friendly = u.team == world.me.team or World.relation(world, u) == "ally"
+		local reload = if friendly then World.reloadOf(world, u, world.shownTick or world.latestTick) else nil
+		if isSel or building or health < Bars.FULL or refilling or production ~= nil or reload ~= nil then
 			table.insert(out, {
 				id = id,
 				health = health,
 				build = if building then u.build else nil,
+				production = production,
+				reload = reload,
 				own = u.team == world.me.team,
 				selected = isSel,
 				stock = stock,

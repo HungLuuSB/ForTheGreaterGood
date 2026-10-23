@@ -58,8 +58,9 @@ Sensors.Level = SensorsState.Level
 local L = Sensors.Level
 Sensors.KINDS = SensorsState.KINDS
 Sensors.AIR_SIGHT_FACTOR = 1.5 -- default airSight = 1.5 × sight
+Sensors.FLYING_SIGHT_BONUS = 1.25 -- aircraft in flight see the ground this much farther; landed, no bonus (guide 12.2, S-139)
 Sensors.DEFAULT_RADAR_ERROR = 40 -- studs, when a radar def has no radarError
-Sensors.WOBBLE_PERIOD = 30 -- ticks per wobble target (guide 11.4: tick // 30)
+Sensors.ORBIT_TICKS = 90 -- ticks per radar blip orbit, 6 s (guide 11.4, S-130)
 Sensors.CLOSE_SONAR = 40 -- studs: naval units and ASW helis detect submerged subs this close
 Sensors.STAMP_BUDGET = 200000 -- cells written by full stamps per sensor tick (D85)
 Sensors.DEFAULT_TRACK_ERROR = 8 -- studs, when a tracking radar def has no trackError
@@ -217,11 +218,14 @@ local function radiiOf(sim: Types.Sim, id: number): { number }
 	local track = poweredRadius(sim, id, sensors.track, sensors.trackDrain)
 	local jam = poweredRadius(sim, id, sensors.jam, sensors.jamDrain)
 	local radar = poweredRadius(sim, id, sensors.radar, sensors.radarDrain) -- S-72
-	local key = (radar * 65536 + track) * 65536 + jam
+	-- in flight an aircraft sees the ground farther (guide 12.2: landing
+	-- loses the bonus; S-139)
+	local flying = def.domain == "air" and bit32.band(sim.world.state[id], World.State.LANDED) == 0
+	local key = ((radar * 65536 + track) * 65536 + jam) * 2 + (if flying then 1 else 0)
 	local radii = byTrack[key]
 	if radii == nil then
 		radii = table.freeze({
-			sensors.sight,
+			if flying then sensors.sight * Sensors.FLYING_SIGHT_BONUS else sensors.sight,
 			sensors.airSight or sensors.sight * Sensors.AIR_SIGHT_FACTOR,
 			radar,
 			sensors.sonar,
@@ -335,26 +339,33 @@ function Sensors.radarDetects(sim: Types.Sim, s: State, observer: number, id: nu
 	return false
 end
 
--- Pseudo-random point in the unit disc for (unit, period, observer):
--- stateless, so it never touches sim.rng and is the same however often asked.
-local function wobblePoint(id: number, period: number, observer: number): (number, number)
-	local h = Hash.u32(Hash.u32(Hash.u32(Hash.OFFSET_BASIS, id), period), observer)
-	local a = (h % 65536) / 65536 * 2 * math.pi
-	local r = math.sqrt((h // 65536) / 65536)
-	return math.cos(a) * r, math.sin(a) * r
+-- Orbit start angle and direction (+1 or -1) for (unit, observer): a
+-- stateless hash, so it never touches sim.rng, is the same however often
+-- asked, and every player of the observing team gets the same orbit.
+local function orbit(id: number, observer: number): (number, number)
+	local h = Hash.u32(Hash.u32(Hash.OFFSET_BASIS, id), observer)
+	return (h % 65536) / 65536 * 2 * math.pi, if (h // 65536) % 2 == 0 then 1 else -1
 end
 
--- Radar error offset `observer` sees on unit `id` at `tick`: a wobble of
--- radius = the observer's best radarError, moving smoothly from one random
--- point to the next every WOBBLE_PERIOD ticks (guide 11.4). Pinpointers
--- shrink it (S-59): the radius is scaled by the team's precision.
+local function orbitAngle(id: number, observer: number, tick: number): number
+	local phase0, dir = orbit(id, observer)
+	return phase0 + dir * 2 * math.pi * (tick % Sensors.ORBIT_TICKS) / Sensors.ORBIT_TICKS
+end
+
+-- The radar error `observer` has on its contacts: its best radarError (or
+-- the trackError passed in), scaled down by its Pinpointers (S-59).
+local function radarError(s: State, observer: number, radius: number?): number
+	return (radius or s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR) * Pinpoint.errorScale(Sensors.precision(s, observer))
+end
+
+-- Aim offset `observer` has on unit `id` at `tick` (S-130, S-131): a hidden
+-- point circling the real unit at the radar error, once every ORBIT_TICKS.
+-- Weapons firing at a radar / sonar contact aim there (guide 11.4), so they
+-- miss more at low precision. Never sent.
 function Sensors.wobble(s: State, observer: number, id: number, tick: number, radius: number?): (number, number)
-	local err = (radius or s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR) * Pinpoint.errorScale(Sensors.precision(s, observer))
-	local k = tick // Sensors.WOBBLE_PERIOD
-	local f = (tick % Sensors.WOBBLE_PERIOD) / Sensors.WOBBLE_PERIOD
-	local ax, az = wobblePoint(id, k, observer)
-	local bx, bz = wobblePoint(id, k + 1, observer)
-	return (ax + (bx - ax) * f) * err, (az + (bz - az) * f) * err
+	local err = radarError(s, observer, radius)
+	local a = orbitAngle(id, observer, tick)
+	return math.cos(a) * err, math.sin(a) * err
 end
 
 -- The ally team's radar precision 0..1 from its finished Pinpointers
@@ -502,9 +513,11 @@ function Sensors.step(sim: Types.Sim)
 end
 
 -- Where `team` believes unit `id` is, and how it knows: the true position
--- when VISIBLE (or a ghost of a structure, which doesn't move), the wobbled
--- position for RADAR / SONAR contacts, nil when hidden.
-function Sensors.knownPosition(sim: Types.Sim, team: number, id: number): (number?, number?, number)
+-- when VISIBLE (or a ghost of a structure, which doesn't move), nil when
+-- hidden. For RADAR / SONAR contacts, the true position for drawing (the
+-- client is sent only its cell, and circles the blip itself: S-134) or,
+-- with `aim`, the hidden aim point (Sensors.wobble, S-131).
+function Sensors.knownPosition(sim: Types.Sim, team: number, id: number, aim: boolean?): (number?, number?, number)
 	local level = Sensors.level(sim, team, id)
 	local w = sim.world
 	if level == L.VISIBLE then
@@ -515,14 +528,17 @@ function Sensors.knownPosition(sim: Types.Sim, team: number, id: number): (numbe
 	elseif level == L.RADAR or level == L.SONAR then
 		local s = sim.sensors
 		local radius = if level == L.RADAR and s.tracked[team] and s.tracked[team][id] then s.trackError[team] else nil
+		if not aim then
+			return w.posX[id], w.posZ[id], level
+		end
 		local dx, dz = Sensors.wobble(s, team, id, sim.tick, radius)
 		return w.posX[id] + dx, w.posZ[id] + dz, level
 	end
 	return nil, nil, level
 end
 
--- What `team` knows about unit `id` for targeting (D100): where it is, how,
--- and its def index. A structure ghost answers from the ghost record, so a
+-- What `team` knows about unit `id` for targeting (D100): where it is (a
+-- radar / sonar contact's hidden aim point, S-131), how, and its def index. A structure ghost answers from the ghost record, so a
 -- structure that died unseen is still a target until its spot is seen
 -- again: the team can't tell it from a live one. nil when hidden.
 --
@@ -538,7 +554,7 @@ function Sensors.knownTarget(sim: Types.Sim, team: number, id: number, gen: numb
 		end
 		return nil, nil, L.HIDDEN, nil
 	end
-	local kx, kz, level = Sensors.knownPosition(sim, team, id)
+	local kx, kz, level = Sensors.knownPosition(sim, team, id, true)
 	if kx == nil then
 		return nil, nil, level, nil
 	end

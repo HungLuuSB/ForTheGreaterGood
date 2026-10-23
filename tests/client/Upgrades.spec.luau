@@ -173,7 +173,9 @@ return function(t: any)
 		t.expect(api.actions.beginPlacement("ord_advextractor"))
 		t.expect(api.actions.placeArea(cx, cz, radius, false, false))
 		run(2)
-		t.equal(#(sim.orders.queue[s.architect] or {}), inside, "T2 extractors on every deposit, upgrades included")
+		-- the free deposits already have the Mason's queued T1s, which a new
+		-- plan can't overlap (C-165): the upgrades of the three standing T1s
+		t.equal(#(sim.orders.queue[s.architect] or {}), 3, "T2 extractors on the T1s; the Mason's queued spots are taken")
 		local _ = grid
 	end)
 end

@@ -487,6 +487,11 @@ Ground units don't send height: the client looks it up from its own copy of the 
     - a rich pair of value 6 in the middle.
     - In all, 30 deposits worth 104, each on an open field cell.
   - **For drawing:** `Normandy.feature(cx, cz)` names each cell (sea, beach, bluff, draw, hedge, house, road, bridge, river, field).
+- **The Canyon** (S-132, the user): `map:canyon` (`Shared/Grid/Canyon`), after BAR's "Classic Glitters" (12 × 20). It is a 154 × 256-cell (1232 × 2048-stud) desert map: **north (player 1) against south (player 2)**, point-symmetric about the centre.
+  - **Mesas:** 36 flat-topped buttes, 48 studs high. They are traced from the reference heightmap's north half and turned 180° for the south. Their cliffs are terraced, no land unit climbs them, and each has a low rocky apron. Jagged high plateaus fill the north-west and south-east corners.
+  - **Badlands:** rough ground (ROCK) round the two mesa belts, north-west and south-east, sits 3 studs above the canyon floor. The floor between them is open, hard-packed ground (GRASS, drawn as desert) running from the north-east to the south-west. Small rock outcrops (impassable) dot it.
+  - **Deposits ("glitter"):** many small value-2 deposits on a jittered grid about every 20 cells, plus four of value 4 round each start: 92 deposits in all.
+  - **For drawing:** `Canyon.feature(cx, cz)` names each cell (mesa, cliff, apron, badlands, boulder, floor).
 
 ---
 
@@ -572,7 +577,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 ### 6.6 Group movement & formations
 
 - **Line move (BAR-style):** dragging a right-click line spreads selected units evenly along it; each gets its own goal cell but units sharing a move class and nearby goals can share a field.
-- **Speed matching (optional toggle):** group moves at the slowest member's speed.
+- **Speed matching (optional toggle):** group moves at the slowest member's speed. Built (S-137): command flag GROUP (Ctrl held, as BAR's ctrl-move) on MOVE / FIGHT / PATROL caps each ground unit's top speed at the selection's slowest ground unit's; aircraft are not capped.
 - Arrival: units within a radius of the goal stop rather than pushing to the exact cell.
 - Implementation notes (`Sim/Nav.luau`, DECISIONS D35, D38–D40):
   - Each (move class, footprint) group shares one field to the group goal, and each unit gets its own formation slot.
@@ -631,7 +636,7 @@ for each player P:
 - **Entering tactical:** server sends one reliable `Enter` event with the unit's full state. After that, only changes.
 - **Leaving tactical:** reliable `Leave` event; client returns the model to the pool but keeps the unit in its strategic table.
 - Implementation (`Sim/NetOut.luau`, DECISIONS D70–D71):
-  - Radar and sonar contacts are strategic-only (icon 0, wobbled cell).
+  - Radar and sonar contacts are strategic-only (icon 0, the unit's own cell: 11.4).
   - The strategic snapshot runs every 5th tick and always sends at least a header, so clients drop units that disappeared.
   - DEATH goes to players that had the unit tactical.
   - Event records ENTER / LEAVE / DEATH were added in `PROTOCOL_VERSION` 2.
@@ -927,7 +932,7 @@ Every domain has a **T1 worker** and an **advanced (T2) worker**. Workers build 
 | Shipyard | T1 | Naval Worker, T1 ships, submarine |
 | Advanced Shipyard | T2 | Advanced Naval Worker, T2 ships, carrier |
 
-Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-95: a factory keeps an order list for its units: move, fight, patrol, guard, repair and attack, appended with shift, replaced by a plain order, cleared by STOP; each new unit rolls out, then takes a copy, in order. It replaced S-4's single rally point. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
+Factories have build power and an optional rally point and repeat queue. Workers can assist factories. (S-95: a factory keeps an order list for its units: move, fight, patrol, guard, repair and attack, appended with shift, replaced by a plain order, cleared by STOP; each new unit rolls out, then takes a copy, in order. It replaced S-4's single rally point. S-133: a finished unit appears on the factory's build pad (the blockout's `buildpad` attachment), facing the exit, and drives straight out through the factory's own footprint before its orders; the factory waits while a unit still stands on its pad. Aircraft appear on the airfield's pad and fly off. S-13: the REPEAT command turns repeat on or off, shown by the factory's REPEAT state bit; TOGGLE means on / off only.)
 
 ### 9.3 Build rules
 
@@ -1150,16 +1155,16 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 ### 11.4 Radar error, jamming, stealth
 
 - **Pinpointers** (S-59, client request 34): T2 structures (Order **Witness**, Chaos **Augur**, `pinpointer = true`) that sharpen their ally team's radar. Precision = finished Pinpointers ÷ 6, at most 1 (`Shared/Combat/Pinpoint`). At precision p:
-  - radar contacts wobble by radarError × (1 − 0.9 p), and fire-control tracks by trackError × (1 − 0.9 p). At full precision a blip barely moves (1.5 studs instead of 14.6 in the test).
+  - radar contacts wobble by radarError × (1 − 0.9 p), and fire-control tracks by trackError × (1 − 0.9 p). At full precision the aim point barely moves (1.5 studs instead of 14.6 in the test).
   - a radar-guided missile chasing a target its team has only on radar (not in sight) loses its lock with chance 0.1 × (1 − p) at each midcourse check (every 5 ticks). Without Pinpointers a 700-stud shot loses about a third (9 of 25 in the test); with six, none.
   - No wire record: a client counts its team's Pinpointers from their icons (unique per unit type, S-58) and applies the same formula.
 
 - **Cloak (not built yet; the `cloaked` state bit is reserved):** a cloaked unit that fires drops its cloak and is then seen by normal sight, so firing never stays hidden. Its shots and projectiles are shown like anyone's (7.2, S-43): they never name the shooter.
 
-- **Radar error ("wobble"):** a radar blip's position is offset by a pseudo-random amount that changes slowly (e.g., seeded by `unitId` and `tick // 30`). The **server sends the wobbled position**, never the true one — clients can't cheat it. Order radars have smaller error than Chaos radars.
+- **Radar error ("wobble"):** like BAR, a radar blip circles the real unit closely. The server sends the contact's **cell**, not its exact position (S-134). The client draws the blip circling that spot 1.5 studs out (S-131, C-154). The radar error lives in a **hidden aim point**, which circles the unit at the radar error and is never sent. Weapons firing at a contact aim there. Players see roughly where a contact is, but their radar-fired shots still miss by the radar error. Order radars have smaller error than Chaos radars.
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks (implemented in D108: `jamDrain`, the radius scales with the share of upkeep it gets, like tracking radars).
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
-- **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the wobbled position, so they miss more — that's intended.
+- **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the hidden aim point, not the drawn blip, so they miss more — that's intended.
 - **Fire-control (tracking) radar** (D104):
   - A short-range radar that turns early-warning contacts inside it into TRACKED contacts.
   - Their wobble is the team's best `trackError` (Order 4–6 studs, Chaos 10–12) instead of `radarError` (15–45).
@@ -1170,7 +1175,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
   - Optional (D105): radar-guided missiles lock at +10% range against tracked targets.
   - Measured: a Verdict on a radar-only Ravager scores 4 of 15 direct hits untracked and 11 of 15 tracked. An Absolution hits a moving radar-only tank 0 of 9 times untracked and 6 of 10 tracked.
 - Implementation (DECISIONS D67):
-  - Wobble is a stateless hash of (unit, tick // 30, observer), interpolated between periods. Its radius is the observer's best `sensors.radarError`.
+  - The aim point orbits: offset = radius × (cos θ, sin θ), θ = phase0 + dir × 2π × tick / 90 (one turn every 6 s). phase0 and dir (±1) are a stateless hash of (unit, observer), so every player of a team gets the same orbit. The radius is the observer's best `sensors.radarError` (or `trackError` when tracked), scaled by Pinpointers. The sent cell is within half a cell (~5.7 studs) of the unit.
   - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
   - Measured: howitzer direct hits 87% with a spotter versus 20% on radar.
 
@@ -1259,13 +1264,13 @@ countermeasures = {
 ### 12.2 Air
 
 - **Fighters** (`JET`): target `AIR` only. Patrol/intercept orders. Carry limited missiles; return to rearm when empty.
-- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order. `ATTACK_GROUND` gives a bomber a spot to bomb, run after run, until another order (D100). Bombs may target radar contacts (aimed at the wobbled position, so small targets are often missed) and remembered structures at their last known position (D96).
+- **Bombers** (`JET`): bomb runs over a target area; stealth bomber for Order. `ATTACK_GROUND` gives a bomber a spot to bomb, run after run, until another order (D100). Bombs may target radar contacts (aimed at the hidden aim point, 11.4, so small targets are often missed) and remembered structures at their last known position (D96).
 - **Attack helicopters** (`HELI`): hover and engage ground/naval targets; vulnerable to IR SAMs.
 - **ASW helicopter** (`HELI`): drops torpedoes on submerged contacts.
 - **Support aircraft:** AWACS (Order), EW jammer aircraft (Chaos).
 - **Air workers** (`HELI`): build air structures; fragile.
 - **Ammo & rearm:** aircraft have `ammo` (missiles/bombs). Empty → return to the nearest free rearm pad (airfield or carrier). Rearm costs supply + power over time.
-- **Landing:** landed aircraft are `landed` state: no LOS bonus, easy targets.
+- **Landing:** landed aircraft are `landed` state: no LOS bonus, easy targets. In flight an aircraft's ground sight is `sensors.sight` × `Sensors.FLYING_SIGHT_BONUS` (1.25); landed, its plain sight (S-139).
 
 ### 12.3 Naval
 
@@ -1585,11 +1590,12 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 ### 16.3 Match flow
 
-1. **Lobby:** map vote, mode, teams, faction pick. Use reserved servers via TeleportService for matches.
-2. **Loading:** def hash check, map data decode, model preload.
-3. **Start:** each player gets a Command Vehicle and starting resources (e.g., 1000 supply, 1000 power).
-4. **Play.**
-5. **End:** results screen (units built/lost, resources, damage dealt), replay save option, return to lobby.
+1. **Lobby** (a separate "FTGG Lobby" place, the experience's start place; lobby stream, `docs/contracts/match.md`): a BAR-style battle room. The host picks the map, mode, win condition, friendly fire and cheats; players pick seats, teams and factions; the host adds AI players by level. Starting reserves a server of the match place (TeleportService) and stores the match config in MemoryStore under the match ID; only the match ID travels with the teleport.
+2. **Loading:** the match server finds its config from its own private server ID (never from teleport data or clients), admits only the listed players, and waits up to 90 s for them; def hash check, map data decode, model preload.
+3. **Start:** each player gets a Command Vehicle at its map start and starting resources (e.g., 1000 supply, 1000 power). In contract version 1, player IDs are 1..n in the room's order (teams grouped) and player i takes the map's start i; factions follow team parity (Order odd, Chaos even).
+4. **Play.** The match server keeps a heartbeat in MemoryStore; a player who drops can rejoin from the lobby (reconnect = join, 7.5).
+5. **End:** results screen (units built/lost, resources, damage dealt), replay save option. The match server writes the results record, then everyone returns to the lobby (their room shows the results, and profiles record the match).
+6. **Studio / development:** without a stored config, the match place starts from its local `MatchConfig` (the dev path), as before.
 
 ### 16.4 Limits (tune from stress tests)
 
@@ -1662,6 +1668,8 @@ Debug flag that decodes every incoming/outgoing packet into readable text and lo
 | **Headroom** | **~12 ms** |
 
 If a system goes over budget repeatedly: stagger more, lower its rate, move work to Actors, or lower unit caps.
+
+On a live server the sim watches itself (S-140): `Sim/Watchdog` compares every tick's system times with this table (projectiles 6 + damage 2, construction 1.5 + match 0.5; 54 ms together). It logs a WARN line for a tick over 54 ms, or with a system over 2× its own budget (at most one a second, the rest counted), and a one-minute INFO summary.
 
 ### 18.2 Client frame budget (60 FPS = 16.7 ms)
 

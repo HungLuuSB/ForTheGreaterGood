@@ -39,6 +39,10 @@ export type Unit = {
 	-- latest known values
 	x: number,
 	z: number,
+	sx: number?, -- strategic records: where they're drawn, gliding toward x, z (radar blips don't jump, C-151)
+	sz: number?,
+	gx: number?, -- the glide toward x, z; sx, sz add the blip's orbit to it (C-154)
+	gz: number?,
 	alt: number,
 	heading: number, -- radians, (sin h, cos h) forward
 	snaps: { Snap }, -- tactical: ascending sim ticks
@@ -57,6 +61,9 @@ export type Unit = {
 	-- own units only (S-61, protocol 20); nil until the server sends them
 	queue: { number }?, -- a factory's queue: unit def indices, the head in production
 	queueProgress: number?, -- the head item's progress, 0..1 (to a 255th)
+	producing: number?, -- allied factories (protocol 27, S-103): the def index in production, 0 = idle
+	producingProgress: number?, -- its progress, 0..1
+	productionShown: number?, -- the item's progress as drawn (eased between the server's steps, Render/FactoryFrames, C-168)
 	fireState: number?, -- Schema.FireState
 	moveState: number?, -- Schema.MoveState
 	ammo: number?, -- aircraft with an ammo count: rounds left
@@ -93,6 +100,7 @@ export type World = {
 	mapVersion: number, -- bumps when WELCOME brings another map (the renderer rebuilds the ground)
 	defs: Defs.DefSet,
 	me: Me,
+	teamAllies: { [number]: number }, -- every team's ally team (WELCOME, protocol 30, S-129); empty before
 	joined: boolean, -- a WELCOME arrived; everything else is dropped before it
 	joins: number, -- WELCOMEs received (the renderer starts over on a change)
 	rejected: Schema.SnapshotRecord?, -- the server's REJECT: stale client
@@ -115,6 +123,9 @@ export type World = {
 	wreckGone: { number }, -- WRECK_GONE (reclaimed or gone)
 	alertQueue: { { kind: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT events (protocol 23, S-68) Core/Alerts drains
 	cheatResults: { any }, -- CHEAT_RESULT events (protocol 27, S-102) the cheat command line drains (C-119)
+	lastShot: { [number]: { [number]: number } }, -- unit → weapon slot → sim tick of its last shot seen (FIRE, a launch; the reload bar, C-170)
+	idle: { [number]: boolean }, -- the player's idle builders and factories, on camera or not (IDLE, protocol 31, S-136; C-158)
+	remoteDomes: { [number]: { x: number, y: number, z: number, radius: number, charge: number, flags: number } }, -- domes of generators not in the tactical tier (DOME, protocol 29, S-122): drawn without vision, as in BAR (C-145)
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
 }
@@ -128,6 +139,7 @@ function World.new(defs: Defs.DefSet): World
 		mapVersion = 0,
 		defs = defs,
 		me = { player = 0, team = 0, allyTeam = 0 },
+		teamAllies = {},
 		joined = false,
 		joins = 0,
 		rejected = nil,
@@ -150,6 +162,9 @@ function World.new(defs: Defs.DefSet): World
 		alertQueue = {},
 		cheatResults = {},
 		shields = {},
+		remoteDomes = {},
+		idle = {},
+		lastShot = {},
 		deathWrecks = {},
 	}
 end
@@ -166,6 +181,8 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 		world.mapVersion += 1
 	end
 	world.me = { player = rec.player :: number, team = rec.team :: number, allyTeam = rec.allyTeam :: number }
+	-- every team's ally team (protocol 30, S-129), indexed by team; 0 = not in the match
+	world.teamAllies = (rec :: any).teamAllies or {}
 	table.clear(world.units)
 	table.clear(world.entered)
 	table.clear(world.left)
@@ -178,6 +195,9 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.wreckGone)
 	table.clear(world.alertQueue)
 	table.clear(world.shields)
+	table.clear(world.remoteDomes)
+	table.clear(world.idle) -- the join sends every idle one again
+	table.clear(world.lastShot)
 	table.clear(world.deathWrecks)
 	world.strategicTick = -1
 	world.economy = nil
@@ -197,11 +217,56 @@ function World.angle(v: number): number
 	return v / 255 * 2 * math.pi - math.pi
 end
 
+World.BLIP_SMOOTH = 0.45 -- seconds: a strategic record's drawn spot closes most of the way to a new reading in this time
+World.BLIP_SNAP = 160 -- studs: a jump this big snaps (a contact reappearing elsewhere)
+World.BLIP_ORBIT = 1.5 -- studs: radar / sonar blips circle their reported spot, as in BAR (C-154)
+World.BLIP_ORBIT_SECONDS = 6 -- one turn
+
+-- A contact's orbit start angle and direction, from its id (the same every
+-- frame, different per contact).
+local function orbitOf(id: number): (number, number)
+	local h = (id * 2654435761) % 4294967296
+	return (h % 65536) / 65536 * 2 * math.pi, if (h // 65536) % 2 == 0 then 1 else -1
+end
+
+-- Once a frame: strategic records (radar blips, sonar contacts, out-of-view
+-- units) glide toward their latest reported spot instead of jumping to each
+-- new one (the user, C-151). Radar and sonar blips also circle it,
+-- BLIP_ORBIT studs once every BLIP_ORBIT_SECONDS (with `now`; C-154): the
+-- server sends strategic spots by cell, so its own small orbit (S-131)
+-- doesn't show. Draw them at sx, sz.
+function World.smoothStrategic(world: World, dt: number, now: number?)
+	local k = 1 - math.exp(-dt / World.BLIP_SMOOTH)
+	local blip = Schema.StrategicFlag.RADAR_ONLY + Schema.StrategicFlag.SONAR_ONLY
+	for id, u in world.units do
+		if u.tier ~= "tactical" then
+			local gx, gz = u.gx, u.gz
+			if gx == nil or gz == nil or (gx - u.x) ^ 2 + (gz - u.z) ^ 2 > World.BLIP_SNAP ^ 2 then
+				gx, gz = u.x, u.z
+			else
+				gx, gz = gx + (u.x - gx) * k, gz + (u.z - gz) * k
+			end
+			u.gx, u.gz = gx, gz
+			if now and bit32.band(u.flags or 0, blip) ~= 0 then
+				local phase, dir = orbitOf(id)
+				local a = phase + dir * 2 * math.pi * now / World.BLIP_ORBIT_SECONDS
+				u.sx, u.sz = gx + math.cos(a) * World.BLIP_ORBIT, gz + math.sin(a) * World.BLIP_ORBIT
+			else
+				u.sx, u.sz = gx, gz
+			end
+		end
+	end
+end
+
 function World.relation(world: World, unit: Unit): "own" | "ally" | "enemy"
 	if unit.team == world.me.team then
 		return "own"
 	end
-	-- ally teams aren't on the wire yet (protocol 6 WELCOME); only own team counts as allied
+	-- every team's ally team arrives with WELCOME since protocol 30 (S-129, C-150)
+	local ally = world.teamAllies[unit.team]
+	if ally ~= nil and ally ~= 0 and ally == world.me.allyTeam then
+		return "ally"
+	end
 	return "enemy"
 end
 
@@ -270,6 +335,41 @@ end
 -- Missiles in stock across a unit's stockpile slots (S-47, C-56), and their
 -- total capacity (Defs' derived `stockCapacity`); nil when it has no
 -- stockpile or the server hasn't said (other players' units never carry it).
+World.RELOAD_BAR = 4 -- seconds: weapons reloading at least this long show a recharge bar (C-170)
+
+-- A shot by `id`'s weapon `slot` at sim tick `tick` (Core/Effects).
+function World.noteShot(world: World, id: number, slot: number, tick: number)
+	local t = world.lastShot[id]
+	if t == nil then
+		t = {}
+		world.lastShot[id] = t
+	end
+	t[slot] = tick
+end
+
+-- How charged `u`'s slowest long-reload weapon is at render tick `tick`,
+-- 0..1, while it recharges after a shot seen; nil when it has none, or it's
+-- charged (the server's reload runs from the shot: Sim/Weapons).
+function World.reloadOf(world: World, u: Unit, tick: number): number?
+	local shots = world.lastShot[u.id]
+	local def = shots and World.def(world, u)
+	if def == nil or shots == nil then
+		return nil
+	end
+	local worst: number? = nil
+	for slot, ws in def.weapons do
+		local weapon = world.defs.weaponByIndex[(ws :: any).weaponIndex] :: any
+		local shot = shots[slot]
+		if shot and weapon and (weapon.reload or 0) >= World.RELOAD_BAR then
+			local f = (tick - shot) / (weapon.reload * 15)
+			if f < 1 then
+				worst = math.min(worst or 1, math.max(f, 0))
+			end
+		end
+	end
+	return worst
+end
+
 function World.stockOf(world: World, u: Unit): (number?, number?)
 	local def = World.def(world, u)
 	if def == nil or u.stock == nil then

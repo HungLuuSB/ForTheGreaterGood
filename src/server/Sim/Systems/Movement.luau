@@ -43,6 +43,8 @@ local World = require("../World")
 local DT = 1 / 15
 local MOVING, LANDED, SUBMERGED = World.State.MOVING, World.State.LANDED, World.State.SUBMERGED
 local HASH_CELL = 16 -- studs per spatial hash bucket
+local SLIDE_MIN = 0.5 -- a unit sliding along a blocked cell keeps at least this share of its top speed (S-135)
+local EXIT_SLACK = 24 -- a unit driving out of its factory stops passing through blocked cells this far past it (S-133)
 local SEPARATION_MARGIN = 2 -- studs beyond touching where separation starts
 local SEPARATION_WEIGHT = 1.5
 local OVERLAP_PASSES = 2
@@ -53,7 +55,7 @@ local RETURN_SPEED = 0.6 -- fraction of max speed for idle units returning to th
 local DIRECT_STAGGER = 4 -- re-check the straight line every N ticks per unit
 
 local sqrt, sin, cos, atan2 = math.sqrt, math.sin, math.cos, math.atan2
-local floor, min, max = math.floor, math.min, math.max
+local floor, min, max, abs = math.floor, math.min, math.max, math.abs
 local PI, TAU = math.pi, 2 * math.pi
 
 -- Scratch arrays indexed by position k in world.ids; reused every tick.
@@ -64,6 +66,7 @@ local nspeed: { number } = {}
 local moving: { boolean } = {}
 local anchored: { boolean } = {} -- deploying / deployed / packing: no movement, no push (S-64)
 local prof: { Nav.Profile? } = {}
+local exitOf: { { number } | false } = {} -- driving out of its factory (S-133)
 
 -- Spatial hash as bucket heads + per-k links (no per-tick allocation once warm).
 local bucketHead: { [number]: number } = {}
@@ -171,6 +174,7 @@ return function(sim: Types.Sim)
 		end
 		moving[k] = w.orderId[id] ~= 0
 		anchored[k] = Deploy.anchored(w, id)
+		exitOf[k] = sim.build.exiting[id] or false
 		anyActive = anyActive or moving[k] or speed[id] > 0
 	end
 	if not anyActive then
@@ -211,6 +215,14 @@ return function(sim: Types.Sim)
 		local dx, dz = gx - x, gz - z
 		local dist = sqrt(dx * dx + dz * dz)
 		local returning = false
+		local exit = exitOf[k]
+		if exit and not moving[k] then
+			-- stopped inside its factory: it still drives out (S-133)
+			gx, gz = exit[4], exit[5]
+			w.goalX[id], w.goalZ[id] = gx, gz
+			dx, dz = gx - x, gz - z
+			dist = sqrt(dx * dx + dz * dz)
+		end
 		if not moving[k] then
 			if dist <= p.radius or (dist <= Nav.ARRIVE_RADIUS * 4 and nspeed[k] <= 0) then
 				-- at its spot (or close enough and settled): brake to a stop
@@ -274,8 +286,16 @@ return function(sim: Types.Sim)
 		end
 
 		local dirX, dirZ = dx / dist, dz / dist
+		if exit then
+			-- out of its factory first, whatever the order (S-133)
+			local ex, ez = exit[4] - x, exit[5] - z
+			local el = sqrt(ex * ex + ez * ez)
+			if el > 1e-9 then
+				dirX, dirZ = ex / el, ez / el
+			end
+		end
 		local stalled = tick - w.progressTick[id] > REPATH_TICKS
-		if order and cell >= 0 and (order.field or (shortcut and stalled)) and (not w.direct[id] or stalled) then
+		if order and cell >= 0 and not exit and (order.field or (shortcut and stalled)) and (not w.direct[id] or stalled) then
 			local field = order.field
 			local d = if field then FlowField.direction(field, cell) else FlowField.NONE
 			if field and d ~= FlowField.NONE and not w.direct[id] then
@@ -320,7 +340,8 @@ return function(sim: Types.Sim)
 
 		local desX, desZ = dirX + SEPARATION_WEIGHT * sepX, dirZ + SEPARATION_WEIGHT * sepZ
 		local desLen = sqrt(desX * desX + desZ * desZ)
-		if desLen < 1e-9 then
+		if exit or desLen < 1e-9 then
+			-- (driving out of its factory: straight for the exit, no jostling; S-133)
 			desX, desZ = dirX, dirZ
 		end
 
@@ -337,6 +358,12 @@ return function(sim: Types.Sim)
 		if not p.air then
 			local tx, tz = g:cellAt(nx[k], nz[k])
 			top *= Terrain.factor(layers, p.moveClass, tz * g.cellsX + tx)
+			-- a group move (ctrl): no faster than the group's slowest (S-137)
+			local q = sim.orders.queue[id]
+			local head = q and q[1]
+			if head and head.speedCap and head.started then
+				top = min(top, head.speedCap)
+			end
 		end
 		local target = min(if returning then top * RETURN_SPEED else top, sqrt(2 * p.brake * max(dist - Nav.ARRIVE_RADIUS, 0)))
 		target *= max(0, cos(diff))
@@ -369,14 +396,24 @@ return function(sim: Types.Sim)
 		local h = nheading[k]
 		local x, z = nx[k], nz[k]
 		local tx, tz = x + sin(h) * v * DT, z + cos(h) * v * DT
-		if Nav.fits(nav, p, tx, tz) then
+		local exit = exitOf[k]
+		if exit then
+			-- out of its factory from the build pad: through the footprint,
+			-- until clear of it on open ground (or 3 cells past it) (S-133)
+			nx[k], nz[k] = tx, tz
+			local out = max(abs(tx - exit[1]), abs(tz - exit[2])) - exit[3] - p.radius
+			if (out > 0 and Nav.fits(nav, p, tx, tz)) or out > EXIT_SLACK then
+				sim.build.exiting[ids[k]] = nil
+				exitOf[k] = false
+			end
+		elseif Nav.fits(nav, p, tx, tz) then
 			nx[k], nz[k] = tx, tz
 		elseif Nav.fits(nav, p, tx, z) then
 			nx[k] = tx
-			nspeed[k] = v * 0.5
+			nspeed[k] = max(v * 0.5, p.maxSpeed * SLIDE_MIN)
 		elseif Nav.fits(nav, p, x, tz) then
 			nz[k] = tz
-			nspeed[k] = v * 0.5
+			nspeed[k] = max(v * 0.5, p.maxSpeed * SLIDE_MIN)
 		else
 			nspeed[k] = 0
 		end

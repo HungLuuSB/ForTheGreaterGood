@@ -154,8 +154,8 @@ return function(t: RunAll.Context)
 			if sim.tick > 4 then
 				t.expect(Sensors.level(sim, 1, red) == L.RADAR and Sensors.level(sim, 2, blue) == L.RADAR, "both radar contacts")
 				t.expect(Sensors.isTracked(sim, 1, red) and Sensors.isTracked(sim, 2, blue), "both tracked")
-				local ox, oz = Sensors.knownPosition(sim, 1, red)
-				local cx, cz = Sensors.knownPosition(sim, 2, blue)
+				local ox, oz = Sensors.knownPosition(sim, 1, red, true)
+				local cx, cz = Sensors.knownPosition(sim, 2, blue, true)
 				worstO = math.max(worstO, dist(w, red, ox :: number, oz :: number))
 				worstC = math.max(worstC, dist(w, blue, cx :: number, cz :: number))
 			end

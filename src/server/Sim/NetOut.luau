@@ -125,6 +125,52 @@ local SF = Schema.StrategicFlag
 -- Strategic icon per def: the shared numbering (Shared/Net/Icons, S-10).
 NetOut.iconIndex = Icons.byDef
 
+NetOut.IDLE_EVERY = 5 -- ticks between checks of the player's idle builders and factories (S-136)
+
+-- Nothing to do (S-136, client request 62): a factory with an empty queue;
+-- a builder with no order of its own (automatic reactions don't count) and
+-- no build, assist, repair or reclaim work.
+function NetOut.isIdle(sim: Types.Sim, id: number): boolean
+	local b = sim.build
+	local d = sim.defs.unitByIndex[sim.world.defIndex[id]]
+	if d.domain == "structure" then
+		local q = b.queue[id]
+		return q == nil or #q == 0
+	end
+	local q = sim.orders.queue[id]
+	if q then
+		for _, order in q do
+			if not order.auto then
+				return false
+			end
+		end
+	end
+	return b.order[id] == nil and (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0
+end
+
+-- IDLE events (S-136): the player's finished builders and factories whose
+-- idleness changed since last sent, on camera or not. Units not marked
+-- idle are busy; a dead one's mark lapses with its generation.
+local function idleEvents(sim: Types.Sim, pid: number, pn: NetState.PlayerNet, events: { Schema.Event })
+	local w = sim.world
+	local sent = pn.sentIdle
+	for _, id in w.ids do
+		if w.owner[id] ~= pid or w.buildProgress[id] < 1 then
+			continue
+		end
+		local d = sim.defs.unitByIndex[w.defIndex[id]]
+		if d.buildOptions == nil or #d.buildOptions == 0 then
+			continue
+		end
+		local idle = NetOut.isIdle(sim, id)
+		local was = sent[id] == w.gen[id]
+		if idle ~= was then
+			table.insert(events, { kind = Schema.EventKind.IDLE, unitId = id, idle = idle })
+			sent[id] = if idle then w.gen[id] else nil
+		end
+	end
+end
+
 function NetOut.new(sim: Types.Sim): NetState.NetState
 	return NetState.new(sim.playerOrder, NetOut.iconIndex(sim.defs))
 end
@@ -152,6 +198,19 @@ end
 -- the whole map, so every unit is in its tactical tier, and it gets every
 -- combat event, every team's Eco record (S-21), and no weapon targets. Its first outbox starts with a WELCOME whose player, team and
 -- ally team are 0. Returns its index in `sim.net.spectators`.
+-- Every team's ally team, team 1 first, 0 for a team not in the match (S-129).
+local function teamAllies(sim: Types.Sim): { number }
+	local n = 0
+	for team in sim.allyOf do
+		n = math.max(n, team)
+	end
+	local out = table.create(n, 0)
+	for team = 1, n do
+		out[team] = sim.allyOf[team] or 0
+	end
+	return out
+end
+
 function NetOut.addSpectator(sim: Types.Sim): number
 	local pn = NetState.viewer(true)
 	local map = sim.map
@@ -160,7 +219,7 @@ function NetOut.addSpectator(sim: Types.Sim): number
 	end
 	pn.forceFull = true
 	local w = Packer.Writer.new(32)
-	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.WELCOME, tick = sim.tick, player = 0, team = 0, allyTeam = 0, mapId = sim.mapId })
+	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.WELCOME, tick = sim.tick, player = 0, team = 0, allyTeam = 0, mapId = sim.mapId, teamAllies = teamAllies(sim) })
 	pn.welcome = w:finish()
 	table.insert(sim.net.spectators, pn)
 	return #sim.net.spectators
@@ -195,6 +254,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 		team = p.team,
 		allyTeam = sim.allyOf[p.team],
 		mapId = sim.mapId,
+		teamAllies = teamAllies(sim), -- (S-129, client request: allies are friends)
 	})
 	pn.welcome = w:finish()
 end
@@ -1044,6 +1104,12 @@ function NetOut.step(sim: Types.Sim)
 			local answers = Cheats.drain(sim, pid) -- CHEAT_RESULT (S-102)
 			if answers then
 				table.move(answers, 1, #answers, #events + 1, events)
+			end
+			if pn.forceFull then
+				table.clear(pn.sentIdle)
+			end
+			if pn.forceFull or sim.tick % NetOut.IDLE_EVERY == 0 then
+				idleEvents(sim, pid, pn, events)
 			end
 		end
 		-- strategic launches: every player, camera or not (S-48)

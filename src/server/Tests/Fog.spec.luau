@@ -57,25 +57,77 @@ local function quiet(sim: Sim.Sim, ids: { number })
 end
 
 return function(t: RunAll.Context)
-	t.test("radar wobble: bounded, deterministic, smooth, per observer", function()
+	t.test("radar wobble: circles the unit, deterministic, smooth, per observer (S-130)", function()
 		local s = Sensors.new(nil, { 1, 2 })
 		s.radarError[1] = 20
 		s.radarError[2] = 45
-		local prevX = Sensors.wobble(s, 1, 7, 0)
-		local moved = false
+		local n = Sensors.ORBIT_TICKS
+		local prevX, prevZ = Sensors.wobble(s, 1, 7, 0)
+		local turned = 0
 		for tick = 1, 300 do
 			local x, z = Sensors.wobble(s, 1, 7, tick)
-			t.expect(math.sqrt(x * x + z * z) <= 20 + 1e-9, "within the observer's radar error")
-			t.expect(math.abs(x - prevX) <= 2 * 20 / 30 + 1e-9, "moves smoothly between periods")
-			moved = moved or x ~= prevX
-			prevX = x
+			t.expect(math.abs(math.sqrt(x * x + z * z) - 20) <= 1e-6, "on a circle of the observer's radar error")
+			local step = math.sqrt((x - prevX) ^ 2 + (z - prevZ) ^ 2)
+			t.expect(step <= 2 * math.pi * 20 / n + 1e-6, "moves smoothly along the circle")
+			turned += math.atan2(prevX * z - prevZ * x, prevX * x + prevZ * z)
+			prevX, prevZ = x, z
 		end
-		t.expect(moved, "the wobble changes over time")
+		t.expect(math.abs(math.abs(turned) - (2 * math.pi * 300 / n)) <= 1e-6, "one way round, once every ORBIT_TICKS")
+		local x0, z0 = Sensors.wobble(s, 1, 7, 10)
+		local x1, z1 = Sensors.wobble(s, 1, 7, 10 + n)
+		t.expect(math.abs(x0 - x1) <= 1e-9, "the orbit repeats")
+		t.expect(math.abs(z0 - z1) <= 1e-9, "the orbit repeats")
 		local a1, a2 = Sensors.wobble(s, 1, 7, 123)
 		local b1, b2 = Sensors.wobble(s, 1, 7, 123)
 		t.expect(a1 == b1 and a2 == b2, "same unit and tick, same offset")
 		local c1 = Sensors.wobble(s, 2, 7, 123)
-		t.notEqual(c1, a1, "each observing team sees its own error")
+		t.notEqual(c1, a1, "each observing team sees its own orbit")
+		local dirs = {}
+		for id = 1, 40 do
+			local ux, uz = Sensors.wobble(s, 1, id, 0)
+			local vx, vz = Sensors.wobble(s, 1, id, 1)
+			dirs[if ux * vz - uz * vx > 0 then 1 else -1] = true
+		end
+		t.expect(dirs[1] and dirs[-1], "units orbit both ways")
+	end)
+
+	t.test("a blip is drawn at its unit (sent as its cell); weapons aim at the hidden point (S-131, S-134)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0)
+		local radar = Spawn.unit(sim, "chs_watcher", 2, -450, 0)
+		quiet(sim, { tank, radar })
+		local apart = 0
+		for _ = 1, 90 do
+			Sim.step(sim)
+			local x, z, level = Sensors.knownPosition(sim, 2, tank)
+			if level == L.RADAR then
+				t.equal(x, sim.world.posX[tank], "drawn at the unit")
+				t.equal(z, sim.world.posZ[tank])
+				local ax, az = Sensors.knownTarget(sim, 2, tank)
+				apart = math.max(apart, math.sqrt(((ax :: number) - x) ^ 2 + ((az :: number) - z) ^ 2))
+			end
+		end
+		t.expect(apart > 10, `aimed off the unit by the radar error ({apart} studs at most)`)
+	end)
+
+	t.test("aircraft in flight see the ground farther; landed, no bonus (S-139, guide 12.2)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local heli = Spawn.unit(sim, "chs_wasp", 2, 0, 0)
+		local sight = sim.defs.units.chs_wasp.sensors.sight
+		local tank = Spawn.unit(sim, "ord_lancer", 1, sight * 1.12, 0) -- beyond its sight, within 1.25 ×
+		local near = Spawn.unit(sim, "ord_lancer", 1, -sight * 0.8, 0)
+		quiet(sim, { heli, tank, near })
+		for _ = 1, 5 do
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 2, tank), L.VISIBLE, "flying: seen at 1.12 × sight")
+		World.setState(w, heli, bit32.bor(w.state[heli], World.State.LANDED))
+		for _ = 1, 5 do
+			Sim.step(sim)
+		end
+		t.expect(Sensors.level(sim, 2, tank) ~= L.VISIBLE, "landed: out of sight")
+		t.equal(Sensors.level(sim, 2, near), L.VISIBLE, "within its plain sight still")
 	end)
 
 	t.test("a jammed unit disappears from enemy radar but not from sight", function()

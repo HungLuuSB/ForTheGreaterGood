@@ -232,6 +232,117 @@ return function(t: RunAll.Context)
 		t.expect(w.wYaw[key] ~= yawAtFire, "and tracked again after")
 	end)
 
+	t.test("a manual target stays while it lives, unseen too; when it dies the tower picks its own at once (S-125, client request 57)", function()
+		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, 250, math.pi)
+		local other = Spawn.unit(sim, "chs_ravager", 2, 300, -100, math.pi) -- visible, nearer: the tower's own pick
+		local spotter = Spawn.unit(sim, "ord_herald", 1, 40, 150, 0)
+		Spawn.unit(sim, "ord_herald", 1, 300, -200, 0) -- sees the Ravager
+		for _, id in { tank, other } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+			World.setHealth(w, id, 1e6)
+		end
+		World.setFireState(w, spotter, World.FireState.HOLD_FIRE)
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		submit(sim, 1, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = { tower }, targetId = tank })
+		local key = World.slotKey(tower, 1)
+		shots(sim, tower, 15 * 2, function()
+			power(sim, 1, 5000)
+		end)
+		t.equal(w.wTarget[key], tank, "on the ordered tank")
+		-- the spotter goes: the tank lives, unseen
+		Combat.queueDamage(sim.combat, spotter, 1e6, 0)
+		local fired = shots(sim, tower, 15 * 12, function()
+			power(sim, 1, 5000)
+			t.expect(w.wTarget[key] ~= other, "never switches to the Ravager")
+		end)
+		t.equal(sim.orders.manualBlind[tower], true, "fires blind at the tank's last known position")
+		t.expect(fired >= 1, `and keeps firing there ({fired})`)
+		-- the tank dies: the tower takes the Ravager at once
+		Combat.queueDamage(sim.combat, tank, 1e9, 0)
+		Sim.step(sim) -- (Damage removes it)
+		power(sim, 1, 5000)
+		Sim.step(sim)
+		t.equal(sim.orders.manual[tower], nil, "the manual target is gone")
+		t.equal(w.wTarget[key], other, "and the tower picked its own target on the next tick")
+	end)
+
+	t.test("a beam at a destroyed structure's ghost misses at the spot instead of crashing the tick (S-126); ghosts only on orders (S-127)", function()
+		local sim = Sim.new({ seed = 10, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local gen = Spawn.unit(sim, "chs_generator", 2, 0, 200)
+		local scout = Spawn.unit(sim, "ord_herald", 1, 40, 100, 0)
+		World.setFireState(w, scout, World.FireState.HOLD_FIRE)
+		for _ = 1, 6 do
+			Sim.step(sim)
+		end
+		-- the team remembers the generator; the scout and then the generator go
+		Combat.queueDamage(sim.combat, scout, 1e6, 0)
+		Sim.step(sim)
+		Combat.queueDamage(sim.combat, gen, 1e6, 0)
+		local misses = 0
+		local ok, err = pcall(function()
+			for _ = 1, 15 * 20 do
+				power(sim, 1, 5000)
+				Sim.step(sim)
+				for _, e in sim.combat.events do
+					if e.kind == "FIRE" and e.unit == tower and not e.hit then
+						misses += 1
+					end
+				end
+			end
+		end)
+		t.expect(ok, `no crash ({err})`)
+		t.equal(w.slot[gen], nil, "the generator is gone")
+		-- (S-127: ghosts are for manual orders only, so on its own the tower
+		-- doesn't fire at it; ordered, it does, and those shots miss)
+		t.equal(misses, 0, "no shot at the ghost on its own")
+		submit(sim, 1, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = { tower }, targetId = gen })
+		local ordered = 0
+		for _ = 1, 15 * 12 do
+			power(sim, 1, 5000)
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower then
+					ordered += 1
+					t.equal(e.hit, false, "a shot at a ghost is a miss")
+				end
+			end
+		end
+		t.expect(ordered >= 1, `ordered onto the ghost, it fires ({ordered})`)
+	end)
+
+	t.test("units don't pick a structure ghost on their own (S-127, the user)", function()
+		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local gen = Spawn.unit(sim, "chs_generator", 2, 0, 200)
+		World.setHealth(w, gen, 1e6) -- (it may take a beam while still seen)
+		local scout = Spawn.unit(sim, "ord_herald", 1, 40, 100, 0)
+		World.setFireState(w, scout, World.FireState.HOLD_FIRE)
+		for _ = 1, 6 do
+			Sim.step(sim)
+		end
+		Combat.queueDamage(sim.combat, scout, 1e6, 0) -- the generator becomes a ghost, alive
+		local key = World.slotKey(tower, 1)
+		local onGhost = 0
+		for i = 1, 15 * 10 do
+			power(sim, 1, 5000)
+			Sim.step(sim)
+			if i > 4 and w.wTarget[key] == gen then -- (sensors update every 2 ticks)
+				onGhost += 1
+			end
+		end
+		t.equal(onGhost, 0, "the tower never keeps or picks the ghost")
+		t.expect(w.slot[gen] ~= nil, "the generator lives")
+	end)
+
 	t.test("the Inferno doesn't fire at radar-only contacts; seen, it does", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world

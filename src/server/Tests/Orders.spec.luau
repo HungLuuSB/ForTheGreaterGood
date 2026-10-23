@@ -106,6 +106,38 @@ return function(t: RunAll.Context)
 		return held, shots
 	end
 
+	t.test("GROUP (ctrl) move: the selection keeps together at its slowest unit's speed (S-137)", function()
+		local function race(group: boolean): (number, number, number, number)
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+			local w = sim.world
+			local scout = Spawn.unit(sim, "ord_herald", 1, -300, 10, 0) -- 60 studs/s
+			local tank = Spawn.unit(sim, "ord_lancer", 1, -300, -10, 0) -- 28 studs/s
+			local jet = Spawn.unit(sim, "ord_falcon", 1, -300, 40, 0)
+			local g = (sim.map :: any).grid
+			local cell, ox, oz = g:encode(250, 0)
+			submit(sim, 1, { cmdType = CT.MOVE, flags = if group then Schema.CmdFlag.GROUP else 0, unitIds = { scout, tank, jet }, cell = cell, offX = ox, offZ = oz })
+			local scoutAt, tankAt, fastest, jetTop = 0, 0, 0, 0
+			for i = 1, 900 do
+				Sim.step(sim)
+				fastest = math.max(fastest, w.speed[scout])
+				jetTop = math.max(jetTop, w.speed[jet])
+				if scoutAt == 0 and w.orderId[scout] == 0 then
+					scoutAt = i
+				end
+				if tankAt == 0 and w.orderId[tank] == 0 then
+					tankAt = i
+				end
+			end
+			return scoutAt, tankAt, fastest, jetTop
+		end
+		local s0, t0 = race(false)
+		local s1, t1, fastest, jetTop = race(true)
+		t.expect(s0 < t0 - 100, `without ctrl the scout arrives far ahead ({s0} vs {t0})`)
+		t.expect(fastest <= 28 + 1e-6, `with ctrl the scout keeps to the tank's 28 studs/s ({fastest})`)
+		t.expect(math.abs(s1 - t1) < 30, `and they arrive together ({s1}, {t1})`)
+		t.expect(jetTop > 100, `aircraft fly as usual ({jetTop})`)
+	end)
+
 	t.test("FIGHT holds to engage what it meets; MOVE drives on", function()
 		local heldFight, shotsFight = crossing(CT.FIGHT)
 		local heldMove = crossing(CT.MOVE)
@@ -458,5 +490,47 @@ return function(t: RunAll.Context)
 		submit(sim, 1, { cmdType = CT.STOP, flags = 0, unitIds = { tank } })
 		steps(sim, 15)
 		t.equal(sim.orders.manual[tank], nil, "STOP drops it")
+	end)
+
+	t.test("ASSIST on a builder: the helper builds what its leader builds, then follows it (S-128, the user)", function()
+		local function run(helped: boolean): (number?, Sim.Sim, number, number)
+			local sim = Sim.new({ seed = 14, players = PLAYERS, mapId = "flat:128" })
+			local w = sim.world
+			Spawn.unit(sim, "ord_sovereign", 1, -300, -300) -- some income
+			local leader = Spawn.unit(sim, "ord_mason", 1, 0, 0, 0)
+			local helper = Spawn.unit(sim, "ord_mason", 1, -60, 0, 0)
+			for _ = 1, 4 do
+				Sim.step(sim)
+			end
+			if helped then
+				on(sim, CT.GUARD, 1, { helper }, leader)
+			end
+			local g = (sim.map :: any).grid
+			local cell, ox, oz = g:encode(80, 0)
+			submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { leader }, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+			local done: number? = nil
+			for _ = 1, 15 * 60 do
+				local acc = sim.eco.accounts[1]
+				acc.supply.stored, acc.power.stored = acc.supply.storage, acc.power.storage
+				Sim.step(sim)
+				for _, e in sim.combat.events do
+					if e.kind == "BUILD_DONE" and done == nil then
+						done = sim.tick
+					end
+				end
+				if done then
+					break
+				end
+			end
+			return done, sim, leader, helper
+		end
+		local alone = run(false)
+		local together, sim, leader, helper = run(true)
+		t.expect(alone ~= nil and together ~= nil, "both finished")
+		t.expect((together :: number) < (alone :: number) * 0.8, `the helper sped it up ({together} against {alone} ticks)`)
+		-- the leader walks off: the helper follows
+		at(sim, CT.MOVE, 1, { leader }, 300, 300)
+		steps(sim, 15 * 20)
+		t.expect(dist(sim.world, helper, sim.world.posX[leader], sim.world.posZ[leader]) < 120, "and follows its leader again")
 	end)
 end

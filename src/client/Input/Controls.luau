@@ -280,7 +280,7 @@ function Controls.bind(api: Api.Api): Controls
 			local x = if ground then ground.X elseif u then u.x else nil
 			local z = if ground then ground.Z elseif u then u.z else nil
 			if x and z then
-				api.actions.commandAt(x, z, id, shift(), shift())
+				api.actions.commandAt(x, z, id, shift(), shift(), ctrl())
 			end
 			return
 		end
@@ -419,13 +419,13 @@ function Controls.bind(api: Api.Api): Controls
 		elseif input.UserInputType == Enum.UserInputType.MouseButton2 and rightStart then
 			local from, to = self.lineFrom, self.lineTo
 			if from and to then
-				api.actions.lineMove(from.X, from.Z, to.X, to.Z, shift())
+				api.actions.lineMove(from.X, from.Z, to.X, to.Z, shift(), ctrl())
 			else
 				local ground = Controls.groundAt(cam(), mouse.X, mouse.Y)
 				local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
 				if ground or id then
 					local p = ground or Vector3.zero
-					api.actions.smartOrder(p.X, p.Z, id, shift())
+					api.actions.smartOrder(p.X, p.Z, id, shift(), ctrl())
 				end
 			end
 			rightStart, self.lineFrom, self.lineTo = nil, nil, nil

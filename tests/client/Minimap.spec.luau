@@ -5,6 +5,7 @@
 
 local Api = require("../../src/client/Api")
 local Commands = require("../../src/client/Core/Commands")
+local Defs = require("@shared/Defs/Defs")
 local Minimap = require("../../src/client/Core/Minimap")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
@@ -89,5 +90,55 @@ return function(t: any)
 		end
 		t.expect(stalled, "a stall shows in the bar")
 		t.equal(Minimap.resLine("Power", nil).text, "Power: waiting for the server")
+	end)
+
+	t.test("radar blips glide toward each new reading; a far jump snaps (C-151)", function()
+		local world = World.new(Defs.load())
+		world.units[9] = { id = 9, tier = "strategic", team = 2, x = 0, z = 0, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} }
+		World.smoothStrategic(world, 1 / 60)
+		t.expect(world.units[9].sx == 0, "starts on its spot")
+		world.units[9].x = 30 -- a new wobbled reading
+		World.smoothStrategic(world, 1 / 60)
+		local u = world.units[9]
+		t.expect((u.sx :: number) > 0 and (u.sx :: number) < 5, "moves only a little in one frame")
+		for _ = 1, 120 do
+			World.smoothStrategic(world, 1 / 60)
+		end
+		t.expect(math.abs((u.sx :: number) - 30) < 0.5, "arrives within two seconds")
+		u.x = 900
+		World.smoothStrategic(world, 1 / 60)
+		t.equal(u.sx, 900, "a contact reappearing far away snaps")
+	end)
+
+	t.test("radar blips circle their spot 1.5 studs out, once in 6 s; other records don't (C-154)", function()
+		local world = World.new(Defs.load())
+		local SF = require("@shared/Net/Schema").StrategicFlag
+		local function rec(id: number, flags: number): any
+			return { id = id, tier = "strategic", team = 2, flags = flags, x = 100, z = 50, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} }
+		end
+		world.units[3] = rec(3, SF.RADAR_ONLY)
+		world.units[4] = rec(4, SF.RADAR_ONLY)
+		world.units[5] = rec(5, 0) -- an ally's unit out of view: exact
+		local angles: { number } = {}
+		local worst, total = 0, 0
+		local last: number? = nil
+		for f = 0, 360 do
+			World.smoothStrategic(world, 1 / 60, f / 60)
+			local u = world.units[3]
+			local dx, dz = (u.sx :: number) - 100, (u.sz :: number) - 50
+			worst = math.max(worst, math.abs(math.sqrt(dx * dx + dz * dz) - World.BLIP_ORBIT))
+			local a = math.atan2(dz, dx)
+			if last then
+				local d = (a - last + math.pi) % (2 * math.pi) - math.pi
+				total += d
+			end
+			last = a
+			table.insert(angles, a)
+		end
+		t.expect(worst < 1e-6, `on the circle (off by {worst})`)
+		t.expect(math.abs(math.abs(total) - 2 * math.pi) < 0.05, `one turn in 6 s ({total})`)
+		local b = world.units[4]
+		t.expect(math.abs((b.sx :: number) - (world.units[3].sx :: number)) + math.abs((b.sz :: number) - (world.units[3].sz :: number)) > 0.01, "contacts circle out of step")
+		t.equal(world.units[5].sx, 100, "a non-blip record sits on its spot")
 	end)
 end

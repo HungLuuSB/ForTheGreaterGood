@@ -5,6 +5,7 @@ local Schema = require("@shared/Net/Schema")
 local Combat = require("../Sim/Combat/Combat")
 local Sim = require("../Sim/Sim")
 local Spawn = require("../Sim/Spawn")
+local World = require("../Sim/World")
 local RunAll = require("./RunAll")
 
 local CT = Schema.CmdType
@@ -189,6 +190,164 @@ return function(t: RunAll.Context)
 		end
 		t.expect(w.posX[produced[1].unit] > 12 + 8, "the new tank drove out of the plant")
 		t.expect(not Passability.canEnter(sim.map :: any, "TRACKED", (sim.map :: any).grid:index(32, 32)), "the plant blocks its cells")
+	end)
+
+	t.test("a produced unit appears on the build pad and drives out through its factory (S-133, client request 61)", function()
+		local Build = require("../Sim/Build")
+		local Blockouts = require("@shared/Defs/Blockouts/Registry")
+		for _, heading in { math.pi / 2, 0, -math.pi / 2, math.pi } do
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+			fund(sim)
+			local w = sim.world
+			local plant = Spawn.unit(sim, "ord_vehplant", 1, 0, 0, heading)
+			build(sim, { plant }, "ord_lancer", 0, 0)
+			local unit = 0
+			runUntil(sim, 3000, function()
+				return unit ~= 0
+			end, function(s)
+				for _, e in events(s, "PRODUCED") do
+					unit = e.unit
+				end
+			end)
+			-- the blockout's pad, turned like the client turns the model (heading + π about +Y)
+			local pad
+			for _, a in (Blockouts :: any).ord_vehplant.attachments do
+				if a.name == "buildpad" then
+					pad = a.at
+				end
+			end
+			local c, sn = math.cos(heading), math.sin(heading)
+			local px, pz = w.posX[plant] - pad[1] * c - pad[3] * sn, w.posZ[plant] + pad[1] * sn - pad[3] * c
+			local fx, fz = math.sin(heading), math.cos(heading)
+			-- it appeared on the pad (then moved at most a tick): just in front of centre, inside the footprint
+			local ahead = (w.posX[unit] - w.posX[plant]) * fx + (w.posZ[unit] - w.posZ[plant]) * fz
+			t.expect(math.abs(ahead - (-pad[3])) < 2, `on the pad: {ahead} studs ahead of centre (pad {-pad[3]}, heading {heading})`)
+			local bx, bz = Build.padPosition(sim, plant)
+			t.expect(math.abs(bx - px) < 1e-9 and math.abs(bz - pz) < 1e-9, "padPosition follows the client's turn")
+			t.expect(math.abs(w.heading[unit] - heading) < 0.2 or math.abs(math.abs(w.heading[unit] - heading) - 2 * math.pi) < 0.2, "facing the exit")
+			t.expect(sim.build.exiting[unit] ~= nil, "driving out")
+			for _ = 1, 150 do
+				Sim.step(sim)
+			end
+			ahead = (w.posX[unit] - w.posX[plant]) * fx + (w.posZ[unit] - w.posZ[plant]) * fz
+			local side = (w.posX[unit] - w.posX[plant]) * fz - (w.posZ[unit] - w.posZ[plant]) * fx
+			t.expect(ahead > 16 + 8, `out of the front of the plant ({ahead} studs ahead, heading {heading})`)
+			t.expect(math.abs(side) < 6, `straight out of the door ({side} studs aside)`)
+			t.equal(sim.build.exiting[unit], nil, "and clear of it")
+		end
+	end)
+
+	t.test("a factory waits while a unit is still on its pad (S-133, the user)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		fund(sim)
+		local w = sim.world
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 0, 0, math.pi / 2)
+		build(sim, { plant }, "ord_lancer", 0, 0)
+		build(sim, { plant }, "ord_lancer", 0, 0)
+		local first = 0
+		runUntil(sim, 3000, function()
+			return first ~= 0
+		end, function(s)
+			for _, e in events(s, "PRODUCED") do
+				first = e.unit
+			end
+		end)
+		-- hold the first tank on the pad: stuck
+		local px, pz = w.posX[first], w.posZ[first]
+		for _ = 1, 300 do
+			World.setPosition(w, first, px, pz)
+			Sim.step(sim)
+		end
+		t.equal(sim.build.progress[plant], 0, "no progress while the pad is taken")
+		t.expect(sim.build.exiting[first] ~= nil, "the tank is still in the plant")
+		local freedAt = runUntil(sim, 300, function()
+			return sim.build.exiting[first] == nil
+		end)
+		t.expect(freedAt ~= nil, "let go, it drives out")
+		runUntil(sim, 30, function()
+			return false
+		end)
+		t.expect((sim.build.progress[plant] or 0) > 0, "and the plant builds again")
+	end)
+
+	t.test("aircraft appear on their airfield's pad", function()
+		local Build = require("../Sim/Build")
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		fund(sim)
+		local w = sim.world
+		local field = Spawn.unit(sim, "ord_airfield", 1, 40, 40, 0)
+		local opts = sim.defs.unitByIndex[w.defIndex[field]].buildOptions :: { string }
+		build(sim, { field }, opts[1], 40, 40)
+		local unit = 0
+		runUntil(sim, 6000, function()
+			return unit ~= 0
+		end, function(s)
+			for _, e in events(s, "PRODUCED") do
+				unit = e.unit
+			end
+		end)
+		t.expect(unit ~= 0, "produced")
+		local px, pz = Build.padPosition(sim, field)
+		t.expect(math.abs(w.posX[unit] - px) < 3 and math.abs(w.posZ[unit] - pz) < 3, `on the pad ({w.posX[unit]}, {w.posZ[unit]} vs {px}, {pz})`)
+		t.equal(sim.build.exiting[unit], nil, "aircraft don't drive out")
+	end)
+
+	t.test("a factory still being built takes a queue and starts on it when finished (S-138, client request 63)", function()
+		local sim, cv, sx, sz = newStart()
+		fund(sim)
+		local w = sim.world
+		build(sim, { cv }, "ord_vehplant", sx + 60, sz)
+		local frame = 0
+		runUntil(sim, 600, function()
+			return frame ~= 0
+		end, function(s)
+			for _, e in events(s, "BUILD_START") do
+				frame = e.unit
+			end
+		end)
+		t.expect(frame ~= 0 and w.buildProgress[frame] < 1, "a plant frame going up")
+		build(sim, { frame }, "ord_lancer", 0, 0)
+		build(sim, { frame }, "ord_lancer", 0, 0)
+		build(sim, { frame }, "ord_mason", 0, 0)
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame], 3, "the frame took the queue")
+		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame }, value = 3 })
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame], 2, "CANCEL n drops a queued item, the frame stays")
+		t.expect(w.slot[frame] ~= nil, "still there")
+		local produced = 0
+		local finishedAt = runUntil(sim, 3000, function()
+			return w.buildProgress[frame] >= 1
+		end, function(s)
+			t.equal(s.build.progress[frame] or 0, 0, "nothing produced or spent before it's finished")
+			produced += #events(s, "PRODUCED")
+		end)
+		t.expect(finishedAt ~= nil, "the plant finished")
+		t.equal(produced, 0, "no unit before then")
+		runUntil(sim, 30, function()
+			return false
+		end)
+		t.expect((sim.build.progress[frame] or 0) > 0, "and it starts on its queue at once")
+		-- CANCEL 0 on a frame with a queue clears the queue first, then a second removes the frame
+		build(sim, { cv }, "ord_vehplant", sx + 60, sz + 80)
+		local frame2 = 0
+		runUntil(sim, 600, function()
+			return frame2 ~= 0
+		end, function(s)
+			for _, e in events(s, "BUILD_START") do
+				frame2 = e.unit
+			end
+		end)
+		build(sim, { frame2 }, "ord_lancer", 0, 0)
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame2], 1, "queued")
+		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame2 }, value = 0 })
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame2], 0, "the first CANCEL 0 clears the queue")
+		t.expect(w.slot[frame2] ~= nil, "and leaves the frame")
+		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame2 }, value = 0 })
+		Sim.step(sim)
+		t.equal(w.slot[frame2], nil, "the second removes the frame")
 	end)
 
 	t.test("a builder assisting a factory speeds up production", function()

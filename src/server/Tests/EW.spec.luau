@@ -549,12 +549,13 @@ return function(t: RunAll.Context)
 
 	t.test("guided target choice doesn't flip-flop between similar targets", function()
 		-- Two Wasps hovering 500 and 505 studs from an Aegis, known only by
-		-- radar: the ±20-stud wobble keeps swapping which one looks closer.
+		-- radar: their ±20-stud orbits (S-130) keep swapping which one looks
+		-- closer (the bearing is picked so they do).
 		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = MAP, defs = BASE })
 		local w = sim.world
 		local aegis = Spawn.unit(sim, "ord_aegis", 1, -400, -200)
 		local near = Spawn.unit(sim, "chs_wasp", 2, 100, -200)
-		local far = Spawn.unit(sim, "chs_wasp", 2, -400 + 505 * math.sin(math.pi / 4), -200 + 505 * math.cos(math.pi / 4))
+		local far = Spawn.unit(sim, "chs_wasp", 2, -400 + 505 * math.sin(-math.pi / 4), -200 + 505 * math.cos(-math.pi / 4))
 		hold(sim, { near, far })
 		for _, id in { near, far } do
 			World.setHealth(w, id, 1e7)
@@ -572,8 +573,8 @@ return function(t: RunAll.Context)
 				prev = cur
 			end
 			-- which one the SAM's team believes is closer (what a margin-free choice would follow)
-			local nx, nz = Sensors.knownPosition(sim, 1, near)
-			local fx, fz = Sensors.knownPosition(sim, 1, far)
+			local nx, nz = Sensors.knownPosition(sim, 1, near, true)
+			local fx, fz = Sensors.knownPosition(sim, 1, far, true)
 			if nx and fx then
 				local dn = (nx + 400) ^ 2 + (nz + 200) ^ 2
 				local df = (fx + 400) ^ 2 + (fz + 200) ^ 2

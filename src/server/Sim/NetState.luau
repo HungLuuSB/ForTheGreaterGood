@@ -22,6 +22,7 @@ export type PlayerNet = {
 	sentTargets: { [number]: string }, -- own tactical units → the weapon targets last sent (S-16)
 	sentStock: { [number]: string }, -- own tactical units → the missile stock last sent (S-47)
 	sentOwner: { [number]: { string } }, -- own tactical units → queue, states, ammo last sent (S-61)
+	sentIdle: { [number]: number }, -- own builders / factories last sent idle → their generation (S-136)
 	sentProducing: { [number]: string }, -- allied tactical factories → item and progress last sent (S-103)
 	domes: { [number]: boolean }, -- generators whose dome the player has from DOME records (S-122)
 	spectator: boolean, -- sees everything, camera on the whole map (S-18)
@@ -79,6 +80,7 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		sentTargets = {},
 		sentStock = {},
 		sentOwner = {},
+		sentIdle = {},
 		sentProducing = {},
 		domes = {},
 		spectator = spectator,

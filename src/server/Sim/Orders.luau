@@ -43,6 +43,7 @@
 
 local Air = require("./Air")
 local Build = require("./Build")
+local BuildState = require("./BuildState")
 local ContactGrid = require("./Combat/ContactGrid")
 local Defs = require("@shared/Defs/Defs")
 local Hash = require("@shared/Util/Hash")
@@ -77,6 +78,7 @@ export type OrderSpec = {
 	gen: number?,
 	defIndex: number?,
 	facing: number?,
+	group: boolean?, -- move-like: keep together at the slowest unit's speed (S-137)
 }
 
 local function def(sim: Types.Sim, id: number): Defs.UnitDef
@@ -120,6 +122,17 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 	local o = sim.orders
 	local batch = o.nextBatch
 	o.nextBatch += 1
+	-- a group move (ctrl, S-137): every ground unit goes at the slowest one's
+	-- top speed, so the group keeps together (aircraft fly as usual)
+	local speedCap: number? = nil
+	if spec.group and sim.nav and isMoveLike(spec.kind) then
+		for _, id in ids do
+			local p = sim.nav.profiles[sim.world.defIndex[id]]
+			if p and not p.air and def(sim, id).domain ~= "structure" then
+				speedCap = math.min(speedCap or math.huge, p.maxSpeed)
+			end
+		end
+	end
 	for _, id in ids do
 		o.anchorX[id], o.anchorZ[id] = nil, nil -- re-anchored where this leaves it (S-34)
 		Air.release(sim, id) -- a docked aircraft launches (S-36)
@@ -135,6 +148,7 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 				-- as its manual target: it can't chase, it fires whenever the
 				-- target is in range (S-121, client request 54)
 				o.manual[id], o.manualGen[id] = spec.target, spec.gen or 0
+				o.manualX[id], o.manualZ[id], o.manualBlind[id] = nil, nil, nil
 			end
 			continue
 		end
@@ -160,6 +174,7 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 			started = false,
 			nav = 0,
 			issued = -math.huge,
+			speedCap = speedCap,
 		})
 	end
 end
@@ -168,7 +183,14 @@ end
 -- (S-115; automatic orders stop units without touching it).
 function Orders.stopCommand(sim: Types.Sim, id: number)
 	Orders.stop(sim, id)
-	sim.orders.manual[id], sim.orders.manualGen[id] = nil, nil
+	Orders.dropManual(sim, id)
+end
+
+-- Forgets unit `id`'s manual target (S-115, S-125).
+function Orders.dropManual(sim: Types.Sim, id: number)
+	local o = sim.orders
+	o.manual[id], o.manualGen[id] = nil, nil
+	o.manualX[id], o.manualZ[id], o.manualBlind[id] = nil, nil, nil
 end
 
 -- STOP: clears the queue and halts.
@@ -336,6 +358,7 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		end
 		o.forced[id], o.forcedGen[id] = t, gen :: number
 		o.manual[id], o.manualGen[id] = t, gen :: number -- kept after the order ends, until STOP (S-115)
+		o.manualX[id], o.manualZ[id], o.manualBlind[id] = nil, nil, nil
 		if d.domain == "air" then
 			return true -- aircraft chase their target themselves
 		end
@@ -351,6 +374,23 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		local t = h.target :: number
 		if not World.isRef(w, t, h.gen) or w.ally[t] ~= w.ally[id] then
 			return false
+		end
+		-- a builder guarding (ASSIST) another builder helps with what that one
+		-- builds: its frame, or the factory production it assists (S-128, the
+		-- user; never repairs or stockpiles); otherwise it follows it
+		local b = sim.build
+		if def(sim, id).buildPower and def(sim, t).buildOptions and def(sim, t).domain ~= "structure" then
+			local lt = b.target[t] or 0
+			local helping = lt ~= 0 and World.isRef(w, lt, b.targetGen[t]) and not b.repair[t]
+				and (w.buildProgress[lt] < 1 or b.assist[t] == true)
+			if helping then
+				if (b.target[id] or 0) ~= lt then
+					Build.commandAssist(sim, { id }, lt)
+				end
+				return true -- Build walks it into range and builds
+			elseif (b.target[id] or 0) ~= 0 and not b.repair[id] then
+				BuildState.idle(b, id) -- the leader's job is done: follow again
+			end
 		end
 		local dx, dz = w.posX[t] - w.posX[id], w.posZ[t] - w.posZ[id]
 		local d2 = dx * dx + dz * dz

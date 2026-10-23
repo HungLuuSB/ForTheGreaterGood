@@ -546,8 +546,10 @@ return function(t: RunAll.Context)
 		t.equal(on.unguided, 0, "never for unguided projectiles")
 		t.equal(on.outOfView, 0, "never for projectiles out of the player's view")
 		-- since attack-move holds to engage (S-4) the torpedo flights are shorter: the
-		-- drift without corrections is smaller than it was (618 studs in D102)
-		t.expect(off.worst > 40, `without corrections torpedoes drift visibly ({off.worst} studs)`)
+		-- drift without corrections is smaller than it was (618 studs in D102);
+		-- since S-131 the drawn sonar blips sit within 1.5 studs of the subs,
+		-- and the uncorrected worst case fell from over 40 to 36.6 studs
+		t.expect(off.worst > 30, `without corrections torpedoes drift visibly ({off.worst} studs)`)
 		t.expect(off.worst > 3 * math.max(on.worst, 1), `corrections cut the drift at least 3× ({off.worst} → {on.worst} studs)`)
 		t.expect(on.worst < 40, `with corrections the visible drift stays small ({on.worst} studs)`)
 		t.expect(lossy.worst < 80, `half the corrections lost: still bounded ({lossy.worst} studs)`)
@@ -584,6 +586,51 @@ return function(t: RunAll.Context)
 		end
 		return true, ""
 	end
+
+	t.test("IDLE: the owner hears when a builder or factory goes idle or busy, on camera or not (S-136, request 62)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local mason = Spawn.unit(sim, "ord_mason", 1, -300, -300)
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 300, 300, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0)
+		local enemy = Spawn.unit(sim, "chs_scrapper", 2, 200, -200)
+		camera(sim, 1, 0, 0, 2, 2) -- a corner: none of them on camera
+		local view = Client.new(g)
+		local otherView = Client.new(g)
+		local function step(n: number)
+			for _ = 1, n do
+				sim.eco.accounts[1].supply.stored = 1000
+				sim.eco.accounts[1].power.stored = 1000
+				Sim.step(sim)
+				Client.receive(view, sim.net.players[1].outbox)
+				Client.receive(otherView, sim.net.players[2].outbox)
+			end
+		end
+		step(10)
+		t.equal(view.idle[mason], true, "an idle builder off camera is reported")
+		t.equal(view.idle[plant], true, "a factory with an empty queue too")
+		t.equal(view.idle[tank], nil, "not a unit that can't build")
+		t.equal(otherView.idle[mason], nil, "owner only")
+		t.equal(otherView.idle[enemy], true, "each player hears of its own")
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.ord_lancer.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
+		local cell, ox, oz = g:encode(-200, -300)
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		step(10)
+		t.equal(view.idle[mason], nil, "building: busy")
+		t.equal(view.idle[plant], nil, "producing: busy")
+		step(900 * 2)
+		t.equal(view.idle[plant], true, "its queue done, idle again")
+		t.equal(view.idle[mason], true, "the generator built, idle again")
+		-- a client joining later hears of every idle one
+		local late = Client.new(g)
+		NetOut.join(sim, 1)
+		step(1)
+		Client.receive(late, sim.net.players[1].outbox)
+		t.equal(late.idle[mason], true, "on join: the idle builder")
+		t.equal(late.idle[plant], true, "and factory")
+		local _ = w
+	end)
 
 	t.test("a client joining late rebuilds the same view as one connected from the start", function()
 		local function run(joinAt: number?): (Client.View, Sim.Sim)
@@ -950,5 +997,14 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.equal(gone, true, "DOME_GONE when the generator died")
+	end)
+
+	t.test("WELCOME lists every team's ally team (S-129, client request)", function()
+		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 }, { id = 3, team = 3, allyTeam = 1 }, { id = 4, team = 4, allyTeam = 2 } }
+		local sim = Sim.new({ seed = 15, players = players, mapId = "flat:64" })
+		NetOut.join(sim, 3)
+		local rec = Schema.decodeSnapshot(Packer.Reader.new(sim.net.players[3].welcome :: buffer))
+		t.equal(rec.allyTeam, 1)
+		t.deepEqual(rec.teamAllies, { 1, 2, 1, 2 }, "teams 1..4 and their ally teams")
 	end)
 end

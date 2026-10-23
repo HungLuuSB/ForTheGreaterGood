@@ -1164,3 +1164,300 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - **Not kept:** a 20 to 26 ring patch with a wide rim of tiny cells, tried as "C-145". The user: "too much"; it also cost ~25 ms a frame, with peaks over 300 ms, under shield_beams. The honeycomb stays as in C-142.
 
 **Why:** the user: the beam should go through once the dome drops; "reduce the size of the ring flowing down the dome".
+
+### C-145 — Shield domes drawn without vision (DOME / DOME_GONE, protocol 29, S-122) (2026-10-23)
+
+**Decision:**
+- **World:** `remoteDomes` keeps domes whose generator the player doesn't have (centre, radius, charge, flags). NetIn sets it from DOME and clears it on DOME_GONE; the branches are guarded until the event kinds exist.
+- **ShieldDomes:** draws from both sources by generator ID (tactical SHIELD first). A dome carries over when its generator enters view: same ID, its ENTER and SHIELD take over and the DOME_GONE comes after.
+- Hit patches already map to the nearest dome.
+
+**Why:** the user: "the shield dome (only the dome) should be rendered regardless of vision like in BAR".
+
+### C-146 — The Commander mechs walk (2026-10-23)
+
+**Decision:** piece script `PieceScripts/Commander` for ord_sovereign and chs_warlord.
+- **Moving:** models-C's stride pose (thighL +28 / shinL −18 / footL −10, thighR −22 / shinR −30 / footR +20) and its mirror alternate, one stride per 0.6 s. The arms swing ±18° against the legs, the torso twists ±6° and the pelvis dips 0.12 studs per step.
+- **Stopped:** everything eases back to rest.
+- Create, aim and fire come from Default.
+
+**Why:** models-C's M-31 (the user's request); the meshes (2b4dc5b) are at review, so the blockout mechs walk until they're approved.
+
+### C-147 — A continued beam that now ends on another dome glances and pulses there (2026-10-23)
+
+**Decision:** `Effects.glance(world, weapon, tracer, now)` holds C-129's deflection and C-139's pulse setup, and now also includes unseen domes (`world.remoteDomes`, S-122). New beams run it, and so does `continueBeam` whenever a moved end falls short (hit = false), so the glance and pulses follow to the new dome.
+
+**Why:** the user's overlapping-domes screenshot. The rule that a beam's line is re-checked against every dome each tick is sim request 56.
+
+### C-148 — Mech stride re-tuned for the heroic mechs (2026-10-23)
+
+**Decision:** Commander POSE follows models-C's M-32 stride: forward leg thigh +24 / shin −8 / foot −16, back leg thigh −18 / shin −22 / foot +30, pelvis dip 0.2. C-145's domes without vision are verified in Studio on main f3334c7 (S-122).
+
+**Why:** the user rejected the first mechs (too small and blocky); models-C rebuilt them about 10 studs tall with a real knee bend.
+
+### C-149 — Remembered buildings (ghosts) can be ordered attacked (2026-10-23)
+
+**Decision:** no code change needed. Ghost structures arrive as strategic records under their real unit IDs, so `Selection.pick` picks them and `Orders.smart` / Attack mode send ATTACK with that targetId. A spec pins it down (Orders.spec).
+
+**Why:** sim-A's S-127, from the user: units no longer auto-target ghosts, only on an attack order or manual target.
+
+### C-150 — Allies told apart: right-click on an ally guards / assists (2026-10-23)
+
+**Decision:** `World.welcome` keeps WELCOME's `teamAllies` (protocol 30, S-129; empty before it). `World.relation` returns "ally" when `teamAllies[team] == me.allyTeam`. `Orders.smart` sends GUARD (guard, or assist a builder, S-128) on allies and ATTACK only on enemies. Attack mode still targets anyone explicitly. Spec in Orders.spec. Without the list, other teams count as enemies as before.
+
+**Why:** right-click on an ally's unit attacked it in team games; sim-A offered the ally list (S-129).
+
+### C-151 — Radar blips glide instead of jumping (2026-10-23)
+
+**Decision:** `World.smoothStrategic(world, dt)` runs once a frame: each strategic record's drawn spot (sx, sz) eases toward its latest reported spot (time constant 0.45 s) and snaps on a jump over 160 studs. NetIn carries sx / sz across snapshot rebuilds. Contact discs (Ghosts.list), icons, the minimap and picking (Selection.position) draw from sx / sz. Measured in Studio (the radar scene): blips moved on 1,202 of 1,210 frames, at most 1.2 studs a frame.
+
+**Why:** the user asked for the jumping radar blips to move smoothly.
+
+### C-152 — Factories show the unit in production on their pad (2026-10-23)
+
+**Decision:** `Render/FactoryFrames` (logic in `Core/Nanoframe`, spec `Nanoframe.spec`) draws each drawn factory's current item, BAR-style:
+- **Where:** the produced unit's pooled model stands on the factory's `buildpad` attachment (rig.md section 8), facing the factory's heading (the exit).
+- **What it shows:** from the queue head and `queueProgress` (own factories) or PRODUCING (allies; NetIn now reads it into `producing` / `producingProgress`).
+  - Parts below a rising build line show as built.
+  - The rest are a team-colored ForceField nanoframe, with SurfaceAppearances detached while unbuilt.
+  - A thin neon outline marks the line.
+  - Every `nano1..N` emitter sprays a Beam at a point sweeping the line.
+- **Progress:** the server sends it in sixteenths, so `Nanoframe.track` eases through each step at the measured step rate (at first the build time over the factory's build power). It never backs down within an item. It stops the spray after 2.5 step gaps with no step (a stalled economy).
+- **Pool safety:** the frame's parts can't be picked (clicks on the pad hit the factory). Every look is restored before the model goes back to the pool.
+- **When frames are dropped:** at strategic zoom, on rejoin and when models are rebuilt.
+- **Checked in Studio** (the `build` profile with a spawned plant and airfield): `debug_out/screens/c152_factory_frame.jpg` and `c152_airfield_frame.jpg`.
+- **Enemies' factories show nothing:** the server doesn't send them their production.
+
+**Why:** the user couldn't see factories producing; the only sign was the pulsing factory lights.
+
+### C-153 — The Canyon drawn as a desert, and listed in the lobby (2026-10-23)
+
+**Decision:**
+- `Main.mapFeature` gives `Canyon.feature` for `map:canyon`.
+- Core/Terrain maps its floor to "desert" (Enum.Material.Limestone, tan 186, 148, 100). Badlands, aprons, cliffs, mesas and boulders map to "redrock" (Sandstone, 168, 88, 58).
+- No other map or atmosphere preset uses those two materials, so Render/Terrain sets their colours freely.
+- The skirmish lobby now lists every hand-made map (MapRegistry.HANDMADE: Normandy, The Canyon) after the generated ones.
+- A committed `canyon` profile has both Commanders at their starts.
+- Spec: Terrain.spec. Screens: `c153_canyon_*.jpg`.
+
+**Why:** S-132 added The Canyon; sim-A asked for the floor drawn as pale desert and the rock reddish.
+
+### C-154 — Radar blips circle their spot on the client (2026-10-23)
+
+**Decision:** `World.smoothStrategic(world, dt, now)` keeps the glide (C-151) in gx / gz. Radar and sonar records are drawn 1.5 studs out on a circle round it, one turn in 6 s, with start angle and direction from the id. Other strategic records sit on their spot. Measured in Studio (`radar`): four Ravager blips at r 1.26–1.74. Spec: Minimap.spec.
+
+**Why:** the user wanted BAR's 1–2 stud circle (request 60). S-131 put the orbit on the server, but strategic records carry only the cell, so it never showed: blips sat still or hopped cells. Sim-A has been told and may drop the server's drawn offset.
+
+### C-155 — Each map has its own look; The Canyon is a desert day (2026-10-23)
+
+**Decision:** `Core/MapLook` gives each map:
+- its atmosphere preset (lighting, time of day, grade);
+- the colour of the land past its edge;
+- the dust and mist particles' colour and wind.
+
+Maps without an entry get the moonlit night (C-101). Details:
+- **The Canyon:** a new "desert" preset: clock 14.5, warm sun, light sandy haze (thicker washed the map out in Studio), crisp shadows, procedural day sky. Sand-coloured dust blows across a tan skirt.
+- **Settings:** atmosphere gets "Map's own", the new default, which follows the map. The other presets still override it.
+- **Applied:** `Atmosphere.setMap` on each new map.
+- Spec: MapLook.spec. Screens: `c155_canyon_day_*.jpg`.
+
+**Why:** the user: "Each map will have its own environment + lighting settings + effects + time of day. For Canyon, it should be during the day".
+
+### C-156 — Animated pieces run by state: radars, drills, wheels, gantries (2026-10-23)
+
+**Decision:**
+- `Core/PieceMotion` lists each def's animated pieces: the blockout's part `anim`, overridden by the mesh manifest's `anim` on the same name. Axes are mapped to x / y / z with a sign.
+- PieceAnim's driver re-plans them through `PieceScripts/Ambient` on every unit, whenever moving, power (off, stalled or unbuilt = 0; else the own team's power ratio in quarters, others count as powered), producing or landed changes.
+- What Ambient does:
+  - wheels roll while moving;
+  - radars, dishes, arrays and sonar drums sweep at 60 / 40°/s × power;
+  - drills turn at 160°/s × power;
+  - jammer emitters spin;
+  - cranes and jibs swing ±30°;
+  - factory gantries and trolleys run their rail while producing;
+  - windmill rotors always turn, and a helicopter's tail rotor runs with its main rotor;
+  - track sets judder while moving (no texture scroll: no texture yet).
+- Powered pieces wind up and down at 180°/s².
+- `open`, `lower`, `pulse` and `swing` stay with their own scripts or the glow.
+- Spec: Ambient.spec. Checked in Studio: the airfield radar turns 61° in 1 s; the Chaos plant's trolley slides 2 studs a second while producing. Screen: `c156_ambient_pieces.jpg`.
+
+**Why:** the user's queue item 2: "Animation pass with C's animated pieces ... driven by power and on/off state".
+
+**Not done:** a sonar "ping" effect and a jammer shimmer beyond the spinning emitter. Both would be new VFX, not pieces.
+
+### C-157 — BAR's selection panel: tile clicks keep, drop or widen a type (2026-10-23)
+
+**Decision:** with several units selected, the unit panel's type tiles (icon and count, C-71) now follow BAR (`Selection.tileClick`):
+- a click keeps only that type;
+- Shift-click drops it;
+- Ctrl-click selects every own unit of that type on screen (`Selection.sameTypeOnScreen`, as a double-click).
+
+Spec: SelectionTiles.spec. Screen: `c157_selection_tiles.jpg` (2 Masons and 3 Lancers).
+
+**Testing note:** Studio MCP's simulated clicks reach the world under a GUI button: the click lands as an empty-ground click and clears the selection, and the Lobby Start button missed the same way. A real click is consumed by the button. So the tile logic is covered by the spec, not by an MCP click.
+
+**Why:** the user's queue item 3.
+
+### C-158 — Idle builders and factories: top-strip counts, I to cycle, IDLE tags (2026-10-23)
+
+**Decision:**
+- `Core/Idle` counts own idle builders and factories:
+  - a factory with an empty queue, or none sent: the server sends one only once there's been a queue;
+  - a builder that stood still 3 s with no orders still shown (Waypoints) and no own frame going up within its build range.
+- `UI/IdleStrip`: "Idle builders (I): n" and "Idle factories: n", right of the resource bar, amber when non-zero. A click picks the next one.
+- **I** selects the next idle builder and the camera follows it (`Idle.next` walks them by id and wraps).
+- `Render/IdleMarks` puts a small IDLE tag over each idle builder. It's screen space, like HealthBars: a BillboardGui didn't render.
+- Checked in Studio: 3 idle builders (2 Masons and the Commander) and 1 idle factory. Spec: Idle.spec. Screen: `c158_idle_marks.jpg`.
+
+**Limits until sim request 62:** only units in the tactical tier count, and a builder repairing or assisting without a client-sent order can read as idle. Request 62 asks the server for an owner-only idle signal that covers off-camera units too.
+
+**Why:** the user's queue item 4.
+
+### C-159 — Rebindable keys in Settings > Keys, saved per player, with clash warnings (2026-10-23)
+
+**Decision:**
+- `Core/Keybinds` lists the 23 single-key actions with their defaults: orders, building, camera and views, the developer follow key.
+- Keys that can't be bound: digits, arrows, modifiers, Enter / slash, Escape, the sim-speed keys, F3.
+- `Keybinds.conflicts` reports actions that share a key; encode / decode save only what differs from the defaults.
+- `SettingsMenu.applyKeys` writes the bindings into Controls, Camera, BuildMenu, RangeOverlay, MissileView and Deposits. Main reads the idle and follow keys through `SettingsMenu.key`.
+- The command card's hover hint, the idle strip and the Settings button show the bound keys.
+- **The Keys page:** a button per action. Click it, press the new key (Escape cancels); while it waits, the game ignores keys. A clash shows "also: …" in red on both rows. Reset to defaults. Then the fixed keys (mouse, groups, camera) as a table.
+- **Saving:** the `Keybinds` RemoteFunction (src/roblox): "get" / "set". A live server keeps them in the FtggSettings DataStore. Studio refuses DataStores without API access, so there they last for the server session.
+- **Defaults change:** camera turn right moves from E to C, because E was both reclaim (C-109, BAR's) and turn right.
+- Checked in Studio: Stop rebound to A showed the clash on Stop and Attack, and the server returned "stop=A" (reset afterwards). Specs: Keybinds.spec, Settings.spec. Screen: `c159_keys_conflict.jpg`.
+
+**Why:** the user's queue item 6.
+
+### C-160 — The Commander walk on models-C's v3 mechs; a review-mesh preview switch (2026-10-23)
+
+**Decision:**
+- No change to the walk: the v3 meshes (M-33, merged) keep the pieces the Commander script drives (thighL / R, shinL / R, footL / R, armL / R, torso, base). The new hipL / hipR stay still.
+- To see a review mesh in game there's now a Studio debug switch: `FtggClientDebug:Invoke("reviewmesh", defId)` builds that one review entry (`MeshModels.REVIEW`), and units of it redraw with the mesh.
+- Checked on the `build` profile: the Sovereign v3 mesh built in 6 s. Walking to a move order, its left thigh swung −18° to +24°. Screen: `c160_mech_v3_walk.jpg`.
+- The Warlord runs the same script on the same piece names.
+
+**Why:** the user's queue item 7: "Commander walk animation once C's version-3 mechs merge". The mechs stay at "review" until the user approves them through models-C.
+
+### C-161 — Own and seen units stay drawn and selectable out of the camera area (2026-10-23)
+
+**Decision:**
+- **Strategic records keep their type:** a record whose icon is a type (own, allied or seen; not radar, sonar or ghost) gets that type as its `defIndex`, since the icon is the def index (Shared/Net/Icons).
+- **And the last tactical detail:** a unit that was tactical keeps heading, altitude, health, build, state, aim, queue, fire / move state, ammo and stock. It keeps its exact spot while the server's cell still holds it, so buildings and parked units don't shift.
+- **UnitRenderer draws them:** at their gliding spot (C-151) with the last heading. Aircraft in the air are left to the icons.
+- **No pop:** a unit leaving the camera area keeps its model, and on ENTER the same model carries on.
+- **Panels:** a selected unit far away keeps its unit panel, build menu and command card, so you can keep giving a Mason build orders anywhere.
+- Checked in Studio (`build` profile): 7 models before, while the camera was 800 studs away and after; all 7 the same instances on return. The Commander's panel and build menu stayed with the camera away. Spec: OffCamera.spec. Screen: `c161_panel_off_camera.jpg`.
+
+**Limit:** off camera the server sends only cell, type and flags. So a far unit's health and a far frame's build progress show their last values until the camera comes back. Fixing that would need the server to send own units in full there (sim-side, a bandwidth question).
+
+**Why:** the user: "I really dislike the way the map re-render when my camera go away and back, also I don't want my unit to be de-render when out of view. I was selecting targets for my mason to build far away and I move out of the view of it, the panel gone ?"
+
+### C-162 — Camera.Focus on the ground point looked at (2026-10-23)
+
+**Decision:** `Camera.apply` sets `cam.Focus` to the ground point the camera looks at. The engine prioritises some work (lighting and the like) round Focus.
+
+**Not a fix for the terrain refinement:** after a long jump (a minimap click across The Canyon), Roblox's voxel terrain draws the new area coarse and sharpens it over about 4 s. That's the engine's terrain level of detail, driven by camera distance, and setting Focus didn't change it. Screens: `c162_jump_before.jpg` (just after the jump) and `c162_jump_after4s.jpg`. The options are the user's call.
+
+**Why:** the user: "the map re-render with better quality" after a minimap jump.
+
+### C-163 — Builders assist: right-click an own factory or frame (2026-10-23)
+
+**Decision:** the smart right-click is split by unit (`Orders.smartFor`):
+- on an own frame, finished factory or damaged unit, selected builders get REPAIR (build it, help the factory's production, heal it) and the other units GUARD it;
+- on an own builder everyone GUARDs, which for builders is S-128's assist: they help whatever the leader builds, then follow it.
+
+The command card's Guard button reads "Assist" when only builders are selected. Spec: Assist.spec. Through the real server, a Mason right-clicked onto a producing plant works on it with `assist` set.
+
+**Why:** the user: "where is the 'Assist' of the workers that can help build unit/structure faster and follow the leading command?" A right-click on an own finished factory used to send GUARD, which only followed it.
+
+### C-164 — Minimap: drag moves the camera; the view drawn as its ground trapezoid (2026-10-23)
+
+**Decision:**
+- A left press on the minimap moves the camera there and keeps moving it while the mouse drags; the release ends it.
+- `Camera.apply` keeps the four ground corners of the screen (`state.corners`, passed through `api.state.camera.corners`). The minimap draws them as four 1-px lines (`Minimap.cameraShape`), so the view reads as the trapezoid it is. The cell box is the fallback until the camera has corners.
+- Checked in Studio: a drag from the middle of the minimap to the lower right left the camera at the drag's end (140, 192). The trapezoid shows in `c164_c166_grid_trapezoid.jpg`.
+
+**Why:** the user's items 1 and 2.
+
+### C-165 — A placement can't overlap a build already queued (2026-10-23)
+
+**Decision:** `Placement.planned` lists the footprints of the builds the player has queued and not started (Waypoints' BUILD points). `Placement.check` counts them as occupied for:
+- the ghost's tint;
+- a click;
+- each spot of a dragged row (earlier spots of the same row included);
+- extractor drags and Upgrade extractors.
+
+Extractor drags also drop spots that share cells with an earlier spot of the same drag. Specs: Placement.spec (new case) and Upgrades.spec: a T2 drag no longer plans over the Mason's queued T1 spots.
+
+**Why:** the user: "When placing preview model to build, you can place 2 model that violate each other hitboxes?"
+
+### C-166 — The build grid round the placement ghost, a Settings toggle (2026-10-23)
+
+**Decision:**
+- While placing, the 8-stud build cells within 6 cells of the ghost are drawn as thin light lines on the ground: one segment per cell edge, so they follow slopes, fading toward the edge.
+- They're laid again only when the ghost crosses a cell corner. They live outside the ghost's folder, so its Highlight doesn't tint them.
+- Settings > Interface "Build grid", on by default.
+- Checked in Studio: `c164_c166_grid_trapezoid.jpg`.
+
+**Why:** the user's item 3: "Add grid box guidance (toggle in setting)".
+
+### C-167 — Baked mesh ground for the named maps (with models-C); terrain keeps only the water (2026-10-23)
+
+**Decision:** the named maps' ground will be uploaded mesh tiles, baked by the models stream from the client's own surface data. The contract is `docs/contracts/map-ground.md`.
+- `lune run export_ground [mapId | all]` writes each map's ground.json:
+  - heights every 4 studs from Core/Terrain.groundY, so the bake matches what units stand on;
+  - the ground type per cell, and the Canyon / Normandy features (where rock detail goes);
+  - water depth, deposits and starts.
+- The tiles go in a `ground` table in the mesh manifest, their textures in `groundMaterials`. `lune run mesh_materials` writes the textures as `ground_<key>` SurfaceAppearances.
+- `Core/GroundMeshes` picks a map's entry: approved, or review with `FtggClientDebug:Invoke("groundanyway", true)` in Studio. Until a texture exists, a tile gets a plain material and colour matching the voxel terrain.
+- `Render/MeshGround` builds the tiles 12 at a time with CreateMeshPartAsync: Precise fidelity, anchored, queryable for ground clicks.
+- `Ground.build` takes the map ID: with an entry, the terrain gets only the water (`RenderTerrain.build(..., waterOnly)`). Maps without one keep the voxel terrain as before.
+- Spec: GroundMeshes.spec. Nothing to see in Studio until models-C's first tiles.
+
+**Why EditableMesh isn't used:** the user rejected the terrain's coarse-then-sharp redraw after camera jumps (C-162). Ground built in game as an EditableMesh would need about 160,000 vertices on The Canyon, but the device's editable-memory budget ran out at about 7,600 (Render/FogBlanket's note). Uploaded meshes have no such budget and render at full detail at any distance.
+
+### C-168 — A producing factory shows its item's progress bar (2026-10-23)
+
+**Decision:** an own or allied factory that is producing gets a second bar under its health bar, always, selected or not. It's amber, the UI accent, so it reads apart from the blue construction bar. It shows the item's progress as the hologram draws it (FactoryFrames' eased value, `u.productionShown`), else the server's sixteenths. Spec: Bars.spec, through the real server.
+
+**Why:** the user: "Still no progress bar for building", over a selected vehicle plant producing a tank.
+
+### C-169 — Ctrl moves keep the group together (GROUP); idle counts from the server; queueing in a frame (2026-10-23)
+
+**Decision:**
+- **Ctrl + move:** right click, a line drag, a Move / Fight / Patrol command click and a minimap right click held with Ctrl send `Schema.CmdFlag.GROUP` (S-137, protocol 31). The selection's ground units then move no faster than the slowest one. `Orders.Intent.group`, only on MOVE, FIGHT and PATROL.
+- **C-158 now counts from the server's IDLE events** (S-136): `world.idle`, cleared on a join and on a unit's death. Every idle builder and factory counts, on camera or not, and the I key jumps to one anywhere (its model stays drawn off camera, C-161). The client-side guess is gone.
+- **S-138:** a factory frame takes the build menu's queue; the client needed nothing new.
+- Specs: Idle.spec (through the real server, off camera included) and FrameQueue.spec (a frame's queue round trip; GROUP on the right commands).
+
+**Why:** the user's queue item 5 (group speed), request 62 (idle) and request 63 (the user: "Still not replicate build command when the building is being built").
+
+### C-170 — A recharge bar for long-reload weapons (Radiance, Inferno and others) (2026-10-23)
+
+**Decision:**
+- The client notes each weapon's last shot it sees (`World.noteShot`: a FIRE, or a projectile launch from a known shooter), with the sim tick.
+- For own and allied units, every weapon with a reload of `World.RELOAD_BAR` (4 s) or more shows a thin pale-blue recharge bar under the health (and build) bar. The bar fills from the shot over the weapon's reload, the server's own timing (Sim/Weapons starts the reload at the shot), and goes when charged. With several such weapons, the least charged one shows.
+- Spec: Bars.spec, a Radiance through the real server: the bar shows for most of its 9 s reload and fills from empty to full. Checked in Studio on `duel`: `c170_reload_bar.jpg`.
+
+**Limit:** a shot the client didn't see (the unit off camera) starts no bar.
+
+**Why:** the user: "Add recharge energy bar for the Radiance/Inferno too, any weapon reloads that long need to have that attack cooldown indicator".
+
+### C-171 — The live server runs sim-A's tick-budget watchdog (2026-10-23)
+
+**Decision:** `src/roblox/Main.server.luau` makes a `Watchdog.new(sim)` with every new sim (match, lobby preview, test profile) and calls `Watchdog.afterStep(dog)` after each live `Sim.step`. On a tick over 54 ms, or with a system over twice its guide 18.1 budget, it warns at most once a second; every 60 s it logs a summary. Checked in Studio: it loads and runs with no errors.
+
+**Why:** sim-A's S-140, the user's queue item 5 there; src/roblox is the client stream's.
+
+### C-172 — The Commander stops rotating: Ambient moves only the pieces it knows (2026-10-23)
+
+**Decision:** PieceScripts/Ambient (C-156) now spins or turns only named pieces:
+- wheels, rotors, tail rotors and jammer emitters (band, tip, spine);
+- radars, dishes, arrays and sonar drums and rings;
+- drills, and cranes (jib, jib1, jib2, deckJib, deckCrane).
+
+Any other spin or turn piece is left to its unit's own script. The v3 Commander mechs mark their torso and head as `turn`, and the old catch-all spun them like radars. Checked in Studio: the Sovereign's torso and head hold at 0°. Spec: Ambient.spec (the Commanders' torso and head stay still). Also: the tidal rotor test reads its axis from the model, since models-C's new mesh turns it about X.
+
+**Also checked:** with models-C's approved T1 batch merged here (m-models 671732b), all 31 meshes on the `build` profile built in 6 s with no failure (`c172_t1_meshes.jpg`).
+
+**Why:** the user: "also why is my commander rotating around ?"

@@ -50,6 +50,13 @@ local function intercept(seed: number): (Sim.Sim, number, number)
 	return sim, falcon, wasp
 end
 
+-- An attack order from player 1's `unit` on `target` (a ghost too, S-127).
+local function attackOn(sim: Sim.Sim, unit: number, target: number)
+	local wr = Packer.Writer.new()
+	Schema.encodeCommand(wr, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = { unit }, targetId = target })
+	assert(Sim.submit(sim, 1, wr:finish()))
+end
+
 return function(t: RunAll.Context)
 	t.test("a fighter intercepts, kills, then circles its point; never below minimum speed", function()
 		local sim, falcon, wasp = intercept(3)
@@ -324,9 +331,9 @@ return function(t: RunAll.Context)
 		Sim.step(sim)
 		t.expect(w.slot[plant] == nil, "the plant is gone")
 		t.equal(Sensors.level(sim, 1, plant), Sensors.Level.GHOST, "Order still remembers it")
-		-- a bomber arrives from beyond its acquisition range
+		-- a bomber ordered onto it arrives from beyond its acquisition range
 		local bomber = Spawn.unit(sim, "ord_absolution", 1, -450, -400, math.pi / 2)
-		moveTo(sim, 1, { bomber }, 150, -100)
+		attackOn(sim, bomber, plant) -- (ghosts only on orders since S-127)
 		local drops, onGround = 0, 0
 		for _ = 1, 900 do
 			Sim.step(sim)
@@ -445,7 +452,7 @@ return function(t: RunAll.Context)
 			for _, e in sim.combat.events do
 				if e.kind == "SPAWN_PROJ" and e.unit == bomber then
 					local target = w.wTarget[World.slotKey(bomber, 1)]
-					local bx, bz, level = Sensors.knownPosition(sim, w.ally[bomber], target)
+					local bx, bz, level = Sensors.knownPosition(sim, w.ally[bomber], target, true)
 					pending[e.other] = { level = level, target = target, bx = bx :: number, bz = bz :: number, tx = w.posX[target], tz = w.posZ[target], hp = w.health[target] }
 				elseif e.kind == "IMPACT" and pending[e.other] and e.x then
 					local r = pending[e.other]
@@ -514,7 +521,7 @@ return function(t: RunAll.Context)
 			Sim.step(sim)
 		end
 		t.equal(Sensors.level(sim, 1, plant), Sensors.Level.GHOST, "the plant is a ghost")
-		moveTo(sim, 1, { bomber }, 150, -100)
+		attackOn(sim, bomber, plant) -- (ghosts only on orders since S-127)
 		local drops = unseenDrops(sim, bomber, 1800)
 		local onGhost, hits = 0, 0
 		for _, d in drops do

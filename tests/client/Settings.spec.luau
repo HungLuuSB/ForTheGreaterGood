@@ -17,7 +17,7 @@ return function(t: any)
 		t.expect(Settings.set(s, "devMode", false) and s.devMode == false, "and switchable")
 		t.equal(s.fog, true, "fog of war shading on (C-100)")
 		t.equal(s.quality, "high")
-		t.equal(s.atmosphere, "night", "a moonlit night by default (C-101: no sun)")
+		t.equal(s.atmosphere, "map", "each map's own look by default (C-155; night elsewhere, C-101)")
 		t.expect(s.detailedModels and s.glow == "high" and s.headlights, "detailed models, full glow and headlights by default (C-106)")
 		t.expect(Settings.set(s, "glow", "low") and s.glow == "low", "a glow level")
 		t.expect(not Settings.set(s, "glow", "max"), "an unknown glow level is refused")
@@ -60,7 +60,7 @@ return function(t: any)
 		end
 	end)
 
-	t.test("the key reference lists every command key", function()
+	t.test("the fixed keys reference lists the mouse, groups and camera", function()
 		local text = {}
 		for _, group in Settings.KEYS do
 			for _, k in group[2] do
@@ -68,8 +68,8 @@ return function(t: any)
 			end
 		end
 		local all = table.concat(text, " ")
-		for _, key in { "A", "F", "M", "Z", "G", "S", "L", "K", "Y", "U", "X", "B", "R", "T", "V", "N", "J", "O" } do
-			t.expect(string.find(all, "%f[%w]" .. key .. "%f[%W]") ~= nil, `{key} is listed`)
+		for _, key in { "Left click", "Right click", "Ctrl", "Shift", "Arrow keys", "Wheel", "F3" } do
+			t.expect(string.find(all, key, 1, true) ~= nil, `{key} is listed`)
 		end
 	end)
 end

@@ -18,10 +18,16 @@
 --             contrast, sun rays through the smoke
 --   dusk      late afternoon: low warm sun, long shadows, an orange
 --             horizon, stronger bloom and sun rays
+--   desert    The Canyon's own (C-155): a bright mid-afternoon sun, warm
+--             sandy haze, crisp shadows, a little more colour
+--   map       not a preset: the map's own (Core/MapLook, C-155), the
+--             default; each map names its preset there
 -- The first apply remembers the place's values (sky and terrain colours
 -- included); "current" puts them back.
 
 local Lighting = game:GetService("Lighting")
+
+local MapLook = require("../Core/MapLook")
 
 local Atmosphere = {}
 
@@ -52,9 +58,11 @@ local PROCEDURAL = { "", "", "", "", "", "" }
 -- the materials Render/Terrain draws with (and "Water")
 local GROUND = { "Grass", "LeafyGrass", "Rock", "Ground", "Sand", "Asphalt", "Mud", "WoodPlanks", "Water" }
 
-Atmosphere.ORDER = { "night", "current", "clear", "haze", "dusk" }
-Atmosphere.NAMES = { night = "Night", current = "Current", clear = "Clear day", haze = "Battle haze", dusk = "Dusk" }
-Atmosphere.DEFAULT = "night"
+Atmosphere.ORDER = { "map", "night", "current", "clear", "haze", "dusk", "desert" }
+Atmosphere.NAMES = { map = "Map's own", night = "Night", current = "Current", clear = "Clear day", haze = "Battle haze", dusk = "Dusk", desert = "Desert day" }
+Atmosphere.DEFAULT = "map"
+Atmosphere.mapId = nil :: string? -- the map being played ("map" follows its look)
+local chosen = Atmosphere.DEFAULT -- the last name asked for (Settings)
 Atmosphere.active = nil :: string? -- the applied preset's name (Render/Glow: headlights at night and dusk)
 
 Atmosphere.PRESETS = {
@@ -120,6 +128,22 @@ Atmosphere.PRESETS = {
 		color = { brightness = 0.02, contrast = 0.08, saturation = 0.08, tint = Color3.fromRGB(255, 238, 218) },
 		rays = { intensity = 0.1, spread = 0.5 },
 		vignette = 0.35,
+	},
+	desert = { -- The Canyon (C-155): tuned in Studio at the north start
+		clock = 14.5,
+		brightness = 3.4,
+		ambient = Color3.fromRGB(120, 106, 92),
+		outdoor = Color3.fromRGB(158, 138, 116),
+		exposure = 0.1,
+		shadowSoftness = 0.2,
+		specular = 0.2,
+		diffuse = 0.8,
+		air = { density = 0.24, offset = 0.15, haze = 0.5, glare = 0.2, color = Color3.fromRGB(232, 208, 172), decay = Color3.fromRGB(196, 146, 104) }, -- thicker haze washed the map out
+		bloom = { intensity = 0.5, size = 24, threshold = 1.8 },
+		color = { brightness = 0.02, contrast = 0.1, saturation = 0.08, tint = Color3.fromRGB(255, 246, 232) },
+		rays = { intensity = 0.05, spread = 0.3 },
+		sky = { faces = PROCEDURAL, stars = 0, moon = 0 }, -- Roblox's daytime sky at the clock
+		vignette = 0.2,
 	},
 } :: { [string]: Preset }
 
@@ -231,7 +255,12 @@ local function set(p: Preset, base: Preset)
 end
 
 -- Applies preset `name` ("current" puts the place's values back).
+-- "map" applies the map's own preset (Core/MapLook).
 function Atmosphere.apply(name: string)
+	chosen = name
+	if name == "map" then
+		name = MapLook.of(Atmosphere.mapId).atmosphere
+	end
 	local p = Atmosphere.PRESETS[name]
 	if p == nil then
 		return
@@ -242,6 +271,14 @@ function Atmosphere.apply(name: string)
 	set(p, saved :: Preset)
 	active = p
 	Atmosphere.active = name
+end
+
+-- A new map: its own look, when the setting follows the map.
+function Atmosphere.setMap(mapId: string?)
+	Atmosphere.mapId = mapId
+	if chosen == "map" then
+		Atmosphere.apply("map")
+	end
 end
 
 -- The applied preset's grade for Render/Grade: its colour correction (nil:

@@ -44,6 +44,7 @@ local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
 local Stats = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Stats")) :: any
 local CheatConfig = require(script.Parent:WaitForChild("CheatConfig")) :: any
 local Build = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Build")) :: any
+local Watchdog = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Watchdog")) :: any
 local HttpService = game:GetService("HttpService")
 
 local DT = 1 / Sim.TICK_RATE
@@ -136,6 +137,7 @@ end
 local defs = withOverrides(Defs.load(), Config.weaponOverrides)
 
 local sim: any
+local dog: any -- the per-tick budget watchdog of the current sim (S-140, C-171)
 local brains: { any } = {} -- the skirmish AI's players in a lobby match (C-70)
 local PREVIEW_PLAYERS = 8 -- the lobby preview has a sim player for every seat a human may take
 local matchStartTick = 0
@@ -252,12 +254,18 @@ if Config.lobby then
 		table.insert(ids, name)
 	end
 	table.sort(ids)
-	table.insert(ids, "normandy")
+	-- then the hand-made maps (Normandy, The Canyon: S-53, S-132)
+	local handmade = {}
+	for name in MapRegistry.HANDMADE do
+		table.insert(handmade, name)
+	end
+	table.sort(handmade)
+	table.move(handmade, 1, #handmade, #ids + 1, ids)
 	for _, name in ids do
 		local id = "map:" .. name
 		local layers = MapRegistry.load(id)
-		local named = MapRegistry.NAMED[name]
-		table.insert(lobbyMaps, { id = id, name = if named then named.name else "Normandy", starts = #layers.starts })
+		local entry = MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name]
+		table.insert(lobbyMaps, { id = id, name = entry.name, starts = #layers.starts })
 	end
 	lobby = Lobby.new(lobbyMaps, Config.seats)
 end
@@ -294,6 +302,8 @@ local function startMatch()
 		-- test profiles: cheats in Studio, and "speed" (the sim's offline option), C-119
 		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs, cheats = RunService:IsStudio(), offline = RunService:IsStudio() })
 	end
+	-- warns when a live tick runs over guide 18.1's budget, and sums up each minute (S-140)
+	dog = Watchdog.new(sim)
 	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
 	for _, s in Config.spawns or {} do
 		local ids = {}
@@ -492,6 +502,46 @@ end)
 --   client → server: { op = "save" } | { op = "watch", index? } | { op = "list" }
 --   server → client: { op = "saved", name, bytes, datastore = string? } |
 --                    { op = "list", names } | { op = "chunk", index, count, data }
+-- Key bindings (C-159): each player's rebound keys, as Core/Keybinds.encode
+-- writes them (only what differs from the defaults). "get" answers the
+-- saved string; "set" stores one. A live server keeps them in the
+-- FtggSettings DataStore; Studio refuses DataStores without API access, so
+-- there they last for the server session.
+--   client → server: InvokeServer("get") → string | InvokeServer("set", text) → boolean
+local KEYBINDS_MAX = 2000 -- characters; every action rebound is ~400
+local keybindsSaved: { [number]: string } = {}
+local keybindsRemote = Instance.new("RemoteFunction")
+keybindsRemote.Name = "Keybinds"
+keybindsRemote.Parent = remotes
+keybindsRemote.OnServerInvoke = function(player: Player, op: any, text: any): any
+	local key = `keys/{player.UserId}`
+	if op == "get" then
+		local mine = keybindsSaved[player.UserId]
+		if mine == nil and not RunService:IsStudio() then
+			local ok, stored = pcall(function()
+				return game:GetService("DataStoreService"):GetDataStore("FtggSettings"):GetAsync(key)
+			end)
+			mine = if ok and type(stored) == "string" then stored else ""
+			keybindsSaved[player.UserId] = mine
+		end
+		return mine or ""
+	elseif op == "set" and type(text) == "string" and #text <= KEYBINDS_MAX and string.match(text, "^[%w_=;]*$") then
+		keybindsSaved[player.UserId] = text
+		if not RunService:IsStudio() then
+			task.spawn(function()
+				local ok, err = pcall(function()
+					game:GetService("DataStoreService"):GetDataStore("FtggSettings"):SetAsync(key, text)
+				end)
+				if not ok then
+					warn(`[Entry] keybinds for {player.Name}: DataStore {err}`)
+				end
+			end)
+		end
+		return true
+	end
+	return false
+end
+
 local CHUNK_BYTES = 200 * 1024
 local replayRemote = Instance.new("RemoteEvent")
 replayRemote.Name = "Replay"
@@ -679,6 +729,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 			Skirmish.tick(b)
 		end
 		Sim.step(sim)
+		Watchdog.afterStep(dog)
 		if lobby and lobby.phase == "playing" then
 			if recordedBytes < MAX_RECORDED_BYTES then
 				for id, rep in recorders do

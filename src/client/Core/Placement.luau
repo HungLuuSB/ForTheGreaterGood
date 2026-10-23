@@ -107,7 +107,34 @@ function Placement.assist(world: World.World, def: any, x: number, z: number): (
 	return g.originX + best[1] * Grid.CELL_SIZE, g.originZ + best[2] * Grid.CELL_SIZE
 end
 
-function Placement.check(world: World.World, def: any, x: number, z: number): Result
+-- A footprint in cells: its corner cell and size.
+export type Footprint = { x0: number, z0: number, size: number }
+
+-- The footprints of builds the player has queued but not started (the
+-- BUILD points Core/Waypoints keeps for every own unit), so a new ghost
+-- can't overlap one (C-165, the user: two queued ghosts overlapped).
+function Placement.planned(world: World.World, byUnit: { [number]: { any } }): { Footprint }
+	local out: { Footprint } = {}
+	local seen: { [string]: boolean } = {}
+	local g = world.grid
+	for _, list in byUnit do
+		for _, p in list do
+			local d = p.defIndex and world.defs.unitByIndex[p.defIndex]
+			if d and d.footprint then
+				local x0, z0 = Placement.snap(g, d.footprint, p.x, p.z)
+				local key = `{x0},{z0},{d.footprint}`
+				if not seen[key] then
+					seen[key] = true
+					table.insert(out, { x0 = x0, z0 = z0, size = d.footprint })
+				end
+			end
+		end
+	end
+	return out
+end
+
+-- `planned` (optional): queued builds' footprints, which count as occupied.
+function Placement.check(world: World.World, def: any, x: number, z: number, planned: { Footprint }?): Result
 	local g = world.grid
 	local size = def.footprint
 	local x0, z0, cx, cz = Placement.snap(g, size, x, z)
@@ -129,6 +156,11 @@ function Placement.check(world: World.World, def: any, x: number, z: number): Re
 					occupant[cz2 * g.cellsX + cx2] = s
 				end
 			end
+		end
+	end
+	for _, f in planned or {} do
+		if f.x0 < x0 + size and x0 < f.x0 + f.size and f.z0 < z0 + size and z0 < f.z0 + f.size then
+			return fail("occupied") -- a queued build is going there
 		end
 	end
 	-- cell by cell, in the server's order: bounds, occupant, terrain
@@ -177,7 +209,7 @@ end
 -- deposits, and own extractors `def` upgrades), each once, nearest to
 -- (fromX, fromZ) first and then each next nearest to the last: an extractor
 -- drag (BAR's area extractor, C-121). Returns check results.
-function Placement.area(world: World.World, def: any, cx: number, cz: number, radius: number, fromX: number, fromZ: number): { Result }
+function Placement.area(world: World.World, def: any, cx: number, cz: number, radius: number, fromX: number, fromZ: number, planned: { Footprint }?): { Result }
 	local layers = world.layers
 	local spots: { Result } = {}
 	if def.extractor == nil or layers == nil then
@@ -194,7 +226,7 @@ function Placement.area(world: World.World, def: any, cx: number, cz: number, ra
 				local wx, wz = g:cellCenter(gx, gz)
 				if (wx - cx) ^ 2 + (wz - cz) ^ 2 <= radius * radius then
 					local px, pz = Placement.assist(world, def, wx, wz)
-					local r = Placement.check(world, def, px, pz)
+					local r = Placement.check(world, def, px, pz, planned)
 					local key = `{r.x},{r.z}`
 					if r.ok and not seen[key] then
 						seen[key] = true
@@ -215,8 +247,18 @@ function Placement.area(world: World.World, def: any, cx: number, cz: number, ra
 			end
 		end
 		local r = table.remove(spots, bi) :: Result
-		table.insert(out, r)
-		x, z = r.x, r.z
+		-- spots on neighbouring deposits can share cells: keep the first (C-165)
+		local clash = false
+		for _, o in out do
+			if o.x0 < r.x0 + def.footprint and r.x0 < o.x0 + def.footprint and o.z0 < r.z0 + def.footprint and r.z0 < o.z0 + def.footprint then
+				clash = true
+				break
+			end
+		end
+		if not clash then
+			table.insert(out, r)
+			x, z = r.x, r.z
+		end
 	end
 	return out
 end

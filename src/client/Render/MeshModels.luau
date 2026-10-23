@@ -231,11 +231,15 @@ local function nextJob(): Job?
 	return best
 end
 
+-- Review entries to build anyway (a Studio debug switch for reviewing a
+-- model in game: FtggClientDebug:Invoke("reviewmesh", id), C-160).
+MeshModels.REVIEW = {} :: { [string]: boolean }
+
 function MeshModels.start(defs: any)
 	started = true
 	for id, e in Meshes.units do
 		local def = defs.units and defs.units[id]
-		if e.status == "approved" and def and ready[id] == nil and not pending[id] then
+		if (e.status == "approved" or MeshModels.REVIEW[id]) and def and ready[id] == nil and not pending[id] then
 			pending[id] = true
 			waiting[id] = { def = def, entry = e, want = 0 }
 		end

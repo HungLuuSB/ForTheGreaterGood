@@ -4,6 +4,154 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
+
+- **The approved T1 structure models are merged here** (models-C's batch), so a playtest draws them. All 31 built with no failure in Studio.
+- **Your Commander no longer rotates (C-172):** my animation pass was spinning the mech's torso and head like a radar. It now moves only the parts it knows.
+
+## Summary (2026-10-23, queue in a frame, Ctrl moves, server idle counts)
+
+- **You can queue units in a factory that's still being built** (sim-A's S-138): pick from the build menu with the frame selected, and production starts the moment it's finished.
+- **Ctrl + right click (or a line drag, or Move / Fight / Patrol) keeps the group together** at its slowest unit's speed (C-169, sim-A's S-137).
+- **Idle counts now come from the server (C-158 on S-136):** every idle builder and factory counts, also off camera, and **I** jumps to one anywhere.
+- **Recharge bar (C-170):** your Radiance, Inferno and every other weapon reloading 4 s or more show a thin pale-blue bar under the health bar, filling until the next shot is ready.
+- Ready to merge: `96392ac` (C-169: Ctrl moves send GROUP; idle counts from IDLE events; frame queue specs)
+- Ready to merge: `8321418` (C-170: recharge bar for long-reload weapons)
+- Ready to merge: `c1300b4` (C-171: Watchdog wired into the live server, S-140)
+
+## Summary (2026-10-23, factory progress bar)
+
+- **A producing factory shows an amber progress bar under its health bar (C-168),** always, for your factories and your allies'. It fills smoothly with the unit being built.
+- Ready to merge: `c1a45ea` (C-168: factory production bar; client only)
+
+## Summary (2026-10-23, mesh ground on the way)
+
+- **The ground is moving off Roblox terrain (C-167):** the named maps will use mesh tiles that models-C bakes from the game's own height data (requested). They stay sharp at any distance, so a minimap jump lands crisp. Terrain keeps only the water.
+  - Building the ground in game wasn't possible: Roblox's budget for such meshes runs out after a few thousand points, and The Canyon needs about 160,000.
+  - The client loader, the export tool (`lune run export_ground`) and the contract are done. Until C's tiles arrive, every map keeps the voxel terrain.
+  - The Canyon comes first, for you to compare in Studio.
+- Ready to merge: `3fbca98` (C-167: export_ground tool, map-ground contract, mesh ground loader; client and .lune only)
+
+## Summary (2026-10-23, assist, minimap drag, build grid, no overlapping plans)
+
+- **Assist (C-163):** right-click your own factory with builders selected and they help its production; right-click your own frame and they build it; right-click your own builder and they follow its lead, helping whatever it builds. With only builders selected, the Guard button reads "Assist".
+- **Minimap (C-164):** drag on it to move the camera; your view now shows as the real trapezoid on the ground.
+- **Build grid (C-166):** while placing, the build cells round the ghost show on the ground (Settings > Interface > Build grid).
+- **No overlapping plans (C-165):** a new building can't be placed over one you've already queued, rows and extractor drags included.
+- **The coarse-then-sharp terrain after a long jump** is Roblox's terrain level of detail. Pointing the camera's focus at the ground (C-162) didn't change it; options are under "Needs my review".
+- **Queue in a factory under construction:** needs the server (sim request 63, sent). The client side is already in place.
+- Ready to merge: `5a70dc2` (C-162..C-166; client only)
+
+## Summary (2026-10-23, nothing pops when the camera moves)
+
+- **Your units and buildings stay drawn when the camera leaves (C-161):** no more re-rendering when you pan away and back; the same models carry on. A selected Mason far away keeps its unit panel, build menu and command card, so you can keep queueing builds for it. Checked in Studio.
+- Off camera, a unit's health and a far building's progress show their last values until you look again (the server sends little there).
+- Ready to merge: `9e8e8c2` (C-161: units stay drawn and selectable off camera; client only)
+
+## Summary (2026-10-23, your queue while away)
+
+Queue status, item by item (details below and in the decisions log):
+- **0. "Needs my review" cleaned up:** everything you approved up to C-130 is gone; only open questions are left.
+- **1. Beam shots from C's assets:** already done before the queue (C-133..C-144; the beam entry is approved). Skipped.
+- **2. Animation pass (C-156):** done. Radars, sonar drums and drills turn while powered, wheels roll while moving, gantries run while producing, windmills turn, tracks judder. Not done: a sonar "ping" and jammer shimmer, which would be new effects rather than pieces.
+- **3. Selection panel like BAR (C-157):** done. Click a tile to keep that type, Shift-click to drop it, Ctrl-click for every one of that type on screen.
+- **4. Idle indicators (C-158):** done, as a client-side guess. sim-A has already made the server's IDLE events (S-136, request 62); I switch to them once they're on main.
+- **5. Group speed (Ctrl-move) (C-169):** done. Ctrl + right click, a line drag, Move / Fight / Patrol, or a minimap right click keeps the group at its slowest unit's speed.
+- **6. Rebindable keys (C-159):** done. Settings > Keys, click and press, red clash warnings, saved for your account. Camera turn-right moved from E to C.
+- **7. Commander walk on the v3 mechs (C-160):** done. It works as is, checked in Studio with a new preview switch.
+
+## Summary (2026-10-23, the Canyon by day, blips circling, units leave from the pad)
+
+- **The Canyon is playable and looks like a desert in daylight (C-153, C-155):** pale sand floor and red rock mesas and cliffs, under a mid-afternoon sun with blowing sand. It's in the skirmish lobby's map list, and the `canyon` test profile starts both Commanders there.
+- **Each map now has its own lighting and time of day (C-155):** the Canyon is the first. The others stay on the moonlit night. Settings > Atmosphere defaults to "Map's own" and can still override it.
+- **Radar blips circle about 1.5 studs round their spot, as in BAR (C-154).** The server's circle (S-131) didn't reach the client, so the client draws it. Measured in Studio.
+- **Finished units appear on the build pad (S-133, merged here from sim-A's branch for your playtest):** the server's pad spot equals the client's drawn frame (64, 47.4 on a vehicle plant).
+- **Animated pieces (C-156):** radars and drills turn while powered, wheels roll while moving, factory gantries run while producing, windmills turn.
+- Ready to merge: `e299b43` (C-153..C-155: Canyon look and lobby entry, client blip orbit, per-map looks)
+- Ready to merge: `65673ae` (C-156: animated pieces run by state)
+- **Selection panel like BAR (C-157):** with several units selected, click a type tile to keep it, Shift-click to drop it, Ctrl-click for every one of that type on screen.
+- **Idle indicators (C-158):** idle builder and factory counts beside the resource bar, **I** jumps to the next idle builder (the camera follows), an IDLE tag over each. For now only what's in view counts: sim request 62 asks the server for a proper idle signal.
+- Ready to merge: `946b6a7` (C-157, C-158: selection tiles, idle indicators)
+- **Rebindable keys (C-159):** Settings > Keys has a button per action: click, press the new key. Two actions on one key show a red warning on both. Saved for your account (the session only in Studio). Camera turn-right moved from E to C, because E is also reclaim.
+- Ready to merge: `0db7a34` (C-159: rebindable keys; adds the Keybinds remote in src/roblox)
+- **The Commander mechs v3 walk (C-160):** the walk works on models-C's v3 meshes as they are; checked in Studio with the new preview switch (`FtggClientDebug:Invoke("reviewmesh", "ord_sovereign")`). They show in normal games once you approve them.
+- Ready to merge: `eb4ad8b` (C-160: review-mesh preview switch; v3 walk checked)
+
+## Summary (2026-10-23, factories show what they build)
+
+- **You can now watch a factory build (C-152):** the unit in production stands on the factory's pad as a translucent team-coloured hologram. It fills in from the bottom up behind a glowing line, with nano spray from the factory's emitters. The spray stops when the economy stalls. This works for your factories and your allies'. Checked in Studio on a vehicle plant and an airfield.
+- **Coming:** finished units start on the pad and drive out, instead of appearing a cell outside the factory (sim request 61).
+- Ready to merge: `12ff8b5` (C-152: factory production frames; client only, no protocol change)
+
+## Summary (2026-10-23, radar blips circle their unit)
+
+- **Radar blips orbit the real unit now,** like BAR (sim-A's S-130 with the client's glide). In the radar scene a blip swept a full turn in about 6 s, 13–17 studs out, and the real position never reaches the client. Guide 11.4 is updated.
+
+## Summary (2026-10-23, allies, assist and ghosts merged)
+
+- **Merged sim-A's S-127 / S-128 / S-129:**
+  - units no longer fire on their own at remembered buildings (only on your order);
+  - builders assist another builder's work with Guard;
+  - the client knows every team's alliance, so right-clicking an ally's unit guards it (or assists its builder) instead of attacking it.
+  - An end-to-end test checks the ally list arriving and right-click using it.
+- **Radar blips circle their unit** (S-130, merged and checked in Studio).
+- **Coming:** a much smaller circle, ~1.5 studs as in BAR (sim request 60). Radar shots keep missing by the radar error, through a hidden aim point the client never receives.
+
+## Summary (2026-10-23, smooth radar blips)
+- **BAR-style circling blips:** at your choice, the server's wobble will become a slow orbit around the real unit (sim request 59), so blips circle it while the real position stays secret. Targeting still uses the wobbled point.
+
+- **Radar blips glide now (C-151)** instead of jumping to each new wobbled spot: the ground discs, icons and minimap dots all ease toward each new reading. A contact that reappears far away still snaps. Checked in the radar scene.
+
+## Summary (2026-10-23, builders assist builders)
+
+- **Builders assist other builders (sim-A's S-128, merging):** give a builder Guard (G, or the card's Guard button) on another builder, and it helps build whatever that one builds, following it in between. Right-clicking your own builder does the same. Nothing changed on the client; it already sends that order.
+- **Allies (C-150):** once sim-A's S-129 is merged, right-clicking an ally's unit guards it (or assists its builder) instead of attacking it. Until then, use G.
+
+## Summary (2026-10-23, manual targets fixed; crash fixed; ghosts)
+
+- **Merged sim-A's S-124 / S-125 / S-126.**
+  - **Manual targets** now stick while the unit lives, even unseen: point weapons keep firing at its last known spot while it's in range.
+  - When the target dies, the unit goes straight back to auto-targeting.
+  - I re-ran my test: the towers burned through two domes to kill the ordered tank, and there's no crash any more (S-126 fixed a crash on beams at a dead building's ghost).
+- **Coming (S-127, from you):** units won't auto-fire at remembered buildings any more, only when you order it. Right-click or Attack on a remembered building already works on the client (C-149, spec added).
+
+## Summary (2026-10-23, beams stop at the next dome; manual target issues)
+
+- **S-123 merged and checked:** two Radiances on a tank behind two overlapping domes. When the front dome drops, the beams stop at the second dome's surface instead of going through, with their glancing legs (`debug_out/screens/two_domes_beam.jpg`). The case of a dome rising across a beam was tested by sim-A; I didn't stage it in Studio.
+- **Manual targeting (sim request 57):** two problems, both sim side:
+  - an ordered target is dropped for a dome generator after a couple of blocked shots, while it still lives;
+  - your note: when the chosen unit dies, it should go back to auto-targeting.
+- **Mech meshes v2** (heroic, ~10 studs) are on m-models at review, next to merge.
+
+## Summary (2026-10-23, domes without vision live; bigger mechs)
+
+- **Shield domes without vision (C-145 + sim-A's S-122): live and checked in Studio.** An enemy Carapace out of your sight shows its dome, honeycomb shell and core, with no unit revealed (`debug_out/screens/unseen_dome.jpg`).
+- **Mech Commanders:** models-C rebuilt them as ~10-stud heroic mechs (blockouts for now). The walk cycle follows their new stride (C-148). Not re-checked in Studio.
+- **Beams vs overlapping domes:** sim-A built request 56 (S-123), integrating. The client is ready.
+
+## Summary (2026-10-23, beams and overlapping domes)
+
+- **Your screenshot (two overlapping domes):** the beam went through dome #2 when #1 collapsed, and through #1 when it came back up. The sim checks a beam's path against domes only at certain moments, not continuously, so it's with sim-A as **request 56**: re-check every dome each tick, and cut the beam at the first one in its way.
+- **Client (C-147):** when a beam's end moves onto another dome, its glancing leg and honeycomb pulses move with it. Unseen domes count too.
+
+## Summary (2026-10-23, the Commanders walk; Needs my review)
+
+- **Mech Commanders (C-146):** the Sovereign and Warlord walk: legs in models-C's stride, alternating every 0.3 s, arms swinging, the torso twisting and the pelvis bobbing. They ease back to rest when they stop (`debug_out/screens/mech_walk.jpg`).
+- **Needs my review:** models-C's mech meshes are at "review", so the game draws the mech blockouts. Approve them through models-C to see the meshes.
+- **Domes without vision (C-145):** the client side is ready and waits for sim-A's S-122 on main.
+
+## Summary (2026-10-23, S-120 / S-121 merged: beams go through fallen domes)
+
+- **Merged sim-A's S-120 / S-121 and checked in Studio:** a Radiance ordered onto an enemy Carapace takes the order (towers now accept attack orders). Its beam ends on the dome, and once the dome collapses (~2.5 s in) the same beam moves on to the generator. It repeats when the dome rises again (`debug_out/screens/beam_through_dome.jpg`).
+- **Domes visible without vision (as in BAR):** asked sim-A (**request 55**). Today the server only sends a dome for a generator you can see. The client will draw domes from the new records.
+- Your shield_beams edit (fewer Radiances) is kept; it's your local MatchConfig, uncommitted.
+
+## Summary (2026-10-23, S-119 merged)
+
+- **Merged sim-A's S-119.** Beam and hitscan weapons follow attack-ground orders: in shield_beams the Radiances now fire at your dome's middle, and their beams end on its surface. A turret's barrel holds on its beam while it burns, and turrets show their aim as soon as a unit comes into view. Checked in Studio.
+- **Still integrating (sim-A, S-120 / S-121):** manual targets win whatever the fire state; structures take ATTACK orders (the cause of your Radiance ignoring the Phalanx: towers never received the order); a beam goes on through a dome that drops under it (the client side is ready, C-144).
+- **Next from models-C:** the Commanders become walking mechs. The blockouts are on m-models; the client will need a walk cycle for their legs once the meshes come.
+
 ## Summary (2026-10-23, beam through a fallen dome; thinner rings)
 
 - **Thinner rings** flow down the dome (C-144).
@@ -1663,100 +1811,28 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
-- **Shield hit look (C-117):** ripple brightness (LightEmission 0.3) and hex size (4.5 studs, 19–37 plates a hit); `debug_out/screens/shield_hex_bigger.jpg`.
+Cleaned up on 2026-10-23: you approved the current values of everything listed up to C-130 (shield hit look, wrecks, towers, beam timing, command sets, build menu, UI kit, glow, environment, lighting, settings, hotkeys, camera, effects). Those entries are gone. What's left are real open questions.
 
-- **Wreck meshes (C-115):** `debug_out/screens/wrecks_meshed.jpg` (review wrecks forced on). Approve them for game (models-C marks each `wreck` approved), and say if they're too dark under the night lighting.
-
-- **S-96 tower meshes (models-C):** Radiance, Inferno, Lumen, Hailstorm are "review" in the manifest; approve them (models-C flips the status) to see them in game. Their glow dims when a beam tower retracts (C-114).
-
-- **Beam towers (C-112):** `debug_out/screens/beam_*.jpg`. Your calls:
-  - **The beam's width, colors and 0.45 s hold.**
-  - **The retract timing** (1.5 s).
-
-- **Per-unit commands and top strip (C-109):** `debug_out/screens/hud_topstrip.jpg`. Your calls:
-  - **Each type's command list** (`Core/CommandSet`).
-  - **The minimap under Roblox's corner:** it can't go higher without being covered by Roblox's menu button.
-
-- **Build menu (C-107):** `debug_out/screens/buildmenu_*.jpg`. Your calls:
-  - **Portrait angle and size:** 66 px tiles, 4 per row (`UI/Portrait`, `UI/BuildMenu`).
-  - **What the tooltip lists.**
-
-- **Review follow-ups (C-106):** `debug_out/screens/uikit2_*.jpg`. Your calls:
-  - **Scrim darkness** (45%, `Kit.COLOR.scrimTransparency`).
-  - **The six Combat charts** (Units · Alive is derived).
-
-- **UI kit, settings, statistics, lobby (C-105):** `debug_out/screens/uikit_*.jpg`. Your calls:
-  - **The kit's look:** amber accent, Montserrat, 85% panels, the stripe strength (`UI/Kit`).
-  - **The statistics pages and charts:** which charts, their size.
-  - **Audio page:** stays a placeholder until there's sound.
-
-- **Glow pass and BAR models in game (C-103):** `debug_out/screens/glowfx_*.jpg`. Your calls:
-  - **Strengths:** the stall floor (0.3), the factory pulse (1.5–4 at 1 Hz) and the weapon flash (6, 0.3 s) (`Core/Glow`).
-  - **Headlights:** brightness, range and cone, 12 at High, always on at night (`Render/Glow`).
-  - **Which models C should approve next:** Oracle, Watcher and the Order vehicle plant.
-
-- **Environment and colour grade (C-102):** `debug_out/screens/environment_*.jpg`. Your calls:
-  - **The grade:** teal strength, contrast, the vignette (night 0.55), and how much it eases off at strategic zoom (`Core/Grade`, `Render/Atmosphere` `night`).
-  - **The blast flash** strength (`Grade.FLASH`, `FLASH_LOOK`).
-  - **The grey fog:** explored 80 at 38%, never 56 at 70% (`Core/FogBlanket.LOOK`).
-  - **Dust and mist** amount, and the dark ground beyond the map.
-
-- **Night lighting (C-101):** `debug_out/screens/lighting_*.jpg`. Your calls:
-  - **How dark:** brightness and exposure (`Render/Atmosphere`, `night`), bright enough to read units today.
-  - **The cool tint** and the desaturation.
-  - **The lighter explored fog** (grey 40 at 40%).
-  - **Technology = Realistic** in the place (only you can set it; it replaced Future).
-
-- **ShieldFx look (C-90):** `debug_out/screens/shieldfx_*.jpg`. Your calls:
-  - **Dome look:** a tinted ball with an edge ring, not the ForceField material (it read grey in the C-87 tests).
-  - **Placeholder shapes and timings:** 9 rings, a 5 s ring trip, flicker below 30%.
-  - **Generators:** the two placeholder designs.
-  - **Strategic detail:** domes switch at 480 studs from the camera.
-
-- **Shield prototype (C-87):** the look, in `debug_out/screens/c87_shield_*.jpg`. Your calls:
-  - ~~Clean hexagons~~: done, you turned on EditableMesh (C-88).
-  - **Placeholder tuning:** field band 50 studs, full force at 50%, rise at 25%, 0.04 charge per unit of mass, recharge 0.05/s.
-  - **Still open for sim-A:** harmless or live bounced shells, a Chaos version, vehicle or structure.
-
-- **Sound plan:** `docs/SOUND_PLAN.md` lists every sound the game needs (the defs' `fx.sound` keys, impacts, units, alerts, UI, ambience) with candidate Creator Store audio IDs; ProSoundEffects entries preferred, ripped uploads marked "don't use". Nothing inserted: pick the IDs.
-
-- **Atmosphere options (C-83):** Current (default), Clear day, Battlefield haze, Dusk, in the settings menu; table with screenshots and frame cost under "atmosphere presets (C-83)" above. Values in `src/client/Render/Atmosphere.luau`. Pick one as the default, or none.
-
-- **Settings defaults (C-81):** pan speed 1.1, zoom step 1.15, edge scroll on in live games (off in Studio), quality High (60 explosions, 100 tracers, 150 projectiles, 12 lights, 24 copies, full animation within 300 studs), Medium and Low below it, fog lights off, UI scale 1.0. In `src/client/Core/Settings.luau`; the key O opens it.
-- **UI placement (C-76, C-79, C-81):** the unit panel is 460 px wide (the build grid shows 2 rows), the command card right of it; the replay bar bottom centre with the replay / spectator banner under the resource bar; "Settings (O)" above the follow button bottom right; lobby and settings panels centred.
-
-- **Camera pitch range (C-69):** Alt + scroll, 35°–80° in 4° steps, starting at 55°; the detailed area stops at 1.8 camera distances (`Camera.MIN_PITCH`, `MAX_PITCH`, `PITCH_STEP`, `RECT_CAP` in `src/client/Camera.luau`).
-
-- **Hotkey layout (C-68):** commands M move, F fight, A attack, Z patrol, G guard, S stop; L fire state, K move state; Y repeat, U on/off, X cancel; J last alert; B build menu (again: next tab), then 1..0 pick (Shift: 5 in a factory, right click drops one). P (patrol in BAR) stays the Studio pause key. In `src/client/Input/Controls.luau` and `UI/BuildMenu.luau`.
-- **UI placement (C-71, BAR layout):** minimap top left (280 px), build grid under it (5 x 52-px tiles, 3 rows then scrolling), unit panel bottom left, command card next to it (5 columns, state bars), resource bar top center, alerts under it, F3 readout top right, follow button bottom right. Sized for Studio's small viewport; a UI session can scale it.
-
-- **Unit icons (C-74):** the user's icon set, 22 px wide for T1 (×1.15 T2, ×1.3 T3, ×1.35 the Command Vehicle), selected lightened 55% toward white, ghosts 45%. `Icons.BASE` in `src/client/Core/Icons.luau`, the selection tint in `UI/Glyph.luau`. Hard pairs at that size: Bomber / Strategic Bomber, Main Battle Tank / MLRS, Airfield / Rearm Pad, Gun Turret / Floating Turret (C-74).
-
-- **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
-
-- **Nuke look (C-57):** missile 4.5× an IR one; detonation flash, fireball, stem and cap (6–10 s), shockwave ring to ~3× the blast, 240-stud scorch; screen flash 1.2 s; warning banner and rings in red. Values in `src/client/Render/Vfx.luau` (`NUKE`), `Render/Effects.luau` (`smoke_huge`) and `Render/NukeWarning.luau`.
-
-- **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
-
-- **Missile look (C-40):** size 4.4 × 0.8 studs (1.3× for radar SAMs), smoke 1.1 s (1.8 s), 1 → 5 studs wide, exhaust light range 10. Values at the top of the missile section in `src/client/Render/Effects.luau`.
-- **Missile sensor view look (C-39):** colors, sizes and label text in `src/client/Render/MissileView.luau` and `Core/MissileView.luau`; path length 1 s, at most 12 missiles, marks 2.5 s.
-
-- **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
-- **Controls (C-13, answered: C-21):** BAR style now: arrow keys, edge scroll (live), middle-drag, S stop, V range rings, A attack (C-57; W, D still free). Earlier: WASD / arrows pan, middle-drag pan, wheel zoom, Q/E rotate; left click / drag select (Shift add, Ctrl toggle), double-click same type, right click smart order, right-drag line move, Shift queue, Ctrl+1..9 / 1..9 groups (double tap jumps), X stop, F3 debug readout. S can't be stop (camera pan).
-- **Visual style:** blockout Lancer (low, light grey, blue glass) and Ravager (tall dark iron, rust, orange visor); faction palettes in `Blockouts/Blockout.luau`; team colors (blue, red, ...) in `Render/TeamColors.luau`; ground as a green 64-stud checkerboard. See `debug_out/screens/task4_brawl_topdown.png`.
-- **UI layout (placeholder):** resource bar top center (440 x 48), minimap bottom left (200 px), F3 debug readout top left below the Roblox buttons; all labelled as placeholders.
-- **Build ghost:** B cycles the selected builder's options as a stand-in for the build menu; Shift both queues and keeps placing (BAR style); the facing doesn't change square footprints but turns the model.
-- **Effects look:** shells as small glowing slugs, impact and death flashes in orange with a particle puff, white tracers, muzzle flashes; colors and sizes in `src/client/Render/Effects.luau`.
-- **Strategic zoom:** switches at 480 studs (back at 420); icon shapes and sizes in `src/client/Core/Icons.luau` and `Render/IconLayer.luau`. Answered: keep sending the camera (C-17).
-- **Health and build bars (C-24):** 4 px health bar, 3 px light-blue build bar under it, 18–90 px wide, over the unit; shown for selected, damaged and unfinished units only. Sizes and colors in `src/client/Render/HealthBars.luau` and `Core/Bars.luau`.
-- **Terrain colors and materials (C-28):** Roblox Grass on open ground, Rock where steeper than ~50°, Sand on shores and under water, default Terrain water color; no custom material colors (that would change the place's Terrain settings). Rules in `src/client/Core/Terrain.luau` (`STEEP`, `SHORE`), materials in `Render/Terrain.luau`.
-- **Juggernaut's animation feel (C-30, C-33):** arms hang at -65°, rise at the server's 80°/s, hold 3 s after the target is gone, recoil 0.8 stud in turn; the timing is the server's (S-20, `chs_juggernaut_cannon`), the recoil and model are the client's (`src/client/Core/PieceScripts/chs_juggernaut.luau`, `src/shared/Defs/Blockouts/chs_juggernaut.luau`).
-- **Aircraft and naval look (C-31):** jet bank up to 60°, helicopter bank 20° and nose-down 12°, rotor 4 turns a second; ships 0.8 stud into the water, own submarines 2.5 studs under it; sonar contacts as hollow rings. Values in `src/client/Core/Attitude.luau` and `Core/PieceScripts/Default.luau`.
-- **How fog of war looks (C-32):** near (≤ 330 studs): darkened scene (ColorCorrection, Lighting brightness 0.6, darker ambient) with a point light per 32-stud cell (brightness 1.4, range 40, 12 studs up, 0.4 s fade); the light grid shows as a soft checker. Far: dark plates (8, 10, 18) at transparency 0.4 over unseen ground, faint seams. Radar contacts as pulsing team-colored discs, sonar contacts larger and paler; ghosts glowing blue-grey at 0.7 transparency. Values in `src/client/Render/FogOfWar.luau` and `Render/Contacts.luau`.
-- **Deaths and wrecks (C-34):** shake 0.4 s; flung pieces 1 s, up to ~7–11 studs; wrecks charred (75 % to dark brown-black, corroded metal), turrets askew, tilted and sunk a little. Values in `src/client/Core/Deaths.luau` and `Render/Deaths.luau`.
-- **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
+- **Models still at "review"** (the game draws the blockout or placeholder until models-C flips them; preview with `FtggClientDebug:Invoke("shellanyway", true)` and so on):
+  - the shield shell's honeycomb bands (C-138);
+  - the Commander mechs v3 (`ord_sovereign`, `chs_warlord`; M-33, on main);
+  - the extractors at footprint 2 (and their wrecks);
+  - on m-models, not merged here yet: the T1 structure redesigns, pairs 2–7 (generators, solar, wind, depots, Bulwark / Spike, vehicle plants).
+- **Sound IDs:** `docs/SOUND_PLAN.md` lists candidate Creator Store audio for every sound. Nothing is inserted until you pick.
+- **Camera turn keys (C-159):** turn right moved from E to C, since E is also BAR's reclaim. Rebind it in Settings > Keys if you prefer something else.
+- **Terrain sharpening after a long camera jump (C-162):** Roblox's voxel terrain draws a far area coarse and sharpens it over a few seconds; scripts can't control it. Your call:
+  - leave it;
+  - glide the camera on long jumps instead of teleporting (it softens the pop but doesn't remove it);
+  - replace the voxel terrain with our own mesh ground at full detail everywhere (a bigger job, and a different look to tune).
+- **Lighting technology:** set `Lighting.Technology` to Realistic in the place (a place setting scripts can't change).
+- **New since C-130, for a look in your playtest:**
+  - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
+  - The Canyon's desert colours and daylight (C-153, C-155): `debug_out/screens/c155_canyon_day_*.jpg`;
+  - radar blips circling 1.5 studs out (C-154).
 
 ## Requests for the models session
+
+3. **Baked map ground (2026-10-23, the user; C-167, `docs/contracts/map-ground.md`):** mesh tiles of each named map's ground from `lune run export_ground` (the Canyon first, status review), ground textures for desert, redrock, grass, rock, sand, road, leafy and ground, and rock detail (Canyon mesa rims, cliff terraces, boulders; then Normandy's bluffs). Uploads need the user's approval.
 
 2. **T2 defense meshes (2026-10-23, the user asked; sim request 43 brings the defs):**
    - a Pulsar-style beam tower per faction, with a tall emitter barrel, glowing charge rails on the base (`power` glow), and a **retract pose**: an armored shell the turret sinks into when switched off (a piece the client moves down, e.g. `turret` dropping into `base`, plus shell plates);
@@ -1767,7 +1843,29 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-54. **Open (sent 2026-10-23).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
+63. **Done (S-138; checked through the real path, FrameQueue.spec).** (2026-10-23, the user: "Add the ability to queue inside the factory while it being built"): accept a factory's queue (and CANCEL / REPEAT) while it's still a frame, start producing when it's finished, and send the QUEUE owner field for the frame. The client already offers the build menu on an unfinished factory.
+62. **Done (S-136; used by C-158 / C-169).** (2026-10-23, the user's queue item 4): **An idle signal for own units.** Owner-only and sent on change, covering units outside the camera (owner fields ride only tactical records, and the strategic flags are full): which of the player's builders have no orders and no build / assist / repair / reclaim / guard / patrol work, and which factories have an empty queue. The client guesses from what it sees until then (C-158).
+61. **Done on m-sim-2 (S-133, 04c70db; not on main yet, merged into this branch for the user's playtest):** the pad position matches the client's frame (vehicle plant: 64, 47.4). (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
+    - The finished unit spawns at the factory's `buildpad` (from the blockout's attachments, model space, rotated with the facing) with the factory's heading. Today it's halfSize + one cell out, then EXIT_ROLL: ~12 studs past the pad on a vehicle plant.
+    - It then drives out along the heading through the factory's own footprint, then takes the rally order.
+    - The client draws the frame there already (C-152).
+    - Your call how it leaves the impassable footprint: a scripted roll or own-team yard cells.
+60. **Done (S-131, main 0a34204; drawn by the client, C-154):** strategic records carry only the cell, so S-131's 1.5-stud server orbit can't show. The client circles each blip 1.5 studs round its spot instead. I suggested sim-A drop the drawn offset and keep only the hidden aim point. (2026-10-23, the user: "that radius is huge, in BAR, just 1-2 studs"): **Small blip orbit, hidden aim error.** S-130's orbit radius (= radar error, 13–45 studs) is far bigger than BAR's. At the user's choice:
+    - The drawn blip orbits ~1.5 studs around the real unit (same ~6 s turn, own phase and direction per contact).
+    - The radar error stays as now, but only in the server's aiming: weapons firing at a radar contact aim at a hidden offset point (radius = radar error, or the Pinpointer's tracking error), so radar shots still miss as before. The client never learns that point.
+    - This relaxes guide 11.4's "never the true position" for display: the sent position is within ~2 studs of the true one. The user accepted that. Please update 11.4 with it.
+    - No client change needed: C-151's glide already draws it.
+59. **Done (S-130, main 57299f7; checked in Studio: a blip sweeps a full turn in ~6 s at radius 13–17).** **Radar blips circle around the real unit (the user, as in BAR):** the wobble offset follows a slow orbit (radius = radar error) instead of moving between random points, so the true position still never goes on the wire (the user chose this over sending true positions, which guide 11.4 forbids). Guide 11.4 to be updated with it. The client already glides (C-151).
+
+58. **Fixed (S-126, on main b7f0f09; verified headless, 70 s with no crash):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
+
+57. **On main (S-125, 6c68d4c; behaviour verified headless, but see 58): cause was a lost spotter (an unseen manual target counted as out of range). Now point-capable weapons keep firing at its last known spot while it lives and that spot is in range (beyond range: own picks); on its death the weapons search the same tick.** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
+
+56. **Done (S-123, main 3860e72; checked in Studio).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
+
+55. **Done (S-122, on main f3334c7; client C-145; checked in Studio).** **Shield domes render regardless of vision (the user, as in BAR):** send dome state (centre, radius, charge, flags) for enemy domes touching the camera area, whatever the team sees, without revealing the generator; the client draws domes from it.
+
+54. **Done (S-120 / S-121, on main 4356074; checked in Studio): structures take ATTACK (manual target, any fire state); a dome dropping under a beam sends a new FIRE / SHOT to the target; the client continues the beam (C-144).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
 
 53. **Built (S-119, merging): attack-ground for BEAM / HITSCAN; aim held while a beam burns; NetOut sends aim on ENTER.** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
     - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.
@@ -1963,3 +2061,18 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `b8cc921` (more, smaller rings in shield hits, C-141); test_client 214, build passed (client render only).
 - Ready to merge: `4b58c31` (more outer rings, review effects on in Studio; C-142); test_client 214, build passed (client render only).
 - Ready to merge: `511ab10` (with 58d5579 and the main merge 46d094c: fast mesh builds, camera lead, SHOT beams; C-143); test_client 214, test 446, build passed.
+- Ready to merge: `5db24f6` (beam continuation for request 54, thinner flowing rings; C-144); test_client 215, build passed (client only).
+- Ready to merge: `318555d` (main 062ba5f merged into the client: S-119); test_client 215, test 449, build passed.
+- Ready to merge: `aaa1538` (m-models merge 021c8c7: sparser honeycomb shell texture, mech Commander blockouts; materials regenerated); test_client 215, build passed.
+- Ready to merge: `861edf9` (main 4356074 merged into the client: S-120, S-121); test_client 215, test 450, build passed.
+- Ready to merge: `8145721` (mech Commander walk cycle, C-146; with the m-models merge of 2b4dc5b and C-145's dome prep 58f2e4c / c7b1493); test_client 215, build passed.
+- Ready to merge: `3986c2a` (glance follows a moved beam end, C-147); test_client 215, build passed (client only).
+- Ready to merge: `ed3303e` (main f3334c7 merged in 9e18206, m-models 2e5a42b; mech stride, domes without vision verified; C-148); test_client 215, test 451, build passed.
+- Ready to merge: `7c8566b` (main 3860e72 merged into the client: S-123); test_client 215, build passed.
+- Ready to merge: `26e92d3` (m-models 44101bf: heroic mech Commander meshes, at review); test_client 215, build passed.
+- Ready to merge: `a6942aa` (main b7f0f09 merged in 8f553c1 with S-124..S-126; ghost-attack spec, C-149); test_client 216, build passed.
+- Ready to merge: `29a4d48` (ally relation and smart orders, C-150; inert until S-129); test_client 217, build passed (client only).
+- Ready to merge: `8d672dd` (smooth radar blips, C-151); test_client 218, build passed (client only).
+- Ready to merge: `3a06cb7` (main e13d850 merged in e5672df: S-127..S-129; ally end-to-end spec); test_client 219, test 457, build passed.
+- Ready to merge: `ace2e89` (m-models e7f4570: Commander mechs v3 at review; team pieces cover every part; materials up to date); test_client 219, build passed.
+- Ready to merge: `1f948db` (main 57299f7 merged into the client: S-130); test_client 219, build passed.

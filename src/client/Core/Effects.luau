@@ -90,7 +90,7 @@ Effects.CONTINUE_RADIUS = 3 -- studs: a beam fired this close to a burning one o
 -- A FIRE / SHOT from a beam weapon whose beam still burns (a dome dropped
 -- under it: the rest goes through, sim request 54): moves that beam's end and
 -- drops its glance and dome pulses; true if one was found (C-144).
-function Effects.continueBeam(fx: Fx, weapon: any, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, hit: boolean, now: number): boolean
+function Effects.continueBeam(fx: Fx, weapon: any, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, hit: boolean, now: number, world: World.World?): boolean
 	if weapon == nil or weapon.type ~= "BEAM" then
 		return false
 	end
@@ -99,6 +99,9 @@ function Effects.continueBeam(fx: Fx, weapon: any, x0: number, y0: number, z0: n
 		if t.weaponId == weapon.id and now < t.born + t.life and (t.x0 - x0) ^ 2 + (t.y0 - y0) ^ 2 + (t.z0 - z0) ^ 2 <= r2 then
 			t.x1, t.y1, t.z1, t.hit = x1, y1, z1, hit
 			t.deflect, t.pulseAt = nil, nil
+			if world and not hit then
+				Effects.glance(world, weapon, t, now) -- now short on another dome
+			end
 			return true
 		end
 	end
@@ -275,6 +278,18 @@ local function shotTracer(world: World.World, weapon: any, faction: string?, x0:
 	local isBeam = weapon ~= nil and weapon.type == "BEAM"
 	local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = hit, size = if weapon then weaponSize(weapon) else 1, beam = if isBeam then (faction or "order") else nil, weaponId = if weapon then weapon.id else nil }
 	if isBeam and not hit then
+		Effects.glance(world, weapon, t, now)
+	end
+	return t
+end
+
+-- A beam that ended short of its target: on a known dome's surface, it
+-- glances off into the ground and pulses the dome (C-129, C-139); else
+-- nothing to add. Also re-run when a burning beam's end moves (C-144).
+function Effects.glance(world: World.World, weapon: any, t: Tracer, now: number)
+	t.deflect, t.pulseAt = nil, nil
+	local x0, y0, z0, x1, y1, z1 = t.x0, t.y0, t.z0, t.x1, t.y1, t.z1
+	do
 		local domes = {}
 		for id in world.shields do
 			local g = world.units[id]
@@ -283,6 +298,9 @@ local function shotTracer(world: World.World, weapon: any, faction: string?, x0:
 			if r then
 				table.insert(domes, { g.x, World.groundY(world, g.x, g.z), g.z, r })
 			end
+		end
+		for _, rd in world.remoteDomes do
+			table.insert(domes, { rd.x, rd.y, rd.z, rd.radius }) -- unseen generators' domes (S-122)
 		end
 		local gx, gy, gz = Effects.deflection(x0, y0, z0, x1, y1, z1, domes, function(x: number, z: number): number
 			return World.groundY(world, x, z)
@@ -293,7 +311,6 @@ local function shotTracer(world: World.World, weapon: any, faction: string?, x0:
 			t.pulseMass = math.min(ShieldField.mass(weapon), 3)
 		end
 	end
-	return t
 end
 
 local function pos(world: World.World, e: Schema.Event): (number, number, number)
@@ -736,6 +753,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local shooter, slot = launcher(world, e.weaponIndex, x, z)
 		if shooter and early then
 			table.insert(fx.shots, { shooter, slot :: number })
+			World.noteShot(world, shooter, slot :: number, e.tick or fx.tick)
 		end
 		local mx, my, mz
 		if shooter and muzzleOf then
@@ -865,6 +883,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		warn(fx, fx.projectiles[e.projId], e.projId, x, y, z, now)
 	elseif kind == EK.FIRE then
 		table.insert(fx.shots, { e.unitId, e.slot })
+		World.noteShot(world, e.unitId, e.slot, e.tick or fx.tick) -- the reload bar (C-170)
 		local x1, y1, z1 = pos(world, e)
 		local shooter = world.units[e.unitId]
 		local x0, y0, z0
@@ -879,7 +898,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local slot = def and def.weapons[e.slot]
 			local weapon = slot and world.defs.weaponByIndex[slot.weaponIndex or 0]
 			local isBeam = weapon ~= nil and weapon.type == "BEAM"
-			if Effects.continueBeam(fx, weapon, x0, y0 :: number, z0 :: number, x1, y1, z1, e.hit == true, now) then
+			if Effects.continueBeam(fx, weapon, x0, y0 :: number, z0 :: number, x1, y1, z1, e.hit == true, now, world) then
 				return -- the burning beam goes on to the new end (a dome dropped, C-144)
 			end
 			local t = shotTracer(world, weapon, def and def.faction, x0, y0 :: number, z0 :: number, x1, y1, z1, e.hit == true, now)
@@ -936,7 +955,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		-- the weapon's id
 		local weapon = if e.weaponIndex and e.weaponIndex > 0 then world.defs.weaponByIndex[e.weaponIndex] else nil
 		local faction = if weapon and string.sub(weapon.id, 1, 4) == "chs_" then "chaos" else "order"
-		if Effects.continueBeam(fx, weapon, x0, y0, z0, x1, y1, z1, e.hit == true, now) then
+		if Effects.continueBeam(fx, weapon, x0, y0, z0, x1, y1, z1, e.hit == true, now, world) then
 			return
 		end
 		local t = shotTracer(world, weapon, faction, x0, y0, z0, x1, y1, z1, e.hit == true, now)

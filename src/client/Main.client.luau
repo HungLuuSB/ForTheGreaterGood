@@ -17,6 +17,13 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local Defs = require("@shared/Defs/Defs")
 local Schema = require("@shared/Net/Schema")
 local Normandy = require("@shared/Grid/Normandy")
+local Canyon = require("@shared/Grid/Canyon")
+local MapLook = require("./Core/MapLook")
+local Atmosphere = require("./Render/Atmosphere")
+local Idle = require("./Core/Idle")
+local GroundMeshes = require("./Core/GroundMeshes")
+local IdleStrip = require("./UI/IdleStrip")
+local IdleMarks = require("./Render/IdleMarks")
 local Api = require("./Api")
 local Camera = require("./Camera")
 local Interp = require("./Core/Interp")
@@ -36,6 +43,7 @@ local ModelPool = require("./Render/ModelPool")
 local RenderDeaths = require("./Render/Deaths")
 local RenderEffects = require("./Render/Effects")
 local ShieldDomes = require("./Render/ShieldDomes")
+local FactoryFrames = require("./Render/FactoryFrames")
 local ShieldFx = require("./Render/ShieldFx")
 local Contacts = require("./Render/Contacts")
 local FogBlanket = require("./Render/FogBlanket")
@@ -121,7 +129,7 @@ end
 Camera.bind(camState)
 -- A hand-made map's cell features, for its drawn materials and houses (C-66).
 local function mapFeature(mapId: string?): ((number, number) -> string)?
-	return if mapId == "map:normandy" then Normandy.feature else nil
+	return if mapId == "map:normandy" then Normandy.feature elseif mapId == "map:canyon" then Canyon.feature else nil
 end
 
 local controls = Controls.bind(api)
@@ -150,11 +158,11 @@ local nukeWarning = NukeWarning.new() -- strategic launch warnings (C-57)
 local radarRings = RadarRings.new() -- own radar facilities' rings, always on top (C-63, C-64)
 local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-58)
 -- Camera follow (C-43), T in developer mode (C-124; the on-screen button is
--- gone): the first selected unit, else the homing missile drawn nearest the
--- screen centre.
-local FOLLOW_KEY = Enum.KeyCode.T
+-- gone; rebindable, C-159): the first selected unit, else the homing
+-- missile drawn nearest the screen centre.
 local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
 local shieldDomes = ShieldDomes.new() -- shield generators' domes (C-91)
+local factoryFrames = FactoryFrames.new() -- units in production on their factory's pad (C-152)
 local function toggleFollow()
 	if camState.follow then
 		camState.follow = nil
@@ -164,6 +172,19 @@ local function toggleFollow()
 	local view = cam.ViewportSize
 	camState.follow = Follow.pick(world, api.state.selection, lastVisibleFx, Controls.projector(cam), view.X / 2, view.Y / 2)
 end
+-- Idle builders and factories (C-158): counts in the top strip, I jumps to
+-- the next idle builder (selected, the camera follows it), a tag over each.
+local idle = Idle.new()
+local idleMarks = IdleMarks.new()
+local nextIdleCount = 0
+local function pickIdle(kind: string)
+	local id = Idle.next(idle, kind :: any)
+	if id then
+		api.actions.select({ id })
+		camState.follow = { kind = "unit", id = id }
+	end
+end
+local idleStrip = IdleStrip.new(pickIdle)
 -- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
 -- The server publishes the speed as the Remotes folder's SimSpeed attribute.
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
@@ -181,7 +202,7 @@ local function requestSpeed(value: number)
 	end
 end
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-	if processed then
+	if processed or SettingsMenu.capturing then
 		return
 	end
 	local key = input.KeyCode
@@ -191,7 +212,9 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 		DepositsRender.setEnabled(deposits, not deposits.enabled)
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
-	elseif key == FOLLOW_KEY then
+	elseif key == SettingsMenu.key("idle") then
+		pickIdle("builder")
+	elseif key == SettingsMenu.key("follow") then
 		local settings = SettingsMenu.state
 		if settings and settings.devMode then
 			toggleFollow()
@@ -283,6 +306,9 @@ local unitPanel = UnitPanel.new(api)
 local alertFeed = AlertFeed.new(api)
 local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; profiles with a lobby only)
 Controls.capture = function(input: InputObject): boolean
+	if SettingsMenu.capturing and input.UserInputType == Enum.UserInputType.Keyboard then
+		return true -- Settings > Keys is taking this key (C-159)
+	end
 	return BuildMenuUI.capture(buildMenu, api, input)
 end
 api.changed.alert:Connect(function(alert: any)
@@ -747,6 +773,21 @@ if RunService:IsStudio() then
 			-- Invoke("depositsanyway", on): draw C's review deposit models (for the user's review, C-123)
 			MeshModels.DEPOSITS_ANYWAY = (...) == true
 			return true
+		elseif query == "groundanyway" then
+			-- Invoke("groundanyway", on): draw the map's review mesh ground (C-167) and rebuild it
+			GroundMeshes.ANYWAY = (...) == true
+			if world.layers then
+				Ground.build(world.layers, nil, mapFeature(world.mapId), world.mapId)
+			end
+			return Ground.last
+		elseif query == "reviewmesh" then
+			-- Invoke("reviewmesh", defId): build and draw one review unit mesh (C-160)
+			local id = ...
+			if type(id) == "string" then
+				MeshModels.REVIEW[id] = true
+				MeshModels.start(defs)
+			end
+			return true
 		elseif query == "meshes" then
 			-- BAR mesh models (C-103): built, failed, seconds, errors
 			return MeshModels.stats
@@ -782,7 +823,7 @@ if RunService:IsStudio() then
 			-- Invoke("ground", "terrain" | "parts"?): rebuild the ground that way; Invoke("ground") the last build's stats
 			local mode = ...
 			if mode and world.layers then
-				Ground.build(world.layers, mode, mapFeature(world.mapId))
+				Ground.build(world.layers, mode, mapFeature(world.mapId), world.mapId)
 				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 			end
 			return Ground.last
@@ -844,6 +885,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	if world.joins ~= seenJoins then
 		-- a (re)join: start over from the server's full picture
 		seenJoins = world.joins
+		FactoryFrames.clear(factoryFrames)
 		UnitRenderer.clear(renderer)
 		Effects.clear(fx)
 		Crater.clear() -- the last match's nuke craters (C-82)
@@ -852,11 +894,12 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		if world.mapVersion ~= seenMap then
 			seenMap = world.mapVersion
 			if world.layers then
-				Ground.build(world.layers, nil, mapFeature(world.mapId))
+				Ground.build(world.layers, nil, mapFeature(world.mapId), world.mapId)
 				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogBlanket.setMap(fog, world, world.layers)
-				Environment.setMap(environment, world.layers)
+				Environment.setMap(environment, world.layers, MapLook.of(world.mapId))
+				Atmosphere.setMap(world.mapId) -- its lighting and time of day, unless Settings picked another (C-155)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
@@ -871,8 +914,14 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local simDt = dt * speed
 	local t = Interp.advance(clock, world, now, dt, speed)
 	World.settle(world, t) -- health bars show changes with the hits that caused them (C-49)
+	World.smoothStrategic(world, dt, now) -- radar blips glide, not jump, and circle their spot (C-151, C-154)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
+	if strategic then
+		FactoryFrames.clear(factoryFrames)
+	else
+		FactoryFrames.step(factoryFrames, world, renderer, now)
+	end
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)
@@ -906,6 +955,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
 	api.state.camera.rect = camState.rect
+	api.state.camera.corners = camState.corners
 	Environment.update(environment, camState.x, camState.z, camState.distance, World.groundY(world, camState.x, camState.z))
 	Grade.update(grade, camState.x, camState.z, camState.distance, dt)
 	t0 = os.clock()
@@ -925,11 +975,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	wantMeshes(now)
 	if Models.version ~= seenModels then
 		seenModels = Models.version
+		FactoryFrames.clear(factoryFrames)
 		ModelPool.flushAll()
 		UnitRenderer.reshowAll(renderer, world)
 		table.clear(meshReady)
 	end
 	for _, id in meshReady do
+		FactoryFrames.clear(factoryFrames)
 		Models.forget(id)
 		ModelPool.flush(id)
 		UnitRenderer.reshow(renderer, world, id)
@@ -1005,6 +1057,12 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	MinimapUI.setFog(minimap, FogBlanket.content(fog), FogBlanket.ENABLED and not (world.joined and world.me.player == 0))
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
+	if now >= nextIdleCount then
+		nextIdleCount = now + 0.25
+		Idle.update(idle, world)
+	end
+	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
+	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
 	BuildMenuUI.step(buildMenu, api)
 	CommandCard.step(commandCard, api)
 	UnitPanel.step(unitPanel, api)

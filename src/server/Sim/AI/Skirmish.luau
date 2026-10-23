@@ -108,7 +108,9 @@ local Packer = require("@shared/Net/Packer")
 local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
 local Schema = require("@shared/Net/Schema")
+local Nav = require("../Nav")
 local Placement = require("../Placement")
+local Quadtree = require("../Path/Quadtree")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Sensors = require("../Sensors")
 local Sim = require("../Sim")
@@ -126,6 +128,12 @@ Skirmish.FIRST_WAVE = 8
 Skirmish.WAVE_GROWTH = 2
 Skirmish.HOME_RADIUS = 260 -- studs: enemies inside it are attacked by everyone
 Skirmish.CLAIM_TICKS = 900 -- a deposit someone was sent to stays reserved this long
+-- A builder sent to build that gets no closer to the site for this long
+-- (walled in, or the site is out of its reach) gives up; the site is left
+-- alone for BAD_SITE_TICKS (S-133: footprint-2 Commanders can't pass
+-- 1-cell gaps between buildings of different sizes)
+Skirmish.STALL_TICKS = 300 -- 20 s
+Skirmish.BAD_SITE_TICKS = 2700 -- 3 min
 Skirmish.SECOND_PLANT_SUPPLY = 600
 Skirmish.ADV_PLANT_SUPPLY = 900 -- supply stored before the Advanced Vehicle Plant (S-7)
 Skirmish.MAX_AA = 4 -- IR SAM trucks wanted at most
@@ -374,6 +382,8 @@ export type Brain = {
 	held: number, -- thinks a ready wave waited for the known defence (S-105)
 	attacking: { [number]: boolean }, -- units sent with a wave
 	claims: { [number]: number }, -- cell → tick a builder was sent there
+	approach: { [number]: { x: number, z: number, best: number, at: number } }, -- builder → its build site, closest so far, when (S-133)
+	gaveUp: number, -- build orders given up as unreachable
 	deposits: { number }, -- deposit cells, nearest home first
 	waves: number,
 	lastWaveOrder: number, -- tick the wave was last sent at its target
@@ -525,6 +535,8 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		held = 0,
 		attacking = {},
 		claims = {},
+		approach = {},
+		gaveUp = 0,
 		deposits = deposits,
 		waves = 0,
 		lastWaveOrder = -math.huge,
@@ -609,8 +621,90 @@ end
 -- starts of a mirrored map build mirrored bases (S-17: sweeping from +x for
 -- both gave the east start a different, safer base).
 local SNAP_NUDGE = 1e-3 -- studs
+Skirmish.EXIT_LANE = 3 -- cells kept clear in front of the AI's factory exits (S-142)
 
-local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (number?, number?)
+-- Can `builder` get within building range of a footprint whose min cell is
+-- (x0, z0)? Some cell on the rings around it, out to its build range (2
+-- cells at least), is open ground of the builder's connected region (its
+-- move class's quadtree; S-142): a shipyard out on the water is built from
+-- the shore. Aircraft and units without a region (inside their factory,
+-- say) always can.
+local function reachable(sim: Types.Sim, builder: number, size: number, x0: number, z0: number): boolean
+	local nav = sim.nav
+	if nav == nil then
+		return true
+	end
+	local w = sim.world
+	local p = nav.profiles[w.defIndex[builder]]
+	if p == nil or p.air then
+		return true
+	end
+	local tree = Nav.tree(nav, p.moveClass, p.need, p.treeKey)
+	local g = nav.grid
+	local bx, bz = g:cellAt(w.posX[builder], w.posZ[builder])
+	if not g:inBounds(bx, bz) or not Quadtree.isOpen(tree, g:index(bx, bz)) then
+		return true
+	end
+	local home = Quadtree.component(tree, g:index(bx, bz))
+	local reach = math.max(2, math.floor((unitDef(sim, builder).buildRange or 0) / 8))
+	for r = 1, reach do
+		for cz = z0 - r, z0 + size - 1 + r do
+			for cx = x0 - r, x0 + size - 1 + r do
+				local edge = cx == x0 - r or cx == x0 + size - 1 + r or cz == z0 - r or cz == z0 + size - 1 + r
+				if edge and g:inBounds(cx, cz) then
+					local i = g:index(cx, cz)
+					if Quadtree.isOpen(tree, i) and Quadtree.component(tree, i) == home then
+						return true
+					end
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- Does a footprint (min cell x0, z0) cover the lane in front of one of the
+-- player's factories: EXIT_LANE cells out from its front edge, its width
+-- (S-142: produced units drive out there, S-133)?
+local function onExitLane(brain: Brain, size: number, x0: number, z0: number): boolean
+	local sim = brain.sim
+	local w = sim.world
+	local g = (sim.map :: Passability.PassMap).grid
+	for _, id in w.ids do
+		if w.owner[id] ~= brain.player then
+			continue
+		end
+		local d = unitDef(sim, id)
+		if d.domain ~= "structure" or d.buildOptions == nil or d.footprint == nil then
+			continue
+		end
+		local fx, fz = math.sin(w.heading[id]), math.cos(w.heading[id])
+		local half = d.footprint * 4
+		local cxs, czs = g:cellAt(w.posX[id] - half + 1e-3, w.posZ[id] - half + 1e-3) -- the factory's min cell
+		local n = d.footprint
+		local lx0, lz0, lx1, lz1 = cxs, czs, cxs + n - 1, czs + n - 1
+		if math.abs(fx) > math.abs(fz) then
+			if fx > 0 then
+				lx0, lx1 = cxs + n, cxs + n + Skirmish.EXIT_LANE - 1
+			else
+				lx0, lx1 = cxs - Skirmish.EXIT_LANE, cxs - 1
+			end
+		else
+			if fz > 0 then
+				lz0, lz1 = czs + n, czs + n + Skirmish.EXIT_LANE - 1
+			else
+				lz0, lz1 = czs - Skirmish.EXIT_LANE, czs - 1
+			end
+		end
+		if x0 <= lx1 and x0 + size - 1 >= lx0 and z0 <= lz1 and z0 + size - 1 >= lz0 then
+			return true
+		end
+	end
+	return false
+end
+
+-- With `builder`, only sites it can reach (S-142).
+local function spotNear(brain: Brain, defId: string, cx: number, cz: number, builder: number?): (number?, number?)
 	local sim = brain.sim
 	local def = sim.defs.units[defId]
 	local g = (sim.map :: Passability.PassMap).grid
@@ -632,9 +726,13 @@ local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (n
 			-- other buildings keep a cell clear of deposits: room for the
 			-- extractor and its 3×3 T2 upgrade (S-104)
 			local onDeposit = def.extractor == nil and PlacementRules.supplyUnder(layers, def.footprint + 2, x, z) > 0
-			if not onDeposit and (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick and Placement.check(sim, def, x, z, nil, brain.ally) then
-				brain.claims[cell] = sim.tick
-				return x, z
+			if not onDeposit and (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
+				local ok, _, x0, z0 = Placement.check(sim, def, x, z, nil, brain.ally)
+				-- reachable for its builder, and off the factories' exit lanes (S-142)
+				if ok and not onExitLane(brain, def.footprint, x0, z0) and (builder == nil or reachable(sim, builder, def.footprint, x0, z0)) then
+					brain.claims[cell] = sim.tick
+					return x, z
+				end
 			end
 		end
 	end
@@ -1063,6 +1161,28 @@ local function think(brain: Brain)
 	if c.commander ~= 0 then
 		table.insert(workers, 1, c.commander)
 	end
+	-- a builder getting no closer to its site gives up on it (S-133)
+	for _, id in workers do
+		local o = sim.build.order[id]
+		local a = brain.approach[id]
+		if o == nil then
+			brain.approach[id] = nil
+			continue
+		end
+		local d = math.sqrt((w.posX[id] - o.x) ^ 2 + (w.posZ[id] - o.z) ^ 2)
+		if a == nil or a.x ~= o.x or a.z ~= o.z then
+			brain.approach[id] = { x = o.x, z = o.z, best = d, at = sim.tick }
+		elseif d < a.best - 8 then
+			a.best, a.at = d, sim.tick
+		elseif sim.tick - a.at > Skirmish.STALL_TICKS then
+			submit(sim, brain.player, { cmdType = CT.STOP, flags = 0, unitIds = { id } })
+			local g = (sim.map :: Passability.PassMap).grid
+			local gx, gz = g:cellAt(o.x, o.z)
+			brain.claims[g:index(gx, gz)] = sim.tick + Skirmish.BAD_SITE_TICKS
+			brain.approach[id] = nil
+			brain.gaveUp += 1
+		end
+	end
 	local cfg = brain.cfg
 	-- power is short if it stalled in the last POWER_MEMORY ticks (watched
 	-- every tick in Skirmish.tick): the stall ratio reads 1 for a moment
@@ -1117,7 +1237,7 @@ local function think(brain: Brain)
 			end
 		end
 		if #c.factories + c.frames < plantsWanted and #c.factories + c.frames < 2 then
-			local x, z = spotNear(brain, plant, brain.homeX + brain.toward * 90, brain.homeZ)
+			local x, z = spotNear(brain, plant, brain.homeX + brain.toward * 90, brain.homeZ, id)
 			if x and z then
 				build(brain, id, plant, x, z, if brain.toward > 0 then 1 else 3)
 				c.frames += 1
@@ -1127,7 +1247,7 @@ local function think(brain: Brain)
 		if isCommander and wantAir then
 			-- hard: an airfield behind the base (S-17)
 			local field = faction(brain, "airfield", "airfield")
-			local x, z = spotNear(brain, field, brain.homeX - brain.dirX * 80, brain.homeZ - brain.dirZ * 80)
+			local x, z = spotNear(brain, field, brain.homeX - brain.dirX * 80, brain.homeZ - brain.dirZ * 80, id)
 			if x and z then
 				build(brain, id, field, x, z, 0)
 				c.airFrames += 1
@@ -1137,7 +1257,7 @@ local function think(brain: Brain)
 		if isCommander and wantNaval and brain.seaX and brain.seaZ then
 			-- hard: a shipyard on the nearby sea (S-17)
 			local yard = faction(brain, "shipyard", "shipyard")
-			local x, z = spotNear(brain, yard, brain.seaX :: number, brain.seaZ :: number)
+			local x, z = spotNear(brain, yard, brain.seaX :: number, brain.seaZ :: number, id)
 			if x and z then
 				build(brain, id, yard, x, z, 0)
 				c.shipFrames += 1
@@ -1150,7 +1270,7 @@ local function think(brain: Brain)
 			local off = (c.barriers - (n - 1) / 2) * 8
 			local cx = brain.homeX + brain.dirX * 140 - brain.dirZ * off
 			local cz = brain.homeZ + brain.dirZ * 140 + brain.dirX * off
-			local x, z = spotNear(brain, "ord_barrier", cx, cz)
+			local x, z = spotNear(brain, "ord_barrier", cx, cz, id)
 			if x and z then
 				build(brain, id, "ord_barrier", x, z, 0)
 				c.barriers += 1
@@ -1164,7 +1284,7 @@ local function think(brain: Brain)
 			if c.turrets >= cfg.defenses and brain.lastFarX and brain.lastFarZ then
 				cx, cz = brain.lastFarX :: number, brain.lastFarZ :: number
 			end
-			local x, z = spotNear(brain, turret, cx, cz)
+			local x, z = spotNear(brain, turret, cx, cz, id)
 			if x and z then
 				build(brain, id, turret, x, z, 0)
 				c.turrets += 1
@@ -1174,7 +1294,7 @@ local function think(brain: Brain)
 		if cfg.radar and not isCommander and #c.factories > 0 and c.extractors >= 2 and c.radarTowers == 0 then
 			-- radar: early warning for the artillery (S-7)
 			local tower = faction(brain, "watchtower", "eye")
-			local x, z = spotNear(brain, tower, brain.homeX + brain.toward * 120, brain.homeZ + 60)
+			local x, z = spotNear(brain, tower, brain.homeX + brain.toward * 120, brain.homeZ + 60, id)
 			if x and z then
 				build(brain, id, tower, x, z, 0)
 				c.radarTowers += 1
@@ -1184,7 +1304,7 @@ local function think(brain: Brain)
 		if cfg.antiAir and c.enemyAirNearHome > 0 and c.samSites == 0 then
 			-- enemy aircraft over the base: an IR SAM site (S-7)
 			local site = faction(brain, "vigil", "thorn")
-			local x, z = spotNear(brain, site, brain.homeX, brain.homeZ - 50)
+			local x, z = spotNear(brain, site, brain.homeX, brain.homeZ - 50, id)
 			if x and z then
 				build(brain, id, site, x, z, 0)
 				c.samSites += 1
@@ -1194,7 +1314,7 @@ local function think(brain: Brain)
 		if cfg.techUp and not isCommander and #c.factories > 0 and #c.advFactories + #c.advFrames == 0 and acc.supply.stored > Skirmish.ADV_PLANT_SUPPLY then
 			-- tech up: the Advanced Vehicle Plant (fire-control radar, MLRS; S-7)
 			local adv = faction(brain, "advvehplant", "advvehplant")
-			local x, z = spotNear(brain, adv, brain.homeX - brain.toward * 40, brain.homeZ + 120)
+			local x, z = spotNear(brain, adv, brain.homeX - brain.toward * 40, brain.homeZ + 120, id)
 			if x and z then
 				build(brain, id, adv, x, z, if brain.toward > 0 then 1 else 3)
 				table.insert(c.advFrames, 0)
@@ -1237,7 +1357,7 @@ local function think(brain: Brain)
 		local wantGen = c.generators < Skirmish.MIN_GENERATORS or (not extractorFirst and c.generators < genCap)
 		if genAllowed and wantGen then
 			local gen = faction(brain, "generator", "generator")
-			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
+			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ, id)
 			if x and z then
 				build(brain, id, gen, x, z, 0)
 				c.generators += 1
@@ -1385,7 +1505,7 @@ local function think(brain: Brain)
 			c.citadels += 1
 		end
 		if job then
-			local x, z = spotNear(brain, job, cx, cz)
+			local x, z = spotNear(brain, job, cx, cz, id)
 			if x and z then
 				build(brain, id, job, x, z, 0)
 			end

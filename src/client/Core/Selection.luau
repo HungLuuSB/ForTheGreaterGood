@@ -40,7 +40,8 @@ function Selection.position(world: World.World, u: World.Unit): (number, number,
 	if u.rx then
 		return u.rx :: number, (u.ry :: number) + Selection.CENTER_HEIGHT, u.rz :: number
 	end
-	return u.x, World.groundY(world, u.x, u.z) + u.alt + Selection.CENTER_HEIGHT, u.z
+	local x, z = u.sx or u.x, u.sz or u.z -- a strategic record's drawn spot (C-151)
+	return x, World.groundY(world, x, z) + u.alt + Selection.CENTER_HEIGHT, z
 end
 
 -- Replaces, adds to or toggles the selection; only own units are kept.
@@ -137,6 +138,24 @@ function Selection.sameTypeOnScreen(world: World.World, project: Projector, defI
 		end
 	end
 	table.sort(out)
+	return out
+end
+
+-- A click on a type tile in the unit panel (C-157, BAR's selection
+-- panel): "keep" only that type, "remove" it (Shift), or "screen": every
+-- own unit of that type on screen (Ctrl; `onScreen` from sameTypeOnScreen).
+function Selection.tileClick(world: World.World, ids: { number }, defIndex: number, how: "keep" | "remove" | "screen", onScreen: { number }?): { number }
+	if how == "screen" then
+		return table.clone(onScreen or {})
+	end
+	local out = {}
+	for _, id in ids do
+		local u = world.units[id]
+		local same = u ~= nil and u.defIndex == defIndex
+		if same == (how == "keep") then
+			table.insert(out, id)
+		end
+	end
 	return out
 end
 

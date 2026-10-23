@@ -7,13 +7,13 @@
 --            asset); off at Low quality
 
 local CoreEnvironment = require("../Core/Environment")
+local MapLook = require("../Core/MapLook")
 local Layers = require("@shared/Grid/Layers")
 
 local Environment = {}
 
 Environment.AMBIENT = true -- SettingsMenu: off at Low quality
 Environment.AMBIENT_WITHIN = 320 -- camera distance (studs) the particles run within
-Environment.SKIRT_COLOR = Color3.fromRGB(30, 32, 36)
 local BOX = Vector3.new(220, 30, 220) -- the volume the particles appear in, round the focus
 local LIFT = 15 -- the box's centre above the ground
 local SMOKE = "rbxasset://textures/particles/smoke_main.dds"
@@ -94,8 +94,21 @@ function Environment.new(): State
 	return { folder = folder, skirt = {}, carrier = carrier, dust = dust, mist = mist, on = false }
 end
 
--- Lays the skirt round `layers`' map (replacing an earlier map's).
-function Environment.setMap(state: State, layers: Layers.Layers)
+-- Lays the skirt round `layers`' map (replacing an earlier map's) and
+-- gives the skirt and the particles the map's look (Core/MapLook, C-155).
+function Environment.setMap(state: State, layers: Layers.Layers, look: MapLook.Look?)
+	local l = look or MapLook.DEFAULT
+	local function rgb(c: { number }): Color3
+		return Color3.fromRGB(c[1], c[2], c[3])
+	end
+	local function v3(v: { number }): Vector3
+		return Vector3.new(v[1], v[2], v[3])
+	end
+	state.dust.Color = ColorSequence.new(rgb(l.dust.color))
+	state.dust.Acceleration = v3(l.dust.wind)
+	state.mist.Color = ColorSequence.new(rgb(l.mist.color))
+	state.mist.Acceleration = v3(l.mist.wind)
+	local skirt = rgb(l.skirt)
 	for _, p in state.skirt do
 		p:Destroy()
 	end
@@ -107,7 +120,7 @@ function Environment.setMap(state: State, layers: Layers.Layers)
 		local p = Instance.new("Part")
 		p.Name = "Skirt"
 		p.Material = Enum.Material.Ground
-		p.Color = Environment.SKIRT_COLOR
+		p.Color = skirt
 		p.Size = Vector3.new(r.x1 - r.x0, thick, r.z1 - r.z0)
 		p.Position = Vector3.new((r.x0 + r.x1) / 2, top - thick / 2, (r.z0 + r.z1) / 2)
 		inert(p)
