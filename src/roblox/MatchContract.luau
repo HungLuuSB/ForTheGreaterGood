@@ -264,8 +264,9 @@ end
 -- reason: the sim's own end ("finished" with its winner, or "draw");
 -- before that, "abandoned" when no human is left on the server, else from
 -- who still stands: one ally team left → it won; none → a draw; several
--- (every human out while AI fight on in a free-for-all) → a draw with that
--- reason (the lobby stream decides how profiles count it).
+-- (every human out while AI fight on in a free-for-all) → "finished" with
+-- no winner, so every player's `won` is false and the humans' profiles
+-- count a loss (the lobby stream's decision, contract section 5).
 function MatchContract.outcomeOf(sim: any, humansPresent: number): (string, number?, string?)
 	if sim.match.over then
 		local w = sim.match.winner
@@ -291,7 +292,10 @@ function MatchContract.outcomeOf(sim: any, humansPresent: number): (string, numb
 	if count == 1 then
 		return "finished", next(standing), nil
 	end
-	return "draw", nil, if count == 0 then nil else "every human is out; AI teams still fight"
+	if count == 0 then
+		return "draw", nil, nil
+	end
+	return "finished", nil, "every human is out; AI teams still fight"
 end
 
 -- Checks a results record against its config (the lobby's validateResult).
@@ -305,7 +309,8 @@ function MatchContract.validateResult(r: any, c: any): string?
 	if not oneOf(MatchContract.OUTCOMES, r.outcome) then
 		return "outcome"
 	end
-	if r.outcome == "finished" and not isInt(r.winner, 1, #c.players) then
+	-- a winner only on "finished", and optional there (every human out while AI teams still fight)
+	if r.winner ~= nil and (r.outcome ~= "finished" or not isInt(r.winner, 1, #c.players)) then
 		return "winner"
 	end
 	if type(r.seconds) ~= "number" or r.seconds < 0 or type(r.endedAt) ~= "number" or type(r.cheatsUsed) ~= "boolean" then

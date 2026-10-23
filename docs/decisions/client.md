@@ -1498,3 +1498,9 @@ Any other spin or turn piece is left to its unit's own script. The v3 Commander 
 - `Kit.input(parent, placeholder, width?, onEnter?)` is a text box in the control style, D's `Ui.input` signature.
 
 Existing calls are unchanged.
+
+### C-175 — Every human out while AI teams fight on: "finished" with no winner (2026-10-23)
+
+**Decision:** `MatchContract.outcomeOf` now returns "finished" with no winner when every human is out and several AI teams still stand. Every player's `won` is then false, so the humans' profiles count a loss. "draw" stays for the sim's own draw and for no team standing. The copy of `validateResult` follows the lobby's: a winner only on "finished", optional there. Spec: MatchContract.spec.
+
+**Why:** the lobby stream's decision in docs/contracts/match.md (m-lobby 287b99e, still v1), answering C-173's open question.
