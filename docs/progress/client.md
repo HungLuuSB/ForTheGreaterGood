@@ -1752,7 +1752,10 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-53. **Open (sent 2026-10-23).** **Attack-ground for BEAM / HITSCAN; turrets returning to rest (the user):** beams and hitscan should fire at an ordered point (pierce damages anyone crossing). Turret guns reportedly swing back to rest while reloading; not reproduced headless (the client draws the server aim verbatim). Sim-A to check the target-retention paths.
+53. **Open (sent 2026-10-23).** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
+    - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.
+    - Cause of the "turret doesn't aim at its target" report (beam towers in shield_beams): the attack-ground order is ignored, the tower tracks a Mason wandering inside the dome (~15° of swing), and its fixed 3 s beam no longer lines up with the barrel.
+    - Also asked: hold the aim on the fired line while a beam burns.
 
 52. **Built (S-118, protocol 28, merging): SHOT carries weaponDefIndex; the client to draw hidden beams as full beams.** **SHOT should say it's a beam:** a hidden shooter's beam arrives as SHOT (both ends, no weapon), so the client draws a plain tracer: no held beam, glancing leg or shield pulses. Asked for the weapon's def index on SHOT (protocol bump).
 
