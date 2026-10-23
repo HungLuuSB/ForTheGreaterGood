@@ -169,6 +169,44 @@ return function(t: RunAll.Context)
 		t.expect(shipCells > 0 and landCells > 0, "test map should have both sea and land")
 	end)
 
+	t.test("occupying a block updates clearance exactly like a full recompute (S-144)", function()
+		local Prng = require("@shared/Util/Prng")
+		local layers = TestMap.generate({ seed = 7, cellsX = 96 })
+		local pm = Passability.build(layers)
+		local g = pm.grid
+		local rng = Prng.new(3)
+		for n = 1, 40 do
+			local size = rng:nextInteger(1, 4)
+			-- some blocks hang over the map's edge
+			local x0, z0 = rng:nextInteger(-2, g.cellsX - 2), rng:nextInteger(-2, g.cellsZ - 2)
+			Passability.setOccupied(pm, x0, z0, size, n)
+		end
+		local fast: { [string]: string } = {}
+		for _, mc in CLASSES do
+			fast[mc] = buffer.tostring(pm.clearance[mc])
+		end
+		Passability.recomputeClearance(pm) -- the full, exact recompute
+		for _, mc in CLASSES do
+			t.expect(buffer.tostring(pm.clearance[mc]) == fast[mc], `{mc} clearance equals the full recompute after placing`)
+		end
+		-- and removing half of them again (the transform path, skipping unchanged classes)
+		for n = 1, 40, 2 do
+			for i = 0, g.cellCount - 1 do
+				if Passability.occupant(pm, i) == n then
+					local x, z = i % g.cellsX, i // g.cellsX
+					Passability.clearOccupied(pm, x, z, 1, n)
+				end
+			end
+		end
+		for _, mc in CLASSES do
+			fast[mc] = buffer.tostring(pm.clearance[mc])
+		end
+		Passability.recomputeClearance(pm)
+		for _, mc in CLASSES do
+			t.expect(buffer.tostring(pm.clearance[mc]) == fast[mc], `{mc} clearance equals the full recompute after removing`)
+		end
+	end)
+
 	t.test("clearance changes by at most 1 between neighbors", function()
 		local pm = Passability.build(TestMap.generate({ seed = 3, cellsX = 64 }))
 		local g = pm.grid

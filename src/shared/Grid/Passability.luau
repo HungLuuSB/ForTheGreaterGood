@@ -24,7 +24,7 @@ local Passability = {}
 local readu8, writeu8 = buffer.readu8, buffer.writeu8
 local readu16, writeu16 = buffer.readu16, buffer.writeu16
 local readi16 = buffer.readi16
-local band = bit32.band
+local band, bor, bxor = bit32.band, bit32.bor, bit32.bxor
 local atan = math.atan
 local deg = math.deg
 
@@ -232,11 +232,16 @@ function Passability.updateRect(pm: PassMap, x0: number, z0: number, x1: number,
 	local mapW, mapH = grid.cellsX, grid.cellsZ
 	x0, z0 = math.max(x0, 0), math.max(z0, 0)
 	x1, z1 = math.min(x1, mapW - 1), math.min(z1, mapH - 1)
+	-- classes none of whose cells changed keep their clearance (S-144: on a
+	-- structure's removal the air classes, for one)
+	local changed = 0
 	for z = z0, z1 do
 		for x = x0, x1 do
 			local i = z * mapW + x
 			local occupied = buffer.readu16(pm.occupancy, i * 2) ~= 0
-			writeu16(pm.passMask, i * 2, cellMask(readu8(pm.slope, i), Layers.getWater(pm.layers, i), occupied))
+			local mask = cellMask(readu8(pm.slope, i), Layers.getWater(pm.layers, i), occupied)
+			changed = bor(changed, bxor(mask, readu16(pm.passMask, i * 2)))
+			writeu16(pm.passMask, i * 2, mask)
 		end
 	end
 	local rx0, rz0 = math.max(x0 - 2 * CAP, 0), math.max(z0 - 2 * CAP, 0)
@@ -244,22 +249,65 @@ function Passability.updateRect(pm: PassMap, x0: number, z0: number, x1: number,
 	local wx0, wz0 = math.max(x0 - CAP, 0), math.max(z0 - CAP, 0)
 	local wx1, wz1 = math.min(x1 + CAP, mapW - 1), math.min(z1 + CAP, mapH - 1)
 	for _, mc in CLASS_ORDER do
-		transform(grid, pm.passMask, 2 ^ mc.bit, pm.clearance[mc.id], rx0, rz0, rx1, rz1, wx0, wz0, wx1, wz1)
+		if band(changed, 2 ^ mc.bit) ~= 0 then
+			transform(grid, pm.passMask, 2 ^ mc.bit, pm.clearance[mc.id], rx0, rz0, rx1, rz1, wx0, wz0, wx1, wz1)
+		end
+	end
+end
+
+-- Recomputes every class's clearance over the whole map from the current
+-- pass masks (exact; for tests and tools: the reference the incremental
+-- updates must equal).
+function Passability.recomputeClearance(pm: PassMap)
+	local grid = pm.grid
+	local w, h = grid.cellsX - 1, grid.cellsZ - 1
+	for _, mc in CLASS_ORDER do
+		transform(grid, pm.passMask, 2 ^ mc.bit, pm.clearance[mc.id], 0, 0, w, h, 0, 0, w, h)
 	end
 end
 
 -- Marks a size × size block of cells (min corner x0, z0) as occupied by
 -- structure `id` (blocked for every non-air class) and updates clearance.
+-- Occupying only adds obstacles, so clearance can only shrink: a cell's new
+-- value is min(old, its Chebyshev distance to the block), exact without
+-- the distance transform (S-144: the transform over (size + 4 × CAP)² cells
+-- for every class cost 2-5 ms a structure; this is about one pass over
+-- (size + 2 × CAP)² cells per ground class). Air classes don't change.
 function Passability.setOccupied(pm: PassMap, x0: number, z0: number, size: number, id: number)
 	local g = pm.grid
+	local mapW, mapH = g.cellsX, g.cellsZ
 	for z = z0, z0 + size - 1 do
 		for x = x0, x0 + size - 1 do
 			if g:inBounds(x, z) then
-				buffer.writeu16(pm.occupancy, (z * g.cellsX + x) * 2, id)
+				local i = z * mapW + x
+				buffer.writeu16(pm.occupancy, i * 2, id)
+				writeu16(pm.passMask, i * 2, cellMask(readu8(pm.slope, i), Layers.getWater(pm.layers, i), true))
 			end
 		end
 	end
-	Passability.updateRect(pm, x0, z0, x0 + size - 1, z0 + size - 1)
+	local x1, z1 = x0 + size - 1, z0 + size - 1
+	local cx0, cz0 = math.max(x0 - CAP, 0), math.max(z0 - CAP, 0)
+	local cx1, cz1 = math.min(x1 + CAP, mapW - 1), math.min(z1 + CAP, mapH - 1)
+	local max, min = math.max, math.min
+	for _, mc in CLASS_ORDER do
+		if mc.surface == "air" then
+			continue
+		end
+		local out = pm.clearance[mc.id]
+		for z = cz0, cz1 do
+			local dz = max(z0 - z, 0, z - z1)
+			for x = cx0, cx1 do
+				local d = max(dz, x0 - x, x - x1)
+				if d < CAP then
+					local i = z * mapW + x
+					local old = readu8(out, i)
+					if d < old then
+						writeu8(out, i, d)
+					end
+				end
+			end
+		end
+	end
 end
 
 -- Frees the cells of a block that structure `id` occupies (cells another

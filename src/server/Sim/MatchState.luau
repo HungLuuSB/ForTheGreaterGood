@@ -30,6 +30,7 @@ export type MatchState = {
 	units: { [number]: number }, -- player → owned units and structures (frames included)
 	commanders: { [number]: number }, -- player → owned COMMANDER units
 	eliminated: { [number]: number }, -- player → tick eliminated
+	doomed: { number }, -- eliminated players' units still to self-destruct: id, gen, id, gen... (S-144)
 	over: boolean,
 	winner: number, -- ally team that won; 0 while running or when nobody is left
 	endTick: number,
@@ -45,6 +46,7 @@ function MatchState.new(config: Config?, unitCap: number): MatchState
 		units = {},
 		commanders = {},
 		eliminated = {},
+		doomed = {},
 		over = false,
 		winner = 0,
 		endTick = 0,
@@ -63,6 +65,10 @@ function MatchState.hash(m: MatchState, order: { number }, h: number): number
 		h = Hash.u32(h, m.units[pid] or 0)
 		h = Hash.u32(h, m.commanders[pid] or 0)
 		h = Hash.u32(h, m.eliminated[pid] or 0xFFFFFFFF)
+	end
+	h = Hash.u32(h, #m.doomed)
+	for _, v in m.doomed do
+		h = Hash.u32(h, v)
 	end
 	h = Hash.u32(h, if m.over then 1 else 0)
 	h = Hash.u32(h, m.winner)
