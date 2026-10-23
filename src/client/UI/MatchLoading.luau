@@ -4,7 +4,8 @@
 -- for everyone ("waiting" in the Remotes folder's "Lobby" attribute), in
 -- the layout of the user's reference (BAR) that the lobby place's own
 -- pre-teleport screen uses too, so the hand-off looks continuous:
--- full-screen art (a dark placeholder until the art exists), the map and
+-- full-screen art (the models stream's layered key art with the lobby's
+-- parallax, UI/KeyArt, C-176; a dark gradient while no art is approved), the map and
 -- the players with a tick once each has loaded, a tip line, and a long
 -- olive bar with this client's progress (Render/Preload). The progress goes
 -- to the server every half second ({ op = "loaded", progress }); the match
@@ -14,6 +15,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
 local Kit = require("./Kit")
+local KeyArt = require("./KeyArt")
 
 local MatchLoading = {}
 
@@ -40,6 +42,8 @@ export type UI = {
 	title: TextLabel,
 	players: TextLabel,
 	tip: TextLabel,
+	art: KeyArt.View,
+	artShown: boolean,
 	remote: RemoteEvent,
 	state: any,
 	lastReport: number,
@@ -65,6 +69,8 @@ function MatchLoading.new(remotes: Instance): UI
 	grad.Rotation = 90
 	grad.Color = ColorSequence.new(Color3.fromRGB(40, 44, 40), Color3.fromRGB(10, 11, 14))
 	grad.Parent = back
+	-- the key art over the gradient, under the text (C-176)
+	local art = KeyArt.new(back, 1)
 	local title = Kit.text(back, "FOR THE GREATER GOOD", "title", Kit.COLOR.text)
 	title.AnchorPoint = Vector2.new(0.5, 0)
 	title.Position = UDim2.fromScale(0.5, 0.22)
@@ -108,6 +114,15 @@ function MatchLoading.new(remotes: Instance): UI
 	percent.Position = UDim2.new(1, 0, 0, -4)
 	percent.Size = UDim2.fromOffset(80, 16)
 	percent.TextXAlignment = Enum.TextXAlignment.Right
+	-- the text and the bar sit over the art (its layers and bands use ZIndex 1..9)
+	for _, d in { title, players, tip, track } :: { GuiObject } do
+		d.ZIndex = 10
+	end
+	for _, d in track:GetDescendants() do
+		if d:IsA("GuiObject") then
+			d.ZIndex = 11
+		end
+	end
 	Kit.skin(gui)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	local remote = remotes:WaitForChild("Lobby") :: RemoteEvent
@@ -118,6 +133,8 @@ function MatchLoading.new(remotes: Instance): UI
 		title = title,
 		players = players,
 		tip = tip,
+		art = art,
+		artShown = false,
 		remote = remote,
 		state = nil,
 		lastReport = -math.huge,
@@ -143,7 +160,15 @@ function MatchLoading.step(ui: UI, now: number, progress: number)
 	local waiting = s ~= nil and s.match ~= nil and s.phase == "waiting"
 	ui.gui.Enabled = waiting
 	if not waiting then
+		if ui.artShown then
+			ui.artShown = false
+			ui.art.hide()
+		end
 		return
+	end
+	if not ui.artShown then
+		ui.artShown = true
+		ui.art.show(nil) -- false while no art is approved: the gradient shows
 	end
 	ui.bar.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
 	ui.percent.Text = string.format("%d%%", math.floor(progress * 100))
