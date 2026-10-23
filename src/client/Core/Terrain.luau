@@ -96,6 +96,13 @@ local FEATURE: { [string]: string } = {
 	sea = "sand",
 	river = "sand",
 	field = "grass",
+	-- The Canyon (Canyon.feature, S-132): a pale desert floor, red rock belts
+	floor = "desert",
+	badlands = "redrock",
+	apron = "redrock",
+	cliff = "redrock",
+	mesa = "redrock",
+	boulder = "redrock",
 }
 function Terrain.material(layers: Layers.Layers, x: number, z: number, feature: Feature?): string
 	local lg = layers.grid

@@ -17,6 +17,9 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local Defs = require("@shared/Defs/Defs")
 local Schema = require("@shared/Net/Schema")
 local Normandy = require("@shared/Grid/Normandy")
+local Canyon = require("@shared/Grid/Canyon")
+local MapLook = require("./Core/MapLook")
+local Atmosphere = require("./Render/Atmosphere")
 local Api = require("./Api")
 local Camera = require("./Camera")
 local Interp = require("./Core/Interp")
@@ -122,7 +125,7 @@ end
 Camera.bind(camState)
 -- A hand-made map's cell features, for its drawn materials and houses (C-66).
 local function mapFeature(mapId: string?): ((number, number) -> string)?
-	return if mapId == "map:normandy" then Normandy.feature else nil
+	return if mapId == "map:normandy" then Normandy.feature elseif mapId == "map:canyon" then Canyon.feature else nil
 end
 
 local controls = Controls.bind(api)
@@ -859,7 +862,8 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 				DepositsRender.build(deposits, world.layers, mapFeature(world.mapId))
 				MinimapUI.setMap(minimap, world.layers)
 				FogBlanket.setMap(fog, world, world.layers)
-				Environment.setMap(environment, world.layers)
+				Environment.setMap(environment, world.layers, MapLook.of(world.mapId))
+				Atmosphere.setMap(world.mapId) -- its lighting and time of day, unless Settings picked another (C-155)
 			end
 		end
 		print(`[Client] joined: sim player {world.me.player}, team {world.me.team}, map {world.mapId}`)
@@ -874,7 +878,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local simDt = dt * speed
 	local t = Interp.advance(clock, world, now, dt, speed)
 	World.settle(world, t) -- health bars show changes with the hits that caused them (C-49)
-	World.smoothStrategic(world, dt) -- radar blips glide, not jump (C-151)
+	World.smoothStrategic(world, dt, now) -- radar blips glide, not jump, and circle their spot (C-151, C-154)
 	local t0 = os.clock()
 	UnitRenderer.step(renderer, world, t, simDt, strategic, workspace.CurrentCamera.CFrame.Position, speed)
 	if strategic then

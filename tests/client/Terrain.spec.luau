@@ -105,4 +105,32 @@ return function(t: any)
 		local x, z = g:cellCenter(10, 10)
 		t.equal(Terrain.material(layers, x, z), Terrain.kind(layers, x, z))
 	end)
+
+	t.test("The Canyon: a desert floor and red rock belts (C-153)", function()
+		local Canyon = require("@shared/Grid/Canyon")
+		local layers = assert(MapRegistry.load("map:canyon"))
+		local g = layers.grid
+		local mats: { [string]: { [string]: number } } = {}
+		for cz = 0, g.cellsZ - 1, 2 do
+			for cx = 0, g.cellsX - 1, 2 do
+				local x, z = g:cellCenter(cx, cz)
+				local f = Canyon.feature(cx, cz)
+				local m = Terrain.material(layers, x, z, Canyon.feature)
+				mats[f] = mats[f] or {}
+				mats[f][m] = (mats[f][m] or 0) + 1
+			end
+		end
+		local function only(feature: string, material: string)
+			local seen = mats[feature]
+			t.expect(seen ~= nil, `{feature} cells exist`)
+			for m, n in seen or {} do
+				-- deposits are bare ground (C-123) whatever the feature
+				t.expect(m == material or m == "ground", `{feature} drawn as {m} ({n} cells)`)
+			end
+		end
+		only("floor", "desert")
+		for _, f in { "badlands", "apron", "cliff", "mesa" } do
+			only(f, "redrock")
+		end
+	end)
 end

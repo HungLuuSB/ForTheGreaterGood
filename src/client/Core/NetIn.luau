@@ -317,6 +317,8 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			z = z,
 			sx = if old and old.tier ~= "tactical" then old.sx else nil, -- the drawn spot carries over (C-151)
 			sz = if old and old.tier ~= "tactical" then old.sz else nil,
+			gx = if old and old.tier ~= "tactical" then old.gx else nil,
+			gz = if old and old.tier ~= "tactical" then old.gz else nil,
 			alt = 0,
 			heading = 0,
 			snaps = {},

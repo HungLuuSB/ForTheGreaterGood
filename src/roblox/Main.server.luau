@@ -252,12 +252,18 @@ if Config.lobby then
 		table.insert(ids, name)
 	end
 	table.sort(ids)
-	table.insert(ids, "normandy")
+	-- then the hand-made maps (Normandy, The Canyon: S-53, S-132)
+	local handmade = {}
+	for name in MapRegistry.HANDMADE do
+		table.insert(handmade, name)
+	end
+	table.sort(handmade)
+	table.move(handmade, 1, #handmade, #ids + 1, ids)
 	for _, name in ids do
 		local id = "map:" .. name
 		local layers = MapRegistry.load(id)
-		local named = MapRegistry.NAMED[name]
-		table.insert(lobbyMaps, { id = id, name = if named then named.name else "Normandy", starts = #layers.starts })
+		local entry = MapRegistry.NAMED[name] or MapRegistry.HANDMADE[name]
+		table.insert(lobbyMaps, { id = id, name = entry.name, starts = #layers.starts })
 	end
 	lobby = Lobby.new(lobbyMaps, Config.seats)
 end
