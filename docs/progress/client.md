@@ -4,6 +4,12 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, S-119 merged)
+
+- **Merged sim-A's S-119.** Beam and hitscan weapons follow attack-ground orders: in shield_beams the Radiances now fire at your dome's middle, and their beams end on its surface. A turret's barrel holds on its beam while it burns, and turrets show their aim as soon as a unit comes into view. Checked in Studio.
+- **Still integrating (sim-A, S-120 / S-121):** manual targets win whatever the fire state; structures take ATTACK orders (the cause of your Radiance ignoring the Phalanx: towers never received the order); a beam goes on through a dome that drops under it (the client side is ready, C-144).
+- **Next from models-C:** the Commanders become walking mechs. The blockouts are on m-models; the client will need a walk cycle for their legs once the meshes come.
+
 ## Summary (2026-10-23, beam through a fallen dome; thinner rings)
 
 - **Thinner rings** flow down the dome (C-144).
@@ -1767,7 +1773,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-54. **Open (sent 2026-10-23).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
+54. **Built (S-120 / S-121, integrating): structures take ATTACK (manual target, any fire state); a dome dropping under a beam sends a new FIRE / SHOT to the target; the client continues the beam (C-144).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
 
 53. **Built (S-119, merging): attack-ground for BEAM / HITSCAN; aim held while a beam burns; NetOut sends aim on ENTER.** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
     - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.
