@@ -1804,7 +1804,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-57. **Built (S-125, integrating after S-124): cause was a lost spotter (an unseen manual target counted as out of range). Now point-capable weapons keep firing at its last known spot while it lives; on its death the weapons search the same tick.** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
+57. **Built (S-125, integrating after S-124): cause was a lost spotter (an unseen manual target counted as out of range). Now point-capable weapons keep firing at its last known spot while it lives and that spot is in range (beyond range: own picks); on its death the weapons search the same tick.** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
 
 56. **Done (S-123, main 3860e72; checked in Studio).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
 
