@@ -8,7 +8,7 @@ Mesh.STATUSES = { approved = true, review = true }
 Mesh.CHANNELS = { running = true, head = true, power = true, weapon = true }
 Mesh.MAPS = { "ALB", "NOR", "RGH", "MTL", "EMI" }
 -- how the client may move an animated piece (rig.md "Animated pieces", M-27)
-Mesh.MOTIONS = { spin = true, turn = true, scroll = true, slide = true, open = true, lower = true, pulse = true }
+Mesh.MOTIONS = { spin = true, turn = true, scroll = true, slide = true, open = true, lower = true, pulse = true, swing = true }
 
 local function isAssetId(v: any): boolean
 	return type(v) == "string" and string.match(v, "^rbxassetid://%d+$") ~= nil

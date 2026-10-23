@@ -161,7 +161,29 @@ Owner: models stream. Every part that should move is its own jointed piece with 
 | `open` | rotation about `axis` up to `range` degrees | silo `hatch` / `hatch2`, bomber `bay`, beam tower lids `shellL` / `shellR`, the anti-nuke `hatch` |
 | `lower` | translation along `axis` up to `range` studs | dipping `sonar` (ASW helicopters, torpedo launchers) |
 | `pulse` | scale and emissive pulse about the pivot | shield generator / fusion / generator `core` |
+| `swing` | an oscillating hinge about `axis`, driven by the client's walk cycle (and an arm's gesture) | walker joints: hips, thighs, shins, feet, arms (section 10) |
 
 The piece names stay the same in a unit's blockout, mesh and wreck, so one piece script serves all three. Builders' `nano` and weapon pieces (`turret`, `barrel`, `launcher`, …) are driven by the sim's aim model as before and aren't listed here. Factories' gantries, cranes and conveyors, extractor drill heads, and generator / fusion cores get their pieces as each structure is redesigned at its new size (size scale, M-26).
 
 How it's built (models stream): `with p.sub(name, pivot, motion, axis, range)` in a build script moves the shells made inside the block into their own piece (`tools/lib.py`); `unit.wheel(..., name=)` and the shared hulls do it for wheels and track sets. `tools/animate.py` lists `anim` for pieces that were already pieces.
+
+## 10. Walkers (the Commander mechs, M-31)
+
+The Commanders (`ord_sovereign`, `chs_warlord`) are walking mechs. The def keeps its pieces (`base`, `nano`); the rest are visual pieces (`visualPieces`, each with an `anim`), all jointed at their pivots:
+
+| Piece | Parent | Motion | What it is |
+|---|---|---|---|
+| `base` | – | – | the pelvis (the root; it bobs a little on each step: `dy`) |
+| `torso` | `base` | `turn` Y | chest, shoulders, backpack; turns towards the build or weapon target |
+| `head` | `torso` | `turn` Y | the sensor head (Order) / the low head with the eye slits (Chaos) |
+| `armL` | `torso` | `swing` X | the left upper arm, on the shoulder |
+| `nano` | `armL` | (the def's piece, aimed like a builder's `nano`) | the build forearm: the emitter (Order) / the claw arm (Chaos); the `nano1` attachment at the emitter |
+| `armR` | `torso` | `swing` X | the right upper arm |
+| `forearmR` | `armR` | `swing` X | the weapon pod (Order) / the heavy gun (Chaos); the `muzzle` attachment at its mouth |
+| `hipL`, `hipR` | `base` | `swing` X | the hip yokes |
+| `thighL`, `thighR` | `hip*` | `swing` X | the thighs |
+| `shinL`, `shinR` | `thigh*` | `swing` X | the shins (a negative swing bends the knee back) |
+| `footL`, `footR` | `shin*` | `swing` X | the feet (a positive swing lifts the toe) |
+
+A positive swing about X turns a part's lower end forward (towards −Z). The review pose `poses.<id>.stride` in `Blockouts/Pending/Registry.luau` is one frame of the walk: the left leg forward (thigh +28°, shin −18°, foot −10°), the right leg back (thigh −22°, shin −30°, foot +20°), the arms against the legs, the torso turned 6° and the pelvis 0.12 lower. A walk cycle alternates it, about one stride per 0.6 s at full speed.
+

@@ -1,6 +1,6 @@
 {
   "note": "Honeycomb shell over the shield dome (M-30, docs/contracts/fx.md \"Honeycomb shell\"): uploaded through Open Cloud (export/opencloud.json: the FBX model and the tile Decal), mesh IDs read from the imported MeshParts and the tile's image ID from the Decal in FTGG Art. Reference: Workspace.ShieldHoneycomb.",
-  "texture": "rbxassetid://90043421276653",
+  "texture": "rbxassetid://77232194668072",
   "meshes": {
     "shell_1": "rbxassetid://138779876950060",
     "shell_2": "rbxassetid://104690751464444",
