@@ -44,6 +44,7 @@ local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
 local Stats = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Stats")) :: any
 local CheatConfig = require(script.Parent:WaitForChild("CheatConfig")) :: any
 local Build = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Build")) :: any
+local Watchdog = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Watchdog")) :: any
 local HttpService = game:GetService("HttpService")
 
 local DT = 1 / Sim.TICK_RATE
@@ -136,6 +137,7 @@ end
 local defs = withOverrides(Defs.load(), Config.weaponOverrides)
 
 local sim: any
+local dog: any -- the per-tick budget watchdog of the current sim (S-140, C-171)
 local brains: { any } = {} -- the skirmish AI's players in a lobby match (C-70)
 local PREVIEW_PLAYERS = 8 -- the lobby preview has a sim player for every seat a human may take
 local matchStartTick = 0
@@ -300,6 +302,8 @@ local function startMatch()
 		-- test profiles: cheats in Studio, and "speed" (the sim's offline option), C-119
 		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs, cheats = RunService:IsStudio(), offline = RunService:IsStudio() })
 	end
+	-- warns when a live tick runs over guide 18.1's budget, and sums up each minute (S-140)
+	dog = Watchdog.new(sim)
 	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
 	for _, s in Config.spawns or {} do
 		local ids = {}
@@ -725,6 +729,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 			Skirmish.tick(b)
 		end
 		Sim.step(sim)
+		Watchdog.afterStep(dog)
 		if lobby and lobby.phase == "playing" then
 			if recordedBytes < MAX_RECORDED_BYTES then
 				for id, rep in recorders do

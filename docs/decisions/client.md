@@ -1442,3 +1442,22 @@ Extractor drags also drop spots that share cells with an earlier spot of the sam
 **Limit:** a shot the client didn't see (the unit off camera) starts no bar.
 
 **Why:** the user: "Add recharge energy bar for the Radiance/Inferno too, any weapon reloads that long need to have that attack cooldown indicator".
+
+### C-171 — The live server runs sim-A's tick-budget watchdog (2026-10-23)
+
+**Decision:** `src/roblox/Main.server.luau` makes a `Watchdog.new(sim)` with every new sim (match, lobby preview, test profile) and calls `Watchdog.afterStep(dog)` after each live `Sim.step`. On a tick over 54 ms, or with a system over twice its guide 18.1 budget, it warns at most once a second; every 60 s it logs a summary. Checked in Studio: it loads and runs with no errors.
+
+**Why:** sim-A's S-140, the user's queue item 5 there; src/roblox is the client stream's.
+
+### C-172 — The Commander stops rotating: Ambient moves only the pieces it knows (2026-10-23)
+
+**Decision:** PieceScripts/Ambient (C-156) now spins or turns only named pieces:
+- wheels, rotors, tail rotors and jammer emitters (band, tip, spine);
+- radars, dishes, arrays and sonar drums and rings;
+- drills, and cranes (jib, jib1, jib2, deckJib, deckCrane).
+
+Any other spin or turn piece is left to its unit's own script. The v3 Commander mechs mark their torso and head as `turn`, and the old catch-all spun them like radars. Checked in Studio: the Sovereign's torso and head hold at 0°. Spec: Ambient.spec (the Commanders' torso and head stay still). Also: the tidal rotor test reads its axis from the model, since models-C's new mesh turns it about X.
+
+**Also checked:** with models-C's approved T1 batch merged here (m-models 671732b), all 31 meshes on the `build` profile built in 6 s with no failure (`c172_t1_meshes.jpg`).
+
+**Why:** the user: "also why is my commander rotating around ?"

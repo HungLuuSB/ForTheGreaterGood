@@ -4,13 +4,20 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
+
+- **The approved T1 structure models are merged here** (models-C's batch), so a playtest draws them. All 31 built with no failure in Studio.
+- **Your Commander no longer rotates (C-172):** my animation pass was spinning the mech's torso and head like a radar. It now moves only the parts it knows.
+
 ## Summary (2026-10-23, queue in a frame, Ctrl moves, server idle counts)
 
 - **You can queue units in a factory that's still being built** (sim-A's S-138): pick from the build menu with the frame selected, and production starts the moment it's finished.
 - **Ctrl + right click (or a line drag, or Move / Fight / Patrol) keeps the group together** at its slowest unit's speed (C-169, sim-A's S-137).
 - **Idle counts now come from the server (C-158 on S-136):** every idle builder and factory counts, also off camera, and **I** jumps to one anywhere.
 - **Recharge bar (C-170):** your Radiance, Inferno and every other weapon reloading 4 s or more show a thin pale-blue bar under the health bar, filling until the next shot is ready.
-- Merged here from sim-A's branch for your playtest; pushed once it's on main.
+- Ready to merge: `96392ac` (C-169: Ctrl moves send GROUP; idle counts from IDLE events; frame queue specs)
+- Ready to merge: `8321418` (C-170: recharge bar for long-reload weapons)
+- Ready to merge: `c1300b4` (C-171: Watchdog wired into the live server, S-140)
 
 ## Summary (2026-10-23, factory progress bar)
 

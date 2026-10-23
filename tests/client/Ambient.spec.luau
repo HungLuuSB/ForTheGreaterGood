@@ -53,6 +53,20 @@ return function(t: any)
 		t.expect(n > 100, `animated pieces found ({n})`)
 	end)
 
+	t.test("the Commander mechs' torso and head don't spin (C-172)", function()
+		for _, id in { "ord_sovereign", "chs_warlord" } do
+			local world = World.new(defs)
+			world.me.team = 1
+			world.economy = { power = { ratio = 255 } } :: any
+			unit(world, 1, id)
+			local s = PieceAnim.new(defs.weaponByIndex)
+			PieceAnim.add(s, 1, defs.units[id], {}) -- no walk script: only Ambient moves pieces
+			run(s, world, 3)
+			t.equal(angle(s, 1, "torso", 2), 0, `{id}: torso still`)
+			t.equal(angle(s, 1, "head", 2), 0, `{id}: head still`)
+		end
+	end)
+
 	t.test("radars and drills turn while powered, stop without power or unfinished", function()
 		local world = World.new(defs)
 		world.me.team = 1
@@ -92,7 +106,14 @@ return function(t: any)
 		run(s, world, 1)
 		t.equal(angle(s, 1, "wheelL", 1), w0, "parked: wheels still")
 		t.expect(offset(s, 2, "trolley", 3) == 0, "idle factory: the gantry rests")
-		local m0 = angle(s, 3, "rotor", 3)
+		-- the rotor's axis as the model says (models-C's tidal mesh turns it about X)
+		local rotorAxis = 3
+		for _, m in PieceMotion.forDef(defs.units.chs_tidal) do
+			if m.piece == "rotor" then
+				rotorAxis = ({ x = 1, y = 2, z = 3 })[m.axis]
+			end
+		end
+		local m0 = angle(s, 3, "rotor", rotorAxis)
 		-- moving and producing
 		local origMoving = World.moving
 		;(World :: any).moving = function(_w: any, u: any): boolean
@@ -104,6 +125,6 @@ return function(t: any)
 		;(World :: any).moving = origMoving
 		t.expect(angle(s, 1, "wheelL", 1) ~= w0, "moving: wheels roll")
 		t.expect(math.abs(offset(s, 2, "trolley", 3)) > 0.5, "producing: the gantry runs")
-		t.expect(angle(s, 3, "rotor", 3) ~= m0, "the windmill turns")
+		t.expect(angle(s, 3, "rotor", rotorAxis) ~= m0, "the windmill turns")
 	end)
 end
