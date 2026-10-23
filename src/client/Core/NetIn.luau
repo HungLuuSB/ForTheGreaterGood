@@ -263,6 +263,11 @@ local function applyState(world: World.World, records: { Schema.State }, tick: n
 			u.queue = r.queue
 			u.queueProgress = (r.queueProgress or 0) / 255
 		end
+		if r.producing ~= nil then
+			-- an allied factory's current item (protocol 27, S-103)
+			u.producing = r.producing
+			u.producingProgress = (r.producingProgress or 0) / 255
+		end
 		if r.fireState then
 			u.fireState, u.moveState = r.fireState, r.moveState
 		end

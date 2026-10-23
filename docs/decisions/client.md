@@ -1212,3 +1212,20 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 **Decision:** `World.smoothStrategic(world, dt)` runs once a frame: each strategic record's drawn spot (sx, sz) eases toward its latest reported spot (time constant 0.45 s) and snaps on a jump over 160 studs. NetIn carries sx / sz across snapshot rebuilds. Contact discs (Ghosts.list), icons, the minimap and picking (Selection.position) draw from sx / sz. Measured in Studio (the radar scene): blips moved on 1,202 of 1,210 frames, at most 1.2 studs a frame.
 
 **Why:** the user asked for the jumping radar blips to move smoothly.
+
+### C-152 — Factories show the unit in production on their pad (2026-10-23)
+
+**Decision:** `Render/FactoryFrames` (logic in `Core/Nanoframe`, spec `Nanoframe.spec`) draws each drawn factory's current item, BAR-style:
+- **Where:** the produced unit's pooled model stands on the factory's `buildpad` attachment (rig.md section 8), facing the factory's heading (the exit).
+- **What it shows:** from the queue head and `queueProgress` (own factories) or PRODUCING (allies; NetIn now reads it into `producing` / `producingProgress`).
+  - Parts below a rising build line show as built.
+  - The rest are a team-colored ForceField nanoframe, with SurfaceAppearances detached while unbuilt.
+  - A thin neon outline marks the line.
+  - Every `nano1..N` emitter sprays a Beam at a point sweeping the line.
+- **Progress:** the server sends it in sixteenths, so `Nanoframe.track` eases through each step at the measured step rate (at first the build time over the factory's build power). It never backs down within an item. It stops the spray after 2.5 step gaps with no step (a stalled economy).
+- **Pool safety:** the frame's parts can't be picked (clicks on the pad hit the factory). Every look is restored before the model goes back to the pool.
+- **When frames are dropped:** at strategic zoom, on rejoin and when models are rebuilt.
+- **Checked in Studio** (the `build` profile with a spawned plant and airfield): `debug_out/screens/c152_factory_frame.jpg` and `c152_airfield_frame.jpg`.
+- **Enemies' factories show nothing:** the server doesn't send them their production.
+
+**Why:** the user couldn't see factories producing; the only sign was the pulsing factory lights.
