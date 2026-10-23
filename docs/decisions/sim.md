@@ -1913,3 +1913,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Asked:** the client knew only its own ally team, so in team games a right-click on an ally's unit sent ATTACK. With every team's ally team it treats allies as friends: right-click is GUARD / assist, and their health bars and minimap dots get friend colours.
 - **Built:** protocol 30. WELCOME ends with `teamCount u8, allyTeam u8 × teamCount`: team 1 first, 0 for a team not in the match. Decoded as `teamAllies`. Spectators get it too.
 - **Tests:** `Schema.spec` pins the new bytes; `NetOut.spec`: player 3's WELCOME in a 2v2 lists `{ 1, 2, 1, 2 }`.
+
+## S-130 — Radar blips orbit the real unit, like BAR (client request 59, the user) (2026-10-23)
+
+- **Asked:** the user wanted radar blips to circle around the real unit, as in BAR, not drift between random points. Guide 11.4's rule stays: only the wobbled position is ever sent.
+- **Built:** `Sensors.wobble` gives offset = radius × (cos θ, sin θ), θ = phase0 + dir × 2π × (tick mod 90) / 90.
+  - One turn takes `Sensors.ORBIT_TICKS` = 90 ticks (6 s). It replaces `WOBBLE_PERIOD`.
+  - phase0 and dir (±1) are a stateless hash of (unit, observer), so every player of a team sees the same orbit.
+  - The radius is unchanged: the observer's best radarError, or the trackError when tracked, scaled by Pinpointers.
+- **Effects:**
+  - Targeting still aims at the wobbled point, so radar-fired artillery still misses at low precision. Fog.spec reports a direct-hit rate of 1 in 28 on radar.
+  - A blip now always sits exactly one radius from the unit. A sharp player can read the true position as the centre of the circle. The user accepted that by choosing BAR's behaviour.
+- **Tests:**
+  - `Fog.spec`: the blip stays on the circle, moves smoothly, turns one way once every 90 ticks and repeats; units orbit both ways.
+  - `EW.spec` (hysteresis): the far Wasp's bearing moved so the two orbits keep swapping which one looks closer.
+  - `Skirmish.spec`: seed 1's Order now falls at 10.3 min without a wave, so the loser-attacks bar moves from 10 to 11 min.
+- **Guide 11.4:** updated.

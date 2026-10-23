@@ -57,25 +57,38 @@ local function quiet(sim: Sim.Sim, ids: { number })
 end
 
 return function(t: RunAll.Context)
-	t.test("radar wobble: bounded, deterministic, smooth, per observer", function()
+	t.test("radar wobble: circles the unit, deterministic, smooth, per observer (S-130)", function()
 		local s = Sensors.new(nil, { 1, 2 })
 		s.radarError[1] = 20
 		s.radarError[2] = 45
-		local prevX = Sensors.wobble(s, 1, 7, 0)
-		local moved = false
+		local n = Sensors.ORBIT_TICKS
+		local prevX, prevZ = Sensors.wobble(s, 1, 7, 0)
+		local turned = 0
 		for tick = 1, 300 do
 			local x, z = Sensors.wobble(s, 1, 7, tick)
-			t.expect(math.sqrt(x * x + z * z) <= 20 + 1e-9, "within the observer's radar error")
-			t.expect(math.abs(x - prevX) <= 2 * 20 / 30 + 1e-9, "moves smoothly between periods")
-			moved = moved or x ~= prevX
-			prevX = x
+			t.expect(math.abs(math.sqrt(x * x + z * z) - 20) <= 1e-6, "on a circle of the observer's radar error")
+			local step = math.sqrt((x - prevX) ^ 2 + (z - prevZ) ^ 2)
+			t.expect(step <= 2 * math.pi * 20 / n + 1e-6, "moves smoothly along the circle")
+			turned += math.atan2(prevX * z - prevZ * x, prevX * x + prevZ * z)
+			prevX, prevZ = x, z
 		end
-		t.expect(moved, "the wobble changes over time")
+		t.expect(math.abs(math.abs(turned) - (2 * math.pi * 300 / n)) <= 1e-6, "one way round, once every ORBIT_TICKS")
+		local x0, z0 = Sensors.wobble(s, 1, 7, 10)
+		local x1, z1 = Sensors.wobble(s, 1, 7, 10 + n)
+		t.expect(math.abs(x0 - x1) <= 1e-9, "the orbit repeats")
+		t.expect(math.abs(z0 - z1) <= 1e-9, "the orbit repeats")
 		local a1, a2 = Sensors.wobble(s, 1, 7, 123)
 		local b1, b2 = Sensors.wobble(s, 1, 7, 123)
 		t.expect(a1 == b1 and a2 == b2, "same unit and tick, same offset")
 		local c1 = Sensors.wobble(s, 2, 7, 123)
-		t.notEqual(c1, a1, "each observing team sees its own error")
+		t.notEqual(c1, a1, "each observing team sees its own orbit")
+		local dirs = {}
+		for id = 1, 40 do
+			local ux, uz = Sensors.wobble(s, 1, id, 0)
+			local vx, vz = Sensors.wobble(s, 1, id, 1)
+			dirs[if ux * vz - uz * vx > 0 then 1 else -1] = true
+		end
+		t.expect(dirs[1] and dirs[-1], "units orbit both ways")
 	end)
 
 	t.test("a jammed unit disappears from enemy radar but not from sight", function()
