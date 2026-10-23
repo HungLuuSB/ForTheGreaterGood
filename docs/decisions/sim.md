@@ -1882,3 +1882,17 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Found by the client:** in request 57's repro, after the ordered tank died the Radiances took the Phalanx generator, then the Phalanx died. Weapons that can fire at radar contacts may target a remembered structure's ghost, alive or not (D101). Since S-113 Radiance is one, and its next beam called `hitscanHits` on the dead unit: `Weapons:106: attempt to index nil with 'radius'`. The whole server tick crashed.
 - **Fixed:** a hitscan or beam shot at a target that no longer exists is a miss at the believed spot (FIRE hit = false), like any miss.
 - **Test:** `Defenses.spec`: a Radiance with radar fires at a destroyed generator's ghost for 20 s without an error (the test fails without the fix).
+
+## S-127 — Units don't auto-target structure ghosts (the user) (2026-10-23)
+
+- **Asked:** "Make the unit not auto target ghost radar; a user can manually tell them to shoot at ghost radar, but by default they don't." Asked which contacts: **ghosts only** (remembered structures not in sight); radar blips stay as they were.
+- **Changed** (`Targeting`):
+  - The automatic search never takes a ghost, and a weapon's kept target is dropped once it becomes a ghost (an unseen remembered structure, alive or dead).
+  - An attack order's target or a manual target may still be one (`acceptable(..., manual)`).
+  - A manual target that is a ghost of a structure that died unseen stays valid while the team remembers it, at the ghost's spot; it was dropped as "dead" before.
+  - Radar contacts (blips) are unchanged: still targets for weapons that can fire at radar.
+- **Effect:** artillery and Radiance no longer shell remembered structures on their own; they do on an order. The AI gives no attack orders on structures, so its artillery fires only at what its team sees or tracks.
+- **Tests:** `Defenses.spec`:
+  - a Radiance never keeps or picks a living generator once it is only a ghost;
+  - at a destroyed generator's ghost it doesn't fire on its own, and on an attack order it fires, each shot a miss.
+  - `Air.spec`'s two ghost-bombing tests now order the bomber onto the ghost (it bombed ghosts on its own before).

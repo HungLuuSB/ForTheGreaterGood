@@ -272,7 +272,7 @@ return function(t: RunAll.Context)
 		t.equal(w.wTarget[key], other, "and the tower picked its own target on the next tick")
 	end)
 
-	t.test("a beam at a destroyed structure's ghost misses at the spot instead of crashing the tick (S-126)", function()
+	t.test("a beam at a destroyed structure's ghost misses at the spot instead of crashing the tick (S-126); ghosts only on orders (S-127)", function()
 		local sim = Sim.new({ seed = 10, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
 		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
@@ -300,7 +300,47 @@ return function(t: RunAll.Context)
 		end)
 		t.expect(ok, `no crash ({err})`)
 		t.equal(w.slot[gen], nil, "the generator is gone")
-		t.expect(misses >= 0, "shots at the ghost are misses")
+		-- (S-127: ghosts are for manual orders only, so on its own the tower
+		-- doesn't fire at it; ordered, it does, and those shots miss)
+		t.equal(misses, 0, "no shot at the ghost on its own")
+		submit(sim, 1, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = { tower }, targetId = gen })
+		local ordered = 0
+		for _ = 1, 15 * 12 do
+			power(sim, 1, 5000)
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower then
+					ordered += 1
+					t.equal(e.hit, false, "a shot at a ghost is a miss")
+				end
+			end
+		end
+		t.expect(ordered >= 1, `ordered onto the ghost, it fires ({ordered})`)
+	end)
+
+	t.test("units don't pick a structure ghost on their own (S-127, the user)", function()
+		local sim = Sim.new({ seed = 11, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local gen = Spawn.unit(sim, "chs_generator", 2, 0, 200)
+		World.setHealth(w, gen, 1e6) -- (it may take a beam while still seen)
+		local scout = Spawn.unit(sim, "ord_herald", 1, 40, 100, 0)
+		World.setFireState(w, scout, World.FireState.HOLD_FIRE)
+		for _ = 1, 6 do
+			Sim.step(sim)
+		end
+		Combat.queueDamage(sim.combat, scout, 1e6, 0) -- the generator becomes a ghost, alive
+		local key = World.slotKey(tower, 1)
+		local onGhost = 0
+		for i = 1, 15 * 10 do
+			power(sim, 1, 5000)
+			Sim.step(sim)
+			if i > 4 and w.wTarget[key] == gen then -- (sensors update every 2 ticks)
+				onGhost += 1
+			end
+		end
+		t.equal(onGhost, 0, "the tower never keeps or picks the ghost")
+		t.expect(w.slot[gen] ~= nil, "the generator lives")
 	end)
 
 	t.test("the Inferno doesn't fire at radar-only contacts; seen, it does", function()
