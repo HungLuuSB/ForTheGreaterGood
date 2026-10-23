@@ -23,6 +23,7 @@ export type PlayerNet = {
 	sentStock: { [number]: string }, -- own tactical units → the missile stock last sent (S-47)
 	sentOwner: { [number]: { string } }, -- own tactical units → queue, states, ammo last sent (S-61)
 	sentProducing: { [number]: string }, -- allied tactical factories → item and progress last sent (S-103)
+	domes: { [number]: boolean }, -- generators whose dome the player has from DOME records (S-122)
 	spectator: boolean, -- sees everything, camera on the whole map (S-18)
 	eventBytes: { [number]: number }, -- cumulative bytes per Schema.EventKind (bandwidth reports)
 	sightVersion: number, -- the ally team's sight version the client has (-1: none; S-26)
@@ -79,6 +80,7 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		sentStock = {},
 		sentOwner = {},
 		sentProducing = {},
+		domes = {},
 		spectator = spectator,
 		eventBytes = {},
 		sightVersion = -1,

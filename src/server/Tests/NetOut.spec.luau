@@ -904,4 +904,51 @@ return function(t: RunAll.Context)
 		local u = view.units[tank]
 		t.expect(u ~= nil and u.aim ~= nil and u.aim[1] ~= nil, "the aim came with the unit")
 	end)
+
+	t.test("a dome in the camera area goes to the player whatever the team sees; DOME_GONE when its generator dies (S-122, client request 55)", function()
+		local sim = Sim.new({ seed = 13, players = PLAYERS, mapId = "flat:64" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local gen = Spawn.unit(sim, "chs_carapace", 2, 150, 150)
+		sim.combat.shieldCharge[gen] = sim.defs.units.chs_carapace.shield.capacity
+		Spawn.unit(sim, "ord_lancer", 1, -200, -200, 0) -- Order sees nothing near the generator
+		camera(sim, 1, 0, 0, 63, 63)
+		local function received(pid: number): { Schema.Event }
+			local out = {}
+			for _, msg in sim.net.players[pid].outbox.Events do
+				for _, e in (Packer.readAll(msg, Schema.decodeEvent, Schema.decodeTickHeader)) do
+					table.insert(out, e)
+				end
+			end
+			return out
+		end
+		local dome, entered, gone = nil, false, false
+		for _ = 1, 6 do
+			Sim.step(sim)
+			for _, e in received(1) do
+				if e.kind == Schema.EventKind.DOME and e.unitId == gen then
+					dome = e
+				elseif e.kind == Schema.EventKind.ENTER and e.unitId == gen then
+					entered = true
+				end
+			end
+		end
+		t.expect(dome ~= nil, "Order gets the Carapace's dome")
+		t.equal(entered, false, "but not the generator")
+		if dome then
+			local x, z = g:decode(dome.cell :: number, dome.offX :: number, dome.offZ :: number)
+			t.expect(math.abs(x - 150) < 8 and math.abs(z - 150) < 8, "at the dome's centre")
+			t.equal(dome.radius, sim.defs.units.chs_carapace.shield.radius)
+		end
+		Combat.queueDamage(sim.combat, gen, 1e6, 0)
+		for _ = 1, 3 do
+			Sim.step(sim)
+			for _, e in received(1) do
+				if e.kind == Schema.EventKind.DOME_GONE and e.unitId == gen then
+					gone = true
+				end
+			end
+		end
+		t.equal(gone, true, "DOME_GONE when the generator died")
+	end)
 end
