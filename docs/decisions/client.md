@@ -1351,3 +1351,52 @@ Spec: SelectionTiles.spec. Screen: `c157_selection_tiles.jpg` (2 Masons and 3 La
 **Limit:** off camera the server sends only cell, type and flags. So a far unit's health and a far frame's build progress show their last values until the camera comes back. Fixing that would need the server to send own units in full there (sim-side, a bandwidth question).
 
 **Why:** the user: "I really dislike the way the map re-render when my camera go away and back, also I don't want my unit to be de-render when out of view. I was selecting targets for my mason to build far away and I move out of the view of it, the panel gone ?"
+
+### C-162 — Camera.Focus on the ground point looked at (2026-10-23)
+
+**Decision:** `Camera.apply` sets `cam.Focus` to the ground point the camera looks at. The engine prioritises some work (lighting and the like) round Focus.
+
+**Not a fix for the terrain refinement:** after a long jump (a minimap click across The Canyon), Roblox's voxel terrain draws the new area coarse and sharpens it over about 4 s. That's the engine's terrain level of detail, driven by camera distance, and setting Focus didn't change it. Screens: `c162_jump_before.jpg` (just after the jump) and `c162_jump_after4s.jpg`. The options are the user's call.
+
+**Why:** the user: "the map re-render with better quality" after a minimap jump.
+
+### C-163 — Builders assist: right-click an own factory or frame (2026-10-23)
+
+**Decision:** the smart right-click is split by unit (`Orders.smartFor`):
+- on an own frame, finished factory or damaged unit, selected builders get REPAIR (build it, help the factory's production, heal it) and the other units GUARD it;
+- on an own builder everyone GUARDs, which for builders is S-128's assist: they help whatever the leader builds, then follow it.
+
+The command card's Guard button reads "Assist" when only builders are selected. Spec: Assist.spec. Through the real server, a Mason right-clicked onto a producing plant works on it with `assist` set.
+
+**Why:** the user: "where is the 'Assist' of the workers that can help build unit/structure faster and follow the leading command?" A right-click on an own finished factory used to send GUARD, which only followed it.
+
+### C-164 — Minimap: drag moves the camera; the view drawn as its ground trapezoid (2026-10-23)
+
+**Decision:**
+- A left press on the minimap moves the camera there and keeps moving it while the mouse drags; the release ends it.
+- `Camera.apply` keeps the four ground corners of the screen (`state.corners`, passed through `api.state.camera.corners`). The minimap draws them as four 1-px lines (`Minimap.cameraShape`), so the view reads as the trapezoid it is. The cell box is the fallback until the camera has corners.
+- Checked in Studio: a drag from the middle of the minimap to the lower right left the camera at the drag's end (140, 192). The trapezoid shows in `c164_c166_grid_trapezoid.jpg`.
+
+**Why:** the user's items 1 and 2.
+
+### C-165 — A placement can't overlap a build already queued (2026-10-23)
+
+**Decision:** `Placement.planned` lists the footprints of the builds the player has queued and not started (Waypoints' BUILD points). `Placement.check` counts them as occupied for:
+- the ghost's tint;
+- a click;
+- each spot of a dragged row (earlier spots of the same row included);
+- extractor drags and Upgrade extractors.
+
+Extractor drags also drop spots that share cells with an earlier spot of the same drag. Specs: Placement.spec (new case) and Upgrades.spec: a T2 drag no longer plans over the Mason's queued T1 spots.
+
+**Why:** the user: "When placing preview model to build, you can place 2 model that violate each other hitboxes?"
+
+### C-166 — The build grid round the placement ghost, a Settings toggle (2026-10-23)
+
+**Decision:**
+- While placing, the 8-stud build cells within 6 cells of the ghost are drawn as thin light lines on the ground: one segment per cell edge, so they follow slopes, fading toward the edge.
+- They're laid again only when the ghost crosses a cell corner. They live outside the ghost's folder, so its Highlight doesn't tint them.
+- Settings > Interface "Build grid", on by default.
+- Checked in Studio: `c164_c166_grid_trapezoid.jpg`.
+
+**Why:** the user's item 3: "Add grid box guidance (toggle in setting)".

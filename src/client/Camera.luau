@@ -54,6 +54,7 @@ export type State = {
 	lastSent: number,
 	lastFocus: { number }?, -- x, z, clock: the camera's speed for the lead
 	rect: { number }, -- minX, minZ, maxX, maxZ cells of the last computed view
+	corners: { number }?, -- the view's ground corners: x1, z1 .. x4, z4 round the edge (C-164)
 	follow: Follow.Target?, -- what the camera follows (C-43)
 	minDistance: number?, -- while following: the least distance that keeps the target in front (Follow.focus)
 	outside: number, -- studs the focus may sit past the map's edge: FOLLOW_MARGIN while following, after that only back inwards
@@ -184,6 +185,10 @@ function Camera.apply(state: State, world: World.World, cam: Camera, now: number
 	local distance = math.max(state.distance, state.minDistance or 0)
 	cam.CameraType = Enum.CameraType.Scriptable
 	cam.CFrame = CFrame.lookAt(focus + back * distance, focus)
+	-- the engine refines terrain detail and lighting around Camera.Focus
+	-- first; the point looked at, not just ahead of the lens, so after a
+	-- jump the ground in view sharpens first (C-162)
+	cam.Focus = CFrame.new(focus)
 
 	-- camera rectangle from the screen corners, each at most RECT_CAP camera
 	-- distances from the focus (sky corners: straight ahead at the cap, C-69)
@@ -221,7 +226,10 @@ function Camera.apply(state: State, world: World.World, cam: Camera, now: number
 	if ll > Camera.LEAD_MAX then
 		lx, lz = lx / ll * Camera.LEAD_MAX, lz / ll * Camera.LEAD_MAX
 	end
-	state.rect = { Commands.cameraRect(g, xs, zs) } -- what is on screen (the minimap's box)
+	state.rect = { Commands.cameraRect(g, xs, zs) } -- what is on screen (its cells)
+	-- the ground the screen shows, corner by corner round the edge (top
+	-- left, top right, bottom right, bottom left): the minimap's trapezoid (C-164)
+	state.corners = { xs[1], zs[1], xs[2], zs[2], xs[4], zs[4], xs[3], zs[3] }
 	if ll > 1 then
 		for i = 1, 4 do
 			table.insert(xs, xs[i] + lx)

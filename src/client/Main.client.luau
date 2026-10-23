@@ -947,6 +947,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	end
 	api.state.camera.x, api.state.camera.z, api.state.camera.zoom = camState.x, camState.z, camState.distance
 	api.state.camera.rect = camState.rect
+	api.state.camera.corners = camState.corners
 	Environment.update(environment, camState.x, camState.z, camState.distance, World.groundY(world, camState.x, camState.z))
 	Grade.update(grade, camState.x, camState.z, camState.distance, dt)
 	t0 = os.clock()

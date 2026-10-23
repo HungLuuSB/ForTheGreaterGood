@@ -33,6 +33,7 @@ export type State = {
 	glow: Glow, -- unit glow (Render/Glow): off, low (resting glow, stall dimming), high (also factory pulse, weapon flash)
 	headlights: boolean, -- vehicle headlights (Render/Glow's SpotLights)
 	devMode: boolean, -- developer mode (C-124): debug keys (T camera follow); on in Studio
+	buildGrid: boolean, -- the build grid round the placement ghost (C-166)
 }
 
 export type Glow = "off" | "low" | "high"
@@ -67,7 +68,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "map", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "map", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio, buildGrid = true }
 end
 
 local function round(x: number, step: number): number
@@ -85,7 +86,7 @@ function Settings.set(s: State, key: string, value: any): boolean
 		end
 		t[key] = math.clamp(round(value, limits[3]), limits[1], limits[2])
 		return true
-	elseif key == "edgeScroll" or key == "fog" or key == "detailedModels" or key == "headlights" or key == "devMode" then
+	elseif key == "edgeScroll" or key == "fog" or key == "detailedModels" or key == "headlights" or key == "devMode" or key == "buildGrid" then
 		if type(value) ~= "boolean" then
 			return false
 		end

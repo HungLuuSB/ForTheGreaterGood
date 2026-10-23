@@ -4,6 +4,15 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, assist, minimap drag, build grid, no overlapping plans)
+
+- **Assist (C-163):** right-click your own factory with builders selected and they help its production; right-click your own frame and they build it; right-click your own builder and they follow its lead, helping whatever it builds. With only builders selected, the Guard button reads "Assist".
+- **Minimap (C-164):** drag on it to move the camera; your view now shows as the real trapezoid on the ground.
+- **Build grid (C-166):** while placing, the build cells round the ghost show on the ground (Settings > Interface > Build grid).
+- **No overlapping plans (C-165):** a new building can't be placed over one you've already queued, rows and extractor drags included.
+- **The coarse-then-sharp terrain after a long jump** is Roblox's terrain level of detail. Pointing the camera's focus at the ground (C-162) didn't change it; options are under "Needs my review".
+- **Queue in a factory under construction:** needs the server (sim request 63, sent). The client side is already in place.
+
 ## Summary (2026-10-23, nothing pops when the camera moves)
 
 - **Your units and buildings stay drawn when the camera leaves (C-161):** no more re-rendering when you pan away and back; the same models carry on. A selected Mason far away keeps its unit panel, build menu and command card, so you can keep queueing builds for it. Checked in Studio.
@@ -1782,6 +1791,10 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - on m-models, not merged here yet: the T1 structure redesigns, pairs 2–7 (generators, solar, wind, depots, Bulwark / Spike, vehicle plants).
 - **Sound IDs:** `docs/SOUND_PLAN.md` lists candidate Creator Store audio for every sound. Nothing is inserted until you pick.
 - **Camera turn keys (C-159):** turn right moved from E to C, since E is also BAR's reclaim. Rebind it in Settings > Keys if you prefer something else.
+- **Terrain sharpening after a long camera jump (C-162):** Roblox's voxel terrain draws a far area coarse and sharpens it over a few seconds; scripts can't control it. Your call:
+  - leave it;
+  - glide the camera on long jumps instead of teleporting (it softens the pop but doesn't remove it);
+  - replace the voxel terrain with our own mesh ground at full detail everywhere (a bigger job, and a different look to tune).
 - **Lighting technology:** set `Lighting.Technology` to Realistic in the place (a place setting scripts can't change).
 - **New since C-130, for a look in your playtest:**
   - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
@@ -1799,6 +1812,7 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
 
 ## Requests for the sim session
 
+63. **Open (2026-10-23, the user: "Add the ability to queue inside the factory while it being built"):** accept a factory's queue (and CANCEL / REPEAT) while it's still a frame, start producing when it's finished, and send the QUEUE owner field for the frame. The client already offers the build menu on an unfinished factory.
 62. **Open (2026-10-23, the user's queue item 4):** **An idle signal for own units.** Owner-only and sent on change, covering units outside the camera (owner fields ride only tactical records, and the strategic flags are full): which of the player's builders have no orders and no build / assist / repair / reclaim / guard / patrol work, and which factories have an empty queue. The client guesses from what it sees until then (C-158).
 61. **Done on m-sim-2 (S-133, 04c70db; not on main yet, merged into this branch for the user's playtest):** the pad position matches the client's frame (vehicle plant: 64, 47.4). (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
     - The finished unit spawns at the factory's `buildpad` (from the blockout's attachments, model space, rotated with the facing) with the factory's heading. Today it's halfSize + one cell out, then EXIT_ROLL: ~12 studs past the pad on a vehicle plant.

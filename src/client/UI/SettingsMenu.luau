@@ -36,6 +36,7 @@ local FogBlanket = require("../Render/FogBlanket")
 local Environment = require("../Render/Environment")
 local Glow = require("../Render/Glow")
 local Models = require("../Render/Models")
+local PlacementGhost = require("../Render/PlacementGhost")
 local Vfx = require("../Render/Vfx")
 local Kit = require("./Kit")
 
@@ -140,6 +141,7 @@ function SettingsMenu.apply(s: Settings.State)
 	Glow.LEVEL = s.glow
 	Glow.HEADLIGHTS = s.headlights
 	Models.setDetailed(s.detailedModels)
+	PlacementGhost.GRID = s.buildGrid
 	Atmosphere.apply(s.atmosphere)
 	local playerGui = (Players.LocalPlayer :: Player):FindFirstChild("PlayerGui")
 	for _, gui in (if playerGui then playerGui:GetChildren() else {}) do
@@ -254,8 +256,12 @@ local function build(ui: UI)
 	Kit.toggle(Kit.row(ifc, "Developer mode", 2), s.devMode, function(on)
 		set("devMode", on)
 	end)
-	local note = Kit.text(ifc, "Settings last for this session.", "small")
-	note.LayoutOrder = 3
+	-- the build grid round the placement ghost (C-166)
+	Kit.toggle(Kit.row(ifc, "Build grid", 3), s.buildGrid, function(on)
+		set("buildGrid", on)
+	end)
+	local note = Kit.text(ifc, "Settings last for this session; keys are saved (Keys).", "small")
+	note.LayoutOrder = 4
 
 	local audio = page("Audio")
 	local none = Kit.text(audio, "The game has no sound yet; volume controls come with it.", "small")

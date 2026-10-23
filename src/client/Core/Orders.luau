@@ -57,6 +57,44 @@ function Orders.smart(world: World.World, x: number, z: number, unitId: number?,
 	return { cmdType = CT.MOVE, queue = queue == true, x = x, z = z }
 end
 
+-- The smart order split by who gets it (C-163): on an own frame, a
+-- finished factory or a damaged unit, builders get REPAIR (build it, help
+-- the factory's production, heal it) and the rest GUARD it; on an own
+-- builder everyone GUARDs, which makes builders assist whatever it builds
+-- (S-128, BAR's assist). Otherwise one order for all (Orders.smart).
+function Orders.smartFor(world: World.World, x: number, z: number, unitId: number?, queue: boolean?, ids: { number }): { { intent: Intent, ids: { number } } }
+	local intent = Orders.smart(world, x, z, unitId, queue)
+	local t = if unitId then world.units[unitId] else nil
+	if t == nil or World.relation(world, t) ~= "own" then
+		return { { intent = intent, ids = ids } }
+	end
+	local tdef = World.def(world, t)
+	local unfinished = t.build ~= nil and t.build < 1
+	local factory = not unfinished and tdef ~= nil and tdef.domain == "structure" and tdef.buildOptions ~= nil and #tdef.buildOptions > 0
+	local damaged = not unfinished and (t.health or 1) < 1
+	if not (unfinished or factory or damaged) then
+		return { { intent = intent, ids = ids } }
+	end
+	local builders, others = {}, {}
+	for _, id in ids do
+		local u = world.units[id]
+		local d = u and World.def(world, u)
+		if id ~= unitId and d and d.buildPower and d.domain ~= "structure" then
+			table.insert(builders, id)
+		else
+			table.insert(others, id)
+		end
+	end
+	local out = {}
+	if #builders > 0 then
+		table.insert(out, { intent = { cmdType = CT.REPAIR, queue = queue == true, targetId = t.id }, ids = builders })
+	end
+	if #others > 0 then
+		table.insert(out, { intent = { cmdType = CT.GUARD, queue = queue == true, targetId = t.id }, ids = others })
+	end
+	return out
+end
+
 -- Payloads for `intent` given to `ids` (own units; the server ignores others).
 function Orders.encode(world: World.World, intent: Intent, ids: { number }): { buffer }
 	local out = {}

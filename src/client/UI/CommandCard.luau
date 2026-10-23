@@ -184,6 +184,13 @@ function CommandCard.step(ui: UI, api: Api.Api)
 	end
 	local fire = FIRE[api.state.fireState or -1]
 	local move = MOVE[api.state.moveState or -1]
+	-- builders guarding a builder or a factory help it build (S-128, C-163)
+	local builders = #defs > 0
+	for _, d in defs do
+		if d.buildPower == nil or d.domain == "structure" then
+			builders = false
+		end
+	end
 	local label = {
 		fire = if fire then fire[1] else "Fire state",
 		movestate = if move then move[1] else "Move state",
@@ -197,7 +204,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		move = "Move",
 		patrol = "Patrol",
 		fight = "Fight",
-		guard = "Guard",
+		guard = if builders then "Assist" else "Guard",
 		alert = "Last alert",
 		repair = "Repair",
 		reclaim = "Reclaim",

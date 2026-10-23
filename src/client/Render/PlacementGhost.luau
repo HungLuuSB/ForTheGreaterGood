@@ -5,7 +5,9 @@
 -- Upgrades in place (C-121): while the ghost (or the Upgrade extractors
 -- command) can upgrade, every own extractor it upgrades gets a pulsing
 -- green disc; an area drag (extractor drags, Upgrade extractors) draws its
--- circle.
+-- circle. The build grid (C-166, Settings > Interface "Build grid"): the
+-- 8-stud build cells round the ghost as thin lines on the ground, fading
+-- out with distance, so footprints line up.
 
 local Api = require("../Api")
 local Upgrades = require("../Core/Upgrades")
@@ -26,9 +28,16 @@ export type Ghost = {
 	marks: Folder, -- upgrade target discs and the area circle (outside the ghost: shown without placing too)
 	discs: { Part },
 	area: Part,
+	grid: Folder, -- the build grid's line segments (outside the ghost: its Highlight would tint them)
+	lines: { Part },
+	gridKey: string, -- the cell and map the grid was laid for
 }
 
 local MARK_POOL = 40
+PlacementGhost.GRID = true -- Settings > Interface: the build grid round the ghost
+PlacementGhost.GRID_CELLS = 6 -- cells from the ghost's centre to the grid's edge
+local CELL = 8
+local GRID_COLOR = Color3.fromRGB(220, 235, 255)
 
 local function flatPart(name: string, parent: Instance): Part
 	local p = Instance.new("Part")
@@ -74,7 +83,9 @@ function PlacementGhost.new(): Ghost
 	local area = flatPart("Area", marks)
 	area.Transparency = 1
 	marks.Parent = workspace
-	return { folder = folder, plate = plate, highlight = highlight, model = nil, defId = nil, marks = marks, discs = discs, area = area }
+	local grid = Instance.new("Folder")
+	grid.Name = "BuildGrid"
+	return { folder = folder, plate = plate, highlight = highlight, model = nil, defId = nil, marks = marks, discs = discs, area = area, grid = grid, lines = {}, gridKey = "" }
 end
 
 -- Facing 0..3 (Schema.Facing: north, east, south, west) as a sim heading
@@ -159,14 +170,85 @@ local function marks(g: Ghost, api: Api.Api, now: number, areaFrom: Vector3?, ar
 	end
 end
 
+-- Lays the build grid round cell boundary (bx, bz) (the corner nearest
+-- the ghost's centre): every cell edge within GRID_CELLS, one segment per
+-- cell so the lines follow the ground.
+local function layGrid(g: Ghost, world: World.World, bx: number, bz: number)
+	local grid = world.grid
+	local r = PlacementGhost.GRID_CELLS
+	local n = 0
+	local function segment(x0: number, z0: number, x1: number, z1: number)
+		local mx, mz = (x0 + x1) / 2, (z0 + z1) / 2
+		local d = math.max(math.abs(mx - bx), math.abs(mz - bz)) / (r * CELL)
+		if d > 1 then
+			return
+		end
+		n += 1
+		local part = g.lines[n]
+		if part == nil then
+			local made = Instance.new("Part")
+			made.Name = "Line"
+			made.Anchored = true
+			made.CanCollide = false
+			made.CanQuery = false
+			made.CanTouch = false
+			made.CastShadow = false
+			made.Material = Enum.Material.Neon
+			made.Color = GRID_COLOR
+			made.Parent = g.grid
+			g.lines[n] = made
+			part = made
+		end
+		local a = Vector3.new(x0, World.groundY(world, x0, z0) + 0.12, z0)
+		local b = Vector3.new(x1, World.groundY(world, x1, z1) + 0.12, z1)
+		part.Size = Vector3.new(0.12, 0.04, (b - a).Magnitude)
+		part.CFrame = CFrame.lookAt((a + b) / 2, b)
+		part.Transparency = 0.45 + 0.5 * d -- fades toward the edge
+	end
+	for i = -r, r do
+		for j = -r, r - 1 do
+			local x, z = bx + i * CELL, bz + j * CELL
+			if grid:inBounds(grid:cellAt(x, z + 1)) or grid:inBounds(grid:cellAt(x - 1, z + 1)) then
+				segment(x, z, x, z + CELL) -- along z
+			end
+			local x2, z2 = bx + j * CELL, bz + i * CELL
+			if grid:inBounds(grid:cellAt(x2 + 1, z2)) or grid:inBounds(grid:cellAt(x2 + 1, z2 - 1)) then
+				segment(x2, z2, x2 + CELL, z2) -- along x
+			end
+		end
+	end
+	for i = n + 1, #g.lines do
+		g.lines[i].Transparency = 1
+	end
+end
+
 function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vector3?, areaTo: Vector3?)
 	marks(g, api, now or os.clock(), areaFrom, areaTo)
 	local p = api.state.placement
+	if p == nil or not PlacementGhost.GRID then
+		if g.grid.Parent ~= nil then
+			g.grid.Parent = nil
+		end
+	end
 	if p == nil then
 		if g.folder.Parent ~= nil then
 			g.folder.Parent = nil
 		end
 		return
+	end
+	if PlacementGhost.GRID then
+		local grid = api.world.grid
+		-- the cell corner nearest the ghost's centre
+		local bx = grid.originX + math.floor((p.x - grid.originX) / CELL + 0.5) * CELL
+		local bz = grid.originZ + math.floor((p.z - grid.originZ) / CELL + 0.5) * CELL
+		local key = `{bx},{bz},{api.world.mapVersion}`
+		if key ~= g.gridKey then
+			g.gridKey = key
+			layGrid(g, api.world, bx, bz)
+		end
+		if g.grid.Parent == nil then
+			g.grid.Parent = workspace
+		end
 	end
 	local world = api.world
 	local def = world.defs.unitByIndex[p.defIndex]
