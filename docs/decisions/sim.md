@@ -1831,3 +1831,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Schema.spec` pins both records' bytes;
   - `NetOut.spec`: Order, seeing nothing near a Carapace, gets its DOME (centre and radius) and no ENTER, and DOME_GONE when it dies.
+
+## S-123 — A burning beam's end follows the domes (client request 56, the user) (2026-10-23)
+
+- **Asked:** a burning beam's line must be re-checked against every dome whenever any dome changes:
+  1. when dome #1 collapses with #2 behind it, the continuation ends at #2's surface (miss, absorbed SHIELD_HIT on #2, the rest of the drain on #2), and pierce damage reaches only up to #2;
+  2. when a dome rises across a burning beam, the beam is cut at the first contact (a new FIRE / SHOT, miss); that dome takes the hit and the drain, and the one behind stops being drained.
+- **Built** (it replaces S-121's one-off go-through):
+  - **Every lingering beam keeps its full shot:** the muzzle height, where it was aimed (a fixed point; a single-target hit follows its target), whether it hit, and whether it is a hit-ray. Misses are kept too, so a dome rising across one is reported.
+  - **Each tick** its end is the first up enemy dome on the line from the muzzle to the full end (`Shield.firstDome`), else the full end.
+  - **When the end changes:** a dome dropped or went, one rose across it, or another stands behind. The sim sends a new FIRE (a SHOT for players without the shooter) with the new end and hit flag, and a dome newly in the way takes the absorbed hit (`Shield.absorbShot`).
+  - **This tick's share:**
+    - on a dome, that dome is drained (S-117) and a hit-ray hurts only up to its surface;
+    - otherwise a hit-ray covers its full line, and a single-target hit damages its target (while alive and in range).
+- **Tests:** `Shield.spec`:
+  - a weak dome in front drops, and the new FIRE ends on the full dome behind (miss), which is then drained while the target inside is untouched;
+  - a dome raised across a beam burning on its target cuts it with a new FIRE (miss) at its surface and takes the hit.

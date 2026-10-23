@@ -79,13 +79,31 @@ export type Event = {
 	mass: number?, -- SHIELD_HIT: the shell's mass (ShieldField.mass)
 }
 
--- A lingering beam (S-113): `ticks` more ticks of `1 / total` of its
--- weapon's damage on `target`, while the shooter stands and the target is
--- in range.
--- A piercing beam (S-115) hurts every enemy on its fixed line (sx, sz) → (ex, ez) instead; its target is 0.
--- A beam stopped by a dome (S-117) also drains it: `domeDrain` charge each tick while the dome `dome` stands and is up.
--- If that dome drops while the beam burns (S-121), the beam goes through: `after*` is where it would have ended without the dome.
-export type Beam = { shooter: number, shooterGen: number, slot: number, target: number, targetGen: number, ticks: number, total: number, sx: number?, sz: number?, ex: number?, ez: number?, dome: number?, domeGen: number?, domeDrain: number?, sy: number?, afterX: number?, afterY: number?, afterZ: number?, afterHit: boolean?, afterTarget: number?, afterTargetGen: number? }
+-- A lingering beam (S-113; reworked in S-123, client request 56): `ticks`
+-- more ticks of `1 / total` of its weapon's damage. It keeps its full shot:
+-- the muzzle height `my`, where it was aimed (`fullX/Y/Z`, a fixed point;
+-- a single-target hit follows `target`), whether it hit (`fullHit`), and
+-- whether it is a hit-ray (`ray`, S-115). Every tick its end is re-checked:
+-- the first up enemy dome on its line (`dome`: drained `domeDrain` a tick),
+-- else the full end.
+export type Beam = {
+	shooter: number,
+	shooterGen: number,
+	slot: number,
+	ticks: number,
+	total: number,
+	target: number,
+	targetGen: number,
+	my: number,
+	fullX: number,
+	fullY: number,
+	fullZ: number,
+	fullHit: boolean,
+	ray: boolean,
+	dome: number?,
+	domeGen: number?,
+	domeDrain: number,
+}
 
 export type Combat = {
 	profiles: { [number]: UnitProfile }, -- by unit def index
@@ -731,16 +749,8 @@ function Combat.hash(c: Combat, h: number): number
 	for _, b in c.beams do
 		h = Hash.u32(Hash.u32(Hash.u32(Hash.u32(h, b.shooter), b.shooterGen), b.target), b.targetGen)
 		h = Hash.u32(Hash.u32(h, b.slot), b.ticks)
-		if b.dome then
-			h = Hash.number(Hash.u32(Hash.u32(h, b.dome), b.domeGen or 0), b.domeDrain or 0)
-		end
-		if b.afterX then
-			h = Hash.number(Hash.number(h, b.afterX), b.afterZ :: number)
-			h = Hash.u32(Hash.u32(Hash.u32(h, if b.afterHit then 1 else 0), b.afterTarget or 0), b.afterTargetGen or 0)
-		end
-		if b.sx then
-			h = Hash.number(Hash.number(Hash.number(Hash.number(h, b.sx), b.sz :: number), b.ex :: number), b.ez :: number)
-		end
+		h = Hash.number(Hash.number(Hash.number(h, b.fullX), b.fullY), b.fullZ)
+		h = Hash.u32(Hash.u32(h, (if b.fullHit then 1 else 0) + (if b.ray then 2 else 0)), b.dome or 0)
 	end
 	h = Hash.u32(h, #c.wreckIds)
 	for _, id in c.wreckIds do
