@@ -152,7 +152,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return true
 	end
 
-	function actions.order(kind: string, target: any, queue: boolean?)
+	function actions.order(kind: string, target: any, queue: boolean?, group: boolean?)
 		local cmdType = Orders.KIND[kind]
 		if cmdType == nil then
 			return false, `unknown order {kind}`
@@ -163,21 +163,22 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			end
 			return issue({ cmdType = cmdType, queue = queue == true, targetId = target })
 		end
-		return issue({ cmdType = cmdType, queue = queue == true, x = target.x, z = target.z })
+		return issue({ cmdType = cmdType, queue = queue == true, x = target.x, z = target.z, group = group == true })
 	end
 
-	function actions.smartOrder(x: number, z: number, unitId: number?, queue: boolean?)
+	-- `group` (Ctrl): a move keeps the selection together (GROUP, S-137, C-169).
+	function actions.smartOrder(x: number, z: number, unitId: number?, queue: boolean?, group: boolean?)
 		if #sel.ids == 0 then
 			return false, "nothing selected"
 		end
-		for _, part in Orders.smartFor(world, x, z, unitId, queue, sel.ids) do
+		for _, part in Orders.smartFor(world, x, z, unitId, queue, sel.ids, group) do
 			issue(part.intent, part.ids)
 		end
 		return true
 	end
 
-	function actions.lineMove(x1: number, z1: number, x2: number, z2: number, queue: boolean?)
-		return issue({ cmdType = CT.MOVE, queue = queue == true, x = x1, z = z1, x2 = x2, z2 = z2 })
+	function actions.lineMove(x1: number, z1: number, x2: number, z2: number, queue: boolean?, group: boolean?)
+		return issue({ cmdType = CT.MOVE, queue = queue == true, x = x1, z = z1, x2 = x2, z2 = z2, group = group == true })
 	end
 
 	function actions.stop()
@@ -239,7 +240,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	-- Gives the current command at (x, z) or on unit `unitId` (input and UI
 	-- both use this): attack an enemy or the ground, guard a unit, or fight /
 	-- move / patrol to the point. Keeps the mode with `keep` (Shift).
-	function actions.commandAt(x: number, z: number, unitId: number?, queue: boolean?, keep: boolean?)
+	function actions.commandAt(x: number, z: number, unitId: number?, queue: boolean?, keep: boolean?, group: boolean?)
 		local kind = state.commandMode
 		if kind == nil then
 			return false, "no command"
@@ -276,7 +277,7 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 			end
 			ok, why = issue({ cmdType = CT.RECLAIM, queue = queue == true, targetId = best })
 		else
-			ok, why = actions.order(kind, { x = x, z = z }, queue)
+			ok, why = actions.order(kind, { x = x, z = z }, queue, group)
 		end
 		if not keep then
 			actions.setCommandMode(nil)

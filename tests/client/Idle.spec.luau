@@ -1,64 +1,68 @@
 --!strict
--- Idle builders and factories (C-158): a factory with an empty queue is
--- idle; a builder that has stood still a few seconds with no orders and no
--- frame going up near it is idle; the cycle walks them in order and wraps.
+-- Idle builders and factories (C-158 on S-136's IDLE events): through the
+-- real server, a Mason with nothing to do and a factory with an empty
+-- queue count as idle, on camera or not; an order or a queue makes them
+-- busy; the cycle walks the idle builders in order and wraps.
 
+local Api = require("../../src/client/Api")
+local Commands = require("../../src/client/Core/Commands")
 local Idle = require("../../src/client/Core/Idle")
+local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
-local Defs = require("@shared/Defs/Defs")
+local NetOut = require("../../src/server/Sim/NetOut")
+local Sim = require("../../src/server/Sim/Sim")
+local Spawn = require("../../src/server/Sim/Spawn")
 
-local defs = Defs.load()
+local DT = 1 / 15
 
 local function scene()
-	local world = World.new(defs)
-	world.me.team = 1
-	local function add(id: number, defId: string, fields: any?)
-		local u: any = { id = id, tier = "tactical", team = 1, defIndex = defs.units[defId].index, x = id * 100, z = 0, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} }
-		for k, v in fields or {} do
-			u[k] = v
+	local sim = Sim.new({ seed = 5, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "start:64", scenario = "empty" })
+	local world = World.new(sim.defs)
+	local api = Api.new(world, function(p: buffer)
+		assert(Sim.submit(sim, 1, p))
+	end)
+	NetOut.join(sim, 1)
+	local tick = 0
+	local function step(n: number)
+		for _ = 1, n do
+			tick += 1
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			Api.frame(api, tick * DT)
+			table.clear(world.died)
 		end
-		world.units[id] = u
 	end
-	add(1, "ord_vehplant", { queue = {} }) -- idle factory
-	add(2, "ord_vehplant", { queue = { defs.units.ord_lancer.index } }) -- busy
-	add(3, "ord_vehplant") -- never had a queue: the server sends none
-	add(4, "ord_mason") -- idle builder
-	add(5, "ord_mason") -- has orders
-	add(6, "ord_mason") -- building a frame next to it
-	add(7, "ord_solar", { x = 600, build = 0.4 })
-	add(8, "ord_mason", { team = 2 }) -- not ours
-	return world
+	return sim, world, api, step
 end
 
 return function(t: any)
-	t.test("idle factories and builders, and only those", function()
-		local world = scene()
+	t.test("idle Masons and an empty factory count; orders and queues make them busy; off camera too", function()
+		local sim, world, api, step = scene()
+		local g = sim.map.layers.grid
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 100, 0, 0)
+		Spawn.unit(sim, "ord_fusion", 1, -150, -150, 0)
+		local m1 = Spawn.unit(sim, "ord_mason", 1, 0, 60, 0)
+		local m2 = Spawn.unit(sim, "ord_mason", 1, 30, 60, 0)
+		-- the camera over one corner only: the Masons and the plant are off it
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 3, 3)))
+		step(20)
 		local st = Idle.new()
-		local orders = function(id: number): boolean
-			return id == 5
-		end
-		Idle.update(st, world, orders, 0)
-		t.equal(table.concat(st.factories, ","), "1,3")
-		t.equal(#st.builders, 0, "a builder isn't idle the moment it stops")
-		Idle.update(st, world, orders, Idle.STILL_SECONDS + 0.1)
-		t.equal(table.concat(st.builders, ","), "4", "the one with no orders and no frame near")
-	end)
-
-	t.test("the cycle walks idle builders in order and wraps", function()
-		local world = scene()
-		world.units[6].x = 9000 -- no frame near it any more
-		local st = Idle.new()
-		local none = function(_id: number): boolean
-			return false
-		end
-		Idle.update(st, world, none, 0)
-		Idle.update(st, world, none, 10)
-		t.equal(table.concat(st.builders, ","), "4,5,6")
-		t.equal(Idle.next(st, "builder"), 4)
-		t.equal(Idle.next(st, "builder"), 5)
-		t.equal(Idle.next(st, "builder"), 6)
-		t.equal(Idle.next(st, "builder"), 4, "wraps")
-		t.equal(Idle.next(st, "factory"), 1)
-		t.equal(Idle.next(st, "factory"), 3)
+		Idle.update(st, world)
+		t.equal(table.concat(st.builders, ","), `{m1},{m2}`, "both Masons idle, off camera")
+		t.equal(table.concat(st.factories, ","), tostring(plant), "the empty plant")
+		-- the camera over them, then orders
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+		step(3)
+		api.actions.select({ plant })
+		t.expect(api.actions.queueBuild("ord_lancer", 2))
+		api.actions.select({ m1 })
+		t.expect(api.actions.smartOrder(-120, 40, nil, false))
+		step(5)
+		Idle.update(st, world)
+		t.equal(table.concat(st.builders, ","), tostring(m2), "m1 moving: busy")
+		t.equal(#st.factories, 0, "the plant producing: busy")
+		-- the cycle
+		t.equal(Idle.next(st, "builder"), m2)
+		t.equal(Idle.next(st, "builder"), m2, "one idle builder: it again")
 	end)
 end

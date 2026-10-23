@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, queue in a frame, Ctrl moves, server idle counts)
+
+- **You can queue units in a factory that's still being built** (sim-A's S-138): pick from the build menu with the frame selected, and production starts the moment it's finished.
+- **Ctrl + right click (or a line drag, or Move / Fight / Patrol) keeps the group together** at its slowest unit's speed (C-169, sim-A's S-137).
+- **Idle counts now come from the server (C-158 on S-136):** every idle builder and factory counts, also off camera, and **I** jumps to one anywhere.
+- Merged here from sim-A's branch for your playtest; pushed once it's on main.
+
 ## Summary (2026-10-23, factory progress bar)
 
 - **A producing factory shows an amber progress bar under its health bar (C-168),** always, for your factories and your allies'. It fills smoothly with the unit being built.
@@ -41,7 +48,7 @@ Queue status, item by item (details below and in the decisions log):
 - **2. Animation pass (C-156):** done. Radars, sonar drums and drills turn while powered, wheels roll while moving, gantries run while producing, windmills turn, tracks judder. Not done: a sonar "ping" and jammer shimmer, which would be new effects rather than pieces.
 - **3. Selection panel like BAR (C-157):** done. Click a tile to keep that type, Shift-click to drop it, Ctrl-click for every one of that type on screen.
 - **4. Idle indicators (C-158):** done, as a client-side guess. sim-A has already made the server's IDLE events (S-136, request 62); I switch to them once they're on main.
-- **5. Group speed (Ctrl-move):** agreed with sim-A: Ctrl + right click, `CmdFlag.GROUP` (S-137, protocol 31). Wiring waits for S-137 on main.
+- **5. Group speed (Ctrl-move) (C-169):** done. Ctrl + right click, a line drag, Move / Fight / Patrol, or a minimap right click keeps the group at its slowest unit's speed.
 - **6. Rebindable keys (C-159):** done. Settings > Keys, click and press, red clash warnings, saved for your account. Camera turn-right moved from E to C.
 - **7. Commander walk on the v3 mechs (C-160):** done. It works as is, checked in Studio with a new preview switch.
 
@@ -1828,8 +1835,8 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
 
 ## Requests for the sim session
 
-63. **Open (2026-10-23, the user: "Add the ability to queue inside the factory while it being built"):** accept a factory's queue (and CANCEL / REPEAT) while it's still a frame, start producing when it's finished, and send the QUEUE owner field for the frame. The client already offers the build menu on an unfinished factory.
-62. **Open (2026-10-23, the user's queue item 4):** **An idle signal for own units.** Owner-only and sent on change, covering units outside the camera (owner fields ride only tactical records, and the strategic flags are full): which of the player's builders have no orders and no build / assist / repair / reclaim / guard / patrol work, and which factories have an empty queue. The client guesses from what it sees until then (C-158).
+63. **Done (S-138; checked through the real path, FrameQueue.spec).** (2026-10-23, the user: "Add the ability to queue inside the factory while it being built"): accept a factory's queue (and CANCEL / REPEAT) while it's still a frame, start producing when it's finished, and send the QUEUE owner field for the frame. The client already offers the build menu on an unfinished factory.
+62. **Done (S-136; used by C-158 / C-169).** (2026-10-23, the user's queue item 4): **An idle signal for own units.** Owner-only and sent on change, covering units outside the camera (owner fields ride only tactical records, and the strategic flags are full): which of the player's builders have no orders and no build / assist / repair / reclaim / guard / patrol work, and which factories have an empty queue. The client guesses from what it sees until then (C-158).
 61. **Done on m-sim-2 (S-133, 04c70db; not on main yet, merged into this branch for the user's playtest):** the pad position matches the client's frame (vehicle plant: 64, 47.4). (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
     - The finished unit spawns at the factory's `buildpad` (from the blockout's attachments, model space, rotated with the facing) with the factory's heading. Today it's halfSize + one cell out, then EXIT_ROLL: ~12 studs past the pad on a vehicle plant.
     - It then drives out along the heading through the factory's own footprint, then takes the rally order.

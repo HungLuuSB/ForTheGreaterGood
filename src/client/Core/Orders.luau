@@ -24,7 +24,10 @@ export type Intent = {
 	value: number?, -- state commands
 	defIndex: number?, -- BUILD: what to build at (x, z)
 	facing: number?, -- BUILD: 0..3
+	group: boolean?, -- MOVE / FIGHT / PATROL with Ctrl: keep together at the slowest unit's speed (GROUP, S-137, C-169)
 }
+
+local GROUPABLE = { [CT.MOVE] = true, [CT.FIGHT] = true, [CT.PATROL] = true }
 
 Orders.KIND = table.freeze({
 	move = CT.MOVE,
@@ -40,7 +43,7 @@ Orders.KIND = table.freeze({
 -- The right-click rule (guide 15.6): enemy → attack; own unfinished frame →
 -- repair; own or allied unit → guard; ground → move. (Wrecks aren't on the
 -- wire yet, so reclaim needs an explicit order.)
-function Orders.smart(world: World.World, x: number, z: number, unitId: number?, queue: boolean?): Intent
+function Orders.smart(world: World.World, x: number, z: number, unitId: number?, queue: boolean?, group: boolean?): Intent
 	local u = if unitId then world.units[unitId] else nil
 	if u then
 		local rel = World.relation(world, u)
@@ -54,7 +57,7 @@ function Orders.smart(world: World.World, x: number, z: number, unitId: number?,
 			return { cmdType = CT.GUARD, queue = queue == true, targetId = u.id }
 		end
 	end
-	return { cmdType = CT.MOVE, queue = queue == true, x = x, z = z }
+	return { cmdType = CT.MOVE, queue = queue == true, x = x, z = z, group = group == true }
 end
 
 -- The smart order split by who gets it (C-163): on an own frame, a
@@ -62,8 +65,8 @@ end
 -- the factory's production, heal it) and the rest GUARD it; on an own
 -- builder everyone GUARDs, which makes builders assist whatever it builds
 -- (S-128, BAR's assist). Otherwise one order for all (Orders.smart).
-function Orders.smartFor(world: World.World, x: number, z: number, unitId: number?, queue: boolean?, ids: { number }): { { intent: Intent, ids: { number } } }
-	local intent = Orders.smart(world, x, z, unitId, queue)
+function Orders.smartFor(world: World.World, x: number, z: number, unitId: number?, queue: boolean?, ids: { number }, group: boolean?): { { intent: Intent, ids: { number } } }
+	local intent = Orders.smart(world, x, z, unitId, queue, group)
 	local t = if unitId then world.units[unitId] else nil
 	if t == nil or World.relation(world, t) ~= "own" then
 		return { { intent = intent, ids = ids } }
@@ -105,7 +108,7 @@ function Orders.encode(world: World.World, intent: Intent, ids: { number }): { b
 		local chunk = table.move(ids, i, math.min(i + limit - 1, #ids), 1, {})
 		local cmd: Schema.Command = {
 			cmdType = intent.cmdType,
-			flags = if intent.queue then Schema.CmdFlag.QUEUE else 0,
+			flags = (if intent.queue then Schema.CmdFlag.QUEUE else 0) + (if intent.group and GROUPABLE[intent.cmdType] then Schema.CmdFlag.GROUP else 0),
 			unitIds = chunk,
 		}
 		if intent.targetId then

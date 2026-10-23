@@ -148,7 +148,8 @@ function MinimapUI.new(api: Api.Api): UI
 			api.actions.focusCamera(x, z)
 		else
 			local shift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
-			api.actions.smartOrder(x, z, nil, shift)
+			local ctrl = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+			api.actions.smartOrder(x, z, nil, shift, ctrl)
 		end
 	end)
 

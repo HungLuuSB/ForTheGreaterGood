@@ -1421,3 +1421,13 @@ Extractor drags also drop spots that share cells with an earlier spot of the sam
 **Decision:** an own or allied factory that is producing gets a second bar under its health bar, always, selected or not. It's amber, the UI accent, so it reads apart from the blue construction bar. It shows the item's progress as the hologram draws it (FactoryFrames' eased value, `u.productionShown`), else the server's sixteenths. Spec: Bars.spec, through the real server.
 
 **Why:** the user: "Still no progress bar for building", over a selected vehicle plant producing a tank.
+
+### C-169 — Ctrl moves keep the group together (GROUP); idle counts from the server; queueing in a frame (2026-10-23)
+
+**Decision:**
+- **Ctrl + move:** right click, a line drag, a Move / Fight / Patrol command click and a minimap right click held with Ctrl send `Schema.CmdFlag.GROUP` (S-137, protocol 31). The selection's ground units then move no faster than the slowest one. `Orders.Intent.group`, only on MOVE, FIGHT and PATROL.
+- **C-158 now counts from the server's IDLE events** (S-136): `world.idle`, cleared on a join and on a unit's death. Every idle builder and factory counts, on camera or not, and the I key jumps to one anywhere (its model stays drawn off camera, C-161). The client-side guess is gone.
+- **S-138:** a factory frame takes the build menu's queue; the client needed nothing new.
+- Specs: Idle.spec (through the real server, off camera included) and FrameQueue.spec (a frame's queue round trip; GROUP on the right commands).
+
+**Why:** the user's queue item 5 (group speed), request 62 (idle) and request 63 (the user: "Still not replicate build command when the building is being built").
