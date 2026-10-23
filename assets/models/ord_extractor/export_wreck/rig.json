@@ -1,7 +1,7 @@
 {
   "id": "ord_extractor_wreck",
   "wreckOf": "ord_extractor",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,19 +9,50 @@
     "base": {
       "parent": null,
       "center": [
-        -0.005,
-        2.5865,
-        0.0181
+        -0.0429,
+        2.2307,
+        0.0206
       ],
       "size": [
-        7.4345,
-        5.2881,
-        7.551
+        15.5905,
+        4.7009,
+        15.7192
+      ]
+    },
+    "drill": {
+      "parent": "base",
+      "center": [
+        0.096,
+        4.9587,
+        0.2652
+      ],
+      "size": [
+        3.8516,
+        2.6893,
+        3.6319
+      ],
+      "pivot": [
+        0.0,
+        3.62,
+        0.0
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [],
+  "visualPieces": [
+    "drill"
+  ],
+  "anim": {
+    "drill": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -34,8 +65,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 616,
-    "total": 616
+    "base": 1862,
+    "drill": 540,
+    "total": 2402
   },
   "textures": {
     "size": 1024,

@@ -82,10 +82,10 @@
       "ClassName": "SurfaceAppearance",
       "Properties": {
         "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://85568525420690",
-        "NormalMapContent": "rbxassetid://103731446347455",
-        "RoughnessMapContent": "rbxassetid://126575043980080",
-        "MetalnessMapContent": "rbxassetid://92588505889215",
+        "ColorMapContent": "rbxassetid://133762243777259",
+        "NormalMapContent": "rbxassetid://103595884256883",
+        "RoughnessMapContent": "rbxassetid://118199144906717",
+        "MetalnessMapContent": "rbxassetid://123498317674829",
         "EmissiveStrength": 0
       }
     },
@@ -754,10 +754,10 @@
       "ClassName": "SurfaceAppearance",
       "Properties": {
         "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://132063971550913",
-        "NormalMapContent": "rbxassetid://95808240312401",
-        "RoughnessMapContent": "rbxassetid://77470155549054",
-        "MetalnessMapContent": "rbxassetid://121886893676855",
+        "ColorMapContent": "rbxassetid://75867190640169",
+        "NormalMapContent": "rbxassetid://92366962766682",
+        "RoughnessMapContent": "rbxassetid://99532525137780",
+        "MetalnessMapContent": "rbxassetid://87689575754752",
         "EmissiveStrength": 0
       }
     },
@@ -1114,10 +1114,10 @@
       "ClassName": "SurfaceAppearance",
       "Properties": {
         "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://134994005535314",
-        "NormalMapContent": "rbxassetid://111541886592342",
-        "RoughnessMapContent": "rbxassetid://100339252582483",
-        "MetalnessMapContent": "rbxassetid://101214173124257",
+        "ColorMapContent": "rbxassetid://132767202729295",
+        "NormalMapContent": "rbxassetid://88240657633300",
+        "RoughnessMapContent": "rbxassetid://98271327122518",
+        "MetalnessMapContent": "rbxassetid://89286425582386",
         "EmissiveStrength": 0
       }
     },
@@ -1258,10 +1258,10 @@
       "ClassName": "SurfaceAppearance",
       "Properties": {
         "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://133858640503158",
-        "NormalMapContent": "rbxassetid://126465348380384",
-        "RoughnessMapContent": "rbxassetid://91839398223782",
-        "MetalnessMapContent": "rbxassetid://135953103760018",
+        "ColorMapContent": "rbxassetid://117829056951805",
+        "NormalMapContent": "rbxassetid://103724103356094",
+        "RoughnessMapContent": "rbxassetid://140564539152072",
+        "MetalnessMapContent": "rbxassetid://92736240936804",
         "EmissiveStrength": 0
       }
     },

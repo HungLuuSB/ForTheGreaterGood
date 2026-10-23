@@ -1,7 +1,32 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 860 triangles, glow share 4.9%",
+  "revision": "Redesign at footprint 2 (size scale S-104, M-26): 2280 triangles, glow share 2.6%",
   "bar": {
+    "model": "rbxassetid://89030726558281",
+    "meshes": {
+      "base": "rbxassetid://138865285203050",
+      "base_glow_power": "rbxassetid://97731875186842",
+      "base_glow_running": "rbxassetid://76325693042887",
+      "drill": "rbxassetid://115998886229038",
+      "drill_glow_power": "rbxassetid://123207070549631"
+    },
+    "decals": {
+      "ALB": "rbxassetid://93710144391948",
+      "RGH": "rbxassetid://117796886620065",
+      "NOR": "rbxassetid://113641681702930",
+      "MTL": "rbxassetid://135114840664073",
+      "EMI": "rbxassetid://102241981030295"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://133762243777259",
+      "NOR": "rbxassetid://103595884256883",
+      "RGH": "rbxassetid://118199144906717",
+      "MTL": "rbxassetid://123498317674829",
+      "EMI": "rbxassetid://140268017589483"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_extractor_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://122909031392130",
     "meshes": {
       "base": "rbxassetid://124225270761429",
@@ -22,7 +47,7 @@
       "MTL": "rbxassetid://92588505889215",
       "EMI": "rbxassetid://123738664450095"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_extractor_bar in FTGG Art"
+    "note": "2026-10-22, glow pass (M-22): 860 triangles, glow share 4.9%"
   },
   "bar_preglow": {
     "model": "rbxassetid://110263150585231",
@@ -46,6 +71,29 @@
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 752 triangles)"
   },
   "wreck": {
+    "model": "rbxassetid://111999252359727",
+    "meshes": {
+      "base": "rbxassetid://137604430087112",
+      "drill": "rbxassetid://73498823936537"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117460909443835",
+      "RGH": "rbxassetid://117123603804542",
+      "NOR": "rbxassetid://140678234613539",
+      "MTL": "rbxassetid://92884432335797",
+      "EMI": "rbxassetid://126883937528468"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://132767202729295",
+      "NOR": "rbxassetid://88240657633300",
+      "RGH": "rbxassetid://98271327122518",
+      "MTL": "rbxassetid://89286425582386",
+      "EMI": "rbxassetid://122529769579871"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_extractor_wreck_bar in FTGG Art",
+    "revision": "Wreck of the fp-2 redesign (M-24 rules): 1940 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://139804711017792",
     "meshes": {
       "base": "rbxassetid://104524370135507"
