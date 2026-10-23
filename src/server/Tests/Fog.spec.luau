@@ -91,23 +91,23 @@ return function(t: RunAll.Context)
 		t.expect(dirs[1] and dirs[-1], "units orbit both ways")
 	end)
 
-	t.test("the drawn blip circles the unit closely; the aim point keeps the radar error (S-131)", function()
-		local s = Sensors.new(nil, { 1, 2 })
-		s.radarError[1] = 20
-		local n = Sensors.ORBIT_TICKS
+	t.test("a blip is drawn at its unit (sent as its cell); weapons aim at the hidden point (S-131, S-134)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0)
+		local radar = Spawn.unit(sim, "chs_watcher", 2, -450, 0)
+		quiet(sim, { tank, radar })
 		local apart = 0
-		for tick = 0, n - 1 do
-			local bx, bz = Sensors.blipOffset(s, 1, 7, tick)
-			local ax, az = Sensors.wobble(s, 1, 7, tick)
-			t.expect(math.abs(math.sqrt(bx * bx + bz * bz) - Sensors.BLIP_ORBIT) <= 1e-6, "the drawn blip orbits at BLIP_ORBIT")
-			apart = math.max(apart, math.sqrt((ax - bx) ^ 2 + (az - bz) ^ 2))
+		for _ = 1, 90 do
+			Sim.step(sim)
+			local x, z, level = Sensors.knownPosition(sim, 2, tank)
+			if level == L.RADAR then
+				t.equal(x, sim.world.posX[tank], "drawn at the unit")
+				t.equal(z, sim.world.posZ[tank])
+				local ax, az = Sensors.knownTarget(sim, 2, tank)
+				apart = math.max(apart, math.sqrt(((ax :: number) - x) ^ 2 + ((az :: number) - z) ^ 2))
+			end
 		end
-		t.expect(apart > 10, `the hidden aim point is not the drawn one ({apart} studs apart at most)`)
-		local x0, z0 = Sensors.blipOffset(s, 1, 7, 5)
-		local x1, z1 = Sensors.blipOffset(s, 1, 7, 5 + n)
-		t.expect(math.abs(x0 - x1) <= 1e-9 and math.abs(z0 - z1) <= 1e-9, "the drawn orbit repeats every ORBIT_TICKS")
-		local tx, tz = Sensors.blipOffset(s, 1, 7, 5, 1)
-		t.expect(math.sqrt(tx * tx + tz * tz) <= 1 + 1e-9, "never wider than the radar error")
+		t.expect(apart > 10, `aimed off the unit by the radar error ({apart} studs at most)`)
 	end)
 
 	t.test("a jammed unit disappears from enemy radar but not from sight", function()
