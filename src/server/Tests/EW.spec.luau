@@ -573,8 +573,8 @@ return function(t: RunAll.Context)
 				prev = cur
 			end
 			-- which one the SAM's team believes is closer (what a margin-free choice would follow)
-			local nx, nz = Sensors.knownPosition(sim, 1, near)
-			local fx, fz = Sensors.knownPosition(sim, 1, far)
+			local nx, nz = Sensors.knownPosition(sim, 1, near, true)
+			local fx, fz = Sensors.knownPosition(sim, 1, far, true)
 			if nx and fx then
 				local dn = (nx + 400) ^ 2 + (nz + 200) ^ 2
 				local df = (fx + 400) ^ 2 + (fz + 200) ^ 2
