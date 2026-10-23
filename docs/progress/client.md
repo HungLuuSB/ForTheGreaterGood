@@ -9,6 +9,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **You can queue units in a factory that's still being built** (sim-A's S-138): pick from the build menu with the frame selected, and production starts the moment it's finished.
 - **Ctrl + right click (or a line drag, or Move / Fight / Patrol) keeps the group together** at its slowest unit's speed (C-169, sim-A's S-137).
 - **Idle counts now come from the server (C-158 on S-136):** every idle builder and factory counts, also off camera, and **I** jumps to one anywhere.
+- **Recharge bar (C-170):** your Radiance, Inferno and every other weapon reloading 4 s or more show a thin pale-blue bar under the health bar, filling until the next shot is ready.
 - Merged here from sim-A's branch for your playtest; pushed once it's on main.
 
 ## Summary (2026-10-23, factory progress bar)

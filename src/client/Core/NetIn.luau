@@ -100,6 +100,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local id = e.unitId :: number
 			world.shields[id] = nil
 			world.idle[id] = nil
+			world.lastShot[id] = nil
 			local u = world.units[id]
 			if u then
 				local vx, vz = 0, 0

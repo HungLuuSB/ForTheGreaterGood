@@ -19,7 +19,7 @@ Bars.FULL = 0.999 -- at or above: counts as full (health is a u8 on the wire)
 -- `stock` / `stockMax`: an own unit's missiles in stock and its capacity
 -- (S-47, C-56); a unit that isn't full shows its bar, so a refilling SAM site
 -- stays visible.
-export type Bar = { id: number, health: number, build: number?, production: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number? }
+export type Bar = { id: number, health: number, build: number?, production: number?, reload: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number? }
 
 -- A factory's item progress 0..1 while it produces, else nil: as drawn
 -- (eased) when the renderer has it, else the server's.
@@ -46,12 +46,16 @@ function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
 		local stock, stockMax = World.stockOf(world, u)
 		local refilling = stock ~= nil and (stock :: number) < (stockMax :: number)
 		local production = if building then nil else Bars.production(u)
-		if isSel or building or health < Bars.FULL or refilling or production ~= nil then
+		-- own and allied long-reload weapons recharging (C-170)
+		local friendly = u.team == world.me.team or World.relation(world, u) == "ally"
+		local reload = if friendly then World.reloadOf(world, u, world.shownTick or world.latestTick) else nil
+		if isSel or building or health < Bars.FULL or refilling or production ~= nil or reload ~= nil then
 			table.insert(out, {
 				id = id,
 				health = health,
 				build = if building then u.build else nil,
 				production = production,
+				reload = reload,
 				own = u.team == world.me.team,
 				selected = isSel,
 				stock = stock,

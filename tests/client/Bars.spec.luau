@@ -117,6 +117,37 @@ return function(t: any)
 		t.expect(rising and last > 0.2, `and rises ({last})`)
 	end)
 
+	t.test("a Radiance recharging after its shot shows a recharge bar that fills over its reload (C-170)", function()
+		local sim, world, _api, run = setup({ { id = 1, team = 1 }, { id = 2, team = 2 } })
+		local tower = Spawn.unit(sim, "ord_radiance", 1, -40, 0, 0)
+		Spawn.unit(sim, "ord_fusion", 1, -120, -120, 0)
+		Spawn.unit(sim, "chs_ravager", 2, 200, 0, 0)
+		local Effects = require("../../src/client/Core/Effects")
+		local fx = Effects.new()
+		local seen, first, last, done = 0, nil, nil, false
+		for i = 1, 15 * 20 do
+			run(1)
+			world.shownTick = world.latestTick -- as World.settle sets it
+			Effects.update(fx, world, world.latestTick, i * DT, 0, 0) -- notes the shots (FIRE)
+			local b = barOf(Bars.list(world, {}), tower)
+			if b and b.reload then
+				if last and last > 0.9 and b.reload < 0.1 then
+					done = true -- charged and fired again
+					break
+				end
+				seen += 1
+				first = first or b.reload
+				last = b.reload
+			elseif seen > 0 then
+				done = true -- charged: the bar goes
+				break
+			end
+		end
+		t.expect(seen > 15 * 5, `the bar shows for most of the 9 s reload ({seen} ticks)`)
+		t.expect((first :: number) < 0.1 and (last :: number) > 0.9, `it fills from empty to full ({first} → {last})`)
+		t.expect(done, "and ends when charged")
+	end)
+
 	t.test("damage lowers a frame's health but not its build progress", function()
 		local sim, world, api, run = setup({ { id = 1, team = 1 }, { id = 2, team = 2 } })
 		local cv = World.ownIds(world)[1]

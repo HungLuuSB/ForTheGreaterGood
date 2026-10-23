@@ -1431,3 +1431,14 @@ Extractor drags also drop spots that share cells with an earlier spot of the sam
 - Specs: Idle.spec (through the real server, off camera included) and FrameQueue.spec (a frame's queue round trip; GROUP on the right commands).
 
 **Why:** the user's queue item 5 (group speed), request 62 (idle) and request 63 (the user: "Still not replicate build command when the building is being built").
+
+### C-170 — A recharge bar for long-reload weapons (Radiance, Inferno and others) (2026-10-23)
+
+**Decision:**
+- The client notes each weapon's last shot it sees (`World.noteShot`: a FIRE, or a projectile launch from a known shooter), with the sim tick.
+- For own and allied units, every weapon with a reload of `World.RELOAD_BAR` (4 s) or more shows a thin pale-blue recharge bar under the health (and build) bar. The bar fills from the shot over the weapon's reload, the server's own timing (Sim/Weapons starts the reload at the shot), and goes when charged. With several such weapons, the least charged one shows.
+- Spec: Bars.spec, a Radiance through the real server: the bar shows for most of its 9 s reload and fills from empty to full. Checked in Studio on `duel`: `c170_reload_bar.jpg`.
+
+**Limit:** a shot the client didn't see (the unit off camera) starts no bar.
+
+**Why:** the user: "Add recharge energy bar for the Radiance/Inferno too, any weapon reloads that long need to have that attack cooldown indicator".
