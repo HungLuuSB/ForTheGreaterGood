@@ -43,6 +43,7 @@ local World = require("../World")
 local DT = 1 / 15
 local MOVING, LANDED, SUBMERGED = World.State.MOVING, World.State.LANDED, World.State.SUBMERGED
 local HASH_CELL = 16 -- studs per spatial hash bucket
+local SLIDE_MIN = 0.5 -- a blocked unit slides at least this share of a full step (S-135)
 local EXIT_SLACK = 24 -- a unit driving out of its factory stops passing through blocked cells this far past it (S-133)
 local SEPARATION_MARGIN = 2 -- studs beyond touching where separation starts
 local SEPARATION_WEIGHT = 1.5
@@ -54,7 +55,7 @@ local RETURN_SPEED = 0.6 -- fraction of max speed for idle units returning to th
 local DIRECT_STAGGER = 4 -- re-check the straight line every N ticks per unit
 
 local sqrt, sin, cos, atan2 = math.sqrt, math.sin, math.cos, math.atan2
-local floor, min, max = math.floor, math.min, math.max
+local floor, min, max, abs = math.floor, math.min, math.max, math.abs
 local PI, TAU = math.pi, 2 * math.pi
 
 -- Scratch arrays indexed by position k in world.ids; reused every tick.
@@ -394,21 +395,31 @@ return function(sim: Types.Sim)
 			-- out of its factory from the build pad: through the footprint,
 			-- until clear of it on open ground (or 3 cells past it) (S-133)
 			nx[k], nz[k] = tx, tz
-			local out = max(math.abs(tx - exit[1]), math.abs(tz - exit[2])) - exit[3] - p.radius
+			local out = max(abs(tx - exit[1]), abs(tz - exit[2])) - exit[3] - p.radius
 			if (out > 0 and Nav.fits(nav, p, tx, tz)) or out > EXIT_SLACK then
 				sim.build.exiting[ids[k]] = nil
 				exitOf[k] = false
 			end
 		elseif Nav.fits(nav, p, tx, tz) then
 			nx[k], nz[k] = tx, tz
-		elseif Nav.fits(nav, p, tx, z) then
-			nx[k] = tx
-			nspeed[k] = v * 0.5
-		elseif Nav.fits(nav, p, x, tz) then
-			nz[k] = tz
-			nspeed[k] = v * 0.5
 		else
-			nspeed[k] = 0
+			-- blocked: slide along the free axis, the one the heading leans
+			-- to first, at least half a full step (S-135: halving the speed
+			-- every tick made units crawl along structures at <1 stud/s)
+			local step = v * DT
+			local sx, sz = sin(h), cos(h)
+			local ax = (if sx < 0 then -1 else 1) * step * max(abs(sx), SLIDE_MIN)
+			local az = (if sz < 0 then -1 else 1) * step * max(abs(sz), SLIDE_MIN)
+			local xFirst = abs(sx) >= abs(sz)
+			if xFirst and Nav.fits(nav, p, x + ax, z) then
+				nx[k] = x + ax
+			elseif Nav.fits(nav, p, x, z + az) then
+				nz[k] = z + az
+			elseif not xFirst and Nav.fits(nav, p, x + ax, z) then
+				nx[k] = x + ax
+			else
+				nspeed[k] = 0
+			end
 		end
 	end
 

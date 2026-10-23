@@ -1990,3 +1990,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Changed:** `Sensors.blipOffset` and `BLIP_ORBIT` are gone. `knownPosition` returns the true position for RADAR / SONAR contacts, so NetOut sends the unit's own cell. `knownPosition(..., true)` and `knownTarget` still return the hidden aim point (S-130's orbit at the radar error), so targeting is unchanged.
 - **What a player learns:** the cell, within half a cell (about 5.7 studs) of the unit. S-131's drawn orbit gave the same, since it was sent as a cell anyway, plus the edge hops. Guide 11.4 and the net tiers line are updated.
 - **Tests:** `Fog.spec`: a radar contact's drawn position is the unit's, and its aim point is more than 10 studs off.
+
+## S-135 — Blocked units slide along structures at speed (the user's approval, from S-133's review item) (2026-10-23)
+
+- **The crawl:** a unit whose next step is blocked slid along the free axis, but Movement halved its speed every such tick. Steering re-accelerated it by one tick's worth each time, so it settled near `accel × DT`, under 1 stud/s, for as long as it touched the wall.
+  - It mattered when a unit kept heading into a structure. The example: a straight-line ("shortcut") order issued while the unit was still inside its factory, which never asks for a flow field because the slow slide still counts as progress.
+  - Seen with S-133 in seed 43: the first Mason crawled along a second plant's east face for 23 s, and the AI's T2 came about 3 minutes late.
+- **Fix:** a blocked unit slides along the axis its heading leans to first (then the other), by at least `SLIDE_MIN` (half) of a full step, and keeps its speed. Only when both axes are blocked does it stop.
+- **Measured** (`Movement.spec`, seed 43's geometry: a Mason leaving a plant, sent north-west past a second plant offset 16 studs):
+  - arrival 529 → 160 ticks;
+  - ticks under 2 studs/s 354 → 0;
+  - in the AI match, that Mason starts the T2 plant at 0.86 min (1.27 before, 0.84 before S-133).
