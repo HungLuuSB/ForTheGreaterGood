@@ -265,8 +265,11 @@ function Mesh.validate(id: string, e: any, def: any?, visual: { string }?): { st
 				bad(`piece {name} isn't in the def's pieces or the blockout's visualPieces`)
 			end
 		end
+		-- an unarmed def may carry a decorative muzzle (the Commander mechs'
+		-- weapon pods, M-31): nothing fires from it
+		local armed = def.weapons ~= nil and #def.weapons > 0
 		for name in e.attachments or {} do
-			if isAttachmentPiece(name) and not inDef[name] then
+			if isAttachmentPiece(name) and not inDef[name] and armed then
 				bad(`attachment {name} isn't in the def's pieces`)
 			end
 		end

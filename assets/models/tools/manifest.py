@@ -52,8 +52,8 @@ APPROVED = {
     "ord_seraph", "ord_shipyard", "ord_silence", "ord_skywright", "ord_tidewright", "ord_veil",
     "ord_vigil", "ord_warden", "ord_watchtower", "ord_windmill",
     # 2026-10-23: the second review: beam shot, deposits, interceptors, the
-    # tracked Commanders (until their mech redesign replaces them)
-    "beam", "deposit", "ord_interceptor", "chs_interceptor", "ord_sovereign", "chs_warlord",
+    # (the tracked Commanders were approved too, then replaced by the mechs, M-31: review)
+    "beam", "deposit", "ord_interceptor", "chs_interceptor",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "

@@ -1,7 +1,53 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Animated pieces (M-27): 4040 triangles, glow share 7.0%",
+  "revision": "Walking mech redesign (M-31), the tracked design kept in tracked/: 3504 triangles, glow share 2.8%",
   "bar": {
+    "model": "rbxassetid://90169513120186",
+    "meshes": {
+      "armL": "rbxassetid://83757272818233",
+      "armR": "rbxassetid://91169934376140",
+      "base": "rbxassetid://90845827716304",
+      "base_glow_running": "rbxassetid://136704571617755",
+      "footL": "rbxassetid://139563041700358",
+      "footL_glow_running": "rbxassetid://93500964501178",
+      "footR": "rbxassetid://137339738728032",
+      "footR_glow_running": "rbxassetid://132176945129584",
+      "forearmR": "rbxassetid://80429548012570",
+      "forearmR_glow_weapon": "rbxassetid://70608244483739",
+      "head": "rbxassetid://82215044428370",
+      "head_glow_running": "rbxassetid://128496430543818",
+      "hipL": "rbxassetid://131120172203591",
+      "hipR": "rbxassetid://122460958900380",
+      "nano": "rbxassetid://114022045223722",
+      "nano_glow_power": "rbxassetid://110140973683610",
+      "nano_glow_running": "rbxassetid://100038625498729",
+      "shinL": "rbxassetid://105398295742023",
+      "shinR": "rbxassetid://109913166314113",
+      "thighL": "rbxassetid://132203201112011",
+      "thighL_glow_running": "rbxassetid://127881519590081",
+      "thighR": "rbxassetid://118920352369556",
+      "thighR_glow_running": "rbxassetid://140559961789268",
+      "torso": "rbxassetid://113566653753446",
+      "torso_glow_power": "rbxassetid://107571658514564",
+      "torso_glow_running": "rbxassetid://112030351097011"
+    },
+    "decals": {
+      "ALB": "rbxassetid://75440938861474",
+      "RGH": "rbxassetid://104757531484320",
+      "NOR": "rbxassetid://130248410909839",
+      "MTL": "rbxassetid://129489193573171",
+      "EMI": "rbxassetid://116023029699613"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://138663279355186",
+      "NOR": "rbxassetid://108767075650790",
+      "RGH": "rbxassetid://113371489579488",
+      "MTL": "rbxassetid://94775605360468",
+      "EMI": "rbxassetid://95987846657380"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sovereign_bar in FTGG Art"
+  },
+  "bar_2": {
     "model": "rbxassetid://126088644946329",
     "meshes": {
       "base": "rbxassetid://138424153646836",
@@ -27,7 +73,7 @@
       "MTL": "rbxassetid://125865071861256",
       "EMI": "rbxassetid://92658788251612"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_sovereign_bar in FTGG Art"
+    "note": "Animated pieces (M-27): 4040 triangles, glow share 7.0%"
   },
   "bar_1": {
     "model": "rbxassetid://119658360799073",
