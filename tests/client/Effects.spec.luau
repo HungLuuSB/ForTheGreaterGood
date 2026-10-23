@@ -3,6 +3,8 @@
 -- ends them, effects wait for the render clock, and the caps hold.
 
 local Commands = require("../../src/client/Core/Commands")
+local Combat = require("../../src/server/Sim/Combat/Combat")
+local EW = require("../../src/server/Sim/EW")
 local Effects = require("../../src/client/Core/Effects")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
@@ -285,6 +287,52 @@ return function(t: any)
 		print(string.format("    ew_test: %d missile frames, worst %.2f studs off a straight continuation, %d decoyed", frames, worst, decoys))
 		t.expect(frames > 100 and decoys > 0, "missiles flew, and one was decoyed")
 		t.expect(worst <= 3, `no jumps or corners (worst {worst} studs; a missile covers ~7 a frame)`)
+	end)
+
+	t.test("a radar missile whose target dies spirals down on the server's path (S-146, C-181)", function()
+		local sim = Sim.new({ seed = 2, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:128", scenario = "empty" })
+		local aegis = Spawn.unit(sim, "ord_aegis", 1, -200, 0)
+		local wasp = Spawn.unit(sim, "chs_wasp", 2, 100, 0)
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		assert(Sim.submit(sim, 1, Commands.camera(0, 0, 127, 127)))
+		local fx = Effects.new()
+		local c = sim.combat
+		local missile, lostAt = 0, nil
+		local worst, compared, spun = 0, 0, false
+		for tick = 1, 15 * 30 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if missile == 0 and e.kind == "SPAWN_PROJ" and e.unit == aegis then
+					missile = e.other
+				elseif e.kind == "LOST_LOCK" and e.other == missile then
+					lostAt = tick
+				end
+			end
+			-- once it has turned onto the Wasp, the Wasp dies (another weapon)
+			if missile ~= 0 and lostAt == nil and sim.world.slot[wasp] and c.projSlot[missile] and bit32.band(c.pFlags[missile], EW.Flag.TURNED) ~= 0 then
+				Combat.queueDamage(c, wasp, sim.world.health[wasp] * 10, 0)
+			end
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+			Effects.update(fx, world, tick, tick * DT, 0, 0)
+			table.clear(world.died)
+			local p = fx.projectiles[missile]
+			if lostAt and p and c.projSlot[missile] and tick > lostAt then
+				spun = spun or p.lost ~= nil
+				local d = math.sqrt((p.x - c.px[missile]) ^ 2 + (p.y - c.py[missile]) ^ 2 + (p.z - c.pz[missile]) ^ 2)
+				worst = math.max(worst, d)
+				compared += 1
+			end
+			if lostAt and c.projSlot[missile] == nil then
+				break
+			end
+		end
+		print(string.format("    lost radar missile: %d ticks compared, worst %.2f studs off the server", compared, worst))
+		t.expect(missile ~= 0, "the SAM launched")
+		t.expect(lostAt ~= nil, "the missile lost its target")
+		t.expect(spun, "the client spirals it (Guidance.lost)")
+		t.expect(compared >= 10, `it flew on after the loss ({compared} ticks)`)
+		t.expect(worst < 0.5, `on the server's path (worst {worst} studs; wire quantization only)`)
 	end)
 
 	t.test("bursts carry what the effects need: launch clouds, countermeasures toward the decoy point, ground and direction (C-47, C-48)", function()

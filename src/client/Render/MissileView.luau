@@ -9,11 +9,16 @@
 -- seeker cone as a wireframe out to the lock range (C-42: cyan while the
 -- target's centre is inside it, red when outside). Corrections,
 -- decoys and lost locks (Effects' marks) show as a line from where the
--- missile was drawn to where the server had it, fading out. Labels are
+-- missile was drawn to where the server had it, fading out. The team's
+-- radar accuracy (Core/RadarAccuracy, C-181): a circle round each radar
+-- blip, the radius radar-fired shots miss by (amber; green and smaller on
+-- tracked contacts), and a readout line at the top. Labels are
 -- screen-space TextLabels. Pools never shrink; unused adornments are hidden.
 
 local Effects = require("../Core/Effects")
 local MissileView = require("../Core/MissileView")
+local RadarAccuracy = require("../Core/RadarAccuracy")
+local Terrain = require("../Core/Terrain")
 local World = require("../Core/World")
 
 local RenderMissileView = {}
@@ -36,7 +41,11 @@ local COLOR: { [string]: Color3 } = {
 	seekerOut = Color3.fromRGB(255, 60, 60),
 	track = Color3.fromRGB(120, 255, 170), -- radar tracks on strategic missiles (C-58)
 	enemyTrack = Color3.fromRGB(255, 90, 90), -- enemy radars tracking your missile
+	radarRing = Color3.fromRGB(255, 190, 70), -- radar accuracy round a blip (C-181)
+	trackRing = Color3.fromRGB(120, 255, 170), -- the same, tracked by fire-control radar
 }
+
+RenderMissileView.MAX_RINGS = 80 -- radar accuracy circles drawn at most (the first by unit ID)
 
 local CONE_SEGMENTS = 24 -- rim segments of the seeker cone
 local CONE_EDGES = 8 -- lines from the apex to the rim
@@ -49,8 +58,10 @@ export type View = {
 	lines: { LineHandleAdornment },
 	spheres: { SphereHandleAdornment },
 	cylinders: { CylinderHandleAdornment },
+	rings: { CylinderHandleAdornment }, -- radar accuracy: an outline and a faint fill per blip (C-181)
 	labels: { TextLabel },
-	used: { lines: number, spheres: number, cylinders: number, labels: number },
+	readout: TextLabel, -- the radar accuracy line (C-181)
+	used: { lines: number, spheres: number, cylinders: number, rings: number, labels: number },
 	entries: { MissileView.Entry }, -- the last frame's (debug query)
 	stats: { frames: number, lastMs: number, maxMs: number, maxShown: number },
 	eye: Vector3, -- the camera this frame
@@ -66,6 +77,23 @@ function RenderMissileView.new(): View
 	gui.ResetOnSpawn = false
 	gui.DisplayOrder = 5
 	gui.Parent = (game:GetService("Players").LocalPlayer :: Player):WaitForChild("PlayerGui")
+	local readout = Instance.new("TextLabel")
+	readout.Name = "RadarAccuracy"
+	readout.AnchorPoint = Vector2.new(0.5, 0)
+	readout.Position = UDim2.new(0.5, 0, 0, 72)
+	readout.AutomaticSize = Enum.AutomaticSize.XY
+	readout.BackgroundColor3 = Color3.fromRGB(10, 12, 16)
+	readout.BackgroundTransparency = 0.35
+	readout.BorderSizePixel = 0
+	readout.Font = Enum.Font.Code
+	readout.TextSize = 14
+	readout.TextColor3 = COLOR.radarRing
+	readout.Visible = false
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 6), UDim.new(0, 6)
+	pad.PaddingTop, pad.PaddingBottom = UDim.new(0, 3), UDim.new(0, 3)
+	pad.Parent = readout
+	readout.Parent = gui
 	return {
 		enabled = false,
 		folder = folder,
@@ -73,8 +101,10 @@ function RenderMissileView.new(): View
 		lines = {},
 		spheres = {},
 		cylinders = {},
+		rings = {},
 		labels = {},
-		used = { lines = 0, spheres = 0, cylinders = 0, labels = 0 },
+		readout = readout,
+		used = { lines = 0, spheres = 0, cylinders = 0, rings = 0, labels = 0 },
 		entries = {},
 		stats = { frames = 0, lastMs = 0, maxMs = 0, maxShown = 0 },
 		eye = Vector3.zero,
@@ -155,6 +185,18 @@ local function cylinder(v: View, p: Vector3, radius: number, height: number, col
 	c.Transparency = transparency
 end
 
+-- A flat circle on the ground: an outline `width` studs wide, or a filled
+-- disc (width nil).
+local function ring(v: View, p: Vector3, radius: number, width: number?, color: Color3, transparency: number)
+	local c = adorn(v, v.rings, "rings", "CylinderHandleAdornment")
+	c.CFrame = CFrame.new(p) * VERTICAL
+	c.Radius = radius
+	c.InnerRadius = if width then math.max(0, radius - width) else 0
+	c.Height = 0.15
+	c.Color3 = color
+	c.Transparency = transparency
+end
+
 local function label(v: View, text: string, x: number, y: number, color: Color3)
 	local i = v.used.labels + 1
 	v.used.labels = i
@@ -195,15 +237,36 @@ local function finish(v: View)
 	hideFrom(v.lines, v.used.lines + 1)
 	hideFrom(v.spheres, v.used.spheres + 1)
 	hideFrom(v.cylinders, v.used.cylinders + 1)
+	hideFrom(v.rings, v.used.rings + 1)
 	hideFrom(v.labels, v.used.labels + 1)
 end
 
 function RenderMissileView.setEnabled(v: View, on: boolean)
 	v.enabled = on
 	if not on then
-		v.used.lines, v.used.spheres, v.used.cylinders, v.used.labels = 0, 0, 0, 0
+		v.used.lines, v.used.spheres, v.used.cylinders, v.used.rings, v.used.labels = 0, 0, 0, 0, 0
 		table.clear(v.entries)
 		finish(v)
+	end
+	v.readout.Visible = on
+end
+
+-- The team's radar accuracy (C-181): a circle round each radar blip, and
+-- the readout.
+local function radarAccuracy(v: View, world: World.World)
+	local acc = RadarAccuracy.of(world.economy)
+	v.readout.Text = RadarAccuracy.readout(acc)
+	local layers = world.layers
+	for i, r in RadarAccuracy.rings(world, acc) do
+		if i > RenderMissileView.MAX_RINGS then
+			break
+		end
+		local y = (if layers then Terrain.surfaceY(layers, r.x, r.z) else World.groundY(world, r.x, r.z)) + 0.6
+		local at = Vector3.new(r.x, y, r.z)
+		local color = if r.tracked then COLOR.trackRing else COLOR.radarRing
+		-- the outline stays visible from the RTS camera: a tenth of the radius, at least 0.3
+		ring(v, at, r.radius, math.max(0.3, r.radius * 0.1), color, 0.15)
+		ring(v, at, r.radius, nil, color, 0.85)
 	end
 end
 
@@ -213,8 +276,9 @@ function RenderMissileView.step(v: View, fx: Effects.Fx, world: World.World, ren
 		return
 	end
 	local t0 = os.clock()
-	v.used.lines, v.used.spheres, v.used.cylinders, v.used.labels = 0, 0, 0, 0
+	v.used.lines, v.used.spheres, v.used.cylinders, v.used.rings, v.used.labels = 0, 0, 0, 0, 0
 	v.eye = cam.CFrame.Position
+	radarAccuracy(v, world)
 	local entries = MissileView.build(fx, world, renderTick, visible)
 	v.entries = entries
 	for _, e in entries do
