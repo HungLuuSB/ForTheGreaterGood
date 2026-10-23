@@ -24,6 +24,7 @@ export type Order = {
 	started: boolean,
 	held: boolean?, -- attack-move / patrol: its hold was checked at least once (S-107)
 	nav: number, -- Nav order ID of the move this order issued (0 = none)
+	speedCap: number?, -- group move (S-137): top speed, the selection's slowest ground unit's
 	gx: number?, -- chase moves (attack, guard): where the last move was aimed
 	gz: number?,
 	issued: number, -- tick of the last chase move
@@ -111,6 +112,7 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 				h = Hash.u32(Hash.u32(h, if ord.started then 1 else 0), ord.nav)
 				h = Hash.u32(h, ord.issued)
 				h = Hash.u32(h, if ord.auto then 1 else 0)
+				h = Hash.number(h, ord.speedCap or 0)
 			end
 		end
 		h = Hash.u32(h, if o.hold[id] then 1 else 0)

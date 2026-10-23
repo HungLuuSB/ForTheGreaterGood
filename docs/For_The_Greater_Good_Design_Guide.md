@@ -577,7 +577,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 ### 6.6 Group movement & formations
 
 - **Line move (BAR-style):** dragging a right-click line spreads selected units evenly along it; each gets its own goal cell but units sharing a move class and nearby goals can share a field.
-- **Speed matching (optional toggle):** group moves at the slowest member's speed.
+- **Speed matching (optional toggle):** group moves at the slowest member's speed. Built (S-137): command flag GROUP (Ctrl held, as BAR's ctrl-move) on MOVE / FIGHT / PATROL caps each ground unit's top speed at the selection's slowest ground unit's; aircraft are not capped.
 - Arrival: units within a radius of the goal stop rather than pushing to the exact cell.
 - Implementation notes (`Sim/Nav.luau`, DECISIONS D35, D38–D40):
   - Each (move class, footprint) group shares one field to the group goal, and each unit gets its own formation slot.

@@ -1990,3 +1990,51 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Changed:** `Sensors.blipOffset` and `BLIP_ORBIT` are gone. `knownPosition` returns the true position for RADAR / SONAR contacts, so NetOut sends the unit's own cell. `knownPosition(..., true)` and `knownTarget` still return the hidden aim point (S-130's orbit at the radar error), so targeting is unchanged.
 - **What a player learns:** the cell, within half a cell (about 5.7 studs) of the unit. S-131's drawn orbit gave the same, since it was sent as a cell anyway, plus the edge hops. Guide 11.4 and the net tiers line are updated.
 - **Tests:** `Fog.spec`: a radar contact's drawn position is the unit's, and its aim point is more than 10 studs off.
+
+## S-135 — Blocked units slide along structures at speed (the user's approval, from S-133's review item) (2026-10-23)
+
+- **The crawl:** a unit whose next step is blocked slid along the free axis, but Movement halved its speed every such tick. Steering re-accelerated it by one tick's worth each time, so it settled near `accel × DT`, under 1 stud/s, for as long as it touched the wall.
+  - It mattered when a unit kept heading into a structure. The example: a straight-line ("shortcut") order issued while the unit was still inside its factory, which never asks for a flow field because the slow slide still counts as progress.
+  - Seen with S-133 in seed 43: the first Mason crawled along a second plant's east face for 23 s, and the AI's T2 came about 3 minutes late.
+- **Fix:** a blocked unit slides along the axis its heading leans to first (then the other), by at least `SLIDE_MIN` (half) of a full step, and keeps its speed. Only when both axes are blocked does it stop.
+- **Measured** (`Movement.spec`, seed 43's geometry: a Mason leaving a plant, sent north-west past a second plant offset 16 studs):
+  - arrival 529 → 160 ticks;
+  - ticks under 2 studs/s 354 → 0;
+  - in the AI match, that Mason starts the T2 plant at 0.86 min (1.27 before, 0.84 before S-133).
+
+## S-136 — IDLE events for the player's builders and factories (client request 62) (2026-10-23)
+
+- **Asked:** the client needs idle builder and factory counts, a key to cycle idle builders and an icon over them, like BAR. It can't tell an idle builder from one that is repairing, assisting, reclaiming or guarding. B's follow-up: a per-unit bit on tactical records misses off-camera units, and BAR counts and jumps to all of them.
+- **Built:** protocol 31, event `IDLE 25`: `unitId u16, idle u8`, owner only, on camera or not.
+  - `NetOut.isIdle`: a factory with an empty queue; a builder with no order of its own (automatic reactions don't count) and no build, assist, repair or reclaim work.
+  - Every `NetOut.IDLE_EVERY` (5) ticks, each player's finished units with `buildOptions` are checked. A change is sent, tracked by generation in `PlayerNet.sentIdle`, so a reused ID starts busy.
+  - On join / reconnect (forceFull) every idle one is sent again. Units never reported are busy.
+- **Not chosen:** a STATES bit. It only reaches units in the tactical tier.
+- **Tests:**
+  - `Schema.spec`: golden bytes `19 02 01 01`, and event kind 26 is now the unknown one.
+  - `NetOut.spec`: an off-camera Mason and plant are reported idle, owner only. Given work they go busy, and idle again when done. A late join hears of both.
+
+## S-137 — Group moves at the slowest unit's speed: command flag GROUP (the user's queue item 3) (2026-10-23)
+
+- **Asked:** a move or fight order given with a modifier keeps the group together at its slowest unit's speed (BAR's ctrl-move). The key was agreed with B: Ctrl, which is free on right-click and in the move / fight command modes.
+- **Built:** protocol 31 (with S-136): `Schema.CmdFlag.GROUP = 4`, valid with QUEUE and LINE.
+  - On MOVE, FIGHT and PATROL, `Orders.give` sets each order's `speedCap` to the lowest `maxSpeed` among the selection's ground units. Structures and aircraft are left out, so aircraft fly as usual.
+  - While that order is the started head, Movement caps the unit's top speed (after terrain) at it.
+  - The cap is hashed with the order. Other commands ignore the flag.
+- **Not done:** faster units don't wait for stragglers at the start. Units start where they stand, at one speed, so the group arrives as it left. BAR's ctrl-move behaves about the same.
+- **Tests:**
+  - `Orders.spec`: a Herald (60 studs/s) and a Lancer (28). Without the flag the Herald arrives far ahead. With it, it never passes 28 studs/s and they arrive within 30 ticks of each other, while a Falcon in the selection flies at its own speed.
+  - `Schema.spec`: golden bytes of a GROUP + QUEUE move; flag bit 8 is reserved.
+
+## S-138 — Queue units in a factory still being built (client request 63, the user) (2026-10-23)
+
+- **Asked:** "Add the ability to queue inside the factory while it being built". `Build.commandBuild` used to drop a queue order on an unfinished factory.
+- **Built:**
+  - An unfinished factory takes BUILD queue items, and REPEAT as before. Its queue is sent in the QUEUE owner field like any factory's.
+  - It produces nothing and spends nothing until finished: the builders loop skips unfinished factories, and assistants build the frame. It starts on the queue the tick it's finished.
+  - **CANCEL:** while a factory's queue isn't empty, CANCEL drops queue items (`value` 1-based, 0 = all) and leaves the frame. A CANCEL with an empty queue cancels the frame as before (S-35). So on a frame with a queue, the first CANCEL 0 clears the queue and the second removes the frame. net.md section 9 says so.
+- **Tests:** `Build.spec`: a Vehicle Plant frame takes three items, and CANCEL 3 drops one. No progress or PRODUCED before it's finished; it starts at once after. A second frame's first CANCEL 0 clears its queue and the second removes it.
+- **Revised the same day (fairness):** the first fix (slide along the leaning axis by at least half a step, speed kept) made the mirrored-map fairness test fail (west 2, east 10 of 12). Over 36 matches: west 9, east 27; main had 15 / 21.
+  - Varying `SLIDE_MIN` (0.3–1.0) moved the split around but kept it tilted east. The cause in that rule wasn't found.
+  - The fix is now smaller: the old slide (x first, then z, the step along the heading) stays, and a sliding unit's speed no longer decays below `SLIDE_MIN` (0.5) of its top speed. It used to halve every tick.
+  - Results: crawl test passes; seed 43's Mason starts at 0.89 min; fairness 6 / 6 of 12, and 17 / 19 over seeds 1–18.

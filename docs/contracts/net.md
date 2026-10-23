@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **30**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **31**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -142,6 +142,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `SHIELD_HIT 20` | `unitId u16 (the generator; 0 = one P doesn't have), projId u16 (0 = a hitscan shot, protocol 26), pos (the point on the dome), mass u8, flags u8`, 13 B (protocol 24, S-79) | For projectiles P has, or anywhere in the camera area: a shell turned back by a dome's field (the hit; a missile loses its lock); with flag `SHIELD_BREACH` 1, one that broke through; with flag `SHIELD_ABSORBED` 2 (protocol 25, S-85), a light shell (mass under `ShieldField.ABSORB_MASS`, 0.5) destroyed where it crossed the dome's surface: drop it, no burst; no IMPACT follows. `mass` / `Schema.SHIELD_MASS_SCALE` (31) is the shell's mass (1 = a 150-damage shell, 0.2..8). A turned shell stays live and bursts with its own IMPACT where it lands. |
 | `DOME 23` | `unitId u16 (the generator), pos (the dome's centre), radius u16 (studs), charge u8, flags u8 (ShieldFlag)`, 13 B (protocol 29, S-122, client request 55) | A shield dome whose circle touches P's camera area (+2 cells) while P doesn't have its generator, whatever P's team sees (as BAR draws shields). Sent when it enters that area and when its charge (by `NetOut.SHIELD_STEP`) or flags change. It doesn't reveal the generator's type. Draw the dome from it. When the generator enters P's tactical tier, its ENTER and SHIELD records take over, after a DOME_GONE. |
 | `DOME_GONE 24` | `unitId u16`, 3 B (protocol 29) | That dome left P's camera area, its generator died, or P now has the generator. |
+| `IDLE 25` | `unitId u16, idle u8 (0 / 1)`, 4 B (protocol 31, S-136, client request 62) | Owner only, on camera or not: one of P's finished builders or factories (units with `buildOptions`) became idle (1) or busy (0). A builder is idle with no order of its own (automatic reactions don't count) and no build, assist, repair or reclaim work; a factory with an empty queue. Checked every `NetOut.IDLE_EVERY` (5) ticks. Units never reported are busy. On join / reconnect every idle one is sent. A dead unit's report lapses: drop it with the unit. |
 | `INTERCEPTED 16` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile was destroyed in flight at `pos`: a small burst, **no detonation**; drop the projectile. Sent instead of its IMPACT. |
 | `DECOYED 7` | `projId u16, pos, vel, decoy pos, decoyTicks u8, countermeasure u8`, 23 B (countermeasure: 1 flares, 2 chaff, 3 DIRCM, `Schema.Countermeasure`; protocol 13) | For projectiles the client has: a countermeasure seduced it. Snap to `pos`/`vel`, clear its target, and for the next `decoyTicks` ticks steer toward the decoy point with `Guidance.decoy` (stop early when it returns false), then fly straight (protocol 11, S-28). |
 | `LOST_LOCK 8` | `projId u16, pos, vel`, 15 B | Same, but the missile flies on unguided. |
@@ -197,8 +198,8 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 ## 9. Client → server: commands (Cmd channel)
 
 - Layout: guide 7.3 and `Schema.encodeCommand`: `cmdType u8, flags u8, count u16, unitIds u16 × count, params`.
-- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10, SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14, REPEAT 15 (`value u8`: 0 off, 1 on; protocol 7), CANCEL 16 (`value u8` 0..50; protocol 12): on an unfinished frame it cancels it (gone, no wreck; the frame's progress × cost is refunded); on a factory it drops queue item `value` (1-based; 0 = all), refunding the progress on the item in production (S-35).
-- Flags: bit0 queue (shift), bit1 line formation.
+- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10, SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14, REPEAT 15 (`value u8`: 0 off, 1 on; protocol 7), CANCEL 16 (`value u8` 0..50; protocol 12): on an unfinished frame it cancels it (gone, no wreck; the frame's progress × cost is refunded); on a factory it drops queue item `value` (1-based; 0 = all), refunding the progress on the item in production (S-35). An unfinished factory takes BUILD queue items too and starts on them when finished (S-138); while its queue isn't empty, CANCEL drops queue items (0 = all) and leaves the frame, so a CANCEL 0 on an empty queue removes the frame.
+- Flags: bit0 queue (shift), bit1 line formation, bit2 GROUP (ctrl; protocol 31, S-137): on MOVE, FIGHT and PATROL, every ground unit of the selection moves no faster than its slowest ground unit's top speed, so the group keeps together (BAR's ctrl-move); aircraft fly as usual. Other commands ignore it.
 - At most 200 unit IDs per command.
 - The server applies a command to the sender's own live units only and ignores the rest. Commands are validated server-side (guide 19); a rejected command just has no effect.
 - **All commands are effective** (S-4). With the queue flag, an order is appended to each unit's queue; without it, it replaces the queue:
@@ -312,6 +313,7 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 31 | Event `IDLE 25` (own idle builders and factories, S-136); command flag `GROUP 4` (S-137) |
 | 30 | WELCOME ends with every team's ally team (`teamCount u8, allyTeam u8 × teamCount`): allies on the client (S-129) |
 | 29 | Events DOME 23 and DOME_GONE 24: shield domes regardless of vision (S-122, client request 55) |
 | 28 | SHOT carries `weaponDefIndex u16` (16 B): a hidden shooter's beam is drawn as a beam (S-118, client request 52) |

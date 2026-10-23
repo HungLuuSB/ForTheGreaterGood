@@ -292,6 +292,64 @@ return function(t: RunAll.Context)
 		t.equal(sim.build.exiting[unit], nil, "aircraft don't drive out")
 	end)
 
+	t.test("a factory still being built takes a queue and starts on it when finished (S-138, client request 63)", function()
+		local sim, cv, sx, sz = newStart()
+		fund(sim)
+		local w = sim.world
+		build(sim, { cv }, "ord_vehplant", sx + 60, sz)
+		local frame = 0
+		runUntil(sim, 600, function()
+			return frame ~= 0
+		end, function(s)
+			for _, e in events(s, "BUILD_START") do
+				frame = e.unit
+			end
+		end)
+		t.expect(frame ~= 0 and w.buildProgress[frame] < 1, "a plant frame going up")
+		build(sim, { frame }, "ord_lancer", 0, 0)
+		build(sim, { frame }, "ord_lancer", 0, 0)
+		build(sim, { frame }, "ord_mason", 0, 0)
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame], 3, "the frame took the queue")
+		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame }, value = 3 })
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame], 2, "CANCEL n drops a queued item, the frame stays")
+		t.expect(w.slot[frame] ~= nil, "still there")
+		local produced = 0
+		local finishedAt = runUntil(sim, 3000, function()
+			return w.buildProgress[frame] >= 1
+		end, function(s)
+			t.equal(s.build.progress[frame] or 0, 0, "nothing produced or spent before it's finished")
+			produced += #events(s, "PRODUCED")
+		end)
+		t.expect(finishedAt ~= nil, "the plant finished")
+		t.equal(produced, 0, "no unit before then")
+		runUntil(sim, 30, function()
+			return false
+		end)
+		t.expect((sim.build.progress[frame] or 0) > 0, "and it starts on its queue at once")
+		-- CANCEL 0 on a frame with a queue clears the queue first, then a second removes the frame
+		build(sim, { cv }, "ord_vehplant", sx + 60, sz + 80)
+		local frame2 = 0
+		runUntil(sim, 600, function()
+			return frame2 ~= 0
+		end, function(s)
+			for _, e in events(s, "BUILD_START") do
+				frame2 = e.unit
+			end
+		end)
+		build(sim, { frame2 }, "ord_lancer", 0, 0)
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame2], 1, "queued")
+		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame2 }, value = 0 })
+		Sim.step(sim)
+		t.equal(#sim.build.queue[frame2], 0, "the first CANCEL 0 clears the queue")
+		t.expect(w.slot[frame2] ~= nil, "and leaves the frame")
+		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame2 }, value = 0 })
+		Sim.step(sim)
+		t.equal(w.slot[frame2], nil, "the second removes the frame")
+	end)
+
 	t.test("a builder assisting a factory speeds up production", function()
 		local function firstLancer(assist: boolean): number
 			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })

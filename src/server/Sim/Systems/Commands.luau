@@ -39,6 +39,7 @@ local bor, band, bnot = bit32.bor, bit32.band, bit32.bnot
 local TOGGLED_ON = World.State.TOGGLED_ON
 local LINE = Schema.CmdFlag.LINE
 local QUEUE = Schema.CmdFlag.QUEUE
+local GROUP = Schema.CmdFlag.GROUP
 
 local Commands = {}
 Commands.UNITS_PER_TICK = 200 -- unit IDs per player per tick (S-100)
@@ -79,7 +80,7 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 		lx, lz = g:decode(cell2, cmd.offX2 :: number, cmd.offZ2 :: number)
 	end
 	local kind = KIND_OF[cmd.cmdType] :: any
-	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz }, band(cmd.flags, QUEUE) ~= 0)
+	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz, group = band(cmd.flags, GROUP) ~= 0 }, band(cmd.flags, QUEUE) ~= 0)
 end
 
 -- ATTACK / GUARD / REPAIR / RECLAIM: an order on a target. ATTACK needs a
@@ -186,8 +187,13 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		elseif cmdType == CT.REPEAT then
 			Orders.setRepeat(sim, id, cmd.value == 1) -- factories only (S-13)
 		elseif cmdType == CT.CANCEL then
-			-- an unfinished frame goes; a factory drops a queue item (S-35)
-			if not Build.cancelFrame(sim, id) then
+			-- an unfinished frame goes; a factory drops a queue item (S-35).
+			-- An unfinished factory with a queue (S-138) drops queue items
+			-- first: value 0 clears its queue, and the next CANCEL 0 the frame
+			local q = sim.build.queue[id]
+			if q ~= nil and #q > 0 then
+				Build.cancelQueued(sim, id, cmd.value :: number)
+			elseif not Build.cancelFrame(sim, id) then
 				Build.cancelQueued(sim, id, cmd.value :: number)
 			end
 		elseif cmdType == CT.STOP then
