@@ -1,0 +1,86 @@
+# Lobby progress
+
+Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
+
+## Summary (2026-10-23, first lobby: rooms, start and return, profile)
+
+- **The lobby place works end to end in Studio.** Make a room, set it up, start, play the (stand-in) match, come back to the room with the results, and see it on your profile.
+- **Rooms (BAR battle room):** create a room (name, public / friends / private, optional password, 2-16 players), browse with search and filters, join by click or by code, leave, kick, host migration, room chat. The host picks the map (with a preview), mode, win rule, friendly fire and cheats, and adds AI with level and faction. Players pick faction, team and color and ready up. The host starts when all are ready, or forces it after a confirmation.
+- **Start and return:** the server checks the room again, reserves a match server, writes the match config to MemoryStore, and teleports everyone together. Only the match ID travels with the teleport. Failures bring everyone back to the room with the reason. Coming back puts you in the same room, rebuilt if that server is gone. The room shows "in match" while it runs.
+- **Studio can't teleport,** so a stand-in match server runs the match's side of the contract in-process. Its loading screen has buttons to end the match, "kill" the server, or leave early. All three paths were checked in Studio, plus staged reserve and teleport failures.
+- **Main menu:** Home (Quick play), Skirmish (map cards and Launch), Multiplayer (rooms), Replays, Profile, Settings, laid out after your BAR references. The background is a live battle of the game's own tank, SAM, MLRS and aircraft models, with a mouse parallax camera.
+- **Checked in Studio through the UI:** Home, the room browser, Create room, the battle room (Teams on Twin Lakes with 3 AI), room chat, Start, the stand-in match screen, the results panel, and the profile. Screenshots: `debug_out/screens/lobby_*.jpg`.
+- **Not checked yet (Rojo was disconnected after a restart):** the game's real unit meshes in the background (the screenshots show the box stand-ins), and four small fixes made after those screenshots: Skirmish's detail panel scrolls with Launch pinned, the results panel is taller, the pages hide behind the loading screen, and the browser's filter order.
+- **Contract:** `docs/contracts/match.md` v1 (config schema, MemoryStore keys, results record, timeouts, rejoin, profiles), filed below for sim-A and client-B.
+- **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
+- **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
+- Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+
+## Connecting Studio
+
+In "FTGG Lobby" only, from the repo root:
+
+1. `lune run src/lobby/tools/sync serve` (keeps `build/lobby` converted)
+2. `rojo serve lobby.project.json` (port 34874)
+3. Rojo plugin: port **34874**, Connect.
+
+Restart both after editing `lobby.project.json`; then reconnect the plugin.
+
+## What needs a published test
+
+Studio can't reserve or teleport, and MemoryStore and DataStore need a published place. The list is in `docs/contracts/match.md` section 10. In short:
+1. Publish "FTGG Lobby" as the **start place** of the same experience as the match place (89435699207932). I haven't published anything.
+2. The match place must implement its side of the contract (request 1 for client-B) before a real match can run.
+3. Then check: group teleport in and out, the same lobby server on return (and a rebuilt room when it's gone), one player's failed teleport, rejoin, a match server shut down mid-match, profile writes, the name filter, friends-only rooms, and room chat with two real accounts.
+
+## Needs my review
+
+1. **Rooms are per lobby server.** Players on another lobby server don't see your room; friends join through the room code only if they're on the same server. A cross-server browser (rooms listed in MemoryStore, joining = teleporting to that server) is possible but needs a published place to test. Want it next?
+2. **Guide 16.3 says "map vote".** Your design has the host pick the map (BAR). I followed your design; the guide is the sim stream's file, so I asked sim-A to update it (request A-3).
+3. **Cheats:** the host can turn them on in any room. Matches with cheats are listed on the profile but don't count. The match server still enforces the allow-list (C-119). OK?
+4. **Forced start** skips only the ready check; every other rule holds.
+5. **Spectators** are members without a seat (when the map's starts are full, or by choice). They're in the config and may watch the match; client-B needs to support it (request B-1).
+6. **Start positions:** the lobby orders players so the sim's player ID is the start index (Teams: ally teams together). So sim request 64 (chosen starts) isn't needed for version 1. BAR's start boxes or chosen starts could come later.
+7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
+8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
+
+## Requests
+
+### For sim-A (sim session)
+
+- **A-1. Match config → Sim (contract section 3).** Nothing new is needed from `Sim.new` for version 1: player ID = start index, factions by team parity as `src/roblox/Lobby.config` does. Please confirm, and resolve your request 64 (chosen starts) against L-4: the lobby assigns starts by player order.
+- **A-2. A shared validator (optional).** If the match server should run `MatchConfig.validate` without copying it, it could move to `src/shared/Match/` (yours). Say if you want it.
+- **A-3. Guide 16.3** ("map vote, mode, teams, faction pick"): the user's design is a BAR battle room where the host picks the map; reserved servers via TeleportService; the flow in `docs/contracts/match.md`. Please update the guide.
+
+### For client-B (client session, match place)
+
+- **B-1. The match server's side of `docs/contracts/match.md`** (in `src/roblox`):
+  - On start, read `server/<game.PrivateServerId>` → `config/<matchId>` from MemoryStore HashMap `FtggMatch`, validate (section 3), refuse otherwise (section 9). Teleport data is only a cross-check.
+  - Admit only listed users; seat them by `players[i].user`; spectators get the spectator stream.
+  - Heartbeat `alive/<matchId>` every 30 s.
+  - At the end, write `result/<matchId>` (section 5), then teleport everyone back to the lobby place with `ServerInstanceId = config.lobby.jobId` and teleport data `{ matchId }`.
+  - Rejoin = join; player colors from the palette; the dev lobby (`src/roblox/Lobby.luau`) stays the Studio fallback.
+- **B-2. Loading screen** while players arrive (your plan), in the style of the user's reference (BAR: full-screen art, a tip line, a long olive progress bar). The lobby's own pre-teleport screen uses the same layout, so the hand-off looks continuous.
+- **B-3. "Return to lobby"** on the results panel with a 30 s auto-return countdown; the server does the teleport (section 6).
+- **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
+- **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
+
+## Plan and status
+
+| Step | Status |
+|---|---|
+| `lobby.project.json`, sync and build tooling (L-1) | done |
+| Rooms and room setup, server-checked (L-3), chat (L-9) | done, checked in Studio |
+| Start and return with Studio stand-ins (L-4, L-6), failure paths | done, checked in Studio |
+| Profile and history (L-8) | done, checked in Studio (stand-in store) |
+| Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio (last fixes pending a re-check) |
+| Background battle scene with parallax (L-12) | done; checked with box stand-ins, real meshes pending a re-check |
+| Contract v1 and requests | done |
+| Published test (needs the user to publish, and B-1) | waiting |
+
+## How to continue
+
+- Specs: `lune run src/lobby/tools/test`. Offline build and check: `lune run src/lobby/tools/sync build` (only `build/lobby`).
+- Server: `src/lobby/server/Main.server.luau` (requests and views), `Launcher` (start), `Returns` (poll, results, arrivals), `StandInMatch` (Studio), `Services/*` (real vs stand-in).
+- Client: `src/lobby/client/Main.client.luau` (shell), `Pages/*`, `Overlays/*`, `Scene.luau` (background).
+- Studio test hooks: `game.ServerScriptService.Lobby:SetAttribute("StandInFail", "reserve" | "teleport" | "player")` in a playtest's server.

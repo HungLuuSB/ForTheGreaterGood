@@ -9,7 +9,9 @@
 --
 -- lobby.project.json maps converted files under build/lobby/src. Each
 -- mapped path's source is the same path without the "build/lobby/" prefix
--- (src/shared, src/lobby/..., and the client's UI kit read-only). Requires
+-- (src/shared, src/lobby/..., and the client's UI kit and mesh model builder
+-- read-only); a "$path" outside build/lobby (the meshes' materials,
+-- place/MeshMaterials.model.json) is served as it is. Requires
 -- are converted by darklua as in the main build (DECISIONS D84), against a
 -- sourcemap of the same tree read from the sources. Only build/lobby is
 -- written; the main game's build/serve and build/ci are never touched.
@@ -69,11 +71,9 @@ local function collect(node: any)
 	for key, value in node do
 		if key == "$path" then
 			local out = value :: string
-			if string.sub(out, 1, #PREFIX) ~= PREFIX then
-				print(`{PROJECT}: "{out}" is not under {OUT}`)
-				process.exit(1)
+			if string.sub(out, 1, #PREFIX) == PREFIX then
+				table.insert(mapped, { string.sub(out, #PREFIX + 1), out })
 			end
-			table.insert(mapped, { string.sub(out, #PREFIX + 1), out })
 		elseif type(value) == "table" then
 			collect(value)
 		end
@@ -89,7 +89,8 @@ local function writeSourceProject()
 		local copy = {}
 		for key, value in node do
 			if key == "$path" then
-				copy[key] = "../../" .. string.sub(value, #PREFIX + 1)
+				local converted = string.sub(value, 1, #PREFIX) == PREFIX
+				copy[key] = "../../" .. if converted then string.sub(value, #PREFIX + 1) else value
 			elseif type(value) == "table" then
 				copy[key] = rewrite(value)
 			else

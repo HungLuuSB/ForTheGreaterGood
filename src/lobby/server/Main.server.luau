@@ -11,7 +11,7 @@
 --     { op = "create", name, privacy, password?, maxPlayers }
 --     { op = "join", roomId, password? }      { op = "leave" }
 --     { op = "start", force? }                { op = "rejoin" }
---     { op = "quick", mapId, faction, level } a skirmish against one AI, started at once
+--     { op = "quick", mapId, faction, level, enemy? }  a skirmish against one AI, started at once
 --     { op = "kick", user }                   host
 --     any Rooms.apply request (set, addAi, ai, removeAi, mine, spectate, play, ready)
 --     { op = "standIn", action }              Studio only (StandInMatch)
@@ -303,7 +303,7 @@ local function handle(player: Player, msg: any): string?
 		local steps = {
 			{ op = "set", key = "mapId", value = map.id },
 			{ op = "mine", faction = msg.faction },
-			{ op = "addAi", level = msg.level, faction = if msg.faction == "order" then "chaos" else "order" },
+			{ op = "addAi", level = msg.level, faction = if msg.enemy ~= nil then msg.enemy elseif msg.faction == "order" then "chaos" else "order" },
 		}
 		for _, step in steps do
 			local serr = Rooms.apply(room, Ctx.maps, user, step)
