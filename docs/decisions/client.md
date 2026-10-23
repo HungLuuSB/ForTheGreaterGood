@@ -1262,3 +1262,25 @@ Maps without an entry get the moonlit night (C-101). Details:
 - Spec: MapLook.spec. Screens: `c155_canyon_day_*.jpg`.
 
 **Why:** the user: "Each map will have its own environment + lighting settings + effects + time of day. For Canyon, it should be during the day".
+
+### C-156 — Animated pieces run by state: radars, drills, wheels, gantries (2026-10-23)
+
+**Decision:**
+- `Core/PieceMotion` lists each def's animated pieces: the blockout's part `anim`, overridden by the mesh manifest's `anim` on the same name. Axes are mapped to x / y / z with a sign.
+- PieceAnim's driver re-plans them through `PieceScripts/Ambient` on every unit, whenever moving, power (off, stalled or unbuilt = 0; else the own team's power ratio in quarters, others count as powered), producing or landed changes.
+- What Ambient does:
+  - wheels roll while moving;
+  - radars, dishes, arrays and sonar drums sweep at 60 / 40°/s × power;
+  - drills turn at 160°/s × power;
+  - jammer emitters spin;
+  - cranes and jibs swing ±30°;
+  - factory gantries and trolleys run their rail while producing;
+  - windmill rotors always turn, and a helicopter's tail rotor runs with its main rotor;
+  - track sets judder while moving (no texture scroll: no texture yet).
+- Powered pieces wind up and down at 180°/s².
+- `open`, `lower`, `pulse` and `swing` stay with their own scripts or the glow.
+- Spec: Ambient.spec. Checked in Studio: the airfield radar turns 61° in 1 s; the Chaos plant's trolley slides 2 studs a second while producing. Screen: `c156_ambient_pieces.jpg`.
+
+**Why:** the user's queue item 2: "Animation pass with C's animated pieces ... driven by power and on/off state".
+
+**Not done:** a sonar "ping" effect and a jammer shimmer beyond the spinning emitter. Both would be new VFX, not pieces.

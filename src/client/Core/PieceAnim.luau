@@ -37,6 +37,9 @@
 -- move snaps; strategic zoom doesn't step the hidden units.
 
 local Schema = require("@shared/Net/Schema")
+local Ambient = require("./PieceScripts/Ambient")
+local Nanoframe = require("./Nanoframe")
+local PieceMotion = require("./PieceMotion")
 local World = require("./World")
 
 local PieceAnim = {}
@@ -89,6 +92,8 @@ export type Unit = {
 	moving: boolean,
 	landed: boolean,
 	retracted: boolean?, -- def.retract towers: TOGGLED_ON clear (C-112)
+	motions: { PieceMotion.Motion }, -- the def's animated pieces (C-156)
+	ambientKey: number?, -- the state Ambient last planned for
 	spins: { [string]: SpinState }, -- "piece:axis" → spin
 	-- methods (see the header)
 	Turn: (Unit, string, Axis, number, number?) -> (),
@@ -311,6 +316,7 @@ function PieceAnim.add(s: Sched, id: number, def: any, script: any): Unit
 		moving = false,
 		landed = false,
 		spins = {},
+		motions = PieceMotion.forDef(def),
 	} :: any
 	for name, fn in Methods do
 		u[name] = fn
@@ -355,6 +361,9 @@ end
 -- Calls the hooks the replicated state asks for (guide 14.3). `shots` are
 -- this frame's { unitId, slot } shots (Core/Effects).
 function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
+	local eco = world.economy
+	local ownRatio = if eco then eco.power.ratio / 255 else 1
+	local myTeam = world.me and world.me.team
 	for id, u in s.units do
 		local wu = world.units[id]
 		if wu == nil then
@@ -386,6 +395,18 @@ function PieceAnim.drive(s: Sched, world: World.World, shots: { { number } })
 		if landed ~= u.landed then
 			u.landed = landed
 			PieceAnim.call(u, if landed then "Land" else "TakeOff")
+		end
+		-- the animated pieces every unit has (C-156): re-planned on a state change
+		if #u.motions > 0 then
+			local moving = if u.lod == "near" then u.moving else World.moving(world, wu)
+			local power = PieceMotion.power(u.def, wu.state or 0, wu.build, if wu.team == myTeam then ownRatio else 1)
+			local producing = Nanoframe.producing(wu) ~= nil
+			local key = PieceMotion.key(moving, power, producing, landed)
+			if key ~= u.ambientKey then
+				u.ambientKey = key
+				s.stats.hooks += 1
+				spawn(u, 0, Ambient.apply, u.motions, { moving = moving, power = power, producing = producing, landed = landed })
+			end
 		end
 		if u.def.retract then
 			local retracted = bit32.band(wu.state or 0, TOGGLED_ON) == 0
