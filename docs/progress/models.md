@@ -466,6 +466,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `bb366c3` (merge of `main` cc8f02a; approvals from the user's second review: `beam`, `deposit`, the interceptors, `ord_sovereign` / `chs_warlord` (tracked, until the mech redesign); manifest only).
 - Ready to merge: `f07b82f` (Commander mechs step 1: walker blockouts `ord_sovereign` / `chs_warlord`, `swing` motion in Blockout / Mesh, `stride` poses, rig.md 10, M-31; `tools/portraits.py`; `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/Mesh.luau`, tools and docs).
 - Ready to merge: `f7b2654` (honeycomb shell: smaller patches, 22% of the cells, new tile ID in `Meshes.shieldShell`; `assets/fx/shield/honeycomb/`, manifest, fx.md).
+- Ready to merge: `2b4dc5b` (Commander mechs step 2: meshes for `ord_sovereign` / `chs_warlord` (review; the tracked ones kept in `assets/models/<id>/tracked/`), WALKER anims, mech anchors, decorative muzzle allowed on unarmed defs (`Mesh.validate`); `assets/`, `src/shared/Defs/Meshes/`, `place/`, tools and docs).
 
 ## Requests
 
