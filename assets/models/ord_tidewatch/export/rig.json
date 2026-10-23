@@ -1,0 +1,257 @@
+{
+  "id": "ord_tidewatch",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.715,
+        1.4815
+      ],
+      "size": [
+        3.34,
+        3.37,
+        11.6305
+      ]
+    },
+    "sonar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.05,
+        1.4
+      ],
+      "size": [
+        0.56,
+        0.25,
+        0.56
+      ],
+      "pivot": [
+        0,
+        0.05,
+        1.4
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.2,
+        2.4,
+        6.8
+      ],
+      "size": [
+        0.22,
+        1.8,
+        1.712
+      ],
+      "pivot": [
+        0.24,
+        2.4,
+        6.8
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0191,
+        3.3,
+        0.5975
+      ],
+      "size": [
+        9.7027,
+        0.24,
+        9.2702
+      ],
+      "pivot": [
+        0.0,
+        3.3,
+        0.2
+      ]
+    },
+    "rack": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.5458,
+        0.3
+      ],
+      "size": [
+        3.8,
+        0.8083,
+        2.6
+      ],
+      "pivot": [
+        0.0,
+        0.85,
+        0.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "rack",
+      "at": [
+        0.0,
+        0.6,
+        -1.6
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "rotor",
+    "sonar",
+    "tailRotor"
+  ],
+  "visualPieces": [
+    "sonar",
+    "tailRotor"
+  ],
+  "anim": {
+    "sonar": {
+      "motion": "lower",
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "range": 8
+    },
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.845,
+        1.7875
+      ],
+      "size": [
+        3.4,
+        1.91,
+        8.575
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.42,
+        -2.6
+      ],
+      "size": [
+        0.5,
+        0.06,
+        0.3
+      ]
+    },
+    {
+      "name": "sonar_glow_running",
+      "piece": "sonar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        -0.12,
+        1.4
+      ],
+      "size": [
+        0.6,
+        0.1,
+        0.6
+      ]
+    },
+    {
+      "name": "rack_glow_weapon",
+      "piece": "rack",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        0.5309,
+        -0.275
+      ],
+      "size": [
+        3.87,
+        0.7783,
+        2.05
+      ]
+    }
+  ],
+  "glowShare": 0.0511,
+  "triangles": {
+    "base": 740,
+    "sonar": 88,
+    "tailRotor": 56,
+    "rotor": 224,
+    "rack": 276,
+    "total": 1384
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
