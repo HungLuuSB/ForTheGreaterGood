@@ -4,6 +4,24 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
+## Summary (second review queue, 2026-10-23)
+
+Done so far:
+- Approvals flipped: beam shot, deposits, interceptors.
+- Unit codex portraits: 146, in `debug_out/portraits/` with `portraits.json`; not committed, renderer in `tools/portraits.py`.
+- Honeycomb: fewer, smaller patches.
+- Commander mechs, blockouts and meshes, status `review`.
+- Next: the T1 structure redesigns at the S-104 sizes (item 2).
+
+### Needs my review
+
+- **Commander size:** the mechs are 1.5x a Lancer's height as asked (Sovereign 6.2 studs with its antennas, Warlord 7.7 with its banner; Lancer 3.7, Paladin 4.25). From the 55° game camera, though, the long tanks (12–15 studs) still cover more ground than a 5.4 x 3 mech, so the mechs read smaller from above (`cmd_mech_55_close.jpg`). `cmd_mech_scale_compare.jpg` shows them at 1.4x (back row): about tank-sized from above.
+  - If you want them clearly bigger in the game view, say a scale, e.g. 1.5–1.8x.
+  - Above about 1.3x they outgrow the sim's footprint-1 hit size (radius 3.6, height 6), so the sim would want footprint 2 (its answer to M-31).
+- **Walker move class (from the sim):** the mechs still move as TRACKED (30° slopes). A walker class (e.g. 40° slopes, BAR-bot style) is a sim change that alters where Commanders can go on every map; the sim asks you to decide.
+- **Commander weapon (from the sim):** the Commanders have no weapon in the sim, so the weapon pod and its `muzzle` are decorative. A BAR-style D-gun would be a new sim feature.
+- **Chaos colors:** the Warlord's gunmetal body is dark from above; its amber glow, stacks and team plates carry it at distance.
+
 ## Summary (BAR queue, 2026-10-22)
 
 Your queue: BAR-style Order + Chaos pairs, each with glow channels, a team test in four colors, 55° close and 220-stud shots (220 at the `bar_7` distance, cropped to its 955 × 568 framing), and the manifest with `lune run mesh_materials` in the same commit. Each pair has its own Ready to merge line. **New meshes go into the manifest as `review`, so the game keeps their blockouts until you approve them** (`APPROVED` in `assets/models/tools/manifest.py`).
@@ -52,7 +70,7 @@ Before the queue: Oracle, Watcher and the Order vehicle plant were marked approv
 | M27b | Animation audit part 2: meshes. 44 BAR meshes rebaked with their moving parts split into their own pieces (`lib.Piece.sub`; no geometry changes): track sets `trackL` / `trackR` (scroll X) on every tracked hull, wheels `wheelL{i}` / `wheelR{i}` (spin X) on every wheeled one, `tailRotor` on all 8 helicopters, `radar` on the airfields and the Sentry, `trolley` on the Order shipyard and the Chaos vehicle plant, `jib` on the Chaos shipyard. Re-uploaded, rigged in FTGG Art, recorded; the manifest lists each unit's `visualPieces` and `anim` ({motion, axis, range?}, rig.md 9). The 13 wrecks of split units rebuilt with the same pieces | – | – | – | – |
 | BFX | Beam shot effect (M-29, the user's request): Radiance / Inferno shot, BAR Pulsar style, original. Eight white textures (core, glow, two crackling filament strips on different waves, a 2 × 2 charge flipbook, impact flare, grey scorch, ember rim), the timing sheet and recommended values per faction in fx.md "Beam shot", `Meshes.beam` in the manifest (`Mesh.validateBeam`). Reference build in FTGG Art (`Workspace.BeamFxReference`, module `BeamShot`, also `assets/fx/beam/BeamShot.luau`): each tower fires at a dummy target 100 studs away | – | – | review | `beamfx_order_mid.jpg`, `beamfx_order_late.jpg`, `beamfx_chaos_mid.jpg`, `beamfx_chaos_late.jpg`, `beamfx_order_charge.jpg`, `beamfx_scorch.jpg`, `beamfx_55_220.jpg`, `beamfx_order_frames.jpg` (t 0.04 / 0.09 / 0.22 / 0.34) |
 | HEX | Shield honeycomb shell (M-30, clients-B's request; the user: little patches): scattered hex patches over the dome, opaque on the top and gone by 72° from it, in 11 bands (`Meshes.shieldShell`, `Mesh.validateShieldShell`), tinted by the client and scaled by charge; fx.md "Honeycomb shell". Reference in FTGG Art: `Workspace.ShieldHoneycomb` | 11,880 | 0% | review | `honeycomb_55_full.jpg`, `honeycomb_55_charge35.jpg`, `honeycomb_25_side.jpg` |
-| MECH | Commander mechs (M-31, the user's request), step 1: blockouts. `ord_sovereign` (tall upright mech, chest core, shoulder team plates, sensor head under a brow, emitter forearm, weapon pod) and `chs_warlord` (hunched walker, pistons, slab and reactive armor, eye slits, stacks, claw arm, banner mast), about 5.6 studs tall (Lancer 3.7); walker rig (rig.md 10): torso, head, armL / `nano`, armR / forearmR, hip / thigh / shin / foot per side, motion `swing`; `stride` review pose. Tracked blockouts kept in `Blockouts/Review/`. Meshes next, after the sim's answer on footprint and move class | – | – | blockout | – |
+| MECH | Commander mechs (M-31, the user's request): walker blockouts and BAR meshes, original designs. `ord_sovereign`: tall upright mech, clean sloped plates, broad chest with a cyan command core and team plates, big shoulder armor with team plates, sensor head under an armored brow, emitter forearm (`nano`, power), twin-barrel weapon pod (`muzzle`, weapon). `chs_warlord`: hunched heavier walker, slab and reactive armor, exposed pistons, amber eye slits, glowing exhaust stacks, a claw crane arm with the emitter, a heavy gun, a banner mast with the team banner. Walker rig (rig.md 10, motion `swing`), fp 1 and TRACKED (the sim's answer). The tracked designs are kept: `Blockouts/Review/*_tracked.luau`, `assets/models/<id>/tracked/` | 3,504 / 3,272 | 2.8% / 2.9% | review | `cmd_mech_55_close.jpg` (with a Lancer and a Paladin), `cmd_mech_55_220.jpg`, `cmd_mech_side_stride.jpg` (the `stride` pose), `cmd_mech_team.jpg`, `cmd_mech_scale_compare.jpg` (1.4x, back row) |
 | DEP | Supply deposits (M-28, the user's request): `fx.deposit` with 3 variants (536–552 tris), BAR metal-spot style: ragged scraped patch tinted to the terrain through the alpha mask, darker soil core, ore outcrops with a metallic sheen (no glow), broken berm, loose stones; one cell wide, ≤ 0.7 tall, hidden under an extractor. Rebaked lighter (grey-brown neutral, less wash and crease) after B's note that bare deposit cells read nearly black at night | 536–552 | 0% | review | `deposit_55_close.jpg`, `deposit_55_220.jpg`, `deposit_grass_extractors.jpg`, `deposit_sand_close.jpg`, `deposit_rock_close.jpg` |
 | INT | Interceptor missiles (anti-nuke, S-111): `ord_interceptor` / `chs_interceptor` (needle nose, booster, bright `weapon` throat at strength 3.0), aliased for `ord_mobile_interceptor` / `chs_mobile_interceptor` | 418 / 406 | 8.6% | review | – |
 
@@ -448,6 +466,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `bb366c3` (merge of `main` cc8f02a; approvals from the user's second review: `beam`, `deposit`, the interceptors, `ord_sovereign` / `chs_warlord` (tracked, until the mech redesign); manifest only).
 - Ready to merge: `f07b82f` (Commander mechs step 1: walker blockouts `ord_sovereign` / `chs_warlord`, `swing` motion in Blockout / Mesh, `stride` poses, rig.md 10, M-31; `tools/portraits.py`; `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/Mesh.luau`, tools and docs).
 - Ready to merge: `f7b2654` (honeycomb shell: smaller patches, 22% of the cells, new tile ID in `Meshes.shieldShell`; `assets/fx/shield/honeycomb/`, manifest, fx.md).
+- Ready to merge: `2b4dc5b` (Commander mechs step 2: meshes for `ord_sovereign` / `chs_warlord` (review; the tracked ones kept in `assets/models/<id>/tracked/`), WALKER anims, mech anchors, decorative muzzle allowed on unarmed defs (`Mesh.validate`); `assets/`, `src/shared/Defs/Meshes/`, `place/`, tools and docs).
 
 ## Requests
 
