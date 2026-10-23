@@ -59,7 +59,7 @@ local L = Sensors.Level
 Sensors.KINDS = SensorsState.KINDS
 Sensors.AIR_SIGHT_FACTOR = 1.5 -- default airSight = 1.5 × sight
 Sensors.DEFAULT_RADAR_ERROR = 40 -- studs, when a radar def has no radarError
-Sensors.WOBBLE_PERIOD = 30 -- ticks per wobble target (guide 11.4: tick // 30)
+Sensors.ORBIT_TICKS = 90 -- ticks per radar blip orbit, 6 s (guide 11.4, S-130)
 Sensors.CLOSE_SONAR = 40 -- studs: naval units and ASW helis detect submerged subs this close
 Sensors.STAMP_BUDGET = 200000 -- cells written by full stamps per sensor tick (D85)
 Sensors.DEFAULT_TRACK_ERROR = 8 -- studs, when a tracking radar def has no trackError
@@ -335,26 +335,24 @@ function Sensors.radarDetects(sim: Types.Sim, s: State, observer: number, id: nu
 	return false
 end
 
--- Pseudo-random point in the unit disc for (unit, period, observer):
--- stateless, so it never touches sim.rng and is the same however often asked.
-local function wobblePoint(id: number, period: number, observer: number): (number, number)
-	local h = Hash.u32(Hash.u32(Hash.u32(Hash.OFFSET_BASIS, id), period), observer)
-	local a = (h % 65536) / 65536 * 2 * math.pi
-	local r = math.sqrt((h // 65536) / 65536)
-	return math.cos(a) * r, math.sin(a) * r
+-- Orbit start angle and direction (+1 or -1) for (unit, observer): a
+-- stateless hash, so it never touches sim.rng, is the same however often
+-- asked, and every player of the observing team sees the same orbit.
+local function orbit(id: number, observer: number): (number, number)
+	local h = Hash.u32(Hash.u32(Hash.OFFSET_BASIS, id), observer)
+	return (h % 65536) / 65536 * 2 * math.pi, if (h // 65536) % 2 == 0 then 1 else -1
 end
 
--- Radar error offset `observer` sees on unit `id` at `tick`: a wobble of
--- radius = the observer's best radarError, moving smoothly from one random
--- point to the next every WOBBLE_PERIOD ticks (guide 11.4). Pinpointers
--- shrink it (S-59): the radius is scaled by the team's precision.
+-- Radar error offset `observer` sees on unit `id` at `tick`: the blip
+-- circles the real unit, like BAR (S-130, client request 59), at radius =
+-- the observer's best radarError (or the trackError passed in), once every
+-- ORBIT_TICKS (guide 11.4). Pinpointers shrink it (S-59): the radius is
+-- scaled by the team's precision.
 function Sensors.wobble(s: State, observer: number, id: number, tick: number, radius: number?): (number, number)
 	local err = (radius or s.radarError[observer] or Sensors.DEFAULT_RADAR_ERROR) * Pinpoint.errorScale(Sensors.precision(s, observer))
-	local k = tick // Sensors.WOBBLE_PERIOD
-	local f = (tick % Sensors.WOBBLE_PERIOD) / Sensors.WOBBLE_PERIOD
-	local ax, az = wobblePoint(id, k, observer)
-	local bx, bz = wobblePoint(id, k + 1, observer)
-	return (ax + (bx - ax) * f) * err, (az + (bz - az) * f) * err
+	local phase0, dir = orbit(id, observer)
+	local a = phase0 + dir * 2 * math.pi * (tick % Sensors.ORBIT_TICKS) / Sensors.ORBIT_TICKS
+	return math.cos(a) * err, math.sin(a) * err
 end
 
 -- The ally team's radar precision 0..1 from its finished Pinpointers

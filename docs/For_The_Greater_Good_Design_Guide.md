@@ -1156,7 +1156,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 
 - **Cloak (not built yet; the `cloaked` state bit is reserved):** a cloaked unit that fires drops its cloak and is then seen by normal sight, so firing never stays hidden. Its shots and projectiles are shown like anyone's (7.2, S-43): they never name the shooter.
 
-- **Radar error ("wobble"):** a radar blip's position is offset by a pseudo-random amount that changes slowly (e.g., seeded by `unitId` and `tick // 30`). The **server sends the wobbled position**, never the true one — clients can't cheat it. Order radars have smaller error than Chaos radars.
+- **Radar error ("wobble"):** a radar blip circles the real unit, like BAR: its position is offset by the radar error along a circle, with a start angle and direction (clockwise or not) seeded by `unitId` and the observing team (S-130). The **server sends the wobbled position**, never the true one — clients can't cheat it. Order radars have smaller error than Chaos radars.
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks (implemented in D108: `jamDrain`, the radius scales with the share of upkeep it gets, like tracking radars).
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the wobbled position, so they miss more — that's intended.
@@ -1170,7 +1170,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
   - Optional (D105): radar-guided missiles lock at +10% range against tracked targets.
   - Measured: a Verdict on a radar-only Ravager scores 4 of 15 direct hits untracked and 11 of 15 tracked. An Absolution hits a moving radar-only tank 0 of 9 times untracked and 6 of 10 tracked.
 - Implementation (DECISIONS D67):
-  - Wobble is a stateless hash of (unit, tick // 30, observer), interpolated between periods. Its radius is the observer's best `sensors.radarError`.
+  - Wobble is an orbit: offset = radius × (cos θ, sin θ), θ = phase0 + dir × 2π × tick / 90 (one turn every 6 s). phase0 and dir (±1) are a stateless hash of (unit, observer), so every player of a team sees the same orbit. Its radius is the observer's best `sensors.radarError` (or `trackError` when tracked).
   - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
   - Measured: howitzer direct hits 87% with a spotter versus 20% on radar.
 

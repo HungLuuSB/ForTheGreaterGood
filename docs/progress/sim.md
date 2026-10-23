@@ -22,6 +22,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 | Anti-nukes (your request, requests 46) | Providence / Cerberus (structures) and Custodian / Chimera (mobile, only while stopped). Cover by aim point, one interceptor per nuke, certain hit, a delay longer than a nuke's flight. They spot nukes anywhere. Radar SAMs shoot aircraft only and now one-shot T1 air | S-111 |
 | Item 8 balance pass | Locust +10% damage, Order heavy cannon +10%, Order radar SAM reload −10%, Falcon range +5%. 12 of 12 shared roles in band (was 10). Fighters, the Herald and the T2 tank Chaos condition still short: proposals below | S-112 |
 | Beams (requests 47, 49, 50) | Lingering beams (`beamDuration`). Radiance fires at blips (misses without Pinpointers) and is a 3 s hit-ray (`pierce`). Domes stop beams at the surface. Manual targets kept until STOP | S-113, S-115, S-116 |
+| Radar blips orbit the unit, like BAR (client request 59, the user) | Wobble is a 6 s circle at the radar error; still only the wobbled point is sent | S-130 |
 | Ally teams on the client (client request) | WELCOME lists every team's ally team (protocol 30) | S-129 |
 | ASSIST a builder (the user) | A builder guarding another builder helps with its frame or factory production, then follows it | S-128 |
 | No auto-fire at ghosts (the user) | Remembered structures not in sight are targets only on an order; a crash on dead ghosts fixed (S-126) | S-126, S-127 |
