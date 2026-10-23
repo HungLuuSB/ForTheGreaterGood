@@ -36,11 +36,27 @@
 --      value falls back to the rally point; the next wave waits until the
 --      army is worth RETREAT_MARGIN times what it fled, and none leaves
 --      for RETREAT_HOLD ticks.
+--      Scouting and massing (S-105; normal and hard): the plant builds one
+--      scout (Herald / Jackal) at a time, a new one at most every
+--      SCOUT_EVERY ticks; it loops round every enemy start, so the team
+--      remembers the turrets and structures there. A wave leaves only when
+--      the army is worth ATTACK_MARGIN times the known defence (armed
+--      units and structures, turrets included) within DEFENSE_RADIUS of
+--      its target; until then it masses at the rally point. An army of
+--      MASS_SHARE of the unit cap (at most MASS_UNITS) goes anyway.
 --   4. T2 (S-101, next.md item 7; normal and hard): once its advanced plant
 --      stands and supply passes ADV_BUILDER_SUPPLY, the plant builds one
---      T2 builder (Architect / Forgemaster). It builds a shield generator
---      over the base, then PINPOINTERS Pinpointers behind it, then (Order
---      hard, with CITADEL_SUPPLY stored) a Citadel toward the enemy. Order
+--      T2 builder (Architect / Forgemaster). It first upgrades its own T1
+--      extractors in place, nearest home first, skipping any with known
+--      enemies near (S-108). Then it builds a shield generator over the
+--      base, PINPOINTERS Pinpointers behind it, the T2 defences (S-106: a
+--      heavy turret toward the enemy, a missile battery behind it, a flak
+--      tower once enemy aircraft are known, a beam tower), an anti-nuke
+--      (Providence / Cerberus, S-111) over the base (S-110; a second once
+--      an enemy silo is known), then (Order hard, with CITADEL_SUPPLY stored) a Citadel
+--      toward the enemy, and (hard, rich) a nuke silo behind the base,
+--      which launches at the best known target at most every NUKE_EVERY
+--      ticks (S-110). Order
 --      hard's T1 builders also raise a wall of BARRIERS Barrier segments
 --      across the front once the base is established. Normal builds an
 --      airfield (and a shipyard on a sea map) once established, as hard did.
@@ -93,6 +109,7 @@ local Passability = require("@shared/Grid/Passability")
 local Prng = require("@shared/Util/Prng")
 local Schema = require("@shared/Net/Schema")
 local Placement = require("../Placement")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local Sensors = require("../Sensors")
 local Sim = require("../Sim")
 local Types = require("../Types")
@@ -119,7 +136,10 @@ Skirmish.FLEET_SIZE = 4 -- ships gathered before the fleet attacks (hard)
 Skirmish.MAX_TURRETS = 6
 Skirmish.ESCORT_RADIUS = 160 -- studs: workers sent to deposits farther from home get an escort (hard)
 Skirmish.ARMY_FIRST_RATIO = 0.6 -- normal's tanks-before-the-third-generator rule holds only while power runs at least this well (S-94)
+Skirmish.MIN_GENERATORS = 2 -- generators before the extractor-first rule applies (S-114)
+Skirmish.GEN_SLACK = 1 -- generators beyond the planned need while only power stalls (S-114)
 Skirmish.GENERATOR_POWER = 20 -- power per second a generator makes (the generator rule's unit; S-94)
+Skirmish.BUILDER_POWER_PER_WORK = 1 / 6 -- power per build power a busy builder draws on average (extractors 500 / 1,800, generators none; S-114)
 Skirmish.POWER_PER_WORK = 1 / 3 -- power per work unit of a T1 tank (Lancer 1,700 / 5,100): what a building factory draws per build power (S-94)
 Skirmish.REFILL_POWER_CAP = 60 -- power/s of missile refills the generator rule plans for, at most (S-57)
 Skirmish.AIR_MEMORY = 900 -- ticks enemy aircraft near home are remembered: half the mobile SAMs stay home (S-57)
@@ -134,8 +154,17 @@ Skirmish.RETREAT_RADIUS = 450 -- studs round a wave's centre where it counts kno
 Skirmish.RETREAT_RATIO = 1.3 -- enemy value / wave value that makes a wave fall back (S-92)
 Skirmish.RETREAT_MARGIN = 1.2 -- the next wave needs this times the value it fled (S-92)
 Skirmish.RETREAT_HOLD = 300 -- ticks no wave leaves after a retreat (S-92)
+Skirmish.NUKE_EVERY = 900 -- ticks between the AI's nuke launches (S-110)
+Skirmish.NUKE_RICH = 0.9 -- of supply storage stored before hard starts a silo (S-110)
+Skirmish.SCOUT_EVERY = 1800 -- ticks between scouts: a new one at most this long after the last (S-105)
+Skirmish.SCOUT_RADIUS = 260 -- studs: the scout's loop round an enemy start (S-105)
+Skirmish.DEFENSE_RADIUS = 450 -- studs: known defence counted round a wave's target (S-105)
+Skirmish.ATTACK_MARGIN = 1.5 -- a wave leaves worth this times the known defence (S-105)
+Skirmish.MASS_SHARE = 0.5 -- of the unit cap: a massed army this large goes anyway (S-105)
+Skirmish.MASS_UNITS = 150 -- the same without a cap
 Skirmish.CONTESTED_ESCORT = 2 -- army units a Chaos worker needs to take a contested deposit (S-97)
 Skirmish.CONTESTED_RADIUS = 300 -- studs: known armed enemies this near a deposit make it contested (S-97)
+Skirmish.CONTESTED_REACH = 40 -- studs beyond an enemy structure's range that still contest a deposit (S-116)
 Skirmish.ADV_BUILDER_SUPPLY = 600 -- supply stored before the advanced plant builds a T2 builder (S-101)
 Skirmish.PINPOINTERS = 2 -- Pinpointers the T2 builder raises (S-101)
 Skirmish.CITADEL_SUPPLY = 1500 -- supply stored (or 90% of storage, if less) before Order hard's Citadel (S-101)
@@ -170,6 +199,9 @@ export type Level = {
 	tanksBeforeGen3: number, -- tanks before its third generator (S-57; normal): this or one more, by its Prng
 	recall: boolean, -- pulls the whole army home against an enemy wave near the base (S-57)
 	retreat: boolean, -- a wave outnumbered in the field falls back (S-92)
+	scout: boolean?, -- one scout loops round the enemy starts (S-105)
+	outweigh: boolean?, -- waves wait to outweigh the known defence (S-105)
+	nuke: boolean?, -- a nuke silo when rich (hard, S-110)
 	-- faction style (S-76; set by Skirmish.styled)
 	wardenShare: number?, -- share of advanced-plant army items that are Wardens (Order)
 	minotaurShare: number?, -- share of advanced-plant army items that are Minotaurs (Chaos)
@@ -241,6 +273,8 @@ Skirmish.LEVELS = table.freeze({
 		recall = true, -- defends the base against enemy waves (S-57)
 		retreat = true,
 		t2Builder = true,
+		scout = true,
+		outweigh = true,
 	},
 	hard = {
 		think = 10,
@@ -271,6 +305,9 @@ Skirmish.LEVELS = table.freeze({
 		recall = false,
 		retreat = true,
 		t2Builder = true,
+		scout = true,
+		outweigh = true,
+		nuke = true,
 	},
 } :: { [string]: Level })
 
@@ -331,6 +368,10 @@ export type Brain = {
 	waveValue: number, -- value the home army needs before a wave leaves (S-92)
 	lastRetreatAt: number, -- tick a wave last fell back (S-92)
 	retreats: number,
+	scoutAt: number, -- tick the last scout was queued (S-105)
+	nukeAt: number, -- tick of the last nuke launch (S-110)
+	nukes: number, -- launches so far
+	held: number, -- thinks a ready wave waited for the known defence (S-105)
 	attacking: { [number]: boolean }, -- units sent with a wave
 	claims: { [number]: number }, -- cell → tick a builder was sent there
 	deposits: { number }, -- deposit cells, nearest home first
@@ -353,6 +394,7 @@ export type Brain = {
 	thinkOffset: number, -- ticks into the think period this player thinks at
 	lastArmyQueued: number, -- tick it last queued an army unit (easy's cooldown)
 	powerShortAt: number, -- last tick power was stalling (S-31)
+	supplyShortAt: number, -- last tick supply was stalling (S-114)
 	powerLowAt: number, -- last tick power ran below ARMY_FIRST_RATIO (S-94)
 	airNearAt: number, -- last tick enemy aircraft were known near home (S-57)
 	lastWaveAt: number, -- tick the last wave left (S-57)
@@ -477,12 +519,17 @@ function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
 		waveValue = cfg.firstWave * Skirmish.UNIT_VALUE,
 		lastRetreatAt = -math.huge,
 		retreats = 0,
+		scoutAt = -math.huge,
+		nukeAt = -math.huge,
+		nukes = 0,
+		held = 0,
 		attacking = {},
 		claims = {},
 		deposits = deposits,
 		waves = 0,
 		lastWaveOrder = -math.huge,
 		powerShortAt = -math.huge,
+		supplyShortAt = -math.huge,
 		powerLowAt = -math.huge,
 		airNearAt = -math.huge,
 		lastWaveAt = -math.huge,
@@ -567,7 +614,8 @@ local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (n
 	local sim = brain.sim
 	local def = sim.defs.units[defId]
 	local g = (sim.map :: Passability.PassMap).grid
-	local step = 8 * def.footprint + 16
+	local layers = (sim.map :: Passability.PassMap).layers
+	local step = 8 * def.footprint + 16 -- 2-cell lanes: 3-cell lanes (S-104) broke mirror fairness (east 10 of 12); review
 	for ring = 1, 8 do
 		local n = ring * 8
 		for k = 0, n - 1 do
@@ -581,7 +629,10 @@ local function spotNear(brain: Brain, defId: string, cx: number, cz: number): (n
 				continue
 			end
 			local cell = g:index(gx, gz)
-			if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick and Placement.check(sim, def, x, z, nil, brain.ally) then
+			-- other buildings keep a cell clear of deposits: room for the
+			-- extractor and its 3×3 T2 upgrade (S-104)
+			local onDeposit = def.extractor == nil and PlacementRules.supplyUnder(layers, def.footprint + 2, x, z) > 0
+			if not onDeposit and (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick and Placement.check(sim, def, x, z, nil, brain.ally) then
 				brain.claims[cell] = sim.tick
 				return x, z
 			end
@@ -601,6 +652,7 @@ function Skirmish.freeDeposit(brain: Brain, accept: ((number, number, number) ->
 	for _, cell in brain.deposits do
 		if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
 			local x, z = pm.grid:cellCenter(pm.grid:coords(cell))
+			x += brain.toward * SNAP_NUDGE -- (a 2×2 extractor's snap ties at a cell centre, S-104: mirror it)
 			if Placement.check(sim, def, x, z, nil, brain.ally) and (accept == nil or accept(cell, x, z)) then
 				return cell
 			end
@@ -618,7 +670,31 @@ function Skirmish.contested(brain: Brain, x: number, z: number): boolean
 			return true
 		end
 	end
-	return Skirmish.enemyValueNear(brain, x, z, Skirmish.CONTESTED_RADIUS) > 0
+	-- known armed enemies near it; a structure only within its guns' reach
+	-- (S-116, client request 48: a lone turret by the base made every home
+	-- deposit contested, and Chaos stopped expanding until it had escorts)
+	local sim = brain.sim
+	local w = sim.world
+	local r2 = Skirmish.CONTESTED_RADIUS ^ 2
+	for _, id in w.ids do
+		if w.ally[id] ~= brain.ally then
+			local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
+			if kx and kz then
+				local d2 = (kx - x) ^ 2 + (kz - z) ^ 2
+				if d2 <= r2 then
+					local shown = Sensors.shownDef(sim, brain.ally, id, level, defIndex :: number)
+					if shown == nil then
+						return true -- an unidentified contact: assume the worst
+					end
+					local d = sim.defs.unitByIndex[shown]
+					if #d.weapons > 0 and (d.domain ~= "structure" or d2 <= (d.maxRange + Skirmish.CONTESTED_REACH) ^ 2) then
+						return true
+					end
+				end
+			end
+		end
+	end
+	return false
 end
 local freeDeposit = Skirmish.freeDeposit
 
@@ -686,8 +762,9 @@ function Skirmish.enemyValueNear(brain: Brain, x: number, z: number, radius: num
 		if w.ally[id] ~= brain.ally then
 			local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
 			if kx and kz and (kx - x) ^ 2 + (kz - z) ^ 2 <= r2 then
-				if Sensors.typeKnown(sim, brain.ally, id, level) then
-					local d = sim.defs.unitByIndex[defIndex :: number]
+				local shown = Sensors.shownDef(sim, brain.ally, id, level, defIndex :: number) -- a decoy counts as what it shows (S-109)
+				if shown then
+					local d = sim.defs.unitByIndex[shown]
 					if #d.weapons > 0 then
 						v += Skirmish.value(d)
 					end
@@ -763,11 +840,18 @@ type Census = {
 	pinpointers: number, -- frames included (S-101)
 	citadels: number, -- frames included (S-101)
 	barriers: number, -- frames included (S-101)
+	scouts: { number }, -- (S-105)
+	built: { [string]: number }, -- own structures per def ID, frames included (S-106)
+	t1Extractors: { number }, -- own finished T1 extractors not being upgraded (S-108)
+	silos: { number }, -- own finished nuke silos (S-110)
+	mobileAntiNukes: { number }, -- (S-111)
+	enemySilo: boolean, -- the team knows an enemy nuke silo (S-110)
 }
 
 local function census(brain: Brain): Census
 	local sim = brain.sim
 	local w = sim.world
+	local scoutId = if brain.prefix == "ord_" then "ord_herald" else "chs_jackal"
 	local c: Census = {
 		commander = 0,
 		builders = {},
@@ -802,6 +886,12 @@ local function census(brain: Brain): Census
 		pinpointers = 0,
 		citadels = 0,
 		barriers = 0,
+		scouts = {},
+		built = {},
+		t1Extractors = {},
+		silos = {},
+		mobileAntiNukes = {},
+		enemySilo = false,
 	}
 	local advPlant = faction(brain, "advvehplant", "advvehplant")
 	local generator = faction(brain, "generator", "generator")
@@ -812,6 +902,12 @@ local function census(brain: Brain): Census
 		if w.owner[id] ~= brain.player then
 			if w.ally[id] ~= brain.ally then
 				local kx, kz, level, defIndex = Sensors.knownTarget(sim, brain.ally, id)
+				if kx and Sensors.typeKnown(sim, brain.ally, id, level) then
+					local ed = sim.defs.unitByIndex[defIndex :: number]
+					if ed.id == "ord_reckoning" or ed.id == "chs_ragnarok" then
+						c.enemySilo = true -- (S-110) a second umbrella site
+					end
+				end
 				if kx and kz and bit32.band(Sensors.knownCategories(sim, brain.ally, id, level, defIndex :: number), BIT.AIR) ~= 0 then
 					c.enemyAir += 1
 					if (kx - brain.homeX) ^ 2 + (kz - brain.homeZ) ^ 2 < nearHome then
@@ -831,6 +927,15 @@ local function census(brain: Brain): Census
 					local sp = sim.defs.weapons[s.def].stockpile :: any
 					c.refillPower += (sp.cost.power or 0) / sp.buildTime
 				end
+			end
+		end
+		if d.domain == "structure" then
+			c.built[d.id] = (c.built[d.id] or 0) + 1
+			if done and d.extractor and d.id == brain.prefix .. "extractor" then
+				table.insert(c.t1Extractors, id)
+			end
+			if done and (d.id == "ord_reckoning" or d.id == "chs_ragnarok") then
+				table.insert(c.silos, id)
 			end
 		end
 		if bit32.band(d.categoryMask, BIT.COMMANDER) ~= 0 then
@@ -883,6 +988,10 @@ local function census(brain: Brain): Census
 		elseif d.buildOptions then
 			table.insert(c.builders, id)
 			c.workers += 1
+		elseif d.id == scoutId then
+			table.insert(c.scouts, id) -- (S-105) not in the army
+		elseif d.id == "ord_custodian" or d.id == "chs_chimera" then
+			table.insert(c.mobileAntiNukes, id) -- (S-111) escorts, not in the army
 		elseif #d.weapons > 0 and d.domain == "naval" then
 			table.insert(c.fleet, id)
 		elseif #d.weapons > 0 then
@@ -901,6 +1010,20 @@ local function census(brain: Brain): Census
 			table.insert(c.trackers, id)
 		elseif d.sensors.radar > 0 then
 			table.insert(c.radarTrucks, id)
+		end
+	end
+	-- extractors ordered but not started yet count too: a builder can still
+	-- be walking to its deposit at the next think (the cap held only while
+	-- the walk was short; S-104)
+	for _, list in { c.builders, { c.commander } } do
+		for _, id in list do
+			for k, order in sim.orders.queue[id] or {} do
+				-- (the head order stays while its frame is built: the frame counts then)
+				local framed = k == 1 and order.started and (sim.build.target[id] or 0) ~= 0
+				if order.kind == "build" and not framed and sim.defs.unitByIndex[order.defIndex :: number].extractor then
+					c.extractors += 1
+				end
+			end
 		end
 	end
 	return c
@@ -947,6 +1070,7 @@ local function think(brain: Brain)
 	-- exactly when the AI picks the next job; deciding on that moment made
 	-- mirrored players choose differently by when they think (S-31)
 	local powerShort = sim.tick - brain.powerShortAt <= Skirmish.POWER_MEMORY
+	local supplyShort = sim.tick - brain.supplyShortAt <= Skirmish.POWER_MEMORY
 	local plantsWanted = if cfg.secondPlant and acc.supply.stored > cfg.secondPlantSupply and c.extractors >= cfg.secondPlantExtractors then 2 else 1
 	-- hard extras come once the economy and an army stand
 	local established = c.extractors >= 6 and #c.army >= 6 and acc.supply.stored >= 200
@@ -967,6 +1091,15 @@ local function think(brain: Brain)
 	local factoryPower = 0
 	for _, f in c.factories do
 		factoryPower += (unitDef(sim, f).buildPower or 0) * Skirmish.POWER_PER_WORK
+	end
+	-- the builders' draw too (S-114): the Command Vehicle and the workers
+	local builderPower = 0
+	for _, list in { c.builders, { c.commander } } do
+		for _, b in list do
+			if b ~= 0 and w.slot[b] then
+				builderPower += (unitDef(sim, b).buildPower or 0) * Skirmish.BUILDER_POWER_PER_WORK
+			end
+		end
 	end
 	-- (but not while power stalls below ARMY_FIRST_RATIO: the plant would
 	-- never finish those tanks, the builders would go on to extractors that
@@ -1075,15 +1208,6 @@ local function think(brain: Brain)
 		-- (counted in generators, frames included, not income: a generator
 		-- finishing a few ticks earlier on one side of a mirror must not
 		-- change the next job; S-94)
-		local genWanted = math.ceil((factoryPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) / Skirmish.GENERATOR_POWER)
-		if genAllowed and (powerShort or c.generators < genWanted) then
-			local gen = faction(brain, "generator", "generator")
-			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
-			if x and z then
-				build(brain, id, gen, x, z, 0)
-				continue
-			end
-		end
 		-- contested deposits only with an escort ready (Chaos, S-97)
 		local escortReady = false
 		local accept = nil
@@ -1100,9 +1224,33 @@ local function think(brain: Brain)
 			end
 		end
 		local cell = if c.extractors < cfg.maxExtractors then freeDeposit(brain, accept) else nil
+		-- generators (S-114, client request 48: the AI built generator after
+		-- generator while deposits stood free): two first; then, while power
+		-- doesn't stall, a free deposit comes first when supply stalls or
+		-- extractors trail generators; generators only up to the planned
+		-- need, and one more only while power stalls and supply doesn't
+		-- (counts and stall memories, never the moment's income: mirror-safe,
+		-- S-31 / S-94)
+		local genWanted = math.ceil((factoryPower + builderPower + 20 + math.min(c.refillPower, Skirmish.REFILL_POWER_CAP)) / Skirmish.GENERATOR_POWER)
+		local extractorFirst = cell ~= nil and (c.extractors < c.generators or (supplyShort and not powerShort))
+		local genCap = genWanted + (if powerShort and not supplyShort then Skirmish.GEN_SLACK else 0)
+		local wantGen = c.generators < Skirmish.MIN_GENERATORS or (not extractorFirst and c.generators < genCap)
+		if genAllowed and wantGen then
+			local gen = faction(brain, "generator", "generator")
+			local x, z = spotNear(brain, gen, brain.homeX - brain.toward * 60, brain.homeZ)
+			if x and z then
+				build(brain, id, gen, x, z, 0)
+				c.generators += 1
+				continue
+			end
+		end
 		if cell then
 			local g = (sim.map :: Passability.PassMap).grid
 			local x, z = g:cellCenter(g:coords(cell))
+			-- an even footprint (the 2×2 T1 extractor, S-104) centred on a cell
+			-- is a snap tie, which rounds toward +x for everyone; nudged toward
+			-- the enemy it rounds the mirror way for mirrored players (as S-31)
+			x += brain.toward * SNAP_NUDGE
 			-- the Command Vehicle only takes deposits near home
 			local far = (x - brain.homeX) ^ 2 + (z - brain.homeZ) ^ 2 >= Skirmish.HOME_RADIUS ^ 2
 			if not isCommander or not far then
@@ -1143,17 +1291,95 @@ local function think(brain: Brain)
 	end
 	-- T2 builders (S-101): a shield over the base, Pinpointers behind it,
 	-- then (Order hard, when rich) a Citadel toward the enemy
+	-- extractors already under an upgrade frame (S-108)
+	local upgrading: { [number]: boolean } = {}
+	for _, old in sim.build.upgrading do
+		upgrading[old] = true
+	end
+	local adv = faction(brain, "advextractor", "advextractor")
+	local advDef = sim.defs.units[adv]
+	local layers = (sim.map :: Passability.PassMap).layers
+	local lg = layers.grid
+	-- the deposit cell under a T1 extractor: where its upgrade is centred
+	local function depositOf(t1: number): (number?, number?)
+		local d = unitDef(sim, t1)
+		local x0, z0 = PlacementRules.snap(lg, d.footprint, w.posX[t1], w.posZ[t1])
+		for gz = z0, z0 + d.footprint - 1 do
+			for gx = x0, x0 + d.footprint - 1 do
+				if lg:inBounds(gx, gz) and Layers.getSupply(layers, lg:index(gx, gz)) > 0 then
+					return lg:cellCenter(gx, gz)
+				end
+			end
+		end
+		return nil, nil
+	end
+	-- the safest upgrade: nearest home, no known enemy near, nobody sent there lately
+	local function nextUpgrade(): (number?, number?)
+		local bestX, bestZ, bestD = nil, nil, math.huge
+		for _, t1 in c.t1Extractors do
+			if upgrading[t1] then
+				continue
+			end
+			local x, z = depositOf(t1)
+			if x == nil or z == nil then
+				continue
+			end
+			local cell = lg:index(lg:cellAt(x, z))
+			local d2 = (x - brain.homeX) ^ 2 + (z - brain.homeZ) ^ 2
+			if d2 < bestD and (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick
+				and Skirmish.enemyValueNear(brain, x, z, Skirmish.CONTESTED_RADIUS) == 0
+				and Placement.check(sim, advDef, x, z, brain.player, brain.ally) then
+				bestX, bestZ, bestD = x, z, d2
+			end
+		end
+		return bestX, bestZ
+	end
+	local function count(defId: string): number
+		return c.built[defId] or 0
+	end
 	for _, id in c.t2Builders do
 		if not idleBuilder(sim, id) then
 			continue
 		end
+		local ux, uz = nextUpgrade()
+		if ux and uz then
+			-- in-place upgrade (S-108): straight on the deposit, not via spotNear
+			brain.claims[lg:index(lg:cellAt(ux, uz))] = sim.tick
+			build(brain, id, adv, ux, uz, 0)
+			continue
+		end
 		local job, cx, cz = nil, 0, 0
+		local heavy, battery = faction(brain, "bastion", "maw"), faction(brain, "sanction", "scourge")
+		local flak, beam = faction(brain, "lumen", "hailstorm"), faction(brain, "radiance", "inferno")
+		local umbrella, silo = faction(brain, "providence", "cerberus"), faction(brain, "reckoning", "ragnarok")
 		if c.shields == 0 then
 			job, cx, cz = faction(brain, "phalanx", "carapace"), brain.homeX + brain.toward * 40, brain.homeZ
 			c.shields += 1
 		elseif c.pinpointers < Skirmish.PINPOINTERS then
 			job, cx, cz = faction(brain, "witness", "augur"), brain.homeX - brain.toward * 70, brain.homeZ + (if c.pinpointers == 0 then 60 else -60)
 			c.pinpointers += 1
+		elseif count(heavy) == 0 then
+			-- T2 defences (S-106): a heavy turret toward the enemy, a missile
+			-- battery behind it against artillery, flak once enemy aircraft
+			-- are known, a beam tower
+			job, cx, cz = heavy, brain.homeX + brain.dirX * 110, brain.homeZ + brain.dirZ * 110
+			c.built[heavy] = 1
+		elseif count(battery) == 0 then
+			job, cx, cz = battery, brain.homeX + brain.dirX * 50, brain.homeZ + brain.dirZ * 50
+			c.built[battery] = 1
+		elseif count(flak) == 0 and c.enemyAir > 0 then
+			job, cx, cz = flak, brain.homeX, brain.homeZ
+			c.built[flak] = 1
+		elseif count(beam) == 0 then
+			job, cx, cz = beam, brain.homeX + brain.dirX * 90, brain.homeZ + brain.dirZ * 90
+			c.built[beam] = 1
+		elseif count(umbrella) < (if c.enemySilo then 2 else 1) then
+			-- the anti-nuke umbrella (S-110, S-111)
+			job, cx, cz = umbrella, brain.homeX - brain.dirX * 40, brain.homeZ - brain.dirZ * 40 + (if count(umbrella) == 0 then 0 else 80)
+			c.built[umbrella] = count(umbrella) + 1
+		elseif cfg.nuke and count(silo) == 0 and acc.supply.stored >= acc.supply.storage * Skirmish.NUKE_RICH and (not cfg.citadel or c.citadels > 0) then
+			job, cx, cz = silo, brain.homeX - brain.dirX * 120, brain.homeZ - brain.dirZ * 120
+			c.built[silo] = 1
 		elseif cfg.citadel and c.citadels == 0 and acc.supply.stored >= math.min(Skirmish.CITADEL_SUPPLY, acc.supply.storage * 0.9) then
 			job, cx, cz = "ord_citadel", brain.homeX + brain.dirX * 120, brain.homeZ + brain.dirZ * 120
 			c.citadels += 1
@@ -1171,6 +1397,8 @@ local function think(brain: Brain)
 	local aaWanted = if cfg.antiAir then math.min(math.ceil(c.enemyAir / 2), Skirmish.MAX_AA) else 0
 	local aaPlanned = c.aa + queued(sim, c.factories, aaUnit)
 	local radarPlanned = #c.radarTrucks + queued(sim, c.factories, radarUnit)
+	local scoutUnit = faction(brain, "herald", "jackal")
+	local scoutPlanned = #c.scouts + queued(sim, c.factories, scoutUnit)
 	-- under air attack with SAMs waiting for missiles and power stalling:
 	-- no new army units until they refill (the economy shares power evenly,
 	-- so new production would keep the SAMs empty; S-57)
@@ -1202,6 +1430,10 @@ local function think(brain: Brain)
 			elseif cfg.radar and radarPlanned < 1 and c.workers >= cfg.workers and not armyFirst then
 				item = radarUnit -- radar to escort the waves (S-7)
 				radarPlanned += 1
+			elseif cfg.scout and scoutPlanned < 1 and c.workers >= cfg.workers and sim.tick - brain.scoutAt >= Skirmish.SCOUT_EVERY then
+				item = scoutUnit -- a look at the enemy's defences (S-105)
+				scoutPlanned += 1
+				brain.scoutAt = sim.tick
 			elseif cfg.armyCooldown > 0 and sim.tick - brain.lastArmyQueued < cfg.armyCooldown * 15 then
 				break -- easy: no army unit this soon after the last
 			elseif holdArmy then
@@ -1220,6 +1452,8 @@ local function think(brain: Brain)
 	end
 	local trackerPlanned = #c.trackers + queued(sim, c.advFactories, trackerUnit)
 	local jammerPlanned = #c.jammers + queued(sim, c.advFactories, "chs_shroud")
+	local mobileUnit = faction(brain, "custodian", "chimera")
+	local mobilePlanned = #c.mobileAntiNukes + queued(sim, c.advFactories, mobileUnit)
 	local t2BuilderUnit = faction(brain, "architect", "forgemaster")
 	local t2Planned = #c.t2Builders + queued(sim, c.advFactories, t2BuilderUnit)
 	for _, f in c.advFactories do
@@ -1229,6 +1463,9 @@ local function think(brain: Brain)
 			if cfg.t2Builder and t2Planned < 1 and acc.supply.stored >= Skirmish.ADV_BUILDER_SUPPLY then
 				item = t2BuilderUnit -- shield and Pinpointers (S-101)
 				t2Planned += 1
+			elseif c.enemySilo and mobilePlanned < 1 then
+				item = mobileUnit -- an enemy silo is known: a mobile anti-nuke for the army (S-111)
+				mobilePlanned += 1
 			elseif trackerPlanned < 1 then
 				item = trackerUnit -- fire-control radar for the artillery (S-7)
 				trackerPlanned += 1
@@ -1385,6 +1622,37 @@ local function think(brain: Brain)
 			brain.escortWanted[worker] = wanted[worker]
 		end
 	end
+	-- the scout (S-105): idle, it loops round every enemy start
+	for _, id in c.scouts do
+		if w.orderId[id] ~= 0 then
+			continue
+		end
+		local flags = 0
+		for _, st in brain.enemyStarts do
+			for k = 0, 3 do
+				local a = (k + 0.5) * math.pi / 2
+				local px = math.clamp(st[1] + math.cos(a) * Skirmish.SCOUT_RADIUS, g.originX + 24, g.originX + g.sizeX - 24)
+				local pz = math.clamp(st[2] + math.sin(a) * Skirmish.SCOUT_RADIUS, g.originZ + 24, g.originZ + g.sizeZ - 24)
+				local cell, ox, oz = g:encode(px, pz)
+				submit(sim, brain.player, { cmdType = CT.MOVE, flags = flags, unitIds = { id }, cell = cell, offX = ox, offZ = oz })
+				flags = Schema.CmdFlag.QUEUE
+			end
+		end
+	end
+	-- nukes (S-110): a silo with a warhead launches at the best known
+	-- target (structures and the Command Vehicle first), at most every
+	-- NUKE_EVERY ticks
+	if #c.silos > 0 and targetX and targetZ and sim.tick - brain.nukeAt >= Skirmish.NUKE_EVERY then
+		for _, silo in c.silos do
+			if (w.wStock[World.slotKey(silo, 1)] or 0) > 0 then
+				local cell, ox, oz = g:encode(targetX, targetZ)
+				submit(sim, brain.player, { cmdType = CT.ATTACK_GROUND, flags = 0, unitIds = { silo }, cell = cell, offX = ox, offZ = oz })
+				brain.nukeAt = sim.tick
+				brain.nukes += 1
+				break
+			end
+		end
+	end
 	-- retreat (S-92): a wave out in the field facing known enemy forces
 	-- worth more than RETREAT_RATIO times its own value falls back
 	if cfg.retreat and #wave > 0 then
@@ -1458,11 +1726,23 @@ local function think(brain: Brain)
 			homeValue += Skirmish.value(unitDef(sim, id))
 		end
 	end
+	-- the known defence where the wave would go (S-105): it leaves only
+	-- worth ATTACK_MARGIN times that, or once massed to MASS_SHARE of the cap
+	local outweighs = true
+	if cfg.outweigh and homeValue >= brain.waveValue and mayAttack then
+		local defense = Skirmish.enemyValueNear(brain, targetX or brain.enemyX, targetZ or brain.enemyZ, Skirmish.DEFENSE_RADIUS)
+		local cap = sim.match.unitCap
+		local massed = #home >= (if cap > 0 then math.min(Skirmish.MASS_UNITS, cap * Skirmish.MASS_SHARE) else Skirmish.MASS_UNITS)
+		outweighs = homeValue >= defense * Skirmish.ATTACK_MARGIN or massed
+		if not outweighs then
+			brain.held += 1
+		end
+	end
 	if recalled then
 		-- defending: nothing else this think
 	elseif threatX and threatZ then
 		fight(home, threatX, threatZ) -- defend
-	elseif homeValue >= brain.waveValue and mayAttack then
+	elseif homeValue >= brain.waveValue and mayAttack and outweighs then
 		-- easy (a wave interval) sends only the wave's value; the others wait
 		local cap = if cfg.waveInterval > 0 then brain.waveValue else math.huge
 		local stay = {}
@@ -1564,7 +1844,7 @@ local function think(brain: Brain)
 			fight(wave, targetX or brain.enemyX, targetZ or brain.enemyZ)
 		end
 		local escorts = {}
-		for _, list in { c.radarTrucks, c.trackers, c.jammers } do
+		for _, list in { c.radarTrucks, c.trackers, c.jammers, c.mobileAntiNukes } do
 			for _, id in list do
 				table.insert(escorts, id)
 			end
@@ -1594,14 +1874,17 @@ end
 -- Call once per tick, before Sim.step.
 function Skirmish.tick(brain: Brain)
 	local sim = brain.sim
-	if sim.match.eliminated[brain.player] then
-		return
+	if sim.match.eliminated[brain.player] or sim.cheats.aiPaused[brain.player] then
+		return -- out, or paused by the AI cheat (S-102)
 	end
 	-- watched every tick, not only when thinking: which moments a think
 	-- samples must not decide what it sees (S-31)
 	local acc = sim.eco.accounts[brain.team]
 	if acc and acc.power.ratio < 0.95 then
 		brain.powerShortAt = sim.tick
+	end
+	if acc and acc.supply.ratio < 0.95 then
+		brain.supplyShortAt = sim.tick -- (S-114, watched like power)
 	end
 	if acc and acc.power.ratio < Skirmish.ARMY_FIRST_RATIO then
 		brain.powerLowAt = sim.tick -- (S-94; watched every tick like the stall, S-31)

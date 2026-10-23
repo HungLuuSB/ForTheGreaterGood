@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **23**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **28**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -101,11 +101,12 @@ Then:
   - A change of state bits or turret aim sends the state, the aim of every slot and the weapon field together.
   - Aim rest and restore (S-20): a unit enters with its weapons at their turret's rest pose (`restYaw`, `restPitch`); after losing a target a weapon holds its aim `restoreDelay` seconds, then turns back to rest. `Shared/Combat/Aim.update` is the server's exact per-tick step, so a client can animate between aim updates with the same results.
   - **Targets** (S-16, own units only): `slotMask u8`, then `targetId u16` per set bit (0 = no target). Sent to the unit's owner whenever a weapon's target changes (every slot), and with the ENTER tick when it has any target; the ID is always a unit (or remembered structure) the team knows. Other players never get it. Exact from the tick Targeting picks the target, before the turret has turned.
-  - **Owner** (S-61, own units only; protocol 20): `ownerMask u8` (QUEUE 1, STATES 2, AMMO 4, CHARGES 8), then the fields it sets, after `stock`:
+  - **Owner** (S-61, own units only; protocol 20): `ownerMask u8` (QUEUE 1, STATES 2, AMMO 4, CHARGES 8, PRODUCING 16), then the fields it sets, after `stock`:
     - QUEUE (factories): `count u8` (0..50), `progress u8` (the head item, 0..255 of 1), then `defIndex u16` per queued item, the head first. Sent when the queue changes or the head's progress crosses a sixteenth.
     - STATES (mobile units and armed structures): one byte, fire state in bits 0–1 (`Schema.FireState`), move state in bits 2–3 (`Schema.MoveState`). Sent when either changes.
     - AMMO (aircraft with an `ammo` count): `rounds u8`, `max u8`. Sent when the rounds change.
     - CHARGES 8 (units with flares or chaff; protocol 21, S-63): `flares u8`, `chaff u8`, the charges left (0 for a kind the def lacks). Sent when either changes. DIRCM has no charges.
+    - PRODUCING 16 (**allied** players' factories, not the owner's; protocol 27, S-103, client request 45): `defIndex u16` (the item in production; 0 = idle), `progress u8` (0..255 of 1). Sent with the ENTER and when the item or its progress (by sixteenths) changes. It is the only owner field allies get; the owner has QUEUE.
     - Each is also sent with the ENTER tick. Other players and spectators never get them.
   - **Stock** (S-47, own units only; protocol 15, progress since 17): `slotMask u8`, then `count u8, progress u8` per set bit: missiles in stock of each weapon slot that has a stockpile (`weapons[i].stockCapacity` in the defs; slots without one are never set), and the next missile's build progress (0..255 of one missile; 0 when full). Sent to the unit's owner whenever a count changes or a progress crosses a sixteenth (`Stockpile.WIRE_STEPS`; every stockpile slot together), and with the ENTER tick always. Between records the progress grows by at most 1/16 (it stalls with the economy), so a client may animate it at `1 / buildTime` per second and stop at the next sixteenth. Other players and spectators never get it. Comes after `targets` in the record.
 
@@ -129,7 +130,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | Kind | Layout | When P gets it |
 |---|---|---|
 | `FIRE 4` | `shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos`, 10 B | Hitscan / beam shots of units in P's tactical tier. Draw a tracer from the shooter's muzzle to the end point (the target's hull centre on a hit, the ground on a miss). No target ID. |
-| `SHOT 13` | `hit u8 (0 / 1), start pos, end pos`, 14 B (protocol 14) | A hitscan / beam shot whose shooter P doesn't have (not in its tactical tier), when either end is in the camera area (+2 cells). Draw a tracer from the start (the muzzle) to the end. No shooter or target ID. |
+| `SHOT 13` | `hit u8 (0 / 1), start pos, end pos, weaponDefIndex u16`, 16 B (protocol 14; the weapon since 28, S-118, client request 52; 0 = unknown) | A hitscan / beam shot whose shooter P doesn't have (not in its tactical tier), when either end is in the camera area (+2 cells). Draw it from the start (the muzzle) to the end, as its weapon is drawn: a BEAM held for its `beamDuration`, deflected on a dome, etc. No shooter or target ID. |
 | `SPAWN_PROJ 5` | `projId u16, weaponIndex u16, pos, vel, targetId u16`, 19 B | A projectile the client doesn't have yet, once it is in the camera area (+2 cells), seen or not (S-43): at launch, or when it flies into the camera area. `targetId` is the homing target if P's team knows that unit, else 0. |
 | `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). A strategic missile's IMPACT is its detonation (`aoe` 150). |
 | `INTERCEPTOR 14` | as SPAWN_PROJ, 19 B (protocol 16) | SPAWN_PROJ of a missile fired at a strategic missile (S-48). `targetId` is the **projectile ID** of the strategic missile it chases (always one the client has: see below), not a unit. Steer it with `Guidance.vertical` / `pn` against that projectile's predicted position and velocity (vy included). Its IMPACT is the interceptor's burst. |
@@ -213,6 +214,40 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - Order queues aren't replicated yet. The client draws queued paths from what it sent (guide 15.6).
 - **Formation goals** (S-12): the server splits a move's units into groups by move class and clearance (aircraft form one group) and places each group with `Shared/Grid/Formation`: `spacing(maxRadius)` with radius = footprint × `PlacementRules.RADIUS_PER_FOOTPRINT`, `layout` (a line from the first point to the second, or a spiral around the point; aircraft always take the spiral around the center), `deepestFirst`, then `assign`. A client that runs the same steps on the positions it knows gets the server's goals on open ground; near blocked cells the server also drops or snaps slots, which a client can't see exactly.
 
+## 9a. Cheat commands (protocol 27, S-102)
+
+Test and cheat commands are **ordinary commands**: sent on the Cmd channel, queued, recorded in the replay and applied in order, so replays repeat them exactly. The sim applies them only when the match allows cheats; otherwise each is answered `CHEATS_OFF` and does nothing.
+
+- **Enabling:** match option `cheats = true` (`MatchState.Config`), or `Sim.new{ cheats = true }` without match rules (sandboxes, Studio scenes). `Sim.new{ offline = true }` (offline / Studio) additionally allows SPEED. Who may cheat is the Roblox entry's decision (host only, the allow list, never in public matchmaking): it drops CHEAT records from anyone else before `Sim.submit`.
+- **Text:** `Shared/Net/CheatText`:
+  - `parse(text, defs, selectedIds)` returns `(Schema.Command?, err?)`. It accepts a leading `/` or `/cheat` and the forms below.
+  - `describe(event)` turns a CHEAT_RESULT into a chat line.
+- **Record:** `cmdType 17 (CHEAT), flags 0, count u16 (0..200), unitIds, op u8, arg u8, team u8, defIndex u16, amount u32, x i16, z i16, radius u16`.
+  - `team` 0 means the sender's team. `x` and `z` are world studs, rounded.
+  - Only KILL SELECTED uses the unit IDs.
+
+| Text | op (`Schema.CheatOp`) | Fields | Effect |
+|---|---|---|---|
+| `give <unitId> [count] [team] at <x,z>` | GIVE 1 | defIndex, amount = count (1..100), team, x, z | Finished units in a square formation around the point, owned by the sender (or the lowest player ID on `team`). Structures snap to the grid; a spot where placement fails (off the map, occupied, wrong terrain, no deposit) is skipped, as is a cell a mobile unit can't enter. No unit cap. Answer: count = placed, total = asked; NO_ROOM when none fit. |
+| `res <supply\|power\|all> <amount\|max> [team]` | RES 2 | arg = `CheatResource` (1 supply, 2 power, 3 all), amount (≤ 10,000,000; `CHEAT_MAX` 0xFFFFFFFF = fill) | Sets the team's stored amount. Storage is raised to fit; the raise lasts. Answer: count = new stored (capped at 65535 on the wire). |
+| `income <supply\|power\|all> <amount> [team]` | INCOME 3 | arg, amount per second | A flat bonus per second; 0 clears it. |
+| `instabuild on\|off` | INSTABUILD 4 | arg 1 / 0 | Every frame and factory item (every team's) finishes on its next build step, free. Builders still walk to the site. |
+| `reveal on\|off [team]` | REVEAL 5 | arg, team | Full sight, air sight, sonar and radar everywhere for the team's ally team: every enemy is VISIBLE and the sight map (SIGHT_ROWS / SIGHT_CELLS) covers the map. |
+| `god on\|off` | GOD 6 | arg | The sender's units take no damage. KILL still works on them. |
+| `kill selected` / `kill <team>` / `kill at <x,z> <radius>` | KILL 7 | arg = `CheatKill` (1 SELECTED: the unit IDs, any owner; 2 TEAM; 3 AREA: x, z, radius) | Self-destruct on this tick's Damage step: no wrecks. Answer: count = units killed. |
+| `speed <0.25-8>` | SPEED 8 | amount = speed × 100 (25..800) | Only with `offline`, else NOT_OFFLINE. The sim stores it in `sim.cheats.speed` and doesn't read it: the tick driver runs at that speed. |
+| `ai <team> pause\|resume` | AI 9 | arg 1 pause / 0 resume, team | Every AI player on the team skips its turns (`Skirmish.tick`). NO_AI when the team has none. |
+
+- **Answer:** event `CHEAT_RESULT 22` (Events channel, owner only, the tick the command applied): `op u8, result u8, count u16, total u16`, 7 B.
+  - `Schema.CheatResult`: OK 0, CHEATS_OFF 1, BAD_ARGS 2, NO_TEAM 3, NO_ROOM 4, NOT_OFFLINE 5, NO_AI 6, NO_MAP 7.
+- **Flags:** the first cheat that applies marks the match:
+  - `sim.cheats.used`;
+  - the replay header's `cheated` (replay format 3: a `cheats u8` byte, bit 0 allowed, bit 1 used, bit 2 offline);
+  - `Stats.series(sim).cheated`;
+  - `Stats.report(sim)[pid].cheats`: the cheats each player applied.
+
+  The results screen and replay list can show "cheats used" from these.
+
 ## 10. Join and reconnect (S-2)
 
 A reconnect is a join. The **Snapshot** channel carries a short handshake, then the normal channels deliver the state. Records start with `kind u8`.
@@ -275,6 +310,8 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 28 | SHOT carries `weaponDefIndex u16` (16 B): a hidden shooter's beam is drawn as a beam (S-118, client request 52) |
+| 27 | CHEAT command 17 and event CHEAT_RESULT 22: cheat / test commands (section 9a, S-102); State owner field PRODUCING 16: allied factories' item and progress (S-103, client request 45) |
 | 26 | SHIELD_HIT projId 0: a hitscan shot stopped at a dome's surface (S-89) |
 | 25 | SHIELD_HIT flag SHIELD_ABSORBED 2: a light shell destroyed at a dome's surface (S-85) |
 | 24 | Events SHIELD 19, SHIELD_HIT 20, SHIELD_FIELD 21: shield domes; corrections for shells in a field (S-79, client request 40) |

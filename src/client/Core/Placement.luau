@@ -11,6 +11,7 @@ local Layers = require("@shared/Grid/Layers")
 local Passability = require("@shared/Grid/Passability")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
+local Upgrades = require("./Upgrades")
 local World = require("./World")
 
 local Placement = {}
@@ -69,11 +70,17 @@ Placement.DEPOSIT_SNAP = 12 -- studs: an extractor ghost this close to a deposit
 -- it under the extractor's center (Sim/Placement), so the ghost snaps to the
 -- nearest deposit within DEPOSIT_SNAP of the cursor. Returns the point to
 -- check: the deposit cell's center (odd footprints) or its min corner (even
--- footprints, whose center is a corner), or (x, z) unchanged.
+-- footprints, whose center is a corner), or (x, z) unchanged. An own
+-- extractor this one upgrades (Core/Upgrades) within Upgrades.SNAP wins: the
+-- ghost sits on it (C-121).
 function Placement.assist(world: World.World, def: any, x: number, z: number): (number, number)
 	local layers = world.layers
 	if def.extractor == nil or layers == nil then
 		return x, z
+	end
+	local old = Upgrades.nearest(world, def, x, z, Upgrades.SNAP)
+	if old then
+		return Upgrades.site(world, def, old)
 	end
 	local g = world.grid
 	local reach = math.ceil(Placement.DEPOSIT_SNAP / Grid.CELL_SIZE)
@@ -136,14 +143,8 @@ function Placement.check(world: World.World, def: any, x: number, z: number): Re
 			local s = occupant[i]
 			if s then
 				local id, sdef = s[4], s[5]
-				local u = world.units[id]
-				local upgrade = def.extractor ~= nil
-					and sdef ~= nil
-					and sdef.extractor ~= nil
-					and sdef.extractor.rate < def.extractor.rate
-					and u.team == world.me.team
-					and (u.build or 0) >= 1
-					and (replaces == 0 or replaces == id)
+				-- an upgrade in place (Core/Upgrades: S-108's upgradesFrom, else D92's rate rule)
+				local upgrade = sdef ~= nil and Upgrades.canUpgrade(world, def, world.units[id]) and (replaces == 0 or replaces == id)
 				if not upgrade then
 					return fail("occupied")
 				end
@@ -154,11 +155,8 @@ function Placement.check(world: World.World, def: any, x: number, z: number): Re
 			end
 		end
 	end
-	if def.extractor then
-		local gx, gz = g:cellAt(cx, cz)
-		if Layers.getSupply(layers, g:index(gx, gz)) == 0 then
-			return fail("no deposit")
-		end
+	if def.extractor and PlacementRules.supplyUnder(layers, size, cx, cz) == 0 then
+		return fail("no deposit") -- any covered cell (S-104), the server's own rule
 	end
 	local minX, minZ = x0 * Grid.CELL_SIZE + g.originX, z0 * Grid.CELL_SIZE + g.originZ
 	local maxX, maxZ = minX + size * Grid.CELL_SIZE, minZ + size * Grid.CELL_SIZE
@@ -173,6 +171,54 @@ function Placement.check(world: World.World, def: any, x: number, z: number): Re
 		end
 	end
 	return { ok = true, reason = nil, x0 = x0, z0 = z0, x = cx, z = cz, replaces = replaces }
+end
+
+-- Extractor spots within `radius` of (cx, cz) that pass the check (free
+-- deposits, and own extractors `def` upgrades), each once, nearest to
+-- (fromX, fromZ) first and then each next nearest to the last: an extractor
+-- drag (BAR's area extractor, C-121). Returns check results.
+function Placement.area(world: World.World, def: any, cx: number, cz: number, radius: number, fromX: number, fromZ: number): { Result }
+	local layers = world.layers
+	local spots: { Result } = {}
+	if def.extractor == nil or layers == nil then
+		return spots
+	end
+	local g = world.grid
+	local reach = math.ceil(radius / Grid.CELL_SIZE)
+	local ccx, ccz = g:cellAt(cx, cz)
+	local seen: { [string]: boolean } = {}
+	for dz = -reach, reach do
+		for dx = -reach, reach do
+			local gx, gz = ccx + dx, ccz + dz
+			if g:inBounds(gx, gz) and Layers.getSupply(layers, g:index(gx, gz)) > 0 then
+				local wx, wz = g:cellCenter(gx, gz)
+				if (wx - cx) ^ 2 + (wz - cz) ^ 2 <= radius * radius then
+					local px, pz = Placement.assist(world, def, wx, wz)
+					local r = Placement.check(world, def, px, pz)
+					local key = `{r.x},{r.z}`
+					if r.ok and not seen[key] then
+						seen[key] = true
+						table.insert(spots, r)
+					end
+				end
+			end
+		end
+	end
+	local out: { Result } = {}
+	local x, z = fromX, fromZ
+	while #spots > 0 do
+		local bi, bd = 1, math.huge
+		for i, r in spots do
+			local d = (r.x - x) ^ 2 + (r.z - z) ^ 2
+			if d < bd then
+				bi, bd = i, d
+			end
+		end
+		local r = table.remove(spots, bi) :: Result
+		table.insert(out, r)
+		x, z = r.x, r.z
+	end
+	return out
 end
 
 -- Centers for a row of `def` dragged from (x1, z1) to (x2, z2): one per

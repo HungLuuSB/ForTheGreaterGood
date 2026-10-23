@@ -54,6 +54,8 @@ export type Unit = {
 	ammo: number?, -- own aircraft: rounds left and max (S-61)
 	maxAmmo: number?,
 	flares: number?, -- own units: countermeasure charges left (S-63)
+	producing: number?, -- allied factories: def index in production, 0 = idle (S-103)
+	producingProgress: number?,
 	chaff: number?,
 	vx: number?, -- tactical units: velocity estimated from the last two Tactical records (studs/s; S-27)
 	vz: number?,
@@ -527,6 +529,9 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 			end
 			if r.flares then
 				u.flares, u.chaff = r.flares, r.chaff
+			end
+			if r.producing then
+				u.producing, u.producingProgress = r.producing, r.producingProgress
 			end
 			if r.ammo then
 				u.ammo, u.maxAmmo = r.ammo, r.maxAmmo

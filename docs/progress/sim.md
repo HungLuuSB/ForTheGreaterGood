@@ -4,7 +4,32 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: the user's queue, 2026-10-23, branch `m-sim-2`; everything merged into `main`)
+## Summary (latest: the user's decisions and requests, 2026-10-23, branch `m-sim-2`)
+
+**Your decisions on the review items, your new requests (cheats, sizes, upgrades, anti-nukes) and the client's requests 45–50**, with a merge check between tasks. Protocol 26 → 28. Tests: 430 in 67 specs → 445 in 69 (fast), 6 → 7 slow; every merge passed fast, slow and build.
+
+| Task | Result | Decision |
+|---|---|---|
+| Merge checks | Client C-116, C-120..C-130 and models (approvals, Commanders, deposits, anti-nuke blockouts, animation audit) merged. One mistake of mine: two merges ran in the integration worktree at once (no `pgrep` in this shell). I stopped both before anything was pushed, dropped the unpushed merges and reran them one at a time | — |
+| Cheat / test commands (your request) | Match option `cheats`. Ordinary recorded commands: give, res, income, instabuild, reveal, god, kill, speed, ai. A result for the chat; the match is flagged in Stats, results and the replay header. Shared parser for the client (`CheatText`). Contract: net.md 9a. The client has it live (C-120) | S-102 |
+| Request 45 | Allied factories' item and progress (State owner field PRODUCING) | S-103 |
+| Sizes by tier (your request via models-C) | All of C's table applied. Extractors work any deposit under them, and MapGen keeps deposits ≥ 3 cells apart. Bases still fit on every map. The AI keeps buildings off deposits, mirrors its 2×2 extractor sites, and counts pending extractors | S-104 |
+| Item 1: scouting and massing (your decision) | One scout per AI. A wave leaves only worth 1.5× the known defence; otherwise the army masses (half the unit cap goes anyway) | S-105 |
+| T2 defences (your picks a, d) | Missile batteries Sanction / Scourge (anti-artillery, radar-guided). The AI builds a heavy turret, a battery, flak, a beam tower and anti-nukes, and hard a silo that fires | S-106, S-110 |
+| Commands option (a) (your decision) | Hold checks every 2 ticks per unit, spread by ID | S-107 |
+| In-place upgrades (your request) | `upgradesFrom`: T2 extractor over the player's own T1. The T1 works on until the T2 is done; cancelled or destroyed, it stays. The AI upgrades its safest extractors first | S-108 |
+| Wraith (next.md item 4) | Decoy drone: on radar it passes for a Behemoth (icon, priorities, AI threat value) until seen or tracked | S-109 |
+| Anti-nukes (your request, requests 46) | Providence / Cerberus (structures) and Custodian / Chimera (mobile, only while stopped). Cover by aim point, one interceptor per nuke, certain hit, a delay longer than a nuke's flight. They spot nukes anywhere. Radar SAMs shoot aircraft only and now one-shot T1 air | S-111 |
+| Item 8 balance pass | Locust +10% damage, Order heavy cannon +10%, Order radar SAM reload −10%, Falcon range +5%. 12 of 12 shared roles in band (was 10). Fighters, the Herald and the T2 tank Chaos condition still short: proposals below | S-112 |
+| Beams (requests 47, 49, 50) | Lingering beams (`beamDuration`). Radiance fires at blips (misses without Pinpointers) and is a 3 s hit-ray (`pierce`). Domes stop beams at the surface. Manual targets kept until STOP | S-113, S-115, S-116 |
+| Hidden beams (request 52) | SHOT carries the weapon's def index (protocol 28), so the client draws a hidden shooter's beam as a beam | S-118 |
+| Beams vs domes (request 51) | A beam held on a dome drains it over the beam: Radiance 250 (42% of a Phalanx, 62% of a Carapace; measured 100% → 54%), Inferno about 142 | S-117 |
+| AI economy (request 48) | Two generators, then extractors alternating with generators, capped at the planned need (builders counted). A turret by the base no longer contests every home deposit | S-114, S-116 |
+| Faction balance (item 1) | faction_ai, same-level matches: Order 84 – Chaos 18, **82%** (was 81% before this round; 86% with the sizes alone), 6% undecided; Normal 16–14, Hard 28–0; Normandy and Crossroads 71%. Retunes beyond ±10% stay proposals (S-91) | S-105 |
+
+**Needs my review** gained: the sizes' balance effect and the 2-cell AI lanes (S-104), the AI's attack margin (S-105), the missile battery numbers (S-106), the anti-nuke and radar SAM numbers (S-111), the balance pass's unmet conditions and proposals (S-112), the beam numbers (S-113, S-115), the AI economy rule (S-114), the cheat choices (S-102).
+
+## Summary (previous round: the user's queue, 2026-10-23)
 
 **The queue** (merge check between every task), plus the client's requests 42–44 as they came. Protocol 24 → 26. Tests: 404 in 64 specs → 419 in 66 (fast), 6 slow; every merge passed fast, slow and build. The client suite (`test_client`) is now run and reported too.
 
@@ -163,6 +188,40 @@ Not in sections 6–13 and also not implemented: transports (load / unload), clo
 Deliberate differences from the guide (decided, recorded): submarines are never VISIBLE, only sonar contacts (D76–D78, guide 11.3 says "or VISIBLE within close sonar range"); sensor counts are u16 and visibility is recomputed every sensor tick (D65); economy income is recomputed each 3 Hz step instead of kept as a running total (8.3); at the projectile cap a new shot resolves like hitscan (the guide: the oldest ballistic shells resolve at their predicted impact); wrecks are a list in `Combat`, not grid features, and don't block movement (8.7).
 
 ## Needs my review
+
+- **Sizes by tier (S-104):**
+  - **Balance effect:** Order's share of same-level AI matches went 81% → 86% with the sizes alone (after the rest of this round: 82%).
+  - **T2 tanks:** the footprint-2 Paladin / Juggernaut fell out of band (0.79), which the balance pass fixed with Paladin damage +10%.
+  - **AI lanes:** the AI keeps 2-cell lanes between buildings. 3-cell lanes, which footprint-2 tanks need to pass, broke mirror fairness (east 10 of 12), so footprint-2 units go round adjacent AI buildings. Your call whether to keep that or look for a symmetric 3-cell layout.
+- **Commands at 800 units after option (a) (S-107):** `lune run stress 450 800`: Commands peak 1.78 ms (tick 184), against 1.69–2.23 after S-100. Spreading the hold checks over two ticks didn't bring the peak under its 1 ms budget. The rest of the peak is order starts and auto-orders. NetOut peaked at 8.46 ms (budget 6) once. Work counters (S-99, deterministic): route 582,424, flow field 1,065,295, sensor lookups 1,457,759, known-target lookups 1,011,901. Bandwidth ~17 KB/s per player (budget 35).
+- **AI attack margin (S-105):** a wave waits until it's worth 1.5× the known defence (450 studs round the target); a massed army of half the unit cap goes anyway. Scout every 2 min.
+- **Missile batteries (S-106):**
+  - Sanction: 380 / 4,200, 2,600 health, range 760, 2 × 300 every 6 s.
+  - Scourge: 320 / 3,600, 2,100 health, range 700, 3 × 200 every 5 s.
+  - They need a fire-control radar to pick artillery over other targets (D107).
+  - The counter check lists 30 "can't see" findings for them: sight 200 against a 700+ range, and the check gives them no radar.
+- **Anti-nukes and radar SAMs (S-111):**
+  - **Costs and stats:** Providence 900 / 14,000, cover 1,100, 3 interceptors, 18 s delay; Cerberus 780 / 12,000, cover 1,000, 3, 15 s; Custodian 420 / 6,000, cover 660, 1, 18 s; Chimera 360 / 5,200, cover 600, 1, 15 s.
+  - **Interceptors:** 400 + 10,000 each (Chaos 360 + 9,000), 50–90 s.
+  - **Radar SAMs:** AIR 1,150 / 1,100, so they now one-shot T2 fighters too.
+- **Balance pass (S-112):**
+  - **T1 fighters:** neither condition is met (Order long 1.08, Chaos flank 0.86), and the duels are noisy. My proposal: judge fighters in the SAM raids or AI matches instead.
+  - **Herald:** doesn't win at range (0.92), and range doesn't help. My proposal: +20% speed.
+  - **T2 tanks:** Chaos close 0.86 (needs 0.8).
+- **Beams on domes (S-117):** a beam drains a dome by its best damage / 150 × 12.5 over its duration (Radiance 250, Inferno ~142); capacities unchanged. Your call whether that's "a lot" enough.
+- **Beams (S-113, S-115):**
+  - Radiance 3,000 / 2,300 over 3 s, hit-ray, fires at blips.
+  - Inferno 1,700 / 1,350 over 1.5 s, range 480, single target.
+- **AI economy (S-114, S-116):**
+  - The opening is two generators, then extractors alternating with generators. More gets built, at about 59% power at 8 min (the test's bar moved from 0.6 to 0.5).
+  - An enemy structure contests a deposit only within its range + 40 studs.
+- **Cheats (S-102):** my choices:
+  - `instabuild` applies to every team (it has no team argument) and also makes things free;
+  - `kill` leaves no wrecks;
+  - `give` ignores the unit cap;
+  - `/cheat on|off` mid-match isn't a sim command: the option is fixed at the match start.
+
+### Earlier review items
 
 - **Faction-only units, stage 3 (S-75):** Locust, Cyclops, Barrier, Citadel built with placeholder numbers (decision log).
   - **Locust:** built singly, not in pairs. Against Lancers it loses close (1.43) and long (1.11) but wins the flank (0.72), so it may want a little more punch.
@@ -465,6 +524,7 @@ Merges into `main` done by this session (the integrator). Failures and conflicts
   - Client: C-102..C-105 → `9b05fe9`; C-106 → `5674020`; C-107..C-109 → `bbab862`; C-110/C-111 → `7c04764`; C-112 → `01d6436`; C-113/C-114 → `b1f4dca`.
   - Models: M-23 → `6d01933`; `b41e955` → `41a6ddf`; BAR pairs 1–4 → `4165d24`; pairs 5–26 came in with the client merges.
   - Every merge passed test, test_slow and build. `integrate.sh` also runs `lune run test_client` now, reported but not required: it flagged the S-96 towers' missing icons (fixed in C-112) and the obsolete shield specs (fixed in C-110).
+- 2026-10-23: the S-95 guard fix → `f84565e`; the queue summary → `509c3e8`; client C-115 (with models M-24) → `bbd9d6e`; models `69bbce2` → `dffb3b1`. All passed test, test_slow, test_client and build and were pushed.
 - From S-40 on, `integrate.sh` also runs the slow suite (`lune run test_slow`) before pushing.
 - Own merges (`m-sim-2` → `main`, same checks): S-1 `c81f8b3`, S-2 `baaa520`, S-3 `a7c2fb6`, S-4 `b56a695`, S-5 `eab1900`, S-6 `46e31e3`, S-7 `f49e64d`, S-8 and S-9 `bb009c5`, S-10 `7d9be6f`, S-11 and S-12 `c64e3e0`.
 

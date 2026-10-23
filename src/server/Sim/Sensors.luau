@@ -562,6 +562,20 @@ function Sensors.typeKnown(sim: Types.Sim, team: number, id: number, level: numb
 	return level == L.VISIBLE or level == L.GHOST or Sensors.isTracked(sim, team, id)
 end
 
+-- The def `team` takes enemy unit `id` for (S-109): its own when the type
+-- is known; the def it spoofs when it is an untracked radar contact with a
+-- `spoof` (the Wraith passes for a bomber); else nil (unknown, D107).
+function Sensors.shownDef(sim: Types.Sim, team: number, id: number, level: number, defIndex: number): number?
+	if Sensors.typeKnown(sim, team, id, level) then
+		return defIndex
+	end
+	local spoof = sim.defs.unitByIndex[defIndex].spoof
+	if spoof ~= nil and level == L.RADAR then
+		return sim.defs.units[spoof].index
+	end
+	return nil
+end
+
 -- The categories `team` knows unit `id` has, given its level and def index
 -- (from Sensors.knownTarget): all of them when its type is known, else
 -- those of its domain (D107).
@@ -577,6 +591,9 @@ function Sensors.knownCategories(sim: Types.Sim, team: number, id: number, level
 			return bit32.bor(bit32.band(def.categoryMask, bit32.bnot(AIR_BITS)), CB.GROUND)
 		end
 		return def.categoryMask
+	end
+	if def.spoof ~= nil and level == L.RADAR then
+		return sim.defs.units[def.spoof].categoryMask -- a decoy's spoofed categories (S-109)
 	end
 	if def.domain == "air" and not landed then
 		return Sensors.DOMAIN_MASK.air
@@ -627,6 +644,22 @@ function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 		ratio = math.clamp(ratio, 0, 1)
 		acc.power.spent += drain * dt * ratio
 		s.powerScale[id] = ratio
+	end
+end
+
+-- The REVEAL cheat (S-102): adds `delta` (1 on, -1 off) to every cell of
+-- the ally team's sight, air sight, sonar and radar maps, so every enemy is
+-- VISIBLE and the client's sight map covers the whole map.
+function Sensors.reveal(sim: Types.Sim, team: number, delta: number)
+	local m = sim.sensors.maps[team]
+	if m == nil then
+		return
+	end
+	for _, kind in { "los", "airLos", "sonar", "radar" } do
+		local map = m[kind]
+		for o = 0, buffer.len(map) - 2, 2 do
+			writeu16(map, o, readu16(map, o) + delta)
+		end
 	end
 end
 

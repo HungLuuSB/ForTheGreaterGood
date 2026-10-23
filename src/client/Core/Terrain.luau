@@ -13,8 +13,7 @@ local Layers = require("@shared/Grid/Layers")
 local Terrain = {}
 
 local CELL = Grid.CELL_SIZE
-
-Terrain.DEPOSIT_LIFT = 0.35 -- studs: deposit plates float this far over the cell's height (deposits on gentle slopes)
+Terrain.DEPOSIT_LIFT = 0.35 -- studs: the drawn ground stays this close to flat under a deposit (Render/Deposits sits on it, C-123)
 
 local function heightAt(layers: Layers.Layers, cx: number, cz: number): number
 	local g = layers.grid
@@ -84,7 +83,8 @@ export type Feature = (cx: number, cz: number) -> string
 
 -- Material name at (x, z): the map's feature where it has a look of its own
 -- (C-66), else the terrain type. House cells give "ground" (their walls and
--- roofs are parts, Render/Ground).
+-- roofs are parts, Render/Ground), and so do supply deposits: bare scraped
+-- ground, so no grass blades cover the deposit's low rocks (C-123).
 local FEATURE: { [string]: string } = {
 	hedge = "leafy",
 	house = "ground",
@@ -98,6 +98,11 @@ local FEATURE: { [string]: string } = {
 	field = "grass",
 }
 function Terrain.material(layers: Layers.Layers, x: number, z: number, feature: Feature?): string
+	local lg = layers.grid
+	local dx, dz = lg:cellAt(x, z)
+	if lg:inBounds(dx, dz) and Layers.getSupply(layers, lg:index(dx, dz)) > 0 then
+		return "ground"
+	end
 	if feature then
 		local g = layers.grid
 		local cx, cz = g:cellAt(x, z)

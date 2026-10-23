@@ -12,7 +12,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 260, power = 2600, buildTime = 6000 },
 	health = 2400,
-	footprint = 1,
+	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 200, airSight = 320 },
 	weapons = {
 		{ def = "ord_flak", turretPiece = "turret", muzzle = "muzzle" },

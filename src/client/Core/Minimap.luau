@@ -58,25 +58,14 @@ function Minimap.terrain(layers: Layers.Layers): { Tile }
 	return rows
 end
 
--- Supply deposits, one square per deposit cell (minimap fractions): the
--- exact spots an extractor needs (the tiles above are 4 cells wide).
-function Minimap.deposits(layers: Layers.Layers): { { number } }
-	local g = layers.grid
-	local out = {}
-	for cz = 0, g.cellsZ - 1 do
-		for cx = 0, g.cellsX - 1 do
-			local supply = Layers.getSupply(layers, g:index(cx, cz))
-			if supply > 0 then
-				table.insert(out, { (cx + 0.5) / g.cellsX, (cz + 0.5) / g.cellsZ, supply })
-			end
-		end
-	end
-	return out
-end
+export type Dot = { id: number, u: number, v: number, team: number, kind: "unit" | "structure" | "blip" | "ghost", selected: boolean, attacked: boolean } -- attacked: the server's UNDER_ATTACK flag (S-68)
 
-export type Dot = { u: number, v: number, team: number, kind: "unit" | "structure" | "blip" | "ghost", selected: boolean, attacked: boolean } -- attacked: the server's UNDER_ATTACK flag (S-68)
+Minimap.ICON_SCALE = 0.5 -- the minimap's unit icons against the strategic layer's (Icons.BASE 22: about 11 pixels; C-122)
 
--- One dot per known unit.
+local DRAW_ORDER = { ghost = 1, structure = 2, unit = 3, blip = 3 }
+
+-- One dot per known unit, ghosts and structures first, selected units last
+-- (drawn in this order, so the selection stays on top).
 function Minimap.dots(world: World.World, selected: { [number]: boolean }): { Dot }
 	local g = world.grid
 	local out = {}
@@ -93,8 +82,15 @@ function Minimap.dots(world: World.World, selected: { [number]: boolean }): { Do
 		elseif def and def.domain == "structure" then
 			kind = "structure"
 		end
-		table.insert(out, { u = mu, v = mv, team = u.team, kind = kind, selected = selected[id] == true, attacked = bit32.band(flags, Schema.StrategicFlag.UNDER_ATTACK) ~= 0 })
+		table.insert(out, { id = id, u = mu, v = mv, team = u.team, kind = kind, selected = selected[id] == true, attacked = bit32.band(flags, Schema.StrategicFlag.UNDER_ATTACK) ~= 0 })
 	end
+	table.sort(out, function(a, b)
+		local oa, ob = DRAW_ORDER[a.kind] + (if a.selected then 10 else 0), DRAW_ORDER[b.kind] + (if b.selected then 10 else 0)
+		if oa ~= ob then
+			return oa < ob
+		end
+		return a.id < b.id
+	end)
 	return out
 end
 

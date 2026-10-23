@@ -20,9 +20,12 @@
 -- select-all of 800 units, sent as four commands of 200, starts over four
 -- ticks: the same as the four arriving a tick apart. Commands are recorded
 -- in the replay on the tick they are applied, so replays match.
+--
+-- CHEAT commands (S-102) go to Sim/Cheats, recorded like any other.
 
 local Schema = require("@shared/Net/Schema")
 local Build = require("../Build")
+local Cheats = require("../Cheats")
 local Orders = require("../Orders")
 local Sensors = require("../Sensors")
 local Nav = require("../Nav")
@@ -165,6 +168,9 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.CAMERA then
 		NetOut.setCamera(sim, player, cmd.minX :: number, cmd.minZ :: number, cmd.maxX :: number, cmd.maxZ :: number)
 		return
+	elseif cmdType == CT.CHEAT then
+		Cheats.apply(sim, player, cmd) -- (S-102) answered CHEATS_OFF unless the match allows them
+		return
 	end
 	for _, id in cmd.unitIds do
 		if w.owner[id] ~= player then
@@ -185,7 +191,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 				Build.cancelQueued(sim, id, cmd.value :: number)
 			end
 		elseif cmdType == CT.STOP then
-			Orders.stop(sim, id)
+			Orders.stopCommand(sim, id) -- (drops the manual target too, S-115)
 		end
 	end
 end

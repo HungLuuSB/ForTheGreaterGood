@@ -11,7 +11,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 80, power = 400, buildTime = 1500 },
 	health = 800,
-	footprint = 1,
+	footprint = 2, -- size shows tech level (S-104)
 	icon = "storage",
 	storage = { supply = 1000, power = 1000 },
 	model = "chs_depot",

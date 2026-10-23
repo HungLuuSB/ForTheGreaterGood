@@ -944,3 +944,161 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 - **Icons:** stopgap tiles (Heavy Turret, IR SAM Site) until the icon catalogue has these towers.
 
 **Why:** the user's Pulsar reference (a bright line from the barrel, retract when off); new defs must have icons, and existing tiles avoid a re-import.
+
+### C-120 — The cheat command line sends the sim's CHEAT commands; results print in its log; "cheats used" on results and replay names (2026-10-23)
+
+**Decision:**
+- **Sending:** `Core/CheatInput.prepare` fills in unit ids and the cursor's "at"; `CheatText.parse` (S-102) builds the command; `Commands.encode` sends it on the Cmd channel (never during a replay). The console echoes the resolved line ("→ give ord_lancer 3 at 43,24"); parse errors print in red.
+- **Results:** CHEAT_RESULT events queue in `world.cheatResults`; Main prints `CheatText.describe` lines, green when OK, red otherwise.
+- **Speed:** the Roblox entry's tick driver takes `sim.cheats.speed` when it changes, and goes back to 1× for a match without one.
+- **"Cheats used":** the statistics Overview adds "CHEATS USED (name ×n)" from `Stats.report`'s `cheats` and `Stats.series`' `cheated`; a saved replay's name ends in "· cheats used".
+- **Log height:** the log shows only the newest lines that fit under the top HUD.
+- **Permissions:** unchanged from C-119 (allow list AND Studio or the lobby's Cheats toggle; the server drops anyone else's CHEAT payloads).
+
+**Why:** the user's brief. The player replay file has no cheat flag of its own, so the name carries it rather than changing the sim's file format.
+
+### C-121 — Extractor upgrades in place: targets highlighted and snapped to, extractor drags as areas, an "Upgrade extractors" area command (2026-10-23)
+
+**Decision:**
+- **Rule:** `Core/Upgrades` follows S-108: `def.upgradesFrom` lists what a def replaces, on the player's own finished structure. Defs without the field fall back to D92 (a same-faction extractor with a lower rate) until S-108 merges. `Core/Placement.check` uses the same rule.
+- **Site:** an upgrade's BUILD goes to the deposit under the old extractor, as the point the new footprint snaps from (S-104: T1 2×2, T2 3×3).
+- **Ghost:** while the ghost upgrades (or in the Upgrade command), every target gets a pulsing disc. The ghost snaps onto a target within 16 studs (before deposits) and draws over it (highlight on top, plate raised).
+- **Extractor drags** are circles: `Placement.area`, every valid spot in the circle (free deposits and upgrades), visited nearest the builders first. Other structures still place rows.
+- **Upgrade extractors** (card button "Upgrade", T2 builders; `CommandSet` takes the def set): drag a circle, or click (16 studs), and `actions.upgradeArea` queues plain BUILDs nearest first.
+- **Build menu:** a "▲ UPGRADE" badge and the tooltip line "Upgrades a T1 extractor in place".
+- **Fixes:** the ghost moves its model with `PivotTo` (blockout parts are anchored, not welded). `Waypoints` no longer counts the extractor a build upgrades as that build's frame.
+
+**Why:** the user's brief; sim-A's S-108 contract (no new command or wire: each queued BUILD is checked when started).
+
+### C-122 — The minimap draws unit icons (2026-10-23)
+
+**Decision:** minimap units are their strategic icons (`Core/Icons.style`, `UI/Glyph`) at `Minimap.ICON_SCALE` 0.5 (about 11 px). Ghosts, selection and under-attack look as on the icon layer; radar blips with no type stay dots. `Minimap.dots` carries each unit's id and sorts ghosts and structures first, the selection last.
+
+**Why:** the user asked for the unit icons on the minimap (BAR's minimap shows them).
+
+### C-123 — Deposits: C's models (or a dark patch) without glow, hidden under structures; a BAR-style overlay while placing extractors or on F4; minimap rings (2026-10-23)
+
+**Decision:**
+- **Data:** `Core/Deposits` lists deposits, finds their holders (known structures over the cell, ghosts as "remembered"), picks a variant and yaw from the cell, and formats the yield.
+- **Ground:** `Render/Deposits` draws C's `fx.deposit` variant once approved (`MeshModels.deposit`; the TeamColor `base` tinted to the terrain colour; materials `fx_deposit_<i>`), else a dark patch and stones. A live structure on the cell hides it. `Render/Ground` no longer draws plates.
+- **Overlay:** while placing an extractor (yield = rate × value) or toggled with F4 (the value). Free deposits get a ring and text, others' a dim marker, own nothing. It's a SurfaceGui on a flat part turned to face the camera; `AlwaysOnTop` stays false, since true hides a SurfaceGui under a Workspace part.
+- **Minimap:** neutral rings, filled in the holder's team colour.
+
+**Why:** the user's brief (no neon, no flat coloured squares; highlight only when it helps). models-C's `fx.deposit` contract.
+
+### C-124 — Settings top right; the Follow button removed (T in developer mode); the F3 readout bottom right (2026-10-23)
+
+**Decision:**
+- **Settings (O):** top right (was top left, C-109).
+- **Follow:** the on-screen button is gone; T follows only with `devMode` on. `devMode` is a new setting (Settings > Interface), on in Studio and off in a live game. `SettingsMenu.state` lets earlier key handlers read it.
+- **Debug readout (F3):** bottom right.
+- **Keys page:** a "Developer mode" group with T and F3.
+
+**Why:** the user's layout request ("keybind available in the developer mode").
+
+### C-125 — Unit panel: model portrait with the type icon; economy flow instead of HP numbers (2026-10-23)
+
+**Decision:**
+- **Portrait:** `UI/Portrait` (the build menu's) with the type glyph at 18 px bottom right; a contact keeps its icon alone. The health bar stays, the HP text is gone.
+- **Flow:** `Core/UnitFlow` gives own units' supply / power per second from defs and client state (production, wind × the team's wind, extractor rate × deposits under it, converters while on, upkeep, factory / builder drain = cost × buildpower ÷ buildTime × the slower stall ratio; frames 0). It's drawn as "+5" / "−10" in the cost colours.
+- A builder's target is the nearest own unfinished frame within its range + 16 studs, the Waypoints rule; the sim doesn't send it.
+
+**Why:** the user ("show its current ore and energy usage, like +5 or −10").
+
+### C-126 — The cheat line's arrow keys cycle suggestions first (2026-10-23)
+
+**Decision:** while suggestions show, Up / Down move a highlight through them (Up from none: the bottom one, next to the bar), and Tab or Enter takes the highlighted one without sending. With no suggestions showing, they walk the history. WASD camera panning is not added (the user: middle-drag is enough for now; A / S stay Attack / Stop).
+
+**Why:** the user's request, and their answer on the history.
+
+### C-127 — Inferno's beam: green, then back to orange (2026-10-23)
+
+**Decision:** Inferno's beam stays orange (255, 170, 70). It was made green in `0d6ca37`, then reverted the same day.
+
+**Why:** the user asked for green, then said orange is fine. The towers' other differences (blip targeting, misses, a lingering beam, Inferno weaker) are sim request 47.
+
+### C-128 — Radiance's ray: bluer, held 3 s, narrowing over its last second (2026-10-23)
+
+**Decision:**
+- `Core/Effects.beamSeconds(weapon)` = `weapon.beamDuration` (S-113), else BEAM_FALLBACK by id (Radiance 3, Inferno 1.5), else 0.45 s.
+- `Effects.beamLook(age, life)`: full width and bright, then the last BEAM_FADE (1 s, at most half the life) narrows the ray to nothing as it fades.
+- Radiance's colour is (120, 190, 255); Inferno stays orange.
+- models-C will build the beam VFX; this ray is the placeholder.
+
+**Why:** the user's description. The hit-ray damage and manual-target rules are sim request 49.
+
+### C-129 — Beams glance off shield domes (drawn) (2026-10-23)
+
+**Decision:** `Core/Effects.deflection` checks a missed BEAM FIRE that ends within 2 studs of a known dome's surface (generator position, `def.shield.radius`) and was fired from outside it. The ray is mirrored about the surface normal and tilted down at least 0.45, 8–90 studs long to the ground; `Render/Effects` draws that second leg from its own pool. It applies once the sim ends beams at domes (sim request 50).
+
+**Why:** the user's sketch ("the shield can deflect incoming laser").
+
+### C-130 — The fog blanket's vertex spacing grows with the map: at most 2 × 2 chunks (2026-10-23)
+
+**Decision:** `FogBlanket.stepFor(cellsX, cellsZ)` = max(STEP, ceil(max side / (2 × CHUNK))): 2 cells on 128-cell maps, 4 on 256-cell maps. Every map needs at most 4 EditableMeshes.
+
+**Why:** on Normandy, 16 chunks hit the device's editable memory budget (Studio: "Failed to create empty EditableMesh ... memory budget limits") and parts of the map lost their fog (the user's screenshot). The budget is shared with the shield fx, charts and vignette.
+
+### C-131 — Shield hits: no ripple; a patch of fine outlined honeycomb cells (BAR's plasma deflector) (2026-10-23)
+
+**Decision:**
+- The ripple emitters are removed (ShieldFx's ripples, ShieldLook.RIPPLE_SCALES / rippleBucket).
+- The plate mesh is a hexagon outline (OUTLINE 0.16 of its corner radius, both windings).
+- Shield.PLATE 2.6, GAP 0: the outlines form a honeycomb. Rings: 3 + strength, clamped to 3..5 (MAX_RINGS 5).
+- The plate pool is 560, with opacity 0.85 (thin lines don't bloom into a block).
+
+**Why:** the user's reference GIF of BAR's plasma deflector: no ripple, a lit honeycomb patch where the shot lands. "The current ripple takes too much space, drop it and enhance the hexes."
+
+### C-132 — Shield hits cave in: the wave runs inward, bigger centre cells, a bowl that bounces (2026-10-23)
+
+**Decision:**
+- **Timing:** `Shield.plateAt(age, ring, strength, rings)` delays a cell by (rings − ring) × RING_DELAY, so the rim lights first and the centre last. The centre stays hottest.
+- **Sizes:** `Shield.cellScale` = 1.3 − 0.55 × ring / rings. The layout spreads the arc by (1 + 0.3 × (1 − d / reach)), so inner rings sit wider apart. Render sets each cell's Size from its scale.
+- **Dent:** depth DENT (1.4) × strength × (1 − (ring / (rings + 1))²) × e^(−7t) × sin(16t): in first, then a small bounce past flat. `plateLook` keeps the largest |dent|.
+
+**Why:** the user, from the reference GIF's later shots: "smaller outside, bigger inside... pushed back inward... curved in to repel the shot".
+
+### C-133 — models-C's beam shot draws the beam towers' shots (after approval) (2026-10-23)
+
+**Decision:**
+- `Render/BeamShots` builds C's rig (core, glow, filaments, charge flipbook, impact, scorch) from `Meshes.beam`, pooled and capped at 8. It preloads the 8 textures.
+- Timing follows the shot's duration (Core/Effects.beamSeconds): charge, then held, then the last BEAM_FADE narrows it.
+- Widths go to BeamShots.TIP (0.08) at the target end (the user: a point at the tip). Filaments converge there.
+- `Render/Effects` hides its placeholder ray while the rig draws.
+- It's used once `Meshes.beam.status` is approved; `Invoke("beamsanyway", true)` previews it.
+
+**Why:** the user asked models-C for the beam VFX; C's reference module `assets/fx/beam/BeamShot.luau`.
+
+### C-134 — Shield hit cells move inward only (2026-10-23)
+
+**Decision:** the dent is depth × x × e^(1 − x) with x = t / DENT_PEAK (0.12 s): pushed in, then eased back to the surface, never past it. C-132's damped swing went outward after its first half-cycle.
+
+**Why:** the user saw the honeycomb moving outward instead of into the shield.
+
+### C-135 — The beam shot follows models-C's update (tip, fan, muzzle star, flare offsets) and the game speed (2026-10-23)
+
+**Decision:**
+- Widths and filament convergence come from `Meshes.beam` (`tip` order 0.06 / chaos 0.08, `fan` 0.3), replacing my own constants.
+- The muzzle star flare comes from `muzzleFlareSize`, and the charge, star and impact flares carry C's StudsOffsets.
+- Rigs age by game time (dt × speed), so a slowed game slows the shot.
+
+**Why:** models-C's beam update (0ccf6c3, ff6072d), from the user's notes to them, and the user's 0.25× test.
+
+### C-136 — Larger shield hit patches (2026-10-23)
+
+**Decision:** Shield.PLATE 3.2 (was 2.6); rings 4 + strength, clamped to 4..6 (61 / 91 / 127 cells); ShieldFx.PLATE_POOL 800.
+
+**Why:** the user: "honeycomb effect is good, make it cover a larger part of the shield".
+
+### C-137 — Client after S-104..S-116: stopgap icons, the extractor ghost on supplyUnder, specs on the new rules (2026-10-23)
+
+**Decision:**
+- **Icons:** stopgaps for ord_sanction / chs_scourge (Artillery Emplacement), chs_wraith (Strategic Bomber), ord_providence / chs_cerberus (Radar SAM Site) and ord_custodian / chs_chimera (Mobile Radar SAM). Same sheet, so no re-upload.
+- **Placement:** `Placement.check` uses `PlacementRules.supplyUnder`, so an extractor works any deposit under its footprint, as the server does.
+- **Specs:**
+  - Nuke: a Cerberus intercepts, and radar SAMs no longer track the nuke.
+  - Placement: the ghost covers the deposit.
+  - ShieldWire: measured from the real dome centre, drawn a tick behind like the game.
+  - Upgrades: builders kept clear of the 3×3 footprints.
+
+**Why:** sim-A's merge 522ca80 (S-104 footprints, S-108 upgrades, S-111 anti-nukes) broke 8 client specs, as sim-A warned.

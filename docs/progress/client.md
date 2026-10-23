@@ -4,6 +4,181 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, sim S-104..S-116 merged into the client)
+
+- **Main merged:** sim-A's S-104..S-116, with bigger structures, extractor upgrades kept running under the frame, anti-nukes, beams that last and pierce and stop at domes, manual targets, and the AI fixes. All 8 client specs it broke are fixed (C-137).
+- **New units** get stopgap icons until the icon catalogue has them: the Sanction and Scourge missile batteries, the Wraith decoy bomber, and the four anti-nukes.
+- **Extractor ghost:** an extractor works any deposit under its footprint, the sim's rule.
+- **Now testable in Studio:** beams glancing off shields (C-129), the full 3 s Radiance beam, and anti-nukes intercepting.
+
+## Summary (2026-10-23, bigger shield hit patches)
+
+- **Shield hits (C-136):** each hit covers about twice the diameter: 3.2-stud cells, 4 to 6 rings (61 to 127 cells). Start a new playtest to see it.
+
+## Summary (2026-10-23, beam update from models-C; slowed test)
+
+- **Beam shot (C-135):** models-C's update is merged and used: a point at the target, nothing wider than the emitter ball at the muzzle, a smaller impact flare, and a flickering star on the ball while firing. The shot also slows with the game speed now.
+- **0.25× test:** running in Studio (`shield_one` + a Radiance + Juggernauts, with C's beam previewed). `debug_out/screens/shield_slow_honeycomb.jpg` shows a hit's patch at that speed.
+
+## Summary (2026-10-23, shield cells only cave in)
+
+- **Shield hits (C-134):** the cells now only move inward. They're pushed in, deepest at the centre, then ease back to the surface. C-132's bounce took them past the surface, outward, which is what you saw.
+
+## Summary (2026-10-23, C's beam shot wired; Needs my review)
+
+- **Merged m-models** (animated pieces on 44 meshes, rebuilt wrecks, lighter deposits, the beam shot effect). test_client stays green and the materials file was regenerated.
+- **Beam shot (C-133):** models-C's effect (a white core, a wide coloured glow, jittering filaments, a charge flash, an impact flare and a scorch mark) now draws the Radiance and Inferno shots. My adjustments for your notes:
+  - it lasts the shot's full duration (Radiance 3 s, Inferno 1.5 s), held, then narrowing away over the last second;
+  - it narrows to **a point at the target end**, and the filaments meet there instead of fanning out. models-C is updating their recommended widths for the same thing.
+- **Needs my review:** it's at "review", so in a normal game you still see the placeholder ray. To preview it, run `ReplicatedStorage.FtggClientDebug:Invoke("beamsanyway", true)` in a playtest. Approve it and models-C flips the status, then it shows everywhere.
+- **Shield hits (C-132), now seen in Studio:** a honeycomb patch on the dome where shots land (`debug_out/screens/shield_cavein.jpg`).
+- **Honeycomb shell over the dome:** asked models-C for the asset (fading out toward the base); I'll scale it with the shield's capacity.
+- **Screenshot:** `debug_out/screens/beam_shot_c.jpg` (both beams, the rig driven directly; the towers' own targets were out of sight in that scene).
+
+## Summary (2026-10-23, shield hits cave in)
+
+- **Shield hits (C-132),** after your second look at the GIF (its 2nd and 3rd shots):
+  - **the wave runs inward:** the outer ring lights first, each ring in after it, the centre last and hottest;
+  - **cells grow toward the centre:** small at the rim, bigger inside (1.3× at the centre, 0.75× at the rim), with the inner rings spread slightly wider;
+  - **the patch caves in like a bowl,** deepest at the centre, then springs back past flat once (a small bounce), as if the dome bends in to repel the shot.
+- **Not checked in Studio yet:** you were in a playtest (`shield_one`), so I didn't touch it. The specs cover the timing, sizes and bounce. Start a new playtest to see it.
+
+## Summary (2026-10-23, shield hits like BAR's plasma deflector)
+
+- **Shield hits (C-131),** after your BAR GIF:
+  - the ripple is gone;
+  - a hit now lights a patch of fine **outlined** honeycomb cells on the dome: 2.6-stud cells whose edges touch, 3 to 5 rings depending on the shot (37 to 91 cells);
+  - the cells are white-hot at the centre and fade outward, still curved with the dome. Each hit sends its wave through the patch as before.
+- **Screenshots:** `debug_out/screens/shield_honeycomb_1.jpg`, `shield_honeycomb_2.jpg` (the shield scene under fire, from outside).
+
+## Summary (2026-10-23, big-map fog fixed)
+
+- **Fog on big maps (C-130):**
+  - the cause, confirmed in the Studio log: "Failed to create empty EditableMesh ... memory budget limits". Normandy needed 16 fog chunks, and the device budget, shared with the shield effect, charts and vignette, ran out partway.
+  - the fix: the fog's vertices now spread out on bigger maps, so every map needs at most 4 chunks, as Coastline always did.
+  - Normandy now builds 4 of 4 and is dark everywhere it should be. From game height it looks the same.
+- **Screenshot:** `debug_out/screens/fog_normandy.jpg`.
+
+## Summary (2026-10-23, beams glance off shields)
+
+- **Deflection (C-129), from your sketch:** a beam that ends on a shield dome's surface is drawn as two legs: up to the dome, then a shorter one mirrored off the surface and angled down into the ground nearby, fading with the beam.
+- It shows up once sim-A stops beams at domes (**sim request 50**). Today beams still pass through, so there was nothing to screenshot yet.
+- **sim-A built request 49 (S-115, merging):**
+  - Radiance pierces: every enemy on its fixed 3 s line takes damage;
+  - manual targets stay until STOP, a new attack order or the target's death; the unit fights on its own while the target is out of range.
+
+## Summary (2026-10-23, Radiance's ray)
+
+- **Radiance (C-128):** a bluer beam, held about 3 s, its last second narrowing to nothing. Inferno stays orange and holds 1.5 s. Once sim-A's `beamDuration` is in main, the client draws exactly the sim's duration.
+- **Sim work (requests 47 and 49) with sim-A:**
+  - Radiance targets radar blips and can miss them without Pinpointers (S-113, merging);
+  - a hit-ray damaging every enemy on the line, for 3 s (request 49);
+  - manual targets override (request 49).
+- **Beam VFX:** models-C builds them, at your request; mine is a placeholder ray until then.
+- **Screenshot:** `debug_out/screens/beam_radiance.jpg`.
+
+## Summary (2026-10-23, beam towers apart)
+
+- **Inferno's beam stays orange:** I made it green (C-127), then put it back at your word.
+- The rest of your note (Radiance targets radar blips and can miss them without a Pinpointer, a lingering high-damage beam; Inferno shorter and weaker) is sim work: **sim request 47** is with sim-A. Once they name the beam's duration, I'll hold the drawn beam that long.
+- A note on C-126: its first suite run had 1 failure that didn't come back in 3 reruns (213/213 each). It ran while you were playtesting; I couldn't see which spec it was.
+
+## Summary (2026-10-23, cheat line arrow keys)
+
+- **Cheat command line (C-126):** while suggestions show, Up / Down move through them, and Tab or Enter takes the highlighted one; with none showing they walk the history as before. Not checked in Studio (you were in a playtest); the camera already ignores the arrow keys while you type.
+- **Camera:** unchanged by your choice: middle-drag (and the arrow keys when not typing).
+
+## Summary (2026-10-23, C's deposit models in; Needs my review)
+
+- **Merged m-models** (models-C's deposits, interceptor missiles, effect textures, animated blockout pieces, S-104-scaled and anti-nuke blockouts). test_client stays green and the materials file has the three deposit variants.
+- **Deposit models, at review:** with them switched on (`Invoke("depositsanyway", true)`), every deposit is one of C's three variants at its own turn, a dark scraped patch with pale rocks.
+  - Grass blades covered the low rocks, so deposit cells are now bare ground in the terrain.
+  - The patch is tinted with the real colour of the terrain around it.
+  - They read quite dark at night. **Needs my review:** approve them (C flips the status and they replace the plain patch everywhere) or ask C for lighter patches.
+- **Screenshot:** `debug_out/screens/deposit_models.jpg`.
+
+## Summary (2026-10-23, HUD layout, developer mode, unit panel)
+
+- **HUD (C-124):**
+  - Settings (O) is in the top right corner.
+  - The Follow (T) button is gone. T still follows the selection, but only in **developer mode**, a new toggle in Settings > Interface (on by default in Studio, off in a live game).
+  - The F3 debug readout is in the bottom right.
+  - Settings > Keys lists T and F3 under "Developer mode".
+- **Unit panel (C-125):**
+  - the portrait is the unit's model at an angle with its type icon bottom right, like the build menu's tiles;
+  - under the health bar, instead of HP numbers, it shows what the unit adds to or takes from the economy right now: supply in white, power in yellow ("+5", "−10").
+  - The wire has no per-unit flow, so the client works it out from the defs and what it sees: an extractor's deposits, generators, wind, converters, radar upkeep, and a factory or builder at work (the item's cost at its buildpower, slowed by a stall). Own units only.
+- **Screenshots:** `debug_out/screens/unitpanel_plant.jpg` (Settings top right, F3 bottom right, a plant building Lancers: −6.7 / −67), `unitpanel_fusion.jpg` (+250 power).
+
+## Summary (2026-10-23, deposits without the yellow squares)
+
+- **Deposits (C-123):** the neon squares are gone. Each deposit is now a dark, subtle patch of scraped ground with a few stones, tinted from the terrain under it, with no glow.
+  - C's deposit models (`fx.deposit`, 3 variants) replace the patch automatically once you approve them. Each deposit gets its own variant and turn, and C's ground patch is tinted to the terrain. models-C is building them today.
+  - A structure built on a deposit hides it; it comes back when the structure is gone.
+- **Overlay, only when it helps (BAR's metal view):**
+  - while you place an extractor, free deposits get a soft ring with the yield your extractor would take ("+2.0");
+  - deposits other players hold get a dim marker, and your own show nothing;
+  - **F4** shows the same overlay any time, with each deposit's value. It's listed in Settings > Keys, with the extractor drag.
+- **Minimap:** small neutral rings for deposits, filled with the holder's team colour when taken (yours in your colour).
+- **Screenshots:** `debug_out/screens/deposit_normal.jpg` (patches, a deposit hidden under your extractor, minimap rings, one filled), `deposit_overlay.jpg` (placing an extractor), `deposit_f4.jpg` (F4).
+
+## Summary (2026-10-23, minimap icons; anti-nukes coming)
+
+- **Minimap icons (C-122):** units on the minimap now show their type icon instead of a dot, the same icons as the zoomed-out view, about 11 px.
+  - Ghosts are faint, the selection is lightened and drawn on top, and units under attack blink red.
+  - Radar blips with no known type stay dots.
+- **Screenshot:** `debug_out/screens/minimap_icons.jpg` (shield scene, enemies shown with /reveal).
+- **Sim request 46 is built (S-111, merging):**
+  - radar SAMs shoot only aircraft and one-shot every T1 aircraft;
+  - new anti-nukes: Providence / Cerberus (structures, 3 interceptors, 18 s / 15 s between shots) and Custodian / Chimera (mobile, 1 interceptor, only while stopped);
+  - each intercepts any enemy nuke aimed inside its cover, with a certain hit, so two nukes on one spot get one through.
+  - I'll do their client side (icons, cover ring, stock and shot delay, blockouts from models-C) once it's in main.
+
+## Summary (2026-10-23, extractor upgrades in place)
+
+- **Upgrading extractors (C-121).** A T2 builder can now build an advanced extractor on top of your own T1:
+  - **Placing:** while you place an Advanced Extractor, every T1 extractor it can upgrade gets a pulsing green disc. The ghost snaps onto a T1 near the cursor and draws over it.
+  - **Shift-drag:** with an extractor ghost, a drag is now a circle (as in BAR's area extractor), not a row. It queues an extractor on every free deposit and every T1 it upgrades inside the circle, nearest the builder first.
+  - **"Upgrade" on the command card:** T2 builders only. Drag a circle to queue an upgrade on every own T1 inside it, nearest first, or click an extractor to upgrade just that one.
+  - **Build menu:** the tile has a green "▲ UPGRADE" badge, and the tooltip says "Upgrades a T1 extractor in place".
+- **sim-A's S-108 is coming with S-104** and changes the rules. The client already follows it, falling back to today's rule until it merges:
+  - upgrades are listed per def (`upgradesFrom`), and only your own extractors qualify;
+  - the T1 keeps producing under the frame and leaves only when the T2 finishes;
+  - the T1 is 2×2 and the T2 3×3, so the build goes on the deposit cell.
+  - The nanoframe (next task) will draw over the T1.
+- **Two fixes found while testing:**
+  - The build ghost of a blockout model left all its parts but the base far away (they're anchored, not welded); the ghost now moves the whole model.
+  - Queued builds on a spot where a T1 stood dropped off the waypoint display at once.
+- **Sim request 46** (your SAM and anti-nuke message) is filed with sim-A.
+- **Screenshots:** `debug_out/screens/upgrade_targets.jpg` (discs, badge, Upgrade button), `upgrade_ghost.jpg`, `upgrade_area.jpg` (the Upgrade circle), `upgrade_started.jpg`, `upgrade_drag.jpg` (an extractor Shift-drag).
+
+## Summary (2026-10-23, cheats work)
+
+- **The cheat commands are live (C-120)**, now that sim-A's S-102 is in main. Tested in Studio:
+  - `/give Lancer 3` places 3 Lancers at the cursor (the log shows "→ give ord_lancer 3 at 43,24");
+  - `/res all max`, `/god on`, `/reveal on`, `/kill selected`, `/kill 2`, `/speed 2` (the game really runs at 2×) and `/speed 1` all work;
+  - mistakes say why in red ("unknown unit", "speed must be 0.25..8", "no AI on that team").
+- **Results:** green when a command worked, red when it didn't.
+- **"Cheats used":** the statistics Overview says "CHEATS USED (name ×n)" next to the match length, and a saved replay's name ends in "· cheats used".
+- **Log:** on a short window it shows only the newest lines that fit, so it never covers the resource bar.
+- **Screenshots:** `debug_out/screens/cheats_results.jpg`, `cheats_autocomplete.jpg`, `cheats_kill_speed.jpg`, `cheats_stats.jpg` (the stats panel shown with sample results, since a test profile never ends).
+
+## Summary (2026-10-23, cheat command line; shield hits)
+
+- **Cheat command line (C-119), BAR's /cheat:**
+  - Press Enter or "/" and type. Suggestions appear as you type: commands, then units by id or display name ("/give lanc" offers the Lancer). Tab takes the first.
+  - "/help" lists every command with an example. Results print in a log above the bar.
+  - "at" defaults to the cursor, and Ctrl+Shift+G repeats the last /give at the cursor.
+- **Until sim-A's S-102 is in main, the bar is a stub** that says what it would send. sim-A built the commands themselves (S-102: give, res, income, instabuild, reveal, god, kill, speed, ai), and they're integrating now. I'll hook them up next.
+- **Who may cheat:**
+  - only players on the allow list (`src/roblox/CheatConfig.luau`: your UserId);
+  - only in Studio, or in a match where the host turned on the new lobby toggle "Cheats" (off by default);
+  - anyone else's cheat commands are dropped on the server before the sim sees them.
+- **/cheat on|off** flips that lobby toggle (host only). sim-A has asked you whether it should also work mid-match.
+- **"Cheats used" on results and replays** comes with S-102's flags.
+- **Shield hits:** dimmer ripples, bigger hex patches (C-117), and each hit now sends a visible wave through its patch instead of freezing it lit (C-118).
+- **Screenshots:** `debug_out/screens/cheats_*.jpg`, `shield_hex_*.jpg`.
+
 ## Summary (2026-10-23, T2 beam towers in game)
 
 - **Beam towers (S-96 + C-112):** Radiance (Order) and Inferno (Chaos), Pulsar-style.
@@ -358,6 +533,11 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `b915691` (S-96 tower blockouts merged from m-models `aafbf19`; retract checked, C-113; docs only besides the merge); test 414, build passed; test_client 196 (the intermittent failure was Ranges.spec's timing check under load, fixed in the next commit).
 - Ready to merge: `ed5681f` (Ranges.spec timing check robust to machine load); test_client 196, test 414, build passed.
 - Ready to merge: `96973a5` (S-96 tower meshes merged from m-models `1efc5e9`, `1429976`; retracted glow dims, C-114); test_client 197, test 414, build passed.
+- Ready to merge: `1d738c9` (wreck meshes built and placed, wreck_<id> appearances, includes m-models `6b94586`, C-115); test_client 197, test 414, build passed.
+- Ready to merge: `f6e9cea` (shield ripples from fixed-size emitters, C-116); test_client 198, test 414, build passed.
+- Ready to merge: `a19380c` (dimmer ripples, bigger hex patches, C-117); test_client 198, test 414, build passed.
+- Ready to merge: `7ac3622` (hex patches animate: waves per hit, glassy plates, C-118); test_client 199, test 414, build passed.
+- Ready to merge: `bbaafa6` (cheat command line, gate, lobby Cheats toggle; stub until S-102; touches src/roblox Main.server, Lobby, new CheatConfig; C-119); test_client 202, test 419, build passed.
 
 ## Tasks
 
@@ -685,6 +865,67 @@ All with real mouse and keyboard input through the MCP tools.
 - Your radar towers and unarmed radar units (mobile radars, AWACS) now always show their green radar ring, selected or not (C-63). It is drawn always on top, so hills and hedgerows don't hide it, and it stays a bold 6 px line at any zoom (C-64, `debug_out/screens/c64_radar_rings_on_top.jpg`).
 - The `normandy` battle is on sim-A's `map:normandy` now (S-53, S-54), laid out west (Order) to east (Chaos): each army in its staging field in front of its river, IR SAM sites at the edge of the bocage, aircraft, radar SAMs, radars, economy and silo behind the river. All 392 units stand on open ground (checked cell by cell), ticks average 2.5 ms (worst 17.5 ms) and both sides keep full supply (`debug_out/screens/normandy_map_order_side.jpg`).
 - SAM ranges cut twice on the user's word (S-55, S-56): IR SAMs now reach 206 (Thorn) / 147 (Vigil), radar SAMs 945 (Wyvern) / 1013 (Aegis). Two client specs' SAM scenes adjusted: the Thorns stand under the jets' loiter circle, and the floors for prediction count and boundary bend account for ~6-tick flights.
+
+## 2026-10-23: cheat command line, permission gate, lobby Cheats toggle; stub until S-102 (C-119)
+
+- **Asked:** an in-game command line for testing (BAR's /cheat): TextChatService commands; give / res / income / instabuild / reveal / god / kill / speed / ai as the sim defines them; "at" = the cursor; ids or names with suggestions; /help; results in chat. Allowed only in Studio, or when the host enabled "Cheats" in the lobby AND the UserId is allow-listed; never in public matchmaking; "cheats used" on results and replays; Ctrl+Shift+G repeats the last give; a stub until the sim side merges.
+- **The commands are the sim's** (S-102, net.md "Cheat commands"): a CHEAT command on the Cmd channel, recorded in the replay. `Shared/Net/CheatText` parses chat text into it, and a CHEAT_RESULT event answers (`CheatText.describe`).
+- **`Core/CheatInput`** (pure, `CheatInput.spec` 3):
+  - the command list with usages and examples;
+  - suggestions: command names, then after "give" units whose id or display name starts with (or contains) the typed text, case-insensitive;
+  - `prepare`: drops "/" and "/cheat", turns a display name into its id, and adds " at x,z" (the cursor's ground point) to a give without one;
+  - /help's lines.
+- **`UI/CheatConsole`:**
+  - a UI-kit bar at the bottom centre, opened with Enter or "/";
+  - suggestions above it (Tab or a click takes one), Up / Down history, Escape closes;
+  - a log of up to 16 lines on a faint backing, kept above the suggestions and fading after 12 s;
+  - Ctrl+Shift+G repeats the last give at the cursor.
+  - Roblox's chat window is off (C-109), so this is the command line; the same commands are also registered as TextChatService commands for when chat is on.
+  - Enter is also taken from a focus loss while Return is down (Studio's input tool drops the TextBox's enterPressed).
+  - The debug hook `Invoke("cheatline", text)` enters a line.
+- **Gate** (`src/roblox/Main.server`, new `src/roblox/CheatConfig`):
+  - a Cmd payload whose byte 0 is CHEAT (17) is dropped unless the player's UserId is in `CheatConfig.allow` (the user's, 11846985184) and the game is in Studio or the lobby's `cheats` is on;
+  - lobby matches pass `match.cheats` (the toggle, or always in Studio); test profiles start with `cheats` and `offline` in Studio;
+  - sim-A confirmed the byte-0 rule.
+- **Lobby:** a host-only "Cheats" toggle (off by default; `Lobby.cheats`, `op = "set", key = "cheats"`). "/cheat on|off" sets it.
+- **Until S-102 is in main:** the bar answers "stub: would send …". Next: `CheatText.parse`, the Cmd channel, the CHEAT_RESULT lines, the speed driver and "cheats used" on results.
+- **Screenshots** (`debug_out/screens/`): `cheats_console.jpg` (three entered lines, "LANCER" turned into ord_lancer and the cursor's "at 47,104" added; "/give rad" suggesting the Radiance), `cheats_commands.jpg` (the command list), `cheats_help.jpg`.
+
+## 2026-10-23: hex patches animate: a wave per hit, glassy plates (C-118)
+
+- **Your notes:** the bigger patches change but look static, solid, not smooth.
+- **Cause 1:** a hit within 6 studs of a young patch merged into it by restarting its clock, so the patch snapped back to full heat. Under steady fire it sat lit and never animated. Hits after 0.25 s also stacked a second grid on the same spot.
+- **Cause 2:** under the night bloom, lit Neon plates at 95% opacity saturated to one white block.
+- **Fix** (`Core/Shield`, `Render/ShieldFx`):
+  - each patch keeps a wave per hit (up to 4); a merging hit adds a wave instead of restarting it;
+  - a plate shows the brightest of its waves (`Shield.plateLook`), and each wave runs out from the centre ring by ring;
+  - rings now light 0.07 s apart (was 0.045), so the spread shows;
+  - patches merge while they glow (`MERGE_AGE` 0.65), so the grids don't stack;
+  - plates peak at 60% opacity (`ShieldFx.PLATE_OPACITY`), glassy with the falloff visible.
+  - `Shield.spec`: the wave reaches ring 2 later than the centre, and a new hit keeps the old wave and relights the centre.
+- **Screenshot:** `debug_out/screens/shield_hex_waves.jpg`.
+
+## 2026-10-23: dimmer ripples, bigger hex patches (C-117)
+
+- **Your notes:** the ripple is too bright (light emission?), and the hex shield should be bigger or have more hexes.
+- **Ripple** (`Render/ShieldFx`): LightEmission 1 → 0.3, so it no longer glares white under the night bloom; it starts 30% transparent (was opaque).
+- **Hexes** (`Core/Shield`):
+  - plates 2.4 → 4.5 studs across (gap 0.4);
+  - every hit lights at least 2 rings (19 plates; 37 for a heavy shell);
+  - each ring out is 45% as opaque as the one inside (was 30%, so the second ring shows);
+  - the shared plate pool grows to 240.
+  - `Shield.spec`: the centre still outshines ring 1 (below half).
+- **Screenshot:** `debug_out/screens/shield_hex_bigger.jpg`.
+
+## 2026-10-23: a heavy hit no longer enlarges every ripple on the dome (C-116)
+
+- **Your find:** with small ripples on the dome, one large shell turned them all big at once: the "burst" of shield effects.
+- **Cause:** each dome had one ripple ParticleEmitter. Every hit set its `Size` for that shell, then emitted one particle. A ParticleEmitter's `Size` applies to the particles it already emitted, so one heavy hit resized every live ripple.
+- **Fix:**
+  - each dome now has one emitter per size in `ShieldLook.RIPPLE_SCALES` (0.6, 0.85, 1.2, 1.7 × `RIPPLE_SIZE` × R), each sized once;
+  - a hit emits from the nearest one (`ShieldLook.rippleBucket`, by √intensity); nothing is resized after creation;
+  - `ShieldLook.spec` covers the choice.
+- **Studio** (`shield` profile): over 245 mixed hits in 15 s the four emitters kept their sizes (18 / 25.5 / 36 / 51 studs), and big and small ripples show side by side (`debug_out/screens/shield_ripples_mixed.jpg`).
 
 ## 2026-10-23: wreck meshes (models-C) built and placed; wreck appearances (C-115)
 
@@ -1376,6 +1617,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
+- **Shield hit look (C-117):** ripple brightness (LightEmission 0.3) and hex size (4.5 studs, 19–37 plates a hit); `debug_out/screens/shield_hex_bigger.jpg`.
+
 - **Wreck meshes (C-115):** `debug_out/screens/wrecks_meshed.jpg` (review wrecks forced on). Approve them for game (models-C marks each `wreck` approved), and say if they're too dark under the night lighting.
 
 - **S-96 tower meshes (models-C):** Radiance, Inferno, Lumen, Hailstorm are "review" in the manifest; approve them (models-C flips the status) to see them in game. Their glow dims when a beam tower retracts (C-114).
@@ -1477,6 +1720,21 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+50. **Built (S-116, merging): beams end at the first up enemy dome (FIRE hit = false on its surface, absorbed SHIELD_HIT); Radiance's pierce stops there; the client's glancing leg (C-129) shows once merged.** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
+
+49. **Built (S-115, merging): Radiance beamDuration 3, pierce along its fixed line; manual targets kept until STOP, a new ATTACK or the target's death.** **Radiance a hit-ray; manual targets override (the user):**
+    - Radiance `beamDuration` 3.0; during the beam, damage goes to every enemy the beam's line crosses (a miss on a blip still hurts what's on the line). An amendment to S-113.
+    - An attack order on a unit beats the unit's own target choice. Out of range, the unit picks its own targets; back in range, it returns to the manual target. STOP clears it.
+
+48. **Built (S-114, S-116, merging): two Furnaces then extractors first; an enemy structure contests a deposit only within its weapon range + 40 (a hold-fire Bulwark by the base froze the Chaos AI's expansion).** **The skirmish AI builds too many Furnaces (the user):** hard or normal AI puts up many `chs_generator`s instead of extractors on free deposits. Sim-A to check the Chaos AI's economy choice. Nothing on the client.
+
+47. **Built (S-113, merging): beamDuration (Radiance 2.5, then 3 in S-115; Inferno 1.5, range 480), Radiance targets radar blips.** **Beam towers apart (the user):** Radiance can target radar blips, may miss them without a Pinpointer (S-59 precision), and its beam lingers longer for high damage. Inferno has a smaller range and a weaker beam. Client side: hold the beam for the sim's duration field once named (0.45 s today). Inferno's beam stays orange (the user changed their mind on green).
+
+46. **Built (S-111, merging): radar SAMs air only (AIR 1,150 / 1,100); anti-nukes `ord_providence` / `chs_cerberus` and mobile `ord_custodian` / `chs_chimera`, INTERCEPTOR / INTERCEPTED, stock in STOCK; client side to do.** **Radar SAMs stop intercepting nukes; a new anti-nuke "umbrella" unit (the user):**
+    - **Radar SAMs** (`ord_radar_sam`, `chs_radar_sam`): drop `intercepts`, air only; damage retuned so a T2 radar SAM one-shots T1 air.
+    - **Anti-nuke:** intercepts any enemy strategic missile whose target point is inside its cover range, with a certain hit and a delay after each shot, so several nukes on one spot overwhelm it. Tier, cost, range, delay and names are sim-A's call (Order and Chaos versions).
+    - Client side once it lands: blockouts, icons, interceptor visuals, a cover-range ring.
 
 44. **Done and used (S-95; C-111).** **Orders for the units a factory builds, as a queue (2026-10-23, the user):** "queue up command for newly built unit from factories like pre-move to this location, guard something, patrol."
     - Today a MOVE / FIGHT / PATROL given to a factory sets one rally point (Orders.give; PATROL becomes fight).
@@ -1623,3 +1881,21 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 5. **Done (S-10), client switched 2026-10-22.** **Icon numbering in shared:** `NetOut.iconIndex` is copied in `Core/Icons` (tested equal). A shared function would keep one copy. Low priority.
 4. **Done (S-9), client switched 2026-10-22.** **Placement rules in shared:** the client copies `Placement.snap` and the constants `LAND_MAX_SLOPE`, `WATER_MIN_DEPTH`, `RADIUS_PER_FOOTPRINT` (C-14). A shared pure `snap` + terrain check would keep them in one place. Low priority.
 3. **Done (S-12; marked by the sim session).** `Shared/Grid/Formation` (`layout`, `deepestFirst`, `assign`, `SLOT_SPACING`); `Formation.spec` checks a client prediction equals the server's goals. **Formation slots in shared:** the client mirrors `Nav.slotsFor` / `Nav.assignSlots` and the constants `SLOT_SPACING`, `RADIUS_PER_FOOTPRINT` to draw where line-moved units go (C-11). A pure function in `src/shared` (layout + greedy assignment, without the open-ground filter) would let both sides use one copy. Low priority.
+- Ready to merge: `5021d5f` (cheat commands live on S-102: results in the log, /speed drives the tick loop, "cheats used" on statistics and replay names; touches src/roblox Main.server; C-120); test_client 203, test 430, build passed.
+- Ready to merge: `4305d94` (extractor upgrades in place on S-108's rule with the D92 fallback: target discs, snap, extractor drags as areas, Upgrade extractors command, UPGRADE badge; ghost PivotTo and build waypoints fixes; touches src/roblox Main.server (Studio debug query "deposits"); C-121); test_client 207, test 430, build passed.
+- Ready to merge: `c74da88` (minimap unit icons, C-122); test_client 207, test 430, build passed.
+- Ready to merge: `22f0286` (deposits: dark patch / C's fx.deposit variants, hidden under structures, placement and F4 overlay, minimap rings; C-123); test_client 209, test 430, build passed.
+- Ready to merge: `7928550` (Settings top right, Follow button removed with T in developer mode, F3 bottom right; unit panel model portrait, type icon and +/- supply and power flow; C-124, C-125); test_client 213, test 430, build passed.
+- Ready to merge: `e943f2f` (merge of m-models eb8a768 with the materials regenerated; deposit cells bare ground, terrain-colored patch tint; C-123 follow-up); test_client 213, test 430, build passed.
+- Ready to merge: `646d404` (cheat line arrow keys cycle suggestions, C-126); test_client 213, build passed (client UI only).
+- Ready to merge: `0d6ca37` (Inferno beam green, C-127); test_client 213, build passed (client render only).
+- Ready to merge: `a6bff45` (Inferno beam back to orange, C-127; supersedes 0d6ca37's colour); render constant only.
+- Ready to merge: `3f2d1ea` (Radiance ray bluer, 3 s, narrowing fade; beamSeconds reads S-113's beamDuration; C-128); test_client 214, build passed (client render only).
+- Ready to merge: `5890cad` (beam deflection off shield domes, drawn; active once sim request 50 lands; C-129); test_client 215, build passed (client render only).
+- Ready to merge: `6bb8932` (big-map fog: at most 4 chunks, C-130); test_client 215, build passed (client render only).
+- Ready to merge: `0971cf3` (shield hits: no ripple, outlined honeycomb cells, C-131); test_client 214, build passed (client render only).
+- Ready to merge: `391ff62` (shield hits cave in: inward wave, bigger centre cells, bowl dent with bounce; C-132); test_client 214, build passed (client render only; not checked in Studio, the user was playtesting).
+- Ready to merge: `ccd9985` (m-models merge cf2e795 + materials 0285a54; C's beam shot wired, review-gated; C-133); test_client 214, build passed.
+- Ready to merge: `1c9b92f` (shield cells inward only, C-134); test_client 214, build passed (client render only).
+- Ready to merge: `33087cd` (m-models merge 2cbfb90; beam shot follows C's values and game speed; C-135); test_client 214, build passed.
+- Ready to merge: `23df21b` (larger shield hit patches, C-136); test_client 214, build passed (client render only).

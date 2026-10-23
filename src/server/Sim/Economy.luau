@@ -20,6 +20,7 @@
 local Defs = require("@shared/Defs/Defs")
 local Hash = require("@shared/Util/Hash")
 local Layers = require("@shared/Grid/Layers")
+local PlacementRules = require("@shared/Grid/PlacementRules")
 local World = require("./World")
 
 local Economy = {}
@@ -44,6 +45,8 @@ export type Resource = {
 	priorityRatio: number?, -- 0..1: their progress ratio this window (S-66)
 	gathered: number, -- total credited: income and reclaim per window, before the storage cap (Stats, S-63)
 	drawn: number, -- total spent, less any shortfall a window forgave (Stats, S-63)
+	bonusIncome: number?, -- per second, from the INCOME cheat (S-102)
+	bonusStorage: number?, -- storage the RES cheat added (S-102)
 }
 
 export type Account = { supply: Resource, power: Resource }
@@ -246,8 +249,9 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 	eco.wind = Economy.windAt(eco.seed, tick or 0)
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]
-		acc.supply.income, acc.power.income = 0, 0
-		acc.supply.storage, acc.power.storage = Economy.BASE_STORAGE, Economy.BASE_STORAGE
+		acc.supply.income, acc.power.income = acc.supply.bonusIncome or 0, acc.power.bonusIncome or 0
+		acc.supply.storage = Economy.BASE_STORAGE + (acc.supply.bonusStorage or 0)
+		acc.power.storage = Economy.BASE_STORAGE + (acc.power.bonusStorage or 0)
 	end
 	for _, id in eco.producers do
 		local acc = eco.accounts[w.team[id]]
@@ -262,11 +266,8 @@ function Economy.step(eco: Economy, w: World.World, defs: Defs.DefSet, layers: L
 		end
 		local ex = def.extractor
 		if ex and layers then
-			local g = layers.grid
-			local cx, cz = g:cellAt(w.posX[id], w.posZ[id])
-			if g:inBounds(cx, cz) then
-				acc.supply.income += ex.rate * Layers.getSupply(layers, g:index(cx, cz))
-			end
+			-- every deposit cell under the footprint (S-104)
+			acc.supply.income += ex.rate * PlacementRules.supplyUnder(layers, def.footprint, w.posX[id], w.posZ[id])
 		end
 		local s = def.storage
 		if s then
@@ -324,6 +325,9 @@ function Economy.hash(eco: Economy, h: number): number
 			h = Hash.number(h, r.ratio)
 			h = Hash.number(h, r.spent)
 			h = Hash.number(h, r.reclaimed)
+			if r.bonusIncome or r.bonusStorage then
+				h = Hash.number(Hash.number(h, r.bonusIncome or 0), r.bonusStorage or 0) -- (S-102)
+			end
 		end
 	end
 	h = Hash.number(h, eco.wind)

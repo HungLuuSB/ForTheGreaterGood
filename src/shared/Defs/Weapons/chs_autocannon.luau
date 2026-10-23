@@ -9,7 +9,7 @@ return {
 	projectileSpeed = 420,
 	gravity = 60,
 	accuracy = 2.2,
-	damage = { LIGHT = 34, ARMORED = 26, STRUCTURE = 20, SHIP = 18, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 37, ARMORED = 29, STRUCTURE = 22, SHIP = 20, AIR = 0, SUB = 0 }, -- +10% (S-112: the Locust's punch)
 	aoe = 2,
 	edgeEffectiveness = 0.3,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

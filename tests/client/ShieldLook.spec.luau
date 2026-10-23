@@ -116,4 +116,5 @@ return function(t: any)
 		t.expect(not ShieldLook.onScreen(500, 300, -10, 50, 1000, 600, false), "behind the camera")
 		t.expect(ShieldLook.onScreen(500, 300, -10, 50, 1000, 600, true), "the camera inside it")
 	end)
+
 end

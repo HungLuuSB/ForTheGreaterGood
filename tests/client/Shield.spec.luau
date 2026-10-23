@@ -32,38 +32,58 @@ return function(t: any)
 		t.equal(centre.ring, 0)
 		local n = Shield.unit(Shield.sub(hit, c))
 		t.expect(Shield.dot(centre.normal, n) > 0.999999, "the centre plate is at the hit")
-		-- the six ring-1 plates are one plate pitch from the centre (as a chord)
+		-- six cells in ring 1, a little over one pitch out; the rim draws in; cells
+		-- shrink from the centre to the rim (C-132)
 		local step = Shield.PLATE + Shield.GAP
-		local ring1 = 0
+		local ring1, d1, d2 = 0, 0, 0
 		for _, p in plates do
+			local d = Shield.len(Shield.sub(p.pos, centre.pos))
 			if p.ring == 1 then
 				ring1 += 1
-				local d = Shield.len(Shield.sub(p.pos, centre.pos))
-				t.expect(math.abs(d - step) < 0.01, `ring 1 at {d}`)
+				d1 = d
+			elseif p.ring == 2 then
+				d2 = math.max(d2, d)
 			end
 		end
 		t.equal(ring1, 6)
+		t.expect(d1 > step and d1 < step * 1.3, `ring 1 spread a little ({d1})`)
+		t.expect(d2 - d1 < d1, "the outer ring sits closer to ring 1 than ring 1 to the centre")
+		t.expect(centre.scale > plates[#plates].scale, "the centre cell is the biggest")
+		for _, p in plates do
+			if p.ring == 2 then
+				t.expect(math.abs(p.scale - Shield.cellScale(2, 2)) < 1e-9, "rim cells smallest")
+			end
+		end
 	end)
 
-	t.test("plates: the centre lights first, outer rings later and cooler; all fade; dents spring back", function()
-		local h0 = Shield.plateAt(0.02, 0, 1)
-		local h2 = Shield.plateAt(0.02, 2, 1)
-		t.expect(h0 > 0.5 and h2 == 0, "ring 2 isn't lit yet")
-		local _, a2 = Shield.plateAt(2 * Shield.RING_DELAY + 0.05, 2, 1)
-		t.expect(a2 > 0, "ring 2 lights after its delay")
-		local early = Shield.plateAt(0.05, 0, 1)
-		local late = Shield.plateAt(0.4, 0, 1)
-		t.expect(early > late, "it cools")
-		t.expect(Shield.plateAt(0.05, 0, 1) > Shield.plateAt(0.05 + Shield.RING_DELAY, 1, 1), "rings further out run cooler")
-		local _, centre = Shield.plateAt(0.05, 0, 1)
-		local _, ring1 = Shield.plateAt(0.05 + Shield.RING_DELAY, 1, 1)
-		t.expect(ring1 < centre * 0.4, `one bright centre, a faint ring ({centre} vs {ring1}): equal rings read as several shots`)
-		t.expect(Shield.plateAt(0.05, 0, 3) > Shield.plateAt(0.05, 0, 0.5), "a heavier hit is hotter")
-		local h, a, d = Shield.plateAt(5, 0, 3)
+	t.test("cells: the wave runs in (rim first, centre last and hottest); all fade; a bowl that never bulges out (C-132, C-134)", function()
+		local R2 = 2 -- a two-ring patch
+		local centreLit = 2 * Shield.RING_DELAY -- when the wave reaches the centre
+		local hRim = Shield.plateAt(0.02, 2, 1, R2)
+		local hCentre = Shield.plateAt(0.02, 0, 1, R2)
+		t.expect(hRim > 0 and hCentre == 0, "the rim lights first, the centre isn't lit yet")
+		local _, aC = Shield.plateAt(centreLit + 0.03, 0, 1, R2)
+		t.expect(aC > 0, "the centre lights once the wave arrives")
+		t.expect(Shield.plateAt(centreLit + 0.05, 0, 1, R2) > Shield.plateAt(centreLit + 0.4, 0, 1, R2), "it cools")
+		local hotC = Shield.plateAt(centreLit + 0.02, 0, 1, R2)
+		local hotR = Shield.plateAt(0.02, 2, 1, R2)
+		t.expect(hotC > hotR, "the centre runs hottest")
+		local _, aCentre = Shield.plateAt(centreLit + 0.05, 0, 1, R2)
+		local _, aRing1 = Shield.plateAt(Shield.RING_DELAY + 0.05, 1, 1, R2)
+		t.expect(aRing1 < aCentre * 0.5, `one bright centre, a faint ring ({aCentre} vs {aRing1})`)
+		t.expect(Shield.plateAt(centreLit + 0.05, 0, 3, R2) > Shield.plateAt(centreLit + 0.05, 0, 0.5, R2), "a heavier hit is hotter")
+		local h, a, d = Shield.plateAt(5, 0, 3, R2)
 		t.equal(h + a + d, 0)
-		local _, _, dentPeak = Shield.plateAt(0.07, 0, 1)
-		local _, _, dentLate = Shield.plateAt(0.3, 0, 1)
-		t.expect(dentPeak > 0.5 and dentLate < 0.05, `dent {dentPeak} then {dentLate}`)
+		-- the bowl: the centre goes deepest, then eases home, never outward
+		local _, _, dentC = Shield.plateAt(centreLit + Shield.DENT_PEAK, 0, 1, R2)
+		local _, _, dentR = Shield.plateAt(Shield.DENT_PEAK, 2, 1, R2)
+		t.expect(dentC > 0.5 and dentC > dentR, `deepest at the centre ({dentC} vs rim {dentR})`)
+		for k = 0, 40 do
+			local _, _, d = Shield.plateAt(centreLit + k * 0.02, 0, 1, R2)
+			t.expect(d >= 0, `never pushed outward ({d} at {k * 0.02} s)`)
+		end
+		local _, _, late = Shield.plateAt(centreLit + 0.6, 0, 1, R2)
+		t.expect(late < dentC * 0.1, "back home as it fades")
 	end)
 
 	t.test("colour: white at its hottest, fading to grey; never red or orange", function()
@@ -233,5 +253,23 @@ return function(t: any)
 		t.expect(r2 == 255 and g2 == 150, "orange")
 		local r3, g3 = Shield.coreColor(0)
 		t.expect(r3 > 200 and g3 < 60, "red")
+	end)
+
+	t.test("a hit on a lit patch sends a new wave through it; the patch never snaps back solid (C-117)", function()
+		local dome = Shield.newDome({ x = 0, y = 0, z = 0 }, 100)
+		local p = Shield.hit(dome, { x = 0, y = 0, z = 100 }, 1, 0)
+		-- the wave travels in: the centre is dark at first, lit once the wave arrives (C-132)
+		local _, centreFirst = Shield.plateLook(p, 0, 0.01)
+		local _, centreLater = Shield.plateLook(p, 0, p.rings * Shield.RING_DELAY + 0.03)
+		t.equal(centreFirst, 0)
+		t.expect(centreLater > 0, "the wave reached the centre")
+		local tNew = 0.5 + p.rings * Shield.RING_DELAY + 0.03 -- the second wave at the centre
+		local _, centreFading = Shield.plateLook(p, 0, tNew)
+		local same = Shield.hit(dome, { x = 0, y = 0, z = 100 }, 1, 0.5)
+		t.equal(same, p, "the same patch")
+		t.equal(#p.waves, 2, "two waves, the first one kept (not restarted)")
+		t.equal(p.waves[1], 0)
+		local _, centreNew = Shield.plateLook(p, 0, tNew)
+		t.expect(centreNew > centreFading, `the new wave relights the centre ({centreFading} -> {centreNew})`)
 	end)
 end

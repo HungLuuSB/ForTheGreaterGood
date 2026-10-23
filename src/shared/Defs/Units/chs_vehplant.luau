@@ -8,7 +8,7 @@ return Templates.extend(Templates.Structure, {
 	faction = "chaos",
 	cost = { supply = 580, power = 1100, buildTime = 6800 },
 	health = 3300,
-	footprint = 3,
+	footprint = 4, -- size shows tech level (S-104)
 	buildPower = 200, -- doubled: T1 units in about half the time (S-94, client request 42b)
 	buildOptions = { "chs_scrapper", "chs_jackal", "chs_ravager", "chs_hellmouth", "chs_hornet", "chs_watcher", "chs_locust" },
 	model = "chs_vehplant",

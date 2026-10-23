@@ -4,11 +4,15 @@
 -- nearby hits merge, and a deflected shell's brake and bounce. Pure Luau
 -- (C-7); Render/ShieldFx draws it.
 --
--- A hit lights a patch of hexagon plates around the hit point: plates in
+-- A hit lights a patch of honeycomb cells around the hit point: cells in
 -- hex rings round the centre, laid on the sphere along great circles so the
--- patch wraps the dome. The centre glows white-hot first; each outer ring
--- lights RING_DELAY later and less hot, so the heat ripples outward. Centre
--- plates dent inward and spring back (the force being stopped).
+-- patch wraps the dome. Since C-132 (the user, BAR's plasma deflector) the
+-- wave runs inward: the outermost ring lights first, each ring in RING_DELAY
+-- later, the centre last and hottest. Cells grow toward the centre (smaller
+-- at the rim, bigger inside, spaced a little wider), and the whole patch is
+-- pushed in like a bowl, deepest at the centre, then eases back to the
+-- surface (never past it: the bounce out read as cells moving outward, the
+-- user, C-134): the dome caving in to repel the shot.
 
 local Shield = {}
 
@@ -19,14 +23,16 @@ export type Plate = {
 	normal: V3, -- outward
 	right: V3, -- the plate's in-plane axis (the hex grid's orientation)
 	ring: number, -- hex rings from the centre
+	scale: number, -- the cell's size, × PLATE (bigger at the centre, C-132)
 }
 
 export type Patch = {
 	hit: V3,
 	strength: number, -- 1 = a typical shell; heat, size and dent grow with it
-	born: number,
+	born: number, -- its latest hit
 	rings: number,
 	plates: { Plate },
+	waves: { number }, -- each hit's time: its own wave out from the centre (C-117)
 }
 
 export type Dome = {
@@ -38,16 +44,26 @@ export type Dome = {
 	up: boolean, -- false once collapsed at 0%, until recharged to RAISE_AT
 }
 
-Shield.PLATE = 2.4 -- studs across a hexagon's flats
-Shield.GAP = 0.25 -- studs between plates
-Shield.RING_DELAY = 0.045 -- seconds between rings lighting
+Shield.PLATE = 3.2 -- studs across a cell's flats (4.5 in C-116..C-130; 2.6 outlined cells in C-131..C-135; larger patches since C-136, the user)
+Shield.GAP = 0 -- studs between cells: outlines touch, a honeycomb
+Shield.RING_DELAY = 0.07 -- seconds between rings lighting: a visible wave out (0.045 until C-117)
+Shield.MAX_WAVES = 4 -- waves a patch keeps at once
 Shield.LIFE = 0.65 -- seconds a plate glows after it lights
-Shield.RING_ALPHA = 0.3 -- each ring out is this much as opaque as the one inside it
+Shield.RING_ALPHA = 0.45 -- each ring out is this much as opaque as the one inside it (0.3 in C-104; up with the second ring every hit lights, C-116)
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
-Shield.MERGE_AGE = 0.25
-Shield.MAX_RINGS = 3
-Shield.DENT = 1.2 -- studs the centre pushes in at strength 1
+Shield.MERGE_AGE = 0.65 -- while it glows (Shield.LIFE): a later hit adds a wave instead of a second grid on top (C-117)
+Shield.MAX_RINGS = 6
+Shield.DENT = 1.4 -- studs the centre pushes in at strength 1 (the rings less, a bowl)
+Shield.CENTER_SCALE = 1.3 -- the centre cell's size, × PLATE; the rim's is CENTER_SCALE − RIM_SHRINK
+Shield.RIM_SHRINK = 0.55
+Shield.SPREAD = 0.3 -- inner rings sit this much further apart than the rim's (positions follow the sizes)
+Shield.DENT_PEAK = 0.12 -- seconds after a cell lights when it is pushed in deepest
+
+-- A cell's size in a patch of `rings` rings, × PLATE.
+function Shield.cellScale(ring: number, rings: number): number
+	return Shield.CENTER_SCALE - Shield.RIM_SHRINK * ring / math.max(rings, 1)
+end
 
 local SQRT3 = math.sqrt(3)
 
@@ -81,7 +97,9 @@ Shield.unit, Shield.dot, Shield.len, Shield.sub = unit, dot, len, sub
 -- Rings of hexagons by a hit's strength: a light hit lights the centre and
 -- one ring (7 plates), a heavy one up to MAX_RINGS (37).
 function Shield.ringsFor(strength: number): number
-	return math.clamp(math.floor(1 + strength), 1, Shield.MAX_RINGS)
+	-- four rings at least (61 cells), five for a typical shell (91), six for
+	-- heavy ones (127): a patch covering a good part of the dome (C-136, the user)
+	return math.clamp(math.floor(4 + strength), 4, Shield.MAX_RINGS)
 end
 
 -- The plates of a patch on a sphere (`center`, `radius`) round the point
@@ -93,6 +111,7 @@ function Shield.layout(center: V3, radius: number, hit: V3, rings: number): { Pl
 	local u = unit(cross(ref, n))
 	local w = cross(n, u)
 	local step = Shield.PLATE + Shield.GAP
+	local reach = step * math.max(rings, 1)
 	local out: { Plate } = {}
 	for q = -rings, rings do
 		for r = math.max(-rings, -q - rings), math.min(rings, -q + rings) do
@@ -104,24 +123,27 @@ function Shield.layout(center: V3, radius: number, hit: V3, rings: number): { Pl
 			if d < 1e-9 then
 				normal = n
 			else
-				-- walk the arc length d along the great circle towards (px, py)
+				-- walk the arc along the great circle towards (px, py); the inner rings
+				-- spread a little (their cells are bigger), the rim's draw in
 				local dir = unit(add(mul(u, px), mul(w, py)))
-				local a = d / radius
+				local a = d * (1 + Shield.SPREAD * (1 - d / reach)) / radius
 				normal = unit(add(mul(n, math.cos(a)), mul(dir, math.sin(a))))
 			end
 			pos = add(center, mul(normal, radius))
 			-- carry the grid's axis onto this plate's tangent plane
 			local right = unit(sub(u, mul(normal, dot(u, normal))))
-			table.insert(out, { pos = pos, normal = normal, right = right, ring = ring })
+			table.insert(out, { pos = pos, normal = normal, right = right, ring = ring, scale = Shield.cellScale(ring, rings) })
 		end
 	end
 	return out
 end
 
--- A plate's look `age` seconds after its patch was born: heat (1 = white
--- hot, 0 = cold), opacity (0..1) and dent (studs inward).
-function Shield.plateAt(age: number, ring: number, strength: number): (number, number, number)
-	local t = age - ring * Shield.RING_DELAY
+-- A cell's look `age` seconds after its wave was born, in a patch of
+-- `rings` rings: heat (1 = white hot, 0 = cold), opacity (0..1) and dent
+-- (studs inward, never outward).
+function Shield.plateAt(age: number, ring: number, strength: number, rings: number): (number, number, number)
+	-- the wave runs in: the rim first, the centre last (C-132)
+	local t = age - (rings - ring) * Shield.RING_DELAY
 	if t < 0 then
 		return 0, 0, 0
 	end
@@ -137,11 +159,11 @@ function Shield.plateAt(age: number, ring: number, strength: number): (number, n
 	local peak = math.clamp(0.55 + 0.25 * strength, 0.4, 1) * math.max(0.2, 1 - ring * 0.4)
 	local heat = peak * (1 - k) ^ 1.6
 	local alpha = math.min(1, t / 0.04) * (1 - k ^ 2) * Shield.RING_ALPHA ^ ring
-	-- the centre dents first and springs back (a damped half-swing)
-	local dent = 0
-	if ring <= 1 then
-		dent = Shield.DENT * math.min(strength, 3) * (if ring == 0 then 1 else 0.45) * math.exp(-t * 9) * math.sin(math.min(t * 20, math.pi))
-	end
+	-- the patch caves in like a bowl (deepest at the centre) and eases back
+	-- to the surface: in, then home, no swing past it (C-134)
+	local depth = Shield.DENT * math.min(strength, 3) * (1 - (ring / (rings + 1)) ^ 2)
+	local x = t / Shield.DENT_PEAK
+	local dent = depth * x * math.exp(1 - x)
 	return heat, alpha, dent
 end
 
@@ -177,7 +199,7 @@ function Shield.idle(dome: Dome, at: V3, now: number): Patch?
 			return nil
 		end
 	end
-	local patch = { hit = on, strength = 0, born = now, rings = 1, plates = Shield.layout(dome.center, dome.radius, on, 1) }
+	local patch = { hit = on, strength = 0, born = now, rings = 1, plates = Shield.layout(dome.center, dome.radius, on, 1), waves = { now } }
 	table.insert(dome.idle, patch)
 	if #dome.idle > Shield.MAX_IDLE then
 		table.remove(dome.idle, 1)
@@ -202,7 +224,14 @@ function Shield.hit(dome: Dome, hit: V3, strength: number, now: number): Patch
 	for _, p in dome.patches do
 		if now - p.born < Shield.MERGE_AGE and len(sub(p.hit, on)) < Shield.MERGE then
 			p.strength = math.min(p.strength + strength * 0.6, 4)
+			-- a new wave through the same grid; the earlier ones keep fading.
+			-- Restarting the patch snapped it back to full heat, so under steady
+			-- fire it sat lit and looked solid, not animated (the user, C-117)
 			p.born = now
+			table.insert(p.waves, now)
+			if #p.waves > Shield.MAX_WAVES then
+				table.remove(p.waves, 1)
+			end
 			local rings = Shield.ringsFor(p.strength)
 			if rings > p.rings then
 				p.rings = rings
@@ -218,12 +247,27 @@ function Shield.hit(dome: Dome, hit: V3, strength: number, now: number): Patch
 		end
 	end
 	local rings = Shield.ringsFor(strength)
-	local patch = { hit = on, strength = strength, born = now, rings = rings, plates = Shield.layout(dome.center, dome.radius, on, rings) }
+	local patch = { hit = on, strength = strength, born = now, rings = rings, plates = Shield.layout(dome.center, dome.radius, on, rings), waves = { now } }
 	table.insert(dome.patches, patch)
 	if #dome.patches > Shield.MAX_PATCHES then
 		table.remove(dome.patches, 1)
 	end
 	return patch
+end
+
+-- A plate of `patch` at `now`: the brightest of its waves (heat, opacity, dent).
+function Shield.plateLook(patch: Patch, ring: number, now: number): (number, number, number)
+	local heat, alpha, dent = 0, 0, 0
+	for _, born in patch.waves do
+		local h, a, d = Shield.plateAt(now - born, ring, patch.strength, patch.rings)
+		if a > alpha then
+			heat, alpha = h, a
+		end
+		if math.abs(d) > math.abs(dent) then
+			dent = d
+		end
+	end
+	return heat, alpha, dent
 end
 
 -- Drops patches whose last plate has faded.

@@ -34,6 +34,10 @@ return function(t: any)
 		for id, e in (Meshes :: any).fx or {} do
 			local c = names["fx_" .. id]
 			t.expect(c ~= nil, `fx {id} has an appearance`)
+			for i, v in (e :: any).variants or {} do
+				local cv = names[`fx_{id}_{i}`]
+				t.expect(cv ~= nil and cv.Properties.ColorMapContent == v.maps.ALB, `fx {id} variant {i} has its appearance`)
+			end
 			t.equal(c.Properties.ColorMapContent, e.maps.ALB)
 		end
 		for id, e in Meshes.units do

@@ -30,12 +30,13 @@ local Vfx = require("../Render/Vfx")
 local Kit = require("./Kit")
 
 local SettingsMenu = {}
+SettingsMenu.state = nil :: Settings.State? -- the live settings once the menu exists (developer mode keys, C-124)
 
 local KEY = Enum.KeyCode.O
 -- the screens the UI scale applies to: the panels; overlays drawn at world
 -- positions (icons, health bars, the selection box, missile labels) and
 -- Roblox's own screens keep screen pixels
-local SCALED = { SettingsButton = true, BuildTooltip = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, FollowButton = true, NukeWarning = true, DebugHud = true }
+local SCALED = { SettingsButton = true, BuildTooltip = true, CheatConsole = true, Minimap = true, ResourceBar = true, BuildMenu = true, CommandCard = true, UnitPanel = true, Alerts = true, Lobby = true, Replay = true, Settings = true, NukeWarning = true, DebugHud = true }
 local PAGES = { "Camera", "Graphics", "Interface", "Audio", "Keys" }
 
 export type UI = { gui: ScreenGui, panel: Kit.Panel, pages: { [string]: ScrollingFrame }, layouts: { [string]: UIListLayout }, state: Settings.State }
@@ -179,8 +180,12 @@ local function build(ui: UI)
 	Kit.slider(Kit.row(ifc, "UI scale", 1), scaleL[1], scaleL[2], scaleL[3], s.uiScale, "%.1f", function(v)
 		set("uiScale", v)
 	end)
+	-- developer mode (C-124): debug keys such as T (camera follow)
+	Kit.toggle(Kit.row(ifc, "Developer mode", 2), s.devMode, function(on)
+		set("devMode", on)
+	end)
 	local note = Kit.text(ifc, "Settings last for this session.", "small")
-	note.LayoutOrder = 2
+	note.LayoutOrder = 3
 
 	local audio = page("Audio")
 	local none = Kit.text(audio, "The game has no sound yet; volume controls come with it.", "small")
@@ -215,15 +220,9 @@ function SettingsMenu.new(): UI
 	local open = Kit.button(buttonGui, "Settings (O)", "ghost", function() end, 116)
 	open.Name = "Open"
 	open.Size = UDim2.fromOffset(116, 28)
-	-- the upper left corner, right after Roblox's own buttons (they keep the
-	-- first ~164 pixels of the top strip; a resign button will join it), C-109
-	local GuiService = game:GetService("GuiService")
-	local function corner()
-		local inset = GuiService.TopbarInset
-		open.Position = UDim2.fromOffset(inset.Min.X + 8, math.max(4, (inset.Height - 28) / 2))
-	end
-	corner()
-	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(corner)
+	-- the upper right corner (C-124, the user; the upper left until then, C-109)
+	open.AnchorPoint = Vector2.new(1, 0)
+	open.Position = UDim2.new(1, -8, 0, 6)
 	open.TextSize = 13
 	local ui: UI
 	local panel = Kit.panel(gui, "Settings", Vector2.new(780, 500), PAGES, function(name)
@@ -236,6 +235,7 @@ function SettingsMenu.new(): UI
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	buttonGui.Parent = gui.Parent
 	ui = { gui = gui, panel = panel, pages = {}, layouts = {}, state = Settings.new(RunService:IsStudio()) }
+	SettingsMenu.state = ui.state -- read by key handlers made before the menu (developer mode)
 	build(ui)
 	panel.select("Camera")
 	local function toggle()

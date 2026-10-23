@@ -31,6 +31,7 @@ local Players = game:GetService("Players")
 
 local Api = require("../Api")
 local Selection = require("../Core/Selection")
+local Upgrades = require("../Core/Upgrades")
 local World = require("../Core/World")
 
 local Controls = {}
@@ -65,6 +66,7 @@ Controls.HINT = {
 	guard = "GUARD: left-click a unit to guard (or a builder to assist)",
 	repair = "REPAIR: left-click an own unit or frame",
 	reclaim = "RECLAIM: left-click a wreck",
+	upgrade = "UPGRADE: drag a circle, or click an extractor",
 }
 
 local DIGITS = {
@@ -84,6 +86,8 @@ export type Controls = {
 	placeFrom: Vector3?, -- left-drag start on the ground while placing (row preview)
 	lineFrom: Vector3?, -- right-drag start on the ground, while dragging
 	lineTo: Vector3?,
+	areaFrom: Vector3?, -- an area drag's center (extractor placement, Upgrade extractors; C-121)
+	areaTo: Vector3?, -- its edge, while dragging
 	attacking: boolean, -- attack mode (A): the next left click attacks (C-57)
 }
 
@@ -188,7 +192,7 @@ function Controls.bind(api: Api.Api): Controls
 	hint.Parent = gui
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 
-	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil, attacking = false }
+	local self: Controls = { boxFrame = box, placeFrom = nil, lineFrom = nil, lineTo = nil, areaFrom = nil, areaTo = nil, attacking = false }
 	local leftStart: Vector2? = nil
 	local boxing = false
 	local rightStart: Vector2? = nil
@@ -227,6 +231,12 @@ function Controls.bind(api: Api.Api): Controls
 		return workspace.CurrentCamera
 	end
 
+	-- is the ghost an extractor (its drags are areas, not rows: C-121)
+	local function placingExtractor(): boolean
+		local p = api.state.placement
+		return p ~= nil and world.defs.unitByIndex[p.defIndex].extractor ~= nil
+	end
+
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if processed or not world.joined then
 			return
@@ -235,6 +245,7 @@ function Controls.bind(api: Api.Api): Controls
 		local placing = api.state.placement ~= nil
 		if placing and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			self.placeFrom = Controls.groundAt(cam(), mouse.X, mouse.Y)
+			self.areaFrom = if placingExtractor() then self.placeFrom else nil
 			leftStart, boxing = mouse, false
 			return
 		elseif placing and input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -256,6 +267,11 @@ function Controls.bind(api: Api.Api): Controls
 			return
 		elseif mode and input.UserInputType == Enum.UserInputType.MouseButton2 then
 			api.actions.setCommandMode(nil)
+			return
+		elseif mode == "upgrade" and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			-- Upgrade extractors: the release gives it (a drag is the circle)
+			self.areaFrom, self.areaTo = Controls.groundAt(cam(), mouse.X, mouse.Y), nil
+			leftStart, boxing = mouse, false
 			return
 		elseif mode and input.UserInputType == Enum.UserInputType.MouseButton1 then
 			local id = pickAt(world, Controls.projector(cam()), mouse.X, mouse.Y)
@@ -329,8 +345,11 @@ function Controls.bind(api: Api.Api): Controls
 			return
 		end
 		local mouse = UserInputService:GetMouseLocation()
-		if self.placeFrom then
-			return -- placing: no selection box
+		if self.areaFrom and leftStart and (mouse - leftStart).Magnitude > Controls.DRAG_PIXELS then
+			self.areaTo = Controls.groundAt(cam(), mouse.X, mouse.Y)
+		end
+		if self.placeFrom or self.areaFrom then
+			return -- placing or an area: no selection box
 		end
 		if leftStart and (boxing or (mouse - leftStart).Magnitude > Controls.DRAG_PIXELS) then
 			boxing = true
@@ -350,12 +369,27 @@ function Controls.bind(api: Api.Api): Controls
 			local from = self.placeFrom :: Vector3
 			local to = Controls.groundAt(cam(), mouse.X, mouse.Y)
 			local dragged = leftStart and (mouse - leftStart).Magnitude > Controls.DRAG_PIXELS
-			if to and dragged then
+			if to and dragged and placingExtractor() then
+				-- an extractor drag: every spot in the circle (upgrades too), nearest first
+				api.actions.placeArea(from.X, from.Z, math.sqrt((to.X - from.X) ^ 2 + (to.Z - from.Z) ^ 2), shift(), shift())
+			elseif to and dragged then
 				api.actions.placeRow(from.X, from.Z, to.X, to.Z, shift(), shift())
 			elseif to then
 				api.actions.place(to.X, to.Z, shift(), shift())
 			end
-			self.placeFrom, leftStart = nil, nil
+			self.placeFrom, self.areaFrom, self.areaTo, leftStart = nil, nil, nil, nil
+			return
+		end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and self.areaFrom then
+			-- Upgrade extractors: the circle, or a click's snap radius
+			local from = self.areaFrom :: Vector3
+			local to = self.areaTo
+			local radius = if to then math.sqrt((to.X - from.X) ^ 2 + (to.Z - from.Z) ^ 2) else 0
+			api.actions.upgradeArea(from.X, from.Z, math.max(radius, Upgrades.SNAP), shift())
+			if not shift() then
+				api.actions.setCommandMode(nil)
+			end
+			self.areaFrom, self.areaTo, leftStart = nil, nil, nil
 			return
 		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 and leftStart then

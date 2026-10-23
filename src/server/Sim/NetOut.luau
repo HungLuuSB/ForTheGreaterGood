@@ -70,6 +70,7 @@
 
 local Grid = require("@shared/Grid/Grid")
 local Alerts = require("./Alerts")
+local Cheats = require("./Cheats")
 local Economy = require("./Economy")
 local Packer = require("@shared/Net/Packer")
 local Icons = require("@shared/Net/Icons")
@@ -183,6 +184,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	table.clear(pn.sentTargets)
 	table.clear(pn.sentStock)
 	table.clear(pn.sentOwner)
+	table.clear(pn.sentProducing)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
 	Schema.encodeSnapshot(w, {
@@ -382,7 +384,7 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			table.insert(events, withPos({ kind = Schema.EventKind.FIRE, unitId = e.unit, slot = e.slot, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number))
 		elseif kind == "FIRE" and e.x and e.sx and (shown(e.x, e.z :: number) or shown(e.sx, e.sz :: number)) then
 			-- a shooter the player doesn't have: both ends, no ID (S-43)
-			local shot = withPos({ kind = Schema.EventKind.SHOT, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number)
+			local shot = withPos({ kind = Schema.EventKind.SHOT, hit = e.hit == true, weaponIndex = e.weaponIndex or 0 }, g, e.x, e.y :: number, e.z :: number) -- (the weapon: S-118)
 			shot.fromCell, shot.fromOffX, shot.fromOffZ = g:encode(e.sx, e.sz :: number)
 			shot.fromY = Schema.toI16(e.sy :: number)
 			table.insert(events, shot)
@@ -911,6 +913,34 @@ function NetOut.step(sim: Types.Sim)
 		end
 		pn.sentOwner = ownerNow
 
+		-- allied players' factories (S-103, client request 45): the item in
+		-- production and its progress (by sixteenths, like the owner's
+		-- queue), when it changes and with the ENTER
+		local sentProducing = pn.sentProducing
+		local producingNow: { [number]: string } = {}
+		for _, id in pn.tacticalList do
+			local q = sim.build.queue[id]
+			if q == nil or w.owner[id] == pid or w.ally[id] ~= ally then
+				continue
+			end
+			local head = q[1] or 0
+			local p = if head ~= 0 then sim.build.progress[id] or 0 else 0
+			local sig = head .. "@" .. math.floor(p * Stockpile.WIRE_STEPS)
+			producingNow[id] = sig
+			if entered[id] or sentProducing[id] ~= sig then
+				local rec = recordOf[id]
+				if rec == nil then
+					rec = { unitId = id }
+					recordOf[id] = rec
+					table.insert(states, rec :: Schema.State)
+				end
+				local r = rec :: Schema.State
+				r.producing = head
+				r.producingProgress = math.clamp(math.floor(p * 255), 0, 255)
+			end
+		end
+		pn.sentProducing = producingNow
+
 		-- strategic snapshot of every other known unit
 		local strategic: { Schema.Strategic } = {}
 		local fullNow = strategicTick or pn.forceFull
@@ -936,7 +966,7 @@ function NetOut.step(sim: Types.Sim)
 				table.insert(strategic, {
 					unitId = id,
 					cell = cell,
-					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[w.defIndex[id]] else 0,
+					icon = if own or level == L.VISIBLE or level == L.GHOST or tracked then net.iconIndex[w.defIndex[id]] else (if level == L.RADAR and sim.defs.unitByIndex[w.defIndex[id]].spoof then net.iconIndex[sim.defs.units[sim.defs.unitByIndex[w.defIndex[id]].spoof :: string].index] else 0), -- a decoy shows its spoof's icon (S-109)
 					team = w.team[id],
 					flags = flags,
 				})
@@ -967,6 +997,10 @@ function NetOut.step(sim: Types.Sim)
 					local cell = g:encode(a.x, a.z)
 					table.insert(events, { kind = Schema.EventKind.ALERT, alert = a.kind, cell = cell, defIndex = a.defIndex })
 				end
+			end
+			local answers = Cheats.drain(sim, pid) -- CHEAT_RESULT (S-102)
+			if answers then
+				table.move(answers, 1, #answers, #events + 1, events)
 			end
 		end
 		-- strategic launches: every player, camera or not (S-48)

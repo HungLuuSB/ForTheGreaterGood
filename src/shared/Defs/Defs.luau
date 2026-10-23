@@ -77,6 +77,8 @@ export type UnitDef = {
 	countermeasures: Countermeasures?,
 	buildPower: number?,
 	buildOptions: { string }?,
+	upgradesFrom: { string }?, -- structures this one may be built over in place, the builder's own (S-108)
+	spoof: string?, -- a def its untracked radar contacts pass for (S-109, the Wraith)
 	buildRange: number?,
 	production: { supply: number?, power: number? }?, -- per second while built
 	extractor: { rate: number }?, -- supply per second per deposit value
@@ -152,9 +154,13 @@ export type WeaponDef = {
 	-- HOMING: also targets enemy strategic missiles the team detects, before
 	-- anything else; a proximity burst destroys one with `chance` (S-48)
 	intercepts: { chance: number }?,
+	interceptOnly: boolean?, -- with intercepts: never fires at units (anti-nukes, S-111)
+	stationary: boolean?, -- fires only while its unit stands still (S-111)
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
 	burnThrough: number?, -- RADAR: fraction of lockRange inside which jamming fails
 	canTargetRadar: boolean?,
+	beamDuration: number?, -- BEAM: seconds the beam lingers; its damage is dealt over that time (S-113)
+	pierce: boolean?, -- with beamDuration: the beam's line hurts every enemy it crosses, hit or miss (S-115)
 	shieldMass: number?, -- weight against shield fields (1 = a typical shell); default from damage (ShieldField.mass, S-79)
 	shotCost: { supply: number?, power: number? }?, -- drawn from the team's stores per shot; no shot without it (S-96)
 	fx: { [string]: string }?,
@@ -301,6 +307,8 @@ local UNIT_SPEC: Spec = {
 		},
 		buildPower = opt(POSITIVE),
 		buildOptions = { kind = "list", optional = true, item = STRING, minItems = 1 },
+		upgradesFrom = { kind = "list", optional = true, item = STRING, minItems = 1 },
+		spoof = opt(STRING),
 		buildRange = opt(POSITIVE),
 		model = STRING,
 		pieces = { kind = "list", item = STRING, minItems = 1 },
@@ -401,7 +409,11 @@ local WEAPON_SPEC: Spec = {
 		manualFire = { kind = "boolean", optional = true },
 		apex = opt(POSITIVE),
 		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION } },
+		interceptOnly = { kind = "boolean", optional = true },
+		stationary = { kind = "boolean", optional = true },
 		canTargetRadar = { kind = "boolean", optional = true },
+		beamDuration = opt(POSITIVE),
+		pierce = { kind = "boolean", optional = true },
 		shieldMass = opt(POSITIVE),
 		shotCost = { kind = "record", optional = true, fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) } },
 		fx = {
@@ -576,6 +588,15 @@ function Defs.validate(raw: RawDefs): { string }
 		if w.intercepts ~= nil and (wtype ~= "HOMING" or w.launch ~= "vertical") then
 			report(`intercepts: only vertical-launch HOMING weapons intercept (they need no aim)`)
 		end
+		if w.beamDuration ~= nil and wtype ~= "BEAM" then
+			report(`beamDuration: only BEAM weapons linger`)
+		end
+		if w.pierce and w.beamDuration == nil then
+			report(`pierce: only lingering beams (beamDuration) pierce`)
+		end
+		if w.interceptOnly and w.intercepts == nil then
+			report(`interceptOnly: needs intercepts`)
+		end
 		local turret = w.turret
 		if
 			type(turret) == "table"
@@ -713,6 +734,22 @@ function Defs.validate(raw: RawDefs): { string }
 		end
 		if type(u.wreck) == "string" and units[u.wreck] == nil then
 			report(`wreck: unknown def {describe(u.wreck)}`)
+		end
+		if type(u.spoof) == "string" and units[u.spoof] == nil then
+			report(`spoof: unknown unit {describe(u.spoof)}`)
+		end
+		if type(u.upgradesFrom) == "table" then
+			if u.domain ~= "structure" then
+				report("upgradesFrom: only structures upgrade in place")
+			end
+			for i, from in u.upgradesFrom do
+				local fd = if type(from) == "string" then units[from] else nil
+				if fd == nil then
+					report(`upgradesFrom[{i}]: unknown unit {describe(from)}`)
+				elseif fd.domain ~= "structure" then
+					report(`upgradesFrom[{i}]: {from} isn't a structure`)
+				end
+			end
 		end
 	end
 

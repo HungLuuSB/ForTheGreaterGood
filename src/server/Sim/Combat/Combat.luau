@@ -64,6 +64,7 @@ export type Event = {
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
 	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK), wreck or 0 (DEATH)
 	slot: number?, -- FIRE, SPAWN_PROJ
+	weaponIndex: number?, -- FIRE: the weapon's def index (S-118: SHOT carries it)
 	hit: boolean?, -- FIRE (hitscan)
 	severity: number?, -- DEATH: 0..255
 	reason: string?, -- BUILD_FAILED
@@ -77,6 +78,13 @@ export type Event = {
 	absorbed: boolean?, -- SHIELD_HIT: a light shell destroyed at the surface (S-85)
 	mass: number?, -- SHIELD_HIT: the shell's mass (ShieldField.mass)
 }
+
+-- A lingering beam (S-113): `ticks` more ticks of `1 / total` of its
+-- weapon's damage on `target`, while the shooter stands and the target is
+-- in range.
+-- A piercing beam (S-115) hurts every enemy on its fixed line (sx, sz) → (ex, ez) instead; its target is 0.
+-- A beam stopped by a dome (S-117) also drains it: `domeDrain` charge each tick while the dome `dome` stands and is up.
+export type Beam = { shooter: number, shooterGen: number, slot: number, target: number, targetGen: number, ticks: number, total: number, sx: number?, sz: number?, ex: number?, ez: number?, dome: number?, domeGen: number?, domeDrain: number? }
 
 export type Combat = {
 	profiles: { [number]: UnitProfile }, -- by unit def index
@@ -121,6 +129,7 @@ export type Combat = {
 	-- shell masses, up (the dome stands), and the power share of their last
 	-- recharge step (0..1)
 	shieldIds: { number },
+	beams: { Beam }, -- lingering beams dealing their damage over time (S-113), in the order they were fired
 	shieldCharge: { [number]: number },
 	shieldUp: { [number]: boolean },
 	shieldPower: { [number]: number },
@@ -220,6 +229,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		pShield = {},
 		pShieldPhase = {},
 		shieldIds = {},
+		beams = {},
 		shieldCharge = {},
 		shieldUp = {},
 		shieldPower = {},
@@ -715,6 +725,17 @@ function Combat.hash(c: Combat, h: number): number
 	h = Hash.u32(h, c.projSerial)
 	for _, id in c.strategic do
 		h = Hash.u32(h, id)
+	end
+	h = Hash.u32(h, #c.beams)
+	for _, b in c.beams do
+		h = Hash.u32(Hash.u32(Hash.u32(Hash.u32(h, b.shooter), b.shooterGen), b.target), b.targetGen)
+		h = Hash.u32(Hash.u32(h, b.slot), b.ticks)
+		if b.dome then
+			h = Hash.number(Hash.u32(Hash.u32(h, b.dome), b.domeGen or 0), b.domeDrain or 0)
+		end
+		if b.sx then
+			h = Hash.number(Hash.number(Hash.number(Hash.number(h, b.sx), b.sz :: number), b.ex :: number), b.ez :: number)
+		end
 	end
 	h = Hash.u32(h, #c.wreckIds)
 	for _, id in c.wreckIds do

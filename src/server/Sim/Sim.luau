@@ -24,6 +24,7 @@ local EWState = require("./EWState")
 local Match = require("./Match")
 local MatchState = require("./MatchState")
 local BuildState = require("./BuildState")
+local CheatsState = require("./CheatsState")
 local Combat = require("./Combat/Combat")
 local Economy = require("./Economy")
 local SensorsState = require("./SensorsState")
@@ -52,6 +53,8 @@ export type Config = {
 	scenario: string?, -- key in Scenarios, default "empty"
 	defs: Defs.DefSet?, -- default Defs.load()
 	match: MatchState.Config?, -- match rules (guide 16); nil = none
+	cheats: boolean?, -- cheat commands allowed without match rules (sandboxes; S-102); with them, match.cheats
+	offline: boolean?, -- offline / Studio: the SPEED cheat is allowed (S-102)
 }
 
 type System = { name: string, every: number, run: (Sim) -> () }
@@ -124,6 +127,8 @@ function Sim.new(config: Config): Sim
 	local unitCap = if config.match then Match.validate(config.match, players, order) else 0
 	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap, friendlyFire = if config.match.friendlyFire == false then false else nil } else nil
 
+	local cheats = config.cheats == true or (config.match ~= nil and config.match.cheats == true)
+	local offline = config.offline == true
 	local defs = config.defs or Defs.load()
 	local mapId = config.mapId or "none"
 	local layers = MapRegistry.load(mapId)
@@ -171,11 +176,14 @@ function Sim.new(config: Config): Sim
 			scenario = scenario,
 			players = headerPlayers,
 			match = matchInfo,
+			cheats = cheats or nil,
+			offline = offline or nil,
 		}),
 		stats = { commandsApplied = 0, commandsRejected = 0 },
 		playerStats = Stats.new(order),
 		statSeries = Stats.newSeries(0),
 		alerts = Alerts.new(order),
+		cheats = CheatsState.new(cheats, offline),
 		net = nil :: any,
 	}
 	sim.combat.friendlyFire = not (config.match and config.match.friendlyFire == false) -- a match option (S-73)
@@ -223,6 +231,7 @@ function Sim.hash(sim: Sim): number
 	h = OrdersState.hash(sim.orders, ids, h)
 	h = EWState.hash(sim.ew, ids, h)
 	h = MatchState.hash(sim.match, sim.playerOrder, h)
+	h = CheatsState.hash(sim.cheats, sim.playerOrder, sim.allyTeams, h)
 	return SensorsState.hash(sim.sensors, h)
 end
 
@@ -285,7 +294,7 @@ function Sim.fromReplay(log: Replay.Log, defs: Defs.DefSet?): Sim
 	if h.defsHash ~= set.hash then
 		error(`Sim.fromReplay: replay defs hash {h.defsHash}, this build is {set.hash}`, 2)
 	end
-	return Sim.new({ seed = h.seed, players = h.players, mapId = h.mapId, scenario = h.scenario, defs = set, match = h.match })
+	return Sim.new({ seed = h.seed, players = h.players, mapId = h.mapId, scenario = h.scenario, defs = set, match = h.match, cheats = h.cheats, offline = h.offline })
 end
 
 -- Plays a replay to `untilTick` (default: its last entry's tick) and compares

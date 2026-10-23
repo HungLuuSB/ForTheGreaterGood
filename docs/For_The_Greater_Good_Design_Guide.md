@@ -933,8 +933,14 @@ Factories have build power and an optional rally point and repeat queue. Workers
 
 - Placement: footprint must be on cells passable for the structure's placement class (land / water / either), not occupied, within builder range when construction starts.
   - Land means dry with slope ≤ 30°; water means depth ≥ 6 studs.
-  - Extractors must stand on a deposit, and no ground unit may stand on the footprint.
-  - Footprints snap to the grid, with odd sizes centered on a cell (DECISIONS D59–D60).
+  - Extractors must cover a deposit with their footprint (any cell of it), and no ground unit may stand on the footprint. An extractor works every deposit cell it covers (S-104).
+  - Footprints snap to the grid, with odd sizes centered on a cell and even sizes on a cell corner (DECISIONS D59–D60).
+- **Size shows tech level** (S-104, the user via the models stream; `docs/art/size-scale.md` on the models branch):
+  - T1 economy structures 2×2, T1 gun turrets 2, vehicle plants 4;
+  - T2 factories 6, fusion 4, T2 extractors 3, beam towers, shield generators and heavy turrets 3, flak and advanced jammers 2;
+  - T3: Citadel 7, nuke silos 6;
+  - T2 heavy tanks (Paladin, Warden, Juggernaut) footprint 2, like the Minotaur and Cyclops.
+  - Deposits stay at least 3 cells apart (`MapGen.MIN_DEPOSIT_GAP`), so a 3×3 T2 extractor fits on each.
   - A placed structure writes the occupancy layer and blocks every non-air class. Clearance is capped at 16 and recomputed exactly around the change only.
 - **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.
 - The client shows a placement ghost using its own grid copy; the server re-validates.
@@ -942,7 +948,10 @@ Factories have build power and an optional rally point and repeat queue. Workers
 - **Factory build power** (S-94, the user, client request 42b): T1 factories (vehicle plant, airfield, shipyard) build at 200, like the T2 ones, so a T1 tank takes about 25 s (a Lancer 25.5 s). A plant building at full speed then draws about 66 power/s, about three generators' worth.
 - **A frame is inert until complete** (S-87, the user): while its build progress is below 1, a structure doesn't aim, target or fire, and its sensors, jamming, factory, economy output, stockpiles, rearm pads and shield wait too. Destroyed, it leaves no wreck and sets off no death blast. It becomes the working unit only on completion. Clients draw frames semi-transparent (build progress is in ENTER and State).
 - Cancelling refunds what was spent (S-35): the CANCEL command removes an unfinished frame (no wreck) or a factory queue item; the frame's progress, or the factory's progress on the item in production, times its cost comes back at the next economy step (capped by storage). Queued items not started cost nothing yet.
-- Upgrading a T1 extractor into T2: build the T2 on the same spot; the T1 is removed when construction starts.
+- **In-place upgrades** (S-108, the user): a structure whose def has `upgradesFrom` may be built over the same player's own finished structure of a listed def (today: each faction's T2 extractor over its own T1 extractor). Allies' and enemies' structures still block it.
+  - The old structure keeps working while the new frame is built on top of it.
+  - When the new one is finished, the old one is removed: no wreck, no refund.
+  - If the frame is cancelled or destroyed, the old one keeps its cells and goes on producing. If the old one is destroyed meanwhile, the frame stays and can be finished.
 
 ### 9.4 Tech progression
 
@@ -1017,7 +1026,19 @@ A weapon starts at its turret's rest pose (`restYaw`, `restPitch`, default 0) an
 - A T3 silo per faction (13.5) builds warheads into its stockpile (8.6) and launches one only on an **attack-ground order**, anywhere on the map: one launch per order, then the order is done (STOP or a new order cancels it). Fire states don't apply. No turret.
 - **Flight** (`Shared/Combat/Lofted`, S-51; the user asked for a vertical climb, then the turn): straight up at `projectileSpeed` 150 to `climbHeight` 120 studs above the ground; a pitch-over toward the lofted arc at `turnRate` 90°/s (powered, no gravity; about half a second); then the arc (gravity 12) that peaks `apex` 300 studs above the ordered spot (S-49: low enough to stay on screen at the closest zoom before icons) and lands on it, re-solved every climbing tick so the landing is exact. ~12.7 s in the air whatever the distance (1,400 studs → ~120 studs/s horizontally). The phase follows from the missile's state (no horizontal velocity and below the climb height: boost; climbing: turn or arc; descending: ballistic), so clients step it with the same function. It passes over units; only the ground stops it.
 - **Blast:** `aoe` 150, `edgeEffectiveness` 0.3, 8,000–10,000 damage at the center: it hurts every side, the launcher's own units included (BAR).
-- **Interception:** radar SAM sites and mobile radar SAMs (`intercepts = { chance = 0.2 }`, S-50) fire interceptors from their stockpiles at an enemy strategic missile their team detects within their range, before any aircraft (10.2). An interceptor navigates against the missile's position and velocity and bursts at its closest approach within its fuse (`aoe`, 20 studs); the burst destroys the missile with probability `chance` (sim Prng). A destroyed missile doesn't detonate. Several sites, or full stockpiles, are needed against more than one missile; empty stockpiles stop nothing.
+- **Interception (S-111, the user; client request 46; replaces S-48's radar SAM interception):** only **anti-nukes** stop strategic missiles; radar SAMs shoot aircraft only.
+  - **Units:**
+    - structures: Order's Providence, Chaos's Cerberus (T2, footprint 3, built by T2 builders);
+    - mobile: Order's Custodian, Chaos's Chimera (T2 vehicles from the advanced vehicle plant, light armour, no other weapon).
+  - **Cover:** an anti-nuke engages an enemy strategic missile whose **aim point** is inside its cover radius (its interceptor's `range`), from when the missile comes within 1.5× that radius.
+  - **It spots strategic missiles anywhere** (the user): it needs no radar or sight of the missile, and anti-nukes carry no radar.
+  - **One interceptor per missile:** an anti-nuke doesn't fire at a missile its team already chases.
+  - **The burst always destroys the missile** (`intercepts.chance` 1); a destroyed missile doesn't detonate.
+  - **Stock and delay:**
+    - interceptors come from a stockpile (8.6; structures 3, mobiles 1);
+    - after each shot the launcher waits its `reload`, longer than a missile's flight, so **several missiles at one spot overwhelm one anti-nuke**;
+    - empty stockpiles stop nothing.
+  - **Mobiles intercept only while standing still** (`stationary`: the launcher has to raise).
 - **Wire** (protocol 16, 7.3): every player gets LAUNCH_WARNING at a launch and the missile itself wherever it flies; INTERCEPTOR records name the missile they chase; INTERCEPTED replaces the IMPACT of a destroyed missile.
 
 ### 10.10 Shield domes (S-79)
@@ -1275,10 +1296,12 @@ countermeasures = {
 | Siege | ● | — | — | ● | — | ●●● |
 | Swarm tank | ●● | — | — | ● | — | ● |
 | Siege mortar | — | — | — | — | — | ●●● |
+| Missile battery | ●●● | — | — | ●● | — | ● |
+| Anti-nuke | — | — | — | — | — | — |
 
 ● weak · ●● good · ●●● strong · — cannot target
 
-Faction-only rows (S-64, S-75): **Deployable gun** is Order's Warden (beats a frontal push once deployed), **Siege** is Chaos's Minotaur (breaks structures; weak against an army in the field), **Swarm tank** is Chaos's Locust (cheap numbers; dies to splash), **Siege mortar** is Chaos's Cyclops (structures only, from beyond their guns). Order's Barrier and Citadel are structures: the trade check measures them (`lune run factions`, "Faction-only units").
+**Missile battery** (S-106: Sanction, Scourge) hits ground units hardest and picks artillery first when it knows the type. **Anti-nuke** (S-111) targets nothing on the board: only strategic missiles (10.9). Faction-only rows (S-64, S-75): **Deployable gun** is Order's Warden (beats a frontal push once deployed), **Siege** is Chaos's Minotaur (breaks structures; weak against an army in the field), **Swarm tank** is Chaos's Locust (cheap numbers; dies to splash), **Siege mortar** is Chaos's Cyclops (structures only, from beyond their guns). Order's Barrier and Citadel are structures: the trade check measures them (`lune run factions`, "Faction-only units").
 
 Tanks and attack helicopters can't target helicopters (changed from ● in round 6: no ground gun or rocket targets `AIR`; D97). Same-role cells (a role against its own kind, e.g. tanks against tanks) are checked as a soft band, not as dots: both sides must be able to damage each other, and the equal-cost trade should stay within 0.5–2.0 (D98).
 

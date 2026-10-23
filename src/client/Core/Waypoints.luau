@@ -14,6 +14,7 @@ local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
 local Orders = require("./Orders")
 local Placement = require("./Placement")
+local Upgrades = require("./Upgrades")
 local World = require("./World")
 
 local Waypoints = {}
@@ -107,13 +108,17 @@ end
 -- structure of that def stands on its spot (its frame has started), or
 -- another structure took the spot (the server skips it)?
 local function buildDone(world: World.World, p: Point): boolean
+	local def = world.defs.unitByIndex[p.defIndex :: number]
 	for _, s in world.units do
 		local sdef = World.def(world, s)
 		if sdef and sdef.domain == "structure" and math.abs(s.x - p.x) < 1 and math.abs(s.z - p.z) < 1 then
-			return true -- ours of that def (started) or something else (blocked)
+			-- ours of that def (started) or something else (blocked); not the
+			-- extractor this build upgrades in place (C-121)
+			if s.defIndex == p.defIndex or not Upgrades.canUpgrade(world, def, s) then
+				return true
+			end
 		end
 	end
-	local def = world.defs.unitByIndex[p.defIndex :: number]
 	local r = Placement.check(world, def, p.x, p.z)
 	return not r.ok and r.reason == "occupied" and r.replaces == 0
 end

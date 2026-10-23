@@ -16,6 +16,9 @@ local function encode(cmd: Schema.Command): buffer
 	return w:finish()
 end
 
+-- A whole command as a payload (the cheat line's, from CheatText.parse; C-120).
+Commands.encode = encode
+
 -- The cell rectangle covering world points `xs`/`zs` (e.g. the ground hits of
 -- the screen corners), clamped to the map and the u8 wire range.
 function Commands.cameraRect(grid: Grid.Grid, xs: { number }, zs: { number }): (number, number, number, number)

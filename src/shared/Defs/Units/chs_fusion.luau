@@ -11,7 +11,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE" },
 	cost = { supply = 900, power = 12000, buildTime = 30000 },
 	health = 3000,
-	footprint = 3,
+	footprint = 4, -- size shows tech level (S-104)
 	icon = "fusion",
 	production = { power = 250 },
 	deathBlast = { damage = 2500, aoe = 120, edge = 0.25 }, -- guide 8.5: "big explosion on death" (S-70)

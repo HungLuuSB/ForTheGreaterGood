@@ -17,12 +17,14 @@ export type BuildState = {
 	reclaim: { [number]: number }, -- builder → wreck it is reclaiming (0 = none)
 	queue: { [number]: { number } }, -- factory → def indices waiting (head is in production)
 	progress: { [number]: number }, -- factory → progress of the head item, 0..1
+	upgrading: { [number]: number }, -- frame → the structure it upgrades in place (S-108)
+	upgradingGen: { [number]: number }, -- its generation (D109)
 }
 
 BuildState.MAX_QUEUE = 50
 
 function BuildState.new(): BuildState
-	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, queue = {}, progress = {} }
+	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, queue = {}, progress = {}, upgrading = {}, upgradingGen = {} }
 end
 
 -- Forgets everything about one unit (it was removed from the world).
@@ -35,6 +37,8 @@ function BuildState.clearUnit(b: BuildState, id: number)
 	b.reclaim[id] = nil
 	b.queue[id] = nil
 	b.progress[id] = nil
+	b.upgrading[id] = nil
+	b.upgradingGen[id] = nil
 end
 
 -- Clears a builder's work (MOVE / STOP / new task).
@@ -65,6 +69,10 @@ function BuildState.hash(b: BuildState, ids: { number }, h: number): number
 				h = Hash.u32(h, d)
 			end
 			h = Hash.number(h, b.progress[id] or 0)
+		end
+		local up = b.upgrading[id]
+		if up then
+			h = Hash.u32(Hash.u32(h, up), b.upgradingGen[id] or 0) -- (S-108)
 		end
 	end
 	return h

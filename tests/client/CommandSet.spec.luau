@@ -32,6 +32,9 @@ return function(t: any)
 			t.expect(has(list, "stop") and has(list, "alert"), "stop and the alert jump everywhere")
 		end
 		t.equal(#CommandSet.of({}), 0, "nothing selected, no commands")
+		-- Upgrade extractors (C-121): builders with an upgrading extractor only
+		t.expect(has(CommandSet.of({ defs.units.ord_architect }, defs), "upgrade"), "a T2 builder upgrades extractors")
+		t.expect(not has(CommandSet.of({ defs.units.ord_mason }, defs), "upgrade"), "a T1 builder doesn't")
 	end)
 
 	t.test("a mixed selection offers the union, in card order", function()

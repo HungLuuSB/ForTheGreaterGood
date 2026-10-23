@@ -35,6 +35,7 @@ local MATERIAL: { [string]: Enum.Material } = {
 	ground = Enum.Material.Ground,
 	bridge = Enum.Material.WoodPlanks,
 }
+RenderTerrain.MATERIAL = MATERIAL -- deposits tint their patch with the surrounding terrain's color (C-123)
 
 export type Stats = { seconds: number, cpu: number, voxels: number, chunks: number, mode: string } -- seconds: wall time (yields included)
 

@@ -13,7 +13,7 @@ return Templates.extend(Templates.Structure, {
 	categories = { "STRUCTURE", "RADAR_EMITTER" },
 	cost = { supply = 1000, power = 10000, buildTime = 24000 },
 	health = 9000,
-	footprint = 3,
+	footprint = 7, -- size shows tech level (S-104)
 	sensors = { sight = 300, airSight = 206, radar = 900, radarError = 16, radarDrain = 4 },
 	weapons = {
 		{ def = "ord_citadel_gun", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" },

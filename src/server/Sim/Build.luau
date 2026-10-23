@@ -363,15 +363,18 @@ function Build.step(sim: Types.Sim)
 					b.targetGen[id] = w.gen[existing]
 					b.assist[id] = false
 				else
-					local ok, why, _, _, cx, cz, replaces = Placement.check(sim, sd, pending.x, pending.z, w.team[id])
+					local ok, why, _, _, cx, cz, replaces = Placement.check(sim, sd, pending.x, pending.z, w.owner[id])
 					if ok and Match.atCap(sim, w.owner[id]) then
 						ok, why = false, "unit_cap"
 					end
 					if ok then
-						if replaces ~= 0 then
-							Lifecycle.remove(sim, replaces) -- extractor upgrade: the T1 goes when the T2 starts (guide 9.3)
-						end
 						local frame = startFrame(sim, sd, w.owner[id], cx, cz, pending.facing)
+						if replaces ~= 0 then
+							-- in-place upgrade (S-108): the old structure works on
+							-- under the frame and goes when the frame is finished
+							b.upgrading[frame] = replaces
+							b.upgradingGen[frame] = w.gen[replaces]
+						end
 						b.target[id] = frame
 						b.targetGen[id] = w.gen[frame]
 						b.assist[id] = false
@@ -463,29 +466,36 @@ function Build.step(sim: Types.Sim)
 		local cost = itemDef.cost
 		local team = w.team[t]
 		local acc = eco.accounts[team]
-		local rate = bp / cost.buildTime -- progress per second at full supply
-		demandS[team] += cost.supply * rate
-		demandP[team] += cost.power * rate
-		local step = rate * DT * Economy.effective(acc, cost.supply, cost.power)
-		-- never spend beyond what this window still allows
-		if cost.supply > 0 then
-			step = math.min(step, Economy.allowance(acc.supply) / cost.supply)
-		end
-		if cost.power > 0 then
-			step = math.min(step, Economy.allowance(acc.power) / cost.power)
-		end
-		if step <= 0 then
-			continue
+		local free = sim.cheats.instabuild -- (S-102) done at once, nothing spent
+		local step = 1
+		if not free then
+			local rate = bp / cost.buildTime -- progress per second at full supply
+			demandS[team] += cost.supply * rate
+			demandP[team] += cost.power * rate
+			step = rate * DT * Economy.effective(acc, cost.supply, cost.power)
+			-- never spend beyond what this window still allows
+			if cost.supply > 0 then
+				step = math.min(step, Economy.allowance(acc.supply) / cost.supply)
+			end
+			if cost.power > 0 then
+				step = math.min(step, Economy.allowance(acc.power) / cost.power)
+			end
+			if step <= 0 then
+				continue
+			end
 		end
 		if frame then
 			step = math.min(step, 1 - w.buildProgress[t])
-			acc.supply.spent += cost.supply * step
-			acc.power.spent += cost.power * step
+			if not free then
+				acc.supply.spent += cost.supply * step
+				acc.power.spent += cost.power * step
+			end
 			local p = w.buildProgress[t] + step
 			World.setHealth(w, t, math.min(itemDef.health, w.health[t] + itemDef.health * step))
 			if p >= 1 - 1e-9 then
 				World.setBuildProgress(w, t, 1)
 				Lifecycle.completed(sim, t)
+				Build.finishUpgrade(sim, t)
 				Combat.addEvent(sim.combat, { kind = "BUILD_DONE", tick = sim.tick, unit = t, other = 0 })
 				Build.countBuilt(sim, t)
 			else
@@ -495,8 +505,10 @@ function Build.step(sim: Types.Sim)
 			local q = b.queue[t] :: { number }
 			local p = b.progress[t] or 0
 			step = math.min(step, 1 - p)
-			acc.supply.spent += cost.supply * step
-			acc.power.spent += cost.power * step
+			if not free then
+				acc.supply.spent += cost.supply * step
+				acc.power.spent += cost.power * step
+			end
 			p += step
 			if p >= 1 - 1e-9 and Match.atCap(sim, w.owner[t]) then
 				b.progress[t] = 1 -- done; rolls out when the owner is under the cap
@@ -534,8 +546,30 @@ function Build.step(sim: Types.Sim)
 	end
 end
 
+-- An in-place upgrade's frame `frame` is finished (S-108): the structure it
+-- replaces goes (no wreck, no refund) if it still stands.
+function Build.finishUpgrade(sim: Types.Sim, frame: number)
+	local b = sim.build
+	local old = b.upgrading[frame]
+	if old == nil then
+		return
+	end
+	local gen = b.upgradingGen[frame]
+	b.upgrading[frame], b.upgradingGen[frame] = nil, nil
+	if World.isRef(sim.world, old, gen) then
+		Lifecycle.remove(sim, old)
+	end
+end
+
 table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
-	BuildState.clearUnit(sim.build, id)
+	local b = sim.build
+	local old = b.upgrading[id]
+	if old ~= nil and World.isRef(sim.world, old, b.upgradingGen[id]) then
+		-- an upgrade frame cancelled or destroyed (S-108): the old structure
+		-- takes its cells back (Placement freed the frame's just before)
+		Placement.occupy(sim, old)
+	end
+	BuildState.clearUnit(b, id)
 end)
 
 return Build

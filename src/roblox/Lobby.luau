@@ -37,6 +37,7 @@ export type State = {
 	mode: string,
 	win: string,
 	friendlyFire: boolean, -- S-73: a match option, on by default
+	cheats: boolean, -- C-119: the host allows cheat commands (allow-listed players only); off by default
 	slots: { Slot },
 	results: any?,
 }
@@ -52,7 +53,7 @@ function Lobby.new(maps: { Map }, kinds: { string }?): State
 	for i, kind in kinds or { "open", "ai" } do
 		table.insert(slots, slot(kind, if i % 2 == 1 then "order" else "chaos", if i % 2 == 1 then 1 else 2))
 	end
-	return { phase = "lobby", mapId = maps[1].id, mode = "FFA", win = "COMMAND_ENDS", friendlyFire = true, slots = slots, results = nil }
+	return { phase = "lobby", mapId = maps[1].id, mode = "FFA", win = "COMMAND_ENDS", friendlyFire = true, cheats = false, slots = slots, results = nil }
 end
 
 local function mapOf(maps: { Map }, id: string): Map?
@@ -116,7 +117,7 @@ end
 
 -- Applies slot `from`'s lobby message. Returns "start", "lobby" or nil (a
 -- setting changed, or nothing), and an error for a refused message.
---   { op = "set", key = "mapId" | "mode" | "win" | "friendlyFire", value }   host
+--   { op = "set", key = "mapId" | "mode" | "win" | "friendlyFire" | "cheats", value }   host
 --   { op = "slot", index, kind = "ai" | "open" | nil, level? }   host; nil removes it, index #slots + 1 adds one
 --   { op = "faction", index, value }   a human for their own slot; the host for AI and open slots
 --   { op = "ally", index, value = 1 | 2 }                         host
@@ -178,6 +179,8 @@ function Lobby.apply(s: State, maps: { Map }, msg: any, from: number?): (string?
 			s.win = v
 		elseif msg.key == "friendlyFire" and type(v) == "boolean" then
 			s.friendlyFire = v
+		elseif msg.key == "cheats" and type(v) == "boolean" then
+			s.cheats = v
 		else
 			return nil, "bad setting"
 		end
@@ -263,7 +266,7 @@ function Lobby.config(s: State, seed: number): any
 		players = players,
 		mapId = s.mapId,
 		scenario = "standard_start",
-		match = { mode = s.mode, win = s.win, ai = ai, friendlyFire = s.friendlyFire },
+		match = { mode = s.mode, win = s.win, ai = ai, friendlyFire = s.friendlyFire, cheats = s.cheats },
 	}
 end
 
