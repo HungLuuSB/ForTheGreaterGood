@@ -47,6 +47,9 @@ local sqrt, sin, cos = math.sqrt, math.sin, math.cos
 
 local candidates: { number } = {}
 local killed: { number } = {}
+-- start-of-tick state of the projectiles interceptors chase (S-151, client
+-- request: steering and the fuse mustn't depend on which steps first)
+local chasedState: { [number]: { number } } = {}
 
 return function(sim: Types.Sim)
 	local c = sim.combat
@@ -58,6 +61,14 @@ return function(sim: Types.Sim)
 	ContactGrid.rebuild(c.contacts, w) -- positions changed in Movement
 	local weapons = sim.defs.weaponByIndex
 	local profiles = c.profiles
+
+	table.clear(chasedState)
+	for _, id in proj do
+		local t = c.pTargetProj[id]
+		if t ~= nil and t ~= 0 and chasedState[t] == nil and c.projSlot[t] ~= nil then
+			chasedState[t] = { c.px[t], c.py[t], c.pz[t], c.pvx[t], c.pvy[t], c.pvz[t] }
+		end
+	end
 
 	-- Backwards, so swap-removal never skips an unprocessed projectile.
 	table.clear(killed)
@@ -107,8 +118,9 @@ return function(sim: Types.Sim)
 		end
 		if projTarget ~= 0 and weapon.turnRate then
 			-- interceptor (S-48): navigate against the missile's own state
-			local tx, ty, tz = c.px[projTarget], c.py[projTarget], c.pz[projTarget]
-			local tvx, tvy, tvz = c.pvx[projTarget], c.pvy[projTarget], c.pvz[projTarget]
+			local st = chasedState[projTarget]
+			local tx, ty, tz = st[1], st[2], st[3]
+			local tvx, tvy, tvz = st[4], st[5], st[6]
 			local maxTurn = math.rad(weapon.turnRate) * DT
 			if weapon.launch == "vertical" then
 				local turned = bit32.band(c.pFlags[id], TURNED) ~= 0
@@ -257,10 +269,11 @@ return function(sim: Types.Sim)
 		-- missile's frame
 		local burstProj = 0
 		if projTarget ~= 0 and (weapon.aoe or 0) > 0 then
-			local ax, ay, az = x0 - c.px[projTarget], y0 - c.py[projTarget], z0 - c.pz[projTarget]
-			local dx = (x1 - x0) - c.pvx[projTarget] * DT
-			local dy = (y1 - y0) - c.pvy[projTarget] * DT
-			local dz = (z1 - z0) - c.pvz[projTarget] * DT
+			local st = chasedState[projTarget]
+			local ax, ay, az = x0 - st[1], y0 - st[2], z0 - st[3]
+			local dx = (x1 - x0) - st[4] * DT
+			local dy = (y1 - y0) - st[5] * DT
+			local dz = (z1 - z0) - st[6] * DT
 			local len2 = dx * dx + dy * dy + dz * dz
 			local t = if len2 > 0 then math.clamp(-(ax * dx + ay * dy + az * dz) / len2, 0, 1) else 0
 			local ex, ey, ez = ax + dx * t, ay + dy * t, az + dz * t
