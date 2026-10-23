@@ -4,6 +4,12 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, domes without vision live; bigger mechs)
+
+- **Shield domes without vision (C-145 + sim-A's S-122): live and checked in Studio.** An enemy Carapace out of your sight shows its dome, honeycomb shell and core, with no unit revealed (`debug_out/screens/unseen_dome.jpg`).
+- **Mech Commanders:** models-C rebuilt them as ~10-stud heroic mechs (blockouts for now). The walk cycle follows their new stride (C-148). Not re-checked in Studio.
+- **Beams vs overlapping domes:** sim-A built request 56 (S-123), integrating. The client is ready.
+
 ## Summary (2026-10-23, beams and overlapping domes)
 
 - **Your screenshot (two overlapping domes):** the beam went through dome #2 when #1 collapsed, and through #1 when it came back up. The sim checks a beam's path against domes only at certain moments, not continuously, so it's with sim-A as **request 56**: re-check every dome each tick, and cut the beam at the first one in its way.
@@ -1790,9 +1796,9 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-56. **Open (sent 2026-10-23).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
+56. **Built (S-123, integrating).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
 
-55. **Open (sent 2026-10-23).** **Shield domes render regardless of vision (the user, as in BAR):** send dome state (centre, radius, charge, flags) for enemy domes touching the camera area, whatever the team sees, without revealing the generator; the client draws domes from it.
+55. **Done (S-122, on main f3334c7; client C-145; checked in Studio).** **Shield domes render regardless of vision (the user, as in BAR):** send dome state (centre, radius, charge, flags) for enemy domes touching the camera area, whatever the team sees, without revealing the generator; the client draws domes from it.
 
 54. **Done (S-120 / S-121, on main 4356074; checked in Studio): structures take ATTACK (manual target, any fire state); a dome dropping under a beam sends a new FIRE / SHOT to the target; the client continues the beam (C-144).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
 

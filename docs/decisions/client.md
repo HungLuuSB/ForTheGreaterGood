@@ -1188,3 +1188,9 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 **Decision:** `Effects.glance(world, weapon, tracer, now)` holds C-129's deflection and C-139's pulse setup, and now also includes unseen domes (`world.remoteDomes`, S-122). New beams run it, and so does `continueBeam` whenever a moved end falls short (hit = false), so the glance and pulses follow to the new dome.
 
 **Why:** the user's overlapping-domes screenshot. The rule that a beam's line is re-checked against every dome each tick is sim request 56.
+
+### C-148 — Mech stride re-tuned for the heroic mechs (2026-10-23)
+
+**Decision:** Commander POSE follows models-C's M-32 stride: forward leg thigh +24 / shin −8 / foot −16, back leg thigh −18 / shin −22 / foot +30, pelvis dip 0.2. C-145's domes without vision are verified in Studio on main f3334c7 (S-122).
+
+**Why:** the user rejected the first mechs (too small and blocky); models-C rebuilt them about 10 studs tall with a real knee bend.

@@ -13,14 +13,15 @@ local Commander = {}
 Commander.STRIDE = 0.6 -- seconds per stride (two steps)
 Commander.WALK = 1 -- signal mask of the walk thread
 
--- models-C's stride (left leg forward); the other step mirrors it. Degrees.
+-- models-C's stride (left leg forward; re-tuned for the ~10-stud heroic
+-- mechs, M-32); the other step mirrors it. Degrees.
 local POSE = {
-	thighL = 28, shinL = -18, footL = -10,
-	thighR = -22, shinR = -30, footR = 20,
+	thighL = 24, shinL = -8, footL = -16,
+	thighR = -18, shinR = -22, footR = 30,
 	armL = -18, armR = 18,
 }
 local TORSO = 6
-local DIP = 0.12 -- studs the pelvis drops mid-step
+local DIP = 0.2 -- studs the pelvis drops mid-step
 local LIMBS = { "thighL", "shinL", "footL", "thighR", "shinR", "footR", "armL", "armR" }
 
 -- The mirror of a pose: L and R swapped.
