@@ -185,5 +185,5 @@ The Commanders (`ord_sovereign`, `chs_warlord`) are walking mechs. The def keeps
 | `shinL`, `shinR` | `thigh*` | `swing` X | the shins (a negative swing bends the knee back) |
 | `footL`, `footR` | `shin*` | `swing` X | the feet (a positive swing lifts the toe) |
 
-A positive swing about X turns a part's lower end forward (towards −Z). The review pose `poses.<id>.stride` in `Blockouts/Pending/Registry.luau` is one frame of the walk: the left leg forward (thigh +28°, shin −18°, foot −10°), the right leg back (thigh −22°, shin −30°, foot +20°), the arms against the legs, the torso turned 6° and the pelvis 0.12 lower. A walk cycle alternates it, about one stride per 0.6 s at full speed.
+A positive swing about X turns a part's lower end forward (towards −Z). The legs rest with a real knee bend (the thigh runs down and forward to the knee, the shin back down to the ankle). The review pose `poses.<id>.stride` in `Blockouts/Pending/Registry.luau` is one frame of the walk: the left leg forward (Order: thigh +24°, shin −8°, foot −16°), the right leg back (thigh −18°, shin −22°, foot +30°), the arms against the legs, the torso turned about 6° and the pelvis 0.2 lower. A walk cycle alternates it, about one stride per 0.8 s at full speed (the heroic mechs, M-32, take longer strides than v1).
 

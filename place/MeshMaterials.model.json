@@ -406,18 +406,6 @@
       }
     },
     {
-      "Name": "chs_warlord",
-      "ClassName": "SurfaceAppearance",
-      "Properties": {
-        "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://87349585652781",
-        "NormalMapContent": "rbxassetid://124579271715480",
-        "RoughnessMapContent": "rbxassetid://96741398275425",
-        "MetalnessMapContent": "rbxassetid://109943558481317",
-        "EmissiveStrength": 0
-      }
-    },
-    {
       "Name": "chs_wasp",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -990,18 +978,6 @@
         "NormalMapContent": "rbxassetid://86634972323141",
         "RoughnessMapContent": "rbxassetid://121383646860114",
         "MetalnessMapContent": "rbxassetid://80015266887662",
-        "EmissiveStrength": 0
-      }
-    },
-    {
-      "Name": "ord_sovereign",
-      "ClassName": "SurfaceAppearance",
-      "Properties": {
-        "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://138663279355186",
-        "NormalMapContent": "rbxassetid://108767075650790",
-        "RoughnessMapContent": "rbxassetid://113371489579488",
-        "MetalnessMapContent": "rbxassetid://94775605360468",
         "EmissiveStrength": 0
       }
     },
