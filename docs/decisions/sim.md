@@ -1876,3 +1876,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:** `Defenses.spec`:
   - a Radiance ordered onto a Juggernaut keeps it after the spotter dies: it never switches to the visible Ravager, and keeps firing blind;
   - when the Juggernaut dies, the manual target is gone and the tower is on the Ravager the next tick.
+
+## S-126 — Fix: a beam or hitscan shot at a destroyed structure's ghost crashed the tick (client request 57's repro) (2026-10-23)
+
+- **Found by the client:** in request 57's repro, after the ordered tank died the Radiances took the Phalanx generator, then the Phalanx died. Weapons that can fire at radar contacts may target a remembered structure's ghost, alive or not (D101). Since S-113 Radiance is one, and its next beam called `hitscanHits` on the dead unit: `Weapons:106: attempt to index nil with 'radius'`. The whole server tick crashed.
+- **Fixed:** a hitscan or beam shot at a target that no longer exists is a miss at the believed spot (FIRE hit = false), like any miss.
+- **Test:** `Defenses.spec`: a Radiance with radar fires at a destroyed generator's ghost for 20 s without an error (the test fails without the fix).
