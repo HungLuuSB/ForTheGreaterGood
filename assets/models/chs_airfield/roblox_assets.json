@@ -1,7 +1,32 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Animated pieces (M-27): 1472 triangles, glow share 2.4%",
+  "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 4596 triangles, glow share 1.4%",
   "bar": {
+    "model": "rbxassetid://112057348035000",
+    "meshes": {
+      "base": "rbxassetid://90130562562931",
+      "base_glow_power": "rbxassetid://82870871531998",
+      "base_glow_running": "rbxassetid://114546304020539",
+      "radar": "rbxassetid://121995840175186",
+      "radar_glow_running": "rbxassetid://100508405749014"
+    },
+    "decals": {
+      "ALB": "rbxassetid://105297476122435",
+      "RGH": "rbxassetid://122619278829994",
+      "NOR": "rbxassetid://94858051812742",
+      "MTL": "rbxassetid://93781739433680",
+      "EMI": "rbxassetid://89223246700407"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://132899944982126",
+      "NOR": "rbxassetid://115586438924044",
+      "RGH": "rbxassetid://124314756563470",
+      "MTL": "rbxassetid://110351864060013",
+      "EMI": "rbxassetid://120558996405863"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_airfield_bar in FTGG Art"
+  },
+  "bar_3": {
     "model": "rbxassetid://96361857018256",
     "meshes": {
       "base": "rbxassetid://133480541403601",
@@ -24,7 +49,7 @@
       "MTL": "rbxassetid://119583282614481",
       "EMI": "rbxassetid://100789068835893"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_airfield_bar in FTGG Art"
+    "note": "Animated pieces (M-27): 1472 triangles, glow share 2.4%"
   },
   "bar_2": {
     "model": "rbxassetid://111567167029284",
@@ -71,5 +96,28 @@
       "EMI": "rbxassetid://95003057933553"
     },
     "note": "2026-10-22, first BAR upload (M-15), Open Cloud import clamped (scale 38.2 / 2048): 1472 triangles, glow share 2.4%"
+  },
+  "wreck": {
+    "model": "rbxassetid://126616809106659",
+    "meshes": {
+      "base": "rbxassetid://126413710811096",
+      "radar": "rbxassetid://131514036665662"
+    },
+    "decals": {
+      "ALB": "rbxassetid://87363745649559",
+      "RGH": "rbxassetid://126954261105436",
+      "NOR": "rbxassetid://138422721693316",
+      "MTL": "rbxassetid://82038245012711",
+      "EMI": "rbxassetid://140187732541915"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://128906385831457",
+      "NOR": "rbxassetid://89588988106564",
+      "RGH": "rbxassetid://130269800025027",
+      "MTL": "rbxassetid://93069622871635",
+      "EMI": "rbxassetid://81062539470471"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_airfield_wreck_bar in FTGG Art",
+    "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 3312 triangles"
   }
 }

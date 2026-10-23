@@ -1,0 +1,82 @@
+{
+  "id": "chs_thorn_wreck",
+  "wreckOf": "chs_thorn",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0141,
+        1.4447,
+        -0.0075
+      ],
+      "size": [
+        7.7736,
+        2.9422,
+        7.7902
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -0.0106,
+        3.7739,
+        -0.3203
+      ],
+      "size": [
+        5.9758,
+        2.0576,
+        3.4185
+      ],
+      "pivot": [
+        0.0,
+        2.8,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -2.4,
+        3.2,
+        -1.95
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 976,
+    "launcher": 844,
+    "total": 1820
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

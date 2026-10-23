@@ -1,0 +1,84 @@
+{
+  "id": "ord_converter_wreck",
+  "wreckOf": "ord_converter",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0022,
+        2.7593,
+        -0.0101
+      ],
+      "size": [
+        15.5872,
+        5.7374,
+        15.7443
+      ]
+    },
+    "coil": {
+      "parent": "base",
+      "center": [
+        -0.0724,
+        5.9436,
+        0.5936
+      ],
+      "size": [
+        3.5074,
+        3.8062,
+        3.5629
+      ],
+      "pivot": [
+        0.0,
+        4.25,
+        0.6
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "coil"
+  ],
+  "anim": {
+    "coil": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1682,
+    "coil": 1176,
+    "total": 2858
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

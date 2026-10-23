@@ -1,0 +1,134 @@
+{
+  "id": "ord_shipyard_wreck",
+  "wreckOf": "ord_shipyard",
+  "footprintStuds": 40,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.1572,
+        6.0323,
+        -0.2168
+      ],
+      "size": [
+        39.5717,
+        14.5902,
+        39.3517
+      ]
+    },
+    "trolley": {
+      "parent": "base",
+      "center": [
+        4.144,
+        10.6677,
+        -5.6214
+      ],
+      "size": [
+        2.5412,
+        1.3354,
+        2.61
+      ],
+      "pivot": [
+        4.0,
+        10.7,
+        -6.0
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        -6.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -10.0,
+        11.0,
+        -6.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        -4.0,
+        11.0,
+        -6.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        2.0,
+        11.0,
+        -6.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        8.0,
+        11.0,
+        -6.0
+      ]
+    },
+    "nano5": {
+      "parent": "trolley",
+      "at": [
+        4.0,
+        10.2,
+        -6.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "trolley"
+  ],
+  "anim": {
+    "trolley": {
+      "motion": "slide",
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "range": 12
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 3208,
+    "trolley": 56,
+    "total": 3264
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

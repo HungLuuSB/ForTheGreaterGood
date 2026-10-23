@@ -28,15 +28,16 @@ ANCHORS = {
     "chs_vehplant": {"buildpad": (B, (3.0, 0.72, -2.0)),  # the pad under the gantry crane (fp-4 redesign)
                      "nano1": (B, (0.2, 6.15, -4.6)), "nano2": (B, (5.8, 6.15, 0.6)),
                      "nano3": ("trolley", (3.0, 7.32, -2.0))},  # the crane's hook block
-    "ord_airfield": {"buildpad": (B, (-12.0, 0.55, -9.0)),  # the landing pad
-                     "nano1": (B, (-16.75, 5.4, 1.75)), "nano2": (B, (-7.25, 5.4, 1.75)), "nano3": (B, (-12.0, 5.5, 1.75))},
-    "chs_airfield": {"buildpad": (B, (-12.0, 0.4, 7.5)),  # under the open hangar
-                     "nano1": (B, (-16.0, 5.05, 8.0)), "nano2": (B, (-12.0, 5.05, 8.0)), "nano3": (B, (-8.0, 5.05, 8.0))},
+    "ord_airfield": {"buildpad": (B, (-10.4, 0.72, -8.0)),  # the pad in front of the hangar
+                     "nano1": (B, (-13.6, 5.3, -4.4)), "nano2": (B, (-7.2, 5.3, -4.4)), "nano3": (B, (-10.4, 8.0, -1.5))},
+    "chs_airfield": {"buildpad": (B, (-10.8, 0.72, 6.8)),  # under the open hangar
+                     "nano1": (B, (-14.4, 6.62, 6.8)), "nano2": (B, (-10.8, 6.62, 6.8)), "nano3": (B, (-7.2, 6.62, 6.8))},
     "ord_shipyard": {"buildpad": (B, (0.0, 0.0, -6.0)),  # in the slip, at the waterline, under the gantry
                      "nano1": (B, (-10.0, 11.0, -6.0)), "nano2": (B, (-4.0, 11.0, -6.0)),
-                     "nano3": (B, (2.0, 11.0, -6.0)), "nano4": (B, (8.0, 11.0, -6.0)), "nano5": (B, (4.0, 10.2, -6.0))},
+                     "nano3": (B, (2.0, 11.0, -6.0)), "nano4": (B, (8.0, 11.0, -6.0)), "nano5": ("trolley", (4.0, 10.2, -6.0))},  # the trolley lamp slides with it
     "chs_shipyard": {"buildpad": (B, (0.0, 0.0, 1.0)),  # in the slip, under the tower crane's jib
-                     "nano1": (B, (4.0, 13.1, 4.0))},
+                     "nano1": ("jib", (4.0, 12.0, 4.0)),  # the hook block's lamp, slews with the jib
+                     "nano2": (B, (11.6, 4.15, 1.2))},  # the emitter arm on the right pier
     # constructors: the emitter at the tip of the `nano` piece
     "ord_mason": {"nano1": (N, (0.0, 4.55, -1.45))},
     "chs_scrapper": {"nano1": (N, (1.182, 3.6, -1.814))},

@@ -135,12 +135,12 @@ Meshes.units.ord_lancer    -- by unit def ID; Meshes.fx.shield_emitter for effec
 
 ## 8. Construction anchors (nanoframe, M-25)
 
-Owner: models stream. Attachments for the client's BAR-style nanoframe, on every factory (vehicle plants, airfields, shipyards and their advanced versions, both factions) and every constructor (every def with a `nano` piece, Commanders included). They are in the blockouts (`attachments`, section 4) and in the mesh manifest (`attachments`, section 7), at the same places.
+Owner: models stream. Attachments for the client's BAR-style nanoframe, on every factory (vehicle plants, airfields, shipyards and their advanced versions, both factions) and every constructor (every def with a `nano` piece, Commanders included). They are in the blockouts (`attachments`, section 4) and in the mesh manifest (`attachments`, section 7). Each sits on its own model's pad and emitters: a structure redesigned at the size scale (S-104) has its mesh anchors where the new mesh has them, while its blockout keeps its scaled ones (`Scale.scaled`) until it is replaced, so the two can differ.
 
 | Attachment | On | Meaning |
 |---|---|---|
 | `buildpad` | factories, parent `base` | where the unit in production sits, centred on the pad (vehicle plants: the ramp or bay; airfields: the landing pad or under the open hangar; shipyards: in the slip at the waterline, y = 0). Its forward (−Z) faces the exit: every factory exits at model −Z (the sim spawns a finished unit one cell out along the factory's heading), so it carries no rotation |
-| `nano1`, `nano2`, … | factories (parent `base`): at the emitters and build lights (door jambs and lintel, crane trolleys, lamps under gantries and roofs); constructors (parent `nano`): at the emitter at the tip of the `nano` piece, so they turn with it | where nano-spray starts; spray from every one of them to the frame |
+| `nano1`, `nano2`, … | factories (parent `base`, or the moving visual piece that carries the emitter: the Chaos vehicle plant's and Order shipyard's `trolley`, the Chaos shipyard's `jib`): at the emitters and build lights (door jambs and lintel, crane trolleys, lamps under gantries and roofs); constructors (parent `nano`): at the emitter at the tip of the `nano` piece, so they turn with it | where nano-spray starts; spray from every one of them to the frame |
 
 Constructors use `nano1`, not `nano`: an Attachment named like the `nano` piece would make `FindFirstChild("nano", true)` ambiguous, and factories and constructors then share one lookup (`nano1` … `nanoN`, stop at the first missing).
 

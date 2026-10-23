@@ -1,7 +1,32 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 1000 triangles, glow share 5.2%",
+  "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 2734 triangles, glow share 4.1%",
   "bar": {
+    "model": "rbxassetid://97166748359345",
+    "meshes": {
+      "base": "rbxassetid://110679675853686",
+      "base_glow_running": "rbxassetid://104083145925801",
+      "launcher": "rbxassetid://93717200013480",
+      "launcher_glow_running": "rbxassetid://138835550893484",
+      "launcher_glow_weapon": "rbxassetid://128671733184121"
+    },
+    "decals": {
+      "ALB": "rbxassetid://131599640737192",
+      "RGH": "rbxassetid://100822639134624",
+      "NOR": "rbxassetid://111631506163464",
+      "MTL": "rbxassetid://83266911902316",
+      "EMI": "rbxassetid://95311399099056"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://102390419450612",
+      "NOR": "rbxassetid://130945863647176",
+      "RGH": "rbxassetid://124798832134873",
+      "MTL": "rbxassetid://100832530163346",
+      "EMI": "rbxassetid://125491622248373"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_vigil_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://79914415678330",
     "meshes": {
       "base": "rbxassetid://80790489950563",
@@ -24,6 +49,29 @@
       "MTL": "rbxassetid://104972724220456",
       "EMI": "rbxassetid://81717092858729"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_vigil_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 1000 triangles, glow share 5.2%"
+  },
+  "wreck": {
+    "model": "rbxassetid://118492686327756",
+    "meshes": {
+      "base": "rbxassetid://71914947957412",
+      "launcher": "rbxassetid://73396494771863"
+    },
+    "decals": {
+      "ALB": "rbxassetid://139173586631796",
+      "RGH": "rbxassetid://129706851815709",
+      "NOR": "rbxassetid://78382925270967",
+      "MTL": "rbxassetid://119513971069590",
+      "EMI": "rbxassetid://72229883430543"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://108469026044853",
+      "NOR": "rbxassetid://109130864410643",
+      "RGH": "rbxassetid://124128382483417",
+      "MTL": "rbxassetid://75857388412961",
+      "EMI": "rbxassetid://78288699117675"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_vigil_wreck_bar in FTGG Art",
+    "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 2098 triangles"
   }
 }
