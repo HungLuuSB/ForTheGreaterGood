@@ -48,6 +48,9 @@ export type OrdersState = {
 	forcedGen: { [number]: number },
 	manual: { [number]: number }, -- unit → its last attack order's target: preferred whenever in range, until STOP (S-115)
 	manualGen: { [number]: number },
+	manualX: { [number]: number }, -- the manual target's last known position (S-125)
+	manualZ: { [number]: number },
+	manualBlind: { [number]: boolean }, -- the manual target lives but the team doesn't see it: fire at manualX / Z (S-125)
 	rally: { [number]: { RallyOrder } }, -- factory → the orders each unit it produces takes, in order (S-95)
 	repeatOn: { [number]: boolean }, -- factory → finished items go back to the end of the queue
 	anchorX: { [number]: number }, -- idle units: the spot a Maneuver unit returns to (S-34)
@@ -63,6 +66,9 @@ function OrdersState.new(): OrdersState
 		forcedGen = {},
 		manual = {},
 		manualGen = {},
+		manualX = {},
+		manualZ = {},
+		manualBlind = {},
 		rally = {},
 		repeatOn = {},
 		anchorX = {},
@@ -78,6 +84,9 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.forcedGen[id] = nil
 	o.manual[id] = nil
 	o.manualGen[id] = nil
+	o.manualX[id] = nil
+	o.manualZ[id] = nil
+	o.manualBlind[id] = nil
 	o.rally[id] = nil
 	o.repeatOn[id] = nil
 	o.anchorX[id] = nil
@@ -107,6 +116,9 @@ function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number
 		h = Hash.u32(h, if o.hold[id] then 1 else 0)
 		h = Hash.u32(Hash.u32(h, o.forced[id] or 0), o.forcedGen[id] or 0)
 		h = Hash.u32(Hash.u32(h, o.manual[id] or 0), o.manualGen[id] or 0)
+		if o.manualX[id] then
+			h = Hash.number(Hash.number(Hash.u32(h, if o.manualBlind[id] then 1 else 0), o.manualX[id]), o.manualZ[id])
+		end
 		local rally = o.rally[id]
 		if rally then
 			h = Hash.u32(h, #rally)

@@ -135,6 +135,7 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 				-- as its manual target: it can't chase, it fires whenever the
 				-- target is in range (S-121, client request 54)
 				o.manual[id], o.manualGen[id] = spec.target, spec.gen or 0
+				o.manualX[id], o.manualZ[id], o.manualBlind[id] = nil, nil, nil
 			end
 			continue
 		end
@@ -168,7 +169,14 @@ end
 -- (S-115; automatic orders stop units without touching it).
 function Orders.stopCommand(sim: Types.Sim, id: number)
 	Orders.stop(sim, id)
-	sim.orders.manual[id], sim.orders.manualGen[id] = nil, nil
+	Orders.dropManual(sim, id)
+end
+
+-- Forgets unit `id`'s manual target (S-115, S-125).
+function Orders.dropManual(sim: Types.Sim, id: number)
+	local o = sim.orders
+	o.manual[id], o.manualGen[id] = nil, nil
+	o.manualX[id], o.manualZ[id], o.manualBlind[id] = nil, nil, nil
 end
 
 -- STOP: clears the queue and halts.
@@ -336,6 +344,7 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		end
 		o.forced[id], o.forcedGen[id] = t, gen :: number
 		o.manual[id], o.manualGen[id] = t, gen :: number -- kept after the order ends, until STOP (S-115)
+		o.manualX[id], o.manualZ[id], o.manualBlind[id] = nil, nil, nil
 		if d.domain == "air" then
 			return true -- aircraft chase their target themselves
 		end

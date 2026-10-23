@@ -468,6 +468,10 @@ return function(sim: Types.Sim)
 			local projTarget = 0
 			if (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
+			elseif (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.orders.manualBlind[id] and target == 0
+				and (sim.orders.manualX[id] - x) ^ 2 + (sim.orders.manualZ[id] - z) ^ 2 <= weapon.range * weapon.range then
+				-- the manual target, unseen: its last known position (S-125)
+				target, kx, kz = 0, sim.orders.manualX[id], sim.orders.manualZ[id]
 			elseif weapon.manualFire then
 				target = 0 -- nothing without an attack-ground order (S-48)
 			elseif weapon.intercepts and Combat.isProjRef(c, w.wTargetProj[key], w.wTargetProjSerial[key]) then
@@ -529,7 +533,7 @@ return function(sim: Types.Sim)
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
 				-- an attack-ground order's shelling ignores the fire state (S-68)
-				local ordered = target == 0 and (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil
+				local ordered = target == 0 and (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and (sim.air.groundX[id] ~= nil or sim.orders.manualBlind[id] == true)
 				-- (its manual target fires even on hold fire: S-120)
 				canFire = (ordered or not holdFire or (target ~= 0 and sim.orders.manual[id] == target)) and dist <= weapon.range + radius
 				if pitch == nil then
