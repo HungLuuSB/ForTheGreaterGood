@@ -5,19 +5,18 @@
 -- charge flipbook and a star flare at the muzzle, an impact flare and a
 -- scorch decal (models-C's values: widths, tip, fan, flares). Drawn
 -- for the shot's whole duration (the sim's beamDuration: Radiance 3 s,
--- Inferno 1.5 s, Core/Effects.beamSeconds), held, then narrowing over the
--- last second; the beam narrows to a point at the target end (the user).
+-- Inferno 1.5 s, Core/Effects.beamSeconds) with C's taper at its end; the
+-- beam narrows to a point at the target end (the user).
 -- Used once the entry is approved (or with ANYWAY for review); until then
 -- Render/Effects draws its placeholder ray.
 
 local ContentProvider = game:GetService("ContentProvider")
 
 local Meshes = require("@shared/Defs/Meshes/Registry")
-local Effects = require("../Core/Effects")
 
 local BeamShots = {}
 
-BeamShots.ANYWAY = false -- debug: use it while the entry is at review (Invoke("beamsanyway", true))
+BeamShots.ANYWAY = game:GetService("RunService"):IsStudio() -- review assets show in Studio, where the user reviews them (C-142); Invoke("beamsanyway", false) turns it off
 BeamShots.MAX = 8 -- shots drawn at once (the oldest is dropped)
 
 local entry = (Meshes :: any).beam
@@ -206,14 +205,14 @@ local function seq(v: number): NumberSequence
 	return NumberSequence.new(math.clamp(v, 0, 1))
 end
 
--- models-C's apply, stretched to the shot's duration: the charge, then held
--- until the last BEAM_FADE seconds, which narrow it away.
+-- models-C's apply (assets/fx/beam/BeamShot.luau, synced 786d85c): the
+-- charge, the beam on for the shot's duration with C's taper at its end,
+-- the impact hot spot held while it burns, then the scorch.
 local function apply(rig: Rig, t: number)
 	local F = rig.F
 	local tOn = F.charge
-	local taper = math.min(Effects.BEAM_FADE, rig.life / 2)
-	local hold = math.max(0, rig.life - tOn - taper)
-	local tEnd = tOn + hold + taper
+	local tEnd = tOn + (if rig.life > 0 then rig.life else F.duration) -- on for the shot's beamDuration (the sim's), the taper at its end
+	-- charge flare: the four flipbook frames over the charge, then a quick fade
 	local cf = rig.charge
 	if t < tOn + 0.04 then
 		local frame = math.clamp(math.floor(t / F.charge * 4), 0, 3)
@@ -225,12 +224,14 @@ local function apply(rig: Rig, t: number)
 	else
 		cf.Enabled = false
 	end
+	-- the beam
 	local on = t >= tOn and t < tEnd
-	local u = math.clamp((t - tOn - hold) / taper, 0, 1)
+	local u = math.clamp((t - (tEnd - F.taper)) / F.taper, 0, 1)
+	local frame = math.floor(t * 30) -- new jitter 30 times a second
+	local pulse = 1 + 0.06 * (Random.new(rig.seed * 31 + frame):NextNumber() * 2 - 1) -- the core breathes while it holds
 	rig.core.Enabled, rig.glow.Enabled = on, on
-	-- full width at the muzzle, a point at the target (the user)
-	local w = F.coreWidth * (1 - u) ^ 1.1
-	rig.core.Width0, rig.core.Width1 = w, w * F.tip
+	local w = F.coreWidth * (1 - u) ^ 1.1 * pulse
+	rig.core.Width0, rig.core.Width1 = w, w * F.tip -- full at the muzzle, a point at the target
 	rig.core.Transparency = seq(0.7 * u ^ 1.6)
 	local gw = F.glowWidth * (1 - u) ^ 0.8
 	rig.glow.Width0, rig.glow.Width1 = gw, gw * F.tip
@@ -239,7 +240,6 @@ local function apply(rig: Rig, t: number)
 	local dir = if (p1 - p0).Magnitude > 1e-3 then (p1 - p0).Unit else Vector3.zAxis
 	local side = if math.abs(dir.Y) < 0.99 then dir:Cross(Vector3.yAxis).Unit else Vector3.xAxis
 	local up = side:Cross(dir).Unit
-	local frame = math.floor(t * 30) -- new jitter 30 times a second
 	for i, f in rig.filaments do
 		f.beam.Enabled = on
 		local fw = F.filamentWidth * (1 - u) ^ 2.2
@@ -250,37 +250,45 @@ local function apply(rig: Rig, t: number)
 		local r = F.spread * (0.6 + 0.4 * rng:NextNumber())
 		local o0 = (side * math.cos(a) + up * math.sin(a)) * r
 		local a2 = a + (rng:NextNumber() - 0.5) * F.jitter
-		local o1 = (side * math.cos(a2) + up * math.sin(a2)) * r * F.fan -- converging on the hit
+		local o1 = (side * math.cos(a2) + up * math.sin(a2)) * r * F.fan
 		f.a0.WorldPosition = p0 + o0
 		f.a1.WorldPosition = p1 + o1
 		f.beam.CurveSize0 = (rng:NextNumber() * 2 - 1) * F.curve
 		f.beam.CurveSize1 = (rng:NextNumber() * 2 - 1) * F.curve
 	end
-	-- the star on the emitter ball while the beam is on, flickering and
-	-- turning a little, shrinking with the taper
+	-- muzzle flare: the full star on the emitter ball while the beam is on,
+	-- flickering and turning a little each frame, shrinking with the taper
 	local mf = rig.flare
 	mf.Enabled = on
 	if on then
-		local frng = Random.new(rig.seed * 7919 + frame)
-		local size = F.muzzleFlareSize * (1 - u) ^ 0.8 * (0.85 + 0.3 * frng:NextNumber())
+		local rng = Random.new(rig.seed * 7919 + frame)
+		local size = F.muzzleFlareSize * (1 - u) ^ 0.8 * (0.85 + 0.3 * rng:NextNumber())
 		mf.Size = UDim2.fromScale(size, size)
-		mf.Image.Rotation = frng:NextNumber() * 30 - 15
+		mf.Image.Rotation = rng:NextNumber() * 30 - 15
 		mf.Image.ImageTransparency = 0.6 * u
 	end
+	-- impact flare at the hit: a burst as the beam lands (impactTime), then
+	-- a flickering hot spot while the beam holds, shrinking with the taper
 	local im = rig.impact
 	local k = (t - tOn) / F.impactTime
-	if k >= 0 and k < 1 then
-		im.Enabled = true
-		local size = F.impactSize * (0.5 + 0.7 * math.min(1, k * 4))
+	im.Enabled = on
+	if on then
+		local rng = Random.new(rig.seed * 4241 + frame)
+		local burst = if k < 1 then 0.5 + 0.7 * math.min(1, k * 4) - 0.5 * math.max(0, k - 0.25) / 0.75 else 0.7
+		local size = F.impactSize * burst * (1 - u) ^ 0.7 * (0.9 + 0.2 * rng:NextNumber())
 		im.Size = UDim2.fromScale(size, size)
-		im.Image.ImageTransparency = k ^ 1.5
-	else
-		im.Enabled = false
+		im.StudsOffset = Vector3.new(0, 0, size * 0.5)
+		im.Image.Rotation = rng:NextNumber() * 40 - 20
+		im.Image.ImageTransparency = if k < 1 then 0 else 0.15 + 0.6 * u
 	end
+	-- scorch: appears as the beam lands; the embers glow while it burns and
+	-- fade over scorchGlowTime after it ends; the soot stays scorchTime after
+	-- the beam, fading over its last 1.5 s
 	local ts = t - tOn - 0.02
-	if ts >= 0 and ts < F.scorchTime then
-		rig.soot.Transparency = math.max(0, (ts - (F.scorchTime - 1.5)) / 1.5)
-		rig.embers.Transparency = math.clamp(ts / F.scorchGlowTime, 0, 1) ^ 0.7
+	local after = t - tEnd
+	if ts >= 0 and after < F.scorchTime then
+		rig.soot.Transparency = math.max(0, (after - (F.scorchTime - 1.5)) / 1.5)
+		rig.embers.Transparency = math.clamp(after / F.scorchGlowTime, 0, 1) ^ 0.7
 	else
 		rig.soot.Transparency, rig.embers.Transparency = 1, 1
 	end
@@ -308,7 +316,7 @@ function BeamShots.step(s: State, tracers: { any }, now: number, groundY: (numbe
 			end
 			local r = rig or build(s, t.beam)
 			r.age, r.life = 0, t.life
-			r.span = math.max(t.life, r.F.charge + r.F.scorchTime) + 0.1
+			r.span = r.F.charge + t.life + r.F.scorchTime + 0.1
 			r.muzzle.WorldPosition = Vector3.new(t.x0, t.y0, t.z0)
 			r.hit.WorldPosition = Vector3.new(t.x1, t.y1, t.z1)
 			r.scorch.CFrame = CFrame.new(t.x1, groundY(t.x1, t.z1) + 0.03, t.z1)
@@ -318,6 +326,11 @@ function BeamShots.step(s: State, tracers: { any }, now: number, groundY: (numbe
 	end
 	for t, r in s.rigs do
 		r.age += dt
+		-- the beam's end can move (a dome dropped under it, C-144)
+		local hx, hy, hz = t.x1, t.y1, t.z1
+		if hx and (r.hit.WorldPosition - Vector3.new(hx, hy, hz)).Magnitude > 0.01 then
+			r.hit.WorldPosition = Vector3.new(hx, hy, hz)
+		end
 		if r.age >= r.span then
 			hide(r)
 			s.rigs[t] = nil
