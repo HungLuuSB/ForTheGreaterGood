@@ -1,6 +1,6 @@
 {
   "id": "chs_windmill",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style gunmetal (M-15)"
   },
@@ -9,31 +9,31 @@
       "parent": null,
       "center": [
         0.0,
-        5.4975,
+        8.0975,
         0.0
       ],
       "size": [
-        6.4,
-        10.995,
-        6.4
+        15.567,
+        16.195,
+        15.567
       ]
     },
     "rotor": {
       "parent": "base",
       "center": [
         0.0,
-        10.4,
-        -1.25
+        15.4,
+        -1.875
       ],
       "size": [
-        3.5344,
-        8.6146,
-        0.8
+        4.9136,
+        13.1476,
+        1.15
       ],
       "pivot": [
         0.0,
-        10.4,
-        -1.2
+        15.4,
+        -1.8
       ]
     }
   },
@@ -42,6 +42,17 @@
     "base",
     "rotor"
   ],
+  "visualPieces": [],
+  "anim": {
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        0,
+        1
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -64,13 +75,13 @@
       "strength": 2.0,
       "center": [
         0.0,
-        8.005,
+        11.935,
         0.0
       ],
       "size": [
-        3.2428,
-        6.29,
-        3.2428
+        4.8702,
+        8.97,
+        4.8702
       ]
     },
     {
@@ -84,22 +95,22 @@
       ],
       "strength": 2.5,
       "center": [
-        0.735,
-        5.625,
-        -0.615
+        2.31,
+        8.5875,
+        -2.0725
       ],
       "size": [
-        2.83,
-        9.85,
-        3.63
+        6.58,
+        14.025,
+        8.145
       ]
     }
   ],
-  "glowShare": 0.0496,
+  "glowShare": 0.0258,
   "triangles": {
-    "base": 532,
-    "rotor": 152,
-    "total": 684
+    "base": 1204,
+    "rotor": 192,
+    "total": 1396
   },
   "textures": {
     "size": 1024,
@@ -112,15 +123,5 @@
       "MTL",
       "EMI"
     ]
-  },
-  "anim": {
-    "rotor": {
-      "motion": "spin",
-      "axis": [
-        0,
-        0,
-        1
-      ]
-    }
   }
 }

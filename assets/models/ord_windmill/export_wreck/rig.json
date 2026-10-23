@@ -1,0 +1,82 @@
+{
+  "id": "ord_windmill_wreck",
+  "wreckOf": "ord_windmill",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0588,
+        8.663,
+        -0.1001
+      ],
+      "size": [
+        15.5831,
+        17.4477,
+        15.6364
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0262,
+        18.2544,
+        -2.3279
+      ],
+      "size": [
+        15.2794,
+        13.3326,
+        1.6952
+      ],
+      "pivot": [
+        0.0,
+        16.2,
+        -2.2
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        0,
+        1
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1044,
+    "rotor": 388,
+    "total": 1432
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

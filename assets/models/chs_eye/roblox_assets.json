@@ -1,7 +1,32 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "User review fixes 2026-10-23: 964 triangles, glow share 6.4%",
+  "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 1940 triangles, glow share 4.1%",
   "bar": {
+    "model": "rbxassetid://97232442632332",
+    "meshes": {
+      "base": "rbxassetid://72235270152611",
+      "base_glow_power": "rbxassetid://83964362846297",
+      "base_glow_running": "rbxassetid://135991387362308",
+      "radar": "rbxassetid://137326956630470",
+      "radar_glow_running": "rbxassetid://131974248456123"
+    },
+    "decals": {
+      "ALB": "rbxassetid://133686611188540",
+      "RGH": "rbxassetid://117346868444852",
+      "NOR": "rbxassetid://72893811646750",
+      "MTL": "rbxassetid://128682900149868",
+      "EMI": "rbxassetid://97187931993624"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://110357151069630",
+      "NOR": "rbxassetid://115990623433662",
+      "RGH": "rbxassetid://70468595393305",
+      "MTL": "rbxassetid://109192809984599",
+      "EMI": "rbxassetid://94878318110540"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_eye_bar in FTGG Art"
+  },
+  "bar_2": {
     "model": "rbxassetid://120290193930865",
     "meshes": {
       "base": "rbxassetid://71047938834555",
@@ -23,7 +48,7 @@
       "MTL": "rbxassetid://74070368170687",
       "EMI": "rbxassetid://124016118512332"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_eye_bar in FTGG Art"
+    "note": "User review fixes 2026-10-23: 964 triangles, glow share 6.4%"
   },
   "bar_1": {
     "model": "rbxassetid://97753186892455",
@@ -48,5 +73,28 @@
       "EMI": "rbxassetid://140165998785079"
     },
     "note": "2026-10-22, first BAR upload (M-15): 920 triangles, glow share 6.6%"
+  },
+  "wreck": {
+    "model": "rbxassetid://121759653402956",
+    "meshes": {
+      "base": "rbxassetid://112691628956465",
+      "radar": "rbxassetid://70381501139318"
+    },
+    "decals": {
+      "ALB": "rbxassetid://126698717205106",
+      "RGH": "rbxassetid://127798556316059",
+      "NOR": "rbxassetid://136836171985856",
+      "MTL": "rbxassetid://121328005669645",
+      "EMI": "rbxassetid://125803773614966"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://119368895226638",
+      "NOR": "rbxassetid://129245628606371",
+      "RGH": "rbxassetid://81146400298216",
+      "MTL": "rbxassetid://116089764709779",
+      "EMI": "rbxassetid://132338465320139"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_eye_wreck_bar in FTGG Art",
+    "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 1844 triangles"
   }
 }

@@ -1,7 +1,31 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow fix (review 2026-10-22): door-frame build lights on power: 768 triangles, glow share 3.4%",
+  "revision": "Redesign at the size scale (S-104, M-26); wreck rebuilt: 3152 triangles, glow share 2.1%",
   "bar": {
+    "model": "rbxassetid://117823509362451",
+    "meshes": {
+      "base": "rbxassetid://138162058544465",
+      "base_glow_power": "rbxassetid://76816949097171",
+      "base_glow_running": "rbxassetid://113402932096540",
+      "gantry": "rbxassetid://86673218698510"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85916962588190",
+      "RGH": "rbxassetid://104198553561326",
+      "NOR": "rbxassetid://137389522069495",
+      "MTL": "rbxassetid://93930170852655",
+      "EMI": "rbxassetid://72797035887066"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://99026288833379",
+      "NOR": "rbxassetid://96453397983050",
+      "RGH": "rbxassetid://128278281507295",
+      "MTL": "rbxassetid://132573809326342",
+      "EMI": "rbxassetid://107871169733588"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://84674479644515",
     "meshes": {
       "base": "rbxassetid://81382716175990",
@@ -22,7 +46,7 @@
       "MTL": "rbxassetid://109397542384179",
       "EMI": "rbxassetid://137448427939203"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_bar in FTGG Art"
+    "note": "2026-10-22, glow fix (review 2026-10-22): door-frame build lights on power: 768 triangles, glow share 3.4%"
   },
   "bar_glow1": {
     "model": "rbxassetid://123916061747114",
@@ -69,6 +93,29 @@
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 564 triangles)"
   },
   "wreck": {
+    "model": "rbxassetid://96197526823509",
+    "meshes": {
+      "base": "rbxassetid://124255559854768",
+      "gantry": "rbxassetid://89625741465477"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73332489852047",
+      "RGH": "rbxassetid://94660799935110",
+      "NOR": "rbxassetid://128426661416437",
+      "MTL": "rbxassetid://85730248734328",
+      "EMI": "rbxassetid://112184142988670"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114291726959905",
+      "NOR": "rbxassetid://130672794061813",
+      "RGH": "rbxassetid://90460461630952",
+      "MTL": "rbxassetid://121089350306368",
+      "EMI": "rbxassetid://107602964779731"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_vehplant_wreck_bar in FTGG Art",
+    "revision": "Redesign at the size scale (S-104, M-26); wreck rebuilt: 2436 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://127452972337159",
     "meshes": {
       "base": "rbxassetid://116908009574326"

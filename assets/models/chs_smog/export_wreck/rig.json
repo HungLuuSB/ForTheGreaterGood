@@ -1,0 +1,84 @@
+{
+  "id": "chs_smog_wreck",
+  "wreckOf": "chs_smog",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0215,
+        2.0756,
+        -0.0215
+      ],
+      "size": [
+        7.7524,
+        4.2503,
+        7.752
+      ]
+    },
+    "spine": {
+      "parent": "base",
+      "center": [
+        0.0032,
+        5.0723,
+        -0.0294
+      ],
+      "size": [
+        2.1507,
+        2.0209,
+        1.9263
+      ],
+      "pivot": [
+        0.0,
+        4.2,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "spine"
+  ],
+  "anim": {
+    "spine": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 692,
+    "spine": 276,
+    "total": 968
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

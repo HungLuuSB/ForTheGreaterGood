@@ -1,7 +1,7 @@
 {
   "id": "ord_generator_wreck",
   "wreckOf": "ord_generator",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,19 +9,50 @@
     "base": {
       "parent": null,
       "center": [
-        0.0279,
-        2.6933,
-        0.0267
+        -0.0086,
+        4.2508,
+        -0.0036
       ],
       "size": [
-        7.4312,
-        5.3995,
-        7.3903
+        15.5585,
+        8.5397,
+        15.5965
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        0.0197,
+        6.5115,
+        -0.6718
+      ],
+      "size": [
+        2.7843,
+        1.2409,
+        2.6797
+      ],
+      "pivot": [
+        0.0,
+        6.0,
+        -0.6
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [],
+  "visualPieces": [
+    "core"
+  ],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -34,8 +65,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 696,
-    "total": 696
+    "base": 1990,
+    "core": 196,
+    "total": 2186
   },
   "textures": {
     "size": 1024,

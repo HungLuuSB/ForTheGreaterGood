@@ -1,7 +1,32 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Animated pieces (M-27): 1088 triangles, glow share 3.4%",
+  "revision": "Redesign / new mesh in the size-scale style (S-104, M-26); wreck built: 4516 triangles, glow share 3.6%",
   "bar": {
+    "model": "rbxassetid://74422959799858",
+    "meshes": {
+      "base": "rbxassetid://110332838117359",
+      "base_glow_power": "rbxassetid://127768965387570",
+      "base_glow_running": "rbxassetid://90982705677139",
+      "trolley": "rbxassetid://80051427590945",
+      "trolley_glow_power": "rbxassetid://131726929282219"
+    },
+    "decals": {
+      "ALB": "rbxassetid://118144066358012",
+      "RGH": "rbxassetid://119218496032498",
+      "NOR": "rbxassetid://123366965890065",
+      "MTL": "rbxassetid://108466923889000",
+      "EMI": "rbxassetid://138424283704074"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109391346851087",
+      "NOR": "rbxassetid://108081889923799",
+      "RGH": "rbxassetid://126577931576636",
+      "MTL": "rbxassetid://126903699106390",
+      "EMI": "rbxassetid://102785596241653"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_shipyard_bar in FTGG Art"
+  },
+  "bar_2": {
     "model": "rbxassetid://102120608414159",
     "meshes": {
       "base": "rbxassetid://102358407279110",
@@ -24,7 +49,7 @@
       "MTL": "rbxassetid://127060871162269",
       "EMI": "rbxassetid://123808638346875"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_shipyard_bar in FTGG Art"
+    "note": "Animated pieces (M-27): 1088 triangles, glow share 3.4%"
   },
   "bar_1": {
     "model": "rbxassetid://73243507301713",
@@ -48,5 +73,28 @@
       "EMI": "rbxassetid://74151609273553"
     },
     "note": "2026-10-22, first BAR upload (M-15), Open Cloud import clamped (scale 39.94 / 2048): 1088 triangles, glow share 3.4%"
+  },
+  "wreck": {
+    "model": "rbxassetid://138254508868364",
+    "meshes": {
+      "base": "rbxassetid://100277681486297",
+      "trolley": "rbxassetid://124993238715304"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84409734467137",
+      "RGH": "rbxassetid://75146825346622",
+      "NOR": "rbxassetid://131749826024950",
+      "MTL": "rbxassetid://111910582859931",
+      "EMI": "rbxassetid://126902742992877"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://97987973766800",
+      "NOR": "rbxassetid://82054650237161",
+      "RGH": "rbxassetid://75782802175885",
+      "MTL": "rbxassetid://132182726751943",
+      "EMI": "rbxassetid://121133001108177"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_shipyard_wreck_bar in FTGG Art",
+    "revision": "Redesign / new mesh in the size-scale style (S-104, M-26); wreck built: 3264 triangles"
   }
 }

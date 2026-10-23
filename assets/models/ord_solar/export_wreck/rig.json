@@ -1,7 +1,7 @@
 {
   "id": "ord_solar_wreck",
   "wreckOf": "ord_solar",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,19 +9,21 @@
     "base": {
       "parent": null,
       "center": [
-        -0.0094,
-        2.0481,
-        0.0226
+        -0.0185,
+        1.813,
+        -0.0351
       ],
       "size": [
-        7.4121,
-        4.1379,
-        7.3705
+        15.7033,
+        3.7828,
+        15.5877
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -34,8 +36,8 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 320,
-    "total": 320
+    "base": 1176,
+    "total": 1176
   },
   "textures": {
     "size": 1024,

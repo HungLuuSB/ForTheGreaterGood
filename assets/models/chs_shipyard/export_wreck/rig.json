@@ -1,0 +1,109 @@
+{
+  "id": "chs_shipyard_wreck",
+  "wreckOf": "chs_shipyard",
+  "footprintStuds": 40,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0651,
+        6.2571,
+        0.4795
+      ],
+      "size": [
+        39.4252,
+        15.8587,
+        38.6037
+      ]
+    },
+    "jib": {
+      "parent": "base",
+      "center": [
+        -4.9084,
+        13.8596,
+        3.3996
+      ],
+      "size": [
+        28.865,
+        3.8746,
+        3.7176
+      ],
+      "pivot": [
+        -16.5,
+        14.2,
+        4.0
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "nano1": {
+      "parent": "jib",
+      "at": [
+        4.0,
+        12.0,
+        4.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        11.6,
+        4.15,
+        1.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "jib"
+  ],
+  "anim": {
+    "jib": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 3640,
+    "jib": 396,
+    "total": 4036
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

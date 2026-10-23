@@ -1,7 +1,7 @@
 {
   "id": "ord_bulwark_wreck",
   "wreckOf": "ord_bulwark",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,31 +9,31 @@
     "base": {
       "parent": null,
       "center": [
-        -0.0311,
-        1.1479,
-        -0.0056
+        -0.0324,
+        1.5971,
+        0.0256
       ],
       "size": [
-        7.4045,
-        2.4037,
-        7.4583
+        15.6566,
+        3.4096,
+        15.676
       ]
     },
     "turret": {
       "parent": "base",
       "center": [
-        0.0199,
-        3.2933,
-        -2.6359
+        -0.3731,
+        4.5248,
+        -3.7632
       ],
       "size": [
-        4.0594,
-        2.0268,
-        9.6778
+        6.2928,
+        2.9486,
+        12.9138
       ],
       "pivot": [
         0.0,
-        2.3,
+        3.2,
         0.0
       ]
     }
@@ -43,12 +43,14 @@
       "parent": "turret",
       "at": [
         0.0,
-        3.15,
-        -7.45
+        4.5,
+        -10.6
       ]
     }
   },
   "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -61,9 +63,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 244,
-    "turret": 520,
-    "total": 764
+    "base": 998,
+    "turret": 728,
+    "total": 1726
   },
   "textures": {
     "size": 1024,

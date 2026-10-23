@@ -1,0 +1,82 @@
+{
+  "id": "ord_watchtower_wreck",
+  "wreckOf": "ord_watchtower",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0257,
+        4.8212,
+        0.0038
+      ],
+      "size": [
+        7.7024,
+        9.689,
+        7.7036
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -0.0061,
+        10.8834,
+        0.1336
+      ],
+      "size": [
+        6.4615,
+        3.3718,
+        1.611
+      ],
+      "pivot": [
+        0.0,
+        9.3,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1484,
+    "radar": 584,
+    "total": 2068
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 2064 triangles, glow share 1.1%",
+  "bar": {
+    "model": "rbxassetid://124087626735854",
+    "meshes": {
+      "base": "rbxassetid://79231786730812",
+      "base_glow_power": "rbxassetid://110988145917709",
+      "base_glow_running": "rbxassetid://137844946843472",
+      "rotor": "rbxassetid://86664063683449"
+    },
+    "decals": {
+      "ALB": "rbxassetid://93527978996459",
+      "RGH": "rbxassetid://99516071432380",
+      "NOR": "rbxassetid://137630562412636",
+      "MTL": "rbxassetid://96242994474309",
+      "EMI": "rbxassetid://73438300112445"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://139983969382388",
+      "NOR": "rbxassetid://71122805537565",
+      "RGH": "rbxassetid://120083981134749",
+      "MTL": "rbxassetid://130182944394808",
+      "EMI": "rbxassetid://74314886869315"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_tidal_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://76078627700667",
+    "meshes": {
+      "base": "rbxassetid://104583881136595",
+      "rotor": "rbxassetid://136892166047655"
+    },
+    "decals": {
+      "ALB": "rbxassetid://71588300213645",
+      "RGH": "rbxassetid://81217697787752",
+      "NOR": "rbxassetid://130363506191216",
+      "MTL": "rbxassetid://134168563398219",
+      "EMI": "rbxassetid://91465330141209"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92514485148373",
+      "NOR": "rbxassetid://107801878673408",
+      "RGH": "rbxassetid://90720235524383",
+      "MTL": "rbxassetid://72672181593735",
+      "EMI": "rbxassetid://71305204655605"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_tidal_wreck_bar in FTGG Art",
+    "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1864 triangles"
+  }
+}

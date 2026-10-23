@@ -1,7 +1,33 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 936 triangles, glow share 5.8%",
+  "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 2080 triangles, glow share 3.4%",
   "bar": {
+    "model": "rbxassetid://117026501315493",
+    "meshes": {
+      "base": "rbxassetid://127950216420147",
+      "base_glow_power": "rbxassetid://92854483460986",
+      "base_glow_running": "rbxassetid://128493671282277",
+      "launcher": "rbxassetid://112676049476527",
+      "launcher_glow_running": "rbxassetid://75468917440254",
+      "launcher_glow_weapon": "rbxassetid://106572649255652"
+    },
+    "decals": {
+      "ALB": "rbxassetid://97366824290527",
+      "RGH": "rbxassetid://82936150007419",
+      "NOR": "rbxassetid://132002280233774",
+      "MTL": "rbxassetid://114318249271098",
+      "EMI": "rbxassetid://140483304130877"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://122515771873416",
+      "NOR": "rbxassetid://137101244130094",
+      "RGH": "rbxassetid://124836909685268",
+      "MTL": "rbxassetid://122293262231473",
+      "EMI": "rbxassetid://75741112848423"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_thorn_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://114342846728427",
     "meshes": {
       "base": "rbxassetid://100188358422412",
@@ -24,7 +50,30 @@
       "MTL": "rbxassetid://76554169272521",
       "EMI": "rbxassetid://97311154607046"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_thorn_bar in FTGG Art",
-    "reuploadNote": "ALB, NOR, RGH, MTL re-uploaded: the first images failed with HTTP 502 in Studio"
+    "reuploadNote": "ALB, NOR, RGH, MTL re-uploaded: the first images failed with HTTP 502 in Studio",
+    "note": "2026-10-22, first BAR upload (M-15): 936 triangles, glow share 5.8%"
+  },
+  "wreck": {
+    "model": "rbxassetid://118968925728407",
+    "meshes": {
+      "base": "rbxassetid://96902074493526",
+      "launcher": "rbxassetid://140304312790550"
+    },
+    "decals": {
+      "ALB": "rbxassetid://108266606273898",
+      "RGH": "rbxassetid://104034976194069",
+      "NOR": "rbxassetid://98440416243156",
+      "MTL": "rbxassetid://74758338437189",
+      "EMI": "rbxassetid://130057197554894"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://136854624635831",
+      "NOR": "rbxassetid://139915581461341",
+      "RGH": "rbxassetid://80465974914129",
+      "MTL": "rbxassetid://123208870859952",
+      "EMI": "rbxassetid://84184292245429"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_thorn_wreck_bar in FTGG Art",
+    "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 1820 triangles"
   }
 }

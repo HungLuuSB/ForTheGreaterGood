@@ -1,0 +1,82 @@
+{
+  "id": "ord_moat_wreck",
+  "wreckOf": "ord_moat",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0034,
+        0.3936,
+        0.013
+      ],
+      "size": [
+        7.5141,
+        2.6788,
+        7.4591
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0195,
+        2.2996,
+        -2.2563
+      ],
+      "size": [
+        3.0566,
+        2.0695,
+        7.9282
+      ],
+      "pivot": [
+        0.0,
+        1.3,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        2.0,
+        -6.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 472,
+    "turret": 424,
+    "total": 896
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "id": "ord_airfield_wreck",
+  "wreckOf": "ord_airfield",
+  "footprintStuds": 40,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0044,
+        5.7884,
+        -0.0519
+      ],
+      "size": [
+        39.4344,
+        12.0894,
+        39.4605
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        15.5166,
+        11.7702,
+        12.6288
+      ],
+      "size": [
+        3.9011,
+        2.5672,
+        1.1223
+      ],
+      "pivot": [
+        15.5,
+        10.95,
+        12.5
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        -10.4,
+        0.72,
+        -8.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -13.6,
+        5.3,
+        -4.4
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        -7.2,
+        5.3,
+        -4.4
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        -10.4,
+        8.0,
+        -1.5
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 3096,
+    "radar": 116,
+    "total": 3212
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
