@@ -4,6 +4,10 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, smooth radar blips)
+
+- **Radar blips glide now (C-151)** instead of jumping to each new wobbled spot: the ground discs, icons and minimap dots all ease toward each new reading. A contact that reappears far away still snaps. Checked in the radar scene.
+
 ## Summary (2026-10-23, builders assist builders)
 
 - **Builders assist other builders (sim-A's S-128, merging):** give a builder Guard (G, or the card's Guard button) on another builder, and it helps build whatever that one builds, following it in between. Right-clicking your own builder does the same. Nothing changed on the client; it already sends that order.

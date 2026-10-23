@@ -40,7 +40,8 @@ function Selection.position(world: World.World, u: World.Unit): (number, number,
 	if u.rx then
 		return u.rx :: number, (u.ry :: number) + Selection.CENTER_HEIGHT, u.rz :: number
 	end
-	return u.x, World.groundY(world, u.x, u.z) + u.alt + Selection.CENTER_HEIGHT, u.z
+	local x, z = u.sx or u.x, u.sz or u.z -- a strategic record's drawn spot (C-151)
+	return x, World.groundY(world, x, z) + u.alt + Selection.CENTER_HEIGHT, z
 end
 
 -- Replaces, adds to or toggles the selection; only own units are kept.

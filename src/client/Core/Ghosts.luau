@@ -70,7 +70,7 @@ function Ghosts.list(g: State, world: World.World): ({ Ghost }, { Contact })
 				end
 			end
 		elseif bit32.band(flags, SF.RADAR_ONLY + SF.SONAR_ONLY) ~= 0 then
-			table.insert(contacts, { id = id, x = u.x, z = u.z, team = u.team, sonar = bit32.band(flags, SF.SONAR_ONLY) ~= 0 })
+			table.insert(contacts, { id = id, x = u.sx or u.x, z = u.sz or u.z, team = u.team, sonar = bit32.band(flags, SF.SONAR_ONLY) ~= 0 })
 		end
 	end
 	table.sort(ghosts, function(a, b)

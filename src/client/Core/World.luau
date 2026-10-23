@@ -39,6 +39,8 @@ export type Unit = {
 	-- latest known values
 	x: number,
 	z: number,
+	sx: number?, -- strategic records: where they're drawn, gliding toward x, z (radar blips don't jump, C-151)
+	sz: number?,
 	alt: number,
 	heading: number, -- radians, (sin h, cos h) forward
 	snaps: { Snap }, -- tactical: ascending sim ticks
@@ -202,6 +204,26 @@ end
 -- Wire aim angle u8 → radians in [-π, π].
 function World.angle(v: number): number
 	return v / 255 * 2 * math.pi - math.pi
+end
+
+World.BLIP_SMOOTH = 0.45 -- seconds: a strategic record's drawn spot closes most of the way to a new reading in this time
+World.BLIP_SNAP = 160 -- studs: a jump this big snaps (a contact reappearing elsewhere)
+
+-- Once a frame: strategic records (radar blips, sonar contacts, out-of-view
+-- units) glide toward their latest reported spot instead of jumping to each
+-- new wobbled one (the user, C-151). Draw them at sx, sz.
+function World.smoothStrategic(world: World, dt: number)
+	local k = 1 - math.exp(-dt / World.BLIP_SMOOTH)
+	for _, u in world.units do
+		if u.tier ~= "tactical" then
+			local sx, sz = u.sx, u.sz
+			if sx == nil or sz == nil or (sx - u.x) ^ 2 + (sz - u.z) ^ 2 > World.BLIP_SNAP ^ 2 then
+				u.sx, u.sz = u.x, u.z
+			else
+				u.sx, u.sz = sx + (u.x - sx) * k, sz + (u.z - sz) * k
+			end
+		end
+	end
 end
 
 function World.relation(world: World, unit: Unit): "own" | "ally" | "enemy"

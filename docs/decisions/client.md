@@ -1206,3 +1206,9 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 **Decision:** `World.welcome` keeps WELCOME's `teamAllies` (protocol 30, S-129; empty before it). `World.relation` returns "ally" when `teamAllies[team] == me.allyTeam`. `Orders.smart` sends GUARD (guard, or assist a builder, S-128) on allies and ATTACK only on enemies. Attack mode still targets anyone explicitly. Spec in Orders.spec. Without the list, other teams count as enemies as before.
 
 **Why:** right-click on an ally's unit attacked it in team games; sim-A offered the ally list (S-129).
+
+### C-151 — Radar blips glide instead of jumping (2026-10-23)
+
+**Decision:** `World.smoothStrategic(world, dt)` runs once a frame: each strategic record's drawn spot (sx, sz) eases toward its latest reported spot (time constant 0.45 s) and snaps on a jump over 160 studs. NetIn carries sx / sz across snapshot rebuilds. Contact discs (Ghosts.list), icons, the minimap and picking (Selection.position) draw from sx / sz. Measured in Studio (the radar scene): blips moved on 1,202 of 1,210 frames, at most 1.2 studs a frame.
+
+**Why:** the user asked for the jumping radar blips to move smoothly.

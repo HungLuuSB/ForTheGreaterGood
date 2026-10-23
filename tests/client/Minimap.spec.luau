@@ -5,6 +5,7 @@
 
 local Api = require("../../src/client/Api")
 local Commands = require("../../src/client/Core/Commands")
+local Defs = require("@shared/Defs/Defs")
 local Minimap = require("../../src/client/Core/Minimap")
 local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
@@ -89,5 +90,23 @@ return function(t: any)
 		end
 		t.expect(stalled, "a stall shows in the bar")
 		t.equal(Minimap.resLine("Power", nil).text, "Power: waiting for the server")
+	end)
+
+	t.test("radar blips glide toward each new reading; a far jump snaps (C-151)", function()
+		local world = World.new(Defs.load())
+		world.units[9] = { id = 9, tier = "strategic", team = 2, x = 0, z = 0, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} }
+		World.smoothStrategic(world, 1 / 60)
+		t.expect(world.units[9].sx == 0, "starts on its spot")
+		world.units[9].x = 30 -- a new wobbled reading
+		World.smoothStrategic(world, 1 / 60)
+		local u = world.units[9]
+		t.expect((u.sx :: number) > 0 and (u.sx :: number) < 5, "moves only a little in one frame")
+		for _ = 1, 120 do
+			World.smoothStrategic(world, 1 / 60)
+		end
+		t.expect(math.abs((u.sx :: number) - 30) < 0.5, "arrives within two seconds")
+		u.x = 900
+		World.smoothStrategic(world, 1 / 60)
+		t.equal(u.sx, 900, "a contact reappearing far away snaps")
 	end)
 end

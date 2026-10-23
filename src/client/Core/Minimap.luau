@@ -70,7 +70,7 @@ function Minimap.dots(world: World.World, selected: { [number]: boolean }): { Do
 	local g = world.grid
 	local out = {}
 	for id, u in world.units do
-		local x, z = u.rx or u.x, u.rz or u.z
+		local x, z = u.rx or u.sx or u.x, u.rz or u.sz or u.z
 		local mu, mv = Minimap.toMap(g, x, z)
 		local flags = u.flags or 0
 		local def = World.def(world, u)
