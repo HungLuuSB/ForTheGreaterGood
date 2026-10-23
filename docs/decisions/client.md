@@ -1182,3 +1182,9 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - Create, aim and fire come from Default.
 
 **Why:** models-C's M-31 (the user's request); the meshes (2b4dc5b) are at review, so the blockout mechs walk until they're approved.
+
+### C-147 — A continued beam that now ends on another dome glances and pulses there (2026-10-23)
+
+**Decision:** `Effects.glance(world, weapon, tracer, now)` holds C-129's deflection and C-139's pulse setup, and now also includes unseen domes (`world.remoteDomes`, S-122). New beams run it, and so does `continueBeam` whenever a moved end falls short (hit = false), so the glance and pulses follow to the new dome.
+
+**Why:** the user's overlapping-domes screenshot. The rule that a beam's line is re-checked against every dome each tick is sim request 56.

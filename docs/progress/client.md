@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, beams and overlapping domes)
+
+- **Your screenshot (two overlapping domes):** the beam went through dome #2 when #1 collapsed, and through #1 when it came back up. The sim checks a beam's path against domes only at certain moments, not continuously, so it's with sim-A as **request 56**: re-check every dome each tick, and cut the beam at the first one in its way.
+- **Client (C-147):** when a beam's end moves onto another dome, its glancing leg and honeycomb pulses move with it. Unseen domes count too.
+
 ## Summary (2026-10-23, the Commanders walk; Needs my review)
 
 - **Mech Commanders (C-146):** the Sovereign and Warlord walk: legs in models-C's stride, alternating every 0.3 s, arms swinging, the torso twisting and the pelvis bobbing. They ease back to rest when they stop (`debug_out/screens/mech_walk.jpg`).
@@ -1784,6 +1789,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+56. **Open (sent 2026-10-23).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
 
 55. **Open (sent 2026-10-23).** **Shield domes render regardless of vision (the user, as in BAR):** send dome state (centre, radius, charge, flags) for enemy domes touching the camera area, whatever the team sees, without revealing the generator; the client draws domes from it.
 
