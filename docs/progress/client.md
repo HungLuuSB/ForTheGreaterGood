@@ -2013,3 +2013,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `8145721` (mech Commander walk cycle, C-146; with the m-models merge of 2b4dc5b and C-145's dome prep 58f2e4c / c7b1493); test_client 215, build passed.
 - Ready to merge: `3986c2a` (glance follows a moved beam end, C-147); test_client 215, build passed (client only).
 - Ready to merge: `ed3303e` (main f3334c7 merged in 9e18206, m-models 2e5a42b; mech stride, domes without vision verified; C-148); test_client 215, test 451, build passed.
+- Ready to merge: `7c8566b` (main 3860e72 merged into the client: S-123); test_client 215, build passed.
