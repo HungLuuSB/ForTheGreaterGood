@@ -7,7 +7,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 ## Summary (2026-10-23, builders assist builders)
 
 - **Builders assist other builders (sim-A's S-128, merging):** give a builder Guard (G, or the card's Guard button) on another builder, and it helps build whatever that one builds, following it in between. Right-clicking your own builder does the same. Nothing changed on the client; it already sends that order.
-- **Allied builders:** use G. Right-click on an ally attacks, because the client doesn't know other teams' alliances.
+- **Allies (C-150):** once sim-A's S-129 is merged, right-clicking an ally's unit guards it (or assists its builder) instead of attacking it. Until then, use G.
 
 ## Summary (2026-10-23, manual targets fixed; crash fixed; ghosts)
 

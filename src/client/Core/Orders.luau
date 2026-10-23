@@ -43,9 +43,11 @@ Orders.KIND = table.freeze({
 function Orders.smart(world: World.World, x: number, z: number, unitId: number?, queue: boolean?): Intent
 	local u = if unitId then world.units[unitId] else nil
 	if u then
-		if u.team ~= world.me.team then
-			-- other teams' alliances aren't on the wire: only own team counts as friendly
+		local rel = World.relation(world, u)
+		if rel == "enemy" then
 			return { cmdType = CT.ATTACK, queue = queue == true, targetId = u.id }
+		elseif rel == "ally" then
+			return { cmdType = CT.GUARD, queue = queue == true, targetId = u.id } -- an ally: guard, or assist its builder (C-150)
 		elseif u.build and u.build < 1 then
 			return { cmdType = CT.REPAIR, queue = queue == true, targetId = u.id }
 		else

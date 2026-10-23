@@ -1200,3 +1200,9 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 **Decision:** no code change needed. Ghost structures arrive as strategic records under their real unit IDs, so `Selection.pick` picks them and `Orders.smart` / Attack mode send ATTACK with that targetId. A spec pins it down (Orders.spec).
 
 **Why:** sim-A's S-127, from the user: units no longer auto-target ghosts, only on an attack order or manual target.
+
+### C-150 — Allies told apart: right-click on an ally guards / assists (2026-10-23)
+
+**Decision:** `World.welcome` keeps WELCOME's `teamAllies` (protocol 30, S-129; empty before it). `World.relation` returns "ally" when `teamAllies[team] == me.allyTeam`. `Orders.smart` sends GUARD (guard, or assist a builder, S-128) on allies and ATTACK only on enemies. Attack mode still targets anyone explicitly. Spec in Orders.spec. Without the list, other teams count as enemies as before.
+
+**Why:** right-click on an ally's unit attacked it in team games; sim-A offered the ally list (S-129).

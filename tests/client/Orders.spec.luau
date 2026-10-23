@@ -238,4 +238,19 @@ return function(t: any)
 		local intent = Orders.smart(world, 40, 40, 77, false)
 		t.expect(intent.cmdType == Schema.CmdType.ATTACK and intent.targetId == 77, "an attack on the ghost")
 	end)
+
+	t.test("right-click on an ally guards (assists), on an enemy attacks (C-150)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		world.me = { player = 1, team = 1, allyTeam = 1 }
+		world.teamAllies = { 1, 2, 1, 2 } -- 2v2: teams 1 and 3 against 2 and 4
+		world.units[5] = { id = 5, tier = "tactical", team = 3, defIndex = sim.defs.units.ord_mason.index, x = 0, z = 0, build = 1, state = 0, aim = {} }
+		world.units[6] = { id = 6, tier = "tactical", team = 2, defIndex = sim.defs.units.ord_mason.index, x = 10, z = 0, build = 1, state = 0, aim = {} }
+		t.equal(World.relation(world, world.units[5]), "ally")
+		t.equal(World.relation(world, world.units[6]), "enemy")
+		t.equal(Orders.smart(world, 0, 0, 5, false).cmdType, Schema.CmdType.GUARD, "an ally's builder: assist")
+		t.equal(Orders.smart(world, 10, 0, 6, false).cmdType, Schema.CmdType.ATTACK, "an enemy: attack")
+		world.teamAllies = {}
+		t.equal(World.relation(world, world.units[5]), "enemy", "without the list (before protocol 30) other teams are enemies")
+	end)
 end
