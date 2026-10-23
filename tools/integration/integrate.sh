@@ -11,7 +11,10 @@
 # and pushes main only if all pass. The client suite (`lune run test_client`,
 # when present) runs too and is reported, not required: a new sim def fails
 # it until the client stream draws its icon, so its failures go to the
-# client stream instead of blocking the merge. A conflict aborts the merge (exit 3); failed checks
+# client stream instead of blocking the merge. The lobby stream's own suite
+# (`lune run src/lobby/tools/test`, when present; it exits 1 on a failure)
+# runs too and is required, like the fast suite (S-145, lobby stream's
+# request). A conflict aborts the merge (exit 3); failed checks
 # drop the local, unpushed merge (main back to origin/main, exit 4); a failed
 # push keeps the checked merge for a retry (exit 5). Nothing
 # is ever force-pushed. Record failures under "Integration notes" in the
@@ -46,9 +49,17 @@ if [ -f .lune/test_client.luau ]; then
 fi
 echo "test_client: $C"
 echo "$C" | grep -q " 0 failed" || echo "CLIENT SUITE FAILURES (reported, not blocking): tell the client stream"
+L="passed (no lobby suite)"
+LOK=0
+if [ -f src/lobby/tools/test.luau ]; then
+	L=$(lune run src/lobby/tools/test 2>&1)
+	LOK=$?
+	L=$(echo "$L" | tail -1)
+fi
+echo "test_lobby: $L"
 B=$(lune run build 2>&1 | tail -1)
 echo "build: $B"
-if echo "$T" | grep -q " 0 failed" && echo "$S" | grep -q " 0 failed" && echo "$B" | grep -q "requires all resolve"; then
+if echo "$T" | grep -q " 0 failed" && echo "$S" | grep -q " 0 failed" && [ $LOK -eq 0 ] && echo "$B" | grep -q "requires all resolve"; then
 	if git push -q origin main; then
 		echo "PUSHED $(git log --oneline -1)"
 		exit 0

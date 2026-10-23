@@ -1,5 +1,6 @@
 --!strict
 local Combat = require("../Sim/Combat/Combat")
+local Match = require("../Sim/Match")
 local Packer = require("@shared/Net/Packer")
 local Replay = require("../Sim/Replay")
 local Schema = require("@shared/Net/Schema")
@@ -98,6 +99,34 @@ return function(t: RunAll.Context)
 		t.deepEqual(ends, { 1 }, "player 1's ally team wins")
 		t.expect(sim.match.over and sim.match.winner == 1, "match over")
 		t.expect(sim.world.slot[s.tank[1]] ~= nil, "the winner keeps their units")
+	end)
+
+	t.test("an eliminated player's units self-destruct a few a tick, not all at once (S-144)", function()
+		local s = setup("FFA", "COMMAND_ENDS", 3)
+		local sim = s.sim
+		for i = 1, 45 do
+			Spawn.unit(sim, "chs_ravager", 2, 200 + (i % 9) * 12, -200 + (i // 9) * 12)
+		end
+		step(sim, 2)
+		local before = owned(sim, 2)
+		Combat.queueDamage(sim.combat, s.commander[2], sim.world.health[s.commander[2]], 0)
+		local counts = {}
+		for _ = 1, 6 do
+			Sim.step(sim)
+			table.insert(counts, owned(sim, 2))
+		end
+		t.expect(before > 40, `player 2 had an army ({before})`)
+		local drops = 0
+		for k = 2, #counts do
+			local d = counts[k - 1] - counts[k]
+			t.expect(d <= Match.SELF_DESTRUCT_PER_TICK, `at most {Match.SELF_DESTRUCT_PER_TICK} a tick ({counts[k - 1]} -> {counts[k]})`)
+			if d > 0 then
+				drops += 1
+			end
+		end
+		t.expect(drops >= 2, `spread over several ticks ({table.concat(counts, ", ")})`)
+		t.equal(counts[#counts], 0, "and all gone within a few ticks")
+		t.equal(#sim.match.doomed, 0, "nothing left to do")
 	end)
 
 	t.test("FFA, Annihilation: out only when nothing is left", function()
