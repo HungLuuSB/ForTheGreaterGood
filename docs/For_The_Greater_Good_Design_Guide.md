@@ -1668,6 +1668,8 @@ Debug flag that decodes every incoming/outgoing packet into readable text and lo
 
 If a system goes over budget repeatedly: stagger more, lower its rate, move work to Actors, or lower unit caps.
 
+On a live server the sim watches itself (S-140): `Sim/Watchdog` compares every tick's system times with this table (projectiles 6 + damage 2, construction 1.5 + match 0.5; 54 ms together). It logs a WARN line for a tick over 54 ms, or with a system over 2× its own budget (at most one a second, the rest counted), and a one-minute INFO summary.
+
 ### 18.2 Client frame budget (60 FPS = 16.7 ms)
 
 | Work | Budget |
