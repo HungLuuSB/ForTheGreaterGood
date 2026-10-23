@@ -137,7 +137,7 @@ export type Draw = { id: number, x: number, y: number, style: Style }
 function Icons.draws(t: Table, world: World.World, project: (number, number, number) -> (number, number, boolean), width: number, height: number, selected: { [number]: boolean }): { Draw }
 	local out, top = {}, {}
 	for id, u in world.units do
-		local x, z = u.rx or u.x, u.rz or u.z
+		local x, z = u.rx or u.sx or u.x, u.rz or u.sz or u.z
 		-- ry is where the model is drawn (altitude included); else ground + altitude
 		local y = u.ry or (World.groundY(world, x, z) + u.alt)
 		local sx, sy, front = project(x, y, z)

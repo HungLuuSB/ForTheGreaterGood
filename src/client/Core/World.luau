@@ -39,6 +39,8 @@ export type Unit = {
 	-- latest known values
 	x: number,
 	z: number,
+	sx: number?, -- strategic records: where they're drawn, gliding toward x, z (radar blips don't jump, C-151)
+	sz: number?,
 	alt: number,
 	heading: number, -- radians, (sin h, cos h) forward
 	snaps: { Snap }, -- tactical: ascending sim ticks
@@ -93,6 +95,7 @@ export type World = {
 	mapVersion: number, -- bumps when WELCOME brings another map (the renderer rebuilds the ground)
 	defs: Defs.DefSet,
 	me: Me,
+	teamAllies: { [number]: number }, -- every team's ally team (WELCOME, protocol 30, S-129); empty before
 	joined: boolean, -- a WELCOME arrived; everything else is dropped before it
 	joins: number, -- WELCOMEs received (the renderer starts over on a change)
 	rejected: Schema.SnapshotRecord?, -- the server's REJECT: stale client
@@ -129,6 +132,7 @@ function World.new(defs: Defs.DefSet): World
 		mapVersion = 0,
 		defs = defs,
 		me = { player = 0, team = 0, allyTeam = 0 },
+		teamAllies = {},
 		joined = false,
 		joins = 0,
 		rejected = nil,
@@ -168,6 +172,8 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 		world.mapVersion += 1
 	end
 	world.me = { player = rec.player :: number, team = rec.team :: number, allyTeam = rec.allyTeam :: number }
+	-- every team's ally team (protocol 30, S-129), indexed by team; 0 = not in the match
+	world.teamAllies = (rec :: any).teamAllies or {}
 	table.clear(world.units)
 	table.clear(world.entered)
 	table.clear(world.left)
@@ -200,11 +206,35 @@ function World.angle(v: number): number
 	return v / 255 * 2 * math.pi - math.pi
 end
 
+World.BLIP_SMOOTH = 0.45 -- seconds: a strategic record's drawn spot closes most of the way to a new reading in this time
+World.BLIP_SNAP = 160 -- studs: a jump this big snaps (a contact reappearing elsewhere)
+
+-- Once a frame: strategic records (radar blips, sonar contacts, out-of-view
+-- units) glide toward their latest reported spot instead of jumping to each
+-- new wobbled one (the user, C-151). Draw them at sx, sz.
+function World.smoothStrategic(world: World, dt: number)
+	local k = 1 - math.exp(-dt / World.BLIP_SMOOTH)
+	for _, u in world.units do
+		if u.tier ~= "tactical" then
+			local sx, sz = u.sx, u.sz
+			if sx == nil or sz == nil or (sx - u.x) ^ 2 + (sz - u.z) ^ 2 > World.BLIP_SNAP ^ 2 then
+				u.sx, u.sz = u.x, u.z
+			else
+				u.sx, u.sz = sx + (u.x - sx) * k, sz + (u.z - sz) * k
+			end
+		end
+	end
+end
+
 function World.relation(world: World, unit: Unit): "own" | "ally" | "enemy"
 	if unit.team == world.me.team then
 		return "own"
 	end
-	-- ally teams aren't on the wire yet (protocol 6 WELCOME); only own team counts as allied
+	-- every team's ally team arrives with WELCOME since protocol 30 (S-129, C-150)
+	local ally = world.teamAllies[unit.team]
+	if ally ~= nil and ally ~= 0 and ally == world.me.allyTeam then
+		return "ally"
+	end
 	return "enemy"
 end
 

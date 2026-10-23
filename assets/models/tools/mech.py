@@ -66,3 +66,69 @@ def cable(p, pts, r=0.045, kind="dark"):
 
 def rivets(p, a, b, count, n):
     bolts(p, a, b, count, n)
+
+
+BOX_FACES = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+
+
+def tseg(p, a, b, w0, d0, w1, d1, kind, off0=0.0, off1=0.0, pad=0.0, bevel=0.08):
+    """A tapered box along a -> b: w0 x d0 at a, w1 x d1 at b (width across
+    X, depth across the limb), pushed off0 / off1 towards the limb's front
+    (-Z side); `pad` lengthens both ends. The v3 mechs' armor plates."""
+    a, b = v(a), v(b)
+    u = b - a
+    un = u.normalized()
+    a, b = a - un * pad, b + un * pad
+    xv = v(X)
+    front = xv.cross(un)
+    if front.z > 0:
+        front = -front
+    pts = []
+    for s in (-1, 1):  # bit 2: along the limb
+        c = a if s < 0 else b
+        w, d, o = (w0, d0, off0) if s < 0 else (w1, d1, off1)
+        for t in (-1, 1):  # bit 1: across X
+            for q in (-1, 1):  # bit 0: depth
+                pts.append(tuple(c + xv * (t * w / 2) + front * (o + q * d / 2)))
+    return p._shell(pts, BOX_FACES, kind, bevel)
+
+
+def drum(p, center, r, length, kind="steel", cap="trim", sides=18, axis="x"):
+    """A round joint housing along `axis` with chamfered (rounded) ends."""
+    c = v(center)
+    ax = v({"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}[axis])
+    p.ocyl(tuple(c - ax * (length / 2 - r * 0.18)), tuple(ax), r, length - r * 0.36, sides, kind)
+    for s in (-1, 1):
+        base = c + ax * s * (length / 2 - r * 0.18)
+        p.ocyl(tuple(base), tuple(ax * s), r, r * 0.18, sides, cap, radius2=r * 0.72)
+
+
+def hazard(p, center, u, n, length, width, stripes=5, t=0.03):
+    """Hazard striping: a dark plate with slanted warning-yellow stripes."""
+    c, u_, n_ = v(center), v(u).normalized(), v(n).normalized()
+    w_ = n_.cross(u_).normalized()
+    p.obox(tuple(c), tuple(u_), tuple(n_), length, width, t, "dark")
+    d = (u_ + w_).normalized()
+    step = length / stripes
+    for i in range(stripes):
+        sc = c + u_ * (-length / 2 + step * (i + 0.5)) + n_ * (t * 0.6)
+        p.obox(tuple(sc), tuple(d), tuple(n_), width * 1.2, step * 0.42, t, "hazard")
+
+
+def arch(z0, z1, y_base, y_top, steps=7, flat=0.35):
+    """A side profile (z, y): an arched shell from z0 to z1, base at y_base,
+    rising to y_top; `flat` is the share of the top kept flat."""
+    pts = [(z0, y_base)]
+    for i in range(steps + 1):
+        t = i / steps
+        z = z0 + (z1 - z0) * t
+        k = abs(2 * t - 1)
+        k = max(0.0, (k - flat) / (1 - flat))
+        pts.append((z, y_base + (y_top - y_base) * (1 - k * k) ** 0.5 if k < 1 else y_base + (y_top - y_base) * 0.0))
+    pts.append((z1, y_base))
+    # drop duplicate end points
+    out = []
+    for q in pts:
+        if not out or abs(out[-1][0] - q[0]) > 1e-6 or abs(out[-1][1] - q[1]) > 1e-6:
+            out.append(q)
+    return out

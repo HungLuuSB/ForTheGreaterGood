@@ -228,4 +228,51 @@ return function(t: any)
 		end
 		t.equal(total, 450)
 	end)
+
+	t.test("a remembered building (ghost) can be picked and attacked (S-127)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		world.me = { player = 1, team = 1, allyTeam = 1 }
+		world.units[77] = { id = 77, tier = "strategic", team = 2, defIndex = nil, icon = 1, flags = Schema.StrategicFlag.GHOST, x = 40, z = 40, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} }
+		t.equal(Selection.pick(world, project, (40 + 192) * 2, (40 + 192) * 2), 77, "picked under the cursor")
+		local intent = Orders.smart(world, 40, 40, 77, false)
+		t.expect(intent.cmdType == Schema.CmdType.ATTACK and intent.targetId == 77, "an attack on the ghost")
+	end)
+
+	t.test("right-click on an ally guards (assists), on an enemy attacks (C-150)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		world.me = { player = 1, team = 1, allyTeam = 1 }
+		world.teamAllies = { 1, 2, 1, 2 } -- 2v2: teams 1 and 3 against 2 and 4
+		world.units[5] = { id = 5, tier = "tactical", team = 3, defIndex = sim.defs.units.ord_mason.index, x = 0, z = 0, build = 1, state = 0, aim = {} }
+		world.units[6] = { id = 6, tier = "tactical", team = 2, defIndex = sim.defs.units.ord_mason.index, x = 10, z = 0, build = 1, state = 0, aim = {} }
+		t.equal(World.relation(world, world.units[5]), "ally")
+		t.equal(World.relation(world, world.units[6]), "enemy")
+		t.equal(Orders.smart(world, 0, 0, 5, false).cmdType, Schema.CmdType.GUARD, "an ally's builder: assist")
+		t.equal(Orders.smart(world, 10, 0, 6, false).cmdType, Schema.CmdType.ATTACK, "an enemy: attack")
+		world.teamAllies = {}
+		t.equal(World.relation(world, world.units[5]), "enemy", "without the list (before protocol 30) other teams are enemies")
+	end)
+
+	t.test("the ally list arrives with WELCOME and right-click reads it (S-129, C-150)", function()
+		local sim = Sim.new({ seed = 2, players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 }, { id = 3, team = 3, allyTeam = 1 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		local Spawn = require("../../src/server/Sim/Spawn")
+		local ally = Spawn.unit(sim, "ord_mason", 3, 10, 0)
+		local enemy = Spawn.unit(sim, "ord_mason", 2, 30, 0)
+		local api = Api.new(world, function(payload: buffer)
+			assert(Sim.submit(sim, 1, payload))
+		end)
+		local cells = (sim.map :: any).grid.cellsX
+		api.send(Commands.camera(0, 0, cells - 1, cells - 1))
+		for tick = 1, 4 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+		end
+		t.expect(world.teamAllies[3] == 1 and world.teamAllies[2] == 2, "every team's ally team from WELCOME")
+		t.equal(World.relation(world, world.units[ally]), "ally")
+		t.equal(World.relation(world, world.units[enemy]), "enemy")
+		t.equal(Orders.smart(world, 10, 0, ally, false).cmdType, Schema.CmdType.GUARD, "right-click an ally's builder: assist")
+	end)
 end

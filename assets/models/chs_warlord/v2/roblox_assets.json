@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "Heroic mech (M-32); v1 in v1/, tracked in tracked/: 5848 triangles, glow share 5.5%",
+  "bar": {
+    "model": "rbxassetid://130640421595854",
+    "meshes": {
+      "armL": "rbxassetid://132844786336681",
+      "armR": "rbxassetid://91694678084307",
+      "base": "rbxassetid://104656828928970",
+      "footL": "rbxassetid://121022842881206",
+      "footL_glow_running": "rbxassetid://140654901243453",
+      "footR": "rbxassetid://134301499683900",
+      "footR_glow_running": "rbxassetid://78918230274154",
+      "forearmR": "rbxassetid://73717402276159",
+      "forearmR_glow_running": "rbxassetid://119869250068114",
+      "forearmR_glow_weapon": "rbxassetid://115397182754966",
+      "head": "rbxassetid://118002823265734",
+      "head_glow_running": "rbxassetid://124382303871873",
+      "hipL": "rbxassetid://84460344651686",
+      "hipR": "rbxassetid://105817047673984",
+      "nano": "rbxassetid://83704605796811",
+      "nano_glow_power": "rbxassetid://135528724586663",
+      "nano_glow_running": "rbxassetid://88418592360898",
+      "shinL": "rbxassetid://82684717135016",
+      "shinL_glow_power": "rbxassetid://102116759441694",
+      "shinL_glow_running": "rbxassetid://76534127100127",
+      "shinR": "rbxassetid://122308348305349",
+      "shinR_glow_power": "rbxassetid://112360379006348",
+      "shinR_glow_running": "rbxassetid://124326848973591",
+      "thighL": "rbxassetid://84157827920602",
+      "thighL_glow_running": "rbxassetid://140428819042419",
+      "thighR": "rbxassetid://131684091711873",
+      "thighR_glow_running": "rbxassetid://102521846565462",
+      "torso": "rbxassetid://111789976582547",
+      "torso_glow_power": "rbxassetid://123588815552764",
+      "torso_glow_running": "rbxassetid://122008387744879"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86277232368512",
+      "RGH": "rbxassetid://105510095103580",
+      "NOR": "rbxassetid://120130542409406",
+      "MTL": "rbxassetid://106005925478818",
+      "EMI": "rbxassetid://116404709333163"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://101405828702868",
+      "NOR": "rbxassetid://80763394558119",
+      "RGH": "rbxassetid://110615057967940",
+      "MTL": "rbxassetid://110494808526344",
+      "EMI": "rbxassetid://134069101667612"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_warlord_bar in FTGG Art"
+  }
+}

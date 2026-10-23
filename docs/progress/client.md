@@ -4,6 +4,33 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, allies, assist and ghosts merged)
+
+- **Merged sim-A's S-127 / S-128 / S-129:**
+  - units no longer fire on their own at remembered buildings (only on your order);
+  - builders assist another builder's work with Guard;
+  - the client knows every team's alliance, so right-clicking an ally's unit guards it (or assists its builder) instead of attacking it.
+  - An end-to-end test checks the ally list arriving and right-click using it.
+- **Coming:** circling radar blips (sim request 59, a 6 s orbit) are in progress at sim-A.
+
+## Summary (2026-10-23, smooth radar blips)
+- **BAR-style circling blips:** at your choice, the server's wobble will become a slow orbit around the real unit (sim request 59), so blips circle it while the real position stays secret. Targeting still uses the wobbled point.
+
+- **Radar blips glide now (C-151)** instead of jumping to each new wobbled spot: the ground discs, icons and minimap dots all ease toward each new reading. A contact that reappears far away still snaps. Checked in the radar scene.
+
+## Summary (2026-10-23, builders assist builders)
+
+- **Builders assist other builders (sim-A's S-128, merging):** give a builder Guard (G, or the card's Guard button) on another builder, and it helps build whatever that one builds, following it in between. Right-clicking your own builder does the same. Nothing changed on the client; it already sends that order.
+- **Allies (C-150):** once sim-A's S-129 is merged, right-clicking an ally's unit guards it (or assists its builder) instead of attacking it. Until then, use G.
+
+## Summary (2026-10-23, manual targets fixed; crash fixed; ghosts)
+
+- **Merged sim-A's S-124 / S-125 / S-126.**
+  - **Manual targets** now stick while the unit lives, even unseen: point weapons keep firing at its last known spot while it's in range.
+  - When the target dies, the unit goes straight back to auto-targeting.
+  - I re-ran my test: the towers burned through two domes to kill the ordered tank, and there's no crash any more (S-126 fixed a crash on beams at a dead building's ghost).
+- **Coming (S-127, from you):** units won't auto-fire at remembered buildings any more, only when you order it. Right-click or Attack on a remembered building already works on the client (C-149, spec added).
+
 ## Summary (2026-10-23, beams stop at the next dome; manual target issues)
 
 - **S-123 merged and checked:** two Radiances on a tank behind two overlapping domes. When the front dome drops, the beams stop at the second dome's surface instead of going through, with their glancing legs (`debug_out/screens/two_domes_beam.jpg`). The case of a dome rising across a beam was tested by sim-A; I didn't stage it in Studio.
@@ -1804,7 +1831,11 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-57. **Open (sent 2026-10-23).** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
+59. **Open (sent 2026-10-23).** **Radar blips circle around the real unit (the user, as in BAR):** the wobble offset follows a slow orbit (radius = radar error) instead of moving between random points, so the true position still never goes on the wire (the user chose this over sending true positions, which guide 11.4 forbids). Guide 11.4 to be updated with it. The client already glides (C-151).
+
+58. **Fixed (S-126, on main b7f0f09; verified headless, 70 s with no crash):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
+
+57. **On main (S-125, 6c68d4c; behaviour verified headless, but see 58): cause was a lost spotter (an unseen manual target counted as out of range). Now point-capable weapons keep firing at its last known spot while it lives and that spot is in range (beyond range: own picks); on its death the weapons search the same tick.** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
 
 56. **Done (S-123, main 3860e72; checked in Studio).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
 
@@ -2014,3 +2045,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `3986c2a` (glance follows a moved beam end, C-147); test_client 215, build passed (client only).
 - Ready to merge: `ed3303e` (main f3334c7 merged in 9e18206, m-models 2e5a42b; mech stride, domes without vision verified; C-148); test_client 215, test 451, build passed.
 - Ready to merge: `7c8566b` (main 3860e72 merged into the client: S-123); test_client 215, build passed.
+- Ready to merge: `26e92d3` (m-models 44101bf: heroic mech Commander meshes, at review); test_client 215, build passed.
+- Ready to merge: `a6942aa` (main b7f0f09 merged in 8f553c1 with S-124..S-126; ghost-attack spec, C-149); test_client 216, build passed.
+- Ready to merge: `29a4d48` (ally relation and smart orders, C-150; inert until S-129); test_client 217, build passed (client only).
+- Ready to merge: `8d672dd` (smooth radar blips, C-151); test_client 218, build passed (client only).
+- Ready to merge: `3a06cb7` (main e13d850 merged in e5672df: S-127..S-129; ally end-to-end spec); test_client 219, test 457, build passed.
