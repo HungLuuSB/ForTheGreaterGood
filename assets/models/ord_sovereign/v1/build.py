@@ -1,4 +1,6 @@
-"""Sovereign (Order Commander, footprint 1): the walking battle mech (M-31).
+"""KEPT for reference (2026-10-23): mech v1 (too small and blocky in the review), replaced by ../build.py (M-32).
+
+Sovereign (Order Commander, footprint 1): the walking battle mech (M-31).
 blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_sovereign/build.py
 
 The user (2026-10-23): a tall, upright, heavily armored mech, BAR-commander
@@ -17,7 +19,7 @@ import math
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools"))
 
 import unit  # noqa: E402
 from unit import UP, bolts, ring, seam  # noqa: E402

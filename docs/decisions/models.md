@@ -256,3 +256,13 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user (2026-10-23): BAR-commander-like silhouettes, but original designs; the Commanders must be clearly the most imposing ground units (the tracked ones read no bigger than a Lancer).
 
+### M-32 — Heroic Commander mechs (2026-10-23)
+
+**Decision:** the mech Commanders are redone as heroic mechs (v1 kept as files: `Blockouts/Review/*_mech_v1.luau`, `assets/models/<id>/v1/`).
+- **Size:** about 2.7x a Lancer's height (about 10 studs), pauldrons spanning about 10 studs, built for footprint 2 (the sim is asked to accept it).
+- **Proportions:** long legs (45% of the height) with a real knee bend and compact armored feet with toe and heel plates; a narrow armored pelvis under a broad V-shaped chest; a head that stands up out of the torso; big pauldrons past the body carrying the team plates; a reactor backpack; arms long enough to reach below the waist.
+- **Finish:** BAR level: bevels everywhere, cylinder joints and pistons, layered plates over a darker under-frame, vents, grilles, rivets, cables and small lights.
+- **Budget:** up to 9,000 triangles, glow 5–8%. Same rig as v1.
+
+**Why:** the user's review of v1 (2026-10-23): too small and too blocky; the Commanders are the hero units and must clearly out-mass any tank from the game camera.
+
