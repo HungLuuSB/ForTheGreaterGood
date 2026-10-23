@@ -2062,3 +2062,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - with a tiny budget, 40 ticks give 3 WARN lines (ticks 1, 16, 31), the second counting 14 skipped ticks, and one summary at 100%;
   - within budget, nothing is logged;
   - the latest tick's systems add up to its total.
+
+## S-141 — Players choose their start (client request 64) — built, then held (2026-10-23)
+
+- **Asked:** for the alpha match flow, the match config chooses each player's start.
+- **Built** (commit 4793451):
+  - `players[i].start` is an index into the map's starts. `standard_start` places that Commander there, and refuses a start that is shared or off the map.
+  - Replay format 4 keeps each player's start.
+  - The skirmish AI already homes on its Commander.
+  - `Match.spec` covers it.
+- **Held:** a fourth session, D (lobby stream, `m-lobby`), now owns rooms, match start and the return to the lobby. B asked to hold this until D's `docs/contracts/match.md` says whether the match place does a start pick.
+  - Reverted on m-sim-2 (cd82cd0) so it doesn't block other merges.
+  - The commit is kept on branch `s141-starts`. If the contract has a start pick, bring it back by reverting the revert.
