@@ -185,6 +185,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	table.clear(pn.sentStock)
 	table.clear(pn.sentOwner)
 	table.clear(pn.sentProducing)
+	table.clear(pn.domes)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
 	Schema.encodeSnapshot(w, {
@@ -744,6 +745,40 @@ function NetOut.step(sim: Types.Sim)
 				end
 			end
 		end
+		-- domes regardless of vision (S-122, client request 55; as BAR draws
+		-- shields): every dome whose circle touches the camera area, when
+		-- the player doesn't have its generator; its centre, radius, charge
+		-- and flags, never the generator's type
+		local domes = pn.domes
+		local domesNow: { [number]: boolean } = {}
+		if cam ~= nil then
+			for _, id in sim.combat.shieldIds do
+				if pn.tactical[id] == nil and w.slot[id] ~= nil then
+					local cells = domeCells[w.defIndex[id]] or 0
+					if inRect(g, cam, w.posX[id], w.posZ[id], cells + NetOut.ENTER_MARGIN) then
+						domesNow[id] = true
+						local sent = shieldNow[id]
+						if sent and (not domes[id] or shieldDirty[id]) then
+							local cx, cy, cz = Shield.center(sim, id)
+							local ev = withPos({ kind = Schema.EventKind.DOME, unitId = id, charge = sent // 4, shieldFlags = sent % 4 }, g, cx, cy, cz)
+							ev.radius = sim.defs.unitByIndex[w.defIndex[id]].shield.radius
+							table.insert(events, ev)
+						end
+					end
+				end
+			end
+		end
+		local gone = {}
+		for id in domes do
+			if not domesNow[id] then
+				table.insert(gone, id)
+			end
+		end
+		table.sort(gone) -- (in ID order, not table order)
+		for _, id in gone do
+			table.insert(events, { kind = Schema.EventKind.DOME_GONE, unitId = id })
+		end
+		pn.domes = domesNow
 
 		-- changes of tactical units that were already known to the client;
 		-- an armed unit entering gets its turrets' aim and weapon states at

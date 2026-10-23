@@ -1818,3 +1818,16 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:** `Shield.spec`:
   - a Radiance ordered onto a Carapace keeps it as its manual target over a nearer Ravager;
   - its beam stops on the weak dome (FIRE, miss), the dome drops, a second FIRE hits the generator, and the generator takes damage.
+
+## S-122 — Shield domes regardless of vision (client request 55, the user) (2026-10-23)
+
+- **Asked:** a shield dome (only the dome) renders regardless of vision, as in BAR. SHIELD events only went with a generator the player had, so an unseen Carapace showed no dome even while beams and shells hit it.
+- **Built** (protocol 29):
+  - **`DOME 23`:** generator ID, the dome's centre (pos), radius u16, charge u8, flags u8 (13 B).
+    - It goes to a player for every dome whose circle touches their camera area (+2 cells) while they don't have the generator in their tactical tier, whatever their team sees.
+    - It's sent when the dome enters that area and when its charge (by `SHIELD_STEP`) or flags change.
+    - No type is revealed: a centre and a radius only.
+  - **`DOME_GONE 24`:** generator ID (3 B), when the dome leaves the area, its generator dies, or the generator enters the tactical tier (its ENTER and SHIELD take over). Sent in ID order.
+- **Tests:**
+  - `Schema.spec` pins both records' bytes;
+  - `NetOut.spec`: Order, seeing nothing near a Carapace, gets its DOME (centre and radius) and no ENTER, and DOME_GONE when it dies.
