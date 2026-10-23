@@ -10,6 +10,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| Shields tuned down (the user: "way too OP") | Phalanx capacity 600 → 120, recharge 30 → 2 /s; Carapace 400 → 80, 24 → 1.6 /s; beam drain scaled to match. 10 Ravagers now bring a Phalanx down in ~30 s (it held 100%); 4 wear it to 76% in a minute | S-150 |
 | Point defence (the user) | Sanctum / Basilisk (T2 structures) and Shepherd / Griffin (T2 vehicles) shoot down enemy missiles and rockets near them with interceptors; never units | S-149 |
 | Radar missiles without a target (the user) | A radar missile that loses its target corkscrews, noses over and falls (no more flying straight into the sky); one whose target dies in its launch phase flies to the target's last known spot and bursts there | S-146 |
 | Radar accuracy for the sensor view (the user, for B) | Eco records carry the team's radar error, tracking error and Pinpointer precision (protocol 32) | S-147 |

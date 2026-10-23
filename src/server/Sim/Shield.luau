@@ -110,7 +110,7 @@ end
 -- over the beam's duration: its best damage / 150 (the shell-mass unit,
 -- uncapped) × BEAM_DRAIN in all. A Radiance beam takes 250 (42% of a
 -- Phalanx, 62% of a Carapace), an Inferno beam about 142.
-Shield.BEAM_DRAIN = 12.5
+Shield.BEAM_DRAIN = 2.5 -- (12.5 until S-150 cut capacities 5×: the same share of a dome)
 
 -- The whole drain a lingering beam `weapon` puts on a dome (S-117).
 function Shield.beamDrain(weapon: any): number
