@@ -2182,3 +2182,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - the skirmish AI doesn't build them yet;
   - the client draws them with the generic blockout and the anti-nuke icon until B and C make their own (IDs sent);
   - no balance report run (the user's rule).
+
+## S-150 — Shields tuned down (the user: "way too OP because even under concentrated fires, it still withstand with 100% charge") (2026-10-24)
+
+- **Measured:** 10 Ravagers shelling a tank under a Phalanx put 412 shells on the dome in 60 s, about 5.5 shell masses a second. The dome recharged 30 a second (S-86's 20× numbers: 600 capacity, 30/s), so it never left 100%. A Carapace was the same.
+- **Changed:**
+  - Phalanx: capacity 600 → 120, recharge 30 → 2 per second.
+  - Carapace: 400 → 80, 24 → 1.6.
+  - Power draw unchanged.
+  - `Shield.BEAM_DRAIN` 12.5 → 2.5, so a beam takes the same share of a dome as in S-117 (Radiance about 42% of a Phalanx).
+- **Now** (`Shield.spec`, the same siege):
+  - 10 Ravagers bring a Phalanx down by 30 s (3%), and it stays down;
+  - 4 Ravagers wear it to 88% at 30 s and 76% at 60 s;
+  - a Carapace under 10 falls in about 20 s.
+- **Tests adjusted:** a breaching heavy shell slows by 13% (was over 15%; the smaller dome drains as the shell goes through); the SHIELD-record recharge test expects the slower rise.
+- No balance report run (the user's rule). The new numbers are placeholders like the rest.
