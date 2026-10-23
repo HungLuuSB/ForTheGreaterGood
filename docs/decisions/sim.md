@@ -1965,3 +1965,21 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - deposit values, with every deposit and the other start reachable for WHEELED, TRACKED and HEAVY_TRACKED;
   - determinism;
   - slow: a 12-minute AI-vs-AI match. Both sides expanded (23 and 25 extractors), each sent 3 waves, and no command was rejected.
+
+## S-133 — Units leave from the build pad; a factory waits while its pad is taken (client request 61, the user) (2026-10-23)
+
+- **Asked:** "why the spawn point of the unit when finished building was too far off? It starts where its built". The client draws the unit in production on the factory's `buildpad` (C-152). The finished unit used to appear one cell outside the footprint (12+ studs past the pad) and visibly jumped. Then the user added: "in case of unit stuck, every plant must wait for no unit standing in the build pad to continue building".
+- **Built:**
+  - **Spawn:** `Build.padOffset(def)` reads the factory blockout's `buildpad` attachment (model space, forward = -Z), else the middle of the front edge. `Build.padPosition` turns it like the client does (heading + π about +Y). A produced unit appears there, facing the exit.
+  - **Exit:** ground and naval units get `BuildState.exiting[id] = { factory x, z, half size, exit x, z, factory }`. While it's set, Movement drives them straight at the exit point (EXIT_ROLL past the front edge, in line with the pad), through the factory's blocked cells, with no separation jostling, whatever their order. It ends once they are clear of the footprint on open ground, or 24 studs past it. A unit stopped inside still drives out. Then the factory's orders as before (S-95).
+  - **Aircraft:** they appear on the airfield's pad with no exit drive (air always fits).
+  - **Factory waits:** a factory makes no progress (and spends nothing) while a unit it made is within twice that unit's radius of its pad. A stuck unit holds its factory. Pausing for the whole drive out cost too much production, and the user asked only about the pad.
+- **Hashed:** `exiting` is in the BuildState hash.
+- **Tests:** `Build.spec`:
+  - a Lancer appears on the Vehicle Plant's pad at four headings and drives straight out of the door;
+  - a plant whose tank is held on the pad makes no progress, then builds again once it drives out;
+  - an aircraft appears on the airfield's pad.
+- **Side effect found:** the AI's timeline shifted. In seed 43, a Mason leaving the pad then crawled along a second plant's edge at 0.8 studs/s for about 20 s, and Order hard's nuke came at 28.2 min instead of 22.4 (the T2 extras test allows 30). That is a movement weakness (sliding along blocked cells at half speed, repeatedly). It's under review, not fixed here.
+- **Follow-up, the AI gives up unreachable build sites:** with S-133 the AI's timeline shifted, and on Coastline (seed 34) Order hard's footprint-2 Commander got walled in by generators. It sat in a 1-cell gap for 8 minutes trying to reach an airfield site, so no shipyard was ever built (`AI.spec`, naval test). The AI's site picker doesn't check reach, and its 2-cell lanes only hold between buildings of one size.
+  - Now a builder that gets no closer than 8 studs to its build site in `Skirmish.STALL_TICKS` (20 s) is stopped. The site is left alone for `BAD_SITE_TICKS` (3 min) through the brain's claims, and `brain.gaveUp` counts these.
+  - The shipyard then comes at 5.0 min and the fleet by 6.2.
