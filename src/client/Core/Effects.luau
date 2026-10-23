@@ -128,6 +128,7 @@ Effects.DIRCM_SECONDS = 0.45 -- a jammer laser on a decoyed IR missile (C-48)
 Effects.NUKE_SECONDS = 4 -- a nuke's detonation flash and fireball (its cloud lasts longer, Render/Vfx; C-57)
 Effects.WARNING_LINGER = 4 -- seconds a launch warning stays after its missile is gone
 Effects.DEATH_SECONDS = 0.9
+Effects.INTERCEPT_PUFF = 3 -- studs: a rocket or missile shot down by point defence (S-149, C-182)
 Effects.LOST_FIRST = 1 -- Guidance.lost's tick count on the first step after a LOST_LOCK (C-181)
 Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
 Effects.MAX_MARKS = 40
@@ -887,7 +888,10 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			p.gone = true
 		end
 		local x, y, z = pos(world, e)
-		local b = burst(fx, now, x, y, z, 12, "impact", Effects.EXPLOSION_SECONDS)
+		-- a nuke's is big; a rocket or missile shot down by point defence
+		-- (S-149) a small puff
+		local size = if p == nil or p.weapon.strategic then 12 else Effects.INTERCEPT_PUFF
+		local b = burst(fx, now, x, y, z, size, "impact", Effects.EXPLOSION_SECONDS)
 		b.ground = World.groundY(world, x, z)
 	elseif kind == EK.LAUNCH_WARNING then
 		local x, y, z = pos(world, e)
