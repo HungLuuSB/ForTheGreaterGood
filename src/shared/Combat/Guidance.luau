@@ -185,8 +185,8 @@ end
 -- the same path. It also noses over by LOST_DIVE a tick (no seeker holds it
 -- up), so a climbing missile arcs over instead of corkscrewing up. Speed is
 -- kept (before the sink).
-Guidance.LOST_TURN = math.rad(9) -- per tick (135°/s)
-Guidance.LOST_PERIOD = 18 -- ticks per turn of the corkscrew (1.2 s)
+Guidance.LOST_TURN = math.rad(20) -- per tick (300°/s; 9° until S-148: the user wanted it more extreme)
+Guidance.LOST_PERIOD = 10 -- ticks per turn of the corkscrew (0.67 s; 18 until S-148)
 Guidance.LOST_SINK = 25 -- studs/s² pulled down
 Guidance.LOST_DIVE = math.rad(3) -- per tick (45°/s) toward straight down
 function Guidance.lost(vx: number, vy: number, vz: number, k: number, projId: number, dt: number): (number, number, number)
