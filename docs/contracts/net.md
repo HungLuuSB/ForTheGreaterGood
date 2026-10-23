@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **27**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **28**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -130,7 +130,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | Kind | Layout | When P gets it |
 |---|---|---|
 | `FIRE 4` | `shooterId u16, slot u8 (bits 0–3 slot 1..8, bit 4 hit), end pos`, 10 B | Hitscan / beam shots of units in P's tactical tier. Draw a tracer from the shooter's muzzle to the end point (the target's hull centre on a hit, the ground on a miss). No target ID. |
-| `SHOT 13` | `hit u8 (0 / 1), start pos, end pos`, 14 B (protocol 14) | A hitscan / beam shot whose shooter P doesn't have (not in its tactical tier), when either end is in the camera area (+2 cells). Draw a tracer from the start (the muzzle) to the end. No shooter or target ID. |
+| `SHOT 13` | `hit u8 (0 / 1), start pos, end pos, weaponDefIndex u16`, 16 B (protocol 14; the weapon since 28, S-118, client request 52; 0 = unknown) | A hitscan / beam shot whose shooter P doesn't have (not in its tactical tier), when either end is in the camera area (+2 cells). Draw it from the start (the muzzle) to the end, as its weapon is drawn: a BEAM held for its `beamDuration`, deflected on a dome, etc. No shooter or target ID. |
 | `SPAWN_PROJ 5` | `projId u16, weaponIndex u16, pos, vel, targetId u16`, 19 B | A projectile the client doesn't have yet, once it is in the camera area (+2 cells), seen or not (S-43): at launch, or when it flies into the camera area. `targetId` is the homing target if P's team knows that unit, else 0. |
 | `IMPACT 6` | `projId u16, pos`, 9 B | For projectiles the client has, or any impact in the camera area. Explosion effect; drop the projectile. Projectiles that reach the end of their life also send one (no damage). A strategic missile's IMPACT is its detonation (`aoe` 150). |
 | `INTERCEPTOR 14` | as SPAWN_PROJ, 19 B (protocol 16) | SPAWN_PROJ of a missile fired at a strategic missile (S-48). `targetId` is the **projectile ID** of the strategic missile it chases (always one the client has: see below), not a unit. Steer it with `Guidance.vertical` / `pn` against that projectile's predicted position and velocity (vy included). Its IMPACT is the interceptor's burst. |
@@ -310,6 +310,7 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 28 | SHOT carries `weaponDefIndex u16` (16 B): a hidden shooter's beam is drawn as a beam (S-118, client request 52) |
 | 27 | CHEAT command 17 and event CHEAT_RESULT 22: cheat / test commands (section 9a, S-102); State owner field PRODUCING 16: allied factories' item and progress (S-103, client request 45) |
 | 26 | SHIELD_HIT projId 0: a hitscan shot stopped at a dome's surface (S-89) |
 | 25 | SHIELD_HIT flag SHIELD_ABSORBED 2: a light shell destroyed at a dome's surface (S-85) |

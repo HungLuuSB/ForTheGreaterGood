@@ -64,6 +64,7 @@ export type Event = {
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
 	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK), wreck or 0 (DEATH)
 	slot: number?, -- FIRE, SPAWN_PROJ
+	weaponIndex: number?, -- FIRE: the weapon's def index (S-118: SHOT carries it)
 	hit: boolean?, -- FIRE (hitscan)
 	severity: number?, -- DEATH: 0..255
 	reason: string?, -- BUILD_FAILED
@@ -82,7 +83,8 @@ export type Event = {
 -- weapon's damage on `target`, while the shooter stands and the target is
 -- in range.
 -- A piercing beam (S-115) hurts every enemy on its fixed line (sx, sz) → (ex, ez) instead; its target is 0.
-export type Beam = { shooter: number, shooterGen: number, slot: number, target: number, targetGen: number, ticks: number, total: number, sx: number?, sz: number?, ex: number?, ez: number? }
+-- A beam stopped by a dome (S-117) also drains it: `domeDrain` charge each tick while the dome `dome` stands and is up.
+export type Beam = { shooter: number, shooterGen: number, slot: number, target: number, targetGen: number, ticks: number, total: number, sx: number?, sz: number?, ex: number?, ez: number?, dome: number?, domeGen: number?, domeDrain: number? }
 
 export type Combat = {
 	profiles: { [number]: UnitProfile }, -- by unit def index
@@ -728,6 +730,9 @@ function Combat.hash(c: Combat, h: number): number
 	for _, b in c.beams do
 		h = Hash.u32(Hash.u32(Hash.u32(Hash.u32(h, b.shooter), b.shooterGen), b.target), b.targetGen)
 		h = Hash.u32(Hash.u32(h, b.slot), b.ticks)
+		if b.dome then
+			h = Hash.number(Hash.u32(Hash.u32(h, b.dome), b.domeGen or 0), b.domeDrain or 0)
+		end
 		if b.sx then
 			h = Hash.number(Hash.number(Hash.number(Hash.number(h, b.sx), b.sz :: number), b.ex :: number), b.ez :: number)
 		end
