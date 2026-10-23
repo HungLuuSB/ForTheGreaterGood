@@ -54,6 +54,8 @@ APPROVED = {
     # 2026-10-23: the second review: beam shot, deposits, interceptors, the
     # (the tracked Commanders were approved too, then replaced by the mechs, M-31: review)
     "beam", "deposit", "ord_interceptor", "chs_interceptor",
+    # 2026-10-23: the Commander mechs v3 and the extractor redesign (fp 2)
+    "ord_sovereign", "chs_warlord", "ord_extractor", "chs_extractor",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -70,6 +72,7 @@ APPROVED_WRECKS = {
     "ord_herald", "chs_jackal", "ord_halo", "chs_hornet", "ord_oracle", "chs_watcher",
     "ord_generator", "chs_generator", "ord_solar", "chs_solar",
     "ord_vehplant", "chs_vehplant", "ord_bulwark", "chs_spike",
+    "ord_extractor", "chs_extractor",  # the fp-2 redesign's wrecks (2026-10-23)
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
