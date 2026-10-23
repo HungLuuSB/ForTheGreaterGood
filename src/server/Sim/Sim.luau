@@ -104,7 +104,10 @@ function Sim.new(config: Config): Sim
 		if ally ~= math.floor(ally) or ally < 1 or ally > Sim.MAX_TEAMS then
 			error(`Sim.new: allyTeam must be an integer in 1..{Sim.MAX_TEAMS}, got {ally}`, 2)
 		end
-		players[p.id] = { id = p.id, team = p.team, allyTeam = ally }
+		if p.start ~= nil and (p.start ~= math.floor(p.start) or p.start < 1 or p.start > 255) then
+			error(`Sim.new: start must be an integer in 1..255, got {p.start}`, 2)
+		end
+		players[p.id] = { id = p.id, team = p.team, allyTeam = ally, start = p.start }
 		table.insert(order, p.id)
 	end
 	table.sort(order)
@@ -135,7 +138,7 @@ function Sim.new(config: Config): Sim
 	local map = if layers then Passability.build(layers) else nil
 	local headerPlayers = {}
 	for i, id in order do
-		headerPlayers[i] = { id = id, team = players[id].team, allyTeam = players[id].allyTeam }
+		headerPlayers[i] = { id = id, team = players[id].team, allyTeam = players[id].allyTeam, start = players[id].start }
 	end
 
 	local sim: Sim = {

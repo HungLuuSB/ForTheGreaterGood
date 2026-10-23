@@ -80,6 +80,55 @@ local function submit(sim: Sim.Sim, player: number, cmd: Schema.Command)
 end
 
 return function(t: RunAll.Context)
+	t.test("chosen starts: each Commander at its player's start; the AI plays from there; replays keep it (S-141, request 64)", function()
+		local Skirmish = require("../Sim/AI/Skirmish")
+		local function commanderOf(sim: Sim.Sim, player: number): number
+			for _, id in sim.world.ids do
+				if sim.world.owner[id] == player and sim.defs.unitByIndex[sim.world.defIndex[id]].id == (if sim.players[player].team % 2 == 1 then "ord_sovereign" else "chs_warlord") then
+					return id
+				end
+			end
+			return 0
+		end
+		local config = {
+			seed = 5,
+			players = { { id = 1, team = 1, start = 2 }, { id = 2, team = 2, start = 1 } },
+			mapId = "skirmish:192",
+			scenario = "standard_start",
+			match = { mode = "FFA" :: "FFA", win = "COMMAND_ENDS" :: "COMMAND_ENDS" },
+		}
+		local sim = Sim.new(config)
+		local starts = (sim.map :: any).layers.starts
+		local w = sim.world
+		local c1, c2 = commanderOf(sim, 1), commanderOf(sim, 2)
+		t.expect(math.abs(w.posX[c1] - starts[2][1]) < 1 and math.abs(w.posZ[c1] - starts[2][2]) < 1, "player 1 at start 2")
+		t.expect(math.abs(w.posX[c2] - starts[1][1]) < 1 and math.abs(w.posZ[c2] - starts[1][2]) < 1, "player 2 at start 1")
+		local brain = Skirmish.new(sim, 1)
+		t.expect(math.abs(brain.homeX - starts[2][1]) < 1, "the AI's home is its Commander's start")
+		t.expect(math.abs(brain.enemyX - starts[1][1]) < 1, "and it looks for the enemy at the other")
+		for _ = 1, 300 do
+			Skirmish.tick(brain)
+			Sim.step(sim)
+		end
+		t.equal(sim.stats.commandsRejected, 0, "its commands are valid")
+		-- the replay header keeps the starts and replays the same match
+		local log = Replay.parse(Replay.serialize(sim.replay))
+		t.equal(log.header.players[1].start, 2)
+		t.equal(log.header.players[2].start, 1)
+		local again = Sim.fromReplay(log)
+		t.expect(math.abs(again.world.posX[commanderOf(again, 1)] - starts[2][1]) < 1, "a replay puts them back on the same starts")
+		-- no start: player order, as before
+		local plain = Sim.new({ seed = 5, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "skirmish:192", scenario = "standard_start" })
+		t.expect(math.abs(plain.world.posX[commanderOf(plain, 1)] - starts[1][1]) < 1, "without a choice, player 1 at start 1")
+		-- a start taken twice, or not on the map, is refused
+		t.throws(function()
+			Sim.new({ seed = 5, players = { { id = 1, team = 1, start = 2 }, { id = 2, team = 2, start = 2 } }, mapId = "skirmish:192", scenario = "standard_start" })
+		end, "share start 2")
+		t.throws(function()
+			Sim.new({ seed = 5, players = { { id = 1, team = 1, start = 9 }, { id = 2, team = 2 } }, mapId = "skirmish:192", scenario = "standard_start" })
+		end, "not on the map")
+	end)
+
 	t.test("FFA, Command Ends: losing the Command Vehicle eliminates; the last player standing wins", function()
 		local s = setup("FFA", "COMMAND_ENDS", 3)
 		local sim = s.sim

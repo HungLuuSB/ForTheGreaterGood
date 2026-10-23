@@ -6,7 +6,8 @@
 -- Binary layout (little-endian, via Packer):
 --   header   magic "FTGR" | format u8 | protocol u16 | defsHash u32 | seed u32
 --            | mapId (len u8 + bytes) | scenario (len u8 + bytes)
---            | playerCount u8 | (player u8, team u8, allyTeam u8) × playerCount
+--            | playerCount u8 | (player u8, team u8, allyTeam u8, start u8 (0 =
+--              by player order; S-141)) × playerCount
 --            | hasMatch u8 [| mode u8 (1 FFA, 2 TEAM) | win u8 (1 COMMAND_ENDS,
 --              2 ANNIHILATION) | unitCap u16]
 --            | cheats u8 (bit 0 allowed, bit 1 used, bit 2 offline; S-102)
@@ -19,10 +20,10 @@ local Packer = require("@shared/Net/Packer")
 local Replay = {}
 
 Replay.MAGIC = "FTGR"
-Replay.FORMAT_VERSION = 3 -- 2: ally teams and match options in the header; 3: cheat flags (S-102)
+Replay.FORMAT_VERSION = 4 -- 2: ally teams and match options in the header; 3: cheat flags (S-102); 4: chosen starts (S-141)
 Replay.Kind = table.freeze({ COMMAND = 1, CHECKPOINT = 2 })
 
-export type PlayerInfo = { id: number, team: number, allyTeam: number? }
+export type PlayerInfo = { id: number, team: number, allyTeam: number?, start: number? }
 export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number?, friendlyFire: boolean? }
 
 export type Header = {
@@ -94,6 +95,7 @@ function Replay.serialize(log: Log): buffer
 		w:writeU8(p.id)
 		w:writeU8(p.team)
 		w:writeU8(p.allyTeam or p.team)
+		w:writeU8(p.start or 0)
 	end
 	local m = h.match
 	if m then
@@ -142,7 +144,12 @@ function Replay.parse(buf: buffer): Log
 		players = {},
 	}
 	for _ = 1, r:readU8() do
-		table.insert(header.players, { id = r:readU8(), team = r:readU8(), allyTeam = r:readU8() })
+		local p: PlayerInfo = { id = r:readU8(), team = r:readU8(), allyTeam = r:readU8() }
+		local start = r:readU8()
+		if start > 0 then
+			p.start = start
+		end
+		table.insert(header.players, p)
 	end
 	local hasMatch = r:readU8()
 	if hasMatch == 1 or hasMatch == 2 then

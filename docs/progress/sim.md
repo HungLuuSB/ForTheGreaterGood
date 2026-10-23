@@ -10,6 +10,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| Chosen starts (client request 64, the alpha match flow) | `players[i].start` (an index into the map's starts) places that player's Commander; unique, checked; replay format 4 keeps it; the AI already takes its home from its Commander | S-141 |
 | Budget watchdog for the Roblox server (your queue item 5, next.md item 2) | `Sim/Watchdog`: after each step, compares the tick's system times with guide 18.1; a WARN line per second while over budget (worst systems first), an INFO summary a minute. B wires it into the server loop | S-140 |
 | Flying sight bonus (your queue item 4, audit item 10) | Aircraft in flight see the ground 1.25× farther; landed, no bonus | S-139 |
 | Queue in a factory being built (client request 63, the user) | An unfinished factory takes BUILD queue items (QUEUE owner field sent) and starts on them when finished; CANCEL on it drops queue items first | S-138 |
