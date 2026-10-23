@@ -5,6 +5,7 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
 ## Summary (2026-10-23, smooth radar blips)
+- **BAR-style circling blips:** at your choice, the server's wobble will become a slow orbit around the real unit (sim request 59), so blips circle it while the real position stays secret. Targeting still uses the wobbled point.
 
 - **Radar blips glide now (C-151)** instead of jumping to each new wobbled spot: the ground discs, icons and minimap dots all ease toward each new reading. A contact that reappears far away still snaps. Checked in the radar scene.
 
@@ -1820,6 +1821,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+59. **Open (sent 2026-10-23).** **Radar blips circle around the real unit (the user, as in BAR):** the wobble offset follows a slow orbit (radius = radar error) instead of moving between random points, so the true position still never goes on the wire (the user chose this over sending true positions, which guide 11.4 forbids). Guide 11.4 to be updated with it. The client already glides (C-151).
 
 58. **Fixed (S-126, on main b7f0f09; verified headless, 70 s with no crash):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
 
