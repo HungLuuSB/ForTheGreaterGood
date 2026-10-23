@@ -498,6 +498,46 @@ end)
 --   client → server: { op = "save" } | { op = "watch", index? } | { op = "list" }
 --   server → client: { op = "saved", name, bytes, datastore = string? } |
 --                    { op = "list", names } | { op = "chunk", index, count, data }
+-- Key bindings (C-159): each player's rebound keys, as Core/Keybinds.encode
+-- writes them (only what differs from the defaults). "get" answers the
+-- saved string; "set" stores one. A live server keeps them in the
+-- FtggSettings DataStore; Studio refuses DataStores without API access, so
+-- there they last for the server session.
+--   client → server: InvokeServer("get") → string | InvokeServer("set", text) → boolean
+local KEYBINDS_MAX = 2000 -- characters; every action rebound is ~400
+local keybindsSaved: { [number]: string } = {}
+local keybindsRemote = Instance.new("RemoteFunction")
+keybindsRemote.Name = "Keybinds"
+keybindsRemote.Parent = remotes
+keybindsRemote.OnServerInvoke = function(player: Player, op: any, text: any): any
+	local key = `keys/{player.UserId}`
+	if op == "get" then
+		local mine = keybindsSaved[player.UserId]
+		if mine == nil and not RunService:IsStudio() then
+			local ok, stored = pcall(function()
+				return game:GetService("DataStoreService"):GetDataStore("FtggSettings"):GetAsync(key)
+			end)
+			mine = if ok and type(stored) == "string" then stored else ""
+			keybindsSaved[player.UserId] = mine
+		end
+		return mine or ""
+	elseif op == "set" and type(text) == "string" and #text <= KEYBINDS_MAX and string.match(text, "^[%w_=;]*$") then
+		keybindsSaved[player.UserId] = text
+		if not RunService:IsStudio() then
+			task.spawn(function()
+				local ok, err = pcall(function()
+					game:GetService("DataStoreService"):GetDataStore("FtggSettings"):SetAsync(key, text)
+				end)
+				if not ok then
+					warn(`[Entry] keybinds for {player.Name}: DataStore {err}`)
+				end
+			end)
+		end
+		return true
+	end
+	return false
+end
+
 local CHUNK_BYTES = 200 * 1024
 local replayRemote = Instance.new("RemoteEvent")
 replayRemote.Name = "Replay"

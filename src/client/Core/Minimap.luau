@@ -99,6 +99,17 @@ function Minimap.cameraBox(grid: Grid.Grid, rect: { number }): (number, number, 
 	return rect[1] / grid.cellsX, rect[2] / grid.cellsZ, (rect[3] + 1) / grid.cellsX, (rect[4] + 1) / grid.cellsZ
 end
 
+-- The camera's ground trapezoid (Camera.corners, world x, z round the
+-- edge) as minimap fractions, clamped to the map (C-164).
+function Minimap.cameraShape(grid: Grid.Grid, corners: { number }): { number }
+	local out = table.create(8)
+	for i = 1, 7, 2 do
+		local u, v = Minimap.toMap(grid, corners[i], corners[i + 1])
+		out[i], out[i + 1] = math.clamp(u, 0, 1), math.clamp(v, 0, 1)
+	end
+	return out
+end
+
 -- Resource bar text: "stored / storage  +income  -demand" with a stall flag.
 export type ResLine = { text: string, fill: number, stalling: boolean }
 

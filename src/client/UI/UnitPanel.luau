@@ -10,15 +10,18 @@
 -- next missile's progress, on / off and repeat, and a factory's queue as the
 -- server has it (S-61). An enemy shows full stats only in sight or tracked;
 -- a radar contact its domain only. Several selected: a tile per unit type
--- with its count; a click keeps only that type. Reads only the client API's
--- state.
+-- with its count, as BAR's selection panel (C-157): a click keeps only that
+-- type, Shift-click drops it, Ctrl-click selects every own unit of that type
+-- on screen. Reads only the client API's state.
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 
 local Api = require("../Api")
 local Kit = require("./Kit")
 local Icons = require("../Core/Icons")
 local Precision = require("../Core/Precision")
+local Selection = require("../Core/Selection")
 local UnitStats = require("../Core/UnitStats")
 local World = require("../Core/World")
 local Glyph = require("./Glyph")
@@ -322,15 +325,24 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 			count.Parent = b
 			ui.typeButtons[i] = b
 			b.MouseButton1Click:Connect(function()
-				local want = b:GetAttribute("DefIndex")
-				local keep = {}
-				for _, id in api.state.selection do
-					local u = api.world.units[id]
-					if u and u.defIndex == want then
-						table.insert(keep, id)
-					end
+				local want = b:GetAttribute("DefIndex") :: number
+				local function down(a: Enum.KeyCode, z: Enum.KeyCode): boolean
+					return UserInputService:IsKeyDown(a) or UserInputService:IsKeyDown(z)
 				end
-				api.actions.select(keep)
+				local how: "keep" | "remove" | "screen" = if down(Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift)
+					then "remove"
+					elseif down(Enum.KeyCode.LeftControl, Enum.KeyCode.RightControl) then "screen"
+					else "keep"
+				local onScreen = nil
+				if how == "screen" then
+					local cam = workspace.CurrentCamera
+					local view = cam.ViewportSize
+					onScreen = Selection.sameTypeOnScreen(api.world, function(x: number, y: number, z: number)
+						local v, visible = cam:WorldToViewportPoint(Vector3.new(x, y, z))
+						return v.X, v.Y, visible and v.Z > 0
+					end, want, view.X, view.Y)
+				end
+				api.actions.select(Selection.tileClick(api.world, api.state.selection, want, how, onScreen))
 			end)
 		end
 		b:SetAttribute("DefIndex", d)

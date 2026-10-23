@@ -4,12 +4,57 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, mesh ground on the way)
+
+- **The ground is moving off Roblox terrain (C-167):** the named maps will use mesh tiles that models-C bakes from the game's own height data (requested). They stay sharp at any distance, so a minimap jump lands crisp. Terrain keeps only the water.
+  - Building the ground in game wasn't possible: Roblox's budget for such meshes runs out after a few thousand points, and The Canyon needs about 160,000.
+  - The client loader, the export tool (`lune run export_ground`) and the contract are done. Until C's tiles arrive, every map keeps the voxel terrain.
+  - The Canyon comes first, for you to compare in Studio.
+
+## Summary (2026-10-23, assist, minimap drag, build grid, no overlapping plans)
+
+- **Assist (C-163):** right-click your own factory with builders selected and they help its production; right-click your own frame and they build it; right-click your own builder and they follow its lead, helping whatever it builds. With only builders selected, the Guard button reads "Assist".
+- **Minimap (C-164):** drag on it to move the camera; your view now shows as the real trapezoid on the ground.
+- **Build grid (C-166):** while placing, the build cells round the ghost show on the ground (Settings > Interface > Build grid).
+- **No overlapping plans (C-165):** a new building can't be placed over one you've already queued, rows and extractor drags included.
+- **The coarse-then-sharp terrain after a long jump** is Roblox's terrain level of detail. Pointing the camera's focus at the ground (C-162) didn't change it; options are under "Needs my review".
+- **Queue in a factory under construction:** needs the server (sim request 63, sent). The client side is already in place.
+- Ready to merge: `5a70dc2` (C-162..C-166; client only)
+
+## Summary (2026-10-23, nothing pops when the camera moves)
+
+- **Your units and buildings stay drawn when the camera leaves (C-161):** no more re-rendering when you pan away and back; the same models carry on. A selected Mason far away keeps its unit panel, build menu and command card, so you can keep queueing builds for it. Checked in Studio.
+- Off camera, a unit's health and a far building's progress show their last values until you look again (the server sends little there).
+- Ready to merge: `9e8e8c2` (C-161: units stay drawn and selectable off camera; client only)
+
+## Summary (2026-10-23, your queue while away)
+
+Queue status, item by item (details below and in the decisions log):
+- **0. "Needs my review" cleaned up:** everything you approved up to C-130 is gone; only open questions are left.
+- **1. Beam shots from C's assets:** already done before the queue (C-133..C-144; the beam entry is approved). Skipped.
+- **2. Animation pass (C-156):** done. Radars, sonar drums and drills turn while powered, wheels roll while moving, gantries run while producing, windmills turn, tracks judder. Not done: a sonar "ping" and jammer shimmer, which would be new effects rather than pieces.
+- **3. Selection panel like BAR (C-157):** done. Click a tile to keep that type, Shift-click to drop it, Ctrl-click for every one of that type on screen.
+- **4. Idle indicators (C-158):** done, as a client-side guess. sim-A has already made the server's IDLE events (S-136, request 62); I switch to them once they're on main.
+- **5. Group speed (Ctrl-move):** agreed with sim-A: Ctrl + right click, `CmdFlag.GROUP` (S-137, protocol 31). Wiring waits for S-137 on main.
+- **6. Rebindable keys (C-159):** done. Settings > Keys, click and press, red clash warnings, saved for your account. Camera turn-right moved from E to C.
+- **7. Commander walk on the v3 mechs (C-160):** done. It works as is, checked in Studio with a new preview switch.
+
 ## Summary (2026-10-23, the Canyon by day, blips circling, units leave from the pad)
 
 - **The Canyon is playable and looks like a desert in daylight (C-153, C-155):** pale sand floor and red rock mesas and cliffs, under a mid-afternoon sun with blowing sand. It's in the skirmish lobby's map list, and the `canyon` test profile starts both Commanders there.
 - **Each map now has its own lighting and time of day (C-155):** the Canyon is the first. The others stay on the moonlit night. Settings > Atmosphere defaults to "Map's own" and can still override it.
 - **Radar blips circle about 1.5 studs round their spot, as in BAR (C-154).** The server's circle (S-131) didn't reach the client, so the client draws it. Measured in Studio.
 - **Finished units appear on the build pad (S-133, merged here from sim-A's branch for your playtest):** the server's pad spot equals the client's drawn frame (64, 47.4 on a vehicle plant).
+- **Animated pieces (C-156):** radars and drills turn while powered, wheels roll while moving, factory gantries run while producing, windmills turn.
+- Ready to merge: `e299b43` (C-153..C-155: Canyon look and lobby entry, client blip orbit, per-map looks)
+- Ready to merge: `65673ae` (C-156: animated pieces run by state)
+- **Selection panel like BAR (C-157):** with several units selected, click a type tile to keep it, Shift-click to drop it, Ctrl-click for every one of that type on screen.
+- **Idle indicators (C-158):** idle builder and factory counts beside the resource bar, **I** jumps to the next idle builder (the camera follows), an IDLE tag over each. For now only what's in view counts: sim request 62 asks the server for a proper idle signal.
+- Ready to merge: `946b6a7` (C-157, C-158: selection tiles, idle indicators)
+- **Rebindable keys (C-159):** Settings > Keys has a button per action: click, press the new key. Two actions on one key show a red warning on both. Saved for your account (the session only in Studio). Camera turn-right moved from E to C, because E is also reclaim.
+- Ready to merge: `0db7a34` (C-159: rebindable keys; adds the Keybinds remote in src/roblox)
+- **The Commander mechs v3 walk (C-160):** the walk works on models-C's v3 meshes as they are; checked in Studio with the new preview switch (`FtggClientDebug:Invoke("reviewmesh", "ord_sovereign")`). They show in normal games once you approve them.
+- Ready to merge: `eb4ad8b` (C-160: review-mesh preview switch; v3 walk checked)
 
 ## Summary (2026-10-23, factories show what they build)
 
@@ -1753,6 +1798,11 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - the extractors at footprint 2 (and their wrecks);
   - on m-models, not merged here yet: the T1 structure redesigns, pairs 2–7 (generators, solar, wind, depots, Bulwark / Spike, vehicle plants).
 - **Sound IDs:** `docs/SOUND_PLAN.md` lists candidate Creator Store audio for every sound. Nothing is inserted until you pick.
+- **Camera turn keys (C-159):** turn right moved from E to C, since E is also BAR's reclaim. Rebind it in Settings > Keys if you prefer something else.
+- **Terrain sharpening after a long camera jump (C-162):** Roblox's voxel terrain draws a far area coarse and sharpens it over a few seconds; scripts can't control it. Your call:
+  - leave it;
+  - glide the camera on long jumps instead of teleporting (it softens the pop but doesn't remove it);
+  - replace the voxel terrain with our own mesh ground at full detail everywhere (a bigger job, and a different look to tune).
 - **Lighting technology:** set `Lighting.Technology` to Realistic in the place (a place setting scripts can't change).
 - **New since C-130, for a look in your playtest:**
   - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
@@ -1760,6 +1810,8 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - radar blips circling 1.5 studs out (C-154).
 
 ## Requests for the models session
+
+3. **Baked map ground (2026-10-23, the user; C-167, `docs/contracts/map-ground.md`):** mesh tiles of each named map's ground from `lune run export_ground` (the Canyon first, status review), ground textures for desert, redrock, grass, rock, sand, road, leafy and ground, and rock detail (Canyon mesa rims, cliff terraces, boulders; then Normandy's bluffs). Uploads need the user's approval.
 
 2. **T2 defense meshes (2026-10-23, the user asked; sim request 43 brings the defs):**
    - a Pulsar-style beam tower per faction, with a tall emitter barrel, glowing charge rails on the base (`power` glow), and a **retract pose**: an armored shell the turret sinks into when switched off (a piece the client moves down, e.g. `turret` dropping into `base`, plus shell plates);
@@ -1770,6 +1822,8 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
 
 ## Requests for the sim session
 
+63. **Open (2026-10-23, the user: "Add the ability to queue inside the factory while it being built"):** accept a factory's queue (and CANCEL / REPEAT) while it's still a frame, start producing when it's finished, and send the QUEUE owner field for the frame. The client already offers the build menu on an unfinished factory.
+62. **Open (2026-10-23, the user's queue item 4):** **An idle signal for own units.** Owner-only and sent on change, covering units outside the camera (owner fields ride only tactical records, and the strategic flags are full): which of the player's builders have no orders and no build / assist / repair / reclaim / guard / patrol work, and which factories have an empty queue. The client guesses from what it sees until then (C-158).
 61. **Done on m-sim-2 (S-133, 04c70db; not on main yet, merged into this branch for the user's playtest):** the pad position matches the client's frame (vehicle plant: 64, 47.4). (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
     - The finished unit spawns at the factory's `buildpad` (from the blockout's attachments, model space, rotated with the facing) with the factory's heading. Today it's halfSize + one cell out, then EXIT_ROLL: ~12 studs past the pad on a vehicle plant.
     - It then drives out along the heading through the factory's own footprint, then takes the rally order.

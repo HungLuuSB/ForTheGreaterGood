@@ -33,6 +33,7 @@ export type State = {
 	glow: Glow, -- unit glow (Render/Glow): off, low (resting glow, stall dimming), high (also factory pulse, weapon flash)
 	headlights: boolean, -- vehicle headlights (Render/Glow's SpotLights)
 	devMode: boolean, -- developer mode (C-124): debug keys (T camera follow); on in Studio
+	buildGrid: boolean, -- the build grid round the placement ghost (C-166)
 }
 
 export type Glow = "off" | "low" | "high"
@@ -67,7 +68,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "map", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "map", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio, buildGrid = true }
 end
 
 local function round(x: number, step: number): number
@@ -85,7 +86,7 @@ function Settings.set(s: State, key: string, value: any): boolean
 		end
 		t[key] = math.clamp(round(value, limits[3]), limits[1], limits[2])
 		return true
-	elseif key == "edgeScroll" or key == "fog" or key == "detailedModels" or key == "headlights" or key == "devMode" then
+	elseif key == "edgeScroll" or key == "fog" or key == "detailedModels" or key == "headlights" or key == "devMode" or key == "buildGrid" then
 		if type(value) ~= "boolean" then
 			return false
 		end
@@ -126,43 +127,28 @@ function Settings.graphics(s: State): Graphics
 	return Settings.QUALITY[s.quality]
 end
 
--- The key bindings reference (Input/Controls, Camera, Main), in groups.
+-- The fixed keys reference (mouse, groups, modifiers), in groups; the
+-- single-key actions are rebindable (Core/Keybinds, C-159).
 Settings.KEYS = table.freeze({
-	{ "Selection", {
+	{ "Fixed: selection", {
 		{ "Left click / drag", "select / box select (Shift adds, Ctrl toggles)" },
 		{ "Double click", "every own unit of that type on screen" },
 		{ "Ctrl + 1–9 / 1–9", "set / recall a group (double tap: jump there)" },
 	} },
-	{ "Orders", {
+	{ "Fixed: orders and building", {
 		{ "Right click", "smart order: attack, guard, repair or move" },
 		{ "Right drag", "line move" },
 		{ "Shift + order", "queue it" },
-		{ "A / F / M / Z / G", "attack / fight / move / patrol / guard, then left click" },
-		{ "S", "stop" },
-		{ "L / K", "fire state / move state" },
-		{ "Y / U / X", "repeat / on-off / cancel (factories)" },
-		{ "E", "reclaim, then left click a wreck (builders)" },
+		{ "1–0 (build menu open)", "pick (Shift: 5 in a factory, right click drops one)" },
+		{ "Drag (extractor)", "an extractor on every deposit in the circle (upgrades too)" },
 		{ "Enter or /", "the cheat command line (/help); Ctrl+Shift+G repeats the last /give" },
 	} },
-	{ "Building", {
-		{ "B, then 1–0", "build menu: open, next tab, pick" },
-		{ "R", "rotate the structure" },
-		{ "Drag (extractor)", "an extractor on every deposit in the circle (upgrades too)" },
-		{ "Right click", "stop placing" },
-	} },
-	{ "Camera and views", {
+	{ "Fixed: camera", {
 		{ "Arrow keys / edge", "pan" },
 		{ "Wheel / Alt + wheel", "zoom / pitch" },
-		{ "Q / E", "rotate" },
-		{ "V", "range rings" },
-		{ "N", "missile sensor view" },
-		{ "F4", "deposit view: free supply spots and their yield" },
-		{ "J", "jump to the last alert" },
-		{ "O", "this menu" },
-	} },
-	{ "Developer mode (Settings > Interface)", {
-		{ "T", "camera follows the selection (or the nearest missile)" },
-		{ "F3", "debug readout (bottom right)" },
+		{ "Middle drag", "pan" },
+		{ "F3", "debug readout (developer mode)" },
+		{ "- / = / P", "sim speed and pause (Studio)" },
 	} },
 })
 

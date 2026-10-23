@@ -50,7 +50,9 @@ export type Stats = { seconds: number, cpu: number, voxels: number, chunks: numb
 -- Builds the terrain for `layers` (yielding), materials from the sim's
 -- terrain types or the map's features (Core/Terrain.material). Returns nil
 -- when the place has terrain of its own (left alone).
-function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature?): Stats?
+-- `waterOnly`: the ground is drawn by baked mesh tiles (Render/MeshGround,
+-- C-167): only the water goes into the terrain.
+function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature?, waterOnly: boolean?): Stats?
 	local terrain = workspace.Terrain
 	if terrain:GetAttribute(MARKER) then
 		terrain:Clear() -- ours, from an earlier map
@@ -89,7 +91,7 @@ function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature
 					local mat = MATERIAL[CoreTerrain.material(layers, x, z, feature)] or Enum.Material.Grass
 					for j = 1, ny do
 						local vy = y0 + (j - 1) * VOXEL
-						local o = math.clamp((ground - RenderTerrain.SURFACE_BIAS - vy) / VOXEL, 0, 1)
+						local o = if waterOnly then 0 else math.clamp((ground - RenderTerrain.SURFACE_BIAS - vy) / VOXEL, 0, 1)
 						mi[j][k] = if o > 0 then mat else Enum.Material.Air
 						oi[j][k] = o
 						li[j][k] = if water then math.clamp((water - vy) / VOXEL, 0, 1) else 0

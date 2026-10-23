@@ -176,6 +176,27 @@ return function(t: any)
 		t.equal(frames, queued, "every queued structure was built")
 	end)
 
+	t.test("a ghost can't overlap a build already queued (C-165)", function()
+		local _sim, world, api, run = setup("start:48", "standard_start")
+		run(3)
+		local cv = World.ownIds(world)[1]
+		api.actions.select({ cv })
+		t.expect(api.actions.beginPlacement("ord_generator"))
+		local u = world.units[cv]
+		local x, z = u.x + 80, u.z + 80
+		t.expect(api.actions.place(x, z, true, true), "the first one, queued, placing kept (Shift)")
+		local size = world.defs.units.ord_generator.footprint * 8
+		local ok, why = api.actions.updatePlacement(x + size / 2, z)
+		t.expect(not ok and why == "occupied", `half over the queued one: {why}`)
+		t.expect(not api.actions.place(x + size / 2, z, true, true), "and it isn't sent")
+		t.expect(api.actions.updatePlacement(x + size, z), "right next to it is fine")
+		-- a dragged row over the queued one skips the taken spot
+		local before = #(api.waypoints.byUnit[cv] or {})
+		api.actions.placeRow(x - size, z, x + size, z, true, true)
+		local after = #(api.waypoints.byUnit[cv] or {})
+		t.equal(after - before, 2, "the row's two free spots, not the queued one")
+	end)
+
 	t.test("placing sends a BUILD and the server raises the frame", function()
 		local sim, world, api, run, sentCount = setup("start:48", "standard_start")
 		local cv = World.ownIds(world)[1]
