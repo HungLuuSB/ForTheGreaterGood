@@ -2085,3 +2085,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - 404 sites checked; the reach check never fired; the lane rule fired twice.
   - Give-ups (S-133) stayed at 1–2 per match, the same as before, so their cause is something else (crowding units, a site taken meanwhile). That's under review.
   - Fast and slow suites pass; mirror fairness 6 / 6.
+
+## S-143 — The lobby stream's match contract v1: the sim side (lobby requests A-1..A-3) (2026-10-23)
+
+- **A-1, starts:** contract v1 gives player IDs 1..n in the room's order (teams grouped) and `start == id`. `Scenarios.standard_start` already puts player i (in sorted ID order) on start i, so `Sim.new` needs nothing new. Factions follow team parity, as `src/roblox/Lobby.config` maps them. Client request 64 / S-141 (chosen starts) is closed against D's L-4; the code stays on branch `s141-starts` in case a later version adds a start pick.
+  - IDs must be contiguous from 1: with IDs 1 and 3, player 3 would take start 2.
+- **A-2, shared validation:** yes. `MatchConfig.validate` (and `validateResult`) may move to `src/shared`, so the lobby and match places run one copy.
+  - D owns that module.
+  - It follows the shared-code rules: `--!strict`, string requires only (`@shared` across roots, relative within), no Roblox globals, it runs in Lune.
+  - Its spec goes under `src/server/Tests`, so `lune run test` covers it.
+  - `Sim.new` stays the final check of the sim config it is turned into.
+- **A-3, guide 16.3:** rewritten for the lobby place and battle room (the host picks the map), reserved servers with the config in MemoryStore, loading and the wait for players, starts and factions in v1, heartbeat and rejoin, the results record and the return. It also keeps the Studio / dev path with the local MatchConfig.
