@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, lost missiles fall; radar accuracy shown)
+
+- **SAMs no longer fly into the sky when their target dies (C-181, S-146):** a radar missile that loses its target now spirals and falls on your screen, on the same path the server uses.
+- **Radar accuracy in the sensor view (N):** a circle round each radar blip shows how far radar-fired shots miss (amber; smaller and green when a fire-control radar tracks it), with a readout under the resource bar, e.g. "Radar accuracy ±7.7 studs · tracked ±2.6 · Pinpointers 40%". Screenshots: `debug_out/screens/c181_*.jpg`.
+
 ## Summary (2026-10-23, the match side of the lobby flow)
 
 - **The match place now runs a lobby match end to end (C-173, D's contract):**
@@ -21,6 +26,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **One key art viewer (C-179):** the lobby place now mounts `UI/KeyArt` read-only, as it does the Kit; keep its API stable.
 - Ready to merge: `50e2138` (C-179: KeyArt header, the lobby mounts it read-only; comment only)
 - **No more animation freezes (C-180):** your playtest log still showed the freeze, most likely from a match started before C-177. The animation scheduler now holds any loop that waits on pieces that have already arrived, so a script like that can't freeze the client again.
+- Ready to merge: `cf35347` (C-180: PieceAnim spin guard; src/client and tests/client)
 
 ## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
 
@@ -1848,6 +1854,7 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
   - The Canyon's desert colours and daylight (C-153, C-155): `debug_out/screens/c155_canyon_day_*.jpg`;
   - radar blips circling 1.5 studs out (C-154).
+  - the radar accuracy circles and readout in the sensor view (C-181): colours, the readout's place under the resource bar. A tracked contact's circle (±2.6 studs) sits inside its blip disc.
 
 ## Requests for the models session
 

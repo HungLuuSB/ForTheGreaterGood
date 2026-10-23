@@ -1543,3 +1543,16 @@ Existing calls are unchanged.
 
 **Why:** the user's next playtest log still showed "Script timeout" in PieceAnim.step at about tick 16,000. That match most likely started before C-177 reached Studio (it ended at tick 18,970, about 21 minutes in, and was the match already running when C-177 was pushed), and every loop in the piece scripts now sleeps. But one more script written the old way would freeze the client again, so the scheduler itself now refuses to spin.
 
+### C-181 — Lost radar missiles spiral down; radar accuracy in the sensor view (2026-10-23)
+
+**Decision:**
+- **Lost radar missiles (S-146):** on LOST_LOCK, a HOMING missile with RADAR guidance steps its velocity with `Guidance.lost(vx, vy, vz, k, projId, 1/15)` before the ballistic step, every tick until it ends. `k` starts at 1 on the first step after the event (`Effects.LOST_FIRST`), because the event carries the state after the server's own first lost tick (k = 0). Effects.spec kills a Wasp once an Aegis SAM has turned onto it: the drawn missile stays within 0.06 studs of the server (with k starting at 0 it drifts 13 studs). IR missiles still fly straight. A target that dies in the launch phase isn't steered at its last spot on the client; the homing corrections carry that path.
+- **Radar accuracy (S-147, the user's request):** `Core/RadarAccuracy` reads the Eco record's `radarError`, `trackError` and `precision`. In the missile sensor view (N):
+  - each radar blip gets a flat circle of the radius radar-fired shots miss by: amber at `radarError`, green at `trackError` on a tracked contact (TRACKED);
+  - a readout under the resource bar: "Radar accuracy ±7.7 studs · tracked ±2.6 · Pinpointers 40%" ("no radar" without one);
+  - at most 80 circles; sonar contacts and ghosts get none.
+  - RadarAccuracy.spec checks the radius against the server's own, and that two Pinpointers shrink it (±12 → ±7.7 studs).
+- Studio: `debug_out/screens/c181_radar_readout.jpg`, `c181_radar_rings.jpg`, `c181_tracked_rings.jpg`.
+
+**Why:** the user's report (SAMs flying into the sky when their target died) and request (show the missiles' radar accuracy), both through sim-A.
+
