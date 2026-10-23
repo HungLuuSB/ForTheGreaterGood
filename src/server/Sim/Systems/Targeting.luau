@@ -3,12 +3,13 @@
 --
 -- Targeting follows team knowledge, never server truth (D100). Each weapon
 -- keeps its current target while it stays valid: an enemy the team knows
--- about (VISIBLE; RADAR contacts and structure ghosts only for
--- canTargetRadar weapons, guide 11.4), a category it can hit, within range
--- (+10% hysteresis, measured to the known position) and arc, and allowed by
--- the unit's fire state. A ghost stays a target even if its structure died
--- unseen (the team can't tell): until the spot is seen again, when Sensors
--- forgets it. Bombers with an attack-ground order (Air) don't auto-target.
+-- about (VISIBLE; RADAR contacts only for canTargetRadar weapons, guide
+-- 11.4), a category it can hit, within range (+10% hysteresis, measured to
+-- the known position) and arc, and allowed by the unit's fire state.
+-- Structure ghosts (remembered, not in sight) are targets only on an attack
+-- order or as a manual target (S-127, the user: never picked by the search);
+-- one stays a target even if its structure died unseen (the team can't
+-- tell). Bombers with an attack-ground order (Air) don't auto-target.
 -- An untracked radar or sonar contact reveals only its domain (D107): it is
 -- filtered by domain, scored without type priorities, and its collision
 -- radius doesn't count toward range. An invalid target is dropped at once. A
@@ -156,7 +157,10 @@ local VISIBLE, RADAR, GHOST, SONAR = Sensors.Level.VISIBLE, Sensors.Level.RADAR,
 -- `gen` is the remembered target's generation (D109); nil = the live unit.
 -- Also returns what it looked up (level, def index, type known, known
 -- categories), so a search scores the target without asking again (S-74).
-local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number, gen: number?): (number?, number, number, boolean, number)
+-- `manual`: an attack order's or manual target, which may be a ghost (a
+-- remembered structure not in sight); the automatic search never takes one
+-- (S-127, the user).
+local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t: number, hysteresis: number, gen: number?, manual: boolean?): (number?, number, number, boolean, number)
 	local c = sim.combat
 	local w = sim.world
 	if w.slot[t] ~= nil and w.ally[t] == w.ally[id] and (gen == nil or w.gen[t] == gen) then
@@ -174,7 +178,8 @@ local function acceptable(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, t:
 	end
 	local radius = if known then tp.radius else 0
 	local allowed = level == VISIBLE
-		or ((level == RADAR or level == GHOST) and weapon.canTargetRadar)
+		or (level == RADAR and weapon.canTargetRadar)
+		or (level == GHOST and weapon.canTargetRadar and manual == true)
 		or (level == SONAR and weapon.type == "TORPEDO") -- torpedoes hunt sonar contacts
 	if not allowed then
 		return nil
@@ -308,20 +313,8 @@ local function search(sim: Types.Sim, id: number, weapon: Defs.WeaponDef): (numb
 			cDoomed[m] = Combat.doomed(c, w, t) and level == VISIBLE
 		end
 	end
-	-- remembered structures that are no longer there: the team doesn't know
-	if weapon.canTargetRadar then
-		local ally = w.ally[id]
-		for _, gid in sim.sensors.ghostIds[ally] or {} do
-			local ghost = sim.sensors.ghosts[ally][gid]
-			if not World.isRef(w, gid, ghost.gen) then
-				local dist = acceptable(sim, id, weapon, gid, 1, ghost.gen)
-				if dist ~= nil then
-					m += 1
-					cT[m], cGen[m], cScore[m], cDoomed[m] = gid, ghost.gen, score(sim, id, weapon, gid, dist, ghost.gen), false
-				end
-			end
-		end
-	end
+	-- (ghosts, remembered structures not in sight, are for manual orders
+	-- only: the search never takes one, S-127)
 	local checkLof = sim.map ~= nil and directFire(weapon)
 	local first = 0
 	local fT, fGen, fScore, fDoomed = 0, 0, 0, false -- the best one, for the fallback
@@ -394,7 +387,13 @@ return function(sim: Types.Sim)
 			-- another target. When it dies, the search runs at once.
 			local o = sim.orders
 			local m = o.manual[id]
-			if m ~= nil then
+			-- (a remembered structure's ghost counts while the team remembers
+			-- it, even if the structure died unseen: S-127)
+			local ghost = if m ~= nil then (sim.sensors.ghosts[w.ally[id]] or {})[m] else nil
+			if m ~= nil and not World.isRef(w, m, o.manualGen[id]) and ghost ~= nil and ghost.gen == o.manualGen[id] then
+				forced, forcedGen = m, o.manualGen[id]
+				o.manualX[id], o.manualZ[id], o.manualBlind[id] = ghost.x, ghost.z, nil
+			elseif m ~= nil then
 				if World.isRef(w, m, o.manualGen[id]) then
 					forced, forcedGen = m, o.manualGen[id]
 					local kx, kz = Sensors.knownTarget(sim, w.ally[id], m, o.manualGen[id])
@@ -439,7 +438,7 @@ return function(sim: Types.Sim)
 				end
 			end
 
-			if forced and acceptable(sim, id, weapon, forced, 1, forcedGen) ~= nil then
+			if forced and acceptable(sim, id, weapon, forced, 1, forcedGen, true) ~= nil then
 				World.setTarget(w, key, forced, forcedGen) -- ordered: overrides fire states and search
 				continue
 			end

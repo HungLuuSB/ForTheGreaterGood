@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 29, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 30, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -470,7 +470,7 @@ return function(t: RunAll.Context)
 		local SK = Schema.SnapshotKind
 		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.HELLO, protocol = 0x0102, defsHash = 0x03040506 })), "01 02 01 06 05 04 03")
 		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.REJECT, protocol = 6, defsHash = 0x0A0B0C0D, reason = 2 })), "02 06 00 0d 0c 0b 0a 02")
-		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.WELCOME, tick = 0x01020304, player = 1, team = 2, allyTeam = 1, mapId = "ab" })), "03 04 03 02 01 01 02 01 02 61 62")
+		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.WELCOME, tick = 0x01020304, player = 1, team = 2, allyTeam = 1, mapId = "ab", teamAllies = { 1, 1, 2 } })), "03 04 03 02 01 01 02 01 02 61 62 03 01 01 02") -- (teams' ally teams since protocol 30, S-129)
 		local eco: Schema.Eco = {
 			team = 3,
 			supply = { stored = 1, storage = 2, income = 3, demand = 4, ratio = 5 },
@@ -597,8 +597,8 @@ return function(t: RunAll.Context)
 		local recs: { Schema.SnapshotRecord } = {
 			{ kind = SK.HELLO, protocol = 65535, defsHash = 4294967295 },
 			{ kind = SK.REJECT, protocol = 0, defsHash = 0, reason = 1 },
-			{ kind = SK.WELCOME, tick = 4294967295, player = 255, team = 8, allyTeam = 8, mapId = "skirmish:192" },
-			{ kind = SK.WELCOME, tick = 0, player = 1, team = 1, allyTeam = 1, mapId = "" },
+			{ kind = SK.WELCOME, tick = 4294967295, player = 255, team = 8, allyTeam = 8, mapId = "skirmish:192", teamAllies = { 1, 2, 1, 2, 3, 3, 4, 8 } },
+			{ kind = SK.WELCOME, tick = 0, player = 1, team = 1, allyTeam = 1, mapId = "", teamAllies = {} },
 		}
 		roundTrip(t, recs, Schema.encodeSnapshot, Schema.decodeSnapshot)
 		for _, r in recs do

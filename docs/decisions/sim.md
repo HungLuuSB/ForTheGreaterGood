@@ -1882,3 +1882,34 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Found by the client:** in request 57's repro, after the ordered tank died the Radiances took the Phalanx generator, then the Phalanx died. Weapons that can fire at radar contacts may target a remembered structure's ghost, alive or not (D101). Since S-113 Radiance is one, and its next beam called `hitscanHits` on the dead unit: `Weapons:106: attempt to index nil with 'radius'`. The whole server tick crashed.
 - **Fixed:** a hitscan or beam shot at a target that no longer exists is a miss at the believed spot (FIRE hit = false), like any miss.
 - **Test:** `Defenses.spec`: a Radiance with radar fires at a destroyed generator's ghost for 20 s without an error (the test fails without the fix).
+
+## S-127 — Units don't auto-target structure ghosts (the user) (2026-10-23)
+
+- **Asked:** "Make the unit not auto target ghost radar; a user can manually tell them to shoot at ghost radar, but by default they don't." Asked which contacts: **ghosts only** (remembered structures not in sight); radar blips stay as they were.
+- **Changed** (`Targeting`):
+  - The automatic search never takes a ghost, and a weapon's kept target is dropped once it becomes a ghost (an unseen remembered structure, alive or dead).
+  - An attack order's target or a manual target may still be one (`acceptable(..., manual)`).
+  - A manual target that is a ghost of a structure that died unseen stays valid while the team remembers it, at the ghost's spot; it was dropped as "dead" before.
+  - Radar contacts (blips) are unchanged: still targets for weapons that can fire at radar.
+- **Effect:** artillery and Radiance no longer shell remembered structures on their own; they do on an order. The AI gives no attack orders on structures, so its artillery fires only at what its team sees or tracks.
+- **Tests:** `Defenses.spec`:
+  - a Radiance never keeps or picks a living generator once it is only a ghost;
+  - at a destroyed generator's ghost it doesn't fire on its own, and on an attack order it fires, each shot a miss.
+  - `Air.spec`'s two ghost-bombing tests now order the bomber onto the ghost (it bombed ghosts on its own before).
+
+## S-128 — ASSIST a builder: help with what it builds (the user, playtesting) (2026-10-23)
+
+- **Asked:** any unit that can build can help build units and structures (not stockpiles), and the ASSIST command on a worker makes the assistant follow its leader and help with its building.
+- **Before:** helping a frame or a factory's production was already open to every mobile builder (REPAIR, or GUARD on the frame or factory; stockpiles were never assistable). GUARD on another builder only followed it.
+- **Built** (`Orders`, the guard order): a unit with build power guarding (ASSIST) a mobile builder:
+  - helps with what that builder is doing: its frame, or the factory production it is assisting (`Build.commandAssist`, which walks it into range);
+  - never follows the leader into repairs or stockpiles;
+  - when the leader's job ends, follows it again, and helps with the next one.
+- **Wire:** nothing new; ASSIST is the existing GUARD command on a builder.
+- **Tests:** `Orders.spec`: a Mason assisting another Mason builds its generator with it (finished in under 80% of the time alone), then follows it when it drives off.
+
+## S-129 — WELCOME lists every team's ally team (client request, after S-128) (2026-10-23)
+
+- **Asked:** the client knew only its own ally team, so in team games a right-click on an ally's unit sent ATTACK. With every team's ally team it treats allies as friends: right-click is GUARD / assist, and their health bars and minimap dots get friend colours.
+- **Built:** protocol 30. WELCOME ends with `teamCount u8, allyTeam u8 × teamCount`: team 1 first, 0 for a team not in the match. Decoded as `teamAllies`. Spectators get it too.
+- **Tests:** `Schema.spec` pins the new bytes; `NetOut.spec`: player 3's WELCOME in a 2v2 lists `{ 1, 2, 1, 2 }`.

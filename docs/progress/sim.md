@@ -6,7 +6,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 ## Summary (latest: the user's decisions and requests, 2026-10-23, branch `m-sim-2`)
 
-**Your decisions on the review items, your new requests (cheats, sizes, upgrades, anti-nukes) and the client's requests 45–50**, with a merge check between tasks. Protocol 26 → 29. Tests: 430 in 67 specs → 445 in 69 (fast), 6 → 7 slow; every merge passed fast, slow and build.
+**Your decisions on the review items, your new requests (cheats, sizes, upgrades, anti-nukes) and the client's requests 45–50**, with a merge check between tasks. Protocol 26 → 30. Tests: 430 in 67 specs → 445 in 69 (fast), 6 → 7 slow; every merge passed fast, slow and build.
 
 | Task | Result | Decision |
 |---|---|---|
@@ -22,6 +22,9 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 | Anti-nukes (your request, requests 46) | Providence / Cerberus (structures) and Custodian / Chimera (mobile, only while stopped). Cover by aim point, one interceptor per nuke, certain hit, a delay longer than a nuke's flight. They spot nukes anywhere. Radar SAMs shoot aircraft only and now one-shot T1 air | S-111 |
 | Item 8 balance pass | Locust +10% damage, Order heavy cannon +10%, Order radar SAM reload −10%, Falcon range +5%. 12 of 12 shared roles in band (was 10). Fighters, the Herald and the T2 tank Chaos condition still short: proposals below | S-112 |
 | Beams (requests 47, 49, 50) | Lingering beams (`beamDuration`). Radiance fires at blips (misses without Pinpointers) and is a 3 s hit-ray (`pierce`). Domes stop beams at the surface. Manual targets kept until STOP | S-113, S-115, S-116 |
+| Ally teams on the client (client request) | WELCOME lists every team's ally team (protocol 30) | S-129 |
+| ASSIST a builder (the user) | A builder guarding another builder helps with its frame or factory production, then follows it | S-128 |
+| No auto-fire at ghosts (the user) | Remembered structures not in sight are targets only on an order; a crash on dead ghosts fixed (S-126) | S-126, S-127 |
 | Manual target kept, unseen too (request 57) | It was lost when the team stopped seeing it; now the unit fires at its last known position while it lives, and searches at once when it dies | S-125 |
 | Commanders at footprint 2 (the user) | 10-stud mechs: footprint 2, build range 60; they still get around maps and AI bases (stuck 5 of 1,784 windows, against 11 at footprint 1) | S-124 |
 | Beam ends follow the domes (request 56) | Every tick a burning beam ends at the first up dome on its line: through a dropped one to the next, cut by one rising | S-123 |

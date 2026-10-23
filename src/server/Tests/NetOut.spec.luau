@@ -951,4 +951,13 @@ return function(t: RunAll.Context)
 		end
 		t.equal(gone, true, "DOME_GONE when the generator died")
 	end)
+
+	t.test("WELCOME lists every team's ally team (S-129, client request)", function()
+		local players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 }, { id = 3, team = 3, allyTeam = 1 }, { id = 4, team = 4, allyTeam = 2 } }
+		local sim = Sim.new({ seed = 15, players = players, mapId = "flat:64" })
+		NetOut.join(sim, 3)
+		local rec = Schema.decodeSnapshot(Packer.Reader.new(sim.net.players[3].welcome :: buffer))
+		t.equal(rec.allyTeam, 1)
+		t.deepEqual(rec.teamAllies, { 1, 2, 1, 2 }, "teams 1..4 and their ally teams")
+	end)
 end
