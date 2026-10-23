@@ -2197,3 +2197,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - a Carapace under 10 falls in about 20 s.
 - **Tests adjusted:** a breaching heavy shell slows by 13% (was over 15%; the smaller dome drains as the shell goes through); the SHIELD-record recharge test expects the slower rise.
 - No balance report run (the user's rule). The new numbers are placeholders like the rest.
+
+## S-151 — Interceptors steer at their target's start-of-tick state (B's question on S-149) (2026-10-24)
+
+- **Found by B:** Projectiles walks `proj` backwards with swap-removal. So an interceptor steered, and fused, against its missile's state either before or after the missile's own step that tick, depending on list order. The client always uses the start of the tick (net.md, C-57), and B's spec saw up to ~1 stud of drift in the last ticks.
+- **Changed:** before the loop, the Projectiles system snapshots the position and velocity of every projectile an interceptor chases. Interceptor steering (PN or the vertical climb) and the interceptor's proximity fuse read that snapshot. Anti-nukes and point defence both, now independent of step order.
+- **Results** unchanged in the specs: point defence 16 / 56 rockets and 14 / 14 missiles; nuke tests pass.
