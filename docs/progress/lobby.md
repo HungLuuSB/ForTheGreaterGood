@@ -44,8 +44,8 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 6. **Start positions:** the lobby orders players so the sim's player ID is the start index (Teams: ally teams together). So sim request 64 (chosen starts) isn't needed for version 1. BAR's start boxes or chosen starts could come later.
 7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
 8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
-9. **Where the config validator lives (A-2):** sim-A agreed it can move to `src/shared/Match/MatchConfig.luau` so the match server uses the same checks, and offered me that file. Your brief says I never edit `src/shared`, so I declined. Either sim-A moves it (my copy then goes), or it stays in `src/lobby`. Which?
-10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. I asked sim-A to add `lune run src/lobby/tools/test`; until then I run them before every "Ready to merge" line.
+9. **Where the config validator lives (A-2):** sim-A agreed it can move to `src/shared/Match/MatchConfig.luau` so the match server uses the same checks, and offered me that file. Your brief says I never edit `src/shared`, so I declined. Either sim-A moves it (it's ready to: validate and validateResult into `src/shared/Match/MatchConfig.luau`, the spec under `src/server/Tests`; I then switch my require and drop my copy), or it stays in `src/lobby`. Which?
+10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. sim-A agreed to add `lune run src/lobby/tools/test` (a failure blocks the push) once its running merges finish; until then I run them before every "Ready to merge" line.
 
 ## Requests
 
