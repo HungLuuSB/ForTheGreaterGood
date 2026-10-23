@@ -499,6 +499,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `14d7b46` (with `b515382`: structure redesign pairs 8–11, radar towers and IR SAM sites at fp 1, airfields and shipyards at fp 5, with wrecks, back to review; new converter meshes (review); new airfield anchors, shipyard nanos on their moving pieces, rig.md 8; `assets/`, manifest, `place/` and docs).
 - Ready to merge: `813e5cd` (new meshes for the blockout-only T1 structures: tidal generators, sonar buoys, jammer towers, torpedo launchers, floating turrets, rearm pads, with wrecks, review; `assets/`, manifest, `place/` and docs). With it, every T1 def has a mesh.
 - Ready to merge: `a7d0c1d` (the user approved every T1 structure mesh and its wreck: manifest flipped to approved; `src/shared/Defs/Meshes/`, tools and docs only).
+- Ready to merge: `12009ea` (T2 air workers Zenith / Condor and ASW helicopters Tidewatch / Leech into the manifest as review; `assets/`, `src/shared/Defs/Meshes/`, `place/` and docs).
 
 ## Requests
 
