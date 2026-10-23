@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, builders assist builders)
+
+- **Builders assist other builders (sim-A's S-128, merging):** give a builder Guard (G, or the card's Guard button) on another builder, and it helps build whatever that one builds, following it in between. Right-clicking your own builder does the same. Nothing changed on the client; it already sends that order.
+- **Allied builders:** use G. Right-click on an ally attacks, because the client doesn't know other teams' alliances.
+
 ## Summary (2026-10-23, manual targets fixed; crash fixed; ghosts)
 
 - **Merged sim-A's S-124 / S-125 / S-126.**
