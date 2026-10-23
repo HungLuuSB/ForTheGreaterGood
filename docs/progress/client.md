@@ -15,6 +15,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `65673ae` (C-156: animated pieces run by state)
 - **Selection panel like BAR (C-157):** with several units selected, click a type tile to keep it, Shift-click to drop it, Ctrl-click for every one of that type on screen.
 - **Idle indicators (C-158):** idle builder and factory counts beside the resource bar, **I** jumps to the next idle builder (the camera follows), an IDLE tag over each. For now only what's in view counts: sim request 62 asks the server for a proper idle signal.
+- Ready to merge: `946b6a7` (C-157, C-158: selection tiles, idle indicators)
 
 ## Summary (2026-10-23, factories show what they build)
 
