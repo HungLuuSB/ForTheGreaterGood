@@ -4,6 +4,14 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, beams stop at the next dome; manual target issues)
+
+- **S-123 merged and checked:** two Radiances on a tank behind two overlapping domes. When the front dome drops, the beams stop at the second dome's surface instead of going through, with their glancing legs (`debug_out/screens/two_domes_beam.jpg`). The case of a dome rising across a beam was tested by sim-A; I didn't stage it in Studio.
+- **Manual targeting (sim request 57):** two problems, both sim side:
+  - an ordered target is dropped for a dome generator after a couple of blocked shots, while it still lives;
+  - your note: when the chosen unit dies, it should go back to auto-targeting.
+- **Mech meshes v2** (heroic, ~10 studs) are on m-models at review, next to merge.
+
 ## Summary (2026-10-23, domes without vision live; bigger mechs)
 
 - **Shield domes without vision (C-145 + sim-A's S-122): live and checked in Studio.** An enemy Carapace out of your sight shows its dome, honeycomb shell and core, with no unit revealed (`debug_out/screens/unseen_dome.jpg`).
@@ -1796,7 +1804,9 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-56. **Built (S-123, integrating).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
+57. **Open (sent 2026-10-23).** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
+
+56. **Done (S-123, main 3860e72; checked in Studio).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
 
 55. **Done (S-122, on main f3334c7; client C-145; checked in Studio).** **Shield domes render regardless of vision (the user, as in BAR):** send dome state (centre, radius, charge, flags) for enemy domes touching the camera area, whatever the team sees, without revealing the generator; the client draws domes from it.
 
