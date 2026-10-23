@@ -1745,98 +1745,19 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Needs my review
 
-- **Shield hit look (C-117):** ripple brightness (LightEmission 0.3) and hex size (4.5 studs, 19–37 plates a hit); `debug_out/screens/shield_hex_bigger.jpg`.
+Cleaned up on 2026-10-23: you approved the current values of everything listed up to C-130 (shield hit look, wrecks, towers, beam timing, command sets, build menu, UI kit, glow, environment, lighting, settings, hotkeys, camera, effects). Those entries are gone. What's left are real open questions.
 
-- **Wreck meshes (C-115):** `debug_out/screens/wrecks_meshed.jpg` (review wrecks forced on). Approve them for game (models-C marks each `wreck` approved), and say if they're too dark under the night lighting.
-
-- **S-96 tower meshes (models-C):** Radiance, Inferno, Lumen, Hailstorm are "review" in the manifest; approve them (models-C flips the status) to see them in game. Their glow dims when a beam tower retracts (C-114).
-
-- **Beam towers (C-112):** `debug_out/screens/beam_*.jpg`. Your calls:
-  - **The beam's width, colors and 0.45 s hold.**
-  - **The retract timing** (1.5 s).
-
-- **Per-unit commands and top strip (C-109):** `debug_out/screens/hud_topstrip.jpg`. Your calls:
-  - **Each type's command list** (`Core/CommandSet`).
-  - **The minimap under Roblox's corner:** it can't go higher without being covered by Roblox's menu button.
-
-- **Build menu (C-107):** `debug_out/screens/buildmenu_*.jpg`. Your calls:
-  - **Portrait angle and size:** 66 px tiles, 4 per row (`UI/Portrait`, `UI/BuildMenu`).
-  - **What the tooltip lists.**
-
-- **Review follow-ups (C-106):** `debug_out/screens/uikit2_*.jpg`. Your calls:
-  - **Scrim darkness** (45%, `Kit.COLOR.scrimTransparency`).
-  - **The six Combat charts** (Units · Alive is derived).
-
-- **UI kit, settings, statistics, lobby (C-105):** `debug_out/screens/uikit_*.jpg`. Your calls:
-  - **The kit's look:** amber accent, Montserrat, 85% panels, the stripe strength (`UI/Kit`).
-  - **The statistics pages and charts:** which charts, their size.
-  - **Audio page:** stays a placeholder until there's sound.
-
-- **Glow pass and BAR models in game (C-103):** `debug_out/screens/glowfx_*.jpg`. Your calls:
-  - **Strengths:** the stall floor (0.3), the factory pulse (1.5–4 at 1 Hz) and the weapon flash (6, 0.3 s) (`Core/Glow`).
-  - **Headlights:** brightness, range and cone, 12 at High, always on at night (`Render/Glow`).
-  - **Which models C should approve next:** Oracle, Watcher and the Order vehicle plant.
-
-- **Environment and colour grade (C-102):** `debug_out/screens/environment_*.jpg`. Your calls:
-  - **The grade:** teal strength, contrast, the vignette (night 0.55), and how much it eases off at strategic zoom (`Core/Grade`, `Render/Atmosphere` `night`).
-  - **The blast flash** strength (`Grade.FLASH`, `FLASH_LOOK`).
-  - **The grey fog:** explored 80 at 38%, never 56 at 70% (`Core/FogBlanket.LOOK`).
-  - **Dust and mist** amount, and the dark ground beyond the map.
-
-- **Night lighting (C-101):** `debug_out/screens/lighting_*.jpg`. Your calls:
-  - **How dark:** brightness and exposure (`Render/Atmosphere`, `night`), bright enough to read units today.
-  - **The cool tint** and the desaturation.
-  - **The lighter explored fog** (grey 40 at 40%).
-  - **Technology = Realistic** in the place (only you can set it; it replaced Future).
-
-- **ShieldFx look (C-90):** `debug_out/screens/shieldfx_*.jpg`. Your calls:
-  - **Dome look:** a tinted ball with an edge ring, not the ForceField material (it read grey in the C-87 tests).
-  - **Placeholder shapes and timings:** 9 rings, a 5 s ring trip, flicker below 30%.
-  - **Generators:** the two placeholder designs.
-  - **Strategic detail:** domes switch at 480 studs from the camera.
-
-- **Shield prototype (C-87):** the look, in `debug_out/screens/c87_shield_*.jpg`. Your calls:
-  - ~~Clean hexagons~~: done, you turned on EditableMesh (C-88).
-  - **Placeholder tuning:** field band 50 studs, full force at 50%, rise at 25%, 0.04 charge per unit of mass, recharge 0.05/s.
-  - **Still open for sim-A:** harmless or live bounced shells, a Chaos version, vehicle or structure.
-
-- **Sound plan:** `docs/SOUND_PLAN.md` lists every sound the game needs (the defs' `fx.sound` keys, impacts, units, alerts, UI, ambience) with candidate Creator Store audio IDs; ProSoundEffects entries preferred, ripped uploads marked "don't use". Nothing inserted: pick the IDs.
-
-- **Atmosphere options (C-83):** Current (default), Clear day, Battlefield haze, Dusk, in the settings menu; table with screenshots and frame cost under "atmosphere presets (C-83)" above. Values in `src/client/Render/Atmosphere.luau`. Pick one as the default, or none.
-
-- **Settings defaults (C-81):** pan speed 1.1, zoom step 1.15, edge scroll on in live games (off in Studio), quality High (60 explosions, 100 tracers, 150 projectiles, 12 lights, 24 copies, full animation within 300 studs), Medium and Low below it, fog lights off, UI scale 1.0. In `src/client/Core/Settings.luau`; the key O opens it.
-- **UI placement (C-76, C-79, C-81):** the unit panel is 460 px wide (the build grid shows 2 rows), the command card right of it; the replay bar bottom centre with the replay / spectator banner under the resource bar; "Settings (O)" above the follow button bottom right; lobby and settings panels centred.
-
-- **Camera pitch range (C-69):** Alt + scroll, 35°–80° in 4° steps, starting at 55°; the detailed area stops at 1.8 camera distances (`Camera.MIN_PITCH`, `MAX_PITCH`, `PITCH_STEP`, `RECT_CAP` in `src/client/Camera.luau`).
-
-- **Hotkey layout (C-68):** commands M move, F fight, A attack, Z patrol, G guard, S stop; L fire state, K move state; Y repeat, U on/off, X cancel; J last alert; B build menu (again: next tab), then 1..0 pick (Shift: 5 in a factory, right click drops one). P (patrol in BAR) stays the Studio pause key. In `src/client/Input/Controls.luau` and `UI/BuildMenu.luau`.
-- **UI placement (C-71, BAR layout):** minimap top left (280 px), build grid under it (5 x 52-px tiles, 3 rows then scrolling), unit panel bottom left, command card next to it (5 columns, state bars), resource bar top center, alerts under it, F3 readout top right, follow button bottom right. Sized for Studio's small viewport; a UI session can scale it.
-
-- **Unit icons (C-74):** the user's icon set, 22 px wide for T1 (×1.15 T2, ×1.3 T3, ×1.35 the Command Vehicle), selected lightened 55% toward white, ghosts 45%. `Icons.BASE` in `src/client/Core/Icons.luau`, the selection tint in `UI/Glyph.luau`. Hard pairs at that size: Bomber / Strategic Bomber, Main Battle Tank / MLRS, Airfield / Rearm Pad, Gun Turret / Floating Turret (C-74).
-
-- **Arc preview and radar tracks look (C-58):** dashed orange arc, red blast ring, label at the cursor (`src/client/Render/AttackPreview.luau`); green track lines (red for enemy radars on your nuke) in `Render/MissileView.luau`.
-
-- **Nuke look (C-57):** missile 4.5× an IR one; detonation flash, fireball, stem and cap (6–10 s), shockwave ring to ~3× the blast, 240-stud scorch; screen flash 1.2 s; warning banner and rings in red. Values in `src/client/Render/Vfx.luau` (`NUKE`), `Render/Effects.luau` (`smoke_huge`) and `Render/NukeWarning.luau`.
-
-- **Enemy defense rings (C-41):** dark red / violet, 0.5 studs wide, in `src/client/Render/RangeOverlay.luau`.
-
-- **Missile look (C-40):** size 4.4 × 0.8 studs (1.3× for radar SAMs), smoke 1.1 s (1.8 s), 1 → 5 studs wide, exhaust light range 10. Values at the top of the missile section in `src/client/Render/Effects.luau`.
-- **Missile sensor view look (C-39):** colors, sizes and label text in `src/client/Render/MissileView.luau` and `Core/MissileView.luau`; path length 1 s, at most 12 missiles, marks 2.5 s.
-
-- **Camera feel:** pitch 55 degrees, zoom 30-900 studs (wheel x1.15), pan speed 1.1 screen heights/s, rotation Q/E limited to +-45 degrees, edge scroll off in Studio. Values in `src/client/Camera.luau`.
-- **Controls (C-13, answered: C-21):** BAR style now: arrow keys, edge scroll (live), middle-drag, S stop, V range rings, A attack (C-57; W, D still free). Earlier: WASD / arrows pan, middle-drag pan, wheel zoom, Q/E rotate; left click / drag select (Shift add, Ctrl toggle), double-click same type, right click smart order, right-drag line move, Shift queue, Ctrl+1..9 / 1..9 groups (double tap jumps), X stop, F3 debug readout. S can't be stop (camera pan).
-- **Visual style:** blockout Lancer (low, light grey, blue glass) and Ravager (tall dark iron, rust, orange visor); faction palettes in `Blockouts/Blockout.luau`; team colors (blue, red, ...) in `Render/TeamColors.luau`; ground as a green 64-stud checkerboard. See `debug_out/screens/task4_brawl_topdown.png`.
-- **UI layout (placeholder):** resource bar top center (440 x 48), minimap bottom left (200 px), F3 debug readout top left below the Roblox buttons; all labelled as placeholders.
-- **Build ghost:** B cycles the selected builder's options as a stand-in for the build menu; Shift both queues and keeps placing (BAR style); the facing doesn't change square footprints but turns the model.
-- **Effects look:** shells as small glowing slugs, impact and death flashes in orange with a particle puff, white tracers, muzzle flashes; colors and sizes in `src/client/Render/Effects.luau`.
-- **Strategic zoom:** switches at 480 studs (back at 420); icon shapes and sizes in `src/client/Core/Icons.luau` and `Render/IconLayer.luau`. Answered: keep sending the camera (C-17).
-- **Health and build bars (C-24):** 4 px health bar, 3 px light-blue build bar under it, 18–90 px wide, over the unit; shown for selected, damaged and unfinished units only. Sizes and colors in `src/client/Render/HealthBars.luau` and `Core/Bars.luau`.
-- **Terrain colors and materials (C-28):** Roblox Grass on open ground, Rock where steeper than ~50°, Sand on shores and under water, default Terrain water color; no custom material colors (that would change the place's Terrain settings). Rules in `src/client/Core/Terrain.luau` (`STEEP`, `SHORE`), materials in `Render/Terrain.luau`.
-- **Juggernaut's animation feel (C-30, C-33):** arms hang at -65°, rise at the server's 80°/s, hold 3 s after the target is gone, recoil 0.8 stud in turn; the timing is the server's (S-20, `chs_juggernaut_cannon`), the recoil and model are the client's (`src/client/Core/PieceScripts/chs_juggernaut.luau`, `src/shared/Defs/Blockouts/chs_juggernaut.luau`).
-- **Aircraft and naval look (C-31):** jet bank up to 60°, helicopter bank 20° and nose-down 12°, rotor 4 turns a second; ships 0.8 stud into the water, own submarines 2.5 studs under it; sonar contacts as hollow rings. Values in `src/client/Core/Attitude.luau` and `Core/PieceScripts/Default.luau`.
-- **How fog of war looks (C-32):** near (≤ 330 studs): darkened scene (ColorCorrection, Lighting brightness 0.6, darker ambient) with a point light per 32-stud cell (brightness 1.4, range 40, 12 studs up, 0.4 s fade); the light grid shows as a soft checker. Far: dark plates (8, 10, 18) at transparency 0.4 over unseen ground, faint seams. Radar contacts as pulsing team-colored discs, sonar contacts larger and paler; ghosts glowing blue-grey at 0.7 transparency. Values in `src/client/Render/FogOfWar.luau` and `Render/Contacts.luau`.
-- **Deaths and wrecks (C-34):** shake 0.4 s; flung pieces 1 s, up to ~7–11 studs; wrecks charred (75 % to dark brown-black, corroded metal), turrets askew, tilted and sunk a little. Values in `src/client/Core/Deaths.luau` and `Render/Deaths.luau`.
-- **Order feedback look:** green selection discs under units, order lines colored by kind (move green, attack red, guard blue, repair yellow, fight orange, patrol light blue), a fading disc where an order lands.
+- **Models still at "review"** (the game draws the blockout or placeholder until models-C flips them; preview with `FtggClientDebug:Invoke("shellanyway", true)` and so on):
+  - the shield shell's honeycomb bands (C-138);
+  - the Commander mechs v3 (`ord_sovereign`, `chs_warlord`; M-33, on main);
+  - the extractors at footprint 2 (and their wrecks);
+  - on m-models, not merged here yet: the T1 structure redesigns, pairs 2–7 (generators, solar, wind, depots, Bulwark / Spike, vehicle plants).
+- **Sound IDs:** `docs/SOUND_PLAN.md` lists candidate Creator Store audio for every sound. Nothing is inserted until you pick.
+- **Lighting technology:** set `Lighting.Technology` to Realistic in the place (a place setting scripts can't change).
+- **New since C-130, for a look in your playtest:**
+  - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
+  - The Canyon's desert colours and daylight (C-153, C-155): `debug_out/screens/c155_canyon_day_*.jpg`;
+  - radar blips circling 1.5 studs out (C-154).
 
 ## Requests for the models session
 
