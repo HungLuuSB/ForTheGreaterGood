@@ -15,6 +15,7 @@ local World = require("./World")
 local NetIn = {}
 
 local EK = Schema.EventKind
+local SF = Schema.StrategicFlag
 
 -- Sim tick of a message from its wire tick; also advances world.latestTick.
 local function stamp(world: World.World, wireTick: number, now: number): number
@@ -305,12 +306,21 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 		end
 		local x, z = g:decode(r.cell, 128, 128)
 		local old = before[r.unitId] or u
+		-- own, allied and seen units keep their type and their last tactical
+		-- detail out of the camera area (C-161): still drawn, selectable and
+		-- buildable from; and their exact spot while they stay in its cell
+		-- (a strategic record carries only the cell)
+		local typed = r.icon > 0 and bit32.band(r.flags, SF.RADAR_ONLY + SF.SONAR_ONLY + SF.GHOST) == 0
+		local keep = if typed and old and old.defIndex == r.icon then old else nil
+		if keep and g:encode(keep.x, keep.z) == r.cell then
+			x, z = keep.x, keep.z
+		end
 		local movedTick = if old == nil then nil elseif old.x ~= x or old.z ~= z then tick else old.movedTick
 		world.units[r.unitId] = {
 			id = r.unitId,
 			tier = "strategic",
 			team = r.team,
-			defIndex = nil,
+			defIndex = if typed then r.icon else nil,
 			icon = r.icon,
 			flags = r.flags,
 			x = x,
@@ -319,16 +329,24 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			sz = if old and old.tier ~= "tactical" then old.sz else nil,
 			gx = if old and old.tier ~= "tactical" then old.gx else nil,
 			gz = if old and old.tier ~= "tactical" then old.gz else nil,
-			alt = 0,
-			heading = 0,
+			alt = if keep then keep.alt else 0,
+			heading = if keep then keep.heading else 0,
 			snaps = {},
 			lastTick = tick,
 			movedTick = movedTick,
-			health = nil,
-			build = nil,
-			state = 0,
+			health = if keep then keep.health else nil,
+			shownHealth = if keep then keep.shownHealth else nil,
+			build = if keep then keep.build else nil,
+			state = if keep then keep.state else 0,
 			weapon = 0,
-			aim = {},
+			aim = if keep then keep.aim else {},
+			queue = if keep then keep.queue else nil,
+			queueProgress = if keep then keep.queueProgress else nil,
+			fireState = if keep then keep.fireState else nil,
+			moveState = if keep then keep.moveState else nil,
+			ammo = if keep then keep.ammo else nil,
+			maxAmmo = if keep then keep.maxAmmo else nil,
+			stock = if keep then keep.stock else nil,
 		}
 	end
 end

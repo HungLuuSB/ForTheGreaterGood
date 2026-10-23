@@ -1337,3 +1337,17 @@ Spec: SelectionTiles.spec. Screen: `c157_selection_tiles.jpg` (2 Masons and 3 La
 - The Warlord runs the same script on the same piece names.
 
 **Why:** the user's queue item 7: "Commander walk animation once C's version-3 mechs merge". The mechs stay at "review" until the user approves them through models-C.
+
+### C-161 — Own and seen units stay drawn and selectable out of the camera area (2026-10-23)
+
+**Decision:**
+- **Strategic records keep their type:** a record whose icon is a type (own, allied or seen; not radar, sonar or ghost) gets that type as its `defIndex`, since the icon is the def index (Shared/Net/Icons).
+- **And the last tactical detail:** a unit that was tactical keeps heading, altitude, health, build, state, aim, queue, fire / move state, ammo and stock. It keeps its exact spot while the server's cell still holds it, so buildings and parked units don't shift.
+- **UnitRenderer draws them:** at their gliding spot (C-151) with the last heading. Aircraft in the air are left to the icons.
+- **No pop:** a unit leaving the camera area keeps its model, and on ENTER the same model carries on.
+- **Panels:** a selected unit far away keeps its unit panel, build menu and command card, so you can keep giving a Mason build orders anywhere.
+- Checked in Studio (`build` profile): 7 models before, while the camera was 800 studs away and after; all 7 the same instances on return. The Commander's panel and build menu stayed with the camera away. Spec: OffCamera.spec. Screen: `c161_panel_off_camera.jpg`.
+
+**Limit:** off camera the server sends only cell, type and flags. So a far unit's health and a far frame's build progress show their last values until the camera comes back. Fixing that would need the server to send own units in full there (sim-side, a bandwidth question).
+
+**Why:** the user: "I really dislike the way the map re-render when my camera go away and back, also I don't want my unit to be de-render when out of view. I was selecting targets for my mason to build far away and I move out of the view of it, the panel gone ?"

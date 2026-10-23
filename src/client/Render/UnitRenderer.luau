@@ -1,6 +1,8 @@
 --!strict
 -- Draws tactical units (guide 15.1–15.2): one pooled model per tactical
--- unit, placed at its interpolated position with one BulkMoveTo per frame.
+-- unit, placed at its interpolated position with one BulkMoveTo per frame;
+-- own, allied and seen units out of the camera area stay drawn at their
+-- strategic spot (C-161).
 -- Pieces move through their Motor6D.Transform, driven by piece scripts
 -- (Core/PieceAnim, guide 14: visual only, the server decides when weapons
 -- fire); each unit's LOD comes from its distance to the camera. Aircraft
@@ -16,6 +18,7 @@ local Interp = require("../Core/Interp")
 local PieceAnim = require("../Core/PieceAnim")
 local PieceScripts = require("../Core/PieceScripts/Registry")
 local World = require("../Core/World")
+local Schema = require("@shared/Net/Schema")
 local Glow = require("./Glow")
 local ModelPool = require("./ModelPool")
 local RenderDeaths = require("./Deaths")
@@ -73,6 +76,21 @@ export type Renderer = {
 
 function UnitRenderer.new(anim: PieceAnim.Sched): Renderer
 	return { drawn = {}, dying = {}, parts = {}, frames = {}, anim = anim, deaths = RenderDeaths.new() }
+end
+
+-- Drawn as a model: tactical units, and out of the camera area (strategic
+-- records) own, allied and seen units whose type is known, so they stay
+-- drawn instead of dropping out and popping back (C-161). Not aircraft in
+-- the air there: their height isn't known (the icons show them).
+function UnitRenderer.drawable(world: World.World, u: World.Unit): boolean
+	if u.tier == "tactical" then
+		return true
+	end
+	local def = World.def(world, u)
+	if def == nil then
+		return false
+	end
+	return def.domain ~= "air" or bit32.band(u.state or 0, Schema.UnitState.LANDED) ~= 0
 end
 
 local function show(r: Renderer, world: World.World, id: number)
@@ -161,14 +179,26 @@ end
 -- each unit's animation LOD.
 function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: number, hidden: boolean?, camera: Vector3?, speed: number?)
 	for _, id in world.entered do
-		hide(r, id) -- an ID can come back after a LEAVE; start clean
-		show(r, world, id)
+		local d, u = r.drawn[id], world.units[id]
+		if d == nil or u == nil or d.def ~= World.def(world, u) then
+			hide(r, id) -- an ID can come back after a LEAVE as another unit; start clean
+			show(r, world, id)
+		end -- else: drawn out of the camera area all along; keep the model (C-161)
 	end
 	table.clear(world.entered)
 	for _, id in world.left do
-		hide(r, id)
+		local u = world.units[id]
+		if u == nil or not UnitRenderer.drawable(world, u) then
+			hide(r, id)
+		end
 	end
 	table.clear(world.left)
+	-- strategic records that can be drawn (C-161): a model for each
+	for id, u in world.units do
+		if r.drawn[id] == nil and u.tier ~= "tactical" and UnitRenderer.drawable(world, u) then
+			show(r, world, id)
+		end
+	end
 	for _, death in world.died do
 		-- the model stays where it was drawn until the render clock reaches the death
 		local d = r.drawn[death.id]
@@ -214,11 +244,17 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 	table.clear(frames)
 	for id, d in r.drawn do
 		local u = world.units[id]
-		if u == nil or u.tier ~= "tactical" then
+		if u == nil or not UnitRenderer.drawable(world, u) or d.def ~= World.def(world, u) then
 			hide(r, id)
 			continue
 		end
-		local x, z, alt, heading = Interp.sample(u, t)
+		local x, z, alt, heading
+		if u.tier == "tactical" then
+			x, z, alt, heading = Interp.sample(u, t)
+		else
+			-- out of the camera area: the record's spot (gliding, C-151), last heading
+			x, z, alt, heading = u.sx or u.x, u.sz or u.z, 0, u.heading
+		end
 		local y = World.groundY(world, x, z, d.floats) + alt
 		if d.floats then
 			y += Attitude.waterOffset(d.def, u.state or 0, d.hullHeight)

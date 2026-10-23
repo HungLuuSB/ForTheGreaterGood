@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, nothing pops when the camera moves)
+
+- **Your units and buildings stay drawn when the camera leaves (C-161):** no more re-rendering when you pan away and back; the same models carry on. A selected Mason far away keeps its unit panel, build menu and command card, so you can keep queueing builds for it. Checked in Studio.
+- Off camera, a unit's health and a far building's progress show their last values until you look again (the server sends little there).
+
 ## Summary (2026-10-23, your queue while away)
 
 Queue status, item by item (details below and in the decisions log):
