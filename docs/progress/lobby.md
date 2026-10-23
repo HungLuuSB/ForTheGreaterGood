@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `287b99e` (match contract: a finished result may have no winner when every human is out; validator, specs, results panel)
 - Ready to merge: `fb34ced` (lobby UI, background scene, `docs/contracts/match.md`, lobby decisions and progress; nothing outside `src/lobby`, `lobby.project.json` and the lobby docs)
 
 ## Connecting Studio
@@ -45,6 +46,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
 8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
 9. **Where the config validator lives (A-2):** sim-A agreed it can move to `src/shared/Match/MatchConfig.luau` so the match server uses the same checks, and offered me that file. Your brief says I never edit `src/shared`, so I declined. Either sim-A moves it (it's ready to: validate and validateResult into `src/shared/Match/MatchConfig.luau`, the spec under `src/server/Tests`; I then switch my require and drop my copy), or it stays in `src/lobby`. Which?
+11. **Loading-screen art:** client-B's match loading screen uses a dark gradient where BAR has key art. The lobby's own screen draws over the live 3D battle instead. A shared key-art image (a render from models-C, uploaded with your OK) would make both screens match. Want one?
 10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. sim-A agreed to add `lune run src/lobby/tools/test` (a failure blocks the push) once its running merges finish; until then I run them before every "Ready to merge" line.
 
 ## Requests
