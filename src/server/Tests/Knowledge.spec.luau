@@ -63,7 +63,7 @@ return function(t: RunAll.Context)
 				continue -- the first sensor pass
 			end
 			t.equal(Sensors.level(sim, 2, tank), L.RADAR, "the tank is only a radar contact")
-			local kx, kz = Sensors.knownPosition(sim, 2, tank)
+			local kx, kz = Sensors.knownPosition(sim, 2, tank, true)
 			if math.sqrt(((kx :: number) - w.posX[mortar]) ^ 2 + ((kz :: number) - w.posZ[mortar]) ^ 2) <= range + radius then
 				inRangeTicks += 1
 			end

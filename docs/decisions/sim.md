@@ -1929,3 +1929,19 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `EW.spec` (hysteresis): the far Wasp's bearing moved so the two orbits keep swapping which one looks closer.
   - `Skirmish.spec`: seed 1's Order now falls at 10.3 min without a wave, so the loser-attacks bar moves from 10 to 11 min.
 - **Guide 11.4:** updated.
+
+## S-131 — Drawn blips orbit at 1.5 studs; the radar error moves to a hidden aim point (client request 60, the user) (2026-10-23)
+
+- **Asked:** after checking S-130 in Studio, the user said "that radius is huge, in BAR, just 1-2 studs". They chose:
+  - a drawn (sent) blip that orbits about 1.5 studs from the real unit;
+  - radar-fired weapons that aim at a separate hidden point at the radar error, so they miss as before.
+- **Built:**
+  - `Sensors.blipOffset` is the drawn orbit: radius `Sensors.BLIP_ORBIT` = 1.5, or the radar error if smaller. It uses the same 90-tick turn and a salted (unit, observer) hash, so its phase and direction are its own.
+  - `Sensors.wobble` stays the aim orbit at the radar error or track error, scaled by Pinpointers. It is exactly S-130's orbit, so aiming is unchanged.
+  - `knownPosition(sim, team, id)` returns the drawn blip. NetOut and the player view use it.
+  - `knownPosition(..., true)` and `knownTarget` return the aim point. Targeting, Weapons, Air, Orders, Commands and the skirmish AI use them.
+- **Relaxes guide 11.4's "never the true position":** the sent position is now within 1.5 studs of the true one. The user accepted that. The aim point is never sent. Guide 11.4, 11.2 (Pinpointers), 10 (net tiers) and the bomber line are updated, and D67's wobble line points here.
+- **Tests:**
+  - `Fog.spec` (new test): the drawn blip stays at BLIP_ORBIT, repeats every 90 ticks, is never wider than the radar error, and comes 10 or more studs from the aim point.
+  - `Air`, `EW`, `Knowledge`, `Pinpoint` and `Tracking` specs now measure the aim point (`knownPosition(..., true)`).
+  - `NetOut.spec`, homing drift: the worst uncorrected torpedo drift fell from over 40 to 36.6 studs, because the sonar blips the client sees now sit on the subs. The bar is now 30. Corrections still cut it 3.5× (to 10.5).
