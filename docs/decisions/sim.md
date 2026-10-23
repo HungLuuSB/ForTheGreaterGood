@@ -2034,3 +2034,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - It produces nothing and spends nothing until finished: the builders loop skips unfinished factories, and assistants build the frame. It starts on the queue the tick it's finished.
   - **CANCEL:** while a factory's queue isn't empty, CANCEL drops queue items (`value` 1-based, 0 = all) and leaves the frame. A CANCEL with an empty queue cancels the frame as before (S-35). So on a frame with a queue, the first CANCEL 0 clears the queue and the second removes the frame. net.md section 9 says so.
 - **Tests:** `Build.spec`: a Vehicle Plant frame takes three items, and CANCEL 3 drops one. No progress or PRODUCED before it's finished; it starts at once after. A second frame's first CANCEL 0 clears its queue and the second removes it.
+- **Revised the same day (fairness):** the first fix (slide along the leaning axis by at least half a step, speed kept) made the mirrored-map fairness test fail (west 2, east 10 of 12). Over 36 matches: west 9, east 27; main had 15 / 21.
+  - Varying `SLIDE_MIN` (0.3–1.0) moved the split around but kept it tilted east. The cause in that rule wasn't found.
+  - The fix is now smaller: the old slide (x first, then z, the step along the heading) stays, and a sliding unit's speed no longer decays below `SLIDE_MIN` (0.5) of its top speed. It used to halve every tick.
+  - Results: crawl test passes; seed 43's Mason starts at 0.89 min; fairness 6 / 6 of 12, and 17 / 19 over seeds 1–18.
