@@ -39,6 +39,7 @@ local bor, band, bnot = bit32.bor, bit32.band, bit32.bnot
 local TOGGLED_ON = World.State.TOGGLED_ON
 local LINE = Schema.CmdFlag.LINE
 local QUEUE = Schema.CmdFlag.QUEUE
+local GROUP = Schema.CmdFlag.GROUP
 
 local Commands = {}
 Commands.UNITS_PER_TICK = 200 -- unit IDs per player per tick (S-100)
@@ -79,7 +80,7 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 		lx, lz = g:decode(cell2, cmd.offX2 :: number, cmd.offZ2 :: number)
 	end
 	local kind = KIND_OF[cmd.cmdType] :: any
-	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz }, band(cmd.flags, QUEUE) ~= 0)
+	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz, group = band(cmd.flags, GROUP) ~= 0 }, band(cmd.flags, QUEUE) ~= 0)
 end
 
 -- ATTACK / GUARD / REPAIR / RECLAIM: an order on a target. ATTACK needs a

@@ -78,6 +78,7 @@ export type OrderSpec = {
 	gen: number?,
 	defIndex: number?,
 	facing: number?,
+	group: boolean?, -- move-like: keep together at the slowest unit's speed (S-137)
 }
 
 local function def(sim: Types.Sim, id: number): Defs.UnitDef
@@ -121,6 +122,17 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 	local o = sim.orders
 	local batch = o.nextBatch
 	o.nextBatch += 1
+	-- a group move (ctrl, S-137): every ground unit goes at the slowest one's
+	-- top speed, so the group keeps together (aircraft fly as usual)
+	local speedCap: number? = nil
+	if spec.group and sim.nav and isMoveLike(spec.kind) then
+		for _, id in ids do
+			local p = sim.nav.profiles[sim.world.defIndex[id]]
+			if p and not p.air and def(sim, id).domain ~= "structure" then
+				speedCap = math.min(speedCap or math.huge, p.maxSpeed)
+			end
+		end
+	end
 	for _, id in ids do
 		o.anchorX[id], o.anchorZ[id] = nil, nil -- re-anchored where this leaves it (S-34)
 		Air.release(sim, id) -- a docked aircraft launches (S-36)
@@ -162,6 +174,7 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 			started = false,
 			nav = 0,
 			issued = -math.huge,
+			speedCap = speedCap,
 		})
 	end
 end

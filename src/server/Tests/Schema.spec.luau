@@ -398,6 +398,10 @@ return function(t: RunAll.Context)
 		local gone: Schema.Event = { kind = Schema.EventKind.DOME_GONE, unitId = 0x0102 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, gone)), "18 02 01")
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, gone), Schema.decodeEvent)[1], gone)
+		-- version 31: command flag GROUP (S-137): a ctrl move
+		local groupMove: Command = { cmdType = CT.MOVE, flags = Schema.CmdFlag.GROUP + QUEUE, unitIds = { 1 }, cell = 0x0203, offX = 4, offZ = 5 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, groupMove)), "01 05 01 00 01 00 03 02 04 05")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, groupMove), Schema.decodeCommand)[1], groupMove)
 		-- version 31: IDLE (S-136): an own builder or factory idle / busy
 		local idle: Schema.Event = { kind = Schema.EventKind.IDLE, unitId = 0x0102, idle = true }
 		t.equal(hex(encodeOne(Schema.encodeEvent, idle)), "19 02 01 01")
@@ -712,7 +716,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, cmd, { 18, 0, 1, 0, 1, 0 }, "unknown cmdType 18") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
-		expectRejected(t, cmd, { CT.STOP, 4, 1, 0, 1, 0 }, "reserved bits")
+		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)
 		expectRejected(t, cmd, { CT.STOP, LINE, 1, 0, 1, 0 }, "LINE flag")
 		expectRejected(t, cmd, { CT.STOP, 0, 0, 0 }, "unit count 0")
 		expectRejected(t, cmd, { CT.STOP, 0, 201, 0 }, "unit count 201")

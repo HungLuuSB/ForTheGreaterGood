@@ -123,8 +123,9 @@ local CHEAT_ARG_MAX: { [number]: number } = { [1] = 0, [2] = 3, [3] = 3, [4] = 1
 Schema.CmdFlag = table.freeze({
 	QUEUE = 1, -- shift: append to the order queue
 	LINE = 2, -- line formation: a second position (the line's end) follows
+	GROUP = 4, -- MOVE / FIGHT / PATROL: the selection keeps together at its slowest unit's speed (ctrl; protocol 31, S-137)
 })
-local CMD_FLAGS_MASK = 3
+local CMD_FLAGS_MASK = 7
 
 -- Structure facing for BUILD: footprints rotate with it (guide 9.3).
 Schema.Facing = table.freeze({ NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 }) -- 0/90/180/270°

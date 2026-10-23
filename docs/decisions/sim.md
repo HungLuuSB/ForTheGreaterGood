@@ -2013,3 +2013,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Schema.spec`: golden bytes `19 02 01 01`, and event kind 26 is now the unknown one.
   - `NetOut.spec`: an off-camera Mason and plant are reported idle, owner only. Given work they go busy, and idle again when done. A late join hears of both.
+
+## S-137 — Group moves at the slowest unit's speed: command flag GROUP (the user's queue item 3) (2026-10-23)
+
+- **Asked:** a move or fight order given with a modifier keeps the group together at its slowest unit's speed (BAR's ctrl-move). The key was agreed with B: Ctrl, which is free on right-click and in the move / fight command modes.
+- **Built:** protocol 31 (with S-136): `Schema.CmdFlag.GROUP = 4`, valid with QUEUE and LINE.
+  - On MOVE, FIGHT and PATROL, `Orders.give` sets each order's `speedCap` to the lowest `maxSpeed` among the selection's ground units. Structures and aircraft are left out, so aircraft fly as usual.
+  - While that order is the started head, Movement caps the unit's top speed (after terrain) at it.
+  - The cap is hashed with the order. Other commands ignore the flag.
+- **Not done:** faster units don't wait for stragglers at the start. Units start where they stand, at one speed, so the group arrives as it left. BAR's ctrl-move behaves about the same.
+- **Tests:**
+  - `Orders.spec`: a Herald (60 studs/s) and a Lancer (28). Without the flag the Herald arrives far ahead. With it, it never passes 28 studs/s and they arrive within 30 ticks of each other, while a Falcon in the selection flies at its own speed.
+  - `Schema.spec`: golden bytes of a GROUP + QUEUE move; flag bit 8 is reserved.

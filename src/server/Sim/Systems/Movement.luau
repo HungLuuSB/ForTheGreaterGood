@@ -358,6 +358,12 @@ return function(sim: Types.Sim)
 		if not p.air then
 			local tx, tz = g:cellAt(nx[k], nz[k])
 			top *= Terrain.factor(layers, p.moveClass, tz * g.cellsX + tx)
+			-- a group move (ctrl): no faster than the group's slowest (S-137)
+			local q = sim.orders.queue[id]
+			local head = q and q[1]
+			if head and head.speedCap and head.started then
+				top = min(top, head.speedCap)
+			end
 		end
 		local target = min(if returning then top * RETURN_SPEED else top, sqrt(2 * p.brake * max(dist - Nav.ARRIVE_RADIUS, 0)))
 		target *= max(0, cos(diff))
