@@ -1,0 +1,82 @@
+{
+  "id": "chs_riptide_wreck",
+  "wreckOf": "chs_riptide",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0529,
+        0.2705,
+        0.0125
+      ],
+      "size": [
+        7.5455,
+        2.436,
+        7.6048
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0114,
+        1.9373,
+        -2.2514
+      ],
+      "size": [
+        2.5996,
+        2.1121,
+        6.6872
+      ],
+      "pivot": [
+        0.0,
+        0.9,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        1.75,
+        -5.6
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1128,
+    "turret": 364,
+    "total": 1492
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

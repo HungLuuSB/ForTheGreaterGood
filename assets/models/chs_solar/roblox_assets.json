@@ -1,7 +1,30 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 432 triangles, glow share 3.4%",
+  "revision": "Redesign at footprint 2 (size scale S-104, M-26); wreck rebuilt: 1600 triangles, glow share 1.9%",
   "bar": {
+    "model": "rbxassetid://102640661094911",
+    "meshes": {
+      "base": "rbxassetid://97471013179343",
+      "base_glow_power": "rbxassetid://84984589349729",
+      "base_glow_running": "rbxassetid://80228289442949"
+    },
+    "decals": {
+      "ALB": "rbxassetid://136948650740863",
+      "RGH": "rbxassetid://102206241405445",
+      "NOR": "rbxassetid://105027139028154",
+      "MTL": "rbxassetid://137054678055349",
+      "EMI": "rbxassetid://122868486779214"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://118778359232631",
+      "NOR": "rbxassetid://127760427745921",
+      "RGH": "rbxassetid://122962134338762",
+      "MTL": "rbxassetid://110068229619622",
+      "EMI": "rbxassetid://139919233231348"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_solar_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://107443420068849",
     "meshes": {
       "base": "rbxassetid://106418058419866",
@@ -22,7 +45,7 @@
       "MTL": "rbxassetid://95834670814619",
       "EMI": "rbxassetid://76303422200848"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_solar_bar in FTGG Art"
+    "note": "2026-10-22, glow pass (M-22): 432 triangles, glow share 3.4%"
   },
   "bar_preglow": {
     "model": "rbxassetid://127789578059230",
@@ -46,6 +69,28 @@
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 384 triangles)"
   },
   "wreck": {
+    "model": "rbxassetid://109976308576987",
+    "meshes": {
+      "base": "rbxassetid://81801386113330"
+    },
+    "decals": {
+      "ALB": "rbxassetid://95775932584597",
+      "RGH": "rbxassetid://138214114108198",
+      "NOR": "rbxassetid://93143973854796",
+      "MTL": "rbxassetid://96237562057393",
+      "EMI": "rbxassetid://75414223298458"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://112288518300911",
+      "NOR": "rbxassetid://113828244684953",
+      "RGH": "rbxassetid://99006771559434",
+      "MTL": "rbxassetid://109713169923823",
+      "EMI": "rbxassetid://118344248053351"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_solar_wreck_bar in FTGG Art",
+    "revision": "Redesign at footprint 2 (size scale S-104, M-26); wreck rebuilt: 1288 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://134308801366415",
     "meshes": {
       "base": "rbxassetid://137566308080706"

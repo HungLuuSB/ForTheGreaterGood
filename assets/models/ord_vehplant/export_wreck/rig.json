@@ -1,7 +1,7 @@
 {
   "id": "ord_vehplant_wreck",
   "wreckOf": "ord_vehplant",
-  "footprintStuds": 24,
+  "footprintStuds": 32,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,19 +9,92 @@
     "base": {
       "parent": null,
       "center": [
-        -0.05,
-        4.3175,
-        -0.0028
+        -0.0801,
+        6.8636,
+        -0.1734
       ],
       "size": [
-        22.2388,
-        8.7233,
-        22.023
+        31.2675,
+        14.2149,
+        31.3478
+      ]
+    },
+    "gantry": {
+      "parent": "base",
+      "center": [
+        -0.1307,
+        9.6598,
+        -0.7859
+      ],
+      "size": [
+        12.2614,
+        3.5246,
+        1.8791
+      ],
+      "pivot": [
+        0.0,
+        10.9,
+        -1.0
       ]
     }
   },
-  "attachments": {},
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.72,
+        -3.0
+      ]
+    },
+    "nano1": {
+      "parent": "base",
+      "at": [
+        -3.03,
+        6.4,
+        -6.0
+      ]
+    },
+    "nano2": {
+      "parent": "base",
+      "at": [
+        -3.03,
+        6.4,
+        0.0
+      ]
+    },
+    "nano3": {
+      "parent": "base",
+      "at": [
+        3.03,
+        6.4,
+        -6.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        3.03,
+        6.4,
+        0.0
+      ]
+    }
+  },
   "teamColorPieces": [],
+  "visualPieces": [
+    "gantry"
+  ],
+  "anim": {
+    "gantry": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 7.0
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -34,8 +107,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 720,
-    "total": 720
+    "base": 2164,
+    "gantry": 272,
+    "total": 2436
   },
   "textures": {
     "size": 1024,

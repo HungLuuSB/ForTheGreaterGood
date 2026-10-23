@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1576 triangles, glow share 1.1%",
+  "bar": {
+    "model": "rbxassetid://102381849877505",
+    "meshes": {
+      "base": "rbxassetid://83651022637194",
+      "base_glow_running": "rbxassetid://114783488786401",
+      "turret": "rbxassetid://115310164254302",
+      "turret_glow_running": "rbxassetid://136985601456124",
+      "turret_glow_weapon": "rbxassetid://73705495940533"
+    },
+    "decals": {
+      "ALB": "rbxassetid://131107111005143",
+      "RGH": "rbxassetid://97033862428695",
+      "NOR": "rbxassetid://91330217104080",
+      "MTL": "rbxassetid://134704574125174",
+      "EMI": "rbxassetid://71322791468859"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://125988816483588",
+      "NOR": "rbxassetid://129123720272826",
+      "RGH": "rbxassetid://93837725507684",
+      "MTL": "rbxassetid://110208445116327",
+      "EMI": "rbxassetid://109444465764107"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_riptide_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://105880206624922",
+    "meshes": {
+      "base": "rbxassetid://77948911463529",
+      "turret": "rbxassetid://128862251159175"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73836739436387",
+      "RGH": "rbxassetid://85551800960003",
+      "NOR": "rbxassetid://114829566461997",
+      "MTL": "rbxassetid://73648202683173",
+      "EMI": "rbxassetid://125913110393715"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://124089178877319",
+      "NOR": "rbxassetid://111178390917134",
+      "RGH": "rbxassetid://78630748178205",
+      "MTL": "rbxassetid://87473751930159",
+      "EMI": "rbxassetid://103514102429556"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_riptide_wreck_bar in FTGG Art",
+    "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1492 triangles"
+  }
+}

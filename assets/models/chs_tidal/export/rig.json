@@ -1,0 +1,129 @@
+{
+  "id": "chs_tidal",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.18,
+        0.0
+      ],
+      "size": [
+        13.2,
+        7.64,
+        14.6
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0,
+        0.5,
+        -1.0
+      ],
+      "size": [
+        6.0,
+        5.3,
+        5.3
+      ],
+      "pivot": [
+        0.0,
+        0.5,
+        -1.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "rotor"
+  ],
+  "visualPieces": [
+    "rotor"
+  ],
+  "anim": {
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.14,
+        0.0
+      ],
+      "size": [
+        13.21,
+        0.62,
+        13.55
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -0.05,
+        4.465,
+        4.6202
+      ],
+      "size": [
+        3.7,
+        3.23,
+        3.3303
+      ]
+    }
+  ],
+  "glowShare": 0.0112,
+  "triangles": {
+    "base": 1692,
+    "rotor": 372,
+    "total": 2064
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

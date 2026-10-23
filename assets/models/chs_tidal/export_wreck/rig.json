@@ -1,0 +1,84 @@
+{
+  "id": "chs_tidal_wreck",
+  "wreckOf": "chs_tidal",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.028,
+        2.1888,
+        -0.0231
+      ],
+      "size": [
+        13.267,
+        7.9229,
+        14.722
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        0.0197,
+        0.44,
+        -0.9405
+      ],
+      "size": [
+        5.931,
+        5.3338,
+        5.4017
+      ],
+      "pivot": [
+        0.0,
+        0.5,
+        -1.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "rotor"
+  ],
+  "anim": {
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1536,
+    "rotor": 328,
+    "total": 1864
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

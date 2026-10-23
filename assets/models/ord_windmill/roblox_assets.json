@@ -1,7 +1,31 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 908 triangles, glow share 5.2%",
+  "revision": "Redesign at footprint 2 (size scale S-104, M-26); wreck built: 1618 triangles, glow share 2.6%",
   "bar": {
+    "model": "rbxassetid://108943379383140",
+    "meshes": {
+      "base": "rbxassetid://123515671386371",
+      "base_glow_power": "rbxassetid://78535257500037",
+      "base_glow_running": "rbxassetid://93716275457994",
+      "rotor": "rbxassetid://78386060985694"
+    },
+    "decals": {
+      "ALB": "rbxassetid://87980066745345",
+      "RGH": "rbxassetid://130492614636902",
+      "NOR": "rbxassetid://132867233981465",
+      "MTL": "rbxassetid://102951596515427",
+      "EMI": "rbxassetid://85505438050883"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://120909131299522",
+      "NOR": "rbxassetid://86833658408552",
+      "RGH": "rbxassetid://89368610438535",
+      "MTL": "rbxassetid://133565831053174",
+      "EMI": "rbxassetid://121622687361106"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_windmill_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://138420585799942",
     "meshes": {
       "base": "rbxassetid://121119585090985",
@@ -23,6 +47,29 @@
       "MTL": "rbxassetid://79079475731111",
       "EMI": "rbxassetid://77868563361134"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_windmill_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 908 triangles, glow share 5.2%"
+  },
+  "wreck": {
+    "model": "rbxassetid://115389130908152",
+    "meshes": {
+      "base": "rbxassetid://92033690501486",
+      "rotor": "rbxassetid://104930098589316"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86000041463149",
+      "RGH": "rbxassetid://108607594803351",
+      "NOR": "rbxassetid://123952853578751",
+      "MTL": "rbxassetid://95946763596947",
+      "EMI": "rbxassetid://101566339999979"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114801701090076",
+      "NOR": "rbxassetid://80799650866649",
+      "RGH": "rbxassetid://120964601931911",
+      "MTL": "rbxassetid://140286922666569",
+      "EMI": "rbxassetid://121454367502871"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_windmill_wreck_bar in FTGG Art",
+    "revision": "Redesign at footprint 2 (size scale S-104, M-26); wreck built: 1432 triangles"
   }
 }

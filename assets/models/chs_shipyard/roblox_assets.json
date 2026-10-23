@@ -1,7 +1,33 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Animated pieces (M-27): 1276 triangles, glow share 2.2%",
+  "revision": "Redesign / new mesh in the size-scale style (S-104, M-26); wreck built: 5792 triangles, glow share 2.3%",
   "bar": {
+    "model": "rbxassetid://139511507521621",
+    "meshes": {
+      "base": "rbxassetid://85476407701291",
+      "base_glow_power": "rbxassetid://134118038926489",
+      "base_glow_running": "rbxassetid://116346405958655",
+      "jib": "rbxassetid://72213295024266",
+      "jib_glow_power": "rbxassetid://75220585450506",
+      "jib_glow_running": "rbxassetid://103520713254853"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122356793132793",
+      "RGH": "rbxassetid://99721618674897",
+      "NOR": "rbxassetid://123341326305932",
+      "MTL": "rbxassetid://76856919591681",
+      "EMI": "rbxassetid://77906776018458"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://133520585824676",
+      "NOR": "rbxassetid://102789953730647",
+      "RGH": "rbxassetid://105318025783290",
+      "MTL": "rbxassetid://137853118055678",
+      "EMI": "rbxassetid://93884876853785"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_shipyard_bar in FTGG Art"
+  },
+  "bar_3": {
     "model": "rbxassetid://94655096243674",
     "meshes": {
       "base": "rbxassetid://114904917649281",
@@ -25,7 +51,7 @@
       "MTL": "rbxassetid://117575507833939",
       "EMI": "rbxassetid://125231634807731"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_shipyard_bar in FTGG Art"
+    "note": "Animated pieces (M-27): 1276 triangles, glow share 2.2%"
   },
   "bar_2": {
     "model": "rbxassetid://139145564244203",
@@ -72,5 +98,28 @@
       "EMI": "rbxassetid://118282052708872"
     },
     "note": "2026-10-22, first BAR upload (M-15), Open Cloud import clamped (scale 43.0 / 2048): 1276 triangles, glow share 2.2%"
+  },
+  "wreck": {
+    "model": "rbxassetid://110171694616543",
+    "meshes": {
+      "base": "rbxassetid://118091466116301",
+      "jib": "rbxassetid://133196012460580"
+    },
+    "decals": {
+      "ALB": "rbxassetid://134457433114358",
+      "RGH": "rbxassetid://104918722723481",
+      "NOR": "rbxassetid://73808221162218",
+      "MTL": "rbxassetid://76899343303972",
+      "EMI": "rbxassetid://73911357192913"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://81844856983746",
+      "NOR": "rbxassetid://109330374928631",
+      "RGH": "rbxassetid://96710299109516",
+      "MTL": "rbxassetid://86976820575570",
+      "EMI": "rbxassetid://97851461826341"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_shipyard_wreck_bar in FTGG Art",
+    "revision": "Redesign / new mesh in the size-scale style (S-104, M-26); wreck built: 4036 triangles"
   }
 }

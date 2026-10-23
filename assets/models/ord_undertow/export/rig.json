@@ -1,0 +1,242 @@
+{
+  "id": "ord_undertow",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.0265,
+        0.0
+      ],
+      "size": [
+        7.4,
+        1.853,
+        7.4
+      ]
+    },
+    "sonar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        -1.2,
+        0.0
+      ],
+      "size": [
+        2.4,
+        0.6,
+        2.4
+      ],
+      "pivot": [
+        0.0,
+        -1.2,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        1.15,
+        -0.4
+      ],
+      "size": [
+        3.1874,
+        0.5,
+        3.1874
+      ],
+      "pivot": [
+        0.0,
+        1.15,
+        -0.4
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.0,
+        2.425,
+        -0.975
+      ],
+      "size": [
+        2.8,
+        2.05,
+        4.55
+      ],
+      "pivot": [
+        0.0,
+        1.4,
+        -0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        0.0,
+        1.95,
+        -3.25
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "sonar",
+    "turret",
+    "launcher"
+  ],
+  "visualPieces": [
+    "sonar"
+  ],
+  "anim": {
+    "sonar": {
+      "motion": "lower",
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "range": 8
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        0.49,
+        0.525
+      ],
+      "size": [
+        7.49,
+        1.12,
+        4.05
+      ]
+    },
+    {
+      "name": "sonar_glow_power",
+      "piece": "sonar",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "size": [
+        2.48,
+        0.12,
+        2.48
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.42,
+        -0.4
+      ],
+      "size": [
+        3.4,
+        0.06,
+        3.4
+      ]
+    },
+    {
+      "name": "launcher_glow_running",
+      "piece": "launcher",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        1.0,
+        3.25,
+        0.48
+      ],
+      "size": [
+        0.35,
+        0.2,
+        0.05
+      ]
+    },
+    {
+      "name": "launcher_glow_weapon",
+      "piece": "launcher",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        1.95,
+        -3.27
+      ],
+      "size": [
+        2.0,
+        0.4,
+        0.04
+      ]
+    }
+  ],
+  "glowShare": 0.0792,
+  "triangles": {
+    "base": 410,
+    "sonar": 120,
+    "turret": 312,
+    "launcher": 644,
+    "total": 1486
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

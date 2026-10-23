@@ -1,6 +1,6 @@
 {
   "id": "ord_depot",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style painted sand-grey (M-15)"
   },
@@ -9,13 +9,13 @@
       "parent": null,
       "center": [
         0.0,
-        1.355,
+        2.35,
         0.0
       ],
       "size": [
-        7.3732,
-        2.71,
-        7.3732
+        15.554,
+        4.7,
+        15.554
       ]
     }
   },
@@ -23,6 +23,8 @@
   "teamColorPieces": [
     "base"
   ],
+  "visualPieces": [],
+  "anim": {},
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -45,13 +47,13 @@
       "strength": 2.0,
       "center": [
         0.0,
-        1.545,
+        2.68,
         0.0
       ],
       "size": [
-        7.36,
-        2.33,
-        7.36
+        14.8,
+        4.1,
+        14.8
       ]
     },
     {
@@ -66,20 +68,20 @@
       "strength": 2.5,
       "center": [
         0.0,
-        1.4038,
-        -0.4385
+        2.1,
+        -1.105
       ],
       "size": [
-        5.8682,
-        0.4592,
-        5.0771
+        13.78,
+        3.05,
+        7.51
       ]
     }
   ],
-  "glowShare": 0.0524,
+  "glowShare": 0.059,
   "triangles": {
-    "base": 496,
-    "total": 496
+    "base": 1678,
+    "total": 1678
   },
   "textures": {
     "size": 1024,

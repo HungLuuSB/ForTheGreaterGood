@@ -132,3 +132,25 @@ def arch(z0, z1, y_base, y_top, steps=7, flat=0.35):
         if not out or abs(out[-1][0] - q[0]) > 1e-6 or abs(out[-1][1] - q[1]) > 1e-6:
             out.append(q)
     return out
+
+
+def octagon(r, cut, cx=0.0, cz=0.0):
+    """Top-view octagon (x, z): a square of half-size r with corners cut by
+    `cut` (structure slabs and housings at the size scale, S-104)."""
+    pts = [(-r + cut, -r), (r - cut, -r), (r, -r + cut), (r, r - cut), (r - cut, r), (-r + cut, r), (-r, r - cut), (-r, -r + cut)]
+    return [(cx + x, cz + z) for x, z in pts]
+
+
+def rect(cx, cz, hx, hz):
+    """Top-view rectangle (x, z) centred on (cx, cz)."""
+    return [(cx - hx, cz - hz), (cx + hx, cz - hz), (cx + hx, cz + hz), (cx - hx, cz + hz)]
+
+
+def prism_z(p, profile_xy, z0, z1, kind, bevel=0.0):
+    """Front profile (x, y) points, extruded along Z from z0 to z1 (hangar
+    arches whose doors face the -Z exit)."""
+    n = len(profile_xy)
+    v = [(x, y, z0) for x, y in profile_xy] + [(x, y, z1) for x, y in profile_xy]
+    f = [list(range(n)), list(range(2 * n - 1, n - 1, -1))]
+    f += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
+    return p._shell(v, f, kind, bevel)

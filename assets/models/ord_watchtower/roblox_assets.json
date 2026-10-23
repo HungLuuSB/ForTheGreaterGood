@@ -1,7 +1,31 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 1004 triangles, glow share 5.6%",
+  "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 2224 triangles, glow share 6.4%",
   "bar": {
+    "model": "rbxassetid://103941892949385",
+    "meshes": {
+      "base": "rbxassetid://89540970613888",
+      "base_glow_running": "rbxassetid://98225252729364",
+      "radar": "rbxassetid://94140776057957",
+      "radar_glow_running": "rbxassetid://112890954942388"
+    },
+    "decals": {
+      "ALB": "rbxassetid://119728375863317",
+      "RGH": "rbxassetid://92933913726295",
+      "NOR": "rbxassetid://82668023060403",
+      "MTL": "rbxassetid://81131374386692",
+      "EMI": "rbxassetid://115018182033213"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://97808113040225",
+      "NOR": "rbxassetid://75379430045833",
+      "RGH": "rbxassetid://79931574651477",
+      "MTL": "rbxassetid://132547971980419",
+      "EMI": "rbxassetid://119429792926933"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_watchtower_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://118452127660094",
     "meshes": {
       "base": "rbxassetid://107466429157276",
@@ -23,6 +47,29 @@
       "MTL": "rbxassetid://88075745130392",
       "EMI": "rbxassetid://130907307424394"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_watchtower_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 1004 triangles, glow share 5.6%"
+  },
+  "wreck": {
+    "model": "rbxassetid://109257306799109",
+    "meshes": {
+      "base": "rbxassetid://107725128331157",
+      "radar": "rbxassetid://81047438516118"
+    },
+    "decals": {
+      "ALB": "rbxassetid://80563805675245",
+      "RGH": "rbxassetid://130332593341021",
+      "NOR": "rbxassetid://116422596327496",
+      "MTL": "rbxassetid://113994577951881",
+      "EMI": "rbxassetid://129359309719211"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://105732891637780",
+      "NOR": "rbxassetid://85265825783509",
+      "RGH": "rbxassetid://92149003964244",
+      "MTL": "rbxassetid://88310699456911",
+      "EMI": "rbxassetid://98926784311442"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_watchtower_wreck_bar in FTGG Art",
+    "revision": "Redesign in the size-scale style (S-104, M-26); wreck rebuilt: 2068 triangles"
   }
 }

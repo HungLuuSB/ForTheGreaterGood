@@ -1,7 +1,7 @@
 {
   "id": "chs_generator_wreck",
   "wreckOf": "chs_generator",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,19 +9,50 @@
     "base": {
       "parent": null,
       "center": [
-        0.02,
-        2.8647,
-        -0.0041
+        -0.028,
+        5.1447,
+        0.0045
       ],
       "size": [
-        6.6584,
-        5.7949,
-        6.6344
+        15.6331,
+        10.2856,
+        15.5011
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        -2.2731,
+        4.1417,
+        0.9073
+      ],
+      "size": [
+        5.3159,
+        0.9507,
+        5.7011
+      ],
+      "pivot": [
+        -2.4,
+        4.2,
+        1.0
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [],
+  "visualPieces": [
+    "core"
+  ],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -34,8 +65,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 740,
-    "total": 740
+    "base": 2300,
+    "core": 124,
+    "total": 2424
   },
   "textures": {
     "size": 1024,

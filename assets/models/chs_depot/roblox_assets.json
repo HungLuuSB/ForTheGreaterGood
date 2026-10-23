@@ -1,7 +1,30 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, first BAR upload (M-15): 780 triangles, glow share 5.1%",
+  "revision": "Redesign at footprint 2 (size scale S-104, M-26); wreck built: 2304 triangles, glow share 5.4%",
   "bar": {
+    "model": "rbxassetid://105999596951378",
+    "meshes": {
+      "base": "rbxassetid://115607540923071",
+      "base_glow_power": "rbxassetid://139304038954916",
+      "base_glow_running": "rbxassetid://89308419185779"
+    },
+    "decals": {
+      "ALB": "rbxassetid://78732051580759",
+      "RGH": "rbxassetid://94118785804357",
+      "NOR": "rbxassetid://105254438520004",
+      "MTL": "rbxassetid://75375084062372",
+      "EMI": "rbxassetid://121827428652661"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://118610338928314",
+      "NOR": "rbxassetid://108708578168657",
+      "RGH": "rbxassetid://116127373986315",
+      "MTL": "rbxassetid://77797695723828",
+      "EMI": "rbxassetid://140399262247139"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_depot_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://117222899414149",
     "meshes": {
       "base": "rbxassetid://122631253923432",
@@ -22,6 +45,28 @@
       "MTL": "rbxassetid://113424109895911",
       "EMI": "rbxassetid://91022857739082"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_depot_bar in FTGG Art"
+    "note": "2026-10-22, first BAR upload (M-15): 780 triangles, glow share 5.1%"
+  },
+  "wreck": {
+    "model": "rbxassetid://90684258358991",
+    "meshes": {
+      "base": "rbxassetid://79283346843657"
+    },
+    "decals": {
+      "ALB": "rbxassetid://131785660501914",
+      "RGH": "rbxassetid://117992679034552",
+      "NOR": "rbxassetid://99094328487241",
+      "MTL": "rbxassetid://76417292185306",
+      "EMI": "rbxassetid://119908679060460"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://140172595739027",
+      "NOR": "rbxassetid://112239581180850",
+      "RGH": "rbxassetid://119714334006523",
+      "MTL": "rbxassetid://73454757457246",
+      "EMI": "rbxassetid://103633665822711"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_depot_wreck_bar in FTGG Art",
+    "revision": "Redesign at footprint 2 (size scale S-104, M-26); wreck built: 2288 triangles"
   }
 }

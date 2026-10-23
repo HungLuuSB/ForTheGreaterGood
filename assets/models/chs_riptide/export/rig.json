@@ -1,0 +1,148 @@
+{
+  "id": "chs_riptide",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        0.275,
+        0.0
+      ],
+      "size": [
+        7.56,
+        2.35,
+        7.56
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        1.95,
+        -2.2388
+      ],
+      "size": [
+        2.6,
+        2.1,
+        6.6224
+      ],
+      "pivot": [
+        0.0,
+        0.9,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        1.75,
+        -5.6
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.05,
+        0.0
+      ],
+      "size": [
+        6.12,
+        0.12,
+        6.12
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -0.8,
+        3.05,
+        0.6
+      ],
+      "size": [
+        0.24,
+        0.16,
+        0.24
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        1.75,
+        -5.0
+      ],
+      "size": [
+        0.38,
+        0.3614,
+        0.08
+      ]
+    }
+  ],
+  "glowShare": 0.0106,
+  "triangles": {
+    "base": 1152,
+    "turret": 424,
+    "total": 1576
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "id": "ord_windmill",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style painted sand-grey (M-15)"
   },
@@ -9,31 +9,31 @@
       "parent": null,
       "center": [
         0.0,
-        6.1925,
+        8.5775,
         0.0
       ],
       "size": [
-        7.1766,
-        12.385,
-        7.1766
+        15.554,
+        17.155,
+        15.554
       ]
     },
     "rotor": {
       "parent": "base",
       "center": [
         0.0,
-        13.0384,
-        -1.725
+        18.2326,
+        -2.35
       ],
       "size": [
-        10.7656,
-        9.3232,
-        1.05
+        15.2822,
+        13.2348,
+        1.6
       ],
       "pivot": [
         0.0,
-        11.6,
-        -1.6
+        16.2,
+        -2.2
       ]
     }
   },
@@ -42,6 +42,17 @@
     "base",
     "rotor"
   ],
+  "visualPieces": [],
+  "anim": {
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        0,
+        1
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -64,13 +75,13 @@
       "strength": 2.0,
       "center": [
         0.0,
-        6.745,
+        9.02,
         0.0
       ],
       "size": [
-        5.16,
-        11.73,
-        5.16
+        14.8,
+        16.78,
+        14.8
       ]
     },
     {
@@ -84,22 +95,22 @@
       ],
       "strength": 2.5,
       "center": [
-        0.0,
-        6.525,
-        0.4
+        2.225,
+        8.605,
+        -1.2725
       ],
       "size": [
-        2.2,
-        9.65,
-        3.0
+        7.35,
+        14.41,
+        7.145
       ]
     }
   ],
-  "glowShare": 0.0522,
+  "glowShare": 0.0264,
   "triangles": {
-    "base": 612,
-    "rotor": 296,
-    "total": 908
+    "base": 1176,
+    "rotor": 442,
+    "total": 1618
   },
   "textures": {
     "size": 1024,
@@ -112,15 +123,5 @@
       "MTL",
       "EMI"
     ]
-  },
-  "anim": {
-    "rotor": {
-      "motion": "spin",
-      "axis": [
-        0,
-        0,
-        1
-      ]
-    }
   }
 }

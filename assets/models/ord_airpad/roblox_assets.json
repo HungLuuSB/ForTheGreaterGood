@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1484 triangles, glow share 0.7%",
+  "bar": {
+    "model": "rbxassetid://94616698188132",
+    "meshes": {
+      "base": "rbxassetid://98639650469440",
+      "base_glow_power": "rbxassetid://107302010134297",
+      "base_glow_running": "rbxassetid://128798859803295"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129338643387568",
+      "RGH": "rbxassetid://116314349749414",
+      "NOR": "rbxassetid://130704775231408",
+      "MTL": "rbxassetid://87163107558411",
+      "EMI": "rbxassetid://106877658950514"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://87832338802647",
+      "NOR": "rbxassetid://117887458472713",
+      "RGH": "rbxassetid://117250879364855",
+      "MTL": "rbxassetid://87673173034676",
+      "EMI": "rbxassetid://115768847797047"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_airpad_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://81386170486248",
+    "meshes": {
+      "base": "rbxassetid://135673633883237"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84546274478417",
+      "RGH": "rbxassetid://139598524522694",
+      "NOR": "rbxassetid://112167663186228",
+      "MTL": "rbxassetid://97653448942602",
+      "EMI": "rbxassetid://115261446556449"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://99568575364190",
+      "NOR": "rbxassetid://127657563008853",
+      "RGH": "rbxassetid://118744120332314",
+      "MTL": "rbxassetid://112707781996510",
+      "EMI": "rbxassetid://123680808847736"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_airpad_wreck_bar in FTGG Art",
+    "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1168 triangles"
+  }
+}
