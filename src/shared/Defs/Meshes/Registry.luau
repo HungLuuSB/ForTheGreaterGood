@@ -800,7 +800,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 		radius = 1.003,
 		refRadius = 120,
 		status = "review",
-		texture = "rbxassetid://90043421276653",
+		texture = "rbxassetid://77232194668072",
 	},
 	units = {
 		chs_airfield = {

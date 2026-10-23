@@ -45,7 +45,7 @@ STEP = 1.5  # polar step of the mesh (degrees)
 SEGMENTS = 120  # round
 TILE_PX = 1024  # tile width in pixels
 COLS, ROWS = 12, 10  # cells per tile (ROWS even: the lattice repeats every two rows)
-PATCHES, SEED = 9, 7  # blobs per tile
+PATCHES, SEED = 9, 7  # blobs per tile (the review: little patches, about a third of the first coverage)
 FILL = 0.07  # faint fill inside patch cells
 LINE = 0.055  # outline half-width as a fraction of the hex side
 GLOW = 0.16  # soft halo half-width, same unit
@@ -85,7 +85,7 @@ def hex_tile():
     weight = np.zeros(x.shape)
     for _ in range(PATCHES):
         px, py = rng.uniform(0, W), rng.uniform(0, H)
-        r = rng.uniform(1.6, 3.4) * math.sqrt(3) * a  # radius in cells
+        r = rng.uniform(0.8, 1.6) * math.sqrt(3) * a  # radius in cells
         dx = np.abs(cx - px)
         dx = np.minimum(dx, W - dx)
         dy = np.abs(cy - py)
@@ -93,6 +93,7 @@ def hex_tile():
         k = np.clip(1.0 - np.hypot(dx, dy) / r, 0.0, 1.0)
         weight = np.maximum(weight, k * k * (3 - 2 * k) * rng.uniform(0.75, 1.0))
     weight = np.where(weight > 0.12, np.clip(weight * 1.6, 0.0, 1.0), 0.0)
+    print(f"[honeycomb] coverage {float((weight > 0).mean()):.3f}")
     return np.clip(np.maximum(line, halo) * weight + FILL * weight, 0.0, 1.0)
 
 
