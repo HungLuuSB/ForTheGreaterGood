@@ -1504,3 +1504,14 @@ Existing calls are unchanged.
 **Decision:** `MatchContract.outcomeOf` now returns "finished" with no winner when every human is out and several AI teams still stand. Every player's `won` is then false, so the humans' profiles count a loss. "draw" stays for the sim's own draw and for no team standing. The copy of `validateResult` follows the lobby's: a winner only on "finished", optional there. Spec: MatchContract.spec.
 
 **Why:** the lobby stream's decision in docs/contracts/match.md (m-lobby 287b99e, still v1), answering C-173's open question.
+
+### C-176 — The match's loading screen shows the lobby's key art with the same parallax (2026-10-23)
+
+**Decision:**
+- `UI/KeyArt` is a copy of the lobby place's `src/lobby/client/KeyArt.luau` (session D; contract docs/contracts/key-art.md, L-13). It reads the models stream's layered art from the mesh manifest's `keyArt`: approved art everywhere, review art only in Studio.
+- It covers the screen at 16:9 with 5% bleed. Each layer moves by mouse × 2.5% of the width × its depth, eased, with a slow idle drift. Dark bands sit behind the title and the bottom text, and the art fades in once preloaded.
+- `UI/MatchLoading` shows it when the match starts waiting, under its text and bar (ZIndex 10+). Without approved art it keeps the dark gradient.
+- So the lobby's pre-teleport screen and the match's look the same across the teleport.
+- Checked in Studio on `contract`: no art in the manifest yet, the gradient shows as before.
+
+**Why:** the user's key-art decision; D asked both screens to behave the same.
