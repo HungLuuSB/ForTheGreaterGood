@@ -898,7 +898,8 @@ startMatch()
 -- units in a row along x (the sim's own Spawn), for playtests of what the
 -- client draws; Invoke("build", builderId, defId, x, z) orders a builder to
 -- construct there (the sim's own build command), for what an unfinished
--- unit looks like.
+-- unit looks like; Invoke("hold", ids) sets them to hold fire, for
+-- screenshots of armies side by side (C-183).
 if RunService:IsStudio() then
 	local debugFn = Instance.new("BindableFunction")
 	debugFn.Name = "FtggDebug"
@@ -914,6 +915,13 @@ if RunService:IsStudio() then
 				table.insert(ids, Spawn.unit(sim, defId, playerId, x + i * (spacing or 12), z, heading or 0))
 			end
 			return ids
+		elseif query == "hold" then
+			for _, id in (...) :: { number } do
+				if sim.world.slot[id] then
+					sim.world.fireState[id] = 0 -- World.FireState.HOLD_FIRE
+				end
+			end
+			return true
 		elseif query == "matchstore" then
 			-- Invoke("matchstore"): the Studio stand-in store of a lobby match (C-173)
 			return HttpService:JSONEncode(standIn)

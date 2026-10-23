@@ -1580,5 +1580,7 @@ Existing calls are unchanged.
 - **Uploaded with the user's approval:** asset 83784263765889 (byte-identical to `assets/icons/ftgg-icons.png`). The atlas and the id are in the same commit, so Studio never runs a mismatched sheet.
 - **Wraith (S-109), kept as is at the user's word:** its owner sees the Decoy Drone. An enemy's radar gets the spoof's def, so the blip draws a strategic bomber's air frame, like a bomber the enemy spotted earlier. Once seen, it's the Decoy Drone. Icons.spec checks all three.
 
+- Studio (the Canyon): `debug_out/screens/c183_strategic_defenses.jpg` shows both teams' anti-nukes, point defences (fixed and mobile), shield generators, flak, beam towers, missile batteries and the Commanders at normal icon size. `c183_strategic_radar.jpg` is zoomed out on radar contacts: the tracked ones show their icons, and the untracked aircraft (a Wraith and a real bomber) the same dashed air frame. `FtggDebug:Invoke("hold", ids)` (Studio only) keeps spawned units from fighting for such shots.
+
 **Why:** 11 defs drew blank contacts and several the wrong tile (the user's list); the user asked for the def lists, the split and the upload.
 
