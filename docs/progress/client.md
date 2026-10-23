@@ -8,6 +8,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 - **Your units and buildings stay drawn when the camera leaves (C-161):** no more re-rendering when you pan away and back; the same models carry on. A selected Mason far away keeps its unit panel, build menu and command card, so you can keep queueing builds for it. Checked in Studio.
 - Off camera, a unit's health and a far building's progress show their last values until you look again (the server sends little there).
+- Ready to merge: `9e8e8c2` (C-161: units stay drawn and selectable off camera; client only)
 
 ## Summary (2026-10-23, your queue while away)
 
