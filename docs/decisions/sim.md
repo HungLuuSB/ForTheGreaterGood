@@ -1983,3 +1983,10 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Follow-up, the AI gives up unreachable build sites:** with S-133 the AI's timeline shifted, and on Coastline (seed 34) Order hard's footprint-2 Commander got walled in by generators. It sat in a 1-cell gap for 8 minutes trying to reach an airfield site, so no shipyard was ever built (`AI.spec`, naval test). The AI's site picker doesn't check reach, and its 2-cell lanes only hold between buildings of one size.
   - Now a builder that gets no closer than 8 studs to its build site in `Skirmish.STALL_TICKS` (20 s) is stopped. The site is left alone for `BAD_SITE_TICKS` (3 min) through the brain's claims, and `brain.gaveUp` counts these.
   - The shipyard then comes at 5.0 min and the fleet by 6.2.
+
+## S-134 — Radar / sonar blips are sent at their unit's cell; the client draws the orbit (client follow-up to S-131) (2026-10-23)
+
+- **Found by B in Studio:** strategic records carry only a cell (`cell u16`, no offsets), so S-131's 1.5-stud drawn orbit never reached the client. Blips sat still on cell centres, and one near a cell edge hopped between cells as the orbit crossed the edge. The client now circles blips itself: 1.5 studs, 6 s a turn, phase and direction from the id (C-154).
+- **Changed:** `Sensors.blipOffset` and `BLIP_ORBIT` are gone. `knownPosition` returns the true position for RADAR / SONAR contacts, so NetOut sends the unit's own cell. `knownPosition(..., true)` and `knownTarget` still return the hidden aim point (S-130's orbit at the radar error), so targeting is unchanged.
+- **What a player learns:** the cell, within half a cell (about 5.7 studs) of the unit. S-131's drawn orbit gave the same, since it was sent as a cell anyway, plus the edge hops. Guide 11.4 and the net tiers line are updated.
+- **Tests:** `Fog.spec`: a radar contact's drawn position is the unit's, and its aim point is more than 10 studs off.
