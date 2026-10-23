@@ -10,6 +10,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| AI sites: reach and exit lanes (next.md item 3) | Sites must be reachable by their builder (within its build range, through its connected ground) and off the 3-cell lanes in front of the AI's factory exits. In 4 sample matches the reach check never fired and the lane rule twice; give-ups stayed at 1–2 per 12 min (cause not found yet) | S-142 |
 | Chosen starts (client request 64) | Built (`players[i].start`, replay format 4), then **held** until the lobby stream's match contract says whether the match place does a start pick; reverted on m-sim-2, kept on branch `s141-starts` | S-141 |
 | Budget watchdog for the Roblox server (your queue item 5, next.md item 2) | `Sim/Watchdog`: after each step, compares the tick's system times with guide 18.1; a WARN line per second while over budget (worst systems first), an INFO summary a minute. B wires it into the server loop | S-140 |
 | Flying sight bonus (your queue item 4, audit item 10) | Aircraft in flight see the ground 1.25× farther; landed, no bonus | S-139 |

@@ -2074,3 +2074,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Held:** a fourth session, D (lobby stream, `m-lobby`), now owns rooms, match start and the return to the lobby. B asked to hold this until D's `docs/contracts/match.md` says whether the match place does a start pick.
   - Reverted on m-sim-2 (cd82cd0) so it doesn't block other merges.
   - The commit is kept on branch `s141-starts`. If the contract has a start pick, bring it back by reverting the revert.
+
+## S-142 — AI build sites: reachable for their builder, off factory exit lanes (next.md item 3) (2026-10-23)
+
+- **Why:** the AI's site picker didn't check that the builder could get to a site. S-133's walled-in Commander made that a real failure; S-133 only added a give-up as a safety net.
+- **Built:** `spotNear` takes the builder (every call in the worker loop passes it).
+  - **Reach:** a site is accepted only if some cell on the rings around its footprint, out to the builder's build range (2 cells at least), is open ground in the builder's connected region. That's its move class's quadtree component, which Nav keeps current. So a shipyard on the water is built from the shore. Aircraft, and builders not standing on open ground (inside their factory), always pass.
+  - **Exit lanes:** sites may not cover the 3 cells (`Skirmish.EXIT_LANE`) in front of any of the player's factories, across the factory's width (S-133's exit path).
+- **Measured** (12 min, hard against normal, Coastline 34, skirmish:192 43, Canyon 1, Ridgeline 3):
+  - 404 sites checked; the reach check never fired; the lane rule fired twice.
+  - Give-ups (S-133) stayed at 1–2 per match, the same as before, so their cause is something else (crowding units, a site taken meanwhile). That's under review.
+  - Fast and slow suites pass; mirror fairness 6 / 6.
