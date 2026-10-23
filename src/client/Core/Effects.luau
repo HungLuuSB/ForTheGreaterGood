@@ -248,6 +248,34 @@ function Effects.impactSize(weapon: any): number
 	return weaponSize(weapon) * (if large then Effects.LARGE_IMPACT else 1)
 end
 
+-- A shot's tracer: a BEAM weapon's held ray (its duration, its faction's
+-- colour; stopped by a known dome it glances off and pulses the dome, C-129,
+-- C-139), else a quick streak.
+local function shotTracer(world: World.World, weapon: any, faction: string?, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, hit: boolean, now: number): Tracer
+	local isBeam = weapon ~= nil and weapon.type == "BEAM"
+	local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = hit, size = if weapon then weaponSize(weapon) else 1, beam = if isBeam then (faction or "order") else nil }
+	if isBeam and not hit then
+		local domes = {}
+		for id in world.shields do
+			local g = world.units[id]
+			local gdef = g and World.def(world, g)
+			local r = gdef and gdef.shield and gdef.shield.radius
+			if r then
+				table.insert(domes, { g.x, World.groundY(world, g.x, g.z), g.z, r })
+			end
+		end
+		local gx, gy, gz = Effects.deflection(x0, y0, z0, x1, y1, z1, domes, function(x: number, z: number): number
+			return World.groundY(world, x, z)
+		end)
+		if gx then
+			t.deflect = { gx, gy :: number, gz :: number }
+			t.pulseAt = now + Effects.SHIELD_PULSE
+			t.pulseMass = math.min(ShieldField.mass(weapon), 3)
+		end
+	end
+	return t
+end
+
 local function pos(world: World.World, e: Schema.Event): (number, number, number)
 	local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 	return x, (e.y :: number) / Schema.Y_SCALE, z
@@ -831,28 +859,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local slot = def and def.weapons[e.slot]
 			local weapon = slot and world.defs.weaponByIndex[slot.weaponIndex or 0]
 			local isBeam = weapon ~= nil and weapon.type == "BEAM"
-			local t: Tracer = { x0 = x0, y0 = y0 :: number, z0 = z0 :: number, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = e.hit == true, size = weaponSize(weapon), beam = if isBeam then (def and def.faction or "order") else nil }
-			if isBeam and not t.hit then
-				-- stopped by a shield dome: it glances off into the ground (C-129)
-				local domes = {}
-				for id in world.shields do
-					local g = world.units[id]
-					local gdef = g and World.def(world, g)
-					local r = gdef and gdef.shield and gdef.shield.radius
-					if r then
-						table.insert(domes, { g.x, World.groundY(world, g.x, g.z), g.z, r })
-					end
-				end
-				local gx, gy, gz = Effects.deflection(x0, y0 :: number, z0 :: number, x1, y1, z1, domes, function(x: number, z: number): number
-					return World.groundY(world, x, z)
-				end)
-				if gx then
-					t.deflect = { gx, gy :: number, gz :: number }
-					-- held on the dome: its honeycomb lights again every SHIELD_PULSE (C-139)
-					t.pulseAt = now + Effects.SHIELD_PULSE
-					t.pulseMass = math.min(ShieldField.mass(weapon), 3)
-				end
-			end
+			local t = shotTracer(world, weapon, def and def.faction, x0, y0 :: number, z0 :: number, x1, y1, z1, e.hit == true, now)
 			if #fx.tracers >= Effects.MAX_TRACERS then
 				fx.skipped.tracers += 1
 			end
@@ -901,7 +908,15 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local x1, y1, z1 = pos(world, e)
 		local x0, z0 = world.grid:decode(e.fromCell, e.fromOffX, e.fromOffZ)
 		local y0 = e.fromY / Schema.Y_SCALE
-		local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = Effects.TRACER_SECONDS, hit = e.hit == true, size = 1 }
+		-- the weapon (protocol 28, S-118): a hidden beam tower's shot draws as its
+		-- full beam, as BAR shows a Pulsar's (the user, C-143); the faction from
+		-- the weapon's id
+		local weapon = if e.weaponIndex and e.weaponIndex > 0 then world.defs.weaponByIndex[e.weaponIndex] else nil
+		local faction = if weapon and string.sub(weapon.id, 1, 4) == "chs_" then "chaos" else "order"
+		local t = shotTracer(world, weapon, faction, x0, y0, z0, x1, y1, z1, e.hit == true, now)
+		if t.beam and t.hit then
+			burst(fx, now, x1, y1, z1, 2.4, "impact", Effects.EXPLOSION_SECONDS)
+		end
 		if #fx.tracers >= Effects.MAX_TRACERS then
 			fx.skipped.tracers += 1
 		end

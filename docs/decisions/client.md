@@ -1146,3 +1146,12 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - **Review effects:** `BeamShots.ANYWAY` and `ShieldFx.SHELL_ANYWAY` default to `RunService:IsStudio()`. Studio is where the user reviews, so they no longer need the debug commands there; live servers still wait for "approved".
 
 **Why:** the user: "also add more rings of outer honeycombs. Where's the effect from C?"
+
+### C-143 — Detailed models load fast (pieces built in parallel), the camera area leads a moving camera; hidden beams drawn as beams (2026-10-23)
+
+**Decision:**
+- **MeshModels:** a model's pieces and glow parts are created at once (`together`), and 8 models build at a time (was 4). All 74 Normandy types are ready in ~15 s, against ~70 s before (25 ready after 34 s) once models-C split meshes into many pieces.
+- **Camera:** the area sent to the server is stretched up to 0.8 s / 400 studs ahead of the camera's motion, so units ahead become tactical (full models) before they scroll into view. The minimap box keeps the true view.
+- **SHOT (protocol 28, S-118):** `weaponIndex` picks the weapon. A BEAM draws as its held beam in its faction's colour (from the weapon id), with the dome glance and pulses (a shared `shotTracer` with FIRE).
+
+**Why:** the user: blockouts showing before detailed models when panning fast; and "in BAR, a Pulsar's beam renders even with no vision".

@@ -4,6 +4,14 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, faster detailed models, hidden beams)
+
+- **Detailed models (C-143):** all 74 types in a big match are ready in about 15 s, against more than a minute before (models-C's new meshes have many more pieces, which were built one at a time). The area the server fills with full models also runs ahead of the camera when you pan.
+- **Hidden beam towers:** their shots now draw as full beams with no vision, as in BAR (sim-A's S-118 merged). Checked in shield_beams without /reveal (`debug_out/screens/hidden_beams.jpg`).
+- **Also merged:** sim-A's S-117 (beams drain shields a lot: your dome dropped to 0% under three Radiances and an Inferno).
+- **Coming from sim-A (S-119):** attack-ground for beam and hitscan weapons; turrets hold their aim while a beam burns; and a server fix for turrets not showing their aim on units entering your view (the likely cause of "the gun never aims at a unit that doesn't move").
+- **Manual targeting priority:** asked sim-A to re-check S-115 against your expectation.
+
 ## Summary (2026-10-23, outer rings, C's effects in Studio, turret aim)
 
 - **Shield hits (C-142):** 8 to 11 rings (217 to 397 cells), the outer ones smaller still. Not checked in Studio yet: you were in a playtest. It shows in your next one.
@@ -1752,7 +1760,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-53. **Open (sent 2026-10-23).** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
+53. **Built (S-119, merging): attack-ground for BEAM / HITSCAN; aim held while a beam burns; NetOut sends aim on ENTER.** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
     - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.
     - Cause of the "turret doesn't aim at its target" report (beam towers in shield_beams): the attack-ground order is ignored, the tower tracks a Mason wandering inside the dome (~15° of swing), and its fixed 3 s beam no longer lines up with the barrel.
     - Also asked: hold the aim on the fired line while a beam burns.
