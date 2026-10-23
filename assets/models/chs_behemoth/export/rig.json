@@ -1,0 +1,166 @@
+{
+  "id": "chs_behemoth",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.2113,
+        -0.7008
+      ],
+      "size": [
+        13.1576,
+        4.3774,
+        10.9985
+      ]
+    },
+    "bay": {
+      "parent": "base",
+      "center": [
+        0.0,
+        -0.035,
+        0.2
+      ],
+      "size": [
+        1.424,
+        0.3501,
+        3.0
+      ],
+      "pivot": [
+        0.0,
+        0.0,
+        0.2
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        0.0,
+        -0.24,
+        2.35
+      ],
+      "size": [
+        3.6,
+        0.52,
+        1.5
+      ],
+      "pivot": [
+        0.0,
+        0.0,
+        2.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "bay",
+      "at": [
+        0,
+        -0.1,
+        0.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.305,
+        1.1093
+      ],
+      "size": [
+        13.14,
+        4.31,
+        7.2815
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.08,
+        -3.4
+      ],
+      "size": [
+        0.36,
+        0.06,
+        0.36
+      ]
+    },
+    {
+      "name": "bay_glow_weapon",
+      "piece": "bay",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        0.01,
+        0.2
+      ],
+      "size": [
+        0.5,
+        0.02,
+        2.0
+      ]
+    }
+  ],
+  "glowShare": 0.0515,
+  "triangles": {
+    "base": 792,
+    "bay": 48,
+    "pylon": 262,
+    "total": 1102
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

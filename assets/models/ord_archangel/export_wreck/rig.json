@@ -1,0 +1,73 @@
+{
+  "id": "ord_archangel_wreck",
+  "wreckOf": "ord_archangel",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0201,
+        1.2384,
+        -0.3528
+      ],
+      "size": [
+        13.7228,
+        3.1028,
+        11.2401
+      ]
+    },
+    "dish": {
+      "parent": "base",
+      "center": [
+        0.0539,
+        2.3865,
+        0.3955
+      ],
+      "size": [
+        0.6932,
+        0.9335,
+        5.4381
+      ],
+      "pivot": [
+        0.0,
+        2.4,
+        0.4
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 588,
+    "dish": 260,
+    "total": 848
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

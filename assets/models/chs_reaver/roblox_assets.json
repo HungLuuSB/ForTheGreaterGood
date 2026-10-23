@@ -1,0 +1,51 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 1004 triangles, glow share 4.0%",
+  "bar": {
+    "model": "rbxassetid://103423533135894",
+    "meshes": {
+      "base": "rbxassetid://137563021207079",
+      "base_glow_running": "rbxassetid://97928252604920",
+      "nano": "rbxassetid://94607950965862",
+      "nano_glow_power": "rbxassetid://120228429551585"
+    },
+    "decals": {
+      "ALB": "rbxassetid://122322981193347",
+      "RGH": "rbxassetid://124737230915697",
+      "NOR": "rbxassetid://140443678626311",
+      "MTL": "rbxassetid://132505694685686",
+      "EMI": "rbxassetid://104606454515956"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://78967709266331",
+      "NOR": "rbxassetid://110392463734016",
+      "RGH": "rbxassetid://111686570160146",
+      "MTL": "rbxassetid://136564569037979",
+      "EMI": "rbxassetid://117088638283981"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_reaver_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://88137071312222",
+    "meshes": {
+      "base": "rbxassetid://121853509125102",
+      "nano": "rbxassetid://72419867047553"
+    },
+    "decals": {
+      "ALB": "rbxassetid://80859231205011",
+      "RGH": "rbxassetid://124416233109241",
+      "NOR": "rbxassetid://117784192517570",
+      "MTL": "rbxassetid://137701780395604",
+      "EMI": "rbxassetid://110565934517303"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://76975171914346",
+      "NOR": "rbxassetid://135078976741124",
+      "RGH": "rbxassetid://93394338469383",
+      "MTL": "rbxassetid://120117242490773",
+      "EMI": "rbxassetid://114370301519157"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_reaver_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 944 triangles"
+  }
+}

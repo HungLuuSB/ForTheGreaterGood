@@ -1,0 +1,270 @@
+{
+  "id": "ord_dominion",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        5.35,
+        -0.6005
+      ],
+      "size": [
+        8.42,
+        12.7,
+        29.401
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        10.4,
+        -0.8225
+      ],
+      "size": [
+        3.0,
+        0.7,
+        0.495
+      ],
+      "pivot": [
+        0.0,
+        10.4,
+        -0.8
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.5825,
+        -11.1568
+      ],
+      "size": [
+        4.3694,
+        1.765,
+        8.6865
+      ],
+      "pivot": [
+        0.0,
+        2.6,
+        -8.6
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        0.0,
+        6.42,
+        4.8
+      ],
+      "size": [
+        1.8,
+        1.24,
+        3.0
+      ],
+      "pivot": [
+        0.0,
+        5.8,
+        5.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0,
+        3.6,
+        -15.55
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        0,
+        6.6,
+        3.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "radar",
+    "turret1",
+    "turret2"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        6.495,
+        1.0475
+      ],
+      "size": [
+        8.49,
+        10.65,
+        26.095
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        7.82,
+        3.1
+      ],
+      "size": [
+        1.2,
+        0.06,
+        2.8
+      ]
+    },
+    {
+      "name": "base_glow_weapon",
+      "piece": "base",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.6,
+        13.75
+      ],
+      "size": [
+        2.1,
+        0.4756,
+        0.08
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        10.4,
+        -1.07
+      ],
+      "size": [
+        2.85,
+        0.06,
+        0.03
+      ]
+    },
+    {
+      "name": "turret1_glow_weapon",
+      "piece": "turret1",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.6,
+        -15.15
+      ],
+      "size": [
+        2.1,
+        0.4756,
+        0.08
+      ]
+    },
+    {
+      "name": "turret2_glow_weapon",
+      "piece": "turret2",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        6.6,
+        3.3
+      ],
+      "size": [
+        0.96,
+        0.26,
+        0.08
+      ]
+    }
+  ],
+  "glowShare": 0.0293,
+  "triangles": {
+    "base": 1292,
+    "radar": 68,
+    "turret1": 436,
+    "turret2": 220,
+    "total": 2016
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

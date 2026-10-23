@@ -1,0 +1,55 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 988 triangles, glow share 4.4%",
+  "bar": {
+    "model": "rbxassetid://92763625318444",
+    "meshes": {
+      "base": "rbxassetid://95106959037758",
+      "base_glow_head": "rbxassetid://129992569396668",
+      "base_glow_running": "rbxassetid://77624213595085",
+      "pylon": "rbxassetid://77801039694570",
+      "pylon_glow_weapon": "rbxassetid://81640032830606",
+      "turret": "rbxassetid://79450165555974",
+      "turret_glow_weapon": "rbxassetid://131748117448453"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84953696260091",
+      "RGH": "rbxassetid://90840203918675",
+      "NOR": "rbxassetid://79273570602903",
+      "MTL": "rbxassetid://135783532009390",
+      "EMI": "rbxassetid://84982099274122"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://110770454303453",
+      "NOR": "rbxassetid://113415967341878",
+      "RGH": "rbxassetid://83946635119225",
+      "MTL": "rbxassetid://90108701311289",
+      "EMI": "rbxassetid://119797478162441"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_manticore_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://90111998892306",
+    "meshes": {
+      "base": "rbxassetid://103286166909154",
+      "pylon": "rbxassetid://139866831306081",
+      "turret": "rbxassetid://140144802016818"
+    },
+    "decals": {
+      "ALB": "rbxassetid://119752063283839",
+      "RGH": "rbxassetid://80534138079299",
+      "NOR": "rbxassetid://84972439421693",
+      "MTL": "rbxassetid://86492473337625",
+      "EMI": "rbxassetid://94174240273512"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://134250191682613",
+      "NOR": "rbxassetid://75778407544960",
+      "RGH": "rbxassetid://132837663811668",
+      "MTL": "rbxassetid://113348054215378",
+      "EMI": "rbxassetid://91394303072389"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_manticore_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 996 triangles"
+  }
+}

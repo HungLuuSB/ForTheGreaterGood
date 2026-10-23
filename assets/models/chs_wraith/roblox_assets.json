@@ -1,0 +1,49 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 360 triangles, glow share 7.6%",
+  "bar": {
+    "model": "rbxassetid://107354103412750",
+    "meshes": {
+      "base": "rbxassetid://106193822712494",
+      "base_glow_power": "rbxassetid://135844586337957",
+      "base_glow_running": "rbxassetid://117994752059795"
+    },
+    "decals": {
+      "ALB": "rbxassetid://89652148929935",
+      "RGH": "rbxassetid://112613867914854",
+      "NOR": "rbxassetid://104928010299635",
+      "MTL": "rbxassetid://127753002659527",
+      "EMI": "rbxassetid://72657499196120"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://80487904281226",
+      "NOR": "rbxassetid://87885573543602",
+      "RGH": "rbxassetid://107663308347646",
+      "MTL": "rbxassetid://99392720802360",
+      "EMI": "rbxassetid://96147460625680"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_wraith_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://74426881958432",
+    "meshes": {
+      "base": "rbxassetid://136432223349649"
+    },
+    "decals": {
+      "ALB": "rbxassetid://95475397319857",
+      "RGH": "rbxassetid://132616509726139",
+      "NOR": "rbxassetid://77235753428160",
+      "MTL": "rbxassetid://119306835826730",
+      "EMI": "rbxassetid://83782326875792"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://124178641036522",
+      "NOR": "rbxassetid://100640605519924",
+      "RGH": "rbxassetid://119594998616660",
+      "MTL": "rbxassetid://94000664191205",
+      "EMI": "rbxassetid://91994694957680"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_wraith_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 348 triangles"
+  }
+}

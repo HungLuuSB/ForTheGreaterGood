@@ -1,0 +1,53 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 744 triangles, glow share 5.4%",
+  "bar": {
+    "model": "rbxassetid://109360287161645",
+    "meshes": {
+      "base": "rbxassetid://107216076379790",
+      "base_glow_head": "rbxassetid://72406694721826",
+      "base_glow_power": "rbxassetid://112552132393933",
+      "base_glow_running": "rbxassetid://94128486446825",
+      "dish": "rbxassetid://130591097750358",
+      "dish_glow_power": "rbxassetid://106183962065008"
+    },
+    "decals": {
+      "ALB": "rbxassetid://97416112377596",
+      "RGH": "rbxassetid://71268029971862",
+      "NOR": "rbxassetid://90568723861795",
+      "MTL": "rbxassetid://138584091048537",
+      "EMI": "rbxassetid://137600851703016"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://134990792179055",
+      "NOR": "rbxassetid://132288494136848",
+      "RGH": "rbxassetid://88157720812853",
+      "MTL": "rbxassetid://97487185284483",
+      "EMI": "rbxassetid://113643062722132"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_banshee_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://140012761245175",
+    "meshes": {
+      "base": "rbxassetid://121977043588191",
+      "dish": "rbxassetid://89119956012341"
+    },
+    "decals": {
+      "ALB": "rbxassetid://79016049474431",
+      "RGH": "rbxassetid://123137360035168",
+      "NOR": "rbxassetid://117909414669675",
+      "MTL": "rbxassetid://93562402788631",
+      "EMI": "rbxassetid://100963623376504"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://115491837219315",
+      "NOR": "rbxassetid://90643748513284",
+      "RGH": "rbxassetid://103963609384899",
+      "MTL": "rbxassetid://72194467525639",
+      "EMI": "rbxassetid://124425937902410"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_banshee_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 736 triangles"
+  }
+}

@@ -1,0 +1,249 @@
+{
+  "id": "ord_sanctuary",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.05,
+        5.95,
+        -0.5
+      ],
+      "size": [
+        11.3,
+        13.7,
+        29.0
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        4.2,
+        11.2,
+        1.58
+      ],
+      "size": [
+        3.0,
+        0.8,
+        0.44
+      ],
+      "pivot": [
+        4.2,
+        11.2,
+        1.6
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        -4.6,
+        3.97,
+        -10.575
+      ],
+      "size": [
+        1.6,
+        1.14,
+        2.75
+      ],
+      "pivot": [
+        -4.6,
+        3.4,
+        -10.0
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        -4.6,
+        3.97,
+        9.025
+      ],
+      "size": [
+        1.6,
+        1.14,
+        2.75
+      ],
+      "pivot": [
+        -4.6,
+        3.4,
+        9.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        -4.6,
+        4.15,
+        -12.05
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        -4.6,
+        4.15,
+        7.55
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "radar",
+    "turret1",
+    "turret2"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        7.05,
+        0.7225
+      ],
+      "size": [
+        11.3,
+        11.74,
+        25.845
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        4.2,
+        9.22,
+        4.0
+      ],
+      "size": [
+        1.2,
+        0.06,
+        1.4
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        4.2,
+        11.2,
+        1.36
+      ],
+      "size": [
+        2.85,
+        0.06,
+        0.03
+      ]
+    },
+    {
+      "name": "turret1_glow_weapon",
+      "piece": "turret1",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        -4.6,
+        4.15,
+        -11.95
+      ],
+      "size": [
+        0.84,
+        0.24,
+        0.08
+      ]
+    },
+    {
+      "name": "turret2_glow_weapon",
+      "piece": "turret2",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        -4.6,
+        4.15,
+        7.65
+      ],
+      "size": [
+        0.84,
+        0.24,
+        0.08
+      ]
+    }
+  ],
+  "glowShare": 0.0073,
+  "triangles": {
+    "base": 1760,
+    "radar": 68,
+    "turret1": 212,
+    "turret2": 212,
+    "total": 2252
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
