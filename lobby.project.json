@@ -1,0 +1,51 @@
+{
+  "name": "FTGG Lobby",
+  "servePort": 34874,
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "build/lobby/src/shared"
+      },
+      "LobbyShared": {
+        "$path": "build/lobby/src/lobby/shared"
+      },
+      "ClientKit": {
+        "$className": "Folder",
+        "UI": {
+          "$className": "Folder",
+          "Kit": {
+            "$path": "build/lobby/src/client/UI/Kit.luau"
+          }
+        },
+        "Core": {
+          "$className": "Folder",
+          "Chart": {
+            "$path": "build/lobby/src/client/Core/Chart.luau"
+          }
+        },
+        "Render": {
+          "$className": "Folder",
+          "MeshModels": {
+            "$path": "build/lobby/src/client/Render/MeshModels.luau"
+          }
+        }
+      },
+      "MeshMaterials": {
+        "$path": "place/MeshMaterials.model.json"
+      }
+    },
+    "ServerScriptService": {
+      "Lobby": {
+        "$path": "build/lobby/src/lobby/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Lobby": {
+          "$path": "build/lobby/src/lobby/client"
+        }
+      }
+    }
+  }
+}
