@@ -22,6 +22,8 @@ local MapLook = require("./Core/MapLook")
 local Atmosphere = require("./Render/Atmosphere")
 local Idle = require("./Core/Idle")
 local GroundMeshes = require("./Core/GroundMeshes")
+local MatchLoading = require("./UI/MatchLoading")
+local Preload = require("./Render/Preload")
 local IdleStrip = require("./UI/IdleStrip")
 local IdleMarks = require("./Render/IdleMarks")
 local Api = require("./Api")
@@ -305,6 +307,10 @@ local commandCard = CommandCard.new(api)
 local unitPanel = UnitPanel.new(api)
 local alertFeed = AlertFeed.new(api)
 local _lobbyUI = LobbyUI.new(remotes) -- the lobby and results screens (C-70; profiles with a lobby only)
+-- a lobby match's loading screen while everyone caches (C-173): it reports
+-- this client's progress (Render/Preload) and hides once the match starts
+local matchLoading = MatchLoading.new(remotes)
+local preload = Preload.new()
 Controls.capture = function(input: InputObject): boolean
 	if SettingsMenu.capturing and input.UserInputType == Enum.UserInputType.Keyboard then
 		return true -- Settings > Keys is taking this key (C-159)
@@ -871,6 +877,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 		ReplayPlayer.advance(replay, dt, deliverReplay)
 	end
 	_lobbyUI.gui.Enabled = replay == nil
+	MatchLoading.step(matchLoading, now, Preload.progress(preload, world))
 	ReplayBar.step(replayBar, replay, if replay then `REPLAY: player {replay.replay.header.viewer}'s view` elseif world.joined and world.me.player == 0 then "SPECTATING: every player, no fog" else nil)
 	if world.rejected then
 		if not warned then

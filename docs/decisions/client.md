@@ -1461,3 +1461,40 @@ Any other spin or turn piece is left to its unit's own script. The v3 Commander 
 **Also checked:** with models-C's approved T1 batch merged here (m-models 671732b), all 31 meshes on the `build` profile built in 6 s with no failure (`c172_t1_meshes.jpg`).
 
 **Why:** the user: "also why is my commander rotating around ?"
+
+### C-173 — The match place's side of the lobby contract: boot from the stored config, loading screen, results record, return trip (2026-10-23)
+
+**Decision:** the lobby stream's (session D's) requests B-1..B-3, following `docs/contracts/match.md` v1.
+- **Match role.** A reserved server of this place (`PrivateServerId` set, no owner), or the Studio profile `contract`:
+  - **finds its match:** `server/<PrivateServerId>` → matchId → `config/<matchId>` in MemoryStore `FtggMatch`;
+  - **checks it** with `src/roblox/MatchContract.luau`'s copy of the lobby's `MatchConfig.validate`;
+  - **builds the sim** from it (`MatchContract.toSim`: Order odd, Chaos even, ally teams, AI levels; `start == id`);
+  - **reuses the skirmish plumbing:** a lobby-style seat list (`toLobby`) keeps `Lobby.results`, `Lobby.done` and the results screen working.
+- **Admission.** Listed players take their seats (rejoin = join), listed spectators watch, anyone else is kicked. Studio's `contractAdmitAny` seats the playtester.
+- **Loading.**
+  - The match waits ("waiting") until every listed human's client has loaded, or 90 s after the first did.
+  - The sim keeps stepping so clients get the map and the replay stays continuous; the AI is paused and players' commands are dropped until the start.
+  - The client's `Render/Preload` measures real caching: joined, ground built, every approved unit mesh built, the SurfaceAppearances preloaded. It reports every 0.5 s.
+  - `UI/MatchLoading` is the BAR-style screen: dark art placeholder, room and map, each player's progress, a tip line, a long olive bar.
+- **Heartbeat** `alive/<matchId>` every 30 s, TTL 120.
+- **Result.** `result/<matchId>` is written once when the match ends for the humans. `MatchContract.outcomeOf` decides:
+  - the sim's own end: "finished" with the winner, or "draw";
+  - otherwise "abandoned" when no human is left on the server;
+  - otherwise from who still stands: one ally team → it won; else "draw" with a reason.
+- **Record contents:** flat stats by the Stats.report names. If every player leaves early, the record is "abandoned". A refused config writes "abandoned" with the reason and sends players back.
+- **Return.** The results panel shows "Return to lobby" for everyone, with a 30 s countdown (`Statistics` Actions `backLabel` / `returnAt`). Then the server teleports each player or the rest:
+  - to `config.lobby.placeId` with `ServerInstanceId = config.lobby.jobId` and teleport data `{ matchId }`;
+  - on failure, or on `TeleportInitFailed`, again without the server ID.
+- **Player colours.** The server publishes each sim team's palette index (`TeamColors` attribute); `Render/TeamColors` now uses the lobby's 12-colour palette, entry n for team n without it.
+- **Dev path unchanged:** test profiles and the in-match skirmish lobby work as before, not extended.
+- **Checked:** spec MatchContract.spec, which plays a Teams match from a contract config through the real sim; the records pass the lobby's own `validateResult`. In Studio on `contract`: the config is read from the stand-in store, the playtester admitted, the loading screen held until loaded (about 15 s for the meshes), and the match played. Then the result was written, the countdown shown, and the return trip printed after 30 s. Screens: `c173_loading_screen.jpg`, `c173_return_countdown.jpg`.
+- **Only a published test can check** the MemoryStore, reserved servers and teleports (contract section 10).
+- **Why:** the user's alpha flow and session D's contract. Copying `validate` follows D's suggestion; it should move to `src/shared` (D owns it), then this copy goes.
+
+### C-174 — Kit: filled action buttons and a text input (2026-10-23)
+
+**Decision:** for the lobby stream (B-4), keeping the kit's API stable:
+- `Kit.button(parent, text, kind, onClick, width, fill?)` takes kinds "go" / "stop" (`Kit.COLOR.go` / `stop`) or any `fill` colour: a filled button with a light hover.
+- `Kit.input(parent, placeholder, width?, onEnter?)` is a text box in the control style, D's `Ui.input` signature.
+
+Existing calls are unchanged.

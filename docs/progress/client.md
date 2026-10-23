@@ -4,6 +4,16 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, the match side of the lobby flow)
+
+- **The match place now runs a lobby match end to end (C-173, D's contract):**
+  - it reads the room's settings that D's lobby stores and admits only the listed players;
+  - it shows a BAR-style loading screen until every client has cached the map, the models and the textures;
+  - it plays, writes the results record for the lobby, and shows "Return to lobby" with a 30 s countdown before sending everyone back.
+  - Checked in Studio with a stand-in store. The real teleports and storage need a published test.
+- **Player colours** now come from the lobby's 12-colour palette.
+- **Kit additions for D (C-174):** green / red action buttons and a text input.
+
 ## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
 
 - **The approved T1 structure models are merged here** (models-C's batch), so a playtest draws them. All 31 built with no failure in Studio.
