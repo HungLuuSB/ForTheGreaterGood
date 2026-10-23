@@ -9,6 +9,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **SAMs no longer fly into the sky when their target dies (C-181, S-146):** a radar missile that loses its target now spirals and falls on your screen, on the same path the server uses.
 - **Radar accuracy in the sensor view (N):** a circle round each radar blip shows how far radar-fired shots miss (amber; smaller and green when a fire-control radar tracks it), with a readout under the resource bar, e.g. "Radar accuracy ±7.7 studs · tracked ±2.6 · Pinpointers 40%". Screenshots: `debug_out/screens/c181_*.jpg`.
 - Ready to merge: `589e168` (C-181: lost radar missiles, radar accuracy view; main 276158f merged in; test_client 258, test 481, build passed)
+- Ready to merge: `11d9adf` (C-181 follow-up: the readout greys "tracked" while nothing is tracked)
 
 ## Summary (2026-10-23, the match side of the lobby flow)
 
