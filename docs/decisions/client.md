@@ -1194,3 +1194,9 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 **Decision:** Commander POSE follows models-C's M-32 stride: forward leg thigh +24 / shin −8 / foot −16, back leg thigh −18 / shin −22 / foot +30, pelvis dip 0.2. C-145's domes without vision are verified in Studio on main f3334c7 (S-122).
 
 **Why:** the user rejected the first mechs (too small and blocky); models-C rebuilt them about 10 studs tall with a real knee bend.
+
+### C-149 — Remembered buildings (ghosts) can be ordered attacked (2026-10-23)
+
+**Decision:** no code change needed. Ghost structures arrive as strategic records under their real unit IDs, so `Selection.pick` picks them and `Orders.smart` / Attack mode send ATTACK with that targetId. A spec pins it down (Orders.spec).
+
+**Why:** sim-A's S-127, from the user: units no longer auto-target ghosts, only on an attack order or manual target.

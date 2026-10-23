@@ -4,6 +4,14 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, manual targets fixed; crash fixed; ghosts)
+
+- **Merged sim-A's S-124 / S-125 / S-126.**
+  - **Manual targets** now stick while the unit lives, even unseen: point weapons keep firing at its last known spot while it's in range.
+  - When the target dies, the unit goes straight back to auto-targeting.
+  - I re-ran my test: the towers burned through two domes to kill the ordered tank, and there's no crash any more (S-126 fixed a crash on beams at a dead building's ghost).
+- **Coming (S-127, from you):** units won't auto-fire at remembered buildings any more, only when you order it. Right-click or Attack on a remembered building already works on the client (C-149, spec added).
+
 ## Summary (2026-10-23, beams stop at the next dome; manual target issues)
 
 - **S-123 merged and checked:** two Radiances on a tank behind two overlapping domes. When the front dome drops, the beams stop at the second dome's surface instead of going through, with their glancing legs (`debug_out/screens/two_domes_beam.jpg`). The case of a dome rising across a beam was tested by sim-A; I didn't stage it in Studio.
@@ -1804,7 +1812,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-58. **Fixed (S-126, on m-sim-2, next to main):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
+58. **Fixed (S-126, on main b7f0f09; verified headless, 70 s with no crash):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
 
 57. **On main (S-125, 6c68d4c; behaviour verified headless, but see 58): cause was a lost spotter (an unseen manual target counted as out of range). Now point-capable weapons keep firing at its last known spot while it lives and that spot is in range (beyond range: own picks); on its death the weapons search the same tick.** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
 

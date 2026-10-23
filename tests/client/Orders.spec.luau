@@ -228,4 +228,14 @@ return function(t: any)
 		end
 		t.equal(total, 450)
 	end)
+
+	t.test("a remembered building (ghost) can be picked and attacked (S-127)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		world.me = { player = 1, team = 1, allyTeam = 1 }
+		world.units[77] = { id = 77, tier = "strategic", team = 2, defIndex = nil, icon = 1, flags = Schema.StrategicFlag.GHOST, x = 40, z = 40, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} }
+		t.equal(Selection.pick(world, project, (40 + 192) * 2, (40 + 192) * 2), 77, "picked under the cursor")
+		local intent = Orders.smart(world, 40, 40, 77, false)
+		t.expect(intent.cmdType == Schema.CmdType.ATTACK and intent.targetId == 77, "an attack on the ghost")
+	end)
 end
