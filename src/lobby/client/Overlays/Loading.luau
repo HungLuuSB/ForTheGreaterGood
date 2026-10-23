@@ -6,7 +6,7 @@
 -- with its controls: end the match now, make the "server" die, or go back
 -- early.
 
-local KeyArt = require("../KeyArt")
+local KeyArt = require("@client/UI/KeyArt")
 local Net = require("../Net")
 local Ui = require("../Ui")
 

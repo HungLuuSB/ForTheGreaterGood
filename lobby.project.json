@@ -16,6 +16,9 @@
           "$className": "Folder",
           "Kit": {
             "$path": "build/lobby/src/client/UI/Kit.luau"
+          },
+          "KeyArt": {
+            "$path": "build/lobby/src/client/UI/KeyArt.luau"
           }
         },
         "Core": {

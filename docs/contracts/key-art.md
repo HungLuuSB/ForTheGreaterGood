@@ -1,6 +1,6 @@
 # Contract: key art with parallax layers
 
-Owner: lobby stream (session D). Maker: models stream (session C). Readers: the lobby's loading screen (`src/lobby/client/KeyArt.luau`), the match place's loading screen (client stream B, `UI/MatchLoading`). Decision: L-13.
+Owner: lobby stream (session D). Maker: models stream (session C). Readers: one viewer, `src/client/UI/KeyArt.luau` (client stream B), used by the match place's loading screen (`UI/MatchLoading`) and, read-only, by the lobby's. Decision: L-13.
 
 The user (2026-10-23): stunning key art from the models stream, with a parallax effect like the menu's live scene. A battle between tanks, aircraft and ships on the far side, SAM missiles flying, explosions on the ground. Realistic lighting, a battlefield feel, a sci-fi edge.
 
@@ -66,3 +66,4 @@ Both loading screens read it through `@shared/Defs/Meshes/Registry`. Without app
 ## Changes
 
 - 2026-10-23: first version (L-13).
+- 2026-10-23: one viewer, `src/client/UI/KeyArt.luau`; the lobby's copy is gone.

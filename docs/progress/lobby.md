@@ -95,7 +95,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
 | Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
-| Key-art contract and parallax viewer on the loading screen (L-13) | done; waiting for C's art |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only); waiting for C's art |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue
