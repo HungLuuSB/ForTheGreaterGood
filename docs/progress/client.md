@@ -1953,3 +1953,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `6d0e0df` (shield_beams test profile, C-140; MatchConfig profile hunk only, ACTIVE untouched); build passed.
 - Ready to merge: `b8cc921` (more, smaller rings in shield hits, C-141); test_client 214, build passed (client render only).
 - Ready to merge: `4b58c31` (more outer rings, review effects on in Studio; C-142); test_client 214, build passed (client render only).
+- Ready to merge: `511ab10` (with 58d5579 and the main merge 46d094c: fast mesh builds, camera lead, SHOT beams; C-143); test_client 214, test 446, build passed.
