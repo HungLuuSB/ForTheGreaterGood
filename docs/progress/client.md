@@ -7,7 +7,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 ## Summary (2026-10-24, point defence; new icon sheet)
 
 - **New icon sheet (C-183):** your draft 4 is uploaded (asset 83784263765889) and live. Every unit's icon comes from the sheet's own lists; anti-nukes, point defences, shields, flak, missile batteries and the decoy drone have their own tiles now. A second sheet starts automatically once the first is full. Screenshots: `debug_out/screens/c183_strategic_*.jpg`.
-- Ready to merge: `2bd726b` (C-183: icon sheet draft 4, multi-sheet atlas, new asset id; src/client, tools/icons, assets, docs/art)
+- Ready to merge: `02e1493` (C-183: icon sheet draft 4, multi-sheet atlas, new asset id, Studio "hold" debug query; src/client, src/roblox, tools/icons, assets, docs/art)
 - **Point defence (C-182, S-149):** interceptors from the Sanctum, Basilisk, Shepherd and Griffin chase rockets and missiles on screen; a shot-down rocket ends in a small puff. Stopgap icons until your draft 4 sheet.
 - Ready to merge: `f5696da` (C-182: point defence on the client, stopgap icons; main c1bbe23 merged in; fixes main's 2 icon specs)
 
