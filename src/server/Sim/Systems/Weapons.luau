@@ -253,45 +253,55 @@ local function fire(
 			ey = Combat.groundHeight(c, ex, ez)
 		end
 	end
+	if weapon.beamDuration then
+		-- a lingering beam (S-113 .. S-123): its full shot is kept, the first
+		-- up enemy dome on its line ends it there (hit = false, the dome
+		-- absorbs the shot, S-89, and is drained over the beam, S-117), and
+		-- beamStep re-checks that end every tick (S-123, client request 56)
+		local gen, hx, hy, hz = 0, 0, 0, 0
+		if #c.shieldIds > 0 then
+			gen, hx, hy, hz = Shield.intercept(sim, w.ally[id], w.posX[id], muzzleY, w.posZ[id], ex, ey, ez, weapon)
+		end
+		if gen ~= 0 then
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = false, x = hx, y = hy, z = hz, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+		else
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+			if hit then
+				c.stats.hits += 1
+			end
+		end
+		local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
+		local follow = hit and not weapon.pierce and target ~= 0
+		table.insert(c.beams, {
+			shooter = id,
+			shooterGen = w.gen[id],
+			slot = slot,
+			ticks = ticks,
+			total = ticks,
+			target = if follow then target else 0,
+			targetGen = if follow then w.gen[target] else 0,
+			my = muzzleY,
+			fullX = ex,
+			fullY = ey,
+			fullZ = ez,
+			fullHit = hit,
+			ray = weapon.pierce == true,
+			dome = if gen ~= 0 then gen else nil,
+			domeGen = if gen ~= 0 then w.gen[gen] else nil,
+			domeDrain = Shield.beamDrain(weapon) / ticks,
+		})
+		return
+	end
 	if #c.shieldIds > 0 then
 		-- an enemy shield dome on the way stops the shot at its surface (S-89)
 		local gen, hx, hy, hz = Shield.intercept(sim, w.ally[id], w.posX[id], muzzleY, w.posZ[id], ex, ey, ez, weapon)
 		if gen ~= 0 then
 			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = false, x = hx, y = hy, z = hz, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
-			if weapon.beamDuration then
-				-- a lingering beam held on the dome drains it over its
-				-- duration (S-117, client request 51); a hit-ray also hurts
-				-- enemies on its line up to the surface, none inside (S-116,
-				-- request 50); the glancing leg the client draws does nothing
-				local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
-				local rec: Combat.Beam = { shooter = id, shooterGen = w.gen[id], slot = slot, target = 0, targetGen = 0, ticks = ticks, total = ticks, dome = gen, domeGen = w.gen[gen], domeDrain = Shield.beamDrain(weapon) / ticks }
-				-- where it would have ended without the dome: it goes on there
-				-- if the dome drops while it burns (S-121, client request 54)
-				rec.sy, rec.afterX, rec.afterY, rec.afterZ, rec.afterHit = muzzleY, ex, ey, ez, hit
-				if hit and target ~= 0 then
-					rec.afterTarget, rec.afterTargetGen = target, w.gen[target]
-				end
-				if weapon.pierce then
-					rec.sx, rec.sz, rec.ex, rec.ez = w.posX[id], w.posZ[id], hx, hz
-				end
-				table.insert(c.beams, rec)
-			end
 			return
 		end
 	end
 	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
-	if weapon.pierce then
-		if hit then
-			c.stats.hits += 1
-		end
-		local ticks = math.max(1, math.floor((weapon.beamDuration :: number) * 15 + 0.5))
-		table.insert(c.beams, { shooter = id, shooterGen = w.gen[id], slot = slot, target = 0, targetGen = 0, ticks = ticks, total = ticks, sx = w.posX[id], sz = w.posZ[id], ex = ex, ez = ez })
-	elseif hit and weapon.beamDuration then
-		c.stats.hits += 1
-		-- a lingering beam (S-113): its damage over beamDuration, from this tick
-		local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
-		table.insert(c.beams, { shooter = id, shooterGen = w.gen[id], slot = slot, target = target, targetGen = w.gen[target], ticks = ticks, total = ticks })
-	elseif hit then
+	if hit then
 		c.stats.hits += 1
 		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
@@ -302,13 +312,13 @@ end
 
 local rayHits: { number } = {}
 
--- One tick's share of a piercing beam (S-115): every enemy unit its line
--- crosses, by its collision radius, in the weapon's target classes.
-local function rayShare(sim: Types.Sim, b: Combat.Beam)
+-- One tick's share of a hit-ray (S-115): every enemy unit the line from
+-- (sx, sz) to (ex, ez) crosses, by its collision radius, in the weapon's
+-- target classes.
+local function rayShare(sim: Types.Sim, b: Combat.Beam, sx: number, sz: number, ex: number, ez: number)
 	local c = sim.combat
 	local w = sim.world
 	local weapon = c.profiles[w.defIndex[b.shooter]].weapons[b.slot]
-	local sx, sz, ex, ez = b.sx :: number, b.sz :: number, b.ex :: number, b.ez :: number
 	local dx, dz = ex - sx, ez - sz
 	local len2 = math.max(dx * dx + dz * dz, 1e-6)
 	local mx, mz = (sx + ex) / 2, (sz + ez) / 2
@@ -327,33 +337,6 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam)
 	end
 end
 
--- A beam held on a dome that dropped goes through (S-121): the FIRE event
--- for its new end, then a hit-ray runs on to its full line, a single-target
--- beam settles on its target (if it would have hit one), or it ends.
-local function goThrough(sim: Types.Sim, b: Combat.Beam)
-	local c = sim.combat
-	local w = sim.world
-	local id = b.shooter
-	local weapon = c.profiles[w.defIndex[id]].weapons[b.slot]
-	local target = b.afterTarget or 0
-	local alive = target ~= 0 and World.isRef(w, target, b.afterTargetGen)
-	local hit = b.afterHit == true and (target == 0 or alive)
-	local ex, ey, ez = b.afterX :: number, b.afterY :: number, b.afterZ :: number
-	if alive then
-		ex, ey, ez = Combat.aimPoint(c, w, target)
-	end
-	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = if alive then target else 0, slot = b.slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = b.sy, sz = w.posZ[id] })
-	b.dome, b.domeGen, b.domeDrain = nil, nil, nil
-	if weapon.pierce then
-		b.ex, b.ez = b.afterX, b.afterZ
-	elseif alive and hit then
-		b.target, b.targetGen = target, b.afterTargetGen :: number
-	else
-		b.ticks = 1 -- nothing to hold on: it ends this tick
-		b.target, b.targetGen = 0, 0
-	end
-end
-
 -- Is a lingering beam of (shooter, slot) burning? (S-119: its aim holds)
 local function beaming(c: Combat.Combat, id: number, slot: number): boolean
 	for _, b in c.beams do
@@ -364,51 +347,75 @@ local function beaming(c: Combat.Combat, id: number, slot: number): boolean
 	return false
 end
 
--- One tick of every lingering beam (S-113).
-local function beamStep(sim: Types.Sim)
+-- One tick of one lingering beam; false when it ends (S-113, S-123).
+local function beamTick(sim: Types.Sim, b: Combat.Beam): boolean
 	local c = sim.combat
 	local w = sim.world
-	local beams = c.beams
+	local id = b.shooter
+	if not World.isRef(w, id, b.shooterGen) or Combat.retracted(sim, id) then
+		return false
+	end
+	local weapon = c.profiles[w.defIndex[id]].weapons[b.slot]
+	-- the full end now: a single-target hit follows its target while it
+	-- lives and stays in range; a ray or a miss keeps its fixed point
+	local fx, fy, fz = b.fullX, b.fullY, b.fullZ
+	if b.target ~= 0 then
+		if not World.isRef(w, b.target, b.targetGen) then
+			return false
+		end
+		local tp = c.profiles[w.defIndex[b.target]]
+		local dx, dz = w.posX[b.target] - w.posX[id], w.posZ[b.target] - w.posZ[id]
+		if dx * dx + dz * dz > (weapon.range + tp.radius) ^ 2 then
+			return false
+		end
+		fx, fy, fz = Combat.aimPoint(c, w, b.target)
+	end
+	-- its end: the first up enemy dome on the line, else the full end; a
+	-- change (a dome dropped, one rose across it, another behind) is a new
+	-- FIRE, and a dome newly in the way takes the hit (S-123)
+	local mx, mz = w.posX[id], w.posZ[id]
+	local gen, hx, hy, hz = 0, 0, 0, 0
+	if #c.shieldIds > 0 then
+		gen, hx, hy, hz = Shield.firstDome(sim, w.ally[id], mx, b.my, mz, fx, fy, fz)
+	end
+	local current = b.dome or 0
+	if current ~= 0 and not World.isRef(w, current, b.domeGen) then
+		current = -1 -- its dome is gone: whatever the line meets now is a change
+	end
+	if gen ~= current then
+		local hitNow = gen == 0 and b.fullHit
+		if gen ~= 0 then
+			Shield.absorbShot(sim, gen, hx, hy, hz, weapon)
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = 0, slot = b.slot, weaponIndex = weapon.index, hit = false, x = hx, y = hy, z = hz, sx = mx, sy = b.my, sz = mz })
+		else
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = if hitNow then b.target else 0, slot = b.slot, weaponIndex = weapon.index, hit = hitNow, x = fx, y = fy, z = fz, sx = mx, sy = b.my, sz = mz })
+		end
+		b.dome = if gen ~= 0 then gen else nil
+		b.domeGen = if gen ~= 0 then w.gen[gen] else nil
+	end
+	-- this tick's share
+	if gen ~= 0 then
+		Shield.drain(sim, gen, b.domeDrain)
+		if b.ray then
+			rayShare(sim, b, mx, mz, hx, hz) -- up to the dome only
+		end
+	elseif b.ray then
+		rayShare(sim, b, mx, mz, fx, fz)
+	elseif b.fullHit and b.target ~= 0 then
+		local tp = c.profiles[w.defIndex[b.target]]
+		local amount = (weapon.damage[Combat.armorOf(w, b.target, tp)] or 0) / b.total
+		Combat.queueDamage(c, b.target, amount, id, w.owner[id])
+	end
+	return true
+end
+
+-- One tick of every lingering beam, in the order they were fired.
+local function beamStep(sim: Types.Sim)
+	local beams = sim.combat.beams
 	local i = 1
 	while i <= #beams do
 		local b = beams[i]
-		local ok = false
-		if b.dome ~= nil and World.isRef(w, b.shooter, b.shooterGen) and not Combat.retracted(sim, b.shooter)
-			and not (World.isRef(w, b.dome :: number, b.domeGen) and c.shieldUp[b.dome :: number] == true) then
-			-- the dome dropped while the beam burns (S-121, client request
-			-- 54): it goes through to where it was aimed, a new FIRE tells
-			-- the clients, and the rest of the beam works there
-			goThrough(sim, b)
-		end
-		if b.dome ~= nil then
-			-- held on a dome (S-117): drain it while the shooter stands and the dome is up
-			local dome = b.dome :: number
-			ok = World.isRef(w, b.shooter, b.shooterGen) and not Combat.retracted(sim, b.shooter)
-				and World.isRef(w, dome, b.domeGen) and c.shieldUp[dome] == true
-			if ok then
-				Shield.drain(sim, dome, b.domeDrain :: number)
-				if b.sx ~= nil then
-					rayShare(sim, b)
-				end
-			end
-		elseif b.sx ~= nil then
-			ok = World.isRef(w, b.shooter, b.shooterGen) and not Combat.retracted(sim, b.shooter)
-			if ok then
-				rayShare(sim, b)
-			end
-		else
-			ok = World.isRef(w, b.shooter, b.shooterGen) and World.isRef(w, b.target, b.targetGen) and not Combat.retracted(sim, b.shooter)
-		end
-		if ok and b.sx == nil and b.dome == nil then
-			local weapon = c.profiles[w.defIndex[b.shooter]].weapons[b.slot]
-			local tp = c.profiles[w.defIndex[b.target]]
-			local dx, dz = w.posX[b.target] - w.posX[b.shooter], w.posZ[b.target] - w.posZ[b.shooter]
-			ok = dx * dx + dz * dz <= (weapon.range + tp.radius) ^ 2
-			if ok then
-				local amount = (weapon.damage[Combat.armorOf(w, b.target, tp)] or 0) / b.total
-				Combat.queueDamage(c, b.target, amount, b.shooter, w.owner[b.shooter])
-			end
-		end
+		local ok = beamTick(sim, b)
 		b.ticks -= 1
 		if not ok or b.ticks <= 0 then
 			table.remove(beams, i)
