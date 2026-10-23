@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, beam through a fallen dome; thinner rings)
+
+- **Thinner rings** flow down the dome (C-144).
+- **Honeycomb hit patches stay as in C-142.** The wide rim of tiny cells is reverted at your word, and it was too heavy for the frame rate anyway.
+- **A dome dropping under a beam:** the client is ready to carry the beam on to its target (C-144). sim-A is building the sim side (request 54), together with your Radiance picking a tank over the Phalanx you ordered.
+- **Manual targets win whatever the fire state:** sim-A built it as S-120. It lands with their next merge, after S-119.
+
 ## Summary (2026-10-23, faster detailed models, hidden beams)
 
 - **Detailed models (C-143):** all 74 types in a big match are ready in about 15 s, against more than a minute before (models-C's new meshes have many more pieces, which were built one at a time). The area the server fills with full models also runs ahead of the camera when you pan.
@@ -1759,6 +1766,8 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 1. **Silo blockouts (C-57, 2026-10-21):** `ord_reckoning` (Order, "Reckoning") and `chs_ragnarok` (Chaos, "Ragnarok"), the T3 nuke silos from S-48, have no blockouts yet, so the generator draws them as plain boxes. Footprint 3 (24 × 24 studs); pieces `base`, `hatch` (opens for the launch; a lid or two doors on top) and `muzzle` (where the nuke leaves, inside the hatch, pointing up). Faction styles as usual. Medium priority.
 
 ## Requests for the sim session
+
+54. **Open (sent 2026-10-23).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
 
 53. **Built (S-119, merging): attack-ground for BEAM / HITSCAN; aim held while a beam burns; NetOut sends aim on ENTER.** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
     - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.

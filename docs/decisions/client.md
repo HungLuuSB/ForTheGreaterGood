@@ -1155,3 +1155,12 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - **SHOT (protocol 28, S-118):** `weaponIndex` picks the weapon. A BEAM draws as its held beam in its faction's colour (from the weapon id), with the dome glance and pulses (a shared `shotTracer` with FIRE).
 
 **Why:** the user: blockouts showing before detailed models when panning fast; and "in BAR, a Pulsar's beam renders even with no vision".
+
+### C-144 — A beam continues past a dome that drops; thinner flowing rings on the dome (2026-10-23)
+
+**Decision:**
+- **Beam continuation:** `Effects.continueBeam`. A FIRE / SHOT from a beam weapon whose beam still burns, starting within 3 studs of it, moves that beam's end (new end, hit flag) and drops its glancing leg and dome pulses, keeping its start time. BeamShots follows the moved end. It's ready for sim request 54 (on the tick a dome drops, a new FIRE / SHOT to the target).
+- **Flowing rings:** ShieldFx.RING_TUBE 0.0015 (was 0.004), at least 0.06 studs.
+- **Not kept:** a 20 to 26 ring patch with a wide rim of tiny cells, tried as "C-145". The user: "too much"; it also cost ~25 ms a frame, with peaks over 300 ms, under shield_beams. The honeycomb stays as in C-142.
+
+**Why:** the user: the beam should go through once the dome drops; "reduce the size of the ring flowing down the dome".

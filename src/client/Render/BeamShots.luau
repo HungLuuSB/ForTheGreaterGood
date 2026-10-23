@@ -326,6 +326,11 @@ function BeamShots.step(s: State, tracers: { any }, now: number, groundY: (numbe
 	end
 	for t, r in s.rigs do
 		r.age += dt
+		-- the beam's end can move (a dome dropped under it, C-144)
+		local hx, hy, hz = t.x1, t.y1, t.z1
+		if hx and (r.hit.WorldPosition - Vector3.new(hx, hy, hz)).Magnitude > 0.01 then
+			r.hit.WorldPosition = Vector3.new(hx, hy, hz)
+		end
 		if r.age >= r.span then
 			hide(r)
 			s.rigs[t] = nil

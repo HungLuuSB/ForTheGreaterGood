@@ -60,7 +60,7 @@ ShieldFx.DOME_COLOR = Color3.fromRGB(225, 232, 240)
 ShieldFx.DOME_OPACITY = 0.2 -- the dome at full strength (1 - transparency)
 ShieldFx.RING_COLOR = Color3.fromRGB(235, 245, 255)
 ShieldFx.RING_OPACITY = 0.55
-ShieldFx.RING_TUBE = 0.004 -- a flowing ring's height (RingThin) or width (adornment), × R
+ShieldFx.RING_TUBE = 0.0015 -- a flowing ring's height (RingThin) or width (adornment), × R (0.004 until C-145, the user: thinner)
 ShieldFx.FOOT_OPACITY = 0.8 -- the ring where the dome meets the ground
 ShieldFx.EDGE_OPACITY = 0.95
 ShieldFx.SWIRL_SIZE = 0.4 -- the swirl disc's diameter, × R (C's checked assembly: 16 on 40)
@@ -772,7 +772,7 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 	-- the rings: slide down, resized to the curve at their height, fade near the ground
 	local speed, bright = ShieldLook.ringFlow(s.strength)
 	s.phase += dt * speed / ShieldLook.RING_PERIOD
-	local ringW = math.max(0.15, R * ShieldFx.RING_TUBE)
+	local ringW = math.max(0.06, R * ShieldFx.RING_TUBE)
 	for i, ring in s.rings do
 		local _, rf, yf, a = ShieldLook.ringAt(i, #s.rings, s.phase)
 		local alpha = ShieldFx.RING_OPACITY * a * bright * opacity
