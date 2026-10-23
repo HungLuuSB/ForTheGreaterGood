@@ -1980,3 +1980,6 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - a plant whose tank is held on the pad makes no progress, then builds again once it drives out;
   - an aircraft appears on the airfield's pad.
 - **Side effect found:** the AI's timeline shifted. In seed 43, a Mason leaving the pad then crawled along a second plant's edge at 0.8 studs/s for about 20 s, and Order hard's nuke came at 28.2 min instead of 22.4 (the T2 extras test allows 30). That is a movement weakness (sliding along blocked cells at half speed, repeatedly). It's under review, not fixed here.
+- **Follow-up, the AI gives up unreachable build sites:** with S-133 the AI's timeline shifted, and on Coastline (seed 34) Order hard's footprint-2 Commander got walled in by generators. It sat in a 1-cell gap for 8 minutes trying to reach an airfield site, so no shipyard was ever built (`AI.spec`, naval test). The AI's site picker doesn't check reach, and its 2-cell lanes only hold between buildings of one size.
+  - Now a builder that gets no closer than 8 studs to its build site in `Skirmish.STALL_TICKS` (20 s) is stopped. The site is left alone for `BAD_SITE_TICKS` (3 min) through the brain's claims, and `brain.gaveUp` counts these.
+  - The shipyard then comes at 5.0 min and the fleet by 6.2.
