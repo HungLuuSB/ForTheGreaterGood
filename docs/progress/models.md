@@ -486,6 +486,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `e7f4570` (Commander mechs v3, M-33: new meshes for `ord_sovereign` / `chs_warlord` (review), v2 kept in `assets/models/<id>/v2/`, muzzles moved forward in the blockouts, `tools/mech.py`; `assets/`, `src/shared/Defs/`, `place/` and docs).
 - Ready to merge: `8d8c995` (structure redesign pair 1: `ord_extractor` / `chs_extractor` at fp 2 with wrecks, back to review; `assets/`, manifest, Meshes spec sample, `place/` and docs).
 - Ready to merge: `3b8c149` (structure redesign pairs 2–7: generators, solar, wind turbines, depots, Bulwark / Spike at fp 2, vehicle plants at fp 4, with wrecks, back to review; new pieces `core`, `gantry`, `trolley`, new anchors; `assets/`, manifest, `place/` and docs).
+- Ready to merge: `14d7b46` (with `b515382`: structure redesign pairs 8–11, radar towers and IR SAM sites at fp 1, airfields and shipyards at fp 5, with wrecks, back to review; new converter meshes (review); new airfield anchors, shipyard nanos on their moving pieces, rig.md 8; `assets/`, manifest, `place/` and docs).
 
 ## Requests
 
