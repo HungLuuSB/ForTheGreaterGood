@@ -21,6 +21,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **One key art viewer (C-179):** the lobby place now mounts `UI/KeyArt` read-only, as it does the Kit; keep its API stable.
 - Ready to merge: `50e2138` (C-179: KeyArt header, the lobby mounts it read-only; comment only)
 - **No more animation freezes (C-180):** your playtest log still showed the freeze, most likely from a match started before C-177. The animation scheduler now holds any loop that waits on pieces that have already arrived, so a script like that can't freeze the client again.
+- Ready to merge: `cf35347` (C-180: PieceAnim spin guard; src/client and tests/client)
 
 ## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
 
