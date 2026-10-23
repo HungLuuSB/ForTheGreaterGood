@@ -176,6 +176,49 @@ function Guidance.climbLeft(weapon: { climbHeight: number? }, py: number, ground
 	return (weapon.climbHeight or 0) - (py - groundY)
 end
 
+-- A radar missile that lost its target (S-146, the user: "spiraling,
+-- waving"): it corkscrews about its flight path and sinks. Each tick the
+-- velocity turns by LOST_TURN toward a direction that circles the path
+-- once every LOST_PERIOD ticks, and gravity-like LOST_SINK pulls it down,
+-- so a climbing missile arcs over and falls. Deterministic from the
+-- missile's ID and the ticks since it was lost (`k`), so the client steps
+-- the same path. It also noses over by LOST_DIVE a tick (no seeker holds it
+-- up), so a climbing missile arcs over instead of corkscrewing up. Speed is
+-- kept (before the sink).
+Guidance.LOST_TURN = math.rad(9) -- per tick (135°/s)
+Guidance.LOST_PERIOD = 18 -- ticks per turn of the corkscrew (1.2 s)
+Guidance.LOST_SINK = 25 -- studs/s² pulled down
+Guidance.LOST_DIVE = math.rad(3) -- per tick (45°/s) toward straight down
+function Guidance.lost(vx: number, vy: number, vz: number, k: number, projId: number, dt: number): (number, number, number)
+	local speed = sqrt(vx * vx + vy * vy + vz * vz)
+	if speed < 1e-9 then
+		return vx, vy - Guidance.LOST_SINK * dt, vz
+	end
+	local fx, fy, fz = vx / speed, vy / speed, vz / speed
+	-- a frame across the path: r = f × up (or × x near vertical), u = r × f
+	local rx, ry, rz = -fz, 0, fx
+	local rl = sqrt(rx * rx + rz * rz)
+	if rl < 1e-3 then
+		rx, ry, rz = 0, fz, -fy -- f × (1, 0, 0)
+		rl = sqrt(ry * ry + rz * rz)
+	end
+	rx, ry, rz = rx / rl, ry / rl, rz / rl
+	local ux, uy, uz = ry * fz - rz * fy, rz * fx - rx * fz, rx * fy - ry * fx
+	-- the circling direction: phase from the ID, a turn every LOST_PERIOD;
+	-- odd IDs turn the other way (waving, not every missile the same)
+	local phase = (projId * 2.399963) % (2 * math.pi)
+	local dir = if projId % 2 == 0 then 1 else -1
+	local a = phase + dir * 2 * math.pi * k / Guidance.LOST_PERIOD
+	local dx, dy, dz = cos(a) * rx + sin(a) * ux, cos(a) * ry + sin(a) * uy, cos(a) * rz + sin(a) * uz
+	local t = math.tan(Guidance.LOST_TURN)
+	-- nose over: down, less its part along the path (none when diving)
+	local dv = math.tan(Guidance.LOST_DIVE)
+	local downX, downY, downZ = fy * fx, -1 + fy * fy, fy * fz
+	local nx, ny, nz = fx + dx * t + downX * dv, fy + dy * t + downY * dv, fz + dz * t + downZ * dv
+	local nl = sqrt(nx * nx + ny * ny + nz * nz)
+	return nx / nl * speed, ny / nl * speed - Guidance.LOST_SINK * dt, nz / nl * speed
+end
+
 -- A target's velocity from the state the wire and the sim share: heading
 -- (0 = +Z) and ground speed. Aircraft climbs are left out.
 function Guidance.velocity(heading: number, speed: number): (number, number)

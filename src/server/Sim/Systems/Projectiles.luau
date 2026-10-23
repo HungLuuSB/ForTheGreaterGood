@@ -40,6 +40,8 @@ local Types = require("../Types")
 local World = require("../World")
 
 local DT = 1 / 15
+local LAUNCH_TICKS = 8 -- a radar missile's launch phase without a vertical climb (S-146)
+local POINT_FUSE = 4 -- studs: a missile without a blast radius bursts this close to its spot
 local TURNED = EW.Flag.TURNED
 local sqrt, sin, cos = math.sqrt, math.sin, math.cos
 
@@ -75,6 +77,33 @@ return function(sim: Types.Sim)
 		local projTarget = c.pTargetProj[id]
 		if projTarget ~= 0 and not Combat.isProjRef(c, projTarget, c.pTargetSerial[id]) then
 			projTarget = 0 -- it detonated or was destroyed: fly on
+		end
+		-- radar missiles (S-146): remember where the target was; once it is
+		-- gone, fly to that spot if it died in the launch phase, else spiral
+		local radar = weapon.type == "HOMING" and weapon.guidance == "RADAR" and projTarget == 0
+		if radar then
+			c.pAge[id] = (c.pAge[id] or 0) + 1
+			if World.isRef(w, homingTarget, c.pTargetGen[id]) then
+				local kx, ky, kz = Combat.aimPoint(c, w, homingTarget)
+				c.pKnownX[id], c.pKnownY[id], c.pKnownZ[id] = kx, ky, kz
+			elseif c.pPoint[id] == nil and c.pLost[id] == nil and c.pDecoy[id] == nil and (homingTarget ~= 0 or c.pKnownX[id] ~= nil) then
+				-- (one fired without a target, never tracking one, flies on straight)
+				local launching = if weapon.launch == "vertical"
+					then bit32.band(c.pFlags[id], TURNED) == 0
+					else c.pAge[id] <= LAUNCH_TICKS
+				if homingTarget ~= 0 and launching and c.pKnownX[id] then
+					-- died before the missile turned onto it: its last known spot
+					c.pPoint[id] = { c.pKnownX[id], c.pKnownY[id] :: number, c.pKnownZ[id] :: number }
+				else
+					c.pLost[id] = 0
+					if homingTarget ~= 0 then
+						-- (a broken lock already sent its LOST_LOCK from EW)
+						Combat.addEvent(c, { kind = "LOST_LOCK", tick = sim.tick, unit = homingTarget, other = id, x = x0, y = y0, z = z0 })
+					end
+				end
+				c.pTarget[id] = 0
+				homingTarget = 0
+			end
 		end
 		if projTarget ~= 0 and weapon.turnRate then
 			-- interceptor (S-48): navigate against the missile's own state
@@ -121,6 +150,24 @@ return function(sim: Types.Sim)
 			if not follow or d[4] <= 0 then
 				c.pDecoy[id] = nil
 			end
+		elseif radar and c.pPoint[id] then
+			-- to the dead target's last known spot (S-146)
+			local pt = c.pPoint[id]
+			local maxTurn = math.rad(weapon.turnRate :: number) * DT
+			if weapon.launch == "vertical" then
+				local turned = bit32.band(c.pFlags[id], TURNED) ~= 0
+				local climbLeft = Guidance.climbLeft(weapon, y0, Combat.groundHeight(c, x0, z0))
+				pvx, pvy, pvz, turned = Guidance.vertical(x0, y0, z0, pvx, pvy, pvz, pt[1], pt[2], pt[3], 0, 0, 0, maxTurn, DT, turned, climbLeft)
+				if turned then
+					c.pFlags[id] = bit32.bor(c.pFlags[id], TURNED)
+				end
+			else
+				pvx, pvy, pvz = Guidance.pn(x0, y0, z0, pvx, pvy, pvz, pt[1], pt[2], pt[3], 0, 0, 0, maxTurn, DT)
+			end
+		elseif radar and c.pLost[id] then
+			-- lost its target: corkscrew and sink (S-146, Guidance.lost)
+			pvx, pvy, pvz = Guidance.lost(pvx, pvy, pvz, c.pLost[id], id, DT)
+			c.pLost[id] += 1
 		end
 		local x1, y1, z1, vx, vy, vz
 		local goal = c.pGoal[id]
@@ -219,6 +266,19 @@ return function(sim: Types.Sim)
 			local ex, ey, ez = ax + dx * t, ay + dy * t, az + dz * t
 			if ex * ex + ey * ey + ez * ez <= (weapon.aoe :: number) ^ 2 and t < bestT then
 				bestT, bestUnit, burst, burstProj = t, 0, 0, projTarget
+			end
+		end
+
+		-- a missile flying to a dead target's spot bursts at its closest
+		-- approach to it, within its blast radius (S-146)
+		local point = if radar then c.pPoint[id] else nil
+		if point then
+			local dx, dy, dz = x1 - x0, y1 - y0, z1 - z0
+			local len2 = dx * dx + dy * dy + dz * dz
+			local t = if len2 > 0 then math.clamp(-((x0 - point[1]) * dx + (y0 - point[2]) * dy + (z0 - point[3]) * dz) / len2, 0, 1) else 0
+			local ex, ey, ez = x0 + dx * t - point[1], y0 + dy * t - point[2], z0 + dz * t - point[3]
+			if ex * ex + ey * ey + ez * ez <= math.max(weapon.aoe or 0, POINT_FUSE) ^ 2 and t < bestT then
+				bestT, bestUnit, burst = t, 0, 0
 			end
 		end
 

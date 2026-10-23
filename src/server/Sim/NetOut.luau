@@ -79,6 +79,7 @@ local Combat = require("./Combat/Combat")
 local Stockpile = require("./Stockpile")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
+local Pinpoint = require("@shared/Combat/Pinpoint")
 local Sensors = require("./Sensors")
 local Shield = require("./Shield")
 local Types = require("./Types")
@@ -277,7 +278,24 @@ local function ecoRecord(sim: Types.Sim, team: number): Schema.Eco?
 			ratio = math.clamp(math.floor(r.ratio * 255), 0, 255),
 		}
 	end
-	return { team = team, supply = res(acc.supply), power = res(acc.power), wind = math.clamp(math.floor(sim.eco.wind * 255), 0, 255) }
+	-- the team's radar accuracy (S-147): what its radar-fired weapons miss
+	-- by, as Sensors.wobble scales it; 0 without such a radar
+	local s = sim.sensors
+	local ally = sim.allyOf[team] or team
+	local p = Sensors.precision(s, ally)
+	local scale = Pinpoint.errorScale(p)
+	local function tenths(err: number?): number
+		return if err then math.clamp(math.floor(err * scale * 10 + 0.5), 1, 65535) else 0
+	end
+	return {
+		team = team,
+		supply = res(acc.supply),
+		power = res(acc.power),
+		wind = math.clamp(math.floor(sim.eco.wind * 255), 0, 255),
+		radarError = tenths(s.radarError[ally]),
+		trackError = tenths(s.trackError[ally]),
+		precision = math.clamp(math.floor(p * 255 + 0.5), 0, 255),
+	}
 end
 
 function NetOut.setCamera(sim: Types.Sim, player: number, minX: number, minZ: number, maxX: number, maxZ: number)

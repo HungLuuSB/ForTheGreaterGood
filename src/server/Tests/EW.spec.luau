@@ -215,6 +215,108 @@ return function(t: RunAll.Context)
 		t.expect(not hit, "the missile missed")
 	end)
 
+	-- Launches the Aegis's radar SAM at the Wasp; returns the missile.
+	local function launched(sim: Sim.Sim, aegis: number): number
+		for _ = 1, 300 do
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "SPAWN_PROJ" and e.unit == aegis then
+					return e.other
+				end
+			end
+		end
+		return 0
+	end
+
+	t.test("a radar missile whose target dies in flight corkscrews and sinks, not up into the sky (S-146)", function()
+		local sim, aegis, wasp = samScene(2, 100, false)
+		local c = sim.combat
+		local missile = launched(sim, aegis)
+		t.expect(missile ~= 0, "the SAM launched")
+		-- let it pitch over onto the Wasp, then the Wasp dies (another weapon)
+		for _ = 1, 60 do
+			if bit32.band(c.pFlags[missile], EW.Flag.TURNED) ~= 0 then
+				break
+			end
+			Sim.step(sim)
+		end
+		Sim.step(sim)
+		t.expect(c.projSlot[missile] ~= nil and bit32.band(c.pFlags[missile], EW.Flag.TURNED) ~= 0, "turned onto its target")
+		Combat.queueDamage(c, wasp, sim.world.health[wasp] * 10, 0)
+		local lost, topY, lowY, startY = false, -math.huge, math.huge, c.py[missile]
+		local sideFlips, prevSide = 0, 0
+		local fx, fz = c.pvx[missile], c.pvz[missile]
+		local fl = math.sqrt(fx * fx + fz * fz)
+		local flown = 0
+		for _ = 1, 120 do
+			Sim.step(sim)
+			flown += 1
+			for _, e in c.events do
+				if e.kind == "LOST_LOCK" and e.other == missile then
+					lost = true
+					t.equal(e.unit, wasp, "it names the dead target")
+				end
+			end
+			if c.projSlot[missile] == nil then
+				break
+			end
+			topY, lowY = math.max(topY, c.py[missile]), math.min(lowY, c.py[missile])
+			-- which side of its old course it is heading to (waving)
+			local side = (c.pvx[missile] * fz - c.pvz[missile] * fx) / fl
+			local s = if side > 1 then 1 elseif side < -1 then -1 else prevSide
+			if prevSide ~= 0 and s ~= prevSide then
+				sideFlips += 1
+			end
+			prevSide = s
+		end
+		t.expect(lost, "LOST_LOCK sent")
+		t.expect(sideFlips >= 2, `it weaves from side to side ({sideFlips} swings)`)
+		t.expect(topY < startY + 60, `no climb into the sky (top {topY - startY} studs above where it was lost)`)
+		print(`    lost missile: flew {flown} ticks after the loss, top {topY - startY}, low {lowY - startY}, swings {sideFlips}, ttl left {c.pTtl[missile]}`)
+		t.expect(lowY < startY - 40, `it sinks ({lowY - startY} studs)`)
+	end)
+
+	t.test("a radar missile whose target dies before it pitched over flies to the target's last known spot (S-146)", function()
+		local sim, aegis, wasp = samScene(2, 100, false)
+		local c = sim.combat
+		local missile = launched(sim, aegis)
+		t.expect(missile ~= 0, "the SAM launched")
+		t.expect(bit32.band(c.pFlags[missile], EW.Flag.TURNED) == 0, "still climbing")
+		local wx, wy, wz = Combat.aimPoint(c, sim.world, wasp)
+		Combat.queueDamage(c, wasp, sim.world.health[wasp] * 10, 0)
+		Sim.step(sim)
+		t.expect(sim.world.slot[wasp] == nil, "the Wasp is gone")
+		local burst = nil
+		for _ = 1, 200 do
+			Sim.step(sim)
+			for _, e in c.events do
+				if e.kind == "IMPACT" and e.other == missile then
+					burst = { e.x, e.y, e.z }
+				end
+			end
+			if burst then
+				break
+			end
+		end
+		t.expect(burst ~= nil, "it burst")
+		local b = burst :: { number }
+		local d = math.sqrt((b[1] - wx) ^ 2 + (b[2] - wy) ^ 2 + (b[3] - wz) ^ 2)
+		local aoe = sim.defs.weapons.ord_radar_sam.aoe or 4
+		t.expect(d <= math.max(aoe, 4) + 2, `at the Wasp's last known spot ({d} studs off, blast radius {aoe})`)
+	end)
+
+	t.test("Guidance.lost keeps the speed across the path and turns the same for the same missile and tick (S-146)", function()
+		local Guidance = require("@shared/Combat/Guidance")
+		local ax, ay, az = Guidance.lost(100, 50, 0, 7, 42, 1 / 15)
+		local bx, by, bz = Guidance.lost(100, 50, 0, 7, 42, 1 / 15)
+		t.expect(ax == bx and ay == by and az == bz, "deterministic")
+		local speed = math.sqrt(100 ^ 2 + 50 ^ 2)
+		local s1 = math.sqrt(ax * ax + (ay + Guidance.LOST_SINK / 15) ^ 2 + az * az)
+		t.expect(math.abs(s1 - speed) < 1e-6, "speed kept before the sink")
+		local cx = Guidance.lost(0, 200, 0, 3, 5, 1 / 15) -- straight up: still turns
+		t.expect(math.abs(cx) > 1, "a vertical missile turns too")
+	end)
+
 	t.test("DIRCM defeats single IR missiles, but a salvo of 4 overwhelms it", function()
 		local sim, guardian, owner = targetRange(3, "ord_guardian")
 		local dircm = (sim.defs.units.ord_guardian.countermeasures :: any).dircm
