@@ -4,6 +4,11 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-24, point defence; new icon sheet)
+
+- **Point defence (C-182, S-149):** interceptors from the Sanctum, Basilisk, Shepherd and Griffin chase rockets and missiles on screen; a shot-down rocket ends in a small puff. Stopgap icons until your draft 4 sheet.
+- Ready to merge: `f5696da` (C-182: point defence on the client, stopgap icons; main c1bbe23 merged in; fixes main's 2 icon specs)
+
 ## Summary (2026-10-23, lost missiles fall; radar accuracy shown)
 
 - **SAMs no longer fly into the sky when their target dies (C-181, S-146):** a radar missile that loses its target now spirals and falls on your screen, on the same path the server uses.
