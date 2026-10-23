@@ -1537,3 +1537,9 @@ Existing calls are unchanged.
 
 **Why:** the two files were identical below the header; one viewer can't drift.
 
+### C-180 — PieceAnim holds a spinning wait loop to the next frame (2026-10-23)
+
+**Decision:** a piece-script thread that passes through `WaitForTurn` / `WaitForMove` 64 times in a row without yielding (`PieceAnim.SPIN_LIMIT`) is held to the next frame each time after that, with one warning. Any yield (a real wait or `Sleep`) resets the count. A new PieceAnim spec runs the C-177 loop (turn, wait, turn back, wait) far from the camera: it keeps swinging and every step returns. With the guard switched off the same spec hangs.
+
+**Why:** the user's next playtest log still showed "Script timeout" in PieceAnim.step at about tick 16,000. That match most likely started before C-177 reached Studio (it ended at tick 18,970, about 21 minutes in, and was the match already running when C-177 was pushed), and every loop in the piece scripts now sleeps. But one more script written the old way would freeze the client again, so the scheduler itself now refuses to spin.
+
