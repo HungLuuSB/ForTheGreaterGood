@@ -15,7 +15,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - builders assist another builder's work with Guard;
   - the client knows every team's alliance, so right-clicking an ally's unit guards it (or assists its builder) instead of attacking it.
   - An end-to-end test checks the ally list arriving and right-click using it.
-- **Coming:** circling radar blips (sim request 59, a 6 s orbit) are in progress at sim-A.
+- **Radar blips circle their unit** (S-130, merged and checked in Studio).
+- **Coming:** a much smaller circle, ~1.5 studs as in BAR (sim request 60). Radar shots keep missing by the radar error, through a hidden aim point the client never receives.
 
 ## Summary (2026-10-23, smooth radar blips)
 - **BAR-style circling blips:** at your choice, the server's wobble will become a slow orbit around the real unit (sim request 59), so blips circle it while the real position stays secret. Targeting still uses the wobbled point.
@@ -1835,6 +1836,11 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
+60. **Open (2026-10-23, the user: "that radius is huge, in BAR, just 1-2 studs"):** **Small blip orbit, hidden aim error.** S-130's orbit radius (= radar error, 13–45 studs) is far bigger than BAR's. At the user's choice:
+    - The drawn blip orbits ~1.5 studs around the real unit (same ~6 s turn, own phase and direction per contact).
+    - The radar error stays as now, but only in the server's aiming: weapons firing at a radar contact aim at a hidden offset point (radius = radar error, or the Pinpointer's tracking error), so radar shots still miss as before. The client never learns that point.
+    - This relaxes guide 11.4's "never the true position" for display: the sent position is within ~2 studs of the true one. The user accepted that. Please update 11.4 with it.
+    - No client change needed: C-151's glide already draws it.
 59. **Done (S-130, main 57299f7; checked in Studio: a blip sweeps a full turn in ~6 s at radius 13–17).** **Radar blips circle around the real unit (the user, as in BAR):** the wobble offset follows a slow orbit (radius = radar error) instead of moving between random points, so the true position still never goes on the wire (the user chose this over sending true positions, which guide 11.4 forbids). Guide 11.4 to be updated with it. The client already glides (C-151).
 
 58. **Fixed (S-126, on main b7f0f09; verified headless, 70 s with no crash):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
