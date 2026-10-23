@@ -223,7 +223,7 @@ export type Result = {
 	version: number,
 	matchId: string,
 	outcome: string, -- "finished" | "draw" | "abandoned"
-	winner: number?, -- the winning ally team ("finished" only)
+	winner: number?, -- the winning ally team ("finished" only; absent when every human is out while AI fight on)
 	seconds: number,
 	endedAt: number,
 	cheatsUsed: boolean,
@@ -241,7 +241,7 @@ function MatchConfig.validateResult(r: any, c: MatchConfig): string?
 	if not oneOf(MatchConfig.OUTCOMES, r.outcome) then
 		return "outcome"
 	end
-	if r.outcome == "finished" and not isInt(r.winner, 1, #c.players) then
+	if r.winner ~= nil and (r.outcome ~= "finished" or not isInt(r.winner, 1, #c.players)) then
 		return "winner"
 	end
 	if type(r.seconds) ~= "number" or r.seconds < 0 or type(r.endedAt) ~= "number" or type(r.cheatsUsed) ~= "boolean" then

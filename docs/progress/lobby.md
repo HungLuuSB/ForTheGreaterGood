@@ -57,6 +57,8 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 
 ### For client-B (client session, match place)
 
+**B-1..B-4 done by client-B (C-173 / C-174 on m-client-foundation):** the match server side with a copy of the validator, the BAR-style loading screen (real caching progress), "Return to lobby" with the 30 s countdown, and `Kit.button` go / stop fills plus `Kit.input`. I'll switch the lobby to the kit's versions once they're on main. Their question (every human out while AI teams fight on) is answered in the contract: `"finished"` with no `winner`, a loss for the humans.
+
 - **B-1. The match server's side of `docs/contracts/match.md`** (in `src/roblox`):
   - On start, read `server/<game.PrivateServerId>` → `config/<matchId>` from MemoryStore HashMap `FtggMatch`, validate (section 3), refuse otherwise (section 9). Teleport data is only a cross-check.
   - Admit only listed users; seat them by `players[i].user`; spectators get the spectator stream.

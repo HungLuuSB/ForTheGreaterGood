@@ -90,12 +90,14 @@ Written once by the match server when the match ends for the humans (the sim's `
 | `version` | number | `1` |
 | `matchId` | string | |
 | `outcome` | `"finished"` \| `"draw"` \| `"abandoned"` | `abandoned`: no result (every human left, the server is shutting down, or the config was refused) |
-| `winner` | integer? | the winning ally team, `"finished"` only |
+| `winner` | integer? | the winning ally team, `"finished"` only. Absent when every human is out while AI teams still fight (FFA): the match is over for the humans, and each player's `won` is false (the humans lost) |
 | `seconds` | number | match length |
 | `endedAt` | number | `os.time()` |
 | `cheatsUsed` | boolean | any cheat command applied (`sim.cheats.used`) |
 | `reason` | string? | optional, for `abandoned` |
 | `players` | array | `players[i]` for config `players[i]`: `{ id, won, outAt?, stats? }` |
+
+Which outcome (client-B's `MatchContract.outcomeOf`): the sim's end gives `"finished"` + `winner`, or `"draw"` (no ally team left). Before that, every human gone from the server gives `"abandoned"`; one ally team standing gives `"finished"` + that team; every human out while AI teams still fight gives `"finished"` with no `winner` (a loss for the humans, not a draw).
 
 `outAt` is seconds into the match when eliminated. `stats` is a flat table of numbers, the sim's `Stats.report` names: `unitsBuilt`, `unitsLost`, `unitsKilled`, `damageDealt`, `damageTaken`, `supplyGathered`, `powerGathered`, `supplySpent`, `powerSpent`. No time series (size); the match's own results screen keeps those. Checked by `MatchConfig.validateResult`.
 
@@ -147,3 +149,4 @@ Studio can't reserve or teleport, and MemoryStore / DataStore need a published p
 ## Changes
 
 - 2026-10-23: version 1 (L-4).
+- 2026-10-23: `winner` may be absent on `"finished"` (every human out, AI still fighting), at client-B's question; still version 1 (nothing published yet).

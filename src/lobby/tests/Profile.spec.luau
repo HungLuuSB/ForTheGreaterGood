@@ -43,6 +43,14 @@ return function(t: RunAll.Context)
 		t.equal(e.at, 5000)
 	end)
 
+	t.test("every human out while AI fight on: finished with no winner, a loss", function()
+		local r = table.clone(RESULT)
+		r.winner = nil
+		r.players = { { id = 1, won = false }, { id = 2, won = false }, { id = 3, won = false } }
+		t.equal(Profile.entryFor(CONFIG, r, 10, "Quad", 0).result, "lost")
+		t.equal(Profile.entryFor(CONFIG, r, 20, "Quad", 0).result, "lost")
+	end)
+
 	t.test("adding a match twice counts it once", function()
 		local p = Profile.new(1)
 		t.equal(Profile.addMatch(p, Profile.entryFor(CONFIG, RESULT, 20, "Quad", 0)), true)
