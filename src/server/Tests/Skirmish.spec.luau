@@ -67,9 +67,11 @@ return function(t: RunAll.Context)
 		local loser = 3 - sim.match.winner
 		t.expect(sim.match.eliminated[loser] ~= nil, "the loser lost its Command Vehicle")
 		for p = 1, 2 do
-			-- the winner attacked; so did the loser if it lasted past 8 minutes
-			-- (since the faction pass, S-62, a rush can end it first)
-			if p == sim.match.winner or sim.tick > 8 * 900 then
+			-- the winner attacked; so did the loser if it lasted past 10 minutes
+			-- (since the faction pass, S-62, a rush can end it first; since
+			-- S-124 (footprint-2 Commanders) seed 1's Order is raided down to
+			-- 2 extractors by minute 5 and falls at 9.9 min without a wave)
+			if p == sim.match.winner or sim.tick > 10 * 900 then
 				t.expect(r.brains[p].waves >= 1, `player {p} attacked ({r.brains[p].waves} waves)`)
 			end
 			t.expect(r.maxExtractors[p] > 4, `player {p} expanded beyond its 4 home deposits ({r.maxExtractors[p]} extractors)`)
