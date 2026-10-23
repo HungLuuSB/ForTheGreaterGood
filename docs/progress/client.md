@@ -12,6 +12,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Recharge bar (C-170):** your Radiance, Inferno and every other weapon reloading 4 s or more show a thin pale-blue bar under the health bar, filling until the next shot is ready.
 - Ready to merge: `96392ac` (C-169: Ctrl moves send GROUP; idle counts from IDLE events; frame queue specs)
 - Ready to merge: `8321418` (C-170: recharge bar for long-reload weapons)
+- Ready to merge: `c1300b4` (C-171: Watchdog wired into the live server, S-140)
 
 ## Summary (2026-10-23, factory progress bar)
 
