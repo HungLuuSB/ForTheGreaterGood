@@ -1,19 +1,23 @@
-"""Sovereign (Order Commander, footprint 2): the heroic walking battle mech
-(M-32). blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_sovereign/build.py
+"""Sovereign (Order Commander, footprint 2): the heroic walking mech, v3
+(M-33). blender -b --factory-startup --python-exit-code 1 -P assets/models/ord_sovereign/build.py
 
-The user's review of v1 (2026-10-23): higher, bigger, a heroic mech, not a
-box robot; an original design, BAR-level finish. About 2.7x a Lancer's
-height (9.7 studs to the brow), pauldrons spanning 10 studs. Long legs (45%)
-with a real knee bend: armored thighs and shins over a dark under-frame,
-pistons behind, knee caps, compact feet with toe and heel plates. A narrow
-armored pelvis under a broad V chest with the cyan command core (power) and
-chest team plates; a sensor head on a neck under an armored brow with a
-cyan visor; big layered pauldrons past the body with the team plates; a
-reactor backpack with two glowing turbine ends; long arms: the build
-forearm with the emitter (`nano`, power) and a twin-barrel weapon pod
-(`forearmR`, `muzzle`, weapon). Clean, sleek, heavy sloped plates, upright
-and noble (Order, M-14). Same rig as v1 (rig.md 10). v1 and the tracked
-design are kept in v1/ and tracked/. Writes export/ through tools/unit.py.
+The user's review of v2 (2026-10-23): the size is right; the look is too
+blocky. v3 keeps v2's rig and pivots and rebuilds the shapes:
+- balanced mass: thick armored legs (tapered thigh plates, big rounded knee
+  guards, shin armor, wide feet with toe and heel plates) and thick arms
+  (forearm armor, elbow guards); a sturdy, grounded stance;
+- shapes, not boxes: round shoulder housings and joint drums, tapered and
+  angled plates with bevels big enough to read at 55 degrees, overlapping
+  armor over a dark under-frame, pistons behind the knees and elbows;
+- a small sleek helmet with a narrow cyan visor, set down between the
+  shoulders;
+- team color in large areas: the arched pauldron shells, the chest plates,
+  the shin plates and the backpack panels; the sand-grey faction paint on
+  the frame and secondary plates;
+- hazard striping on the joints, vents, cables, lights, a bigger weapon pod
+  with long twin barrels (`muzzle`) and a clear build-emitter arm (`nano`).
+Original design. v2, v1 and the tracked design are kept in v2/, v1/ and
+tracked/. Writes export/ through tools/unit.py.
 """
 
 import math
@@ -24,7 +28,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 import lib  # noqa: E402
 import unit  # noqa: E402
-from mech import cable, joint, piston, plate_on, rivets, seg  # noqa: E402
+from mech import arch, cable, drum, hazard, piston, rivets, tseg  # noqa: E402
 from unit import UP, seam  # noqa: E402
 
 FWD = (0, 0, -1)
@@ -36,112 +40,118 @@ V = lib.vec
 
 
 def build_base(p):
-    # dark under-frame core, armored cod plate and hip guards over it
-    p.prism_x([(-0.7, 4.3), (0.7, 4.3), (0.85, 4.9), (0.62, 5.22), (-0.62, 5.22), (-0.85, 4.9)], -0.9, 0.9, "dark", bevel=0.06)
-    p.prism_x([(-1.08, 4.4), (-0.8, 4.12), (-0.72, 4.12), (-0.72, 5.15), (-0.98, 5.1)], -0.7, 0.7, "paint", bevel=0.05)
-    p.prism_x([(0.72, 4.3), (1.0, 4.45), (0.98, 5.05), (0.72, 5.12)], -0.75, 0.75, "paint", bevel=0.05)
+    p.prism_x([(-0.75, 4.2), (0.75, 4.2), (0.9, 4.85), (0.65, 5.2), (-0.65, 5.2), (-0.9, 4.85)], -0.95, 0.95, "dark", bevel=0.1)
+    # tapered cod plate and a rear plate, both with big bevels
+    p.prism_x([(-1.15, 4.45), (-0.82, 4.05), (-0.72, 4.05), (-0.72, 5.15), (-1.05, 5.05)], -0.75, 0.75, "paint", bevel=0.12)
+    p.prism_x([(0.72, 4.25), (1.05, 4.45), (1.0, 5.05), (0.72, 5.15)], -0.8, 0.8, "paint", bevel=0.1)
+    hazard(p, (0, 4.32, -1.08), X, (0, -0.4, -1), 1.1, 0.22, stripes=6)
+    # hip skirts: angled plates over the hip joints
     for sx in (-1, 1):
-        p.obox((sx * 0.98, 4.85, -0.25), (0, 0, 1), (sx, 0.25, 0), 1.3, 0.75, 0.1, "paint", bevel=0.03)  # hip guards
-    joint(p, (0, 4.6, 0), 0.32, 3.2)
-    p.cylinder("y", (0, 5.25, 0), 0.78, 0.12, 18, "trim")  # waist bearing
-    p.box((0, 4.62, -1.07), (0.9, 0.08, 0.04), "light")
+        p.obox((sx * 1.05, 4.95, -0.2), (0, 0, 1), (sx, 0.35, 0), 1.5, 0.95, 0.14, "paint", bevel=0.05)
+    drum(p, (0, 4.6, 0), 0.4, 3.0, "steel", "trim")
+    p.cylinder("y", (0, 5.25, 0), 0.8, 0.12, 20, "trim")
+    p.box((0, 4.75, -1.12), (1.1, 0.14, 0.04), "light")
 
 
 def details_base(p):
-    rivets(p, (-0.5, 4.95, -1.0), (0.5, 4.95, -1.0), 4, FWD)
-    seam(p, (-0.6, 4.75, -1.06), (0.6, 4.75, -1.06), FWD)
+    rivets(p, (-0.5, 4.95, -1.05), (0.5, 4.95, -1.05), 4, (0, -0.3, -1))
 
 
 # ---------------------------------------------------------------- torso
 
-CHEST = [(-1.4, -1.0), (1.4, -1.0), (1.55, -0.3), (1.45, 1.05), (-1.45, 1.05), (-1.55, -0.3)]
+CHEST = [(-1.35, -1.0), (1.35, -1.0), (1.55, -0.3), (1.45, 1.05), (-1.45, 1.05), (-1.55, -0.3)]
 
 
 def build_torso(p):
-    # waist: a steel column with four abdominal pistons round it
-    p.cylinder("y", (0, 5.6, 0), 0.62, 0.62, 14, "steel")
+    # waist: a steel column, four abdominal pistons, dark abdomen with bands
+    p.cylinder("y", (0, 5.6, 0), 0.66, 0.62, 18, "steel")
     for sx in (-1, 1):
         for sz in (-1, 1):
-            piston(p, (sx * 0.62, 5.3, sz * 0.45), (sx * 0.85, 6.3, sz * 0.55), r=0.06)
-    # abdomen: dark frame and two armored bands on the front
-    p.prism_y([(-0.95, -0.75), (0.95, -0.75), (1.05, 0.0), (0.95, 0.75), (-0.95, 0.75), (-1.05, 0.0)], 5.85, 6.55, "dark", bevel=0.05)
-    for i, y in enumerate((5.95, 6.3)):
-        p.prism_x([(-0.98 - 0.04 * i, y), (-0.8, y), (-0.8, y + 0.3), (-0.95 - 0.06 * i, y + 0.3)], -0.75 + 0.05 * i, 0.75 - 0.05 * i, "paint", bevel=0.03)
-    # chest: widening upward into the V, sloped front plates round the core
-    p.prism_y(CHEST, 6.45, 8.0, "paint", bevel=0.08, top_scale=1.32)
+            piston(p, (sx * 0.6, 5.3, sz * 0.45), (sx * 0.85, 6.3, sz * 0.55), r=0.07)
+    p.prism_y([(-0.95, -0.78), (0.95, -0.78), (1.08, 0.0), (0.95, 0.78), (-0.95, 0.78), (-1.08, 0.0)], 5.85, 6.55, "dark", bevel=0.08)
+    for i, y in enumerate((5.92, 6.27)):
+        p.prism_x([(-1.0 - 0.05 * i, y), (-0.8, y), (-0.8, y + 0.3), (-0.96 - 0.06 * i, y + 0.3)], -0.78 + 0.06 * i, 0.78 - 0.06 * i, "paint", bevel=0.05)
+    # chest: a V widening up to the shoulders, big bevels
+    p.prism_y(CHEST, 6.45, 8.05, "paint", bevel=0.18, top_scale=1.3)
+    # large team chest plates either side of the core, angled outward
     for sx in (-1, 1):
-        p.prism_x([(-1.25, 6.45), (-1.62, 7.0), (-1.95, 7.95), (-1.45, 8.05), (-1.2, 7.2)], *sorted((sx * 0.62, sx * 1.95)), "paint", bevel=0.05)
-        p.obox((sx * 1.3, 7.55, -1.78), X, (0, 0.45, -1), 0.7, 0.62, 0.05, "team", bevel=0.01)  # chest team plates
-        p.obox((sx * 1.55, 6.85, -1.5), (sx * 0.4, 1, -0.3), (0, 0.3, -1), 1.0, 0.12, 0.04, "light")
-    # the command core in a ringed housing, with four radial fins
-    p.cylinder("z", (0, 7.2, -1.5), 0.66, 0.28, 18, "trim")
-    p.cylinder("z", (0, 7.2, -1.66), 0.56, 0.06, 18, "dark")
-    p.cylinder("z", (0, 7.2, -1.7), 0.5, 0.05, 18, "power")
+        x0, x1 = sorted((sx * 0.62, sx * 2.0))
+        p.prism_x([(-1.22, 6.55), (-1.62, 7.05), (-1.92, 7.95), (-1.42, 8.05), (-1.18, 7.25)], x0, x1, "team", bevel=0.1)
+        p.obox((sx * 1.62, 6.75, -1.47), (sx * 0.35, 1, -0.3), (0, 0.3, -1), 1.2, 0.16, 0.05, "light")
+    # the command core: a ringed housing, lens, four radial fins
+    p.cylinder("z", (0, 7.25, -1.52), 0.7, 0.3, 22, "trim", bevel=0.04)
+    p.cylinder("z", (0, 7.25, -1.69), 0.6, 0.06, 22, "dark")
+    p.cylinder("z", (0, 7.25, -1.73), 0.5, 0.05, 22, "power")
     for a in (45, 135, 225, 315):
         r = math.radians(a)
-        p.obox((math.cos(r) * 0.62, 7.2 + math.sin(r) * 0.62, -1.62), (math.cos(r), math.sin(r), 0), FWD, 0.3, 0.08, 0.12, "steel")
-    # armored collar behind the head
-    p.prism_x([(-1.05, 7.85), (-0.7, 8.42), (0.95, 8.42), (1.15, 7.85)], -1.6, 1.6, "paint", bevel=0.06)
-    # shoulder sockets
+        p.obox((math.cos(r) * 0.66, 7.25 + math.sin(r) * 0.66, -1.66), (math.cos(r), math.sin(r), 0), FWD, 0.34, 0.09, 0.14, "steel")
+    # a low collar round the helmet (the head sits down between the shoulders)
+    p.prism_x([(-1.0, 7.9), (-0.55, 8.55), (0.9, 8.6), (1.2, 7.9)], -1.55, 1.55, "paint", bevel=0.14)
     for sx in (-1, 1):
-        p.cylinder("x", (sx * 2.75, 7.6, 0), 0.62, 0.5, 14, "dark")
-    # pauldrons: a big sloped shell over an under-layer, team plate on top,
-    # a light strip down the front slope, a vent on the outside
+        p.prism_x([(-0.75, 8.0), (-0.45, 8.85), (0.6, 8.85), (0.85, 8.0)], *sorted((sx * 0.75, sx * 1.55)), "paint", bevel=0.1)
+    # round shoulder housings
     for sx in (-1, 1):
-        x0, x1 = sorted((sx * 2.65, sx * 4.95))
-        p.prism_x([(-1.5, 7.35), (1.5, 7.35), (1.62, 8.3), (1.2, 8.95), (-1.2, 8.95), (-1.62, 8.3)], x0, x1, "paint", bevel=0.09)
-        xu0, xu1 = sorted((sx * 3.1, sx * 4.75))
-        p.prism_x([(-1.25, 6.95), (1.25, 6.95), (1.3, 7.4), (-1.3, 7.4)], xu0, xu1, "trim", bevel=0.04)
-        p.box((sx * 3.8, 8.97, 0.0), (1.75, 0.04, 2.25), "team", bevel=0.01)
-        p.obox((sx * 3.8, 8.62, -1.42), X, (0, 0.6, -0.8), 1.7, 0.3, 0.04, "light")
-        p.box((sx * 4.97, 8.0, 0.2), (0.04, 0.6, 1.6), "light")
-        p.box((sx * 4.98, 7.6, 0.2), (0.03, 0.08, 1.4), "light")
-    # reactor backpack: housing, two glowing turbine ends, grilles, cables to the pauldrons
-    p.box((0, 7.4, 1.95), (3.4, 2.2, 1.6), "trim", bevel=0.1)
-    p.box((0, 8.0, 2.76), (2.6, 0.5, 0.04), "power")
+        drum(p, (sx * 2.85, 7.6, 0), 0.82, 0.8, "dark", "trim", sides=20)
+    # pauldrons: arched team shells over a trim under-layer, a paint rim,
+    # a front light strip, hazard striping on the lower front edge, side vents
     for sx in (-1, 1):
-        p.box((sx * 1.71, 7.4, 1.95), (0.03, 0.12, 1.3), "light")
+        x0, x1 = sorted((sx * 2.5, sx * 5.0))
+        p.prism_x(arch(-1.75, 1.75, 7.45, 9.2, steps=9, flat=0.3), x0, x1, "team", bevel=0.14)
+        xu0, xu1 = sorted((sx * 2.75, sx * 4.8))
+        p.prism_x(arch(-1.5, 1.5, 6.95, 7.6, steps=5, flat=0.5), xu0, xu1, "trim", bevel=0.06)
+        xr0, xr1 = sorted((sx * 4.95, sx * 5.12))
+        p.prism_x(arch(-1.6, 1.6, 7.35, 8.95, steps=9, flat=0.3), xr0, xr1, "paint", bevel=0.04)
+        p.obox((sx * 3.75, 8.62, -1.6), X, (0, 0.6, -0.8), 2.0, 0.3, 0.04, "light")
+        p.box((sx * 3.75, 7.05, -1.52), (1.7, 0.12, 0.04), "power")
+        hazard(p, (sx * 3.75, 7.55, -1.76), X, FWD, 2.1, 0.22, stripes=7)
+        p.box((sx * 5.13, 8.15, 0.25), (0.04, 0.55, 1.5), "power")
+        p.box((sx * 5.14, 7.7, 0.25), (0.03, 0.1, 1.3), "light")
+    # reactor backpack: a rounded housing, team side panels, glowing turbine
+    # ends, a vent, cables to the pauldrons, the antenna mast
+    p.box((0, 7.45, 1.95), (3.3, 2.2, 1.6), "trim", bevel=0.28)
     for sx in (-1, 1):
-        p.cylinder("z", (sx * 0.9, 7.15, 2.8), 0.55, 0.14, 16, "dark")
-        p.cylinder("z", (sx * 0.9, 7.15, 2.88), 0.42, 0.04, 16, "power")
-        p.cylinder("z", (sx * 0.9, 7.15, 2.9), 0.14, 0.06, 8, "steel")
-        cable(p, [(sx * 1.6, 8.2, 1.6), (sx * 2.4, 8.5, 1.3), (sx * 3.0, 8.4, 1.2)])
-        cable(p, [(sx * 1.6, 6.6, 1.6), (sx * 2.1, 6.4, 1.0), (sx * 2.7, 7.0, 0.6)])
-    p.cylinder("y", (1.2, 9.25, 2.3), 0.06, 1.7, 6, "dark")
-    p.box((1.2, 10.12, 2.3), (0.14, 0.12, 0.14), "light")
-    p.cylinder("y", (-1.2, 8.75, 2.3), 0.18, 0.4, 8, "trim")
+        p.obox((sx * 1.68, 7.45, 1.95), (0, 0, 1), (sx, 0, 0), 1.3, 1.7, 0.08, "team", bevel=0.03)
+        p.cylinder("z", (sx * 0.85, 7.2, 2.8), 0.56, 0.16, 20, "dark")
+        p.cylinder("z", (sx * 0.85, 7.2, 2.89), 0.44, 0.04, 20, "power")
+        p.cylinder("z", (sx * 0.85, 7.2, 2.91), 0.14, 0.06, 8, "steel")
+        cable(p, [(sx * 1.4, 8.3, 1.5), (sx * 2.2, 8.6, 1.3), (sx * 2.8, 8.4, 1.15)])
+        cable(p, [(sx * 1.5, 6.5, 1.5), (sx * 2.1, 6.3, 0.9), (sx * 2.6, 6.9, 0.5)])
+    p.box((0, 8.12, 2.77), (2.4, 0.42, 0.04), "power")
+    for sx in (-1, 1):
+        p.box((sx * 1.66, 6.6, 1.95), (0.03, 0.14, 1.3), "light")
+    p.box((0, 8.62, 1.95), (2.6, 0.04, 1.2), "team", bevel=0.01)
+    p.cylinder("y", (1.2, 9.25, 2.3), 0.06, 1.6, 6, "dark")
+    p.box((1.2, 10.08, 2.3), (0.14, 0.12, 0.14), "light")
 
 
 def details_torso(p):
-    seam(p, (-1.6, 7.75, -1.6), (-0.7, 7.75, -1.62), (0, 0.45, -1))
-    seam(p, (0.7, 7.75, -1.62), (1.6, 7.75, -1.6), (0, 0.45, -1))
     for sx in (-1, 1):
-        rivets(p, (sx * 3.0, 8.96, -1.0), (sx * 4.6, 8.96, -1.0), 5, UP)
-        rivets(p, (sx * 3.0, 8.96, 1.0), (sx * 4.6, 8.96, 1.0), 5, UP)
-        seam(p, (sx * 4.96, 7.5, -1.2), (sx * 4.96, 8.6, -1.2), (sx, 0, 0))
-    rivets(p, (-1.4, 6.65, 2.76), (1.4, 6.65, 2.76), 7, (0, 0, 1))
+        rivets(p, (sx * 2.8, 9.18, -0.9), (sx * 4.7, 9.18, -0.9), 6, UP)
+        rivets(p, (sx * 2.8, 9.18, 0.9), (sx * 4.7, 9.18, 0.9), 6, UP)
+        seam(p, (sx * 2.6, 9.19, 0.0), (sx * 4.9, 9.19, 0.0), UP)
+    rivets(p, (-1.3, 6.55, 2.76), (1.3, 6.55, 2.76), 7, (0, 0, 1))
+    seam(p, (-1.4, 8.0, -1.62), (1.4, 8.0, -1.62), (0, 0.4, -1))
 
 
 # ---------------------------------------------------------------- head
 
 
 def build_head(p):
-    p.cylinder("y", (0, 8.55, -0.2), 0.36, 0.55, 12, "steel")
-    p.cylinder("y", (0, 8.35, -0.2), 0.5, 0.12, 12, "dark")
-    p.prism_y([(-0.55, -1.0), (0.55, -1.0), (0.68, -0.5), (0.62, 0.4), (-0.62, 0.4), (-0.68, -0.5)],
-              8.62, 9.5, "paint", bevel=0.06, top_scale=0.84)
-    p.prism_x([(-1.1, 9.32), (-0.92, 9.62), (0.25, 9.7), (0.25, 9.46)], -0.78, 0.78, "trim", bevel=0.04)  # brow
-    p.box((0, 9.08, -1.02), (0.95, 0.16, 0.04), "light")  # visor
-    p.box((0, 8.78, -0.98), (0.6, 0.18, 0.04), "grille")  # chin vent
+    # a small sleek helmet set down in the collar: pointed brow, narrow visor
+    p.cylinder("y", (0, 8.35, -0.2), 0.32, 0.4, 12, "steel")
+    p.prism_y([(-0.5, 0.35), (0.5, 0.35), (0.58, -0.25), (0.28, -0.95), (-0.28, -0.95), (-0.58, -0.25)],
+              8.45, 9.15, "paint", bevel=0.1, top_scale=0.68, top_center=(0, -0.1))
+    p.prism_x([(-0.95, 8.95), (-0.6, 9.28), (0.15, 9.32), (0.2, 9.1)], -0.32, 0.32, "team", bevel=0.05)  # crest
+    p.obox((0, 8.85, -0.9), X, (0, 0.25, -1), 0.62, 0.09, 0.05, "light")  # narrow visor
+    p.prism_x([(-0.9, 8.45), (-0.72, 8.45), (-0.6, 8.75), (-0.92, 8.7)], -0.38, 0.38, "trim", bevel=0.03)  # chin guard
     for sx in (-1, 1):
-        p.cylinder("x", (sx * 0.7, 9.0, -0.3), 0.2, 0.14, 10, "dark")
-        p.box((sx * 0.78, 9.0, -0.3), (0.02, 0.07, 0.14), "light")
-    p.cylinder("y", (0.42, 9.95, 0.12), 0.04, 0.9, 6, "dark")
-    p.cylinder("y", (-0.3, 9.8, 0.18), 0.035, 0.6, 6, "dark")
+        p.obox((sx * 0.55, 8.75, -0.3), (0, 0, 1), (sx, 0, 0), 0.6, 0.45, 0.08, "trim", bevel=0.02)  # cheek plates
+        p.cylinder("x", (sx * 0.6, 8.8, -0.25), 0.12, 0.08, 10, "head")
+    p.cylinder("y", (0.38, 9.55, 0.15), 0.035, 0.8, 6, "dark")
 
 
 def details_head(p):
-    seam(p, (-0.55, 9.32, -1.0), (0.55, 9.32, -1.0), FWD)
+    seam(p, (-0.4, 9.0, -0.75), (0.4, 9.0, -0.75), (0, 0.4, -1))
 
 
 # ---------------------------------------------------------------- arms
@@ -149,13 +159,14 @@ def details_head(p):
 
 def upper_arm(p, sx):
     x = sx * 3.35
-    joint(p, (sx * 3.3, 7.6, 0), 0.58, 0.95)
-    a, b = (x, 7.25, 0), (x, 5.75, 0)
-    seg(p, a, b, 0.8, 0.85, "dark", pad=0.1)
-    p.obox((x + sx * 0.38, 6.55, 0), UP, X, 1.25, 1.0, 0.14, "paint", bevel=0.04)  # outer armor
-    p.obox((x, 6.6, -0.48), UP, FWD, 1.0, 0.7, 0.1, "paint", bevel=0.03)  # front armor
-    piston(p, (x, 7.0, 0.45), (x, 5.8, 0.4))
-    joint(p, (x, 5.5, 0), 0.44, 1.0)
+    drum(p, (sx * 3.3, 7.6, 0), 0.66, 1.05, "steel", "trim", sides=18)
+    tseg(p, (x, 7.2, 0), (x, 5.8, 0), 1.0, 1.0, 0.95, 0.95, "dark", pad=0.1)
+    # overlapping armor: a tapered outer shell and a front plate
+    tseg(p, (x, 7.1, 0), (x, 5.9, 0), 1.45, 1.35, 1.3, 1.2, "paint", bevel=0.12)
+    p.obox((x + sx * 0.74, 6.5, 0), UP, X, 0.9, 0.8, 0.08, "trim", bevel=0.02)
+    piston(p, (x, 7.0, 0.62), (x, 5.95, 0.66), r=0.11)  # sleeve behind the elbow
+    drum(p, (x, 5.5, 0), 0.5, 1.25, "steel", "trim")
+    hazard(p, (x, 5.5, 0.52), X, (0, 0, 1), 1.15, 0.22, stripes=5)
 
 
 def build_armL(p):
@@ -168,7 +179,7 @@ def build_armR(p):
 
 def details_arm(sx):
     def d(p):
-        rivets(p, (sx * 3.81, 6.1, -0.35), (sx * 3.81, 7.0, -0.35), 3, (sx, 0, 0))
+        rivets(p, (sx * 4.07, 6.1, -0.3), (sx * 4.07, 6.9, -0.3), 3, (sx, 0, 0))
     return d
 
 
@@ -177,52 +188,52 @@ NANO_A, NANO_B = (-3.35, 5.5, 0.0), (-3.35, 3.75, -0.85)
 
 def build_nano(p):
     x = -3.35
-    seg(p, NANO_A, NANO_B, 0.85, 0.85, "dark", pad=0.15)
-    seg(p, NANO_A, NANO_B, 1.15, 0.5, "paint", offset=0.32, pad=0.05)  # front armor
-    plate_on(p, NANO_A, NANO_B, 0.2, 0.7, 0.36, "team", 0.58)
-    seg(p, NANO_A, NANO_B, 0.18, 0.95, "trim", pad=0.0)  # spine
-    # emitter: a ringed barrel facing forward, a glowing lens, three focusing fins
-    p.cylinder("z", (x, 3.55, -1.25), 0.42, 0.55, 16, "trim")
-    p.cylinder("z", (x, 3.55, -1.55), 0.46, 0.07, 16, "power")
-    p.cylinder("z", (x, 3.55, -1.6), 0.28, 0.04, 14, "power")
+    tseg(p, NANO_A, NANO_B, 0.95, 0.95, 0.9, 0.9, "dark", pad=0.15)
+    tseg(p, NANO_A, NANO_B, 1.4, 0.75, 1.25, 0.6, "paint", off0=0.25, off1=0.25, bevel=0.12)  # forearm armor
+    # elbow guard: a rounded cap over the back of the elbow
+    p.prism_x(arch(-0.45, 0.85, 5.45, 6.05, steps=5, flat=0.2), x - 0.6, x + 0.6, "paint", bevel=0.08)
+    piston(p, (x, 5.15, 0.6), (x, 4.45, 0.15), r=0.09, sleeve="steel")  # the rod behind the elbow
+    # the emitter: a ringed barrel, a big glowing lens, three focusing prongs
+    p.cylinder("z", (x, 3.55, -1.25), 0.52, 0.55, 20, "trim", bevel=0.04)
+    p.cylinder("z", (x, 3.55, -1.55), 0.56, 0.07, 20, "power")
+    p.cylinder("z", (x, 3.55, -1.6), 0.34, 0.04, 16, "power")
     for a in (90, 210, 330):
         r = math.radians(a)
-        p.obox((x + math.cos(r) * 0.5, 3.55 + math.sin(r) * 0.5, -1.45), (0, 0, 1), (math.cos(r), math.sin(r), 0),
-               0.6, 0.07, 0.2, "dark")
+        p.obox((x + math.cos(r) * 0.62, 3.55 + math.sin(r) * 0.62, -1.55), (0, 0, 1), (math.cos(r), math.sin(r), 0),
+               0.75, 0.09, 0.22, "dark", bevel=0.02)
     for s2 in (-1, 1):
-        p.obox((x + s2 * 0.58, 4.6, -0.45), (0, -1.75, -0.85), (s2, 0, 0), 1.2, 0.12, 0.03, "light")
+        p.obox((x + s2 * 0.71, 4.6, -0.45), (0, -1.75, -0.85), (s2, 0, 0), 1.3, 0.14, 0.03, "light")
 
 
 def details_nano(p):
-    rivets(p, (-3.79, 5.1, -0.1), (-3.79, 4.1, -0.6), 4, (-1, 0, 0))
+    rivets(p, (-4.06, 5.0, -0.1), (-4.06, 4.0, -0.55), 4, (-1, 0, 0))
 
 
 def build_forearmR(p):
     x = 3.45
-    # the pod: an armored block over a dark frame, held forward from the elbow
-    p.prism_x([(-0.35, 4.05), (0.45, 4.05), (0.55, 5.2), (-0.2, 5.55), (-2.85, 5.5), (-3.05, 5.1), (-2.95, 4.05)],
-              x - 0.62, x + 0.62, "paint", bevel=0.08)
-    p.prism_x([(-2.6, 3.88), (0.2, 3.88), (0.2, 4.1), (-2.6, 4.1)], x - 0.5, x + 0.5, "dark", bevel=0.03)
-    p.box((x + 0.64, 4.85, -1.2), (0.04, 0.7, 1.8), "team", bevel=0.01)
-    p.box((x - 0.63, 4.95, -1.0), (0.04, 0.5, 1.4), "grille")
-    p.box((x, 5.56, -1.6), (0.7, 0.04, 1.4), "grille")
-    # ammo drum on the side, a feed into the pod
-    p.cylinder("x", (x + 0.75, 4.45, -0.1), 0.42, 0.3, 14, "trim")
-    p.cylinder("x", (x + 0.92, 4.45, -0.1), 0.25, 0.05, 10, "dark")
-    # twin barrels in a shroud, muzzle rings, a ready light
-    p.box((x, 4.65, -3.1), (1.0, 0.75, 0.3), "trim", bevel=0.05)
-    for dx in (-0.24, 0.24):
-        p.cylinder("z", (x + dx, 4.65, -3.55), 0.17, 1.0, 10, "dark")
-        p.cylinder("z", (x + dx, 4.65, -3.9), 0.2, 0.18, 10, "steel")
-        p.cylinder("z", (x + dx, 4.65, -4.02), 0.18, 0.05, 10, "weapon")
-    p.box((x, 5.08, -2.98), (0.5, 0.06, 0.04), "weapon")
-    p.box((x + 0.63, 5.25, -1.8), (0.03, 0.12, 2.0), "light")
-    p.box((x - 0.63, 5.25, -1.8), (0.03, 0.12, 2.0), "light")
+    # a big pod: armored block over a dark frame, a team side panel, an
+    # ammo drum, vents; long twin barrels in a shroud, ready lights
+    p.prism_x([(-0.35, 4.0), (0.5, 4.0), (0.62, 5.2), (-0.2, 5.62), (-3.05, 5.55), (-3.25, 5.1), (-3.1, 4.0)],
+              x - 0.78, x + 0.78, "paint", bevel=0.16)
+    p.prism_x([(-2.8, 3.82), (0.25, 3.82), (0.25, 4.08), (-2.8, 4.08)], x - 0.6, x + 0.6, "dark", bevel=0.04)
+    p.obox((x + 0.8, 4.85, -1.35), (0, 0, 1), X, 2.4, 0.95, 0.06, "team", bevel=0.02)
+    p.box((x - 0.79, 4.95, -1.3), (0.04, 0.6, 1.8), "grille")
+    p.box((x, 5.6, -1.7), (0.9, 0.04, 1.5), "grille")
+    drum(p, (x + 0.95, 4.45, -0.15), 0.5, 0.4, "trim", "dark", sides=18)
+    p.box((x, 4.62, -3.35), (1.15, 0.85, 0.35), "trim", bevel=0.06)
+    for dx in (-0.27, 0.27):
+        p.cylinder("z", (x + dx, 4.65, -4.05), 0.18, 1.6, 12, "dark")
+        p.cylinder("z", (x + dx, 4.65, -4.3), 0.22, 0.22, 12, "steel")
+        p.cylinder("z", (x + dx, 4.65, -4.82), 0.22, 0.2, 12, "steel")
+        p.cylinder("z", (x + dx, 4.65, -4.95), 0.19, 0.05, 12, "weapon")
+    p.box((x, 5.1, -3.2), (0.55, 0.06, 0.04), "weapon")
+    for s2 in (-1, 1):
+        p.box((x + s2 * 0.79, 5.3, -1.8), (0.03, 0.14, 2.2), "light")
+    hazard(p, (x, 4.06, -0.4), (0, 0, 1), (0, -1, 0), 1.0, 0.5, stripes=4)
 
 
 def details_forearmR(p):
-    rivets(p, (4.08, 4.3, -2.6), (4.08, 4.3, -0.3), 6, X)
-    seam(p, (4.08, 5.3, -2.6), (4.08, 5.3, -0.3), X)
+    rivets(p, (4.24, 4.25, -2.8), (4.24, 4.25, -0.3), 6, X)
 
 
 # ---------------------------------------------------------------- legs
@@ -234,44 +245,58 @@ def leg_specs(sx):
     HIP, KNEE, ANKLE = (x, 4.5, 0.0), (x, 2.6, -0.55), (x, 0.8, 0.15)
 
     def hip(p):
-        joint(p, (sx * 1.45, 4.6, 0), 0.5, 0.6)
-        p.obox((sx * 1.8, 4.65, 0.0), UP, X, 1.0, 1.2, 0.12, "paint", bevel=0.03)
+        drum(p, (sx * 1.55, 4.6, 0), 0.62, 0.75, "steel", "trim")
+        p.obox((sx * 1.98, 4.65, 0.0), UP, X, 1.1, 1.3, 0.14, "paint", bevel=0.04)
+        hazard(p, (sx * 2.06, 4.65, 0.0), (0, 0, 1), X, 1.0, 0.24, stripes=5)
 
     def thigh(p):
-        seg(p, HIP, KNEE, 0.95, 0.95, "dark", pad=0.15)
-        seg(p, HIP, KNEE, 1.3, 0.55, "paint", offset=0.32, pad=-0.15)  # front armor
-        for s2 in (-1, 1):  # side armor
-            p.obox(tuple((V(HIP) + V(KNEE)) / 2 + V((s2 * 0.55, 0.05, 0.05))), tuple(V(KNEE) - V(HIP)), (s2, 0, 0),
-                   1.4, 0.95, 0.1, "paint", bevel=0.03)
-        piston(p, (x, 4.25, 0.55), (x, 2.95, 0.15))
+        tseg(p, HIP, KNEE, 1.05, 1.05, 1.0, 1.0, "dark", pad=0.12)
+        # tapered front plate, side plates, a rear plate: overlapping armor
+        tseg(p, HIP, KNEE, 1.8, 0.8, 1.5, 0.6, "paint", off0=0.32, off1=0.38, pad=-0.1, bevel=0.14)
         for s2 in (-1, 1):
-            p.obox((x + s2 * 0.62, 3.6, -0.25), (0, -1.9, -0.55), (s2, 0, 0), 1.5, 0.14, 0.03, "light")
-        joint(p, KNEE, 0.45, 1.05)
-        p.prism_x([(-1.15, 2.2), (-0.8, 2.15), (-0.75, 3.05), (-1.05, 2.95)], x - 0.55, x + 0.55, "paint", bevel=0.05)  # knee cap
+            p.obox(tuple((V(HIP) + V(KNEE)) / 2 + V((s2 * 0.62, 0.1, 0.0))), tuple(V(KNEE) - V(HIP)), (s2, 0, 0),
+                   1.55, 1.15, 0.12, "paint", bevel=0.04)
+        tseg(p, HIP, KNEE, 1.2, 0.35, 1.0, 0.3, "trim", off0=-0.6, off1=-0.55, pad=-0.25, bevel=0.06)
+        piston(p, (x, 3.95, 0.72), (x, 2.75, 0.52), r=0.13)  # sleeve behind the knee
+        for s2 in (-1, 1):
+            p.obox((x + s2 * 0.69, 3.55, -0.32), (0, -1.9, -0.55), (s2, 0, 0), 1.4, 0.14, 0.03, "light")
+        drum(p, KNEE, 0.55, 1.35, "steel", "trim")
+        # big rounded knee guard
+        p.prism_x([(-1.2, 2.1), (-0.85, 1.95), (-0.72, 2.6), (-0.85, 3.25), (-1.25, 3.05), (-1.4, 2.6)],
+                  x - 0.68, x + 0.68, "paint", bevel=0.14)
+        hazard(p, (x, 3.12, -1.12), X, (0, 0.5, -0.87), 1.1, 0.18, stripes=5)
 
     def shin(p):
-        seg(p, KNEE, ANKLE, 0.9, 0.9, "dark", pad=0.1)
-        seg(p, KNEE, ANKLE, 1.25, 0.6, "paint", offset=0.28, pad=-0.2)
-        plate_on(p, KNEE, ANKLE, 0.3, 0.75, 0.62, "team", 0.6)
-        piston(p, (x, 2.3, 0.15), (x, 1.05, 0.6))
+        tseg(p, KNEE, ANKLE, 1.0, 1.0, 0.95, 0.95, "dark", pad=0.08)
+        tseg(p, KNEE, ANKLE, 1.65, 0.75, 1.45, 0.65, "team", off0=0.32, off1=0.3, pad=-0.2, bevel=0.14)  # team shin plate
         for s2 in (-1, 1):
-            p.obox((x + s2 * 0.64, 1.6, -0.3), (0, -1.8, 0.7), (s2, 0, 0), 1.2, 0.12, 0.03, "light")
-        p.box((x, 1.3, 0.62), (0.6, 0.5, 0.04), "power")
+            p.obox(tuple((V(KNEE) + V(ANKLE)) / 2 + V((s2 * 0.6, 0.0, 0.08))), tuple(V(ANKLE) - V(KNEE)), (s2, 0, 0),
+                   1.5, 1.05, 0.12, "paint", bevel=0.04)
+        piston(p, (x, 2.4, 0.42), (x, 1.15, 0.85), r=0.1, sleeve="steel")  # the rod behind the knee
+        p.prism_x([(0.35, 1.0), (0.85, 1.05), (0.95, 1.9), (0.55, 2.05)], x - 0.55, x + 0.55, "paint", bevel=0.08)  # calf
+        p.box((x, 1.45, 0.98), (0.75, 0.7, 0.04), "power")
+        p.obox((x, 2.2, -0.82), X, (0, 0.37, -1), 1.2, 0.12, 0.05, "light")
+        for s2 in (-1, 1):
+            p.obox((x + s2 * 0.67, 1.55, -0.32), (0, -1.8, 0.7), (s2, 0, 0), 1.2, 0.12, 0.03, "light")
 
     def foot(p):
-        joint(p, ANKLE, 0.34, 0.95)
-        p.box((x, 0.5, 0.15), (0.85, 0.55, 0.85), "dark", bevel=0.05)  # tarsal block
-        p.prism_x([(-1.5, 0.0), (-0.15, 0.0), (-0.15, 0.48), (-0.85, 0.56), (-1.48, 0.28)], x - 0.64, x + 0.64, "paint", bevel=0.05)  # toe plate
-        p.prism_x([(0.45, 0.0), (1.25, 0.0), (1.25, 0.32), (0.95, 0.5), (0.45, 0.5)], x - 0.5, x + 0.5, "paint", bevel=0.05)  # heel plate
-        p.box((x, 0.04, -0.3), (1.15, 0.08, 1.9), "dark")  # sole
-        p.box((x, 0.2, -1.5), (0.9, 0.1, 0.03), "light")
-        p.box((x, 0.25, 1.26), (0.6, 0.1, 0.03), "light")
+        drum(p, ANKLE, 0.44, 1.15, "steel", "trim")
+        p.box((x, 0.5, 0.15), (1.05, 0.62, 1.0), "dark", bevel=0.08)
+        # wide feet: a toe plate with a ridge, a heel plate, a dark sole
+        p.prism_x([(-1.75, 0.0), (-0.1, 0.0), (-0.1, 0.55), (-0.85, 0.66), (-1.6, 0.36)], x - 0.82, x + 0.82, "paint", bevel=0.14)
+        p.prism_x([(-1.65, 0.38), (-0.9, 0.66), (-0.4, 0.7), (-0.4, 0.78), (-0.95, 0.76), (-1.7, 0.45)], x - 0.18, x + 0.18, "trim", bevel=0.03)
+        p.prism_x([(0.45, 0.0), (1.45, 0.0), (1.45, 0.36), (1.1, 0.58), (0.45, 0.58)], x - 0.68, x + 0.68, "paint", bevel=0.12)
+        p.box((x, 0.04, -0.15), (1.5, 0.08, 3.1), "dark")
+        p.box((x, 0.24, -1.72), (1.3, 0.16, 0.03), "light")
+        for s2 in (-1, 1):
+            p.box((x + s2 * 0.83, 0.3, -0.9), (0.03, 0.14, 1.3), "light")
+        p.box((x, 0.28, 1.46), (0.8, 0.1, 0.03), "light")
 
     def det_thigh(p):
-        rivets(p, (x + sx * 0.62, 4.2, -0.2), (x + sx * 0.62, 3.0, -0.5), 4, (sx, 0, 0))
+        rivets(p, (x + sx * 0.69, 4.15, -0.15), (x + sx * 0.69, 3.0, -0.45), 4, (sx, 0, 0))
 
     def det_shin(p):
-        seam(p, (x - 0.45, 2.1, -0.85), (x + 0.45, 2.1, -0.85), (0, 0.35, -1))
+        seam(p, (x - 0.55, 2.0, -0.95), (x + 0.55, 2.0, -0.95), (0, 0.35, -1))
 
     none = lambda p: None  # noqa: E731
     return [
@@ -291,8 +316,8 @@ unit.run(__file__, "ord_sovereign", "order", footprint=2,
                  unit.PieceSpec("armR", "torso", (3.3, 7.6, 0.0), build_armR, details_arm(1)),
                  unit.PieceSpec("forearmR", "armR", (3.35, 5.5, 0.0), build_forearmR, details_forearmR)]
          + leg_specs(-1) + leg_specs(1),
-         attachments={"muzzle": {"parent": "forearmR", "at": [3.45, 4.65, -4.1]}},
-         budget=9000,
+         attachments={"muzzle": {"parent": "forearmR", "at": [3.45, 4.65, -5.0]}},
+         budget=12000,
          previews=[("35", (-17, 13, -20), (0, 5.0, 0), 50),
                    ("side", (24, 5.5, 0), (0, 5.0, 0), 50),
                    ("80", (0, 34, 4), (0, 5.0, 0), 50),

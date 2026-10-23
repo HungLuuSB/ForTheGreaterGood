@@ -102,6 +102,6 @@ return {
 	parts = parts,
 	attachments = {
 		{ name = "nano1", parent = "nano", at = { -3.35, 3.55, -1.62 } }, -- nanoframe anchor (M-25)
-		{ name = "muzzle", parent = "forearmR", at = { 3.45, 4.65, -4.2 } },
+		{ name = "muzzle", parent = "forearmR", at = { 3.45, 4.65, -5.0 } },
 	},
 }
