@@ -64,8 +64,13 @@ local function studsText(v: number): string
 	return if v < 10 then string.format("±%.1f", v) else string.format("±%d", math.floor(v + 0.5))
 end
 
+RadarAccuracy.GREY = "#7f848c" -- the tracked part while no blip is tracked
+
 -- The readout: "Radar accuracy ±1.6 studs · tracked ±0.4 · Pinpointers 50%".
-function RadarAccuracy.readout(acc: Accuracy?): string
+-- `anyTracked`: some blip is TRACKED now. Without one the tracked part is
+-- greyed (rich text): under a partial power stall the fire-control radar's
+-- reach shrinks, so trackError holds only inside it (S-147).
+function RadarAccuracy.readout(acc: Accuracy?, anyTracked: boolean?): string
 	if acc == nil or (acc.radar == nil and acc.track == nil) then
 		return "Radar accuracy: no radar"
 	end
@@ -74,7 +79,8 @@ function RadarAccuracy.readout(acc: Accuracy?): string
 		table.insert(parts, `Radar accuracy {studsText(acc.radar)} studs`)
 	end
 	if acc.track then
-		table.insert(parts, if acc.radar then `tracked {studsText(acc.track)}` else `Tracked accuracy {studsText(acc.track)} studs`)
+		local text = if acc.radar then `tracked {studsText(acc.track)}` else `Tracked accuracy {studsText(acc.track)} studs`
+		table.insert(parts, if anyTracked == false then `<font color="{RadarAccuracy.GREY}">{text}</font>` else text)
 	end
 	table.insert(parts, if acc.precision > 0 then string.format("Pinpointers %d%%", math.floor(acc.precision * 100 + 0.5)) else "no Pinpointers")
 	return table.concat(parts, "  ·  ")
