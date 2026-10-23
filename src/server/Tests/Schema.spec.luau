@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 28, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 29, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -391,6 +391,13 @@ return function(t: RunAll.Context)
 		local producing: State = { unitId = 1, producing = 0x0304, producingProgress = 0x80 }
 		t.equal(hex(encodeOne(Schema.encodeState, producing)), "01 00 80 10 04 03 80")
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeState, producing), Schema.decodeState)[1], producing)
+		-- version 29: DOME, DOME_GONE (S-122): domes regardless of vision
+		local dome: Schema.Event = { kind = Schema.EventKind.DOME, unitId = 0x0102, cell = 0x0304, offX = 5, offZ = 6, y = 7, radius = 80, charge = 200, shieldFlags = 1 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, dome)), "17 02 01 04 03 05 06 07 00 50 00 c8 01")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, dome), Schema.decodeEvent)[1], dome)
+		local gone: Schema.Event = { kind = Schema.EventKind.DOME_GONE, unitId = 0x0102 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, gone)), "18 02 01")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, gone), Schema.decodeEvent)[1], gone)
 		-- version 27: CHEAT_RESULT (S-102)
 		local answer: Schema.Event = { kind = Schema.EventKind.CHEAT_RESULT, cheatOp = Schema.CheatOp.GIVE, cheatResult = Schema.CheatResult.OK, count = 3, total = 0x0105 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, answer)), "16 01 00 03 00 05 01")
@@ -537,7 +544,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 23, 1, 0 }, "unknown event kind 23") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27
+		expectRejected(t, Schema.decodeEvent, { 25, 1, 0 }, "unknown event kind 25") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind

@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 28 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118)
+Schema.PROTOCOL_VERSION = 29 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -900,6 +900,14 @@ end
 --               flags u8 (SHIELD_BREACH, SHIELD_ABSORBED): a shell turned
 --               back by the dome's field, through it, or (protocol 25)
 --               destroyed at its surface (protocol 24)                      = 13 bytes
+--   DOME        unitId u16 (the generator) | pos (the dome's centre) | radius
+--               u16 (studs) | charge u8 (0..255) | flags u8 (Schema.ShieldFlag):
+--               a shield dome whose circle touches the camera area, whatever
+--               the team sees, when the player doesn't have its generator
+--               (as BAR draws shields); when it enters the area and when its
+--               charge or flags change (protocol 29, S-122)              = 13 bytes
+--   DOME_GONE   unitId u16: that dome left the area, its generator died, or
+--               the player now has the generator (ENTER / SHIELD cover it) =  3 bytes
 --   CHEAT_RESULT op u8 (Schema.CheatOp) | result u8 (Schema.CheatResult) |
 --               count u16 | total u16: the answer to the player's CHEAT
 --               command, for the chat (GIVE: units placed of asked; KILL:
@@ -934,6 +942,8 @@ Schema.EventKind = table.freeze({
 	SHIELD_HIT = 20,
 	SHIELD_FIELD = 21,
 	CHEAT_RESULT = 22, -- protocol 27 (S-102)
+	DOME = 23, -- protocol 29 (S-122)
+	DOME_GONE = 24,
 })
 -- CHEAT_RESULT result codes (S-102)
 Schema.CheatResult = table.freeze({
@@ -962,7 +972,7 @@ local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3 })
 Schema.ShieldFlag = table.freeze({ UP = 1, RECHARGING = 2 }) -- SHIELD flags: the dome stands; it is recharging (protocol 24)
 Schema.SHIELD_BREACH = 1 -- SHIELD_HIT flags: the shell broke through (else it turned back)
 Schema.SHIELD_ABSORBED = 2 -- SHIELD_HIT flags: a light shell destroyed at the surface; drop it, no burst (protocol 25, S-85)
@@ -1153,6 +1163,20 @@ function Schema.encodeEvent(w: Writer, e: Event)
 		w:writeU8(required(e.charge, "charge"))
 		w:writeU8(flags)
 		return
+	elseif kind == EK.DOME then
+		local flags = required(e.shieldFlags, "shieldFlags")
+		if flags > 3 then
+			error(`Schema: dome flags {flags} have reserved bits`, 2)
+		end
+		writeId(w, required(e.unitId, "unitId"), "unitId")
+		writePos(w, e)
+		w:writeU16(math.clamp(math.floor(required(e.radius, "radius") + 0.5), 0, 65535))
+		w:writeU8(required(e.charge, "charge"))
+		w:writeU8(flags)
+		return
+	elseif kind == EK.DOME_GONE then
+		writeId(w, required(e.unitId, "unitId"), "unitId")
+		return
 	elseif kind == EK.SHIELD_FIELD then
 		local phase = required(e.phase, "phase")
 		if phase ~= 1 and phase ~= 2 then
@@ -1312,6 +1336,20 @@ function Schema.decodeEvent(r: Reader): Event
 			fail(r, `shield flags {flags}`)
 		end
 		e.shieldFlags = flags
+		return e
+	elseif kind == EK.DOME then
+		e.unitId = readId(r, "unitId")
+		readPos(r, e)
+		e.radius = r:readU16()
+		e.charge = r:readU8()
+		local flags = r:readU8()
+		if flags > 3 then
+			fail(r, `dome flags {flags}`)
+		end
+		e.shieldFlags = flags
+		return e
+	elseif kind == EK.DOME_GONE then
+		e.unitId = readId(r, "unitId")
 		return e
 	elseif kind == EK.SHIELD_FIELD then
 		e.projId = readId(r, "projId")
