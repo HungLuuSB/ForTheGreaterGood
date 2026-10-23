@@ -1102,3 +1102,65 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
   - Upgrades: builders kept clear of the 3×3 footprints.
 
 **Why:** sim-A's merge 522ca80 (S-104 footprints, S-108 upgrades, S-111 anti-nukes) broke 8 client specs, as sim-A warned.
+
+### C-138 — models-C's honeycomb shell on shield domes (after approval); the beam shot held for the sim's beamDuration (2026-10-23)
+
+**Decision:**
+- **Shell:** `Meshes.shieldShell` bands are loaded once (CreateMeshPartAsync), cloned per dome, and sized and placed each frame with the dome (band.size × R, band.center[2] × R above the base). Transparency = 1 − band.opacity × charge × the dome's opacity.
+- **Shell look:** the "shieldShell" SurfaceAppearance (texture, AlphaMode Transparency) is written to MeshMaterials, because scripts can't set ColorMap; it's tinted where allowed. It's shown once approved; `Invoke("shellanyway", true)` previews it.
+- **Beam shot:** BeamShots runs C's latest apply (on from the charge for the shot's duration, the sim's `beamDuration` with C's `duration` as fallback, C's taper at the end, the impact hot spot held, the embers and soot after).
+
+**Why:** the user's honeycomb shell request (models-C's asset, 8fcf418), and their beamDuration note to models-C (8c1281a).
+
+### C-139 — A beam held on a shield lights it every 0.2 s; bigger hit patches (2026-10-23)
+
+**Decision:**
+- **Pulses:** a BEAM tracer stopped by a dome (C-129's deflect) gets `pulseAt` and `pulseMass` (the weapon's shield mass, at most 3). `Effects.update` adds a "absorb" ShieldHit at the contact every SHIELD_PULSE (0.2 s) while the beam burns. ShieldDomes maps it to the nearest dome, and it adds a wave to the same patch.
+- **Patches:** Shield.PLATE 4.8; rings 5 + strength, clamped to 5..7 (91 / 127 / 169 cells); pool 1000.
+
+**Why:** the user: "do the reflect effect every 0.2s, and I did tell you to make the reflect patches bigger". The drain behind it is sim request 51 (S-117).
+
+### C-140 — The `shield_beams` test profile (2026-10-23)
+
+**Decision:** MatchConfig profile `shield_beams` on flat:128.
+- **Yours:** a Phalanx, Fusion, Vehicle Plant and 3 Masons at 50× health.
+- **The enemy:** Radiances east, west and south and an Inferno south-east, all on attack-ground at the dome's middle; Juggernauts and Ravagers shelling it; an Eye radar; 2 Fusions and 6 depots for beam power (startResources 20,000 power).
+
+Until sim request 52 (the weapon on SHOT), beams from shooters you can't see draw as plain tracers, so play it with `/reveal on`.
+
+**Why:** the user: "a scenario of a shield of mine against some radiance from different angles + some shots".
+
+### C-141 — More, smaller rings in shield hit patches (2026-10-23)
+
+**Decision:**
+- Rings are 6 + strength, clamped to 6..9 (127 to 271 cells). Rim cells are a third of the centre's size (RIM_SHRINK 0.85).
+- Each ring sits as far out as its cells are big (the arc is the integral of cellScale), so the centre cells spread and the rim cells pack tight. This replaces C-132's SPREAD.
+- RING_DELAY 0.05 so the inward wave still reaches the centre quickly. Pool 1300.
+
+**Why:** the user: "add more smaller rings to the honeycomb reflect".
+
+### C-142 — Even more outer rings; models-C's review effects show in Studio (2026-10-23)
+
+**Decision:**
+- **Rings:** 8 + strength, clamped to 8..11 (217 to 397 cells). RIM_SHRINK 0.9, RING_DELAY 0.04, pool 2000.
+- **Review effects:** `BeamShots.ANYWAY` and `ShieldFx.SHELL_ANYWAY` default to `RunService:IsStudio()`. Studio is where the user reviews, so they no longer need the debug commands there; live servers still wait for "approved".
+
+**Why:** the user: "also add more rings of outer honeycombs. Where's the effect from C?"
+
+### C-143 — Detailed models load fast (pieces built in parallel), the camera area leads a moving camera; hidden beams drawn as beams (2026-10-23)
+
+**Decision:**
+- **MeshModels:** a model's pieces and glow parts are created at once (`together`), and 8 models build at a time (was 4). All 74 Normandy types are ready in ~15 s, against ~70 s before (25 ready after 34 s) once models-C split meshes into many pieces.
+- **Camera:** the area sent to the server is stretched up to 0.8 s / 400 studs ahead of the camera's motion, so units ahead become tactical (full models) before they scroll into view. The minimap box keeps the true view.
+- **SHOT (protocol 28, S-118):** `weaponIndex` picks the weapon. A BEAM draws as its held beam in its faction's colour (from the weapon id), with the dome glance and pulses (a shared `shotTracer` with FIRE).
+
+**Why:** the user: blockouts showing before detailed models when panning fast; and "in BAR, a Pulsar's beam renders even with no vision".
+
+### C-144 — A beam continues past a dome that drops; thinner flowing rings on the dome (2026-10-23)
+
+**Decision:**
+- **Beam continuation:** `Effects.continueBeam`. A FIRE / SHOT from a beam weapon whose beam still burns, starting within 3 studs of it, moves that beam's end (new end, hit flag) and drops its glancing leg and dome pulses, keeping its start time. BeamShots follows the moved end. It's ready for sim request 54 (on the tick a dome drops, a new FIRE / SHOT to the target).
+- **Flowing rings:** ShieldFx.RING_TUBE 0.0015 (was 0.004), at least 0.06 studs.
+- **Not kept:** a 20 to 26 ring patch with a wide rim of tiny cells, tried as "C-145". The user: "too much"; it also cost ~25 ms a frame, with peaks over 300 ms, under shield_beams. The honeycomb stays as in C-142.
+
+**Why:** the user: the beam should go through once the dome drops; "reduce the size of the ring flowing down the dome".

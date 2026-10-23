@@ -501,4 +501,16 @@ return function(t: any)
 		t.equal((Effects.deflection(0, 10, -400, 0, 10, -250, domes, flat)), nil, "a beam ending away from any dome isn't deflected")
 		t.equal((Effects.deflection(0, 10, -50, 0, 10, hz, domes, flat)), nil, "nor one fired from inside")
 	end)
+
+	t.test("a beam whose dome drops goes on to its new end (C-144)", function()
+		local fx = Effects.new()
+		local radiance = { id = "ord_radiance_beam", type = "BEAM" }
+		table.insert(fx.tracers, { x0 = 0, y0 = 10, z0 = 0, x1 = 0, y1 = 10, z1 = -100, born = 0, life = 3, hit = false, size = 1, beam = "order", weaponId = radiance.id, deflect = { 5, 0, -90 }, pulseAt = 0.2 })
+		t.expect(Effects.continueBeam(fx, radiance, 0.5, 10, 0, 0, 5, -220, true, 1.2), "the burning beam is continued")
+		local tr = fx.tracers[1]
+		t.expect(tr.z1 == -220 and tr.hit and tr.deflect == nil and tr.pulseAt == nil and tr.born == 0, "to the new end, no glance, same start time")
+		t.equal(#fx.tracers, 1, "no second beam")
+		t.expect(not Effects.continueBeam(fx, radiance, 0, 10, 0, 0, 5, -220, true, 3.5), "a burnt-out beam is not continued")
+		t.expect(not Effects.continueBeam(fx, { id = "chs_inferno_beam", type = "BEAM" }, 0, 10, 0, 0, 5, -220, true, 1), "another weapon's beam isn't")
+	end)
 end

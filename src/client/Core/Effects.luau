@@ -52,6 +52,7 @@ Effects.BEAM_FADE = 1 -- seconds: the last part of a beam's life, when it narrow
 Effects.DEFLECT_SURFACE = 2 -- studs: a beam ending this close to a dome's surface was stopped by it (sim request 50)
 Effects.DEFLECT_DOWN = 0.45 -- the glancing ray points at least this steeply into the ground
 Effects.DEFLECT_MIN, Effects.DEFLECT_MAX = 8, 90 -- studs: the glancing ray's length
+Effects.SHIELD_PULSE = 0.2 -- seconds: a beam held on a dome lights it again this often (the user, C-139)
 
 -- A beam from (x0, y0, z0) that ended at (x1, y1, z1) on the surface of one
 -- of `domes` ({ x, y, z, radius }, centers on the ground) from outside: where
@@ -82,6 +83,26 @@ function Effects.deflection(x0: number, y0: number, z0: number, x1: number, y1: 
 		end
 	end
 	return nil, nil, nil
+end
+
+Effects.CONTINUE_RADIUS = 3 -- studs: a beam fired this close to a burning one of the same weapon continues it
+
+-- A FIRE / SHOT from a beam weapon whose beam still burns (a dome dropped
+-- under it: the rest goes through, sim request 54): moves that beam's end and
+-- drops its glance and dome pulses; true if one was found (C-144).
+function Effects.continueBeam(fx: Fx, weapon: any, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, hit: boolean, now: number): boolean
+	if weapon == nil or weapon.type ~= "BEAM" then
+		return false
+	end
+	local r2 = Effects.CONTINUE_RADIUS ^ 2
+	for _, t in fx.tracers do
+		if t.weaponId == weapon.id and now < t.born + t.life and (t.x0 - x0) ^ 2 + (t.y0 - y0) ^ 2 + (t.z0 - z0) ^ 2 <= r2 then
+			t.x1, t.y1, t.z1, t.hit = x1, y1, z1, hit
+			t.deflect, t.pulseAt = nil, nil
+			return true
+		end
+	end
+	return false
 end
 
 -- How long a BEAM weapon's ray is drawn.
@@ -165,7 +186,7 @@ export type Burst = { x: number, y: number, z: number, radius: number, born: num
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
-export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
+export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }?, pulseAt: number?, pulseMass: number?, weaponId: string? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
 
 export type Fx = {
 	projectiles: { [number]: Proj },
@@ -245,6 +266,34 @@ function Effects.impactSize(weapon: any): number
 	local impact = weapon and weapon.fx and weapon.fx.impact
 	local large = type(impact) == "string" and string.find(impact, "_large", 1, true) ~= nil
 	return weaponSize(weapon) * (if large then Effects.LARGE_IMPACT else 1)
+end
+
+-- A shot's tracer: a BEAM weapon's held ray (its duration, its faction's
+-- colour; stopped by a known dome it glances off and pulses the dome, C-129,
+-- C-139), else a quick streak.
+local function shotTracer(world: World.World, weapon: any, faction: string?, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, hit: boolean, now: number): Tracer
+	local isBeam = weapon ~= nil and weapon.type == "BEAM"
+	local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = hit, size = if weapon then weaponSize(weapon) else 1, beam = if isBeam then (faction or "order") else nil, weaponId = if weapon then weapon.id else nil }
+	if isBeam and not hit then
+		local domes = {}
+		for id in world.shields do
+			local g = world.units[id]
+			local gdef = g and World.def(world, g)
+			local r = gdef and gdef.shield and gdef.shield.radius
+			if r then
+				table.insert(domes, { g.x, World.groundY(world, g.x, g.z), g.z, r })
+			end
+		end
+		local gx, gy, gz = Effects.deflection(x0, y0, z0, x1, y1, z1, domes, function(x: number, z: number): number
+			return World.groundY(world, x, z)
+		end)
+		if gx then
+			t.deflect = { gx, gy :: number, gz :: number }
+			t.pulseAt = now + Effects.SHIELD_PULSE
+			t.pulseMass = math.min(ShieldField.mass(weapon), 3)
+		end
+	end
+	return t
 end
 
 local function pos(world: World.World, e: Schema.Event): (number, number, number)
@@ -830,25 +879,10 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local slot = def and def.weapons[e.slot]
 			local weapon = slot and world.defs.weaponByIndex[slot.weaponIndex or 0]
 			local isBeam = weapon ~= nil and weapon.type == "BEAM"
-			local t: Tracer = { x0 = x0, y0 = y0 :: number, z0 = z0 :: number, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = e.hit == true, size = weaponSize(weapon), beam = if isBeam then (def and def.faction or "order") else nil }
-			if isBeam and not t.hit then
-				-- stopped by a shield dome: it glances off into the ground (C-129)
-				local domes = {}
-				for id in world.shields do
-					local g = world.units[id]
-					local gdef = g and World.def(world, g)
-					local r = gdef and gdef.shield and gdef.shield.radius
-					if r then
-						table.insert(domes, { g.x, World.groundY(world, g.x, g.z), g.z, r })
-					end
-				end
-				local gx, gy, gz = Effects.deflection(x0, y0 :: number, z0 :: number, x1, y1, z1, domes, function(x: number, z: number): number
-					return World.groundY(world, x, z)
-				end)
-				if gx then
-					t.deflect = { gx, gy :: number, gz :: number }
-				end
+			if Effects.continueBeam(fx, weapon, x0, y0 :: number, z0 :: number, x1, y1, z1, e.hit == true, now) then
+				return -- the burning beam goes on to the new end (a dome dropped, C-144)
 			end
+			local t = shotTracer(world, weapon, def and def.faction, x0, y0 :: number, z0 :: number, x1, y1, z1, e.hit == true, now)
 			if #fx.tracers >= Effects.MAX_TRACERS then
 				fx.skipped.tracers += 1
 			end
@@ -897,7 +931,18 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local x1, y1, z1 = pos(world, e)
 		local x0, z0 = world.grid:decode(e.fromCell, e.fromOffX, e.fromOffZ)
 		local y0 = e.fromY / Schema.Y_SCALE
-		local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = Effects.TRACER_SECONDS, hit = e.hit == true, size = 1 }
+		-- the weapon (protocol 28, S-118): a hidden beam tower's shot draws as its
+		-- full beam, as BAR shows a Pulsar's (the user, C-143); the faction from
+		-- the weapon's id
+		local weapon = if e.weaponIndex and e.weaponIndex > 0 then world.defs.weaponByIndex[e.weaponIndex] else nil
+		local faction = if weapon and string.sub(weapon.id, 1, 4) == "chs_" then "chaos" else "order"
+		if Effects.continueBeam(fx, weapon, x0, y0, z0, x1, y1, z1, e.hit == true, now) then
+			return
+		end
+		local t = shotTracer(world, weapon, faction, x0, y0, z0, x1, y1, z1, e.hit == true, now)
+		if t.beam and t.hit then
+			burst(fx, now, x1, y1, z1, 2.4, "impact", Effects.EXPLOSION_SECONDS)
+		end
 		if #fx.tracers >= Effects.MAX_TRACERS then
 			fx.skipped.tracers += 1
 		end
@@ -1102,6 +1147,15 @@ function Effects.update(fx: Fx, world: World.World, renderTick: number, now: num
 			table.remove(fx.crashes, i)
 			local b = burst(fx, now, c.x, c.y + 1.5, c.z, c.radius, "death", Effects.DEATH_SECONDS)
 			b.ground = c.y
+		end
+	end
+	-- beams held on a shield dome: a fresh hit at the contact every
+	-- SHIELD_PULSE while they burn (the server's SHIELD_HIT lit the first)
+	for _, t in fx.tracers do
+		local at = t.pulseAt
+		if at and now < t.born + t.life and now >= at and #fx.shieldHits < 64 then
+			t.pulseAt = at + Effects.SHIELD_PULSE
+			table.insert(fx.shieldHits, { unitId = 0, kind = "absorb", x = t.x1, y = t.y1, z = t.z1, mass = t.pulseMass or 1, breach = false, projId = 0, tick = fx.tick })
 		end
 	end
 	for i = #fx.bursts, 1, -1 do

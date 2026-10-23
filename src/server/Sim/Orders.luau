@@ -130,6 +130,11 @@ function Orders.give(sim: Types.Sim, ids: { number }, spec: OrderSpec, queued: b
 				local list = if queued then o.rally[id] or {} else {}
 				table.insert(list, { kind = spec.kind, x = spec.x, z = spec.z, lx = spec.lx, lz = spec.lz, target = spec.target, gen = spec.gen })
 				o.rally[id] = list
+			elseif spec.kind == "attack" and #d.weapons > 0 and spec.target then
+				-- an armed structure (a beam tower, a turret) takes an attack
+				-- as its manual target: it can't chase, it fires whenever the
+				-- target is in range (S-121, client request 54)
+				o.manual[id], o.manualGen[id] = spec.target, spec.gen or 0
 			end
 			continue
 		end

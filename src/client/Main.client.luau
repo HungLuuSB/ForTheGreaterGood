@@ -735,6 +735,10 @@ if RunService:IsStudio() then
 			-- Invoke("wrecksanyway", on): use review wreck meshes too (for the user's review, C-115)
 			MeshModels.WRECKS_ANYWAY = (...) == true
 			return true
+		elseif query == "shellanyway" then
+			-- Invoke("shellanyway", on): models-C's review honeycomb shell on shield domes (C-138)
+			require("./Render/ShieldFx").SHELL_ANYWAY = (...) == true
+			return true
 		elseif query == "beamsanyway" then
 			-- Invoke("beamsanyway", on): models-C's review beam shot effect (for the user's review, C-133)
 			require("./Render/BeamShots").ANYWAY = (...) == true

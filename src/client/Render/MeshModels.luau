@@ -25,7 +25,7 @@ local Meshes = require("@shared/Defs/Meshes/Registry")
 
 local MeshModels = {}
 
-MeshModels.AT_ONCE = 4 -- models building at the same time
+MeshModels.AT_ONCE = 8 -- models building at the same time (4 until C-143)
 MeshModels.TEAM_TAG = "TeamColor"
 MeshModels.GLOW_TAG = "Glow"
 
@@ -66,6 +66,32 @@ local function meshPart(id: string, center: { number }, size: { number }, precis
 	return part
 end
 
+-- Runs `fns` at once and waits for all (each mesh piece is its own
+-- CreateMeshPartAsync: one at a time, a 20-piece model took ~5 s, C-143).
+-- Rethrows the first error.
+local function together(fns: { () -> () })
+	local left, err = #fns, nil
+	local me = coroutine.running()
+	for _, fn in fns do
+		task.spawn(function()
+			local ok, e = pcall(fn)
+			if not ok and err == nil then
+				err = e
+			end
+			left -= 1
+			if left == 0 and coroutine.status(me) == "suspended" then
+				task.spawn(me)
+			end
+		end)
+	end
+	if left > 0 then
+		coroutine.yield()
+	end
+	if err then
+		error(err, 0)
+	end
+end
+
 -- Builds entry `e` for def `def` (yields). Model space = unit space.
 local function build(def: any, e: any): Model
 	local materials = ReplicatedStorage:FindFirstChild("MeshMaterials")
@@ -75,9 +101,17 @@ local function build(def: any, e: any): Model
 	model.Name = def.model
 	local parts: { [string]: MeshPart } = {}
 	local maps = e.maps
-	-- pieces, parents first (the joints need both ends)
+	-- pieces, made all at once (the joints come after, with both ends)
+	local made: { [string]: MeshPart } = {}
+	local jobs = {}
 	for name, p in e.pieces do
-		local part = meshPart(p.mesh, p.center, p.size)
+		table.insert(jobs, function()
+			made[name] = meshPart(p.mesh, p.center, p.size)
+		end)
+	end
+	together(jobs)
+	for name, p in e.pieces do
+		local part = made[name]
 		part.Name = name
 		if look and look:IsA("SurfaceAppearance") then
 			look:Clone().Parent = part -- maps, Overlay: the alpha shows the team color (rig.md 6)
@@ -125,8 +159,16 @@ local function build(def: any, e: any): Model
 		attachment.Parent = parts[a.parent]
 	end
 	-- glow parts: albedo = tint, the shared white mask, welded to their piece
-	for _, g in e.glow or {} do
-		local part = meshPart(g.mesh, g.center, g.size, true)
+	local glowParts: { [number]: MeshPart } = {}
+	local glowJobs = {}
+	for i, g in e.glow or {} do
+		table.insert(glowJobs, function()
+			glowParts[i] = meshPart(g.mesh, g.center, g.size, true)
+		end)
+	end
+	together(glowJobs)
+	for i, g in e.glow or {} do
+		local part = glowParts[i]
 		part.Name = g.name
 		part.CastShadow = false
 		local tint = Color3.fromRGB(g.tint[1], g.tint[2], g.tint[3])

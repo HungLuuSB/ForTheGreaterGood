@@ -727,4 +727,148 @@ return function(t: RunAll.Context)
 		print(string.format("    one Radiance beam: the Carapace %.0f%% -> %.0f%% (%.0f%% of its capacity)", before / capacity * 100, lowest / capacity * 100, share * 100))
 		t.expect(share > 0.4 and share < 0.8, `a big share of the charge ({share * 100}%)`)
 	end)
+
+	t.test("an ordered attack on a shield generator sticks; a dome dropping mid-beam lets the beam through (client request 54, S-121)", function()
+		local Packer = require("@shared/Net/Packer")
+		local Schema = require("@shared/Net/Schema")
+		local sim = Sim.new({ seed = 10, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local carapace = Spawn.unit(sim, "chs_carapace", 2, 0, 250)
+		local capacity = sim.defs.units.chs_carapace.shield.capacity
+		sim.combat.shieldCharge[carapace] = capacity * 0.1 -- a weak dome: the first beam drains it
+		local tank = Spawn.unit(sim, "chs_ravager", 2, 150, 0, math.pi) -- nearer the tower than the generator
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local scout = Spawn.unit(sim, "ord_herald", 1, 60, 120, 0)
+		for _, id in { tank, scout } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+			World.setHealth(w, id, 1e6)
+		end
+		for _ = 1, 4 do
+			Sim.step(sim) -- sensors: the team knows the generator
+		end
+		local wr = Packer.Writer.new()
+		Schema.encodeCommand(wr, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = { tower }, targetId = carapace })
+		assert(Sim.submit(sim, 1, wr:finish()))
+		local fires: { any } = {}
+		local genHealth = w.health[carapace]
+		for _ = 1, 15 * 6 do
+			local acc = sim.eco.accounts[1]
+			acc.power.storage = math.max(acc.power.storage, 5000)
+			acc.power.stored = 5000
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower then
+					table.insert(fires, e)
+				end
+			end
+			if #fires >= 2 then
+				break
+			end
+		end
+		t.equal(sim.orders.manual[tower], carapace, "the tower took the attack as its manual target")
+		t.equal(w.wTarget[World.slotKey(tower, 1)], carapace, "and aims at the generator, not the nearer tank")
+		t.expect(#fires >= 2, `the beam stopped on the dome, then a new FIRE when it dropped ({#fires})`)
+		if #fires >= 2 then
+			t.equal(fires[1].hit, false, "first on the dome")
+			t.equal(fires[2].hit, true, "then through to the generator")
+		end
+		for _ = 1, 30 do
+			Sim.step(sim)
+		end
+		t.expect(w.health[carapace] < genHealth, "the rest of the beam reached the generator")
+	end)
+
+	t.test("a burning beam's end follows the domes: through a dropped one to the next, cut by one rising (client request 56, S-123)", function()
+		local Packer = require("@shared/Net/Packer")
+		local Schema = require("@shared/Net/Schema")
+		local capacity = 400
+		local function setup(seed: number): (Sim.Sim, number, number)
+			local sim = Sim.new({ seed = seed, players = PLAYERS, mapId = "flat:128" })
+			local w = sim.world
+			local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+			local target = Spawn.unit(sim, "chs_juggernaut", 2, 0, 280, math.pi)
+			local scout = Spawn.unit(sim, "ord_herald", 1, 60, 200, 0)
+			for _, id in { target, scout } do
+				World.setFireState(w, id, World.FireState.HOLD_FIRE)
+				World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+				World.setHealth(w, id, 1e6)
+			end
+			return sim, tower, target
+		end
+		local function step(sim: Sim.Sim, tower: number, fires: { any })
+			local acc = sim.eco.accounts[1]
+			acc.power.storage = math.max(acc.power.storage, 5000)
+			acc.power.stored = 5000
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower then
+					table.insert(fires, e)
+				end
+			end
+		end
+		local function attack(sim: Sim.Sim, tower: number, target: number)
+			for _ = 1, 4 do
+				Sim.step(sim)
+			end
+			local wr = Packer.Writer.new()
+			Schema.encodeCommand(wr, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = { tower }, targetId = target })
+			assert(Sim.submit(sim, 1, wr:finish()))
+		end
+		-- 1. a weak dome in front drops; a full one behind takes the beam
+		local sim, tower, target = setup(11)
+		local front = Spawn.unit(sim, "chs_carapace", 2, 0, 0)
+		local back = Spawn.unit(sim, "chs_carapace", 2, 0, 250)
+		sim.combat.shieldCharge[front] = capacity * 0.05
+		sim.combat.shieldCharge[back] = capacity
+		attack(sim, tower, target)
+		local fires = {}
+		for _ = 1, 15 * 4 do
+			step(sim, tower, fires)
+			if #fires >= 2 then
+				break
+			end
+		end
+		t.expect(#fires >= 2, `a new FIRE when the front dome dropped ({#fires})`)
+		if #fires >= 2 then
+			t.expect(fires[1].z < 0 and not fires[1].hit, "first on the front dome")
+			t.expect(fires[2].z > 120 and fires[2].z < 250 and not fires[2].hit, `then on the back dome's surface (z {fires[2].z}), not through it`)
+		end
+		local backBefore = sim.combat.shieldCharge[back]
+		for _ = 1, 10 do
+			step(sim, tower, fires)
+		end
+		t.expect(sim.combat.shieldCharge[back] < backBefore, "the back dome is drained now")
+		t.equal(sim.world.health[target], 1e6, "the target inside it untouched")
+		-- 2. a dome rising across a burning beam cuts it
+		local sim2, tower2, target2 = setup(12)
+		local rising = Spawn.unit(sim2, "chs_carapace", 2, 0, 0)
+		sim2.combat.shieldCharge[rising] = 0
+		sim2.combat.shieldUp[rising] = false
+		attack(sim2, tower2, target2)
+		local fires2 = {}
+		local hits = 0
+		for _ = 1, 15 * 4 do
+			step(sim2, tower2, fires2)
+			if #fires2 == 1 and fires2[1].hit and sim2.combat.shieldUp[rising] == false then
+				-- the beam burns on the target: raise the dome across it
+				sim2.combat.shieldCharge[rising] = capacity
+				sim2.combat.shieldUp[rising] = true
+			end
+			for _, e in sim2.combat.events do
+				if e.kind == "SHIELD_HIT" and e.unit == rising then
+					hits += 1
+				end
+			end
+			if #fires2 >= 2 then
+				break
+			end
+		end
+		t.expect(#fires2 >= 2, `a new FIRE when the dome rose ({#fires2})`)
+		if #fires2 >= 2 then
+			t.equal(fires2[1].hit, true, "first on the target")
+			t.expect(not fires2[2].hit and fires2[2].z < 0, `then cut at the rising dome (z {fires2[2].z})`)
+		end
+		t.expect(hits >= 1, "the rising dome took the hit")
+	end)
 end

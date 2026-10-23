@@ -106,6 +106,32 @@ local function hitscanHits(
 	return lateral <= tp.radius and vertical <= tp.height / 2
 end
 
+local lineHits: { number } = {}
+
+-- The first enemy unit (by its collision radius, in the weapon's target
+-- classes) on the line from (sx, sz) to (ex, ez), or 0 (S-119: an
+-- attack-ground hitscan or beam shot).
+local function firstOnLine(sim: Types.Sim, id: number, weapon: Defs.WeaponDef, sx: number, sz: number, ex: number, ez: number): number
+	local c = sim.combat
+	local w = sim.world
+	local dx, dz = ex - sx, ez - sz
+	local len2 = math.max(dx * dx + dz * dz, 1e-6)
+	local n = ContactGrid.query(c.contacts, w, (sx + ex) / 2, (sz + ez) / 2, math.sqrt(len2) / 2 + c.maxRadius, w.ally[id], lineHits)
+	local best, bestT = 0, math.huge
+	for k = 1, n do
+		local u = lineHits[k]
+		local tp = c.profiles[w.defIndex[u]]
+		if bit32.band(weapon.targetMask, tp.categoryMask) ~= 0 then
+			local t = math.clamp(((w.posX[u] - sx) * dx + (w.posZ[u] - sz) * dz) / len2, 0, 1)
+			local px, pz = sx + dx * t - w.posX[u], sz + dz * t - w.posZ[u]
+			if px * px + pz * pz <= tp.radius * tp.radius and (t < bestT or (t == bestT and u < best)) then
+				best, bestT = u, t
+			end
+		end
+	end
+	return best
+end
+
 local function fire(
 	sim: Types.Sim,
 	id: number,
@@ -198,50 +224,84 @@ local function fire(
 
 	-- hitscan, or a projectile shot at the pool cap: the total error is the
 	-- turret's remaining aim offset (within tolerance) plus the spread
-	local hit = hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
-	-- where the shot ends: the target's aim point, or the ground beyond or
-	-- beside it on a miss (FIRE carries it for clients, guide 7.3)
+	local hit
 	local ex, ey, ez
-	if hit then
-		ex, ey, ez = Combat.aimPoint(c, w, target)
+	if target == 0 then
+		-- an attack-ground shot (S-119, client request 53): along the aim to
+		-- the ordered point; it hits the first enemy on the line, if any (a
+		-- hit-ray runs on to the point and hurts everyone on it)
+		local gx = w.posX[id] + sin(worldYaw + yawErr) * dist
+		local gz = w.posZ[id] + cos(worldYaw + yawErr) * dist
+		local first = firstOnLine(sim, id, weapon, w.posX[id], w.posZ[id], gx, gz)
+		hit = first ~= 0
+		if hit and not weapon.pierce then
+			target = first
+			ex, ey, ez = Combat.aimPoint(c, w, first)
+		else
+			ex, ez = gx, gz
+			ey = Combat.groundHeight(c, ex, ez)
+		end
 	else
-		ex = w.posX[id] + sin(worldYaw + yawErr) * dist
-		ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
-		ey = Combat.groundHeight(c, ex, ez)
+		hit = hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
+		-- where the shot ends: the target's aim point, or the ground beyond or
+		-- beside it on a miss (FIRE carries it for clients, guide 7.3)
+		if hit then
+			ex, ey, ez = Combat.aimPoint(c, w, target)
+		else
+			ex = w.posX[id] + sin(worldYaw + yawErr) * dist
+			ez = w.posZ[id] + cos(worldYaw + yawErr) * dist
+			ey = Combat.groundHeight(c, ex, ez)
+		end
+	end
+	if weapon.beamDuration then
+		-- a lingering beam (S-113 .. S-123): its full shot is kept, the first
+		-- up enemy dome on its line ends it there (hit = false, the dome
+		-- absorbs the shot, S-89, and is drained over the beam, S-117), and
+		-- beamStep re-checks that end every tick (S-123, client request 56)
+		local gen, hx, hy, hz = 0, 0, 0, 0
+		if #c.shieldIds > 0 then
+			gen, hx, hy, hz = Shield.intercept(sim, w.ally[id], w.posX[id], muzzleY, w.posZ[id], ex, ey, ez, weapon)
+		end
+		if gen ~= 0 then
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = false, x = hx, y = hy, z = hz, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+		else
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
+			if hit then
+				c.stats.hits += 1
+			end
+		end
+		local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
+		local follow = hit and not weapon.pierce and target ~= 0
+		table.insert(c.beams, {
+			shooter = id,
+			shooterGen = w.gen[id],
+			slot = slot,
+			ticks = ticks,
+			total = ticks,
+			target = if follow then target else 0,
+			targetGen = if follow then w.gen[target] else 0,
+			my = muzzleY,
+			fullX = ex,
+			fullY = ey,
+			fullZ = ez,
+			fullHit = hit,
+			ray = weapon.pierce == true,
+			dome = if gen ~= 0 then gen else nil,
+			domeGen = if gen ~= 0 then w.gen[gen] else nil,
+			domeDrain = Shield.beamDrain(weapon) / ticks,
+		})
+		return
 	end
 	if #c.shieldIds > 0 then
 		-- an enemy shield dome on the way stops the shot at its surface (S-89)
 		local gen, hx, hy, hz = Shield.intercept(sim, w.ally[id], w.posX[id], muzzleY, w.posZ[id], ex, ey, ez, weapon)
 		if gen ~= 0 then
 			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = false, x = hx, y = hy, z = hz, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
-			if weapon.beamDuration then
-				-- a lingering beam held on the dome drains it over its
-				-- duration (S-117, client request 51); a hit-ray also hurts
-				-- enemies on its line up to the surface, none inside (S-116,
-				-- request 50); the glancing leg the client draws does nothing
-				local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
-				local rec: Combat.Beam = { shooter = id, shooterGen = w.gen[id], slot = slot, target = 0, targetGen = 0, ticks = ticks, total = ticks, dome = gen, domeGen = w.gen[gen], domeDrain = Shield.beamDrain(weapon) / ticks }
-				if weapon.pierce then
-					rec.sx, rec.sz, rec.ex, rec.ez = w.posX[id], w.posZ[id], hx, hz
-				end
-				table.insert(c.beams, rec)
-			end
 			return
 		end
 	end
 	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
-	if weapon.pierce then
-		if hit then
-			c.stats.hits += 1
-		end
-		local ticks = math.max(1, math.floor((weapon.beamDuration :: number) * 15 + 0.5))
-		table.insert(c.beams, { shooter = id, shooterGen = w.gen[id], slot = slot, target = 0, targetGen = 0, ticks = ticks, total = ticks, sx = w.posX[id], sz = w.posZ[id], ex = ex, ez = ez })
-	elseif hit and weapon.beamDuration then
-		c.stats.hits += 1
-		-- a lingering beam (S-113): its damage over beamDuration, from this tick
-		local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
-		table.insert(c.beams, { shooter = id, shooterGen = w.gen[id], slot = slot, target = target, targetGen = w.gen[target], ticks = ticks, total = ticks })
-	elseif hit then
+	if hit then
 		c.stats.hits += 1
 		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
@@ -252,13 +312,13 @@ end
 
 local rayHits: { number } = {}
 
--- One tick's share of a piercing beam (S-115): every enemy unit its line
--- crosses, by its collision radius, in the weapon's target classes.
-local function rayShare(sim: Types.Sim, b: Combat.Beam)
+-- One tick's share of a hit-ray (S-115): every enemy unit the line from
+-- (sx, sz) to (ex, ez) crosses, by its collision radius, in the weapon's
+-- target classes.
+local function rayShare(sim: Types.Sim, b: Combat.Beam, sx: number, sz: number, ex: number, ez: number)
 	local c = sim.combat
 	local w = sim.world
 	local weapon = c.profiles[w.defIndex[b.shooter]].weapons[b.slot]
-	local sx, sz, ex, ez = b.sx :: number, b.sz :: number, b.ex :: number, b.ez :: number
 	local dx, dz = ex - sx, ez - sz
 	local len2 = math.max(dx * dx + dz * dz, 1e-6)
 	local mx, mz = (sx + ex) / 2, (sz + ez) / 2
@@ -277,44 +337,85 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam)
 	end
 end
 
--- One tick of every lingering beam (S-113).
-local function beamStep(sim: Types.Sim)
+-- Is a lingering beam of (shooter, slot) burning? (S-119: its aim holds)
+local function beaming(c: Combat.Combat, id: number, slot: number): boolean
+	for _, b in c.beams do
+		if b.shooter == id and b.slot == slot then
+			return true
+		end
+	end
+	return false
+end
+
+-- One tick of one lingering beam; false when it ends (S-113, S-123).
+local function beamTick(sim: Types.Sim, b: Combat.Beam): boolean
 	local c = sim.combat
 	local w = sim.world
-	local beams = c.beams
+	local id = b.shooter
+	if not World.isRef(w, id, b.shooterGen) or Combat.retracted(sim, id) then
+		return false
+	end
+	local weapon = c.profiles[w.defIndex[id]].weapons[b.slot]
+	-- the full end now: a single-target hit follows its target while it
+	-- lives and stays in range; a ray or a miss keeps its fixed point
+	local fx, fy, fz = b.fullX, b.fullY, b.fullZ
+	if b.target ~= 0 then
+		if not World.isRef(w, b.target, b.targetGen) then
+			return false
+		end
+		local tp = c.profiles[w.defIndex[b.target]]
+		local dx, dz = w.posX[b.target] - w.posX[id], w.posZ[b.target] - w.posZ[id]
+		if dx * dx + dz * dz > (weapon.range + tp.radius) ^ 2 then
+			return false
+		end
+		fx, fy, fz = Combat.aimPoint(c, w, b.target)
+	end
+	-- its end: the first up enemy dome on the line, else the full end; a
+	-- change (a dome dropped, one rose across it, another behind) is a new
+	-- FIRE, and a dome newly in the way takes the hit (S-123)
+	local mx, mz = w.posX[id], w.posZ[id]
+	local gen, hx, hy, hz = 0, 0, 0, 0
+	if #c.shieldIds > 0 then
+		gen, hx, hy, hz = Shield.firstDome(sim, w.ally[id], mx, b.my, mz, fx, fy, fz)
+	end
+	local current = b.dome or 0
+	if current ~= 0 and not World.isRef(w, current, b.domeGen) then
+		current = -1 -- its dome is gone: whatever the line meets now is a change
+	end
+	if gen ~= current then
+		local hitNow = gen == 0 and b.fullHit
+		if gen ~= 0 then
+			Shield.absorbShot(sim, gen, hx, hy, hz, weapon)
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = 0, slot = b.slot, weaponIndex = weapon.index, hit = false, x = hx, y = hy, z = hz, sx = mx, sy = b.my, sz = mz })
+		else
+			Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = if hitNow then b.target else 0, slot = b.slot, weaponIndex = weapon.index, hit = hitNow, x = fx, y = fy, z = fz, sx = mx, sy = b.my, sz = mz })
+		end
+		b.dome = if gen ~= 0 then gen else nil
+		b.domeGen = if gen ~= 0 then w.gen[gen] else nil
+	end
+	-- this tick's share
+	if gen ~= 0 then
+		Shield.drain(sim, gen, b.domeDrain)
+		if b.ray then
+			rayShare(sim, b, mx, mz, hx, hz) -- up to the dome only
+		end
+	elseif b.ray then
+		rayShare(sim, b, mx, mz, fx, fz)
+	elseif b.fullHit and b.target ~= 0 then
+		local tp = c.profiles[w.defIndex[b.target]]
+		local amount = (weapon.damage[Combat.armorOf(w, b.target, tp)] or 0) / b.total
+		Combat.queueDamage(c, b.target, amount, id, w.owner[id])
+	end
+	return true
+end
+
+-- One tick of every lingering beam, in the order they were fired.
+local function beamStep(sim: Types.Sim)
+	local beams = sim.combat.beams
 	local i = 1
 	while i <= #beams do
 		local b = beams[i]
-		local ok = false
-		if b.dome ~= nil then
-			-- held on a dome (S-117): drain it while the shooter stands and the dome is up
-			local dome = b.dome :: number
-			ok = World.isRef(w, b.shooter, b.shooterGen) and not Combat.retracted(sim, b.shooter)
-				and World.isRef(w, dome, b.domeGen) and c.shieldUp[dome] == true
-			if ok then
-				Shield.drain(sim, dome, b.domeDrain :: number)
-				if b.sx ~= nil then
-					rayShare(sim, b)
-				end
-			end
-		elseif b.sx ~= nil then
-			ok = World.isRef(w, b.shooter, b.shooterGen) and not Combat.retracted(sim, b.shooter)
-			if ok then
-				rayShare(sim, b)
-			end
-		else
-			ok = World.isRef(w, b.shooter, b.shooterGen) and World.isRef(w, b.target, b.targetGen) and not Combat.retracted(sim, b.shooter)
-		end
-		if ok and b.sx == nil and b.dome == nil then
-			local weapon = c.profiles[w.defIndex[b.shooter]].weapons[b.slot]
-			local tp = c.profiles[w.defIndex[b.target]]
-			local dx, dz = w.posX[b.target] - w.posX[b.shooter], w.posZ[b.target] - w.posZ[b.shooter]
-			ok = dx * dx + dz * dz <= (weapon.range + tp.radius) ^ 2
-			if ok then
-				local amount = (weapon.damage[Combat.armorOf(w, b.target, tp)] or 0) / b.total
-				Combat.queueDamage(c, b.target, amount, b.shooter, w.owner[b.shooter])
-			end
-		end
+		local ok = beamTick(sim, b)
 		b.ticks -= 1
 		if not ok or b.ticks <= 0 then
 			table.remove(beams, i)
@@ -365,7 +466,7 @@ return function(sim: Types.Sim)
 			-- ordered spot for a bomber's attack-ground.
 			local kx, kz, defIndex = nil, nil, nil
 			local projTarget = 0
-			if (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC") and sim.air.groundX[id] ~= nil then
+			if (weapon.type == "BOMB" or weapon.manualFire or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil then
 				target, kx, kz = 0, sim.air.groundX[id], sim.air.groundZ[id]
 			elseif weapon.manualFire then
 				target = 0 -- nothing without an attack-ground order (S-48)
@@ -428,8 +529,9 @@ return function(sim: Types.Sim)
 					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
 				end
 				-- an attack-ground order's shelling ignores the fire state (S-68)
-				local ordered = target == 0 and weapon.type == "BALLISTIC" and sim.air.groundX[id] ~= nil
-				canFire = (ordered or not holdFire) and dist <= weapon.range + radius
+				local ordered = target == 0 and (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil
+				-- (its manual target fires even on hold fire: S-120)
+				canFire = (ordered or not holdFire or (target ~= 0 and sim.orders.manual[id] == target)) and dist <= weapon.range + radius
 				if pitch == nil then
 					canFire = false
 					wantPitch = if turret then rad(turret.maxPitch) else 0
@@ -468,7 +570,10 @@ return function(sim: Types.Sim)
 			-- rotate the turret (fixed mounts without a turret table aim
 			-- instantly); without a target: hold, then back to rest
 			aimState.yaw, aimState.pitch, aimState.hold = w.wYaw[key], w.wPitch[key], w.wHold[key]
-			if aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
+			if weapon.beamDuration and beaming(c, id, slot) then
+				-- a lingering beam burning (S-119, client request 53): the
+				-- barrel stays on the fired line until the beam ends
+			elseif aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
 				Aim.update(turret, aimState, wantYaw, wantPitch)
 			else
 				Aim.update(turret, aimState, nil, nil)
@@ -492,6 +597,7 @@ return function(sim: Types.Sim)
 				and reload <= 0
 				and w.wOverkill[key] ~= OK_ALLOWED
 				and sim.orders.forced[id] ~= target
+				and sim.orders.manual[id] ~= target -- (a manual target is kept, S-120)
 				and World.isRef(w, target, targetGen)
 				and Combat.doomed(c, w, target)
 				and Sensors.level(sim, w.ally[id], target) == VISIBLE

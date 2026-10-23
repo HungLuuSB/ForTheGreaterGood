@@ -381,9 +381,10 @@ return function(sim: Types.Sim)
 		local groundOrder = sim.air.groundX[id] ~= nil
 		local forced = sim.orders.forced[id] -- an attack order's target (Orders, S-4)
 		local forcedGen = sim.orders.forcedGen[id]
-		if forced == nil and fs ~= HOLD_FIRE then
+		if forced == nil then
 			-- the last attack order's target, kept until STOP (S-115, client
-			-- request 49): taken whenever it is in range; else the search
+			-- request 49): taken whenever it is in range, whatever the fire
+			-- state (S-120: manual targeting takes priority); else the search
 			local m = sim.orders.manual[id]
 			if m ~= nil then
 				if World.isRef(w, m, sim.orders.manualGen[id]) then
@@ -397,7 +398,7 @@ return function(sim: Types.Sim)
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
 			local searchNow = staggerTick or w.wOverkill[key] == OK_RETARGET
-			if groundOrder and (weapon.type == "BOMB" or weapon.type == "BALLISTIC") then
+			if groundOrder and (weapon.type == "BOMB" or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") then
 				World.setTarget(w, key, 0) -- bombing / shelling the ordered spot (Air.bombAim, S-68)
 				continue
 			end

@@ -4,6 +4,52 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, beam through a fallen dome; thinner rings)
+
+- **Thinner rings** flow down the dome (C-144).
+- **Honeycomb hit patches stay as in C-142.** The wide rim of tiny cells is reverted at your word, and it was too heavy for the frame rate anyway.
+- **A dome dropping under a beam:** the client is ready to carry the beam on to its target (C-144). sim-A is building the sim side (request 54), together with your Radiance picking a tank over the Phalanx you ordered.
+- **Manual targets win whatever the fire state:** sim-A built it as S-120. It lands with their next merge, after S-119.
+
+## Summary (2026-10-23, faster detailed models, hidden beams)
+
+- **Detailed models (C-143):** all 74 types in a big match are ready in about 15 s, against more than a minute before (models-C's new meshes have many more pieces, which were built one at a time). The area the server fills with full models also runs ahead of the camera when you pan.
+- **Hidden beam towers:** their shots now draw as full beams with no vision, as in BAR (sim-A's S-118 merged). Checked in shield_beams without /reveal (`debug_out/screens/hidden_beams.jpg`).
+- **Also merged:** sim-A's S-117 (beams drain shields a lot: your dome dropped to 0% under three Radiances and an Inferno).
+- **Coming from sim-A (S-119):** attack-ground for beam and hitscan weapons; turrets hold their aim while a beam burns; and a server fix for turrets not showing their aim on units entering your view (the likely cause of "the gun never aims at a unit that doesn't move").
+- **Manual targeting priority:** asked sim-A to re-check S-115 against your expectation.
+
+## Summary (2026-10-23, outer rings, C's effects in Studio, turret aim)
+
+- **Shield hits (C-142):** 8 to 11 rings (217 to 397 cells), the outer ones smaller still. Not checked in Studio yet: you were in a playtest. It shows in your next one.
+- **models-C's beam effect and honeycomb shell now show in Studio without commands.** Live games still wait for your approval.
+- **Turret aim:** the client draws the server's aim exactly. My headless tests didn't reproduce turrets going back to rest during a reload, so it's with sim-A (**request 53**), together with your point that beam and hitscan weapons need attack-ground orders (today they ignore them and pick their own targets).
+- **Hidden Radiances' shots drawn as projectiles:** that's request 52 (a SHOT carries no weapon yet). Built by sim-A as S-118; I'll draw them as full beams once it's on main.
+
+## Summary (2026-10-23, more rings in shield hits)
+
+- **Shield hits (C-141):** more rings, getting smaller toward the edge: 6 to 9 rings (127 to 271 cells). The edge cells are a third the size of the centre one and packed tight, and the inward wave is a little quicker. Screenshot: `debug_out/screens/shield_rings_more.jpg` (shield_beams, 0.5×).
+
+## Summary (2026-10-23, shield vs Radiances scenario)
+
+- **New test profile `shield_beams` (C-140):** your Phalanx dome against three Radiances (east, west, south) and an Inferno (south-east), every beam aimed at the dome so it glances off, plus Juggernauts and Ravagers shelling it. Your units are tough so it lasts. Set `ACTIVE = "shield_beams"` (your local MatchConfig already is).
+- **Play it with `/reveal on` for now:** a beam from an enemy you can't see reaches the client as a plain shot with no weapon, so it draws as a quick tracer. Sim request 52 asks for the weapon on those shots.
+- **Your earlier question:** your own dome's hit patches show without /reveal (204 cells lit with the shooter unseen). It was the scattered shell (`shellanyway`) and these hidden-shooter beams that looked tied to /reveal.
+- **Screenshot:** `debug_out/screens/shield_beams_scene.jpg`.
+
+## Summary (2026-10-23, beams pulse on shields; bigger patches)
+
+- **A beam held on a shield (C-139)** lights its honeycomb again every 0.2 s for as long as it burns.
+- **Bigger hit patches:** 4.8-stud cells, 5 to 7 rings (91 to 127 to 169 cells), about three times the diameter of the patches before C-136.
+- **Shields vs beams (sim request 51, built as S-117, merging):** a Radiance beam drains 250 charge over its 3 s (42% of a Phalanx, 62% of a Carapace), an Inferno about 142. Capacities are unchanged.
+
+## Summary (2026-10-23, shield shell, beams glancing off shields; Needs my review)
+
+- **Beams glance off shields: done and checked in Studio.** A Radiance firing at an enemy dome stops at its surface, a short leg glances off downward into the ground, the dome takes the hit, and the units inside are untouched (`debug_out/screens/beam_deflect_side.jpg`).
+- **Honeycomb shell (C-138):** models-C's shell is on every dome as scattered hex patches, strongest on top and fading toward the base, with its opacity following the shield's charge (`shield_shell_top.jpg`, `shield_shell_beam.jpg`).
+- **Beam shot:** stays on for the shot's full duration (Radiance 3 s, Inferno 1.5 s) with a hot spot at the impact, per your note to models-C.
+- **Needs my review:** the shell and the beam shot are both at "review". Preview them in a playtest with `ReplicatedStorage.FtggClientDebug:Invoke("shellanyway", true)` and `Invoke("beamsanyway", true)`. Approve them through models-C and they show everywhere.
+
 ## Summary (2026-10-23, sim S-104..S-116 merged into the client)
 
 - **Main merged:** sim-A's S-104..S-116, with bigger structures, extractor upgrades kept running under the frame, anti-nukes, beams that last and pierce and stop at domes, manual targets, and the AI fixes. All 8 client specs it broke are fixed (C-137).
@@ -1721,6 +1767,17 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
+54. **Open (sent 2026-10-23).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
+
+53. **Built (S-119, merging): attack-ground for BEAM / HITSCAN; aim held while a beam burns; NetOut sends aim on ENTER.** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
+    - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.
+    - Cause of the "turret doesn't aim at its target" report (beam towers in shield_beams): the attack-ground order is ignored, the tower tracks a Mason wandering inside the dome (~15° of swing), and its fixed 3 s beam no longer lines up with the barrel.
+    - Also asked: hold the aim on the fired line while a beam burns.
+
+52. **Built (S-118, protocol 28, merging): SHOT carries weaponDefIndex; the client to draw hidden beams as full beams.** **SHOT should say it's a beam:** a hidden shooter's beam arrives as SHOT (both ends, no weapon), so the client draws a plain tracer: no held beam, glancing leg or shield pulses. Asked for the weapon's def index on SHOT (protocol bump).
+
+51. **Built (S-117, merging): a beam stopped by a dome drains it over its duration (best damage / 150 × 12.5: Radiance 250, Inferno ~142). The user: shields were far too strong against beams.**
+
 50. **Built (S-116, merging): beams end at the first up enemy dome (FIRE hit = false on its surface, absorbed SHIELD_HIT); Radiance's pierce stops there; the client's glancing leg (C-129) shows once merged.** **Shield domes deflect beams (the user's sketch):** a beam meeting an active enemy dome ends at the contact (FIRE end point, hit = false); pierce damage stops there; the dome takes a SHIELD_HIT. The client draws the glancing leg (C-129, ready).
 
 49. **Built (S-115, merging): Radiance beamDuration 3, pierce along its fixed line; manual targets kept until STOP, a new ATTACK or the target's death.** **Radiance a hit-ray; manual targets override (the user):**
@@ -1899,3 +1956,10 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `1c9b92f` (shield cells inward only, C-134); test_client 214, build passed (client render only).
 - Ready to merge: `33087cd` (m-models merge 2cbfb90; beam shot follows C's values and game speed; C-135); test_client 214, build passed.
 - Ready to merge: `23df21b` (larger shield hit patches, C-136); test_client 214, build passed (client render only).
+- Ready to merge: `1000f8b` (main 522ca80 merged in 9ce4c94, m-models 252d63a; 8 client specs fixed, stopgap icons, supplyUnder ghost; C-137); test_client 214, test 445, build passed.
+- Ready to merge: `13f7561` (m-models merges ce25ddd + 786d85c; honeycomb shell, beam held for beamDuration; C-138); test_client 214, build passed.
+- Ready to merge: `25b6d3f` (beam pulses on shields, bigger hit patches; C-139); test_client 214, build passed (client render only).
+- Ready to merge: `6d0e0df` (shield_beams test profile, C-140; MatchConfig profile hunk only, ACTIVE untouched); build passed.
+- Ready to merge: `b8cc921` (more, smaller rings in shield hits, C-141); test_client 214, build passed (client render only).
+- Ready to merge: `4b58c31` (more outer rings, review effects on in Studio; C-142); test_client 214, build passed (client render only).
+- Ready to merge: `511ab10` (with 58d5579 and the main merge 46d094c: fast mesh builds, camera lead, SHOT beams; C-143); test_client 214, test 446, build passed.

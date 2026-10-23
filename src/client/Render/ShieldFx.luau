@@ -36,11 +36,13 @@
 -- Client-side only. Adornments keep the default ZIndex and culling off.
 
 local AssetService = game:GetService("AssetService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local Shield = require("../Core/Shield")
 local ShieldLook = require("../Core/ShieldLook")
+local Meshes = require("@shared/Defs/Meshes/Registry")
 
 local ShieldFx = {}
 
@@ -58,12 +60,12 @@ ShieldFx.DOME_COLOR = Color3.fromRGB(225, 232, 240)
 ShieldFx.DOME_OPACITY = 0.2 -- the dome at full strength (1 - transparency)
 ShieldFx.RING_COLOR = Color3.fromRGB(235, 245, 255)
 ShieldFx.RING_OPACITY = 0.55
-ShieldFx.RING_TUBE = 0.004 -- a flowing ring's height (RingThin) or width (adornment), × R
+ShieldFx.RING_TUBE = 0.0015 -- a flowing ring's height (RingThin) or width (adornment), × R (0.004 until C-145, the user: thinner)
 ShieldFx.FOOT_OPACITY = 0.8 -- the ring where the dome meets the ground
 ShieldFx.EDGE_OPACITY = 0.95
 ShieldFx.SWIRL_SIZE = 0.4 -- the swirl disc's diameter, × R (C's checked assembly: 16 on 40)
 ShieldFx.SWIRL_OPACITY = 0.85
-ShieldFx.PLATE_POOL = 800 -- honeycomb cells shared by every shield (6 patches of up to 127, C-136)
+ShieldFx.PLATE_POOL = 2000 -- honeycomb cells shared by every shield (C-142: patches of 217 to 397)
 ShieldFx.PLATE_OPACITY = 0.85 -- a cell's outline at its brightest (outlines are thin: they don't bloom into a block)
 ShieldFx.OUTLINE = 0.16 -- a cell's outline width, of its corner radius (C-131: outlined cells, BAR's honeycomb)
 ShieldFx.PLATE_THICKNESS = 0.12
@@ -89,6 +91,7 @@ export type ShieldFx = {
 	anchor: Part, -- invisible, at the centre: the adornee
 	dome: BasePart,
 	domeMesh: boolean, -- C's hemisphere (else a ball)
+	shell: { MeshPart }, -- the honeycomb shell's bands (C-138), or none
 	specks: ParticleEmitter,
 	core: Part, -- placeholder core, shown without an emitter part
 	coreLight: PointLight,
@@ -143,7 +146,17 @@ local function bare(p: BasePart)
 end
 
 -- C's meshes, made once from their IDs in their own thread (it yields)
-local templates: { dome: MeshPart?, ring: MeshPart?, ringThin: MeshPart? } = {}
+local templates: { dome: MeshPart?, ring: MeshPart?, ringThin: MeshPart?, shell: { MeshPart }? } = {}
+
+-- models-C's honeycomb shell (Meshes.shieldShell, C-138): bands of the dome
+-- surface, a hex pattern fading out toward the base; each band's opacity ×
+-- the charge. Shown once approved, or with SHELL_ANYWAY for review.
+local shellEntry = (Meshes :: any).shieldShell
+ShieldFx.SHELL_ANYWAY = RunService:IsStudio() -- review assets show in Studio, where the user reviews them (C-142)
+ShieldFx.SHELL_TINT = Color3.fromRGB(205, 225, 245)
+local function shellOn(): boolean
+	return shellEntry ~= nil and templates.shell ~= nil and (shellEntry.status == "approved" or ShieldFx.SHELL_ANYWAY)
+end
 local templatesState = "idle"
 
 local function loadTemplates()
@@ -159,7 +172,32 @@ local function loadTemplates()
 			slots[key] = part
 		end
 	end
-	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, foot {if templates.ring then "mesh" else "none"}, rings {if templates.ringThin then "thin mesh" else "adornments"}`
+	if shellEntry then
+		local bands: { MeshPart } = {}
+		for _, band in shellEntry.bands do
+			local ok, part = pcall(function()
+				return (AssetService :: any):CreateMeshPartAsync((Content :: any).fromUri(band.mesh))
+			end)
+			if not ok or part == nil then
+				bands = nil :: any
+				break
+			end
+			bare(part)
+			part.Transparency = 1
+			local look = ReplicatedStorage:FindFirstChild("MeshMaterials")
+			local sa = look and look:FindFirstChild("shieldShell")
+			if sa then
+				local c = sa:Clone()
+				pcall(function()
+					(c :: any).Color = ShieldFx.SHELL_TINT
+				end)
+				c.Parent = part
+			end
+			table.insert(bands, part)
+		end
+		templates.shell = bands
+	end
+	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, foot {if templates.ring then "mesh" else "none"}, rings {if templates.ringThin then "thin mesh" else "adornments"}, shell {if templates.shell then #templates.shell .. " bands" else "none"}`
 	templatesState = "done"
 end
 
@@ -370,6 +408,14 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 	anchor.Size = Vector3.one
 	anchor.Position = position
 	anchor.Parent = folder
+	-- the honeycomb shell's bands (sized per frame with the dome)
+	local shell: { MeshPart } = {}
+	for i, t in templates.shell or {} do
+		local p = t:Clone()
+		p.Name = `Shell{i}`
+		p.Parent = folder
+		shell[i] = p
+	end
 	-- the dome: C's hemisphere (centre half-way up), else a ball
 	local dome: BasePart
 	local domeMesh = templates.dome ~= nil
@@ -533,6 +579,7 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		anchor = anchor,
 		dome = dome,
 		domeMesh = domeMesh,
+		shell = shell,
 		specks = specks,
 		core = core,
 		coreLight = coreLight,
@@ -580,6 +627,9 @@ local function hideDetail(s: ShieldFx)
 	s.beam.Enabled = false
 	s.specks.Enabled = false
 	s.swirlDecal.Transparency = 1
+	for _, p in s.shell do
+		p.Transparency = 1
+	end
 end
 
 -- One shield's frame; false if it was skipped (down or off screen). Hit
@@ -650,6 +700,21 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		end
 	end
 	s.dome.Transparency = if R > 0.05 then 1 - domeAlpha else 1
+	-- the honeycomb shell: each band's opacity × the charge, grown with the dome
+	local showShell = shellOn() and R > 0.05
+	for i, p in s.shell do
+		local band = shellEntry.bands[i]
+		if showShell then
+			local size = Vector3.new(band.size[1] * Rs, band.size[2] * Rs, band.size[3] * Rs)
+			if p.Size ~= size then
+				p.Size = size
+				p.CFrame = CFrame.new(center + Vector3.new(0, band.center[2] * Rs, 0))
+			end
+			p.Transparency = 1 - band.opacity * s.strength * opacity
+		elseif p.Transparency ~= 1 then
+			p.Transparency = 1
+		end
+	end
 	if s.foot then
 		local footAlpha = ShieldFx.FOOT_OPACITY * opacity
 		s.foot.Transparency = if R > 0.05 then 1 - footAlpha else 1
@@ -707,7 +772,7 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 	-- the rings: slide down, resized to the curve at their height, fade near the ground
 	local speed, bright = ShieldLook.ringFlow(s.strength)
 	s.phase += dt * speed / ShieldLook.RING_PERIOD
-	local ringW = math.max(0.15, R * ShieldFx.RING_TUBE)
+	local ringW = math.max(0.06, R * ShieldFx.RING_TUBE)
 	for i, ring in s.rings do
 		local _, rf, yf, a = ShieldLook.ringAt(i, #s.rings, s.phase)
 		local alpha = ShieldFx.RING_OPACITY * a * bright * opacity

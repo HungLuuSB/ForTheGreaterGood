@@ -39,6 +39,8 @@ Camera.EDGE_SCROLL = not game:GetService("RunService"):IsStudio()
 Camera.MAX_YAW = math.rad(45) -- rotation limit either side of north-up
 Camera.YAW_SPEED = math.rad(90) -- per second with Q / E
 Camera.SEND_INTERVAL = 0.2 -- seconds between CAMERA commands (≤ 5 per second)
+Camera.LEAD_SECONDS = 0.8 -- the area sent to the server runs this far ahead of a moving camera (C-143)
+Camera.LEAD_MAX = 400 -- studs, at most
 Camera.FOLLOW_MARGIN = 400 -- studs: a follow may take the focus this far past the map's edge (missiles overshoot it, C-43)
 
 export type State = {
@@ -50,6 +52,7 @@ export type State = {
 	dragging: Vector2?,
 	lastRect: { number }?,
 	lastSent: number,
+	lastFocus: { number }?, -- x, z, clock: the camera's speed for the lead
 	rect: { number }, -- minX, minZ, maxX, maxZ cells of the last computed view
 	follow: Follow.Target?, -- what the camera follows (C-43)
 	minDistance: number?, -- while following: the least distance that keeps the target in front (Follow.focus)
@@ -200,12 +203,32 @@ function Camera.apply(state: State, world: World.World, cam: Camera, now: number
 		table.insert(xs, focus.X + dx)
 		table.insert(zs, focus.Z + dz)
 	end
-	local minX, minZ, maxX, maxZ = Commands.cameraRect(g, xs, zs)
-	state.rect = { minX, minZ, maxX, maxZ }
+	-- run the area ahead of a moving camera, so units there arrive (tactical,
+	-- full models) before they scroll into view (the user: models popping in
+	-- when panning fast, C-143)
+	local lf = state.lastFocus
+	local vx, vz = 0, 0
+	if lf and now > lf[3] then
+		vx, vz = (state.x - lf[1]) / (now - lf[3]), (state.z - lf[2]) / (now - lf[3])
+	end
+	state.lastFocus = { state.x, state.z, now }
+	local lx, lz = vx * Camera.LEAD_SECONDS, vz * Camera.LEAD_SECONDS
+	local ll = math.sqrt(lx * lx + lz * lz)
+	if ll > Camera.LEAD_MAX then
+		lx, lz = lx / ll * Camera.LEAD_MAX, lz / ll * Camera.LEAD_MAX
+	end
+	state.rect = { Commands.cameraRect(g, xs, zs) } -- what is on screen (the minimap's box)
+	if ll > 1 then
+		for i = 1, 4 do
+			table.insert(xs, xs[i] + lx)
+			table.insert(zs, zs[i] + lz)
+		end
+	end
+	local minX, minZ, maxX, maxZ = Commands.cameraRect(g, xs, zs) -- what the server sends: with the lead
 	local last = state.lastRect
 	local changed = last == nil or last[1] ~= minX or last[2] ~= minZ or last[3] ~= maxX or last[4] ~= maxZ
 	if changed and now - state.lastSent >= Camera.SEND_INTERVAL then
-		state.lastRect = state.rect
+		state.lastRect = { minX, minZ, maxX, maxZ }
 		state.lastSent = now
 		return Commands.camera(minX, minZ, maxX, maxZ)
 	end

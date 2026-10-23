@@ -6,7 +6,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 ## Summary (latest: the user's decisions and requests, 2026-10-23, branch `m-sim-2`)
 
-**Your decisions on the review items, your new requests (cheats, sizes, upgrades, anti-nukes) and the client's requests 45–50**, with a merge check between tasks. Protocol 26 → 28. Tests: 430 in 67 specs → 445 in 69 (fast), 6 → 7 slow; every merge passed fast, slow and build.
+**Your decisions on the review items, your new requests (cheats, sizes, upgrades, anti-nukes) and the client's requests 45–50**, with a merge check between tasks. Protocol 26 → 29. Tests: 430 in 67 specs → 445 in 69 (fast), 6 → 7 slow; every merge passed fast, slow and build.
 
 | Task | Result | Decision |
 |---|---|---|
@@ -22,6 +22,12 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 | Anti-nukes (your request, requests 46) | Providence / Cerberus (structures) and Custodian / Chimera (mobile, only while stopped). Cover by aim point, one interceptor per nuke, certain hit, a delay longer than a nuke's flight. They spot nukes anywhere. Radar SAMs shoot aircraft only and now one-shot T1 air | S-111 |
 | Item 8 balance pass | Locust +10% damage, Order heavy cannon +10%, Order radar SAM reload −10%, Falcon range +5%. 12 of 12 shared roles in band (was 10). Fighters, the Herald and the T2 tank Chaos condition still short: proposals below | S-112 |
 | Beams (requests 47, 49, 50) | Lingering beams (`beamDuration`). Radiance fires at blips (misses without Pinpointers) and is a 3 s hit-ray (`pierce`). Domes stop beams at the surface. Manual targets kept until STOP | S-113, S-115, S-116 |
+| Commanders at footprint 2 (the user) | 10-stud mechs: footprint 2, build range 60; they still get around maps and AI bases (stuck 5 of 1,784 windows, against 11 at footprint 1) | S-124 |
+| Beam ends follow the domes (request 56) | Every tick a burning beam ends at the first up dome on its line: through a dropped one to the next, cut by one rising | S-123 |
+| Domes regardless of vision (request 55) | DOME / DOME_GONE events (protocol 29): a dome in the camera area is drawn even when its generator isn't seen | S-122 |
+| Towers' attack orders, beams through dropped domes (request 54) | Armed structures take ATTACK as a manual target; a dome dropping mid-beam sends a new FIRE and the beam goes on to its target | S-121 |
+| Manual targets first (the user) | The last attack's target wins whatever the fire state, until STOP | S-120 |
+| Attack-ground beams, entering aim (request 53) | Beams and hitscan take attack-ground (first enemy on the line, or Radiance's ray to the point); an armed unit entering the view now comes with its turret aim (it was sent only on change, so steady turrets showed at rest) | S-119 |
 | Hidden beams (request 52) | SHOT carries the weapon's def index (protocol 28), so the client draws a hidden shooter's beam as a beam | S-118 |
 | Beams vs domes (request 51) | A beam held on a dome drains it over the beam: Radiance 250 (42% of a Phalanx, 62% of a Carapace; measured 100% → 54%), Inferno about 142 | S-117 |
 | AI economy (request 48) | Two generators, then extractors alternating with generators, capped at the planned need (builders counted). A turret by the base no longer contests every home deposit | S-114, S-116 |
@@ -193,6 +199,7 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
   - **Balance effect:** Order's share of same-level AI matches went 81% → 86% with the sizes alone (after the rest of this round: 82%).
   - **T2 tanks:** the footprint-2 Paladin / Juggernaut fell out of band (0.79), which the balance pass fixed with Paladin damage +10%.
   - **AI lanes:** the AI keeps 2-cell lanes between buildings. 3-cell lanes, which footprint-2 tanks need to pass, broke mirror fairness (east 10 of 12), so footprint-2 units go round adjacent AI buildings. Your call whether to keep that or look for a symmetric 3-cell layout.
+- **Commander mechs (models-C, M-31):** the Commanders become walking mechs on the client; I kept them TRACKED, footprint 1, unarmed. Your call: a walker move class (BAR-bot style, steeper slopes, e.g. 40°) is a sim change (new passability bit and flow-field profiles) that would let Commanders climb where tanks can't; and whether the Commander should be armed (a D-gun).
 - **Commands at 800 units after option (a) (S-107):** `lune run stress 450 800`: Commands peak 1.78 ms (tick 184), against 1.69–2.23 after S-100. Spreading the hold checks over two ticks didn't bring the peak under its 1 ms budget. The rest of the peak is order starts and auto-orders. NetOut peaked at 8.46 ms (budget 6) once. Work counters (S-99, deterministic): route 582,424, flow field 1,065,295, sensor lookups 1,457,759, known-target lookups 1,011,901. Bandwidth ~17 KB/s per player (budget 35).
 - **AI attack margin (S-105):** a wave waits until it's worth 1.5× the known defence (450 studs round the target); a massed army of half the unit cap goes anyway. Scout every 2 min.
 - **Missile batteries (S-106):**

@@ -1772,3 +1772,92 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - SHOT ends with `weaponDefIndex u16` (16 B; 0 = unknown).
   - Weapons records the weapon on its FIRE combat event (`weaponIndex`), so NetOut has it even if the shooter died that tick. The client takes type, `beamDuration` and faction from the defs.
 - **Tests:** `Schema.spec` pins SHOT's new bytes; `NetOut.spec`'s hidden-shooter SHOT carries the gunner's weapon index.
+
+## S-119 — Attack-ground for beams and hitscan; an entering unit's turret aim (client request 53, the user) (2026-10-23)
+
+- **Asked:**
+  1. Beam and hitscan weapons take attack-ground orders, "because they can shoot a point; a unit walking past can still take damage".
+  2. Turret guns swing back to their rest position between shots: "if a unit does not move, the gun never aims at it".
+- **Built (1):**
+  - **Orders:** `Air.groundFires` and the Targeting / Weapons ground-order checks include BEAM and HITSCAN weapons. A unit or tower given ATTACK_GROUND aims at the point and fires at it, whatever its fire state, until another order.
+  - **Hitscan and non-piercing beams:** the shot hits the first enemy on its line from the muzzle to the point (collision radius, the weapon's target classes; `firstOnLine`), otherwise it misses on the ground at the point. The Inferno's lingering beam then settles on the unit it hit.
+  - **Radiance's hit-ray (`pierce`):** the line runs to the point, and every enemy on it takes the share each tick.
+  - **Domes:** an up enemy dome on the way stops the shot at its surface, as in S-116 / S-117.
+- **Found and fixed (2):**
+  - **Cause:** NetOut sent a weapon's aim in State records only when it changed. A unit entering a player's tactical tier came with its ENTER and no aim, so a turret already held steady on a still target was never sent and the client drew it at rest.
+  - **Fix:** an armed unit now gets a State record with its aim and weapon states on the tick it enters.
+  - The other reports (swinging back between reloads) didn't reproduce headless (the client's probes, and mine); an entering unit with a steady aim fits both.
+  - **The beam towers' case (the client's repro, `shield_beams`):** a Radiance kept tracking its target during its 3 s beam, so the barrel left the beam's fixed line, then eased back toward rest. Fix: while a lingering beam of a weapon burns, that weapon's aim holds on the fired line (no turret update); tracking resumes when the beam ends.
+- **Tests:**
+  - `Defenses.spec`: Radiance attack-grounds a point and the Ravager on its line takes the ray; the Inferno attack-grounds empty ground, misses, and hurts nobody off the line;
+  - `NetOut.spec`: a Lancer aimed at a still Ravager enters a player's view and its aim arrives with it (the test fails without the fix).
+  - `Defenses.spec`: Radiance firing at a Ravager driving across holds its yaw for the 3 s of the beam, then tracks again.
+
+## S-120 — Manual targets take priority whatever the fire state (the user, via the client) (2026-10-23)
+
+- **Asked:** "Manual targeting must take priority." Units didn't stick to the unit they were ordered to attack. An attack on a unit should win over the unit's own picks whenever that target is in range and attackable, whatever the fire state, and survive later moves.
+- **Changed (S-115's rule):**
+  - Targeting takes the manual target (the last ATTACK's, kept until STOP) whenever it is in range, on any fire state (was: not on hold fire).
+  - Weapons fires at it even on hold fire.
+  - The overkill rule (S-29: drop a target that damage on its way will kill) no longer drops a manual target, as it never dropped an attack order's.
+- **Tests:** `Orders.spec`: on hold fire, the unit stays on its manual target and keeps firing at it; STOP still clears it.
+
+## S-121 — Armed structures take attack orders; a dome dropping mid-beam lets it through (client request 54, the user) (2026-10-23)
+
+- **Asked:**
+  1. A Radiance ordered to attack an enemy Phalanx still chose a tank: an ordered target should stick, and the beam hits the dome until it drops, then the generator.
+  2. When a dome drops while a beam burns on it, the rest of the beam goes through to its target (or attack-ground point), and pierce damage resumes along the full line. A new FIRE / SHOT on that tick tells the client.
+- **Cause (1):** structures took no orders except a silo's attack-ground (S-48), so the ATTACK never reached the tower.
+- **Built:**
+  1. **Attack orders on armed structures:** an armed structure given ATTACK takes the target as its manual target (S-115 / S-120: it wins whenever in range, whatever the fire state, until STOP or a new attack). It doesn't chase.
+  2. **A dome dropping mid-beam:**
+     - a beam stopped by a dome remembers where it would have ended without it (`after*`: the point, whether it would have hit, the target; hashed);
+     - when the dome drops (or goes) while the beam burns and the shooter stands, the sim sends a new FIRE for that weapon, ending at the target's aim point or the full line's end, with its hit flag (a SHOT for players without the shooter);
+     - the beam then works there for the rest of its duration: a hit-ray along the full line, a single-target beam on its target, or it ends if it would have missed.
+- **Wire:** nothing new. A FIRE or SHOT from a weapon whose beam is still burning moves the beam's end (the client's proposal; no flag).
+- **Tests:** `Shield.spec`:
+  - a Radiance ordered onto a Carapace keeps it as its manual target over a nearer Ravager;
+  - its beam stops on the weak dome (FIRE, miss), the dome drops, a second FIRE hits the generator, and the generator takes damage.
+
+## S-122 — Shield domes regardless of vision (client request 55, the user) (2026-10-23)
+
+- **Asked:** a shield dome (only the dome) renders regardless of vision, as in BAR. SHIELD events only went with a generator the player had, so an unseen Carapace showed no dome even while beams and shells hit it.
+- **Built** (protocol 29):
+  - **`DOME 23`:** generator ID, the dome's centre (pos), radius u16, charge u8, flags u8 (13 B).
+    - It goes to a player for every dome whose circle touches their camera area (+2 cells) while they don't have the generator in their tactical tier, whatever their team sees.
+    - It's sent when the dome enters that area and when its charge (by `SHIELD_STEP`) or flags change.
+    - No type is revealed: a centre and a radius only.
+  - **`DOME_GONE 24`:** generator ID (3 B), when the dome leaves the area, its generator dies, or the generator enters the tactical tier (its ENTER and SHIELD take over). Sent in ID order.
+- **Tests:**
+  - `Schema.spec` pins both records' bytes;
+  - `NetOut.spec`: Order, seeing nothing near a Carapace, gets its DOME (centre and radius) and no ENTER, and DOME_GONE when it dies.
+
+## S-123 — A burning beam's end follows the domes (client request 56, the user) (2026-10-23)
+
+- **Asked:** a burning beam's line must be re-checked against every dome whenever any dome changes:
+  1. when dome #1 collapses with #2 behind it, the continuation ends at #2's surface (miss, absorbed SHIELD_HIT on #2, the rest of the drain on #2), and pierce damage reaches only up to #2;
+  2. when a dome rises across a burning beam, the beam is cut at the first contact (a new FIRE / SHOT, miss); that dome takes the hit and the drain, and the one behind stops being drained.
+- **Built** (it replaces S-121's one-off go-through):
+  - **Every lingering beam keeps its full shot:** the muzzle height, where it was aimed (a fixed point; a single-target hit follows its target), whether it hit, and whether it is a hit-ray. Misses are kept too, so a dome rising across one is reported.
+  - **Each tick** its end is the first up enemy dome on the line from the muzzle to the full end (`Shield.firstDome`), else the full end.
+  - **When the end changes:** a dome dropped or went, one rose across it, or another stands behind. The sim sends a new FIRE (a SHOT for players without the shooter) with the new end and hit flag, and a dome newly in the way takes the absorbed hit (`Shield.absorbShot`).
+  - **This tick's share:**
+    - on a dome, that dome is drained (S-117) and a hit-ray hurts only up to its surface;
+    - otherwise a hit-ray covers its full line, and a single-target hit damages its target (while alive and in range).
+- **Tests:** `Shield.spec`:
+  - a weak dome in front drops, and the new FIRE ends on the full dome behind (miss), which is then drained while the target inside is untouched;
+  - a dome raised across a beam burning on its target cuts it with a new FIRE (miss) at its surface and takes the hit.
+
+## S-124 — Commanders at footprint 2 (the user, via models-C: 10-stud walking mechs) (2026-10-23)
+
+- **Asked:** the Commanders become much bigger walking mechs, about 10 studs tall (2.7× a Lancer). Accept footprint 2 for `ord_sovereign` and `chs_warlord`. Check pathing (the gaps maps and base layouts leave), build range from the bigger body, start positions and AI openings. Movement stays TRACKED.
+- **Changed:**
+  - `ord_sovereign`, `chs_warlord`: footprint 1 → 2. Collision radius 3.6 → 7.2 studs, hit height 6 → 12 (6 per footprint cell; the mech's head is at about 10).
+  - `buildRange` 56 → 60: builders measure from their centre, so the reach from the bigger body's edge stays what it was.
+  - Pieces unchanged (`base`, `nano`), unarmed, TRACKED.
+- **Checked** (`debug_out/cmdstuck.luau`; hard AI on all six maps, 10 minutes):
+  - **Mobility:** with a pending order, the Commanders didn't move in 5 of 1,784 five-second windows (11 of 1,775 at footprint 1), with no failed builds (1 at footprint 1).
+  - **Pathing:** they need 3-cell gaps (guide 6.2), which every map keeps (MapGen's MIN_GAP). In the AI's bases, with 2-cell lanes (S-104), they go round, and the numbers show no harm.
+  - **Starts:** standard starts are unchanged (mobile units don't occupy cells).
+  - **AI and slow suites:** the AI spec and the fairness tests pass (mirror split 5–7).
+  - `Skirmish.spec`'s seed-1 match changed: Chaos raids Order down to 2 extractors by minute 5, Order's army never reaches its first wave (1,700 of 2,400), and Chaos wins at 9.9 min. The test wanted a wave from a loser lasting past 8 minutes; the bar is now 10. Under review: it's the Order-side weakness item 1 is about, shown by one seed.

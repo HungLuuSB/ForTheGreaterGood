@@ -57,6 +57,18 @@ function MeshMaterials.render(): string
 			{ "EmissiveStrength", "1" },
 		}),
 	}
+	-- the shield's honeycomb shell (models-C, C-138): its texture only, the
+	-- hex pattern in its alpha
+	local shell = (Meshes :: any).shieldShell
+	if shell and shell.texture then
+		table.insert(
+			children,
+			appearance("shieldShell", {
+				{ "AlphaMode", quote("Transparency") },
+				{ "ColorMapContent", quote(shell.texture) },
+			})
+		)
+	end
 	for _, entry in entries do
 		local maps = entry.maps
 		table.insert(
