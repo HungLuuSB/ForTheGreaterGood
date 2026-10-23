@@ -1327,3 +1327,13 @@ Spec: SelectionTiles.spec. Screen: `c157_selection_tiles.jpg` (2 Masons and 3 La
 - Checked in Studio: Stop rebound to A showed the clash on Stop and Attack, and the server returned "stop=A" (reset afterwards). Specs: Keybinds.spec, Settings.spec. Screen: `c159_keys_conflict.jpg`.
 
 **Why:** the user's queue item 6.
+
+### C-160 — The Commander walk on models-C's v3 mechs; a review-mesh preview switch (2026-10-23)
+
+**Decision:**
+- No change to the walk: the v3 meshes (M-33, merged) keep the pieces the Commander script drives (thighL / R, shinL / R, footL / R, armL / R, torso, base). The new hipL / hipR stay still.
+- To see a review mesh in game there's now a Studio debug switch: `FtggClientDebug:Invoke("reviewmesh", defId)` builds that one review entry (`MeshModels.REVIEW`), and units of it redraw with the mesh.
+- Checked on the `build` profile: the Sovereign v3 mesh built in 6 s. Walking to a move order, its left thigh swung −18° to +24°. Screen: `c160_mech_v3_walk.jpg`.
+- The Warlord runs the same script on the same piece names.
+
+**Why:** the user's queue item 7: "Commander walk animation once C's version-3 mechs merge". The mechs stay at "review" until the user approves them through models-C.

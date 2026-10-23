@@ -772,6 +772,14 @@ if RunService:IsStudio() then
 			-- Invoke("depositsanyway", on): draw C's review deposit models (for the user's review, C-123)
 			MeshModels.DEPOSITS_ANYWAY = (...) == true
 			return true
+		elseif query == "reviewmesh" then
+			-- Invoke("reviewmesh", defId): build and draw one review unit mesh (C-160)
+			local id = ...
+			if type(id) == "string" then
+				MeshModels.REVIEW[id] = true
+				MeshModels.start(defs)
+			end
+			return true
 		elseif query == "meshes" then
 			-- BAR mesh models (C-103): built, failed, seconds, errors
 			return MeshModels.stats
