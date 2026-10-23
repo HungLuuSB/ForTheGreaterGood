@@ -41,6 +41,8 @@ export type Unit = {
 	z: number,
 	sx: number?, -- strategic records: where they're drawn, gliding toward x, z (radar blips don't jump, C-151)
 	sz: number?,
+	gx: number?, -- the glide toward x, z; sx, sz add the blip's orbit to it (C-154)
+	gz: number?,
 	alt: number,
 	heading: number, -- radians, (sin h, cos h) forward
 	snaps: { Snap }, -- tactical: ascending sim ticks
@@ -210,19 +212,40 @@ end
 
 World.BLIP_SMOOTH = 0.45 -- seconds: a strategic record's drawn spot closes most of the way to a new reading in this time
 World.BLIP_SNAP = 160 -- studs: a jump this big snaps (a contact reappearing elsewhere)
+World.BLIP_ORBIT = 1.5 -- studs: radar / sonar blips circle their reported spot, as in BAR (C-154)
+World.BLIP_ORBIT_SECONDS = 6 -- one turn
+
+-- A contact's orbit start angle and direction, from its id (the same every
+-- frame, different per contact).
+local function orbitOf(id: number): (number, number)
+	local h = (id * 2654435761) % 4294967296
+	return (h % 65536) / 65536 * 2 * math.pi, if (h // 65536) % 2 == 0 then 1 else -1
+end
 
 -- Once a frame: strategic records (radar blips, sonar contacts, out-of-view
 -- units) glide toward their latest reported spot instead of jumping to each
--- new wobbled one (the user, C-151). Draw them at sx, sz.
-function World.smoothStrategic(world: World, dt: number)
+-- new one (the user, C-151). Radar and sonar blips also circle it,
+-- BLIP_ORBIT studs once every BLIP_ORBIT_SECONDS (with `now`; C-154): the
+-- server sends strategic spots by cell, so its own small orbit (S-131)
+-- doesn't show. Draw them at sx, sz.
+function World.smoothStrategic(world: World, dt: number, now: number?)
 	local k = 1 - math.exp(-dt / World.BLIP_SMOOTH)
-	for _, u in world.units do
+	local blip = Schema.StrategicFlag.RADAR_ONLY + Schema.StrategicFlag.SONAR_ONLY
+	for id, u in world.units do
 		if u.tier ~= "tactical" then
-			local sx, sz = u.sx, u.sz
-			if sx == nil or sz == nil or (sx - u.x) ^ 2 + (sz - u.z) ^ 2 > World.BLIP_SNAP ^ 2 then
-				u.sx, u.sz = u.x, u.z
+			local gx, gz = u.gx, u.gz
+			if gx == nil or gz == nil or (gx - u.x) ^ 2 + (gz - u.z) ^ 2 > World.BLIP_SNAP ^ 2 then
+				gx, gz = u.x, u.z
 			else
-				u.sx, u.sz = sx + (u.x - sx) * k, sz + (u.z - sz) * k
+				gx, gz = gx + (u.x - gx) * k, gz + (u.z - gz) * k
+			end
+			u.gx, u.gz = gx, gz
+			if now and bit32.band(u.flags or 0, blip) ~= 0 then
+				local phase, dir = orbitOf(id)
+				local a = phase + dir * 2 * math.pi * now / World.BLIP_ORBIT_SECONDS
+				u.sx, u.sz = gx + math.cos(a) * World.BLIP_ORBIT, gz + math.sin(a) * World.BLIP_ORBIT
+			else
+				u.sx, u.sz = gx, gz
 			end
 		end
 	end

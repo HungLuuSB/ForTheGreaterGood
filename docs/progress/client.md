@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, the Canyon by day, blips circling, units leave from the pad)
+
+- **The Canyon is playable and looks like a desert in daylight (C-153, C-155):** pale sand floor and red rock mesas and cliffs, under a mid-afternoon sun with blowing sand. It's in the skirmish lobby's map list, and the `canyon` test profile starts both Commanders there.
+- **Each map now has its own lighting and time of day (C-155):** the Canyon is the first. The others stay on the moonlit night. Settings > Atmosphere defaults to "Map's own" and can still override it.
+- **Radar blips circle about 1.5 studs round their spot, as in BAR (C-154).** The server's circle (S-131) didn't reach the client, so the client draws it. Measured in Studio.
+- **Finished units appear on the build pad (S-133, merged here from sim-A's branch for your playtest):** the server's pad spot equals the client's drawn frame (64, 47.4 on a vehicle plant).
+
 ## Summary (2026-10-23, factories show what they build)
 
 - **You can now watch a factory build (C-152):** the unit in production stands on the factory's pad as a translucent team-coloured hologram. It fills in from the bottom up behind a glowing line, with nano spray from the factory's emitters. The spray stops when the economy stalls. This works for your factories and your allies'. Checked in Studio on a vehicle plant and an airfield.
@@ -1842,12 +1849,12 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-61. **Open (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
+61. **Done on m-sim-2 (S-133, 04c70db; not on main yet, merged into this branch for the user's playtest):** the pad position matches the client's frame (vehicle plant: 64, 47.4). (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
     - The finished unit spawns at the factory's `buildpad` (from the blockout's attachments, model space, rotated with the facing) with the factory's heading. Today it's halfSize + one cell out, then EXIT_ROLL: ~12 studs past the pad on a vehicle plant.
     - It then drives out along the heading through the factory's own footprint, then takes the rally order.
     - The client draws the frame there already (C-152).
     - Your call how it leaves the impassable footprint: a scripted roll or own-team yard cells.
-60. **Open (2026-10-23, the user: "that radius is huge, in BAR, just 1-2 studs"):** **Small blip orbit, hidden aim error.** S-130's orbit radius (= radar error, 13–45 studs) is far bigger than BAR's. At the user's choice:
+60. **Done (S-131, main 0a34204; drawn by the client, C-154):** strategic records carry only the cell, so S-131's 1.5-stud server orbit can't show. The client circles each blip 1.5 studs round its spot instead. I suggested sim-A drop the drawn offset and keep only the hidden aim point. (2026-10-23, the user: "that radius is huge, in BAR, just 1-2 studs"): **Small blip orbit, hidden aim error.** S-130's orbit radius (= radar error, 13–45 studs) is far bigger than BAR's. At the user's choice:
     - The drawn blip orbits ~1.5 studs around the real unit (same ~6 s turn, own phase and direction per contact).
     - The radar error stays as now, but only in the server's aiming: weapons firing at a radar contact aim at a hidden offset point (radius = radar error, or the Pinpointer's tracking error), so radar shots still miss as before. The client never learns that point.
     - This relaxes guide 11.4's "never the true position" for display: the sent position is within ~2 studs of the true one. The user accepted that. Please update 11.4 with it.

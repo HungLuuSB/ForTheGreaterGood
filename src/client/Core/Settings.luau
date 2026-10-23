@@ -11,7 +11,8 @@
 --              model detail distance (piece animation LOD), and fog of war shading
 --              on / off (the near-zoom fog of war lights; off by default,
 --              the user's call from C-32's review)
---   atmosphere a lighting preset (Render/Atmosphere, C-83): Night (C-101, the default: no sun), Current (the
+--   atmosphere a lighting preset (Render/Atmosphere, C-83): Map's own (C-155, the default: each map's
+--              lighting and time of day, Core/MapLook), Night (C-101: no sun), Current (the
 --              place as saved), Clear day, Battle haze, Dusk
 --   interface  UI scale
 -- High is today's look; listed under "Needs my review".
@@ -54,7 +55,7 @@ Settings.QUALITY = table.freeze({
 }) :: { [Quality]: Graphics }
 
 Settings.QUALITIES = { "low", "medium", "high" } :: { Quality }
-Settings.ATMOSPHERES = { "night", "current", "clear", "haze", "dusk" }
+Settings.ATMOSPHERES = { "map", "night", "current", "clear", "haze", "dusk", "desert" }
 Settings.GLOWS = { "off", "low", "high" } :: { Glow }
 
 Settings.LIMITS = table.freeze({
@@ -66,7 +67,7 @@ Settings.LIMITS = table.freeze({
 -- The defaults; `studio` turns edge scroll off (Studio's mouse often rests
 -- on the window edge, Camera.EDGE_SCROLL).
 function Settings.new(studio: boolean): State
-	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "night", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio }
+	return { panSpeed = 1.1, zoomStep = 1.15, edgeScroll = not studio, quality = "high", fog = true, atmosphere = "map", uiScale = 1, detailedModels = true, glow = "high", headlights = true, devMode = studio }
 end
 
 local function round(x: number, step: number): number

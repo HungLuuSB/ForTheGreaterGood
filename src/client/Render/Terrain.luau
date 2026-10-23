@@ -34,8 +34,16 @@ local MATERIAL: { [string]: Enum.Material } = {
 	leafy = Enum.Material.LeafyGrass,
 	ground = Enum.Material.Ground,
 	bridge = Enum.Material.WoodPlanks,
+	-- The Canyon's desert (C-153): materials no other map or atmosphere
+	-- preset uses, so their colors (below) touch nothing else
+	desert = Enum.Material.Limestone,
+	redrock = Enum.Material.Sandstone,
 }
-RenderTerrain.MATERIAL = MATERIAL -- deposits tint their patch with the surrounding terrain's color (C-123)
+RenderTerrain.MATERIAL = MATERIAL
+local COLORS: { [Enum.Material]: Color3 } = {
+	[Enum.Material.Limestone] = Color3.fromRGB(186, 148, 100), -- pale desert ground (a lighter tan read as snow at night)
+	[Enum.Material.Sandstone] = Color3.fromRGB(168, 88, 58), -- reddish rock
+} -- deposits tint their patch with the surrounding terrain's color (C-123)
 
 export type Stats = { seconds: number, cpu: number, voxels: number, chunks: number, mode: string } -- seconds: wall time (yields included)
 
@@ -51,6 +59,9 @@ function RenderTerrain.build(layers: Layers.Layers, feature: CoreTerrain.Feature
 		return nil
 	end
 	terrain:SetAttribute(MARKER, true)
+	for material, color in COLORS do
+		terrain:SetMaterialColor(material, color)
+	end
 	local t0 = os.clock()
 	local g = layers.grid
 	local lo, hi = CoreTerrain.bounds(layers)

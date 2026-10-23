@@ -124,6 +124,17 @@ local PROFILES = {
 			{ def = "chs_lamprey", player = 2, x = 130, z = 70, heading = -math.pi / 2 },
 		},
 	},
+	-- The Canyon (S-132, C-153): both Commanders at their starts, no AI;
+	-- for looking at the desert map
+	canyon = {
+		seed = 3,
+		mapId = "map:canyon",
+		scenario = "standard_start",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+	},
 	-- radar and fog on Coastline: your watchtower (radar 650) and 2 Lancers in
 	-- the west, 4 Ravagers and a generator in the middle, on radar but out of
 	-- sight; the bot stays put, so they stay radar contacts (C-32)

@@ -1229,3 +1229,36 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - **Enemies' factories show nothing:** the server doesn't send them their production.
 
 **Why:** the user couldn't see factories producing; the only sign was the pulsing factory lights.
+
+### C-153 — The Canyon drawn as a desert, and listed in the lobby (2026-10-23)
+
+**Decision:**
+- `Main.mapFeature` gives `Canyon.feature` for `map:canyon`.
+- Core/Terrain maps its floor to "desert" (Enum.Material.Limestone, tan 186, 148, 100). Badlands, aprons, cliffs, mesas and boulders map to "redrock" (Sandstone, 168, 88, 58).
+- No other map or atmosphere preset uses those two materials, so Render/Terrain sets their colours freely.
+- The skirmish lobby now lists every hand-made map (MapRegistry.HANDMADE: Normandy, The Canyon) after the generated ones.
+- A committed `canyon` profile has both Commanders at their starts.
+- Spec: Terrain.spec. Screens: `c153_canyon_*.jpg`.
+
+**Why:** S-132 added The Canyon; sim-A asked for the floor drawn as pale desert and the rock reddish.
+
+### C-154 — Radar blips circle their spot on the client (2026-10-23)
+
+**Decision:** `World.smoothStrategic(world, dt, now)` keeps the glide (C-151) in gx / gz. Radar and sonar records are drawn 1.5 studs out on a circle round it, one turn in 6 s, with start angle and direction from the id. Other strategic records sit on their spot. Measured in Studio (`radar`): four Ravager blips at r 1.26–1.74. Spec: Minimap.spec.
+
+**Why:** the user wanted BAR's 1–2 stud circle (request 60). S-131 put the orbit on the server, but strategic records carry only the cell, so it never showed: blips sat still or hopped cells. Sim-A has been told and may drop the server's drawn offset.
+
+### C-155 — Each map has its own look; The Canyon is a desert day (2026-10-23)
+
+**Decision:** `Core/MapLook` gives each map:
+- its atmosphere preset (lighting, time of day, grade);
+- the colour of the land past its edge;
+- the dust and mist particles' colour and wind.
+
+Maps without an entry get the moonlit night (C-101). Details:
+- **The Canyon:** a new "desert" preset: clock 14.5, warm sun, light sandy haze (thicker washed the map out in Studio), crisp shadows, procedural day sky. Sand-coloured dust blows across a tan skirt.
+- **Settings:** atmosphere gets "Map's own", the new default, which follows the map. The other presets still override it.
+- **Applied:** `Atmosphere.setMap` on each new map.
+- Spec: MapLook.spec. Screens: `c155_canyon_day_*.jpg`.
+
+**Why:** the user: "Each map will have its own environment + lighting settings + effects + time of day. For Canyon, it should be during the day".
