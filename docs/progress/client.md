@@ -8,6 +8,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 - **The approved T1 structure models are merged here** (models-C's batch), so a playtest draws them. All 31 built with no failure in Studio.
 - **Your Commander no longer rotates (C-172):** my animation pass was spinning the mech's torso and head like a radar. It now moves only the parts it knows.
+- Ready to merge: `f220783` (C-172: Ambient only animates known pieces; contains the m-models 671732b merge)
 
 ## Summary (2026-10-23, queue in a frame, Ctrl moves, server idle counts)
 
