@@ -1861,3 +1861,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Starts:** standard starts are unchanged (mobile units don't occupy cells).
   - **AI and slow suites:** the AI spec and the fairness tests pass (mirror split 5–7).
   - `Skirmish.spec`'s seed-1 match changed: Chaos raids Order down to 2 extractors by minute 5, Order's army never reaches its first wave (1,700 of 2,400), and Chaos wins at 9.9 min. The test wanted a wave from a loser lasting past 8 minutes; the bar is now 10. Under review: it's the Order-side weakness item 1 is about, shown by one seed.
+
+## S-125 — A manual target stays while it lives, unseen too; when it dies the unit picks its own at once (client request 57, the user) (2026-10-23)
+
+- **Asked:**
+  1. The manual target was dropped while it lived. Two Radiances ordered onto a Juggernaut inside a Phalanx, with a Carapace in front, switched to a dome generator after a few shots. The ordered target must stay while it lives, even when every shot is stopped by a dome.
+  2. The user: "when the unit I chose dies, it should switch back to auto-targeting."
+- **Cause (1):** the Juggernaut killed the Lancer spotter, the team stopped seeing it, and Targeting treated an unknown manual target like one out of range: the weapons searched and took a generator. Domes had nothing to do with it.
+- **Built:**
+  - **Last known position:** while a manual target lives, the unit remembers where the team last knew it (`OrdersState.manualX / Z`; hashed).
+  - **Unseen target:** while the target lives but is unknown (`manualBlind`) and that position is within a weapon's range, weapons that can shoot a point (ballistic, beam, hitscan) fire at it, as at an attack-ground point. Beams drain the domes in the way and go through when they drop (S-123). Other weapons hold. None takes another target. Farther than its range, the weapon searches as for a seen target out of range (S-115). The S-115 test, a tank driving away from its manual target, needs this.
+  - **Out of range:** a known target out of range still lets the unit pick its own (S-115).
+  - **Target dies:** the manual target is dropped (`Orders.dropManual`) and every weapon of the unit searches on that tick, not on its next staggered search tick.
+- **Tests:** `Defenses.spec`:
+  - a Radiance ordered onto a Juggernaut keeps it after the spotter dies: it never switches to the visible Ravager, and keeps firing blind;
+  - when the Juggernaut dies, the manual target is gone and the tower is on the Ravager the next tick.
