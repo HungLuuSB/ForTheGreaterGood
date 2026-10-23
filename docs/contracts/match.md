@@ -29,7 +29,7 @@ Both places **must be in the same experience**: reserved servers, MemoryStore an
 
 ## 3. Match config (`config/<matchId>`)
 
-Built by `src/lobby/shared/MatchConfig.luau` (`MatchConfig.build`), checked by `MatchConfig.validate`. The match server should run the same checks (copy the function, or ask for it in `src/shared`).
+Built by `src/lobby/shared/MatchConfig.luau` (`MatchConfig.build`). The shapes, limits, palette and checks live in **`@shared/Match/MatchConfig`** (`validate`, `validateResult`, `users`; S-145). The lobby and the match place both use it, so they can't disagree.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -63,7 +63,7 @@ Player order: FFA keeps the room's seat order. TEAM puts ally teams together (te
 
 **To the sim config** (what `src/roblox/Lobby.config` does today): `players[i] → { id = i, team = <faction parity: Order odd, Chaos even, as Lobby.config>, allyTeam }`, `match = { mode, win, friendlyFire, cheats, ai = { [id] = level } }`, `scenario = "standard_start"`.
 
-**Palette** (`Config.COLORS`, RGB): 1 Blue 64,132,230 · 2 Red 222,70,62 · 3 Green 82,186,92 · 4 Yellow 236,200,64 · 5 Purple 156,92,214 · 6 Orange 238,132,46 · 7 Cyan 60,200,210 · 8 Pink 232,110,180 · 9 White 226,229,235 · 10 Olive 140,150,70 · 11 Brown 150,100,62 · 12 Teal 40,130,120.
+**Palette** (`COLORS` in `@shared/Match/MatchConfig`, RGB): 1 Blue 64,132,230 · 2 Red 222,70,62 · 3 Green 82,186,92 · 4 Yellow 236,200,64 · 5 Purple 156,92,214 · 6 Orange 238,132,46 · 7 Cyan 60,200,210 · 8 Pink 232,110,180 · 9 White 226,229,235 · 10 Olive 140,150,70 · 11 Brown 150,100,62 · 12 Teal 40,130,120.
 
 ## 4. Where it's stored
 
@@ -99,7 +99,7 @@ Written once by the match server when the match ends for the humans (the sim's `
 
 Which outcome (client-B's `MatchContract.outcomeOf`): the sim's end gives `"finished"` + `winner`, or `"draw"` (no ally team left). Before that, every human gone from the server gives `"abandoned"`; one ally team standing gives `"finished"` + that team; every human out while AI teams still fight gives `"finished"` with no `winner` (a loss for the humans, not a draw).
 
-`outAt` is seconds into the match when eliminated. `stats` is a flat table of numbers, the sim's `Stats.report` names: `unitsBuilt`, `unitsLost`, `unitsKilled`, `damageDealt`, `damageTaken`, `supplyGathered`, `powerGathered`, `supplySpent`, `powerSpent`. No time series (size); the match's own results screen keeps those. Checked by `MatchConfig.validateResult`.
+`outAt` is seconds into the match when eliminated. `stats` is a flat table of numbers, the sim's `Stats.report` names: `unitsBuilt`, `unitsLost`, `unitsKilled`, `damageDealt`, `damageTaken`, `supplyGathered`, `powerGathered`, `supplySpent`, `powerSpent`. No time series (size); the match's own results screen keeps those. Checked by `validateResult` in `@shared/Match/MatchConfig`.
 
 ## 6. Lifetimes and timeouts
 
@@ -149,4 +149,5 @@ Studio can't reserve or teleport, and MemoryStore / DataStore need a published p
 ## Changes
 
 - 2026-10-23: version 1 (L-4).
+- 2026-10-23: the checks moved to `@shared/Match/MatchConfig` (sim-A, S-145, the user's choice); the lobby and client-B dropped their copies.
 - 2026-10-23: `winner` may be absent on `"finished"` (every human out, AI still fighting), at client-B's question; still version 1 (nothing published yet).

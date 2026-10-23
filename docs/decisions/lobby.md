@@ -31,7 +31,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 ## L-2 (2026-10-23): one constants module
 
-`Config.luau` holds the enums, limits, palette, timeouts, store names and `MATCH_PLACE_ID = 89435699207932` (the FTGG main game, as the user named it). Both places must be in one experience.
+`Config.luau` holds the lobby's limits, labels, timeouts, store names and `MATCH_PLACE_ID = 89435699207932` (the FTGG main game, as the user named it). Both places must be in one experience. Since S-145 the contract's version, enums, team limits and palette come from `@shared/Match/MatchConfig` and are re-exported here.
 
 ## L-3 (2026-10-23): rooms
 
