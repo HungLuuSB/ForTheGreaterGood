@@ -745,9 +745,17 @@ function NetOut.step(sim: Types.Sim)
 			end
 		end
 
-		-- changes of tactical units that were already known to the client
+		-- changes of tactical units that were already known to the client;
+		-- an armed unit entering gets its turrets' aim and weapon states at
+		-- once (S-119, client request 53: aim went out only when it changed,
+		-- so a turret held steady on a still target showed at rest)
 		for _, id in pn.tacticalList do
 			if entered[id] then
+				if w.weaponCount[id] > 0 then
+					local rec = stateRecord(sim, id, D.STATE)
+					rec.state = nil -- (ENTER carries it)
+					table.insert(states, rec)
+				end
 				continue
 			end
 			local dirty = w.dirty[id]

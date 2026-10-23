@@ -153,6 +153,52 @@ return function(t: RunAll.Context)
 		t.equal(w.health[ally], 1e6, "the ally on the line took nothing")
 	end)
 
+	t.test("beam towers fire at an attack-ground point; the ray hurts what stands on its line (S-119, client request 53)", function()
+		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local crossing = Spawn.unit(sim, "chs_ravager", 2, 0, 0, math.pi) -- on the line, not visible to Order
+		World.setFireState(w, crossing, World.FireState.HOLD_FIRE)
+		World.setMoveState(w, crossing, World.MoveState.HOLD_POSITION)
+		World.setHealth(w, crossing, 1e6)
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(0, 300)
+		submit(sim, 1, { cmdType = Schema.CmdType.ATTACK_GROUND, flags = 0, unitIds = { tower }, cell = cell, offX = ox, offZ = oz })
+		local ends = nil
+		local fired = shots(sim, tower, 15 * 6, function()
+			power(sim, 1, 5000)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower and ends == nil then
+					ends = { e.x, e.z }
+				end
+			end
+		end)
+		t.expect(fired >= 1, "it fired at the ordered point")
+		t.expect(ends ~= nil and math.abs(ends[2] - 300) < 20, `the beam ends at the point ({ends and ends[2]})`)
+		t.expect(w.health[crossing] < 1e6, "the Ravager on the line took the ray")
+		-- the Inferno: a single-target beam; nothing on the line is a miss on the ground
+		local sim2 = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:128" })
+		local w2 = sim2.world
+		local inferno = Spawn.unit(sim2, "chs_inferno", 2, 0, 300)
+		local nobody = Spawn.unit(sim2, "ord_lancer", 1, 200, -200, 0) -- off the line
+		World.setFireState(w2, nobody, World.FireState.HOLD_FIRE)
+		local c2, o2x, o2z = (sim2.map :: any).grid:encode(0, -100)
+		local wr = Packer.Writer.new()
+		Schema.encodeCommand(wr, { cmdType = Schema.CmdType.ATTACK_GROUND, flags = 0, unitIds = { inferno }, cell = c2, offX = o2x, offZ = o2z })
+		assert(Sim.submit(sim2, 2, wr:finish()))
+		local missed = 0
+		shots(sim2, inferno, 15 * 6, function()
+			power(sim2, 2, 5000)
+			for _, e in sim2.combat.events do
+				if e.kind == "FIRE" and e.unit == inferno and not e.hit then
+					missed += 1
+				end
+			end
+		end)
+		t.expect(missed >= 1, "the Inferno fired at the empty ground")
+		t.equal(w2.health[nobody], sim2.defs.units.ord_lancer.health, "and hurt nobody off its line")
+	end)
+
 	t.test("the Inferno doesn't fire at radar-only contacts; seen, it does", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world

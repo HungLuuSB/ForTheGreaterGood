@@ -1772,3 +1772,21 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - SHOT ends with `weaponDefIndex u16` (16 B; 0 = unknown).
   - Weapons records the weapon on its FIRE combat event (`weaponIndex`), so NetOut has it even if the shooter died that tick. The client takes type, `beamDuration` and faction from the defs.
 - **Tests:** `Schema.spec` pins SHOT's new bytes; `NetOut.spec`'s hidden-shooter SHOT carries the gunner's weapon index.
+
+## S-119 — Attack-ground for beams and hitscan; an entering unit's turret aim (client request 53, the user) (2026-10-23)
+
+- **Asked:**
+  1. Beam and hitscan weapons take attack-ground orders, "because they can shoot a point; a unit walking past can still take damage".
+  2. Turret guns swing back to their rest position between shots: "if a unit does not move, the gun never aims at it".
+- **Built (1):**
+  - **Orders:** `Air.groundFires` and the Targeting / Weapons ground-order checks include BEAM and HITSCAN weapons. A unit or tower given ATTACK_GROUND aims at the point and fires at it, whatever its fire state, until another order.
+  - **Hitscan and non-piercing beams:** the shot hits the first enemy on its line from the muzzle to the point (collision radius, the weapon's target classes; `firstOnLine`), otherwise it misses on the ground at the point. The Inferno's lingering beam then settles on the unit it hit.
+  - **Radiance's hit-ray (`pierce`):** the line runs to the point, and every enemy on it takes the share each tick.
+  - **Domes:** an up enemy dome on the way stops the shot at its surface, as in S-116 / S-117.
+- **Found and fixed (2):**
+  - **Cause:** NetOut sent a weapon's aim in State records only when it changed. A unit entering a player's tactical tier came with its ENTER and no aim, so a turret already held steady on a still target was never sent and the client drew it at rest.
+  - **Fix:** an armed unit now gets a State record with its aim and weapon states on the tick it enters.
+  - The other reports (swinging back between reloads) didn't reproduce headless (the client's probes, and mine); an entering unit with a steady aim fits both.
+- **Tests:**
+  - `Defenses.spec`: Radiance attack-grounds a point and the Ravager on its line takes the ray; the Inferno attack-grounds empty ground, misses, and hurts nobody off the line;
+  - `NetOut.spec`: a Lancer aimed at a still Ravager enters a player's view and its aim arrives with it (the test fails without the fix).
