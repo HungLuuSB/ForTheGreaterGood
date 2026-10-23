@@ -115,6 +115,7 @@ export type World = {
 	wreckGone: { number }, -- WRECK_GONE (reclaimed or gone)
 	alertQueue: { { kind: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT events (protocol 23, S-68) Core/Alerts drains
 	cheatResults: { any }, -- CHEAT_RESULT events (protocol 27, S-102) the cheat command line drains (C-119)
+	remoteDomes: { [number]: { x: number, y: number, z: number, radius: number, charge: number, flags: number } }, -- domes of generators not in the tactical tier (DOME, protocol 29, S-122): drawn without vision, as in BAR (C-145)
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
 }
@@ -150,6 +151,7 @@ function World.new(defs: Defs.DefSet): World
 		alertQueue = {},
 		cheatResults = {},
 		shields = {},
+		remoteDomes = {},
 		deathWrecks = {},
 	}
 end
@@ -178,6 +180,7 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.wreckGone)
 	table.clear(world.alertQueue)
 	table.clear(world.shields)
+	table.clear(world.remoteDomes)
 	table.clear(world.deathWrecks)
 	world.strategicTick = -1
 	world.economy = nil

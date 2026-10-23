@@ -167,30 +167,41 @@ function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx, renderer
 		table.clear(fx.shieldHits)
 		return
 	end
-	for id, d in s.domes do
-		local u = world.units[id]
-		if world.shields[id] == nil or u == nil or u.tier ~= "tactical" then
-			d.fx:destroy()
-			s.domes[id] = nil
-		end
+	-- every dome to draw: generators the player has (SHIELD), and the others'
+	-- domes the server sends whatever the team sees (DOME, S-122, C-145)
+	local sources: { [number]: { x: number, z: number, y: number?, radius: number, charge: number, flags: number } } = {}
+	for id, rd in world.remoteDomes do
+		sources[id] = rd
 	end
 	for id, sh in world.shields do
 		local u = world.units[id]
 		local def = if u and u.tier == "tactical" then World.def(world, u) else nil
 		local radius = def and def.shield and def.shield.radius
 		if u and radius then
+			sources[id] = { x = u.x, z = u.z, radius = radius, charge = sh.charge, flags = sh.flags }
+		end
+	end
+	for id, d in s.domes do
+		if sources[id] == nil then
+			d.fx:destroy()
+			s.domes[id] = nil
+		end
+	end
+	for id, sh in sources do
+		do
+			local radius = sh.radius
 			local up = bit32.band(sh.flags, UP) ~= 0
 			local d = s.domes[id]
 			local model = UnitRenderer.modelOf(renderer, id)
 			if d == nil then
-				local y = World.groundY(world, u.x, u.z)
-				local base = Vector3.new(u.x, y, u.z)
+				local y = sh.y or World.groundY(world, sh.x, sh.z)
+				local base = Vector3.new(sh.x, y, sh.z)
 				local f = ShieldFx.new(beamOf(model) or base, radius, nil, base)
 				f:setStrength(sh.charge)
 				if up then
 					f:deploy(true) -- it was standing before it came into view
 				end
-				d = { fx = f, up = up, x = u.x, y = y, z = u.z, radius = radius, model = model }
+				d = { fx = f, up = up, x = sh.x, y = y, z = sh.z, radius = radius, model = model }
 				s.domes[id] = d
 			elseif model ~= d.model then
 				-- the generator's model came into view, went, or was swapped

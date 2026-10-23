@@ -168,6 +168,14 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 		elseif kind == EK.CHEAT_RESULT then
 			-- the answer to this player's cheat command (protocol 27, S-102)
 			table.insert(world.cheatResults, e)
+		elseif EK.DOME ~= nil and kind == EK.DOME then
+			-- a dome whose generator this player doesn't have (protocol 29, S-122):
+			-- its centre, radius and state, whatever the team sees (C-145)
+			local x, z = world.grid:decode(e.cell, e.offX, e.offZ)
+			world.remoteDomes[e.unitId :: number] = { x = x, y = (e.y :: number) / Schema.Y_SCALE, z = z, radius = e.radius :: number, charge = (e.charge :: number) / 255, flags = e.shieldFlags or 0 }
+		elseif EK.DOME_GONE ~= nil and kind == EK.DOME_GONE then
+			-- (when the generator came into view, its ENTER and SHIELD take over)
+			world.remoteDomes[e.unitId :: number] = nil
 		elseif kind == EK.SHIELD then
 			-- a generator's dome (protocol 24, S-79): charge and up / recharging
 			world.shields[e.unitId :: number] = { charge = (e.charge :: number) / 255, flags = e.shieldFlags :: number }

@@ -4,6 +4,7 @@
 
 local Default = require("./Default")
 local BeamTower = require("./BeamTower")
+local Commander = require("./Commander")
 
 local Registry = {}
 
@@ -13,6 +14,8 @@ Registry.SCRIPTS = table.freeze({
 	chs_minotaur = require("./chs_minotaur"),
 	ord_radiance = BeamTower,
 	chs_inferno = BeamTower,
+	ord_sovereign = Commander, -- walking mechs (M-31, C-146)
+	chs_warlord = Commander,
 }) :: { [string]: any }
 
 function Registry.forDef(def: any): any

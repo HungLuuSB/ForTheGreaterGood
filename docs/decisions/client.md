@@ -1164,3 +1164,33 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - **Not kept:** a 20 to 26 ring patch with a wide rim of tiny cells, tried as "C-145". The user: "too much"; it also cost ~25 ms a frame, with peaks over 300 ms, under shield_beams. The honeycomb stays as in C-142.
 
 **Why:** the user: the beam should go through once the dome drops; "reduce the size of the ring flowing down the dome".
+
+### C-145 — Shield domes drawn without vision (DOME / DOME_GONE, protocol 29, S-122) (2026-10-23)
+
+**Decision:**
+- **World:** `remoteDomes` keeps domes whose generator the player doesn't have (centre, radius, charge, flags). NetIn sets it from DOME and clears it on DOME_GONE; the branches are guarded until the event kinds exist.
+- **ShieldDomes:** draws from both sources by generator ID (tactical SHIELD first). A dome carries over when its generator enters view: same ID, its ENTER and SHIELD take over and the DOME_GONE comes after.
+- Hit patches already map to the nearest dome.
+
+**Why:** the user: "the shield dome (only the dome) should be rendered regardless of vision like in BAR".
+
+### C-146 — The Commander mechs walk (2026-10-23)
+
+**Decision:** piece script `PieceScripts/Commander` for ord_sovereign and chs_warlord.
+- **Moving:** models-C's stride pose (thighL +28 / shinL −18 / footL −10, thighR −22 / shinR −30 / footR +20) and its mirror alternate, one stride per 0.6 s. The arms swing ±18° against the legs, the torso twists ±6° and the pelvis dips 0.12 studs per step.
+- **Stopped:** everything eases back to rest.
+- Create, aim and fire come from Default.
+
+**Why:** models-C's M-31 (the user's request); the meshes (2b4dc5b) are at review, so the blockout mechs walk until they're approved.
+
+### C-147 — A continued beam that now ends on another dome glances and pulses there (2026-10-23)
+
+**Decision:** `Effects.glance(world, weapon, tracer, now)` holds C-129's deflection and C-139's pulse setup, and now also includes unseen domes (`world.remoteDomes`, S-122). New beams run it, and so does `continueBeam` whenever a moved end falls short (hit = false), so the glance and pulses follow to the new dome.
+
+**Why:** the user's overlapping-domes screenshot. The rule that a beam's line is re-checked against every dome each tick is sim request 56.
+
+### C-148 — Mech stride re-tuned for the heroic mechs (2026-10-23)
+
+**Decision:** Commander POSE follows models-C's M-32 stride: forward leg thigh +24 / shin −8 / foot −16, back leg thigh −18 / shin −22 / foot +30, pelvis dip 0.2. C-145's domes without vision are verified in Studio on main f3334c7 (S-122).
+
+**Why:** the user rejected the first mechs (too small and blocky); models-C rebuilt them about 10 studs tall with a real knee bend.

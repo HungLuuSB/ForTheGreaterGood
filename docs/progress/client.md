@@ -4,6 +4,43 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, beams stop at the next dome; manual target issues)
+
+- **S-123 merged and checked:** two Radiances on a tank behind two overlapping domes. When the front dome drops, the beams stop at the second dome's surface instead of going through, with their glancing legs (`debug_out/screens/two_domes_beam.jpg`). The case of a dome rising across a beam was tested by sim-A; I didn't stage it in Studio.
+- **Manual targeting (sim request 57):** two problems, both sim side:
+  - an ordered target is dropped for a dome generator after a couple of blocked shots, while it still lives;
+  - your note: when the chosen unit dies, it should go back to auto-targeting.
+- **Mech meshes v2** (heroic, ~10 studs) are on m-models at review, next to merge.
+
+## Summary (2026-10-23, domes without vision live; bigger mechs)
+
+- **Shield domes without vision (C-145 + sim-A's S-122): live and checked in Studio.** An enemy Carapace out of your sight shows its dome, honeycomb shell and core, with no unit revealed (`debug_out/screens/unseen_dome.jpg`).
+- **Mech Commanders:** models-C rebuilt them as ~10-stud heroic mechs (blockouts for now). The walk cycle follows their new stride (C-148). Not re-checked in Studio.
+- **Beams vs overlapping domes:** sim-A built request 56 (S-123), integrating. The client is ready.
+
+## Summary (2026-10-23, beams and overlapping domes)
+
+- **Your screenshot (two overlapping domes):** the beam went through dome #2 when #1 collapsed, and through #1 when it came back up. The sim checks a beam's path against domes only at certain moments, not continuously, so it's with sim-A as **request 56**: re-check every dome each tick, and cut the beam at the first one in its way.
+- **Client (C-147):** when a beam's end moves onto another dome, its glancing leg and honeycomb pulses move with it. Unseen domes count too.
+
+## Summary (2026-10-23, the Commanders walk; Needs my review)
+
+- **Mech Commanders (C-146):** the Sovereign and Warlord walk: legs in models-C's stride, alternating every 0.3 s, arms swinging, the torso twisting and the pelvis bobbing. They ease back to rest when they stop (`debug_out/screens/mech_walk.jpg`).
+- **Needs my review:** models-C's mech meshes are at "review", so the game draws the mech blockouts. Approve them through models-C to see the meshes.
+- **Domes without vision (C-145):** the client side is ready and waits for sim-A's S-122 on main.
+
+## Summary (2026-10-23, S-120 / S-121 merged: beams go through fallen domes)
+
+- **Merged sim-A's S-120 / S-121 and checked in Studio:** a Radiance ordered onto an enemy Carapace takes the order (towers now accept attack orders). Its beam ends on the dome, and once the dome collapses (~2.5 s in) the same beam moves on to the generator. It repeats when the dome rises again (`debug_out/screens/beam_through_dome.jpg`).
+- **Domes visible without vision (as in BAR):** asked sim-A (**request 55**). Today the server only sends a dome for a generator you can see. The client will draw domes from the new records.
+- Your shield_beams edit (fewer Radiances) is kept; it's your local MatchConfig, uncommitted.
+
+## Summary (2026-10-23, S-119 merged)
+
+- **Merged sim-A's S-119.** Beam and hitscan weapons follow attack-ground orders: in shield_beams the Radiances now fire at your dome's middle, and their beams end on its surface. A turret's barrel holds on its beam while it burns, and turrets show their aim as soon as a unit comes into view. Checked in Studio.
+- **Still integrating (sim-A, S-120 / S-121):** manual targets win whatever the fire state; structures take ATTACK orders (the cause of your Radiance ignoring the Phalanx: towers never received the order); a beam goes on through a dome that drops under it (the client side is ready, C-144).
+- **Next from models-C:** the Commanders become walking mechs. The blockouts are on m-models; the client will need a walk cycle for their legs once the meshes come.
+
 ## Summary (2026-10-23, beam through a fallen dome; thinner rings)
 
 - **Thinner rings** flow down the dome (C-144).
@@ -1767,7 +1804,13 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-54. **Open (sent 2026-10-23).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
+57. **Open (sent 2026-10-23).** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
+
+56. **Done (S-123, main 3860e72; checked in Studio).** **Beams vs overlapping domes (the user's screenshot):** a burning beam must re-check its line against every up dome each tick. When #1 collapses, it stops at #2 behind it instead of going through; when a dome rises across it, it's cut there. A new FIRE / SHOT whenever the end changes; the client follows (C-144, C-147).
+
+55. **Done (S-122, on main f3334c7; client C-145; checked in Studio).** **Shield domes render regardless of vision (the user, as in BAR):** send dome state (centre, radius, charge, flags) for enemy domes touching the camera area, whatever the team sees, without revealing the generator; the client draws domes from it.
+
+54. **Done (S-120 / S-121, on main 4356074; checked in Studio): structures take ATTACK (manual target, any fire state); a dome dropping under a beam sends a new FIRE / SHOT to the target; the client continues the beam (C-144).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
 
 53. **Built (S-119, merging): attack-ground for BEAM / HITSCAN; aim held while a beam burns; NetOut sends aim on ENTER.** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
     - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.
@@ -1963,3 +2006,11 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `b8cc921` (more, smaller rings in shield hits, C-141); test_client 214, build passed (client render only).
 - Ready to merge: `4b58c31` (more outer rings, review effects on in Studio; C-142); test_client 214, build passed (client render only).
 - Ready to merge: `511ab10` (with 58d5579 and the main merge 46d094c: fast mesh builds, camera lead, SHOT beams; C-143); test_client 214, test 446, build passed.
+- Ready to merge: `5db24f6` (beam continuation for request 54, thinner flowing rings; C-144); test_client 215, build passed (client only).
+- Ready to merge: `318555d` (main 062ba5f merged into the client: S-119); test_client 215, test 449, build passed.
+- Ready to merge: `aaa1538` (m-models merge 021c8c7: sparser honeycomb shell texture, mech Commander blockouts; materials regenerated); test_client 215, build passed.
+- Ready to merge: `861edf9` (main 4356074 merged into the client: S-120, S-121); test_client 215, test 450, build passed.
+- Ready to merge: `8145721` (mech Commander walk cycle, C-146; with the m-models merge of 2b4dc5b and C-145's dome prep 58f2e4c / c7b1493); test_client 215, build passed.
+- Ready to merge: `3986c2a` (glance follows a moved beam end, C-147); test_client 215, build passed (client only).
+- Ready to merge: `ed3303e` (main f3334c7 merged in 9e18206, m-models 2e5a42b; mech stride, domes without vision verified; C-148); test_client 215, test 451, build passed.
+- Ready to merge: `7c8566b` (main 3860e72 merged into the client: S-123); test_client 215, build passed.
