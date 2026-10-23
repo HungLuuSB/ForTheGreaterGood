@@ -2001,3 +2001,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - arrival 529 → 160 ticks;
   - ticks under 2 studs/s 354 → 0;
   - in the AI match, that Mason starts the T2 plant at 0.86 min (1.27 before, 0.84 before S-133).
+
+## S-136 — IDLE events for the player's builders and factories (client request 62) (2026-10-23)
+
+- **Asked:** the client needs idle builder and factory counts, a key to cycle idle builders and an icon over them, like BAR. It can't tell an idle builder from one that is repairing, assisting, reclaiming or guarding. B's follow-up: a per-unit bit on tactical records misses off-camera units, and BAR counts and jumps to all of them.
+- **Built:** protocol 31, event `IDLE 25`: `unitId u16, idle u8`, owner only, on camera or not.
+  - `NetOut.isIdle`: a factory with an empty queue; a builder with no order of its own (automatic reactions don't count) and no build, assist, repair or reclaim work.
+  - Every `NetOut.IDLE_EVERY` (5) ticks, each player's finished units with `buildOptions` are checked. A change is sent, tracked by generation in `PlayerNet.sentIdle`, so a reused ID starts busy.
+  - On join / reconnect (forceFull) every idle one is sent again. Units never reported are busy.
+- **Not chosen:** a STATES bit. It only reaches units in the tactical tier.
+- **Tests:**
+  - `Schema.spec`: golden bytes `19 02 01 01`, and event kind 26 is now the unknown one.
+  - `NetOut.spec`: an off-camera Mason and plant are reported idle, owner only. Given work they go busy, and idle again when done. A late join hears of both.

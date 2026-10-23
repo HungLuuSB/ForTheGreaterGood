@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 30 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129)
+Schema.PROTOCOL_VERSION = 31 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -908,6 +908,12 @@ end
 --               charge or flags change (protocol 29, S-122)              = 13 bytes
 --   DOME_GONE   unitId u16: that dome left the area, its generator died, or
 --               the player now has the generator (ENTER / SHIELD cover it) =  3 bytes
+--   IDLE        unitId u16 | idle u8 (0 / 1): one of the player's own
+--               builders or factories became idle or busy, on camera or
+--               not; owner only. A builder is idle with no order of its own
+--               and no build / assist / repair / reclaim work; a factory
+--               with an empty queue. Units not reported are busy; on join,
+--               every idle one is sent (protocol 31, S-136, request 62)  =  4 bytes
 --   CHEAT_RESULT op u8 (Schema.CheatOp) | result u8 (Schema.CheatResult) |
 --               count u16 | total u16: the answer to the player's CHEAT
 --               command, for the chat (GIVE: units placed of asked; KILL:
@@ -944,6 +950,7 @@ Schema.EventKind = table.freeze({
 	CHEAT_RESULT = 22, -- protocol 27 (S-102)
 	DOME = 23, -- protocol 29 (S-122)
 	DOME_GONE = 24,
+	IDLE = 25, -- protocol 31 (S-136)
 })
 -- CHEAT_RESULT result codes (S-102)
 Schema.CheatResult = table.freeze({
@@ -972,7 +979,7 @@ local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3, [25] = 4 })
 Schema.ShieldFlag = table.freeze({ UP = 1, RECHARGING = 2 }) -- SHIELD flags: the dome stands; it is recharging (protocol 24)
 Schema.SHIELD_BREACH = 1 -- SHIELD_HIT flags: the shell broke through (else it turned back)
 Schema.SHIELD_ABSORBED = 2 -- SHIELD_HIT flags: a light shell destroyed at the surface; drop it, no burst (protocol 25, S-85)
@@ -1000,6 +1007,7 @@ export type Event = {
 	build: number?,
 	state: number?,
 	alert: number?, -- ALERT: Schema.AlertKind (with cell, defIndex)
+	idle: boolean?, -- IDLE (S-136)
 	charge: number?, -- SHIELD: 0..255 of capacity
 	shieldFlags: number?, -- SHIELD: Schema.ShieldFlag bits
 	mass: number?, -- SHIELD_HIT: the shell's mass × SHIELD_MASS_SCALE (u8)
@@ -1177,6 +1185,10 @@ function Schema.encodeEvent(w: Writer, e: Event)
 	elseif kind == EK.DOME_GONE then
 		writeId(w, required(e.unitId, "unitId"), "unitId")
 		return
+	elseif kind == EK.IDLE then
+		writeId(w, required(e.unitId, "unitId"), "unitId")
+		w:writeU8(if required(e.idle, "idle") then 1 else 0)
+		return
 	elseif kind == EK.SHIELD_FIELD then
 		local phase = required(e.phase, "phase")
 		if phase ~= 1 and phase ~= 2 then
@@ -1350,6 +1362,14 @@ function Schema.decodeEvent(r: Reader): Event
 		return e
 	elseif kind == EK.DOME_GONE then
 		e.unitId = readId(r, "unitId")
+		return e
+	elseif kind == EK.IDLE then
+		e.unitId = readId(r, "unitId")
+		local v = r:readU8()
+		if v > 1 then
+			fail(r, `idle {v} (0 or 1)`)
+		end
+		e.idle = v == 1
 		return e
 	elseif kind == EK.SHIELD_FIELD then
 		e.projId = readId(r, "projId")

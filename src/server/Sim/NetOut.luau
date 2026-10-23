@@ -125,6 +125,52 @@ local SF = Schema.StrategicFlag
 -- Strategic icon per def: the shared numbering (Shared/Net/Icons, S-10).
 NetOut.iconIndex = Icons.byDef
 
+NetOut.IDLE_EVERY = 5 -- ticks between checks of the player's idle builders and factories (S-136)
+
+-- Nothing to do (S-136, client request 62): a factory with an empty queue;
+-- a builder with no order of its own (automatic reactions don't count) and
+-- no build, assist, repair or reclaim work.
+function NetOut.isIdle(sim: Types.Sim, id: number): boolean
+	local b = sim.build
+	local d = sim.defs.unitByIndex[sim.world.defIndex[id]]
+	if d.domain == "structure" then
+		local q = b.queue[id]
+		return q == nil or #q == 0
+	end
+	local q = sim.orders.queue[id]
+	if q then
+		for _, order in q do
+			if not order.auto then
+				return false
+			end
+		end
+	end
+	return b.order[id] == nil and (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0
+end
+
+-- IDLE events (S-136): the player's finished builders and factories whose
+-- idleness changed since last sent, on camera or not. Units not marked
+-- idle are busy; a dead one's mark lapses with its generation.
+local function idleEvents(sim: Types.Sim, pid: number, pn: NetState.PlayerNet, events: { Schema.Event })
+	local w = sim.world
+	local sent = pn.sentIdle
+	for _, id in w.ids do
+		if w.owner[id] ~= pid or w.buildProgress[id] < 1 then
+			continue
+		end
+		local d = sim.defs.unitByIndex[w.defIndex[id]]
+		if d.buildOptions == nil or #d.buildOptions == 0 then
+			continue
+		end
+		local idle = NetOut.isIdle(sim, id)
+		local was = sent[id] == w.gen[id]
+		if idle ~= was then
+			table.insert(events, { kind = Schema.EventKind.IDLE, unitId = id, idle = idle })
+			sent[id] = if idle then w.gen[id] else nil
+		end
+	end
+end
+
 function NetOut.new(sim: Types.Sim): NetState.NetState
 	return NetState.new(sim.playerOrder, NetOut.iconIndex(sim.defs))
 end
@@ -1058,6 +1104,12 @@ function NetOut.step(sim: Types.Sim)
 			local answers = Cheats.drain(sim, pid) -- CHEAT_RESULT (S-102)
 			if answers then
 				table.move(answers, 1, #answers, #events + 1, events)
+			end
+			if pn.forceFull then
+				table.clear(pn.sentIdle)
+			end
+			if pn.forceFull or sim.tick % NetOut.IDLE_EVERY == 0 then
+				idleEvents(sim, pid, pn, events)
 			end
 		end
 		-- strategic launches: every player, camera or not (S-48)

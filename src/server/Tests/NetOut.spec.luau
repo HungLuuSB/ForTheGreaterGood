@@ -587,6 +587,51 @@ return function(t: RunAll.Context)
 		return true, ""
 	end
 
+	t.test("IDLE: the owner hears when a builder or factory goes idle or busy, on camera or not (S-136, request 62)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local mason = Spawn.unit(sim, "ord_mason", 1, -300, -300)
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 300, 300, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0)
+		local enemy = Spawn.unit(sim, "chs_scrapper", 2, 200, -200)
+		camera(sim, 1, 0, 0, 2, 2) -- a corner: none of them on camera
+		local view = Client.new(g)
+		local otherView = Client.new(g)
+		local function step(n: number)
+			for _ = 1, n do
+				sim.eco.accounts[1].supply.stored = 1000
+				sim.eco.accounts[1].power.stored = 1000
+				Sim.step(sim)
+				Client.receive(view, sim.net.players[1].outbox)
+				Client.receive(otherView, sim.net.players[2].outbox)
+			end
+		end
+		step(10)
+		t.equal(view.idle[mason], true, "an idle builder off camera is reported")
+		t.equal(view.idle[plant], true, "a factory with an empty queue too")
+		t.equal(view.idle[tank], nil, "not a unit that can't build")
+		t.equal(otherView.idle[mason], nil, "owner only")
+		t.equal(otherView.idle[enemy], true, "each player hears of its own")
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = sim.defs.units.ord_lancer.index, cell = 0, offX = 0, offZ = 0, facing = 0 })
+		local cell, ox, oz = g:encode(-200, -300)
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		step(10)
+		t.equal(view.idle[mason], nil, "building: busy")
+		t.equal(view.idle[plant], nil, "producing: busy")
+		step(900 * 2)
+		t.equal(view.idle[plant], true, "its queue done, idle again")
+		t.equal(view.idle[mason], true, "the generator built, idle again")
+		-- a client joining later hears of every idle one
+		local late = Client.new(g)
+		NetOut.join(sim, 1)
+		step(1)
+		Client.receive(late, sim.net.players[1].outbox)
+		t.equal(late.idle[mason], true, "on join: the idle builder")
+		t.equal(late.idle[plant], true, "and factory")
+		local _ = w
+	end)
+
 	t.test("a client joining late rebuilds the same view as one connected from the start", function()
 		local function run(joinAt: number?): (Client.View, Sim.Sim)
 			local sim, mine, theirs = battle(13)
