@@ -384,7 +384,7 @@ function combatEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally
 			table.insert(events, withPos({ kind = Schema.EventKind.FIRE, unitId = e.unit, slot = e.slot, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number))
 		elseif kind == "FIRE" and e.x and e.sx and (shown(e.x, e.z :: number) or shown(e.sx, e.sz :: number)) then
 			-- a shooter the player doesn't have: both ends, no ID (S-43)
-			local shot = withPos({ kind = Schema.EventKind.SHOT, hit = e.hit == true }, g, e.x, e.y :: number, e.z :: number)
+			local shot = withPos({ kind = Schema.EventKind.SHOT, hit = e.hit == true, weaponIndex = e.weaponIndex or 0 }, g, e.x, e.y :: number, e.z :: number) -- (the weapon: S-118)
 			shot.fromCell, shot.fromOffX, shot.fromOffZ = g:encode(e.sx, e.sz :: number)
 			shot.fromY = Schema.toI16(e.sy :: number)
 			table.insert(events, shot)

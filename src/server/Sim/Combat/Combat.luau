@@ -64,6 +64,7 @@ export type Event = {
 	unit: number, -- shooter (FIRE, SPAWN_PROJ), hit unit or 0 (IMPACT), missile's target (DECOYED, LOST_LOCK), dead unit (DEATH)
 	other: number, -- target (FIRE), projectile (SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK), wreck or 0 (DEATH)
 	slot: number?, -- FIRE, SPAWN_PROJ
+	weaponIndex: number?, -- FIRE: the weapon's def index (S-118: SHOT carries it)
 	hit: boolean?, -- FIRE (hitscan)
 	severity: number?, -- DEATH: 0..255
 	reason: string?, -- BUILD_FAILED

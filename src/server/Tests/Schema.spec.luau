@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 27, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 28, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -560,13 +560,13 @@ return function(t: RunAll.Context)
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, strat), Schema.decodeEvent)[1], strat)
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, strat))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, icpt))
-		-- protocol 14: SHOT, a hidden shooter's hitscan shot (S-43)
-		local shot: Schema.Event = { kind = Schema.EventKind.SHOT, hit = true, fromCell = 0x0102, fromOffX = 3, fromOffZ = 4, fromY = -5, cell = 0x0607, offX = 8, offZ = 9, y = 10 }
-		t.equal(hex(encodeOne(Schema.encodeEvent, shot)), "0d 01 02 01 03 04 fb ff 07 06 08 09 0a 00")
+		-- protocol 14: SHOT, a hidden shooter's hitscan shot (S-43); its weapon since protocol 28 (S-118)
+		local shot: Schema.Event = { kind = Schema.EventKind.SHOT, hit = true, fromCell = 0x0102, fromOffX = 3, fromOffZ = 4, fromY = -5, cell = 0x0607, offX = 8, offZ = 9, y = 10, weaponIndex = 0x0b0c }
+		t.equal(hex(encodeOne(Schema.encodeEvent, shot)), "0d 01 02 01 03 04 fb ff 07 06 08 09 0a 00 0c 0b")
 		t.equal(buffer.len(encodeOne(Schema.encodeEvent, shot)), Schema.EVENT_BYTES[Schema.EventKind.SHOT])
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, shot), Schema.decodeEvent)[1], shot)
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, shot))
-		expectRejected(t, Schema.decodeEvent, { 13, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "SHOT hit byte 2")
+		expectRejected(t, Schema.decodeEvent, { 13, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "SHOT hit byte 2")
 		expectRejected(t, Schema.decodeEvent, { 2, 0, 0 }, "unitId 0 is reserved")
 		expectRejected(t, Schema.decodeEvent, { 1, 1, 0, 1, 0, 9 }, "team 9 outside")
 	end)

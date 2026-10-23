@@ -1764,3 +1764,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   Recharge during the beam gives some back: measured, one Radiance beam took a full Carapace to 54% (46%).
 - **Wire:** nothing new; SHIELD charge records follow the drain.
 - **Tests:** `Shield.spec`: one Radiance beam on a full Carapace takes 40–80% of its capacity (measured 46%).
+
+## S-118 — SHOT carries its weapon (client request 52) (2026-10-23)
+
+- **Asked:** a beam from a shooter the player can't see arrives as SHOT (both ends, no ID), so the client can't tell it's a beam: no held beam, no glancing leg on a dome, no honeycomb pulses. Add the weapon's def index (cleaner than flags).
+- **Built:** protocol 28.
+  - SHOT ends with `weaponDefIndex u16` (16 B; 0 = unknown).
+  - Weapons records the weapon on its FIRE combat event (`weaponIndex`), so NetOut has it even if the shooter died that tick. The client takes type, `beamDuration` and faction from the defs.
+- **Tests:** `Schema.spec` pins SHOT's new bytes; `NetOut.spec`'s hidden-shooter SHOT carries the gunner's weapon index.
