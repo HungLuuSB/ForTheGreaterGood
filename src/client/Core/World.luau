@@ -63,6 +63,7 @@ export type Unit = {
 	queueProgress: number?, -- the head item's progress, 0..1 (to a 255th)
 	producing: number?, -- allied factories (protocol 27, S-103): the def index in production, 0 = idle
 	producingProgress: number?, -- its progress, 0..1
+	productionShown: number?, -- the item's progress as drawn (eased between the server's steps, Render/FactoryFrames, C-168)
 	fireState: number?, -- Schema.FireState
 	moveState: number?, -- Schema.MoveState
 	ammo: number?, -- aircraft with an ammo count: rounds left
@@ -122,6 +123,8 @@ export type World = {
 	wreckGone: { number }, -- WRECK_GONE (reclaimed or gone)
 	alertQueue: { { kind: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT events (protocol 23, S-68) Core/Alerts drains
 	cheatResults: { any }, -- CHEAT_RESULT events (protocol 27, S-102) the cheat command line drains (C-119)
+	lastShot: { [number]: { [number]: number } }, -- unit → weapon slot → sim tick of its last shot seen (FIRE, a launch; the reload bar, C-170)
+	idle: { [number]: boolean }, -- the player's idle builders and factories, on camera or not (IDLE, protocol 31, S-136; C-158)
 	remoteDomes: { [number]: { x: number, y: number, z: number, radius: number, charge: number, flags: number } }, -- domes of generators not in the tactical tier (DOME, protocol 29, S-122): drawn without vision, as in BAR (C-145)
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
@@ -160,6 +163,8 @@ function World.new(defs: Defs.DefSet): World
 		cheatResults = {},
 		shields = {},
 		remoteDomes = {},
+		idle = {},
+		lastShot = {},
 		deathWrecks = {},
 	}
 end
@@ -191,6 +196,8 @@ function World.welcome(world: World, rec: Schema.SnapshotRecord, now: number)
 	table.clear(world.alertQueue)
 	table.clear(world.shields)
 	table.clear(world.remoteDomes)
+	table.clear(world.idle) -- the join sends every idle one again
+	table.clear(world.lastShot)
 	table.clear(world.deathWrecks)
 	world.strategicTick = -1
 	world.economy = nil
@@ -328,6 +335,41 @@ end
 -- Missiles in stock across a unit's stockpile slots (S-47, C-56), and their
 -- total capacity (Defs' derived `stockCapacity`); nil when it has no
 -- stockpile or the server hasn't said (other players' units never carry it).
+World.RELOAD_BAR = 4 -- seconds: weapons reloading at least this long show a recharge bar (C-170)
+
+-- A shot by `id`'s weapon `slot` at sim tick `tick` (Core/Effects).
+function World.noteShot(world: World, id: number, slot: number, tick: number)
+	local t = world.lastShot[id]
+	if t == nil then
+		t = {}
+		world.lastShot[id] = t
+	end
+	t[slot] = tick
+end
+
+-- How charged `u`'s slowest long-reload weapon is at render tick `tick`,
+-- 0..1, while it recharges after a shot seen; nil when it has none, or it's
+-- charged (the server's reload runs from the shot: Sim/Weapons).
+function World.reloadOf(world: World, u: Unit, tick: number): number?
+	local shots = world.lastShot[u.id]
+	local def = shots and World.def(world, u)
+	if def == nil or shots == nil then
+		return nil
+	end
+	local worst: number? = nil
+	for slot, ws in def.weapons do
+		local weapon = world.defs.weaponByIndex[(ws :: any).weaponIndex] :: any
+		local shot = shots[slot]
+		if shot and weapon and (weapon.reload or 0) >= World.RELOAD_BAR then
+			local f = (tick - shot) / (weapon.reload * 15)
+			if f < 1 then
+				worst = math.min(worst or 1, math.max(f, 0))
+			end
+		end
+	end
+	return worst
+end
+
 function World.stockOf(world: World, u: Unit): (number?, number?)
 	local def = World.def(world, u)
 	if def == nil or u.stock == nil then

@@ -99,6 +99,8 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 		elseif kind == EK.DEATH then
 			local id = e.unitId :: number
 			world.shields[id] = nil
+			world.idle[id] = nil
+			world.lastShot[id] = nil
 			local u = world.units[id]
 			if u then
 				local vx, vz = 0, 0
@@ -166,6 +168,9 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
 			local x, z = g:decode(e.cell :: number, 128, 128)
 			table.insert(world.alertQueue, { kind = e.alert :: number, x = x, z = z, defIndex = e.defIndex or 0, tick = tick })
+		elseif EK.IDLE ~= nil and kind == EK.IDLE then
+			-- one of this player's builders or factories became idle or busy (S-136)
+			world.idle[e.unitId :: number] = if e.idle then true else nil
 		elseif kind == EK.CHEAT_RESULT then
 			-- the answer to this player's cheat command (protocol 27, S-102)
 			table.insert(world.cheatResults, e)

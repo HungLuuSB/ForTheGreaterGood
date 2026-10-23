@@ -1059,9 +1059,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	ResourceBar.step(resourceBar, api, now)
 	if now >= nextIdleCount then
 		nextIdleCount = now + 0.25
-		Idle.update(idle, world, function(id: number): boolean
-			return api.waypoints.byUnit[id] ~= nil
-		end, now)
+		Idle.update(idle, world)
 	end
 	IdleStrip.step(idleStrip, #idle.builders, #idle.factories, SettingsMenu.binds.idle or "")
 	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)

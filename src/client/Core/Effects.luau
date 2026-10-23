@@ -753,6 +753,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		local shooter, slot = launcher(world, e.weaponIndex, x, z)
 		if shooter and early then
 			table.insert(fx.shots, { shooter, slot :: number })
+			World.noteShot(world, shooter, slot :: number, e.tick or fx.tick)
 		end
 		local mx, my, mz
 		if shooter and muzzleOf then
@@ -882,6 +883,7 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 		warn(fx, fx.projectiles[e.projId], e.projId, x, y, z, now)
 	elseif kind == EK.FIRE then
 		table.insert(fx.shots, { e.unitId, e.slot })
+		World.noteShot(world, e.unitId, e.slot, e.tick or fx.tick) -- the reload bar (C-170)
 		local x1, y1, z1 = pos(world, e)
 		local shooter = world.units[e.unitId]
 		local x0, y0, z0

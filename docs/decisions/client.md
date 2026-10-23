@@ -1415,3 +1415,30 @@ Extractor drags also drop spots that share cells with an earlier spot of the sam
 - Spec: GroundMeshes.spec. Nothing to see in Studio until models-C's first tiles.
 
 **Why EditableMesh isn't used:** the user rejected the terrain's coarse-then-sharp redraw after camera jumps (C-162). Ground built in game as an EditableMesh would need about 160,000 vertices on The Canyon, but the device's editable-memory budget ran out at about 7,600 (Render/FogBlanket's note). Uploaded meshes have no such budget and render at full detail at any distance.
+
+### C-168 — A producing factory shows its item's progress bar (2026-10-23)
+
+**Decision:** an own or allied factory that is producing gets a second bar under its health bar, always, selected or not. It's amber, the UI accent, so it reads apart from the blue construction bar. It shows the item's progress as the hologram draws it (FactoryFrames' eased value, `u.productionShown`), else the server's sixteenths. Spec: Bars.spec, through the real server.
+
+**Why:** the user: "Still no progress bar for building", over a selected vehicle plant producing a tank.
+
+### C-169 — Ctrl moves keep the group together (GROUP); idle counts from the server; queueing in a frame (2026-10-23)
+
+**Decision:**
+- **Ctrl + move:** right click, a line drag, a Move / Fight / Patrol command click and a minimap right click held with Ctrl send `Schema.CmdFlag.GROUP` (S-137, protocol 31). The selection's ground units then move no faster than the slowest one. `Orders.Intent.group`, only on MOVE, FIGHT and PATROL.
+- **C-158 now counts from the server's IDLE events** (S-136): `world.idle`, cleared on a join and on a unit's death. Every idle builder and factory counts, on camera or not, and the I key jumps to one anywhere (its model stays drawn off camera, C-161). The client-side guess is gone.
+- **S-138:** a factory frame takes the build menu's queue; the client needed nothing new.
+- Specs: Idle.spec (through the real server, off camera included) and FrameQueue.spec (a frame's queue round trip; GROUP on the right commands).
+
+**Why:** the user's queue item 5 (group speed), request 62 (idle) and request 63 (the user: "Still not replicate build command when the building is being built").
+
+### C-170 — A recharge bar for long-reload weapons (Radiance, Inferno and others) (2026-10-23)
+
+**Decision:**
+- The client notes each weapon's last shot it sees (`World.noteShot`: a FIRE, or a projectile launch from a known shooter), with the sim tick.
+- For own and allied units, every weapon with a reload of `World.RELOAD_BAR` (4 s) or more shows a thin pale-blue recharge bar under the health (and build) bar. The bar fills from the shot over the weapon's reload, the server's own timing (Sim/Weapons starts the reload at the shot), and goes when charged. With several such weapons, the least charged one shows.
+- Spec: Bars.spec, a Radiance through the real server: the bar shows for most of its 9 s reload and fills from empty to full. Checked in Studio on `duel`: `c170_reload_bar.jpg`.
+
+**Limit:** a shot the client didn't see (the unit off camera) starts no bar.
+
+**Why:** the user: "Add recharge energy bar for the Radiance/Inferno too, any weapon reloads that long need to have that attack cooldown indicator".

@@ -13,6 +13,9 @@ local HealthBars = {}
 local HEALTH_H = 4 -- pixels
 local BUILD_H = 3
 local BUILD_COLOR = Color3.fromRGB(150, 205, 255)
+local PRODUCTION_COLOR = Color3.fromRGB(238, 186, 92) -- a factory's item in production (C-168)
+local RELOAD_COLOR = Color3.fromRGB(205, 235, 255) -- a long-reload weapon recharging (C-170)
+local RELOAD_H = 2
 local BACK_COLOR = Color3.fromRGB(20, 20, 20)
 -- missile stock (S-47, C-56): one pip per missile above the health bar,
 -- filled while in stock; past MAX_PIPS a single bar instead
@@ -21,7 +24,7 @@ local MAX_PIPS = 10
 local STOCK_COLOR = Color3.fromRGB(255, 200, 70)
 local EMPTY_COLOR = Color3.fromRGB(70, 60, 45)
 
-type Slot = { root: Frame, healthFill: Frame, buildBack: Frame, buildFill: Frame, stockRow: Frame, pips: { Frame } }
+type Slot = { root: Frame, healthFill: Frame, buildBack: Frame, buildFill: Frame, reloadBack: Frame, reloadFill: Frame, stockRow: Frame, pips: { Frame } }
 
 export type Layer = { gui: ScreenGui, slots: { Slot }, used: number }
 
@@ -54,13 +57,16 @@ local function newSlot(parent: ScreenGui): Slot
 	buildBack.BackgroundTransparency = 0.25
 	buildBack.Position = UDim2.new(0, 0, 1, 1)
 	local buildFill = bar(buildBack, "Build", BUILD_COLOR)
+	local reloadBack = bar(root, "ReloadBack", BACK_COLOR)
+	reloadBack.BackgroundTransparency = 0.25
+	local reloadFill = bar(reloadBack, "Reload", RELOAD_COLOR)
 	local stockRow = Instance.new("Frame")
 	stockRow.Name = "Stock"
 	stockRow.BackgroundTransparency = 1
 	stockRow.AnchorPoint = Vector2.new(0, 1)
 	stockRow.Position = UDim2.new(0, 0, 0, -1)
 	stockRow.Parent = root
-	return { root = root, healthFill = healthFill, buildBack = buildBack, buildFill = buildFill, stockRow = stockRow, pips = {} }
+	return { root = root, healthFill = healthFill, buildBack = buildBack, buildFill = buildFill, reloadBack = reloadBack, reloadFill = reloadFill, stockRow = stockRow, pips = {} }
 end
 
 -- The stock row: `count` of `capacity` pips lit (or one bar past MAX_PIPS),
@@ -128,9 +134,11 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 			end
 			local w = math.floor(d.width + 0.5)
 			local b = d.bar
-			local building = b.build ~= nil
+			local building = b.build ~= nil or b.production ~= nil
 			-- the pair is anchored by its bottom edge, so the health bar stays put when the build bar goes
-			slot.root.Position = UDim2.fromOffset(math.floor(d.x + 0.5), math.floor(d.y + 0.5) - if building then BUILD_H + 1 else 0)
+			local reloading = b.reload ~= nil
+			local below = (if building then BUILD_H + 1 else 0) + (if reloading then RELOAD_H + 1 else 0)
+			slot.root.Position = UDim2.fromOffset(math.floor(d.x + 0.5), math.floor(d.y + 0.5) - below)
 			slot.root.Size = UDim2.fromOffset(w, HEALTH_H)
 			slot.healthFill.Size = UDim2.new(math.clamp(b.health, 0, 1), 0, 1, 0)
 			local r, g, bl = Bars.healthColor(b.health)
@@ -138,7 +146,15 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 			slot.buildBack.Visible = building
 			if building then
 				slot.buildBack.Size = UDim2.new(1, 0, 0, BUILD_H)
-				slot.buildFill.Size = UDim2.new(math.clamp(b.build :: number, 0, 1), 0, 1, 0)
+				slot.buildFill.Size = UDim2.new(math.clamp((b.build or b.production) :: number, 0, 1), 0, 1, 0)
+				slot.buildFill.BackgroundColor3 = if b.build ~= nil then BUILD_COLOR else PRODUCTION_COLOR
+			end
+			-- the recharge bar: under the health (and build) bar (C-170)
+			slot.reloadBack.Visible = reloading
+			if reloading then
+				slot.reloadBack.Position = UDim2.new(0, 0, 1, 1 + (if building then BUILD_H + 1 else 0))
+				slot.reloadBack.Size = UDim2.new(1, 0, 0, RELOAD_H)
+				slot.reloadFill.Size = UDim2.new(math.clamp(b.reload :: number, 0, 1), 0, 1, 0)
 			end
 			drawStock(slot, w, b.stock, b.stockMax, b.stockProgress)
 			slot.root.Visible = true
