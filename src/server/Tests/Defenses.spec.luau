@@ -232,6 +232,46 @@ return function(t: RunAll.Context)
 		t.expect(w.wYaw[key] ~= yawAtFire, "and tracked again after")
 	end)
 
+	t.test("a manual target stays while it lives, unseen too; when it dies the tower picks its own at once (S-125, client request 57)", function()
+		local sim = Sim.new({ seed = 9, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local tank = Spawn.unit(sim, "chs_juggernaut", 2, 0, 250, math.pi)
+		local other = Spawn.unit(sim, "chs_ravager", 2, 300, -100, math.pi) -- visible, nearer: the tower's own pick
+		local spotter = Spawn.unit(sim, "ord_herald", 1, 40, 150, 0)
+		Spawn.unit(sim, "ord_herald", 1, 300, -200, 0) -- sees the Ravager
+		for _, id in { tank, other } do
+			World.setFireState(w, id, World.FireState.HOLD_FIRE)
+			World.setMoveState(w, id, World.MoveState.HOLD_POSITION)
+			World.setHealth(w, id, 1e6)
+		end
+		World.setFireState(w, spotter, World.FireState.HOLD_FIRE)
+		for _ = 1, 4 do
+			Sim.step(sim)
+		end
+		submit(sim, 1, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = { tower }, targetId = tank })
+		local key = World.slotKey(tower, 1)
+		shots(sim, tower, 15 * 2, function()
+			power(sim, 1, 5000)
+		end)
+		t.equal(w.wTarget[key], tank, "on the ordered tank")
+		-- the spotter goes: the tank lives, unseen
+		Combat.queueDamage(sim.combat, spotter, 1e6, 0)
+		local fired = shots(sim, tower, 15 * 12, function()
+			power(sim, 1, 5000)
+			t.expect(w.wTarget[key] ~= other, "never switches to the Ravager")
+		end)
+		t.equal(sim.orders.manualBlind[tower], true, "fires blind at the tank's last known position")
+		t.expect(fired >= 1, `and keeps firing there ({fired})`)
+		-- the tank dies: the tower takes the Ravager at once
+		Combat.queueDamage(sim.combat, tank, 1e9, 0)
+		Sim.step(sim) -- (Damage removes it)
+		power(sim, 1, 5000)
+		Sim.step(sim)
+		t.equal(sim.orders.manual[tower], nil, "the manual target is gone")
+		t.equal(w.wTarget[key], other, "and the tower picked its own target on the next tick")
+	end)
+
 	t.test("the Inferno doesn't fire at radar-only contacts; seen, it does", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world

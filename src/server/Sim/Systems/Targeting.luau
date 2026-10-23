@@ -45,6 +45,7 @@ local Hash = require("@shared/Util/Hash")
 local ContactGrid = require("../Combat/ContactGrid")
 local EW = require("../EW")
 local Sensors = require("../Sensors")
+local Orders = require("../Orders")
 local Defs = require("@shared/Defs/Defs")
 local Types = require("../Types")
 local World = require("../World")
@@ -381,23 +382,38 @@ return function(sim: Types.Sim)
 		local groundOrder = sim.air.groundX[id] ~= nil
 		local forced = sim.orders.forced[id] -- an attack order's target (Orders, S-4)
 		local forcedGen = sim.orders.forcedGen[id]
+		local blind = false
+		local retarget = false
 		if forced == nil then
 			-- the last attack order's target, kept until STOP (S-115, client
 			-- request 49): taken whenever it is in range, whatever the fire
-			-- state (S-120: manual targeting takes priority); else the search
-			local m = sim.orders.manual[id]
+			-- state (S-120: manual targeting takes priority); else the search.
+			-- While it lives but the team doesn't see it (S-125, client
+			-- request 57), the unit keeps to its last known position: weapons
+			-- that shoot a point fire there, the others hold, and none takes
+			-- another target. When it dies, the search runs at once.
+			local o = sim.orders
+			local m = o.manual[id]
 			if m ~= nil then
-				if World.isRef(w, m, sim.orders.manualGen[id]) then
-					forced, forcedGen = m, sim.orders.manualGen[id]
+				if World.isRef(w, m, o.manualGen[id]) then
+					forced, forcedGen = m, o.manualGen[id]
+					local kx, kz = Sensors.knownTarget(sim, w.ally[id], m, o.manualGen[id])
+					if kx ~= nil and kz ~= nil then
+						o.manualX[id], o.manualZ[id], o.manualBlind[id] = kx, kz, nil
+					elseif o.manualX[id] ~= nil then
+						blind = true
+						o.manualBlind[id] = true
+					end
 				else
-					sim.orders.manual[id], sim.orders.manualGen[id] = nil, nil -- gone
+					Orders.dropManual(sim, id) -- gone: back to its own targets now
+					retarget = true
 				end
 			end
 		end
 		for slot = 1, count do
 			local key = id * 8 + slot - 1
 			local weapon = p.weapons[slot]
-			local searchNow = staggerTick or w.wOverkill[key] == OK_RETARGET
+			local searchNow = staggerTick or retarget or w.wOverkill[key] == OK_RETARGET
 			if groundOrder and (weapon.type == "BOMB" or weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") then
 				World.setTarget(w, key, 0) -- bombing / shelling the ordered spot (Air.bombAim, S-68)
 				continue
@@ -425,6 +441,14 @@ return function(sim: Types.Sim)
 
 			if forced and acceptable(sim, id, weapon, forced, 1, forcedGen) ~= nil then
 				World.setTarget(w, key, forced, forcedGen) -- ordered: overrides fire states and search
+				continue
+			end
+			if blind and (sim.orders.manualX[id] - w.posX[id]) ^ 2 + (sim.orders.manualZ[id] - w.posZ[id]) ^ 2 <= weapon.range * weapon.range then
+				-- the manual target, unseen, its last known position in range:
+				-- Weapons fires there if it can shoot a point, else holds; no
+				-- other target (S-125). Out of range, the search as for a seen
+				-- target out of range (S-115).
+				World.setTarget(w, key, 0)
 				continue
 			end
 			local cur = w.wTarget[key]
