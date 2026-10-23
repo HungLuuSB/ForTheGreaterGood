@@ -487,6 +487,12 @@ Ground units don't send height: the client looks it up from its own copy of the 
     - a rich pair of value 6 in the middle.
     - In all, 30 deposits worth 104, each on an open field cell.
   - **For drawing:** `Normandy.feature(cx, cz)` names each cell (sea, beach, bluff, draw, hedge, house, road, bridge, river, field).
+- **The Canyon** (S-132, the user): `map:canyon` (`Shared/Grid/Canyon`), after BAR's "Classic Glitters" (12 × 20). It is a 154 × 256-cell (1232 × 2048-stud) desert map: **north (player 1) against south (player 2)**, point-symmetric about the centre.
+  - **Mesas:** 36 flat-topped buttes, 48 studs high. They are traced from the reference heightmap's north half and turned 180° for the south. Their cliffs are terraced, no land unit climbs them, and each has a low rocky apron. Jagged high plateaus fill the north-west and south-east corners.
+  - **Badlands:** rough ground (ROCK) round the two mesa belts, north-west and south-east, sits 3 studs above the canyon floor. The floor between them is open, hard-packed ground (GRASS, drawn as desert) running from the north-east to the south-west. Small rock outcrops (impassable) dot it.
+  - **Deposits ("glitter"):** many small value-2 deposits on a jittered grid about every 20 cells, plus four of value 4 round each start: 92 deposits in all.
+  - **For drawing:** `Canyon.feature(cx, cz)` names each cell (mesa, cliff, apron, badlands, boulder, floor).
+
 ---
 
 ## 6. Movement Classes & Pathfinding
