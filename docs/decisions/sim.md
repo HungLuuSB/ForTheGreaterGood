@@ -2146,3 +2146,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Why the wire:** the accuracy is the ally team's: the best `radarError` among its finished radars (or `trackError` for tracked contacts), scaled by its Pinpointers. The client can't count allies' Pinpointers and radars off camera.
 - **Built:** protocol 32. Eco records end with `radarError u16`, `trackError u16` (tenths of a stud, 0 = none) and `precision u8` (× 255). They're the values `Sensors.wobble` uses: the hidden aim point circles a contact at radarError, a tracked one at trackError. They're sent with the Eco record when it changes.
 - **Tests:** `Schema.spec` golden bytes; `NetOut.spec`: no radar gives 0, an Oracle gives 16.0 studs, and three Witnesses scale it down with the precision.
+
+## S-148 — A wilder spiral for lost radar missiles (the user: "make the spiraling more extreme") (2026-10-23)
+
+- `Guidance.LOST_TURN` goes from 9° to 20° a tick (300°/s); `LOST_PERIOD` goes from 18 to 10 ticks (a corkscrew turn every 0.67 s). The nose-over (3° a tick) and the sink are unchanged.
+- **Measured** (`EW.spec`, a Wasp killed after the Aegis missile pitched over): 4 side-to-side swings instead of 2. It flies 30 ticks after the loss, at most 42 studs above where it was lost, then dives about 168 studs into the ground.
+- The client steps the same shared function, so it follows with the next main merge.
