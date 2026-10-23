@@ -18,6 +18,7 @@
 
 local Categories = require("@shared/Defs/Categories")
 local Combat = require("./Combat/Combat")
+local World = require("./World")
 local Lifecycle = require("./Lifecycle")
 local MatchState = require("./MatchState")
 local Types = require("./Types")
@@ -123,10 +124,38 @@ table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
 	end
 end)
 
+Match.SELF_DESTRUCT_PER_TICK = 20 -- an eliminated player's units go this many a tick (S-144)
+
+-- Self-destructs the next eliminated players' units, a few a tick: a whole
+-- base at once cost tens of ms in one tick (every structure's footprint
+-- freed, every death and wreck sent; S-144, the live server's watchdog).
+local function selfDestruct(sim: Types.Sim)
+	local m = sim.match
+	local list = m.doomed
+	if #list == 0 then
+		return
+	end
+	local w = sim.world
+	local done, i = 0, 1
+	while i <= #list and done < Match.SELF_DESTRUCT_PER_TICK do
+		local id, gen = list[i], list[i + 1]
+		if World.isRef(w, id, gen) then
+			Combat.queueDamage(sim.combat, id, w.health[id] * 4 + 1, 0)
+			done += 1
+		end
+		i += 2
+	end
+	m.doomed = table.move(list, i, #list, 1, {}) -- the rest, for the next ticks
+end
+
 -- Match system body (after Construction, every tick).
 function Match.step(sim: Types.Sim)
 	local m = sim.match
-	if not m.enabled or m.over then
+	if not m.enabled then
+		return
+	end
+	selfDestruct(sim)
+	if m.over then
 		return
 	end
 	local w = sim.world
@@ -143,10 +172,11 @@ function Match.step(sim: Types.Sim)
 		end
 	end
 	if #newly > 0 then
-		-- self-destruct everything they still own
+		-- self-destruct everything they still own, a few a tick (S-144)
 		for _, id in w.ids do
 			if table.find(newly, w.owner[id]) then
-				Combat.queueDamage(c, id, w.health[id] * 4 + 1, 0)
+				table.insert(m.doomed, id)
+				table.insert(m.doomed, w.gen[id])
 			end
 		end
 	end

@@ -66,6 +66,18 @@
       }
     },
     {
+      "Name": "chs_condor",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://105276239939545",
+        "NormalMapContent": "rbxassetid://82114609997941",
+        "RoughnessMapContent": "rbxassetid://98663555794311",
+        "MetalnessMapContent": "rbxassetid://85231928740760",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_converter",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -278,6 +290,18 @@
         "NormalMapContent": "rbxassetid://102909256202131",
         "RoughnessMapContent": "rbxassetid://72876622193323",
         "MetalnessMapContent": "rbxassetid://136749334637508",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "chs_leech",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://117714234011551",
+        "NormalMapContent": "rbxassetid://131469286879870",
+        "RoughnessMapContent": "rbxassetid://128963584421007",
+        "MetalnessMapContent": "rbxassetid://112455661532750",
         "EmissiveStrength": 0
       }
     },
@@ -1170,6 +1194,18 @@
       }
     },
     {
+      "Name": "ord_tidewatch",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://80054371655160",
+        "NormalMapContent": "rbxassetid://106233096262303",
+        "RoughnessMapContent": "rbxassetid://102005867491854",
+        "MetalnessMapContent": "rbxassetid://109104913937407",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_tidewright",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -1274,6 +1310,18 @@
         "NormalMapContent": "rbxassetid://86833658408552",
         "RoughnessMapContent": "rbxassetid://89368610438535",
         "MetalnessMapContent": "rbxassetid://133565831053174",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_zenith",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://94111338181615",
+        "NormalMapContent": "rbxassetid://118350865333668",
+        "RoughnessMapContent": "rbxassetid://87138077947407",
+        "MetalnessMapContent": "rbxassetid://75496300554256",
         "EmissiveStrength": 0
       }
     },

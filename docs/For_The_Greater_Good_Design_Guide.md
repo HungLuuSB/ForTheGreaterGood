@@ -1590,11 +1590,12 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 ### 16.3 Match flow
 
-1. **Lobby:** map vote, mode, teams, faction pick. Use reserved servers via TeleportService for matches.
-2. **Loading:** def hash check, map data decode, model preload.
-3. **Start:** each player gets a Command Vehicle and starting resources (e.g., 1000 supply, 1000 power).
-4. **Play.**
-5. **End:** results screen (units built/lost, resources, damage dealt), replay save option, return to lobby.
+1. **Lobby** (a separate "FTGG Lobby" place, the experience's start place; lobby stream, `docs/contracts/match.md`): a BAR-style battle room. The host picks the map, mode, win condition, friendly fire and cheats; players pick seats, teams and factions; the host adds AI players by level. Starting reserves a server of the match place (TeleportService) and stores the match config in MemoryStore under the match ID; only the match ID travels with the teleport.
+2. **Loading:** the match server finds its config from its own private server ID (never from teleport data or clients), admits only the listed players, and waits up to 90 s for them; def hash check, map data decode, model preload.
+3. **Start:** each player gets a Command Vehicle at its map start and starting resources (e.g., 1000 supply, 1000 power). In contract version 1, player IDs are 1..n in the room's order (teams grouped) and player i takes the map's start i; factions follow team parity (Order odd, Chaos even).
+4. **Play.** The match server keeps a heartbeat in MemoryStore; a player who drops can rejoin from the lobby (reconnect = join, 7.5).
+5. **End:** results screen (units built/lost, resources, damage dealt), replay save option. The match server writes the results record, then everyone returns to the lobby (their room shows the results, and profiles record the match).
+6. **Studio / development:** without a stored config, the match place starts from its local `MatchConfig` (the dev path), as before.
 
 ### 16.4 Limits (tune from stress tests)
 

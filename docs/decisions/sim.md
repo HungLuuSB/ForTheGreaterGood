@@ -2062,3 +2062,63 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - with a tiny budget, 40 ticks give 3 WARN lines (ticks 1, 16, 31), the second counting 14 skipped ticks, and one summary at 100%;
   - within budget, nothing is logged;
   - the latest tick's systems add up to its total.
+
+## S-141 — Players choose their start (client request 64) — built, then held (2026-10-23)
+
+- **Asked:** for the alpha match flow, the match config chooses each player's start.
+- **Built** (commit 4793451):
+  - `players[i].start` is an index into the map's starts. `standard_start` places that Commander there, and refuses a start that is shared or off the map.
+  - Replay format 4 keeps each player's start.
+  - The skirmish AI already homes on its Commander.
+  - `Match.spec` covers it.
+- **Held:** a fourth session, D (lobby stream, `m-lobby`), now owns rooms, match start and the return to the lobby. B asked to hold this until D's `docs/contracts/match.md` says whether the match place does a start pick.
+  - Reverted on m-sim-2 (cd82cd0) so it doesn't block other merges.
+  - The commit is kept on branch `s141-starts`. If the contract has a start pick, bring it back by reverting the revert.
+
+## S-142 — AI build sites: reachable for their builder, off factory exit lanes (next.md item 3) (2026-10-23)
+
+- **Why:** the AI's site picker didn't check that the builder could get to a site. S-133's walled-in Commander made that a real failure; S-133 only added a give-up as a safety net.
+- **Built:** `spotNear` takes the builder (every call in the worker loop passes it).
+  - **Reach:** a site is accepted only if some cell on the rings around its footprint, out to the builder's build range (2 cells at least), is open ground in the builder's connected region. That's its move class's quadtree component, which Nav keeps current. So a shipyard on the water is built from the shore. Aircraft, and builders not standing on open ground (inside their factory), always pass.
+  - **Exit lanes:** sites may not cover the 3 cells (`Skirmish.EXIT_LANE`) in front of any of the player's factories, across the factory's width (S-133's exit path).
+- **Measured** (12 min, hard against normal, Coastline 34, skirmish:192 43, Canyon 1, Ridgeline 3):
+  - 404 sites checked; the reach check never fired; the lane rule fired twice.
+  - Give-ups (S-133) stayed at 1–2 per match, the same as before, so their cause is something else (crowding units, a site taken meanwhile). That's under review.
+  - Fast and slow suites pass; mirror fairness 6 / 6.
+
+## S-143 — The lobby stream's match contract v1: the sim side (lobby requests A-1..A-3) (2026-10-23)
+
+- **A-1, starts:** contract v1 gives player IDs 1..n in the room's order (teams grouped) and `start == id`. `Scenarios.standard_start` already puts player i (in sorted ID order) on start i, so `Sim.new` needs nothing new. Factions follow team parity, as `src/roblox/Lobby.config` maps them. Client request 64 / S-141 (chosen starts) is closed against D's L-4; the code stays on branch `s141-starts` in case a later version adds a start pick.
+  - IDs must be contiguous from 1: with IDs 1 and 3, player 3 would take start 2.
+- **A-2, shared validation:** yes. `MatchConfig.validate` (and `validateResult`) may move to `src/shared`, so the lobby and match places run one copy.
+  - D owns that module.
+  - It follows the shared-code rules: `--!strict`, string requires only (`@shared` across roots, relative within), no Roblox globals, it runs in Lune.
+  - Its spec goes under `src/server/Tests`, so `lune run test` covers it.
+  - `Sim.new` stays the final check of the sim config it is turned into.
+- **A-3, guide 16.3:** rewritten for the lobby place and battle room (the host picks the map), reserved servers with the config in MemoryStore, loading and the wait for players, starts and factions in v1, heartbeat and rejoin, the results record and the return. It also keeps the Studio / dev path with the local MatchConfig.
+
+## S-144 — Cheaper structure placement and staggered self-destruct (the live server's watchdog, B's Studio run) (2026-10-23)
+
+- **Reported:** the watchdog (S-140) in B's Studio run flagged Construction at 10–13 ms once early on, and NetOut at 47.6 ms on the tick the match ended.
+- **Construction, measured headless** (skirmish:192, seed 3, hard against normal): the peak was 10.5 ms on a BUILD_START tick. Each structure's `Placement.occupy` cost 2.4–4.7 ms: `Passability.updateRect` re-ran the Chebyshev distance transform over (size + 4 × CAP)² cells (CAP 16) for all 9 move classes.
+- **Fix, placing:**
+  - Occupying only adds obstacles, so `Passability.setOccupied` now sets each ground class's clearance to min(old, Chebyshev distance to the block) over (size + 2 × CAP)², which is exact. Air classes don't change.
+  - Measured: occupy 0.20–0.25 ms; Construction peak 0.87 ms.
+- **Fix, removing:** `updateRect` (still a full transform, since clearance grows) skips classes none of whose cells' pass bits changed, for one the air classes.
+- **Test:** `Passability.recomputeClearance` (a forced full recompute) is the reference in `Passability.spec`. After 40 random blocks, some over the map's edge, and after removing half of them, every class's clearance equals it byte for byte.
+- **NetOut at match end:** an eliminated player's whole army and base self-destructed in one tick. That's one tick of deaths, wrecks, freed footprints (each a full transform) and sight changes; harmless at the very end, a hitch mid-match in FFA.
+  - Now their units queue in `MatchState.doomed` (id, gen; hashed) and go `Match.SELF_DESTRUCT_PER_TICK` (20) a tick.
+  - `Match.spec`: a 46-unit army goes over several ticks, at most 20 a tick.
+  - The rest of B's 47.6 ms may be the match place's own end-of-match work (results, resends). The next Studio run will tell.
+
+## S-145 — The match contract's validator moves to `src/shared` (the user's choice, lobby request A-2) (2026-10-23)
+
+- **Asked:** the match server should check the lobby's config and its own result with the lobby's code, not a copy. The lobby stream may not edit `src/shared`, so the user chose that A moves it (option a, relayed by D).
+- **Built:** `Shared/Match/MatchConfig` (pure Luau, both runtimes), taken from m-lobby 287b99e:
+  - the contract's constants: `CONFIG_VERSION`, `MODES`, `WINS`, `LEVELS`, `FACTIONS`, `MAX_ALLY_TEAMS`, `MAX_TEAM_SIZE`, `MAX_FFA`, and the 12-color palette `COLORS`;
+  - the `Player`, `MatchConfig`, `ResultPlayer` and `Result` types;
+  - `validate`, `validateResult` (with today's rule that a "finished" result may omit `winner`), `users` and `OUTCOMES`.
+  - `build` and `summary` stay in `src/lobby`, since they need the lobby's Rooms.
+  - D switches its require to `@shared/Match/MatchConfig` and drops its copy; B drops its copy in `src/roblox`.
+- **Tests:** `src/server/Tests/MatchConfig.spec`, moved from the lobby's spec with a hand-written config of the same Teams room. It covers tampered configs (version, IDs and starts, colors, users, AI levels, FFA ally teams, spectators, no human, options, lobby, seed) and results checked against their config.
+- **Merge check:** `integrate.sh` now also runs the lobby's own suite (`lune run src/lobby/tools/test`, when present) and requires it to pass, as D asked.
