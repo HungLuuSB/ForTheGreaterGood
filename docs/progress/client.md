@@ -7,6 +7,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 ## Summary (2026-10-23, factory progress bar)
 
 - **A producing factory shows an amber progress bar under its health bar (C-168),** always, for your factories and your allies'. It fills smoothly with the unit being built.
+- Ready to merge: `c1a45ea` (C-168: factory production bar; client only)
 
 ## Summary (2026-10-23, mesh ground on the way)
 
