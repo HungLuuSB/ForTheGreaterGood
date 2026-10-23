@@ -1270,7 +1270,7 @@ countermeasures = {
 - **Support aircraft:** AWACS (Order), EW jammer aircraft (Chaos).
 - **Air workers** (`HELI`): build air structures; fragile.
 - **Ammo & rearm:** aircraft have `ammo` (missiles/bombs). Empty → return to the nearest free rearm pad (airfield or carrier). Rearm costs supply + power over time.
-- **Landing:** landed aircraft are `landed` state: no LOS bonus, easy targets.
+- **Landing:** landed aircraft are `landed` state: no LOS bonus, easy targets. In flight an aircraft's ground sight is `sensors.sight` × `Sensors.FLYING_SIGHT_BONUS` (1.25); landed, its plain sight (S-139).
 
 ### 12.3 Naval
 

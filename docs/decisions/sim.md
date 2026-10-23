@@ -2038,3 +2038,12 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Varying `SLIDE_MIN` (0.3–1.0) moved the split around but kept it tilted east. The cause in that rule wasn't found.
   - The fix is now smaller: the old slide (x first, then z, the step along the heading) stays, and a sliding unit's speed no longer decays below `SLIDE_MIN` (0.5) of its top speed. It used to halve every tick.
   - Results: crawl test passes; seed 43's Mason starts at 0.89 min; fairness 6 / 6 of 12, and 17 / 19 over seeds 1–18.
+
+## S-139 — Flying sight bonus (the user's queue item 4; guide audit item 10, third part) (2026-10-23)
+
+- **Guide 12.2:** "landed aircraft are `landed` state: no LOS bonus". So far there was no bonus, so landing cost an aircraft nothing in sight.
+- **Built:** an aircraft not LANDED stamps its ground sight at `sensors.sight × Sensors.FLYING_SIGHT_BONUS` (1.25). Landed, it stamps its plain sight. `airSight` (sight against aircraft) is unchanged.
+  - The radii cache key includes "flying", so landing or taking off restamps the unit.
+  - Sight isn't terrain-occluded (that's still optional, audit item 19), so the bonus is reach only.
+- **Numbers:** 1.25 is a placeholder (a Wasp's 300-stud sight becomes 375 in flight). It's under review with the other balance numbers. No balance report was run (the user's rule).
+- **Tests:** `Fog.spec`: a flying Wasp sees a tank at 1.12 × its sight; landed, it doesn't, and it still sees one at 0.8 ×.
