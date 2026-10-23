@@ -43,6 +43,7 @@
 
 local Air = require("./Air")
 local Build = require("./Build")
+local BuildState = require("./BuildState")
 local ContactGrid = require("./Combat/ContactGrid")
 local Defs = require("@shared/Defs/Defs")
 local Hash = require("@shared/Util/Hash")
@@ -360,6 +361,23 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		local t = h.target :: number
 		if not World.isRef(w, t, h.gen) or w.ally[t] ~= w.ally[id] then
 			return false
+		end
+		-- a builder guarding (ASSIST) another builder helps with what that one
+		-- builds: its frame, or the factory production it assists (S-128, the
+		-- user; never repairs or stockpiles); otherwise it follows it
+		local b = sim.build
+		if def(sim, id).buildPower and def(sim, t).buildOptions and def(sim, t).domain ~= "structure" then
+			local lt = b.target[t] or 0
+			local helping = lt ~= 0 and World.isRef(w, lt, b.targetGen[t]) and not b.repair[t]
+				and (w.buildProgress[lt] < 1 or b.assist[t] == true)
+			if helping then
+				if (b.target[id] or 0) ~= lt then
+					Build.commandAssist(sim, { id }, lt)
+				end
+				return true -- Build walks it into range and builds
+			elseif (b.target[id] or 0) ~= 0 and not b.repair[id] then
+				BuildState.idle(b, id) -- the leader's job is done: follow again
+			end
 		end
 		local dx, dz = w.posX[t] - w.posX[id], w.posZ[t] - w.posZ[id]
 		local d2 = dx * dx + dz * dz

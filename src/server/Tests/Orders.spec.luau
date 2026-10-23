@@ -459,4 +459,46 @@ return function(t: RunAll.Context)
 		steps(sim, 15)
 		t.equal(sim.orders.manual[tank], nil, "STOP drops it")
 	end)
+
+	t.test("ASSIST on a builder: the helper builds what its leader builds, then follows it (S-128, the user)", function()
+		local function run(helped: boolean): (number?, Sim.Sim, number, number)
+			local sim = Sim.new({ seed = 14, players = PLAYERS, mapId = "flat:128" })
+			local w = sim.world
+			Spawn.unit(sim, "ord_sovereign", 1, -300, -300) -- some income
+			local leader = Spawn.unit(sim, "ord_mason", 1, 0, 0, 0)
+			local helper = Spawn.unit(sim, "ord_mason", 1, -60, 0, 0)
+			for _ = 1, 4 do
+				Sim.step(sim)
+			end
+			if helped then
+				on(sim, CT.GUARD, 1, { helper }, leader)
+			end
+			local g = (sim.map :: any).grid
+			local cell, ox, oz = g:encode(80, 0)
+			submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { leader }, defIndex = sim.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+			local done: number? = nil
+			for _ = 1, 15 * 60 do
+				local acc = sim.eco.accounts[1]
+				acc.supply.stored, acc.power.stored = acc.supply.storage, acc.power.storage
+				Sim.step(sim)
+				for _, e in sim.combat.events do
+					if e.kind == "BUILD_DONE" and done == nil then
+						done = sim.tick
+					end
+				end
+				if done then
+					break
+				end
+			end
+			return done, sim, leader, helper
+		end
+		local alone = run(false)
+		local together, sim, leader, helper = run(true)
+		t.expect(alone ~= nil and together ~= nil, "both finished")
+		t.expect((together :: number) < (alone :: number) * 0.8, `the helper sped it up ({together} against {alone} ticks)`)
+		-- the leader walks off: the helper follows
+		at(sim, CT.MOVE, 1, { leader }, 300, 300)
+		steps(sim, 15 * 20)
+		t.expect(dist(sim.world, helper, sim.world.posX[leader], sim.world.posZ[leader]) < 120, "and follows its leader again")
+	end)
 end
