@@ -75,6 +75,10 @@ const STOPGAP = {
 	chs_cerberus: "Radar SAM Site", // S-111: an anti-nuke
 	ord_custodian: "Mobile Radar SAM", // S-111: a mobile anti-nuke
 	chs_chimera: "Mobile Radar SAM", // S-111: a mobile anti-nuke
+	ord_sanctum: "Radar SAM Site", // S-149: point defence, shoots down missiles and rockets
+	chs_basilisk: "Radar SAM Site", // S-149: point defence
+	ord_shepherd: "Mobile Radar SAM", // S-149: mobile point defence
+	chs_griffin: "Mobile Radar SAM", // S-149: mobile point defence
 };
 
 // Entries drawn in the frame of each def's own domain rather than the

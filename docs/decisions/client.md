@@ -1557,3 +1557,13 @@ Existing calls are unchanged.
 
 **Why:** the user's report (SAMs flying into the sky when their target died) and request (show the missiles' radar accuracy), both through sim-A.
 
+### C-182 — Point defence on the client: interceptions drawn, stopgap icons (2026-10-24)
+
+**Decision:**
+- S-149's interceptors use the anti-nuke path the client already had (INTERCEPTOR chases a projectile, INTERCEPTED drops it). A rocket or tactical missile shot down ends in a small puff (`Effects.INTERCEPT_PUFF`, 3 studs) instead of a nuke's 12.
+- New PointDefence.spec: a Sanctum against an MLRS. 21 interceptors drawn chasing their rockets, 16 rockets shot down with 16 puffs, interceptors within ~1 stud of the server.
+  - The remaining stud is in an interceptor's last tick or two. The server walks projectiles backwards in its swap-removal list, so an interceptor sometimes steers at its rocket's state after the rocket's own step; the client always uses the start of the tick (C-57). Asked of the sim stream.
+- Stopgap icons until the user's draft 4 sheet (C-183): `ord_sanctum` and `chs_basilisk` draw the Radar SAM Site tile, `ord_shepherd` and `chs_griffin` the Mobile Radar SAM, as the anti-nukes do. This fixes main's two failing icon specs.
+
+**Why:** sim-A's S-149 (the user's point defence) and S-150; the icon specs failed on main.
+
