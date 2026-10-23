@@ -65,7 +65,7 @@ ShieldFx.FOOT_OPACITY = 0.8 -- the ring where the dome meets the ground
 ShieldFx.EDGE_OPACITY = 0.95
 ShieldFx.SWIRL_SIZE = 0.4 -- the swirl disc's diameter, × R (C's checked assembly: 16 on 40)
 ShieldFx.SWIRL_OPACITY = 0.85
-ShieldFx.PLATE_POOL = 1300 -- honeycomb cells shared by every shield (C-141: patches of 127 to 271)
+ShieldFx.PLATE_POOL = 2000 -- honeycomb cells shared by every shield (C-142: patches of 217 to 397)
 ShieldFx.PLATE_OPACITY = 0.85 -- a cell's outline at its brightest (outlines are thin: they don't bloom into a block)
 ShieldFx.OUTLINE = 0.16 -- a cell's outline width, of its corner radius (C-131: outlined cells, BAR's honeycomb)
 ShieldFx.PLATE_THICKNESS = 0.12
@@ -152,7 +152,7 @@ local templates: { dome: MeshPart?, ring: MeshPart?, ringThin: MeshPart?, shell:
 -- surface, a hex pattern fading out toward the base; each band's opacity ×
 -- the charge. Shown once approved, or with SHELL_ANYWAY for review.
 local shellEntry = (Meshes :: any).shieldShell
-ShieldFx.SHELL_ANYWAY = false
+ShieldFx.SHELL_ANYWAY = RunService:IsStudio() -- review assets show in Studio, where the user reviews them (C-142)
 ShieldFx.SHELL_TINT = Color3.fromRGB(205, 225, 245)
 local function shellOn(): boolean
 	return shellEntry ~= nil and templates.shell ~= nil and (shellEntry.status == "approved" or ShieldFx.SHELL_ANYWAY)

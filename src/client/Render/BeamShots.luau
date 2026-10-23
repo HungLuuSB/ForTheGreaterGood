@@ -16,7 +16,7 @@ local Meshes = require("@shared/Defs/Meshes/Registry")
 
 local BeamShots = {}
 
-BeamShots.ANYWAY = false -- debug: use it while the entry is at review (Invoke("beamsanyway", true))
+BeamShots.ANYWAY = game:GetService("RunService"):IsStudio() -- review assets show in Studio, where the user reviews them (C-142); Invoke("beamsanyway", false) turns it off
 BeamShots.MAX = 8 -- shots drawn at once (the oldest is dropped)
 
 local entry = (Meshes :: any).beam

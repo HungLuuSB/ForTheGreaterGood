@@ -4,6 +4,13 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, outer rings, C's effects in Studio, turret aim)
+
+- **Shield hits (C-142):** 8 to 11 rings (217 to 397 cells), the outer ones smaller still. Not checked in Studio yet: you were in a playtest. It shows in your next one.
+- **models-C's beam effect and honeycomb shell now show in Studio without commands.** Live games still wait for your approval.
+- **Turret aim:** the client draws the server's aim exactly. My headless tests didn't reproduce turrets going back to rest during a reload, so it's with sim-A (**request 53**), together with your point that beam and hitscan weapons need attack-ground orders (today they ignore them and pick their own targets).
+- **Hidden Radiances' shots drawn as projectiles:** that's request 52 (a SHOT carries no weapon yet). Built by sim-A as S-118; I'll draw them as full beams once it's on main.
+
 ## Summary (2026-10-23, more rings in shield hits)
 
 - **Shield hits (C-141):** more rings, getting smaller toward the edge: 6 to 9 rings (127 to 271 cells). The edge cells are a third the size of the centre one and packed tight, and the inward wave is a little quicker. Screenshot: `debug_out/screens/shield_rings_more.jpg` (shield_beams, 0.5×).
@@ -1745,7 +1752,9 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-52. **Open (sent 2026-10-23).** **SHOT should say it's a beam:** a hidden shooter's beam arrives as SHOT (both ends, no weapon), so the client draws a plain tracer: no held beam, glancing leg or shield pulses. Asked for the weapon's def index on SHOT (protocol bump).
+53. **Open (sent 2026-10-23).** **Attack-ground for BEAM / HITSCAN; turrets returning to rest (the user):** beams and hitscan should fire at an ordered point (pierce damages anyone crossing). Turret guns reportedly swing back to rest while reloading; not reproduced headless (the client draws the server aim verbatim). Sim-A to check the target-retention paths.
+
+52. **Built (S-118, protocol 28, merging): SHOT carries weaponDefIndex; the client to draw hidden beams as full beams.** **SHOT should say it's a beam:** a hidden shooter's beam arrives as SHOT (both ends, no weapon), so the client draws a plain tracer: no held beam, glancing leg or shield pulses. Asked for the weapon's def index on SHOT (protocol bump).
 
 51. **Built (S-117, merging): a beam stopped by a dome drains it over its duration (best damage / 150 × 12.5: Radiance 250, Inferno ~142). The user: shields were far too strong against beams.**
 

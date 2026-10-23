@@ -1138,3 +1138,11 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - RING_DELAY 0.05 so the inward wave still reaches the centre quickly. Pool 1300.
 
 **Why:** the user: "add more smaller rings to the honeycomb reflect".
+
+### C-142 — Even more outer rings; models-C's review effects show in Studio (2026-10-23)
+
+**Decision:**
+- **Rings:** 8 + strength, clamped to 8..11 (217 to 397 cells). RIM_SHRINK 0.9, RING_DELAY 0.04, pool 2000.
+- **Review effects:** `BeamShots.ANYWAY` and `ShieldFx.SHELL_ANYWAY` default to `RunService:IsStudio()`. Studio is where the user reviews, so they no longer need the debug commands there; live servers still wait for "approved".
+
+**Why:** the user: "also add more rings of outer honeycombs. Where's the effect from C?"
