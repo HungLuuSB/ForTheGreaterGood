@@ -2062,3 +2062,37 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - with a tiny budget, 40 ticks give 3 WARN lines (ticks 1, 16, 31), the second counting 14 skipped ticks, and one summary at 100%;
   - within budget, nothing is logged;
   - the latest tick's systems add up to its total.
+
+## S-141 — Players choose their start (client request 64) — built, then held (2026-10-23)
+
+- **Asked:** for the alpha match flow, the match config chooses each player's start.
+- **Built** (commit 4793451):
+  - `players[i].start` is an index into the map's starts. `standard_start` places that Commander there, and refuses a start that is shared or off the map.
+  - Replay format 4 keeps each player's start.
+  - The skirmish AI already homes on its Commander.
+  - `Match.spec` covers it.
+- **Held:** a fourth session, D (lobby stream, `m-lobby`), now owns rooms, match start and the return to the lobby. B asked to hold this until D's `docs/contracts/match.md` says whether the match place does a start pick.
+  - Reverted on m-sim-2 (cd82cd0) so it doesn't block other merges.
+  - The commit is kept on branch `s141-starts`. If the contract has a start pick, bring it back by reverting the revert.
+
+## S-142 — AI build sites: reachable for their builder, off factory exit lanes (next.md item 3) (2026-10-23)
+
+- **Why:** the AI's site picker didn't check that the builder could get to a site. S-133's walled-in Commander made that a real failure; S-133 only added a give-up as a safety net.
+- **Built:** `spotNear` takes the builder (every call in the worker loop passes it).
+  - **Reach:** a site is accepted only if some cell on the rings around its footprint, out to the builder's build range (2 cells at least), is open ground in the builder's connected region. That's its move class's quadtree component, which Nav keeps current. So a shipyard on the water is built from the shore. Aircraft, and builders not standing on open ground (inside their factory), always pass.
+  - **Exit lanes:** sites may not cover the 3 cells (`Skirmish.EXIT_LANE`) in front of any of the player's factories, across the factory's width (S-133's exit path).
+- **Measured** (12 min, hard against normal, Coastline 34, skirmish:192 43, Canyon 1, Ridgeline 3):
+  - 404 sites checked; the reach check never fired; the lane rule fired twice.
+  - Give-ups (S-133) stayed at 1–2 per match, the same as before, so their cause is something else (crowding units, a site taken meanwhile). That's under review.
+  - Fast and slow suites pass; mirror fairness 6 / 6.
+
+## S-143 — The lobby stream's match contract v1: the sim side (lobby requests A-1..A-3) (2026-10-23)
+
+- **A-1, starts:** contract v1 gives player IDs 1..n in the room's order (teams grouped) and `start == id`. `Scenarios.standard_start` already puts player i (in sorted ID order) on start i, so `Sim.new` needs nothing new. Factions follow team parity, as `src/roblox/Lobby.config` maps them. Client request 64 / S-141 (chosen starts) is closed against D's L-4; the code stays on branch `s141-starts` in case a later version adds a start pick.
+  - IDs must be contiguous from 1: with IDs 1 and 3, player 3 would take start 2.
+- **A-2, shared validation:** yes. `MatchConfig.validate` (and `validateResult`) may move to `src/shared`, so the lobby and match places run one copy.
+  - D owns that module.
+  - It follows the shared-code rules: `--!strict`, string requires only (`@shared` across roots, relative within), no Roblox globals, it runs in Lune.
+  - Its spec goes under `src/server/Tests`, so `lune run test` covers it.
+  - `Sim.new` stays the final check of the sim config it is turned into.
+- **A-3, guide 16.3:** rewritten for the lobby place and battle room (the host picks the map), reserved servers with the config in MemoryStore, loading and the wait for players, starts and factions in v1, heartbeat and rejoin, the results record and the return. It also keeps the Studio / dev path with the local MatchConfig.
