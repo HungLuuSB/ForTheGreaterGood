@@ -2152,3 +2152,33 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - `Guidance.LOST_TURN` goes from 9° to 20° a tick (300°/s); `LOST_PERIOD` goes from 18 to 10 ticks (a corkscrew turn every 0.67 s). The nose-over (3° a tick) and the sink are unchanged.
 - **Measured** (`EW.spec`, a Wasp killed after the Aegis missile pitched over): 4 side-to-side swings instead of 2. It flies 30 ticks after the loss, at most 42 studs above where it was lost, then dives about 168 studs into the ground.
 - The client steps the same shared function, so it follows with the next main merge.
+
+## S-149 — Point defence: units that shoot down missiles and rockets (the user) (2026-10-24)
+
+- **Asked:** "Add a new unit for both faction: an unit that is capable of intercepting long range missiles." The user chose:
+  - targets: every missile and rocket flying nearby;
+  - a structure and a mobile version per faction;
+  - interceptor missiles with a hit chance.
+- **Units** (T2, placeholder numbers; Order fewer and surer, Chaos more and less sure):
+
+  | | Order | Chaos |
+  |---|---|---|
+  | Structure (T2 builder, footprint 3) | `ord_sanctum` Sanctum: 450 range, 8 interceptors, 85% | `chs_basilisk` Basilisk: 420, 10, 75% |
+  | Mobile (advanced vehicle plant, wheeled) | `ord_shepherd` Shepherd: 330, 4, 85% | `chs_griffin` Griffin: 300, 5, 75% |
+
+  - Each has its own short radar (radar about its reach), to detect what it shoots. They never fire at units.
+  - The mobile ones fire on the move, unlike the mobile anti-nukes: they escort armies.
+  - The interceptors (`*_point_interceptor`) launch vertically. They fly at 580–600 studs/s and turn 680–720°/s: tighter than a SAM, so they can come round onto a nearby rocket.
+  - The stock refills one interceptor every 1.8–2.5 s. A salvo larger than the stock gets through.
+- **Mechanism** (`intercepts.tactical = true`; Targeting's `interceptTarget`):
+  - It picks the nearest enemy projectile within range that the team detects (sight or radar at its position), one interceptor per missile, from all projectiles in flight.
+  - What counts: HOMING weapons, and BALLISTIC ones marked `rocket = true` (both MLRS and both rocket packs). Not strategic missiles (anti-nukes take those) and not interceptors.
+  - The rest is the anti-nuke path (S-48, S-111): the interceptor homes on the projectile and its proximity burst destroys it with `intercepts.chance` (an INTERCEPTED event).
+- **Measured** (`PointDefence.spec`, 30 s):
+  - a Sanctum against a Chaos MLRS (Hydra) shelling a tank beside it: 16 of 56 rockets shot down with 22 interceptors (73% of interceptors hit). The MLRS outfires the stock: saturation, as intended;
+  - a Basilisk against an Order missile battery: 14 of 14 missiles shot down;
+  - a Shepherd also shoots rockets down; an anti-nuke ignores them.
+- **Not done:**
+  - the skirmish AI doesn't build them yet;
+  - the client draws them with the generic blockout and the anti-nuke icon until B and C make their own (IDs sent);
+  - no balance report run (the user's rule).

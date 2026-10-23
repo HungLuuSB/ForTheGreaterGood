@@ -10,6 +10,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| Point defence (the user) | Sanctum / Basilisk (T2 structures) and Shepherd / Griffin (T2 vehicles) shoot down enemy missiles and rockets near them with interceptors; never units | S-149 |
 | Radar missiles without a target (the user) | A radar missile that loses its target corkscrews, noses over and falls (no more flying straight into the sky); one whose target dies in its launch phase flies to the target's last known spot and bursts there | S-146 |
 | Radar accuracy for the sensor view (the user, for B) | Eco records carry the team's radar error, tracking error and Pinpointer precision (protocol 32) | S-147 |
 | Match records' validator into `src/shared` (the user's choice, lobby request A-2) | `Shared/Match/MatchConfig`: the contract's limits, palette, record types, `validate`, `validateResult`, `users`; the lobby and match places use one copy. integrate.sh now also runs the lobby's own suite (required) | S-145 |
