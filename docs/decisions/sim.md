@@ -1787,6 +1787,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - **Cause:** NetOut sent a weapon's aim in State records only when it changed. A unit entering a player's tactical tier came with its ENTER and no aim, so a turret already held steady on a still target was never sent and the client drew it at rest.
   - **Fix:** an armed unit now gets a State record with its aim and weapon states on the tick it enters.
   - The other reports (swinging back between reloads) didn't reproduce headless (the client's probes, and mine); an entering unit with a steady aim fits both.
+  - **The beam towers' case (the client's repro, `shield_beams`):** a Radiance kept tracking its target during its 3 s beam, so the barrel left the beam's fixed line, then eased back toward rest. Fix: while a lingering beam of a weapon burns, that weapon's aim holds on the fired line (no turret update); tracking resumes when the beam ends.
 - **Tests:**
   - `Defenses.spec`: Radiance attack-grounds a point and the Ravager on its line takes the ray; the Inferno attack-grounds empty ground, misses, and hurts nobody off the line;
   - `NetOut.spec`: a Lancer aimed at a still Ravager enters a player's view and its aim arrives with it (the test fails without the fix).
+  - `Defenses.spec`: Radiance firing at a Ravager driving across holds its yaw for the 3 s of the beam, then tracks again.

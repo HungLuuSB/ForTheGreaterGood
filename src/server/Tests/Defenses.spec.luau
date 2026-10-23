@@ -199,6 +199,39 @@ return function(t: RunAll.Context)
 		t.equal(w2.health[nobody], sim2.defs.units.ord_lancer.health, "and hurt nobody off its line")
 	end)
 
+	t.test("a burning beam holds the barrel on its line until it ends (S-119, client request 53)", function()
+		local sim = Sim.new({ seed = 8, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local runner = Spawn.unit(sim, "chs_ravager", 2, -200, 200, math.pi / 2)
+		Spawn.unit(sim, "ord_herald", 1, 0, 120, 0) -- sees it
+		World.setFireState(w, runner, World.FireState.HOLD_FIRE)
+		World.setHealth(w, runner, 1e6)
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(300, 200)
+		submit(sim, 2, { cmdType = Schema.CmdType.MOVE, flags = 0, unitIds = { runner }, cell = cell, offX = ox, offZ = oz })
+		local key = World.slotKey(tower, 1)
+		local firedAt, yawAtFire = nil, 0
+		local moved = false
+		for _ = 1, 15 * 10 do
+			power(sim, 1, 5000)
+			Sim.step(sim)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower and firedAt == nil then
+					firedAt, yawAtFire = sim.tick, w.wYaw[key]
+				end
+			end
+			if firedAt and sim.tick > firedAt and sim.tick < firedAt + 15 * 3 then
+				if w.wYaw[key] ~= yawAtFire then
+					moved = true
+				end
+			end
+		end
+		t.expect(firedAt ~= nil, "it fired at the moving Ravager")
+		t.equal(moved, false, "the barrel stayed on the beam's line while it burned")
+		t.expect(w.wYaw[key] ~= yawAtFire, "and tracked again after")
+	end)
+
 	t.test("the Inferno doesn't fire at radar-only contacts; seen, it does", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world

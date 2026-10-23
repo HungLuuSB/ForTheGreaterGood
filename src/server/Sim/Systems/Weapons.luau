@@ -321,6 +321,16 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam)
 	end
 end
 
+-- Is a lingering beam of (shooter, slot) burning? (S-119: its aim holds)
+local function beaming(c: Combat.Combat, id: number, slot: number): boolean
+	for _, b in c.beams do
+		if b.shooter == id and b.slot == slot then
+			return true
+		end
+	end
+	return false
+end
+
 -- One tick of every lingering beam (S-113).
 local function beamStep(sim: Types.Sim)
 	local c = sim.combat
@@ -512,7 +522,10 @@ return function(sim: Types.Sim)
 			-- rotate the turret (fixed mounts without a turret table aim
 			-- instantly); without a target: hold, then back to rest
 			aimState.yaw, aimState.pitch, aimState.hold = w.wYaw[key], w.wPitch[key], w.wHold[key]
-			if aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
+			if weapon.beamDuration and beaming(c, id, slot) then
+				-- a lingering beam burning (S-119, client request 53): the
+				-- barrel stays on the fired line until the beam ends
+			elseif aimed and weapon.launch ~= "vertical" then -- vertical launchers stay at rest (S-42)
 				Aim.update(turret, aimState, wantYaw, wantPitch)
 			else
 				Aim.update(turret, aimState, nil, nil)
