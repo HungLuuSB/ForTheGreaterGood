@@ -2036,3 +2036,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `26e92d3` (m-models 44101bf: heroic mech Commander meshes, at review); test_client 215, build passed.
 - Ready to merge: `a6942aa` (main b7f0f09 merged in 8f553c1 with S-124..S-126; ghost-attack spec, C-149); test_client 216, build passed.
 - Ready to merge: `29a4d48` (ally relation and smart orders, C-150; inert until S-129); test_client 217, build passed (client only).
+- Ready to merge: `8d672dd` (smooth radar blips, C-151); test_client 218, build passed (client only).
