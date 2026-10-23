@@ -10,7 +10,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Studio can't teleport,** so a stand-in match server runs the match's side of the contract in-process. Its loading screen has buttons to end the match, "kill" the server, or leave early. All three paths were checked in Studio, plus staged reserve and teleport failures.
 - **Main menu:** Home (Quick play), Skirmish (map cards and Launch), Multiplayer (rooms), Replays, Profile, Settings, laid out after your BAR references. The background is a live battle of the game's own tank, SAM, MLRS and aircraft models, with a mouse parallax camera.
 - **Checked in Studio through the UI:** Home, the room browser, Create room, the battle room (Teams on Twin Lakes with 3 AI), room chat, Start, the stand-in match screen, the results panel, and the profile. Screenshots: `debug_out/screens/lobby_*.jpg`.
-- **Not checked yet (Rojo was disconnected after a restart):** the game's real unit meshes in the background (the screenshots show the box stand-ins), and four small fixes made after those screenshots: Skirmish's detail panel scrolls with Launch pinned, the results panel is taller, the pages hide behind the loading screen, and the browser's filter order.
+- **Re-checked after Rojo reconnected:** the background uses the game's real unit meshes (all 11, no box stand-ins), brighter and closer (`lobby_home.jpg`). The four fixes work: Skirmish scrolls with Launch pinned and segmented options, the results panel fits, the pages hide behind the loading screen (`lobby_loading.jpg`), and the browser order is right. A two-player free for all is called "1v1".
 - **Contract:** `docs/contracts/match.md` v1 (config schema, MemoryStore keys, results record, timeouts, rejoin, profiles), filed below for sim-A and client-B.
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
@@ -91,8 +91,8 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Rooms and room setup, server-checked (L-3), chat (L-9) | done, checked in Studio |
 | Start and return with Studio stand-ins (L-4, L-6), failure paths | done, checked in Studio |
 | Profile and history (L-8) | done, checked in Studio (stand-in store) |
-| Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio (last fixes pending a re-check) |
-| Background battle scene with parallax (L-12) | done; checked with box stand-ins, real meshes pending a re-check |
+| Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
+| Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
 | Key-art contract and parallax viewer on the loading screen (L-13) | done; waiting for C's art |
 | Published test (needs the user to publish, and B-1) | waiting |

@@ -64,15 +64,16 @@ function Skirmish.new(frame: Frame, _router: any): any
 		end
 		return out
 	end
-	Kit.dropdown(Kit.row(detail, "Your faction", 6), options(Config.FACTIONS), choice.faction, function(v)
+	-- segmented, not dropdowns: a dropdown's list would be clipped by the scroll
+	Kit.segmented(Kit.row(detail, "Your faction", 6), options(Config.FACTIONS), choice.faction, function(v)
 		choice.faction = v
-	end, 200)
-	Kit.dropdown(Kit.row(detail, "Opponent faction", 7), options(Config.FACTIONS), choice.enemy, function(v)
+	end, 90)
+	Kit.segmented(Kit.row(detail, "Opponent faction", 7), options(Config.FACTIONS), choice.enemy, function(v)
 		choice.enemy = v
-	end, 200)
-	Kit.dropdown(Kit.row(detail, "Difficulty", 8), options(Config.LEVELS), choice.level, function(v)
+	end, 90)
+	Kit.segmented(Kit.row(detail, "Difficulty", 8), options(Config.LEVELS), choice.level, function(v)
 		choice.level = v
-	end, 200)
+	end, 70)
 	local launch = Ui.button(card, "Launch", "go", function()
 		if choice.map then
 			Net.send({ op = "quick", mapId = choice.map.id, faction = choice.faction, level = choice.level, enemy = choice.enemy })

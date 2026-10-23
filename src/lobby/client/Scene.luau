@@ -79,9 +79,10 @@ end
 local function light()
 	Lighting.ClockTime = 17.7
 	Lighting.GeographicLatitude = 30
-	Lighting.Brightness = 2.6
-	Lighting.Ambient = Color3.fromRGB(46, 40, 40)
-	Lighting.OutdoorAmbient = Color3.fromRGB(120, 100, 92)
+	Lighting.Brightness = 3.2
+	Lighting.Ambient = Color3.fromRGB(70, 62, 60)
+	Lighting.OutdoorAmbient = Color3.fromRGB(150, 132, 120)
+	Lighting.ExposureCompensation = 0.35
 	Lighting.EnvironmentDiffuseScale = 0.5
 	Lighting.EnvironmentSpecularScale = 0.8
 	Lighting.ShadowSoftness = 0.2
@@ -93,7 +94,7 @@ local function light()
 		end
 		e.Parent = Lighting
 	end
-	effect("Atmosphere", "LobbyAtmosphere", { Density = 0.36, Offset = 0.15, Color = Color3.fromRGB(205, 170, 140), Decay = Color3.fromRGB(110, 76, 66), Glare = 0.5, Haze = 1.8 })
+	effect("Atmosphere", "LobbyAtmosphere", { Density = 0.3, Offset = 0.25, Color = Color3.fromRGB(222, 186, 150), Decay = Color3.fromRGB(150, 104, 84), Glare = 0.6, Haze = 1.4 })
 	effect("BloomEffect", "LobbyBloom", { Intensity = 0.7, Size = 28, Threshold = 1.4 })
 	effect("SunRaysEffect", "LobbySunRays", { Intensity = 0.05, Spread = 0.6 })
 	effect("ColorCorrectionEffect", "LobbyGrade", { Contrast = 0.14, Saturation = -0.08, TintColor = Color3.fromRGB(255, 238, 222) })
@@ -537,8 +538,8 @@ end
 
 -- camera --------------------------------------------------------------------
 
-local camPos = ORIGIN + Vector3.new(-8, 30, 92)
-local camLook = ORIGIN + Vector3.new(4, 6, 0)
+local camPos = ORIGIN + Vector3.new(-4, 19, 64)
+local camLook = ORIGIN + Vector3.new(2, 4, -2)
 local smoothX, smoothY = 0, 0
 
 local function stepCamera(now: number, dt: number)
@@ -547,7 +548,7 @@ local function stepCamera(now: number, dt: number)
 		return
 	end
 	cam.CameraType = Enum.CameraType.Scriptable
-	cam.FieldOfView = 42
+	cam.FieldOfView = 50
 	local mx, my = 0, 0
 	if parallax then
 		local vp = cam.ViewportSize
