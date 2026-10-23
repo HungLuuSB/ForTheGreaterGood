@@ -4,6 +4,12 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, S-120 / S-121 merged: beams go through fallen domes)
+
+- **Merged sim-A's S-120 / S-121 and checked in Studio:** a Radiance ordered onto an enemy Carapace takes the order (towers now accept attack orders). Its beam ends on the dome, and once the dome collapses (~2.5 s in) the same beam moves on to the generator. It repeats when the dome rises again (`debug_out/screens/beam_through_dome.jpg`).
+- **Domes visible without vision (as in BAR):** asked sim-A (**request 55**). Today the server only sends a dome for a generator you can see. The client will draw domes from the new records.
+- Your shield_beams edit (fewer Radiances) is kept; it's your local MatchConfig, uncommitted.
+
 ## Summary (2026-10-23, S-119 merged)
 
 - **Merged sim-A's S-119.** Beam and hitscan weapons follow attack-ground orders: in shield_beams the Radiances now fire at your dome's middle, and their beams end on its surface. A turret's barrel holds on its beam while it burns, and turrets show their aim as soon as a unit comes into view. Checked in Studio.
@@ -1773,7 +1779,9 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-54. **Built (S-120 / S-121, integrating): structures take ATTACK (manual target, any fire state); a dome dropping under a beam sends a new FIRE / SHOT to the target; the client continues the beam (C-144).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
+55. **Open (sent 2026-10-23).** **Shield domes render regardless of vision (the user, as in BAR):** send dome state (centre, radius, charge, flags) for enemy domes touching the camera area, whatever the team sees, without revealing the generator; the client draws domes from it.
+
+54. **Done (S-120 / S-121, on main 4356074; checked in Studio): structures take ATTACK (manual target, any fire state); a dome dropping under a beam sends a new FIRE / SHOT to the target; the client continues the beam (C-144).** **An ordered target must stick (a Radiance ordered onto a Phalanx picked a tank), and a beam must go on through a dome that drops under it.** Proposed wire: a new FIRE / SHOT on the drop tick; the client continues the burning beam (C-144, ready). Manual-target priority over fire state is S-120.
 
 53. **Built (S-119, merging): attack-ground for BEAM / HITSCAN; aim held while a beam burns; NetOut sends aim on ENTER.** **Attack-ground for BEAM / HITSCAN; turret aim during a beam (the user):**
     - Beams and hitscan should fire at an ordered point; pierce damages anyone crossing.
