@@ -2025,3 +2025,12 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:**
   - `Orders.spec`: a Herald (60 studs/s) and a Lancer (28). Without the flag the Herald arrives far ahead. With it, it never passes 28 studs/s and they arrive within 30 ticks of each other, while a Falcon in the selection flies at its own speed.
   - `Schema.spec`: golden bytes of a GROUP + QUEUE move; flag bit 8 is reserved.
+
+## S-138 — Queue units in a factory still being built (client request 63, the user) (2026-10-23)
+
+- **Asked:** "Add the ability to queue inside the factory while it being built". `Build.commandBuild` used to drop a queue order on an unfinished factory.
+- **Built:**
+  - An unfinished factory takes BUILD queue items, and REPEAT as before. Its queue is sent in the QUEUE owner field like any factory's.
+  - It produces nothing and spends nothing until finished: the builders loop skips unfinished factories, and assistants build the frame. It starts on the queue the tick it's finished.
+  - **CANCEL:** while a factory's queue isn't empty, CANCEL drops queue items (`value` 1-based, 0 = all) and leaves the frame. A CANCEL with an empty queue cancels the frame as before (S-35). So on a frame with a queue, the first CANCEL 0 clears the queue and the second removes the frame. net.md section 9 says so.
+- **Tests:** `Build.spec`: a Vehicle Plant frame takes three items, and CANCEL 3 drops one. No progress or PRODUCED before it's finished; it starts at once after. A second frame's first CANCEL 0 clears its queue and the second removes it.

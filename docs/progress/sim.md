@@ -22,6 +22,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 | Anti-nukes (your request, requests 46) | Providence / Cerberus (structures) and Custodian / Chimera (mobile, only while stopped). Cover by aim point, one interceptor per nuke, certain hit, a delay longer than a nuke's flight. They spot nukes anywhere. Radar SAMs shoot aircraft only and now one-shot T1 air | S-111 |
 | Item 8 balance pass | Locust +10% damage, Order heavy cannon +10%, Order radar SAM reload −10%, Falcon range +5%. 12 of 12 shared roles in band (was 10). Fighters, the Herald and the T2 tank Chaos condition still short: proposals below | S-112 |
 | Beams (requests 47, 49, 50) | Lingering beams (`beamDuration`). Radiance fires at blips (misses without Pinpointers) and is a 3 s hit-ray (`pierce`). Domes stop beams at the surface. Manual targets kept until STOP | S-113, S-115, S-116 |
+| Queue in a factory being built (client request 63, the user) | An unfinished factory takes BUILD queue items (QUEUE owner field sent) and starts on them when finished; CANCEL on it drops queue items first | S-138 |
 | Discord notify (your queue item 2) | Built, then removed at your request (`lune run notify` is gone) | — |
 | Group speed (your queue item 3) | Command flag GROUP 4 (Ctrl, agreed with B): a move / fight / patrol keeps ground units at the slowest one's speed | S-137 |
 | Idle builders and factories (client request 62) | Owner-only IDLE event on change, on camera or not; every idle one on join (protocol 31) | S-136 |
