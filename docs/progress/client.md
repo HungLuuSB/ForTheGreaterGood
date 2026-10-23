@@ -18,6 +18,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `ae721bf` (C-176: loading screen key art, a copy of the lobby's KeyArt viewer)
 - Ready to merge: `9a9ae06` (C-177: fix a client freeze from crane / gantry loops far from the camera)
 - Ready to merge: `3fd6f06` (C-178: MatchContract and TeamColors use @shared/Match/MatchConfig)
+- **One key art viewer (C-179):** the lobby place now mounts `UI/KeyArt` read-only, as it does the Kit; keep its API stable.
 
 ## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
 

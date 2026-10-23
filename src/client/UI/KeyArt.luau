@@ -1,8 +1,10 @@
 --!strict
--- A copy of the lobby place's src/lobby/client/KeyArt.luau (session D),
--- so the match's loading screen (UI/MatchLoading, C-176) shows the same art
--- the same way and the hand-off across the teleport looks continuous; keep
--- the two in step.
+-- The one key art viewer of both places (C-179): the match's loading
+-- screen (UI/MatchLoading, C-176) and the lobby place, which mounts this
+-- file read-only as ReplicatedStorage.ClientKit.UI.KeyArt (lobby L-13), so
+-- the hand-off across the teleport looks continuous. Keep its API stable,
+-- as with the Kit: KeyArt.available(), and KeyArt.new(parent, zIndex)
+-- returning a view with show(name?) -> boolean and hide().
 --
 -- Key art with parallax layers (L-13, docs/contracts/key-art.md): the
 -- models stream's layered pictures from the mesh manifest's `keyArt`, each
