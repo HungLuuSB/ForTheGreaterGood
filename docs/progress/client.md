@@ -8,6 +8,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 - **You can now watch a factory build (C-152):** the unit in production stands on the factory's pad as a translucent team-coloured hologram. It fills in from the bottom up behind a glowing line, with nano spray from the factory's emitters. The spray stops when the economy stalls. This works for your factories and your allies'. Checked in Studio on a vehicle plant and an airfield.
 - **Coming:** finished units start on the pad and drive out, instead of appearing a cell outside the factory (sim request 61).
+- Ready to merge: `12ff8b5` (C-152: factory production frames; client only, no protocol change)
 
 ## Summary (2026-10-23, radar blips circle their unit)
 
