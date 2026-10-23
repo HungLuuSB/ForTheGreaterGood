@@ -1,0 +1,139 @@
+{
+  "id": "chs_leviathan_wreck",
+  "wreckOf": "chs_leviathan",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.1989,
+        4.8327,
+        -0.428
+      ],
+      "size": [
+        10.5268,
+        11.5453,
+        28.7554
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -3.4263,
+        11.2191,
+        1.0329
+      ],
+      "size": [
+        3.1494,
+        1.1679,
+        0.5839
+      ],
+      "pivot": [
+        -3.6,
+        11.0,
+        1.0
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        -4.0583,
+        2.9798,
+        -11.3449
+      ],
+      "size": [
+        1.0279,
+        0.3863,
+        1.6045
+      ],
+      "pivot": [
+        -4.0,
+        2.4,
+        -10.4
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        -3.9854,
+        2.9689,
+        9.5324
+      ],
+      "size": [
+        1.7778,
+        1.382,
+        2.6823
+      ],
+      "pivot": [
+        -4.0,
+        2.4,
+        10.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        -4.0,
+        3.0999999999999996,
+        -12.200000000000001
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        -4.0,
+        3.0999999999999996,
+        8.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1368,
+    "radar": 80,
+    "turret1": 112,
+    "turret2": 200,
+    "total": 1760
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

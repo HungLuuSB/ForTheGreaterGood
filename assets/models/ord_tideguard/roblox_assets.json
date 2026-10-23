@@ -1,0 +1,57 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 1956 triangles, glow share 2.6%",
+  "bar": {
+    "model": "rbxassetid://92788392692905",
+    "meshes": {
+      "base": "rbxassetid://107967552784656",
+      "base_glow_head": "rbxassetid://105477458768531",
+      "base_glow_running": "rbxassetid://130604766815487",
+      "trackL": "rbxassetid://78022420541236",
+      "trackR": "rbxassetid://140585342302307",
+      "turret": "rbxassetid://76064792707223",
+      "turret_glow_running": "rbxassetid://121356352782141",
+      "turret_glow_weapon": "rbxassetid://140043023088692"
+    },
+    "decals": {
+      "ALB": "rbxassetid://127598865672420",
+      "RGH": "rbxassetid://77224564255866",
+      "NOR": "rbxassetid://105910374161183",
+      "MTL": "rbxassetid://87314029720493",
+      "EMI": "rbxassetid://101883880113463"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://81570169181306",
+      "NOR": "rbxassetid://126001769938616",
+      "RGH": "rbxassetid://105908218696374",
+      "MTL": "rbxassetid://111736225009100",
+      "EMI": "rbxassetid://127276242124780"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_tideguard_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://93344448569319",
+    "meshes": {
+      "base": "rbxassetid://109659122077014",
+      "trackL": "rbxassetid://117612571018057",
+      "trackR": "rbxassetid://109170200602018",
+      "turret": "rbxassetid://102703708654180"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73236748905857",
+      "RGH": "rbxassetid://134473492422229",
+      "NOR": "rbxassetid://107406718777183",
+      "MTL": "rbxassetid://80432104993763",
+      "EMI": "rbxassetid://101310971312610"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://123682507423798",
+      "NOR": "rbxassetid://105450851951257",
+      "RGH": "rbxassetid://101622745129118",
+      "MTL": "rbxassetid://120362859539676",
+      "EMI": "rbxassetid://116068728536883"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_tideguard_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 1844 triangles"
+  }
+}

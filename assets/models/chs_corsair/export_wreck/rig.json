@@ -1,0 +1,166 @@
+{
+  "id": "chs_corsair_wreck",
+  "wreckOf": "chs_corsair",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0757,
+        4.2005,
+        -1.0593
+      ],
+      "size": [
+        6.9951,
+        10.0728,
+        28.1504
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -0.1346,
+        9.5057,
+        1.7849
+      ],
+      "size": [
+        2.8119,
+        0.8207,
+        0.5111
+      ],
+      "pivot": [
+        0.0,
+        9.0,
+        1.8
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        -0.1653,
+        2.8992,
+        -11.528
+      ],
+      "size": [
+        2.809,
+        1.8595,
+        6.8893
+      ],
+      "pivot": [
+        0.0,
+        2.0,
+        -9.4
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        0.2098,
+        2.6098,
+        9.0165
+      ],
+      "size": [
+        1.0952,
+        0.4983,
+        2.2572
+      ],
+      "pivot": [
+        0.0,
+        2.0,
+        9.6
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.091,
+        2.7713,
+        5.1276
+      ],
+      "size": [
+        2.3905,
+        2.0058,
+        3.0324
+      ],
+      "pivot": [
+        0.0,
+        2.0,
+        5.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0,
+        2.9,
+        -14.8
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        0,
+        2.6,
+        8.0
+      ]
+    },
+    "muzzle3": {
+      "parent": "launcher",
+      "at": [
+        0.0,
+        2.9,
+        3.6000000000000005
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 808,
+    "radar": 68,
+    "turret1": 264,
+    "turret2": 100,
+    "launcher": 384,
+    "total": 1624
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

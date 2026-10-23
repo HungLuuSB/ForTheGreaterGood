@@ -1,0 +1,200 @@
+{
+  "id": "ord_providence",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.65,
+        0.0
+      ],
+      "size": [
+        23.1468,
+        7.3,
+        23.1468
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        7.0,
+        8.6,
+        7.0
+      ],
+      "size": [
+        4.2,
+        2.5252,
+        1.1626
+      ],
+      "pivot": [
+        7.0,
+        7.4,
+        7.0
+      ]
+    },
+    "hatch": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.45,
+        -0.775
+      ],
+      "size": [
+        7.2,
+        1.1,
+        7.85
+      ],
+      "pivot": [
+        0.0,
+        4.35,
+        2.7
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "base",
+      "at": [
+        0.0,
+        3.2,
+        -1.0
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "radar",
+    "hatch"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.715,
+        0.0
+      ],
+      "size": [
+        22.5,
+        2.23,
+        22.5
+      ]
+    },
+    {
+      "name": "base_glow_weapon",
+      "piece": "base",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.7,
+        -5.32
+      ],
+      "size": [
+        7.4,
+        0.3,
+        0.06
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        7.0,
+        8.665,
+        6.8215
+      ],
+      "size": [
+        3.84,
+        2.1118,
+        0.7849
+      ]
+    },
+    {
+      "name": "hatch_glow_running",
+      "piece": "hatch",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.78,
+        -4.62
+      ],
+      "size": [
+        6.0,
+        0.05,
+        0.12
+      ]
+    }
+  ],
+  "glowShare": 0.0102,
+  "triangles": {
+    "base": 1178,
+    "radar": 160,
+    "hatch": 276,
+    "total": 1614
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

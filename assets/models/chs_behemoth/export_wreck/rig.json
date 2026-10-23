@@ -1,0 +1,101 @@
+{
+  "id": "chs_behemoth_wreck",
+  "wreckOf": "chs_behemoth",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0054,
+        2.25,
+        -0.6448
+      ],
+      "size": [
+        13.224,
+        4.4999,
+        11.1263
+      ]
+    },
+    "bay": {
+      "parent": "base",
+      "center": [
+        -0.0375,
+        -0.046,
+        0.2051
+      ],
+      "size": [
+        1.5728,
+        0.4022,
+        2.9515
+      ],
+      "pivot": [
+        0.0,
+        0.0,
+        0.2
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        -0.0544,
+        -0.2739,
+        2.3394
+      ],
+      "size": [
+        3.5933,
+        0.5716,
+        1.5693
+      ],
+      "pivot": [
+        0.0,
+        0.0,
+        2.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "bay",
+      "at": [
+        0,
+        -0.1,
+        0.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 768,
+    "bay": 48,
+    "pylon": 236,
+    "total": 1052
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

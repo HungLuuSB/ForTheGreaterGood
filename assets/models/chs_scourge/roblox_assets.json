@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 2870 triangles, glow share 4.7%",
+  "bar": {
+    "model": "rbxassetid://118219809815338",
+    "meshes": {
+      "base": "rbxassetid://119817774144996",
+      "base_glow_power": "rbxassetid://79559574920643",
+      "base_glow_running": "rbxassetid://80528887609782",
+      "launcher": "rbxassetid://124060189912684",
+      "launcher_glow_weapon": "rbxassetid://92341081442736"
+    },
+    "decals": {
+      "ALB": "rbxassetid://91964606052631",
+      "RGH": "rbxassetid://96990228979343",
+      "NOR": "rbxassetid://96140459673556",
+      "MTL": "rbxassetid://134697558662875",
+      "EMI": "rbxassetid://122790016132898"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://85516881529758",
+      "NOR": "rbxassetid://77413580436085",
+      "RGH": "rbxassetid://86691387460142",
+      "MTL": "rbxassetid://136556486487978",
+      "EMI": "rbxassetid://81473017216684"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_scourge_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://85509191733106",
+    "meshes": {
+      "base": "rbxassetid://133800302988649",
+      "launcher": "rbxassetid://89681197605157"
+    },
+    "decals": {
+      "ALB": "rbxassetid://101021010997368",
+      "RGH": "rbxassetid://139357525933656",
+      "NOR": "rbxassetid://79147832401700",
+      "MTL": "rbxassetid://90038579286157",
+      "EMI": "rbxassetid://130185898684690"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95037131937667",
+      "NOR": "rbxassetid://77323341459690",
+      "RGH": "rbxassetid://87692171090776",
+      "MTL": "rbxassetid://97804131979003",
+      "EMI": "rbxassetid://140597728432800"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_scourge_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 2468 triangles"
+  }
+}

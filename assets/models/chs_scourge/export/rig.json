@@ -1,0 +1,148 @@
+{
+  "id": "chs_scourge",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        4.5,
+        0.0
+      ],
+      "size": [
+        23.1714,
+        9.0,
+        23.1714
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.5417,
+        0.1064
+      ],
+      "size": [
+        6.0,
+        3.8834,
+        8.2128
+      ],
+      "pivot": [
+        0.0,
+        1.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -1.6,
+        4.4,
+        -4.2
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "launcher"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.045,
+        0.0
+      ],
+      "size": [
+        22.45,
+        8.51,
+        22.45
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -1.8,
+        1.6,
+        -2.0725
+      ],
+      "size": [
+        10.4,
+        0.8,
+        10.945
+      ]
+    },
+    {
+      "name": "launcher_glow_weapon",
+      "piece": "launcher",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        4.65,
+        -2.45
+      ],
+      "size": [
+        4.08,
+        1.38,
+        0.12
+      ]
+    }
+  ],
+  "glowShare": 0.047,
+  "triangles": {
+    "base": 1848,
+    "launcher": 1022,
+    "total": 2870
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

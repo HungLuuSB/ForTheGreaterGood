@@ -1,0 +1,112 @@
+{
+  "id": "ord_providence_wreck",
+  "wreckOf": "ord_providence",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0868,
+        3.5892,
+        0.0974
+      ],
+      "size": [
+        23.2637,
+        7.2585,
+        23.1986
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        7.0261,
+        8.5028,
+        6.9849
+      ],
+      "size": [
+        4.1716,
+        2.7206,
+        1.4352
+      ],
+      "pivot": [
+        7.0,
+        7.4,
+        7.0
+      ]
+    },
+    "hatch": {
+      "parent": "base",
+      "center": [
+        0.1018,
+        4.4202,
+        -0.8745
+      ],
+      "size": [
+        6.9803,
+        1.4062,
+        7.6503
+      ],
+      "pivot": [
+        0.0,
+        4.35,
+        2.7
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "base",
+      "at": [
+        0.0,
+        3.2,
+        -1.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 942,
+    "radar": 148,
+    "hatch": 232,
+    "total": 1322
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
