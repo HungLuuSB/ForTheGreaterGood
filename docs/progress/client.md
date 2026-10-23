@@ -1804,7 +1804,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-58. **Open, URGENT (sent 2026-10-23).** **Sim crash when a beam or hitscan's manual target dies (S-125):** Weapons:106 hitscanHits indexes the dead target's profile (nil) on the tick after it dies; the whole server tick errors. Headless repro sent.
+58. **Fixed (S-126, on m-sim-2, next to main):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
 
 57. **On main (S-125, 6c68d4c; behaviour verified headless, but see 58): cause was a lost spotter (an unseen manual target counted as out of range). Now point-capable weapons keep firing at its last known spot while it lives and that spot is in range (beyond range: own picks); on its death the weapons search the same tick.** **Manual targets:** dropped for a dome generator after a couple of dome-blocked shots while the ordered unit still lives (headless repro sent); and when the chosen unit dies, back to auto-targeting at once (the user).
 
