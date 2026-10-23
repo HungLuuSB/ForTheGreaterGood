@@ -242,7 +242,10 @@ local function fire(
 			ey = Combat.groundHeight(c, ex, ez)
 		end
 	else
-		hit = hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
+		-- a remembered structure that is gone (a ghost: radar-capable weapons
+		-- fire at them, Radiance since S-113) can't be hit: a miss at the
+		-- spot (S-126; it crashed the tick, client request 57's repro)
+		hit = w.slot[target] ~= nil and hitscanHits(c, w, target, dist, wrapAngle(worldYaw + yawErr - exactYaw), pitch + pitchErr - exactPitch)
 		-- where the shot ends: the target's aim point, or the ground beyond or
 		-- beside it on a miss (FIRE carries it for clients, guide 7.3)
 		if hit then

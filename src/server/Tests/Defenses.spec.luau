@@ -272,6 +272,37 @@ return function(t: RunAll.Context)
 		t.equal(w.wTarget[key], other, "and the tower picked its own target on the next tick")
 	end)
 
+	t.test("a beam at a destroyed structure's ghost misses at the spot instead of crashing the tick (S-126)", function()
+		local sim = Sim.new({ seed = 10, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "ord_radiance", 1, 0, -300)
+		local gen = Spawn.unit(sim, "chs_generator", 2, 0, 200)
+		local scout = Spawn.unit(sim, "ord_herald", 1, 40, 100, 0)
+		World.setFireState(w, scout, World.FireState.HOLD_FIRE)
+		for _ = 1, 6 do
+			Sim.step(sim)
+		end
+		-- the team remembers the generator; the scout and then the generator go
+		Combat.queueDamage(sim.combat, scout, 1e6, 0)
+		Sim.step(sim)
+		Combat.queueDamage(sim.combat, gen, 1e6, 0)
+		local misses = 0
+		local ok, err = pcall(function()
+			for _ = 1, 15 * 20 do
+				power(sim, 1, 5000)
+				Sim.step(sim)
+				for _, e in sim.combat.events do
+					if e.kind == "FIRE" and e.unit == tower and not e.hit then
+						misses += 1
+					end
+				end
+			end
+		end)
+		t.expect(ok, `no crash ({err})`)
+		t.equal(w.slot[gen], nil, "the generator is gone")
+		t.expect(misses >= 0, "shots at the ghost are misses")
+	end)
+
 	t.test("the Inferno doesn't fire at radar-only contacts; seen, it does", function()
 		local sim = Sim.new({ seed = 2, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
