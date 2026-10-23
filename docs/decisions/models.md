@@ -266,3 +266,16 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user's review of v1 (2026-10-23): too small and too blocky; the Commanders are the hero units and must clearly out-mass any tank from the game camera.
 
+### M-33 — Commander mechs v3: shapes, balance, team color (2026-10-23)
+
+**Decision:** keep v2's size, footprint 2, rig and pivots, and rebuild the surfaces (v2 kept in `assets/models/<id>/v2/`):
+- **Balance:** thick armored legs and arms.
+- **Shapes:** round shoulder housings and joint drums, tapered and angled plates with bevels big enough to read at 55°, armor layered over a dark under-frame, pistons behind the knees and elbows.
+- **Heads:** small helmets set down between the shoulders.
+- **Team color in large areas:** the arched pauldron shells, the chest plates, the shin plates and the backpack / reactor hump; the faction paint on the frame and secondary plates.
+- **Detail:** hazard striping on the joints, vents, cables and lights; a bigger weapon (Order: long twin barrels; Chaos: a long gun with a muzzle brake), so the `muzzle` attachments moved forward (Order z −5.0, Chaos z −4.72; blockouts updated); a clear emitter arm.
+- **Budget:** up to 12,000 triangles; glow about 5%.
+- **Tools:** shared shapes in `tools/mech.py` (`tseg`, `drum`, `hazard`, `arch`).
+
+**Why:** the user's review of v2 (2026-10-23): the size is right, the look too blocky; limbs read thin under huge shoulders; heads read as boxes; ownership must read from across the map like BAR's commanders.
+
