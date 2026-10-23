@@ -4,6 +4,10 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, factory progress bar)
+
+- **A producing factory shows an amber progress bar under its health bar (C-168),** always, for your factories and your allies'. It fills smoothly with the unit being built.
+
 ## Summary (2026-10-23, mesh ground on the way)
 
 - **The ground is moving off Roblox terrain (C-167):** the named maps will use mesh tiles that models-C bakes from the game's own height data (requested). They stay sharp at any distance, so a minimap jump lands crisp. Terrain keeps only the water.

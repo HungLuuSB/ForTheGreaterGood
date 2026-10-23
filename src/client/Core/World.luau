@@ -63,6 +63,7 @@ export type Unit = {
 	queueProgress: number?, -- the head item's progress, 0..1 (to a 255th)
 	producing: number?, -- allied factories (protocol 27, S-103): the def index in production, 0 = idle
 	producingProgress: number?, -- its progress, 0..1
+	productionShown: number?, -- the item's progress as drawn (eased between the server's steps, Render/FactoryFrames, C-168)
 	fireState: number?, -- Schema.FireState
 	moveState: number?, -- Schema.MoveState
 	ammo: number?, -- aircraft with an ammo count: rounds left

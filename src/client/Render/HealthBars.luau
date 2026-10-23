@@ -13,6 +13,7 @@ local HealthBars = {}
 local HEALTH_H = 4 -- pixels
 local BUILD_H = 3
 local BUILD_COLOR = Color3.fromRGB(150, 205, 255)
+local PRODUCTION_COLOR = Color3.fromRGB(238, 186, 92) -- a factory's item in production (C-168)
 local BACK_COLOR = Color3.fromRGB(20, 20, 20)
 -- missile stock (S-47, C-56): one pip per missile above the health bar,
 -- filled while in stock; past MAX_PIPS a single bar instead
@@ -128,7 +129,7 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 			end
 			local w = math.floor(d.width + 0.5)
 			local b = d.bar
-			local building = b.build ~= nil
+			local building = b.build ~= nil or b.production ~= nil
 			-- the pair is anchored by its bottom edge, so the health bar stays put when the build bar goes
 			slot.root.Position = UDim2.fromOffset(math.floor(d.x + 0.5), math.floor(d.y + 0.5) - if building then BUILD_H + 1 else 0)
 			slot.root.Size = UDim2.fromOffset(w, HEALTH_H)
@@ -138,7 +139,8 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 			slot.buildBack.Visible = building
 			if building then
 				slot.buildBack.Size = UDim2.new(1, 0, 0, BUILD_H)
-				slot.buildFill.Size = UDim2.new(math.clamp(b.build :: number, 0, 1), 0, 1, 0)
+				slot.buildFill.Size = UDim2.new(math.clamp((b.build or b.production) :: number, 0, 1), 0, 1, 0)
+				slot.buildFill.BackgroundColor3 = if b.build ~= nil then BUILD_COLOR else PRODUCTION_COLOR
 			end
 			drawStock(slot, w, b.stock, b.stockMax, b.stockProgress)
 			slot.root.Visible = true

@@ -1415,3 +1415,9 @@ Extractor drags also drop spots that share cells with an earlier spot of the sam
 - Spec: GroundMeshes.spec. Nothing to see in Studio until models-C's first tiles.
 
 **Why EditableMesh isn't used:** the user rejected the terrain's coarse-then-sharp redraw after camera jumps (C-162). Ground built in game as an EditableMesh would need about 160,000 vertices on The Canyon, but the device's editable-memory budget ran out at about 7,600 (Render/FogBlanket's note). Uploaded meshes have no such budget and render at full detail at any distance.
+
+### C-168 — A producing factory shows its item's progress bar (2026-10-23)
+
+**Decision:** an own or allied factory that is producing gets a second bar under its health bar, always, selected or not. It's amber, the UI accent, so it reads apart from the blue construction bar. It shows the item's progress as the hologram draws it (FactoryFrames' eased value, `u.productionShown`), else the server's sixteenths. Spec: Bars.spec, through the real server.
+
+**Why:** the user: "Still no progress bar for building", over a selected vehicle plant producing a tank.

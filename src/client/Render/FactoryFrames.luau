@@ -241,6 +241,9 @@ function FactoryFrames.step(ff: FactoryFrames, world: World.World, renderer: Uni
 		if defIndex ~= f.defIndex or UnitRenderer.modelOf(renderer, id) ~= f.factoryModel then
 			release(f)
 			frames[id] = nil
+			if u then
+				u.productionShown = nil -- the next item starts from its own progress
+			end
 		end
 	end
 	for id, d in renderer.drawn do
@@ -268,6 +271,7 @@ function FactoryFrames.step(ff: FactoryFrames, world: World.World, renderer: Uni
 		local place = CFrame.new(at) * CFrame.Angles(0, u.heading + math.pi, 0)
 		frame.root.CFrame = place * frame.rootOffset
 		local progress, spraying = Nanoframe.track(frame.tracker, reported, now, frame.expected)
+		u.productionShown = progress -- the factory's progress bar draws the same eased value (C-168)
 		local lineY = Nanoframe.lineY(frame.lo, frame.hi, progress)
 		local color = frameColor(u.team)
 		for _, look in frame.looks do
