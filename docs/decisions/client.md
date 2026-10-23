@@ -1284,3 +1284,31 @@ Maps without an entry get the moonlit night (C-101). Details:
 **Why:** the user's queue item 2: "Animation pass with C's animated pieces ... driven by power and on/off state".
 
 **Not done:** a sonar "ping" effect and a jammer shimmer beyond the spinning emitter. Both would be new VFX, not pieces.
+
+### C-157 — BAR's selection panel: tile clicks keep, drop or widen a type (2026-10-23)
+
+**Decision:** with several units selected, the unit panel's type tiles (icon and count, C-71) now follow BAR (`Selection.tileClick`):
+- a click keeps only that type;
+- Shift-click drops it;
+- Ctrl-click selects every own unit of that type on screen (`Selection.sameTypeOnScreen`, as a double-click).
+
+Spec: SelectionTiles.spec. Screen: `c157_selection_tiles.jpg` (2 Masons and 3 Lancers).
+
+**Testing note:** Studio MCP's simulated clicks reach the world under a GUI button: the click lands as an empty-ground click and clears the selection, and the Lobby Start button missed the same way. A real click is consumed by the button. So the tile logic is covered by the spec, not by an MCP click.
+
+**Why:** the user's queue item 3.
+
+### C-158 — Idle builders and factories: top-strip counts, I to cycle, IDLE tags (2026-10-23)
+
+**Decision:**
+- `Core/Idle` counts own idle builders and factories:
+  - a factory with an empty queue, or none sent: the server sends one only once there's been a queue;
+  - a builder that stood still 3 s with no orders still shown (Waypoints) and no own frame going up within its build range.
+- `UI/IdleStrip`: "Idle builders (I): n" and "Idle factories: n", right of the resource bar, amber when non-zero. A click picks the next one.
+- **I** selects the next idle builder and the camera follows it (`Idle.next` walks them by id and wraps).
+- `Render/IdleMarks` puts a small IDLE tag over each idle builder. It's screen space, like HealthBars: a BillboardGui didn't render.
+- Checked in Studio: 3 idle builders (2 Masons and the Commander) and 1 idle factory. Spec: Idle.spec. Screen: `c158_idle_marks.jpg`.
+
+**Limits until sim request 62:** only units in the tactical tier count, and a builder repairing or assisting without a client-sent order can read as idle. Request 62 asks the server for an owner-only idle signal that covers off-camera units too.
+
+**Why:** the user's queue item 4.

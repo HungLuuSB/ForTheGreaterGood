@@ -13,6 +13,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Animated pieces (C-156):** radars and drills turn while powered, wheels roll while moving, factory gantries run while producing, windmills turn.
 - Ready to merge: `e299b43` (C-153..C-155: Canyon look and lobby entry, client blip orbit, per-map looks)
 - Ready to merge: `65673ae` (C-156: animated pieces run by state)
+- **Selection panel like BAR (C-157):** with several units selected, click a type tile to keep it, Shift-click to drop it, Ctrl-click for every one of that type on screen.
+- **Idle indicators (C-158):** idle builder and factory counts beside the resource bar, **I** jumps to the next idle builder (the camera follows), an IDLE tag over each. For now only what's in view counts: sim request 62 asks the server for a proper idle signal.
 
 ## Summary (2026-10-23, factories show what they build)
 
@@ -1773,6 +1775,7 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
 
 ## Requests for the sim session
 
+62. **Open (2026-10-23, the user's queue item 4):** **An idle signal for own units.** Owner-only and sent on change, covering units outside the camera (owner fields ride only tactical records, and the strategic flags are full): which of the player's builders have no orders and no build / assist / repair / reclaim / guard / patrol work, and which factories have an empty queue. The client guesses from what it sees until then (C-158).
 61. **Done on m-sim-2 (S-133, 04c70db; not on main yet, merged into this branch for the user's playtest):** the pad position matches the client's frame (vehicle plant: 64, 47.4). (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**
     - The finished unit spawns at the factory's `buildpad` (from the blockout's attachments, model space, rotated with the facing) with the factory's heading. Today it's halfSize + one cell out, then EXIT_ROLL: ~12 studs past the pad on a vehicle plant.
     - It then drives out along the heading through the factory's own footprint, then takes the rally order.

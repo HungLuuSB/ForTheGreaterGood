@@ -20,6 +20,9 @@ local Normandy = require("@shared/Grid/Normandy")
 local Canyon = require("@shared/Grid/Canyon")
 local MapLook = require("./Core/MapLook")
 local Atmosphere = require("./Render/Atmosphere")
+local Idle = require("./Core/Idle")
+local IdleStrip = require("./UI/IdleStrip")
+local IdleMarks = require("./Render/IdleMarks")
 local Api = require("./Api")
 local Camera = require("./Camera")
 local Interp = require("./Core/Interp")
@@ -169,6 +172,20 @@ local function toggleFollow()
 	local view = cam.ViewportSize
 	camState.follow = Follow.pick(world, api.state.selection, lastVisibleFx, Controls.projector(cam), view.X / 2, view.Y / 2)
 end
+-- Idle builders and factories (C-158): counts in the top strip, I jumps to
+-- the next idle builder (selected, the camera follows it), a tag over each.
+Idle.KEY = Enum.KeyCode.I
+local idle = Idle.new()
+local idleMarks = IdleMarks.new()
+local nextIdleCount = 0
+local function pickIdle(kind: string)
+	local id = Idle.next(idle, kind :: any)
+	if id then
+		api.actions.select({ id })
+		camState.follow = { kind = "unit", id = id }
+	end
+end
+local idleStrip = IdleStrip.new(pickIdle)
 -- Global sim speed (C-35, Studio only): - slower, = faster, P pause / resume.
 -- The server publishes the speed as the Remotes folder's SimSpeed attribute.
 local SPEEDS = { 0.1, 0.25, 0.5, 1, 2, 4 }
@@ -196,6 +213,8 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 		DepositsRender.setEnabled(deposits, not deposits.enabled)
 	elseif key == MissileViewRender.TOGGLE_KEY then
 		MissileViewRender.setEnabled(missileView, not missileView.enabled)
+	elseif key == Idle.KEY then
+		pickIdle("builder")
 	elseif key == FOLLOW_KEY then
 		local settings = SettingsMenu.state
 		if settings and settings.devMode then
@@ -1020,6 +1039,14 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	MinimapUI.setFog(minimap, FogBlanket.content(fog), FogBlanket.ENABLED and not (world.joined and world.me.player == 0))
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
+	if now >= nextIdleCount then
+		nextIdleCount = now + 0.25
+		Idle.update(idle, world, function(id: number): boolean
+			return api.waypoints.byUnit[id] ~= nil
+		end, now)
+	end
+	IdleStrip.step(idleStrip, #idle.builders, #idle.factories)
+	IdleMarks.step(idleMarks, world, idle.builders, strategic, workspace.CurrentCamera)
 	BuildMenuUI.step(buildMenu, api)
 	CommandCard.step(commandCard, api)
 	UnitPanel.step(unitPanel, api)

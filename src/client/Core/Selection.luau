@@ -141,6 +141,24 @@ function Selection.sameTypeOnScreen(world: World.World, project: Projector, defI
 	return out
 end
 
+-- A click on a type tile in the unit panel (C-157, BAR's selection
+-- panel): "keep" only that type, "remove" it (Shift), or "screen": every
+-- own unit of that type on screen (Ctrl; `onScreen` from sameTypeOnScreen).
+function Selection.tileClick(world: World.World, ids: { number }, defIndex: number, how: "keep" | "remove" | "screen", onScreen: { number }?): { number }
+	if how == "screen" then
+		return table.clone(onScreen or {})
+	end
+	local out = {}
+	for _, id in ids do
+		local u = world.units[id]
+		local same = u ~= nil and u.defIndex == defIndex
+		if same == (how == "keep") then
+			table.insert(out, id)
+		end
+	end
+	return out
+end
+
 function Selection.saveGroup(sel: Selection, n: number)
 	sel.groups[n] = table.clone(sel.ids)
 end
