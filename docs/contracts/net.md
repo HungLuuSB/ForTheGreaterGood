@@ -145,7 +145,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `IDLE 25` | `unitId u16, idle u8 (0 / 1)`, 4 B (protocol 31, S-136, client request 62) | Owner only, on camera or not: one of P's finished builders or factories (units with `buildOptions`) became idle (1) or busy (0). A builder is idle with no order of its own (automatic reactions don't count) and no build, assist, repair or reclaim work; a factory with an empty queue. Checked every `NetOut.IDLE_EVERY` (5) ticks. Units never reported are busy. On join / reconnect every idle one is sent. A dead unit's report lapses: drop it with the unit. |
 | `INTERCEPTED 16` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile was destroyed in flight at `pos`: a small burst, **no detonation**; drop the projectile. Sent instead of its IMPACT. |
 | `DECOYED 7` | `projId u16, pos, vel, decoy pos, decoyTicks u8, countermeasure u8`, 23 B (countermeasure: 1 flares, 2 chaff, 3 DIRCM, `Schema.Countermeasure`; protocol 13) | For projectiles the client has: a countermeasure seduced it. Snap to `pos`/`vel`, clear its target, and for the next `decoyTicks` ticks steer toward the decoy point with `Guidance.decoy` (stop early when it returns false), then fly straight (protocol 11, S-28). |
-| `LOST_LOCK 8` | `projId u16, pos, vel`, 15 B | Same, but the missile flies on unguided. A RADAR-guided missile (S-146) then corkscrews and sinks: from the event's tick, step its velocity with `Guidance.lost(vx, vy, vz, k, projId, 1 / 15)` before the ballistic step, k = 0, 1, 2... ticks since the event. Others fly straight. |
+| `LOST_LOCK 8` | `projId u16, pos, vel`, 15 B | Same, but the missile flies on unguided. A RADAR-guided missile (S-146) then corkscrews and sinks: the event carries its state after the server's first lost step (k = 0), so on each later tick step its velocity with `Guidance.lost(vx, vy, vz, k, projId, 1 / 15)` before the ballistic step, with k = 1, 2, 3... (the ticks since the event). Others fly straight. |
 | `DEATH 3` | `unitId u16, severity u8, wreckId u16`, 6 B | Tactical units (section 5). |
 | `ENTER 1` / `LEAVE 2` | 16 B / 3 B | Section 5. |
 
@@ -289,6 +289,9 @@ radarError u16      the team's radar accuracy, tenths of a stud (0 = no radar):
                     at this distance (guide 11.4), Pinpointers included
 trackError u16      the same for tracked contacts (0 = no fire-control radar)
 precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
+                    (trackError is 0 only while no fire-control radar has any
+                    power; in a partial stall it still tracks, within its shrunk
+                    reach: it applies to the contacts flagged TRACKED)
                     = 41 B
 ```
 
