@@ -1792,3 +1792,12 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `Defenses.spec`: Radiance attack-grounds a point and the Ravager on its line takes the ray; the Inferno attack-grounds empty ground, misses, and hurts nobody off the line;
   - `NetOut.spec`: a Lancer aimed at a still Ravager enters a player's view and its aim arrives with it (the test fails without the fix).
   - `Defenses.spec`: Radiance firing at a Ravager driving across holds its yaw for the 3 s of the beam, then tracks again.
+
+## S-120 — Manual targets take priority whatever the fire state (the user, via the client) (2026-10-23)
+
+- **Asked:** "Manual targeting must take priority." Units didn't stick to the unit they were ordered to attack. An attack on a unit should win over the unit's own picks whenever that target is in range and attackable, whatever the fire state, and survive later moves.
+- **Changed (S-115's rule):**
+  - Targeting takes the manual target (the last ATTACK's, kept until STOP) whenever it is in range, on any fire state (was: not on hold fire).
+  - Weapons fires at it even on hold fire.
+  - The overkill rule (S-29: drop a target that damage on its way will kill) no longer drops a manual target, as it never dropped an attack order's.
+- **Tests:** `Orders.spec`: on hold fire, the unit stays on its manual target and keeps firing at it; STOP still clears it.

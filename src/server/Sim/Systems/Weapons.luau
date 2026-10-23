@@ -483,7 +483,8 @@ return function(sim: Types.Sim)
 				end
 				-- an attack-ground order's shelling ignores the fire state (S-68)
 				local ordered = target == 0 and (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil
-				canFire = (ordered or not holdFire) and dist <= weapon.range + radius
+				-- (its manual target fires even on hold fire: S-120)
+				canFire = (ordered or not holdFire or (target ~= 0 and sim.orders.manual[id] == target)) and dist <= weapon.range + radius
 				if pitch == nil then
 					canFire = false
 					wantPitch = if turret then rad(turret.maxPitch) else 0
@@ -549,6 +550,7 @@ return function(sim: Types.Sim)
 				and reload <= 0
 				and w.wOverkill[key] ~= OK_ALLOWED
 				and sim.orders.forced[id] ~= target
+				and sim.orders.manual[id] ~= target -- (a manual target is kept, S-120)
 				and World.isRef(w, target, targetGen)
 				and Combat.doomed(c, w, target)
 				and Sensors.level(sim, w.ally[id], target) == VISIBLE
