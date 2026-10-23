@@ -39,7 +39,7 @@ function Results.new(gui: ScreenGui): any
 		elseif r.outcome == "draw" then
 			headline, color = "Draw", Kit.COLOR.text
 		elseif mine == nil then
-			headline, color = `Ally team {r.winner} won`, Kit.COLOR.text
+			headline, color = if r.winner then `Ally team {r.winner} won` else "Every human is out", Kit.COLOR.text
 		elseif mine.won then
 			headline, color = "Victory", Kit.COLOR.victory
 		else

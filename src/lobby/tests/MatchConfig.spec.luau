@@ -123,7 +123,12 @@ return function(t: RunAll.Context)
 		r.matchId = "m1"
 		r.winner = 9
 		t.equal(MatchConfig.validateResult(r, c), "winner")
+		r.winner = nil -- every human out while AI fight on: finished, nobody's winner
+		t.equal(MatchConfig.validateResult(r, c), nil)
+		r.outcome = "draw"
 		r.winner = 2
+		t.equal(MatchConfig.validateResult(r, c), "winner")
+		r.outcome = "finished"
 		r.players[1].stats = { unitsBuilt = "lots" }
 		t.equal(MatchConfig.validateResult(r, c), "player 1: stats")
 		r.players[1].stats = nil
