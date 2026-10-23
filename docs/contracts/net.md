@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **29**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **30**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -258,7 +258,7 @@ A reconnect is a join. The **Snapshot** channel carries a short handshake, then 
 |---|---|---|---|
 | `HELLO 1` | C → S | `protocol u16, defsHash u32`, 7 B | First message after connecting. |
 | `REJECT 2` | S → C | `protocol u16, defsHash u32, reason u8`, 8 B | The server's versions; `reason` 1 = protocol, 2 = defs. Show "update your client" and stop. Nothing else is sent. |
-| `WELCOME 3` | S → C | `tick u32, player u8, team u8, allyTeam u8, mapIdLength u8, mapId bytes`, 9 B + map ID | The full sim tick (to unwrap wire ticks), who you are, and the map to load. |
+| `WELCOME 3` | S → C | `tick u32, player u8, team u8, allyTeam u8, mapIdLength u8, mapId bytes, teamCount u8, allyTeam u8 × teamCount` (the list since protocol 30, S-129), 10 B + map ID + teams | The full sim tick (to unwrap wire ticks), who you are, the map to load, and every team's ally team (team 1 first; 0 = a team not in the match): units of teams in your ally team are friends. |
 
 After WELCOME, the server resets the player's replication state, so the very next outbox is a complete picture:
 - a **full strategic snapshot**, not waiting for the 5-tick cadence;
@@ -312,6 +312,7 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 30 | WELCOME ends with every team's ally team (`teamCount u8, allyTeam u8 × teamCount`): allies on the client (S-129) |
 | 29 | Events DOME 23 and DOME_GONE 24: shield domes regardless of vision (S-122, client request 55) |
 | 28 | SHOT carries `weaponDefIndex u16` (16 B): a hidden shooter's beam is drawn as a beam (S-118, client request 52) |
 | 27 | CHEAT command 17 and event CHEAT_RESULT 22: cheat / test commands (section 9a, S-102); State owner field PRODUCING 16: allied factories' item and progress (S-103, client request 45) |
