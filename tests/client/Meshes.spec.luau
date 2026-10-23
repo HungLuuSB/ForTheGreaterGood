@@ -40,10 +40,12 @@ return function(t: any)
 	end)
 
 	t.test("the approved and review statuses follow the user's review", function()
-		for _, id in { "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth", "ord_extractor", "chs_spike" } do
+		for _, id in { "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth", "ord_generator", "chs_spike" } do
 			t.equal(Registry.units[id].status, "approved", id)
 		end
 		t.equal(Registry.fx.shield_emitter.status, "approved")
+		-- redesigned at the size scale (S-104): back to review until the user approves
+		t.equal(Registry.units.ord_extractor.status, "review")
 	end)
 
 	t.test("validate reports broken entries", function()

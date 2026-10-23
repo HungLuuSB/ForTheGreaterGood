@@ -1,6 +1,6 @@
 {
   "id": "chs_extractor",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style gunmetal (M-15)"
   },
@@ -9,20 +9,52 @@
       "parent": null,
       "center": [
         0.0,
-        3.4975,
+        4.1725,
         0.0
       ],
       "size": [
-        6.6,
-        6.995,
-        6.6
+        15.563,
+        8.345,
+        15.563
+      ]
+    },
+    "drill": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.325,
+        0.0
+      ],
+      "size": [
+        2.5,
+        6.15,
+        2.5
+      ],
+      "pivot": [
+        0.0,
+        1.25,
+        0.0
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [
-    "base"
+    "base",
+    "drill"
   ],
+  "visualPieces": [
+    "drill"
+  ],
+  "anim": {
+    "drill": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -44,14 +76,14 @@
       ],
       "strength": 2.0,
       "center": [
-        1.165,
-        4.42,
-        0.24
+        0.0,
+        5.0125,
+        0.0
       ],
       "size": [
-        2.77,
-        5.76,
-        0.92
+        10.9,
+        7.475,
+        10.9
       ]
     },
     {
@@ -65,21 +97,43 @@
       ],
       "strength": 2.5,
       "center": [
-        1.0625,
-        3.135,
-        0.84
+        5.2475,
+        3.915,
+        3.6
       ],
       "size": [
-        3.765,
-        3.87,
-        3.32
+        3.195,
+        3.73,
+        2.8
+      ]
+    },
+    {
+      "name": "drill_glow_power",
+      "piece": "drill",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.045,
+        0.0
+      ],
+      "size": [
+        2.4,
+        4.07,
+        2.4
       ]
     }
   ],
-  "glowShare": 0.0492,
+  "glowShare": 0.0259,
   "triangles": {
-    "base": 860,
-    "total": 860
+    "base": 1936,
+    "drill": 344,
+    "total": 2280
   },
   "textures": {
     "size": 1024,
