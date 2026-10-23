@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 29 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122)
+Schema.PROTOCOL_VERSION = 30 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -1458,6 +1458,8 @@ end
 --   HELLO    C → S  protocol u16 | defsHash u32                              =  7 bytes
 --   REJECT   S → C  protocol u16 | defsHash u32 | reason u8 (1 protocol, 2 defs) = 8 bytes
 --   WELCOME  S → C  tick u32 | player u8 | team u8 | allyTeam u8 | mapIdLength u8 | mapId
+--                   | teamCount u8 | allyTeam u8 × teamCount (team 1 first; 0 = no such
+--                   team; protocol 30, S-129)
 --------------------------------------------------------------------------------
 
 Schema.SnapshotKind = table.freeze({ HELLO = 1, REJECT = 2, WELCOME = 3 })
@@ -1474,6 +1476,7 @@ export type SnapshotRecord = {
 	team: number?,
 	allyTeam: number?,
 	mapId: string?,
+	teamAllies: { number }?, -- WELCOME: the ally team of teams 1..n, 0 for a team not in the match (protocol 30)
 }
 
 function Schema.encodeSnapshot(w: Writer, rec: SnapshotRecord)
@@ -1493,6 +1496,14 @@ function Schema.encodeSnapshot(w: Writer, rec: SnapshotRecord)
 		end
 		w:writeU8(#mapId)
 		w:writeString(mapId)
+		local allies = rec.teamAllies or {}
+		if #allies > Schema.MAX_TEAMS then
+			error(`Schema: {#allies} teams (at most {Schema.MAX_TEAMS})`, 2)
+		end
+		w:writeU8(#allies)
+		for _, a in allies do
+			w:writeU8(a)
+		end
 	else
 		w:writeU16(required(rec.protocol, "protocol"))
 		w:writeU32(required(rec.defsHash, "defsHash"))
@@ -1519,6 +1530,15 @@ function Schema.decodeSnapshot(r: Reader): SnapshotRecord
 		rec.team = r:readU8()
 		rec.allyTeam = r:readU8()
 		rec.mapId = r:readString(r:readU8())
+		local n = r:readU8()
+		if n > Schema.MAX_TEAMS then
+			fail(r, `{n} teams`)
+		end
+		local allies = table.create(n)
+		for i = 1, n do
+			allies[i] = r:readU8()
+		end
+		rec.teamAllies = allies
 	else
 		rec.protocol = r:readU16()
 		rec.defsHash = r:readU32()

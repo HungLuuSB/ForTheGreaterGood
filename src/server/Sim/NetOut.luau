@@ -152,6 +152,19 @@ end
 -- the whole map, so every unit is in its tactical tier, and it gets every
 -- combat event, every team's Eco record (S-21), and no weapon targets. Its first outbox starts with a WELCOME whose player, team and
 -- ally team are 0. Returns its index in `sim.net.spectators`.
+-- Every team's ally team, team 1 first, 0 for a team not in the match (S-129).
+local function teamAllies(sim: Types.Sim): { number }
+	local n = 0
+	for team in sim.allyOf do
+		n = math.max(n, team)
+	end
+	local out = table.create(n, 0)
+	for team = 1, n do
+		out[team] = sim.allyOf[team] or 0
+	end
+	return out
+end
+
 function NetOut.addSpectator(sim: Types.Sim): number
 	local pn = NetState.viewer(true)
 	local map = sim.map
@@ -160,7 +173,7 @@ function NetOut.addSpectator(sim: Types.Sim): number
 	end
 	pn.forceFull = true
 	local w = Packer.Writer.new(32)
-	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.WELCOME, tick = sim.tick, player = 0, team = 0, allyTeam = 0, mapId = sim.mapId })
+	Schema.encodeSnapshot(w, { kind = Schema.SnapshotKind.WELCOME, tick = sim.tick, player = 0, team = 0, allyTeam = 0, mapId = sim.mapId, teamAllies = teamAllies(sim) })
 	pn.welcome = w:finish()
 	table.insert(sim.net.spectators, pn)
 	return #sim.net.spectators
@@ -195,6 +208,7 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 		team = p.team,
 		allyTeam = sim.allyOf[p.team],
 		mapId = sim.mapId,
+		teamAllies = teamAllies(sim), -- (S-129, client request: allies are friends)
 	})
 	pn.welcome = w:finish()
 end

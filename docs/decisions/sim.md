@@ -1907,3 +1907,9 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - when the leader's job ends, follows it again, and helps with the next one.
 - **Wire:** nothing new; ASSIST is the existing GUARD command on a builder.
 - **Tests:** `Orders.spec`: a Mason assisting another Mason builds its generator with it (finished in under 80% of the time alone), then follows it when it drives off.
+
+## S-129 — WELCOME lists every team's ally team (client request, after S-128) (2026-10-23)
+
+- **Asked:** the client knew only its own ally team, so in team games a right-click on an ally's unit sent ATTACK. With every team's ally team it treats allies as friends: right-click is GUARD / assist, and their health bars and minimap dots get friend colours.
+- **Built:** protocol 30. WELCOME ends with `teamCount u8, allyTeam u8 × teamCount`: team 1 first, 0 for a team not in the match. Decoded as `teamAllies`. Spectators get it too.
+- **Tests:** `Schema.spec` pins the new bytes; `NetOut.spec`: player 3's WELCOME in a 2v2 lists `{ 1, 2, 1, 2 }`.
