@@ -17,7 +17,7 @@ Status: **a proposal for the user's review**, refreshed 2026-10-23 after S-102..
 - **What's left:** the retunes beyond ±10% (S-91) and the proposals under "Needs my review" in `sim.md` (fighters, the Herald, the T2 tank condition).
 - **Next step:** run the balance checkpoint when you ask for it. It now has new inputs since the last run: footprint sizes, the AI's outweigh rule, T2 defences, nukes, anti-nukes, the slide fix and the pad exit.
 
-## 3. The AI's base layout and reach (M)
+## 3. The AI's base layout and reach (M) — reach and exit lanes done (S-142); the remaining give-ups and mixed-size lanes open
 
 - **The gap:** the AI's site picker (`spotNear`) doesn't check that a builder can reach the site. Its 2-cell lanes only hold between buildings of one size.
 - **What happened:** with footprint-2 Commanders (S-124) and pad exits (S-133), a Commander got walled in by generators. S-133 added a give-up (20 s without getting closer), but that's a safety net, not a layout.

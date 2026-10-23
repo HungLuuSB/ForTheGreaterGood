@@ -124,6 +124,38 @@ local PROFILES = {
 			{ def = "chs_lamprey", player = 2, x = 130, z = 70, heading = -math.pi / 2 },
 		},
 	},
+	-- The lobby place's match (C-173, docs/contracts/match.md v1) in Studio:
+	-- the match role runs from this config as if the lobby had stored it
+	-- (an in-memory stand-in for the MemoryStore); the playtester takes the
+	-- first human seat (contractAdmitAny). Loading screen, start once loaded,
+	-- result record and the return trip (printed: Studio can't teleport).
+	contract = {
+		seed = 7,
+		mapId = "map:ridgeline",
+		scenario = "standard_start",
+		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
+		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+		contractAdmitAny = true,
+		contract = {
+			version = 1,
+			matchId = "studio-match",
+			createdAt = 0,
+			seed = 7,
+			mapId = "map:ridgeline",
+			mode = "FFA",
+			win = "COMMAND_ENDS",
+			friendlyFire = true,
+			cheats = true,
+			players = {
+				{ id = 1, start = 1, faction = "order", allyTeam = 1, color = 3, user = 1, name = "Playtester" },
+				{ id = 2, start = 2, faction = "chaos", allyTeam = 2, color = 6, name = "AI 1 (easy)", ai = "easy" },
+			},
+			spectators = {},
+			lobby = { placeId = 0, jobId = "studio-lobby", roomId = "studio-room", roomName = "Studio room" },
+		},
+	},
 	-- The Canyon (S-132, C-153): both Commanders at their starts, no AI;
 	-- for looking at the desert map
 	canyon = {

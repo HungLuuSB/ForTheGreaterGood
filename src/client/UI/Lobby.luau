@@ -50,7 +50,7 @@ local function clear(ui: UI)
 	end
 end
 
-local function results(ui: UI, r: any, send: (any) -> ())
+local function results(ui: UI, r: any, send: (any) -> (), match: any?, returnAt: number?)
 	local actions: Statistics.Actions = {
 		back = if ui.host
 			then function()
@@ -58,6 +58,14 @@ local function results(ui: UI, r: any, send: (any) -> ())
 			end
 			else nil,
 	}
+	if match then
+		-- a lobby match (C-173): anyone goes back now, or everyone after the countdown
+		actions.back = function()
+			send({ op = "return" })
+		end
+		actions.backLabel = "Return to lobby"
+		actions.returnAt = returnAt
+	end
 	if r.replays and ui.replay then
 		local replay = ui.replay :: RemoteEvent
 		actions.save = function()
@@ -138,7 +146,7 @@ local function render(ui: UI, data: any)
 	ui.host = mySeat == 1
 	ui.panel.root.Visible = s.phase == "lobby"
 	if s.phase == "results" then
-		results(ui, s.results or {}, send)
+		results(ui, s.results or {}, send, s.match, s.returnAt)
 		return
 	end
 	Statistics.hide(ui.stats)
