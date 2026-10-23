@@ -469,6 +469,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `2b4dc5b` (Commander mechs step 2: meshes for `ord_sovereign` / `chs_warlord` (review; the tracked ones kept in `assets/models/<id>/tracked/`), WALKER anims, mech anchors, decorative muzzle allowed on unarmed defs (`Mesh.validate`); `assets/`, `src/shared/Defs/Meshes/`, `place/`, tools and docs).
 - Ready to merge: `fb028ba` (heroic Commander mechs step 1: new blockouts, v1 moved to `Review/` and `assets/models/<id>/v1/`, the v1 meshes out of the manifest until the new ones; `src/shared/Defs/Blockouts/`, `assets/`, manifest, `place/` and docs).
 - Ready to merge: `44101bf` (heroic Commander mechs step 2: meshes for `ord_sovereign` / `chs_warlord`, review, fp 2 per S-124; `assets/`, manifest, `place/`, tools and docs).
+- Ready to merge: `e7f4570` (Commander mechs v3, M-33: new meshes for `ord_sovereign` / `chs_warlord` (review), v2 kept in `assets/models/<id>/v2/`, muzzles moved forward in the blockouts, `tools/mech.py`; `assets/`, `src/shared/Defs/`, `place/` and docs).
 
 ## Requests
 
