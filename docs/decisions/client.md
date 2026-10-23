@@ -1164,3 +1164,12 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - **Not kept:** a 20 to 26 ring patch with a wide rim of tiny cells, tried as "C-145". The user: "too much"; it also cost ~25 ms a frame, with peaks over 300 ms, under shield_beams. The honeycomb stays as in C-142.
 
 **Why:** the user: the beam should go through once the dome drops; "reduce the size of the ring flowing down the dome".
+
+### C-145 — Shield domes drawn without vision (DOME / DOME_GONE, protocol 29, S-122) (2026-10-23)
+
+**Decision:**
+- **World:** `remoteDomes` keeps domes whose generator the player doesn't have (centre, radius, charge, flags). NetIn sets it from DOME and clears it on DOME_GONE; the branches are guarded until the event kinds exist.
+- **ShieldDomes:** draws from both sources by generator ID (tactical SHIELD first). A dome carries over when its generator enters view: same ID, its ENTER and SHIELD take over and the DOME_GONE comes after.
+- Hit patches already map to the nearest dome.
+
+**Why:** the user: "the shield dome (only the dome) should be rendered regardless of vision like in BAR".
