@@ -110,6 +110,26 @@ return function(t: RunAll.Context)
 		t.expect(apart > 10, `aimed off the unit by the radar error ({apart} studs at most)`)
 	end)
 
+	t.test("aircraft in flight see the ground farther; landed, no bonus (S-139, guide 12.2)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local heli = Spawn.unit(sim, "chs_wasp", 2, 0, 0)
+		local sight = sim.defs.units.chs_wasp.sensors.sight
+		local tank = Spawn.unit(sim, "ord_lancer", 1, sight * 1.12, 0) -- beyond its sight, within 1.25 ×
+		local near = Spawn.unit(sim, "ord_lancer", 1, -sight * 0.8, 0)
+		quiet(sim, { heli, tank, near })
+		for _ = 1, 5 do
+			Sim.step(sim)
+		end
+		t.equal(Sensors.level(sim, 2, tank), L.VISIBLE, "flying: seen at 1.12 × sight")
+		World.setState(w, heli, bit32.bor(w.state[heli], World.State.LANDED))
+		for _ = 1, 5 do
+			Sim.step(sim)
+		end
+		t.expect(Sensors.level(sim, 2, tank) ~= L.VISIBLE, "landed: out of sight")
+		t.equal(Sensors.level(sim, 2, near), L.VISIBLE, "within its plain sight still")
+	end)
+
 	t.test("a jammed unit disappears from enemy radar but not from sight", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world

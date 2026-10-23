@@ -58,6 +58,7 @@ Sensors.Level = SensorsState.Level
 local L = Sensors.Level
 Sensors.KINDS = SensorsState.KINDS
 Sensors.AIR_SIGHT_FACTOR = 1.5 -- default airSight = 1.5 × sight
+Sensors.FLYING_SIGHT_BONUS = 1.25 -- aircraft in flight see the ground this much farther; landed, no bonus (guide 12.2, S-139)
 Sensors.DEFAULT_RADAR_ERROR = 40 -- studs, when a radar def has no radarError
 Sensors.ORBIT_TICKS = 90 -- ticks per radar blip orbit, 6 s (guide 11.4, S-130)
 Sensors.CLOSE_SONAR = 40 -- studs: naval units and ASW helis detect submerged subs this close
@@ -217,11 +218,14 @@ local function radiiOf(sim: Types.Sim, id: number): { number }
 	local track = poweredRadius(sim, id, sensors.track, sensors.trackDrain)
 	local jam = poweredRadius(sim, id, sensors.jam, sensors.jamDrain)
 	local radar = poweredRadius(sim, id, sensors.radar, sensors.radarDrain) -- S-72
-	local key = (radar * 65536 + track) * 65536 + jam
+	-- in flight an aircraft sees the ground farther (guide 12.2: landing
+	-- loses the bonus; S-139)
+	local flying = def.domain == "air" and bit32.band(sim.world.state[id], World.State.LANDED) == 0
+	local key = ((radar * 65536 + track) * 65536 + jam) * 2 + (if flying then 1 else 0)
 	local radii = byTrack[key]
 	if radii == nil then
 		radii = table.freeze({
-			sensors.sight,
+			if flying then sensors.sight * Sensors.FLYING_SIGHT_BONUS else sensors.sight,
 			sensors.airSight or sensors.sight * Sensors.AIR_SIGHT_FACTOR,
 			radar,
 			sensors.sonar,

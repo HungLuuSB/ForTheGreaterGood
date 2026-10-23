@@ -2038,3 +2038,27 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Varying `SLIDE_MIN` (0.3–1.0) moved the split around but kept it tilted east. The cause in that rule wasn't found.
   - The fix is now smaller: the old slide (x first, then z, the step along the heading) stays, and a sliding unit's speed no longer decays below `SLIDE_MIN` (0.5) of its top speed. It used to halve every tick.
   - Results: crawl test passes; seed 43's Mason starts at 0.89 min; fairness 6 / 6 of 12, and 17 / 19 over seeds 1–18.
+
+## S-139 — Flying sight bonus (the user's queue item 4; guide audit item 10, third part) (2026-10-23)
+
+- **Guide 12.2:** "landed aircraft are `landed` state: no LOS bonus". So far there was no bonus, so landing cost an aircraft nothing in sight.
+- **Built:** an aircraft not LANDED stamps its ground sight at `sensors.sight × Sensors.FLYING_SIGHT_BONUS` (1.25). Landed, it stamps its plain sight. `airSight` (sight against aircraft) is unchanged.
+  - The radii cache key includes "flying", so landing or taking off restamps the unit.
+  - Sight isn't terrain-occluded (that's still optional, audit item 19), so the bonus is reach only.
+- **Numbers:** 1.25 is a placeholder (a Wasp's 300-stud sight becomes 375 in flight). It's under review with the other balance numbers. No balance report was run (the user's rule).
+- **Tests:** `Fog.spec`: a flying Wasp sees a tank at 1.12 × its sight; landed, it doesn't, and it still sees one at 0.8 ×.
+
+## S-140 — Per-tick budget watchdog for the live server (the user's queue item 5; next.md item 2) (2026-10-23)
+
+- **Asked:** a per-tick budget watchdog that runs in the Roblox server and logs ticks over budget with the system breakdown, so B can measure the real server in Studio. The Lune timings are noisy and not Roblox's.
+- **Built:**
+  - `Sim.enableTiming` also keeps the latest tick's time per system (`last`, 0 when the system didn't run) and the total (`lastTotal`). It returns the existing timing if called twice.
+  - `Sim/Watchdog`: `Watchdog.new(sim, { tickBudgetMs?, logger? })`, then `Watchdog.afterStep(dog)` after every `Sim.step`. Budgets are guide 18.1's per system: projectiles 6 + damage 2 share the 8 ms row, construction 1.5 + match 0.5 share the 2 ms row. Together that's 54 ms, the 66.7 ms tick minus the ~12 ms headroom.
+  - **WARN line:** for a tick over 54 ms, or with any system over 2× its own budget. It names the tick, the total and the top 3 systems by budget share, at most one line per 15 ticks; skipped ticks are counted into the next line.
+  - **INFO summary:** every 900 ticks: the share of ticks over budget, the mean and worst tick, the worst tick's top systems and the unit count.
+  - It only observes: wall-clock timings never feed back into the sim. It runs in Lune too.
+- **Wiring:** the server loop is in `src/roblox` (the client stream's), so B adds `Watchdog.new` after `Sim.new` and `Watchdog.afterStep` after each step.
+- **Tests:** `Watchdog.spec`:
+  - with a tiny budget, 40 ticks give 3 WARN lines (ticks 1, 16, 31), the second counting 14 skipped ticks, and one summary at 100%;
+  - within budget, nothing is logged;
+  - the latest tick's systems add up to its total.

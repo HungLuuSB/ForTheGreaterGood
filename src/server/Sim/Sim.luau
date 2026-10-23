@@ -237,14 +237,26 @@ end
 
 -- Optional per-system wall-clock timing for profiling and stress tests.
 -- Observes only: timings never feed back into the simulation.
-export type Timing = { total: { [string]: number }, peak: { [string]: number }, peakTick: { [string]: number }, ticks: number }
+export type Timing = {
+	total: { [string]: number },
+	peak: { [string]: number },
+	peakTick: { [string]: number },
+	ticks: number,
+	last: { [string]: number }, -- the latest tick, per system (0 when it didn't run; Watchdog, S-140)
+	lastTotal: number, -- the latest tick's systems together, seconds
+}
 local timings: { [any]: Timing } = setmetatable({}, { __mode = "k" }) :: any
 
 function Sim.enableTiming(sim: Sim): Timing
-	local t: Timing = { total = {}, peak = {}, peakTick = {}, ticks = 0 }
+	local existing = timings[sim]
+	if existing then
+		return existing
+	end
+	local t: Timing = { total = {}, peak = {}, peakTick = {}, ticks = 0, last = {}, lastTotal = 0 }
 	for _, s in SYSTEMS do
 		t.total[s.name] = 0
 		t.peak[s.name] = 0
+		t.last[s.name] = 0
 	end
 	timings[sim] = t
 	return t
@@ -256,6 +268,9 @@ function Sim.step(sim: Sim)
 	sim.tick = tick
 	table.clear(sim.combat.events) -- events describe one tick (NetOut sends them)
 	local timing = timings[sim]
+	if timing then
+		timing.lastTotal = 0
+	end
 	for _, system in SYSTEMS do
 		if tick % system.every == 0 then
 			Profiler.begin(system.name)
@@ -264,6 +279,8 @@ function Sim.step(sim: Sim)
 				system.run(sim)
 				local dt = Profiler.now() - t0
 				timing.total[system.name] += dt
+				timing.last[system.name] = dt
+				timing.lastTotal += dt
 				if dt > timing.peak[system.name] then
 					timing.peak[system.name] = dt
 					timing.peakTick[system.name] = tick
@@ -272,6 +289,8 @@ function Sim.step(sim: Sim)
 				system.run(sim)
 			end
 			Profiler.finish()
+		elseif timing then
+			timing.last[system.name] = 0
 		end
 	end
 	if timing then
