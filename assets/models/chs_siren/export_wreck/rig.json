@@ -1,0 +1,109 @@
+{
+  "id": "chs_siren_wreck",
+  "wreckOf": "chs_siren",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.041,
+        1.1694,
+        -1.1199
+      ],
+      "size": [
+        4.7973,
+        3.6665,
+        14.4788
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        0.0292,
+        3.4227,
+        -3.6361
+      ],
+      "size": [
+        1.4825,
+        3.7782,
+        1.4281
+      ],
+      "pivot": [
+        0.0,
+        1.6,
+        -3.6
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        -0.0062,
+        3.3846,
+        3.4086
+      ],
+      "size": [
+        1.4493,
+        3.5191,
+        1.4536
+      ],
+      "pivot": [
+        0.0,
+        1.6,
+        3.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0.0,
+        5.300000000000001,
+        -3.6
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        0.0,
+        5.300000000000001,
+        3.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 520,
+    "turret1": 288,
+    "turret2": 312,
+    "total": 1120
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

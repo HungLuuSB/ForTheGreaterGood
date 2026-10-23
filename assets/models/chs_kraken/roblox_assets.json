@@ -1,0 +1,57 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 1992 triangles, glow share 3.5%",
+  "bar": {
+    "model": "rbxassetid://74078854783445",
+    "meshes": {
+      "base": "rbxassetid://80103740689733",
+      "base_glow_running": "rbxassetid://109474029562577",
+      "radar": "rbxassetid://134323927846246",
+      "radar_glow_running": "rbxassetid://94499954459755",
+      "turret1": "rbxassetid://119356607445895",
+      "turret1_glow_weapon": "rbxassetid://99063762812012",
+      "turret2": "rbxassetid://128826203754105",
+      "turret2_glow_weapon": "rbxassetid://88116352578297"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86851540153456",
+      "RGH": "rbxassetid://79703444822747",
+      "NOR": "rbxassetid://74269187890678",
+      "MTL": "rbxassetid://136079082529490",
+      "EMI": "rbxassetid://105469350749385"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://88639085642283",
+      "NOR": "rbxassetid://106118609230883",
+      "RGH": "rbxassetid://107981288989769",
+      "MTL": "rbxassetid://113878363058921",
+      "EMI": "rbxassetid://120288279198028"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_kraken_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://82312275694493",
+    "meshes": {
+      "base": "rbxassetid://139638225762975",
+      "radar": "rbxassetid://136601353617677",
+      "turret1": "rbxassetid://113403166627997",
+      "turret2": "rbxassetid://73032673825072"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94555641351665",
+      "RGH": "rbxassetid://75479282835966",
+      "NOR": "rbxassetid://73364680970796",
+      "MTL": "rbxassetid://92805233331227",
+      "EMI": "rbxassetid://88019007880696"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://89405910962925",
+      "NOR": "rbxassetid://81617087663747",
+      "RGH": "rbxassetid://133664351523561",
+      "MTL": "rbxassetid://92585613427530",
+      "EMI": "rbxassetid://91084550346583"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_kraken_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 1388 triangles"
+  }
+}

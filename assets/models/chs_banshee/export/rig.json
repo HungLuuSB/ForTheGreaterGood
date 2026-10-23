@@ -1,0 +1,160 @@
+{
+  "id": "chs_banshee",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.925,
+        -1.0
+      ],
+      "size": [
+        12.44,
+        3.75,
+        10.8
+      ]
+    },
+    "dish": {
+      "parent": "base",
+      "center": [
+        0.0,
+        1.7125,
+        0.4
+      ],
+      "size": [
+        2.28,
+        0.625,
+        4.2
+      ],
+      "pivot": [
+        0.0,
+        1.7,
+        0.4
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "dish"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.0,
+        1.2599
+      ],
+      "size": [
+        11.8494,
+        3.72,
+        6.3803
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.05,
+        -2.4
+      ],
+      "size": [
+        0.34,
+        0.06,
+        0.34
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        0.56,
+        1.8
+      ],
+      "size": [
+        12.44,
+        0.4184,
+        0.4
+      ]
+    },
+    {
+      "name": "dish_glow_power",
+      "piece": "dish",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        2.03,
+        0.4
+      ],
+      "size": [
+        1.7,
+        0.02,
+        3.38
+      ]
+    }
+  ],
+  "glowShare": 0.0538,
+  "triangles": {
+    "base": 604,
+    "dish": 140,
+    "total": 744
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

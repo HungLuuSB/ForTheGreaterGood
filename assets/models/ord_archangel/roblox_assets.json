@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 972 triangles, glow share 5.9%",
+  "bar": {
+    "model": "rbxassetid://73987766506029",
+    "meshes": {
+      "base": "rbxassetid://89917767398022",
+      "base_glow_head": "rbxassetid://75775892508768",
+      "base_glow_running": "rbxassetid://72496585198417",
+      "dish": "rbxassetid://138514587388664",
+      "dish_glow_running": "rbxassetid://76411576722828"
+    },
+    "decals": {
+      "ALB": "rbxassetid://114936619079318",
+      "RGH": "rbxassetid://128293553844121",
+      "NOR": "rbxassetid://93521201122026",
+      "MTL": "rbxassetid://111751493641643",
+      "EMI": "rbxassetid://112327036198242"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://104445545231865",
+      "NOR": "rbxassetid://125931018224771",
+      "RGH": "rbxassetid://128486258774393",
+      "MTL": "rbxassetid://95244433155493",
+      "EMI": "rbxassetid://109937182385044"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_archangel_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://107911205541768",
+    "meshes": {
+      "base": "rbxassetid://75999338210749",
+      "dish": "rbxassetid://71947232133057"
+    },
+    "decals": {
+      "ALB": "rbxassetid://105555495625657",
+      "RGH": "rbxassetid://123747495767442",
+      "NOR": "rbxassetid://73149963290013",
+      "MTL": "rbxassetid://126360405761676",
+      "EMI": "rbxassetid://98857852426121"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95325095570359",
+      "NOR": "rbxassetid://75010154849302",
+      "RGH": "rbxassetid://78260064595197",
+      "MTL": "rbxassetid://80996750149008",
+      "EMI": "rbxassetid://136440171865757"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_archangel_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 848 triangles"
+  }
+}

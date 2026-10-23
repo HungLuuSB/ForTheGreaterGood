@@ -1504,3 +1504,29 @@ Existing calls are unchanged.
 **Decision:** `MatchContract.outcomeOf` now returns "finished" with no winner when every human is out and several AI teams still stand. Every player's `won` is then false, so the humans' profiles count a loss. "draw" stays for the sim's own draw and for no team standing. The copy of `validateResult` follows the lobby's: a winner only on "finished", optional there. Spec: MatchContract.spec.
 
 **Why:** the lobby stream's decision in docs/contracts/match.md (m-lobby 287b99e, still v1), answering C-173's open question.
+
+### C-176 — The match's loading screen shows the lobby's key art with the same parallax (2026-10-23)
+
+**Decision:**
+- `UI/KeyArt` is a copy of the lobby place's `src/lobby/client/KeyArt.luau` (session D; contract docs/contracts/key-art.md, L-13). It reads the models stream's layered art from the mesh manifest's `keyArt`: approved art everywhere, review art only in Studio.
+- It covers the screen at 16:9 with 5% bleed. Each layer moves by mouse × 2.5% of the width × its depth, eased, with a slow idle drift. Dark bands sit behind the title and the bottom text, and the art fades in once preloaded.
+- `UI/MatchLoading` shows it when the match starts waiting, under its text and bar (ZIndex 10+). Without approved art it keeps the dark gradient.
+- So the lobby's pre-teleport screen and the match's look the same across the teleport.
+- Checked in Studio on `contract`: no art in the manifest yet, the gradient shows as before.
+
+**Why:** the user's key-art decision; D asked both screens to behave the same.
+
+### C-177 — Fix: a crane or gantry loop froze the client when its unit went far from the camera (2026-10-23)
+
+**Decision:** PieceScripts/Ambient's jib and gantry loops (C-156) now sleep each swing's time instead of waiting for the turn or move to finish.
+- Far from the camera (LOD "far"), turns and moves land at once, so `WaitForTurn` / `WaitForMove` returned without yielding.
+- A loop started while its factory was near then spun forever, and the client hit "Script timeout: exhausted allowed execution time" in PieceAnim.step (seen in the user's playtest console).
+- Spec: Ambient.spec (a producing plant's loop started near, then far). It hangs with the old code and passes now.
+
+**Why:** a client freeze in the user's playtest.
+
+### C-178 — MatchContract and TeamColors use the shared MatchConfig (2026-10-23)
+
+**Decision:** `src/roblox/MatchContract` now calls `@shared/Match/MatchConfig` (S-145, the module the lobby place uses too) for validate, validateResult, the version and the palette, instead of its copies. `Render/TeamColors` builds its palette from the same module's COLORS. Nothing else changed; MatchContract.spec passes. Checked in Studio only up to the build (the requires resolve); the contract path is unchanged.
+
+**Why:** the user moved the validator to src/shared; lobby-D asked to drop the copies.
