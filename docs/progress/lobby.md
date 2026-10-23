@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `287b99e` (match contract: a finished result may have no winner when every human is out; validator, specs, results panel)
 - Ready to merge: `fb34ced` (lobby UI, background scene, `docs/contracts/match.md`, lobby decisions and progress; nothing outside `src/lobby`, `lobby.project.json` and the lobby docs)
 
 ## Connecting Studio
@@ -44,7 +45,8 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 6. **Start positions:** the lobby orders players so the sim's player ID is the start index (Teams: ally teams together). So sim request 64 (chosen starts) isn't needed for version 1. BAR's start boxes or chosen starts could come later.
 7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
 8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
-9. **Where the config validator lives (A-2):** sim-A agreed it can move to `src/shared/Match/MatchConfig.luau` so the match server uses the same checks, and offered me that file. Your brief says I never edit `src/shared`, so I declined. Either sim-A moves it (it's ready to: validate and validateResult into `src/shared/Match/MatchConfig.luau`, the spec under `src/server/Tests`; I then switch my require and drop my copy), or it stays in `src/lobby`. Which?
+9. **Decided (2026-10-23): the config validator moves to `src/shared`.** sim-A moves validate / validateResult and their constants to `src/shared/Match/MatchConfig.luau` (from m-lobby 287b99e). Then the lobby and client-B drop their copies. `build` and `summary` stay in `src/lobby`.
+11. **Decided (2026-10-23): layered key art with parallax** from models-C for both loading screens (L-13, `docs/contracts/key-art.md`). Uploads still need your approval.
 10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. sim-A agreed to add `lune run src/lobby/tools/test` (a failure blocks the push) once its running merges finish; until then I run them before every "Ready to merge" line.
 
 ## Requests
@@ -52,7 +54,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 ### For sim-A (sim session)
 
 - **A-1. Done (sim-A S-143):** confirmed, `standard_start` seats player i on start i (IDs must be contiguous from 1, which MatchConfig guarantees); request 64 closed against L-4. **Match config → Sim (contract section 3).** Nothing new is needed from `Sim.new` for version 1: player ID = start index, factions by team parity as `src/roblox/Lobby.config` does. Please confirm, and resolve your request 64 (chosen starts) against L-4: the lobby assigns starts by player order.
-- **A-2. Waiting for your call (Needs my review 9):** sim-A agreed and offered me the file, but your brief keeps me out of `src/shared`. **A shared validator (optional).** If the match server should run `MatchConfig.validate` without copying it, it could move to `src/shared/Match/` (yours). Say if you want it.
+- **A-2. Agreed (your choice): sim-A does the move,** then I switch to `@shared/Match/MatchConfig`. **A shared validator (optional).** If the match server should run `MatchConfig.validate` without copying it, it could move to `src/shared/Match/` (yours). Say if you want it.
 - **A-3. Done (sim-A, m-sim-2 2e9b5c7).** **Guide 16.3** ("map vote, mode, teams, faction pick"): the user's design is a BAR battle room where the host picks the map; reserved servers via TeleportService; the flow in `docs/contracts/match.md`. Please update the guide.
 
 ### For client-B (client session, match place)
@@ -70,6 +72,15 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 - **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
 - **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
 
+### For models-C (models session)
+
+- **C-1. Key art with parallax layers (2026-10-23, the user):** 3 key arts per `docs/contracts/key-art.md`:
+  1. a dusk land battle with ships firing on the far sea;
+  2. a SAM site under air attack at night;
+  3. a beach assault.
+
+  Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed.
+
 ## Plan and status
 
 | Step | Status |
@@ -81,6 +92,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio (last fixes pending a re-check) |
 | Background battle scene with parallax (L-12) | done; checked with box stand-ins, real meshes pending a re-check |
 | Contract v1 and requests | done |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; waiting for C's art |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue
