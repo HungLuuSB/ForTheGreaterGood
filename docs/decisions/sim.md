@@ -1792,3 +1792,29 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - `Defenses.spec`: Radiance attack-grounds a point and the Ravager on its line takes the ray; the Inferno attack-grounds empty ground, misses, and hurts nobody off the line;
   - `NetOut.spec`: a Lancer aimed at a still Ravager enters a player's view and its aim arrives with it (the test fails without the fix).
   - `Defenses.spec`: Radiance firing at a Ravager driving across holds its yaw for the 3 s of the beam, then tracks again.
+
+## S-120 — Manual targets take priority whatever the fire state (the user, via the client) (2026-10-23)
+
+- **Asked:** "Manual targeting must take priority." Units didn't stick to the unit they were ordered to attack. An attack on a unit should win over the unit's own picks whenever that target is in range and attackable, whatever the fire state, and survive later moves.
+- **Changed (S-115's rule):**
+  - Targeting takes the manual target (the last ATTACK's, kept until STOP) whenever it is in range, on any fire state (was: not on hold fire).
+  - Weapons fires at it even on hold fire.
+  - The overkill rule (S-29: drop a target that damage on its way will kill) no longer drops a manual target, as it never dropped an attack order's.
+- **Tests:** `Orders.spec`: on hold fire, the unit stays on its manual target and keeps firing at it; STOP still clears it.
+
+## S-121 — Armed structures take attack orders; a dome dropping mid-beam lets it through (client request 54, the user) (2026-10-23)
+
+- **Asked:**
+  1. A Radiance ordered to attack an enemy Phalanx still chose a tank: an ordered target should stick, and the beam hits the dome until it drops, then the generator.
+  2. When a dome drops while a beam burns on it, the rest of the beam goes through to its target (or attack-ground point), and pierce damage resumes along the full line. A new FIRE / SHOT on that tick tells the client.
+- **Cause (1):** structures took no orders except a silo's attack-ground (S-48), so the ATTACK never reached the tower.
+- **Built:**
+  1. **Attack orders on armed structures:** an armed structure given ATTACK takes the target as its manual target (S-115 / S-120: it wins whenever in range, whatever the fire state, until STOP or a new attack). It doesn't chase.
+  2. **A dome dropping mid-beam:**
+     - a beam stopped by a dome remembers where it would have ended without it (`after*`: the point, whether it would have hit, the target; hashed);
+     - when the dome drops (or goes) while the beam burns and the shooter stands, the sim sends a new FIRE for that weapon, ending at the target's aim point or the full line's end, with its hit flag (a SHOT for players without the shooter);
+     - the beam then works there for the rest of its duration: a hit-ray along the full line, a single-target beam on its target, or it ends if it would have missed.
+- **Wire:** nothing new. A FIRE or SHOT from a weapon whose beam is still burning moves the beam's end (the client's proposal; no flag).
+- **Tests:** `Shield.spec`:
+  - a Radiance ordered onto a Carapace keeps it as its manual target over a nearer Ravager;
+  - its beam stops on the weak dome (FIRE, miss), the dome drops, a second FIRE hits the generator, and the generator takes damage.

@@ -265,6 +265,12 @@ local function fire(
 				-- request 50); the glancing leg the client draws does nothing
 				local ticks = math.max(1, math.floor(weapon.beamDuration * 15 + 0.5))
 				local rec: Combat.Beam = { shooter = id, shooterGen = w.gen[id], slot = slot, target = 0, targetGen = 0, ticks = ticks, total = ticks, dome = gen, domeGen = w.gen[gen], domeDrain = Shield.beamDrain(weapon) / ticks }
+				-- where it would have ended without the dome: it goes on there
+				-- if the dome drops while it burns (S-121, client request 54)
+				rec.sy, rec.afterX, rec.afterY, rec.afterZ, rec.afterHit = muzzleY, ex, ey, ez, hit
+				if hit and target ~= 0 then
+					rec.afterTarget, rec.afterTargetGen = target, w.gen[target]
+				end
 				if weapon.pierce then
 					rec.sx, rec.sz, rec.ex, rec.ez = w.posX[id], w.posZ[id], hx, hz
 				end
@@ -321,6 +327,33 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam)
 	end
 end
 
+-- A beam held on a dome that dropped goes through (S-121): the FIRE event
+-- for its new end, then a hit-ray runs on to its full line, a single-target
+-- beam settles on its target (if it would have hit one), or it ends.
+local function goThrough(sim: Types.Sim, b: Combat.Beam)
+	local c = sim.combat
+	local w = sim.world
+	local id = b.shooter
+	local weapon = c.profiles[w.defIndex[id]].weapons[b.slot]
+	local target = b.afterTarget or 0
+	local alive = target ~= 0 and World.isRef(w, target, b.afterTargetGen)
+	local hit = b.afterHit == true and (target == 0 or alive)
+	local ex, ey, ez = b.afterX :: number, b.afterY :: number, b.afterZ :: number
+	if alive then
+		ex, ey, ez = Combat.aimPoint(c, w, target)
+	end
+	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = if alive then target else 0, slot = b.slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = b.sy, sz = w.posZ[id] })
+	b.dome, b.domeGen, b.domeDrain = nil, nil, nil
+	if weapon.pierce then
+		b.ex, b.ez = b.afterX, b.afterZ
+	elseif alive and hit then
+		b.target, b.targetGen = target, b.afterTargetGen :: number
+	else
+		b.ticks = 1 -- nothing to hold on: it ends this tick
+		b.target, b.targetGen = 0, 0
+	end
+end
+
 -- Is a lingering beam of (shooter, slot) burning? (S-119: its aim holds)
 local function beaming(c: Combat.Combat, id: number, slot: number): boolean
 	for _, b in c.beams do
@@ -340,6 +373,13 @@ local function beamStep(sim: Types.Sim)
 	while i <= #beams do
 		local b = beams[i]
 		local ok = false
+		if b.dome ~= nil and World.isRef(w, b.shooter, b.shooterGen) and not Combat.retracted(sim, b.shooter)
+			and not (World.isRef(w, b.dome :: number, b.domeGen) and c.shieldUp[b.dome :: number] == true) then
+			-- the dome dropped while the beam burns (S-121, client request
+			-- 54): it goes through to where it was aimed, a new FIRE tells
+			-- the clients, and the rest of the beam works there
+			goThrough(sim, b)
+		end
 		if b.dome ~= nil then
 			-- held on a dome (S-117): drain it while the shooter stands and the dome is up
 			local dome = b.dome :: number
@@ -483,7 +523,8 @@ return function(sim: Types.Sim)
 				end
 				-- an attack-ground order's shelling ignores the fire state (S-68)
 				local ordered = target == 0 and (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and sim.air.groundX[id] ~= nil
-				canFire = (ordered or not holdFire) and dist <= weapon.range + radius
+				-- (its manual target fires even on hold fire: S-120)
+				canFire = (ordered or not holdFire or (target ~= 0 and sim.orders.manual[id] == target)) and dist <= weapon.range + radius
 				if pitch == nil then
 					canFire = false
 					wantPitch = if turret then rad(turret.maxPitch) else 0
@@ -549,6 +590,7 @@ return function(sim: Types.Sim)
 				and reload <= 0
 				and w.wOverkill[key] ~= OK_ALLOWED
 				and sim.orders.forced[id] ~= target
+				and sim.orders.manual[id] ~= target -- (a manual target is kept, S-120)
 				and World.isRef(w, target, targetGen)
 				and Combat.doomed(c, w, target)
 				and Sensors.level(sim, w.ally[id], target) == VISIBLE
