@@ -24,7 +24,7 @@ local World = require("./World")
 -- team: economy and ownership (one account per team); allyTeam: shared
 -- sight, no friendly targeting, overflow sharing (guide 16.1). Default
 -- allyTeam = team.
-export type Player = { id: number, team: number, allyTeam: number?, start: number? } -- start: index into the map's starts (S-141)
+export type Player = { id: number, team: number, allyTeam: number? }
 
 export type QueuedCommand = {
 	player: number,
