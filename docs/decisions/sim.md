@@ -2122,3 +2122,27 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - D switches its require to `@shared/Match/MatchConfig` and drops its copy; B drops its copy in `src/roblox`.
 - **Tests:** `src/server/Tests/MatchConfig.spec`, moved from the lobby's spec with a hand-written config of the same Teams room. It covers tampered configs (version, IDs and starts, colors, users, AI levels, FFA ally teams, spectators, no human, options, lobby, seed) and results checked against their config.
 - **Merge check:** `integrate.sh` now also runs the lobby's own suite (`lune run src/lobby/tools/test`, when present) and requires it to pass, as D asked.
+
+## S-146 — Radar missiles that lose their target spiral and fall; ones whose target dies at launch fly to its last spot (the user) (2026-10-23)
+
+- **Asked:** "when a unit die after a rocket was launched by SAM targeting it, it will result in the missile fly straight into the sky. I want something more realistic. 1. For RADAR MISSILE that lose its target, it begin spiraling, waving. 2. For RADAR MISSILE that launch and it target die before the launch initiated -> target its last known position".
+- **Cause:** a missile without a live target kept its velocity. A vertical-launch SAM still climbing went straight up until its fuel ran out.
+- **Built** (RADAR-guided HOMING missiles, not interceptors chasing a missile):
+  - **Tracking:** every tick while the target lives, the missile records its aim point (`Combat.pKnownX/Y/Z`) and counts its age (`pAge`).
+  - **Launch phase:** when the target is gone and it died during the launch phase, the missile flies to the last known aim point (`pPoint`). The launch phase is a vertical launch before pitch-over (TURNED), or the first 8 ticks of other launches. It steers with PN, or the vertical climb then pitch-over, and bursts at its closest approach within its blast radius (4 studs without one).
+  - **Otherwise it's lost** (`pLost`, ticks since): target killed, lock broken (EW), or a decoy spent. Each tick `Guidance.lost` turns the velocity 9° toward a direction circling the path once per 18 ticks (1.2 s; even IDs one way, odd the other), noses it over 3° toward straight down, and pulls it down at 25 studs/s². It ends on the ground or when its fuel runs out.
+  - **Events:** a killed target sends LOST_LOCK; a broken lock already did, from EW.
+  - A missile that never had a target, such as a test shot at a point, flies straight as before. IR missiles are unchanged.
+- **Shared:** `Guidance.lost(vx, vy, vz, k, projId, dt)` is pure and deterministic, so the client steps the same corkscrew from LOST_LOCK (net.md, section 7). The fly-to-point path has no event; homing corrections carry it.
+- **Hashed:** age, known point, point, lost ticks.
+- **Tests:** `EW.spec`:
+  - a Wasp killed after the Aegis missile pitched over: LOST_LOCK; the missile swings side to side, climbs at most 12 studs more and sinks over 160 within 22 ticks;
+  - a Wasp killed while the missile is still climbing: it bursts at the Wasp's last known spot;
+  - `Guidance.lost` is deterministic, keeps speed before the sink, and turns a vertical missile too.
+
+## S-147 — The team's radar accuracy on the wire, for the sensor view (the user, for B) (2026-10-23)
+
+- **Asked:** B should show the radar accuracy of the missile in the sensor view.
+- **Why the wire:** the accuracy is the ally team's: the best `radarError` among its finished radars (or `trackError` for tracked contacts), scaled by its Pinpointers. The client can't count allies' Pinpointers and radars off camera.
+- **Built:** protocol 32. Eco records end with `radarError u16`, `trackError u16` (tenths of a stud, 0 = none) and `precision u8` (× 255). They're the values `Sensors.wobble` uses: the hidden aim point circles a contact at radarError, a tracked one at trackError. They're sent with the Eco record when it changes.
+- **Tests:** `Schema.spec` golden bytes; `NetOut.spec`: no radar gives 0, an Oracle gives 16.0 studs, and three Witnesses scale it down with the precision.
