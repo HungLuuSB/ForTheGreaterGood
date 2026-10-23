@@ -45,6 +45,8 @@ ANCHORS = {
     "chs_vulture": {"nano1": (N, (0.0, -0.55, -1.7))},
     "ord_tidewright": {"nano1": (N, (0.0, 3.5, 0.1))},
     "chs_wrecker": {"nano1": (N, (0.0, 3.5, 0.1))},
+    "ord_harbormaster": {"nano1": (N, (-0.55, 3.82, 1.1)), "nano2": (N, (0.55, 3.42, 5.7))},  # two arms (T2)
+    "chs_reaver": {"nano1": (N, (-0.5, 3.72, 1.2)), "nano2": (N, (0.5, 3.32, 5.8))},
     "ord_architect": {"nano1": (N, (-0.8, 5.4, -1.4)), "nano2": (N, (0.8, 5.4, -1.4))},
     "chs_forgemaster": {"nano1": (N, (1.1, 5.7, -3.0)), "nano2": (N, (0.2, 3.9, 1.9))},
     "ord_sovereign": {"nano1": (N, (-3.35, 3.55, -1.64))},  # the heroic mech's emitter (M-32)

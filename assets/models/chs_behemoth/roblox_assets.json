@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 1102 triangles, glow share 5.1%",
+  "bar": {
+    "model": "rbxassetid://80691966314694",
+    "meshes": {
+      "base": "rbxassetid://122509142758907",
+      "base_glow_head": "rbxassetid://76437076041572",
+      "base_glow_running": "rbxassetid://80195703194157",
+      "bay": "rbxassetid://93745120780655",
+      "bay_glow_weapon": "rbxassetid://101283263359030",
+      "pylon": "rbxassetid://115977438191001"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94890847826214",
+      "RGH": "rbxassetid://102149674663739",
+      "NOR": "rbxassetid://90389833735067",
+      "MTL": "rbxassetid://78228991177518",
+      "EMI": "rbxassetid://109049593143031"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://96837677476618",
+      "NOR": "rbxassetid://130245136222467",
+      "RGH": "rbxassetid://137269488148014",
+      "MTL": "rbxassetid://92928542501209",
+      "EMI": "rbxassetid://105724340093469"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_behemoth_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://134520109822864",
+    "meshes": {
+      "base": "rbxassetid://82823907801807",
+      "bay": "rbxassetid://81845136959348",
+      "pylon": "rbxassetid://99965769651068"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128232050311517",
+      "RGH": "rbxassetid://116744041558409",
+      "NOR": "rbxassetid://81484231598895",
+      "MTL": "rbxassetid://131183415916602",
+      "EMI": "rbxassetid://132291860063994"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://97060131168128",
+      "NOR": "rbxassetid://112676318703733",
+      "RGH": "rbxassetid://81876634060156",
+      "MTL": "rbxassetid://102402225193910",
+      "EMI": "rbxassetid://85818383955017"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_behemoth_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 1052 triangles"
+  }
+}

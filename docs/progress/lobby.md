@@ -10,11 +10,14 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Studio can't teleport,** so a stand-in match server runs the match's side of the contract in-process. Its loading screen has buttons to end the match, "kill" the server, or leave early. All three paths were checked in Studio, plus staged reserve and teleport failures.
 - **Main menu:** Home (Quick play), Skirmish (map cards and Launch), Multiplayer (rooms), Replays, Profile, Settings, laid out after your BAR references. The background is a live battle of the game's own tank, SAM, MLRS and aircraft models, with a mouse parallax camera.
 - **Checked in Studio through the UI:** Home, the room browser, Create room, the battle room (Teams on Twin Lakes with 3 AI), room chat, Start, the stand-in match screen, the results panel, and the profile. Screenshots: `debug_out/screens/lobby_*.jpg`.
-- **Not checked yet (Rojo was disconnected after a restart):** the game's real unit meshes in the background (the screenshots show the box stand-ins), and four small fixes made after those screenshots: Skirmish's detail panel scrolls with Launch pinned, the results panel is taller, the pages hide behind the loading screen, and the browser's filter order.
+- **Re-checked after Rojo reconnected:** the background uses the game's real unit meshes (all 11, no box stand-ins), brighter and closer (`lobby_home.jpg`). The four fixes work: Skirmish scrolls with Launch pinned and segmented options, the results panel fits, the pages hide behind the loading screen (`lobby_loading.jpg`), and the browser order is right. A two-player free for all is called "1v1".
 - **Contract:** `docs/contracts/match.md` v1 (config schema, MemoryStore keys, results record, timeouts, rejoin, profiles), filed below for sim-A and client-B.
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `84dc557` (background with the real meshes, brighter and closer; 1v1 naming; segmented skirmish options; checked in Studio)
+- Ready to merge: `673427d` (the lobby uses `@shared/Match/MatchConfig`; includes a merge of main)
+- Ready to merge: `22f73db` (layered key art with parallax for the loading screens, L-13, `docs/contracts/key-art.md`)
 - Ready to merge: `287b99e` (match contract: a finished result may have no winner when every human is out; validator, specs, results panel)
 - Ready to merge: `fb34ced` (lobby UI, background scene, `docs/contracts/match.md`, lobby decisions and progress; nothing outside `src/lobby`, `lobby.project.json` and the lobby docs)
 
@@ -45,7 +48,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 6. **Start positions:** the lobby orders players so the sim's player ID is the start index (Teams: ally teams together). So sim request 64 (chosen starts) isn't needed for version 1. BAR's start boxes or chosen starts could come later.
 7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
 8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
-9. **Decided (2026-10-23): the config validator moves to `src/shared`.** sim-A moves validate / validateResult and their constants to `src/shared/Match/MatchConfig.luau` (from m-lobby 287b99e). Then the lobby and client-B drop their copies. `build` and `summary` stay in `src/lobby`.
+9. **Done (2026-10-23): the config validator is in `src/shared`** (`@shared/Match/MatchConfig`, S-145; the lobby uses it since its merge of main). sim-A moves validate / validateResult and their constants to `src/shared/Match/MatchConfig.luau` (from m-lobby 287b99e). Then the lobby and client-B drop their copies. `build` and `summary` stay in `src/lobby`.
 11. **Decided (2026-10-23): layered key art with parallax** from models-C for both loading screens (L-13, `docs/contracts/key-art.md`). Uploads still need your approval.
 10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. sim-A agreed to add `lune run src/lobby/tools/test` (a failure blocks the push) once its running merges finish; until then I run them before every "Ready to merge" line.
 
@@ -54,7 +57,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 ### For sim-A (sim session)
 
 - **A-1. Done (sim-A S-143):** confirmed, `standard_start` seats player i on start i (IDs must be contiguous from 1, which MatchConfig guarantees); request 64 closed against L-4. **Match config → Sim (contract section 3).** Nothing new is needed from `Sim.new` for version 1: player ID = start index, factions by team parity as `src/roblox/Lobby.config` does. Please confirm, and resolve your request 64 (chosen starts) against L-4: the lobby assigns starts by player order.
-- **A-2. Agreed (your choice): sim-A does the move,** then I switch to `@shared/Match/MatchConfig`. **A shared validator (optional).** If the match server should run `MatchConfig.validate` without copying it, it could move to `src/shared/Match/` (yours). Say if you want it.
+- **A-2. Done (S-145, main d095edd); the lobby uses `@shared/Match/MatchConfig`.** **A shared validator (optional).** If the match server should run `MatchConfig.validate` without copying it, it could move to `src/shared/Match/` (yours). Say if you want it.
 - **A-3. Done (sim-A, m-sim-2 2e9b5c7).** **Guide 16.3** ("map vote, mode, teams, faction pick"): the user's design is a BAR battle room where the host picks the map; reserved servers via TeleportService; the flow in `docs/contracts/match.md`. Please update the guide.
 
 ### For client-B (client session, match place)
@@ -89,10 +92,10 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Rooms and room setup, server-checked (L-3), chat (L-9) | done, checked in Studio |
 | Start and return with Studio stand-ins (L-4, L-6), failure paths | done, checked in Studio |
 | Profile and history (L-8) | done, checked in Studio (stand-in store) |
-| Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio (last fixes pending a re-check) |
-| Background battle scene with parallax (L-12) | done; checked with box stand-ins, real meshes pending a re-check |
+| Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
+| Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
-| Key-art contract and parallax viewer on the loading screen (L-13) | done; waiting for C's art |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only); waiting for C's art |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue

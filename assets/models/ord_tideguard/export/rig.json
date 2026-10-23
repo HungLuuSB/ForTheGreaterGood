@@ -1,0 +1,229 @@
+{
+  "id": "ord_tideguard",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.45,
+        0.0364
+      ],
+      "size": [
+        6.5,
+        3.9,
+        10.4171
+      ]
+    },
+    "trackL": {
+      "parent": "base",
+      "center": [
+        -2.75,
+        0.5,
+        0.0011
+      ],
+      "size": [
+        0.9,
+        1.0,
+        8.3978
+      ],
+      "pivot": [
+        -2.75,
+        0.46,
+        0.0
+      ]
+    },
+    "trackR": {
+      "parent": "base",
+      "center": [
+        2.75,
+        0.5,
+        0.0011
+      ],
+      "size": [
+        0.9,
+        1.0,
+        8.3978
+      ],
+      "pivot": [
+        2.75,
+        0.46,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.0975,
+        -1.6341
+      ],
+      "size": [
+        3.5672,
+        1.595,
+        7.6318
+      ],
+      "pivot": [
+        0.0,
+        2.3,
+        0.9
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0,
+        2.95,
+        -5.5
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "trackL",
+    "trackR",
+    "turret"
+  ],
+  "visualPieces": [
+    "trackL",
+    "trackR"
+  ],
+  "anim": {
+    "trackL": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "trackR": {
+      "motion": "scroll",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.765,
+        1.085
+      ],
+      "size": [
+        6.58,
+        3.47,
+        8.37
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.75,
+        -4.75
+      ],
+      "size": [
+        3.8,
+        0.2,
+        0.08
+      ]
+    },
+    {
+      "name": "turret_glow_running",
+      "piece": "turret",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        3.325,
+        0.655
+      ],
+      "size": [
+        3.68,
+        0.99,
+        2.69
+      ]
+    },
+    {
+      "name": "turret_glow_weapon",
+      "piece": "turret",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        2.95,
+        -5.0
+      ],
+      "size": [
+        0.54,
+        0.54,
+        0.08
+      ]
+    }
+  ],
+  "glowShare": 0.0261,
+  "triangles": {
+    "base": 928,
+    "trackL": 308,
+    "trackR": 308,
+    "turret": 412,
+    "total": 1956
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

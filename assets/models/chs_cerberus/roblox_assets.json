@@ -1,0 +1,55 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New T2 mesh (item 3); wreck built: 2636 triangles, glow share 1.1%",
+  "bar": {
+    "model": "rbxassetid://89941156106269",
+    "meshes": {
+      "base": "rbxassetid://97258323701194",
+      "base_glow_power": "rbxassetid://88147617453490",
+      "base_glow_running": "rbxassetid://101049810909957",
+      "launcher": "rbxassetid://123028797622171",
+      "launcher_glow_weapon": "rbxassetid://134418032340988",
+      "radar": "rbxassetid://94168117543755",
+      "radar_glow_running": "rbxassetid://100147008864961"
+    },
+    "decals": {
+      "ALB": "rbxassetid://110032088792384",
+      "RGH": "rbxassetid://106912935658427",
+      "NOR": "rbxassetid://108533858801687",
+      "MTL": "rbxassetid://130593276688549",
+      "EMI": "rbxassetid://86671829362247"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92223607282891",
+      "NOR": "rbxassetid://70407179153396",
+      "RGH": "rbxassetid://89617830471676",
+      "MTL": "rbxassetid://80603629363076",
+      "EMI": "rbxassetid://130912669816554"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_cerberus_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://97805792218012",
+    "meshes": {
+      "base": "rbxassetid://89009965176138",
+      "launcher": "rbxassetid://111261980269860",
+      "radar": "rbxassetid://116286209172248"
+    },
+    "decals": {
+      "ALB": "rbxassetid://125386389502475",
+      "RGH": "rbxassetid://128456600158491",
+      "NOR": "rbxassetid://109227327918647",
+      "MTL": "rbxassetid://89305027853183",
+      "EMI": "rbxassetid://72540316800169"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75828199278921",
+      "NOR": "rbxassetid://76256850928113",
+      "RGH": "rbxassetid://135567315028320",
+      "MTL": "rbxassetid://97305527084005",
+      "EMI": "rbxassetid://110757014851080"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_cerberus_wreck_bar in FTGG Art",
+    "revision": "New T2 mesh (item 3); wreck built: 2308 triangles"
+  }
+}

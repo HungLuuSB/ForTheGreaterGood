@@ -1,0 +1,90 @@
+{
+  "id": "chs_reaver_wreck",
+  "wreckOf": "chs_reaver",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0057,
+        2.1684,
+        -1.268
+      ],
+      "size": [
+        5.1738,
+        5.5815,
+        14.6976
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.028,
+        3.0114,
+        3.4753
+      ],
+      "size": [
+        2.0033,
+        2.7357,
+        5.4402
+      ],
+      "pivot": [
+        0.0,
+        1.95,
+        3.6
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        -0.5,
+        3.72,
+        1.2
+      ]
+    },
+    "nano2": {
+      "parent": "nano",
+      "at": [
+        0.5,
+        3.32,
+        5.8
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 768,
+    "nano": 176,
+    "total": 944
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

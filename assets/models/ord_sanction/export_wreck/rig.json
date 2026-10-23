@@ -1,0 +1,82 @@
+{
+  "id": "ord_sanction_wreck",
+  "wreckOf": "ord_sanction",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0269,
+        1.8848,
+        -0.0171
+      ],
+      "size": [
+        23.2311,
+        4.0677,
+        23.2971
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -0.0109,
+        6.2363,
+        -0.3135
+      ],
+      "size": [
+        7.7796,
+        5.4874,
+        7.1905
+      ],
+      "pivot": [
+        0.0,
+        3.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -1.4,
+        6.0,
+        -4.05
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 922,
+    "launcher": 980,
+    "total": 1902
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

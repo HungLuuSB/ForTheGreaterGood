@@ -31,7 +31,7 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 ## L-2 (2026-10-23): one constants module
 
-`Config.luau` holds the enums, limits, palette, timeouts, store names and `MATCH_PLACE_ID = 89435699207932` (the FTGG main game, as the user named it). Both places must be in one experience.
+`Config.luau` holds the lobby's limits, labels, timeouts, store names and `MATCH_PLACE_ID = 89435699207932` (the FTGG main game, as the user named it). Both places must be in one experience. Since S-145 the contract's version, enums, team limits and palette come from `@shared/Match/MatchConfig` and are re-exported here.
 
 ## L-3 (2026-10-23): rooms
 
@@ -83,6 +83,6 @@ Replays lists your recent matches; "Watch" stays off until the match place can p
 
 ## L-13 (2026-10-23): layered key art with parallax for the loading screens
 
-- **Decision:** the user's call. models-C renders key art (tanks, aircraft, ships on the far side, SAM missiles, ground explosions, realistic light, a sci-fi edge) as 4 layers from one camera (`sky`, `far`, `mid`, `near`, each with a depth). The loading screens shift each layer with the mouse in proportion to its depth, plus an idle drift. Layers are 2048 × 1152 in 2 × 2 tiles of 1024 × 576, because Roblox shrinks images above 1024 px. The tiles are listed in the mesh manifest's `keyArt` table (C's generated file); "review" art shows only in Studio. The lobby's viewer is `src/lobby/client/KeyArt.luau`; client-B's match loading screen copies its behaviour, so the two screens match across the teleport. Without approved art the lobby keeps the live battle behind the loading screen.
+- **Decision:** the user's call. models-C renders key art (tanks, aircraft, ships on the far side, SAM missiles, ground explosions, realistic light, a sci-fi edge) as 4 layers from one camera (`sky`, `far`, `mid`, `near`, each with a depth). The loading screens shift each layer with the mouse in proportion to its depth, plus an idle drift. Layers are 2048 × 1152 in 2 × 2 tiles of 1024 × 576, because Roblox shrinks images above 1024 px. The tiles are listed in the mesh manifest's `keyArt` table (C's generated file); "review" art shows only in Studio. The viewer is client-B's `src/client/UI/KeyArt.luau` (C-176, started as a copy of the lobby's), used read-only by the lobby like the UI kit, so both loading screens run the same code. Without approved art the lobby keeps the live battle behind the loading screen.
 - **Alternatives:** a single flat image (no depth); the live 3D scene on the match side too (the match place loads its own assets while that screen shows, so a picture is lighter).
 - **Why:** the user asked for stunning key art that keeps the parallax feel of the menu.

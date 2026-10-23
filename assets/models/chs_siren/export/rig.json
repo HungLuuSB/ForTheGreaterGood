@@ -1,0 +1,239 @@
+{
+  "id": "chs_siren",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        1.12,
+        -1.1538
+      ],
+      "size": [
+        4.72,
+        3.44,
+        14.4076
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.35,
+        -3.6
+      ],
+      "size": [
+        1.4,
+        3.5,
+        1.4
+      ],
+      "pivot": [
+        0.0,
+        1.6,
+        -3.6
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.35,
+        3.4
+      ],
+      "size": [
+        1.4,
+        3.5,
+        1.4
+      ],
+      "pivot": [
+        0.0,
+        1.6,
+        3.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0.0,
+        5.300000000000001,
+        -3.6
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        0.0,
+        5.300000000000001,
+        3.4
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "turret1",
+    "turret2"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        1.635,
+        0.7975
+      ],
+      "size": [
+        4.09,
+        1.87,
+        10.595
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.7,
+        2.84,
+        0.6
+      ],
+      "size": [
+        0.6,
+        0.05,
+        0.6
+      ]
+    },
+    {
+      "name": "turret1_glow_running",
+      "piece": "turret1",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.2,
+        -3.6
+      ],
+      "size": [
+        0.22,
+        0.16,
+        0.22
+      ]
+    },
+    {
+      "name": "turret1_glow_power",
+      "piece": "turret1",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.2,
+        -3.6
+      ],
+      "size": [
+        1.42,
+        0.9,
+        1.404
+      ]
+    },
+    {
+      "name": "turret2_glow_running",
+      "piece": "turret2",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.2,
+        3.4
+      ],
+      "size": [
+        0.22,
+        0.16,
+        0.22
+      ]
+    },
+    {
+      "name": "turret2_glow_power",
+      "piece": "turret2",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.2,
+        3.4
+      ],
+      "size": [
+        1.42,
+        0.9,
+        1.404
+      ]
+    }
+  ],
+  "glowShare": 0.0562,
+  "triangles": {
+    "base": 532,
+    "turret1": 372,
+    "turret2": 372,
+    "total": 1276
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

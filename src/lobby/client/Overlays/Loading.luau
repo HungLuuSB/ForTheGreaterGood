@@ -6,7 +6,7 @@
 -- with its controls: end the match now, make the "server" die, or go back
 -- early.
 
-local KeyArt = require("../KeyArt")
+local KeyArt = require("@client/UI/KeyArt")
 local Net = require("../Net")
 local Ui = require("../Ui")
 
@@ -142,7 +142,7 @@ function Loading.new(gui: ScreenGui): any
 				return false
 			end
 			local map = Net.map(room.settings.mapId)
-			title.Text = `{Ui.label2(room.settings.mode)} on {if map then map.name else room.mapName}`
+			title.Text = `{Ui.modeName(room.settings.mode, #room.slots)} on {if map then map.name else room.mapName}`
 			tip.Text = TIPS[tipIndex]
 			controls.Visible = mode == "standIn"
 			if mode == "starting" then

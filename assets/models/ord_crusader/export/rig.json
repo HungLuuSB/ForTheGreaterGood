@@ -1,0 +1,298 @@
+{
+  "id": "ord_crusader",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        4.7,
+        -0.7309
+      ],
+      "size": [
+        6.94,
+        11.2,
+        28.3619
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        9.0,
+        0.58
+      ],
+      "size": [
+        2.6,
+        0.6,
+        0.44
+      ],
+      "pivot": [
+        0.0,
+        9.2,
+        0.6
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.2825,
+        -11.2059
+      ],
+      "size": [
+        2.9778,
+        1.565,
+        7.5882
+      ],
+      "pivot": [
+        0.0,
+        2.4,
+        -9.0
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        2.4,
+        3.1,
+        6.0
+      ],
+      "size": [
+        1.4,
+        1.4,
+        2.0
+      ],
+      "pivot": [
+        2.4,
+        2.4,
+        6.2
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.0225,
+        -4.6
+      ],
+      "size": [
+        3.6,
+        1.245,
+        2.4
+      ],
+      "pivot": [
+        0.0,
+        2.4,
+        -4.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0,
+        3.3,
+        -15.05
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        2.4,
+        3.3499999999999996,
+        4.9
+      ]
+    },
+    "muzzle3": {
+      "parent": "launcher",
+      "at": [
+        0.0,
+        3.8,
+        -4.6
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "radar",
+    "turret1",
+    "turret2",
+    "launcher"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.75,
+        0.7225
+      ],
+      "size": [
+        6.89,
+        9.34,
+        25.445
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        7.62,
+        4.4
+      ],
+      "size": [
+        1.5,
+        0.06,
+        1.8
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        9.0,
+        0.36
+      ],
+      "size": [
+        2.45,
+        0.06,
+        0.03
+      ]
+    },
+    {
+      "name": "turret1_glow_weapon",
+      "piece": "turret1",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.3,
+        -14.45
+      ],
+      "size": [
+        0.54,
+        0.54,
+        0.1
+      ]
+    },
+    {
+      "name": "turret2_glow_weapon",
+      "piece": "turret2",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        2.4,
+        3.25,
+        4.98
+      ],
+      "size": [
+        0.2,
+        0.8,
+        0.04
+      ]
+    },
+    {
+      "name": "launcher_glow_weapon",
+      "piece": "launcher",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        3.65,
+        -4.9
+      ],
+      "size": [
+        2.7,
+        0.02,
+        1.06
+      ]
+    }
+  ],
+  "glowShare": 0.0354,
+  "triangles": {
+    "base": 1072,
+    "radar": 68,
+    "turret1": 244,
+    "turret2": 280,
+    "launcher": 236,
+    "total": 1900
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

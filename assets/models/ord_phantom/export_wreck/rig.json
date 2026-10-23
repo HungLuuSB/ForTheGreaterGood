@@ -1,0 +1,101 @@
+{
+  "id": "ord_phantom_wreck",
+  "wreckOf": "ord_phantom",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0052,
+        0.939,
+        -0.2758
+      ],
+      "size": [
+        14.133,
+        1.2735,
+        7.7441
+      ]
+    },
+    "bay": {
+      "parent": "base",
+      "center": [
+        0.0244,
+        0.1625,
+        -0.0184
+      ],
+      "size": [
+        1.7398,
+        0.4858,
+        2.9647
+      ],
+      "pivot": [
+        0.0,
+        0.2,
+        0.0
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        0.0165,
+        0.0265,
+        1.9092
+      ],
+      "size": [
+        2.5911,
+        0.6438,
+        2.517
+      ],
+      "pivot": [
+        0.0,
+        0.2,
+        2.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "bay",
+      "at": [
+        0,
+        0.1,
+        0.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 360,
+    "bay": 48,
+    "pylon": 144,
+    "total": 552
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

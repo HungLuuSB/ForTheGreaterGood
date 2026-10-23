@@ -45,7 +45,7 @@ function Results.new(gui: ScreenGui): any
 		else
 			headline, color = "Defeat", Kit.COLOR.defeat
 		end
-		local p = Kit.panel(gui, "Match results", Vector2.new(860, 250 + 36 * (#r.players + 1)))
+		local p = Kit.panel(gui, "Match results", Vector2.new(860, 215 + 36 * (#r.players + 1)))
 		p.root.ZIndex = 45
 		p.scrim.ZIndex = 44
 		local function close()
@@ -59,7 +59,7 @@ function Results.new(gui: ScreenGui): any
 		h.TextSize = 32
 		h.Size = UDim2.new(1, 0, 0, 40)
 		h.LayoutOrder = 1
-		local facts = `{r.mapName}  ·  {Ui.label2(r.mode)}  ·  {Ui.clock(r.seconds or 0)}`
+		local facts = `{r.mapName}  ·  {Ui.modeName(r.mode, #r.players)}  ·  {Ui.clock(r.seconds or 0)}`
 		if r.reason then
 			facts ..= `  ·  {r.reason}`
 		end
