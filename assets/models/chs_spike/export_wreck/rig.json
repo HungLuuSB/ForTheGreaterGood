@@ -1,7 +1,7 @@
 {
   "id": "chs_spike_wreck",
   "wreckOf": "chs_spike",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,31 +9,31 @@
     "base": {
       "parent": null,
       "center": [
-        -0.0012,
-        1.2339,
-        0.0193
+        0.0234,
+        1.795,
+        0.001
       ],
       "size": [
-        6.3691,
-        2.536,
-        6.3817
+        15.5464,
+        3.713,
+        15.7955
       ]
     },
     "turret": {
       "parent": "base",
       "center": [
-        0.1579,
-        3.0151,
-        -1.6003
+        -0.0547,
+        4.0248,
+        -2.7521
       ],
       "size": [
-        3.7464,
-        1.2886,
-        7.1372
+        5.3697,
+        3.4213,
+        11.771
       ],
       "pivot": [
         0.0,
-        2.4,
+        2.6,
         0.0
       ]
     }
@@ -43,12 +43,14 @@
       "parent": "turret",
       "at": [
         0.0,
-        3.0,
-        -5.15
+        3.6,
+        -8.6
       ]
     }
   },
   "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -61,9 +63,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 588,
-    "turret": 400,
-    "total": 988
+    "base": 1480,
+    "turret": 608,
+    "total": 2088
   },
   "textures": {
     "size": 1024,

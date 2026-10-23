@@ -1,7 +1,33 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "2026-10-22, glow pass (M-22): 868 triangles, glow share 3.2%",
+  "revision": "Redesign at the size scale (S-104, M-26); wreck rebuilt: 1902 triangles, glow share 2.7%",
   "bar": {
+    "model": "rbxassetid://125331706205823",
+    "meshes": {
+      "base": "rbxassetid://92808637532401",
+      "base_glow_power": "rbxassetid://106271203032486",
+      "base_glow_running": "rbxassetid://118534918452554",
+      "turret": "rbxassetid://116199423303947",
+      "turret_glow_running": "rbxassetid://89175360306107",
+      "turret_glow_weapon": "rbxassetid://71503917713602"
+    },
+    "decals": {
+      "ALB": "rbxassetid://81112298758772",
+      "RGH": "rbxassetid://127118546953907",
+      "NOR": "rbxassetid://116181783223379",
+      "MTL": "rbxassetid://117506233364978",
+      "EMI": "rbxassetid://101164100996667"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://90652074021017",
+      "NOR": "rbxassetid://140253699249132",
+      "RGH": "rbxassetid://124725292529181",
+      "MTL": "rbxassetid://136928280024690",
+      "EMI": "rbxassetid://135352248397952"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_bulwark_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://139647399994048",
     "meshes": {
       "base": "rbxassetid://72350770589731",
@@ -24,7 +50,7 @@
       "MTL": "rbxassetid://136852780265337",
       "EMI": "rbxassetid://99460146378514"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_bulwark_bar in FTGG Art"
+    "note": "2026-10-22, glow pass (M-22): 868 triangles, glow share 3.2%"
   },
   "bar_preglow": {
     "model": "rbxassetid://103528490751341",
@@ -49,6 +75,29 @@
     "note": "before the glow pass (2026-10-22, review 1: BAR style (M-15, M-18), 764 triangles)"
   },
   "wreck": {
+    "model": "rbxassetid://91501915291475",
+    "meshes": {
+      "base": "rbxassetid://106182551913507",
+      "turret": "rbxassetid://85108031608710"
+    },
+    "decals": {
+      "ALB": "rbxassetid://96340179234070",
+      "RGH": "rbxassetid://94533745718569",
+      "NOR": "rbxassetid://123782362244878",
+      "MTL": "rbxassetid://81814512504316",
+      "EMI": "rbxassetid://132552529371497"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://93971590641312",
+      "NOR": "rbxassetid://88855366149989",
+      "RGH": "rbxassetid://116411232809514",
+      "MTL": "rbxassetid://84677423311896",
+      "EMI": "rbxassetid://111466875438949"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_bulwark_wreck_bar in FTGG Art",
+    "revision": "Redesign at the size scale (S-104, M-26); wreck rebuilt: 1726 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://109381430668906",
     "meshes": {
       "base": "rbxassetid://120634697091683",

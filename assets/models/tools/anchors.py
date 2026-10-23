@@ -22,10 +22,12 @@ B, N = "base", "nano"
 
 ANCHORS = {
     # factories
-    "ord_vehplant": {"buildpad": (B, (0.0, 0.6, -7.4)),  # on the ramp before the door
-                     "nano1": (B, (-5.12, 5.5, -4.8)), "nano2": (B, (5.12, 5.5, -4.8)), "nano3": (B, (0.0, 5.85, -4.8))},
-    "chs_vehplant": {"buildpad": (B, (3.5, 0.55, 2.0)),  # the gantry bay
-                     "nano1": (B, (4.0, 6.4, -0.5)), "nano2": (B, (3.5, 6.8, -4.0))},
+    "ord_vehplant": {"buildpad": (B, (0.0, 0.72, -3.0)),  # the build pad in the assembly bay (fp-4 redesign)
+                     "nano1": (B, (-3.03, 6.4, -6.0)), "nano2": (B, (-3.03, 6.4, 0.0)),
+                     "nano3": (B, (3.03, 6.4, -6.0)), "nano4": (B, (3.03, 6.4, 0.0))},
+    "chs_vehplant": {"buildpad": (B, (3.0, 0.72, -2.0)),  # the pad under the gantry crane (fp-4 redesign)
+                     "nano1": (B, (0.2, 6.15, -4.6)), "nano2": (B, (5.8, 6.15, 0.6)),
+                     "nano3": ("trolley", (3.0, 7.32, -2.0))},  # the crane's hook block
     "ord_airfield": {"buildpad": (B, (-12.0, 0.55, -9.0)),  # the landing pad
                      "nano1": (B, (-16.75, 5.4, 1.75)), "nano2": (B, (-7.25, 5.4, 1.75)), "nano3": (B, (-12.0, 5.5, 1.75))},
     "chs_airfield": {"buildpad": (B, (-12.0, 0.4, 7.5)),  # under the open hangar

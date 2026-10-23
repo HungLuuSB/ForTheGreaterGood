@@ -1,6 +1,6 @@
 {
   "id": "ord_vehplant",
-  "footprintStuds": 24,
+  "footprintStuds": 32,
   "variants": {
     "bar": "BAR-style painted sand-grey (M-15)"
   },
@@ -9,13 +9,31 @@
       "parent": null,
       "center": [
         0.0,
-        4.3,
+        6.9,
         0.0
       ],
       "size": [
-        22.0,
-        8.6,
-        21.9576
+        31.1194,
+        13.8,
+        31.1194
+      ]
+    },
+    "gantry": {
+      "parent": "base",
+      "center": [
+        0.0,
+        9.4975,
+        -1.0
+      ],
+      "size": [
+        12.0,
+        3.595,
+        1.8
+      ],
+      "pivot": [
+        0.0,
+        10.9,
+        -1.0
       ]
     }
   },
@@ -24,38 +42,61 @@
       "parent": "base",
       "at": [
         0.0,
-        0.6,
-        -7.4
+        0.72,
+        -3.0
       ]
     },
     "nano1": {
       "parent": "base",
       "at": [
-        -5.12,
-        5.5,
-        -4.8
+        -3.03,
+        6.4,
+        -6.0
       ]
     },
     "nano2": {
       "parent": "base",
       "at": [
-        5.12,
-        5.5,
-        -4.8
+        -3.03,
+        6.4,
+        0.0
       ]
     },
     "nano3": {
       "parent": "base",
       "at": [
-        0.0,
-        5.85,
-        -4.8
+        3.03,
+        6.4,
+        -6.0
+      ]
+    },
+    "nano4": {
+      "parent": "base",
+      "at": [
+        3.03,
+        6.4,
+        0.0
       ]
     }
   },
   "teamColorPieces": [
-    "base"
+    "base",
+    "gantry"
   ],
+  "visualPieces": [
+    "gantry"
+  ],
+  "anim": {
+    "gantry": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 7.0
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -78,13 +119,13 @@
       "strength": 2.0,
       "center": [
         0.0,
-        2.135,
-        -0.9
+        4.81,
+        0.0
       ],
       "size": [
-        20.6,
-        2.89,
-        18.8
+        29.8,
+        8.38,
+        29.8
       ]
     },
     {
@@ -99,20 +140,21 @@
       "strength": 2.5,
       "center": [
         0.0,
-        4.5975,
-        1.835
+        9.05,
+        1.9842
       ],
       "size": [
-        11.3,
-        8.095,
-        13.13
+        28.49,
+        9.7,
+        24.5185
       ]
     }
   ],
-  "glowShare": 0.0339,
+  "glowShare": 0.0206,
   "triangles": {
-    "base": 768,
-    "total": 768
+    "base": 2720,
+    "gantry": 432,
+    "total": 3152
   },
   "textures": {
     "size": 1024,

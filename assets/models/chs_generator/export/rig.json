@@ -1,6 +1,6 @@
 {
   "id": "chs_generator",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style gunmetal (M-15)"
   },
@@ -9,20 +9,52 @@
       "parent": null,
       "center": [
         0.0,
-        2.8625,
+        4.875,
         0.0
       ],
       "size": [
-        6.6,
-        5.725,
-        6.6
+        15.563,
+        9.75,
+        15.563
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        -2.4,
+        4.2,
+        1.0
+      ],
+      "size": [
+        5.0112,
+        0.8,
+        5.74
+      ],
+      "pivot": [
+        -2.4,
+        4.2,
+        1.0
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [
-    "base"
+    "base",
+    "core"
   ],
+  "visualPieces": [
+    "core"
+  ],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -45,13 +77,13 @@
       "strength": 2.0,
       "center": [
         0.0,
-        4.35,
-        -1.4
+        5.45,
+        0.0
       ],
       "size": [
-        5.9,
-        0.2,
-        0.3
+        14.35,
+        9.4,
+        14.35
       ]
     },
     {
@@ -65,21 +97,43 @@
       ],
       "strength": 2.5,
       "center": [
-        0.05,
-        2.868,
-        0.7538
+        -0.41,
+        5.76,
+        -1.4082
       ],
       "size": [
-        6.02,
-        1.168,
-        3.5443
+        11.74,
+        8.22,
+        12.0737
+      ]
+    },
+    {
+      "name": "core_glow_power",
+      "piece": "core",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -2.4,
+        4.2,
+        1.0
+      ],
+      "size": [
+        5.4,
+        0.4,
+        5.4
       ]
     }
   ],
-  "glowShare": 0.0889,
+  "glowShare": 0.0691,
   "triangles": {
-    "base": 752,
-    "total": 752
+    "base": 2396,
+    "core": 148,
+    "total": 2544
   },
   "textures": {
     "size": 1024,

@@ -1,6 +1,6 @@
 {
   "id": "ord_generator",
-  "footprintStuds": 8,
+  "footprintStuds": 16,
   "variants": {
     "bar": "BAR-style painted sand-grey (M-15)"
   },
@@ -9,20 +9,52 @@
       "parent": null,
       "center": [
         0.0,
-        2.7,
+        4.235,
         0.0
       ],
       "size": [
-        7.376,
-        5.4,
-        7.376
+        15.5538,
+        8.47,
+        15.5538
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        0.0,
+        6.7,
+        -0.6
+      ],
+      "size": [
+        1.8,
+        0.3,
+        1.7726
+      ],
+      "pivot": [
+        0.0,
+        6.0,
+        -0.6
       ]
     }
   },
   "attachments": {},
   "teamColorPieces": [
-    "base"
+    "base",
+    "core"
   ],
+  "visualPieces": [
+    "core"
+  ],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -45,13 +77,13 @@
       "strength": 2.0,
       "center": [
         0.0,
-        0.6,
+        2.02,
         0.0
       ],
       "size": [
-        1.8,
-        0.1,
-        7.16
+        14.8,
+        2.58,
+        14.8
       ]
     },
     {
@@ -66,20 +98,42 @@
       "strength": 2.5,
       "center": [
         0.0,
-        3.68,
-        0.0
+        5.18,
+        -0.071
       ],
       "size": [
-        5.82,
-        3.28,
-        3.8
+        10.89,
+        6.46,
+        11.548
+      ]
+    },
+    {
+      "name": "core_glow_power",
+      "piece": "core",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        6.5375,
+        -0.6
+      ],
+      "size": [
+        2.7,
+        1.075,
+        2.6726
       ]
     }
   ],
-  "glowShare": 0.0774,
+  "glowShare": 0.0399,
   "triangles": {
-    "base": 696,
-    "total": 696
+    "base": 2306,
+    "core": 196,
+    "total": 2502
   },
   "textures": {
     "size": 1024,

@@ -37,20 +37,18 @@ APPROVED = {
     # 2026-10-22: tanks, constructors, artillery, T1 pairs, the 10 structures
     "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth",
     "ord_herald", "chs_jackal", "ord_halo", "chs_hornet", "ord_oracle", "chs_watcher",
-    "ord_generator", "chs_generator", "ord_solar", "chs_solar",
-    "ord_vehplant", "chs_vehplant", "ord_bulwark", "chs_spike",
     "shield_emitter",
     # 2026-10-23: the BAR queue, pairs 1-26, and the missiles
-    "chs_airfield", "chs_barracuda", "chs_carapace", "chs_cyclops", "chs_depot", "chs_eye",
+    "chs_airfield", "chs_barracuda", "chs_carapace", "chs_cyclops", "chs_eye",
     "chs_forgemaster", "chs_gorgon", "chs_hailstorm", "chs_harpy", "chs_hydra", "chs_inferno",
     "chs_ir_sam", "chs_juggernaut", "chs_lamprey", "chs_locust", "chs_minotaur", "chs_nuke",
     "chs_plague", "chs_radar_sam", "chs_ragnarok", "chs_shipyard", "chs_shroud", "chs_stalker",
-    "chs_thorn", "chs_vulture", "chs_wasp", "chs_windmill", "chs_wrecker", "ord_absolution",
-    "ord_airfield", "ord_arbiter", "ord_architect", "ord_barrier", "ord_citadel", "ord_depot",
+    "chs_thorn", "chs_vulture", "chs_wasp", "chs_wrecker", "ord_absolution",
+    "ord_airfield", "ord_arbiter", "ord_architect", "ord_barrier", "ord_citadel",
     "ord_falcon", "ord_guardian", "ord_ir_sam", "ord_judgement", "ord_lumen", "ord_nuke",
     "ord_paladin", "ord_phalanx", "ord_radar_sam", "ord_radiance", "ord_reckoning", "ord_sentry",
     "ord_seraph", "ord_shipyard", "ord_silence", "ord_skywright", "ord_tidewright", "ord_veil",
-    "ord_vigil", "ord_warden", "ord_watchtower", "ord_windmill",
+    "ord_vigil", "ord_warden", "ord_watchtower",
     # 2026-10-23: the second review: beam shot, deposits, interceptors, the
     # (the tracked Commanders were approved too, then replaced by the mechs, M-31: review)
     "beam", "deposit", "ord_interceptor", "chs_interceptor",
@@ -64,14 +62,13 @@ DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a ran
 FX_ALIASES = {"ord_mobile_interceptor": "ord_interceptor", "chs_mobile_interceptor": "chs_interceptor"}
 # wreck versions (M-24) the user approved; the rest are "review"
 # Structures redesigned at the size scale (S-104) go back to "review" with
-# their wrecks until the user approves the new designs; their earlier
-# approvals: ord_extractor, chs_extractor (2026-10-23, fp 1).
+# their wrecks until the user approves the new designs; earlier (fp 1)
+# approvals so replaced: the generators, solar, wind turbines, depots,
+# vehicle plants, Bulwark and Spike.
 APPROVED_WRECKS = {
     # 2026-10-23: the first 22 wrecks
     "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth",
     "ord_herald", "chs_jackal", "ord_halo", "chs_hornet", "ord_oracle", "chs_watcher",
-    "ord_generator", "chs_generator", "ord_solar", "chs_solar",
-    "ord_vehplant", "chs_vehplant", "ord_bulwark", "chs_spike",
     "ord_extractor", "chs_extractor",  # the fp-2 redesign's wrecks (2026-10-23)
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"

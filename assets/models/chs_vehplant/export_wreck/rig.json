@@ -1,7 +1,7 @@
 {
   "id": "chs_vehplant_wreck",
   "wreckOf": "chs_vehplant",
-  "footprintStuds": 24,
+  "footprintStuds": 32,
   "variants": {
     "bar": "BAR-style wreck (M-24)"
   },
@@ -9,32 +9,32 @@
     "base": {
       "parent": null,
       "center": [
-        -0.0549,
-        3.9927,
-        -0.0151
+        0.0392,
+        6.1676,
+        -0.0395
       ],
       "size": [
-        21.888,
-        8.002,
-        22.1813
+        31.0574,
+        12.3655,
+        31.4846
       ]
     },
     "trolley": {
       "parent": "base",
       "center": [
-        3.8856,
-        5.5547,
-        -0.565
+        3.0569,
+        9.3735,
+        -2.0606
       ],
       "size": [
-        0.149,
-        2.0005,
-        0.6438
+        13.1646,
+        4.0891,
+        1.9037
       ],
       "pivot": [
-        4.0,
-        7.0,
-        -0.5
+        3.0,
+        10.7,
+        -2.0
       ]
     }
   },
@@ -42,25 +42,33 @@
     "buildpad": {
       "parent": "base",
       "at": [
-        3.5,
-        0.55,
-        2.0
+        3.0,
+        0.72,
+        -2.0
       ]
     },
     "nano1": {
       "parent": "base",
       "at": [
-        4.0,
-        6.4,
-        -0.5
+        0.2,
+        6.15,
+        -4.6
       ]
     },
     "nano2": {
       "parent": "base",
       "at": [
-        3.5,
-        6.8,
-        -4.0
+        5.8,
+        6.15,
+        0.6
+      ]
+    },
+    "nano3": {
+      "parent": "trolley",
+      "at": [
+        3.0,
+        7.32,
+        -2.0
       ]
     }
   },
@@ -76,7 +84,7 @@
         0,
         1
       ],
-      "range": 5
+      "range": 6.0
     }
   },
   "emissive": {
@@ -91,9 +99,9 @@
   "glow": [],
   "glowShare": 0.0,
   "triangles": {
-    "base": 804,
-    "trolley": 12,
-    "total": 816
+    "base": 2156,
+    "trolley": 120,
+    "total": 2276
   },
   "textures": {
     "size": 1024,
