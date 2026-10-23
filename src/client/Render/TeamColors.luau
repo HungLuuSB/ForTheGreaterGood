@@ -8,20 +8,13 @@
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local PALETTE = {
-	Color3.fromRGB(64, 132, 230), -- 1 Blue
-	Color3.fromRGB(222, 70, 62), -- 2 Red
-	Color3.fromRGB(82, 186, 92), -- 3 Green
-	Color3.fromRGB(236, 200, 64), -- 4 Yellow
-	Color3.fromRGB(156, 92, 214), -- 5 Purple
-	Color3.fromRGB(238, 132, 46), -- 6 Orange
-	Color3.fromRGB(60, 200, 210), -- 7 Cyan
-	Color3.fromRGB(232, 110, 180), -- 8 Pink
-	Color3.fromRGB(226, 229, 235), -- 9 White
-	Color3.fromRGB(140, 150, 70), -- 10 Olive
-	Color3.fromRGB(150, 100, 62), -- 11 Brown
-	Color3.fromRGB(40, 130, 120), -- 12 Teal
-}
+local MatchConfig = require("@shared/Match/MatchConfig")
+
+-- the palette, shared with the lobby place (S-145)
+local PALETTE: { Color3 } = {}
+for i, c in MatchConfig.COLORS do
+	PALETTE[i] = Color3.fromRGB(c.rgb[1], c.rgb[2], c.rgb[3])
+end
 
 local byTeam: { [number]: number } = {} -- the match's palette index per team
 local watching = false
