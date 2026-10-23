@@ -172,7 +172,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			-- a dome whose generator this player doesn't have (protocol 29, S-122):
 			-- its centre, radius and state, whatever the team sees (C-145)
 			local x, z = world.grid:decode(e.cell, e.offX, e.offZ)
-			world.remoteDomes[e.unitId :: number] = { x = x, y = (e.y :: number) / Schema.Y_SCALE, z = z, radius = e.radius :: number, charge = (e.charge :: number) / 255, flags = e.shieldFlags or e.flags or 0 }
+			world.remoteDomes[e.unitId :: number] = { x = x, y = (e.y :: number) / Schema.Y_SCALE, z = z, radius = e.radius :: number, charge = (e.charge :: number) / 255, flags = e.shieldFlags or 0 }
 		elseif EK.DOME_GONE ~= nil and kind == EK.DOME_GONE then
 			-- (when the generator came into view, its ENTER and SHIELD take over)
 			world.remoteDomes[e.unitId :: number] = nil
