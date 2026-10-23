@@ -253,4 +253,26 @@ return function(t: any)
 		world.teamAllies = {}
 		t.equal(World.relation(world, world.units[5]), "enemy", "without the list (before protocol 30) other teams are enemies")
 	end)
+
+	t.test("the ally list arrives with WELCOME and right-click reads it (S-129, C-150)", function()
+		local sim = Sim.new({ seed = 2, players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 }, { id = 3, team = 3, allyTeam = 1 } }, mapId = "flat:64", scenario = "empty" })
+		local world = World.new(sim.defs)
+		NetOut.join(sim, 1)
+		local Spawn = require("../../src/server/Sim/Spawn")
+		local ally = Spawn.unit(sim, "ord_mason", 3, 10, 0)
+		local enemy = Spawn.unit(sim, "ord_mason", 2, 30, 0)
+		local api = Api.new(world, function(payload: buffer)
+			assert(Sim.submit(sim, 1, payload))
+		end)
+		local cells = (sim.map :: any).grid.cellsX
+		api.send(Commands.camera(0, 0, cells - 1, cells - 1))
+		for tick = 1, 4 do
+			Sim.step(sim)
+			NetIn.applyOutbox(world, sim.net.players[1].outbox, tick * DT)
+		end
+		t.expect(world.teamAllies[3] == 1 and world.teamAllies[2] == 2, "every team's ally team from WELCOME")
+		t.equal(World.relation(world, world.units[ally]), "ally")
+		t.equal(World.relation(world, world.units[enemy]), "enemy")
+		t.equal(Orders.smart(world, 10, 0, ally, false).cmdType, Schema.CmdType.GUARD, "right-click an ally's builder: assist")
+	end)
 end

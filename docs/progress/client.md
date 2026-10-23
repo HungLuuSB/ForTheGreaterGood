@@ -4,6 +4,15 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, allies, assist and ghosts merged)
+
+- **Merged sim-A's S-127 / S-128 / S-129:**
+  - units no longer fire on their own at remembered buildings (only on your order);
+  - builders assist another builder's work with Guard;
+  - the client knows every team's alliance, so right-clicking an ally's unit guards it (or assists its builder) instead of attacking it.
+  - An end-to-end test checks the ally list arriving and right-click using it.
+- **Coming:** circling radar blips (sim request 59, a 6 s orbit) are in progress at sim-A.
+
 ## Summary (2026-10-23, smooth radar blips)
 - **BAR-style circling blips:** at your choice, the server's wobble will become a slow orbit around the real unit (sim request 59), so blips circle it while the real position stays secret. Targeting still uses the wobbled point.
 
