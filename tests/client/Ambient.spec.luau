@@ -67,6 +67,19 @@ return function(t: any)
 		end
 	end)
 
+	t.test("far away (LOD far), a producing factory's gantry loop still yields (C-177)", function()
+		local world = World.new(defs)
+		world.me.team = 1
+		unit(world, 2, "chs_vehplant", { queue = { defs.units.chs_jackal.index }, queueProgress = 0.1 })
+		local s = PieceAnim.new(defs.weaponByIndex)
+		local u = PieceAnim.add(s, 2, defs.units.chs_vehplant, {})
+		run(s, world, 0.5) -- near: the gantry loop starts
+		u.lod = "far" -- the camera pulls away: turns and moves land at once
+		local t0 = os.clock()
+		run(s, world, 2) -- would never return if the loop didn't yield
+		t.expect(os.clock() - t0 < 2, "the frames kept coming")
+	end)
+
 	t.test("radars and drills turn while powered, stop without power or unfinished", function()
 		local world = World.new(defs)
 		world.me.team = 1
