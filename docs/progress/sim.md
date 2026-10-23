@@ -10,6 +10,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| Match records' validator into `src/shared` (the user's choice, lobby request A-2) | `Shared/Match/MatchConfig`: the contract's limits, palette, record types, `validate`, `validateResult`, `users`; the lobby and match places use one copy. integrate.sh now also runs the lobby's own suite (required) | S-145 |
 | Watchdog spikes from B's Studio run (Construction 10–13 ms, NetOut 47.6 ms at match end) | Placing a structure updates clearance incrementally (2.4–4.7 → 0.2 ms; Construction peak 10.5 → 0.9 ms); removals skip unchanged move classes; an eliminated player's units self-destruct 20 a tick instead of all at once | S-144 |
 | AI sites: reach and exit lanes (next.md item 3) | Sites must be reachable by their builder (within its build range, through its connected ground) and off the 3-cell lanes in front of the AI's factory exits. In 4 sample matches the reach check never fired and the lane rule twice; give-ups stayed at 1–2 per 12 min (cause not found yet) | S-142 |
 | Chosen starts (client request 64) | Built, then closed: the lobby's match contract v1 gives `start == id` (players ordered by the lobby), which `standard_start` already does; the code is kept on branch `s141-starts` | S-141, S-143 |

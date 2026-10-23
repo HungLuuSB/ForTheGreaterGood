@@ -2110,3 +2110,15 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - Now their units queue in `MatchState.doomed` (id, gen; hashed) and go `Match.SELF_DESTRUCT_PER_TICK` (20) a tick.
   - `Match.spec`: a 46-unit army goes over several ticks, at most 20 a tick.
   - The rest of B's 47.6 ms may be the match place's own end-of-match work (results, resends). The next Studio run will tell.
+
+## S-145 — The match contract's validator moves to `src/shared` (the user's choice, lobby request A-2) (2026-10-23)
+
+- **Asked:** the match server should check the lobby's config and its own result with the lobby's code, not a copy. The lobby stream may not edit `src/shared`, so the user chose that A moves it (option a, relayed by D).
+- **Built:** `Shared/Match/MatchConfig` (pure Luau, both runtimes), taken from m-lobby 287b99e:
+  - the contract's constants: `CONFIG_VERSION`, `MODES`, `WINS`, `LEVELS`, `FACTIONS`, `MAX_ALLY_TEAMS`, `MAX_TEAM_SIZE`, `MAX_FFA`, and the 12-color palette `COLORS`;
+  - the `Player`, `MatchConfig`, `ResultPlayer` and `Result` types;
+  - `validate`, `validateResult` (with today's rule that a "finished" result may omit `winner`), `users` and `OUTCOMES`.
+  - `build` and `summary` stay in `src/lobby`, since they need the lobby's Rooms.
+  - D switches its require to `@shared/Match/MatchConfig` and drops its copy; B drops its copy in `src/roblox`.
+- **Tests:** `src/server/Tests/MatchConfig.spec`, moved from the lobby's spec with a hand-written config of the same Teams room. It covers tampered configs (version, IDs and starts, colors, users, AI levels, FFA ally teams, spectators, no human, options, lobby, seed) and results checked against their config.
+- **Merge check:** `integrate.sh` now also runs the lobby's own suite (`lune run src/lobby/tools/test`, when present) and requires it to pass, as D asked.
