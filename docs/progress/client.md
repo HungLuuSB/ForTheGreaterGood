@@ -10,6 +10,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Each map now has its own lighting and time of day (C-155):** the Canyon is the first. The others stay on the moonlit night. Settings > Atmosphere defaults to "Map's own" and can still override it.
 - **Radar blips circle about 1.5 studs round their spot, as in BAR (C-154).** The server's circle (S-131) didn't reach the client, so the client draws it. Measured in Studio.
 - **Finished units appear on the build pad (S-133, merged here from sim-A's branch for your playtest):** the server's pad spot equals the client's drawn frame (64, 47.4 on a vehicle plant).
+- **Animated pieces (C-156):** radars and drills turn while powered, wheels roll while moving, factory gantries run while producing, windmills turn.
+- Ready to merge: `e299b43` (C-153..C-155: Canyon look and lobby entry, client blip orbit, per-map looks)
+- Ready to merge: `65673ae` (C-156: animated pieces run by state)
 
 ## Summary (2026-10-23, factories show what they build)
 
