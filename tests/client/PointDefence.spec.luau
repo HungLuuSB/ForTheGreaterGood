@@ -74,10 +74,9 @@ return function(t: any)
 		t.expect(intercepted >= 2, `rockets shot down ({intercepted})`)
 		t.expect(chasers >= intercepted, `each interceptor drawn chasing its rocket ({chasers})`)
 		t.expect(puffs >= intercepted, `a small puff per rocket shot down ({puffs})`)
-		-- (up to ~1 stud in the last tick or two: the server sometimes steers an
-		-- interceptor at its rocket's state after the rocket's own step, by
-		-- the order it walks projectiles; asked of the sim stream, C-182)
-		t.expect(compared > 20 and worst < 1.5, `interceptors on the server's path (worst {worst} studs)`)
+		-- (the server steers at its target's start-of-tick state since S-151,
+		-- as the client does: wire quantization only)
+		t.expect(compared > 20 and worst < 0.5, `interceptors on the server's path (worst {worst} studs)`)
 	end)
 
 	t.test("the four point-defence units have icons", function()
