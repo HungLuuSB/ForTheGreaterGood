@@ -19,6 +19,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Rebindable keys (C-159):** Settings > Keys has a button per action: click, press the new key. Two actions on one key show a red warning on both. Saved for your account (the session only in Studio). Camera turn-right moved from E to C, because E is also reclaim.
 - Ready to merge: `0db7a34` (C-159: rebindable keys; adds the Keybinds remote in src/roblox)
 - **The Commander mechs v3 walk (C-160):** the walk works on models-C's v3 meshes as they are; checked in Studio with the new preview switch (`FtggClientDebug:Invoke("reviewmesh", "ord_sovereign")`). They show in normal games once you approve them.
+- Ready to merge: `eb4ad8b` (C-160: review-mesh preview switch; v3 walk checked)
 
 ## Summary (2026-10-23, factories show what they build)
 
