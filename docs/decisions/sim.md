@@ -1896,3 +1896,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - a Radiance never keeps or picks a living generator once it is only a ghost;
   - at a destroyed generator's ghost it doesn't fire on its own, and on an attack order it fires, each shot a miss.
   - `Air.spec`'s two ghost-bombing tests now order the bomber onto the ghost (it bombed ghosts on its own before).
+
+## S-128 — ASSIST a builder: help with what it builds (the user, playtesting) (2026-10-23)
+
+- **Asked:** any unit that can build can help build units and structures (not stockpiles), and the ASSIST command on a worker makes the assistant follow its leader and help with its building.
+- **Before:** helping a frame or a factory's production was already open to every mobile builder (REPAIR, or GUARD on the frame or factory; stockpiles were never assistable). GUARD on another builder only followed it.
+- **Built** (`Orders`, the guard order): a unit with build power guarding (ASSIST) a mobile builder:
+  - helps with what that builder is doing: its frame, or the factory production it is assisting (`Build.commandAssist`, which walks it into range);
+  - never follows the leader into repairs or stockpiles;
+  - when the leader's job ends, follows it again, and helps with the next one.
+- **Wire:** nothing new; ASSIST is the existing GUARD command on a builder.
+- **Tests:** `Orders.spec`: a Mason assisting another Mason builds its generator with it (finished in under 80% of the time alone), then follows it when it drives off.
