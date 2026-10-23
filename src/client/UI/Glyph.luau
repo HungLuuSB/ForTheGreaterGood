@@ -2,7 +2,8 @@
 -- A unit type's icon on screen (C-74): its tile of the user's icon sprite
 -- sheet (UI/IconAtlas, white with a dark edge) tinted with the team color;
 -- ghosts at 45% opacity, selected icons lightened. Used by the icon layer,
--- the build grid and the unit panel.
+-- the build grid and the unit panel. A tile names its sheet (C-183: the
+-- icons spill onto a second sheet once the first is full).
 
 local Icons = require("../Core/Icons")
 local IconAtlas = require("./IconAtlas")
@@ -26,7 +27,7 @@ function Glyph.new(parent: Instance): G
 	root.Name = "Glyph"
 	root.BackgroundTransparency = 1
 	root.AnchorPoint = Vector2.new(0.5, 0.5)
-	root.Image = IconAtlas.image
+	root.Image = IconAtlas.images[1]
 	root.ImageRectSize = RECT
 	root.ScaleType = Enum.ScaleType.Stretch
 	root.Parent = parent
@@ -39,6 +40,10 @@ function Glyph.apply(g: G, style: Icons.Style, color: Color3)
 	g.root.Size = UDim2.fromOffset(w, math.floor(w * IconAtlas.TILE_H / IconAtlas.TILE_W + 0.5))
 	local p = IconAtlas.tiles[style.tile]
 	g.root.ImageRectOffset = if p then Vector2.new(p[1], p[2]) else Vector2.zero
+	local image = IconAtlas.images[if p then p[3] or 1 else 1]
+	if g.root.Image ~= image then
+		g.root.Image = image
+	end
 	g.root.ImageColor3 = if style.selected then color:Lerp(WHITE, 0.55) else color
 	if style.attacked and blinkOn then
 		g.root.ImageColor3 = RED -- under attack (S-68): blinks red

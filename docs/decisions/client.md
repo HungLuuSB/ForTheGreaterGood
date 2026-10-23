@@ -1568,3 +1568,17 @@ Existing calls are unchanged.
 
 **Why:** sim-A's S-149 (the user's point defence) and S-150; the icon specs failed on main.
 
+### C-183 — Icon sheet draft 4: icons mapped from each item's defs; a second sheet when the first is full (2026-10-24)
+
+**Decision:**
+- `docs/art/icons/ftgg-unit-icons.html` is the user's draft 4. Every catalogue item lists its defs exactly. `tools/icons/render.mjs` maps each unit def from those lists alone; the families, stopgaps and name matching are gone. A def in no item, in two, or an id that is no def fails the run. All 150 defs map, from 75 items.
+- Tile key `slug(name)_t<tier>`, one per item. The Commanders' radar frame is `walker`.
+- New tiles for the defs that had none or the wrong one, including: anti-nuke and mobile anti-nuke, point defence and mobile point defence, shield generator, flak tower, missile battery, decoy drone, siege mortar.
+- **Sheets:** tiles are fixed at 96 × 112 (90 per 1024-px sheet, 85 used). When a sheet is full the next one starts (`assets/icons/ftgg-icons-2.png` ...). Each tile is `{ x, y, sheet }`, and `IconAtlas.images` lists one asset per sheet (`tools/icons/assets.json`, `images`). `UI/Glyph` sets each icon's image from its tile's sheet. The run fails with a message past 4 sheets, and checks that no tile runs off its sheet.
+  - Dry run at 128-px tiles: 2 sheets (48 + 37 tiles), the second listed as "upload it".
+  - IconAtlas.spec fails while any sheet has no uploaded id.
+- **Uploaded with the user's approval:** asset 83784263765889 (byte-identical to `assets/icons/ftgg-icons.png`). The atlas and the id are in the same commit, so Studio never runs a mismatched sheet.
+- **Wraith (S-109), kept as is at the user's word:** its owner sees the Decoy Drone. An enemy's radar gets the spoof's def, so the blip draws a strategic bomber's air frame, like a bomber the enemy spotted earlier. Once seen, it's the Decoy Drone. Icons.spec checks all three.
+
+**Why:** 11 defs drew blank contacts and several the wrong tile (the user's list); the user asked for the def lists, the split and the upload.
+

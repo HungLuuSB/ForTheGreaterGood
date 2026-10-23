@@ -10,6 +10,7 @@ local NetIn = require("../../src/client/Core/NetIn")
 local World = require("../../src/client/Core/World")
 local NetOut = require("../../src/server/Sim/NetOut")
 local Sim = require("../../src/server/Sim/Sim")
+local Spawn = require("../../src/server/Sim/Spawn")
 local Defs = require("@shared/Defs/Defs")
 local Schema = require("@shared/Net/Schema")
 
@@ -108,5 +109,48 @@ return function(t: any)
 		local _ = own
 		t.expect(not Icons.strategic(false, 450) and Icons.strategic(false, 500), "enter beyond 480")
 		t.expect(Icons.strategic(true, 450) and not Icons.strategic(true, 400), "leave below 420")
+	end)
+
+	t.test("the Wraith: its owner sees the Decoy Drone; an enemy's radar sees a strategic bomber until it sees it (S-109, C-183)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:64", scenario = "empty" })
+		Spawn.unit(sim, "ord_beacon", 1, -200, 0, 0)
+		local wraith = Spawn.unit(sim, "chs_wraith", 2, 150, 0, 0)
+		local bomber = Spawn.unit(sim, "chs_behemoth", 2, 150, 120, 0)
+		local function view(player: number): World.World
+			local world = World.new(sim.defs)
+			NetOut.join(sim, player)
+			local g = sim.map.layers.grid
+			assert(Sim.submit(sim, player, Commands.camera(0, 0, g.cellsX - 1, g.cellsZ - 1)))
+			return world
+		end
+		local enemy, owner = view(1), view(2)
+		for tick = 1, 150 do -- (both climb to cruise height)
+			Sim.step(sim)
+			NetIn.applyOutbox(enemy, sim.net.players[1].outbox, tick / 15)
+			NetIn.applyOutbox(owner, sim.net.players[2].outbox, tick / 15)
+		end
+		local t1 = Icons.table(sim.defs)
+		local mine = Icons.style(t1, owner, owner.units[wraith], false)
+		t.equal(mine.tile, IconAtlas.byDef.chs_wraith.tile, "the owner sees the Decoy Drone")
+		t.equal(IconAtlas.byDef.chs_wraith.name, "Decoy Drone")
+		local w = enemy.units[wraith]
+		t.expect(w ~= nil and bit32.band(w.flags or 0, Schema.StrategicFlag.RADAR_ONLY) ~= 0, "the enemy has the Wraith as a radar blip")
+		t.equal(t1.sample[w.icon].id, "chs_behemoth", "its icon is the spoof's: a strategic bomber")
+		-- on radar a unit shows only its frame: the Wraith the frame of a
+		-- known strategic bomber (a never-seen real one has no icon yet)
+		local seen = Icons.style(t1, enemy, w, false)
+		t.equal(seen.kind, "contact")
+		t.equal(seen.tile, IconAtlas.contacts[IconAtlas.byDef.chs_behemoth.frame], "a bomber's radar frame")
+		t.expect(seen.tile ~= IconAtlas.byDef.chs_wraith.tile, "not the Decoy Drone")
+		t.equal(enemy.units[bomber].icon, 0, "(a real bomber never seen shows a blank blip)")
+		-- in sight it's identified
+		Spawn.unit(sim, "ord_herald", 1, 130, -20, 0)
+		for tick = 151, 170 do
+			Sim.step(sim)
+			NetIn.applyOutbox(enemy, sim.net.players[1].outbox, tick / 15)
+			NetIn.applyOutbox(owner, sim.net.players[2].outbox, tick / 15)
+		end
+		local id = Icons.style(t1, enemy, enemy.units[wraith], false)
+		t.equal(id.tile, IconAtlas.byDef.chs_wraith.tile, "seen: the Decoy Drone")
 	end)
 end

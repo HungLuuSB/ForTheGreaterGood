@@ -34,15 +34,20 @@ return function(t: any)
 		end
 	end)
 
-	t.test("tiles fit the sheet and don't overlap", function()
+	t.test("tiles fit their sheet and don't overlap; every sheet has its image (C-183)", function()
 		local w, h = IconAtlas.TILE_W, IconAtlas.TILE_H
 		local seen = {}
 		for key, p in IconAtlas.tiles do
+			local sheet = p[3]
+			t.expect(sheet ~= nil and sheet >= 1 and sheet <= #IconAtlas.images, `{key}: sheet {sheet} of {#IconAtlas.images}`)
 			t.expect(p[1] >= 0 and p[2] >= 0 and p[1] + w <= SHEET and p[2] + h <= SHEET, `{key} off the sheet`)
 			t.expect(p[1] % w == 0 and p[2] % h == 0, `{key} off the grid`)
-			local at = `{p[1]},{p[2]}`
+			local at = `{sheet},{p[1]},{p[2]}`
 			t.expect(seen[at] == nil, `{key} and {seen[at]} share a tile`)
 			seen[at] = key
+		end
+		for i, image in IconAtlas.images do
+			t.expect(string.match(image, "^rbxassetid://%d+$") ~= nil, `sheet {i} is uploaded ({image})`)
 		end
 	end)
 end
