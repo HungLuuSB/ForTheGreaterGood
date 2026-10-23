@@ -4,6 +4,18 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, your queue while away)
+
+Queue status, item by item (details below and in the decisions log):
+- **0. "Needs my review" cleaned up:** everything you approved up to C-130 is gone; only open questions are left.
+- **1. Beam shots from C's assets:** already done before the queue (C-133..C-144; the beam entry is approved). Skipped.
+- **2. Animation pass (C-156):** done. Radars, sonar drums and drills turn while powered, wheels roll while moving, gantries run while producing, windmills turn, tracks judder. Not done: a sonar "ping" and jammer shimmer, which would be new effects rather than pieces.
+- **3. Selection panel like BAR (C-157):** done. Click a tile to keep that type, Shift-click to drop it, Ctrl-click for every one of that type on screen.
+- **4. Idle indicators (C-158):** done, as a client-side guess. sim-A has already made the server's IDLE events (S-136, request 62); I switch to them once they're on main.
+- **5. Group speed (Ctrl-move):** agreed with sim-A: Ctrl + right click, `CmdFlag.GROUP` (S-137, protocol 31). Wiring waits for S-137 on main.
+- **6. Rebindable keys (C-159):** done. Settings > Keys, click and press, red clash warnings, saved for your account. Camera turn-right moved from E to C.
+- **7. Commander walk on the v3 mechs (C-160):** done. It works as is, checked in Studio with a new preview switch.
+
 ## Summary (2026-10-23, the Canyon by day, blips circling, units leave from the pad)
 
 - **The Canyon is playable and looks like a desert in daylight (C-153, C-155):** pale sand floor and red rock mesas and cliffs, under a mid-afternoon sun with blowing sand. It's in the skirmish lobby's map list, and the `canyon` test profile starts both Commanders there.
