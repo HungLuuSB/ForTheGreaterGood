@@ -13,6 +13,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
   - Checked in Studio with a stand-in store. The real teleports and storage need a published test.
 - **Player colours** now come from the lobby's 12-colour palette.
 - **Kit additions for D (C-174):** green / red action buttons and a text input.
+- Ready to merge: `c821622` (C-173, C-174: match side of docs/contracts/match.md; src/roblox and src/client)
 
 ## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
 
