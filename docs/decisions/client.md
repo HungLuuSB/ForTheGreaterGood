@@ -1530,3 +1530,10 @@ Existing calls are unchanged.
 **Decision:** `src/roblox/MatchContract` now calls `@shared/Match/MatchConfig` (S-145, the module the lobby place uses too) for validate, validateResult, the version and the palette, instead of its copies. `Render/TeamColors` builds its palette from the same module's COLORS. Nothing else changed; MatchContract.spec passes. Checked in Studio only up to the build (the requires resolve); the contract path is unchanged.
 
 **Why:** the user moved the validator to src/shared; lobby-D asked to drop the copies.
+
+### C-179 — One key art viewer: the lobby mounts UI/KeyArt read-only (2026-10-23)
+
+**Decision:** lobby-D deleted its copy (m-lobby 27b4ce0); the lobby place mounts `src/client/UI/KeyArt.luau` read-only as `ReplicatedStorage.ClientKit.UI.KeyArt`, like the Kit. Its header now says so and drops "keep the two in step". The API stays stable: `KeyArt.available()`, `KeyArt.new(parent, zIndex)` returning a view with `show(name?) -> boolean` and `hide()`.
+
+**Why:** the two files were identical below the header; one viewer can't drift.
+
