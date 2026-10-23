@@ -8,6 +8,7 @@ Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.m
 
 Done so far:
 - Approvals flipped: beam shot, deposits, interceptors.
+- Approved by the user 2026-10-23: all T1 structure redesigns and new T1 meshes (`t1v2_*`, rows R1–R11 and N1–N7) and their wrecks; manifest flipped. The v3 Commander mechs were already approved (`7fbd495`); they have no wreck yet.
 - Unit codex portraits: 146, in `debug_out/portraits/` with `portraits.json`; not committed, renderer in `tools/portraits.py`.
 - Honeycomb: fewer, smaller patches.
 - Commander mechs, blockouts and meshes, status `review`.
@@ -496,6 +497,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `3b8c149` (structure redesign pairs 2–7: generators, solar, wind turbines, depots, Bulwark / Spike at fp 2, vehicle plants at fp 4, with wrecks, back to review; new pieces `core`, `gantry`, `trolley`, new anchors; `assets/`, manifest, `place/` and docs).
 - Ready to merge: `14d7b46` (with `b515382`: structure redesign pairs 8–11, radar towers and IR SAM sites at fp 1, airfields and shipyards at fp 5, with wrecks, back to review; new converter meshes (review); new airfield anchors, shipyard nanos on their moving pieces, rig.md 8; `assets/`, manifest, `place/` and docs).
 - Ready to merge: `813e5cd` (new meshes for the blockout-only T1 structures: tidal generators, sonar buoys, jammer towers, torpedo launchers, floating turrets, rearm pads, with wrecks, review; `assets/`, manifest, `place/` and docs). With it, every T1 def has a mesh.
+- Ready to merge: `a7d0c1d` (the user approved every T1 structure mesh and its wreck: manifest flipped to approved; `src/shared/Defs/Meshes/`, tools and docs only).
 
 ## Requests
 

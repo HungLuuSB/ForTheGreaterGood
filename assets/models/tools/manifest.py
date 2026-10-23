@@ -54,6 +54,14 @@ APPROVED = {
     "beam", "deposit", "ord_interceptor", "chs_interceptor",
     # 2026-10-23: the Commander mechs v3 and the extractor redesign (fp 2)
     "ord_sovereign", "chs_warlord", "ord_extractor", "chs_extractor",
+    # 2026-10-23: every T1 structure redesigned at the size scale or newly
+    # meshed (t1v2_*), with their wrecks
+    "ord_generator", "chs_generator", "ord_solar", "chs_solar", "ord_windmill", "chs_windmill",
+    "ord_depot", "chs_depot", "ord_vehplant", "chs_vehplant", "ord_airfield", "chs_airfield",
+    "ord_shipyard", "chs_shipyard", "ord_converter", "chs_converter", "ord_tidal", "chs_tidal",
+    "ord_airpad", "chs_airpad", "ord_bulwark", "chs_spike", "ord_watchtower", "chs_eye",
+    "ord_vigil", "chs_thorn", "ord_ear", "chs_listener", "ord_curtain", "chs_smog",
+    "ord_undertow", "chs_fang", "ord_moat", "chs_riptide",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -61,16 +69,20 @@ DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a ran
 # fx entries that reuse another weapon's mesh (the client looks meshes up by weapon ID)
 FX_ALIASES = {"ord_mobile_interceptor": "ord_interceptor", "chs_mobile_interceptor": "chs_interceptor"}
 # wreck versions (M-24) the user approved; the rest are "review"
-# Structures redesigned at the size scale (S-104) go back to "review" with
-# their wrecks until the user approves the new designs; earlier (fp 1)
-# approvals so replaced: the generators, solar, wind turbines, depots,
-# vehicle plants, Bulwark and Spike, radar towers, IR SAM sites, airfields
-# and shipyards (taken out of APPROVED above).
+# Structures redesigned at the size scale (S-104) went back to "review" with
+# their wrecks until the user approved the new designs (all T1: 2026-10-23).
 APPROVED_WRECKS = {
     # 2026-10-23: the first 22 wrecks
     "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth",
     "ord_herald", "chs_jackal", "ord_halo", "chs_hornet", "ord_oracle", "chs_watcher",
     "ord_extractor", "chs_extractor",  # the fp-2 redesign's wrecks (2026-10-23)
+    # 2026-10-23: the T1 structure redesigns and new T1 meshes (t1v2_*)
+    "ord_generator", "chs_generator", "ord_solar", "chs_solar", "ord_windmill", "chs_windmill",
+    "ord_depot", "chs_depot", "ord_vehplant", "chs_vehplant", "ord_airfield", "chs_airfield",
+    "ord_shipyard", "chs_shipyard", "ord_converter", "chs_converter", "ord_tidal", "chs_tidal",
+    "ord_airpad", "chs_airpad", "ord_bulwark", "chs_spike", "ord_watchtower", "chs_eye",
+    "ord_vigil", "chs_thorn", "ord_ear", "chs_listener", "ord_curtain", "chs_smog",
+    "ord_undertow", "chs_fang", "ord_moat", "chs_riptide",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
