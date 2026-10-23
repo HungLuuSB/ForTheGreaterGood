@@ -1173,3 +1173,12 @@ Until sim request 52 (the weapon on SHOT), beams from shooters you can't see dra
 - Hit patches already map to the nearest dome.
 
 **Why:** the user: "the shield dome (only the dome) should be rendered regardless of vision like in BAR".
+
+### C-146 — The Commander mechs walk (2026-10-23)
+
+**Decision:** piece script `PieceScripts/Commander` for ord_sovereign and chs_warlord.
+- **Moving:** models-C's stride pose (thighL +28 / shinL −18 / footL −10, thighR −22 / shinR −30 / footR +20) and its mirror alternate, one stride per 0.6 s. The arms swing ±18° against the legs, the torso twists ±6° and the pelvis dips 0.12 studs per step.
+- **Stopped:** everything eases back to rest.
+- Create, aim and fire come from Default.
+
+**Why:** models-C's M-31 (the user's request); the meshes (2b4dc5b) are at review, so the blockout mechs walk until they're approved.

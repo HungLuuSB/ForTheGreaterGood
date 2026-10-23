@@ -4,6 +4,12 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, the Commanders walk; Needs my review)
+
+- **Mech Commanders (C-146):** the Sovereign and Warlord walk: legs in models-C's stride, alternating every 0.3 s, arms swinging, the torso twisting and the pelvis bobbing. They ease back to rest when they stop (`debug_out/screens/mech_walk.jpg`).
+- **Needs my review:** models-C's mech meshes are at "review", so the game draws the mech blockouts. Approve them through models-C to see the meshes.
+- **Domes without vision (C-145):** the client side is ready and waits for sim-A's S-122 on main.
+
 ## Summary (2026-10-23, S-120 / S-121 merged: beams go through fallen domes)
 
 - **Merged sim-A's S-120 / S-121 and checked in Studio:** a Radiance ordered onto an enemy Carapace takes the order (towers now accept attack orders). Its beam ends on the dome, and once the dome collapses (~2.5 s in) the same beam moves on to the generator. It repeats when the dome rises again (`debug_out/screens/beam_through_dome.jpg`).
