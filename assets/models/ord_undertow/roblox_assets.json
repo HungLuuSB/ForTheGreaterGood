@@ -1,0 +1,58 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1486 triangles, glow share 7.9%",
+  "bar": {
+    "model": "rbxassetid://135641592605735",
+    "meshes": {
+      "base": "rbxassetid://103966914679783",
+      "base_glow_running": "rbxassetid://122068811952981",
+      "launcher": "rbxassetid://86487557879655",
+      "launcher_glow_running": "rbxassetid://86941696792283",
+      "launcher_glow_weapon": "rbxassetid://109191952861470",
+      "sonar": "rbxassetid://136156256297732",
+      "sonar_glow_power": "rbxassetid://126836683623833",
+      "turret": "rbxassetid://116671978281031",
+      "turret_glow_running": "rbxassetid://120731923437992"
+    },
+    "decals": {
+      "ALB": "rbxassetid://101136348363086",
+      "RGH": "rbxassetid://131520084778819",
+      "NOR": "rbxassetid://75520721021673",
+      "MTL": "rbxassetid://81907702760075",
+      "EMI": "rbxassetid://90728818854130"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://91527795516663",
+      "NOR": "rbxassetid://92326145779338",
+      "RGH": "rbxassetid://87175369842582",
+      "MTL": "rbxassetid://76690656861307",
+      "EMI": "rbxassetid://139471289337235"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_undertow_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://75019184770182",
+    "meshes": {
+      "base": "rbxassetid://89371153034927",
+      "launcher": "rbxassetid://98609104698339",
+      "sonar": "rbxassetid://126463285452479",
+      "turret": "rbxassetid://83426609243293"
+    },
+    "decals": {
+      "ALB": "rbxassetid://113876662784169",
+      "RGH": "rbxassetid://72813524087313",
+      "NOR": "rbxassetid://106733665138288",
+      "MTL": "rbxassetid://120385353628483",
+      "EMI": "rbxassetid://73985864632218"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://110772505135465",
+      "NOR": "rbxassetid://100315634423658",
+      "RGH": "rbxassetid://127207397812207",
+      "MTL": "rbxassetid://124462761485712",
+      "EMI": "rbxassetid://126322408164573"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_undertow_wreck_bar in FTGG Art",
+    "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1294 triangles"
+  }
+}

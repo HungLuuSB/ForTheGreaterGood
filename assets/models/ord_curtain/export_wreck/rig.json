@@ -1,0 +1,84 @@
+{
+  "id": "ord_curtain_wreck",
+  "wreckOf": "ord_curtain",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0102,
+        2.6423,
+        -0.0293
+      ],
+      "size": [
+        7.7017,
+        5.3425,
+        7.7149
+      ]
+    },
+    "tip": {
+      "parent": "base",
+      "center": [
+        0.0412,
+        5.6893,
+        -0.2902
+      ],
+      "size": [
+        1.2877,
+        0.913,
+        1.369
+      ],
+      "pivot": [
+        0.0,
+        5.2,
+        -0.3
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "tip"
+  ],
+  "anim": {
+    "tip": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 714,
+    "tip": 308,
+    "total": 1022
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "id": "ord_airpad",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.475,
+        0.0
+      ],
+      "size": [
+        23.1458,
+        4.95,
+        23.1458
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base"
+  ],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.31,
+        0.0
+      ],
+      "size": [
+        22.45,
+        3.64,
+        22.45
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        1.4775,
+        2.1275,
+        -3.525
+      ],
+      "size": [
+        11.855,
+        2.355,
+        7.55
+      ]
+    }
+  ],
+  "glowShare": 0.0072,
+  "triangles": {
+    "base": 1484,
+    "total": 1484
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

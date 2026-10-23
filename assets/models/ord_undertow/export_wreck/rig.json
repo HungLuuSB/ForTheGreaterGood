@@ -1,0 +1,132 @@
+{
+  "id": "ord_undertow_wreck",
+  "wreckOf": "ord_undertow",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0194,
+        0.0578,
+        -0.0057
+      ],
+      "size": [
+        7.5086,
+        1.9832,
+        7.5614
+      ]
+    },
+    "sonar": {
+      "parent": "base",
+      "center": [
+        -0.0054,
+        -1.2321,
+        0.0072
+      ],
+      "size": [
+        2.4508,
+        0.7338,
+        2.4064
+      ],
+      "pivot": [
+        0.0,
+        -1.2,
+        0.0
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0516,
+        1.1714,
+        -0.4268
+      ],
+      "size": [
+        3.4261,
+        0.6507,
+        3.4124
+      ],
+      "pivot": [
+        0.0,
+        1.15,
+        -0.4
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -0.0316,
+        2.2481,
+        -1.0045
+      ],
+      "size": [
+        2.898,
+        1.8019,
+        4.6794
+      ],
+      "pivot": [
+        0.0,
+        1.4,
+        -0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        0.0,
+        1.95,
+        -3.25
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "sonar"
+  ],
+  "anim": {
+    "sonar": {
+      "motion": "lower",
+      "axis": [
+        0,
+        -1,
+        0
+      ],
+      "range": 8
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 362,
+    "sonar": 120,
+    "turret": 312,
+    "launcher": 500,
+    "total": 1294
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

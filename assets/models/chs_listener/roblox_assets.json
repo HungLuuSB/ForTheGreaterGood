@@ -1,0 +1,52 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1212 triangles, glow share 3.5%",
+  "bar": {
+    "model": "rbxassetid://88651203717380",
+    "meshes": {
+      "base": "rbxassetid://133772664528276",
+      "base_glow_power": "rbxassetid://111320123729093",
+      "base_glow_running": "rbxassetid://88685837758994",
+      "drum": "rbxassetid://113635644394274",
+      "drum_glow_power": "rbxassetid://114819614029768"
+    },
+    "decals": {
+      "ALB": "rbxassetid://97281079297514",
+      "RGH": "rbxassetid://100628378229774",
+      "NOR": "rbxassetid://113894827874219",
+      "MTL": "rbxassetid://127823229690556",
+      "EMI": "rbxassetid://128372929864718"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://134523686715489",
+      "NOR": "rbxassetid://82743517065665",
+      "RGH": "rbxassetid://126390688471989",
+      "MTL": "rbxassetid://73904239501096",
+      "EMI": "rbxassetid://85596244743308"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_listener_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://130408474534535",
+    "meshes": {
+      "base": "rbxassetid://98871394918748",
+      "drum": "rbxassetid://87421531686693"
+    },
+    "decals": {
+      "ALB": "rbxassetid://124166543733284",
+      "RGH": "rbxassetid://112302069603605",
+      "NOR": "rbxassetid://97476581173402",
+      "MTL": "rbxassetid://132236036657737",
+      "EMI": "rbxassetid://99159528822040"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://105512740173372",
+      "NOR": "rbxassetid://133217061377213",
+      "RGH": "rbxassetid://119939036095585",
+      "MTL": "rbxassetid://82070252784944",
+      "EMI": "rbxassetid://117604013754587"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_listener_wreck_bar in FTGG Art",
+    "revision": "New mesh in the size-scale style (S-104, M-26); wreck built: 1224 triangles"
+  }
+}
