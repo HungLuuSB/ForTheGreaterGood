@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `84dc557` (background with the real meshes, brighter and closer; 1v1 naming; segmented skirmish options; checked in Studio)
 - Ready to merge: `673427d` (the lobby uses `@shared/Match/MatchConfig`; includes a merge of main)
 - Ready to merge: `22f73db` (layered key art with parallax for the loading screens, L-13, `docs/contracts/key-art.md`)
 - Ready to merge: `287b99e` (match contract: a finished result may have no winner when every human is out; validator, specs, results panel)
@@ -94,7 +95,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
 | Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
-| Key-art contract and parallax viewer on the loading screen (L-13) | done; waiting for C's art |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only); waiting for C's art |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue
