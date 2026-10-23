@@ -1971,3 +1971,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `511ab10` (with 58d5579 and the main merge 46d094c: fast mesh builds, camera lead, SHOT beams; C-143); test_client 214, test 446, build passed.
 - Ready to merge: `5db24f6` (beam continuation for request 54, thinner flowing rings; C-144); test_client 215, build passed (client only).
 - Ready to merge: `318555d` (main 062ba5f merged into the client: S-119); test_client 215, test 449, build passed.
+- Ready to merge: `aaa1538` (m-models merge 021c8c7: sparser honeycomb shell texture, mech Commander blockouts; materials regenerated); test_client 215, build passed.
