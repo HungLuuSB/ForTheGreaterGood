@@ -876,4 +876,32 @@ return function(t: RunAll.Context)
 		t.equal(records, 400, "every mover is sent exactly once")
 		t.expect(#msgs >= 4, `400 × 8 bytes needs several messages, got {#msgs}`)
 	end)
+
+	t.test("an armed unit entering the view comes with its turrets' aim (S-119, client request 53)", function()
+		local sim = Sim.new({ seed = 12, players = PLAYERS, mapId = "flat:64" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local tank = Spawn.unit(sim, "ord_lancer", 1, -150, -150, 0)
+		local still = Spawn.unit(sim, "chs_ravager", 2, -150, -20, 0)
+		World.setFireState(w, still, World.FireState.HOLD_FIRE)
+		World.setMoveState(w, still, World.MoveState.HOLD_POSITION)
+		World.setHealth(w, still, 1e6)
+		World.setMoveState(w, tank, World.MoveState.HOLD_POSITION)
+		camera(sim, 2, 40, 40, 63, 63) -- player 2 looks elsewhere
+		for _ = 1, 60 do
+			Sim.step(sim)
+		end
+		local key = World.slotKey(tank, 1)
+		t.equal(w.wTarget[key], still, "the Lancer is on the Ravager")
+		local yaw = w.wYaw[key]
+		local view = Client.new(g)
+		camera(sim, 2, 0, 0, 40, 40) -- now over both
+		for _ = 1, 3 do
+			Sim.step(sim)
+			Client.receive(view, sim.net.players[2].outbox)
+		end
+		t.equal(w.wYaw[key], yaw, "the turret didn't move")
+		local u = view.units[tank]
+		t.expect(u ~= nil and u.aim ~= nil and u.aim[1] ~= nil, "the aim came with the unit")
+	end)
 end
