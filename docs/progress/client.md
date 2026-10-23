@@ -4,6 +4,10 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, radar blips circle their unit)
+
+- **Radar blips orbit the real unit now,** like BAR (sim-A's S-130 with the client's glide). In the radar scene a blip swept a full turn in about 6 s, 13–17 studs out, and the real position never reaches the client. Guide 11.4 is updated.
+
 ## Summary (2026-10-23, allies, assist and ghosts merged)
 
 - **Merged sim-A's S-127 / S-128 / S-129:**
@@ -1831,7 +1835,7 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 
 ## Requests for the sim session
 
-59. **Open (sent 2026-10-23).** **Radar blips circle around the real unit (the user, as in BAR):** the wobble offset follows a slow orbit (radius = radar error) instead of moving between random points, so the true position still never goes on the wire (the user chose this over sending true positions, which guide 11.4 forbids). Guide 11.4 to be updated with it. The client already glides (C-151).
+59. **Done (S-130, main 57299f7; checked in Studio: a blip sweeps a full turn in ~6 s at radius 13–17).** **Radar blips circle around the real unit (the user, as in BAR):** the wobble offset follows a slow orbit (radius = radar error) instead of moving between random points, so the true position still never goes on the wire (the user chose this over sending true positions, which guide 11.4 forbids). Guide 11.4 to be updated with it. The client already glides (C-151).
 
 58. **Fixed (S-126, on main b7f0f09; verified headless, 70 s with no crash):** the crash was a beam fired at a dead structure's ghost (Radiance may target ghosts, D101 / S-113); hitscanHits indexed the gone unit. Now a shot at a gone target is a miss at the believed spot. Regression test added.
 
