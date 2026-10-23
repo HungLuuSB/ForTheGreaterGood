@@ -54,6 +54,36 @@ return {
 				shellR = { 0, 0, 90 },
 			},
 		},
+		-- the Commander mechs mid-stride (M-31, the heroic redesign M-32): left leg forward, right leg
+		-- back, the arms swinging against them, the torso turned a little
+		ord_sovereign = {
+			stride = {
+				base = { 0, 0, 0, 0, -0.2, 0 },
+				torso = { 0, -6, 0 },
+				thighL = { 24, 0, 0 },
+				shinL = { -8, 0, 0 },
+				footL = { -16, 0, 0 },
+				thighR = { -18, 0, 0 },
+				shinR = { -22, 0, 0 },
+				footR = { 30, 0, 0 },
+				armL = { -16, 0, 0 },
+				armR = { 14, 0, 0 },
+			},
+		},
+		chs_warlord = {
+			stride = {
+				base = { 0, 0, 0, 0, -0.25, 0 },
+				torso = { 0, 7, 0 },
+				thighL = { 22, 0, 0 },
+				shinL = { -6, 0, 0 },
+				footL = { -16, 0, 0 },
+				thighR = { -16, 0, 0 },
+				shinR = { -20, 0, 0 },
+				footR = { 28, 0, 0 },
+				armL = { -14, 0, 0 },
+				armR = { 12, 0, 0 },
+			},
+		},
 		ord_warden = {
 			packed = {},
 			deployed = {

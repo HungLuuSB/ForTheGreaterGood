@@ -250,3 +250,19 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** clients-B's request for the user (2026-10-23): a honeycomb visible on the top of the dome, fading towards the base, opacity scaled by charge, no glow; then the user asked for the honeycomb in little patches. Roblox has no vertex alpha and a tiling texture can't fade with height, so the fade has to live in separate parts.
 
+### M-31 — The Commanders are walking mechs (2026-10-23)
+
+**Decision:** the Sovereign and the Warlord are walking battle mechs, about 1.5x a Lancer's height: the Order one tall and upright (clean sloped plates, broad chest and shoulders with team plates, a sensor head under an armored brow, a big cyan command core in the chest, the build emitter on the left forearm, a weapon pod on the right); the Chaos one hunched and heavier (exposed pistons, slab and reactive armor, amber eye slits, exhaust stacks, a crane-like claw arm with the emitter, a banner mast with the team banner). Rigged as walkers (rig.md 10, new motion `swing`). The tracked designs stay as files (`Blockouts/Review/*_tracked.luau`, and the tracked meshes under `assets/models/<id>/tracked/` once the mech meshes replace them).
+
+**Why:** the user (2026-10-23): BAR-commander-like silhouettes, but original designs; the Commanders must be clearly the most imposing ground units (the tracked ones read no bigger than a Lancer).
+
+### M-32 — Heroic Commander mechs (2026-10-23)
+
+**Decision:** the mech Commanders are redone as heroic mechs (v1 kept as files: `Blockouts/Review/*_mech_v1.luau`, `assets/models/<id>/v1/`).
+- **Size:** about 2.7x a Lancer's height (about 10 studs), pauldrons spanning about 10 studs, built for footprint 2 (the sim is asked to accept it).
+- **Proportions:** long legs (45% of the height) with a real knee bend and compact armored feet with toe and heel plates; a narrow armored pelvis under a broad V-shaped chest; a head that stands up out of the torso; big pauldrons past the body carrying the team plates; a reactor backpack; arms long enough to reach below the waist.
+- **Finish:** BAR level: bevels everywhere, cylinder joints and pistons, layered plates over a darker under-frame, vents, grilles, rivets, cables and small lights.
+- **Budget:** up to 9,000 triangles, glow 5–8%. Same rig as v1.
+
+**Why:** the user's review of v1 (2026-10-23): too small and too blocky; the Commanders are the hero units and must clearly out-mass any tank from the game camera.
+

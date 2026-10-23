@@ -15,6 +15,7 @@ a positive rotation about it is the opening / forward direction):
   open    rotation about axis up to `range` degrees (hatches, covers, doors)
   lower   translation along axis, `range` studs (dipping sonar)
   pulse   scale / emissive pulse about the pivot (cores)
+  swing   an oscillating hinge about axis, driven by the walk cycle (walker joints)
 """
 
 import json
@@ -32,6 +33,9 @@ def a(motion, axis, rng=None):
 
 
 HELI = {"rotor": a("spin", Y)}
+# the Commander mechs (M-31, rig.md 10): torso and head turn, every limb swings
+WALKER = {"torso": a("turn", Y), "head": a("turn", Y), "armL": a("swing", X), "armR": a("swing", X),
+          "forearmR": a("swing", X), **{f"{j}{s}": a("swing", X) for j in ("hip", "thigh", "shin", "foot") for s in "LR"}}
 ANIM = {
     # helicopters' main rotors (tail rotors are sub-pieces)
     "ord_skywright": HELI, "chs_vulture": HELI, "ord_guardian": HELI, "chs_wasp": HELI,
@@ -52,6 +56,7 @@ ANIM = {
     "chs_ragnarok": {"hatch": a("open", X, 110)},
     "ord_absolution": {"bay": a("open", Z, 60)}, "chs_plague": {"bay": a("open", Z, 60)},
     # beam tower lids (the `retracted` pose closes them; Blockouts/Pending)
+    "ord_sovereign": WALKER, "chs_warlord": WALKER,
     "ord_radiance": {"shellL": a("open", (0, 0, -1), 90), "shellR": a("open", Z, 90)},
     "chs_inferno": {"shellL": a("open", (0, 0, -1), 90), "shellR": a("open", Z, 90)},
 }

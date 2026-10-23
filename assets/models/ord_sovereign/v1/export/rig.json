@@ -1,0 +1,689 @@
+{
+  "id": "ord_sovereign",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.6258,
+        -0.0237
+      ],
+      "size": [
+        2.3,
+        0.9684,
+        1.9429
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0,
+        4.525,
+        0.11
+      ],
+      "size": [
+        5.4,
+        2.95,
+        3.14
+      ],
+      "pivot": [
+        0.0,
+        3.1,
+        0.0
+      ]
+    },
+    "head": {
+      "parent": "torso",
+      "center": [
+        0.0,
+        5.525,
+        -0.2109
+      ],
+      "size": [
+        1.2,
+        1.35,
+        1.1094
+      ],
+      "pivot": [
+        0.0,
+        4.8,
+        -0.1
+      ]
+    },
+    "armL": {
+      "parent": "torso",
+      "center": [
+        -2.055,
+        3.76,
+        0.0
+      ],
+      "size": [
+        0.79,
+        1.92,
+        0.8944
+      ],
+      "pivot": [
+        -2.05,
+        4.3,
+        0.0
+      ]
+    },
+    "nano": {
+      "parent": "armL",
+      "center": [
+        -2.05,
+        2.9459,
+        -0.6612
+      ],
+      "size": [
+        0.8788,
+        0.8881,
+        2.0776
+      ],
+      "pivot": [
+        -2.05,
+        3.1,
+        0.0
+      ]
+    },
+    "armR": {
+      "parent": "torso",
+      "center": [
+        2.055,
+        3.76,
+        0.0
+      ],
+      "size": [
+        0.79,
+        1.92,
+        0.8944
+      ],
+      "pivot": [
+        2.05,
+        4.3,
+        0.0
+      ]
+    },
+    "forearmR": {
+      "parent": "armR",
+      "center": [
+        2.1,
+        2.8503,
+        -0.9015
+      ],
+      "size": [
+        1.06,
+        0.9974,
+        2.6969
+      ],
+      "pivot": [
+        2.05,
+        3.1,
+        0.0
+      ]
+    },
+    "hipL": {
+      "parent": "base",
+      "center": [
+        -1.37,
+        2.6289,
+        -0.0231
+      ],
+      "size": [
+        0.74,
+        0.7778,
+        1.0462
+      ],
+      "pivot": [
+        -1.2,
+        2.6,
+        0.0
+      ]
+    },
+    "thighL": {
+      "parent": "hipL",
+      "center": [
+        -1.3,
+        1.694,
+        -0.0187
+      ],
+      "size": [
+        0.9,
+        1.4881,
+        1.2751
+      ],
+      "pivot": [
+        -1.3,
+        2.4,
+        0.0
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -1.3,
+        0.8458,
+        -0.0203
+      ],
+      "size": [
+        0.76,
+        0.8517,
+        1.1006
+      ],
+      "pivot": [
+        -1.3,
+        1.25,
+        0.0
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -1.3,
+        0.31,
+        -0.2097
+      ],
+      "size": [
+        1.04,
+        0.62,
+        1.92
+      ],
+      "pivot": [
+        -1.3,
+        0.35,
+        0.0
+      ]
+    },
+    "hipR": {
+      "parent": "base",
+      "center": [
+        1.37,
+        2.6289,
+        -0.0231
+      ],
+      "size": [
+        0.74,
+        0.7778,
+        1.0462
+      ],
+      "pivot": [
+        1.2,
+        2.6,
+        0.0
+      ]
+    },
+    "thighR": {
+      "parent": "hipR",
+      "center": [
+        1.3,
+        1.694,
+        -0.0187
+      ],
+      "size": [
+        0.9,
+        1.4881,
+        1.2751
+      ],
+      "pivot": [
+        1.3,
+        2.4,
+        0.0
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        1.3,
+        0.8458,
+        -0.0203
+      ],
+      "size": [
+        0.76,
+        0.8517,
+        1.1006
+      ],
+      "pivot": [
+        1.3,
+        1.25,
+        0.0
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        1.3,
+        0.31,
+        -0.2097
+      ],
+      "size": [
+        1.04,
+        0.62,
+        1.92
+      ],
+      "pivot": [
+        1.3,
+        0.35,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "forearmR",
+      "at": [
+        2.1,
+        2.78,
+        -2.32
+      ]
+    },
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        -2.05,
+        2.9,
+        -1.66
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "torso",
+    "head",
+    "armL",
+    "nano",
+    "armR",
+    "forearmR",
+    "hipL",
+    "thighL",
+    "shinL",
+    "footL",
+    "hipR",
+    "thighR",
+    "shinR",
+    "footR"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "torso": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "head": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "armL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "armR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "forearmR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "hipL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "hipR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        2.75,
+        -1.0
+      ],
+      "size": [
+        0.9,
+        0.08,
+        0.04
+      ]
+    },
+    {
+      "name": "torso_glow_running",
+      "piece": "torso",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.8134,
+        0.1156
+      ],
+      "size": [
+        5.46,
+        2.5132,
+        2.5887
+      ]
+    },
+    {
+      "name": "torso_glow_power",
+      "piece": "torso",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.05,
+        0.0975
+      ],
+      "size": [
+        1.2,
+        0.709,
+        3.165
+      ]
+    },
+    {
+      "name": "head_glow_running",
+      "piece": "head",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.17,
+        -0.335
+      ],
+      "size": [
+        1.14,
+        0.12,
+        0.59
+      ]
+    },
+    {
+      "name": "nano_glow_running",
+      "piece": "nano",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -2.48,
+        2.9,
+        -0.5
+      ],
+      "size": [
+        0.02,
+        0.08,
+        0.9
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        -2.05,
+        2.9,
+        -1.595
+      ],
+      "size": [
+        0.74,
+        0.7214,
+        0.09
+      ]
+    },
+    {
+      "name": "forearmR_glow_weapon",
+      "piece": "forearmR",
+      "channel": "weapon",
+      "tint": [
+        190,
+        240,
+        255
+      ],
+      "strength": 1.5,
+      "center": [
+        2.1,
+        2.9032,
+        -1.8725
+      ],
+      "size": [
+        0.58,
+        0.4936,
+        0.845
+      ]
+    },
+    {
+      "name": "thighL_glow_running",
+      "piece": "thighL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.71,
+        1.95,
+        -0.1
+      ],
+      "size": [
+        0.03,
+        0.42,
+        0.06
+      ]
+    },
+    {
+      "name": "footL_glow_running",
+      "piece": "footL",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.3,
+        0.12,
+        -1.13
+      ],
+      "size": [
+        0.6,
+        0.06,
+        0.03
+      ]
+    },
+    {
+      "name": "thighR_glow_running",
+      "piece": "thighR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        1.71,
+        1.95,
+        -0.1
+      ],
+      "size": [
+        0.03,
+        0.42,
+        0.06
+      ]
+    },
+    {
+      "name": "footR_glow_running",
+      "piece": "footR",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        1.3,
+        0.12,
+        -1.13
+      ],
+      "size": [
+        0.6,
+        0.06,
+        0.03
+      ]
+    }
+  ],
+  "glowShare": 0.0283,
+  "triangles": {
+    "base": 272,
+    "torso": 1032,
+    "head": 304,
+    "armL": 184,
+    "nano": 284,
+    "armR": 184,
+    "forearmR": 300,
+    "hipL": 88,
+    "thighL": 156,
+    "shinL": 68,
+    "footL": 160,
+    "hipR": 88,
+    "thighR": 156,
+    "shinR": 68,
+    "footR": 160,
+    "total": 3504
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

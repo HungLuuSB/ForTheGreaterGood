@@ -63,7 +63,7 @@ function Blockout.pieceSet(bp: Blockout, def: any): { [string]: boolean }
 end
 
 -- How the client may move each animated piece (rig.md "Animated pieces").
-Blockout.MOTIONS = table.freeze({ spin = true, turn = true, scroll = true, slide = true, open = true, lower = true, pulse = true })
+Blockout.MOTIONS = table.freeze({ spin = true, turn = true, scroll = true, slide = true, open = true, lower = true, pulse = true, swing = true })
 
 -- name → anim for every part that carries one.
 function Blockout.anims(bp: Blockout): { [string]: Anim }

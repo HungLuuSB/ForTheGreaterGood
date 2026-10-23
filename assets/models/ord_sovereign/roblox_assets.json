@@ -1,58 +1,55 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Animated pieces (M-27): 4040 triangles, glow share 7.0%",
+  "revision": "Heroic mech (M-32); v1 in v1/, tracked in tracked/: 6416 triangles, glow share 5.3%",
   "bar": {
-    "model": "rbxassetid://126088644946329",
+    "model": "rbxassetid://125614050633538",
     "meshes": {
-      "base": "rbxassetid://138424153646836",
-      "base_glow_head": "rbxassetid://115436419365202",
-      "base_glow_running": "rbxassetid://95504730289130",
-      "nano": "rbxassetid://128133036345853",
-      "nano_glow_power": "rbxassetid://96652370745219",
-      "nano_glow_running": "rbxassetid://132496345686230",
-      "trackL": "rbxassetid://72091165664634",
-      "trackR": "rbxassetid://110499619480524"
+      "armL": "rbxassetid://129853230411966",
+      "armR": "rbxassetid://73388111092440",
+      "base": "rbxassetid://75749405532675",
+      "base_glow_running": "rbxassetid://137608425173100",
+      "footL": "rbxassetid://80993812745010",
+      "footL_glow_running": "rbxassetid://135784344958288",
+      "footR": "rbxassetid://92138682236939",
+      "footR_glow_running": "rbxassetid://83194882019742",
+      "forearmR": "rbxassetid://101546713304707",
+      "forearmR_glow_running": "rbxassetid://120885968649735",
+      "forearmR_glow_weapon": "rbxassetid://129220792185025",
+      "head": "rbxassetid://93719944502253",
+      "head_glow_running": "rbxassetid://125587388497191",
+      "hipL": "rbxassetid://127946549881720",
+      "hipR": "rbxassetid://137787398941583",
+      "nano": "rbxassetid://100226050117853",
+      "nano_glow_power": "rbxassetid://129312372252793",
+      "nano_glow_running": "rbxassetid://115266051541268",
+      "shinL": "rbxassetid://128194680087651",
+      "shinL_glow_power": "rbxassetid://100636285018790",
+      "shinL_glow_running": "rbxassetid://118820799110392",
+      "shinR": "rbxassetid://140591626026035",
+      "shinR_glow_power": "rbxassetid://127599559918067",
+      "shinR_glow_running": "rbxassetid://133929621299307",
+      "thighL": "rbxassetid://137389197769309",
+      "thighL_glow_running": "rbxassetid://131906112406631",
+      "thighR": "rbxassetid://82931009705840",
+      "thighR_glow_running": "rbxassetid://83269506037428",
+      "torso": "rbxassetid://89633355558957",
+      "torso_glow_power": "rbxassetid://85221029311246",
+      "torso_glow_running": "rbxassetid://123279874478739"
     },
     "decals": {
-      "ALB": "rbxassetid://89856831305797",
-      "RGH": "rbxassetid://108313016194384",
-      "NOR": "rbxassetid://89374105814546",
-      "MTL": "rbxassetid://133559466098736",
-      "EMI": "rbxassetid://124722768818768"
+      "ALB": "rbxassetid://93194801534957",
+      "RGH": "rbxassetid://105629005038575",
+      "NOR": "rbxassetid://132184338894961",
+      "MTL": "rbxassetid://106437502783572",
+      "EMI": "rbxassetid://103925312625920"
     },
     "surfaceAppearance": {
-      "ALB": "rbxassetid://87193481392018",
-      "NOR": "rbxassetid://96298268111551",
-      "RGH": "rbxassetid://90627141630657",
-      "MTL": "rbxassetid://125865071861256",
-      "EMI": "rbxassetid://92658788251612"
+      "ALB": "rbxassetid://71392263607279",
+      "NOR": "rbxassetid://101393769555812",
+      "RGH": "rbxassetid://128426529726304",
+      "MTL": "rbxassetid://97990088726369",
+      "EMI": "rbxassetid://106509459991738"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_sovereign_bar in FTGG Art"
-  },
-  "bar_1": {
-    "model": "rbxassetid://119658360799073",
-    "meshes": {
-      "base": "rbxassetid://77961190907937",
-      "base_glow_head": "rbxassetid://97495340459969",
-      "base_glow_running": "rbxassetid://105991948401437",
-      "nano": "rbxassetid://96893311045579",
-      "nano_glow_power": "rbxassetid://104358676168602",
-      "nano_glow_running": "rbxassetid://74931697804083"
-    },
-    "decals": {
-      "ALB": "rbxassetid://79844054802130",
-      "RGH": "rbxassetid://116122929979621",
-      "NOR": "rbxassetid://140681011470844",
-      "MTL": "rbxassetid://73243138829462",
-      "EMI": "rbxassetid://118757131289097"
-    },
-    "surfaceAppearance": {
-      "ALB": "rbxassetid://86597743734877",
-      "NOR": "rbxassetid://127835594010242",
-      "RGH": "rbxassetid://90421706851762",
-      "MTL": "rbxassetid://74743822712597",
-      "EMI": "rbxassetid://132450350042936"
-    },
-    "note": "Commander (2026-10-23): 4040 triangles, glow share 7.0%"
   }
 }

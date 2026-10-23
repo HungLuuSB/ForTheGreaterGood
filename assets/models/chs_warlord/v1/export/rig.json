@@ -1,0 +1,647 @@
+{
+  "id": "chs_warlord",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        2.405,
+        -0.0218
+      ],
+      "size": [
+        2.8,
+        1.01,
+        1.9364
+      ]
+    },
+    "torso": {
+      "parent": "base",
+      "center": [
+        0.0,
+        5.165,
+        0.1049
+      ],
+      "size": [
+        5.6,
+        5.0896,
+        3.4413
+      ],
+      "pivot": [
+        0.0,
+        2.8,
+        0.0
+      ]
+    },
+    "head": {
+      "parent": "torso",
+      "center": [
+        0.0,
+        4.0835,
+        -1.425
+      ],
+      "size": [
+        1.16,
+        0.8329,
+        1.15
+      ],
+      "pivot": [
+        0.0,
+        4.0,
+        -1.0
+      ]
+    },
+    "armL": {
+      "parent": "torso",
+      "center": [
+        -2.28,
+        3.275,
+        -0.13
+      ],
+      "size": [
+        0.86,
+        2.05,
+        0.86
+      ],
+      "pivot": [
+        -2.2,
+        3.9,
+        -0.1
+      ]
+    },
+    "nano": {
+      "parent": "armL",
+      "center": [
+        -2.25,
+        2.55,
+        -1.3616
+      ],
+      "size": [
+        0.6032,
+        0.9,
+        2.9231
+      ],
+      "pivot": [
+        -2.25,
+        2.5,
+        0.0
+      ]
+    },
+    "armR": {
+      "parent": "torso",
+      "center": [
+        2.28,
+        3.275,
+        -0.13
+      ],
+      "size": [
+        0.86,
+        2.05,
+        0.86
+      ],
+      "pivot": [
+        2.25,
+        3.9,
+        -0.1
+      ]
+    },
+    "forearmR": {
+      "parent": "armR",
+      "center": [
+        2.3,
+        2.45,
+        -1.135
+      ],
+      "size": [
+        1.2,
+        0.95,
+        2.53
+      ],
+      "pivot": [
+        2.3,
+        2.7,
+        -0.2
+      ]
+    },
+    "hipL": {
+      "parent": "base",
+      "center": [
+        -1.605,
+        2.3,
+        0.1
+      ],
+      "size": [
+        0.81,
+        0.9,
+        1.0
+      ],
+      "pivot": [
+        -1.4,
+        2.3,
+        0.1
+      ]
+    },
+    "thighL": {
+      "parent": "hipL",
+      "center": [
+        -1.66,
+        1.5645,
+        -0.15
+      ],
+      "size": [
+        1.12,
+        1.489,
+        1.1412
+      ],
+      "pivot": [
+        -1.6,
+        2.15,
+        0.1
+      ]
+    },
+    "shinL": {
+      "parent": "thighL",
+      "center": [
+        -1.6,
+        0.825,
+        -0.0155
+      ],
+      "size": [
+        0.95,
+        0.95,
+        1.531
+      ],
+      "pivot": [
+        -1.6,
+        1.15,
+        -0.35
+      ]
+    },
+    "footL": {
+      "parent": "shinL",
+      "center": [
+        -1.6,
+        0.32,
+        -0.3674
+      ],
+      "size": [
+        1.3256,
+        0.64,
+        2.3193
+      ],
+      "pivot": [
+        -1.6,
+        0.35,
+        0.0
+      ]
+    },
+    "hipR": {
+      "parent": "base",
+      "center": [
+        1.605,
+        2.3,
+        0.1
+      ],
+      "size": [
+        0.81,
+        0.9,
+        1.0
+      ],
+      "pivot": [
+        1.4,
+        2.3,
+        0.1
+      ]
+    },
+    "thighR": {
+      "parent": "hipR",
+      "center": [
+        1.66,
+        1.5645,
+        -0.15
+      ],
+      "size": [
+        1.12,
+        1.489,
+        1.1412
+      ],
+      "pivot": [
+        1.6,
+        2.15,
+        0.1
+      ]
+    },
+    "shinR": {
+      "parent": "thighR",
+      "center": [
+        1.6,
+        0.825,
+        -0.0155
+      ],
+      "size": [
+        0.95,
+        0.95,
+        1.531
+      ],
+      "pivot": [
+        1.6,
+        1.15,
+        -0.35
+      ]
+    },
+    "footR": {
+      "parent": "shinR",
+      "center": [
+        1.6,
+        0.32,
+        -0.3674
+      ],
+      "size": [
+        1.3256,
+        0.64,
+        2.3193
+      ],
+      "pivot": [
+        1.6,
+        0.35,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "forearmR",
+      "at": [
+        2.35,
+        2.4,
+        -2.47
+      ]
+    },
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        -2.25,
+        2.45,
+        -2.62
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "torso",
+    "head",
+    "armL",
+    "nano",
+    "armR",
+    "forearmR",
+    "hipL",
+    "thighL",
+    "shinL",
+    "footL",
+    "hipR",
+    "thighR",
+    "shinR",
+    "footR"
+  ],
+  "visualPieces": [],
+  "anim": {
+    "torso": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "head": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "armL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "armR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "forearmR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "hipL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footL": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "hipR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "thighR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "shinR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "footR": {
+      "motion": "swing",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "torso_glow_running",
+      "piece": "torso",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        5.2728,
+        -0.2603
+      ],
+      "size": [
+        5.66,
+        4.874,
+        2.1619
+      ]
+    },
+    {
+      "name": "torso_glow_power",
+      "piece": "torso",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        4.4913,
+        -0.0455
+      ],
+      "size": [
+        2.14,
+        3.7578,
+        2.4037
+      ]
+    },
+    {
+      "name": "head_glow_running",
+      "piece": "head",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.15,
+        -1.96
+      ],
+      "size": [
+        0.836,
+        0.11,
+        0.0934
+      ]
+    },
+    {
+      "name": "nano_glow_power",
+      "piece": "nano",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -2.25,
+        2.45,
+        -2.56
+      ],
+      "size": [
+        0.34,
+        0.3234,
+        0.12
+      ]
+    },
+    {
+      "name": "forearmR_glow_weapon",
+      "piece": "forearmR",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        2.5075,
+        2.575,
+        -1.75
+      ],
+      "size": [
+        0.795,
+        0.83,
+        1.4
+      ]
+    },
+    {
+      "name": "thighL_glow_running",
+      "piece": "thighL",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -2.02,
+        1.95,
+        -0.3
+      ],
+      "size": [
+        0.03,
+        0.4,
+        0.06
+      ]
+    },
+    {
+      "name": "shinL_glow_running",
+      "piece": "shinL",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.6,
+        0.8,
+        -0.2
+      ],
+      "size": [
+        1.01,
+        0.5,
+        0.08
+      ]
+    },
+    {
+      "name": "thighR_glow_running",
+      "piece": "thighR",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        2.02,
+        1.95,
+        -0.3
+      ],
+      "size": [
+        0.03,
+        0.4,
+        0.06
+      ]
+    },
+    {
+      "name": "shinR_glow_running",
+      "piece": "shinR",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        1.6,
+        0.8,
+        -0.2
+      ],
+      "size": [
+        1.01,
+        0.5,
+        0.08
+      ]
+    }
+  ],
+  "glowShare": 0.0291,
+  "triangles": {
+    "base": 208,
+    "torso": 992,
+    "head": 176,
+    "armL": 144,
+    "nano": 244,
+    "armR": 144,
+    "forearmR": 260,
+    "hipL": 88,
+    "thighL": 156,
+    "shinL": 168,
+    "footL": 140,
+    "hipR": 88,
+    "thighR": 156,
+    "shinR": 168,
+    "footR": 140,
+    "total": 3272
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
