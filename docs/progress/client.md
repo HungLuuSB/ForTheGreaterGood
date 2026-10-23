@@ -4,6 +4,10 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-23, more rings in shield hits)
+
+- **Shield hits (C-141):** more rings, getting smaller toward the edge: 6 to 9 rings (127 to 271 cells). The edge cells are a third the size of the centre one and packed tight, and the inward wave is a little quicker. Screenshot: `debug_out/screens/shield_rings_more.jpg` (shield_beams, 0.5×).
+
 ## Summary (2026-10-23, shield vs Radiances scenario)
 
 - **New test profile `shield_beams` (C-140):** your Phalanx dome against three Radiances (east, west, south) and an Inferno (south-east), every beam aimed at the dome so it glances off, plus Juggernauts and Ravagers shelling it. Your units are tough so it lasts. Set `ACTIVE = "shield_beams"` (your local MatchConfig already is).

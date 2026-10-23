@@ -46,18 +46,17 @@ export type Dome = {
 
 Shield.PLATE = 4.8 -- studs across a cell's flats (4.5 in C-116..C-130; outlined since C-131: 2.6, then 3.2 in C-136; 4.8 since C-139, the user: bigger patches)
 Shield.GAP = 0 -- studs between cells: outlines touch, a honeycomb
-Shield.RING_DELAY = 0.07 -- seconds between rings lighting: a visible wave out (0.045 until C-117)
+Shield.RING_DELAY = 0.05 -- seconds between rings lighting (0.045 until C-117, 0.07 until C-141: more rings)
 Shield.MAX_WAVES = 4 -- waves a patch keeps at once
 Shield.LIFE = 0.65 -- seconds a plate glows after it lights
 Shield.RING_ALPHA = 0.45 -- each ring out is this much as opaque as the one inside it (0.3 in C-104; up with the second ring every hit lights, C-116)
 Shield.MAX_PATCHES = 6 -- patches per dome at once (the oldest goes)
 Shield.MERGE = 6 -- studs: a hit this close to a young patch heats it instead
 Shield.MERGE_AGE = 0.65 -- while it glows (Shield.LIFE): a later hit adds a wave instead of a second grid on top (C-117)
-Shield.MAX_RINGS = 7
+Shield.MAX_RINGS = 9
 Shield.DENT = 1.4 -- studs the centre pushes in at strength 1 (the rings less, a bowl)
 Shield.CENTER_SCALE = 1.3 -- the centre cell's size, × PLATE; the rim's is CENTER_SCALE − RIM_SHRINK
-Shield.RIM_SHRINK = 0.55
-Shield.SPREAD = 0.3 -- inner rings sit this much further apart than the rim's (positions follow the sizes)
+Shield.RIM_SHRINK = 0.85 -- the rim's cells a third of the centre's (0.55 until C-141, the user: more, smaller rings)
 Shield.DENT_PEAK = 0.12 -- seconds after a cell lights when it is pushed in deepest
 
 -- A cell's size in a patch of `rings` rings, × PLATE.
@@ -97,9 +96,9 @@ Shield.unit, Shield.dot, Shield.len, Shield.sub = unit, dot, len, sub
 -- Rings of hexagons by a hit's strength: a light hit lights the centre and
 -- one ring (7 plates), a heavy one up to MAX_RINGS (37).
 function Shield.ringsFor(strength: number): number
-	-- five rings at least (91 cells), six for a typical shell (127), seven for
-	-- heavy ones (169): a patch covering a good part of the dome (C-136, C-139: the user)
-	return math.clamp(math.floor(5 + strength), 5, Shield.MAX_RINGS)
+	-- six rings at least (127 cells), seven for a typical shell (169), up to
+	-- nine for heavy ones (271): more, smaller rings toward the rim (C-141)
+	return math.clamp(math.floor(6 + strength), 6, Shield.MAX_RINGS)
 end
 
 -- The plates of a patch on a sphere (`center`, `radius`) round the point
@@ -111,7 +110,7 @@ function Shield.layout(center: V3, radius: number, hit: V3, rings: number): { Pl
 	local u = unit(cross(ref, n))
 	local w = cross(n, u)
 	local step = Shield.PLATE + Shield.GAP
-	local reach = step * math.max(rings, 1)
+	local nRings = math.max(rings, 1)
 	local out: { Plate } = {}
 	for q = -rings, rings do
 		for r = math.max(-rings, -q - rings), math.min(rings, -q + rings) do
@@ -123,10 +122,12 @@ function Shield.layout(center: V3, radius: number, hit: V3, rings: number): { Pl
 			if d < 1e-9 then
 				normal = n
 			else
-				-- walk the arc along the great circle towards (px, py); the inner rings
-				-- spread a little (their cells are bigger), the rim's draw in
+				-- walk the arc along the great circle towards (px, py): each ring as
+				-- far out as its cells are big (the integral of cellScale), so the
+				-- big centre cells spread and the small rim cells pack tight (C-141)
 				local dir = unit(add(mul(u, px), mul(w, py)))
-				local a = d * (1 + Shield.SPREAD * (1 - d / reach)) / radius
+				local r = d / step
+				local a = step * (Shield.CENTER_SCALE * r - Shield.RIM_SHRINK * r * r / (2 * nRings)) / radius
 				normal = unit(add(mul(n, math.cos(a)), mul(dir, math.sin(a))))
 			end
 			pos = add(center, mul(normal, radius))

@@ -1129,3 +1129,12 @@ A plain radar blip never seen up close carries no icon on the wire (icon 0), so 
 Until sim request 52 (the weapon on SHOT), beams from shooters you can't see draw as plain tracers, so play it with `/reveal on`.
 
 **Why:** the user: "a scenario of a shield of mine against some radiance from different angles + some shots".
+
+### C-141 — More, smaller rings in shield hit patches (2026-10-23)
+
+**Decision:**
+- Rings are 6 + strength, clamped to 6..9 (127 to 271 cells). Rim cells are a third of the centre's size (RIM_SHRINK 0.85).
+- Each ring sits as far out as its cells are big (the arc is the integral of cellScale), so the centre cells spread and the rim cells pack tight. This replaces C-132's SPREAD.
+- RING_DELAY 0.05 so the inward wave still reaches the centre quickly. Pool 1300.
+
+**Why:** the user: "add more smaller rings to the honeycomb reflect".
