@@ -12,6 +12,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **No overlapping plans (C-165):** a new building can't be placed over one you've already queued, rows and extractor drags included.
 - **The coarse-then-sharp terrain after a long jump** is Roblox's terrain level of detail. Pointing the camera's focus at the ground (C-162) didn't change it; options are under "Needs my review".
 - **Queue in a factory under construction:** needs the server (sim request 63, sent). The client side is already in place.
+- Ready to merge: `5a70dc2` (C-162..C-166; client only)
 
 ## Summary (2026-10-23, nothing pops when the camera moves)
 
