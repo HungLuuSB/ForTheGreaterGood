@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 30, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 31, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -398,6 +398,16 @@ return function(t: RunAll.Context)
 		local gone: Schema.Event = { kind = Schema.EventKind.DOME_GONE, unitId = 0x0102 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, gone)), "18 02 01")
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, gone), Schema.decodeEvent)[1], gone)
+		-- version 31: command flag GROUP (S-137): a ctrl move
+		local groupMove: Command = { cmdType = CT.MOVE, flags = Schema.CmdFlag.GROUP + QUEUE, unitIds = { 1 }, cell = 0x0203, offX = 4, offZ = 5 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, groupMove)), "01 05 01 00 01 00 03 02 04 05")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, groupMove), Schema.decodeCommand)[1], groupMove)
+		-- version 31: IDLE (S-136): an own builder or factory idle / busy
+		local idle: Schema.Event = { kind = Schema.EventKind.IDLE, unitId = 0x0102, idle = true }
+		t.equal(hex(encodeOne(Schema.encodeEvent, idle)), "19 02 01 01")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, idle), Schema.decodeEvent)[1], idle)
+		local busy: Schema.Event = { kind = Schema.EventKind.IDLE, unitId = 0x0102, idle = false }
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, busy), Schema.decodeEvent)[1], busy)
 		-- version 27: CHEAT_RESULT (S-102)
 		local answer: Schema.Event = { kind = Schema.EventKind.CHEAT_RESULT, cheatOp = Schema.CheatOp.GIVE, cheatResult = Schema.CheatResult.OK, count = 3, total = 0x0105 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, answer)), "16 01 00 03 00 05 01")
@@ -544,7 +554,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 25, 1, 0 }, "unknown event kind 25") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29
+		expectRejected(t, Schema.decodeEvent, { 26, 1, 0 }, "unknown event kind 26") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind
@@ -706,7 +716,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, cmd, { 18, 0, 1, 0, 1, 0 }, "unknown cmdType 18") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
-		expectRejected(t, cmd, { CT.STOP, 4, 1, 0, 1, 0 }, "reserved bits")
+		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)
 		expectRejected(t, cmd, { CT.STOP, LINE, 1, 0, 1, 0 }, "LINE flag")
 		expectRejected(t, cmd, { CT.STOP, 0, 0, 0 }, "unit count 0")
 		expectRejected(t, cmd, { CT.STOP, 0, 201, 0 }, "unit count 201")

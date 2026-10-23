@@ -577,7 +577,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 ### 6.6 Group movement & formations
 
 - **Line move (BAR-style):** dragging a right-click line spreads selected units evenly along it; each gets its own goal cell but units sharing a move class and nearby goals can share a field.
-- **Speed matching (optional toggle):** group moves at the slowest member's speed.
+- **Speed matching (optional toggle):** group moves at the slowest member's speed. Built (S-137): command flag GROUP (Ctrl held, as BAR's ctrl-move) on MOVE / FIGHT / PATROL caps each ground unit's top speed at the selection's slowest ground unit's; aircraft are not capped.
 - Arrival: units within a radius of the goal stop rather than pushing to the exact cell.
 - Implementation notes (`Sim/Nav.luau`, DECISIONS D35, D38–D40):
   - Each (move class, footprint) group shares one field to the group goal, and each unit gets its own formation slot.
@@ -636,7 +636,7 @@ for each player P:
 - **Entering tactical:** server sends one reliable `Enter` event with the unit's full state. After that, only changes.
 - **Leaving tactical:** reliable `Leave` event; client returns the model to the pool but keeps the unit in its strategic table.
 - Implementation (`Sim/NetOut.luau`, DECISIONS D70–D71):
-  - Radar and sonar contacts are strategic-only (icon 0, the drawn blip's cell, within 1.5 studs of the unit: 11.4).
+  - Radar and sonar contacts are strategic-only (icon 0, the unit's own cell: 11.4).
   - The strategic snapshot runs every 5th tick and always sends at least a header, so clients drop units that disappeared.
   - DEATH goes to players that had the unit tactical.
   - Event records ENTER / LEAVE / DEATH were added in `PROTOCOL_VERSION` 2.
@@ -1161,7 +1161,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
 
 - **Cloak (not built yet; the `cloaked` state bit is reserved):** a cloaked unit that fires drops its cloak and is then seen by normal sight, so firing never stays hidden. Its shots and projectiles are shown like anyone's (7.2, S-43): they never name the shooter.
 
-- **Radar error ("wobble"):** like BAR, a radar blip circles the real unit closely: the **drawn blip** orbits at 1.5 studs (less if the radar error is smaller), and that is the position the server sends (S-131). The radar error lives in a **hidden aim point**, which circles the unit at the radar error and is never sent. Weapons firing at a contact aim there. Players see roughly where a contact is, but their radar-fired shots still miss by the radar error. Order radars have smaller error than Chaos radars.
+- **Radar error ("wobble"):** like BAR, a radar blip circles the real unit closely. The server sends the contact's **cell**, not its exact position (S-134). The client draws the blip circling that spot 1.5 studs out (S-131, C-154). The radar error lives in a **hidden aim point**, which circles the unit at the radar error and is never sent. Weapons firing at a contact aim there. Players see roughly where a contact is, but their radar-fired shots still miss by the radar error. Order radars have smaller error than Chaos radars.
 - **Jamming:** a jammer hides its own team's units inside its radius from enemy radar. It does not affect sight (LOS). Jammers drain power continuously; if power stalls, their radius shrinks (implemented in D108: `jamDrain`, the radius scales with the share of upkeep it gets, like tracking radars).
 - **Stealth (low observable):** `radarSignature < 1` reduces the distance at which radar can detect the unit to `radarRange × signature`. Radar emitters are few, so check stealth units against the list of nearby enemy radars directly. Stealth never prevents visual detection.
 - **Radar targeting:** weapons with `canTargetRadar = true` (mostly artillery and long-range missiles) can fire at radar blips. They aim at the hidden aim point, not the drawn blip, so they miss more — that's intended.
@@ -1175,7 +1175,7 @@ Compute this when a unit changes sensor cell or when the maps change around it, 
   - Optional (D105): radar-guided missiles lock at +10% range against tracked targets.
   - Measured: a Verdict on a radar-only Ravager scores 4 of 15 direct hits untracked and 11 of 15 tracked. An Absolution hits a moving radar-only tank 0 of 9 times untracked and 6 of 10 tracked.
 - Implementation (DECISIONS D67):
-  - Both the drawn blip and the aim point orbit: offset = radius × (cos θ, sin θ), θ = phase0 + dir × 2π × tick / 90 (one turn every 6 s). phase0 and dir (±1) are a stateless hash of (unit, observer), salted differently for the two, so every player of a team sees the same orbit. The aim point's radius is the observer's best `sensors.radarError` (or `trackError` when tracked), scaled by Pinpointers. The drawn blip's radius is 1.5 studs, or the aim radius if smaller.
+  - The aim point orbits: offset = radius × (cos θ, sin θ), θ = phase0 + dir × 2π × tick / 90 (one turn every 6 s). phase0 and dir (±1) are a stateless hash of (unit, observer), so every player of a team gets the same orbit. The radius is the observer's best `sensors.radarError` (or `trackError` when tracked), scaled by Pinpointers. The sent cell is within half a cell (~5.7 studs) of the unit.
   - Every weapon targets only what its team knows: VISIBLE, plus RADAR contacts and ghosts for `canTargetRadar` weapons.
   - Measured: howitzer direct hits 87% with a spotter versus 20% on radar.
 

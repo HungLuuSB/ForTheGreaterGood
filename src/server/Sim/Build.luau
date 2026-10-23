@@ -87,7 +87,8 @@ end
 --------------------------------------------------------------------------------
 
 -- BUILD from player-owned `ids`: mobile builders get a pending structure at
--- (x, z); factories (complete structures with buildOptions) queue the unit.
+-- (x, z); factories (structures with buildOptions) queue the unit, unfinished
+-- ones too: they start producing when finished (S-138, client request 63).
 function Build.commandBuild(sim: Types.Sim, ids: { number }, defIndex: number, x: number, z: number, facing: number)
 	local w = sim.world
 	local b = sim.build
@@ -101,7 +102,7 @@ function Build.commandBuild(sim: Types.Sim, ids: { number }, defIndex: number, x
 			continue -- can't build that
 		end
 		if d.domain == "structure" then
-			if w.buildProgress[id] >= 1 and target.domain ~= "structure" then
+			if target.domain ~= "structure" then
 				local q = b.queue[id] or {}
 				if #q < BuildState.MAX_QUEUE then
 					table.insert(q, defIndex)

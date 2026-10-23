@@ -109,6 +109,7 @@ export type View = {
 	warnings: { { projId: number, x: number, z: number } }, -- LAUNCH_WARNING records (S-48)
 	alerts: { { alert: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT records (S-68)
 	shields: { [number]: { charge: number, flags: number } }, -- SHIELD records by generator (S-79)
+	idle: { [number]: boolean }, -- own builders / factories reported idle (S-136)
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
 	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
@@ -142,6 +143,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		warnings = {},
 		alerts = {},
 		shields = {},
+		idle = {},
 		strategicTick = -1,
 		received = {},
 		log = {},
@@ -340,6 +342,9 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 					p.target = 0 -- turned: a missile loses its lock
 				end
 				table.insert(view.effects, { kind = "shield", x = x, y = y, z = z, breach = e.breach, absorbed = e.absorbed, mass = (e.mass :: number) / Schema.SHIELD_MASS_SCALE })
+				continue
+			elseif kind == EK.IDLE then
+				view.idle[e.unitId :: number] = if e.idle then true else nil
 				continue
 			elseif kind == EK.ALERT then
 				local x, z = view.grid:decode(e.cell :: number, 128, 128)

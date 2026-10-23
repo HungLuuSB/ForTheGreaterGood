@@ -106,6 +106,38 @@ return function(t: RunAll.Context)
 		return held, shots
 	end
 
+	t.test("GROUP (ctrl) move: the selection keeps together at its slowest unit's speed (S-137)", function()
+		local function race(group: boolean): (number, number, number, number)
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+			local w = sim.world
+			local scout = Spawn.unit(sim, "ord_herald", 1, -300, 10, 0) -- 60 studs/s
+			local tank = Spawn.unit(sim, "ord_lancer", 1, -300, -10, 0) -- 28 studs/s
+			local jet = Spawn.unit(sim, "ord_falcon", 1, -300, 40, 0)
+			local g = (sim.map :: any).grid
+			local cell, ox, oz = g:encode(250, 0)
+			submit(sim, 1, { cmdType = CT.MOVE, flags = if group then Schema.CmdFlag.GROUP else 0, unitIds = { scout, tank, jet }, cell = cell, offX = ox, offZ = oz })
+			local scoutAt, tankAt, fastest, jetTop = 0, 0, 0, 0
+			for i = 1, 900 do
+				Sim.step(sim)
+				fastest = math.max(fastest, w.speed[scout])
+				jetTop = math.max(jetTop, w.speed[jet])
+				if scoutAt == 0 and w.orderId[scout] == 0 then
+					scoutAt = i
+				end
+				if tankAt == 0 and w.orderId[tank] == 0 then
+					tankAt = i
+				end
+			end
+			return scoutAt, tankAt, fastest, jetTop
+		end
+		local s0, t0 = race(false)
+		local s1, t1, fastest, jetTop = race(true)
+		t.expect(s0 < t0 - 100, `without ctrl the scout arrives far ahead ({s0} vs {t0})`)
+		t.expect(fastest <= 28 + 1e-6, `with ctrl the scout keeps to the tank's 28 studs/s ({fastest})`)
+		t.expect(math.abs(s1 - t1) < 30, `and they arrive together ({s1}, {t1})`)
+		t.expect(jetTop > 100, `aircraft fly as usual ({jetTop})`)
+	end)
+
 	t.test("FIGHT holds to engage what it meets; MOVE drives on", function()
 		local heldFight, shotsFight = crossing(CT.FIGHT)
 		local heldMove = crossing(CT.MOVE)
