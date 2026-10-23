@@ -17,6 +17,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Idle indicators (C-158):** idle builder and factory counts beside the resource bar, **I** jumps to the next idle builder (the camera follows), an IDLE tag over each. For now only what's in view counts: sim request 62 asks the server for a proper idle signal.
 - Ready to merge: `946b6a7` (C-157, C-158: selection tiles, idle indicators)
 - **Rebindable keys (C-159):** Settings > Keys has a button per action: click, press the new key. Two actions on one key show a red warning on both. Saved for your account (the session only in Studio). Camera turn-right moved from E to C, because E is also reclaim.
+- Ready to merge: `0db7a34` (C-159: rebindable keys; adds the Keybinds remote in src/roblox)
 
 ## Summary (2026-10-23, factories show what they build)
 
