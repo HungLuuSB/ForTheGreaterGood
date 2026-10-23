@@ -1931,3 +1931,4 @@ You asked for a client-only prototype of the plasma deflector, with no sim chang
 - Ready to merge: `13f7561` (m-models merges ce25ddd + 786d85c; honeycomb shell, beam held for beamDuration; C-138); test_client 214, build passed.
 - Ready to merge: `25b6d3f` (beam pulses on shields, bigger hit patches; C-139); test_client 214, build passed (client render only).
 - Ready to merge: `6d0e0df` (shield_beams test profile, C-140; MatchConfig profile hunk only, ACTIVE untouched); build passed.
+- Ready to merge: `b8cc921` (more, smaller rings in shield hits, C-141); test_client 214, build passed (client render only).
