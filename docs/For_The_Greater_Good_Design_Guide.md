@@ -940,6 +940,7 @@ Factories have build power and an optional rally point and repeat queue. Workers
   - T2 factories 6, fusion 4, T2 extractors 3, beam towers, shield generators and heavy turrets 3, flak and advanced jammers 2;
   - T3: Citadel 7, nuke silos 6;
   - T2 heavy tanks (Paladin, Warden, Juggernaut) footprint 2, like the Minotaur and Cyclops.
+  - Commanders (Sovereign, Warlord): footprint 2, 10-stud walking mechs, build range 60 (S-124).
   - Deposits stay at least 3 cells apart (`MapGen.MIN_DEPOSIT_GAP`), so a 3×3 T2 extractor fits on each.
   - A placed structure writes the occupancy layer and blocks every non-air class. Clearance is capped at 16 and recomputed exactly around the change only.
 - **Facing:** every BUILD order carries a facing of 0/90/180/270° (section 7.3). Footprints rotate with facing: a non-square W×D footprint occupies D×W cells at 90°/270°. Placement checks, occupancy and passability updates all use the rotated footprint. Square footprints are unaffected.

@@ -1847,3 +1847,17 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Tests:** `Shield.spec`:
   - a weak dome in front drops, and the new FIRE ends on the full dome behind (miss), which is then drained while the target inside is untouched;
   - a dome raised across a beam burning on its target cuts it with a new FIRE (miss) at its surface and takes the hit.
+
+## S-124 — Commanders at footprint 2 (the user, via models-C: 10-stud walking mechs) (2026-10-23)
+
+- **Asked:** the Commanders become much bigger walking mechs, about 10 studs tall (2.7× a Lancer). Accept footprint 2 for `ord_sovereign` and `chs_warlord`. Check pathing (the gaps maps and base layouts leave), build range from the bigger body, start positions and AI openings. Movement stays TRACKED.
+- **Changed:**
+  - `ord_sovereign`, `chs_warlord`: footprint 1 → 2. Collision radius 3.6 → 7.2 studs, hit height 6 → 12 (6 per footprint cell; the mech's head is at about 10).
+  - `buildRange` 56 → 60: builders measure from their centre, so the reach from the bigger body's edge stays what it was.
+  - Pieces unchanged (`base`, `nano`), unarmed, TRACKED.
+- **Checked** (`debug_out/cmdstuck.luau`; hard AI on all six maps, 10 minutes):
+  - **Mobility:** with a pending order, the Commanders didn't move in 5 of 1,784 five-second windows (11 of 1,775 at footprint 1), with no failed builds (1 at footprint 1).
+  - **Pathing:** they need 3-cell gaps (guide 6.2), which every map keeps (MapGen's MIN_GAP). In the AI's bases, with 2-cell lanes (S-104), they go round, and the numbers show no harm.
+  - **Starts:** standard starts are unchanged (mobile units don't occupy cells).
+  - **AI and slow suites:** the AI spec and the fairness tests pass (mirror split 5–7).
+  - `Skirmish.spec`'s seed-1 match changed: Chaos raids Order down to 2 extractors by minute 5, Order's army never reaches its first wave (1,700 of 2,400), and Chaos wins at 9.9 min. The test wanted a wave from a loser lasting past 8 minutes; the bar is now 10. Under review: it's the Order-side weakness item 1 is about, shown by one seed.
