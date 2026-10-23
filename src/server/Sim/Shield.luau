@@ -263,11 +263,10 @@ function Shield.deflect(
 	return x1, y1, z1, vx1, vy1, vz1, true, false
 end
 
--- A hitscan shot by side `side` from (sx, sy, sz) to (ex, ey, ez): the
--- first enemy dome, up, whose surface the segment enters from outside
--- stops it there (S-89). Returns the generator (0 for none) and the point;
--- drains the shot's mass and records a SHIELD_HIT (absorbed, projectile 0).
-function Shield.intercept(sim: Types.Sim, side: number, sx: number, sy: number, sz: number, ex: number, ey: number, ez: number, weapon: any): (number, number, number, number)
+-- The first enemy dome, up, whose surface the segment from (sx, sy, sz)
+-- to (ex, ey, ez) of side `side` enters from outside: the generator (0 for
+-- none) and the point (S-89; S-123: re-checked every tick for a burning beam).
+function Shield.firstDome(sim: Types.Sim, side: number, sx: number, sy: number, sz: number, ex: number, ey: number, ez: number): (number, number, number, number)
 	local c = sim.combat
 	local w = sim.world
 	local dx, dy, dz = ex - sx, ey - sy, ez - sz
@@ -287,7 +286,7 @@ function Shield.intercept(sim: Types.Sim, side: number, sx: number, sy: number, 
 				local disc = b * b - a * cc
 				if disc >= 0 then
 					local t = (-b - sqrt(disc)) / a -- the first crossing
-					if t >= 0 and t <= 1 and t < bestT then
+					if t >= 0 and t <= 1 and (t < bestT or (t == bestT and d < best)) then
 						best, bestT = d, t
 					end
 				end
@@ -297,10 +296,26 @@ function Shield.intercept(sim: Types.Sim, side: number, sx: number, sy: number, 
 	if best == 0 then
 		return 0, 0, 0, 0
 	end
-	local hx, hy, hz = sx + dx * bestT, sy + dy * bestT, sz + dz * bestT
+	return best, sx + dx * bestT, sy + dy * bestT, sz + dz * bestT
+end
+
+-- A shot stopped at dome `gen`'s surface at (hx, hy, hz): it drains the
+-- shot's mass and records a SHIELD_HIT (absorbed, projectile 0).
+function Shield.absorbShot(sim: Types.Sim, gen: number, hx: number, hy: number, hz: number, weapon: any)
 	local mass = Shield.mass(weapon)
-	Shield.drain(sim, best, Shield.HIT_COST * mass)
-	Combat.addEvent(c, { kind = "SHIELD_HIT", tick = sim.tick, unit = best, other = 0, x = hx, y = hy, z = hz, absorbed = true, mass = mass })
+	Shield.drain(sim, gen, Shield.HIT_COST * mass)
+	Combat.addEvent(sim.combat, { kind = "SHIELD_HIT", tick = sim.tick, unit = gen, other = 0, x = hx, y = hy, z = hz, absorbed = true, mass = mass })
+end
+
+-- A hitscan shot by side `side` from (sx, sy, sz) to (ex, ey, ez): the
+-- first enemy dome, up, whose surface the segment enters from outside
+-- stops it there (S-89). Returns the generator (0 for none) and the point;
+-- drains the shot's mass and records a SHIELD_HIT (absorbed, projectile 0).
+function Shield.intercept(sim: Types.Sim, side: number, sx: number, sy: number, sz: number, ex: number, ey: number, ez: number, weapon: any): (number, number, number, number)
+	local best, hx, hy, hz = Shield.firstDome(sim, side, sx, sy, sz, ex, ey, ez)
+	if best ~= 0 then
+		Shield.absorbShot(sim, best, hx, hy, hz, weapon)
+	end
 	return best, hx, hy, hz
 end
 
