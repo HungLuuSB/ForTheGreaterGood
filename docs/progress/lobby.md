@@ -44,14 +44,16 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 6. **Start positions:** the lobby orders players so the sim's player ID is the start index (Teams: ally teams together). So sim request 64 (chosen starts) isn't needed for version 1. BAR's start boxes or chosen starts could come later.
 7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
 8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
+9. **Where the config validator lives (A-2):** sim-A agreed it can move to `src/shared/Match/MatchConfig.luau` so the match server uses the same checks, and offered me that file. Your brief says I never edit `src/shared`, so I declined. Either sim-A moves it (my copy then goes), or it stays in `src/lobby`. Which?
+10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. I asked sim-A to add `lune run src/lobby/tools/test`; until then I run them before every "Ready to merge" line.
 
 ## Requests
 
 ### For sim-A (sim session)
 
-- **A-1. Match config → Sim (contract section 3).** Nothing new is needed from `Sim.new` for version 1: player ID = start index, factions by team parity as `src/roblox/Lobby.config` does. Please confirm, and resolve your request 64 (chosen starts) against L-4: the lobby assigns starts by player order.
-- **A-2. A shared validator (optional).** If the match server should run `MatchConfig.validate` without copying it, it could move to `src/shared/Match/` (yours). Say if you want it.
-- **A-3. Guide 16.3** ("map vote, mode, teams, faction pick"): the user's design is a BAR battle room where the host picks the map; reserved servers via TeleportService; the flow in `docs/contracts/match.md`. Please update the guide.
+- **A-1. Done (sim-A S-143):** confirmed, `standard_start` seats player i on start i (IDs must be contiguous from 1, which MatchConfig guarantees); request 64 closed against L-4. **Match config → Sim (contract section 3).** Nothing new is needed from `Sim.new` for version 1: player ID = start index, factions by team parity as `src/roblox/Lobby.config` does. Please confirm, and resolve your request 64 (chosen starts) against L-4: the lobby assigns starts by player order.
+- **A-2. Waiting for your call (Needs my review 9):** sim-A agreed and offered me the file, but your brief keeps me out of `src/shared`. **A shared validator (optional).** If the match server should run `MatchConfig.validate` without copying it, it could move to `src/shared/Match/` (yours). Say if you want it.
+- **A-3. Done (sim-A, m-sim-2 2e9b5c7).** **Guide 16.3** ("map vote, mode, teams, faction pick"): the user's design is a BAR battle room where the host picks the map; reserved servers via TeleportService; the flow in `docs/contracts/match.md`. Please update the guide.
 
 ### For client-B (client session, match place)
 
