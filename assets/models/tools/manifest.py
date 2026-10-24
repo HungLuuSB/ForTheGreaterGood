@@ -126,6 +126,11 @@ APPROVED = {
     "ord_airpad", "chs_airpad", "ord_bulwark", "chs_spike", "ord_watchtower", "chs_eye",
     "ord_vigil", "chs_thorn", "ord_ear", "chs_listener", "ord_curtain", "chs_smog",
     "ord_undertow", "chs_fang", "ord_moat", "chs_riptide",
+    # 2026-10-24: the T2 batch (T2 aircraft, anti-nukes fixed and mobile,
+    # missile batteries, amphibious tanks, air workers, ASW helicopters)
+    "ord_archon", "chs_manticore", "ord_phantom", "chs_behemoth", "ord_archangel", "chs_banshee", "chs_wraith",
+    "ord_providence", "chs_cerberus", "ord_custodian", "chs_chimera", "ord_sanction", "chs_scourge",
+    "ord_tideguard", "chs_mire", "ord_zenith", "chs_condor", "ord_tidewatch", "chs_leech",
 }
 REVIEW_NOTE = "new BAR mesh, waiting for the user's review"
 DEPOSIT_NOTE = ("supply deposit (neutral terrain prop): pick a variant and a random yaw per deposit; "
@@ -147,6 +152,10 @@ APPROVED_WRECKS = {
     "ord_airpad", "chs_airpad", "ord_bulwark", "chs_spike", "ord_watchtower", "chs_eye",
     "ord_vigil", "chs_thorn", "ord_ear", "chs_listener", "ord_curtain", "chs_smog",
     "ord_undertow", "chs_fang", "ord_moat", "chs_riptide",
+    # 2026-10-24: the T2 batch's wrecks
+    "ord_archon", "chs_manticore", "ord_phantom", "chs_behemoth", "ord_archangel", "chs_banshee", "chs_wraith",
+    "ord_providence", "chs_cerberus", "ord_custodian", "chs_chimera", "ord_sanction", "chs_scourge",
+    "ord_tideguard", "chs_mire",
 }
 WRECK_NOTE = "wreck version, waiting for the user's review"
 
