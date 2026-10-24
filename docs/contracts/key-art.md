@@ -13,7 +13,7 @@ The user (2026-10-23): stunning key art from the models stream, with a parallax 
 | **Light** | realistic and dramatic: low sun or dusk, volumetric haze and god rays, rim light on the units, faction glow parts lit (sci-fi), warm explosion light on the ground and the smoke |
 | **Content** | **mid-ground:** Order and Chaos tanks fighting (Paladin, Lancer, Ravager, Minotaur...), muzzle flashes, tracers, impacts and **explosions on the ground** with dirt and fire. **Air:** fighters and helicopters, **SAM missiles climbing on smoke trails** (Seraph, IR SAM), an interception burst or two. **Far side:** a sea with **ships** (Dominion, Kraken, Crusader...) firing, a coast, haze. **Foreground:** close dark shapes (rubble, a wreck, a tank's track or turret edge), smoke and embers |
 | **Factions** | Order blue (64,132,230) and Chaos red (222,70,62) team paint, as in game |
-| **Mood per art** | 1. dusk land battle with the sea behind (the user's description); 2. a SAM site under air attack at night; 3. a beach assault: ships, landing tanks, artillery |
+| **Mood per art** | all three at dusk (the user's style guide, `docs/art/keyart.md` on m-models): 1. "Commander's stand", a land battle with the sea behind; 2. a SAM site under air attack; 3. a beach assault: ships, landing tanks, artillery |
 | **Avoid** | text, logos and UI in the art; the screens put text in the top band and the bottom 25%, so keep heroes out of those bands |
 
 ## 2. Layers (for the parallax)
@@ -66,4 +66,5 @@ Both loading screens read it through `@shared/Defs/Meshes/Registry`. Without app
 ## Changes
 
 - 2026-10-23: first version (L-13).
+- 2026-10-24: all three arts at dusk (the user's style guide); art 1 "Commander's stand" approved by the user, waiting for upload approval.
 - 2026-10-23: one viewer, `src/client/UI/KeyArt.luau`; the lobby's copy is gone.

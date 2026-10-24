@@ -8,6 +8,7 @@
 
 local KeyArt = require("@client/UI/KeyArt")
 local Net = require("../Net")
+local Scene = require("../Scene")
 local Ui = require("../Ui")
 
 local Kit = Ui.Kit
@@ -129,9 +130,12 @@ function Loading.new(gui: ScreenGui): any
 			end
 			if newMode ~= mode then
 				if mode == nil and newMode ~= nil then
-					root.BackgroundTransparency = if art.show() then 1 else 0.45
+					local shown = art.show()
+					root.BackgroundTransparency = if shown then 1 else 0.45
+					Scene.setCovered(shown) -- the art is opaque: pause the battle behind it
 				elseif newMode == nil then
 					art.hide()
+					Scene.setCovered(false)
 				end
 				mode = newMode
 				started = os.clock()
