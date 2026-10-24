@@ -16,6 +16,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Own units off camera stay live (C-205, S-158):** health, build bars and factory queues keep moving when the camera is elsewhere.
 - **Factory facing (C-206, reference 7):** the placement ghost of a factory shows a green arrow on its exit side, and R shows "Buildings set to face East" over it; the ghost now turns the same way the built factory will (it was flipped for South and North). Screenshots: `debug_out/screens/c206_*.jpg`.
 - **Health bars under the unit (C-208, your request):** `debug_out/screens/c208_health_bars_under.jpg`.
+- **State buttons show every state (C-210, your request):** three segments under Fire / Move state (red, yellow, green), two under Repeat, On / Off and priority (red left, green right); the current one lit. `debug_out/screens/c210_state_segments_x2.jpg`.
+- **The Canyon's mesh ground (C-209, models-C's 08b9889):** wired and checked in Studio: it builds in ~10 s and is sharp right after a minimap jump; clicks over mesas now land on the ground. Its textures draw flat white in the match place, so models-C is looking at them before your review. Side-by-side shots: `debug_out/screens/c209_canyon_*.jpg` (voxel vs mesh, close and after a jump).
+- Ready to merge: `94be98c` (m-models 08b9889 merged in 13b9a3c; C-209, C-210; test_client 295, build passed)
 - Ready to merge: `196d8a7` (main f04d534 merged in 3d5fbf4, protocol 34; C-204 watchdog profile and speed fix (src/roblox), C-205, C-206, C-208; test 496, test_client 295, build passed)
 
 ## Summary (2026-10-24, point defence; new icon sheet)
