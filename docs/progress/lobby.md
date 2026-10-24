@@ -12,6 +12,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Checked in Studio:** The Plains (16 starts) is in the map list; a 4-against-4 Teams room on it, the seat editor with 8 teams and 16 colours (`lobby_room_plains_seat.jpg`), and a forced start whose config passed the shared check and launched.
 - **Not done yet (after the beta):** the automatic colours in the room (`TeamColors.forViewer`) and removing the colour picker; The Plains' skirmish note.
 - **Tests:** lobby specs 47 / 47; the lobby build check passes.
+- Ready to merge: `63ca504` (rooms to the new limits, start 0 for every player, seat editor for 8 teams and 16 colours, specs and contract; includes sim-A's `c06d3ca`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
 
 ## Summary (2026-10-24, Settings on client-B's components; publishing)
 
