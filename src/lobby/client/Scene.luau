@@ -664,6 +664,11 @@ local EFFECTS = { "LobbyBloom", "LobbySunRays", "LobbyGrade", "LobbyFocus" }
 
 local function apply()
 	folder.Parent = if enabled and not covered then workspace else nil
+	-- nothing 3D shows under the art: skip drawing the world entirely (as
+	-- the match's loading screen does, C-184)
+	pcall(function()
+		RunService:Set3dRenderingEnabled(not covered)
+	end)
 	for _, name in EFFECTS do
 		local e = Lighting:FindFirstChild(name)
 		if e and e:IsA("PostEffect") then
@@ -680,7 +685,8 @@ end
 -- While opaque key art covers the screen, the battle behind it costs frames
 -- for nothing (it held a Studio playtest at 39 fps with 80 ms spikes, which
 -- made the art's parallax stutter): take it out of the world, switch the
--- post effects off and stop stepping it until it's uncovered.
+-- post effects and 3D rendering off and stop stepping it until it's
+-- uncovered.
 function Scene.setCovered(on: boolean)
 	covered = on
 	apply()
