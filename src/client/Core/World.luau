@@ -6,6 +6,7 @@
 -- Wire conventions: docs/contracts/net.md (protocol 5).
 
 local Defs = require("@shared/Defs/Defs")
+local MoveClasses = require("@shared/Defs/MoveClasses")
 local Grid = require("@shared/Grid/Grid")
 local Layers = require("@shared/Grid/Layers")
 local MapRegistry = require("@shared/Grid/MapRegistry")
@@ -273,6 +274,17 @@ end
 -- Drawn ground height (studs) under a world position: the smooth surface
 -- the 3D terrain shows (Core/Terrain, C-28), or the water surface for units
 -- that float.
+-- Whether a unit is drawn on the water surface rather than the bed (C-192,
+-- the user: each on its terrain): ships, structures built on water (their
+-- models float), and amphibious or hover units, which ride the surface.
+function World.floats(def: any): boolean
+	if def.domain == "naval" or def.placement == "water" then
+		return true
+	end
+	local mc = def.moveClass and (MoveClasses :: any)[def.moveClass]
+	return mc ~= nil and (mc.surface == "amphib" or mc.surface == "hover")
+end
+
 function World.groundY(world: World, x: number, z: number, floats: boolean?): number
 	local layers = world.layers
 	if layers == nil then
