@@ -73,6 +73,7 @@ export type ShieldEnergy = {
 		hit: { string },
 	},
 	bands: { { name: string, mesh: string, theta: { number }, center: Vec3, size: Vec3 } },
+	hexGrid: EnergyPart,
 	hitCap: { mesh: string, center: Vec3, size: Vec3, halfAngle: number },
 	timing: { [string]: number },
 	counts: { [string]: number },
@@ -945,6 +946,11 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			ringJoints = 12,
 			streaks = 20,
 			waves = 3,
+		},
+		hexGrid = {
+			center = { 0.0001, 0.4778, 0 },
+			mesh = "rbxassetid://117467787840280",
+			size = { 2.002, 1.0499, 2.0025 },
 		},
 		hitCap = {
 			center = { 0, 0.9864, 0 },
