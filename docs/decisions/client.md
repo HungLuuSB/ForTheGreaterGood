@@ -1859,6 +1859,7 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 
 **Decision:**
 - **Icons:** Pharos and Scylla (naval SAM platforms) on the Radar SAM Site tile, Empyrean and Rookery (advanced rearm pads) on the Rearm Pad tile, until the user designs their own (as C-195). The sheet PNG is byte-identical; only IconAtlas's mapping changes. Fixes main's two failing icon specs after S-166.
+- **The jammer's ground ring (C-211) is switched off** (the user): `SensorFx.JAM_RING = false`; the shimmering dome stays.
 - **Radar fill (C-207) is switched off** (the user): `RadarFill.ENABLED = false`, so Main passes no circles and nothing draws; the code, its spec and the fog composite stay for when it comes back (with sim-A's terrain-cut radar, request 66).
 - **S-163's mid-beam FIREs** (a single-target beam's new end when an enemy steps into its line) take the existing continuation path (`Effects.continueBeam`, C-144): the burning beam's end and hit move; no change needed.
 
