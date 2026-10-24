@@ -4,6 +4,24 @@ Progress of the models stream: hand-made blockouts in `src/shared/Defs/Blockouts
 
 Decisions: `M-1`, `M-2`, ... in [`../decisions/models.md`](../decisions/models.md). Rig and blockout format: [`../contracts/rig.md`](../contracts/rig.md).
 
+## Summary (third review queue, 2026-10-24)
+
+Your reviews:
+- **T2 batch approved:** T2 aircraft, anti-nukes (fixed and mobile), missile batteries, amphibious tanks, air workers and ASW helicopters are `approved` in the manifest, with the wrecks they have (the four helicopters have none yet: item 6).
+- **Key art 1 "Commander's stand" uploaded** (16 tiles, image IDs resolved in FTGG Art) and in the manifest as `keyArt.commanders_stand`, approved.
+
+Queue:
+
+| # | Item | Status | Shots (`debug_out/screens/`) |
+|---|---|---|---|
+| 1 | **The Canyon's baked ground (C-167, M-35).** 68 tiles (323,632 triangles) from the game's heights, pale rippled sand floor and red rock slabs, the borders between them smooth wavy lines instead of the cell staircase. 190 rock detail meshes (94,236 triangles): every mesa a butte, its real slope's lower part a talus apron with boulders, above it a sheer fluted cliff of 2–3 strata tiers (reds, a cream band, dark varnish streaks; the bands line up across mesas) under a caprock lip; boulder clusters on the `boulder` cells. Materials `desert`, `redrock`, `cliff`. In the manifest as `ground.canyon`, `review` (the game draws it only with `Invoke("groundanyway", true)` in Studio); built in FTGG Art as `Workspace.GroundReview.canyon` (x +6000) with two Lancers and a Ravager | review | `ground_canyon_55_close.jpg`, `ground_canyon_55_220.jpg`, `ground_canyon_side.jpg` |
+
+**Notes for clients-B (C-167):**
+- **Ground clicks:** `Render/MeshGround` makes the tiles with `CollisionFidelity.Box`, and `CanQuery` on. A raycast then hits each tile's bounding box, not its surface: over the Canyon's mesas a 256-stud tile's box top sits at the mesa height, so `Controls.groundAt` would land clicks up to 50 studs high. In FTGG Art every ray hit y = 18 on flat sand. Suggest `CanQuery` off on the tiles and ground clicks from Core/Terrain's heights (or `PreciseConvexDecomposition`, which costs more).
+- **Seams:** the borders between ground types no longer fall on cell edges (M-35: wavy lines cut through the triangles, the surface unchanged). The contract's "seams fall on cell edges" line could say so.
+- **New material key `cliff`** (the strata walls, details only): `GroundMeshes.FALLBACK` has no entry, so it would draw as grass if its SurfaceAppearance were missing. Suggest `cliff = { material = "Sandstone", color = { 150, 78, 52 } }`.
+- The Canyon's `ground` cells (the 92 deposit cells) are drawn as the type around them; the deposit models cover them.
+
 ## Summary (second review queue, 2026-10-23)
 
 Done so far:
@@ -525,6 +543,8 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `fbe9923` (Bulwark blockout v3: the weapons stacked, laser ring under the beam head, each turning on its own; `retracted` pose updated).
 - Ready to merge: `ef1237e` (T1 defence blockouts v2 after the user's references: tall laser towers, low twin-barrel batteries; pieces unchanged).
 - Ready to merge: `72b72fd` (merge of sim-A's `a5c00e1` pitch pieces with the matching blockouts: Sentry / Guard `barrel`, Overwatch / Twin Guard / Geryon `mount`, Bulwark `laser_mount`; integrate this commit, not `a5c00e1` alone; also `2fd0e93`, the artillery `raised` poses).
+- Ready to merge: `056e644` (the user's approvals: the T2 batch (aircraft, anti-nukes, missile batteries, amphibious tanks, air workers, ASW helicopters) and their wrecks; key art 1 uploaded as `keyArt.commanders_stand`, approved; `assets/keyart/`, `assets/models/tools/manifest.py`, `src/shared/Defs/Meshes/Registry.luau`).
+- Ready to merge: `08b9889` (the Canyon's baked ground, C-167 / M-35: `ground.canyon` and `groundMaterials` in the manifest, review; `assets/maps/`, tools, manifest, `place/MeshMaterials.model.json`, docs).
 
 ## Requests
 
