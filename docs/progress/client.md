@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **No honeycomb on the shield (C-189):** the dome shows hex cells only where a shot hits.
+- Ready to merge: `f0f231f` (C-189: no idle honeycomb on v4 shields; src/client)
 - **New shield look in the game (C-187):** your approved v4 from models-C: a ForceField dome in the faction's colour (Order cyan, Chaos amber) that forms from the top down and drains back up, a channel with packets, streaks, energy waves and glowing hit patches. It replaces the old look and C-186. About 0.27 ms a frame per dome. Screenshots: `debug_out/screens/c187_shield_*.jpg`.
 - Ready to merge: `5dd4a94` (C-187: shield energy v4, C-186 taken out; src/client, place/MeshMaterials; main 5950103 merged in; also carries the C-186 hold note)
 - Ready to merge: `84771a6` (C-186: shield column and dome waves; src/client, place/MeshMaterials; main bd87d26 merged in)
