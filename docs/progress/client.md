@@ -4,6 +4,15 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-24, playtest logging, BAR settings, HUD after reference 3)
+
+- **Live playtest logging (C-201):** the match place prints a `[Match]` line at each step of lobby → match → lobby: the config read (match id, map, mode, room, one line per seat), each player admitted or refused (with user id) and leaving, the start (who hadn't loaded), a heartbeat every 30 s, the result and when the store accepted it, and each teleport back (target, started or failed, fallback, retries). Failed store reads and writes warn per attempt and once more when they give up. The watchdog's WARN / INFO lines stay on.
+- **Settings in BAR's layout (C-202):** a search box across the top, Unfold all and Advanced switches, a sidebar with each section's sub-sections and the amber bar on the one in view, amber section headers with an underline, fold arrows with indented child rows (dimmed while their parent is off), right-aligned dark dropdowns, square-knob sliders and toggles, and the hovered option's help in the footer. The pieces are in the Kit (`Kit.options`, `Kit.search`, `Kit.header`, `Kit.fold`, `Kit.treeNav`, `Kit.helpFooter`) for the lobby. Screenshots: `debug_out/screens/c202_settings_*.jpg`.
+- **HUD after reference 3 (C-203):** build categories Economy / Combat / Utility / Build in tabs under the grid, each with its colour and key; Z X C V open them while a builder is selected (Patrol, Cancel, camera-right and range rings give way then; all four are rebindable); tile costs at the bottom right, the type icon bottom left; short coloured underlines on state buttons ("Repeat On / Off"); the unit's name in yellow-green; a flat "Keys · Settings (O)" text menu top right. Screenshots: `debug_out/screens/c203_hud_*.jpg`.
+- Ready to merge: `feee077` (main d6643d4 merged into the client; test_client 285, test 495, build passed)
+- Ready to merge: `8c74610` (C-201: [Match] playtest logging; src/roblox)
+- Ready to merge: `3265b0b` (C-202 settings rebuild + Studio fixes 3234fff, C-203 HUD; src/client and client specs; test_client 290, build passed)
+
 ## Summary (2026-10-24, point defence; new icon sheet)
 
 - **Bulwark's laser muzzles stay put on death (C-200):** muzzles named like `laser_muzzle1` count as attachments, so a destroyed tower never flings them.
