@@ -62,8 +62,10 @@
 --   * Sight and wrecks (Events, protocol 10, S-26): the ally team's sight
 --     map (sensor cells) on sensor ticks when it changed, as SIGHT_CELLS
 --     changes or SIGHT_ROWS of the whole map (after a join); WRECK when the
---     team learns of a wreck (its spot in sight), WRECK_GONE when it sees
---     the spot without it. Spectators get no sight (they see everything) and
+--     team learns of a wreck (its spot in sight) with the supply left in
+--     it, WRECK_GONE when it sees the spot without it; WRECK_STATE on
+--     sensor ticks for sent wrecks in sight whose supply (whole units) or
+--     resurrect progress (of 255) changed (protocol 35, S-168). Spectators get no sight (they see everything) and
 --     every wreck.
 --   * Join / reconnect (Snapshot channel, S-2): NetOut.hello checks the
 --     client's versions; NetOut.join resets the player's replication state
@@ -152,7 +154,7 @@ function NetOut.isIdle(sim: Types.Sim, id: number): boolean
 			end
 		end
 	end
-	return b.order[id] == nil and (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0
+	return b.order[id] == nil and (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0 and (b.resurrect[id] or 0) == 0
 end
 
 -- IDLE events (S-136): the player's finished builders and factories whose
@@ -584,7 +586,7 @@ local function updateWrecks(sim: Types.Sim, net: NetState.NetState, ally: number
 	local function learn(wid: number)
 		local x, z = c.wreckX[wid], c.wreckZ[wid]
 		if known[wid] == nil and x ~= nil and inSightFor(sim, ally, x, z) then
-			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid] }
+			known[wid] = { x, z, c.wreckDef[wid], c.wreckHeading[wid], c.wreckSupply[wid] }
 			table.insert(list, wid)
 			changed = true
 		end
@@ -626,11 +628,35 @@ local function updateWrecks(sim: Types.Sim, net: NetState.NetState, ally: number
 	end
 end
 
+-- A wreck's supply and resurrect progress as WRECK_STATE sends them (S-168).
+local function wreckState(c: any, wid: number): (number, number)
+	return math.clamp(math.floor((c.wreckSupply[wid] or 0) + 0.5), 0, 65535), math.clamp(math.floor((c.wreckRez[wid] or 0) * 255), 0, 255)
+end
+
+-- WRECK_STATE for the viewer's sent wrecks in its team's sight whose supply
+-- or resurrect progress changed (sensor ticks; S-168).
+local function wreckStateEvents(sim: Types.Sim, pn: NetState.PlayerNet, ally: number, events: { Schema.Event })
+	local c = sim.combat
+	local sent = pn.sentWreckState
+	for _, wid in pn.wreckList do
+		local x = c.wreckX[wid]
+		if x ~= nil and inSightFor(sim, ally, x, c.wreckZ[wid]) then
+			local supply, rez = wreckState(c, wid)
+			local sig = supply * 256 + rez
+			if sent[wid] ~= sig then
+				sent[wid] = sig
+				table.insert(events, { kind = Schema.EventKind.WRECK_STATE, wreckId = wid, supply = supply, rez = rez })
+			end
+		end
+	end
+end
+
 -- WRECK / WRECK_GONE for what the viewer's team learned since the last send.
-local function wreckEvents(g: Grid.Grid, pn: NetState.PlayerNet, k: NetState.WreckKnowledge, events: { Schema.Event })
+local function wreckEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, k: NetState.WreckKnowledge, events: { Schema.Event })
 	if pn.wreckVersion == k.version then
 		return
 	end
+	local c = sim.combat
 	pn.wreckVersion = k.version
 	local sent, sentList = pn.wrecksSent, pn.wreckList
 	local i = 1
@@ -638,6 +664,7 @@ local function wreckEvents(g: Grid.Grid, pn: NetState.PlayerNet, k: NetState.Wre
 		local wid = sentList[i]
 		if k.known[wid] == nil then
 			sent[wid] = nil
+			pn.sentWreckState[wid] = nil
 			table.remove(sentList, i)
 			table.insert(events, { kind = Schema.EventKind.WRECK_GONE, wreckId = wid })
 		else
@@ -650,7 +677,17 @@ local function wreckEvents(g: Grid.Grid, pn: NetState.PlayerNet, k: NetState.Wre
 			table.insert(sentList, wid)
 			local p = k.known[wid]
 			local cell, ox, oz = g:encode(p[1], p[2])
-			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]) })
+			-- its supply now (S-168); a wreck gone since the team saw it: as it was
+			local supply, rez = wreckState(c, wid)
+			if c.wreckX[wid] == nil then
+				supply, rez = math.clamp(math.floor((p[5] or 0) + 0.5), 0, 65535), 0
+			end
+			pn.sentWreckState[wid] = supply * 256 + rez
+			local full = math.floor(Combat.fullWreckSupply(sim.defs.unitByIndex[p[3]]) + 0.5)
+			table.insert(events, { kind = Schema.EventKind.WRECK, wreckId = wid, defIndex = p[3], cell = cell, offX = ox, offZ = oz, heading = NetOut.headingU8(p[4]), supply = supply, fullSupply = math.clamp(full, 0, 65535) })
+			if rez > 0 then
+				table.insert(events, { kind = Schema.EventKind.WRECK_STATE, wreckId = wid, supply = supply, rez = rez })
+			end
 		end
 	end
 end
@@ -1206,12 +1243,16 @@ function NetOut.step(sim: Types.Sim)
 			pn.sightVersion = -1
 			table.clear(pn.wrecksSent)
 			table.clear(pn.wreckList)
+			table.clear(pn.sentWreckState)
 			pn.wreckVersion = -1
 		end
 		if ally ~= SPECTATOR then
 			sightEvents(sim, pn, net.sight[ally], events)
 		end
-		wreckEvents(g, pn, net.wrecks[ally], events)
+		wreckEvents(sim, g, pn, net.wrecks[ally], events)
+		if sensorTick then
+			wreckStateEvents(sim, pn, ally, events)
+		end
 		for _, e in events do
 			pn.eventCounts[e.kind] = (pn.eventCounts[e.kind] or 0) + 1
 			pn.eventBytes[e.kind] = (pn.eventBytes[e.kind] or 0) + Schema.eventBytes(e)

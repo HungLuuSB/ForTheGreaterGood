@@ -166,6 +166,35 @@ return function(t: RunAll.Context)
 		end
 	end)
 
+	t.test("aircraft rise gradually over hills and ease down after them, never snapping to the ground (S-167)", function()
+		for _, unit in { "ord_falcon", "chs_harpy" } do
+			-- over Normandy's bluffs: beach to plateau, ~20 studs in 3 cells
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "map:normandy" })
+			local w = sim.world
+			local c = sim.combat
+			local plane = Spawn.unit(sim, unit, 1, 300, 420, 0)
+			w.fireState[plane] = World.FireState.HOLD_FIRE
+			moveTo(sim, 1, { plane }, 300, 900)
+			local lastY, lastGround = nil, nil
+			local worstStep, worstGroundStep, lowest = 0, 0, math.huge
+			for _ = 1, 15 * 25 do
+				Sim.step(sim)
+				local ground = Combat.groundHeight(c, w.posX[plane], w.posZ[plane])
+				local y = ground + w.alt[plane]
+				if lastY then
+					worstStep = math.max(worstStep, math.abs(y - lastY))
+					worstGroundStep = math.max(worstGroundStep, math.abs(ground - (lastGround :: number)))
+				end
+				lowest = math.min(lowest, w.alt[plane])
+				lastY, lastGround = y, ground
+			end
+			local limit = math.max(Air.CLIMB_RATE, Air.DESCENT_RATE) * Air.DT + 1e-6
+			t.expect(worstGroundStep > limit, `{unit}: the ground under it jumped ({worstGroundStep} studs in a tick)`)
+			t.expect(worstStep <= limit, `{unit}: its height changed at most {limit} a tick ({worstStep})`)
+			t.expect(lowest >= Air.MIN_CLEARANCE - 1e-6, `{unit}: never below {Air.MIN_CLEARANCE} studs over the ground ({lowest})`)
+		end
+	end)
+
 	t.test("rearming slows down when the team stalls", function()
 		local function rearmTicks(stall: boolean): number
 			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
