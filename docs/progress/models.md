@@ -744,6 +744,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `6e07762` (T2 ship hull redesign with lofted hulls for all 9 T2 ships, the T1 corvettes Envoy / Barracuda and the naval workers Tidewright / Wrecker, those four back to review; Shepherd / Griffin meshes; wrecks for the six capital ships and the Commander mechs; the status table in models.md; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs). Nothing new draws in game: every changed unit is `review`.
 - Ready to merge: `adfb7ec` (wrecks for ten more meshes, queue item 6, review; `assets/models/*/export_wreck`, manifest, `place/MeshMaterials.model.json`).
 - Ready to merge: `55947ca` (wrecks for nine more meshes, queue item 6, review; `assets/models/*/export_wreck`, manifest, `place/MeshMaterials.model.json`). The WIP commits before it (59b4e0d, 089559e) only add unreviewed T2 build scripts, wreck exports and two tool tables that nothing in the game reads.
+- Ready to merge: `eb247e1` (T2 structure meshes at the S-104 sizes, queue item 5: 26 new builds for the advanced factories, extractors, fusion plants, T2 sensors, jammers and defences, all `review` (nothing new draws in game); `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs; includes the merge of `main` fb13cd4). Their wrecks follow.
 
 ## Requests
 
