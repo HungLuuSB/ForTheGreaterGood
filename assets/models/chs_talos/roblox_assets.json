@@ -1,0 +1,55 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 2496 triangles, glow share 2.8%",
+  "bar": {
+    "model": "rbxassetid://133361808323048",
+    "meshes": {
+      "barrel": "rbxassetid://88755312898261",
+      "base": "rbxassetid://98115672536354",
+      "base_glow_power": "rbxassetid://104212057131280",
+      "base_glow_running": "rbxassetid://77663201723689",
+      "turret": "rbxassetid://81739885868391",
+      "turret_glow_head": "rbxassetid://107685363157728",
+      "turret_glow_running": "rbxassetid://121995262520686"
+    },
+    "decals": {
+      "ALB": "rbxassetid://78329871632878",
+      "RGH": "rbxassetid://110304254497036",
+      "NOR": "rbxassetid://79424578127594",
+      "MTL": "rbxassetid://89684346915851",
+      "EMI": "rbxassetid://139726075255826"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://81859212474400",
+      "NOR": "rbxassetid://99204166497218",
+      "RGH": "rbxassetid://100572673477091",
+      "MTL": "rbxassetid://119673283740712",
+      "EMI": "rbxassetid://109420199851340"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_talos_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://73401204708453",
+    "meshes": {
+      "barrel": "rbxassetid://70859577235662",
+      "base": "rbxassetid://129623271915317",
+      "turret": "rbxassetid://114231705445419"
+    },
+    "decals": {
+      "ALB": "rbxassetid://111258853451337",
+      "RGH": "rbxassetid://139254265583579",
+      "NOR": "rbxassetid://77495006588797",
+      "MTL": "rbxassetid://73416199365036",
+      "EMI": "rbxassetid://80720614228659"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://119585068071269",
+      "NOR": "rbxassetid://113442987527388",
+      "RGH": "rbxassetid://113329010028611",
+      "MTL": "rbxassetid://98833115472103",
+      "EMI": "rbxassetid://134562346993864"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_talos_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 2096 triangles"
+  }
+}

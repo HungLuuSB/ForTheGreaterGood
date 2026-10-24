@@ -1,0 +1,101 @@
+{
+  "id": "chs_guard_wreck",
+  "wreckOf": "chs_guard",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0692,
+        5.0099,
+        0.0553
+      ],
+      "size": [
+        8.9938,
+        10.1284,
+        9.2325
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.0035,
+        11.9615,
+        0.3352
+      ],
+      "size": [
+        3.5471,
+        4.1625,
+        3.7122
+      ],
+      "pivot": [
+        0.0,
+        10.0,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0801,
+        11.4566,
+        -2.6214
+      ],
+      "size": [
+        1.7397,
+        1.5251,
+        4.3128
+      ],
+      "pivot": [
+        0.0,
+        11.3,
+        -0.8
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        11.3,
+        -5.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1416,
+    "turret": 428,
+    "barrel": 172,
+    "total": 2016
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

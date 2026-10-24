@@ -1,0 +1,169 @@
+{
+  "id": "chs_twin_guard_wreck",
+  "wreckOf": "chs_twin_guard",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0662,
+        4.9135,
+        -0.0186
+      ],
+      "size": [
+        8.9101,
+        9.9181,
+        9.1886
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0063,
+        11.0918,
+        0.1948
+      ],
+      "size": [
+        4.365,
+        3.0051,
+        4.7068
+      ],
+      "pivot": [
+        0.0,
+        10.0,
+        0.0
+      ]
+    },
+    "mount": {
+      "parent": "turret",
+      "center": [
+        -0.0022,
+        11.0792,
+        -0.9646
+      ],
+      "size": [
+        4.3628,
+        1.1082,
+        1.1027
+      ],
+      "pivot": [
+        0.0,
+        11.2,
+        -0.6
+      ]
+    },
+    "barrel1": {
+      "parent": "mount",
+      "center": [
+        -1.5859,
+        11.1616,
+        -2.9356
+      ],
+      "size": [
+        1.6305,
+        1.5992,
+        4.3398
+      ],
+      "pivot": [
+        -1.6,
+        11.2,
+        -1.0
+      ]
+    },
+    "barrel2": {
+      "parent": "mount",
+      "center": [
+        1.5606,
+        11.1115,
+        -2.8531
+      ],
+      "size": [
+        1.4234,
+        1.4736,
+        4.2725
+      ],
+      "pivot": [
+        1.6,
+        11.2,
+        -1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "barrel1",
+      "at": [
+        -1.6,
+        11.2,
+        -5.2
+      ]
+    },
+    "muzzle2": {
+      "parent": "barrel2",
+      "at": [
+        1.6,
+        11.2,
+        -5.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "barrel1",
+    "barrel2"
+  ],
+  "anim": {
+    "barrel1": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 0.5
+    },
+    "barrel2": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 0.5
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1444,
+    "turret": 448,
+    "mount": 44,
+    "barrel1": 144,
+    "barrel2": 144,
+    "total": 2224
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

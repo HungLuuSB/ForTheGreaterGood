@@ -1,0 +1,101 @@
+{
+  "id": "ord_gauntlet_wreck",
+  "wreckOf": "ord_gauntlet",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0505,
+        2.0988,
+        -0.0021
+      ],
+      "size": [
+        12.5722,
+        4.4241,
+        12.3977
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0166,
+        6.4645,
+        0.6512
+      ],
+      "size": [
+        5.9145,
+        4.4338,
+        5.786
+      ],
+      "pivot": [
+        0.0,
+        4.2,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        0.0373,
+        7.7205,
+        -3.5666
+      ],
+      "size": [
+        3.8969,
+        2.2004,
+        10.7497
+      ],
+      "pivot": [
+        0.0,
+        7.6,
+        0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        7.6,
+        -8.9
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1468,
+    "turret": 356,
+    "barrel": 432,
+    "total": 2256
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 2392 triangles, glow share 2.7%",
+  "bar": {
+    "model": "rbxassetid://135562407357751",
+    "meshes": {
+      "barrel": "rbxassetid://139037388012485",
+      "barrel_glow_weapon": "rbxassetid://94670341039530",
+      "base": "rbxassetid://140005132156959",
+      "base_glow_running": "rbxassetid://134199600112129",
+      "turret": "rbxassetid://84232337457987",
+      "turret_glow_running": "rbxassetid://116316896174023"
+    },
+    "decals": {
+      "ALB": "rbxassetid://137706732432213",
+      "RGH": "rbxassetid://76019507181696",
+      "NOR": "rbxassetid://114472784667768",
+      "MTL": "rbxassetid://140079994258333",
+      "EMI": "rbxassetid://118570721197886"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://120785224670796",
+      "NOR": "rbxassetid://124587516213892",
+      "RGH": "rbxassetid://132927493745248",
+      "MTL": "rbxassetid://101702981709044",
+      "EMI": "rbxassetid://107579689405265"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_beamer_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://76231177397164",
+    "meshes": {
+      "barrel": "rbxassetid://71289006238313",
+      "base": "rbxassetid://84924514267638",
+      "turret": "rbxassetid://121893401696982"
+    },
+    "decals": {
+      "ALB": "rbxassetid://110578834349746",
+      "RGH": "rbxassetid://108158360314325",
+      "NOR": "rbxassetid://132663921392307",
+      "MTL": "rbxassetid://85242237290532",
+      "EMI": "rbxassetid://138275619649729"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://72998418623196",
+      "NOR": "rbxassetid://71172574052948",
+      "RGH": "rbxassetid://98150155743837",
+      "MTL": "rbxassetid://109699139819641",
+      "EMI": "rbxassetid://71572977201166"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_beamer_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 2092 triangles"
+  }
+}

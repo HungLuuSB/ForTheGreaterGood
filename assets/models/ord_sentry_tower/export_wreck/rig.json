@@ -1,0 +1,101 @@
+{
+  "id": "ord_sentry_tower_wreck",
+  "wreckOf": "ord_sentry_tower",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0135,
+        5.6687,
+        -0.0467
+      ],
+      "size": [
+        7.8139,
+        11.5548,
+        8.1006
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.2792,
+        13.6852,
+        0.2288
+      ],
+      "size": [
+        2.7571,
+        4.7029,
+        3.0278
+      ],
+      "pivot": [
+        0.0,
+        11.3,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        -1.1509,
+        12.6363,
+        -2.7854
+      ],
+      "size": [
+        1.0698,
+        1.155,
+        3.0303
+      ],
+      "pivot": [
+        -1.2,
+        12.6,
+        -0.8
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        -1.2,
+        12.6,
+        -4.3
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1480,
+    "turret": 272,
+    "barrel": 208,
+    "total": 1960
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
