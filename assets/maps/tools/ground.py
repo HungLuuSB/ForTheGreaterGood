@@ -34,13 +34,23 @@ sys.path.insert(0, os.path.join(HERE, "..", "..", "models", "tools"))
 import lib  # noqa: E402
 from lib import R  # noqa: E402
 
+sys.path.insert(0, HERE)
+import textures  # noqa: E402
+
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 TILE = 256  # studs per tile side (64 quads: 8,192 triangles at most per tile and type)
 UV_REPEAT = 32.0
 MAX_PART_TRIS = 120_000  # per FBX upload (Open Cloud: 20 MB a file)
 
 STYLES = {
-    "canyon": {"strata": True, "boulders": True, "wall": "cliff", "rock": "redrock"},
+    "canyon": {"strata": True, "boulders": True, "wall": "cliff", "rock": "redrock", "aim": ("feature", "cliff")},
+    # the generated maps: grass hills with grey rock ridges
+    "ridgeline": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
+    "coastline": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
+    "twin_lakes": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
+    "crossroads": {"crag": "rock", "boulders": True, "rock": "rock", "aim": ("material", "rock")},
+    # the bocage: hedgerow foliage on the banks, crag on the bluffs
+    "normandy": {"crag": "rock", "hedges": "leafy", "keep_cells": True, "boulders": True, "rock": "rock", "aim": ("feature", "hedge")},
 }
 
 
@@ -139,11 +149,13 @@ def smooth_noise(shape, rng, sigma):
     return blur2(rng.standard_normal(shape), sigma) * sigma * 1.8
 
 
-def material_weights(f, rng):
+def material_weights(f, rng, keep_cells=False):
     """Per height sample, a weight per ground type: the cell types spread to the samples,
     blurred and stirred with noise, so the border between two types is a smooth wavy line
     instead of the cell grid's staircase. Types on very few cells (the Canyon's `ground`
-    under the deposits, which the deposit models cover) join their neighbours."""
+    under the deposits, which the deposit models cover) join their neighbours. `keep_cells`:
+    every cell keeps its own type at its centre sample, so 1-cell features (Normandy's hedge
+    banks, its 2-cell roads) aren't blurred away."""
     mats = f.mat.copy()
     counts = np.bincount(mats.ravel(), minlength=len(f.mat_pal))
     small = [m for m in range(len(f.mat_pal)) if 0 < counts[m] < 0.005 * mats.size]
@@ -162,6 +174,14 @@ def material_weights(f, rng):
         q = np.pad(ind, 1, mode="edge")
         w[k] = (q[:-1, :-1] + q[1:, :-1] + q[:-1, 1:] + q[1:, 1:]) / 4  # per sample
         w[k] = blur2(w[k], 1.6) + 0.22 * smooth_noise(w[k].shape, rng, 3.0)
+    if keep_cells:
+        idx = {m: k for k, m in enumerate(used)}
+        for cz in range(f.cd):
+            for cx in range(f.cw):
+                j, i = cz * pc + pc // 2, cx * pc + pc // 2
+                k = idx[mats[cz, cx]]
+                others = np.delete(w[:, j, i], k)
+                w[k, j, i] = max(w[k, j, i], (others.max() if len(others) else 0) + 0.3)
     # rock features always stay rock (the strata stand on them)
     if "redrock" in [f.mat_pal[m] for m in used]:
         rock = [f.mat_pal[m] for m in used].index("redrock")
@@ -188,9 +208,9 @@ def clip(poly, a, b):
     return out
 
 
-def build_tiles(f, records, rng):
+def build_tiles(f, records, rng, style=None):
     pc = f.per_cell
-    names, w = material_weights(f, rng)
+    names, w = material_weights(f, rng, (style or {}).get("keep_cells", False))
     nm = len(names)
     nxs, nzs = -f.gx, -f.gz
     ln = np.sqrt(nxs ** 2 + 1 + nzs ** 2)
@@ -254,6 +274,7 @@ def build_tiles(f, records, rng):
                 center, size = world_bounds(o["verts"])
                 records.append({"name": name, "kind": "tiles", "material": key, "center": center, "size": size,
                                 "triangles": tri_count(ob), "object": ob})
+    return names, w
 
 
 # ---------------------------------------------------------------------------
@@ -657,7 +678,7 @@ def rock_shell(rng, cx, cy, cz, r, flat):
 def boulders(f, rng, records, style, talus):
     feat = {name: i for i, name in enumerate(f.feat_pal)}
     spots = []
-    zs, xs = np.where(f.feat == feat["boulder"])
+    zs, xs = np.where(f.feat == feat["boulder"]) if "boulder" in feat else ((), ())
     for z, x in zip(zs, xs):
         cx = f.ox + (x + 0.5) * f.cell
         cz = f.oz + (z + 0.5) * f.cell
@@ -697,6 +718,249 @@ def boulders(f, rng, records, style, talus):
         center, size = world_bounds(b.verts)
         records.append({"name": ob.name, "kind": "details", "material": key, "center": center, "size": size,
                         "triangles": tri_count(ob), "object": ob})
+
+
+# ---------------------------------------------------------------------------
+# Crag skin and hedgerows (the other maps)
+# ---------------------------------------------------------------------------
+
+
+class Periodic:
+    """A periodic noise field over `period` studs, sampled bilinearly at any (x, z)."""
+
+    def __init__(self, rng, period, beta, lo=1.0, hi=None, res=256):
+        self.a = textures.noise(res, rng, beta, lo=lo, hi=hi)
+        self.res, self.period = res, period
+
+    def __call__(self, x, z):
+        fx = (x / self.period * self.res) % self.res
+        fz = (z / self.period * self.res) % self.res
+        i, j = int(fx), int(fz)
+        tx, tz = fx - i, fz - j
+        a, r = self.a, self.res
+        i1, j1 = (i + 1) % r, (j + 1) % r
+        return (a[j, i] * (1 - tx) * (1 - tz) + a[j, i1] * tx * (1 - tz)
+                + a[j1, i] * (1 - tx) * tz + a[j1, i1] * tx * tz)
+
+
+def box_uv(pts, scale):
+    """Box projection of one face: its dominant normal axis picks the plane."""
+    n = np.abs(np.cross(pts[1] - pts[0], pts[2] - pts[0]))
+    ax = int(np.argmax(n))
+    out = []
+    for p in pts:
+        a, c = [(p[2], p[1]), (p[0], p[2]), (p[0], p[1])][ax]
+        out.append((a / scale, c / scale))
+    return out
+
+
+def crag(f, rng, records, style, names, w):
+    """A craggy rock skin over the rock ground: the surface at 2-stud steps, lifted
+    0.15-2.4 studs by ridged noise (never below the drawn surface) and pushed a little
+    downhill, fading to its edge where rock gives way to grass or sand. Faceted, box-
+    mapped. Returns points along its edge (for boulders at the foot)."""
+    key = style["crag"]
+    if key not in names:
+        return []
+    k = names.index(key)
+    others = np.delete(w, k, axis=0)
+    dom = w[k] - (others.max(0) if len(others) else 0)  # > 0 where rock wins, per sample
+    ridge = Periodic(rng, 64.0, 2.6, lo=2, hi=40)
+    ridge2 = Periodic(rng, 23.0, 2.2, lo=2, hi=30)
+    step = f.step / 2
+    sub = 2  # vertices per sample step
+
+    def dom_at(x, z):
+        fx = np.clip((x - f.ox) / f.step, 0, f.nx - 1.001)
+        fz = np.clip((z - f.oz) / f.step, 0, f.nz - 1.001)
+        i, j = int(fx), int(fz)
+        tx, tz = fx - i, fz - j
+        return (dom[j, i] * (1 - tx) * (1 - tz) + dom[j, i + 1] * tx * (1 - tz)
+                + dom[j + 1, i] * (1 - tx) * tz + dom[j + 1, i + 1] * tx * tz)
+
+    edge_pts = []
+    by_tile = {}
+    vcache = {}
+
+    def vert(ii, jj):
+        kk = (ii, jj)
+        if kk not in vcache:
+            x, z = f.ox + ii * step, f.oz + jj * step
+            d = dom_at(x, z)
+            s = min(max(d / 0.5, 0.0), 1.0)
+            s = s * s * (3 - 2 * s)
+            r = 1 - abs(ridge(x, z))
+            r2 = 1 - abs(ridge2(x, z))
+            # the rim dives 0.4 under the ground (no slit under an overhang), the rest rises 0.15-2.4
+            lift = -0.4 + 0.55 * min(max(d / 0.15, 0.0), 1.0) + s * (1.5 * r ** 2 + 0.9 * r2 ** 3)
+            gx, gz = f.grad(x, z)
+            g = math.hypot(gx, gz)
+            push = s * min(g, 1.5) * lift * 0.5 / (g or 1)  # none at the edge: no folds there
+            px, pz = x - gx * push, z - gz * push
+            vcache[kk] = {"pos": np.array([px, f.at(x, z) + lift, pz]), "d": d}
+        return vcache[kk]
+
+    def clip_edge(poly):
+        """The part of a polygon where rock wins (d >= 0), cut on the interpolated d = 0 line."""
+        out = []
+        for i in range(len(poly)):
+            p, q = poly[i], poly[(i + 1) % len(poly)]
+            if p["d"] >= 0:
+                out.append(p)
+            if (p["d"] >= 0) != (q["d"] >= 0):
+                t = p["d"] / (p["d"] - q["d"])
+                out.append({"pos": p["pos"] + (q["pos"] - p["pos"]) * t, "d": 0.0})
+        return out
+
+    nqx, nqz = (f.nx - 1) * sub, (f.nz - 1) * sub
+    for jj in range(nqz):
+        for ii in range(nqx):
+            # cheap reject on the sample grid first
+            si, sj = ii // sub, jj // sub
+            if dom[sj:sj + 2, si:si + 2].max() <= 0:
+                continue
+            q = [vert(ii, jj), vert(ii + 1, jj), vert(ii + 1, jj + 1), vert(ii, jj + 1)]
+            if max(v["d"] for v in q) <= 0:
+                continue
+            tile = (int((q[0]["pos"][0] - f.ox) // TILE), int((q[0]["pos"][2] - f.oz) // TILE))
+            b = by_tile.setdefault(tile, Builder())
+            for tri in ((0, 2, 1), (0, 3, 2)):  # up-facing in Roblox axes (see build_tiles)
+                poly = [q[t] for t in tri]
+                if min(v["d"] for v in poly) < 0:
+                    poly = clip_edge(poly)
+                    if len(poly) >= 3 and rng.random() < 0.15:
+                        edge_pts.append((float(poly[0]["pos"][0]), float(poly[0]["pos"][2]), None))
+                for k in range(1, len(poly) - 1):
+                    pts = [poly[0]["pos"], poly[k]["pos"], poly[k + 1]["pos"]]
+                    if np.linalg.norm(np.cross(pts[1] - pts[0], pts[2] - pts[0])) < 1e-6:
+                        continue
+                    base = len(b.verts)
+                    b.verts.extend(tuple(float(c) for c in p) for p in pts)
+                    b.faces.append((base, base + 1, base + 2))
+                    b.uvs.append(box_uv(pts, 20.0))
+    for (tx, tz), b in sorted(by_tile.items()):
+        # split big tiles so no mesh passes the triangle limit
+        for part in range(0, len(b.faces), 18000):
+            sub_b = Builder()
+            for fi in range(part, min(part + 18000, len(b.faces))):
+                base = len(sub_b.verts)
+                sub_b.verts.extend(b.verts[i] for i in b.faces[fi])
+                sub_b.faces.append((base, base + 1, base + 2))
+                sub_b.uvs.append(b.uvs[fi])
+            name = f"d_crag{tx}_{tz}_{part // 18000}_{key}"
+            me_ob = make_object(name, sub_b.verts, sub_b.faces, sub_b.uvs, None, smooth=False)
+            center, size = world_bounds(sub_b.verts)
+            records.append({"name": name, "kind": "details", "material": key, "center": center, "size": size,
+                            "triangles": tri_count(me_ob), "object": me_ob})
+    out = []
+    for x, z, _ in edge_pts:
+        gx, gz = f.grad(x, z)
+        g = math.hypot(gx, gz) or 1.0
+        out.append((x, z, (-gx / g, -gz / g)))
+    return out
+
+
+def hedges(f, rng, records, style):
+    """Hedgerow foliage along the `hedge` cells: each straight run of hedge cells (rows and
+    columns; corners belong to both) becomes one continuous lumpy half-round roll on top of
+    the drawn bank, about 7 studs wide and 4 above it, its ends rounded down into the bank."""
+    key = style["hedges"]
+    feat = {name: i for i, name in enumerate(f.feat_pal)}
+    if "hedge" not in feat:
+        return
+    hedge = f.feat == feat["hedge"]
+    lump = Periodic(rng, 37.0, 2.4, lo=2, hi=30)
+    lump2 = Periodic(rng, 11.0, 2.0, lo=2, hi=20)
+    runs = []  # (first cell, last cell, axis)
+    for z in range(f.cd):
+        x = 0
+        while x < f.cw:
+            if hedge[z, x]:
+                x1 = x
+                while x1 + 1 < f.cw and hedge[z, x1 + 1]:
+                    x1 += 1
+                if x1 > x:
+                    runs.append(((x, z), (x1, z), "x"))
+                x = x1 + 1
+            else:
+                x += 1
+    for x in range(f.cw):
+        z = 0
+        while z < f.cd:
+            if hedge[z, x]:
+                z1 = z
+                while z1 + 1 < f.cd and hedge[z1 + 1, x]:
+                    z1 += 1
+                if z1 > z:
+                    runs.append(((x, z), (x, z1), "z"))
+                z = z1 + 1
+            else:
+                z += 1
+    # single cells with no hedge neighbour: a short roll of their own
+    for z, x in zip(*np.where(hedge)):
+        n = sum(hedge[zz, xx] for zz, xx in ((z - 1, x), (z + 1, x), (z, x - 1), (z, x + 1))
+                if 0 <= zz < f.cd and 0 <= xx < f.cw)
+        if n == 0:
+            runs.append(((x, z), (x, z), "x"))
+
+    width, height, angles = 7.2, 4.2, 9
+    by_tile = {}
+    for (x0, z0), (x1, z1), axis in runs:
+        d = np.array([1.0, 0.0]) if axis == "x" else np.array([0.0, 1.0])
+        perp = np.array([-d[1], d[0]])
+        a = np.array([f.ox + (x0 + 0.5) * f.cell, f.oz + (z0 + 0.5) * f.cell]) - d * 3.6
+        b = np.array([f.ox + (x1 + 0.5) * f.cell, f.oz + (z1 + 0.5) * f.cell]) + d * 3.6
+        length = float(np.linalg.norm(b - a))
+        steps = max(int(length / 2.0), 2)
+        rows = []
+        for s in range(steps + 1):
+            t = s / steps
+            c = a + (b - a) * t
+            end = min(t * length, (1 - t) * length)
+            k_end = min(1.0, (end + 0.4) / 3.0) ** 0.5  # rounded ends
+            top = f.at(c[0], c[1])
+            row = []
+            for i in range(angles):
+                ang = math.pi * i / (angles - 1)
+                lx = math.cos(ang) * width / 2 * k_end
+                ly = math.sin(ang) * height * k_end
+                px, pz = c[0] + perp[0] * lx, c[1] + perp[1] * lx
+                k = 1 + 0.22 * lump(px, pz + ly) + 0.12 * lump2(px + ly, pz)
+                row.append(np.array([c[0] + perp[0] * lx * k, top - 0.7 + ly * k, c[1] + perp[1] * lx * k]))
+            rows.append((c, top, row))
+        tile = (int(((a[0] + b[0]) / 2 - f.ox) // TILE), int(((a[1] + b[1]) / 2 - f.oz) // TILE))
+        bld = by_tile.setdefault(tile, Builder())
+        # winding: outward from the roll's axis
+        c0, top0, r0 = rows[0]
+        c1, _, r1 = rows[1]
+        q = [r0[angles // 2], r0[angles // 2 + 1], r1[angles // 2 + 1]]
+        nrm = np.cross(q[1] - q[0], q[2] - q[0])
+        flip = nrm[1] < 0  # the top of the roll must face up
+        for s in range(steps):
+            ra, rb = rows[s][2], rows[s + 1][2]
+            for i in range(angles - 1):
+                quad = [ra[i], ra[i + 1], rb[i + 1], rb[i]]
+                for tri in ((0, 1, 2), (0, 2, 3)):
+                    pts = [quad[t] for t in tri]
+                    if flip:
+                        pts = pts[::-1]
+                    base = len(bld.verts)
+                    bld.verts.extend(tuple(float(v) for v in p) for p in pts)
+                    bld.faces.append((base, base + 1, base + 2))
+                    bld.uvs.append(box_uv(pts, 8.0))
+    for (tx, tz), bld in sorted(by_tile.items()):
+        for part in range(0, len(bld.faces), 18000):
+            sub_b = Builder()
+            for fi in range(part, min(part + 18000, len(bld.faces))):
+                base = len(sub_b.verts)
+                sub_b.verts.extend(bld.verts[i] for i in bld.faces[fi])
+                sub_b.faces.append((base, base + 1, base + 2))
+                sub_b.uvs.append(bld.uvs[fi])
+            name = f"d_hedge{tx}_{tz}_{part // 18000}_{key}"
+            ob = make_object(name, sub_b.verts, sub_b.faces, sub_b.uvs, None)
+            center, size = world_bounds(sub_b.verts)
+            records.append({"name": name, "kind": "details", "material": key, "center": center, "size": size,
+                            "triangles": tri_count(ob), "object": ob})
 
 
 # ---------------------------------------------------------------------------
@@ -779,12 +1043,17 @@ def main():
     style = STYLES.get(name, {})
     rng = np.random.default_rng(sum(map(ord, name)) * 104729)
     records = []
-    build_tiles(f, records, rng)
+    names, w = build_tiles(f, records, rng, style)
     print(f"tiles: {sum(1 for r in records)} meshes, {sum(r['triangles'] for r in records):,} triangles", flush=True)
+    talus = []
     if style.get("strata"):
-        talus = strata(f, rng, records, style)
-        if style.get("boulders"):
-            boulders(f, rng, records, style, talus)
+        talus += strata(f, rng, records, style)
+    if style.get("crag"):
+        talus += crag(f, rng, records, style, names, w)
+    if style.get("hedges"):
+        hedges(f, rng, records, style)
+    if style.get("boulders"):
+        boulders(f, rng, records, style, talus)
     det = [r for r in records if r["kind"] == "details"]
     print(f"details: {len(det)} meshes, {sum(r['triangles'] for r in det):,} triangles", flush=True)
     for r in records:
@@ -815,9 +1084,9 @@ def main():
     lib.write_json(os.path.join(out, "ground.json"), rig)
     print(f"{len(parts)} FBX parts -> {os.path.relpath(out, ROOT)}", flush=True)
     if not no_preview:
-        # aim at the mesa nearest the map's centre
-        cliff = f.feat_pal.index("cliff")
-        zs, xs = np.where(f.feat == cliff)
+        # aim at the style's feature (or ground type) nearest the map's centre
+        kind, what = style.get("aim", ("material", f.mat_pal[0]))
+        zs, xs = np.where(f.feat == f.feat_pal.index(what)) if kind == "feature" else np.where(f.mat == f.mat_pal.index(what))
         cx, cz = f.ox + (xs + 0.5) * f.cell, f.oz + (zs + 0.5) * f.cell
         i = int(np.argmin(cx ** 2 + (cz - 60) ** 2))
         look = (float(cx[i]), 0.0, float(cz[i]) + 30)

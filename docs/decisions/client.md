@@ -1854,3 +1854,13 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - `SensorFx.spec`. Screenshot: `debug_out/screens/c211_sonar_ping_jammer.jpg` (two Crusaders pinging at sea, a Veil's dome and ring on land).
 
 **Why:** the user's queue item 7.
+
+### C-212 — S-166's units on existing icon tiles; radar fill off for now (2026-10-24)
+
+**Decision:**
+- **Icons:** Pharos and Scylla (naval SAM platforms) on the Radar SAM Site tile, Empyrean and Rookery (advanced rearm pads) on the Rearm Pad tile, until the user designs their own (as C-195). The sheet PNG is byte-identical; only IconAtlas's mapping changes. Fixes main's two failing icon specs after S-166.
+- **The jammer's shimmering dome (C-211) is switched off** (the user): `SensorFx.JAM_DOME = false`; the purple ground ring at the jam radius stays.
+- **Radar fill (C-207) is switched off** (the user): `RadarFill.ENABLED = false`, so Main passes no circles and nothing draws; the code, its spec and the fog composite stay for when it comes back (with sim-A's terrain-cut radar, request 66).
+- **S-163's mid-beam FIREs** (a single-target beam's new end when an enemy steps into its line) take the existing continuation path (`Effects.continueBeam`, C-144): the burning beam's end and hit move; no change needed.
+
+**Why:** sim-A's S-166 and S-163; the user, 2026-10-24.

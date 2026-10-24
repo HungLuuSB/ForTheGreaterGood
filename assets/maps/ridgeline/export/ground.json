@@ -1,0 +1,604 @@
+{
+  "map": "ridgeline",
+  "source": "map:ridgeline",
+  "uvRepeat": 32.0,
+  "tile": 256,
+  "parts": [
+    {
+      "fbx": "ground_1.fbx",
+      "meshes": [
+        "t0_0_grass",
+        "t1_0_grass",
+        "t2_0_grass",
+        "t3_0_grass",
+        "t0_1_grass",
+        "t1_1_grass",
+        "t1_1_rock",
+        "t2_1_grass",
+        "t2_1_rock",
+        "t3_1_grass",
+        "t0_2_grass",
+        "t1_2_grass",
+        "t1_2_rock",
+        "t2_2_grass",
+        "t2_2_rock",
+        "t3_2_grass",
+        "t0_3_grass",
+        "t1_3_grass",
+        "t1_3_rock"
+      ],
+      "triangles": 116490
+    },
+    {
+      "fbx": "ground_2.fbx",
+      "meshes": [
+        "t2_3_grass",
+        "t2_3_rock",
+        "t3_3_grass",
+        "d_crag1_1_0_rock",
+        "d_crag1_2_0_rock",
+        "d_crag1_3_0_rock",
+        "d_crag2_1_0_rock",
+        "d_crag2_2_0_rock",
+        "d_crag2_3_0_rock",
+        "d_rocks1_1_rock",
+        "d_rocks1_2_rock",
+        "d_rocks1_3_rock",
+        "d_rocks2_1_rock",
+        "d_rocks2_2_rock",
+        "d_rocks2_3_rock"
+      ],
+      "triangles": 39690
+    }
+  ],
+  "meshes": [
+    {
+      "name": "t0_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        21.1875,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        6.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -128.0,
+        22.125,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        5.75,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t2_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        128.0,
+        22.125,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        5.75,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t3_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        21.1875,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        6.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t0_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        20.125,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        2.75,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -128.0,
+        19.25,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        5.5,
+        256.0
+      ],
+      "triangles": 7621
+    },
+    {
+      "name": "t1_1_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        -124.3806,
+        40.9056,
+        -105.6845
+      ],
+      "size": [
+        44.8445,
+        45.1888,
+        162.174
+      ],
+      "triangles": 957
+    },
+    {
+      "name": "t2_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        128.0,
+        19.25,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        5.5,
+        256.0
+      ],
+      "triangles": 7623
+    },
+    {
+      "name": "t2_1_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        123.8381,
+        40.9203,
+        -104.8933
+      ],
+      "size": [
+        45.1544,
+        45.1593,
+        157.8477
+      ],
+      "triangles": 931
+    },
+    {
+      "name": "t3_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        20.125,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        2.75,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t0_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        19.625,
+        128.0
+      ],
+      "size": [
+        256.0,
+        3.25,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -128.0,
+        21.375,
+        128.0
+      ],
+      "size": [
+        256.0,
+        8.75,
+        256.0
+      ],
+      "triangles": 7599
+    },
+    {
+      "name": "t1_2_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        -124.155,
+        42.9704,
+        103.69
+      ],
+      "size": [
+        47.7954,
+        48.5592,
+        156.5277
+      ],
+      "triangles": 959
+    },
+    {
+      "name": "t2_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        128.0,
+        22.1146,
+        128.0
+      ],
+      "size": [
+        256.0,
+        10.2292,
+        256.0
+      ],
+      "triangles": 7694
+    },
+    {
+      "name": "t2_2_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        123.5857,
+        43.0,
+        106.8689
+      ],
+      "size": [
+        40.6378,
+        48.5,
+        153.5909
+      ],
+      "triangles": 838
+    },
+    {
+      "name": "t3_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        19.625,
+        128.0
+      ],
+      "size": [
+        256.0,
+        3.25,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t0_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        20.8125,
+        384.0
+      ],
+      "size": [
+        256.0,
+        5.625,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -128.0,
+        25.9974,
+        384.0
+      ],
+      "size": [
+        256.0,
+        15.4948,
+        256.0
+      ],
+      "triangles": 7529
+    },
+    {
+      "name": "t1_3_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        -66.3621,
+        52.4714,
+        377.2295
+      ],
+      "size": [
+        132.7242,
+        62.0572,
+        102.6734
+      ],
+      "triangles": 1011
+    },
+    {
+      "name": "t2_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        128.0,
+        25.5,
+        384.0
+      ],
+      "size": [
+        256.0,
+        14.5,
+        256.0
+      ],
+      "triangles": 7505
+    },
+    {
+      "name": "t2_3_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        67.0694,
+        52.4404,
+        378.2947
+      ],
+      "size": [
+        134.1387,
+        62.1191,
+        104.9207
+      ],
+      "triangles": 1023
+    },
+    {
+      "name": "t3_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        20.8125,
+        384.0
+      ],
+      "size": [
+        256.0,
+        5.625,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "d_crag1_1_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -124.3854,
+        41.6916,
+        -105.6844
+      ],
+      "size": [
+        44.8349,
+        47.5537,
+        162.1742
+      ],
+      "triangles": 3414
+    },
+    {
+      "name": "d_crag1_2_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -124.155,
+        43.6291,
+        103.6919
+      ],
+      "size": [
+        47.7954,
+        50.6004,
+        156.5314
+      ],
+      "triangles": 3454
+    },
+    {
+      "name": "d_crag1_3_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -66.3625,
+        53.3915,
+        377.2282
+      ],
+      "size": [
+        132.725,
+        64.5332,
+        102.6708
+      ],
+      "triangles": 3749
+    },
+    {
+      "name": "d_crag2_1_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        123.823,
+        41.8949,
+        -104.8933
+      ],
+      "size": [
+        45.1242,
+        47.8059,
+        157.8477
+      ],
+      "triangles": 3358
+    },
+    {
+      "name": "d_crag2_2_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        123.587,
+        44.0316,
+        106.8666
+      ],
+      "size": [
+        40.6315,
+        51.3531,
+        153.5956
+      ],
+      "triangles": 3068
+    },
+    {
+      "name": "d_crag2_3_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        67.0694,
+        53.1919,
+        378.2947
+      ],
+      "size": [
+        134.1387,
+        64.3466,
+        104.9208
+      ],
+      "triangles": 3747
+    },
+    {
+      "name": "d_rocks1_1_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -124.4715,
+        19.518,
+        -106.0851
+      ],
+      "size": [
+        45.9738,
+        3.4302,
+        162.5539
+      ],
+      "triangles": 420
+    },
+    {
+      "name": "d_rocks1_2_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -122.0311,
+        20.2436,
+        105.3889
+      ],
+      "size": [
+        50.7065,
+        5.6781,
+        128.0183
+      ],
+      "triangles": 280
+    },
+    {
+      "name": "d_rocks1_3_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -75.6792,
+        33.4705,
+        377.058
+      ],
+      "size": [
+        118.4153,
+        22.8382,
+        102.7493
+      ],
+      "triangles": 380
+    },
+    {
+      "name": "d_rocks2_1_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        122.9254,
+        24.9635,
+        -105.7392
+      ],
+      "size": [
+        44.7731,
+        15.1826,
+        158.795
+      ],
+      "triangles": 420
+    },
+    {
+      "name": "d_rocks2_2_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        122.3387,
+        25.9111,
+        105.1555
+      ],
+      "size": [
+        45.9795,
+        16.2374,
+        148.5763
+      ],
+      "triangles": 380
+    },
+    {
+      "name": "d_rocks2_3_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        71.0208,
+        29.9908,
+        382.7461
+      ],
+      "size": [
+        123.5173,
+        15.3843,
+        95.4641
+      ],
+      "triangles": 300
+    }
+  ],
+  "triangles": {
+    "tiles": 133210,
+    "details": 22970
+  }
+}

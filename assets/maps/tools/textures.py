@@ -217,13 +217,144 @@ def cliff(n, rng):
     big = noise(n, rng, 3.0, hi=6)
     light = 1.0 + 0.08 * big + 0.09 * grit - 0.38 * streak - 0.35 * frac - 0.22 * ledge
     alb = np.clip(alb * light[..., None], 0, 1)
-    height = big * 2 + grit * 0.6 - frac * 2.5 - streak * 0.8 + np.cumsum(np.ones_like(y), 0) * 0 \
-        + np.take(np.linspace(0, 3, k), idx) + ledge * 1.5
+    height = big * 2 + grit * 0.6 - frac * 2.5 - streak * 0.8 + np.take(np.linspace(0, 3, k), idx) + ledge * 1.5
     rgh = 0.85 + 0.05 * frac
     return alb, normal_map(height, 1.4), rgh
 
 
-MATERIALS = {"desert": desert, "redrock": redrock, "ground": ground, "cliff": cliff}
+def blades(n, rng, count, length, width):
+    """Periodic field of short straight strokes (grass blades, straw): coverage 0..1."""
+    out = np.zeros((n, n))
+    for _ in range(count):
+        cx, cy = rng.random() * n, rng.random() * n
+        ang = rng.random() * np.pi
+        ln = length * (0.5 + rng.random())
+        dx, dy = np.cos(ang), np.sin(ang)
+        steps = int(ln * 1.5) + 1
+        shade = 0.5 + 0.5 * rng.random()
+        for s in range(steps):
+            t = s / max(steps - 1, 1) - 0.5
+            px, py = int(cx + dx * ln * t) % n, int(cy + dy * ln * t) % n
+            r = max(1, int(width))
+            ys = np.arange(py - r + 1, py + r) % n
+            xs = np.arange(px - r + 1, px + r) % n
+            out[np.ix_(ys, xs)] = np.maximum(out[np.ix_(ys, xs)], shade * (1 - abs(t)))
+    return out
+
+
+def grass(n, rng):
+    """Meadow grass (the generated maps, Normandy's fields): clumps, blades in every
+    direction, darker and yellower patches, a few bare spots; reads at night too."""
+    clumps = noise(n, rng, 2.4, lo=4, hi=48)
+    patch = noise(n, rng, 3.0, lo=2, hi=10)
+    bl = blades(n, rng, 9000, 7, 1)
+    fine = noise(n, rng, 0.6, lo=n / 6)
+    bare = np.clip(noise(n, rng, 2.8, lo=3, hi=16) * 2.2 - 1.55, 0, 1)
+    height = clumps * 2.5 + bl * 1.6 + fine * 0.4 - bare * 1.5
+    light = 1.0 + 0.10 * clumps + 0.12 * (bl - 0.4) + 0.06 * fine
+    green = srgb_mix((74, 96, 62), light)
+    dry = srgb_mix((104, 106, 66), light)
+    t = np.clip(patch * 0.8 + 0.35, 0, 1)[..., None] * 0.6
+    alb = green * (1 - t) + dry * t
+    alb = alb * (1 - bare[..., None]) + srgb_mix((104, 92, 72), 1 + 0.1 * fine) * bare[..., None]
+    rgh = 0.9 - 0.08 * bl
+    return alb, normal_map(height, 0.9), rgh
+
+
+def rock(n, rng):
+    """Grey crag (rock ridges, Normandy's bluffs, the crag skin): fractured blocks,
+    sharp joints, lichen and grit."""
+    f1, edge, cid = worley(n, rng, 70)
+    warp = noise(n, rng, 2.4, lo=3, hi=40)
+    joints = np.exp(-(np.maximum(edge + 5 * warp, 0) / 1.8) ** 2)
+    _, edge2, _ = worley(n, rng, 260)
+    joints = np.maximum(joints, 0.45 * np.exp(-(np.maximum(edge2 + 3 * warp, 0) / 1.2) ** 2))
+    block = (np.sin(cid * 12.9898) * 43758.5453) % 1.0
+    tilt = blur(block - 0.5, 5)
+    big = noise(n, rng, 2.8, lo=2, hi=12)
+    grit = noise(n, rng, 0.5, lo=n / 5)
+    lichen = np.clip(noise(n, rng, 2.0, lo=8, hi=80) * 2.4 - 1.3, 0, 1)
+    height = big * 2.5 + tilt * 4 - joints * 3.0 + grit * 0.7
+    light = 1.0 + 0.12 * big + 0.08 * (block - 0.5) + 0.09 * grit - 0.2 * joints
+    alb = srgb_mix((104, 106, 110), light)
+    alb = alb * (1 - 0.6 * lichen[..., None]) + srgb_mix((112, 118, 84), light) * 0.6 * lichen[..., None]
+    rgh = 0.86 + 0.06 * joints
+    return alb, normal_map(height, 1.2), rgh
+
+
+def sand(n, rng):
+    """Beach and river-bed sand: finer and greyer than the desert, damp patches,
+    shell grit, faint wave ripples."""
+    x, y = grid(n)
+    warp = noise(n, rng, 3.2, lo=1, hi=10)
+    rip = np.sin(2 * np.pi * (5 * x + 13 * y) + 2.5 * warp)
+    damp = np.clip(noise(n, rng, 3.0, lo=2, hi=10) * 1.4, -1, 1)
+    grain = noise(n, rng, 0.5, lo=n / 5)
+    peb_h, peb_t = pebbles(n, rng, 90, 0.8, 2.4)
+    height = rip * 1.2 + grain * 0.4 + peb_h * 1.0
+    light = 1.0 + 0.04 * rip + 0.07 * grain - 0.08 * np.clip(damp, 0, 1)
+    alb = srgb_mix((168, 160, 134), light)
+    stones = peb_h > 0
+    shell = np.stack([0.75 + 0.1 * peb_t, 0.72 + 0.1 * peb_t, 0.66 + 0.08 * peb_t], -1)
+    alb = np.where(stones[..., None], shell, alb)
+    rgh = 0.88 - 0.12 * np.clip(damp, 0, 1)
+    return alb, normal_map(height, 0.8), rgh
+
+
+def road(n, rng):
+    """Country road: worn dark tarmac with gravel, patched repairs and cracks."""
+    grain = noise(n, rng, 0.4, lo=n / 4)
+    gravel_h, gravel_t = pebbles(n, rng, 900, 0.6, 1.6)
+    patch_cells = noise(n, rng, 2.6, lo=2, hi=12)
+    patch = (patch_cells > 0.45).astype(float)
+    _, edge, _ = worley(n, rng, 40)
+    cracks = np.exp(-(np.maximum(edge + 6 * noise(n, rng, 2.4, lo=3, hi=40), 0) / 1.0) ** 2) * \
+        (noise(n, rng, 3.0, hi=6) > 0.1)
+    wear = noise(n, rng, 3.0, lo=1, hi=6)
+    height = grain * 0.5 + gravel_h * 0.6 - cracks * 1.5 + patch * 0.3
+    light = 1.0 + 0.10 * grain + 0.06 * wear - 0.25 * cracks - 0.05 * patch + 0.25 * (gravel_h > 0) * gravel_t
+    alb = srgb_mix((70, 72, 74), light)
+    rgh = 0.82 - 0.06 * patch + 0.08 * cracks
+    return alb, normal_map(height, 0.8), rgh
+
+
+def leafy(n, rng):
+    """Hedgerow foliage: overlapping leaf clumps, deep shade between them, a few
+    lighter young leaves."""
+    f1, edge, cid = worley(n, rng, 420)
+    size = n / np.sqrt(420)
+    dome = np.clip(1 - f1 / (0.75 * size), 0, 1) ** 0.6  # each clump a rounded mound
+    tone = (np.sin(cid * 78.233) * 43758.5453) % 1.0
+    leaves = blades(n, rng, 6000, 4, 1)
+    big = noise(n, rng, 2.8, lo=2, hi=12)
+    height = dome * 5 + leaves * 0.8 + big * 1.5
+    light = 0.55 + 0.55 * dome + 0.12 * (leaves - 0.3) + 0.06 * big
+    alb = srgb_mix((70, 94, 52), light)
+    alb = alb * (1 + 0.12 * (tone[..., None] - 0.5) * np.array([0.6, 1.0, 0.4]))
+    rgh = 0.75 + 0.1 * (1 - dome)
+    return alb, normal_map(height, 1.3), rgh
+
+
+def bridge(n, rng):
+    """Bridge deck: weathered planks across the deck (seams along z), nail rows, wear."""
+    x, y = grid(n)
+    planks = 24  # per 32 studs
+    pid = np.floor(x * planks + 0.02 * noise(n, rng, 3.0, hi=4)).astype(int)
+    frac_x = (x * planks) % 1.0
+    seam = np.exp(-(np.minimum(frac_x, 1 - frac_x) / 0.05) ** 2)
+    tone = (np.sin(pid * 12.9898) * 43758.5453) % 1.0
+    grain = aniso(n, rng, 2.0, 1.0, 0.08, lo=4)  # along the plank (v)
+    wear = noise(n, rng, 2.8, lo=2, hi=10)
+    nails = np.exp(-((frac_x - 0.5) / 0.08) ** 2) * np.exp(-((((y * 4) % 1.0) - 0.5) / 0.03) ** 2)
+    height = -seam * 2 + grain * 0.6 + tone * 0.5
+    light = 1.0 + 0.16 * (tone - 0.5) + 0.12 * grain + 0.06 * wear - 0.45 * seam - 0.3 * nails
+    alb = srgb_mix((122, 104, 80), light)
+    rgh = 0.86 + 0.06 * seam
+    return alb, normal_map(height, 1.0), rgh
+
+
+MATERIALS = {"desert": desert, "redrock": redrock, "ground": ground, "cliff": cliff, "grass": grass, "rock": rock,
+             "sand": sand, "road": road, "leafy": leafy, "bridge": bridge}
 
 
 def main():
@@ -233,6 +364,12 @@ def main():
         i = args.index("--size")
         n = int(args[i + 1])
         del args[i:i + 2]
+    contact = None
+    if "--contact" in args:
+        i = args.index("--contact")
+        contact = args[i + 1]
+        del args[i:i + 2]
+    sheet = []
     for name in args or list(MATERIALS):
         rng = np.random.default_rng(sum(map(ord, name)) * 7919)  # fixed seed per material
         alb, nor, rgh = MATERIALS[name](n, rng)
@@ -245,6 +382,9 @@ def main():
         # 2 x 2 preview to check the tiling
         png.write(os.path.join(d, "preview_tile.png"), to8(np.tile(alb, (2, 2, 1))))
         print(f"{name}: {n} px -> {os.path.relpath(d)}")
+        sheet.append(to8(np.tile(alb, (2, 2, 1))[::4, ::4]))
+    if contact:  # the albedos side by side (2 x 2 tiles each, quarter size), to check them in one look
+        png.write(contact, np.concatenate(sheet, 1))
 
 
 if __name__ == "__main__":
