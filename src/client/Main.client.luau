@@ -1091,7 +1091,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	radarAt += dt
 	if radarAt >= 0.25 then
 		radarAt = 0
-		radarCircles = if world.joined and world.me.player ~= 0 then RadarFill.circles(world, api.state.placement, api.state.selection, missileView.enabled) else nil
+		radarCircles = if RadarFill.ENABLED and world.joined and world.me.player ~= 0 then RadarFill.circles(world, api.state.placement, api.state.selection, missileView.enabled) else nil
 	end
 	FogBlanket.step(fog, world, dt, not (world.joined and world.me.player == 0), radarCircles)
 	Contacts.step(contacts, world, now, strategic)
