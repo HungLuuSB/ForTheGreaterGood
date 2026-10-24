@@ -43,7 +43,7 @@ function Loading.new(gui: ScreenGui): any
 	title.Size = UDim2.new(0.8, 0, 0, 50)
 	title.TextXAlignment = Enum.TextXAlignment.Center
 	title.ZIndex = 51
-	local sub = Kit.text(root, "", "section", Kit.COLOR.dim)
+	local sub = Kit.text(root, "", "section", Color3.fromRGB(214, 218, 226))
 	sub.AnchorPoint = Vector2.new(0.5, 0)
 	sub.Position = UDim2.new(0.5, 0, 0.12, 54)
 	sub.Size = UDim2.new(0.8, 0, 0, 30)
@@ -56,6 +56,15 @@ function Loading.new(gui: ScreenGui): any
 	tip.TextWrapped = true
 	tip.TextXAlignment = Enum.TextXAlignment.Center
 	tip.ZIndex = 51
+	-- a soft dark outline keeps the text readable over bright key art
+	for _, label in { title, sub, tip } do
+		local outline = Instance.new("UIStroke")
+		outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+		outline.Color = Color3.new(0, 0, 0)
+		outline.Thickness = 1.5
+		outline.Transparency = 0.35
+		outline.Parent = label
+	end
 	local track = Ui.frame(root, "Bar", UDim2.new(0.6, 0, 0, 24), UDim2.new(0.2, 0, 1, -80))
 	track.BackgroundColor3 = Color3.fromRGB(40, 42, 46)
 	track.BackgroundTransparency = 0.1
