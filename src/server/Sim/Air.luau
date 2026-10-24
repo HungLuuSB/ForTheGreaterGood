@@ -33,6 +33,9 @@ Air.ALTITUDE = table.freeze({ JET = 100, HELI = 35, BOMBER = 130 }) -- studs abo
 Air.EGRESS_TICKS = 45 -- bombers fly straight this long after a release (3 s)
 Air.RUN_IN = 150 -- studs beyond the release distance a bomber turns back from (about a turn radius)
 Air.CLIMB_RATE = 40 -- studs per second
+Air.DESCENT_RATE = 25 -- studs per second, over falling ground (S-167)
+Air.TERRAIN_LOOKAHEAD = 2 -- seconds of flight scanned ahead for rising ground (S-167)
+Air.MIN_CLEARANCE = 8 -- studs: never closer to the ground than this in flight
 Air.LOITER_RADIUS = 220 -- studs; wider than a jet's turn circle at cruise speed
 Air.ARRIVE_RADIUS = 40 -- studs: a jet's move ends this close to its goal, or once it flew toward it and the goal fell behind (client request 17)
 Air.CRUISE = 0.75 -- fraction of max speed while circling
@@ -464,23 +467,58 @@ function Air.steerJet(sim: Types.Sim, id: number, p: Nav.Profile, x: number, z: 
 	return nh, math.clamp(nv, minSpeed, p.maxSpeed)
 end
 
--- Altitude: cruise band in flight, 0 when landed; climbs and descends at
--- CLIMB_RATE. Called by Movement for every aircraft.
+-- Altitude (`World.alt`, above the ground under the aircraft). In flight an
+-- aircraft keeps an absolute height (AirState.height) that climbs at
+-- CLIMB_RATE and descends at DESCENT_RATE toward its cruise height over the
+-- highest ground on its path in the next TERRAIN_LOOKAHEAD seconds, so it
+-- rises before a hill and eases down after it (S-167, the user: it snapped
+-- to every hill, its height being ground + a fixed offset). It never flies
+-- lower than MIN_CLEARANCE over the ground. Landed on a pad it settles onto
+-- the pad's top at CLIMB_RATE, as before. Called by Movement for every
+-- aircraft.
 function Air.updateAltitude(sim: Types.Sim, id: number)
 	local w = sim.world
+	local a = sim.air
 	local d = def(sim, id)
-	local phase = sim.air.phase[id]
-	local target = cruiseAltitude(sim, d)
+	local phase = a.phase[id]
 	if phase == "rearm" or phase == "docked" then
 		-- parked on top of its pad, where guns can see and hit it (S-71)
-		local pad = sim.air.pad[id]
+		local pad = a.pad[id]
 		local pp = if pad and w.slot[pad] then sim.combat.profiles[w.defIndex[pad]] else nil
-		target = if pp then pp.height else 0
+		local target = if pp then pp.height else 0
+		a.height[id] = nil
+		local alt = w.alt[id]
+		if alt ~= target then
+			local step = Air.CLIMB_RATE * Air.DT
+			World.setAltitude(w, id, if alt < target then math.min(target, alt + step) else math.max(target, alt - step))
+		end
+		return
 	end
-	local alt = w.alt[id]
-	if alt ~= target then
-		local step = Air.CLIMB_RATE * Air.DT
-		World.setAltitude(w, id, if alt < target then math.min(target, alt + step) else math.max(target, alt - step))
+	local c = sim.combat
+	local x, z = w.posX[id], w.posZ[id]
+	local ground = Combat.groundHeight(c, x, z)
+	local cruise = cruiseAltitude(sim, d)
+	local top = ground
+	local v = w.speed[id] or 0
+	if v > 0 then
+		local hx, hz = math.sin(w.heading[id]), math.cos(w.heading[id])
+		for k = 1, 4 do
+			local s = v * Air.TERRAIN_LOOKAHEAD * k / 4
+			top = math.max(top, Combat.groundHeight(c, x + hx * s, z + hz * s))
+		end
+	end
+	local want = top + cruise
+	local y = a.height[id] or (ground + w.alt[id])
+	if y < want then
+		y = math.min(want, y + Air.CLIMB_RATE * Air.DT)
+	elseif y > want then
+		y = math.max(want, y - Air.DESCENT_RATE * Air.DT)
+	end
+	y = math.max(y, ground + math.min(Air.MIN_CLEARANCE, cruise))
+	a.height[id] = y
+	local alt = y - ground
+	if alt ~= w.alt[id] then
+		World.setAltitude(w, id, alt)
 	end
 end
 

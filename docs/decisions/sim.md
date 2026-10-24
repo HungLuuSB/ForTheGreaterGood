@@ -2407,3 +2407,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Cause:** it took the open cell `nearestOpen` finds first, a search that tries +x first. From inside a factory's footprint that's the east side: the exit for the west player's plants (they face east) but the back of the east player's.
 - **Now:** the open cell on the smallest square ring around the unit's cell that is nearest the unit itself (`Nav` `openNearPoint`; exact ties to the lower index). A unit driving out is already part-way through its door, so that's the exit side, mirrored for both.
 - **Checks:** mirror matches **west 15 / east 21** (pass); `debug_giveups`: **1 give-up in 16 matches** (2 with the first version, 59 before S-161); `Build.spec`'s regression test passes.
+
+## S-167 — Aircraft rise gradually over hills (the user) (2026-10-24)
+
+- **Asked:** an aircraft passing over a hill snapped to the new height (terrain + offset); it should rise gradually.
+- **Cause:** `World.alt` (height above the ground) only eased toward the cruise band, so the absolute height was always ground + band and followed every rise and drop of the terrain at once (13.5 studs in one tick over Normandy's bluffs).
+- **Now:** a flying aircraft keeps an absolute height (`AirState.height`, hashed). It climbs at `Air.CLIMB_RATE` 40 studs/s and descends at `Air.DESCENT_RATE` 25 toward its cruise band over the highest ground on its path in the next `Air.TERRAIN_LOOKAHEAD` 2 s (4 samples along its heading at its speed), so it starts climbing before the hill and eases down after it. It never flies lower than `Air.MIN_CLEARANCE` 8 studs over the ground (a cliff steeper than the lookahead can catch pushes it up). `alt` is derived from it. Landed on a pad: as before.
+- **Wire:** nothing new: altitude is still height above the ground, so the client's ground + alt is now smooth.
+- **Tests:** `Air.spec`: a Falcon and a Harpy crossing Normandy's bluffs change height at most 2.7 studs a tick (the ground under them jumps more), never below 8 studs over the ground.
