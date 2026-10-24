@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Shield hits explode (C-185):** shells and rockets destroyed on a dome now explode on the honeycomb with their own impact effect. `debug_out/screens/c185_shield_absorb_bursts.jpg`.
+- Ready to merge: `369ea62` (C-185: absorbed projectiles burst on the dome; src/client)
 - **Smooth key art (C-184):** the loading screens' parallax no longer stutters, and the match no longer draws the world behind its loading screen.
 - Ready to merge: `ddc588f` (C-184: KeyArt sub-pixel parallax, 3D paused while loading; src/client)
 - **New icon sheet (C-183):** your draft 4 is uploaded (asset 83784263765889) and live. Every unit's icon comes from the sheet's own lists; anti-nukes, point defences, shields, flak, missile batteries and the decoy drone have their own tiles now. A second sheet starts automatically once the first is full. Screenshots: `debug_out/screens/c183_strategic_*.jpg`.
