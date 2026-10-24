@@ -74,17 +74,6 @@ function MeshMaterials.render(): string
 			})
 		)
 	end
-	-- the shield's dome waves (models-C, C-186): the wave in its alpha
-	local wave = (Meshes :: any).shieldWave
-	if wave and wave.texture then
-		table.insert(
-			children,
-			appearance("shieldWave", {
-				{ "AlphaMode", quote("Transparency") },
-				{ "ColorMapContent", quote(wave.texture) },
-			})
-		)
-	end
 	for _, entry in entries do
 		local maps = entry.maps
 		table.insert(
