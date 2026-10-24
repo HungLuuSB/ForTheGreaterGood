@@ -1730,3 +1730,9 @@ Existing calls are unchanged.
 
 **Why:** sim-A's S-154, S-155 and S-157; the user's requests.
 
+### C-196 — Resource priority on the command card (2026-10-24)
+
+**Decision:** a "Prio high" / "Prio low" state button (green high, amber low) on the units resource priority does something for (S-156, `CommandSet.consumer`): builders and factories, stockpiling launchers, aircraft (rearm), shields, radars, jammers, trackers and DIRCM units. A click with every selected unit high sets them all low; with any low, sets them all high (PRIORITY, value 1 high / 0 low). The button reads the LOW_PRIORITY state bit, which arrives for allies too. CommandSet.spec checks who gets it; OrderLines.spec runs the round trip.
+
+**Why:** the user: "Introducing priority resources usage -> high priority unit take the resources first and the rest goes to low priority"; sim-A's S-156.
+
