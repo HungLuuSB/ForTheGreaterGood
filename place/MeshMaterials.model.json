@@ -978,6 +978,18 @@
       }
     },
     {
+      "Name": "ground_leafy",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://118966371265944",
+        "NormalMapContent": "rbxassetid://104177185158886",
+        "RoughnessMapContent": "rbxassetid://125413451365745",
+        "MetalnessMapContent": "rbxassetid://99460669639100",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ground_redrock",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -986,6 +998,18 @@
         "NormalMapContent": "rbxassetid://98305883284830",
         "RoughnessMapContent": "rbxassetid://83133963617961",
         "MetalnessMapContent": "rbxassetid://121351602786229",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ground_road",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://113633661226111",
+        "NormalMapContent": "rbxassetid://130873802016344",
+        "RoughnessMapContent": "rbxassetid://104251353080187",
+        "MetalnessMapContent": "rbxassetid://134437579636053",
         "EmissiveStrength": 0
       }
     },
