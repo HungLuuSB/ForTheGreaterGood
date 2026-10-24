@@ -9,13 +9,13 @@
       "parent": null,
       "center": [
         0.0,
-        1.62,
-        -0.9564
+        1.57,
+        -0.972
       ],
       "size": [
-        3.32,
-        4.24,
-        11.2128
+        3.33,
+        4.34,
+        11.144
       ]
     },
     "nano": {
@@ -51,6 +51,8 @@
     "base",
     "nano"
   ],
+  "visualPieces": [],
+  "anim": {},
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -74,12 +76,12 @@
       "center": [
         0.0,
         2.09,
-        0.8275
+        -0.1967
       ],
       "size": [
-        3.31,
+        3.2392,
         2.98,
-        7.655
+        9.7035
       ]
     },
     {
@@ -104,11 +106,11 @@
       ]
     }
   ],
-  "glowShare": 0.053,
+  "glowShare": 0.077,
   "triangles": {
-    "base": 408,
+    "base": 1138,
     "nano": 120,
-    "total": 528
+    "total": 1258
   },
   "textures": {
     "size": 1024,

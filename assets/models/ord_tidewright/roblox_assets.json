@@ -1,7 +1,31 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "User review fixes 2026-10-23: 620 triangles, glow share 6.0%",
+  "revision": "lofted hull v2 / Commander mech wrecks (queue item 6): 1350 triangles, glow share 6.7%",
   "bar": {
+    "model": "rbxassetid://125115883035177",
+    "meshes": {
+      "base": "rbxassetid://86353688063026",
+      "base_glow_running": "rbxassetid://128391044582082",
+      "nano": "rbxassetid://86653523913178",
+      "nano_glow_power": "rbxassetid://73053258556846"
+    },
+    "decals": {
+      "ALB": "rbxassetid://120998012565894",
+      "RGH": "rbxassetid://121825371610498",
+      "NOR": "rbxassetid://88055907158225",
+      "MTL": "rbxassetid://120036552396294",
+      "EMI": "rbxassetid://87216092983319"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://128402556532436",
+      "NOR": "rbxassetid://129461466130558",
+      "RGH": "rbxassetid://86334864837453",
+      "MTL": "rbxassetid://138027851517407",
+      "EMI": "rbxassetid://139137680454111"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_tidewright_bar in FTGG Art"
+  },
+  "bar_2": {
     "model": "rbxassetid://100623431948976",
     "meshes": {
       "base": "rbxassetid://78552723743818",
@@ -23,7 +47,7 @@
       "MTL": "rbxassetid://109627997545921",
       "EMI": "rbxassetid://72272294657746"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_tidewright_bar in FTGG Art"
+    "note": "User review fixes 2026-10-23: 620 triangles, glow share 6.0%"
   },
   "bar_1": {
     "model": "rbxassetid://88886612389206",

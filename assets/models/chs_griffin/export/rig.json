@@ -1,0 +1,374 @@
+{
+  "id": "chs_griffin",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        3.25,
+        -0.1356
+      ],
+      "size": [
+        4.0,
+        4.5,
+        10.0713
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        -3.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.2,
+        0.75,
+        -3.4
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        0.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.2,
+        0.75,
+        0.4
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -2.2,
+        0.75,
+        3.6
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        -2.2,
+        0.75,
+        3.6
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        -3.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.2,
+        0.75,
+        -3.4
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        0.4
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.2,
+        0.75,
+        0.4
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        2.2,
+        0.75,
+        3.6
+      ],
+      "size": [
+        0.68,
+        1.5,
+        1.4266
+      ],
+      "pivot": [
+        2.2,
+        0.75,
+        3.6
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -1.5,
+        5.9,
+        -2.215
+      ],
+      "size": [
+        1.6,
+        0.8,
+        0.17
+      ],
+      "pivot": [
+        -1.5,
+        5.5,
+        -2.2
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.625,
+        2.0225
+      ],
+      "size": [
+        3.2,
+        2.65,
+        4.245
+      ],
+      "pivot": [
+        0.0,
+        2.3,
+        2.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -1.0,
+        5.0,
+        0.5
+      ]
+    }
+  },
+  "teamColorPieces": [
+    "base",
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
+    "radar",
+    "launcher"
+  ],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
+    "radar"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        4.32,
+        -0.4225
+      ],
+      "size": [
+        4.09,
+        4.56,
+        8.845
+      ]
+    },
+    {
+      "name": "base_glow_head",
+      "piece": "base",
+      "channel": "head",
+      "tint": [
+        255,
+        236,
+        205
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        1.45,
+        -5.22
+      ],
+      "size": [
+        2.9,
+        0.2,
+        0.08
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        -1.5,
+        5.9,
+        -2.3
+      ],
+      "size": [
+        1.48,
+        0.06,
+        0.02
+      ]
+    },
+    {
+      "name": "launcher_glow_weapon",
+      "piece": "launcher",
+      "channel": "weapon",
+      "tint": [
+        255,
+        175,
+        70
+      ],
+      "strength": 1.5,
+      "center": [
+        0.0,
+        4.94,
+        2.0
+      ],
+      "size": [
+        2.44,
+        0.04,
+        3.4184
+      ]
+    }
+  ],
+  "glowShare": 0.0381,
+  "triangles": {
+    "base": 664,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelL3": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
+    "wheelR3": 56,
+    "radar": 68,
+    "launcher": 1480,
+    "total": 2548
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

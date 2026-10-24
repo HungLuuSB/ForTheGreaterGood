@@ -16,12 +16,13 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
 
 import lib  # noqa: E402
+import ships  # noqa: E402
 import unit  # noqa: E402
 from unit import UP, bolts, ring  # noqa: E402
 
 T1 = (0.0, 1.3, -2.6)
 T2 = (0.0, 1.3, 3.3)
-
+H = ships.Hull(length=11.20, beam=3.33, freeboard=1.30, depth=0.60, sheer_bow=0.50, sheer_stern=0.15, flare=0.2, transom=0.6, rake=1.4, max_at=0.42, fine=2.0, z0=-1.00)  # v2 hull (tools/ships.py)
 
 def beam(p, a, b, w, kind):
     a, b = lib.vec(a), lib.vec(b)
@@ -32,8 +33,7 @@ def beam(p, a, b, w, kind):
 
 
 def build_base(p):
-    p.prism_x([(-6.6, 1.3), (-4.6, -0.5), (4.6, -0.5), (4.6, 1.3)], -1.6, 1.6, "paint", bevel=0.05)
-    p.prism_x([(-6.0, 0.0), (-4.4, -0.35), (4.65, -0.35), (4.65, 0.0)], -1.66, 1.66, "dark", bevel=0.02)
+    ships.hull(p, H)
     p.box((0, 1.33, 4.12), (2.8, 0.05, 0.9), "team", bevel=0.01)
     p.box((0, 1.82, 0.6), (1.92, 1.04, 1.76), "paint", bevel=0.04)
     p.box((0, 2.15, -0.3), (1.44, 0.22, 0.05), "light")
@@ -48,11 +48,13 @@ def build_base(p):
     p.box((0, 4.4, 1.2), (0.3, 0.3, 0.3), "light")
     for sx in (-1, 1):
         p.box((sx * 0.98, 2.0, 0.6), (0.06, 0.14, 0.4), "light")
-        p.box((sx * 1.63, 1.1, 0.0), (0.05, 0.14, 6.6), "light")
-    p.box((0, 0.7, 4.63), (2.6, 0.2, 0.05), "light")
+        if sx > 0:  # running strips along the sheer, both sides
+            ships.deck_strip(p, H, H.z0 - 0.36 * H.length, H.z0 + 0.42 * H.length, 0.1)
+    p.box((0, 0.7, H.z(0.0) + 0.03), (ships.half_beam_at(H, H.z(0.0)) * 1.3, 0.2, 0.05), "light")
 
 
 def details_base(p):
+    ships.hull_details(p, H)
     bolts(p, (-1.4, 1.301, -4.0), (1.4, 1.301, -4.0), 6, UP)
     ring(p, (0.48, 3.741, 1.7), UP, 0.35)
 

@@ -1,15 +1,17 @@
 """Kraken (Chaos cruiser, T2 ship, footprint 3): mesh, textures, rig data.
 blender -b --factory-startup --python-exit-code 1 -P assets/models/chs_kraken/build.py
 
-New mesh from its blockout, at the T2 capital-ship size (size-scale.md:
-29-30 long): a low long hull with a raked bow and a dark waterline band,
-welded patches, team plates on the foredeck and the bridge roof, hazard
-striping, a squat bridge with an amber slit, two funnels with hot bands, a
-braced lattice mast with the client-turned radar array (`radar`, M-27),
-tyre fenders, amber gunwale strips; `turret1` a triple open gun mount
-forward with a slab shield and a team plate (`muzzle1`), `turret2` a quad
-flak mount aft (`muzzle2`). Model space, waterline at y = 0. Chaos reads
-rugged and improvised (M-14). Writes export/ through tools/unit.py.
+v2, the user's review 2026-10-24 (the hulls read as flat barges): a real hull
+from tools/ships.py, bulkier than the Corsair: a fuller beam, a hard raked bow
+with a high sheer, flared sides, a broad transom, a dark boot-top. Chaos reads
+rugged and improvised (M-14): welded deck patches, hazard striping, tyre
+fenders, reactive slabs on the deckhouse. Stacked decks: a long deckhouse, an
+upper deck, a raised bridge with an amber slit and a team roof, two raked
+funnels with hot bands, a tall braced lattice mast with the client-turned
+radar (`radar`, M-27). `turret1` a heavy triple mount with a slab shield
+raised on a barbette forward (`muzzle1`), `turret2` a quad flak mount on a
+raised platform aft (`muzzle2`). Model space, waterline at y = 0. Writes
+export/ through tools/unit.py.
 """
 
 import os
@@ -17,54 +19,69 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
 
+import ships  # noqa: E402
 import unit  # noqa: E402
-from mech import hazard  # noqa: E402
+from mech import cable, hazard, rect  # noqa: E402
+from ships import barbette, deck_at, deck_strip, half_beam_at  # noqa: E402
 from unit import UP, bolts, ring  # noqa: E402
 
-DECK = 2.2
-T1 = (0.0, DECK, -9.0)
-T2 = (0.0, DECK, 9.2)
-RADAR = (0.0, 10.0, 0.4)
+H = ships.Hull(length=29.6, beam=7.6, freeboard=2.0, depth=1.7, sheer_bow=1.8, sheer_stern=0.25,
+               flare=0.2, transom=0.64, rake=2.6, max_at=0.44, fine=2.3)
+T1_Z = -9.2
+T1 = (0.0, deck_at(H, T1_Z) + 0.9, T1_Z)
+T2_Z = 9.4
+T2 = (0.0, deck_at(H, T2_Z) + 1.0, T2_Z)
+SUP = deck_at(H, -1.0)
+RADAR = (0.0, SUP + 9.4, 0.6)
 
 
 def build_base(p):
-    p.prism_x([(-15.4, DECK + 0.3), (-11.4, -0.9), (13.8, -0.9), (13.8, DECK)], -3.6, 3.6, "paint", bevel=0.08)
-    p.prism_x([(-13.6, 0.0), (-11.2, -0.6), (13.85, -0.6), (13.85, 0.0)], -3.67, 3.67, "dark", bevel=0.02)
-    for x, z, w, d in ((2.0, -4.0, 1.4, 3.0), (-1.8, 5.6, 1.6, 2.4)):
-        p.box((x, DECK + 0.03, z), (w, 0.04, d), "steel", bevel=0.01)
-    p.box((0, DECK + 0.03, -12.6), (4.0, 0.05, 2.4), "team", bevel=0.012)
-    hazard(p, (0, DECK + 0.03, -5.8), (1, 0, 0), UP, 6.0, 0.4, stripes=12)
-    # squat bridge, amber slit, team roof, two funnels
-    p.box((0, DECK + 1.3, -1.6), (4.6, 2.6, 5.0), "paint", bevel=0.06)
-    p.box((0, DECK + 1.9, -4.12), (3.8, 0.36, 0.05), "light")
-    p.box((0, DECK + 2.63, -1.6), (4.0, 0.05, 4.4), "team", bevel=0.012)
-    for z in (2.0, 3.8):
-        p.cylinder("y", (0.0, DECK + 3.6, z), 0.85, 2.6, 12, "trim")
-        p.cylinder("y", (0.0, DECK + 4.65, z), 0.88, 0.25, 12, "light")
+    ships.hull(p, H)
+    for x, z, w, d in ((2.0, -5.4, 1.4, 3.0), (-1.8, 6.0, 1.6, 2.4)):
+        p.box((x, deck_at(H, z) + 0.03, z), (w, 0.04, d), "steel", bevel=0.01)
+    p.obox((0, deck_at(H, -12.6) + 0.04, -12.6), (1, 0, 0), (0, 1, 0.1), 3.4, 2.2, 0.05, "team", bevel=0.012)
+    hazard(p, (0, deck_at(H, -6.4) + 0.04, -6.4), (1, 0, 0), UP, 5.4, 0.4, stripes=12)
+    barbette(p, (0, T1_Z), H, T1[1], 2.0)
+    barbette(p, (0, T2_Z), H, T2[1], 1.3)
+    # stacked decks: deckhouse with reactive slabs, upper deck, raised bridge
+    p.prism_y(rect(0, -0.8, 2.8, 4.6), SUP - 0.2, SUP + 2.0, "paint", bevel=0.08, top_scale=0.96)
+    for sx in (-1, 1):
+        for z in (-3.6, -1.0, 1.6):
+            p.box((sx * 2.86, SUP + 1.0, z), (0.3, 1.2, 1.8), "era", bevel=0.03)
+        p.box((sx * 2.84, SUP + 1.9, -0.8), (0.05, 0.14, 8.0), "light")
+    p.prism_y(rect(0, -0.6, 2.2, 3.4), SUP + 2.0, SUP + 3.8, "paint", bevel=0.08, top_scale=0.94)
+    p.prism_y(rect(0, -2.2, 1.7, 1.4), SUP + 3.8, SUP + 5.6, "paint", bevel=0.08, top_scale=0.9)
+    p.box((0, SUP + 5.0, -3.62), (2.8, 0.34, 0.05), "light")  # amber slit
+    p.box((0, SUP + 5.64, -2.2), (2.6, 0.05, 2.2), "team", bevel=0.012)
+    for k, z in enumerate((1.4, 3.0)):  # two raked funnels with hot bands
+        p.prism_y(rect(0, z, 0.75, 0.65), SUP + 3.8, SUP + 6.4, "trim", bevel=0.05, top_scale=0.85, top_center=(0, z + 0.5))
+        p.box((0, SUP + 5.9, z + 0.42), (1.3, 0.22, 1.1), "light")
     # braced lattice mast
     for dx in (-0.5, 0.5):
         for dz in (-0.5, 0.5):
-            p.box((dx, DECK + 5.0, 0.4 + dz), (0.15, 5.4, 0.15), "paint")
-    for y in (DECK + 3.4, DECK + 5.6):
-        p.box((0, y, 0.4), (1.2, 0.1, 1.2), "steel")
-    p.box((0, DECK + 7.5, 0.4), (1.3, 0.2, 1.3), "trim")
-    for sx in (-1, 1):
-        p.box((sx * 3.62, 1.5, 0.0), (0.05, 0.16, 24.0), "light")
-        for z in (-9.0, -1.0, 7.0):
-            p.ocyl((sx * 3.7, 0.95, z), (sx, 0, 0), 0.55, 0.34, 10, "rubber")
-    p.box((0, 1.1, 13.87), (5.0, 0.24, 0.05), "light")
-    p.cylinder("y", (0, DECK + 0.05, -9.0), 1.9, 0.1, 18, "dark")
+            p.box((dx, SUP + 6.6, 0.6 + dz), (0.15, 5.6, 0.15), "paint")
+    for y in (SUP + 5.0, SUP + 7.0, SUP + 9.0):
+        p.box((0, y, 0.6), (1.2, 0.1, 1.2), "steel")
+    p.box((0, SUP + 9.4 - 0.5, 0.6), (1.3, 0.2, 1.3), "trim")
+    cable(p, [(0.5, SUP + 8.8, 0.6), (2.4, deck_at(H, 6.0) + 1.0, 6.0), (2.8, deck_at(H, 8.0) + 0.2, 8.0)], r=0.03, kind="steel")
+    for z in (-9.0, -1.0, 7.0):
+        for sx in (-1, 1):
+            b = half_beam_at(H, z)
+            p.ocyl((sx * (b + 0.02), deck_at(H, z) - 0.8, z), (sx, 0, 0), 0.5, 0.34, 10, "rubber")
+    deck_strip(p, H, -12.8, 13.2, 0.12)
+    p.box((0, 1.1, H.z(0.0) + 0.03), (half_beam_at(H, H.z(0.0)) * 1.4, 0.24, 0.05), "light")
 
     with p.sub("radar", RADAR, "turn", (0, 1, 0)):  # M-27
-        p.box((0, 10.2, 0.4), (3.2, 0.8, 0.3), "paint", bevel=0.03)
-        p.box((0, 10.2, 0.24), (3.0, 0.6, 0.04), "dark")
-        p.box((0, 10.2, 0.22), (3.05, 0.06, 0.03), "light")
-        p.box((0, 10.62, 0.4), (2.4, 0.04, 0.2), "team")
+        p.box((0, RADAR[1] + 0.2, 0.6), (3.2, 0.8, 0.3), "paint", bevel=0.03)
+        p.box((0, RADAR[1] + 0.2, 0.44), (3.0, 0.6, 0.04), "dark")
+        p.box((0, RADAR[1] + 0.2, 0.42), (3.05, 0.06, 0.03), "light")
+        p.box((0, RADAR[1] + 0.62, 0.6), (2.4, 0.04, 0.2), "team")
 
 
 def details_base(p):
-    bolts(p, (-3.0, DECK + 0.001, -10.6), (3.0, DECK + 0.001, -10.6), 9, UP)
-    ring(p, (0.0, DECK + 4.901, 2.0), UP, 0.6)
+    ships.hull_details(p, H)
+    bolts(p, (-2.8, deck_at(H, -10.8) + 0.001, -10.8), (2.8, deck_at(H, -10.8) + 0.001, -10.8), 9, UP)
+    ring(p, (0.0, SUP + 6.401, 1.4), UP, 0.5)
 
 
 def build_turret1(p):
@@ -99,4 +116,6 @@ unit.run(__file__, "chs_kraken", "chaos", footprint=3,
                  unit.PieceSpec("turret2", "base", T2, build_turret2, no_details)],
          attachments={"muzzle1": {"parent": "turret1", "at": [0, T1[1] + 1.0, T1[2] - 6.3]},
                       "muzzle2": {"parent": "turret2", "at": [0, T2[1] + 0.8, T2[2] - 2.0]}},
-         budget=10000)
+         budget=10000,
+         previews=[("35", (-28, 22, -32), (0, 3.5, 0), 45),
+                   ("close", (-15, 13, -17), (0, 4.5, -2.0), 40)])

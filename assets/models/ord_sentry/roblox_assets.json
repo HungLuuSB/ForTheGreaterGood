@@ -1,7 +1,35 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "Animated pieces (M-27): 804 triangles, glow share 6.2%",
+  "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 1534 triangles, glow share 7.1%",
   "bar": {
+    "model": "rbxassetid://137281682613473",
+    "meshes": {
+      "base": "rbxassetid://71182841624362",
+      "base_glow_running": "rbxassetid://98296163779605",
+      "radar": "rbxassetid://102503276780305",
+      "radar_glow_running": "rbxassetid://101439220747082",
+      "turret1": "rbxassetid://109421983606359",
+      "turret1_glow_weapon": "rbxassetid://76626294696848",
+      "turret2": "rbxassetid://113768426533695",
+      "turret2_glow_weapon": "rbxassetid://130456488695334"
+    },
+    "decals": {
+      "ALB": "rbxassetid://124780826097955",
+      "RGH": "rbxassetid://111879858375320",
+      "NOR": "rbxassetid://124585832834828",
+      "MTL": "rbxassetid://116394697868306",
+      "EMI": "rbxassetid://115000872258079"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://134355807917058",
+      "NOR": "rbxassetid://95066662690341",
+      "RGH": "rbxassetid://129572969095527",
+      "MTL": "rbxassetid://83086398185960",
+      "EMI": "rbxassetid://80223050051732"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sentry_bar in FTGG Art"
+  },
+  "bar_3": {
     "model": "rbxassetid://121305342645862",
     "meshes": {
       "base": "rbxassetid://103069438022418",
@@ -27,7 +55,7 @@
       "MTL": "rbxassetid://81712092215644",
       "EMI": "rbxassetid://80922659269117"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_sentry_bar in FTGG Art"
+    "note": "Animated pieces (M-27): 804 triangles, glow share 6.2%"
   },
   "bar_2": {
     "model": "rbxassetid://117719932104477",

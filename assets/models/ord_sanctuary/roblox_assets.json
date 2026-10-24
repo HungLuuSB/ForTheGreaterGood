@@ -1,7 +1,36 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "New T2 mesh (item 3); wreck built: 2252 triangles, glow share 0.7%",
+  "revision": "T2 ship hull redesign v2 (tools/ships.py): 3114 triangles, glow share 1.0%",
   "bar": {
+    "model": "rbxassetid://140216369015533",
+    "meshes": {
+      "base": "rbxassetid://120098654803780",
+      "base_glow_power": "rbxassetid://104931791084457",
+      "base_glow_running": "rbxassetid://89981192280808",
+      "radar": "rbxassetid://122547856149671",
+      "radar_glow_running": "rbxassetid://83585917407959",
+      "turret1": "rbxassetid://111123532946448",
+      "turret1_glow_weapon": "rbxassetid://86069548493529",
+      "turret2": "rbxassetid://94546388726565",
+      "turret2_glow_weapon": "rbxassetid://117794320751996"
+    },
+    "decals": {
+      "ALB": "rbxassetid://120308717087949",
+      "RGH": "rbxassetid://137424001692805",
+      "NOR": "rbxassetid://128088858623903",
+      "MTL": "rbxassetid://136756048423944",
+      "EMI": "rbxassetid://79000401259417"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://100185846139430",
+      "NOR": "rbxassetid://92415868770380",
+      "RGH": "rbxassetid://74902159469646",
+      "MTL": "rbxassetid://116678689120461",
+      "EMI": "rbxassetid://72616250552609"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sanctuary_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://88840361702639",
     "meshes": {
       "base": "rbxassetid://76926806425395",
@@ -28,9 +57,34 @@
       "MTL": "rbxassetid://76434155001736",
       "EMI": "rbxassetid://121071484926199"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_sanctuary_bar in FTGG Art"
+    "note": "New T2 mesh (item 3); wreck built: 2252 triangles, glow share 0.7%"
   },
   "wreck": {
+    "model": "rbxassetid://128961692141872",
+    "meshes": {
+      "base": "rbxassetid://99952594979847",
+      "radar": "rbxassetid://103169684290732",
+      "turret1": "rbxassetid://71246520622818",
+      "turret2": "rbxassetid://75946562294147"
+    },
+    "decals": {
+      "ALB": "rbxassetid://138182996567278",
+      "RGH": "rbxassetid://110718067095782",
+      "NOR": "rbxassetid://113522321246709",
+      "MTL": "rbxassetid://97163332321668",
+      "EMI": "rbxassetid://116013313269478"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://107643150071240",
+      "NOR": "rbxassetid://105253316036381",
+      "RGH": "rbxassetid://94996708754022",
+      "MTL": "rbxassetid://134736092015012",
+      "EMI": "rbxassetid://89863600382705"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sanctuary_wreck_bar in FTGG Art",
+    "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 2770 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://139967548303994",
     "meshes": {
       "base": "rbxassetid://83936497921426",

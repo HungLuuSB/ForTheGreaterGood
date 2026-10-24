@@ -17,6 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
 
+import ships  # noqa: E402
 import unit  # noqa: E402
 from mech import hazard  # noqa: E402
 from unit import UP, bolts  # noqa: E402
@@ -24,7 +25,7 @@ from unit import UP, bolts  # noqa: E402
 DECK = 1.6
 T1 = (0.0, DECK, -3.6)
 T2 = (0.0, DECK, 3.4)
-
+H = ships.Hull(length=14.40, beam=4.16, freeboard=1.60, depth=0.70, sheer_bow=0.70, sheer_stern=0.15, flare=0.2, transom=0.6, rake=1.4, max_at=0.42, fine=2.0, z0=-1.20)  # v2 hull (tools/ships.py)
 
 def mast(p, c):
     x, y, z = c
@@ -42,8 +43,7 @@ def mast(p, c):
 
 
 def build_base(p):
-    p.prism_x([(-8.4, DECK + 0.2), (-6.0, -0.6), (6.0, -0.6), (6.0, DECK)], -2.0, 2.0, "paint", bevel=0.06)
-    p.prism_x([(-7.6, 0.0), (-5.7, -0.45), (6.05, -0.45), (6.05, 0.0)], -2.07, 2.07, "dark", bevel=0.02)
+    ships.hull(p, H)
     p.box((0, DECK + 0.03, -6.0), (2.6, 0.05, 1.6), "team", bevel=0.012)
     p.box((0, DECK + 0.03, 5.4), (2.6, 0.05, 1.0), "team", bevel=0.012)
     p.box((0, DECK + 0.6, 0.0), (2.4, 1.2, 2.6), "paint", bevel=0.05)
@@ -52,13 +52,15 @@ def build_base(p):
     p.box((0.7, DECK + 1.24, 0.6), (0.6, 0.05, 0.6), "power")
     hazard(p, (0, DECK + 0.03, 1.8), (1, 0, 0), UP, 3.2, 0.35, stripes=7)
     for sx in (-1, 1):
-        p.box((sx * 2.02, 1.2, 0.0), (0.05, 0.14, 9.0), "light")
+        if sx > 0:  # running strips along the sheer, both sides
+            ships.deck_strip(p, H, H.z0 - 0.36 * H.length, H.z0 + 0.42 * H.length, 0.1)
         for z in (-4.0, 2.0):
             p.ocyl((sx * 2.1, 0.8, z), (sx, 0, 0), 0.4, 0.26, 10, "rubber")
-    p.box((0, 0.8, 6.07), (3.0, 0.2, 0.05), "light")
+    p.box((0, 0.8, H.z(0.0) + 0.03), (ships.half_beam_at(H, H.z(0.0)) * 1.3, 0.2, 0.05), "light")
 
 
 def details_base(p):
+    ships.hull_details(p, H)
     bolts(p, (-1.6, DECK + 0.001, -4.8), (1.6, DECK + 0.001, -4.8), 6, UP)
 
 

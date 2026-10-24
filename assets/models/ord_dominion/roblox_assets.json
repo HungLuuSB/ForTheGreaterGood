@@ -1,7 +1,38 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "New T2 mesh (item 3); wreck built: 2016 triangles, glow share 2.9%",
+  "revision": "T2 ship hull redesign v2 (tools/ships.py): 4610 triangles, glow share 2.9%",
   "bar": {
+    "model": "rbxassetid://70549447391384",
+    "meshes": {
+      "base": "rbxassetid://110117774864510",
+      "base_glow_power": "rbxassetid://101105046238772",
+      "base_glow_running": "rbxassetid://118672010922452",
+      "base_glow_weapon": "rbxassetid://74946698712488",
+      "radar": "rbxassetid://128892478641401",
+      "radar_glow_running": "rbxassetid://121199521265719",
+      "turret1": "rbxassetid://84560314155486",
+      "turret1_glow_running": "rbxassetid://134392534683606",
+      "turret1_glow_weapon": "rbxassetid://84209476415022",
+      "turret2": "rbxassetid://85254731851366",
+      "turret2_glow_weapon": "rbxassetid://113417885023828"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129832717885161",
+      "RGH": "rbxassetid://90212333540841",
+      "NOR": "rbxassetid://101784262807455",
+      "MTL": "rbxassetid://120037324283807",
+      "EMI": "rbxassetid://137799365101294"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://138359007532525",
+      "NOR": "rbxassetid://128129967475646",
+      "RGH": "rbxassetid://85746412658489",
+      "MTL": "rbxassetid://100145769473288",
+      "EMI": "rbxassetid://72395327666859"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_dominion_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://118689808284387",
     "meshes": {
       "base": "rbxassetid://78465103955743",
@@ -29,9 +60,34 @@
       "MTL": "rbxassetid://92707068045666",
       "EMI": "rbxassetid://119177182393024"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_dominion_bar in FTGG Art"
+    "note": "New T2 mesh (item 3); wreck built: 2016 triangles, glow share 2.9%"
   },
   "wreck": {
+    "model": "rbxassetid://80411360832747",
+    "meshes": {
+      "base": "rbxassetid://120487723735495",
+      "radar": "rbxassetid://112388251484872",
+      "turret1": "rbxassetid://101325569819729",
+      "turret2": "rbxassetid://84940674177202"
+    },
+    "decals": {
+      "ALB": "rbxassetid://85692661178501",
+      "RGH": "rbxassetid://77427245542744",
+      "NOR": "rbxassetid://121020951998324",
+      "MTL": "rbxassetid://125921145064298",
+      "EMI": "rbxassetid://127903768186001"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://136402016822981",
+      "NOR": "rbxassetid://120689240586986",
+      "RGH": "rbxassetid://73810749031156",
+      "MTL": "rbxassetid://111482026461773",
+      "EMI": "rbxassetid://83612014531570"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_dominion_wreck_bar in FTGG Art",
+    "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 3458 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://83910679980387",
     "meshes": {
       "base": "rbxassetid://110863123524092",
