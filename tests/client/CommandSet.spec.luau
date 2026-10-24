@@ -47,6 +47,13 @@ return function(t: any)
 		end
 		local nuke = CommandSet.of({ defs.units.ord_reckoning }, defs)
 		t.expect(has(nuke, "stop") and has(nuke, "attack") and not has(nuke, "fire"), "a nuke silo with the def set: stop and a manual launch")
+		-- resource priority (S-156, C-196) where it does something
+		for _, id in { "ord_mason", "ord_vehplant", "ord_phalanx", "ord_beacon", "ord_falcon", "ord_reckoning", "ord_guardian" } do
+			t.expect(has(CommandSet.of({ defs.units[id] }, defs), "priority"), `{id}: priority`)
+		end
+		for _, id in { "ord_lancer", "ord_generator", "ord_extractor" } do
+			t.expect(not has(CommandSet.of({ defs.units[id] }, defs), "priority"), `{id}: no priority (uses no resources)`)
+		end
 		local sam = CommandSet.of({ defs.units.ord_aegis }, defs)
 		t.expect(has(sam, "fire") and has(sam, "attack") and has(sam, "stop"), "a stockpiled SAM site is an ordinary defense")
 		-- Upgrade extractors (C-121): builders with an upgrading extractor only

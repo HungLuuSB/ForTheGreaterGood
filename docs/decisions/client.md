@@ -1730,3 +1730,26 @@ Existing calls are unchanged.
 
 **Why:** sim-A's S-154, S-155 and S-157; the user's requests.
 
+### C-196 — Resource priority on the command card (2026-10-24)
+
+**Decision:** a "Prio high" / "Prio low" state button (green high, amber low) on the units resource priority does something for (S-156, `CommandSet.consumer`): builders and factories, stockpiling launchers, aircraft (rearm), shields, radars, jammers, trackers and DIRCM units. A click with every selected unit high sets them all low; with any low, sets them all high (PRIORITY, value 1 high / 0 low). The button reads the LOW_PRIORITY state bit, which arrives for allies too. CommandSet.spec checks who gets it; OrderLines.spec runs the round trip.
+
+**Why:** the user: "Introducing priority resources usage -> high priority unit take the resources first and the rest goes to low priority"; sim-A's S-156.
+
+### C-197 — Icon sheet draft 5: the S-157 defences get their own icons (2026-10-24)
+
+**Decision:** the user's draft 5 replaces `docs/art/icons/ftgg-unit-icons.html`: Laser Tower (Sentry, Guard), Twin Laser Tower (Overwatch, Twin Guard), Triple Laser Tower (Geryon), Ramping Beam Tower (Beamer, T1), Lobbing Gun (Gauntlet, Talos, T1); Chaos's Bulwark joins Radiance on Beam Tower; the retired ord_bulwark, chs_spike and chs_inferno stay mapped for old replays. render.mjs maps all 159 defs from 80 items: 90 tiles, exactly one full 1024-px sheet (the next item would start a second sheet). Uploaded with the user's approval as asset 107697270697313 (byte-identical to `assets/icons/ftgg-icons.png`), in the same commit as its atlas. The /give alias test follows the new type names (`ord_laser` is the Sentry).
+
+**Why:** the user's draft 5 and approval.
+
+### C-198 — The S-157 towers' visuals: coloured lasers, the Beamer's ramp, barrels in turn, the Geryon drum (2026-10-24)
+
+**Decision:**
+- **Lasers** (`fx.tracer = "laser"`, `fx.color = { r, g, b }`): the whole line at once in the weapon's colour for 0.12 s, fading. Red for Sentry, Guard and Twin Guard; green for Overwatch, Geryon and Bulwark's laser; blue for the Beamer.
+- **The Beamer** (`ramp`): each bolt lasts one shot gap plus a little, so they join into one held beam. Its width and brightness grow with intensity, time on one target over `ramp.seconds` (4 s), as the server's damage ramps. A pause longer than 1.6 shot gaps (a target change or a loss) starts it over (`Effects.ramp`).
+- **Barrels in turn** (`muzzles`): each shot starts at the next muzzle (`muzzleOf`), and the matching `barrelN` (or `laser_barrelN`) recoils (Default piece script). With a `drumPiece` (Geryon, Bulwark's laser), the cluster turns one barrel on (360° / barrels) after each shot.
+- Gauntlet and Talos: the high-arc shells come with SPAWN_PROJ's velocity, no client change.
+- Lasers.spec, through the real server: Sentry and Guard fire red, Overwatch green; the Beamer rises from 0 to full; a pause resets it; Geryon's three shots turn the drum a full circle and recoil each barrel. Studio (blockouts until models-C's models): the Beamer's held blue beam on a Juggernaut. `debug_out/screens/c198_beamer.jpg`.
+
+**Why:** the user's T1 defences; sim-A's S-157 fields.
+

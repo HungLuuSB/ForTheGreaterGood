@@ -203,6 +203,11 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		return issue({ cmdType = CT.REPEAT, queue = false, value = if on then 1 else 0 })
 	end
 
+	-- Resource priority (S-156, C-196): high (the default) or low.
+	function actions.setPriority(high: boolean)
+		return issue({ cmdType = CT.PRIORITY, queue = false, value = if high then 1 else 0 })
+	end
+
 	-- CANCEL (S-35): an unfinished frame is cancelled; a factory drops queue
 	-- item `index` (1-based; 0 = all).
 	function actions.cancel(index: number?)

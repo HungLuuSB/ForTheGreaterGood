@@ -62,7 +62,20 @@ local function keyOf(name: string): string
 	local id = ACTION[name]
 	return if id then SettingsMenu.binds[id] or "" else ""
 end
-local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true }
+local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true, priority = true }
+local LOW_PRIORITY = 128 -- Schema.UnitState.LOW_PRIORITY (S-156)
+local AMBER = Color3.fromRGB(235, 170, 60)
+
+-- Whether any selected unit runs at low resource priority (S-156, C-196).
+local function anyLow(api: Api.Api): boolean
+	for _, id in api.state.selection do
+		local u = api.world.units[id]
+		if u and bit32.band(u.state or 0, LOW_PRIORITY) ~= 0 then
+			return true
+		end
+	end
+	return false
+end
 
 local function act(api: Api.Api, name: string)
 	local a = api.actions
@@ -80,6 +93,9 @@ local function act(api: Api.Api, name: string)
 	elseif name == "toggle" then
 		local anyOn = selected(api)
 		a.toggle(not anyOn)
+	elseif name == "priority" then
+		-- all high → low; any low → all back to high
+		a.setPriority(anyLow(api))
 	elseif name == "cancel" then
 		local _, _, factories = selected(api)
 		local q = factories[1] and api.state.factoryQueues[factories[1]]
@@ -158,6 +174,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		return
 	end
 	local anyOn, anyRepeat, factories, switchable = selected(api)
+	local low = anyLow(api)
 	-- this selection's commands only, packed into rows
 	local defs = {}
 	for _, id in api.state.selection do
@@ -198,6 +215,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		-- only converters, beam towers and shields switch (the sim's TOGGLED_ON bit); for anything else
 		-- "Off" in red read as a stopped factory (the user, C-107)
 		toggle = if not switchable then "On / Off" elseif anyOn then "On" else "Off",
+		priority = if low then "Prio low" else "Prio high", -- resource priority (S-156, C-196)
 		cancel = "Cancel",
 		stop = "Stop",
 		attack = "Attack",
@@ -215,6 +233,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		movestate = if move then move[2] else Color3.fromRGB(110, 110, 110),
 		["repeat"] = if anyRepeat then GREEN else RED,
 		toggle = if not switchable then Color3.fromRGB(110, 110, 110) elseif anyOn then GREEN else RED,
+		priority = if low then AMBER else GREEN,
 	}
 	local mouse = game:GetService("UserInputService"):GetMouseLocation()
 	local inset = game:GetService("GuiService"):GetGuiInset()

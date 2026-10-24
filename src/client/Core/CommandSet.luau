@@ -20,13 +20,37 @@
 --                only nuke silos (strategic weapons)
 --   interceptors fire state only (hold fire keeps the stock): anti-nukes and
 --                point defence never take a manual target
+--   priority     high / low resource priority (S-156, C-196) on what uses
+--                resources: builders and factories, stockpiling launchers,
+--                aircraft (rearm), shields, radars, jammers, DIRCM
 -- "alert" (jump to the last alert) is always there: it's not a unit order.
 
 local Upgrades = require("./Upgrades")
 
 local CommandSet = {}
 
-CommandSet.ORDER = { "fire", "movestate", "repeat", "toggle", "cancel", "stop", "attack", "move", "patrol", "fight", "guard", "repair", "reclaim", "upgrade", "alert" }
+CommandSet.ORDER = { "fire", "movestate", "repeat", "toggle", "priority", "cancel", "stop", "attack", "move", "patrol", "fight", "guard", "repair", "reclaim", "upgrade", "alert" }
+
+-- Whether resource priority does something for `def` (the sim's S-156
+-- consumers): build power, missile stockpiles, rearming, upkeep.
+function CommandSet.consumer(def: any): boolean
+	if (def.buildPower or 0) > 0 or def.domain == "air" or def.shield ~= nil then
+		return true
+	end
+	local s = def.sensors
+	if s and (s.radarDrain or s.jamDrain or s.trackDrain) then
+		return true
+	end
+	if def.countermeasures and def.countermeasures.dircm then
+		return true
+	end
+	for _, ws in def.weapons or {} do
+		if (ws :: any).stockCapacity ~= nil then
+			return true
+		end
+	end
+	return false
+end
 
 local function isFactory(def: any): boolean
 	return def.domain == "structure" and def.buildOptions ~= nil and #def.buildOptions > 0
@@ -82,6 +106,9 @@ function CommandSet.forDef(def: any, all: any?): { [string]: boolean }
 	end
 	if def.converter ~= nil or def.toggle ~= nil or def.retract ~= nil or def.shield ~= nil then
 		set.toggle = true
+	end
+	if CommandSet.consumer(def) then
+		set.priority = true
 	end
 	return set
 end

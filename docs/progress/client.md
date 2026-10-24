@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Build over your own units; new defences have icons (C-195):** placing over your own or allied units is allowed (they walk out); shields' On / Off works on the card; the new T1 defences use existing icon tiles until they get their own.
+- Ready to merge: `09df50f` (C-195; carries sim-A's d41074e, S-152..S-157, so the new defs land with their icon entries; test 495, test_client 280, build passed)
 - **Command line (C-194):** Tab completes and cycles choices (reveal on / off, kill selected / a team ...); /give takes aliases like ord_shield or chs_ir-sam.
 - Ready to merge: `a04dd51` (C-194: Tab cycling, unit aliases; src/client)
 - **Commands and order lines (C-193):** each unit offers only commands that do something (no Stop on a generator; shields get On / Off); a box with a builder in it selects only builders; a turret takes no move; order lines (assist, build, factory orders) stay until done; builders spray what they build; the shield bar sits over the generator.
