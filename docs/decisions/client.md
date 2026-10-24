@@ -1652,3 +1652,9 @@ Existing calls are unchanged.
 
 **Why:** the user: "why the honeycomb grid spread so slow, look chobby?"
 
+### C-191 — Multi-select tiles: the type's portrait, its icon bottom right, the count top left (2026-10-24)
+
+**Decision:** with several units selected, each type tile in the unit panel shows the type's model at an angle (`UI/Portrait`, as the one-unit tile and the build menu), its type icon small in the bottom right, and how many of that type are selected in the top left. Tiles are 50 px, up from 46. Clicks are unchanged (C-157: keep, Shift drop, Ctrl same type on screen). Studio (the Canyon, 5 Lancers, 3 Paladins, 2 Halos, a Mason): `debug_out/screens/c191_selection_tiles.jpg`.
+
+**Why:** the user: "when selecting multiple units, the panel should show the image of the unit + its icon in the bottom right + number of that type of unit in the upper left corner".
+

@@ -10,7 +10,8 @@
 -- next missile's progress, on / off and repeat, and a factory's queue as the
 -- server has it (S-61). An enemy shows full stats only in sight or tracked;
 -- a radar contact its domain only. Several selected: a tile per unit type
--- with its count, as BAR's selection panel (C-157): a click keeps only that
+-- as BAR's selection panel (C-157): the type's portrait, its icon bottom
+-- right and how many are selected top left (C-191); a click keeps only that
 -- type, Shift-click drops it, Ctrl-click selects every own unit of that type
 -- on screen. Reads only the client API's state.
 
@@ -52,6 +53,7 @@ export type UI = {
 	types: Frame,
 	typeButtons: { TextButton },
 	typeGlyphs: { Glyph.G },
+	typePortraits: { Portrait.Portrait }, -- each type tile's model (C-191)
 	icons: Icons.Table,
 	codes: { [number]: string },
 	key: string,
@@ -135,7 +137,7 @@ function UnitPanel.new(api: Api.Api): UI
 	types.Size = UDim2.new(1, -12, 1, -12)
 	types.Parent = panel
 	local gl = Instance.new("UIGridLayout")
-	gl.CellSize = UDim2.fromOffset(46, 46)
+	gl.CellSize = UDim2.fromOffset(50, 50)
 	gl.CellPadding = UDim2.fromOffset(3, 3)
 	gl.SortOrder = Enum.SortOrder.LayoutOrder
 	gl.Parent = types
@@ -144,7 +146,7 @@ function UnitPanel.new(api: Api.Api): UI
 	return {
 		gui = gui, panel = panel, portrait = portrait, portraitGlyph = pg, portraitView = view, cornerGlyph = corner,
 		flowSupply = flowSupply, flowPower = flowPower, name = name, role = role, stats = stats,
-		health = health, healthFill = fill, types = types, typeButtons = {}, typeGlyphs = {},
+		health = health, healthFill = fill, types = types, typeButtons = {}, typeGlyphs = {}, typePortraits = {},
 		icons = Icons.table(api.world.defs), codes = Icons.codes(api.world.defs), key = "",
 	}
 end
@@ -307,20 +309,25 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 			b.BorderSizePixel = 0
 			b.Text = ""
 			b.Parent = ui.types
+			-- the model at an angle (as the one-unit portrait), the type icon
+			-- bottom right, the count top left (C-191)
+			ui.typePortraits[i] = Portrait.new(b)
 			local g = Glyph.new(b)
-			g.root.Position = UDim2.fromScale(0.5, 0.45)
+			g.root.AnchorPoint = Vector2.new(1, 1)
+			g.root.Position = UDim2.new(1, -1, 1, -1)
+			g.root.ZIndex = 4
 			ui.typeGlyphs[i] = g
 			local count = Instance.new("TextLabel")
 			count.Name = "Count"
 			count.BackgroundTransparency = 1
-			count.AnchorPoint = Vector2.new(1, 1)
-			count.Position = UDim2.new(1, -2, 1, -1)
+			count.AnchorPoint = Vector2.new(0, 0)
+			count.Position = UDim2.fromOffset(3, 1)
 			count.Size = UDim2.fromOffset(30, 14)
 			count.Font = Enum.Font.GothamBold
-			count.TextSize = 12
+			count.TextSize = 13
 			count.TextColor3 = Color3.new(1, 1, 1)
-			count.TextStrokeTransparency = 0.3
-			count.TextXAlignment = Enum.TextXAlignment.Right
+			count.TextStrokeTransparency = 0.2
+			count.TextXAlignment = Enum.TextXAlignment.Left
 			count.ZIndex = 4
 			count.Parent = b
 			ui.typeButtons[i] = b
@@ -349,7 +356,8 @@ function UnitPanel.step(ui: UI, api: Api.Api)
 		b.LayoutOrder = i
 		b.Visible = true
 		local def = world.defs.unitByIndex[d]
-		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 24), TeamColors(teams[d]))
+		Portrait.set(ui.typePortraits[i], def, teams[d])
+		Glyph.apply(ui.typeGlyphs[i], styleOf(ui, def, teams[d], 15), TeamColors(teams[d]))
 		;(b :: any).Count.Text = tostring(counts[d])
 	end
 	for i = #order + 1, #ui.typeButtons do
