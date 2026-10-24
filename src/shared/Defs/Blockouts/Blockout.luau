@@ -113,10 +113,11 @@ Blockout.PALETTES = table.freeze({
 local SHAPES = { box = true, wedge = true, cylinder = true, ball = true }
 local AXES = { x = true, y = true, z = true }
 
--- Muzzles (`muzzle`, `muzzle1`, ...) are Attachments; every other name in a
--- def's `pieces` is a jointed part.
+-- Muzzles (`muzzle`, `muzzle1`, ..., and a second weapon's prefixed ones like
+-- `laser_muzzle1`, S-157) are Attachments; every other name in a def's
+-- `pieces` is a jointed part.
 function Blockout.isAttachmentPiece(name: string): boolean
-	return string.match(name, "^muzzle%d*$") ~= nil
+	return string.match(name, "^muzzle%d*$") ~= nil or string.match(name, "^%a+_muzzle%d*$") ~= nil
 end
 
 local function isVec(v: any, positive: boolean): boolean

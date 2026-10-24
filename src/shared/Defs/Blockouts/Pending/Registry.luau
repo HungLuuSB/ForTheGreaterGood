@@ -34,6 +34,26 @@ return {
 				shellR = { 0, 0, 90 },
 			},
 		},
+		-- the laser towers aiming up (S-157: pitch -60..+60 degrees)
+		ord_sentry_tower = { aimed = { barrel = { 35, 0, 0 } } },
+		chs_guard = { aimed = { barrel = { 35, 0, 0 } } },
+		ord_overwatch = { aimed = { mount = { 35, 0, 0 } } },
+		chs_twin_guard = { aimed = { mount = { 35, 0, 0 } } },
+		chs_geryon = { aimed = { mount = { 35, 0, 0 } } },
+		-- the lobbing guns at high trajectory (S-157: the barrel pitches up to 85 degrees)
+		ord_gauntlet = {
+			raised = { barrel = { 70, 0, 0 } },
+		},
+		chs_talos = {
+			raised = { barrel = { 70, 0, 0 } },
+		},
+		chs_bulwark = { -- S-157, Inferno's replacement: the beam head sinks onto its armored collar, the barrel folds down
+			aimed = { barrel = { 25, 0, 0 }, laser_mount = { 35, 0, 0 } },
+			retracted = {
+				turret = { 0, 0, 0, 0, -2.0, 0 },
+				barrel = { -35, 0, 0 },
+			},
+		},
 		chs_inferno = {
 			retracted = {
 				turret = { 0, 0, 0, 0, -11.1, 0 }, -- x1.5 with the fp 3 blockout (S-104)

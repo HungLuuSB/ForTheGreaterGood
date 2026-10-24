@@ -684,6 +684,201 @@ def ka2_option_c(scene):
 OPTIONS.update({"ka2_a": ka2_option_a, "ka2_b": ka2_option_b, "ka2_c": ka2_option_c})
 
 
+# ---------------------------------------------------------------------------
+# Key art 3 options: an Order SAM base holds off a Chaos air raid in daylight
+# while a Chaos nuke comes in high and the base's anti-nuke fires at it
+# (the user's brief, 2026-10-24). Green hills, sun about 50 degrees up.
+# Aegis and Sanctum have no meshes yet: Seraph and Sanction stand in.
+# ---------------------------------------------------------------------------
+
+STAND_IN = {"ord_aegis": "ord_seraph", "ord_sanctum": "ord_sanction"}
+PROVIDENCE_OPEN = {"hatch": (100, 0, 0)}  # Blockouts/Pending/Registry.luau, pose "open"
+
+
+def green_land():
+    """Rolling green ground rising into hills and a far ridge."""
+    def hills(x, y):
+        far = smooth(140, 520, y)
+        return far * (26 + 18 * noise.noise(Vector((x / 160.0, y / 160.0, 5.0)))) + 3.0 * noise.noise(Vector((x / 50.0, y / 50.0, 6.0)))
+    return Land(lambda x, y: 5000.0, extra=hills, amp=1.0)
+
+
+def missile_mesh(mid, pos, direction, scale=1.0):
+    """A missile from assets/fx/missiles in clay, pointing along `direction`."""
+    fbx = os.path.join(K.ROOT, "assets", "fx", "missiles", mid, "export", f"{mid}.fbx")
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.fbx(filepath=fbx)
+    objs = [o for o in bpy.data.objects if o not in before]
+    root = bpy.data.objects.new(f"{mid}_root", None)
+    K.link(root, "mid")
+    for o in objs:
+        for c in o.users_collection:
+            c.objects.unlink(o)
+        if o.type != "MESH" or o.name.startswith(("emissive_probe", "tex_")):
+            bpy.data.objects.remove(o, do_unlink=True)
+            continue
+        K.link(o, "mid")
+        K.lib.assign_single_material([o], clay("trail"))
+        o.parent = root
+    root.location = pos
+    root.rotation_euler = Vector(direction).to_track_quat("Y", "Z").to_euler()
+    root.scale = (scale, scale, scale)
+    return root
+
+
+def ka3_story(land, cam_h, horizon, prov, nuke_at, meet_at, seed):
+    """The nuke (big, on a long thick trail from beyond the frame) and the
+    interceptor (its curving trail from the Providence's open hatch), both
+    heading for the meeting point; frame positions (sx, sy, distance)."""
+    nuke = at_screen(*nuke_at[:2], nuke_at[2], cam_h, horizon)
+    meet = at_screen(*meet_at[:2], meet_at[2], cam_h, horizon)
+    d = (meet - nuke).normalized()
+    line([tuple(nuke - d * 600), tuple(nuke)], 5.0)  # the nuke's long, thick white trail
+    missile_mesh("chs_nuke", tuple(nuke), d, scale=8.0)
+    hatch = Vector((prov.x, prov.y, land.z(prov.x, prov.y) + 6))
+    # the interceptor: up out of the hatch, curving toward the meeting point; its head 70% of the way
+    pts = []
+    for i in range(16):
+        t = i / 15 * 0.7
+        a = hatch.lerp(meet, t)
+        a.z += math.sin(t / 0.7 * math.pi * 0.5) * (meet - hatch).length * 0.18 * (1 - t)
+        pts.append(a)
+    line([tuple(q) for q in pts], 1.4)
+    missile_mesh("ord_interceptor", tuple(pts[-1]), pts[-1] - pts[-2], scale=2.0)
+    return meet
+
+
+def ka3_base(land, placements):
+    """(uid, sx, y, heading, pose) by frame position; stand-ins for the meshes not built yet."""
+    keep, rails = [], {}
+    for uid, sx, y, hd, pose in placements:
+        x = X(sx, y)
+        put(land, STAND_IN.get(uid, uid), x, y, hd, pose=pose)
+        keep.append((x, y, 16))
+        rails.setdefault(uid, []).append((x, y, land.z(x, y) + 4))
+    return keep, rails
+
+
+def ka3_air(land, cam_h, horizon, craft, sams, rails, hit):
+    """Aircraft at frame positions (uid, sx, sy, distance, heading, pitch, bank),
+    SAM markers (launcher uid, index, craft index, cut, kw), and one hit
+    aircraft falling in a black smoke spiral."""
+    pos = []
+    for uid, sx, sy, dist, hd, pitch, bank in craft:
+        p = at_screen(sx, sy, dist, cam_h, horizon)
+        put(land, uid, p.x, p.y, hd, z=p.z, tilt=(pitch, bank_to_cam(p.x, p.y, hd, bank) if bank else 0))
+        pos.append((p, K.forward(hd) * 3.5))
+    for i, (uid, k, ci, cut, kw) in enumerate(sams):
+        p, v = pos[ci]
+        sam_marker(land, rails[uid][k], p, v, 70 + i, cut=cut, **kw)
+    uid, sx, sy, dist, hd = hit
+    p = at_screen(sx, sy, dist, cam_h, horizon)
+    put(land, uid, p.x, p.y, hd, z=p.z, wreck=True, tilt=(-40, 60))
+    line([tuple(p + Vector((math.cos(a) * 3, math.sin(a) * 3, 2.2 * a))) for a in [i * 0.6 for i in range(16)]], 1.2, "smoke")
+
+
+def ka3_option_a(scene):
+    """A: "Converging". The Providence left of centre fires; its
+    interceptor curves up and right while the nuke comes down from the upper
+    right; they meet high in the middle. A Vigil fires in the foreground on
+    the left; a Manticore banks past close on the right."""
+    horizon = 0.58
+    land = green_land()
+    land.build(-420, 420, -10, 560, 3.0)
+    cam_h = land.z(0, 0) + 4.5
+    K.cam_rig(scene, cam_h, 0.05 + 0.9 * horizon, RENDER_LENS, y=0.0)
+    K.sun(50, 80, 4.0, (255, 255, 255), angle=1.0)
+    K.fill(0.8, (200, 210, 230))
+    base = [("ord_vigil", 0.06, 26, 30, None), ("ord_providence", 0.38, 72, 200, PROVIDENCE_OPEN),
+            ("ord_aegis", 0.2, 50, 20, None), ("ord_aegis", 0.62, 104, 0, None), ("ord_lumen", 0.55, 58, -20, None),
+            ("ord_lumen", 0.88, 70, -40, None), ("ord_phalanx", 0.74, 96, 0, None), ("ord_sanctum", 0.92, 120, 0, None),
+            ("ord_vigil", 0.46, 120, 0, None)]
+    keep, rails = ka3_base(land, base)
+    scatter(land, ["ord_halo", "ord_lancer"], (0.05, 0.95, 40, 140), 6, 10, 71, keep=keep, screen=True)
+    prov = Vector((X(0.38, 72), 72, 0))
+    meet = ka3_story(land, cam_h, horizon, prov, (0.68, 0.2, 380), (0.56, 0.25, 330), 1)
+    line([rails["ord_vigil"][0], (rails["ord_vigil"][0][0] + 2, rails["ord_vigil"][0][1] + 4, rails["ord_vigil"][0][2] + 9)], 0.5)  # the foreground missile leaving the tube
+    craft = [("chs_manticore", 0.82, 0.38, 20, 230, -10, 35), ("chs_harpy", 0.28, 0.36, 80, 120, 0, 25),
+             ("chs_plague", 0.44, 0.32, 150, 160, 0, 0), ("chs_plague", 0.5, 0.3, 170, 165, 0, 0),
+             ("chs_behemoth", 0.72, 0.27, 240, 190, 0, 0), ("chs_wasp", 0.16, 0.46, 60, 150, 8, 0),
+             ("chs_wasp", 0.9, 0.48, 70, 210, 8, 0), ("chs_wraith", 0.86, 0.22, 200, 200, 0, 20)]
+    sams = [("ord_aegis", 0, 1, 0.8, {"turn": 10}), ("ord_aegis", 1, 4, 0.6, {"turn": 9}), ("ord_vigil", 1, 2, 0.7, {"turn": 12}),
+            ("ord_vigil", 0, 5, 0.5, {"turn": 13})]
+    ka3_air(land, cam_h, horizon, craft, sams, rails, ("chs_harpy", 0.32, 0.3, 120, 140))
+    for sx, y in ((0.3, 110), (0.8, 140)):
+        smoke_post(land, X(sx, y), y, h=40, r=1.6)
+    return {"focal": meet, "plan": (-220, 220, -10, 600)}
+
+
+def ka3_option_b(scene):
+    """B: "Up through the raid". The camera tilted up: the sky and the raid
+    fill most of the frame; the Providence on the right fires, the nuke
+    comes down from the upper left; a Harpy banks past close on the left; a
+    Vigil fires in the foreground on the right."""
+    horizon = 0.72
+    land = green_land()
+    land.build(-420, 420, -10, 560, 3.0)
+    cam_h = land.z(0, 0) + 3.5
+    K.cam_rig(scene, cam_h, 0.05 + 0.9 * horizon, RENDER_LENS, y=0.0)
+    K.sun(50, -70, 4.0, (255, 255, 255), angle=1.0)
+    K.fill(0.8, (200, 210, 230))
+    base = [("ord_vigil", 0.94, 26, -30, None), ("ord_providence", 0.66, 66, 160, PROVIDENCE_OPEN),
+            ("ord_aegis", 0.36, 52, 10, None), ("ord_lumen", 0.18, 60, 20, None), ("ord_lumen", 0.5, 80, 0, None),
+            ("ord_phalanx", 0.28, 100, 0, None), ("ord_sanctum", 0.84, 110, 0, None), ("ord_aegis", 0.08, 96, 30, None)]
+    keep, rails = ka3_base(land, base)
+    scatter(land, ["ord_halo", "ord_lancer"], (0.05, 0.95, 40, 140), 5, 10, 81, keep=keep, screen=True)
+    prov = Vector((X(0.66, 66), 66, 0))
+    meet = ka3_story(land, cam_h, horizon, prov, (0.3, 0.16, 380), (0.42, 0.22, 330), 2)
+    line([rails["ord_vigil"][0], (rails["ord_vigil"][0][0] - 2, rails["ord_vigil"][0][1] + 4, rails["ord_vigil"][0][2] + 9)], 0.5)
+    craft = [("chs_harpy", 0.18, 0.42, 18, 110, -10, 35), ("chs_manticore", 0.7, 0.4, 70, 220, 0, 25),
+             ("chs_plague", 0.52, 0.34, 140, 200, 0, 0), ("chs_plague", 0.6, 0.31, 160, 195, 0, 0),
+             ("chs_behemoth", 0.82, 0.24, 230, 200, 0, 0), ("chs_wasp", 0.92, 0.58, 50, 220, 8, 0),
+             ("chs_wasp", 0.44, 0.6, 70, 180, 8, 0), ("chs_wraith", 0.12, 0.26, 190, 150, 0, 20)]
+    sams = [("ord_aegis", 0, 2, 0.8, {"turn": 10}), ("ord_aegis", 1, 7, 0.6, {"turn": 9}), ("ord_vigil", 0, 1, 0.7, {"turn": 12}),
+            ("ord_lumen", 0, 4, 0.5, {"turn": 13})]
+    ka3_air(land, cam_h, horizon, craft, sams, rails, ("chs_harpy", 0.74, 0.3, 110, 220))
+    for sx, y in ((0.3, 110), (0.6, 140)):
+        smoke_post(land, X(sx, y), y, h=40, r=1.6)
+    return {"focal": meet, "plan": (-220, 220, -10, 600)}
+
+
+def ka3_option_c(scene):
+    """C: "Vertical line". A slightly higher view over the base, the
+    Providence in the centre: the nuke falls almost straight down toward it
+    and the interceptor climbs straight up, one line up the middle; the
+    shield dome left, the flak right, a Vigil firing in the foreground left,
+    a Manticore banking past close on the right."""
+    horizon = 0.5
+    land = green_land()
+    land.build(-420, 420, -10, 560, 3.0)
+    cam_h = land.z(0, 0) + 8.0
+    K.cam_rig(scene, cam_h, 0.05 + 0.9 * horizon, RENDER_LENS, y=0.0)
+    K.sun(50, 75, 4.0, (255, 255, 255), angle=1.0)
+    K.fill(0.8, (200, 210, 230))
+    base = [("ord_vigil", 0.06, 28, 30, None), ("ord_providence", 0.5, 88, 180, PROVIDENCE_OPEN),
+            ("ord_phalanx", 0.22, 80, 0, None), ("ord_aegis", 0.36, 60, 20, None), ("ord_aegis", 0.7, 66, -20, None),
+            ("ord_lumen", 0.8, 50, -30, None), ("ord_lumen", 0.9, 96, -40, None), ("ord_sanctum", 0.64, 120, 0, None),
+            ("ord_vigil", 0.3, 120, 0, None)]
+    keep, rails = ka3_base(land, base)
+    scatter(land, ["ord_halo", "ord_lancer"], (0.05, 0.95, 40, 150), 6, 10, 91, keep=keep, screen=True)
+    prov = Vector((X(0.5, 88), 88, 0))
+    meet = ka3_story(land, cam_h, horizon, prov, (0.53, 0.15, 380), (0.5, 0.22, 320), 3)
+    line([rails["ord_vigil"][0], (rails["ord_vigil"][0][0] + 2, rails["ord_vigil"][0][1] + 4, rails["ord_vigil"][0][2] + 9)], 0.5)
+    craft = [("chs_manticore", 0.82, 0.32, 22, 230, -10, 35), ("chs_harpy", 0.26, 0.3, 80, 120, 0, 25),
+             ("chs_plague", 0.36, 0.26, 150, 160, 0, 0), ("chs_plague", 0.66, 0.24, 160, 195, 0, 0),
+             ("chs_behemoth", 0.74, 0.18, 240, 200, 0, 0), ("chs_wasp", 0.12, 0.4, 60, 150, 8, 0),
+             ("chs_wasp", 0.94, 0.42, 70, 210, 8, 0), ("chs_wraith", 0.1, 0.2, 200, 160, 0, 20)]
+    sams = [("ord_aegis", 0, 1, 0.8, {"turn": 10}), ("ord_aegis", 1, 3, 0.6, {"turn": 9}), ("ord_vigil", 1, 2, 0.7, {"turn": 12}),
+            ("ord_vigil", 0, 5, 0.5, {"turn": 13})]
+    ka3_air(land, cam_h, horizon, craft, sams, rails, ("chs_harpy", 0.4, 0.26, 120, 140))
+    for sx, y in ((0.4, 110), (0.82, 150)):
+        smoke_post(land, X(sx, y), y, h=40, r=1.6)
+    return {"focal": meet, "plan": (-220, 220, -10, 600)}
+
+
+OPTIONS.update({"ka3_a": ka3_option_a, "ka3_b": ka3_option_b, "ka3_c": ka3_option_c})
+
+
 if __name__ == "__main__":
     for name in sys.argv[sys.argv.index("--") + 1:]:
         run(name, OPTIONS[name])
