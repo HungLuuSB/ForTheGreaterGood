@@ -38,3 +38,10 @@ __pycache__/
 
 # Node packages for tools/icons
 node_modules/
+
+# Baked map ground (C-167): the FBX parts and previews are rebuilt by
+# assets/maps/tools/ground.py from the committed ground.json; the uploads'
+# IDs are in assets/maps/<name>/roblox_assets.json
+/assets/maps/*/export/*.fbx
+/assets/maps/*/export/preview_*.png
+/assets/maps/materials/*/preview_tile.png

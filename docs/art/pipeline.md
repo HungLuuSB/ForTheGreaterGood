@@ -162,3 +162,16 @@ After every upload (or a status change): `python assets/models/tools/manifest.py
 2. rig it with `Batch.run` in "FTGG Art" (`ReplicatedStorage.ModelReview.<id>_wreck_bar`);
 3. `record_assets.py` writes it under `wreck` in the unit's `roblox_assets.json`;
 4. then `manifest.py` as above.
+
+## Map ground (C-167, M-35)
+
+The named maps' ground as mesh tiles (contract `docs/contracts/map-ground.md`):
+
+1. `lune run export_ground map:<name> assets/maps` writes `assets/maps/<name>/ground.json` (the game's own heights and ground types).
+2. Textures, once per ground type: `"<blender>/5.2/python/bin/python.exe" assets/maps/tools/textures.py <type ...>` writes `assets/maps/materials/<type>/` (tileable, 32 studs a repeat).
+3. Bake: `blender -b --factory-startup --python-exit-code 1 -P assets/maps/tools/ground.py -- <name>` writes the FBX parts (at most 120k triangles each), the rig `export/ground.json` and previews. A map's look (strata, boulders) is its entry in `STYLES`.
+4. Upload: `python assets/maps/tools/upload.py <name> 11846985184` (parts as Models, new ground types' maps as Decals).
+5. In "FTGG Art", `InsertService:LoadAsset` on each part gives the MeshParts by name (their sizes clamp at 2048, which doesn't matter: the client sets each size from the manifest); record the IDs in `assets/maps/<name>/roblox_assets.json` (`meshes` by name), the Decals' images in `assets/maps/materials/roblox_assets.json` (`maps`). Identical meshes come back with their old IDs.
+6. `python assets/models/tools/manifest.py`, `lune run mesh_materials`, same commit. Review build: `Workspace.GroundReview.<name>` in "FTGG Art" (offset x +6000).
+
+Fresh ground maps fail with HTTP 502 like unit maps; one SurfaceAppearance (`ground_cliff`) stayed grey although every map reported Success, and re-uploading all four of its maps fixed it.
