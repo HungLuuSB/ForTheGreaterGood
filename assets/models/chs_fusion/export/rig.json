@@ -1,0 +1,150 @@
+{
+  "id": "chs_fusion",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        9.49,
+        0.0
+      ],
+      "size": [
+        31.5286,
+        18.98,
+        31.5286
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        0.0,
+        3.475,
+        -5.05
+      ],
+      "size": [
+        3.5,
+        2.05,
+        0.5
+      ],
+      "pivot": [
+        0.0,
+        8.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "core"
+  ],
+  "visualPieces": [
+    "core"
+  ],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        8.825,
+        0.0
+      ],
+      "size": [
+        27.3,
+        15.85,
+        27.3
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        5.5975,
+        10.575,
+        0.1165
+      ],
+      "size": [
+        14.495,
+        16.75,
+        21.6329
+      ]
+    },
+    {
+      "name": "core_glow_power",
+      "piece": "core",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        0.0,
+        8.025,
+        -0.0191
+      ],
+      "size": [
+        10.28,
+        10.65,
+        10.1619
+      ]
+    }
+  ],
+  "glowShare": 0.0408,
+  "triangles": {
+    "base": 4400,
+    "core": 336,
+    "total": 4736
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

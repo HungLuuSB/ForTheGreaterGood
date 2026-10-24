@@ -160,6 +160,11 @@ def build_base(p):
     # the containment sphere: a glowing core, pulsing
     with p.sub("core", CORE, "pulse", (0, 1, 0)):
         sphere(p, CORE, R_CORE, "power", seg=16, rings=10)
+        # solid fittings on the core itself: with only glow faces, its mesh is empty once the
+        # glow parts are split off, and the import drops it (the rig then misses `core`)
+        p.cylinder("y", CORE, R_CORE * 1.03, 0.28, 24, "trim")
+        for sy in (-1, 1):
+            p.cylinder("y", (CORE[0], CORE[1] + sy * R_CORE * 0.97, CORE[2]), R_CORE * 0.3, 0.2, 12, "steel")
 
 
 def details_base(p):

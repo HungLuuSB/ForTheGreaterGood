@@ -1,0 +1,150 @@
+{
+  "id": "ord_beacon",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style painted sand-grey (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        7.975,
+        0.0
+      ],
+      "size": [
+        23.5396,
+        15.95,
+        23.5396
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        18.6676,
+        0.1473
+      ],
+      "size": [
+        12.4,
+        6.1353,
+        2.0407
+      ],
+      "pivot": [
+        0.0,
+        15.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "radar"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        8.435,
+        0.0
+      ],
+      "size": [
+        20.49,
+        15.27,
+        20.49
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        130,
+        225,
+        255
+      ],
+      "strength": 2.5,
+      "center": [
+        -3.88,
+        3.6,
+        6.2
+      ],
+      "size": [
+        0.05,
+        0.4,
+        2.0
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        90,
+        210,
+        255
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        19.1457,
+        -0.1507
+      ],
+      "size": [
+        11.8,
+        4.8985,
+        1.4237
+      ]
+    }
+  ],
+  "glowShare": 0.025,
+  "triangles": {
+    "base": 2652,
+    "radar": 864,
+    "total": 3516
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

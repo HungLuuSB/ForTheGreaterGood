@@ -1,0 +1,29 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "T2 structure at the S-104 size (queue item 5): 3516 triangles, glow share 2.5%",
+  "bar": {
+    "model": "rbxassetid://127546778823943",
+    "meshes": {
+      "base": "rbxassetid://111432598552242",
+      "base_glow_power": "rbxassetid://126182219928982",
+      "base_glow_running": "rbxassetid://139060679440839",
+      "radar": "rbxassetid://73047769113858",
+      "radar_glow_running": "rbxassetid://137074023047728"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73883265989033",
+      "RGH": "rbxassetid://71807584298577",
+      "NOR": "rbxassetid://110611992125167",
+      "MTL": "rbxassetid://75207725545292",
+      "EMI": "rbxassetid://86596431398293"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://123363725362888",
+      "NOR": "rbxassetid://137455710659813",
+      "RGH": "rbxassetid://95760119390497",
+      "MTL": "rbxassetid://74561281766749",
+      "EMI": "rbxassetid://139081488351105"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_beacon_bar in FTGG Art"
+  }
+}

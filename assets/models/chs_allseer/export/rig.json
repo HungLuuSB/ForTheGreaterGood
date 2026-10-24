@@ -1,0 +1,150 @@
+{
+  "id": "chs_allseer",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style gunmetal (M-15)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0,
+        7.85,
+        0.0
+      ],
+      "size": [
+        23.551,
+        15.7,
+        23.551
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        0.0,
+        17.9315,
+        0.0985
+      ],
+      "size": [
+        12.0,
+        5.063,
+        1.7532
+      ],
+      "pivot": [
+        0.0,
+        15.4,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [
+    "base",
+    "radar"
+  ],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [
+    {
+      "name": "base_glow_running",
+      "piece": "base",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        8.065,
+        0.0
+      ],
+      "size": [
+        23.69,
+        15.53,
+        18.4
+      ]
+    },
+    {
+      "name": "base_glow_power",
+      "piece": "base",
+      "channel": "power",
+      "tint": [
+        255,
+        125,
+        35
+      ],
+      "strength": 2.5,
+      "center": [
+        -0.2475,
+        2.9,
+        1.7332
+      ],
+      "size": [
+        15.305,
+        3.16,
+        11.4663
+      ]
+    },
+    {
+      "name": "radar_glow_running",
+      "piece": "radar",
+      "channel": "running",
+      "tint": [
+        255,
+        150,
+        55
+      ],
+      "strength": 2.0,
+      "center": [
+        0.0,
+        18.2595,
+        -0.2222
+      ],
+      "size": [
+        11.5,
+        4.0138,
+        1.0934
+      ]
+    }
+  ],
+  "glowShare": 0.0227,
+  "triangles": {
+    "base": 2730,
+    "radar": 476,
+    "total": 3206
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "T2 structure at the S-104 size (queue item 5): 7866 triangles, glow share 1.9%",
+  "bar": {
+    "model": "rbxassetid://89780490836705",
+    "meshes": {
+      "base": "rbxassetid://100192900363648",
+      "base_glow_power": "rbxassetid://103311510010314",
+      "base_glow_running": "rbxassetid://132274718448479",
+      "jib": "rbxassetid://95962210535588",
+      "jib1": "rbxassetid://129054947553235",
+      "jib1_glow_power": "rbxassetid://122807382196563",
+      "jib1_glow_running": "rbxassetid://105587202221701",
+      "jib2": "rbxassetid://89551838609626",
+      "jib2_glow_power": "rbxassetid://74435172823848",
+      "jib2_glow_running": "rbxassetid://81482624923858",
+      "jib_glow_power": "rbxassetid://76046958528820",
+      "jib_glow_running": "rbxassetid://107366859268136"
+    },
+    "decals": {
+      "ALB": "rbxassetid://92189219892460",
+      "RGH": "rbxassetid://119935020205358",
+      "NOR": "rbxassetid://75136151478794",
+      "MTL": "rbxassetid://82672078684098",
+      "EMI": "rbxassetid://82403529586478"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://76923849717505",
+      "NOR": "rbxassetid://93324133971801",
+      "RGH": "rbxassetid://123124280463067",
+      "MTL": "rbxassetid://96702027678796",
+      "EMI": "rbxassetid://85619835119523"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_advshipyard_bar in FTGG Art"
+  }
+}
