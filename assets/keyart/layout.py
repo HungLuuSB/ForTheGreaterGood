@@ -494,6 +494,196 @@ def option_c(scene):
 
 OPTIONS = {"ka1_a": option_a, "ka1_b": option_b, "ka1_c": option_c}
 
+# ---------------------------------------------------------------------------
+# Key art 2 options: an Order air-defence site on a rocky headland at dusk,
+# a Chaos air raid coming in over the sea with the low sun behind it
+# ---------------------------------------------------------------------------
+
+def X(sx, y):
+    """The world x at forward distance y that sits at `sx` across the visible frame."""
+    return (sx - 0.5) * 2 * TAN * y
+
+
+class CliffLand(Land):
+    """A rocky plateau `top` studs over the sea, dropping in a cliff at the
+    coast (the signed distance `coast(x, y)`, positive inland)."""
+
+    def __init__(self, coast, top=22.0, extra=None, amp=1.2, fall=0.0):
+        super().__init__(coast, extra, amp)
+        self.top, self.fall = top, fall  # `fall`: the plateau sinks this much per stud forward (a headland tilting to the sea)
+
+    def z(self, x, y):
+        s = self.coast(x, y)
+        top = max(4.0, self.top - self.fall * max(0.0, y))
+        if s < 0:
+            return min(-2.0, s * 0.5) if s < -6 else top * smooth(-6, 0, s) - 2.0 * (1 - smooth(-6, 0, s))
+        rocks = self.amp * noise.fractal(Vector((x / 40.0, y / 40.0, 3.0)), 0.6, 2.0, 4) \
+            + 0.7 * noise.noise(Vector((x / 9.0, y / 9.0, 4.0)))
+        return top * smooth(0, 4, s) + rocks * smooth(0, 15, s) + self.extra(x, y)
+
+
+def boulders(land, region, count, seed, size=(1.0, 3.5)):
+    rng = random.Random(seed)
+    x0, x1, y0, y1 = region
+    for _ in range(count):
+        y = rng.uniform(y0, y1)
+        x = X(rng.uniform(x0, x1), y)
+        s = rng.uniform(*size)
+        o = K.prim("ico_sphere", "mid", subdivisions=1, radius=1.0, location=(x, y, land.z(x, y) + s * 0.2))
+        o.scale = (s * rng.uniform(0.8, 1.5), s * rng.uniform(0.7, 1.2), s * rng.uniform(0.5, 0.9))
+        o.rotation_euler = Euler((rng.random(), rng.random(), rng.random() * 6))
+        K.set_mat(o, clay("ground"))
+
+
+ORDER_AA = ["ord_halo", "ord_halo", "ord_lancer", "ord_paladin"]
+
+
+def ka2_site(land, sites, extra_units, seed):
+    """The site: (uid, sx, y, heading) placements by frame position, then mobile
+    air defence and tanks scattered among them. Returns the launch rails."""
+    keep = []
+    rails = {}
+    for uid, sx, y, hd in sites:
+        x = X(sx, y)
+        put(land, uid, x, y, hd)
+        keep.append((x, y, 16))
+        rails[uid + f"@{sx}"] = (x, y, land.z(x, y) + 4)
+    for uids, region, count, hd in extra_units:
+        scatter(land, uids, region, count, hd, seed, keep=keep, screen=True)
+        seed += 1
+    return rails
+
+
+def raid(land, top, craft, sams, kills, rails):
+    """Aircraft (uid, sx, y, z over the plateau, heading, pitch, bank),
+    SAM markers (rail key, aircraft index, cut, kw), hit aircraft falling."""
+    pos = []
+    for uid, sx, y, z, hd, pitch, bank in craft:
+        x = X(sx, y)
+        put(land, uid, x, y, hd, z=z + top, tilt=(pitch, bank))
+        pos.append((Vector((x, y, z + top)), K.forward(hd) * 3.5))
+    for i, (rail, ti, cut, kw) in enumerate(sams):
+        p, v = pos[ti]
+        sam_marker(land, rails[rail], p, v, 60 + i, cut=cut, **kw)
+    for uid, sx, y, z, hd in kills:
+        x = X(sx, y)
+        put(land, uid, x, y, hd, z=z + top, wreck=True, tilt=(-30, 40))
+        line([(x, y, z + top), (x - 10, y + 8, z + top + 16), (x - 24, y + 18, z + top + 26)], 2.0, "smoke")
+    return pos
+
+
+def ka2_option_a(scene):
+    """A: "Volley". Camera low among the launchers on the headland; the
+    nearest Seraph firing on the left third is the focal point; trails fan
+    up and converge on a Behemoth formation against the sun over the sea;
+    a Manticore dives close on the right; the Commander directs the site."""
+    top, horizon = 22.0, 0.5
+    land = CliffLand(lambda x, y: 170 + 10 * math.sin(x / 70) - y, top=top)
+    land.build(-380, 380, -10, 260, 3.0)
+    cam_h = land.z(0, 0) + 4.0
+    K.cam_rig(scene, cam_h, 0.05 + 0.9 * horizon, RENDER_LENS, y=0.0)
+    K.sun(5, -18, 4.0, (255, 255, 255), angle=1.0)
+    K.fill(0.6, (200, 210, 230))
+    sun_disc(scene, -18, 5)
+    sites = [("ord_seraph", 0.3, 22, 20), ("ord_sanction", 0.06, 46, 30), ("ord_vigil", 0.52, 40, 0),
+             ("ord_lumen", 0.74, 46, -20), ("ord_phalanx", 0.2, 80, 0), ("ord_citadel", 0.46, 96, 180),
+             ("ord_oracle", 0.64, 78, 30), ("ord_watchtower", 0.9, 92, 0), ("ord_sovereign", 0.4, 60, 20)]
+    rails = ka2_site(land, sites, [(ORDER_AA, (0.05, 0.95, 30, 120), 8, 10)], 11)
+    for uid, sx, y, hd in (("ord_vigil", 0.12, 26, 120), ("ord_halo", 0.83, 30, 200)):
+        put(land, uid, X(sx, y), y, hd, wreck=True)  # bomb damage
+    for uid, sx, y, hd in (("chs_kraken", 0.25, 300, 80), ("chs_leviathan", 0.55, 330, 95), ("chs_siren", 0.8, 290, 100)):
+        put(land, uid, X(sx, y), y, hd, z=0.0)
+    craft = [("chs_behemoth", 0.42, 230, 58, 180, 0, 0), ("chs_behemoth", 0.56, 250, 64, 185, 0, 0),
+             ("chs_behemoth", 0.33, 260, 70, 175, 0, 0), ("chs_plague", 0.66, 200, 46, 190, 0, 10),
+             ("chs_banshee", 0.2, 180, 40, 160, 0, -20), ("chs_harpy", 0.86, 160, 34, 210, 0, 25)]
+    close = at_screen(0.74, 0.3, 23.0, cam_h, horizon)
+    put(land, "chs_manticore", close.x, close.y, 200, z=close.z, tilt=(-14, bank_to_cam(close.x, close.y, 200, 30)))
+    sams = [("ord_seraph@0.3", 0, 0.8, {"turn": 9}), ("ord_seraph@0.3", 1, 0.65, {"turn": 11}),
+            ("ord_vigil@0.52", 0, 0.75, {"turn": 12}), ("ord_sanction@0.06", 2, 0.7, {"turn": 8}),
+            ("ord_vigil@0.52", 3, 0.6, {"turn": 13}), ("ord_sanction@0.06", 4, 0.85, {"turn": 10})]
+    raid(land, top, craft, sams, [("chs_behemoth", 0.62, 220, 44, 200)], rails)
+    boulders(land, (-0.05, 1.05, 12, 140), 40, 21)
+    for sx, y in ((0.36, 70), (0.7, 104), (0.15, 60), (0.55, 120), (0.85, 260)):
+        smoke_post(land if y < 160 else None, X(sx, y), y)
+    for sx, y, r in ((0.6, 54, 3), (0.28, 88, 2.5), (0.8, 66, 3), (0.42, 110, 2.5)):
+        crater(land, X(sx, y), y, r)
+    return {"focal": Vector(rails["ord_seraph@0.3"]) - Vector((0, 0, 1.5)), "plan": (-200, 200, -10, 360)}
+
+
+def ka2_option_b(scene):
+    """B: "Bomber down". The camera low and tilted up; a Behemoth close
+    overhead on the right third, hit and breaking up, is the focal point;
+    the trails converge on it from the site below; the sun behind the raid
+    over the sea; the site and the Commander along the bottom third."""
+    top, horizon = 22.0, 0.66
+    land = CliffLand(lambda x, y: 150 + 10 * math.sin(x / 70) - y, top=top)
+    land.build(-380, 380, -10, 260, 3.0)
+    cam_h = land.z(0, 0) + 3.0
+    K.cam_rig(scene, cam_h, 0.05 + 0.9 * horizon, RENDER_LENS, y=0.0)
+    K.sun(5, 14, 4.0, (255, 255, 255), angle=1.0)
+    K.fill(0.6, (200, 210, 230))
+    sun_disc(scene, 14, 5)
+    sites = [("ord_seraph", 0.12, 40, 20), ("ord_vigil", 0.3, 34, 0), ("ord_lumen", 0.52, 52, -20),
+             ("ord_sanction", 0.82, 70, 0), ("ord_phalanx", 0.36, 90, 0), ("ord_oracle", 0.66, 96, 30),
+             ("ord_sovereign", 0.22, 62, 40)]
+    rails = ka2_site(land, sites, [(ORDER_AA, (0.02, 0.98, 30, 110), 7, 10)], 31)
+    for uid, sx, y, hd in (("chs_kraken", 0.4, 260, 80), ("chs_siren", 0.75, 240, 100)):
+        put(land, uid, X(sx, y), y, hd, z=0.0)
+    close = at_screen(0.68, 0.28, 32.0, cam_h, horizon)
+    put(land, "chs_behemoth", close.x, close.y, 190, z=close.z, wreck=True, tilt=(-18, 26))
+    line([tuple(close), tuple(close + Vector((-10, 12, 8))), tuple(close + Vector((-26, 30, 16)))], 3.0, "smoke")
+    craft = [("chs_behemoth", 0.3, 200, 70, 180, 0, 0), ("chs_behemoth", 0.48, 230, 76, 185, 0, 0),
+             ("chs_plague", 0.14, 170, 52, 160, 0, -15), ("chs_wraith", 0.88, 150, 44, 220, 0, 30),
+             ("chs_harpy", 0.56, 130, 36, 200, 0, 15)]
+    craft_pos = raid(land, top, craft, [("ord_seraph@0.12", 0, 0.8, {"turn": 9}), ("ord_lumen@0.52", 1, 0.7, {"turn": 12}),
+                                        ("ord_sanction@0.82", 3, 0.75, {"turn": 11}), ("ord_vigil@0.3", 4, 0.6, {"turn": 14})], [], rails)
+    for i, rail in enumerate(("ord_seraph@0.12", "ord_vigil@0.3", "ord_sanction@0.82")):
+        sam_marker(land, rails[rail], close, Vector((0, -3, 0)), 90 + i, cut=1.0, turn=10)
+    boulders(land, (-0.05, 1.05, 10, 130), 36, 41)
+    for sx, y in ((0.45, 70), (0.75, 110), (0.1, 90)):
+        smoke_post(land, X(sx, y), y)
+    return {"focal": close, "plan": (-200, 200, -10, 320)}
+
+
+def ka2_option_c(scene):
+    """C: "The ridge". The camera on the plateau behind the site, looking
+    out over the cliff edge: the sea fills a big band of the frame; the
+    Oracle radar and the Citadel on the cliff edge, silhouetted against the
+    sun over the sea, are the focal point on the right third; the raid comes
+    in over the water and the Chaos fleet fires from offshore."""
+    top, horizon = 30.0, 0.36
+    land = CliffLand(lambda x, y: 95 + 14 * math.sin(x / 60) - y, top=top, fall=0.22)  # the cliff is 9 studs at the edge
+    land.build(-380, 380, -10, 200, 3.0)
+    cam_h = land.z(0, 0) + 7.0
+    K.cam_rig(scene, cam_h, 0.05 + 0.9 * horizon, RENDER_LENS, y=0.0)
+    K.sun(4, 22, 4.0, (255, 255, 255), angle=1.0)
+    K.fill(0.6, (200, 210, 230))
+    sun_disc(scene, 22, 4)
+    sites = [("ord_oracle", 0.68, 74, 30), ("ord_citadel", 0.8, 86, 200), ("ord_seraph", 0.2, 34, 20),
+             ("ord_vigil", 0.42, 44, 0), ("ord_lumen", 0.56, 30, -20), ("ord_phalanx", 0.3, 70, 0),
+             ("ord_sanction", 0.08, 64, 30), ("ord_sovereign", 0.5, 56, 30)]
+    rails = ka2_site(land, sites, [(ORDER_AA, (0.02, 0.98, 24, 76), 6, 10)], 51)
+    for uid, sx, y, hd in (("chs_kraken", 0.2, 190, 70), ("chs_leviathan", 0.45, 230, 85), ("chs_siren", 0.62, 170, 95),
+                           ("chs_kraken", 0.86, 210, 110), ("ord_dominion", 0.04, 160, 60)):
+        put(land, uid, X(sx, y), y, hd, z=0.0)
+    craft = [("chs_behemoth", 0.4, 180, 40, 180, 0, 0), ("chs_behemoth", 0.55, 210, 46, 185, 0, 0),
+             ("chs_plague", 0.25, 150, 34, 165, 0, -10), ("chs_banshee", 0.7, 130, 30, 200, 0, 20),
+             ("chs_harpy", 0.9, 110, 24, 215, 0, 25)]
+    close = at_screen(0.24, 0.24, 24.0, cam_h, horizon)
+    put(land, "chs_manticore", close.x, close.y, 150, z=close.z, tilt=(-12, bank_to_cam(close.x, close.y, 150, 30)))
+    sams = [("ord_seraph@0.2", 0, 0.8, {"turn": 9}), ("ord_vigil@0.42", 1, 0.7, {"turn": 12}),
+            ("ord_sanction@0.08", 2, 0.75, {"turn": 10}), ("ord_lumen@0.56", 3, 0.6, {"turn": 13}),
+            ("ord_seraph@0.2", 4, 0.55, {"turn": 14})]
+    raid(land, top, craft, sams, [("chs_plague", 0.34, 120, 28, 170)], rails)
+    boulders(land, (-0.05, 1.05, 10, 90), 30, 61)
+    for sx, y in ((0.3, 50), (0.62, 66), (0.86, 190)):
+        smoke_post(land if y < 95 else None, X(sx, y), y)
+    return {"focal": Vector((X(0.72, 78), 78, land.z(X(0.72, 78), 78) + 5)), "plan": (-180, 180, -10, 260)}
+
+
+OPTIONS.update({"ka2_a": ka2_option_a, "ka2_b": ka2_option_b, "ka2_c": ka2_option_c})
+
+
 if __name__ == "__main__":
     for name in sys.argv[sys.argv.index("--") + 1:]:
         run(name, OPTIONS[name])

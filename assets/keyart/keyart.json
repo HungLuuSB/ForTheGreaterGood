@@ -1,0 +1,4 @@
+{
+  "_doc": "Key arts listed in the mesh manifest's keyArt (docs/contracts/key-art.md on m-lobby). One entry per art dir under assets/keyart/; listed only once its tiles are uploaded and their image IDs resolved (final/opencloud.json \"images\"). Status \"approved\" draws everywhere, \"review\" only in Studio.",
+  "ka2": {"name": "volley", "title": "Volley", "status": "approved"}
+}

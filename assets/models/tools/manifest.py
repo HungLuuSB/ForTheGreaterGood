@@ -28,6 +28,30 @@ BEAM = json.load(open(os.path.join(ROOT, "assets", "fx", "beam", "roblox_assets.
 # the honeycomb shell over the shield dome (M-30, fx.md "Honeycomb shell")
 SHELL_DIR = os.path.join(ROOT, "assets", "fx", "shield", "honeycomb")
 SHELL_NOTE = "honeycomb shell bands, waiting for the user's review"
+# key art with parallax layers (lobby contract docs/contracts/key-art.md, L-13): assets/keyart/keyart.json
+# lists the arts; each one's tiles are in assets/keyart/<dir>/final/opencloud.json once uploaded
+KEYART_DIR = os.path.join(ROOT, "assets", "keyart")
+KEYART_DEPTHS = [("sky", 0.08), ("far", 0.3), ("mid", 0.6), ("near", 1.0)]
+
+
+def key_arts():
+    """The uploaded key arts whose image IDs are resolved, as the viewer reads them."""
+    cfg = load(os.path.join(KEYART_DIR, "keyart.json"))
+    out = {}
+    for art, c in cfg.items():
+        if art.startswith("_"):
+            continue
+        path = os.path.join(KEYART_DIR, art, "final", "opencloud.json")
+        images = load(path).get("images", {}) if os.path.isfile(path) else {}
+        if not all(len(images.get(name, [])) == 4 for name, _ in KEYART_DEPTHS):
+            print(f"key art {art}: image IDs not resolved yet, left out")
+            continue
+        out[c["name"]] = {"status": c["status"], "title": c["title"], "size": [2048, 1152], "tiles": [2, 2],
+                          "layers": [{"name": name, "depth": depth, "images": images[name]} for name, depth in KEYART_DEPTHS]}
+        for name, _ in KEYART_DEPTHS:
+            for v in images[name]:
+                assert v.startswith("rbxassetid://"), (art, name, v)
+    return out
 BEAM_NOTE = "beam shot textures and recommended values (fx.md \"Beam shot\"), waiting for the user's review"
 
 # The user's approvals: only these are "approved" (the game draws them);
@@ -254,7 +278,7 @@ def main():
                         "center": b["center"], "size": b["size"]} for b in rig["bands"]]}
     if shell["status"] == "review":
         shell["note"] = SHELL_NOTE
-    body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell}, 0)
+    body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell, "keyArt": key_arts()}, 0)
     text = f"""--!strict
 -- Mesh manifest (M-23, docs/contracts/rig.md section 7): every BAR-style mesh
 -- by unit def ID, with its asset IDs, rig, team pieces and glow parts.
@@ -309,7 +333,17 @@ export type ShieldShell = {{
 	bands: {{ {{ name: string, mesh: string, opacity: number, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
 }}
 
-local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell }} = {{
+-- key art with parallax layers (lobby contract key-art.md, L-13): layers back
+-- to front, each cut into tiles (columns, rows) listed row by row from the top left
+export type KeyArt = {{
+	status: string,
+	title: string,
+	size: {{ number }},
+	tiles: {{ number }},
+	layers: {{ {{ name: string, depth: number, images: {{ string }} }} }},
+}}
+
+local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell, keyArt: {{ [string]: KeyArt }} }} = {{
 	glowMask = "{GLOW_MASK}",
 	textures = {lua(TEXTURES, 1)},
 {body[2:-2]}

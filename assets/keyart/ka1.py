@@ -195,8 +195,14 @@ def haze_box(density=0.00015):
 # Terrain, foreground
 # ---------------------------------------------------------------------------
 
+GROUND_MATERIAL = None  # a scene may swap in its own ground material (fade -> material); sand by default
+SEA_FROM = 150.0  # where the sea plane starts (under the land until the coast)
+
+
 def terrain(land, layer, x0, x1, y0, y1, step, fade=None, sea=True):
-    """The land as one mesh with the sand material and the craters' scorch."""
+    """The land as one mesh with the ground material and the craters'
+    scorch; a layer's copy (sea=False) leaves out what lies under water,
+    since the sea is only in the sky layer."""
     bm = bmesh.new()
     nx, ny = int((x1 - x0) / step) + 1, int((y1 - y0) / step) + 1
     verts, scorch = [], []
@@ -208,7 +214,10 @@ def terrain(land, layer, x0, x1, y0, y1, step, fade=None, sea=True):
     for j in range(ny - 1):
         for i in range(nx - 1):
             a = j * nx + i
-            bm.faces.new((verts[a], verts[a + 1], verts[a + nx + 1], verts[a + nx]))
+            quad = (verts[a], verts[a + 1], verts[a + nx + 1], verts[a + nx])
+            if not sea and all(v.co.z < -0.3 for v in quad):
+                continue
+            bm.faces.new(quad)
     me = bpy.data.meshes.new("sand")
     bm.to_mesh(me)
     bm.free()
@@ -217,13 +226,13 @@ def terrain(land, layer, x0, x1, y0, y1, step, fade=None, sea=True):
     at = me.attributes.new("scorch", "FLOAT", "POINT")
     at.data.foreach_set("value", scorch)
     o = bpy.data.objects.new("sand", me)
-    me.materials.append(sand_material(fade))
+    me.materials.append((GROUND_MATERIAL or sand_material)(fade))
     K.link(o, layer)
     if not sea:
         return o
     sea = bpy.data.meshes.new("sea")
     bm = bmesh.new()
-    for v in ((-6000, 150, 0), (6000, 150, 0), (6000, 9000, 0), (-6000, 9000, 0)):
+    for v in ((-6000, SEA_FROM, 0), (6000, SEA_FROM, 0), (6000, 9000, 0), (-6000, 9000, 0)):
         bm.verts.new(v)
     bm.faces.new(bm.verts)
     bm.to_mesh(sea)
