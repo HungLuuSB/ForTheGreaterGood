@@ -1,0 +1,55 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-149 point defence (Sanctum / Basilisk) and the vertical-launch SAM redesign (Aegis / Wyvern), 2026-10-24: 5672 triangles, glow share 2.3%",
+  "bar": {
+    "model": "rbxassetid://83468689593568",
+    "meshes": {
+      "base": "rbxassetid://79864354898412",
+      "base_glow_power": "rbxassetid://136225691839778",
+      "base_glow_running": "rbxassetid://71568530756040",
+      "launcher": "rbxassetid://83428143442598",
+      "launcher_glow_weapon": "rbxassetid://73055949462285",
+      "radar": "rbxassetid://76839806101699",
+      "radar_glow_head": "rbxassetid://113469398041751"
+    },
+    "decals": {
+      "ALB": "rbxassetid://96875644850142",
+      "RGH": "rbxassetid://116279400838586",
+      "NOR": "rbxassetid://119147800658567",
+      "MTL": "rbxassetid://78174036149873",
+      "EMI": "rbxassetid://128068213115576"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://89145585107282",
+      "NOR": "rbxassetid://72500144809376",
+      "RGH": "rbxassetid://72954886525909",
+      "MTL": "rbxassetid://75648342826244",
+      "EMI": "rbxassetid://113850684380475"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_basilisk_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://129924439251376",
+    "meshes": {
+      "base": "rbxassetid://82380622244963",
+      "launcher": "rbxassetid://72826811255047",
+      "radar": "rbxassetid://136276186907433"
+    },
+    "decals": {
+      "ALB": "rbxassetid://76818306740061",
+      "RGH": "rbxassetid://111428699351644",
+      "NOR": "rbxassetid://119524550450644",
+      "MTL": "rbxassetid://103183731928066",
+      "EMI": "rbxassetid://129032068329590"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75671341883188",
+      "NOR": "rbxassetid://115612628578242",
+      "RGH": "rbxassetid://136057452629511",
+      "MTL": "rbxassetid://131071558477987",
+      "EMI": "rbxassetid://100115293829445"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_basilisk_wreck_bar in FTGG Art",
+    "revision": "S-149 point defence (Sanctum / Basilisk) and the vertical-launch SAM redesign (Aegis / Wyvern), 2026-10-24: 4024 triangles"
+  }
+}

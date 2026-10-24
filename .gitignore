@@ -34,6 +34,7 @@ __pycache__/
 /assets/reference/**/*.webp
 /assets/reference/**/*.gif
 /assets/reference/**/*.mp4
+/assets/reference/**/*.html
 
 # Node packages for tools/icons
 node_modules/
