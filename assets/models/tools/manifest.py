@@ -60,7 +60,6 @@ def shield_energy():
                       "hit": [tex[f"hit_{k}"] for k in range(1, SHIELD_ENERGY["counts"]["hitFrames"] + 1)]},
          "bands": [{"name": f"Band_{k}", "theta": [round((k - 1) * step, 4), round(k * step, 4)], **part(f"Band_{k}")}
                    for k in range(1, spec["bands"] + 1)],
-         "hexGrid": part("HexGrid"),  # unused since the idle honeycomb went (C-189); goes once the client spec stops checking it
          "hitCap": {**part("HitCap"), "halfAngle": spec["capHalfAngle"]},
          **SHIELD_ENERGY}
     if e["status"] == "review":
@@ -396,7 +395,6 @@ export type ShieldEnergy = {{
 		hit: {{ string }},
 	}},
 	bands: {{ {{ name: string, mesh: string, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
-	hexGrid: EnergyPart,
 	hitCap: {{ mesh: string, center: Vec3, size: Vec3, halfAngle: number }},
 	timing: {{ [string]: number }},
 	counts: {{ [string]: number }},
