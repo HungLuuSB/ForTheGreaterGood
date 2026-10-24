@@ -19,6 +19,9 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **State buttons show every state (C-210, your request):** three segments under Fire / Move state (red, yellow, green), two under Repeat, On / Off and priority (red left, green right); the current one lit. `debug_out/screens/c210_state_segments_x2.jpg`.
 - **The Canyon's mesh ground (C-209, models-C's 08b9889):** wired and checked in Studio: it builds in ~10 s and is sharp right after a minimap jump; clicks over mesas now land on the ground. Its textures draw flat white in the match place, so models-C is looking at them before your review. Side-by-side shots: `debug_out/screens/c209_canyon_*.jpg` (voxel vs mesh, close and after a jump).
 - Ready to merge: `94be98c` (m-models 08b9889 merged in 13b9a3c; C-209, C-210; test_client 295, build passed)
+- **Radar coverage (C-207, reference 6):** while you place a radar, select one, or press N, your radar coverage shows as a translucent green fill with softer lighter rings, under the fog and on the minimap. It follows the server's circles until sim-A makes radar terrain-shaped (request 66). Screenshots: `debug_out/screens/c207_radar_fill_minimap.jpg`, `c207_radar_fill_placing.jpg`.
+- **Canyon textures fixed by the Studio restart** (models-C's diagnosis): the mesh ground is textured and sharp after a jump (`c209_canyon_mesh_close.jpg`, `c209_canyon_mesh_after_jump.jpg`). Still to fix: in unexplored areas the fog blanket sits flat over the mesa tops at the sim's blocky height, showing as grey squares above the rounded baked mesas.
+- Ready to merge: `84ef26e` (main 1b8da68 merged in a439502: S-158..S-160; C-207; test_client 298, build passed)
 - Ready to merge: `196d8a7` (main f04d534 merged in 3d5fbf4, protocol 34; C-204 watchdog profile and speed fix (src/roblox), C-205, C-206, C-208; test 496, test_client 295, build passed)
 
 ## Summary (2026-10-24, point defence; new icon sheet)
