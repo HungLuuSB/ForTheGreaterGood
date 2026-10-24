@@ -1,0 +1,27 @@
+{
+  "note": "Shield energy column and dome waves (the user's redesign 2026-10-24, docs/contracts/fx.md \"Energy column\" and \"Dome waves\"): uploaded through Open Cloud (export/opencloud.json: the FBX model and the texture Decals), mesh IDs read from the imported MeshParts and image IDs from the Decals in FTGG Art. Reference: Workspace.ShieldWaveReference.",
+  "textures": {
+    "column_core": "rbxassetid://72593827340445",
+    "wave": "rbxassetid://102592901781774",
+    "column_swirl": "rbxassetid://80810982556945",
+    "column_glow": "rbxassetid://75493024903042"
+  },
+  "meshes": {
+    "wave_1": "rbxassetid://104446069607297",
+    "wave_2": "rbxassetid://103742965936446",
+    "wave_3": "rbxassetid://129982328368873",
+    "wave_4": "rbxassetid://115498888583620",
+    "wave_5": "rbxassetid://103111624491589",
+    "wave_6": "rbxassetid://75097348011542",
+    "wave_7": "rbxassetid://96750377131812",
+    "wave_8": "rbxassetid://126072554682228",
+    "wave_9": "rbxassetid://118945865935405",
+    "wave_10": "rbxassetid://108166322291110",
+    "wave_11": "rbxassetid://109490778765658",
+    "wave_12": "rbxassetid://122559924511991",
+    "wave_13": "rbxassetid://79536633098428",
+    "wave_14": "rbxassetid://118972605427241",
+    "wave_15": "rbxassetid://92879051671712",
+    "wave_16": "rbxassetid://83947794314513"
+  }
+}

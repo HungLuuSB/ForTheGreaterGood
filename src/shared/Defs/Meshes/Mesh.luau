@@ -176,6 +176,77 @@ function Mesh.validateShieldColumn(e: any): { string }
 	return problems
 end
 
+-- Problems with the manifest's `shieldEnergy` entry (fx.md "Shield energy"):
+-- every texture an asset, the bands stepping evenly from the apex (0) to the
+-- ground (90) without gaps, the grid and hit cap meshes, and the values the
+-- client needs.
+function Mesh.validateShieldEnergy(e: any): { string }
+	local problems: { string } = {}
+	local function bad(msg: string)
+		table.insert(problems, `shieldEnergy: {msg}`)
+	end
+	if not Mesh.STATUSES[e.status] then
+		bad(`status {tostring(e.status)} must be "approved" or "review"`)
+	end
+	local tex = e.textures or {}
+	for _, k in { "pulse", "glow", "line", "spark", "flare", "streak", "field" } do
+		if not isAssetId(tex[k]) then
+			bad(`texture {k} asset ID missing`)
+		end
+	end
+	for k, n in { waveGlow = 3, waveLine = 3, hit = 8 } do
+		if type(tex[k]) ~= "table" or #tex[k] ~= n then
+			bad(`textures.{k} must list {n} images`)
+			continue
+		end
+		for i, id in tex[k] do
+			if not isAssetId(id) then
+				bad(`textures.{k}[{i}] asset ID missing`)
+			end
+		end
+	end
+	if type(e.bands) ~= "table" or #e.bands < 2 then
+		bad("needs at least two bands")
+	else
+		local step = 90 / #e.bands
+		for i, b in e.bands do
+			if not isAssetId(b.mesh) then
+				bad(`band {i}: mesh asset ID missing`)
+			end
+			if not isVec3(b.center) or not isVec3(b.size) then
+				bad(`band {i}: center and size must be three numbers`)
+			end
+			if type(b.theta) ~= "table" or math.abs(b.theta[1] - (i - 1) * step) > 1e-3 or math.abs(b.theta[2] - i * step) > 1e-3 then
+				bad(`band {i}: theta must be {(i - 1) * step}..{i * step} degrees`)
+			end
+		end
+	end
+	for _, k in { "hexGrid", "hitCap" } do
+		local p = e[k]
+		if type(p) ~= "table" or not isAssetId(p.mesh) or not isVec3(p.center) or not isVec3(p.size) then
+			bad(`{k} needs a mesh, center and size`)
+		end
+	end
+	for _, group in { "timing", "counts", "sizes" } do
+		if type(e[group]) ~= "table" then
+			bad(`{group} missing`)
+			continue
+		end
+		for k, v in e[group] do
+			if type(v) ~= "number" or v <= 0 then
+				bad(`{group}.{k} must be a positive number`)
+			end
+		end
+	end
+	if type(e.counts) == "table" and type(e.bands) == "table" and e.counts.bands ~= #e.bands then
+		bad("counts.bands must match the bands listed")
+	end
+	if type(e.tints) ~= "table" or not isVec3(e.tints.order) or not isVec3(e.tints.chaos) then
+		bad("tints.order and tints.chaos must be RGB")
+	end
+	return problems
+end
+
 -- Problems with one entry, empty when valid. `def` is the unit def (nil for
 -- an fx entry, which has no def to match); `visual` is the blockout's
 -- `visualPieces` (client-only jointed pieces, rig.md 4), also allowed.
