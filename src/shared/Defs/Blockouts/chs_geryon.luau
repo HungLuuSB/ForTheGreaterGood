@@ -7,6 +7,7 @@
 -- triangle about the drum's forward axis. Only the top barrel fires; the
 -- client turns the drum 120 degrees per shot (`muzzle1` the top one at
 -- rest). Each barrel is a client piece (`barrel1..3`) for its own recoil.
+-- The drum hangs from `mount`, which the def pitches -60..+60 degrees.
 -- Model space, forward = -Z.
 
 local CY, CZ, R = 12.6, -1.4, 0.9 -- the drum's axis (height, depth) and the barrels' distance from it
@@ -31,7 +32,8 @@ local parts = {
 	{ name = "roofTeam", parent = "turret", shape = "box", size = { 2.2, 0.08, 1.6 }, at = { 0, 13.84, 1.6 }, color = "team" },
 	{ name = "sensor", parent = "turret", shape = "box", size = { 0.5, 0.4, 0.3 }, at = { 1.3, 13.4, -1.0 }, color = "glass" },
 
-	{ name = "drum", parent = "turret", shape = "cylinder", axis = "z", size = { 2.8, 2.8, 1.2 }, at = { 0, CY, CZ }, pivot = { 0, CY, CZ }, color = "metal" },
+	{ name = "mount", parent = "turret", shape = "box", size = { 2.2, 2.2, 0.8 }, at = { 0, CY, CZ + 1.0 }, pivot = { 0, CY, CZ + 1.2 }, color = "dark" },
+	{ name = "drum", parent = "mount", shape = "cylinder", axis = "z", size = { 2.8, 2.8, 1.2 }, at = { 0, CY, CZ }, pivot = { 0, CY, CZ }, color = "metal" },
 	{ name = "drumRing", parent = "drum", shape = "cylinder", axis = "z", size = { 2.6, 2.6, 0.3 }, at = { 0, CY, CZ - 3.0 }, color = "dark" },
 }
 for k = 1, 3 do

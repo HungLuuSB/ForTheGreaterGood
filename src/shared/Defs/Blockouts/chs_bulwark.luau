@@ -6,7 +6,7 @@
 -- tiers. Lowest, the `laser` ring: a full-width rotating armored ring with a
 -- Geryon-style rotary `laser_drum` of three green barrels on its front
 -- (`laser_muzzle1` the top one at rest; the client turns the drum 120
--- degrees per shot). Above it the armored collar `shell` (static). On top the
+-- degrees per shot) on `laser_mount`, which the def pitches -60..+60 degrees. Above it the armored collar `shell` (static). On top the
 -- beam `turret`: a heavy head with a single big "eye" lens and a long beam
 -- `barrel` (`muzzle` at its tip). Switched off, the head sinks onto the
 -- collar and the barrel folds down (pose `retracted`). Rugged and improvised
@@ -38,9 +38,9 @@ local parts = {
 	{ name = "laserPlateL", parent = "laser", shape = "box", size = { 0.5, 2.4, 4.0 }, at = { -4.5, LY + 1.5, 0.6 }, color = "metal" },
 	{ name = "laserPlateR", parent = "laser", shape = "box", size = { 0.5, 2.4, 4.0 }, at = { 4.5, LY + 1.5, 0.6 }, color = "metal" },
 	{ name = "laserTeam", parent = "laser", shape = "box", size = { 2.8, 1.2, 0.08 }, at = { 0, LY + 1.5, 4.42 }, color = "team" },
-	{ name = "laserMount", parent = "laser", shape = "box", size = { 2.6, 2.6, 1.4 }, at = { 0, DY, -4.2 }, color = "dark" },
+	{ name = "laser_mount", parent = "laser", shape = "box", size = { 2.6, 2.6, 1.4 }, at = { 0, DY, -4.2 }, pivot = { 0, DY, -3.6 }, color = "dark" },
 	{ name = "laserSensor", parent = "laser", shape = "box", size = { 0.5, 0.4, 0.3 }, at = { 2.0, LY + 2.4, -4.3 }, color = "glass" },
-	{ name = "laser_drum", parent = "laser", shape = "cylinder", axis = "z", size = { 2.4, 2.4, 1.0 }, at = { 0, DY, DZ }, pivot = { 0, DY, DZ }, color = "metal" },
+	{ name = "laser_drum", parent = "laser_mount", shape = "cylinder", axis = "z", size = { 2.4, 2.4, 1.0 }, at = { 0, DY, DZ }, pivot = { 0, DY, DZ }, color = "metal" },
 
 	-- tier 2: the armored collar (the def's `shell`; it doesn't move)
 	{ name = "shell", parent = "base", shape = "box", size = { 7.2, 2.2, 7.2 }, at = { 0, LY + 4.1, 0.2 }, pivot = { 0, LY + 3.0, 0 }, color = "dark" },

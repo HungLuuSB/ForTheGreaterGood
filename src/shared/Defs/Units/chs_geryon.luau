@@ -15,8 +15,8 @@ return Templates.extend(Templates.Structure, {
 	health = 1500,
 	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 240 },
-	weapons = { { def = "chs_geryon_laser", turretPiece = "turret", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2", "muzzle3" }, drumPiece = "drum" } },
-	pieces = { "base", "turret", "drum", "muzzle1", "muzzle2", "muzzle3" },
+	weapons = { { def = "chs_geryon_laser", turretPiece = "turret", pitchPiece = "mount", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2", "muzzle3" }, drumPiece = "drum" } },
+	pieces = { "base", "turret", "mount", "drum", "muzzle1", "muzzle2", "muzzle3" }, -- the mount pitches the drum (models-C, the user)
 	icon = "turret",
 	model = "chs_geryon",
 })

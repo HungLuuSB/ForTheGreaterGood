@@ -13,8 +13,8 @@ return Templates.extend(Templates.Structure, {
 	health = 1400,
 	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 260 },
-	weapons = { { def = "ord_overwatch_laser", turretPiece = "turret", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2" } } },
-	pieces = { "base", "turret", "muzzle1", "muzzle2" },
+	weapons = { { def = "ord_overwatch_laser", turretPiece = "turret", pitchPiece = "mount", muzzle = "muzzle1", muzzles = { "muzzle1", "muzzle2" } } },
+	pieces = { "base", "turret", "mount", "muzzle1", "muzzle2" }, -- the mount pitches both barrels (models-C, the user)
 	icon = "turret",
 	model = "ord_overwatch",
 })

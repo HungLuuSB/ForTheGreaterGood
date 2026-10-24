@@ -4,6 +4,7 @@
 -- rounded `turret` carrying two Guard laser tubes in ribbed shrouds either
 -- side, firing in turn. Each tube is a client piece (`barrel1` left,
 -- `barrel2` right) for its own recoil; `muzzle1` / `muzzle2` at their lenses.
+-- Both hang from `mount`, which the def pitches -60..+60 degrees.
 -- Model space, forward = -Z.
 
 local parts = {
@@ -23,10 +24,11 @@ for _, p in {
 	{ name = "roofTeam", parent = "turret", shape = "box", size = { 2.4, 0.08, 2.0 }, at = { 0, 12.44, 0.4 }, color = "team" },
 	{ name = "sensor", parent = "turret", shape = "box", size = { 0.6, 0.4, 0.3 }, at = { 0, 12.0, -2.15 }, color = "glass" },
 
-	{ name = "barrel1", parent = "turret", shape = "box", size = { 1.3, 1.3, 2.4 }, at = { -1.6, 11.2, -2.0 }, pivot = { -1.6, 11.2, -1.0 }, color = "hull" },
+	{ name = "mount", parent = "turret", shape = "box", size = { 4.4, 1.0, 1.0 }, at = { 0, 11.2, -1.0 }, pivot = { 0, 11.2, -0.6 }, color = "dark" },
+	{ name = "barrel1", parent = "mount", shape = "box", size = { 1.3, 1.3, 2.4 }, at = { -1.6, 11.2, -2.0 }, pivot = { -1.6, 11.2, -1.0 }, color = "hull" },
 	{ name = "tube1", parent = "barrel1", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 2.0 }, at = { -1.6, 11.2, -4.0 }, color = "metal" },
 	{ name = "lens1", parent = "barrel1", shape = "cylinder", axis = "z", size = { 0.5, 0.5, 0.2 }, at = { -1.6, 11.2, -5.05 }, color = "glass" },
-	{ name = "barrel2", parent = "turret", shape = "box", size = { 1.3, 1.3, 2.4 }, at = { 1.6, 11.2, -2.0 }, pivot = { 1.6, 11.2, -1.0 }, color = "hull" },
+	{ name = "barrel2", parent = "mount", shape = "box", size = { 1.3, 1.3, 2.4 }, at = { 1.6, 11.2, -2.0 }, pivot = { 1.6, 11.2, -1.0 }, color = "hull" },
 	{ name = "tube2", parent = "barrel2", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 2.0 }, at = { 1.6, 11.2, -4.0 }, color = "metal" },
 	{ name = "lens2", parent = "barrel2", shape = "cylinder", axis = "z", size = { 0.5, 0.5, 0.2 }, at = { 1.6, 11.2, -5.05 }, color = "glass" },
 } do

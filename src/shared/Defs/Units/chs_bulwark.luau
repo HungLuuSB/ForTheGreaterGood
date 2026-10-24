@@ -17,8 +17,8 @@ return Templates.extend(Templates.Structure, {
 	footprint = 3, -- size shows tech level (S-104)
 	sensors = { sight = 200 },
 	retract = { armor = 4 },
-	weapons = { { def = "chs_bulwark_beam", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" }, { def = "chs_geryon_laser", turretPiece = "laser", muzzle = "laser_muzzle1", muzzles = { "laser_muzzle1", "laser_muzzle2", "laser_muzzle3" }, drumPiece = "laser_drum" } },
-	pieces = { "base", "shell", "turret", "barrel", "muzzle", "laser", "laser_drum", "laser_muzzle1", "laser_muzzle2", "laser_muzzle3" },
+	weapons = { { def = "chs_bulwark_beam", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" }, { def = "chs_geryon_laser", turretPiece = "laser", pitchPiece = "laser_mount", muzzle = "laser_muzzle1", muzzles = { "laser_muzzle1", "laser_muzzle2", "laser_muzzle3" }, drumPiece = "laser_drum" } },
+	pieces = { "base", "shell", "turret", "barrel", "muzzle", "laser", "laser_mount", "laser_drum", "laser_muzzle1", "laser_muzzle2", "laser_muzzle3" },
 	icon = "beam",
 	model = "chs_bulwark",
 })
