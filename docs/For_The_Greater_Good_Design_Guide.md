@@ -856,6 +856,12 @@ end
 
 **Fixed order:** production → converters (power → supply) → consumers → overflow sharing.
 
+**Resource priority (S-156, the user):** every consumer is high or low priority (the PRIORITY command; high by default). In a stall the high consumers share what's on offer first: missile refills take their share (S-66), then every other high consumer. Low consumers share what's left, so with nothing left they stop. It applies to:
+- a builder's or factory's build power (an assisted frame splits by builder);
+- a stockpiler's refills (low leaves the refill share);
+- an aircraft's rearm;
+- shield, radar, jammer and DIRCM upkeep.
+
 Optionally store values as integers in thousandths so rounding never drifts over long matches.
 
 ### 8.5 Economy structures

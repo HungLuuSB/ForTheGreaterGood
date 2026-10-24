@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 32, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 33, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -640,7 +640,7 @@ return function(t: RunAll.Context)
 	t.test("unit state bits live in Shared and are the sim's", function()
 		local World = require("../Sim/World")
 		t.equal(World.State, Schema.UnitState, "one table (S-6)")
-		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16, DEPLOYED = 32, DEPLOYING = 64 })
+		t.deepEqual(Schema.UnitState, { MOVING = 1, TOGGLED_ON = 2, SUBMERGED = 4, LANDED = 8, REPEAT = 16, DEPLOYED = 32, DEPLOYING = 64, LOW_PRIORITY = 128 })
 	end)
 
 	t.test("tactical layout is byte exact", function()
@@ -719,7 +719,7 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 18, 0, 1, 0, 1, 0 }, "unknown cmdType 18") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27)
+		expectRejected(t, cmd, { 19, 0, 1, 0, 1, 0 }, "unknown cmdType 19") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)

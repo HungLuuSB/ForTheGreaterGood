@@ -37,6 +37,7 @@ local World = require("../World")
 local CT = Schema.CmdType
 local bor, band, bnot = bit32.bor, bit32.band, bit32.bnot
 local TOGGLED_ON = World.State.TOGGLED_ON
+local LOW_PRIORITY = World.State.LOW_PRIORITY
 local LINE = Schema.CmdFlag.LINE
 local QUEUE = Schema.CmdFlag.QUEUE
 local GROUP = Schema.CmdFlag.GROUP
@@ -184,6 +185,10 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 		elseif cmdType == CT.TOGGLE then
 			local state = w.state[id]
 			World.setState(w, id, if cmd.value == 1 then bor(state, TOGGLED_ON) else band(state, bnot(TOGGLED_ON)))
+		elseif cmdType == CT.PRIORITY then
+			-- resource priority (S-156): 0 low, 1 high
+			local state = w.state[id]
+			World.setState(w, id, if cmd.value == 0 then bor(state, LOW_PRIORITY) else band(state, bnot(LOW_PRIORITY)))
 		elseif cmdType == CT.REPEAT then
 			Orders.setRepeat(sim, id, cmd.value == 1) -- factories only (S-13)
 		elseif cmdType == CT.CANCEL then

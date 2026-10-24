@@ -2241,3 +2241,20 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Client:** B drops its "units in the way" check for own and allied units to match.
 - **Fixed while testing:** a unit that stopped at its exit point kept the walk-out flag for good, because clearing was checked only while it moved. In an AI match a Commander and builders kept steering at their exit points, and one held a new factory's pad (S-133's pad wait). Movement now checks every tick whether a walking-out unit is clear: out of the footprint, and on open ground or stopped. AI.spec passes again.
 - **Mirror-fairness test widened (`Fairness.spec`):** with S-155 the six-seed mirrored-matches test split west 3 / east 9 (the bar is 4 each). Over seeds 1–18 the split is west 15 / east 21, the same as `main` before the change, and seeds 7–12 split 5/7 (6/6 on `main`). So the start's odds didn't move; six seeds are too few. The test now plays seeds 1–18 (36 matches) and asks for 12 each, the same one-third bar. It takes ~165 s instead of ~55 s, in the slow suite only.
+
+## S-156 — Resource priority: high and low consumers (the user, via B) (2026-10-24)
+
+- **Asked:** a high / low resource priority per unit; high consumers take supply and power first in a stall.
+- **Wire (protocol 33):**
+  - Command `PRIORITY 18`, `value u8`: 0 low, 1 high. Any unit takes it.
+  - Unit state bit `LOW_PRIORITY 128`: set means low. Clear, high, is the default for every unit. The AI never sends it.
+  - It's a state bit, not an owner field, so allies and enemies who see the unit see it too, like `REPEAT`.
+- **Economy (`settleRatio`):** missile refills first, up to their share of income (S-66). Then the high consumers share what's left (`ratio`); refills beyond their share count as high. The low consumers (`lowDemand`) share the rest (`lowRatio`). With no low demand the arithmetic is exactly as before, so matches without the command replay unchanged. `Economy.effective(acc, s, p, low)` reads the low ratio.
+- **Who counts as a consumer:**
+  - a builder's or factory's build power: the frame it builds splits its progress by builder;
+  - a stockpiler's refills: a low one leaves the refill share and refills last;
+  - an aircraft's rearm (its own bit, not the pad's);
+  - shield, tracking-radar, plain-radar, jammer and DIRCM upkeep.
+- **Tests:**
+  - `Economy.spec`: the low ratio gets what the high demand leaves, and nothing when the high demand is short.
+  - `Build.spec`: two plants, supply income for one. Both high, they share alike. With one low, the high plant runs at full speed and the low one gets next to nothing. PRIORITY 1 clears the bit.

@@ -135,7 +135,7 @@ function Shield.drain(sim: Types.Sim, id: number, amount: number)
 end
 
 -- Recharge (an economy consumer, called by Build.step).
-function Shield.drainStep(sim: Types.Sim, demandP: { [number]: number })
+function Shield.drainStep(sim: Types.Sim, demandP: { [number]: number }, lowP: { [number]: number })
 	local c = sim.combat
 	local w = sim.world
 	local dt = Shield.DT
@@ -167,7 +167,11 @@ function Shield.drainStep(sim: Types.Sim, demandP: { [number]: number })
 				continue
 			end
 			demandP[team] += s.power
-			ratio = math.min(Economy.effective(acc, 0, s.power), Economy.allowance(acc.power) / (s.power * dt))
+			local low = Economy.isLow(w, id) -- (S-156)
+			if low then
+				lowP[team] += s.power
+			end
+			ratio = math.min(Economy.effective(acc, 0, s.power, low), Economy.allowance(acc.power) / (s.power * dt))
 			ratio = math.clamp(ratio, 0, 1)
 			acc.power.spent += s.power * dt * ratio
 		end
