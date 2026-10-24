@@ -250,6 +250,28 @@ return function(t: RunAll.Context)
 		)
 	end)
 
+	t.test("naval SAM platforms stand on water only and shoot down aircraft (S-166)", function()
+		local Placement = require("../Sim/Placement")
+		for _, pair in { { "ord_pharos", 1, "chs_harpy" }, { "chs_scylla", 2, "ord_falcon" } } do
+			local sim = Sim.new({ seed = 3, players = PLAYERS, mapId = MAP })
+			local d = sim.defs.units[pair[1]]
+			t.expect((Placement.check(sim, d, 0, 0)), `{pair[1]} can stand on the sea`)
+			t.expect(not (Placement.check(sim, d, -450, 0)), `{pair[1]} can't stand on land`)
+			local platform = Spawn.unit(sim, d.id, pair[2], 0, 0)
+			local enemy = 3 - (pair[2] :: number)
+			local plane = Spawn.unit(sim, pair[3], enemy, 0, 200, math.pi) -- loitering in range
+			sim.world.fireState[plane] = World.FireState.HOLD_FIRE
+			for _ = 1, 15 * 40 do
+				Sim.step(sim)
+				if sim.world.slot[plane] == nil then
+					break
+				end
+			end
+			t.equal(sim.world.slot[plane], nil, `{pair[1]} shot down the {pair[3]}`)
+			t.expect(sim.world.slot[platform] ~= nil, "and still stands")
+		end
+	end)
+
 	t.test("naval combat is deterministic", function()
 		local a, ad, as = duel(11)
 		local b, bd, bs = duel(11)

@@ -19,7 +19,7 @@ return Templates.extend(Templates.Unit, {
 	sensors = { sight = 120 },
 	buildPower = 200,
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)
-	buildOptions = { "chs_tidal", "chs_advextractor", "chs_fusion", "chs_shipyard", "chs_advshipyard", "chs_breaker", "chs_deepear" },
+	buildOptions = { "chs_tidal", "chs_advextractor", "chs_fusion", "chs_shipyard", "chs_advshipyard", "chs_breaker", "chs_deepear", "chs_scylla" },
 	pieces = { "base", "nano" },
 	icon = "worker",
 	model = "chs_reaver",
