@@ -3,7 +3,7 @@
 return {
 	id = "ord_light_cannon",
 	type = "BALLISTIC",
-	range = 210, -- faction pass (S-62)
+	range = 190, -- tier rebalance (S-157, the user): was 210; faction pass (S-62)
 	reload = 1.75, -- faction pass, tuned (S-62)
 	salvo = { count = 1, delay = 0 },
 	projectileSpeed = 380,

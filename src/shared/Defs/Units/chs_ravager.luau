@@ -8,7 +8,7 @@ return Templates.extend(Templates.TankT1, {
 	faction = "chaos",
 
 	cost = { supply = 130, power = 1300, buildTime = 3700 },
-	health = 1000, -- faction pass (S-62)
+	health = 800, -- tier rebalance (S-157, the user): was 1000; faction pass (S-62)
 
 	movement = { maxSpeed = 36, accel = 12, brake = 24, turnRate = 100 },
 

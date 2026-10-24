@@ -4,7 +4,7 @@ local Templates = require("../Templates")
 -- Placeholder (guide 13.4); stats to balance in M8.
 return Templates.extend(Templates.Unit, {
 	id = "ord_sentry",
-	name = "Sentry",
+	name = "Envoy", -- (S-157, the user: "Sentry" went to the laser tower)
 	description = "Corvette. Fast and cheap; light gun.",
 	faction = "order",
 	tier = 1,

@@ -3,7 +3,7 @@
 return {
 	id = "ord_mg",
 	type = "BALLISTIC",
-	range = 175, -- faction pass (S-62)
+	range = 88, -- halved (S-152, the user: "Scout attack range's is too big"); 175 since the faction pass (S-62)
 	reload = 0.45, -- faction pass (S-62)
 	projectileSpeed = 600,
 	gravity = 20,

@@ -8,7 +8,7 @@ return {
 	projectileSpeed = 420,
 	gravity = 60,
 	accuracy = 0.6,
-	damage = { LIGHT = 341, ARMORED = 319, STRUCTURE = 273, SHIP = 251, AIR = 0, SUB = 0 }, -- +10% (S-112: T2 tanks back in band after S-104)
+	damage = { LIGHT = 392, ARMORED = 367, STRUCTURE = 314, SHIP = 289, AIR = 0, SUB = 0 }, -- +15%, tier rebalance (S-157, the user); +10% (S-112: T2 tanks back in band after S-104)
 	aoe = 5,
 	edgeEffectiveness = 0.4,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },

@@ -12,6 +12,6 @@ return Templates.extend(Templates.Builder, {
 	sensors = { sight = 95 },
 	buildPower = 90, -- faction pass (S-62)
 	buildRange = 45, -- 70% of 64 (client request 7, S-19)
-	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_vehplant", "chs_advvehplant", "chs_spike", "chs_thorn", "chs_eye", "chs_smog" },
+	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_vehplant", "chs_advvehplant", "chs_guard", "chs_twin_guard", "chs_geryon", "chs_talos", "chs_thorn", "chs_eye", "chs_smog" },
 	model = "chs_scrapper",
 })

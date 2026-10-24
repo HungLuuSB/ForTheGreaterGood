@@ -630,7 +630,7 @@ end
 -- finished unit drains trackDrain + jamDrain + radarDrain power per second
 -- at the team's power stall ratio; the share it gets scales its track, jam
 -- and radar radii (applied at the next sensor tick).
-function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
+function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number }, lowP: { [number]: number })
 	local w = sim.world
 	local s = sim.sensors
 	local eco = sim.eco
@@ -656,7 +656,11 @@ function Sensors.drainStep(sim: Types.Sim, demandP: { [number]: number })
 			continue
 		end
 		demandP[team] += drain
-		local ratio = math.min(Economy.effective(acc, 0, drain), Economy.allowance(acc.power) / (drain * dt))
+		local low = Economy.isLow(w, id) -- (S-156)
+		if low then
+			lowP[team] += drain
+		end
+		local ratio = math.min(Economy.effective(acc, 0, drain, low), Economy.allowance(acc.power) / (drain * dt))
 		ratio = math.clamp(ratio, 0, 1)
 		acc.power.spent += drain * dt * ratio
 		s.powerScale[id] = ratio

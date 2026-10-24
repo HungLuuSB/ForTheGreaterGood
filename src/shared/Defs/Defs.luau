@@ -38,6 +38,10 @@ export type WeaponSlot = {
 	turretPiece: string?,
 	pitchPiece: string?,
 	muzzle: string?,
+	-- client only (S-157): barrels the shots alternate between, in order, and
+	-- the drum piece turned a barrel's angle after each shot (Geryon)
+	muzzles: { string }?,
+	drumPiece: string?,
 	stockpile: number?, -- capacity on this unit, overriding the weapon's stockpile.capacity (S-47)
 	stockCapacity: number?, -- derived: the slot's missile capacity, nil = no stockpile (S-47)
 }
@@ -96,6 +100,7 @@ export type UnitDef = {
 	-- switched off (TOGGLE), it retracts: can't fire, and damage to it is
 	-- divided by `armor` (S-96, client request 43). It starts switched on.
 	retract: { armor: number }?,
+	retired: boolean?, -- no longer built (on no build list); kept so old replays and scenes load (S-157)
 	storage: { supply: number?, power: number? }?, -- added to team storage while built
 	placement: ("land" | "water" | "either")?, -- structures only
 	ammo: number?, -- rounds carried (aircraft); nil = unlimited
@@ -158,6 +163,7 @@ export type WeaponDef = {
 	-- team detects, instead (point defence, S-149)
 	intercepts: { chance: number, tactical: boolean? }?,
 	rocket: boolean?, -- BALLISTIC: an unguided rocket, which point defence intercepts (S-149)
+	highArc: boolean?, -- BALLISTIC: lobbed on the high arc, not the low one (S-157: Gauntlet, Talos)
 	interceptOnly: boolean?, -- with intercepts: never fires at units (anti-nukes, S-111)
 	stationary: boolean?, -- fires only while its unit stands still (S-111)
 	launch: ("turret" | "vertical")?, -- HOMING: "vertical" leaves straight up, no turret aim (S-42); default "turret"
@@ -167,7 +173,12 @@ export type WeaponDef = {
 	pierce: boolean?, -- with beamDuration: the beam's line hurts every enemy it crosses, hit or miss (S-115)
 	shieldMass: number?, -- weight against shield fields (1 = a typical shell); default from damage (ShieldField.mass, S-79)
 	shotCost: { supply: number?, power: number? }?, -- drawn from the team's stores per shot; no shot without it (S-96)
-	fx: { [string]: string }?,
+	-- HITSCAN (S-157, the Beamer): each hit deals `from` .. `to` (the damage
+	-- table is the full `to`), rising over `seconds` on one target; leaving a
+	-- target pauses the weapon cooldown[1] .. cooldown[2] seconds, by the
+	-- intensity it had reached
+	ramp: { from: number, to: number, seconds: number, cooldown: { number } }?,
+	fx: { [string]: any }?, -- muzzle / trail / impact / sound names; tracer "laser" with color { r, g, b } (S-157; client only)
 }
 
 export type DefSet = {
@@ -292,6 +303,8 @@ local UNIT_SPEC: Spec = {
 					turretPiece = opt(STRING),
 					pitchPiece = opt(STRING),
 					muzzle = opt(STRING),
+					muzzles = { kind = "list", optional = true, item = STRING, minItems = 2, maxItems = 3 }, -- (S-157)
+					drumPiece = opt(STRING),
 					stockpile = { kind = "integer", optional = true, min = 1, max = 255 }, -- capacity (S-47)
 				},
 			},
@@ -334,6 +347,7 @@ local UNIT_SPEC: Spec = {
 		deathBlast = { kind = "record", optional = true, fields = { damage = POSITIVE, aoe = POSITIVE, edge = { kind = "number", min = 0, max = 1 } } },
 		shield = { kind = "record", optional = true, fields = { radius = POSITIVE, capacity = POSITIVE, recharge = POSITIVE, power = NON_NEGATIVE } },
 		retract = { kind = "record", optional = true, fields = { armor = { kind = "number", min = 1 } } },
+		retired = { kind = "boolean", optional = true },
 		storage = {
 			kind = "record",
 			optional = true,
@@ -414,6 +428,7 @@ local WEAPON_SPEC: Spec = {
 		apex = opt(POSITIVE),
 		intercepts = { kind = "record", optional = true, fields = { chance = FRACTION, tactical = { kind = "boolean", optional = true } } },
 		rocket = { kind = "boolean", optional = true },
+		highArc = { kind = "boolean", optional = true },
 		interceptOnly = { kind = "boolean", optional = true },
 		stationary = { kind = "boolean", optional = true },
 		canTargetRadar = { kind = "boolean", optional = true },
@@ -421,10 +436,35 @@ local WEAPON_SPEC: Spec = {
 		pierce = { kind = "boolean", optional = true },
 		shieldMass = opt(POSITIVE),
 		shotCost = { kind = "record", optional = true, fields = { supply = opt(NON_NEGATIVE), power = opt(NON_NEGATIVE) } },
+		ramp = {
+			kind = "record",
+			optional = true,
+			fields = {
+				from = POSITIVE,
+				to = POSITIVE,
+				seconds = POSITIVE,
+				cooldown = { kind = "list", item = NON_NEGATIVE, minItems = 2, maxItems = 2 },
+			},
+		},
 		fx = {
 			kind = "record",
 			optional = true,
-			fields = { muzzle = opt(STRING), trail = opt(STRING), impact = opt(STRING), sound = opt(STRING) },
+			fields = {
+				muzzle = opt(STRING),
+				trail = opt(STRING),
+				impact = opt(STRING),
+				sound = opt(STRING),
+				tracer = { kind = "string", optional = true, enum = set({ "laser" }) }, -- (S-157)
+				color = {
+					kind = "record",
+					optional = true,
+					fields = {
+						r = { kind = "integer", min = 0, max = 255 },
+						g = { kind = "integer", min = 0, max = 255 },
+						b = { kind = "integer", min = 0, max = 255 },
+					},
+				},
+			},
 		},
 	},
 }
@@ -587,6 +627,25 @@ function Defs.validate(raw: RawDefs): { string }
 		if w.apex ~= nil and wtype ~= "BALLISTIC" then
 			report(`apex: only BALLISTIC weapons are lofted, not {tostring(wtype)}`)
 		end
+		if w.highArc and (wtype ~= "BALLISTIC" or w.apex ~= nil) then
+			report("highArc: only unlofted BALLISTIC weapons take the high arc")
+		end
+		local ramp = w.ramp
+		if type(ramp) == "table" then
+			if wtype ~= "HITSCAN" then
+				report(`ramp: only HITSCAN weapons ramp, not {tostring(wtype)}`)
+			end
+			if (w.aoe or 0) > 0 then
+				report("ramp: a ramping weapon hits its target only (aoe 0)")
+			end
+			if type(ramp.from) == "number" and type(ramp.to) == "number" and ramp.from > ramp.to then
+				report("ramp: from must not exceed to")
+			end
+			local cd = ramp.cooldown
+			if type(cd) == "table" and type(cd[1]) == "number" and type(cd[2]) == "number" and cd[1] > cd[2] then
+				report("ramp.cooldown: { shortest, longest }")
+			end
+		end
 		if w.apex ~= nil and w.turnRate == nil then
 			report(`turnRate: required for lofted (apex) weapons: the pitch-over`)
 		end
@@ -701,11 +760,21 @@ function Defs.validate(raw: RawDefs): { string }
 					report(`weapons[{i}].stockpile: weapon {describe(slot.def)} has no stockpile`)
 				end
 				if type(slot) == "table" then
-					for _, key in { "turretPiece", "pitchPiece", "muzzle" } do
+					for _, key in { "turretPiece", "pitchPiece", "muzzle", "drumPiece" } do
 						local piece = slot[key]
 						if type(piece) == "string" and not pieces[piece] then
 							report(`weapons[{i}].{key}: piece {describe(piece)} is not in pieces`)
 						end
+					end
+					if type(slot.muzzles) == "table" then
+						for j, piece in slot.muzzles do
+							if type(piece) == "string" and not pieces[piece] then
+								report(`weapons[{i}].muzzles[{j}]: piece {describe(piece)} is not in pieces`)
+							end
+						end
+					end
+					if slot.drumPiece ~= nil and slot.muzzles == nil then
+						report(`weapons[{i}].drumPiece: a drum turns between muzzles; it needs muzzles`)
 					end
 					-- only a turret turns pieces: a weapon without one (bombs fall
 					-- from a fixed bay, D91) has a muzzle but no turret or pitch piece
@@ -734,6 +803,8 @@ function Defs.validate(raw: RawDefs): { string }
 			for i, option in u.buildOptions do
 				if type(option) == "string" and units[option] == nil then
 					report(`buildOptions[{i}]: unknown unit {describe(option)}`)
+				elseif type(option) == "string" and type(units[option]) == "table" and units[option].retired then
+					report(`buildOptions[{i}]: {option} is retired (S-157)`)
 				end
 			end
 		end

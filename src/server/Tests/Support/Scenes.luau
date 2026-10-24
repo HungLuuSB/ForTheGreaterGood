@@ -351,7 +351,7 @@ function Scenes.waves(attacker: string, waves: number, seed: number, defs: Defs.
 	local defender = if attacker == "order" then "chaos" else "order"
 	local dpre = if defender == "order" then "ord_" else "chs_"
 	local bx, ax = 250, -350
-	local turretId = if defender == "order" then "ord_bulwark" else "chs_spike"
+	local turretId = if defender == "order" then "ord_sentry_tower" else "chs_guard" -- the T1 basic towers (S-157)
 	local base = { Spawn.unit(sim, dpre .. "vehplant", dp, bx, 0), Spawn.unit(sim, turretId, dp, bx - 40, 30) }
 	local defenders = table.clone(base)
 	for i, id in Scenes.WAVE_ROLES[defender] do
