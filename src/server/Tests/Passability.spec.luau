@@ -5,7 +5,7 @@ local Passability = require("@shared/Grid/Passability")
 local TestMap = require("@shared/Grid/TestMap")
 local RunAll = require("./RunAll")
 
-local CLASSES = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "HOVER", "AMPHIB", "SHIP", "SUB", "HELI", "JET" }
+local CLASSES = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "HOVER", "AMPHIB", "SHIP", "SUB", "HELI", "JET", "WALKER" }
 
 -- Land at height 10 everywhere; `water(cx, cz)` gives depths (0 = dry).
 local function flatWith(cellsX: number, cellsZ: number, water: (number, number) -> number): Passability.PassMap
@@ -59,15 +59,15 @@ return function(t: RunAll.Context)
 			return depths[cx + 1]
 		end)
 		local expected = {
-			-- depth: WHEELED TRACKED HEAVY HOVER AMPHIB SHIP SUB HELI JET
-			{ true, true, true, true, true, false, false, true, true }, -- 0
-			{ true, true, true, true, true, false, false, true, true }, -- 1 (ford ≤ 1)
-			{ false, true, true, true, true, false, false, true, true }, -- 2 (ford ≤ 2)
-			{ false, false, false, true, true, false, false, true, true }, -- 3
-			{ false, false, false, true, true, true, false, true, true }, -- 6 (ship ≥ 6)
-			{ false, false, false, true, true, true, false, true, true }, -- 11.75
-			{ false, false, false, true, true, true, true, true, true }, -- 12 (sub ≥ 12)
-			{ false, false, false, true, true, true, true, true, true }, -- 20
+			-- depth: WHEELED TRACKED HEAVY HOVER AMPHIB SHIP SUB HELI JET WALKER
+			{ true, true, true, true, true, false, false, true, true, true }, -- 0
+			{ true, true, true, true, true, false, false, true, true, true }, -- 1 (ford ≤ 1)
+			{ false, true, true, true, true, false, false, true, true, true }, -- 2 (ford ≤ 2)
+			{ false, false, false, true, true, false, false, true, true, false }, -- 3
+			{ false, false, false, true, true, true, false, true, true, false }, -- 6 (ship ≥ 6)
+			{ false, false, false, true, true, true, false, true, true, false }, -- 11.75
+			{ false, false, false, true, true, true, true, true, true, false }, -- 12 (sub ≥ 12)
+			{ false, false, false, true, true, true, true, true, true, false }, -- 20
 		}
 		for i, row in expected do
 			local want = {}
@@ -76,6 +76,19 @@ return function(t: RunAll.Context)
 			end
 			t.deepEqual(enterable(pm, i - 1), want, `depth {depths[i]}`)
 		end
+	end)
+
+	t.test("WALKER climbs 40° (S-159): a 37° ramp is open to it, not to TRACKED; 45° is closed", function()
+		local steep = Passability.build(TestMap.build(6, 1, function(cx)
+			return cx * 6 -- atan(0.75) = 36.9°
+		end))
+		t.expect(math.abs(Passability.slopeDegrees(steep, 2) - 36.9) < 0.4, "ramp slope")
+		t.expect(Passability.canEnter(steep, "WALKER", 2), "WALKER max 40°")
+		t.expect(not Passability.canEnter(steep, "TRACKED", 2), "TRACKED max 30°")
+		local cliff = Passability.build(TestMap.build(6, 1, function(cx)
+			return cx * 8 -- 45°
+		end))
+		t.expect(not Passability.canEnter(cliff, "WALKER", 2), "45° is too steep")
 	end)
 
 	t.test("steep slopes block by move class (HEAVY_TRACKED at 26.5°)", function()
