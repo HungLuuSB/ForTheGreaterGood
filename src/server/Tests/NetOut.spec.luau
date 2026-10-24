@@ -660,6 +660,80 @@ return function(t: RunAll.Context)
 		local _ = w
 	end)
 
+	t.test("OWN_STATUS: the owner's units off camera send health, build and queue on change, capped per tick (S-158)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local w = sim.world
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 300, 300, 0)
+		local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 0)
+		local enemy = Spawn.unit(sim, "chs_scrapper", 2, 200, -200)
+		camera(sim, 1, 0, 0, 2, 2) -- a corner: none of them on camera
+		local view = Client.new(g)
+		local otherView = Client.new(g)
+		local function step(n: number)
+			for _ = 1, n do
+				sim.eco.accounts[1].supply.stored = 1000
+				sim.eco.accounts[1].power.stored = 1000
+				Sim.step(sim)
+				Client.receive(view, sim.net.players[1].outbox)
+				Client.receive(otherView, sim.net.players[2].outbox)
+			end
+		end
+		step(2)
+		t.equal(view.ownStatus[tank] and view.ownStatus[tank].health, 255, "an own unit off camera: full health")
+		t.equal(view.ownStatus[plant] and view.ownStatus[plant].queueHead, 0, "an idle factory: no queue")
+		t.equal(view.ownStatus[enemy], nil, "owner only")
+		t.equal(otherView.ownStatus[tank], nil, "not to the other player")
+		local counts = sim.net.players[1].eventCounts
+		local before = counts[Schema.EventKind.OWN_STATUS] or 0
+		step(5)
+		t.equal(counts[Schema.EventKind.OWN_STATUS] or 0, before, "nothing changed: nothing sent")
+		w.health[tank] *= 0.5
+		step(1)
+		t.equal(view.ownStatus[tank].health, math.ceil(0.5 * 255), "health change sent")
+		local lancer = sim.defs.units.ord_lancer.index
+		submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { plant }, defIndex = lancer, cell = 0, offX = 0, offZ = 0, facing = 0 })
+		submit(sim, 1, { cmdType = CT.BUILD, flags = Schema.CmdFlag.QUEUE, unitIds = { plant }, defIndex = lancer, cell = 0, offX = 0, offZ = 0, facing = 0 })
+		step(60)
+		local st = view.ownStatus[plant]
+		t.equal(st.queueHead, lancer, "the queue's head")
+		t.equal(st.queueCount, 2, "and its length")
+		t.expect(st.queueProgress > 0, `and the head's progress ({st.queueProgress})`)
+		-- on camera the unit's status rides ENTER / State; leaving, no repeat
+		camera(sim, 1, 0, 0, 95, 95)
+		step(2)
+		before = counts[Schema.EventKind.OWN_STATUS] or 0
+		camera(sim, 1, 0, 0, 2, 2)
+		w.health[tank] = w.health[tank] -- unchanged
+		step(1)
+		t.expect((counts[Schema.EventKind.OWN_STATUS] or 0) - before <= 1, "leaving the tier doesn't resend what the client has (the factory's progress may step)")
+		-- the cap: many changes at once spread over ticks
+		local many = {}
+		for i = 1, 60 do
+			table.insert(many, Spawn.unit(sim, "ord_herald", 1, -300 + (i % 10) * 12, -300 + (i // 10) * 12))
+		end
+		step(1)
+		before = counts[Schema.EventKind.OWN_STATUS] or 0
+		for _, id in many do
+			w.health[id] *= 0.5
+		end
+		step(1)
+		t.equal((counts[Schema.EventKind.OWN_STATUS] or 0) - before, NetOut.OWN_STATUS_MAX, "capped per tick")
+		step(2)
+		for _, id in many do
+			t.equal(view.ownStatus[id].health, math.ceil(0.5 * 255), "every one arrives on the next ticks")
+		end
+		-- a client joining later gets every own unit off camera
+		local late = Client.new(g)
+		NetOut.join(sim, 1)
+		for _ = 1, 4 do
+			Sim.step(sim)
+			Client.receive(late, sim.net.players[1].outbox)
+		end
+		t.equal(late.ownStatus[tank] and late.ownStatus[tank].health, math.ceil(0.5 * 255), "on join")
+		t.equal(late.ownStatus[many[60]] and late.ownStatus[many[60]].health, math.ceil(0.5 * 255), "all of them, over the cap's ticks")
+	end)
+
 	t.test("a client joining late rebuilds the same view as one connected from the start", function()
 		local function run(joinAt: number?): (Client.View, Sim.Sim)
 			local sim, mine, theirs = battle(13)
