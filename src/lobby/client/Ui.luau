@@ -152,6 +152,14 @@ function Ui.label2(key: string): string
 	return (Config.LABELS :: any)[key] or key
 end
 
+-- A mode's name for `players` players: a two-player free for all is a 1v1.
+function Ui.modeName(mode: string, players: number?): string
+	if mode == "FFA" and players == 2 then
+		return "1v1"
+	end
+	return Ui.label2(mode)
+end
+
 function Ui.clock(seconds: number): string
 	seconds = math.max(0, math.floor(seconds))
 	return string.format("%d:%02d", seconds // 60, seconds % 60)

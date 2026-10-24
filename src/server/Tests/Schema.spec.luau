@@ -304,7 +304,7 @@ return function(t: RunAll.Context)
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 31, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 32, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -486,8 +486,11 @@ return function(t: RunAll.Context)
 			supply = { stored = 1, storage = 2, income = 3, demand = 4, ratio = 5 },
 			power = { stored = 6, storage = 7, income = 8, demand = 9, ratio = 10 },
 			wind = 11,
+			radarError = 0x0102,
+			trackError = 0x0304,
+			precision = 0x80,
 		}
-		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b") -- team first since protocol 9
+		t.equal(hex(encodeOne(Schema.encodeEco, eco)), "03 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 06 00 00 00 07 00 00 00 08 00 00 00 09 00 00 00 0a 0b 02 01 04 03 80") -- team first since protocol 9; radar accuracy since 32
 	end)
 
 	t.test("wreck and sight events (protocol 10): golden bytes, round-trip, bad input, truncation", function()
@@ -621,6 +624,9 @@ return function(t: RunAll.Context)
 			supply = { stored = 4294967295, storage = 0, income = 12345, demand = 0, ratio = 255 },
 			power = { stored = 0, storage = 4294967295, income = 0, demand = 99999, ratio = 0 },
 			wind = 255,
+			radarError = 65535,
+			trackError = 0,
+			precision = 255,
 		}
 		roundTrip(t, { eco }, Schema.encodeEco, Schema.decodeEco)
 		t.equal(buffer.len(encodeOne(Schema.encodeEco, eco)), Schema.ECO_BYTES)

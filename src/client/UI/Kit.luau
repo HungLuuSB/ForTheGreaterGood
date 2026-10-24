@@ -8,7 +8,7 @@
 --   panel (frame with title, optional sidebar nav with a highlighted pill)
 --   toggle (green on, red off)   slider (with its value)   dropdown
 --   segmented buttons   filter chips (with team color swatches)
---   thin scrollbar   button   table   line chart (Core/Chart, one
+--   thin scrollbar   button (outlined, ghost, primary, filled go / stop)   text input   table   line chart (Core/Chart, one
 --   EditableImage per chart, drawn a chart per frame through a queue)
 -- Sizes are in pixels before the settings' UI scale (a UIScale on the gui).
 
@@ -34,6 +34,8 @@ Kit.COLOR = table.freeze({
 	text = Color3.fromRGB(226, 229, 235),
 	dim = Color3.fromRGB(150, 156, 168),
 	faint = Color3.fromRGB(102, 108, 120),
+	go = Color3.fromRGB(70, 150, 84), -- a filled action button: start, confirm (C-174, the lobby stream's B-4)
+	stop = Color3.fromRGB(168, 58, 52), -- a filled action button: leave, cancel
 	accent = Color3.fromRGB(238, 186, 92),
 	on = Color3.fromRGB(96, 204, 122),
 	off = Color3.fromRGB(216, 86, 76),
@@ -532,7 +534,10 @@ function Kit.slider(parent: Instance, min: number, max: number, step: number, va
 end
 
 -- A button: "primary" (amber), "ghost" (outlined) or plain.
-function Kit.button(parent: Instance, text: string, kind: string?, onClick: () -> (), width: number?): TextButton
+-- `kind`: nil (outlined), "ghost", "primary" (the accent), or a filled
+-- action button: "go" / "stop" (Kit.COLOR.go / stop), or any colour as
+-- `fill` (C-174, the lobby stream's request B-4).
+function Kit.button(parent: Instance, text: string, kind: string?, onClick: () -> (), width: number?, fill: Color3?): TextButton
 	local b = Instance.new("TextButton")
 	b.AutoButtonColor = false
 	b.Size = UDim2.fromOffset(width or 120, 30)
@@ -540,7 +545,18 @@ function Kit.button(parent: Instance, text: string, kind: string?, onClick: () -
 	b.TextSize = 14
 	b.Text = text
 	b.BorderSizePixel = 0
-	if kind == "primary" then
+	local filled = fill or (if kind == "go" then Kit.COLOR.go elseif kind == "stop" then Kit.COLOR.stop else nil)
+	if filled then
+		b.BackgroundColor3 = filled
+		b.BackgroundTransparency = 0
+		b.TextColor3 = Color3.fromRGB(240, 244, 240)
+		b.MouseEnter:Connect(function()
+			b.BackgroundColor3 = filled:Lerp(Color3.new(1, 1, 1), 0.12)
+		end)
+		b.MouseLeave:Connect(function()
+			b.BackgroundColor3 = filled
+		end)
+	elseif kind == "primary" then
 		b.BackgroundColor3 = Kit.COLOR.accent
 		b.BackgroundTransparency = 0
 		b.TextColor3 = Color3.fromRGB(28, 22, 12)
@@ -560,6 +576,37 @@ function Kit.button(parent: Instance, text: string, kind: string?, onClick: () -
 	end)
 	b.MouseButton1Click:Connect(onClick)
 	return b
+end
+
+-- A text box in the control style (C-174, the lobby stream's request B-4):
+-- `placeholder` shown while empty; `onEnter(text)` when Enter leaves it.
+function Kit.input(parent: Instance, placeholder: string, width: number?, onEnter: ((string) -> ())?): TextBox
+	local t = Instance.new("TextBox")
+	t.Name = "Input"
+	t.Size = UDim2.fromOffset(width or 220, 30)
+	t.BackgroundColor3 = Kit.COLOR.raised
+	t.BackgroundTransparency = 0.94
+	t.BorderSizePixel = 0
+	t.FontFace = Kit.font(Enum.FontWeight.Regular)
+	t.TextSize = 14
+	t.TextColor3 = Kit.COLOR.text
+	t.PlaceholderText = placeholder
+	t.PlaceholderColor3 = Kit.COLOR.faint
+	t.TextXAlignment = Enum.TextXAlignment.Left
+	t.ClearTextOnFocus = false
+	t.Text = ""
+	t.Parent = parent
+	corner(t, Kit.CONTROL_RADIUS)
+	stroke(t, 0.85)
+	Kit.pad(t, Kit.SPACE.m, 0, Kit.SPACE.m, 0)
+	if onEnter then
+		t.FocusLost:Connect(function(enter: boolean)
+			if enter then
+				onEnter(t.Text)
+			end
+		end)
+	end
+	return t
 end
 
 export type Segmented = { frame: Frame, set: (value: string) -> () }

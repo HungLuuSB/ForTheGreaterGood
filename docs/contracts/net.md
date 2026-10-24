@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **31**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **32**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -145,7 +145,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `IDLE 25` | `unitId u16, idle u8 (0 / 1)`, 4 B (protocol 31, S-136, client request 62) | Owner only, on camera or not: one of P's finished builders or factories (units with `buildOptions`) became idle (1) or busy (0). A builder is idle with no order of its own (automatic reactions don't count) and no build, assist, repair or reclaim work; a factory with an empty queue. Checked every `NetOut.IDLE_EVERY` (5) ticks. Units never reported are busy. On join / reconnect every idle one is sent. A dead unit's report lapses: drop it with the unit. |
 | `INTERCEPTED 16` | `projId u16, pos`, 9 B (protocol 16) | A strategic missile was destroyed in flight at `pos`: a small burst, **no detonation**; drop the projectile. Sent instead of its IMPACT. |
 | `DECOYED 7` | `projId u16, pos, vel, decoy pos, decoyTicks u8, countermeasure u8`, 23 B (countermeasure: 1 flares, 2 chaff, 3 DIRCM, `Schema.Countermeasure`; protocol 13) | For projectiles the client has: a countermeasure seduced it. Snap to `pos`/`vel`, clear its target, and for the next `decoyTicks` ticks steer toward the decoy point with `Guidance.decoy` (stop early when it returns false), then fly straight (protocol 11, S-28). |
-| `LOST_LOCK 8` | `projId u16, pos, vel`, 15 B | Same, but the missile flies on unguided. |
+| `LOST_LOCK 8` | `projId u16, pos, vel`, 15 B | Same, but the missile flies on unguided. A RADAR-guided missile (S-146) then corkscrews and sinks: the event carries its state after the server's first lost step (k = 0), so on each later tick step its velocity with `Guidance.lost(vx, vy, vz, k, projId, 1 / 15)` before the ballistic step, with k = 1, 2, 3... (the ticks since the event). Others fly straight. |
 | `DEATH 3` | `unitId u16, severity u8, wreckId u16`, 6 B | Tactical units (section 5). |
 | `ENTER 1` / `LEAVE 2` | 16 B / 3 B | Section 5. |
 
@@ -161,6 +161,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
   - homing weapons (`weapon.turnRate`) whose target the client knows first steer (S-27, **`Shared/Combat/Guidance`**): `HOMING` missiles with `Guidance.pn(x, y, z, vx, vy, vz, tx, ty, tz, tvx, 0, tvz, rad(turnRate) / 15, 1/15)` (proportional navigation), `TORPEDO` with `Guidance.lead(x, y, z, vx, vy, vz, tx, ty, tz, tvx, tvz, rad(turnRate) / 15)`. `t` is the target's position **at the start of the tick** (where the client had it before this tick's records) and `tv` its velocity: `Guidance.velocity(heading, speed)` on the server; the reference client estimates it from its last two Tactical records (0 when a tick brings none);
   - then `Ballistics.step(x, y, z, vx, vy, vz, weapon.gravity or 0, 1/15)` (**`Shared/Combat/Ballistics`**).
   - A guided missile whose target leaves its seeker cone gets LOST_LOCK and flies on unguided (S-27); the client gets the event.
+  - A RADAR-guided missile whose target is gone (killed, lock broken, decoy spent) spirals: LOST_LOCK, then `Guidance.lost` each tick (S-146). If the target died during the launch phase (a vertical launch before it pitched over, or the first 8 ticks of other launches), there is no event: it flies to the target's last known aim point and bursts there; homing corrections carry that path.
   - Vertical launches (`weapon.launch == "vertical"`: the radar SAMs, S-42) spawn pointing straight up from a launcher whose turret stays at rest. Step them with `Guidance.vertical(x, y, z, vx, vy, vz, tx, ty, tz, tvx, 0, tvz, rad(turnRate) / 15, 1/15, turned, climbLeft)`, which returns the velocity and the new `turned`: keep it per missile, false at SPAWN_PROJ (a missile that comes into view already turned over flips to true on its first step with the target near its nose).
   - The boost climb (S-44): `climbLeft = Guidance.climbLeft(weapon, y, Layers.heightAt(layers, x, z))`, the weapon's `climbHeight` (100 studs on both radar SAMs) minus the missile's height above the ground under it. Use `Layers.heightAt` (Shared, cell-based: the cell's height, the server's `Combat.groundHeight`), not a smoothed ground, or the hand-over tick differs. While the missile still flies exactly straight up (vx = vz = 0, which the wire keeps exact) and `climbLeft > 0`, it doesn't steer; nothing about its age is needed.
   - A decoyed missile (DECOYED) follows its decoy point: `Guidance.decoy(x, y, z, vx, vy, vz, dx, dy, dz, rad(turnRate) / 15, Guidance.seekerAngle(weapon))` each tick while ticks remain and it returns true (S-28). The reference client matches the server's path to under a stud this way (`Guidance.spec`).
@@ -283,7 +284,15 @@ per resource, supply then power:
   demand u32        tenths of a unit per second
   ratio u8          stall ratio, floor(ratio × 255)
 wind u8             current wind, 0..255 of a turbine's maximum
-                    = 36 B
+radarError u16      the team's radar accuracy, tenths of a stud (0 = no radar):
+                    a radar-fired weapon aims at a point circling a contact
+                    at this distance (guide 11.4), Pinpointers included
+trackError u16      the same for tracked contacts (0 = no fire-control radar)
+precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
+                    (trackError is 0 only while no fire-control radar has any
+                    power; in a partial stall it still tracks, within its shrunk
+                    reach: it applies to the contacts flagged TRACKED)
+                    = 41 B
 ```
 
 ## 10a. Spectators and player replays (S-18)
@@ -313,6 +322,7 @@ wind u8             current wind, 0..255 of a turbine's maximum
 | 8 | State `targets` field (mask bit 32): own units' weapon targets (S-16, client request 6) |
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
+| 32 | Eco records end with the team's radar accuracy: `radarError u16, trackError u16, precision u8` (S-147) |
 | 31 | Event `IDLE 25` (own idle builders and factories, S-136); command flag `GROUP 4` (S-137) |
 | 30 | WELCOME ends with every team's ally team (`teamCount u8, allyTeam u8 × teamCount`): allies on the client (S-129) |
 | 29 | Events DOME 23 and DOME_GONE 24: shield domes regardless of vision (S-122, client request 55) |

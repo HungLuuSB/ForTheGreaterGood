@@ -49,10 +49,10 @@ shade.BackgroundTransparency = 0
 local grad = Instance.new("UIGradient")
 grad.Rotation = 90
 grad.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0.15),
-	NumberSequenceKeypoint.new(0.18, 0.55),
-	NumberSequenceKeypoint.new(0.6, 0.7),
-	NumberSequenceKeypoint.new(1, 0.2),
+	NumberSequenceKeypoint.new(0, 0.3),
+	NumberSequenceKeypoint.new(0.18, 0.75),
+	NumberSequenceKeypoint.new(0.65, 0.85),
+	NumberSequenceKeypoint.new(1, 0.35),
 })
 grad.Parent = shade
 

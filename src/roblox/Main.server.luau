@@ -21,6 +21,15 @@
 -- published once every human is out or the match is over, and "back to
 -- lobby" returns to the preview. A human who leaves mid-match keeps the
 -- seat and rejoins into it.
+--
+-- Match role (C-173, docs/contracts/match.md v1, the lobby stream's L-4):
+-- a reserved server of this place runs the one match the lobby place stored
+-- for it (MemoryStore `FtggMatch`: server/<PrivateServerId> → config/<id>).
+-- It admits only the listed users (players into their seats, spectators to
+-- watch), holds the sim at its first tick while everyone loads (up to 90 s
+-- after the first arrives), keeps alive/<id> fresh, writes result/<id>, and
+-- teleports everyone back to their lobby server. The Studio profile
+-- `contract` runs the same path from an in-memory stand-in store.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -44,6 +53,7 @@ local Lobby = require(script.Parent:WaitForChild("Lobby")) :: any
 local Stats = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Stats")) :: any
 local CheatConfig = require(script.Parent:WaitForChild("CheatConfig")) :: any
 local Build = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Build")) :: any
+local MatchContract = require(script.Parent:WaitForChild("MatchContract")) :: any
 local Watchdog = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Watchdog")) :: any
 local HttpService = game:GetService("HttpService")
 
@@ -156,6 +166,11 @@ local recordedBytes = 0
 local MAX_RECORDED_BYTES = 32 * 1024 * 1024 -- all recordings together; past it they stop growing
 local savedReplays: { [number]: { { name: string, file: buffer } } } = {} -- UserId → saved this session
 local lobby: any = nil -- the lobby's state (C-70; seats since C-77)
+-- the match role (C-173), set up after the lobby below; declared here for finishMatch
+local contract: any = nil -- the validated match config
+local contractRaw: any = nil -- what the store held, for a refusal's return trip
+local resultWritten = false
+local storeSet: (string, any, number) -> ()
 local lobbyMaps: { any } = {}
 local joined: { [Player]: boolean } = {} -- HELLO accepted: receives the outbox
 local tokens: { [Player]: number } = {}
@@ -236,6 +251,21 @@ local function finishMatch()
 	lobby.results.replays = next(recorders) ~= nil
 	brains = {}
 	print(`[Entry] match over for the humans: {if sim.match.over then `ally team {sim.match.winner} won` else "all out"}`)
+	if contract and not resultWritten then
+		-- the results record (contract section 5), then everyone goes back after RETURN_SECONDS
+		local present = 0
+		for player, seat in slotOf do
+			if typeof(seat) == "number" and player.Parent then
+				present += 1
+			end
+		end
+		local outcome, winner, reason = MatchContract.outcomeOf(sim, present)
+		local record = MatchContract.result(contract, outcome, sim, Stats.report(sim), matchStartTick, os.time(), reason, winner)
+		storeSet("result/" .. contract.matchId, record, MatchContract.RESULT_TTL)
+		resultWritten = true
+		lobby.returnAt = workspace:GetServerTimeNow() + MatchContract.RETURN_SECONDS
+		print(`[Match] result written: {record.outcome}{if record.winner then `, ally team {record.winner}` else ""}`)
+	end
 	publishLobby()
 end
 
@@ -270,9 +300,150 @@ if Config.lobby then
 	lobby = Lobby.new(lobbyMaps, Config.seats)
 end
 
+-- The match role (C-173): a reserved server (not a VIP server, which has an
+-- owner) or the Studio `contract` profile. Its store is the MemoryStore
+-- HashMap, or an in-memory stand-in in Studio.
+local matchServer = (game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0) or Config.contract ~= nil
+local hashMap: any = nil
+local standIn: { [string]: any } = {}
+local function storeGet(key: string): any
+	if hashMap == nil then
+		return standIn[key]
+	end
+	for attempt = 1, 3 do
+		local ok, v = pcall(hashMap.GetAsync, hashMap, key)
+		if ok then
+			return v
+		end
+		warn(`[Match] store read {key}: {v}`)
+		task.wait(attempt)
+	end
+	return nil
+end
+storeSet = function(key: string, value: any, ttl: number)
+	if hashMap == nil then
+		standIn[key] = value
+		return
+	end
+	task.spawn(function()
+		for attempt = 1, 3 do
+			local ok, err = pcall(hashMap.SetAsync, hashMap, key, value, ttl)
+			if ok then
+				return
+			end
+			warn(`[Match] store write {key}: {err}`)
+			task.wait(attempt)
+		end
+	end)
+end
+local matchArrived: { [number]: boolean } = {} -- listed humans whose clients finished loading
+local firstArrival: number? = nil
+if matchServer then
+	local serverKey = game.PrivateServerId
+	if Config.contract then
+		serverKey = "studio"
+		standIn["server/studio"] = Config.contract.matchId
+		standIn["config/" .. Config.contract.matchId] = Config.contract
+	else
+		hashMap = game:GetService("MemoryStoreService"):GetHashMap(MatchContract.MAP)
+	end
+	local matchId: any = nil
+	for _ = 1, 10 do -- the lobby writes the keys before it teleports; allow for store lag
+		matchId = storeGet("server/" .. serverKey)
+		if matchId then
+			break
+		end
+		task.wait(1)
+	end
+	contractRaw = if type(matchId) == "string" then storeGet("config/" .. matchId) else nil
+	local why = if contractRaw == nil then "no match config for this server" else MatchContract.validate(contractRaw)
+	if why then
+		warn(`[Match] refused: {why}`)
+		if type(contractRaw) == "table" and type(contractRaw.matchId) == "string" and type(contractRaw.players) == "table" then
+			storeSet("result/" .. contractRaw.matchId, MatchContract.result(contractRaw, "abandoned", nil, nil, 0, os.time(), why), MatchContract.RESULT_TTL)
+			resultWritten = true
+		end
+	else
+		contract = contractRaw
+		lobby = MatchContract.toLobby(contract)
+		lobby.phase = "waiting" -- everyone loads first; the sim holds at its first tick
+		remotes:SetAttribute("TeamColors", HttpService:JSONEncode(MatchContract.teamColors(contract)))
+		print(`[Match] {contract.matchId}: {contract.mapId} {contract.mode}, {#contract.players} players, {#contract.spectators} spectators, from room "{contract.lobby.roomName}"`)
+		-- the heartbeat the lobby polls (contract section 6)
+		task.spawn(function()
+			while not resultWritten do
+				storeSet("alive/" .. contract.matchId, { at = os.time(), players = #Players:GetPlayers() }, MatchContract.HEARTBEAT_TTL)
+				task.wait(MatchContract.HEARTBEAT_EVERY)
+			end
+		end)
+	end
+end
+
+-- Back to the lobby place (contract section 6): the lobby server the room
+-- lives on, else any (it rebuilds the room from the store). In Studio it
+-- only says so.
+local TeleportService = game:GetService("TeleportService")
+local function sendBack(list: { Player })
+	local c = contract or contractRaw
+	if #list == 0 then
+		return
+	end
+	if type(c) ~= "table" or type(c.lobby) ~= "table" then
+		for _, p in list do
+			p:Kick("This match couldn't start. Rejoin the game to return to the lobby.")
+		end
+		return
+	end
+	if Config.contract or RunService:IsStudio() then
+		for _, p in list do
+			print(`[Match] (Studio) would teleport {p.Name} back to lobby place {c.lobby.placeId}, server {c.lobby.jobId}`)
+		end
+		return
+	end
+	local function attempt(toServer: boolean): boolean
+		local options = Instance.new("TeleportOptions")
+		if toServer then
+			options.ServerInstanceId = c.lobby.jobId
+		end
+		options:SetTeleportData({ matchId = c.matchId })
+		local ok, err = pcall(TeleportService.TeleportAsync, TeleportService, c.lobby.placeId, list, options)
+		if not ok then
+			warn(`[Match] return teleport ({if toServer then "to the room's server" else "to any lobby"}): {err}`)
+		end
+		return ok
+	end
+	if not attempt(true) then
+		attempt(false)
+	end
+end
+TeleportService.TeleportInitFailed:Connect(function(player: Player, result: Enum.TeleportResult, message: string)
+	local c = contract or contractRaw
+	if type(c) ~= "table" or type(c.lobby) ~= "table" then
+		return
+	end
+	warn(`[Match] {player.Name}'s return failed ({result.Name}: {message}); retrying to any lobby server`)
+	local options = Instance.new("TeleportOptions")
+	options:SetTeleportData({ matchId = c.matchId })
+	pcall(TeleportService.TeleportAsync, TeleportService, c.lobby.placeId, { player }, options)
+end)
+
 local function startMatch()
 	brains = {}
-	if lobby then
+	if contract then
+		-- the lobby's match (C-173): built once at boot, held while everyone loads
+		sim = Sim.new(MatchContract.toSim(contract))
+		brains = Skirmish.forMatch(sim)
+		matchStartTick = sim.tick
+		recorders, recordedBytes = {}, 0
+		for _, id in Lobby.humans(lobby) do
+			local header = { protocol = Schema.PROTOCOL_VERSION, defsHash = sim.defs.hash, mapId = sim.mapId, viewer = id, players = {} }
+			for _, pid in sim.playerOrder do
+				local p = sim.players[pid]
+				table.insert(header.players, { id = pid, team = p.team, allyTeam = p.allyTeam })
+			end
+			recorders[id] = PlayerReplay.new(header, sim.tick + 1)
+		end
+	elseif lobby then
 		if lobby.phase == "playing" then
 			local config = Lobby.config(lobby, seed)
 			-- cheats: the host's lobby toggle, or always in Studio (C-119)
@@ -305,7 +476,7 @@ local function startMatch()
 	-- warns when a live tick runs over guide 18.1's budget, and sums up each minute (S-140)
 	dog = Watchdog.new(sim)
 	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
-	for _, s in Config.spawns or {} do
+	for _, s in (if contract then {} else Config.spawns) or {} do
 		local ids = {}
 		local cols = s.cols or s.count or 1 -- a formation: rows of `cols` units, each row `rowDx`, `rowDz` from the last
 		for i = 0, (s.count or 1) - 1 do
@@ -328,7 +499,7 @@ local function startMatch()
 		end
 	end
 	-- the profile's starting stores (tests: a strong economy from the start)
-	local start = Config.startResources
+	local start = if contract then nil else Config.startResources
 	if start then
 		for _ = 1, 5 do
 			Sim.step(sim) -- the economy (every 5th tick) counts the spawned depots' storage
@@ -348,7 +519,7 @@ local function startMatch()
 			specOf[player] = NetOut.addSpectator(sim)
 		end
 	end
-	if Config.demoOrders then
+	if Config.demoOrders and not contract then
 		demoOrders()
 	end
 	if lobby then
@@ -374,6 +545,27 @@ local function reseat()
 end
 
 lobbyRemote.OnServerEvent:Connect(function(player: Player, msg: any)
+	if contract then
+		-- the lobby's match (C-173): loading progress and Return to lobby only
+		if type(msg) ~= "table" then
+			return
+		end
+		local seat = slotOf[player]
+		if msg.op == "loaded" and lobby.phase == "waiting" and typeof(seat) == "number" and type(msg.progress) == "number" then
+			local loading = lobby.loading or {}
+			lobby.loading = loading
+			loading[tostring(seat)] = math.clamp(msg.progress, 0, 1)
+			if msg.progress >= 1 and not matchArrived[seat] then
+				matchArrived[seat] = true
+				firstArrival = firstArrival or workspace:GetServerTimeNow()
+				print(`[Match] {player.Name} loaded`)
+			end
+			publishLobby()
+		elseif msg.op == "return" and lobby.phase == "results" then
+			sendBack({ player })
+		end
+		return
+	end
 	if lobby == nil or slotOf[player] == nil then
 		return
 	end
@@ -394,6 +586,44 @@ lobbyRemote.OnServerEvent:Connect(function(player: Player, msg: any)
 end)
 
 local function assignSlot(player: Player)
+	if matchServer then
+		-- the lobby's list decides (contract section 6): seats, spectators, or out
+		if contract == nil then
+			task.defer(sendBack, { player }) -- a refused match: everyone goes back
+			return
+		end
+		local seat = MatchContract.seatOf(contract, player.UserId)
+		if seat == nil and Config.contractAdmitAny then
+			-- Studio: the playtester plays the first human seat nobody holds
+			for i, p in contract.players do
+				local held = false
+				for _, s in slotOf do
+					held = held or s == i
+				end
+				if p.user and not held then
+					seat = i
+					break
+				end
+			end
+		end
+		if typeof(seat) == "number" then
+			slotOf[player] = seat
+			tokens[player] = 40
+			print(`[Match] {player.Name} takes seat {seat} ({contract.players[seat].name})`)
+		elseif seat == "spectator" then
+			specOf[player] = 0
+			print(`[Match] {player.Name} watches`)
+		else
+			print(`[Match] {player.Name} isn't listed: kicked`)
+			player:Kick("You're not part of this match.")
+			return
+		end
+		if resultWritten then
+			task.defer(sendBack, { player }) -- the match is closed: straight back
+		end
+		publishLobby()
+		return
+	end
 	if lobby then
 		local i = Lobby.seat(lobby, player.UserId, player.DisplayName)
 		if i then
@@ -438,6 +668,24 @@ Players.PlayerRemoving:Connect(function(player)
 	specOf[player] = nil -- its viewer stays in the sim until the next match (NetOut has no removal)
 	joined[player] = nil
 	tokens[player] = nil
+	if contract then
+		-- every listed human gone before the end: no result to play for (contract section 5)
+		if not resultWritten and (lobby.phase == "waiting" or lobby.phase == "playing") then
+			local left = 0
+			for other, seat in slotOf do
+				if typeof(seat) == "number" and other ~= player then
+					left += 1
+				end
+			end
+			if left == 0 then
+				storeSet("result/" .. contract.matchId, MatchContract.result(contract, "abandoned", sim, Stats.report(sim), matchStartTick, os.time(), "every player left"), MatchContract.RESULT_TTL)
+				resultWritten = true
+				print("[Match] every player left: abandoned")
+			end
+		end
+		publishLobby()
+		return
+	end
 	if lobby then
 		Lobby.leave(lobby, player.UserId) -- in a match the seat stays theirs to rejoin
 		reseat()
@@ -490,6 +738,9 @@ remoteOf.Cmd.OnServerEvent:Connect(function(player: Player, payload: any)
 	end
 	if (tokens[player] or 0) < 1 then
 		return -- rate limited
+	end
+	if contract and lobby.phase == "waiting" then
+		return -- the lobby's match hasn't started (C-173)
 	end
 	tokens[player] -= 1
 	Sim.submit(sim, id, payload)
@@ -647,7 +898,8 @@ startMatch()
 -- units in a row along x (the sim's own Spawn), for playtests of what the
 -- client draws; Invoke("build", builderId, defId, x, z) orders a builder to
 -- construct there (the sim's own build command), for what an unfinished
--- unit looks like.
+-- unit looks like; Invoke("hold", ids) sets them to hold fire, for
+-- screenshots of armies side by side (C-183).
 if RunService:IsStudio() then
 	local debugFn = Instance.new("BindableFunction")
 	debugFn.Name = "FtggDebug"
@@ -663,6 +915,16 @@ if RunService:IsStudio() then
 				table.insert(ids, Spawn.unit(sim, defId, playerId, x + i * (spacing or 12), z, heading or 0))
 			end
 			return ids
+		elseif query == "hold" then
+			for _, id in (...) :: { number } do
+				if sim.world.slot[id] then
+					sim.world.fireState[id] = 0 -- World.FireState.HOLD_FIRE
+				end
+			end
+			return true
+		elseif query == "matchstore" then
+			-- Invoke("matchstore"): the Studio stand-in store of a lobby match (C-173)
+			return HttpService:JSONEncode(standIn)
 		elseif query == "results" then
 			-- ends a lobby match now and shows the results (the statistics panel, C-105)
 			if lobby and lobby.phase == "playing" then
@@ -721,16 +983,40 @@ RunService.Heartbeat:Connect(function(dt: number)
 		cheatSpeed = wanted
 		remotes:SetAttribute("SimSpeed", speed)
 	end
+	-- the lobby's match (C-173): it starts once every listed human has
+	-- loaded, or WAIT_SECONDS after the first did; the results screen sends
+	-- everyone back after RETURN_SECONDS
+	local waiting = contract ~= nil and lobby.phase == "waiting"
+	if waiting then
+		local all = true
+		for _, id in Lobby.humans(lobby) do
+			all = all and matchArrived[id] == true
+		end
+		if all or (firstArrival and workspace:GetServerTimeNow() - firstArrival >= MatchContract.WAIT_SECONDS) then
+			lobby.phase = "playing"
+			matchStartTick = sim.tick
+			waiting = false
+			print(`[Match] start{if all then "" else " (not everyone loaded)"}`)
+			publishLobby()
+		end
+	elseif contract and lobby.phase == "results" and lobby.returnAt and workspace:GetServerTimeNow() >= lobby.returnAt then
+		lobby.returnAt = nil
+		sendBack(Players:GetPlayers())
+		publishLobby()
+	end
 	acc += dt * speed
 	local n = 0
 	while acc >= DT and n < MAX_STEPS_PER_FRAME do
 		local t0 = os.clock()
-		for _, b in brains do
-			Skirmish.tick(b)
+		if not waiting then -- the AI waits for the start too
+			for _, b in brains do
+				Skirmish.tick(b)
+			end
 		end
 		Sim.step(sim)
 		Watchdog.afterStep(dog)
-		if lobby and lobby.phase == "playing" then
+		-- a lobby match records from its first tick, the loading wait included (C-173)
+		if lobby and (lobby.phase == "playing" or (contract and lobby.phase == "waiting")) then
 			if recordedBytes < MAX_RECORDED_BYTES then
 				for id, rep in recorders do
 					local outbox = sim.net.players[id].outbox

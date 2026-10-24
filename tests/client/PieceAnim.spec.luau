@@ -151,6 +151,32 @@ return function(t: any)
 		t.equal(#s.threads, 0)
 	end)
 
+	t.test("a loop that waits on turns can't hang the client far away (C-180)", function()
+		local s = PieceAnim.new(defs.weaponByIndex)
+		local swings = 0
+		local script = {
+			Create = function(u: any)
+				-- the C-177 pattern: far away each turn lands at once
+				while true do
+					u:Turn("jib", "y", 20, 10)
+					u:WaitForTurn("jib", "y")
+					u:Turn("jib", "y", -20, 10)
+					u:WaitForTurn("jib", "y")
+					swings += 1
+				end
+			end,
+		}
+		local u = PieceAnim.add(s, 1, { id = "test", weapons = {} }, script)
+		t.equal(swings, 0, "near: the first turn takes time")
+		u.lod = "far"
+		local before = swings
+		for _ = 1, 60 do
+			PieceAnim.step(s, DT) -- returns: the guard holds the loop (the turn under way lands in 2 s)
+		end
+		t.expect(swings > before, "far away it keeps swinging")
+		t.expect(swings - before <= 60 * PieceAnim.SPIN_LIMIT, `but at most a frame's worth per step ({swings - before})`)
+	end)
+
 	t.test("the default script keeps turrets within a tick of the server's aim in a duel", function()
 		local sim = Sim.new({ seed = 7, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:48", scenario = "duel_test" })
 		local world = World.new(sim.defs)

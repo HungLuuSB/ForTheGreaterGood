@@ -77,6 +77,7 @@ type Thread = {
 	wake: number?, -- Sleep: resume at this scheduler time
 	wait: Track?, -- WaitForTurn / WaitForMove: resume when it arrives
 	dead: boolean,
+	spins: number, -- waits in a row that didn't yield (the spin guard, C-180)
 }
 
 export type Unit = {
@@ -187,7 +188,7 @@ end
 
 local function spawn(u: Unit, mask: number, fn: (...any) -> (), ...: any)
 	local s = u.sched
-	local th: Thread = { co = coroutine.create(fn), unit = u, mask = mask, wake = nil, wait = nil, dead = false }
+	local th: Thread = { co = coroutine.create(fn), unit = u, mask = mask, wake = nil, wait = nil, dead = false, spins = 0 }
 	local outer = s.current
 	s.current = th
 	local ok, err = coroutine.resume(th.co, u, ...)
@@ -218,11 +219,28 @@ function Methods.Move(u: Unit, piece: string, axis: Axis, offset: number, speed:
 	setGoal(u, piece, 2, axis, offset, speed)
 end
 
+-- A loop of turns and waits that never yields would hang the client: far
+-- away (LOD "far") a turn lands at once, so its wait returns at once (the
+-- C-177 freeze). After this many waits in a row that didn't yield, the
+-- thread is held to the next frame instead (C-180).
+PieceAnim.SPIN_LIMIT = 64
+
 local function waitFor(u: Unit, piece: string, kind: number, axis: Axis)
 	local tr = trackOf(u, piece, kind, axis)
+	local th = running(u)
 	if tr and u.sched.active[tr] then
-		running(u).wait = tr
+		th.spins = 0
+		th.wait = tr
 		coroutine.yield()
+	elseif th.spins >= PieceAnim.SPIN_LIMIT then
+		if th.spins == PieceAnim.SPIN_LIMIT then
+			warn(`[PieceAnim] {u.def.id}: a loop waits on pieces that have already arrived; holding it a frame each time`)
+		end
+		th.spins += 1
+		th.wake = u.sched.now
+		coroutine.yield()
+	else
+		th.spins += 1
 	end
 end
 
@@ -235,7 +253,9 @@ function Methods.WaitForMove(u: Unit, piece: string, axis: Axis)
 end
 
 function Methods.Sleep(u: Unit, seconds: number)
-	running(u).wake = u.sched.now + seconds
+	local th = running(u)
+	th.spins = 0
+	th.wake = u.sched.now + seconds
 	coroutine.yield()
 end
 

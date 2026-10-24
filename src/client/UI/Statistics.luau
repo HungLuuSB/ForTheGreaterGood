@@ -44,6 +44,8 @@ local CHARTS = {
 
 export type Actions = {
 	back: (() -> ())?, -- nil: not the host
+	backLabel: string?, -- the back button's text ("Back to lobby" by default)
+	returnAt: number?, -- a lobby match's auto-return (server time, GetServerTimeNow; C-173): a countdown beside the button
 	save: (() -> ())?, -- nil: no replays
 	watch: ((index: number?) -> ())?,
 }
@@ -214,7 +216,21 @@ local function fillOverview(ui: UI, actions: Actions, status: string?, saved: { 
 	backRow.LayoutOrder = 6
 	backRow.Parent = o
 	if actions.back then
-		Kit.button(backRow, "Back to lobby", "primary", actions.back, 160)
+		Kit.button(backRow, actions.backLabel or "Back to lobby", "primary", actions.back, 160)
+		local at = actions.returnAt
+		if at then
+			-- the auto-return countdown (the server does the teleport)
+			local label = Kit.text(backRow, "", "small", Kit.COLOR.dim)
+			label.Position = UDim2.fromOffset(172, 0)
+			label.Size = UDim2.new(1, -172, 1, 0)
+			task.spawn(function()
+				while label.Parent do
+					local left = math.max(0, math.ceil(at - workspace:GetServerTimeNow()))
+					label.Text = if left > 0 then `Returning to the lobby in {left} s` else "Returning to the lobby..."
+					task.wait(0.25)
+				end
+			end)
+		end
 	else
 		Kit.text(backRow, "The host returns to the lobby", "small").Size = UDim2.fromScale(1, 1)
 	end

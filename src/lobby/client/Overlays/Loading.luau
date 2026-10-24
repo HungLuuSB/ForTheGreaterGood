@@ -1,9 +1,12 @@
 --!strict
 -- The loading screen while a match starts (BAR's: the battle behind, a tip,
--- a long progress bar): reserving a server, then teleporting. In Studio the
--- Studio stand-in match runs here instead (L-6), with its controls: end the
--- match now, make the "server" die, or go back early.
+-- a long progress bar; the key art with parallax layers once the models
+-- stream delivers it, docs/contracts/key-art.md): reserving a server, then
+-- teleporting. In Studio the Studio stand-in match runs here instead (L-6),
+-- with its controls: end the match now, make the "server" die, or go back
+-- early.
 
+local KeyArt = require("@client/UI/KeyArt")
 local Net = require("../Net")
 local Ui = require("../Ui")
 
@@ -29,6 +32,9 @@ function Loading.new(gui: ScreenGui): any
 	root.BackgroundColor3 = Color3.new(0, 0, 0)
 	root.BackgroundTransparency = 0.45
 	root.Active = true
+	-- the models stream's layered key art when there is some (L-13); else
+	-- the live battle shows through the veil
+	local art = KeyArt.new(root, 40)
 	local title = Kit.text(root, "", "title", Color3.new(1, 1, 1))
 	title.TextSize = 38
 	title.AnchorPoint = Vector2.new(0.5, 0)
@@ -122,6 +128,11 @@ function Loading.new(gui: ScreenGui): any
 				newMode = if Net.standIn then "standIn" else "teleport"
 			end
 			if newMode ~= mode then
+				if mode == nil and newMode ~= nil then
+					root.BackgroundTransparency = if art.show() then 1 else 0.45
+				elseif newMode == nil then
+					art.hide()
+				end
 				mode = newMode
 				started = os.clock()
 				tipIndex = tipIndex % #TIPS + 1
@@ -131,7 +142,7 @@ function Loading.new(gui: ScreenGui): any
 				return false
 			end
 			local map = Net.map(room.settings.mapId)
-			title.Text = `{Ui.label2(room.settings.mode)} on {if map then map.name else room.mapName}`
+			title.Text = `{Ui.modeName(room.settings.mode, #room.slots)} on {if map then map.name else room.mapName}`
 			tip.Text = TIPS[tipIndex]
 			controls.Visible = mode == "standIn"
 			if mode == "starting" then

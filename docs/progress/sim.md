@@ -10,6 +10,11 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| Interceptors steer at their target's start-of-tick state (B) | Steering and the fuse no longer depend on which projectile steps first; matches the client | S-151 |
+| Shields tuned down (the user: "way too OP") | Phalanx capacity 600 → 120, recharge 30 → 2 /s; Carapace 400 → 80, 24 → 1.6 /s; beam drain scaled to match. 10 Ravagers now bring a Phalanx down in ~30 s (it held 100%); 4 wear it to 76% in a minute | S-150 |
+| Point defence (the user) | Sanctum / Basilisk (T2 structures) and Shepherd / Griffin (T2 vehicles) shoot down enemy missiles and rockets near them with interceptors; never units | S-149 |
+| Radar missiles without a target (the user) | A radar missile that loses its target corkscrews, noses over and falls (no more flying straight into the sky); one whose target dies in its launch phase flies to the target's last known spot and bursts there | S-146 |
+| Radar accuracy for the sensor view (the user, for B) | Eco records carry the team's radar error, tracking error and Pinpointer precision (protocol 32) | S-147 |
 | Match records' validator into `src/shared` (the user's choice, lobby request A-2) | `Shared/Match/MatchConfig`: the contract's limits, palette, record types, `validate`, `validateResult`, `users`; the lobby and match places use one copy. integrate.sh now also runs the lobby's own suite (required) | S-145 |
 | Watchdog spikes from B's Studio run (Construction 10–13 ms, NetOut 47.6 ms at match end) | Placing a structure updates clearance incrementally (2.4–4.7 → 0.2 ms; Construction peak 10.5 → 0.9 ms); removals skip unchanged move classes; an eliminated player's units self-destruct 20 a tick instead of all at once | S-144 |
 | AI sites: reach and exit lanes (next.md item 3) | Sites must be reachable by their builder (within its build range, through its connected ground) and off the 3-cell lanes in front of the AI's factory exits. In 4 sample matches the reach check never fired and the lane rule twice; give-ups stayed at 1–2 per 12 min (cause not found yet) | S-142 |

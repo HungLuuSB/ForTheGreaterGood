@@ -17,7 +17,7 @@ return Templates.extend(Templates.Structure, {
 	health = 2800,
 	footprint = 3, -- size shows tech level (S-104)
 	sensors = { sight = 120 },
-	shield = { radius = 120, capacity = 600, recharge = 30, power = 40 }, -- 20x S-79's (S-86)
+	shield = { radius = 120, capacity = 120, recharge = 2, power = 40 }, -- S-150: 600 / 30 (S-86) held full under any focused fire
 	pieces = { "base", "core" },
 	icon = "shield",
 	model = "ord_phalanx",

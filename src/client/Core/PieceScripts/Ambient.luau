@@ -85,11 +85,15 @@ function Ambient.apply(u: any, motions: { any }, mode: any)
 					u:StartThread(function()
 						u:SetSignalMask(Ambient.SIGNAL)
 						local speed = Ambient.JIB * 2 / Ambient.JIB_SECONDS * mode.power
+						local swing = Ambient.JIB_SECONDS / mode.power
+						-- sleep the swing's time rather than WaitForTurn: far away (LOD
+						-- "far") a turn lands at once and the wait wouldn't yield, so the
+						-- loop spun forever and froze the client (C-177)
 						while true do
 							u:Turn(name, m.axis, Ambient.JIB, speed)
-							u:WaitForTurn(name, m.axis)
+							u:Sleep(swing)
 							u:Turn(name, m.axis, -Ambient.JIB, speed)
-							u:WaitForTurn(name, m.axis)
+							u:Sleep(swing)
 						end
 					end)
 				else
@@ -102,11 +106,11 @@ function Ambient.apply(u: any, motions: { any }, mode: any)
 				u:StartThread(function()
 					u:SetSignalMask(Ambient.SIGNAL)
 					local speed = math.abs(range) / Ambient.SLIDE_SECONDS
-					while true do
+					while true do -- Sleep, not WaitForMove: see the jib above (C-177)
 						u:Move(name, m.axis, range, speed)
-						u:WaitForMove(name, m.axis)
+						u:Sleep(Ambient.SLIDE_SECONDS)
 						u:Move(name, m.axis, 0, speed)
-						u:WaitForMove(name, m.axis)
+						u:Sleep(Ambient.SLIDE_SECONDS)
 					end
 				end)
 			else

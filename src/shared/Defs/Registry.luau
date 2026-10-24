@@ -30,6 +30,8 @@ return {
 		ord_sanction = require("./Units/ord_sanction"), -- (S-106)
 		ord_providence = require("./Units/ord_providence"), -- (S-111)
 		ord_custodian = require("./Units/ord_custodian"),
+		ord_sanctum = require("./Units/ord_sanctum"), -- (S-149)
+		ord_shepherd = require("./Units/ord_shepherd"),
 		ord_reckoning = require("./Units/ord_reckoning"),
 		chs_condor = require("./Units/chs_condor"),
 		chs_converter = require("./Units/chs_converter"),
@@ -65,6 +67,8 @@ return {
 		chs_wraith = require("./Units/chs_wraith"), -- (S-109)
 		chs_cerberus = require("./Units/chs_cerberus"), -- (S-111)
 		chs_chimera = require("./Units/chs_chimera"),
+		chs_basilisk = require("./Units/chs_basilisk"), -- (S-149)
+		chs_griffin = require("./Units/chs_griffin"),
 		chs_cyclops = require("./Units/chs_cyclops"),
 		chs_mire = require("./Units/chs_mire"),
 		chs_plague = require("./Units/chs_plague"),
@@ -201,6 +205,10 @@ return {
 		chs_interceptor = require("./Weapons/chs_interceptor"),
 		ord_mobile_interceptor = require("./Weapons/ord_mobile_interceptor"),
 		chs_mobile_interceptor = require("./Weapons/chs_mobile_interceptor"),
+		ord_point_interceptor = require("./Weapons/ord_point_interceptor"), -- (S-149)
+		ord_mobile_point_interceptor = require("./Weapons/ord_mobile_point_interceptor"),
+		chs_point_interceptor = require("./Weapons/chs_point_interceptor"),
+		chs_mobile_point_interceptor = require("./Weapons/chs_mobile_point_interceptor"),
 		ord_mlrs = require("./Weapons/ord_mlrs"),
 		ord_naval_gun = require("./Weapons/ord_naval_gun"),
 		ord_naval_sam = require("./Weapons/ord_naval_sam"),
