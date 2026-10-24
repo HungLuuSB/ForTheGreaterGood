@@ -24,6 +24,9 @@ export type PlayerNet = {
 	sentOwner: { [number]: { string } }, -- own tactical units → queue, states, ammo last sent (S-61)
 	sentIdle: { [number]: number }, -- own builders / factories last sent idle → their generation (S-136)
 	sentProducing: { [number]: string }, -- allied tactical factories → item and progress last sent (S-103)
+	sentOwn: { [number]: number }, -- own units off camera → their status last sent (NetOut's signature; S-158)
+	sentOwnGen: { [number]: number }, -- the same units → the generation it was sent for
+	ownCursor: number, -- where the next OWN_STATUS pass starts in the world's ID list (round robin past the cap)
 	domes: { [number]: boolean }, -- generators whose dome the player has from DOME records (S-122)
 	spectator: boolean, -- sees everything, camera on the whole map (S-18)
 	eventBytes: { [number]: number }, -- cumulative bytes per Schema.EventKind (bandwidth reports)
@@ -82,6 +85,9 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		sentOwner = {},
 		sentIdle = {},
 		sentProducing = {},
+		sentOwn = {},
+		sentOwnGen = {},
+		ownCursor = 0,
 		domes = {},
 		spectator = spectator,
 		eventBytes = {},

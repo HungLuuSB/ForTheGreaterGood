@@ -14,6 +14,7 @@ return Templates.extend(Templates.Builder, {
 	sensors = { sight = 130 },
 	buildPower = 300,
 	footprint = 2, -- a 10-stud walking mech (S-124, the user via models-C)
+	moveClass = "WALKER", -- climbs 40° slopes, BAR-bot style (S-159)
 	buildRange = 60, -- 70% of 80 (client request 7, S-19), + 4 for the bigger body (S-124: the reach from its edge stays)
 	buildOptions = { "chs_extractor", "chs_generator", "chs_solar", "chs_windmill", "chs_converter", "chs_depot", "chs_vehplant", "chs_airfield", "chs_shipyard", "chs_guard", "chs_eye" },
 	production = { supply = 1, power = 20 },

@@ -24,6 +24,7 @@ Terrain.SPEED = table.freeze({
 	HEAVY_TRACKED = table.freeze({ [GRASS] = 1, [ROCK] = 0.9, [SAND] = 0.6, [ROAD] = 1.1 }),
 	AMPHIB = table.freeze({ [GRASS] = 1, [ROCK] = 0.9, [SAND] = 0.85, [ROAD] = 1.1 }),
 	HOVER = table.freeze({ [GRASS] = 1, [ROCK] = 0.8, [SAND] = 1, [ROAD] = 1.1 }),
+	WALKER = table.freeze({ [GRASS] = 1, [ROCK] = 0.95, [SAND] = 0.85, [ROAD] = 1.05 }), -- legs mind the ground less (S-159)
 } :: { [string]: { [number]: number } })
 
 -- The speed factor of `moveClass` on cell `index` (1 for classes and cells

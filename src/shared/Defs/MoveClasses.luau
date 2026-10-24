@@ -28,6 +28,9 @@ local classes: { [string]: MoveClass } = {
 	SUB = { id = "SUB", bit = 6, surface = "water", minDepth = 12, pathing = "flowfield" },
 	HELI = { id = "HELI", bit = 7, surface = "air", pathing = "steering" },
 	JET = { id = "JET", bit = 8, surface = "air", pathing = "steering" },
+	-- walking mechs (S-159, the user: about 40°, BAR-bot style): the Commanders
+	-- climb what tanks can't, Normandy's hedgerows (35–38°) included
+	WALKER = { id = "WALKER", bit = 9, surface = "land", maxSlope = 40, maxFord = 2, pathing = "flowfield" },
 }
 
 for _, mc in classes do

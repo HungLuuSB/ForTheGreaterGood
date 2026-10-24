@@ -9,8 +9,9 @@ local Passability = require("@shared/Grid/Passability")
 local Sim = require("../Sim/Sim")
 local Skirmish = require("../Sim/AI/Skirmish")
 local RunAll = require("./RunAll")
+local Schema = require("@shared/Net/Schema")
 
-local LAND = { "WHEELED", "TRACKED", "HEAVY_TRACKED" }
+local LAND = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "WALKER" }
 
 return function(t: RunAll.Context)
 	local layers = MapRegistry.load("map:canyon") :: Layers.Layers
@@ -120,6 +121,15 @@ return function(t: RunAll.Context)
 		t.expect(buffer.tostring(again.supply) == buffer.tostring(layers.supply), "deposits")
 	end)
 
+	t.test("the AI faces its factories toward the enemy: south from the north start, north from the south (S-160)", function()
+		local sim = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "map:canyon", scenario = "standard_start" })
+		t.equal(Skirmish.enemyFacing(Skirmish.new(sim, 1)), Schema.Facing.SOUTH, "player 1 (north)")
+		t.equal(Skirmish.enemyFacing(Skirmish.new(sim, 2)), Schema.Facing.NORTH, "player 2 (south)")
+		local ridge = Sim.new({ seed = 1, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "map:ridgeline", scenario = "standard_start" })
+		local a, b = Skirmish.enemyFacing(Skirmish.new(ridge, 1)), Skirmish.enemyFacing(Skirmish.new(ridge, 2))
+		t.expect((a == Schema.Facing.EAST and b == Schema.Facing.WEST) or (a == Schema.Facing.WEST and b == Schema.Facing.EAST), `Ridgeline: east and west as before ({a}, {b})`)
+	end)
+
 	t.slow("AI vs AI on The Canyon: both expand and fight, every command valid", function()
 		local sim = Sim.new({
 			seed = 1,
@@ -148,6 +158,14 @@ return function(t: RunAll.Context)
 		end
 		t.expect(brains[1].waves + brains[2].waves >= 1, `someone attacked ({brains[1].waves}, {brains[2].waves} waves)`)
 		t.equal(sim.stats.commandsRejected, 0, "every AI command was valid")
+		for _, id in w.ids do
+			local d = sim.defs.unitByIndex[w.defIndex[id]]
+			local owner = w.owner[id]
+			if d.id:find("vehplant") and (owner == 1 or owner == 2) then
+				local want = if owner == 1 then math.pi else 0 -- facing SOUTH / NORTH (S-160)
+				t.expect(math.abs(math.sin(w.heading[id] - want)) < 1e-6 and math.cos(w.heading[id] - want) > 0, `player {owner}'s {d.id} faces the enemy`)
+			end
+		end
 		print(`    canyon AI: {sim.tick / 900} min, extractors {extractors[1]} / {extractors[2]}, waves {brains[1].waves} / {brains[2].waves}`)
 	end)
 end

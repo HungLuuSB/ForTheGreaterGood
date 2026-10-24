@@ -600,6 +600,16 @@ local function faction(brain: Brain, order: string, chaos: string): string
 	return brain.prefix .. (if brain.prefix == "ord_" then order else chaos)
 end
 
+-- The BUILD facing (Schema.Facing) nearest the enemy start (S-160, the
+-- user's BAR reference #7): factories face their pad and exit lane that
+-- way. East / west wins a tie, as before on the mirrored 1v1 maps.
+function Skirmish.enemyFacing(brain: Brain): number
+	if math.abs(brain.dirX) >= math.abs(brain.dirZ) then
+		return if brain.dirX >= 0 then Schema.Facing.EAST else Schema.Facing.WEST
+	end
+	return if brain.dirZ > 0 then Schema.Facing.NORTH else Schema.Facing.SOUTH
+end
+
 local function build(brain: Brain, builder: number, defId: string, x: number, z: number, facing: number)
 	local g = (brain.sim.map :: Passability.PassMap).grid
 	local cell, ox, oz = g:encode(x, z)
@@ -1239,7 +1249,7 @@ local function think(brain: Brain)
 		if #c.factories + c.frames < plantsWanted and #c.factories + c.frames < 2 then
 			local x, z = spotNear(brain, plant, brain.homeX + brain.toward * 90, brain.homeZ, id)
 			if x and z then
-				build(brain, id, plant, x, z, if brain.toward > 0 then 1 else 3)
+				build(brain, id, plant, x, z, Skirmish.enemyFacing(brain))
 				c.frames += 1
 				continue
 			end
@@ -1317,7 +1327,7 @@ local function think(brain: Brain)
 			local adv = faction(brain, "advvehplant", "advvehplant")
 			local x, z = spotNear(brain, adv, brain.homeX - brain.toward * 40, brain.homeZ + 120, id)
 			if x and z then
-				build(brain, id, adv, x, z, if brain.toward > 0 then 1 else 3)
+				build(brain, id, adv, x, z, Skirmish.enemyFacing(brain))
 				table.insert(c.advFrames, 0)
 				continue
 			end
