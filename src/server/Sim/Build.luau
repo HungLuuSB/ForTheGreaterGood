@@ -78,10 +78,7 @@ local function halt(sim: Types.Sim, id: number)
 	local w = sim.world
 	if sim.nav and w.orderId[id] ~= 0 then
 		Nav.clearOrder(sim.nav, w, id)
-		-- hold where it will come to rest, not where it is: a unit holding the
-		-- spot it braked past walked back to it, in range and a step out
-		-- again (S-153, the user)
-		w.goalX[id], w.goalZ[id] = Nav.stopPoint(sim.nav, w, id)
+		w.goalX[id], w.goalZ[id] = w.posX[id], w.posZ[id]
 	end
 end
 

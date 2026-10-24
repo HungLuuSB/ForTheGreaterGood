@@ -10,8 +10,9 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| Build over your own units (the user, via B) | Own and allied ground units no longer stop a frame from starting; units on its footprint walk straight out. Enemy units still block; the AI's planning still avoids units | S-155 |
 | Shield generators switch off (the user, via B) | TOGGLE off: the dome is down, no power upkeep, no recharge, the charge kept; on: it rises again at 25%. Generators start on | S-154 |
-| In-range orders don't move the unit (the user, via B) | ATTACK on a target already in range keeps the unit still (it closed to 90% of range: a Lancer moved 15 studs); a halted unit holds where it comes to rest, not the point it braked past | S-153 |
+| In-range orders don't move the unit (the user, via B) | ATTACK on a target already in range keeps the unit still (it closed to 90% of range: a Lancer moved 15 studs); builders don't step back (a stop-point change for braking was tried and dropped: it broke mirror fairness) | S-153 |
 | Scouts' range halved (the user, via B) | Herald machine gun 175 → 88, Jackal 140 → 70 | S-152 |
 | Interceptors steer at their target's start-of-tick state (B) | Steering and the fuse no longer depend on which projectile steps first; matches the client | S-151 |
 | Shields tuned down (the user: "way too OP") | Phalanx capacity 600 → 120, recharge 30 → 2 /s; Carapace 400 → 80, 24 → 1.6 /s; beam drain scaled to match. 10 Ravagers now bring a Phalanx down in ~30 s (it held 100%); 4 wear it to 76% in a minute | S-150 |

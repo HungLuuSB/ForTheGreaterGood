@@ -350,6 +350,41 @@ return function(t: RunAll.Context)
 		t.equal(w.slot[frame2], nil, "the second removes the frame")
 	end)
 
+	t.test("building over your own units: the frame starts and they walk out; an enemy still blocks (S-155, the user)", function()
+		local Passability = require("@shared/Grid/Passability")
+		local function attempt(blockerTeam: number): (Sim.Sim, number, number)
+			local sim, cv, sx, sz = newStart()
+			fund(sim)
+			local w = sim.world
+			local site = sx + 60
+			local tank = Spawn.unit(sim, if blockerTeam == 1 then "ord_lancer" else "chs_ravager", blockerTeam, site + 2, sz + 3)
+			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
+			World.setHealth(w, tank, 1e7)
+			build(sim, { cv }, "ord_vehplant", site, sz)
+			local frame = 0
+			runUntil(sim, 400, function()
+				return frame ~= 0
+			end, function(s)
+				for _, e in events(s, "BUILD_START") do
+					frame = e.unit
+				end
+			end)
+			return sim, frame, tank
+		end
+		local sim, frame, tank = attempt(1)
+		t.expect(frame ~= 0, "the frame started over the friendly tank")
+		runUntil(sim, 150, function()
+			return false
+		end)
+		local w = sim.world
+		local pm = sim.map :: any
+		local cx, cz = pm.grid:cellAt(w.posX[tank], w.posZ[tank])
+		t.equal(Passability.occupant(pm, pm.grid:index(cx, cz)), 0, "the tank walked out of the footprint")
+		t.equal(sim.build.exiting[tank], nil, "and is clear of it")
+		local _, frame2 = attempt(2)
+		t.equal(frame2, 0, "an enemy tank on the site still blocks it")
+	end)
+
 	t.test("a builder assisting a factory speeds up production", function()
 		local function firstLancer(assist: boolean): number
 			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })

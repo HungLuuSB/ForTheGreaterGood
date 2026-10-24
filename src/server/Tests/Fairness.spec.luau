@@ -164,11 +164,13 @@ return function(t: RunAll.Context)
 		t.expect(not ((leads[1] > 0.05 and leads[2] > 0.05) or (leads[1] < -0.05 and leads[2] < -0.05)), `both pairs lean the same way: {leads[1] * 100}%, {leads[2] * 100}%`)
 	end)
 
-	-- The same AI level on both starts of a mirrored map, both factions, six
+	-- The same AI level on both starts of a mirrored map, both factions, 18
 	-- seeds: wins (or the value lead after 10 minutes) split close to even.
+	-- Six seeds were too few: a change that moves no start's odds can turn a
+	-- 6-of-12 split into 3 of 12 (S-155; seeds 1-18 split 15/21 before and after)
 	t.slow("mirror AI matches on a mirrored map split close to even between the starts", function()
 		local west, east = 0, 0
-		for seed = 1, 6 do
+		for seed = 1, 18 do
 			for _, teams in { { 1, 3 }, { 2, 4 } } do -- Order mirror, Chaos mirror
 				local sim = Sim.new({
 					seed = seed,
@@ -206,7 +208,7 @@ return function(t: RunAll.Context)
 				end
 			end
 		end
-		print(string.format("    mirror AI matches: west %d, east %d of 12", west, east))
-		t.expect(west >= 4 and east >= 4, `close to even: west {west}, east {east} of 12`)
+		print(string.format("    mirror AI matches: west %d, east %d of 36", west, east))
+		t.expect(west >= 12 and east >= 12, `close to even: west {west}, east {east} of 36`)
 	end)
 end
