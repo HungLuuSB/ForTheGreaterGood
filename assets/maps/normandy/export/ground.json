@@ -1,0 +1,3603 @@
+{
+  "map": "normandy",
+  "source": "map:normandy",
+  "uvRepeat": 32.0,
+  "tile": 256,
+  "parts": [
+    {
+      "fbx": "ground_1.fbx",
+      "meshes": [
+        "t0_0_grass",
+        "t0_0_sand",
+        "t0_0_leafy",
+        "t1_0_grass",
+        "t1_0_sand",
+        "t2_0_grass",
+        "t2_0_leafy",
+        "t3_0_grass",
+        "t3_0_leafy",
+        "t4_0_grass",
+        "t4_0_leafy",
+        "t4_0_road",
+        "t5_0_grass",
+        "t5_0_leafy",
+        "t6_0_grass",
+        "t6_0_sand",
+        "t7_0_grass",
+        "t0_1_grass",
+        "t0_1_road",
+        "t1_1_grass",
+        "t1_1_sand",
+        "t1_1_road",
+        "t2_1_grass",
+        "t2_1_leafy",
+        "t2_1_road",
+        "t3_1_grass",
+        "t3_1_leafy",
+        "t4_1_grass",
+        "t4_1_leafy"
+      ],
+      "triangles": 114151
+    },
+    {
+      "fbx": "ground_2.fbx",
+      "meshes": [
+        "t5_1_grass",
+        "t5_1_leafy",
+        "t5_1_road",
+        "t6_1_grass",
+        "t6_1_sand",
+        "t6_1_road",
+        "t7_1_grass",
+        "t7_1_road",
+        "t0_2_grass",
+        "t0_2_road",
+        "t1_2_grass",
+        "t1_2_sand",
+        "t1_2_road",
+        "t2_2_grass",
+        "t2_2_leafy",
+        "t2_2_road",
+        "t3_2_grass",
+        "t3_2_leafy",
+        "t3_2_road",
+        "t4_2_grass",
+        "t4_2_leafy",
+        "t4_2_road",
+        "t5_2_grass",
+        "t5_2_leafy",
+        "t5_2_road",
+        "t6_2_grass",
+        "t6_2_sand",
+        "t6_2_road",
+        "t7_2_grass",
+        "t7_2_road",
+        "t0_3_grass",
+        "t0_3_road",
+        "t1_3_grass",
+        "t1_3_sand",
+        "t1_3_road"
+      ],
+      "triangles": 116109
+    },
+    {
+      "fbx": "ground_3.fbx",
+      "meshes": [
+        "t2_3_grass",
+        "t2_3_leafy",
+        "t2_3_road",
+        "t3_3_grass",
+        "t3_3_leafy",
+        "t3_3_road",
+        "t4_3_grass",
+        "t4_3_leafy",
+        "t4_3_road",
+        "t5_3_grass",
+        "t5_3_leafy",
+        "t5_3_road",
+        "t6_3_grass",
+        "t6_3_sand",
+        "t6_3_road",
+        "t7_3_grass",
+        "t7_3_road",
+        "t0_4_grass",
+        "t0_4_road",
+        "t1_4_grass",
+        "t1_4_sand",
+        "t1_4_road",
+        "t2_4_grass",
+        "t2_4_leafy",
+        "t2_4_road",
+        "t3_4_grass",
+        "t3_4_leafy",
+        "t3_4_road",
+        "t4_4_grass",
+        "t4_4_leafy",
+        "t4_4_road",
+        "t5_4_grass",
+        "t5_4_leafy",
+        "t5_4_road",
+        "t6_4_grass",
+        "t6_4_sand"
+      ],
+      "triangles": 119127
+    },
+    {
+      "fbx": "ground_4.fbx",
+      "meshes": [
+        "t6_4_road",
+        "t7_4_grass",
+        "t7_4_road",
+        "t0_5_grass",
+        "t0_5_road",
+        "t1_5_grass",
+        "t1_5_sand",
+        "t1_5_road",
+        "t2_5_grass",
+        "t2_5_leafy",
+        "t2_5_road",
+        "t3_5_grass",
+        "t3_5_leafy",
+        "t3_5_road",
+        "t4_5_grass",
+        "t4_5_leafy",
+        "t4_5_road",
+        "t5_5_grass",
+        "t5_5_leafy",
+        "t5_5_road",
+        "t6_5_grass",
+        "t6_5_sand",
+        "t6_5_road",
+        "t7_5_grass",
+        "t7_5_road",
+        "t0_6_grass",
+        "t0_6_sand",
+        "t0_6_rock",
+        "t1_6_grass",
+        "t1_6_sand",
+        "t1_6_road",
+        "t1_6_rock",
+        "t2_6_grass",
+        "t2_6_sand",
+        "t2_6_leafy",
+        "t2_6_rock",
+        "t3_6_grass",
+        "t3_6_sand",
+        "t3_6_leafy",
+        "t3_6_road",
+        "t3_6_rock"
+      ],
+      "triangles": 117040
+    },
+    {
+      "fbx": "ground_5.fbx",
+      "meshes": [
+        "t4_6_grass",
+        "t4_6_sand",
+        "t4_6_leafy",
+        "t4_6_road",
+        "t4_6_rock",
+        "t5_6_grass",
+        "t5_6_sand",
+        "t5_6_leafy",
+        "t5_6_rock",
+        "t6_6_grass",
+        "t6_6_sand",
+        "t6_6_road",
+        "t6_6_rock",
+        "t7_6_grass",
+        "t7_6_sand",
+        "t7_6_rock",
+        "t0_7_sand",
+        "t1_7_sand",
+        "t2_7_sand",
+        "t3_7_sand",
+        "t4_7_sand",
+        "t5_7_sand",
+        "t6_7_sand",
+        "t7_7_sand",
+        "d_crag0_6_0_rock",
+        "d_crag1_6_0_rock",
+        "d_crag2_6_0_rock",
+        "d_crag3_6_0_rock",
+        "d_crag4_6_0_rock"
+      ],
+      "triangles": 118309
+    },
+    {
+      "fbx": "ground_6.fbx",
+      "meshes": [
+        "d_crag5_6_0_rock",
+        "d_crag6_6_0_rock",
+        "d_crag7_6_0_rock",
+        "d_hedge2_0_0_leafy",
+        "d_hedge2_1_0_leafy",
+        "d_hedge2_2_0_leafy",
+        "d_hedge2_3_0_leafy",
+        "d_hedge2_4_0_leafy",
+        "d_hedge2_5_0_leafy",
+        "d_hedge2_6_0_leafy",
+        "d_hedge3_0_0_leafy",
+        "d_hedge3_1_0_leafy",
+        "d_hedge3_2_0_leafy",
+        "d_hedge3_3_0_leafy",
+        "d_hedge3_4_0_leafy",
+        "d_hedge3_5_0_leafy",
+        "d_hedge3_6_0_leafy",
+        "d_hedge4_0_0_leafy",
+        "d_hedge4_1_0_leafy",
+        "d_hedge4_2_0_leafy",
+        "d_hedge4_3_0_leafy",
+        "d_hedge4_4_0_leafy",
+        "d_hedge4_5_0_leafy",
+        "d_hedge4_6_0_leafy",
+        "d_hedge5_0_0_leafy",
+        "d_hedge5_1_0_leafy",
+        "d_hedge5_2_0_leafy",
+        "d_hedge5_3_0_leafy",
+        "d_hedge5_4_0_leafy",
+        "d_hedge5_5_0_leafy",
+        "d_hedge5_6_0_leafy",
+        "d_rocks0_6_rock",
+        "d_rocks1_6_rock",
+        "d_rocks2_6_rock",
+        "d_rocks3_6_rock",
+        "d_rocks4_6_rock",
+        "d_rocks5_6_rock",
+        "d_rocks6_6_rock",
+        "d_rocks7_6_rock"
+      ],
+      "triangles": 79660
+    }
+  ],
+  "meshes": [
+    {
+      "name": "t0_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -896.0,
+        33.1875,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 8196
+    },
+    {
+      "name": "t0_0_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -1022.5448,
+        33.5,
+        -1023.5752
+      ],
+      "size": [
+        2.9103,
+        0.01,
+        0.8496
+      ],
+      "triangles": 3
+    },
+    {
+      "name": "t0_0_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -1023.2662,
+        33.5,
+        -1020.8021
+      ],
+      "size": [
+        1.4676,
+        0.01,
+        4.7061
+      ],
+      "triangles": 5
+    },
+    {
+      "name": "t1_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -640.0,
+        33.5875,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        4.825,
+        256.0
+      ],
+      "triangles": 7652
+    },
+    {
+      "name": "t1_0_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -659.5453,
+        32.6267,
+        -896.0
+      ],
+      "size": [
+        29.1045,
+        4.2535,
+        256.0
+      ],
+      "triangles": 1072
+    },
+    {
+      "name": "t2_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        37.5625,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        7.375,
+        256.0
+      ],
+      "triangles": 8315
+    },
+    {
+      "name": "t2_0_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -340.3342,
+        38.4674,
+        -897.2975
+      ],
+      "size": [
+        118.8222,
+        5.5652,
+        253.405
+      ],
+      "triangles": 375
+    },
+    {
+      "name": "t3_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -128.0,
+        35.875,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8484
+    },
+    {
+      "name": "t3_0_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -120.5045,
+        37.4088,
+        -896.5846
+      ],
+      "size": [
+        241.0089,
+        5.1824,
+        254.8307
+      ],
+      "triangles": 538
+    },
+    {
+      "name": "t4_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        128.0,
+        35.875,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8477
+    },
+    {
+      "name": "t4_0_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        119.1578,
+        36.9561,
+        -896.7397
+      ],
+      "size": [
+        238.3157,
+        6.0878,
+        254.5205
+      ],
+      "triangles": 537
+    },
+    {
+      "name": "t4_0_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        28.3326,
+        35.9965,
+        -1015.3287
+      ],
+      "size": [
+        7.3348,
+        1.2769,
+        1.7025
+      ],
+      "triangles": 9
+    },
+    {
+      "name": "t5_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        37.5625,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        7.375,
+        256.0
+      ],
+      "triangles": 8356
+    },
+    {
+      "name": "t5_0_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        339.5816,
+        38.5164,
+        -897.0329
+      ],
+      "size": [
+        118.4343,
+        5.4673,
+        253.9343
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "t6_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        640.0,
+        33.7451,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        4.5098,
+        256.0
+      ],
+      "triangles": 7723
+    },
+    {
+      "name": "t6_0_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        660.9966,
+        32.7106,
+        -896.0
+      ],
+      "size": [
+        28.6918,
+        4.4213,
+        256.0
+      ],
+      "triangles": 1005
+    },
+    {
+      "name": "t7_0_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        896.0,
+        33.1875,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t0_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -896.0,
+        33.1875,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 7776
+    },
+    {
+      "name": "t0_1_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -886.8975,
+        33.2845,
+        -699.5295
+      ],
+      "size": [
+        237.795,
+        2.1811,
+        27.729
+      ],
+      "triangles": 914
+    },
+    {
+      "name": "t1_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -640.0,
+        33.7719,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        4.4562,
+        256.0
+      ],
+      "triangles": 7211
+    },
+    {
+      "name": "t1_1_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -659.0273,
+        32.8616,
+        -640.0
+      ],
+      "size": [
+        27.4475,
+        3.9732,
+        256.0
+      ],
+      "triangles": 819
+    },
+    {
+      "name": "t1_1_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -640.0,
+        35.1875,
+        -613.5032
+      ],
+      "size": [
+        256.0,
+        1.625,
+        203.0063
+      ],
+      "triangles": 1492
+    },
+    {
+      "name": "t2_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        37.5625,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        7.375,
+        256.0
+      ],
+      "triangles": 8136
+    },
+    {
+      "name": "t2_1_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -340.5694,
+        39.8429,
+        -639.2113
+      ],
+      "size": [
+        116.0408,
+        2.8142,
+        252.3874
+      ],
+      "triangles": 118
+    },
+    {
+      "name": "t2_1_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -453.3623,
+        35.625,
+        -700.5865
+      ],
+      "size": [
+        117.2754,
+        0.75,
+        25.1303
+      ],
+      "triangles": 426
+    },
+    {
+      "name": "t3_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -128.0,
+        35.875,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8485
+    },
+    {
+      "name": "t3_1_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -118.7402,
+        36.8789,
+        -639.7206
+      ],
+      "size": [
+        237.4804,
+        5.7422,
+        254.2203
+      ],
+      "triangles": 553
+    },
+    {
+      "name": "t4_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        128.0,
+        35.875,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8457
+    },
+    {
+      "name": "t4_1_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        118.7501,
+        36.9506,
+        -639.2603
+      ],
+      "size": [
+        237.5002,
+        5.5988,
+        254.5205
+      ],
+      "triangles": 555
+    },
+    {
+      "name": "t5_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        37.5625,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        7.375,
+        256.0
+      ],
+      "triangles": 8064
+    },
+    {
+      "name": "t5_1_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        342.1561,
+        38.936,
+        -638.9671
+      ],
+      "size": [
+        119.8698,
+        4.6279,
+        253.9343
+      ],
+      "triangles": 237
+    },
+    {
+      "name": "t5_1_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        453.3584,
+        35.625,
+        -699.7796
+      ],
+      "size": [
+        117.2832,
+        0.75,
+        26.4731
+      ],
+      "triangles": 443
+    },
+    {
+      "name": "t6_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        640.0,
+        33.8356,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        4.3289,
+        256.0
+      ],
+      "triangles": 7262
+    },
+    {
+      "name": "t6_1_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        660.7217,
+        32.6834,
+        -640.0
+      ],
+      "size": [
+        27.3218,
+        3.6168,
+        256.0
+      ],
+      "triangles": 840
+    },
+    {
+      "name": "t6_1_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        640.0,
+        35.1875,
+        -613.6483
+      ],
+      "size": [
+        256.0,
+        1.625,
+        203.2965
+      ],
+      "triangles": 1436
+    },
+    {
+      "name": "t7_1_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        896.0,
+        33.1875,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 7678
+    },
+    {
+      "name": "t7_1_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        887.22,
+        33.2744,
+        -700.0306
+      ],
+      "size": [
+        238.4399,
+        2.2012,
+        30.7454
+      ],
+      "triangles": 1020
+    },
+    {
+      "name": "t0_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -896.0,
+        33.8125,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        2.125,
+        256.0
+      ],
+      "triangles": 8252
+    },
+    {
+      "name": "t0_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -897.5034,
+        34.2634,
+        -268.1609
+      ],
+      "size": [
+        252.9933,
+        1.0268,
+        24.3219
+      ],
+      "triangles": 162
+    },
+    {
+      "name": "t1_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -640.0,
+        32.8761,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        4.7478,
+        256.0
+      ],
+      "triangles": 7488
+    },
+    {
+      "name": "t1_2_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -659.7851,
+        31.7155,
+        -392.0777
+      ],
+      "size": [
+        28.294,
+        4.431,
+        239.8447
+      ],
+      "triangles": 1010
+    },
+    {
+      "name": "t1_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -649.4447,
+        34.1875,
+        -384.0
+      ],
+      "size": [
+        217.3239,
+        2.125,
+        256.0
+      ],
+      "triangles": 834
+    },
+    {
+      "name": "t2_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        36.9375,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        7.625,
+        256.0
+      ],
+      "triangles": 8394
+    },
+    {
+      "name": "t2_2_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -341.5805,
+        38.263,
+        -396.6681
+      ],
+      "size": [
+        117.8343,
+        4.9739,
+        228.6285
+      ],
+      "triangles": 289
+    },
+    {
+      "name": "t2_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -371.3983,
+        33.5625,
+        -257.6882
+      ],
+      "size": [
+        230.7966,
+        0.875,
+        3.3763
+      ],
+      "triangles": 107
+    },
+    {
+      "name": "t3_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -128.0,
+        36.7206,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        7.9412,
+        256.0
+      ],
+      "triangles": 8487
+    },
+    {
+      "name": "t3_2_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -118.6991,
+        37.6811,
+        -397.0221
+      ],
+      "size": [
+        237.3981,
+        6.1377,
+        228.7351
+      ],
+      "triangles": 467
+    },
+    {
+      "name": "t3_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -128.0,
+        34.4375,
+        -256.8733
+      ],
+      "size": [
+        256.0,
+        0.875,
+        1.7466
+      ],
+      "triangles": 36
+    },
+    {
+      "name": "t4_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        128.0,
+        36.719,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        7.938,
+        256.0
+      ],
+      "triangles": 8420
+    },
+    {
+      "name": "t4_2_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        118.9629,
+        37.25,
+        -397.3408
+      ],
+      "size": [
+        237.9259,
+        7.0,
+        229.3183
+      ],
+      "triangles": 621
+    },
+    {
+      "name": "t4_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        127.7506,
+        34.4375,
+        -257.6081
+      ],
+      "size": [
+        255.5013,
+        0.875,
+        3.2162
+      ],
+      "triangles": 115
+    },
+    {
+      "name": "t5_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        36.9375,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        7.625,
+        256.0
+      ],
+      "triangles": 8369
+    },
+    {
+      "name": "t5_2_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        341.1761,
+        38.2042,
+        -397.3229
+      ],
+      "size": [
+        118.7768,
+        5.0917,
+        229.3542
+      ],
+      "triangles": 298
+    },
+    {
+      "name": "t5_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        396.0681,
+        33.5625,
+        -257.8686
+      ],
+      "size": [
+        231.8637,
+        0.875,
+        3.7372
+      ],
+      "triangles": 74
+    },
+    {
+      "name": "t6_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        640.0,
+        32.5569,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        5.3861,
+        256.0
+      ],
+      "triangles": 7500
+    },
+    {
+      "name": "t6_2_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        660.6945,
+        31.625,
+        -392.0103
+      ],
+      "size": [
+        30.898,
+        4.25,
+        239.9794
+      ],
+      "triangles": 985
+    },
+    {
+      "name": "t6_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        618.1002,
+        34.1875,
+        -384.0
+      ],
+      "size": [
+        212.2003,
+        2.125,
+        256.0
+      ],
+      "triangles": 871
+    },
+    {
+      "name": "t7_2_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        896.0,
+        33.8125,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        2.125,
+        256.0
+      ],
+      "triangles": 8223
+    },
+    {
+      "name": "t7_2_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        869.3532,
+        34.321,
+        -257.0882
+      ],
+      "size": [
+        143.4615,
+        0.6421,
+        2.1764
+      ],
+      "triangles": 79
+    },
+    {
+      "name": "t0_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -896.0,
+        34.8125,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 7839
+    },
+    {
+      "name": "t0_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -887.5061,
+        34.375,
+        -246.0544
+      ],
+      "size": [
+        239.0122,
+        1.25,
+        19.8912
+      ],
+      "triangles": 659
+    },
+    {
+      "name": "t1_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -640.0,
+        31.4639,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        4.5721,
+        256.0
+      ],
+      "triangles": 7270
+    },
+    {
+      "name": "t1_3_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -659.6371,
+        30.3468,
+        -115.1957
+      ],
+      "size": [
+        29.0486,
+        3.6936,
+        230.3915
+      ],
+      "triangles": 929
+    },
+    {
+      "name": "t1_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -640.0,
+        32.875,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        1.75,
+        256.0
+      ],
+      "triangles": 1351
+    },
+    {
+      "name": "t2_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        37.0,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        10.0,
+        256.0
+      ],
+      "triangles": 8011
+    },
+    {
+      "name": "t2_3_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -349.7762,
+        37.0525,
+        -116.015
+      ],
+      "size": [
+        102.7083,
+        5.3949,
+        227.223
+      ],
+      "triangles": 247
+    },
+    {
+      "name": "t2_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -384.0,
+        33.5,
+        -246.7127
+      ],
+      "size": [
+        256.0,
+        1.0,
+        18.5746
+      ],
+      "triangles": 672
+    },
+    {
+      "name": "t3_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -130.1813,
+        38.625,
+        -128.0
+      ],
+      "size": [
+        251.6374,
+        9.25,
+        256.0
+      ],
+      "triangles": 7689
+    },
+    {
+      "name": "t3_3_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -112.1327,
+        39.7998,
+        -116.2949
+      ],
+      "size": [
+        171.2515,
+        4.4004,
+        230.466
+      ],
+      "triangles": 271
+    },
+    {
+      "name": "t3_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -128.0,
+        35.0,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        2.0,
+        256.0
+      ],
+      "triangles": 1872
+    },
+    {
+      "name": "t4_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        130.7895,
+        38.625,
+        -128.0
+      ],
+      "size": [
+        250.4211,
+        9.25,
+        256.0
+      ],
+      "triangles": 7531
+    },
+    {
+      "name": "t4_3_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        112.1936,
+        40.0782,
+        -116.5879
+      ],
+      "size": [
+        170.8591,
+        3.8435,
+        228.147
+      ],
+      "triangles": 281
+    },
+    {
+      "name": "t4_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        128.0,
+        35.0,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        2.0,
+        256.0
+      ],
+      "triangles": 1936
+    },
+    {
+      "name": "t5_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        37.0,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        10.0,
+        256.0
+      ],
+      "triangles": 8051
+    },
+    {
+      "name": "t5_3_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        349.0947,
+        37.8457,
+        -115.157
+      ],
+      "size": [
+        100.3983,
+        3.8087,
+        228.8814
+      ],
+      "triangles": 163
+    },
+    {
+      "name": "t5_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        384.0,
+        33.5,
+        -246.9774
+      ],
+      "size": [
+        256.0,
+        1.0,
+        18.0452
+      ],
+      "triangles": 709
+    },
+    {
+      "name": "t6_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        640.0,
+        31.621,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        4.258,
+        256.0
+      ],
+      "triangles": 7300
+    },
+    {
+      "name": "t6_3_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        660.4259,
+        30.3438,
+        -116.211
+      ],
+      "size": [
+        27.8986,
+        3.6876,
+        232.4219
+      ],
+      "triangles": 905
+    },
+    {
+      "name": "t6_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        640.0,
+        32.875,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        1.75,
+        256.0
+      ],
+      "triangles": 1303
+    },
+    {
+      "name": "t7_3_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        896.0,
+        34.8125,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 7966
+    },
+    {
+      "name": "t7_3_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        886.7308,
+        34.375,
+        -247.2194
+      ],
+      "size": [
+        237.4617,
+        1.25,
+        17.5612
+      ],
+      "triangles": 630
+    },
+    {
+      "name": "t0_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -896.0,
+        34.8125,
+        128.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 7915
+    },
+    {
+      "name": "t0_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -887.0549,
+        34.375,
+        244.9383
+      ],
+      "size": [
+        238.1098,
+        1.25,
+        22.1233
+      ],
+      "triangles": 671
+    },
+    {
+      "name": "t1_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -640.0,
+        31.4978,
+        128.0
+      ],
+      "size": [
+        256.0,
+        4.5044,
+        256.0
+      ],
+      "triangles": 7295
+    },
+    {
+      "name": "t1_4_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -659.7071,
+        30.2933,
+        114.9027
+      ],
+      "size": [
+        28.9324,
+        3.5866,
+        229.8055
+      ],
+      "triangles": 915
+    },
+    {
+      "name": "t1_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -640.0,
+        32.875,
+        128.0
+      ],
+      "size": [
+        256.0,
+        1.75,
+        256.0
+      ],
+      "triangles": 1282
+    },
+    {
+      "name": "t2_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        35.875,
+        128.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8079
+    },
+    {
+      "name": "t2_4_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -340.3303,
+        37.9678,
+        109.6566
+      ],
+      "size": [
+        116.2946,
+        4.0644,
+        214.5062
+      ],
+      "triangles": 277
+    },
+    {
+      "name": "t2_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -384.0,
+        33.5,
+        246.287
+      ],
+      "size": [
+        256.0,
+        1.0,
+        19.426
+      ],
+      "triangles": 702
+    },
+    {
+      "name": "t3_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -130.5418,
+        38.0,
+        128.0
+      ],
+      "size": [
+        250.9164,
+        8.0,
+        256.0
+      ],
+      "triangles": 7445
+    },
+    {
+      "name": "t3_4_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -112.5071,
+        40.3366,
+        107.6943
+      ],
+      "size": [
+        172.3024,
+        3.3268,
+        213.2647
+      ],
+      "triangles": 191
+    },
+    {
+      "name": "t3_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -128.0,
+        35.0,
+        128.0
+      ],
+      "size": [
+        256.0,
+        2.0,
+        256.0
+      ],
+      "triangles": 2004
+    },
+    {
+      "name": "t4_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        130.7354,
+        38.0,
+        128.0
+      ],
+      "size": [
+        250.5292,
+        8.0,
+        256.0
+      ],
+      "triangles": 7619
+    },
+    {
+      "name": "t4_4_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        112.091,
+        40.4639,
+        108.2141
+      ],
+      "size": [
+        171.0941,
+        3.0722,
+        211.3994
+      ],
+      "triangles": 185
+    },
+    {
+      "name": "t4_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        128.0,
+        35.0,
+        128.0
+      ],
+      "size": [
+        256.0,
+        2.0,
+        256.0
+      ],
+      "triangles": 1942
+    },
+    {
+      "name": "t5_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        35.9523,
+        128.0
+      ],
+      "size": [
+        256.0,
+        7.9046,
+        256.0
+      ],
+      "triangles": 7990
+    },
+    {
+      "name": "t5_4_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        340.9377,
+        37.135,
+        109.2422
+      ],
+      "size": [
+        116.93,
+        5.7299,
+        216.9524
+      ],
+      "triangles": 287
+    },
+    {
+      "name": "t5_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        384.0,
+        33.5,
+        246.0903
+      ],
+      "size": [
+        256.0,
+        1.0,
+        19.8194
+      ],
+      "triangles": 669
+    },
+    {
+      "name": "t6_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        640.0,
+        31.375,
+        128.0
+      ],
+      "size": [
+        256.0,
+        4.75,
+        256.0
+      ],
+      "triangles": 7233
+    },
+    {
+      "name": "t6_4_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        660.0018,
+        30.0599,
+        115.626
+      ],
+      "size": [
+        27.5416,
+        3.1198,
+        231.2521
+      ],
+      "triangles": 889
+    },
+    {
+      "name": "t6_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        640.0,
+        32.875,
+        128.0
+      ],
+      "size": [
+        256.0,
+        1.75,
+        256.0
+      ],
+      "triangles": 1392
+    },
+    {
+      "name": "t7_4_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        896.0,
+        34.8125,
+        128.0
+      ],
+      "size": [
+        256.0,
+        2.375,
+        256.0
+      ],
+      "triangles": 7916
+    },
+    {
+      "name": "t7_4_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        887.4264,
+        34.375,
+        247.1868
+      ],
+      "size": [
+        238.8527,
+        1.25,
+        17.6263
+      ],
+      "triangles": 636
+    },
+    {
+      "name": "t0_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -896.0,
+        33.8125,
+        384.0
+      ],
+      "size": [
+        256.0,
+        2.125,
+        256.0
+      ],
+      "triangles": 8223
+    },
+    {
+      "name": "t0_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -902.8378,
+        34.5,
+        256.8886
+      ],
+      "size": [
+        148.2902,
+        0.5,
+        1.7772
+      ],
+      "triangles": 81
+    },
+    {
+      "name": "t1_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -640.0,
+        32.4063,
+        384.0
+      ],
+      "size": [
+        256.0,
+        5.6874,
+        256.0
+      ],
+      "triangles": 7561
+    },
+    {
+      "name": "t1_5_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -660.0468,
+        31.4701,
+        393.0396
+      ],
+      "size": [
+        26.6671,
+        3.9402,
+        237.9208
+      ],
+      "triangles": 903
+    },
+    {
+      "name": "t1_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -639.9654,
+        34.1875,
+        384.0
+      ],
+      "size": [
+        255.9309,
+        2.125,
+        256.0
+      ],
+      "triangles": 940
+    },
+    {
+      "name": "t2_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        36.9648,
+        384.0
+      ],
+      "size": [
+        256.0,
+        7.5704,
+        256.0
+      ],
+      "triangles": 8351
+    },
+    {
+      "name": "t2_5_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -340.8368,
+        38.7301,
+        379.9574
+      ],
+      "size": [
+        116.2873,
+        4.0398,
+        210.7269
+      ],
+      "triangles": 168
+    },
+    {
+      "name": "t2_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -423.9793,
+        33.4068,
+        258.1522
+      ],
+      "size": [
+        176.0414,
+        0.5636,
+        4.3043
+      ],
+      "triangles": 77
+    },
+    {
+      "name": "t3_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -130.0155,
+        36.75,
+        384.0
+      ],
+      "size": [
+        251.969,
+        8.0,
+        256.0
+      ],
+      "triangles": 8406
+    },
+    {
+      "name": "t3_5_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -132.0598,
+        38.2766,
+        379.8665
+      ],
+      "size": [
+        211.0907,
+        4.9469,
+        211.4081
+      ],
+      "triangles": 456
+    },
+    {
+      "name": "t3_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -75.3695,
+        33.8125,
+        384.0
+      ],
+      "size": [
+        150.739,
+        2.125,
+        256.0
+      ],
+      "triangles": 464
+    },
+    {
+      "name": "t4_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        130.2637,
+        36.75,
+        384.0
+      ],
+      "size": [
+        251.4727,
+        8.0,
+        256.0
+      ],
+      "triangles": 8323
+    },
+    {
+      "name": "t4_5_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        132.3907,
+        37.8048,
+        380.5484
+      ],
+      "size": [
+        211.2207,
+        5.8903,
+        211.3934
+      ],
+      "triangles": 554
+    },
+    {
+      "name": "t4_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        105.0142,
+        33.8125,
+        384.0
+      ],
+      "size": [
+        210.0284,
+        2.125,
+        256.0
+      ],
+      "triangles": 401
+    },
+    {
+      "name": "t5_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        36.9384,
+        384.0
+      ],
+      "size": [
+        256.0,
+        7.6232,
+        256.0
+      ],
+      "triangles": 8381
+    },
+    {
+      "name": "t5_5_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        340.6481,
+        38.9546,
+        379.7818
+      ],
+      "size": [
+        117.0551,
+        3.5908,
+        210.6014
+      ],
+      "triangles": 170
+    },
+    {
+      "name": "t5_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        387.3776,
+        33.5625,
+        258.5577
+      ],
+      "size": [
+        249.2448,
+        0.875,
+        5.1154
+      ],
+      "triangles": 165
+    },
+    {
+      "name": "t6_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        640.0,
+        32.6725,
+        384.0
+      ],
+      "size": [
+        256.0,
+        5.155,
+        256.0
+      ],
+      "triangles": 7616
+    },
+    {
+      "name": "t6_5_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        660.5569,
+        31.563,
+        392.6332
+      ],
+      "size": [
+        28.3898,
+        4.1259,
+        238.7337
+      ],
+      "triangles": 928
+    },
+    {
+      "name": "t6_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        640.0,
+        34.1875,
+        384.0
+      ],
+      "size": [
+        256.0,
+        2.125,
+        256.0
+      ],
+      "triangles": 820
+    },
+    {
+      "name": "t7_5_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        896.0,
+        33.8125,
+        384.0
+      ],
+      "size": [
+        256.0,
+        2.125,
+        256.0
+      ],
+      "triangles": 8235
+    },
+    {
+      "name": "t7_5_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        885.0799,
+        34.25,
+        257.0651
+      ],
+      "size": [
+        234.1597,
+        1.0,
+        2.1301
+      ],
+      "triangles": 107
+    },
+    {
+      "name": "t0_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -896.0,
+        32.3007,
+        565.106
+      ],
+      "size": [
+        256.0,
+        4.1487,
+        106.2121
+      ],
+      "triangles": 3453
+    },
+    {
+      "name": "t0_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -896.0,
+        11.0155,
+        703.0389
+      ],
+      "size": [
+        256.0,
+        10.2809,
+        129.9223
+      ],
+      "triangles": 4212
+    },
+    {
+      "name": "t0_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        -896.0,
+        24.0697,
+        627.4149
+      ],
+      "size": [
+        256.0,
+        19.4939,
+        30.5518
+      ],
+      "triangles": 1059
+    },
+    {
+      "name": "t1_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -640.0,
+        25.068,
+        575.9649
+      ],
+      "size": [
+        256.0,
+        21.364,
+        127.9298
+      ],
+      "triangles": 3344
+    },
+    {
+      "name": "t1_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -640.0,
+        19.3537,
+        640.0
+      ],
+      "size": [
+        256.0,
+        26.9574,
+        256.0
+      ],
+      "triangles": 4310
+    },
+    {
+      "name": "t1_6_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -559.3962,
+        23.3373,
+        619.2078
+      ],
+      "size": [
+        22.3626,
+        24.3255,
+        214.4156
+      ],
+      "triangles": 703
+    },
+    {
+      "name": "t1_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        -640.0,
+        24.7303,
+        627.4348
+      ],
+      "size": [
+        256.0,
+        20.5843,
+        30.1942
+      ],
+      "triangles": 895
+    },
+    {
+      "name": "t2_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -384.0,
+        36.3938,
+        565.2353
+      ],
+      "size": [
+        256.0,
+        9.2124,
+        106.4707
+      ],
+      "triangles": 3530
+    },
+    {
+      "name": "t2_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -384.0,
+        11.6335,
+        702.358
+      ],
+      "size": [
+        256.0,
+        11.517,
+        131.284
+      ],
+      "triangles": 4223
+    },
+    {
+      "name": "t2_6_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -396.0203,
+        40.4573,
+        543.9615
+      ],
+      "size": [
+        2.8537,
+        1.0854,
+        26.3159
+      ],
+      "triangles": 22
+    },
+    {
+      "name": "t2_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        -384.0,
+        24.2927,
+        628.0769
+      ],
+      "size": [
+        256.0,
+        18.8153,
+        26.6574
+      ],
+      "triangles": 981
+    },
+    {
+      "name": "t3_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        -131.7678,
+        26.9679,
+        576.4251
+      ],
+      "size": [
+        248.4643,
+        25.4514,
+        128.8502
+      ],
+      "triangles": 3515
+    },
+    {
+      "name": "t3_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -128.0,
+        11.0136,
+        702.8014
+      ],
+      "size": [
+        256.0,
+        10.2773,
+        130.3973
+      ],
+      "triangles": 4166
+    },
+    {
+      "name": "t3_6_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        -131.378,
+        37.9625,
+        544.3957
+      ],
+      "size": [
+        180.5942,
+        3.575,
+        27.2388
+      ],
+      "triangles": 50
+    },
+    {
+      "name": "t3_6_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        -6.0,
+        21.9726,
+        618.8755
+      ],
+      "size": [
+        12.0,
+        21.5547,
+        213.751
+      ],
+      "triangles": 331
+    },
+    {
+      "name": "t3_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        -140.4144,
+        23.6276,
+        627.6169
+      ],
+      "size": [
+        231.1713,
+        17.875,
+        28.4685
+      ],
+      "triangles": 972
+    },
+    {
+      "name": "t4_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        130.8935,
+        26.8101,
+        577.4325
+      ],
+      "size": [
+        250.2131,
+        25.7656,
+        130.8649
+      ],
+      "triangles": 3530
+    },
+    {
+      "name": "t4_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        128.0,
+        10.8483,
+        703.5351
+      ],
+      "size": [
+        256.0,
+        9.9466,
+        128.9298
+      ],
+      "triangles": 4189
+    },
+    {
+      "name": "t4_6_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        130.8344,
+        37.7194,
+        543.5718
+      ],
+      "size": [
+        181.8322,
+        4.0613,
+        27.2759
+      ],
+      "triangles": 60
+    },
+    {
+      "name": "t4_6_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        5.2408,
+        21.9772,
+        618.7298
+      ],
+      "size": [
+        10.4816,
+        21.5456,
+        213.4597
+      ],
+      "triangles": 329
+    },
+    {
+      "name": "t4_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        140.0455,
+        23.5055,
+        627.7063
+      ],
+      "size": [
+        231.909,
+        18.0209,
+        29.1814
+      ],
+      "triangles": 956
+    },
+    {
+      "name": "t5_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        384.0,
+        36.3018,
+        565.3457
+      ],
+      "size": [
+        256.0,
+        9.3964,
+        106.6913
+      ],
+      "triangles": 3533
+    },
+    {
+      "name": "t5_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        384.0,
+        11.3083,
+        702.9697
+      ],
+      "size": [
+        256.0,
+        10.8667,
+        130.0606
+      ],
+      "triangles": 4256
+    },
+    {
+      "name": "t5_6_leafy",
+      "kind": "tiles",
+      "material": "leafy",
+      "center": [
+        395.8752,
+        40.0583,
+        543.4966
+      ],
+      "size": [
+        4.7729,
+        1.8834,
+        27.2167
+      ],
+      "triangles": 22
+    },
+    {
+      "name": "t5_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        384.0,
+        24.6218,
+        628.3667
+      ],
+      "size": [
+        256.0,
+        19.8123,
+        27.1467
+      ],
+      "triangles": 953
+    },
+    {
+      "name": "t6_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        640.0,
+        25.0625,
+        576.0
+      ],
+      "size": [
+        256.0,
+        21.375,
+        128.0
+      ],
+      "triangles": 3382
+    },
+    {
+      "name": "t6_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        640.0,
+        19.5104,
+        640.0
+      ],
+      "size": [
+        256.0,
+        27.2709,
+        256.0
+      ],
+      "triangles": 4375
+    },
+    {
+      "name": "t6_6_road",
+      "kind": "tiles",
+      "material": "road",
+      "center": [
+        559.2882,
+        23.3364,
+        619.2343
+      ],
+      "size": [
+        26.6056,
+        24.3271,
+        214.4687
+      ],
+      "triangles": 659
+    },
+    {
+      "name": "t6_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        640.0,
+        24.4565,
+        627.9558
+      ],
+      "size": [
+        256.0,
+        19.4388,
+        27.8767
+      ],
+      "triangles": 833
+    },
+    {
+      "name": "t7_6_grass",
+      "kind": "tiles",
+      "material": "grass",
+      "center": [
+        896.0,
+        32.5499,
+        564.3354
+      ],
+      "size": [
+        256.0,
+        3.6503,
+        104.6708
+      ],
+      "triangles": 3440
+    },
+    {
+      "name": "t7_6_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        896.0,
+        11.0494,
+        702.9553
+      ],
+      "size": [
+        256.0,
+        10.3488,
+        130.0894
+      ],
+      "triangles": 4271
+    },
+    {
+      "name": "t7_6_rock",
+      "kind": "tiles",
+      "material": "rock",
+      "center": [
+        896.0,
+        23.8184,
+        627.4472
+      ],
+      "size": [
+        256.0,
+        18.5295,
+        29.5328
+      ],
+      "triangles": 1013
+    },
+    {
+      "name": "t0_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -896.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -640.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t2_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -384.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t3_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        -128.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t4_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        128.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t5_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        384.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t6_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        640.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t7_7_sand",
+      "kind": "tiles",
+      "material": "sand",
+      "center": [
+        896.0,
+        -4.5625,
+        896.0
+      ],
+      "size": [
+        256.0,
+        20.875,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "d_crag0_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -895.0,
+        24.2571,
+        627.4165
+      ],
+      "size": [
+        258.0,
+        20.1266,
+        30.5499
+      ],
+      "triangles": 3782
+    },
+    {
+      "name": "d_crag1_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -640.0025,
+        24.7423,
+        627.4352
+      ],
+      "size": [
+        256.0049,
+        20.9912,
+        30.1726
+      ],
+      "triangles": 3055
+    },
+    {
+      "name": "d_crag2_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -383.9998,
+        24.3943,
+        628.0847
+      ],
+      "size": [
+        256.0004,
+        19.3124,
+        26.6569
+      ],
+      "triangles": 3472
+    },
+    {
+      "name": "d_crag3_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -140.4329,
+        23.8494,
+        627.6087
+      ],
+      "size": [
+        231.1341,
+        18.9205,
+        28.4522
+      ],
+      "triangles": 3340
+    },
+    {
+      "name": "d_crag4_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        140.0874,
+        23.5524,
+        627.7071
+      ],
+      "size": [
+        231.8253,
+        18.6719,
+        29.1787
+      ],
+      "triangles": 3323
+    },
+    {
+      "name": "d_crag5_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        384.0,
+        24.4704,
+        628.3738
+      ],
+      "size": [
+        256.0,
+        20.245,
+        27.1367
+      ],
+      "triangles": 3419
+    },
+    {
+      "name": "d_crag6_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        640.0023,
+        24.3833,
+        627.959
+      ],
+      "size": [
+        256.0045,
+        19.9461,
+        27.8819
+      ],
+      "triangles": 2883
+    },
+    {
+      "name": "d_crag7_6_0_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        896.0,
+        23.9305,
+        627.4514
+      ],
+      "size": [
+        256.0,
+        19.3778,
+        29.5234
+      ],
+      "triangles": 3594
+    },
+    {
+      "name": "d_hedge2_0_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -340.144,
+        40.9747,
+        -892.2756
+      ],
+      "size": [
+        119.4881,
+        8.7494,
+        263.7511
+      ],
+      "triangles": 2512
+    },
+    {
+      "name": "d_hedge2_1_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -340.0722,
+        40.9848,
+        -624.0
+      ],
+      "size": [
+        119.3444,
+        8.4945,
+        111.2
+      ],
+      "triangles": 1152
+    },
+    {
+      "name": "d_hedge2_2_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -340.1534,
+        40.4114,
+        -404.0
+      ],
+      "size": [
+        119.5068,
+        8.6229,
+        247.2
+      ],
+      "triangles": 2512
+    },
+    {
+      "name": "d_hedge2_3_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -348.1506,
+        39.4118,
+        -112.0
+      ],
+      "size": [
+        103.5012,
+        8.3987,
+        239.2
+      ],
+      "triangles": 1712
+    },
+    {
+      "name": "d_hedge2_4_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -340.1557,
+        39.4654,
+        123.9574
+      ],
+      "size": [
+        119.5115,
+        8.4557,
+        183.9982
+      ],
+      "triangles": 2080
+    },
+    {
+      "name": "d_hedge2_5_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -340.1186,
+        40.335,
+        380.0
+      ],
+      "size": [
+        119.4371,
+        8.47,
+        215.2
+      ],
+      "triangles": 1648
+    },
+    {
+      "name": "d_hedge2_6_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -395.9231,
+        41.2241,
+        544.0
+      ],
+      "size": [
+        7.762,
+        7.2481,
+        31.2
+      ],
+      "triangles": 240
+    },
+    {
+      "name": "d_hedge3_0_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -139.7369,
+        39.1827,
+        -888.1267
+      ],
+      "size": [
+        199.7262,
+        9.1655,
+        271.4534
+      ],
+      "triangles": 3616
+    },
+    {
+      "name": "d_hedge3_1_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -139.7492,
+        39.1163,
+        -664.2506
+      ],
+      "size": [
+        199.7016,
+        9.0326,
+        191.7011
+      ],
+      "triangles": 3376
+    },
+    {
+      "name": "d_hedge3_2_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -139.779,
+        39.8696,
+        -404.0
+      ],
+      "size": [
+        199.642,
+        9.0392,
+        247.2
+      ],
+      "triangles": 3680
+    },
+    {
+      "name": "d_hedge3_3_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -112.0,
+        41.5181,
+        -112.2671
+      ],
+      "size": [
+        175.2,
+        8.8362,
+        239.7342
+      ],
+      "triangles": 2496
+    },
+    {
+      "name": "d_hedge3_4_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -112.0,
+        41.4887,
+        124.0115
+      ],
+      "size": [
+        175.2,
+        8.5024,
+        183.8374
+      ],
+      "triangles": 1760
+    },
+    {
+      "name": "d_hedge3_5_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -132.0,
+        39.9029,
+        380.0
+      ],
+      "size": [
+        215.2,
+        8.6058,
+        215.2
+      ],
+      "triangles": 3968
+    },
+    {
+      "name": "d_hedge3_6_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        -132.0051,
+        39.2603,
+        544.0
+      ],
+      "size": [
+        184.1738,
+        8.3205,
+        31.2
+      ],
+      "triangles": 480
+    },
+    {
+      "name": "d_hedge4_0_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        96.0,
+        39.2421,
+        -888.254
+      ],
+      "size": [
+        287.2,
+        9.2842,
+        271.708
+      ],
+      "triangles": 5120
+    },
+    {
+      "name": "d_hedge4_1_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        96.0,
+        39.2148,
+        -664.2003
+      ],
+      "size": [
+        287.2,
+        9.2295,
+        191.6006
+      ],
+      "triangles": 4128
+    },
+    {
+      "name": "d_hedge4_2_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        96.0,
+        39.8898,
+        -404.0
+      ],
+      "size": [
+        287.2,
+        9.0796,
+        247.2
+      ],
+      "triangles": 5184
+    },
+    {
+      "name": "d_hedge4_3_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        112.0,
+        41.5424,
+        -112.1794
+      ],
+      "size": [
+        175.2,
+        8.8849,
+        239.5588
+      ],
+      "triangles": 2496
+    },
+    {
+      "name": "d_hedge4_4_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        112.0,
+        41.5556,
+        124.0005
+      ],
+      "size": [
+        175.2,
+        8.6362,
+        184.2229
+      ],
+      "triangles": 1760
+    },
+    {
+      "name": "d_hedge4_5_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        132.0,
+        40.0407,
+        380.0
+      ],
+      "size": [
+        215.2,
+        8.8813,
+        215.2
+      ],
+      "triangles": 3968
+    },
+    {
+      "name": "d_hedge4_6_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        132.0218,
+        39.4338,
+        544.0
+      ],
+      "size": [
+        183.7656,
+        8.6676,
+        31.2
+      ],
+      "triangles": 480
+    },
+    {
+      "name": "d_hedge5_0_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        340.2589,
+        40.9253,
+        -892.2043
+      ],
+      "size": [
+        119.7177,
+        8.6505,
+        263.6086
+      ],
+      "triangles": 2512
+    },
+    {
+      "name": "d_hedge5_1_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        340.187,
+        40.9593,
+        -624.0
+      ],
+      "size": [
+        119.574,
+        8.4435,
+        111.2
+      ],
+      "triangles": 1152
+    },
+    {
+      "name": "d_hedge5_2_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        340.2648,
+        40.4165,
+        -404.0
+      ],
+      "size": [
+        119.7296,
+        8.6331,
+        247.2
+      ],
+      "triangles": 2512
+    },
+    {
+      "name": "d_hedge5_3_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        348.2906,
+        39.4884,
+        -112.0
+      ],
+      "size": [
+        103.7812,
+        8.5519,
+        239.2
+      ],
+      "triangles": 1712
+    },
+    {
+      "name": "d_hedge5_4_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        340.2084,
+        39.5131,
+        124.0541
+      ],
+      "size": [
+        119.6168,
+        8.5511,
+        184.1091
+      ],
+      "triangles": 2080
+    },
+    {
+      "name": "d_hedge5_5_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        340.2192,
+        40.3282,
+        380.0
+      ],
+      "size": [
+        119.6384,
+        8.4564,
+        215.2
+      ],
+      "triangles": 1648
+    },
+    {
+      "name": "d_hedge5_6_0_leafy",
+      "kind": "details",
+      "material": "leafy",
+      "center": [
+        395.9662,
+        41.2419,
+        544.0
+      ],
+      "size": [
+        8.0953,
+        7.2839,
+        31.2
+      ],
+      "triangles": 240
+    },
+    {
+      "name": "d_rocks0_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -889.2517,
+        23.6655,
+        627.1335
+      ],
+      "size": [
+        220.2936,
+        20.9431,
+        35.1684
+      ],
+      "triangles": 360
+    },
+    {
+      "name": "d_rocks1_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -634.4611,
+        24.8449,
+        627.913
+      ],
+      "size": [
+        236.8358,
+        23.1482,
+        35.3832
+      ],
+      "triangles": 380
+    },
+    {
+      "name": "d_rocks2_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -374.3067,
+        24.0488,
+        628.5943
+      ],
+      "size": [
+        230.2653,
+        21.9789,
+        32.9497
+      ],
+      "triangles": 620
+    },
+    {
+      "name": "d_rocks3_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        -139.8671,
+        23.1552,
+        627.5711
+      ],
+      "size": [
+        197.5726,
+        19.6827,
+        34.3173
+      ],
+      "triangles": 420
+    },
+    {
+      "name": "d_rocks4_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        125.2044,
+        23.0711,
+        629.2737
+      ],
+      "size": [
+        200.4503,
+        20.0727,
+        32.6153
+      ],
+      "triangles": 320
+    },
+    {
+      "name": "d_rocks5_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        374.0133,
+        24.0096,
+        628.0689
+      ],
+      "size": [
+        230.4309,
+        22.1026,
+        33.898
+      ],
+      "triangles": 600
+    },
+    {
+      "name": "d_rocks6_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        628.0859,
+        24.6381,
+        627.7018
+      ],
+      "size": [
+        225.0167,
+        21.3694,
+        31.4736
+      ],
+      "triangles": 380
+    },
+    {
+      "name": "d_rocks7_6_rock",
+      "kind": "details",
+      "material": "rock",
+      "center": [
+        894.7735,
+        23.2678,
+        627.2512
+      ],
+      "size": [
+        252.6165,
+        19.2064,
+        33.0039
+      ],
+      "triangles": 460
+    }
+  ],
+  "triangles": {
+    "tiles": 567764,
+    "details": 96632
+  }
+}

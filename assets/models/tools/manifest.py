@@ -3,8 +3,8 @@ uploaded BAR-style mesh (docs/contracts/rig.md, section 7):
 
     python assets/models/tools/manifest.py [--skip id,id]
 
-(--skip leaves out meshes uploaded but not yet committed, so each pair's
-commit lists only its own.)
+(--skip leaves out meshes or map grounds uploaded but not yet committed, so
+each pair's or map's commit lists only its own.)
 
 Sources per unit: assets/models/<id>/export/rig.json (pieces, pivots,
 attachments, team pieces, glow parts) and assets/models/<id>/roblox_assets.json
@@ -99,9 +99,11 @@ GROUND_NOTE = "baked ground, waiting for the user's review (Studio: Invoke(\"gro
 MAPS_DIR = os.path.join(ROOT, "assets", "maps")
 
 
-def grounds():
+def grounds(skip=()):
     out, used = {}, set()
     for name in sorted(os.listdir(MAPS_DIR)):
+        if name in skip:
+            continue
         rig_p = os.path.join(MAPS_DIR, name, "export", "ground.json")
         ids_p = os.path.join(MAPS_DIR, name, "roblox_assets.json")
         if not (os.path.isfile(rig_p) and os.path.isfile(ids_p)):
@@ -361,7 +363,7 @@ def main():
                         "center": b["center"], "size": b["size"]} for b in rig["bands"]]}
     if shell["status"] == "review":
         shell["note"] = SHELL_NOTE
-    ground, ground_materials = grounds()
+    ground, ground_materials = grounds(skip)
     body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell, "shieldEnergy": shield_energy(),
                 "keyArt": key_arts(), "ground": ground, "groundMaterials": ground_materials}, 0)
     text = f"""--!strict
