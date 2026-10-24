@@ -39,15 +39,6 @@ return function(t: any)
 		t.expect(Registry.fx.shield_emitter ~= nil and Registry.fx.shield_emitter.attachments.core ~= nil)
 	end)
 
-	t.test("the shield's dome waves and energy column are valid", function()
-		t.deepEqual(Mesh.validateShieldWave(Registry.shieldWave), {})
-		t.deepEqual(Mesh.validateShieldColumn(Registry.shieldColumn), {})
-		t.equal(#Registry.shieldWave.bands, 16)
-		local broken = table.clone(Registry.shieldWave) :: any
-		broken.bands = { Registry.shieldWave.bands[2], Registry.shieldWave.bands[1] }
-		t.expect(#Mesh.validateShieldWave(broken) > 0, "out-of-order bands are caught")
-	end)
-
 	t.test("the shield's energy look v4 is valid", function()
 		local e = Registry.shieldEnergy
 		t.deepEqual(Mesh.validateShieldEnergy(e), {})

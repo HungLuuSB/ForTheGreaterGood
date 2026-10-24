@@ -514,6 +514,9 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `014494d` (shield energy column and dome waves, review: `assets/fx/shield/waves/`, manifest `shieldColumn` / `shieldWave`, `Mesh.luau` validators, `tests/client/Meshes.spec.luau`, fx.md and docs; clients-B implements the look).
 - Ready to merge: `81d46b2` (Aegis / Wyvern vertical-launch SAMs and Sanctum / Basilisk point defence: meshes, wrecks and blockouts, manifest `review`, MeshMaterials; `assets/models/`, `src/shared/Defs/Blockouts/`, `src/shared/Defs/Meshes/Registry.luau`, `place/MeshMaterials.model.json`, `.gitignore`).
 - Ready to merge: `e9c6352` (shield energy v4, approved: `assets/fx/shield/waves/`, manifest `shieldEnergy`, `Mesh.validateShieldEnergy`, `tests/client/Meshes.spec.luau`, fx.md and M-34; `shieldColumn` / `shieldWave` unchanged for the client; clients-B ports v4).
+- Ready to merge: `91fabf0` (shield hit patches v2, smaller and dimmer: new `hitCap` mesh and `hit` flipbook, `shieldEnergy.sizes.hitGlow` 1.6; `assets/fx/shield/waves/`, manifest, fx.md).
+- Ready to merge: `05c4622` (Aegis launcher v2, six visible upright canisters, status `review`: mesh, wreck, blockout muzzle, manifest, MeshMaterials).
+- Ready to merge: `1a685cd` (removes the manifest's `shieldColumn` / `shieldWave`, their validators and spec, fx.md's superseded sections, and with `f899384` their frozen data; the client reads `shieldEnergy` since C-187).
 
 ## Requests
 
