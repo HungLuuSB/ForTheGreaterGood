@@ -72,5 +72,28 @@
       "EMI": "rbxassetid://93201884383705"
     },
     "note": "2026-10-22, first BAR upload (M-15): 620 triangles, glow share 6.0%"
+  },
+  "wreck": {
+    "model": "rbxassetid://102211255548457",
+    "meshes": {
+      "base": "rbxassetid://129539137282966",
+      "nano": "rbxassetid://122891871460957"
+    },
+    "decals": {
+      "ALB": "rbxassetid://73827709802707",
+      "RGH": "rbxassetid://109443400224696",
+      "NOR": "rbxassetid://120059443851967",
+      "MTL": "rbxassetid://122238985515082",
+      "EMI": "rbxassetid://93963394874680"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://89497816141820",
+      "NOR": "rbxassetid://114997773454103",
+      "RGH": "rbxassetid://125568742052088",
+      "MTL": "rbxassetid://109795466999788",
+      "EMI": "rbxassetid://110984400818476"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_tidewright_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1338 triangles"
   }
 }

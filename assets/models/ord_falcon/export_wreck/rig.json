@@ -1,0 +1,82 @@
+{
+  "id": "ord_falcon_wreck",
+  "wreckOf": "ord_falcon",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0224,
+        1.2696,
+        -0.5308
+      ],
+      "size": [
+        6.9915,
+        2.0193,
+        9.4278
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        -0.0425,
+        -0.0253,
+        -0.1929
+      ],
+      "size": [
+        2.2768,
+        0.6554,
+        2.3
+      ],
+      "pivot": [
+        0.0,
+        0.05,
+        0.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "pylon",
+      "at": [
+        0,
+        -0.15,
+        -1.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 576,
+    "pylon": 140,
+    "total": 716
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

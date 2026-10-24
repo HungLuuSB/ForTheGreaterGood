@@ -1,0 +1,82 @@
+{
+  "id": "chs_wrecker_wreck",
+  "wreckOf": "chs_wrecker",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0354,
+        1.5721,
+        -0.9298
+      ],
+      "size": [
+        3.369,
+        4.2988,
+        11.3144
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        -0.0149,
+        2.5745,
+        1.6481
+      ],
+      "size": [
+        1.5986,
+        2.6806,
+        3.866
+      ],
+      "pivot": [
+        0.0,
+        1.5,
+        2.8
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        3.5,
+        0.1
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1126,
+    "nano": 120,
+    "total": 1246
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

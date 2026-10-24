@@ -1,0 +1,111 @@
+{
+  "id": "ord_absolution_wreck",
+  "wreckOf": "ord_absolution",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.035,
+        1.1428,
+        -0.5241
+      ],
+      "size": [
+        7.6275,
+        1.9218,
+        10.0488
+      ]
+    },
+    "bay": {
+      "parent": "base",
+      "center": [
+        -0.0437,
+        -0.0005,
+        0.1147
+      ],
+      "size": [
+        1.4475,
+        0.5622,
+        2.7259
+      ],
+      "pivot": [
+        0.0,
+        0.1,
+        0.2
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        0.0024,
+        0.0888,
+        1.0115
+      ],
+      "size": [
+        5.1298,
+        0.4216,
+        0.975
+      ],
+      "pivot": [
+        0.0,
+        0.2,
+        1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "bay",
+      "at": [
+        0,
+        -0.1,
+        0.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "bay": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 60
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 456,
+    "bay": 60,
+    "pylon": 36,
+    "total": 552
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

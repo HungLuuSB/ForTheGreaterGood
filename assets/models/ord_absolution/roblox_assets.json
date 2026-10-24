@@ -26,5 +26,29 @@
       "EMI": "rbxassetid://89281970970945"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_absolution_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://120423499550753",
+    "meshes": {
+      "base": "rbxassetid://134858587899995",
+      "bay": "rbxassetid://114974698473848",
+      "pylon": "rbxassetid://97605964659708"
+    },
+    "decals": {
+      "ALB": "rbxassetid://127807113842466",
+      "RGH": "rbxassetid://113304855208443",
+      "NOR": "rbxassetid://121298295443898",
+      "MTL": "rbxassetid://127784697019341",
+      "EMI": "rbxassetid://114279835424352"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://125285268373999",
+      "NOR": "rbxassetid://91900403108268",
+      "RGH": "rbxassetid://119015203486772",
+      "MTL": "rbxassetid://97385875460176",
+      "EMI": "rbxassetid://120198120228773"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_absolution_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 552 triangles"
   }
 }

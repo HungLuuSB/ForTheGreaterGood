@@ -72,5 +72,28 @@
       "EMI": "rbxassetid://91681830185427"
     },
     "note": "2026-10-22, first BAR upload (M-15): 528 triangles, glow share 5.4%"
+  },
+  "wreck": {
+    "model": "rbxassetid://87946829833091",
+    "meshes": {
+      "base": "rbxassetid://94599093167377",
+      "nano": "rbxassetid://123190042046035"
+    },
+    "decals": {
+      "ALB": "rbxassetid://84644141004315",
+      "RGH": "rbxassetid://112771190999674",
+      "NOR": "rbxassetid://91410209771915",
+      "MTL": "rbxassetid://131185040260144",
+      "EMI": "rbxassetid://133264301320383"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://122315713142571",
+      "NOR": "rbxassetid://117022620607716",
+      "RGH": "rbxassetid://85353573381266",
+      "MTL": "rbxassetid://101150727398143",
+      "EMI": "rbxassetid://111446634983885"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_wrecker_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1246 triangles"
   }
 }

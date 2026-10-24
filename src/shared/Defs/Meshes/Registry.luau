@@ -15034,6 +15034,30 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"nano",
 			},
 			triangles = 1258,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://122315713142571",
+					MTL = "rbxassetid://101150727398143",
+					NOR = "rbxassetid://117022620607716",
+					RGH = "rbxassetid://85353573381266",
+				},
+				model = "rbxassetid://87946829833091",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.0354, 1.5721, -0.9298 },
+						mesh = "rbxassetid://94599093167377",
+						size = { 3.369, 4.2988, 11.3144 },
+					},
+					nano = {
+						center = { -0.0149, 2.5745, 1.6481 },
+						mesh = "rbxassetid://123190042046035",
+						size = { 1.5986, 2.6806, 3.866 },
+					},
+				},
+				status = "review",
+				triangles = 1246,
+			},
 		},
 		chs_wyvern = {
 			anim = {
@@ -15252,6 +15276,35 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"base",
 			},
 			triangles = 672,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://125285268373999",
+					MTL = "rbxassetid://97385875460176",
+					NOR = "rbxassetid://91900403108268",
+					RGH = "rbxassetid://119015203486772",
+				},
+				model = "rbxassetid://120423499550753",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.035, 1.1428, -0.5241 },
+						mesh = "rbxassetid://134858587899995",
+						size = { 7.6275, 1.9218, 10.0488 },
+					},
+					bay = {
+						center = { -0.0437, -0.0005, 0.1147 },
+						mesh = "rbxassetid://114974698473848",
+						size = { 1.4475, 0.5622, 2.7259 },
+					},
+					pylon = {
+						center = { 0.0024, 0.0888, 1.0115 },
+						mesh = "rbxassetid://97605964659708",
+						size = { 5.1298, 0.4216, 0.975 },
+					},
+				},
+				status = "review",
+				triangles = 552,
+			},
 		},
 		ord_aegis = {
 			anim = {
@@ -17553,6 +17606,30 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"base",
 			},
 			triangles = 792,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://95006042796025",
+					MTL = "rbxassetid://75099467065113",
+					NOR = "rbxassetid://110940248632456",
+					RGH = "rbxassetid://113262267353726",
+				},
+				model = "rbxassetid://87761482115882",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.0224, 1.2696, -0.5308 },
+						mesh = "rbxassetid://106299725974439",
+						size = { 6.9915, 2.0193, 9.4278 },
+					},
+					pylon = {
+						center = { -0.0425, -0.0253, -0.1929 },
+						mesh = "rbxassetid://95788523720001",
+						size = { 2.2768, 0.6554, 2.3 },
+					},
+				},
+				status = "review",
+				triangles = 716,
+			},
 		},
 		ord_gauntlet = {
 			attachments = {
@@ -17853,6 +17930,40 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			visualPieces = {
 				"tailRotor",
 			},
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://122072290894274",
+					MTL = "rbxassetid://130795581435526",
+					NOR = "rbxassetid://116668577909361",
+					RGH = "rbxassetid://117475404656329",
+				},
+				model = "rbxassetid://116589971687684",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { -0.0265, 1.5143, 1.1165 },
+						mesh = "rbxassetid://113552415218224",
+						size = { 3.3986, 3.0218, 10.0766 },
+					},
+					pylon = {
+						center = { 0.004, 0.5772, -0.564 },
+						mesh = "rbxassetid://98652738820615",
+						size = { 3.1963, 0.647, 1.7075 },
+					},
+					rotor = {
+						center = { -0.0109, 2.7637, 0.1699 },
+						mesh = "rbxassetid://108797239734701",
+						size = { 6.4371, 0.2345, 6.428 },
+					},
+					tailRotor = {
+						center = { 0.1681, 2.0286, 5.412 },
+						mesh = "rbxassetid://111707906187319",
+						size = { 0.2322, 1.5751, 1.5792 },
+					},
+				},
+				status = "review",
+				triangles = 1036,
+			},
 		},
 		ord_halo = {
 			anim = {
@@ -18146,27 +18257,27 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 1802,
 			wreck = {
 				maps = {
-					ALB = "rbxassetid://103085654282986",
-					MTL = "rbxassetid://82063303524291",
-					NOR = "rbxassetid://132290692243349",
-					RGH = "rbxassetid://83884423911969",
+					ALB = "rbxassetid://125462895156132",
+					MTL = "rbxassetid://126938547069418",
+					NOR = "rbxassetid://122354464800637",
+					RGH = "rbxassetid://138740372919494",
 				},
-				model = "rbxassetid://72305949646339",
+				model = "rbxassetid://113974035638247",
 				note = "wreck version, waiting for the user's review",
 				pieces = {
 					base = {
-						center = { -0.0056, 2.3089, -1.2812 },
-						mesh = "rbxassetid://120233314028359",
-						size = { 4.9178, 5.8042, 14.5163 },
+						center = { -0.0158, 2.2449, -1.2582 },
+						mesh = "rbxassetid://100225369669051",
+						size = { 4.891, 5.9997, 14.5048 },
 					},
 					nano = {
-						center = { 0.0242, 3.0945, 3.4577 },
-						mesh = "rbxassetid://110175442831765",
-						size = { 2.0615, 2.8886, 5.4595 },
+						center = { 0.0024, 3.0884, 3.4576 },
+						mesh = "rbxassetid://96325112233788",
+						size = { 2.095, 2.8507, 5.4262 },
 					},
 				},
 				status = "review",
-				triangles = 908,
+				triangles = 1686,
 			},
 		},
 		ord_herald = {
@@ -20422,6 +20533,40 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			visualPieces = {
 				"radar",
 			},
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://123887876621965",
+					MTL = "rbxassetid://139455906641273",
+					NOR = "rbxassetid://96182019976555",
+					RGH = "rbxassetid://137100268726292",
+				},
+				model = "rbxassetid://109476840605372",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { -0.0302, 1.8098, -0.8875 },
+						mesh = "rbxassetid://96164444108004",
+						size = { 3.8459, 4.9792, 11.0343 },
+					},
+					radar = {
+						center = { 0.0064, 4.2865, 1.2196 },
+						mesh = "rbxassetid://138120495887099",
+						size = { 1.6366, 1.1143, 1.6104 },
+					},
+					turret1 = {
+						center = { -0.0236, 1.7054, -3.7725 },
+						mesh = "rbxassetid://98370070776067",
+						size = { 1.6227, 0.9633, 4.1195 },
+					},
+					turret2 = {
+						center = { 0.0044, 1.6218, 2.7971 },
+						mesh = "rbxassetid://80868051253469",
+						size = { 1.0249, 0.6977, 2.0487 },
+					},
+				},
+				status = "review",
+				triangles = 1462,
+			},
 		},
 		ord_sentry_tower = {
 			attachments = {
@@ -20893,6 +21038,65 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"wheelR3",
 				"radar",
 			},
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://95141654537961",
+					MTL = "rbxassetid://89900432974196",
+					NOR = "rbxassetid://104842693892155",
+					RGH = "rbxassetid://122498174701857",
+				},
+				model = "rbxassetid://109197841470867",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.0312, 3.1261, -0.3159 },
+						mesh = "rbxassetid://125507086606060",
+						size = { 5.0389, 4.5306, 10.903 },
+					},
+					launcher = {
+						center = { 0.0187, 3.5427, 2.2122 },
+						mesh = "rbxassetid://91658945542289",
+						size = { 3.6126, 1.8049, 4.8286 },
+					},
+					radar = {
+						center = { -1.3975, 5.8518, -1.8364 },
+						mesh = "rbxassetid://133363298543702",
+						size = { 1.5441, 1.0738, 0.4218 },
+					},
+					wheelL1 = {
+						center = { -2.1613, 0.797, -3.4036 },
+						mesh = "rbxassetid://73105531710713",
+						size = { 0.8286, 1.5927, 1.5104 },
+					},
+					wheelL2 = {
+						center = { -2.1463, 0.7968, 0.1775 },
+						mesh = "rbxassetid://112176741761510",
+						size = { 0.8291, 1.6963, 1.6156 },
+					},
+					wheelL3 = {
+						center = { -2.1189, 0.816, 3.6258 },
+						mesh = "rbxassetid://134432427306467",
+						size = { 0.8453, 1.6788, 1.5901 },
+					},
+					wheelR1 = {
+						center = { 2.1378, 0.7824, -3.4169 },
+						mesh = "rbxassetid://97944853618643",
+						size = { 0.8657, 1.6008, 1.5267 },
+					},
+					wheelR2 = {
+						center = { 2.1345, 0.7812, 0.2244 },
+						mesh = "rbxassetid://110982468299040",
+						size = { 0.7956, 1.5531, 1.6168 },
+					},
+					wheelR3 = {
+						center = { 2.2149, 0.8123, 3.628 },
+						mesh = "rbxassetid://97868891722174",
+						size = { 0.8258, 1.5737, 1.5953 },
+					},
+				},
+				status = "review",
+				triangles = 1552,
+			},
 		},
 		ord_shipyard = {
 			anim = {
@@ -21190,6 +21394,40 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			triangles = 856,
 			visualPieces = {
 				"tailRotor",
+			},
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://75141139686569",
+					MTL = "rbxassetid://113981543962585",
+					NOR = "rbxassetid://124475938735607",
+					RGH = "rbxassetid://128843795876207",
+				},
+				model = "rbxassetid://86603319112201",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { 0.0135, 1.5266, 1.056 },
+						mesh = "rbxassetid://71669773932954",
+						size = { 1.9964, 3.1038, 10.0399 },
+					},
+					nano = {
+						center = { 0.046, -0.1565, -0.8155 },
+						mesh = "rbxassetid://107921825776329",
+						size = { 1.1927, 1.0317, 2.5114 },
+					},
+					rotor = {
+						center = { -0.0047, 2.7889, 0.1732 },
+						mesh = "rbxassetid://74051005423687",
+						size = { 6.4168, 0.3715, 6.3878 },
+					},
+					tailRotor = {
+						center = { 0.1358, 2.0434, 5.4085 },
+						mesh = "rbxassetid://72846825216209",
+						size = { 0.2643, 1.6454, 1.5274 },
+					},
+				},
+				status = "review",
+				triangles = 732,
 			},
 		},
 		ord_solar = {
@@ -22124,6 +22362,30 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"nano",
 			},
 			triangles = 1350,
+			wreck = {
+				maps = {
+					ALB = "rbxassetid://89497816141820",
+					MTL = "rbxassetid://109795466999788",
+					NOR = "rbxassetid://114997773454103",
+					RGH = "rbxassetid://125568742052088",
+				},
+				model = "rbxassetid://102211255548457",
+				note = "wreck version, waiting for the user's review",
+				pieces = {
+					base = {
+						center = { -0.0252, 1.6962, -0.9068 },
+						mesh = "rbxassetid://129539137282966",
+						size = { 3.7731, 4.6549, 11.1106 },
+					},
+					nano = {
+						center = { -0.0092, 2.6445, 1.6843 },
+						mesh = "rbxassetid://122891871460957",
+						size = { 1.5769, 2.6652, 3.963 },
+					},
+				},
+				status = "review",
+				triangles = 1338,
+			},
 		},
 		ord_undertow = {
 			anim = {

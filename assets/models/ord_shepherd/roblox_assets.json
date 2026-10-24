@@ -34,5 +34,35 @@
       "EMI": "rbxassetid://131806012963133"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_shepherd_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://109197841470867",
+    "meshes": {
+      "base": "rbxassetid://125507086606060",
+      "launcher": "rbxassetid://91658945542289",
+      "radar": "rbxassetid://133363298543702",
+      "wheelL1": "rbxassetid://73105531710713",
+      "wheelL2": "rbxassetid://112176741761510",
+      "wheelL3": "rbxassetid://134432427306467",
+      "wheelR1": "rbxassetid://97944853618643",
+      "wheelR2": "rbxassetid://110982468299040",
+      "wheelR3": "rbxassetid://97868891722174"
+    },
+    "decals": {
+      "ALB": "rbxassetid://71626657183589",
+      "RGH": "rbxassetid://97558675956349",
+      "NOR": "rbxassetid://71348701817338",
+      "MTL": "rbxassetid://100681070299419",
+      "EMI": "rbxassetid://108550401477188"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95141654537961",
+      "NOR": "rbxassetid://104842693892155",
+      "RGH": "rbxassetid://122498174701857",
+      "MTL": "rbxassetid://89900432974196",
+      "EMI": "rbxassetid://136752454812773"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_shepherd_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1552 triangles"
   }
 }
