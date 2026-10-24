@@ -12,7 +12,7 @@ local Spawn = require("../Sim/Spawn")
 local RunAll = require("./RunAll")
 
 local T = Layers.Terrain
-local LAND = { "WHEELED", "TRACKED", "HEAVY_TRACKED" }
+local LAND = { "WHEELED", "TRACKED", "HEAVY_TRACKED", "WALKER" }
 
 return function(t: RunAll.Context)
 	local layers = MapRegistry.load("map:normandy") :: Layers.Layers
@@ -91,7 +91,7 @@ return function(t: RunAll.Context)
 		t.equal(west, 8, "8 behind the west river: home and rear")
 	end)
 
-	t.test("the bluffs, river, hedges and houses stop land units; draws, bridges and gaps let them through", function()
+	t.test("the bluffs, river, hedges and houses stop land units (Commanders climb hedges); draws, bridges and gaps let them through", function()
 		for _, mc in LAND do
 			t.expect(not Passability.canEnter(pm, mc, cell(300, 628)), `{mc}: the cliff is too steep`)
 			t.expect(not Passability.canEnter(pm, mc, cell(Normandy.RIVER_X, -500)), `{mc}: the river`)
@@ -115,7 +115,10 @@ return function(t: RunAll.Context)
 						houses += 1
 					end
 					for _, mc in LAND do
-						t.expect(not Passability.canEnter(pm, mc, g:index(cx, cz)), `{mc} can't enter a {f}`)
+						-- the Commanders' legs climb hedgerows (35–38°), not houses (S-159)
+						if mc ~= "WALKER" or f == "house" then
+							t.expect(not Passability.canEnter(pm, mc, g:index(cx, cz)), `{mc} can't enter a {f}`)
+						end
 					end
 					local x = g:cellCenter(cx, cz)
 					t.expect(math.abs(x) < 400, "hedges and houses only in the bocage: staging fields and rears are open")

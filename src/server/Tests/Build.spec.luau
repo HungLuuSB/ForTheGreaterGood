@@ -275,6 +275,38 @@ return function(t: RunAll.Context)
 		end
 	end)
 
+	t.test("BUILD's facing turns the frame, so its pad and exit lane face that way (S-160, the user's reference #7)", function()
+		for facing = 0, 3 do
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+			fund(sim)
+			local w = sim.world
+			local mason = Spawn.unit(sim, "ord_mason", 1, 40, 0)
+			local g = (sim.map :: any).grid
+			local cell, ox, oz = g:encode(0, 0)
+			submit(sim, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim.defs.units.ord_vehplant.index, cell = cell, offX = ox, offZ = oz, facing = facing })
+			local plant = 0
+			runUntil(sim, 600, function()
+				return plant ~= 0
+			end, function(s)
+				for _, id in s.world.ids do
+					if s.defs.unitByIndex[s.world.defIndex[id]].id == "ord_vehplant" then
+						plant = id
+					end
+				end
+			end)
+			t.expect(plant ~= 0, `the frame started (facing {facing})`)
+			local h = w.heading[plant]
+			t.expect(math.abs(math.sin(h - facing * math.pi / 2)) < 1e-9 and math.cos(h - facing * math.pi / 2) > 0, `heading = facing × 90° ({h}, facing {facing})`)
+			local px, pz = require("../Sim/Build").padPosition(sim, plant)
+			local fx, fz = math.sin(h), math.cos(h)
+			local ahead = (px - w.posX[plant]) * fx + (pz - w.posZ[plant]) * fz
+			local side = (px - w.posX[plant]) * fz - (pz - w.posZ[plant]) * fx
+			t.expect(math.abs(side) < 1e-6, `the pad on the facing's axis (facing {facing}, {side} aside, {ahead} ahead)`)
+		end
+		local Facing = Schema.Facing
+		t.deepEqual({ Facing.NORTH, Facing.EAST, Facing.SOUTH, Facing.WEST }, { 0, 1, 2, 3 }, "0 north (+Z), 1 east (+X), 2 south, 3 west")
+	end)
+
 	t.test("a factory waits while a unit is still on its pad (S-133, the user)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
 		fund(sim)
