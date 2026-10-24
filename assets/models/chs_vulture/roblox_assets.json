@@ -107,5 +107,30 @@
       "EMI": "rbxassetid://70789529225948"
     },
     "note": "2026-10-22, first BAR upload (M-15): 702 triangles, glow share 6.0%"
+  },
+  "wreck": {
+    "model": "rbxassetid://112911975683567",
+    "meshes": {
+      "base": "rbxassetid://102530381858535",
+      "nano": "rbxassetid://81005699290425",
+      "rotor": "rbxassetid://106356230687244",
+      "tailRotor": "rbxassetid://109400482909994"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129078694830758",
+      "RGH": "rbxassetid://123195219512131",
+      "NOR": "rbxassetid://139043119880298",
+      "MTL": "rbxassetid://122250827954277",
+      "EMI": "rbxassetid://127772017438044"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://116246118957436",
+      "NOR": "rbxassetid://103467561388775",
+      "RGH": "rbxassetid://82074466618434",
+      "MTL": "rbxassetid://75195589758333",
+      "EMI": "rbxassetid://71681292049213"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_vulture_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 640 triangles"
   }
 }

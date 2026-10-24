@@ -79,5 +79,29 @@
       "EMI": "rbxassetid://92704130052945"
     },
     "note": "2026-10-22, first BAR upload (M-15): 660 triangles, glow share 5.4%"
+  },
+  "wreck": {
+    "model": "rbxassetid://134368039738002",
+    "meshes": {
+      "base": "rbxassetid://98221506114336",
+      "turret1": "rbxassetid://76141066654009",
+      "turret2": "rbxassetid://85622341868625"
+    },
+    "decals": {
+      "ALB": "rbxassetid://113948079328607",
+      "RGH": "rbxassetid://75847471817094",
+      "NOR": "rbxassetid://75983070040817",
+      "MTL": "rbxassetid://122090600109286",
+      "EMI": "rbxassetid://119858338573622"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://78841908361853",
+      "NOR": "rbxassetid://107587212219061",
+      "RGH": "rbxassetid://130363643285715",
+      "MTL": "rbxassetid://140033724186481",
+      "EMI": "rbxassetid://103861842575368"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_barracuda_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1338 triangles"
   }
 }

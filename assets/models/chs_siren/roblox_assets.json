@@ -61,6 +61,30 @@
     "note": "New T2 mesh (item 3); wreck built: 1276 triangles, glow share 5.6%"
   },
   "wreck": {
+    "model": "rbxassetid://103599945814450",
+    "meshes": {
+      "base": "rbxassetid://138687713723791",
+      "turret1": "rbxassetid://87959485802847",
+      "turret2": "rbxassetid://132542819657982"
+    },
+    "decals": {
+      "ALB": "rbxassetid://130643676504591",
+      "RGH": "rbxassetid://132919818244958",
+      "NOR": "rbxassetid://92907826355875",
+      "MTL": "rbxassetid://76707584161540",
+      "EMI": "rbxassetid://140045746623443"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://90783464135908",
+      "NOR": "rbxassetid://88497972978472",
+      "RGH": "rbxassetid://112500131729061",
+      "MTL": "rbxassetid://104506047535706",
+      "EMI": "rbxassetid://95001780655138"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_siren_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1898 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://81311123928351",
     "meshes": {
       "base": "rbxassetid://132617278721021",

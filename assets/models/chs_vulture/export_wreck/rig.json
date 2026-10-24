@@ -1,0 +1,139 @@
+{
+  "id": "chs_vulture_wreck",
+  "wreckOf": "chs_vulture",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0395,
+        1.6523,
+        1.8309
+      ],
+      "size": [
+        1.9365,
+        3.2544,
+        9.1647
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.2551,
+        2.1587,
+        5.7149
+      ],
+      "size": [
+        0.1572,
+        1.592,
+        1.5655
+      ],
+      "pivot": [
+        0.2,
+        2.1,
+        5.7
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        -0.0044,
+        3.399,
+        0.2208
+      ],
+      "size": [
+        8.3123,
+        0.2763,
+        3.4346
+      ],
+      "pivot": [
+        0.0,
+        3.4,
+        0.2
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        0.0418,
+        0.0635,
+        -0.8696
+      ],
+      "size": [
+        1.2361,
+        0.8409,
+        2.4676
+      ],
+      "pivot": [
+        0.0,
+        0.25,
+        -0.2
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        -0.55,
+        -1.7
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "tailRotor"
+  ],
+  "anim": {
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 464,
+    "tailRotor": 28,
+    "rotor": 64,
+    "nano": 84,
+    "total": 640
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

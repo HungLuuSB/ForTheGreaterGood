@@ -26,5 +26,29 @@
       "EMI": "rbxassetid://98772409736648"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_plague_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://119089549175358",
+    "meshes": {
+      "base": "rbxassetid://96123448417450",
+      "bay": "rbxassetid://124558728841396",
+      "pylon": "rbxassetid://80988486238559"
+    },
+    "decals": {
+      "ALB": "rbxassetid://76640287354636",
+      "RGH": "rbxassetid://132719823591414",
+      "NOR": "rbxassetid://105975169195946",
+      "MTL": "rbxassetid://90637839783506",
+      "EMI": "rbxassetid://76247233041496"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://135661904451153",
+      "NOR": "rbxassetid://111883643240603",
+      "RGH": "rbxassetid://75676234472404",
+      "MTL": "rbxassetid://125294475802377",
+      "EMI": "rbxassetid://138180186118925"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_plague_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 648 triangles"
   }
 }

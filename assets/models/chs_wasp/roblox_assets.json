@@ -79,5 +79,30 @@
       "EMI": "rbxassetid://94522463507367"
     },
     "note": "2026-10-22, first BAR upload (M-15): 742 triangles, glow share 5.1%"
+  },
+  "wreck": {
+    "model": "rbxassetid://127845074372157",
+    "meshes": {
+      "base": "rbxassetid://80273591633122",
+      "pylon": "rbxassetid://78412992250601",
+      "rotor": "rbxassetid://138459900917368",
+      "tailRotor": "rbxassetid://131889259885071"
+    },
+    "decals": {
+      "ALB": "rbxassetid://86046554976995",
+      "RGH": "rbxassetid://136404634536904",
+      "NOR": "rbxassetid://118068731366766",
+      "MTL": "rbxassetid://84883765105616",
+      "EMI": "rbxassetid://98845958512419"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://85055822773162",
+      "NOR": "rbxassetid://76989239048447",
+      "RGH": "rbxassetid://71508212672565",
+      "MTL": "rbxassetid://92524601863923",
+      "EMI": "rbxassetid://136537513426857"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_wasp_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 604 triangles"
   }
 }
