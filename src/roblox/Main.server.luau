@@ -41,6 +41,7 @@ local NetOut = require(game:GetService("ServerScriptService"):WaitForChild("Sim"
 local Defs = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Defs"):WaitForChild("Defs")) :: any
 local Packer = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("Packer")) :: any
 local Schema = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("Schema")) :: any
+local CheatText = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("CheatText")) :: any
 local PlayerReplay = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net"):WaitForChild("PlayerReplay")) :: any
 local Config = require(script.Parent:WaitForChild("MatchConfig")) :: any
 local Combat = require(game:GetService("ServerScriptService"):WaitForChild("Sim"):WaitForChild("Combat"):WaitForChild("Combat")) :: any
@@ -511,8 +512,21 @@ local function startMatch()
 			sim = Sim.new({ seed = seed, players = preview, mapId = lobby.mapId, scenario = "empty", defs = defs })
 		end
 	else
-		-- test profiles: cheats in Studio, and "speed" (the sim's offline option), C-119
-		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs, cheats = RunService:IsStudio(), offline = RunService:IsStudio() })
+		-- test profiles: cheats in Studio, and "speed" (the sim's offline option), C-119;
+		-- `match` gives a profile match rules and AI players (the watchdog run, C-204)
+		sim = Sim.new({ seed = seed, players = Config.players, mapId = Config.mapId, scenario = Config.scenario, defs = defs, cheats = RunService:IsStudio(), offline = RunService:IsStudio(), match = Config.match })
+		if Config.match then
+			brains = Skirmish.forMatch(sim)
+		end
+		-- `startCheats`: { player, text } cheat lines (CheatText) the profile sends at the start
+		for _, c in Config.startCheats or {} do
+			local cmd, err = CheatText.parse(c[2], defs)
+			if cmd then
+				Sim.submit(sim, c[1], encode(cmd))
+			else
+				warn(`[Entry] startCheats "{c[2]}": {err}`)
+			end
+		end
 	end
 	-- warns when a live tick runs over guide 18.1's budget, and sums up each minute (S-140)
 	dog = Watchdog.new(sim)

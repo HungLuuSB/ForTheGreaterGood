@@ -21,6 +21,9 @@
 -- stored at match start (default 1,000 each; capped by its storage).
 -- `speed` (optional, default 1): the sim speed the match starts at (C-35);
 -- in a playtest - / = change it and P pauses.
+-- `match` (optional, C-204): the sim's match rules, `ai = { [player] = level }`
+-- making those players the skirmish AI. `startCheats` (optional): { player,
+-- cheat line } pairs (Shared/Net/CheatText) sent at the start as that player.
 
 local PROFILES = {
 	-- 10 Lancers (you) vs 10 Ravagers (bot), in gun range from the start
@@ -164,6 +167,21 @@ local PROFILES = {
 		scenario = "standard_start",
 		players = { { id = 1, team = 1 }, { id = 2, team = 2 } },
 		humanSlots = { 1 },
+		demoOrders = false,
+		restartAfter = nil,
+	},
+	-- the watchdog run (S-140, sim-A's request, C-204): four Hard AI in a
+	-- free-for-all on Twin Lakes with a strong income each, at double speed,
+	-- so unit counts reach the hundreds; you watch as a spectator
+	watchdog = {
+		seed = 13,
+		mapId = "map:twin_lakes",
+		scenario = "standard_start",
+		players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 }, { id = 3, team = 3, allyTeam = 3 }, { id = 4, team = 4, allyTeam = 4 } },
+		humanSlots = {},
+		match = { mode = "FFA", win = "COMMAND_ENDS", ai = { [1] = "hard", [2] = "hard", [3] = "hard", [4] = "hard" }, friendlyFire = true, cheats = true },
+		startCheats = { { 1, "income all 40" }, { 2, "income all 40" }, { 3, "income all 40" }, { 4, "income all 40" } },
+		speed = 2,
 		demoOrders = false,
 		restartAfter = nil,
 	},
