@@ -35,6 +35,13 @@
 -- (the target, or the ground beyond it on a miss) stays fixed for the
 -- beam's life, and each tick every enemy unit the line crosses (its
 -- collision radius, the weapon's target classes) takes the share.
+-- A single-target beam's share goes along the beam (S-163, guide audit
+-- item 16): each tick to the first enemy unit its line crosses, from the
+-- muzzle to its end (the target's aim point, a miss's fixed point on the
+-- ground, or the dome that stops it), in the weapon's target classes; so a
+-- unit stepping into the beam takes it, and a missed beam burns what walks
+-- into its line. When that unit changes, a new FIRE ends the drawn beam
+-- there (the target again: hit = true; nothing: the full end).
 -- Shield domes (S-89): an enemy dome between the muzzle and a hitscan
 -- shot's end stops the shot at its surface (Shield.intercept); the FIRE
 -- event ends there, with no hit.
@@ -296,6 +303,8 @@ local function fire(
 			dome = if gen ~= 0 then gen else nil,
 			domeGen = if gen ~= 0 then w.gen[gen] else nil,
 			domeDrain = Shield.beamDrain(weapon) / ticks,
+			struck = if follow then target else 0, -- what the FIRE showed it striking (S-163)
+			struckGen = if follow then w.gen[target] else 0,
 		})
 		return
 	end
@@ -347,6 +356,31 @@ local function rayShare(sim: Types.Sim, b: Combat.Beam, sx: number, sz: number, 
 			end
 		end
 	end
+end
+
+-- The first enemy unit (weapon target classes, collision radius) the line
+-- from (sx, sz) to (ex, ez) crosses, nearest the muzzle, or 0 (S-163).
+local function firstOnLine(sim: Types.Sim, b: Combat.Beam, sx: number, sz: number, ex: number, ez: number): number
+	local c = sim.combat
+	local w = sim.world
+	local weapon = c.profiles[w.defIndex[b.shooter]].weapons[b.slot]
+	local dx, dz = ex - sx, ez - sz
+	local len2 = math.max(dx * dx + dz * dz, 1e-6)
+	local mx, mz = (sx + ex) / 2, (sz + ez) / 2
+	local n = ContactGrid.query(c.contacts, w, mx, mz, math.sqrt(len2) / 2 + c.maxRadius, w.ally[b.shooter], rayHits)
+	local best, bestT = 0, math.huge
+	for k = 1, n do
+		local u = rayHits[k]
+		local tp = c.profiles[w.defIndex[u]]
+		if bit32.band(weapon.targetMask, tp.categoryMask) ~= 0 then
+			local t = math.clamp(((w.posX[u] - sx) * dx + (w.posZ[u] - sz) * dz) / len2, 0, 1)
+			local px, pz = sx + dx * t - w.posX[u], sz + dz * t - w.posZ[u]
+			if px * px + pz * pz <= tp.radius * tp.radius and (t < bestT or (t == bestT and u < best)) then
+				best, bestT = u, t
+			end
+		end
+	end
+	return best
 end
 
 -- Is a lingering beam of (shooter, slot) burning? (S-119: its aim holds)
@@ -413,10 +447,31 @@ local function beamTick(sim: Types.Sim, b: Combat.Beam): boolean
 		end
 	elseif b.ray then
 		rayShare(sim, b, mx, mz, fx, fz)
-	elseif b.fullHit and b.target ~= 0 then
-		local tp = c.profiles[w.defIndex[b.target]]
-		local amount = (weapon.damage[Combat.armorOf(w, b.target, tp)] or 0) / b.total
-		Combat.queueDamage(c, b.target, amount, id, w.owner[id])
+	else
+		-- along the beam (S-163): the first enemy on its line takes the share;
+		-- the hit target when nothing stands in front of it
+		local u = firstOnLine(sim, b, mx, mz, fx, fz)
+		if u == 0 and b.fullHit and b.target ~= 0 then
+			u = b.target -- (its circle may sit just past the aim point's line end)
+		end
+		local was = b.struck or 0
+		if was ~= 0 and not World.isRef(w, was, b.struckGen :: number) then
+			was = -1
+		end
+		if u ~= was then
+			if u ~= 0 then
+				local ux, uy, uz = Combat.aimPoint(c, w, u)
+				Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = u, slot = b.slot, weaponIndex = weapon.index, hit = true, x = ux, y = uy, z = uz, sx = mx, sy = b.my, sz = mz })
+			else
+				Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = 0, slot = b.slot, weaponIndex = weapon.index, hit = false, x = fx, y = fy, z = fz, sx = mx, sy = b.my, sz = mz })
+			end
+		end
+		b.struck, b.struckGen = u, if u ~= 0 then w.gen[u] else 0
+		if u ~= 0 then
+			local tp = c.profiles[w.defIndex[u]]
+			local amount = (weapon.damage[Combat.armorOf(w, u, tp)] or 0) / b.total
+			Combat.queueDamage(c, u, amount, id, w.owner[id])
+		end
 	end
 	return true
 end
