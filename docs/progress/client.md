@@ -4,10 +4,30 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-24, playtest logging, BAR settings, HUD, watchdog run, facing arrow, bars under units)
+
+- **Live playtest logging (C-201):** the match place prints a `[Match]` line at each step of lobby → match → lobby: the config read (match id, map, mode, room, one line per seat), each player admitted or refused (with user id) and leaving, the start (who hadn't loaded), a heartbeat every 30 s, the result and when the store accepted it, and each teleport back (target, started or failed, fallback, retries). Failed store reads and writes warn per attempt and once more when they give up. The watchdog's WARN / INFO lines stay on.
+- **Settings in BAR's layout (C-202):** a search box across the top, Unfold all and Advanced switches, a sidebar with each section's sub-sections and the amber bar on the one in view, amber section headers with an underline, fold arrows with indented child rows (dimmed while their parent is off), right-aligned dark dropdowns, square-knob sliders and toggles, and the hovered option's help in the footer. The pieces are in the Kit (`Kit.options`, `Kit.search`, `Kit.header`, `Kit.fold`, `Kit.treeNav`, `Kit.helpFooter`) for the lobby. Screenshots: `debug_out/screens/c202_settings_*.jpg`.
+- **HUD after reference 3 (C-203):** build categories Economy / Combat / Utility / Build in tabs under the grid, each with its colour and key; Z X C V open them while a builder is selected (Patrol, Cancel, camera-right and range rings give way then; all four are rebindable); tile costs at the bottom right, the type icon bottom left; short coloured underlines on state buttons ("Repeat On / Off"); the unit's name in yellow-green; a flat "Keys · Settings (O)" text menu top right. Screenshots: `debug_out/screens/c203_hud_*.jpg`.
+- Ready to merge: `feee077` (main d6643d4 merged into the client; test_client 285, test 495, build passed)
+- Ready to merge: `8c74610` (C-201: [Match] playtest logging; src/roblox)
+- Ready to merge: `3265b0b` (C-202 settings rebuild + Studio fixes 3234fff, C-203 HUD; src/client and client specs; test_client 290, build passed)
+- **Watchdog run 1 for sim-A (C-204, request 65):** four Hard AI on Twin Lakes for 24 game minutes (peak 273 units): one tick over budget (Damage 96 ms when a player's army self-destructed), Pathing spikes 15–26 ms, Commands 2–4 ms over its 1 ms. The table is in request 65; raw lines in `debug_out/watchdog_2026-10-24.txt`. A new `watchdog` test profile runs it again after A's fixes. sim-A will also make radar terrain-cut (request 66) for reference 6.
+- **Own units off camera stay live (C-205, S-158):** health, build bars and factory queues keep moving when the camera is elsewhere.
+- **Factory facing (C-206, reference 7):** the placement ghost of a factory shows a green arrow on its exit side, and R shows "Buildings set to face East" over it; the ghost now turns the same way the built factory will (it was flipped for South and North). Screenshots: `debug_out/screens/c206_*.jpg`.
+- **Health bars under the unit (C-208, your request):** `debug_out/screens/c208_health_bars_under.jpg`.
+- **State buttons show every state (C-210, your request):** three segments under Fire / Move state (red, yellow, green), two under Repeat, On / Off and priority (red left, green right); the current one lit. `debug_out/screens/c210_state_segments_x2.jpg`.
+- **The Canyon's mesh ground (C-209, models-C's 08b9889):** wired and checked in Studio: it builds in ~10 s and is sharp right after a minimap jump; clicks over mesas now land on the ground. Its textures draw flat white in the match place, so models-C is looking at them before your review. Side-by-side shots: `debug_out/screens/c209_canyon_*.jpg` (voxel vs mesh, close and after a jump).
+- Ready to merge: `94be98c` (m-models 08b9889 merged in 13b9a3c; C-209, C-210; test_client 295, build passed)
+- **Radar coverage (C-207, reference 6):** while you place a radar, select one, or press N, your radar coverage shows as a translucent green fill with softer lighter rings, under the fog and on the minimap. It follows the server's circles until sim-A makes radar terrain-shaped (request 66). Screenshots: `debug_out/screens/c207_radar_fill_minimap.jpg`, `c207_radar_fill_placing.jpg`.
+- **Canyon textures fixed by the Studio restart** (models-C's diagnosis): the mesh ground is textured and sharp after a jump (`c209_canyon_mesh_close.jpg`, `c209_canyon_mesh_after_jump.jpg`). Still to fix: in unexplored areas the fog blanket sits flat over the mesa tops at the sim's blocky height, showing as grey squares above the rounded baked mesas.
+- Ready to merge: `84ef26e` (main 1b8da68 merged in a439502: S-158..S-160; C-207; test_client 298, build passed)
+- Ready to merge: `196d8a7` (main f04d534 merged in 3d5fbf4, protocol 34; C-204 watchdog profile and speed fix (src/roblox), C-205, C-206, C-208; test 496, test_client 295, build passed)
+
 ## Summary (2026-10-24, point defence; new icon sheet)
 
 - **Bulwark's laser muzzles stay put on death (C-200):** muzzles named like `laser_muzzle1` count as attachments, so a destroyed tower never flings them.
-- Ready to merge: `PENDING` (C-200; src/client and a spec)
+- Ready to merge: `10eb034` (C-200; src/client and a spec; main merged in at debda1b, test 495, test_client 285, build passed)
 - **Laser looks (C-199):** lasers follow your references: a thick white-to-colour bolt tapering to the target with a muzzle flare and a glowing orb (Overwatch, Geryon and the other laser towers in their colours); the Beamer a thin flickering thread with a cone of light where it lands.
 - Ready to merge: `583fb90` (C-199; src/client only)
 - **Priority, new icons, tower visuals (C-196..C-198):** a High / Low priority button on units that use resources; your draft 5 icon sheet with the new towers' own icons; red, green and blue lasers, the Beamer's growing beam, barrels firing in turn and Geryon's turning drum.
@@ -1905,6 +1925,26 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
 
 ## Requests for the sim session
 
+66. **Open (2026-10-24, the user's reference 6, C-207): terrain-cut radar.** The user wants radar coverage drawn like BAR's: a green fill **cut by terrain** (line-of-sight shaped). Our `Sensors` stamps radar as a plain circle, so a client-side cut would show coverage the server doesn't apply. Is a terrain-occluded radar map (per emitter, from its height over the ground heights, like BAR's radar LOS) something you'd add to `Sensors`, with a shared pure function (e.g. `Shared/Sensors/RadarLos.cells(layers, x, z, height, radius)`) so the client draws exactly the server's cells? Until then the client draws the circle the sim uses (C-207) and swaps in the shared function when it lands. If you'd rather keep radar circular, say so and I'll tell the user.
+65. **Open (2026-10-24, your request, next.md item 1): Studio watchdog run 1.** Raw lines: `debug_out/watchdog_2026-10-24.txt` in FTGG-client (gitignored; ask and I'll paste any part).
+    - **Setup:** MatchConfig profile `watchdog` (C-204, on m-client-foundation 6352d16): map:twin_lakes seed 13, 4 Hard AI FFA, Command Ends, `income all 100` each, `speed 4`; I watched as a spectator. Studio Play (client and server in one process, so the server shares the CPU with rendering). Server code at main d6643d4. Ticks 0–22,030 (24.5 game minutes); 85 units at minute 2, 195 at 4, peak **273 at minute 7**, 236–245 at minutes 11–14, then 140–190 after the drop at tick 13,442 (most likely a player eliminated).
+    - **Every tick stayed under the 54 ms tick budget except one** (104.2 ms, below). Mean tick 1.1 ms (min 1) → 6–10 ms (min 7–14, 210–245 units) → 5–7 ms late. Ticks over some system's budget: 0.6–7.3 % per minute (worst minute 11, 7.3 %).
+    - **Per system** (flagged = WARN lines naming it over 2× its budget; lead = it was the worst system on the line):
+
+      | System (budget ms) | Flagged / lead | Median when flagged | Peak ms | Peak at | Units then |
+      |---|---|---|---|---|---|
+      | **Damage (2)** | 104 / 103 | 6.3 | **96.1** (tick total 104.2) | tick 13,442 (min 14.9) | 236 → 151 (likely an elimination: its units self-destruct, S-144) |
+      | Damage (2), next worst | | | 24.1 | 10,991 (12.2) | 236 |
+      | **Pathing (8)** | 24 / 21 | 18.2 | 26.4 (tick 43.9) | 7,596 (8.4) | 223 |
+      | **Commands (1)** | 290 / 284 | 2.6 | 7.2 | 2,097 (2.3) | 68 |
+      | NetOut (6) | 2 / 2 | 16.4 | 16.4 (tick 35.7, with Movement 11.1 of 10) | 3,983 (4.4) | 218 |
+      | NetOut (6) | | | 14.1 | 1,584 (1.8) | 85 |
+      | Weapons (5) | 1 / 1 | | 12.9 | 3,242 (3.6) | 140 |
+      | Construction (1.5) | 6 / 3 | 4.1 | 6.8 | 8,160 (9.1) | 209 |
+      | Sensors (5), Targeting (8), Movement (10), Economy (1) | 0 | | 3.4 / 5.2 / 11.1 / 0.1 | | |
+
+    - **Reading:** Commands is over its 1 ms on most WARN lines from minute 0 (2–4 ms with 4 AI submitting: the AI's command load, not players'); Damage runs 4–9 ms through every big fight from minute 4 and spikes to 96 ms when a player's army self-destructs; Pathing spikes 15–26 ms every few hundred ticks (flow-field builds for new goals?); NetOut 2–6 ms routinely, 12–16 ms spikes (one spectator, so a 4-player server would pay more).
+    - **Next:** after your fixes and `--!native`, I'll run the same profile (same seed) again and put the two side by side here.
 63. **Done (S-138; checked through the real path, FrameQueue.spec).** (2026-10-23, the user: "Add the ability to queue inside the factory while it being built"): accept a factory's queue (and CANCEL / REPEAT) while it's still a frame, start producing when it's finished, and send the QUEUE owner field for the frame. The client already offers the build menu on an unfinished factory.
 62. **Done (S-136; used by C-158 / C-169).** (2026-10-23, the user's queue item 4): **An idle signal for own units.** Owner-only and sent on change, covering units outside the camera (owner fields ride only tactical records, and the strategic flags are full): which of the player's builders have no orders and no build / assist / repair / reclaim / guard / patrol work, and which factories have an empty queue. The client guesses from what it sees until then (C-158).
 61. **Done on m-sim-2 (S-133, 04c70db; not on main yet, merged into this branch for the user's playtest):** the pad position matches the client's frame (vehicle plant: 64, 47.4). (2026-10-23, the user: "why the spawn point of the unit when finished building was too far off? It starts where its built"):** **Produced units start on the build pad.**

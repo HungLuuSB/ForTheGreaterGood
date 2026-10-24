@@ -63,8 +63,10 @@ return {
 		chs_ravager = require("./Units/chs_ravager"),
 		chs_reaver = require("./Units/chs_reaver"),
 		chs_riptide = require("./Units/chs_riptide"),
+		chs_rookery = require("./Units/chs_rookery"),
 		chs_scourge = require("./Units/chs_scourge"), -- (S-106)
 		chs_scrapper = require("./Units/chs_scrapper"),
+		chs_scylla = require("./Units/chs_scylla"),
 		chs_seekerspire = require("./Units/chs_seekerspire"),
 		chs_shipyard = require("./Units/chs_shipyard"),
 		chs_shroud = require("./Units/chs_shroud"),
@@ -113,6 +115,7 @@ return {
 		ord_dominion = require("./Units/ord_dominion"),
 		ord_ear = require("./Units/ord_ear"),
 		ord_edict = require("./Units/ord_edict"),
+		ord_empyrean = require("./Units/ord_empyrean"),
 		ord_extractor = require("./Units/ord_extractor"),
 		ord_falcon = require("./Units/ord_falcon"),
 		ord_fusion = require("./Units/ord_fusion"),
@@ -132,6 +135,7 @@ return {
 		ord_paladin = require("./Units/ord_paladin"),
 		ord_phalanx = require("./Units/ord_phalanx"),
 		ord_phantom = require("./Units/ord_phantom"),
+		ord_pharos = require("./Units/ord_pharos"),
 		ord_providence = require("./Units/ord_providence"), -- (S-111)
 		ord_radiance = require("./Units/ord_radiance"),
 		ord_rampart = require("./Units/ord_rampart"),

@@ -1,9 +1,11 @@
 --!strict
 -- Command card (C-68; BAR style since C-71), bottom left next to the unit
 -- panel, a functional PLACEHOLDER: small grey text buttons in BAR's order.
--- State buttons on the top row carry a colored bar under the text (fire
--- state: at will green, return yellow, hold red; move state: roam green,
--- maneuver yellow, hold red; repeat and on / off: green on, red off); the
+-- State buttons on the top row carry a row of short segments under the
+-- text, one per state, the current one lit (the user, C-210): three for
+-- fire state (hold red, return yellow, at will green) and move state (hold
+-- red, maneuver yellow, roam green), two for repeat, on / off and priority
+-- (off / low red on the left, on / high green on the right); the
 -- command modes (move, fight, attack, patrol, guard: the next left click
 -- gives the order) light up while active. Hotkeys (Input/Controls) show on
 -- hover. Fire and move states are the server's (protocol 20, S-61) for
@@ -32,6 +34,8 @@ local FIRE = { [0] = { "Hold fire", RED }, [1] = { "Return fire", YELLOW }, [2] 
 local MOVE = { [0] = { "Hold pos", RED }, [1] = { "Maneuver", YELLOW }, [2] = { "Roam", GREEN } }
 local COLS = 5
 local W, H = 64, 24
+local SEG_W, SEG_H, SEG_GAP = 9, 2, 2 -- a state segment's size and spacing (C-210)
+local DARK = Color3.fromRGB(72, 74, 80) -- an unlit segment
 
 export type UI = { gui: ScreenGui, panel: Frame, buttons: { [string]: TextButton }, shown: string }
 
@@ -64,7 +68,6 @@ local function keyOf(name: string): string
 end
 local STATES = { fire = true, movestate = true, ["repeat"] = true, toggle = true, priority = true }
 local LOW_PRIORITY = 128 -- Schema.UnitState.LOW_PRIORITY (S-156)
-local AMBER = Color3.fromRGB(235, 170, 60)
 
 -- Whether any selected unit runs at low resource priority (S-156, C-196).
 local function anyLow(api: Api.Api): boolean
@@ -150,13 +153,28 @@ function CommandCard.new(api: Api.Api): UI
 		c.CornerRadius = UDim.new(0, 2)
 		c.Parent = b
 		if STATES[name] then
-			local bar = Instance.new("Frame")
-			bar.Name = "State"
-			bar.AnchorPoint = Vector2.new(0.5, 1)
-			bar.Position = UDim2.new(0.5, 0, 1, -2)
-			bar.Size = UDim2.new(0.6, 0, 0, 2)
-			bar.BorderSizePixel = 0
-			bar.Parent = b
+			-- the state segments (reference 3, C-203; one per state, C-210)
+			local row = Instance.new("Frame")
+			row.Name = "State"
+			row.BackgroundTransparency = 1
+			row.AnchorPoint = Vector2.new(0.5, 1)
+			row.Position = UDim2.new(0.5, 0, 1, -1)
+			row.Size = UDim2.fromOffset(SEG_W * 3 + SEG_GAP * 2, SEG_H)
+			row.Parent = b
+			local list = Instance.new("UIListLayout")
+			list.FillDirection = Enum.FillDirection.Horizontal
+			list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+			list.Padding = UDim.new(0, SEG_GAP)
+			list.SortOrder = Enum.SortOrder.LayoutOrder
+			list.Parent = row
+			for i = 1, 3 do
+				local seg = Instance.new("Frame")
+				seg.Name = `Seg{i}`
+				seg.LayoutOrder = i
+				seg.Size = UDim2.fromOffset(SEG_W, SEG_H)
+				seg.BorderSizePixel = 0
+				seg.Parent = row
+			end
 		end
 		b.MouseButton1Click:Connect(function()
 			act(api, name)
@@ -211,11 +229,11 @@ function CommandCard.step(ui: UI, api: Api.Api)
 	local label = {
 		fire = if fire then fire[1] else "Fire state",
 		movestate = if move then move[1] else "Move state",
-		["repeat"] = "Repeat",
+		["repeat"] = if #factories == 0 then "Repeat" elseif anyRepeat then "Repeat On" else "Repeat Off",
 		-- only converters, beam towers and shields switch (the sim's TOGGLED_ON bit); for anything else
 		-- "Off" in red read as a stopped factory (the user, C-107)
 		toggle = if not switchable then "On / Off" elseif anyOn then "On" else "Off",
-		priority = if low then "Prio low" else "Prio high", -- resource priority (S-156, C-196)
+		priority = if low then "Low prio" else "High prio", -- resource priority (S-156, C-196)
 		cancel = "Cancel",
 		stop = "Stop",
 		attack = "Attack",
@@ -228,12 +246,13 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		reclaim = "Reclaim",
 		upgrade = "Upgrade", -- Upgrade extractors (C-121)
 	}
-	local stateColor = {
-		fire = if fire then fire[2] else Color3.fromRGB(110, 110, 110),
-		movestate = if move then move[2] else Color3.fromRGB(110, 110, 110),
-		["repeat"] = if anyRepeat then GREEN else RED,
-		toggle = if not switchable then Color3.fromRGB(110, 110, 110) elseif anyOn then GREEN else RED,
-		priority = if low then AMBER else GREEN,
+	-- each state button's segments, left to right, and the lit one (0: none)
+	local segments: { [string]: { colors: { Color3 }, lit: number } } = {
+		fire = { colors = { RED, YELLOW, GREEN }, lit = if api.state.fireState then api.state.fireState + 1 else 0 },
+		movestate = { colors = { RED, YELLOW, GREEN }, lit = if api.state.moveState then api.state.moveState + 1 else 0 },
+		["repeat"] = { colors = { RED, GREEN }, lit = if #factories == 0 then 0 elseif anyRepeat then 2 else 1 },
+		toggle = { colors = { RED, GREEN }, lit = if not switchable then 0 elseif anyOn then 2 else 1 },
+		priority = { colors = { RED, GREEN }, lit = if low then 1 else 2 },
 	}
 	local mouse = game:GetService("UserInputService"):GetMouseLocation()
 	local inset = game:GetService("GuiService"):GetGuiInset()
@@ -244,9 +263,14 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		local key = keyOf(name)
 		b.Text = if over and key ~= "" then `{label[name]} [{key}]` else label[name]
 		b.BackgroundColor3 = if api.state.commandMode == name then ACTIVE else BTN
-		local bar = b:FindFirstChild("State") :: Frame?
-		if bar then
-			bar.BackgroundColor3 = stateColor[name]
+		local row = b:FindFirstChild("State") :: Frame?
+		local seg = segments[name]
+		if row and seg then
+			for i = 1, 3 do
+				local f = row:FindFirstChild(`Seg{i}`) :: Frame
+				f.Visible = i <= #seg.colors
+				f.BackgroundColor3 = if i == seg.lit then seg.colors[i] else DARK
+			end
 		end
 	end
 	ui.buttons["repeat"].TextTransparency = if #factories > 0 then 0 else 0.5

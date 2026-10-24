@@ -1277,7 +1277,7 @@ countermeasures = {
 - **ASW helicopter** (`HELI`): drops torpedoes on submerged contacts.
 - **Support aircraft:** AWACS (Order), EW jammer aircraft (Chaos).
 - **Air workers** (`HELI`): build air structures; fragile.
-- **Ammo & rearm:** aircraft have `ammo` (missiles/bombs). Empty → return to the nearest free rearm pad (airfield or carrier). Rearm costs supply + power over time.
+- **Ammo & rearm:** aircraft have `ammo` (missiles/bombs). Empty → return to the nearest free rearm pad (airfield or carrier). Rearm costs supply + power over time. A pad's `rearmPads` is how many aircraft it takes at once; `rearmSpeed` (default 1) how much faster than the aircraft's `rearmTime` it rearms them: the advanced pads (Empyrean, Rookery; S-166) take 2 at 2× speed, so they also draw power and supply 2× as fast per aircraft.
 - **Landing:** landed aircraft are `landed` state: no LOS bonus, easy targets. In flight an aircraft's ground sight is `sensors.sight` × `Sensors.FLYING_SIGHT_BONUS` (1.25); landed, its plain sight (S-139).
 
 ### 12.3 Naval
@@ -1405,6 +1405,8 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 | Torpedo launcher | T1 | **Undertow** | **Fang** | Naval |
 | Coastal battery | T2 | **Rampart** | **Breaker** | Adv. Naval |
 | Sonar buoy / station | T1 / T2 | **Ear / Choir** | **Listener / Deepear** | Naval / Adv. Naval |
+| Naval SAM platform (S-166) | T2 | **Pharos** (the Crusader's naval SAM, own radar 600) | **Scylla** (the Corsair's, radar 560) | Adv. Naval |
+| Rearm pad / advanced rearm pad (S-166) | T1 / T2 | **Aerie / Empyrean** | **Roost / Rookery** | Air / Adv. Air |
 | Nuclear missile silo (S-48) | T3 | **Reckoning** | **Ragnarok** | Adv. Ground (Architect / Forgemaster) |
 
 Beam towers (S-96, client request 43): a precise BEAM, one very heavy hit on a long reload, each shot paid in power from the team's stores (`shotCost`; no shot without it). Like any beam, terrain is the only thing in the way: they fire over walls and other defenses. They fire only at targets the team sees, not radar contacts. Switched off (TOGGLE), a beam tower retracts into its armored shell: it can't fire, and damage to it is divided by 4 (`retract.armor`); it starts switched on.

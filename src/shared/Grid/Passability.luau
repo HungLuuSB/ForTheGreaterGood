@@ -122,7 +122,14 @@ end
 --
 -- A cell's capped clearance depends only on blocked cells within CAP of it,
 -- so recomputing a rectangle that extends 2 × CAP beyond a change and writing
--- back the inner CAP band is exact (Passability.updateRect).
+-- back the inner CAP band is exact.
+--
+-- With `seed` (S-164), the border cells inside the map take their value from
+-- it instead of counting as free: the current clearance of cells that the
+-- change can't reach. The passes are min-plus linear, so starting from those
+-- exact (capped) distances gives the exact result inside, and the rectangle
+-- can be just the band that may change (Passability.updateRect).
+local scratch: { number } = {} -- reused: the passes write every entry they read
 local function transform(
 	grid: Grid.Grid,
 	passMask: buffer,
@@ -135,16 +142,17 @@ local function transform(
 	wx0: number,
 	wz0: number,
 	wx1: number,
-	wz1: number
+	wz1: number,
+	seed: buffer?
 )
 	local mapW, mapH = grid.cellsX, grid.cellsZ
 	local w, h = rx1 - rx0 + 1, rz1 - rz0 + 1
 	local BIG = 1000000
 	-- d covers the rectangle plus a one-cell border holding the outside
-	-- values (0 beyond the map edge, BIG inside the map), so the passes need
-	-- no bounds checks. Padded stride: pw = w + 2.
+	-- values (0 beyond the map edge; inside the map BIG, or the seed's
+	-- value), so the passes need no bounds checks. Padded stride: pw = w + 2.
 	local pw, ph = w + 2, h + 2
-	local d = table.create(pw * ph, 0)
+	local d = if pw * ph > 65536 then table.create(pw * ph, 0) else scratch -- (whole-map builds get their own)
 	for pz = 0, ph - 1 do
 		local mz = rz0 + pz - 1
 		for px = 0, pw - 1 do
@@ -153,7 +161,7 @@ local function transform(
 			if mx < 0 or mz < 0 or mx >= mapW or mz >= mapH then
 				v = 0 -- outside the map: blocked
 			elseif px == 0 or pz == 0 or px == pw - 1 or pz == ph - 1 then
-				v = BIG -- inside the map, outside the rectangle: free
+				v = if seed then readu8(seed, mz * mapW + mx) else BIG -- inside the map, outside the rectangle
 			else
 				v = if band(readu16(passMask, (mz * mapW + mx) * 2), bitValue) ~= 0 then BIG else 0
 			end
@@ -244,13 +252,15 @@ function Passability.updateRect(pm: PassMap, x0: number, z0: number, x1: number,
 			writeu16(pm.passMask, i * 2, mask)
 		end
 	end
-	local rx0, rz0 = math.max(x0 - 2 * CAP, 0), math.max(z0 - 2 * CAP, 0)
-	local rx1, rz1 = math.min(x1 + 2 * CAP, mapW - 1), math.min(z1 + 2 * CAP, mapH - 1)
+	-- only cells within CAP of the change can change; the ring just outside
+	-- seeds the transform with its current values (S-164: the 2 × CAP
+	-- rectangle cost 1.5–2.4 ms a structure removed, Damage's peaks)
 	local wx0, wz0 = math.max(x0 - CAP, 0), math.max(z0 - CAP, 0)
 	local wx1, wz1 = math.min(x1 + CAP, mapW - 1), math.min(z1 + CAP, mapH - 1)
 	for _, mc in CLASS_ORDER do
 		if band(changed, 2 ^ mc.bit) ~= 0 then
-			transform(grid, pm.passMask, 2 ^ mc.bit, pm.clearance[mc.id], rx0, rz0, rx1, rz1, wx0, wz0, wx1, wz1)
+			local out = pm.clearance[mc.id]
+			transform(grid, pm.passMask, 2 ^ mc.bit, out, wx0, wz0, wx1, wz1, wx0, wz0, wx1, wz1, out)
 		end
 	end
 end

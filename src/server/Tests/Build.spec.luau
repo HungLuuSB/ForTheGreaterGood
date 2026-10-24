@@ -307,6 +307,31 @@ return function(t: RunAll.Context)
 		t.deepEqual({ Facing.NORTH, Facing.EAST, Facing.SOUTH, Facing.WEST }, { 0, 1, 2, 3 }, "0 north (+Z), 1 east (+X), 2 south, 3 west")
 	end)
 
+	t.test("a unit ordered behind its factory while driving out goes round it (S-161: the order was unreachable from inside the footprint)", function()
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		fund(sim)
+		local w = sim.world
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 0, 0, math.pi / 2) -- facing east
+		build(sim, { plant }, "ord_lancer", 0, 0)
+		local unit = 0
+		runUntil(sim, 3000, function()
+			return unit ~= 0
+		end, function(s)
+			for _, e in events(s, "PRODUCED") do
+				unit = e.unit
+			end
+		end)
+		t.expect(unit ~= 0 and sim.build.exiting[unit] ~= nil, "produced, still in the footprint")
+		local g = (sim.map :: any).grid
+		local cell, ox, oz = g:encode(-120, 0)
+		submit(sim, 1, { cmdType = CT.MOVE, flags = 0, unitIds = { unit }, cell = cell, offX = ox, offZ = oz })
+		for _ = 1, 15 * 30 do
+			Sim.step(sim)
+		end
+		local d = math.sqrt((w.posX[unit] + 120) ^ 2 + w.posZ[unit] ^ 2)
+		t.expect(d < 24, `it got round the plant to the west ({d} studs off)`)
+	end)
+
 	t.test("a factory waits while a unit is still on its pad (S-133, the user)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
 		fund(sim)

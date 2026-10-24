@@ -1,4 +1,5 @@
 --!strict
+--!native
 -- System 4: target acquisition (guide 10.2).
 --
 -- Targeting follows team knowledge, never server truth (D100). Each weapon

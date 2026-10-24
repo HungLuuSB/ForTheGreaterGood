@@ -112,6 +112,13 @@ end
 -- Turn keys (Settings > Keys, C-159; E was also BAR's reclaim, so right is C)
 Camera.ROTATE_LEFT = Enum.KeyCode.Q
 Camera.ROTATE_RIGHT = Enum.KeyCode.C
+-- a UI that holds a turn key for now (the build menu's tab keys, C-203)
+Camera.keyTaken = nil :: ((Enum.KeyCode) -> boolean)?
+
+local function turnKey(key: Enum.KeyCode): boolean
+	local taken = Camera.keyTaken
+	return UserInputService:IsKeyDown(key) and not (taken and taken(key))
+end
 
 -- Applies this frame's pan, rotation and middle-drag to the focus; returns
 -- true when the player panned (which stops a follow, C-43).
@@ -124,9 +131,9 @@ function Camera.input(state: State, cam: Camera, dt: number): boolean
 				move += dir
 			end
 		end
-		if UserInputService:IsKeyDown(Camera.ROTATE_LEFT) then
+		if turnKey(Camera.ROTATE_LEFT) then
 			state.yaw = math.clamp(state.yaw + Camera.YAW_SPEED * dt, -Camera.MAX_YAW, Camera.MAX_YAW)
-		elseif UserInputService:IsKeyDown(Camera.ROTATE_RIGHT) then
+		elseif turnKey(Camera.ROTATE_RIGHT) then
 			state.yaw = math.clamp(state.yaw - Camera.YAW_SPEED * dt, -Camera.MAX_YAW, Camera.MAX_YAW)
 		end
 	end

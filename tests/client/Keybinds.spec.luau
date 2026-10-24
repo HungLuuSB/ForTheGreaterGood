@@ -11,12 +11,17 @@ return function(t: any)
 		local seen = {}
 		for _, a in Keybinds.ACTIONS do
 			t.expect(not Keybinds.RESERVED[a.default], `{a.id}: {a.default} isn't reserved`)
-			t.expect(seen[a.default] == nil, `{a.id}: {a.default} also {seen[a.default]}`)
-			seen[a.default] = a.id
+			local k = (a.layer or "") .. ":" .. a.default
+			t.expect(seen[k] == nil, `{a.id}: {a.default} also {seen[k]}`)
+			seen[k] = a.id
 		end
 		t.expect(next(Keybinds.conflicts(b)) == nil, "no conflicts by default")
 		t.equal(b.reclaim, "E")
 		t.equal(b.rotateRight, "C", "the camera no longer shares E with reclaim")
+		t.equal(b.tabEconomy .. b.tabCombat .. b.tabUtility .. b.tabBuild, "ZXCV", "BAR's category keys (C-203)")
+		t.expect(b.patrol == "Z", "over Patrol only while a builder's menu shows: no conflict")
+		Keybinds.set(b, "tabCombat", "Z")
+		t.equal(Keybinds.conflicts(b).tabCombat[1], "tabEconomy", "two tabs on one key conflict")
 	end)
 
 	t.test("rebinding: reserved keys refused, shared keys flagged on both", function()

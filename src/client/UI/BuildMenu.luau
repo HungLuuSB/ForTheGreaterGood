@@ -6,10 +6,14 @@
 -- queued count. B opens the menu's keys / goes to the next tab; while they
 -- are on, 1..0 pick the tab's items (the menu takes those keys before the
 -- control groups). Acts only through the client API.
--- Tiles are BAR's (C-107): the unit's model portrait at an angle
--- (UI/Portrait), its type icon at the bottom right, the cost stacked at the
--- bottom left (supply white, power yellow), the hotkey top left and the
--- queued count top right. Hovering a tile shows its name and stats.
+-- Tiles are BAR's (C-107; reference 3 since C-203): the unit's model
+-- portrait at an angle (UI/Portrait), its type icon at the bottom left, the
+-- cost stacked at the bottom right (supply white, power yellow), the hotkey
+-- top left and the queued count top right. Hovering a tile shows its name
+-- and stats. The category tabs sit under the grid, each with its colour
+-- and hotkey (Economy Z, Combat X, Utility C, Build V, C-203): while a
+-- builder's menu shows, those keys open the tab and arm the digits (over
+-- Patrol, Cancel, camera right and range rings).
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -30,6 +34,17 @@ local TeamColors = require("../Render/TeamColors")
 local BuildMenuUI = {}
 
 BuildMenuUI.KEY = Enum.KeyCode.B
+-- the structure tabs' keys (Settings > Keys writes them)
+BuildMenuUI.TAB_KEYS = { Economy = Enum.KeyCode.Z, Combat = Enum.KeyCode.X, Utility = Enum.KeyCode.C, Build = Enum.KeyCode.V } :: { [string]: Enum.KeyCode }
+BuildMenuUI.active = nil :: any -- the menu, for key handlers made before it (C-203)
+-- each tab's colour mark (reference 3)
+local TAB_COLOR: { [string]: Color3 } = {
+	Economy = Color3.fromRGB(255, 214, 60),
+	Combat = Color3.fromRGB(236, 96, 84),
+	Utility = Color3.fromRGB(92, 172, 240),
+	Build = Color3.fromRGB(110, 210, 120),
+	Units = Color3.fromRGB(200, 204, 212),
+}
 local DIGITS = {
 	[Enum.KeyCode.One] = 1, [Enum.KeyCode.Two] = 2, [Enum.KeyCode.Three] = 3, [Enum.KeyCode.Four] = 4, [Enum.KeyCode.Five] = 5,
 	[Enum.KeyCode.Six] = 6, [Enum.KeyCode.Seven] = 7, [Enum.KeyCode.Eight] = 8, [Enum.KeyCode.Nine] = 9, [Enum.KeyCode.Zero] = 10,
@@ -152,10 +167,12 @@ function BuildMenuUI.new(api: Api.Api): UI
 	panel.BorderSizePixel = 0
 	panel.Visible = false
 	panel.Parent = gui
+	-- the tabs under the grid (reference 3, C-203)
 	local tabRow = Instance.new("Frame")
 	tabRow.Name = "Tabs"
 	tabRow.BackgroundTransparency = 1
-	tabRow.Position = UDim2.fromOffset(4, 3)
+	tabRow.AnchorPoint = Vector2.new(0, 1)
+	tabRow.Position = UDim2.new(0, 4, 1, -3)
 	tabRow.Size = UDim2.new(1, -8, 0, 20)
 	tabRow.Parent = panel
 	local tl = Instance.new("UIListLayout")
@@ -169,7 +186,7 @@ function BuildMenuUI.new(api: Api.Api): UI
 	grid.ScrollBarThickness = 4
 	grid.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	grid.CanvasSize = UDim2.new()
-	grid.Position = UDim2.fromOffset(4, 26)
+	grid.Position = UDim2.fromOffset(4, 4)
 	grid.Size = UDim2.new(1, -8, 1, -30)
 	grid.Parent = panel
 	local gl = Instance.new("UIGridLayout")
@@ -205,7 +222,38 @@ function BuildMenuUI.new(api: Api.Api): UI
 	Kit.skin(tipGui)
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
 	tipGui.Parent = gui.Parent
-	return { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, portraits = {}, tip = tip, tipTitle = tipTitle, tipBody = tipBody, hovered = nil, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
+	local ui: UI = { gui = gui, panel = panel, tabRow = tabRow, grid = grid, tabButtons = {}, itemButtons = {}, itemGlyphs = {}, portraits = {}, tip = tip, tipTitle = tipTitle, tipBody = tipBody, hovered = nil, icons = Icons.table(api.world.defs), menu = nil, tab = 1, armed = false, key = "", codes = Icons.codes(api.world.defs) }
+	BuildMenuUI.active = ui
+	return ui
+end
+
+-- The structure tab bound to `key` while a builder's menu shows (its
+-- tabs' keys take over then), or nil; `present` false when that tab is
+-- bound but this menu lacks it.
+local function tabKey(ui: UI, key: Enum.KeyCode): (string?, boolean)
+	local menu = ui.menu
+	if menu == nil then
+		return nil, false
+	end
+	local layer = false
+	for _, tab in menu.tabs do
+		layer = layer or BuildMenuUI.TAB_KEYS[tab] ~= nil
+	end
+	if not layer then
+		return nil, false
+	end
+	for tab, k in BuildMenuUI.TAB_KEYS do
+		if k == key then
+			return tab, table.find(menu.tabs, tab) ~= nil
+		end
+	end
+	return nil, false
+end
+
+-- True when `key` is a build tab's key right now (other handlers of it
+-- stand aside: range rings, the camera's turn).
+function BuildMenuUI.takes(ui: UI, key: Enum.KeyCode): boolean
+	return (tabKey(ui, key)) ~= nil
 end
 
 -- The menu's keys (Controls.capture): true when it took the key.
@@ -214,6 +262,15 @@ function BuildMenuUI.capture(ui: UI, api: Api.Api, input: InputObject): boolean
 	if menu == nil or #menu.tabs == 0 then
 		ui.armed = false
 		return false
+	end
+	local tab, present = tabKey(ui, input.KeyCode)
+	if tab then
+		if present then
+			ui.tab = table.find(menu.tabs, tab) :: number
+			ui.armed = true
+			ui.key = "" -- redraw
+		end
+		return true
 	end
 	if input.KeyCode == BuildMenuUI.KEY then
 		if ui.armed then
@@ -312,8 +369,22 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 		local b = ui.tabButtons[i]
 		if b == nil then
 			b = button(ui.tabRow, "Tab")
-			b.Size = UDim2.fromOffset(53, 20)
+			b.Size = UDim2.fromOffset(65, 20)
 			b.TextSize = 10
+			b.RichText = true
+			b.TextXAlignment = Enum.TextXAlignment.Left
+			local pad = Instance.new("UIPadding")
+			pad.PaddingLeft = UDim.new(0, 11)
+			pad.Parent = b
+			-- the tab's colour mark: a small diamond
+			local mark = Instance.new("Frame")
+			mark.Name = "Mark"
+			mark.AnchorPoint = Vector2.new(0.5, 0.5)
+			mark.Position = UDim2.new(0, -5, 0.5, 0)
+			mark.Size = UDim2.fromOffset(6, 6)
+			mark.Rotation = 45
+			mark.BorderSizePixel = 0
+			mark.Parent = b
 			local index = i
 			b.MouseButton1Click:Connect(function()
 				ui.tab = index
@@ -321,9 +392,11 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			end)
 			ui.tabButtons[i] = b
 		end
-		b.Text = tab
+		local k = BuildMenuUI.TAB_KEYS[tab]
+		b.Text = if k then `{tab} <font color="#A8AEB8">{k.Name}</font>` else tab
 		b.Visible = true
 		b.BackgroundColor3 = if i == ui.tab then ON else OFF
+		;(b :: any).Mark.BackgroundColor3 = TAB_COLOR[tab] or Color3.new(1, 1, 1)
 	end
 	for i = #menu.tabs + 1, #ui.tabButtons do
 		ui.tabButtons[i].Visible = false
@@ -335,26 +408,26 @@ function BuildMenuUI.step(ui: UI, api: Api.Api)
 			b.Text = ""
 			b.BackgroundColor3 = TILE
 			b.ClipsDescendants = true
-			-- the model portrait, the type's icon bottom right, the cost bottom
-			-- left, the hotkey and the queued count (BAR tiles, C-107)
+			-- the model portrait, the type's icon bottom left, the cost bottom
+			-- right, the hotkey and the queued count (BAR tiles, C-107, C-203)
 			ui.portraits[i] = Portrait.new(b)
 			local g = Glyph.new(b)
-			g.root.AnchorPoint = Vector2.new(1, 1)
-			g.root.Position = UDim2.new(1, -2, 1, -2)
+			g.root.AnchorPoint = Vector2.new(0, 1)
+			g.root.Position = UDim2.new(0, 2, 1, -2)
 			g.root.ZIndex = 4
 			ui.itemGlyphs[i] = g
 			local function costLabel(name: string, y: number, color: Color3): TextLabel
 				local l = Instance.new("TextLabel")
 				l.Name = name
 				l.BackgroundTransparency = 1
-				l.AnchorPoint = Vector2.new(0, 1)
-				l.Position = UDim2.new(0, 3, 1, y)
+				l.AnchorPoint = Vector2.new(1, 1)
+				l.Position = UDim2.new(1, -3, 1, y)
 				l.Size = UDim2.new(1, -24, 0, 12)
 				l.Font = Enum.Font.GothamBold
 				l.TextSize = 11
 				l.TextColor3 = color
 				l.TextStrokeTransparency = 0.35
-				l.TextXAlignment = Enum.TextXAlignment.Left
+				l.TextXAlignment = Enum.TextXAlignment.Right
 				l.ZIndex = 4
 				l.Parent = b
 				return l

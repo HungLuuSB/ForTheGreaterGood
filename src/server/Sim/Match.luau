@@ -125,10 +125,14 @@ table.insert(Lifecycle.removalHooks, function(sim: Types.Sim, id: number)
 end)
 
 Match.SELF_DESTRUCT_PER_TICK = 20 -- an eliminated player's units go this many a tick (S-144)
+Match.SELF_DESTRUCT_STRUCTURE = 10 -- a structure counts as this many (S-164: freeing a footprint costs ms)
 
 -- Self-destructs the next eliminated players' units, a few a tick: a whole
 -- base at once cost tens of ms in one tick (every structure's footprint
 -- freed, every death and wreck sent; S-144, the live server's watchdog).
+-- Structures weigh SELF_DESTRUCT_STRUCTURE against the tick's allowance,
+-- so about 2 go a tick (S-164: 20 a tick still cost Damage 96 ms in B's
+-- Studio run); the first in line always goes, so the list always shrinks.
 local function selfDestruct(sim: Types.Sim)
 	local m = sim.match
 	local list = m.doomed
@@ -137,11 +141,15 @@ local function selfDestruct(sim: Types.Sim)
 	end
 	local w = sim.world
 	local done, i = 0, 1
-	while i <= #list and done < Match.SELF_DESTRUCT_PER_TICK do
+	while i <= #list do
 		local id, gen = list[i], list[i + 1]
 		if World.isRef(w, id, gen) then
+			local weight = if sim.defs.unitByIndex[w.defIndex[id]].domain == "structure" then Match.SELF_DESTRUCT_STRUCTURE else 1
+			if done > 0 and done + weight > Match.SELF_DESTRUCT_PER_TICK then
+				break
+			end
 			Combat.queueDamage(sim.combat, id, w.health[id] * 4 + 1, 0)
-			done += 1
+			done += weight
 		end
 		i += 2
 	end

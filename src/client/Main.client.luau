@@ -32,6 +32,7 @@ local Interp = require("./Core/Interp")
 local NetIn = require("./Core/NetIn")
 local PieceAnim = require("./Core/PieceAnim")
 local World = require("./Core/World")
+local RadarFill = require("./Core/RadarFill")
 local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
 local Bars = require("./Core/Bars")
@@ -58,6 +59,7 @@ local Models = require("./Render/Models")
 local Vfx = require("./Render/Vfx")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
+local SensorFxRender = require("./Render/SensorFx")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
 local DepositsRender = require("./Render/Deposits")
@@ -140,6 +142,9 @@ local controls = Controls.bind(api)
 -- high above its ground point, a big model's body; C-38)
 local pickParams = RaycastParams.new()
 pickParams.FilterType = Enum.RaycastFilterType.Include
+Controls.heightAt = function(x: number, z: number): number
+	return World.groundY(world, x, z, true) -- the water's surface over water (C-209)
+end
 Controls.pickModel = function(px: number, py: number): number?
 	local cam = workspace.CurrentCamera
 	local ray = cam:ViewportPointToRay(px, py)
@@ -210,7 +215,9 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 		return
 	end
 	local key = input.KeyCode
-	if key == RangeOverlay.TOGGLE_KEY then
+	if BuildMenuUI.active and BuildMenuUI.takes(BuildMenuUI.active, key) then
+		return -- a build tab's key while a builder's menu shows (C-203)
+	elseif key == RangeOverlay.TOGGLE_KEY then
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
 	elseif key == DepositsRender.TOGGLE_KEY then
 		DepositsRender.setEnabled(deposits, not deposits.enabled)
@@ -242,7 +249,10 @@ local fxRenderer = RenderEffects.new()
 local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
+local sensorFx = SensorFxRender.new()
 local fog = FogBlanket.new()
+local radarCircles: { RadarFill.Circle }? = nil -- the radar layer's circles, nil while hidden (C-207)
+local radarAt = 0
 local environment = Environment.new() -- ground beyond the map, ambient particles (C-102)
 local grade = Grade.new() -- colour grade: zoom easing, blast flashes, vignette (C-102)
 local glow = Glow.new() -- unit glow states and headlights (C-103)
@@ -305,6 +315,9 @@ local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
 local resourceBar = ResourceBar.new() -- placeholder UI (task 9)
 -- playable placeholder UI (C-68): build menu, command card, unit panel, alerts
 local buildMenu = BuildMenuUI.new(api)
+Camera.keyTaken = function(key: Enum.KeyCode): boolean
+	return BuildMenuUI.takes(buildMenu, key) -- C is the Utility tab's while a builder's menu shows (C-203)
+end
 local commandCard = CommandCard.new(api)
 local unitPanel = UnitPanel.new(api)
 local alertFeed = AlertFeed.new(api)
@@ -1069,14 +1082,22 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	local right = cam.CFrame.RightVector
 	local barDraws = if strategic then {} else Bars.draws(world, Bars.list(world, api.selection.set), Controls.projector(cam), view.X, view.Y, right.X, right.Z)
 	HealthBars.step(healthBars, barDraws, not strategic)
+	-- sonar pings and jammer domes (C-211)
+	SensorFxRender.step(sensorFx, world, now, not strategic)
 	mark("bars", t0)
 	t0 = os.clock()
 	-- fog of war (the blanket, C-100), radar / sonar contacts and ghosts (C-32); before `died` is cleared
-	FogBlanket.step(fog, world, dt, not (world.joined and world.me.player == 0))
+	-- the radar layer (C-207): looked up a few times a second
+	radarAt += dt
+	if radarAt >= 0.25 then
+		radarAt = 0
+		radarCircles = if world.joined and world.me.player ~= 0 then RadarFill.circles(world, api.state.placement, api.state.selection, missileView.enabled) else nil
+	end
+	FogBlanket.step(fog, world, dt, not (world.joined and world.me.player == 0), radarCircles)
 	Contacts.step(contacts, world, now, strategic)
 	mark("fog", t0)
 	t0 = os.clock()
-	MinimapUI.setFog(minimap, FogBlanket.content(fog), FogBlanket.ENABLED and not (world.joined and world.me.player == 0))
+	MinimapUI.setFog(minimap, FogBlanket.content(fog), (FogBlanket.ENABLED or radarCircles ~= nil) and not (world.joined and world.me.player == 0))
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
 	if now >= nextIdleCount then

@@ -27,6 +27,7 @@ GroundMeshes.FALLBACK = table.freeze({
 	bridge = { material = "WoodPlanks", color = { 120, 104, 80 } },
 	desert = { material = "Limestone", color = { 186, 148, 100 } },
 	redrock = { material = "Sandstone", color = { 168, 88, 58 } },
+	cliff = { material = "Sandstone", color = { 150, 78, 52 } }, -- strata walls (details only; models-C, M-35)
 } :: { [string]: { material: string, color: { number } } })
 
 -- The map name in an ID ("map:canyon" → "canyon"), or nil.

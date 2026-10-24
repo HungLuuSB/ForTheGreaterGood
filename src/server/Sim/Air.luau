@@ -564,7 +564,8 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 			end
 			local cost = d.ammoCost or NO_COST
 			local cs, cp = (cost.supply or 0) + (a.cmSupplyPerRound[id] or 0), cost.power or 0
-			local rate = 1 / (d.rearmTime :: number) -- rounds per second at full economy
+			-- rounds per second at full economy; an advanced pad rearms faster (S-166)
+			local rate = (def(sim, pad).rearmSpeed or 1) / (d.rearmTime :: number)
 			local team = w.team[id]
 			local acc = eco.accounts[team]
 			demandS[team] += cs * rate
