@@ -2332,3 +2332,40 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Changed:** the skirmish AI chose east or west only, from the sign of the enemy's x. On The Canyon (north vs south) its factories faced sideways. `Skirmish.enemyFacing` now picks the nearest of the four toward the enemy start (east / west on a tie, so the mirrored 1v1 maps are unchanged). Vehicle plants and advanced plants use it; airfields and shipyards stay at 0.
 - **Guide 9.3** says what facing means and who follows it.
 - **Tests:** `Build.spec` (BUILD with each facing: the frame's heading and its pad on that axis), `Canyon.spec` (the AI faces south from the north start and north from the south; on Ridgeline east and west as before; the slow match checks the AI's built plants).
+
+## S-161 — The AI's give-ups: their causes, fixed; the coarser base grid tried and parked (your queue item 6, next.md item 3) (2026-10-24)
+
+- **Asked:** the cause of the remaining give-ups (1–2 per 12 minutes after S-142), and mixed sizes laid out on a coarser grid, with mirror fairness as the guard.
+- **How:** `lune run debug_giveups [minutes] [seeds] [mapFilter]` (new, `.lune/`): mirror matches at normal and hard on Ridgeline, Coastline, Twin Lakes and The Canyon. Each give-up (`Skirmish.giveUpHook`, a debug hook, nil in play) prints what stood around it. **59 give-ups in 16 matches of 12 minutes:**
+  - **28, a builder standing still with a move order** before a deposit it can't reach (Twin Lakes' middle deposits at x = ±12, The Canyon's at (-396, -644)). When no open cell of the builder's region lies near the goal, Nav marks the move unreachable and the unit never moves. S-142's reach check covered `spotNear` sites but not `freeDeposit`'s.
+  - **17, a site occupied:** mostly the same unreachable far deposits, already taken by the enemy.
+  - **13, moving but no closer:** a builder produced by a vehicle plant, given a site behind the plant while still driving out (S-133), pushed head-on into the plant for 20 s. Planning started from its cell inside the footprint, the route search found nothing, and the order was marked unreachable for good: no field, no extension, a straight line into the wall.
+  - 1, units in the way.
+- **Fixed:**
+  - `Skirmish.freeDeposit(brain, accept, builder)` skips deposits the builder can't reach (the S-142 check);
+  - `Nav` plans a unit standing in a blocked cell from the nearest open cell (the one it comes out on), so the order gets a field.
+- **After: 2 give-ups in the same 16 matches**, both builders sliding along their own buildings (an extractor and a generator). Every AI was affected, the player's units too (any order given while driving out of a factory, or walking off a new frame, S-155).
+- **The coarser grid, tried and parked on branch `s161-grid`:** sites on a lattice of blocks anchored at home and mirrored. Footprints up to BLOCK − 2 at block centres, larger ones at every second block corner, so any two buildings keep 2 free cells whatever their sizes. It never ran out of sites, but it cost the economy on Ridgeline (normal, seeds 34–36, 8 minutes):
+
+  | Layout | Generators | Lancers | Power ratio, minutes 6–8 |
+  |---|---|---|---|
+  | Ring sweep (kept) | 15 / 15 / 15 | 14 / 19 / 12 | 0.74 / 0.81 / 0.81 |
+  | 5-cell blocks | 11 / 18 / 19 | 9 / 17 / 11 | 0.47 / 0.67 / 0.67 |
+  | 4-cell blocks | 11 / 11 / 11 | 15 / 17 / 10 | 0.64 / 0.65 / 0.66 |
+
+  With 5-cell blocks `AI.spec`'s normal-economy test failed (power ratio 0.45 at 8 minutes, needs 0.5). With the give-ups gone, the lanes it was for matter less. Under "Needs my review".
+- **Tests:** `Build.spec`: a tank ordered behind its plant while driving out of it gets round it (136 studs short before the fix).
+- **Mirror fairness:** the slow suite's guard runs at the merge.
+
+## S-162 — The fairness run as its own report (your queue item 7, next.md item 6) (2026-10-24)
+
+- `lune run fairness [seeds] [minutes] [mapFilter] [level]` (new): the same AI level on both starts (default normal), both faction mirrors, seeds 1..12 by default (24 matches a map), up to 10 minutes each (then the value lead decides, as in `Fairness.spec`), on every two-start map: Ridgeline, Coastline, Normandy, The Canyon. Per map: wins by start, draws, wins per faction mirror, the two-sided binomial p. Target: neither start under a third of the decided matches. Parallel workers (`--jobs`, S-99). Writes `docs/FAIRNESS.md` without a map filter.
+- **Report only, outside the slow suite:** it runs with the balance checkpoint, never per change. The slow suite keeps its 36-match Ridgeline guard (S-155) for merges.
+- Not run now (your rule): its first numbers come with the next balance checkpoint.
+
+## S-163 — Beam damage along the beam (your queue item 8, guide audit item 16) (2026-10-24)
+
+- **Before:** lingering beams dealt their damage per tick (S-113), but a single-target beam's share always went to its target, through anything in front of it, and a missed beam burned nothing. Hit-rays (Radiance, `pierce`) already hurt everything on their line (S-115).
+- **Now:** each tick a single-target beam's share goes to the **first enemy unit its line crosses**, from the muzzle to its end (the target's aim point, a miss's fixed point on the ground, or the dome that stops it), by collision radius, in the weapon's target classes; the hit target when nothing stands in front. A unit stepping into the beam takes it; a missed beam burns whatever walks into its line. Allies are never hit.
+- **Wire:** nothing new. When the struck unit changes, a new FIRE ends the drawn beam there (`hit = true`, at its aim point), or at the full end when nothing is struck, as dome changes do (S-123). The beam keeps who it struck (`Beam.struck`, hashed).
+- **Tests:** `Defenses.spec`: an Inferno beam at a Paladin; a Lancer stepping into the line takes the share and a FIRE ends the beam at it; the Paladin behind takes only the shares before.

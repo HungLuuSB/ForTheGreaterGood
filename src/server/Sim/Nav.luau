@@ -598,7 +598,16 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 		if direct then
 			w.direct[id] = true
 		elseif g:inBounds(ux, uz) then
-			table.insert(plan.cells, g:index(ux, uz))
+			-- a unit inside a footprint (driving out of its factory, S-133, or
+			-- walking off a new frame, S-155) routes from the open cell it
+			-- comes out on: from its own blocked cell the search found
+			-- nothing and the order was unreachable for good (S-161: a Mason
+			-- given a site behind its plant pushed into the plant for 20 s)
+			local cell = g:index(ux, uz)
+			if not Quadtree.isOpen(t, cell) then
+				cell = nearestOpen(t, cell, 0) or cell
+			end
+			table.insert(plan.cells, cell)
 		end
 	end
 	if plan.nextMember <= #members then
