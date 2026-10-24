@@ -258,13 +258,14 @@ Test and cheat commands are **ordinary commands**: sent on the Cmd channel, queu
 
   The results screen and replay list can show "cheats used" from these.
 
-## 9b. The pre-game: chosen starts (protocol 36, S-169)
+## 9b. The pre-game: chosen starts (protocol 36, S-169, S-171)
 
-With the match option `startMode = "choose"` (match config; absent or `"fixed"` = start == id as before) the match server's sim boots into a **pre-game**: no units, only commands and the wire run (ticks advance). Everything here is ordinary recorded commands and events.
+**Every match from the lobby starts with a pre-game** (S-171, the user: there are no fixed starts). The match server passes `startMode = "choose"` to `Sim.new` (`"fixed"`, start i on the map's start i, is left only for headless tests and tools). The sim boots with no units; only commands and the wire run (ticks advance). Everything here is ordinary recorded commands and events.
 
-- **Sides and start areas:** the ally teams, ascending, share the map's predefined starts in contiguous blocks (`Shared/Match/StartAreas.sides(allyTeams, #starts)`: with A sides and S starts, side k gets starts ⌊(k−1)·S/A⌋+1 .. ⌊k·S/A⌋; never more sides than starts). A side's **start area** is every point nearer one of its starts than any other side's (`StartAreas.sideAt`). Draw the areas and the predefined starts (suggestions) from that module: the server checks picks with it.
+- **Sides and hints:** the ally teams, ascending, share the map's start positions in contiguous blocks (`Shared/Match/StartAreas.sides(allyTeams, #starts)`: with A sides and S starts, side k gets starts ⌊(k−1)·S/A⌋+1 .. ⌊k·S/A⌋; never more sides than starts). Those starts are **hints**: the AI takes them first (below).
+- **Spawn boxes:** each side picks inside its **spawn box** (`StartAreas.boxes(sides, starts, StartAreas.bounds(grid), layers.startBoxes)`): the bounding box of its starts' boxes (the map's own `startBoxes`, or a square of `StartAreas.boxHalf` around each start: a sixth of the map's shorter side, 96..256 studs), kept 16 studs inside the map; two sides' boxes that would overlap are split at the midpoint between their starts, 96 studs apart. Draw the boxes and the hints from that module: the server checks picks with it.
 - **Commands** (no unit IDs):
-  - `START_POS 20` (pos params: `cell, offX, offZ`): the sender's Commander starts there. Accepted when inside the sender's side's area, on ground the Commander can stand on, and at least `StartAreas.SPACING` (48) studs from every other player's pick; refused silently otherwise (the PREGAME event shows what holds). A new one replaces the old.
+  - `START_POS 20` (pos params: `cell, offX, offZ`): the sender's Commander starts there. Accepted when inside the sender's side's spawn box, on ground the Commander can stand on, and at least `StartAreas.SPACING` (48) studs from every other player's pick; refused silently otherwise (the PREGAME event shows what holds). A new one replaces the old.
   - `READY 21` (`value u8`: 1 ready, 0 not).
   - `BUILD` with **no unit IDs**: a build for the sender's future Commander (one of its build options; anywhere on the map); with the QUEUE flag appended, else the list is replaced. At most `Schema.PREBUILD_MAX` (30). `STOP` with no unit IDs clears it.
   - CAMERA and CHEAT work as usual; anything else is ignored until the match starts.
@@ -272,7 +273,8 @@ With the match option `startMode = "choose"` (match config; absent or `"fixed"` 
   - `PREGAME` for every player, to everyone, when its pick, ready or AI flag changes (and after a join): `cell/offX/offZ` = the pick when PICKED is set.
   - `PREBUILD` for the receiver and its allies (spectators: everyone), when the list changes (and after a join): the full list in order; `count` 0 = none.
   - `COUNTDOWN`: 5, 4, 3, 2, 1 while it runs (one each second), 255 when it's cancelled, **0 on the tick the match starts**, in the same outbox as the Commanders' ENTERs (and their first State records).
-- **Flow:** when every player is READY (the skirmish AI picks its side's suggestion and readies at once, through these commands), a 5 s countdown runs; any player un-readying cancels it. `Pregame.TIMEOUT` (90 s) after the pre-game began, everyone counts as ready. When the countdown ends the Commanders appear on the picks (a player who never picked: the first free point among its side's suggestions, `StartAreas.suggestions`), each with its PREBUILD list as its build orders, and the match starts on that tick.
+- **Flow:** when every player is READY a 5 s countdown runs; any player un-readying cancels it. `Pregame.TIMEOUT` (90 s) after the pre-game began, everyone counts as ready. When the countdown ends the Commanders appear on the picks, each with its PREBUILD list as its build orders, and the match starts on that tick.
+- **The AI, and players who never pick** (`Pregame.bestSpot`): the k-th player of a side (by player ID) takes the side's k-th hint when it's a valid pick; past the hints, or with the hint taken, the best valid spot in the box on a 16-stud grid: free deposits within 160 studs (deposits within 100 of another pick are taken) × 10 + open ground (the Commander's clearance, up to 6) × 2 − the distance to the side's nearest hint / 16. The AI picks and readies at once, through these commands.
 
 ## 10. Join and reconnect (S-2)
 
@@ -345,7 +347,7 @@ precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
 | 34 | Event `OWN_STATUS 26`: own units off camera, health / build / queue head on change, capped per tick (S-158) |
-| 36 | Up to 16 teams: strategic records 7 B (team 4 bits); commands START_POS 20, READY 21, and BUILD / STOP with no unit IDs in the pre-game; events PREGAME 28, COUNTDOWN 29, PREBUILD 30 (section 9b, S-169) |
+| 36 | Up to 16 teams: strategic records 7 B (team 4 bits); commands START_POS 20, READY 21, and BUILD / STOP with no unit IDs in the pre-game; events PREGAME 28, COUNTDOWN 29, PREBUILD 30 (section 9b, S-169); every match has the pre-game, spawn boxes (S-171) |
 | 35 | Command RESURRECT 19; WRECK carries `supply`, `fullSupply` (14 B); event WRECK_STATE 27 (S-168) |
 | 33 | Command PRIORITY 18 and unit state bit LOW_PRIORITY 128: resource priority (S-156) |
 | 32 | Eco records end with the team's radar accuracy: `radarError u16, trackError u16, precision u8` (S-147) |

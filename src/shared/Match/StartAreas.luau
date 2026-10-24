@@ -1,23 +1,30 @@
 --!strict
--- Start areas for "choose" start positions (S-169, the user: a map's starts
--- are suggestions; up to 16 players on any map). Shared by the sim, which
--- checks each pick, and the client, which draws the areas. Pure Luau.
+-- Spawn boxes and start hints (S-169, S-171, the user: there are no fixed
+-- starts; a map's start positions are hints the AI uses to pick good spots,
+-- and each side's players start inside that side's spawn box). Shared by
+-- the sim, which checks every pick, and the client, which draws the boxes.
+-- Pure Luau.
 --
---   * Sides: the match's ally teams, in ascending order, share out the map's
---     starts in contiguous blocks: with A sides and S starts, side k gets
---     starts floor((k-1)·S/A)+1 .. floor(k·S/A). So on a 2v2 map (starts
---     1-2 west, 3-4 east) two sides get one half each, and four sides one
---     start each. Never more sides than starts.
---   * A side's start area: every point nearer one of its starts than to any
---     other side's start (ties go to the lower start index).
---   * Suggestions: a side's k-th player (by player ID) is offered start
---     ((k-1) mod n)+1 of its n, then rings SPACING apart around it.
+--   * Sides: the match's ally teams, ascending, share out the map's starts
+--     (the hints) in contiguous blocks: with A sides and S starts, side k
+--     gets starts floor((k-1)·S/A)+1 .. floor(k·S/A). Never more sides than
+--     starts.
+--   * Spawn boxes: each start has a box, the map's own (`Layers.startBoxes`,
+--     { x0, z0, x1, z1 } per start) or, without one, a square of BOX_HALF
+--     (a sixth of the map's shorter side, 96..256 studs) around it. A
+--     side's box is the bounding box of its starts' boxes, kept EDGE studs
+--     inside the map. Two sides' boxes that overlap are split at the
+--     midpoint between their starts' centres, along the axis they're
+--     farther apart on, GAP studs apart.
 --   * Picks keep SPACING studs from every other player's pick.
 
 local StartAreas = {}
 
 StartAreas.SPACING = 48 -- studs between two players' starts
+StartAreas.EDGE = 16 -- studs a box keeps from the map's edge
+StartAreas.GAP = 96 -- studs between two sides' boxes split apart
 
+export type Box = { number } -- { x0, z0, x1, z1 }, world studs, x0 <= x1, z0 <= z1
 export type Sides = {
 	allies: { number }, -- the sides (ally teams), ascending
 	startsOf: { [number]: { number } }, -- ally team → its start indices (1-based, ascending)
@@ -52,39 +59,63 @@ function StartAreas.sides(allyTeams: { number }, startCount: number): Sides
 	return { allies = allies, startsOf = startsOf, sideOfStart = sideOfStart }
 end
 
--- The side whose start area holds (x, z): the side of the nearest start.
--- `starts` are the map's { x, z } in start order (Layers.starts).
-function StartAreas.sideAt(sides: Sides, starts: { { number } }, x: number, z: number): number?
-	local best, bestD = nil :: number?, math.huge
-	for i, s in starts do
-		local side = sides.sideOfStart[i]
-		if side ~= nil then
-			local d = (s[1] - x) ^ 2 + (s[2] - z) ^ 2
-			if d < bestD then
-				best, bestD = side, d
+-- Half the side of a derived start box on a map of `width` × `depth` studs.
+function StartAreas.boxHalf(width: number, depth: number): number
+	return math.clamp(math.min(width, depth) / 6, 96, 256)
+end
+
+local function centre(starts: { { number } }, list: { number }): (number, number)
+	local x, z = 0, 0
+	for _, i in list do
+		x += starts[i][1]
+		z += starts[i][2]
+	end
+	return x / #list, z / #list
+end
+
+-- Every side's spawn box. `bounds` is the map's { x0, z0, x1, z1 };
+-- `startBoxes` the map's own boxes per start (optional).
+function StartAreas.boxes(sides: Sides, starts: { { number } }, bounds: Box, startBoxes: { Box }?): { [number]: Box }
+	local half = StartAreas.boxHalf(bounds[3] - bounds[1], bounds[4] - bounds[2])
+	local out: { [number]: Box } = {}
+	for _, a in sides.allies do
+		local x0, z0, x1, z1 = math.huge, math.huge, -math.huge, -math.huge
+		for _, i in sides.startsOf[a] do
+			local b = if startBoxes and startBoxes[i] then startBoxes[i] else { starts[i][1] - half, starts[i][2] - half, starts[i][1] + half, starts[i][2] + half }
+			x0, z0 = math.min(x0, b[1]), math.min(z0, b[2])
+			x1, z1 = math.max(x1, b[3]), math.max(z1, b[4])
+		end
+		local e = StartAreas.EDGE
+		out[a] = { math.max(x0, bounds[1] + e), math.max(z0, bounds[2] + e), math.min(x1, bounds[3] - e), math.min(z1, bounds[4] - e) }
+	end
+	-- split overlapping boxes between their sides' starts
+	for p = 1, #sides.allies do
+		for q = p + 1, #sides.allies do
+			local a, b = sides.allies[p], sides.allies[q]
+			local ba, bb = out[a], out[b]
+			if ba[1] < bb[3] and bb[1] < ba[3] and ba[2] < bb[4] and bb[2] < ba[4] then
+				local ax, az = centre(starts, sides.startsOf[a])
+				local bx, bz = centre(starts, sides.startsOf[b])
+				local alongX = math.abs(bx - ax) >= math.abs(bz - az)
+				local lo, hi = if alongX then 1 else 2, if alongX then 3 else 4
+				local ca, cb = if alongX then ax else az, if alongX then bx else bz
+				local mid = (ca + cb) / 2
+				local first, second = if ca <= cb then ba else bb, if ca <= cb then bb else ba
+				first[hi] = math.min(first[hi], mid - StartAreas.GAP / 2)
+				second[lo] = math.max(second[lo], mid + StartAreas.GAP / 2)
 			end
 		end
 	end
-	return best
+	return out
 end
 
--- The suggested spot for the `k`-th player of side `ally` (1-based) on
--- `ring` 0, 1, 2...: ring 0 is the start itself; ring r offers 6r points
--- on a circle of r · SPACING (the first toward +x, counter-clockwise).
--- Returns the start's { x, z } and the points to try, in order.
-function StartAreas.suggestions(sides: Sides, starts: { { number } }, ally: number, k: number, rings: number): { { number } }
-	local own = sides.startsOf[ally]
-	assert(own and #own > 0, "StartAreas.suggestions: unknown side")
-	local start = starts[own[(k - 1) % #own + 1]]
-	local out = { { start[1], start[2] } }
-	for r = 1, rings do
-		local n = 6 * r
-		for j = 0, n - 1 do
-			local a = j / n * 2 * math.pi
-			table.insert(out, { start[1] + math.cos(a) * r * StartAreas.SPACING, start[2] + math.sin(a) * r * StartAreas.SPACING })
-		end
-	end
-	return out
+function StartAreas.inBox(box: Box, x: number, z: number): boolean
+	return x >= box[1] and x <= box[3] and z >= box[2] and z <= box[4]
+end
+
+-- The map's bounds { x0, z0, x1, z1 } from its grid.
+function StartAreas.bounds(grid: any): Box
+	return { grid.originX, grid.originZ, grid.originX + grid.cellsX * 8, grid.originZ + grid.cellsZ * 8 }
 end
 
 -- Does (x, z) keep SPACING from every pick in `picks` (player → { x, z }),

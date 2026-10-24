@@ -2021,10 +2021,10 @@ function Skirmish.tick(brain: Brain)
 	local b = brain :: any
 	if b.pending then
 		if sim.pregame then
-			-- the pre-game (S-169): its side's suggestion, then ready; as
+			-- the pre-game (S-169, S-171): its best spot (a hint first), then ready; as
 			-- commands, so a replay picks the same
 			if sim.pregame.picks[brain.player] == nil and not b.picked then
-				local x, z = Pregame.suggest(sim, brain.player)
+				local x, z = Pregame.bestSpot(sim, brain.player)
 				if x and z then
 					local g = (sim.map :: Passability.PassMap).grid
 					local cell, ox, oz = g:encode(x, z)

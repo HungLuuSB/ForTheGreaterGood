@@ -2456,3 +2456,28 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Now:** `Match.validate` gives no cap unless the match config sets `unitCap` (0 = none; 1..65535 per player). The default was `clamp(300 − 25 × (players − 2), 150, 300)`; S-169's match-wide 1,200 is gone with it. The cap machinery stays for configs that set one (tests, special modes); the AI's massing rule already handled no cap.
 - **Risk:** the server budget (guide 18.1) was planned for about 800 units in a match. Without a cap, 16 players can build far more; B's watchdog and `profile_match` will show what a live server takes. Under "Needs my review".
 - **Tests:** `Match.spec` (no cap by default for 2, 8 and 16 players; a set cap still applies), `Pregame.spec`.
+
+## S-171 — No fixed starts: spawn boxes, and the map's starts as AI hints (the user) (2026-10-24)
+
+- **Asked:** remove the fixed start positions too. They should help the AI pick the best spot for each map (with not enough of them, the most beneficial free spot around). Each team has a spawn box: its spawn points are confined to it. Write the logic and tell D.
+- **Every match has the pre-game:** the lobby no longer chooses a start mode; the match server always passes `startMode = "choose"`. `"fixed"` stays in `Sim.new` for headless tests, tools and reports (every AI test and balance report uses it). `MatchConfig`: no `startMode`; `start` is 0 (== id accepted from older lobbies).
+- **Spawn boxes** (`Shared/Match/StartAreas.boxes`) replace S-169's nearest-start areas: per side, the bounding box of its starts' boxes (a map's own `Layers.startBoxes`, or a square of a sixth of the map's shorter side, 96..256 studs, around each start), 16 studs inside the map; overlapping boxes of two sides are split at the midpoint between their starts, 96 studs apart. No map defines its own boxes yet.
+- **Best spot** (`Pregame.bestSpot`, the AI's pick and the default for players who never pick): the side's k-th player takes the side's k-th hint if it's a valid pick; otherwise the best valid spot in the box on a 16-stud grid by free deposits within 160 studs (×10; within 100 of another pick they're taken), open ground (the Commander's clearance up to 6, ×2), minus the distance to the side's nearest hint / 16. In an 8v8 on Ridgeline every one of side 1's seven non-hint players starts within 160 studs of a deposit.
+- **Wire:** unchanged from protocol 36 (the client computes the boxes from the shared module and the map). Contract net.md 9b.
+- **Tests (`Pregame.spec`):** the boxes (size, split, a map's own box, the edge), picks outside the own box refused, the 8v8 (each side's first player on its hint, the rest spaced, in their boxes, near deposits).
+
+## S-172 — Player colours: allies cold, enemies warm (the user) (2026-10-24)
+
+- **Asked:** each team member gets a colour automatically: allies cold colours (blue, green, cyan shades), enemies warm ones (red, orange, fuchsia, yellow shades).
+- **Built:** `Shared/Match/TeamColors` (pure, shared by the client and the lobby): `forViewer(viewer, players)` gives every player's colour as that viewer sees it. The viewer is Blue, its allies the other cold shades by player ID (8 in all: Blue, Cyan, Green, Navy, Teal, Sky, Mint, Forest); enemies warm shades by side then ID (16: Red, Orange, Fuchsia, Yellow, Crimson, Amber, Magenta, Gold, Coral, Tangerine, Pink, Lemon, Brick, Rust, Plum, Mustard; hues alternate, so a 16-player FFA's 15 enemies are all distinct). A spectator sees ally team 1 cold. So two players see each other in different colours; that's what the user asked for (BAR's ally / enemy colour mode).
+- **Not the sim's:** the sim and the wire carry no colours. MatchConfig still validates the contract's `color` index (the lobby may keep sending one); clients use TeamColors. B draws it, D shows it in the room (the viewer's side cold).
+- **Tests:** `TeamColors.spec` (8v8 from three viewers, a 16-player FFA, spectators, order independence).
+
+## S-173 — The Plains, a flat 8v8 map (the user) (2026-10-24)
+
+- **Asked:** a flat map with plains, bigger than The Canyon, for 8v8 matches, with a lot of deposits; each player should be able to spawn on a spot with three deposits.
+- **Built:** `map:plains` (`Shared/Grid/Plains`, in MapRegistry.HANDMADE as "The Plains"): 256 × 256 cells (2048 × 2048 studs: the wire's largest; The Canyon is 154 × 256), grass, gently rolling (steepest 1.8°), no water; roads east–west through the middle and north–south at x = ±520; mirror-symmetric west ↔ east.
+  - **16 start hints** (S-171): 1–8 west, 9–16 east, each half in a north and a south group of four. So 2 sides get a half each (8v8), 4 sides a quarter (4 × 4), 8 sides two hints each.
+  - **Deposits:** three value-3 deposits round each hint (two in front, one behind, 40–50 studs out), and value-2 deposits on a jittered 200-stud grid over the middle and the flanks, at least 120 studs from any hint (148 in all).
+- **Tests (`Plains.spec`):** size, flatness, no water, mirror symmetry of heights, ground and deposits; every hint with exactly three deposits within 80 studs; an 8v8 AI pre-game where all 16 Commanders start on a hint with its three deposits; the same map every time.
+- **For C:** `lune run export_ground map:plains` makes its ground file for a baked mesh, as for the other maps (C-167). B: it's in MapRegistry like The Canyon (minimap, map picker).
