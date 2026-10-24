@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Bulwark's laser muzzles stay put on death (C-200):** muzzles named like `laser_muzzle1` count as attachments, so a destroyed tower never flings them.
+- Ready to merge: `PENDING` (C-200; src/client and a spec)
 - **Laser looks (C-199):** lasers follow your references: a thick white-to-colour bolt tapering to the target with a muzzle flare and a glowing orb (Overwatch, Geryon and the other laser towers in their colours); the Beamer a thin flickering thread with a cone of light where it lands.
 - Ready to merge: `583fb90` (C-199; src/client only)
 - **Priority, new icons, tower visuals (C-196..C-198):** a High / Low priority button on units that use resources; your draft 5 icon sheet with the new towers' own icons; red, green and blue lasers, the Beamer's growing beam, barrels firing in turn and Geryon's turning drum.

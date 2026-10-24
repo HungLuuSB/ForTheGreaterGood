@@ -1764,3 +1764,9 @@ Existing calls are unchanged.
 - The Beamer's colour is the def's (70, 150, 255, sky blue); the reference is deeper blue-violet, so sim-A is asked to change `ord_beamer_beam.fx.color`.
 
 **Why:** the user's two laser references.
+
+### C-200 — Prefixed muzzles aren't flung on death (2026-10-24)
+
+**Decision:** `Deaths`' attachment check matches `^%a+_muzzle%d*$` as well as `^muzzle%d*$`, as models-C's `Blockout.isAttachmentPiece` and `Mesh` now do, so Bulwark's `laser_muzzle1..3` are never picked as flung pieces. Deaths.spec: forty overkill deaths of a def with prefixed muzzles fling only real pieces.
+
+**Why:** models-C's T1 defence blockouts (m-models ea3ae59) bring attachment muzzles with a prefix.
