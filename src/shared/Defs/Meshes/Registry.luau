@@ -52,7 +52,17 @@ export type ShieldShell = {
 	bands: { { name: string, mesh: string, opacity: number, theta: { number }, center: Vec3, size: Vec3 } },
 }
 
-local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot, shieldShell: ShieldShell } = {
+-- key art with parallax layers (lobby contract key-art.md, L-13): layers back
+-- to front, each cut into tiles (columns, rows) listed row by row from the top left
+export type KeyArt = {
+	status: string,
+	title: string,
+	size: { number },
+	tiles: { number },
+	layers: { { name: string, depth: number, images: { string } } },
+}
+
+local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot, shieldShell: ShieldShell, keyArt: { [string]: KeyArt } } = {
 	glowMask = "rbxassetid://101169341901946",
 	textures = {
 		heatShimmer = "rbxassetid://105647146631109",
@@ -702,6 +712,56 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 				"base",
 			},
 			triangles = 588,
+		},
+	},
+	keyArt = {
+		volley = {
+			layers = {
+				{
+					depth = 0.08,
+					images = {
+						"rbxassetid://120876057102744",
+						"rbxassetid://138637509477242",
+						"rbxassetid://97924510367746",
+						"rbxassetid://72078077048983",
+					},
+					name = "sky",
+				},
+				{
+					depth = 0.3,
+					images = {
+						"rbxassetid://115264331435332",
+						"rbxassetid://122562777636821",
+						"rbxassetid://102550340249131",
+						"rbxassetid://131443702734543",
+					},
+					name = "far",
+				},
+				{
+					depth = 0.6,
+					images = {
+						"rbxassetid://136907639205605",
+						"rbxassetid://134372356485310",
+						"rbxassetid://129141995841031",
+						"rbxassetid://97324906005450",
+					},
+					name = "mid",
+				},
+				{
+					depth = 1,
+					images = {
+						"rbxassetid://88201577163079",
+						"rbxassetid://126169791360700",
+						"rbxassetid://133813028911684",
+						"rbxassetid://109076741961135",
+					},
+					name = "near",
+				},
+			},
+			size = { 2048, 1152 },
+			status = "approved",
+			tiles = { 2, 2 },
+			title = "Volley",
 		},
 	},
 	shieldShell = {

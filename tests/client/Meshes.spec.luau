@@ -39,6 +39,22 @@ return function(t: any)
 		t.expect(Registry.fx.shield_emitter ~= nil and Registry.fx.shield_emitter.attachments.core ~= nil)
 	end)
 
+	t.test("key arts have four layers back to front, each with its tiles as asset IDs", function()
+		for name, art in Registry.keyArt do
+			t.expect(art.status == "approved" or art.status == "review", `{name}: status`)
+			t.equal(#art.layers, 4, name)
+			local last = -1
+			for _, layer in art.layers do
+				t.expect(layer.depth > last, `{name}: layers back to front`)
+				last = layer.depth
+				t.equal(#layer.images, art.tiles[1] * art.tiles[2], `{name} {layer.name}`)
+				for _, id in layer.images do
+					t.expect(Mesh.isAssetId(id), `{name} {layer.name}: {id}`)
+				end
+			end
+		end
+	end)
+
 	t.test("the approved and review statuses follow the user's review", function()
 		for _, id in { "ord_lancer", "chs_ravager", "ord_mason", "chs_scrapper", "ord_verdict", "chs_hellmouth", "ord_extractor", "ord_sovereign" } do
 			t.equal(Registry.units[id].status, "approved", id)
