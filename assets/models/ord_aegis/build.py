@@ -8,10 +8,11 @@ under the launcher with a glowing turret ring, a cable trench, and an
 armored radar block at the back right carrying the big engagement radar
 (client-turned `radar`, M-27): a tilted phased-array panel with glowing
 edges and a team back. The `launcher` (the def turns it, M-3): a turntable
-with armored cradle cheeks and a pack of four closed canisters standing
-upright (the radar SAMs launch vertically, the user 2026-10-24), a large
-team plate on its face, cap rings on top that light when ready (`weapon`),
-`muzzle` at the front left cap. Order reads heavy and clean (M-14).
+with armored cradle cheeks and six round canisters standing upright in an
+open strapped frame (the radar SAMs launch vertically, the user
+2026-10-24; v2 after the key art 3 review: the closed box with a big team
+plate read as a plain block), team bands near their tops, cap rings that
+light when ready (`weapon`), `muzzle` at the front left cap. Order reads heavy and clean (M-14).
 Writes export/ through tools/unit.py.
 """
 
@@ -42,14 +43,17 @@ def shifted(pts, dx, dz):
     return [(x + dx, z + dz) for x, z in pts]
 
 
-def mouth(sx, sy):
-    """Centre of a canister's front cap; sx, sy in -1/1 (left/right, low/high)."""
-    side = (1.0, 0.0, 0.0)
-    c = along(PACK, AXIS, PACK_LEN / 2 + 0.05)
-    return tuple(c[i] + side[i] * sx * 1.15 + NORM[i] * sy * 1.15 for i in range(3))
+COLS = (-1.95, 0.0, 1.95)  # canister columns across the pack (x, from PACK)
+ROWS = (-1.0, 1.0)  # front and back rows (z, from PACK)
+CAN_R = 0.9
 
 
-MUZZLE = mouth(-1, 1)
+def mouth(col, row):
+    """Centre of a canister's top cap."""
+    return (PACK[0] + COLS[col], PACK[1] + PACK_LEN / 2 + 0.05, PACK[2] + ROWS[row])
+
+
+MUZZLE = mouth(0, 0)  # the front left canister
 
 
 def build_base(p):
@@ -107,39 +111,38 @@ def details_base(p):
 def build_launcher(p):
     x0, y0, z0 = PIVOT
     p.cylinder("y", (x0, y0 + 0.2, z0), 2.8, 0.4, 28, "trim", bevel=0.05)  # turntable
-    for sx in (-1, 1):  # armored cradle cheeks hugging the upright pack
-        p.prism_x([(z0 - 2.8, y0 + 0.4), (z0 + 2.8, y0 + 0.4), (z0 + 2.8, y0 + 3.2), (z0 + 1.6, y0 + 4.4), (z0 - 2.8, y0 + 4.4)],
-                  x0 + sx * 2.9 - 0.35, x0 + sx * 2.9 + 0.35, "paint", bevel=0.08)
-        p.box((x0 + sx * 3.27, y0 + 2.4, z0), (0.05, 0.16, 4.4), "light")
-    # the canister pack: four closed canisters in an armored box, raised 40 degrees
-    p.obox(PACK, (1, 0, 0), NORM, 5.0, PACK_LEN, 4.8, "paint", bevel=0.14)
-    p.obox(along(PACK, NORM, -2.42), (1, 0, 0), NORM, 4.2, PACK_LEN - 2.4, 0.06, "team", bevel=0.02)
-    for k in (-2.6, 2.6):  # straps round the pack
-        p.obox(along(PACK, AXIS, k), (1, 0, 0), NORM, 5.1, 0.35, 4.9, "trim", bevel=0.03)
-    for sx in (-1, 1):  # the grooves between the four canisters
-        p.obox(along(PACK, NORM, sx * 2.41), (1, 0, 0), NORM, 0.12, PACK_LEN - 0.4, 0.06, "dark")
-    for sx in (-1, 1):
-        p.obox(tuple(PACK[i] + (sx * 2.51 if i == 0 else 0) for i in range(3)), (sx, 0, 0), NORM, 0.06, PACK_LEN - 0.4, 0.12, "dark")
-    for sx in (-1, 1):
-        p.obox(tuple(PACK[i] + (sx * 2.52 if i == 0 else 0) for i in range(3)), (sx, 0, 0), NORM, 0.05, PACK_LEN - 1.0, 3.2, "trim")
-    front = along(PACK, AXIS, PACK_LEN / 2 + 0.02)
-    p.obox(front, (1, 0, 0), NORM, 4.8, 0.04, 4.6, "dark")
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            m = mouth(sx, sy)
-            p.ocyl(m, AXIS, 0.95, 0.12, 20, "steel")
-            p.ocyl(along(m, AXIS, 0.12), AXIS, 0.72, 0.04, 18, "weapon")  # ready ring on the cap face
-            p.ocyl(along(m, AXIS, 0.12), AXIS, 0.5, 0.06, 18, "steel")
-    back = along(PACK, AXIS, -PACK_LEN / 2 - 0.02)
-    p.obox(back, (1, 0, 0), NORM, 4.4, 0.04, 4.2, "grille")
-    hazard(p, along(along(PACK, NORM, -2.46), AXIS, PACK_LEN / 2 - 0.5), (1, 0, 0), (0, 0, -1), 4.2, 0.4, stripes=10)
+    for sx in (-1, 1):  # armored cradle cheeks hugging the pack's sides
+        p.prism_x([(z0 - 2.6, y0 + 0.4), (z0 + 2.6, y0 + 0.4), (z0 + 2.6, y0 + 3.0), (z0 + 1.4, y0 + 4.2), (z0 - 2.6, y0 + 4.2)],
+                  x0 + sx * 3.25 - 0.3, x0 + sx * 3.25 + 0.3, "paint", bevel=0.08)
+        p.box((x0 + sx * 3.57, y0 + 2.2, z0), (0.05, 0.16, 4.0), "light")
+        p.box((x0 + sx * 3.56, y0 + 3.4, z0 - 0.4), (0.05, 1.2, 2.6), "team", bevel=0.015)
+    # the canister pack: six round canisters standing upright in an open frame (vertical launch)
+    base_y = PACK[1] - PACK_LEN / 2
+    p.box((PACK[0], base_y - 0.15, PACK[2]), (6.4, 0.3, 4.4), "trim", bevel=0.05)  # the cradle floor
+    for ci, cx in enumerate(COLS):
+        for ri, rz in enumerate(ROWS):
+            c = (PACK[0] + cx, PACK[1], PACK[2] + rz)
+            p.cylinder("y", c, CAN_R, PACK_LEN, 20, "paint", bevel=0.04)
+            p.cylinder("y", (c[0], PACK[1] + PACK_LEN / 2 - 1.0, c[2]), CAN_R + 0.03, 0.5, 20, "team")  # team band near the top
+            p.cylinder("y", (c[0], PACK[1] - 1.2, c[2]), CAN_R + 0.03, 0.16, 20, "dark")  # seam
+            m = mouth(ci, ri)
+            p.cylinder("y", m, CAN_R - 0.05, 0.1, 20, "steel")  # the cap
+            p.cylinder("y", (m[0], m[1] + 0.07, m[2]), 0.62, 0.04, 18, "weapon")  # ready ring
+            p.cylinder("y", (m[0], m[1] + 0.09, m[2]), 0.4, 0.05, 16, "steel")
+    for k in (-2.4, 0.4, 2.9):  # straps binding the pack
+        p.box((PACK[0], PACK[1] + k, PACK[2]), (6.5, 0.32, 4.5), "trim", bevel=0.03)
+        p.box((PACK[0], PACK[1] + k, PACK[2] - 2.26), (6.0, 0.18, 0.04), "light" if k > 2 else "dark")
+    for sx in (-1, 1):  # frame posts at the corners
+        for sz in (-1, 1):
+            p.box((PACK[0] + sx * 3.05, PACK[1], PACK[2] + sz * 2.05), (0.32, PACK_LEN, 0.32), "trim")
+    hazard(p, (PACK[0], base_y + 0.02, PACK[2] - 2.25), (1, 0, 0), (0, 0, -1), 6.0, 0.35, stripes=12)
     # fire-control sensor on the cradle
     p.box((x0 + 2.0, y0 + 4.9, z0 - 2.9), (1.0, 0.7, 1.0), "trim", bevel=0.05)
     p.box((x0 + 2.0, y0 + 4.9, z0 - 3.42), (0.8, 0.36, 0.05), "light")
 
 
 def details_launcher(p):
-    ring(p, along(PACK, NORM, 2.43), NORM, 1.4)
+    ring(p, (PACK[0], PACK[1] - 3.0, PACK[2] - 2.24), (0, 0, -1), 0.6)
 
 
 unit.run(__file__, "ord_aegis", "order", footprint=3,
