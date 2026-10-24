@@ -134,6 +134,7 @@ Skirmish.CLAIM_TICKS = 900 -- a deposit someone was sent to stays reserved this 
 -- 1-cell gaps between buildings of different sizes)
 Skirmish.STALL_TICKS = 300 -- 20 s
 Skirmish.BAD_SITE_TICKS = 2700 -- 3 min
+Skirmish.giveUpHook = nil :: ((brain: any, builder: number, order: any, distance: number, best: number) -> ())? -- debug tools only (lune run debug_giveups)
 Skirmish.SECOND_PLANT_SUPPLY = 600
 Skirmish.ADV_PLANT_SUPPLY = 900 -- supply stored before the Advanced Vehicle Plant (S-7)
 Skirmish.MAX_AA = 4 -- IR SAM trucks wanted at most
@@ -753,7 +754,9 @@ end
 -- nobody sent there lately.
 -- The first free deposit, nearest home first; `accept` may refuse some
 -- (contested ones without an escort, S-97).
-function Skirmish.freeDeposit(brain: Brain, accept: ((number, number, number) -> boolean)?): number?
+-- With `builder`, only deposits it can reach (S-161: on Twin Lakes builders
+-- stood still for 20 s before deposits their move class can't get to).
+function Skirmish.freeDeposit(brain: Brain, accept: ((number, number, number) -> boolean)?, builder: number?): number?
 	local sim = brain.sim
 	local pm = sim.map :: Passability.PassMap
 	local def = sim.defs.units[faction(brain, "extractor", "extractor")]
@@ -761,7 +764,8 @@ function Skirmish.freeDeposit(brain: Brain, accept: ((number, number, number) ->
 		if (brain.claims[cell] or -math.huge) + Skirmish.CLAIM_TICKS < sim.tick then
 			local x, z = pm.grid:cellCenter(pm.grid:coords(cell))
 			x += brain.toward * SNAP_NUDGE -- (a 2×2 extractor's snap ties at a cell centre, S-104: mirror it)
-			if Placement.check(sim, def, x, z, nil, brain.ally) and (accept == nil or accept(cell, x, z)) then
+			local ok, _, x0, z0 = Placement.check(sim, def, x, z, nil, brain.ally)
+			if ok and (accept == nil or accept(cell, x, z)) and (builder == nil or reachable(sim, builder, def.footprint, x0, z0)) then
 				return cell
 			end
 		end
@@ -1185,6 +1189,9 @@ local function think(brain: Brain)
 		elseif d < a.best - 8 then
 			a.best, a.at = d, sim.tick
 		elseif sim.tick - a.at > Skirmish.STALL_TICKS then
+			if Skirmish.giveUpHook then
+				Skirmish.giveUpHook(brain, id, o, d, a.best)
+			end
 			submit(sim, brain.player, { cmdType = CT.STOP, flags = 0, unitIds = { id } })
 			local g = (sim.map :: Passability.PassMap).grid
 			local gx, gz = g:cellAt(o.x, o.z)
@@ -1354,7 +1361,7 @@ local function think(brain: Brain)
 				return escortReady or not Skirmish.contested(brain, dx, dz)
 			end
 		end
-		local cell = if c.extractors < cfg.maxExtractors then freeDeposit(brain, accept) else nil
+		local cell = if c.extractors < cfg.maxExtractors then freeDeposit(brain, accept, id) else nil
 		-- generators (S-114, client request 48: the AI built generator after
 		-- generator while deposits stood free): two first; then, while power
 		-- doesn't stall, a free deposit comes first when supply stalls or

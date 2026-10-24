@@ -1,4 +1,5 @@
 --!strict
+--!native
 -- System 6: steering, local avoidance and position update (guide 6.5–6.6).
 --
 -- Per tick, in four passes over world.ids (deterministic order):
