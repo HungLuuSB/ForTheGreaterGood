@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `0e9644c` (top bar clear of Roblox's own buttons)
 - Ready to merge: `d9c51c0` (no 3D rendering while key art covers the screen, as C-184)
 - Ready to merge: `78c2c4d` (pause the 3D battle behind opaque key art)
 - Ready to merge: `27b4ce0` (one key-art viewer: client-B's `UI/KeyArt` mounted read-only; includes a merge of main)
