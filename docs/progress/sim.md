@@ -10,6 +10,7 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| Shield generators switch off (the user, via B) | TOGGLE off: the dome is down, no power upkeep, no recharge, the charge kept; on: it rises again at 25%. Generators start on | S-154 |
 | In-range orders don't move the unit (the user, via B) | ATTACK on a target already in range keeps the unit still (it closed to 90% of range: a Lancer moved 15 studs); a halted unit holds where it comes to rest, not the point it braked past | S-153 |
 | Scouts' range halved (the user, via B) | Herald machine gun 175 → 88, Jackal 140 → 70 | S-152 |
 | Interceptors steer at their target's start-of-tick state (B) | Steering and the fuse no longer depend on which projectile steps first; matches the client | S-151 |

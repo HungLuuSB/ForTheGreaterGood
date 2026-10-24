@@ -2218,3 +2218,11 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - ATTACK leaves a unit standing still when its target is in range. Only a unit already chasing closes to ATTACK_REACH.
   - `halt` holds `Nav.stopPoint`: where the unit comes to rest from its speed and braking, straight ahead, or where it is if that spot is blocked. This covers building, repairing, reclaiming and assisting, which all halt through Build.
 - **Tests:** `Orders.spec`: the Lancer stays within 1 stud (it moved 15); a Mason sent to build stops in range and never steps back.
+
+## S-154 — Shield generators switch off to save power (the user, via B: "a shield can be turned off to save power") (2026-10-24)
+
+- **Built:** Phalanx and Carapace (any def with `shield`) honour TOGGLED_ON (the TOGGLE command), and start switched on like converters.
+  - Off: the dome is down (SHIELD's UP flag clear), so shells pass. No power upkeep and no recharge; the charge it has is kept.
+  - On: it rises again under the usual rule, at RAISE_AT (25%) of capacity, and recharges.
+- **Tests:** `Shield.spec`: off, the dome drops, draws nothing, lets a heavy shell through and keeps its charge; on, it rises.
+- **Client:** B offers On/Off on the card for any def with `shield`. No wire change: TOGGLED_ON and SHIELD's flags already carry it.

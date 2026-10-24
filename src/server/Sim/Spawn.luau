@@ -48,8 +48,8 @@ function Spawn.unit(sim: Types.Sim, defId: string, owner: number, x: number, z: 
 	end
 	Air.onSpawn(sim, id)
 	EW.onSpawn(sim, id)
-	if def.converter or def.retract then
-		World.setState(sim.world, id, bit32.bor(sim.world.state[id], World.State.TOGGLED_ON)) -- converters and retracting towers (S-96) start on
+	if def.converter or def.retract or def.shield then
+		World.setState(sim.world, id, bit32.bor(sim.world.state[id], World.State.TOGGLED_ON)) -- converters, retracting towers (S-96) and shield generators (S-154) start on
 	end
 	if def.moveClass == "SUB" then
 		World.setState(sim.world, id, bit32.bor(sim.world.state[id], World.State.SUBMERGED)) -- always submerged (guide 12.3)
