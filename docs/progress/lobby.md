@@ -79,8 +79,8 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 ### For models-C (models session)
 
 - **C-1. Key art with parallax layers (2026-10-23, the user):** 3 key arts per `docs/contracts/key-art.md`:
-  1. a dusk land battle with ships firing on the far sea;
-  2. a SAM site under air attack at night;
+  1. "Commander's stand", a dusk land battle with ships on the far sea: **approved by you, rendered (m-models 37cfb7a), waiting for your upload approval**;
+  2. a SAM site under air attack, at dusk (your style guide);
   3. a beach assault.
 
   Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed.
