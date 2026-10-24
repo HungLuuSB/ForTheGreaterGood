@@ -51,6 +51,29 @@
     "note": "New T2 mesh (item 3); wreck built: 1024 triangles, glow share 5.3%"
   },
   "wreck": {
+    "model": "rbxassetid://113974035638247",
+    "meshes": {
+      "base": "rbxassetid://100225369669051",
+      "nano": "rbxassetid://96325112233788"
+    },
+    "decals": {
+      "ALB": "rbxassetid://120045045790588",
+      "RGH": "rbxassetid://78105406987758",
+      "NOR": "rbxassetid://116473611673043",
+      "MTL": "rbxassetid://107789485791800",
+      "EMI": "rbxassetid://120583820893936"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://125462895156132",
+      "NOR": "rbxassetid://122354464800637",
+      "RGH": "rbxassetid://138740372919494",
+      "MTL": "rbxassetid://126938547069418",
+      "EMI": "rbxassetid://79648916358559"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_harbormaster_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1686 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://72305949646339",
     "meshes": {
       "base": "rbxassetid://120233314028359",

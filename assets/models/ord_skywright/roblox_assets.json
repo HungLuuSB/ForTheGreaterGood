@@ -107,5 +107,30 @@
       "EMI": "rbxassetid://138222645634905"
     },
     "note": "2026-10-22, first BAR upload (M-15): 856 triangles, glow share 5.4%"
+  },
+  "wreck": {
+    "model": "rbxassetid://86603319112201",
+    "meshes": {
+      "base": "rbxassetid://71669773932954",
+      "nano": "rbxassetid://107921825776329",
+      "rotor": "rbxassetid://74051005423687",
+      "tailRotor": "rbxassetid://72846825216209"
+    },
+    "decals": {
+      "ALB": "rbxassetid://110507810381082",
+      "RGH": "rbxassetid://85360417229998",
+      "NOR": "rbxassetid://111814424342210",
+      "MTL": "rbxassetid://71326949136626",
+      "EMI": "rbxassetid://106287970189510"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://75141139686569",
+      "NOR": "rbxassetid://124475938735607",
+      "RGH": "rbxassetid://128843795876207",
+      "MTL": "rbxassetid://113981543962585",
+      "EMI": "rbxassetid://124139125979502"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_skywright_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 732 triangles"
   }
 }

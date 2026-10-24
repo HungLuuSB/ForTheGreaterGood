@@ -108,5 +108,30 @@
       "EMI": "rbxassetid://135804636592980"
     },
     "note": "2026-10-22, first BAR upload (M-15): 804 triangles, glow share 6.3%"
+  },
+  "wreck": {
+    "model": "rbxassetid://109476840605372",
+    "meshes": {
+      "base": "rbxassetid://96164444108004",
+      "radar": "rbxassetid://138120495887099",
+      "turret1": "rbxassetid://98370070776067",
+      "turret2": "rbxassetid://80868051253469"
+    },
+    "decals": {
+      "ALB": "rbxassetid://121740340707559",
+      "RGH": "rbxassetid://118099584241123",
+      "NOR": "rbxassetid://78680325093346",
+      "MTL": "rbxassetid://110690381426991",
+      "EMI": "rbxassetid://120150802164703"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://123887876621965",
+      "NOR": "rbxassetid://96182019976555",
+      "RGH": "rbxassetid://137100268726292",
+      "MTL": "rbxassetid://139455906641273",
+      "EMI": "rbxassetid://136970391534753"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sentry_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1462 triangles"
   }
 }

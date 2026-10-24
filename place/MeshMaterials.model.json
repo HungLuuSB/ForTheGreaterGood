@@ -2514,6 +2514,18 @@
       }
     },
     {
+      "Name": "wreck_chs_wrecker",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://122315713142571",
+        "NormalMapContent": "rbxassetid://117022620607716",
+        "RoughnessMapContent": "rbxassetid://85353573381266",
+        "MetalnessMapContent": "rbxassetid://101150727398143",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_chs_wyvern",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2522,6 +2534,18 @@
         "NormalMapContent": "rbxassetid://82798859997702",
         "RoughnessMapContent": "rbxassetid://73795694689945",
         "MetalnessMapContent": "rbxassetid://81529390720301",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_absolution",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://125285268373999",
+        "NormalMapContent": "rbxassetid://91900403108268",
+        "RoughnessMapContent": "rbxassetid://119015203486772",
+        "MetalnessMapContent": "rbxassetid://97385875460176",
         "EmissiveStrength": 0
       }
     },
@@ -2706,6 +2730,18 @@
       }
     },
     {
+      "Name": "wreck_ord_falcon",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://95006042796025",
+        "NormalMapContent": "rbxassetid://110940248632456",
+        "RoughnessMapContent": "rbxassetid://113262267353726",
+        "MetalnessMapContent": "rbxassetid://75099467065113",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_gauntlet",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2730,6 +2766,18 @@
       }
     },
     {
+      "Name": "wreck_ord_guardian",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://122072290894274",
+        "NormalMapContent": "rbxassetid://116668577909361",
+        "RoughnessMapContent": "rbxassetid://117475404656329",
+        "MetalnessMapContent": "rbxassetid://130795581435526",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_halo",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2746,10 +2794,10 @@
       "ClassName": "SurfaceAppearance",
       "Properties": {
         "AlphaMode": "Overlay",
-        "ColorMapContent": "rbxassetid://103085654282986",
-        "NormalMapContent": "rbxassetid://132290692243349",
-        "RoughnessMapContent": "rbxassetid://83884423911969",
-        "MetalnessMapContent": "rbxassetid://82063303524291",
+        "ColorMapContent": "rbxassetid://125462895156132",
+        "NormalMapContent": "rbxassetid://122354464800637",
+        "RoughnessMapContent": "rbxassetid://138740372919494",
+        "MetalnessMapContent": "rbxassetid://126938547069418",
         "EmissiveStrength": 0
       }
     },
@@ -2886,6 +2934,18 @@
       }
     },
     {
+      "Name": "wreck_ord_sentry",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://123887876621965",
+        "NormalMapContent": "rbxassetid://96182019976555",
+        "RoughnessMapContent": "rbxassetid://137100268726292",
+        "MetalnessMapContent": "rbxassetid://139455906641273",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_sentry_tower",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2898,6 +2958,18 @@
       }
     },
     {
+      "Name": "wreck_ord_shepherd",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://95141654537961",
+        "NormalMapContent": "rbxassetid://104842693892155",
+        "RoughnessMapContent": "rbxassetid://122498174701857",
+        "MetalnessMapContent": "rbxassetid://89900432974196",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_shipyard",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2906,6 +2978,18 @@
         "NormalMapContent": "rbxassetid://82054650237161",
         "RoughnessMapContent": "rbxassetid://75782802175885",
         "MetalnessMapContent": "rbxassetid://132182726751943",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_skywright",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://75141139686569",
+        "NormalMapContent": "rbxassetid://124475938735607",
+        "RoughnessMapContent": "rbxassetid://128843795876207",
+        "MetalnessMapContent": "rbxassetid://113981543962585",
         "EmissiveStrength": 0
       }
     },
@@ -2954,6 +3038,18 @@
         "NormalMapContent": "rbxassetid://105450851951257",
         "RoughnessMapContent": "rbxassetid://101622745129118",
         "MetalnessMapContent": "rbxassetid://120362859539676",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_tidewright",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://89497816141820",
+        "NormalMapContent": "rbxassetid://114997773454103",
+        "RoughnessMapContent": "rbxassetid://125568742052088",
+        "MetalnessMapContent": "rbxassetid://109795466999788",
         "EmissiveStrength": 0
       }
     },

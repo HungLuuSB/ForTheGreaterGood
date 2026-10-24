@@ -25,5 +25,28 @@
       "EMI": "rbxassetid://122572314777812"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_falcon_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://87761482115882",
+    "meshes": {
+      "base": "rbxassetid://106299725974439",
+      "pylon": "rbxassetid://95788523720001"
+    },
+    "decals": {
+      "ALB": "rbxassetid://140149188320675",
+      "RGH": "rbxassetid://123716138360638",
+      "NOR": "rbxassetid://77833708403743",
+      "MTL": "rbxassetid://133897600279142",
+      "EMI": "rbxassetid://123353177714192"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://95006042796025",
+      "NOR": "rbxassetid://110940248632456",
+      "RGH": "rbxassetid://113262267353726",
+      "MTL": "rbxassetid://75099467065113",
+      "EMI": "rbxassetid://80190790025200"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_falcon_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 716 triangles"
   }
 }
