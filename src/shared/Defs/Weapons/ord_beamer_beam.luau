@@ -18,5 +18,5 @@ return {
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },
 	turret = { yawRate = 90, pitchRate = 60, tolerance = 1, minPitch = -60, maxPitch = 30, arc = 360 },
-	fx = { tracer = "laser", color = { r = 70, g = 150, b = 255 }, impact = "beam_impact", sound = "beam_hum" },
+	fx = { tracer = "laser", color = { r = 60, g = 70, b = 255 }, impact = "beam_impact", sound = "beam_hum" }, -- deep blue-violet, the user's reference (S-157)
 }
