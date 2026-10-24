@@ -15,6 +15,7 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `bdb507b` (loading text readable over key art; includes merges of main with Volley)
 - Ready to merge: `0e9644c` (top bar clear of Roblox's own buttons)
 - Ready to merge: `d9c51c0` (no 3D rendering while key art covers the screen, as C-184)
 - Ready to merge: `78c2c4d` (pause the 3D battle behind opaque key art)
@@ -101,7 +102,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
 | Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
-| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only). Art 2 "Volley" checked in Studio (`lobby_keyart_volley_*.jpg`); the stutter fix waits on B-6. The battle pauses behind the art |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only). Art 2 "Volley" on main and checked in Studio through Quick play: smooth (60 fps), the battle paused behind it (`lobby_loading_volley.jpg`) |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue
