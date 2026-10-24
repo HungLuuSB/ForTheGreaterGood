@@ -2,10 +2,10 @@
 -- Sensor effects (C-211; Core/SensorFx decides which and when): sonar
 -- pings as thin cyan rings spreading over the water (pooled
 -- CylinderHandleAdornments: a ring is a cylinder with an InnerRadius), and
--- jammer domes in Roblox's ForceField material, which shimmers by itself,
--- breathing slowly; a thin purple ring on the ground at the jam radius can
--- show the reach (JAM_RING, off for now). Hidden at strategic zoom with
--- the models.
+-- jammers as a thin purple ring on the ground at the jam radius, breathing
+-- slowly; a dome in Roblox's ForceField material (it shimmers by itself)
+-- can be switched on with JAM_DOME (off for now). Hidden at strategic zoom
+-- with the models.
 
 local Core = require("../Core/SensorFx")
 local World = require("../Core/World")
@@ -17,8 +17,9 @@ SensorFx.JAM_COLOR = Color3.fromRGB(170, 120, 255)
 SensorFx.RING_WIDTH = 3 -- studs, at least: a ring's band
 SensorFx.JAM_TRANSPARENCY = 0 -- the dome at its strongest (ForceField is faint at any setting; its rim brighter)
 SensorFx.JAM_BREATH = 0.35 -- how much the dome's transparency breathes
-SensorFx.JAM_RING = false -- the ground ring at the jam radius: off (the user, 2026-10-24)
-SensorFx.JAM_RING_TRANSPARENCY = 0.35 -- the ground ring, when on
+SensorFx.JAM_DOME = false -- the shimmering dome: off (the user, 2026-10-24)
+SensorFx.JAM_RING = true -- the ground ring at the jam radius
+SensorFx.JAM_RING_TRANSPARENCY = 0.35
 
 export type State = { folder: Folder, rings: { CylinderHandleAdornment }, domes: { Part }, jamRings: { CylinderHandleAdornment } }
 
@@ -86,12 +87,14 @@ function SensorFx.step(s: State, world: World.World, now: number, visible: boole
 					a.Visible = true
 				end
 			else
-				domes += 1
-				local d = dome(s, domes)
-				d.Size = Vector3.one * (e.r * 2)
-				d.CFrame = CFrame.new(e.x, World.groundY(world, e.x, e.z, true), e.z)
 				local breath = Core.breath(e.id, now)
-				d.Transparency = SensorFx.JAM_TRANSPARENCY + SensorFx.JAM_BREATH * breath
+				if SensorFx.JAM_DOME then
+					domes += 1
+					local d = dome(s, domes)
+					d.Size = Vector3.one * (e.r * 2)
+					d.CFrame = CFrame.new(e.x, World.groundY(world, e.x, e.z, true), e.z)
+					d.Transparency = SensorFx.JAM_TRANSPARENCY + SensorFx.JAM_BREATH * breath
+				end
 				if SensorFx.JAM_RING then
 					jamRings += 1
 					local g = ring(s, s.jamRings, jamRings, "JamRing", SensorFx.JAM_COLOR)
