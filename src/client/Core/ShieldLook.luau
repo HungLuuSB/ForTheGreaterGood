@@ -1,6 +1,7 @@
 --!strict
 -- How a shield dome looks over time (C-90): the deploy and collapse
--- phases, the rings flowing down the dome, the low-strength flicker, the
+-- phases, the rings flowing down the dome (or, with models-C's assets, the
+-- energy column and the dome waves, C-186), the low-strength flicker, the
 -- opacity rule, the strategic level of detail and the off-screen test.
 -- Pure Luau (C-7); Render/ShieldFx draws it.
 --
@@ -101,6 +102,74 @@ function ShieldLook.ringAt(i: number, n: number, phase: number): (number, number
 	local theta = ShieldLook.RING_TOP + p * (math.pi / 2 - ShieldLook.RING_TOP)
 	local alpha = math.min(1, p / 0.12) * math.min(1, (1 - p) / 0.3)
 	return theta, math.sin(theta), math.cos(theta), alpha
+end
+
+-- The energy column (C-186, models-C's shieldColumn): `since` seconds into
+-- `state` at `strength`, with the manifest's `c` ({ weakest, deploy =
+-- { shoot, thicken }, collapse = { pinch, flash } }). Returns how far the
+-- core reaches (0..1 of the way to the dome's top), the core's and the
+-- outer layers' (swirl, glow) width factors (× each layer's own widths),
+-- and a brightness factor. Every width thins with strength down to
+-- `weakest`; deploy shoots the core up, then widens the swirl and glow;
+-- collapse pinches all to a thread, flashes once, then hides (all 0).
+export type Column = { weakest: number, deploy: { shoot: number, thicken: number }, collapse: { pinch: number, flash: number } }
+ShieldLook.PINCH_TO = 0.05 -- the collapse pinches every width to this
+function ShieldLook.column(state: State, since: number, strength: number, c: Column): (number, number, number, number)
+	local thin = c.weakest + (1 - c.weakest) * math.clamp(strength, 0, 1)
+	if state == "up" then
+		return 1, thin, thin, 1
+	elseif state == "deploying" then
+		local reach = easeOut(since / c.deploy.shoot)
+		local widen = easeOut((since - c.deploy.shoot) / c.deploy.thicken)
+		return reach, thin, thin * widen, 1
+	elseif state == "collapsing" then
+		local pinch, flash = c.collapse.pinch, c.collapse.flash
+		if since < pinch then
+			local w = thin * (1 + (ShieldLook.PINCH_TO - 1) * easeIn(since / pinch))
+			return 1, w, w, 1
+		elseif since < pinch + flash then
+			local w = thin * 1.5
+			return 1, w, w, 3
+		end
+	end
+	return 0, 0, 0, 0
+end
+
+-- The dome waves (C-186, models-C's shieldWave): `count` waves evenly spaced
+-- in time, at flow phase `phase` (one unit = one trip top to rim), on
+-- `bands` bands whose centres are `step` degrees apart from the top. A wave
+-- at polar angle θ shows band floor(θ / step) + 1 at weight 1 - f and the
+-- next at f (f the fraction between), fading in over the first `fade`
+-- degrees and out over the last; waves on one band add. Fills `out` (band
+-- index → weight, 0..1) and returns it.
+function ShieldLook.waveBands(phase: number, count: number, bands: number, step: number, fade: number, out: { number }): { number }
+	for i = 1, bands do
+		out[i] = 0
+	end
+	local rim = (bands - 1) * step
+	for k = 0, count - 1 do
+		local theta = ((phase + k / count) % 1) * rim
+		local f = math.min(1, theta / fade, (rim - theta) / fade)
+		local x = theta / step
+		local i = math.floor(x)
+		local w = x - i
+		if i + 1 <= bands then
+			out[i + 1] += (1 - w) * f
+		end
+		if i + 2 <= bands then
+			out[i + 2] += w * f
+		end
+	end
+	for i = 1, bands do
+		out[i] = math.min(out[i], 1)
+	end
+	return out
+end
+
+-- How fast the waves roll at a strength: trips per second, slower as it
+-- weakens (models-C: seconds / max(0.3, strength)).
+function ShieldLook.waveRate(strength: number, seconds: number): number
+	return math.max(0.3, strength) / seconds
 end
 
 -- Strategic level of detail for a shield `distance` studs from the camera, with hysteresis.
