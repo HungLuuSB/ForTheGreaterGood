@@ -174,8 +174,19 @@ return function(sim: Types.Sim)
 		end
 		moving[k] = w.orderId[id] ~= 0
 		anchored[k] = Deploy.anchored(w, id)
-		exitOf[k] = sim.build.exiting[id] or false
-		anyActive = anyActive or moving[k] or speed[id] > 0
+		local exit = sim.build.exiting[id]
+		if exit then
+			-- out of the footprint on open ground (or stopped past its edge):
+			-- done, checked every tick, not only while moving (S-155: a unit
+			-- that stopped at its exit point kept the flag for good)
+			local out = max(abs(posX[id] - exit[1]), abs(posZ[id] - exit[2])) - exit[3] - (if p then p.radius else 0)
+			if out > 0 and (p == nil or speed[id] <= 0 or Nav.fits(nav, p, posX[id], posZ[id])) then
+				sim.build.exiting[id] = nil
+				exit = nil
+			end
+		end
+		exitOf[k] = exit or false
+		anyActive = anyActive or moving[k] or speed[id] > 0 or exitOf[k] ~= false -- (walking out of a footprint: S-133, S-155)
 	end
 	if not anyActive then
 		-- Nothing is moving: nothing can start overlapping either. Aircraft
@@ -224,7 +235,8 @@ return function(sim: Types.Sim)
 			dist = sqrt(dx * dx + dz * dz)
 		end
 		if not moving[k] then
-			if dist <= p.radius or (dist <= Nav.ARRIVE_RADIUS * 4 and nspeed[k] <= 0) then
+			-- (a unit walking out of a footprint never counts as settled: S-155)
+			if not exit and (dist <= p.radius or (dist <= Nav.ARRIVE_RADIUS * 4 and nspeed[k] <= 0)) then
 				-- at its spot (or close enough and settled): brake to a stop
 				if nspeed[k] > 0 then
 					nspeed[k] = max(0, nspeed[k] - p.brake * DT)

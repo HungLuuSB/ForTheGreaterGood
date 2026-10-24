@@ -2203,3 +2203,41 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Found by B:** Projectiles walks `proj` backwards with swap-removal. So an interceptor steered, and fused, against its missile's state either before or after the missile's own step that tick, depending on list order. The client always uses the start of the tick (net.md, C-57), and B's spec saw up to ~1 stud of drift in the last ticks.
 - **Changed:** before the loop, the Projectiles system snapshots the position and velocity of every projectile an interceptor chases. Interceptor steering (PN or the vertical climb) and the interceptor's proximity fuse read that snapshot. Anti-nukes and point defence both, now independent of step order.
 - **Results** unchanged in the specs: point defence 16 / 56 rockets and 14 / 14 missiles; nuke tests pass.
+
+## S-152 — Scouts' weapon range halved (the user, via B: "Scout attack range's is too big, reduce by half (for both factions)") (2026-10-24)
+
+- `ord_mg` (Herald) 175 → 88 studs; `chs_mg` (Jackal) 140 → 70. Only the scouts carry them. Placeholder like the rest; no balance report run (the user's rule).
+
+## S-153 — Orders in range don't move the unit (the user, via B) (2026-10-24)
+
+- **Asked:** "a lancer attack a unit already inside of its attack range, the lancer tended to move out a little bit ... builder unit ... can simply path until they reaches the needed range ... they DO NOT need to go in range and move back out".
+- **Causes:**
+  - ATTACK closed in to `ATTACK_REACH` (90%) of the unit's longest range even when the target was already in range. A Lancer at rest with a target at 95% of its range moved 15 studs.
+  - `halt` (Orders and Build, used when a unit gets in range) set the spot the unit holds to where it was at that tick. The unit then braked a few studs past it and, idle, walked back.
+- **Fixed:**
+  - ATTACK leaves a unit standing still when its target is in range. Only a unit already chasing closes to ATTACK_REACH.
+  - `halt` holds `Nav.stopPoint`: where the unit comes to rest from its speed and braking, straight ahead, or where it is if that spot is blocked. This covers building, repairing, reclaiming and assisting, which all halt through Build.
+- **Tests:** `Orders.spec`: the Lancer stays within 1 stud (it moved 15); a Mason sent to build stops in range and never steps back.
+- **Revised the same day (fairness):** holding the predicted stop point (`Nav.stopPoint`) broke the mirror-fairness tests at merge (Twin Lakes 2v2: 4 matching structures where 7 are required; mirrored matches west 2, east 10), and the cause in it wasn't found. It's gone. `halt` holds the spot where the unit is again. The braking step-back was at most half a stud in the measured cases; the attack change, which was the visible 15 studs, stays. Both cases in `Orders.spec` still pass.
+
+## S-154 — Shield generators switch off to save power (the user, via B: "a shield can be turned off to save power") (2026-10-24)
+
+- **Built:** Phalanx and Carapace (any def with `shield`) honour TOGGLED_ON (the TOGGLE command), and start switched on like converters.
+  - Off: the dome is down (SHIELD's UP flag clear), so shells pass. No power upkeep and no recharge; the charge it has is kept.
+  - On: it rises again under the usual rule, at RAISE_AT (25%) of capacity, and recharges.
+- **Tests:** `Shield.spec`: off, the dome drops, draws nothing, lets a heavy shell through and keeps its charge; on, it rises.
+- **Client:** B offers On/Off on the card for any def with `shield`. No wire change: TOGGLED_ON and SHIELD's flags already carry it.
+
+## S-155 — Build over your own units; they walk out of the footprint (the user, via B) (2026-10-24)
+
+- **Asked:** "You can also pre-place model inside grid that have unit (not structure) so when you build the model, other units inside can move out of the grid." Before, `Placement.check` failed with "units in the way" when a frame should start.
+- **Rule:**
+  - When a frame starts (`Placement.check` with `owner`, no `knower`), the builder's own and allied ground units are no obstacle. Enemy ground units still block ("units in the way"). Aircraft never did.
+  - Planning checks with `knower` (the skirmish AI) still treat every unit as an obstacle. Letting the AI plan over its own units held Chaos's T2 back by minutes in seed 24 (its Forgemaster came at 7 min instead of 3.3), and two AI tests failed. So the AI keeps its old sites.
+  - The client's ghost should treat own and allied units as no obstacle, since the server accepts them at the frame's start.
+  - When a structure's footprint is occupied (`Placement.occupy`, so a new frame, a spawned structure, or an upgrade's restored footprint), `Placement.clearUnits` sends every ground unit on it (any team) straight out, away from the centre across the nearer edges, to a cell past the edge. It uses S-133's walk-out (`BuildState.exiting`): through the blocked cells, ignoring separation, whatever its order, until it's clear on open ground. Then it carries on with its orders.
+- **Fixed on the way:** Movement skipped its whole step when nothing was moving or had an order. A unit walking out while everything else stood still never left; now walking out counts as active. And a walking-out unit near its exit point no longer counts as settled.
+- **Tests:** `Build.spec`: a Commander starts a Vehicle Plant over a friendly Lancer, and the Lancer walks off the footprint; an enemy Ravager on the site still stops the frame.
+- **Client:** B drops its "units in the way" check for own and allied units to match.
+- **Fixed while testing:** a unit that stopped at its exit point kept the walk-out flag for good, because clearing was checked only while it moved. In an AI match a Commander and builders kept steering at their exit points, and one held a new factory's pad (S-133's pad wait). Movement now checks every tick whether a walking-out unit is clear: out of the footprint, and on open ground or stopped. AI.spec passes again.
+- **Mirror-fairness test widened (`Fairness.spec`):** with S-155 the six-seed mirrored-matches test split west 3 / east 9 (the bar is 4 each). Over seeds 1–18 the split is west 15 / east 21, the same as `main` before the change, and seeds 7–12 split 5/7 (6/6 on `main`). So the start's odds didn't move; six seeds are too few. The test now plays seeds 1–18 (36 matches) and asks for 12 each, the same one-third bar. It takes ~165 s instead of ~55 s, in the slow suite only.

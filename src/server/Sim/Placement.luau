@@ -98,13 +98,18 @@ function Placement.check(sim: Types.Sim, def: Defs.UnitDef, x: number, z: number
 			return false, "no deposit", x0, z0, cx, cz, 0
 		end
 	end
-	-- no ground unit may stand on the footprint
+	-- no ground unit may stand on the footprint, except, when a frame starts
+	-- (`owner` without `knower`), the builder's own and allied units: they
+	-- walk out (Placement.occupy, S-155, the user). Planning checks (the AI,
+	-- with `knower`) still steer round them
+	local friendly = if owner ~= nil and knower == nil and sim.players[owner] then sim.players[owner].allyTeam else nil
 	local minX, minZ = x0 * Grid.CELL_SIZE + g.originX, z0 * Grid.CELL_SIZE + g.originZ
 	local maxX, maxZ = minX + size * Grid.CELL_SIZE, minZ + size * Grid.CELL_SIZE
 	for _, id in w.ids do
 		local udef = sim.defs.unitByIndex[w.defIndex[id]]
 		local hidden = knower ~= nil and w.ally[id] ~= knower and Sensors.level(sim, knower, id) ~= L.VISIBLE
-		if udef.domain ~= "air" and id ~= replaces and not hidden then
+		local ours = friendly ~= nil and w.ally[id] == friendly and udef.domain ~= "structure"
+		if udef.domain ~= "air" and id ~= replaces and not hidden and not ours then
 			local r = sim.combat.profiles[w.defIndex[id]].radius
 			local px, pz = w.posX[id], w.posZ[id]
 			if px + r > minX and px - r < maxX and pz + r > minZ and pz - r < maxZ then
@@ -132,6 +137,33 @@ function Placement.occupy(sim: Types.Sim, id: number)
 	Passability.setOccupied(pm, x0, z0, size, id)
 	if sim.nav then
 		Nav.terrainChanged(sim.nav, x0, z0, x0 + size - 1, z0 + size - 1)
+		Placement.clearUnits(sim, id, x0, z0, size)
+	end
+end
+
+-- Ground units standing on structure `id`'s new footprint walk straight out
+-- of it, on the side they stand (S-155, the user: build over your own
+-- units and they move out of the way), through its blocked cells like a
+-- unit leaving its factory's pad (BuildState.exiting, Movement; S-133).
+function Placement.clearUnits(sim: Types.Sim, id: number, x0: number, z0: number, size: number)
+	local w = sim.world
+	local g = (sim.map :: Passability.PassMap).grid
+	local half = size * Grid.CELL_SIZE / 2
+	local cx, cz = (x0 + size / 2) * Grid.CELL_SIZE + g.originX, (z0 + size / 2) * Grid.CELL_SIZE + g.originZ
+	local profiles = (sim.nav :: Nav.Nav).profiles
+	for _, u in w.ids do
+		local p = profiles[w.defIndex[u]]
+		if u == id or p == nil or p.air or sim.build.exiting[u] then
+			continue
+		end
+		local dx, dz = w.posX[u] - cx, w.posZ[u] - cz
+		if math.abs(dx) < half + p.radius and math.abs(dz) < half + p.radius then
+			-- out across the nearer pair of edges, straight away from the centre
+			local len = math.sqrt(dx * dx + dz * dz)
+			local ux, uz = if len > 1e-6 then dx / len else 1, if len > 1e-6 then dz / len else 0
+			local reach = (half + p.radius + Grid.CELL_SIZE) / math.max(math.abs(ux), math.abs(uz))
+			sim.build.exiting[u] = { cx, cz, half, cx + ux * reach, cz + uz * reach, id }
+		end
 	end
 end
 
