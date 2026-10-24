@@ -734,6 +734,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `1c1fa3c` (Normandy's baked ground, C-167 / M-35: `ground.normandy` in the manifest, review; `assets/maps/`, manifest, `place/MeshMaterials.model.json`, `road` / `leafy` textures; merge after the four before it).
 - Ready to merge: `5fd2a55` (S-157 tower meshes with wrecks, review: `ord_sentry_tower`, `chs_guard`, `ord_beamer`, `ord_overwatch`, `chs_twin_guard`, `chs_geryon`, `ord_gauntlet`, `chs_talos`, `chs_bulwark`; `assets/models/`, manifest, `place/MeshMaterials.model.json`).
 - Ready to merge: `0305a40` (the S-166 blockouts registered now their defs are in main, and hand-made blockouts for `ord_shepherd` / `chs_griffin`; `src/shared/Defs/Blockouts/` only. The client's icon specs fail for the four S-166 defs until B's icon tiles land; not from this commit).
+- Ready to merge: `6e07762` (T2 ship hull redesign with lofted hulls for all 9 T2 ships, the T1 corvettes Envoy / Barracuda and the naval workers Tidewright / Wrecker, those four back to review; Shepherd / Griffin meshes; wrecks for the six capital ships and the Commander mechs; the status table in models.md; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs). Nothing new draws in game: every changed unit is `review`.
 
 ## Requests
 
