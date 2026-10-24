@@ -1719,3 +1719,14 @@ Existing calls are unchanged.
 
 **Why:** the user: "Tab to complete suggestion/cycle choices (like reveal on/off, kill selected/...)" and "give command unit name should be also have the aliases (give ord_shield -> Phalanx, give ord_ir-sam,...)".
 
+### C-195 — Place over own and allied units; shields switchable; S-157's units on the icon sheet; retired units hidden (2026-10-24)
+
+**Decision:**
+- **Placement:** the preview no longer counts own and allied ground units as in the way. They walk out of the footprint when the frame starts (S-155); enemy units still block. Placement.spec compares with the server's frame-start check (owner, no knower). OrderLines.spec: a solar placed over an own Lancer starts, and the Lancer walks off; an enemy Ravager in sight still blocks.
+- **The card's On / Off** treats shield generators as switchable (S-154: off = dome down, no upkeep).
+- **Icons for S-157's units, on existing tiles** (no new sheet, no upload): Sentry, Guard, Overwatch, Twin Guard and Geryon on the Gun Turret tile; Beamer and Chaos's Bulwark on the Beam Tower tile; Gauntlet and Talos on the Artillery Emplacement tile (T2 dots until they get their own). The sheet PNG is byte-identical. Dedicated icons need the user's design and a new upload.
+- **Retired units** (`retired = true`: ord_bulwark, chs_spike, chs_inferno) aren't suggested or aliased by /give; their ids still work. Their models still preload (replays can show them).
+- This branch merges sim-A's d41074e (S-152..S-157) so the new defs and their icon entries land on main together (the icon specs fail without entries).
+
+**Why:** sim-A's S-154, S-155 and S-157; the user's requests.
+

@@ -173,7 +173,7 @@ return function(t: any)
 		Spawn.unit(sim, "ord_fusion", 1, -150, -150, 0)
 		local mason = Spawn.unit(sim, "ord_mason", 1, 0, 0, 0)
 		local lancer = Spawn.unit(sim, "ord_lancer", 1, 60, 0, 0)
-		local enemy = Spawn.unit(sim, "chs_ravager", 2, -120, 120, 0)
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, -40, 70, 0) -- in the Mason's sight
 		sim.world.fireState[lancer] = 0
 		sim.world.fireState[enemy] = 0
 		step(3)
@@ -181,7 +181,7 @@ return function(t: any)
 		api.actions.beginPlacement("ord_solar")
 		local ok, why = api.actions.updatePlacement(60, 0)
 		t.expect(ok, `an own tank on the spot doesn't block it ({why})`)
-		local okEnemy, whyEnemy = api.actions.updatePlacement(-120, 120)
+		local okEnemy, whyEnemy = api.actions.updatePlacement(-40, 70)
 		t.expect(not okEnemy and whyEnemy == "units in the way", "an enemy's still does")
 		t.expect(api.actions.place(60, 0, false, false))
 		local started = false

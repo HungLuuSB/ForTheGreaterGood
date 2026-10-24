@@ -79,6 +79,9 @@ function CheatInput.aliases(defs: any): { [string]: { string } }
 		end
 	end
 	for id, def in defs.units do
+		if def.retired then
+			continue -- off every build list (S-157): no alias
+		end
 		local prefix = string.match(id, "^(%a+_)") or ""
 		local entry = (IconAtlas.byDef :: any)[id]
 		if entry then
@@ -159,8 +162,10 @@ function CheatInput.suggest(text: string, defs: any, max: number?): { Suggestion
 		local typed = string.lower(w[2] or "")
 		local starts, contains = {}, {}
 		local ids = {}
-		for id in defs.units do
-			table.insert(ids, id)
+		for id, def in defs.units do
+			if not def.retired then -- retired units (S-157) aren't offered; their id still works
+				table.insert(ids, id)
+			end
 		end
 		table.sort(ids)
 		-- the aliases each unit answers to (C-194)
