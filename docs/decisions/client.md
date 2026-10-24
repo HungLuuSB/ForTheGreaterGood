@@ -1584,3 +1584,12 @@ Existing calls are unchanged.
 
 **Why:** 11 defs drew blank contacts and several the wrong tile (the user's list); the user asked for the def lists, the split and the upload.
 
+### C-184 — Smooth key art parallax: sub-pixel layers; no world drawn behind the loading screen (2026-10-24)
+
+**Decision:**
+- `UI/KeyArt` (lobby-D's measurements and fix, approved by the user): the layers' size and position are set in scale, not offset. UDim2 offsets are whole pixels, so the near layer moved on only 50 of 158 frames, in 1–1.4 px jumps. Each tile is 1 px larger (no hairline between tiles) and turned 0.001° (Roblox draws a rotated GUI object at sub-pixel positions). D measured 60 fps and 0.02 px steps on 239 of 240 frames. The API is unchanged; the lobby mounts the file read-only.
+- `UI/MatchLoading`: while the loading screen shows (opaque: art or gradient), `RunService:Set3dRenderingEnabled(false)`. It's turned back on when the match starts.
+- Checked in Studio with the contract profile: loading still reaches 100% with the world paused (90 meshes in 24 s), the match starts, and the world draws again.
+
+**Why:** the user saw the parallax stutter in the lobby; the match's loading screen uses the same viewer.
+
