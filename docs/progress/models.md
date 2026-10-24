@@ -520,6 +520,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `7c71d43` (shield hits v3: 16-frame flipbook, `timing.hitLife` 0.42, the idle honeycomb off in fx.md and ShieldPreview; merge this tip, not `961fd00` alone: that commit dropped `hexGrid`, which the client spec still checks, so `hexGrid` stays for now).
 - Ready to merge: `aca7bfa` (removes `shieldEnergy.hexGrid`: the idle honeycomb is off and the client spec no longer checks it).
 - Ready to merge: `799407a` (key art 3 "Converging": final layers uploaded, `keyArt.converging` approved; `assets/keyart/`, `src/shared/Defs/Meshes/Registry.luau`).
+- Ready to merge: `cc5ac3d` (T1 defence blockouts for S-157: `ord_sentry_tower`, `chs_guard`, `ord_beamer`, `ord_overwatch`, `chs_twin_guard`, `chs_geryon`, `ord_gauntlet`, `chs_talos`, `chs_bulwark` with a `retracted` pose; prefixed muzzles like `laser_muzzle1` are attachments; meshes after the user's look review).
 
 ## Requests
 
