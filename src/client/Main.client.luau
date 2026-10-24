@@ -140,6 +140,9 @@ local controls = Controls.bind(api)
 -- high above its ground point, a big model's body; C-38)
 local pickParams = RaycastParams.new()
 pickParams.FilterType = Enum.RaycastFilterType.Include
+Controls.heightAt = function(x: number, z: number): number
+	return World.groundY(world, x, z, true) -- the water's surface over water (C-209)
+end
 Controls.pickModel = function(px: number, py: number): number?
 	local cam = workspace.CurrentCamera
 	local ray = cam:ViewportPointToRay(px, py)

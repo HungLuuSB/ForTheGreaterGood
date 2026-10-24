@@ -1826,3 +1826,16 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 **Decision:** the bars sit under the unit (the user): centred on it, their top `Bars.GAP` (4 px) below the lowest on-screen corner of its footprint at its base (where the model is drawn, so an aircraft's bar stays at the aircraft). The stack is anchored by its top: health, then the build / production bar and the reload bar below it; missile stock pips stay just above the health bar. Bars.spec updated. Screenshot: `debug_out/screens/c208_health_bars_under.jpg`.
 
 **Why:** the user, 2026-10-24.
+
+### C-209 — The Canyon's baked ground wired: clicks march the sim's heights; cliff fallback (2026-10-24)
+
+**Decision:** with models-C's Canyon ground (m-models 08b9889, merged in 13b9a3c; manifest `ground.canyon` at review, drawn with the Studio switch `groundanyway`), mesh tiles no longer take ground clicks (`CanQuery` off: a tile's box hit rays at mesa height). `Controls.groundAt` raycasts the map parts and water as before, then marches the ray down to `Controls.heightAt` (Main: `World.groundY`, water surface over water) in 4-stud steps from 400 studs, refined to a tenth of a stud. `GroundMeshes.FALLBACK.cliff` = Sandstone (150, 78, 52) for the strata walls.
+- Studio, 2026-10-24 (`debug_out/screens/c209_canyon_*.jpg`): 236 tiles and details build in about 10 s; after a camera jump the mesh ground is there at once and sharp. **But their SurfaceAppearances draw flat white in the match place** (no load error): the textures need a look from models-C before the user's review; voxel shots for comparison.
+
+**Why:** the user's queue item 8; models-C's notes 1 and 2.
+
+### C-210 — State buttons show every state (2026-10-24)
+
+**Decision:** state buttons in the command card carry one short segment per state under the label, the current one lit (the user): fire and move states three (red, yellow, green: hold, return / maneuver, at will / roam), repeat, on / off and priority two (off / low red on the left, on / high green on the right); unlit segments dark grey, all unlit when no selected unit has the state. Replaces C-203's single coloured underline. Screenshot: `debug_out/screens/c210_state_segments_x2.jpg` (UI at 2× for the shot).
+
+**Why:** the user, 2026-10-24.
