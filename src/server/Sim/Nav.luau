@@ -330,6 +330,23 @@ local function cachedField(nav: Nav, order: Order, cells: { number }): (string, 
 end
 
 -- Ends a unit's order (arrived, stopped or replaced).
+-- Where unit `id` comes to rest from its speed now, braking straight ahead
+-- (S-153): the spot it should hold after a halt.
+function Nav.stopPoint(nav: Nav, w: World.World, id: number): (number, number)
+	local p = nav.profiles[w.defIndex[id]]
+	local v = w.speed[id]
+	if p == nil or p.air or v <= 0 or p.brake <= 0 then
+		return w.posX[id], w.posZ[id]
+	end
+	local d = v * v / (2 * p.brake)
+	local h = w.heading[id]
+	local x, z = w.posX[id] + math.sin(h) * d, w.posZ[id] + math.cos(h) * d
+	if not Nav.fits(nav, p, x, z) then
+		return w.posX[id], w.posZ[id]
+	end
+	return x, z
+end
+
 function Nav.clearOrder(nav: Nav, w: World.World, id: number)
 	local oid = w.orderId[id]
 	if oid ~= 0 then

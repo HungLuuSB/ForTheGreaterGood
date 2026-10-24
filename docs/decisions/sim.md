@@ -2203,3 +2203,18 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Found by B:** Projectiles walks `proj` backwards with swap-removal. So an interceptor steered, and fused, against its missile's state either before or after the missile's own step that tick, depending on list order. The client always uses the start of the tick (net.md, C-57), and B's spec saw up to ~1 stud of drift in the last ticks.
 - **Changed:** before the loop, the Projectiles system snapshots the position and velocity of every projectile an interceptor chases. Interceptor steering (PN or the vertical climb) and the interceptor's proximity fuse read that snapshot. Anti-nukes and point defence both, now independent of step order.
 - **Results** unchanged in the specs: point defence 16 / 56 rockets and 14 / 14 missiles; nuke tests pass.
+
+## S-152 — Scouts' weapon range halved (the user, via B: "Scout attack range's is too big, reduce by half (for both factions)") (2026-10-24)
+
+- `ord_mg` (Herald) 175 → 88 studs; `chs_mg` (Jackal) 140 → 70. Only the scouts carry them. Placeholder like the rest; no balance report run (the user's rule).
+
+## S-153 — Orders in range don't move the unit (the user, via B) (2026-10-24)
+
+- **Asked:** "a lancer attack a unit already inside of its attack range, the lancer tended to move out a little bit ... builder unit ... can simply path until they reaches the needed range ... they DO NOT need to go in range and move back out".
+- **Causes:**
+  - ATTACK closed in to `ATTACK_REACH` (90%) of the unit's longest range even when the target was already in range. A Lancer at rest with a target at 95% of its range moved 15 studs.
+  - `halt` (Orders and Build, used when a unit gets in range) set the spot the unit holds to where it was at that tick. The unit then braked a few studs past it and, idle, walked back.
+- **Fixed:**
+  - ATTACK leaves a unit standing still when its target is in range. Only a unit already chasing closes to ATTACK_REACH.
+  - `halt` holds `Nav.stopPoint`: where the unit comes to rest from its speed and braking, straight ahead, or where it is if that spot is blocked. This covers building, repairing, reclaiming and assisting, which all halt through Build.
+- **Tests:** `Orders.spec`: the Lancer stays within 1 stud (it moved 15); a Mason sent to build stops in range and never steps back.

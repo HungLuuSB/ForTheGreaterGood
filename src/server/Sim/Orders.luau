@@ -111,7 +111,10 @@ local function halt(sim: Types.Sim, id: number)
 	local w = sim.world
 	if sim.nav and w.orderId[id] ~= 0 then
 		Nav.clearOrder(sim.nav, w, id)
-		w.goalX[id], w.goalZ[id] = w.posX[id], w.posZ[id]
+		-- hold where it will come to rest, not where it is: a unit holding the
+		-- spot it braked past walked back to it, in range and a step out
+		-- again (S-153, the user)
+		w.goalX[id], w.goalZ[id] = Nav.stopPoint(sim.nav, w, id)
 	end
 end
 
@@ -362,7 +365,11 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		if d.domain == "air" then
 			return true -- aircraft chase their target themselves
 		end
-		local reach = d.maxRange * Orders.ATTACK_REACH
+		-- a unit standing with its target in range stays put (S-153, the
+		-- user); one already closing in goes on to ATTACK_REACH of its
+		-- range, so it doesn't stop right at the edge
+		local chasing = w.orderId[id] ~= 0 and h.gx ~= nil
+		local reach = if chasing then d.maxRange * Orders.ATTACK_REACH else d.maxRange
 		local dx, dz = kx - w.posX[id], kz - w.posZ[id]
 		if dx * dx + dz * dz > reach * reach then
 			chase(sim, id, h, kx, kz)

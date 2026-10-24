@@ -10,6 +10,8 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| In-range orders don't move the unit (the user, via B) | ATTACK on a target already in range keeps the unit still (it closed to 90% of range: a Lancer moved 15 studs); a halted unit holds where it comes to rest, not the point it braked past | S-153 |
+| Scouts' range halved (the user, via B) | Herald machine gun 175 → 88, Jackal 140 → 70 | S-152 |
 | Interceptors steer at their target's start-of-tick state (B) | Steering and the fuse no longer depend on which projectile steps first; matches the client | S-151 |
 | Shields tuned down (the user: "way too OP") | Phalanx capacity 600 → 120, recharge 30 → 2 /s; Carapace 400 → 80, 24 → 1.6 /s; beam drain scaled to match. 10 Ravagers now bring a Phalanx down in ~30 s (it held 100%); 4 wear it to 76% in a minute | S-150 |
 | Point defence (the user) | Sanctum / Basilisk (T2 structures) and Shepherd / Griffin (T2 vehicles) shoot down enemy missiles and rockets near them with interceptors; never units | S-149 |
