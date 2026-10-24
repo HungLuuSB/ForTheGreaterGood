@@ -5,11 +5,15 @@
 --     opacity following strength: invisible at 0%, full from 50%;
 --   - a bright edge on its outline as the camera sees it (two camera-facing
 --     ring adornments) and C's ring at the foot of the dome;
---   - C's thin rings (RingThin) flowing from the top down the dome (C's
---     Ring, whose tube grows with the ring, is only the foot ring);
---   - C's light beam rising from the emitter (a generator's `beam`
---     attachment) to the top, C's swirl turning at the top, C's specks
---     floating inside, a slow subtle pulse;
+--   - wide waves of energy rolling down the dome (C's shieldWave bands,
+--     C-186: each wave crossfades between its two nearest bands), else C's
+--     thin rings (RingThin) flowing from the top down (C's Ring, whose tube
+--     grows with the ring, is only the foot ring);
+--   - a column of vortex energy from the emitter (a generator's `beam`
+--     attachment) to the top (C's shieldColumn, C-186: three Beams, core,
+--     swirl and glow, thinning as the shield weakens, shooting up on deploy,
+--     pinching and flashing on collapse), else C's light beam; C's swirl
+--     turning at the top, C's specks floating inside, a slow subtle pulse;
 --   - the emitter's core (the generator's `core` piece, else a placeholder
 --     ball) glowing green full, orange, red empty; a capacity bar above;
 --   - hits, as a shell crosses the surface: a patch of fine honeycomb cells
@@ -92,6 +96,11 @@ export type ShieldFx = {
 	dome: BasePart,
 	domeMesh: boolean, -- C's hemisphere (else a ball)
 	shell: { MeshPart }, -- the honeycomb shell's bands (C-138), or none
+	waves: { MeshPart }, -- the dome waves' bands (C-186), or none
+	wavePhase: number, -- the waves' flow (one unit = a trip top to rim)
+	waveWeights: { number },
+	column: { [string]: Beam }?, -- the energy column: core, swirl, glow (C-186)
+	columnTop: Attachment,
 	specks: ParticleEmitter,
 	core: Part, -- placeholder core, shown without an emitter part
 	coreLight: PointLight,
@@ -146,16 +155,29 @@ local function bare(p: BasePart)
 end
 
 -- C's meshes, made once from their IDs in their own thread (it yields)
-local templates: { dome: MeshPart?, ring: MeshPart?, ringThin: MeshPart?, shell: { MeshPart }? } = {}
+local templates: { dome: MeshPart?, ring: MeshPart?, ringThin: MeshPart?, shell: { MeshPart }?, wave: { MeshPart }? } = {}
 
 -- models-C's honeycomb shell (Meshes.shieldShell, C-138): bands of the dome
 -- surface, a hex pattern fading out toward the base; each band's opacity ×
--- the charge. Shown once approved, or with SHELL_ANYWAY for review.
+-- the charge. Shown once approved, or with SHELL_ANYWAY for review (as are
+-- the column and the waves, C-186).
 local shellEntry = (Meshes :: any).shieldShell
 ShieldFx.SHELL_ANYWAY = RunService:IsStudio() -- review assets show in Studio, where the user reviews them (C-142)
 ShieldFx.SHELL_TINT = Color3.fromRGB(205, 225, 245)
 local function shellOn(): boolean
 	return shellEntry ~= nil and templates.shell ~= nil and (shellEntry.status == "approved" or ShieldFx.SHELL_ANYWAY)
+end
+-- models-C's energy column and dome waves (Meshes.shieldColumn,
+-- Meshes.shieldWave; fx.md "Energy column", "Dome waves"; C-186)
+local columnEntry = (Meshes :: any).shieldColumn
+local waveEntry = (Meshes :: any).shieldWave
+ShieldFx.ENERGY_TINT = Color3.fromRGB(150, 235, 255) -- C's reference assembly
+ShieldFx.WAVE_FADE = 10 -- degrees: a wave fades in under the top and out at the rim
+local function columnOn(): boolean
+	return columnEntry ~= nil and (columnEntry.status == "approved" or ShieldFx.SHELL_ANYWAY)
+end
+local function wavesOn(): boolean
+	return waveEntry ~= nil and templates.wave ~= nil and (waveEntry.status == "approved" or ShieldFx.SHELL_ANYWAY)
 end
 local templatesState = "idle"
 
@@ -172,32 +194,39 @@ local function loadTemplates()
 			slots[key] = part
 		end
 	end
-	if shellEntry then
+	-- bands of the dome surface with a SurfaceAppearance from MeshMaterials
+	-- (scripts can't set one's maps): the honeycomb shell, the dome waves
+	local function bandParts(entry: any, material: string, tint: Color3): { MeshPart }?
 		local bands: { MeshPart } = {}
-		for _, band in shellEntry.bands do
+		for _, band in entry.bands do
 			local ok, part = pcall(function()
 				return (AssetService :: any):CreateMeshPartAsync((Content :: any).fromUri(band.mesh))
 			end)
 			if not ok or part == nil then
-				bands = nil :: any
-				break
+				return nil
 			end
 			bare(part)
 			part.Transparency = 1
 			local look = ReplicatedStorage:FindFirstChild("MeshMaterials")
-			local sa = look and look:FindFirstChild("shieldShell")
+			local sa = look and look:FindFirstChild(material)
 			if sa then
 				local c = sa:Clone()
 				pcall(function()
-					(c :: any).Color = ShieldFx.SHELL_TINT
+					(c :: any).Color = tint
 				end)
 				c.Parent = part
 			end
 			table.insert(bands, part)
 		end
-		templates.shell = bands
+		return bands
 	end
-	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, foot {if templates.ring then "mesh" else "none"}, rings {if templates.ringThin then "thin mesh" else "adornments"}, shell {if templates.shell then #templates.shell .. " bands" else "none"}`
+	if shellEntry then
+		templates.shell = bandParts(shellEntry, "shieldShell", ShieldFx.SHELL_TINT)
+	end
+	if waveEntry then
+		templates.wave = bandParts(waveEntry, "shieldWave", ShieldFx.ENERGY_TINT)
+	end
+	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, foot {if templates.ring then "mesh" else "none"}, rings {if templates.ringThin then "thin mesh" else "adornments"}, shell {if templates.shell then #templates.shell .. " bands" else "none"}, waves {if templates.wave then #templates.wave .. " bands" else "none"}`
 	templatesState = "done"
 end
 
@@ -327,6 +356,9 @@ function Methods.setEmitter(s: ShieldFx, emitter: Attachment?)
 	s.coreTarget = if part and part:IsA("BasePart") then part else nil
 	s.coreOriginal = if s.coreTarget then s.coreTarget.Color else nil
 	s.beam.Attachment0 = emitter or s.beamBase
+	for _, b in s.column or {} do
+		b.Attachment0 = emitter or s.beamBase
+	end
 	local placeholder = s.coreTarget == nil
 	s.core.Transparency = if placeholder then 0 else 1
 	s.coreLight.Enabled = placeholder
@@ -416,6 +448,14 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		p.Parent = folder
 		shell[i] = p
 	end
+	-- the dome waves' bands (sized per frame with the dome, C-186)
+	local waves: { MeshPart } = {}
+	for i, t in templates.wave or {} do
+		local p = t:Clone()
+		p.Name = `Wave{i}`
+		p.Parent = folder
+		waves[i] = p
+	end
 	-- the dome: C's hemisphere (centre half-way up), else a ball
 	local dome: BasePart
 	local domeMesh = templates.dome ~= nil
@@ -491,6 +531,36 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 	beam.Segments = 24
 	beam.Enabled = false
 	beam.Parent = anchor
+	-- C's energy column (C-186): three straight Beams from the emitter to
+	-- the top, drawn glow, swirl, core; widths set per frame
+	local columnTop = Instance.new("Attachment")
+	columnTop.Parent = anchor
+	local column: { [string]: Beam }? = nil
+	if columnEntry then
+		local c: { [string]: Beam } = {}
+		for name, z in { glow = 1, swirl = 2, core = 3 } do
+			local layer = columnEntry[name]
+			local b = Instance.new("Beam")
+			b.Name = `Column{name}`
+			b.Attachment1 = columnTop
+			b.FaceCamera = true
+			b.LightEmission = layer.lightEmission
+			b.LightInfluence = 0
+			b.Color = ColorSequence.new(ShieldFx.ENERGY_TINT)
+			b.Texture = layer.texture
+			b.TextureMode = Enum.TextureMode.Wrap
+			b.TextureLength = math.max(0.1, layer.textureLength * radius)
+			b.TextureSpeed = layer.textureSpeed
+			b.Transparency = NumberSequence.new(layer.transparency)
+			b.Brightness = layer.brightness
+			b.Segments = 20
+			b.ZOffset = z
+			b.Enabled = false
+			b.Parent = anchor
+			c[name] = b
+		end
+		column = c
+	end
 	-- C's swirl at the top: a disc with the swirl on its top face, turning
 	local swirl = Instance.new("Part")
 	swirl.Name = "Swirl"
@@ -580,6 +650,11 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		dome = dome,
 		domeMesh = domeMesh,
 		shell = shell,
+		waves = waves,
+		wavePhase = 0,
+		waveWeights = {},
+		column = column,
+		columnTop = columnTop,
 		specks = specks,
 		core = core,
 		coreLight = coreLight,
@@ -629,6 +704,14 @@ local function hideDetail(s: ShieldFx)
 	s.swirlDecal.Transparency = 1
 	for _, p in s.shell do
 		p.Transparency = 1
+	end
+	for _, p in s.waves do
+		if p.Transparency ~= 1 then
+			p.Transparency = 1
+		end
+	end
+	for _, b in s.column or {} do
+		b.Enabled = false
 	end
 end
 
@@ -764,18 +847,56 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		hideDetail(s)
 		return true
 	end
-	-- the beam: its top end climbs from the emitter to the dome's top on deploy
+	-- the beam: its top end climbs from the emitter to the dome's top on
+	-- deploy; or C's energy column (C-186)
 	local startY = (s.beam.Attachment0 :: Attachment).WorldPosition.Y - center.Y
 	local topY = s.radius - 0.5
-	s.beam.Enabled = beamK > 0.01
-	s.beamTop.Position = Vector3.new(0, startY + (topY - startY) * beamK, 0)
-	-- the rings: slide down, resized to the curve at their height, fade near the ground
+	local column = s.column
+	if column and columnOn() then
+		s.beam.Enabled = false
+		local reach, coreK, outerK, brightK = ShieldLook.column(s.state, since, s.strength, columnEntry)
+		local top = (if s.state == "collapsing" then Rs else s.radius) - 0.5
+		s.columnTop.Position = Vector3.new(0, startY + (top - startY) * reach, 0)
+		for name, b in column do
+			local layer = columnEntry[name]
+			local k = if name == "core" then coreK else outerK
+			b.Enabled = reach > 0.01 and k > 0.001
+			b.Width0 = layer.width0 * s.radius * k
+			b.Width1 = layer.width1 * s.radius * k
+			b.Brightness = layer.brightness * brightK
+		end
+	else
+		s.beam.Enabled = beamK > 0.01
+		s.beamTop.Position = Vector3.new(0, startY + (topY - startY) * beamK, 0)
+	end
+	-- the dome waves (C-186): each wave crossfades between its two nearest
+	-- bands, their opacity × the dome's; else the rings below
 	local speed, bright = ShieldLook.ringFlow(s.strength)
+	local showWaves = wavesOn() and #s.waves > 1
+	if showWaves then
+		s.wavePhase += dt * ShieldLook.waveRate(s.strength, waveEntry.seconds)
+		local weights = ShieldLook.waveBands(s.wavePhase, waveEntry.waves, #s.waves, 90 / (#s.waves - 1), ShieldFx.WAVE_FADE, s.waveWeights)
+		for i, p in s.waves do
+			local band = waveEntry.bands[i]
+			local alpha = weights[i] * waveEntry.opacity * opacity
+			if R > 0.05 and alpha > 0.005 then
+				local size = Vector3.new(band.size[1] * Rs, band.size[2] * Rs, band.size[3] * Rs)
+				if p.Size ~= size then
+					p.Size = size
+					p.CFrame = CFrame.new(center + Vector3.new(0, band.center[2] * Rs, 0))
+				end
+				p.Transparency = 1 - alpha
+			elseif p.Transparency ~= 1 then
+				p.Transparency = 1
+			end
+		end
+	end
+	-- the rings: slide down, resized to the curve at their height, fade near the ground
 	s.phase += dt * speed / ShieldLook.RING_PERIOD
 	local ringW = math.max(0.06, R * ShieldFx.RING_TUBE)
 	for i, ring in s.rings do
 		local _, rf, yf, a = ShieldLook.ringAt(i, #s.rings, s.phase)
-		local alpha = ShieldFx.RING_OPACITY * a * bright * opacity
+		local alpha = if showWaves then 0 else ShieldFx.RING_OPACITY * a * bright * opacity
 		if R > 0.05 and alpha > 0.01 then
 			local rr = R * rf
 			if s.ringMesh then

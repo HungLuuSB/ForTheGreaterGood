@@ -1584,3 +1584,34 @@ Existing calls are unchanged.
 
 **Why:** 11 defs drew blank contacts and several the wrong tile (the user's list); the user asked for the def lists, the split and the upload.
 
+### C-184 — Smooth key art parallax: sub-pixel layers; no world drawn behind the loading screen (2026-10-24)
+
+**Decision:**
+- `UI/KeyArt` (lobby-D's measurements and fix, approved by the user): the layers' size and position are set in scale, not offset. UDim2 offsets are whole pixels, so the near layer moved on only 50 of 158 frames, in 1–1.4 px jumps. Each tile is 1 px larger (no hairline between tiles) and turned 0.001° (Roblox draws a rotated GUI object at sub-pixel positions). D measured 60 fps and 0.02 px steps on 239 of 240 frames. The API is unchanged; the lobby mounts the file read-only.
+- `UI/MatchLoading`: while the loading screen shows (opaque: art or gradient), `RunService:Set3dRenderingEnabled(false)`. It's turned back on when the match starts.
+- Checked in Studio with the contract profile: loading still reaches 100% with the world paused (90 meshes in 24 s), the match starts, and the world draws again.
+
+**Why:** the user saw the parallax stutter in the lobby; the match's loading screen uses the same viewer.
+
+### C-185 — A projectile destroyed on a shield dome bursts there with its explosion (2026-10-24)
+
+**Decision:** on SHIELD_HIT with ABSORBED (S-85, S-93: every shell reaching an up dome is destroyed at its surface), the client now bursts the projectile's own impact effect there: its weapon's impact size, facing along its flight, and timed where its drawn path meets the honeycomb (C-99). Before, it was dropped with no burst and only the honeycomb lit up. Hitscan rounds stopped by a dome still show no burst, as on units; beams keep their glance (C-129).
+- ShieldWire.spec: every autocannon round absorbed explodes on the shell (r = 120 ± 4), none inside.
+- Studio (the Canyon): three Locusts on a Phalanx's dome, 55 rounds absorbed, an explosion on the honeycomb at each. `debug_out/screens/c185_shield_absorb_bursts.jpg`.
+
+**Why:** the user: "Absorbed/Impact of projectiles on the shield honeycomb trigger their explosion vfx". This replaces S-85's "no burst" on the client.
+
+### C-186 — Shield energy column and dome waves on models-C's assets (review) (2026-10-24)
+
+**Decision:** the user's shield redesign, on models-C's `Meshes.shieldColumn` and `Meshes.shieldWave` (fx.md "Energy column", "Dome waves"; both status review, so they show in Studio only until approved; elsewhere the old beam and rings stay).
+- **Column:** three straight Beams from the generator's `beam` attachment to the dome's top: glow, swirl, core (ZOffset 1–3). They use C's textures, widths × R, scroll speeds and brightness, tinted (150, 235, 255) as in C's reference. `ShieldLook.column` drives them:
+  - every width × (weakest + (1 − weakest) × strength), down to a fifth at 0%;
+  - deploy: the core shoots up in `deploy.shoot`, then the swirl and glow widen over `deploy.thicken`;
+  - collapse: everything pinches to 5% in `collapse.pinch`, flashes (brightness × 3, widths × 1.5) for `collapse.flash`, then hides, before the dome is down.
+- **Waves:** C's 16 dome bands, one MeshPart each per shield, with a `shieldWave` SurfaceAppearance (`Core/MeshMaterials`, regenerated `place/MeshMaterials.model.json`). `ShieldLook.waveBands` places C's 3 waves, evenly spaced in time, from the top to the rim. Each wave shows its two nearest bands at (1 − f, f), fading over the first and last 10°; waves on one band add. They take `seconds / max(0.3, strength)` to cross, at `opacity` × the dome's opacity. They replace the RingThin flow; the dome, edge, foot ring, top swirl, specks and hits stay.
+- Hidden at strategic zoom and when down, like the rest of the detail; every instance is made once per shield.
+- ShieldLook.spec: thinning, deploy order, pinch–flash–gone, the (1 − f, f) split, fades, three waves, no frame-to-frame jumps.
+- Studio (the Canyon, a radius-120 review dome): 3 beams and 6 wave bands lit close up, none at strategic zoom; the shield loop 0.08 ms a frame. `debug_out/screens/c186_shield_full_side.jpg`, `_full_55`, `_weak20`, `_collapse_flash`, `_deploy`.
+
+**Why:** the user found the thin beam and small rings "simple" and asked for a vortex column and wide waves; models-C made the assets to clients-B's layout.
+
