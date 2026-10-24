@@ -5,7 +5,8 @@
 -- on top the `turret`, a wide saucer head with a lit dome, a team band and
 -- a long green laser barrel on each side, firing in turn. Each barrel is a
 -- client piece (`barrel1` left, `barrel2` right) for its own recoil;
--- `muzzle1` / `muzzle2` at their lenses. Model space, forward = -Z.
+-- `muzzle1` / `muzzle2` at their lenses. Both hang from `mount`, a
+-- trunnion bar the def pitches -60..+60 degrees. Model space, forward = -Z.
 
 local parts = {
 	{ name = "base", shape = "cylinder", axis = "y", size = { 8.4, 1.0, 8.4 }, at = { 0, 0.5, 0 }, color = "dark" },
@@ -25,9 +26,10 @@ for _, p in {
 	{ name = "lightL", parent = "turret", shape = "box", size = { 0.6, 0.2, 0.1 }, at = { -1.6, 12.6, -2.0 }, color = "glass" },
 	{ name = "lightR", parent = "turret", shape = "box", size = { 0.6, 0.2, 0.1 }, at = { 1.6, 12.6, -2.0 }, color = "glass" },
 
-	{ name = "barrel1", parent = "turret", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 4.4 }, at = { -2.6, 12.2, -3.4 }, pivot = { -2.6, 12.2, -1.2 }, color = "metal" },
+	{ name = "mount", parent = "turret", shape = "box", size = { 5.8, 0.8, 1.2 }, at = { 0, 12.2, -1.0 }, pivot = { 0, 12.2, -0.6 }, color = "dark" },
+	{ name = "barrel1", parent = "mount", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 4.4 }, at = { -2.6, 12.2, -3.4 }, pivot = { -2.6, 12.2, -1.2 }, color = "metal" },
 	{ name = "lens1", parent = "barrel1", shape = "cylinder", axis = "z", size = { 0.45, 0.45, 0.2 }, at = { -2.6, 12.2, -5.65 }, color = "glass" },
-	{ name = "barrel2", parent = "turret", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 4.4 }, at = { 2.6, 12.2, -3.4 }, pivot = { 2.6, 12.2, -1.2 }, color = "metal" },
+	{ name = "barrel2", parent = "mount", shape = "cylinder", axis = "z", size = { 0.6, 0.6, 4.4 }, at = { 2.6, 12.2, -3.4 }, pivot = { 2.6, 12.2, -1.2 }, color = "metal" },
 	{ name = "lens2", parent = "barrel2", shape = "cylinder", axis = "z", size = { 0.45, 0.45, 0.2 }, at = { 2.6, 12.2, -5.65 }, color = "glass" },
 } do
 	table.insert(parts, p)

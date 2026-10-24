@@ -14,8 +14,8 @@ return Templates.extend(Templates.Structure, {
 	health = 800,
 	footprint = 2, -- size shows tech level (S-104)
 	sensors = { sight = 230 },
-	weapons = { { def = "ord_sentry_laser", turretPiece = "turret", muzzle = "muzzle" } },
-	pieces = { "base", "turret", "muzzle" },
+	weapons = { { def = "ord_sentry_laser", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },
+	pieces = { "base", "turret", "barrel", "muzzle" }, -- barrel pitches (models-C, the user)
 	icon = "turret",
 	model = "ord_sentry_tower",
 })

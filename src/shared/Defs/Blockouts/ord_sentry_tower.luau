@@ -3,7 +3,8 @@
 -- 2026-10-24: a tall slim laser tower): a skirt of eight armored petals round
 -- a footing, a tall slim column with a lit band, and on top the `turret`: an
 -- upright box head carrying one red laser emitter offset to the left, a
--- sensor and a team panel. The def turns `turret`; `muzzle` at the lens.
+-- sensor and a team panel. The def turns `turret` and pitches `barrel`
+-- (the emitter's mount, -60..+60 degrees); `muzzle` at the lens.
 -- Order reads clean and heavy (M-14). Model space, forward = -Z.
 
 local parts = {
@@ -23,9 +24,9 @@ for _, p in {
 	{ name = "turret", parent = "base", shape = "box", size = { 2.4, 3.2, 2.8 }, at = { 0.3, 13.0, 0.2 }, pivot = { 0, 11.3, 0 }, color = "hull" },
 	{ name = "turretTeam", parent = "turret", shape = "box", size = { 0.08, 1.8, 1.8 }, at = { 1.54, 13.2, 0.2 }, color = "team" },
 	{ name = "sensor", parent = "turret", shape = "box", size = { 0.6, 0.6, 0.1 }, at = { 0.8, 14.0, -1.25 }, color = "glass" },
-	{ name = "emitterMount", parent = "turret", shape = "box", size = { 1.2, 1.2, 1.2 }, at = { -1.2, 12.6, -0.8 }, color = "dark" },
-	{ name = "emitter", parent = "turret", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 3.0 }, at = { -1.2, 12.6, -2.6 }, color = "metal" },
-	{ name = "lens", parent = "turret", shape = "cylinder", axis = "z", size = { 0.5, 0.5, 0.2 }, at = { -1.2, 12.6, -4.15 }, color = "glass" },
+	{ name = "barrel", parent = "turret", shape = "box", size = { 1.2, 1.2, 1.2 }, at = { -1.2, 12.6, -0.8 }, pivot = { -1.2, 12.6, -0.8 }, color = "dark" },
+	{ name = "emitter", parent = "barrel", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 3.0 }, at = { -1.2, 12.6, -2.6 }, color = "metal" },
+	{ name = "lens", parent = "barrel", shape = "cylinder", axis = "z", size = { 0.5, 0.5, 0.2 }, at = { -1.2, 12.6, -4.15 }, color = "glass" },
 } do
 	table.insert(parts, p)
 end
@@ -34,6 +35,6 @@ return {
 	id = "ord_sentry_tower",
 	parts = parts,
 	attachments = {
-		{ name = "muzzle", parent = "turret", at = { -1.2, 12.6, -4.3 } },
+		{ name = "muzzle", parent = "barrel", at = { -1.2, 12.6, -4.3 } },
 	},
 }
