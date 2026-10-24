@@ -8076,13 +8076,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0428,
 			maps = {
-				ALB = "rbxassetid://100773127068859",
-				EMI = "rbxassetid://128048629506894",
-				MTL = "rbxassetid://111709059185327",
-				NOR = "rbxassetid://81074282070030",
-				RGH = "rbxassetid://73699996423019",
+				ALB = "rbxassetid://102096728360420",
+				EMI = "rbxassetid://89480171308682",
+				MTL = "rbxassetid://136097046217749",
+				NOR = "rbxassetid://118889486530115",
+				RGH = "rbxassetid://128867098055600",
 			},
-			model = "rbxassetid://71086497350602",
+			model = "rbxassetid://130493559594820",
 			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
@@ -9545,13 +9545,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0408,
 			maps = {
-				ALB = "rbxassetid://86501614187659",
-				EMI = "rbxassetid://106785148715963",
-				MTL = "rbxassetid://132203170635260",
-				NOR = "rbxassetid://100758083872191",
-				RGH = "rbxassetid://108496604453959",
+				ALB = "rbxassetid://87867850715503",
+				EMI = "rbxassetid://123726647330071",
+				MTL = "rbxassetid://100125962222026",
+				NOR = "rbxassetid://112025789802121",
+				RGH = "rbxassetid://136061480802259",
 			},
-			model = "rbxassetid://98135151246830",
+			model = "rbxassetid://122317901865163",
 			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
@@ -16592,13 +16592,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0164,
 			maps = {
-				ALB = "rbxassetid://125275879407729",
-				EMI = "rbxassetid://106754842733428",
-				MTL = "rbxassetid://133586596025939",
-				NOR = "rbxassetid://93041177727670",
-				RGH = "rbxassetid://115177662086017",
+				ALB = "rbxassetid://119157781437213",
+				EMI = "rbxassetid://123868172156964",
+				MTL = "rbxassetid://120113248942472",
+				NOR = "rbxassetid://84190530179846",
+				RGH = "rbxassetid://137656300624774",
 			},
-			model = "rbxassetid://101679813309658",
+			model = "rbxassetid://124432634414379",
 			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
@@ -16700,13 +16700,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0236,
 			maps = {
-				ALB = "rbxassetid://101378742088105",
-				EMI = "rbxassetid://89255349533494",
-				MTL = "rbxassetid://87416613456115",
-				NOR = "rbxassetid://107891144050025",
-				RGH = "rbxassetid://107368780447008",
+				ALB = "rbxassetid://96644885839897",
+				EMI = "rbxassetid://77135516354742",
+				MTL = "rbxassetid://100614328163204",
+				NOR = "rbxassetid://95162189361937",
+				RGH = "rbxassetid://121212950410952",
 			},
-			model = "rbxassetid://104383099103433",
+			model = "rbxassetid://123722202156205",
 			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {
@@ -24561,13 +24561,13 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			},
 			glowShare = 0.0215,
 			maps = {
-				ALB = "rbxassetid://84578447676714",
-				EMI = "rbxassetid://121971178099689",
-				MTL = "rbxassetid://116803724892648",
-				NOR = "rbxassetid://127753282595960",
-				RGH = "rbxassetid://121770285147794",
+				ALB = "rbxassetid://71743349870783",
+				EMI = "rbxassetid://106789870274456",
+				MTL = "rbxassetid://137098355106012",
+				NOR = "rbxassetid://138565173413076",
+				RGH = "rbxassetid://107866708378611",
 			},
-			model = "rbxassetid://99856696148565",
+			model = "rbxassetid://87408562439605",
 			note = "new BAR mesh, waiting for the user's review",
 			pieces = {
 				base = {

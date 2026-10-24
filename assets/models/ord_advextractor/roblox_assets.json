@@ -1,7 +1,36 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "T2 structure at the S-104 size (queue item 5): 5950 triangles, glow share 2.4%",
+  "revision": "re-upload: a texture map failed to load (HTTP 502): 5950 triangles, glow share 2.4%",
   "bar": {
+    "model": "rbxassetid://123722202156205",
+    "meshes": {
+      "base": "rbxassetid://89298941105553",
+      "base_glow_power": "rbxassetid://131052845519818",
+      "base_glow_running": "rbxassetid://94599550699090",
+      "drillL": "rbxassetid://99655873364072",
+      "drillL_glow_power": "rbxassetid://100621038025980",
+      "drillL_glow_running": "rbxassetid://135914862806868",
+      "drillR": "rbxassetid://84815576837979",
+      "drillR_glow_power": "rbxassetid://87928791304039",
+      "drillR_glow_running": "rbxassetid://99342612486725"
+    },
+    "decals": {
+      "ALB": "rbxassetid://129168756209660",
+      "RGH": "rbxassetid://70564197332794",
+      "NOR": "rbxassetid://96139606745449",
+      "MTL": "rbxassetid://138255373844222",
+      "EMI": "rbxassetid://127851204124624"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://96644885839897",
+      "NOR": "rbxassetid://95162189361937",
+      "RGH": "rbxassetid://121212950410952",
+      "MTL": "rbxassetid://100614328163204",
+      "EMI": "rbxassetid://77135516354742"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_advextractor_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://104383099103433",
     "meshes": {
       "base": "rbxassetid://89298941105553",
@@ -28,6 +57,6 @@
       "MTL": "rbxassetid://87416613456115",
       "EMI": "rbxassetid://89255349533494"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_advextractor_bar in FTGG Art"
+    "note": "T2 structure at the S-104 size (queue item 5): 5950 triangles, glow share 2.4%"
   }
 }
