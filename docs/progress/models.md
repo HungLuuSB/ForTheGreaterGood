@@ -518,6 +518,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `05c4622` (Aegis launcher v2, six visible upright canisters, status `review`: mesh, wreck, blockout muzzle, manifest, MeshMaterials).
 - Ready to merge: `1a685cd` (removes the manifest's `shieldColumn` / `shieldWave`, their validators and spec, fx.md's superseded sections, and with `f899384` their frozen data; the client reads `shieldEnergy` since C-187).
 - Ready to merge: `7c71d43` (shield hits v3: 16-frame flipbook, `timing.hitLife` 0.42, the idle honeycomb off in fx.md and ShieldPreview; merge this tip, not `961fd00` alone: that commit dropped `hexGrid`, which the client spec still checks, so `hexGrid` stays for now).
+- Ready to merge: `aca7bfa` (removes `shieldEnergy.hexGrid`: the idle honeycomb is off and the client spec no longer checks it).
 
 ## Requests
 
