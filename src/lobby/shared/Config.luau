@@ -26,6 +26,7 @@ Config.FACTIONS = Match.FACTIONS
 Config.MAX_ALLY_TEAMS = Match.MAX_ALLY_TEAMS
 Config.MAX_TEAM_SIZE = Match.MAX_TEAM_SIZE
 Config.MAX_FFA = Match.MAX_FFA
+Config.MAX_SEATS = Match.MAX_PLAYERS -- who plays: humans and AI
 Config.COLORS = Match.COLORS
 
 Config.PRIVACY = table.freeze({ "public", "friends", "private" })

@@ -2,11 +2,23 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-24, the beta merge: new start rules and limits)
+
+- **sim-A's beta merge failed 3 lobby specs** after S-169 / S-171 raised the shared limits. Fixed on `m-lobby` with sim-A's `c06d3ca` merged in:
+  - **Room rules:** Teams 2 up to min(8, the map's starts) sides of any size, at most 16 players; free for all one player per start, up to 16. The map's starts cap the sides, not the players: 4 against 4 on a two-start map is allowed.
+  - **Config:** every player's `start` is `0` (picked in the match's pre-game, S-171).
+  - **Room UI:** the seat editor lists only the teams the map allows, and its colour grid has a third row for the 16 colours. The room's map markers no longer take player colours, since starts are hints.
+  - **Contract:** `docs/contracts/match.md` updated (start 0, the limits); still version 1.
+- **Checked in Studio:** The Plains (16 starts) is in the map list; a 4-against-4 Teams room on it, the seat editor with 8 teams and 16 colours (`lobby_room_plains_seat.jpg`), and a forced start whose config passed the shared check and launched.
+- **Not done yet (after the beta):** the automatic colours in the room (`TeamColors.forViewer`) and removing the colour picker; The Plains' skirmish note.
+- **Tests:** lobby specs 47 / 47; the lobby build check passes.
+- Ready to merge: `63ca504` (rooms to the new limits, start 0 for every player, seat editor for 8 teams and 16 colours, specs and contract; includes sim-A's `c06d3ca`; touches only `src/lobby`, the lobby docs and `docs/contracts/match.md`)
+
 ## Summary (2026-10-24, Settings on client-B's components; publishing)
 
 - **The Settings page uses client-B's settings body** (`Kit.options`, C-202): search, section tree, amber sub-section headers, hover help, children dimmed under a switched-off parent. Interface (scale; a pointer to the match's Settings) and Background (battle scene, camera follows the mouse). Still saved on the profile (L-16). Checked in Studio (`lobby_settings_options.jpg`, `lobby_settings_background.jpg`).
 - **Main merged** (`f508bfa`, main `1536c94`). The kit now needs client-B's `Core/OptionTree`, mounted read-only like the rest. Four new defs got roles in the Units tab: naval SAM platform (Pharos / Scylla), advanced rearm pad (Empyrean / Rookery).
-- **Found while publishing: EditableImage must be allowed** for the experience (Game Settings → Security). Without it a published place lets EditableImage be created but refuses the write: client-B's `Kit.panel` then stops the whole lobby client, and the map previews stay empty. You enabled it for FTGG Playtest; it's in the checklist (step 4) now. The lobby's map previews now fall back to the map's name; I asked client-B to guard the kit the same way (B-8).
+- **Found while publishing: EditableImage must be allowed** for the experience (Game Settings → Security). Without it a published place lets EditableImage be created but refuses the write: client-B's `Kit.panel` then stops the whole lobby client, and the map previews stay empty. You enabled it for FTGG Playtest; it's in the beta guide (step 5) now. The lobby's map previews now fall back to the map's name; I asked client-B to guard the kit the same way (B-8).
 - **Top bar:** the tabs are narrower, so "Settings" no longer runs into the player count on a 1548-pixel-wide window (`lobby_topbar_skirmish.jpg`). The room under client-B's new look: `lobby_room_newkit.jpg`.
 - **Published so far (by you):** the lobby is the start place of experience 10772730291 (place 109045403486391, "FTGG Testplace"), with "FTGG Match" (123800718230540) added. The lobby there was published before this summary's changes and before the Units tab's latest fixes: publish it again once the match place is in.
 - **Tests:** lobby specs 47 / 47; the lobby build check passes.
@@ -92,46 +104,68 @@ In "FTGG Lobby" only, from the repo root:
 
 Restart both after editing `lobby.project.json`; then reconnect the plugin.
 
-## Live playtest: "FTGG Playtest" (checklist for you)
+## Beta: publishing both places (guide for you)
 
-A new experience, owned by your account, with "FTGG Lobby" as its start place and the match place as its second place. Publish nothing from the old experience (89435699207932 stays your dev place).
+**The experience** (created 2026-10-24, owned by your account): id 10772730291.
+- Start place: the lobby, Studio window "FTGG Testplace", place 109045403486391.
+- Second place: "FTGG Match", place 123800718230540.
 
-### Before you start
+Both places exist; steps 1–4 bring them up to date, step 5 checks the settings, steps 6–7 prove it works before your friends join.
 
-- "FTGG Lobby.rbxl" open in Studio with Rojo connected on port 34874 (it is now, showing this branch). No playtest running.
-- The match place file prepared from main (sim-A: main `d6643d4`).
-- Your three testers' Roblox usernames. Below, **A** is you (the owner: only you see the servers' logs), **B**, **C**, **D** the testers.
+### 1. Wait for the green light
 
-### 1. Publish the lobby (this creates the experience)
+1. sim-A finishes the merge chain into `main`: my lobby (`c64caa7`), sim-A's start rules (`458b2d0`), and client-B's and models-C's queued work. sim-A sends you the final `main` commit.
+2. I merge that `main` into `m-lobby`, run the lobby specs, check the lobby in Studio, and tell you "lobby ready to publish". The lobby carries its own copy of the shared code (defs, maps, the config check), so it must hold the same `main` as the match place.
+3. client-B (or sim-A) tells you the match game is synced to that same commit (step 3).
 
-1. In "FTGG Lobby.rbxl": **File → Publish to Roblox As…**
-2. Choose **Create new experience**. Name: **FTGG Playtest**. Creator: **your account**. Devices: at least Computer.
-3. **Create.** The lobby is now the experience's start place.
+### 2. Publish the lobby
 
-### 2. Add the match place to the experience
+1. In Studio, open the lobby: the window "FTGG Testplace" (File → Open from Roblox → FTGG Playtest, if it's closed).
+2. Live sync running: in two terminals in `C:\Workspace\Projects\FTGG-lobby`:
+   - `lune run src/lobby/tools/sync serve`
+   - `rojo serve lobby.project.json` (port 34874)
+3. Rojo plugin in that window: port **34874** → **Connect**. Tell me, and I check that the synced code is the right version.
+4. No playtest running (Stop).
+5. **File → Publish to Roblox** (the window is already linked to place 109045403486391, so not "Publish As").
 
-1. Still in the lobby's Studio: **View → Asset Manager → Places**.
-2. Right-click the empty area → **Add New Place**.
-3. Right-click the new place → **Rename** → **FTGG Match**.
+### 3. Sync the match game to the same `main`
 
-### 3. Publish the match place into it
+The match place is the main game's place file (its maps, terrain and models live in the file) with `main`'s code synced in.
 
-1. Open the match place file in Studio. First **File → Save to File As…** "FTGG Match playtest.rbxl", and work in that copy, so your dev place stays linked to 89435699207932.
+- **Easiest:** ask client-B: "sync the match game window to main `<commit>` for the beta publish". B runs its usual sync and tells you when Studio shows that commit.
+- **If B isn't around,** ask sim-A to do the same from the integration worktree (`FTGG-integration`, on `main`). Don't run git or the sync there yourself: sim-A merges in that worktree, and a sync running during a merge would break it.
+- **Check before publishing:** the Rojo plugin in the match game's window says connected, and the window's Output shows no red errors after a quick Play / Stop.
+
+### 4. Publish the match place
+
+1. In the match game's window: **File → Save to File As…** "FTGG Match beta.rbxl". Studio continues in this copy, so your dev place 89435699207932 stays linked to the old experience.
 2. **File → Publish to Roblox As…** → experience **FTGG Playtest** → place **FTGG Match** → **Overwrite**.
-3. Nothing else to republish: a lobby server finds the match place when it starts.
+3. Next time (a later fix): open "FTGG Match beta.rbxl", sync, **File → Publish to Roblox**.
 
-### 4. Settings (Studio, File → Game Settings, in either place; Save)
+### 5. Settings (Studio, File → Game Settings, in either place's window; Save)
 
-1. **Places** tab → **⋯** on FTGG Match → **Configure Place** → Max players **16**.
-2. **Places** tab → **⋯** on FTGG Lobby → **Configure Place** → Max players **2 for this session** (Part A needs two lobby servers and you have four testers; you set **20** at the break, step A5).
-3. **Permissions** tab: Playability **Private**; Collaborators → add B, C and D with **Play**. You are the owner (the experience was created under your account).
-4. **Security** tab: allow **EditableImage** (the mesh / image API switch). Without it the lobby's menus fail to load in the published place (done for FTGG Playtest on 2026-10-24).
-5. Nothing else: teleports between places of one experience need no extra setting; the lobby uses its stand-ins in Studio either way.
-6. Check in the Creator Dashboard (create.roblox.com → Creations → FTGG Playtest → Places): FTGG Lobby (start place) and FTGG Match.
+1. **Places** tab:
+   - **⋯** on FTGG Match → **Configure Place** → Max players **16**.
+   - **⋯** on FTGG Testplace → **Configure Place** → Max players **20**. Use **2** only for Part A of the test plan below (two lobby servers with four testers); a plain friends' playtest can stay at 20.
+2. **Permissions** tab: Playability **Private**. Collaborators: add each friend's Roblox username with **Play**. You stay the owner.
+3. **Security** tab: EditableImage allowed (done 2026-10-24; without it the menus can't draw).
+4. If Roblox asks for the maturity questionnaire, fill it in.
+5. Creator Dashboard (create.roblox.com → Creations → FTGG Playtest → Places): FTGG Testplace is the start place, FTGG Match is the second.
 
-If Roblox asks for the maturity questionnaire before testers can join, fill it in.
+### 6. Fresh servers
 
-### 5. The 30-minute session
+Servers started before a publish keep the old code. Before anyone joins: Creator Dashboard → FTGG Playtest → **⋯** → **Shut down all servers** (or "Restart servers for updates").
+
+### 7. Smoke test alone (5 minutes, before your friends)
+
+1. Join from the Roblox app or website (Play on FTGG Playtest), not from Studio.
+2. The lobby loads: the battle behind the menu, "1 player online", no "STUDIO STAND-INS" tag.
+3. **F9 → Server**, filter `[Lobby]`. Look for `match place 123800718230540 (the experience's other place "FTGG Match")`, then `room list: memorystore`.
+4. Home → **Quick play**. The loading screen with key art, then the match place. The match plays: the pre-game where you pick your start, then the match against the AI.
+5. Finish it (or leave the match and rejoin the experience). You come back to the lobby, in your room with the results, and the match is on your Profile.
+6. If any step fails: screenshot F9 (Server and Client tabs) and send it to me; don't invite anyone yet.
+
+### 8. The 30-minute test plan (4 testers)
 
 **Reading the logs:** in the game press **F9 → Server**, type `[Lobby]` (in the match: `[Match]`) in the filter. Only A sees the Server tab.
 
@@ -143,7 +177,7 @@ If Roblox asks for the maturity questionnaire before testers can join, fill it i
 | 2-4 | **A2.** A: Multiplayer → Create room "Cross A", public. C and D open Multiplayer. C clicks "Cross A". | Within ~15 s C and D see "Cross A [other server]" and "1 room on 2 lobby servers". C's move fails because S1 is full: a short loading screen, then the toast "Couldn't move you to Cross A's lobby server (...)". C stays usable on S2. |
 | 4-6 | **A3.** B closes Roblox. C clicks "Cross A" again. | Loading screen "Moving to the room's lobby server...", then C is in Cross A with A. A's log: `C joined room XXXXX from server ...`. |
 | 6-8 | **A4.** D (alone on S2) creates a **private** room "Cross D" and reads its code aloud. A: Leave, type the code in "Room code", **Join by code**. | The private room never shows in anyone's browser. A moves to S2 and lands in Cross D. |
-| 8-9 | **A5.** A sets FTGG Lobby's Max players to **20** (step 4.2). Everyone closes Roblox. | Empty servers close; the next ones are 20-player servers. |
+| 8-9 | **A5.** A sets FTGG Testplace's Max players to **20** (step 5.1). Everyone closes Roblox. | Empty servers close; the next ones are 20-player servers. |
 
 **Part B: matches (9-28 min, lobby 20, match 16)**
 
@@ -156,7 +190,7 @@ If Roblox asks for the maturity questionnaire before testers can join, fill it i
 
 Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4) and DataStore budget pressure (10.7). Note it if either happens.
 
-### 6. What to send me afterwards
+### 9. What to send me afterwards
 
 - **Server logs:** screenshots of A's F9 → Server, filtered `[Lobby]`, after A3, A4, B1, B2 (the return) and B3 (the rebuild and "abandoned"); and filtered `[Match]` on the match server at each start.
 - **Room state:** screenshots of the Playtest room after each match (the results panel and the room behind it), and of C's and D's browser during A2.

@@ -3,6 +3,7 @@
 -- migration, kicks, the host's settings and AI, players' own choices,
 -- readiness and every start rule; requests from the wrong member refused.
 
+local Config = require("../shared/Config")
 local Rooms = require("../shared/Rooms")
 local RunAll = require("../../server/Tests/RunAll")
 
@@ -111,13 +112,13 @@ return function(t: RunAll.Context)
 		t.equal(r.settings.win, "ANNIHILATION")
 	end)
 
-	t.test("a map with fewer starts than seats is refused", function()
+	t.test("in free for all, a map with fewer starts than seats is refused", function()
 		local r = room()
 		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:quad" })
 		Rooms.apply(r, MAPS, HOST, { op = "addAi" })
 		Rooms.apply(r, MAPS, HOST, { op = "addAi" })
 		local err = Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:duel" })
-		t.expect(err and string.find(err, "2 starts"), err)
+		t.equal(err, "Duel seats 2 here: remove AI or players first")
 		t.equal(r.settings.mapId, "map:quad")
 	end)
 
@@ -126,7 +127,7 @@ return function(t: RunAll.Context)
 		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi", level = "hard", faction = "order" }), nil)
 		t.equal(r.slots[2].kind, "ai")
 		t.equal(r.slots[2].level, "hard")
-		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi" }), "No free start on this map")
+		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi" }), "No free seat on this map")
 		t.equal(Rooms.apply(r, MAPS, HOST, { op = "ai", index = 2, level = "insane" }), "Bad level")
 		t.equal(Rooms.apply(r, MAPS, HOST, { op = "ai", index = 1, level = "easy" }), "Not an AI slot")
 		t.equal(Rooms.apply(r, MAPS, HOST, { op = "ai", index = 2, level = "easy", faction = "chaos", team = 2 }), nil)
@@ -147,8 +148,8 @@ return function(t: RunAll.Context)
 		t.equal(r.slots[i].team, 2)
 		t.equal(r.slots[i].color, 5)
 		t.equal(Rooms.apply(r, MAPS, B, { op = "mine", faction = "neutral" }), "Bad faction")
-		t.equal(Rooms.apply(r, MAPS, B, { op = "mine", team = 5 }), "Bad team")
-		t.equal(Rooms.apply(r, MAPS, B, { op = "mine", color = 13 }), "Bad color")
+		t.equal(Rooms.apply(r, MAPS, B, { op = "mine", team = 9 }), "Bad team")
+		t.equal(Rooms.apply(r, MAPS, B, { op = "mine", color = #Config.COLORS + 1 }), "Bad color")
 		t.equal(Rooms.apply(r, MAPS, HOST, { op = "mine", color = 5 }), "That color is taken")
 		t.equal(Rooms.apply(r, MAPS, B, { op = "ai", index = 1, faction = "chaos" }), "Only the host can do that")
 	end)
@@ -157,7 +158,7 @@ return function(t: RunAll.Context)
 		local r = room()
 		Rooms.join(r, MAPS, B, "B", nil)
 		Rooms.join(r, MAPS, C, "C", nil)
-		t.equal(Rooms.apply(r, MAPS, C, { op = "play" }), "No free start on this map")
+		t.equal(Rooms.apply(r, MAPS, C, { op = "play" }), "No free seat on this map")
 		t.equal(Rooms.apply(r, MAPS, C, { op = "ready", value = true }), "Spectators don't ready up")
 		t.equal(Rooms.apply(r, MAPS, B, { op = "spectate" }), nil)
 		t.equal(Rooms.apply(r, MAPS, C, { op = "play" }), nil)
@@ -182,32 +183,49 @@ return function(t: RunAll.Context)
 		t.equal(Rooms.checkStart(r, MAPS, HOST, false), nil)
 	end)
 
-	t.test("Teams needs two teams, each up to four", function()
+	t.test("Teams: 2 sides up to the map's starts (at most 8), any size, 16 in all (S-169, S-171)", function()
 		local r = room()
-		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })
 		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mode", value = "TEAM" })
 		Rooms.apply(r, MAPS, HOST, { op = "mine", team = 1 })
 		Rooms.apply(r, MAPS, HOST, { op = "addAi" })
 		Rooms.apply(r, MAPS, HOST, { op = "ai", index = 2, team = 1 })
 		t.equal(Rooms.checkStart(r, MAPS, HOST, true), "Teams needs two teams or more")
-		for _ = 1, 4 do
-			Rooms.apply(r, MAPS, HOST, { op = "addAi" })
+		-- a two-start map seats more than two: sides are what the starts cap
+		for _ = 1, 6 do
+			t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi" }), nil)
 			Rooms.apply(r, MAPS, HOST, { op = "ai", index = #r.slots, team = 2 })
 		end
-		t.equal(Rooms.checkStart(r, MAPS, HOST, true), nil)
-		Rooms.apply(r, MAPS, HOST, { op = "addAi" })
-		Rooms.apply(r, MAPS, HOST, { op = "ai", index = #r.slots, team = 2 })
-		t.equal(Rooms.checkStart(r, MAPS, HOST, true), "Team 2 has 5 players (up to 4)")
-	end)
-
-	t.test("free for all seats up to eight, even on a bigger map", function()
-		local r = room()
-		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })
-		for _ = 1, 10 do
+		t.equal(#r.slots, 8)
+		t.equal(Rooms.checkStart(r, MAPS, HOST, true), nil, "4 against 4 on a duel map")
+		Rooms.apply(r, MAPS, HOST, { op = "ai", index = #r.slots, team = 3 })
+		t.equal(Rooms.checkStart(r, MAPS, HOST, true), "Duel has 2 starts: up to 2 teams")
+		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:quad" })
+		t.equal(Rooms.checkStart(r, MAPS, HOST, true), nil, "three sides on a four-start map")
+		for _ = 1, 20 do
 			Rooms.apply(r, MAPS, HOST, { op = "addAi" })
 		end
-		t.equal(#r.slots, 8)
+		t.equal(#r.slots, Config.MAX_SEATS)
+		t.equal(Rooms.apply(r, MAPS, HOST, { op = "addAi" }), "No free seat on this map")
+		-- back to free for all: one per start
+		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mode", value = "FFA" })
+		t.equal(Rooms.checkStart(r, MAPS, HOST, true), "Free for all on Quad is up to 4 players")
+	end)
+
+	t.test("free for all seats one player per start, up to 16", function()
+		local r = room()
+		Rooms.apply(r, MAPS, HOST, { op = "set", key = "mapId", value = "map:big" })
+		for _ = 1, 20 do
+			Rooms.apply(r, MAPS, HOST, { op = "addAi" })
+		end
+		t.equal(#r.slots, math.min(16, 16))
 		t.equal(Rooms.checkStart(r, MAPS, HOST, true), nil)
+		local q = room()
+		Rooms.apply(q, MAPS, HOST, { op = "set", key = "mapId", value = "map:quad" })
+		for _ = 1, 6 do
+			Rooms.apply(q, MAPS, HOST, { op = "addAi" })
+		end
+		t.equal(#q.slots, 4)
+		t.equal(Rooms.apply(q, MAPS, HOST, { op = "set", key = "mapId", value = "map:duel" }), "Duel seats 2 here: remove AI or players first")
 	end)
 
 	t.test("nothing changes while starting or in a match; away members keep seats", function()
