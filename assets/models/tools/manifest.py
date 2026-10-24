@@ -28,6 +28,38 @@ BEAM = json.load(open(os.path.join(ROOT, "assets", "fx", "beam", "roblox_assets.
 # the honeycomb shell over the shield dome (M-30, fx.md "Honeycomb shell")
 SHELL_DIR = os.path.join(ROOT, "assets", "fx", "shield", "honeycomb")
 SHELL_NOTE = "honeycomb shell bands, waiting for the user's review"
+# the shield's energy column and dome waves (the user's redesign 2026-10-24, fx.md "Energy column", "Dome waves")
+WAVES_DIR = os.path.join(ROOT, "assets", "fx", "shield", "waves")
+WAVES_NOTE = "shield energy column and dome waves, waiting for the user's review"
+# the reference look (FTGG Art, Workspace.ShieldWaveReference); widths and texture lengths are fractions of the dome radius R
+SHIELD_COLUMN = {
+    "core": {"width0": 0.02, "width1": 0.014, "textureSpeed": 2.5, "textureLength": 0.1, "lightEmission": 1, "brightness": 6, "transparency": 0},
+    "swirl": {"width0": 0.08, "width1": 0.06, "textureSpeed": 7, "textureLength": 0.14, "lightEmission": 1, "brightness": 4, "transparency": 0},
+    "glow": {"width0": 0.16, "width1": 0.12, "textureSpeed": 0.6, "textureLength": 0.25, "lightEmission": 1, "brightness": 2.5, "transparency": 0.35},
+    "weakest": 0.2,  # the widths' factor at the lowest strength (they scale linearly to 1 at full strength)
+    "deploy": {"shoot": 0.4, "thicken": 0.6},  # seconds: the core shoots up, then the swirl and glow widen to full
+    "collapse": {"pinch": 0.35, "flash": 0.15},  # seconds: everything narrows to a thread, then one bright flash and gone
+}
+SHIELD_WAVES = {"waves": 3, "seconds": 4.5, "opacity": 0.9}  # at once; top to rim at full strength; peak opacity
+
+
+def shield_waves():
+    rig = load(os.path.join(WAVES_DIR, "export", "waves.json"))
+    ids = load(os.path.join(WAVES_DIR, "roblox_assets.json"))
+    tex = ids["textures"]
+    wave = {"status": "approved" if "shieldWave" in APPROVED else "review", "texture": tex["wave"], "radius": rig["radius"],
+            "width": rig["width"], **SHIELD_WAVES,
+            "bands": [{"name": b["name"], "mesh": ids["meshes"][b["name"]], "centre": b["centre"], "theta": b["theta"],
+                       "center": b["center"], "size": b["size"]} for b in rig["bands"]]}
+    column = {"status": "approved" if "shieldColumn" in APPROVED else "review", **{k: v for k, v in SHIELD_COLUMN.items()}}
+    for layer in ("core", "swirl", "glow"):
+        column[layer] = {"texture": tex[f"column_{layer}"], **SHIELD_COLUMN[layer]}
+    for e in (wave, column):
+        if e["status"] == "review":
+            e["note"] = WAVES_NOTE
+    return wave, column
+
+
 # key art with parallax layers (lobby contract docs/contracts/key-art.md, L-13): assets/keyart/keyart.json
 # lists the arts; each one's tiles are in assets/keyart/<dir>/final/opencloud.json once uploaded
 KEYART_DIR = os.path.join(ROOT, "assets", "keyart")
@@ -278,7 +310,9 @@ def main():
                         "center": b["center"], "size": b["size"]} for b in rig["bands"]]}
     if shell["status"] == "review":
         shell["note"] = SHELL_NOTE
-    body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell, "keyArt": key_arts()}, 0)
+    wave, column = shield_waves()
+    body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell, "shieldWave": wave, "shieldColumn": column,
+                "keyArt": key_arts()}, 0)
     text = f"""--!strict
 -- Mesh manifest (M-23, docs/contracts/rig.md section 7): every BAR-style mesh
 -- by unit def ID, with its asset IDs, rig, team pieces and glow parts.
@@ -333,6 +367,44 @@ export type ShieldShell = {{
 	bands: {{ {{ name: string, mesh: string, opacity: number, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
 }}
 
+-- the shield's dome waves (fx.md "Dome waves"): bands of the dome, centres
+-- evenly spaced from the top (0 degrees) to the rim (90), each spanning two
+-- spacings; centre and size at dome radius 1. A wave between two centres
+-- shows both bands weighted (1 - f, f).
+export type ShieldWave = {{
+	status: string,
+	note: string?,
+	texture: string,
+	radius: number,
+	width: number,
+	waves: number,
+	seconds: number,
+	opacity: number,
+	bands: {{ {{ name: string, mesh: string, centre: number, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
+}}
+-- the shield's energy column (fx.md "Energy column"): three Beams from the
+-- generator's `beam` attachment to the dome's top; widths and texture
+-- lengths are fractions of the dome radius
+export type ColumnLayer = {{
+	texture: string,
+	width0: number,
+	width1: number,
+	textureSpeed: number,
+	textureLength: number,
+	lightEmission: number,
+	brightness: number,
+	transparency: number,
+}}
+export type ShieldColumn = {{
+	status: string,
+	note: string?,
+	core: ColumnLayer,
+	swirl: ColumnLayer,
+	glow: ColumnLayer,
+	weakest: number,
+	deploy: {{ shoot: number, thicken: number }},
+	collapse: {{ pinch: number, flash: number }},
+}}
 -- key art with parallax layers (lobby contract key-art.md, L-13): layers back
 -- to front, each cut into tiles (columns, rows) listed row by row from the top left
 export type KeyArt = {{
@@ -343,7 +415,7 @@ export type KeyArt = {{
 	layers: {{ {{ name: string, depth: number, images: {{ string }} }} }},
 }}
 
-local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell, keyArt: {{ [string]: KeyArt }} }} = {{
+local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell, shieldWave: ShieldWave, shieldColumn: ShieldColumn, keyArt: {{ [string]: KeyArt }} }} = {{
 	glowMask = "{GLOW_MASK}",
 	textures = {lua(TEXTURES, 1)},
 {body[2:-2]}
