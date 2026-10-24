@@ -2305,3 +2305,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The Beamer's first hit is ~10, halfway after 2 s, 50 from 4 s. It switches after its target dies, about 0.5 s later, low again.
   - Gauntlet and Talos hit a still tank near their range, aiming above 45°.
   - Bulwark fires both weapons and starts on.
+
+## S-158 — Own units off camera: OWN_STATUS (the user's approval, next.md item 4) (2026-10-24)
+
+- **Asked:** strategic records carry only cell, icon, team and flags, so the owner's units off camera kept their last health, build progress and factory queue (B's question). The user approved a slim owner-only record, sent on change and capped per tick.
+- **Wire (protocol 34):** event `OWN_STATUS 26`: `unitId u16, health u8, build u8, queueHead u16, queueProgress u8, queueCount u8`, 9 bytes. Health as ENTER's (u8 of max, rounded up), the queue head a unit def index (0 = none), its progress 0..255.
+- **When:** for the player's own units outside its tactical tier, when one of the values changed since the client last had it. The head's progress counts by sixteenths (`Stockpile.WIRE_STEPS`), like the owner's queue field, so a factory off camera sends 16 a build. At a unit's LEAVE the server notes its status (the client has it then), so leaving doesn't resend. On join every own unit off camera is sent.
+- **Cap:** `NetOut.OWN_STATUS_MAX` = 24 per player per tick (216 bytes, at most ~3.2 KB/s). Past the cap the next tick starts where this one stopped (a round-robin cursor over the world's ID list), so no unit waits forever.
+- **Cost:** one pass over the world's units per player per tick, with a signature per own off-camera unit (no strings, no tables unless one is sent).
+- **Why an event, not a strategic field:** strategic records go to everyone with fog applied and every 5th tick; this is owner-only, rare and reliable, like IDLE.
+- **Tests:** `Schema.spec` golden bytes; `NetOut.spec` "OWN_STATUS": owner only, nothing when nothing changed, health and queue changes arrive, leaving the tier doesn't resend, the cap holds and the rest arrive on the next ticks, a late join gets all of them.
