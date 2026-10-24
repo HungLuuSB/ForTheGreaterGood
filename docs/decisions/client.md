@@ -1640,3 +1640,9 @@ Existing calls are unchanged.
 
 **Why:** the user: "The hit patches are too much; ask models-C for smaller or dimmer ones."
 
+### C-189 — No honeycomb over the shield dome; cells only where a shot hits (2026-10-24)
+
+**Decision:** the v4 dome no longer shows models-C's `hexGrid` (Neon at 0.92 when up, fx.md); the client doesn't load or make it. Hex cells now appear only in the hit patches (C-188). Studio: `debug_out/screens/c189_shield_no_honeycomb.jpg`.
+
+**Why:** the user: "turn off the honeycomb the shield, it should only be activate for the patch reflect shot on hit".
+
