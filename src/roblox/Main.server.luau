@@ -84,6 +84,7 @@ end
 -- keys through SimSpeed requests, honored in Studio only.
 local SPEEDS = { 0, 0.1, 0.25, 0.5, 1, 2, 4 }
 local speed = Config.speed or 1
+local cheatSpeed: number? = nil -- the last /speed the sim took (S-102; it never reads it itself)
 remotes:SetAttribute("SimSpeed", speed)
 local speedRemote = Instance.new("RemoteEvent")
 speedRemote.Name = "SimSpeed"
@@ -528,6 +529,10 @@ local function startMatch()
 			end
 		end
 	end
+	-- the profile's speed until a /speed: the sim's own default (1) isn't a request (C-204)
+	speed = Config.speed or 1
+	cheatSpeed = sim.cheats and sim.cheats.speed
+	remotes:SetAttribute("SimSpeed", speed)
 	-- warns when a live tick runs over guide 18.1's budget, and sums up each minute (S-140)
 	dog = Watchdog.new(sim)
 	-- the profile's extra units (MatchConfig `spawns`), optionally tougher for tests
@@ -1027,7 +1032,6 @@ if RunService:IsStudio() then
 end
 
 local acc = 0
-local cheatSpeed: number? = nil -- the last /speed the sim took (S-102; it never reads it itself)
 local stepTime, peak, steps = 0, 0, 0
 local reportAt = os.clock() + 10
 

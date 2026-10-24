@@ -171,7 +171,7 @@ local PROFILES = {
 		restartAfter = nil,
 	},
 	-- the watchdog run (S-140, sim-A's request, C-204): four Hard AI in a
-	-- free-for-all on Twin Lakes with a strong income each, at double speed,
+	-- free-for-all on Twin Lakes with a strong income each, at 4x speed,
 	-- so unit counts reach the hundreds; you watch as a spectator
 	watchdog = {
 		seed = 13,
@@ -180,8 +180,7 @@ local PROFILES = {
 		players = { { id = 1, team = 1, allyTeam = 1 }, { id = 2, team = 2, allyTeam = 2 }, { id = 3, team = 3, allyTeam = 3 }, { id = 4, team = 4, allyTeam = 4 } },
 		humanSlots = {},
 		match = { mode = "FFA", win = "COMMAND_ENDS", ai = { [1] = "hard", [2] = "hard", [3] = "hard", [4] = "hard" }, friendlyFire = true, cheats = true },
-		startCheats = { { 1, "income all 40" }, { 2, "income all 40" }, { 3, "income all 40" }, { 4, "income all 40" } },
-		speed = 2,
+		startCheats = { { 1, "income all 100" }, { 2, "income all 100" }, { 3, "income all 100" }, { 4, "income all 100" }, { 1, "speed 4" } },
 		demoOrders = false,
 		restartAfter = nil,
 	},
