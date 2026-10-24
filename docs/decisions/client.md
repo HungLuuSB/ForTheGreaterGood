@@ -1593,3 +1593,11 @@ Existing calls are unchanged.
 
 **Why:** the user saw the parallax stutter in the lobby; the match's loading screen uses the same viewer.
 
+### C-185 — A projectile destroyed on a shield dome bursts there with its explosion (2026-10-24)
+
+**Decision:** on SHIELD_HIT with ABSORBED (S-85, S-93: every shell reaching an up dome is destroyed at its surface), the client now bursts the projectile's own impact effect there: its weapon's impact size, facing along its flight, and timed where its drawn path meets the honeycomb (C-99). Before, it was dropped with no burst and only the honeycomb lit up. Hitscan rounds stopped by a dome still show no burst, as on units; beams keep their glance (C-129).
+- ShieldWire.spec: every autocannon round absorbed explodes on the shell (r = 120 ± 4), none inside.
+- Studio (the Canyon): three Locusts on a Phalanx's dome, 55 rounds absorbed, an explosion on the honeycomb at each. `debug_out/screens/c185_shield_absorb_bursts.jpg`.
+
+**Why:** the user: "Absorbed/Impact of projectiles on the shield honeycomb trigger their explosion vfx". This replaces S-85's "no burst" on the client.
+
