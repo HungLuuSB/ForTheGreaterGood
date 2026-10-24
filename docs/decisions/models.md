@@ -291,3 +291,14 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 - `shieldColumn` / `shieldWave` were removed from the manifest (and `assets/fx/shield/waves/legacy_v2/`) once clients-B's `ShieldFx` moved to `shieldEnergy` (C-187).
 
 **Why:** the user's v3 review: the apex flare was too big, the streaks looked like rain, the waves were missing, and the dome scaled up instead of forming from the apex. Their mock-up (`assets/reference/shield/shield_demo.html`) set the timings and shapes.
+
+### M-35 — Baked map ground: heightfield tiles, wavy type borders, butte strata (2026-10-24)
+
+**Decision:** the named maps' ground (C-167, `docs/contracts/map-ground.md`) is baked by `assets/maps/tools/ground.py` (Blender) from `lune run export_ground`:
+- **Tiles** are the height samples exactly (every 4 studs), 256-stud tiles split by ground type, world-space UVs (32 studs a repeat), normals from the whole field so tiles and types join without a shading seam.
+- **Ground-type borders are smooth wavy lines, not the cell grid.** Each type's cells are spread to the samples, blurred (6 studs) and stirred with noise; triangles are clipped along the line where two types' weights cross. The surface is unchanged (the cut points lie on the triangles), only the seam moves off the cell edges. Types on fewer than 0.5% of the cells (the Canyon's `ground` under the deposits, which the deposit models cover) join their neighbours.
+- **Rock detail (the Canyon):** each mesa keeps its real slope's lower part as a talus apron (tile surface plus boulders); above a wandering talus line, a sheer fluted cliff of 2–3 strata tiers with setbacks and broken ledges rises to a caprock lip that sinks into the mesa top. Every part is traced up the real slope and stands on or above the drawn surface. Walls use `cliff` (u along the cliff, v = height / 32, so strata line up across mesas); ledges, lips and boulders `redrock`.
+- **Textures** are generated (`assets/maps/tools/textures.py`, periodic noise, Worley slabs, ripples on integer wave vectors) so nothing large repeats visibly every 32 studs.
+- **Files:** `ground.json` (input) and the rig `export/ground.json` and `roblox_assets.json` are committed; the FBX parts are rebuilt from them and gitignored.
+
+**Why:** the cell staircase between sand and rock read as pixel art from the game camera, and the sim's 40–56° mesa slopes, drawn as they are, read as mounds, not canyon country. Strata walls and buttes give the Canyon its silhouette without changing where anything stands.

@@ -91,6 +91,40 @@ def key_arts():
             for v in images[name]:
                 assert v.startswith("rbxassetid://"), (art, name, v)
     return out
+# baked map ground (C-167, docs/contracts/map-ground.md): assets/maps/<name>/export/ground.json
+# (the bake) and assets/maps/<name>/roblox_assets.json (mesh IDs); textures per ground material
+# in assets/maps/materials/roblox_assets.json. Maps the user approved:
+GROUND_APPROVED = set()
+GROUND_NOTE = "baked ground, waiting for the user's review (Studio: Invoke(\"groundanyway\", true))"
+MAPS_DIR = os.path.join(ROOT, "assets", "maps")
+
+
+def grounds():
+    out, used = {}, set()
+    for name in sorted(os.listdir(MAPS_DIR)):
+        rig_p = os.path.join(MAPS_DIR, name, "export", "ground.json")
+        ids_p = os.path.join(MAPS_DIR, name, "roblox_assets.json")
+        if not (os.path.isfile(rig_p) and os.path.isfile(ids_p)):
+            continue
+        rig, ids = load(rig_p), load(ids_p)["meshes"]
+        e = {"status": "approved" if name in GROUND_APPROVED else "review", "tiles": [], "details": []}
+        for m in rig["meshes"]:
+            e[m["kind"]].append({"mesh": ids[m["name"]], "center": m["center"], "size": m["size"],
+                                 "material": m["material"]})
+            used.add(m["material"])
+        if e["status"] == "review":
+            e["note"] = GROUND_NOTE
+        out[name] = e
+    mats = load(os.path.join(MAPS_DIR, "materials", "roblox_assets.json")) if out else {}
+    materials = {}
+    for key in sorted(used):
+        maps = mats[key]["maps"]
+        for k in ("ALB", "NOR", "RGH", "MTL"):
+            assert maps[k].startswith("rbxassetid://"), (key, k)
+        materials[key] = {"maps": {k: maps[k] for k in ("ALB", "NOR", "RGH", "MTL")}}
+    return out, materials
+
+
 BEAM_NOTE = "beam shot textures and recommended values (fx.md \"Beam shot\"), waiting for the user's review"
 
 # The user's approvals: only these are "approved" (the game draws them);
@@ -327,8 +361,9 @@ def main():
                         "center": b["center"], "size": b["size"]} for b in rig["bands"]]}
     if shell["status"] == "review":
         shell["note"] = SHELL_NOTE
+    ground, ground_materials = grounds()
     body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell, "shieldEnergy": shield_energy(),
-                "keyArt": key_arts()}, 0)
+                "keyArt": key_arts(), "ground": ground, "groundMaterials": ground_materials}, 0)
     text = f"""--!strict
 -- Mesh manifest (M-23, docs/contracts/rig.md section 7): every BAR-style mesh
 -- by unit def ID, with its asset IDs, rig, team pieces and glow parts.
@@ -420,7 +455,12 @@ export type KeyArt = {{
 	layers: {{ {{ name: string, depth: number, images: {{ string }} }} }},
 }}
 
-local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell, shieldEnergy: ShieldEnergy, keyArt: {{ [string]: KeyArt }} }} = {{
+-- baked map ground (C-167, map-ground.md): world-space tiles and rock detail per
+-- map name, one material per mesh; the client turns each 180° about Y as the units
+export type GroundPiece = {{ mesh: string, center: Vec3, size: Vec3, material: string }}
+export type Ground = {{ status: string, note: string?, tiles: {{ GroundPiece }}, details: {{ GroundPiece }} }}
+
+local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell, shieldEnergy: ShieldEnergy, keyArt: {{ [string]: KeyArt }}, ground: {{ [string]: Ground }}, groundMaterials: {{ [string]: {{ maps: {{ [string]: string }} }} }} }} = {{
 	glowMask = "{GLOW_MASK}",
 	textures = {lua(TEXTURES, 1)},
 {body[2:-2]}
