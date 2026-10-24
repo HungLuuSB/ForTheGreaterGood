@@ -250,7 +250,8 @@ function ShieldEnergy.new(folder: Folder, holder: BasePart, base: Vector3, R: nu
 			local d = Instance.new("Decal")
 			d.Face = Enum.NormalId.Top
 			d.Texture = tx.hit[1]
-			d.Color3 = Color3.new(tint.R * 3, tint.G * 3, tint.B * 3)
+			local glow = S.hitGlow or 3 -- sizes.hitGlow (C-188: 1.6, the user found 3 too much)
+			d.Color3 = Color3.new(tint.R * glow, tint.G * glow, tint.B * glow)
 			d.Transparency = 1
 			d.Parent = h
 			hits[k] = d

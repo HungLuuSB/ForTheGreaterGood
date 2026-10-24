@@ -1634,3 +1634,9 @@ Existing calls are unchanged.
 
 **Why:** the user approved v4 and asked for it in ShieldFx, through models-C.
 
+### C-188 — Smaller, dimmer shield hit patches (2026-10-24)
+
+**Decision:** the hit decal's glow is `tint × sizes.hitGlow` (models-C's new value, 1.6; 3 until it reaches main) instead of a fixed × 3. models-C's smaller `hitCap` (half-angle 0.28, from 0.46) and new flipbook come through the manifest with no client change.
+
+**Why:** the user: "The hit patches are too much; ask models-C for smaller or dimmer ones."
+
