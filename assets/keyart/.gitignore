@@ -1,0 +1,6 @@
+# Render intermediates: the linear layer cache (re-render with --only), test runs,
+# the superseded daytime previews, Python caches.
+*/final/linear/
+*/test/
+*_preview/
+__pycache__/

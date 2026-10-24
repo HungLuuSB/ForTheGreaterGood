@@ -15,6 +15,8 @@ Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lob
 - **Tests:** `lune run src/lobby/tools/test`: 32 tests in 4 specs pass. The lobby build check passes (`lune run src/lobby/tools/sync build`).
 - **No Discord post:** the notify tool isn't in main (sim-A removed it at your request).
 - Ready to merge: `18d894a` (lobby server, shared logic, specs, tooling; touches only `src/lobby`, `lobby.project.json`)
+- Ready to merge: `78c2c4d` (pause the 3D battle behind opaque key art)
+- Ready to merge: `27b4ce0` (one key-art viewer: client-B's `UI/KeyArt` mounted read-only; includes a merge of main)
 - Ready to merge: `84dc557` (background with the real meshes, brighter and closer; 1v1 naming; segmented skirmish options; checked in Studio)
 - Ready to merge: `673427d` (the lobby uses `@shared/Match/MatchConfig`; includes a merge of main)
 - Ready to merge: `22f73db` (layered key art with parallax for the loading screens, L-13, `docs/contracts/key-art.md`)
@@ -75,11 +77,13 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 - **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
 - **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
 
+- **B-6. Key-art viewer stutter (2026-10-24, the user approved; sent):** UDim2 offsets are whole pixels, so `UI/KeyArt` moved its layers in 1 px jumps. Move them by scale instead (fractional), give tiles a 1 px overlap and a 0.001° rotation (sub-pixel drawing). Tested live: smooth, 60 fps.
+
 ### For models-C (models session)
 
 - **C-1. Key art with parallax layers (2026-10-23, the user):** 3 key arts per `docs/contracts/key-art.md`:
-  1. a dusk land battle with ships firing on the far sea;
-  2. a SAM site under air attack at night;
+  1. "Commander's stand", a dusk land battle with ships on the far sea: **approved by you, rendered (m-models 37cfb7a), waiting for your upload approval**;
+  2. a SAM site under air attack, at dusk (your style guide);
   3. a beach assault.
 
   Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed.
@@ -95,7 +99,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
 | Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
-| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only); waiting for C's art |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only). Art 2 "Volley" checked in Studio (`lobby_keyart_volley_*.jpg`); the stutter fix waits on B-6. The battle pauses behind the art |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue
