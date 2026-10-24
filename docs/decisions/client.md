@@ -1784,3 +1784,14 @@ Existing calls are unchanged.
 The watchdog's WARN / INFO lines (S-140) stay on.
 
 **Why:** the user's queue item 2: about four players will try the flow soon, and the console has to show where it breaks.
+
+### C-202 — Settings in BAR's layout; the pieces in the Kit (2026-10-24)
+
+**Decision:** the settings menu follows the user's BAR references 4–5, built from new Kit pieces the lobby can reuse:
+- `Core/OptionTree` (pure, OptionTree.spec): sections → sub-sections → option rows; which rows show for a view: the chosen section's, or with a search every match from every section (all words, in label, help, keywords, section and sub-section names; folds and Advanced ignored); "Advanced" rows only with Advanced on; a folded parent hides its children unless Unfold all; children dimmed while an ancestor is off; a sub-section header shows when any of its rows does; the active sub-section for a scroll position.
+- Kit: `Kit.search` (dark box, magnifier), `Kit.header` (amber on a lighter band, amber underline), `Kit.fold` (▾ / ▸), `Kit.treeNav` (sections with the pill; the chosen one's sub-sections under it, an amber bar on the one in view; a click scrolls to it), `Kit.helpFooter` (hovered option's name, help text, faint hint bottom right), and `Kit.options(panel, sections)`: a whole searchable body in a `Kit.panel` made without nav (search box across the top beside the title, Unfold all / Advanced switches top right, rows indented 20 px per level under fold arrows, controls right-aligned, a veil over a dimmed row's controls that lets clicks through).
+- Kit look changes (all users, the lobby included): square slider knob (12×16) on a dark track; toggle corners squarer; dropdowns a dark box (`Kit.COLOR.box`); an open dropdown lifts its ancestors' ZIndex so its list draws over the rows after it.
+- The menu: Graphics (Quality, with its caps as folded child rows · Models · Lighting), Interface (Scale · Building · Developer, Advanced), Control (Camera; zoom step Advanced), Keys (one sub-section per key group, Reset, the fixed-key tables), Audio. 940 × 620, fixed; the page scrolls. Every row has help text for the footer.
+- Not yet seen in Studio (no Studio connected on 2026-10-24); screenshots follow at the next Studio slot.
+
+**Why:** the user's queue item 3, with the pieces in the Kit for the lobby stream (D).
