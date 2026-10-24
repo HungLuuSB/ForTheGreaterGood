@@ -19,6 +19,7 @@
 -- Sizes are in pixels before the settings' UI scale (a UIScale on the gui).
 
 local AssetService = game:GetService("AssetService")
+local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
@@ -279,7 +280,10 @@ function Kit.panel(parent: Instance, title: string, size: Vector2, nav: { string
 		local gui = root:FindFirstAncestorOfClass("ScreenGui")
 		local uiScale = gui and gui:FindFirstChild("SettingsScale")
 		local k = if uiScale and uiScale:IsA("UIScale") then uiScale.Scale else 1
-		root.Size = UDim2.fromOffset(math.min(wanted.X, vp.X / k - 24), math.min(wanted.Y, vp.Y / k - 24))
+		-- clear of Roblox's top bar when the gui draws under it (C-202)
+		local inset = if gui and gui.IgnoreGuiInset then GuiService:GetGuiInset().Y else 0
+		root.Size = UDim2.fromOffset(math.min(wanted.X, vp.X / k - 24), math.min(wanted.Y, (vp.Y - inset) / k - 24))
+		root.Position = UDim2.new(0.5, 0, 0.5, inset / 2 / k)
 	end
 	fit()
 	scrim.Visible = root.Visible
@@ -758,15 +762,17 @@ function Kit.dropdown(parent: Instance, options: { { string } }, value: string, 
 			onChange(o[1])
 		end)
 	end
-	-- the open list draws over the rows after it: with Sibling z-order each
-	-- ancestor is lifted over its siblings while it's open (C-202)
+	-- the open list draws over the rows after it: its ZIndex does that in a
+	-- Global-order gui; in a Sibling-order one each ancestor is lifted over
+	-- its siblings while it's open (C-202)
 	local lifted: { { GuiObject | number } } = {}
 	list:GetPropertyChangedSignal("Visible"):Connect(function()
 		for _, e in lifted do
 			(e[1] :: GuiObject).ZIndex = e[2] :: number
 		end
 		table.clear(lifted)
-		if list.Visible then
+		local gui = b:FindFirstAncestorWhichIsA("LayerCollector")
+		if list.Visible and gui and gui.ZIndexBehavior == Enum.ZIndexBehavior.Sibling then
 			local a: Instance? = b
 			while a and a:IsA("GuiObject") do
 				table.insert(lifted, { a, a.ZIndex })
@@ -912,13 +918,6 @@ local function chevron(parent: Instance, color: Color3?): Frame
 		bar.Parent = f
 	end
 	return f
-end
-
--- The UIScale over a gui object (the settings' UI scale), 1 without one.
-local function scaleOf(g: Instance): number
-	local gui = g:FindFirstAncestorOfClass("ScreenGui")
-	local s = gui and gui:FindFirstChild("SettingsScale")
-	return if s and s:IsA("UIScale") then s.Scale else 1
 end
 
 -- A search box: a dark box with a magnifier; `onChange(text)` on every edit.
@@ -1399,14 +1398,13 @@ function Kit.options(panel: Panel, sections: { OptionSection }): Options
 		end
 		return out
 	end
-	-- the header offsets in the canvas (unscaled), visible ones only
+	-- the header offsets in the canvas (screen pixels, as CanvasPosition), visible ones only
 	local function headerYs(): { { key: string, y: number } }
 		local out = {}
-		local k = scaleOf(scroll)
 		for _, h in headerOrder do
 			local f = headers[h.key]
 			if f.Visible then
-				table.insert(out, { key = h.key, y = (f.AbsolutePosition.Y - scroll.AbsolutePosition.Y) / k + scroll.CanvasPosition.Y })
+				table.insert(out, { key = h.key, y = f.AbsolutePosition.Y - scroll.AbsolutePosition.Y + scroll.CanvasPosition.Y })
 			end
 		end
 		return out
