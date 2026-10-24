@@ -1,8 +1,9 @@
 --!strict
 -- The cheat command line (C-119, BAR's /cheat): Enter or "/" opens a UI-kit
 -- bar at the bottom centre; typing shows suggestions (Core/CheatInput:
--- commands, then unit ids or names after "give"; Tab or a click takes the
--- first / that one); Enter sends, Escape closes. Up / Down cycle the
+-- commands, then unit ids, names or aliases after "give", then each
+-- command's choices; Tab or a click takes the first / that one, and Tab
+-- again cycles to the next, C-194); Enter sends, Escape closes. Up / Down cycle the
 -- suggestions while some show (Tab or Enter then takes the highlighted
 -- one, C-126), else walk the history. Lines and the server's results print in a log above the bar,
 -- fading after a while. Ctrl+Shift+G repeats the last give at the cursor.
@@ -38,6 +39,7 @@ export type UI = {
 	defs: any,
 	suggestions: { CheatInput.Suggestion },
 	pick: number, -- the suggestion Up / Down highlighted (0: none; Tab takes the first)
+	cycle: { list: { CheatInput.Suggestion }, at: number, text: string }?, -- Tab's choices while it cycles (C-194)
 	sent: boolean, -- this line went already (Return seen before FocusLost)
 }
 
@@ -235,14 +237,33 @@ function CheatConsole.new(defs: any, submit: (string) -> ()): UI
 	sc.Parent = suggest
 	Kit.pad(suggest, 4)
 	Kit.list(suggest, 0)
-	local ui: UI = { gui = gui, bar = bar, box = box, suggest = suggest, log = log, logRoom = 1000, lines = {}, history = {}, historyAt = 1, lastGive = nil, submit = submit, defs = defs, suggestions = {}, pick = 0, sent = false }
+	local ui: UI = { gui = gui, bar = bar, box = box, suggest = suggest, log = log, logRoom = 1000, lines = {}, history = {}, historyAt = 1, lastGive = nil, submit = submit, defs = defs, suggestions = {}, pick = 0, sent = false, cycle = nil }
 	box:GetPropertyChangedSignal("Text"):Connect(function()
-		-- Tab completes: Roblox types a tab character into the box
+		-- Tab completes: Roblox types a tab character into the box. Pressed
+		-- again on what it completed, it takes the next choice (C-194).
 		if string.find(box.Text, "\t", 1, true) then
-			local first = ui.suggestions[math.max(ui.pick, 1)]
-			box.Text = if first then first.text else string.gsub(box.Text, "\t", "")
+			local typed = string.gsub(box.Text, "\t", "")
+			local c = ui.cycle
+			if c and typed == c.text and #c.list > 1 then
+				c.at = c.at % #c.list + 1
+			elseif #ui.suggestions > 0 then
+				c = { list = table.clone(ui.suggestions), at = math.max(ui.pick, 1), text = "" }
+				ui.cycle = c
+			else
+				c = nil
+				ui.cycle = nil
+			end
+			if c then
+				c.text = c.list[c.at].text
+				box.Text = c.text
+			else
+				box.Text = typed
+			end
 			box.CursorPosition = #box.Text + 1
 			return
+		end
+		if ui.cycle and box.Text ~= ui.cycle.text then
+			ui.cycle = nil -- typing ends a Tab cycle
 		end
 		suggestionRows(ui)
 	end)

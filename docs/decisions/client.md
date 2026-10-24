@@ -1709,3 +1709,13 @@ Existing calls are unchanged.
 
 **Waiting on sim-A:** shields honouring On / Off (and starting on); building over mobile units (then the client drops its "units in the way" check); in-range attacks and builds without moving; scouts' range halved; resource priority.
 
+### C-194 — Command line: Tab cycles choices; units by alias (2026-10-24)
+
+**Decision:**
+- **Tab:** the first Tab takes the first suggestion; each further Tab on what it completed takes the next one, wrapping; typing ends the cycle (`UI/CheatConsole`).
+- **Choices for every command,** word by word (`CheatInput.CHOICES`): on / off (reveal, god, instabuild, cheat); supply / power / all, then amounts (res, income); selected, a team or at (kill); teams, then pause / resume (ai); speeds; counts after a unit.
+- **Unit aliases** (`CheatInput.aliases` / `resolve`), from each unit's icon-sheet type with the faction's prefix, in full and short (generic last words like site, generator and tower dropped): `ord_shield` and `ord_shield-generator` name the Phalanx, `chs_ir-sam` the Chaos IR SAM site; the type alone names both factions' (Tab cycles them). Display names work as before. A give sends the id when the word names exactly one unit; suggestions match aliases and show the type ("Phalanx (ord_phalanx) - Shield Generator"). /help mentions both.
+- CheatInput.spec covers the aliases, the ambiguity, the choices and counts. Studio: Tab on `/re`, `/reveal `, `/give ord_shi` and `/give shield` cycles as specified.
+
+**Why:** the user: "Tab to complete suggestion/cycle choices (like reveal on/off, kill selected/...)" and "give command unit name should be also have the aliases (give ord_shield -> Phalanx, give ord_ir-sam,...)".
+
