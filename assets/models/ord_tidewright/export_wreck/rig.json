@@ -1,0 +1,82 @@
+{
+  "id": "ord_tidewright_wreck",
+  "wreckOf": "ord_tidewright",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0252,
+        1.6962,
+        -0.9068
+      ],
+      "size": [
+        3.7731,
+        4.6549,
+        11.1106
+      ]
+    },
+    "nano": {
+      "parent": "base",
+      "center": [
+        -0.0092,
+        2.6445,
+        1.6843
+      ],
+      "size": [
+        1.5769,
+        2.6652,
+        3.963
+      ],
+      "pivot": [
+        0.0,
+        1.5,
+        2.8
+      ]
+    }
+  },
+  "attachments": {
+    "nano1": {
+      "parent": "nano",
+      "at": [
+        0.0,
+        3.5,
+        0.1
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1202,
+    "nano": 136,
+    "total": 1338
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

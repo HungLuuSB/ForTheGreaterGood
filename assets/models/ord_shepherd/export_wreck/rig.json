@@ -1,0 +1,280 @@
+{
+  "id": "ord_shepherd_wreck",
+  "wreckOf": "ord_shepherd",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0312,
+        3.1261,
+        -0.3159
+      ],
+      "size": [
+        5.0389,
+        4.5306,
+        10.903
+      ]
+    },
+    "wheelL1": {
+      "parent": "base",
+      "center": [
+        -2.1613,
+        0.797,
+        -3.4036
+      ],
+      "size": [
+        0.8286,
+        1.5927,
+        1.5104
+      ],
+      "pivot": [
+        -2.15,
+        0.8,
+        -3.4
+      ]
+    },
+    "wheelL2": {
+      "parent": "base",
+      "center": [
+        -2.1463,
+        0.7968,
+        0.1775
+      ],
+      "size": [
+        0.8291,
+        1.6963,
+        1.6156
+      ],
+      "pivot": [
+        -2.15,
+        0.8,
+        0.2
+      ]
+    },
+    "wheelL3": {
+      "parent": "base",
+      "center": [
+        -2.1189,
+        0.816,
+        3.6258
+      ],
+      "size": [
+        0.8453,
+        1.6788,
+        1.5901
+      ],
+      "pivot": [
+        -2.15,
+        0.8,
+        3.6
+      ]
+    },
+    "wheelR1": {
+      "parent": "base",
+      "center": [
+        2.1378,
+        0.7824,
+        -3.4169
+      ],
+      "size": [
+        0.8657,
+        1.6008,
+        1.5267
+      ],
+      "pivot": [
+        2.15,
+        0.8,
+        -3.4
+      ]
+    },
+    "wheelR2": {
+      "parent": "base",
+      "center": [
+        2.1345,
+        0.7812,
+        0.2244
+      ],
+      "size": [
+        0.7956,
+        1.5531,
+        1.6168
+      ],
+      "pivot": [
+        2.15,
+        0.8,
+        0.2
+      ]
+    },
+    "wheelR3": {
+      "parent": "base",
+      "center": [
+        2.2149,
+        0.8123,
+        3.628
+      ],
+      "size": [
+        0.8258,
+        1.5737,
+        1.5953
+      ],
+      "pivot": [
+        2.15,
+        0.8,
+        3.6
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        -1.3975,
+        5.8518,
+        -1.8364
+      ],
+      "size": [
+        1.5441,
+        1.0738,
+        0.4218
+      ],
+      "pivot": [
+        -1.4,
+        5.4,
+        -1.8
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        0.0187,
+        3.5427,
+        2.2122
+      ],
+      "size": [
+        3.6126,
+        1.8049,
+        4.8286
+      ],
+      "pivot": [
+        0.0,
+        2.7,
+        2.2
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -0.75,
+        4.5,
+        0.35
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "wheelL1",
+    "wheelL2",
+    "wheelL3",
+    "wheelR1",
+    "wheelR2",
+    "wheelR3",
+    "radar"
+  ],
+  "anim": {
+    "wheelL1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelL3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR1": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR2": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "wheelR3": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 552,
+    "wheelL1": 56,
+    "wheelL2": 56,
+    "wheelL3": 56,
+    "wheelR1": 56,
+    "wheelR2": 56,
+    "wheelR3": 56,
+    "radar": 68,
+    "launcher": 596,
+    "total": 1552
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
