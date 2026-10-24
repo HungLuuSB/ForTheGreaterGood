@@ -15,7 +15,7 @@ return function(t: any)
 		t.equal(#energy.bands, energy.counts.bands)
 		t.equal(#energy.textures.hit, energy.counts.hitFrames)
 		t.equal(#energy.textures.waveGlow, 3)
-		t.expect(energy.hexGrid.mesh ~= nil and energy.hitCap.mesh ~= nil)
+		t.expect(energy.hitCap.mesh ~= nil, "the hit cap (the idle honeycomb grid is off, C-189)")
 		for _, k in { "pre", "raise", "collapse", "off", "pulsePeriod", "waveCycle", "jitterStep", "hitLife" } do
 			t.expect(type(T[k]) == "number", `timing.{k}`)
 		end
