@@ -1,29 +1,38 @@
 --!strict
--- Guard (Chaos laser tower, T1, footprint 2; S-157): a round patched pad
--- with reactive-armor blocks, a squat post, a rounded `turret` with one
--- stubby red laser tube braced on the side and an orange sensor. The def
--- turns `turret`; `muzzle` at the lens. Rugged and improvised (M-14).
--- Model space, forward = -Z.
+-- Guard (Chaos laser tower, T1, footprint 2; S-157; the user's reference
+-- 2026-10-24: a tall laser tower on an armored skirt): a skirt of heavy
+-- angled armor plates, a stout octagonal column with a vent, and on top the
+-- `turret`: a rounded head with one stubby red laser tube and a ribbed
+-- shroud. The def turns `turret`; `muzzle` at the lens. Rugged and heavier
+-- than the Sentry (M-14). Model space, forward = -Z.
+
+local parts = {
+	{ name = "base", shape = "cylinder", axis = "y", size = { 7.0, 1.2, 7.0 }, at = { 0, 0.6, 0 }, color = "dark" },
+	{ name = "footing", parent = "base", shape = "cylinder", axis = "y", size = { 4.6, 2.4, 4.6 }, at = { 0, 2.2, 0 }, color = "dark" },
+	{ name = "column", parent = "base", shape = "cylinder", axis = "y", size = { 3.0, 6.6, 3.0 }, at = { 0, 6.7, 0 }, color = "hull" },
+	{ name = "vent", parent = "base", shape = "box", size = { 1.2, 1.6, 0.2 }, at = { 0, 7.4, -1.5 }, color = "glass" },
+	{ name = "band1", parent = "base", shape = "cylinder", axis = "y", size = { 3.3, 0.4, 3.3 }, at = { 0, 4.4, 0 }, color = "metal" },
+	{ name = "band2", parent = "base", shape = "cylinder", axis = "y", size = { 3.3, 0.4, 3.3 }, at = { 0, 9.4, 0 }, color = "metal" },
+}
+for k = 0, 5 do -- the heavy angled skirt
+	local a = math.rad(k * 60 + 30)
+	table.insert(parts, { name = `plate{k}`, parent = "base", shape = "box", size = { 3.4, 2.4, 0.8 }, at = { math.sin(a) * 3.8, 1.8, math.cos(a) * 3.8 }, rot = { -24, math.deg(a), 0 }, color = if k % 2 == 0 then "team" else "metal" })
+end
+for _, p in {
+	{ name = "turret", parent = "base", shape = "cylinder", axis = "y", size = { 3.4, 2.4, 3.4 }, at = { 0, 11.2, 0.2 }, pivot = { 0, 10.0, 0 }, color = "hull" },
+	{ name = "roofTeam", parent = "turret", shape = "box", size = { 2.0, 0.08, 1.8 }, at = { 0, 12.44, 0.4 }, color = "team" },
+	{ name = "shroud", parent = "turret", shape = "box", size = { 1.6, 1.4, 2.2 }, at = { 0, 11.4, -1.6 }, color = "hull" },
+	{ name = "rib", parent = "turret", shape = "box", size = { 1.7, 0.2, 1.8 }, at = { 0, 12.0, -1.6 }, color = "dark" },
+	{ name = "tube", parent = "turret", shape = "cylinder", axis = "z", size = { 0.8, 0.8, 2.4 }, at = { 0, 11.3, -3.6 }, color = "metal" },
+	{ name = "lens", parent = "turret", shape = "cylinder", axis = "z", size = { 0.55, 0.55, 0.2 }, at = { 0, 11.3, -4.85 }, color = "glass" },
+} do
+	table.insert(parts, p)
+end
 
 return {
 	id = "chs_guard",
-	parts = {
-		{ name = "base", shape = "cylinder", axis = "y", size = { 11.4, 1.0, 11.4 }, at = { 0, 0.5, 0 }, color = "dark" },
-		{ name = "patch", parent = "base", shape = "box", size = { 3.2, 0.06, 2.4 }, at = { -2.6, 1.03, 2.4 }, color = "metal" },
-		{ name = "teamA", parent = "base", shape = "box", size = { 2.6, 0.08, 2.0 }, at = { 2.8, 1.04, 2.2 }, color = "team" },
-		{ name = "eraA", parent = "base", shape = "box", size = { 2.2, 1.0, 0.5 }, at = { 0, 1.4, -4.4 }, color = "metal" },
-		{ name = "eraB", parent = "base", shape = "box", size = { 2.2, 1.0, 0.5 }, at = { -3.4, 1.4, -2.8 }, rot = { 0, 50, 0 }, color = "metal" },
-		{ name = "eraC", parent = "base", shape = "box", size = { 2.2, 1.0, 0.5 }, at = { 3.4, 1.4, -2.8 }, rot = { 0, -50, 0 }, color = "metal" },
-		{ name = "post", parent = "base", shape = "cylinder", axis = "y", size = { 3.0, 2.4, 3.0 }, at = { 0, 2.2, 0 }, color = "hull" },
-
-		{ name = "turret", parent = "base", shape = "cylinder", axis = "y", size = { 4.2, 1.8, 4.2 }, at = { 0, 4.3, 0.2 }, pivot = { 0, 3.4, 0 }, color = "hull" },
-		{ name = "roofTeam", parent = "turret", shape = "box", size = { 2.4, 0.08, 2.0 }, at = { 0, 5.24, 0.5 }, color = "team" },
-		{ name = "sensor", parent = "turret", shape = "box", size = { 0.6, 0.4, 0.4 }, at = { -1.4, 4.9, -1.6 }, color = "glass" },
-		{ name = "tube", parent = "turret", shape = "cylinder", axis = "z", size = { 1.0, 1.0, 3.0 }, at = { 0.3, 4.3, -2.9 }, color = "metal" },
-		{ name = "brace", parent = "turret", shape = "box", size = { 0.3, 0.9, 2.2 }, at = { 1.0, 4.3, -2.4 }, color = "dark" },
-		{ name = "lens", parent = "turret", shape = "cylinder", axis = "z", size = { 0.7, 0.7, 0.2 }, at = { 0.3, 4.3, -4.45 }, color = "glass" },
-	},
+	parts = parts,
 	attachments = {
-		{ name = "muzzle", parent = "turret", at = { 0.3, 4.3, -4.6 } },
+		{ name = "muzzle", parent = "turret", at = { 0, 11.3, -5.0 } },
 	},
 }
