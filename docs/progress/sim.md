@@ -578,6 +578,8 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
 
+- **2026-10-24, RESUME HERE after the restart (the merge chain for the beta):** on main (pushed): 3e06cf2 (S-167, S-168). Was running when Claude restarted: client 5ffed26 (merge bf35ebd in ../FTGG-integration, NOT pushed, slow suite unfinished). To resume: in ../FTGG-integration `git reset --hard origin/main` (drops the unpushed merge, as integrate.sh does on a failure), then run integrate.sh in order, one at a time: (1) client 5ffed26, (2) models 0305a40, (3) sim 548d154 (S-169, S-170), (4) client 285e02c (EditableImage guards; contains 29482f6), (5) lobby c64caa7 (d1c6758), (6) sim 458b2d0 (S-171..S-173), (7) models 1746bbc (ship hulls, Shepherd/Griffin, wrecks; all `review`). Then send the user, B, C and D the final main commit for the beta publish. B's S-168 client side (e831e9d) is held by B until a Studio check.
+
 - **2026-10-24, sim, dropped: 775ceb6 (S-161..S-163)** failed the slow suite's mirror test, west 11 / east 25 of 36 (needs 12 each), so the unpushed merge was dropped and main stayed at 1b8da68. Cause: S-161's Nav fix picked the +x-first open cell for units inside a footprint (S-161 follow-up). Fixed in 04214c3 (15 / 21), merged with S-164..S-166 as 77d11ae. `integrate.sh` now prints a failed suite's FAIL lines.
 
 - 2026-10-21: client `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1` merged (`--no-ff`); `lune run test` 34 specs / 253 passed, `lune run build` 263 scripts / 787 requires; pushed (`2a8b078`). `main` merged into `m-sim-2`.
