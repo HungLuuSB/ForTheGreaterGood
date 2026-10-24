@@ -10,6 +10,6 @@ return {
 	aoe = 0,
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },
-	turret = { yawRate = 130, pitchRate = 80, tolerance = 3, minPitch = -60, maxPitch = 30, arc = 360 },
+	turret = { yawRate = 130, pitchRate = 80, tolerance = 3, minPitch = -60, maxPitch = 60, arc = 360 },
 	fx = { tracer = "laser", color = { r = 255, g = 40, b = 40 }, impact = "laser_hit", sound = "laser" },
 }

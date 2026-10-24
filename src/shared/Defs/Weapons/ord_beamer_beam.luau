@@ -17,6 +17,6 @@ return {
 	ramp = { from = 10, to = 50, seconds = 4, cooldown = { 0.1, 0.5 } },
 	targets = { "GROUND", "NAVAL", "STRUCTURE" },
 	priority = { "ARMORED", "GROUND", "STRUCTURE" },
-	turret = { yawRate = 90, pitchRate = 60, tolerance = 1, minPitch = -60, maxPitch = 30, arc = 360 },
+	turret = { yawRate = 90, pitchRate = 60, tolerance = 1, minPitch = -60, maxPitch = 60, arc = 360 },
 	fx = { tracer = "laser", color = { r = 60, g = 70, b = 255 }, impact = "beam_impact", sound = "beam_hum" }, -- deep blue-violet, the user's reference (S-157)
 }
