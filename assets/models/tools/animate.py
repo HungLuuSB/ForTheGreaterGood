@@ -45,6 +45,7 @@ ANIM = {
     # radar dishes and arrays
     "ord_oracle": {"dish": a("turn", Y)}, "chs_watcher": {"dish": a("turn", Y)},
     "ord_arbiter": {"dish": a("turn", Y)}, "chs_stalker": {"dish": a("turn", Y)},
+    "ord_witness": {"dish": a("turn", Y)}, "chs_augur": {"dish": a("turn", Y)},  # pinpointers (T2)
     "ord_watchtower": {"radar": a("turn", Y)}, "chs_eye": {"radar": a("turn", Y)},
     "ord_citadel": {"radar": a("turn", Y)},
     # jammer arrays

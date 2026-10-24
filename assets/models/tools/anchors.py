@@ -38,6 +38,26 @@ ANCHORS = {
     "chs_shipyard": {"buildpad": (B, (0.0, 0.0, 1.0)),  # in the slip, under the tower crane's jib
                      "nano1": ("jib", (4.0, 12.0, 4.0)),  # the hook block's lamp, slews with the jib
                      "nano2": (B, (11.6, 4.15, 1.2))},  # the emitter arm on the right pier
+    # T2 factories (footprint 6)
+    "ord_advvehplant": {"buildpad": (B, (0.0, 0.9, -4.0)),  # the pad in the assembly bay
+                        "nano1": (B, (-4.9, 7.4, -9.0)), "nano2": (B, (-4.9, 7.4, -4.0)), "nano3": (B, (-4.9, 7.4, 1.0)),
+                        "nano4": (B, (4.9, 7.4, -9.0)), "nano5": (B, (4.9, 7.4, -4.0)), "nano6": (B, (4.9, 7.4, 1.0)),
+                        "nano7": ("gantry", (3.0, 13.63, -6.0))},  # the gantry's build lamp slides with it
+    "chs_advvehplant": {"buildpad": (B, (6.5, 0.76, -1.0)),  # the pad under the two bridge cranes
+                        "nano1": ("trolley1", (-1.0, 9.72, -1.0)), "nano2": ("trolley2", (14.0, 9.72, -1.0)),  # hook blocks
+                        "nano3": (B, (0.4, 6.69, -6.2)), "nano4": (B, (12.6, 6.69, -6.2))},  # booms off the front columns
+    "ord_advairfield": {"buildpad": (B, (-3.0, 0.7, -11.0)),  # the apron pad in front of the assembly hangar
+                        "nano1": (B, (-4.6, 5.5, -14.4)), "nano2": (B, (-4.6, 5.5, -7.6)), "nano3": (B, (-8.3, 8.4, -11.0))},
+    "chs_advairfield": {"buildpad": (B, (-15.0, 0.66, -11.4)),  # under the open front hangar
+                        "nano1": (B, (-20.4, 6.85, -11.4)), "nano2": (B, (-9.6, 6.85, -11.4)),  # the girder's end heads
+                        "nano3": ("trolley", (-17.0, 6.15, -11.4))},  # the hoist trolley's head runs with it
+    "ord_advshipyard": {"buildpad": (B, (0.0, 0.0, 1.0)),  # in the slip under the covered dock, at the waterline
+                        "nano1": (B, (-5.3, 13.05, -4.0)), "nano2": (B, (-5.3, 13.05, 6.0)),  # lamps along the roof slot
+                        "nano3": (B, (5.3, 13.05, -4.0)), "nano4": (B, (5.3, 13.05, 6.0)),
+                        "nano5": ("gantry", (-7.0, 15.4, -17.4)), "nano6": ("gantry", (7.0, 15.4, -17.4))},  # travel with the gantry
+    "chs_advshipyard": {"buildpad": (B, (0.0, 0.0, -1.0)),  # in the slip under the hammerhead's hook
+                        "nano1": ("jib1", (-1.8, 13.73, 4.6)), "nano2": ("jib2", (1.8, 13.73, -7.0)),  # pier cranes' hook lamps
+                        "nano3": ("jib", (8.0, 18.77, -1.0))},  # the hammerhead's hook lamp, slews with its jib
     # constructors: the emitter at the tip of the `nano` piece
     "ord_mason": {"nano1": (N, (0.0, 4.55, -1.45))},
     "chs_scrapper": {"nano1": (N, (1.182, 3.6, -1.814))},
