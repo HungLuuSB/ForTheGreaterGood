@@ -97,6 +97,7 @@ function SettingsMenu.applyKeys()
 		[k("patrol")] = "patrol",
 		[k("guard")] = "guard",
 		[k("reclaim")] = "reclaim",
+		[k("resurrect")] = "resurrect",
 	}
 	Controls.STOP_KEY = k("stop")
 	Controls.ROTATE_KEY = k("rotate")

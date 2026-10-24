@@ -24,9 +24,14 @@ local function rgb(c: { number }): Color3
 	return Color3.fromRGB(c[1], c[2], c[3])
 end
 
-local function make(piece: GroundMeshes.Piece, parent: Instance, materials: Instance?): (boolean, boolean)
+local function make(piece: GroundMeshes.Piece, parent: Instance, materials: Instance?, detail: boolean): (boolean, boolean)
+	-- details (rims, caps, boulders) stand above the sim's heights: the fog
+	-- blanket samples their real shape (C-213), so they get a convex
+	-- decomposition (Default: ~40 ms each) and stay queryable; tiles match the
+	-- sim's heights and keep a cheap box nothing queries
+	local fidelity = if detail then Enum.CollisionFidelity.Default else Enum.CollisionFidelity.Box
 	local ok, part = pcall(function()
-		return (AssetService :: any):CreateMeshPartAsync((Content :: any).fromUri(piece.mesh), { RenderFidelity = Enum.RenderFidelity.Precise, CollisionFidelity = Enum.CollisionFidelity.Box })
+		return (AssetService :: any):CreateMeshPartAsync((Content :: any).fromUri(piece.mesh), { RenderFidelity = Enum.RenderFidelity.Precise, CollisionFidelity = fidelity })
 	end)
 	if not ok or part == nil then
 		warn(`[MeshGround] {piece.mesh}: {part}`)
@@ -39,7 +44,10 @@ local function make(piece: GroundMeshes.Piece, parent: Instance, materials: Inst
 	mp.Anchored = true
 	mp.CanCollide = false
 	mp.CanTouch = false
-	mp.CanQuery = false -- a tile's box would catch clicks at mesa height: Controls.groundAt marches the sim's heights (C-209)
+	mp.CanQuery = detail -- a tile's box would catch clicks at mesa height: Controls.groundAt marches the sim's heights (C-209); details are only for the fog's height samples
+	if detail then
+		mp:SetAttribute("GroundDetail", true) -- clicks look through it (Controls.groundAt)
+	end
 	mp.CastShadow = true
 	local look = materials and materials:FindFirstChild("ground_" .. piece.material)
 	if look and look:IsA("SurfaceAppearance") then
@@ -74,7 +82,7 @@ function MeshGround.build(entry: GroundMeshes.Entry, folder: Instance): Stats
 		while nextJob <= #jobs do
 			local job = jobs[nextJob]
 			nextJob += 1
-			local ok, textured = make(job.piece, holder, materials)
+			local ok, textured = make(job.piece, holder, materials, job.kind == "details")
 			if ok then
 				(stats :: any)[job.kind] += 1
 				if textured then

@@ -60,6 +60,7 @@ local Vfx = require("./Render/Vfx")
 local Ground = require("./Render/Ground")
 local HealthBars = require("./Render/HealthBars")
 local SensorFxRender = require("./Render/SensorFx")
+local WreckInfo = require("./Render/WreckInfo")
 local Overlay = require("./Render/Overlay")
 local PlacementGhost = require("./Render/PlacementGhost")
 local DepositsRender = require("./Render/Deposits")
@@ -250,7 +251,9 @@ local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
 local sensorFx = SensorFxRender.new()
+local wreckInfo = WreckInfo.new()
 local fog = FogBlanket.new()
+local fogGround: any = nil -- the Ground.last whose finished mesh ground the blanket was rebuilt over (C-213)
 local radarCircles: { RadarFill.Circle }? = nil -- the radar layer's circles, nil while hidden (C-207)
 local radarAt = 0
 local environment = Environment.new() -- ground beyond the map, ambient particles (C-102)
@@ -682,6 +685,13 @@ if RunService:IsStudio() then
 			local on = ...
 			FogBlanket.ENABLED = on ~= false
 			return FogBlanket.ENABLED
+		elseif query == "fogreach" then
+			-- debug: rebuild the blanket with FogBlanket.REACH = reach (C-213: how far round a vertex its height looks)
+			FogBlanket.REACH = (...) or FogBlanket.REACH
+			if world.layers then
+				FogBlanket.setMap(fog, world, world.layers)
+			end
+			return FogBlanket.REACH
 		elseif query == "fogstress" then
 			-- debug: for a few seconds (default 4), every sensor cell of the team sight
 			-- flips at the sim rate (worse than any battle), through the real path;
@@ -1080,10 +1090,15 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	t0 = os.clock()
 	-- health and build bars (C-24): selected, damaged and unfinished units
 	local right = cam.CFrame.RightVector
-	local barDraws = if strategic then {} else Bars.draws(world, Bars.list(world, api.selection.set), Controls.projector(cam), view.X, view.Y, right.X, right.Z)
+	local barList = Bars.list(world, api.selection.set)
+	local wreckBars = Bars.wreckList(world) -- wrecks' supply and resurrect bars (C-216)
+	table.move(wreckBars, 1, #wreckBars, #barList + 1, barList)
+	local barDraws = if strategic then {} else Bars.draws(world, barList, Controls.projector(cam), view.X, view.Y, right.X, right.Z)
 	HealthBars.step(healthBars, barDraws, not strategic)
 	-- sonar pings and jammer domes (C-211)
 	SensorFxRender.step(sensorFx, world, now, not strategic)
+	-- reclaim zones for workers and the wreck under the mouse (C-216)
+	WreckInfo.step(wreckInfo, world, api.state.selection, cam, now, Controls.hover(), game:GetService("UserInputService"):GetMouseLocation())
 	mark("bars", t0)
 	t0 = os.clock()
 	-- fog of war (the blanket, C-100), radar / sonar contacts and ghosts (C-32); before `died` is cleared
@@ -1091,7 +1106,13 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	radarAt += dt
 	if radarAt >= 0.25 then
 		radarAt = 0
-		radarCircles = if world.joined and world.me.player ~= 0 then RadarFill.circles(world, api.state.placement, api.state.selection, missileView.enabled) else nil
+		radarCircles = if RadarFill.ENABLED and world.joined and world.me.player ~= 0 then RadarFill.circles(world, api.state.placement, api.state.selection, missileView.enabled) else nil
+	end
+	-- a baked map's mesh ground finished loading: the blanket again, over its rock details (C-213)
+	local groundNow = Ground.last
+	if groundNow and groundNow.mesh and fogGround ~= groundNow and world.layers then
+		fogGround = groundNow
+		FogBlanket.setMap(fog, world, world.layers)
 	end
 	FogBlanket.step(fog, world, dt, not (world.joined and world.me.player == 0), radarCircles)
 	Contacts.step(contacts, world, now, strategic)

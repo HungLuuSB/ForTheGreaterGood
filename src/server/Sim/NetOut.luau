@@ -67,6 +67,12 @@
 --     sensor ticks for sent wrecks in sight whose supply (whole units) or
 --     resurrect progress (of 255) changed (protocol 35, S-168). Spectators get no sight (they see everything) and
 --     every wreck.
+--   * The pre-game (S-169, startMode "choose"): PREGAME for every player
+--     (its pick, ready, AI) when it changes, to everyone; PREBUILD (a
+--     player's queue for its Commander) to the player and its allies;
+--     COUNTDOWN 5..1 while it runs, 255 when cancelled, 0 on the tick the
+--     match starts, in the same outbox as the Commanders' ENTERs. A join
+--     resends them.
 --   * Join / reconnect (Snapshot channel, S-2): NetOut.hello checks the
 --     client's versions; NetOut.join resets the player's replication state
 --     and queues a WELCOME, so the next outbox is a complete picture (full
@@ -87,6 +93,7 @@ local Stockpile = require("./Stockpile")
 local Tick = require("@shared/Net/Tick")
 local NetState = require("./NetState")
 local Pinpoint = require("@shared/Combat/Pinpoint")
+local Pregame = require("./Pregame")
 local Sensors = require("./Sensors")
 local Shield = require("./Shield")
 local Types = require("./Types")
@@ -626,6 +633,51 @@ local function updateWrecks(sim: Types.Sim, net: NetState.NetState, ally: number
 	if changed then
 		k.version += 1
 	end
+end
+
+-- The pre-game's events for one viewer (S-169; see the header).
+local function pregameEvents(sim: Types.Sim, g: Grid.Grid, pn: NetState.PlayerNet, ally: number, events: { Schema.Event })
+	local pg = sim.pregame
+	local PF = Schema.PregameFlag
+	if pg then
+		for _, pid in sim.playerOrder do
+			local p = pg.picks[pid]
+			local cell, ox, oz = 0, 0, 0
+			if p then
+				cell, ox, oz = g:encode(p[1], p[2])
+			end
+			local flags = (if p then PF.PICKED else 0) + (if pg.ready[pid] then PF.READY else 0) + (if sim.match.ai[pid] then PF.AI else 0)
+			local sig = flags * 2 ^ 32 + cell * 65536 + ox * 256 + oz
+			if pn.sentPregame[pid] ~= sig then
+				pn.sentPregame[pid] = sig
+				table.insert(events, { kind = Schema.EventKind.PREGAME, player = pid, pregameFlags = flags, cell = cell, offX = ox, offZ = oz })
+			end
+			if ally == SPECTATOR or sim.players[pid].allyTeam == ally then
+				local builds = {}
+				local parts = {}
+				for _, b in pg.builds[pid] or {} do
+					local bc, bx, bz = g:encode(b.x, b.z)
+					table.insert(builds, { defIndex = b.defIndex, cell = bc, offX = bx, offZ = bz, facing = b.facing })
+					table.insert(parts, `{b.defIndex}:{bc}:{bx}:{bz}:{b.facing}`)
+				end
+				local key = table.concat(parts, ",")
+				if (pn.sentPrebuild[pid] or "") ~= key then
+					pn.sentPrebuild[pid] = key
+					table.insert(events, { kind = Schema.EventKind.PREBUILD, player = pid, builds = builds })
+				end
+			end
+		end
+	end
+	local now = Pregame.secondsLeft(sim)
+	if pg == nil and sim.match.startTick == sim.tick and sim.tick > 0 then
+		now = Schema.COUNTDOWN_STARTED
+	end
+	if now ~= nil and now ~= pn.sentCountdown then
+		table.insert(events, { kind = Schema.EventKind.COUNTDOWN, seconds = now })
+	elseif now == nil and pg ~= nil and pn.sentCountdown ~= nil then
+		table.insert(events, { kind = Schema.EventKind.COUNTDOWN, seconds = Schema.COUNTDOWN_CANCELLED })
+	end
+	pn.sentCountdown = now
 end
 
 -- A wreck's supply and resurrect progress as WRECK_STATE sends them (S-168).
@@ -1245,10 +1297,14 @@ function NetOut.step(sim: Types.Sim)
 			table.clear(pn.wreckList)
 			table.clear(pn.sentWreckState)
 			pn.wreckVersion = -1
+			table.clear(pn.sentPregame)
+			table.clear(pn.sentPrebuild)
+			pn.sentCountdown = nil
 		end
 		if ally ~= SPECTATOR then
 			sightEvents(sim, pn, net.sight[ally], events)
 		end
+		pregameEvents(sim, g, pn, ally, events)
 		wreckEvents(sim, g, pn, net.wrecks[ally], events)
 		if sensorTick then
 			wreckStateEvents(sim, pn, ally, events)

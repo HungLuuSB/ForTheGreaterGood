@@ -91,7 +91,10 @@ export type Me = { player: number, team: number, allyTeam: number }
 export type Sight = { width: number, depth: number, cells: buffer, version: number, changed: { number }, full: boolean }
 
 -- A wreck the team knows of (WRECK, protocol 10, C-65).
-export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number }
+-- A known wreck (C-65). Supply and resurrect progress (protocol 35, S-168;
+-- C-216): `supply` left in it and `fullSupply` it held at the death (whole
+-- units), `rez` 0..1; out of sight they keep their last values.
+export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number, supply: number, fullSupply: number, rez: number }
 
 -- An own unit's status off camera (OWN_STATUS, S-158): health and build
 -- 0..1, the factory queue's head (unit def index, 0 = none), its progress

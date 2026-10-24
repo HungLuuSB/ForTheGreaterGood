@@ -27,7 +27,7 @@
 --                       2v2 or ffa4; water none (default), lakes or sea
 --   "map:<name>"        a named MapGen map (MapRegistry.NAMED below), or a
 --                       hand-made one (MapRegistry.HANDMADE: "map:normandy", S-53;
---                       "map:canyon", S-132)
+--                       "map:canyon", S-132; "map:plains", S-173)
 --
 -- Baked Studio maps (guide 5.4) will be added as "baked:<name>".
 
@@ -35,6 +35,7 @@ local Canyon = require("./Canyon")
 local Layers = require("./Layers")
 local MapGen = require("./MapGen")
 local Normandy = require("./Normandy")
+local Plains = require("./Plains")
 local TestMap = require("./TestMap")
 
 local MapRegistry = {}
@@ -54,6 +55,7 @@ export type Handmade = { name: string, build: () -> Layers.Layers }
 MapRegistry.HANDMADE = table.freeze({
 	normandy = { name = "Normandy", build = Normandy.build },
 	canyon = { name = "The Canyon", build = Canyon.build },
+	plains = { name = "The Plains", build = Plains.build }, -- 8v8 (S-173)
 } :: { [string]: Handmade })
 
 -- MapGen options for a "map:" or "mapgen:" ID, nil for other IDs (and for

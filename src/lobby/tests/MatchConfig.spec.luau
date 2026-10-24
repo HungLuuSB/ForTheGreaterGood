@@ -25,7 +25,7 @@ local function teamRoom(): Rooms.Room
 end
 
 return function(t: RunAll.Context)
-	t.test("Teams: ally teams sit together in start order, renumbered from 1; AI numbered in that order", function()
+	t.test("Teams: ally teams sit together, renumbered from 1; AI numbered in that order; starts picked in game (0)", function()
 		local c = MatchConfig.build(teamRoom(), "m1", 42, 1000, LOBBY)
 		t.equal(MatchConfig.validate(c), nil)
 		local got = {}
@@ -33,10 +33,10 @@ return function(t: RunAll.Context)
 			table.insert(got, { p.id, p.start, p.allyTeam, p.name, p.user or 0 })
 		end
 		t.deepEqual(got, {
-			{ 1, 1, 1, "Bee", 20 },
-			{ 2, 2, 1, "AI 1 (easy)", 0 },
-			{ 3, 3, 2, "Host", 10 },
-			{ 4, 4, 2, "AI 2 (hard)", 0 },
+			{ 1, 0, 1, "Bee", 20 },
+			{ 2, 0, 1, "AI 1 (easy)", 0 },
+			{ 3, 0, 2, "Host", 10 },
+			{ 4, 0, 2, "AI 2 (hard)", 0 },
 		})
 		t.equal(c.players[2].ai, "easy")
 		t.equal(c.lobby.roomId, "r1")
@@ -86,7 +86,7 @@ return function(t: RunAll.Context)
 		end, "spectator")
 		broken(function(c)
 			c.players = { c.players[2], c.players[4] }
-			c.players[1].id, c.players[1].start, c.players[2].id, c.players[2].start = 1, 1, 2, 2
+			c.players[1].id, c.players[1].start, c.players[2].id, c.players[2].start = 1, 0, 2, 0
 		end, "no human")
 		broken(function(c)
 			c.cheats = "yes"

@@ -49,6 +49,7 @@ Controls.COMMAND_KEYS = {
 	[Enum.KeyCode.Z] = "patrol",
 	[Enum.KeyCode.G] = "guard",
 	[Enum.KeyCode.E] = "reclaim", -- C-109 (BAR's key)
+	[Enum.KeyCode.D] = "resurrect", -- C-216
 }
 Controls.FIRE_STATE_KEY = Enum.KeyCode.L
 Controls.MOVE_STATE_KEY = Enum.KeyCode.K
@@ -66,6 +67,7 @@ Controls.HINT = {
 	guard = "GUARD: left-click a unit to guard (or a builder to assist)",
 	repair = "REPAIR: left-click an own unit or frame",
 	reclaim = "RECLAIM: left-click a wreck",
+	resurrect = "RESURRECT: left-click a wreck (it refills with supply, then comes back for power)",
 	upgrade = "UPGRADE: drag a circle, or click an extractor",
 }
 
@@ -152,8 +154,8 @@ function Controls.groundAt(cam: Camera, px: number, py: number): Vector3?
 		params.FilterType = Enum.RaycastFilterType.Include
 		params.FilterDescendantsInstances = { map, workspace.Terrain }
 		local hit = workspace:Raycast(ray.Origin, ray.Direction * 5000, params)
-		if hit then
-			return hit.Position
+		if hit and not hit.Instance:GetAttribute("GroundDetail") then
+			return hit.Position -- (a baked map's rock details are only for the fog's heights: C-213)
 		end
 	end
 	local heightAt = Controls.heightAt

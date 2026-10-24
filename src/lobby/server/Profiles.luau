@@ -98,6 +98,46 @@ local function pump()
 	end)
 end
 
+-- Saves `user`'s lobby settings (L-16; already checked). Changes within
+-- SETTINGS_WAIT seconds go out as one write of the latest values.
+local SETTINGS_WAIT = 3
+local pendingSettings: { [number]: Profile.Settings } = {}
+
+function Profiles.setSettings(user: number, settings: Profile.Settings)
+	local r = cache[user]
+	if r then
+		r.settings = settings
+	end
+	local queued = pendingSettings[user] ~= nil
+	pendingSettings[user] = settings
+	if queued then
+		return
+	end
+	task.delay(SETTINGS_WAIT, function()
+		-- the values are taken on the first try, so retries write the same;
+		-- a change after that queues a new write
+		local captured: Profile.Settings? = nil
+		table.insert(queue, {
+			user = user,
+			what = "settings",
+			transform = function(rec: Profile.Record): boolean
+				if captured == nil then
+					captured = pendingSettings[user]
+					pendingSettings[user] = nil
+				end
+				local want = captured
+				if want == nil then
+					return false
+				end
+				local same = rec.settings.uiScale == want.uiScale and rec.settings.scene == want.scene and rec.settings.parallax == want.parallax
+				rec.settings = want
+				return not same
+			end,
+		})
+		pump()
+	end)
+end
+
 -- Adds a match to `user`'s history (written even if they've left).
 function Profiles.addMatch(user: number, entry: Profile.Entry)
 	-- show it at once; the store write follows

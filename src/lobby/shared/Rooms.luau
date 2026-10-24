@@ -55,6 +55,7 @@ export type Room = {
 	settings: Settings,
 	phase: string,
 	matchId: string?,
+	startedAt: number?, -- os.time() when the running match started (the header's "running for")
 	notice: string?, -- the last start failure or match news, shown in the room
 	results: any?, -- the last match's summary
 	version: number, -- bumped on every change
@@ -165,10 +166,28 @@ local function humanCount(room: Room): number
 	return n
 end
 
--- Seats a member if the map has a free start; returns whether they sit.
+-- How many play on a map (S-169, S-171: starts are picked in the match's
+-- pre-game, so the map's starts only cap the sides): free for all, one per
+-- start up to MAX_FFA; Teams, any number per side up to MAX_SEATS.
+local function capacity(room: Room, map: MapInfo): number
+	if room.settings.mode == "FFA" then
+		return math.min(Config.MAX_FFA, map.starts)
+	end
+	return Config.MAX_SEATS
+end
+Rooms.capacity = capacity
+
+-- How many sides Teams may have on a map: 2 up to its starts (at most
+-- MAX_ALLY_TEAMS).
+local function maxSides(map: MapInfo): number
+	return math.min(Config.MAX_ALLY_TEAMS, map.starts)
+end
+Rooms.maxSides = maxSides
+
+-- Seats a member if the map has room; returns whether they sit.
 local function seat(room: Room, maps: { MapInfo }, user: number, faction: string?): boolean
 	local map = mapOf(maps, room.settings.mapId)
-	if map == nil or #room.slots >= map.starts or (room.settings.mode == "FFA" and #room.slots >= Config.MAX_FFA) then
+	if map == nil or #room.slots >= capacity(room, map) then
 		return false
 	end
 	table.insert(room.slots, {
@@ -324,7 +343,7 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 			return nil
 		end
 		if not seat(room, maps, from) then
-			return "No free start on this map"
+			return "No free seat on this map"
 		end
 		changed(room)
 		return nil
@@ -356,8 +375,9 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 			if map == nil then
 				return "Unknown map"
 			end
-			if #room.slots > map.starts then
-				return `{map.name} has {map.starts} starts: remove AI or players first`
+			local cap = capacity(room, map)
+			if #room.slots > cap then
+				return `{map.name} seats {cap} here: remove AI or players first`
 			end
 			room.settings.mapId = map.id
 		elseif key == "mode" and find(Config.MODES, v) then
@@ -376,11 +396,8 @@ function Rooms.apply(room: Room, maps: { MapInfo }, from: number, msg: any): str
 		return nil
 	elseif op == "addAi" then
 		local map = mapOf(maps, room.settings.mapId)
-		if map == nil or #room.slots >= map.starts then
-			return "No free start on this map"
-		end
-		if room.settings.mode == "FFA" and #room.slots >= Config.MAX_FFA then
-			return `Free for all is up to {Config.MAX_FFA} players`
+		if map == nil or #room.slots >= capacity(room, map) then
+			return "No free seat on this map"
 		end
 		if msg.faction ~= nil and not find(Config.FACTIONS, msg.faction) then
 			return "Bad faction"
@@ -482,17 +499,13 @@ function Rooms.checkStart(room: Room, maps: { MapInfo }, from: number, force: bo
 	if #room.slots < 2 then
 		return "Two players or more: add an AI or wait for a player"
 	end
-	if #room.slots > map.starts then
-		return `{map.name} has {map.starts} starts`
+	if #room.slots > capacity(room, map) then
+		return if room.settings.mode == "FFA" then `Free for all on {map.name} is up to {capacity(room, map)} players` else `Up to {Config.MAX_SEATS} players`
 	end
 	if humanCount(room) == 0 then
 		return "Someone has to play"
 	end
-	if room.settings.mode == "FFA" then
-		if #room.slots > Config.MAX_FFA then
-			return `Free for all is up to {Config.MAX_FFA} players`
-		end
-	else
+	if room.settings.mode ~= "FFA" then
 		local count: { [number]: number } = {}
 		local teams = 0
 		for _, s in room.slots do
@@ -504,10 +517,8 @@ function Rooms.checkStart(room: Room, maps: { MapInfo }, from: number, force: bo
 		if teams < 2 then
 			return "Teams needs two teams or more"
 		end
-		for team, n in count do
-			if n > Config.MAX_TEAM_SIZE then
-				return `Team {team} has {n} players (up to {Config.MAX_TEAM_SIZE})`
-			end
+		if teams > maxSides(map) then
+			return `{map.name} has {map.starts} starts: up to {maxSides(map)} teams`
 		end
 	end
 	local colors: { [number]: boolean } = {}
@@ -527,9 +538,11 @@ function Rooms.checkStart(room: Room, maps: { MapInfo }, from: number, force: bo
 end
 
 -- Members leave for the match: away, keeping their seats.
-function Rooms.setPhase(room: Room, phase: string, matchId: string?)
+-- `now` (os.time()) dates a match's start, for "running for N min".
+function Rooms.setPhase(room: Room, phase: string, matchId: string?, now: number?)
 	room.phase = phase
 	room.matchId = matchId
+	room.startedAt = if phase == "match" then now else nil
 	for _, m in room.members do
 		m.ready = false
 		m.away = phase == "match"
@@ -591,6 +604,7 @@ function Rooms.summary(room: Room, maps: { MapInfo }): any
 		starts = if map then map.starts else 0,
 		mode = room.settings.mode,
 		phase = room.phase,
+		startedAt = room.startedAt,
 	}
 end
 
@@ -615,6 +629,7 @@ function Rooms.view(room: Room): any
 		slots = slots,
 		settings = table.clone(room.settings),
 		phase = room.phase,
+		startedAt = room.startedAt,
 		notice = room.notice,
 		results = room.results,
 		version = room.version,

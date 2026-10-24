@@ -15,6 +15,7 @@ local World = require("./World")
 
 local RadarFill = {}
 
+RadarFill.ENABLED = false -- off for now (the user, 2026-10-24): Main draws no radar layer
 RadarFill.FILL = 1 -- inside, off the rings
 RadarFill.RING = 255 -- on a ring's line (values between: near one)
 RadarFill.RING_STEP = 160 -- studs between the inner rings

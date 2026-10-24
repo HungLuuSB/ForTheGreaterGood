@@ -1,17 +1,22 @@
 --!strict
 -- The battle room (L-3, BAR's room layout): teams (or players) and
 -- spectators on the left, room chat in the middle, the map and the rules on
--- the right with Leave / Ready / Start. The host's controls show only for
--- the host; the server checks every request anyway. A click on a seat opens
--- its editor: your own faction, team and color; the host's AI (level,
--- faction, team, color, remove) and kick.
+-- the right with Leave / Invite / Ready / Start. The rules are BAR's rows (a
+-- darker label cell joined to a value cell; real switches for friendly
+-- fire and cheats) under a big map preview; while a match runs the header
+-- says how long. Invite sends a Roblox game invite carrying the room code
+-- (L-17). The host's controls show only for the host; the server checks
+-- every request anyway. A click on a seat opens its editor: your own
+-- faction, team and color; the host's AI (level, faction, team, color,
+-- remove) and kick.
 
 local Players = game:GetService("Players")
+local SocialService = game:GetService("SocialService")
 local TextChatService = game:GetService("TextChatService")
 
 local Config = require("../../shared/Config")
+local Listing = require("../../shared/Listing")
 local MapImage = require("../MapImage")
-local MatchConfig = require("../../shared/MatchConfig")
 local Net = require("../Net")
 local Ui = require("../Ui")
 local Browser = require("./Browser")
@@ -47,16 +52,12 @@ local function slotOf(room: any, user: number): number?
 	return nil
 end
 
--- Start colors as the match will seat them (MatchConfig's order).
-local function startColors(room: any): { [number]: Color3 }
-	local ok, c = pcall(MatchConfig.build, room, "preview", 0, 0, { placeId = 0, jobId = "" })
-	local out = {}
-	if ok then
-		for _, p in c.players do
-			out[p.start] = Ui.color(p.color)
-		end
-	end
-	return out
+-- How many teams the room's map allows (its starts, at most
+-- MAX_ALLY_TEAMS): starts are picked in the match's pre-game (S-171), so a
+-- map's starts cap the sides, not the players.
+local function sidesFor(room: any): number
+	local map = Net.map(room.settings.mapId)
+	return math.min(Config.MAX_ALLY_TEAMS, if map then map.starts else Config.MAX_ALLY_TEAMS)
 end
 
 -- The seat editor (a small modal).
@@ -77,7 +78,7 @@ local function editSeat(gui: Instance, index: number)
 	end
 	local m = memberOf(room, s.user)
 	local title = if s.kind == "ai" then "AI player" elseif mine then "Your seat" else (if m then m.name else "Player")
-	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 400 else 330))
+	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 430 else 360))
 	Kit.list(p.content, Kit.SPACE.s)
 	local function send(fields: any)
 		local msg = table.clone(fields)
@@ -95,22 +96,22 @@ local function editSeat(gui: Instance, index: number)
 		end, 90)
 		if room.settings.mode == "TEAM" then
 			local teams = {}
-			for t = 1, Config.MAX_ALLY_TEAMS do
-				table.insert(teams, { tostring(t), `Team {t}` })
+			local sides = sidesFor(room)
+			for t = 1, sides do
+				table.insert(teams, { tostring(t), if sides > 4 then tostring(t) else `Team {t}` })
 			end
 			Kit.segmented(Kit.row(p.content, "Team", 2), teams, tostring(s.team), function(v)
 				send({ team = tonumber(v) })
-			end, 62)
+			end, if sides > 4 then 30 else 62)
 		end
 		if s.kind == "ai" then
 			Kit.segmented(Kit.row(p.content, "Difficulty", 3), options(Config.LEVELS), s.level, function(v)
 				send({ level = v })
 			end, 80)
 		end
-		local colorRow = Kit.row(p.content, "Color", 4, 64)
-		colorRow.Size = UDim2.new(0.7, 0, 1, 0)
-		colorRow.Position = UDim2.fromScale(0.3, 0)
-		local wrap = Ui.frame(colorRow, "Colors", UDim2.fromOffset(6 * 30, 58))
+		local colorRows = math.ceil(#Config.COLORS / 6)
+		local colorRow = Kit.row(p.content, "Color", 4, colorRows * 30 + 4)
+		local wrap = Ui.frame(colorRow, "Colors", UDim2.fromOffset(6 * 30, colorRows * 30))
 		local gl = Instance.new("UIGridLayout")
 		gl.CellSize = UDim2.fromOffset(24, 24)
 		gl.CellPadding = UDim2.fromOffset(6, 6)
@@ -185,11 +186,40 @@ local function confirmForce(gui: Instance, waiting: { string })
 	end, 140)
 end
 
+-- A Roblox game invite to this room: friends who accept arrive with
+-- "room=<code>" as launch data and the server takes them to the room.
+local function invite(room: any)
+	local player = Players.LocalPlayer
+	task.spawn(function()
+		local okCan, can = pcall(function()
+			return SocialService:CanSendGameInviteAsync(player)
+		end)
+		if not okCan or not can then
+			if Net.view and Net.view.studio then
+				Net.toast(`Invites need the published game. To test here: StandInLaunch = "{Listing.launchData(room.id)}" on ServerScriptService.Lobby, then a new player.`)
+			else
+				Net.toast(`You can't send invites right now. Share the room code {room.id} instead.`, "error")
+			end
+			return
+		end
+		local ok, err = pcall(function()
+			local options = Instance.new("ExperienceInviteOptions")
+			options.LaunchData = Listing.launchData(room.id)
+			options.PromptMessage = `Join my room "{room.name}" in For The Greater Good`
+			SocialService:PromptGameInvite(player, options)
+		end)
+		if not ok then
+			warn(`[Lobby] invite: {err}`)
+			Net.toast(`The invite didn't open. Share the room code {room.id} instead.`, "error")
+		end
+	end)
+end
+
 function Room.new(frame: Frame, _router: any): any
 	local gui = frame:FindFirstAncestorOfClass("ScreenGui") :: ScreenGui
 
 	-- left: header, notice, seats
-	local left = Ui.card(frame, "Seats", UDim2.new(0.4, -Kit.SPACE.m, 1, 0), nil, 0.12)
+	local left = Ui.card(frame, "Seats", UDim2.new(0.37, -Kit.SPACE.m, 1, 0), nil, 0.12)
 	Kit.pad(left, Kit.SPACE.xl, Kit.SPACE.l, Kit.SPACE.xl, Kit.SPACE.l)
 	local name = Kit.text(left, "", "title")
 	name.TextSize = 30
@@ -197,6 +227,13 @@ function Room.new(frame: Frame, _router: any): any
 	local sub = Kit.text(left, "", "small", Kit.COLOR.dim)
 	sub.Position = UDim2.fromOffset(0, 40)
 	sub.RichText = true
+	-- BAR's "Running for 3 minutes", at the right of the title
+	local status = Kit.text(left, "", "label", Kit.COLOR.accent)
+	status.AnchorPoint = Vector2.new(1, 0)
+	status.Position = UDim2.fromScale(1, 0)
+	status.Size = UDim2.new(0.5, 0, 0, 40)
+	status.TextXAlignment = Enum.TextXAlignment.Right
+	name.TextTruncate = Enum.TextTruncate.AtEnd
 	local notice = Ui.card(left, "Notice", UDim2.new(1, 0, 0, 0), UDim2.fromOffset(0, 70), 0.3)
 	notice.BackgroundColor3 = Color3.fromRGB(70, 30, 26)
 	notice.AutomaticSize = Enum.AutomaticSize.Y
@@ -210,7 +247,7 @@ function Room.new(frame: Frame, _router: any): any
 	Kit.list(seats, Kit.SPACE.s)
 
 	-- middle: chat
-	local chat = Ui.card(frame, "Chat", UDim2.new(0.3, -Kit.SPACE.m, 1, 0), UDim2.new(0.4, 0, 0, 0), 0.25)
+	local chat = Ui.card(frame, "Chat", UDim2.new(0.27, -Kit.SPACE.m, 1, 0), UDim2.new(0.37, 0, 0, 0), 0.25)
 	Kit.pad(chat, Kit.SPACE.m)
 	local chatHead = Kit.text(chat, "ROOM CHAT", "small", Kit.COLOR.faint)
 	chatHead.Size = UDim2.new(1, 0, 0, 20)
@@ -222,13 +259,15 @@ function Room.new(frame: Frame, _router: any): any
 	input.Size = UDim2.new(1, 0, 0, 32)
 	input.Position = UDim2.new(0, 0, 1, -32)
 
-	-- right: map, rules, actions
-	local rightCol = Ui.frame(frame, "Setup", UDim2.new(0.3, 0, 1, 0), UDim2.new(0.7, 0, 0, 0))
-	local mapHolder = Ui.frame(rightCol, "MapHolder", UDim2.new(1, 0, 0.42, 0))
+	-- right: the map as big as the column allows, the rules under it, actions
+	local RULE_H, RULE_GAP = 30, 3
+	local rulesH = 6 * RULE_H + 5 * RULE_GAP + Kit.SPACE.s * 2
+	local rightCol = Ui.frame(frame, "Setup", UDim2.new(0.36, 0, 1, 0), UDim2.new(0.64, 0, 0, 0))
+	local mapHolder = Ui.frame(rightCol, "MapHolder", UDim2.new(1, 0, 1, -(rulesH + 44 + Kit.SPACE.s * 2)))
 	local mapImage = MapImage.new(mapHolder)
-	local rules = Ui.card(rightCol, "Rules", UDim2.new(1, 0, 0.58, -Kit.SPACE.m - 52), UDim2.new(0, 0, 0.42, Kit.SPACE.m), 0.12)
-	Kit.pad(rules, Kit.SPACE.l, Kit.SPACE.m)
-	Kit.list(rules, 2)
+	local rules = Ui.card(rightCol, "Rules", UDim2.new(1, 0, 0, rulesH), UDim2.new(0, 0, 1, -(rulesH + 44 + Kit.SPACE.s)), 0.12)
+	Kit.pad(rules, Kit.SPACE.s, Kit.SPACE.s)
+	Kit.list(rules, RULE_GAP)
 	local actions = Ui.frame(rightCol, "Actions", UDim2.new(1, 0, 0, 44), UDim2.new(0, 0, 1, -44))
 	local al = Kit.list(actions, Kit.SPACE.s, true)
 	al.HorizontalAlignment = Enum.HorizontalAlignment.Right
@@ -310,6 +349,27 @@ function Room.new(frame: Frame, _router: any): any
 	end)
 
 	local boundRoom: string? = nil
+	local currentRoom: any = nil
+	local function paintStatus()
+		local room = currentRoom
+		if room == nil then
+			status.Text = ""
+		elseif room.phase == "match" then
+			status.Text = if room.startedAt then `In match · running for {Ui.minutes(room.startedAt)}` else "In match"
+		elseif room.phase == "starting" then
+			status.Text = "Starting..."
+		else
+			status.Text = ""
+		end
+		-- the title takes the width the status leaves
+		name.Size = UDim2.new(1, -(if status.Text == "" then 0 else status.TextBounds.X + Kit.SPACE.l), 0, 40)
+	end
+	task.spawn(function()
+		while true do
+			task.wait(15)
+			paintStatus()
+		end
+	end)
 
 	local function seatChip(parent: Instance, room: any, index: number?, member: any?, order: number)
 		local s = if index then room.slots[index] else nil
@@ -417,6 +477,8 @@ function Room.new(frame: Frame, _router: any): any
 		local hostMember = memberOf(room, room.host)
 		name.Text = room.name
 		sub.Text = `Hosted by {if hostMember then hostMember.name else "?"}   ·   Code <b>{room.id}</b>   ·   {Ui.label2(room.privacy)}{if room.locked then " · password" else ""}   ·   {#room.members}/{room.maxPlayers}`
+		currentRoom = room
+		paintStatus()
 		local noticeText2 = room.notice
 		if room.phase == "match" then
 			noticeText2 = "A match is in progress."
@@ -450,7 +512,8 @@ function Room.new(frame: Frame, _router: any): any
 				table.insert(used[s.team], i)
 				top = math.max(top, s.team)
 			end
-			top = math.min(Config.MAX_ALLY_TEAMS, top + (if top < Config.MAX_ALLY_TEAMS then 1 else 0))
+			local sides = sidesFor(room)
+			top = math.min(sides, top + (if top < sides then 1 else 0))
 			for team = 1, top do
 				local list = used[team] or {}
 				local buttons = {}
@@ -511,58 +574,58 @@ function Room.new(frame: Frame, _router: any): any
 
 		-- map
 		local map = Net.map(room.settings.mapId)
-		mapImage.set(map, startColors(room))
+		mapImage.set(map) -- the starts are hints: players pick theirs in the match
 
-		-- rules
+		-- rules: BAR's rows, editable for the host while the room is open
 		Ui.clear(rules)
 		local canEdit = host and setup
-		local function rule(label: string, order2: number, editor: (Frame) -> (), value: string)
-			local row = Kit.row(rules, label, order2, 34)
-			if canEdit then
-				editor(row)
-			else
-				Ui.label(row, value, "label", Kit.COLOR.text)
-			end
-		end
 		local mapOptions = {}
 		for _, m in Net.maps or {} do
 			table.insert(mapOptions, { m.id, `{m.name} ({m.starts})` })
 		end
-		rule("Map", 1, function(row)
-			Kit.dropdown(row, mapOptions, room.settings.mapId, function(id)
-				Net.send({ op = "set", key = "mapId", value = id })
-			end, 200)
-		end, room.mapName)
-		rule("Mode", 2, function(row)
-			Kit.segmented(row, options(Config.MODES), room.settings.mode, function(x)
-				Net.send({ op = "set", key = "mode", value = x })
-			end, 100)
-		end, Ui.label2(room.settings.mode))
-		rule("Win rule", 3, function(row)
-			Kit.dropdown(row, options(Config.WINS), room.settings.win, function(x)
-				Net.send({ op = "set", key = "win", value = x })
-			end, 200)
-		end, Ui.label2(room.settings.win))
-		rule("Friendly fire", 4, function(row)
-			Kit.toggle(row, room.settings.friendlyFire, function(on)
-				Net.send({ op = "set", key = "friendlyFire", value = on })
-			end)
-		end, if room.settings.friendlyFire then "On" else "Off")
-		rule("Cheats", 5, function(row)
-			Kit.toggle(row, room.settings.cheats, function(on)
-				Net.send({ op = "set", key = "cheats", value = on })
-			end)
-		end, if room.settings.cheats then "On (not counted)" else "Off")
+		local function choice(label: string, order2: number, opts: { { string } }, value: string, shown: string, key: string)
+			local cell = Ui.field(rules, label, order2, RULE_H)
+			if canEdit then
+				Ui.fieldDropdown(cell, opts, value, function(x)
+					Net.send({ op = "set", key = key, value = x })
+				end)
+			else
+				Ui.fieldText(cell, shown)
+			end
+		end
+		choice("Map", 1, mapOptions, room.settings.mapId, room.mapName, "mapId")
+		choice("Mode", 2, options(Config.MODES), room.settings.mode, Ui.label2(room.settings.mode), "mode")
+		choice("Win rule", 3, options(Config.WINS), room.settings.win, Ui.label2(room.settings.win), "win")
+		Ui.fieldToggle(Ui.field(rules, "Friendly fire", 4, RULE_H), room.settings.friendlyFire, if canEdit then function(on)
+			Net.send({ op = "set", key = "friendlyFire", value = on })
+		end else nil)
+		Ui.fieldToggle(Ui.field(rules, "Cheats", 5, RULE_H), room.settings.cheats, if canEdit then function(on)
+			Net.send({ op = "set", key = "cheats", value = on })
+		end else nil, "On (not counted)", "Off")
 		if mySlot then
 			local s = room.slots[mySlot]
-			local row = Kit.row(rules, "You", 6, 34)
-			Ui.swatch(row, Ui.color(s.color), 14).LayoutOrder = 1
-			Ui.label(row, `{Ui.label2(s.faction)}{if room.settings.mode == "TEAM" then ` · Team {s.team}` else ""}`, "label", nil, 2)
+			local cell = Ui.field(rules, "You", 6, RULE_H)
+			local you = Ui.frame(cell, "You", UDim2.fromScale(1, 1))
+			Kit.pad(you, Kit.SPACE.m, 0, Kit.SPACE.m, 0)
+			local yl = Kit.list(you, Kit.SPACE.s, true)
+			yl.VerticalAlignment = Enum.VerticalAlignment.Center
+			Ui.swatch(you, Ui.color(s.color), 14).LayoutOrder = 1
+			Ui.label(you, `{Ui.label2(s.faction)}{if room.settings.mode == "TEAM" then ` · Team {s.team}` else ""}`, "label", nil, 2)
 			if setup then
-				Ui.button(row, "Change", "ghost", function()
+				Ui.chevron(cell)
+				local hit = Instance.new("TextButton")
+				hit.Name = "Change"
+				hit.BackgroundTransparency = 1
+				hit.Text = ""
+				hit.Size = UDim2.fromScale(1, 1)
+				hit.ZIndex = 5
+				hit.Parent = cell
+				hit.MouseButton1Click:Connect(function()
 					editSeat(gui, mySlot)
-				end, 80, 26).LayoutOrder = 3
+				end)
 			end
+		else
+			Ui.fieldText(Ui.field(rules, "You", 6, RULE_H), "Spectating", Kit.COLOR.dim)
 		end
 
 		-- actions
@@ -571,11 +634,14 @@ function Room.new(frame: Frame, _router: any): any
 		Ui.button(actions, "Leave", "stop", function()
 			Net.send({ op = "leave" })
 		end, 110, 40).LayoutOrder = 1
+		Ui.button(actions, "Invite", "ghost", function()
+			invite(room)
+		end, 110, 40).LayoutOrder = 2
 		if room.phase == "match" then
 			if myMember and not myMember.away then
 				Ui.button(actions, "Rejoin match", "go", function()
 					Net.send({ op = "rejoin" })
-				end, 170, 40).LayoutOrder = 2
+				end, 170, 40).LayoutOrder = 3
 			end
 		elseif host then
 			local waiting = room.notReady or {}

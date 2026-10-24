@@ -96,17 +96,23 @@ local function editable(key: string, size: number, fill: (buffer, number) -> ())
 	if images[key] ~= nil then
 		return images[key] or nil
 	end
-	local ok, img = pcall(function()
-		return (AssetService :: any):CreateEditableImage({ Size = Vector2.new(size, size) })
+	-- all of it in the pcall: where the experience hasn't enabled EditableImage
+	-- (Game Settings > Security) the create can succeed and the write throw
+	-- (the lobby stream's report): the panel then just goes without
+	local ok, content = pcall(function()
+		local img = (AssetService :: any):CreateEditableImage({ Size = Vector2.new(size, size) })
+		if img == nil then
+			return nil
+		end
+		local buf = buffer.create(size * size * 4)
+		fill(buf, size)
+		img:WritePixelsBuffer(Vector2.zero, Vector2.new(size, size), buf)
+		return (Content :: any).fromObject(img)
 	end)
-	if not ok or img == nil then
-		images[key] = false -- no editable memory: go without
+	if not ok or content == nil then
+		images[key] = false -- no editable memory or not allowed: go without
 		return nil
 	end
-	local buf = buffer.create(size * size * 4)
-	fill(buf, size)
-	img:WritePixelsBuffer(Vector2.zero, Vector2.new(size, size), buf)
-	local content = (Content :: any).fromObject(img)
 	images[key] = content
 	return content
 end
@@ -1636,15 +1642,16 @@ function Kit.chart(parent: Instance, title: string, order: number?): LineChart
 				editableImage = nil
 			end
 			local ok, img = pcall(function()
-				return (AssetService :: any):CreateEditableImage({ Size = Vector2.new(W, H) })
+				local made = (AssetService :: any):CreateEditableImage({ Size = Vector2.new(W, H) })
+				image.ImageContent = (Content :: any).fromObject(made)
+				return made
 			end)
 			if not ok or img == nil then
-				note.Text = "not enough image memory for charts"
+				note.Text = "charts need editable images (memory, or the experience's setting)"
 				image.Visible = false
 				return
 			end
 			editableImage, imageSize = img, Vector2.new(W, H)
-			image.ImageContent = (Content :: any).fromObject(img)
 		end
 		local raster = {}
 		for _, l in data.lines do
@@ -1653,7 +1660,13 @@ function Kit.chart(parent: Instance, title: string, order: number?): LineChart
 		end
 		local buf = buffer.create(W * H * 4)
 		Chart.raster(buf, W, H, raster, math.max(data.xMax, 1e-6), data.top)
-		editableImage:WritePixelsBuffer(Vector2.zero, Vector2.new(W, H), buf)
+		local written = pcall(function()
+			editableImage:WritePixelsBuffer(Vector2.zero, Vector2.new(W, H), buf)
+		end)
+		if not written then
+			note.Text = "charts need editable images (memory, or the experience's setting)"
+			image.Visible = false
+		end
 	end
 	local function redraw()
 		if current and not queued then

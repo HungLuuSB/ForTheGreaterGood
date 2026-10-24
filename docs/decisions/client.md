@@ -1854,3 +1854,44 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - `SensorFx.spec`. Screenshot: `debug_out/screens/c211_sonar_ping_jammer.jpg` (two Crusaders pinging at sea, a Veil's dome and ring on land).
 
 **Why:** the user's queue item 7.
+
+### C-212 — S-166's units on existing icon tiles; radar fill off for now (2026-10-24)
+
+**Decision:**
+- **Icons:** Pharos and Scylla (naval SAM platforms) on the Radar SAM Site tile, Empyrean and Rookery (advanced rearm pads) on the Rearm Pad tile, until the user designs their own (as C-195). The sheet PNG is byte-identical; only IconAtlas's mapping changes. Fixes main's two failing icon specs after S-166.
+- **The jammer's shimmering dome (C-211) is switched off** (the user): `SensorFx.JAM_DOME = false`; the purple ground ring at the jam radius stays.
+- **Radar fill (C-207) is switched off** (the user): `RadarFill.ENABLED = false`, so Main passes no circles and nothing draws; the code, its spec and the fog composite stay for when it comes back (with sim-A's terrain-cut radar, request 66).
+- **S-163's mid-beam FIREs** (a single-target beam's new end when an enemy steps into its line) take the existing continuation path (`Effects.continueBeam`, C-144): the burning beam's end and hit move; no change needed.
+
+**Why:** sim-A's S-166 and S-163; the user, 2026-10-24.
+
+### C-213 — Fog of war over a baked map's rock details (2026-10-24)
+
+**Decision:** on the Canyon's mesh ground the fog blanket showed as grey squares on the mesa tops: the rock details (strata walls, caps, rims) stand ~6 studs above the sim's mesa height, so the blanket (at the sim's heights) passed under them and showed only over each top's flat middle. Now:
+- `Render/MeshGround` builds details with a convex-decomposition collision (`CollisionFidelity.Default`, ~40 ms each, ~7 s for the Canyon's 190 in the background), `CanQuery` on, tagged `GroundDetail`; tiles keep their box and `CanQuery` off (C-209).
+- `Render/FogBlanket`'s height samples raycast the voxel terrain and `workspace.Map` (the details), taking the higher of that and the sim's height; Main rebuilds the blanket once the mesh ground has finished loading (`Ground.last.mesh`).
+- `Controls.groundAt` looks through `GroundDetail` hits (clicks still march the sim's heights).
+- Kept: the blanket's vertex looks across half a vertex step (`FogBlanket.REACH` 1; a Studio query `fogreach` rebuilds it with another value: 0.5 let the rims poke through again). The blanket can't follow a mesa's outline closer than its vertex step (32 studs on the Canyon, set by the editable-memory budget), so a thin skirt drapes off the mesa edges.
+- Screenshots: `debug_out/screens/c213_canyon_fog_before.jpg`, `c213_canyon_fog_over_mesas.jpg`. Contract `docs/contracts/map-ground.md` updated (and models-C's note 3: type borders are wavy lines, not cell edges).
+
+**Why:** the user, 2026-10-24.
+
+### C-214 — Kit survives an experience without EditableImage (2026-10-24)
+
+**Decision:** `Kit`'s shared images (panel stripes, shadow) create, write and wrap the EditableImage inside one pcall; on failure the panel goes without them. A chart's image likewise: create and the per-draw write are guarded, and the chart says "charts need editable images" instead of throwing. Before, in an experience whose Game Settings > Security doesn't allow EditableImage, the create succeeded and the write threw, killing the client script at the first panel (the lobby stream's report from the published playtest).
+
+- Follow-up the same day: the other EditableImage users too. `Render/Grade`'s vignette (made at startup) creates, writes and wraps in one pcall. `Render/FogBlanket` tests a first write when it makes its image, pcalls `CreateEditableMesh` for its chunks, and pcalls each frame's write: a refused write clears the blanket (`stats.mode` "image writes refused") instead of throwing inside the render step every frame. `Render/ShieldFx` was already guarded.
+
+**Why:** lobby-D's crash report; the setting is per experience, and a missing setting should cost looks, not the game.
+
+### C-216 — Wrecks' supply, resurrect and reclaim zones (2026-10-24, S-168, protocol 35)
+
+**Decision:**
+- **Wire:** `World.Wreck` keeps `supply`, `fullSupply` (from WRECK) and `rez` 0..1 (from WRECK_STATE, which also refreshes `supply`); out of sight the last values stay.
+- **Bars** (`Bars.wreckList`, drawn by HealthBars under the wreck like units' bars, C-208): dark green = supply / fullSupply, only below full; purple = resurrect progress, only above 0; with both, green over purple.
+- **Resurrect:** a command mode like Reclaim (the known wreck nearest the click, `Api` order kind "resurrect" → RESURRECT 19). On the card for units whose def has `canResurrect` (T1 workers), key D (rebindable, Settings > Keys). The server ignores it for Commanders' wrecks.
+- **Hover and zones** (`Core/ReclaimZones`, `Render/WreckInfo`): the wreck within 24 studs of the ground under the mouse is named, e.g. "Lancer wreck · 45 supply · resurrect 40%". With only mobile builders selected, known wrecks with supply group into zones (two within 80 studs share one), each a thin green ring on the ground (supply-weighted centre, radius holding every wreck + 16) with "+N supply" over it; refreshed 4 times a second. The ring draws on top (AlwaysOnTop, like the radar rings: a flat ring at the centre's height hid under higher ground) and the label sits on its far (north) edge, clear of the wrecks inside.
+- `ReclaimZones.spec` (WRECK / WRECK_STATE through the real path while one Mason reclaims and another resurrects; the bars; zones, hover and workers-only), CommandSet.spec (a Mason resurrects).
+- Checked in Studio (Coastline skirmish): Lancers and Ravagers fought by the Commander; one Mason reclaimed (green bar under the wreck, the zone total falling), another resurrected (purple bar, power draining, then the Lancer back where its wreck lay with "Construction complete: Lancer"); the hover read "Ravager wreck · 65 supply · resurrect 77%"; the card shows Resurrect for Masons. Screenshots: `debug_out/screens/c216_*.jpg`.
+
+**Why:** the user's resurrect / reclaim feature (S-168, via sim-A).

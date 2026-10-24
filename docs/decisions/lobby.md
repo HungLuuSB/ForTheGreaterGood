@@ -9,8 +9,8 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | ID | Decision |
 |---|---|
 | L-1 | The lobby is its own place, synced from `build/lobby` (darklua-converted, like the main build) by `lune run src/lobby/tools/sync serve` + `rojo serve lobby.project.json` on port 34874 |
-| L-2 | Lobby constants in `src/lobby/shared/Config.luau`; the match place ID there |
-| L-3 | Rooms are pure Luau (`Rooms.luau`), server-owned, per lobby server; members vs seats; host migration in join order |
+| L-2 | Lobby constants in `src/lobby/shared/Config.luau`; the match place setting there (L-14) |
+| L-3 | Rooms are pure Luau (`Rooms.luau`), server-owned, on one lobby server each (listed on all of them, L-15); members vs seats; host migration in join order |
 | L-4 | Match config v1 and results record v1 in MemoryStore, found by the match server through its PrivateServerId; only the match ID travels in the teleport |
 | L-5 | Map previews: one byte per pixel from the map's layers, built on the server, colored on the client |
 | L-6 | Studio stand-ins for MemoryStore, TeleportService, DataStore and TextService, and an in-process stand-in match server |
@@ -18,9 +18,14 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 | L-8 | Profiles in DataStore `FtggProfiles`, written by lobby servers only, idempotent by match ID |
 | L-9 | Room chat through one TextChatService channel per room |
 | L-10 | The lobby UI follows BAR's lobby (top tabs, battle room in three columns) in the client's UI kit; green to go, red to leave |
-| L-11 | Replays and Settings pages: listed and local for now |
+| L-11 | Replays and Settings pages: Replays listed only; Settings saved on the profile (L-16) |
 | L-12 | The menu background is a live scene of the game's own unit models with a mouse parallax camera |
 | L-13 | Loading screens show layered key art from the models stream with mouse parallax (`docs/contracts/key-art.md`) |
+| L-14 | The match place comes from one setting, `Config.MATCH_PLACE_ID`; 0 finds it at server start (the experience's other place) |
+| L-15 | Rooms are listed across lobby servers through a MemoryStore sorted map; joining one elsewhere is a teleport to that server, then the usual join |
+| L-16 | The lobby settings (UI scale, background scene, parallax) are saved on the profile |
+| L-17 | Invite a friend: a Roblox game invite whose launch data is the room code |
+| L-18 | A Units tab: the unit encyclopedia by role with counterparts, a 3D showroom with places, and the article from the defs |
 
 ## L-1 (2026-10-23): a separate lobby place, its own converted tree
 
@@ -31,13 +36,13 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 
 ## L-2 (2026-10-23): one constants module
 
-`Config.luau` holds the lobby's limits, labels, timeouts, store names and `MATCH_PLACE_ID = 89435699207932` (the FTGG main game, as the user named it). Both places must be in one experience. Since S-145 the contract's version, enums, team limits and palette come from `@shared/Match/MatchConfig` and are re-exported here.
+`Config.luau` holds the lobby's limits, labels, timeouts, store names and the match place setting `MATCH_PLACE_ID` (L-14; it was the main game's 89435699207932 until 2026-10-24). Both places must be in one experience. Since S-145 the contract's version, enums, team limits and palette come from `@shared/Match/MatchConfig` and are re-exported here.
 
 ## L-3 (2026-10-23): rooms
 
-- **Decision:** a room has members (humans in join order) and seats (`slots`: humans who play and AI). A member without a seat spectates. New members sit while the map has free starts (and FFA has fewer than 8), else spectate. The host changes settings, AI and starts; players set their own faction, team and color; colors are unique. Host changes to the map, mode, win rule or options unready everyone. A leaving host passes the room to the first member here (then the first away). Rooms live on one lobby server; the browser lists that server's rooms: public to all, friends-only to the host's friends, private never (join by the 5-character code).
+- **Decision:** a room has members (humans in join order) and seats (`slots`: humans who play and AI). A member without a seat spectates. New members sit while the map has free starts (and FFA has fewer than 8), else spectate. The host changes settings, AI and starts; players set their own faction, team and color; colors are unique. Host changes to the map, mode, win rule or options unready everyone. A leaving host passes the room to the first member here (then the first away). Rooms live on one lobby server; the browser lists every lobby server's rooms (L-15): public to all, friends-only to the host's friends, private never (join by the 5-character code).
 - **Phases:** `setup` → `starting` (reserving, nothing changes, Leave refused) → `match` (members away keep their seats) → `setup` with the results.
-- **Alternatives:** BAR's fixed slot list with open slots (the old dev lobby): more clicks; a cross-server room list through MemoryStore: needs a published place to test and joining a room on another server means teleporting there. Left for later (Needs my review).
+- **Alternatives:** BAR's fixed slot list with open slots (the old dev lobby): more clicks; a cross-server room list through MemoryStore: added on 2026-10-24 (L-15).
 - **Why:** BAR's model (players and spectators, teams with Add bot / Join), all checked server-side (guide 19); pure Luau so Lune tests it.
 
 ## L-4 (2026-10-23): match config and results through MemoryStore
@@ -73,7 +78,7 @@ The user's references (BAR's battle room, scenario page, landing page, loading s
 
 ## L-11 (2026-10-23): Replays and Settings
 
-Replays lists your recent matches; "Watch" stays off until the match place can play a saved replay on a reserved server (contract "reserved for a later version"). Settings holds the lobby's own: interface scale, the background scene and its parallax, for the session. Keys, graphics and sound stay in the match's settings.
+Replays lists your recent matches; "Watch" stays off until the match place can play a saved replay on a reserved server (contract "reserved for a later version"). Settings holds the lobby's own: interface scale, the background scene and its parallax, saved on the profile since 2026-10-24 (L-16). Keys, graphics and sound stay in the match's settings.
 
 ## L-12 (2026-10-23): the battle in the background
 
@@ -87,3 +92,37 @@ Replays lists your recent matches; "Watch" stays off until the match place can p
 - **Smoothness (2026-10-24):** the layers move by fractions of the screen (UDim2 offsets are whole pixels), the tiles draw at sub-pixel positions, and the lobby pauses its 3D battle while art covers the screen (`Scene.setCovered`). Measured in Studio: 39 → 60 fps, the near layer moving every frame instead of every third.
 - **Alternatives:** a single flat image (no depth); the live 3D scene on the match side too (the match place loads its own assets while that screen shows, so a picture is lighter).
 - **Why:** the user asked for stunning key art that keeps the parallax feel of the menu.
+
+## L-14 (2026-10-24): the match place from one setting
+
+- **Decision:** the user's call for the live playtest in a new experience, "FTGG Playtest" (the lobby as its start place, the match place added as its second place). `Config.MATCH_PLACE_ID` is the only place setting. Its default `0` means "find it": at server start `server/Places.luau` lists the experience's places (`AssetService:GetGamePlacesAsync`, retried) and takes the only one that isn't this place, or the one whose name contains "match"; it logs `[Lobby] match place <id> (...)`. A non-zero setting wins. Starting a match without a match place fails with the reason in the room. The lobby place ID is never configured: `game.PlaceId`, carried in the config's `lobby.placeId` for the return.
+- **Alternatives:** a hard-coded ID per experience (a lobby rebuild and republish after the match place is published, and an easy mix-up between experiences); an attribute set on the place in Studio (Rojo-managed instances, easy to lose).
+- **Why:** the same lobby build works in any experience whose other place is the match place, so publishing needs no code change.
+
+## L-15 (2026-10-24): rooms across lobby servers
+
+- **Decision:** the user approved it (queue item 1). Each lobby server writes one entry, keyed by its JobId, to the MemoryStore sorted map `FtggRooms` (TTL 60 s): its rooms with privacy, password, host and phase, and its player count. It rewrites the entry when its rooms change (at most every 3 s) and at least every 15 s, and reads the whole map every 10 s (`server/Lobbies.luau`, pure part `shared/Listing.luau`). The browser lists the other servers' public rooms, and friends-only ones to the host's friends, tagged "[other server]"; private rooms are listed for their codes only. The top bar's "players online" counts every lobby server. Joining a room elsewhere (click or code) is a hop: this server checks phase, room, friendship and password; writes `hop/<userId>` (the room and password, 300 s) to `FtggMatch`; and teleports the player to that server (`TeleportOptions.ServerInstanceId`), showing the loading screen. The room's server reads the key on arrival and joins them through `Rooms.join`. A failed teleport (a full server) brings a toast. Room codes are unique across the listed servers.
+- **Studio stand-in:** an in-memory sorted map and a stand-in peer server (`StandInPeer`) with four rooms at fixed codes (PEERT Teams, PEERL password "peer", PEERP private, PEERM in a match). A hop to one moves that room into this server and runs the real arrival. `StandInFail = "hop"` stages a failed move.
+- **Alternatives:** one HashMap key per room (more requests per read); a cross-server MessagingService feed (no state for a server that just started); joining a remote room without a teleport (not possible: room members must be on its server to start together).
+- **Why:** friends on different lobby servers could only meet through a code that worked on one server; budget: a few requests per server per minute against MemoryStore's per-experience limit.
+
+## L-16 (2026-10-24): lobby settings on the profile
+
+Since 2026-10-24 the page is client-B's settings body (`Kit.options`, C-202), as in the match: search, a section tree, sub-section headers, hover help; the camera switch sits under the battle scene switch and dims with it.
+
+The user approved it (queue item 2). The profile record gets `settings = { uiScale, scene, parallax }` (`Profile.cleanSettings` checks each field: scale 0.75-1.25 in 0.05 steps, booleans; older records get the defaults). The Settings page applies the saved values when the profile arrives and sends `{ op = "settings" }` after each change (the slider once it rests); the server writes the latest values in one UpdateAsync 3 s later. Alternative: client-side storage (none that persists across devices on Roblox).
+
+## L-17 (2026-10-24): invite a friend
+
+The user approved it (queue item 5). "Invite" in the room calls `SocialService:PromptGameInvite` with launch data `room=<code>` (`Listing.launchData`). A player who joins with that launch data goes to the room after the match-return and hop checks: on this server with `Rooms.join`, on another with a hop; a room with a password asks for it. The launch data is only a code (anyone can make a link with launch data), so every rule of a normal join applies. In Studio the attribute `StandInLaunch` on ServerScriptService.Lobby stands in for the launch data. Alternative: following the inviter (lands on their server, not in their room).
+
+## L-18 (2026-10-24): the Units tab (unit encyclopedia)
+
+- **Decision:** the user's request ("a wikipedia tab for units"), plan approved with the 3D showroom. A **Units** tab between Multiplayer and Replays:
+  - **List (left):** Order or Chaos, search (names and roles), All / Units / Structures, tier; units grouped by section (command and workers, ground, air, naval, defences, sensors and EW, strategic, economy, factories) and role, with their strategic icons (client-B's `UI/IconAtlas`, read-only).
+  - **Showroom (middle):** the unit's real model (client-B's `Render/Models`: the BAR mesh when approved, else the blockout; `MeshModels` starts every approved model when the tab first opens and the shown unit jumps the queue) on a place: Pad, Field, Water (terrain water, ships at their waterline, submarines lower), Shore (amphibious units at the waterline on a beach) or Sky (a runway far below; aircraft hover and bob). Auto picks the place from client-B's `Core/PortraitStage`, as the build menu's portraits do (structures on the field). Options: the turntable, Dusk (the menu's light) or Day, the colour (faction or any of the 12 lobby colours), and Compare (the unit and its counterparts side by side). Drag turns, the wheel zooms. The places are built once, far from the menu's battle; while the tab is open the battle leaves the world (`Scene.setAway`) and the camera is the showroom's.
+  - **Article (right):** name, faction, role, tier, description; the counterpart (links) with how they differ (health, damage per second, range, speed, sight and value, 5% or more, green when better); the in-game values (cost, value, build work and seconds at its first builder, health and armor, movement, sensors, stealth, firepower, countermeasures, ammo, build power, income, storage, size); each weapon (damage per second against its main class, range, reload, volley, damage per armor class, targets, guidance, lock, splash, stock); what it builds and what builds it (links).
+- **Data:** `src/lobby/shared/Codex.luau`. The defs have no role, so the roles are a table after guide section 13 (with the economy, factories and the units added since); a role holds each faction's units (none for a faction-only role, two for Chaos's heavy laser towers). A def no role lists shows under "Other"; defs nothing builds (retired: Inferno, Spike, the old Bulwark) don't show. The numbers use the unit panel's rule (client-B's `Core/UnitStats`: damage × shots ÷ reload against the weapon's main class), computed here because UnitStats needs the match's client world. `Codex.spec` checks the roles against the real defs.
+- **Read-only client modules added to `lobby.project.json`:** `Render/Models`, `Render/BlockoutBuilder`, `Core/PortraitStage`, `UI/IconAtlas` (with the kit's rule: client-B keeps their API stable).
+- **Alternatives:** a flat ViewportFrame preview (no terrain water, no shadows, the lobby's lighting doesn't reach it); a `role` field on the defs (sim-A's files; the lobby's table works now and the spec catches drift).
+

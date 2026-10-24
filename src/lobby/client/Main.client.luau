@@ -1,7 +1,7 @@
 --!strict
 -- The lobby client (L-10): BAR's lobby layout in the game's UI kit. A top
--- bar with the pages (Home, Skirmish, Multiplayer, Replays, Profile) and
--- Settings; the battle room replaces the room browser while you're in one;
+-- bar with the pages (Home, Skirmish, Multiplayer, Units: the unit
+-- encyclopedia with its 3D showroom, L-18, Replays, Profile) and Settings; the battle room replaces the room browser while you're in one;
 -- full-screen overlays while a match starts or runs (the loading screen,
 -- with the Studio stand-in's controls) and for a finished match's results.
 -- Behind it all, the 3D scene (Scene).
@@ -18,6 +18,7 @@ local Skirmish = require("./Pages/Skirmish")
 local Browser = require("./Pages/Browser")
 local Room = require("./Pages/Room")
 local Replays = require("./Pages/Replays")
+local Units = require("./Pages/Units")
 local ProfilePage = require("./Pages/Profile")
 local Settings = require("./Pages/Settings")
 local Loading = require("./Overlays/Loading")
@@ -81,7 +82,7 @@ logo.TextColor3 = Kit.COLOR.text
 logo.TextXAlignment = Enum.TextXAlignment.Left
 logo.Parent = top
 
-local tabs = Ui.frame(top, "Tabs", UDim2.new(0, 760, 1, 0), UDim2.fromOffset(270, 0))
+local tabs = Ui.frame(top, "Tabs", UDim2.new(0, 710, 1, 0), UDim2.fromOffset(270, 0))
 
 -- Roblox's own buttons (its menu, chat) sit in the top-left corner over the
 -- bar: the logo and tabs start where Roblox's free area begins.
@@ -117,13 +118,13 @@ studioTag.Visible = false
 
 local body = Ui.frame(gui, "Body", UDim2.new(1, -48, 1, -BAR - 40), UDim2.fromOffset(24, BAR + 20))
 
-type Page = { frame: Frame, show: (() -> ())?, update: ((any) -> ())? }
+type Page = { frame: Frame, show: (() -> ())?, hide: (() -> ())?, update: ((any) -> ())? }
 local pages: { [string]: Page } = {}
 local tabButtons: { [string]: TextButton } = {}
 local current = "Home"
 local router: any = {}
 
-local TABS = { "Home", "Skirmish", "Multiplayer", "Replays", "Profile", "Settings" }
+local TABS = { "Home", "Skirmish", "Multiplayer", "Units", "Replays", "Profile", "Settings" }
 
 local function paint()
 	for name, b in tabButtons do
@@ -150,6 +151,12 @@ function router.go(name: string)
 	local target = pageFor(name)
 	for n, p in pages do
 		local on = n == target
+		if not on and p.frame.Visible and p.hide then
+			p.hide()
+		end
+	end
+	for n, p in pages do
+		local on = n == target
 		if on and not p.frame.Visible and p.show then
 			p.show()
 		end
@@ -165,7 +172,7 @@ for i, name in TABS do
 	b.BackgroundColor3 = Kit.COLOR.raised
 	b.BackgroundTransparency = 1
 	b.BorderSizePixel = 0
-	b.Size = UDim2.new(0, if name == "Multiplayer" then 150 else 118, 1, 0)
+	b.Size = UDim2.new(0, if name == "Multiplayer" then 128 else 96, 1, 0)
 	b.FontFace = Kit.font(Enum.FontWeight.SemiBold)
 	b.TextSize = 16
 	b.Text = string.upper(name)
@@ -184,13 +191,14 @@ local function mount(name: string, module: any)
 	local frame = Ui.frame(body, name, UDim2.fromScale(1, 1))
 	frame.Visible = false
 	local p = module.new(frame, router)
-	pages[name] = { frame = frame, show = p.show, update = p.update }
+	pages[name] = { frame = frame, show = p.show, hide = p.hide, update = p.update }
 end
 
 mount("Home", Home)
 mount("Skirmish", Skirmish)
 mount("Browser", Browser)
 mount("Room", Room)
+mount("Units", Units)
 mount("Replays", Replays)
 mount("Profile", ProfilePage)
 mount("Settings", Settings)
@@ -258,7 +266,22 @@ Net.onStandIn(function(_s: any)
 		body.Visible = not loading.update(Net.view)
 	end
 end)
+Net.onHop(function(_h: any)
+	if Net.view then
+		body.Visible = not loading.update(Net.view)
+	end
+end)
 
 router.go("Home")
-task.spawn(Net.loadMaps)
+task.spawn(function()
+	Net.loadMaps()
+	-- pages drawn before the maps arrived (a room's preview) draw again
+	if Net.view then
+		for _, p in pages do
+			if p.update then
+				p.update(Net.view)
+			end
+		end
+	end
+end)
 print("[Lobby] client ready")

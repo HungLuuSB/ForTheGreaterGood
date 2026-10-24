@@ -164,7 +164,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 		elseif kind == EK.WRECK then
 			local x, z = world.grid:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 			local id = e.wreckId :: number
-			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0) }
+			world.wrecks[id] = { id = id, defIndex = e.defIndex :: number, x = x, z = z, heading = World.heading(e.heading or 0), supply = e.supply or 0, fullSupply = e.fullSupply or 0, rez = 0 }
 			table.insert(world.wreckAdded, id)
 		elseif kind == EK.ALERT then
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
@@ -203,6 +203,13 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 		elseif kind == EK.SHIELD then
 			-- a generator's dome (protocol 24, S-79): charge and up / recharging
 			world.shields[e.unitId :: number] = { charge = (e.charge :: number) / 255, flags = e.shieldFlags :: number }
+		elseif EK.WRECK_STATE ~= nil and kind == EK.WRECK_STATE then
+			-- a known wreck's supply and resurrect progress (protocol 35, S-168)
+			local w = world.wrecks[e.wreckId :: number]
+			if w then
+				w.supply = e.supply or w.supply
+				w.rez = (e.rez or 0) / 255
+			end
 		elseif kind == EK.WRECK_GONE then
 			local id = e.wreckId :: number
 			world.wrecks[id] = nil
