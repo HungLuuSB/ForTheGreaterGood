@@ -29,7 +29,7 @@ Textures:
   zig-zag of short straight strokes; swap the variants for the crackle.
 - hit_1 .. hit_8 (the HitCap mesh's TextureID, a flipbook): a patch of
   honeycomb cells lit round the impact and a bright ring spreading outward,
-  fading; planar over the cap (2 sin 0.46 = 0.888 R across), cells 0.147 R.
+  fading; planar over the cap (2 sin 0.28 = 0.553 R across), cells 0.147 R.
 - field: the dome's faint pattern for the ForceField material.
 
 Meshes (export/energy.fbx, export/energy.json; radius 1, Y up in Roblox):
@@ -38,7 +38,7 @@ Meshes (export/energy.fbx, export/energy.json; radius 1, Y up in Roblox):
   pentagon at the apex), as thin ribbons (0.0045 R) at radius 1.004.
 - Band_1 .. Band_20: the dome surface (radius 1) in 20 bands of 4.5 degrees
   from the apex to the ground, for the sweeping raise and collapse.
-- HitCap: a spherical cap of 0.46 rad round +Y at radius 1.006, UVs planar
+- HitCap: a spherical cap of 0.28 rad round +Y at radius 1.006, UVs planar
   from above (U along X, V along Z); turned onto the hit point.
 """
 
@@ -58,7 +58,7 @@ import lib  # noqa: E402
 OUT = os.path.join(HERE, "export")
 HEX = 1 / 0.147  # hex units per R: one unit = the cells' width across the flats (the mock-up's sc = 1.7 at R = 4)
 BANDS = 20
-CAP = 0.46  # HitCap half-angle, radians
+CAP = 0.28  # HitCap half-angle, radians (0.46 at first; the user: the hit patches were too much)
 GRID_R, GRID_W = 1.004, 0.0045
 
 
@@ -186,7 +186,7 @@ def tex_hit(k, n=8, w=256, h=256):
     rho = np.hypot(px, pz)
     ang = np.arcsin(np.clip(rho, 0, 1))
     age = (k + 0.5) / n
-    rad = 0.12 + age * 0.28
+    rad = 0.07 + age * 0.16  # the ring's angle from the impact, inside the cap
     hitg = np.exp(-(ang / rad) ** 2) * (1 - age) * (1 + 2 * np.exp(-((ang - rad) / 0.05) ** 2))
     dist, cid = hex_cell(px * HEX, pz * HEX)
     line = 1 - np.clip(dist / 0.06, 0, 1)
@@ -333,6 +333,7 @@ def main():
         center, size = extent(o)
         parts[o.name] = {"center": center, "size": size, "triangles": lib.tris(o)}
     lib.export_fbx(objs, os.path.join(OUT, "energy.fbx"))
+    lib.export_fbx([o for o in objs if o.name == "HitCap"], os.path.join(OUT, "hitcap.fbx"))  # the cap alone, for re-uploading it
     lib.write_json(os.path.join(OUT, "energy.json"), {
         "id": "shield_energy", "bands": BANDS, "bandDegrees": 90 / BANDS, "capHalfAngle": CAP,
         "hexAcrossFlats": 0.147, "parts": parts, "textures": sorted(textures),

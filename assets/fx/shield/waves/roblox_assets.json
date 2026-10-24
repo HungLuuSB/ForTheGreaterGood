@@ -1,17 +1,17 @@
 {
-  "note": "Shield energy v4 (the user's v3 review 2026-10-24; docs/contracts/fx.md \"Shield energy\"): textures uploaded through Open Cloud as Decals and the meshes as one Model (export/opencloud.json); image and mesh IDs read in FTGG Art, where ReplicatedStorage.FX.ShieldEnergy holds the template MeshParts (x100: radius 1 = 100 studs) with the images as attributes. Reference module: ShieldPreview.luau.",
+  "note": "Shield energy v4 (the user's v3 review 2026-10-24; docs/contracts/fx.md \"Shield energy\"): textures uploaded through Open Cloud as Decals and the meshes as one Model (export/opencloud.json); image and mesh IDs read in FTGG Art, where ReplicatedStorage.FX.ShieldEnergy holds the template MeshParts (x100: radius 1 = 100 studs) with the images as attributes. Reference module: ShieldPreview.luau. Hit patches v2 (smaller cap, 0.28 rad, re-uploaded alone as export/hitcap.fbx; the user: the hit patches were too much).",
   "textures": {
     "field": "rbxassetid://128868364830447",
     "flare": "rbxassetid://123552515265600",
     "glow": "rbxassetid://112656457330596",
-    "hit_1": "rbxassetid://81478126700519",
-    "hit_2": "rbxassetid://76961164632491",
-    "hit_3": "rbxassetid://91286251098916",
-    "hit_4": "rbxassetid://94649966504568",
-    "hit_5": "rbxassetid://115569169076815",
-    "hit_6": "rbxassetid://119021152259092",
-    "hit_7": "rbxassetid://100600971567257",
-    "hit_8": "rbxassetid://125377299320930",
+    "hit_1": "rbxassetid://92239441295428",
+    "hit_2": "rbxassetid://133972577452031",
+    "hit_3": "rbxassetid://75433235304483",
+    "hit_4": "rbxassetid://136501535850148",
+    "hit_5": "rbxassetid://78899436985577",
+    "hit_6": "rbxassetid://124101607268971",
+    "hit_7": "rbxassetid://85769666737638",
+    "hit_8": "rbxassetid://90468035189286",
     "line": "rbxassetid://124267731373106",
     "pulse": "rbxassetid://140247072686648",
     "spark": "rbxassetid://92194209333839",
@@ -45,6 +45,6 @@
     "Band_19": "rbxassetid://123895290107325",
     "Band_20": "rbxassetid://120967215274558",
     "HexGrid": "rbxassetid://117467787840280",
-    "HitCap": "rbxassetid://109505689580861"
+    "HitCap": "rbxassetid://81293762193505"
   }
 }

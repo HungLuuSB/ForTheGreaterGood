@@ -43,7 +43,8 @@ SHIELD_ENERGY = {
                "filamentSegments": 8, "hits": 4, "hitFrames": 8},
     "sizes": {"coreWidthStuds": 0.6, "glowWidth": 0.02, "filamentWidthStuds": 0.18, "filamentReach": 0.012, "flare": 0.15,
               "streakWidth": 0.02, "streakTile": 0.5, "waveGlowWidth": 0.223, "waveGlowTile": 0.255, "waveLineWidth": 0.035,
-              "waveLineTile": 0.3, "edgeWidth": 0.03},
+              "waveLineTile": 0.3, "edgeWidth": 0.03,
+              "hitGlow": 1.6},  # the hit Decal's Color3 = tint x hitGlow (3 at first; the user: the hits were too much)
     "tints": {"order": [143, 232, 255], "chaos": [255, 180, 92]},
 }
 # the reference look (FTGG Art, Workspace.ShieldWaveReference); widths and texture lengths are fractions of the dome radius R
