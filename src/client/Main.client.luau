@@ -46,6 +46,7 @@ local RenderDeaths = require("./Render/Deaths")
 local RenderEffects = require("./Render/Effects")
 local ShieldDomes = require("./Render/ShieldDomes")
 local FactoryFrames = require("./Render/FactoryFrames")
+local BuildSpray = require("./Render/BuildSpray")
 local ShieldFx = require("./Render/ShieldFx")
 local Contacts = require("./Render/Contacts")
 local FogBlanket = require("./Render/FogBlanket")
@@ -165,6 +166,7 @@ local attackPreview = AttackPreviewRender.new() -- attack mode's arc preview (C-
 local lastVisibleFx: { { any } } = {} -- Effects.visible's list from the last frame
 local shieldDomes = ShieldDomes.new() -- shield generators' domes (C-91)
 local factoryFrames = FactoryFrames.new() -- units in production on their factory's pad (C-152)
+local buildSpray = BuildSpray.new() -- builders' nano spray at what they build (C-193)
 local function toggleFollow()
 	if camState.follow then
 		camState.follow = nil
@@ -929,6 +931,7 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	else
 		FactoryFrames.step(factoryFrames, world, renderer, now)
 	end
+	BuildSpray.step(buildSpray, world, renderer, api.waypoints.byUnit, now, strategic)
 	mark("units", t0)
 	t0 = os.clock()
 	Effects.update(fx, world, t, now, camState.x, camState.z, muzzleOf)

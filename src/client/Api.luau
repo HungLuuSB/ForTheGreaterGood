@@ -107,6 +107,11 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		if #targets == 0 then
 			return false, "nothing selected"
 		end
+		-- only the units that have this command (C-193): no move line from a turret
+		targets = Orders.able(world, intent.cmdType, targets)
+		if #targets == 0 then
+			return false, "no selected unit can do that"
+		end
 		for _, payload in Orders.encode(world, intent, targets) do
 			send(payload)
 		end
@@ -513,8 +518,7 @@ function Api.frame(api: Api, now: number)
 		for _, g in sel.groups do
 			table.clear(g)
 		end
-		table.clear(api.waypoints.byUnit)
-		table.clear(api.waypoints.idleSince)
+		Waypoints.reset(api.waypoints)
 		state.commandMode = nil
 		state.placement = nil
 	end

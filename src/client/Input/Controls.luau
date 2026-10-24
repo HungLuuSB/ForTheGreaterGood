@@ -397,7 +397,7 @@ function Controls.bind(api: Api.Api): Controls
 			local mode = if shift() then "add" elseif ctrl() then "toggle" else "replace"
 			if boxing then
 				local a = leftStart :: Vector2
-				api.actions.select(Selection.inBox(world, project, a.X, a.Y, mouse.X, mouse.Y), mode)
+				api.actions.select(Selection.filterBox(world, Selection.inBox(world, project, a.X, a.Y, mouse.X, mouse.Y)), mode)
 			else
 				local id = pickAt(world, project, mouse.X, mouse.Y)
 				local u = if id then world.units[id] else nil
