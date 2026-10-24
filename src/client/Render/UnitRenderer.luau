@@ -25,6 +25,8 @@ local RenderDeaths = require("./Deaths")
 
 local UnitRenderer = {}
 
+UnitRenderer.AIR_ALT = 35 -- studs: an aircraft out of the camera area never seen close (the sim's helicopter band)
+
 UnitRenderer.BUILD_TRANSPARENCY = 0.6 -- a unit under construction (parts already more see-through stay so)
 
 type Drawn = {
@@ -110,7 +112,7 @@ local function show(r: Renderer, world: World.World, id: number)
 		model = model,
 		root = model.PrimaryPart :: BasePart,
 		rootOffset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity,
-		floats = def.domain == "naval",
+		floats = World.floats(def),
 		motors = motors,
 		def = def,
 		attitude = Attitude.new(),
@@ -252,8 +254,11 @@ function UnitRenderer.step(r: Renderer, world: World.World, t: number, dt: numbe
 		if u.tier == "tactical" then
 			x, z, alt, heading = Interp.sample(u, t)
 		else
-			-- out of the camera area: the record's spot (gliding, C-151), last heading
-			x, z, alt, heading = u.sx or u.x, u.sz or u.z, 0, u.heading
+			-- out of the camera area: the record's spot (gliding, C-151), last
+			-- heading; an aircraft keeps its last height, or a cruising one if
+			-- it was never seen close (C-192: not on the ground)
+			local air = d.def.domain == "air"
+			x, z, alt, heading = u.sx or u.x, u.sz or u.z, if air then (if (u.alt or 0) > 0 then u.alt :: number else UnitRenderer.AIR_ALT) else 0, u.heading
 		end
 		local y = World.groundY(world, x, z, d.floats) + alt
 		if d.floats then

@@ -15,6 +15,7 @@
 local Effects = require("../Core/Effects")
 local Vfx = require("./Vfx")
 local BeamShots = require("./BeamShots")
+local Lasers = require("./Lasers")
 local Crater = require("./Crater")
 local Ground = require("./Ground")
 
@@ -60,6 +61,7 @@ export type Renderer = {
 	tracers: { BasePart },
 	deflects: { BasePart }, -- beams' glancing legs off shield domes (C-129)
 	beams: BeamShots.State, -- models-C's beam shot effect once approved (C-133)
+	lasers: Lasers.State, -- laser bolts (C-199)
 	vfx: Vfx.State,
 	lastNow: number,
 	vfxNow: number, -- effect time: real time scaled by the sim speed (bursts slow down and pause with the sim)
@@ -300,6 +302,7 @@ function RenderEffects.new(): Renderer
 		tracers = {},
 		deflects = {},
 		beams = BeamShots.new(folder),
+		lasers = Lasers.new(folder),
 		vfx = Vfx.new(folder),
 		lastNow = 0,
 		vfxNow = 0,
@@ -497,6 +500,17 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		end, r.folder)
 		local a, b = Vector3.new(t.x0, t.y0, t.z0), Vector3.new(t.x1, t.y1, t.z1)
 		local k = math.clamp((now - t.born) / t.life, 0, 1)
+		if t.laser then
+			-- a laser: Render/Lasers draws it (C-199: a tapered core in a glow,
+			-- a muzzle flare, an impact orb); only the hit sparks here
+			part.Transparency = 1
+			local ramp = t.ramp or 0
+			if t.hit and not r.emitted[t] then
+				r.emitted[t] = true
+				Vfx.spawn(r.vfx, "hit", t.x1, t.y1, t.z1, 0.5 + 0.6 * ramp, vt, nil, t.x0 - t.x1, t.y0 - t.y1, t.z0 - t.z1)
+			end
+			continue
+		end
 		if t.beam then
 			-- a beam tower's ray (C-112, C-128): the whole line at once in the
 			-- faction's beam color, held bright, narrowing to nothing over its last second
@@ -540,6 +554,7 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 	park(r.tracers, #fx.tracers + 1)
 	park(r.deflects, nDeflects + 1)
 	BeamShots.step(r.beams, fx.tracers, now, groundBelow, speed)
+	Lasers.step(r.lasers, fx.tracers, now)
 
 	-- bursts: each plays its Vfx rig once (or the place's saved effect)
 	for _, b in fx.bursts do

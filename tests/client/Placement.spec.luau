@@ -73,7 +73,9 @@ return function(t: any)
 			local def = defOf(sim, defId)
 			for _ = 1, 150 do
 				local x, z = rng:nextNumber(-200, 200), rng:nextNumber(-200, 200)
-				local sok, sreason = ServerPlacement.check(sim, def, x, z, 1, knower)
+				-- the frame-start form (owner, no knower): own units walk out of
+				-- the footprint (S-155), as the client's preview has it (C-195)
+				local sok, sreason = ServerPlacement.check(sim, def, x, z, 1)
 				local r = Placement.check(world, def, x, z)
 				total += 1
 				if r.ok == sok and r.reason == sreason then

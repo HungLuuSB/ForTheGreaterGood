@@ -1,0 +1,112 @@
+{
+  "id": "chs_basilisk_wreck",
+  "wreckOf": "chs_basilisk",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0015,
+        4.1768,
+        -0.1006
+      ],
+      "size": [
+        22.6635,
+        8.6528,
+        22.896
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        7.4158,
+        9.4505,
+        5.8465
+      ],
+      "size": [
+        3.6635,
+        3.2164,
+        2.2758
+      ],
+      "pivot": [
+        7.4,
+        8.0,
+        6.6
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -2.0629,
+        2.5479,
+        0.3679
+      ],
+      "size": [
+        8.1547,
+        4.4524,
+        6.8043
+      ],
+      "pivot": [
+        -2.0,
+        1.6,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -4.875,
+        4.65,
+        -1.8
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1340,
+    "radar": 248,
+    "launcher": 2436,
+    "total": 4024
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

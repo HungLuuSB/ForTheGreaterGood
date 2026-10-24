@@ -491,7 +491,7 @@ end
 local padLoad: { [number]: number } = {}
 local NO_COST: { supply: number?, power: number? } = table.freeze({})
 
-function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number })
+function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number }, lowS: { [number]: number }, lowP: { [number]: number })
 	local w = sim.world
 	local a = sim.air
 	local eco = sim.eco
@@ -569,7 +569,12 @@ function Air.rearmStep(sim: Types.Sim, demandS: { [number]: number }, demandP: {
 			local acc = eco.accounts[team]
 			demandS[team] += cs * rate
 			demandP[team] += cp * rate
-			local step = rate * Air.DT * Economy.effective(acc, cs, cp)
+			local low = Economy.isLow(w, id) -- the aircraft's own priority (S-156)
+			if low then
+				lowS[team] += cs * rate
+				lowP[team] += cp * rate
+			end
+			local step = rate * Air.DT * Economy.effective(acc, cs, cp, low)
 			if cs > 0 then
 				step = math.min(step, Economy.allowance(acc.supply) / cs)
 			end

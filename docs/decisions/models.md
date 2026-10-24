@@ -279,3 +279,15 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 
 **Why:** the user's review of v2 (2026-10-23): the size is right, the look too blocky; limbs read thin under huge shoulders; heads read as boxes; ownership must read from across the map like BAR's commanders.
 
+
+### M-34 — Shield energy v4: waves, sweep and honeycomb on Beams (2026-10-24)
+
+**Decision:** the shield's look is the user's v4 (approved 2026-10-24), built from things Roblox draws without per-vertex alpha:
+- **Waves, streaks and edge arcs** are curved `Beam` segments lying on the dome (`FaceCamera` off, attachment frames along the surface, `CurveSize` from a circular-arc Bézier), not meshes. That makes them wobbly, broken and uneven for the cost of moving attachments.
+- **The sweeping raise and collapse** use 20 `ForceField` band MeshParts that exist only during the transition; the single `Dome` is used when idle.
+- **The honeycomb** is one mesh of even hex cells (the dual of a geodesic sphere), so the cells keep their size up to the apex.
+- **Hits** are a Decal flipbook on a transparent cap MeshPart.
+- **The reference module** `assets/fx/shield/waves/ShieldPreview.luau` holds every value; the manifest's `shieldEnergy` carries them for the client.
+- `shieldColumn` / `shieldWave` were removed from the manifest (and `assets/fx/shield/waves/legacy_v2/`) once clients-B's `ShieldFx` moved to `shieldEnergy` (C-187).
+
+**Why:** the user's v3 review: the apex flare was too big, the streaks looked like rain, the waves were missing, and the dome scaled up instead of forming from the apex. Their mock-up (`assets/reference/shield/shield_demo.html`) set the timings and shapes.

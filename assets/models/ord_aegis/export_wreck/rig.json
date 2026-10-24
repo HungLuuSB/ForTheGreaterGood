@@ -1,0 +1,112 @@
+{
+  "id": "ord_aegis_wreck",
+  "wreckOf": "ord_aegis",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.1113,
+        2.1282,
+        0.0287
+      ],
+      "size": [
+        23.2933,
+        4.5756,
+        23.2018
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        6.003,
+        6.8666,
+        4.968
+      ],
+      "size": [
+        5.8858,
+        4.4354,
+        2.509
+      ],
+      "pivot": [
+        6.0,
+        4.6,
+        5.0
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -3.0906,
+        7.2532,
+        0.6006
+      ],
+      "size": [
+        7.5031,
+        7.9224,
+        6.1037
+      ],
+      "pivot": [
+        -3.0,
+        3.4,
+        1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -4.95,
+        10.95,
+        0.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 968,
+    "radar": 196,
+    "launcher": 3560,
+    "total": 4724
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

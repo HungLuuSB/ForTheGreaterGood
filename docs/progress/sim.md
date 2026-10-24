@@ -10,6 +10,12 @@ Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's ne
 
 | Task | Result | Decision |
 |---|---|---|
+| T1 defences and the tier rebalance (the user, via B) | Laser towers Sentry / Guard (the T1 basics), Beamer (ramping beam), Overwatch / Twin Guard / Geryon, lobbing guns Gauntlet / Talos, Chaos's T2 Bulwark; Bulwark, Spike and Inferno retired; the corvette is now Envoy. T1 tanks less health and range, T2 tanks more health and damage. 4 scouts beat a lone Sentry or Guard, 3 don't; a T2 tank kills one keeping 87–100% | S-157 |
+| Resource priority (the user, via B) | PRIORITY command 18 (0 low, 1 high) and the LOW_PRIORITY state bit 128 (protocol 33); in a stall low consumers share only what the high ones leave: building, refills, rearming, upkeep | S-156 |
+| Build over your own units (the user, via B) | Own and allied ground units no longer stop a frame from starting; units on its footprint walk straight out. Enemy units still block; the AI's planning still avoids units | S-155 |
+| Shield generators switch off (the user, via B) | TOGGLE off: the dome is down, no power upkeep, no recharge, the charge kept; on: it rises again at 25%. Generators start on | S-154 |
+| In-range orders don't move the unit (the user, via B) | ATTACK on a target already in range keeps the unit still (it closed to 90% of range: a Lancer moved 15 studs); builders don't step back (a stop-point change for braking was tried and dropped: it broke mirror fairness) | S-153 |
+| Scouts' range halved (the user, via B) | Herald machine gun 175 → 88, Jackal 140 → 70 | S-152 |
 | Interceptors steer at their target's start-of-tick state (B) | Steering and the fuse no longer depend on which projectile steps first; matches the client | S-151 |
 | Shields tuned down (the user: "way too OP") | Phalanx capacity 600 → 120, recharge 30 → 2 /s; Carapace 400 → 80, 24 → 1.6 /s; beam drain scaled to match. 10 Ravagers now bring a Phalanx down in ~30 s (it held 100%); 4 wear it to 76% in a minute | S-150 |
 | Point defence (the user) | Sanctum / Basilisk (T2 structures) and Shepherd / Griffin (T2 vehicles) shoot down enemy missiles and rockets near them with interceptors; never units | S-149 |

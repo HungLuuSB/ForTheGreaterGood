@@ -17,7 +17,8 @@ return function(t: any)
 		t.equal(byId[1].text, "/give ord_lancer ")
 		local byName = CheatInput.suggest("/give LANC", defs)
 		t.equal(byName[1].text, "/give ord_lancer ", "by display name, any case")
-		t.equal(#CheatInput.suggest("/give ord_lancer 5", defs), 0, "nothing past the unit")
+		local counts = CheatInput.suggest("/give ord_lancer ", defs)
+		t.expect(#counts > 0 and counts[1].text == "/give ord_lancer 1 ", "counts after the unit (C-194)")
 	end)
 
 	t.test("prepares the line: names to ids, the cursor added to a give", function()
@@ -40,5 +41,47 @@ return function(t: any)
 		local lines = CheatInput.help()
 		t.expect(#lines >= #CheatInput.COMMANDS + 1, "a line each")
 		t.expect(string.find(table.concat(lines, "\n"), "e.g. /give ord_lancer 5", 1, true) ~= nil, "with examples")
+	end)
+
+	t.test("units answer to their icon-sheet type with the faction's prefix, full and short (C-194)", function()
+		t.equal(CheatInput.unitId("ord_shield", defs), "ord_phalanx")
+		t.equal(CheatInput.unitId("chs_shield-generator", defs), "chs_carapace")
+		t.equal(CheatInput.unitId("phalanx", defs), "ord_phalanx", "the display name")
+		local both = CheatInput.resolve("shield", defs)
+		t.expect(table.find(both, "ord_phalanx") ~= nil and table.find(both, "chs_carapace") ~= nil, "the type alone names both factions'")
+		t.equal(CheatInput.unitId("shield", defs), nil, "ambiguous: no single id (Tab cycles them)")
+		local irSam = CheatInput.resolve("ord_ir-sam", defs)
+		t.expect(#irSam >= 1, "ord_ir-sam names Order's IR SAM site")
+		t.equal(CheatInput.prepare("/give ord_shield 2", defs, 0, 0), "give ord_phalanx 2 at 0,0")
+		local sug = CheatInput.suggest("/give ord_shi", defs)
+		t.equal(sug[1].text, "/give ord_phalanx ", "suggested by alias")
+		t.expect(string.find(sug[1].label, "Shield Generator", 1, true) ~= nil, "the label says the type")
+	end)
+
+	t.test("each command's choices come up as it's typed (C-194)", function()
+		local function texts(line: string): { string }
+			local out = {}
+			for _, x in CheatInput.suggest(line, defs, 20) do
+				table.insert(out, x.text)
+			end
+			return out
+		end
+		t.deepEqual(texts("/reveal "), { "/reveal on ", "/reveal off " })
+		t.deepEqual(texts("/god o"), { "/god on ", "/god off " })
+		t.deepEqual(texts("/god of"), { "/god off " })
+		t.equal(texts("/kill ")[1], "/kill selected ")
+		t.deepEqual(texts("/res p"), { "/res power " })
+		t.equal(texts("/res all ")[1], "/res all max ")
+		t.deepEqual(texts("/ai 2 "), { "/ai 2 pause ", "/ai 2 resume " })
+		t.equal(#texts("/speed "), 6)
+	end)
+
+	t.test("retired units aren't suggested or aliased, but their id still works (S-157)", function()
+		for _, x in CheatInput.suggest("/give chs_spi", defs, 50) do
+			t.expect(not string.find(x.text, "chs_spike", 1, true), "Spike retired")
+		end
+		t.equal(CheatInput.unitId("chs_spike", defs), "chs_spike", "the id still resolves")
+		t.equal(#CheatInput.resolve("ord_gun-turret", defs), 0, "the retired Bulwark's type names nothing")
+		t.deepEqual(CheatInput.resolve("ord_laser", defs), { "ord_sentry_tower" }, "draft 5's Laser Tower: the Sentry")
 	end)
 end

@@ -151,6 +151,44 @@ return function(t: RunAll.Context)
 		t.expect((starvedTicks :: number) > 15 * 500, "progress was limited by income")
 	end)
 
+	t.test("resource priority: in a stall, high consumers are served first, low ones get what is left (S-156)", function()
+		-- two Vehicle Plants on one Lancer each; supply income covers one
+		local function progress(lowFirst: boolean): (number, number)
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+			local a = Spawn.unit(sim, "ord_vehplant", 1, -60, 0, math.pi / 2)
+			local b = Spawn.unit(sim, "ord_vehplant", 1, 60, 0, math.pi / 2)
+			local acc = sim.eco.accounts[1]
+			local lancer = sim.defs.units.ord_lancer
+			acc.supply.stored = 0
+			acc.supply.bonusIncome = lancer.cost.supply * 200 / lancer.cost.buildTime
+			acc.power.bonusIncome = 1000
+			build(sim, { a }, "ord_lancer", 0, 0)
+			build(sim, { b }, "ord_lancer", 0, 0)
+			if lowFirst then
+				submit(sim, 1, { cmdType = CT.PRIORITY, flags = 0, unitIds = { a }, value = 0 })
+			end
+			for _ = 1, 150 do
+				Sim.step(sim)
+			end
+			t.equal(bit32.band(sim.world.state[a], World.State.LOW_PRIORITY) ~= 0, lowFirst, "the LOW_PRIORITY bit follows the command")
+			return sim.build.progress[a] or 0, sim.build.progress[b] or 0
+		end
+		local full = 200 / 5100 * 10 -- a plant's progress in 10 s at full supply
+		local evenA, evenB = progress(false)
+		t.expect(math.abs(evenA - evenB) < 0.01 and evenA < full * 0.6, `both high: they share alike ({evenA}, {evenB})`)
+		local lowA, highB = progress(true)
+		t.expect(highB > full * 0.9, `the high plant runs at full speed: {highB} of {full}`)
+		t.expect(lowA < full * 0.1, `the low plant gets what is left, next to nothing: {lowA}`)
+
+		-- PRIORITY 1 makes it high again
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 0, 0)
+		submit(sim, 1, { cmdType = CT.PRIORITY, flags = 0, unitIds = { plant }, value = 0 })
+		submit(sim, 1, { cmdType = CT.PRIORITY, flags = 0, unitIds = { plant }, value = 1 })
+		Sim.step(sim)
+		t.equal(bit32.band(sim.world.state[plant], World.State.LOW_PRIORITY), 0, "high again")
+	end)
+
 	t.test("invalid sites fail with a reason", function()
 		local sim, cv, sx, sz = newStart()
 		build(sim, { cv }, "ord_extractor", sx + 30, sz) -- no deposit there
@@ -348,6 +386,41 @@ return function(t: RunAll.Context)
 		submit(sim, 1, { cmdType = CT.CANCEL, flags = 0, unitIds = { frame2 }, value = 0 })
 		Sim.step(sim)
 		t.equal(w.slot[frame2], nil, "the second removes the frame")
+	end)
+
+	t.test("building over your own units: the frame starts and they walk out; an enemy still blocks (S-155, the user)", function()
+		local Passability = require("@shared/Grid/Passability")
+		local function attempt(blockerTeam: number): (Sim.Sim, number, number)
+			local sim, cv, sx, sz = newStart()
+			fund(sim)
+			local w = sim.world
+			local site = sx + 60
+			local tank = Spawn.unit(sim, if blockerTeam == 1 then "ord_lancer" else "chs_ravager", blockerTeam, site + 2, sz + 3)
+			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
+			World.setHealth(w, tank, 1e7)
+			build(sim, { cv }, "ord_vehplant", site, sz)
+			local frame = 0
+			runUntil(sim, 400, function()
+				return frame ~= 0
+			end, function(s)
+				for _, e in events(s, "BUILD_START") do
+					frame = e.unit
+				end
+			end)
+			return sim, frame, tank
+		end
+		local sim, frame, tank = attempt(1)
+		t.expect(frame ~= 0, "the frame started over the friendly tank")
+		runUntil(sim, 150, function()
+			return false
+		end)
+		local w = sim.world
+		local pm = sim.map :: any
+		local cx, cz = pm.grid:cellAt(w.posX[tank], w.posZ[tank])
+		t.equal(Passability.occupant(pm, pm.grid:index(cx, cz)), 0, "the tank walked out of the footprint")
+		t.equal(sim.build.exiting[tank], nil, "and is clear of it")
+		local _, frame2 = attempt(2)
+		t.equal(frame2, 0, "an enemy tank on the site still blocks it")
 	end)
 
 	t.test("a builder assisting a factory speeds up production", function()

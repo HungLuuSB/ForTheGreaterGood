@@ -59,6 +59,23 @@ return function(t: RunAll.Context)
 		near(t, Economy.allowance(r), 100 + 10 - 40, "allowance = stored + window income − spent")
 	end)
 
+	t.test("low-priority demand shares only what the high demand leaves (S-156)", function()
+		-- settled to 20, so 30 on offer this window: high wants 24, low 24
+		local r = resource(10, 1000, 30, 144, 0)
+		r.lowDemand = 72
+		Economy.settle(r, 1 / 3)
+		near(t, r.ratio, 1, "high: all it wants")
+		near(t, r.lowRatio :: number, 6 / 24, "low: the 6 left of 24")
+		local acc: Economy.Account = { supply = r, power = resource(0, 1000, 0, 0, 0) }
+		near(t, Economy.effective(acc, 10, 0, true), 0.25, "low consumers read the low ratio")
+		near(t, Economy.effective(acc, 10, 0), 1, "high consumers the high one")
+		local short = resource(0, 1000, 30, 144, 0)
+		short.lowDemand = 72
+		Economy.settle(short, 1 / 3)
+		near(t, short.ratio, 20 / 24, "high short too: it shares the 20 on offer")
+		near(t, short.lowRatio :: number, 0, "low gets nothing")
+	end)
+
 	t.test("teams start with 1,000 / 1,000 and their own accounts", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
 		t.deepEqual(sim.eco.teams, { 1, 2 })

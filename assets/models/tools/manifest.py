@@ -28,6 +28,45 @@ BEAM = json.load(open(os.path.join(ROOT, "assets", "fx", "beam", "roblox_assets.
 # the honeycomb shell over the shield dome (M-30, fx.md "Honeycomb shell")
 SHELL_DIR = os.path.join(ROOT, "assets", "fx", "shield", "honeycomb")
 SHELL_NOTE = "honeycomb shell bands, waiting for the user's review"
+# the shield's energy look v4 (approved by the user 2026-10-24, fx.md "Shield energy"): the values of the
+# reference module assets/fx/shield/waves/ShieldPreview.luau; sizes are fractions of the dome radius R unless noted
+ENERGY_DIR = os.path.join(ROOT, "assets", "fx", "shield", "waves")
+SHIELD_ENERGY = {
+    "timing": {"pre": 0.22, "raise": 1.0, "collapse": 0.85, "off": 0.25, "waveCycle": 2.1, "pulsePeriod": 0.5,
+               "jitterStep": 0.1, "hitLife": 0.42},  # hitLife 0.8 at first; the user: the spread was slow
+    "counts": {"bands": 20, "streaks": 20, "waves": 3, "ringJoints": 12, "edgeArcs": 3, "edgeJoints": 6, "filaments": 2,
+               "filamentSegments": 8, "hits": 4, "hitFrames": 16},
+    "sizes": {"coreWidthStuds": 0.6, "glowWidth": 0.02, "filamentWidthStuds": 0.18, "filamentReach": 0.012, "flare": 0.15,
+              "streakWidth": 0.02, "streakTile": 0.5, "waveGlowWidth": 0.223, "waveGlowTile": 0.255, "waveLineWidth": 0.035,
+              "waveLineTile": 0.3, "edgeWidth": 0.03,
+              "hitGlow": 1.6},  # the hit Decal's Color3 = tint x hitGlow (3 at first; the user: the hits were too much)
+    "tints": {"order": [143, 232, 255], "chaos": [255, 180, 92]},
+}
+
+
+def shield_energy():
+    spec = load(os.path.join(ENERGY_DIR, "export", "energy.json"))
+    ids = load(os.path.join(ENERGY_DIR, "roblox_assets.json"))
+    tex, meshes, parts = ids["textures"], ids["meshes"], spec["parts"]
+    step = spec["bandDegrees"]
+
+    def part(name):
+        return {"mesh": meshes[name], "center": parts[name]["center"], "size": parts[name]["size"]}
+
+    e = {"status": "approved" if "shieldEnergy" in APPROVED else "review",
+         "textures": {"pulse": tex["pulse"], "glow": tex["glow"], "line": tex["line"], "spark": tex["spark"],
+                      "flare": tex["flare"], "streak": tex["streak"], "field": tex["field"],
+                      "waveGlow": [tex[f"wave_glow_{c}"] for c in "abc"], "waveLine": [tex[f"wave_line_{c}"] for c in "abc"],
+                      "hit": [tex[f"hit_{k}"] for k in range(1, SHIELD_ENERGY["counts"]["hitFrames"] + 1)]},
+         "bands": [{"name": f"Band_{k}", "theta": [round((k - 1) * step, 4), round(k * step, 4)], **part(f"Band_{k}")}
+                   for k in range(1, spec["bands"] + 1)],
+         "hitCap": {**part("HitCap"), "halfAngle": spec["capHalfAngle"]},
+         **SHIELD_ENERGY}
+    if e["status"] == "review":
+        e["note"] = "shield energy v4, waiting for the user's review"
+    return e
+
+
 # key art with parallax layers (lobby contract docs/contracts/key-art.md, L-13): assets/keyart/keyart.json
 # lists the arts; each one's tiles are in assets/keyart/<dir>/final/opencloud.json once uploaded
 KEYART_DIR = os.path.join(ROOT, "assets", "keyart")
@@ -76,6 +115,7 @@ APPROVED = {
     # 2026-10-23: the second review: beam shot, deposits, interceptors, the
     # (the tracked Commanders were approved too, then replaced by the mechs, M-31: review)
     "beam", "deposit", "ord_interceptor", "chs_interceptor",
+    "shieldEnergy",  # the user approved shield v4, 2026-10-24
     # 2026-10-23: the Commander mechs v3 and the extractor redesign (fp 2)
     "ord_sovereign", "chs_warlord", "ord_extractor", "chs_extractor",
     # 2026-10-23: every T1 structure redesigned at the size scale or newly
@@ -278,7 +318,8 @@ def main():
                         "center": b["center"], "size": b["size"]} for b in rig["bands"]]}
     if shell["status"] == "review":
         shell["note"] = SHELL_NOTE
-    body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell, "keyArt": key_arts()}, 0)
+    body = lua({"units": units, "fx": fx, "beam": beam, "shieldShell": shell, "shieldEnergy": shield_energy(),
+                "keyArt": key_arts()}, 0)
     text = f"""--!strict
 -- Mesh manifest (M-23, docs/contracts/rig.md section 7): every BAR-style mesh
 -- by unit def ID, with its asset IDs, rig, team pieces and glow parts.
@@ -333,6 +374,33 @@ export type ShieldShell = {{
 	bands: {{ {{ name: string, mesh: string, opacity: number, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
 }}
 
+-- the shield's energy look v4 (fx.md "Shield energy"): textures, the 20
+-- raise/collapse bands and the hit cap (center and size
+-- at dome radius 1, Roblox axes), timings in seconds, counts, sizes (fractions
+-- of the dome radius unless named ...Studs) and the faction tints (RGB 0-255)
+export type EnergyPart = {{ mesh: string, center: Vec3, size: Vec3 }}
+export type ShieldEnergy = {{
+	status: string,
+	note: string?,
+	textures: {{
+		pulse: string,
+		glow: string,
+		line: string,
+		spark: string,
+		flare: string,
+		streak: string,
+		field: string,
+		waveGlow: {{ string }},
+		waveLine: {{ string }},
+		hit: {{ string }},
+	}},
+	bands: {{ {{ name: string, mesh: string, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
+	hitCap: {{ mesh: string, center: Vec3, size: Vec3, halfAngle: number }},
+	timing: {{ [string]: number }},
+	counts: {{ [string]: number }},
+	sizes: {{ [string]: number }},
+	tints: {{ order: Vec3, chaos: Vec3 }},
+}}
 -- key art with parallax layers (lobby contract key-art.md, L-13): layers back
 -- to front, each cut into tiles (columns, rows) listed row by row from the top left
 export type KeyArt = {{
@@ -343,7 +411,7 @@ export type KeyArt = {{
 	layers: {{ {{ name: string, depth: number, images: {{ string }} }} }},
 }}
 
-local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell, keyArt: {{ [string]: KeyArt }} }} = {{
+local manifest: {{ glowMask: string, textures: {{ [string]: string }}, units: {{ [string]: Entry }}, fx: {{ [string]: Entry }}, beam: BeamShot, shieldShell: ShieldShell, shieldEnergy: ShieldEnergy, keyArt: {{ [string]: KeyArt }} }} = {{
 	glowMask = "{GLOW_MASK}",
 	textures = {lua(TEXTURES, 1)},
 {body[2:-2]}

@@ -181,7 +181,7 @@ The flares and the core use the core color, the embers the glow color. Check the
 
 ## Shield (Order deployable shield)
 
-The target look: a translucent dome with a bright edge, thin glowing rings flowing from the top down the dome, a curved light beam rising from a small emitter device to the top of the dome, a swirling vortex at the top, floating specks inside, and a ring burst where a shell hits. `R` below is the dome radius in studs.
+The look (shield v4, approved by the user 2026-10-24): "Shield energy" below. It replaces the energy column and dome waves of the first redesign (removed from the manifest once the client moved to `shieldEnergy`, C-187), the thin rings and the light beam. `R` below is the dome radius in studs.
 
 ### Meshes (`ReplicatedStorage.FX.Shield`)
 
@@ -226,6 +226,62 @@ Scattered patches of hex cells laid over the dome (the user: "spread out like li
 - **Texture:** `texture`, one tile of pointy-top hex outlines (white RGB, the pattern in alpha), 12 × 10 cells per tile, only small seeded blobs of cells drawn, about 22% of the cells (the review: fewer, smaller patches; each blob 1–3 cells across, full in the middle, fading at its edge, with a faint fill inside the cells). The bands' UVs tile it evenly over the dome (azimuthal equidistant from the top), the cells 5 studs across at the default radius 120 (they scale with the dome). The pole pinches the tiling slightly (the azimuthal projection); at 55° and 220 it reads as one more patch.
 - **Build each band** as a MeshPart: `MeshId` = `bands[i].mesh`, `Size` = `bands[i].size` × R, `CFrame` = dome base center × `CFrame.new(0, bands[i].center[2] × R, 0)` (the same base center as `Dome`), `Anchored`, no collisions, queries, touches or shadows. Add a `SurfaceAppearance` with `ColorMap` = `texture`, `AlphaMode = Transparency` and `Color` = the tint (team color or the Order cyan). Set `Transparency = 1 − bands[i].opacity × charge` (charge 0..1); keep the cap at most 0.99 opaque if a fully opaque part sorts badly against the ForceField dome.
 - **No glow parts:** it reads through the tint; checked at 55° (full and 35% charge) and from the side: `honeycomb_55_full.jpg`, `honeycomb_55_charge35.jpg`, `honeycomb_25_side.jpg` in `debug_out/screens/`. Reference: "FTGG Art", `Workspace.ShieldHoneycomb` (R = 120, at (0, 0, 3000)).
+
+### Shield energy (v4, approved by the user 2026-10-24)
+
+The user's v3 review, with their mock-up (`assets/reference/shield/shield_demo.html`, reference only, never committed): energy flows up a straight beam, bursts at the apex, and waves of energy keep rolling down the shell; the dome forms by sweeping down from the apex instead of scaling up, and collapses back up into it.
+
+- In the manifest as `Meshes.shieldEnergy` (check with `Mesh.validateShieldEnergy`).
+- Built by `assets/fx/shield/waves/build.py` (`export/energy.json`); IDs in `assets/fx/shield/waves/roblox_assets.json`.
+- **The reference implementation is `assets/fx/shield/waves/ShieldPreview.luau`**: fixed pools, and a `setFrame` that is a pure function of the state and the clock. Port it into `ShieldFx` (one update loop) rather than re-deriving it.
+- Every value below is in `shieldEnergy`: `timing`, `counts`, `sizes` (fractions of `R` unless named `…Studs`) and `tints` (Order (143, 232, 255), Chaos (255, 180, 92)).
+
+**States** (`timing`, seconds): `off`; `pre` 0.22 (the beam lights, the flare swells); `raise` 1.0 (the dome forms from the apex down); idle; `collapse` 0.85 (the reverse, draining up into the apex, a last flash at the end); then `off`, the beam fading in 0.25. With `p` the state's progress and `ease` the mock-up's in-out quadratic, the formed front (0 apex .. 1 ground) is `1.05 × ease(p)` in a raise and `1.05 × (1 − ease(p))` in a collapse.
+
+- **Shell.**
+  - Idle: the `Dome` mesh (`ForceField` material, `TextureID = textures.field`, `Color` = tint), bright at its edge, nearly clear inside.
+  - Raise and collapse only: the 20 `bands`, each 4.5° from the apex down. Build each MeshPart from `bands[i].mesh` with `Size = size × R` and `CFrame = base × CFrame.new(0, center[2] × R, 0)`, in the same material, texture and colour.
+  - Band `i` shows `clamp((front − (i − 1)/20) × 20 / 1.6, 0, 1)`; then swap to the single dome. The bands exist only during a raise or collapse.
+- **Honeycomb.** Off when idle (the user, 2026-10-24: cells only in the hit patches). The hit flipbook carries the cells; the waves' glow textures light a few cells as they pass.
+- **Channel.** The straight beam from the generator's `beam` attachment to an attachment at the apex, `CurveSize` 0, `FaceCamera`:
+  - `glow`: width `glowWidth × R`, transparency 0.45.
+  - `pulse`: core width `coreWidthStuds` (0.6), `TextureLength` a third of the beam, `TextureSpeed` 2, `Brightness` 5, `ZOffset` 2. The packets visibly travel up, and one reaches the apex every `pulsePeriod` (0.5 s).
+  - Two filaments (`filaments` × `filamentSegments`, `line` texture, `filamentWidthStuds` 0.18, white-ish tint) zig-zag round the core, their joints up to `filamentReach × R` off it, re-randomised every `jitterStep` (0.1 s).
+  - A `spark` BillboardGui at the emitter flickers in size.
+- **Apex flare.** A BillboardGui (`flare`) at the apex, `flare × R` across (half of v3).
+  - Its size is × (1 + 0.5 × arrive), where `arrive` peaks as each packet arrives (every 0.5 s); `Brightness` 2.2 + 1.5 × arrive.
+  - It grows during `pre` and during the last 15% of a collapse (the flash).
+  - It must not drown the top of the dome.
+- **Streaks.** `streaks` (20) curved Beams lying on the dome along unevenly spaced meridians, from the apex to the formed front (idle: to the ground).
+  - `FaceCamera` off; the attachments' X axis runs along the meridian and Y across it on the surface, so the Beam's width lies on the dome.
+  - `CurveSize0 = CurveSize1 = 4/3 · tan(θ/4) · R` for an arc of angle θ (a circular-arc Bézier); `Segments` 16.
+  - `streak` texture (Wrap, `TextureLength` about `streakTile × R`, `TextureSpeed` 0.25–0.45, a little different per streak): packets of light slide down. Transparency goes from 0.55 at the apex to 1 at the ground.
+  - Subtle, behind the waves (`ZOffset` −1).
+- **Energy waves** (the main effect).
+  - `waves` (3) in flight on a `waveCycle` (2.1 s), so a new wave leaves the apex every 0.7 s.
+  - They run whenever the shell shows: from the first moment of a raise, while up, and during a collapse. During a raise, only above the formed front.
+  - For wave `i` (0-based): `age = frac(t / 2.1 + i / 3)`; its position is `0.04 + 0.94 × age^1.3` (0 apex .. 1 ground), so it accelerates going down. It fades in over the first 10% and out over the last 22%, just above the ground.
+  - Each wave is a ring of `ringJoints` (12) curved Beam segments lying on the dome (attachments as for the streaks, `CurveSize` from the joint spacing), in two layers:
+    - **glow band:** width `waveGlowWidth × R`, a `waveGlow` texture (`TextureLength` = `waveGlowTile × R`), centred 0.062 rad above the line, so the texture's bright leading edge sits on the line;
+    - **crackling line:** width `waveLineWidth × R`, a `waveLine` texture (`TextureLength` = `waveLineTile × R`, white-ish tint), `ZOffset` 1.
+  - Never a level circle: each joint's polar angle wobbles by `0.03 sin(3φ + 2.1i + 1.3t) + 0.017 sin(7φ − 2t + i)` (× π/2), plus ±0.01 rad of jitter.
+  - Brightness varies round the ring (`0.45 + 0.55 max(0, sin(4φ + 1.7i + 0.8t))`), with small gaps.
+  - Every `jitterStep`, re-jitter the joints and swap among the three `waveGlow` / `waveLine` variants, so the cells and the crackle flicker.
+- **Raise/collapse edge.** `edgeArcs` (3) open arcs of `edgeJoints` (6) segments ride the formed front.
+  - Each is 80–115°, crackling (`waveLine`, `edgeWidth × R`), with fading ends and a gap or two.
+  - They fade out in the last 15% of a raise.
+- **Hits.** `hits` (4) pooled `hitCap` MeshParts, idle only.
+  - Placement: `Size = size × R`; `CFrame.fromMatrix(base + dir × center[2] × R, right, dir)`, with `dir` the unit direction from the dome's centre to the hit.
+  - Each cap is fully transparent and carries a `Decal` on its `Top` face: `Texture` = `hit[k]` for frame `k` of `counts.hitFrames` (16) over `timing.hitLife` (0.42 s; crossfade frame k into k + 1 for smooth play), `Color3` = tint × `sizes.hitGlow` (1.6, so it glows a little). The frames show a patch of cells lighting and spreading outward in a ring, fading.
+  - The cap is 0.28 rad round the impact (`hitCap.halfAngle`), about 0.55 R across. The first version (0.46 rad, glow × 3, 8 frames over 0.8 s) lit most of the dome after a few quick hits and spread slowly; the user asked for smaller, dimmer, faster patches.
+  - A Decal on a MeshPart projects onto the cap. The MeshPart's own `TextureID` doesn't work here: `Neon` ignores the alpha and `ForceField` washes it out.
+- **Detail by zoom.** At 220 studs the outline, the beam and the waves must read. The streaks, filaments and edge crackle can drop first.
+
+**Reference:** "FTGG Art", `Workspace.ShieldEnergyReference`, driven by the `ShieldPreview` module there.
+- The Phalanx (R 120, Order) at (750, 0, −1100) and the Carapace (R 80, Chaos) at (1050, 0, −1100).
+- The uploaded meshes are templates in `ReplicatedStorage.FX.ShieldEnergy` (the ×100 import: radius 1 = 100 studs), with the texture images as attributes.
+- Frames: `debug_out/screens/shield_v4_strip.png` (raise, idle with two hits, collapse, Order and Chaos) and `shield_v4_220.png`.
+- Freshly uploaded images draw blank in Studio until loaded once (`ContentProvider:PreloadAsync`).
 
 ### Asset IDs
 

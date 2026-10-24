@@ -596,6 +596,35 @@ return function(t: RunAll.Context)
 		print(string.format("    Phalanx charge: 10 Ravagers %.0f%% / %.0f%%, 4 Ravagers %.0f%% / %.0f%% (30 s / 60 s)", heavy30 * 100, heavy60 * 100, light30 * 100, light60 * 100))
 	end)
 
+	t.test("TOGGLE switches a dome off and on: off it's down, draws no power, keeps its charge (S-154, the user)", function()
+		local sim, gen = dome(1, 0.6)
+		local w = sim.world
+		t.expect(bit32.band(w.state[gen], World.State.TOGGLED_ON) ~= 0, "a generator starts switched on")
+		local function toggle(on: boolean)
+			local wr = Packer.Writer.new()
+			Schema.encodeCommand(wr, { cmdType = Schema.CmdType.TOGGLE, flags = 0, unitIds = { gen }, value = if on then 1 else 0 })
+			assert(Sim.submit(sim, 1, wr:finish()))
+		end
+		Sim.step(sim)
+		t.expect(sim.combat.shieldUp[gen] == true, "up while on")
+		toggle(false)
+		for _ = 1, 30 do
+			Sim.step(sim)
+		end
+		local held = sim.combat.shieldCharge[gen]
+		t.equal(sim.combat.shieldUp[gen], false, "off: the dome is down")
+		t.equal(sim.combat.shieldPower[gen], 0, "and draws no power")
+		local hitless = fire(sim, "chs_heavy_cannon", 0, 250)
+		local hit = follow(sim, hitless)
+		t.equal(hit, nil, "a shell passes where the dome was")
+		t.expect(math.abs(sim.combat.shieldCharge[gen] - held) < 1e-9, "no recharge while off; the charge is kept")
+		toggle(true)
+		for _ = 1, 3 do
+			Sim.step(sim)
+		end
+		t.equal(sim.combat.shieldUp[gen], true, "on again: it rises (charge above RAISE_AT)")
+	end)
+
 	t.test("a player without the generator gets SHIELD_HIT with generator 0", function()
 		local sim, gen = dome(10)
 		local g = (sim.map :: any).grid

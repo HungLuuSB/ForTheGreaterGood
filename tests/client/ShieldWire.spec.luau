@@ -137,10 +137,10 @@ return function(t: any)
 		t.expect(deepest < 4, `never drawn more than a few studs inside ({deepest})`)
 	end)
 
-	t.test("light shells (S-85): destroyed at the surface, dropped with no burst, the dome lit there", function()
+	t.test("light shells (S-85): destroyed at the surface, bursting there with their explosion (C-185), the dome lit there", function()
 		local sim, world, fx, _, step = scene()
 		Spawn.unit(sim, "chs_locust", 2, 0, 40, math.pi) -- autocannon, mass ~0.23
-		local absorbs, inside, bursts = 0, 0, 0
+		local absorbs, inside, bursts, onShell = 0, 0, 0, 0
 		local seen: { [any]: boolean } = {}
 		step(15 * 8, function()
 			for _, h in fx.shieldHits do
@@ -164,11 +164,16 @@ return function(t: any)
 					if r < 110 then
 						bursts += 1
 					end
+					local r3 = math.sqrt(b.x ^ 2 + (b.z + 100) ^ 2 + (b.y - World.groundY(world, 0, -100)) ^ 2)
+					if b.kind == "impact" and math.abs(r3 - 120) < 4 then
+						onShell += 1
+					end
 				end
 			end
 		end)
 		t.expect(absorbs >= 3, `autocannon rounds destroyed at the dome ({absorbs})`)
 		t.equal(inside, 0, "none drawn well inside the dome")
 		t.equal(bursts, 0, "no bursts inside the dome")
+		t.expect(onShell >= absorbs, `each absorbed round explodes on the honeycomb ({onShell} bursts for {absorbs})`)
 	end)
 end

@@ -320,7 +320,7 @@ end
 -- DIRCM upkeep (called by Build.step with the other economy consumers):
 -- drains powerDrain per second and recharges the cooldown, both at the
 -- team's power stall ratio.
-function EW.drainStep(sim: Types.Sim, demandP: { [number]: number })
+function EW.drainStep(sim: Types.Sim, demandP: { [number]: number }, lowP: { [number]: number })
 	local w = sim.world
 	local e = sim.ew
 	local eco = sim.eco
@@ -337,7 +337,11 @@ function EW.drainStep(sim: Types.Sim, demandP: { [number]: number })
 			local team = w.team[id]
 			local acc = eco.accounts[team]
 			demandP[team] += drain
-			ratio = math.min(Economy.effective(acc, 0, drain), Economy.allowance(acc.power) / (drain * dt))
+			local low = Economy.isLow(w, id) -- (S-156)
+			if low then
+				lowP[team] += drain
+			end
+			ratio = math.min(Economy.effective(acc, 0, drain, low), Economy.allowance(acc.power) / (drain * dt))
 			ratio = math.max(ratio, 0)
 			acc.power.spent += drain * dt * ratio
 		end

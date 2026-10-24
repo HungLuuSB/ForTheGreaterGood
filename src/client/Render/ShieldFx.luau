@@ -17,9 +17,14 @@
 --     deflector; no ripple since C-131)
 --     (Core/Shield) and a brief brightness pulse.
 -- Timings, flicker, ring flow, detail and culling are Core/ShieldLook's.
+-- Since C-187 the look is models-C's energy look v4 (Render/ShieldEnergy,
+-- approved by the user): a ForceField dome tinted by faction that forms from
+-- the apex down, a straight channel with packets, streaks, energy waves and
+-- flipbook hits. The look above stays as the fallback when v4's meshes
+-- don't load.
 --
 --   ShieldFx.ready()  -- C's meshes loaded (false until then: wait before new())
---   local s = ShieldFx.new(emitter, radius, teamColor, base?)  -- an Attachment or a Vector3
+--   local s = ShieldFx.new(emitter, radius, teamColor, base?, faction?)  -- an Attachment or a Vector3
 --   s:deploy()  s:setStrength(0.6)  s:hit(worldPos, intensity)  s:collapse()  s:destroy()
 --   s:setEmitter(attachment?)  -- the beam's start (a model streamed in or out)
 --
@@ -41,7 +46,9 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local Shield = require("../Core/Shield")
+local ShieldEnergyLook = require("../Core/ShieldEnergyLook")
 local ShieldLook = require("../Core/ShieldLook")
+local ShieldEnergy = require("./ShieldEnergy")
 local Meshes = require("@shared/Defs/Meshes/Registry")
 
 local ShieldFx = {}
@@ -92,6 +99,9 @@ export type ShieldFx = {
 	dome: BasePart,
 	domeMesh: boolean, -- C's hemisphere (else a ball)
 	shell: { MeshPart }, -- the honeycomb shell's bands (C-138), or none
+	energy: ShieldEnergy.Energy?, -- the v4 look (C-187), else the look above
+	energyHits: { { dir: Vector3, born: number } }, -- v4 hits, newest last
+	hitList: { ShieldEnergy.Hit }, -- scratch for setFrame
 	specks: ParticleEmitter,
 	core: Part, -- placeholder core, shown without an emitter part
 	coreLight: PointLight,
@@ -158,6 +168,12 @@ local function shellOn(): boolean
 	return shellEntry ~= nil and templates.shell ~= nil and (shellEntry.status == "approved" or ShieldFx.SHELL_ANYWAY)
 end
 local templatesState = "idle"
+-- the energy look v4 (C-187): approved, so it's the look everywhere once loaded
+local function energyOn(): boolean
+	local e = ShieldEnergy.entry
+	return ShieldEnergy.ready() and (e.status == "approved" or ShieldFx.SHELL_ANYWAY)
+end
+ShieldFx.DETAIL_MID = 300 -- studs: beyond, v4 drops its streaks, filaments, edge crackle and honeycomb (fx.md)
 
 local function loadTemplates()
 	templatesState = "loading"
@@ -197,6 +213,7 @@ local function loadTemplates()
 		end
 		templates.shell = bands
 	end
+	ShieldEnergy.load() -- the v4 look's meshes and images (C-187)
 	ShieldFx.stats.meshes = `dome {if templates.dome then "mesh" else "ball"}, foot {if templates.ring then "mesh" else "none"}, rings {if templates.ringThin then "thin mesh" else "adornments"}, shell {if templates.shell then #templates.shell .. " bands" else "none"}`
 	templatesState = "done"
 end
@@ -327,6 +344,9 @@ function Methods.setEmitter(s: ShieldFx, emitter: Attachment?)
 	s.coreTarget = if part and part:IsA("BasePart") then part else nil
 	s.coreOriginal = if s.coreTarget then s.coreTarget.Color else nil
 	s.beam.Attachment0 = emitter or s.beamBase
+	if s.energy then
+		ShieldEnergy.setFrom(s.energy, emitter or s.beamBase)
+	end
 	local placeholder = s.coreTarget == nil
 	s.core.Transparency = if placeholder then 0 else 1
 	s.coreLight.Enabled = placeholder
@@ -335,6 +355,17 @@ end
 -- A hit at `worldPos` (projected onto the dome); `intensity` 1 = a typical shell.
 function Methods.hit(s: ShieldFx, worldPos: Vector3, intensity: number)
 	if s.state ~= "up" and s.state ~= "deploying" then
+		return
+	end
+	if s.energy then
+		-- v4: a flipbook patch where it hit (newest kept when the pool is full)
+		local dir = worldPos - s.position
+		if dir.Magnitude > 1e-3 then
+			table.insert(s.energyHits, { dir = dir.Unit, born = clock })
+			if #s.energyHits > ShieldEnergy.entry.counts.hits then
+				table.remove(s.energyHits, 1)
+			end
+		end
 		return
 	end
 	Shield.hit(s.model, { x = worldPos.X, y = worldPos.Y, z = worldPos.Z }, intensity, clock)
@@ -377,7 +408,7 @@ end
 -- position), the beam rising from `emitter` (an Attachment, e.g. a
 -- generator's `beam`, or a position for a placeholder core); down until
 -- deploy(). Call once ShieldFx.ready() is true for C's meshes.
-function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: Color3?, base: Vector3?): ShieldFx
+function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: Color3?, base: Vector3?, faction: string?): ShieldFx
 	ShieldFx.ready()
 	if root == nil then
 		local f = Instance.new("Folder")
@@ -580,6 +611,9 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		dome = dome,
 		domeMesh = domeMesh,
 		shell = shell,
+		energy = nil,
+		energyHits = {},
+		hitList = {},
 		specks = specks,
 		core = core,
 		coreLight = coreLight,
@@ -598,6 +632,11 @@ function ShieldFx.new(emitter: Attachment | Vector3, radius: number, teamColor: 
 		barFill = fill,
 		barText = text,
 	}, Methods) :: any
+	if energyOn() and domeMesh then
+		-- the v4 look on the same dome part (C-187)
+		local seed = math.floor(position.X * 7 + position.Z * 13) % 997 + 1
+		s.energy = ShieldEnergy.new(folder, anchor, position, radius, ShieldEnergy.tint(faction), attachment or beamBase, dome, seed)
+	end
 	s:setEmitter(attachment)
 	table.insert(shields, s)
 	ShieldFx.stats.shields = #shields
@@ -632,9 +671,101 @@ local function hideDetail(s: ShieldFx)
 	end
 end
 
+-- Where the capacity bar hovers: just above the generator's model (its
+-- beam emitter sits on top of it), not over the dome (C-193, the user).
+ShieldFx.BAR_LIFT = 3 -- studs above the emitter
+local function barPoint(s: ShieldFx): Vector3
+	local from = if s.emitter then s.emitter.WorldPosition else s.beamBase.WorldPosition
+	return from + Vector3.new(0, ShieldFx.BAR_LIFT, 0)
+end
+
+-- A v4 dome's frame (C-187): ShieldFx's states mapped onto v4's, the
+-- strength rule as an opacity factor, detail by distance; the edge
+-- adornments only at strategic distance, where the ForceField dome alone
+-- would be faint. False if skipped.
+local function drawEnergy(s: ShieldFx, now: number, cam: Camera, view: Vector2): boolean
+	local e = s.energy :: ShieldEnergy.Energy
+	local timing = ShieldEnergy.entry.timing
+	local deploySeconds, collapseSeconds = ShieldEnergyLook.durations(timing)
+	local since = now - s.since
+	if s.state == "deploying" and since >= deploySeconds then
+		s.state, s.since = "up", now
+	elseif s.state == "collapsing" and since >= collapseSeconds then
+		s.state, s.since = "down", now
+	end
+	since = now - s.since
+	if s.emitter and s.emitter.Parent == nil then
+		s:setEmitter(nil)
+	end
+	local r8, g8, b8 = Shield.coreColor(s.strength)
+	local coreColor = Color3.fromRGB(r8, g8, b8)
+	if s.coreTarget then
+		s.coreTarget.Color = coreColor
+	end
+	if s.bar then
+		s.bar.Visible = false
+	end
+	s.edge.Visible = false
+	s.edgeGlow.Visible = false
+	local st, tState = ShieldEnergyLook.stateOf(s.state, since, timing)
+	if st == "off" and tState >= timing.off then
+		ShieldEnergy.hide(e)
+		return false
+	end
+	local center = s.position
+	local sp = cam:WorldToViewportPoint(center + Vector3.new(0, s.radius * 0.5, 0))
+	local radiusPx = s.radius / math.max(sp.Z, 1) * (view.Y / 2) / math.tan(math.rad(cam.FieldOfView) / 2)
+	local D = (cam.CFrame.Position - center).Magnitude
+	if not ShieldLook.onScreen(sp.X, sp.Y, sp.Z, radiusPx, view.X, view.Y, D < s.radius) then
+		s.visible = false
+		return false
+	end
+	s.visible = true
+	s.strategic = ShieldLook.strategic(s.strategic, D)
+	local detail: ShieldEnergy.Detail = if s.strategic then "far" elseif D > ShieldFx.DETAIL_MID then "mid" else "full"
+	local alpha = ShieldLook.opacity(s.strength) * ShieldLook.flicker(s.strength, now)
+	-- the live hits, oldest first, as directions and ages
+	local list = s.hitList
+	table.clear(list)
+	for _, h in s.energyHits do
+		local age = now - h.born
+		if age < timing.hitLife then
+			table.insert(list, { dir = h.dir, age = age })
+		end
+	end
+	ShieldEnergy.setFrame(e, st, tState, now, alpha, detail, list)
+	-- the outline at strategic distance; the capacity bar over the generator
+	if s.strategic and st == "idle" and D > s.radius * 1.02 then
+		local n = (cam.CFrame.Position - center) / D
+		local R = s.radius
+		local c = center + n * (R * R / D)
+		local rr = R * math.sqrt(1 - (R * R) / (D * D))
+		local w = math.max(0.25, D * 0.0025)
+		local cf = CFrame.lookAt(c, c + n) - center
+		s.edge.CFrame = cf
+		s.edge.Color3 = e.tint
+		s.edge.Radius = rr
+		s.edge.InnerRadius = math.max(rr - w, 0)
+		s.edge.Height = 0.05
+		s.edge.Transparency = 1 - ShieldFx.EDGE_OPACITY * alpha
+		s.edge.Visible = alpha > 0.01
+	elseif s.bar and s.barFill and s.barText and st ~= "off" then
+		local tp, on = cam:WorldToViewportPoint(barPoint(s))
+		s.bar.Visible = on
+		s.bar.Position = UDim2.fromOffset(tp.X, tp.Y)
+		s.barFill.Size = UDim2.fromScale(s.strength, 1)
+		s.barFill.BackgroundColor3 = coreColor
+		s.barText.Text = `Shield {math.floor(s.strength * 100 + 0.5)}%`
+	end
+	return true
+end
+
 -- One shield's frame; false if it was skipped (down or off screen). Hit
 -- plates go into `plateParts` / `plateCFrames` for one BulkMoveTo.
 local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vector2, plateParts: { BasePart }, plateCFrames: { CFrame }): boolean
+	if s.energy then
+		return drawEnergy(s, now, cam, view)
+	end
 	local next = ShieldLook.advance(s.state, now - s.since)
 	if next ~= s.state then
 		s.state = next
@@ -745,10 +876,9 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		s.edgeGlow.Height = 0.05
 		s.edgeGlow.Transparency = 1 - edgeAlpha * 0.3
 		s.edgeGlow.Visible = edgeAlpha > 0.01
-		-- the bar, above the outline's top
+		-- the bar, just above the generator (C-193)
 		if s.bar and s.barFill and s.barText then
-			local up = cam.CFrame.UpVector - n * cam.CFrame.UpVector:Dot(n)
-			local top = if up.Magnitude > 1e-3 then c + up.Unit * (rr + 2) else center + Vector3.new(0, R, 0)
+			local top = barPoint(s)
 			local tp, on = cam:WorldToViewportPoint(top)
 			s.bar.Visible = on and not s.strategic -- strategic detail: the dome and edge only
 			s.bar.Position = UDim2.fromOffset(tp.X, tp.Y)

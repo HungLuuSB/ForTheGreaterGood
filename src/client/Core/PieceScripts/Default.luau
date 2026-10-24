@@ -49,8 +49,32 @@ function Default.AimWeapon(u: any, slot: number, yaw: number, pitch: number)
 	end
 end
 
+Default.DRUM_SPEED = 720 -- degrees per second: a barrel cluster turning to the next barrel
+
+-- A slot with several muzzles (S-157, C-198): each shot's barrel recoils in
+-- turn (`barrelN` for `muzzleN`, `laser_barrelN` for `laser_muzzleN`), and
+-- a `drumPiece` turns the cluster one barrel on after each shot (Geryon,
+-- Bulwark's laser).
+local function cycleFire(u: any, slot: number, slotDef: any, muzzles: { string })
+	u.shotsFired = u.shotsFired or {}
+	local n = u.shotsFired[slot] or 0
+	u.shotsFired[slot] = n + 1
+	if slotDef.drumPiece then
+		u:Turn(slotDef.drumPiece, "z", -(n + 1) * 360 / #muzzles, Default.DRUM_SPEED)
+	end
+	local barrel = (string.gsub(muzzles[n % #muzzles + 1], "muzzle", "barrel"))
+	u:Move(barrel, "z", Default.RECOIL, Default.RECOIL_SPEED) -- (a model without it draws nothing)
+	u:WaitForMove(barrel, "z")
+	u:Move(barrel, "z", 0, Default.RETURN_SPEED)
+end
+
 function Default.FireWeapon(u: any, slot: number)
-	local piece = u.def.weapons[slot].pitchPiece
+	local slotDef = u.def.weapons[slot]
+	if slotDef.muzzles and #slotDef.muzzles > 1 then
+		cycleFire(u, slot, slotDef, slotDef.muzzles)
+		return
+	end
+	local piece = slotDef.pitchPiece
 	if piece == nil then
 		return
 	end

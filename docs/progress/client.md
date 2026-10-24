@@ -6,6 +6,33 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Bulwark's laser muzzles stay put on death (C-200):** muzzles named like `laser_muzzle1` count as attachments, so a destroyed tower never flings them.
+- Ready to merge: `PENDING` (C-200; src/client and a spec)
+- **Laser looks (C-199):** lasers follow your references: a thick white-to-colour bolt tapering to the target with a muzzle flare and a glowing orb (Overwatch, Geryon and the other laser towers in their colours); the Beamer a thin flickering thread with a cone of light where it lands.
+- Ready to merge: `583fb90` (C-199; src/client only)
+- **Priority, new icons, tower visuals (C-196..C-198):** a High / Low priority button on units that use resources; your draft 5 icon sheet with the new towers' own icons; red, green and blue lasers, the Beamer's growing beam, barrels firing in turn and Geryon's turning drum.
+- Ready to merge: `6eb8b11` (C-196 e7d8400, C-197 082a892, C-198; src/client, the icon sheet and asset id)
+- **Build over your own units; new defences have icons (C-195):** placing over your own or allied units is allowed (they walk out); shields' On / Off works on the card; the new T1 defences use existing icon tiles until they get their own.
+- Ready to merge: `09df50f` (C-195; carries sim-A's d41074e, S-152..S-157, so the new defs land with their icon entries; test 495, test_client 280, build passed)
+- **Command line (C-194):** Tab completes and cycles choices (reveal on / off, kill selected / a team ...); /give takes aliases like ord_shield or chs_ir-sam.
+- Ready to merge: `a04dd51` (C-194: Tab cycling, unit aliases; src/client)
+- **Commands and order lines (C-193):** each unit offers only commands that do something (no Stop on a generator; shields get On / Off); a box with a builder in it selects only builders; a turret takes no move; order lines (assist, build, factory orders) stay until done; builders spray what they build; the shield bar sits over the generator.
+- Ready to merge: `1699a9e` (C-193: command audit, box filter, lasting order lines, nano spray; src/client)
+- **Units on their terrain (C-192):** portraits show each unit on ground, water, a shore or above ground; in the world, water buildings and amphibious units float, and far-off aircraft stay in the air.
+- Ready to merge: `17bd157` (C-192: units on their terrain, portraits and world; src/client)
+- **Selection tiles (C-191):** with several units selected, each type's tile shows the unit itself, its icon bottom right and the count top left.
+- Ready to merge: `41fd948` (C-191: multi-select tiles; src/client)
+- **Smoother shield hits (C-190):** the hit patch crossfades between its frames instead of stepping; a faster patch is asked of models-C.
+- Ready to merge: `e06e139` (C-190: hit patch crossfade; src/client)
+- **No honeycomb on the shield (C-189):** the dome shows hex cells only where a shot hits.
+- Ready to merge: `f0f231f` (C-189: no idle honeycomb on v4 shields; src/client)
+- **New shield look in the game (C-187):** your approved v4 from models-C: a ForceField dome in the faction's colour (Order cyan, Chaos amber) that forms from the top down and drains back up, a channel with packets, streaks, energy waves and glowing hit patches. It replaces the old look and C-186. About 0.27 ms a frame per dome. Screenshots: `debug_out/screens/c187_shield_*.jpg`.
+- Ready to merge: `5dd4a94` (C-187: shield energy v4, C-186 taken out; src/client, place/MeshMaterials; main 5950103 merged in; also carries the C-186 hold note)
+- Ready to merge: `84771a6` (C-186: shield column and dome waves; src/client, place/MeshMaterials; main bd87d26 merged in)
+- **Shield hits explode (C-185):** shells and rockets destroyed on a dome now explode on the honeycomb with their own impact effect. `debug_out/screens/c185_shield_absorb_bursts.jpg`.
+- Ready to merge: `369ea62` (C-185: absorbed projectiles burst on the dome; src/client)
+- **Smooth key art (C-184):** the loading screens' parallax no longer stutters, and the match no longer draws the world behind its loading screen.
+- Ready to merge: `ddc588f` (C-184: KeyArt sub-pixel parallax, 3D paused while loading; src/client)
 - **New icon sheet (C-183):** your draft 4 is uploaded (asset 83784263765889) and live. Every unit's icon comes from the sheet's own lists; anti-nukes, point defences, shields, flak, missile batteries and the decoy drone have their own tiles now. A second sheet starts automatically once the first is full. Screenshots: `debug_out/screens/c183_strategic_*.jpg`.
 - Ready to merge: `02e1493` (C-183: icon sheet draft 4, multi-sheet atlas, new asset id, Studio "hold" debug query; src/client, src/roblox, tools/icons, assets, docs/art)
 - **Point defence (C-182, S-149):** interceptors from the Sanctum, Basilisk, Shepherd and Griffin chase rockets and missiles on screen; a shot-down rocket ends in a small puff. Stopgap icons until your draft 4 sheet.

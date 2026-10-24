@@ -255,7 +255,7 @@ function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vec
 	setModel(g, def)
 	local model = g.model :: Model
 	local color = if p.valid then VALID else INVALID
-	local y = World.groundY(world, p.x, p.z)
+	local y = World.groundY(world, p.x, p.z, World.floats(def)) -- on the water for a water structure (C-192)
 	local size = def.footprint * 8
 	g.plate.Size = Vector3.new(size, 0.2, size)
 	g.plate.CFrame = CFrame.new(p.x, y + 0.1, p.z)

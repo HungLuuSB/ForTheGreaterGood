@@ -43,6 +43,7 @@ Effects.LAUNCH_BLEND = 3 -- ticks for a shell to go from the drawn barrel tip on
 Effects.SHOOTER_RADIUS = 12 -- studs: a unit this close to a launch point with that weapon fired it
 Effects.SNAP_STUDS = 60
 Effects.TRACER_SECONDS = 0.09
+Effects.LASER_SECONDS = 0.12 -- a laser bolt's line, drawn whole at once (C-198)
 Effects.BEAM_SECONDS = 0.45 -- a BEAM shot without a duration of its own (S-96, C-112)
 -- Beam durations until the sim's `beamDuration` (S-113) is in the defs: the
 -- user's look (C-128): Radiance's ray lingers 3 s, Inferno's 1.5 s.
@@ -175,7 +176,8 @@ export type Proj = {
 -- protocol 24, S-79): Render/ShieldDomes lights the dome there.
 -- `kind`: "enter" (the shell crossed the dome's surface: SHIELD_FIELD, drawn
 -- at once, C-95), "turn" or "breach" (SHIELD_HIT, at the turn deep inside),
--- "absorb" (SHIELD_HIT: a light shell destroyed at the surface, S-85).
+-- "absorb" (SHIELD_HIT: a shell destroyed at the surface, S-85; it bursts
+-- there with its own explosion, C-185).
 export type ShieldHit = { unitId: number, kind: string, x: number, y: number, z: number, mass: number, breach: boolean, projId: number, tick: number }
 
 -- A strategic missile's launch (LAUNCH_WARNING, S-48): every player gets one.
@@ -192,7 +194,7 @@ export type Burst = { x: number, y: number, z: number, radius: number, born: num
 -- A correction, decoy or lost lock (C-39): where the missile was drawn
 -- (x0, y0, z0) and the server's state it was moved onto (x1, y1, z1).
 export type Mark = { kind: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number }
-export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }?, pulseAt: number?, pulseMass: number?, weaponId: string? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
+export type Tracer = { x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, born: number, life: number, hit: boolean, size: number, beam: string?, deflect: { number }?, pulseAt: number?, pulseMass: number?, weaponId: string?, laser: { number }?, ramp: number? } -- beam: the shooter's faction for a BEAM weapon (C-112): a held line, not a streak; deflect: where a beam stopped by a shield glances to (C-129)
 
 export type Fx = {
 	projectiles: { [number]: Proj },
@@ -208,6 +210,7 @@ export type Fx = {
 	late: { n: number, sum: number, max: number }, -- render ticks between an event's tick and when it played (diagnostics)
 	launches: { n: number, fromBarrel: number, sumOffset: number }, -- shells started at a drawn barrel tip, and its distance from the server's launch point (diagnostics)
 	shots: { { number } }, -- { unitId, slot } of shots played since the caller last cleared it (piece scripts' FireWeapon)
+	ramps: { [number]: { number } }, -- a ramping beam's run on one target (C-198)
 	marks: { Mark }, -- the sensor view's corrections, decoys and lost locks, oldest first (C-39)
 	warnings: { Warning }, -- strategic launches, kept while the missile flies and WARNING_LINGER after (C-57)
 	shieldHits: { ShieldHit }, -- since the caller last cleared it (C-91)
@@ -228,6 +231,7 @@ function Effects.new(): Fx
 		late = { n = 0, sum = 0, max = 0 },
 		launches = { n = 0, fromBarrel = 0, sumOffset = 0 },
 		shots = {},
+		ramps = {}, -- a ramping beam's run on one target: unit*16+slot → { started, last } (C-198)
 		marks = {},
 		warnings = {},
 		shieldHits = {},
@@ -280,10 +284,31 @@ end
 local function shotTracer(world: World.World, weapon: any, faction: string?, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, hit: boolean, now: number): Tracer
 	local isBeam = weapon ~= nil and weapon.type == "BEAM"
 	local t: Tracer = { x0 = x0, y0 = y0, z0 = z0, x1 = x1, y1 = y1, z1 = z1, born = now, life = if isBeam then Effects.beamSeconds(weapon) else Effects.TRACER_SECONDS, hit = hit, size = if weapon then weaponSize(weapon) else 1, beam = if isBeam then (faction or "order") else nil, weaponId = if weapon then weapon.id else nil }
+	-- a laser (S-157): the whole line at once in the weapon's colour (C-198)
+	local fxDef = weapon and weapon.fx
+	if fxDef and fxDef.tracer == "laser" then
+		local c = fxDef.color -- { r, g, b } (0..255, S-157)
+		t.laser = if c then { c.r or c[1] or 255, c.g or c[2] or 255, c.b or c[3] or 255 } else { 255, 255, 255 }
+		t.life = Effects.LASER_SECONDS
+	end
 	if isBeam and not hit then
 		Effects.glance(world, weapon, t, now)
 	end
 	return t
+end
+
+-- A ramping beam's intensity now (0..1, C-198): time on one target over the
+-- weapon's ramp.seconds, as the server ramps its damage (S-157); firing
+-- that paused longer than 1.6 shot gaps starts over.
+function Effects.ramp(fx: Fx, key: number, weapon: any, now: number): number
+	local r = fx.ramps[key]
+	local gap = (weapon.reload or 0.2) * 1.6
+	if r == nil or now - r[2] > gap then
+		r = { now, now }
+		fx.ramps[key] = r
+	end
+	r[2] = now
+	return math.clamp((now - r[1]) / (weapon.ramp.seconds or 4), 0, 1)
 end
 
 -- A beam that ended short of its target: on a known dome's surface, it
@@ -917,6 +942,13 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 				return -- the burning beam goes on to the new end (a dome dropped, C-144)
 			end
 			local t = shotTracer(world, weapon, def and def.faction, x0, y0 :: number, z0 :: number, x1, y1, z1, e.hit == true, now)
+			if weapon and weapon.ramp then
+				-- the Beamer (S-157): its intensity grows over ramp.seconds of
+				-- firing at one target, as the server's damage does; a pause
+				-- longer than a shot's gap (a target change, a loss) starts over
+				t.ramp = Effects.ramp(fx, e.unitId * 16 + e.slot, weapon, now)
+				t.life = (weapon.reload or 0.2) + 0.08 -- the bolts join into one beam
+			end
 			if #fx.tracers >= Effects.MAX_TRACERS then
 				fx.skipped.tracers += 1
 			end
@@ -945,16 +977,21 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			end
 		end
 	elseif kind == EK.SHIELD_HIT then
-		-- turned back (a missile loses its lock), broke through, or a light shell
-		-- destroyed at the surface (protocol 25): dropped, no burst, no IMPACT follows
+		-- turned back (a missile loses its lock), broke through, or destroyed
+		-- at the surface (protocol 25): no IMPACT follows, so an absorbed
+		-- projectile bursts on the honeycomb with its own explosion (the
+		-- user, C-185)
 		local p = fx.projectiles[e.projId]
+		local x, y, z = pos(world, e)
 		if p and e.absorbed then
 			fx.projectiles[e.projId] = nil
 			p.gone = true
+			local b = burst(fx, now, x, y, z, Effects.impactSize(p.weapon), "impact", Effects.EXPLOSION_SECONDS)
+			b.ground = World.groundY(world, x, z)
+			facing(b, p.vx, p.vy, p.vz)
 		elseif p and not e.breach then
 			p.target = 0
 		end
-		local x, y, z = pos(world, e)
 		if #fx.shieldHits < 64 then
 			table.insert(fx.shieldHits, { unitId = e.unitId or 0, kind = if e.breach then "breach" elseif e.absorbed then "absorb" else "turn", x = x, y = y, z = z, mass = e.mass / Schema.SHIELD_MASS_SCALE, breach = e.breach == true, projId = e.projId, tick = e.tick })
 		end

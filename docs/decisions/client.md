@@ -1593,3 +1593,180 @@ Existing calls are unchanged.
 
 **Why:** the user saw the parallax stutter in the lobby; the match's loading screen uses the same viewer.
 
+### C-185 — A projectile destroyed on a shield dome bursts there with its explosion (2026-10-24)
+
+**Decision:** on SHIELD_HIT with ABSORBED (S-85, S-93: every shell reaching an up dome is destroyed at its surface), the client now bursts the projectile's own impact effect there: its weapon's impact size, facing along its flight, and timed where its drawn path meets the honeycomb (C-99). Before, it was dropped with no burst and only the honeycomb lit up. Hitscan rounds stopped by a dome still show no burst, as on units; beams keep their glance (C-129).
+- ShieldWire.spec: every autocannon round absorbed explodes on the shell (r = 120 ± 4), none inside.
+- Studio (the Canyon): three Locusts on a Phalanx's dome, 55 rounds absorbed, an explosion on the honeycomb at each. `debug_out/screens/c185_shield_absorb_bursts.jpg`.
+
+**Why:** the user: "Absorbed/Impact of projectiles on the shield honeycomb trigger their explosion vfx". This replaces S-85's "no burst" on the client.
+
+### C-186 — Shield energy column and dome waves on models-C's assets (review) (2026-10-24)
+
+**Decision:** the user's shield redesign, on models-C's `Meshes.shieldColumn` and `Meshes.shieldWave` (fx.md "Energy column", "Dome waves"; both status review, so they show in Studio only until approved; elsewhere the old beam and rings stay).
+- **Column:** three straight Beams from the generator's `beam` attachment to the dome's top: glow, swirl, core (ZOffset 1–3). They use C's textures, widths × R, scroll speeds and brightness, tinted (150, 235, 255) as in C's reference. `ShieldLook.column` drives them:
+  - every width × (weakest + (1 − weakest) × strength), down to a fifth at 0%;
+  - deploy: the core shoots up in `deploy.shoot`, then the swirl and glow widen over `deploy.thicken`;
+  - collapse: everything pinches to 5% in `collapse.pinch`, flashes (brightness × 3, widths × 1.5) for `collapse.flash`, then hides, before the dome is down.
+- **Waves:** C's 16 dome bands, one MeshPart each per shield, with a `shieldWave` SurfaceAppearance (`Core/MeshMaterials`, regenerated `place/MeshMaterials.model.json`). `ShieldLook.waveBands` places C's 3 waves, evenly spaced in time, from the top to the rim. Each wave shows its two nearest bands at (1 − f, f), fading over the first and last 10°; waves on one band add. They take `seconds / max(0.3, strength)` to cross, at `opacity` × the dome's opacity. They replace the RingThin flow; the dome, edge, foot ring, top swirl, specks and hits stay.
+- Hidden at strategic zoom and when down, like the rest of the detail; every instance is made once per shield.
+- ShieldLook.spec: thinning, deploy order, pinch–flash–gone, the (1 − f, f) split, fades, three waves, no frame-to-frame jumps.
+- Studio (the Canyon, a radius-120 review dome): 3 beams and 6 wave bands lit close up, none at strategic zoom; the shield loop 0.08 ms a frame. `debug_out/screens/c186_shield_full_side.jpg`, `_full_55`, `_weak20`, `_collapse_flash`, `_deploy`.
+
+**Why:** the user found the thin beam and small rings "simple" and asked for a vortex column and wide waves; models-C made the assets to clients-B's layout.
+
+**On hold (2026-10-24):** the user rejected this design before approving it; models-C is making a new reference. Not built on further; it stays Studio-only (review assets) until the new hand-off replaces it.
+
+### C-187 — Shield energy look v4 in the game, ported from models-C's reference (2026-10-24)
+
+**Decision:** the user's approved shield look (models-C's M-34, fx.md "Shield energy", `Meshes.shieldEnergy`) replaces the dome look and C-186.
+- **Port:** `Render/ShieldEnergy` ports `assets/fx/shield/waves/ShieldPreview.luau`: the same instances, made once per shield, and the same per-frame logic. Jitter comes from a hash, not `Random`, so nothing is allocated per frame. `Core/ShieldEnergyLook` holds the pure parts: the state mapping, the envelope (beam, front, edge, flare), band reveal, the waves' motion, wobble and brightness, the packet arrival and the arc handles. ShieldEnergyLook.spec checks them against the manifest.
+- **In ShieldFx:**
+  - deploying = pre (0.22 s) then raise (1 s); up = idle; collapsing = collapse (0.85 s); down = the beam fading out (0.25 s).
+  - Strength: the dome rule (invisible at 0, full from 50%, with the low-strength flicker) scales the dome, bands, honeycomb, waves, streaks, arcs and hits; the channel never drops below 40%.
+  - Detail: full within 300 studs; beyond that, no streaks, filaments, edge crackle or honeycomb, and the waves move every other frame; at strategic zoom only the shell, plus the outline in the faction's tint.
+  - Hits: the flipbook caps (4 per dome, the newest replacing the oldest), in place of the honeycomb plates.
+  - The faction comes from the generator's def, else from the generator type with that dome radius (a remote dome carries neither); Order cyan, Chaos amber.
+- **C-186 is taken out:** ShieldFx, ShieldLook, MeshMaterials and their spec are back to before it, and the client no longer reads `shieldColumn` or `shieldWave`. The old look stays only as the fallback if v4's meshes don't load.
+- **Cost (Studio, a Phalanx and a Carapace up):** about 0.27 ms per dome at full detail, 0.25 at mid distance, about 0.08 at strategic zoom. The first port cost 0.5 ms per dome; caching brought it down: NumberSequences and textures written only when they change, filaments re-laid only each jitter step, streaks only when their end moves, and attachments set in their parent's space.
+- Screenshots: `debug_out/screens/c187_shield_order_chaos.jpg`, `_250`, `_raise`, `_collapse`, `_hits`.
+- **For review:** each hit patch covers about a quarter of the dome (hitCap's half-angle 0.46 rad) and glows at tint × 3, so four quick hits per dome light most of it (`c187_shield_hits.jpg`).
+
+**Why:** the user approved v4 and asked for it in ShieldFx, through models-C.
+
+### C-188 — Smaller, dimmer shield hit patches (2026-10-24)
+
+**Decision:** the hit decal's glow is `tint × sizes.hitGlow` (models-C's new value, 1.6; 3 until it reaches main) instead of a fixed × 3. models-C's smaller `hitCap` (half-angle 0.28, from 0.46) and new flipbook come through the manifest with no client change.
+
+**Why:** the user: "The hit patches are too much; ask models-C for smaller or dimmer ones."
+
+### C-189 — No honeycomb over the shield dome; cells only where a shot hits (2026-10-24)
+
+**Decision:** the v4 dome no longer shows models-C's `hexGrid` (Neon at 0.92 when up, fx.md); the client doesn't load or make it. Hex cells now appear only in the hit patches (C-188). Studio: `debug_out/screens/c189_shield_no_honeycomb.jpg`.
+
+**Why:** the user: "turn off the honeycomb the shield, it should only be activate for the patch reflect shot on hit".
+
+### C-190 — Shield hit patches crossfade frame to frame (2026-10-24)
+
+**Decision:** each hit cap carries two Decals. Frame k fades out as frame k + 1 fades in, and the last frame fades out alone, so the 8-frame flipbook plays smoothly instead of stepping at 10 frames a second. Checked in Studio: neighbouring frames share the weight through the hit, and it ends faded. The speed is models-C's `timing.hitLife` (0.8 s); I've asked them for about 0.4–0.45 s, and more frames if they help. Both come through the manifest.
+
+**Why:** the user: "why the honeycomb grid spread so slow, look chobby?"
+
+### C-191 — Multi-select tiles: the type's portrait, its icon bottom right, the count top left (2026-10-24)
+
+**Decision:** with several units selected, each type tile in the unit panel shows the type's model at an angle (`UI/Portrait`, as the one-unit tile and the build menu), its type icon small in the bottom right, and how many of that type are selected in the top left. Tiles are 50 px, up from 46. Clicks are unchanged (C-157: keep, Shift drop, Ctrl same type on screen). Studio (the Canyon, 5 Lancers, 3 Paladins, 2 Halos, a Mason): `debug_out/screens/c191_selection_tiles.jpg`.
+
+**Why:** the user: "when selecting multiple units, the panel should show the image of the unit + its icon in the bottom right + number of that type of unit in the upper left corner".
+
+### C-192 — Each unit on its terrain: in the world and in every portrait (2026-10-24)
+
+**Decision:**
+- **Portraits** (`UI/Portrait`, so the build menu, the unit panel and its type tiles): the unit stands on its terrain (`Core/PortraitStage`):
+  - a disc of ground for land units and structures;
+  - water over a darker bed for ships, submarines and water structures (the hull a little in the water);
+  - a shore for amphibious and hover units (ground, water across the front);
+  - ground well below an aircraft, with its shadow; the camera frames the unit and the ground.
+- **In the world** (`World.floats`):
+  - structures built on water (`placement = "water"`: shipyards, tidal generators, sonar) float on the surface, as their models are made to; they were drawn on the seabed;
+  - amphibious and hover units ride the water surface instead of the bed;
+  - ghosts and the placement preview of water structures follow the same rule;
+  - an aircraft out of the camera area keeps its last height, or 35 studs if it was never seen close, instead of being drawn on the ground.
+- PortraitStage.spec covers both rules. Studio (Coastline): a Crusader, a tidal generator and a Tideguard on the water, a Lancer on the shore, a Falcon above; the tiles show each on its terrain. `debug_out/screens/c192_terrain_portraits.jpg`.
+
+**Why:** the user: "unit should be render with its accessible terrain, for example, tank on ground, amphibious is on ground + water, ship on water, air is hover above ground", then "apply to all portrait".
+
+### C-193 — Commands audited per unit; builders-only box select; order lines last until done; builders spray (2026-10-24)
+
+**Decision** (the user's batch; the server-side items went to sim-A):
+- **Command sets audited, unit by unit** (`Core/CommandSet`):
+  - Stop only on what has something to stop (mobile units, builders, factories, armed units, nuke silos). Generators, extractors, storage, sonar, pads, walls and Pinpointers offer nothing (the card shows Last alert only).
+  - Shield generators get On / Off. The server still has to honour it (asked of sim-A: off = dome down, no upkeep).
+  - Interceptors (anti-nukes, point defence) get the fire state only.
+  - Stockpiled SAM sites are ordinary defences (fire state, attack, stop).
+  - CommandSet.spec checks each case.
+- **Orders go only to the units that have the command** (`Orders.able`, used by every issue): a turret in a selection given Move takes no move and draws no line.
+- **Box select:** a box with a mobile builder in it (a Commander included) keeps only the builders (`Selection.filterBox`).
+- **Order lines last until the order is done** (`Core/Waypoints`, replacing the 2 s idle drop):
+  - a point line goes when the unit gets there, or that one point after 6 s stuck short of it;
+  - attack, guard / assist and reclaim lines stay until the target is gone, repair until it's whole;
+  - a build line stays until its frame is finished, not just started;
+  - patrol stays until replaced;
+  - a builder's lines go once the server has reported it idle for 1.5 s (IDLE events).
+- **New units take their factory's order list**, as the server gives it (S-95). Factory lists stay until replaced (Repeat or not).
+- **Builders' nano spray** (`Core/BuildTargets`, `Render/BuildSpray`): a team-coloured stream from a working builder to what it builds or repairs, sweeping over the frame at the height it has reached; violet and flowing back for reclaim.
+  - The server doesn't send a builder's target, so it follows the builder's own order line: its build's frame, its repair or reclaim target, or the frame of the builder it assists. It sprays only while the builder stands within build range.
+- **The shield's capacity bar** hovers just above the generator model, not over the dome.
+- **Placement:** another builder's planned build counts as taken (it did already; the lines now stay until the frame is finished, so the plans stay counted).
+- OrderLines.spec, through the real client and server:
+  - both lines stay for the whole build (62 frames), where the old rule dropped them after 2 s still;
+  - both builders spray the frame;
+  - a factory's Lancer takes the factory's move line;
+  - a turret gets no move;
+  - another builder's plan blocks placement.
+- Studio (the Canyon): the card, the bar and the spray checked. `debug_out/screens/c193_build_spray_lines.jpg`.
+
+**Why:** the user's list: commands for all units ("why does the generator has a Stop command"), shields switching off, the bar, the box filter, no move arrow for turrets, assist and build lines persisting, factory orders persisting on their units, nano spray.
+
+**Waiting on sim-A:** shields honouring On / Off (and starting on); building over mobile units (then the client drops its "units in the way" check); in-range attacks and builds without moving; scouts' range halved; resource priority.
+
+### C-194 — Command line: Tab cycles choices; units by alias (2026-10-24)
+
+**Decision:**
+- **Tab:** the first Tab takes the first suggestion; each further Tab on what it completed takes the next one, wrapping; typing ends the cycle (`UI/CheatConsole`).
+- **Choices for every command,** word by word (`CheatInput.CHOICES`): on / off (reveal, god, instabuild, cheat); supply / power / all, then amounts (res, income); selected, a team or at (kill); teams, then pause / resume (ai); speeds; counts after a unit.
+- **Unit aliases** (`CheatInput.aliases` / `resolve`), from each unit's icon-sheet type with the faction's prefix, in full and short (generic last words like site, generator and tower dropped): `ord_shield` and `ord_shield-generator` name the Phalanx, `chs_ir-sam` the Chaos IR SAM site; the type alone names both factions' (Tab cycles them). Display names work as before. A give sends the id when the word names exactly one unit; suggestions match aliases and show the type ("Phalanx (ord_phalanx) - Shield Generator"). /help mentions both.
+- CheatInput.spec covers the aliases, the ambiguity, the choices and counts. Studio: Tab on `/re`, `/reveal `, `/give ord_shi` and `/give shield` cycles as specified.
+
+**Why:** the user: "Tab to complete suggestion/cycle choices (like reveal on/off, kill selected/...)" and "give command unit name should be also have the aliases (give ord_shield -> Phalanx, give ord_ir-sam,...)".
+
+### C-195 — Place over own and allied units; shields switchable; S-157's units on the icon sheet; retired units hidden (2026-10-24)
+
+**Decision:**
+- **Placement:** the preview no longer counts own and allied ground units as in the way. They walk out of the footprint when the frame starts (S-155); enemy units still block. Placement.spec compares with the server's frame-start check (owner, no knower). OrderLines.spec: a solar placed over an own Lancer starts, and the Lancer walks off; an enemy Ravager in sight still blocks.
+- **The card's On / Off** treats shield generators as switchable (S-154: off = dome down, no upkeep).
+- **Icons for S-157's units, on existing tiles** (no new sheet, no upload): Sentry, Guard, Overwatch, Twin Guard and Geryon on the Gun Turret tile; Beamer and Chaos's Bulwark on the Beam Tower tile; Gauntlet and Talos on the Artillery Emplacement tile (T2 dots until they get their own). The sheet PNG is byte-identical. Dedicated icons need the user's design and a new upload.
+- **Retired units** (`retired = true`: ord_bulwark, chs_spike, chs_inferno) aren't suggested or aliased by /give; their ids still work. Their models still preload (replays can show them).
+- This branch merges sim-A's d41074e (S-152..S-157) so the new defs and their icon entries land on main together (the icon specs fail without entries).
+
+**Why:** sim-A's S-154, S-155 and S-157; the user's requests.
+
+### C-196 — Resource priority on the command card (2026-10-24)
+
+**Decision:** a "Prio high" / "Prio low" state button (green high, amber low) on the units resource priority does something for (S-156, `CommandSet.consumer`): builders and factories, stockpiling launchers, aircraft (rearm), shields, radars, jammers, trackers and DIRCM units. A click with every selected unit high sets them all low; with any low, sets them all high (PRIORITY, value 1 high / 0 low). The button reads the LOW_PRIORITY state bit, which arrives for allies too. CommandSet.spec checks who gets it; OrderLines.spec runs the round trip.
+
+**Why:** the user: "Introducing priority resources usage -> high priority unit take the resources first and the rest goes to low priority"; sim-A's S-156.
+
+### C-197 — Icon sheet draft 5: the S-157 defences get their own icons (2026-10-24)
+
+**Decision:** the user's draft 5 replaces `docs/art/icons/ftgg-unit-icons.html`: Laser Tower (Sentry, Guard), Twin Laser Tower (Overwatch, Twin Guard), Triple Laser Tower (Geryon), Ramping Beam Tower (Beamer, T1), Lobbing Gun (Gauntlet, Talos, T1); Chaos's Bulwark joins Radiance on Beam Tower; the retired ord_bulwark, chs_spike and chs_inferno stay mapped for old replays. render.mjs maps all 159 defs from 80 items: 90 tiles, exactly one full 1024-px sheet (the next item would start a second sheet). Uploaded with the user's approval as asset 107697270697313 (byte-identical to `assets/icons/ftgg-icons.png`), in the same commit as its atlas. The /give alias test follows the new type names (`ord_laser` is the Sentry).
+
+**Why:** the user's draft 5 and approval.
+
+### C-198 — The S-157 towers' visuals: coloured lasers, the Beamer's ramp, barrels in turn, the Geryon drum (2026-10-24)
+
+**Decision:**
+- **Lasers** (`fx.tracer = "laser"`, `fx.color = { r, g, b }`): the whole line at once in the weapon's colour for 0.12 s, fading. Red for Sentry, Guard and Twin Guard; green for Overwatch, Geryon and Bulwark's laser; blue for the Beamer.
+- **The Beamer** (`ramp`): each bolt lasts one shot gap plus a little, so they join into one held beam. Its width and brightness grow with intensity, time on one target over `ramp.seconds` (4 s), as the server's damage ramps. A pause longer than 1.6 shot gaps (a target change or a loss) starts it over (`Effects.ramp`).
+- **Barrels in turn** (`muzzles`): each shot starts at the next muzzle (`muzzleOf`), and the matching `barrelN` (or `laser_barrelN`) recoils (Default piece script). With a `drumPiece` (Geryon, Bulwark's laser), the cluster turns one barrel on (360° / barrels) after each shot.
+- Gauntlet and Talos: the high-arc shells come with SPAWN_PROJ's velocity, no client change.
+- Lasers.spec, through the real server: Sentry and Guard fire red, Overwatch green; the Beamer rises from 0 to full; a pause resets it; Geryon's three shots turn the drum a full circle and recoil each barrel. Studio (blockouts until models-C's models): the Beamer's held blue beam on a Juggernaut. `debug_out/screens/c198_beamer.jpg`.
+
+**Why:** the user's T1 defences; sim-A's S-157 fields.
+
+
+### C-199 — Laser looks from the user's references: the tapered bolt, the Beamer's thread (2026-10-24)
+
+**Decision:** lasers draw in `Render/Lasers` (pooled Beams on Terrain attachments and Neon balls) instead of a Neon box, in two looks:
+- **Bolt** (every laser without a `ramp`: Sentry, Guard, Twin Guard, Overwatch, Geryon, Bulwark's laser; the Overwatch / Warden reference): a core white at the muzzle turning to the weapon's colour, 0.55 studs wide at the muzzle tapering to 0.07 at the target, inside a soft glow of that colour (1.7 → 0.35); a white-tinted flare at the muzzle and a glowing orb with a halo at the target. Sized by the weapon (0.7..1.3); fades over the last 65 % of its 0.12 s.
+- **Thread** (a weapon with a `ramp`: the Beamer reference): a thin core (0.14) the same width all the way, flickering white and colour along its length each frame, inside a thin coloured fringe; a small coloured flare at the muzzle; a cone of light opening at the target (mouth 1.8 studs, narrowing back along the beam) with a small orb. It widens up to 1.6× with the ramp and doesn't fade between bolts.
+- Hit sparks stay in Render/Effects.
+- Studio (blockouts): the Overwatch's green bolt on a Juggernaut and the Beamer's ramped thread. `debug_out/screens/c199-overwatch-laser.jpg`, `c199-beamer-ramped.jpg`.
+- The Beamer's colour is the def's (70, 150, 255, sky blue); the reference is deeper blue-violet, so sim-A is asked to change `ord_beamer_beam.fx.color`.
+
+**Why:** the user's two laser references.
+
+### C-200 — Prefixed muzzles aren't flung on death (2026-10-24)
+
+**Decision:** `Deaths`' attachment check matches `^%a+_muzzle%d*$` as well as `^muzzle%d*$`, as models-C's `Blockout.isAttachmentPiece` and `Mesh` now do, so Bulwark's `laser_muzzle1..3` are never picked as flung pieces. Deaths.spec: forty overkill deaths of a def with prefixed muzzles fling only real pieces.
+
+**Why:** models-C's T1 defence blockouts (m-models ea3ae59) bring attachment muzzles with a prefix.

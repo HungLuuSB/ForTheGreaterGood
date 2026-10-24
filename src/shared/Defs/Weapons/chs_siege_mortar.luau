@@ -10,7 +10,7 @@ return {
 	projectileSpeed = 240,
 	gravity = 60,
 	accuracy = 1.0,
-	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 1200, SHIP = 0, AIR = 0, SUB = 0 },
+	damage = { LIGHT = 0, ARMORED = 0, STRUCTURE = 1380, SHIP = 0, AIR = 0, SUB = 0 }, -- +15%, tier rebalance (S-157, the user)
 	aoe = 10,
 	edgeEffectiveness = 0.3,
 	targets = { "STRUCTURE" },

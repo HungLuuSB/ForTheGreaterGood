@@ -3,7 +3,7 @@
 return {
 	id = "chs_autocannon",
 	type = "BALLISTIC",
-	range = 120,
+	range = 110, -- tier rebalance (S-157, the user): was 120
 	reload = 0.5,
 	salvo = { count = 1, delay = 0 },
 	projectileSpeed = 420,

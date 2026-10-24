@@ -144,7 +144,8 @@ local function fire(
 	dist: number,
 	exactYaw: number, -- true direction / pitch to the target's center
 	exactPitch: number,
-	projTarget: number -- interceptors: the strategic missile they are fired at (S-48)
+	projTarget: number, -- interceptors: the strategic missile they are fired at (S-48)
+	scale: number? -- a ramping weapon's share of its full damage (S-157)
 )
 	local c = sim.combat
 	local w = sim.world
@@ -159,6 +160,9 @@ local function fire(
 		local speed = weapon.projectileSpeed or 0
 		local yaw, p = worldYaw + yawErr, pitch + pitchErr
 		local ttl = 2 * weapon.range / math.max(speed, 1) + 1
+		if weapon.highArc then
+			ttl = math.max(ttl, 2 * speed / math.max(weapon.gravity or 1, 1) + 1) -- the longest lob (S-157)
+		end
 		local launchY = muzzleY
 		local goal: { number }? = nil
 		local vx, vy, vz = cos(p) * sin(yaw) * speed, sin(p) * speed, cos(p) * cos(yaw) * speed
@@ -304,7 +308,12 @@ local function fire(
 		end
 	end
 	Combat.addEvent(c, { kind = "FIRE", tick = sim.tick, unit = id, other = target, slot = slot, weaponIndex = weapon.index, hit = hit, x = ex, y = ey, z = ez, sx = w.posX[id], sy = muzzleY, sz = w.posZ[id] })
-	if hit then
+	if hit and scale ~= nil then
+		-- a ramping weapon (S-157): its target only, at the ramp's share
+		c.stats.hits += 1
+		local tp = c.profiles[w.defIndex[target]]
+		Combat.queueDamage(c, target, weapon.damage[Combat.armorOf(w, target, tp)] * scale, id, w.owner[id])
+	elseif hit then
 		c.stats.hits += 1
 		Combat.explode(c, w, ex, ey, ez, weapon, id, w.ally[id], target)
 	elseif (weapon.aoe or 0) > 0 then
@@ -498,7 +507,7 @@ return function(sim: Types.Sim)
 				local lx, lz = kx :: number, kz :: number
 				for _ = 1, 2 do
 					local d = sqrt((lx - x) ^ 2 + (lz - z) ^ 2)
-					local p = Ballistics.launchPitch(speed, weapon.gravity or 0, d, 0) or 0
+					local p = Ballistics.launchPitch(speed, weapon.gravity or 0, d, 0, weapon.highArc) or 0
 					local t = d / math.max(speed * cos(p), 1)
 					lx, lz = (kx :: number) + tvx * t, (kz :: number) + tvz * t
 				end
@@ -533,7 +542,7 @@ return function(sim: Types.Sim)
 				elseif weapon.apex then
 					pitch = 0 -- lofted: fire() works out the launch (S-48)
 				else
-					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy)
+					pitch = Ballistics.launchPitch(weapon.projectileSpeed or 1, weapon.gravity or 0, dist, dy, weapon.highArc)
 				end
 				-- an attack-ground order's shelling ignores the fire state (S-68)
 				local ordered = target == 0 and (weapon.type == "BALLISTIC" or weapon.type == "BEAM" or weapon.type == "HITSCAN") and (sim.air.groundX[id] ~= nil or sim.orders.manualBlind[id] == true)
@@ -614,6 +623,31 @@ return function(sim: Types.Sim)
 				canFire = false
 			end
 
+			-- a ramping weapon (S-157, the user: the Beamer): the longer it stays
+			-- on one target, the harder each hit, up to the ramp's `to` after
+			-- `seconds`; leaving a target holds fire for a pause that grows with
+			-- the intensity reached there
+			local ramp = weapon.ramp
+			local scale: number? = nil
+			if ramp then
+				local on = w.wRampTarget[key] or 0
+				if target ~= on then
+					if on ~= 0 then
+						local f = min((w.wRampTime[key] or 0) / ramp.seconds, 1)
+						local pause = ramp.cooldown[1] + (ramp.cooldown[2] - ramp.cooldown[1]) * f
+						if reload < pause then
+							reload = pause
+							w.wReload[key] = pause
+						end
+					end
+					w.wRampTarget[key] = target
+					w.wRampTime[key] = 0
+				elseif canFire and target ~= 0 then
+					w.wRampTime[key] = min((w.wRampTime[key] or 0) + DT, ramp.seconds)
+				end
+				scale = (ramp.from + (ramp.to - ramp.from) * (w.wRampTime[key] or 0) / ramp.seconds) / ramp.to
+			end
+
 			-- the rest of a salvo (S-69): `salvo.count` shots, `salvo.delay`
 			-- apart; the reload runs from the first. A shot waits for a target
 			-- to fire at; losing it ends the salvo.
@@ -650,7 +684,7 @@ return function(sim: Types.Sim)
 					if weapon.shotCost then
 						pay(sim, w.team[id], weapon.shotCost) -- (S-96)
 					end
-					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch, projTarget)
+					fire(sim, id, slot, weapon, target, heading + yaw, pitchNow, muzzleY, dist, exactYaw, exactPitch, projTarget, scale)
 					local salvo = weapon.salvo
 					if salvo and salvo.count > 1 then
 						w.wSalvo[key], w.wSalvoWait[key] = salvo.count - 1, salvo.delay
