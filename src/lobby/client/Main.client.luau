@@ -6,6 +6,7 @@
 -- with the Studio stand-in's controls) and for a finished match's results.
 -- Behind it all, the 3D scene (Scene).
 
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 
@@ -81,6 +82,24 @@ logo.TextXAlignment = Enum.TextXAlignment.Left
 logo.Parent = top
 
 local tabs = Ui.frame(top, "Tabs", UDim2.new(0, 760, 1, 0), UDim2.fromOffset(270, 0))
+
+-- Roblox's own buttons (its menu, chat) sit in the top-left corner over the
+-- bar: the logo and tabs start where Roblox's free area begins.
+local function clearRobloxButtons()
+	local left = 0
+	local ok, inset = pcall(function()
+		return GuiService.TopbarInset
+	end)
+	if ok and inset then
+		left = inset.Min.X
+	end
+	logo.Position = UDim2.fromOffset(math.max(24, left + 12), 0)
+	tabs.Position = UDim2.fromOffset(math.max(24, left + 12) + 246, 0)
+end
+clearRobloxButtons()
+pcall(function()
+	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(clearRobloxButtons)
+end)
 Kit.list(tabs, 0, true)
 
 local right = Ui.frame(top, "Right", UDim2.new(0, 420, 1, 0), UDim2.new(1, -440, 0, 0))

@@ -53,7 +53,7 @@ export type ShieldShell = {
 }
 
 -- the shield's energy look v4 (fx.md "Shield energy"): textures, the 20
--- raise/collapse bands, the honeycomb grid and the hit cap (center and size
+-- raise/collapse bands and the hit cap (center and size
 -- at dome radius 1, Roblox axes), timings in seconds, counts, sizes (fractions
 -- of the dome radius unless named ...Studs) and the faction tints (RGB 0-255)
 export type EnergyPart = { mesh: string, center: Vec3, size: Vec3 }
@@ -73,7 +73,6 @@ export type ShieldEnergy = {
 		hit: { string },
 	},
 	bands: { { name: string, mesh: string, theta: { number }, center: Vec3, size: Vec3 } },
-	hexGrid: EnergyPart,
 	hitCap: { mesh: string, center: Vec3, size: Vec3, halfAngle: number },
 	timing: { [string]: number },
 	counts: { [string]: number },
@@ -941,16 +940,11 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			edgeJoints = 6,
 			filamentSegments = 8,
 			filaments = 2,
-			hitFrames = 8,
+			hitFrames = 16,
 			hits = 4,
 			ringJoints = 12,
 			streaks = 20,
 			waves = 3,
-		},
-		hexGrid = {
-			center = { 0.0001, 0.4778, 0 },
-			mesh = "rbxassetid://117467787840280",
-			size = { 2.002, 1.0499, 2.0025 },
 		},
 		hitCap = {
 			center = { 0, 0.9864, 0 },
@@ -979,14 +973,22 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			flare = "rbxassetid://123552515265600",
 			glow = "rbxassetid://112656457330596",
 			hit = {
-				"rbxassetid://92239441295428",
-				"rbxassetid://133972577452031",
-				"rbxassetid://75433235304483",
-				"rbxassetid://136501535850148",
-				"rbxassetid://78899436985577",
-				"rbxassetid://124101607268971",
-				"rbxassetid://85769666737638",
-				"rbxassetid://90468035189286",
+				"rbxassetid://91138819951481",
+				"rbxassetid://96421133962499",
+				"rbxassetid://111447415903126",
+				"rbxassetid://91457607631267",
+				"rbxassetid://139272037907562",
+				"rbxassetid://94273274634959",
+				"rbxassetid://107423514404451",
+				"rbxassetid://111161003827626",
+				"rbxassetid://103558778524978",
+				"rbxassetid://128524315705648",
+				"rbxassetid://118939803929865",
+				"rbxassetid://88899708075559",
+				"rbxassetid://100399951649201",
+				"rbxassetid://116254602878263",
+				"rbxassetid://133084628031410",
+				"rbxassetid://84060167448382",
 			},
 			line = "rbxassetid://124267731373106",
 			pulse = "rbxassetid://140247072686648",
@@ -1005,7 +1007,7 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 		},
 		timing = {
 			collapse = 0.85,
-			hitLife = 0.8,
+			hitLife = 0.42,
 			jitterStep = 0.1,
 			off = 0.25,
 			pre = 0.22,

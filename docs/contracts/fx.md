@@ -242,9 +242,7 @@ The user's v3 review, with their mock-up (`assets/reference/shield/shield_demo.h
   - Idle: the `Dome` mesh (`ForceField` material, `TextureID = textures.field`, `Color` = tint), bright at its edge, nearly clear inside.
   - Raise and collapse only: the 20 `bands`, each 4.5° from the apex down. Build each MeshPart from `bands[i].mesh` with `Size = size × R` and `CFrame = base × CFrame.new(0, center[2] × R, 0)`, in the same material, texture and colour.
   - Band `i` shows `clamp((front − (i − 1)/20) × 20 / 1.6, 0, 1)`; then swap to the single dome. The bands exist only during a raise or collapse.
-- **Honeycomb.** `hexGrid`: even hex cells (about 0.147 R across, no stretching at the apex) as one mesh over the dome.
-  - `Neon`, tint, `Transparency` 0.92 when idle, hidden otherwise.
-  - Its cells brighten under each passing wave through the wave's own glow texture (below), which carries lit cells.
+- **Honeycomb.** Off when idle (the user, 2026-10-24: cells only in the hit patches). The hit flipbook carries the cells; the waves' glow textures light a few cells as they pass.
 - **Channel.** The straight beam from the generator's `beam` attachment to an attachment at the apex, `CurveSize` 0, `FaceCamera`:
   - `glow`: width `glowWidth × R`, transparency 0.45.
   - `pulse`: core width `coreWidthStuds` (0.6), `TextureLength` a third of the beam, `TextureSpeed` 2, `Brightness` 5, `ZOffset` 2. The packets visibly travel up, and one reaches the apex every `pulsePeriod` (0.5 s).
@@ -274,10 +272,10 @@ The user's v3 review, with their mock-up (`assets/reference/shield/shield_demo.h
   - They fade out in the last 15% of a raise.
 - **Hits.** `hits` (4) pooled `hitCap` MeshParts, idle only.
   - Placement: `Size = size × R`; `CFrame.fromMatrix(base + dir × center[2] × R, right, dir)`, with `dir` the unit direction from the dome's centre to the hit.
-  - Each cap is fully transparent and carries a `Decal` on its `Top` face: `Texture` = `hit[k]` for frame `k` of 8 over `hitLife` (0.8 s), `Color3` = tint × `sizes.hitGlow` (1.6, so it glows a little). The frames show a patch of cells lighting and spreading outward in a ring, fading.
-  - The cap is 0.28 rad round the impact (`hitCap.halfAngle`), about 0.55 R across. The first version (0.46 rad, glow × 3) lit most of the dome after a few quick hits; the user asked for smaller, dimmer patches.
+  - Each cap is fully transparent and carries a `Decal` on its `Top` face: `Texture` = `hit[k]` for frame `k` of `counts.hitFrames` (16) over `timing.hitLife` (0.42 s; crossfade frame k into k + 1 for smooth play), `Color3` = tint × `sizes.hitGlow` (1.6, so it glows a little). The frames show a patch of cells lighting and spreading outward in a ring, fading.
+  - The cap is 0.28 rad round the impact (`hitCap.halfAngle`), about 0.55 R across. The first version (0.46 rad, glow × 3, 8 frames over 0.8 s) lit most of the dome after a few quick hits and spread slowly; the user asked for smaller, dimmer, faster patches.
   - A Decal on a MeshPart projects onto the cap. The MeshPart's own `TextureID` doesn't work here: `Neon` ignores the alpha and `ForceField` washes it out.
-- **Detail by zoom.** At 220 studs the outline, the beam and the waves must read. The streaks, filaments, edge crackle and honeycomb can drop first.
+- **Detail by zoom.** At 220 studs the outline, the beam and the waves must read. The streaks, filaments and edge crackle can drop first.
 
 **Reference:** "FTGG Art", `Workspace.ShieldEnergyReference`, driven by the `ShieldPreview` module there.
 - The Phalanx (R 120, Order) at (750, 0, −1100) and the Carapace (R 80, Chaos) at (1050, 0, −1100).

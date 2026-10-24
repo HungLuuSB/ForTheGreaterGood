@@ -34,7 +34,7 @@ ShieldPreview.FILAMENTS = 2
 ShieldPreview.FILAMENT_SEGMENTS = 8
 ShieldPreview.JITTER_STEP = 0.1 -- seconds between re-jitters (filaments, crackle, flickering cells): "every few frames"
 ShieldPreview.HITS = 4
-ShieldPreview.HIT_LIFE = 0.8
+ShieldPreview.HIT_LIFE = 0.42
 ShieldPreview.PULSE_PERIOD = 0.5 -- a packet reaches the apex every 0.5 s
 
 -- sizes in units of the radius R unless noted
@@ -54,7 +54,7 @@ ShieldPreview.SIZE = {
 	hitGlow = 1.6, -- the hit Decal's Color3 = tint x hitGlow
 }
 -- the meshes' bounding-box centres at radius 1 (export/energy.json)
-local GRID_CENTER, CAP_CENTER = 0.477818, 0.986411
+local CAP_CENTER = 0.986411
 
 local Images = {
 	pulse = "rbxassetid://140247072686648",
@@ -67,14 +67,22 @@ local Images = {
 	wave_glow = { "rbxassetid://101230899960268", "rbxassetid://122976001906567", "rbxassetid://91679967814767" },
 	wave_line = { "rbxassetid://104994993937547", "rbxassetid://73910800096425", "rbxassetid://98445617977251" },
 	hit = {
-		"rbxassetid://92239441295428",
-		"rbxassetid://133972577452031",
-		"rbxassetid://75433235304483",
-		"rbxassetid://136501535850148",
-		"rbxassetid://78899436985577",
-		"rbxassetid://124101607268971",
-		"rbxassetid://85769666737638",
-		"rbxassetid://90468035189286",
+		"rbxassetid://91138819951481",
+		"rbxassetid://96421133962499",
+		"rbxassetid://111447415903126",
+		"rbxassetid://91457607631267",
+		"rbxassetid://139272037907562",
+		"rbxassetid://94273274634959",
+		"rbxassetid://107423514404451",
+		"rbxassetid://111161003827626",
+		"rbxassetid://103558778524978",
+		"rbxassetid://128524315705648",
+		"rbxassetid://118939803929865",
+		"rbxassetid://88899708075559",
+		"rbxassetid://100399951649201",
+		"rbxassetid://116254602878263",
+		"rbxassetid://133084628031410",
+		"rbxassetid://84060167448382",
 	},
 }
 ShieldPreview.Images = Images
@@ -205,11 +213,7 @@ function ShieldPreview.new(params: any)
 		b.Color = params.edge or tint
 		self.bands[k] = b
 	end
-	-- the honeycomb: even cells over the whole dome
-	local grid = part(templates.HexGrid, "HexGrid", GRID_CENTER)
-	grid.Material = Enum.Material.Neon
-	grid.Color = tint
-	self.grid = grid
+	-- no idle honeycomb (the user, 2026-10-24: cells only in the hit patches)
 	-- hits: a patch of honeycomb cells spreading in a ring, a flipbook in a Decal on the cap's top face
 	-- (a Decal on a MeshPart projects onto the mesh; it draws on a fully transparent part, and a Color3
 	-- above 1 makes it glow; the MeshPart's own TextureID ignores alpha in Neon and fades out in ForceField)
@@ -374,7 +378,6 @@ function ShieldPreview.setFrame(self: any, f: Frame)
 		local reveal = if full then 0 else math.clamp((front - bs) * ShieldPreview.BANDS / 1.6, 0, 1)
 		b.Transparency = 1 - reveal
 	end
-	self.grid.Transparency = if full then 0.92 else 1
 
 	-- the channel
 	local from: Vector3 = self.from.WorldPosition
@@ -521,7 +524,7 @@ function ShieldPreview.setFrame(self: any, f: Frame)
 			end
 			right = right.Unit
 			h.CFrame = CFrame.fromMatrix(base + dir * CAP_CENTER * R, right, dir)
-			d.Texture = Images.hit[math.clamp(math.floor(hit.age / ShieldPreview.HIT_LIFE * 8) + 1, 1, 8)]
+			d.Texture = Images.hit[math.clamp(math.floor(hit.age / ShieldPreview.HIT_LIFE * #Images.hit) + 1, 1, #Images.hit)]
 			d.Transparency = 0
 		else
 			d.Transparency = 1

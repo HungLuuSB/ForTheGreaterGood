@@ -33,9 +33,9 @@ SHELL_NOTE = "honeycomb shell bands, waiting for the user's review"
 ENERGY_DIR = os.path.join(ROOT, "assets", "fx", "shield", "waves")
 SHIELD_ENERGY = {
     "timing": {"pre": 0.22, "raise": 1.0, "collapse": 0.85, "off": 0.25, "waveCycle": 2.1, "pulsePeriod": 0.5,
-               "jitterStep": 0.1, "hitLife": 0.8},
+               "jitterStep": 0.1, "hitLife": 0.42},  # hitLife 0.8 at first; the user: the spread was slow
     "counts": {"bands": 20, "streaks": 20, "waves": 3, "ringJoints": 12, "edgeArcs": 3, "edgeJoints": 6, "filaments": 2,
-               "filamentSegments": 8, "hits": 4, "hitFrames": 8},
+               "filamentSegments": 8, "hits": 4, "hitFrames": 16},
     "sizes": {"coreWidthStuds": 0.6, "glowWidth": 0.02, "filamentWidthStuds": 0.18, "filamentReach": 0.012, "flare": 0.15,
               "streakWidth": 0.02, "streakTile": 0.5, "waveGlowWidth": 0.223, "waveGlowTile": 0.255, "waveLineWidth": 0.035,
               "waveLineTile": 0.3, "edgeWidth": 0.03,
@@ -57,10 +57,9 @@ def shield_energy():
          "textures": {"pulse": tex["pulse"], "glow": tex["glow"], "line": tex["line"], "spark": tex["spark"],
                       "flare": tex["flare"], "streak": tex["streak"], "field": tex["field"],
                       "waveGlow": [tex[f"wave_glow_{c}"] for c in "abc"], "waveLine": [tex[f"wave_line_{c}"] for c in "abc"],
-                      "hit": [tex[f"hit_{k}"] for k in range(1, 9)]},
+                      "hit": [tex[f"hit_{k}"] for k in range(1, SHIELD_ENERGY["counts"]["hitFrames"] + 1)]},
          "bands": [{"name": f"Band_{k}", "theta": [round((k - 1) * step, 4), round(k * step, 4)], **part(f"Band_{k}")}
                    for k in range(1, spec["bands"] + 1)],
-         "hexGrid": part("HexGrid"),
          "hitCap": {**part("HitCap"), "halfAngle": spec["capHalfAngle"]},
          **SHIELD_ENERGY}
     if e["status"] == "review":
@@ -376,7 +375,7 @@ export type ShieldShell = {{
 }}
 
 -- the shield's energy look v4 (fx.md "Shield energy"): textures, the 20
--- raise/collapse bands, the honeycomb grid and the hit cap (center and size
+-- raise/collapse bands and the hit cap (center and size
 -- at dome radius 1, Roblox axes), timings in seconds, counts, sizes (fractions
 -- of the dome radius unless named ...Studs) and the faction tints (RGB 0-255)
 export type EnergyPart = {{ mesh: string, center: Vec3, size: Vec3 }}
@@ -396,7 +395,6 @@ export type ShieldEnergy = {{
 		hit: {{ string }},
 	}},
 	bands: {{ {{ name: string, mesh: string, theta: {{ number }}, center: Vec3, size: Vec3 }} }},
-	hexGrid: EnergyPart,
 	hitCap: {{ mesh: string, center: Vec3, size: Vec3, halfAngle: number }},
 	timing: {{ [string]: number }},
 	counts: {{ [string]: number }},
