@@ -587,6 +587,34 @@ return function(t: RunAll.Context)
 		return true, ""
 	end
 
+	t.test("Eco records carry the team's radar accuracy, scaled by its Pinpointers (S-147)", function()
+		local Pinpoint = require("@shared/Combat/Pinpoint")
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local g = (sim.map :: any).grid
+		local view = Client.new(g)
+		local function step(n: number)
+			for _ = 1, n do
+				Sim.step(sim)
+				Client.receive(view, sim.net.players[1].outbox)
+			end
+		end
+		step(10)
+		t.equal((view.economy :: any).radarError, 0, "no radar: 0")
+		Spawn.unit(sim, "ord_oracle", 1, -200, -200)
+		step(10)
+		local err = sim.defs.units.ord_oracle.sensors.radarError :: number
+		t.equal((view.economy :: any).radarError, math.floor(err * 10 + 0.5), `a radar: its radarError in tenths ({err} studs)`)
+		t.equal((view.economy :: any).precision, 0)
+		for i = 1, 3 do
+			Spawn.unit(sim, "ord_witness", 1, -250 + i * 20, -250)
+		end
+		step(10)
+		local p = Pinpoint.precision(3 * Pinpoint.weight(sim.defs.units.ord_witness))
+		t.equal((view.economy :: any).radarError, math.floor(err * Pinpoint.errorScale(p) * 10 + 0.5), "scaled down by the Pinpointers")
+		t.equal((view.economy :: any).precision, math.floor(p * 255 + 0.5))
+		t.expect((view.economy :: any).radarError < err * 10, "smaller")
+	end)
+
 	t.test("IDLE: the owner hears when a builder or factory goes idle or busy, on camera or not (S-136, request 62)", function()
 		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
 		local g = (sim.map :: any).grid

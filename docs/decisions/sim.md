@@ -2122,3 +2122,84 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - D switches its require to `@shared/Match/MatchConfig` and drops its copy; B drops its copy in `src/roblox`.
 - **Tests:** `src/server/Tests/MatchConfig.spec`, moved from the lobby's spec with a hand-written config of the same Teams room. It covers tampered configs (version, IDs and starts, colors, users, AI levels, FFA ally teams, spectators, no human, options, lobby, seed) and results checked against their config.
 - **Merge check:** `integrate.sh` now also runs the lobby's own suite (`lune run src/lobby/tools/test`, when present) and requires it to pass, as D asked.
+
+## S-146 — Radar missiles that lose their target spiral and fall; ones whose target dies at launch fly to its last spot (the user) (2026-10-23)
+
+- **Asked:** "when a unit die after a rocket was launched by SAM targeting it, it will result in the missile fly straight into the sky. I want something more realistic. 1. For RADAR MISSILE that lose its target, it begin spiraling, waving. 2. For RADAR MISSILE that launch and it target die before the launch initiated -> target its last known position".
+- **Cause:** a missile without a live target kept its velocity. A vertical-launch SAM still climbing went straight up until its fuel ran out.
+- **Built** (RADAR-guided HOMING missiles, not interceptors chasing a missile):
+  - **Tracking:** every tick while the target lives, the missile records its aim point (`Combat.pKnownX/Y/Z`) and counts its age (`pAge`).
+  - **Launch phase:** when the target is gone and it died during the launch phase, the missile flies to the last known aim point (`pPoint`). The launch phase is a vertical launch before pitch-over (TURNED), or the first 8 ticks of other launches. It steers with PN, or the vertical climb then pitch-over, and bursts at its closest approach within its blast radius (4 studs without one).
+  - **Otherwise it's lost** (`pLost`, ticks since): target killed, lock broken (EW), or a decoy spent. Each tick `Guidance.lost` turns the velocity 9° toward a direction circling the path once per 18 ticks (1.2 s; even IDs one way, odd the other), noses it over 3° toward straight down, and pulls it down at 25 studs/s². It ends on the ground or when its fuel runs out.
+  - **Events:** a killed target sends LOST_LOCK; a broken lock already did, from EW.
+  - A missile that never had a target, such as a test shot at a point, flies straight as before. IR missiles are unchanged.
+- **Shared:** `Guidance.lost(vx, vy, vz, k, projId, dt)` is pure and deterministic, so the client steps the same corkscrew from LOST_LOCK (net.md, section 7). The fly-to-point path has no event; homing corrections carry it.
+- **Hashed:** age, known point, point, lost ticks.
+- **Tests:** `EW.spec`:
+  - a Wasp killed after the Aegis missile pitched over: LOST_LOCK; the missile swings side to side, climbs at most 12 studs more and sinks over 160 within 22 ticks;
+  - a Wasp killed while the missile is still climbing: it bursts at the Wasp's last known spot;
+  - `Guidance.lost` is deterministic, keeps speed before the sink, and turns a vertical missile too.
+
+## S-147 — The team's radar accuracy on the wire, for the sensor view (the user, for B) (2026-10-23)
+
+- **Asked:** B should show the radar accuracy of the missile in the sensor view.
+- **Why the wire:** the accuracy is the ally team's: the best `radarError` among its finished radars (or `trackError` for tracked contacts), scaled by its Pinpointers. The client can't count allies' Pinpointers and radars off camera.
+- **Built:** protocol 32. Eco records end with `radarError u16`, `trackError u16` (tenths of a stud, 0 = none) and `precision u8` (× 255). They're the values `Sensors.wobble` uses: the hidden aim point circles a contact at radarError, a tracked one at trackError. They're sent with the Eco record when it changes.
+- **Tests:** `Schema.spec` golden bytes; `NetOut.spec`: no radar gives 0, an Oracle gives 16.0 studs, and three Witnesses scale it down with the precision.
+
+## S-148 — A wilder spiral for lost radar missiles (the user: "make the spiraling more extreme") (2026-10-23)
+
+- `Guidance.LOST_TURN` goes from 9° to 20° a tick (300°/s); `LOST_PERIOD` goes from 18 to 10 ticks (a corkscrew turn every 0.67 s). The nose-over (3° a tick) and the sink are unchanged.
+- **Measured** (`EW.spec`, a Wasp killed after the Aegis missile pitched over): 4 side-to-side swings instead of 2. It flies 30 ticks after the loss, at most 42 studs above where it was lost, then dives about 168 studs into the ground.
+- The client steps the same shared function, so it follows with the next main merge.
+
+## S-149 — Point defence: units that shoot down missiles and rockets (the user) (2026-10-24)
+
+- **Asked:** "Add a new unit for both faction: an unit that is capable of intercepting long range missiles." The user chose:
+  - targets: every missile and rocket flying nearby;
+  - a structure and a mobile version per faction;
+  - interceptor missiles with a hit chance.
+- **Units** (T2, placeholder numbers; Order fewer and surer, Chaos more and less sure):
+
+  | | Order | Chaos |
+  |---|---|---|
+  | Structure (T2 builder, footprint 3) | `ord_sanctum` Sanctum: 450 range, 8 interceptors, 85% | `chs_basilisk` Basilisk: 420, 10, 75% |
+  | Mobile (advanced vehicle plant, wheeled) | `ord_shepherd` Shepherd: 330, 4, 85% | `chs_griffin` Griffin: 300, 5, 75% |
+
+  - Each has its own short radar (radar about its reach), to detect what it shoots. They never fire at units.
+  - The mobile ones fire on the move, unlike the mobile anti-nukes: they escort armies.
+  - The interceptors (`*_point_interceptor`) launch vertically. They fly at 580–600 studs/s and turn 680–720°/s: tighter than a SAM, so they can come round onto a nearby rocket.
+  - The stock refills one interceptor every 1.8–2.5 s. A salvo larger than the stock gets through.
+- **Mechanism** (`intercepts.tactical = true`; Targeting's `interceptTarget`):
+  - It picks the nearest enemy projectile within range that the team detects (sight or radar at its position), one interceptor per missile, from all projectiles in flight.
+  - What counts: HOMING weapons, and BALLISTIC ones marked `rocket = true` (both MLRS and both rocket packs). Not strategic missiles (anti-nukes take those) and not interceptors.
+  - The rest is the anti-nuke path (S-48, S-111): the interceptor homes on the projectile and its proximity burst destroys it with `intercepts.chance` (an INTERCEPTED event).
+- **Measured** (`PointDefence.spec`, 30 s):
+  - a Sanctum against a Chaos MLRS (Hydra) shelling a tank beside it: 16 of 56 rockets shot down with 22 interceptors (73% of interceptors hit). The MLRS outfires the stock: saturation, as intended;
+  - a Basilisk against an Order missile battery: 14 of 14 missiles shot down;
+  - a Shepherd also shoots rockets down; an anti-nuke ignores them.
+- **Not done:**
+  - the skirmish AI doesn't build them yet;
+  - the client draws them with the generic blockout and the anti-nuke icon until B and C make their own (IDs sent);
+  - no balance report run (the user's rule).
+
+## S-150 — Shields tuned down (the user: "way too OP because even under concentrated fires, it still withstand with 100% charge") (2026-10-24)
+
+- **Measured:** 10 Ravagers shelling a tank under a Phalanx put 412 shells on the dome in 60 s, about 5.5 shell masses a second. The dome recharged 30 a second (S-86's 20× numbers: 600 capacity, 30/s), so it never left 100%. A Carapace was the same.
+- **Changed:**
+  - Phalanx: capacity 600 → 120, recharge 30 → 2 per second.
+  - Carapace: 400 → 80, 24 → 1.6.
+  - Power draw unchanged.
+  - `Shield.BEAM_DRAIN` 12.5 → 2.5, so a beam takes the same share of a dome as in S-117 (Radiance about 42% of a Phalanx).
+- **Now** (`Shield.spec`, the same siege):
+  - 10 Ravagers bring a Phalanx down by 30 s (3%), and it stays down;
+  - 4 Ravagers wear it to 88% at 30 s and 76% at 60 s;
+  - a Carapace under 10 falls in about 20 s.
+- **Tests adjusted:** a breaching heavy shell slows by 13% (was over 15%; the smaller dome drains as the shell goes through); the SHIELD-record recharge test expects the slower rise.
+- No balance report run (the user's rule). The new numbers are placeholders like the rest.
+
+## S-151 — Interceptors steer at their target's start-of-tick state (B's question on S-149) (2026-10-24)
+
+- **Found by B:** Projectiles walks `proj` backwards with swap-removal. So an interceptor steered, and fused, against its missile's state either before or after the missile's own step that tick, depending on list order. The client always uses the start of the tick (net.md, C-57), and B's spec saw up to ~1 stud of drift in the last ticks.
+- **Changed:** before the loop, the Projectiles system snapshots the position and velocity of every projectile an interceptor chases. Interceptor steering (PN or the vertical climb) and the interceptor's proximity fuse read that snapshot. Anti-nukes and point defence both, now independent of step order.
+- **Results** unchanged in the specs: point defence 16 / 56 rockets and 14 / 14 missiles; nuke tests pass.

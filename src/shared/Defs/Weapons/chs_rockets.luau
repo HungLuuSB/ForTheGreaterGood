@@ -3,6 +3,7 @@
 return {
 	id = "chs_rockets",
 	type = "BALLISTIC",
+	rocket = true, -- point defence intercepts it (S-149)
 	range = 200,
 	reload = 0.8,
 	projectileSpeed = 300,

@@ -87,8 +87,26 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
 .bg-dark { background-color: var(--map-dark-a); background-image: linear-gradient(var(--map-dark-b) 1px, transparent 1px), linear-gradient(90deg, var(--map-dark-b) 1px, transparent 1px); background-size: 24px 24px; }
 .bg-sand { background-color: var(--map-sand-a); background-image: radial-gradient(var(--map-sand-b) 1px, transparent 1.6px); background-size: 7px 7px; }
 
+.badge { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+.badge.new { background: var(--accent); color: var(--surface); }
+.badge.chg { border: 1px solid var(--accent); color: var(--accent); }
+.tile .why { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.news { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 10px; }
+.newcard { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; display: grid; grid-template-columns: auto 1fr; overflow: hidden; min-width: 0; }
+.newcard .pair { display: flex; align-items: center; gap: 6px; padding: 10px 12px; }
+.newcard .arrow { color: rgba(255,255,255,.75); font-size: 16px; }
+.newcard .was { opacity: .9; display: grid; justify-items: center; gap: 2px; font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,.8); }
+.newcard .meta { align-content: center; }
+.maptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.maptable th { text-align: left; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.maptable td { padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.maptable td code { font-family: var(--font-mono); font-size: 12px; }
+.maptable td.ic { width: 34px; background: var(--map-dark-a); line-height: 0; text-align: center; }
+.maptable tr.hl td:not(.ic) { color: var(--accent); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); max-height: 560px; overflow-y: auto; }
+details summary { cursor: pointer; font-weight: 600; }
 .field { border-radius: 6px; border: 1px solid var(--line); overflow-x: auto; }
-.field svg { display: block; min-width: 760px; width: 100%; height: auto; }
+.field > svg { display: block; min-width: 760px; width: 100%; height: auto; }
 .note { font-size: 13px; color: var(--muted); margin: 0; max-width: 74ch; }
 .copy-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; display: grid; gap: 8px; }
 .copy-panel textarea { width: 100%; min-height: 110px; font-family: var(--font-mono); font-size: 12px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
@@ -98,8 +116,8 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
 <div class="wrap">
   <header>
     <div class="eyebrow">For The Greater Good · strategic zoom</div>
-    <h1>Unit icon set, draft 3</h1>
-    <p class="lede">Built on BAR's documented three-part rule, with our own frames and symbols. The frame shape is the unit type, the dots under it are the tech level (none for T1, two for T2, three for T3), and the white symbol inside is the weapon or role. Every icon is drawn in white with a dark edge, so one image takes any team color in Roblox through <code>ImageColor3</code>.</p>
+    <h1>Unit icon set, draft 4</h1>
+    <p class="lede">Built on BAR's documented three-part rule, with our own frames and symbols. The frame shape is the unit type, the dots under it are the tech level (none for T1, two for T2, three for T3), and the white symbol inside is the weapon or role. Every icon is drawn in white with a dark edge, so one image takes any team color in Roblox through <code>ImageColor3</code>. Draft 4 covers every one of the game's 150 unit definitions (read 24 Oct 2026): 12 new icons, mainly for the units that shoot missiles down, and one changed frame.</p>
   </header>
 
   <section class="grammar" aria-label="Icon grammar">
@@ -107,6 +125,7 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     <div class="rule"><h3>Dots = tech level</h3><div class="row" id="lg-tiers"></div></div>
     <div class="rule"><h3>Symbol = weapon or role</h3><div class="row" id="lg-roles"></div></div>
     <div class="rule"><h3>Contacts</h3><div class="row" id="lg-contacts"></div></div>
+    <div class="rule"><h3>New symbols</h3><div class="row" id="lg-new"></div></div>
   </section>
 
   <div class="controls" role="group" aria-label="Preview settings">
@@ -120,12 +139,22 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     <textarea id="copyText" aria-label="SVG source" readonly></textarea>
   </div>
 
+  <section class="section">
+    <div class="section-head"><h2>New in draft 4</h2><p>Before (what the game draws today) → after</p></div>
+    <div class="news" id="news"></div>
+  </section>
+
   <div id="sections"></div>
+
+  <section class="section">
+    <div class="section-head"><h2>Every unit's icon</h2><p>The 150 unit definitions in the game, each with exactly one icon; the tile key is the sprite sheet name</p></div>
+    <div class="tablewrap"><table class="maptable" id="maptable"></table></div>
+  </section>
 
   <section class="section">
     <div class="section-head"><h2>Battlefield check</h2><p>In-game size at strategic zoom (about 20 px), both teams mixed</p></div>
     <div class="field" id="field"></div>
-    <p class="note">At this size the frame and the symbol must both read. Check that tanks, artillery, anti-air and radars differ at a glance, and that aircraft (triangle) and helicopters (inverted triangle) are easy to tell apart.</p>
+    <p class="note">At this size the frame and the symbol must both read. Check that tanks, artillery, anti-air and radars differ at a glance, that the anti-nukes (ringed nuke) and point defences (missile hit by a burst) stand apart from each other and from the SAMs, and that aircraft (triangle) and helicopters (inverted triangle) are easy to tell apart.</p>
   </section>
 </div>
 
@@ -173,6 +202,12 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     const [a, b, c, e] = [p(r1, a0), p(r2, a0), p(r2, a1), p(r1, a1)];
     return sf(`M${f2(a[0])} ${f2(a[1])} L${f2(b[0])} ${f2(b[1])} A${r2} ${r2} 0 0 1 ${f2(c[0])} ${f2(c[1])} L${f2(e[0])} ${f2(e[1])} A${r1} ${r1} 0 0 0 ${f2(a[0])} ${f2(a[1])} Z`);
   }
+  // an explosion burst: n spikes
+  function burst(x, y, r1, r2, n) { let d = ""; for (let i = 0; i < n * 2; i++) { const r = i % 2 ? r2 : r1, a = -Math.PI/2 + i * Math.PI/n; d += (i ? "L" : "M") + f2(x + r*Math.cos(a)) + " " + f2(y + r*Math.sin(a)) + " "; } return sf(d + "Z"); }
+  // a bold slash with a dark edge: "shoots these down"
+  const slash = (x, y, r = 11) => sl(`M${x+r*.72} ${y-r*.72} L${x-r*.72} ${y+r*.72}`, 3.2);
+  // dashed stroke: a decoy's symbol
+  const dl = (d, w = 2.6) => `<path d="${d}" fill="none" stroke="${D}" stroke-width="${w + 2.4}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3.2"/><path d="${d}" fill="none" stroke="${W}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3.2"/>`;
   const ell = (x, y, rx, ry) => `M${x-rx} ${y} A${rx} ${ry} 0 1 0 ${x+rx} ${y} A${rx} ${ry} 0 1 0 ${x-rx} ${y}`;
 
   // ---- symbols: weapon or role ----
@@ -210,78 +245,109 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     coastal: (x, y) => shell(x, y - 4, 6) + `<path d="M${x-6} ${y-2} H${x+6}" stroke="${D}" stroke-width="2"/>` + wave(x, y + 9),
     floating: (x, y) => shell(x, y - 5, 3.6) + wave(x, y + 8),
     nuke: (x, y) => sc(x, y, 2.6) + wedge(x, y, 4.3, 11, -Math.PI/2 - .55, -Math.PI/2 + .55) + wedge(x, y, 4.3, 11, Math.PI/6 - .55, Math.PI/6 + .55) + wedge(x, y, 4.3, 11, 5*Math.PI/6 - .55, 5*Math.PI/6 + .55),
+    // draft 4
+    mortar: (x, y) => sl(`M${x-10} ${y+9} Q${x-7} ${y-17} ${x+3} ${y-2}`, 2.2) + sc(x + 4, y + 2, 4.4) + sl(`M${x-11} ${y+11} H${x-5}`, 2.6),
+    antinuke: (x, y) => sl(ell(x, y, 9.8, 9.8), 1.8) + `<g transform="translate(${x} ${y}) scale(.64) translate(${-x} ${-y})">${SYM.nuke(x, y)}</g>`,
+    pointdef: (x, y) => `<g transform="rotate(180 ${x} ${y - 5})">${rocket(x, y - 5, .74)}</g>` + burst(x, y + 6, 6.6, 3, 8),
+    shield: (x, y) => sl(`M${x-11} ${y+6} A11 11 0 0 1 ${x+11} ${y+6}`, 3) + sl(`M${x-5.5} ${y+6} A5.5 5.5 0 0 1 ${x+5.5} ${y+6}`, 2.2) + sl(`M${x-12} ${y+9} H${x+12}`, 2),
+    beam: (x, y) => sl(`M${x-8} ${y+8} L${x+7} ${y-7}`, 3.4) + sc(x - 8, y + 8, 3.4) + star(x + 8, y - 8, 5.6, 2.3),
+    flak: (x, y) => sl(`M${x-8} ${y+9} L${x} ${y} L${x+8} ${y+9}`, 3.6) + sc(x - 7, y - 6, 2.3) + sc(x, y - 10, 2.3) + sc(x + 7, y - 6, 2.3),
+    missiles: (x, y) => rocket(x - 5, y + 1, .85) + rocket(x + 5, y + 1, .85),
+    wall: (x, y) => sl(`M${x-11} ${y-6} H${x+11} M${x-11} ${y} H${x+11} M${x-11} ${y+6} H${x+11} M${x-4} ${y-6} V${y} M${x+4} ${y} V${y+6} M${x+8} ${y-6} V${y} M${x-8} ${y} V${y+6}`, 2),
+    fortress: (x, y) => sf(`M${x-10} ${y+10} V${y-4} H${x-6.5} V${y-9} H${x-2.5} V${y-4} H${x+2.5} V${y-9} H${x+6.5} V${y-4} H${x+10} V${y+10} Z`) + `<path d="M${x-3} ${y+10} V${y+4} A3 3 0 0 1 ${x+3} ${y+4} V${y+10} Z" fill="${D}"/>`,
+    decoy: (x, y) => dl(`M${x-8} ${y-8} L${x} ${y+1} L${x+8} ${y-8} M${x-8} ${y} L${x} ${y+9} L${x+8} ${y}`, 3.2),
   };
 
   // ---- catalogue: roster from guide 13 ----
   const CAT = [
-    { title: "Ground", note: "Vehicles are diamonds; the Juggernaut walks, so it gets the walker circle; amphibious tanks get the long hexagon", items: [
-      { n: "Command Vehicle", ids: "ord_sovereign · chs_warlord", f: "vehicle", s: "command", t: 0, big: 1.35 },
-      { n: "Ground Worker", ids: "ord_mason · chs_scrapper", f: "vehicle", s: "construct", t: 1 },
-      { n: "Adv. Ground Worker", ids: "ord_architect · chs_forgemaster", f: "vehicle", s: "construct", t: 2 },
-      { n: "Scout", ids: "ord_herald · chs_jackal", f: "vehicle", s: "scout", t: 1 },
-      { n: "Light Tank", ids: "ord_lancer · chs_ravager", f: "vehicle", s: "cannon", t: 1 },
-      { n: "Main Battle Tank", ids: "ord_paladin", f: "vehicle", s: "heavy", t: 2 },
-      { n: "Assault Walker", ids: "chs_juggernaut", f: "walker", s: "walkerGun", t: 2 },
-      { n: "Artillery", ids: "ord_verdict · chs_hellmouth", f: "vehicle", s: "artillery", t: 1 },
-      { n: "MLRS", ids: "ord_judgement · chs_hydra", f: "vehicle", s: "rockets", t: 2 },
-      { n: "Mobile IR SAM", ids: "ord_halo · chs_hornet", f: "vehicle", s: "aa", t: 1 },
-      { n: "Mobile Radar SAM", ids: "ord_seraph · chs_gorgon", f: "vehicle", s: "aa2", t: 2 },
-      { n: "Mobile Radar", ids: "ord_oracle · chs_watcher", f: "vehicle", s: "radar", t: 1 },
-      { n: "Tracking Radar", ids: "ord_arbiter · chs_stalker", f: "vehicle", s: "tracking", t: 2 },
-      { n: "Pinpointer", ids: "Witness · Augur", f: "vehicle", s: "pin", t: 2 },
-      { n: "Mobile Jammer", ids: "ord_veil · chs_shroud", f: "vehicle", s: "jammer", t: 2 },
-      { n: "Amphibious Tank", ids: "ord_tideguard · chs_mire", f: "amphib", s: "cannon", t: 2 },
+    { title: "Ground", note: "Vehicles are diamonds; the Commander mechs walk, so they get the walker circle; amphibious tanks get the long hexagon", items: [
+      { n: "Commander", was: {f:"vehicle",s:"command",t:0}, defs: "ord_sovereign chs_warlord", f: "walker", s: "command", t: 0, big: 1.35, ch: "Walker circle: the Commanders are mechs now (was the vehicle diamond)" },
+      { n: "Ground Worker", defs: "ord_mason chs_scrapper", f: "vehicle", s: "construct", t: 1 },
+      { n: "Adv. Ground Worker", defs: "ord_architect chs_forgemaster", f: "vehicle", s: "construct", t: 2 },
+      { n: "Scout", defs: "ord_herald chs_jackal", f: "vehicle", s: "scout", t: 1 },
+      { n: "Light Tank", defs: "ord_lancer chs_ravager chs_locust", f: "vehicle", s: "cannon", t: 1 },
+      { n: "Main Battle Tank", was: {f:"walker",s:"walkerGun",t:2}, wasNote: "Juggernaut before", defs: "ord_paladin chs_juggernaut ord_warden chs_minotaur", f: "vehicle", s: "heavy", t: 2, ch: "Now also the Juggernaut (it's tracked now, no longer a walker)" },
+      { n: "Artillery", defs: "ord_verdict chs_hellmouth", f: "vehicle", s: "artillery", t: 1 },
+      { n: "Siege Mortar", was: {f:"vehicle",s:"artillery",t:1}, defs: "chs_cyclops", f: "vehicle", s: "mortar", t: 2, nw: "Cyclops showed the T1 artillery icon" },
+      { n: "MLRS", defs: "ord_judgement chs_hydra", f: "vehicle", s: "rockets", t: 2 },
+      { n: "Mobile IR SAM", defs: "ord_halo chs_hornet", f: "vehicle", s: "aa", t: 1 },
+      { n: "Mobile Radar SAM", defs: "ord_seraph chs_gorgon", f: "vehicle", s: "aa2", t: 2 },
+      { n: "Mobile Anti-Nuke", was: "vehicle", defs: "ord_custodian chs_chimera", f: "vehicle", s: "antinuke", t: 2, nw: "Had no icon (drawn as a blank contact)" },
+      { n: "Mobile Point Defence", was: "vehicle", defs: "ord_shepherd chs_griffin", f: "vehicle", s: "pointdef", t: 2, nw: "New unit (S-149), had no icon" },
+      { n: "Mobile Radar", defs: "ord_oracle chs_watcher", f: "vehicle", s: "radar", t: 1 },
+      { n: "Tracking Radar", defs: "ord_arbiter chs_stalker", f: "vehicle", s: "tracking", t: 2 },
+      { n: "Mobile Jammer", defs: "ord_veil chs_shroud", f: "vehicle", s: "jammer", t: 2 },
+      { n: "Amphibious Tank", defs: "ord_tideguard chs_mire", f: "amphib", s: "cannon", t: 2 },
     ]},
     { title: "Air", note: "Jets are triangles; helicopters are inverted triangles", items: [
-      { n: "Air Worker", ids: "ord_skywright · chs_vulture", f: "vtol", s: "construct", t: 1 },
-      { n: "Adv. Air Worker", ids: "ord_zenith · chs_condor", f: "vtol", s: "construct", t: 2 },
-      { n: "Fighter", ids: "ord_falcon · chs_harpy", f: "air", s: "aa", t: 1 },
-      { n: "Air Superiority", ids: "ord_archon · chs_manticore", f: "air", s: "aa2", t: 2 },
-      { n: "Bomber", ids: "ord_absolution · chs_plague", f: "air", s: "bombs2", t: 1 },
-      { n: "Strategic Bomber", ids: "ord_phantom · chs_behemoth", f: "air", s: "bombs3", t: 2 },
-      { n: "AWACS", ids: "ord_archangel", f: "air", s: "radar", t: 2 },
-      { n: "EW Jammer Plane", ids: "chs_banshee", f: "air", s: "jammer", t: 2 },
-      { n: "Attack Helicopter", ids: "ord_guardian · chs_wasp", f: "vtol", s: "rockets", t: 1 },
-      { n: "ASW Helicopter", ids: "ord_tidewatch · chs_leech", f: "vtol", s: "torpedo", t: 2 },
+      { n: "Air Worker", defs: "ord_skywright chs_vulture", f: "vtol", s: "construct", t: 1 },
+      { n: "Adv. Air Worker", defs: "ord_zenith chs_condor", f: "vtol", s: "construct", t: 2 },
+      { n: "Fighter", defs: "ord_falcon chs_harpy", f: "air", s: "aa", t: 1 },
+      { n: "Air Superiority", defs: "ord_archon chs_manticore", f: "air", s: "aa2", t: 2 },
+      { n: "Bomber", defs: "ord_absolution chs_plague", f: "air", s: "bombs2", t: 1 },
+      { n: "Strategic Bomber", defs: "ord_phantom chs_behemoth", f: "air", s: "bombs3", t: 2 },
+      { n: "Decoy Drone", was: "air", defs: "chs_wraith", f: "air", s: "decoy", t: 2, nw: "Own team only: enemies still see the Strategic Bomber icon until they see or track it (S-109)" },
+      { n: "AWACS", defs: "ord_archangel", f: "air", s: "radar", t: 2 },
+      { n: "EW Jammer Plane", defs: "chs_banshee", f: "air", s: "jammer", t: 2 },
+      { n: "Attack Helicopter", defs: "ord_guardian chs_wasp", f: "vtol", s: "rockets", t: 1 },
+      { n: "ASW Helicopter", defs: "ord_tidewatch chs_leech", f: "vtol", s: "torpedo", t: 2 },
     ]},
     { title: "Naval", note: "Ships have one rounded side (the bow); submarines get a submarine silhouette", items: [
-      { n: "Naval Worker", ids: "ord_tidewright · chs_wrecker", f: "ship", s: "construct", t: 1 },
-      { n: "Adv. Naval Worker", ids: "ord_harbormaster · chs_reaver", f: "ship", s: "construct", t: 2 },
-      { n: "Corvette", ids: "ord_sentry · chs_barracuda", f: "ship", s: "cannon", t: 1 },
-      { n: "Destroyer", ids: "ord_crusader · chs_corsair", f: "ship", s: "aa2", t: 2 },
-      { n: "Cruiser", ids: "ord_dominion · chs_kraken", f: "ship", s: "heavy", t: 2 },
-      { n: "Carrier", ids: "ord_sanctuary · chs_leviathan", f: "ship", s: "carrier", t: 2 },
-      { n: "EW Ship", ids: "chs_siren", f: "ship", s: "jammer", t: 2 },
-      { n: "Submarine", ids: "ord_silence · chs_lamprey", f: "sub", s: "torpedo", t: 1 },
+      { n: "Naval Worker", defs: "ord_tidewright chs_wrecker", f: "ship", s: "construct", t: 1 },
+      { n: "Adv. Naval Worker", defs: "ord_harbormaster chs_reaver", f: "ship", s: "construct", t: 2 },
+      { n: "Corvette", defs: "ord_sentry chs_barracuda", f: "ship", s: "cannon", t: 1 },
+      { n: "Destroyer", defs: "ord_crusader chs_corsair", f: "ship", s: "aa2", t: 2 },
+      { n: "Cruiser", defs: "ord_dominion chs_kraken", f: "ship", s: "heavy", t: 2 },
+      { n: "Carrier", defs: "ord_sanctuary chs_leviathan", f: "ship", s: "carrier", t: 2 },
+      { n: "EW Ship", defs: "chs_siren", f: "ship", s: "jammer", t: 2 },
+      { n: "Submarine", defs: "ord_silence chs_lamprey", f: "sub", s: "torpedo", t: 1 },
     ]},
     { title: "Structures", note: "Square frame; the factory symbol is the shape of what it builds", items: [
-      { n: "Vehicle Plant", ids: "vehplant (T2: _t2)", f: "struct", s: "fabVehicle", t: 1 },
-      { n: "Airfield", ids: "airfield (T2: _t2)", f: "struct", s: "fabAir", t: 1 },
-      { n: "Shipyard", ids: "shipyard (T2: _t2)", f: "struct", s: "fabShip", t: 1 },
-      { n: "Supply Extractor", ids: "extractor (T2: advanced)", f: "struct", s: "extractor", t: 1 },
-      { n: "Power Generator", ids: "generator · solar · wind", f: "struct", s: "power", t: 1 },
-      { n: "Tidal Generator", ids: "tidal · tide mill", f: "struct", s: "tidal", t: 1 },
-      { n: "Supply Converter", ids: "converter · smelter", f: "struct", s: "converter", t: 1 },
-      { n: "Fusion Reactor", ids: "fusion", f: "struct", s: "fusion", t: 2 },
-      { n: "Storage", ids: "supply depot · power bank", f: "struct", s: "storage", t: 1 },
-      { n: "Radar Tower", ids: "watchtower · eye (T2: beacon · all-seer)", f: "struct", s: "radar", t: 1 },
-      { n: "Tracking Radar Site", ids: "ord_tribunal · chs_seekerspire", f: "struct", s: "tracking", t: 2 },
-      { n: "Jammer Tower", ids: "curtain · smog (T2: veilspire · blackout)", f: "struct", s: "jammer", t: 1 },
-      { n: "Sonar Station", ids: "ear · listener (T2: choir · deepear)", f: "struct", s: "sonar", t: 1 },
-      { n: "Rearm Pad", ids: "aerie · roost", f: "struct", s: "rearm", t: 1 },
-      { n: "Nuke Silo", ids: "ord_reckoning · chs_ragnarok", f: "struct", s: "nuke", t: 3, big: 1.25 },
+      { n: "Vehicle Plant", defs: "ord_vehplant chs_vehplant", f: "struct", s: "fabVehicle", t: 1 },
+      { n: "Adv. Vehicle Plant", defs: "ord_advvehplant chs_advvehplant", f: "struct", s: "fabVehicle", t: 2 },
+      { n: "Airfield", defs: "ord_airfield chs_airfield", f: "struct", s: "fabAir", t: 1 },
+      { n: "Adv. Airfield", defs: "ord_advairfield chs_advairfield", f: "struct", s: "fabAir", t: 2 },
+      { n: "Shipyard", defs: "ord_shipyard chs_shipyard", f: "struct", s: "fabShip", t: 1 },
+      { n: "Adv. Shipyard", defs: "ord_advshipyard chs_advshipyard", f: "struct", s: "fabShip", t: 2 },
+      { n: "Supply Extractor", defs: "ord_extractor chs_extractor", f: "struct", s: "extractor", t: 1 },
+      { n: "Adv. Extractor", defs: "ord_advextractor chs_advextractor", f: "struct", s: "extractor", t: 2 },
+      { n: "Power Generator", defs: "ord_generator chs_generator ord_solar chs_solar ord_windmill chs_windmill", f: "struct", s: "power", t: 1 },
+      { n: "Tidal Generator", defs: "ord_tidal chs_tidal", f: "struct", s: "tidal", t: 1 },
+      { n: "Supply Converter", defs: "ord_converter chs_converter", f: "struct", s: "converter", t: 1 },
+      { n: "Fusion Reactor", defs: "ord_fusion chs_fusion", f: "struct", s: "fusion", t: 2 },
+      { n: "Storage", defs: "ord_depot chs_depot", f: "struct", s: "storage", t: 1 },
+      { n: "Wall", was: {f:"struct",s:"storage",t:1}, defs: "ord_barrier", f: "struct", s: "wall", t: 1, nw: "Barrier showed the Storage icon" },
+      { n: "Radar Tower", defs: "ord_watchtower chs_eye", f: "struct", s: "radar", t: 1 },
+      { n: "Long-Range Radar", defs: "ord_beacon chs_allseer", f: "struct", s: "radar", t: 2 },
+      { n: "Tracking Radar Site", defs: "ord_tribunal chs_seekerspire", f: "struct", s: "tracking", t: 2 },
+      { n: "Pinpointer", defs: "ord_witness chs_augur", f: "struct", s: "pin", t: 2 },
+      { n: "Jammer Tower", defs: "ord_curtain chs_smog", f: "struct", s: "jammer", t: 1 },
+      { n: "Adv. Jammer Tower", defs: "ord_veilspire chs_blackout", f: "struct", s: "jammer", t: 2 },
+      { n: "Sonar Station", defs: "ord_ear chs_listener", f: "struct", s: "sonar", t: 1 },
+      { n: "Adv. Sonar Station", defs: "ord_choir chs_deepear", f: "struct", s: "sonar", t: 2 },
+      { n: "Rearm Pad", defs: "ord_airpad chs_airpad", f: "struct", s: "rearm", t: 1 },
+      { n: "Nuke Silo", defs: "ord_reckoning chs_ragnarok", f: "struct", s: "nuke", t: 3, big: 1.25 },
     ]},
-    { title: "Defenses", note: "Shield frame; the symbol is the weapon", items: [
-      { n: "Gun Turret", ids: "ord_bulwark · chs_spike", f: "defense", s: "cannon", t: 1 },
-      { n: "Heavy Turret", ids: "ord_bastion · chs_maw", f: "defense", s: "heavy", t: 2 },
-      { n: "IR SAM Site", ids: "ord_vigil · chs_thorn", f: "defense", s: "aa", t: 1 },
-      { n: "Radar SAM Site", ids: "ord_aegis · chs_wyvern", f: "defense", s: "aa2", t: 2 },
-      { n: "Artillery Emplacement", ids: "ord_edict · chs_cataclysm", f: "defense", s: "artillery", t: 2 },
-      { n: "Coastal Battery", ids: "ord_rampart · chs_breaker", f: "defense", s: "coastal", t: 2 },
-      { n: "Floating Turret", ids: "ord_moat · chs_riptide", f: "defense", s: "floating", t: 1 },
-      { n: "Torpedo Launcher", ids: "ord_undertow · chs_fang", f: "defense", s: "torpedo", t: 1 },
+    { title: "Defenses", note: "Shield frame; the symbol is the weapon. A ringed nuke shoots nukes down; a falling missile with a burst shoots missiles and rockets down", items: [
+      { n: "Gun Turret", defs: "ord_bulwark chs_spike", f: "defense", s: "cannon", t: 1 },
+      { n: "Heavy Turret", defs: "ord_bastion chs_maw", f: "defense", s: "heavy", t: 2 },
+      { n: "Beam Tower", was: {f:"defense",s:"heavy",t:2}, defs: "ord_radiance chs_inferno", f: "defense", s: "beam", t: 2, nw: "Radiance and Inferno showed the Heavy Turret icon" },
+      { n: "IR SAM Site", defs: "ord_vigil chs_thorn", f: "defense", s: "aa", t: 1 },
+      { n: "Flak Tower", was: {f:"defense",s:"aa",t:1}, defs: "ord_lumen chs_hailstorm", f: "defense", s: "flak", t: 2, nw: "Lumen and Hailstorm showed the T1 IR SAM icon" },
+      { n: "Radar SAM Site", defs: "ord_aegis chs_wyvern", f: "defense", s: "aa2", t: 2 },
+      { n: "Anti-Nuke", was: "struct", defs: "ord_providence chs_cerberus", f: "defense", s: "antinuke", t: 2, nw: "Had no icon (drawn as a blank contact)" },
+      { n: "Point Defence", was: "struct", defs: "ord_sanctum chs_basilisk", f: "defense", s: "pointdef", t: 2, nw: "New structure (S-149), had no icon" },
+      { n: "Shield Generator", was: {f:"struct",s:"jammer",t:1}, defs: "ord_phalanx chs_carapace", f: "defense", s: "shield", t: 2, nw: "Phalanx and Carapace showed the Jammer Tower icon" },
+      { n: "Artillery Emplacement", defs: "ord_edict chs_cataclysm", f: "defense", s: "artillery", t: 2 },
+      { n: "Missile Battery", was: "struct", defs: "ord_sanction chs_scourge", f: "defense", s: "missiles", t: 2, nw: "Had no icon (drawn as a blank contact)" },
+      { n: "Coastal Battery", defs: "ord_rampart chs_breaker", f: "defense", s: "coastal", t: 2 },
+      { n: "Floating Turret", defs: "ord_moat chs_riptide", f: "defense", s: "floating", t: 1 },
+      { n: "Torpedo Launcher", defs: "ord_undertow chs_fang", f: "defense", s: "torpedo", t: 1 },
+      { n: "Fortress", was: {f:"defense",s:"heavy",t:2}, defs: "ord_citadel", f: "defense", s: "fortress", t: 3, big: 1.25, nw: "Citadel showed the T2 Heavy Turret icon" },
     ]},
   ];
+  const NAMES = {"chs_advairfield":"Advanced Aerodrome","chs_advextractor":"Deep Excavator","chs_advshipyard":"Advanced Drydock","chs_advvehplant":"Advanced Foundry","chs_airfield":"Aerodrome","chs_airpad":"Roost","chs_allseer":"All-Seer","chs_augur":"Augur","chs_banshee":"Banshee","chs_barracuda":"Barracuda","chs_behemoth":"Behemoth","chs_blackout":"Blackout","chs_breaker":"Breaker","chs_carapace":"Carapace","chs_cataclysm":"Cataclysm","chs_cerberus":"Cerberus","chs_chimera":"Chimera","chs_condor":"Condor","chs_converter":"Smelter","chs_corsair":"Corsair","chs_cyclops":"Cyclops","chs_deepear":"Deepear","chs_depot":"Hoard","chs_extractor":"Excavator","chs_eye":"Eye","chs_fang":"Fang","chs_forgemaster":"Forgemaster","chs_fusion":"Hellforge","chs_generator":"Furnace","chs_gorgon":"Gorgon","chs_hailstorm":"Hailstorm","chs_harpy":"Harpy","chs_hellmouth":"Hellmouth","chs_hornet":"Hornet","chs_hydra":"Hydra","chs_inferno":"Inferno","chs_jackal":"Jackal","chs_juggernaut":"Juggernaut","chs_kraken":"Kraken","chs_lamprey":"Lamprey","chs_leech":"Leech","chs_leviathan":"Leviathan","chs_listener":"Listener","chs_locust":"Locust","chs_manticore":"Manticore","chs_maw":"Maw","chs_minotaur":"Minotaur","chs_mire":"Mire","chs_plague":"Plague","chs_ragnarok":"Ragnarok","chs_ravager":"Ravager","chs_reaver":"Reaver","chs_riptide":"Riptide","chs_scourge":"Scourge","chs_scrapper":"Scrapper","chs_seekerspire":"Seeker Spire","chs_shipyard":"Drydock","chs_shroud":"Shroud","chs_siren":"Siren","chs_smog":"Smog","chs_solar":"Sun Trap","chs_spike":"Spike","chs_stalker":"Stalker","chs_thorn":"Thorn","chs_tidal":"Tide Mill","chs_vehplant":"Vehicle Foundry","chs_vulture":"Vulture","chs_warlord":"Warlord","chs_wasp":"Wasp","chs_watcher":"Watcher","chs_windmill":"Wind Pylon","chs_wraith":"Wraith","chs_wrecker":"Wrecker","chs_wyvern":"Wyvern","ord_absolution":"Absolution","ord_advairfield":"Advanced Airfield","ord_advextractor":"Advanced Extractor","ord_advshipyard":"Advanced Shipyard","ord_advvehplant":"Advanced Vehicle Plant","ord_aegis":"Aegis","ord_airfield":"Airfield","ord_airpad":"Aerie","ord_arbiter":"Arbiter","ord_archangel":"Archangel","ord_architect":"Architect","ord_archon":"Archon","ord_barrier":"Barrier","ord_bastion":"Bastion","ord_beacon":"Beacon","ord_bulwark":"Bulwark","ord_choir":"Choir","ord_citadel":"Citadel","ord_converter":"Supply Converter","ord_crusader":"Crusader","ord_curtain":"Curtain","ord_custodian":"Custodian","ord_depot":"Depot","ord_dominion":"Dominion","ord_ear":"Ear","ord_edict":"Edict","ord_extractor":"Extractor","ord_falcon":"Falcon","ord_fusion":"Fusion Reactor","ord_generator":"Generator","ord_guardian":"Guardian","ord_halo":"Halo","ord_harbormaster":"Harbormaster","ord_herald":"Herald","ord_judgement":"Judgement","ord_lancer":"Lancer","ord_lumen":"Lumen","ord_mason":"Mason","ord_moat":"Moat","ord_oracle":"Oracle","ord_paladin":"Paladin","ord_phalanx":"Phalanx","ord_phantom":"Phantom","ord_providence":"Providence","ord_radiance":"Radiance","ord_rampart":"Rampart","ord_reckoning":"Reckoning","ord_sanction":"Sanction","ord_sanctuary":"Sanctuary","ord_sentry":"Sentry","ord_seraph":"Seraph","ord_shipyard":"Shipyard","ord_silence":"Silence","ord_skywright":"Skywright","ord_solar":"Solar Array","ord_sovereign":"Sovereign","ord_tidal":"Tidal Generator","ord_tideguard":"Tideguard","ord_tidewatch":"Tidewatch","ord_tidewright":"Tidewright","ord_tribunal":"Tribunal","ord_undertow":"Undertow","ord_vehplant":"Vehicle Plant","ord_veil":"Veil","ord_veilspire":"Veilspire","ord_verdict":"Verdict","ord_vigil":"Vigil","ord_warden":"Warden","ord_watchtower":"Watchtower","ord_windmill":"Wind Turbine","ord_witness":"Witness","ord_zenith":"Zenith","ord_sanctum":"Sanctum","ord_shepherd":"Shepherd","chs_basilisk":"Basilisk","chs_griffin":"Griffin"};
+  const slug = (it) => it.n.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") + "_t" + it.t;
   const SCALE = { 0: 1, 1: 1, 2: 1.15, 3: 1.3 };
   const scaleOf = (it) => it.big || SCALE[it.t] || 1;
 
@@ -311,8 +377,8 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
 
   // ---- state ----
   let team = TEAMS[1], ground = GROUNDS[0], size = 52;
-  try { const s = JSON.parse(localStorage.getItem("ftgg-icons-v2") || "{}"); team = TEAMS.find(t => t.id === s.team) || team; ground = GROUNDS.find(g => g.id === s.ground) || ground; size = s.size || size; } catch (e) {}
-  const save = () => { try { localStorage.setItem("ftgg-icons-v2", JSON.stringify({ team: team.id, ground: ground.id, size })); } catch (e) {} };
+  try { const s = JSON.parse(localStorage.getItem("ftgg-icons-v4") || "{}"); team = TEAMS.find(t => t.id === s.team) || team; ground = GROUNDS.find(g => g.id === s.ground) || ground; size = s.size || size; } catch (e) {}
+  const save = () => { try { localStorage.setItem("ftgg-icons-v4", JSON.stringify({ team: team.id, ground: ground.id, size })); } catch (e) {} };
 
   // ---- legend ----
   const lg = (el, entries) => { document.getElementById(el).innerHTML = entries.map(([svg, label]) => `<div class="mini"><div class="pad">${svg}</div>${label}</div>`).join(""); };
@@ -322,6 +388,7 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     lg("lg-tiers", [[iconSVG({ f: "vehicle", s: "cannon", t: 1 }, c, 38), "T1: none"], [iconSVG({ f: "vehicle", s: "heavy", t: 2 }, c, 42), "T2: two"], [iconSVG({ f: "struct", s: "nuke", t: 3 }, c, 46), "T3: three"]]);
     const R = [["cannon", "Cannon"], ["heavy", "Heavy gun"], ["artillery", "Artillery"], ["rockets", "Rockets"], ["aa", "Anti-air"], ["aa2", "Heavy AA"], ["scout", "Scout"], ["construct", "Builder"], ["radar", "Radar"], ["jammer", "Jammer"], ["bombs2", "Bombs"], ["torpedo", "Torpedo"]];
     lg("lg-roles", R.map(([s, l]) => [iconSVG({ f: "vehicle", s, t: 1 }, c, 30), l]));
+    lg("lg-new", [["antinuke", "Anti-nuke"], ["pointdef", "Point def."], ["shield", "Shield"], ["beam", "Beam"], ["flak", "Flak"], ["missiles", "Missiles"], ["mortar", "Mortar"], ["wall", "Wall"], ["fortress", "Fortress"], ["decoy", "Decoy"]].map(([s, l]) => [iconSVG({ f: "defense", s, t: 1 }, c, 30), l]));
     lg("lg-contacts", [
       [iconSVG({ f: "vehicle" }, c, 30, "contact"), "Surface"], [iconSVG({ f: "air" }, c, 30, "contact"), "Air"],
       [iconSVG({ f: "sub" }, c, 30, "contact"), "Sonar"], [iconSVG({ f: "defense", s: "aa2", t: 2, n: "Ghost" }, c, 30, "ghost"), "Ghost"],
@@ -353,7 +420,7 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
             <div class="swatch bg-${ground.id}">${iconSVG(it, team.color, Math.round(size * k))}
               <div class="smalls">${iconSVG(it, team.color, Math.round(18 * k))}${iconSVG(it, team.color, Math.round(24 * k))}</div>
             </div>
-            <div class="meta"><b>${it.n}</b><code>${it.ids}</code>
+            <div class="meta"><b>${it.n} ${it.nw ? '<span class="badge new">New</span>' : it.ch ? '<span class="badge chg">Changed</span>' : ""}</b><code>${it.defs.split(" ").map(d => NAMES[d] || d).join(" · ")}</code><code>${slug(it)}</code>
               <div class="foot"><span class="tier">${it.t === 0 ? "COMMAND" : "T" + it.t}</span>
               <button class="copy" type="button" data-s="${si}" data-i="${ii}">Copy SVG</button></div>
             </div></article>`;
@@ -386,13 +453,40 @@ input[type=range] { accent-color: var(--accent); width: 140px; }
     for (let i = 0; i < 26; i++) add(pick(ground_), 320 + rnd() * 180, 40 + rnd() * 220, T[0]);
     for (let i = 0; i < 26; i++) add(pick(ground_), 600 + rnd() * 180, 40 + rnd() * 220, T[1]);
     for (let i = 0; i < 8; i++) add(pick(air_), 470 + rnd() * 160, 30 + rnd() * 240, T[i % 2]);
+    const find = (n) => all.find(i => i.n === n);
+    add(find("Point Defence"), 230, 150, T[0]); add(find("Anti-Nuke"), 230, 70, T[0]); add(find("Shield Generator"), 230, 230, T[0]);
+    add(find("Point Defence"), Wd - 230, 150, T[1]); add(find("Anti-Nuke"), Wd - 230, 230, T[1]); add(find("Missile Battery"), Wd - 230, 70, T[1]);
+    add(find("Mobile Point Defence"), 420, 120, T[0]); add(find("Mobile Anti-Nuke"), 400, 200, T[0]);
+    add(find("Mobile Point Defence"), 690, 180, T[1]); add(find("Mobile Anti-Nuke"), 710, 90, T[1]);
     add({ f: "vehicle" }, 860, 150, T[1], "contact"); add({ f: "air" }, 520, 36, T[1], "contact");
     add({ f: "defense", s: "aa2", t: 2 }, 880, 250, T[1], "ghost");
     const bg = ground.id === "grass" ? "#456f38" : ground.id === "sand" ? "#bba878" : "#1f241f";
     document.getElementById("field").innerHTML = `<svg viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Icons at in-game size on a battlefield"><rect width="${Wd}" height="${H}" fill="${bg}"/><path d="M540 0 C 520 90, 580 170, 545 300" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="16"/>${out.join("")}</svg>`;
   }
 
-  function renderAll() { renderControls(); renderLegend(); renderSections(); renderField(); }
+  function renderNews() {
+    const all = []; CAT.forEach(s => s.items.forEach(i => { if (i.nw || i.ch) all.push(i); }));
+    const big = 50;
+    document.getElementById("news").innerHTML = all.map(it => {
+      const was = typeof it.was === "string" ? iconSVG({ f: it.was }, team.color, Math.round(36 * scaleOf(it)), "contact") : iconSVG(it.was, team.color, Math.round(36 * scaleOf(it)));
+      const wasL = typeof it.was === "string" ? "blank" : "before";
+      return `<article class="newcard">
+        <div class="pair bg-${ground.id}"><div class="was">${was}<span>${wasL}</span></div><span class="arrow" aria-hidden="true">→</span>${iconSVG(it, team.color, Math.round(big * scaleOf(it)))}</div>
+        <div class="meta"><b>${it.n} <span class="badge ${it.nw ? "new" : "chg"}">${it.nw ? "New" : "Changed"}</span></b>
+          <code>${it.defs.split(" ").map(d => NAMES[d] || d).join(" · ")}</code>
+          <div class="why">${it.nw || it.ch}</div></div>
+      </article>`;
+    }).join("");
+  }
+  function renderTable() {
+    const rows = [];
+    CAT.forEach(sec => sec.items.forEach(it => it.defs.split(" ").forEach(d => rows.push([d, it]))));
+    rows.sort((a, b) => a[0].localeCompare(b[0]));
+    document.getElementById("maptable").innerHTML = `<thead><tr><th></th><th>Unit</th><th>Def id</th><th>Icon</th><th>Tile key</th></tr></thead><tbody>` +
+      rows.map(([d, it]) => `<tr class="${it.nw || it.ch ? "hl" : ""}"><td class="ic">${iconSVG(it, team.color, Math.round(24 * scaleOf(it)))}</td><td>${NAMES[d] || d}</td><td><code>${d}</code></td><td>${it.n}${it.nw ? " (new)" : it.ch ? " (changed)" : ""}</td><td><code>${slug(it)}</code></td></tr>`).join("") + "</tbody>";
+  }
+
+  function renderAll() { renderControls(); renderLegend(); renderNews(); renderSections(); renderTable(); renderField(); }
   renderAll();
 })();
 </script>

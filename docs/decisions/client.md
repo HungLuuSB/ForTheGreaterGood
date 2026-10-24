@@ -1530,3 +1530,66 @@ Existing calls are unchanged.
 **Decision:** `src/roblox/MatchContract` now calls `@shared/Match/MatchConfig` (S-145, the module the lobby place uses too) for validate, validateResult, the version and the palette, instead of its copies. `Render/TeamColors` builds its palette from the same module's COLORS. Nothing else changed; MatchContract.spec passes. Checked in Studio only up to the build (the requires resolve); the contract path is unchanged.
 
 **Why:** the user moved the validator to src/shared; lobby-D asked to drop the copies.
+
+### C-179 — One key art viewer: the lobby mounts UI/KeyArt read-only (2026-10-23)
+
+**Decision:** lobby-D deleted its copy (m-lobby 27b4ce0); the lobby place mounts `src/client/UI/KeyArt.luau` read-only as `ReplicatedStorage.ClientKit.UI.KeyArt`, like the Kit. Its header now says so and drops "keep the two in step". The API stays stable: `KeyArt.available()`, `KeyArt.new(parent, zIndex)` returning a view with `show(name?) -> boolean` and `hide()`.
+
+**Why:** the two files were identical below the header; one viewer can't drift.
+
+### C-180 — PieceAnim holds a spinning wait loop to the next frame (2026-10-23)
+
+**Decision:** a piece-script thread that passes through `WaitForTurn` / `WaitForMove` 64 times in a row without yielding (`PieceAnim.SPIN_LIMIT`) is held to the next frame each time after that, with one warning. Any yield (a real wait or `Sleep`) resets the count. A new PieceAnim spec runs the C-177 loop (turn, wait, turn back, wait) far from the camera: it keeps swinging and every step returns. With the guard switched off the same spec hangs.
+
+**Why:** the user's next playtest log still showed "Script timeout" in PieceAnim.step at about tick 16,000. That match most likely started before C-177 reached Studio (it ended at tick 18,970, about 21 minutes in, and was the match already running when C-177 was pushed), and every loop in the piece scripts now sleeps. But one more script written the old way would freeze the client again, so the scheduler itself now refuses to spin.
+
+### C-181 — Lost radar missiles spiral down; radar accuracy in the sensor view (2026-10-23)
+
+**Decision:**
+- **Lost radar missiles (S-146):** on LOST_LOCK, a HOMING missile with RADAR guidance steps its velocity with `Guidance.lost(vx, vy, vz, k, projId, 1/15)` before the ballistic step, every tick until it ends. `k` starts at 1 on the first step after the event (`Effects.LOST_FIRST`), because the event carries the state after the server's own first lost tick (k = 0). Effects.spec kills a Wasp once an Aegis SAM has turned onto it: the drawn missile stays within 0.06 studs of the server (with k starting at 0 it drifts 13 studs). IR missiles still fly straight. A target that dies in the launch phase isn't steered at its last spot on the client; the homing corrections carry that path.
+- **Radar accuracy (S-147, the user's request):** `Core/RadarAccuracy` reads the Eco record's `radarError`, `trackError` and `precision`. In the missile sensor view (N):
+  - each radar blip gets a flat circle of the radius radar-fired shots miss by: amber at `radarError`, green at `trackError` on a tracked contact (TRACKED);
+  - a readout under the resource bar: "Radar accuracy ±7.7 studs · tracked ±2.6 · Pinpointers 40%" ("no radar" without one);
+  - at most 80 circles; sonar contacts and ghosts get none.
+  - RadarAccuracy.spec checks the radius against the server's own, and that two Pinpointers shrink it (±12 → ±7.7 studs).
+- Studio: `debug_out/screens/c181_radar_readout.jpg`, `c181_radar_rings.jpg`, `c181_tracked_rings.jpg`.
+- **Follow-up (sim-A, S-147):** under a partial power stall a fire-control radar's reach shrinks, so `trackError` holds only for blips still TRACKED. The readout greys its "tracked" part while no blip is TRACKED (rich text, `RadarAccuracy.GREY`); circles already use trackError only on TRACKED blips.
+
+**Why:** the user's report (SAMs flying into the sky when their target died) and request (show the missiles' radar accuracy), both through sim-A.
+
+### C-182 — Point defence on the client: interceptions drawn, stopgap icons (2026-10-24)
+
+**Decision:**
+- S-149's interceptors use the anti-nuke path the client already had (INTERCEPTOR chases a projectile, INTERCEPTED drops it). A rocket or tactical missile shot down ends in a small puff (`Effects.INTERCEPT_PUFF`, 3 studs) instead of a nuke's 12.
+- New PointDefence.spec: a Sanctum against an MLRS. 21 interceptors drawn chasing their rockets, 16 rockets shot down with 16 puffs, interceptors within ~1 stud of the server.
+  - The remaining stud is in an interceptor's last tick or two. The server walks projectiles backwards in its swap-removal list, so an interceptor sometimes steers at its rocket's state after the rocket's own step; the client always uses the start of the tick (C-57). Asked of the sim stream.
+  - Fixed by S-151 (the server snapshots chased projectiles at the start of the tick): worst 0.20 studs, and the spec now holds 0.5.
+- Stopgap icons until the user's draft 4 sheet (C-183): `ord_sanctum` and `chs_basilisk` draw the Radar SAM Site tile, `ord_shepherd` and `chs_griffin` the Mobile Radar SAM, as the anti-nukes do. This fixes main's two failing icon specs.
+
+**Why:** sim-A's S-149 (the user's point defence) and S-150; the icon specs failed on main.
+
+### C-183 — Icon sheet draft 4: icons mapped from each item's defs; a second sheet when the first is full (2026-10-24)
+
+**Decision:**
+- `docs/art/icons/ftgg-unit-icons.html` is the user's draft 4. Every catalogue item lists its defs exactly. `tools/icons/render.mjs` maps each unit def from those lists alone; the families, stopgaps and name matching are gone. A def in no item, in two, or an id that is no def fails the run. All 150 defs map, from 75 items.
+- Tile key `slug(name)_t<tier>`, one per item. The Commanders' radar frame is `walker`.
+- New tiles for the defs that had none or the wrong one, including: anti-nuke and mobile anti-nuke, point defence and mobile point defence, shield generator, flak tower, missile battery, decoy drone, siege mortar.
+- **Sheets:** tiles are fixed at 96 × 112 (90 per 1024-px sheet, 85 used). When a sheet is full the next one starts (`assets/icons/ftgg-icons-2.png` ...). Each tile is `{ x, y, sheet }`, and `IconAtlas.images` lists one asset per sheet (`tools/icons/assets.json`, `images`). `UI/Glyph` sets each icon's image from its tile's sheet. The run fails with a message past 4 sheets, and checks that no tile runs off its sheet.
+  - Dry run at 128-px tiles: 2 sheets (48 + 37 tiles), the second listed as "upload it".
+  - IconAtlas.spec fails while any sheet has no uploaded id.
+- **Uploaded with the user's approval:** asset 83784263765889 (byte-identical to `assets/icons/ftgg-icons.png`). The atlas and the id are in the same commit, so Studio never runs a mismatched sheet.
+- **Wraith (S-109), kept as is at the user's word:** its owner sees the Decoy Drone. An enemy's radar gets the spoof's def, so the blip draws a strategic bomber's air frame, like a bomber the enemy spotted earlier. Once seen, it's the Decoy Drone. Icons.spec checks all three.
+
+- Studio (the Canyon): `debug_out/screens/c183_strategic_defenses.jpg` shows both teams' anti-nukes, point defences (fixed and mobile), shield generators, flak, beam towers, missile batteries and the Commanders at normal icon size. `c183_strategic_radar.jpg` is zoomed out on radar contacts: the tracked ones show their icons, and the untracked aircraft (a Wraith and a real bomber) the same dashed air frame. `FtggDebug:Invoke("hold", ids)` (Studio only) keeps spawned units from fighting for such shots.
+
+**Why:** 11 defs drew blank contacts and several the wrong tile (the user's list); the user asked for the def lists, the split and the upload.
+
+### C-184 — Smooth key art parallax: sub-pixel layers; no world drawn behind the loading screen (2026-10-24)
+
+**Decision:**
+- `UI/KeyArt` (lobby-D's measurements and fix, approved by the user): the layers' size and position are set in scale, not offset. UDim2 offsets are whole pixels, so the near layer moved on only 50 of 158 frames, in 1–1.4 px jumps. Each tile is 1 px larger (no hairline between tiles) and turned 0.001° (Roblox draws a rotated GUI object at sub-pixel positions). D measured 60 fps and 0.02 px steps on 239 of 240 frames. The API is unchanged; the lobby mounts the file read-only.
+- `UI/MatchLoading`: while the loading screen shows (opaque: art or gradient), `RunService:Set3dRenderingEnabled(false)`. It's turned back on when the match starts.
+- Checked in Studio with the contract profile: loading still reaches 100% with the world paused (90 meshes in 24 s), the match starts, and the world draws again.
+
+**Why:** the user saw the parallax stutter in the lobby; the match's loading screen uses the same viewer.
+

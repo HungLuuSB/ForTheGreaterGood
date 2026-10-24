@@ -13,6 +13,7 @@
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local Kit = require("./Kit")
 local KeyArt = require("./KeyArt")
@@ -163,12 +164,17 @@ function MatchLoading.step(ui: UI, now: number, progress: number)
 		if ui.artShown then
 			ui.artShown = false
 			ui.art.hide()
+			RunService:Set3dRenderingEnabled(true)
 		end
 		return
 	end
 	if not ui.artShown then
 		ui.artShown = true
 		ui.art.show(nil) -- false while no art is approved: the gradient shows
+		-- the screen is opaque (art or gradient): don't pay for drawing the
+		-- world behind it, so the parallax stays smooth (C-184). Loading
+		-- (meshes, ground, textures) is script and ContentProvider work.
+		RunService:Set3dRenderingEnabled(false)
 	end
 	ui.bar.Size = UDim2.fromScale(math.clamp(progress, 0, 1), 1)
 	ui.percent.Text = string.format("%d%%", math.floor(progress * 100))

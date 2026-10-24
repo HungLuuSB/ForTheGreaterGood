@@ -14,6 +14,6 @@ return Templates.extend(Templates.Structure, {
 	footprint = 6, -- size shows tech level (S-104)
 	icon = "factory",
 	buildPower = 200,
-	buildOptions = { "chs_forgemaster", "chs_juggernaut", "chs_hydra", "chs_gorgon", "chs_shroud", "chs_mire", "chs_stalker", "chs_minotaur", "chs_cyclops", "chs_chimera" },
+	buildOptions = { "chs_forgemaster", "chs_juggernaut", "chs_hydra", "chs_gorgon", "chs_shroud", "chs_mire", "chs_stalker", "chs_minotaur", "chs_cyclops", "chs_chimera", "chs_griffin" },
 	model = "chs_advvehplant",
 })

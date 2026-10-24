@@ -128,6 +128,8 @@ Effects.DIRCM_SECONDS = 0.45 -- a jammer laser on a decoyed IR missile (C-48)
 Effects.NUKE_SECONDS = 4 -- a nuke's detonation flash and fireball (its cloud lasts longer, Render/Vfx; C-57)
 Effects.WARNING_LINGER = 4 -- seconds a launch warning stays after its missile is gone
 Effects.DEATH_SECONDS = 0.9
+Effects.INTERCEPT_PUFF = 3 -- studs: a rocket or missile shot down by point defence (S-149, C-182)
+Effects.LOST_FIRST = 1 -- Guidance.lost's tick count on the first step after a LOST_LOCK (C-181)
 Effects.MARK_SECONDS = 2.5 -- how long the sensor view shows a correction, decoy or lost lock (C-39)
 Effects.MAX_MARKS = 40
 -- an impact this close above water at least this deep is a splash (C-82)
@@ -160,6 +162,7 @@ export type Proj = {
 	launch: { number }?, -- launched early (C-27): the server's state at its spawn tick { tick, x, y, z, vx, vy, vz }, taken as is on that step
 	nextState: { number }?, -- the prediction one tick on { x, y, z, vx, vy, vz, dvx, dvy, dvz } (dv: this tick's steering): frames draw the curve between (C-38)
 	decoy: { number }?, -- decoyed: { x, y, z, ticks left } of the flare or chaff it follows (S-28)
+	lost: number?, -- a radar missile that lost its target: ticks of Guidance.lost it has flown (S-146, C-181)
 	turned: boolean?, -- a vertical launch has pitched over onto its target (Guidance.vertical, S-42, C-53)
 	chase: Proj?, -- an interceptor's strategic missile (S-48, C-57)
 	own: boolean?, -- a strategic missile launched by the local player's team (C-58)
@@ -600,6 +603,9 @@ local function advance(world: World.World, p: Proj, t: number): (number, number,
 		end, t, p.x, p.y, p.z, vx, vy, vz, p.turned)
 	elseif weapon.turnRate and p.decoy then
 		vx, vy, vz, follow = followDecoy(weapon, p.decoy, p.x, p.y, p.z, vx, vy, vz)
+	elseif p.lost then
+		-- lost its target: corkscrews and sinks, as the server steps it (S-146)
+		vx, vy, vz = Guidance.lost(vx, vy, vz, p.lost, p.id, DT)
 	end
 	local goal = p.goal
 	if goal and weapon.apex then
@@ -643,6 +649,9 @@ local function stepProjectiles(fx: Fx, world: World.World, t: number)
 		end
 		p.turned = turned
 		p.launch = nil
+		if p.lost then
+			p.lost += 1
+		end
 		local d = p.decoy
 		if d then
 			d[4] -= 1
@@ -840,6 +849,9 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			local target = World.unitOrDying(world, p.target)
 			p.target = 0
 			p.decoy = nil
+			-- a radar missile spirals down from here (S-146); the event's state
+			-- is after the server's first lost tick, so the next step is k = 1
+			p.lost = if kind == EK.LOST_LOCK and p.weapon.type == "HOMING" and p.weapon.guidance == "RADAR" then Effects.LOST_FIRST else nil
 			if kind == EK.DECOYED and (e.decoyTicks or 0) > 0 then
 				-- it follows the flare or chaff like the server (S-28)
 				local cx, cz = world.grid:decode(e.decoyCell, e.decoyOffX, e.decoyOffZ)
@@ -876,7 +888,10 @@ local function apply(fx: Fx, world: World.World, e: any, now: number, muzzleOf: 
 			p.gone = true
 		end
 		local x, y, z = pos(world, e)
-		local b = burst(fx, now, x, y, z, 12, "impact", Effects.EXPLOSION_SECONDS)
+		-- a nuke's is big; a rocket or missile shot down by point defence
+		-- (S-149) a small puff
+		local size = if p == nil or p.weapon.strategic then 12 else Effects.INTERCEPT_PUFF
+		local b = burst(fx, now, x, y, z, size, "impact", Effects.EXPLOSION_SECONDS)
 		b.ground = World.groundY(world, x, z)
 	elseif kind == EK.LAUNCH_WARNING then
 		local x, y, z = pos(world, e)

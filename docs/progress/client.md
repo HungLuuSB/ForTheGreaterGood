@@ -4,6 +4,20 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
+## Summary (2026-10-24, point defence; new icon sheet)
+
+- **New icon sheet (C-183):** your draft 4 is uploaded (asset 83784263765889) and live. Every unit's icon comes from the sheet's own lists; anti-nukes, point defences, shields, flak, missile batteries and the decoy drone have their own tiles now. A second sheet starts automatically once the first is full. Screenshots: `debug_out/screens/c183_strategic_*.jpg`.
+- Ready to merge: `02e1493` (C-183: icon sheet draft 4, multi-sheet atlas, new asset id, Studio "hold" debug query; src/client, src/roblox, tools/icons, assets, docs/art)
+- **Point defence (C-182, S-149):** interceptors from the Sanctum, Basilisk, Shepherd and Griffin chase rockets and missiles on screen; a shot-down rocket ends in a small puff. Stopgap icons until your draft 4 sheet.
+- Ready to merge: `f5696da` (C-182: point defence on the client, stopgap icons; main c1bbe23 merged in; fixes main's 2 icon specs)
+
+## Summary (2026-10-23, lost missiles fall; radar accuracy shown)
+
+- **SAMs no longer fly into the sky when their target dies (C-181, S-146):** a radar missile that loses its target now spirals and falls on your screen, on the same path the server uses.
+- **Radar accuracy in the sensor view (N):** a circle round each radar blip shows how far radar-fired shots miss (amber; smaller and green when a fire-control radar tracks it), with a readout under the resource bar, e.g. "Radar accuracy ±7.7 studs · tracked ±2.6 · Pinpointers 40%". Screenshots: `debug_out/screens/c181_*.jpg`.
+- Ready to merge: `589e168` (C-181: lost radar missiles, radar accuracy view; main 276158f merged in; test_client 258, test 481, build passed)
+- Ready to merge: `11d9adf` (C-181 follow-up: the readout greys "tracked" while nothing is tracked)
+
 ## Summary (2026-10-23, the match side of the lobby flow)
 
 - **The match place now runs a lobby match end to end (C-173, D's contract):**
@@ -16,6 +30,12 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `c821622` (C-173, C-174: match side of docs/contracts/match.md; src/roblox and src/client)
 - Ready to merge: `3cb87aa` (C-175: humans out while AI fight on = finished, no winner; D's decision)
 - Ready to merge: `ae721bf` (C-176: loading screen key art, a copy of the lobby's KeyArt viewer)
+- Ready to merge: `9a9ae06` (C-177: fix a client freeze from crane / gantry loops far from the camera)
+- Ready to merge: `3fd6f06` (C-178: MatchContract and TeamColors use @shared/Match/MatchConfig)
+- **One key art viewer (C-179):** the lobby place now mounts `UI/KeyArt` read-only, as it does the Kit; keep its API stable.
+- Ready to merge: `50e2138` (C-179: KeyArt header, the lobby mounts it read-only; comment only)
+- **No more animation freezes (C-180):** your playtest log still showed the freeze, most likely from a match started before C-177. The animation scheduler now holds any loop that waits on pieces that have already arrived, so a script like that can't freeze the client again.
+- Ready to merge: `cf35347` (C-180: PieceAnim spin guard; src/client and tests/client)
 
 ## Summary (2026-10-23, new T1 models in; the Commander stops spinning)
 
@@ -1843,6 +1863,7 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
   - The Canyon's desert colours and daylight (C-153, C-155): `debug_out/screens/c155_canyon_day_*.jpg`;
   - radar blips circling 1.5 studs out (C-154).
+  - the radar accuracy circles and readout in the sensor view (C-181): colours, the readout's place under the resource bar. A tracked contact's circle (±2.6 studs) sits inside its blip disc.
 
 ## Requests for the models session
 

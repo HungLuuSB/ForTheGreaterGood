@@ -389,7 +389,7 @@ return function(t: RunAll.Context)
 			end
 		end
 		t.expect(hit ~= nil and hit.breach == true, "the siege shell broke through")
-		t.expect(through ~= nil and through < entry * 0.85, `slowed ({entry} → {through})`) -- 0.80 with the footprint-3 Phalanx (S-104)
+		t.expect(through ~= nil and through < entry * 0.9, `slowed ({entry} → {through})`) -- 0.80 with the footprint-3 Phalanx (S-104); 0.87 at S-150's capacity (the breach drains the smaller dome as it goes)
 		local def = sim.defs.units.ord_phalanx.shield
 		near(t, drop, Shield.BREACH_COST * Shield.mass(sim.defs.weapons.chs_siege_mortar) - def.recharge / 15, 0.01, "a breach costs half the shell's mass (less a tick's recharge)")
 		t.equal(ShieldField.force(0.5), 1, "full force at 50%")
@@ -556,8 +556,45 @@ return function(t: RunAll.Context)
 		t.expect(fieldTicks >= 3, `the client stepped the shell in the field ({fieldTicks} ticks)`)
 		t.expect(worst < 1, `the client's field step tracks the server's ({worst} studs at worst)`)
 		t.equal(hits, 1, "one SHIELD_HIT")
-		t.expect(view.shields[gen].charge > half + 8, `SHIELD records follow the recharge ({half} → {view.shields[gen].charge})`)
+		t.expect(view.shields[gen].charge > half + 2, `SHIELD records follow the recharge ({half} → {view.shields[gen].charge})`) -- (+8 before S-150's slower recharge)
 	end))
+
+	t.test("concentrated fire brings a dome down; light fire only wears it (S-150, the user)", function()
+		-- `n` Ravagers shell a tank under a Phalanx for 60 s; the dome's charge
+		-- at 30 and 60 s (it held 100% throughout before S-150)
+		local function siege(n: number): (number, number)
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+			local w = sim.world
+			local gen = Spawn.unit(sim, "ord_phalanx", 1, 0, 0)
+			Spawn.unit(sim, "ord_sovereign", 1, -300, -300)
+			for i = 1, 4 do
+				Spawn.unit(sim, "ord_generator", 1, -330 + i * 20, -330)
+			end
+			local tank = Spawn.unit(sim, "ord_lancer", 1, 0, 40)
+			World.setHealth(w, tank, 1e7)
+			World.setFireState(w, tank, World.FireState.HOLD_FIRE)
+			local ids = {}
+			for i = 1, n do
+				table.insert(ids, Spawn.unit(sim, "chs_ravager", 2, 190 + (i % 3) * 14, 40 + (i - n / 2) * 12, -math.pi / 2))
+			end
+			local wr = Packer.Writer.new()
+			Schema.encodeCommand(wr, { cmdType = Schema.CmdType.ATTACK, flags = 0, unitIds = ids, targetId = tank })
+			assert(Sim.submit(sim, 2, wr:finish()))
+			local at30 = 0
+			for tick = 1, 900 do
+				Sim.step(sim)
+				if tick == 450 then
+					at30 = Shield.fraction(sim, gen) or 0 -- (nil: the generator itself fell)
+				end
+			end
+			return at30, Shield.fraction(sim, gen) or 0
+		end
+		local heavy30, heavy60 = siege(10)
+		local light30, light60 = siege(4)
+		t.expect(heavy30 < 0.15 and heavy60 < 0.15, `10 tanks bring it down within 30 s (at 30 s {heavy30}, at 60 s {heavy60})`)
+		t.expect(light60 < 0.9 and light60 > 0.5, `4 tanks wear it down slowly ({light30} at 30 s, {light60} at 60 s)`)
+		print(string.format("    Phalanx charge: 10 Ravagers %.0f%% / %.0f%%, 4 Ravagers %.0f%% / %.0f%% (30 s / 60 s)", heavy30 * 100, heavy60 * 100, light30 * 100, light60 * 100))
+	end)
 
 	t.test("a player without the generator gets SHIELD_HIT with generator 0", function()
 		local sim, gen = dome(10)

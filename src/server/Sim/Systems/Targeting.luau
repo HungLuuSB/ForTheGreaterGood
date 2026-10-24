@@ -85,15 +85,25 @@ local function interceptTarget(sim: Types.Sim, id: number, weapon: Defs.WeaponDe
 	local w = sim.world
 	local ally = w.ally[id]
 	local x, z = w.posX[id], w.posZ[id]
+	local tactical = (weapon.intercepts :: { chance: number, tactical: boolean? }).tactical == true
+	local weapons = sim.defs.weaponByIndex
 	local function valid(p: number, reach: number): number?
 		if c.pTeam[p] == ally then
 			return nil
+		end
+		if tactical then
+			-- point defence (S-149): enemy missiles and rockets, not strategic
+			-- missiles (anti-nukes take those) or other interceptors
+			local pw = weapons[c.pWeapon[p]]
+			if pw.strategic or pw.intercepts or not (pw.type == "HOMING" or pw.rocket) then
+				return nil
+			end
 		end
 		-- anti-nukes (S-111, client request 46): a missile whose aim point is
 		-- inside the cover radius, engaged on its way in (within
 		-- INTERCEPT_REACH × the radius)
 		local goal = c.pGoal[p]
-		if weapon.interceptOnly then
+		if weapon.interceptOnly and not tactical then
 			if goal == nil or (goal[1] - x) ^ 2 + (goal[3] - z) ^ 2 > weapon.range * weapon.range then
 				return nil
 			end
@@ -102,8 +112,8 @@ local function interceptTarget(sim: Types.Sim, id: number, weapon: Defs.WeaponDe
 		local px, pz = c.px[p], c.pz[p]
 		local d2 = (px - x) ^ 2 + (pz - z) ^ 2
 		-- (anti-nukes spot strategic missiles anywhere, whatever the team's
-		-- sensors: the user, S-111)
-		if d2 > reach * reach or (not weapon.interceptOnly and not Sensors.detectsPoint(sim, ally, px, pz)) then
+		-- sensors: the user, S-111; point defence needs to detect them)
+		if d2 > reach * reach or ((tactical or not weapon.interceptOnly) and not Sensors.detectsPoint(sim, ally, px, pz)) then
 			return nil
 		end
 		return d2
@@ -122,7 +132,7 @@ local function interceptTarget(sim: Types.Sim, id: number, weapon: Defs.WeaponDe
 		return cur
 	end
 	local best, bestD2 = 0, math.huge
-	for _, p in c.strategic do
+	for _, p in (if tactical then c.proj else c.strategic) do
 		local d2 = if chased[p] then nil else valid(p, weapon.range)
 		if d2 and d2 < bestD2 then
 			best, bestD2 = p, d2
@@ -429,7 +439,8 @@ return function(sim: Types.Sim)
 			end
 			-- interceptors: enemy strategic missiles before anything else (S-48)
 			if weapon.intercepts then
-				local p = if fs ~= HOLD_FIRE and #sim.combat.strategic > 0 then interceptTarget(sim, id, weapon, key) else 0
+				local pool = if weapon.intercepts.tactical then #sim.combat.proj else #sim.combat.strategic
+				local p = if fs ~= HOLD_FIRE and pool > 0 then interceptTarget(sim, id, weapon, key) else 0
 				w.wTargetProj[key] = p
 				w.wTargetProjSerial[key] = if p ~= 0 then sim.combat.pSerial[p] else 0
 				if p ~= 0 or weapon.interceptOnly then
