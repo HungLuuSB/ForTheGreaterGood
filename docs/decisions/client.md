@@ -1770,3 +1770,17 @@ Existing calls are unchanged.
 **Decision:** `Deaths`' attachment check matches `^%a+_muzzle%d*$` as well as `^muzzle%d*$`, as models-C's `Blockout.isAttachmentPiece` and `Mesh` now do, so Bulwark's `laser_muzzle1..3` are never picked as flung pieces. Deaths.spec: forty overkill deaths of a def with prefixed muzzles fling only real pieces.
 
 **Why:** models-C's T1 defence blockouts (m-models ea3ae59) bring attachment muzzles with a prefix.
+
+### C-201 — The match place logs the playtest flow (2026-10-24)
+
+**Decision:** for the first live playtest (lobby → reserved match → lobby), the match server prints a `[Match]` line at every step, warnings for every failure:
+- boot: the job id and the `server/<key>` lookup, the match id it found (and after how many reads), `config read` with map, mode, room and lobby server, then one line per seat (name, user or AI level, faction, ally team) and per spectator; `config refused: <why>` otherwise;
+- each player: `admitted <name> (user <id>) to seat <n>` / `as a spectator`, or `refused <name> (user <id>): not listed, kicked` (or: no valid config); leaving, with the phase;
+- the start: everyone loaded, or the 90 s wait over with the names not loaded;
+- `heartbeat <n>: <phase>, tick, connected` every 30 s, and when it stops;
+- `result: <outcome>, ally team <n> won (<reason>), <k> humans present; writing result/<id>`, then `stored result/<id>` once MemoryStore accepted it;
+- store reads and writes: each failed attempt (n/3) and a final FAILED line;
+- each teleport back: names → place and target server, started or failed, the fallback to any lobby server, and TeleportInitFailed retries with their own result.
+The watchdog's WARN / INFO lines (S-140) stay on.
+
+**Why:** the user's queue item 2: about four players will try the flow soon, and the console has to show where it breaks.
