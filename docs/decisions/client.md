@@ -1658,3 +1658,20 @@ Existing calls are unchanged.
 
 **Why:** the user: "when selecting multiple units, the panel should show the image of the unit + its icon in the bottom right + number of that type of unit in the upper left corner".
 
+### C-192 — Each unit on its terrain: in the world and in every portrait (2026-10-24)
+
+**Decision:**
+- **Portraits** (`UI/Portrait`, so the build menu, the unit panel and its type tiles): the unit stands on its terrain (`Core/PortraitStage`):
+  - a disc of ground for land units and structures;
+  - water over a darker bed for ships, submarines and water structures (the hull a little in the water);
+  - a shore for amphibious and hover units (ground, water across the front);
+  - ground well below an aircraft, with its shadow; the camera frames the unit and the ground.
+- **In the world** (`World.floats`):
+  - structures built on water (`placement = "water"`: shipyards, tidal generators, sonar) float on the surface, as their models are made to; they were drawn on the seabed;
+  - amphibious and hover units ride the water surface instead of the bed;
+  - ghosts and the placement preview of water structures follow the same rule;
+  - an aircraft out of the camera area keeps its last height, or 35 studs if it was never seen close, instead of being drawn on the ground.
+- PortraitStage.spec covers both rules. Studio (Coastline): a Crusader, a tidal generator and a Tideguard on the water, a Lancer on the shore, a Falcon above; the tiles show each on its terrain. `debug_out/screens/c192_terrain_portraits.jpg`.
+
+**Why:** the user: "unit should be render with its accessible terrain, for example, tank on ground, amphibious is on ground + water, ship on water, air is hover above ground", then "apply to all portrait".
+

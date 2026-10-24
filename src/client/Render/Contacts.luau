@@ -121,7 +121,7 @@ function Contacts.step(c: Contacts, world: World.World, now: number, hidden: boo
 				c.ghostModels[g.id] = entry
 				-- placed like a unit (rig.md): the root part at the unit origin times RootOffset
 				local offset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
-				local y = World.groundY(world, g.x, g.z)
+				local y = World.groundY(world, g.x, g.z, World.floats(g.def)) -- a water structure floats (C-192)
 				local root = model.PrimaryPart :: BasePart
 				model.Parent = c.folder
 				root.CFrame = CFrame.new(g.x, y, g.z) * CFrame.Angles(0, g.heading + math.pi, 0) * offset
