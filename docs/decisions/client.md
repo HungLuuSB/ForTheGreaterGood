@@ -1880,4 +1880,6 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 
 **Decision:** `Kit`'s shared images (panel stripes, shadow) create, write and wrap the EditableImage inside one pcall; on failure the panel goes without them. A chart's image likewise: create and the per-draw write are guarded, and the chart says "charts need editable images" instead of throwing. Before, in an experience whose Game Settings > Security doesn't allow EditableImage, the create succeeded and the write threw, killing the client script at the first panel (the lobby stream's report from the published playtest).
 
+- Follow-up the same day: the other EditableImage users too. `Render/Grade`'s vignette (made at startup) creates, writes and wraps in one pcall. `Render/FogBlanket` tests a first write when it makes its image, pcalls `CreateEditableMesh` for its chunks, and pcalls each frame's write: a refused write clears the blanket (`stats.mode` "image writes refused") instead of throwing inside the render step every frame. `Render/ShieldFx` was already guarded.
+
 **Why:** lobby-D's crash report; the setting is per experience, and a missing setting should cost looks, not the game.

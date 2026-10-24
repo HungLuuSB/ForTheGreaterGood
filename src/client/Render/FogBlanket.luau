@@ -134,8 +134,10 @@ end
 -- UVs onto the whole image (u east, v south) kept half a pixel in from its
 -- edges (no wrap-around bleed).
 local function buildChunk(f: FogBlanket, world: World.World, grid: any, cx0: number, cz0: number, cx1: number, cz1: number)
-	local em = (AssetService :: any):CreateEditableMesh()
-	if em == nil then
+	local made, em = pcall(function()
+		return (AssetService :: any):CreateEditableMesh()
+	end)
+	if not made or em == nil then
 		f.stats.mode = "no editable-mesh memory"
 		return
 	end
@@ -197,15 +199,21 @@ function FogBlanket.setMap(f: FogBlanket, world: World.World, layers: any)
 	clear(f)
 	local grid = layers.grid
 	f.stats.chunks, f.stats.triangles = 0, 0
+	-- create, a first write and the content in one pcall: where the experience
+	-- doesn't allow EditableImage the create can succeed and the write throw (C-214)
+	local content: any = nil
 	local ok, img = pcall(function()
-		return (AssetService :: any):CreateEditableImage({ Size = Vector2.new(grid.cellsX, grid.cellsZ) })
+		local made = (AssetService :: any):CreateEditableImage({ Size = Vector2.new(grid.cellsX, grid.cellsZ) })
+		made:WritePixelsBuffer(Vector2.zero, Vector2.one, buffer.create(4))
+		content = (Content :: any).fromObject(made)
+		return made
 	end)
 	if not ok or img == nil then
 		f.stats.mode = if ok then "no editable-image memory" else `images unavailable: {img}`
 		return
 	end
 	f.image = img
-	f.content = (Content :: any).fromObject(img)
+	f.content = content
 	f.core = Core.new(grid.cellsX, grid.cellsZ, Grid.SENSOR_CELL_SIZE // Grid.CELL_SIZE)
 	f.radar = RadarFill.new(grid.cellsX, grid.cellsZ)
 	f.grid = grid
@@ -270,7 +278,14 @@ function FogBlanket.step(f: FogBlanket, world: World.World, dt: number, show: bo
 	Core.setOverlay(core, if radar and layer then layer.cells else nil, if layer then layer.version else 0, fogOn)
 	local r = Core.step(core, elapsed)
 	if r then
-		img:WritePixelsBuffer(Vector2.new(r.x, r.y), Vector2.new(r.w, r.h), Core.region(core, r))
+		local written = pcall(function()
+			img:WritePixelsBuffer(Vector2.new(r.x, r.y), Vector2.new(r.w, r.h), Core.region(core, r))
+		end)
+		if not written then
+			f.stats.mode = "image writes refused" -- the fog goes away rather than erroring every frame (C-214)
+			clear(f)
+			return
+		end
 		f.stats.uploads += 1
 		f.stats.written += r.w * r.h
 	end
