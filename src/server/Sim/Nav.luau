@@ -229,31 +229,93 @@ function Nav.clearLine(nav: Nav, p: Profile, x0: number, z0: number, x1: number,
 end
 
 -- Nearest open cell (4-connected BFS) in `component` (0 = any), or nil.
+-- Scratch for nearestOpen (S-164: it built a direction table per cell
+-- and a fresh `seen` set per call, 3–5 ms an order on B's Studio run):
+-- cells seen in this search carry the search's stamp.
+local seenStamp: buffer? = nil
+local stamp = 0
+local queue: { number } = {}
 local function nearestOpen(tree: Quadtree.Tree, cell: number, component: number): number?
 	local g = tree.grid
-	local seen = { [cell] = true }
-	local queue, head = { cell }, 1
-	while queue[head] and head <= Nav.NEAREST_SEARCH_LIMIT do
+	local w, h = g.cellsX, g.cellsZ
+	local seen = seenStamp
+	if seen == nil or buffer.len(seen) < g.cellCount * 4 or stamp >= 4294967295 then
+		seen = buffer.create(g.cellCount * 4)
+		seenStamp = seen
+		stamp = 0
+	end
+	local s = seen :: buffer
+	stamp += 1
+	local mark = stamp
+	local readu32, writeu32 = buffer.readu32, buffer.writeu32
+	writeu32(s, cell * 4, mark)
+	queue[1] = cell
+	local head, tail = 1, 1
+	local limit = Nav.NEAREST_SEARCH_LIMIT
+	while head <= tail and head <= limit do
 		local c = queue[head]
 		head += 1
 		if Quadtree.isOpen(tree, c) and (component == 0 or Quadtree.component(tree, c) == component) then
 			return c
 		end
-		local cx, cz = g:coords(c)
-		for _, d in { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } } do
-			local nx, nz = cx + d[1], cz + d[2]
-			if g:inBounds(nx, nz) then
-				local n = g:index(nx, nz)
-				if not seen[n] then
-					seen[n] = true
-					table.insert(queue, n)
-				end
-			end
+		local cx, cz = c % w, c // w
+		-- the same neighbour order as before: +x, +z, -x, -z
+		if cx + 1 < w and readu32(s, (c + 1) * 4) ~= mark then
+			writeu32(s, (c + 1) * 4, mark)
+			tail += 1
+			queue[tail] = c + 1
+		end
+		if cz + 1 < h and readu32(s, (c + w) * 4) ~= mark then
+			writeu32(s, (c + w) * 4, mark)
+			tail += 1
+			queue[tail] = c + w
+		end
+		if cx > 0 and readu32(s, (c - 1) * 4) ~= mark then
+			writeu32(s, (c - 1) * 4, mark)
+			tail += 1
+			queue[tail] = c - 1
+		end
+		if cz > 0 and readu32(s, (c - w) * 4) ~= mark then
+			writeu32(s, (c - w) * 4, mark)
+			tail += 1
+			queue[tail] = c - w
 		end
 	end
 	return nil
 end
 Nav.nearestOpen = nearestOpen
+
+-- The open cell (any component) on the smallest square ring around cell
+-- (cx, cz) that has one, nearest the point (x, z); exact ties go to the
+-- lower index. Mirror-symmetric, unlike nearestOpen's fixed search order
+-- (S-161). Nil within CLEARANCE_CAP rings.
+local function openNearPoint(tree: Quadtree.Tree, cx: number, cz: number, x: number, z: number): number?
+	local g = tree.grid
+	for r = 1, Passability.CLEARANCE_CAP do
+		local best, bestD = nil :: number?, math.huge
+		for dz = -r, r do
+			for dx = -r, r do
+				if math.max(math.abs(dx), math.abs(dz)) == r then
+					local nx, nz = cx + dx, cz + dz
+					if g:inBounds(nx, nz) then
+						local c = g:index(nx, nz)
+						if Quadtree.isOpen(tree, c) then
+							local px, pz = g:cellCenter(nx, nz)
+							local d = (px - x) ^ 2 + (pz - z) ^ 2
+							if d < bestD or (d == bestD and c < (best :: number)) then
+								best, bestD = c, d
+							end
+						end
+					end
+				end
+			end
+		end
+		if best then
+			return best
+		end
+	end
+	return nil
+end
 
 Nav.MAX_COMMAND_UNITS = 200 -- guide 22.3
 Formation.spiral(Nav.MAX_COMMAND_UNITS * 4) -- built at load, not in the first order's tick
@@ -602,10 +664,13 @@ local function runPlan(nav: Nav, w: World.World, entry: JobEntry, budget: number
 			-- walking off a new frame, S-155) routes from the open cell it
 			-- comes out on: from its own blocked cell the search found
 			-- nothing and the order was unreachable for good (S-161: a Mason
-			-- given a site behind its plant pushed into the plant for 20 s)
+			-- given a site behind its plant pushed into the plant for 20 s).
+			-- The open cell nearest the unit itself, not nearestOpen's first
+			-- find: its +x-first order sent the east player's units out of
+			-- the back of their plants and tilted mirror fairness east
 			local cell = g:index(ux, uz)
 			if not Quadtree.isOpen(t, cell) then
-				cell = nearestOpen(t, cell, 0) or cell
+				cell = openNearPoint(t, ux, uz, x, z) or cell
 			end
 			table.insert(plan.cells, cell)
 		end
@@ -776,17 +841,18 @@ function Nav.runJobs(nav: Nav, w: World.World, budget: number)
 			break
 		end
 	end
-	-- an idle Pathing tick (no job queued) applies pending terrain changes
-	-- (S-67), so the next order rarely finds any
+	-- an idle Pathing tick (no job queued) applies one tree's pending
+	-- terrain changes (S-67), so the next order rarely finds any; one, not
+	-- all (S-164: five trees' updates and component passes in one idle
+	-- tick cost Pathing 10–14 ms)
 	if idle and next(nav.dirty) ~= nil then
-		local keys: { string } = {}
+		local first: string? = nil
 		for key in nav.dirty do
-			table.insert(keys, key)
+			if first == nil or key < first then
+				first = key
+			end
 		end
-		table.sort(keys)
-		for _, key in keys do
-			flush(nav, key, nav.trees[key])
-		end
+		flush(nav, first :: string, nav.trees[first :: string])
 	end
 end
 

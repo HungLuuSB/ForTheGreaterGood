@@ -1,4 +1,5 @@
 --!strict
+--!native
 -- Sensor maps and visibility (guide 11.1–11.3).
 --
 -- Per ally team, on the 16-stud sensor grid, six count maps (u16 per cell):
