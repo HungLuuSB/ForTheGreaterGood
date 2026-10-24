@@ -4,6 +4,7 @@
 -- over a faint footprint, until its frame starts. Pooled per def; rebuilt
 -- only when the set of queued builds changes.
 
+local Facing = require("../Core/Facing")
 local Api = require("../Api")
 local Schema = require("@shared/Net/Schema")
 local World = require("../Core/World")
@@ -99,7 +100,7 @@ function QueuedBuilds.step(q: Queued, api: Api.Api)
 		local def = world.defs.unitByIndex[p.defIndex :: number]
 		local model = take(q, def)
 		local y = World.groundY(world, p.x, p.z)
-		local heading = math.pi - (p.facing or 0) * math.pi / 2 -- Schema.Facing: north is -Z
+		local heading = Facing.heading(p.facing or 0) -- as the built frame turns (C-206)
 		local offset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
 		;(model.PrimaryPart :: BasePart).CFrame = CFrame.new(p.x, y, p.z) * CFrame.Angles(0, heading + math.pi, 0) * offset
 		model.Parent = q.folder

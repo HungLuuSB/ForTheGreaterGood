@@ -87,6 +87,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 				aim = {},
 			}
 			table.insert(world.entered, id)
+			world.ownStatus[id] = nil -- ENTER and State carry it now (S-158)
 		elseif kind == EK.LEAVE then
 			world.shields[e.unitId :: number] = nil -- its dome is sent again on the next ENTER
 			local u = world.units[e.unitId :: number]
@@ -100,6 +101,7 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			local id = e.unitId :: number
 			world.shields[id] = nil
 			world.idle[id] = nil
+			world.ownStatus[id] = nil
 			world.lastShot[id] = nil
 			local u = world.units[id]
 			if u then
@@ -168,6 +170,22 @@ local function applyEvents(world: World.World, events: { Schema.Event }, tick: n
 			-- the owner's alerts (protocol 23, S-68); stalls carry cell 0
 			local x, z = g:decode(e.cell :: number, 128, 128)
 			table.insert(world.alertQueue, { kind = e.alert :: number, x = x, z = z, defIndex = e.defIndex or 0, tick = tick })
+		elseif EK.OWN_STATUS ~= nil and kind == EK.OWN_STATUS then
+			-- an own unit off camera: health, build and factory queue (protocol 34,
+			-- S-158); kept by ID, as it can come before the unit's strategic record
+			local id = e.unitId :: number
+			local status: World.OwnStatus = {
+				health = (e.health :: number) / 255,
+				build = (e.build :: number) / 255,
+				queueHead = e.queueHead or 0,
+				queueProgress = (e.queueProgress or 0) / 255,
+				queueCount = e.queueCount or 0,
+			}
+			world.ownStatus[id] = status
+			local u = world.units[id]
+			if u and u.tier ~= "tactical" then
+				World.applyStatus(u, status)
+			end
 		elseif EK.IDLE ~= nil and kind == EK.IDLE then
 			-- one of this player's builders or factories became idle or busy (S-136)
 			world.idle[e.unitId :: number] = if e.idle then true else nil
@@ -353,6 +371,10 @@ local function applyStrategic(world: World.World, records: { Schema.Strategic },
 			maxAmmo = if keep then keep.maxAmmo else nil,
 			stock = if keep then keep.stock else nil,
 		}
+		local status = world.ownStatus[r.unitId]
+		if status and r.team == world.me.team then
+			World.applyStatus(world.units[r.unitId], status) -- what OWN_STATUS said last (S-158)
+		end
 	end
 end
 

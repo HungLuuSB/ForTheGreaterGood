@@ -7,7 +7,11 @@ local World = require("./World")
 
 local BuildMenu = {}
 
-BuildMenu.TABS = table.freeze({ "Economy", "Factories", "Defense", "Utility", "Units" })
+-- BAR's build categories (reference 3, C-203): Economy, Combat, Utility,
+-- Build (factories); a factory's menu is its Units.
+BuildMenu.TABS = table.freeze({ "Economy", "Combat", "Utility", "Build", "Units" })
+-- The Keybinds action that opens each structure tab (Z X C V by default).
+BuildMenu.TAB_ACTIONS = table.freeze({ Economy = "tabEconomy", Combat = "tabCombat", Utility = "tabUtility", Build = "tabBuild" }) :: { [string]: string }
 
 -- The tab a buildable def goes under.
 function BuildMenu.category(def: any): string
@@ -15,13 +19,13 @@ function BuildMenu.category(def: any): string
 		return "Units"
 	end
 	if def.buildOptions and #def.buildOptions > 0 then
-		return "Factories"
+		return "Build"
 	end
 	if def.production or def.extractor or def.converter or def.storage or def.wind then
 		return "Economy"
 	end
 	if #(def.weapons or {}) > 0 then
-		return "Defense"
+		return "Combat"
 	end
 	return "Utility" -- radars, jammers, sonar, pads
 end

@@ -524,6 +524,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `2f48424` (Bulwark blockout v2, a stacked tower after the user's reference; `retracted` pose updated, no `shellL` / `shellR` lids).
 - Ready to merge: `fbe9923` (Bulwark blockout v3: the weapons stacked, laser ring under the beam head, each turning on its own; `retracted` pose updated).
 - Ready to merge: `ef1237e` (T1 defence blockouts v2 after the user's references: tall laser towers, low twin-barrel batteries; pieces unchanged).
+- Ready to merge: `72b72fd` (merge of sim-A's `a5c00e1` pitch pieces with the matching blockouts: Sentry / Guard `barrel`, Overwatch / Twin Guard / Geryon `mount`, Bulwark `laser_mount`; integrate this commit, not `a5c00e1` alone; also `2fd0e93`, the artillery `raised` poses).
 
 ## Requests
 

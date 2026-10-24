@@ -10,13 +10,21 @@
 --   segmented buttons   filter chips (with team color swatches)
 --   thin scrollbar   button (outlined, ghost, primary, filled go / stop)   text input   table   line chart (Core/Chart, one
 --   EditableImage per chart, drawn a chart per frame through a queue)
+--   BAR-style settings pieces (C-202, references 4–5): search box, amber
+--   section header with an underline, fold arrow, tree sidebar (sections,
+--   the chosen one's sub-sections with an amber bar), hover help footer,
+--   and Kit.options: a whole searchable settings body built from a
+--   Core/OptionTree spec (indented child rows, dimmed while their parent is
+--   off, "Unfold all" / "Advanced")
 -- Sizes are in pixels before the settings' UI scale (a UIScale on the gui).
 
 local AssetService = game:GetService("AssetService")
+local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local Chart = require("../Core/Chart")
+local OptionTree = require("../Core/OptionTree")
 
 local Kit = {}
 
@@ -43,6 +51,8 @@ Kit.COLOR = table.freeze({
 	control = Color3.fromRGB(44, 48, 56), -- a HUD button's fill
 	victory = Color3.fromRGB(132, 222, 140),
 	defeat = Color3.fromRGB(236, 104, 92),
+	box = Color3.fromRGB(10, 11, 14), -- a control's dark box: dropdowns, toggle tracks, the search box (C-202)
+	knob = Color3.fromRGB(205, 210, 218), -- a slider's square knob
 })
 Kit.TYPE = table.freeze({ title = 26, section = 16, label = 14, small = 12 })
 Kit.SPACE = table.freeze({ xs = 4, s = 8, m = 12, l = 16, xl = 24 })
@@ -270,7 +280,10 @@ function Kit.panel(parent: Instance, title: string, size: Vector2, nav: { string
 		local gui = root:FindFirstAncestorOfClass("ScreenGui")
 		local uiScale = gui and gui:FindFirstChild("SettingsScale")
 		local k = if uiScale and uiScale:IsA("UIScale") then uiScale.Scale else 1
-		root.Size = UDim2.fromOffset(math.min(wanted.X, vp.X / k - 24), math.min(wanted.Y, vp.Y / k - 24))
+		-- clear of Roblox's top bar when the gui draws under it (C-202)
+		local inset = if gui and gui.IgnoreGuiInset then GuiService:GetGuiInset().Y else 0
+		root.Size = UDim2.fromOffset(math.min(wanted.X, vp.X / k - 24), math.min(wanted.Y, (vp.Y - inset) / k - 24))
+		root.Position = UDim2.new(0.5, 0, 0.5, inset / 2 / k)
 	end
 	fit()
 	scrim.Visible = root.Visible
@@ -425,18 +438,18 @@ function Kit.toggle(parent: Instance, on: boolean, onChange: (boolean) -> ()): T
 	b.AutoButtonColor = false
 	b.Text = ""
 	b.Size = UDim2.fromOffset(44, 22)
-	b.BackgroundColor3 = Color3.fromRGB(10, 11, 14)
+	b.BackgroundColor3 = Kit.COLOR.box
 	b.BackgroundTransparency = 0.3
 	b.BorderSizePixel = 0
 	b.Parent = parent
-	corner(b, 5)
+	corner(b, 3)
 	stroke(b, 0.85)
 	local knob = Instance.new("Frame")
 	knob.Size = UDim2.fromOffset(14, 14)
 	knob.AnchorPoint = Vector2.new(0, 0.5)
 	knob.BorderSizePixel = 0
 	knob.Parent = b
-	corner(knob, 3)
+	corner(knob, 2)
 	local state = on
 	local t: Toggle
 	t = {
@@ -471,22 +484,27 @@ function Kit.slider(parent: Instance, min: number, max: number, step: number, va
 	track.AnchorPoint = Vector2.new(0, 0.5)
 	track.Position = UDim2.new(0, 0, 0.5, 0)
 	track.Size = UDim2.new(0, width or 200, 0, 6)
-	veil(track, 0.1)
+	track.BackgroundColor3 = Kit.COLOR.box
+	track.BackgroundTransparency = 0.2
+	track.BorderSizePixel = 0
 	track.Parent = f
-	corner(track, 3)
+	corner(track, 2)
+	stroke(track, 0.88)
 	local fill = Instance.new("Frame")
 	fill.BackgroundColor3 = Kit.COLOR.accent
 	fill.BorderSizePixel = 0
 	fill.Size = UDim2.fromScale(0, 1)
 	fill.Parent = track
-	corner(fill, 3)
+	corner(fill, 2)
+	-- a square knob (references 4–5, C-202)
 	local knob = Instance.new("Frame")
 	knob.AnchorPoint = Vector2.new(0.5, 0.5)
-	knob.Size = UDim2.fromOffset(14, 14)
-	knob.BackgroundColor3 = Kit.COLOR.text
+	knob.Size = UDim2.fromOffset(12, 16)
+	knob.BackgroundColor3 = Kit.COLOR.knob
 	knob.BorderSizePixel = 0
 	knob.Parent = track
-	corner(knob, 7)
+	corner(knob, 2)
+	stroke(knob, 0.6, Kit.COLOR.box)
 	local label = Kit.text(f, "", "label")
 	label.AnchorPoint = Vector2.new(1, 0)
 	label.Position = UDim2.fromScale(1, 0)
@@ -667,7 +685,9 @@ function Kit.dropdown(parent: Instance, options: { { string } }, value: string, 
 	b.Name = "Dropdown"
 	b.AutoButtonColor = false
 	b.Size = UDim2.fromOffset(width or 180, 28)
-	veil(b, 0.06)
+	b.BackgroundColor3 = Kit.COLOR.box -- a dark box with a small chevron (references 4–5, C-202)
+	b.BackgroundTransparency = 0.25
+	b.BorderSizePixel = 0
 	b.FontFace = Kit.font(Enum.FontWeight.Regular)
 	b.TextSize = 14
 	b.TextColor3 = Kit.COLOR.text
@@ -742,6 +762,25 @@ function Kit.dropdown(parent: Instance, options: { { string } }, value: string, 
 			onChange(o[1])
 		end)
 	end
+	-- the open list draws over the rows after it: its ZIndex does that in a
+	-- Global-order gui; in a Sibling-order one each ancestor is lifted over
+	-- its siblings while it's open (C-202)
+	local lifted: { { GuiObject | number } } = {}
+	list:GetPropertyChangedSignal("Visible"):Connect(function()
+		for _, e in lifted do
+			(e[1] :: GuiObject).ZIndex = e[2] :: number
+		end
+		table.clear(lifted)
+		local gui = b:FindFirstAncestorWhichIsA("LayerCollector")
+		if list.Visible and gui and gui.ZIndexBehavior == Enum.ZIndexBehavior.Sibling then
+			local a: Instance? = b
+			while a and a:IsA("GuiObject") do
+				table.insert(lifted, { a, a.ZIndex })
+				a.ZIndex += 50
+				a = a.Parent
+			end
+		end
+	end)
 	b.MouseButton1Click:Connect(function()
 		list.Visible = not list.Visible
 	end)
@@ -855,6 +894,586 @@ function Kit.table(parent: Instance, columns: { Column }, rows: { { any } }, row
 		line(cells, false, i)
 	end
 	return t
+end
+
+-- settings pieces (C-202, BAR references 4–5) ---------------------------------
+
+-- A chevron (two short bars; Montserrat has no arrow glyphs) pointing down;
+-- rotate the frame for other directions.
+local function chevron(parent: Instance, color: Color3?): Frame
+	local f = Instance.new("Frame")
+	f.Name = "Chevron"
+	f.BackgroundTransparency = 1
+	f.AnchorPoint = Vector2.new(0.5, 0.5)
+	f.Size = UDim2.fromOffset(10, 10)
+	f.Parent = parent
+	for i, angle in { 45, -45 } do
+		local bar = Instance.new("Frame")
+		bar.AnchorPoint = Vector2.new(0.5, 0.5)
+		bar.Position = UDim2.fromOffset(if i == 1 then 3 else 7, 5)
+		bar.Size = UDim2.fromOffset(6, 1.6)
+		bar.Rotation = angle
+		bar.BackgroundColor3 = color or Kit.COLOR.dim
+		bar.BorderSizePixel = 0
+		bar.Parent = f
+	end
+	return f
+end
+
+-- A search box: a dark box with a magnifier; `onChange(text)` on every edit.
+function Kit.search(parent: Instance, placeholder: string, width: number?, onChange: (string) -> ()): TextBox
+	local t = Kit.input(parent, placeholder, width)
+	t.Name = "Search"
+	t.BackgroundColor3 = Kit.COLOR.box
+	t.BackgroundTransparency = 0.25
+	local pad = t:FindFirstChildOfClass("UIPadding") :: UIPadding
+	pad.PaddingLeft = UDim.new(0, 32)
+	-- the magnifier: a ring and a handle
+	local ring = Instance.new("Frame")
+	ring.Name = "Magnifier"
+	ring.BackgroundTransparency = 1
+	ring.AnchorPoint = Vector2.new(0, 0.5)
+	ring.Position = UDim2.new(0, -21, 0.5, -1)
+	ring.Size = UDim2.fromOffset(10, 10)
+	ring.Parent = t
+	corner(ring, 5)
+	stroke(ring, 0.2, Kit.COLOR.dim)
+	local handle = Instance.new("Frame")
+	handle.AnchorPoint = Vector2.new(0.5, 0.5)
+	handle.Position = UDim2.fromOffset(11, 11)
+	handle.Size = UDim2.fromOffset(5, 1.6)
+	handle.Rotation = 45
+	handle.BackgroundColor3 = Kit.COLOR.dim
+	handle.BorderSizePixel = 0
+	handle.Parent = ring
+	t:GetPropertyChangedSignal("Text"):Connect(function()
+		onChange(t.Text)
+	end)
+	return t
+end
+
+-- A section header: amber text on a slightly lighter band with a thin
+-- amber underline.
+function Kit.header(parent: Instance, text: string, order: number?): Frame
+	local f = Instance.new("Frame")
+	f.Name = "Header"
+	f.Size = UDim2.new(1, 0, 0, 30)
+	f.LayoutOrder = order or 0
+	veil(f, 0.035)
+	f.Parent = parent
+	local l = Kit.text(f, text, "section", Kit.COLOR.accent)
+	l.Name = "Title"
+	l.Position = UDim2.fromOffset(Kit.SPACE.s, 0)
+	l.Size = UDim2.new(1, -Kit.SPACE.s * 2, 1, -1)
+	local line = Instance.new("Frame")
+	line.Name = "Underline"
+	line.AnchorPoint = Vector2.new(0, 1)
+	line.Position = UDim2.fromScale(0, 1)
+	line.Size = UDim2.new(1, 0, 0, 1)
+	line.BackgroundColor3 = Kit.COLOR.accent
+	line.BackgroundTransparency = 0.45
+	line.BorderSizePixel = 0
+	line.Parent = f
+	return f
+end
+
+export type Fold = { button: TextButton, set: (open: boolean) -> () }
+
+-- A fold arrow: ▾ open, ▸ folded; `onClick` toggles.
+function Kit.fold(parent: Instance, open: boolean, onClick: () -> ()): Fold
+	local b = Instance.new("TextButton")
+	b.Name = "Fold"
+	b.AutoButtonColor = false
+	b.Text = ""
+	b.Size = UDim2.fromOffset(18, 18)
+	veil(b, 0)
+	b.Parent = parent
+	corner(b, 3)
+	local c = chevron(b, Kit.COLOR.text)
+	c.Position = UDim2.fromScale(0.5, 0.5)
+	b.MouseEnter:Connect(function()
+		b.BackgroundTransparency = 0.92
+	end)
+	b.MouseLeave:Connect(function()
+		b.BackgroundTransparency = 1
+	end)
+	b.MouseButton1Click:Connect(onClick)
+	local fold: Fold = {
+		button = b,
+		set = function(o: boolean)
+			c.Rotation = if o then 0 else -90
+		end,
+	}
+	fold.set(open)
+	return fold
+end
+
+export type TreeNav = {
+	frame: Frame,
+	-- the chosen section, the sub-sections listed under it (key, name)
+	select: (section: string, subs: { { string } }) -> (),
+	mark: (key: string?) -> (), -- the active sub-section's amber bar
+}
+
+-- A sidebar of sections; the chosen one has a lighter pill and its
+-- sub-sections under it, the active one marked by a short amber bar.
+function Kit.treeNav(parent: Instance, sections: { string }, onSection: (string) -> (), onSub: (key: string) -> ()): TreeNav
+	local side = Instance.new("Frame")
+	side.Name = "Sidebar"
+	side.BackgroundTransparency = 1
+	side.Parent = parent
+	Kit.list(side, 2)
+	local buttons: { [string]: TextButton } = {}
+	local subFrame = Instance.new("Frame")
+	subFrame.Name = "Subs"
+	subFrame.BackgroundTransparency = 1
+	subFrame.AutomaticSize = Enum.AutomaticSize.Y
+	subFrame.Size = UDim2.new(1, 0, 0, 0)
+	subFrame.Parent = side
+	Kit.pad(subFrame, Kit.SPACE.m, 2, 0, Kit.SPACE.s)
+	Kit.list(subFrame, 0)
+	local subItems: { [string]: { button: TextButton, bar: Frame } } = {}
+	local selected: string? = nil
+	local nav: TreeNav
+	for i, name in sections do
+		local b = Instance.new("TextButton")
+		b.Name = name
+		b.AutoButtonColor = false
+		b.Size = UDim2.new(1, 0, 0, 34)
+		veil(b, 0)
+		b.FontFace = Kit.font(Enum.FontWeight.Regular)
+		b.TextSize = 15
+		b.TextColor3 = Kit.COLOR.dim
+		b.TextXAlignment = Enum.TextXAlignment.Left
+		b.Text = name
+		b.LayoutOrder = i * 2
+		b.Parent = side
+		corner(b)
+		Kit.pad(b, Kit.SPACE.m, 0, Kit.SPACE.m, 0)
+		buttons[name] = b
+		b.MouseEnter:Connect(function()
+			if selected ~= name then
+				b.BackgroundTransparency = 0.96
+			end
+		end)
+		b.MouseLeave:Connect(function()
+			if selected ~= name then
+				b.BackgroundTransparency = 1
+			end
+		end)
+		b.MouseButton1Click:Connect(function()
+			onSection(name)
+		end)
+	end
+	nav = {
+		frame = side,
+		select = function(section: string, subs: { { string } })
+			selected = section
+			for n, b in buttons do
+				local on = n == section
+				b.BackgroundTransparency = if on then 0.9 else 1
+				b.TextColor3 = if on then Kit.COLOR.text else Kit.COLOR.dim
+				b.FontFace = Kit.font(if on then Enum.FontWeight.Medium else Enum.FontWeight.Regular)
+				if on then
+					subFrame.LayoutOrder = b.LayoutOrder + 1
+				end
+			end
+			for _, item in subItems do
+				item.button:Destroy()
+			end
+			table.clear(subItems)
+			for i, sub in subs do
+				local key = sub[1]
+				local b = Instance.new("TextButton")
+				b.Name = sub[2]
+				b.AutoButtonColor = false
+				b.Size = UDim2.new(1, 0, 0, 26)
+				veil(b, 0)
+				b.FontFace = Kit.font(Enum.FontWeight.Regular)
+				b.TextSize = 13
+				b.TextColor3 = Kit.COLOR.dim
+				b.TextXAlignment = Enum.TextXAlignment.Left
+				b.Text = sub[2]
+				b.LayoutOrder = i
+				b.Parent = subFrame
+				Kit.pad(b, Kit.SPACE.m, 0, Kit.SPACE.xs, 0)
+				local bar = Instance.new("Frame")
+				bar.Name = "Bar"
+				bar.AnchorPoint = Vector2.new(0, 0.5)
+				bar.Position = UDim2.new(0, -Kit.SPACE.m, 0.5, 0)
+				bar.Size = UDim2.fromOffset(3, 16)
+				bar.BackgroundColor3 = Kit.COLOR.accent
+				bar.BorderSizePixel = 0
+				bar.Visible = false
+				bar.Parent = b
+				b.MouseButton1Click:Connect(function()
+					onSub(key)
+				end)
+				subItems[key] = { button = b, bar = bar }
+			end
+			subFrame.Visible = #subs > 0
+		end,
+		mark = function(key: string?)
+			for k, item in subItems do
+				local on = k == key
+				item.bar.Visible = on
+				item.button.TextColor3 = if on then Kit.COLOR.text else Kit.COLOR.dim
+			end
+		end,
+	}
+	return nav
+end
+
+export type HelpFooter = { frame: Frame, show: (title: string, help: string?, hint: string?) -> (), clear: () -> () }
+
+-- The hovered option's name and help text, and a faint hint at the bottom
+-- right; `idle` when nothing is hovered.
+function Kit.helpFooter(parent: Instance, idle: string): HelpFooter
+	local f = Instance.new("Frame")
+	f.Name = "Help"
+	f.BackgroundTransparency = 1
+	f.Parent = parent
+	local line = Instance.new("Frame")
+	line.Size = UDim2.new(1, 0, 0, 1)
+	line.BackgroundColor3 = Kit.COLOR.border
+	line.BackgroundTransparency = 0.9
+	line.BorderSizePixel = 0
+	line.Parent = f
+	local title = Kit.text(f, "", "label")
+	title.Name = "Title"
+	title.FontFace = Kit.font(Enum.FontWeight.SemiBold)
+	title.Position = UDim2.fromOffset(0, 6)
+	title.Size = UDim2.new(1, 0, 0, 18)
+	local help = Kit.text(f, "", "small")
+	help.Name = "Text"
+	help.TextWrapped = true
+	help.TextYAlignment = Enum.TextYAlignment.Top
+	help.Position = UDim2.fromOffset(0, 26)
+	help.Size = UDim2.new(1, -150, 1, -26)
+	local hint = Kit.text(f, "", "small", Kit.COLOR.faint)
+	hint.Name = "Hint"
+	hint.TextXAlignment = Enum.TextXAlignment.Right
+	hint.AnchorPoint = Vector2.new(1, 1)
+	hint.Position = UDim2.fromScale(1, 1)
+	hint.Size = UDim2.fromOffset(150, 16)
+	local footer: HelpFooter
+	footer = {
+		frame = f,
+		show = function(t: string, h: string?, n: string?)
+			title.Text = t
+			title.TextColor3 = Kit.COLOR.text
+			help.Text = h or ""
+			hint.Text = n or ""
+		end,
+		clear = function()
+			title.Text = idle
+			title.TextColor3 = Kit.COLOR.faint
+			help.Text = ""
+			hint.Text = ""
+		end,
+	}
+	footer.clear()
+	return footer
+end
+
+-- One option of a Kit.options spec: Core/OptionTree's fields, plus how to
+-- draw it. `build(control)` adds its controls to `control` (right-aligned
+-- in a normal row; the whole row, from its indent, when `wide`); `isOn()`
+-- says whether its children are live (dimmed when not); `height` in pixels.
+export type OptionDef = {
+	id: string,
+	label: string,
+	help: string?,
+	keywords: string?,
+	advanced: boolean?,
+	parent: string?,
+	folded: boolean?,
+	build: ((control: Frame) -> ())?,
+	isOn: (() -> boolean)?,
+	wide: boolean?,
+	height: number?,
+	hint: string?, -- the footer's faint bottom-right text (default: the id)
+}
+export type OptionSection = { name: string, subs: { { name: string, options: { OptionDef } } } }
+
+export type Options = {
+	view: OptionTree.View,
+	tree: OptionTree.Tree,
+	search: TextBox,
+	nav: TreeNav,
+	footer: HelpFooter,
+	scroll: ScrollingFrame,
+	rows: { [string]: Frame },
+	refresh: () -> (), -- after a value changed (dims the children of a parent switched off)
+	select: (section: string) -> (),
+}
+
+local INDENT = 20
+
+-- A searchable settings body in a Kit.panel made without nav (BAR
+-- references 4–5): a search box across the top beside the title, "Unfold
+-- all" and "Advanced" switches at the top right; in the content a tree
+-- sidebar, the chosen section's rows under amber sub-section headers (or
+-- every match while searching), and the hover help footer.
+function Kit.options(panel: Panel, sections: { OptionSection }): Options
+	local tree = OptionTree.new(sections :: any)
+	local defs: { [string]: OptionDef } = {}
+	for _, sec in sections do
+		for _, sub in sec.subs do
+			for _, d in sub.options do
+				defs[d.id] = d
+			end
+		end
+	end
+	local view = OptionTree.view(sections[1].name)
+	local o: Options
+	-- header bar: the search box, then the switches
+	panel.title.Size = UDim2.fromOffset(150, 36)
+	local bar = Instance.new("Frame")
+	bar.Name = "OptionsBar"
+	bar.BackgroundTransparency = 1
+	bar.Position = UDim2.fromOffset(180, Kit.SPACE.l + 3)
+	bar.Size = UDim2.new(1, -180 - Kit.SPACE.xl, 0, 30)
+	bar.Parent = panel.frame
+	local switches = Instance.new("Frame")
+	switches.Name = "Switches"
+	switches.BackgroundTransparency = 1
+	switches.AnchorPoint = Vector2.new(1, 0)
+	switches.Position = UDim2.fromScale(1, 0)
+	switches.Size = UDim2.new(0, 300, 1, 0)
+	switches.Parent = bar
+	local sl = Kit.list(switches, Kit.SPACE.s, true)
+	sl.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	local function switch(label: string, order: number, onChange: (boolean) -> ())
+		local l = Kit.text(switches, label, "label", Kit.COLOR.dim)
+		l.AutomaticSize = Enum.AutomaticSize.X
+		l.Size = UDim2.fromOffset(0, 30)
+		l.LayoutOrder = order
+		local t = Kit.toggle(switches, false, onChange)
+		t.button.LayoutOrder = order + 1
+	end
+	switch("Unfold all", 1, function(on)
+		view.unfoldAll = on
+		o.refresh()
+	end)
+	local gap = Instance.new("Frame")
+	gap.BackgroundTransparency = 1
+	gap.Size = UDim2.fromOffset(Kit.SPACE.s, 1)
+	gap.LayoutOrder = 3
+	gap.Parent = switches
+	switch("Advanced", 4, function(on)
+		view.advanced = on
+		o.refresh()
+	end)
+	local search = Kit.search(bar, "Search settings", 10, function(text)
+		view.query = text
+		if o then
+			o.refresh()
+			o.scroll.CanvasPosition = Vector2.zero
+		end
+	end)
+	search.Size = UDim2.new(1, -316, 1, 0)
+	-- body: sidebar | rows over the footer
+	local SIDE, FOOT = 180, 64
+	local body = panel.content
+	local scrollHolder = Instance.new("Frame")
+	scrollHolder.Name = "Rows"
+	scrollHolder.BackgroundTransparency = 1
+	scrollHolder.Position = UDim2.fromOffset(SIDE + Kit.SPACE.l, 0)
+	scrollHolder.Size = UDim2.new(1, -SIDE - Kit.SPACE.l, 1, -FOOT - Kit.SPACE.s)
+	scrollHolder.Parent = body
+	local scroll = Kit.scroll(scrollHolder)
+	Kit.list(scroll, 2)
+	Kit.pad(scroll, 0, 0, Kit.SPACE.m, Kit.SPACE.l)
+	local footer = Kit.helpFooter(body, "Hover over an option to see what it does.")
+	footer.frame.AnchorPoint = Vector2.new(0, 1)
+	footer.frame.Position = UDim2.new(0, SIDE + Kit.SPACE.l, 1, 0)
+	footer.frame.Size = UDim2.new(1, -SIDE - Kit.SPACE.l, 0, FOOT)
+	local divider = Instance.new("Frame")
+	divider.BackgroundColor3 = Kit.COLOR.border
+	divider.BackgroundTransparency = 0.9
+	divider.BorderSizePixel = 0
+	divider.Position = UDim2.fromOffset(SIDE + Kit.SPACE.s, 0)
+	divider.Size = UDim2.new(0, 1, 1, 0)
+	divider.Parent = body
+	-- the rows, every section's, in order under their sub-section headers
+	local headers: { [string]: Frame } = {}
+	local headerOrder: { { key: string, section: string, sub: string } } = {}
+	local rows: { [string]: Frame } = {}
+	local folds: { [string]: Fold } = {}
+	local labels: { [string]: TextLabel } = {}
+	local veils: { [string]: Frame } = {}
+	local order = 0
+	local refresh: () -> ()
+	for _, sec in sections do
+		for _, sub in sec.subs do
+			local key = OptionTree.subKey(sec.name, sub.name)
+			order += 1
+			headers[key] = Kit.header(scroll, sub.name, order)
+			table.insert(headerOrder, { key = key, section = sec.name, sub = sub.name })
+			for _, d in sub.options do
+				local opt = tree.byId[d.id]
+				order += 1
+				local r = Instance.new("Frame")
+				r.Name = d.id
+				r.Size = UDim2.new(1, 0, 0, d.height or Kit.ROW)
+				r.LayoutOrder = order
+				veil(r, 0)
+				r.Parent = scroll
+				corner(r, 4)
+				local x = opt.level * INDENT
+				if tree.children[d.id] then
+					local fold = Kit.fold(r, true, function()
+						view.folded[d.id] = not OptionTree.isFolded(tree, view, d.id)
+						refresh()
+					end)
+					fold.button.AnchorPoint = Vector2.new(0, 0.5)
+					fold.button.Position = UDim2.new(0, x, 0.5, 0)
+					folds[d.id] = fold
+				end
+				local holder = Instance.new("Frame")
+				holder.Name = "Control"
+				holder.BackgroundTransparency = 1
+				if d.wide then
+					holder.Position = UDim2.fromOffset(x + 22, 0)
+					holder.Size = UDim2.new(1, -x - 22, 1, 0)
+				else
+					local l = Kit.text(r, d.label, "label")
+					l.Position = UDim2.fromOffset(x + 22, 0)
+					l.Size = UDim2.new(0.5, -x - 22, 1, 0)
+					l.TextTruncate = Enum.TextTruncate.AtEnd
+					labels[d.id] = l
+					holder.AnchorPoint = Vector2.new(1, 0)
+					holder.Position = UDim2.fromScale(1, 0)
+					holder.Size = UDim2.new(0.5, 0, 1, 0)
+					local list = Kit.list(holder, Kit.SPACE.s, true)
+					list.HorizontalAlignment = Enum.HorizontalAlignment.Right
+				end
+				holder.Parent = r
+				if d.build then
+					d.build(holder)
+				end
+				-- dimmed while a parent is off: a veil over the controls that lets clicks through
+				local dim = Instance.new("Frame")
+				dim.Name = "Dim"
+				dim.BackgroundColor3 = Kit.COLOR.panel
+				dim.BackgroundTransparency = 0.45
+				dim.BorderSizePixel = 0
+				dim.AnchorPoint = holder.AnchorPoint
+				dim.Position = holder.Position
+				dim.Size = holder.Size
+				dim.ZIndex = 10
+				dim.Interactable = false
+				dim.Visible = false
+				dim.Parent = r -- over the controls, outside their list layout
+				veils[d.id] = dim
+				r.MouseEnter:Connect(function()
+					r.BackgroundTransparency = 0.965
+					footer.show(d.label, d.help, d.hint or d.id)
+				end)
+				r.MouseLeave:Connect(function()
+					r.BackgroundTransparency = 1
+					footer.clear()
+				end)
+				rows[d.id] = r
+			end
+		end
+	end
+	local empty = Kit.text(scroll, "No settings match.", "small", Kit.COLOR.faint)
+	empty.LayoutOrder = order + 1
+	empty.Size = UDim2.new(1, 0, 0, 40)
+	empty.TextXAlignment = Enum.TextXAlignment.Center
+	-- the sidebar
+	local names = {}
+	for _, sec in sections do
+		table.insert(names, sec.name)
+	end
+	local nav: TreeNav
+	local function subsOf(section: string, shown: OptionTree.Shown): { { string } }
+		local out = {}
+		for _, h in headerOrder do
+			if h.section == section and shown.subs[h.key] then
+				table.insert(out, { h.key, h.sub })
+			end
+		end
+		return out
+	end
+	-- the header offsets in the canvas (screen pixels, as CanvasPosition), visible ones only
+	local function headerYs(): { { key: string, y: number } }
+		local out = {}
+		for _, h in headerOrder do
+			local f = headers[h.key]
+			if f.Visible then
+				table.insert(out, { key = h.key, y = f.AbsolutePosition.Y - scroll.AbsolutePosition.Y + scroll.CanvasPosition.Y })
+			end
+		end
+		return out
+	end
+	local function markActive()
+		nav.mark(OptionTree.activeSub(headerYs(), scroll.CanvasPosition.Y))
+	end
+	local function isOn(id: string): boolean
+		local f = defs[id].isOn
+		return f == nil or f()
+	end
+	refresh = function()
+		local shown = OptionTree.shown(tree, view, isOn)
+		local searching = string.find(view.query, "%S") ~= nil
+		for _, h in headerOrder do
+			local f = headers[h.key]
+			f.Visible = shown.subs[h.key] == true
+			local title = f:FindFirstChild("Title") :: TextLabel
+			title.Text = if searching then `{h.section} · {h.sub}` else h.sub
+		end
+		for id, r in rows do
+			local row = shown.rows[id]
+			r.Visible = row.visible
+			veils[id].Visible = row.dimmed
+			local l = labels[id]
+			if l then
+				l.TextColor3 = if row.dimmed then Kit.COLOR.faint elseif row.level > 0 then Kit.COLOR.dim else Kit.COLOR.text
+			end
+			local fold = folds[id]
+			if fold then
+				fold.set(row.open)
+			end
+		end
+		empty.Visible = shown.count == 0
+		nav.select(view.section, subsOf(view.section, shown))
+		task.defer(markActive)
+	end
+	nav = Kit.treeNav(body, names, function(section)
+		view.section = section
+		if string.find(view.query, "%S") then
+			search.Text = "" -- picking a section ends the search (refreshes)
+		end
+		refresh()
+		scroll.CanvasPosition = Vector2.zero
+	end, function(key)
+		for _, h in headerYs() do
+			if h.key == key then
+				scroll.CanvasPosition = Vector2.new(0, h.y)
+			end
+		end
+	end)
+	nav.frame.Size = UDim2.new(0, SIDE, 1, 0)
+	scroll:GetPropertyChangedSignal("CanvasPosition"):Connect(markActive)
+	o = {
+		view = view,
+		tree = tree,
+		search = search,
+		nav = nav,
+		footer = footer,
+		scroll = scroll,
+		rows = rows,
+		refresh = refresh,
+		select = function(section: string)
+			view.section = section
+			refresh()
+		end,
+	}
+	refresh()
+	return o
 end
 
 -- skin ------------------------------------------------------------------------
