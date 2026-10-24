@@ -1615,3 +1615,5 @@ Existing calls are unchanged.
 
 **Why:** the user found the thin beam and small rings "simple" and asked for a vortex column and wide waves; models-C made the assets to clients-B's layout.
 
+**On hold (2026-10-24):** the user rejected this design before approving it; models-C is making a new reference. Not built on further; it stays Studio-only (review assets) until the new hand-off replaces it.
+
