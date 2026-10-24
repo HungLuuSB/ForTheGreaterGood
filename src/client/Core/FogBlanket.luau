@@ -35,7 +35,7 @@ FogBlanket.LOOK = table.freeze({
 FogBlanket.TINT = table.freeze({ 1, 1.02, 1.08 }) -- r, g, b multipliers on the grey (a faintly cool haze)
 FogBlanket.BUDGET = 3000 -- pixels faded per step at most: a huge change spreads over a few steps
 -- the radar layer: its colour, and its alpha on fill and on rings (RadarFill.FILL, RING)
-FogBlanket.RADAR = table.freeze({ r = 70, g = 225, b = 110, fill = 0.16, ring = 0.45 })
+FogBlanket.RADAR = table.freeze({ r = 70, g = 225, b = 110, fill = 0.13, ring = 0.34 })
 
 local STATES = { FogBlanket.LOOK.visible, FogBlanket.LOOK.explored, FogBlanket.LOOK.never }
 local GREY = { STATES[1].grey, STATES[2].grey, STATES[3].grey }
@@ -60,7 +60,7 @@ export type Blanket = {
 	dirty: Rect?, -- changed since the last take
 	visionVersion: number,
 	stats: { fading: number, written: number },
-	radar: buffer?, -- RadarFill cells (0 none, 1 fill, 2 ring) per pixel, or nil: no radar layer
+	radar: buffer?, -- RadarFill cells (0 none, 1 fill, up to 255 on a ring) per pixel, or nil: no radar layer
 	radarVersion: number, -- the layer's version last composited
 	fogShown: boolean, -- false: fog alpha left out (shading off), radar alone
 }
@@ -75,7 +75,8 @@ local function writePixel(b: Blanket, i: number, grey: number, alpha: number)
 	if kind ~= 0 then
 		-- the fog over the radar layer: "over" compositing
 		local R = FogBlanket.RADAR
-		local ra = if kind == 2 then R.ring else R.fill
+		local ring = if kind <= 1 then 0 else (kind - 1) / 254 -- RadarFill.strength
+		local ra = R.fill + (R.ring - R.fill) * ring
 		local under = ra * (1 - fa)
 		local outA = fa + under
 		fogR = (fogR * fa + R.r * under) / outA

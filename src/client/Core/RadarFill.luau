@@ -1,6 +1,7 @@
 --!strict
 -- The team's radar coverage as a map layer (C-207, BAR reference 6): one
--- value per grid cell, 0 outside, FILL inside, RING on the lighter rings
+-- value per grid cell, 0 outside, FILL (1) inside, up to RING (255) on the
+-- lighter rings, softened over RING_WIDTH so they don't step cell by cell
 -- (each radar's own, every RING_STEP studs from it, and the coverage's
 -- outer edge: an edge deep inside another radar isn't drawn). Circles are
 -- the sim's: Sensors stamps a radar's radius as a plain circle (terrain
@@ -14,10 +15,19 @@ local World = require("./World")
 
 local RadarFill = {}
 
-RadarFill.FILL = 1
-RadarFill.RING = 2
+RadarFill.FILL = 1 -- inside, off the rings
+RadarFill.RING = 255 -- on a ring's line (values between: near one)
 RadarFill.RING_STEP = 160 -- studs between the inner rings
-RadarFill.RING_WIDTH = 8 -- studs: a ring is this wide (a grid cell)
+RadarFill.RING_WIDTH = 12 -- studs from a ring's line to where it has faded out
+
+-- A cell value's ring strength, 0 (fill) .. 1 (on the line).
+function RadarFill.strength(v: number): number
+	return if v <= 1 then 0 else (v - 1) / (RadarFill.RING - 1)
+end
+
+local function value(strength: number): number
+	return 1 + math.floor(math.clamp(strength, 0, 1) * (RadarFill.RING - 1) + 0.5)
+end
 
 export type Circle = { x: number, z: number, r: number }
 export type Layer = { width: number, depth: number, cells: buffer, key: string, version: number }
@@ -47,7 +57,7 @@ function RadarFill.build(layer: Layer, circles: { Circle }, originX: number, ori
 	layer.version += 1
 	local cells, w, d = layer.cells, layer.width, layer.depth
 	buffer.fill(cells, 0, 0)
-	local half, band = RadarFill.RING_WIDTH / 2, RadarFill.RING_WIDTH
+	local band = RadarFill.RING_WIDTH
 	local function each(c: Circle, fn: (i: number, dist: number) -> ())
 		local x0 = math.max(0, math.floor((c.x - c.r - originX) / cell))
 		local x1 = math.min(w - 1, math.floor((c.x + c.r - originX) / cell))
@@ -76,17 +86,20 @@ function RadarFill.build(layer: Layer, circles: { Circle }, originX: number, ori
 	end
 	for _, c in circles do
 		each(c, function(i, dist)
-			local ring
+			local strength = 0
 			if c.r - dist < band then
-				ring = buffer.readu8(deep, i) == 0 -- the coverage's outer edge
-			else
+				-- the coverage's outer edge, fading inwards
+				if buffer.readu8(deep, i) == 0 then
+					strength = 1 - (c.r - dist) / band
+				end
+			elseif dist > band then
+				-- this radar's inner rings, fading both ways from their lines
 				local m = dist % RadarFill.RING_STEP
-				ring = dist > half and (m < half or RadarFill.RING_STEP - m < half) -- this radar's inner rings
+				strength = 1 - math.min(m, RadarFill.RING_STEP - m) / (band / 2)
 			end
-			if ring then
-				buffer.writeu8(cells, i, RadarFill.RING)
-			elseif buffer.readu8(cells, i) == 0 then
-				buffer.writeu8(cells, i, RadarFill.FILL)
+			local v = value(strength)
+			if v > buffer.readu8(cells, i) then
+				buffer.writeu8(cells, i, v)
 			end
 		end)
 	end

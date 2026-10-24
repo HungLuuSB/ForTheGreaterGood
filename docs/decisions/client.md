@@ -1839,3 +1839,9 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 **Decision:** state buttons in the command card carry one short segment per state under the label, the current one lit (the user): fire and move states three (red, yellow, green: hold, return / maneuver, at will / roam), repeat, on / off and priority two (off / low red on the left, on / high green on the right); unlit segments dark grey, all unlit when no selected unit has the state. Replaces C-203's single coloured underline. Screenshot: `debug_out/screens/c210_state_segments_x2.jpg` (UI at 2× for the shot).
 
 **Why:** the user, 2026-10-24.
+
+### C-207 — Radar coverage as a green fill with rings, on the minimap too (2026-10-24)
+
+**Decision:** reference 6's radar view. `Core/RadarFill` turns the team's radar circles into one value per grid cell: 0 outside, FILL inside, up to RING on the lighter rings (each radar's own every RING_STEP 160 studs, and the coverage's outer edge; an edge deep inside another radar isn't drawn, so overlapping radars read as one area), softened over RING_WIDTH 12 studs. `Core/FogBlanket` composites it under the fog in the same image (green 70/225/110, fill alpha 0.13, rings up to 0.34; with fog of war shading off, the image holds the radar alone), so the minimap mirrors it. Shown while placing a radar structure (its own range added at the ghost), while a selected own unit has radar, or in the sensor view (N); circles are every finished own radar emitter, looked up 4 times a second. **The terrain cut waits for the sim:** Sensors stamps radar as a plain circle, so a client-side cut would show coverage the server doesn't count. sim-A will add a shared terrain-occluded radar function (request 66), and the layer will take its cells then. `RadarFill.spec`. Screenshots: `debug_out/screens/c207_radar_fill_*.jpg`.
+
+**Why:** the user's queue item 5.
