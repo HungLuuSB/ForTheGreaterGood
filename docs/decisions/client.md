@@ -1792,6 +1792,19 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Kit: `Kit.search` (dark box, magnifier), `Kit.header` (amber on a lighter band, amber underline), `Kit.fold` (▾ / ▸), `Kit.treeNav` (sections with the pill; the chosen one's sub-sections under it, an amber bar on the one in view; a click scrolls to it), `Kit.helpFooter` (hovered option's name, help text, faint hint bottom right), and `Kit.options(panel, sections)`: a whole searchable body in a `Kit.panel` made without nav (search box across the top beside the title, Unfold all / Advanced switches top right, rows indented 20 px per level under fold arrows, controls right-aligned, a veil over a dimmed row's controls that lets clicks through).
 - Kit look changes (all users, the lobby included): square slider knob (12×16) on a dark track; toggle corners squarer; dropdowns a dark box (`Kit.COLOR.box`); an open dropdown lifts its ancestors' ZIndex so its list draws over the rows after it.
 - The menu: Graphics (Quality, with its caps as folded child rows · Models · Lighting), Interface (Scale · Building · Developer, Advanced), Control (Camera; zoom step Advanced), Keys (one sub-section per key group, Reset, the fixed-key tables), Audio. 940 × 620, fixed; the page scrolls. Every row has help text for the footer.
-- Not yet seen in Studio (no Studio connected on 2026-10-24); screenshots follow at the next Studio slot.
+- Checked in Studio: search, Unfold all, Advanced, hover help, dimmed children, the sub-section jump and amber bar, an open dropdown. Fixes from that check: a Kit panel in a gui drawn under Roblox's top bar keeps clear of it (short windows); the sub-section jump uses screen pixels (CanvasPosition is in them); the dropdown lifts its ancestors only in a Sibling-order gui (the menu's gui is Global, where the list's own ZIndex already wins). Screenshots: `debug_out/screens/c202_settings_*.jpg`.
 
 **Why:** the user's queue item 3, with the pieces in the Kit for the lobby stream (D).
+
+### C-203 — The HUD after reference 3 (2026-10-24)
+
+**Decision:**
+- **Build categories are BAR's:** Economy, Combat (was Defense), Utility, Build (was Factories); a factory's menu stays Units. The tabs sit **under** the grid, each with a coloured diamond (Economy yellow, Combat red, Utility blue, Build green) and its key.
+- **Tab keys Z / X / C / V** (Keybinds `tabEconomy` … `tabBuild`, group Building, rebindable): while a builder's structure menu shows they open the tab and arm the digits, like B. They are a key **layer** (`Action.layer = "build"`): conflicts count only within a layer, and while the layer is active Patrol (Z), Cancel (X), the camera's right turn (C) and range rings (V) stand aside (`BuildMenuUI.takes`, `Camera.keyTaken`). Without a builder selected those keys work as before.
+- **Build tiles:** cost stacked at the bottom right (supply white, power yellow), the type icon at the bottom left, as in the reference.
+- **Command card:** state buttons carry a short coloured underline (22 × 2 px; green on, red off, yellow for the middle fire / move states); Repeat reads "Repeat On" / "Repeat Off" on factories; priority "High prio" / "Low prio".
+- **Unit panel:** the name in yellow-green (190, 228, 96).
+- **Top-right menu:** a flat text strip ("Keys", "Settings (O)") replaces the Settings button; `SettingsMenu.addMenuItem(text, order, onClick)` adds items (Lobby, Statistics later: statistics need server data mid-match).
+- Screenshots: `debug_out/screens/c203_hud_economy.jpg`, `c203_hud_combat_x.jpg`.
+
+**Why:** the user's queue item 4 (reference 3).

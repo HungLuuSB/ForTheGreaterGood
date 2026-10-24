@@ -152,11 +152,15 @@ function CommandCard.new(api: Api.Api): UI
 		if STATES[name] then
 			local bar = Instance.new("Frame")
 			bar.Name = "State"
+			-- a short coloured underline (reference 3, C-203)
 			bar.AnchorPoint = Vector2.new(0.5, 1)
-			bar.Position = UDim2.new(0.5, 0, 1, -2)
-			bar.Size = UDim2.new(0.6, 0, 0, 2)
+			bar.Position = UDim2.new(0.5, 0, 1, -1)
+			bar.Size = UDim2.fromOffset(22, 2)
 			bar.BorderSizePixel = 0
 			bar.Parent = b
+			local cb = Instance.new("UICorner")
+			cb.CornerRadius = UDim.new(0, 1)
+			cb.Parent = bar
 		end
 		b.MouseButton1Click:Connect(function()
 			act(api, name)
@@ -211,11 +215,11 @@ function CommandCard.step(ui: UI, api: Api.Api)
 	local label = {
 		fire = if fire then fire[1] else "Fire state",
 		movestate = if move then move[1] else "Move state",
-		["repeat"] = "Repeat",
+		["repeat"] = if #factories == 0 then "Repeat" elseif anyRepeat then "Repeat On" else "Repeat Off",
 		-- only converters, beam towers and shields switch (the sim's TOGGLED_ON bit); for anything else
 		-- "Off" in red read as a stopped factory (the user, C-107)
 		toggle = if not switchable then "On / Off" elseif anyOn then "On" else "Off",
-		priority = if low then "Prio low" else "Prio high", -- resource priority (S-156, C-196)
+		priority = if low then "Low prio" else "High prio", -- resource priority (S-156, C-196)
 		cancel = "Cancel",
 		stop = "Stop",
 		attack = "Attack",

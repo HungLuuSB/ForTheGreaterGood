@@ -210,7 +210,9 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 		return
 	end
 	local key = input.KeyCode
-	if key == RangeOverlay.TOGGLE_KEY then
+	if BuildMenuUI.active and BuildMenuUI.takes(BuildMenuUI.active, key) then
+		return -- a build tab's key while a builder's menu shows (C-203)
+	elseif key == RangeOverlay.TOGGLE_KEY then
 		RangeOverlay.setEnabled(ranges, not ranges.enabled)
 	elseif key == DepositsRender.TOGGLE_KEY then
 		DepositsRender.setEnabled(deposits, not deposits.enabled)
@@ -305,6 +307,9 @@ local minimap = MinimapUI.new(api) -- placeholder UI (task 9)
 local resourceBar = ResourceBar.new() -- placeholder UI (task 9)
 -- playable placeholder UI (C-68): build menu, command card, unit panel, alerts
 local buildMenu = BuildMenuUI.new(api)
+Camera.keyTaken = function(key: Enum.KeyCode): boolean
+	return BuildMenuUI.takes(buildMenu, key) -- C is the Utility tab's while a builder's menu shows (C-203)
+end
 local commandCard = CommandCard.new(api)
 local unitPanel = UnitPanel.new(api)
 local alertFeed = AlertFeed.new(api)

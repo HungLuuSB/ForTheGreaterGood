@@ -119,7 +119,7 @@ function UnitPanel.new(api: Api.Api): UI
 	local flowPower = textLabel(panel, Enum.Font.GothamBold, 13, Color3.fromRGB(255, 214, 60))
 	flowPower.Position = UDim2.fromOffset(6, 95)
 	flowPower.Size = UDim2.fromOffset(64, 15)
-	local name = textLabel(panel, Enum.Font.GothamBold, 15, Color3.new(1, 1, 1))
+	local name = textLabel(panel, Enum.Font.GothamBold, 15, Color3.fromRGB(190, 228, 96)) -- yellow-green (reference 3, C-203)
 	name.Position = UDim2.fromOffset(72, 4)
 	name.Size = UDim2.new(1, -78, 0, 18)
 	local role = textLabel(panel, Enum.Font.Gotham, 11, Color3.fromRGB(190, 190, 190))

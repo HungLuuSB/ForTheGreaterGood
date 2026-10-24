@@ -52,6 +52,31 @@ SettingsMenu.state = nil :: Settings.State? -- the live settings once the menu e
 SettingsMenu.binds = Keybinds.defaults() -- the player's keys (C-159)
 SettingsMenu.capturing = false -- waiting for a key to bind: the game ignores keys
 SettingsMenu.openButton = nil :: TextButton? -- its label names the key
+SettingsMenu.menu = nil :: Frame? -- the top-right text menu (C-203)
+
+-- Adds a flat text item to the top-right menu (left to right by `order`).
+function SettingsMenu.addMenuItem(text: string, order: number, onClick: () -> ()): TextButton
+	local b = Instance.new("TextButton")
+	b.Name = text
+	b.AutoButtonColor = false
+	b.BackgroundTransparency = 1
+	b.AutomaticSize = Enum.AutomaticSize.X
+	b.Size = UDim2.fromOffset(0, 26)
+	b.FontFace = Kit.font(Enum.FontWeight.Medium)
+	b.TextSize = 13
+	b.TextColor3 = Kit.COLOR.dim
+	b.Text = text
+	b.LayoutOrder = order
+	b.Parent = SettingsMenu.menu
+	b.MouseEnter:Connect(function()
+		b.TextColor3 = Kit.COLOR.text
+	end)
+	b.MouseLeave:Connect(function()
+		b.TextColor3 = Kit.COLOR.dim
+	end)
+	b.MouseButton1Click:Connect(onClick)
+	return b
+end
 
 -- The KeyCode bound to action `id` (Core/Keybinds).
 function SettingsMenu.key(id: string): Enum.KeyCode
@@ -82,6 +107,7 @@ function SettingsMenu.applyKeys()
 	Controls.CANCEL_KEY = k("cancel")
 	Controls.ALERT_KEY = k("lastAlert")
 	BuildMenuUI.KEY = k("build")
+	BuildMenuUI.TAB_KEYS = { Economy = k("tabEconomy"), Combat = k("tabCombat"), Utility = k("tabUtility"), Build = k("tabBuild") }
 	Camera.ROTATE_LEFT = k("rotateLeft")
 	Camera.ROTATE_RIGHT = k("rotateRight")
 	RangeOverlay.TOGGLE_KEY = k("ranges")
@@ -446,14 +472,27 @@ function SettingsMenu.new(): UI
 	buttonGui.DisplayOrder = 6
 	buttonGui.IgnoreGuiInset = true
 	buttonGui.IgnoreGuiInset = true
-	local open = Kit.button(buttonGui, "Settings (O)", "ghost", function() end, 116)
+	-- BAR's flat text menu in the upper right corner (reference 3, C-203;
+	-- a Settings button there since C-124)
+	local strip = Instance.new("Frame")
+	strip.Name = "Menu"
+	strip.AnchorPoint = Vector2.new(1, 0)
+	strip.Position = UDim2.new(1, -8, 0, 6)
+	strip.AutomaticSize = Enum.AutomaticSize.X
+	strip.Size = UDim2.fromOffset(0, 26)
+	strip.BackgroundColor3 = Kit.COLOR.panel
+	strip.BackgroundTransparency = 0.35
+	strip.BorderSizePixel = 0
+	strip.Parent = buttonGui
+	local sc = Instance.new("UICorner")
+	sc.CornerRadius = UDim.new(0, 4)
+	sc.Parent = strip
+	Kit.pad(strip, Kit.SPACE.s, 0, Kit.SPACE.s, 0)
+	Kit.list(strip, Kit.SPACE.m, true)
+	SettingsMenu.menu = strip
+	local open = SettingsMenu.addMenuItem("Settings (O)", 100, function() end)
 	open.Name = "Open"
 	SettingsMenu.openButton = open
-	open.Size = UDim2.fromOffset(116, 28)
-	-- the upper right corner (C-124, the user; the upper left until then, C-109)
-	open.AnchorPoint = Vector2.new(1, 0)
-	open.Position = UDim2.new(1, -8, 0, 6)
-	open.TextSize = 13
 	local panel = Kit.panel(gui, "Settings", Vector2.new(940, 620))
 	panel.root.Visible = false
 	gui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
@@ -467,6 +506,11 @@ function SettingsMenu.new(): UI
 		panel.root.Visible = not panel.root.Visible
 	end
 	open.MouseButton1Click:Connect(toggle)
+	SettingsMenu.addMenuItem("Keys", 90, function()
+		ui.options.search.Text = ""
+		ui.options.select("Keys")
+		panel.root.Visible = true
+	end)
 	panel.scrim.InputBegan:Connect(function(input: InputObject)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			panel.root.Visible = false
