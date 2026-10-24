@@ -33,6 +33,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Fog over the Canyon's mesas fixed (C-213):** the mesas are now fogged like the ground around them (the rock details on top used to poke through, leaving grey squares). `debug_out/screens/c213_canyon_fog_before.jpg` / `c213_canyon_fog_over_mesas.jpg`. A thin skirt still drapes off the mesa edges: the fog can't be finer than about 32 studs there.
 - **Kit crash fix for D (C-214):** a published experience without EditableImage allowed no longer crashes at the first panel; it just loses the stripes, shadow and charts.
 - Ready to merge: `e7c577c` (C-213, C-214; test_client 300, build passed)
+- **Resurrect and reclaim (C-216, sim-A's S-168):** wrecks show a dark-green bar for supply left (when partly reclaimed) and a purple bar while being resurrected; hover a wreck for "<unit> wreck · supply"; T1 workers get a Resurrect button (key D); with only workers selected, nearby wrecks show as green zones with "+N supply". Checked in Studio, a Lancer resurrected end to end. `debug_out/screens/c216_*.jpg`.
+- Ready to merge: `1e3361e` (C-216 with main 3e06cf2 merged in 7a9708b; test_client 303, build passed)
 - **16 players' colours (C-215 groundwork):** until the palette grows to 16 (sim-A, with lobby-D's four colours), teams 13–16 draw as lighter twins of 1–4 instead of grey.
 - Ready to merge: `8a32e77` (C-215 groundwork: Render/TeamColors only; build passed)
 - Ready to merge: `99ee814` (C-214 follow-up: the vignette and the fog blanket survive an experience without EditableImage too; test_client 300, build passed)

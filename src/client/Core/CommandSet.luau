@@ -29,7 +29,7 @@ local Upgrades = require("./Upgrades")
 
 local CommandSet = {}
 
-CommandSet.ORDER = { "fire", "movestate", "repeat", "toggle", "priority", "cancel", "stop", "attack", "move", "patrol", "fight", "guard", "repair", "reclaim", "upgrade", "alert" }
+CommandSet.ORDER = { "fire", "movestate", "repeat", "toggle", "priority", "cancel", "stop", "attack", "move", "patrol", "fight", "guard", "repair", "reclaim", "resurrect", "upgrade", "alert" }
 
 -- Whether resource priority does something for `def` (the sim's S-156
 -- consumers): build power, missile stockpiles, rearming, upkeep.
@@ -96,6 +96,9 @@ function CommandSet.forDef(def: any, all: any?): { [string]: boolean }
 	end
 	if builder and not isFactory(def) then
 		set.repair, set.reclaim = true, true
+		if def.canResurrect then
+			set.resurrect = true -- T1 workers (S-168, C-216)
+		end
 		if all ~= nil and Upgrades.upgraderFor(all, { def }) ~= nil then
 			set.upgrade = true
 		end

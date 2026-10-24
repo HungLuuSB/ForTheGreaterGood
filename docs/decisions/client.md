@@ -1883,3 +1883,15 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Follow-up the same day: the other EditableImage users too. `Render/Grade`'s vignette (made at startup) creates, writes and wraps in one pcall. `Render/FogBlanket` tests a first write when it makes its image, pcalls `CreateEditableMesh` for its chunks, and pcalls each frame's write: a refused write clears the blanket (`stats.mode` "image writes refused") instead of throwing inside the render step every frame. `Render/ShieldFx` was already guarded.
 
 **Why:** lobby-D's crash report; the setting is per experience, and a missing setting should cost looks, not the game.
+
+### C-216 — Wrecks' supply, resurrect and reclaim zones (2026-10-24, S-168, protocol 35)
+
+**Decision:**
+- **Wire:** `World.Wreck` keeps `supply`, `fullSupply` (from WRECK) and `rez` 0..1 (from WRECK_STATE, which also refreshes `supply`); out of sight the last values stay.
+- **Bars** (`Bars.wreckList`, drawn by HealthBars under the wreck like units' bars, C-208): dark green = supply / fullSupply, only below full; purple = resurrect progress, only above 0; with both, green over purple.
+- **Resurrect:** a command mode like Reclaim (the known wreck nearest the click, `Api` order kind "resurrect" → RESURRECT 19). On the card for units whose def has `canResurrect` (T1 workers), key D (rebindable, Settings > Keys). The server ignores it for Commanders' wrecks.
+- **Hover and zones** (`Core/ReclaimZones`, `Render/WreckInfo`): the wreck within 24 studs of the ground under the mouse is named, e.g. "Lancer wreck · 45 supply · resurrect 40%". With only mobile builders selected, known wrecks with supply group into zones (two within 80 studs share one), each a thin green ring on the ground (supply-weighted centre, radius holding every wreck + 16) with "+N supply" over it; refreshed 4 times a second. The ring draws on top (AlwaysOnTop, like the radar rings: a flat ring at the centre's height hid under higher ground) and the label sits on its far (north) edge, clear of the wrecks inside.
+- `ReclaimZones.spec` (WRECK / WRECK_STATE through the real path while one Mason reclaims and another resurrects; the bars; zones, hover and workers-only), CommandSet.spec (a Mason resurrects).
+- Checked in Studio (Coastline skirmish): Lancers and Ravagers fought by the Commander; one Mason reclaimed (green bar under the wreck, the zone total falling), another resurrected (purple bar, power draining, then the Lancer back where its wreck lay with "Construction complete: Lancer"); the hover read "Ravager wreck · 65 supply · resurrect 77%"; the card shows Resurrect for Masons. Screenshots: `debug_out/screens/c216_*.jpg`.
+
+**Why:** the user's resurrect / reclaim feature (S-168, via sim-A).

@@ -17,6 +17,8 @@ local PRODUCTION_COLOR = Color3.fromRGB(238, 186, 92) -- a factory's item in pro
 local RELOAD_COLOR = Color3.fromRGB(205, 235, 255) -- a long-reload weapon recharging (C-170)
 local RELOAD_H = 2
 local BACK_COLOR = Color3.fromRGB(20, 20, 20)
+local WRECK_SUPPLY_COLOR = Color3.fromRGB(40, 120, 55) -- a wreck's supply left (dark green, S-168; C-216)
+local REZ_COLOR = Color3.fromRGB(170, 90, 230) -- resurrect progress (purple)
 -- missile stock (S-47, C-56): one pip per missile above the health bar,
 -- filled while in stock; past MAX_PIPS a single bar instead
 local PIP_H = 3
@@ -141,13 +143,25 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 			slot.root.Position = UDim2.fromOffset(math.floor(d.x + 0.5), math.floor(d.y + 0.5))
 			slot.root.Size = UDim2.fromOffset(w, HEALTH_H)
 			slot.healthFill.Size = UDim2.new(math.clamp(b.health, 0, 1), 0, 1, 0)
-			local r, g, bl = Bars.healthColor(b.health)
-			slot.healthFill.BackgroundColor3 = Color3.fromRGB(r, g, bl)
-			slot.buildBack.Visible = building
-			if building then
-				slot.buildBack.Size = UDim2.new(1, 0, 0, BUILD_H)
-				slot.buildFill.Size = UDim2.new(math.clamp((b.build or b.production) :: number, 0, 1), 0, 1, 0)
-				slot.buildFill.BackgroundColor3 = if b.build ~= nil then BUILD_COLOR else PRODUCTION_COLOR
+			if b.wreck then
+				-- a wreck: supply left (dark green) over resurrect progress (purple); either alone
+				slot.healthFill.BackgroundColor3 = if b.supplyShare ~= nil then WRECK_SUPPLY_COLOR else REZ_COLOR
+				local both = b.supplyShare ~= nil and b.rez ~= nil
+				slot.buildBack.Visible = both
+				if both then
+					slot.buildBack.Size = UDim2.new(1, 0, 0, BUILD_H)
+					slot.buildFill.Size = UDim2.new(math.clamp(b.rez :: number, 0, 1), 0, 1, 0)
+					slot.buildFill.BackgroundColor3 = REZ_COLOR
+				end
+			else
+				local r, g, bl = Bars.healthColor(b.health)
+				slot.healthFill.BackgroundColor3 = Color3.fromRGB(r, g, bl)
+				slot.buildBack.Visible = building
+				if building then
+					slot.buildBack.Size = UDim2.new(1, 0, 0, BUILD_H)
+					slot.buildFill.Size = UDim2.new(math.clamp((b.build or b.production) :: number, 0, 1), 0, 1, 0)
+					slot.buildFill.BackgroundColor3 = if b.build ~= nil then BUILD_COLOR else PRODUCTION_COLOR
+				end
 			end
 			-- the recharge bar: under the health (and build) bar (C-170)
 			slot.reloadBack.Visible = reloading
