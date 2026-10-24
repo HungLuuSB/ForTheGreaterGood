@@ -22,6 +22,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - **Radar coverage (C-207, reference 6):** while you place a radar, select one, or press N, your radar coverage shows as a translucent green fill with softer lighter rings, under the fog and on the minimap. It follows the server's circles until sim-A makes radar terrain-shaped (request 66). Screenshots: `debug_out/screens/c207_radar_fill_minimap.jpg`, `c207_radar_fill_placing.jpg`.
 - **Canyon textures fixed by the Studio restart** (models-C's diagnosis): the mesh ground is textured and sharp after a jump (`c209_canyon_mesh_close.jpg`, `c209_canyon_mesh_after_jump.jpg`). Still to fix: in unexplored areas the fog blanket sits flat over the mesa tops at the sim's blocky height, showing as grey squares above the rounded baked mesas.
 - Ready to merge: `84ef26e` (main 1b8da68 merged in a439502: S-158..S-160; C-207; test_client 298, build passed)
+- **Sonar pings and jammer shimmer (C-211):** your sonar units and buildings send a cyan ring out across the water every 3 s; jammers (yours and enemies' in sight) wear a shimmering dome with a thin purple ring at their reach. `debug_out/screens/c211_sonar_ping_jammer.jpg`.
+- Ready to merge: `fe5325a` (C-211; test 506, test_client 300, build passed)
 - Ready to merge: `196d8a7` (main f04d534 merged in 3d5fbf4, protocol 34; C-204 watchdog profile and speed fix (src/roblox), C-205, C-206, C-208; test 496, test_client 295, build passed)
 
 ## Summary (2026-10-24, point defence; new icon sheet)
