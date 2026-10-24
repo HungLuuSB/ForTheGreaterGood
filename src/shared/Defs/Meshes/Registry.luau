@@ -742,6 +742,54 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 		},
 	},
 	keyArt = {
+		converging = {
+			layers = {
+				{
+					depth = 0.08,
+					images = {
+						"rbxassetid://94239323635054",
+						"rbxassetid://92051970228871",
+						"rbxassetid://80439517893500",
+						"rbxassetid://74725006446213",
+					},
+					name = "sky",
+				},
+				{
+					depth = 0.3,
+					images = {
+						"rbxassetid://107146459515973",
+						"rbxassetid://139534438899625",
+						"rbxassetid://131414658787403",
+						"rbxassetid://77572981493754",
+					},
+					name = "far",
+				},
+				{
+					depth = 0.6,
+					images = {
+						"rbxassetid://98441044477463",
+						"rbxassetid://128971936250228",
+						"rbxassetid://96232858314688",
+						"rbxassetid://119812257521747",
+					},
+					name = "mid",
+				},
+				{
+					depth = 1,
+					images = {
+						"rbxassetid://108812955185417",
+						"rbxassetid://118301937656077",
+						"rbxassetid://74266329697079",
+						"rbxassetid://89421099334422",
+					},
+					name = "near",
+				},
+			},
+			size = { 2048, 1152 },
+			status = "approved",
+			tiles = { 2, 2 },
+			title = "Converging",
+		},
 		volley = {
 			layers = {
 				{
