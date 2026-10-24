@@ -48,6 +48,20 @@ return function(t: any)
 		t.expect(#Mesh.validateShieldWave(broken) > 0, "out-of-order bands are caught")
 	end)
 
+	t.test("the shield's energy look v4 is valid", function()
+		local e = Registry.shieldEnergy
+		t.deepEqual(Mesh.validateShieldEnergy(e), {})
+		t.equal(#e.bands, 20)
+		t.equal(e.bands[20].theta[2], 90)
+		local broken = table.clone(e) :: any
+		broken.bands = { e.bands[2], e.bands[1] }
+		t.expect(#Mesh.validateShieldEnergy(broken) > 0, "out-of-order bands are caught")
+		local noHits = table.clone(e) :: any
+		noHits.textures = table.clone(e.textures)
+		noHits.textures.hit = { e.textures.hit[1] }
+		t.expect(#Mesh.validateShieldEnergy(noHits) > 0, "a short hit flipbook is caught")
+	end)
+
 	t.test("key arts have four layers back to front, each with its tiles as asset IDs", function()
 		for name, art in Registry.keyArt do
 			t.expect(art.status == "approved" or art.status == "review", `{name}: status`)
