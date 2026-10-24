@@ -9,14 +9,22 @@
 -- memory, TeleportService replaced by the in-process stand-in match.
 --   client -> server (Request):
 --     { op = "create", name, privacy, password?, maxPlayers }
---     { op = "join", roomId, password? }      { op = "leave" }
+--     { op = "join", roomId, password? }      { op = "leave" }   (a room on another lobby server: a hop, L-15)
 --     { op = "start", force? }                { op = "rejoin" }
 --     { op = "quick", mapId, faction, level, enemy? }  a skirmish against one AI, started at once
 --     { op = "kick", user }                   host
+--     { op = "settings", values }             the lobby settings, saved on the profile (L-16)
 --     any Rooms.apply request (set, addAi, ai, removeAi, mine, spectate, play, ready)
 --     { op = "standIn", action }              Studio only (StandInMatch)
 --   server -> client (Push):
 --     { kind = "view", view }   { kind = "toast", text, style }   { kind = "standIn", ... }
+--     { kind = "hop", active, roomName? }      moving to a room on another lobby server
+--     { kind = "askPassword", roomId, name }   an invite to a room with a password
+--
+-- Invites (L-17): a game invite carries "room=<code>" as launch data; a
+-- player who joins with it goes to that room (here or on its server). In
+-- Studio, the attribute `StandInLaunch` on ServerScriptService.Lobby stands
+-- in for the launch data.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -27,16 +35,21 @@ local Config = require("../shared/Config")
 local Ctx = require("./Ctx")
 local Directory = require("./Directory")
 local Launcher = require("./Launcher")
+local Listing = require("../shared/Listing")
+local Lobbies = require("./Lobbies")
 local MapPreview = require("../shared/MapPreview")
 local MapRegistry = require("@shared/Grid/MapRegistry")
 local MatchStore = require("./Services/MatchStore")
+local Places = require("./Places")
 local Profile = require("../shared/Profile")
 local ProfileStore = require("./Services/ProfileStore")
 local Profiles = require("./Profiles")
 local Returns = require("./Returns")
+local RoomIndex = require("./Services/RoomIndex")
 local Rooms = require("../shared/Rooms")
 local Social = require("./Services/Social")
 local StandInMatch = require("./StandInMatch")
+local StandInPeer = require("./StandInPeer")
 local Teleport = require("./Services/Teleport")
 
 local studio = RunService:IsStudio()
@@ -64,7 +77,8 @@ local sendViews: () -> ()
 
 Ctx.studio = studio
 Ctx.store = if studio then MatchStore.standIn() else MatchStore.real()
-Ctx.teleport = if studio then Teleport.standIn(StandInMatch.start, flags) else Teleport.real()
+Ctx.teleport = if studio then Teleport.standIn(StandInMatch.start, flags, StandInPeer.hop) else Teleport.real()
+Ctx.index = if studio then RoomIndex.standIn() else RoomIndex.real()
 Ctx.profiles = if studio then ProfileStore.standIn() else ProfileStore.real()
 Ctx.social = if studio then Social.standIn() else Social.real()
 Ctx.maps = {}
@@ -78,7 +92,10 @@ Ctx.publish = function(user: number?)
 	end
 	if not publishing then
 		publishing = true
-		task.defer(sendViews)
+		-- a closure: the room list's reader can publish before sendViews is defined
+		task.defer(function()
+			sendViews()
+		end)
 	end
 end
 Ctx.toast = function(user: number, text: string, style: string?)
@@ -100,7 +117,9 @@ Profiles.init(Ctx.profiles, function(user: number)
 	Ctx.publish(user)
 end)
 Ctx.teleport.onFailed(Launcher.teleportFailed)
-print(`[Lobby] services: store {Ctx.store.kind}, teleport {Ctx.teleport.kind}, profiles {Ctx.profiles.kind}, text {Ctx.social.kind}`)
+print(`[Lobby] services: store {Ctx.store.kind}, teleport {Ctx.teleport.kind}, profiles {Ctx.profiles.kind}, text {Ctx.social.kind}, room list {Ctx.index.kind}`)
+task.spawn(Places.init, studio)
+Lobbies.start()
 
 -- maps ------------------------------------------------------------------------
 
@@ -135,6 +154,9 @@ task.spawn(function()
 	Ctx.maps = list
 	mapsReady = true
 	print(`[Lobby] {#list} maps ready`)
+	if studio then
+		StandInPeer.start(Lobbies.arrive)
+	end
 	Ctx.publish()
 end)
 
@@ -160,6 +182,10 @@ local function viewFor(player: Player): any
 			table.insert(list, Rooms.summary(r, Ctx.maps))
 		end
 	end
+	-- rooms on the other lobby servers (L-15)
+	for _, line in Lobbies.lines(user, Ctx.social.isFriend) do
+		table.insert(list, line)
+	end
 	table.sort(list, function(a, b)
 		if (a.phase == "setup") ~= (b.phase == "setup") then
 			return a.phase == "setup"
@@ -176,16 +202,17 @@ local function viewFor(player: Player): any
 		roomView.notReady = Rooms.notReady(room)
 	end
 	local rec = Profiles.get(user)
-	local online = #Players:GetPlayers()
+	local online = Lobbies.online()
 	return {
 		me = { user = user, name = player.DisplayName },
 		studio = studio,
 		services = { store = Ctx.store.kind, teleport = Ctx.teleport.kind, profiles = Ctx.profiles.kind },
 		online = online,
+		servers = Lobbies.servers(),
 		mapsReady = mapsReady,
 		rooms = list,
 		room = roomView,
-		profile = if rec then { summary = Profile.summary(rec), history = rec.history } else nil,
+		profile = if rec then { summary = Profile.summary(rec), history = rec.history, settings = rec.settings } else nil,
 	}
 end
 
@@ -220,6 +247,37 @@ task.spawn(function()
 	end
 end)
 
+-- Joins `player` to the room with this code: one here, or a hop to the
+-- lobby server that has it (L-15). nil, or why not. `invited`: from an
+-- invite's launch data, so a password room asks for its password.
+local function joinByCode(player: Player, code: any, password: any, invited: boolean?): string?
+	local user = player.UserId
+	if type(code) ~= "string" or #code > 16 then
+		return "No room with that code"
+	end
+	local room = Directory.get(code)
+	local current = Directory.roomOf(user)
+	if current and current ~= room and current.phase ~= "setup" then
+		return "Your room is in a match"
+	end
+	if room then
+		if room.privacy == "friends" and not Rooms.visibleTo(room, user, Ctx.social.isFriend) then
+			return "Only the host's friends can join"
+		end
+		if invited and room.password and Rooms.member(room, user) == nil then
+			Ctx.send(user, { kind = "askPassword", roomId = room.id, name = room.name })
+			return nil
+		end
+		return Directory.join(room, user, player.DisplayName, password, Ctx.maps)
+	end
+	local listed = Lobbies.find(code)
+	if listed and invited and listed.password ~= nil then
+		Ctx.send(user, { kind = "askPassword", roomId = listed.id, name = listed.name })
+		return nil
+	end
+	return Lobbies.hop(player, code, password)
+end
+
 local function handle(player: Player, msg: any): string?
 	local user = player.UserId
 	local op = msg.op
@@ -246,18 +304,18 @@ local function handle(player: Player, msg: any): string?
 		print(`[Lobby] {player.Name} created room {room.id} "{room.name}" ({room.privacy})`)
 		return nil
 	elseif op == "join" then
-		local room = Directory.get(msg.roomId)
-		if room == nil then
-			return "No room with that code"
+		return joinByCode(player, msg.roomId, msg.password)
+	elseif op == "settings" then
+		local rec = Profiles.get(user)
+		if rec == nil then
+			return "Your profile is still loading"
 		end
-		if room.privacy == "friends" and not Rooms.visibleTo(room, user, Ctx.social.isFriend) then
-			return "Only the host's friends can join"
+		local clean, refused = Profile.cleanSettings(msg.values, rec.settings)
+		if refused then
+			return "Those settings aren't valid"
 		end
-		local current = Directory.roomOf(user)
-		if current and current ~= room and current.phase ~= "setup" then
-			return "Your room is in a match"
-		end
-		return Directory.join(room, user, player.DisplayName, msg.password, Ctx.maps)
+		Profiles.setSettings(user, clean)
+		return nil
 	elseif op == "leave" then
 		local room = Directory.roomOf(user)
 		if room and room.phase == "starting" then
@@ -354,7 +412,29 @@ local function added(player: Player)
 	task.spawn(Profiles.load, player.UserId)
 	local data = player:GetJoinData()
 	local hint = type(data) == "table" and type(data.TeleportData) == "table" and data.TeleportData.matchId or nil
-	task.spawn(Returns.arrive, player, hint)
+	local launch = if type(data) == "table" then data.LaunchData else nil
+	if studio and launch == nil then
+		launch = flags:GetAttribute("StandInLaunch")
+	end
+	task.spawn(function()
+		-- back from a match, then a move from another lobby server, then an invite
+		Returns.arrive(player, hint)
+		if Lobbies.arrive(player) then
+			return
+		end
+		local code = Listing.launchCode(launch)
+		if code and Directory.roomOf(player.UserId) == nil then
+			while not mapsReady do
+				task.wait(0.5)
+			end
+			print(`[Lobby] {player.Name} came from an invite to room {code}`)
+			local err = joinByCode(player, code, nil, true)
+			if err then
+				Ctx.toast(player.UserId, `Couldn't join the room you were invited to: {err}`, "error")
+			end
+			Ctx.publish()
+		end
+	end)
 	Ctx.publish()
 end
 
@@ -380,4 +460,4 @@ Players.PlayerRemoving:Connect(function(player: Player)
 end)
 
 remotes.Parent = ReplicatedStorage
-print(`[Lobby] server ready (match place {Config.MATCH_PLACE_ID}{if studio then ", Studio stand-ins" else ""})`)
+print(`[Lobby] server ready (match place setting {Config.MATCH_PLACE_ID}{if Config.MATCH_PLACE_ID == 0 then ", found at start" else ""}{if studio then ", Studio stand-ins" else ""})`)

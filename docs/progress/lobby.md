@@ -2,6 +2,61 @@
 
 Progress of the lobby stream (session D): the lobby place "FTGG Lobby" (`src/lobby/**`, `lobby.project.json`, Rojo port 34874) and the lobby ↔ match contract (`docs/contracts/match.md`). Branch `m-lobby`, worktree `FTGG-lobby`. This stream never edits `src/client`, `src/server` or `src/shared`; it asks under "Requests" below. Decisions: `L-1`, `L-2`, ... in [`../decisions/lobby.md`](../decisions/lobby.md).
 
+## Summary (2026-10-24, Settings on client-B's components; publishing)
+
+- **The Settings page uses client-B's settings body** (`Kit.options`, C-202): search, section tree, amber sub-section headers, hover help, children dimmed under a switched-off parent. Interface (scale; a pointer to the match's Settings) and Background (battle scene, camera follows the mouse). Still saved on the profile (L-16). Checked in Studio (`lobby_settings_options.jpg`, `lobby_settings_background.jpg`).
+- **Main merged** (`f508bfa`, main `1536c94`). The kit now needs client-B's `Core/OptionTree`, mounted read-only like the rest. Four new defs got roles in the Units tab: naval SAM platform (Pharos / Scylla), advanced rearm pad (Empyrean / Rookery).
+- **Found while publishing: EditableImage must be allowed** for the experience (Game Settings → Security). Without it a published place lets EditableImage be created but refuses the write: client-B's `Kit.panel` then stops the whole lobby client, and the map previews stay empty. You enabled it for FTGG Playtest; it's in the checklist (step 4) now. The lobby's map previews now fall back to the map's name; I asked client-B to guard the kit the same way (B-8).
+- **Top bar:** the tabs are narrower, so "Settings" no longer runs into the player count on a 1548-pixel-wide window (`lobby_topbar_skirmish.jpg`). The room under client-B's new look: `lobby_room_newkit.jpg`.
+- **Published so far (by you):** the lobby is the start place of experience 10772730291 (place 109045403486391, "FTGG Testplace"), with "FTGG Match" (123800718230540) added. The lobby there was published before this summary's changes and before the Units tab's latest fixes: publish it again once the match place is in.
+- **Tests:** lobby specs 47 / 47; the lobby build check passes.
+
+## Summary (2026-10-24, the Units tab)
+
+- **A unit encyclopedia, the new "Units" tab (L-18):**
+  - **List:** both factions' units and structures by role, with icons, search, and Units / Structures and tier filters.
+  - **Showroom:** a 3D showroom of the real models on Pad, Field, Water, Shore or Sky ("Auto" picks by the unit), with turntable, Day/Dusk, colours, and Compare (counterparts side by side).
+  - **Article:** description, counterpart with the differences, in-game values, weapons, and what it builds and what builds it.
+- **Data:** `src/lobby/shared/Codex.luau` (roles after guide section 13; retired defs hidden); `Codex.spec` checks it against the real defs.
+- **Checked in Studio** ("FTGG Lobby", after Rojo was restarted for the new mounts):
+  - every place: Paladin on the pad, Dominion on the water, Tideguard on the shore, Falcon in the sky, Bastion on the field;
+  - Compare with one counterpart (Paladin vs Juggernaut) and with two (Overwatch vs Twin Guard and Geryon);
+  - Day light, a colour swatch, the weapons and "Built by" sections;
+  - leaving the tab brings the battle and its dusk light back.
+- **Fixed in Studio:** infobox rows that grew without end and then didn't wrap (now sized from the wrapped text); the build line's wording; the hint off the stage; aircraft centred; wider framing; the pad's lamps out of the camera's way.
+- **Screenshots** (`debug_out/screens/`): `lobby_units_pad`, `lobby_units_compare`, `lobby_units_day_colour`, `lobby_units_field_compare`, `lobby_units_article_weapons`, `lobby_home_after_units`. The place shots `lobby_units_water`, `lobby_units_sky`, `lobby_units_shore` and `lobby_units_field` are from before the text fixes.
+- **Tests:** `lune run src/lobby/tools/test`: 47 tests in 6 specs pass; the lobby build check passes.
+
+## Summary (2026-10-24, live playtest prep, rooms across servers, invites, saved settings)
+
+- **The lobby is ready to publish** for the "FTGG Playtest" experience: specs and build pass, and everything below was checked in Studio ("FTGG Lobby", stand-ins). The click-by-click checklist and the 30-minute test plan are under "Live playtest" below. I haven't published anything.
+- **One place setting (L-14):** `MATCH_PLACE_ID` in `src/lobby/shared/Config.luau` replaces the hard-coded 89435699207932. It is `0`, which means the lobby finds the match place when a server starts: the experience's other place. So publishing needs no code change. The lobby's own place ID isn't configured anywhere (`game.PlaceId`).
+- **Rooms across lobby servers (L-15):** each lobby server lists its rooms in a shared MemoryStore list. The browser shows the other servers' rooms tagged "[other server]", says "N rooms on M lobby servers", and the top bar counts players on every server. Joining one (click or code) moves you to that server behind the loading screen ("Moving to the room's lobby server...") and into the room. A full server gives a toast. Studio has a stand-in second server with four rooms (codes PEERT, PEERL with password "peer", PEERP private, PEERM in a match).
+- **Lobby settings saved on the profile (L-16):** UI scale, background scene and parallax follow you to any server.
+- **Invite a friend (L-17):** "Invite" in the room opens Roblox's invite prompt. The invite carries the room code, and a friend who joins through it lands in the room (on any lobby server; a password room asks for the password).
+- **Closer to your references 1-2:**
+  - the room's settings are BAR rows: a darker label cell joined to a value cell, with a chevron on choices;
+  - Friendly fire and Cheats are real switches (square knob, green on, red off), shown read-only to guests;
+  - Skirmish map cards are greyscale, in colour when hovered or chosen;
+  - the room header says "In match · running for N min" while a match runs (the browser too);
+  - the map preview fills the room's right column above the rules (much bigger at 1080p; in Studio's short viewport the rows were made more compact to give it room).
+- **B's kit:** the lobby now uses `Kit.button`'s go / stop fills and `Kit.input` (C-174). B's new Settings components aren't on main yet: I'll switch the Settings page when B says they are.
+- **Key art:** the loading screen takes the next approved art each time. Art 3 "Converging" and art 2 "Volley" both show (screenshots below). Art 1 "Commander's stand" shows by itself once models-C lists it in the manifest.
+- **Fixed on the way:**
+  - the seat editor's colour grid sat outside its dialog;
+  - a room drawn before the map list arrived kept "Loading map...";
+  - "Leave early" (Studio stand-in) was hard to read over bright key art;
+  - views stopped entirely if the room list published before the server was ready (found in Studio, fixed before anything shipped).
+- **Screenshots** (`debug_out/screens/`):
+  - `lobby_browser_servers.jpg`: rooms from two lobby servers;
+  - `lobby_room_after_hop.jpg`: a room joined on the other server;
+  - `lobby_invite_arrival.jpg`: an invite's launch data landing in a private room;
+  - `lobby_room_host.jpg`, `lobby_room_dropdown.jpg`, `lobby_room_toggle.jpg`: host rows, an open list, a switch flipped off;
+  - `lobby_room_in_match.jpg`: the "running for" header;
+  - `lobby_skirmish_grey.jpg`, `lobby_seat_editor.jpg`, `lobby_settings.jpg`;
+  - `lobby_loading_converging.jpg`, `lobby_loading_volley.jpg`.
+- **Tests:** `lune run src/lobby/tools/test`: 41 tests in 5 specs pass (new: `Listing.spec` with 7, settings in `Profile.spec`). The lobby build check passes.
+
 ## Summary (2026-10-23, first lobby: rooms, start and return, profile)
 
 - **The lobby place works end to end in Studio.** Make a room, set it up, start, play the (stand-in) match, come back to the room with the results, and see it on your profile.
@@ -36,23 +91,89 @@ In "FTGG Lobby" only, from the repo root:
 
 Restart both after editing `lobby.project.json`; then reconnect the plugin.
 
-## What needs a published test
+## Live playtest: "FTGG Playtest" (checklist for you)
 
-Studio can't reserve or teleport, and MemoryStore and DataStore need a published place. The list is in `docs/contracts/match.md` section 10. In short:
-1. Publish "FTGG Lobby" as the **start place** of the same experience as the match place (89435699207932). I haven't published anything.
-2. The match place must implement its side of the contract (request 1 for client-B) before a real match can run.
-3. Then check: group teleport in and out, the same lobby server on return (and a rebuilt room when it's gone), one player's failed teleport, rejoin, a match server shut down mid-match, profile writes, the name filter, friends-only rooms, and room chat with two real accounts.
+A new experience, owned by your account, with "FTGG Lobby" as its start place and the match place as its second place. Publish nothing from the old experience (89435699207932 stays your dev place).
+
+### Before you start
+
+- "FTGG Lobby.rbxl" open in Studio with Rojo connected on port 34874 (it is now, showing this branch). No playtest running.
+- The match place file prepared from main (sim-A: main `d6643d4`).
+- Your three testers' Roblox usernames. Below, **A** is you (the owner: only you see the servers' logs), **B**, **C**, **D** the testers.
+
+### 1. Publish the lobby (this creates the experience)
+
+1. In "FTGG Lobby.rbxl": **File → Publish to Roblox As…**
+2. Choose **Create new experience**. Name: **FTGG Playtest**. Creator: **your account**. Devices: at least Computer.
+3. **Create.** The lobby is now the experience's start place.
+
+### 2. Add the match place to the experience
+
+1. Still in the lobby's Studio: **View → Asset Manager → Places**.
+2. Right-click the empty area → **Add New Place**.
+3. Right-click the new place → **Rename** → **FTGG Match**.
+
+### 3. Publish the match place into it
+
+1. Open the match place file in Studio. First **File → Save to File As…** "FTGG Match playtest.rbxl", and work in that copy, so your dev place stays linked to 89435699207932.
+2. **File → Publish to Roblox As…** → experience **FTGG Playtest** → place **FTGG Match** → **Overwrite**.
+3. Nothing else to republish: a lobby server finds the match place when it starts.
+
+### 4. Settings (Studio, File → Game Settings, in either place; Save)
+
+1. **Places** tab → **⋯** on FTGG Match → **Configure Place** → Max players **16**.
+2. **Places** tab → **⋯** on FTGG Lobby → **Configure Place** → Max players **2 for this session** (Part A needs two lobby servers and you have four testers; you set **20** at the break, step A5).
+3. **Permissions** tab: Playability **Private**; Collaborators → add B, C and D with **Play**. You are the owner (the experience was created under your account).
+4. **Security** tab: allow **EditableImage** (the mesh / image API switch). Without it the lobby's menus fail to load in the published place (done for FTGG Playtest on 2026-10-24).
+5. Nothing else: teleports between places of one experience need no extra setting; the lobby uses its stand-ins in Studio either way.
+6. Check in the Creator Dashboard (create.roblox.com → Creations → FTGG Playtest → Places): FTGG Lobby (start place) and FTGG Match.
+
+If Roblox asks for the maturity questionnaire before testers can join, fill it in.
+
+### 5. The 30-minute session
+
+**Reading the logs:** in the game press **F9 → Server**, type `[Lobby]` (in the match: `[Match]`) in the filter. Only A sees the Server tab.
+
+**Part A: two lobby servers (0-9 min, lobby max players 2)**
+
+| Time | Who does what | Watch |
+|---|---|---|
+| 0-2 | **A1.** Join in this order: A, B (wait until B is in), C, D. | A and B share one lobby server (S1), C and D another (S2). Top bar: "4 players online" for everyone. A's log: `match place <id> (the experience's other place "FTGG Match")`, `room list: memorystore`. |
+| 2-4 | **A2.** A: Multiplayer → Create room "Cross A", public. C and D open Multiplayer. C clicks "Cross A". | Within ~15 s C and D see "Cross A [other server]" and "1 room on 2 lobby servers". C's move fails because S1 is full: a short loading screen, then the toast "Couldn't move you to Cross A's lobby server (...)". C stays usable on S2. |
+| 4-6 | **A3.** B closes Roblox. C clicks "Cross A" again. | Loading screen "Moving to the room's lobby server...", then C is in Cross A with A. A's log: `C joined room XXXXX from server ...`. |
+| 6-8 | **A4.** D (alone on S2) creates a **private** room "Cross D" and reads its code aloud. A: Leave, type the code in "Room code", **Join by code**. | The private room never shows in anyone's browser. A moves to S2 and lands in Cross D. |
+| 8-9 | **A5.** A sets FTGG Lobby's Max players to **20** (step 4.2). Everyone closes Roblox. | Empty servers close; the next ones are 20-player servers. |
+
+**Part B: matches (9-28 min, lobby 20, match 16)**
+
+| Time | Who does what | Watch |
+|---|---|---|
+| 9-12 | **B1.** A joins and creates public room "Playtest": Teams, Twin Lakes. A clicks **Invite** and invites D (D is not in the game). B and C join the experience and click "Playtest". D accepts the invite. Everyone types one line in room chat. B opens Settings: Interface scale 1.10, "Camera follows the mouse" off. | D lands straight in Playtest (A's log: `D came from an invite to room XXXXX`). The browser says "this lobby server". Everyone sees all four chat lines. |
+| 12-18 | **B2. Match 1.** A and B on Team 1; C on Team 2, A adds a Normal AI to Team 2. D clicks **Leave** and stays in the lobby (keeps this lobby server alive). A turns **Cheats on**. Everyone Ready, A Start. At ~2 min C closes Roblox, rejoins the experience, clicks **Rejoin match**. A ends the match with the cheat command line (destroy Team 2's Commander), or you play it out. | Key art loading screen, then A, B and C arrive in the match together. D's browser: "Playtest · In match · N min". C lands back in the room with "Rejoin match" and returns to the same seat. After the results' "Return to lobby", A, B and C are back on D's lobby server, in Playtest with the results. Profile: the match listed as cheats (not counted). |
+| 18-26 | **B3. Match 2, abandoned.** D joins Playtest. Cheats off. A+B against C+D. Start. After ~1 min **all four close Roblox**. Wait a minute, then all rejoin the experience. | All four arrive in the match. On return everyone is in Playtest on a new lobby server (A's log: `room XXXXX rebuilt for match ...`). The room shows "In match" until about 2-3 min after the match server stopped, then results "abandoned"; the profile counts it as abandoned. |
+| 26-28 | **B4.** B opens Settings; everyone opens Profile. | B's scale 1.10 and parallax off came back on the new server. Both matches in everyone's history. |
+
+Not stageable on purpose: one player's teleport refused by Roblox (contract 10.4) and DataStore budget pressure (10.7). Note it if either happens.
+
+### 6. What to send me afterwards
+
+- **Server logs:** screenshots of A's F9 → Server, filtered `[Lobby]`, after A3, A4, B1, B2 (the return) and B3 (the rebuild and "abandoned"); and filtered `[Match]` on the match server at each start.
+- **Room state:** screenshots of the Playtest room after each match (the results panel and the room behind it), and of C's and D's browser during A2.
+- **Anything odd:** the toast text, who saw it, and the clock time, so I can find it in the logs.
+- **Profiles (optional):** Creator Dashboard → FTGG Playtest → Data Stores → `FtggProfiles`, key `p/<B's user ID>`: a screenshot of its `settings` and `history`.
 
 ## Needs my review
 
-1. **Rooms are per lobby server.** Players on another lobby server don't see your room; friends join through the room code only if they're on the same server. A cross-server browser (rooms listed in MemoryStore, joining = teleporting to that server) is possible but needs a published place to test. Want it next?
+1. **Done (2026-10-24): rooms across lobby servers** (L-15). Needs the live test (Part A above).
 2. **Guide 16.3 says "map vote".** Your design has the host pick the map (BAR). I followed your design; the guide is the sim stream's file, so I asked sim-A to update it (request A-3).
 3. **Cheats:** the host can turn them on in any room. Matches with cheats are listed on the profile but don't count. The match server still enforces the allow-list (C-119). OK?
 4. **Forced start** skips only the ready check; every other rule holds.
 5. **Spectators** are members without a seat (when the map's starts are full, or by choice). They're in the config and may watch the match; client-B needs to support it (request B-1).
 6. **Start positions:** the lobby orders players so the sim's player ID is the start index (Teams: ally teams together). So sim request 64 (chosen starts) isn't needed for version 1. BAR's start boxes or chosen starts could come later.
 7. **Players beyond 16:** the room cap is 16 humans (players and spectators); FFA seats up to 8, Teams 4 × 4.
-8. **Lobby settings** (UI scale, background scene, parallax) last for the session only. Should they be saved on the profile?
+8. **Done (2026-10-24): lobby settings saved on the profile** (L-16).
+12. **Key art order:** I read "show key arts 1 and 3" as: every approved art comes round, one per loading screen in turn (2 "Volley" included). Say if the lobby should show only 1 and 3 and leave Volley to the match's loading screen.
+13. **Lobby max players:** 2 for Part A of the playtest only, so four testers fill two lobby servers; 20 afterwards.
 9. **Done (2026-10-23): the config validator is in `src/shared`** (`@shared/Match/MatchConfig`, S-145; the lobby uses it since its merge of main). sim-A moves validate / validateResult and their constants to `src/shared/Match/MatchConfig.luau` (from m-lobby 287b99e). Then the lobby and client-B drop their copies. `build` and `summary` stay in `src/lobby`.
 11. **Decided (2026-10-23): layered key art with parallax** from models-C for both loading screens (L-13, `docs/contracts/key-art.md`). Uploads still need your approval.
 10. **Merge check:** `integrate.sh` doesn't run the lobby's 32 specs. sim-A agreed to add `lune run src/lobby/tools/test` (a failure blocks the push) once its running merges finish; until then I run them before every "Ready to merge" line.
@@ -67,7 +188,10 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 
 ### For client-B (client session, match place)
 
-**B-1..B-4 done by client-B (C-173 / C-174 on m-client-foundation):** the match server side with a copy of the validator, the BAR-style loading screen (real caching progress), "Return to lobby" with the 30 s countdown, and `Kit.button` go / stop fills plus `Kit.input`. I'll switch the lobby to the kit's versions once they're on main. Their question (every human out while AI teams fight on) is answered in the contract: `"finished"` with no `winner`, a loss for the humans.
+**B-1..B-4 done by client-B (C-173 / C-174):** the match server side with a copy of the validator, the BAR-style loading screen (real caching progress), "Return to lobby" with the 30 s countdown, and `Kit.button` go / stop fills plus `Kit.input`. Since 2026-10-24 the lobby uses the kit's go / stop buttons and `Kit.input` (its own copies are gone).
+
+- **B-7. Done (C-202, 2026-10-24):** the lobby's Settings page is built on `Kit.options`.
+- **B-8. Done by client-B (C-214, e7c577c; on main with sim-A's next merge):** create, write and content now share one pcall in `editable()`, and `Kit.chart` is guarded the same way. **Guard `Kit` `editable()`:** `WritePixelsBuffer` and `Content.fromObject` are outside its pcall. In a published place without the EditableImage setting the write throws and the first `Kit.panel` stops the client script. Inside the pcall, a missing setting would only lose the stripes and shadow. Their question (every human out while AI teams fight on) is answered in the contract: `"finished"` with no `winner`, a loss for the humans.
 
 - **B-1. The match server's side of `docs/contracts/match.md`** (in `src/roblox`):
   - On start, read `server/<game.PrivateServerId>` → `config/<matchId>` from MemoryStore HashMap `FtggMatch`, validate (section 3), refuse otherwise (section 9). Teleport data is only a cross-check.
@@ -89,7 +213,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
   2. a SAM site under air attack, at dusk (your style guide);
   3. a beach assault.
 
-  Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed.
+  Each art is 4 depth layers in 2 × 2 tiles of 1024 × 576. Once you approve the uploads, they go in the manifest's `keyArt`. The lobby's loading screen shows them as soon as they're listed. **Status 2026-10-24:** 2 "Volley" and 3 "Converging" are listed and show in the lobby; 1 "Commander's stand" waits for its upload and manifest entry.
 
 ## Plan and status
 
@@ -103,11 +227,19 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
 | Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only). Art 2 "Volley" on main and checked in Studio through Quick play: smooth (60 fps), the battle paused behind it (`lobby_loading_volley.jpg`) |
-| Published test (needs the user to publish, and B-1) | waiting |
+| Match place from one setting (L-14) | done, checked in Studio (stand-in) |
+| Rooms across lobby servers (L-15) | done, checked in Studio with the stand-in peer server; live test in the playtest plan |
+| Lobby settings on the profile (L-16) | done, checked in Studio (stand-in store) |
+| Invite a friend (L-17) | done; the prompt opens in Studio, the arrival checked with `StandInLaunch` |
+| References 1-2: rows, switches, grey cards, "running for", bigger map | done, checked in Studio |
+| Kit buttons and input (C-174) | done; B's Settings components: waiting (B-7) |
+| Published test ("FTGG Playtest", the checklist above) | ready to publish; waiting for you |
+| Units tab: encyclopedia, showroom, article (L-18) | done, checked in Studio |
 
 ## How to continue
 
 - Specs: `lune run src/lobby/tools/test`. Offline build and check: `lune run src/lobby/tools/sync build` (only `build/lobby`).
 - Server: `src/lobby/server/Main.server.luau` (requests and views), `Launcher` (start), `Returns` (poll, results, arrivals), `StandInMatch` (Studio), `Services/*` (real vs stand-in).
 - Client: `src/lobby/client/Main.client.luau` (shell), `Pages/*`, `Overlays/*`, `Scene.luau` (background).
-- Studio test hooks: `game.ServerScriptService.Lobby:SetAttribute("StandInFail", "reserve" | "teleport" | "player")` in a playtest's server.
+- Server, new: `Places` (the match place, L-14), `Lobbies` (rooms across servers, hops), `StandInPeer` (Studio's second server), `Services/RoomIndex` (the `FtggRooms` list); shared `Listing` (its pure part).
+- Studio test hooks on `game.ServerScriptService.Lobby`: `StandInFail` = `"reserve"` | `"teleport"` | `"player"` | `"hop"` in a playtest's server; `StandInLaunch` = `"room=PEERP"` (set in Edit before Play) for an invite's launch data.

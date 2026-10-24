@@ -15,10 +15,13 @@ local getMaps = remotes:WaitForChild("GetMaps") :: RemoteFunction
 Net.view = nil :: any
 Net.standIn = nil :: any -- { matchId, mapId, endsAt } while in the Studio stand-in match
 Net.maps = nil :: any -- { { id, name, starts, preview } } once loaded
+Net.hop = nil :: any -- { roomName } while moving to a room on another lobby server (L-15)
 
 local viewListeners: { (any) -> () } = {}
 local toastListeners: { (string, string) -> () } = {}
 local standInListeners: { (any) -> () } = {}
+local hopListeners: { (any) -> () } = {}
+local passwordListeners: { (string, string) -> () } = {}
 
 function Net.onView(f: (any) -> ())
 	table.insert(viewListeners, f)
@@ -33,6 +36,22 @@ end
 
 function Net.onStandIn(f: (any) -> ())
 	table.insert(standInListeners, f)
+end
+
+function Net.onHop(f: (any) -> ())
+	table.insert(hopListeners, f)
+end
+
+-- An invite to a room with a password: ask for it (roomId, room name).
+function Net.onAskPassword(f: (string, string) -> ())
+	table.insert(passwordListeners, f)
+end
+
+-- A toast from the client itself (shown like the server's).
+function Net.toast(text: string, style: string?)
+	for _, f in toastListeners do
+		task.spawn(f, text, style or "info")
+	end
 end
 
 function Net.send(msg: any)
@@ -80,6 +99,15 @@ push.OnClientEvent:Connect(function(msg: any)
 		Net.standIn = if msg.active then { matchId = msg.matchId, mapId = msg.mapId, endsAt = os.clock() + (msg.seconds or 0) } else nil
 		for _, f in standInListeners do
 			task.spawn(f, Net.standIn)
+		end
+	elseif msg.kind == "hop" then
+		Net.hop = if msg.active then { roomName = tostring(msg.roomName) } else nil
+		for _, f in hopListeners do
+			task.spawn(f, Net.hop)
+		end
+	elseif msg.kind == "askPassword" and type(msg.roomId) == "string" then
+		for _, f in passwordListeners do
+			task.spawn(f, msg.roomId, tostring(msg.name))
 		end
 	end
 end)

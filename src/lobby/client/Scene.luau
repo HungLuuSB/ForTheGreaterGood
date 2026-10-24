@@ -47,6 +47,7 @@ fx.Parent = folder
 local enabled = true
 local parallax = true
 local covered = false -- something opaque covers the screen (key art): render and step nothing
+local away = false -- the unit showroom has the screen and the camera (L-18)
 local started = false
 
 type Unit = {
@@ -648,7 +649,7 @@ function Scene.start()
 	folder.Parent = workspace
 	spawnUnits()
 	RunService.RenderStepped:Connect(function(dt: number)
-		if covered then
+		if covered or away then
 			return
 		end
 		local now = os.clock()
@@ -663,7 +664,7 @@ end
 local EFFECTS = { "LobbyBloom", "LobbySunRays", "LobbyGrade", "LobbyFocus" }
 
 local function apply()
-	folder.Parent = if enabled and not covered then workspace else nil
+	folder.Parent = if enabled and not covered and not away then workspace else nil
 	-- nothing 3D shows under the art: skip drawing the world entirely (as
 	-- the match's loading screen does, C-184)
 	pcall(function()
@@ -690,6 +691,18 @@ end
 function Scene.setCovered(on: boolean)
 	covered = on
 	apply()
+end
+
+-- The unit showroom (L-18) takes the screen: the battle leaves the world
+-- and stops stepping, and the camera is the showroom's.
+function Scene.setAway(on: boolean)
+	away = on
+	apply()
+end
+
+-- The battle's evening light again (after the showroom's Day light).
+function Scene.relight()
+	light()
 end
 
 function Scene.setParallax(on: boolean)

@@ -12,6 +12,7 @@ local Config = require("../shared/Config")
 local Ctx = require("./Ctx")
 local Directory = require("./Directory")
 local MatchConfig = require("../shared/MatchConfig")
+local Places = require("./Places")
 local Returns = require("./Returns")
 local Rooms = require("../shared/Rooms")
 
@@ -44,10 +45,10 @@ local function fail(room: Rooms.Room, reason: string, keys: { string })
 	Ctx.publish()
 end
 
-local function reserve(): (string?, string?, string?)
+local function reserve(place: number): (string?, string?, string?)
 	local err: string? = nil
 	for attempt = 1, Config.TELEPORT_RETRIES do
-		local code, id, e = Ctx.teleport.reserve(Config.MATCH_PLACE_ID)
+		local code, id, e = Ctx.teleport.reserve(place)
 		if code and id then
 			return code, id, nil
 		end
@@ -58,6 +59,11 @@ local function reserve(): (string?, string?, string?)
 end
 
 local function run(room: Rooms.Room)
+	local place, noPlace = Places.match()
+	if place == nil then
+		fail(room, `no match place ({noPlace})`, {})
+		return
+	end
 	local matchId = HttpService:GenerateGUID(false)
 	local config = MatchConfig.build(room, matchId, rng:NextInteger(1, 2 ^ 31 - 1), os.time(), { placeId = game.PlaceId, jobId = game.JobId })
 	local bad = MatchConfig.validate(config)
@@ -65,7 +71,7 @@ local function run(room: Rooms.Room)
 		fail(room, `the config failed its own check ({bad})`, {})
 		return
 	end
-	local code, serverId, err = reserve()
+	local code, serverId, err = reserve(place)
 	if code == nil or serverId == nil then
 		fail(room, err or "no match server", {})
 		return
@@ -98,7 +104,7 @@ local function run(room: Rooms.Room)
 		return
 	end
 	-- away before the teleport: leaving this server keeps their seat
-	Rooms.setPhase(room, "match", matchId)
+	Rooms.setPhase(room, "match", matchId, os.time())
 	Rooms.setNotice(room, nil)
 	for _, p in going do
 		retries[p.UserId] = 0
@@ -106,7 +112,7 @@ local function run(room: Rooms.Room)
 	Ctx.publish()
 	local ok, terr = false, nil
 	for attempt = 1, Config.TELEPORT_RETRIES do
-		ok, terr = Ctx.teleport.teleport(going, Config.MATCH_PLACE_ID, code, { matchId = matchId })
+		ok, terr = Ctx.teleport.teleport(going, place, code, { matchId = matchId })
 		if ok then
 			break
 		end
@@ -165,9 +171,13 @@ function Launcher.rejoin(player: Player): string?
 	if not ok or type(access) ~= "table" or type(access.accessCode) ~= "string" then
 		return "The match can't be found"
 	end
+	local place = Places.match()
+	if place == nil then
+		return "No match place"
+	end
 	Rooms.setAway(room, player.UserId, true)
 	Ctx.publish()
-	local sent, err = Ctx.teleport.teleport({ player }, Config.MATCH_PLACE_ID, access.accessCode, { matchId = matchId })
+	local sent, err = Ctx.teleport.teleport({ player }, place, access.accessCode, { matchId = matchId })
 	if not sent then
 		Rooms.setAway(room, player.UserId, false)
 		Ctx.publish()

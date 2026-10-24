@@ -19,18 +19,33 @@
           },
           "KeyArt": {
             "$path": "build/lobby/src/client/UI/KeyArt.luau"
+          },
+          "IconAtlas": {
+            "$path": "build/lobby/src/client/UI/IconAtlas.luau"
           }
         },
         "Core": {
           "$className": "Folder",
           "Chart": {
             "$path": "build/lobby/src/client/Core/Chart.luau"
+          },
+          "PortraitStage": {
+            "$path": "build/lobby/src/client/Core/PortraitStage.luau"
+          },
+          "OptionTree": {
+            "$path": "build/lobby/src/client/Core/OptionTree.luau"
           }
         },
         "Render": {
           "$className": "Folder",
           "MeshModels": {
             "$path": "build/lobby/src/client/Render/MeshModels.luau"
+          },
+          "Models": {
+            "$path": "build/lobby/src/client/Render/Models.luau"
+          },
+          "BlockoutBuilder": {
+            "$path": "build/lobby/src/client/Render/BlockoutBuilder.luau"
           }
         }
       },

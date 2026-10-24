@@ -25,6 +25,14 @@ export type Entry = {
 	cheats: boolean, -- cheats were on: never counted in the totals
 }
 
+-- The lobby's own settings (L-16), saved on the profile so they follow the
+-- player to any lobby server and device.
+export type Settings = {
+	uiScale: number, -- Config.UI_SCALE_MIN..MAX, in 0.05 steps
+	scene: boolean, -- the battle in the background
+	parallax: boolean, -- the camera follows the mouse
+}
+
 export type Record = {
 	version: number,
 	created: number,
@@ -35,10 +43,45 @@ export type Record = {
 	abandoned: number,
 	factions: { [string]: number }, -- matches played per faction
 	history: { Entry }, -- newest first, up to Config.HISTORY_MAX
+	settings: Settings,
 }
 
+function Profile.defaultSettings(): Settings
+	return { uiScale = 1, scene = true, parallax = true }
+end
+
 function Profile.new(now: number): Record
-	return { version = Profile.VERSION, created = now, played = 0, wins = 0, losses = 0, draws = 0, abandoned = 0, factions = {}, history = {} }
+	return { version = Profile.VERSION, created = now, played = 0, wins = 0, losses = 0, draws = 0, abandoned = 0, factions = {}, history = {}, settings = Profile.defaultSettings() }
+end
+
+-- Settings from a client or the store: every field checked, unknown ones
+-- dropped, a bad or missing field keeps `base`'s value. Returns the clean
+-- settings and whether anything was refused.
+function Profile.cleanSettings(v: any, base: Settings): (Settings, boolean)
+	local out = table.clone(base)
+	if type(v) ~= "table" then
+		return out, v ~= nil
+	end
+	local refused = false
+	if v.uiScale ~= nil then
+		local x = v.uiScale
+		if type(x) == "number" and x == x and x >= Config.UI_SCALE_MIN - 1e-6 and x <= Config.UI_SCALE_MAX + 1e-6 then
+			out.uiScale = math.floor(x * 20 + 0.5) / 20
+		else
+			refused = true
+		end
+	end
+	for _, k in { "scene", "parallax" } do
+		local x = v[k]
+		if x ~= nil then
+			if type(x) == "boolean" then
+				(out :: any)[k] = x
+			else
+				refused = true
+			end
+		end
+	end
+	return out, refused
 end
 
 local function num(v: any): number
@@ -58,6 +101,7 @@ function Profile.migrate(data: any, now: number): Record
 			r.factions[f] = num(data.factions[f])
 		end
 	end
+	r.settings = (Profile.cleanSettings(data.settings, r.settings))
 	if type(data.history) == "table" then
 		for _, e in data.history do
 			if type(e) == "table" and type(e.matchId) == "string" and type(e.result) == "string" then

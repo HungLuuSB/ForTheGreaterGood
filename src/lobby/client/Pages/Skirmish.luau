@@ -1,5 +1,6 @@
 --!strict
--- Skirmish (BAR's scenario page): map cards on the left, the chosen map's
+-- Skirmish (BAR's scenario page): map cards on the left (greyscale, in
+-- color with a light outline when hovered or chosen), the chosen map's
 -- details on the right with your faction, the AI's level and faction, and
 -- Launch. Launch asks the server for a private room with one AI, started at
 -- once (the same start path as any room).
@@ -84,19 +85,27 @@ function Skirmish.new(frame: Frame, _router: any): any
 	launch.TextSize = 16
 
 	local tiles: { [string]: Frame } = {}
+	local images: { [string]: any } = {}
+	local hovered: string? = nil
+	local function paintTiles()
+		for id, c in tiles do
+			local lit = id == hovered or (choice.map and choice.map.id == id)
+			images[id].setGrey(not lit)
+			local s = c:FindFirstChildOfClass("UIStroke")
+			if s then
+				local chosen = choice.map and choice.map.id == id
+				s.Color = if chosen then Kit.COLOR.accent elseif lit then Color3.new(1, 1, 1) else Kit.COLOR.border
+				s.Transparency = if chosen then 0.1 elseif lit then 0.4 else 0.85
+			end
+		end
+	end
 	local function select(m: any)
 		choice.map = m
 		name.Text = m.name
 		facts.Text = `{m.starts} starts · {m.preview.cells[1]} × {m.preview.cells[2]} cells`
 		note.Text = NOTES[m.id] or ""
 		preview.set(m)
-		for id, c in tiles do
-			local s = c:FindFirstChildOfClass("UIStroke")
-			if s then
-				s.Color = if id == m.id then Kit.COLOR.accent else Kit.COLOR.border
-				s.Transparency = if id == m.id then 0.1 else 0.85
-			end
-		end
+		paintTiles()
 	end
 
 	local built = false
@@ -115,7 +124,9 @@ function Skirmish.new(frame: Frame, _router: any): any
 			Ui.corner(tile, 8)
 			Ui.stroke(tile, 0.85)
 			local img = MapImage.new(tile, false, true)
+			img.setGrey(true)
 			img.set(m)
+			images[m.id] = img
 			local fade = Ui.frame(tile, "Fade", UDim2.new(1, 0, 0, 60), UDim2.new(0, 0, 1, -60))
 			fade.BackgroundColor3 = Color3.new(0, 0, 0)
 			fade.BackgroundTransparency = 0
@@ -142,6 +153,16 @@ function Skirmish.new(frame: Frame, _router: any): any
 			hit.Parent = tile
 			hit.MouseButton1Click:Connect(function()
 				select(m)
+			end)
+			hit.MouseEnter:Connect(function()
+				hovered = m.id
+				paintTiles()
+			end)
+			hit.MouseLeave:Connect(function()
+				if hovered == m.id then
+					hovered = nil
+				end
+				paintTiles()
 			end)
 			tiles[m.id] = tile
 		end

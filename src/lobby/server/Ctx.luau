@@ -4,6 +4,7 @@
 
 local MatchStore = require("./Services/MatchStore")
 local ProfileStore = require("./Services/ProfileStore")
+local RoomIndex = require("./Services/RoomIndex")
 local Social = require("./Services/Social")
 local Teleport = require("./Services/Teleport")
 local Rooms = require("../shared/Rooms")
@@ -13,6 +14,7 @@ export type Ctx = {
 	store: MatchStore.Store,
 	teleport: Teleport.Teleport,
 	profiles: ProfileStore.Store,
+	index: RoomIndex.Index, -- the lobby servers' rooms (L-15)
 	social: Social.Social,
 	maps: { Rooms.MapInfo },
 	-- something visible changed: resend views (all players, or one)

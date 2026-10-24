@@ -4,8 +4,9 @@
 -- hands the players to the in-process stand-in match (StandInMatch), which
 -- plays the match server's part of the contract. Failures can be staged in
 -- Studio with the attribute `StandInFail` on ServerScriptService.Lobby:
--- "reserve", "teleport" (every attempt throws) or "player" (one player's
--- teleport fails, as TeleportInitFailed reports it).
+-- "reserve", "teleport" (every attempt throws), "player" (one player's
+-- teleport fails, as TeleportInitFailed reports it) or "hop" (a move to a
+-- room on another lobby server fails, L-15).
 
 local TeleportService = game:GetService("TeleportService")
 
@@ -15,6 +16,8 @@ export type Teleport = {
 	kind: string, -- "teleportservice" | "stand-in"
 	reserve: (placeId: number) -> (string?, string?, string?), -- accessCode, privateServerId, error
 	teleport: (players: { Player }, placeId: number, accessCode: string, data: any) -> (boolean, string?),
+	-- to a running public server of a place (another lobby server, L-15)
+	toServer: (players: { Player }, placeId: number, jobId: string, data: any) -> (boolean, string?),
 	onFailed: (callback: Failure) -> (),
 }
 
@@ -47,14 +50,24 @@ function Teleport.real(): Teleport
 			end)
 			return ok, if ok then nil else tostring(err)
 		end,
+		toServer = function(players: { Player }, placeId: number, jobId: string, data: any)
+			local options = Instance.new("TeleportOptions")
+			options.ServerInstanceId = jobId
+			options:SetTeleportData(data)
+			local ok, err = pcall(function()
+				TeleportService:TeleportAsync(placeId, players, options)
+			end)
+			return ok, if ok then nil else tostring(err)
+		end,
 		onFailed = function(callback: Failure)
 			table.insert(callbacks, callback)
 		end,
 	}
 end
 
--- `start(privateServerId, players, data)` is the stand-in match's entry.
-function Teleport.standIn(start: (string, { Player }, any) -> (), flags: Instance): Teleport
+-- `start(privateServerId, players, data)` is the stand-in match's entry;
+-- `hop(jobId, players, data)` the stand-in peer lobby server's (L-15).
+function Teleport.standIn(start: (string, { Player }, any) -> (), flags: Instance, hop: (string, { Player }, any) -> ()): Teleport
 	local callbacks: { Failure } = {}
 	local reserved = 0
 	return {
@@ -80,6 +93,18 @@ function Teleport.standIn(start: (string, { Player }, any) -> (), flags: Instanc
 			end
 			local id = string.gsub(accessCode, "code", "server")
 			task.spawn(start, id, going, data)
+			return true, nil
+		end,
+		toServer = function(players: { Player }, _placeId: number, jobId: string, data: any)
+			if flags:GetAttribute("StandInFail") == "hop" then
+				for _, p in players do
+					for _, cb in callbacks do
+						task.spawn(cb, p, "GameFull: staged in Studio")
+					end
+				end
+				return true, nil -- TeleportAsync returns; the failure comes as TeleportInitFailed
+			end
+			task.spawn(hop, jobId, table.clone(players), data)
 			return true, nil
 		end,
 		onFailed = function(callback: Failure)

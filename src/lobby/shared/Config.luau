@@ -7,10 +7,14 @@ local Match = require("@shared/Match/MatchConfig")
 
 local Config = {}
 
--- The match place (the FTGG main game). The lobby and the match place must
--- be places of the same experience: reserved servers, MemoryStore and
--- DataStores are per experience.
-Config.MATCH_PLACE_ID = 89435699207932
+-- The match place: the one setting to change per experience (L-14). The
+-- lobby and the match place must be places of the same experience
+-- (reserved servers, MemoryStore and DataStores are per experience). 0 finds
+-- it at server start: the experience's only other place, or the one whose
+-- name contains "match" (server/Places.luau). The lobby's own place ID is
+-- never set: it is game.PlaceId, and match configs carry it for the return.
+-- Before the playtest experience, the main game was 89435699207932.
+Config.MATCH_PLACE_ID = 0
 
 -- The match contract's version, enums, limits and palette are shared with
 -- the match place (@shared/Match/MatchConfig, S-145).
@@ -63,6 +67,19 @@ Config.RESULT_TTL = 3 * 24 * 3600 -- result/<id>
 Config.HISTORY_MAX = 50
 Config.PROFILE_STORE = "FtggProfiles"
 Config.MATCH_MAP = "FtggMatch" -- the MemoryStore HashMap
+
+-- Rooms across lobby servers (L-15): each server's rooms in the MemoryStore
+-- sorted map ROOM_LIST, one entry per server.
+Config.ROOM_LIST = "FtggRooms"
+Config.LIST_EVERY = 15 -- seconds between a server's entry writes (sooner after a change)
+Config.LIST_MIN_GAP = 3 -- seconds between two writes, however busy
+Config.LIST_READ_EVERY = 10 -- seconds between reads of the other servers' entries
+Config.LIST_TTL = 60 -- an entry's expiry: a server silent this long is gone
+Config.HOP_TTL = 300 -- hop/<userId>: the room a player is moving to on another server
+
+-- Lobby settings saved on the profile (L-16).
+Config.UI_SCALE_MIN = 0.75
+Config.UI_SCALE_MAX = 1.25
 
 -- Studio stand-in match (L-6): how long the in-process match runs.
 Config.STAND_IN_SECONDS = 20
