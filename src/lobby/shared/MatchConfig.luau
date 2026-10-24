@@ -22,10 +22,10 @@ MatchConfig.OUTCOMES = Shared.OUTCOMES
 
 export type Lobby = { placeId: number, jobId: string }
 
--- The config for a room that passed Rooms.checkStart. Sim player IDs follow
--- the map's starts: in Teams, ally teams sit together (team 1's players
--- first), since named 2v2 maps put players 1-2 and 3-4 on the same side;
--- ally teams are renumbered 1..n in team order.
+-- The config for a room that passed Rooms.checkStart. In Teams, ally teams
+-- sit together (team 1's players first) and are renumbered 1..n in team
+-- order. Every player's `start` is 0: starts are picked in the match's
+-- pre-game (S-171; the map's starts are only hints).
 function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now: number, lobby: Lobby): MatchConfig
 	local order: { number } = {}
 	for i in room.slots do
@@ -65,7 +65,7 @@ function MatchConfig.build(room: Rooms.Room, matchId: string, seed: number, now:
 		end
 		table.insert(players, {
 			id = id,
-			start = id,
+			start = 0,
 			faction = s.faction,
 			allyTeam = ally,
 			color = s.color,

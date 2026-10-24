@@ -17,7 +17,6 @@ local TextChatService = game:GetService("TextChatService")
 local Config = require("../../shared/Config")
 local Listing = require("../../shared/Listing")
 local MapImage = require("../MapImage")
-local MatchConfig = require("../../shared/MatchConfig")
 local Net = require("../Net")
 local Ui = require("../Ui")
 local Browser = require("./Browser")
@@ -53,16 +52,12 @@ local function slotOf(room: any, user: number): number?
 	return nil
 end
 
--- Start colors as the match will seat them (MatchConfig's order).
-local function startColors(room: any): { [number]: Color3 }
-	local ok, c = pcall(MatchConfig.build, room, "preview", 0, 0, { placeId = 0, jobId = "" })
-	local out = {}
-	if ok then
-		for _, p in c.players do
-			out[p.start] = Ui.color(p.color)
-		end
-	end
-	return out
+-- How many teams the room's map allows (its starts, at most
+-- MAX_ALLY_TEAMS): starts are picked in the match's pre-game (S-171), so a
+-- map's starts cap the sides, not the players.
+local function sidesFor(room: any): number
+	local map = Net.map(room.settings.mapId)
+	return math.min(Config.MAX_ALLY_TEAMS, if map then map.starts else Config.MAX_ALLY_TEAMS)
 end
 
 -- The seat editor (a small modal).
@@ -83,7 +78,7 @@ local function editSeat(gui: Instance, index: number)
 	end
 	local m = memberOf(room, s.user)
 	local title = if s.kind == "ai" then "AI player" elseif mine then "Your seat" else (if m then m.name else "Player")
-	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 400 else 330))
+	local p, close = Browser.dialog(gui, title, Vector2.new(460, if s.kind == "ai" then 430 else 360))
 	Kit.list(p.content, Kit.SPACE.s)
 	local function send(fields: any)
 		local msg = table.clone(fields)
@@ -101,20 +96,22 @@ local function editSeat(gui: Instance, index: number)
 		end, 90)
 		if room.settings.mode == "TEAM" then
 			local teams = {}
-			for t = 1, Config.MAX_ALLY_TEAMS do
-				table.insert(teams, { tostring(t), `Team {t}` })
+			local sides = sidesFor(room)
+			for t = 1, sides do
+				table.insert(teams, { tostring(t), if sides > 4 then tostring(t) else `Team {t}` })
 			end
 			Kit.segmented(Kit.row(p.content, "Team", 2), teams, tostring(s.team), function(v)
 				send({ team = tonumber(v) })
-			end, 62)
+			end, if sides > 4 then 30 else 62)
 		end
 		if s.kind == "ai" then
 			Kit.segmented(Kit.row(p.content, "Difficulty", 3), options(Config.LEVELS), s.level, function(v)
 				send({ level = v })
 			end, 80)
 		end
-		local colorRow = Kit.row(p.content, "Color", 4, 64)
-		local wrap = Ui.frame(colorRow, "Colors", UDim2.fromOffset(6 * 30, 58))
+		local colorRows = math.ceil(#Config.COLORS / 6)
+		local colorRow = Kit.row(p.content, "Color", 4, colorRows * 30 + 4)
+		local wrap = Ui.frame(colorRow, "Colors", UDim2.fromOffset(6 * 30, colorRows * 30))
 		local gl = Instance.new("UIGridLayout")
 		gl.CellSize = UDim2.fromOffset(24, 24)
 		gl.CellPadding = UDim2.fromOffset(6, 6)
@@ -515,7 +512,8 @@ function Room.new(frame: Frame, _router: any): any
 				table.insert(used[s.team], i)
 				top = math.max(top, s.team)
 			end
-			top = math.min(Config.MAX_ALLY_TEAMS, top + (if top < Config.MAX_ALLY_TEAMS then 1 else 0))
+			local sides = sidesFor(room)
+			top = math.min(sides, top + (if top < sides then 1 else 0))
 			for team = 1, top do
 				local list = used[team] or {}
 				local buttons = {}
@@ -576,7 +574,7 @@ function Room.new(frame: Frame, _router: any): any
 
 		-- map
 		local map = Net.map(room.settings.mapId)
-		mapImage.set(map, startColors(room))
+		mapImage.set(map) -- the starts are hints: players pick theirs in the match
 
 		-- rules: BAR's rows, editable for the host while the room is open
 		Ui.clear(rules)
