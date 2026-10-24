@@ -4,7 +4,7 @@ Progress of the client stream: `src/client`, `src/shared/Defs/Blockouts/`, Studi
 
 Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.md).
 
-## Summary (2026-10-24, playtest logging, BAR settings, HUD after reference 3)
+## Summary (2026-10-24, playtest logging, BAR settings, HUD, watchdog run, facing arrow, bars under units)
 
 - **Live playtest logging (C-201):** the match place prints a `[Match]` line at each step of lobby → match → lobby: the config read (match id, map, mode, room, one line per seat), each player admitted or refused (with user id) and leaving, the start (who hadn't loaded), a heartbeat every 30 s, the result and when the store accepted it, and each teleport back (target, started or failed, fallback, retries). Failed store reads and writes warn per attempt and once more when they give up. The watchdog's WARN / INFO lines stay on.
 - **Settings in BAR's layout (C-202):** a search box across the top, Unfold all and Advanced switches, a sidebar with each section's sub-sections and the amber bar on the one in view, amber section headers with an underline, fold arrows with indented child rows (dimmed while their parent is off), right-aligned dark dropdowns, square-knob sliders and toggles, and the hovered option's help in the footer. The pieces are in the Kit (`Kit.options`, `Kit.search`, `Kit.header`, `Kit.fold`, `Kit.treeNav`, `Kit.helpFooter`) for the lobby. Screenshots: `debug_out/screens/c202_settings_*.jpg`.
@@ -12,6 +12,11 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `feee077` (main d6643d4 merged into the client; test_client 285, test 495, build passed)
 - Ready to merge: `8c74610` (C-201: [Match] playtest logging; src/roblox)
 - Ready to merge: `3265b0b` (C-202 settings rebuild + Studio fixes 3234fff, C-203 HUD; src/client and client specs; test_client 290, build passed)
+- **Watchdog run 1 for sim-A (C-204, request 65):** four Hard AI on Twin Lakes for 24 game minutes (peak 273 units): one tick over budget (Damage 96 ms when a player's army self-destructed), Pathing spikes 15–26 ms, Commands 2–4 ms over its 1 ms. The table is in request 65; raw lines in `debug_out/watchdog_2026-10-24.txt`. A new `watchdog` test profile runs it again after A's fixes. sim-A will also make radar terrain-cut (request 66) for reference 6.
+- **Own units off camera stay live (C-205, S-158):** health, build bars and factory queues keep moving when the camera is elsewhere.
+- **Factory facing (C-206, reference 7):** the placement ghost of a factory shows a green arrow on its exit side, and R shows "Buildings set to face East" over it; the ghost now turns the same way the built factory will (it was flipped for South and North). Screenshots: `debug_out/screens/c206_*.jpg`.
+- **Health bars under the unit (C-208, your request):** `debug_out/screens/c208_health_bars_under.jpg`.
+- Ready to merge: `196d8a7` (main f04d534 merged in 3d5fbf4, protocol 34; C-204 watchdog profile and speed fix (src/roblox), C-205, C-206, C-208; test 496, test_client 295, build passed)
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
