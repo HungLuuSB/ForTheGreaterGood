@@ -517,6 +517,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `91fabf0` (shield hit patches v2, smaller and dimmer: new `hitCap` mesh and `hit` flipbook, `shieldEnergy.sizes.hitGlow` 1.6; `assets/fx/shield/waves/`, manifest, fx.md).
 - Ready to merge: `05c4622` (Aegis launcher v2, six visible upright canisters, status `review`: mesh, wreck, blockout muzzle, manifest, MeshMaterials).
 - Ready to merge: `1a685cd` (removes the manifest's `shieldColumn` / `shieldWave`, their validators and spec, fx.md's superseded sections, and with `f899384` their frozen data; the client reads `shieldEnergy` since C-187).
+- Ready to merge: `961fd00` (shield hits v3: 16-frame flipbook, `timing.hitLife` 0.42; `hexGrid` out of the manifest, the idle honeycomb is off; validator, fx.md, ShieldPreview).
 
 ## Requests
 
