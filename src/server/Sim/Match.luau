@@ -25,25 +25,24 @@ local Types = require("./Types")
 
 local Match = {}
 
-Match.MAX_FFA_PLAYERS = 8
-Match.MAX_ALLY_TEAMS = 4
-Match.MAX_TEAM_SIZE = 4
+Match.MAX_FFA_PLAYERS = 16 -- (S-169, the user: 16 players; was 8)
+Match.MAX_ALLY_TEAMS = 8 -- sides in TEAM mode (S-169; was 4)
+Match.MAX_TEAM_SIZE = 16 -- any size of side, within MAX_PLAYERS (S-169; was 4)
+Match.MAX_PLAYERS = 16
 
 local COMMANDER = Categories.Bit.COMMANDER
 
--- Guide 16.4: 300 per player in 1v1 down to 150 in an 8-player FFA.
-function Match.defaultCap(playerCount: number): number
-	return math.clamp(300 - 25 * (playerCount - 2), 150, 300)
-end
-
 -- Checks a match config against the players; errors with a clear message.
--- Returns the unit cap to use.
+-- Returns the unit cap to use (0 = none).
 function Match.validate(config: MatchState.Config, players: { [number]: Types.Player }, order: { number }): number
 	if config.mode ~= "FFA" and config.mode ~= "TEAM" then
 		error(`Match: mode must be "FFA" or "TEAM", got {tostring(config.mode)}`, 3)
 	end
 	if config.win ~= "COMMAND_ENDS" and config.win ~= "ANNIHILATION" then
 		error(`Match: win must be "COMMAND_ENDS" or "ANNIHILATION", got {tostring(config.win)}`, 3)
+	end
+	if #order > Match.MAX_PLAYERS then
+		error(`Match: at most {Match.MAX_PLAYERS} players, got {#order}`, 3)
 	end
 	local sizes: { [number]: number } = {}
 	local allyCount = 0
@@ -80,9 +79,11 @@ function Match.validate(config: MatchState.Config, players: { [number]: Types.Pl
 			error(`Match: ai level must be "easy", "normal" or "hard", got {tostring(level)}`, 3)
 		end
 	end
-	local cap = config.unitCap or Match.defaultCap(#order)
-	if cap ~= math.floor(cap) or cap < 1 or cap > 65535 then
-		error(`Match: unitCap must be an integer in 1..65535, got {cap}`, 3)
+	-- no unit cap unless the config sets one (S-170, the user: remove the
+	-- in-game limit; it was clamp(300 - 25 × (players - 2), 150, 300))
+	local cap = config.unitCap or 0
+	if cap ~= math.floor(cap) or cap < 0 or cap > 65535 then
+		error(`Match: unitCap must be an integer in 0..65535 (0 = none), got {cap}`, 3)
 	end
 	return cap
 end

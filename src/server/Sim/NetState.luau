@@ -34,6 +34,9 @@ export type PlayerNet = {
 	wrecksSent: { [number]: boolean }, -- wreck IDs the client was sent a WRECK for (S-26)
 	wreckList: { number }, -- the same, in the order they were sent
 	sentWreckState: { [number]: number }, -- sent wrecks → supply × 256 + resurrect progress (0..255) last sent (S-168)
+	sentPregame: { [number]: number }, -- players → their PREGAME state last sent (S-169)
+	sentPrebuild: { [number]: string }, -- players (self, allies) → their pre-game queue last sent
+	sentCountdown: number?, -- the COUNTDOWN seconds last sent (nil: none running)
 	wreckVersion: number, -- the ally team's wreck knowledge version last compared
 }
 
@@ -96,6 +99,9 @@ function NetState.viewer(spectator: boolean): PlayerNet
 		wrecksSent = {},
 		wreckList = {},
 		sentWreckState = {},
+		sentPregame = {},
+		sentPrebuild = {},
+		sentCountdown = nil,
 		wreckVersion = -1,
 	}
 end

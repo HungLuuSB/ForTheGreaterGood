@@ -111,6 +111,9 @@ export type View = {
 	shields: { [number]: { charge: number, flags: number } }, -- SHIELD records by generator (S-79)
 	idle: { [number]: boolean }, -- own builders / factories reported idle (S-136)
 	ownStatus: { [number]: { health: number, build: number, queueHead: number, queueProgress: number, queueCount: number } }, -- own units off camera, from OWN_STATUS (S-158)
+	pregame: { [number]: { flags: number, x: number?, z: number? } }, -- players' pre-game state, from PREGAME (S-169)
+	prebuilds: { [number]: { { defIndex: number, x: number, z: number, facing: number } } }, -- from PREBUILD
+	countdown: { number }, -- every COUNTDOWN value received, in order
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
 	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
@@ -146,6 +149,9 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		shields = {},
 		idle = {},
 		ownStatus = {},
+		pregame = {},
+		prebuilds = {},
+		countdown = {},
 		strategicTick = -1,
 		received = {},
 		log = {},
@@ -379,6 +385,25 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				local x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
 				assert(view.wrecks[e.wreckId :: number] == nil, `WRECK {e.wreckId} the client already has`)
 				view.wrecks[e.wreckId :: number] = { defIndex = e.defIndex :: number, x = x, z = z, heading = e.heading :: number, supply = e.supply :: number, fullSupply = e.fullSupply :: number, rez = 0 }
+				continue
+			elseif kind == EK.PREGAME then
+				local picked = bit32.band(e.pregameFlags :: number, Schema.PregameFlag.PICKED) ~= 0
+				local x, z = nil, nil
+				if picked then
+					x, z = g:decode(e.cell :: number, e.offX :: number, e.offZ :: number)
+				end
+				view.pregame[e.player :: number] = { flags = e.pregameFlags :: number, x = x, z = z }
+				continue
+			elseif kind == EK.PREBUILD then
+				local list = {}
+				for _, b in e.builds :: { any } do
+					local x, z = g:decode(b.cell, b.offX, b.offZ)
+					table.insert(list, { defIndex = b.defIndex, x = x, z = z, facing = b.facing })
+				end
+				view.prebuilds[e.player :: number] = list
+				continue
+			elseif kind == EK.COUNTDOWN then
+				table.insert(view.countdown, e.seconds :: number)
 				continue
 			elseif kind == EK.WRECK_STATE then
 				local wreck = view.wrecks[e.wreckId :: number]
