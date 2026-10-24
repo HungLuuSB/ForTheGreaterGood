@@ -27,7 +27,7 @@ Textures:
   cells (swap them every few frames for the flicker).
 - wave_line_a / _b / _c (Beam): the wave's thin crackling leading line, a
   zig-zag of short straight strokes; swap the variants for the crackle.
-- hit_1 .. hit_8 (the HitCap mesh's TextureID, a flipbook): a patch of
+- hit_1 .. hit_16 (a Decal flipbook on the HitCap mesh): a patch of
   honeycomb cells lit round the impact and a bright ring spreading outward,
   fading; planar over the cap (2 sin 0.28 = 0.553 R across), cells 0.147 R.
 - field: the dome's faint pattern for the ForceField material.
@@ -58,6 +58,7 @@ import lib  # noqa: E402
 OUT = os.path.join(HERE, "export")
 HEX = 1 / 0.147  # hex units per R: one unit = the cells' width across the flats (the mock-up's sc = 1.7 at R = 4)
 BANDS = 20
+HIT_FRAMES = 16  # 8 at first; more frames read crisper at the faster spread (hitLife 0.42 s)
 CAP = 0.28  # HitCap half-angle, radians (0.46 at first; the user: the hit patches were too much)
 GRID_R, GRID_W = 1.004, 0.0045
 
@@ -178,7 +179,7 @@ def tex_wave_line(seed, w=64, h=512):
     return np.clip(a, 0, 1)
 
 
-def tex_hit(k, n=8, w=256, h=256):
+def tex_hit(k, n=16, w=256, h=256):
     """Frame k of n: the mock-up's hit glow over the cap's planar UVs."""
     U, V = grid(w, h)
     half = math.sin(CAP)
@@ -313,8 +314,8 @@ def main():
     for s, tag in zip((11, 12, 13), "abc"):
         textures[f"wave_glow_{tag}"] = tex_wave_glow(s)
         textures[f"wave_line_{tag}"] = tex_wave_line(s + 20)
-    for k in range(8):
-        textures[f"hit_{k + 1}"] = tex_hit(k)
+    for k in range(HIT_FRAMES):
+        textures[f"hit_{k + 1}"] = tex_hit(k, HIT_FRAMES)
     for name, a in textures.items():
         save_png(name, a)
 
@@ -334,6 +335,7 @@ def main():
         parts[o.name] = {"center": center, "size": size, "triangles": lib.tris(o)}
     lib.export_fbx(objs, os.path.join(OUT, "energy.fbx"))
     lib.export_fbx([o for o in objs if o.name == "HitCap"], os.path.join(OUT, "hitcap.fbx"))  # the cap alone, for re-uploading it
+    # HexGrid stays in energy.fbx but is out of the manifest: the user turned the idle honeycomb off (cells only in the hits)
     lib.write_json(os.path.join(OUT, "energy.json"), {
         "id": "shield_energy", "bands": BANDS, "bandDegrees": 90 / BANDS, "capHalfAngle": CAP,
         "hexAcrossFlats": 0.147, "parts": parts, "textures": sorted(textures),

@@ -101,7 +101,7 @@ end
 
 -- Problems with the manifest's `shieldEnergy` entry (fx.md "Shield energy"):
 -- every texture an asset, the bands stepping evenly from the apex (0) to the
--- ground (90) without gaps, the grid and hit cap meshes, and the values the
+-- ground (90) without gaps, the hit cap mesh and flipbook, and the values the
 -- client needs.
 function Mesh.validateShieldEnergy(e: any): { string }
 	local problems: { string } = {}
@@ -117,7 +117,8 @@ function Mesh.validateShieldEnergy(e: any): { string }
 			bad(`texture {k} asset ID missing`)
 		end
 	end
-	for k, n in { waveGlow = 3, waveLine = 3, hit = 8 } do
+	local hitFrames = type(e.counts) == "table" and e.counts.hitFrames or 0
+	for k, n in { waveGlow = 3, waveLine = 3, hit = hitFrames } do
 		if type(tex[k]) ~= "table" or #tex[k] ~= n then
 			bad(`textures.{k} must list {n} images`)
 			continue
@@ -144,7 +145,7 @@ function Mesh.validateShieldEnergy(e: any): { string }
 			end
 		end
 	end
-	for _, k in { "hexGrid", "hitCap" } do
+	for _, k in { "hitCap" } do
 		local p = e[k]
 		if type(p) ~= "table" or not isAssetId(p.mesh) or not isVec3(p.center) or not isVec3(p.size) then
 			bad(`{k} needs a mesh, center and size`)
