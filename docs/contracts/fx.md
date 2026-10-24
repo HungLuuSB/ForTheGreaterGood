@@ -181,7 +181,7 @@ The flares and the core use the core color, the embers the glow color. Check the
 
 ## Shield (Order deployable shield)
 
-The look (shield v4, approved by the user 2026-10-24): "Shield energy" below. It replaces the energy column and dome waves ("Energy column", "Dome waves", kept in the manifest as `shieldColumn` / `shieldWave` only until the client has moved to `shieldEnergy`), the thin rings and the light beam. `R` below is the dome radius in studs.
+The look (shield v4, approved by the user 2026-10-24): "Shield energy" below. It replaces the energy column and dome waves of the first redesign (removed from the manifest once the client moved to `shieldEnergy`, C-187), the thin rings and the light beam. `R` below is the dome radius in studs.
 
 ### Meshes (`ReplicatedStorage.FX.Shield`)
 
@@ -226,29 +226,6 @@ Scattered patches of hex cells laid over the dome (the user: "spread out like li
 - **Texture:** `texture`, one tile of pointy-top hex outlines (white RGB, the pattern in alpha), 12 × 10 cells per tile, only small seeded blobs of cells drawn, about 22% of the cells (the review: fewer, smaller patches; each blob 1–3 cells across, full in the middle, fading at its edge, with a faint fill inside the cells). The bands' UVs tile it evenly over the dome (azimuthal equidistant from the top), the cells 5 studs across at the default radius 120 (they scale with the dome). The pole pinches the tiling slightly (the azimuthal projection); at 55° and 220 it reads as one more patch.
 - **Build each band** as a MeshPart: `MeshId` = `bands[i].mesh`, `Size` = `bands[i].size` × R, `CFrame` = dome base center × `CFrame.new(0, bands[i].center[2] × R, 0)` (the same base center as `Dome`), `Anchored`, no collisions, queries, touches or shadows. Add a `SurfaceAppearance` with `ColorMap` = `texture`, `AlphaMode = Transparency` and `Color` = the tint (team color or the Order cyan). Set `Transparency = 1 − bands[i].opacity × charge` (charge 0..1); keep the cap at most 0.99 opaque if a fully opaque part sorts badly against the ForceField dome.
 - **No glow parts:** it reads through the tint; checked at 55° (full and 35% charge) and from the side: `honeycomb_55_full.jpg`, `honeycomb_55_charge35.jpg`, `honeycomb_25_side.jpg` in `debug_out/screens/`. Reference: "FTGG Art", `Workspace.ShieldHoneycomb` (R = 120, at (0, 0, 3000)).
-
-### Energy column (superseded by "Shield energy")
-
-Replaces the thin beam (`beam` texture, one `Beam`). The user: a column of vortex energy rising from the emitter to the top of the dome, channelling energy into the shield; it gets thinner as the shield weakens and collapses when the shield goes down. In the manifest as `Meshes.shieldColumn` (check with `Mesh.validateShieldColumn`); textures built by `assets/fx/shield/waves/build.py`, IDs in `assets/fx/shield/waves/roblox_assets.json`.
-
-- **Three `Beam`s** from the generator's `beam` attachment (`Attachment0`) to an attachment at the dome's top (`Attachment1`), all with `FaceCamera = true`, `TextureMode = Wrap` (the textures tile along the beam, so a tall column doesn't stretch them), `LightEmission = 1`, `Segments` about 20, `Color` = the tint (team color or the Order cyan), drawn in this order (`ZOffset` 1, 2, 3): `glow` (a wide soft halo), `swirl` (helical streaks twisting one way, the near side of the vortex, with the far side faint; scrolls up fast), `core` (a bright thin line).
-- **Per layer** (`shieldColumn.core / .swirl / .glow`): `texture`, `width0` (at the emitter) and `width1` (at the top) and `textureLength`, all as fractions of the dome radius R (× R in studs), `textureSpeed`, `brightness`, `transparency`.
-- **Strength:** multiply every width by `weakest + (1 − weakest) × strength` (the column thins as the shield weakens; `weakest` = 0.2).
-- **Deploy:** the core shoots up from the emitter to the top in `deploy.shoot` seconds (grow `Attachment1` from the emitter up, or the core's width from a thread), then the swirl and glow widen from 0 to full in `deploy.thicken`.
-- **Collapse** (the shield goes down): every width narrows to about 5% in `collapse.pinch` seconds, then one bright flash (`brightness` × 3, widths × 1.5) for `collapse.flash`, then the beams hide.
-- **Don't use the Glass material** on the dome: Roblox doesn't draw Beams (or particles) behind Glass.
-
-### Dome waves (superseded by "Shield energy")
-
-Replace the thin rings flowing down the dome (`RingThin` pool). The user: wide waves of energy rolling down the dome, not small circles. In the manifest as `Meshes.shieldWave` (check with `Mesh.validateShieldWave`), built by `assets/fx/shield/waves/build.py`.
-
-- **Bands:** the dome surface (radius 1.005, just over the honeycomb shell) cut into 16 bands whose centres step evenly from the top (0°) to the rim (90°), 6° apart; each band spans two steps (12°, 50% overlap with its neighbours; the first is clipped at the pole, the last at the rim). `bands[i]`: `mesh`, `centre` and `theta` (degrees from the top), `center` and `size` at radius 1. Build each as a MeshPart: `Size` = `size` × R, `CFrame` = the dome's base center × `CFrame.new(0, center[2] × R, 0)`, anchored, no collisions, queries, touches or shadows. 12,816 triangles for all 16.
-- **Texture** (`texture`): white, the pattern in alpha: U round the dome (4 repeats), V across the band from its top edge (0) to its lower edge (1): a broad hump of energy, brightest towards the lower (leading) side, soft above, faint filaments; alpha 0 at both edges, so overlapping bands sum without a seam. As with the shell, a `SurfaceAppearance` with `ColorMapContent` = `texture`, `AlphaMode = Transparency`, `Color` = the tint (it has to come from `ReplicatedStorage.MeshMaterials`, like `shieldShell`, since scripts can't set it).
-- **A wave** at polar angle θ (0 at the top, 90 at the rim): `x = θ / 6`, `i = floor(x)`, `f = x − i`; band `i + 1` shows with weight `1 − f`, band `i + 2` with weight `f` (the weights of different waves on one band add). `Transparency = 1 − weight × opacity × fade`, with `fade` easing in over the first 10° and out over the last 10°.
-- **Values** (`shieldWave`): `waves` at once (3, evenly spaced in time), `seconds` from the top to the rim at full strength (4.5; slower as the shield weakens, e.g. `seconds / max(0.3, strength)`), `opacity` at full strength (0.9; scale it with strength like the dome).
-- **What stays:** the dome, the bright edge, the ring at the foot of the dome, the swirl at the top (it reads as the column spreading into the dome), the floating specks and the hits. **What goes:** the thin beam and the `RingThin` flow.
-
-**Reference:** "FTGG Art", `Workspace.ShieldWaveReference` at (900, 0, −900): the Phalanx, R = 60, a white `SmoothPlastic` dome at 0.9 transparency, the three column Beams with the values above, three waves at 24°, 54° and 80°, tinted (150, 235, 255). Screenshots: `debug_out/screens/shield_waves_side.jpg`, `shield_waves_55.jpg`. A freshly uploaded texture can draw flat in Studio until its image is loaded once (an EditableImage of it, `ColorMapContent = Content.fromObject(image)`); the published IDs work as they are.
 
 ### Shield energy (v4, approved by the user 2026-10-24)
 

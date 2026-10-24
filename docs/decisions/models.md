@@ -288,6 +288,6 @@ The manifest lists it as `wreck` in the unit's entry (rig.md section 7).
 - **The honeycomb** is one mesh of even hex cells (the dual of a geodesic sphere), so the cells keep their size up to the apex.
 - **Hits** are a Decal flipbook on a transparent cap MeshPart.
 - **The reference module** `assets/fx/shield/waves/ShieldPreview.luau` holds every value; the manifest's `shieldEnergy` carries them for the client.
-- `shieldColumn` / `shieldWave` stay in the manifest, frozen in `assets/fx/shield/waves/legacy_v2/`, only until clients-B's `ShieldFx` moves to `shieldEnergy`.
+- `shieldColumn` / `shieldWave` were removed from the manifest (and `assets/fx/shield/waves/legacy_v2/`) once clients-B's `ShieldFx` moved to `shieldEnergy` (C-187).
 
 **Why:** the user's v3 review: the apex flare was too big, the streaks looked like rain, the waves were missing, and the dome scaled up instead of forming from the apex. Their mock-up (`assets/reference/shield/shield_demo.html`) set the timings and shapes.

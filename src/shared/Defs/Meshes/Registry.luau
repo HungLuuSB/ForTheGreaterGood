@@ -52,44 +52,6 @@ export type ShieldShell = {
 	bands: { { name: string, mesh: string, opacity: number, theta: { number }, center: Vec3, size: Vec3 } },
 }
 
--- the shield's dome waves (fx.md "Dome waves"): bands of the dome, centres
--- evenly spaced from the top (0 degrees) to the rim (90), each spanning two
--- spacings; centre and size at dome radius 1. A wave between two centres
--- shows both bands weighted (1 - f, f).
-export type ShieldWave = {
-	status: string,
-	note: string?,
-	texture: string,
-	radius: number,
-	width: number,
-	waves: number,
-	seconds: number,
-	opacity: number,
-	bands: { { name: string, mesh: string, centre: number, theta: { number }, center: Vec3, size: Vec3 } },
-}
--- the shield's energy column (fx.md "Energy column"): three Beams from the
--- generator's `beam` attachment to the dome's top; widths and texture
--- lengths are fractions of the dome radius
-export type ColumnLayer = {
-	texture: string,
-	width0: number,
-	width1: number,
-	textureSpeed: number,
-	textureLength: number,
-	lightEmission: number,
-	brightness: number,
-	transparency: number,
-}
-export type ShieldColumn = {
-	status: string,
-	note: string?,
-	core: ColumnLayer,
-	swirl: ColumnLayer,
-	glow: ColumnLayer,
-	weakest: number,
-	deploy: { shoot: number, thicken: number },
-	collapse: { pinch: number, flash: number },
-}
 -- the shield's energy look v4 (fx.md "Shield energy"): textures, the 20
 -- raise/collapse bands, the honeycomb grid and the hit cap (center and size
 -- at dome radius 1, Roblox axes), timings in seconds, counts, sizes (fractions
@@ -128,7 +90,7 @@ export type KeyArt = {
 	layers: { { name: string, depth: number, images: { string } } },
 }
 
-local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot, shieldShell: ShieldShell, shieldWave: ShieldWave, shieldColumn: ShieldColumn, shieldEnergy: ShieldEnergy, keyArt: { [string]: KeyArt } } = {
+local manifest: { glowMask: string, textures: { [string]: string }, units: { [string]: Entry }, fx: { [string]: Entry }, beam: BeamShot, shieldShell: ShieldShell, shieldEnergy: ShieldEnergy, keyArt: { [string]: KeyArt } } = {
 	glowMask = "rbxassetid://101169341901946",
 	textures = {
 		heatShimmer = "rbxassetid://105647146631109",
@@ -830,49 +792,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 			title = "Volley",
 		},
 	},
-	shieldColumn = {
-		collapse = {
-			flash = 0.15,
-			pinch = 0.35,
-		},
-		core = {
-			brightness = 6,
-			lightEmission = 1,
-			texture = "rbxassetid://72593827340445",
-			textureLength = 0.1,
-			textureSpeed = 2.5,
-			transparency = 0,
-			width0 = 0.02,
-			width1 = 0.014,
-		},
-		deploy = {
-			shoot = 0.4,
-			thicken = 0.6,
-		},
-		glow = {
-			brightness = 2.5,
-			lightEmission = 1,
-			texture = "rbxassetid://75493024903042",
-			textureLength = 0.25,
-			textureSpeed = 0.6,
-			transparency = 0.35,
-			width0 = 0.16,
-			width1 = 0.12,
-		},
-		note = "superseded by shieldEnergy (the user approved v4 2026-10-24); kept until the client ports v4",
-		status = "review",
-		swirl = {
-			brightness = 4,
-			lightEmission = 1,
-			texture = "rbxassetid://80810982556945",
-			textureLength = 0.14,
-			textureSpeed = 7,
-			transparency = 0,
-			width0 = 0.08,
-			width1 = 0.06,
-		},
-		weakest = 0.2,
-	},
 	shieldEnergy = {
 		bands = {
 			{
@@ -1196,146 +1115,6 @@ local manifest: { glowMask: string, textures: { [string]: string }, units: { [st
 		refRadius = 120,
 		status = "review",
 		texture = "rbxassetid://77232194668072",
-	},
-	shieldWave = {
-		bands = {
-			{
-				center = { 0, 1.0022, 0 },
-				centre = 0,
-				mesh = "rbxassetid://104446069607297",
-				name = "wave_1",
-				size = { 0.2101, 0.0055, 0.2101 },
-				theta = { 0, 6 },
-			},
-			{
-				center = { 0, 0.994, 0 },
-				centre = 6,
-				mesh = "rbxassetid://103742965936446",
-				name = "wave_2",
-				size = { 0.4179, 0.022, 0.4179 },
-				theta = { 0, 12 },
-			},
-			{
-				center = { 0, 0.9777, 0 },
-				centre = 12,
-				mesh = "rbxassetid://129982328368873",
-				name = "wave_3",
-				size = { 0.6211, 0.0437, 0.6211 },
-				theta = { 6, 18 },
-			},
-			{
-				center = { 0, 0.9506, 0 },
-				centre = 18,
-				mesh = "rbxassetid://115498888583620",
-				name = "wave_4",
-				size = { 0.8175, 0.0649, 0.8175 },
-				theta = { 12, 24 },
-			},
-			{
-				center = { 0, 0.9131, 0 },
-				centre = 24,
-				mesh = "rbxassetid://103111624491589",
-				name = "wave_5",
-				size = { 1.005, 0.0855, 1.005 },
-				theta = { 18, 30 },
-			},
-			{
-				center = { 0, 0.8656, 0 },
-				centre = 30,
-				mesh = "rbxassetid://75097348011542",
-				name = "wave_6",
-				size = { 1.1814, 0.1051, 1.1814 },
-				theta = { 24, 36 },
-			},
-			{
-				center = { 0, 0.8086, 0 },
-				centre = 36,
-				mesh = "rbxassetid://96750377131812",
-				name = "wave_7",
-				size = { 1.345, 0.1235, 1.345 },
-				theta = { 30, 42 },
-			},
-			{
-				center = { 0, 0.7428, 0 },
-				centre = 42,
-				mesh = "rbxassetid://126072554682228",
-				name = "wave_8",
-				size = { 1.4937, 0.1406, 1.4937 },
-				theta = { 36, 48 },
-			},
-			{
-				center = { 0, 0.6688, 0 },
-				centre = 48,
-				mesh = "rbxassetid://118945865935405",
-				name = "wave_9",
-				size = { 1.6261, 0.1561, 1.6261 },
-				theta = { 42, 54 },
-			},
-			{
-				center = { 0, 0.5875, 0 },
-				centre = 54,
-				mesh = "rbxassetid://108166322291110",
-				name = "wave_10",
-				size = { 1.7407, 0.17, 1.7407 },
-				theta = { 48, 60 },
-			},
-			{
-				center = { 0, 0.4997, 0 },
-				centre = 60,
-				mesh = "rbxassetid://109490778765658",
-				name = "wave_11",
-				size = { 1.8362, 0.182, 1.8362 },
-				theta = { 54, 66 },
-			},
-			{
-				center = { 0, 0.4065, 0 },
-				centre = 66,
-				mesh = "rbxassetid://122559924511991",
-				name = "wave_12",
-				size = { 1.9116, 0.1919, 1.9116 },
-				theta = { 60, 72 },
-			},
-			{
-				center = { 0, 0.3089, 0 },
-				centre = 72,
-				mesh = "rbxassetid://79536633098428",
-				name = "wave_13",
-				size = { 1.9661, 0.1998, 1.9661 },
-				theta = { 66, 78 },
-			},
-			{
-				center = { 0, 0.2078, 0 },
-				centre = 78,
-				mesh = "rbxassetid://118972605427241",
-				name = "wave_14",
-				size = { 1.999, 0.2055, 1.999 },
-				theta = { 72, 84 },
-			},
-			{
-				center = { 0, 0.1045, 0 },
-				centre = 84,
-				mesh = "rbxassetid://92879051671712",
-				name = "wave_15",
-				size = { 2.01, 0.209, 2.01 },
-				theta = { 78, 90 },
-			},
-			{
-				center = { 0, 0.0525, 0 },
-				centre = 90,
-				mesh = "rbxassetid://83947794314513",
-				name = "wave_16",
-				size = { 2.01, 0.1051, 2.01 },
-				theta = { 84, 90 },
-			},
-		},
-		note = "superseded by shieldEnergy (the user approved v4 2026-10-24); kept until the client ports v4",
-		opacity = 0.9,
-		radius = 1.005,
-		seconds = 4.5,
-		status = "review",
-		texture = "rbxassetid://102592901781774",
-		waves = 3,
-		width = 12,
 	},
 	units = {
 		chs_airfield = {
