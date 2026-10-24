@@ -161,6 +161,23 @@ function ShieldDomes.forces(s: State, drawn: { { any } })
 	s.plumesShown = used
 end
 
+-- A dome's faction, for the energy look's tint (C-187): its generator's
+-- def when the client knows it, else the generator type with that dome
+-- radius (a remote dome carries no team or type).
+local function factionOf(world: World.World, id: number, radius: number): string?
+	local u = world.units[id]
+	local def = if u then World.def(world, u) else nil
+	if def and def.faction then
+		return def.faction
+	end
+	for _, d in world.defs.unitByIndex do
+		if d.shield and d.shield.radius == radius and d.faction then
+			return d.faction
+		end
+	end
+	return nil
+end
+
 -- Each frame, after Effects.update.
 function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx, renderer: UnitRenderer.Renderer)
 	if not ShieldFx.ready() then
@@ -196,7 +213,7 @@ function ShieldDomes.step(s: State, world: World.World, fx: Effects.Fx, renderer
 			if d == nil then
 				local y = sh.y or World.groundY(world, sh.x, sh.z)
 				local base = Vector3.new(sh.x, y, sh.z)
-				local f = ShieldFx.new(beamOf(model) or base, radius, nil, base)
+				local f = ShieldFx.new(beamOf(model) or base, radius, nil, base, factionOf(world, id, radius))
 				f:setStrength(sh.charge)
 				if up then
 					f:deploy(true) -- it was standing before it came into view

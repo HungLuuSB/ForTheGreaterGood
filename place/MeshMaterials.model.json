@@ -18,14 +18,6 @@
       }
     },
     {
-      "Name": "shieldWave",
-      "ClassName": "SurfaceAppearance",
-      "Properties": {
-        "AlphaMode": "Transparency",
-        "ColorMapContent": "rbxassetid://102592901781774"
-      }
-    },
-    {
       "Name": "chs_airfield",
       "ClassName": "SurfaceAppearance",
       "Properties": {
