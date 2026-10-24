@@ -44,6 +44,16 @@ return function(t: any)
 		t.expect(math.abs(sx) + math.abs(sz) > 0 and ex == 0 and ez == 0, "the shake eases out")
 	end)
 
+	t.test("muzzles are never flung, prefixed ones included", function()
+		-- Bulwark's laser muzzles are attachments too (models-C's Blockout rule)
+		local def = { pieces = { "base", "turret", "muzzle", "laser_muzzle1", "laser_muzzle2", "laser_muzzle3", "laser_drum" } }
+		for id = 1, 40 do
+			for _, p in Deaths.plan(id, def, 230, 0).pieces do
+				t.expect(p.name == "turret" or p.name == "laser_drum", `{p.name} is a jointed piece`)
+			end
+		end
+	end)
+
 	t.test("every death in a duel gets the plan its DEATH event calls for", function()
 		local sim = Sim.new({ seed = 7, players = { { id = 1, team = 1 }, { id = 2, team = 2 } }, mapId = "flat:48", scenario = "duel_test" })
 		local world = World.new(sim.defs)

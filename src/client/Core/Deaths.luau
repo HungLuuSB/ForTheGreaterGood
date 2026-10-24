@@ -24,8 +24,10 @@ Deaths.MAX_PIECES = 3
 export type Piece = { name: string, vx: number, vy: number, vz: number, spin: { number } } -- studs/s in the unit's frame, radians/s
 export type Plan = { kind: "shake" | "fling" | "crash", duration: number, wreck: boolean, pieces: { Piece } }
 
+-- muzzles are attachments, not parts to fling: `muzzle`, `muzzle2`, and
+-- prefixed ones like Bulwark's `laser_muzzle1` (models-C's Blockout rule)
 local function isAttachment(name: string): boolean
-	return string.match(name, "^muzzle%d*$") ~= nil
+	return string.match(name, "^muzzle%d*$") ~= nil or string.match(name, "^%a+_muzzle%d*$") ~= nil
 end
 
 -- The animation for a death of unit `id` (a def with `pieces`).
