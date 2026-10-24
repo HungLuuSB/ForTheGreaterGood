@@ -15,6 +15,10 @@
 -- seconds. Pixels hold a grey level and an alpha; `rgba` is the image's bytes (written by
 -- Render/FogBlanket) and `step` reports the rectangle of pixels it changed,
 -- so only those are uploaded. Pure Luau (C-7).
+-- The radar layer (C-207, Core/RadarFill): while shown, the team's radar
+-- coverage is a translucent green under the fog (lighter on its rings),
+-- in the same image, so the minimap shows it too; with fog of war shading
+-- off (`fogShown` false) the image holds the radar layer alone.
 
 local Vision = require("./Vision")
 
@@ -30,6 +34,8 @@ FogBlanket.LOOK = table.freeze({
 })
 FogBlanket.TINT = table.freeze({ 1, 1.02, 1.08 }) -- r, g, b multipliers on the grey (a faintly cool haze)
 FogBlanket.BUDGET = 3000 -- pixels faded per step at most: a huge change spreads over a few steps
+-- the radar layer: its colour, and its alpha on fill and on rings (RadarFill.FILL, RING)
+FogBlanket.RADAR = table.freeze({ r = 70, g = 225, b = 110, fill = 0.16, ring = 0.45 })
 
 local STATES = { FogBlanket.LOOK.visible, FogBlanket.LOOK.explored, FogBlanket.LOOK.never }
 local GREY = { STATES[1].grey, STATES[2].grey, STATES[3].grey }
@@ -54,15 +60,33 @@ export type Blanket = {
 	dirty: Rect?, -- changed since the last take
 	visionVersion: number,
 	stats: { fading: number, written: number },
+	radar: buffer?, -- RadarFill cells (0 none, 1 fill, 2 ring) per pixel, or nil: no radar layer
+	radarVersion: number, -- the layer's version last composited
+	fogShown: boolean, -- false: fog alpha left out (shading off), radar alone
 }
 
 local function writePixel(b: Blanket, i: number, grey: number, alpha: number)
 	local t = FogBlanket.TINT
 	local o = i * 4
-	buffer.writeu8(b.rgba, o, math.clamp(math.floor(grey * t[1] + 0.5), 0, 255))
-	buffer.writeu8(b.rgba, o + 1, math.clamp(math.floor(grey * t[2] + 0.5), 0, 255))
-	buffer.writeu8(b.rgba, o + 2, math.clamp(math.floor(grey * t[3] + 0.5), 0, 255))
-	buffer.writeu8(b.rgba, o + 3, math.clamp(math.floor(alpha * 255 + 0.5), 0, 255))
+	local fogR, fogG, fogB = grey * t[1], grey * t[2], grey * t[3]
+	local fa = if b.fogShown then alpha else 0
+	local radar = b.radar
+	local kind = if radar then buffer.readu8(radar, i) else 0
+	if kind ~= 0 then
+		-- the fog over the radar layer: "over" compositing
+		local R = FogBlanket.RADAR
+		local ra = if kind == 2 then R.ring else R.fill
+		local under = ra * (1 - fa)
+		local outA = fa + under
+		fogR = (fogR * fa + R.r * under) / outA
+		fogG = (fogG * fa + R.g * under) / outA
+		fogB = (fogB * fa + R.b * under) / outA
+		fa = outA
+	end
+	buffer.writeu8(b.rgba, o, math.clamp(math.floor(fogR + 0.5), 0, 255))
+	buffer.writeu8(b.rgba, o + 1, math.clamp(math.floor(fogG + 0.5), 0, 255))
+	buffer.writeu8(b.rgba, o + 2, math.clamp(math.floor(fogB + 0.5), 0, 255))
+	buffer.writeu8(b.rgba, o + 3, math.clamp(math.floor(fa * 255 + 0.5), 0, 255))
 end
 
 local function touch(b: Blanket, px: number, py: number)
@@ -96,6 +120,9 @@ function FogBlanket.new(cellsX: number, cellsZ: number, k: number): Blanket
 		dirty = { x = 0, y = 0, w = cellsX, h = cellsZ },
 		visionVersion = -1,
 		stats = { fading = 0, written = 0 },
+		radar = nil,
+		radarVersion = -1,
+		fogShown = true,
 	}
 	local never = FogBlanket.LOOK.never
 	buffer.fill(b.state, 0, NEVER)
@@ -252,6 +279,23 @@ function FogBlanket.step(b: Blanket, dt: number): Rect?
 		b.stats.written += r.w * r.h
 	end
 	return r
+end
+
+-- Sets the radar layer (`cells`: RadarFill's, `version` its change count;
+-- nil hides it) and whether the fog shows. Any change rewrites every pixel
+-- (the next `step` reports the whole image). Returns true if it changed.
+function FogBlanket.setOverlay(b: Blanket, cells: buffer?, version: number, fogShown: boolean): boolean
+	local v = if cells then version else -1
+	if cells == b.radar and v == b.radarVersion and fogShown == b.fogShown then
+		return false
+	end
+	b.radar, b.radarVersion, b.fogShown = cells, v, fogShown
+	local cur = b.cur
+	for i = 0, b.width * b.depth - 1 do
+		writePixel(b, i, buffer.readf32(cur, i * 8), buffer.readf32(cur, i * 8 + 4))
+	end
+	b.dirty = { x = 0, y = 0, w = b.width, h = b.depth }
+	return true
 end
 
 -- The bytes of rectangle `r` of the image, rows packed (for a partial upload).

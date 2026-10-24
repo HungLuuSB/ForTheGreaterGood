@@ -32,6 +32,7 @@ local Interp = require("./Core/Interp")
 local NetIn = require("./Core/NetIn")
 local PieceAnim = require("./Core/PieceAnim")
 local World = require("./Core/World")
+local RadarFill = require("./Core/RadarFill")
 local Hud = require("./Debug/Hud")
 local Controls = require("./Input/Controls")
 local Bars = require("./Core/Bars")
@@ -248,6 +249,8 @@ local iconTable = Icons.table(defs)
 local iconLayer = IconLayer.new()
 local healthBars = HealthBars.new()
 local fog = FogBlanket.new()
+local radarCircles: { RadarFill.Circle }? = nil -- the radar layer's circles, nil while hidden (C-207)
+local radarAt = 0
 local environment = Environment.new() -- ground beyond the map, ambient particles (C-102)
 local grade = Grade.new() -- colour grade: zoom easing, blast flashes, vignette (C-102)
 local glow = Glow.new() -- unit glow states and headlights (C-103)
@@ -1080,11 +1083,17 @@ RunService:BindToRenderStep("FtggClient", Enum.RenderPriority.Camera.Value + 1, 
 	mark("bars", t0)
 	t0 = os.clock()
 	-- fog of war (the blanket, C-100), radar / sonar contacts and ghosts (C-32); before `died` is cleared
-	FogBlanket.step(fog, world, dt, not (world.joined and world.me.player == 0))
+	-- the radar layer (C-207): looked up a few times a second
+	radarAt += dt
+	if radarAt >= 0.25 then
+		radarAt = 0
+		radarCircles = if world.joined and world.me.player ~= 0 then RadarFill.circles(world, api.state.placement, api.state.selection, missileView.enabled) else nil
+	end
+	FogBlanket.step(fog, world, dt, not (world.joined and world.me.player == 0), radarCircles)
 	Contacts.step(contacts, world, now, strategic)
 	mark("fog", t0)
 	t0 = os.clock()
-	MinimapUI.setFog(minimap, FogBlanket.content(fog), FogBlanket.ENABLED and not (world.joined and world.me.player == 0))
+	MinimapUI.setFog(minimap, FogBlanket.content(fog), (FogBlanket.ENABLED or radarCircles ~= nil) and not (world.joined and world.me.player == 0))
 	MinimapUI.step(minimap, api, now)
 	ResourceBar.step(resourceBar, api, now)
 	if now >= nextIdleCount then
