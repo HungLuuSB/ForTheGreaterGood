@@ -523,6 +523,7 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `cc5ac3d` (T1 defence blockouts for S-157: `ord_sentry_tower`, `chs_guard`, `ord_beamer`, `ord_overwatch`, `chs_twin_guard`, `chs_geryon`, `ord_gauntlet`, `chs_talos`, `chs_bulwark` with a `retracted` pose; prefixed muzzles like `laser_muzzle1` are attachments; meshes after the user's look review).
 - Ready to merge: `2f48424` (Bulwark blockout v2, a stacked tower after the user's reference; `retracted` pose updated, no `shellL` / `shellR` lids).
 - Ready to merge: `fbe9923` (Bulwark blockout v3: the weapons stacked, laser ring under the beam head, each turning on its own; `retracted` pose updated).
+- Ready to merge: `ef1237e` (T1 defence blockouts v2 after the user's references: tall laser towers, low twin-barrel batteries; pieces unchanged).
 
 ## Requests
 
