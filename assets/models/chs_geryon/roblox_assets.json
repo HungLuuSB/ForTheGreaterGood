@@ -1,0 +1,66 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 2300 triangles, glow share 2.4%",
+  "bar": {
+    "model": "rbxassetid://93300688948958",
+    "meshes": {
+      "barrel1": "rbxassetid://120062638504923",
+      "barrel1_glow_weapon": "rbxassetid://104954824333503",
+      "barrel2": "rbxassetid://99358266608360",
+      "barrel2_glow_weapon": "rbxassetid://98832487399902",
+      "barrel3": "rbxassetid://80159261501501",
+      "barrel3_glow_weapon": "rbxassetid://122639209332383",
+      "base": "rbxassetid://137770024690882",
+      "base_glow_power": "rbxassetid://118987367409136",
+      "base_glow_running": "rbxassetid://107999227015135",
+      "drum": "rbxassetid://125199252745842",
+      "mount": "rbxassetid://117835106414129",
+      "turret": "rbxassetid://71719049205212",
+      "turret_glow_head": "rbxassetid://96316271782272",
+      "turret_glow_running": "rbxassetid://93217796800733"
+    },
+    "decals": {
+      "ALB": "rbxassetid://125555255263035",
+      "RGH": "rbxassetid://121147845215055",
+      "NOR": "rbxassetid://125775187777821",
+      "MTL": "rbxassetid://74591170160595",
+      "EMI": "rbxassetid://139524875445254"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://126754636061444",
+      "NOR": "rbxassetid://85739759705475",
+      "RGH": "rbxassetid://139208027240473",
+      "MTL": "rbxassetid://110575216793485",
+      "EMI": "rbxassetid://112618733997359"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_geryon_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://79630892631350",
+    "meshes": {
+      "barrel1": "rbxassetid://108862401698047",
+      "barrel2": "rbxassetid://83379408676520",
+      "barrel3": "rbxassetid://127088246656376",
+      "base": "rbxassetid://72188694316038",
+      "drum": "rbxassetid://113197143806170",
+      "mount": "rbxassetid://102383210077043",
+      "turret": "rbxassetid://137181466774235"
+    },
+    "decals": {
+      "ALB": "rbxassetid://102417611655881",
+      "RGH": "rbxassetid://72617956919654",
+      "NOR": "rbxassetid://131334187596649",
+      "MTL": "rbxassetid://101732217524841",
+      "EMI": "rbxassetid://86045050575009"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://77247481019635",
+      "NOR": "rbxassetid://139087546811344",
+      "RGH": "rbxassetid://77800806447084",
+      "MTL": "rbxassetid://82728941608347",
+      "EMI": "rbxassetid://89137800020628"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_geryon_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 1816 triangles"
+  }
+}

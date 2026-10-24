@@ -1,0 +1,101 @@
+{
+  "id": "chs_talos_wreck",
+  "wreckOf": "chs_talos",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0059,
+        1.9798,
+        0.0027
+      ],
+      "size": [
+        11.6782,
+        4.0126,
+        11.641
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.112,
+        5.8318,
+        0.9377
+      ],
+      "size": [
+        5.4642,
+        4.4521,
+        5.3884
+      ],
+      "pivot": [
+        0.0,
+        3.8,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        -0.0254,
+        7.6373,
+        -2.5772
+      ],
+      "size": [
+        4.3226,
+        3.1557,
+        9.5889
+      ],
+      "pivot": [
+        0.0,
+        7.4,
+        0.6
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        7.4,
+        -7.3
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1320,
+    "turret": 192,
+    "barrel": 584,
+    "total": 2096
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

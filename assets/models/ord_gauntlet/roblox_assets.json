@@ -1,0 +1,53 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 2488 triangles, glow share 5.0%",
+  "bar": {
+    "model": "rbxassetid://134730742511579",
+    "meshes": {
+      "barrel": "rbxassetid://126814253722513",
+      "base": "rbxassetid://133499620515610",
+      "base_glow_running": "rbxassetid://107123599793029",
+      "turret": "rbxassetid://104724483370297",
+      "turret_glow_running": "rbxassetid://133235814576622"
+    },
+    "decals": {
+      "ALB": "rbxassetid://76350649309489",
+      "RGH": "rbxassetid://70962303719107",
+      "NOR": "rbxassetid://120563533548020",
+      "MTL": "rbxassetid://110354430486528",
+      "EMI": "rbxassetid://117811989412373"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109625733322714",
+      "NOR": "rbxassetid://116471046207592",
+      "RGH": "rbxassetid://79507231181418",
+      "MTL": "rbxassetid://78111295624193",
+      "EMI": "rbxassetid://92404517913454"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_gauntlet_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://136448899049985",
+    "meshes": {
+      "barrel": "rbxassetid://87326153333462",
+      "base": "rbxassetid://134701353889513",
+      "turret": "rbxassetid://115700303762948"
+    },
+    "decals": {
+      "ALB": "rbxassetid://125373728939329",
+      "RGH": "rbxassetid://128085016739162",
+      "NOR": "rbxassetid://120501773194823",
+      "MTL": "rbxassetid://132011980791452",
+      "EMI": "rbxassetid://124896814118476"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://73996463040445",
+      "NOR": "rbxassetid://102104060808868",
+      "RGH": "rbxassetid://105918648284485",
+      "MTL": "rbxassetid://115370829837979",
+      "EMI": "rbxassetid://74214465528023"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_gauntlet_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 2256 triangles"
+  }
+}

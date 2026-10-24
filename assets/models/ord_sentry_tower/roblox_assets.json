@@ -1,0 +1,54 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 2184 triangles, glow share 2.7%",
+  "bar": {
+    "model": "rbxassetid://136726786769092",
+    "meshes": {
+      "barrel": "rbxassetid://83739532335823",
+      "barrel_glow_weapon": "rbxassetid://84021723683797",
+      "base": "rbxassetid://131064650975562",
+      "base_glow_running": "rbxassetid://120558986808665",
+      "turret": "rbxassetid://81314128507836",
+      "turret_glow_running": "rbxassetid://128462243631628"
+    },
+    "decals": {
+      "ALB": "rbxassetid://99053234697584",
+      "RGH": "rbxassetid://71771836100786",
+      "NOR": "rbxassetid://138440398657580",
+      "MTL": "rbxassetid://107504963856795",
+      "EMI": "rbxassetid://88370760431805"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://134738491711480",
+      "NOR": "rbxassetid://118919973743505",
+      "RGH": "rbxassetid://90714446964515",
+      "MTL": "rbxassetid://92135162921713",
+      "EMI": "rbxassetid://117501450260549"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sentry_tower_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://96092931786058",
+    "meshes": {
+      "barrel": "rbxassetid://86977990503087",
+      "base": "rbxassetid://119516431419859",
+      "turret": "rbxassetid://70515387582229"
+    },
+    "decals": {
+      "ALB": "rbxassetid://135663989871817",
+      "RGH": "rbxassetid://104532263483866",
+      "NOR": "rbxassetid://84200253671257",
+      "MTL": "rbxassetid://88477000669747",
+      "EMI": "rbxassetid://125013293007929"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://84915812534056",
+      "NOR": "rbxassetid://119285788553867",
+      "RGH": "rbxassetid://137180170244779",
+      "MTL": "rbxassetid://99999107120324",
+      "EMI": "rbxassetid://137366137442851"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sentry_tower_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 1960 triangles"
+  }
+}

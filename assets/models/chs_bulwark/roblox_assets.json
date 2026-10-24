@@ -1,0 +1,67 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 4708 triangles, glow share 2.2%",
+  "bar": {
+    "model": "rbxassetid://106992084302416",
+    "meshes": {
+      "barrel": "rbxassetid://135556585180312",
+      "barrel_glow_weapon": "rbxassetid://106646630945514",
+      "base": "rbxassetid://72901765924643",
+      "base_glow_power": "rbxassetid://114178085974968",
+      "base_glow_running": "rbxassetid://87142512124851",
+      "laser": "rbxassetid://111397951115032",
+      "laser_drum": "rbxassetid://115180869889798",
+      "laser_drum_glow_weapon": "rbxassetid://82590732605449",
+      "laser_glow_head": "rbxassetid://76714903648106",
+      "laser_mount": "rbxassetid://108659935278655",
+      "shell": "rbxassetid://100155841976913",
+      "shell_glow_running": "rbxassetid://116045096771302",
+      "turret": "rbxassetid://98032729568573",
+      "turret_glow_power": "rbxassetid://125776930832224",
+      "turret_glow_running": "rbxassetid://97182971354633"
+    },
+    "decals": {
+      "ALB": "rbxassetid://132025563263014",
+      "RGH": "rbxassetid://110622157870956",
+      "NOR": "rbxassetid://104325233829600",
+      "MTL": "rbxassetid://135300786513450",
+      "EMI": "rbxassetid://101303799616857"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://88219386998860",
+      "NOR": "rbxassetid://79489716596462",
+      "RGH": "rbxassetid://88755632675209",
+      "MTL": "rbxassetid://129574393590204",
+      "EMI": "rbxassetid://104979110819675"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_bulwark_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://81856999726620",
+    "meshes": {
+      "barrel": "rbxassetid://92712039704777",
+      "base": "rbxassetid://103282940903843",
+      "laser": "rbxassetid://101584071876484",
+      "laser_drum": "rbxassetid://97664744595262",
+      "laser_mount": "rbxassetid://108187723279230",
+      "shell": "rbxassetid://115375383779648",
+      "turret": "rbxassetid://90491000898956"
+    },
+    "decals": {
+      "ALB": "rbxassetid://94972001587279",
+      "RGH": "rbxassetid://109122225897674",
+      "NOR": "rbxassetid://93027011798568",
+      "MTL": "rbxassetid://101424231550799",
+      "EMI": "rbxassetid://134652813444090"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://83444827918315",
+      "NOR": "rbxassetid://77375317076846",
+      "RGH": "rbxassetid://113236619779481",
+      "MTL": "rbxassetid://71842749744397",
+      "EMI": "rbxassetid://139532212793191"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_bulwark_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 4116 triangles"
+  }
+}

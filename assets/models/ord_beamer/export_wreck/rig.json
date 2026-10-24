@@ -1,0 +1,101 @@
+{
+  "id": "ord_beamer_wreck",
+  "wreckOf": "ord_beamer",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0115,
+        6.445,
+        -0.028
+      ],
+      "size": [
+        9.3635,
+        13.1254,
+        9.1307
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.1003,
+        14.4843,
+        0.5738
+      ],
+      "size": [
+        2.9952,
+        3.2418,
+        4.8122
+      ],
+      "pivot": [
+        0.0,
+        12.8,
+        0.0
+      ]
+    },
+    "barrel": {
+      "parent": "turret",
+      "center": [
+        -0.0624,
+        13.9062,
+        -3.2291
+      ],
+      "size": [
+        1.7466,
+        1.6896,
+        4.2676
+      ],
+      "pivot": [
+        0.0,
+        13.8,
+        -1.8
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "barrel",
+      "at": [
+        0.0,
+        13.8,
+        -5.3
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1544,
+    "turret": 204,
+    "barrel": 344,
+    "total": 2092
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

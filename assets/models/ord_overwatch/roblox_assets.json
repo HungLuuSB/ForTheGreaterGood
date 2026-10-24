@@ -1,0 +1,59 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 3256 triangles, glow share 10.0%",
+  "bar": {
+    "model": "rbxassetid://88382636197025",
+    "meshes": {
+      "barrel1": "rbxassetid://130787472402302",
+      "barrel1_glow_weapon": "rbxassetid://103604667803604",
+      "barrel2": "rbxassetid://88140225965554",
+      "barrel2_glow_weapon": "rbxassetid://137488926584619",
+      "base": "rbxassetid://127929477598303",
+      "base_glow_running": "rbxassetid://83240874440228",
+      "mount": "rbxassetid://136894373077466",
+      "turret": "rbxassetid://113018708243156",
+      "turret_glow_running": "rbxassetid://84094429750020"
+    },
+    "decals": {
+      "ALB": "rbxassetid://132878200677461",
+      "RGH": "rbxassetid://123701945158573",
+      "NOR": "rbxassetid://78717616564213",
+      "MTL": "rbxassetid://125868741589676",
+      "EMI": "rbxassetid://121070026893553"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://114688684812319",
+      "NOR": "rbxassetid://127559751358579",
+      "RGH": "rbxassetid://102990780920934",
+      "MTL": "rbxassetid://138823479135792",
+      "EMI": "rbxassetid://80578662710260"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_overwatch_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://97931615849338",
+    "meshes": {
+      "barrel1": "rbxassetid://113471664267082",
+      "barrel2": "rbxassetid://93201644275907",
+      "base": "rbxassetid://101814566173328",
+      "mount": "rbxassetid://100873909616617",
+      "turret": "rbxassetid://76943733690775"
+    },
+    "decals": {
+      "ALB": "rbxassetid://111589417693211",
+      "RGH": "rbxassetid://95616661309612",
+      "NOR": "rbxassetid://108283712932359",
+      "MTL": "rbxassetid://91447294502179",
+      "EMI": "rbxassetid://74261930969810"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://119005558080544",
+      "NOR": "rbxassetid://110878225864133",
+      "RGH": "rbxassetid://86332995414883",
+      "MTL": "rbxassetid://83199707262349",
+      "EMI": "rbxassetid://104187569680808"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_overwatch_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 2892 triangles"
+  }
+}

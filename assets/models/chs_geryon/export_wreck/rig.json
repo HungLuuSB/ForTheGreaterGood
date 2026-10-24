@@ -1,0 +1,225 @@
+{
+  "id": "chs_geryon_wreck",
+  "wreckOf": "chs_geryon",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0272,
+        5.3816,
+        -0.0064
+      ],
+      "size": [
+        8.0534,
+        11.0107,
+        8.0984
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        -0.1052,
+        13.4221,
+        0.8662
+      ],
+      "size": [
+        3.4711,
+        5.3592,
+        4.0123
+      ],
+      "pivot": [
+        0.0,
+        10.8,
+        0.3
+      ]
+    },
+    "mount": {
+      "parent": "turret",
+      "center": [
+        -0.0385,
+        12.6102,
+        -0.4236
+      ],
+      "size": [
+        2.2203,
+        2.1704,
+        0.9158
+      ],
+      "pivot": [
+        0.0,
+        12.6,
+        -0.19999999999999996
+      ]
+    },
+    "drum": {
+      "parent": "mount",
+      "center": [
+        -0.0849,
+        12.5966,
+        -2.6338
+      ],
+      "size": [
+        2.8498,
+        2.7259,
+        3.9724
+      ],
+      "pivot": [
+        0.0,
+        12.6,
+        -1.4
+      ]
+    },
+    "barrel1": {
+      "parent": "drum",
+      "center": [
+        -0.0449,
+        13.4551,
+        -4.5526
+      ],
+      "size": [
+        1.1563,
+        0.9391,
+        5.0867
+      ],
+      "pivot": [
+        5.5109105961630896e-17,
+        13.5,
+        -2.0
+      ]
+    },
+    "barrel2": {
+      "parent": "drum",
+      "center": [
+        -0.811,
+        12.1438,
+        -4.5563
+      ],
+      "size": [
+        0.7523,
+        0.751,
+        5.1008
+      ],
+      "pivot": [
+        -0.7794228634059948,
+        12.15,
+        -2.0
+      ]
+    },
+    "barrel3": {
+      "parent": "drum",
+      "center": [
+        0.7345,
+        12.1539,
+        -4.5536
+      ],
+      "size": [
+        0.6215,
+        0.6914,
+        5.071
+      ],
+      "pivot": [
+        0.7794228634059945,
+        12.149999999999999,
+        -2.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "barrel1",
+      "at": [
+        0.0,
+        13.5,
+        -7.2
+      ]
+    },
+    "muzzle2": {
+      "parent": "barrel2",
+      "at": [
+        -0.779,
+        12.15,
+        -7.2
+      ]
+    },
+    "muzzle3": {
+      "parent": "barrel3",
+      "at": [
+        0.779,
+        12.15,
+        -7.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "barrel1",
+    "barrel2",
+    "barrel3"
+  ],
+  "anim": {
+    "barrel1": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 0.5
+    },
+    "barrel2": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 0.5
+    },
+    "barrel3": {
+      "motion": "slide",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 0.5
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 936,
+    "turret": 204,
+    "mount": 44,
+    "drum": 280,
+    "barrel1": 132,
+    "barrel2": 132,
+    "barrel3": 88,
+    "total": 1816
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "S-157 tower meshes (the user's approved shapes, dressed: skirts, panel lines, vents, cables, glow strips): 2400 triangles, glow share 1.2%",
+  "bar": {
+    "model": "rbxassetid://87760124060265",
+    "meshes": {
+      "barrel": "rbxassetid://93186403887813",
+      "barrel_glow_weapon": "rbxassetid://91378592361949",
+      "base": "rbxassetid://116726278074705",
+      "base_glow_power": "rbxassetid://76128166335919",
+      "base_glow_running": "rbxassetid://125544781634505",
+      "turret": "rbxassetid://93018649148811",
+      "turret_glow_head": "rbxassetid://102048397074329",
+      "turret_glow_running": "rbxassetid://75996383423893"
+    },
+    "decals": {
+      "ALB": "rbxassetid://121264507597585",
+      "RGH": "rbxassetid://93328893437860",
+      "NOR": "rbxassetid://94997837268738",
+      "MTL": "rbxassetid://91058944397455",
+      "EMI": "rbxassetid://85020131209970"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://88724050412647",
+      "NOR": "rbxassetid://115737766864276",
+      "RGH": "rbxassetid://100028360471074",
+      "MTL": "rbxassetid://87783664075208",
+      "EMI": "rbxassetid://100916946389750"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_guard_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://125184865453101",
+    "meshes": {
+      "barrel": "rbxassetid://134083904674220",
+      "base": "rbxassetid://110551272195498",
+      "turret": "rbxassetid://97421287521344"
+    },
+    "decals": {
+      "ALB": "rbxassetid://105742841148723",
+      "RGH": "rbxassetid://115345964863092",
+      "NOR": "rbxassetid://75901887546439",
+      "MTL": "rbxassetid://108858490572899",
+      "EMI": "rbxassetid://95417044783943"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92427354770256",
+      "NOR": "rbxassetid://77008989032681",
+      "RGH": "rbxassetid://128789517361355",
+      "MTL": "rbxassetid://114407636844125",
+      "EMI": "rbxassetid://124926367636373"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_guard_wreck_bar in FTGG Art",
+    "revision": "S-157 tower wrecks: 2016 triangles"
+  }
+}
