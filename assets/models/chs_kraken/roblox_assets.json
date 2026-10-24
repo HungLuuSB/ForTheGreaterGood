@@ -1,7 +1,35 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "New T2 mesh (item 3); wreck built: 1992 triangles, glow share 3.5%",
+  "revision": "T2 ship hull redesign v2 (tools/ships.py): 3850 triangles, glow share 3.2%",
   "bar": {
+    "model": "rbxassetid://112738210997213",
+    "meshes": {
+      "base": "rbxassetid://110721124588394",
+      "base_glow_running": "rbxassetid://84365222821106",
+      "radar": "rbxassetid://102813550016249",
+      "radar_glow_running": "rbxassetid://96761560293422",
+      "turret1": "rbxassetid://112741452102000",
+      "turret1_glow_weapon": "rbxassetid://133140362769961",
+      "turret2": "rbxassetid://96372543729909",
+      "turret2_glow_weapon": "rbxassetid://85919431350669"
+    },
+    "decals": {
+      "ALB": "rbxassetid://78725616361558",
+      "RGH": "rbxassetid://98080068781909",
+      "NOR": "rbxassetid://93423129197308",
+      "MTL": "rbxassetid://135397524724691",
+      "EMI": "rbxassetid://107729382963443"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://91899416167330",
+      "NOR": "rbxassetid://100575259016026",
+      "RGH": "rbxassetid://131625923228782",
+      "MTL": "rbxassetid://99668608335172",
+      "EMI": "rbxassetid://90948348457826"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_kraken_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://74078854783445",
     "meshes": {
       "base": "rbxassetid://80103740689733",
@@ -27,9 +55,34 @@
       "MTL": "rbxassetid://113878363058921",
       "EMI": "rbxassetid://120288279198028"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_kraken_bar in FTGG Art"
+    "note": "New T2 mesh (item 3); wreck built: 1992 triangles, glow share 3.5%"
   },
   "wreck": {
+    "model": "rbxassetid://88998291510120",
+    "meshes": {
+      "base": "rbxassetid://136914849543388",
+      "radar": "rbxassetid://93317396407307",
+      "turret1": "rbxassetid://121916441523190",
+      "turret2": "rbxassetid://86381802913221"
+    },
+    "decals": {
+      "ALB": "rbxassetid://128008279147989",
+      "RGH": "rbxassetid://135158163123321",
+      "NOR": "rbxassetid://85928776914927",
+      "MTL": "rbxassetid://134672392167540",
+      "EMI": "rbxassetid://74054736710759"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://72914713629349",
+      "NOR": "rbxassetid://98623234863772",
+      "RGH": "rbxassetid://116507166357375",
+      "MTL": "rbxassetid://112284926476811",
+      "EMI": "rbxassetid://113422384819353"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_kraken_wreck_bar in FTGG Art",
+    "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 3146 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://82312275694493",
     "meshes": {
       "base": "rbxassetid://139638225762975",

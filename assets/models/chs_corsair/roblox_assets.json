@@ -1,7 +1,67 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "New T2 mesh (item 3); wreck built: 1796 triangles, glow share 3.5%",
+  "revision": "re-uploaded whole: the first maps drew white in Studio: 3282 triangles, glow share 3.3%",
   "bar": {
+    "model": "rbxassetid://127866545087497",
+    "meshes": {
+      "base": "rbxassetid://126029023107775",
+      "base_glow_running": "rbxassetid://96921841731831",
+      "launcher": "rbxassetid://75096182805430",
+      "launcher_glow_weapon": "rbxassetid://129821390749773",
+      "radar": "rbxassetid://114049373739400",
+      "radar_glow_running": "rbxassetid://122073840987198",
+      "turret1": "rbxassetid://97220485899184",
+      "turret1_glow_weapon": "rbxassetid://108740225970048",
+      "turret2": "rbxassetid://125174145108226",
+      "turret2_glow_weapon": "rbxassetid://112619197803717"
+    },
+    "decals": {
+      "ALB": "rbxassetid://78926231963160",
+      "RGH": "rbxassetid://124752730468625",
+      "NOR": "rbxassetid://126094886649953",
+      "MTL": "rbxassetid://91825431414032",
+      "EMI": "rbxassetid://138162197079793"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://137311421270314",
+      "NOR": "rbxassetid://104038881681833",
+      "RGH": "rbxassetid://102317571571447",
+      "MTL": "rbxassetid://71976568166250",
+      "EMI": "rbxassetid://84328341907012"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_corsair_bar in FTGG Art"
+  },
+  "bar_2": {
+    "model": "rbxassetid://92877095090204",
+    "meshes": {
+      "base": "rbxassetid://126029023107775",
+      "base_glow_running": "rbxassetid://96921841731831",
+      "launcher": "rbxassetid://75096182805430",
+      "launcher_glow_weapon": "rbxassetid://129821390749773",
+      "radar": "rbxassetid://114049373739400",
+      "radar_glow_running": "rbxassetid://122073840987198",
+      "turret1": "rbxassetid://97220485899184",
+      "turret1_glow_weapon": "rbxassetid://108740225970048",
+      "turret2": "rbxassetid://125174145108226",
+      "turret2_glow_weapon": "rbxassetid://112619197803717"
+    },
+    "decals": {
+      "ALB": "rbxassetid://101870159377869",
+      "RGH": "rbxassetid://128877356706497",
+      "NOR": "rbxassetid://70495847825313",
+      "MTL": "rbxassetid://111766360232091",
+      "EMI": "rbxassetid://132467251872684"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://105093207307762",
+      "NOR": "rbxassetid://138947202523876",
+      "RGH": "rbxassetid://129305227275788",
+      "MTL": "rbxassetid://126821882401293",
+      "EMI": "rbxassetid://130998328861957"
+    },
+    "note": "T2 ship hull redesign v2 (tools/ships.py): 3282 triangles, glow share 3.3%"
+  },
+  "bar_1": {
     "model": "rbxassetid://115506135992716",
     "meshes": {
       "base": "rbxassetid://81099287267218",
@@ -29,9 +89,35 @@
       "MTL": "rbxassetid://115194534191662",
       "EMI": "rbxassetid://113620230267580"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_corsair_bar in FTGG Art"
+    "note": "New T2 mesh (item 3); wreck built: 1796 triangles, glow share 3.5%"
   },
   "wreck": {
+    "model": "rbxassetid://71134938627066",
+    "meshes": {
+      "base": "rbxassetid://79410599785514",
+      "launcher": "rbxassetid://117379471584827",
+      "radar": "rbxassetid://77113780019735",
+      "turret1": "rbxassetid://132084741580408",
+      "turret2": "rbxassetid://122593993230595"
+    },
+    "decals": {
+      "ALB": "rbxassetid://133009809831446",
+      "RGH": "rbxassetid://93161489066225",
+      "NOR": "rbxassetid://130680704142666",
+      "MTL": "rbxassetid://128513840227791",
+      "EMI": "rbxassetid://74791358576918"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109364997559509",
+      "NOR": "rbxassetid://109350766486007",
+      "RGH": "rbxassetid://109974292258466",
+      "MTL": "rbxassetid://111511683695314",
+      "EMI": "rbxassetid://131429322174009"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_corsair_wreck_bar in FTGG Art",
+    "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 2422 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://101683736880035",
     "meshes": {
       "base": "rbxassetid://89305838238583",

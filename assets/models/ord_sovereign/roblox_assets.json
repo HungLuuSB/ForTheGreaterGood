@@ -52,5 +52,41 @@
       "EMI": "rbxassetid://89576595134492"
     },
     "modelPath": "ReplicatedStorage.ModelReview.ord_sovereign_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://80201166614682",
+    "meshes": {
+      "armL": "rbxassetid://127084673811192",
+      "armR": "rbxassetid://101652824238604",
+      "base": "rbxassetid://98811389089256",
+      "footL": "rbxassetid://94274410719550",
+      "footR": "rbxassetid://79685884260197",
+      "forearmR": "rbxassetid://122150837639904",
+      "head": "rbxassetid://100470435338340",
+      "hipL": "rbxassetid://99653082355736",
+      "hipR": "rbxassetid://72526096921759",
+      "nano": "rbxassetid://94427428355795",
+      "shinL": "rbxassetid://122616604952256",
+      "shinR": "rbxassetid://122982598127464",
+      "thighL": "rbxassetid://91473166158060",
+      "thighR": "rbxassetid://116492294776845",
+      "torso": "rbxassetid://134329837686107"
+    },
+    "decals": {
+      "ALB": "rbxassetid://131602029743185",
+      "RGH": "rbxassetid://102922591399769",
+      "NOR": "rbxassetid://130795558079578",
+      "MTL": "rbxassetid://71945403042513",
+      "EMI": "rbxassetid://88900062596868"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://82921651990621",
+      "NOR": "rbxassetid://131892951653158",
+      "RGH": "rbxassetid://124285358715231",
+      "MTL": "rbxassetid://79520201941375",
+      "EMI": "rbxassetid://124546633675990"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_sovereign_wreck_bar in FTGG Art",
+    "revision": "lofted hull v2 / Commander mech wrecks (queue item 6): 8164 triangles"
   }
 }

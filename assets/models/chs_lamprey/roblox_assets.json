@@ -26,5 +26,29 @@
       "EMI": "rbxassetid://111398192790701"
     },
     "modelPath": "ReplicatedStorage.ModelReview.chs_lamprey_bar in FTGG Art"
+  },
+  "wreck": {
+    "model": "rbxassetid://97651983916931",
+    "meshes": {
+      "base": "rbxassetid://99616983834976",
+      "turret1": "rbxassetid://134219942426783",
+      "turret2": "rbxassetid://124927873570903"
+    },
+    "decals": {
+      "ALB": "rbxassetid://120386644444421",
+      "RGH": "rbxassetid://89182390267501",
+      "NOR": "rbxassetid://97734214005445",
+      "MTL": "rbxassetid://79908498866453",
+      "EMI": "rbxassetid://104347357100368"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://104720593340792",
+      "NOR": "rbxassetid://124938199081947",
+      "RGH": "rbxassetid://105854857957290",
+      "MTL": "rbxassetid://79567876255695",
+      "EMI": "rbxassetid://97786092570057"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_lamprey_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 536 triangles"
   }
 }

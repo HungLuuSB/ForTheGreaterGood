@@ -17,7 +17,15 @@ Queue:
 | 1 | **The Canyon's baked ground (C-167, M-35).** 68 tiles (323,632 triangles) from the game's heights, pale rippled sand floor and red rock slabs, the borders between them smooth wavy lines instead of the cell staircase. 190 rock detail meshes (94,236 triangles): every mesa a butte, its real slope's lower part a talus apron with boulders, above it a sheer fluted cliff of 2–3 strata tiers (reds, a cream band, dark varnish streaks; the bands line up across mesas) under a caprock lip; boulder clusters on the `boulder` cells. Materials `desert`, `redrock`, `cliff`. In the manifest as `ground.canyon`, `review` (the game draws it only with `Invoke("groundanyway", true)` in Studio); built in FTGG Art as `Workspace.GroundReview.canyon` (x +6000) with two Lancers and a Ravager | review | `ground_canyon_55_close.jpg`, `ground_canyon_55_220.jpg`, `ground_canyon_side.jpg` |
 | 1b | **The other named maps' ground (C-167, M-35)**, each in the manifest as `ground.<name>`, `review`, built in FTGG Art (`Workspace.GroundReview.<name>`) with two Lancers and a Ravager. New textures `grass`, `rock`, `sand`, `road`, `leafy`. **Coastline** (32 tiles, 137k triangles; 24 crag details, 49k): grey rock ridges under a craggy skin on grass, sand shore. **Ridgeline** (22 tiles, 133k; 12 details, 23k). **Twin Lakes** (80 tiles, 305k; 55 details, 65k). **Crossroads** (76 tiles, 306k; 56 details, 85k: rock-banked sandy river beds, water stays the client's). **Normandy** (165 tiles, 568k; 44 details, 97k): fields, tarmac roads, beach and sea bed, crag on the bluffs, continuous hedgerow rolls on the bocage banks, the village plots raised for the client's houses | review | `ground_<map>_55_close.jpg`, `ground_<map>_55_220.jpg` |
 | 2 | **S-157 tower meshes with wrecks** (your approved shapes, the `pair_*.png` builds, dressed in the mesh style): Order bodies in the sand paint (white-sand in Studio's light) with cyan strips, Chaos gunmetal with amber; added a chamfered bolted base skirt on every tower, panel lines round the columns and turrets (baked), louvred vents, clamped cable runs from base to turret, faction glow strips up the column fronts, an antenna on each turret (`tools/towers.py`). Laser emitters keep their `weapon` glow (lens or coil ring); Gauntlet / Talos (guns) have none. T1 at fp 2 (16 studs), Bulwark T2 at fp 3, larger. Wrecks for all nine. Status `review`, wrecks `review`. Triangles 2,184–3,256 (Bulwark 4,708); glow Order 2.7–10% (Overwatch's lit vent band), Chaos 1.1–2.8% | review | `s157_towers_55_close_a.jpg` (Lancer, Sentry / Guard, Beamer / Geryon, Overwatch), `s157_towers_55_close_b.jpg` (Twin Guard, Gauntlet / Talos, Bulwark), `s157_towers_55_220.jpg` |
+| 3 | **T2 ship hull redesign** (not a rescale): every hull is now one lofted shell from `tools/ships.py`: a pointed raked bow, flared sides, a sheer line rising to the bow, a rounded bilge, a tapered stern with a transom, a dark boot-top and a sheer strake, with running strips that follow the sheer. Destroyers lean and fast (`ord_crusader`: forward deckhouse, tall bridge with wraparound glass and wings, tower mast, raked funnel, hangar and helideck; `chs_corsair`: narrower, sharper bow, raised bridge with an amber slit, two raked funnels, tall lattice mast); cruisers bulkier with stacked decks (`ord_dominion`: armored belt, three-level superstructure, superfiring triples fore and aft on barbettes; `chs_kraken`: reactive slabs, raised bridge, two funnels); carriers keep the flat deck over a real hull and a hangar deck, with a taller three-level island (`ord_sanctuary`, `chs_leviathan`). Guns raised on barbettes. Same pieces and muzzles, new pivots. The T2 workers and jammer (`ord_harbormaster`, `chs_reaver`, `chs_siren`), the T1 corvettes (`ord_sentry` Envoy, `chs_barracuda`) and the naval workers (`ord_tidewright`, `chs_wrecker`) had the same barge hull and get the lofted one too (back to review). Wrecks rebuilt for all | review | `ships_v2_55_close.jpg`, `ships_v2_55_220.jpg` |
+| 4 | **Shepherd / Griffin** (mobile point defence, S-149), hand-made blockouts and meshes with wrecks: `ord_shepherd` (armored 6x6, sloped cab with wraparound glass, team skirts; the static `launcher` a vertical-launch module with a 2 x 4 grid of cell hatches and ready lights; a compact search panel on a mast, client-turned `radar`) / `chs_griffin` (lighter open 6x6, amber cab slit; the static `launcher` an open welded rack of twelve upright tubes with amber mouths, the deep stock; a lattice radar mast with a beacon). Both launch straight up from `muzzle` | review | `pd_trucks_55_close.jpg`, `pd_trucks_55_220.jpg` |
 | S | **sim-A's request (first in the queue):** pending blockouts under the sim's fixed IDs, in `Blockouts/Pending/` until the defs land. Naval SAM platforms, fp 3, floating at y = 0: `ord_pharos` (round armored caisson with a team deck ring and fenders, a lighthouse tower with a team band, gallery and glowing lantern, crowned by the `launcher`: a sensor head between two canister pods with ready-lit caps) / `chs_scylla` (a ruin afloat: drum floats under a tilted slab deck, ruined columns, one toppled, a crooked spiked pedestal with an amber eye slit; the `launcher` a slab skull with six missile tubes fanned out like necks, amber mouths). Advanced rearm pads, fp 4, two bays: `ord_empyrean` (armored apron, two team-ringed landing circles, a control tower with a glass cab and radar mast between the bays at the back, blast deflectors, rearm booms, fuel blocks) / `chs_rookery` (patched dark slab with a grate, two circles with amber lamps, a scrap barricade, fuel tanks and hose, a crane stub over a bay, a lattice light mast, crates). Meshes after your look review | blockout | `t2_navalsam_pads_blockout_55_close.jpg`, `t2_navalsam_pads_blockout_55_220.jpg` (with a Lancer and the T1 pads) |
+
+**Resume here (paused 2026-10-24 for a Claude restart):**
+- **Item 5, T2 structures:** build scripts for all 26 written by helper agents (`assets/models/<id>/build.py`, committed as work in progress, not merge-ready, not reviewed). Baked (export/): ord/chs_advvehplant, ord_advairfield, ord/chs_advextractor, ord_fusion, ord_veilspire, ord_edict, chs_cataclysm, ord_rampart, chs_breaker, ord_bastion, chs_maw. Still to bake: chs_advairfield, ord/chs_advshipyard, chs_fusion, ord_beacon, chs_allseer, ord_witness, chs_augur, ord_choir, chs_deepear, chs_blackout, ord_tribunal, chs_seekerspire. Then: review each preview, wrecks (FTGG_WRECK=1), upload, rig, record, manifest, shots.
+- **Item 6, wrecks:** recorded so far: `adfb7ec` and earlier. Built and uploaded but not yet rigged: ord_harbormaster, ord_sentry, ord_tidewright, chs_wrecker, ord_shepherd (v2 / new), ord_absolution, ord_falcon, ord_guardian, ord_skywright. Not built yet: chs_lamprey's batch onward in the queue order (ord_silence, ord_barrier, chs_condor, chs_leech, ord_tidewatch, ord_zenith, chs_cyclops, chs_forgemaster, chs_gorgon, chs_hydra, chs_juggernaut, chs_minotaur, chs_shroud, chs_stalker, ord_arbiter, ord_architect, ord_judgement, ord_paladin, ord_seraph, ord_veil, ord_warden, chs_carapace, chs_hailstorm, chs_inferno, ord_lumen, ord_phalanx, ord_radiance, chs_ragnarok, ord_citadel, ord_reckoning).
+- **Rig route:** the batch input goes to FTGG Art through the Rojo sync as a temporary `src/shared/_ModelsBatch.luau` (excluded from git); `ServerStorage.ModelsTools.Batch` rigs it (pass the clamp scale for meshes longer than 20.48 studs); the result is recorded with `record_assets.py`. The manifest must use the committed `export_wreck/rig.json` for any wreck rebuilt but not yet recorded (ord_harbormaster now).
+- **FTGG Art:** review folders added this session (`Workspace.GroundReview`, `TowerMeshReview`, `ShipV2Review`, `SmallShipV2Review`, `NewT2PadReview/Profile/Silhouette`); save the place before closing Studio.
 
 **Canyon textures in the match place:** clients-B saw the tiles draw flat white there; every ground map loads in that place (fetch status Success, readable). Likely Studio's cached texture pack (a restart fixed the same symptom in FTGG Art); B rechecks after a Studio restart and tells me if they're still white.
 
@@ -26,6 +34,180 @@ Queue:
 - **Seams:** the borders between ground types no longer fall on cell edges (M-35: wavy lines cut through the triangles, the surface unchanged). The contract's "seams fall on cell edges" line could say so.
 - **New material key `cliff`** (the strata walls, details only): `GroundMeshes.FALLBACK` has no entry, so it would draw as grass if its SurfaceAppearance were missing. Suggest `cliff = { material = "Sandstone", color = { 150, 78, 52 } }`.
 - The Canyon's `ground` cells (the 92 deposit cells) are drawn as the type around them; the deposit models cover them.
+
+## Status table (queue item 7)
+
+Every unit def: its blockout, mesh and wreck status in the mesh manifest (`review` = drawn as the blockout in game until you approve it).
+
+<!-- status-table:begin -->
+163 defs: 160 hand-made blockouts; 133 meshes (105 approved, 28 in review); 95 wrecks (63 approved). Generated by `lune run assets/models/tools/status_table.luau`.
+
+| Def | Name | Tier | Domain | Blockout | Mesh | Wreck |
+|---|---|---|---|---|---|---|
+| `chs_warlord` | Warlord | 0 | ground | hand-made | approved | review |
+| `ord_sovereign` | Sovereign | 0 | ground | hand-made | approved | review |
+| `chs_hellmouth` | Hellmouth | 1 | ground | hand-made | approved | approved |
+| `chs_hornet` | Hornet | 1 | ground | hand-made | approved | approved |
+| `chs_jackal` | Jackal | 1 | ground | hand-made | approved | approved |
+| `chs_locust` | Locust | 1 | ground | hand-made | approved | review |
+| `chs_ravager` | Ravager | 1 | ground | hand-made | approved | approved |
+| `chs_scrapper` | Scrapper | 1 | ground | hand-made | approved | approved |
+| `chs_watcher` | Watcher | 1 | ground | hand-made | approved | approved |
+| `ord_halo` | Halo | 1 | ground | hand-made | approved | approved |
+| `ord_herald` | Herald | 1 | ground | hand-made | approved | approved |
+| `ord_lancer` | Lancer | 1 | ground | hand-made | approved | approved |
+| `ord_mason` | Mason | 1 | ground | hand-made | approved | approved |
+| `ord_oracle` | Oracle | 1 | ground | hand-made | approved | approved |
+| `ord_verdict` | Verdict | 1 | ground | hand-made | approved | approved |
+| `chs_harpy` | Harpy | 1 | air | hand-made | approved | review |
+| `chs_plague` | Plague | 1 | air | hand-made | approved | review |
+| `chs_vulture` | Vulture | 1 | air | hand-made | approved | review |
+| `chs_wasp` | Wasp | 1 | air | hand-made | approved | review |
+| `ord_absolution` | Absolution | 1 | air | hand-made | approved | – |
+| `ord_falcon` | Falcon | 1 | air | hand-made | approved | – |
+| `ord_guardian` | Guardian | 1 | air | hand-made | approved | – |
+| `ord_skywright` | Skywright | 1 | air | hand-made | approved | – |
+| `chs_barracuda` | Barracuda | 1 | naval | hand-made | review | review |
+| `chs_lamprey` | Lamprey | 1 | naval | hand-made | approved | review |
+| `chs_wrecker` | Wrecker | 1 | naval | hand-made | review | – |
+| `ord_sentry` | Envoy | 1 | naval | hand-made | review | – |
+| `ord_silence` | Silence | 1 | naval | hand-made | approved | – |
+| `ord_tidewright` | Tidewright | 1 | naval | hand-made | review | – |
+| `chs_airfield` | Aerodrome | 1 | structure | hand-made | approved | approved |
+| `chs_airpad` | Roost | 1 | structure | hand-made | approved | approved |
+| `chs_converter` | Smelter | 1 | structure | hand-made | approved | approved |
+| `chs_depot` | Hoard | 1 | structure | hand-made | approved | approved |
+| `chs_extractor` | Excavator | 1 | structure | hand-made | approved | approved |
+| `chs_eye` | Eye | 1 | structure | hand-made | approved | approved |
+| `chs_fang` | Fang | 1 | structure | hand-made | approved | approved |
+| `chs_generator` | Furnace | 1 | structure | hand-made | approved | approved |
+| `chs_geryon` | Geryon | 1 | structure | hand-made | review | review |
+| `chs_guard` | Guard | 1 | structure | hand-made | review | review |
+| `chs_listener` | Listener | 1 | structure | hand-made | approved | approved |
+| `chs_riptide` | Riptide | 1 | structure | hand-made | approved | approved |
+| `chs_shipyard` | Drydock | 1 | structure | hand-made | approved | approved |
+| `chs_smog` | Smog | 1 | structure | hand-made | approved | approved |
+| `chs_solar` | Sun Trap | 1 | structure | hand-made | approved | approved |
+| `chs_spike` | Spike | 1 | structure | hand-made | approved | approved |
+| `chs_talos` | Talos | 1 | structure | hand-made | review | review |
+| `chs_thorn` | Thorn | 1 | structure | hand-made | approved | approved |
+| `chs_tidal` | Tide Mill | 1 | structure | hand-made | approved | approved |
+| `chs_twin_guard` | Twin Guard | 1 | structure | hand-made | review | review |
+| `chs_vehplant` | Vehicle Foundry | 1 | structure | hand-made | approved | approved |
+| `chs_windmill` | Wind Pylon | 1 | structure | hand-made | approved | approved |
+| `ord_airfield` | Airfield | 1 | structure | hand-made | approved | approved |
+| `ord_airpad` | Aerie | 1 | structure | hand-made | approved | approved |
+| `ord_barrier` | Barrier | 1 | structure | hand-made | approved | – |
+| `ord_beamer` | Beamer | 1 | structure | hand-made | review | review |
+| `ord_bulwark` | Bulwark | 1 | structure | hand-made | approved | approved |
+| `ord_converter` | Supply Converter | 1 | structure | hand-made | approved | approved |
+| `ord_curtain` | Curtain | 1 | structure | hand-made | approved | approved |
+| `ord_depot` | Depot | 1 | structure | hand-made | approved | approved |
+| `ord_ear` | Ear | 1 | structure | hand-made | approved | approved |
+| `ord_extractor` | Extractor | 1 | structure | hand-made | approved | approved |
+| `ord_gauntlet` | Gauntlet | 1 | structure | hand-made | review | review |
+| `ord_generator` | Generator | 1 | structure | hand-made | approved | approved |
+| `ord_moat` | Moat | 1 | structure | hand-made | approved | approved |
+| `ord_overwatch` | Overwatch | 1 | structure | hand-made | review | review |
+| `ord_sentry_tower` | Sentry | 1 | structure | hand-made | review | review |
+| `ord_shipyard` | Shipyard | 1 | structure | hand-made | approved | approved |
+| `ord_solar` | Solar Array | 1 | structure | hand-made | approved | approved |
+| `ord_tidal` | Tidal Generator | 1 | structure | hand-made | approved | approved |
+| `ord_undertow` | Undertow | 1 | structure | hand-made | approved | approved |
+| `ord_vehplant` | Vehicle Plant | 1 | structure | hand-made | approved | approved |
+| `ord_vigil` | Vigil | 1 | structure | hand-made | approved | approved |
+| `ord_watchtower` | Watchtower | 1 | structure | hand-made | approved | approved |
+| `ord_windmill` | Wind Turbine | 1 | structure | hand-made | approved | approved |
+| `chs_chimera` | Chimera | 2 | ground | hand-made | approved | approved |
+| `chs_cyclops` | Cyclops | 2 | ground | hand-made | approved | – |
+| `chs_forgemaster` | Forgemaster | 2 | ground | hand-made | approved | – |
+| `chs_gorgon` | Gorgon | 2 | ground | hand-made | approved | – |
+| `chs_griffin` | Griffin | 2 | ground | hand-made | review | review |
+| `chs_hydra` | Hydra | 2 | ground | hand-made | approved | – |
+| `chs_juggernaut` | Juggernaut | 2 | ground | hand-made | approved | – |
+| `chs_minotaur` | Minotaur | 2 | ground | hand-made | approved | – |
+| `chs_mire` | Mire | 2 | ground | hand-made | approved | approved |
+| `chs_shroud` | Shroud | 2 | ground | hand-made | approved | – |
+| `chs_stalker` | Stalker | 2 | ground | hand-made | approved | – |
+| `ord_arbiter` | Arbiter | 2 | ground | hand-made | approved | – |
+| `ord_architect` | Architect | 2 | ground | hand-made | approved | – |
+| `ord_custodian` | Custodian | 2 | ground | hand-made | approved | approved |
+| `ord_judgement` | Judgement | 2 | ground | hand-made | approved | – |
+| `ord_paladin` | Paladin | 2 | ground | hand-made | approved | – |
+| `ord_seraph` | Seraph | 2 | ground | hand-made | approved | – |
+| `ord_shepherd` | Shepherd | 2 | ground | hand-made | review | – |
+| `ord_tideguard` | Tideguard | 2 | ground | hand-made | approved | approved |
+| `ord_veil` | Veil | 2 | ground | hand-made | approved | – |
+| `ord_warden` | Warden | 2 | ground | hand-made | approved | – |
+| `chs_banshee` | Banshee | 2 | air | hand-made | approved | approved |
+| `chs_behemoth` | Behemoth | 2 | air | hand-made | approved | approved |
+| `chs_condor` | Condor | 2 | air | hand-made | approved | – |
+| `chs_leech` | Leech | 2 | air | hand-made | approved | – |
+| `chs_manticore` | Manticore | 2 | air | hand-made | approved | approved |
+| `chs_wraith` | Wraith | 2 | air | generic | approved | approved |
+| `ord_archangel` | Archangel | 2 | air | hand-made | approved | approved |
+| `ord_archon` | Archon | 2 | air | hand-made | approved | approved |
+| `ord_phantom` | Phantom | 2 | air | hand-made | approved | approved |
+| `ord_tidewatch` | Tidewatch | 2 | air | hand-made | approved | – |
+| `ord_zenith` | Zenith | 2 | air | hand-made | approved | – |
+| `chs_corsair` | Corsair | 2 | naval | hand-made | review | review |
+| `chs_kraken` | Kraken | 2 | naval | hand-made | review | review |
+| `chs_leviathan` | Leviathan | 2 | naval | hand-made | review | review |
+| `chs_reaver` | Reaver | 2 | naval | hand-made | review | review |
+| `chs_siren` | Siren | 2 | naval | hand-made | review | review |
+| `ord_crusader` | Crusader | 2 | naval | hand-made | review | review |
+| `ord_dominion` | Dominion | 2 | naval | hand-made | review | review |
+| `ord_harbormaster` | Harbormaster | 2 | naval | hand-made | review | review |
+| `ord_sanctuary` | Sanctuary | 2 | naval | hand-made | review | review |
+| `chs_advairfield` | Advanced Aerodrome | 2 | structure | hand-made | – | – |
+| `chs_advextractor` | Deep Excavator | 2 | structure | hand-made | – | – |
+| `chs_advshipyard` | Advanced Drydock | 2 | structure | hand-made | – | – |
+| `chs_advvehplant` | Advanced Foundry | 2 | structure | hand-made | – | – |
+| `chs_allseer` | All-Seer | 2 | structure | hand-made | – | – |
+| `chs_augur` | Augur | 2 | structure | hand-made | – | – |
+| `chs_basilisk` | Basilisk | 2 | structure | hand-made | review | review |
+| `chs_blackout` | Blackout | 2 | structure | hand-made | – | – |
+| `chs_breaker` | Breaker | 2 | structure | hand-made | – | – |
+| `chs_bulwark` | Bulwark | 2 | structure | hand-made | review | review |
+| `chs_carapace` | Carapace | 2 | structure | hand-made | approved | – |
+| `chs_cataclysm` | Cataclysm | 2 | structure | hand-made | – | – |
+| `chs_cerberus` | Cerberus | 2 | structure | hand-made | approved | approved |
+| `chs_deepear` | Deepear | 2 | structure | hand-made | – | – |
+| `chs_fusion` | Hellforge | 2 | structure | hand-made | – | – |
+| `chs_hailstorm` | Hailstorm | 2 | structure | hand-made | approved | – |
+| `chs_inferno` | Inferno | 2 | structure | hand-made | approved | – |
+| `chs_maw` | Maw | 2 | structure | hand-made | – | – |
+| `chs_rookery` | Rookery | 2 | structure | hand-made | – | – |
+| `chs_scourge` | Scourge | 2 | structure | generic | approved | approved |
+| `chs_scylla` | Scylla | 2 | structure | hand-made | – | – |
+| `chs_seekerspire` | Seeker Spire | 2 | structure | hand-made | – | – |
+| `chs_wyvern` | Wyvern | 2 | structure | hand-made | review | review |
+| `ord_advairfield` | Advanced Airfield | 2 | structure | hand-made | – | – |
+| `ord_advextractor` | Advanced Extractor | 2 | structure | hand-made | – | – |
+| `ord_advshipyard` | Advanced Shipyard | 2 | structure | hand-made | – | – |
+| `ord_advvehplant` | Advanced Vehicle Plant | 2 | structure | hand-made | – | – |
+| `ord_aegis` | Aegis | 2 | structure | hand-made | review | review |
+| `ord_bastion` | Bastion | 2 | structure | hand-made | – | – |
+| `ord_beacon` | Beacon | 2 | structure | hand-made | – | – |
+| `ord_choir` | Choir | 2 | structure | hand-made | – | – |
+| `ord_edict` | Edict | 2 | structure | hand-made | – | – |
+| `ord_empyrean` | Empyrean | 2 | structure | hand-made | – | – |
+| `ord_fusion` | Fusion Reactor | 2 | structure | hand-made | – | – |
+| `ord_lumen` | Lumen | 2 | structure | hand-made | approved | – |
+| `ord_phalanx` | Phalanx | 2 | structure | hand-made | approved | – |
+| `ord_pharos` | Pharos | 2 | structure | hand-made | – | – |
+| `ord_providence` | Providence | 2 | structure | hand-made | approved | approved |
+| `ord_radiance` | Radiance | 2 | structure | hand-made | approved | – |
+| `ord_rampart` | Rampart | 2 | structure | hand-made | – | – |
+| `ord_sanction` | Sanction | 2 | structure | generic | approved | approved |
+| `ord_sanctum` | Sanctum | 2 | structure | hand-made | review | review |
+| `ord_tribunal` | Tribunal | 2 | structure | hand-made | – | – |
+| `ord_veilspire` | Veilspire | 2 | structure | hand-made | – | – |
+| `ord_witness` | Witness | 2 | structure | hand-made | – | – |
+| `chs_ragnarok` | Ragnarok | 3 | structure | hand-made | approved | – |
+| `ord_citadel` | Citadel | 3 | structure | hand-made | approved | – |
+| `ord_reckoning` | Reckoning | 3 | structure | hand-made | approved | – |
+<!-- status-table:end -->
 
 ## Summary (second review queue, 2026-10-23)
 
@@ -557,6 +739,9 @@ Twelve units, six roles, both factions. Lancer and Ravager (from the client stre
 - Ready to merge: `f3410f8` (Crossroads's baked ground, C-167 / M-35: `ground.crossroads` in the manifest, review; `assets/maps/`, manifest, `place/MeshMaterials.model.json`).
 - Ready to merge: `1c1fa3c` (Normandy's baked ground, C-167 / M-35: `ground.normandy` in the manifest, review; `assets/maps/`, manifest, `place/MeshMaterials.model.json`, `road` / `leafy` textures; merge after the four before it).
 - Ready to merge: `5fd2a55` (S-157 tower meshes with wrecks, review: `ord_sentry_tower`, `chs_guard`, `ord_beamer`, `ord_overwatch`, `chs_twin_guard`, `chs_geryon`, `ord_gauntlet`, `chs_talos`, `chs_bulwark`; `assets/models/`, manifest, `place/MeshMaterials.model.json`).
+- Ready to merge: `0305a40` (the S-166 blockouts registered now their defs are in main, and hand-made blockouts for `ord_shepherd` / `chs_griffin`; `src/shared/Defs/Blockouts/` only. The client's icon specs fail for the four S-166 defs until B's icon tiles land; not from this commit).
+- Ready to merge: `6e07762` (T2 ship hull redesign with lofted hulls for all 9 T2 ships, the T1 corvettes Envoy / Barracuda and the naval workers Tidewright / Wrecker, those four back to review; Shepherd / Griffin meshes; wrecks for the six capital ships and the Commander mechs; the status table in models.md; `assets/models/`, manifest, `place/MeshMaterials.model.json`, docs). Nothing new draws in game: every changed unit is `review`.
+- Ready to merge: `adfb7ec` (wrecks for ten more meshes, queue item 6, review; `assets/models/*/export_wreck`, manifest, `place/MeshMaterials.model.json`).
 
 ## Requests
 

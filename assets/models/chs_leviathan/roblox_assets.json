@@ -1,7 +1,63 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "New T2 mesh (item 3); wreck built: 2324 triangles, glow share 2.4%",
+  "revision": "re-uploaded whole: the first maps drew white in Studio: 3190 triangles, glow share 0.7%",
   "bar": {
+    "model": "rbxassetid://99587771431922",
+    "meshes": {
+      "base": "rbxassetid://90958408117310",
+      "base_glow_running": "rbxassetid://109846501312267",
+      "radar": "rbxassetid://85083330932727",
+      "radar_glow_running": "rbxassetid://89316811832201",
+      "turret1": "rbxassetid://75502483983047",
+      "turret1_glow_weapon": "rbxassetid://91596734205579",
+      "turret2": "rbxassetid://73899471577910",
+      "turret2_glow_weapon": "rbxassetid://70610791175646"
+    },
+    "decals": {
+      "ALB": "rbxassetid://136381224174032",
+      "RGH": "rbxassetid://88690202483613",
+      "NOR": "rbxassetid://112970003841607",
+      "MTL": "rbxassetid://134221577791862",
+      "EMI": "rbxassetid://116655656391554"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://99352451573778",
+      "NOR": "rbxassetid://107070924457230",
+      "RGH": "rbxassetid://103222712575665",
+      "MTL": "rbxassetid://130484050901825",
+      "EMI": "rbxassetid://75925181287658"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_leviathan_bar in FTGG Art"
+  },
+  "bar_2": {
+    "model": "rbxassetid://86991399887680",
+    "meshes": {
+      "base": "rbxassetid://90958408117310",
+      "base_glow_running": "rbxassetid://109846501312267",
+      "radar": "rbxassetid://85083330932727",
+      "radar_glow_running": "rbxassetid://89316811832201",
+      "turret1": "rbxassetid://75502483983047",
+      "turret1_glow_weapon": "rbxassetid://91596734205579",
+      "turret2": "rbxassetid://73899471577910",
+      "turret2_glow_weapon": "rbxassetid://70610791175646"
+    },
+    "decals": {
+      "ALB": "rbxassetid://95882620184243",
+      "RGH": "rbxassetid://76753778228034",
+      "NOR": "rbxassetid://71188538759435",
+      "MTL": "rbxassetid://124018583590579",
+      "EMI": "rbxassetid://80633702626185"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://110860985378008",
+      "NOR": "rbxassetid://87776606508030",
+      "RGH": "rbxassetid://117046254069925",
+      "MTL": "rbxassetid://85062134128349",
+      "EMI": "rbxassetid://137449100171431"
+    },
+    "note": "T2 ship hull redesign v2 (tools/ships.py): 3190 triangles, glow share 0.7%"
+  },
+  "bar_1": {
     "model": "rbxassetid://92461454815623",
     "meshes": {
       "base": "rbxassetid://126590842199216",
@@ -27,9 +83,34 @@
       "MTL": "rbxassetid://77937726246149",
       "EMI": "rbxassetid://94690024651415"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_leviathan_bar in FTGG Art"
+    "note": "New T2 mesh (item 3); wreck built: 2324 triangles, glow share 2.4%"
   },
   "wreck": {
+    "model": "rbxassetid://77492661219595",
+    "meshes": {
+      "base": "rbxassetid://123384182129659",
+      "radar": "rbxassetid://103787813820829",
+      "turret1": "rbxassetid://70500142505396",
+      "turret2": "rbxassetid://73619539307884"
+    },
+    "decals": {
+      "ALB": "rbxassetid://117150057057238",
+      "RGH": "rbxassetid://86962702236167",
+      "NOR": "rbxassetid://89814885992418",
+      "MTL": "rbxassetid://95923059424652",
+      "EMI": "rbxassetid://82192141763398"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://139820150083398",
+      "NOR": "rbxassetid://121052723518846",
+      "RGH": "rbxassetid://117027053114833",
+      "MTL": "rbxassetid://73539107827143",
+      "EMI": "rbxassetid://118739583403397"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_leviathan_wreck_bar in FTGG Art",
+    "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 2594 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://110422489704479",
     "meshes": {
       "base": "rbxassetid://123849741177097",

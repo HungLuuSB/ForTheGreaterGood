@@ -56,5 +56,31 @@
       "EMI": "rbxassetid://112374665605872"
     },
     "note": "2026-10-22, first BAR upload (M-15): 1264 triangles, glow share 5.9%"
+  },
+  "wreck": {
+    "model": "rbxassetid://131778326483540",
+    "meshes": {
+      "barrel": "rbxassetid://112839916259137",
+      "base": "rbxassetid://109487137835593",
+      "trackL": "rbxassetid://87581998121286",
+      "trackR": "rbxassetid://130416523482224",
+      "turret": "rbxassetid://93021664250170"
+    },
+    "decals": {
+      "ALB": "rbxassetid://81583478594597",
+      "RGH": "rbxassetid://103391618236224",
+      "NOR": "rbxassetid://122090035061702",
+      "MTL": "rbxassetid://77111248243031",
+      "EMI": "rbxassetid://93424231158100"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://101436847561524",
+      "NOR": "rbxassetid://114059217734698",
+      "RGH": "rbxassetid://71089724646220",
+      "MTL": "rbxassetid://99692577422546",
+      "EMI": "rbxassetid://91806276426304"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_locust_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1168 triangles"
   }
 }

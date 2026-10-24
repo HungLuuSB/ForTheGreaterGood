@@ -1,0 +1,109 @@
+{
+  "id": "chs_barracuda_wreck",
+  "wreckOf": "chs_barracuda",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0289,
+        1.7804,
+        -0.9513
+      ],
+      "size": [
+        3.464,
+        4.8998,
+        11.3474
+      ]
+    },
+    "turret1": {
+      "parent": "base",
+      "center": [
+        -0.0303,
+        1.6983,
+        -3.5243
+      ],
+      "size": [
+        1.3856,
+        0.9833,
+        3.383
+      ],
+      "pivot": [
+        0.0,
+        1.3,
+        -2.6
+      ]
+    },
+    "turret2": {
+      "parent": "base",
+      "center": [
+        0.0671,
+        1.6522,
+        2.8418
+      ],
+      "size": [
+        0.9446,
+        0.6676,
+        1.7442
+      ],
+      "pivot": [
+        0.0,
+        1.3,
+        3.3
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle1": {
+      "parent": "turret1",
+      "at": [
+        0,
+        1.75,
+        -5.42
+      ]
+    },
+    "muzzle2": {
+      "parent": "turret2",
+      "at": [
+        0,
+        1.6,
+        1.95
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1130,
+    "turret1": 116,
+    "turret2": 92,
+    "total": 1338
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

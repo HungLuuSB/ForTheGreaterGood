@@ -1,0 +1,139 @@
+{
+  "id": "chs_wasp_wreck",
+  "wreckOf": "chs_wasp",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0168,
+        1.6363,
+        1.8431
+      ],
+      "size": [
+        3.5846,
+        3.2906,
+        8.9548
+      ]
+    },
+    "tailRotor": {
+      "parent": "base",
+      "center": [
+        0.1928,
+        2.1162,
+        5.6943
+      ],
+      "size": [
+        0.1724,
+        1.6124,
+        1.5615
+      ],
+      "pivot": [
+        0.2,
+        2.1,
+        5.7
+      ]
+    },
+    "rotor": {
+      "parent": "base",
+      "center": [
+        -0.0086,
+        3.392,
+        0.1648
+      ],
+      "size": [
+        8.3436,
+        0.301,
+        3.4188
+      ],
+      "pivot": [
+        0.0,
+        3.4,
+        0.2
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        0.0353,
+        0.5444,
+        -0.499
+      ],
+      "size": [
+        3.2315,
+        0.7113,
+        1.6959
+      ],
+      "pivot": [
+        0.0,
+        0.6,
+        -0.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "pylon",
+      "at": [
+        0,
+        0.55,
+        -1.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "tailRotor"
+  ],
+  "anim": {
+    "tailRotor": {
+      "motion": "spin",
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "rotor": {
+      "motion": "spin",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 416,
+    "tailRotor": 28,
+    "rotor": 64,
+    "pylon": 96,
+    "total": 604
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -50,5 +50,28 @@
       "EMI": "rbxassetid://87597956730486"
     },
     "note": "2026-10-22, first BAR upload (M-15): 710 triangles, glow share 5.2%"
+  },
+  "wreck": {
+    "model": "rbxassetid://133260518836213",
+    "meshes": {
+      "base": "rbxassetid://79125099091576",
+      "pylon": "rbxassetid://119654660344759"
+    },
+    "decals": {
+      "ALB": "rbxassetid://96316756763478",
+      "RGH": "rbxassetid://90151883618553",
+      "NOR": "rbxassetid://132901270218891",
+      "MTL": "rbxassetid://130435712056111",
+      "EMI": "rbxassetid://94268867551500"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://109172179298615",
+      "NOR": "rbxassetid://94247906326126",
+      "RGH": "rbxassetid://86219006111513",
+      "MTL": "rbxassetid://123219445202608",
+      "EMI": "rbxassetid://119996034966766"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_harpy_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 744 triangles"
   }
 }

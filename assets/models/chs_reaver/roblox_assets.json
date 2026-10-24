@@ -1,7 +1,31 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "New T2 mesh (item 3); wreck built: 1004 triangles, glow share 4.0%",
+  "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 1782 triangles, glow share 4.9%",
   "bar": {
+    "model": "rbxassetid://137368873398931",
+    "meshes": {
+      "base": "rbxassetid://88722993073238",
+      "base_glow_running": "rbxassetid://78254421436452",
+      "nano": "rbxassetid://119881257336775",
+      "nano_glow_power": "rbxassetid://125621879064850"
+    },
+    "decals": {
+      "ALB": "rbxassetid://99296089484071",
+      "RGH": "rbxassetid://82122319936114",
+      "NOR": "rbxassetid://82181311488048",
+      "MTL": "rbxassetid://73604454125676",
+      "EMI": "rbxassetid://111437847481452"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://121662109398536",
+      "NOR": "rbxassetid://77897604060628",
+      "RGH": "rbxassetid://91523382692677",
+      "MTL": "rbxassetid://81716484927882",
+      "EMI": "rbxassetid://109347805320731"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_reaver_bar in FTGG Art"
+  },
+  "bar_1": {
     "model": "rbxassetid://103423533135894",
     "meshes": {
       "base": "rbxassetid://137563021207079",
@@ -23,9 +47,32 @@
       "MTL": "rbxassetid://136564569037979",
       "EMI": "rbxassetid://117088638283981"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.chs_reaver_bar in FTGG Art"
+    "note": "New T2 mesh (item 3); wreck built: 1004 triangles, glow share 4.0%"
   },
   "wreck": {
+    "model": "rbxassetid://138066054351051",
+    "meshes": {
+      "base": "rbxassetid://106146840429496",
+      "nano": "rbxassetid://119849087581060"
+    },
+    "decals": {
+      "ALB": "rbxassetid://133156496479622",
+      "RGH": "rbxassetid://135841460667259",
+      "NOR": "rbxassetid://112569326811547",
+      "MTL": "rbxassetid://97490644291494",
+      "EMI": "rbxassetid://132864251473451"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://92219786666549",
+      "NOR": "rbxassetid://124063459663370",
+      "RGH": "rbxassetid://126344842546901",
+      "MTL": "rbxassetid://127283348203565",
+      "EMI": "rbxassetid://97951407587924"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_reaver_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 1722 triangles"
+  },
+  "wreck_1": {
     "model": "rbxassetid://88137071312222",
     "meshes": {
       "base": "rbxassetid://121853509125102",

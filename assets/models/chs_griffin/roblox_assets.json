@@ -1,0 +1,68 @@
+{
+  "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
+  "revision": "new mesh (mobile point defence, S-149): 2548 triangles, glow share 3.8%",
+  "bar": {
+    "model": "rbxassetid://108919892348625",
+    "meshes": {
+      "base": "rbxassetid://133441684366753",
+      "base_glow_head": "rbxassetid://131437377770667",
+      "base_glow_running": "rbxassetid://139755698532105",
+      "launcher": "rbxassetid://132576013032190",
+      "launcher_glow_weapon": "rbxassetid://130615939484166",
+      "radar": "rbxassetid://135151381536600",
+      "radar_glow_running": "rbxassetid://128994334224039",
+      "wheelL1": "rbxassetid://84571956935903",
+      "wheelL2": "rbxassetid://76520855628142",
+      "wheelL3": "rbxassetid://117977538777320",
+      "wheelR1": "rbxassetid://127967340161908",
+      "wheelR2": "rbxassetid://115855138830537",
+      "wheelR3": "rbxassetid://73601471470266"
+    },
+    "decals": {
+      "ALB": "rbxassetid://126794379505857",
+      "RGH": "rbxassetid://93020344209069",
+      "NOR": "rbxassetid://78407282527717",
+      "MTL": "rbxassetid://136018234893524",
+      "EMI": "rbxassetid://125253869801462"
+    },
+    "surfaceAppearance": {
+      "MTL": "rbxassetid://89667888843194",
+      "NOR": "rbxassetid://101051895377607",
+      "ALB": "rbxassetid://104606089829841",
+      "RGH": "rbxassetid://133415836942309",
+      "EMI": "rbxassetid://80058370624482"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_griffin_bar in FTGG Art",
+    "reuploadNote": "re-uploaded whole: the first upload's maps drew white in Studio (pipeline.md); meshes came back the same"
+  },
+  "wreck": {
+    "model": "rbxassetid://119300416114960",
+    "meshes": {
+      "base": "rbxassetid://108061330774945",
+      "launcher": "rbxassetid://92087254119019",
+      "radar": "rbxassetid://120914375066739",
+      "wheelL1": "rbxassetid://80751607197282",
+      "wheelL2": "rbxassetid://132872971702965",
+      "wheelL3": "rbxassetid://115010177116369",
+      "wheelR1": "rbxassetid://115170014533911",
+      "wheelR2": "rbxassetid://99200148709082",
+      "wheelR3": "rbxassetid://116181166994199"
+    },
+    "decals": {
+      "ALB": "rbxassetid://82587783170981",
+      "RGH": "rbxassetid://138250923236041",
+      "NOR": "rbxassetid://117757469025423",
+      "MTL": "rbxassetid://99084541479021",
+      "EMI": "rbxassetid://83090028798365"
+    },
+    "surfaceAppearance": {
+      "ALB": "rbxassetid://139124757181303",
+      "NOR": "rbxassetid://103985549988847",
+      "RGH": "rbxassetid://121139527609609",
+      "MTL": "rbxassetid://119487886407831",
+      "EMI": "rbxassetid://74515927709104"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.chs_griffin_wreck_bar in FTGG Art",
+    "revision": "wreck (queue item 6 / v2 hull): 2104 triangles"
+  }
+}

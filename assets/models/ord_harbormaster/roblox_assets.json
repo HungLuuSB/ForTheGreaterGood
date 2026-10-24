@@ -1,7 +1,32 @@
 {
   "note": "Uploaded through the Open Cloud Assets API (assets/models/tools/opencloud.py, creator hungluu344); the SurfaceAppearance uses the Decal images (pipeline.md, Open Cloud route). Glow parts (<piece>_glow_<channel>) are listed with the meshes (docs/contracts/fx.md, Unit glow).",
-  "revision": "New T2 mesh (item 3); wreck built: 1024 triangles, glow share 5.3%",
+  "revision": "lofted hull v2 (tools/ships.py), the user's 2026-10-24 review: 1802 triangles, glow share 5.9%",
   "bar": {
+    "model": "rbxassetid://99802230512425",
+    "meshes": {
+      "base": "rbxassetid://96080347482502",
+      "base_glow_running": "rbxassetid://77863974661449",
+      "nano": "rbxassetid://94362258370888",
+      "nano_glow_power": "rbxassetid://93244958470907"
+    },
+    "decals": {
+      "ALB": "rbxassetid://115703978725669",
+      "RGH": "rbxassetid://88913097679544",
+      "NOR": "rbxassetid://121663823165072",
+      "MTL": "rbxassetid://120432561139011",
+      "EMI": "rbxassetid://80003556044718"
+    },
+    "surfaceAppearance": {
+      "MTL": "rbxassetid://126074126562504",
+      "NOR": "rbxassetid://129847645842547",
+      "ALB": "rbxassetid://83465652788129",
+      "RGH": "rbxassetid://97904982192090",
+      "EMI": "rbxassetid://139204300858181"
+    },
+    "modelPath": "ReplicatedStorage.ModelReview.ord_harbormaster_bar in FTGG Art",
+    "reuploadNote": "re-uploaded whole: the first upload's maps drew white in Studio (pipeline.md); meshes came back the same"
+  },
+  "bar_1": {
     "model": "rbxassetid://126993696955839",
     "meshes": {
       "base": "rbxassetid://101671841864248",
@@ -23,7 +48,7 @@
       "MTL": "rbxassetid://94385561784224",
       "EMI": "rbxassetid://89335366463326"
     },
-    "modelPath": "ReplicatedStorage.ModelReview.ord_harbormaster_bar in FTGG Art"
+    "note": "New T2 mesh (item 3); wreck built: 1024 triangles, glow share 5.3%"
   },
   "wreck": {
     "model": "rbxassetid://72305949646339",

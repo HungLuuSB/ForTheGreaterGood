@@ -9,13 +9,13 @@
       "parent": null,
       "center": [
         0.0,
-        1.85,
-        -0.9564
+        1.8,
+        -0.972
       ],
       "size": [
-        3.32,
-        4.7,
-        11.2128
+        3.33,
+        4.8,
+        11.144
       ]
     },
     "turret1": {
@@ -78,6 +78,8 @@
     "turret1",
     "turret2"
   ],
+  "visualPieces": [],
+  "anim": {},
   "emissive": {
     "probe": "emissive_probe",
     "tint": [
@@ -101,12 +103,12 @@
       "center": [
         0.0,
         2.575,
-        0.6775
+        -0.1967
       ],
       "size": [
-        3.31,
+        3.2392,
         3.95,
-        7.955
+        9.7035
       ]
     },
     {
@@ -152,12 +154,12 @@
       ]
     }
   ],
-  "glowShare": 0.0537,
+  "glowShare": 0.0708,
   "triangles": {
-    "base": 424,
+    "base": 1154,
     "turret1": 144,
     "turret2": 92,
-    "total": 660
+    "total": 1390
   },
   "textures": {
     "size": 1024,

@@ -1,0 +1,111 @@
+{
+  "id": "chs_plague_wreck",
+  "wreckOf": "chs_plague",
+  "footprintStuds": 8,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0139,
+        1.5216,
+        -0.6472
+      ],
+      "size": [
+        7.6521,
+        3.0156,
+        9.5133
+      ]
+    },
+    "bay": {
+      "parent": "base",
+      "center": [
+        0.0121,
+        0.0182,
+        0.1389
+      ],
+      "size": [
+        1.5785,
+        0.6042,
+        2.8069
+      ],
+      "pivot": [
+        0.0,
+        0.1,
+        0.2
+      ]
+    },
+    "pylon": {
+      "parent": "base",
+      "center": [
+        0.0107,
+        0.2062,
+        1.4204
+      ],
+      "size": [
+        4.6409,
+        0.4118,
+        0.8415
+      ],
+      "pivot": [
+        0.0,
+        0.3,
+        1.4
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "bay",
+      "at": [
+        0,
+        -0.1,
+        0.2
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "bay": {
+      "motion": "open",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "range": 60
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 464,
+    "bay": 60,
+    "pylon": 124,
+    "total": 648
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
