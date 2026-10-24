@@ -28,6 +28,7 @@ local AssetService = game:GetService("AssetService")
 
 local Grid = require("@shared/Grid/Grid")
 local Core = require("../Core/FogBlanket")
+local RadarFill = require("../Core/RadarFill")
 local Vision = require("../Core/Vision")
 local World = require("../Core/World")
 
@@ -44,6 +45,8 @@ FogBlanket.frozen = false -- debug: no updates (a test pattern stays)
 export type FogBlanket = {
 	core: Core.Blanket?,
 	vision: Vision.Vision?,
+	radar: RadarFill.Layer?, -- the radar layer (C-207), one value per pixel
+	grid: any,
 	image: EditableImage?,
 	content: Content?,
 	folder: Folder,
@@ -61,6 +64,8 @@ function FogBlanket.new(): FogBlanket
 	return {
 		core = nil,
 		vision = nil,
+		radar = nil,
+		grid = nil,
 		image = nil,
 		content = nil,
 		folder = folder,
@@ -197,6 +202,8 @@ function FogBlanket.setMap(f: FogBlanket, world: World.World, layers: any)
 	f.image = img
 	f.content = (Content :: any).fromObject(img)
 	f.core = Core.new(grid.cellsX, grid.cellsZ, Grid.SENSOR_CELL_SIZE // Grid.CELL_SIZE)
+	f.radar = RadarFill.new(grid.cellsX, grid.cellsZ)
+	f.grid = grid
 	f.vision = Vision.new(grid)
 	f.stats.pixels = grid.cellsX * grid.cellsZ
 	f.stats.imageBytes = f.stats.pixels * 4
@@ -229,8 +236,10 @@ function FogBlanket.content(f: FogBlanket): Content?
 end
 
 -- Per frame. `show`: false for spectators (no fog) or when switched off.
-function FogBlanket.step(f: FogBlanket, world: World.World, dt: number, show: boolean)
-	local on = show and FogBlanket.ENABLED
+-- `radar`: the radar layer's circles (RadarFill.circles), nil when hidden.
+function FogBlanket.step(f: FogBlanket, world: World.World, dt: number, show: boolean, radar: { RadarFill.Circle }?)
+	local fogOn = show and FogBlanket.ENABLED
+	local on = fogOn or radar ~= nil
 	local parent = if on then workspace else nil
 	if f.folder.Parent ~= parent then
 		f.folder.Parent = parent
@@ -249,6 +258,11 @@ function FogBlanket.step(f: FogBlanket, world: World.World, dt: number, show: bo
 	if Vision.update(v, world) or core.visionVersion < 0 then
 		Core.apply(core, v)
 	end
+	local layer, grid = f.radar, f.grid
+	if radar and layer and grid then
+		RadarFill.build(layer, radar, grid.originX, grid.originZ, grid.sizeX / grid.cellsX)
+	end
+	Core.setOverlay(core, if radar and layer then layer.cells else nil, if layer then layer.version else 0, fogOn)
 	local r = Core.step(core, elapsed)
 	if r then
 		img:WritePixelsBuffer(Vector2.new(r.x, r.y), Vector2.new(r.w, r.h), Core.region(core, r))

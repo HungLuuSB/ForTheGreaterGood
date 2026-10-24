@@ -102,6 +102,48 @@ end
 -- Ground point under a viewport pixel: a raycast against the drawn ground
 -- (workspace.Map parts and the Terrain, its water surface included), else
 -- the plane at the map's base height.
+-- The ground height at (x, z) the sim uses (set by Main: World.groundY).
+-- Baked mesh ground (C-167) isn't raycast (a tile's box would catch the
+-- ray at mesa height), so clicks over it march the ray down to this
+-- height instead (C-209, models-C's note).
+Controls.heightAt = nil :: ((number, number) -> number)?
+Controls.MARCH_STEP = 4 -- studs along the ray between height checks
+Controls.MARCH_TOP = 400 -- no ground above this height
+
+-- Where a ray meets the height field: from where it drops below MARCH_TOP,
+-- in MARCH_STEP steps, then halved down to a tenth of a stud.
+local function march(origin: Vector3, dir: Vector3, heightAt: (number, number) -> number): Vector3?
+	if dir.Y >= -1e-4 then
+		return nil
+	end
+	local t = math.max(0, (Controls.MARCH_TOP - origin.Y) / dir.Y)
+	local tEnd = t + 6000
+	local function below(at: number): boolean
+		local p = origin + dir * at
+		return p.Y <= heightAt(p.X, p.Z)
+	end
+	if below(t) then
+		return origin + dir * t
+	end
+	while t < tEnd do
+		local nextT = t + Controls.MARCH_STEP
+		if below(nextT) then
+			local lo, hi = t, nextT
+			while hi - lo > 0.1 do
+				local mid = (lo + hi) / 2
+				if below(mid) then
+					hi = mid
+				else
+					lo = mid
+				end
+			end
+			return origin + dir * hi
+		end
+		t = nextT
+	end
+	return nil
+end
+
 function Controls.groundAt(cam: Camera, px: number, py: number): Vector3?
 	local ray = cam:ViewportPointToRay(px, py)
 	local map = workspace:FindFirstChild("Map")
@@ -112,6 +154,13 @@ function Controls.groundAt(cam: Camera, px: number, py: number): Vector3?
 		local hit = workspace:Raycast(ray.Origin, ray.Direction * 5000, params)
 		if hit then
 			return hit.Position
+		end
+	end
+	local heightAt = Controls.heightAt
+	if heightAt then
+		local p = march(ray.Origin, ray.Direction.Unit, heightAt)
+		if p then
+			return p
 		end
 	end
 	if ray.Direction.Y < -1e-4 then

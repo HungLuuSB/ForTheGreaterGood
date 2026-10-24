@@ -196,7 +196,7 @@ return function(t: any)
 		t.equal(#list, 1, "only the damaged enemy")
 		t.equal(list[1].id, 1)
 		t.expect(not list[1].own)
-		-- top-down projector, 2 px per stud: centered over the unit, footprint wide
+		-- top-down projector, 2 px per stud: centred on the unit, under its footprint (C-208), footprint wide
 		world.units[1].x, world.units[1].z = 50, 40
 		local function project(x: number, _y: number, z: number)
 			return x * 2, z * 2, true
@@ -204,7 +204,7 @@ return function(t: any)
 		local d = Bars.draws(world, list, project, 400, 400, 1, 0)
 		t.equal(#d, 1)
 		t.equal(d[1].x, 100)
-		t.equal(d[1].y, 80)
+		t.equal(d[1].y, 88 + Bars.GAP, "the footprint's near edge (z 44 → 88 px) plus the gap")
 		t.equal(d[1].width, Bars.MIN_WIDTH, "an 8-stud unit at 2 px/stud: clamped up to the minimum")
 		t.equal(#Bars.draws(world, list, project, 50, 50, 1, 0), 0, "off screen: no bar")
 		-- an aircraft drawn at 110 studs: its bar and icon sit just over the model, not at twice the altitude
@@ -223,7 +223,7 @@ return function(t: any)
 				iconY = ic.y
 			end
 		end
-		t.expect(barY and barY > 110 and barY < 130, `aircraft bar just over the model ({barY})`)
+		t.expect(barY and barY >= 110 and barY < 120, `aircraft bar right at the model, not at the ground ({barY})`)
 		t.equal(iconY, 110, "aircraft icon at the model")
 		local r, g = Bars.healthColor(1)
 		t.expect(g > r, "full: green")

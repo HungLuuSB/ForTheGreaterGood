@@ -9,7 +9,10 @@
 
 local Keybinds = {}
 
-export type Action = { id: string, label: string, group: string, default: string }
+-- `layer`: a key layer that takes its keys first while it's active (the
+-- build menu's tabs while a builder's menu shows, C-203); keys conflict
+-- only within one layer.
+export type Action = { id: string, label: string, group: string, default: string, layer: string? }
 
 Keybinds.ACTIONS = table.freeze({
 	{ id = "attack", label = "Attack, then left click", group = "Orders", default = "A" },
@@ -26,6 +29,12 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "cancel", label = "Cancel (factories, frames)", group = "Orders", default = "X" },
 	{ id = "build", label = "Build menu: open, next tab", group = "Building", default = "B" },
 	{ id = "rotate", label = "Rotate the structure", group = "Building", default = "R" },
+	-- BAR's category keys (reference 3): over Patrol, Cancel, camera right and
+	-- range rings while a builder's build menu shows
+	{ id = "tabEconomy", label = "Build menu: Economy (a builder selected)", group = "Building", default = "Z", layer = "build" },
+	{ id = "tabCombat", label = "Build menu: Combat (a builder selected)", group = "Building", default = "X", layer = "build" },
+	{ id = "tabUtility", label = "Build menu: Utility (a builder selected)", group = "Building", default = "C", layer = "build" },
+	{ id = "tabBuild", label = "Build menu: Build (a builder selected)", group = "Building", default = "V", layer = "build" },
 	{ id = "rotateLeft", label = "Turn the camera left", group = "Camera and views", default = "Q" },
 	-- E is BAR's reclaim (C-109), so the camera turns right on C
 	{ id = "rotateRight", label = "Turn the camera right", group = "Camera and views", default = "C" },
@@ -77,14 +86,16 @@ function Keybinds.set(b: Binds, id: string, key: string): boolean
 	return true
 end
 
--- Actions sharing a key with another: id → the other actions' ids.
+-- Actions sharing a key with another in their layer: id → the other
+-- actions' ids.
 function Keybinds.conflicts(b: Binds): { [string]: { string } }
 	local byKey: { [string]: { string } } = {}
 	for _, a in Keybinds.ACTIONS do
 		local key = b[a.id]
 		if key then
-			byKey[key] = byKey[key] or {}
-			table.insert(byKey[key], a.id)
+			local k = (a.layer or "") .. ":" .. key
+			byKey[k] = byKey[k] or {}
+			table.insert(byKey[k], a.id)
 		end
 	end
 	local out: { [string]: { string } } = {}

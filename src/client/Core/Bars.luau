@@ -70,14 +70,20 @@ function Bars.list(world: World.World, selected: { [number]: boolean }): { Bar }
 	return out
 end
 
+local CORNERS = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }
+
 Bars.MIN_WIDTH = 18 -- pixels: a bar stays readable when zoomed out
 Bars.MAX_WIDTH = 90
 
-export type Draw = { bar: Bar, x: number, y: number, width: number }
+export type Draw = { bar: Bar, x: number, y: number, width: number } -- y: the bars' top edge
 
--- Where the bars go on screen: centered above the unit, as wide as its
--- footprint looks along the camera's right vector (rightX, rightZ),
--- clamped to MIN_WIDTH..MAX_WIDTH. Off-screen bars are left out.
+Bars.GAP = 4 -- pixels between the unit's footprint and its bars
+
+-- Where the bars go on screen: under the unit (the user, C-208): centred on
+-- it, their top GAP pixels below the lowest on-screen corner of its
+-- footprint at its base (where the model is drawn, altitude included), as
+-- wide as the footprint looks along the camera's right vector (rightX,
+-- rightZ), clamped to MIN_WIDTH..MAX_WIDTH. Off-screen bars are left out.
 function Bars.draws(world: World.World, bars: { Bar }, project: (number, number, number) -> (number, number, boolean), width: number, height: number, rightX: number, rightZ: number): { Draw }
 	local out = {}
 	for _, b in bars do
@@ -86,12 +92,19 @@ function Bars.draws(world: World.World, bars: { Bar }, project: (number, number,
 		local size = (if def then def.footprint else 1) * Grid.CELL_SIZE
 		local x, z = u.rx or u.x, u.rz or u.z
 		-- ry is where the model is drawn (altitude included); else ground + altitude
-		local y = (u.ry or (World.groundY(world, x, z) + u.alt)) + size * 0.6 + 3
-		local sx, sy, front = project(x, y, z)
+		local y = u.ry or (World.groundY(world, x, z) + u.alt)
+		local sx, _, front = project(x, y, z)
+		local half = size / 2
+		local low = -math.huge
+		for _, c in CORNERS do
+			local _, cy, cf = project(x + c[1] * half, y, z + c[2] * half)
+			front = front and cf
+			low = math.max(low, cy)
+		end
+		local sy = low + Bars.GAP
 		if not front or sx < -60 or sy < -20 or sx > width + 60 or sy > height + 20 then
 			continue
 		end
-		local half = size / 2
 		local ax = project(x - rightX * half, y, z - rightZ * half)
 		local bx = project(x + rightX * half, y, z + rightZ * half)
 		local w = math.clamp(math.abs(bx - ax), Bars.MIN_WIDTH, Bars.MAX_WIDTH)
