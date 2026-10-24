@@ -1675,3 +1675,37 @@ Existing calls are unchanged.
 
 **Why:** the user: "unit should be render with its accessible terrain, for example, tank on ground, amphibious is on ground + water, ship on water, air is hover above ground", then "apply to all portrait".
 
+### C-193 — Commands audited per unit; builders-only box select; order lines last until done; builders spray (2026-10-24)
+
+**Decision** (the user's batch; the server-side items went to sim-A):
+- **Command sets audited, unit by unit** (`Core/CommandSet`):
+  - Stop only on what has something to stop (mobile units, builders, factories, armed units, nuke silos). Generators, extractors, storage, sonar, pads, walls and Pinpointers offer nothing (the card shows Last alert only).
+  - Shield generators get On / Off. The server still has to honour it (asked of sim-A: off = dome down, no upkeep).
+  - Interceptors (anti-nukes, point defence) get the fire state only.
+  - Stockpiled SAM sites are ordinary defences (fire state, attack, stop).
+  - CommandSet.spec checks each case.
+- **Orders go only to the units that have the command** (`Orders.able`, used by every issue): a turret in a selection given Move takes no move and draws no line.
+- **Box select:** a box with a mobile builder in it (a Commander included) keeps only the builders (`Selection.filterBox`).
+- **Order lines last until the order is done** (`Core/Waypoints`, replacing the 2 s idle drop):
+  - a point line goes when the unit gets there, or that one point after 6 s stuck short of it;
+  - attack, guard / assist and reclaim lines stay until the target is gone, repair until it's whole;
+  - a build line stays until its frame is finished, not just started;
+  - patrol stays until replaced;
+  - a builder's lines go once the server has reported it idle for 1.5 s (IDLE events).
+- **New units take their factory's order list**, as the server gives it (S-95). Factory lists stay until replaced (Repeat or not).
+- **Builders' nano spray** (`Core/BuildTargets`, `Render/BuildSpray`): a team-coloured stream from a working builder to what it builds or repairs, sweeping over the frame at the height it has reached; violet and flowing back for reclaim.
+  - The server doesn't send a builder's target, so it follows the builder's own order line: its build's frame, its repair or reclaim target, or the frame of the builder it assists. It sprays only while the builder stands within build range.
+- **The shield's capacity bar** hovers just above the generator model, not over the dome.
+- **Placement:** another builder's planned build counts as taken (it did already; the lines now stay until the frame is finished, so the plans stay counted).
+- OrderLines.spec, through the real client and server:
+  - both lines stay for the whole build (62 frames), where the old rule dropped them after 2 s still;
+  - both builders spray the frame;
+  - a factory's Lancer takes the factory's move line;
+  - a turret gets no move;
+  - another builder's plan blocks placement.
+- Studio (the Canyon): the card, the bar and the spray checked. `debug_out/screens/c193_build_spray_lines.jpg`.
+
+**Why:** the user's list: commands for all units ("why does the generator has a Stop command"), shields switching off, the bar, the box filter, no move arrow for turrets, assist and build lines persisting, factory orders persisting on their units, nano spray.
+
+**Waiting on sim-A:** shields honouring On / Off (and starting on); building over mobile units (then the client drops its "units in the way" check); in-range attacks and builds without moving; scouts' range halved; resource priority.
+

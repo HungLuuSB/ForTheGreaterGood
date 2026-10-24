@@ -1,8 +1,11 @@
 --!strict
 -- Which commands a selection offers (C-109, the user: each unit gets its own
 -- set): the union of every selected type's commands, in the command card's
--- order. Pure Luau (C-7).
---   every unit   stop
+-- order. Pure Luau (C-7). Audited unit by unit in C-193 (the user: "why
+-- does the generator has a Stop command"):
+--   stop         only what has something to stop: mobile units, builders,
+--                factories, armed units and nuke silos; a generator, an
+--                extractor, storage, sonar, a pad or a wall offers nothing
 --   armed        fire state, attack
 --   mobile       move, fight, patrol, guard; move state when armed
 --   builders     repair, reclaim (and move / guard to assist when mobile);
@@ -11,8 +14,12 @@
 --   factories    repeat, cancel; move, fight, patrol, guard, attack as
 --                orders for the units they produce (the sim's order list
 --                per factory, copied to each new unit: S-95)
---   switchable   on / off (converters; beam towers retract when off, S-96)
---   silos        stop (the launch), attack (a manual launch at a point)
+--   switchable   on / off (converters; beam towers retract when off, S-96;
+--                shield generators, to save power: C-193)
+--   silos        stop (the launch), attack (a manual launch at a point);
+--                only nuke silos (strategic weapons)
+--   interceptors fire state only (hold fire keeps the stock): anti-nukes and
+--                point defence never take a manual target
 -- "alert" (jump to the last alert) is always there: it's not a unit order.
 
 local Upgrades = require("./Upgrades")
@@ -28,20 +35,34 @@ end
 -- The commands one unit type offers, as a set (`all`: the def set, for
 -- the upgrade command; without it there is none).
 function CommandSet.forDef(def: any, all: any?): { [string]: boolean }
-	local set: { [string]: boolean } = { stop = true }
+	local set: { [string]: boolean } = {}
 	local armed = def.weapons ~= nil and #def.weapons > 0
 	local mobile = def.domain ~= "structure" and def.movement ~= nil and (def.movement.maxSpeed or 0) > 0
 	local builder = (def.buildPower or 0) > 0
-	-- a silo: every weapon a stockpiled launcher (no fire state: it only fires on a manual attack)
-	local silo = armed and def.domain == "structure"
+	-- what its weapons are (with the def set): nuke silos launch only on a
+	-- manual attack; interceptors only ever shoot missiles down
+	local silo, interceptor = armed, armed
 	for _, ws in def.weapons or {} do
-		silo = silo and (ws :: any).stockCapacity ~= nil
+		local w = all and all.weaponByIndex and all.weaponByIndex[(ws :: any).weaponIndex]
+		if w then
+			silo = silo and w.strategic == true and w.intercepts == nil
+			interceptor = interceptor and w.interceptOnly == true
+		else
+			-- (no def set: the old rule, every weapon stockpiled on a structure)
+			silo = silo and def.domain == "structure" and (ws :: any).stockCapacity ~= nil
+			interceptor = false
+		end
 	end
-	if armed then
-		set.attack = true
+	if interceptor then
+		set.fire = true
+	elseif armed then
+		set.attack, set.stop = true, true
 		if not silo then
 			set.fire = true
 		end
+	end
+	if mobile or builder then
+		set.stop = true
 	end
 	if mobile then
 		set.move, set.fight, set.patrol, set.guard = true, true, true, true
@@ -56,10 +77,10 @@ function CommandSet.forDef(def: any, all: any?): { [string]: boolean }
 		end
 	end
 	if isFactory(def) then
-		set["repeat"], set.cancel = true, true
+		set["repeat"], set.cancel, set.stop = true, true, true
 		set.move, set.fight, set.patrol, set.guard, set.attack = true, true, true, true, true
 	end
-	if def.converter ~= nil or def.toggle ~= nil or def.retract ~= nil then
+	if def.converter ~= nil or def.toggle ~= nil or def.retract ~= nil or def.shield ~= nil then
 		set.toggle = true
 	end
 	return set

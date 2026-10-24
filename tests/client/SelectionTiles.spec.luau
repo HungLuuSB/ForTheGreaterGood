@@ -42,4 +42,13 @@ return function(t: any)
 		local onScreen = Selection.sameTypeOnScreen(world, project, lancer, 100, 100)
 		t.equal(table.concat(Selection.tileClick(world, { 3 }, lancer, "screen", onScreen), ","), "1,2", "own Lancers in view; not the far one, not the enemy's")
 	end)
+
+	t.test("a box with a builder in it keeps only the builders (C-193)", function()
+		local world = scene()
+		local mason = defs.units.ord_mason.index
+		world.units[6] = { id = 6, tier = "tactical", team = 1, defIndex = mason, x = 40, z = 0, alt = 0, heading = 0, snaps = {}, lastTick = 0, state = 0, weapon = 0, aim = {} } :: any
+		t.deepEqual(Selection.filterBox(world, { 1, 2, 3, 6 }), { 6 }, "the Mason only")
+		t.deepEqual(Selection.filterBox(world, { 1, 2, 3 }), { 1, 2, 3 }, "no builder: everything")
+		t.deepEqual(Selection.filterBox(world, {}), {})
+	end)
 end

@@ -671,6 +671,14 @@ local function hideDetail(s: ShieldFx)
 	end
 end
 
+-- Where the capacity bar hovers: just above the generator's model (its
+-- beam emitter sits on top of it), not over the dome (C-193, the user).
+ShieldFx.BAR_LIFT = 3 -- studs above the emitter
+local function barPoint(s: ShieldFx): Vector3
+	local from = if s.emitter then s.emitter.WorldPosition else s.beamBase.WorldPosition
+	return from + Vector3.new(0, ShieldFx.BAR_LIFT, 0)
+end
+
 -- A v4 dome's frame (C-187): ShieldFx's states mapped onto v4's, the
 -- strength rule as an opacity factor, detail by distance; the edge
 -- adornments only at strategic distance, where the ForceField dome alone
@@ -726,7 +734,7 @@ local function drawEnergy(s: ShieldFx, now: number, cam: Camera, view: Vector2):
 		end
 	end
 	ShieldEnergy.setFrame(e, st, tState, now, alpha, detail, list)
-	-- the outline at strategic distance; the capacity bar above the dome
+	-- the outline at strategic distance; the capacity bar over the generator
 	if s.strategic and st == "idle" and D > s.radius * 1.02 then
 		local n = (cam.CFrame.Position - center) / D
 		local R = s.radius
@@ -742,7 +750,7 @@ local function drawEnergy(s: ShieldFx, now: number, cam: Camera, view: Vector2):
 		s.edge.Transparency = 1 - ShieldFx.EDGE_OPACITY * alpha
 		s.edge.Visible = alpha > 0.01
 	elseif s.bar and s.barFill and s.barText and st ~= "off" then
-		local tp, on = cam:WorldToViewportPoint(center + Vector3.new(0, s.radius + 2, 0))
+		local tp, on = cam:WorldToViewportPoint(barPoint(s))
 		s.bar.Visible = on
 		s.bar.Position = UDim2.fromOffset(tp.X, tp.Y)
 		s.barFill.Size = UDim2.fromScale(s.strength, 1)
@@ -868,10 +876,9 @@ local function draw(s: ShieldFx, now: number, dt: number, cam: Camera, view: Vec
 		s.edgeGlow.Height = 0.05
 		s.edgeGlow.Transparency = 1 - edgeAlpha * 0.3
 		s.edgeGlow.Visible = edgeAlpha > 0.01
-		-- the bar, above the outline's top
+		-- the bar, just above the generator (C-193)
 		if s.bar and s.barFill and s.barText then
-			local up = cam.CFrame.UpVector - n * cam.CFrame.UpVector:Dot(n)
-			local top = if up.Magnitude > 1e-3 then c + up.Unit * (rr + 2) else center + Vector3.new(0, R, 0)
+			local top = barPoint(s)
 			local tp, on = cam:WorldToViewportPoint(top)
 			s.bar.Visible = on and not s.strategic -- strategic detail: the dome and edge only
 			s.bar.Position = UDim2.fromOffset(tp.X, tp.Y)

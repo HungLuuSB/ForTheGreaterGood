@@ -7,6 +7,7 @@ local Formation = require("@shared/Grid/Formation")
 local Packer = require("@shared/Net/Packer")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Schema = require("@shared/Net/Schema")
+local CommandSet = require("./CommandSet")
 local World = require("./World")
 
 local Orders = {}
@@ -39,6 +40,43 @@ Orders.KIND = table.freeze({
 	repair = CT.REPAIR,
 	reclaim = CT.RECLAIM,
 })
+
+-- The units of `ids` that have the command `cmdType` on their card (C-193,
+-- the user: a turret in the selection takes no move order and draws no move
+-- line). Order commands only; stop, state and queue commands go to all.
+local NEEDS: { [number]: string } = {
+	[Schema.CmdType.MOVE] = "move",
+	[Schema.CmdType.FIGHT] = "fight",
+	[Schema.CmdType.PATROL] = "patrol",
+	[Schema.CmdType.GUARD] = "guard",
+	[Schema.CmdType.ATTACK] = "attack",
+	[Schema.CmdType.ATTACK_GROUND] = "attack",
+	[Schema.CmdType.REPAIR] = "repair",
+	[Schema.CmdType.RECLAIM] = "reclaim",
+}
+function Orders.able(world: World.World, cmdType: number, ids: { number }): { number }
+	local need = NEEDS[cmdType]
+	if need == nil then
+		return ids
+	end
+	local out = {}
+	local sets: { [any]: { [string]: boolean } } = {}
+	for _, id in ids do
+		local u = world.units[id]
+		local def = u and World.def(world, u)
+		if def then
+			local set = sets[def]
+			if set == nil then
+				set = CommandSet.forDef(def, world.defs)
+				sets[def] = set
+			end
+			if set[need] then
+				table.insert(out, id)
+			end
+		end
+	end
+	return out
+end
 
 -- The right-click rule (guide 15.6): enemy → attack; own unfinished frame →
 -- repair; own or allied unit → guard; ground → move. (Wrecks aren't on the

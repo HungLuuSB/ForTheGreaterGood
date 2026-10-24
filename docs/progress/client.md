@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Units on their terrain (C-192):** portraits show each unit on ground, water, a shore or above ground; in the world, water buildings and amphibious units float, and far-off aircraft stay in the air.
+- Ready to merge: `17bd157` (C-192: units on their terrain, portraits and world; src/client)
 - **Selection tiles (C-191):** with several units selected, each type's tile shows the unit itself, its icon bottom right and the count top left.
 - Ready to merge: `41fd948` (C-191: multi-select tiles; src/client)
 - **Smoother shield hits (C-190):** the hit patch crossfades between its frames instead of stepping; a faster patch is asked of models-C.

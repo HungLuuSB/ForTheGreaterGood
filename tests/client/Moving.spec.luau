@@ -69,7 +69,7 @@ return function(t: any)
 			print(string.format("    %s: moving %d of %d ticks on the way, there at tick %s, line gone at tick %s", case.def, moving, moving + still, tostring(reachedAt), tostring(droppedAt)))
 			t.expect(reachedAt ~= nil, "it got there")
 			t.expect(still == 0, "moving on every tick of the way")
-			t.expect((reachedAt :: number) > 2 + 15 * Waypoints.IDLE_SECONDS, "the trip takes longer than the idle timeout that used to drop the line")
+			t.expect((reachedAt :: number) > 2 + 15 * 2, "the trip takes longer than the 2 s idle timeout that used to drop the line")
 			t.expect(droppedAt ~= nil and droppedAt >= (reachedAt :: number) - 15, "the line goes when it gets there, not before")
 		end)
 	end
