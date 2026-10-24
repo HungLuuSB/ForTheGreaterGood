@@ -297,7 +297,8 @@ The user's v3 review, with their mock-up (`assets/reference/shield/shield_demo.h
   - They fade out in the last 15% of a raise.
 - **Hits.** `hits` (4) pooled `hitCap` MeshParts, idle only.
   - Placement: `Size = size × R`; `CFrame.fromMatrix(base + dir × center[2] × R, right, dir)`, with `dir` the unit direction from the dome's centre to the hit.
-  - Each cap is fully transparent and carries a `Decal` on its `Top` face: `Texture` = `hit[k]` for frame `k` of 8 over `hitLife` (0.8 s), `Color3` = tint × 3 (so it glows). The frames show a patch of cells lighting and spreading outward in a ring, fading.
+  - Each cap is fully transparent and carries a `Decal` on its `Top` face: `Texture` = `hit[k]` for frame `k` of 8 over `hitLife` (0.8 s), `Color3` = tint × `sizes.hitGlow` (1.6, so it glows a little). The frames show a patch of cells lighting and spreading outward in a ring, fading.
+  - The cap is 0.28 rad round the impact (`hitCap.halfAngle`), about 0.55 R across. The first version (0.46 rad, glow × 3) lit most of the dome after a few quick hits; the user asked for smaller, dimmer patches.
   - A Decal on a MeshPart projects onto the cap. The MeshPart's own `TextureID` doesn't work here: `Neon` ignores the alpha and `ForceField` washes it out.
 - **Detail by zoom.** At 220 studs the outline, the beam and the waves must read. The streaks, filaments, edge crackle and honeycomb can drop first.
 

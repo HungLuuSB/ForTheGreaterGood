@@ -51,9 +51,10 @@ ShieldPreview.SIZE = {
 	waveLineWidth = 0.035,
 	waveLineTile = 0.3,
 	edgeWidth = 0.03,
+	hitGlow = 1.6, -- the hit Decal's Color3 = tint x hitGlow
 }
 -- the meshes' bounding-box centres at radius 1 (export/energy.json)
-local GRID_CENTER, CAP_CENTER = 0.477818, 0.953714
+local GRID_CENTER, CAP_CENTER = 0.477818, 0.986411
 
 local Images = {
 	pulse = "rbxassetid://140247072686648",
@@ -66,14 +67,14 @@ local Images = {
 	wave_glow = { "rbxassetid://101230899960268", "rbxassetid://122976001906567", "rbxassetid://91679967814767" },
 	wave_line = { "rbxassetid://104994993937547", "rbxassetid://73910800096425", "rbxassetid://98445617977251" },
 	hit = {
-		"rbxassetid://81478126700519",
-		"rbxassetid://76961164632491",
-		"rbxassetid://91286251098916",
-		"rbxassetid://94649966504568",
-		"rbxassetid://115569169076815",
-		"rbxassetid://119021152259092",
-		"rbxassetid://100600971567257",
-		"rbxassetid://125377299320930",
+		"rbxassetid://92239441295428",
+		"rbxassetid://133972577452031",
+		"rbxassetid://75433235304483",
+		"rbxassetid://136501535850148",
+		"rbxassetid://78899436985577",
+		"rbxassetid://124101607268971",
+		"rbxassetid://85769666737638",
+		"rbxassetid://90468035189286",
 	},
 }
 ShieldPreview.Images = Images
@@ -219,7 +220,7 @@ function ShieldPreview.new(params: any)
 		local d = Instance.new("Decal")
 		d.Face = Enum.NormalId.Top
 		d.Texture = Images.hit[1]
-		d.Color3 = Color3.new(tint.R * 3, tint.G * 3, tint.B * 3)
+		d.Color3 = Color3.new(tint.R * S.hitGlow, tint.G * S.hitGlow, tint.B * S.hitGlow)
 		d.Transparency = 1
 		d.Parent = h
 		self.hits[k] = d

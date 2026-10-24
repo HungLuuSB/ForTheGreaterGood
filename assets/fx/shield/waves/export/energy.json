@@ -2,7 +2,7 @@
   "id": "shield_energy",
   "bands": 20,
   "bandDegrees": 4.5,
-  "capHalfAngle": 0.46,
+  "capHalfAngle": 0.28,
   "hexAcrossFlats": 0.147,
   "parts": {
     "HexGrid": {
@@ -281,13 +281,13 @@
     "HitCap": {
       "center": [
         0.0,
-        0.953714,
+        0.986411,
         -0.0
       ],
       "size": [
-        0.893224,
-        0.104571,
-        0.893224
+        0.556028,
+        0.039178,
+        0.556028
       ],
       "triangles": 720
     }
