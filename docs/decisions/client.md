@@ -1820,3 +1820,9 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 **Decision:** `Core/Facing`: a facing's sim heading (facing × 90°, S-133), its exit direction (0 → +Z, 1 → +X, 2 → −Z, 3 → −X) and its name as the player sees the map (the camera looks toward −Z at yaw 0, so up is North): 0 South (the default, toward the camera), 1 East, 2 North, 3 West. (Schema calls 0 NORTH; the names here follow the screen.) The placement ghost of a factory gets a green arrow (shaft and chevron, on the ground) on its exit side; turning it (R) shows "Buildings set to face East" over the ghost for 4 s, as a screen-space label (a BillboardGui in a Workspace folder doesn't draw here; the HUD's world labels are all screen-space). Fixed on the way: the ghost and queued-build markers turned by π − facing × 90°, flipped 180° from the built frame for South and North; they now turn by the sim's heading as the renderer does. `Facing.spec` checks the arrow's side against `Build.padPosition` for all four facings. Screenshots: `debug_out/screens/c206_*.jpg` (the built plant opens south like its ghost).
 
 **Why:** the user's queue item 6 (reference 7); sim-A: BUILD's facing already works end to end.
+
+### C-208 — Health bars under the unit (2026-10-24)
+
+**Decision:** the bars sit under the unit (the user): centred on it, their top `Bars.GAP` (4 px) below the lowest on-screen corner of its footprint at its base (where the model is drawn, so an aircraft's bar stays at the aircraft). The stack is anchored by its top: health, then the build / production bar and the reload bar below it; missile stock pips stay just above the health bar. Bars.spec updated. Screenshot: `debug_out/screens/c208_health_bars_under.jpg`.
+
+**Why:** the user, 2026-10-24.
