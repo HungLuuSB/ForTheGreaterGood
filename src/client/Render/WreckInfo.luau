@@ -1,7 +1,7 @@
 --!strict
 -- Wreck information (C-216, S-168; Core/ReclaimZones decides what): with
 -- only workers selected, each reclaim zone as a thin green ring on the
--- ground with "+N supply" over its centre; and the wreck under the mouse
+-- ground with "+N supply" on its far edge; and the wreck under the mouse
 -- named with its supply left ("Lancer wreck · 45 supply"). Labels are a
 -- screen-space layer like IdleMarks (no BillboardGuis); rings are pooled
 -- CylinderHandleAdornments. Zones are looked up a few times a second.
@@ -81,7 +81,7 @@ function WreckInfo.step(s: State, world: World.World, selection: { number }, cam
 			local a = Instance.new("CylinderHandleAdornment")
 			a.Name = "Zone"
 			a.Adornee = workspace.Terrain
-			a.AlwaysOnTop = false
+			a.AlwaysOnTop = true -- a flat ring at the centre's height hides under higher ground (like RadarRings, C-64)
 			a.AdornCullingMode = Enum.AdornCullingMode.Never
 			a.Color3 = WreckInfo.ZONE_COLOR
 			a.Height = 0.3
@@ -101,7 +101,8 @@ function WreckInfo.step(s: State, world: World.World, selection: { number }, cam
 			l.TextColor3 = WreckInfo.ZONE_COLOR
 			s.labels[i] = l
 		end
-		local v, onScreen = cam:WorldToViewportPoint(Vector3.new(z.x, y + 2, z.z))
+		-- the label on the ring's far (north) edge, clear of the wrecks inside it
+		local v, onScreen = cam:WorldToViewportPoint(Vector3.new(z.x, y + 2, z.z - z.r))
 		l.Visible = onScreen
 		if onScreen then
 			l.Text = `+{z.supply} supply`
