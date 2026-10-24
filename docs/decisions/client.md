@@ -1770,3 +1770,87 @@ Existing calls are unchanged.
 **Decision:** `Deaths`' attachment check matches `^%a+_muzzle%d*$` as well as `^muzzle%d*$`, as models-C's `Blockout.isAttachmentPiece` and `Mesh` now do, so Bulwark's `laser_muzzle1..3` are never picked as flung pieces. Deaths.spec: forty overkill deaths of a def with prefixed muzzles fling only real pieces.
 
 **Why:** models-C's T1 defence blockouts (m-models ea3ae59) bring attachment muzzles with a prefix.
+
+### C-201 — The match place logs the playtest flow (2026-10-24)
+
+**Decision:** for the first live playtest (lobby → reserved match → lobby), the match server prints a `[Match]` line at every step, warnings for every failure:
+- boot: the job id and the `server/<key>` lookup, the match id it found (and after how many reads), `config read` with map, mode, room and lobby server, then one line per seat (name, user or AI level, faction, ally team) and per spectator; `config refused: <why>` otherwise;
+- each player: `admitted <name> (user <id>) to seat <n>` / `as a spectator`, or `refused <name> (user <id>): not listed, kicked` (or: no valid config); leaving, with the phase;
+- the start: everyone loaded, or the 90 s wait over with the names not loaded;
+- `heartbeat <n>: <phase>, tick, connected` every 30 s, and when it stops;
+- `result: <outcome>, ally team <n> won (<reason>), <k> humans present; writing result/<id>`, then `stored result/<id>` once MemoryStore accepted it;
+- store reads and writes: each failed attempt (n/3) and a final FAILED line;
+- each teleport back: names → place and target server, started or failed, the fallback to any lobby server, and TeleportInitFailed retries with their own result.
+The watchdog's WARN / INFO lines (S-140) stay on.
+
+**Why:** the user's queue item 2: about four players will try the flow soon, and the console has to show where it breaks.
+
+### C-202 — Settings in BAR's layout; the pieces in the Kit (2026-10-24)
+
+**Decision:** the settings menu follows the user's BAR references 4–5, built from new Kit pieces the lobby can reuse:
+- `Core/OptionTree` (pure, OptionTree.spec): sections → sub-sections → option rows; which rows show for a view: the chosen section's, or with a search every match from every section (all words, in label, help, keywords, section and sub-section names; folds and Advanced ignored); "Advanced" rows only with Advanced on; a folded parent hides its children unless Unfold all; children dimmed while an ancestor is off; a sub-section header shows when any of its rows does; the active sub-section for a scroll position.
+- Kit: `Kit.search` (dark box, magnifier), `Kit.header` (amber on a lighter band, amber underline), `Kit.fold` (▾ / ▸), `Kit.treeNav` (sections with the pill; the chosen one's sub-sections under it, an amber bar on the one in view; a click scrolls to it), `Kit.helpFooter` (hovered option's name, help text, faint hint bottom right), and `Kit.options(panel, sections)`: a whole searchable body in a `Kit.panel` made without nav (search box across the top beside the title, Unfold all / Advanced switches top right, rows indented 20 px per level under fold arrows, controls right-aligned, a veil over a dimmed row's controls that lets clicks through).
+- Kit look changes (all users, the lobby included): square slider knob (12×16) on a dark track; toggle corners squarer; dropdowns a dark box (`Kit.COLOR.box`); an open dropdown lifts its ancestors' ZIndex so its list draws over the rows after it.
+- The menu: Graphics (Quality, with its caps as folded child rows · Models · Lighting), Interface (Scale · Building · Developer, Advanced), Control (Camera; zoom step Advanced), Keys (one sub-section per key group, Reset, the fixed-key tables), Audio. 940 × 620, fixed; the page scrolls. Every row has help text for the footer.
+- Checked in Studio: search, Unfold all, Advanced, hover help, dimmed children, the sub-section jump and amber bar, an open dropdown. Fixes from that check: a Kit panel in a gui drawn under Roblox's top bar keeps clear of it (short windows); the sub-section jump uses screen pixels (CanvasPosition is in them); the dropdown lifts its ancestors only in a Sibling-order gui (the menu's gui is Global, where the list's own ZIndex already wins). Screenshots: `debug_out/screens/c202_settings_*.jpg`.
+
+**Why:** the user's queue item 3, with the pieces in the Kit for the lobby stream (D).
+
+### C-203 — The HUD after reference 3 (2026-10-24)
+
+**Decision:**
+- **Build categories are BAR's:** Economy, Combat (was Defense), Utility, Build (was Factories); a factory's menu stays Units. The tabs sit **under** the grid, each with a coloured diamond (Economy yellow, Combat red, Utility blue, Build green) and its key.
+- **Tab keys Z / X / C / V** (Keybinds `tabEconomy` … `tabBuild`, group Building, rebindable): while a builder's structure menu shows they open the tab and arm the digits, like B. They are a key **layer** (`Action.layer = "build"`): conflicts count only within a layer, and while the layer is active Patrol (Z), Cancel (X), the camera's right turn (C) and range rings (V) stand aside (`BuildMenuUI.takes`, `Camera.keyTaken`). Without a builder selected those keys work as before.
+- **Build tiles:** cost stacked at the bottom right (supply white, power yellow), the type icon at the bottom left, as in the reference.
+- **Command card:** state buttons carry a short coloured underline (22 × 2 px; green on, red off, yellow for the middle fire / move states); Repeat reads "Repeat On" / "Repeat Off" on factories; priority "High prio" / "Low prio".
+- **Unit panel:** the name in yellow-green (190, 228, 96).
+- **Top-right menu:** a flat text strip ("Keys", "Settings (O)") replaces the Settings button; `SettingsMenu.addMenuItem(text, order, onClick)` adds items (Lobby, Statistics later: statistics need server data mid-match).
+- Screenshots: `debug_out/screens/c203_hud_economy.jpg`, `c203_hud_combat_x.jpg`.
+
+**Why:** the user's queue item 4 (reference 3).
+
+### C-205 — Own units off camera stay live (OWN_STATUS, S-158) (2026-10-24)
+
+**Decision:** the client keeps each `OWN_STATUS` (protocol 34) in `world.ownStatus` by unit ID and applies it (`World.applyStatus`: health, build progress, the factory queue and its head's progress) to the unit while it's outside the tactical tier: at once when the unit is known, and on every strategic snapshot that recreates it (so a status that came before the unit's first record waits for it). ENTER and DEATH drop it (ENTER / State win from then on). The queue is rebuilt from head and count (`World.statusQueue`): the queue the client last had from its head on, cut or padded with its last item; the head repeated when the old queue doesn't hold it. Health bars, build bars, the factory queue strip and idle counts therefore keep moving for own units off camera. `OwnStatus.spec`: a factory's progress, finished items and damage off camera through the real NetOut → NetIn path; a status before the strategic record; the queue rebuild.
+
+**Why:** the user's queue item 6, with sim-A's S-158.
+
+### C-206 — The factory facing arrow and "Buildings set to face …" (2026-10-24)
+
+**Decision:** `Core/Facing`: a facing's sim heading (facing × 90°, S-133), its exit direction (0 → +Z, 1 → +X, 2 → −Z, 3 → −X) and its name as the player sees the map (the camera looks toward −Z at yaw 0, so up is North): 0 South (the default, toward the camera), 1 East, 2 North, 3 West. (Schema calls 0 NORTH; the names here follow the screen.) The placement ghost of a factory gets a green arrow (shaft and chevron, on the ground) on its exit side; turning it (R) shows "Buildings set to face East" over the ghost for 4 s, as a screen-space label (a BillboardGui in a Workspace folder doesn't draw here; the HUD's world labels are all screen-space). Fixed on the way: the ghost and queued-build markers turned by π − facing × 90°, flipped 180° from the built frame for South and North; they now turn by the sim's heading as the renderer does. `Facing.spec` checks the arrow's side against `Build.padPosition` for all four facings. Screenshots: `debug_out/screens/c206_*.jpg` (the built plant opens south like its ghost).
+
+**Why:** the user's queue item 6 (reference 7); sim-A: BUILD's facing already works end to end.
+
+### C-208 — Health bars under the unit (2026-10-24)
+
+**Decision:** the bars sit under the unit (the user): centred on it, their top `Bars.GAP` (4 px) below the lowest on-screen corner of its footprint at its base (where the model is drawn, so an aircraft's bar stays at the aircraft). The stack is anchored by its top: health, then the build / production bar and the reload bar below it; missile stock pips stay just above the health bar. Bars.spec updated. Screenshot: `debug_out/screens/c208_health_bars_under.jpg`.
+
+**Why:** the user, 2026-10-24.
+
+### C-209 — The Canyon's baked ground wired: clicks march the sim's heights; cliff fallback (2026-10-24)
+
+**Decision:** with models-C's Canyon ground (m-models 08b9889, merged in 13b9a3c; manifest `ground.canyon` at review, drawn with the Studio switch `groundanyway`), mesh tiles no longer take ground clicks (`CanQuery` off: a tile's box hit rays at mesa height). `Controls.groundAt` raycasts the map parts and water as before, then marches the ray down to `Controls.heightAt` (Main: `World.groundY`, water surface over water) in 4-stud steps from 400 studs, refined to a tenth of a stud. `GroundMeshes.FALLBACK.cliff` = Sandstone (150, 78, 52) for the strata walls.
+- Studio, 2026-10-24 (`debug_out/screens/c209_canyon_*.jpg`): 236 tiles and details build in about 10 s; after a camera jump the mesh ground is there at once and sharp. **But their SurfaceAppearances draw flat white in the match place** (no load error): the textures need a look from models-C before the user's review; voxel shots for comparison.
+
+**Why:** the user's queue item 8; models-C's notes 1 and 2.
+
+### C-210 — State buttons show every state (2026-10-24)
+
+**Decision:** state buttons in the command card carry one short segment per state under the label, the current one lit (the user): fire and move states three (red, yellow, green: hold, return / maneuver, at will / roam), repeat, on / off and priority two (off / low red on the left, on / high green on the right); unlit segments dark grey, all unlit when no selected unit has the state. Replaces C-203's single coloured underline. Screenshot: `debug_out/screens/c210_state_segments_x2.jpg` (UI at 2× for the shot).
+
+**Why:** the user, 2026-10-24.
+
+### C-207 — Radar coverage as a green fill with rings, on the minimap too (2026-10-24)
+
+**Decision:** reference 6's radar view. `Core/RadarFill` turns the team's radar circles into one value per grid cell: 0 outside, FILL inside, up to RING on the lighter rings (each radar's own every RING_STEP 160 studs, and the coverage's outer edge; an edge deep inside another radar isn't drawn, so overlapping radars read as one area), softened over RING_WIDTH 12 studs. `Core/FogBlanket` composites it under the fog in the same image (green 70/225/110, fill alpha 0.13, rings up to 0.34; with fog of war shading off, the image holds the radar alone), so the minimap mirrors it. Shown while placing a radar structure (its own range added at the ghost), while a selected own unit has radar, or in the sensor view (N); circles are every finished own radar emitter, looked up 4 times a second. **The terrain cut waits for the sim:** Sensors stamps radar as a plain circle, so a client-side cut would show coverage the server doesn't count. sim-A will add a shared terrain-occluded radar function (request 66), and the layer will take its cells then. `RadarFill.spec`. Screenshots: `debug_out/screens/c207_radar_fill_*.jpg`.
+
+**Why:** the user's queue item 5.
+
+### C-211 — Sonar pings and jammer shimmer (2026-10-24)
+
+**Decision:** `Core/SensorFx` (pure) picks the emitters drawn in the tactical tier and their timing; `Render/SensorFx` draws them, hidden at strategic zoom:
+- **Sonar ping:** every finished own sonar emitter on camera sends a thin cyan ring (pooled CylinderHandleAdornments: a cylinder with an InnerRadius) across the water surface out to its sonar radius, PING_TIME 1.6 s every PING_PERIOD 3 s, staggered per unit (golden-ratio offset by id), clear at the start, clearest a quarter of the way out, faded at the radius. Enemy sonar doesn't ping on your screen.
+- **Jammer shimmer:** every finished jammer on camera, own or a seen enemy's, wears a dome at its jam radius in Roblox's ForceField material (it shimmers by itself), breathing slowly (4 s, out of phase per unit), plus a thin purple ring on the ground at the radius. From inside the dome the shimmer is faint, so the ring shows the reach. The sim's jammers have no on/off switch (TOGGLED_ON is only for converters, beam towers and shields; Schema's comment calling it "radar / jammer switched on" is stale), so every finished jammer shimmers. The radius is the def's; the sim shrinks it in a power stall, which the client doesn't know.
+- `SensorFx.spec`. Screenshot: `debug_out/screens/c211_sonar_ping_jammer.jpg` (two Crusaders pinging at sea, a Veil's dome and ring on land).
+
+**Why:** the user's queue item 7.

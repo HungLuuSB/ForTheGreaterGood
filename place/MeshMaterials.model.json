@@ -942,6 +942,42 @@
       }
     },
     {
+      "Name": "ground_cliff",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://99467802748514",
+        "NormalMapContent": "rbxassetid://82993085455559",
+        "RoughnessMapContent": "rbxassetid://101774450668310",
+        "MetalnessMapContent": "rbxassetid://138401222445176",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ground_desert",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://98749317720568",
+        "NormalMapContent": "rbxassetid://97920080636525",
+        "RoughnessMapContent": "rbxassetid://139093985823380",
+        "MetalnessMapContent": "rbxassetid://136149512360989",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ground_redrock",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://88142544153714",
+        "NormalMapContent": "rbxassetid://98305883284830",
+        "RoughnessMapContent": "rbxassetid://83133963617961",
+        "MetalnessMapContent": "rbxassetid://121351602786229",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_absolution",
       "ClassName": "SurfaceAppearance",
       "Properties": {

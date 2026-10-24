@@ -36,11 +36,15 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" > /tmp/ftgg-merge.log 2
 	git merge --abort 2>/dev/null
 	exit 3
 fi
-T=$(lune run test 2>&1 | tail -1)
+lune run test > /tmp/ftgg-test.log 2>&1
+T=$(tail -1 /tmp/ftgg-test.log)
 echo "test: $T"
+grep -A2 "^  FAIL" /tmp/ftgg-test.log | head -20
 S="0 failed (no slow suite)"
 if [ -f .lune/test_slow.luau ]; then
-	S=$(lune run test_slow 2>&1 | tail -1)
+	lune run test_slow > /tmp/ftgg-test_slow.log 2>&1
+	S=$(tail -1 /tmp/ftgg-test_slow.log)
+	grep -A2 "^  FAIL" /tmp/ftgg-test_slow.log | head -20
 fi
 echo "test_slow: $S"
 C="0 failed (no client suite)"

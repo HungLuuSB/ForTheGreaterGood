@@ -39,7 +39,7 @@ local function make(piece: GroundMeshes.Piece, parent: Instance, materials: Inst
 	mp.Anchored = true
 	mp.CanCollide = false
 	mp.CanTouch = false
-	mp.CanQuery = true -- ground clicks raycast workspace.Map (Input/Controls.groundAt)
+	mp.CanQuery = false -- a tile's box would catch clicks at mesa height: Controls.groundAt marches the sim's heights (C-209)
 	mp.CastShadow = true
 	local look = materials and materials:FindFirstChild("ground_" .. piece.material)
 	if look and look:IsA("SurfaceAppearance") then

@@ -124,6 +124,48 @@ return function(t: RunAll.Context)
 		t.expect(dist(w, falcon, -200, 0) < 420, "back near its patrol point")
 	end)
 
+	t.test("an advanced rearm pad rearms two aircraft at once, twice as fast (S-166)", function()
+		for _, padId in { "ord_empyrean", "chs_rookery" } do
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })
+			local team = if padId == "ord_empyrean" then 1 else 2
+			local fighter = if team == 1 then "ord_falcon" else "chs_harpy"
+			local pad = Spawn.unit(sim, padId, team, 0, 0)
+			local planes = { Spawn.unit(sim, fighter, team, 40, 0), Spawn.unit(sim, fighter, team, -40, 0) }
+			for _, f in planes do
+				sim.air.ammo[f] = 0
+				Air.onEmpty(sim, f)
+			end
+			local landed, done, both = {}, {}, false
+			for _ = 1, 3000 do
+				local acc = sim.eco.accounts[team] -- full economy: two fast rearms draw 4× an Aerie's power
+				acc.power.storage, acc.power.stored = 1e6, 1e6
+				acc.supply.storage, acc.supply.stored = 1e6, 1e6
+				Sim.step(sim)
+				local n = 0
+				for k, f in planes do
+					local phase = sim.air.phase[f]
+					if phase == "rearm" then
+						n += 1
+						landed[k] = landed[k] or sim.tick
+					elseif phase == "fly" and landed[k] and not done[k] then
+						done[k] = sim.tick
+					end
+				end
+				both = both or n == 2
+				if done[1] and done[2] then
+					break
+				end
+			end
+			t.expect(both, `{padId}: both on the pad at once`)
+			local d = sim.defs.units[fighter]
+			local want = (d.ammo :: number) * (d.rearmTime :: number) * 15 / 2 -- half an Aerie's time
+			for k = 1, 2 do
+				t.expect(done[k] ~= nil and math.abs((done[k] :: number) - (landed[k] :: number) - want) <= 3, `{padId}: plane {k} rearmed in {done[k] and done[k] - landed[k]} ticks (want {want})`)
+			end
+			local _ = pad
+		end
+	end)
+
 	t.test("rearming slows down when the team stalls", function()
 		local function rearmTicks(stall: boolean): number
 			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:128" })

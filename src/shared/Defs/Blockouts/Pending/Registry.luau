@@ -8,8 +8,19 @@
 -- fields each was built for (a proposal for the sim session, M-17).
 
 return {
-	blockouts = {},
-	defs = {},
+	blockouts = {
+		chs_rookery = require("./chs_rookery"),
+		chs_scylla = require("./chs_scylla"),
+		ord_empyrean = require("./ord_empyrean"),
+		ord_pharos = require("./ord_pharos"),
+	},
+	-- sim-A's request 2026-10-24 (IDs fixed by the sim; the defs land with its next merge)
+	defs = {
+		ord_pharos = { id = "ord_pharos", model = "ord_pharos", faction = "order", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "launcher", "muzzle" } },
+		chs_scylla = { id = "chs_scylla", model = "chs_scylla", faction = "chaos", tier = 2, domain = "structure", footprint = 3, pieces = { "base", "launcher", "muzzle" } },
+		ord_empyrean = { id = "ord_empyrean", model = "ord_empyrean", faction = "order", tier = 2, domain = "structure", footprint = 4, pieces = { "base" } },
+		chs_rookery = { id = "chs_rookery", model = "chs_rookery", faction = "chaos", tier = 2, domain = "structure", footprint = 4, pieces = { "base" } },
+	},
 	poses = {
 		-- anti-nukes: ready to launch
 		ord_providence = {

@@ -129,6 +129,36 @@ return function(t: RunAll.Context)
 		t.equal(#sim.match.doomed, 0, "nothing left to do")
 	end)
 
+	t.test("an eliminated player's structures self-destruct about two a tick (S-164: B's watchdog saw Damage 96 ms)", function()
+		local s = setup("FFA", "COMMAND_ENDS", 3)
+		local sim = s.sim
+		local gens = {}
+		for i = 0, 9 do
+			table.insert(gens, Spawn.unit(sim, "chs_generator", 2, 150 + (i % 5) * 24, 150 + (i // 5) * 24))
+		end
+		step(sim, 2)
+		Combat.queueDamage(sim.combat, s.commander[2], sim.world.health[s.commander[2]], 0)
+		local function standing(): number
+			local n = 0
+			for _, id in gens do
+				if sim.world.slot[id] then
+					n += 1
+				end
+			end
+			return n
+		end
+		local counts = {}
+		for _ = 1, 10 do
+			Sim.step(sim)
+			table.insert(counts, standing())
+		end
+		local per = Match.SELF_DESTRUCT_PER_TICK // Match.SELF_DESTRUCT_STRUCTURE
+		for k = 2, #counts do
+			t.expect(counts[k - 1] - counts[k] <= per, `at most {per} structures a tick ({table.concat(counts, ", ")})`)
+		end
+		t.equal(counts[#counts], 0, `all gone within 10 ticks ({table.concat(counts, ", ")})`)
+	end)
+
 	t.test("FFA, Annihilation: out only when nothing is left", function()
 		local s = setup("FFA", "ANNIHILATION", 3)
 		local sim = s.sim

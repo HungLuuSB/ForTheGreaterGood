@@ -8,8 +8,15 @@
 -- circle. The build grid (C-166, Settings > Interface "Build grid"): the
 -- 8-stud build cells round the ghost as thin lines on the ground, fading
 -- out with distance, so footprints line up.
+-- Facing (C-206, reference 7): a factory's ghost has an arrow on its exit
+-- side, and turning the placement (R) shows "Buildings set to face East"
+-- over it for a moment. The ghost turns as the built frame will (heading =
+-- facing × 90°, Core/Facing).
+
+local Players = game:GetService("Players")
 
 local Api = require("../Api")
+local Facing = require("../Core/Facing")
 local Upgrades = require("../Core/Upgrades")
 local World = require("../Core/World")
 local Models = require("./Models")
@@ -31,7 +38,14 @@ export type Ghost = {
 	grid: Folder, -- the build grid's line segments (outside the ghost: its Highlight would tint them)
 	lines: { Part },
 	gridKey: string, -- the cell and map the grid was laid for
+	arrow: { Part }, -- shaft and the two bars of the head (C-206)
+	labelGui: ScreenGui, -- "Buildings set to face …" over the ghost: a screen-space label like IdleMarks (no BillboardGuis)
+	label: TextLabel,
+	facing: number?, -- the facing last drawn
+	labelUntil: number,
 }
+
+local LABEL_SECONDS = 4
 
 local MARK_POOL = 40
 PlacementGhost.GRID = true -- Settings > Interface: the build grid round the ghost
@@ -85,13 +99,73 @@ function PlacementGhost.new(): Ghost
 	marks.Parent = workspace
 	local grid = Instance.new("Folder")
 	grid.Name = "BuildGrid"
-	return { folder = folder, plate = plate, highlight = highlight, model = nil, defId = nil, marks = marks, discs = discs, area = area, grid = grid, lines = {}, gridKey = "" }
+	-- the facing arrow: a shaft and a chevron, flat on the ground
+	local arrow = {}
+	for i, name in { "Shaft", "HeadL", "HeadR" } do
+		local a = Instance.new("Part")
+		a.Name = name
+		a.Anchored = true
+		a.CanCollide = false
+		a.CanQuery = false
+		a.CanTouch = false
+		a.CastShadow = false
+		a.Material = Enum.Material.Neon
+		a.Transparency = 0.15
+		a.Size = if i == 1 then Vector3.new(3, 0.3, 9) else Vector3.new(2.6, 0.3, 7)
+		a.Parent = folder
+		arrow[i] = a
+	end
+	local labelGui = Instance.new("ScreenGui")
+	labelGui.Name = "FtggFacingLabel"
+	labelGui.ResetOnSpawn = false
+	labelGui.IgnoreGuiInset = true -- positions come from WorldToViewportPoint
+	labelGui.DisplayOrder = -1 -- under the HUD panels
+	labelGui.Parent = (Players.LocalPlayer :: Player):WaitForChild("PlayerGui")
+	local label = Instance.new("TextLabel")
+	label.Name = "Facing"
+	label.AnchorPoint = Vector2.new(0.5, 1)
+	label.BackgroundColor3 = Color3.fromRGB(20, 22, 27)
+	label.BackgroundTransparency = 0.35
+	label.BorderSizePixel = 0
+	label.AutomaticSize = Enum.AutomaticSize.X
+	label.Size = UDim2.fromOffset(0, 24)
+	label.FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold)
+	label.TextSize = 15
+	label.TextColor3 = Color3.fromRGB(240, 244, 248)
+	label.Visible = false
+	label.Parent = labelGui
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 10), UDim.new(0, 10)
+	pad.Parent = label
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 4)
+	corner.Parent = label
+	return { folder = folder, plate = plate, highlight = highlight, model = nil, defId = nil, marks = marks, discs = discs, area = area, grid = grid, lines = {}, gridKey = "", arrow = arrow, labelGui = labelGui, label = label, facing = nil, labelUntil = 0 }
 end
 
--- Facing 0..3 (Schema.Facing: north, east, south, west) as a sim heading
--- (forward = (sin h, cos h); north is -Z).
-local function headingOf(facing: number): number
-	return math.pi - facing * math.pi / 2
+-- Lays the arrow on the exit side of a footprint `size` studs wide at
+-- (x, z), pointing out, each part on the ground under it (C-206).
+local function layArrow(g: Ghost, world: World.World, def: any, x: number, z: number, size: number, facing: number, color: Color3, shown: boolean)
+	local ex, ez = Facing.exit(facing)
+	local dir = Vector3.new(ex, 0, ez)
+	local side = Vector3.new(-ez, 0, ex)
+	local floats = World.floats(def)
+	local function onGround(p: Vector3): Vector3
+		return Vector3.new(p.X, World.groundY(world, p.X, p.Z, floats) + 0.6, p.Z)
+	end
+	local base = Vector3.new(x, 0, z) + dir * (size / 2 + 2)
+	local tip = base + dir * 12
+	local shaftMid = onGround(base + dir * 4.5)
+	g.arrow[1].CFrame = CFrame.lookAt(shaftMid, shaftMid + dir)
+	for i, sign in { 1, -1 } do
+		local from = tip - dir * 4.5 + side * (sign * 4.5)
+		local mid = onGround((from + tip) / 2)
+		g.arrow[i + 1].CFrame = CFrame.lookAt(mid, mid + (tip - from).Unit)
+	end
+	for _, a in g.arrow do
+		a.Color = color
+		a.Transparency = if shown then 0.15 else 1
+	end
 end
 
 local function setModel(g: Ghost, def: any)
@@ -234,6 +308,8 @@ function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vec
 		if g.folder.Parent ~= nil then
 			g.folder.Parent = nil
 		end
+		g.facing, g.labelUntil = nil, 0 -- the next placement starts quiet
+		g.label.Visible = false
 		return
 	end
 	if PlacementGhost.GRID then
@@ -271,8 +347,26 @@ function PlacementGhost.step(g: Ghost, api: Api.Api, now: number?, areaFrom: Vec
 		g.plate.Size = Vector3.new(size + 2, 0.2, size + 2)
 	end
 	local offset = (model:GetAttribute("RootOffset") :: CFrame?) or CFrame.identity
-	-- PivotTo: blockout parts are anchored, not welded (moving the root alone left them behind)
-	model:PivotTo(CFrame.new(p.x, y, p.z) * CFrame.Angles(0, headingOf(p.facing) + math.pi, 0) * offset)
+	-- PivotTo: blockout parts are anchored, not welded (moving the root alone left them behind);
+	-- turned as the renderer turns the built frame: heading + π (C-206: it was π - heading, flipped for 0 and 2)
+	model:PivotTo(CFrame.new(p.x, y, p.z) * CFrame.Angles(0, Facing.heading(p.facing) + math.pi, 0) * offset)
+	-- the exit arrow on factories, and the message when the facing turns
+	local factory = def.buildOptions ~= nil and #def.buildOptions > 0
+	layArrow(g, world, def, p.x, p.z, size, p.facing, color, factory)
+	local t = now or os.clock()
+	if g.facing ~= nil and g.facing ~= p.facing then
+		g.labelUntil = t + LABEL_SECONDS
+		g.label.Text = Facing.message(p.facing)
+	end
+	g.facing = p.facing
+	local shown = false
+	local cam = workspace.CurrentCamera
+	if t < g.labelUntil and cam then
+		local v, onScreen = cam:WorldToViewportPoint(Vector3.new(p.x, y + size / 2 + 6, p.z))
+		shown = onScreen
+		g.label.Position = UDim2.fromOffset(v.X, v.Y)
+	end
+	g.label.Visible = shown
 	if g.folder.Parent == nil then
 		g.folder.Parent = workspace
 	end

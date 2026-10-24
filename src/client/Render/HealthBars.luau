@@ -48,9 +48,10 @@ local function bar(parent: Instance, name: string, color: Color3): Frame
 end
 
 local function newSlot(parent: ScreenGui): Slot
-	-- root = the health bar's dark back; the build bar hangs under it
+	-- root = the health bar's dark back, its top at the draw's y (under the
+	-- unit, C-208); the build and reload bars hang under it
 	local root = bar(parent, "Bar", BACK_COLOR)
-	root.AnchorPoint = Vector2.new(0.5, 1)
+	root.AnchorPoint = Vector2.new(0.5, 0)
 	root.BackgroundTransparency = 0.25
 	local healthFill = bar(root, "Health", Color3.new(0, 1, 0))
 	local buildBack = bar(root, "BuildBack", BACK_COLOR)
@@ -135,10 +136,9 @@ function HealthBars.step(layer: Layer, draws: { Bars.Draw }, visible: boolean)
 			local w = math.floor(d.width + 0.5)
 			local b = d.bar
 			local building = b.build ~= nil or b.production ~= nil
-			-- the pair is anchored by its bottom edge, so the health bar stays put when the build bar goes
+			-- anchored by its top edge under the unit: the health bar stays put when the build bar goes
 			local reloading = b.reload ~= nil
-			local below = (if building then BUILD_H + 1 else 0) + (if reloading then RELOAD_H + 1 else 0)
-			slot.root.Position = UDim2.fromOffset(math.floor(d.x + 0.5), math.floor(d.y + 0.5) - below)
+			slot.root.Position = UDim2.fromOffset(math.floor(d.x + 0.5), math.floor(d.y + 0.5))
 			slot.root.Size = UDim2.fromOffset(w, HEALTH_H)
 			slot.healthFill.Size = UDim2.new(math.clamp(b.health, 0, 1), 0, 1, 0)
 			local r, g, bl = Bars.healthColor(b.health)

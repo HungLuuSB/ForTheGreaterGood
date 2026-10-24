@@ -2332,3 +2332,78 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Changed:** the skirmish AI chose east or west only, from the sign of the enemy's x. On The Canyon (north vs south) its factories faced sideways. `Skirmish.enemyFacing` now picks the nearest of the four toward the enemy start (east / west on a tie, so the mirrored 1v1 maps are unchanged). Vehicle plants and advanced plants use it; airfields and shipyards stay at 0.
 - **Guide 9.3** says what facing means and who follows it.
 - **Tests:** `Build.spec` (BUILD with each facing: the frame's heading and its pad on that axis), `Canyon.spec` (the AI faces south from the north start and north from the south; on Ridgeline east and west as before; the slow match checks the AI's built plants).
+
+## S-161 — The AI's give-ups: their causes, fixed; the coarser base grid tried and parked (your queue item 6, next.md item 3) (2026-10-24)
+
+- **Asked:** the cause of the remaining give-ups (1–2 per 12 minutes after S-142), and mixed sizes laid out on a coarser grid, with mirror fairness as the guard.
+- **How:** `lune run debug_giveups [minutes] [seeds] [mapFilter]` (new, `.lune/`): mirror matches at normal and hard on Ridgeline, Coastline, Twin Lakes and The Canyon. Each give-up (`Skirmish.giveUpHook`, a debug hook, nil in play) prints what stood around it. **59 give-ups in 16 matches of 12 minutes:**
+  - **28, a builder standing still with a move order** before a deposit it can't reach (Twin Lakes' middle deposits at x = ±12, The Canyon's at (-396, -644)). When no open cell of the builder's region lies near the goal, Nav marks the move unreachable and the unit never moves. S-142's reach check covered `spotNear` sites but not `freeDeposit`'s.
+  - **17, a site occupied:** mostly the same unreachable far deposits, already taken by the enemy.
+  - **13, moving but no closer:** a builder produced by a vehicle plant, given a site behind the plant while still driving out (S-133), pushed head-on into the plant for 20 s. Planning started from its cell inside the footprint, the route search found nothing, and the order was marked unreachable for good: no field, no extension, a straight line into the wall.
+  - 1, units in the way.
+- **Fixed:**
+  - `Skirmish.freeDeposit(brain, accept, builder)` skips deposits the builder can't reach (the S-142 check);
+  - `Nav` plans a unit standing in a blocked cell from the nearest open cell (the one it comes out on), so the order gets a field.
+- **After: 2 give-ups in the same 16 matches**, both builders sliding along their own buildings (an extractor and a generator). Every AI was affected, the player's units too (any order given while driving out of a factory, or walking off a new frame, S-155).
+- **The coarser grid, tried and parked on branch `s161-grid`:** sites on a lattice of blocks anchored at home and mirrored. Footprints up to BLOCK − 2 at block centres, larger ones at every second block corner, so any two buildings keep 2 free cells whatever their sizes. It never ran out of sites, but it cost the economy on Ridgeline (normal, seeds 34–36, 8 minutes):
+
+  | Layout | Generators | Lancers | Power ratio, minutes 6–8 |
+  |---|---|---|---|
+  | Ring sweep (kept) | 15 / 15 / 15 | 14 / 19 / 12 | 0.74 / 0.81 / 0.81 |
+  | 5-cell blocks | 11 / 18 / 19 | 9 / 17 / 11 | 0.47 / 0.67 / 0.67 |
+  | 4-cell blocks | 11 / 11 / 11 | 15 / 17 / 10 | 0.64 / 0.65 / 0.66 |
+
+  With 5-cell blocks `AI.spec`'s normal-economy test failed (power ratio 0.45 at 8 minutes, needs 0.5). With the give-ups gone, the lanes it was for matter less. Under "Needs my review".
+- **Tests:** `Build.spec`: a tank ordered behind its plant while driving out of it gets round it (136 studs short before the fix).
+- **Mirror fairness:** the slow suite's guard runs at the merge.
+
+## S-162 — The fairness run as its own report (your queue item 7, next.md item 6) (2026-10-24)
+
+- `lune run fairness [seeds] [minutes] [mapFilter] [level]` (new): the same AI level on both starts (default normal), both faction mirrors, seeds 1..12 by default (24 matches a map), up to 10 minutes each (then the value lead decides, as in `Fairness.spec`), on every two-start map: Ridgeline, Coastline, Normandy, The Canyon. Per map: wins by start, draws, wins per faction mirror, the two-sided binomial p. Target: neither start under a third of the decided matches. Parallel workers (`--jobs`, S-99). Writes `docs/FAIRNESS.md` without a map filter.
+- **Report only, outside the slow suite:** it runs with the balance checkpoint, never per change. The slow suite keeps its 36-match Ridgeline guard (S-155) for merges.
+- Not run now (your rule): its first numbers come with the next balance checkpoint.
+
+## S-163 — Beam damage along the beam (your queue item 8, guide audit item 16) (2026-10-24)
+
+- **Before:** lingering beams dealt their damage per tick (S-113), but a single-target beam's share always went to its target, through anything in front of it, and a missed beam burned nothing. Hit-rays (Radiance, `pierce`) already hurt everything on their line (S-115).
+- **Now:** each tick a single-target beam's share goes to the **first enemy unit its line crosses**, from the muzzle to its end (the target's aim point, a miss's fixed point on the ground, or the dome that stops it), by collision radius, in the weapon's target classes; the hit target when nothing stands in front. A unit stepping into the beam takes it; a missed beam burns whatever walks into its line. Allies are never hit.
+- **Wire:** nothing new. When the struck unit changes, a new FIRE ends the drawn beam there (`hit = true`, at its aim point), or at the full end when nothing is struck, as dome changes do (S-123). The beam keeps who it struck (`Beam.struck`, hashed).
+- **Tests:** `Defenses.spec`: an Inferno beam at a Paladin; a Lancer stepping into the line takes the share and a FIRE ends the beam at it; the Paladin behind takes only the shares before.
+
+## S-164 — The live server's budget: B's watchdog run 1, the fixes, `--!native` (your queue item 5, next.md item 1) (2026-10-24)
+
+- **B's Studio run 1** (client request 65; Twin Lakes seed 13, 4 Hard AI FFA, `income all 100`, speed 4, 24.5 game minutes, peak 273 units, main d6643d4): only one tick over the 54 ms tick budget, 104 ms with **Damage 96.1 ms** when a player was eliminated (its units self-destruct). Over 2× their 18.1 budgets: Damage (4–9 ms through big fights), Pathing (15–26 ms spikes), Commands (2–4 ms from minute 0), NetOut (12–16 ms spikes, one spectator), once Weapons 12.9 and Construction 6.8.
+- **`lune run profile_match [minutes] [seed] [mapId] [income] [--parts]`** (new): the same match headless; per system the ticks over budget, the median over and the five worst ticks with what happened in them. `--parts` times a few functions inside the systems (module fields only). Its shapes match B's (Lune isn't a live server: compare shapes, not milliseconds).
+- **Found and fixed:**
+  - **Damage: a structure's removal cost 1.5–2.4 ms**, all in `Passability.updateRect`: the clearance transform over a (size + 4 × CAP)² rectangle per ground class (CAP 16), into a fresh table each time. Only cells within CAP of the change can change, so the transform now covers just that band, seeded on its border with the current values of the cells just outside. Exact: the two-pass L∞ transform is min-plus linear, so arbitrary exact seeds give the exact result; `Passability.spec`'s full-recompute comparison passes. One scratch table is reused. A footprint-3 place + remove: 3.34 → 0.72 ms. In the profile, Damage over budget on 47 ticks → 1, peak 5.6 → 2.5 ms.
+  - **Damage 96 ms on an elimination:** S-144 self-destructed 20 units a tick, structures included. Structures now weigh 10 against those 20 (`Match.SELF_DESTRUCT_STRUCTURE`), about 2 a tick; the first in line always goes.
+  - **Pathing on idle ticks:** an idle Pathing tick applied every tree's pending terrain changes (S-67), 5 trees' updates and component passes at once: 10–14 ms. Now one tree a tick (the others the next idle ticks, or when an order needs them).
+  - **`Nav.nearestOpen`** (goal and slot snapping, up to 4,096 cells) built a direction table per cell and a fresh `seen` set per call. Now a stamp buffer and a reused queue; the same cells in the same order, so the same results.
+- **Commands:** its average is 0.29 ms a tick at 196 units (auto-orders 0.07, the per-unit pass 0.14). Its over-budget ticks are single `Nav.issueMove` calls of 3–5 ms that I couldn't reproduce outside a running match (the same orders benchmark at 0.02–0.5 ms), so most likely garbage collection landing there. Run 2 will show whether the nearestOpen change helped. Not changed further.
+- **NetOut:** 12–18 ms spikes in the profile too, with the spectator (who has every unit tactical). Not looked into yet; next once run 2 is in.
+- **`--!native`** on `Systems/Targeting`, `Systems/Movement` and `Sim/Sensors` (none was over budget in run 1, so run 2 shows the codegen's effect on them). Lune ignores it; `lune run build` keeps it (darklua keeps comments) and the place compiles.
+- **Tooling:** `integrate.sh` now prints the failing tests of a failed suite (it showed only the summary line).
+- **Next:** B's run 2 on the merge commit, same profile and seed, side by side with run 1.
+
+## S-165 — Homing corrections for radar-only contacts: measured, not built (your queue item 8, client request 11a) (2026-10-24)
+
+- **Asked (11a, 2026-10-21):** corrections more often than every 5 ticks for missiles whose target the player has only as a radar contact; the client drifted ~7 studs (up to 35).
+- **Tried:** every 2 ticks for homing projectiles whose target isn't in the player's tactical tier. In `NetOut.spec`'s torpedo scene (torpedoes at sonar contacts) the mean visible drift went from 2.68 to 2.55 studs (−5%), the worst case stayed 10.5, and the homing bytes rose 63% (0.09 → 0.15 KB/s); with every other message lost it got worse (corrections every 2 ticks all fell on the lost ticks).
+- **Why so little:** since S-131 / S-134 a blip is sent at its unit's true cell and the client circles it 1.5 studs, so the client already steers at almost the right point. 11a's drift was measured before that.
+- **Not built.** If B still sees drifting missiles in Studio, a smaller step (every 3 ticks, radar-only targets only) is ready to try.
+
+## S-166 — A naval SAM platform and an advanced rearm pad (your queue item 8, guide audit item 15) (2026-10-24)
+
+- **Naval SAM platforms** (guide 13.5, built by the advanced naval workers): `ord_pharos` **Pharos** (the Crusader's `ord_naval_sam`, own radar 600, error 20; 2,200 health; 300 supply, 3,800 power) and `chs_scylla` **Scylla** (the Corsair's `chs_naval_sam`, radar 560, error 22; 2,400 health; 280 / 3,600). T2, footprint 3, `placement = "water"`. Radar-guided: jamming beyond burn-through blocks them, chaff decoys them. Names after the faction styles (Order: a lighthouse; Chaos: the sea monster).
+- **Advanced rearm pads** (guide 13.1, built by the advanced air workers): `ord_empyrean` **Empyrean** and `chs_rookery` **Rookery**: T2, footprint 4 (two bays), 3,000 / 3,200 health, 300 supply, 3,600 power. `rearmPads = 2` and the new def field **`rearmSpeed = 2`**: rounds come twice as fast (and are paid twice as fast).
+- **`rearmSpeed`** (structures and carriers with `rearmPads`, default 1, validated): Air's rearm rate is `rearmSpeed / rearmTime` rounds a second at full economy.
+- **The AI doesn't build them yet.** Wire: nothing new.
+- **Tests:** `Air.spec` (two aircraft on an Empyrean or a Rookery at once, each rearmed in half an Aerie's time), `Naval.spec` (each platform stands on the sea, not on land, and shoots down a loitering enemy fighter).
+- **Requests:** blockouts / models to models-C; icon entries to client-B (the icon run fails on a def without one, C-183).
+
+## S-161 follow-up — the Nav fix tilted mirror fairness; now symmetric (2026-10-24)
+
+- **Found at the merge:** with S-161 the slow suite's 36 mirror matches on Ridgeline split **west 11 / east 25** (the guard needs 12 each; before, 19 / 17), and the merge of 775ceb6 was dropped (main untouched). Three variants in parallel: without the Nav fix 19 / 17; without the deposit reach check still 11 / 25. So the Nav fix.
+- **Cause:** it took the open cell `nearestOpen` finds first, a search that tries +x first. From inside a factory's footprint that's the east side: the exit for the west player's plants (they face east) but the back of the east player's.
+- **Now:** the open cell on the smallest square ring around the unit's cell that is nearest the unit itself (`Nav` `openNearPoint`; exact ties to the lower index). A unit driving out is already part-way through its door, so that's the exit side, mirrored for both.
+- **Checks:** mirror matches **west 15 / east 21** (pass); `debug_giveups`: **1 give-up in 16 matches** (2 with the first version, 59 before S-161); `Build.spec`'s regression test passes.

@@ -107,6 +107,7 @@ export type UnitDef = {
 	ammoCost: { supply: number?, power: number? }?, -- per round rearmed
 	rearmTime: number?, -- seconds per round at full economy
 	rearmPads: number?, -- structures: aircraft rearmed at once
+	rearmSpeed: number?, -- structures / carriers with rearmPads: how much faster than rearmTime they rearm (default 1; S-166)
 	model: string,
 	pieces: { string },
 	script: string?,
@@ -363,6 +364,7 @@ local UNIT_SPEC: Spec = {
 		},
 		rearmTime = opt(POSITIVE), -- seconds per round at full economy
 		rearmPads = { kind = "integer", optional = true, min = 1 }, -- aircraft rearmed at once
+		rearmSpeed = opt(POSITIVE), -- rearm rate multiplier (S-166)
 	},
 }
 
@@ -704,6 +706,9 @@ function Defs.validate(raw: RawDefs): { string }
 		end
 		if u.rearmPads ~= nil and u.domain ~= "structure" and u.domain ~= "naval" then
 			report("rearmPads: only structures and ships (carriers) have rearm pads")
+		end
+		if u.rearmSpeed ~= nil and u.rearmPads == nil then
+			report("rearmSpeed: only units with rearmPads")
 		end
 		if type(u.movement) == "table" and u.movement.minSpeed ~= nil and u.movement.minSpeed > u.movement.maxSpeed then
 			report("movement.minSpeed: above maxSpeed")

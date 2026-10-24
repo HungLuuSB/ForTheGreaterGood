@@ -103,6 +103,8 @@ export type Beam = {
 	dome: number?,
 	domeGen: number?,
 	domeDrain: number,
+	struck: number?, -- a single-target beam: the unit its share went to last tick (S-163), 0 = none
+	struckGen: number?,
 }
 
 export type Combat = {
@@ -776,6 +778,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(Hash.u32(h, b.slot), b.ticks)
 		h = Hash.number(Hash.number(Hash.number(h, b.fullX), b.fullY), b.fullZ)
 		h = Hash.u32(Hash.u32(h, (if b.fullHit then 1 else 0) + (if b.ray then 2 else 0)), b.dome or 0)
+		h = Hash.u32(h, b.struck or 0)
 	end
 	h = Hash.u32(h, #c.wreckIds)
 	for _, id in c.wreckIds do

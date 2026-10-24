@@ -1,0 +1,4424 @@
+{
+  "map": "canyon",
+  "source": "map:canyon",
+  "uvRepeat": 32.0,
+  "tile": 256,
+  "parts": [
+    {
+      "fbx": "ground_1.fbx",
+      "meshes": [
+        "t0_0_redrock",
+        "t0_0_desert",
+        "t1_0_redrock",
+        "t1_0_desert",
+        "t2_0_redrock",
+        "t2_0_desert",
+        "t3_0_redrock",
+        "t4_0_redrock",
+        "t0_1_desert",
+        "t1_1_redrock",
+        "t1_1_desert",
+        "t2_1_redrock",
+        "t2_1_desert",
+        "t3_1_redrock",
+        "t4_1_redrock",
+        "t0_2_redrock",
+        "t0_2_desert",
+        "t1_2_redrock",
+        "t1_2_desert",
+        "t2_2_redrock",
+        "t2_2_desert",
+        "t3_2_redrock",
+        "t3_2_desert"
+      ],
+      "triangles": 114364
+    },
+    {
+      "fbx": "ground_2.fbx",
+      "meshes": [
+        "t4_2_redrock",
+        "t0_3_redrock",
+        "t0_3_desert",
+        "t1_3_redrock",
+        "t1_3_desert",
+        "t2_3_desert",
+        "t3_3_redrock",
+        "t3_3_desert",
+        "t4_3_redrock",
+        "t4_3_desert",
+        "t0_4_redrock",
+        "t0_4_desert",
+        "t1_4_redrock",
+        "t1_4_desert",
+        "t2_4_redrock",
+        "t2_4_desert",
+        "t3_4_redrock",
+        "t3_4_desert",
+        "t4_4_redrock",
+        "t4_4_desert",
+        "t0_5_redrock",
+        "t1_5_redrock",
+        "t1_5_desert",
+        "t2_5_redrock",
+        "t2_5_desert",
+        "t3_5_redrock"
+      ],
+      "triangles": 113978
+    },
+    {
+      "fbx": "ground_3.fbx",
+      "meshes": [
+        "t3_5_desert",
+        "t4_5_redrock",
+        "t4_5_desert",
+        "t0_6_redrock",
+        "t1_6_redrock",
+        "t1_6_desert",
+        "t2_6_redrock",
+        "t2_6_desert",
+        "t3_6_redrock",
+        "t3_6_desert",
+        "t4_6_desert",
+        "t0_7_redrock",
+        "t1_7_redrock",
+        "t2_7_redrock",
+        "t2_7_desert",
+        "t3_7_redrock",
+        "t3_7_desert",
+        "t4_7_redrock",
+        "t4_7_desert",
+        "d_wall0_cliff",
+        "d_wall1_cliff",
+        "d_wall2_cliff",
+        "d_wall3_cliff",
+        "d_wall4_cliff",
+        "d_wall5_cliff",
+        "d_wall6_cliff",
+        "d_wall7_cliff",
+        "d_wall8_cliff",
+        "d_wall9_cliff",
+        "d_wall10_cliff",
+        "d_wall11_cliff",
+        "d_wall12_cliff",
+        "d_wall13_cliff",
+        "d_wall14_cliff",
+        "d_wall15_cliff",
+        "d_wall16_cliff",
+        "d_wall17_cliff",
+        "d_wall18_cliff",
+        "d_wall19_cliff",
+        "d_wall20_cliff",
+        "d_wall21_cliff",
+        "d_wall22_cliff",
+        "d_wall23_cliff",
+        "d_wall24_cliff",
+        "d_wall25_cliff",
+        "d_wall26_cliff",
+        "d_wall27_cliff",
+        "d_wall28_cliff",
+        "d_wall29_cliff",
+        "d_wall30_cliff",
+        "d_wall31_cliff",
+        "d_wall32_cliff",
+        "d_wall33_cliff",
+        "d_wall34_cliff",
+        "d_wall35_cliff",
+        "d_wall36_cliff",
+        "d_wall37_cliff",
+        "d_wall38_cliff",
+        "d_wall39_cliff",
+        "d_wall40_cliff",
+        "d_wall41_cliff",
+        "d_wall42_cliff",
+        "d_wall43_cliff",
+        "d_wall44_cliff",
+        "d_wall45_cliff",
+        "d_wall46_cliff",
+        "d_wall47_cliff",
+        "d_wall48_cliff",
+        "d_wall49_cliff",
+        "d_wall50_cliff",
+        "d_wall51_cliff",
+        "d_wall52_cliff",
+        "d_wall53_cliff",
+        "d_wall54_cliff",
+        "d_wall55_cliff",
+        "d_wall56_cliff",
+        "d_wall57_cliff",
+        "d_wall58_cliff",
+        "d_wall59_cliff",
+        "d_wall60_cliff"
+      ],
+      "triangles": 119710
+    },
+    {
+      "fbx": "ground_4.fbx",
+      "meshes": [
+        "d_wall61_cliff",
+        "d_wall62_cliff",
+        "d_wall63_cliff",
+        "d_wall64_cliff",
+        "d_wall65_cliff",
+        "d_wall66_cliff",
+        "d_wall67_cliff",
+        "d_wall68_cliff",
+        "d_wall69_cliff",
+        "d_wall70_cliff",
+        "d_wall71_cliff",
+        "d_wall72_cliff",
+        "d_wall73_cliff",
+        "d_ledge0_redrock",
+        "d_ledge1_redrock",
+        "d_ledge2_redrock",
+        "d_ledge3_redrock",
+        "d_ledge4_redrock",
+        "d_ledge5_redrock",
+        "d_ledge6_redrock",
+        "d_ledge7_redrock",
+        "d_ledge8_redrock",
+        "d_ledge9_redrock",
+        "d_ledge10_redrock",
+        "d_ledge11_redrock",
+        "d_ledge12_redrock",
+        "d_ledge13_redrock",
+        "d_ledge14_redrock",
+        "d_ledge15_redrock",
+        "d_ledge16_redrock",
+        "d_ledge17_redrock",
+        "d_ledge18_redrock",
+        "d_ledge19_redrock",
+        "d_ledge20_redrock",
+        "d_ledge21_redrock",
+        "d_ledge22_redrock",
+        "d_ledge23_redrock",
+        "d_ledge24_redrock",
+        "d_ledge25_redrock",
+        "d_ledge26_redrock",
+        "d_ledge27_redrock",
+        "d_ledge28_redrock",
+        "d_ledge29_redrock",
+        "d_ledge30_redrock",
+        "d_ledge31_redrock",
+        "d_ledge32_redrock",
+        "d_ledge33_redrock",
+        "d_ledge34_redrock",
+        "d_ledge35_redrock",
+        "d_ledge36_redrock",
+        "d_ledge37_redrock",
+        "d_ledge38_redrock",
+        "d_ledge39_redrock",
+        "d_ledge40_redrock",
+        "d_ledge41_redrock",
+        "d_ledge42_redrock",
+        "d_ledge43_redrock",
+        "d_ledge44_redrock",
+        "d_ledge45_redrock",
+        "d_ledge46_redrock",
+        "d_ledge47_redrock",
+        "d_ledge48_redrock",
+        "d_ledge49_redrock",
+        "d_ledge50_redrock",
+        "d_ledge51_redrock",
+        "d_ledge52_redrock",
+        "d_ledge53_redrock",
+        "d_ledge54_redrock",
+        "d_ledge55_redrock",
+        "d_ledge56_redrock",
+        "d_ledge57_redrock",
+        "d_ledge58_redrock",
+        "d_ledge59_redrock",
+        "d_ledge60_redrock",
+        "d_ledge61_redrock",
+        "d_ledge62_redrock",
+        "d_ledge63_redrock",
+        "d_ledge64_redrock",
+        "d_ledge65_redrock",
+        "d_ledge66_redrock",
+        "d_ledge67_redrock",
+        "d_ledge68_redrock",
+        "d_ledge69_redrock",
+        "d_ledge70_redrock",
+        "d_ledge71_redrock",
+        "d_ledge72_redrock",
+        "d_ledge73_redrock",
+        "d_rocks0_0_redrock",
+        "d_rocks0_1_redrock",
+        "d_rocks0_2_redrock",
+        "d_rocks0_3_redrock",
+        "d_rocks0_4_redrock",
+        "d_rocks0_5_redrock",
+        "d_rocks0_6_redrock",
+        "d_rocks0_7_redrock",
+        "d_rocks1_0_redrock",
+        "d_rocks1_1_redrock",
+        "d_rocks1_2_redrock",
+        "d_rocks1_3_redrock",
+        "d_rocks1_4_redrock",
+        "d_rocks1_5_redrock",
+        "d_rocks1_6_redrock",
+        "d_rocks1_7_redrock",
+        "d_rocks1_8_redrock",
+        "d_rocks2_0_redrock",
+        "d_rocks2_1_redrock",
+        "d_rocks2_2_redrock",
+        "d_rocks2_3_redrock",
+        "d_rocks2_4_redrock",
+        "d_rocks2_5_redrock",
+        "d_rocks2_6_redrock",
+        "d_rocks2_7_redrock",
+        "d_rocks3_0_redrock",
+        "d_rocks3_1_redrock",
+        "d_rocks3_2_redrock",
+        "d_rocks3_3_redrock",
+        "d_rocks3_4_redrock",
+        "d_rocks3_5_redrock",
+        "d_rocks3_6_redrock",
+        "d_rocks3_7_redrock",
+        "d_rocks4_0_redrock",
+        "d_rocks4_1_redrock",
+        "d_rocks4_2_redrock",
+        "d_rocks4_3_redrock",
+        "d_rocks4_4_redrock",
+        "d_rocks4_5_redrock",
+        "d_rocks4_6_redrock",
+        "d_rocks4_7_redrock",
+        "d_rocks4_8_redrock"
+      ],
+      "triangles": 69816
+    }
+  ],
+  "meshes": [
+    {
+      "name": "t0_0_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -532.1789,
+        33.9431,
+        -986.9169
+      ],
+      "size": [
+        167.6421,
+        48.1138,
+        74.1662
+      ],
+      "triangles": 1253
+    },
+    {
+      "name": "t0_0_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -488.0,
+        10.5,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        1.5,
+        256.0
+      ],
+      "triangles": 7153
+    },
+    {
+      "name": "t1_0_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -204.179,
+        33.9574,
+        -881.2297
+      ],
+      "size": [
+        200.358,
+        48.5851,
+        226.4595
+      ],
+      "triangles": 1094
+    },
+    {
+      "name": "t1_0_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -232.0,
+        12.75,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        7.5,
+        256.0
+      ],
+      "triangles": 7364
+    },
+    {
+      "name": "t2_0_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        24.0,
+        35.7221,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        51.0558,
+        256.0
+      ],
+      "triangles": 6718
+    },
+    {
+      "name": "t2_0_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -58.0658,
+        10.375,
+        -896.0
+      ],
+      "size": [
+        91.8684,
+        2.75,
+        256.0
+      ],
+      "triangles": 1730
+    },
+    {
+      "name": "t3_0_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        280.0,
+        36.75,
+        -896.0
+      ],
+      "size": [
+        256.0,
+        48.0,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t4_0_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        512.0,
+        37.375,
+        -896.0
+      ],
+      "size": [
+        208.0,
+        48.25,
+        256.0
+      ],
+      "triangles": 6656
+    },
+    {
+      "name": "t0_1_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -488.0,
+        14.625,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_1_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -205.34,
+        33.9373,
+        -653.8925
+      ],
+      "size": [
+        202.6801,
+        48.6254,
+        228.215
+      ],
+      "triangles": 1276
+    },
+    {
+      "name": "t1_1_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -232.0,
+        13.25,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        9.0,
+        256.0
+      ],
+      "triangles": 7218
+    },
+    {
+      "name": "t2_1_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        24.0,
+        34.625,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        51.25,
+        256.0
+      ],
+      "triangles": 3379
+    },
+    {
+      "name": "t2_1_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        22.8579,
+        12.25,
+        -640.0
+      ],
+      "size": [
+        253.7159,
+        7.5,
+        256.0
+      ],
+      "triangles": 5223
+    },
+    {
+      "name": "t3_1_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        280.0,
+        35.9375,
+        -640.0
+      ],
+      "size": [
+        256.0,
+        50.625,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t4_1_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        512.0,
+        38.0,
+        -640.0
+      ],
+      "size": [
+        208.0,
+        48.5,
+        256.0
+      ],
+      "triangles": 6656
+    },
+    {
+      "name": "t0_2_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -471.5622,
+        34.5,
+        -435.8987
+      ],
+      "size": [
+        147.5455,
+        48.5,
+        152.1199
+      ],
+      "triangles": 2165
+    },
+    {
+      "name": "t0_2_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -488.0,
+        10.4365,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        1.873,
+        256.0
+      ],
+      "triangles": 6457
+    },
+    {
+      "name": "t1_2_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -200.8871,
+        12.125,
+        -267.308
+      ],
+      "size": [
+        115.6052,
+        4.25,
+        22.6159
+      ],
+      "triangles": 285
+    },
+    {
+      "name": "t1_2_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -232.0,
+        13.0625,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        7.875,
+        256.0
+      ],
+      "triangles": 8033
+    },
+    {
+      "name": "t2_2_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        97.3937,
+        21.0031,
+        -403.3077
+      ],
+      "size": [
+        109.2127,
+        23.7437,
+        217.3845
+      ],
+      "triangles": 622
+    },
+    {
+      "name": "t2_2_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        24.0,
+        13.1875,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        8.625,
+        256.0
+      ],
+      "triangles": 7792
+    },
+    {
+      "name": "t3_2_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        280.0,
+        34.9526,
+        -384.0
+      ],
+      "size": [
+        256.0,
+        50.8447,
+        256.0
+      ],
+      "triangles": 7664
+    },
+    {
+      "name": "t3_2_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        223.4057,
+        10.7954,
+        -359.7606
+      ],
+      "size": [
+        142.8115,
+        2.5907,
+        207.5213
+      ],
+      "triangles": 1050
+    },
+    {
+      "name": "t4_2_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        512.0,
+        36.469,
+        -384.0
+      ],
+      "size": [
+        208.0,
+        48.562,
+        256.0
+      ],
+      "triangles": 6656
+    },
+    {
+      "name": "t0_3_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -488.0,
+        14.625,
+        -27.5407
+      ],
+      "size": [
+        256.0,
+        12.25,
+        55.0814
+      ],
+      "triangles": 665
+    },
+    {
+      "name": "t0_3_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -488.0,
+        9.625,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        2.25,
+        256.0
+      ],
+      "triangles": 7743
+    },
+    {
+      "name": "t1_3_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -244.2543,
+        33.625,
+        -128.0
+      ],
+      "size": [
+        231.4915,
+        49.25,
+        256.0
+      ],
+      "triangles": 1823
+    },
+    {
+      "name": "t1_3_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -232.0,
+        13.4375,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        8.875,
+        256.0
+      ],
+      "triangles": 6745
+    },
+    {
+      "name": "t2_3_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        24.0,
+        14.125,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t3_3_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        309.4142,
+        33.75,
+        -128.0
+      ],
+      "size": [
+        197.1716,
+        49.5,
+        256.0
+      ],
+      "triangles": 4507
+    },
+    {
+      "name": "t3_3_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        280.0,
+        9.9371,
+        -128.0
+      ],
+      "size": [
+        256.0,
+        1.6258,
+        256.0
+      ],
+      "triangles": 4185
+    },
+    {
+      "name": "t4_3_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        512.0,
+        34.5,
+        -128.0
+      ],
+      "size": [
+        208.0,
+        52.0,
+        256.0
+      ],
+      "triangles": 6246
+    },
+    {
+      "name": "t4_3_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        454.7626,
+        9.3812,
+        -82.3916
+      ],
+      "size": [
+        93.5252,
+        1.7623,
+        164.7833
+      ],
+      "triangles": 744
+    },
+    {
+      "name": "t0_4_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -488.0,
+        34.5,
+        128.0
+      ],
+      "size": [
+        256.0,
+        52.0,
+        256.0
+      ],
+      "triangles": 7582
+    },
+    {
+      "name": "t0_4_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -433.7412,
+        9.6034,
+        93.3081
+      ],
+      "size": [
+        130.6354,
+        2.2068,
+        186.6163
+      ],
+      "triangles": 1088
+    },
+    {
+      "name": "t1_4_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -287.0286,
+        33.8125,
+        128.0
+      ],
+      "size": [
+        145.9428,
+        49.375,
+        256.0
+      ],
+      "triangles": 3091
+    },
+    {
+      "name": "t1_4_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -217.1711,
+        10.25,
+        128.0
+      ],
+      "size": [
+        226.3422,
+        2.0,
+        256.0
+      ],
+      "triangles": 5445
+    },
+    {
+      "name": "t2_4_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        140.2131,
+        12.651,
+        204.4566
+      ],
+      "size": [
+        23.5738,
+        4.6981,
+        103.0869
+      ],
+      "triangles": 284
+    },
+    {
+      "name": "t2_4_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        24.0,
+        14.125,
+        128.0
+      ],
+      "size": [
+        256.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 8022
+    },
+    {
+      "name": "t3_4_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        280.0,
+        33.4388,
+        128.0
+      ],
+      "size": [
+        256.0,
+        49.6224,
+        256.0
+      ],
+      "triangles": 1711
+    },
+    {
+      "name": "t3_4_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        280.0,
+        12.5625,
+        128.0
+      ],
+      "size": [
+        256.0,
+        7.875,
+        256.0
+      ],
+      "triangles": 6793
+    },
+    {
+      "name": "t4_4_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        512.0,
+        14.625,
+        27.8513
+      ],
+      "size": [
+        208.0,
+        12.25,
+        55.7026
+      ],
+      "triangles": 488
+    },
+    {
+      "name": "t4_4_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        512.0,
+        9.625,
+        128.0
+      ],
+      "size": [
+        208.0,
+        2.25,
+        256.0
+      ],
+      "triangles": 6324
+    },
+    {
+      "name": "t0_5_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -488.0,
+        36.1565,
+        384.0
+      ],
+      "size": [
+        256.0,
+        49.187,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_5_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -232.0344,
+        34.7511,
+        384.0
+      ],
+      "size": [
+        255.9312,
+        51.2479,
+        256.0
+      ],
+      "triangles": 6582
+    },
+    {
+      "name": "t1_5_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -200.2998,
+        10.5564,
+        384.0
+      ],
+      "size": [
+        192.5996,
+        2.8629,
+        256.0
+      ],
+      "triangles": 2314
+    },
+    {
+      "name": "t2_5_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        51.1382,
+        13.6457,
+        298.4842
+      ],
+      "size": [
+        201.7237,
+        6.7085,
+        84.9684
+      ],
+      "triangles": 26
+    },
+    {
+      "name": "t2_5_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        24.0,
+        13.1875,
+        384.0
+      ],
+      "size": [
+        256.0,
+        8.625,
+        256.0
+      ],
+      "triangles": 8200
+    },
+    {
+      "name": "t3_5_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        280.0,
+        12.125,
+        360.7499
+      ],
+      "size": [
+        256.0,
+        4.25,
+        209.4997
+      ],
+      "triangles": 330
+    },
+    {
+      "name": "t3_5_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        280.0,
+        13.219,
+        384.0
+      ],
+      "size": [
+        256.0,
+        7.562,
+        256.0
+      ],
+      "triangles": 8032
+    },
+    {
+      "name": "t4_5_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        474.965,
+        34.5,
+        435.6978
+      ],
+      "size": [
+        133.93,
+        48.5,
+        152.0459
+      ],
+      "triangles": 2060
+    },
+    {
+      "name": "t4_5_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        512.0,
+        10.4768,
+        384.0
+      ],
+      "size": [
+        208.0,
+        1.9536,
+        256.0
+      ],
+      "triangles": 4980
+    },
+    {
+      "name": "t0_6_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -488.0,
+        38.0,
+        640.0
+      ],
+      "size": [
+        256.0,
+        48.5,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_6_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -232.0,
+        35.1875,
+        640.0
+      ],
+      "size": [
+        256.0,
+        52.125,
+        256.0
+      ],
+      "triangles": 8113
+    },
+    {
+      "name": "t1_6_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        -124.8498,
+        9.9574,
+        556.851
+      ],
+      "size": [
+        41.6997,
+        1.6648,
+        89.7019
+      ],
+      "triangles": 207
+    },
+    {
+      "name": "t2_6_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -46.6926,
+        34.1735,
+        640.3444
+      ],
+      "size": [
+        114.6148,
+        50.4029,
+        255.3112
+      ],
+      "triangles": 1904
+    },
+    {
+      "name": "t2_6_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        24.0,
+        12.25,
+        640.0
+      ],
+      "size": [
+        256.0,
+        7.5,
+        256.0
+      ],
+      "triangles": 6540
+    },
+    {
+      "name": "t3_6_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        246.748,
+        33.9341,
+        714.2918
+      ],
+      "size": [
+        110.3003,
+        48.6318,
+        107.4164
+      ],
+      "triangles": 1222
+    },
+    {
+      "name": "t3_6_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        280.0,
+        13.5,
+        640.0
+      ],
+      "size": [
+        256.0,
+        8.5,
+        256.0
+      ],
+      "triangles": 7228
+    },
+    {
+      "name": "t4_6_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        512.0,
+        14.625,
+        640.0
+      ],
+      "size": [
+        208.0,
+        7.75,
+        256.0
+      ],
+      "triangles": 6656
+    },
+    {
+      "name": "t0_7_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -488.0,
+        37.25,
+        896.0
+      ],
+      "size": [
+        256.0,
+        48.5,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t1_7_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        -232.0,
+        36.5315,
+        896.0
+      ],
+      "size": [
+        256.0,
+        48.437,
+        256.0
+      ],
+      "triangles": 8192
+    },
+    {
+      "name": "t2_7_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        1.2298,
+        35.7311,
+        896.0
+      ],
+      "size": [
+        210.4596,
+        51.0377,
+        256.0
+      ],
+      "triangles": 5205
+    },
+    {
+      "name": "t2_7_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        81.3074,
+        12.75,
+        896.0
+      ],
+      "size": [
+        141.3852,
+        7.5,
+        256.0
+      ],
+      "triangles": 3267
+    },
+    {
+      "name": "t3_7_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        245.5534,
+        33.9217,
+        815.1064
+      ],
+      "size": [
+        109.1323,
+        48.6566,
+        94.2129
+      ],
+      "triangles": 1087
+    },
+    {
+      "name": "t3_7_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        280.0,
+        11.125,
+        896.0
+      ],
+      "size": [
+        256.0,
+        3.75,
+        256.0
+      ],
+      "triangles": 7345
+    },
+    {
+      "name": "t4_7_redrock",
+      "kind": "tiles",
+      "material": "redrock",
+      "center": [
+        530.7868,
+        33.9314,
+        987.7556
+      ],
+      "size": [
+        170.4263,
+        48.1373,
+        72.4888
+      ],
+      "triangles": 1273
+    },
+    {
+      "name": "t4_7_desert",
+      "kind": "tiles",
+      "material": "desert",
+      "center": [
+        512.0,
+        10.5,
+        896.0
+      ],
+      "size": [
+        208.0,
+        1.5,
+        256.0
+      ],
+      "triangles": 5595
+    },
+    {
+      "name": "d_wall0_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -536.4971,
+        40.1314,
+        -1003.2728
+      ],
+      "size": [
+        91.2836,
+        36.7371,
+        41.4545
+      ],
+      "triangles": 468
+    },
+    {
+      "name": "d_wall1_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -51.0536,
+        43.5555,
+        -998.2008
+      ],
+      "size": [
+        14.5916,
+        35.3894,
+        51.5983
+      ],
+      "triangles": 186
+    },
+    {
+      "name": "d_wall2_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        87.543,
+        42.3162,
+        -989.4256
+      ],
+      "size": [
+        39.9533,
+        38.3675,
+        69.1489
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_wall3_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        13.0199,
+        41.5021,
+        -959.0388
+      ],
+      "size": [
+        110.558,
+        39.6158,
+        19.0794
+      ],
+      "triangles": 372
+    },
+    {
+      "name": "d_wall4_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        375.628,
+        43.5034,
+        -1013.6829
+      ],
+      "size": [
+        42.3601,
+        35.4933,
+        20.6342
+      ],
+      "triangles": 162
+    },
+    {
+      "name": "d_wall5_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        422.1817,
+        41.51,
+        -986.1605
+      ],
+      "size": [
+        52.4251,
+        40.2769,
+        41.0611
+      ],
+      "triangles": 210
+    },
+    {
+      "name": "d_wall6_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        530.2582,
+        41.7024,
+        -918.1608
+      ],
+      "size": [
+        171.4837,
+        40.5952,
+        94.7918
+      ],
+      "triangles": 732
+    },
+    {
+      "name": "d_wall7_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        159.2472,
+        41.1088,
+        -840.0639
+      ],
+      "size": [
+        84.1503,
+        40.2177,
+        117.2568
+      ],
+      "triangles": 852
+    },
+    {
+      "name": "d_wall8_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        104.0871,
+        42.7704,
+        -844.3857
+      ],
+      "size": [
+        13.1844,
+        36.4592,
+        80.1422
+      ],
+      "triangles": 276
+    },
+    {
+      "name": "d_wall9_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -247.2301,
+        39.5321,
+        -762.1841
+      ],
+      "size": [
+        60.271,
+        38.4359,
+        109.9174
+      ],
+      "triangles": 912
+    },
+    {
+      "name": "d_wall10_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        228.824,
+        43.5613,
+        -722.5877
+      ],
+      "size": [
+        46.0123,
+        35.8774,
+        64.6109
+      ],
+      "triangles": 354
+    },
+    {
+      "name": "d_wall11_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        250.954,
+        43.3969,
+        -716.9146
+      ],
+      "size": [
+        46.9735,
+        36.5144,
+        64.6958
+      ],
+      "triangles": 360
+    },
+    {
+      "name": "d_wall12_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        135.8793,
+        41.1077,
+        -709.6401
+      ],
+      "size": [
+        84.1954,
+        39.0789,
+        12.0933
+      ],
+      "triangles": 294
+    },
+    {
+      "name": "d_wall13_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        184.5737,
+        41.7329,
+        -674.7412
+      ],
+      "size": [
+        15.9633,
+        38.1473,
+        60.0698
+      ],
+      "triangles": 234
+    },
+    {
+      "name": "d_wall14_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        118.938,
+        40.9208,
+        -657.7321
+      ],
+      "size": [
+        105.6449,
+        38.6597,
+        70.8369
+      ],
+      "triangles": 540
+    },
+    {
+      "name": "d_wall15_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        596.1706,
+        43.7769,
+        -605.1059
+      ],
+      "size": [
+        39.6589,
+        37.415,
+        77.1299
+      ],
+      "triangles": 450
+    },
+    {
+      "name": "d_wall16_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        249.3523,
+        41.7153,
+        -589.4197
+      ],
+      "size": [
+        26.3188,
+        38.1139,
+        6.8445
+      ],
+      "triangles": 84
+    },
+    {
+      "name": "d_wall17_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        497.0951,
+        44.7118,
+        -573.4067
+      ],
+      "size": [
+        71.2515,
+        36.0764,
+        22.7648
+      ],
+      "triangles": 264
+    },
+    {
+      "name": "d_wall18_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        464.4994,
+        44.3573,
+        -535.3404
+      ],
+      "size": [
+        41.744,
+        36.7853,
+        56.5376
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_wall19_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        537.1578,
+        44.7259,
+        -538.4562
+      ],
+      "size": [
+        14.3223,
+        35.9189,
+        31.8137
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_wall20_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        505.6006,
+        44.0986,
+        -510.4336
+      ],
+      "size": [
+        40.3569,
+        37.3028,
+        16.0113
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_wall21_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -471.5949,
+        41.1199,
+        -436.0947
+      ],
+      "size": [
+        76.0152,
+        36.2603,
+        77.9099
+      ],
+      "triangles": 780
+    },
+    {
+      "name": "d_wall22_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        196.6837,
+        40.3136,
+        -383.9587
+      ],
+      "size": [
+        45.9534,
+        36.2987,
+        14.5252
+      ],
+      "triangles": 174
+    },
+    {
+      "name": "d_wall23_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        230.5527,
+        39.6818,
+        -371.1307
+      ],
+      "size": [
+        21.207,
+        37.6363,
+        36.6598
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_wall24_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        168.2672,
+        39.8805,
+        -344.4917
+      ],
+      "size": [
+        20.2641,
+        37.2389,
+        54.1827
+      ],
+      "triangles": 204
+    },
+    {
+      "name": "d_wall25_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        215.5555,
+        39.7086,
+        -314.8901
+      ],
+      "size": [
+        83.2659,
+        37.5829,
+        48.8606
+      ],
+      "triangles": 438
+    },
+    {
+      "name": "d_wall26_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        331.3321,
+        43.0713,
+        -358.5843
+      ],
+      "size": [
+        32.8402,
+        34.0684,
+        9.2127
+      ],
+      "triangles": 132
+    },
+    {
+      "name": "d_wall27_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        324.7585,
+        42.5159,
+        -328.0761
+      ],
+      "size": [
+        47.0494,
+        35.9681,
+        56.7179
+      ],
+      "triangles": 336
+    },
+    {
+      "name": "d_wall28_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        354.0659,
+        42.4537,
+        -327.5429
+      ],
+      "size": [
+        15.6186,
+        36.2259,
+        39.3539
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_wall29_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        596.3161,
+        42.2643,
+        -284.8068
+      ],
+      "size": [
+        39.3679,
+        37.9714,
+        49.6836
+      ],
+      "triangles": 282
+    },
+    {
+      "name": "d_wall30_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        498.6417,
+        41.8449,
+        -223.9553
+      ],
+      "size": [
+        60.9573,
+        38.2745,
+        89.4627
+      ],
+      "triangles": 498
+    },
+    {
+      "name": "d_wall31_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        465.1111,
+        41.6546,
+        -207.4595
+      ],
+      "size": [
+        68.4894,
+        38.1907,
+        87.6293
+      ],
+      "triangles": 516
+    },
+    {
+      "name": "d_wall32_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -193.5646,
+        39.6444,
+        -213.8691
+      ],
+      "size": [
+        70.7488,
+        38.1648,
+        64.275
+      ],
+      "triangles": 744
+    },
+    {
+      "name": "d_wall33_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        305.2724,
+        38.5057,
+        -193.1409
+      ],
+      "size": [
+        114.511,
+        40.9875,
+        101.0239
+      ],
+      "triangles": 1134
+    },
+    {
+      "name": "d_wall34_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        551.9879,
+        39.7511,
+        -65.9787
+      ],
+      "size": [
+        128.0241,
+        39.4765,
+        122.1947
+      ],
+      "triangles": 936
+    },
+    {
+      "name": "d_wall35_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        592.2407,
+        40.8185,
+        -100.4648
+      ],
+      "size": [
+        28.2044,
+        37.3629,
+        29.0707
+      ],
+      "triangles": 114
+    },
+    {
+      "name": "d_wall36_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        376.5817,
+        38.804,
+        -48.3222
+      ],
+      "size": [
+        69.0243,
+        37.3921,
+        76.5298
+      ],
+      "triangles": 804
+    },
+    {
+      "name": "d_wall37_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -551.603,
+        40.2334,
+        64.542
+      ],
+      "size": [
+        128.7939,
+        38.5115,
+        122.6364
+      ],
+      "triangles": 936
+    },
+    {
+      "name": "d_wall38_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -592.4222,
+        39.518,
+        100.432
+      ],
+      "size": [
+        30.3268,
+        39.9638,
+        31.504
+      ],
+      "triangles": 114
+    },
+    {
+      "name": "d_wall39_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -375.6033,
+        39.0506,
+        47.5197
+      ],
+      "size": [
+        69.584,
+        36.867,
+        77.1281
+      ],
+      "triangles": 804
+    },
+    {
+      "name": "d_wall40_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -302.7405,
+        37.8747,
+        192.6788
+      ],
+      "size": [
+        114.7971,
+        42.2497,
+        100.7489
+      ],
+      "triangles": 1134
+    },
+    {
+      "name": "d_wall41_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -466.5052,
+        40.6474,
+        207.3731
+      ],
+      "size": [
+        71.5559,
+        40.2051,
+        88.6179
+      ],
+      "triangles": 516
+    },
+    {
+      "name": "d_wall42_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -498.8608,
+        41.6557,
+        224.7295
+      ],
+      "size": [
+        60.9484,
+        38.6528,
+        89.1995
+      ],
+      "triangles": 498
+    },
+    {
+      "name": "d_wall43_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        194.6737,
+        40.272,
+        214.4271
+      ],
+      "size": [
+        71.1439,
+        36.83,
+        64.204
+      ],
+      "triangles": 744
+    },
+    {
+      "name": "d_wall44_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -595.8536,
+        42.124,
+        284.7556
+      ],
+      "size": [
+        40.2928,
+        38.252,
+        48.8803
+      ],
+      "triangles": 282
+    },
+    {
+      "name": "d_wall45_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -214.6383,
+        39.0471,
+        315.7195
+      ],
+      "size": [
+        84.2561,
+        38.9058,
+        48.866
+      ],
+      "triangles": 438
+    },
+    {
+      "name": "d_wall46_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -167.7261,
+        39.5358,
+        344.6475
+      ],
+      "size": [
+        20.4035,
+        37.9284,
+        55.1768
+      ],
+      "triangles": 204
+    },
+    {
+      "name": "d_wall47_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -230.7522,
+        40.5645,
+        369.5909
+      ],
+      "size": [
+        25.2956,
+        35.871,
+        31.4271
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_wall48_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -195.6288,
+        40.9138,
+        383.9298
+      ],
+      "size": [
+        48.5199,
+        35.0975,
+        11.7526
+      ],
+      "triangles": 174
+    },
+    {
+      "name": "d_wall49_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -324.8953,
+        42.2084,
+        326.2579
+      ],
+      "size": [
+        47.1662,
+        36.5832,
+        56.6232
+      ],
+      "triangles": 336
+    },
+    {
+      "name": "d_wall50_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -353.2296,
+        41.8162,
+        329.0651
+      ],
+      "size": [
+        15.6901,
+        37.5007,
+        41.7533
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_wall51_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -331.5969,
+        42.6301,
+        358.3085
+      ],
+      "size": [
+        30.5708,
+        34.9472,
+        9.6289
+      ],
+      "triangles": 132
+    },
+    {
+      "name": "d_wall52_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        472.0308,
+        40.5893,
+        434.9493
+      ],
+      "size": [
+        73.4919,
+        37.3213,
+        78.9022
+      ],
+      "triangles": 780
+    },
+    {
+      "name": "d_wall53_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -250.0037,
+        41.807,
+        588.9279
+      ],
+      "size": [
+        25.5382,
+        37.9614,
+        9.7766
+      ],
+      "triangles": 84
+    },
+    {
+      "name": "d_wall54_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -503.5508,
+        44.316,
+        510.7329
+      ],
+      "size": [
+        38.8057,
+        36.8679,
+        16.5098
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_wall55_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -464.1532,
+        44.2559,
+        536.2398
+      ],
+      "size": [
+        44.0725,
+        36.9882,
+        53.4691
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_wall56_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -537.0547,
+        45.2188,
+        539.2834
+      ],
+      "size": [
+        11.7688,
+        34.9158,
+        32.5046
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_wall57_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -496.1124,
+        43.9051,
+        573.7429
+      ],
+      "size": [
+        69.7744,
+        37.6898,
+        24.3642
+      ],
+      "triangles": 264
+    },
+    {
+      "name": "d_wall58_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -595.0558,
+        43.0597,
+        604.8196
+      ],
+      "size": [
+        41.8883,
+        38.8496,
+        77.7021
+      ],
+      "triangles": 450
+    },
+    {
+      "name": "d_wall59_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -119.2923,
+        40.606,
+        656.954
+      ],
+      "size": [
+        105.2439,
+        39.29,
+        69.4859
+      ],
+      "triangles": 540
+    },
+    {
+      "name": "d_wall60_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -184.5469,
+        42.2824,
+        675.9253
+      ],
+      "size": [
+        13.9738,
+        37.0469,
+        60.5808
+      ],
+      "triangles": 234
+    },
+    {
+      "name": "d_wall61_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -135.3939,
+        41.0663,
+        710.0453
+      ],
+      "size": [
+        84.3894,
+        39.1596,
+        11.3371
+      ],
+      "triangles": 294
+    },
+    {
+      "name": "d_wall62_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -250.3912,
+        43.2812,
+        715.9675
+      ],
+      "size": [
+        45.2106,
+        36.7461,
+        63.5287
+      ],
+      "triangles": 360
+    },
+    {
+      "name": "d_wall63_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -229.1304,
+        43.0168,
+        723.1942
+      ],
+      "size": [
+        46.9514,
+        36.9663,
+        62.987
+      ],
+      "triangles": 354
+    },
+    {
+      "name": "d_wall64_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        248.4139,
+        39.685,
+        763.6655
+      ],
+      "size": [
+        60.2568,
+        38.1192,
+        108.9358
+      ],
+      "triangles": 912
+    },
+    {
+      "name": "d_wall65_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -158.3022,
+        41.3215,
+        839.4406
+      ],
+      "size": [
+        86.1309,
+        39.7921,
+        118.5701
+      ],
+      "triangles": 852
+    },
+    {
+      "name": "d_wall66_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -103.4292,
+        43.2071,
+        843.7399
+      ],
+      "size": [
+        12.4495,
+        35.5858,
+        80.9739
+      ],
+      "triangles": 276
+    },
+    {
+      "name": "d_wall67_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -529.8392,
+        39.9302,
+        916.9198
+      ],
+      "size": [
+        172.3216,
+        44.1395,
+        96.5155
+      ],
+      "triangles": 732
+    },
+    {
+      "name": "d_wall68_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -420.5574,
+        43.0066,
+        984.9282
+      ],
+      "size": [
+        50.6747,
+        37.2112,
+        42.8251
+      ],
+      "triangles": 210
+    },
+    {
+      "name": "d_wall69_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -376.7177,
+        43.1403,
+        1014.0571
+      ],
+      "size": [
+        41.2708,
+        36.2195,
+        19.8857
+      ],
+      "triangles": 162
+    },
+    {
+      "name": "d_wall70_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -11.3457,
+        41.9974,
+        958.2011
+      ],
+      "size": [
+        109.5223,
+        38.6003,
+        17.0568
+      ],
+      "triangles": 372
+    },
+    {
+      "name": "d_wall71_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        -87.6147,
+        42.5301,
+        989.564
+      ],
+      "size": [
+        40.3017,
+        37.9397,
+        68.872
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_wall72_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        51.3547,
+        42.8645,
+        998.3044
+      ],
+      "size": [
+        15.327,
+        36.7713,
+        51.3911
+      ],
+      "triangles": 186
+    },
+    {
+      "name": "d_wall73_cliff",
+      "kind": "details",
+      "material": "cliff",
+      "center": [
+        536.9235,
+        40.2057,
+        1003.2193
+      ],
+      "size": [
+        91.2197,
+        36.5885,
+        41.5614
+      ],
+      "triangles": 468
+    },
+    {
+      "name": "d_ledge0_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -536.5166,
+        50.8818,
+        -1003.5296
+      ],
+      "size": [
+        90.3337,
+        15.2365,
+        40.9407
+      ],
+      "triangles": 468
+    },
+    {
+      "name": "d_ledge1_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -33.8345,
+        51.8349,
+        -998.3207
+      ],
+      "size": [
+        48.0136,
+        18.8305,
+        51.3587
+      ],
+      "triangles": 186
+    },
+    {
+      "name": "d_ledge2_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        82.9051,
+        55.3914,
+        -989.6593
+      ],
+      "size": [
+        48.2438,
+        12.2171,
+        68.6815
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_ledge3_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        13.0295,
+        52.8113,
+        -974.0554
+      ],
+      "size": [
+        109.9546,
+        16.9973,
+        47.9778
+      ],
+      "triangles": 372
+    },
+    {
+      "name": "d_ledge4_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        380.0829,
+        53.7331,
+        -1013.866
+      ],
+      "size": [
+        50.3819,
+        15.0338,
+        20.2679
+      ],
+      "triangles": 162
+    },
+    {
+      "name": "d_ledge5_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        429.4246,
+        54.551,
+        -990.8218
+      ],
+      "size": [
+        66.5341,
+        14.1949,
+        50.0976
+      ],
+      "triangles": 210
+    },
+    {
+      "name": "d_ledge6_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        530.4533,
+        50.6887,
+        -922.8183
+      ],
+      "size": [
+        171.0933,
+        22.6225,
+        103.1595
+      ],
+      "triangles": 732
+    },
+    {
+      "name": "d_ledge7_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        159.1673,
+        50.6459,
+        -840.0411
+      ],
+      "size": [
+        83.2802,
+        21.1435,
+        116.2356
+      ],
+      "triangles": 852
+    },
+    {
+      "name": "d_ledge8_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        111.4425,
+        55.0802,
+        -844.3811
+      ],
+      "size": [
+        26.9394,
+        11.8396,
+        79.5527
+      ],
+      "triangles": 276
+    },
+    {
+      "name": "d_ledge9_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -247.2714,
+        53.307,
+        -762.1855
+      ],
+      "size": [
+        59.3248,
+        10.886,
+        108.8291
+      ],
+      "triangles": 912
+    },
+    {
+      "name": "d_ledge10_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        228.9629,
+        53.5998,
+        -722.5446
+      ],
+      "size": [
+        45.2492,
+        15.8004,
+        63.7886
+      ],
+      "triangles": 354
+    },
+    {
+      "name": "d_ledge11_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        250.8576,
+        54.6477,
+        -717.0171
+      ],
+      "size": [
+        46.0431,
+        14.0126,
+        63.8236
+      ],
+      "triangles": 360
+    },
+    {
+      "name": "d_ledge12_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        135.8687,
+        52.1943,
+        -701.6472
+      ],
+      "size": [
+        83.6943,
+        16.9057,
+        26.9606
+      ],
+      "triangles": 294
+    },
+    {
+      "name": "d_ledge13_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        177.0404,
+        55.0034,
+        -674.6819
+      ],
+      "size": [
+        29.9553,
+        11.6064,
+        59.2142
+      ],
+      "triangles": 234
+    },
+    {
+      "name": "d_ledge14_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        119.0127,
+        49.6385,
+        -658.4537
+      ],
+      "size": [
+        104.8304,
+        21.2241,
+        71.2076
+      ],
+      "triangles": 540
+    },
+    {
+      "name": "d_ledge15_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        596.3828,
+        55.2029,
+        -605.075
+      ],
+      "size": [
+        39.2345,
+        14.563,
+        76.0537
+      ],
+      "triangles": 450
+    },
+    {
+      "name": "d_ledge16_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        249.4397,
+        51.8923,
+        -580.8911
+      ],
+      "size": [
+        26.0652,
+        17.7599,
+        23.0191
+      ],
+      "triangles": 84
+    },
+    {
+      "name": "d_ledge17_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        497.0535,
+        56.8712,
+        -566.3699
+      ],
+      "size": [
+        70.5061,
+        11.7577,
+        35.841
+      ],
+      "triangles": 264
+    },
+    {
+      "name": "d_ledge18_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        469.4682,
+        57.7633,
+        -535.3194
+      ],
+      "size": [
+        50.7095,
+        9.9735,
+        55.7884
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_ledge19_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        530.1007,
+        57.7435,
+        -538.5369
+      ],
+      "size": [
+        27.2754,
+        9.8838,
+        31.3091
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_ledge20_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        505.5533,
+        53.1918,
+        -517.2329
+      ],
+      "size": [
+        39.777,
+        19.1164,
+        28.505
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_ledge21_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -471.5541,
+        48.7219,
+        -436.09
+      ],
+      "size": [
+        75.0078,
+        21.0563,
+        76.9019
+      ],
+      "triangles": 780
+    },
+    {
+      "name": "d_ledge22_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        196.7469,
+        47.7624,
+        -376.6131
+      ],
+      "size": [
+        45.5377,
+        21.4012,
+        28.0696
+      ],
+      "triangles": 174
+    },
+    {
+      "name": "d_ledge23_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        228.0242,
+        51.2478,
+        -366.4104
+      ],
+      "size": [
+        25.7013,
+        14.5044,
+        45.2491
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_ledge24_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        174.1997,
+        47.9055,
+        -344.4127
+      ],
+      "size": [
+        31.1625,
+        21.189,
+        53.6162
+      ],
+      "triangles": 204
+    },
+    {
+      "name": "d_ledge25_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        215.4841,
+        50.5271,
+        -315.0943
+      ],
+      "size": [
+        82.3211,
+        15.9459,
+        48.102
+      ],
+      "triangles": 438
+    },
+    {
+      "name": "d_ledge26_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        331.3452,
+        49.4525,
+        -350.7312
+      ],
+      "size": [
+        32.2888,
+        21.3059,
+        23.8337
+      ],
+      "triangles": 132
+    },
+    {
+      "name": "d_ledge27_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        324.9083,
+        50.788,
+        -328.1804
+      ],
+      "size": [
+        46.2673,
+        19.424,
+        56.0117
+      ],
+      "triangles": 336
+    },
+    {
+      "name": "d_ledge28_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        347.0268,
+        50.3045,
+        -327.5733
+      ],
+      "size": [
+        28.622,
+        20.5243,
+        38.724
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_ledge29_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        596.5814,
+        52.8354,
+        -284.6415
+      ],
+      "size": [
+        38.8372,
+        16.8292,
+        48.8781
+      ],
+      "triangles": 282
+    },
+    {
+      "name": "d_ledge30_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        498.5843,
+        54.2456,
+        -223.8546
+      ],
+      "size": [
+        60.1175,
+        13.473,
+        88.5949
+      ],
+      "triangles": 498
+    },
+    {
+      "name": "d_ledge31_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        465.1854,
+        55.0391,
+        -207.5601
+      ],
+      "size": [
+        67.6617,
+        11.4218,
+        86.7113
+      ],
+      "triangles": 516
+    },
+    {
+      "name": "d_ledge32_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -193.5623,
+        48.7897,
+        -213.8558
+      ],
+      "size": [
+        69.6329,
+        19.8742,
+        63.2418
+      ],
+      "triangles": 744
+    },
+    {
+      "name": "d_ledge33_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        305.2262,
+        50.418,
+        -193.111
+      ],
+      "size": [
+        113.495,
+        17.1629,
+        99.9112
+      ],
+      "triangles": 1134
+    },
+    {
+      "name": "d_ledge34_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        552.2188,
+        50.44,
+        -65.9614
+      ],
+      "size": [
+        127.5624,
+        18.0988,
+        121.156
+      ],
+      "triangles": 936
+    },
+    {
+      "name": "d_ledge35_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        586.4102,
+        52.9484,
+        -94.5968
+      ],
+      "size": [
+        39.199,
+        13.1031,
+        40.1953
+      ],
+      "triangles": 114
+    },
+    {
+      "name": "d_ledge36_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        376.5569,
+        48.2365,
+        -48.2991
+      ],
+      "size": [
+        68.0193,
+        18.5269,
+        75.6294
+      ],
+      "triangles": 804
+    },
+    {
+      "name": "d_ledge37_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -551.8696,
+        50.5217,
+        64.5546
+      ],
+      "size": [
+        128.2609,
+        17.9349,
+        121.6121
+      ],
+      "triangles": 936
+    },
+    {
+      "name": "d_ledge38_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -587.0115,
+        50.0275,
+        95.1414
+      ],
+      "size": [
+        40.4087,
+        18.9448,
+        41.3291
+      ],
+      "triangles": 114
+    },
+    {
+      "name": "d_ledge39_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -375.649,
+        47.0114,
+        47.5547
+      ],
+      "size": [
+        68.4859,
+        20.9454,
+        76.1285
+      ],
+      "triangles": 804
+    },
+    {
+      "name": "d_ledge40_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -302.7721,
+        51.0845,
+        192.6633
+      ],
+      "size": [
+        113.7026,
+        15.8299,
+        99.6099
+      ],
+      "triangles": 1134
+    },
+    {
+      "name": "d_ledge41_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -466.6093,
+        50.8001,
+        207.4218
+      ],
+      "size": [
+        70.6311,
+        19.8999,
+        87.581
+      ],
+      "triangles": 516
+    },
+    {
+      "name": "d_ledge42_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -498.7592,
+        52.3356,
+        224.6511
+      ],
+      "size": [
+        60.0932,
+        17.293,
+        88.2869
+      ],
+      "triangles": 498
+    },
+    {
+      "name": "d_ledge43_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        194.674,
+        50.2698,
+        214.4821
+      ],
+      "size": [
+        70.1768,
+        16.8344,
+        63.1434
+      ],
+      "triangles": 744
+    },
+    {
+      "name": "d_ledge44_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -596.1246,
+        50.496,
+        284.59
+      ],
+      "size": [
+        39.7508,
+        21.508,
+        48.1029
+      ],
+      "triangles": 282
+    },
+    {
+      "name": "d_ledge45_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -214.6384,
+        51.594,
+        315.8621
+      ],
+      "size": [
+        83.2232,
+        13.812,
+        48.0949
+      ],
+      "triangles": 438
+    },
+    {
+      "name": "d_ledge46_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -173.9187,
+        49.8128,
+        344.6314
+      ],
+      "size": [
+        31.7246,
+        17.3743,
+        54.7028
+      ],
+      "triangles": 204
+    },
+    {
+      "name": "d_ledge47_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -229.3913,
+        48.9451,
+        364.3418
+      ],
+      "size": [
+        27.1485,
+        19.1097,
+        41.111
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_ledge48_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -195.7242,
+        53.585,
+        375.9524
+      ],
+      "size": [
+        47.9928,
+        9.755,
+        26.7213
+      ],
+      "triangles": 174
+    },
+    {
+      "name": "d_ledge49_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -324.9889,
+        50.3927,
+        326.3964
+      ],
+      "size": [
+        46.3056,
+        20.2146,
+        55.8169
+      ],
+      "triangles": 336
+    },
+    {
+      "name": "d_ledge50_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -346.614,
+        52.2268,
+        329.0162
+      ],
+      "size": [
+        27.9718,
+        16.6795,
+        41.1352
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_ledge51_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -331.5867,
+        49.9746,
+        350.6675
+      ],
+      "size": [
+        29.9277,
+        20.2581,
+        23.8157
+      ],
+      "triangles": 132
+    },
+    {
+      "name": "d_ledge52_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        472.0164,
+        51.1207,
+        434.9887
+      ],
+      "size": [
+        72.4351,
+        16.2585,
+        77.8368
+      ],
+      "triangles": 780
+    },
+    {
+      "name": "d_ledge53_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -250.0827,
+        50.1522,
+        581.3815
+      ],
+      "size": [
+        25.305,
+        21.271,
+        23.8805
+      ],
+      "triangles": 84
+    },
+    {
+      "name": "d_ledge54_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -503.5806,
+        52.1458,
+        517.2093
+      ],
+      "size": [
+        38.2182,
+        21.2083,
+        28.3887
+      ],
+      "triangles": 150
+    },
+    {
+      "name": "d_ledge55_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -468.7089,
+        53.0166,
+        536.3128
+      ],
+      "size": [
+        52.1258,
+        19.4668,
+        52.8005
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_ledge56_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -529.4494,
+        52.1375,
+        539.3431
+      ],
+      "size": [
+        25.9675,
+        21.0785,
+        32.0299
+      ],
+      "triangles": 126
+    },
+    {
+      "name": "d_ledge57_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -496.1566,
+        55.401,
+        566.9
+      ],
+      "size": [
+        69.0864,
+        14.698,
+        36.9203
+      ],
+      "triangles": 264
+    },
+    {
+      "name": "d_ledge58_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -595.3404,
+        51.2468,
+        604.8244
+      ],
+      "size": [
+        41.3191,
+        22.4755,
+        76.635
+      ],
+      "triangles": 450
+    },
+    {
+      "name": "d_ledge59_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -119.3686,
+        52.9277,
+        658.2637
+      ],
+      "size": [
+        104.4547,
+        14.6466,
+        71.0332
+      ],
+      "triangles": 540
+    },
+    {
+      "name": "d_ledge60_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -176.5219,
+        50.834,
+        675.9138
+      ],
+      "size": [
+        28.9621,
+        19.9437,
+        59.9399
+      ],
+      "triangles": 234
+    },
+    {
+      "name": "d_ledge61_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -135.4069,
+        53.1174,
+        701.668
+      ],
+      "size": [
+        83.8547,
+        15.0574,
+        27.0245
+      ],
+      "triangles": 294
+    },
+    {
+      "name": "d_ledge62_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -250.3247,
+        53.5198,
+        716.0742
+      ],
+      "size": [
+        44.3605,
+        16.2689,
+        62.7013
+      ],
+      "triangles": 360
+    },
+    {
+      "name": "d_ledge63_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -229.2681,
+        52.9939,
+        723.1094
+      ],
+      "size": [
+        46.1372,
+        17.0123,
+        62.2513
+      ],
+      "triangles": 354
+    },
+    {
+      "name": "d_ledge64_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        248.379,
+        48.463,
+        763.6225
+      ],
+      "size": [
+        59.2086,
+        20.5632,
+        107.9154
+      ],
+      "triangles": 912
+    },
+    {
+      "name": "d_ledge65_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -158.1767,
+        54.0786,
+        839.4255
+      ],
+      "size": [
+        85.2315,
+        14.2779,
+        117.4404
+      ],
+      "triangles": 852
+    },
+    {
+      "name": "d_ledge66_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -111.4063,
+        52.0706,
+        843.7461
+      ],
+      "size": [
+        27.2825,
+        17.8588,
+        80.3774
+      ],
+      "triangles": 276
+    },
+    {
+      "name": "d_ledge67_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -530.0523,
+        57.0536,
+        921.8123
+      ],
+      "size": [
+        171.8953,
+        9.8929,
+        105.2088
+      ],
+      "triangles": 732
+    },
+    {
+      "name": "d_ledge68_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -429.1205,
+        51.4734,
+        989.7754
+      ],
+      "size": [
+        67.3487,
+        20.2776,
+        52.0817
+      ],
+      "triangles": 210
+    },
+    {
+      "name": "d_ledge69_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -381.017,
+        50.7195,
+        1014.2938
+      ],
+      "size": [
+        48.9415,
+        21.0611,
+        19.4123
+      ],
+      "triangles": 162
+    },
+    {
+      "name": "d_ledge70_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -11.3592,
+        52.6898,
+        974.0887
+      ],
+      "size": [
+        108.9704,
+        17.2154,
+        47.8343
+      ],
+      "triangles": 372
+    },
+    {
+      "name": "d_ledge71_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -83.0158,
+        54.1587,
+        989.784
+      ],
+      "size": [
+        48.4947,
+        14.6826,
+        68.4319
+      ],
+      "triangles": 270
+    },
+    {
+      "name": "d_ledge72_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        34.1306,
+        50.6097,
+        998.4258
+      ],
+      "size": [
+        48.6574,
+        21.2809,
+        51.1483
+      ],
+      "triangles": 186
+    },
+    {
+      "name": "d_ledge73_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        536.8995,
+        48.3985,
+        1003.4983
+      ],
+      "size": [
+        90.2469,
+        20.2029,
+        41.0035
+      ],
+      "triangles": 468
+    },
+    {
+      "name": "d_rocks0_0_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -535.55,
+        21.0381,
+        -997.1138
+      ],
+      "size": [
+        101.5834,
+        15.3211,
+        44.3052
+      ],
+      "triangles": 520
+    },
+    {
+      "name": "d_rocks0_1_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -466.4828,
+        16.0964,
+        -595.0186
+      ],
+      "size": [
+        121.1892,
+        5.9803,
+        135.4623
+      ],
+      "triangles": 440
+    },
+    {
+      "name": "d_rocks0_2_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -471.9454,
+        21.0353,
+        -435.5087
+      ],
+      "size": [
+        91.1743,
+        14.4582,
+        96.5024
+      ],
+      "triangles": 800
+    },
+    {
+      "name": "d_rocks0_3_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -563.0217,
+        15.0366,
+        -3.0296
+      ],
+      "size": [
+        29.5399,
+        3.0843,
+        7.5564
+      ],
+      "triangles": 100
+    },
+    {
+      "name": "d_rocks0_4_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -482.9397,
+        20.3097,
+        126.4417
+      ],
+      "size": [
+        247.2588,
+        16.0294,
+        252.2892
+      ],
+      "triangles": 2320
+    },
+    {
+      "name": "d_rocks0_5_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -486.7043,
+        23.3317,
+        384.2441
+      ],
+      "size": [
+        255.0386,
+        17.259,
+        257.384
+      ],
+      "triangles": 900
+    },
+    {
+      "name": "d_rocks0_6_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -525.6404,
+        24.2549,
+        586.662
+      ],
+      "size": [
+        183.1008,
+        13.469,
+        130.9481
+      ],
+      "triangles": 1060
+    },
+    {
+      "name": "d_rocks0_7_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -495.3597,
+        22.3515,
+        927.8302
+      ],
+      "size": [
+        242.1213,
+        15.2377,
+        161.0318
+      ],
+      "triangles": 1200
+    },
+    {
+      "name": "d_rocks1_0_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -215.8358,
+        18.0603,
+        -796.1317
+      ],
+      "size": [
+        143.4681,
+        13.2873,
+        58.6377
+      ],
+      "triangles": 400
+    },
+    {
+      "name": "d_rocks1_1_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -219.7382,
+        17.3581,
+        -651.2891
+      ],
+      "size": [
+        231.9434,
+        13.4623,
+        231.6098
+      ],
+      "triangles": 960
+    },
+    {
+      "name": "d_rocks1_2_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -175.9545,
+        14.9454,
+        -357.1974
+      ],
+      "size": [
+        32.0547,
+        5.979,
+        72.6381
+      ],
+      "triangles": 180
+    },
+    {
+      "name": "d_rocks1_3_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -203.7728,
+        18.6208,
+        -172.9428
+      ],
+      "size": [
+        199.818,
+        15.1411,
+        158.1581
+      ],
+      "triangles": 1060
+    },
+    {
+      "name": "d_rocks1_4_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -300.8042,
+        19.4181,
+        128.4862
+      ],
+      "size": [
+        117.1719,
+        13.3272,
+        246.1544
+      ],
+      "triangles": 1240
+    },
+    {
+      "name": "d_rocks1_5_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -254.6098,
+        19.348,
+        339.2704
+      ],
+      "size": [
+        200.5939,
+        12.3693,
+        114.9186
+      ],
+      "triangles": 1320
+    },
+    {
+      "name": "d_rocks1_6_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -192.9592,
+        23.5259,
+        681.4527
+      ],
+      "size": [
+        175.6038,
+        18.1808,
+        165.7227
+      ],
+      "triangles": 1540
+    },
+    {
+      "name": "d_rocks1_7_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -228.6765,
+        21.3105,
+        898.2891
+      ],
+      "size": [
+        250.8926,
+        10.9178,
+        248.6448
+      ],
+      "triangles": 940
+    },
+    {
+      "name": "d_rocks1_8_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -117.9475,
+        17.5311,
+        1023.988
+      ],
+      "size": [
+        2.3193,
+        1.1982,
+        1.9525
+      ],
+      "triangles": 20
+    },
+    {
+      "name": "d_rocks2_0_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        41.6674,
+        19.9065,
+        -894.3319
+      ],
+      "size": [
+        221.3367,
+        10.9641,
+        238.136
+      ],
+      "triangles": 1460
+    },
+    {
+      "name": "d_rocks2_1_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        23.1386,
+        18.6955,
+        -617.3072
+      ],
+      "size": [
+        257.094,
+        17.2874,
+        213.3604
+      ],
+      "triangles": 660
+    },
+    {
+      "name": "d_rocks2_2_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        56.461,
+        14.9224,
+        -387.9799
+      ],
+      "size": [
+        192.6548,
+        7.2819,
+        248.0351
+      ],
+      "triangles": 800
+    },
+    {
+      "name": "d_rocks2_3_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -98.8743,
+        15.1186,
+        -147.2738
+      ],
+      "size": [
+        9.7233,
+        5.1558,
+        9.4791
+      ],
+      "triangles": 80
+    },
+    {
+      "name": "d_rocks2_4_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        102.2945,
+        15.6204,
+        147.9939
+      ],
+      "size": [
+        15.0424,
+        4.5226,
+        11.2994
+      ],
+      "triangles": 120
+    },
+    {
+      "name": "d_rocks2_5_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        -12.0032,
+        14.6899,
+        388.0618
+      ],
+      "size": [
+        103.0468,
+        6.9239,
+        249.5173
+      ],
+      "triangles": 840
+    },
+    {
+      "name": "d_rocks2_6_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        5.6667,
+        19.3037,
+        626.141
+      ],
+      "size": [
+        214.1783,
+        17.8519,
+        185.004
+      ],
+      "triangles": 460
+    },
+    {
+      "name": "d_rocks2_7_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        25.3421,
+        18.8276,
+        915.3259
+      ],
+      "size": [
+        255.0669,
+        15.5882,
+        216.2772
+      ],
+      "triangles": 1000
+    },
+    {
+      "name": "d_rocks3_0_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        273.7453,
+        21.3378,
+        -898.5522
+      ],
+      "size": [
+        242.2773,
+        10.8345,
+        252.4321
+      ],
+      "triangles": 820
+    },
+    {
+      "name": "d_rocks3_1_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        218.9158,
+        22.315,
+        -679.8052
+      ],
+      "size": [
+        129.2504,
+        14.6455,
+        166.8345
+      ],
+      "triangles": 1220
+    },
+    {
+      "name": "d_rocks3_2_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        260.1939,
+        20.4772,
+        -340.6832
+      ],
+      "size": [
+        212.981,
+        14.7517,
+        120.5575
+      ],
+      "triangles": 1560
+    },
+    {
+      "name": "d_rocks3_3_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        323.4555,
+        19.9568,
+        -124.8866
+      ],
+      "size": [
+        165.4872,
+        15.3595,
+        249.0292
+      ],
+      "triangles": 1540
+    },
+    {
+      "name": "d_rocks3_4_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        228.358,
+        20.2192,
+        174.1727
+      ],
+      "size": [
+        153.5213,
+        17.5344,
+        157.7446
+      ],
+      "triangles": 880
+    },
+    {
+      "name": "d_rocks3_5_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        175.2913,
+        14.5531,
+        355.8315
+      ],
+      "size": [
+        28.6637,
+        6.1986,
+        74.3401
+      ],
+      "triangles": 160
+    },
+    {
+      "name": "d_rocks3_6_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        263.1073,
+        18.8022,
+        661.6901
+      ],
+      "size": [
+        144.1038,
+        15.6364,
+        203.4733
+      ],
+      "triangles": 680
+    },
+    {
+      "name": "d_rocks3_7_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        244.1414,
+        19.8397,
+        796.3758
+      ],
+      "size": [
+        68.4881,
+        13.5382,
+        53.5902
+      ],
+      "triangles": 460
+    },
+    {
+      "name": "d_rocks4_0_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        504.9473,
+        22.2678,
+        -919.8341
+      ],
+      "size": [
+        185.4418,
+        13.1631,
+        147.8845
+      ],
+      "triangles": 1120
+    },
+    {
+      "name": "d_rocks4_1_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        523.2994,
+        23.5493,
+        -583.5814
+      ],
+      "size": [
+        176.9548,
+        13.1623,
+        140.6768
+      ],
+      "triangles": 1140
+    },
+    {
+      "name": "d_rocks4_2_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        539.8799,
+        22.1494,
+        -384.5867
+      ],
+      "size": [
+        150.443,
+        13.4242,
+        253.5076
+      ],
+      "triangles": 980
+    },
+    {
+      "name": "d_rocks4_3_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        512.6907,
+        20.7617,
+        -126.4107
+      ],
+      "size": [
+        208.1248,
+        15.2471,
+        253.9313
+      ],
+      "triangles": 1700
+    },
+    {
+      "name": "d_rocks4_4_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        559.006,
+        14.8592,
+        3.5804
+      ],
+      "size": [
+        1.1601,
+        0.5245,
+        1.072
+      ],
+      "triangles": 20
+    },
+    {
+      "name": "d_rocks4_5_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        469.7,
+        20.8125,
+        436.8951
+      ],
+      "size": [
+        86.7853,
+        13.2149,
+        93.5687
+      ],
+      "triangles": 860
+    },
+    {
+      "name": "d_rocks4_6_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        467.3698,
+        16.2187,
+        596.3234
+      ],
+      "size": [
+        120.0006,
+        6.469,
+        134.3552
+      ],
+      "triangles": 480
+    },
+    {
+      "name": "d_rocks4_7_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        537.8111,
+        19.8825,
+        998.4708
+      ],
+      "size": [
+        108.477,
+        12.2453,
+        45.9588
+      ],
+      "triangles": 440
+    },
+    {
+      "name": "d_rocks4_8_redrock",
+      "kind": "details",
+      "material": "redrock",
+      "center": [
+        483.6061,
+        14.5614,
+        1023.9919
+      ],
+      "size": [
+        2.2683,
+        1.102,
+        1.7879
+      ],
+      "triangles": 20
+    }
+  ],
+  "triangles": {
+    "tiles": 323632,
+    "details": 94236
+  }
+}

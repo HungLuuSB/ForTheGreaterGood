@@ -153,6 +153,41 @@ return function(t: RunAll.Context)
 		t.equal(w.health[ally], 1e6, "the ally on the line took nothing")
 	end)
 
+	t.test("a single-target beam burns the first enemy on its line: one stepping in takes the share, with a new FIRE (S-163)", function()
+		local sim = Sim.new({ seed = 6, players = PLAYERS, mapId = "flat:128" })
+		local w = sim.world
+		local tower = Spawn.unit(sim, "chs_inferno", 2, 0, 300)
+		local target = Spawn.unit(sim, "ord_paladin", 1, 0, -100, 0)
+		Spawn.unit(sim, "chs_jackal", 2, 40, -60, math.pi) -- sees it
+		World.setFireState(w, target, World.FireState.HOLD_FIRE)
+		World.setMoveState(w, target, World.MoveState.HOLD_POSITION)
+		World.setHealth(w, target, 1e6)
+		local blocker = 0
+		local fires, struckBlocker = 0, false
+		shots(sim, tower, 15 * 4, function()
+			power(sim, 2, 5000)
+			for _, e in sim.combat.events do
+				if e.kind == "FIRE" and e.unit == tower then
+					fires += 1
+					if blocker ~= 0 and e.other == blocker and e.hit then
+						struckBlocker = true
+					end
+					if blocker == 0 then
+						-- the beam burns: a tank steps into its line
+						blocker = Spawn.unit(sim, "ord_lancer", 1, 0, 100, 0)
+						World.setFireState(w, blocker, World.FireState.HOLD_FIRE)
+						World.setMoveState(w, blocker, World.MoveState.HOLD_POSITION)
+						World.setHealth(w, blocker, 1e6)
+					end
+				end
+			end
+		end)
+		t.expect(blocker ~= 0, "the Inferno fired")
+		t.expect(w.health[blocker] < 1e6, "the tank in the beam took its share")
+		t.expect(struckBlocker, "a new FIRE ends the beam at it")
+		t.expect(w.health[target] > 1e6 - sim.defs.weapons.chs_inferno_beam.damage.ARMORED * 0.5, "the target behind took only the shares before")
+	end)
+
 	t.test("beam towers fire at an attack-ground point; the ray hurts what stands on its line (S-119, client request 53)", function()
 		local sim = Sim.new({ seed = 7, players = PLAYERS, mapId = "flat:128" })
 		local w = sim.world
