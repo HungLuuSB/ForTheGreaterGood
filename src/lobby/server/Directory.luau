@@ -14,7 +14,13 @@ local rng = Random.new()
 
 Directory.rooms = rooms
 
--- A short code players can share for private rooms: no 0/O, 1/I.
+-- Is a code in use on another lobby server? (Lobbies sets it, L-15.)
+Directory.taken = function(_id: string): boolean
+	return false
+end
+
+-- A short code players can share for private rooms: no 0/O, 1/I. Unique
+-- across the lobby servers, as far as the shared room list knows.
 local CODE = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 local function newId(): string
 	while true do
@@ -23,11 +29,12 @@ local function newId(): string
 			local i = rng:NextInteger(1, #CODE)
 			s ..= string.sub(CODE, i, i)
 		end
-		if rooms[s] == nil then
+		if rooms[s] == nil and not Directory.taken(s) then
 			return s
 		end
 	end
 end
+Directory.newId = newId
 
 function Directory.get(id: any): Rooms.Room?
 	return if type(id) == "string" then rooms[string.upper(id)] else nil
@@ -134,6 +141,7 @@ function Directory.recreate(config: any, saved: any, user: number): Rooms.Room
 		settings = { mapId = config.mapId, mode = config.mode, win = config.win, friendlyFire = config.friendlyFire, cheats = config.cheats },
 		phase = "match",
 		matchId = config.matchId,
+		startedAt = config.createdAt,
 		notice = nil,
 		results = nil,
 		version = 1,
@@ -156,6 +164,12 @@ function Directory.recreate(config: any, saved: any, user: number): Rooms.Room
 	end
 	rooms[room.id] = room
 	return room
+end
+
+-- A room made elsewhere joins this server's (the Studio stand-in peer's
+-- rooms, when a player "moves" to them).
+function Directory.adopt(room: Rooms.Room)
+	rooms[room.id] = room
 end
 
 -- A member of a room on this server (back from the match) takes their place.

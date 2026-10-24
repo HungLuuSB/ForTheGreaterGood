@@ -2,11 +2,17 @@
 -- The loading screen while a match starts (BAR's: the battle behind, a tip,
 -- a long progress bar; the key art with parallax layers once the models
 -- stream delivers it, docs/contracts/key-art.md): reserving a server, then
--- teleporting. In Studio the Studio stand-in match runs here instead (L-6),
--- with its controls: end the match now, make the "server" die, or go back
--- early.
+-- teleporting; also while moving to a room on another lobby server (L-15).
+-- In Studio the Studio stand-in match runs here instead (L-6), with its
+-- controls: end the match now, make the "server" die, or go back early.
+-- Each showing takes the next key art in turn, so every approved art
+-- (1 "Commander's stand" once it's listed, 2 "Volley", 3 "Converging")
+-- comes round.
+
+local RunService = game:GetService("RunService")
 
 local KeyArt = require("@client/UI/KeyArt")
+local Meshes = require("@shared/Defs/Meshes/Registry")
 local Net = require("../Net")
 local Scene = require("../Scene")
 local Ui = require("../Ui")
@@ -25,6 +31,21 @@ local TIPS = {
 }
 
 local OLIVE = Color3.fromRGB(150, 160, 70)
+
+-- The key arts KeyArt shows here (approved; in review too in Studio), by name.
+local function artNames(): { string }
+	local out = {}
+	local all = (Meshes :: any).keyArt
+	if type(all) == "table" then
+		for name, e in all do
+			if type(e) == "table" and (e.status == "approved" or (e.status == "review" and RunService:IsStudio())) then
+				table.insert(out, name)
+			end
+		end
+	end
+	table.sort(out)
+	return out
+end
 
 function Loading.new(gui: ScreenGui): any
 	local root = Ui.frame(gui, "Loading", UDim2.fromScale(1, 1))
@@ -88,7 +109,7 @@ function Loading.new(gui: ScreenGui): any
 	Ui.button(controls, "Server dies", "stop", function()
 		Net.send({ op = "standIn", action = "die" })
 	end, 150, 36)
-	Ui.button(controls, "Leave early", "ghost", function()
+	Ui.button(controls, "Leave early", "dark", function()
 		Net.send({ op = "standIn", action = "leave" })
 	end, 150, 36)
 	for _, d in controls:GetDescendants() do
@@ -98,6 +119,8 @@ function Loading.new(gui: ScreenGui): any
 	end
 
 	local tipIndex = math.random(1, #TIPS)
+	local names = artNames()
+	local artIndex = math.random(1, math.max(1, #names))
 	local mode: string? = nil
 	local started = 0
 
@@ -113,7 +136,7 @@ function Loading.new(gui: ScreenGui): any
 				barText.Text = `Stand-in match: ends in {Ui.clock(left)}`
 				local total = 20
 				fill.Size = UDim2.fromScale(math.clamp(1 - left / total, 0, 1), 1)
-			elseif mode == "teleport" then
+			elseif mode == "teleport" or mode == "hop" then
 				fill.Size = UDim2.fromScale(math.min(0.95, 0.6 + (os.clock() - started) / 30), 1)
 			end
 		end
@@ -132,14 +155,17 @@ function Loading.new(gui: ScreenGui): any
 				end
 			end
 			local newMode: string? = nil
-			if room and room.phase == "starting" then
+			if Net.hop then
+				newMode = "hop"
+			elseif room and room.phase == "starting" then
 				newMode = "starting"
 			elseif room and room.phase == "match" and mine and mine.away then
 				newMode = if Net.standIn then "standIn" else "teleport"
 			end
 			if newMode ~= mode then
 				if mode == nil and newMode ~= nil then
-					local shown = art.show()
+					artIndex = artIndex % math.max(1, #names) + 1
+					local shown = art.show(names[artIndex])
 					root.BackgroundTransparency = if shown then 1 else 0.45
 					Scene.setCovered(shown) -- the art is opaque: pause the battle behind it
 				elseif newMode == nil then
@@ -151,6 +177,14 @@ function Loading.new(gui: ScreenGui): any
 				tipIndex = tipIndex % #TIPS + 1
 			end
 			root.Visible = mode ~= nil
+			if mode == "hop" then
+				title.Text = Net.hop.roomName
+				sub.Text = "Moving to the room's lobby server..."
+				barText.Text = "Teleporting"
+				tip.Text = TIPS[tipIndex]
+				controls.Visible = false
+				return true
+			end
 			if mode == nil or room == nil then
 				return false
 			end

@@ -55,6 +55,7 @@ export type Room = {
 	settings: Settings,
 	phase: string,
 	matchId: string?,
+	startedAt: number?, -- os.time() when the running match started (the header's "running for")
 	notice: string?, -- the last start failure or match news, shown in the room
 	results: any?, -- the last match's summary
 	version: number, -- bumped on every change
@@ -527,9 +528,11 @@ function Rooms.checkStart(room: Room, maps: { MapInfo }, from: number, force: bo
 end
 
 -- Members leave for the match: away, keeping their seats.
-function Rooms.setPhase(room: Room, phase: string, matchId: string?)
+-- `now` (os.time()) dates a match's start, for "running for N min".
+function Rooms.setPhase(room: Room, phase: string, matchId: string?, now: number?)
 	room.phase = phase
 	room.matchId = matchId
+	room.startedAt = if phase == "match" then now else nil
 	for _, m in room.members do
 		m.ready = false
 		m.away = phase == "match"
@@ -591,6 +594,7 @@ function Rooms.summary(room: Room, maps: { MapInfo }): any
 		starts = if map then map.starts else 0,
 		mode = room.settings.mode,
 		phase = room.phase,
+		startedAt = room.startedAt,
 	}
 end
 
@@ -615,6 +619,7 @@ function Rooms.view(room: Room): any
 		slots = slots,
 		settings = table.clone(room.settings),
 		phase = room.phase,
+		startedAt = room.startedAt,
 		notice = room.notice,
 		results = room.results,
 		version = room.version,

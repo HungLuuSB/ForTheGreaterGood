@@ -8,10 +8,10 @@ Owner: lobby stream (session D). Readers and writers: the lobby place (`src/lobb
 
 | Place | Role |
 |---|---|
-| **FTGG Lobby** (to be published as the experience's **start place**) | rooms, room setup, start, return, profiles |
-| **Match place** (the FTGG main game, place ID `89435699207932`) | runs one match per reserved server |
+| **FTGG Lobby** (the experience's **start place**) | rooms, room setup, start, return, profiles |
+| **Match place** (the FTGG main game, as the experience's second place) | runs one match per reserved server |
 
-Both places **must be in the same experience**: reserved servers, MemoryStore and DataStores are per experience.
+Both places **must be in the same experience**: reserved servers, MemoryStore and DataStores are per experience. The first live experience is **"FTGG Playtest"** (the user's account). The lobby finds the match place from one setting, `Config.MATCH_PLACE_ID` in `src/lobby/shared/Config.luau`: `0` (the default) looks it up at server start as the experience's only other place, or the one whose name contains "match" (L-14). The lobby's own place ID is never configured: it is `game.PlaceId`, and the config's `lobby.placeId` carries it for the return trip.
 
 1. The host starts a room. The lobby server checks everything (`Rooms.checkStart`), reserves a server of the match place (`TeleportService:ReserveServer`), writes the match config and its lookup keys to MemoryStore (section 4), and teleports the room's players together with `TeleportOptions.ReservedServerAccessCode`. **Only the match ID travels in the teleport data**: `{ matchId = "<guid>" }`.
 2. The match server finds its match from its own `game.PrivateServerId` (never from teleport data), admits only the listed users, plays, and keeps a heartbeat.
@@ -79,6 +79,13 @@ MemoryStore **HashMap `FtggMatch`** (values are JSON tables; each under 32 KB):
 | `alive/<matchId>` | `{ at = os.time(), players = n }` | 120 s, refreshed every 30 s |
 | `result/<matchId>` | the results record (section 5) | 3 days |
 
+Lobby-only records (the match server never reads them):
+
+| Where | Key | Value | TTL |
+|---|---|---|---|
+| HashMap `FtggMatch` | `hop/<userId>` | `{ roomId, password?, from }`: the room a player is moving to on another lobby server (L-15) | 300 s, removed on arrival |
+| **SortedMap `FtggRooms`** | `<lobby JobId>` | that lobby server's rooms (`src/lobby/shared/Listing.luau`), rewritten on change and every 15 s | 60 s |
+
 **The match server finds its match:** `server/<game.PrivateServerId>` → matchId → `config/<matchId>`. No key, or a config that fails validation: refuse (section 9). The teleport data's `matchId` must equal it; if not, trust the store and log it. Never read anything else from teleport data or from clients.
 
 ## 5. Results record (`result/<matchId>`)
@@ -145,9 +152,15 @@ Studio can't reserve or teleport, and MemoryStore / DataStore need a published p
 7. Profile writes in the live DataStore, under budget pressure.
 8. The room name filter (TextService) and friends-only rooms (`IsFriendsWith`) with real accounts.
 9. Room chat (TextChatService channels) between two real clients.
+10. Rooms across lobby servers (L-15): the `FtggRooms` list, a move to a room on another lobby server (`TeleportAsync` with `ServerInstanceId`), a move refused because that server is full.
+11. Game invites (L-17): `SocialService:PromptGameInvite` with launch data `room=<code>`, and the invited friend landing in the room.
+12. Lobby settings saved on the profile (L-16) and back on the next visit.
+
+The ordered plan for a 4-tester session is in [`../progress/lobby.md`](../progress/lobby.md), "Live playtest".
 
 ## Changes
 
 - 2026-10-23: version 1 (L-4).
 - 2026-10-23: the checks moved to `@shared/Match/MatchConfig` (sim-A, S-145, the user's choice); the lobby and client-B dropped their copies.
+- 2026-10-24: the match place comes from `Config.MATCH_PLACE_ID` (0: found at server start) instead of the hard-coded main game ID, for the "FTGG Playtest" experience (L-14); lobby-only records `hop/<userId>` and the `FtggRooms` sorted map (L-15). The match server's side is unchanged; still version 1.
 - 2026-10-23: `winner` may be absent on `"finished"` (every human out, AI still fighting), at client-B's question; still version 1 (nothing published yet).

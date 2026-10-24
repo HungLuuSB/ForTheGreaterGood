@@ -1,7 +1,9 @@
 --!strict
--- The room browser (L-3): every room you may see on this lobby server, with
--- search and filters, join by click (a password asked for locked rooms) or
--- by code (private rooms), and Create room.
+-- The room browser (L-3, L-15): every room you may see on any lobby server
+-- (rooms on other servers come from the shared room list; joining one
+-- moves you to its server), with search and filters, join by click (a
+-- password asked for locked rooms) or by code (private rooms, on any
+-- server), and Create room.
 
 local Config = require("../../shared/Config")
 local Net = require("../Net")
@@ -33,7 +35,7 @@ local function dialog(gui: Instance, title: string, size: Vector2): (any, () -> 
 end
 Browser.dialog = dialog
 
-local function passwordDialog(gui: Instance, room: any)
+local function passwordDialog(gui: Instance, room: { id: string, name: string })
 	local p, close = dialog(gui, `Join {room.name}`, Vector2.new(420, 220))
 	Kit.list(p.content, Kit.SPACE.m)
 	Kit.text(p.content, "This room has a password.", "small").LayoutOrder = 1
@@ -140,7 +142,12 @@ function Browser.new(frame: Frame, _router: any): any
 	empty.Size = UDim2.fromScale(1, 1)
 	empty.TextXAlignment = Enum.TextXAlignment.Center
 
+	Net.onAskPassword(function(roomId: string, roomName: string)
+		passwordDialog(gui, { id = roomId, name = roomName })
+	end)
+
 	local rooms: { any } = {}
+	local servers = 1
 	function render()
 		Ui.clear(scroll)
 		local q = string.lower(search.Text)
@@ -176,8 +183,11 @@ function Browser.new(frame: Frame, _router: any): any
 				row.BackgroundTransparency = base
 			end)
 			local status = if r.phase == "setup" then (if r.members >= r.maxPlayers then "Full" else "Open") else (if r.phase == "starting" then "Starting" else "In match")
+			if r.phase == "match" and r.startedAt then
+				status = `In match · {Ui.minutes(r.startedAt)}`
+			end
 			local cells = {
-				r.name .. (if r.locked then "   [password]" else "") .. (if r.privacy ~= "public" then `   [{Ui.label2(r.privacy)}]` else ""),
+				r.name .. (if r.locked then "   [password]" else "") .. (if r.privacy ~= "public" then `   [{Ui.label2(r.privacy)}]` else "") .. (if r.remote then "   [other server]" else ""),
 				r.host,
 				r.mapName,
 				Ui.label2(r.mode),
@@ -205,7 +215,7 @@ function Browser.new(frame: Frame, _router: any): any
 			end)
 		end
 		empty.Text = if #rooms == 0 then "No rooms yet. Create one, or start a Skirmish." elseif shown == 0 then "No room matches." else ""
-		count.Text = `{#rooms} room{if #rooms == 1 then "" else "s"} on this lobby server`
+		count.Text = `{#rooms} room{if #rooms == 1 then "" else "s"} on {if servers == 1 then "this lobby server" else `{servers} lobby servers`}`
 	end
 	search:GetPropertyChangedSignal("Text"):Connect(function()
 		render()
@@ -214,6 +224,7 @@ function Browser.new(frame: Frame, _router: any): any
 	return {
 		update = function(v: any)
 			rooms = v.rooms
+			servers = v.servers or 1
 			render()
 		end,
 	}

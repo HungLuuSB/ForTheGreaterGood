@@ -1,7 +1,9 @@
 --!strict
 -- A map preview (L-5): the server's preview bytes colored into an
 -- EditableImage (one per map, shared by every view of it), with the starts
--- as numbered markers, colored by the player who starts there.
+-- as numbered markers, colored by the player who starts there. A
+-- greyscale version too, for the skirmish cards (BAR's scenario grid:
+-- grey until hovered or chosen).
 
 local AssetService = game:GetService("AssetService")
 
@@ -14,8 +16,8 @@ local MapImage = {}
 
 local contents: { [string]: any } = {}
 
-local function contentOf(map: any): any
-	local id = map.id
+local function contentOf(map: any, grey: boolean?): any
+	local id = if grey then map.id .. ":grey" else map.id
 	if contents[id] ~= nil then
 		return contents[id] or nil
 	end
@@ -30,13 +32,25 @@ local function contentOf(map: any): any
 	local buf = buffer.create(p.w * p.h * 4)
 	for i = 0, p.w * p.h - 1 do
 		local r, g, b = MapPreview.color(buffer.readu8(p.data, i))
+		if grey then
+			local l = math.floor((0.3 * r + 0.59 * g + 0.11 * b) * 0.85)
+			r, g, b = l, l, l
+		end
 		buffer.writeu8(buf, i * 4, r)
 		buffer.writeu8(buf, i * 4 + 1, g)
 		buffer.writeu8(buf, i * 4 + 2, b)
 		buffer.writeu8(buf, i * 4 + 3, 255)
 	end
-	img:WritePixelsBuffer(Vector2.zero, Vector2.new(p.w, p.h), buf)
-	local content = (Content :: any).fromObject(img)
+	-- a published place refuses EditableImage writes until the experience
+	-- allows them (Game Settings > Security): the map's name shows instead
+	local wrote, content = pcall(function()
+		img:WritePixelsBuffer(Vector2.zero, Vector2.new(p.w, p.h), buf)
+		return (Content :: any).fromObject(img)
+	end)
+	if not wrote then
+		contents[id] = false
+		return nil
+	end
 	contents[id] = content
 	return content
 end
@@ -44,6 +58,7 @@ end
 export type MapImage = {
 	frame: Frame,
 	set: (map: any?, colors: { [number]: Color3 }?) -> (),
+	setGrey: (grey: boolean) -> (), -- the greyscale picture (or back to color)
 }
 
 -- A preview that fills `parent` keeping the map's aspect ratio (`fill`:
@@ -71,8 +86,19 @@ function MapImage.new(parent: Instance, markers: boolean?, fill: boolean?): MapI
 	note.Size = UDim2.fromScale(1, 1)
 	note.TextXAlignment = Enum.TextXAlignment.Center
 	local marks: { Frame } = {}
+	local shown: any = nil
+	local isGrey = false
 	return {
 		frame = holder,
+		setGrey = function(grey: boolean)
+			isGrey = grey
+			if shown and shown.preview then
+				local content = contentOf(shown, grey)
+				if content then
+					image.ImageContent = content
+				end
+			end
+		end,
 		set = function(map: any?, colors: { [number]: Color3 }?)
 			for _, m in marks do
 				m:Destroy()
@@ -83,9 +109,10 @@ function MapImage.new(parent: Instance, markers: boolean?, fill: boolean?): MapI
 				note.Text = "Loading map..."
 				return
 			end
+			shown = map
 			local p = map.preview
 			aspect.AspectRatio = p.w / p.h
-			local content = contentOf(map)
+			local content = contentOf(map, isGrey)
 			if content then
 				image.ImageContent = content
 				note.Text = ""
