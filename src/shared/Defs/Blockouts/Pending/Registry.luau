@@ -34,6 +34,14 @@ return {
 				shellR = { 0, 0, 90 },
 			},
 		},
+		chs_bulwark = { -- S-157, Inferno's replacement: the beam turret sinks into the pit, the lids close
+			retracted = {
+				turret = { 0, 0, 0, 0, -10.5, 0 },
+				barrel = { -90, 0, 0 },
+				shellL = { 0, 0, -90 },
+				shellR = { 0, 0, 90 },
+			},
+		},
 		chs_inferno = {
 			retracted = {
 				turret = { 0, 0, 0, 0, -11.1, 0 }, -- x1.5 with the fp 3 blockout (S-104)
