@@ -1,0 +1,82 @@
+{
+  "id": "ord_edict_wreck",
+  "wreckOf": "ord_edict",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0311,
+        3.687,
+        -0.0184
+      ],
+      "size": [
+        23.4448,
+        7.55,
+        23.7305
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        0.0397,
+        5.5435,
+        -6.7573
+      ],
+      "size": [
+        9.4493,
+        5.6696,
+        25.3801
+      ],
+      "pivot": [
+        0.0,
+        2.6,
+        1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        4.5,
+        -19.4
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1778,
+    "turret": 1124,
+    "total": 2902
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

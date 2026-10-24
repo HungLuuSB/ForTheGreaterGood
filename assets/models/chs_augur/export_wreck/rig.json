@@ -1,0 +1,82 @@
+{
+  "id": "chs_augur_wreck",
+  "wreckOf": "chs_augur",
+  "footprintStuds": 16,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.0359,
+        3.2152,
+        0.0249
+      ],
+      "size": [
+        15.8765,
+        6.5206,
+        15.6236
+      ]
+    },
+    "dish": {
+      "parent": "base",
+      "center": [
+        0.0183,
+        8.7139,
+        0.1774
+      ],
+      "size": [
+        6.9838,
+        5.1234,
+        2.2013
+      ],
+      "pivot": [
+        0.0,
+        6.2,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {
+    "dish": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 1996,
+    "dish": 312,
+    "total": 2308
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

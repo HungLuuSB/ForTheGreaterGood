@@ -1,0 +1,82 @@
+{
+  "id": "chs_maw_wreck",
+  "wreckOf": "chs_maw",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0183,
+        3.7689,
+        -0.0121
+      ],
+      "size": [
+        23.4546,
+        7.4912,
+        23.4753
+      ]
+    },
+    "turret": {
+      "parent": "base",
+      "center": [
+        1.0676,
+        11.2912,
+        -3.8813
+      ],
+      "size": [
+        15.7106,
+        7.8953,
+        21.6092
+      ],
+      "pivot": [
+        0.0,
+        7.509599999999999,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "turret",
+      "at": [
+        0.0,
+        10.728,
+        -14.751
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [],
+  "anim": {},
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2052,
+    "turret": 1876,
+    "total": 3928
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

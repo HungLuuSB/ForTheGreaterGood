@@ -1,0 +1,84 @@
+{
+  "id": "chs_fusion_wreck",
+  "wreckOf": "chs_fusion",
+  "footprintStuds": 32,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0746,
+        9.4479,
+        -0.0303
+      ],
+      "size": [
+        31.5724,
+        19.3955,
+        31.5783
+      ]
+    },
+    "core": {
+      "parent": "base",
+      "center": [
+        -0.0093,
+        8.0359,
+        -0.0743
+      ],
+      "size": [
+        10.1394,
+        11.1435,
+        10.7507
+      ],
+      "pivot": [
+        0.0,
+        8.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {},
+  "teamColorPieces": [],
+  "visualPieces": [
+    "core"
+  ],
+  "anim": {
+    "core": {
+      "motion": "pulse",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 3584,
+    "core": 312,
+    "total": 3896
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "id": "chs_advshipyard_wreck",
+  "wreckOf": "chs_advshipyard",
+  "footprintStuds": 48,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        -0.0953,
+        11.4789,
+        0.5978
+      ],
+      "size": [
+        47.5705,
+        26.24,
+        46.7535
+      ]
+    },
+    "jib1": {
+      "parent": "base",
+      "center": [
+        -10.1319,
+        15.5614,
+        4.6292
+      ],
+      "size": [
+        23.988,
+        3.6734,
+        2.4269
+      ],
+      "pivot": [
+        -19.2,
+        15.999999999999998,
+        4.6
+      ]
+    },
+    "jib2": {
+      "parent": "base",
+      "center": [
+        8.2579,
+        15.6647,
+        -7.9002
+      ],
+      "size": [
+        20.0954,
+        3.8892,
+        2.8771
+      ],
+      "pivot": [
+        19.2,
+        15.999999999999998,
+        -7.0
+      ]
+    },
+    "jib": {
+      "parent": "base",
+      "center": [
+        8.3567,
+        22.8454,
+        3.5694
+      ],
+      "size": [
+        4.2449,
+        8.8487,
+        39.8102
+      ],
+      "pivot": [
+        8.0,
+        24.400000000000002,
+        18.4
+      ]
+    }
+  },
+  "attachments": {
+    "buildpad": {
+      "parent": "base",
+      "at": [
+        0.0,
+        0.0,
+        -1.0
+      ]
+    },
+    "nano1": {
+      "parent": "jib1",
+      "at": [
+        -1.8,
+        13.73,
+        4.6
+      ]
+    },
+    "nano2": {
+      "parent": "jib2",
+      "at": [
+        1.8,
+        13.73,
+        -7.0
+      ]
+    },
+    "nano3": {
+      "parent": "jib",
+      "at": [
+        8.0,
+        18.77,
+        -1.0
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "jib1",
+    "jib2",
+    "jib"
+  ],
+  "anim": {
+    "jib1": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "jib2": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "jib": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 4368,
+    "jib1": 372,
+    "jib2": 368,
+    "jib": 600,
+    "total": 5708
+  },
+  "textures": {
+    "size": 2048,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
