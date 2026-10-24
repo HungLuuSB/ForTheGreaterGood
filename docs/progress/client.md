@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **New shield look, for your review (C-186):** a column of vortex energy from the generator to the top of the dome, and wide waves rolling down it, on models-C's assets. Studio only until you approve them. Screenshots: `debug_out/screens/c186_shield_*.jpg`.
+- Ready to merge: `84771a6` (C-186: shield column and dome waves; src/client, place/MeshMaterials; main bd87d26 merged in)
 - **Shield hits explode (C-185):** shells and rockets destroyed on a dome now explode on the honeycomb with their own impact effect. `debug_out/screens/c185_shield_absorb_bursts.jpg`.
 - Ready to merge: `369ea62` (C-185: absorbed projectiles burst on the dome; src/client)
 - **Smooth key art (C-184):** the loading screens' parallax no longer stutters, and the match no longer draws the world behind its loading screen.
@@ -1867,6 +1869,7 @@ Cleaned up on 2026-10-23: you approved the current values of everything listed u
   - the unit in production on the factory pad (C-152): hologram, build line, nano spray;
   - The Canyon's desert colours and daylight (C-153, C-155): `debug_out/screens/c155_canyon_day_*.jpg`;
   - radar blips circling 1.5 studs out (C-154).
+  - the new shield column and dome waves (C-186, models-C's review assets): `debug_out/screens/c186_shield_*.jpg`;
   - the radar accuracy circles and readout in the sensor view (C-181): colours, the readout's place under the resource bar. A tracked contact's circle (±2.6 studs) sits inside its blip disc.
 
 ## Requests for the models session
