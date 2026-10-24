@@ -14,7 +14,9 @@
 --   - 3 energy waves rolling down (rings of curved Beam segments: a glow
 --     band and a crackling line, wobbling, with gaps, textures swapped every
 --     jitter step), and 3 broken arcs on the front of a raise or collapse;
---   - hits: pooled caps with a Decal flipbook of cells lighting outward.
+--   - hits: pooled caps with a Decal flipbook of cells lighting outward,
+--     two Decals per cap crossfading frame to frame so 8 frames play
+--     smoothly (C-190: one Decal stepped at 10 a second, choppy).
 -- Every instance is made in new(); setFrame only moves, shows and fades
 -- them (the reference's fixed pools). Jitter comes from
 -- ShieldEnergyLook.hash, not Random, so nothing is allocated per frame.
@@ -50,6 +52,7 @@ export type Energy = {
 	dome: BasePart,
 	bands: { MeshPart },
 	hits: { Decal },
+	hitsNext: { Decal }, -- each cap's second Decal: the next frame, crossfaded in
 	apex: Attachment,
 	from: Attachment,
 	glow: Beam,
@@ -235,17 +238,24 @@ function ShieldEnergy.new(folder: Folder, holder: BasePart, base: Vector3, R: nu
 	-- hits: a flipbook in a Decal on a fully transparent cap (fx.md: the cap's
 	-- own TextureID ignores alpha in Neon and washes out in ForceField)
 	local hits: { Decal } = {}
+	local hitsNext: { Decal } = {}
 	if templates.cap then
+		local glow = S.hitGlow or 3 -- sizes.hitGlow (C-188: 1.6, the user found 3 too much)
 		for k = 1, C.hits do
 			local h = part(templates.cap, `Hit{k}`, entry.hitCap.center, entry.hitCap.size)
-			local d = Instance.new("Decal")
-			d.Face = Enum.NormalId.Top
-			d.Texture = tx.hit[1]
-			local glow = S.hitGlow or 3 -- sizes.hitGlow (C-188: 1.6, the user found 3 too much)
-			d.Color3 = Color3.new(tint.R * glow, tint.G * glow, tint.B * glow)
-			d.Transparency = 1
-			d.Parent = h
-			hits[k] = d
+			for layer = 1, 2 do
+				local d = Instance.new("Decal")
+				d.Face = Enum.NormalId.Top
+				d.Texture = tx.hit[layer]
+				d.Color3 = Color3.new(tint.R * glow, tint.G * glow, tint.B * glow)
+				d.Transparency = 1
+				d.Parent = h
+				if layer == 1 then
+					hits[k] = d
+				else
+					hitsNext[k] = d
+				end
+			end
 		end
 	end
 
@@ -343,6 +353,7 @@ function ShieldEnergy.new(folder: Folder, holder: BasePart, base: Vector3, R: nu
 		dome = dome,
 		bands = bands,
 		hits = hits,
+		hitsNext = hitsNext,
 		apex = apex,
 		from = from,
 		glow = glow,
@@ -425,8 +436,9 @@ function ShieldEnergy.hide(e: Energy)
 	for _, b in e.bands do
 		b.Transparency = 1
 	end
-	for _, d in e.hits do
+	for k, d in e.hits do
 		d.Transparency = 1
+		e.hitsNext[k].Transparency = 1
 	end
 	e.glow.Enabled, e.core.Enabled = false, false
 	for _, fil in e.filaments do
@@ -634,6 +646,7 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 	for k, d in e.hits do
 		local hit = hits[k]
 		local h = d.Parent :: MeshPart
+		local nextD = e.hitsNext[k]
 		if full and drawDetail and hit and hit.age >= 0 and hit.age < T.hitLife then
 			local dir = hit.dir.Unit
 			local right = dir:Cross(Vector3.zAxis)
@@ -642,10 +655,27 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 			end
 			right = right.Unit
 			h.CFrame = CFrame.fromMatrix(base + dir * entry.hitCap.center[2] * R, right, dir)
-			d.Texture = tx.hit[math.clamp(math.floor(hit.age / T.hitLife * frames) + 1, 1, frames)]
-			d.Transparency = 1 - alpha
-		elseif d.Transparency ~= 1 then
+			-- frame k fading out as frame k + 1 fades in (the last one just fades)
+			local x = math.clamp(hit.age / T.hitLife * frames, 0, frames)
+			local i = math.min(math.floor(x), frames - 1)
+			local f = x - i
+			local cur, nxt = tx.hit[i + 1], tx.hit[math.min(i + 2, frames)]
+			if d.Texture ~= cur then
+				d.Texture = cur
+			end
+			if nextD.Texture ~= nxt then
+				nextD.Texture = nxt
+			end
+			if i + 1 >= frames then
+				d.Transparency = 1 - alpha * (1 - f)
+				nextD.Transparency = 1
+			else
+				d.Transparency = 1 - alpha * (1 - f)
+				nextD.Transparency = 1 - alpha * f
+			end
+		elseif d.Transparency ~= 1 or nextD.Transparency ~= 1 then
 			d.Transparency = 1
+			nextD.Transparency = 1
 		end
 	end
 end

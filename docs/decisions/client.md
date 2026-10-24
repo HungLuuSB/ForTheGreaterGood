@@ -1646,3 +1646,9 @@ Existing calls are unchanged.
 
 **Why:** the user: "turn off the honeycomb the shield, it should only be activate for the patch reflect shot on hit".
 
+### C-190 — Shield hit patches crossfade frame to frame (2026-10-24)
+
+**Decision:** each hit cap carries two Decals. Frame k fades out as frame k + 1 fades in, and the last frame fades out alone, so the 8-frame flipbook plays smoothly instead of stepping at 10 frames a second. Checked in Studio: neighbouring frames share the weight through the hit, and it ends faded. The speed is models-C's `timing.hitLife` (0.8 s); I've asked them for about 0.4–0.45 s, and more frames if they help. Both come through the manifest.
+
+**Why:** the user: "why the honeycomb grid spread so slow, look chobby?"
+
