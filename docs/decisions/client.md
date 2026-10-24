@@ -1736,3 +1736,9 @@ Existing calls are unchanged.
 
 **Why:** the user: "Introducing priority resources usage -> high priority unit take the resources first and the rest goes to low priority"; sim-A's S-156.
 
+### C-197 — Icon sheet draft 5: the S-157 defences get their own icons (2026-10-24)
+
+**Decision:** the user's draft 5 replaces `docs/art/icons/ftgg-unit-icons.html`: Laser Tower (Sentry, Guard), Twin Laser Tower (Overwatch, Twin Guard), Triple Laser Tower (Geryon), Ramping Beam Tower (Beamer, T1), Lobbing Gun (Gauntlet, Talos, T1); Chaos's Bulwark joins Radiance on Beam Tower; the retired ord_bulwark, chs_spike and chs_inferno stay mapped for old replays. render.mjs maps all 159 defs from 80 items: 90 tiles, exactly one full 1024-px sheet (the next item would start a second sheet). Uploaded with the user's approval as asset 107697270697313 (byte-identical to `assets/icons/ftgg-icons.png`), in the same commit as its atlas. The /give alias test follows the new type names (`ord_laser` is the Sentry).
+
+**Why:** the user's draft 5 and approval.
+

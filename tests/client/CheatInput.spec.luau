@@ -81,7 +81,7 @@ return function(t: any)
 			t.expect(not string.find(x.text, "chs_spike", 1, true), "Spike retired")
 		end
 		t.equal(CheatInput.unitId("chs_spike", defs), "chs_spike", "the id still resolves")
-		local turrets = CheatInput.resolve("ord_gun-turret", defs)
-		t.expect(table.find(turrets, "ord_bulwark") == nil and table.find(turrets, "ord_sentry_tower") ~= nil, "the alias names the Sentry, not the retired Bulwark")
+		t.equal(#CheatInput.resolve("ord_gun-turret", defs), 0, "the retired Bulwark's type names nothing")
+		t.deepEqual(CheatInput.resolve("ord_laser", defs), { "ord_sentry_tower" }, "draft 5's Laser Tower: the Sentry")
 	end)
 end
