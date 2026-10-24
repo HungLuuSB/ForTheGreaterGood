@@ -6,7 +6,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
-- **Shield column and waves (C-186): on hold.** You rejected this design; models-C is building a new reference (a straight channel with pulses and filaments, an apex starburst, streaks and broken arcs down the dome, a ForceField shell). C-186 shows in Studio only and stays as is until the new hand-off.
+- **New shield look in the game (C-187):** your approved v4 from models-C: a ForceField dome in the faction's colour (Order cyan, Chaos amber) that forms from the top down and drains back up, a channel with packets, streaks, energy waves and glowing hit patches. It replaces the old look and C-186. About 0.27 ms a frame per dome. Screenshots: `debug_out/screens/c187_shield_*.jpg`.
 - Ready to merge: `84771a6` (C-186: shield column and dome waves; src/client, place/MeshMaterials; main bd87d26 merged in)
 - **Shield hits explode (C-185):** shells and rockets destroyed on a dome now explode on the honeycomb with their own impact effect. `debug_out/screens/c185_shield_absorb_bursts.jpg`.
 - Ready to merge: `369ea62` (C-185: absorbed projectiles burst on the dome; src/client)

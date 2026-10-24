@@ -1617,3 +1617,20 @@ Existing calls are unchanged.
 
 **On hold (2026-10-24):** the user rejected this design before approving it; models-C is making a new reference. Not built on further; it stays Studio-only (review assets) until the new hand-off replaces it.
 
+### C-187 — Shield energy look v4 in the game, ported from models-C's reference (2026-10-24)
+
+**Decision:** the user's approved shield look (models-C's M-34, fx.md "Shield energy", `Meshes.shieldEnergy`) replaces the dome look and C-186.
+- **Port:** `Render/ShieldEnergy` ports `assets/fx/shield/waves/ShieldPreview.luau`: the same instances, made once per shield, and the same per-frame logic. Jitter comes from a hash, not `Random`, so nothing is allocated per frame. `Core/ShieldEnergyLook` holds the pure parts: the state mapping, the envelope (beam, front, edge, flare), band reveal, the waves' motion, wobble and brightness, the packet arrival and the arc handles. ShieldEnergyLook.spec checks them against the manifest.
+- **In ShieldFx:**
+  - deploying = pre (0.22 s) then raise (1 s); up = idle; collapsing = collapse (0.85 s); down = the beam fading out (0.25 s).
+  - Strength: the dome rule (invisible at 0, full from 50%, with the low-strength flicker) scales the dome, bands, honeycomb, waves, streaks, arcs and hits; the channel never drops below 40%.
+  - Detail: full within 300 studs; beyond that, no streaks, filaments, edge crackle or honeycomb, and the waves move every other frame; at strategic zoom only the shell, plus the outline in the faction's tint.
+  - Hits: the flipbook caps (4 per dome, the newest replacing the oldest), in place of the honeycomb plates.
+  - The faction comes from the generator's def, else from the generator type with that dome radius (a remote dome carries neither); Order cyan, Chaos amber.
+- **C-186 is taken out:** ShieldFx, ShieldLook, MeshMaterials and their spec are back to before it, and the client no longer reads `shieldColumn` or `shieldWave`. The old look stays only as the fallback if v4's meshes don't load.
+- **Cost (Studio, a Phalanx and a Carapace up):** about 0.27 ms per dome at full detail, 0.25 at mid distance, about 0.08 at strategic zoom. The first port cost 0.5 ms per dome; caching brought it down: NumberSequences and textures written only when they change, filaments re-laid only each jitter step, streaks only when their end moves, and attachments set in their parent's space.
+- Screenshots: `debug_out/screens/c187_shield_order_chaos.jpg`, `_250`, `_raise`, `_collapse`, `_hits`.
+- **For review:** each hit patch covers about a quarter of the dome (hitCap's half-angle 0.46 rad) and glows at tint × 3, so four quick hits per dome light most of it (`c187_shield_hits.jpg`).
+
+**Why:** the user approved v4 and asked for it in ShieldFx, through models-C.
+

@@ -62,6 +62,13 @@ export type Energy = {
 	streaks: { { phi: number, a0: Attachment, a1: Attachment, beam: Beam } },
 	waves: { { glow: Ring, line: Ring, seed: number } },
 	edges: { Ring },
+	-- what was last set, so unchanged values aren't written again (C-187:
+	-- writes of NumberSequences and attachment frames are most of the cost)
+	lastStep: number,
+	lastFrom: Vector3,
+	lastSet: { [Instance]: number },
+	lastStreak: number, -- the streaks' end angle last laid
+	frame: number, -- frames drawn (mid detail lays the waves every other one)
 	-- scratch (reused every frame)
 	thetasG: { number },
 	thetasL: { number },
@@ -150,6 +157,9 @@ local function surfaceFrame(pos: Vector3, normal: Vector3, along: Vector3): CFra
 	local y = normal:Cross(x).Unit
 	return CFrame.fromMatrix(pos, x, y)
 end
+-- Attachments live on `holder`, an unrotated part at the dome's base, so
+-- their CFrame is the world frame less the base: writing CFrame is cheaper
+-- than WorldCFrame (C-187).
 
 -- A dome's energy look in `folder` round `base` (the dome's base centre),
 -- radius `R`, tinted, its channel from `from`. `holder` is a part at the
@@ -354,6 +364,11 @@ function ShieldEnergy.new(folder: Folder, holder: BasePart, base: Vector3, R: nu
 		streaks = streaks,
 		waves = waves,
 		edges = edges,
+		lastStep = -1,
+		lastFrom = Vector3.zero,
+		lastSet = {},
+		lastStreak = -1,
+		frame = seed % 2, -- domes alternate
 		thetasG = {},
 		thetasL = {},
 		phis = {},
@@ -384,7 +399,7 @@ local function layRing(e: Energy, ring: Ring, r: number, thetas: { number }, phi
 	for j = 0, count - 1 do
 		local prev = if j > 0 then pos[j - 1] elseif ring.closed then pos[count - 1] else pos[j]
 		local nxt = if j < count - 1 then pos[j + 1] elseif ring.closed then pos[0] else pos[j]
-		ring.points[j].WorldCFrame = surfaceFrame(pos[j], (pos[j] - base).Unit, nxt - prev)
+		ring.points[j].CFrame = surfaceFrame(pos[j] - base, (pos[j] - base).Unit, nxt - prev)
 	end
 	for j, b in ring.segs do
 		local j1 = if ring.closed then j % n else j
@@ -400,6 +415,16 @@ local function setRing(ring: Ring, on: boolean)
 		if b.Enabled ~= on then
 			b.Enabled = on
 		end
+	end
+end
+
+-- A Beam's uniform transparency, written only when it changed by more
+-- than a little.
+local function fade(e: Energy, b: Beam, v: number)
+	local last = e.lastSet[b]
+	if last == nil or math.abs(last - v) > 0.01 then
+		e.lastSet[b] = v
+		b.Transparency = NumberSequence.new(v)
 	end
 end
 
@@ -464,11 +489,13 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 	local glowOn = beamOn * math.max(0.4, alpha)
 	e.core.Enabled, e.glow.Enabled = show, show
 	if show then
-		e.core.Transparency = NumberSequence.new(1 - glowOn)
-		e.glow.Transparency = NumberSequence.new(1 - 0.55 * glowOn)
+		fade(e, e.core, 1 - glowOn)
+		fade(e, e.glow, 1 - 0.55 * glowOn)
 	end
 	local filOn = show and near and axis.Magnitude > 0.5
-	if filOn then
+	-- the zig-zags change only every jitter step (or when the emitter moves)
+	local newStep = step ~= e.lastStep or (from - e.lastFrom).Magnitude > 0.05
+	if filOn and newStep then
 		local side = axis.Unit:Cross(Vector3.xAxis).Unit
 		local side2 = axis.Unit:Cross(side).Unit
 		local n = C.filamentSegments
@@ -480,14 +507,14 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 					ang += 0.9 + 0.8 * hash(step * 131 + fi * 17 + e.seed + i * 3.1)
 					off = (side * math.cos(ang) + side2 * math.sin(ang)) * (0.4 + 0.6 * hash(step * 71 + fi * 5 + i * 1.7 + e.seed)) * S.filamentReach * R
 				end
-				fil.points[i].WorldPosition = from + axis * (i / n) + off
+				fil.points[i].Position = from + axis * (i / n) + off - base
 			end
 			for _, b in fil.segs do
 				b.Enabled = true
-				b.Transparency = NumberSequence.new(1 - 0.9 * glowOn)
+				fade(e, b, 1 - 0.9 * glowOn)
 			end
 		end
-	else
+	elseif not filOn then
 		for _, fil in e.filaments do
 			for _, b in fil.segs do
 				if b.Enabled then
@@ -512,23 +539,36 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 	-- the streaks: down the formed part of the dome
 	local streakTheta = math.min(1, front) * PI / 2 * 0.99
 	local streaksOn = near and (st == "idle" or st == "raise" or st == "collapse") and streakTheta > 0.05
+	-- (laid again only when their end moved: still while the dome is up)
+	local relay = streaksOn and math.abs(streakTheta - e.lastStreak) > 1e-4
+	if relay then
+		e.lastStreak = streakTheta
+	end
 	for _, s in e.streaks do
-		s.beam.Enabled = streaksOn
-		if streaksOn then
+		if s.beam.Enabled ~= streaksOn then
+			s.beam.Enabled = streaksOn
+		end
+		if relay then
 			local r = R * 1.006
-			local apexPos = onSphere(base, r, 0, s.phi)
-			local endPos = onSphere(base, r, streakTheta, s.phi)
-			s.a0.WorldCFrame = surfaceFrame(apexPos, Vector3.yAxis, Vector3.new(math.cos(s.phi), 0, math.sin(s.phi)))
+			local apexPos = onSphere(Vector3.zero, r, 0, s.phi)
+			local endPos = onSphere(Vector3.zero, r, streakTheta, s.phi)
+			s.a0.CFrame = surfaceFrame(apexPos, Vector3.yAxis, Vector3.new(math.cos(s.phi), 0, math.sin(s.phi)))
 			local tangent = Vector3.new(math.cos(streakTheta) * math.cos(s.phi), -math.sin(streakTheta), math.cos(streakTheta) * math.sin(s.phi))
-			s.a1.WorldCFrame = surfaceFrame(endPos, (endPos - base).Unit, tangent)
+			s.a1.CFrame = surfaceFrame(endPos, endPos.Unit, tangent)
 			local k = ShieldEnergyLook.handle(streakTheta, r)
 			s.beam.CurveSize0, s.beam.CurveSize1 = k, k
-			local function tr(v: number): number
-				return 1 - (1 - v) * alpha
+		end
+		if streaksOn then
+			local key = (if full then 1 else 0) + math.floor(alpha * 50) * 2
+			if e.lastSet[s.beam] ~= key then
+				e.lastSet[s.beam] = key
+				local function tr(v: number): number
+					return 1 - (1 - v) * alpha
+				end
+				s.beam.Transparency = if full
+					then NumberSequence.new({ NumberSequenceKeypoint.new(0, tr(0.55)), NumberSequenceKeypoint.new(0.7, tr(0.7)), NumberSequenceKeypoint.new(1, 1) })
+					else NumberSequence.new({ NumberSequenceKeypoint.new(0, tr(0.6)), NumberSequenceKeypoint.new(0.85, tr(0.3)), NumberSequenceKeypoint.new(1, tr(0.2)) })
 			end
-			s.beam.Transparency = if full
-				then NumberSequence.new({ NumberSequenceKeypoint.new(0, tr(0.55)), NumberSequenceKeypoint.new(0.7, tr(0.7)), NumberSequenceKeypoint.new(1, 1) })
-				else NumberSequence.new({ NumberSequenceKeypoint.new(0, tr(0.6)), NumberSequenceKeypoint.new(0.85, tr(0.3)), NumberSequenceKeypoint.new(1, tr(0.2)) })
 		end
 	end
 
@@ -536,23 +576,31 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 	local shellOn = drawDetail and (st == "raise" or st == "idle" or st == "collapse")
 	local J = C.ringJoints
 	local thetasG, thetasL, phis, alphas = e.thetasG, e.thetasL, e.phis, e.alphas
+	-- beyond full detail the rings move every other frame (half the cost; at
+	-- that distance a frame's move is a pixel or two)
+	e.frame += 1
+	local lay = near or e.frame % 2 == 0
 	for i, w in e.waves do
 		local fi = i - 1
-		local _, wp, fade = ShieldEnergyLook.wave(fi, C.waves, t, T.waveCycle)
+		local _, wp, waveFade = ShieldEnergyLook.wave(fi, C.waves, t, T.waveCycle)
 		local vis = shellOn and wp < front - 0.02
 		setRing(w.glow, vis)
 		setRing(w.line, vis)
-		if vis then
+		if vis and (lay or newStep) then
 			for j = 0, J - 1 do
 				local phi = j / J * 2 * PI + 0.2 * fi
 				local th = ShieldEnergyLook.waveTheta(wp, phi, fi, t, step * 53 + i * 7 + j * 1.31 + e.seed)
 				thetasL[j + 1] = th
 				thetasG[j + 1] = math.max(0.02, th - 0.062) -- the glow band's centre sits above its leading line
 				phis[j + 1] = phi
-				alphas[j + 1] = ShieldEnergyLook.waveAlpha(phi, fi, t, w.seed, fade) * alpha
+				alphas[j + 1] = ShieldEnergyLook.waveAlpha(phi, fi, t, w.seed, waveFade) * alpha
 			end
 			layRing(e, w.glow, R * 1.008, thetasG, phis)
 			layRing(e, w.line, R * 1.01, thetasL, phis)
+		end
+		-- their brightness round the ring and the texture swap: every jitter step
+		if vis and (newStep or e.lastSet[w.line.segs[1]] == nil) then
+			e.lastSet[w.line.segs[1]] = step
 			local glowTex = tx.waveGlow[(step + i) % 3 + 1]
 			local lineTex = tx.waveLine[(step + i + 1) % 3 + 1]
 			for j, b in w.glow.segs do
@@ -569,6 +617,7 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 			end
 		end
 	end
+	e.lastStep, e.lastFrom = step, from
 
 	-- the broken arcs on the front of a raise or collapse
 	for i, ring in e.edges do
