@@ -80,6 +80,7 @@ export type UnitDef = {
 	maxRange: number, -- derived: longest weapon range, 0 if unarmed
 	countermeasures: Countermeasures?,
 	buildPower: number?,
+	canResurrect: boolean?, -- builders: RESURRECT brings a wreck's unit back (S-168)
 	buildOptions: { string }?,
 	upgradesFrom: { string }?, -- structures this one may be built over in place, the builder's own (S-108)
 	spoof: string?, -- a def its untracked radar contacts pass for (S-109, the Wraith)
@@ -324,6 +325,7 @@ local UNIT_SPEC: Spec = {
 			},
 		},
 		buildPower = opt(POSITIVE),
+		canResurrect = { kind = "boolean", optional = true },
 		buildOptions = { kind = "list", optional = true, item = STRING, minItems = 1 },
 		upgradesFrom = { kind = "list", optional = true, item = STRING, minItems = 1 },
 		spoof = opt(STRING),
@@ -800,6 +802,9 @@ function Defs.validate(raw: RawDefs): { string }
 			report("buildPower: builders (units with buildOptions) need buildPower > 0")
 		elseif not isBuilder and u.buildPower ~= nil then
 			report("buildPower: only builders (units with buildOptions) have buildPower")
+		end
+		if u.canResurrect and u.buildPower == nil then
+			report("canResurrect: only builders with buildPower")
 		end
 		if not isBuilder and u.buildRange ~= nil then
 			report("buildRange: only builders (units with buildOptions) have buildRange")

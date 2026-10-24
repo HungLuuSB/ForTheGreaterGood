@@ -15,6 +15,7 @@ export type BuildState = {
 	assist: { [number]: boolean }, -- builder's target is a factory's production (not a frame)
 	repair: { [number]: boolean }, -- builder's target is a finished, damaged unit to heal (S-4)
 	reclaim: { [number]: number }, -- builder → wreck it is reclaiming (0 = none)
+	resurrect: { [number]: number }, -- builder → wreck it is resurrecting (0 = none; S-168)
 	queue: { [number]: { number } }, -- factory → def indices waiting (head is in production)
 	progress: { [number]: number }, -- factory → progress of the head item, 0..1
 	upgrading: { [number]: number }, -- frame → the structure it upgrades in place (S-108)
@@ -28,7 +29,7 @@ export type BuildState = {
 BuildState.MAX_QUEUE = 50
 
 function BuildState.new(): BuildState
-	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, queue = {}, progress = {}, upgrading = {}, upgradingGen = {}, exiting = {} }
+	return { order = {}, target = {}, targetGen = {}, assist = {}, repair = {}, reclaim = {}, resurrect = {}, queue = {}, progress = {}, upgrading = {}, upgradingGen = {}, exiting = {} }
 end
 
 -- Forgets everything about one unit (it was removed from the world).
@@ -39,6 +40,7 @@ function BuildState.clearUnit(b: BuildState, id: number)
 	b.assist[id] = nil
 	b.repair[id] = nil
 	b.reclaim[id] = nil
+	b.resurrect[id] = nil
 	b.queue[id] = nil
 	b.progress[id] = nil
 	b.upgrading[id] = nil
@@ -54,6 +56,7 @@ function BuildState.idle(b: BuildState, id: number)
 	b.assist[id] = nil
 	b.repair[id] = nil
 	b.reclaim[id] = nil
+	b.resurrect[id] = nil
 end
 
 -- Hash over units in `ids` (ascending), so it's independent of table order.
@@ -66,6 +69,7 @@ function BuildState.hash(b: BuildState, ids: { number }, h: number): number
 		end
 		h = Hash.u32(Hash.u32(h, b.target[id] or 0), b.targetGen[id] or 0)
 		h = Hash.u32(h, b.reclaim[id] or 0)
+		h = Hash.u32(h, b.resurrect[id] or 0)
 		h = Hash.u32(h, if b.repair[id] then 1 else 0)
 		local q = b.queue[id]
 		if q then

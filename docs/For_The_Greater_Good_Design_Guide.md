@@ -591,7 +591,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - **No pathfinding.** Air units steer directly toward their goal.
 - **JET:** minimum speed (can't stop), limited turn rate, circles when idle or attacking. Collision checks use the swept path each tick because jets move 15–25 studs per tick.
 - **HELI:** can hover, slower turns, separation steering against other helis.
-- Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly.
+- Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly (S-167): a flying aircraft keeps an absolute height that climbs at 40 studs/s and descends at 25 toward its band over the highest ground on its path in the next 2 s, so it rises before a hill instead of snapping to it, and it never flies lower than 8 studs over the ground. The wire's altitude stays height above the ground under it.
 - Implementation (`Sim/Air.luau`, DECISIONS D73–D74):
   - Jets circle their goal at 220 studs when idle and chase or orbit their target when attacking.
   - Helicopters hover at 35, jets cruise at 100, bombers at 130; they climb at 40 studs/s.
@@ -904,6 +904,7 @@ Route these through the same team account so shortages affect them naturally:
 - Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time. Aircraft shot down in flight crash and burn: no wreck (a landed one can leave one; S-38).
 - Wrecks are static features stored in grid cells. They appear on the minimap and are rendered in the tactical tier.
 - A team knows a wreck once it has seen its spot, and learns it is gone only by seeing the spot again (like structure ghosts; S-26).
+- **Resurrect (S-168, the user):** the T1 workers (`canResurrect`: Mason, Scrapper) bring a wreck's unit back with RESURRECT. An untouched wreck costs power only: the unit's power cost, over its build time at the worker's build power. A partly reclaimed wreck must first be refilled with the worker's team's supply (at its reclaim rate) to what it held; then the resurrect runs. The unit returns at full health, owned by the worker's player (enemy wrecks too), on the wreck's spot; a structure once its footprint is free; within the unit cap. Commanders' wrecks can't be resurrected. Progress stays on the wreck; reclaiming it sets the refill back. Clients show a purple bar for resurrect progress and a dark-green one for the wreck's supply below 100%, name the wreck and its supply on hover, and show the reclaimable supply of areas when only workers are selected.
 
 ### 8.8 Networking
 

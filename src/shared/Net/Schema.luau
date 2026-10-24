@@ -19,7 +19,7 @@ local Schema = {}
 -- Bump on ANY change to a record layout, enum value or validation rule.
 -- Checked on join (with the defs hash) and written into replay headers.
 -- Schema.spec pins golden bytes to this number.
-Schema.PROTOCOL_VERSION = 34 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158)
+Schema.PROTOCOL_VERSION = 35 -- 2: Events channel records (ENTER, LEAVE, DEATH); 3: combat events (FIRE, SPAWN_PROJ, IMPACT, DECOYED, LOST_LOCK); 4: Projectiles channel (homing corrections); 5: strategic TRACKED flag; 6: join handshake (Snapshot channel) and Eco records; 7: REPEAT command and REPEAT state bit; 8: State TARGET field (own units' weapon targets); 9: Eco records carry their team; 10: WRECK / WRECK_GONE and SIGHT_ROWS / SIGHT_CELLS events; 11: DECOYED carries the decoy point and ticks; 12: CANCEL command; 13: DECOYED says which countermeasure won; 14: SHOT (a hidden shooter's hitscan shot); 15: State STOCK field (own units' missile stockpiles); 16: INTERCEPTOR, LAUNCH_WARNING, INTERCEPTED (strategic missiles); 17: STOCK carries the next missile's build progress; 18: SPAWN_STRATEGIC (a strategic missile with its goal); 19: strategic icon 8 bits, one per unit type; 20: State OWNER field (own units' factory queue, fire / move state, ammo); 21: OWNER CHARGES (own units' flares / chaff left); 22: unit state bits DEPLOYED, DEPLOYING; 23: ALERT events; 24: SHIELD, SHIELD_FIELD and SHIELD_HIT events (shield domes); 25: SHIELD_HIT flag ABSORBED; 26: SHIELD_HIT projId 0 (a hitscan shot); 27: CHEAT command and CHEAT_RESULT event (S-102), State owner field PRODUCING (allied factories); 28: SHOT carries its weapon (S-118); 29: DOME and DOME_GONE (domes regardless of vision, S-122); 30: WELCOME lists every team's ally team (S-129); 31: IDLE events (S-136) and command flag GROUP (S-137); 32: Eco records carry the team's radar accuracy (S-147); 33: PRIORITY command and LOW_PRIORITY state bit (S-156); 34: OWN_STATUS events (own units off camera, S-158); 35: RESURRECT command, WRECK carries its supply, WRECK_STATE events (S-168)
 
 -- Which RemoteEvent carries what (guide 7.1).
 Schema.Channel = table.freeze({
@@ -101,6 +101,7 @@ Schema.CmdType = table.freeze({
 	CANCEL = 16, -- unfinished frames: cancel them; factories: drop queue item `value` (0 = all), refunding what was spent (S-35)
 	CHEAT = 17, -- a cheat / test command (S-102; protocol 27); applied only when the match allows cheats
 	PRIORITY = 18, -- resource priority: value 1 high (the default), 0 low; sets the LOW_PRIORITY state bit (S-156; protocol 33)
+	RESURRECT = 19, -- targetId = a wreck: workers that can resurrect refill it with supply, then bring its unit back for power (S-168; protocol 35)
 })
 
 -- CHEAT commands (S-102, net.md "Cheat commands"): what to do.
@@ -137,7 +138,7 @@ Schema.MoveState = table.freeze({ HOLD_POSITION = 0, MANEUVER = 1, ROAM = 2 })
 
 -- Params layout per command type:
 --   pos     cell u16, offX u8, offZ u8            (+ cell2, offX2, offZ2 with LINE)
---   target  targetId u16                          (unit, or wreck for RECLAIM)
+--   target  targetId u16                          (unit, or wreck for RECLAIM / RESURRECT)
 --   build   defIndex u16, cell u16, offX u8, offZ u8, facing u8 (0..3; bits 2..7 reserved)
 --   value   value u8                              (0..VALUE_MAX[cmdType])
 --   camera  minX u8, minZ u8, maxX u8, maxZ u8    (cell rectangle, unit count 0)
@@ -167,6 +168,7 @@ local PARAMS: { [number]: ParamKind } = {
 	[CT.CANCEL] = "value",
 	[CT.CHEAT] = "cheat",
 	[CT.PRIORITY] = "value",
+	[CT.RESURRECT] = "target",
 }
 local VALUE_MAX: { [number]: number } = {
 	[CT.SET_FIRE_STATE] = 2,
@@ -869,7 +871,8 @@ end
 --               | countermeasure u8 (Schema.Countermeasure; protocol 13)     = 23 bytes
 --   LOST_LOCK   projId u16 | pos | vel (the missile flies on unguided)       = 15 bytes
 --   WRECK       wreckId u16 | defIndex u16 | cell u16 | offX u8 | offZ u8
---               | heading u8                                                  = 10 bytes
+--               | heading u8 | supply u16 (left in it) | fullSupply u16 (what
+--               it held at first; protocol 35, S-168)                        = 14 bytes
 --   WRECK_GONE  wreckId u16                                                   =  3 bytes
 --   SIGHT_ROWS  firstRow u8 | rowCount u8 (1..) | rowBytes u8 (1..)
 --               | rowCount × rowBytes bytes: one bit per sensor cell, row by
@@ -931,6 +934,9 @@ end
 --               command, for the chat (GIVE: units placed of asked; KILL:
 --               units killed; RES / INCOME: the amount set; SPEED: speed × 100);
 --               owner only (protocol 27, S-102)                             =  7 bytes
+--   WRECK_STATE wreckId u16 | supply u16 | rez u8 (resurrect progress,
+--               0..255): a wreck the client has, in the team's sight, whose
+--               supply or resurrect progress changed (protocol 35, S-168)   =  6 bytes
 --   SIGHT_CELLS count u8 (1..255) | count × u16: sensor cell index
 --               (z × sensorX + x) | SIGHT_SEEN (bit 15) when now in sight = 2 + 2 × count
 -- pos = cell u16 | offX u8 | offZ u8 | y i16 (eighth studs)                     6 bytes
@@ -964,6 +970,7 @@ Schema.EventKind = table.freeze({
 	DOME_GONE = 24,
 	IDLE = 25, -- protocol 31 (S-136)
 	OWN_STATUS = 26, -- protocol 34 (S-158)
+	WRECK_STATE = 27, -- protocol 35 (S-168)
 })
 -- CHEAT_RESULT result codes (S-102)
 Schema.CheatResult = table.freeze({
@@ -992,7 +999,7 @@ local ALERT_MAX = 9
 local EK = Schema.EventKind
 Schema.ENTER_BYTES = 16
 -- fixed sizes; SIGHT_ROWS and SIGHT_CELLS are variable (Schema.eventBytes)
-Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 10, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3, [25] = 4, [26] = 9 })
+Schema.EVENT_BYTES = table.freeze({ [1] = 16, [2] = 3, [3] = 6, [4] = 10, [5] = 19, [6] = 9, [7] = 23, [8] = 15, [9] = 14, [10] = 3, [13] = 16, [14] = 19, [15] = 9, [16] = 9, [17] = 25, [18] = 6, [19] = 5, [20] = 13, [21] = 13, [22] = 7, [23] = 13, [24] = 3, [25] = 4, [26] = 9, [27] = 6 })
 Schema.ShieldFlag = table.freeze({ UP = 1, RECHARGING = 2 }) -- SHIELD flags: the dome stands; it is recharging (protocol 24)
 Schema.SHIELD_BREACH = 1 -- SHIELD_HIT flags: the shell broke through (else it turned back)
 Schema.SHIELD_ABSORBED = 2 -- SHIELD_HIT flags: a light shell destroyed at the surface; drop it, no burst (protocol 25, S-85)
@@ -1024,6 +1031,9 @@ export type Event = {
 	queueHead: number?, -- OWN_STATUS: unit def index in production (0 = none; S-158)
 	queueProgress: number?, -- OWN_STATUS: 0..255
 	queueCount: number?, -- OWN_STATUS: items in the queue
+	supply: number?, -- WRECK, WRECK_STATE: supply left in the wreck (whole units; S-168)
+	fullSupply: number?, -- WRECK: what it held when the unit died
+	rez: number?, -- WRECK_STATE: resurrect progress 0..255
 	charge: number?, -- SHIELD: 0..255 of capacity
 	shieldFlags: number?, -- SHIELD: Schema.ShieldFlag bits
 	mass: number?, -- SHIELD_HIT: the shell's mass × SHIELD_MASS_SCALE (u8)
@@ -1242,7 +1252,14 @@ function Schema.encodeEvent(w: Writer, e: Event)
 			w:writeU8(required(e.offX, "offX"))
 			w:writeU8(required(e.offZ, "offZ"))
 			w:writeU8(required(e.heading, "heading"))
+			w:writeU16(math.clamp(e.supply or 0, 0, 65535)) -- (protocol 35, S-168)
+			w:writeU16(math.clamp(e.fullSupply or 0, 0, 65535))
 		end
+		return
+	elseif kind == EK.WRECK_STATE then
+		writeId(w, required(e.wreckId, "wreckId"), "wreckId")
+		w:writeU16(math.clamp(required(e.supply, "supply"), 0, 65535))
+		w:writeU8(required(e.rez, "rez"))
 		return
 	end
 	if isProjEvent(kind) then
@@ -1434,7 +1451,14 @@ function Schema.decodeEvent(r: Reader): Event
 			e.offX = r:readU8()
 			e.offZ = r:readU8()
 			e.heading = r:readU8()
+			e.supply = r:readU16()
+			e.fullSupply = r:readU16()
 		end
+		return e
+	elseif kind == EK.WRECK_STATE then
+		e.wreckId = readId(r, "wreckId")
+		e.supply = r:readU16()
+		e.rez = r:readU8()
 		return e
 	end
 	if isProjEvent(kind) then

@@ -6,7 +6,7 @@ local Hash = require("@shared/Util/Hash")
 
 local OrdersState = {}
 
-export type Kind = "move" | "fight" | "patrol" | "attack" | "guard" | "repair" | "reclaim" | "build" | "attackGround"
+export type Kind = "move" | "fight" | "patrol" | "attack" | "guard" | "repair" | "reclaim" | "resurrect" | "build" | "attackGround"
 
 export type Order = {
 	kind: Kind,
@@ -17,7 +17,7 @@ export type Order = {
 	lz: number?,
 	ox: number?, -- patrol: the other end (where the unit was when it started)
 	oz: number?,
-	target: number?, -- attack / guard / repair: unit ID; reclaim: wreck ID
+	target: number?, -- attack / guard / repair: unit ID; reclaim / resurrect: wreck ID
 	gen: number?, -- the target unit's generation (D109); for attack, a ghost's if remembered dead
 	defIndex: number?, -- build
 	facing: number?,
@@ -94,7 +94,7 @@ function OrdersState.clearUnit(o: OrdersState, id: number)
 	o.anchorZ[id] = nil
 end
 
-local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9 }
+local KIND_CODE: { [string]: number } = { move = 1, fight = 2, patrol = 3, attack = 4, guard = 5, repair = 6, reclaim = 7, build = 8, attackGround = 9, resurrect = 10 }
 
 -- Hash over units in `ids` (ascending).
 function OrdersState.hash(o: OrdersState, ids: { number }, h: number): number

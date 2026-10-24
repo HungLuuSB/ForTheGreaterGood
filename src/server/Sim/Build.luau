@@ -171,6 +171,32 @@ function Build.commandReclaim(sim: Types.Sim, ids: { number }, wreckId: number)
 	end
 end
 
+-- RESURRECT a wreck (S-168): builders that can (`canResurrect`) refill it
+-- with supply to what it held, then bring its unit back for power. Not a
+-- Commander's wreck.
+function Build.commandResurrect(sim: Types.Sim, ids: { number }, wreckId: number)
+	local b = sim.build
+	local c = sim.combat
+	if c.wreckX[wreckId] == nil then
+		return
+	end
+	local wd = sim.defs.unitByIndex[c.wreckDef[wreckId]]
+	if table.find(wd.categories, "COMMANDER") then
+		return
+	end
+	for _, id in ids do
+		local d = def(sim, id)
+		if not d.canResurrect or d.domain == "structure" then
+			continue
+		end
+		BuildState.idle(b, id)
+		b.resurrect[id] = wreckId
+		if sim.nav then
+			Nav.clearOrder(sim.nav, sim.world, id)
+		end
+	end
+end
+
 -- MOVE / STOP: drop build work (factories keep their queues).
 function Build.commandIdle(sim: Types.Sim, ids: { number })
 	for _, id in ids do
@@ -237,6 +263,80 @@ local lowPower: { [number]: number } = {} -- of `power`: from low-priority build
 local lowS: { [number]: number } = {} -- low-priority consumers' share of the demand (S-156)
 local lowP: { [number]: number } = {}
 local LOW_PRIORITY = World.State.LOW_PRIORITY
+
+Build.RESURRECT_POWER = 1 -- of the unit's power cost (S-168: resurrecting costs power only)
+
+-- One tick of `id` resurrecting wreck `wreck` (in range): refill first, at
+-- its reclaim rate, paid in supply; then progress at its build power
+-- against the unit's build time, paid in power. Both are economy consumers
+-- (stall ratios, priority) like building. Done: the unit stands where the
+-- wreck lay, the builder's owner's, at full health; a structure waits for
+-- its footprint to be free, anything for room under the unit cap.
+local function resurrectStep(sim: Types.Sim, id: number, wreck: number, bp: number)
+	local w = sim.world
+	local c = sim.combat
+	local b = sim.build
+	local wd = sim.defs.unitByIndex[c.wreckDef[wreck]]
+	local team = w.team[id]
+	local acc = sim.eco.accounts[team]
+	local low = Economy.isLow(w, id)
+	local full = Combat.fullWreckSupply(wd)
+	local free = sim.cheats.instabuild
+	local function consume(cs: number, cp: number, rate: number): number
+		if free then
+			return math.huge
+		end
+		demandS[team] += cs * rate
+		demandP[team] += cp * rate
+		if low then
+			lowS[team] += cs * rate
+			lowP[team] += cp * rate
+		end
+		local step = rate * Build.DT * Economy.effective(acc, cs, cp, low)
+		if cs > 0 then
+			step = math.min(step, Economy.allowance(acc.supply) / cs)
+		end
+		if cp > 0 then
+			step = math.min(step, Economy.allowance(acc.power) / cp)
+		end
+		acc.supply.spent += cs * step
+		acc.power.spent += cp * step
+		return step
+	end
+	local supply = c.wreckSupply[wreck]
+	if supply < full - 1e-9 then
+		-- the wreck was partly reclaimed: put the supply back first
+		local amount = math.min(full - supply, consume(1, 0, bp * Build.RECLAIM_RATE))
+		c.wreckSupply[wreck] = math.min(full, supply + amount)
+		return
+	end
+	local rez = c.wreckRez[wreck] or 0
+	if rez < 1 - 1e-9 then
+		local rate = bp / wd.cost.buildTime
+		rez = math.min(1, rez + consume(0, wd.cost.power * Build.RESURRECT_POWER, rate))
+		c.wreckRez[wreck] = rez
+		if rez < 1 - 1e-9 then
+			return
+		end
+	end
+	-- done: room for it?
+	local owner = w.owner[id]
+	local x, z = c.wreckX[wreck], c.wreckZ[wreck]
+	if Match.atCap(sim, owner) then
+		return
+	end
+	if wd.domain == "structure" and not Placement.check(sim, wd, x, z, owner) then
+		return -- units on the footprint: wait (they walk off a frame, not a wreck)
+	end
+	local heading = c.wreckHeading[wreck]
+	Combat.removeWreck(c, wreck)
+	b.resurrect[id] = 0
+	local unit = Spawn.unit(sim, wd.id, owner, x, z, heading)
+	Stockpile.empty(sim, unit) -- missiles are built again, as for a produced unit (S-47)
+	Combat.addEvent(c, { kind = "RESURRECTED", tick = sim.tick, unit = unit, other = wreck })
+	Build.countBuilt(sim, unit)
+end
+
 
 -- Cancelling (guide 9.3, S-35): what was spent comes back. Spending is
 -- proportional to progress, so a refund is progress × cost, credited like
@@ -441,6 +541,21 @@ function Build.step(sim: Types.Sim)
 				end
 			else
 				approach(sim, id, pending.x, pending.z)
+			end
+			continue
+		end
+
+		local rezWreck = b.resurrect[id] or 0
+		if rezWreck ~= 0 then
+			local c = sim.combat
+			local wx = c.wreckX[rezWreck]
+			if wx == nil then
+				b.resurrect[id] = 0 -- gone (reclaimed away, or another builder finished it)
+			elseif inRange(sim, id, wx, c.wreckZ[rezWreck], Grid.CELL_SIZE / 2) then
+				halt(sim, id)
+				resurrectStep(sim, id, rezWreck, bp)
+			else
+				approach(sim, id, wx, c.wreckZ[rezWreck])
 			end
 			continue
 		end

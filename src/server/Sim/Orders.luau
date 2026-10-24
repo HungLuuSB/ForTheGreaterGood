@@ -17,7 +17,7 @@
 --            the team no longer knows the target.
 --   guard    stay within GUARD_RADIUS of an allied unit (builders assist it
 --            when it is a frame or a factory). Done when it is gone.
---   repair / reclaim / build
+--   repair / reclaim / resurrect / build
 --            the Build commands; done when the builder is idle again.
 --            Repair also heals damaged finished units (Build, S-4).
 --   attackGround  bombers' attack-ground (D100); kept until replaced.
@@ -274,7 +274,7 @@ end
 
 local function builderIdle(sim: Types.Sim, id: number): boolean
 	local b = sim.build
-	return b.order[id] == nil and (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0
+	return b.order[id] == nil and (b.target[id] or 0) == 0 and (b.reclaim[id] or 0) == 0 and (b.resurrect[id] or 0) == 0
 end
 
 -- Moves `id` toward (x, z) unless a recent chase move already aims close by.
@@ -300,6 +300,8 @@ local function start(sim: Types.Sim, id: number, h: Order): boolean
 		Build.commandAssist(sim, { id }, h.target :: number)
 	elseif kind == "reclaim" then
 		Build.commandReclaim(sim, { id }, h.target :: number)
+	elseif kind == "resurrect" then
+		Build.commandResurrect(sim, { id }, h.target :: number)
 	elseif kind == "build" then
 		Build.commandBuild(sim, { id }, h.defIndex :: number, h.x :: number, h.z :: number, h.facing or 0)
 	elseif kind == "attackGround" then
@@ -426,7 +428,7 @@ local function run(sim: Types.Sim, id: number, h: Order): boolean
 		end
 		return true
 	end
-	-- repair / reclaim / build
+	-- repair / reclaim / resurrect / build
 	return not builderIdle(sim, id)
 end
 
