@@ -22,11 +22,16 @@
 -- in the replay on the tick they are applied, so replays match.
 --
 -- CHEAT commands (S-102) go to Sim/Cheats, recorded like any other.
+--
+-- During the pre-game (startMode "choose", S-169) Sim/Pregame takes
+-- START_POS, READY and the Commander's queue (BUILD / STOP with no unit
+-- IDs), and after the tick's commands runs the countdown and the start.
 
 local Schema = require("@shared/Net/Schema")
 local Build = require("../Build")
 local Cheats = require("../Cheats")
 local Orders = require("../Orders")
+local Pregame = require("../Pregame")
 local Sensors = require("../Sensors")
 local Nav = require("../Nav")
 local NetOut = require("../NetOut")
@@ -84,9 +89,9 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz, group = band(cmd.flags, GROUP) ~= 0 }, band(cmd.flags, QUEUE) ~= 0)
 end
 
--- ATTACK / GUARD / REPAIR / RECLAIM: an order on a target. ATTACK needs a
--- unit the sender's team knows (a ghost too); GUARD and REPAIR an allied
--- live unit; RECLAIM a wreck.
+-- ATTACK / GUARD / REPAIR / RECLAIM / RESURRECT: an order on a target. ATTACK
+-- needs a unit the sender's team knows (a ghost too); GUARD and REPAIR an
+-- allied live unit; RECLAIM and RESURRECT a wreck.
 local function applyTargeted(sim: Types.Sim, player: number, cmd: Schema.Command)
 	local w = sim.world
 	local units = ownedUnits(w, player, cmd.unitIds)
@@ -106,11 +111,11 @@ local function applyTargeted(sim: Types.Sim, player: number, cmd: Schema.Command
 		if level == Sensors.Level.GHOST and w.slot[t] == nil then
 			gen = sim.sensors.ghosts[ally][t].gen
 		end
-	elseif cmd.cmdType == CT.RECLAIM then
+	elseif cmd.cmdType == CT.RECLAIM or cmd.cmdType == CT.RESURRECT then
 		if sim.combat.wreckX[t] == nil then
 			return
 		end
-		kind = "reclaim"
+		kind = if cmd.cmdType == CT.RESURRECT then "resurrect" else "reclaim" -- (S-168)
 	else
 		if w.slot[t] == nil or w.ally[t] ~= ally then
 			return
@@ -147,6 +152,9 @@ local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
 end
 
 local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
+	if sim.pregame and Pregame.command(sim, player, cmd) then
+		return
+	end
 	local w = sim.world
 	local cmdType = cmd.cmdType
 	if KIND_OF[cmdType] then
@@ -155,7 +163,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.BUILD then
 		applyBuild(sim, player, cmd)
 		return
-	elseif cmdType == CT.ATTACK or cmdType == CT.GUARD or cmdType == CT.REPAIR or cmdType == CT.RECLAIM then
+	elseif cmdType == CT.ATTACK or cmdType == CT.GUARD or cmdType == CT.REPAIR or cmdType == CT.RECLAIM or cmdType == CT.RESURRECT then
 		applyTargeted(sim, player, cmd)
 		return
 	elseif cmdType == CT.ATTACK_GROUND then
@@ -228,6 +236,9 @@ function Commands.step(sim: Types.Sim)
 	table.clear(queue)
 	table.move(keep, 1, #keep, 1, queue)
 	Orders.step(sim) -- start and check every unit's head order
+	if sim.pregame then
+		Pregame.step(sim) -- the countdown, and the start (S-169)
+	end
 end
 
 return Commands

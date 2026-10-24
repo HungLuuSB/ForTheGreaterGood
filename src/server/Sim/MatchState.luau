@@ -15,10 +15,11 @@ export type AiLevel = "easy" | "normal" | "hard"
 export type Config = {
 	mode: Mode,
 	win: WinCondition,
-	unitCap: number?, -- per player; default from the player count (Match.defaultCap)
+	unitCap: number?, -- per player; default none (0; S-170)
 	ai: { [number]: AiLevel }?, -- players the skirmish AI plays, and how well (S-17)
 	friendlyFire: boolean?, -- blasts hurt allies too; default true (guide 10.6, S-73)
 	cheats: boolean?, -- cheat / test commands allowed; default off (S-102)
+	startMode: ("fixed" | "choose")?, -- "choose": players pick their starts in a pre-game (S-169); default fixed
 }
 
 export type MatchState = {
@@ -34,6 +35,7 @@ export type MatchState = {
 	over: boolean,
 	winner: number, -- ally team that won; 0 while running or when nobody is left
 	endTick: number,
+	startTick: number, -- the tick the match started on: 0, or the pre-game's end (S-169)
 }
 
 function MatchState.new(config: Config?, unitCap: number): MatchState
@@ -50,6 +52,7 @@ function MatchState.new(config: Config?, unitCap: number): MatchState
 		over = false,
 		winner = 0,
 		endTick = 0,
+		startTick = 0,
 	}
 end
 
@@ -60,6 +63,7 @@ function MatchState.hash(m: MatchState, order: { number }, h: number): number
 	h = Hash.u32(h, if m.enabled then 1 else 0)
 	h = Hash.u32(h, WIN_CODE[m.win])
 	h = Hash.u32(h, m.unitCap)
+	h = Hash.u32(h, m.startTick)
 	for _, pid in order do
 		h = Hash.u32(h, pid)
 		h = Hash.u32(h, m.units[pid] or 0)

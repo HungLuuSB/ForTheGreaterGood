@@ -110,6 +110,7 @@ local Prng = require("@shared/Util/Prng")
 local Schema = require("@shared/Net/Schema")
 local Nav = require("../Nav")
 local Placement = require("../Placement")
+local Pregame = require("../Pregame")
 local Quadtree = require("../Path/Quadtree")
 local PlacementRules = require("@shared/Grid/PlacementRules")
 local Sensors = require("../Sensors")
@@ -429,6 +430,11 @@ end
 -- Creates the AI for `player` at `level` (default: the match's `ai` option
 -- for the player, else "normal"). Needs a map with start positions.
 function Skirmish.new(sim: Types.Sim, player: number, level: string?): Brain
+	if sim.pregame then
+		-- no Commander yet (S-169): a stand-in that picks and readies, and
+		-- becomes the real brain when the match starts (Skirmish.tick)
+		return ({ sim = sim, player = player, pendingLevel = level or sim.match.ai[player] or "normal", pending = true } :: any) :: Brain
+	end
 	local levelName = level or sim.match.ai[player] or "normal"
 	local base = Skirmish.LEVELS[levelName]
 	assert(base, `Skirmish.new: unknown level {levelName}`)
@@ -2012,6 +2018,29 @@ end
 -- Call once per tick, before Sim.step.
 function Skirmish.tick(brain: Brain)
 	local sim = brain.sim
+	local b = brain :: any
+	if b.pending then
+		if sim.pregame then
+			-- the pre-game (S-169, S-171): its best spot (a hint first), then ready; as
+			-- commands, so a replay picks the same
+			if sim.pregame.picks[brain.player] == nil and not b.picked then
+				local x, z = Pregame.bestSpot(sim, brain.player)
+				if x and z then
+					local g = (sim.map :: Passability.PassMap).grid
+					local cell, ox, oz = g:encode(x, z)
+					submit(sim, brain.player, { cmdType = CT.START_POS, flags = 0, unitIds = {}, cell = cell, offX = ox, offZ = oz })
+				end
+				submit(sim, brain.player, { cmdType = CT.READY, flags = 0, unitIds = {}, value = 1 })
+				b.picked = true
+			end
+			return
+		end
+		local real = Skirmish.new(sim, brain.player, b.pendingLevel) :: any
+		table.clear(b)
+		for k, v in real do
+			b[k] = v
+		end
+	end
 	if sim.match.eliminated[brain.player] or sim.cheats.aiPaused[brain.player] then
 		return -- out, or paused by the AI cheat (S-102)
 	end

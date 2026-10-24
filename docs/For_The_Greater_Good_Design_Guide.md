@@ -492,6 +492,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
   - **Badlands:** rough ground (ROCK) round the two mesa belts, north-west and south-east, sits 3 studs above the canyon floor. The floor between them is open, hard-packed ground (GRASS, drawn as desert) running from the north-east to the south-west. Small rock outcrops (impassable) dot it.
   - **Deposits ("glitter"):** many small value-2 deposits on a jittered grid about every 20 cells, plus four of value 4 round each start: 92 deposits in all.
   - **For drawing:** `Canyon.feature(cx, cz)` names each cell (mesa, cliff, apron, badlands, boulder, floor).
+- **The Plains** (S-173, the user): `map:plains` (`Shared/Grid/Plains`), a flat, open 256 × 256-cell (2048 × 2048-stud, the wire's largest) grass map for 8v8, bigger than The Canyon. Gently rolling (under 2°), no water, roads east–west through the middle and north–south at x = ±520. Mirror-symmetric west ↔ east. 16 start hints (1–8 west, 9–16 east, in north and south groups of four), each with three value-3 deposits of its own; value-2 deposits on a jittered grid over the middle and the flanks, at least 120 studs from any hint.
 
 ---
 
@@ -591,7 +592,7 @@ Implementation (`Sim/Path/Quadtree.luau`, `Sim/Path/Route.luau`):
 - **No pathfinding.** Air units steer directly toward their goal.
 - **JET:** minimum speed (can't stop), limited turn rate, circles when idle or attacking. Collision checks use the swept path each tick because jets move 15–25 studs per tick.
 - **HELI:** can hover, slower turns, separation steering against other helis.
-- Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly.
+- Altitude bands (above ground): helicopters 30–40, jets 90–120, bombers 120–140. Altitude follows terrain smoothly (S-167): a flying aircraft keeps an absolute height that climbs at 40 studs/s and descends at 25 toward its band over the highest ground on its path in the next 2 s, so it rises before a hill instead of snapping to it, and it never flies lower than 8 studs over the ground. The wire's altitude stays height above the ground under it.
 - Implementation (`Sim/Air.luau`, DECISIONS D73–D74):
   - Jets circle their goal at 220 studs when idle and chase or orbit their target when attacking.
   - Helicopters hover at 35, jets cruise at 100, bombers at 130; they climb at 40 studs/s.
@@ -904,6 +905,7 @@ Route these through the same team account so shortages affect them naturally:
 - Destroyed units leave **wrecks** with a supply value (e.g., 50% of cost). Workers reclaim them over time. Aircraft shot down in flight crash and burn: no wreck (a landed one can leave one; S-38).
 - Wrecks are static features stored in grid cells. They appear on the minimap and are rendered in the tactical tier.
 - A team knows a wreck once it has seen its spot, and learns it is gone only by seeing the spot again (like structure ghosts; S-26).
+- **Resurrect (S-168, the user):** the T1 workers (`canResurrect`: Mason, Scrapper) bring a wreck's unit back with RESURRECT. An untouched wreck costs power only: the unit's power cost, over its build time at the worker's build power. A partly reclaimed wreck must first be refilled with the worker's team's supply (at its reclaim rate) to what it held; then the resurrect runs. The unit returns at full health, owned by the worker's player (enemy wrecks too), on the wreck's spot; a structure once its footprint is free; within the unit cap. Commanders' wrecks can't be resurrected. Progress stays on the wreck; reclaiming it sets the refill back. Clients show a purple bar for resurrect progress and a dark-green one for the wreck's supply below 100%, name the wreck and its supply on hover, and show the reclaimable supply of areas when only workers are selected.
 
 ### 8.8 Networking
 
@@ -1574,14 +1576,15 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 ### 16.1 Teams
 
 - Players belong to **ally teams**. Allies share sight, radar and sonar; can give units and resources; receive economy overflow.
-- **Team mode:** 2–4 ally teams of 2–4 players.
-- **FFA:** each player is their own ally team, up to 8.
+- **Up to 16 players on any map** (S-169, the user). **Team mode:** 2–8 sides (ally teams) of any size, never more sides than the map has starts. **FFA:** each player is their own ally team, up to 16, never more than the map's starts.
+- **Start positions** (S-169, S-171, the user): there are no fixed starts. Every match opens with a **pre-game** where each player picks its Commander's spot inside its side's **spawn box** (a box around the side's share of the map's start positions, or the map's own boxes), at least 48 studs from other picks. The map's start positions are **hints**: the AI takes its side's hints first, and past them (or with one taken) the best free spot in the box (free deposits nearby, open ground, close to the side); a player who never picks gets the same. Everyone sees every pick. Players may queue builds for their Commander before it exists (shown to them and their allies). When everyone is ready (or after 90 s) a 5..1 countdown runs, cancelled if anyone un-readies; then the Commanders appear on the picks with their queues, and the match starts. Wire: net.md 9b. (`startMode = "fixed"` is left for headless tests and tools.)
+- **Player colours** (S-172, the user): assigned automatically, relative to the viewer (`Shared/Match/TeamColors.forViewer`): the viewer and its allies in cold shades (blue, green, cyan; the viewer blue), every enemy in a warm one (red, orange, fuchsia, yellow shades, grouped by side). Spectators see the lowest ally team cold. The config's `color` is no longer chosen by players.
 
 - Implementation (DECISIONS D87):
   - Players have a `team` (economy, ownership) and an `allyTeam`.
   - Sight maps are per ally team. Targeting and friendly fire use ally teams.
   - Overflow is split among allies with room.
-  - The match config `{ mode = "FFA" | "TEAM", win, unitCap? }` is validated at start: FFA 2–8 players each alone; TEAM 2–4 ally teams of up to 4.
+  - The match config `{ mode = "FFA" | "TEAM", win, unitCap?, startMode? }` is validated at start: at most 16 players; FFA each alone; TEAM 2–8 sides of any size (S-169; was FFA 2–8, TEAM 2–4 of up to 4). A map needs at least as many start positions as sides (`Shared/Match/StartAreas`); fixed starts (tests only) need one per player.
 
 ### 16.2 Win conditions (match option)
 
@@ -1613,10 +1616,10 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 ### 16.4 Limits (tune from stress tests)
 
-- Unit cap per player: e.g., 150 (FFA 8) to 300 (1v1), with a global cap around what the server handles.
+- **No unit cap in-game** (S-170, the user). A match config may still set `unitCap` per player (tests, special modes).
 - Factory queue limit, max command size (200 units).
 - Implementation:
-  - The default cap is `clamp(300 − 25 × (players − 2), 150, 300)` and counts units, structures and frames.
+  - By default there is none (`unitCap` 0). A set cap counts units, structures and frames (it was `clamp(300 − 25 × (players − 2), 150, 300)` until S-170).
   - At the cap, construction fails with `unit_cap`, and finished factory items wait until there is room.
 
 ---

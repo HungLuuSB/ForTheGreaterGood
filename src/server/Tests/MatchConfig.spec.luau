@@ -36,7 +36,7 @@ return function(t: RunAll.Context)
 		c.spectators = { { user = 30, name = "Cee" } }
 		t.equal(MatchConfig.validate(c), nil)
 		t.deepEqual(MatchConfig.users(c), { 20, 10, 30 })
-		t.equal(#MatchConfig.COLORS, 12)
+		t.equal(#MatchConfig.COLORS, 16) -- 16 players (S-169)
 	end)
 
 	t.test("validate refuses tampered configs", function()

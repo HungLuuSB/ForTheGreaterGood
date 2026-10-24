@@ -275,7 +275,7 @@ return function(t: RunAll.Context)
 
 		local strategic: Strategic = { unitId = 1, cell = 0, icon = 0, team = 1, flags = 0 }
 		t.equal(buffer.len(encodeOne(Schema.encodeStrategic, strategic)), Schema.STRATEGIC_BYTES)
-		t.equal(Schema.STRATEGIC_BYTES, 6)
+		t.equal(Schema.STRATEGIC_BYTES, 7) -- 4-bit team since protocol 36 (S-169)
 
 		-- command: 4-byte header + 2 per unit + params
 		t.equal(buffer.len(encodeOne(Schema.encodeCommand, { cmdType = CT.STOP, flags = 0, unitIds = { 1 } })), 6)
@@ -293,18 +293,20 @@ return function(t: RunAll.Context)
 		t.equal(buffer.len(encodeOne(Schema.encodeTickHeader, 0)), Schema.TICK_HEADER_BYTES)
 	end)
 
-	t.test("strategic bit layout: icon bits 0-7, team 8-10, flags 11-15 (protocol 19)", function()
+	t.test("strategic bit layout: icon bits 0-7, team 8-11, flags 12-16, 7 reserved (protocol 36)", function()
 		local rec: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
-		-- 1 + (2 - 1) * 2^8 + 1 * 2^11 = 0x0901
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, rec)), { 0x02, 0x01, 0x04, 0x03, 0x01, 0x09 })
-		local top: Strategic = { unitId = 1, cell = 0, icon = 255, team = 8, flags = 31 }
-		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF })
+		-- 1 + (2 - 1) * 2^8 + 1 * 2^12 = 0x1101
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, rec)), { 0x02, 0x01, 0x04, 0x03, 0x01, 0x11, 0x00 })
+		local top: Strategic = { unitId = 1, cell = 0, icon = 255, team = 16, flags = 31 }
+		t.deepEqual(bytesOf(encodeOne(Schema.encodeStrategic, top)), { 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x01 })
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeStrategic, top), Schema.decodeStrategic)[1], top)
+		expectRejected(t, Schema.decodeStrategic, { 1, 0, 0, 0, 0, 0, 0x02 }, "reserved bits")
 	end)
 
 	-- Hand-computed bytes. If this test fails you changed the wire format:
 	-- bump Schema.PROTOCOL_VERSION and update these bytes in the same change.
 	t.test("golden bytes are pinned to PROTOCOL_VERSION", function()
-		t.equal(Schema.PROTOCOL_VERSION, 34, "protocol version changed: update the golden bytes below")
+		t.equal(Schema.PROTOCOL_VERSION, 36, "protocol version changed: update the golden bytes below")
 		local build: Command = {
 			cmdType = CT.BUILD,
 			flags = QUEUE,
@@ -408,6 +410,26 @@ return function(t: RunAll.Context)
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, idle), Schema.decodeEvent)[1], idle)
 		local busy: Schema.Event = { kind = Schema.EventKind.IDLE, unitId = 0x0102, idle = false }
 		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, busy), Schema.decodeEvent)[1], busy)
+		-- version 36: the pre-game (S-169)
+		local EKp = Schema.EventKind
+		local pregame: Schema.Event = { kind = EKp.PREGAME, player = 3, pregameFlags = Schema.PregameFlag.PICKED + Schema.PregameFlag.READY, cell = 0x0405, offX = 6, offZ = 7 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, pregame)), "1c 03 03 05 04 06 07")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, pregame), Schema.decodeEvent)[1], pregame)
+		local countdown: Schema.Event = { kind = EKp.COUNTDOWN, seconds = 5 }
+		t.equal(hex(encodeOne(Schema.encodeEvent, countdown)), "1d 05")
+		local prebuild: Schema.Event = { kind = EKp.PREBUILD, player = 2, builds = { { defIndex = 0x0102, cell = 0x0304, offX = 5, offZ = 6, facing = 1 } } }
+		t.equal(hex(encodeOne(Schema.encodeEvent, prebuild)), "1e 02 01 02 01 04 03 05 06 01")
+		t.equal(Schema.eventBytes(prebuild), 10)
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, prebuild), Schema.decodeEvent)[1], prebuild)
+		local none: Schema.Event = { kind = EKp.PREBUILD, player = 2, builds = {} }
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeEvent, none), Schema.decodeEvent)[1], none)
+		expectRejected(t, Schema.decodeEvent, { 28, 1, 8, 0, 0, 0, 0 }, "pregame flags 8")
+		expectRejected(t, Schema.decodeEvent, { 30, 1, 31 }, "PREBUILD of 31")
+		local pick: Command = { cmdType = CT.START_POS, flags = 0, unitIds = {}, cell = 0x0203, offX = 4, offZ = 5 }
+		t.equal(hex(encodeOne(Schema.encodeCommand, pick)), "14 00 00 00 03 02 04 05")
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, pick), Schema.decodeCommand)[1], pick)
+		local ready: Command = { cmdType = CT.READY, flags = 0, unitIds = {}, value = 1 }
+		t.deepEqual(Packer.readAll(encodeOne(Schema.encodeCommand, ready), Schema.decodeCommand)[1], ready)
 		-- version 34: OWN_STATUS (S-158): an own unit off camera
 		local status: Schema.Event = { kind = Schema.EventKind.OWN_STATUS, unitId = 0x0102, health = 200, build = 255, queueHead = 0x0304, queueProgress = 128, queueCount = 5 }
 		t.equal(hex(encodeOne(Schema.encodeEvent, status)), "1a 02 01 c8 ff 04 03 80 05")
@@ -432,7 +454,7 @@ return function(t: RunAll.Context)
 		}
 		t.equal(hex(encodeOne(Schema.encodeState, state)), "02 01 1f 03 05 04 81 06 07 08 09 01 c0 0a")
 		local strategic: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = 1 }
-		t.equal(hex(encodeOne(Schema.encodeStrategic, strategic)), "02 01 04 03 01 09") -- version 19 layout
+		t.equal(hex(encodeOne(Schema.encodeStrategic, strategic)), "02 01 04 03 01 11 00") -- version 36 layout
 		t.equal(hex(encodeOne(Schema.encodeTickHeader, 0xABCD)), "cd ab")
 		-- version 2: events
 		local enter: Schema.Event = {
@@ -481,8 +503,8 @@ return function(t: RunAll.Context)
 		t.equal(hex(encodeOne(Schema.encodeProjSync, sync)), "02 01 04 03 05 06 fe ff 01 00 ff ff 03 02")
 		-- version 5: TRACKED strategic flag (16 = flag bit 4 = bit 13 overall)
 		local tracked: Strategic = { unitId = 0x0102, cell = 0x0304, icon = 1, team = 2, flags = Schema.StrategicFlag.RADAR_ONLY + Schema.StrategicFlag.TRACKED }
-		-- 1 + (2 - 1) * 2^8 + 17 * 2^11 = 0x8901 (version 19 layout)
-		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 01 89")
+		-- 1 + (2 - 1) * 2^8 + 17 * 2^12 = 0x11101 (version 36 layout)
+		t.equal(hex(encodeOne(Schema.encodeStrategic, tracked)), "02 01 04 03 01 11 01")
 		-- version 6: join handshake and economy
 		local SK = Schema.SnapshotKind
 		t.equal(hex(encodeOne(Schema.encodeSnapshot, { kind = SK.HELLO, protocol = 0x0102, defsHash = 0x03040506 })), "01 02 01 06 05 04 03")
@@ -502,18 +524,21 @@ return function(t: RunAll.Context)
 
 	t.test("wreck and sight events (protocol 10): golden bytes, round-trip, bad input, truncation", function()
 		local EK = Schema.EventKind
-		local wreck: Schema.Event = { kind = EK.WRECK, wreckId = 0x0102, defIndex = 0x0304, cell = 0x0506, offX = 7, offZ = 8, heading = 9 }
+		local wreck: Schema.Event = { kind = EK.WRECK, wreckId = 0x0102, defIndex = 0x0304, cell = 0x0506, offX = 7, offZ = 8, heading = 9, supply = 0x0a0b, fullSupply = 0x0c0d }
 		local gone: Schema.Event = { kind = EK.WRECK_GONE, wreckId = 0x0102 }
-		t.equal(hex(encodeOne(Schema.encodeEvent, wreck)), "09 02 01 04 03 06 05 07 08 09")
+		local state: Schema.Event = { kind = EK.WRECK_STATE, wreckId = 0x0102, supply = 0x0304, rez = 200 } -- (protocol 35, S-168)
+		t.equal(hex(encodeOne(Schema.encodeEvent, wreck)), "09 02 01 04 03 06 05 07 08 09 0b 0a 0d 0c") -- supply, fullSupply since protocol 35
 		t.equal(hex(encodeOne(Schema.encodeEvent, gone)), "0a 02 01")
-		roundTrip(t, { wreck, gone }, Schema.encodeEvent, Schema.decodeEvent)
-		for _, e in { wreck, gone } do
+		t.equal(hex(encodeOne(Schema.encodeEvent, state)), "1b 02 01 04 03 c8")
+		roundTrip(t, { wreck, gone, state }, Schema.encodeEvent, Schema.decodeEvent)
+		for _, e in { wreck, gone, state } do
 			t.equal(buffer.len(encodeOne(Schema.encodeEvent, e)), Schema.EVENT_BYTES[e.kind], `size of event kind {e.kind}`)
 			t.equal(Schema.eventBytes(e), Schema.EVENT_BYTES[e.kind])
 			expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, e))
 		end
-		expectRejected(t, Schema.decodeEvent, { 9, 0, 0, 1, 0, 0, 0, 0, 0, 0 }, "wreckId 0 is reserved")
-		expectRejected(t, Schema.decodeEvent, { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0 }, "defIndex 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 9, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "wreckId 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "defIndex 0 is reserved")
+		expectRejected(t, Schema.decodeEvent, { 27, 0, 0, 1, 0, 0 }, "wreckId 0 is reserved")
 
 		-- rows: 2 rows of 2 bytes; cells: one seen, one unseen
 		local rows: Schema.Event = { kind = EK.SIGHT_ROWS, firstRow = 3, rowCount = 2, rowBytes = 2, bits = fromBytes({ 0x01, 0x80, 0xFF, 0x00 }) }
@@ -564,7 +589,7 @@ return function(t: RunAll.Context)
 		expectRejected(t, Schema.decodeEvent, { 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "weaponIndex 0 is reserved")
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[1]))
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, events[3]))
-		expectRejected(t, Schema.decodeEvent, { 27, 1, 0 }, "unknown event kind 27") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34
+		expectRejected(t, Schema.decodeEvent, { 31, 1, 0 }, "unknown event kind 31") -- 9..12 since protocol 10, 13 since 14, 14..16 since 16, 17 since 18, 18 since 23, 19..21 since 24, 22 since 27, 23..24 since 29, 25 since 31, 26 since 34, 27 since 35, 28..30 since 36
 		expectRejected(t, Schema.decodeEvent, { 18, 10, 0, 0, 0, 0 }, "alert kind 10")
 		-- protocol 16: strategic missiles (S-48)
 		local EK = Schema.EventKind
@@ -595,7 +620,7 @@ return function(t: RunAll.Context)
 		expectTruncated(t, "event record", Schema.decodeEvent, encodeOne(Schema.encodeEvent, shot))
 		expectRejected(t, Schema.decodeEvent, { 13, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, "SHOT hit byte 2")
 		expectRejected(t, Schema.decodeEvent, { 2, 0, 0 }, "unitId 0 is reserved")
-		expectRejected(t, Schema.decodeEvent, { 1, 1, 0, 1, 0, 9 }, "team 9 outside")
+		expectRejected(t, Schema.decodeEvent, { 1, 1, 0, 1, 0, 17 }, "team 17 outside")
 	end)
 
 	t.test("projectile corrections round-trip, reject projId 0, and every prefix is truncated", function()
@@ -638,8 +663,8 @@ return function(t: RunAll.Context)
 		roundTrip(t, { eco }, Schema.encodeEco, Schema.decodeEco)
 		t.equal(buffer.len(encodeOne(Schema.encodeEco, eco)), Schema.ECO_BYTES)
 		expectTruncated(t, "eco record", Schema.decodeEco, encodeOne(Schema.encodeEco, eco))
-		expectRejected(t, Schema.decodeEco, { 0 }, "team 0 outside 1..8") -- protocol 9: records carry their team
-		expectRejected(t, Schema.decodeEco, { 9 }, "team 9 outside 1..8")
+		expectRejected(t, Schema.decodeEco, { 0 }, "team 0 outside 1..16") -- protocol 9: records carry their team
+		expectRejected(t, Schema.decodeEco, { 17 }, "team 17 outside 1..16")
 		t.equal(Schema.Channel.Snapshot.reliable, true, "the handshake is reliable")
 		t.equal(Schema.Channel.Eco.reliable, true, "economy is reliable")
 	end)
@@ -726,14 +751,14 @@ return function(t: RunAll.Context)
 	t.test("malformed records are rejected", function()
 		local cmd = Schema.decodeCommand
 		expectRejected(t, cmd, { 0, 0, 1, 0, 1, 0 }, "unknown cmdType 0")
-		expectRejected(t, cmd, { 19, 0, 1, 0, 1, 0 }, "unknown cmdType 19") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33)
+		expectRejected(t, cmd, { 22, 0, 1, 0, 1, 0 }, "unknown cmdType 22") -- 15 is REPEAT (protocol 7), 16 CANCEL (protocol 12), 17 CHEAT (protocol 27), 18 PRIORITY (protocol 33), 19 RESURRECT (protocol 35), 20 START_POS and 21 READY (protocol 36)
 		t.equal(hex(encodeOne(Schema.encodeCommand, { cmdType = CT.CANCEL, flags = 0, unitIds = { 0x0102 }, value = 3 })), "10 00 01 00 02 01 03", "CANCEL: value = queue position (protocol 12)")
 		expectRejected(t, cmd, { 16, 0, 1, 0, 1, 0, 51 }, "value 51")
 		expectRejected(t, cmd, { CT.STOP, 8, 1, 0, 1, 0 }, "reserved bits") -- 4 is GROUP since protocol 31 (S-137)
 		expectRejected(t, cmd, { CT.STOP, LINE, 1, 0, 1, 0 }, "LINE flag")
-		expectRejected(t, cmd, { CT.STOP, 0, 0, 0 }, "unit count 0")
-		expectRejected(t, cmd, { CT.STOP, 0, 201, 0 }, "unit count 201")
-		expectRejected(t, cmd, { CT.STOP, 0, 0xFF, 0xFF }, "unit count 65535")
+		expectRejected(t, cmd, { CT.GUARD, 0, 0, 0 }, "unit count 0") -- (STOP may be empty since protocol 36: the pre-game)
+		expectRejected(t, cmd, { CT.GUARD, 0, 201, 0 }, "unit count 201")
+		expectRejected(t, cmd, { CT.GUARD, 0, 0xFF, 0xFF }, "unit count 65535")
 		expectRejected(t, cmd, { CT.STOP, 0, 1, 0, 0, 0 }, "unitId 0 is reserved")
 		expectRejected(t, cmd, { CT.ATTACK, 0, 1, 0, 1, 0, 0, 0 }, "targetId 0 is reserved")
 		expectRejected(t, cmd, { CT.TOGGLE, 0, 1, 0, 1, 0, 2 }, "value 2 out of range")
@@ -766,7 +791,7 @@ return function(t: RunAll.Context)
 		t.throws(enc(Schema.encodeTactical, { unitId = 0, cell = 0, offX = 0, offZ = 0, heading = 0 }), "unitId 0")
 		t.throws(enc(Schema.encodeTactical, { unitId = 1, cell = 0, offX = 256, offZ = 0, heading = 0 }), "u8 out of range")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 0, flags = 0 }), "team 0")
-		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 9, flags = 0 }), "team 9")
+		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 17, flags = 0 }), "team 17")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 256, team = 1, flags = 0 }), "8%-bit value")
 		t.throws(enc(Schema.encodeStrategic, { unitId = 1, cell = 0, icon = 0, team = 1, flags = 32 }), "reserved bits")
 		t.throws(enc(Schema.encodeState, { unitId = 1 }), "no fields")
@@ -780,8 +805,9 @@ return function(t: RunAll.Context)
 		t.throws(enc(Schema.encodeCommand, badFacing), "facing 4")
 		local noFacing: Command = { cmdType = CT.BUILD, flags = 0, unitIds = { 1 }, defIndex = 1, cell = 0, offX = 0, offZ = 0 }
 		t.throws(enc(Schema.encodeCommand, noFacing), "missing field facing")
-		t.throws(enc(Schema.encodeCommand, { cmdType = CT.STOP, flags = 0, unitIds = ids(201, 1) }), "1..200")
-		t.throws(enc(Schema.encodeCommand, { cmdType = CT.STOP, flags = 0, unitIds = {} }), "1..200")
+		t.throws(enc(Schema.encodeCommand, { cmdType = CT.GUARD, flags = 0, unitIds = ids(201, 1), targetId = 1 }), "1..200")
+		t.throws(enc(Schema.encodeCommand, { cmdType = CT.GUARD, flags = 0, unitIds = {}, targetId = 1 }), "1..200")
+		t.throws(enc(Schema.encodeCommand, { cmdType = CT.STOP, flags = 0, unitIds = ids(201, 1) }), "201 unit IDs")
 		t.throws(enc(Schema.encodeCommand, { cmdType = CT.MOVE, flags = 0, unitIds = { 1 } }), "missing field cell")
 		t.throws(enc(Schema.encodeCommand, { cmdType = CT.STOP, flags = LINE, unitIds = { 1 } }), "LINE flag")
 		t.throws(enc(Schema.encodeCommand, { cmdType = 99, flags = 0, unitIds = { 1 } }), "unknown cmdType")
@@ -806,11 +832,11 @@ return function(t: RunAll.Context)
 		end
 		t.deepEqual(recovered, tactical)
 
-		-- 150 strategic records fill a 900-byte message exactly
+		-- 128 strategic records of 7 bytes fill a 900-byte message (896 bytes; protocol 36)
 		local strategic = many(SEED + 1, randomStrategic)
 		messages = Packer.chunk(strategic, Schema.encodeStrategic)
-		t.equal(#messages, math.ceil(RANDOM_COUNT / 150))
-		t.equal(buffer.len(messages[1]), 900)
+		t.equal(#messages, math.ceil(RANDOM_COUNT / 128))
+		t.equal(buffer.len(messages[1]), 896)
 		recovered = {}
 		for _, m in messages do
 			for _, rec in (Packer.readAll(m, Schema.decodeStrategic)) do

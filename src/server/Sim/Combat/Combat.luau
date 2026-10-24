@@ -189,6 +189,7 @@ export type Combat = {
 	wreckZ: { [number]: number },
 	wreckDef: { [number]: number },
 	wreckHeading: { [number]: number }, -- the unit's heading when it died (radians; S-26)
+	wreckRez: { [number]: number }, -- resurrect progress 0..1 (S-168; nil = none)
 	wreckSupply: { [number]: number },
 	nextWreckId: number,
 
@@ -289,6 +290,7 @@ function Combat.new(defs: Defs.DefSet, layers: Layers.Layers?): Combat
 		wreckZ = {},
 		wreckDef = {},
 		wreckHeading = {},
+		wreckRez = {},
 		wreckSupply = {},
 		nextWreckId = 1,
 		stats = { shots = 0, hits = 0, kills = 0 },
@@ -710,7 +712,7 @@ function Combat.addWreck(c: Combat, x: number, z: number, def: Defs.UnitDef, hea
 	c.wreckZ[id] = z
 	c.wreckDef[id] = def.index
 	c.wreckHeading[id] = heading or 0
-	c.wreckSupply[id] = def.cost.supply * Combat.WRECK_SUPPLY_FRACTION
+	c.wreckSupply[id] = Combat.fullWreckSupply(def)
 	return id
 end
 
@@ -720,6 +722,13 @@ function Combat.removeWreck(c: Combat, id: number)
 		table.remove(c.wreckIds, i)
 	end
 	c.wreckX[id], c.wreckZ[id], c.wreckDef[id], c.wreckSupply[id], c.wreckHeading[id] = nil, nil, nil, nil, nil
+	c.wreckRez[id] = nil
+end
+
+-- The supply a wreck of `def` holds when its unit dies (and must hold again
+-- before it can be resurrected, S-168).
+function Combat.fullWreckSupply(def: Defs.UnitDef): number
+	return def.cost.supply * Combat.WRECK_SUPPLY_FRACTION
 end
 
 --------------------------------------------------------------------------------
@@ -788,6 +797,7 @@ function Combat.hash(c: Combat, h: number): number
 		h = Hash.u32(h, c.wreckDef[id])
 		h = Hash.number(h, c.wreckHeading[id])
 		h = Hash.number(h, c.wreckSupply[id])
+		h = Hash.number(h, c.wreckRez[id] or 0)
 	end
 	return h
 end

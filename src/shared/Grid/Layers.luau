@@ -24,6 +24,7 @@ export type Layers = {
 	supply: buffer, -- u8 × cellCount: supply deposit value, 0 = none (guide 5.2)
 	terrain: buffer, -- u8 × cellCount: Layers.Terrain type (guide 5.2 terrainType, S-37)
 	starts: { { number } }, -- start positions {x, z} in world studs, player order
+	startBoxes: { { number } }?, -- per start, its spawn box { x0, z0, x1, z1 } (studs); nil = derived (Shared/Match/StartAreas, S-171)
 }
 
 function Layers.new(grid: Grid.Grid): Layers

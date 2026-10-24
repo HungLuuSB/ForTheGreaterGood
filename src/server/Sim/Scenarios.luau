@@ -72,17 +72,27 @@ end
 -- Match start (guide 16.3): each player's Command Vehicle at its map start
 -- position (player order), Order for odd teams and Chaos for even teams,
 -- facing the map center. Needs a map with start positions.
+-- With chosen starts (the pre-game, S-169) each Commander stands on its
+-- player's pick (`sim.startPositions`), facing the map's centre.
 Scenarios.standard_start = function(sim: Types.Sim)
 	local map = sim.map
-	if map == nil or #map.layers.starts < #sim.playerOrder then
+	local chosen = sim.startPositions
+	if map == nil or (chosen == nil and #map.layers.starts < #sim.playerOrder) then
 		error("Scenarios.standard_start: needs a map with a start per player", 0)
 	end
 	for i, playerId in sim.playerOrder do
 		local player = sim.players[playerId]
-		local start = map.layers.starts[i]
 		local defId = if player.team % 2 == 1 then "ord_sovereign" else "chs_warlord"
-		local heading = if start[1] < 0 then math.pi / 2 else -math.pi / 2
-		Spawn.unit(sim, defId, playerId, start[1], start[2], heading)
+		if chosen then
+			local p = chosen[playerId]
+			local g = map.grid
+			local cx, cz = g.originX + g.cellsX * 4, g.originZ + g.cellsZ * 4 -- the map's centre
+			Spawn.unit(sim, defId, playerId, p[1], p[2], math.atan2(cx - p[1], cz - p[2]))
+		else
+			local start = map.layers.starts[i]
+			local heading = if start[1] < 0 then math.pi / 2 else -math.pi / 2
+			Spawn.unit(sim, defId, playerId, start[1], start[2], heading)
+		end
 	end
 end
 
