@@ -76,6 +76,8 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 - **B-4. Kit additions** (I use the kit read-only): a text input (`Kit.input`, the lobby has its own in `src/lobby/client/Ui.luau`), and a `fill` option on `Kit.button` for green / red action buttons.
 - **B-5. (later) Replays from the lobby:** a `kind = "replay"` match config for a reserved server that plays a saved replay (contract "reserved for a later version").
 
+- **B-6. Key-art viewer stutter (2026-10-24, the user approved; sent):** UDim2 offsets are whole pixels, so `UI/KeyArt` moved its layers in 1 px jumps. Move them by scale instead (fractional), give tiles a 1 px overlap and a 0.001° rotation (sub-pixel drawing). Tested live: smooth, 60 fps.
+
 ### For models-C (models session)
 
 - **C-1. Key art with parallax layers (2026-10-23, the user):** 3 key arts per `docs/contracts/key-art.md`:
@@ -96,7 +98,7 @@ Studio can't reserve or teleport, and MemoryStore and DataStore need a published
 | Main menu, skirmish, browser, battle room, loading and results screens (L-10, L-11) | done, checked in Studio |
 | Background battle scene with parallax (L-12) | done, checked in Studio with the real meshes |
 | Contract v1 and requests | done |
-| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only); waiting for C's art |
+| Key-art contract and parallax viewer on the loading screen (L-13) | done; one viewer (client-B's `UI/KeyArt`, read-only). Art 2 "Volley" checked in Studio (`lobby_keyart_volley_*.jpg`); the stutter fix waits on B-6. The battle pauses behind the art |
 | Published test (needs the user to publish, and B-1) | waiting |
 
 ## How to continue

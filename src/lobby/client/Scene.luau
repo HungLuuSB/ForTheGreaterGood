@@ -46,6 +46,7 @@ fx.Parent = folder
 
 local enabled = true
 local parallax = true
+local covered = false -- something opaque covers the screen (key art): render and step nothing
 local started = false
 
 type Unit = {
@@ -647,6 +648,9 @@ function Scene.start()
 	folder.Parent = workspace
 	spawnUnits()
 	RunService.RenderStepped:Connect(function(dt: number)
+		if covered then
+			return
+		end
 		local now = os.clock()
 		stepCamera(now, dt)
 		if enabled then
@@ -656,9 +660,30 @@ function Scene.start()
 	end)
 end
 
+local EFFECTS = { "LobbyBloom", "LobbySunRays", "LobbyGrade", "LobbyFocus" }
+
+local function apply()
+	folder.Parent = if enabled and not covered then workspace else nil
+	for _, name in EFFECTS do
+		local e = Lighting:FindFirstChild(name)
+		if e and e:IsA("PostEffect") then
+			e.Enabled = not covered
+		end
+	end
+end
+
 function Scene.setEnabled(on: boolean)
 	enabled = on
-	folder.Parent = if on then workspace else nil
+	apply()
+end
+
+-- While opaque key art covers the screen, the battle behind it costs frames
+-- for nothing (it held a Studio playtest at 39 fps with 80 ms spikes, which
+-- made the art's parallax stutter): take it out of the world, switch the
+-- post effects off and stop stepping it until it's uncovered.
+function Scene.setCovered(on: boolean)
+	covered = on
+	apply()
 end
 
 function Scene.setParallax(on: boolean)
