@@ -323,12 +323,24 @@ api.changed.alert:Connect(function(alert: any)
 	MinimapUI.ping(minimap, world.grid, alert.x, alert.z, AlertFeed.COLOR[alert.kind] or Color3.new(1, 1, 1))
 end)
 
--- Drawn muzzle of a unit's weapon slot (tracers start there), if it has a model.
+-- Drawn muzzle of a unit's weapon slot (tracers start there), if it has a
+-- model. A slot with several `muzzles` (S-157: Overwatch, Twin Guard,
+-- Geryon, Bulwark's laser) fires from each in turn (C-198), in step with
+-- the piece script's recoil (it counts the same shots).
+local muzzleShots: { [number]: number } = {}
 local function muzzleOf(id: number, slot: number): (number?, number?, number?)
 	local model = UnitRenderer.modelOf(renderer, id)
 	local u = world.units[id]
 	local def = u and World.def(world, u)
-	local name = def and def.weapons[slot] and def.weapons[slot].muzzle
+	local slotDef = def and def.weapons[slot]
+	local name = slotDef and slotDef.muzzle
+	local list = slotDef and slotDef.muzzles
+	if list and #list > 0 then
+		local key = id * 16 + slot
+		local n = muzzleShots[key] or 0
+		muzzleShots[key] = n + 1
+		name = list[n % #list + 1]
+	end
 	local att = model and name and model:FindFirstChild(name, true)
 	if att and att:IsA("Attachment") then
 		local p = att.WorldPosition

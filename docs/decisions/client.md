@@ -1742,3 +1742,14 @@ Existing calls are unchanged.
 
 **Why:** the user's draft 5 and approval.
 
+### C-198 — The S-157 towers' visuals: coloured lasers, the Beamer's ramp, barrels in turn, the Geryon drum (2026-10-24)
+
+**Decision:**
+- **Lasers** (`fx.tracer = "laser"`, `fx.color = { r, g, b }`): the whole line at once in the weapon's colour for 0.12 s, fading. Red for Sentry, Guard and Twin Guard; green for Overwatch, Geryon and Bulwark's laser; blue for the Beamer.
+- **The Beamer** (`ramp`): each bolt lasts one shot gap plus a little, so they join into one held beam. Its width and brightness grow with intensity, time on one target over `ramp.seconds` (4 s), as the server's damage ramps. A pause longer than 1.6 shot gaps (a target change or a loss) starts it over (`Effects.ramp`).
+- **Barrels in turn** (`muzzles`): each shot starts at the next muzzle (`muzzleOf`), and the matching `barrelN` (or `laser_barrelN`) recoils (Default piece script). With a `drumPiece` (Geryon, Bulwark's laser), the cluster turns one barrel on (360° / barrels) after each shot.
+- Gauntlet and Talos: the high-arc shells come with SPAWN_PROJ's velocity, no client change.
+- Lasers.spec, through the real server: Sentry and Guard fire red, Overwatch green; the Beamer rises from 0 to full; a pause resets it; Geryon's three shots turn the drum a full circle and recoil each barrel. Studio (blockouts until models-C's models): the Beamer's held blue beam on a Juggernaut. `debug_out/screens/c198_beamer.jpg`.
+
+**Why:** the user's T1 defences; sim-A's S-157 fields.
+

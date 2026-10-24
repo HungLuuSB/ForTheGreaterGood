@@ -497,6 +497,23 @@ function RenderEffects.step(r: Renderer, fx: Effects.Fx, renderTick: number, now
 		end, r.folder)
 		local a, b = Vector3.new(t.x0, t.y0, t.z0), Vector3.new(t.x1, t.y1, t.z1)
 		local k = math.clamp((now - t.born) / t.life, 0, 1)
+		if t.laser then
+			-- a laser (C-198): the whole line in its colour, fading out; a
+			-- ramping beam grows wider and brighter with its intensity
+			local len = (b - a).Magnitude
+			local ramp = t.ramp or 0
+			local w = 0.16 + 0.55 * ramp
+			part.Size = Vector3.new(w, w, math.max(len, 0.1))
+			part.CFrame = if len > 1e-3 then CFrame.lookAt((a + b) / 2, b) else CFrame.new(b)
+			part.Color = Color3.fromRGB(t.laser[1], t.laser[2], t.laser[3])
+			local fade = if t.ramp then 0 else math.max(0, k - 0.4) / 0.6
+			part.Transparency = math.clamp(0.25 - 0.2 * ramp + 0.75 * fade, 0, 1)
+			if t.hit and not r.emitted[t] then
+				r.emitted[t] = true
+				Vfx.spawn(r.vfx, "hit", t.x1, t.y1, t.z1, 0.5 + 0.6 * ramp, vt, nil, t.x0 - t.x1, t.y0 - t.y1, t.z0 - t.z1)
+			end
+			continue
+		end
 		if t.beam then
 			-- a beam tower's ray (C-112, C-128): the whole line at once in the
 			-- faction's beam color, held bright, narrowing to nothing over its last second
