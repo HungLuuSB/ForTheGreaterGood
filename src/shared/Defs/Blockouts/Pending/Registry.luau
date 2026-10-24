@@ -34,6 +34,13 @@ return {
 				shellR = { 0, 0, 90 },
 			},
 		},
+		-- the lobbing guns at high trajectory (S-157: the barrel pitches up to 85 degrees)
+		ord_gauntlet = {
+			raised = { barrel = { 70, 0, 0 } },
+		},
+		chs_talos = {
+			raised = { barrel = { 70, 0, 0 } },
+		},
 		chs_bulwark = { -- S-157, Inferno's replacement: the beam head sinks onto its armored collar, the barrel folds down
 			retracted = {
 				turret = { 0, 0, 0, 0, -2.0, 0 },
