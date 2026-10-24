@@ -19,7 +19,10 @@ Bars.FULL = 0.999 -- at or above: counts as full (health is a u8 on the wire)
 -- `stock` / `stockMax`: an own unit's missiles in stock and its capacity
 -- (S-47, C-56); a unit that isn't full shows its bar, so a refilling SAM site
 -- stays visible.
-export type Bar = { id: number, health: number, build: number?, production: number?, reload: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number? }
+-- A wreck's bar (protocol 35, S-168; C-216) has `wreck` set and `id` its
+-- wreck ID: `supplyShare` (supply / fullSupply, only below full) and `rez`
+-- (resurrect progress, only above 0); `health` repeats the first row's share.
+export type Bar = { id: number, health: number, build: number?, production: number?, reload: number?, own: boolean, selected: boolean, stock: number?, stockMax: number?, stockProgress: number?, wreck: boolean?, supplyShare: number?, rez: number? }
 
 -- A factory's item progress 0..1 while it produces, else nil: as drawn
 -- (eased) when the renderer has it, else the server's.
@@ -72,6 +75,32 @@ end
 
 local CORNERS = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }
 
+-- Bars for known wrecks that are partly reclaimed or being resurrected
+-- (C-216), in wreck ID order.
+function Bars.wreckList(world: World.World): { Bar }
+	local out = {}
+	for id, w in world.wrecks do
+		local share = if w.fullSupply > 0 then math.clamp(w.supply / w.fullSupply, 0, 1) else 1
+		local partly = share < Bars.FULL
+		local rezzing = w.rez > 0
+		if partly or rezzing then
+			table.insert(out, {
+				id = id,
+				health = if partly then share else w.rez,
+				own = false,
+				selected = false,
+				wreck = true,
+				supplyShare = if partly then share else nil,
+				rez = if rezzing then w.rez else nil,
+			})
+		end
+	end
+	table.sort(out, function(a, b)
+		return a.id < b.id
+	end)
+	return out
+end
+
 Bars.MIN_WIDTH = 18 -- pixels: a bar stays readable when zoomed out
 Bars.MAX_WIDTH = 90
 
@@ -87,12 +116,20 @@ Bars.GAP = 4 -- pixels between the unit's footprint and its bars
 function Bars.draws(world: World.World, bars: { Bar }, project: (number, number, number) -> (number, number, boolean), width: number, height: number, rightX: number, rightZ: number): { Draw }
 	local out = {}
 	for _, b in bars do
-		local u = world.units[b.id]
-		local def = World.def(world, u)
+		local def, x, z, y
+		if b.wreck then
+			local w = world.wrecks[b.id]
+			def = world.defs.unitByIndex[w.defIndex]
+			x, z = w.x, w.z
+			y = World.groundY(world, x, z)
+		else
+			local u = world.units[b.id]
+			def = World.def(world, u)
+			x, z = u.rx or u.x, u.rz or u.z
+			-- ry is where the model is drawn (altitude included); else ground + altitude
+			y = u.ry or (World.groundY(world, x, z) + u.alt)
+		end
 		local size = (if def then def.footprint else 1) * Grid.CELL_SIZE
-		local x, z = u.rx or u.x, u.rz or u.z
-		-- ry is where the model is drawn (altitude included); else ground + altitude
-		local y = u.ry or (World.groundY(world, x, z) + u.alt)
 		local sx, _, front = project(x, y, z)
 		local half = size / 2
 		local low = -math.huge

@@ -61,7 +61,7 @@ end
 -- BAR's order: states, then orders.
 local ORDER = CommandSet.ORDER
 -- each button's key action (Core/Keybinds; rebindable, C-159)
-local ACTION = { move = "move", fight = "fight", attack = "attack", patrol = "patrol", guard = "guard", stop = "stop", fire = "fireState", movestate = "moveState", ["repeat"] = "repeat", toggle = "toggle", cancel = "cancel", alert = "lastAlert", reclaim = "reclaim" }
+local ACTION = { move = "move", fight = "fight", attack = "attack", patrol = "patrol", guard = "guard", stop = "stop", fire = "fireState", movestate = "moveState", ["repeat"] = "repeat", toggle = "toggle", cancel = "cancel", alert = "lastAlert", reclaim = "reclaim", resurrect = "resurrect" }
 local function keyOf(name: string): string
 	local id = ACTION[name]
 	return if id then SettingsMenu.binds[id] or "" else ""
@@ -82,7 +82,7 @@ end
 
 local function act(api: Api.Api, name: string)
 	local a = api.actions
-	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" or name == "upgrade" then
+	if name == "move" or name == "fight" or name == "attack" or name == "patrol" or name == "guard" or name == "repair" or name == "reclaim" or name == "resurrect" or name == "upgrade" then
 		a.setCommandMode(if api.state.commandMode == name then nil else name)
 	elseif name == "stop" then
 		a.stop()
@@ -244,6 +244,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		alert = "Last alert",
 		repair = "Repair",
 		reclaim = "Reclaim",
+		resurrect = "Resurrect", -- T1 workers (S-168, C-216)
 		upgrade = "Upgrade", -- Upgrade extractors (C-121)
 	}
 	-- each state button's segments, left to right, and the lit one (0: none)
