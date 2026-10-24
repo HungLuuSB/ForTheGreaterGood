@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Smoother shield hits (C-190):** the hit patch crossfades between its frames instead of stepping; a faster patch is asked of models-C.
+- Ready to merge: `e06e139` (C-190: hit patch crossfade; src/client)
 - **No honeycomb on the shield (C-189):** the dome shows hex cells only where a shot hits.
 - Ready to merge: `f0f231f` (C-189: no idle honeycomb on v4 shields; src/client)
 - **New shield look in the game (C-187):** your approved v4 from models-C: a ForceField dome in the faction's colour (Order cyan, Chaos amber) that forms from the top down and drains back up, a channel with packets, streaks, energy waves and glowing hit patches. It replaces the old look and C-186. About 0.27 ms a frame per dome. Screenshots: `debug_out/screens/c187_shield_*.jpg`.
