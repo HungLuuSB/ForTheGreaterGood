@@ -74,6 +74,18 @@
       }
     },
     {
+      "Name": "chs_basilisk",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://89145585107282",
+        "NormalMapContent": "rbxassetid://72500144809376",
+        "RoughnessMapContent": "rbxassetid://72954886525909",
+        "MetalnessMapContent": "rbxassetid://75648342826244",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "chs_behemoth",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -746,6 +758,18 @@
       }
     },
     {
+      "Name": "chs_wyvern",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://138627354220679",
+        "NormalMapContent": "rbxassetid://80358752688120",
+        "RoughnessMapContent": "rbxassetid://77842760581399",
+        "MetalnessMapContent": "rbxassetid://107544406648841",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "fx_chs_interceptor",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -934,6 +958,18 @@
         "NormalMapContent": "rbxassetid://133607449265472",
         "RoughnessMapContent": "rbxassetid://93258898544729",
         "MetalnessMapContent": "rbxassetid://137316919824961",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ord_aegis",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://95200940271719",
+        "NormalMapContent": "rbxassetid://99197455886176",
+        "RoughnessMapContent": "rbxassetid://116521790819817",
+        "MetalnessMapContent": "rbxassetid://122117024762526",
         "EmissiveStrength": 0
       }
     },
@@ -1382,6 +1418,18 @@
       }
     },
     {
+      "Name": "ord_sanctum",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://126710179744319",
+        "NormalMapContent": "rbxassetid://96552433516263",
+        "RoughnessMapContent": "rbxassetid://73363936862150",
+        "MetalnessMapContent": "rbxassetid://114612791664669",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ord_sentry",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -1654,6 +1702,18 @@
         "NormalMapContent": "rbxassetid://90643748513284",
         "RoughnessMapContent": "rbxassetid://103963609384899",
         "MetalnessMapContent": "rbxassetid://72194467525639",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_chs_basilisk",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://75671341883188",
+        "NormalMapContent": "rbxassetid://115612628578242",
+        "RoughnessMapContent": "rbxassetid://136057452629511",
+        "MetalnessMapContent": "rbxassetid://131071558477987",
         "EmissiveStrength": 0
       }
     },
@@ -2066,6 +2126,30 @@
       }
     },
     {
+      "Name": "wreck_chs_wyvern",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://71244078727007",
+        "NormalMapContent": "rbxassetid://82798859997702",
+        "RoughnessMapContent": "rbxassetid://73795694689945",
+        "MetalnessMapContent": "rbxassetid://81529390720301",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_aegis",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://86484935717885",
+        "NormalMapContent": "rbxassetid://86388243588830",
+        "RoughnessMapContent": "rbxassetid://71441611905906",
+        "MetalnessMapContent": "rbxassetid://76478968142373",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "wreck_ord_airfield",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -2362,6 +2446,18 @@
         "NormalMapContent": "rbxassetid://82996370523764",
         "RoughnessMapContent": "rbxassetid://74628229867582",
         "MetalnessMapContent": "rbxassetid://98604670994817",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "wreck_ord_sanctum",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://130961581439291",
+        "NormalMapContent": "rbxassetid://118638223929615",
+        "RoughnessMapContent": "rbxassetid://136650705054471",
+        "MetalnessMapContent": "rbxassetid://74970615585556",
         "EmissiveStrength": 0
       }
     },
