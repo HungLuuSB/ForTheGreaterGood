@@ -97,7 +97,8 @@ Stockpile.WIRE_STEPS = 16
 -- Refills come first in a stall, up to Economy.REFILL_PRIORITY of income
 -- (S-66): their demand is also added to `priorityS` / `priorityP`, and they
 -- progress at the priority ratio. Build.step runs this before construction.
-function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number }, priorityS: { [number]: number }, priorityP: { [number]: number })
+-- A low-priority stockpiler (S-156) refills last instead, at the low ratios.
+function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: { [number]: number }, priorityS: { [number]: number }, priorityP: { [number]: number }, lowS: { [number]: number }, lowP: { [number]: number })
 	local w = sim.world
 	local eco = sim.eco
 	for _, id in w.ids do
@@ -118,9 +119,16 @@ function Stockpile.step(sim: Types.Sim, demandS: { [number]: number }, demandP: 
 			local acc = eco.accounts[team]
 			demandS[team] += cs * rate
 			demandP[team] += cp * rate
-			priorityS[team] += cs * rate
-			priorityP[team] += cp * rate
-			local step = rate * Stockpile.DT * Economy.priorityEffective(acc, cs, cp)
+			local step
+			if bit32.band(w.state[id], World.State.LOW_PRIORITY) ~= 0 then
+				lowS[team] += cs * rate
+				lowP[team] += cp * rate
+				step = rate * Stockpile.DT * Economy.effective(acc, cs, cp, true)
+			else
+				priorityS[team] += cs * rate
+				priorityP[team] += cp * rate
+				step = rate * Stockpile.DT * Economy.priorityEffective(acc, cs, cp)
+			end
 			if cs > 0 then
 				step = math.min(step, Economy.allowance(acc.supply) / cs)
 			end

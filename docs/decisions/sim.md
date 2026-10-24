@@ -2203,3 +2203,105 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Found by B:** Projectiles walks `proj` backwards with swap-removal. So an interceptor steered, and fused, against its missile's state either before or after the missile's own step that tick, depending on list order. The client always uses the start of the tick (net.md, C-57), and B's spec saw up to ~1 stud of drift in the last ticks.
 - **Changed:** before the loop, the Projectiles system snapshots the position and velocity of every projectile an interceptor chases. Interceptor steering (PN or the vertical climb) and the interceptor's proximity fuse read that snapshot. Anti-nukes and point defence both, now independent of step order.
 - **Results** unchanged in the specs: point defence 16 / 56 rockets and 14 / 14 missiles; nuke tests pass.
+
+## S-152 — Scouts' weapon range halved (the user, via B: "Scout attack range's is too big, reduce by half (for both factions)") (2026-10-24)
+
+- `ord_mg` (Herald) 175 → 88 studs; `chs_mg` (Jackal) 140 → 70. Only the scouts carry them. Placeholder like the rest; no balance report run (the user's rule).
+
+## S-153 — Orders in range don't move the unit (the user, via B) (2026-10-24)
+
+- **Asked:** "a lancer attack a unit already inside of its attack range, the lancer tended to move out a little bit ... builder unit ... can simply path until they reaches the needed range ... they DO NOT need to go in range and move back out".
+- **Causes:**
+  - ATTACK closed in to `ATTACK_REACH` (90%) of the unit's longest range even when the target was already in range. A Lancer at rest with a target at 95% of its range moved 15 studs.
+  - `halt` (Orders and Build, used when a unit gets in range) set the spot the unit holds to where it was at that tick. The unit then braked a few studs past it and, idle, walked back.
+- **Fixed:**
+  - ATTACK leaves a unit standing still when its target is in range. Only a unit already chasing closes to ATTACK_REACH.
+  - `halt` holds `Nav.stopPoint`: where the unit comes to rest from its speed and braking, straight ahead, or where it is if that spot is blocked. This covers building, repairing, reclaiming and assisting, which all halt through Build.
+- **Tests:** `Orders.spec`: the Lancer stays within 1 stud (it moved 15); a Mason sent to build stops in range and never steps back.
+- **Revised the same day (fairness):** holding the predicted stop point (`Nav.stopPoint`) broke the mirror-fairness tests at merge (Twin Lakes 2v2: 4 matching structures where 7 are required; mirrored matches west 2, east 10), and the cause in it wasn't found. It's gone. `halt` holds the spot where the unit is again. The braking step-back was at most half a stud in the measured cases; the attack change, which was the visible 15 studs, stays. Both cases in `Orders.spec` still pass.
+
+## S-154 — Shield generators switch off to save power (the user, via B: "a shield can be turned off to save power") (2026-10-24)
+
+- **Built:** Phalanx and Carapace (any def with `shield`) honour TOGGLED_ON (the TOGGLE command), and start switched on like converters.
+  - Off: the dome is down (SHIELD's UP flag clear), so shells pass. No power upkeep and no recharge; the charge it has is kept.
+  - On: it rises again under the usual rule, at RAISE_AT (25%) of capacity, and recharges.
+- **Tests:** `Shield.spec`: off, the dome drops, draws nothing, lets a heavy shell through and keeps its charge; on, it rises.
+- **Client:** B offers On/Off on the card for any def with `shield`. No wire change: TOGGLED_ON and SHIELD's flags already carry it.
+
+## S-155 — Build over your own units; they walk out of the footprint (the user, via B) (2026-10-24)
+
+- **Asked:** "You can also pre-place model inside grid that have unit (not structure) so when you build the model, other units inside can move out of the grid." Before, `Placement.check` failed with "units in the way" when a frame should start.
+- **Rule:**
+  - When a frame starts (`Placement.check` with `owner`, no `knower`), the builder's own and allied ground units are no obstacle. Enemy ground units still block ("units in the way"). Aircraft never did.
+  - Planning checks with `knower` (the skirmish AI) still treat every unit as an obstacle. Letting the AI plan over its own units held Chaos's T2 back by minutes in seed 24 (its Forgemaster came at 7 min instead of 3.3), and two AI tests failed. So the AI keeps its old sites.
+  - The client's ghost should treat own and allied units as no obstacle, since the server accepts them at the frame's start.
+  - When a structure's footprint is occupied (`Placement.occupy`, so a new frame, a spawned structure, or an upgrade's restored footprint), `Placement.clearUnits` sends every ground unit on it (any team) straight out, away from the centre across the nearer edges, to a cell past the edge. It uses S-133's walk-out (`BuildState.exiting`): through the blocked cells, ignoring separation, whatever its order, until it's clear on open ground. Then it carries on with its orders.
+- **Fixed on the way:** Movement skipped its whole step when nothing was moving or had an order. A unit walking out while everything else stood still never left; now walking out counts as active. And a walking-out unit near its exit point no longer counts as settled.
+- **Tests:** `Build.spec`: a Commander starts a Vehicle Plant over a friendly Lancer, and the Lancer walks off the footprint; an enemy Ravager on the site still stops the frame.
+- **Client:** B drops its "units in the way" check for own and allied units to match.
+- **Fixed while testing:** a unit that stopped at its exit point kept the walk-out flag for good, because clearing was checked only while it moved. In an AI match a Commander and builders kept steering at their exit points, and one held a new factory's pad (S-133's pad wait). Movement now checks every tick whether a walking-out unit is clear: out of the footprint, and on open ground or stopped. AI.spec passes again.
+- **Mirror-fairness test widened (`Fairness.spec`):** with S-155 the six-seed mirrored-matches test split west 3 / east 9 (the bar is 4 each). Over seeds 1–18 the split is west 15 / east 21, the same as `main` before the change, and seeds 7–12 split 5/7 (6/6 on `main`). So the start's odds didn't move; six seeds are too few. The test now plays seeds 1–18 (36 matches) and asks for 12 each, the same one-third bar. It takes ~165 s instead of ~55 s, in the slow suite only.
+
+## S-156 — Resource priority: high and low consumers (the user, via B) (2026-10-24)
+
+- **Asked:** a high / low resource priority per unit; high consumers take supply and power first in a stall.
+- **Wire (protocol 33):**
+  - Command `PRIORITY 18`, `value u8`: 0 low, 1 high. Any unit takes it.
+  - Unit state bit `LOW_PRIORITY 128`: set means low. Clear, high, is the default for every unit. The AI never sends it.
+  - It's a state bit, not an owner field, so allies and enemies who see the unit see it too, like `REPEAT`.
+- **Economy (`settleRatio`):** missile refills first, up to their share of income (S-66). Then the high consumers share what's left (`ratio`); refills beyond their share count as high. The low consumers (`lowDemand`) share the rest (`lowRatio`). With no low demand the arithmetic is exactly as before, so matches without the command replay unchanged. `Economy.effective(acc, s, p, low)` reads the low ratio.
+- **Who counts as a consumer:**
+  - a builder's or factory's build power: the frame it builds splits its progress by builder;
+  - a stockpiler's refills: a low one leaves the refill share and refills last;
+  - an aircraft's rearm (its own bit, not the pad's);
+  - shield, tracking-radar, plain-radar, jammer and DIRCM upkeep.
+- **Tests:**
+  - `Economy.spec`: the low ratio gets what the high demand leaves, and nothing when the high demand is short.
+  - `Build.spec`: two plants, supply income for one. Both high, they share alike. With one low, the high plant runs at full speed and the low one gets next to nothing. PRIORITY 1 clears the bit.
+
+## S-157 — T1 defences, Chaos's Bulwark, and the tier rebalance (the user, via B) (2026-10-24)
+
+- **Asked (the user, through B):**
+  - The T1 defence batch: Sentry, Beamer, Overwatch and Gauntlet for Order; Guard, Twin Guard, a triple-barrel tower and a Gauntlet counterpart for Chaos.
+  - Bulwark redesigned as Chaos's counterpart to Radiance, in Inferno's place.
+  - "T1 unit (tank and defense) currently has too much health and range. Tune them down." "T2 more health and damage."
+  - "around 4 [scouts] should be able to win against 1 lone T1 defense like the new sentry."
+  - A Juggernaut lost over half its health to a Spike.
+- **Names and ids (ids never change, so every tower is new; the user approved these):**
+
+  | id | Name | Weapon | Range | Notes |
+  |---|---|---|---|---|
+  | `ord_sentry_tower` | Sentry | `ord_sentry_laser`, red | 190 | 800 health; Commander and Mason |
+  | `chs_guard` | Guard | `chs_guard_laser`, red | 165 | 750 health |
+  | `ord_beamer` | Beamer | `ord_beamer_beam`, blue | 220 | 5 pulses a second, ramping |
+  | `ord_overwatch` | Overwatch | `ord_overwatch_laser`, green | 240 | 2 barrels in turn |
+  | `chs_twin_guard` | Twin Guard | `chs_twin_laser`, red | 195 | 2 barrels |
+  | `chs_geryon` | Geryon | `chs_geryon_laser`, green | 215 | 3-barrel drum; harder hits than Overwatch, less range |
+  | `ord_gauntlet` | Gauntlet | `ord_gauntlet_shell` | 420 | high arc |
+  | `chs_talos` | Talos | `chs_talos_shell` | 360 | high arc |
+  | `chs_bulwark` | Bulwark (T2) | `chs_bulwark_beam` and `chs_geryon_laser` | 480 / 215 | Inferno's numbers, retracts like it |
+
+  The corvette `ord_sentry` keeps its id and is now **Envoy**.
+- **Retired:** `ord_bulwark`, `chs_spike` and `chs_inferno` get `retired = true`. They're on no build list (`Defs.validate` refuses a retired build option) and the AI doesn't build them. The defs stay, so old replays and scenes load. `TechTree.spec` skips retired defs when it checks that every def is reachable. The hard AI's gun turrets are now Sentry and Guard, and its T2 beam tower is Bulwark for Chaos.
+- **New mechanics:**
+  - **Ramp** (`weapon.ramp = { from, to, seconds, cooldown = { shortest, longest } }`, HITSCAN only, aoe 0). Each hit deals `from` .. `to` (the damage table holds the full `to`), rising linearly over `seconds` while the weapon stays on one target and can fire at it. When the target changes (or is lost), the weapon holds fire for `cooldown[1]` .. `cooldown[2]` seconds, by the intensity it had reached. The new target starts again from `from`. State per weapon slot: `World.wRampTarget` / `wRampTime`, hashed when present.
+    - Beamer: 10 → 50 over 4 s, a pulse every 0.2 s (50 → 250 a second), pause 0.1–0.5 s.
+  - **High arc** (`weapon.highArc`, BALLISTIC, not lofted): `Ballistics.launchPitch(..., high)` takes the high solution for aiming, leading and line of fire. Gauntlet and Talos lob at 165 / 155 studs/s, so a shell lands 3–5 s later and hits what stands still. Their barrels top out at 85°, so they can't hit what's right beside them.
+  - **Client-only fields:**
+    - weapon `fx.tracer = "laser"` and `fx.color = { r, g, b }`;
+    - weapon slot `muzzles = { ... }` (2 or 3 barrels in turn) and `drumPiece` (Geryon, Bulwark's laser). Validation checks they're in `pieces`. The server still fires from `muzzle`.
+  - Laser towers aim down to −60°, so units next to them don't hide under the barrel (scouts hugging a Sentry did at −15°).
+- **Tier rebalance:**
+  - **T1 tanks, less health:**
+    - Lancer 1300 → 1050, Ravager 1000 → 800, Locust 600 → 500;
+    - Verdict 800 → 650, Hellmouth 700 → 570 (artillery keeps its range).
+  - **T1 guns, less range:** `ord_light_cannon` 210 → 190, `chs_light_cannon` 170 → 155, `chs_autocannon` 120 → 110. Tideguard and Mire share the light cannons and lose the range too.
+  - **T2 tanks, more health:** Paladin 3200 → 3850, Juggernaut 2500 → 3000, Minotaur 4200 → 5000, Cyclops 1100 → 1300, Tideguard 1400 → 1700, Mire 1550 → 1850.
+  - **T2 guns, +15% damage:** `ord_heavy_cannon` (Paladin, Bastion), `chs_juggernaut_cannon`, `chs_ram_cannon`, `chs_siege_mortar`.
+  - No balance report was run (the user's rule); the fights below check the targets.
+- **Tests (`Towers.spec`):**
+  - Four scouts, either faction's, beat a lone Sentry or Guard with 2–3 left; three lose.
+  - Paladin or Juggernaut against a Sentry, Guard or the old Spike: the tower falls, the tank keeps 87–100%. The Juggernaut outranges a Guard.
+  - The Beamer's first hit is ~10, halfway after 2 s, 50 from 4 s. It switches after its target dies, about 0.5 s later, low again.
+  - Gauntlet and Talos hit a still tank near their range, aiming above 45°.
+  - Bulwark fires both weapons and starts on.

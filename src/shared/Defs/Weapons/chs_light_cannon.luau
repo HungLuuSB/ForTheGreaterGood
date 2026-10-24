@@ -3,7 +3,7 @@
 return {
 	id = "chs_light_cannon",
 	type = "BALLISTIC",
-	range = 170, -- faction pass (S-62)
+	range = 155, -- tier rebalance (S-157, the user): was 170; faction pass (S-62)
 	reload = 1.4, -- faction pass, tuned (S-62)
 	salvo = { count = 1, delay = 0 },
 	projectileSpeed = 340,

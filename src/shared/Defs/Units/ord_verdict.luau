@@ -9,7 +9,7 @@ return Templates.extend(Templates.TankT1, {
 	faction = "order",
 	categories = { "GROUND", "ARMORED", "ARTILLERY" },
 	cost = { supply = 180, power = 1800, buildTime = 5200 },
-	health = 800, -- faction pass (S-62)
+	health = 650, -- tier rebalance (S-157, the user): was 800; faction pass (S-62)
 	movement = { maxSpeed = 24, accel = 10, brake = 20, turnRate = 90 },
 	sensors = { sight = 170 },
 	weapons = { { def = "ord_howitzer", turretPiece = "turret", pitchPiece = "barrel", muzzle = "muzzle" } },

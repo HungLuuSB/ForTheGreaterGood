@@ -111,6 +111,20 @@ function Selection.inBox(world: World.World, project: Projector, x0: number, y0:
 	return out
 end
 
+-- A box's units after the user's filter (C-193): when it holds a mobile
+-- builder (a Commander included), only the builders are kept; else all.
+function Selection.filterBox(world: World.World, ids: { number }): { number }
+	local builders = {}
+	for _, id in ids do
+		local u = world.units[id]
+		local def = u and World.def(world, u)
+		if def and def.domain ~= "structure" and (def.buildPower or 0) > 0 then
+			table.insert(builders, id)
+		end
+	end
+	return if #builders > 0 then builders else ids
+end
+
 -- The unit nearest to screen point (sx, sy) within PICK_PIXELS, any team.
 function Selection.pick(world: World.World, project: Projector, sx: number, sy: number): number?
 	local best, bestD = nil, Selection.PICK_PIXELS * Selection.PICK_PIXELS

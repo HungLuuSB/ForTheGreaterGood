@@ -1,12 +1,17 @@
 --!strict
 -- What each own unit was last ordered to do, from the commands this client
 -- sent (order queues aren't replicated, net.md section 9): drawn as lines
--- for selected units (guide 15.6) and as translucent queued structures. A
--- point is dropped when its unit gets close; a unit target follows that unit
--- and is dropped when it's gone; a queued build is done once an own frame of
--- that structure stands on its spot (C-23). A factory's orders are for the
--- units it builds (the sim's rally point): they stay until replaced or
--- stopped (C-109).
+-- for selected units (guide 15.6) and as translucent queued structures.
+-- Lines stay until the order is done (C-193, the user: "unit with command
+-- will have their command planned stayed until they finished all of the
+-- command"): a point when its unit gets there (or stands stuck short of it
+-- for STUCK_SECONDS: that one point goes); attack, guard (assist) and
+-- reclaim until the target is gone; repair until it's whole; a queued build
+-- until its frame is finished (C-23 dropped it when the frame started);
+-- patrol until replaced; and everything once the server reports the builder
+-- idle (IDLE events, S-136). A factory's orders are for the units it builds
+-- (the sim's rally point, S-95): they stay until replaced or stopped
+-- (C-109), and each unit it rolls out takes a copy, as the server gives it.
 -- Pure Luau (C-7).
 
 local Formation = require("@shared/Grid/Formation")
@@ -20,11 +25,9 @@ local World = require("./World")
 local Waypoints = {}
 
 Waypoints.REACHED = 10 -- studs, at least; groups stand in a formation around the point
-Waypoints.IDLE_SECONDS = 2 -- a unit standing still this long has no orders left
--- A builder stands still while it builds, so a queued build only expires
--- after this long idle with no own frame going up within its build range
--- (a fallback for a build the server dropped).
-Waypoints.BUILD_IDLE_SECONDS = 20
+Waypoints.STUCK_SECONDS = 6 -- a unit standing still this long short of a point: that point is dropped
+Waypoints.IDLE_GRACE = 1.5 -- seconds the server keeps reporting a builder idle before its lines go
+Waypoints.ADOPT_REACH = 16 -- studs beyond a factory's footprint where its new units appear
 Waypoints.MAX_PER_UNIT = 16
 -- Aircraft fly to their goal and arrive within the server's
 -- Air.ARRIVE_RADIUS, or once the goal falls behind them after they flew
@@ -36,10 +39,23 @@ Waypoints.AIR_PASS = 220
 local CT = Schema.CmdType
 
 export type Point = { kind: number, x: number, z: number, targetId: number?, reach: number, defIndex: number?, facing: number?, approached: boolean? }
-export type Waypoints = { byUnit: { [number]: { Point } }, idleSince: { [number]: number } }
+export type Waypoints = {
+	byUnit: { [number]: { Point } },
+	idleSince: { [number]: number }, -- since when the server reports the unit idle
+	stuckSince: { [number]: number }, -- since when it stands still short of its point
+	seen: { [number]: boolean }?, -- units already known (a new one may come out of a factory)
+}
 
 function Waypoints.new(): Waypoints
-	return { byUnit = {}, idleSince = {} }
+	return { byUnit = {}, idleSince = {}, stuckSince = {}, seen = nil }
+end
+
+-- Forgets everything (a new WELCOME: unit IDs start over).
+function Waypoints.reset(wp: Waypoints)
+	table.clear(wp.byUnit)
+	table.clear(wp.idleSince)
+	table.clear(wp.stuckSince)
+	wp.seen = nil
 end
 
 -- How close counts as there: the server spreads a group in a formation
@@ -112,9 +128,12 @@ local function buildDone(world: World.World, p: Point): boolean
 	for _, s in world.units do
 		local sdef = World.def(world, s)
 		if sdef and sdef.domain == "structure" and math.abs(s.x - p.x) < 1 and math.abs(s.z - p.z) < 1 then
-			-- ours of that def (started) or something else (blocked); not the
-			-- extractor this build upgrades in place (C-121)
-			if s.defIndex == p.defIndex or not Upgrades.canUpgrade(world, def, s) then
+			-- ours of that def, finished (C-193: the line stays while it goes
+			-- up), or something else (blocked); not the extractor this build
+			-- upgrades in place (C-121)
+			if s.defIndex == p.defIndex then
+				return s.build == nil or s.build >= 1
+			elseif not Upgrades.canUpgrade(world, def, s) then
 				return true
 			end
 		end
@@ -123,51 +142,84 @@ local function buildDone(world: World.World, p: Point): boolean
 	return not r.ok and r.reason == "occupied" and r.replaces == 0
 end
 
--- Is `u` putting up a frame: an own unfinished structure within its build range?
-local function building(world: World.World, u: World.Unit): boolean
-	local def = World.def(world, u)
-	local range = (def and def.buildRange or 0) + 16
-	for _, s in world.units do
-		if s.team == u.team and s.build and s.build < 1 and (s.x - u.x) ^ 2 + (s.z - u.z) ^ 2 <= range * range then
-			return true
+-- Units new since the last frame that came out of an own factory with
+-- orders take a copy of its list (the server gives each produced unit the
+-- factory's order list, S-95). Units already there at the first frame
+-- (the join) take nothing.
+local function adopt(wp: Waypoints, world: World.World)
+	local first = wp.seen == nil
+	local seen: { [number]: boolean } = wp.seen or {}
+	wp.seen = seen
+	for id, u in world.units do
+		if seen[id] then
+			continue
+		end
+		seen[id] = true
+		if first or u.team ~= world.me.team or wp.byUnit[id] ~= nil then
+			continue
+		end
+		local def = World.def(world, u)
+		if def == nil or def.domain == "structure" then
+			continue
+		end
+		local best, bestD2 = nil, math.huge
+		for fid, list in wp.byUnit do
+			local f = world.units[fid]
+			local fdef = f and World.def(world, f)
+			if f and fdef and fdef.domain == "structure" and fdef.buildOptions and #fdef.buildOptions > 0 and #list > 0 then
+				local reach = fdef.footprint * 8 / 2 + Waypoints.ADOPT_REACH
+				local d2 = (f.x - u.x) ^ 2 + (f.z - u.z) ^ 2
+				if d2 <= reach * reach and d2 < bestD2 then
+					best, bestD2 = fid, d2
+				end
+			end
+		end
+		if best then
+			local copy = {}
+			for _, p in wp.byUnit[best] do
+				table.insert(copy, table.clone(p))
+			end
+			wp.byUnit[id] = copy
 		end
 	end
-	return false
+	for id in seen do
+		if world.units[id] == nil then
+			seen[id] = nil
+		end
+	end
 end
 
--- Follows unit targets, drops reached points and started builds, units that
--- are gone, and units that have stood still for IDLE_SECONDS (builders with a
--- build next: BUILD_IDLE_SECONDS, and never while a frame goes up) (`now` in
--- seconds).
+-- Follows unit targets and drops what's done (see the header) (`now` in seconds).
 function Waypoints.update(wp: Waypoints, world: World.World, now: number)
+	adopt(wp, world)
 	for id, list in wp.byUnit do
 		local u = world.units[id]
 		if u == nil then
 			wp.byUnit[id] = nil
 			wp.idleSince[id] = nil
+			wp.stuckSince[id] = nil
 			continue
 		end
 		local udef = World.def(world, u)
 		if udef and udef.domain == "structure" and udef.buildOptions and #udef.buildOptions > 0 then
 			continue -- a factory's orders for its new units: kept until replaced or stopped
 		end
-		-- queued builds anywhere in the list: done once their frame stands
+		-- queued builds anywhere in the list: done once their frame is finished
 		for i = #list, 1, -1 do
 			local p = list[i]
 			if p.kind == CT.BUILD and p.defIndex and buildDone(world, p) then
 				table.remove(list, i)
 			end
 		end
-		local head = list[1]
-		local buildNext = head ~= nil and head.kind == CT.BUILD
-		if not World.moving(world, u) and not (buildNext and building(world, u)) then
+		-- the server's word: a builder it keeps reporting idle has nothing left
+		if world.idle[id] then
 			local since = wp.idleSince[id]
-			local limit = if buildNext then Waypoints.BUILD_IDLE_SECONDS else Waypoints.IDLE_SECONDS
 			if since == nil then
 				wp.idleSince[id] = now
-			elseif now - since >= limit then
+			elseif now - since >= Waypoints.IDLE_GRACE then
 				wp.byUnit[id] = nil
 				wp.idleSince[id] = nil
+				wp.stuckSince[id] = nil
 				continue
 			end
 		else
@@ -177,13 +229,17 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 		while first do
 			if first.targetId then
 				local t = world.units[first.targetId]
-				if t == nil then
+				local healed = first.kind == CT.REPAIR and t ~= nil and t.build == nil and (t.health or 0) >= 0.999
+				if t == nil or healed then
 					table.remove(list, 1)
 					first = list[1]
 					continue
 				end
 				first.x, first.z = t.rx or t.x, t.rz or t.z
-				break -- attack / guard / repair last until the target is gone
+				break -- attack / guard / repair / reclaim last until the target is gone (or whole)
+			end
+			if first.kind == CT.BUILD or first.kind == CT.PATROL then
+				break -- a build until its frame is finished; a patrol until replaced
 			end
 			local x, z = u.rx or u.x, u.rz or u.z
 			local d2 = (first.x - x) ^ 2 + (first.z - z) ^ 2
@@ -198,12 +254,28 @@ function Waypoints.update(wp: Waypoints, world: World.World, now: number)
 					passed = true
 				end
 			end
-			if (d2 <= first.reach ^ 2 or passed) and first.kind ~= CT.PATROL then
+			if d2 <= first.reach ^ 2 or passed then
 				table.remove(list, 1)
 				first = list[1]
-			else
-				break
+				wp.stuckSince[id] = nil
+				continue
 			end
+			-- standing still short of it (blocked, or arrived spread out in a
+			-- formation): that point goes after STUCK_SECONDS
+			if World.moving(world, u) then
+				wp.stuckSince[id] = nil
+			else
+				local since = wp.stuckSince[id]
+				if since == nil then
+					wp.stuckSince[id] = now
+				elseif now - since >= Waypoints.STUCK_SECONDS then
+					table.remove(list, 1)
+					first = list[1]
+					wp.stuckSince[id] = nil
+					continue
+				end
+			end
+			break
 		end
 		if #list == 0 then
 			wp.byUnit[id] = nil

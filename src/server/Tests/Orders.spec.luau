@@ -138,6 +138,49 @@ return function(t: RunAll.Context)
 		t.expect(jetTop > 100, `aircraft fly as usual ({jetTop})`)
 	end)
 
+	t.test("in-range orders don't move the unit: ATTACK on a target in range, a builder reaching its site (S-153, the user)", function()
+		-- a Lancer at rest; an enemy in its range, beyond ATTACK_REACH of it
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local w = sim.world
+		local lancer = Spawn.unit(sim, "ord_lancer", 1, 0, 0, math.pi / 2)
+		local range = sim.defs.units.ord_lancer.maxRange
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, range * 0.95, 0, -math.pi / 2)
+		World.setHealth(w, enemy, 1e7)
+		World.setFireState(w, enemy, World.FireState.HOLD_FIRE)
+		for _ = 1, 5 do
+			Sim.step(sim)
+		end
+		on(sim, CT.ATTACK, 1, { lancer }, enemy)
+		local moved = 0
+		for _ = 1, 90 do
+			Sim.step(sim)
+			moved = math.max(moved, math.sqrt(w.posX[lancer] ^ 2 + w.posZ[lancer] ^ 2))
+		end
+		t.expect(moved < 1, `the Lancer stayed put ({moved} studs)`)
+
+		-- a Mason sent to build 150 studs away: once in range it stops and
+		-- stays; it never walks back out
+		local sim2 = Sim.new({ seed = 1, players = PLAYERS, mapId = "flat:96" })
+		local w2 = sim2.world
+		Spawn.unit(sim2, "ord_sovereign", 1, -300, -300)
+		local mason = Spawn.unit(sim2, "ord_mason", 1, 0, 0, math.pi / 2)
+		local g = (sim2.map :: any).grid
+		local cell, ox, oz = g:encode(150, 0)
+		submit(sim2, 1, { cmdType = CT.BUILD, flags = 0, unitIds = { mason }, defIndex = sim2.defs.units.ord_generator.index, cell = cell, offX = ox, offZ = oz, facing = 0 })
+		local best, back, built = math.huge, 0, false
+		for _ = 1, 600 do
+			sim2.eco.accounts[1].supply.stored = 1000
+			sim2.eco.accounts[1].power.stored = 1000
+			Sim.step(sim2)
+			local d = math.abs(150 - w2.posX[mason])
+			best = math.min(best, d)
+			back = math.max(back, d - best)
+			built = built or (sim2.build.target[mason] or 0) ~= 0
+		end
+		t.expect(built, "it built")
+		t.expect(back < 1, `it never stepped back out ({back} studs back from its closest)`)
+	end)
+
 	t.test("FIGHT holds to engage what it meets; MOVE drives on", function()
 		local heldFight, shotsFight = crossing(CT.FIGHT)
 		local heldMove = crossing(CT.MOVE)

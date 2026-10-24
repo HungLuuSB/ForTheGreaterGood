@@ -120,15 +120,16 @@ return function(t: any)
 		local ok, why = api.actions.upgradeArea(cx, cz, 200, false)
 		t.expect(ok, why)
 		run(2)
-		-- the T1s under the queued builds don't count as their frames (Waypoints):
-		-- every upgrade is either started (a frame stands) or still drawn
+		-- the T1s under the queued builds don't count as their frames, and a
+		-- started frame keeps its line until it's finished (C-193): every
+		-- upgrade is still drawn
 		local started = 0
 		for _, u in world.units do
 			if u.defIndex == sim.defs.units.ord_advextractor.index then
 				started += 1
 			end
 		end
-		t.equal(started + #(api.waypoints.byUnit[s.architect] or {}), 3, `every queued upgrade started or still drawn ({started} started)`)
+		t.equal(#(api.waypoints.byUnit[s.architect] or {}), 3, `every queued upgrade still drawn ({started} started)`)
 		local q = sim.orders.queue[s.architect] or {}
 		t.equal(#q, 3, "one BUILD per T1")
 		local expected = Upgrades.inCircle(world, sim.defs.units.ord_advextractor, cx, cz, 200, b.x, b.z)

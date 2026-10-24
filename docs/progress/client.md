@@ -6,6 +6,16 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Build over your own units; new defences have icons (C-195):** placing over your own or allied units is allowed (they walk out); shields' On / Off works on the card; the new T1 defences use existing icon tiles until they get their own.
+- Ready to merge: `09df50f` (C-195; carries sim-A's d41074e, S-152..S-157, so the new defs land with their icon entries; test 495, test_client 280, build passed)
+- **Command line (C-194):** Tab completes and cycles choices (reveal on / off, kill selected / a team ...); /give takes aliases like ord_shield or chs_ir-sam.
+- Ready to merge: `a04dd51` (C-194: Tab cycling, unit aliases; src/client)
+- **Commands and order lines (C-193):** each unit offers only commands that do something (no Stop on a generator; shields get On / Off); a box with a builder in it selects only builders; a turret takes no move; order lines (assist, build, factory orders) stay until done; builders spray what they build; the shield bar sits over the generator.
+- Ready to merge: `1699a9e` (C-193: command audit, box filter, lasting order lines, nano spray; src/client)
+- **Units on their terrain (C-192):** portraits show each unit on ground, water, a shore or above ground; in the world, water buildings and amphibious units float, and far-off aircraft stay in the air.
+- Ready to merge: `17bd157` (C-192: units on their terrain, portraits and world; src/client)
+- **Selection tiles (C-191):** with several units selected, each type's tile shows the unit itself, its icon bottom right and the count top left.
+- Ready to merge: `41fd948` (C-191: multi-select tiles; src/client)
 - **Smoother shield hits (C-190):** the hit patch crossfades between its frames instead of stepping; a faster patch is asked of models-C.
 - Ready to merge: `e06e139` (C-190: hit patch crossfade; src/client)
 - **No honeycomb on the shield (C-189):** the dome shows hex cells only where a shot hits.

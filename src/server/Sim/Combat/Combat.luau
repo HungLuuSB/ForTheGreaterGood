@@ -439,7 +439,8 @@ Combat.LOF_END = 6 -- studs at the target end left unchecked (the ground it stan
 
 -- Whether `weapon`'s shot from (x0, y0, z0) reaches (x1, y1, z1) above the
 -- terrain: a straight line for hitscan and beams, the shell's low arc for
--- ballistic weapons (so artillery lobs over a ridge a tank shell hits).
+-- ballistic weapons (so artillery lobs over a ridge a tank shell hits), or
+-- its high arc for `highArc` ones (S-157).
 -- Homing missiles, torpedoes and bombs aren't checked: they steer or fall.
 -- Every LOF_STEP studs, the shot must be above the ground there.
 function Combat.lineOfFire(c: Combat, weapon: Defs.WeaponDef, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean
@@ -456,7 +457,7 @@ function Combat.lineOfFire(c: Combat, weapon: Defs.WeaponDef, x0: number, y0: nu
 	local slope, drop = (y1 - y0) / dist, 0
 	if g > 0 then
 		local speed = weapon.projectileSpeed or 1
-		local pitch = Ballistics.launchPitch(speed, g, dist, y1 - y0)
+		local pitch = Ballistics.launchPitch(speed, g, dist, y1 - y0, weapon.highArc)
 		if pitch == nil then
 			return false -- out of reach
 		end

@@ -32,6 +32,30 @@ return function(t: any)
 			t.expect(has(list, "stop") and has(list, "alert"), "stop and the alert jump everywhere")
 		end
 		t.equal(#CommandSet.of({}), 0, "nothing selected, no commands")
+		-- the audit (C-193): nothing to stop on a passive structure; shields switch
+		for _, id in { "ord_generator", "chs_generator", "ord_extractor", "ord_depot", "ord_airpad", "ord_barrier", "ord_witness", "ord_ear" } do
+			local list = CommandSet.of({ defs.units[id] }, defs)
+			t.expect(not has(list, "stop") and has(list, "alert"), `{id}: no Stop, only the alert jump`)
+		end
+		for _, id in { "ord_phalanx", "chs_carapace" } do
+			local list = CommandSet.of({ defs.units[id] }, defs)
+			t.expect(has(list, "toggle") and not has(list, "stop"), `{id}: On / Off to save power, no Stop`)
+		end
+		for _, id in { "ord_sanctum", "chs_basilisk", "ord_providence", "chs_cerberus" } do
+			local list = CommandSet.of({ defs.units[id] }, defs)
+			t.expect(has(list, "fire") and not has(list, "attack") and not has(list, "stop"), `{id}: an interceptor holds fire or not, nothing manual`)
+		end
+		local nuke = CommandSet.of({ defs.units.ord_reckoning }, defs)
+		t.expect(has(nuke, "stop") and has(nuke, "attack") and not has(nuke, "fire"), "a nuke silo with the def set: stop and a manual launch")
+		-- resource priority (S-156, C-196) where it does something
+		for _, id in { "ord_mason", "ord_vehplant", "ord_phalanx", "ord_beacon", "ord_falcon", "ord_reckoning", "ord_guardian" } do
+			t.expect(has(CommandSet.of({ defs.units[id] }, defs), "priority"), `{id}: priority`)
+		end
+		for _, id in { "ord_lancer", "ord_generator", "ord_extractor" } do
+			t.expect(not has(CommandSet.of({ defs.units[id] }, defs), "priority"), `{id}: no priority (uses no resources)`)
+		end
+		local sam = CommandSet.of({ defs.units.ord_aegis }, defs)
+		t.expect(has(sam, "fire") and has(sam, "attack") and has(sam, "stop"), "a stockpiled SAM site is an ordinary defense")
 		-- Upgrade extractors (C-121): builders with an upgrading extractor only
 		t.expect(has(CommandSet.of({ defs.units.ord_architect }, defs), "upgrade"), "a T2 builder upgrades extractors")
 		t.expect(not has(CommandSet.of({ defs.units.ord_mason }, defs), "upgrade"), "a T1 builder doesn't")

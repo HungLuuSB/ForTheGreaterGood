@@ -192,9 +192,11 @@ function Placement.check(world: World.World, def: any, x: number, z: number, pla
 	end
 	local minX, minZ = x0 * Grid.CELL_SIZE + g.originX, z0 * Grid.CELL_SIZE + g.originZ
 	local maxX, maxZ = minX + size * Grid.CELL_SIZE, minZ + size * Grid.CELL_SIZE
+	-- enemy ground units block a frame; own and allied ones walk out of the
+	-- footprint when it starts (S-155, C-195)
 	for id, u in world.units do
 		local udef = World.def(world, u)
-		if udef and udef.domain ~= "air" and udef.domain ~= "structure" and id ~= replaces then
+		if udef and udef.domain ~= "air" and udef.domain ~= "structure" and id ~= replaces and World.relation(world, u) == "enemy" then
 			local r = udef.footprint * PlacementRules.RADIUS_PER_FOOTPRINT
 			local px, pz = u.rx or u.x, u.rz or u.z
 			if px + r > minX and px - r < maxX and pz + r > minZ and pz - r < maxZ then

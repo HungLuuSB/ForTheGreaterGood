@@ -107,6 +107,11 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 		if #targets == 0 then
 			return false, "nothing selected"
 		end
+		-- only the units that have this command (C-193): no move line from a turret
+		targets = Orders.able(world, intent.cmdType, targets)
+		if #targets == 0 then
+			return false, "no selected unit can do that"
+		end
 		for _, payload in Orders.encode(world, intent, targets) do
 			send(payload)
 		end
@@ -196,6 +201,11 @@ function Api.new(world: World.World, send: (buffer) -> ()): Api
 	-- Factories: repeat the queue on / off (REPEAT, S-13).
 	function actions.setRepeat(on: boolean)
 		return issue({ cmdType = CT.REPEAT, queue = false, value = if on then 1 else 0 })
+	end
+
+	-- Resource priority (S-156, C-196): high (the default) or low.
+	function actions.setPriority(high: boolean)
+		return issue({ cmdType = CT.PRIORITY, queue = false, value = if high then 1 else 0 })
 	end
 
 	-- CANCEL (S-35): an unfinished frame is cancelled; a factory drops queue
@@ -513,8 +523,7 @@ function Api.frame(api: Api, now: number)
 		for _, g in sel.groups do
 			table.clear(g)
 		end
-		table.clear(api.waypoints.byUnit)
-		table.clear(api.waypoints.idleSince)
+		Waypoints.reset(api.waypoints)
 		state.commandMode = nil
 		state.placement = nil
 	end

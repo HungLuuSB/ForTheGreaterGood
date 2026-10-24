@@ -81,8 +81,8 @@ return function(t: RunAll.Context)
 		local lancer = set.units.ord_lancer
 		t.equal(lancer.categoryMask, Categories.Bit.GROUND + Categories.Bit.ARMORED)
 		t.equal(lancer.weapons[1].weaponIndex, set.weapons.ord_light_cannon.index)
-		t.equal(lancer.maxRange, 210) -- ord_light_cannon's range (S-22, S-62)
-		t.equal(set.units.chs_ravager.maxRange, 170)
+		t.equal(lancer.maxRange, 190) -- ord_light_cannon's range (S-22, S-62, S-157)
+		t.equal(set.units.chs_ravager.maxRange, 155)
 		local cannon = set.weapons.ord_light_cannon
 		t.equal(cannon.targetMask, Categories.mask({ "GROUND", "NAVAL", "STRUCTURE" }))
 		t.deepEqual(cannon.priorityMasks, { Categories.Bit.ARMORED, Categories.Bit.GROUND, Categories.Bit.STRUCTURE })

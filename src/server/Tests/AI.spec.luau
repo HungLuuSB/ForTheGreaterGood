@@ -239,9 +239,9 @@ return function(t: RunAll.Context)
 		run(sim, { brain }, 900 * 12, true, function()
 			escorted = escorted or next(brain.escorts) ~= nil
 			aircraft = #owned(sim, 1, "ord_guardian") + #owned(sim, 1, "ord_absolution") + #owned(sim, 1, "ord_falcon")
-			return escorted and aircraft > 0 and #owned(sim, 1, "ord_bulwark") >= 2
+			return escorted and aircraft > 0 and #owned(sim, 1, "ord_sentry_tower") >= 2
 		end)
-		t.expect(#owned(sim, 1, "ord_bulwark") >= 2, `gun turrets ({#owned(sim, 1, "ord_bulwark")})`)
+		t.expect(#owned(sim, 1, "ord_sentry_tower") >= 2, `laser towers ({#owned(sim, 1, "ord_sentry_tower")})`)
 		t.expect(escorted, "army units escorted a worker to a far deposit")
 		t.expect(#owned(sim, 1, "ord_airfield") > 0, "an airfield")
 		t.expect(aircraft > 0, `and aircraft from it ({aircraft})`)

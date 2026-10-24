@@ -1652,3 +1652,104 @@ Existing calls are unchanged.
 
 **Why:** the user: "why the honeycomb grid spread so slow, look chobby?"
 
+### C-191 — Multi-select tiles: the type's portrait, its icon bottom right, the count top left (2026-10-24)
+
+**Decision:** with several units selected, each type tile in the unit panel shows the type's model at an angle (`UI/Portrait`, as the one-unit tile and the build menu), its type icon small in the bottom right, and how many of that type are selected in the top left. Tiles are 50 px, up from 46. Clicks are unchanged (C-157: keep, Shift drop, Ctrl same type on screen). Studio (the Canyon, 5 Lancers, 3 Paladins, 2 Halos, a Mason): `debug_out/screens/c191_selection_tiles.jpg`.
+
+**Why:** the user: "when selecting multiple units, the panel should show the image of the unit + its icon in the bottom right + number of that type of unit in the upper left corner".
+
+### C-192 — Each unit on its terrain: in the world and in every portrait (2026-10-24)
+
+**Decision:**
+- **Portraits** (`UI/Portrait`, so the build menu, the unit panel and its type tiles): the unit stands on its terrain (`Core/PortraitStage`):
+  - a disc of ground for land units and structures;
+  - water over a darker bed for ships, submarines and water structures (the hull a little in the water);
+  - a shore for amphibious and hover units (ground, water across the front);
+  - ground well below an aircraft, with its shadow; the camera frames the unit and the ground.
+- **In the world** (`World.floats`):
+  - structures built on water (`placement = "water"`: shipyards, tidal generators, sonar) float on the surface, as their models are made to; they were drawn on the seabed;
+  - amphibious and hover units ride the water surface instead of the bed;
+  - ghosts and the placement preview of water structures follow the same rule;
+  - an aircraft out of the camera area keeps its last height, or 35 studs if it was never seen close, instead of being drawn on the ground.
+- PortraitStage.spec covers both rules. Studio (Coastline): a Crusader, a tidal generator and a Tideguard on the water, a Lancer on the shore, a Falcon above; the tiles show each on its terrain. `debug_out/screens/c192_terrain_portraits.jpg`.
+
+**Why:** the user: "unit should be render with its accessible terrain, for example, tank on ground, amphibious is on ground + water, ship on water, air is hover above ground", then "apply to all portrait".
+
+### C-193 — Commands audited per unit; builders-only box select; order lines last until done; builders spray (2026-10-24)
+
+**Decision** (the user's batch; the server-side items went to sim-A):
+- **Command sets audited, unit by unit** (`Core/CommandSet`):
+  - Stop only on what has something to stop (mobile units, builders, factories, armed units, nuke silos). Generators, extractors, storage, sonar, pads, walls and Pinpointers offer nothing (the card shows Last alert only).
+  - Shield generators get On / Off. The server still has to honour it (asked of sim-A: off = dome down, no upkeep).
+  - Interceptors (anti-nukes, point defence) get the fire state only.
+  - Stockpiled SAM sites are ordinary defences (fire state, attack, stop).
+  - CommandSet.spec checks each case.
+- **Orders go only to the units that have the command** (`Orders.able`, used by every issue): a turret in a selection given Move takes no move and draws no line.
+- **Box select:** a box with a mobile builder in it (a Commander included) keeps only the builders (`Selection.filterBox`).
+- **Order lines last until the order is done** (`Core/Waypoints`, replacing the 2 s idle drop):
+  - a point line goes when the unit gets there, or that one point after 6 s stuck short of it;
+  - attack, guard / assist and reclaim lines stay until the target is gone, repair until it's whole;
+  - a build line stays until its frame is finished, not just started;
+  - patrol stays until replaced;
+  - a builder's lines go once the server has reported it idle for 1.5 s (IDLE events).
+- **New units take their factory's order list**, as the server gives it (S-95). Factory lists stay until replaced (Repeat or not).
+- **Builders' nano spray** (`Core/BuildTargets`, `Render/BuildSpray`): a team-coloured stream from a working builder to what it builds or repairs, sweeping over the frame at the height it has reached; violet and flowing back for reclaim.
+  - The server doesn't send a builder's target, so it follows the builder's own order line: its build's frame, its repair or reclaim target, or the frame of the builder it assists. It sprays only while the builder stands within build range.
+- **The shield's capacity bar** hovers just above the generator model, not over the dome.
+- **Placement:** another builder's planned build counts as taken (it did already; the lines now stay until the frame is finished, so the plans stay counted).
+- OrderLines.spec, through the real client and server:
+  - both lines stay for the whole build (62 frames), where the old rule dropped them after 2 s still;
+  - both builders spray the frame;
+  - a factory's Lancer takes the factory's move line;
+  - a turret gets no move;
+  - another builder's plan blocks placement.
+- Studio (the Canyon): the card, the bar and the spray checked. `debug_out/screens/c193_build_spray_lines.jpg`.
+
+**Why:** the user's list: commands for all units ("why does the generator has a Stop command"), shields switching off, the bar, the box filter, no move arrow for turrets, assist and build lines persisting, factory orders persisting on their units, nano spray.
+
+**Waiting on sim-A:** shields honouring On / Off (and starting on); building over mobile units (then the client drops its "units in the way" check); in-range attacks and builds without moving; scouts' range halved; resource priority.
+
+### C-194 — Command line: Tab cycles choices; units by alias (2026-10-24)
+
+**Decision:**
+- **Tab:** the first Tab takes the first suggestion; each further Tab on what it completed takes the next one, wrapping; typing ends the cycle (`UI/CheatConsole`).
+- **Choices for every command,** word by word (`CheatInput.CHOICES`): on / off (reveal, god, instabuild, cheat); supply / power / all, then amounts (res, income); selected, a team or at (kill); teams, then pause / resume (ai); speeds; counts after a unit.
+- **Unit aliases** (`CheatInput.aliases` / `resolve`), from each unit's icon-sheet type with the faction's prefix, in full and short (generic last words like site, generator and tower dropped): `ord_shield` and `ord_shield-generator` name the Phalanx, `chs_ir-sam` the Chaos IR SAM site; the type alone names both factions' (Tab cycles them). Display names work as before. A give sends the id when the word names exactly one unit; suggestions match aliases and show the type ("Phalanx (ord_phalanx) - Shield Generator"). /help mentions both.
+- CheatInput.spec covers the aliases, the ambiguity, the choices and counts. Studio: Tab on `/re`, `/reveal `, `/give ord_shi` and `/give shield` cycles as specified.
+
+**Why:** the user: "Tab to complete suggestion/cycle choices (like reveal on/off, kill selected/...)" and "give command unit name should be also have the aliases (give ord_shield -> Phalanx, give ord_ir-sam,...)".
+
+### C-195 — Place over own and allied units; shields switchable; S-157's units on the icon sheet; retired units hidden (2026-10-24)
+
+**Decision:**
+- **Placement:** the preview no longer counts own and allied ground units as in the way. They walk out of the footprint when the frame starts (S-155); enemy units still block. Placement.spec compares with the server's frame-start check (owner, no knower). OrderLines.spec: a solar placed over an own Lancer starts, and the Lancer walks off; an enemy Ravager in sight still blocks.
+- **The card's On / Off** treats shield generators as switchable (S-154: off = dome down, no upkeep).
+- **Icons for S-157's units, on existing tiles** (no new sheet, no upload): Sentry, Guard, Overwatch, Twin Guard and Geryon on the Gun Turret tile; Beamer and Chaos's Bulwark on the Beam Tower tile; Gauntlet and Talos on the Artillery Emplacement tile (T2 dots until they get their own). The sheet PNG is byte-identical. Dedicated icons need the user's design and a new upload.
+- **Retired units** (`retired = true`: ord_bulwark, chs_spike, chs_inferno) aren't suggested or aliased by /give; their ids still work. Their models still preload (replays can show them).
+- This branch merges sim-A's d41074e (S-152..S-157) so the new defs and their icon entries land on main together (the icon specs fail without entries).
+
+**Why:** sim-A's S-154, S-155 and S-157; the user's requests.
+
+### C-196 — Resource priority on the command card (2026-10-24)
+
+**Decision:** a "Prio high" / "Prio low" state button (green high, amber low) on the units resource priority does something for (S-156, `CommandSet.consumer`): builders and factories, stockpiling launchers, aircraft (rearm), shields, radars, jammers, trackers and DIRCM units. A click with every selected unit high sets them all low; with any low, sets them all high (PRIORITY, value 1 high / 0 low). The button reads the LOW_PRIORITY state bit, which arrives for allies too. CommandSet.spec checks who gets it; OrderLines.spec runs the round trip.
+
+**Why:** the user: "Introducing priority resources usage -> high priority unit take the resources first and the rest goes to low priority"; sim-A's S-156.
+
+### C-197 — Icon sheet draft 5: the S-157 defences get their own icons (2026-10-24)
+
+**Decision:** the user's draft 5 replaces `docs/art/icons/ftgg-unit-icons.html`: Laser Tower (Sentry, Guard), Twin Laser Tower (Overwatch, Twin Guard), Triple Laser Tower (Geryon), Ramping Beam Tower (Beamer, T1), Lobbing Gun (Gauntlet, Talos, T1); Chaos's Bulwark joins Radiance on Beam Tower; the retired ord_bulwark, chs_spike and chs_inferno stay mapped for old replays. render.mjs maps all 159 defs from 80 items: 90 tiles, exactly one full 1024-px sheet (the next item would start a second sheet). Uploaded with the user's approval as asset 107697270697313 (byte-identical to `assets/icons/ftgg-icons.png`), in the same commit as its atlas. The /give alias test follows the new type names (`ord_laser` is the Sentry).
+
+**Why:** the user's draft 5 and approval.
+
+### C-198 — The S-157 towers' visuals: coloured lasers, the Beamer's ramp, barrels in turn, the Geryon drum (2026-10-24)
+
+**Decision:**
+- **Lasers** (`fx.tracer = "laser"`, `fx.color = { r, g, b }`): the whole line at once in the weapon's colour for 0.12 s, fading. Red for Sentry, Guard and Twin Guard; green for Overwatch, Geryon and Bulwark's laser; blue for the Beamer.
+- **The Beamer** (`ramp`): each bolt lasts one shot gap plus a little, so they join into one held beam. Its width and brightness grow with intensity, time on one target over `ramp.seconds` (4 s), as the server's damage ramps. A pause longer than 1.6 shot gaps (a target change or a loss) starts it over (`Effects.ramp`).
+- **Barrels in turn** (`muzzles`): each shot starts at the next muzzle (`muzzleOf`), and the matching `barrelN` (or `laser_barrelN`) recoils (Default piece script). With a `drumPiece` (Geryon, Bulwark's laser), the cluster turns one barrel on (360° / barrels) after each shot.
+- Gauntlet and Talos: the high-arc shells come with SPAWN_PROJ's velocity, no client change.
+- Lasers.spec, through the real server: Sentry and Guard fire red, Overwatch green; the Beamer rises from 0 to full; a pause resets it; Geryon's three shots turn the drum a full circle and recoil each barrel. Studio (blockouts until models-C's models): the Beamer's held blue beam on a Juggernaut. `debug_out/screens/c198_beamer.jpg`.
+
+**Why:** the user's T1 defences; sim-A's S-157 fields.
+
