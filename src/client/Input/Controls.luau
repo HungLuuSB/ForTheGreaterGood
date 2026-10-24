@@ -152,8 +152,8 @@ function Controls.groundAt(cam: Camera, px: number, py: number): Vector3?
 		params.FilterType = Enum.RaycastFilterType.Include
 		params.FilterDescendantsInstances = { map, workspace.Terrain }
 		local hit = workspace:Raycast(ray.Origin, ray.Direction * 5000, params)
-		if hit then
-			return hit.Position
+		if hit and not hit.Instance:GetAttribute("GroundDetail") then
+			return hit.Position -- (a baked map's rock details are only for the fog's heights: C-213)
 		end
 	end
 	local heightAt = Controls.heightAt

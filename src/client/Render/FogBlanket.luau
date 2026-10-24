@@ -39,6 +39,7 @@ FogBlanket.UPDATE = 1 / 15 -- seconds between vision reads and uploads (the sim 
 FogBlanket.STEP = 2 -- grid cells between vertices, at least (bigger maps space them wider: stepFor)
 FogBlanket.CHUNK = 32 -- vertex steps per chunk side
 FogBlanket.LIFT = 1 -- studs over the highest ground near a vertex
+FogBlanket.REACH = 1 -- how far round a vertex its height looks, as a share of half a vertex step
 FogBlanket.TRANSPARENCY = 0.02 -- the chunks' own (see above)
 FogBlanket.frozen = false -- debug: no updates (a test pattern stays)
 
@@ -92,15 +93,16 @@ local function clear(f: FogBlanket)
 	f.image, f.content, f.core, f.vision = nil, nil, nil, nil
 end
 
-local terrainOnly = RaycastParams.new()
-terrainOnly.FilterType = Enum.RaycastFilterType.Include
-terrainOnly.FilterDescendantsInstances = { workspace.Terrain }
-
--- The ground at a world point: the sim's ground or water, or the drawn
--- terrain, whichever is higher.
+-- The ground at a world point: the sim's ground or water, or what is drawn
+-- there (the voxel terrain, a baked map's rock details: C-213), whichever is
+-- higher.
 local function groundAt(world: World.World, x: number, z: number): number
 	local y = World.groundY(world, x, z, true)
-	local hit = workspace:Raycast(Vector3.new(x, y + 400, z), Vector3.new(0, -800, 0), terrainOnly)
+	local drawn = RaycastParams.new()
+	drawn.FilterType = Enum.RaycastFilterType.Include
+	local map = workspace:FindFirstChild("Map")
+	drawn.FilterDescendantsInstances = if map then { workspace.Terrain, map } else { workspace.Terrain }
+	local hit = workspace:Raycast(Vector3.new(x, y + 400, z), Vector3.new(0, -800, 0), drawn)
 	return if hit then math.max(y, hit.Position.Y) else y
 end
 
@@ -114,6 +116,9 @@ local function heightAt(world: World.World, x: number, z: number, r: number): nu
 		end
 	end
 	return y + FogBlanket.LIFT
+end
+local function vertexHeight(world: World.World, x: number, z: number, r: number): number
+	return if FogBlanket.REACH > 0 then heightAt(world, x, z, r * FogBlanket.REACH) else groundAt(world, x, z) + FogBlanket.LIFT
 end
 
 -- Grid cells between vertices on a map of `cellsX` × `cellsZ`: STEP, or wider
@@ -141,7 +146,7 @@ local function buildChunk(f: FogBlanket, world: World.World, grid: any, cx0: num
 	for j = cz0, cz1 do
 		for i = cx0, cx1 do
 			local x, z = grid.originX + i * cell, grid.originZ + j * cell
-			local p = Vector3.new(x, heightAt(world, x, z, cell / 2), z)
+			local p = Vector3.new(x, vertexHeight(world, x, z, cell / 2), z)
 			local k = (j - cz0) * cols + (i - cx0)
 			ids[k] = em:AddVertex(p)
 			local u, v = (x - grid.originX) / grid.sizeX, (z - grid.originZ) / grid.sizeZ

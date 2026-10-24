@@ -1864,3 +1864,14 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - **S-163's mid-beam FIREs** (a single-target beam's new end when an enemy steps into its line) take the existing continuation path (`Effects.continueBeam`, C-144): the burning beam's end and hit move; no change needed.
 
 **Why:** sim-A's S-166 and S-163; the user, 2026-10-24.
+
+### C-213 — Fog of war over a baked map's rock details (2026-10-24)
+
+**Decision:** on the Canyon's mesh ground the fog blanket showed as grey squares on the mesa tops: the rock details (strata walls, caps, rims) stand ~6 studs above the sim's mesa height, so the blanket (at the sim's heights) passed under them and showed only over each top's flat middle. Now:
+- `Render/MeshGround` builds details with a convex-decomposition collision (`CollisionFidelity.Default`, ~40 ms each, ~7 s for the Canyon's 190 in the background), `CanQuery` on, tagged `GroundDetail`; tiles keep their box and `CanQuery` off (C-209).
+- `Render/FogBlanket`'s height samples raycast the voxel terrain and `workspace.Map` (the details), taking the higher of that and the sim's height; Main rebuilds the blanket once the mesh ground has finished loading (`Ground.last.mesh`).
+- `Controls.groundAt` looks through `GroundDetail` hits (clicks still march the sim's heights).
+- Kept: the blanket's vertex looks across half a vertex step (`FogBlanket.REACH` 1; a Studio query `fogreach` rebuilds it with another value: 0.5 let the rims poke through again). The blanket can't follow a mesa's outline closer than its vertex step (32 studs on the Canyon, set by the editable-memory budget), so a thin skirt drapes off the mesa edges.
+- Screenshots: `debug_out/screens/c213_canyon_fog_before.jpg`, `c213_canyon_fog_over_mesas.jpg`. Contract `docs/contracts/map-ground.md` updated (and models-C's note 3: type borders are wavy lines, not cell edges).
+
+**Why:** the user, 2026-10-24.
