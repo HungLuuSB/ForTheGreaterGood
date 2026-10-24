@@ -93,6 +93,39 @@ export type Sight = { width: number, depth: number, cells: buffer, version: numb
 -- A wreck the team knows of (WRECK, protocol 10, C-65).
 export type Wreck = { id: number, defIndex: number, x: number, z: number, heading: number }
 
+-- An own unit's status off camera (OWN_STATUS, S-158): health and build
+-- 0..1, the factory queue's head (unit def index, 0 = none), its progress
+-- 0..1 and the queue's length.
+export type OwnStatus = { health: number, build: number, queueHead: number, queueProgress: number, queueCount: number }
+
+-- The queue an OWN_STATUS describes, from the one the client last had: the
+-- old queue from its head on, cut or padded (with its last item) to the
+-- count; the head alone repeated when the old one doesn't hold it.
+function World.statusQueue(old: { number }?, head: number, count: number): { number }
+	local out = {}
+	if head == 0 or count == 0 then
+		return out
+	end
+	local from = if old then table.find(old, head) else nil
+	for i = 1, count do
+		local item = if from and old then old[from + i - 1] else nil
+		out[i] = item or out[i - 1] or head
+	end
+	out[1] = head
+	return out
+end
+
+-- Applies `status` to own unit `u` while it's outside the tactical tier.
+function World.applyStatus(u: Unit, status: OwnStatus)
+	u.health = status.health
+	u.shownHealth = status.health
+	u.build = status.build
+	if status.queueHead ~= 0 or status.queueCount ~= 0 or u.queue ~= nil then
+		u.queue = World.statusQueue(u.queue, status.queueHead, status.queueCount)
+		u.queueProgress = status.queueProgress
+	end
+end
+
 export type World = {
 	shownTick: number?, -- the render tick World.settle last ran for (C-49)
 	grid: Grid.Grid,
@@ -126,6 +159,7 @@ export type World = {
 	cheatResults: { any }, -- CHEAT_RESULT events (protocol 27, S-102) the cheat command line drains (C-119)
 	lastShot: { [number]: { [number]: number } }, -- unit → weapon slot → sim tick of its last shot seen (FIRE, a launch; the reload bar, C-170)
 	idle: { [number]: boolean }, -- the player's idle builders and factories, on camera or not (IDLE, protocol 31, S-136; C-158)
+	ownStatus: { [number]: OwnStatus }, -- own units off camera: the latest OWN_STATUS by unit (protocol 34, S-158; C-205), kept until the unit ENTERs or dies
 	remoteDomes: { [number]: { x: number, y: number, z: number, radius: number, charge: number, flags: number } }, -- domes of generators not in the tactical tier (DOME, protocol 29, S-122): drawn without vision, as in BAR (C-145)
 	shields: { [number]: { charge: number, flags: number } }, -- shield generators' domes by unit id (SHIELD, protocol 24, S-79): charge 0..1 of capacity, Schema.ShieldFlag bits
 	deathWrecks: { [number]: number }, -- wreck ID → the tick of the DEATH that left it (its death animation places it)
@@ -165,6 +199,7 @@ function World.new(defs: Defs.DefSet): World
 		shields = {},
 		remoteDomes = {},
 		idle = {},
+		ownStatus = {},
 		lastShot = {},
 		deathWrecks = {},
 	}
