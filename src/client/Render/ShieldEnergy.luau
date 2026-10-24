@@ -5,7 +5,8 @@
 -- shield and its one update loop; this draws one dome's look:
 --   - the shell: the single ForceField Dome when up; during a raise or a
 --     collapse the 20 bands, revealed from the apex down (or drained back up);
---   - the honeycomb grid (Neon, nearly clear) when up;
+--   - no honeycomb over the dome: the user wants cells only where a shot
+--     hits (C-189), so models-C's hexGrid isn't loaded;
 --   - the channel: a straight core with packets scrolling up, a soft glow,
 --     two zig-zag filaments re-jittered every jitter step, a flickering
 --     spark at the emitter and a flare at the apex pulsing as packets arrive;
@@ -18,7 +19,7 @@
 -- them (the reference's fixed pools). Jitter comes from
 -- ShieldEnergyLook.hash, not Random, so nothing is allocated per frame.
 -- Detail by distance (fx.md): "full"; "mid" drops the streaks, filaments,
--- edge crackle and honeycomb; "far" (strategic) keeps only the shell.
+-- edge crackle; "far" (strategic) keeps only the shell.
 
 local AssetService = game:GetService("AssetService")
 local ContentProvider = game:GetService("ContentProvider")
@@ -48,7 +49,6 @@ export type Energy = {
 	holder: BasePart,
 	dome: BasePart,
 	bands: { MeshPart },
-	grid: MeshPart?,
 	hits: { Decal },
 	apex: Attachment,
 	from: Attachment,
@@ -79,7 +79,7 @@ export type Energy = {
 
 -- the meshes, made once from their IDs (CreateMeshPartAsync yields: call
 -- ShieldEnergy.load in its own thread)
-local templates: { bands: { MeshPart }?, grid: MeshPart?, cap: MeshPart? } = {}
+local templates: { bands: { MeshPart }?, cap: MeshPart? } = {}
 local state = "idle"
 
 local function bare(p: BasePart)
@@ -118,7 +118,6 @@ function ShieldEnergy.load()
 		table.insert(bands :: { MeshPart }, p)
 	end
 	templates.bands = bands
-	templates.grid = mesh(entry.hexGrid.mesh)
 	templates.cap = mesh(entry.hitCap.mesh)
 	local tx = entry.textures
 	local ids: { any } = { tx.pulse, tx.glow, tx.line, tx.spark, tx.flare, tx.streak, tx.field }
@@ -233,14 +232,6 @@ function ShieldEnergy.new(folder: Folder, holder: BasePart, base: Vector3, R: nu
 		p.Color = tint
 		bands[k] = p
 	end
-	-- the honeycomb
-	local grid: MeshPart? = nil
-	if templates.grid then
-		local g = part(templates.grid, "HexGrid", entry.hexGrid.center, entry.hexGrid.size)
-		g.Material = Enum.Material.Neon
-		g.Color = tint
-		grid = g
-	end
 	-- hits: a flipbook in a Decal on a fully transparent cap (fx.md: the cap's
 	-- own TextureID ignores alpha in Neon and washes out in ForceField)
 	local hits: { Decal } = {}
@@ -351,7 +342,6 @@ function ShieldEnergy.new(folder: Folder, holder: BasePart, base: Vector3, R: nu
 		holder = holder,
 		dome = dome,
 		bands = bands,
-		grid = grid,
 		hits = hits,
 		apex = apex,
 		from = from,
@@ -435,9 +425,6 @@ function ShieldEnergy.hide(e: Energy)
 	for _, b in e.bands do
 		b.Transparency = 1
 	end
-	if e.grid then
-		e.grid.Transparency = 1
-	end
 	for _, d in e.hits do
 		d.Transparency = 1
 	end
@@ -477,9 +464,6 @@ function ShieldEnergy.setFrame(e: Energy, st: string, tState: number, t: number,
 	for k, b in e.bands do
 		local reveal = if full then 0 else ShieldEnergyLook.bandReveal(front, k, C.bands)
 		b.Transparency = 1 - reveal * alpha
-	end
-	if e.grid then
-		e.grid.Transparency = if full and near then 1 - 0.08 * alpha else 1
 	end
 
 	-- the channel
