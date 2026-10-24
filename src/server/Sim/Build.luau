@@ -233,6 +233,10 @@ local demandS: { [number]: number } = {}
 local demandP: { [number]: number } = {}
 local priorityS: { [number]: number } = {} -- missile refills' share of the demand (S-66)
 local priorityP: { [number]: number } = {}
+local lowPower: { [number]: number } = {} -- of `power`: from low-priority builders (S-156)
+local lowS: { [number]: number } = {} -- low-priority consumers' share of the demand (S-156)
+local lowP: { [number]: number } = {}
+local LOW_PRIORITY = World.State.LOW_PRIORITY
 
 -- Cancelling (guide 9.3, S-35): what was spent comes back. Spending is
 -- proportional to progress, so a refund is progress × cost, credited like
@@ -359,19 +363,26 @@ function Build.step(sim: Types.Sim)
 
 	for i = #targets, 1, -1 do
 		power[targets[i]] = nil
+		lowPower[targets[i]] = nil
 		targets[i] = nil
 	end
 	for _, team in eco.teams do
 		demandS[team], demandP[team] = 0, 0
 		priorityS[team], priorityP[team] = 0, 0
+		lowS[team], lowP[team] = 0, 0
 	end
 
-	local function addPower(target: number, bp: number)
+	-- `builder`'s power goes to `target`; a low-priority builder's is
+	-- counted apart, and progresses at the low ratios (S-156)
+	local function addPower(target: number, bp: number, builder: number)
 		if power[target] == nil then
 			power[target] = 0
 			table.insert(targets, target)
 		end
 		power[target] += bp
+		if bit32.band(w.state[builder], LOW_PRIORITY) ~= 0 then
+			lowPower[target] = (lowPower[target] or 0) + bp
+		end
 	end
 
 	-- 1. builders
@@ -384,7 +395,7 @@ function Build.step(sim: Types.Sim)
 		if d.domain == "structure" then
 			local q = b.queue[id]
 			if q and #q > 0 then
-				addPower(id, bp)
+				addPower(id, bp, id)
 			end
 			continue
 		end
@@ -479,7 +490,7 @@ function Build.step(sim: Types.Sim)
 					local td = def(sim, t)
 					World.setHealth(w, t, math.min(td.health, w.health[t] + td.health * bp / td.cost.buildTime * DT))
 				else
-					addPower(t, bp)
+					addPower(t, bp, id)
 				end
 			else
 				approach(sim, id, w.posX[t], w.posZ[t])
@@ -488,7 +499,7 @@ function Build.step(sim: Types.Sim)
 	end
 
 	-- 2. missile stockpiles (S-47) first: refills have priority in a stall (S-66)
-	Stockpile.step(sim, demandS, demandP, priorityS, priorityP)
+	Stockpile.step(sim, demandS, demandP, priorityS, priorityP, lowS, lowP)
 
 	-- a factory waits while a unit it made still stands on its build pad
 	-- (within twice its radius: the next one would appear on top of it; S-133,
@@ -536,7 +547,16 @@ function Build.step(sim: Types.Sim)
 			local rate = bp / cost.buildTime -- progress per second at full supply
 			demandS[team] += cost.supply * rate
 			demandP[team] += cost.power * rate
-			step = rate * DT * Economy.effective(acc, cost.supply, cost.power)
+			local low = lowPower[t]
+			if low == nil then
+				step = rate * DT * Economy.effective(acc, cost.supply, cost.power)
+			else
+				-- low-priority builders' share at the low ratios (S-156)
+				local lowRate = low / cost.buildTime
+				lowS[team] += cost.supply * lowRate
+				lowP[team] += cost.power * lowRate
+				step = ((rate - lowRate) * Economy.effective(acc, cost.supply, cost.power) + lowRate * Economy.effective(acc, cost.supply, cost.power, true)) * DT
+			end
 			-- never spend beyond what this window still allows
 			if cost.supply > 0 then
 				step = math.min(step, Economy.allowance(acc.supply) / cost.supply)
@@ -590,16 +610,16 @@ function Build.step(sim: Types.Sim)
 	end
 
 	-- 3. aircraft landing on pads and rearming (also economy consumers)
-	Air.rearmStep(sim, demandS, demandP)
+	Air.rearmStep(sim, demandS, demandP, lowS, lowP)
 
 	-- 4. DIRCM upkeep: continuous power drain, cooldown at the stall ratio
-	EW.drainStep(sim, demandP)
+	EW.drainStep(sim, demandP, lowP)
 
 	-- 5. tracking radars: power drain, radius at the stall ratio (D104)
-	Sensors.drainStep(sim, demandP)
+	Sensors.drainStep(sim, demandP, lowP)
 
 	-- 6. shield domes recharging (S-79)
-	Shield.drainStep(sim, demandP)
+	Shield.drainStep(sim, demandP, lowP)
 
 	for _, team in eco.teams do
 		local acc = eco.accounts[team]
@@ -607,6 +627,8 @@ function Build.step(sim: Types.Sim)
 		acc.power.demand = demandP[team]
 		acc.supply.priorityDemand = priorityS[team]
 		acc.power.priorityDemand = priorityP[team]
+		acc.supply.lowDemand = lowS[team]
+		acc.power.lowDemand = lowP[team]
 	end
 end
 

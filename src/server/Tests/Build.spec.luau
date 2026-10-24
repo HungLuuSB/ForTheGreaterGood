@@ -151,6 +151,44 @@ return function(t: RunAll.Context)
 		t.expect((starvedTicks :: number) > 15 * 500, "progress was limited by income")
 	end)
 
+	t.test("resource priority: in a stall, high consumers are served first, low ones get what is left (S-156)", function()
+		-- two Vehicle Plants on one Lancer each; supply income covers one
+		local function progress(lowFirst: boolean): (number, number)
+			local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+			local a = Spawn.unit(sim, "ord_vehplant", 1, -60, 0, math.pi / 2)
+			local b = Spawn.unit(sim, "ord_vehplant", 1, 60, 0, math.pi / 2)
+			local acc = sim.eco.accounts[1]
+			local lancer = sim.defs.units.ord_lancer
+			acc.supply.stored = 0
+			acc.supply.bonusIncome = lancer.cost.supply * 200 / lancer.cost.buildTime
+			acc.power.bonusIncome = 1000
+			build(sim, { a }, "ord_lancer", 0, 0)
+			build(sim, { b }, "ord_lancer", 0, 0)
+			if lowFirst then
+				submit(sim, 1, { cmdType = CT.PRIORITY, flags = 0, unitIds = { a }, value = 0 })
+			end
+			for _ = 1, 150 do
+				Sim.step(sim)
+			end
+			t.equal(bit32.band(sim.world.state[a], World.State.LOW_PRIORITY) ~= 0, lowFirst, "the LOW_PRIORITY bit follows the command")
+			return sim.build.progress[a] or 0, sim.build.progress[b] or 0
+		end
+		local full = 200 / 5100 * 10 -- a plant's progress in 10 s at full supply
+		local evenA, evenB = progress(false)
+		t.expect(math.abs(evenA - evenB) < 0.01 and evenA < full * 0.6, `both high: they share alike ({evenA}, {evenB})`)
+		local lowA, highB = progress(true)
+		t.expect(highB > full * 0.9, `the high plant runs at full speed: {highB} of {full}`)
+		t.expect(lowA < full * 0.1, `the low plant gets what is left, next to nothing: {lowA}`)
+
+		-- PRIORITY 1 makes it high again
+		local sim = Sim.new({ seed = 1, players = PLAYERS, mapId = "start:64" })
+		local plant = Spawn.unit(sim, "ord_vehplant", 1, 0, 0)
+		submit(sim, 1, { cmdType = CT.PRIORITY, flags = 0, unitIds = { plant }, value = 0 })
+		submit(sim, 1, { cmdType = CT.PRIORITY, flags = 0, unitIds = { plant }, value = 1 })
+		Sim.step(sim)
+		t.equal(bit32.band(sim.world.state[plant], World.State.LOW_PRIORITY), 0, "high again")
+	end)
+
 	t.test("invalid sites fail with a reason", function()
 		local sim, cv, sx, sz = newStart()
 		build(sim, { cv }, "ord_extractor", sx + 30, sz) -- no deposit there

@@ -10,6 +10,7 @@ return Templates.extend(Templates.Structure, {
 	name = "Inferno",
 	description = "Beam tower. A precise, heavy shot for 500 power. Off: retracts into its armor.",
 	faction = "chaos",
+	retired = true, -- (S-157) Bulwark (chs_bulwark) took its place as Chaos's beam tower; kept for old replays and scenes
 	tier = 2,
 	categories = { "STRUCTURE" },
 	cost = { supply = 420, power = 5000, buildTime = 13000 },

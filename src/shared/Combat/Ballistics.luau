@@ -7,8 +7,9 @@ local sqrt, atan, atan2 = math.sqrt, math.atan, math.atan2
 
 -- Low-arc launch pitch (radians) to hit a point `dist` studs away
 -- horizontally and `dh` studs higher, at launch speed `speed` and gravity
--- `gravity` (studs/s²). nil when out of ballistic reach.
-function Ballistics.launchPitch(speed: number, gravity: number, dist: number, dh: number): number?
+-- `gravity` (studs/s²). nil when out of ballistic reach. `high`: the high
+-- arc instead (S-157: the Gauntlet's lobbed shells).
+function Ballistics.launchPitch(speed: number, gravity: number, dist: number, dh: number, high: boolean?): number?
 	if dist < 1e-6 then
 		return if dh >= 0 then math.pi / 2 else -math.pi / 2
 	end
@@ -19,6 +20,9 @@ function Ballistics.launchPitch(speed: number, gravity: number, dist: number, dh
 	local disc = v2 * v2 - gravity * (gravity * dist * dist + 2 * dh * v2)
 	if disc < 0 then
 		return nil
+	end
+	if high then
+		return atan((v2 + sqrt(disc)) / (gravity * dist))
 	end
 	return atan((v2 - sqrt(disc)) / (gravity * dist))
 end

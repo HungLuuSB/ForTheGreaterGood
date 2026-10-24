@@ -90,6 +90,8 @@ export type World = {
 	wStockProgress: { [number]: number }, -- 0..1 of the next missile
 	wSalvo: { [number]: number }, -- salvo weapons: shots left in the salvo under way (S-69)
 	wSalvoWait: { [number]: number }, -- seconds until its next shot
+	wRampTarget: { [number]: number }, -- ramping weapons (S-157): the target it has been on (0 = none)
+	wRampTime: { [number]: number }, -- seconds on it, up to the ramp's seconds
 
 	-- ID allocator
 	gen: { [number]: number }, -- per ID slot: how many units have had it (D109); kept after despawn
@@ -145,6 +147,8 @@ function World.new(): World
 		wStockProgress = {},
 		wSalvo = {},
 		wSalvoWait = {},
+		wRampTarget = {},
+		wRampTime = {},
 		gen = {},
 		pins = {},
 		nextFresh = 1,
@@ -357,6 +361,8 @@ function World.despawn(w: World, tick: number, id: number)
 		w.wStockProgress[key] = nil
 		w.wSalvo[key] = nil
 		w.wSalvoWait[key] = nil
+		w.wRampTarget[key] = nil
+		w.wRampTime[key] = nil
 		w.wTargetProj[key] = nil
 		w.wTargetProjSerial[key] = nil
 	end
@@ -479,6 +485,10 @@ function World.hash(w: World, h: number?): number
 			local salvo = w.wSalvo[key]
 			if salvo ~= nil and salvo > 0 then -- only during a salvo: other hashes are as before (S-69)
 				hv = Hash.number(Hash.u32(hv, salvo), w.wSalvoWait[key])
+			end
+			local ramp = w.wRampTime[key]
+			if ramp ~= nil then -- ramping weapons only (S-157)
+				hv = Hash.number(Hash.u32(hv, w.wRampTarget[key]), ramp)
 			end
 		end
 	end

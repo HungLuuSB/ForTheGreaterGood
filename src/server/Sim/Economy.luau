@@ -43,6 +43,8 @@ export type Resource = {
 	wasted: number, -- total overflow lost to full storage
 	priorityDemand: number?, -- per second, of `demand`: missile refills, served first (S-66)
 	priorityRatio: number?, -- 0..1: their progress ratio this window (S-66)
+	lowDemand: number?, -- per second, of `demand`: low-priority consumers, served last (S-156)
+	lowRatio: number?, -- 0..1: their progress ratio this window (S-156)
 	gathered: number, -- total credited: income and reclaim per window, before the storage cap (Stats, S-63)
 	drawn: number, -- total spent, less any shortfall a window forgave (Stats, S-63)
 	bonusIncome: number?, -- per second, from the INCOME cheat (S-102)
@@ -78,6 +80,8 @@ local function newResource(): Resource
 		drawn = 0,
 		priorityDemand = 0,
 		priorityRatio = 1,
+		lowDemand = 0,
+		lowRatio = 1,
 	}
 end
 
@@ -163,16 +167,28 @@ end
 -- REFILL_PRIORITY of the window's income goes to them before construction
 -- gets its share; whatever they want beyond that shares the rest like any
 -- consumer. At 0 every consumer shares alike, as before.
+-- Low-priority consumers (the LOW_PRIORITY state bit, S-156) come last:
+-- they share what the high ones (every other consumer) leave over.
 Economy.REFILL_PRIORITY = 0.25
 
 local function settleRatio(r: Resource, window: number)
 	local available = r.stored + r.income * window
 	local wanted = r.demand * window
 	local pWanted = (r.priorityDemand or 0) * window
+	local lowWanted = (r.lowDemand or 0) * window
 	local granted = math.max(0, math.min(pWanted, available, Economy.REFILL_PRIORITY * r.income * window))
 	local restWanted = wanted - granted
+	if lowWanted > 0 then
+		restWanted -= lowWanted
+	end
 	r.ratio = if restWanted > 1e-12 then math.clamp((available - granted) / restWanted, 0, 1) else 1
 	r.priorityRatio = if pWanted > 0 then math.min(1, (granted + (pWanted - granted) * r.ratio) / pWanted) else 1
+	if lowWanted > 0 then
+		local left = available - granted - math.max(restWanted, 0) * r.ratio
+		r.lowRatio = math.clamp(left / lowWanted, 0, 1)
+	else
+		r.lowRatio = 1
+	end
 end
 
 -- Settles one resource for a window, overflow wasted. Pure; exposed for tests.
@@ -214,14 +230,15 @@ local function shareOverflow(eco: Economy, kind: "supply" | "power", team: numbe
 end
 
 -- Effective progress ratio for a consumer of cost (supply, power): the
--- smallest ratio among the resources it actually uses (guide 8.4).
-function Economy.effective(acc: Account, costSupply: number, costPower: number): number
+-- smallest ratio among the resources it actually uses (guide 8.4). `low`:
+-- a low-priority consumer (S-156), at the ratios left after the high ones.
+function Economy.effective(acc: Account, costSupply: number, costPower: number, low: boolean?): number
 	local e = 1
 	if costSupply > 0 then
-		e = math.min(e, acc.supply.ratio)
+		e = math.min(e, if low then acc.supply.lowRatio or acc.supply.ratio else acc.supply.ratio)
 	end
 	if costPower > 0 then
-		e = math.min(e, acc.power.ratio)
+		e = math.min(e, if low then acc.power.lowRatio or acc.power.ratio else acc.power.ratio)
 	end
 	return e
 end
@@ -236,6 +253,11 @@ function Economy.priorityEffective(acc: Account, costSupply: number, costPower: 
 		e = math.min(e, acc.power.priorityRatio or acc.power.ratio)
 	end
 	return e
+end
+
+-- Is this unit a low-priority consumer (PRIORITY 0, S-156)?
+function Economy.isLow(w: World.World, id: number): boolean
+	return bit32.band(w.state[id], World.State.LOW_PRIORITY) ~= 0
 end
 
 -- What may still be spent from this resource in the current window.
@@ -325,6 +347,9 @@ function Economy.hash(eco: Economy, h: number): number
 			h = Hash.number(h, r.ratio)
 			h = Hash.number(h, r.spent)
 			h = Hash.number(h, r.reclaimed)
+			if (r.lowDemand or 0) > 0 then
+				h = Hash.number(Hash.number(h, r.lowDemand :: number), r.lowRatio or 1) -- (S-156)
+			end
 			if r.bonusIncome or r.bonusStorage then
 				h = Hash.number(Hash.number(h, r.bonusIncome or 0), r.bonusStorage or 0) -- (S-102)
 			end

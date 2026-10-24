@@ -75,4 +75,13 @@ return function(t: any)
 		t.deepEqual(texts("/ai 2 "), { "/ai 2 pause ", "/ai 2 resume " })
 		t.equal(#texts("/speed "), 6)
 	end)
+
+	t.test("retired units aren't suggested or aliased, but their id still works (S-157)", function()
+		for _, x in CheatInput.suggest("/give chs_spi", defs, 50) do
+			t.expect(not string.find(x.text, "chs_spike", 1, true), "Spike retired")
+		end
+		t.equal(CheatInput.unitId("chs_spike", defs), "chs_spike", "the id still resolves")
+		local turrets = CheatInput.resolve("ord_gun-turret", defs)
+		t.expect(table.find(turrets, "ord_bulwark") == nil and table.find(turrets, "ord_sentry_tower") ~= nil, "the alias names the Sentry, not the retired Bulwark")
+	end)
 end

@@ -6,6 +6,8 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Command line (C-194):** Tab completes and cycles choices (reveal on / off, kill selected / a team ...); /give takes aliases like ord_shield or chs_ir-sam.
+- Ready to merge: `a04dd51` (C-194: Tab cycling, unit aliases; src/client)
 - **Commands and order lines (C-193):** each unit offers only commands that do something (no Stop on a generator; shields get On / Off); a box with a builder in it selects only builders; a turret takes no move; order lines (assist, build, factory orders) stay until done; builders spray what they build; the shield bar sits over the generator.
 - Ready to merge: `1699a9e` (C-193: command audit, box filter, lasting order lines, nano spray; src/client)
 - **Units on their terrain (C-192):** portraits show each unit on ground, water, a shore or above ground; in the world, water buildings and amphibious units float, and far-off aircraft stay in the air.

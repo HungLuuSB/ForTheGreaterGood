@@ -167,4 +167,39 @@ return function(t: any)
 		t.expect(ok2, "elsewhere is fine")
 		api.actions.cancelPlacement()
 	end)
+
+	t.test("a build can go over own units: they walk out when the frame starts (S-155, C-195)", function()
+		local sim, world, api, step = scene()
+		Spawn.unit(sim, "ord_fusion", 1, -150, -150, 0)
+		local mason = Spawn.unit(sim, "ord_mason", 1, 0, 0, 0)
+		local lancer = Spawn.unit(sim, "ord_lancer", 1, 60, 0, 0)
+		local enemy = Spawn.unit(sim, "chs_ravager", 2, -40, 70, 0) -- in the Mason's sight
+		sim.world.fireState[lancer] = 0
+		sim.world.fireState[enemy] = 0
+		step(3)
+		api.actions.select({ mason })
+		api.actions.beginPlacement("ord_solar")
+		local ok, why = api.actions.updatePlacement(60, 0)
+		t.expect(ok, `an own tank on the spot doesn't block it ({why})`)
+		local okEnemy, whyEnemy = api.actions.updatePlacement(-40, 70)
+		t.expect(not okEnemy and whyEnemy == "units in the way", "an enemy's still does")
+		t.expect(api.actions.place(60, 0, false, false))
+		local started = false
+		for _ = 1, 15 * 20 do
+			step(1)
+			for _, u in world.units do
+				local def = World.def(world, u)
+				if def and def.id == "ord_solar" then
+					started = true
+				end
+			end
+			if started then
+				break
+			end
+		end
+		t.expect(started, "the frame started over the tank")
+		step(15 * 3)
+		local l = world.units[lancer]
+		t.expect(l ~= nil and (math.abs(l.x - 60) > 8 or math.abs(l.z) > 8), `the tank walked off the footprint ({l and l.x}, {l and l.z})`)
+	end)
 end

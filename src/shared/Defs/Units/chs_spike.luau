@@ -7,6 +7,7 @@ return Templates.extend(Templates.Structure, {
 	name = "Spike",
 	description = "Gun turret.",
 	faction = "chaos",
+	retired = true, -- (S-157) Guard (chs_guard) took its place as the T1 basic tower; kept for old replays and scenes
 	tier = 1,
 	categories = { "STRUCTURE" },
 	cost = { supply = 120, power = 900, buildTime = 2400 },

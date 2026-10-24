@@ -14,7 +14,7 @@ local ROSTER = {
 		"herald", "lancer", "verdict", "halo", "oracle", "paladin", "judgement", "seraph", "veil", "tideguard",
 		"falcon", "guardian", "absolution", "archon", "phantom", "tidewatch", "archangel",
 		"sentry", "silence", "crusader", "dominion", "sanctuary",
-		"bulwark", "bastion", "vigil", "aegis", "edict", "watchtower", "beacon", "curtain", "veilspire",
+		"sentry_tower", "beamer", "overwatch", "gauntlet", "bastion", "vigil", "aegis", "edict", "watchtower", "beacon", "curtain", "veilspire",
 		"moat", "undertow", "rampart", "ear", "choir", "reckoning", "witness",
 	},
 	chaos = {
@@ -22,7 +22,7 @@ local ROSTER = {
 		"jackal", "ravager", "hellmouth", "hornet", "watcher", "juggernaut", "hydra", "gorgon", "shroud", "mire",
 		"harpy", "wasp", "plague", "manticore", "behemoth", "leech", "banshee",
 		"barracuda", "lamprey", "corsair", "kraken", "leviathan", "siren",
-		"spike", "maw", "thorn", "wyvern", "cataclysm", "eye", "allseer", "smog", "blackout",
+		"guard", "twin_guard", "geryon", "talos", "bulwark", "maw", "thorn", "wyvern", "cataclysm", "eye", "allseer", "smog", "blackout",
 		"riptide", "fang", "breaker", "listener", "deepear", "ragnarok", "augur",
 	},
 }
@@ -85,7 +85,7 @@ return function(t: RunAll.Context)
 			-- and nothing of the faction is left out of the tree
 			local total, reached = 0, 0
 			for id, d in defs.units do
-				if d.faction == faction then
+				if d.faction == faction and not d.retired then -- (S-157)
 					total += 1
 					if from[id] then
 						reached += 1

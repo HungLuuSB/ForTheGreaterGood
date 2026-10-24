@@ -37,12 +37,12 @@ export type UI = { gui: ScreenGui, panel: Frame, buttons: { [string]: TextButton
 
 local function selected(api: Api.Api): (boolean, boolean, { number }, boolean)
 	local anyOn, anyRepeat, factories = false, false, {}
-	local switchable = false -- converters and beam towers: the units the on / off bit does something for
+	local switchable = false -- converters, beam towers and shield generators (S-154): the units the on / off bit does something for
 	for _, id in api.state.selection do
 		local u = api.world.units[id]
 		if u then
 			local d = World.def(api.world, u)
-			switchable = switchable or (d ~= nil and (d.converter ~= nil or d.retract ~= nil)) -- beam towers retract when off (S-96)
+			switchable = switchable or (d ~= nil and (d.converter ~= nil or d.retract ~= nil or d.shield ~= nil)) -- beam towers retract when off (S-96); shields go down (S-154)
 			anyOn = anyOn or bit32.band(u.state or 0, 2) ~= 0
 			anyRepeat = anyRepeat or bit32.band(u.state or 0, 16) ~= 0
 			local def = World.def(api.world, u)
@@ -195,7 +195,7 @@ function CommandCard.step(ui: UI, api: Api.Api)
 		fire = if fire then fire[1] else "Fire state",
 		movestate = if move then move[1] else "Move state",
 		["repeat"] = "Repeat",
-		-- only converters switch (the sim's TOGGLED_ON bit); for anything else
+		-- only converters, beam towers and shields switch (the sim's TOGGLED_ON bit); for anything else
 		-- "Off" in red read as a stopped factory (the user, C-107)
 		toggle = if not switchable then "On / Off" elseif anyOn then "On" else "Off",
 		cancel = "Cancel",
