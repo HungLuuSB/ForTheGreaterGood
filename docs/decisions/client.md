@@ -1875,3 +1875,9 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Screenshots: `debug_out/screens/c213_canyon_fog_before.jpg`, `c213_canyon_fog_over_mesas.jpg`. Contract `docs/contracts/map-ground.md` updated (and models-C's note 3: type borders are wavy lines, not cell edges).
 
 **Why:** the user, 2026-10-24.
+
+### C-214 — Kit survives an experience without EditableImage (2026-10-24)
+
+**Decision:** `Kit`'s shared images (panel stripes, shadow) create, write and wrap the EditableImage inside one pcall; on failure the panel goes without them. A chart's image likewise: create and the per-draw write are guarded, and the chart says "charts need editable images" instead of throwing. Before, in an experience whose Game Settings > Security doesn't allow EditableImage, the create succeeded and the write threw, killing the client script at the first panel (the lobby stream's report from the published playtest).
+
+**Why:** lobby-D's crash report; the setting is per experience, and a missing setting should cost looks, not the game.
