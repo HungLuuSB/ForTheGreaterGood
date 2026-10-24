@@ -118,11 +118,15 @@ function KeyArt.new(parent: Instance, zIndex: number): View
 		smoothY += (my - smoothY) * a
 		local t = os.clock()
 		local driftX, driftY = math.sin(t * 0.15) * 0.25, math.sin(t * 0.11) * 0.15
+		-- in scale, not offset: UDim2 offsets are whole pixels, so the layers
+		-- stepped 1-1.4 px every few frames (lobby-D, C-184); the tiles'
+		-- tiny rotation makes Roblox draw them at sub-pixel positions
+		local vx, vy = math.max(vp.X, 1), math.max(vp.Y, 1)
 		for _, l in layers do
 			local dx = -(smoothX + driftX) * SHIFT * vp.X * l.depth
 			local dy = -(smoothY + driftY) * SHIFT * vp.X * l.depth * 0.5
-			l.frame.Size = UDim2.fromOffset(w, h)
-			l.frame.Position = UDim2.new(0.5, dx, 0.5, dy)
+			l.frame.Size = UDim2.fromScale(w / vx, h / vy)
+			l.frame.Position = UDim2.fromScale(0.5 + dx / vx, 0.5 + dy / vy)
 		end
 	end
 
@@ -162,7 +166,8 @@ function KeyArt.new(parent: Instance, zIndex: number): View
 					img.Image = id
 					img.ImageTransparency = 1
 					img.Position = UDim2.fromScale(c / cols, r / rows)
-					img.Size = UDim2.fromScale(1 / cols, 1 / rows)
+					img.Size = UDim2.new(1 / cols, 1, 1 / rows, 1) -- 1 px overlap: no hairline between tiles
+					img.Rotation = 0.001 -- drawn at sub-pixel positions, not snapped (C-184)
 					img.ZIndex = zIndex + i
 					img.Parent = f
 					table.insert(tiles, img)
