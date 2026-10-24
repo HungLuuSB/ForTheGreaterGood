@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **34**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **35**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -150,8 +150,9 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `DEATH 3` | `unitId u16, severity u8, wreckId u16`, 6 B | Tactical units (section 5). |
 | `ENTER 1` / `LEAVE 2` | 16 B / 3 B | Section 5. |
 
-| `WRECK 9` | `wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8`, 10 B | Section 7a. |
+| `WRECK 9` | `wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8, supply u16, fullSupply u16`, 14 B (supply fields since protocol 35, S-168) | Section 7a. |
 | `WRECK_GONE 10` | `wreckId u16`, 3 B | Section 7a. |
+| `WRECK_STATE 27` | `wreckId u16, supply u16, rez u8`, 6 B (protocol 35, S-168) | Section 7a. |
 | `SIGHT_ROWS 11` | `firstRow u8, rowCount u8, rowBytes u8, bits`, 4 + rowCount × rowBytes B | Section 7a. |
 | `SIGHT_CELLS 12` | `count u8, cell u16 × count`, 2 + 2 × count B | Section 7a. |
 
@@ -182,6 +183,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 - `WRECK` when the team first has the wreck's spot in sight (in the same tick as the DEATH that made it, if the team saw it), on the whole map, not only the camera area (wrecks are on the minimap). `heading` is the dead unit's (u8 like ENTER); `defIndex` is the unit it was (the wreck model comes from its def).
 - `WRECK_GONE` when the team sees the spot without the wreck (reclaimed). A wreck removed out of the team's sight stays on the client's map until then.
 - After a WELCOME, a WRECK for every wreck the team knows. Spectators get every wreck at once and see it go at once.
+- **Supply and resurrect (protocol 35, S-168):** WRECK carries `supply` (whole units left in the wreck when sent) and `fullSupply` (what it held when the unit died: `Combat.WRECK_SUPPLY_FRACTION` 0.5 × the def's supply cost). `WRECK_STATE` follows on sensor ticks (every 2nd tick) for a wreck the client has, while its spot is in the team's sight, when its `supply` or its resurrect progress `rez` (0..255) changed since the last sent; a WRECK whose `rez` isn't 0 is followed by one at once. Out of sight the client keeps the last values. The values to show: a dark-green bar `supply / fullSupply` (below 1 only), a purple bar `rez / 255` (above 0 only); a hover can name the wreck (its `defIndex`) and its `supply`; the reclaimable supply of an area is the sum of the known wrecks' `supply`.
 - Wreck IDs are the server's (1-based, never reused within a match); RECLAIM commands target them.
 
 **Cost** (`lune run stress`, 800 units, two players): sight ~0.3–0.4 KB/s and wrecks ~0.12 KB/s per player in a large battle (events 0.72 → 1.22 KB/s, total 15.4 KB/s of 35); a join adds the whole map once (2 KB on a 256-cell map) plus 10 B per known wreck.
@@ -200,7 +202,7 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 ## 9. Client → server: commands (Cmd channel)
 
 - Layout: guide 7.3 and `Schema.encodeCommand`: `cmdType u8, flags u8, count u16, unitIds u16 × count, params`.
-- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10, SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14, REPEAT 15 (`value u8`: 0 off, 1 on; protocol 7), CANCEL 16 (`value u8` 0..50; protocol 12): on an unfinished frame it cancels it (gone, no wreck; the frame's progress × cost is refunded); on a factory it drops queue item `value` (1-based; 0 = all), refunding the progress on the item in production (S-35). An unfinished factory takes BUILD queue items too and starts on them when finished (S-138); while its queue isn't empty, CANCEL drops queue items (0 = all) and leaves the frame, so a CANCEL 0 on an empty queue removes the frame. PRIORITY 18 (`value u8`: 0 low, 1 high; protocol 33, S-156) sets or clears the unit's `LOW_PRIORITY` bit, on any unit. It matters for consumers: builders and factories (their build power), stockpilers (missile refills), aircraft rearming, and shield / radar / jammer / DIRCM upkeep. In a stall the low ones share only what the high ones leave.
+- Types: MOVE 1, FIGHT 2, ATTACK 3, ATTACK_GROUND 4, PATROL 5, GUARD 6, STOP 7, BUILD 8, REPAIR 9, RECLAIM 10 (targetId: a wreck), SET_FIRE_STATE 11, SET_MOVE_STATE 12, TOGGLE 13, CAMERA 14, REPEAT 15 (`value u8`: 0 off, 1 on; protocol 7), CANCEL 16 (`value u8` 0..50; protocol 12): on an unfinished frame it cancels it (gone, no wreck; the frame's progress × cost is refunded); on a factory it drops queue item `value` (1-based; 0 = all), refunding the progress on the item in production (S-35). An unfinished factory takes BUILD queue items too and starts on them when finished (S-138); while its queue isn't empty, CANCEL drops queue items (0 = all) and leaves the frame, so a CANCEL 0 on an empty queue removes the frame. PRIORITY 18 (`value u8`: 0 low, 1 high; protocol 33, S-156) sets or clears the unit's `LOW_PRIORITY` bit, on any unit. It matters for consumers: builders and factories (their build power), stockpilers (missile refills), aircraft rearming, and shield / radar / jammer / DIRCM upkeep. In a stall the low ones share only what the high ones leave. RESURRECT 19 (`targetId u16`: a wreck; protocol 35, S-168): units whose def has `canResurrect` (the T1 workers `ord_mason`, `chs_scrapper`) walk into build range, refill the wreck with team supply at their reclaim rate if it was partly reclaimed, then resurrect it at their build power against the unit's build time, paid in power (the unit's power cost); the unit then stands where the wreck lay, the worker's owner's, at full health (an enemy's wreck too; a structure once its footprint is free; within the unit cap). Never a Commander's wreck. Other units ignore it. Resurrect progress stays on the wreck when the worker stops; reclaiming a wreck lowers its supply, and it must be refilled before the resurrect can finish.
 - Flags: bit0 queue (shift), bit1 line formation, bit2 GROUP (ctrl; protocol 31, S-137): on MOVE, FIGHT and PATROL, every ground unit of the selection moves no faster than its slowest ground unit's top speed, so the group keeps together (BAR's ctrl-move); aircraft fly as usual. Other commands ignore it.
 - At most 200 unit IDs per command.
 - The server applies a command to the sender's own live units only and ignores the rest. Commands are validated server-side (guide 19); a rejected command just has no effect.
@@ -324,6 +326,7 @@ precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
 | 34 | Event `OWN_STATUS 26`: own units off camera, health / build / queue head on change, capped per tick (S-158) |
+| 35 | Command RESURRECT 19; WRECK carries `supply`, `fullSupply` (14 B); event WRECK_STATE 27 (S-168) |
 | 33 | Command PRIORITY 18 and unit state bit LOW_PRIORITY 128: resource priority (S-156) |
 | 32 | Eco records end with the team's radar accuracy: `radarError u16, trackError u16, precision u8` (S-147) |
 | 31 | Event `IDLE 25` (own idle builders and factories, S-136); command flag `GROUP 4` (S-137) |

@@ -84,9 +84,9 @@ local function applyMove(sim: Types.Sim, player: number, cmd: Schema.Command)
 	Orders.give(sim, units, { kind = kind, x = x, z = z, lx = lx, lz = lz, group = band(cmd.flags, GROUP) ~= 0 }, band(cmd.flags, QUEUE) ~= 0)
 end
 
--- ATTACK / GUARD / REPAIR / RECLAIM: an order on a target. ATTACK needs a
--- unit the sender's team knows (a ghost too); GUARD and REPAIR an allied
--- live unit; RECLAIM a wreck.
+-- ATTACK / GUARD / REPAIR / RECLAIM / RESURRECT: an order on a target. ATTACK
+-- needs a unit the sender's team knows (a ghost too); GUARD and REPAIR an
+-- allied live unit; RECLAIM and RESURRECT a wreck.
 local function applyTargeted(sim: Types.Sim, player: number, cmd: Schema.Command)
 	local w = sim.world
 	local units = ownedUnits(w, player, cmd.unitIds)
@@ -106,11 +106,11 @@ local function applyTargeted(sim: Types.Sim, player: number, cmd: Schema.Command
 		if level == Sensors.Level.GHOST and w.slot[t] == nil then
 			gen = sim.sensors.ghosts[ally][t].gen
 		end
-	elseif cmd.cmdType == CT.RECLAIM then
+	elseif cmd.cmdType == CT.RECLAIM or cmd.cmdType == CT.RESURRECT then
 		if sim.combat.wreckX[t] == nil then
 			return
 		end
-		kind = "reclaim"
+		kind = if cmd.cmdType == CT.RESURRECT then "resurrect" else "reclaim" -- (S-168)
 	else
 		if w.slot[t] == nil or w.ally[t] ~= ally then
 			return
@@ -155,7 +155,7 @@ local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
 	elseif cmdType == CT.BUILD then
 		applyBuild(sim, player, cmd)
 		return
-	elseif cmdType == CT.ATTACK or cmdType == CT.GUARD or cmdType == CT.REPAIR or cmdType == CT.RECLAIM then
+	elseif cmdType == CT.ATTACK or cmdType == CT.GUARD or cmdType == CT.REPAIR or cmdType == CT.RECLAIM or cmdType == CT.RESURRECT then
 		applyTargeted(sim, player, cmd)
 		return
 	elseif cmdType == CT.ATTACK_GROUND then
