@@ -1808,3 +1808,15 @@ The watchdog's WARN / INFO lines (S-140) stay on.
 - Screenshots: `debug_out/screens/c203_hud_economy.jpg`, `c203_hud_combat_x.jpg`.
 
 **Why:** the user's queue item 4 (reference 3).
+
+### C-205 — Own units off camera stay live (OWN_STATUS, S-158) (2026-10-24)
+
+**Decision:** the client keeps each `OWN_STATUS` (protocol 34) in `world.ownStatus` by unit ID and applies it (`World.applyStatus`: health, build progress, the factory queue and its head's progress) to the unit while it's outside the tactical tier: at once when the unit is known, and on every strategic snapshot that recreates it (so a status that came before the unit's first record waits for it). ENTER and DEATH drop it (ENTER / State win from then on). The queue is rebuilt from head and count (`World.statusQueue`): the queue the client last had from its head on, cut or padded with its last item; the head repeated when the old queue doesn't hold it. Health bars, build bars, the factory queue strip and idle counts therefore keep moving for own units off camera. `OwnStatus.spec`: a factory's progress, finished items and damage off camera through the real NetOut → NetIn path; a status before the strategic record; the queue rebuild.
+
+**Why:** the user's queue item 6, with sim-A's S-158.
+
+### C-206 — The factory facing arrow and "Buildings set to face …" (2026-10-24)
+
+**Decision:** `Core/Facing`: a facing's sim heading (facing × 90°, S-133), its exit direction (0 → +Z, 1 → +X, 2 → −Z, 3 → −X) and its name as the player sees the map (the camera looks toward −Z at yaw 0, so up is North): 0 South (the default, toward the camera), 1 East, 2 North, 3 West. (Schema calls 0 NORTH; the names here follow the screen.) The placement ghost of a factory gets a green arrow (shaft and chevron, on the ground) on its exit side; turning it (R) shows "Buildings set to face East" over the ghost for 4 s, as a screen-space label (a BillboardGui in a Workspace folder doesn't draw here; the HUD's world labels are all screen-space). Fixed on the way: the ghost and queued-build markers turned by π − facing × 90°, flipped 180° from the built frame for South and North; they now turn by the sim's heading as the renderer does. `Facing.spec` checks the arrow's side against `Build.padPosition` for all four facings. Screenshots: `debug_out/screens/c206_*.jpg` (the built plant opens south like its ghost).
+
+**Why:** the user's queue item 6 (reference 7); sim-A: BUILD's facing already works end to end.
