@@ -70,6 +70,7 @@ Studio is now available to the client session only (`src/client`, `src/shared/De
   - `lune run balance [seeds] [filter]`: equal-value matchup report, written to `docs/BALANCE.md` (report only).
   - `lune run factions [seeds] [filter]`: the faction pass's trade check, every shared role's Order and Chaos versions at equal value (close, long, defend, flank); report only, into `debug_out/factions.md` (S-62).
   - `lune run faction_ai [minutes] [seeds] [mapFilter] [mirrored]`: Order AI against Chaos AI at every level pair, every map, both starts; written to `docs/FACTION_AI.md` (report only; S-65).
+  - `lune run fairness [seeds] [minutes] [mapFilter] [level]`: mirror AI matches on every two-start map (12 seeds × both factions = 24 per map), wins by start; written to `docs/FAIRNESS.md` (report only, with the balance checkpoint; S-162). The slow suite's 36-match Ridgeline test stays the merge guard.
   - `lune run export <scene> [--player N]`: record a match for the viewer (`tools/viewer/index.html`) into `debug_out/`.
   - `lune run build`: offline Roblox build and check, in `build/ci/` (see below). `lune run check_build [place]` re-checks a built place.
   - `lune run serve`: live sync to Studio, into `build/serve/` (see below).
