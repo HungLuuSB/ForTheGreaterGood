@@ -1753,3 +1753,14 @@ Existing calls are unchanged.
 
 **Why:** the user's T1 defences; sim-A's S-157 fields.
 
+
+### C-199 — Laser looks from the user's references: the tapered bolt, the Beamer's thread (2026-10-24)
+
+**Decision:** lasers draw in `Render/Lasers` (pooled Beams on Terrain attachments and Neon balls) instead of a Neon box, in two looks:
+- **Bolt** (every laser without a `ramp`: Sentry, Guard, Twin Guard, Overwatch, Geryon, Bulwark's laser; the Overwatch / Warden reference): a core white at the muzzle turning to the weapon's colour, 0.55 studs wide at the muzzle tapering to 0.07 at the target, inside a soft glow of that colour (1.7 → 0.35); a white-tinted flare at the muzzle and a glowing orb with a halo at the target. Sized by the weapon (0.7..1.3); fades over the last 65 % of its 0.12 s.
+- **Thread** (a weapon with a `ramp`: the Beamer reference): a thin core (0.14) the same width all the way, flickering white and colour along its length each frame, inside a thin coloured fringe; a small coloured flare at the muzzle; a cone of light opening at the target (mouth 1.8 studs, narrowing back along the beam) with a small orb. It widens up to 1.6× with the ramp and doesn't fade between bolts.
+- Hit sparks stay in Render/Effects.
+- Studio (blockouts): the Overwatch's green bolt on a Juggernaut and the Beamer's ramped thread. `debug_out/screens/c199-overwatch-laser.jpg`, `c199-beamer-ramped.jpg`.
+- The Beamer's colour is the def's (70, 150, 255, sky blue); the reference is deeper blue-violet, so sim-A is asked to change `ord_beamer_beam.fx.color`.
+
+**Why:** the user's two laser references.

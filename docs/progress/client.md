@@ -6,6 +6,10 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 
 ## Summary (2026-10-24, point defence; new icon sheet)
 
+- **Laser looks (C-199):** lasers follow your references: a thick white-to-colour bolt tapering to the target with a muzzle flare and a glowing orb (Overwatch, Geryon and the other laser towers in their colours); the Beamer a thin flickering thread with a cone of light where it lands.
+- Ready to merge: `PENDING` (C-199; src/client only)
+- **Priority, new icons, tower visuals (C-196..C-198):** a High / Low priority button on units that use resources; your draft 5 icon sheet with the new towers' own icons; red, green and blue lasers, the Beamer's growing beam, barrels firing in turn and Geryon's turning drum.
+- Ready to merge: `6eb8b11` (C-196 e7d8400, C-197 082a892, C-198; src/client, the icon sheet and asset id)
 - **Build over your own units; new defences have icons (C-195):** placing over your own or allied units is allowed (they walk out); shields' On / Off works on the card; the new T1 defences use existing icon tiles until they get their own.
 - Ready to merge: `09df50f` (C-195; carries sim-A's d41074e, S-152..S-157, so the new defs land with their icon entries; test 495, test_client 280, build passed)
 - **Command line (C-194):** Tab completes and cycles choices (reveal on / off, kill selected / a team ...); /give takes aliases like ord_shield or chs_ir-sam.
