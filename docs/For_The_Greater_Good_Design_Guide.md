@@ -492,6 +492,7 @@ Ground units don't send height: the client looks it up from its own copy of the 
   - **Badlands:** rough ground (ROCK) round the two mesa belts, north-west and south-east, sits 3 studs above the canyon floor. The floor between them is open, hard-packed ground (GRASS, drawn as desert) running from the north-east to the south-west. Small rock outcrops (impassable) dot it.
   - **Deposits ("glitter"):** many small value-2 deposits on a jittered grid about every 20 cells, plus four of value 4 round each start: 92 deposits in all.
   - **For drawing:** `Canyon.feature(cx, cz)` names each cell (mesa, cliff, apron, badlands, boulder, floor).
+- **The Plains** (S-173, the user): `map:plains` (`Shared/Grid/Plains`), a flat, open 256 × 256-cell (2048 × 2048-stud, the wire's largest) grass map for 8v8, bigger than The Canyon. Gently rolling (under 2°), no water, roads east–west through the middle and north–south at x = ±520. Mirror-symmetric west ↔ east. 16 start hints (1–8 west, 9–16 east, in north and south groups of four), each with three value-3 deposits of its own; value-2 deposits on a jittered grid over the middle and the flanks, at least 120 studs from any hint.
 
 ---
 
@@ -1576,13 +1577,14 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 - Players belong to **ally teams**. Allies share sight, radar and sonar; can give units and resources; receive economy overflow.
 - **Up to 16 players on any map** (S-169, the user). **Team mode:** 2–8 sides (ally teams) of any size, never more sides than the map has starts. **FFA:** each player is their own ally team, up to 16, never more than the map's starts.
-- **Start positions** (match option `startMode`): **fixed** (player i on the map's start i, as before) or **choose in game**: a pre-game where each player picks its Commander's spot inside its side's **start area** (the part of the map nearer its side's predefined starts than any other side's; the starts are suggestions), at least 48 studs from other picks. Everyone sees every pick. Players may queue builds for their Commander before it exists (shown to them and their allies). When everyone is ready (or after 90 s) a 5..1 countdown runs, cancelled if anyone un-readies; then the Commanders appear on the picks (unpicked players on their side's next free suggestion) with their queues, and the match starts. Wire: net.md 9b.
+- **Start positions** (S-169, S-171, the user): there are no fixed starts. Every match opens with a **pre-game** where each player picks its Commander's spot inside its side's **spawn box** (a box around the side's share of the map's start positions, or the map's own boxes), at least 48 studs from other picks. The map's start positions are **hints**: the AI takes its side's hints first, and past them (or with one taken) the best free spot in the box (free deposits nearby, open ground, close to the side); a player who never picks gets the same. Everyone sees every pick. Players may queue builds for their Commander before it exists (shown to them and their allies). When everyone is ready (or after 90 s) a 5..1 countdown runs, cancelled if anyone un-readies; then the Commanders appear on the picks with their queues, and the match starts. Wire: net.md 9b. (`startMode = "fixed"` is left for headless tests and tools.)
+- **Player colours** (S-172, the user): assigned automatically, relative to the viewer (`Shared/Match/TeamColors.forViewer`): the viewer and its allies in cold shades (blue, green, cyan; the viewer blue), every enemy in a warm one (red, orange, fuchsia, yellow shades, grouped by side). Spectators see the lowest ally team cold. The config's `color` is no longer chosen by players.
 
 - Implementation (DECISIONS D87):
   - Players have a `team` (economy, ownership) and an `allyTeam`.
   - Sight maps are per ally team. Targeting and friendly fire use ally teams.
   - Overflow is split among allies with room.
-  - The match config `{ mode = "FFA" | "TEAM", win, unitCap?, startMode? }` is validated at start: at most 16 players; FFA each alone; TEAM 2–8 sides of any size (S-169; was FFA 2–8, TEAM 2–4 of up to 4). Fixed starts need a map start per player; chosen ones need at least as many starts as sides (`Shared/Match/StartAreas`).
+  - The match config `{ mode = "FFA" | "TEAM", win, unitCap?, startMode? }` is validated at start: at most 16 players; FFA each alone; TEAM 2–8 sides of any size (S-169; was FFA 2–8, TEAM 2–4 of up to 4). A map needs at least as many start positions as sides (`Shared/Match/StartAreas`); fixed starts (tests only) need one per player.
 
 ### 16.2 Win conditions (match option)
 

@@ -19,7 +19,6 @@ MatchConfig.MAX_PLAYERS = 16 -- guide 16.1 (S-169, the user: 16 on any map)
 MatchConfig.MAX_ALLY_TEAMS = 8 -- Team mode: 2-8 sides (never more than the map's starts: the match place checks)
 MatchConfig.MAX_TEAM_SIZE = 16 -- any size of side, within MAX_PLAYERS
 MatchConfig.MAX_FFA = 16 -- FFA, each alone (never more than the map's starts)
-MatchConfig.START_MODES = table.freeze({ "fixed", "choose" }) -- `startMode` (S-169); absent = "fixed"
 
 -- Player colors (contract: `color` is an index into this list). Distinct on
 -- the dark terrain and on the minimap; no two players share one.
@@ -45,7 +44,7 @@ MatchConfig.COLORS = table.freeze({
 
 export type Player = {
 	id: number, -- sim player ID, 1..#players; also the map start it plays from
-	start: number, -- the map start: == id with startMode "fixed"; 0 (or == id) with "choose": picked in the pre-game (S-169)
+	start: number, -- 0: picked in the match's pre-game (S-171: no fixed starts); == id is accepted from older lobbies and means the same
 	faction: string, -- "order" | "chaos"
 	allyTeam: number, -- 1..#ally teams; in FFA, its own id
 	color: number, -- index into COLORS
@@ -64,7 +63,6 @@ export type MatchConfig = {
 	win: string,
 	friendlyFire: boolean,
 	cheats: boolean,
-	startMode: string?, -- "fixed" (absent) | "choose": players pick their start in the match's pre-game (S-169)
 	players: { Player },
 	spectators: { { user: number, name: string } },
 	lobby: { placeId: number, jobId: string, roomId: string, roomName: string },
@@ -98,10 +96,6 @@ function MatchConfig.validate(c: any): string?
 	if type(c.friendlyFire) ~= "boolean" or type(c.cheats) ~= "boolean" then
 		return "options"
 	end
-	if c.startMode ~= nil and not oneOf(MatchConfig.START_MODES, c.startMode) then
-		return "startMode"
-	end
-	local choose = c.startMode == "choose"
 	if type(c.players) ~= "table" or #c.players < 2 or #c.players > MatchConfig.MAX_PLAYERS then
 		return "player count"
 	end
@@ -109,7 +103,7 @@ function MatchConfig.validate(c: any): string?
 	local colors: { [number]: boolean } = {}
 	local humans = 0
 	for i, p in c.players do
-		if type(p) ~= "table" or p.id ~= i or not (p.start == i or (choose and p.start == 0)) then
+		if type(p) ~= "table" or p.id ~= i or not (p.start == 0 or p.start == i) then
 			return `player {i}: id`
 		end
 		if not oneOf(MatchConfig.FACTIONS, p.faction) or not isInt(p.allyTeam, 1, #c.players) then

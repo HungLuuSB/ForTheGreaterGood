@@ -50,7 +50,7 @@ local function commanderOf(sim: Sim.Sim, player: number): number
 end
 
 return function(t: RunAll.Context)
-	t.test("start areas: sides share the map's starts in blocks; a point belongs to the nearest start's side", function()
+	t.test("spawn boxes: sides share the map's starts (hints) in blocks; boxes around them, split where they'd overlap (S-171)", function()
 		local sides = StartAreas.sides({ 2, 1 }, 4)
 		t.deepEqual(sides.allies, { 1, 2 })
 		t.deepEqual(sides.startsOf[1], { 1, 2 })
@@ -61,14 +61,22 @@ return function(t: RunAll.Context)
 		end, "3 sides for 2 starts")
 		local starts = { { -500, 0 }, { 500, 0 } }
 		local two = StartAreas.sides({ 1, 2 }, 2)
-		t.equal(StartAreas.sideAt(two, starts, -10, 300), 1, "west of the middle: side 1")
-		t.equal(StartAreas.sideAt(two, starts, 10, -300), 2, "east: side 2")
-		local s = StartAreas.suggestions(two, starts, 1, 1, 1)
-		t.deepEqual(s[1], { -500, 0 }, "the start first")
-		t.equal(#s, 7, "then a ring of 6")
+		local bounds = { -1024, -1024, 1024, 1024 }
+		local half = StartAreas.boxHalf(2048, 2048)
+		t.equal(half, 256, "a sixth of the map, at most 256")
+		local boxes = StartAreas.boxes(two, starts, bounds)
+		t.deepEqual(boxes[1], { -500 - half, -half, -500 + half, half }, "side 1's box around its start")
+		t.expect(StartAreas.inBox(boxes[1], -500, 0) and not StartAreas.inBox(boxes[1], 0, 0), "the middle is no one's")
+		-- close starts: the boxes are split at the midpoint, GAP apart
+		local near = StartAreas.boxes(two, { { -100, 0 }, { 100, 0 } }, bounds)
+		t.equal(near[1][3], -StartAreas.GAP / 2, "west box ends before the middle")
+		t.equal(near[2][1], StartAreas.GAP / 2, "east box starts after it")
+		-- a map's own boxes win, and the edge is kept
+		local own = StartAreas.boxes(two, starts, bounds, { { -1100, -50, -400, 50 }, { 400, -50, 600, 50 } })
+		t.deepEqual(own[1], { -1024 + StartAreas.EDGE, -50, -400, 50 })
 	end)
 
-	t.test("the pre-game: no units, only commands; picks in your own area, spaced, on standable ground", function()
+	t.test("the pre-game: no units, only commands; picks in your own box, spaced, on standable ground", function()
 		local sim = newMatch(2)
 		t.expect(sim.pregame ~= nil, "a pre-game")
 		t.equal(#sim.world.ids, 0, "no units yet")
@@ -78,10 +86,10 @@ return function(t: RunAll.Context)
 		pick(sim, 2, west[1] + 100, west[2]) -- in the other side's area
 		Sim.step(sim)
 		t.deepEqual(sim.pregame.picks[1], { west[1], west[2] }, "player 1 picked its start")
-		t.equal(sim.pregame.picks[2], nil, "player 2 can't pick in side 1's area")
+		t.equal(sim.pregame.picks[2], nil, "player 2 can't pick in side 1's box")
 		pick(sim, 2, east[1], east[2])
 		Sim.step(sim)
-		t.expect(sim.pregame.picks[2] ~= nil, "in its own area it can")
+		t.expect(sim.pregame.picks[2] ~= nil, "in its own box it can")
 		t.equal(#sim.world.ids, 0, "still no units")
 		local before = sim.tick
 		for _ = 1, 30 do
@@ -177,15 +185,32 @@ return function(t: RunAll.Context)
 			t.expect(c ~= 0, `player {pid} has a Commander`)
 			pos[pid] = { w.posX[c], w.posZ[c] }
 		end
-		local starts = (sim.map :: any).layers.starts
-		local sides = StartAreas.sides({ 1, 2 }, #starts)
+		local layers = (sim.map :: any).layers
+		local boxes = StartAreas.boxes(StartAreas.sides({ 1, 2 }, #layers.starts), layers.starts, StartAreas.bounds((sim.map :: any).grid), layers.startBoxes)
 		for a = 1, 16 do
-			t.equal(StartAreas.sideAt(sides, starts, pos[a][1], pos[a][2]), sim.players[a].allyTeam, `player {a} in its side's area`)
+			t.expect(StartAreas.inBox(sim.match and boxes[sim.players[a].allyTeam], pos[a][1], pos[a][2]), `player {a} in its side's box`)
 			for b = a + 1, 16 do
 				local d = math.sqrt((pos[a][1] - pos[b][1]) ^ 2 + (pos[a][2] - pos[b][2]) ^ 2)
 				t.expect(d >= StartAreas.SPACING - 1e-6, `players {a} and {b} {d} studs apart`)
 			end
 		end
+		-- each side's first player on its hint; the rest on scored spots near deposits
+		t.expect(math.abs(pos[1][1] - layers.starts[1][1]) < 1 and math.abs(pos[1][2] - layers.starts[1][2]) < 1, "player 1 on side 1's hint")
+		t.expect(math.abs(pos[9][1] - layers.starts[2][1]) < 1 and math.abs(pos[9][2] - layers.starts[2][2]) < 1, "player 9 on side 2's hint")
+		local withDeposits = 0
+		for pid = 2, 8 do
+			for i = 0, (sim.map :: any).grid.cellCount - 1 do
+				if Layers.getSupply(layers, i) > 0 then
+					local dx, dz = (sim.map :: any).grid:cellCenter((sim.map :: any).grid:coords(i))
+					if (dx - pos[pid][1]) ^ 2 + (dz - pos[pid][2]) ^ 2 <= Pregame.DEPOSIT_RADIUS ^ 2 then
+						withDeposits += 1
+						break
+					end
+				end
+			end
+		end
+		print(`    8v8 Ridgeline: {withDeposits} of side 1's other 7 players start within {Pregame.DEPOSIT_RADIUS} studs of a deposit`)
+		t.expect(withDeposits >= 4, "most of them near deposits")
 		for _ = 1, 15 * 30 do
 			for _, b in brains do
 				Skirmish.tick(b)
