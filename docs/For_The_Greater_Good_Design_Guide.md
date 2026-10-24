@@ -1575,14 +1575,14 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 ### 16.1 Teams
 
 - Players belong to **ally teams**. Allies share sight, radar and sonar; can give units and resources; receive economy overflow.
-- **Team mode:** 2–4 ally teams of 2–4 players.
-- **FFA:** each player is their own ally team, up to 8.
+- **Up to 16 players on any map** (S-169, the user). **Team mode:** 2–8 sides (ally teams) of any size, never more sides than the map has starts. **FFA:** each player is their own ally team, up to 16, never more than the map's starts.
+- **Start positions** (match option `startMode`): **fixed** (player i on the map's start i, as before) or **choose in game**: a pre-game where each player picks its Commander's spot inside its side's **start area** (the part of the map nearer its side's predefined starts than any other side's; the starts are suggestions), at least 48 studs from other picks. Everyone sees every pick. Players may queue builds for their Commander before it exists (shown to them and their allies). When everyone is ready (or after 90 s) a 5..1 countdown runs, cancelled if anyone un-readies; then the Commanders appear on the picks (unpicked players on their side's next free suggestion) with their queues, and the match starts. Wire: net.md 9b.
 
 - Implementation (DECISIONS D87):
   - Players have a `team` (economy, ownership) and an `allyTeam`.
   - Sight maps are per ally team. Targeting and friendly fire use ally teams.
   - Overflow is split among allies with room.
-  - The match config `{ mode = "FFA" | "TEAM", win, unitCap? }` is validated at start: FFA 2–8 players each alone; TEAM 2–4 ally teams of up to 4.
+  - The match config `{ mode = "FFA" | "TEAM", win, unitCap?, startMode? }` is validated at start: at most 16 players; FFA each alone; TEAM 2–8 sides of any size (S-169; was FFA 2–8, TEAM 2–4 of up to 4). Fixed starts need a map start per player; chosen ones need at least as many starts as sides (`Shared/Match/StartAreas`).
 
 ### 16.2 Win conditions (match option)
 
@@ -1614,10 +1614,10 @@ PC first. RTS controls on touch screens need a separate design (tap-select, comm
 
 ### 16.4 Limits (tune from stress tests)
 
-- Unit cap per player: e.g., 150 (FFA 8) to 300 (1v1), with a global cap around what the server handles.
+- **No unit cap in-game** (S-170, the user). A match config may still set `unitCap` per player (tests, special modes).
 - Factory queue limit, max command size (200 units).
 - Implementation:
-  - The default cap is `clamp(300 − 25 × (players − 2), 150, 300)` and counts units, structures and frames.
+  - By default there is none (`unitCap` 0). A set cap counts units, structures and frames (it was `clamp(300 − 25 × (players − 2), 150, 300)` until S-170).
   - At the cap, construction fails with `unit_cap`, and finished factory items wait until there is room.
 
 ---

@@ -32,6 +32,7 @@ local Stats = require("./Stats")
 local Alerts = require("./Alerts")
 local Nav = require("./Nav")
 local NetOut = require("./NetOut")
+local Pregame = require("./Pregame")
 local _Placement = require("./Placement") -- registers its Lifecycle removal hook
 local Replay = require("./Replay")
 local Scenarios = require("./Scenarios")
@@ -125,7 +126,14 @@ function Sim.new(config: Config): Sim
 	table.sort(allyTeams)
 
 	local unitCap = if config.match then Match.validate(config.match, players, order) else 0
-	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap, friendlyFire = if config.match.friendlyFire == false then false else nil } else nil
+	local choose = config.match ~= nil and config.match.startMode == "choose"
+	if config.match and config.match.startMode ~= nil and config.match.startMode ~= "fixed" and not choose then
+		error(`Sim.new: startMode must be "fixed" or "choose", got {tostring(config.match.startMode)}`, 2)
+	end
+	if choose and scenario ~= "standard_start" then
+		error("Sim.new: startMode \"choose\" needs the standard_start scenario", 2)
+	end
+	local matchInfo = if config.match then { mode = config.match.mode, win = config.match.win, unitCap = unitCap, friendlyFire = if config.match.friendlyFire == false then false else nil, startMode = if choose then "choose" :: "choose" else nil } else nil
 
 	local cheats = config.cheats == true or (config.match ~= nil and config.match.cheats == true)
 	local offline = config.offline == true
@@ -188,6 +196,14 @@ function Sim.new(config: Config): Sim
 	}
 	sim.combat.friendlyFire = not (config.match and config.match.friendlyFire == false) -- a match option (S-73)
 	sim.net = NetOut.new(sim)
+	if choose then
+		-- the pre-game (S-169): the scenario runs when it ends, on the picks
+		sim.pregame = Pregame.new(sim, function(s)
+			setup(s)
+			Stats.sample(s)
+		end)
+		return sim
+	end
 	setup(sim)
 	Stats.sample(sim) -- the series' first point: tick 0, after the scenario (S-88)
 	return sim
@@ -272,7 +288,10 @@ function Sim.step(sim: Sim)
 		timing.lastTotal = 0
 	end
 	for _, system in SYSTEMS do
-		if tick % system.every == 0 then
+		-- the pre-game (S-169): only commands and the wire (the start may
+		-- happen in Commands; the rest of that tick then runs as usual)
+		local paused = sim.pregame ~= nil and system.name ~= "Sim.Commands" and system.name ~= "Sim.NetOut"
+		if tick % system.every == 0 and not paused then
 			Profiler.begin(system.name)
 			if timing then
 				local t0 = Profiler.now()

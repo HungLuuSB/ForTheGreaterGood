@@ -358,12 +358,29 @@ return function(t: RunAll.Context)
 		for i = 1, 6 do
 			table.insert(five, { id = i, team = i, allyTeam = if i <= 5 then 1 else 2 })
 		end
-		t.expect(not try("TEAM", five), "an ally team of 5 is rejected")
+		t.expect(try("TEAM", five), "a side of 5 is fine (S-169)")
+		local sixteen, seventeen, nine = {}, {}, {}
+		for i = 1, 17 do
+			table.insert(seventeen, { id = i, team = i, allyTeam = if i <= 8 then 1 else 2 })
+			if i <= 16 then
+				table.insert(sixteen, { id = i, team = i, allyTeam = if i <= 8 then 1 else 2 })
+			end
+		end
+		for i = 1, 9 do
+			table.insert(nine, { id = i, team = i, allyTeam = i })
+		end
+		t.expect(try("TEAM", sixteen), "8v8 is fine (S-169)")
+		t.expect(not try("TEAM", seventeen), "17 players are rejected")
+		t.expect(not try("TEAM", nine), "9 sides are rejected")
+		t.expect(try("FFA", players("FFA", 16)), "a 16-player FFA is fine")
+		t.equal(Sim.new({ seed = 1, players = sixteen, mapId = "none", match = { mode = "TEAM", win = "ANNIHILATION" } }).match.unitCap, 0, "16 players: no cap (S-170)")
 		t.expect(not try("CTF", players("FFA", 2)), "unknown modes are rejected")
 		local default = Sim.new({ seed = 1, players = players("FFA", 8), mapId = "none", match = { mode = "FFA", win = "ANNIHILATION" } })
-		t.equal(default.match.unitCap, 150, "8-player FFA cap (guide 16.4)")
+		t.equal(default.match.unitCap, 0, "no unit cap by default (S-170, the user)")
 		local duel = Sim.new({ seed = 1, players = players("FFA", 2), mapId = "none", match = { mode = "FFA", win = "ANNIHILATION" } })
-		t.equal(duel.match.unitCap, 300, "1v1 cap")
+		t.equal(duel.match.unitCap, 0, "1v1 neither")
+		local capped = Sim.new({ seed = 1, players = players("FFA", 2), mapId = "none", match = { mode = "FFA", win = "ANNIHILATION", unitCap = 40 } })
+		t.equal(capped.match.unitCap, 40, "a config may still set one")
 	end)
 
 	t.test("a fought-out Team match ends and replays exactly", function()

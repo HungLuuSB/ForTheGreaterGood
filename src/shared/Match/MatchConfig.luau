@@ -15,9 +15,11 @@ MatchConfig.MODES = table.freeze({ "FFA", "TEAM" })
 MatchConfig.WINS = table.freeze({ "COMMAND_ENDS", "ANNIHILATION" })
 MatchConfig.LEVELS = table.freeze({ "easy", "normal", "hard" }) -- AI levels
 MatchConfig.FACTIONS = table.freeze({ "order", "chaos" })
-MatchConfig.MAX_ALLY_TEAMS = 4 -- guide 16.1: Team mode, 2-4 ally teams of up to 4
-MatchConfig.MAX_TEAM_SIZE = 4
-MatchConfig.MAX_FFA = 8 -- guide 16.1: FFA up to 8, each alone
+MatchConfig.MAX_PLAYERS = 16 -- guide 16.1 (S-169, the user: 16 on any map)
+MatchConfig.MAX_ALLY_TEAMS = 8 -- Team mode: 2-8 sides (never more than the map's starts: the match place checks)
+MatchConfig.MAX_TEAM_SIZE = 16 -- any size of side, within MAX_PLAYERS
+MatchConfig.MAX_FFA = 16 -- FFA, each alone (never more than the map's starts)
+MatchConfig.START_MODES = table.freeze({ "fixed", "choose" }) -- `startMode` (S-169); absent = "fixed"
 
 -- Player colors (contract: `color` is an index into this list). Distinct on
 -- the dark terrain and on the minimap; no two players share one.
@@ -34,11 +36,16 @@ MatchConfig.COLORS = table.freeze({
 	table.freeze({ name = "Olive", rgb = table.freeze({ 140, 150, 70 }) }),
 	table.freeze({ name = "Brown", rgb = table.freeze({ 150, 100, 62 }) }),
 	table.freeze({ name = "Teal", rgb = table.freeze({ 40, 130, 120 }) }),
+	-- 13-16 for 16 players (S-169; lobby-D's picks)
+	table.freeze({ name = "Navy", rgb = table.freeze({ 38, 60, 150 }) }),
+	table.freeze({ name = "Maroon", rgb = table.freeze({ 140, 28, 48 }) }),
+	table.freeze({ name = "Lime", rgb = table.freeze({ 168, 224, 60 }) }),
+	table.freeze({ name = "Lavender", rgb = table.freeze({ 196, 168, 246 }) }),
 })
 
 export type Player = {
 	id: number, -- sim player ID, 1..#players; also the map start it plays from
-	start: number, -- the map start (== id in version 1; see the contract)
+	start: number, -- the map start: == id with startMode "fixed"; 0 (or == id) with "choose": picked in the pre-game (S-169)
 	faction: string, -- "order" | "chaos"
 	allyTeam: number, -- 1..#ally teams; in FFA, its own id
 	color: number, -- index into COLORS
@@ -57,6 +64,7 @@ export type MatchConfig = {
 	win: string,
 	friendlyFire: boolean,
 	cheats: boolean,
+	startMode: string?, -- "fixed" (absent) | "choose": players pick their start in the match's pre-game (S-169)
 	players: { Player },
 	spectators: { { user: number, name: string } },
 	lobby: { placeId: number, jobId: string, roomId: string, roomName: string },
@@ -90,14 +98,18 @@ function MatchConfig.validate(c: any): string?
 	if type(c.friendlyFire) ~= "boolean" or type(c.cheats) ~= "boolean" then
 		return "options"
 	end
-	if type(c.players) ~= "table" or #c.players < 2 or #c.players > MatchConfig.MAX_ALLY_TEAMS * MatchConfig.MAX_TEAM_SIZE then
+	if c.startMode ~= nil and not oneOf(MatchConfig.START_MODES, c.startMode) then
+		return "startMode"
+	end
+	local choose = c.startMode == "choose"
+	if type(c.players) ~= "table" or #c.players < 2 or #c.players > MatchConfig.MAX_PLAYERS then
 		return "player count"
 	end
 	local users: { [number]: boolean } = {}
 	local colors: { [number]: boolean } = {}
 	local humans = 0
 	for i, p in c.players do
-		if type(p) ~= "table" or p.id ~= i or p.start ~= i then
+		if type(p) ~= "table" or p.id ~= i or not (p.start == i or (choose and p.start == 0)) then
 			return `player {i}: id`
 		end
 		if not oneOf(MatchConfig.FACTIONS, p.faction) or not isInt(p.allyTeam, 1, #c.players) then
@@ -130,6 +142,19 @@ function MatchConfig.validate(c: any): string?
 	end
 	if c.mode == "FFA" and #c.players > MatchConfig.MAX_FFA then
 		return "FFA player count"
+	end
+	if c.mode == "TEAM" then
+		local sides: { [number]: boolean } = {}
+		local n = 0
+		for _, p in c.players do
+			if not sides[p.allyTeam] then
+				sides[p.allyTeam] = true
+				n += 1
+			end
+		end
+		if n < 2 or n > MatchConfig.MAX_ALLY_TEAMS then
+			return "side count"
+		end
 	end
 	if type(c.spectators) ~= "table" then
 		return "spectators"

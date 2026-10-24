@@ -1,6 +1,6 @@
 # Network contract: what the client receives
 
-**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **35**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
+**Status: ready** (sim stream, 2026-10-21). Everything here is `Schema.PROTOCOL_VERSION` **36**, as built and tested, including the join / reconnect snapshot and the economy channel (section 10, S-2), the REPEAT command (S-13), and the team's sight map and wrecks (section 7a, S-26).
 
 Owner: sim stream (`src/shared/Net`, `src/server/Sim/NetOut.luau`). The client stream builds `NetIn` against this file.
 - **Source of truth for byte layouts:** `src/shared/Net/Schema.luau`. `Tests/Schema.spec.luau` pins golden bytes to the protocol version.
@@ -52,7 +52,7 @@ Names and reliability: `Schema.Channel`.
 | Def index | u16 | `defs.unitByIndex[i]` (1-based, `Defs.load()` order, identical on both sides; the defs hash proves it). |
 | Weapon index | u16 | `defs.weaponByIndex[i]`. |
 | Icon | 8 bits (protocol 19) | 0 = unknown (radar / sonar blip). Else the unit's **def index** (Defs: sorted by ID, from 1): every unit type has its own icon (S-58, client request 35). `Shared/Net/Icons.byDef`, which the server uses too. `def.icon` stays the family name (`Icons.names` lists them) for the shape; the def gives the unique glyph. |
-| Team | 3 bits (strategic) / u8 (ENTER) | 1..8. Ally teams come from the match config. |
+| Team | 4 bits (strategic; 3 before protocol 36) / u8 (ENTER) | 1..16 (S-169; 1..8 before). Ally teams come from the match config. |
 
 **Unit `state` bits** (u16, `Schema.UnitState` in Shared; the sim's `World.State` is the same table): `MOVING 1` (since S-33: ground and naval units with a movement order or speed, aircraft unless landed, loitering included; it changes in a State record like any bit), `TOGGLED_ON 2` (radar / jammer / converter switched on; a beam tower deployed: clear = retracted into its shell, S-96), `SUBMERGED 4`, `LANDED 8`, `REPEAT 16` (factory repeat on, protocol 7), `DEPLOYED 32` and `DEPLOYING 64` (protocol 22, S-64: a deployable unit, the Warden, unpacked, or unpacking / packing; 4 s each way, the progress isn't sent), `LOW_PRIORITY 128` (protocol 33, S-156: resource priority low; clear = high, the default). Other bits are reserved (0).
 
@@ -115,7 +115,7 @@ A Tactical or State record always refers to a unit the client got an ENTER for. 
 ## 6. Strategic
 
 - Every 5th tick (3 Hz) the server sends a full **snapshot** of every known unit that is not tactical for this player. That includes own units outside the camera and ghosts of structures that died unseen.
-- Record: `unitId u16, cell u16, icon 8 bits | team 3 bits (team − 1) | flags 5 bits`, 6 B (protocol 19; bits LSB-first: icon 0–7, team 8–10, flags 11–15).
+- Record: `unitId u16, cell u16, icon 8 bits | team 4 bits (team − 1) | flags 5 bits | 7 reserved bits (0)`, 7 B (protocol 36, S-169: teams 1..16; bits LSB-first: icon 0–7, team 8–11, flags 12–16; before 36: 6 B with team 8–10, flags 11–15).
 - Flags:
   - `RADAR_ONLY 1`, `SONAR_ONLY 2`, `UNDER_ATTACK 4` (since protocol 23, S-68: own and allied units an enemy hit in the last 3 s), `GHOST 8`, `TRACKED 16`;
   - all 5 flag bits are in use.
@@ -153,6 +153,9 @@ All of a tick's events are one reliable batch. Records start with `kind u8`; siz
 | `WRECK 9` | `wreckId u16, defIndex u16, cell u16, offX u8, offZ u8, heading u8, supply u16, fullSupply u16`, 14 B (supply fields since protocol 35, S-168) | Section 7a. |
 | `WRECK_GONE 10` | `wreckId u16`, 3 B | Section 7a. |
 | `WRECK_STATE 27` | `wreckId u16, supply u16, rez u8`, 6 B (protocol 35, S-168) | Section 7a. |
+| `PREGAME 28` | `player u8, flags u8 (PICKED 1, READY 2, AI 4), cell u16, offX u8, offZ u8`, 7 B (protocol 36, S-169) | Section 9b. |
+| `COUNTDOWN 29` | `seconds u8`, 2 B | Section 9b. |
+| `PREBUILD 30` | `player u8, count u8, count × (defIndex u16, cell u16, offX u8, offZ u8, facing u8)`, 3 + 7 × count B | Section 9b. |
 | `SIGHT_ROWS 11` | `firstRow u8, rowCount u8, rowBytes u8, bits`, 4 + rowCount × rowBytes B | Section 7a. |
 | `SIGHT_CELLS 12` | `count u8, cell u16 × count`, 2 + 2 × count B | Section 7a. |
 
@@ -255,6 +258,22 @@ Test and cheat commands are **ordinary commands**: sent on the Cmd channel, queu
 
   The results screen and replay list can show "cheats used" from these.
 
+## 9b. The pre-game: chosen starts (protocol 36, S-169)
+
+With the match option `startMode = "choose"` (match config; absent or `"fixed"` = start == id as before) the match server's sim boots into a **pre-game**: no units, only commands and the wire run (ticks advance). Everything here is ordinary recorded commands and events.
+
+- **Sides and start areas:** the ally teams, ascending, share the map's predefined starts in contiguous blocks (`Shared/Match/StartAreas.sides(allyTeams, #starts)`: with A sides and S starts, side k gets starts ⌊(k−1)·S/A⌋+1 .. ⌊k·S/A⌋; never more sides than starts). A side's **start area** is every point nearer one of its starts than any other side's (`StartAreas.sideAt`). Draw the areas and the predefined starts (suggestions) from that module: the server checks picks with it.
+- **Commands** (no unit IDs):
+  - `START_POS 20` (pos params: `cell, offX, offZ`): the sender's Commander starts there. Accepted when inside the sender's side's area, on ground the Commander can stand on, and at least `StartAreas.SPACING` (48) studs from every other player's pick; refused silently otherwise (the PREGAME event shows what holds). A new one replaces the old.
+  - `READY 21` (`value u8`: 1 ready, 0 not).
+  - `BUILD` with **no unit IDs**: a build for the sender's future Commander (one of its build options; anywhere on the map); with the QUEUE flag appended, else the list is replaced. At most `Schema.PREBUILD_MAX` (30). `STOP` with no unit IDs clears it.
+  - CAMERA and CHEAT work as usual; anything else is ignored until the match starts.
+- **Events:**
+  - `PREGAME` for every player, to everyone, when its pick, ready or AI flag changes (and after a join): `cell/offX/offZ` = the pick when PICKED is set.
+  - `PREBUILD` for the receiver and its allies (spectators: everyone), when the list changes (and after a join): the full list in order; `count` 0 = none.
+  - `COUNTDOWN`: 5, 4, 3, 2, 1 while it runs (one each second), 255 when it's cancelled, **0 on the tick the match starts**, in the same outbox as the Commanders' ENTERs (and their first State records).
+- **Flow:** when every player is READY (the skirmish AI picks its side's suggestion and readies at once, through these commands), a 5 s countdown runs; any player un-readying cancels it. `Pregame.TIMEOUT` (90 s) after the pre-game began, everyone counts as ready. When the countdown ends the Commanders appear on the picks (a player who never picked: the first free point among its side's suggestions, `StartAreas.suggestions`), each with its PREBUILD list as its build orders, and the match starts on that tick.
+
 ## 10. Join and reconnect (S-2)
 
 A reconnect is a join. The **Snapshot** channel carries a short handshake, then the normal channels deliver the state. Records start with `kind u8`.
@@ -279,7 +298,7 @@ Server side: `NetOut.hello(sim, msg)` returns nil (accept) or the REJECT message
 **Eco channel** (reliable): after the tick header, one record per team: a player gets only its own team's, a spectator every team's, in team order (protocol 9, S-21). Sent on economy ticks (every 5th tick) when any of them changed, and after WELCOME.
 
 ```
-team u8             1..8 (protocol 9)
+team u8             1..16 (protocol 9; 1..8 before 36)
 per resource, supply then power:
   stored u32        whole units (floor)
   storage u32       whole units
@@ -326,6 +345,7 @@ precision u8        Pinpointer precision, floor(p × 255)  (protocol 32, S-147)
 | 9 | Eco records start with `team u8` (36 B); spectators get every team's (S-21) |
 | 10 | Events WRECK 9, WRECK_GONE 10, SIGHT_ROWS 11, SIGHT_CELLS 12: the team's wrecks and sight map (S-26, client requests 9 and 10) |
 | 34 | Event `OWN_STATUS 26`: own units off camera, health / build / queue head on change, capped per tick (S-158) |
+| 36 | Up to 16 teams: strategic records 7 B (team 4 bits); commands START_POS 20, READY 21, and BUILD / STOP with no unit IDs in the pre-game; events PREGAME 28, COUNTDOWN 29, PREBUILD 30 (section 9b, S-169) |
 | 35 | Command RESURRECT 19; WRECK carries `supply`, `fullSupply` (14 B); event WRECK_STATE 27 (S-168) |
 | 33 | Command PRIORITY 18 and unit state bit LOW_PRIORITY 128: resource priority (S-156) |
 | 32 | Eco records end with the team's radar accuracy: `radarError u16, trackError u16, precision u8` (S-147) |

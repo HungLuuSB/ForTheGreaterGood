@@ -2430,3 +2430,29 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
 - **Client (B):** the two bars, the hover, and the workers' reclaim zones from the known wrecks' supply.
 - **Not yet:** the AI doesn't resurrect.
 - **Tests (`Resurrect.spec`):** an enemy Ravager's untouched wreck resurrected by a Mason for its power cost, no supply, in about its build time, the Mason's player's at full health; a three-quarters-reclaimed wreck refilled first (at the reclaim rate), then resurrected; enemy reclaiming during a resurrect lowers the supply, the progress stays; a tank and a Commander don't resurrect, a Commander's wreck can't be; a generator's wreck comes back on its footprint; the wire (supply, full supply, progress, the enemy out of sight hears nothing, the supply drop as it's reclaimed). `Schema.spec`: golden bytes for WRECK, WRECK_STATE, RESURRECT.
+
+## S-169 — Chosen starts in a pre-game; up to 16 players on any map (the user) (2026-10-24)
+
+- **Asked:** a map's spawn points are only suggestions; 16 people can play on a 2-team map, or a 4-team map. A setting lets players choose their spawn point. While choosing, everyone sees the others' spots, and you can queue build commands for your Commander. When all are ready, a 5..1 countdown, then the match. The user approved the plan: start areas per side, up to 16 players, ready + countdown, pre-queued Commander builds; briefs to B and D.
+- **16 players:**
+  - `Schema.MAX_TEAMS` 8 → 16; strategic records 6 → 7 bytes (team 4 bits: icon bits 0–7, team 8–11, flags 12–16, 7 reserved). 128 strategic records fill a 900-byte message (was 150).
+  - `Match`: at most 16 players (`MAX_PLAYERS`); FFA up to 16; TEAM 2–8 sides of any size. `MatchConfig` (shared) the same, plus `startMode` and 4 more colours (Navy, Maroon, Lime, Lavender, D's picks) for 16.
+  - **Unit cap:** the default is now also at most `Match.GLOBAL_CAP` 1,200 / players (16 players: 75 each). Today's 8-player FFA (150 each) is unchanged. Under "Needs my review".
+- **The pre-game (`Sim/Pregame`), with `match.startMode = "choose"`:**
+  - `Sim.new` keeps the scenario (standard_start only) for later and boots with no units. `Sim.step` runs only Commands and NetOut until the start.
+  - **Sides:** the ally teams share the map's starts in contiguous blocks; each side's start area is the Voronoi region of its starts (`Shared/Match/StartAreas`, shared with the client).
+  - **Commands:** START_POS 20 (a pick: in the own side's area, Commander-standable, 48 studs from other picks), READY 21, and BUILD / STOP with no unit IDs for the Commander's queue (its build options, at most 30).
+  - **Flow:** all ready (or 90 s) → a 5 s countdown (un-ready cancels) → each Commander on its pick (unpicked: the first free point among its side's suggestions, start then rings of 48 studs), facing the map's centre, with its queue as build orders; `match.startTick` = that tick (hashed).
+  - **The AI** picks its side's suggestion and readies through recorded commands (`Skirmish.tick`), since AI levels aren't in the replay; its brain is a stand-in until the start, then the real one.
+  - **Replays:** format 4 keeps the start mode; a chosen-starts match replays exactly.
+- **Wire (protocol 36):** events PREGAME 28 (each player's pick, ready, AI; to everyone), COUNTDOWN 29 (5..1, 255 cancelled, 0 on the start tick with the Commanders' ENTERs), PREBUILD 30 (a player's queue, to the player and allies). Contract net.md 9b.
+- **Lobby (D):** the room setting, `startMode` in the config (absent = fixed), `start = 0` (or == id) in choose mode, the limits; match.md is D's.
+- **Client (B):** the pre-game screen, picking, ghosts, the Commander's build menu with no Commander, the countdown, 16-player colours and HUD.
+- **Tests (`Pregame.spec`):** start areas and suggestions; no units and no eliminations in the pre-game; a pick in the other side's area or too close is refused; all ready → 75 ticks → Commanders on their picks with their queues, the unpicked one on its side's start; un-ready cancels, the timeout starts anyway; 16 AI players 8v8 on Ridgeline, all spaced and in their areas, then they build (cap 75); the wire (everyone sees picks, queues to allies only, COUNTDOWN 5..0 with the ENTERs on one tick); replay; fixed mode unchanged. `Match.spec` (limits, 16-player cap), `Schema.spec` (golden bytes, 4-bit team).
+
+## S-170 — No unit cap in-game (the user) (2026-10-24)
+
+- **Asked:** remove the units limit in-game.
+- **Now:** `Match.validate` gives no cap unless the match config sets `unitCap` (0 = none; 1..65535 per player). The default was `clamp(300 − 25 × (players − 2), 150, 300)`; S-169's match-wide 1,200 is gone with it. The cap machinery stays for configs that set one (tests, special modes); the AI's massing rule already handled no cap.
+- **Risk:** the server budget (guide 18.1) was planned for about 800 units in a match. Without a cap, 16 players can build far more; B's watchdog and `profile_match` will show what a live server takes. Under "Needs my review".
+- **Tests:** `Match.spec` (no cap by default for 2, 8 and 16 players; a set cap still applies), `Pregame.spec`.

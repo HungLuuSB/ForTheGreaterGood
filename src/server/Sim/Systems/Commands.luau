@@ -22,11 +22,16 @@
 -- in the replay on the tick they are applied, so replays match.
 --
 -- CHEAT commands (S-102) go to Sim/Cheats, recorded like any other.
+--
+-- During the pre-game (startMode "choose", S-169) Sim/Pregame takes
+-- START_POS, READY and the Commander's queue (BUILD / STOP with no unit
+-- IDs), and after the tick's commands runs the countdown and the start.
 
 local Schema = require("@shared/Net/Schema")
 local Build = require("../Build")
 local Cheats = require("../Cheats")
 local Orders = require("../Orders")
+local Pregame = require("../Pregame")
 local Sensors = require("../Sensors")
 local Nav = require("../Nav")
 local NetOut = require("../NetOut")
@@ -147,6 +152,9 @@ local function applyBuild(sim: Types.Sim, player: number, cmd: Schema.Command)
 end
 
 local function apply(sim: Types.Sim, player: number, cmd: Schema.Command)
+	if sim.pregame and Pregame.command(sim, player, cmd) then
+		return
+	end
 	local w = sim.world
 	local cmdType = cmd.cmdType
 	if KIND_OF[cmdType] then
@@ -228,6 +236,9 @@ function Commands.step(sim: Types.Sim)
 	table.clear(queue)
 	table.move(keep, 1, #keep, 1, queue)
 	Orders.step(sim) -- start and check every unit's head order
+	if sim.pregame then
+		Pregame.step(sim) -- the countdown, and the start (S-169)
+	end
 end
 
 return Commands

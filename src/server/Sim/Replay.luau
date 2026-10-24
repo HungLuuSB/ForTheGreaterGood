@@ -8,7 +8,7 @@
 --            | mapId (len u8 + bytes) | scenario (len u8 + bytes)
 --            | playerCount u8 | (player u8, team u8, allyTeam u8) × playerCount
 --            | hasMatch u8 [| mode u8 (1 FFA, 2 TEAM) | win u8 (1 COMMAND_ENDS,
---              2 ANNIHILATION) | unitCap u16]
+--              2 ANNIHILATION) | unitCap u16 | startMode u8 (1 fixed, 2 choose; format 4)]
 --            | cheats u8 (bit 0 allowed, bit 1 used, bit 2 offline; S-102)
 --   entries  kind u8, then
 --            COMMAND     tick u32 | player u8 | length u16 | payload (Schema command record)
@@ -19,11 +19,11 @@ local Packer = require("@shared/Net/Packer")
 local Replay = {}
 
 Replay.MAGIC = "FTGR"
-Replay.FORMAT_VERSION = 3 -- 2: ally teams and match options in the header; 3: cheat flags (S-102)
+Replay.FORMAT_VERSION = 4 -- 2: ally teams and match options in the header; 3: cheat flags (S-102); 4: start mode (S-169)
 Replay.Kind = table.freeze({ COMMAND = 1, CHECKPOINT = 2 })
 
 export type PlayerInfo = { id: number, team: number, allyTeam: number? }
-export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number?, friendlyFire: boolean? }
+export type MatchInfo = { mode: "FFA" | "TEAM", win: "COMMAND_ENDS" | "ANNIHILATION", unitCap: number?, friendlyFire: boolean?, startMode: ("fixed" | "choose")? }
 
 export type Header = {
 	protocolVersion: number,
@@ -101,6 +101,7 @@ function Replay.serialize(log: Log): buffer
 		w:writeU8(if m.mode == "FFA" then 1 else 2)
 		w:writeU8(if m.win == "COMMAND_ENDS" then 1 else 2)
 		w:writeU16(m.unitCap or 0)
+		w:writeU8(if m.startMode == "choose" then 2 else 1)
 	else
 		w:writeU8(0)
 	end
@@ -146,15 +147,16 @@ function Replay.parse(buf: buffer): Log
 	end
 	local hasMatch = r:readU8()
 	if hasMatch == 1 or hasMatch == 2 then
-		local mode, win, cap = r:readU8(), r:readU8(), r:readU16()
-		if (mode ~= 1 and mode ~= 2) or (win ~= 1 and win ~= 2) then
-			error(`Replay: bad match options (mode {mode}, win {win})`, 2)
+		local mode, win, cap, startMode = r:readU8(), r:readU8(), r:readU16(), r:readU8()
+		if (mode ~= 1 and mode ~= 2) or (win ~= 1 and win ~= 2) or (startMode ~= 1 and startMode ~= 2) then
+			error(`Replay: bad match options (mode {mode}, win {win}, start mode {startMode})`, 2)
 		end
 		header.match = {
 			mode = if mode == 1 then "FFA" else "TEAM",
 			win = if win == 1 then "COMMAND_ENDS" else "ANNIHILATION",
 			unitCap = if cap > 0 then cap else nil,
 			friendlyFire = if hasMatch == 2 then false else nil,
+			startMode = if startMode == 2 then "choose" else nil,
 		}
 	end
 	local cheatFlags = r:readU8()

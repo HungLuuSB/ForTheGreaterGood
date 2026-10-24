@@ -62,6 +62,8 @@ export type Sim = {
 	statSeries: Stats.Series, -- the same over time (S-88, client request 41); not hashed
 	alerts: any, -- Alerts.State: player alerts, last enemy hit per unit (S-68); not hashed
 	cheats: CheatsState.State, -- cheat / test commands (S-102)
+	pregame: any?, -- Pregame.State while the pre-game lasts (startMode "choose", S-169); nil once the match runs
+	startPositions: { [number]: { number } }?, -- player → { x, z } its Commander starts at (the pre-game's picks; S-169)
 }
 
 return {}
