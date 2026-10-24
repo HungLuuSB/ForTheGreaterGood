@@ -4,7 +4,37 @@ Progress of the headless simulation stream: `src/shared` (except `Defs/Blockouts
 
 Decisions: D1–D109 (before the split) in `docs/DECISIONS.md`; this stream's new decisions are `S-1`, `S-2`, ... in `docs/decisions/sim.md`. A new session should be able to continue from this file alone.
 
-## Summary (latest: your queue while away, plus B's requests 59–63, 2026-10-23 evening, branch `m-sim-2`)
+## Summary (latest: your queue of 2026-10-24, items 0–8, branch `m-sim-2`)
+
+**Your nine items, B's watchdog run (request 65) and C's blockouts.** Fast tests and build on every commit, the slow suite on every merge; no balance reports. Protocol 33 → 34. Tests: 495 in 74 specs → 511 in 75 (fast), 8 slow. On main: d6643d4 (everything you listed under item 0 was already there), then f04d534 (S-158), 1b8da68 (S-159, S-160); S-161..S-166 merging (one merge was dropped first, see Integration notes).
+
+| Item | Result | Decision |
+|---|---|---|
+| 0. Merge queue | Nothing pending: client C-182..C-200, models 81d46b2..72b72fd and the lobby's eleven lines were all on main at d6643d4. B, C and D merged main. **Publish both places from main 1b8da68** (or the S-166 merge, once pushed); D publishes the lobby from its Studio file and finds the match place itself (L-14) | — |
+| 1. Bulwark clash | Proposal below: rename the Chaos T2 tower (Bulwark is an Order-style name); ids stay | — |
+| 2. Own units off camera | OWN_STATUS event 26, 9 bytes, owner only, outside the tactical tier, on change, 24 a tick round robin; contract in net.md; B has it | S-158 |
+| 3. Commanders | WALKER move class (40°, ford 2) for both Commanders. Every map still connects (`Walker.spec`); mirror matches 19 / 17. They cross Normandy's hedgerows (35–38°) | S-159 |
+| 3. Commander weapon | Design only, below | — |
+| 4. Structure facing | BUILD has carried `facing u8` all along and the pad, exit drive and AI exit lane follow the heading: no wire change (B told). The AI now faces its plants toward the enemy, the nearest of four (The Canyon: north / south) | S-160 |
+| 5. Measure the real server | B's Studio run 1 (request 65), reproduced headless (`lune run profile_match`). Fixed: structure removal 4.6× cheaper (Damage over budget 47 → 1 tick in the profile), elimination self-destruct weighted (the 96 ms tick), one quadtree a tick on idle Pathing ticks, allocation-free `nearestOpen`. `--!native` on Targeting, Movement, Sensors. Commands averages 0.29 ms; its spikes look like GC. NetOut spikes still open. **Run 2 requested from B** | S-164 |
+| 6. AI give-ups, mixed sizes | 59 give-ups in 16 matches → **1**: deposits reach-checked for the builder, and a unit ordered while inside a footprint plans from the open cell it comes out on (the first version tilted mirror fairness east; fixed). The coarser base grid cost the economy; parked on `s161-grid` | S-161 |
+| 7. Fairness report | `lune run fairness`: 24 mirror matches per two-start map, `docs/FAIRNESS.md`, only with the balance checkpoint (not run) | S-162 |
+| 8. BEAM along the beam | A single-target beam's share goes to the first enemy on its line each tick, with a new FIRE when that changes | S-163 |
+| 8. Homing corrections (11a) | Measured, not built: −5% drift for +63% homing bytes now that blips sit at their unit's cell | S-165 |
+| 8. Naval SAM platform, advanced rearm pad | Pharos / Scylla (water, own radar, naval SAM), Empyrean / Rookery (2 aircraft, `rearmSpeed` 2). C has blockouts on m-models (1e1e96b); B told the icon IDs | S-166 |
+
+**Needs my review** gained:
+- **Bulwark's new name (item 1):** rename the Chaos `chs_bulwark` (Order's `ord_bulwark` is retired, and Bulwark reads Order-style). Pick one: **Balor** (the one-eyed giant whose gaze burns: a beam tower), **Ifrit** (a fire spirit), **Typhon** (the storm monster). Or keep Bulwark on Chaos and rename the retired Order turret instead.
+- **Commander weapon (item 3, design only):**
+  - **Main gun:** a light laser (hitscan), range 200 (above its 140 sight; allies spot), reload 0.6 s, 60 light / 50 armored / 30 structure, no air. About one T1 tank's damage; with 3,000 health the Commander holds a fight but doesn't win one alone.
+  - **D-gun:** manual fire only (a new command, like ATTACK_GROUND with a flag), range 180, cooldown 1.5 s, 400 power a shot from the team's stores (no shot without it). A slow ground-skimming fireball (350 studs/s) that hits everything its line crosses: 99,999 to anything but a Commander, 1,500 to Commanders (no one-shot Commander duels). Allies on its line too (as BAR). Units it kills leave **no wreck**, and wrecks it crosses are destroyed. The AI uses it only on enemies within 150 of its Commander.
+  - Wire: the command, SPAWN_PROJ / IMPACT as now, a DGUN cooldown in the owner fields.
+- **WALKER on Normandy (S-159):** at 40° the Commanders cross the bocage's hedgerows (11.5% of the map opens to them). Alternatives: hedges 8 studs tall (45°; a map re-export for C), or WALKER at 34°.
+- **The base grid (S-161):** parked on `s161-grid`. The AI's economy dropped with it (fewer generators, power ratio at minutes 6–8 0.47–0.67 against 0.74–0.81).
+- **Request 11a (S-165):** not built, see the table.
+- **Commands (S-164):** single 3–5 ms `issueMove` calls in a running match I couldn't pin down outside it; run 2 decides the next step.
+
+## Summary (previous round: your queue while away, plus B's requests 59–63, 2026-10-23 evening, branch `m-sim-2`)
 
 **Your queue (items 1–6), The Canyon, and B's requests 59–63**, B's first as you asked. Fast tests and build on every commit, the slow suite on every merge; no balance reports. Protocol 30 → 31. Tests: 457 in 69 specs → 472 in 71 (fast), 7 → 8 slow. Merged into main: S-127..S-138 and the client's C-149..C-156; C-157..C-167 is merging, S-139 and S-140 follow.
 
@@ -437,6 +467,15 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 
 ## For the client stream
 
+- **2026-10-24, for B:**
+  - **OWN_STATUS (S-158, protocol 34):** event 26, `unitId u16, health u8, build u8, queueHead u16, queueProgress u8, queueCount u8`; own units outside the tactical tier, on change, 24 a tick; contract net.md.
+  - **Facing (S-160):** no wire change. BUILD `facing` 0 north (+Z), 1 east (+X), 2 south, 3 west; frame heading = facing × 90°; pad and exit follow it.
+  - **Request 65 (watchdog run 1):** done, fixes in S-164. Please run 2 on the S-166 merge commit, same profile and seed.
+  - **Request 66 (terrain-cut radar):** yes; next.md item 2, after the budget work.
+  - **New defs needing icons (S-166):** `ord_pharos`, `chs_scylla` (naval SAM platforms, like `sam_radar`), `ord_empyrean`, `chs_rookery` (advanced rearm pads, like `airpad`).
+  - **Beams (S-163):** a single-target beam may send a new FIRE mid-beam ending at whatever enemy stepped into its line (`hit = true`), or at its full end.
+  - **11a:** not built (S-165).
+
 - **Done (request 41), S-88: statistics over time in `Sim/Stats`.** `Stats.series(sim)` returns `{ start, every, t, players }` in your StatSeries shape: `t` in seconds, `players[tostring(pid)][field]` arrays of whole numbers. The fields are `Stats.FIELDS`: your ten plus **`damageTaken`**, which is health enemies removed from that player's units, capped like `damageDealt`. `Stats.report` has `damageTaken` too.
   - Sampling: one sample at tick 0 (after the scenario), then every 150 ticks at the end of the tick. Past 120 samples, every other one is dropped and the interval doubles (`series.every`).
   - Replays and headless runs have it, since the sim keeps it. No wire change; the Roblox server reads it as it reads `Stats.report`, so `src/roblox/StatSeries` can go.
@@ -538,6 +577,8 @@ Deliberate differences from the guide (decided, recorded): submarines are never 
 ## Integration notes
 
 Merges into `main` done by this session (the integrator). Failures and conflicts are recorded here, per stream.
+
+- **2026-10-24, sim, dropped: 775ceb6 (S-161..S-163)** failed the slow suite's mirror test, west 11 / east 25 of 36 (needs 12 each), so the unpushed merge was dropped and main stayed at 1b8da68. Cause: S-161's Nav fix picked the +x-first open cell for units inside a footprint (S-161 follow-up). Fixed in 04214c3 (15 / 21), merged with S-164..S-166 as 77d11ae. `integrate.sh` now prints a failed suite's FAIL lines.
 
 - 2026-10-21: client `a2371cd`, `f815a5d`, `7bbaa7b`, `89e7db1` merged (`--no-ff`); `lune run test` 34 specs / 253 passed, `lune run build` 263 scripts / 787 requires; pushed (`2a8b078`). `main` merged into `m-sim-2`.
 - 2026-10-21: client `a96cca2` (contracts: rig, blockout format, client-state draft) → `02bacbc`; `2062b10` (blockout generator) → `4c93177`; `df29a2d` (client foundation) → `6b05efe`. Each passed test and build and was pushed; `main` merged back into `m-sim-2`. No conflicts or failures.
