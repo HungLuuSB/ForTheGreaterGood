@@ -1375,7 +1375,7 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 
 | Role | Tier | Order | Chaos |
 |---|---|---|---|
-| Corvette | T1 | **Sentry** | **Barracuda** |
+| Corvette | T1 | **Envoy** (`ord_sentry`; Sentry until S-157) | **Barracuda** |
 | Submarine | T1 | **Silence** | **Lamprey** |
 | Destroyer (SAM + sonar) | T2 | **Crusader** | **Corsair** |
 | Cruiser / battleship | T2 | **Dominion** | **Kraken** |
@@ -1386,14 +1386,18 @@ Implementation (DECISIONS D88): every entry below exists as a validated placehol
 
 | Role | Tier | Order | Chaos | Built by |
 |---|---|---|---|---|
-| Gun turret | T1 | **Bulwark** | **Spike** | Command, Ground |
+| Laser tower (S-157) | T1 | **Sentry** (`ord_sentry_tower`, red) | **Guard** (red) | Command, Ground |
+| Ramping beam tower (S-157) | T1 | **Beamer** (blue; 10 → 50 a hit over 4 s on one target) | — | Ground |
+| Heavy laser tower (S-157) | T1 | **Overwatch** (2 green barrels in turn) | **Twin Guard** (2 red barrels) and **Geryon** (3-barrel drum, green; more damage, less range than Overwatch) | Ground |
+| Lobbing gun (S-157) | T1 | **Gauntlet** (high arc, 420) | **Talos** (high arc, 360) | Ground |
+| ~~Gun turret~~ (retired, S-157) | T1 | ~~Bulwark~~ (`ord_bulwark`) | ~~Spike~~ (`chs_spike`) | — |
 | Heavy turret | T2 | **Bastion** | **Maw** | Adv. Ground |
 | IR SAM site | T1 | **Vigil** | **Thorn** | Ground, Air |
 | Radar SAM site (long range) | T2 | **Aegis** | **Wyvern** | Adv. Ground, Adv. Air |
 | Artillery emplacement | T2 | **Edict** | **Cataclysm** | Adv. Ground |
 | Radar tower / long-range radar | T1 / T2 | **Watchtower / Beacon** | **Eye / All-Seer** | All workers |
 | Jammer tower | T1 / T2 | **Curtain / Veilspire** | **Smog / Blackout** | Ground / Adv. Ground |
-| Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (650, 2,600 every 9 s, 700 power a shot) | **Inferno** (560, 2,000 every 7 s, 500 power a shot) | Adv. Ground |
+| Beam tower (S-96, BAR's Pulsar) | T2 | **Radiance** (650, 3,000 over 3 s every 9 s, 700 power a shot) | **Bulwark** (`chs_bulwark`, S-157: 480, 1,700 over 1.5 s every 7 s, 500 power a shot, plus Geryon's green laser; Inferno retired) | Adv. Ground |
 | Flak tower (S-96) | T2 | **Lumen** (2 flak guns) | **Hailstorm** (3, cheaper) | Adv. Ground |
 | Fire-control radar | T2 | **Tribunal** | **Seeker Spire** (cheaper, weaker) | Adv. Ground |
 | Pinpointer (radar precision, S-59) | T2 | **Witness** | **Augur** | Adv. Ground |

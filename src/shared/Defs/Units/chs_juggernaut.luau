@@ -14,7 +14,7 @@ return Templates.extend(Templates.TankT1, {
 	moveClass = "HEAVY_TRACKED",
 	footprint = 2, -- size shows tech level (S-104)
 	cost = { supply = 280, power = 2800, buildTime = 7000 },
-	health = 2500, -- faction pass (S-62)
+	health = 3000, -- tier rebalance (S-157, the user): was 2500; faction pass (S-62)
 	movement = { maxSpeed = 25, accel = 10, brake = 20, turnRate = 80 },
 	sensors = { sight = 210 },
 	weapons = { { def = "chs_juggernaut_cannon", turretPiece = "turret", muzzle = "muzzle" } },

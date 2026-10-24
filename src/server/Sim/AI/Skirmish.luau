@@ -1278,8 +1278,9 @@ local function think(brain: Brain)
 			end
 		end
 		if not isCommander and wantTurret and c.turrets < turretsWanted then
-			-- hard: gun turrets, first on the way home, then by far extractors (S-17)
-			local turret = faction(brain, "bulwark", "spike")
+			-- hard: gun turrets, first on the way home, then by far extractors (S-17);
+			-- the laser towers since S-157
+			local turret = faction(brain, "sentry_tower", "guard")
 			local cx, cz = brain.homeX + brain.dirX * 110, brain.homeZ + brain.dirZ * 110
 			if c.turrets >= cfg.defenses and brain.lastFarX and brain.lastFarZ then
 				cx, cz = brain.lastFarX :: number, brain.lastFarZ :: number
@@ -1470,7 +1471,7 @@ local function think(brain: Brain)
 		end
 		local job, cx, cz = nil, 0, 0
 		local heavy, battery = faction(brain, "bastion", "maw"), faction(brain, "sanction", "scourge")
-		local flak, beam = faction(brain, "lumen", "hailstorm"), faction(brain, "radiance", "inferno")
+		local flak, beam = faction(brain, "lumen", "hailstorm"), faction(brain, "radiance", "bulwark") -- Bulwark in Inferno's place (S-157)
 		local umbrella, silo = faction(brain, "providence", "cerberus"), faction(brain, "reckoning", "ragnarok")
 		if c.shields == 0 then
 			job, cx, cz = faction(brain, "phalanx", "carapace"), brain.homeX + brain.toward * 40, brain.homeZ
