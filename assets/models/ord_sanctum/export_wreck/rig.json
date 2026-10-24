@@ -1,0 +1,112 @@
+{
+  "id": "ord_sanctum_wreck",
+  "wreckOf": "ord_sanctum",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.1643,
+        4.1024,
+        -0.0966
+      ],
+      "size": [
+        23.3019,
+        8.4783,
+        23.3405
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        6.8769,
+        6.8207,
+        6.9468
+      ],
+      "size": [
+        2.6349,
+        2.1546,
+        1.0127
+      ],
+      "pivot": [
+        7.0,
+        5.8,
+        7.0
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -1.901,
+        4.0137,
+        -0.1198
+      ],
+      "size": [
+        7.1922,
+        1.7621,
+        7.8459
+      ],
+      "pivot": [
+        -2.0,
+        4.0,
+        0.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -4.325,
+        4.7,
+        -2.325
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      90,
+      210,
+      255
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 980,
+    "radar": 68,
+    "launcher": 1792,
+    "total": 2840
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}

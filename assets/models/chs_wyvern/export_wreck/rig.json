@@ -1,0 +1,112 @@
+{
+  "id": "chs_wyvern_wreck",
+  "wreckOf": "chs_wyvern",
+  "footprintStuds": 24,
+  "variants": {
+    "bar": "BAR-style wreck (M-24)"
+  },
+  "pieces": {
+    "base": {
+      "parent": null,
+      "center": [
+        0.1355,
+        5.3491,
+        0.026
+      ],
+      "size": [
+        22.952,
+        10.9336,
+        22.973
+      ]
+    },
+    "radar": {
+      "parent": "base",
+      "center": [
+        6.0006,
+        11.1914,
+        4.9549
+      ],
+      "size": [
+        5.6174,
+        3.3618,
+        1.7054
+      ],
+      "pivot": [
+        6.0,
+        9.6,
+        5.0
+      ]
+    },
+    "launcher": {
+      "parent": "base",
+      "center": [
+        -3.0435,
+        5.6048,
+        1.1864
+      ],
+      "size": [
+        10.6097,
+        10.6556,
+        4.4128
+      ],
+      "pivot": [
+        -3.0,
+        3.8,
+        1.0
+      ]
+    }
+  },
+  "attachments": {
+    "muzzle": {
+      "parent": "launcher",
+      "at": [
+        -7.4,
+        10.9,
+        1.45
+      ]
+    }
+  },
+  "teamColorPieces": [],
+  "visualPieces": [
+    "radar"
+  ],
+  "anim": {
+    "radar": {
+      "motion": "turn",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "emissive": {
+    "probe": "emissive_probe",
+    "tint": [
+      255,
+      140,
+      50
+    ],
+    "strength": 2.0
+  },
+  "glow": [],
+  "glowShare": 0.0,
+  "triangles": {
+    "base": 2060,
+    "radar": 148,
+    "launcher": 1680,
+    "total": 3888
+  },
+  "textures": {
+    "size": 1024,
+    "perVariant": [
+      "ALB",
+      "RGH"
+    ],
+    "shared": [
+      "NOR",
+      "MTL",
+      "EMI"
+    ]
+  }
+}
