@@ -35,6 +35,7 @@ Decisions: `C-1`, `C-2`, ... in [`../decisions/client.md`](../decisions/client.m
 - Ready to merge: `e7c577c` (C-213, C-214; test_client 300, build passed)
 - **16 players' colours (C-215 groundwork):** until the palette grows to 16 (sim-A, with lobby-D's four colours), teams 13–16 draw as lighter twins of 1–4 instead of grey.
 - Ready to merge: `8a32e77` (C-215 groundwork: Render/TeamColors only; build passed)
+- Ready to merge: `99ee814` (C-214 follow-up: the vignette and the fog blanket survive an experience without EditableImage too; test_client 300, build passed)
 - Ready to merge: `196d8a7` (main f04d534 merged in 3d5fbf4, protocol 34; C-204 watchdog profile and speed fix (src/roblox), C-205, C-206, C-208; test 496, test_client 295, build passed)
 
 ## Summary (2026-10-24, point defence; new icon sheet)
