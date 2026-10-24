@@ -16,6 +16,11 @@
 --     unit. Radar / sonar contacts carry their wobbled cell and icon 0
 --     (tracked radar contacts: the TRACKED flag and the real icon, D104);
 --     remembered structures carry the GHOST flag and their last position.
+--   * Own units off camera (S-158): OWN_STATUS events with health, build
+--     progress and the factory queue's head for the player's units outside
+--     its tactical tier, when one changed since the client last had it (at
+--     its LEAVE, or the last OWN_STATUS); at most OWN_STATUS_MAX a tick, the
+--     rest on the next ticks in turn.
 --   * DEATH events for dead units the player had in its tactical tier.
 --   * Combat events (D99; S-43: projectiles and shots regardless of sight,
 --     never revealing a shooter):
@@ -127,6 +132,7 @@ local SF = Schema.StrategicFlag
 NetOut.iconIndex = Icons.byDef
 
 NetOut.IDLE_EVERY = 5 -- ticks between checks of the player's idle builders and factories (S-136)
+NetOut.OWN_STATUS_MAX = 24 -- OWN_STATUS events per player per tick (S-158): 216 bytes, ~3.2 KB/s at most
 
 -- Nothing to do (S-136, client request 62): a factory with an empty queue;
 -- a builder with no order of its own (automatic reactions don't count) and
@@ -245,6 +251,8 @@ function NetOut.join(sim: Types.Sim, player: number, clearCamera: boolean?)
 	table.clear(pn.sentStock)
 	table.clear(pn.sentOwner)
 	table.clear(pn.sentProducing)
+	table.clear(pn.sentOwn)
+	table.clear(pn.sentOwnGen)
 	table.clear(pn.domes)
 	local p = sim.players[player]
 	local w = Packer.Writer.new(32)
@@ -312,6 +320,55 @@ end
 
 local function healthU8(health: number, max: number): number
 	return math.clamp(math.ceil(health / max * 255), 0, 255)
+end
+
+-- An own unit's status as OWN_STATUS sends it (S-158): health and build
+-- progress u8, the factory queue's head (0 = none), its length and the
+-- head's progress; and as one number that changes when one of them does
+-- (the progress by sixteenths, like the owner's queue field).
+local function ownStatus(sim: Types.Sim, id: number): (number, number, number, number, number, number)
+	local w = sim.world
+	local health = healthU8(w.health[id], sim.defs.unitByIndex[w.defIndex[id]].health)
+	local build = math.floor(w.buildProgress[id] * 255)
+	local q = sim.build.queue[id]
+	local head, count, progress = 0, 0, 0
+	if q and #q > 0 then
+		head, count = q[1], math.min(#q, 63)
+		progress = math.clamp(sim.build.progress[id] or 0, 0, 1)
+	end
+	local step = math.floor(progress * Stockpile.WIRE_STEPS)
+	local sig = ((head * 64 + count) * 17 + step) * 65536 + build * 256 + health
+	return sig, health, build, head, count, math.floor(progress * 255)
+end
+
+-- OWN_STATUS events (S-158): the player's units outside its tactical tier
+-- whose status changed since the client last had it, at most OWN_STATUS_MAX;
+-- past the cap the next tick starts where this one stopped.
+local function ownStatusEvents(sim: Types.Sim, pid: number, pn: NetState.PlayerNet, events: { Schema.Event })
+	local w = sim.world
+	local ids = w.ids
+	local n = #ids
+	local sentSig, sentGen = pn.sentOwn, pn.sentOwnGen
+	local start = pn.ownCursor % math.max(n, 1)
+	local sent = 0
+	for k = 0, n - 1 do
+		local i = (start + k) % n + 1
+		local id = ids[i]
+		if w.owner[id] ~= pid or pn.tactical[id] then
+			continue
+		end
+		local sig, health, build, head, count, progress = ownStatus(sim, id)
+		if sentGen[id] == w.gen[id] and sentSig[id] == sig then
+			continue
+		end
+		if sent == NetOut.OWN_STATUS_MAX then
+			pn.ownCursor = i - 1
+			return
+		end
+		sent += 1
+		sentSig[id], sentGen[id] = sig, w.gen[id]
+		table.insert(events, { kind = Schema.EventKind.OWN_STATUS, unitId = id, health = health, build = build, queueHead = head, queueProgress = progress, queueCount = count })
+	end
 end
 
 local function angleU8(a: number): number -- radians in [-π, π] → 0..255
@@ -805,6 +862,10 @@ function NetOut.step(sim: Types.Sim)
 					pn.tactical[id] = nil
 					table.remove(pn.tacticalList, table.find(pn.tacticalList, id) :: number)
 					table.insert(events, { kind = Schema.EventKind.LEAVE, unitId = id })
+					if w.owner[id] == pid then
+						-- the client has its status as of now (S-158)
+						pn.sentOwn[id], pn.sentOwnGen[id] = (ownStatus(sim, id)), w.gen[id]
+					end
 				end
 			elseif seen and cam ~= nil and inRect(g, cam, w.posX[id], w.posZ[id], NetOut.ENTER_MARGIN + extra) then
 				pn.tactical[id] = w.gen[id]
@@ -1129,6 +1190,11 @@ function NetOut.step(sim: Types.Sim)
 			if pn.forceFull or sim.tick % NetOut.IDLE_EVERY == 0 then
 				idleEvents(sim, pid, pn, events)
 			end
+			if pn.forceFull then
+				table.clear(pn.sentOwn)
+				table.clear(pn.sentOwnGen)
+			end
+			ownStatusEvents(sim, pid, pn, events)
 		end
 		-- strategic launches: every player, camera or not (S-48)
 		for _, e in sim.combat.events do

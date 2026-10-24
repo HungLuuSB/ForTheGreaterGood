@@ -2305,3 +2305,30 @@ Each entry gives the date, the decision, the alternatives and the reason. Overru
   - The Beamer's first hit is ~10, halfway after 2 s, 50 from 4 s. It switches after its target dies, about 0.5 s later, low again.
   - Gauntlet and Talos hit a still tank near their range, aiming above 45°.
   - Bulwark fires both weapons and starts on.
+
+## S-158 — Own units off camera: OWN_STATUS (the user's approval, next.md item 4) (2026-10-24)
+
+- **Asked:** strategic records carry only cell, icon, team and flags, so the owner's units off camera kept their last health, build progress and factory queue (B's question). The user approved a slim owner-only record, sent on change and capped per tick.
+- **Wire (protocol 34):** event `OWN_STATUS 26`: `unitId u16, health u8, build u8, queueHead u16, queueProgress u8, queueCount u8`, 9 bytes. Health as ENTER's (u8 of max, rounded up), the queue head a unit def index (0 = none), its progress 0..255.
+- **When:** for the player's own units outside its tactical tier, when one of the values changed since the client last had it. The head's progress counts by sixteenths (`Stockpile.WIRE_STEPS`), like the owner's queue field, so a factory off camera sends 16 a build. At a unit's LEAVE the server notes its status (the client has it then), so leaving doesn't resend. On join every own unit off camera is sent.
+- **Cap:** `NetOut.OWN_STATUS_MAX` = 24 per player per tick (216 bytes, at most ~3.2 KB/s). Past the cap the next tick starts where this one stopped (a round-robin cursor over the world's ID list), so no unit waits forever.
+- **Cost:** one pass over the world's units per player per tick, with a signature per own off-camera unit (no strings, no tables unless one is sent).
+- **Why an event, not a strategic field:** strategic records go to everyone with fog applied and every 5th tick; this is owner-only, rare and reliable, like IDLE.
+- **Tests:** `Schema.spec` golden bytes; `NetOut.spec` "OWN_STATUS": owner only, nothing when nothing changed, health and queue changes arrive, leaving the tier doesn't resend, the cap holds and the rest arrive on the next ticks, a late join gets all of them.
+
+## S-159 — Commanders walk: the WALKER move class (the user's approval, queue item 3) (2026-10-24)
+
+- **Asked:** a WALKER move class, about 40° slopes, BAR-bot style, for `ord_sovereign` and `chs_warlord`; check every map still connects and mirror fairness holds.
+- **Built:** `MoveClasses.WALKER`: bit 9, land, `maxSlope` 40, `maxFord` 2 (as TRACKED), flow-field pathing. Terrain speeds: grass 1, rock 0.95, sand 0.85, road 1.05 (legs mind the ground less than tracks). Both Commanders have `moveClass = "WALKER"` (footprint 2 kept).
+- **Normandy's hedgerows:** they're 6-stud bumps on 8-stud cells, 35–38° slopes, so a 40° walker crosses them; 11.5% of Normandy (the bocage) is open to Commanders only. Houses (45°) still stop them. 36° wouldn't have kept the hedges closed either (some are 35°): it would take ≤ 34°, barely more than a tank's 30°. I kept your 40°; `Normandy.spec` now exempts WALKER from the hedge check. Alternatives under "Needs my review".
+- **Every map still connects** (`Walker.spec`, new): on Ridgeline, Coastline, Twin Lakes, Crossroads, Normandy and The Canyon, at footprint 2, every start is open to a Commander and in one component with every other start, every deposit a tank reaches from a start a Commander reaches too, and a Commander enters every cell a tank does. Cells open to Commanders only: Ridgeline, Coastline, Crossroads 0; Canyon 160 (0.4%: no mesa top: `Canyon.spec` still has no land unit on a cliff); Twin Lakes 264 (0.7%); Normandy 7,522 (11.5%, the hedges).
+- **Mirror fairness holds:** the slow suite's 36 mirror AI matches on Ridgeline split west 19 / east 17 (the guard needs 12 each).
+- **Tests:** `Passability.spec` (a 37° ramp open to WALKER, not TRACKED; 45° closed; ford like TRACKED), `Walker.spec`, `Canyon.spec` / `Normandy.spec` / `Placement.spec` class lists.
+
+## S-160 — Structure facing on BUILD: the AI faces its factories toward the enemy (the user's BAR reference #7) (2026-10-24)
+
+- **Asked:** a facing (N / E / S / W) on BUILD, so a factory's pad and exit lanes follow it; the AI faces its factories toward the enemy. Tell B the wire format.
+- **Already there:** BUILD has carried `facing u8` (0..3, bits 2–7 reserved) since protocol 1 (guide 7.3, 9.3), and the frame's heading is facing × 90°. The build pad and the exit drive (S-133) and the AI's kept-clear exit lane (S-142) already follow the heading. So no wire change: 0 north (+Z), 1 east (+X), 2 south, 3 west. The arrow and "Buildings set to face East" are client-only (B sends the chosen facing).
+- **Changed:** the skirmish AI chose east or west only, from the sign of the enemy's x. On The Canyon (north vs south) its factories faced sideways. `Skirmish.enemyFacing` now picks the nearest of the four toward the enemy start (east / west on a tie, so the mirrored 1v1 maps are unchanged). Vehicle plants and advanced plants use it; airfields and shipyards stay at 0.
+- **Guide 9.3** says what facing means and who follows it.
+- **Tests:** `Build.spec` (BUILD with each facing: the frame's heading and its pad on that axis), `Canyon.spec` (the AI faces south from the north start and north from the south; on Ridgeline east and west as before; the slow match checks the AI's built plants).

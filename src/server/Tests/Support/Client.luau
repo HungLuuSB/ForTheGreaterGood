@@ -110,6 +110,7 @@ export type View = {
 	alerts: { { alert: number, x: number, z: number, defIndex: number, tick: number } }, -- ALERT records (S-68)
 	shields: { [number]: { charge: number, flags: number } }, -- SHIELD records by generator (S-79)
 	idle: { [number]: boolean }, -- own builders / factories reported idle (S-136)
+	ownStatus: { [number]: { health: number, build: number, queueHead: number, queueProgress: number, queueCount: number } }, -- own units off camera, from OWN_STATUS (S-158)
 	economy: Schema.Eco?, -- own team's account, from the Eco channel (S-2)
 	economies: { [number]: Schema.Eco }, -- every team's account the client got: a spectator's are all teams (S-21)
 	welcome: Schema.SnapshotRecord?, -- the last WELCOME (who we are, the map, the full tick)
@@ -144,6 +145,7 @@ function Client.new(grid: Grid.Grid, defs: Defs.DefSet?, layers: Layers.Layers?)
 		alerts = {},
 		shields = {},
 		idle = {},
+		ownStatus = {},
 		strategicTick = -1,
 		received = {},
 		log = {},
@@ -345,6 +347,9 @@ function Client.receive(view: View, outbox: { [string]: { buffer } })
 				continue
 			elseif kind == EK.IDLE then
 				view.idle[e.unitId :: number] = if e.idle then true else nil
+				continue
+			elseif kind == EK.OWN_STATUS then
+				view.ownStatus[e.unitId :: number] = { health = e.health :: number, build = e.build :: number, queueHead = e.queueHead :: number, queueProgress = e.queueProgress :: number, queueCount = e.queueCount :: number }
 				continue
 			elseif kind == EK.ALERT then
 				local x, z = view.grid:decode(e.cell :: number, 128, 128)
