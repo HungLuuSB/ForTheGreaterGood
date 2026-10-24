@@ -966,6 +966,18 @@
       }
     },
     {
+      "Name": "ground_grass",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://121529954923163",
+        "NormalMapContent": "rbxassetid://99922886869121",
+        "RoughnessMapContent": "rbxassetid://138512901640767",
+        "MetalnessMapContent": "rbxassetid://83684859424019",
+        "EmissiveStrength": 0
+      }
+    },
+    {
       "Name": "ground_redrock",
       "ClassName": "SurfaceAppearance",
       "Properties": {
@@ -974,6 +986,30 @@
         "NormalMapContent": "rbxassetid://98305883284830",
         "RoughnessMapContent": "rbxassetid://83133963617961",
         "MetalnessMapContent": "rbxassetid://121351602786229",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ground_rock",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://125819693360183",
+        "NormalMapContent": "rbxassetid://91864940045136",
+        "RoughnessMapContent": "rbxassetid://87229806472760",
+        "MetalnessMapContent": "rbxassetid://114104904799908",
+        "EmissiveStrength": 0
+      }
+    },
+    {
+      "Name": "ground_sand",
+      "ClassName": "SurfaceAppearance",
+      "Properties": {
+        "AlphaMode": "Overlay",
+        "ColorMapContent": "rbxassetid://86061130561711",
+        "NormalMapContent": "rbxassetid://92444521969947",
+        "RoughnessMapContent": "rbxassetid://72675263494665",
+        "MetalnessMapContent": "rbxassetid://88088798673499",
         "EmissiveStrength": 0
       }
     },
